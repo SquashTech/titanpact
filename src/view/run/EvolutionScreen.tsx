@@ -2,7 +2,7 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { HeroDefinition, StatKey, TypeId } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
-import { MOVE_CAP, type EvolutionNode, type EvolutionPath } from '../../run/progression';
+import type { EvolutionNode, EvolutionPath } from '../../run/progression';
 import { passives } from '../../data/passives';
 import { PassiveGlyph, passiveColor, passiveTint } from '../shared/passiveIcons';
 import { PassiveDetailCard } from '../shared/PassiveDossier';
@@ -281,9 +281,6 @@ function PathDossier({
   const poolMoves = (path.learnableMoveIds ?? []).filter((id) => moves[id]);
   const traded = tradedType(hero, path);
   const promise = poolPromise(path);
-  // At the cap the grant becomes a replace-or-decline offer, which by the Evolution level is the
-  // usual case rather than the edge one (applyEvolutionMoves).
-  const kitFull = grantedMoves.length > 0 && entry.unlockedMoveIds.length >= MOVE_CAP;
 
   return (
     <div className="detail-overlay evolution-dossier-overlay" onClick={onClose}>
@@ -342,11 +339,6 @@ function PathDossier({
               {grantedMoves.map((id) => (
                 <MoveDetailCard key={id} move={moves[id]} caster={caster} />
               ))}
-              {kitFull && (
-                <p className="evolution-dossier-note-line">
-                  {hero.name} already knows {MOVE_CAP} moves — you'll choose one to replace, or decline.
-                </p>
-              )}
             </section>
           )}
 

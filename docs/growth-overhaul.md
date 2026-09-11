@@ -598,11 +598,14 @@ The Evolution sits mid-ladder rather than at the top because the top rung stacki
 distinct milestone: the 4th Scroll changes what a hero can *do*, the 6th changes what it *is*, the
 8th opens the ceiling.
 
-**Ordering on the 6th Scroll:** the Evolution screen raises for that one hero *before* the Scroll's
-offer rolls, so a retype's line is in the pool for the same pour. The Evolution's own outright
-grant (and its replace-or-decline overflow) is unchanged. Two moves in one pour is a lot of screen;
-that is the milestone, and learning moves is the part of the game people love — the screen count
-was weighed and accepted (2026-09-11, per user direction).
+**The 6th Scroll buys the Evolution and nothing else** (revised 2026-09-11, per user direction).
+The Evolution screen raises for that one hero in place of the Scroll's offer; no move rolls behind
+it. The Evolution's own outright grant (and its replace-or-decline overflow) is unchanged, so a
+path that grants a move still teaches exactly that one. It was briefly Evolution *then* offer, so
+a retype's line could be in the pool the same pour — but the pour that changes what a hero *is*
+should not end on a second, smaller box, and the 7th Scroll draws from the post-Evolution pool
+anyway. The dossier's yellow "already knows 4 moves" line went with it: the replace offer says
+that itself when it comes.
 
 **Six evolved is the expected ending.** Six Evolutions cost 36 Scrolls. That is a deliberate
 reversal of §5's "scarce when it matters, universal by the end" into *universal by the end, paced by

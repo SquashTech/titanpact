@@ -12203,9 +12203,124 @@ textarea,
   padding-bottom: 10px;
 }
 
-/* The counter switch, sitting under the header rather than at the foot of a sheet. */
+/* The counter switch, at the FOOT of the screen (2026-09-11, per user direction), directly over
+   Continue: it is the control the thumb comes back to, and the top of the screen is the far end
+   of a thumb's reach. Taller than a sheet's tabs because it is a screen control, not a page one. */
 .guild-hall-tabs {
   margin-top: 0;
+  padding: 3px;
+  background: linear-gradient(180deg, #1c1a20, #14131a);
+  border-color: rgba(var(--node-rgb), 0.28);
+  box-shadow: var(--hairline), var(--elev-1);
+}
+
+.guild-hall-tabs .tab-button {
+  padding: 8px 2px 7px;
+  gap: 3px;
+}
+
+.guild-hall-tabs .tab-button .section-glyph {
+  width: 18px;
+  height: 18px;
+}
+
+.guild-hall-tabs .tab-button-label {
+  font-size: 10.5px;
+}
+
+.guild-hall-tabs .tab-button.is-active {
+  color: rgb(var(--node-rgb));
+  background: linear-gradient(180deg, rgba(var(--node-rgb), 0.2), rgba(var(--node-rgb), 0.06)), var(--surface-raised);
+  box-shadow: var(--hairline), var(--elev-1), 0 0 14px -4px rgba(var(--node-rgb), 0.7);
+}
+
+.guild-hall-tabs .tab-button-count {
+  top: 4px;
+  right: 6px;
+  font-size: 9px;
+}
+
+.guild-hall-tabs .tab-button.is-active .tab-button-count {
+  color: rgb(var(--node-rgb));
+}
+
+/* --- The Guild Hall's atmosphere (2026-09-11, per user direction) --------
+   The screen names the place and then lets the place do the talking: a hung
+   sign for a header, and lantern light instead of the node stage's even wash.
+   Both are ambient — the sign is the header's art, the lanterns paint under
+   the content the way `.shrine-descent` does. */
+.guild-sign {
+  display: block;
+  width: 168px;
+  height: auto;
+  margin: 0 auto -6px;
+  transform-origin: 50% 0;
+  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 10px rgba(var(--node-rgb), 0.28));
+  animation: guild-sign-swing 7s ease-in-out infinite;
+}
+
+@keyframes guild-sign-swing {
+  0%,
+  100% {
+    transform: rotate(-1.4deg);
+  }
+  50% {
+    transform: rotate(1.4deg);
+  }
+}
+
+/* Two lanterns high in the corners and a hearth low behind the shelf, all
+   flickering out of phase. The corner pools are what the sign's drop shadow
+   falls out of; the hearth is what the counter stands in front of. */
+.guild-hall-hearth {
+  position: absolute;
+  inset: calc(var(--shell-pad) * -1);
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.guild-hall-hearth::before,
+.guild-hall-hearth::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.guild-hall-hearth::before {
+  background:
+    radial-gradient(circle 150px at 6% 4%, rgba(255, 190, 90, 0.34), rgba(255, 150, 60, 0.1) 46%, transparent 72%),
+    radial-gradient(circle 150px at 94% 4%, rgba(255, 190, 90, 0.34), rgba(255, 150, 60, 0.1) 46%, transparent 72%);
+  animation: guild-lantern-flicker 4.2s ease-in-out infinite;
+}
+
+.guild-hall-hearth::after {
+  background: radial-gradient(ellipse 70% 34% at 50% 104%, rgba(255, 140, 50, 0.3), rgba(200, 80, 30, 0.1) 48%, transparent 74%);
+  animation: guild-lantern-flicker 3.1s ease-in-out -1.3s infinite;
+}
+
+@keyframes guild-lantern-flicker {
+  0%,
+  100% {
+    opacity: 0.78;
+  }
+  38% {
+    opacity: 1;
+  }
+  61% {
+    opacity: 0.86;
+  }
+  80% {
+    opacity: 0.96;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guild-sign,
+  .guild-hall-hearth::before,
+  .guild-hall-hearth::after {
+    animation: none;
+  }
 }
 
 /* The purse (NodeStage NodePurse), pinned in the corner the roster glyph does
@@ -12396,32 +12511,6 @@ textarea,
   font-weight: 800;
   letter-spacing: 0.04em;
   color: var(--text-dim);
-}
-
-/* Slot holdings under an inspected item (EquipChoiceCard SlotOwners) — who
-   already has what, so the buy decision doesn't need the equip screen first.
-   The same squad grid as Manage Roster since 2026-09-07, so the cap is sized
-   for three rows of cards rather than six lines of text. */
-.equip-owners {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  max-height: 296px;
-  overflow-y: auto;
-  margin-top: 8px;
-  padding: 8px;
-  background: var(--surface-sunken);
-  border: 1px solid var(--border-sunken);
-  border-radius: var(--radius-sm);
-}
-
-.equip-owners-head {
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  margin-bottom: 2px;
 }
 
 /* Both of these are written as `.equip-cache-* .guild-hall-*` (0,2,0) rather
@@ -12632,6 +12721,8 @@ textarea,
   line-height: 1.2;
 }
 
+/* Only the Sell good still carries a line (SellSection); the Contract's and the Scroll's came off
+   (2026-09-11, per user direction) — a good named "Recruit Contract" with a coin under it is read. */
 .guild-hall-good-desc {
   font-size: 10px;
   line-height: 1.3;
@@ -12658,6 +12749,26 @@ textarea,
 .guild-hall-good-price .resource-glyph {
   width: 12px;
   height: 12px;
+}
+
+/* The shelf's Scroll limit reached (SCROLL_PURCHASE_LIMIT): the coin becomes the notice, and the
+   good greys the way a bought item on the equipment shelf does. */
+.guild-hall-good-price.is-soldout {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10px;
+}
+
+.guild-hall-good.sold-out:disabled {
+  opacity: 0.55;
+}
+
+.guild-hall-good-held.is-scroll {
+  border-color: color-mix(in srgb, #c9a2ff 55%, var(--border));
+  color: #c9a2ff;
 }
 
 /* How many Contracts are already held, as a count ON the good rather than a
@@ -16069,58 +16180,79 @@ textarea,
 .map-footer-label {
   color: inherit;
 }
-
 /* Gear waiting in the bag, said by the whole button (2026-09-08, second pass, per user direction).
 
    A corner badge was the entire cue, and a corner badge is exactly the kind of mark an eye learns
    to stop seeing after the first act — while the thing it points at is a hero fighting a whole act
    without the item that was sitting in the bag the whole time. So the button stops being the Roster
-   and becomes the notification: the item colour replaces its accent on the rule, the icon and the
-   glow, its label says what is waiting rather than where it goes, and the whole tile breathes.
-   Nothing modal, nothing to dismiss — it simply cannot be read as the same button. */
+   and becomes the notification. It is FILLED (2026-09-11, per user direction): the earlier tinted
+   plate nested a gradient token inside a gradient, which is invalid, so the button lost its
+   background entirely and came out as a faint outline over the trees — quieter than at rest. Now
+   it is a solid slab of the alert colour with dark ink on it, the one lit object on the screen. */
 .map-footer-button.has-unopened {
-  color: var(--text);
-  border-color: color-mix(in srgb, var(--btn-color) 42%, var(--border));
+  --alert-ink: #15110b;
+  color: var(--alert-ink);
+  border-color: color-mix(in srgb, var(--btn-color) 70%, #ffffff);
+  border-top-color: color-mix(in srgb, var(--btn-color) 45%, #ffffff);
   border-top-width: 3px;
-  background: linear-gradient(165deg, var(--surface-raised), color-mix(in srgb, var(--btn-color) 15%, transparent));
-  animation: map-footer-alert 2.2s ease-in-out infinite;
+  background:
+    linear-gradient(104deg, transparent 28%, rgba(255, 255, 255, 0.2) 47%, transparent 66%),
+    linear-gradient(180deg, color-mix(in srgb, var(--btn-color) 72%, #ffffff), var(--btn-color) 52%, color-mix(in srgb, var(--btn-color) 74%, #000000));
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.28);
+  animation: map-footer-alert 1.5s ease-in-out infinite;
 }
 
+.map-footer-button.has-unopened:hover {
+  color: var(--alert-ink);
+  background:
+    linear-gradient(104deg, transparent 28%, rgba(255, 255, 255, 0.28) 47%, transparent 66%),
+    linear-gradient(180deg, color-mix(in srgb, var(--btn-color) 60%, #ffffff), var(--btn-color) 52%, color-mix(in srgb, var(--btn-color) 74%, #000000));
+}
+
+/* The glow breathes AND the plate lifts a hair — a colour alone can be learned away, a thing that
+   moves in the corner of the eye cannot. */
 @keyframes map-footer-alert {
   0%,
   100% {
-    box-shadow: 0 0 12px -6px var(--btn-color), var(--elev-1);
+    transform: translateY(0);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--btn-color) 55%, transparent), 0 0 18px -4px var(--btn-color), var(--elev-2);
   }
   50% {
-    box-shadow: 0 0 26px -3px var(--btn-color), var(--elev-1);
+    transform: translateY(-2px);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--btn-color) 0%, transparent), 0 0 34px 2px var(--btn-color), var(--elev-2);
   }
 }
 
 .map-footer-button.has-unopened .node-glyph {
-  filter: drop-shadow(0 0 6px var(--btn-color));
+  color: var(--alert-ink);
+  filter: none;
 }
 
-/* The count, in the same colour as everything else the state changed — the badge is now the
-   smallest part of the cue rather than all of it, so it stops carrying the alarm on its own. */
+.map-footer-button.has-unopened:hover .node-glyph {
+  filter: none;
+}
+
+/* The count, cut in the plate's ink with the alert colour as its figure, so the two never fight
+   for one hue. */
 .map-footer-badge {
   position: absolute;
   top: 6px;
   right: 10px;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  background: var(--btn-color, var(--accent));
-  color: var(--surface);
+  background: var(--alert-ink, var(--accent));
+  color: var(--btn-color, var(--surface));
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
-  box-shadow: 0 0 12px -2px var(--btn-color, var(--accent)), 0 0 0 2px rgba(0, 0, 0, 0.45);
-  animation: map-footer-badge-pulse 2.2s var(--ease-out) infinite;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35), 0 2px 6px rgba(0, 0, 0, 0.45);
+  animation: map-footer-badge-pulse 1.5s var(--ease-out) infinite;
 }
 
 @keyframes map-footer-badge-pulse {
@@ -16130,7 +16262,7 @@ textarea,
     transform: scale(1);
   }
   80% {
-    transform: scale(1.16);
+    transform: scale(1.18);
   }
 }
 
@@ -17903,11 +18035,15 @@ textarea,
    z-index 1 with everything else would put the shrine's falling light over
    the header and the hero cards instead of behind them. */
 /* `.pact-seal-flash` is the opposite case to `.shrine-descent`: an ambient
-   layer that has to paint ABOVE the content, at the z-index it names itself. */
+   layer that has to paint ABOVE the content, at the z-index it names itself.
+   `.guild-hall-hearth` is `.shrine-descent`'s case again — the Guild Hall's
+   lantern light, under the content (ShopNodeScreen). `.node-purse` is a
+   corner chip like `.corner-glyph-button`; lifted, it lost its absolute
+   position and stretched across the top of both shops as a bar. */
 .node-screen
-  > *:not(.node-sky):not(.shrine-descent):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button):not(.is-floating):not(
-    .pact-seal-flash
-  ),
+  > *:not(.node-sky):not(.shrine-descent):not(.guild-hall-hearth):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button):not(
+    .node-purse
+  ):not(.is-floating):not(.pact-seal-flash),
 .levelup-screen > *:not(.node-sky):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button),
 /* .squad-select joined the stage in 2026-08-29 so it could carry the act's
    Location (docs/locations.md §5.5). Its root rule was already this stage's,
@@ -18576,13 +18712,6 @@ textarea,
    pure gain — and a FULL hero opens EquipSwapScreen, a whole screen for the
    one decision that actually costs something. */
 
-/* An empty slot is a pure gain — nothing is displaced, nothing rejoins the bag
-   — and it is the one verdict this screen can state without knowing what the
-   player is building toward. So it, and only it, gets the green. */
-.roster-mgmt-card.can-take .equip-card-verdict {
-  color: var(--hp-high);
-}
-
 /* Already holds it, or the bag has no room to catch what a swap displaces. */
 .roster-mgmt-card.is-locked {
   opacity: 0.4;
@@ -18661,23 +18790,6 @@ textarea,
   font-style: italic;
   font-weight: 600;
   opacity: 0.55;
-}
-
-/* The card's verdict, in its top-right corner: how many slots are free, or
-   that there are none. Absolutely placed rather than given a row of its own —
-   a card ~118px wide has no width for a column, and the identity block under
-   it is a button, so the mark has to stay inert. */
-.equip-card-verdict {
-  position: absolute;
-  top: 3px;
-  right: 5px;
-  z-index: 1;
-  font-size: 8.5px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  pointer-events: none;
 }
 
 /* --- The seating (Manage Roster, `.is-equipping`) ------------------------
@@ -20029,13 +20141,6 @@ textarea,
   font-size: 10px;
   font-style: italic;
   color: var(--text-dim);
-}
-
-.evolution-dossier-note-line {
-  margin: 6px 0 0;
-  font-size: 10px;
-  line-height: 1.4;
-  color: var(--accent);
 }
 
 /* Where the hero LANDS, not what the path adds: a bare "+30 Attack" is not a
@@ -24274,23 +24379,44 @@ textarea,
 }
 
 /* Once every Scroll is poured the board has nothing left to say, and this is the only thing on
-   the screen to press — so it breathes in the screen's own tint. The base plate's hover shadow
-   is the bottom of the cycle; the top is roughly double its reach. */
+   the screen to press. FILLED (2026-09-11, per user direction): the tinted dark plate every
+   other Continue wears sat in the screen's own violet and read as one more row of the board —
+   the six rows above it are the same dark plates with the same coloured rims. A solid slab of
+   the Scroll's colour with dark ink is the one thing on the screen that is not a row. */
 .mastery-continue:not(.is-hidden):not(:disabled) {
-  animation: mastery-continue-glow 2.2s ease-in-out infinite;
+  --scroll-rgb: 201, 162, 255;
+  color: #17102a;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.55);
+  border-top-color: rgba(255, 255, 255, 0.8);
+  background:
+    linear-gradient(104deg, transparent 28%, rgba(255, 255, 255, 0.22) 47%, transparent 66%),
+    linear-gradient(180deg, #e6d3ff, rgb(var(--scroll-rgb)) 52%, #9a6fe0);
+  animation: mastery-continue-glow 1.6s ease-in-out infinite;
+}
+
+.mastery-continue:not(.is-hidden):not(:disabled):hover {
+  border-color: rgba(255, 255, 255, 0.75);
+  background:
+    linear-gradient(104deg, transparent 28%, rgba(255, 255, 255, 0.32) 47%, transparent 66%),
+    linear-gradient(180deg, #efe3ff, #d4b6ff 52%, #9a6fe0);
 }
 
 @keyframes mastery-continue-glow {
   0%,
   100% {
-    border-color: rgba(var(--cta-rgb), 0.72);
-    box-shadow: inset 0 1px 0 rgba(var(--cta-rgb), 0.6), inset 0 -14px 24px -16px rgba(var(--cta-rgb), 1),
-      0 3px 10px rgba(0, 0, 0, 0.55), 0 0 22px -4px rgba(var(--cta-rgb), 0.55);
+    transform: translateY(0);
+    box-shadow: 0 0 0 0 rgba(var(--scroll-rgb), 0.55), 0 3px 10px rgba(0, 0, 0, 0.55), 0 0 18px -4px rgb(var(--scroll-rgb));
   }
   50% {
-    border-color: rgba(var(--cta-rgb), 1);
-    box-shadow: inset 0 1px 0 rgba(var(--cta-rgb), 0.85), inset 0 -14px 24px -16px rgba(var(--cta-rgb), 1),
-      0 3px 10px rgba(0, 0, 0, 0.55), 0 0 40px 2px rgba(var(--cta-rgb), 0.75);
+    transform: translateY(-2px);
+    box-shadow: 0 0 0 6px rgba(var(--scroll-rgb), 0), 0 3px 10px rgba(0, 0, 0, 0.55), 0 0 36px 2px rgb(var(--scroll-rgb));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mastery-continue:not(.is-hidden):not(:disabled) {
+    animation: none;
   }
 }
 
@@ -26850,12 +26976,202 @@ textarea,
   font-style: italic;
 }
 
-/* The Guild Hall's buy sheet and the reward pick's inspect (EquipInspectOverlay): the same card
-   on the .log-panel chassis, because a footer with a confirm in it must not close on a tap.
-   The tier stripe comes with it, so it still reads as the same thing opening. */
+/* The reward pick's inspect (EquipInspectOverlay): the same card on the .log-panel chassis, with
+   the tier stripe so it still reads as the same thing opening. */
 .equip-inspect-panel {
   gap: 10px;
   border-top-width: 3px;
+}
+
+/* --- The Guild Hall's buy sheet (EquipBuyOverlay.tsx, 2026-09-11) ----------
+   The item dossier on the dossier chassis, then two facets under it on the
+   same scored hairlines: the merges buying it would open, and the price as a
+   ledger over the one button. The roster's six slot cards came off it. */
+.equip-buy-panel {
+  gap: 0;
+}
+
+.equip-buy-merges {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.equip-buy-merges-none {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.equip-buy-merge-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* One merge: the partner, where it is, the mark, and the piece the pair becomes — cut in the
+   tier it REACHES, since that tier is the whole reason to buy. */
+.equip-buy-merge-row {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 22px 38px auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 6px 6px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.02), color-mix(in srgb, var(--merge-color) 12%, transparent));
+  border: 1px solid color-mix(in srgb, var(--merge-color) 30%, var(--border));
+}
+
+.equip-buy-merge-row:not(.is-ready) {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: var(--border);
+  opacity: 0.8;
+}
+
+.equip-buy-merge-piece {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  flex: none;
+}
+
+.equip-buy-merge-piece .item-piece {
+  --item-box-pip: 3px;
+}
+
+.equip-buy-merge-piece.is-result {
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--merge-color) 70%, transparent));
+}
+
+.equip-buy-merge-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.equip-buy-merge-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.equip-buy-merge-copies {
+  margin-left: 5px;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-dim);
+}
+
+.equip-buy-merge-where {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.equip-buy-merge-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--merge-color);
+}
+
+.equip-buy-merge-arrow .merge-mark {
+  width: 14px;
+  height: 14px;
+}
+
+.equip-buy-merge-result {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--merge-color);
+}
+
+.equip-buy-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+/* The purse before and after, in the run's one gold chip language. */
+.equip-buy-ledger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  align-self: center;
+  padding: 3px 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(224, 166, 60, 0.1);
+  border: 1px solid rgba(224, 166, 60, 0.3);
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.equip-buy-ledger .resource-glyph {
+  width: 13px;
+  height: 13px;
+}
+
+.equip-buy-ledger-now {
+  color: var(--text-dim);
+  font-weight: 700;
+}
+
+.equip-buy-ledger-arrow {
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+.equip-buy-ledger.is-short {
+  background: rgba(217, 84, 84, 0.1);
+  border-color: rgba(217, 84, 84, 0.35);
+  color: var(--enemy, #d95454);
+}
+
+.equip-buy-button {
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 12px;
+  font-size: 15px;
+  border-radius: var(--radius-md);
+}
+
+.equip-buy-button-price {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.28);
+  font-size: 13px;
+}
+
+.equip-buy-button-price .resource-glyph {
+  width: 12px;
+  height: 12px;
+}
+
+.equip-buy-button:disabled .equip-buy-button-price {
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .item-detail-sell .move-detail-unit {

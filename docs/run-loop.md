@@ -381,7 +381,8 @@ burned either way — and it ticks that hero's **Mastery Rank**, which is what g
 
 **Where they come from.** `SCROLLS_PER_ACT` = 2 from every Guardian (10 guaranteed over a run),
 the `scrollReward` Scroll Cache at `SCROLL_REWARD_COUNT` = 2 a visit (weight 34), and the Guild
-Hall at `SCROLL_PURCHASE_COST` = 35g. ~15-18 reachable, against the six that max one hero — so
+Hall at `SCROLL_PURCHASE_COST` = 35g, `SCROLL_PURCHASE_LIMIT` = 2 a visit (2026-09-11, per user
+direction — an uncapped shelf let a rich run turn the whole purse into rank in one stop). ~15-18 reachable, against the six that max one hero — so
 the floor alone is one maxed hero and a second half-ranked, and everything past that is a real
 spread-vs-concentrate call.
 

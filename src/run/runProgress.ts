@@ -14,7 +14,6 @@ import {
   holdsItem,
   MAX_ITEM_SLOTS,
   mergeEnchantChoices,
-  markItemSeen,
   markItemUnseen,
   mergeResultId,
   nextRarity,
@@ -176,9 +175,9 @@ export function stashItem(run: RunState, itemId: string, equipmentLookup: Record
   return { ...next, unseenItemIds: markItemUnseen(next.unseenItemIds, itemId) };
 }
 
-/** The player has looked at it. Tapping a bag item — for any reason — is what calls this. */
-export function markStashItemSeen(run: RunState, itemId: string): RunState {
-  return { ...run, unseenItemIds: markItemSeen(run.unseenItemIds, itemId) };
+/** The player has looked at the bag. Opening the Roster is what calls this (2026-09-11) — the badge is a notification, and a notification is cleared by being answered, not by the item being handled. */
+export function markAllStashItemsSeen(run: RunState): RunState {
+  return run.unseenItemIds.length === 0 ? run : { ...run, unseenItemIds: [] };
 }
 
 /** Taking gear off. The bag always has room for it, so this cannot leave a hero stuck holding something. */

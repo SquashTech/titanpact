@@ -3,8 +3,9 @@ import type { RunState } from '../../run/state';
 import type { GuildHallOffers } from '../../run/shop';
 import type { GuildHallOffer } from '../../run/recruitment';
 import { GuildHallPanel, guildHallTabs, type GuildHallTab } from './GuildHallPanel';
+import { GuildSign } from './guildHallArt';
 import { RosterPeek } from './RosterPeek';
-import { NodeHeader, NodePurse, NodeSky, NODE_TINT_MANA } from '../shared/NodeStage';
+import { NodeHeader, NodePurse, NodeSky, NODE_TINT_HEARTH } from '../shared/NodeStage';
 import { TabStrip } from '../shared/TabStrip';
 
 interface Props {
@@ -22,6 +23,11 @@ interface Props {
 
 // The `shop` node. Continue stands down while the panel has a modal open —
 // otherwise two identical gold CTAs sit on screen for two different commitments.
+//
+// The header names the place and nothing else (2026-09-11, per user direction): the sign, the
+// name, and lantern light. "Who Will You Take" / "People and gear — for gold" were a question and
+// a price list over a screen that is plainly both, and every line under a section mark went with
+// them — what a hire is and what a full roster asks are said on the hero's own sheet.
 export function ShopNodeScreen({
   run,
   offers,
@@ -35,26 +41,15 @@ export function ShopNodeScreen({
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [tab, setTab] = useState<GuildHallTab>('heroes');
   return (
-    <div className="node-screen shop-node-screen" style={{ '--node-rgb': NODE_TINT_MANA } as CSSProperties}>
+    <div className="node-screen shop-node-screen" style={{ '--node-rgb': NODE_TINT_HEARTH } as CSSProperties}>
       <NodeSky />
+      <div className="guild-hall-hearth" aria-hidden="true" />
       {/* Full Manage Roster behind the glyph, not the read-only peek — a shop's
           question is "do I already have something better in that slot". */}
       <RosterPeek run={run} onRunChange={onRunChange} />
       <NodePurse gold={run.gold} />
 
-      {/* The panel used to open with its own `<h2>Guild Hall</h2>` over a rule, which made this
-          the one node screen in the run that named itself in a masthead instead of in the
-          NodeHeader every other one uses. */}
-      <NodeHeader
-        compact
-        eyebrow={muster ? 'The Last Muster' : 'The Guild Hall'}
-        title={muster ? 'The Vigil' : 'Who Will You Take'}
-        readout={muster ? 'The last shelf, and the last hands.' : 'People and gear — for gold.'}
-      />
-
-      {/* Above the scroll, not in it: the two counters (2026-09-10, per user direction) are a
-          control the thumb comes back to, and one that scrolled away with the shelf was not. */}
-      <TabStrip className="guild-hall-tabs" tabs={guildHallTabs(run, offers, muster)} active={tab} onSelect={setTab} />
+      <NodeHeader compact art={<GuildSign />} eyebrow={muster ? 'The Last Muster' : 'Welcome to'} title={muster ? 'The Vigil' : 'The Guild Hall'} />
 
       <div className="screen-scroll">
         <GuildHallPanel
@@ -69,6 +64,10 @@ export function ShopNodeScreen({
           freeRecruits={muster}
         />
       </div>
+
+      {/* At the foot, over Continue (2026-09-11, per user direction): the two counters are the
+          control the thumb comes back to, and the foot is where the thumb already is. */}
+      <TabStrip className="guild-hall-tabs" tabs={guildHallTabs(run, offers, muster)} active={tab} onSelect={setTab} />
       {!overlayOpen && (
         <button className="resolve-button" onClick={onContinue}>
           {muster ? 'Walk on' : 'Continue'}

@@ -11,7 +11,7 @@ import {
   anvilQuote,
   anvilUpgrade,
   enchantItem,
-  markStashItemSeen,
+  markAllStashItemsSeen,
   mergeFromStash,
   reachableNodeIds,
   advanceToNode,
@@ -217,7 +217,7 @@ test('runProgress: stashItem carries an item, and a full bag refuses the next on
   assert.throws(() => stashItem(one, 'notAnItem', equipment), RunProgressError);
 });
 
-test('runProgress: an arriving item is marked unopened, and tapping it clears the mark', () => {
+test('runProgress: an arriving item is marked unopened, and opening the bag clears every mark', () => {
   const run = seedRoster(['cinderKnight']);
   const one = stashItem(run, 'sword.common', equipment);
   assert.deepStrictEqual(one.unseenItemIds, ['sword.common']);
@@ -228,7 +228,7 @@ test('runProgress: an arriving item is marked unopened, and tapping it clears th
   assert.deepStrictEqual(two.unseenItemIds, ['sword.common']);
   assert.strictEqual(unseenCount(two.unseenItemIds, two.stash), 1);
 
-  const seen = markStashItemSeen(two, 'sword.common');
+  const seen = markAllStashItemsSeen(stashItem(two, 'dagger.common', equipment));
   assert.deepStrictEqual(seen.unseenItemIds, []);
   // Gear the player took off is not "new" — only an arrival marks.
   assert.deepStrictEqual(unequipToStash(gearedRun('cinderKnight', ['sword.common']), 'cinderKnight', 0).unseenItemIds, []);

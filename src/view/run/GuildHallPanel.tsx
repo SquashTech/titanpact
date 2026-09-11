@@ -2,7 +2,7 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { heroes } from '../../data/heroes';
 import { equipment } from '../../data/equipment';
-import { guildHallOffers, CONTRACT_PURCHASE_COST, SCROLL_PURCHASE_COST } from '../../data/recruitment';
+import { guildHallOffers, CONTRACT_PURCHASE_COST, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT } from '../../data/recruitment';
 import { playSfx } from '../../audio/sfx';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { SectionGlyph } from '../shared/sectionIcons';
@@ -27,11 +27,11 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { overlayHost } from '../shared/overlayHost';
 import type { TabSpec } from '../shared/TabStrip';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
-import { EquipInspectOverlay } from './EquipChoiceCard';
+import { EquipBuyOverlay } from './EquipBuyOverlay';
 import { RecruitFanfare } from './RecruitFanfare';
 import { SellSection } from './SellSection';
 
-export type GuildHallTab = 'heroes' | 'gear';
+export type GuildHallTab = 'heroes' | 'shop';
 
 /** The hero shelf as the panel shows it: heroes already on the roster are off it, and the Vigil's are free. */
 export function guildHeroOffers(run: RunState, offers: GuildHallOffers, freeRecruits: boolean): GuildHallOffer[] {
@@ -42,11 +42,11 @@ export function guildHeroOffers(run: RunState, offers: GuildHallOffers, freeRecr
     .map((offer) => (freeRecruits ? { ...offer, cost: 0 } : offer));
 }
 
-/** The two counters (2026-09-10, per user direction): people on one, gear on the other. */
+/** The two counters (2026-09-10, per user direction): people on one, the shop on the other. */
 export function guildHallTabs(run: RunState, offers: GuildHallOffers, freeRecruits: boolean): readonly TabSpec<GuildHallTab>[] {
   return [
     { id: 'heroes', label: 'Heroes', glyph: 'heroes', count: guildHeroOffers(run, offers, freeRecruits).length },
-    { id: 'gear', label: 'Gear', glyph: 'equipment', count: offers.equipmentOfferIds.length },
+    { id: 'shop', label: 'Shop', glyph: 'equipment', count: offers.equipmentOfferIds.length },
   ];
 }
 
@@ -167,7 +167,10 @@ export function GuildHallPanel({
   const previewOffer = previewOfferId ? heroOffers.find((o) => o.id === previewOfferId) : undefined;
   const previewEquip = previewEquipId ? equipmentOffers.find((i) => i.id === previewEquipId) : undefined;
   const canBuyContract = run.gold >= CONTRACT_PURCHASE_COST;
-  const canBuyScroll = run.gold >= SCROLL_PURCHASE_COST;
+  // Bought this visit: a Scroll is poured on the way out, so the count is zero on the way in.
+  const scrollsBought = run.masteryScrolls;
+  const scrollsSoldOut = scrollsBought >= SCROLL_PURCHASE_LIMIT;
+  const canBuyScroll = !scrollsSoldOut && run.gold >= SCROLL_PURCHASE_COST;
 
   // Derived from state rather than pushed from each setter, so a later modal can't forget to report.
   const overlayOpen = !!previewOffer || !!previewEquip || confirmingContract || sellOpen || !!fanfareHeroId;
@@ -190,7 +193,7 @@ export function GuildHallPanel({
 
   function handleBuyScroll() {
     try {
-      onRunChange(buyMasteryScroll(run, SCROLL_PURCHASE_COST));
+      onRunChange(buyMasteryScroll(run, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT));
       playSfx('scroll.spend');
     } catch (err) {
       if (!(err instanceof RecruitmentError)) throw err;
@@ -210,17 +213,12 @@ export function GuildHallPanel({
     <div className="guild-hall">
       {tab === 'heroes' && (
         <div className="guild-hall-section">
+          {/* The mark and nothing under it (2026-09-11, per user direction): what a hire is — raw,
+              unevolved — and what a full roster asks are both said on the hero's own sheet, at the
+              moment the gold is about to be spent. */}
           <div className="guild-hall-section-head">
             <span className="guild-hall-section-title">
               <SectionGlyph name="heroes" /> Recruits
-            </span>
-            {/* What 50g buys is now half of what it used to (docs/growth-overhaul.md §6): a hire
-                arrives RAW — no Evolution, rank 1, its own three moves — where a Recruit Contract's
-                hero arrives finished. The hint has to say so, or the two routes look interchangeable
-                and the cheaper-looking one is quietly the weaker. */}
-            <span className="guild-hall-section-hint">
-              Unevolved, unranked — yours to build
-              {rosterFull ? ` · roster is full (${ROSTER_CAP}/${ROSTER_CAP}), so a hire asks who leaves` : ''}
             </span>
           </div>
           {heroOffers.length > 0 ? (
@@ -251,7 +249,6 @@ export function GuildHallPanel({
                 <ResourceGlyph kind="contract" tone="inherit" />
               </span>
               <span className="guild-hall-good-name">Recruit Contract</span>
-              <span className="guild-hall-good-desc">Claim a beaten enemy hero, free, later.</span>
               <span className="guild-hall-good-price">
                 <ResourceGlyph kind="gold" /> {CONTRACT_PURCHASE_COST}
               </span>
@@ -262,30 +259,41 @@ export function GuildHallPanel({
               )}
             </button>
             {/* No confirm, unlike the Contract: a Scroll is spent later and on whoever you like, so
-                there is nothing here to get wrong. Buying is the reversible half of the decision. */}
-            <button className="guild-hall-good is-scroll" disabled={!canBuyScroll} onClick={handleBuyScroll}>
+                there is nothing here to get wrong. Buying is the reversible half of the decision.
+                The shelf holds SCROLL_PURCHASE_LIMIT a visit, and the corner count is how many of
+                them are already taken — poured on the way out, never carried. */}
+            <button
+              className={`guild-hall-good is-scroll${scrollsSoldOut ? ' sold-out' : ''}`}
+              disabled={!canBuyScroll}
+              onClick={handleBuyScroll}
+            >
               <span className="guild-hall-good-glyph">
                 <ResourceGlyph kind="scroll" tone="inherit" />
               </span>
               <span className="guild-hall-good-name">Mastery Scroll</span>
-              {/* No held count: a Scroll bought here is poured the moment the Guild Hall is left
-                  (App.tsx raises MasteryScreen on the way back to the map), never carried. */}
-              <span className="guild-hall-good-desc">Teach one hero a move, on the way out.</span>
-              <span className="guild-hall-good-price">
-                <ResourceGlyph kind="gold" /> {SCROLL_PURCHASE_COST}
-              </span>
+              {scrollsSoldOut ? (
+                <span className="guild-hall-good-price is-soldout">Sold out</span>
+              ) : (
+                <span className="guild-hall-good-price">
+                  <ResourceGlyph kind="gold" /> {SCROLL_PURCHASE_COST}
+                </span>
+              )}
+              {scrollsBought > 0 && (
+                <span className="guild-hall-good-held is-scroll" aria-label={`${scrollsBought} of ${SCROLL_PURCHASE_LIMIT} bought`}>
+                  {scrollsBought}/{SCROLL_PURCHASE_LIMIT}
+                </span>
+              )}
             </button>
           </div>
         </div>
       )}
 
-      {tab === 'gear' && (
+      {tab === 'shop' && (
         <div className="guild-hall-section">
           <div className="guild-hall-section-head">
             <span className="guild-hall-section-title">
               <SectionGlyph name="equipment" /> Equipment
             </span>
-            <span className="guild-hall-section-hint">Bought outright, and worn from the roster</span>
           </div>
           {equipmentOffers.length > 0 ? (
             <div className="equip-cache-list guild-hall-equip-list">
@@ -311,7 +319,7 @@ export function GuildHallPanel({
 
       {/* The Anvil and the Enchanter moved to the Blacksmith (2026-09-08, per user direction):
           the Guild Hall trades in heroes and gear, the Blacksmith works on gear you already own. */}
-      {tab === 'gear' && <SellSection run={run} onRunChange={onRunChange} open={sellOpen} onOpenChange={setSellOpen} />}
+      {tab === 'shop' && <SellSection run={run} onRunChange={onRunChange} open={sellOpen} onOpenChange={setSellOpen} />}
 
       {fanfareHeroId && (
         <RecruitFanfare heroId={fanfareHeroId} source="guild" onDone={() => setFanfareHeroId(null)} />
@@ -352,29 +360,18 @@ export function GuildHallPanel({
               );
             })()}
 
-          {previewEquip &&
-            (() => {
-              const cost = EQUIPMENT_PRICE_BY_RARITY[previewEquip.rarity];
-              const affordable = run.gold >= cost;
-              return (
-                <EquipInspectOverlay
-                  item={previewEquip}
-                  roster={run.roster}
-                  action={{
-                    label: `Buy ${previewEquip.name} — ${cost}g`,
-                    disabled: !affordable,
-                    note: !affordable
-                      ? `Not enough gold — ${cost}g needed, you have ${run.gold}g.`
-                      : 'It goes to your inventory. Hand it out from the Roster whenever you like.',
-                    onConfirm: () => {
-                      setPreviewEquipId(null);
-                      onBuyEquipment(previewEquip.id);
-                    },
-                  }}
-                  onClose={() => setPreviewEquipId(null)}
-                />
-              );
-            })()}
+          {previewEquip && (
+            <EquipBuyOverlay
+              item={previewEquip}
+              run={run}
+              cost={EQUIPMENT_PRICE_BY_RARITY[previewEquip.rarity]}
+              onBuy={() => {
+                setPreviewEquipId(null);
+                onBuyEquipment(previewEquip.id);
+              }}
+              onClose={() => setPreviewEquipId(null)}
+            />
+          )}
 
           {/* The one purchase with nothing to open first, so it gets its own confirm. */}
           {confirmingContract && (

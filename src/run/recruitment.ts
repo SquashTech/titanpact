@@ -62,7 +62,15 @@ export function buyContract(run: RunState, cost: number): RunState {
   return { ...run, gold: run.gold - cost, recruitContracts: run.recruitContracts + 1 };
 }
 
-export function buyMasteryScroll(run: RunState, cost: number): RunState {
+/**
+ * `limit` is per VISIT, and `run.masteryScrolls` is the count bought on it: a Scroll is poured on
+ * the way out of the Guild Hall and the map refuses to open with one owed, so the count is always
+ * zero on the way in (App.tsx `masteryDue`).
+ */
+export function buyMasteryScroll(run: RunState, cost: number, limit = Infinity): RunState {
+  if (run.masteryScrolls >= limit) {
+    throw new RecruitmentError(`The Guild Hall sells ${limit} Mastery Scrolls a visit`);
+  }
   if (run.gold < cost) {
     throw new RecruitmentError(`A Mastery Scroll costs ${cost} gold, only ${run.gold} available`);
   }

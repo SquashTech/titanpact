@@ -2626,6 +2626,25 @@ and the number every decision is measured against no longer scrolls away. Both m
 and `ShopNodeScreen` now takes the `NodeHeader` every other node screen has always had
 (*THE GUILD HALL / Who Will You Take / People and gear — for gold*).
 
+**Then the words came off and the place went on (2026-09-11, per user direction).** The header is
+the hung sign (`guildHallArt.tsx` — a plank on two chains carrying the crest, swinging a degree
+either way), *Welcome to / The Guild Hall*, and nothing else; lantern light pools in the top
+corners and a hearth glows low behind the shelf (`.guild-hall-hearth`, flickering out of phase,
+in a warmer amber than the reward gold — `NODE_TINT_HEARTH`). Every line under a section mark
+went — *Unevolved, unranked — yours to build*, *Bought outright, and worn from the roster* — and so
+did the sentence on the Contract and Scroll goods: what a hire is and what a full roster asks are
+said on the hero's own sheet at the moment the gold is spent. The two counters moved to the FOOT,
+directly over Continue, and *Gear* became *Shop*: the tab strip is the control the thumb comes
+back to, and the foot is where the thumb already is. The Scroll good sells `SCROLL_PURCHASE_LIMIT`
+a visit and wears the count taken as its corner tally, then greys to *Sold out* like a bought item.
+
+**The buy sheet is a dossier with a ledger (`EquipBuyOverlay.tsx`).** It was the item card on the
+`.log-panel` box with six roster slot cards under it and a sentence about the inventory. Now it is
+the item dossier on the dossier chassis, one facet for the merges buying it would open (partner,
+where it is, the mark, the piece the pair becomes — cut in the tier it reaches; *Nothing you carry
+merges with it* otherwise), and the purse before and after as a gold chip over the one Buy button.
+Who carries a purchase is decided in the Roster, so the sheet stopped showing who has room.
+
 **The section head becomes a chapter mark.** Centred, flanked by two rules that fade *away* from
 the label in both directions (`::after` is the same gradient mirrored), with whatever the section
 qualifies sitting **under** it rather than beside it, and no longer italic. The flanking rules are

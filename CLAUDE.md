@@ -191,9 +191,10 @@ don't silently override it.
   curve-derived margin did.
 - **Evolutions come from the 6th SCROLL into a hero — never from a level, never from a beat**
   (2026-09-11, `docs/growth-overhaul.md` §11, superseding §5's Crucible). Pouring the
-  `EVOLUTION_SCROLLS`th Scroll raises that hero's Evolution screen *before* the Scroll's own
-  offer rolls, so a retype's line is in the pool the same pour (`useScrollPour`,
-  `src/view/run/MasteryBoard.tsx`). Scrolls are poured one hero at a time, so a ladder threshold
+  `EVOLUTION_SCROLLS`th Scroll raises that hero's Evolution screen **in place of a move offer**
+  (revised 2026-09-11, per user direction: the Evolution is that Scroll's whole reward — no
+  offer rolls behind it, and the path's own outright grant is the only move it teaches;
+  `useScrollPour`, `src/view/run/MasteryBoard.tsx`). Scrolls are poured one hero at a time, so a ladder threshold
   can never wall the way a level threshold did under roster-wide levelling — and the player
   watches the pips fill toward it, which is what the Crucible's fixed cadence had lost.
   **Six evolved is the expected ending** (36 of a ~50 floor), a deliberate reversal of "scarce

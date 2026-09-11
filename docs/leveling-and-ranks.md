@@ -215,12 +215,13 @@ the moment a Scroll is won, and not leavable until it is spent.** Full rationale
   never stored — two figures for one fact drift, and the board's pips need the count anyway.
 - **The tick lands BEFORE the roll.** The Scroll that reaches a rung offers from the band it just
   opened, which is what makes the rung Scroll the bigger moment rather than a silent deposit. The
-  6th Scroll raises the hero's Evolution screen first, then its offer rolls from the post-Evolution
+  6th Scroll raises the hero's Evolution screen INSTEAD of an offer (2026-09-11, per user
+  direction) — the Evolution is that Scroll's reward, and the 7th draws from the post-Evolution
   pool (`useScrollPour`, `src/view/run/MasteryBoard.tsx`).
 - **Income, by lane** (2026-09-11): Guardian `SCROLLS_PER_ACT` = 4, Elite 3, Skirmish 2, Fight and
   Battle 1 — 50 a run on the Elite route, 35 on the Battle route — plus the `scrollReward` Scroll
   Cache (`SCROLL_REWARD_COUNT` = 2, weight 46), the lone Scroll and the Guild Hall at
-  `SCROLL_PURCHASE_COST` = 35g. Six Evolutions cost 36. All first-pass figures for playtest.
+  `SCROLL_PURCHASE_COST` = 35g, no more than `SCROLL_PURCHASE_LIMIT` = 2 a visit. Six Evolutions cost 36. All first-pass figures for playtest.
 - **A Scroll is refused only when it would buy literally nothing** — max rank AND nothing left to
   teach (`canSpendScroll`). A dry band below the cap still takes one: the rank tick is the only
   thing that opens the next band, so refusing there would strand the hero at that rank forever.
@@ -330,8 +331,8 @@ design detail to specify in `/data`; the invariant is that offerings are
 > Crucible beat and screen survive and now grant a **Class** (`growth-overhaul.md` §11).
 
 **An Evolution is what the 6th Mastery Scroll into a hero buys** (`EVOLUTION_SCROLLS`,
-`availableEvolution`). Pouring it raises that hero's **choice of three paths** before the
-Scroll's own move offer rolls, so a retype's line is in the pool the same pour. Scrolls are
+`availableEvolution`). Pouring it raises that hero's **choice of three paths** in place of a
+move offer — the Evolution is that Scroll's whole reward (2026-09-11, per user direction). Scrolls are
 poured one hero at a time, so the threshold can never wall the way a level threshold did under
 roster-wide levelling, and the player watches the pips fill toward it. Six evolved is the
 expected ending. A generated hero reads its position off level (`ENEMY_SCROLLS_BY_LEVEL`).

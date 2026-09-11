@@ -25,7 +25,7 @@ import {
   GUILD_HALL_EQUIPMENT_OFFER_COUNT,
   SLOT_PRICE_BY_TARGET,
 } from '../../run/shop';
-import { CONTRACT_PURCHASE_COST, GUILD_HALL_RECRUIT_COST, SCROLL_PURCHASE_COST } from '../../data/recruitment';
+import { CONTRACT_PURCHASE_COST, GUILD_HALL_RECRUIT_COST, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT } from '../../data/recruitment';
 
 /** The mark at the head of a row — resolved to a glyph by the view. */
 export type NodeFactGlyph =
@@ -153,7 +153,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         facts: [
           { glyph: 'hero', label: 'Hire', value: `${GUILD_HALL_RECRUIT_COST}g`, note: `Lv ${guildHallLevel(actNumber)}, raw` },
           { glyph: 'contract', label: 'Contract', value: `${CONTRACT_PURCHASE_COST}g` },
-          { glyph: 'scroll', label: 'Scroll', value: `${SCROLL_PURCHASE_COST}g` },
+          { glyph: 'scroll', label: 'Scroll', value: `${SCROLL_PURCHASE_COST}g`, note: `up to ${SCROLL_PURCHASE_LIMIT}` },
           { glyph: 'item', label: 'Gear', value: `${GUILD_HALL_EQUIPMENT_OFFER_COUNT} on shelf`, note: priceBand(EQUIPMENT_PRICE_BY_RARITY) },
           { glyph: 'sell', label: 'Sell', value: `${Math.round(EQUIPMENT_SELL_SHARE * 100)}%`, note: 'of buy price' },
         ],

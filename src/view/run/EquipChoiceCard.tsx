@@ -1,12 +1,7 @@
-import { useState, type CSSProperties } from 'react';
-import { equipment } from '../../data/equipment';
-import { heroes } from '../../data/heroes';
+import type { CSSProperties } from 'react';
 import type { EquipmentDefinition } from '../../run/equipment';
-import { itemSlotsFor } from '../../run/progression';
-import type { RosterEntry } from '../../run/state';
 import { EquipmentIcon, ItemEffectChips, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
-import { ItemDetailCard, ItemDetailOverlay } from '../shared/ItemDossier';
-import { HeroSlotCard, HeroSlotGrid } from '../shared/HeroSlotCard';
+import { ItemDetailCard } from '../shared/ItemDossier';
 import { useLongPress } from '../shared/MoveTile';
 
 interface EquipChoiceCardProps {
@@ -44,65 +39,17 @@ export function EquipChoiceCard({ item, picked, onPick, onInspect, revealDelayMs
   );
 }
 
-/**
- * Who has room and who is full — the half of the buy decision the item's own card can't answer
- * ("is there anywhere to put this that doesn't cost me something?"). The same squad grid Manage
- * Roster uses (2026-09-07, per user direction): item names are icons here too, so the shelf, the
- * bag and the buy sheet are one picture rather than three notations.
- *
- * Read-only, and now purely informational: a purchase goes to the bag, and who carries it is
- * decided in the Roster whenever the player likes.
- */
-function SlotOwners({ roster }: { roster: readonly RosterEntry[] }) {
-  const [summaryItem, setSummaryItem] = useState<EquipmentDefinition | null>(null);
-  return (
-    <div className="equip-owners">
-      <div className="equip-owners-head">Roster — item slots</div>
-      <HeroSlotGrid className="is-compact">
-        {roster.map((entry) => {
-          const hero = heroes[entry.heroId];
-          if (!hero) return null;
-          const free = itemSlotsFor(hero, entry) - entry.equipment.length;
-          return (
-            <HeroSlotCard
-              key={entry.rosterId}
-              hero={hero}
-              entry={entry}
-              equipmentLookup={equipment}
-              className={free > 0 ? 'can-take' : ''}
-              badge={<span className="equip-card-verdict">{free > 0 ? `${free} free` : 'Full'}</span>}
-              slotProps={(_, item) => ({ onTap: item ? () => setSummaryItem(item) : undefined })}
-            />
-          );
-        })}
-      </HeroSlotGrid>
-      <ItemDetailOverlay item={summaryItem} onClose={() => setSummaryItem(null)} />
-    </div>
-  );
-}
-
 interface EquipInspectOverlayProps {
   item: EquipmentDefinition;
-  /** Adds the roster's item-slot holdings. Omit where the item isn't a purchase (the Loot Pile). */
-  roster?: readonly RosterEntry[];
-  /** Turns the sheet into a decision (the Guild Hall shelf): a confirm button plus Cancel. Omit for read-only inspects. */
-  action?: {
-    label: string;
-    /** Rendered above the button — why it is inert, or what confirming will additionally cost. */
-    note?: string;
-    disabled?: boolean;
-    onConfirm: () => void;
-  };
   onClose: () => void;
 }
 
 /**
- * The item dossier with a decision under it — the Guild Hall's buy, or a plain inspect from a
- * reward or event pick. Same card as every other item hold (ItemDossier.tsx); the wrapper is the
- * `.log-panel` one rather than `.detail-overlay` because it carries a footer that must not close
- * on a tap, and it takes the tier stripe so it still reads as the same thing opening.
+ * A plain inspect from a reward or event pick. Same card as every other item hold
+ * (ItemDossier.tsx), with the tier stripe so it reads as the same thing opening. The Guild Hall's
+ * buy sheet grew out of this and is its own component now (EquipBuyOverlay.tsx).
  */
-export function EquipInspectOverlay({ item, roster, action, onClose }: EquipInspectOverlayProps) {
+export function EquipInspectOverlay({ item, onClose }: EquipInspectOverlayProps) {
   return (
     <div className="log-overlay" onClick={onClose}>
       <div
@@ -111,20 +58,7 @@ export function EquipInspectOverlay({ item, roster, action, onClose }: EquipInsp
         onClick={(e) => e.stopPropagation()}
       >
         <ItemDetailCard item={item} />
-        {roster && roster.length > 0 && <SlotOwners roster={roster} />}
-        {action ? (
-          <div className="detail-action">
-            {action.note && <div className="detail-action-note">{action.note}</div>}
-            <button className="resolve-button" disabled={action.disabled} onClick={action.onConfirm}>
-              {action.label}
-            </button>
-            <button className="detail-action-cancel" onClick={onClose}>
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <div className="move-popup-hint">Tap anywhere to close</div>
-        )}
+        <div className="move-popup-hint">Tap anywhere to close</div>
       </div>
     </div>
   );

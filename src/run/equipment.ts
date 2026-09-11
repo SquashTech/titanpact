@@ -616,10 +616,6 @@ export function markItemUnseen(unseen: UnseenItems, itemId: string): UnseenItems
   return unseen.includes(itemId) ? unseen : [...unseen, itemId];
 }
 
-export function markItemSeen(unseen: UnseenItems, itemId: string): UnseenItems {
-  return unseen.includes(itemId) ? unseen.filter((id) => id !== itemId) : unseen;
-}
-
 /** Drops marks whose item has left the bag, so a mark never outlives what it points at. */
 export function pruneUnseen(unseen: UnseenItems, stash: Stash): UnseenItems {
   return unseen.length === 0 ? unseen : unseen.filter((id) => stash.includes(id));

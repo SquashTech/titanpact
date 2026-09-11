@@ -263,9 +263,18 @@ opens. Instead the label renames itself — `Roster` / `2 New Items` (`mapFooter
 footerWaiting`). A badge alone is a mark the eye learns to skip; a button that has changed its
 mind about what it is called cannot be.
 
-**The mark is an INBOX, not a stock figure.** `unseenItemIds` empties per item as each is
-handled. A figure wired to a stock the player routinely sits on would be lit most of the run,
-which is the definition of a mark the eye learns to skip.
+**The mark is an INBOX, not a stock figure.** A figure wired to a stock the player routinely
+sits on would be lit most of the run, which is the definition of a mark the eye learns to skip.
+**Opening the Roster is what empties it** (2026-09-11, per user direction, `markAllStashItemsSeen`):
+the badge is a notification, and a notification is answered by being looked at, not by every item
+under it being handled. It used to clear per item as each was tapped, which left the map's button
+lit after a visit that had plainly seen the bag. Inside the screen the arrivals still wear their
+mark until tapped, held as local state for that one visit, so what was new is still findable.
+
+**The lit button is a FILLED plate** (2026-09-11, per user direction): a solid slab of the alert
+colour with dark ink, lifting and glowing on a loop. It was a tinted outline, and a stylesheet
+fault had left it with no background at all — fainter than at rest, on the one screen it exists
+to interrupt.
 
 **Mastery Scrolls do not ride that label either, because they never wait** (2026-09-10, revised
 the same day). They were briefly a stock with a purse chip and a Roster tab; a Scroll is now poured

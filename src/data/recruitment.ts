@@ -15,6 +15,14 @@ export const CONTRACT_PURCHASE_COST = 20;
  */
 export const SCROLL_PURCHASE_COST = 35;
 
+/**
+ * How many Scrolls one Guild Hall visit sells (2026-09-11, per user direction). Gold is the one
+ * currency that buys either objective power or growth, and an uncapped shelf let a rich run turn
+ * the whole purse into rank in one stop; two keeps the conversion a decision rather than a dump.
+ * First-pass figure for playtest.
+ */
+export const SCROLL_PURCHASE_LIMIT = 2;
+
 /** Gold cost to recruit any Guild Hall hero outright. */
 export const GUILD_HALL_RECRUIT_COST = 50;
 

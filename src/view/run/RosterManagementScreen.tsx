@@ -13,9 +13,10 @@ import {
   mergeablePairIndices,
   mergeResultId,
   nextRarity,
+  pruneUnseen,
   unseenCount,
 } from '../../run/equipment';
-import { equipFromStash, markStashItemSeen, mergeFromStash, moveEquipment, unequipToStash, RunProgressError } from '../../run/runProgress';
+import { equipFromStash, markAllStashItemsSeen, mergeFromStash, moveEquipment, unequipToStash, RunProgressError } from '../../run/runProgress';
 import { itemSlotsFor } from '../../run/progression';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { ItemBox, ItemEffectChips, ItemPiece, RARITY_COLOR_VARS, slotBoxes } from '../shared/EquipmentBox';
@@ -87,6 +88,18 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
    * cosmetic — unlike the gate's, this fires AFTER the equip, so nothing waits on it.
    */
   const [seatingRosterId, setSeatingRosterId] = useState<string | null>(null);
+  /**
+   * The bag items that were unopened when this screen was opened (2026-09-11, per user direction).
+   * OPENING the screen is what clears the map's notification — the run's marks are dropped on
+   * mount — but the items themselves still wear the mark here until tapped, so what was new is
+   * still findable on the visit that cleared it.
+   */
+  const [arrivals, setArrivals] = useState<readonly string[]>(() => pruneUnseen(run.unseenItemIds, run.stash));
+
+  useEffect(() => {
+    if (unseenCount(run.unseenItemIds, run.stash) > 0) onRunChange(markAllStashItemsSeen(run));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!seatingRosterId) return;
@@ -250,14 +263,13 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
   }
 
   /**
-   * Clears a bag item's unopened mark. Only the two gestures that LEAVE it in the bag need this
-   * — picking it up and reading it out. Anything that moves it out drops the mark on its own,
-   * since a mark cannot outlive the item it points at (`withStash`, runProgress.ts).
+   * Clears a bag item's arrival mark. Only the two gestures that LEAVE it in the bag need this
+   * — picking it up and reading it out; the run's own mark was already dropped on open.
    */
   function seeStashItem(ref: SlotRef) {
     if (ref.kind !== 'stash') return;
     const itemId = run.stash[ref.index];
-    if (itemId && run.unseenItemIds.includes(itemId)) onRunChange(markStashItemSeen(run, itemId));
+    if (itemId && arrivals.includes(itemId)) setArrivals(arrivals.filter((id) => id !== itemId));
   }
 
   function handleSlotClick(ref: SlotRef) {
@@ -338,7 +350,7 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
    * above it. The roster is what the screen is about; the bag is the tray you draw from, and a
    * tray belongs at the bottom of the reach.
    */
-  const unopened = unseenCount(run.unseenItemIds, run.stash);
+  const unopened = pruneUnseen(arrivals, run.stash).length;
   const bagPanel = (
     <div className={`stash-panel${mergePairs.size > 0 ? ' has-merge' : ''}`}>
       {/* No item count (2026-09-10, per user direction). The grid below IS the count, and a figure
@@ -380,7 +392,7 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
           const props = slotProps(ref, item, isDropTarget);
           // The mark rides the box, not the slot: which ITEM is unopened is the question, and the
           // bag reshuffles indices every time something leaves it.
-          const unseen = !!item && run.unseenItemIds.includes(item.id);
+          const unseen = !!item && arrivals.includes(item.id);
           // A pair that is waiting, and a pair the carried piece would complete, are two states of
           // one fact — so the second is the first turned up rather than a different mark.
           const pairable = !selected && mergePairs.has(index);
