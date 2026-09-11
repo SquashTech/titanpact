@@ -48,7 +48,7 @@ import { pickAiAction, type AiContext } from '../../run/ai';
 import { relicTeamStatModifiers } from '../../run/relics';
 import { relicTeamPassiveGrants } from '../../run/passives';
 import { relicTeamStatusGrants } from '../../run/statusGrants';
-import { CombatantCard, type Popup } from './CombatantCard';
+import { CombatantCard, type FigureFx, type Popup } from './CombatantCard';
 import { HeroDetailOverlay } from './HeroDetailOverlay';
 import { SwitchInPanel, type SwitchOption } from './SwitchInPanel';
 import { FieldEffectDetailOverlay } from './FieldEffectDetailOverlay';
@@ -621,6 +621,8 @@ export function FightScreen({
   /** Only a React key: consecutive beats can carry identical text, and the headline must remount to replay its arrival. */
   const [beatSeq, setBeatSeq] = useState(0);
   const [popups, setPopups] = useState<Record<string, Popup>>({});
+  /** Per figure, the element last declared against it. Not cleared per beat: the effect times itself out, so a quick tap never cuts it short. */
+  const [figureFx, setFigureFx] = useState<Record<string, FigureFx>>({});
   /** The move dossier, opened by holding a move row. Carries the holder: every number on the card is relative to the commanding hero. */
   const [movePopup, setMovePopup] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
   /** Tutorial cues already spoken in THIS fight. Screen-local: a fight is atomic and a reload replays it. */
@@ -969,6 +971,7 @@ export function FightScreen({
     if (!revealed) {
       setCombat(finalState.current!);
       setPopups({});
+      setFigureFx({});
       setBeat(null);
       setResolving(false);
       setPending({});
@@ -995,6 +998,10 @@ export function FightScreen({
         revealed.popups.map((p) => [p.combatantId, { key: popupSeq.current++, text: p.text, className: p.className, glyph: p.glyph }])
       )
     );
+    if (revealed.fx) {
+      const { type, combatantIds } = revealed.fx;
+      setFigureFx((prev) => ({ ...prev, ...Object.fromEntries(combatantIds.map((id) => [id, { key: popupSeq.current++, type }])) }));
+    }
     return true;
   }
 
@@ -1065,6 +1072,7 @@ export function FightScreen({
           popup={popups[id]}
           statCtx={statCtx}
           striking={beat?.strikeCombatantId === id}
+          fx={figureFx[id]}
         />
       );
     }

@@ -10,6 +10,7 @@ import { StatusGlyph, statusColor, statusTint, PoisonPips } from '../shared/stat
 import { useLongPress } from '../shared/MoveTile';
 import { StatusDetailOverlay } from './StatusDetailOverlay';
 import { getTypeColor, getTypeColorRgb } from './typeColors';
+import { TypeFx } from './TypeFx';
 
 export interface Popup {
   key: number;
@@ -17,6 +18,12 @@ export interface Popup {
   className: string;
   /** A status id (buildBeats' BeatPopup.glyph), drawn ahead of the number in the status's own mark. */
   glyph?: string;
+}
+
+/** A move's element landing on this figure (buildBeats' Beat.fx). Keyed so the same type twice running replays. */
+export interface FigureFx {
+  key: number;
+  type: string;
 }
 
 // ── Figure animation ────────────────────────────────────────────────────
@@ -110,6 +117,8 @@ interface Props {
   compact?: boolean;
   /** This figure is the one mid-move — it holds its action frame until the console moves on (buildBeats' `strikeCombatantId`). */
   striking?: boolean;
+  /** The element of the move just declared against this figure, played over its stage. */
+  fx?: FigureFx | null;
   /** Field Effect plus the board a conditional passive reads (state.ts StatContext). Omitted, neither hook applies. */
   statCtx?: StatContext;
 }
@@ -194,6 +203,7 @@ export function CombatantCard({
   compact,
   statCtx,
   striking,
+  fx,
 }: Props) {
   const [inspectingStatus, setInspectingStatus] = useState<string | null>(null);
   const hitClass = popup ? POPUP_HIT_CLASS[popup.className] : undefined;
@@ -271,6 +281,7 @@ export function CombatantCard({
           className="combatant-portrait"
           pose={pose}
         />
+        {fx && <TypeFx key={fx.key} type={fx.type} />}
       </div>
       {/* Always rendered so the row reserves its height whether or not this card has a badge. */}
       <div className="eff-badge-row">

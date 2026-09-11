@@ -4,7 +4,7 @@
 import type { Beat } from '../view/combat/buildBeats';
 import type { CombatEvent, StatChangedEvent, StatusTickedEvent } from '../engine/events';
 import { playSfx } from './sfx';
-import type { SfxId } from './sounds';
+import { sounds, type SfxId } from './sounds';
 
 /** Which event in a beat gets to speak, most salient first. */
 const PRIORITY: readonly CombatEvent['type'][] = [
@@ -127,9 +127,12 @@ export function playBeatSfx(beat: Beat): void {
     case 'ManaRegenTicked':
       playSfx('mana', { gain: 0.7 });
       break;
-    case 'MoveUsed':
-      playSfx('cast');
+    case 'MoveUsed': {
+      // The type's own cast (sounds.ts "The element itself") when it has one; the plain wind-up otherwise.
+      const typed = beat.fx ? (`cast.${beat.fx.type}` as SfxId) : null;
+      playSfx(typed && typed in sounds ? typed : 'cast');
       break;
+    }
     case 'ActionBlocked':
       playSfx('ui.denied', { gain: 0.8 });
       break;

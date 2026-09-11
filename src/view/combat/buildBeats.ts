@@ -98,6 +98,13 @@ export interface BeatFlavor {
    * that move, and drops on the first beat that isn't about it.
    */
   strikeCombatantId?: string;
+  /**
+   * The element manifesting on this beat: the declared move's type, played over
+   * each of its targets (TypeFx.tsx), and the cast sound beatSfx voices in that
+   * type. One effect per type whatever the move — the type is what the chart is
+   * read at, so it is the one thing every move of a type has in common.
+   */
+  fx?: { type: string; combatantIds: readonly string[] };
 }
 
 export interface Beat extends BeatFlavor {
@@ -247,6 +254,7 @@ export function buildBeats(
           bannerSub: clause ? `▸${clause.slice(3)}` : undefined,
           bannerAccent: getTypeColor(move.type),
           bannerMeta: `${cost} MP`,
+          fx: { type: move.type, combatantIds: e.targetCombatantIds },
         });
         break;
       }

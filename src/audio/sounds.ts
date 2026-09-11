@@ -45,6 +45,21 @@ export type SfxId =
   | 'map.threat'
   // Combat
   | 'cast'
+  | 'cast.Fire'
+  | 'cast.Water'
+  | 'cast.Frost'
+  | 'cast.Storm'
+  | 'cast.Stone'
+  | 'cast.Nature'
+  | 'cast.Light'
+  | 'cast.Shadow'
+  | 'cast.Arcane'
+  | 'cast.Mind'
+  | 'cast.Spirit'
+  | 'cast.Iron'
+  | 'cast.Mech'
+  | 'cast.Beast'
+  | 'cast.Ancient'
   | 'hit.physical'
   | 'hit.magical'
   | 'hit.crit'
@@ -556,6 +571,196 @@ export const sounds: Record<SfxId, SoundSpec> = {
     voices: [
       { wave: 'noise', gain: 0.34, attack: 0.05, decay: 0.1, filter: { type: 'bandpass', freq: 900, freqEnd: 2000, q: 1.6 } },
       { wave: 'triangle', freq: 330, freqEnd: 420, gain: 0.16, attack: 0.03, decay: 0.1 },
+    ],
+  },
+
+  /* ── The element itself ──────────────────────────────────────────────────
+     One cast per type, played on the declaration beat under the type's effect
+     (view/combat/TypeFx.tsx) in place of the plain wind-up above. Each is the
+     element MANIFESTING — a whoosh, a splash, a crack — and never the blow,
+     which is still the next beat's hit.* and must still be free to land on
+     top. So every one of these sits under 0.5s and leaves the low end alone
+     for the impact, except the three that are themselves a weight landing
+     (Stone, Ancient, Storm's thunder), which take it and hand it back fast. */
+
+  /** A gust catching, then the crackle riding on it. Three short ticks, not one hiss: fire pops. */
+  'cast.Fire': {
+    gain: 0.4,
+    jitter: 0.05,
+    voices: [
+      { wave: 'noise', gain: 0.4, attack: 0.04, decay: 0.34, filter: { type: 'bandpass', freq: 380, freqEnd: 1900, q: 1.3 } },
+      { wave: 'sine', freq: 96, freqEnd: 62, gain: 0.2, attack: 0.03, decay: 0.3 },
+      { wave: 'noise', gain: 0.14, attack: 0.001, decay: 0.03, delay: 0.09, filter: { type: 'highpass', freq: 3200 } },
+      { wave: 'noise', gain: 0.12, attack: 0.001, decay: 0.025, delay: 0.17, filter: { type: 'highpass', freq: 2800 } },
+      { wave: 'noise', gain: 0.13, attack: 0.001, decay: 0.035, delay: 0.26, filter: { type: 'highpass', freq: 3600 } },
+    ],
+  },
+
+  /** A splash: the lowpass closing over the noise is the water settling; the bloops are the drops. */
+  'cast.Water': {
+    gain: 0.62,
+    jitter: 0.05,
+    voices: [
+      { wave: 'noise', gain: 0.42, attack: 0.012, decay: 0.36, filter: { type: 'lowpass', freq: 3400, freqEnd: 420, q: 0.9 } },
+      { wave: 'sine', freq: 330, freqEnd: 130, gain: 0.26, attack: 0.004, decay: 0.14 },
+      { wave: 'sine', freq: 240, freqEnd: 520, gain: 0.16, attack: 0.004, decay: 0.11, delay: 0.14 },
+      { wave: 'sine', freq: 300, freqEnd: 640, gain: 0.12, attack: 0.004, decay: 0.09, delay: 0.24 },
+    ],
+  },
+
+  /** Ice forming: three high bells stacking, a brittle tick, and a thin hiss of cold rising over them. */
+  'cast.Frost': {
+    gain: 0.5,
+    jitter: 0.03,
+    voices: [
+      { wave: 'sine', freq: 1760, gain: 0.22, attack: 0.004, decay: 0.32 },
+      { wave: 'sine', freq: 2637, gain: 0.16, attack: 0.004, decay: 0.3, delay: 0.05 },
+      { wave: 'sine', freq: 3520, gain: 0.12, attack: 0.004, decay: 0.36, delay: 0.1 },
+      { wave: 'noise', gain: 0.24, attack: 0.001, decay: 0.05, filter: { type: 'highpass', freq: 5200 } },
+      { wave: 'noise', gain: 0.14, attack: 0.06, decay: 0.32, filter: { type: 'bandpass', freq: 5500, freqEnd: 9000, q: 1.2 } },
+    ],
+  },
+
+  /** Lightning: the crack is instant and bright, the thunder arrives 40ms behind it and rolls off low. */
+  'cast.Storm': {
+    gain: 0.5,
+    jitter: 0.04,
+    voices: [
+      { wave: 'noise', gain: 0.46, attack: 0.001, decay: 0.08, filter: { type: 'highpass', freq: 2400 } },
+      { wave: 'square', freq: 1900, freqEnd: 180, gain: 0.16, attack: 0.001, decay: 0.06, filter: { type: 'lowpass', freq: 5000, freqEnd: 900, q: 1.5 } },
+      { wave: 'noise', gain: 0.4, attack: 0.012, decay: 0.5, delay: 0.04, filter: { type: 'lowpass', freq: 900, freqEnd: 110, q: 1 } },
+      { wave: 'sine', freq: 72, freqEnd: 38, gain: 0.34, attack: 0.01, decay: 0.42, delay: 0.04 },
+    ],
+  },
+
+  /** Rockfall: one heavy thud, two smaller ones tumbling after it, gravel in between. */
+  'cast.Stone': {
+    gain: 0.5,
+    jitter: 0.05,
+    voices: [
+      { wave: 'noise', gain: 0.48, attack: 0.004, decay: 0.28, filter: { type: 'lowpass', freq: 640, freqEnd: 140, q: 1.1 } },
+      { wave: 'sine', freq: 112, freqEnd: 44, gain: 0.44, attack: 0.002, decay: 0.26 },
+      { wave: 'noise', gain: 0.16, attack: 0.02, decay: 0.3, delay: 0.04, filter: { type: 'bandpass', freq: 1300, freqEnd: 700, q: 1.8 } },
+      { wave: 'noise', gain: 0.3, attack: 0.003, decay: 0.18, delay: 0.15, filter: { type: 'lowpass', freq: 520, freqEnd: 140, q: 1.1 } },
+      { wave: 'sine', freq: 96, freqEnd: 46, gain: 0.24, attack: 0.002, decay: 0.16, delay: 0.15 },
+      { wave: 'noise', gain: 0.2, attack: 0.003, decay: 0.14, delay: 0.27, filter: { type: 'lowpass', freq: 480, freqEnd: 150, q: 1.1 } },
+    ],
+  },
+
+  /** Leaves in a gust: a wide, soft rustle with a small wooden note under it and a brighter one lifting off. */
+  'cast.Nature': {
+    gain: 0.64,
+    jitter: 0.04,
+    voices: [
+      { wave: 'noise', gain: 0.36, attack: 0.06, decay: 0.3, filter: { type: 'bandpass', freq: 1300, freqEnd: 2800, q: 0.7 } },
+      { wave: 'noise', gain: 0.18, attack: 0.001, decay: 0.04, delay: 0.12, filter: { type: 'bandpass', freq: 2400, q: 2 } },
+      { wave: 'triangle', freq: 330, gain: 0.12, attack: 0.03, decay: 0.34 },
+      { wave: 'triangle', freq: 660, freqEnd: 880, gain: 0.12, attack: 0.05, decay: 0.3, delay: 0.08 },
+    ],
+  },
+
+  /** Radiance: rising sines an octave apart, a shimmer of detuned air over them, no low end at all. */
+  'cast.Light': {
+    gain: 0.56,
+    jitter: 0.02,
+    voices: [
+      { wave: 'sine', freq: 880, freqEnd: 1760, gain: 0.22, attack: 0.08, decay: 0.4 },
+      { wave: 'sine', freq: 1320, freqEnd: 2640, gain: 0.14, attack: 0.1, decay: 0.38, delay: 0.05 },
+      { wave: 'sine', freq: 2200, detune: 12, gain: 0.1, attack: 0.1, decay: 0.5, delay: 0.1 },
+      { wave: 'noise', gain: 0.09, attack: 0.1, decay: 0.36, filter: { type: 'highpass', freq: 6000 } },
+    ],
+  },
+
+  /** A dark swell: detuned saws under a closing lowpass, a breath, and a whisper falling through it. */
+  'cast.Shadow': {
+    gain: 0.46,
+    jitter: 0.04,
+    voices: [
+      { wave: 'sawtooth', freq: 92, freqEnd: 58, detune: 30, gain: 0.3, attack: 0.08, decay: 0.5, filter: { type: 'lowpass', freq: 420, freqEnd: 150, q: 1.6 } },
+      { wave: 'noise', gain: 0.24, attack: 0.1, decay: 0.48, filter: { type: 'bandpass', freq: 320, freqEnd: 120, q: 1.2 } },
+      { wave: 'triangle', freq: 520, freqEnd: 170, gain: 0.1, attack: 0.14, decay: 0.32, filter: { type: 'lowpass', freq: 1400, freqEnd: 400, q: 1 } },
+    ],
+  },
+
+  /** Sorcery: a detuned saw opening up, two bells landing behind it, glitter on top. */
+  'cast.Arcane': {
+    gain: 0.6,
+    jitter: 0.03,
+    voices: [
+      { wave: 'sawtooth', freq: 520, freqEnd: 1040, detune: 30, gain: 0.18, attack: 0.02, decay: 0.3, filter: { type: 'lowpass', freq: 2400, freqEnd: 5200, q: 1.8 } },
+      { wave: 'sine', freq: 1568, gain: 0.14, attack: 0.004, decay: 0.26, delay: 0.06 },
+      { wave: 'sine', freq: 2093, gain: 0.12, attack: 0.004, decay: 0.3, delay: 0.12 },
+      { wave: 'noise', gain: 0.1, attack: 0.03, decay: 0.26, filter: { type: 'bandpass', freq: 4000, freqEnd: 8000, q: 1.4 } },
+    ],
+  },
+
+  /** A psychic warble: wide-detuned pairs beating against each other, one bending down through the other. */
+  'cast.Mind': {
+    gain: 0.32,
+    jitter: 0.03,
+    voices: [
+      { wave: 'sine', freq: 392, detune: 44, gain: 0.24, attack: 0.05, hold: 0.1, decay: 0.34 },
+      { wave: 'sine', freq: 784, freqEnd: 540, detune: 22, gain: 0.14, attack: 0.02, decay: 0.4 },
+      { wave: 'triangle', freq: 196, detune: 12, gain: 0.14, attack: 0.05, decay: 0.34, filter: { type: 'lowpass', freq: 900, q: 1 } },
+    ],
+  },
+
+  /** Ethereal: slow-attacked sines a fifth apart and a breath of filtered air, nothing struck anywhere. */
+  'cast.Spirit': {
+    gain: 0.5,
+    jitter: 0.02,
+    voices: [
+      { wave: 'sine', freq: 660, gain: 0.2, attack: 0.12, decay: 0.5 },
+      { wave: 'sine', freq: 990, gain: 0.12, attack: 0.16, decay: 0.5, delay: 0.04 },
+      { wave: 'sine', freq: 330, freqEnd: 352, gain: 0.1, attack: 0.1, decay: 0.46 },
+      { wave: 'noise', gain: 0.12, attack: 0.15, decay: 0.5, filter: { type: 'bandpass', freq: 1800, freqEnd: 3600, q: 0.6 } },
+    ],
+  },
+
+  /** A blade: the swipe first, then the ring — an inharmonic pair so it reads as steel, not as a bell. */
+  'cast.Iron': {
+    gain: 0.44,
+    jitter: 0.04,
+    voices: [
+      { wave: 'noise', gain: 0.22, attack: 0.03, decay: 0.12, filter: { type: 'bandpass', freq: 700, freqEnd: 3600, q: 1 } },
+      { wave: 'noise', gain: 0.3, attack: 0.001, decay: 0.09, delay: 0.06, filter: { type: 'highpass', freq: 3000 } },
+      { wave: 'square', freq: 1400, freqEnd: 900, gain: 0.16, attack: 0.001, decay: 0.14, delay: 0.06, filter: { type: 'highpass', freq: 800 } },
+      { wave: 'triangle', freq: 2350, detune: 30, gain: 0.12, attack: 0.001, decay: 0.22, delay: 0.06 },
+    ],
+  },
+
+  /** Machinery: a servo whirring up, then the click and clack of something locking on. */
+  'cast.Mech': {
+    gain: 0.52,
+    jitter: 0.03,
+    voices: [
+      { wave: 'sawtooth', freq: 240, freqEnd: 720, gain: 0.14, attack: 0.03, hold: 0.05, decay: 0.15, filter: { type: 'lowpass', freq: 1200, freqEnd: 2400, q: 2 } },
+      { wave: 'square', freq: 120, gain: 0.2, attack: 0.001, decay: 0.03, delay: 0.2 },
+      { wave: 'noise', gain: 0.26, attack: 0.001, decay: 0.03, delay: 0.2, filter: { type: 'highpass', freq: 4000 } },
+      { wave: 'square', freq: 90, freqEnd: 80, gain: 0.16, attack: 0.001, decay: 0.1, delay: 0.24, filter: { type: 'lowpass', freq: 600, q: 1 } },
+    ],
+  },
+
+  /** A snarl: detuned saws growling under a breath of noise, a chest note beneath both. */
+  'cast.Beast': {
+    gain: 0.42,
+    jitter: 0.05,
+    voices: [
+      { wave: 'sawtooth', freq: 95, freqEnd: 70, detune: 40, gain: 0.3, attack: 0.02, hold: 0.1, decay: 0.3, filter: { type: 'lowpass', freq: 640, freqEnd: 280, q: 1.4 } },
+      { wave: 'noise', gain: 0.3, attack: 0.02, decay: 0.28, filter: { type: 'bandpass', freq: 900, freqEnd: 400, q: 1.5 } },
+      { wave: 'sine', freq: 60, freqEnd: 45, gain: 0.28, attack: 0.01, decay: 0.3 },
+    ],
+  },
+
+  /** A gong: a strike, then the longest tail in the combat table — the one cast allowed to outlast its beat. */
+  'cast.Ancient': {
+    gain: 0.46,
+    jitter: 0.015,
+    voices: [
+      { wave: 'noise', gain: 0.3, attack: 0.004, decay: 0.28, filter: { type: 'lowpass', freq: 420, freqEnd: 100, q: 1 } },
+      { wave: 'sine', freq: 98, gain: 0.34, attack: 0.01, hold: 0.1, decay: 0.9 },
+      { wave: 'sine', freq: 147, detune: 8, gain: 0.2, attack: 0.02, decay: 0.8 },
+      { wave: 'triangle', freq: 220, detune: 14, gain: 0.12, attack: 0.02, decay: 0.7, filter: { type: 'lowpass', freq: 800, q: 1 } },
     ],
   },
 

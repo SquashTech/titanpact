@@ -4066,6 +4066,809 @@ textarea,
   }
 }
 
+/* ── Type FX: the element manifests on the target ──────────────────────
+   One effect per TYPE, played over the target's stage on the beat a move is
+   declared (buildBeats' `fx`, TypeFx.tsx), whatever the move — so every move
+   has an animation the day it is authored, and the animation says the one
+   thing every move of a type shares, which is the column the chart is read
+   at. The blow is still the NEXT beat (.hit-struck above): this is the
+   element arriving, not the damage landing, and it plays on a self-target
+   just the same, since a buff is the element too.
+
+   Built entirely from the container's two pseudo-elements and a handful of
+   bare <i>s the component numbers with --i (0-based) and --n. Every piece is
+   anchored to the figure's centre (--cx/--cy) by the independent `translate`
+   property, so each keyframe set owns `transform` outright and never has to
+   restate a centering offset. --j is a fixed shuffle of --i for staggers, so
+   particles don't light up left-to-right like a marquee. Everything is
+   pointer-inert and sits over the sprite, under the popup.
+
+   Read alongside the figure animations above: the two are one exchange, with
+   the attacker already in its strike lean while this plays. */
+.type-fx {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  --fx: rgb(var(--fx-rgb));
+  --fx-a: rgba(var(--fx-rgb), 0.55);
+  --fx-faint: rgba(var(--fx-rgb), 0.2);
+  --cx: 50%;
+  --cy: 46px;
+  --ground: 90px;
+}
+
+.type-fx::before,
+.type-fx::after,
+.type-fx i {
+  content: '';
+  position: absolute;
+  display: block;
+  left: var(--cx);
+  top: var(--cy);
+  translate: -50% -50%;
+  animation-fill-mode: both;
+}
+
+.type-fx i:nth-child(1) { --j: 3; }
+.type-fx i:nth-child(2) { --j: 0; }
+.type-fx i:nth-child(3) { --j: 5; }
+.type-fx i:nth-child(4) { --j: 1; }
+.type-fx i:nth-child(5) { --j: 4; }
+.type-fx i:nth-child(6) { --j: 2; }
+
+/* Fallback for a type with no effect of its own: a ring and a scatter in the type's colour. */
+.type-fx-burst::before {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 3px solid var(--fx);
+  animation: fx-burst-ring 560ms ease-out;
+}
+
+.type-fx-burst::after {
+  display: none;
+}
+
+.type-fx-burst i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--fx);
+  --a: calc(var(--i) * 360deg / var(--n));
+  animation: fx-burst-scatter 620ms ease-out;
+  animation-delay: 40ms;
+}
+
+@keyframes fx-burst-ring {
+  0% { transform: scale(0.3); opacity: 1; }
+  100% { transform: scale(4); opacity: 0; }
+}
+
+@keyframes fx-burst-scatter {
+  0% { transform: rotate(var(--a)) translateX(4px); opacity: 1; }
+  100% { transform: rotate(var(--a)) translateX(46px) scale(0.3); opacity: 0; }
+}
+
+/* FIRE — tongues of flame climbing the figure from the ground, each one
+   flickering as it rises; a warm bloom at the base is what lights the sprite. */
+.type-fx-fire::before {
+  width: 92px;
+  height: 50px;
+  top: var(--ground);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 176, 64, 0.75), rgba(255, 92, 30, 0.38) 45%, transparent 70%);
+  animation: fx-fire-bloom 720ms ease-out;
+}
+
+.type-fx-fire::after {
+  display: none;
+}
+
+.type-fx-fire i {
+  width: 22px;
+  height: 34px;
+  top: var(--ground);
+  margin-left: calc((var(--i) - 2.5) * 14px);
+  border-radius: 50% 50% 40% 40% / 70% 70% 30% 30%;
+  background: radial-gradient(ellipse at 50% 85%, #fff6b4 0%, #ffb83e 32%, #ff5a1f 62%, transparent 78%);
+  filter: blur(0.6px);
+  animation: fx-fire-tongue 760ms ease-out;
+  animation-delay: calc(var(--j) * 38ms);
+}
+
+@keyframes fx-fire-bloom {
+  0% { opacity: 0; transform: scale(0.5, 0.3); }
+  25% { opacity: 1; transform: scale(1.1, 1); }
+  100% { opacity: 0; transform: translateY(-22px) scale(1.3, 1.6); }
+}
+
+@keyframes fx-fire-tongue {
+  0% { opacity: 0; transform: translateY(12px) scale(0.4, 0.3); }
+  18% { opacity: 1; transform: translateY(-2px) scale(1.1, 1); }
+  45% { transform: translate(3px, -24px) scale(0.95, 1.25); }
+  72% { opacity: 0.85; transform: translate(-3px, -44px) scale(0.7, 1.05); }
+  100% { opacity: 0; transform: translate(1px, -64px) scale(0.25, 0.6); }
+}
+
+/* WATER — a surge washes up over the figure, its crest a thin white arc,
+   and the drops it throws come back down under gravity. */
+.type-fx-water::before {
+  width: 120px;
+  height: 46px;
+  top: calc(var(--ground) + 6px);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 60%, rgba(205, 238, 255, 0.85), rgba(74, 144, 217, 0.6) 40%, rgba(74, 144, 217, 0) 70%);
+  animation: fx-water-surge 660ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.type-fx-water::after {
+  width: 74px;
+  height: 26px;
+  top: calc(var(--ground) - 4px);
+  border-radius: 50%;
+  border-top: 3px solid #dff3ff;
+  box-shadow: 0 -2px 8px rgba(205, 238, 255, 0.6);
+  animation: fx-water-surge 660ms cubic-bezier(0.2, 0.7, 0.3, 1);
+  animation-delay: 40ms;
+}
+
+.type-fx-water i {
+  width: 7px;
+  height: 10px;
+  top: calc(var(--ground) - 30px);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: linear-gradient(180deg, #e8f7ff, var(--fx));
+  --dx: calc((var(--i) - 2.5) * 16px);
+  animation: fx-water-drop 560ms cubic-bezier(0.3, 0, 0.7, 1);
+  animation-delay: calc(200ms + var(--j) * 22ms);
+}
+
+@keyframes fx-water-surge {
+  0% { opacity: 0; transform: translateY(10px) scale(0.4, 0.3); }
+  30% { opacity: 1; transform: translateY(-30px) scale(1, 1); }
+  60% { opacity: 0.9; transform: translateY(-58px) scale(1.15, 0.8); }
+  100% { opacity: 0; transform: translateY(-70px) scale(1.3, 0.4); }
+}
+
+@keyframes fx-water-drop {
+  0% { opacity: 0; transform: translate(0, 0); animation-timing-function: ease-out; }
+  30% { opacity: 1; transform: translate(var(--dx), -34px); animation-timing-function: ease-in; }
+  100% { opacity: 0; transform: translate(calc(var(--dx) * 1.6), 34px); }
+}
+
+/* FROST — a hexagon of cold flashes over the figure and six shards grow out
+   of it, hold for a moment as ice does, then break away. */
+.type-fx-frost::before {
+  width: 72px;
+  height: 72px;
+  clip-path: polygon(50% 0, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+  background: rgba(215, 248, 255, 0.4);
+  animation: fx-frost-flash 520ms ease-out;
+}
+
+.type-fx-frost::after {
+  width: 110px;
+  height: 64px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 255, 255, 0.55), transparent 70%);
+  filter: blur(4px);
+  animation: fx-frost-mist 800ms ease-out;
+}
+
+.type-fx-frost i {
+  width: 10px;
+  height: 34px;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  background: linear-gradient(180deg, #ffffff, #9fe4ee 55%, #4aa9c0);
+  --a: calc(var(--i) * 60deg);
+  animation: fx-frost-shard 760ms ease-out;
+  animation-delay: calc(var(--j) * 28ms);
+}
+
+@keyframes fx-frost-flash {
+  0% { opacity: 0; transform: scale(0.3) rotate(-20deg); }
+  40% { opacity: 1; transform: scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: scale(1.15) rotate(8deg); }
+}
+
+@keyframes fx-frost-mist {
+  0% { opacity: 0; transform: scale(0.6); }
+  35% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.3); }
+}
+
+@keyframes fx-frost-shard {
+  0% { opacity: 0; transform: rotate(var(--a)) translateY(0) scale(0.2); }
+  30% { opacity: 1; transform: rotate(var(--a)) translateY(-24px) scale(1); }
+  68% { opacity: 1; transform: rotate(var(--a)) translateY(-26px) scale(1); }
+  100% { opacity: 0; transform: rotate(var(--a)) translateY(-44px) scale(0.6); }
+}
+
+/* STORM — a bolt from above the stage, stuttering the way lightning does,
+   with the whole stage going white behind it and sparks off the strike. */
+.type-fx-storm::before {
+  width: 38px;
+  height: 116px;
+  top: 40px;
+  transform-origin: 50% 0;
+  clip-path: polygon(48% 0, 18% 44%, 46% 46%, 12% 100%, 82% 40%, 52% 38%, 92% 0);
+  background: #ffffff;
+  filter: drop-shadow(0 0 5px var(--fx)) drop-shadow(0 0 14px var(--fx));
+  animation: fx-storm-bolt 540ms linear;
+}
+
+.type-fx-storm::after {
+  left: 0;
+  top: 0;
+  translate: 0 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at 50% 55%, rgba(226, 212, 255, 0.75), transparent 72%);
+  animation: fx-storm-flash 540ms linear;
+}
+
+.type-fx-storm i {
+  width: 3px;
+  height: 12px;
+  top: 70px;
+  border-radius: 2px;
+  background: #ffffff;
+  box-shadow: 0 0 6px var(--fx);
+  --a: calc(var(--i) * 72deg + 20deg);
+  animation: fx-storm-spark 420ms ease-out;
+  animation-delay: 50ms;
+}
+
+@keyframes fx-storm-bolt {
+  0% { opacity: 0; transform: scaleY(0); }
+  6% { opacity: 1; transform: scaleY(1); }
+  12% { opacity: 1; }
+  15% { opacity: 0.15; }
+  20% { opacity: 1; }
+  32% { opacity: 1; }
+  36% { opacity: 0.3; }
+  40% { opacity: 0.9; }
+  60% { opacity: 0; transform: scaleY(1); }
+  100% { opacity: 0; }
+}
+
+@keyframes fx-storm-flash {
+  0% { opacity: 0; }
+  6% { opacity: 1; }
+  15% { opacity: 0.2; }
+  20% { opacity: 0.9; }
+  45% { opacity: 0.4; }
+  70% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+@keyframes fx-storm-spark {
+  0% { opacity: 1; transform: rotate(var(--a)) translateY(-6px); }
+  100% { opacity: 0; transform: rotate(var(--a)) translateY(-40px) scaleY(0.5); }
+}
+
+/* STONE — rocks drop onto the figure from above the stage, tumbling, and
+   bounce once on landing; the dust comes up as the last one hits. */
+.type-fx-stone::before {
+  width: 110px;
+  height: 32px;
+  top: calc(var(--ground) + 2px);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(190, 170, 128, 0.55), transparent 70%);
+  filter: blur(2px);
+  animation: fx-stone-dust 520ms ease-out;
+  animation-delay: 300ms;
+}
+
+.type-fx-stone::after {
+  display: none;
+}
+
+.type-fx-stone i {
+  width: 16px;
+  height: 14px;
+  top: calc(var(--ground) - 8px);
+  margin-left: calc((var(--i) - 2) * 18px);
+  clip-path: polygon(20% 0, 75% 5%, 100% 45%, 85% 100%, 25% 95%, 0 55%);
+  background: linear-gradient(135deg, #cdbd92, #8c7c54 60%, #5a4e38);
+  animation: fx-stone-fall 720ms linear;
+  animation-delay: calc(var(--j) * 50ms);
+}
+
+@keyframes fx-stone-dust {
+  0% { opacity: 0; transform: scale(0.3); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+
+@keyframes fx-stone-fall {
+  0% { opacity: 0; transform: translateY(-96px) rotate(0deg); animation-timing-function: ease-in; }
+  8% { opacity: 1; }
+  48% { transform: translateY(0) rotate(120deg); animation-timing-function: ease-out; }
+  64% { transform: translateY(-14px) rotate(160deg); animation-timing-function: ease-in; }
+  80% { transform: translateY(0) rotate(190deg); }
+  100% { opacity: 0; transform: translateY(0) rotate(190deg); }
+}
+
+/* NATURE — a gust lifts leaves off the ground and spins them up past the
+   figure, each on its own drift; a green glow at the roots is the growth. */
+.type-fx-nature::before {
+  width: 100px;
+  height: 32px;
+  top: var(--ground);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(107, 191, 89, 0.6), transparent 70%);
+  animation: fx-nature-glow 800ms ease-out;
+}
+
+.type-fx-nature::after {
+  display: none;
+}
+
+.type-fx-nature i {
+  width: 13px;
+  height: 8px;
+  top: var(--ground);
+  margin-left: calc((var(--i) - 2.5) * 14px);
+  border-radius: 80% 0 80% 0;
+  background: linear-gradient(90deg, #97e07e, #4d9c3d);
+  --dx: calc((var(--i) - 2.5) * 7px);
+  animation: fx-nature-leaf 920ms ease-out;
+  animation-delay: calc(var(--j) * 40ms);
+}
+
+@keyframes fx-nature-glow {
+  0% { opacity: 0; transform: scale(0.4, 0.3); }
+  30% { opacity: 1; transform: scale(1, 1); }
+  100% { opacity: 0; transform: scale(1.2, 1.6) translateY(-12px); }
+}
+
+@keyframes fx-nature-leaf {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  15% { opacity: 1; }
+  50% { transform: translate(var(--dx), -40px) rotate(220deg); }
+  100% { opacity: 0; transform: translate(calc(var(--dx) * -1), -80px) rotate(480deg); }
+}
+
+/* LIGHT — a column of light comes down onto the figure from above the
+   stage, rays turn behind it, and sparkles wink around the edge. */
+.type-fx-light::before {
+  width: 60px;
+  height: 134px;
+  top: 40px;
+  transform-origin: 50% 0;
+  background: linear-gradient(180deg, rgba(255, 250, 214, 0), rgba(255, 242, 176, 0.9) 35%, rgba(255, 242, 176, 0.65) 85%, rgba(255, 242, 176, 0));
+  -webkit-mask: linear-gradient(90deg, transparent, #000 35%, #000 65%, transparent);
+  mask: linear-gradient(90deg, transparent, #000 35%, #000 65%, transparent);
+  mix-blend-mode: screen;
+  animation: fx-light-column 760ms ease-out;
+}
+
+.type-fx-light::after {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(rgba(255, 242, 176, 0.5) 0 7deg, transparent 7deg 45deg);
+  -webkit-mask: radial-gradient(circle, #000 15%, transparent 68%);
+  mask: radial-gradient(circle, #000 15%, transparent 68%);
+  mix-blend-mode: screen;
+  animation: fx-light-rays 820ms ease-out;
+}
+
+.type-fx-light i {
+  width: 12px;
+  height: 12px;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+  background: #ffffff;
+  --a: calc(var(--i) * 60deg);
+  animation: fx-light-sparkle 460ms ease-out;
+  animation-delay: calc(150ms + var(--j) * 55ms);
+}
+
+@keyframes fx-light-column {
+  0% { opacity: 0; transform: scale(0.2, 0); }
+  18% { opacity: 1; transform: scale(0.8, 1); }
+  50% { opacity: 0.9; transform: scale(1, 1); }
+  100% { opacity: 0; transform: scale(1.4, 1); }
+}
+
+@keyframes fx-light-rays {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.6); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(35deg) scale(1.1); }
+}
+
+@keyframes fx-light-sparkle {
+  0% { opacity: 0; transform: rotate(var(--a)) translateY(-34px) scale(0); }
+  40% { opacity: 1; transform: rotate(var(--a)) translateY(-36px) scale(1.2); }
+  100% { opacity: 0; transform: rotate(var(--a)) translateY(-40px) scale(0); }
+}
+
+/* SHADOW — tendrils of dark come up out of the ground around the figure and
+   sway as they climb, under a vignette that closes the stage in. */
+.type-fx-shadow::before {
+  left: 0;
+  top: 0;
+  translate: 0 0;
+  width: 100%;
+  height: 100%;
+  /* A halo of dark closing on the figure, gone again before the stage's own edge — a box-shaped vignette showed the stage's corners. */
+  background: radial-gradient(ellipse at 50% 55%, transparent 22%, rgba(22, 14, 42, 0.85) 48%, transparent 72%);
+  animation: fx-shadow-vignette 900ms ease-in-out;
+}
+
+.type-fx-shadow::after {
+  width: 110px;
+  height: 28px;
+  top: calc(var(--ground) + 4px);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(10, 6, 20, 0.9), rgba(106, 99, 122, 0.3) 55%, transparent 72%);
+  animation: fx-shadow-pool 900ms ease-out;
+}
+
+.type-fx-shadow i {
+  width: 18px;
+  height: 62px;
+  top: calc(var(--ground) - 12px);
+  margin-left: calc((var(--i) - 2) * 17px);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 90%, rgba(34, 24, 56, 0.95), rgba(106, 99, 122, 0.6) 50%, transparent 76%);
+  filter: blur(1.5px);
+  box-shadow: 0 0 10px rgba(122, 84, 204, 0.45);
+  animation: fx-shadow-tendril 900ms ease-out;
+  animation-delay: calc(var(--j) * 48ms);
+}
+
+@keyframes fx-shadow-vignette {
+  0% { opacity: 0; }
+  40% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes fx-shadow-pool {
+  0% { opacity: 0; transform: scale(0.3, 0.5); }
+  30% { opacity: 1; transform: scale(1, 1); }
+  100% { opacity: 0; transform: scale(1.2, 0.7); }
+}
+
+@keyframes fx-shadow-tendril {
+  0% { opacity: 0; transform: translateY(20px) scale(0.6, 0.2); }
+  30% { opacity: 1; transform: translateY(-10px) skewX(6deg) scale(1, 1); }
+  60% { transform: translateY(-26px) skewX(-8deg) scale(0.9, 1.2); }
+  100% { opacity: 0; transform: translateY(-52px) skewX(3deg) scale(0.5, 1.3); }
+}
+
+/* ARCANE — a rune ring turns open around the figure with a glow inside it,
+   and motes fly off the ring as it spins. */
+.type-fx-arcane::before {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: 2px dashed var(--fx);
+  box-shadow: 0 0 12px var(--fx-a), inset 0 0 12px var(--fx-a);
+  animation: fx-arcane-ring 820ms ease-out;
+}
+
+.type-fx-arcane::after {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(226, 150, 236, 0.7), var(--fx-faint) 45%, transparent 70%);
+  animation: fx-arcane-glow 820ms ease-out;
+}
+
+.type-fx-arcane i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffe6ff;
+  box-shadow: 0 0 8px var(--fx);
+  --a: calc(var(--i) * 60deg);
+  animation: fx-arcane-mote 860ms ease-out;
+  animation-delay: calc(var(--j) * 30ms);
+}
+
+@keyframes fx-arcane-ring {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.4); }
+  30% { opacity: 1; transform: rotate(60deg) scale(1); }
+  70% { opacity: 1; transform: rotate(110deg) scale(1.02); }
+  100% { opacity: 0; transform: rotate(140deg) scale(1.25); }
+}
+
+@keyframes fx-arcane-glow {
+  0% { opacity: 0; transform: scale(0.3); }
+  35% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+
+@keyframes fx-arcane-mote {
+  0% { opacity: 0; transform: rotate(var(--a)) translateX(12px) scale(0.4); }
+  25% { opacity: 1; transform: rotate(calc(var(--a) + 60deg)) translateX(32px) scale(1); }
+  100% { opacity: 0; transform: rotate(calc(var(--a) + 210deg)) translateX(50px) scale(0.3); }
+}
+
+/* MIND — ripples spread from the figure's head, one after another, over a
+   pulse of pink; a broken ring turns the other way behind them. */
+.type-fx-mind {
+  --cy: 34px;
+}
+
+.type-fx-mind::before {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 200, 230, 0.8), var(--fx-faint) 50%, transparent 70%);
+  animation: fx-mind-pulse 720ms ease-out;
+}
+
+.type-fx-mind::after {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(var(--fx) 0 22deg, transparent 22deg 90deg);
+  -webkit-mask: radial-gradient(circle, transparent 40%, #000 42%, #000 48%, transparent 50%);
+  mask: radial-gradient(circle, transparent 40%, #000 42%, #000 48%, transparent 50%);
+  animation: fx-mind-spin 760ms ease-out;
+}
+
+.type-fx-mind i {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--fx);
+  box-shadow: 0 0 10px var(--fx-a);
+  animation: fx-mind-ripple 700ms ease-out;
+  animation-delay: calc(var(--i) * 140ms);
+}
+
+@keyframes fx-mind-pulse {
+  0% { opacity: 0; transform: scale(0.3); }
+  30% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.3); }
+}
+
+@keyframes fx-mind-spin {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.6); }
+  35% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(-160deg) scale(1.1); }
+}
+
+@keyframes fx-mind-ripple {
+  0% { opacity: 1; transform: scale(0.2); }
+  100% { opacity: 0; transform: scale(2.3); }
+}
+
+/* SPIRIT — wisps drift up from the ground past the figure on a slow
+   weave, inside a soft aura; nothing here moves fast. */
+.type-fx-spirit::before {
+  width: 84px;
+  height: 100px;
+  top: 50px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(95, 207, 192, 0.4), transparent 70%);
+  animation: fx-spirit-aura 1000ms ease-in-out;
+}
+
+.type-fx-spirit::after {
+  display: none;
+}
+
+.type-fx-spirit i {
+  width: 14px;
+  height: 14px;
+  top: calc(var(--ground) - 6px);
+  margin-left: calc((var(--i) - 1.5) * 20px);
+  border-radius: 50%;
+  background: radial-gradient(circle, #ecfffb, rgba(95, 207, 192, 0.85) 40%, transparent 70%);
+  box-shadow: 0 0 12px var(--fx-a);
+  animation: fx-spirit-wisp 1000ms ease-in-out;
+  animation-delay: calc(var(--j) * 60ms);
+}
+
+@keyframes fx-spirit-aura {
+  0% { opacity: 0; transform: scale(0.7); }
+  40% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.15); }
+}
+
+@keyframes fx-spirit-wisp {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  20% { opacity: 1; transform: translate(0, -12px) scale(1); }
+  40% { transform: translate(8px, -30px); }
+  60% { transform: translate(-6px, -48px); }
+  80% { opacity: 0.8; transform: translate(6px, -66px); }
+  100% { opacity: 0; transform: translate(0, -86px) scale(0.3); }
+}
+
+/* IRON — two slashes cross the figure, each drawn from its own end, and a
+   glint fires where they meet. Fast: steel is the quickest thing here. */
+.type-fx-iron::before {
+  width: 24px;
+  height: 24px;
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+  background: #ffffff;
+  filter: drop-shadow(0 0 6px var(--fx));
+  animation: fx-iron-glint 320ms ease-out;
+  animation-delay: 150ms;
+}
+
+.type-fx-iron::after {
+  display: none;
+}
+
+.type-fx-iron i {
+  width: 98px;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, #ffffff 30%, #ffffff 70%, transparent);
+  box-shadow: 0 0 6px var(--fx), 0 0 2px #ffffff;
+  --a: calc(-36deg + var(--i) * 72deg);
+  transform-origin: 0 50%;
+  animation: fx-iron-slash 380ms ease-out;
+  animation-delay: calc(var(--i) * 110ms);
+}
+
+.type-fx-iron i:nth-child(2) {
+  transform-origin: 100% 50%;
+}
+
+@keyframes fx-iron-glint {
+  0% { opacity: 0; transform: rotate(0deg) scale(0); }
+  40% { opacity: 1; transform: rotate(45deg) scale(1.2); }
+  100% { opacity: 0; transform: rotate(90deg) scale(0); }
+}
+
+@keyframes fx-iron-slash {
+  0% { opacity: 0; transform: rotate(var(--a)) scaleX(0); }
+  18% { opacity: 1; transform: rotate(var(--a)) scaleX(1); }
+  55% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--a)) scaleX(1); }
+}
+
+/* MECH — four bracket corners close in on the figure from the edges of the
+   stage, a scanline runs down it, and the lock flashes once it has it. */
+.type-fx-mech::before {
+  width: 84px;
+  height: 3px;
+  top: 40px;
+  background: var(--fx);
+  box-shadow: 0 0 8px var(--fx);
+  animation: fx-mech-scan 520ms linear;
+}
+
+.type-fx-mech::after {
+  width: 66px;
+  height: 66px;
+  border-radius: 4px;
+  border: 1px solid var(--fx);
+  background: rgba(217, 122, 60, 0.32);
+  animation: fx-mech-lock 280ms ease-out;
+  animation-delay: 330ms;
+}
+
+.type-fx-mech i {
+  width: 16px;
+  height: 16px;
+  border-top: 3px solid var(--fx);
+  border-left: 3px solid var(--fx);
+  filter: drop-shadow(0 0 4px var(--fx-a));
+  --a: calc(var(--i) * 90deg);
+  animation: fx-mech-bracket 640ms ease-out;
+}
+
+@keyframes fx-mech-scan {
+  0% { opacity: 0; transform: translateY(-40px); }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(44px); }
+}
+
+@keyframes fx-mech-lock {
+  0% { opacity: 0; transform: scale(1); }
+  40% { opacity: 1; transform: scale(1.06); }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+@keyframes fx-mech-bracket {
+  0% { opacity: 0; transform: rotate(var(--a)) translate(-66px, -66px); }
+  35% { opacity: 1; transform: rotate(var(--a)) translate(-26px, -26px); }
+  45% { transform: rotate(var(--a)) translate(-31px, -31px); }
+  55% { transform: rotate(var(--a)) translate(-27px, -27px); }
+  85% { opacity: 1; transform: rotate(var(--a)) translate(-27px, -27px); }
+  100% { opacity: 0; transform: rotate(var(--a)) translate(-27px, -27px); }
+}
+
+/* BEAST — three claw gashes rake down across the figure in quick succession
+   over a dust of impact. Each is drawn from its top end, as a swipe is. */
+.type-fx-beast::before {
+  width: 72px;
+  height: 54px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(181, 119, 47, 0.5), transparent 70%);
+  animation: fx-beast-puff 420ms ease-out;
+}
+
+.type-fx-beast::after {
+  display: none;
+}
+
+.type-fx-beast i {
+  width: 64px;
+  height: 6px;
+  margin-left: calc((var(--i) - 1) * 16px);
+  border-radius: 50%;
+  background: linear-gradient(90deg, transparent, #f2c27a 15%, #b5772f 50%, #6b3f14 85%, transparent);
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+  transform-origin: 0 50%;
+  animation: fx-beast-gash 480ms ease-out;
+  animation-delay: calc(var(--i) * 45ms);
+}
+
+@keyframes fx-beast-puff {
+  0% { opacity: 0; transform: scale(0.5); }
+  35% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+
+@keyframes fx-beast-gash {
+  0% { opacity: 0; transform: rotate(-58deg) scaleX(0); }
+  25% { opacity: 1; transform: rotate(-58deg) scaleX(1); }
+  60% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(-58deg) scaleX(1) translateY(6px); }
+}
+
+/* ANCIENT — a double ring wider than the stage turns slowly around the
+   figure with four rune marks lighting in sequence on it, and the ground
+   under it pulses. The slowest effect here, because it should be. */
+.type-fx-ancient::before {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  border: 3px double rgba(160, 180, 110, 0.9);
+  box-shadow: 0 0 16px var(--fx-a), inset 0 0 16px var(--fx-a);
+  animation: fx-ancient-ring 1080ms ease-in-out;
+}
+
+.type-fx-ancient::after {
+  width: 124px;
+  height: 36px;
+  top: calc(var(--ground) + 4px);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(138, 156, 94, 0.6), transparent 70%);
+  animation: fx-ancient-ground 1080ms ease-out;
+}
+
+.type-fx-ancient i {
+  width: 9px;
+  height: 18px;
+  clip-path: polygon(50% 0, 100% 30%, 60% 100%, 0 70%);
+  background: #e6efc8;
+  filter: drop-shadow(0 0 5px var(--fx));
+  --a: calc(var(--i) * 90deg + 45deg);
+  animation: fx-ancient-rune 720ms ease-in-out;
+  animation-delay: calc(120ms + var(--i) * 110ms);
+}
+
+@keyframes fx-ancient-ring {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.6); }
+  25% { opacity: 1; transform: rotate(12deg) scale(1); }
+  75% { opacity: 1; transform: rotate(32deg) scale(1.02); }
+  100% { opacity: 0; transform: rotate(44deg) scale(1.1); }
+}
+
+@keyframes fx-ancient-ground {
+  0% { opacity: 0; transform: scale(0.4, 0.4); }
+  30% { opacity: 1; transform: scale(1, 1); }
+  100% { opacity: 0; transform: scale(1.25, 1.4); }
+}
+
+@keyframes fx-ancient-rune {
+  0% { opacity: 0; transform: rotate(var(--a)) translateY(-54px) scale(0.5); }
+  40% { opacity: 1; transform: rotate(var(--a)) translateY(-54px) scale(1.2); }
+  100% { opacity: 0; transform: rotate(var(--a)) translateY(-54px) scale(0.8); }
+}
+
 /* Crit gets its own punchier overshoot-scale instead of the plain float, plus
    a bigger card flash below (crit-hit) — reads as "harder hit" without
    needing new copy beyond the existing "Critical hit!" banner tag. */

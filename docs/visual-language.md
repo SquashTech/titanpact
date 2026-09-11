@@ -3197,6 +3197,80 @@ one at the cap (+2, frames at 900/1250/1900ms showing the wave, the tick to Lv 2
 the tutorial's two, a loss, and a Quick Battle with nothing to pay. The Browser pane's tab was
 hidden throughout (`document.hidden`, timeline at 0) so every frame came from headless Edge.
 
+## Thirtieth pass — the element manifests (2026-09-11)
+
+*Per user direction: "one animation for each type in the game, and they can just display
+regardless of the attack … better than nothing … a natural accompanying sound effect as well."*
+
+### Where it sits
+
+A move already had three beats of presentation — the actor's strike lean (seventeenth pass), the
+target's recoil, the number — and none of them said what TYPE the move was except the banner's
+tint. This pass adds the element itself, and puts it on the **declaration beat**: "Cinder uses
+Ember ▸ Fang" is now the frame the fire climbs Fang, and the next tap is still the damage, with
+the recoil and the number. That split is the Pokémon order (animation, then the bar drains) and
+it fell out of the beat model for free — buildBeats stamps `fx: { type, combatantIds }` on the
+MoveDeclared beat, over every target the engine resolved, self included, so a buff shows its
+element on the hero that cast it and a spread move lights both foes at once.
+
+**One effect per type, whatever the move.** The type is the column the chart is read at, so it
+is the one thing every move of a type has in common, and the one thing the player is already
+tracking when the move is declared. A per-move animation is the obvious later refinement; this
+is the floor every move stands on the day it is authored.
+
+### The effects (`TypeFx.tsx`, styles.css "Type FX")
+
+Pure CSS, no assets: the container carries the type's colour (`--fx-rgb`) and its class picks
+the keyframes; the particles are bare `<i>`s numbered by `--i`/`--n` so one rule fans them out,
+with `--j` a fixed shuffle for staggers so nothing lights up left-to-right like a marquee. Each is
+anchored to the figure's centre by the independent `translate` property, which is what lets every
+keyframe set own `transform` outright. It plays over the sprite (`z-index` in the stage), under the
+popup, times itself out (`TYPE_FX_MS`) rather than clearing on the next beat — so a quick tap into
+the damage beat leaves the claw marks still fading as the number lands, which is the exchange read
+as one thing.
+
+Fire climbs from the ground in six flickering tongues over a bloom · Water surges up with a white
+crest and throws drops that fall back · Frost flashes a hexagon and grows six shards that hold,
+then break · Storm drops a stuttering bolt with the stage whiting out behind it · Stone tumbles
+rocks from above that bounce once, dust on the last · Nature lifts leaves off the ground and spins
+them up · Light brings a column down from above with rays turning behind it · Shadow closes a halo
+of dark on the figure and sends tendrils up around it · Arcane turns a dashed rune ring open with
+motes flying off it · Mind ripples out from the head under a broken ring turning the other way ·
+Spirit drifts four wisps up on a weave inside an aura · Iron crosses two slashes drawn from
+opposite ends with a glint where they meet · Mech closes four reticle corners in from the edges,
+runs a scanline, and flashes the lock · Beast rakes three claw gashes down in succession · Ancient
+turns a double ring wider than the stage, four rune marks lighting in sequence on it. Ancient is
+the slowest (1080ms) and Iron the fastest (380ms), on purpose.
+
+### The sounds (`sounds.ts` "The element itself")
+
+Fifteen `cast.<Type>` rows in the same voice vocabulary, played by `beatSfx` on the declaration
+beat in place of the plain `cast` wind-up — which stays, for a type with no cast of its own. Each
+is the element *manifesting*, never the blow: the hit still lands on the next beat and has to be
+free to land on top, so every cast leaves the low end alone except the three that are themselves
+a weight landing (Stone, Ancient, Storm's thunder). Fire is a gust catching with three crackle
+ticks; Water a splash with two bloops; Frost three high bells and a brittle tick; Storm the crack
+with thunder 40ms behind; Stone one thud and two tumbling; Nature a rustle; Light rising sines
+with no low end; Shadow a detuned swell; Arcane a saw opening under bells; Mind wide-detuned pairs
+beating; Spirit slow fifths; Iron a swipe then steel ringing; Mech a servo then a lock; Beast a
+snarl; Ancient a gong, the one cast allowed to outlast its beat. All fifteen are on the audition
+page. Offline-rendered peaks were evened to 0.17–0.40 (the hits sit at 0.39–0.45).
+
+### Verification
+
+A throwaway harness mounting fifteen real `CombatantCard`s (one hero per type) at 394×780,
+frames at ~120/300/520ms from headless Edge with animations paused; then a real Quick Battle
+driven over CDP, which caught Fang's Beast gashes on the enemy row and Brimstone's *Stoke the
+Flames* putting fire on both itself and Sylva. Two fixes came out of the frames: the bolt was
+too thin to register at 28px and was widened to 38px with a fatter polygon; Shadow's vignette
+and Light's column both showed the stage's rectangular edge and were softened to a halo and a
+horizontally masked column.
+
+**Open:** the bolt and the column both reach above the stage, which on the enemy row is the
+nameplate; a per-move animation layer; and whether the declaration beat is the right home once
+auto-play is the common way to watch a round (at 450ms a step the two beats overlap as intended;
+at Fast they do not, and the element is mostly gone before it is seen).
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.
