@@ -20,6 +20,7 @@ import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { NodeSky, NODE_TINT_GOLD } from '../shared/NodeStage';
 import { HubGlyph } from '../shared/nodeIcons';
 import { useAmbientLocation } from '../shared/LocationContext';
+import { matchupVerdict } from '../shared/matchupVerdict';
 
 interface Props {
   run: RunState;
@@ -39,19 +40,16 @@ interface Props {
 
 /**
  * 2-wide/3-tall grid: active, bench, reserve. Always 6 cells (the roster cap); cells past the
- * roster render empty. Each row is a BAND with its own header (2026-09-11, per user direction):
- * the label says what the row is and the note says what it means for the fight, because a
- * left-hand column of three small words did not separate "opens the fight" from "sits it out".
+ * roster render empty. Each row is a BAND with its own header (2026-09-11, per user direction),
+ * because a left-hand column of three small words did not separate the rows.
  */
 const SLOT_COUNT = 6;
-function slotRows(squadSize: number): readonly { key: string; label: string; note: string; indices: readonly [number, number] }[] {
+function slotRows(squadSize: number): readonly { key: string; label: string; indices: readonly [number, number] }[] {
   return [
-    { key: 'active', label: 'Active', note: 'Open the fight', indices: [0, 1] },
-    { key: 'bench', label: 'Bench', note: 'Switch in', indices: [2, 3] },
+    { key: 'active', label: 'Active', indices: [0, 1] },
+    { key: 'bench', label: 'Bench', indices: [2, 3] },
     // The finale fields six, so the third row stops being a sideboard and becomes bench.
-    squadSize > 4
-      ? { key: 'bench', label: 'Bench', note: 'Switch in', indices: [4, 5] }
-      : { key: 'reserve', label: 'Reserve', note: 'Sit this one out', indices: [4, 5] },
+    { key: squadSize > 4 ? 'bench' : 'reserve', label: squadSize > 4 ? 'Bench' : 'Reserve', indices: [4, 5] },
   ];
 }
 
@@ -141,6 +139,23 @@ function SquadSlot({
   );
 }
 
+/**
+ * The arrow under a scouted enemy while one of the player's heroes is held: up for a matchup the
+ * hero comes out ahead in, down for one it comes out behind in, and an empty slot otherwise — the
+ * slot is always drawn so the chips never change height when a hero is picked up or put down.
+ */
+function MatchupArrow({ verdict }: { verdict: 'up' | 'down' | null }) {
+  return (
+    <span className={`enemy-scout-verdict${verdict ? ` is-${verdict}` : ''}`} aria-label={verdict === 'up' ? 'Good matchup' : verdict === 'down' ? 'Bad matchup' : undefined}>
+      {verdict && (
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+          {verdict === 'up' ? <path d="M12 4 21 14h-6v6H9v-6H3Z" /> : <path d="M12 20 3 10h6V4h6v6h6Z" />}
+        </svg>
+      )}
+    </span>
+  );
+}
+
 /** Bring-6-pick-4 squad selection before every fight node (docs/combat.md "Bring-6-pick-4 sideboard"). Drag, or tap-then-tap, swaps two cells. */
 export function SquadSelectScreen({
   run,
@@ -168,6 +183,12 @@ export function SquadSelectScreen({
   const required = requiredSquadSize(run.roster.length, squadSize);
   const location = useAmbientLocation();
   const rosterById = new Map(run.roster.map((r) => [r.rosterId, r]));
+
+  // The hero the player has picked up: its arrows land under the scouted enemies while it is held
+  // (matchupVerdict), so "who does this one want to see across the field" is answered by the same
+  // tap that starts a swap. Post-Evolution types, since that is the typing that fights.
+  const heldEntry = selectedSlot !== null && slots[selectedSlot] ? rosterById.get(slots[selectedSlot]!) : undefined;
+  const heldTypes = heldEntry ? rosterEntryTypes(heroes[heldEntry.heroId], heldEntry) : null;
 
   const activeIds = [slots[0], slots[1]] as const;
   const benchIds = slots.slice(2, squadSize).filter((id): id is string => id !== null);
@@ -245,6 +266,7 @@ export function SquadSelectScreen({
                           <TypeBadge key={t} type={t} />
                         ))}
                       </div>
+                      <MatchupArrow verdict={heldTypes ? matchupVerdict(heldTypes, types) : null} />
                     </div>
                   );
                 }
@@ -263,6 +285,7 @@ export function SquadSelectScreen({
                         <TypeBadge key={t} type={t} />
                       ))}
                     </div>
+                    <MatchupArrow verdict={heldTypes ? matchupVerdict(heldTypes, types) : null} />
                   </button>
                 );
               })}
@@ -286,7 +309,6 @@ export function SquadSelectScreen({
                 <div key={rowIndex} className={`squad-band squad-band-${row.key}`}>
                   <div className="squad-band-head">
                     <span className="squad-band-label">{row.label}</span>
-                    <span className="squad-band-note">{row.note}</span>
                   </div>
                   <div className="squad-grid-row-cells">
                     {row.indices.map((index) => {

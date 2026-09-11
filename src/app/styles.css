@@ -10584,7 +10584,12 @@ textarea,
   flex-direction: column;
   gap: 12px;
   margin-block: auto;
-  padding: 6px 0 8px;
+  padding: 10px 0 8px;
+}
+
+/* A breath under the scouted row before the VS (2026-09-11, per user direction). */
+.squad-section-enemy {
+  margin-bottom: 8px;
 }
 
 .squad-section {
@@ -11797,6 +11802,46 @@ textarea,
   box-shadow: var(--hairline-strong), var(--elev-2);
 }
 
+/* The arrow a held hero drops under each enemy (SquadSelectScreen MatchupArrow):
+   a doubling ahead in green, a doubling behind in red, and an empty slot of the
+   same height otherwise so the row never jumps. It arrives with a pop, since it
+   is the answer to the tap that just happened. */
+.enemy-scout-verdict {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  border-radius: 50%;
+  color: transparent;
+}
+
+.enemy-scout-verdict > svg {
+  width: 15px;
+  height: 15px;
+  animation: enemy-scout-verdict-in 0.22s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.enemy-scout-verdict.is-up {
+  color: var(--hp-high);
+  background: color-mix(in srgb, var(--hp-high) 18%, transparent);
+  box-shadow: 0 0 10px -2px var(--hp-high);
+}
+
+.enemy-scout-verdict.is-down {
+  color: var(--hp-low);
+  background: color-mix(in srgb, var(--hp-low) 18%, transparent);
+  box-shadow: 0 0 10px -2px var(--hp-low);
+}
+
+@keyframes enemy-scout-verdict-in {
+  from {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+}
+
 .enemy-scout-name {
   max-width: 100%;
   overflow: hidden;
@@ -12027,13 +12072,6 @@ textarea,
 
 .squad-band-active .squad-band-label {
   text-shadow: 0 0 10px rgba(var(--band-rgb), 0.55);
-}
-
-.squad-band-note {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text-dim);
-  white-space: nowrap;
 }
 
 .squad-grid-row-cells {
