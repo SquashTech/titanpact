@@ -1008,29 +1008,6 @@ textarea,
   }
 }
 
-.field-effect-detail-panel {
-  /* Overridden inline per effect (FieldEffectDetailOverlay.tsx) — this is just the pre-mount fallback so the panel never flashes unstyled. */
-  border-top-color: var(--magical);
-}
-
-/* The effect's glyph (docs/icon-pack.md — its flavorType element carrying the
-   iconset's "cycle arrows" modifier). Native 32px, because this panel is the
-   only Field Effect surface with room for it: the horizon plaque would have
-   had to give up half the divider's width to carry a 16px copy. Mirrors
-   .status-detail-icon's job for statuses. */
-.field-effect-detail-icon {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 4px;
-}
-
-.field-effect-detail-icon img {
-  width: 32px;
-  height: 32px;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
-}
-
 /* Ambient battlefield treatment while a Field Effect is active — a pulsing
    border/glow plus a diagonal shimmer sweep, so the charged-up state reads
    across the whole battlefield rather than living only in the small divider
@@ -10465,36 +10442,6 @@ textarea,
   cursor: pointer;
 }
 
-/* --- Field Effect detail overlay (FieldEffectDetailOverlay.tsx) --------- */
-/* The status dossier moved to its own rules ("The status dossier" below);
-   these are what the Field Effect readout still wears: a narrow .detail-panel
-   with the type colour as a stripe, a name, a readout line and the sentence. */
-.status-detail-panel {
-  max-width: 300px;
-  gap: 6px;
-  border-top-width: 3px;
-}
-
-/* color set inline per instance (statusColor) — no default here since every
-   caller always supplies one. */
-.status-detail-name {
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.status-detail-readout {
-  display: flex;
-  gap: 10px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--accent);
-}
-
-.status-detail-desc {
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--text);
-}
 /* --- Squad select screen ------------------------------------------------ */
 
 .squad-select {
@@ -27153,4 +27100,54 @@ textarea,
   font-size: 12px;
   line-height: 1.45;
   color: var(--text-dim);
+}
+
+/* --- The Field Effect dossier (FieldEffectDetailOverlay.tsx) ------------ */
+/* What a hold on the horizon plaque opens. The status dossier's ledger rows,
+   in the field's element colour: what the field does (one row per engine
+   flag), the flat clock, the override rule. The plaque's pixel art sits in
+   the disc at its native 32px — the only Field Effect surface with room for
+   it. It replaced a narrow card of one sentence (2026-09-11, per user
+   direction). */
+.field-dossier-panel {
+  gap: 0;
+  border-top-width: 3px;
+  background:
+    linear-gradient(155deg, color-mix(in srgb, var(--field-color) 16%, transparent), transparent 46%),
+    var(--surface-raised);
+}
+
+.field-dossier-panel .move-detail-stats {
+  margin-top: 10px;
+}
+
+.field-dossier-disc {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--field-color);
+  background: radial-gradient(
+    circle at 32% 28%,
+    color-mix(in srgb, var(--field-color) 34%, transparent),
+    color-mix(in srgb, var(--field-color) 10%, transparent)
+  );
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--field-color) 40%, transparent),
+    0 0 18px -6px var(--field-color);
+}
+
+.field-dossier-disc img {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+}
+
+.field-dossier-disc svg {
+  width: 30px;
+  height: 30px;
 }

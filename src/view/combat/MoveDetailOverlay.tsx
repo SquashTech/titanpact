@@ -27,6 +27,7 @@ import { ElementGlyph } from '../shared/elementIcons';
 import { StatGlyph, MoveKindGlyph } from '../shared/statIcons';
 import { StatusGlyph, statusColor } from '../shared/statusIcons';
 import { statusFactsLine } from '../shared/statusFacts';
+import { fieldEffectFactsLine } from '../shared/fieldEffectFacts';
 import { STAT_LABELS, hpTier } from '../shared/StatBars';
 import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -722,7 +723,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
               glyph={<ElementGlyph type={fieldDef.flavorType ?? 'Arcane'} />}
               color={getTypeColor(fieldDef.flavorType ?? 'Arcane')}
               text={`Field: ${fieldDef.name}`}
-              note={fieldDef.description}
+              note={fieldEffectFactsLine(fieldDef)}
             />
           )}
         </div>
