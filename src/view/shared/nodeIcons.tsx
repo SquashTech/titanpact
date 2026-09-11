@@ -158,14 +158,7 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
 // The map's own controls: the footer's one Roster button, plus Reference and Menu in the header corners.
 const HUB_PATHS = {
   // Two figures. Not the Skirmish helm: that means "a squad you fight" on the same screen.
-  roster: (
-    <>
-      <circle cx="16.6" cy="8.2" r="3.2" />
-      <path d="M16.6 12.8c3.2 0 5.2 2 5.2 5v3.4h-4.4v-2.8c0-2.2-.9-4.2-2.4-5.5a5 5 0 0 1 1.6-.1Z" />
-      <circle cx="9.2" cy="7.4" r="4" />
-      <path d="M9.2 13c4.2 0 6.8 2.6 6.8 6.2v2H2.4v-2c0-3.6 2.6-6.2 6.8-6.2Z" />
-    </>
-  ),
+  roster: SECTION_PATHS.heroes,
   // Scroll (the Mentor node already owns the book).
   reference: (
     <>

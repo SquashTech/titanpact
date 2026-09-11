@@ -8,6 +8,8 @@ import { playSfx } from '../../audio/sfx';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { MoveButtonReplica, useLongPress } from '../shared/MoveTile';
+import { HubGlyph } from '../shared/nodeIcons';
+import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { healCasterForEntry } from '../shared/healCaster';
 import { overlayHost } from '../shared/overlayHost';
 
@@ -32,6 +34,7 @@ interface Props {
 export function MoveOfferOverlay({ run, entry, moveId, eyebrow, onResolve }: Props) {
   const [selectedReplaceId, setSelectedReplaceId] = useState<string | null>(null);
   const [popupMoveId, setPopupMoveId] = useState<string | null>(null);
+  const [referenceOpen, setReferenceOpen] = useState(false);
 
   const hero = heroes[entry.heroId];
   const caster = healCasterForEntry(hero, entry, run.relics);
@@ -46,6 +49,16 @@ export function MoveOfferOverlay({ run, entry, moveId, eyebrow, onResolve }: Pro
   return createPortal(
     <div className="log-overlay moveoffer-overlay">
       <div className="reward-panel moveoffer-panel">
+        {/* The cards below are terse — the rule under each payload is in here instead. */}
+        <button
+          type="button"
+          className="moveoffer-reference"
+          onClick={() => setReferenceOpen(true)}
+          aria-label="Reference"
+          title="Reference"
+        >
+          <HubGlyph name="reference" />
+        </button>
         <div className="offer-hero-head" {...headPress}>
           <HeroPortrait heroId={hero.id} className="offer-hero-portrait" />
           <h3>{hero.name}</h3>
@@ -53,7 +66,7 @@ export function MoveOfferOverlay({ run, entry, moveId, eyebrow, onResolve }: Pro
         <p className="offer-hero-eyebrow">{eyebrow}</p>
 
         <div className="offer-move-highlight">
-          <MoveDetailCard move={moves[moveId]} label="New move offered" caster={caster} />
+          <MoveDetailCard move={moves[moveId]} label="New move offered" caster={caster} terse />
         </div>
 
         {atCap && (
@@ -110,6 +123,7 @@ export function MoveOfferOverlay({ run, entry, moveId, eyebrow, onResolve }: Pro
           </div>
         </div>
       )}
+      {referenceOpen && <ReferenceOverlay initialTab="statuses" onClose={() => setReferenceOpen(false)} />}
     </div>,
     overlayHost()
   );
@@ -142,7 +156,7 @@ export function MoveLearnedOverlay({ run, entry, moveId, eyebrow, onClose }: Lea
         <p className="offer-hero-eyebrow">{eyebrow}</p>
 
         <div className="offer-move-highlight">
-          <MoveDetailCard move={moves[moveId]} label="Move learned" caster={caster} />
+          <MoveDetailCard move={moves[moveId]} label="Move learned" caster={caster} terse />
         </div>
 
         <div className="reward-panel-actions moveoffer-actions">

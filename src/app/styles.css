@@ -11506,6 +11506,11 @@ textarea,
   padding-bottom: 10px;
 }
 
+/* The counter switch, sitting under the header rather than at the foot of a sheet. */
+.guild-hall-tabs {
+  margin-top: 0;
+}
+
 /* The purse (NodeStage NodePurse), pinned in the corner the roster glyph does
    not own. It replaces `.guild-hall-header` — an <h2> at one end of a rule and
    a gold figure at the other, which is a masthead, and which made these the
@@ -20285,6 +20290,11 @@ textarea,
   border-top: 1px solid var(--border);
 }
 
+/* A buff at priority 0 has no figure to strip, and an empty strip drew a second rule. */
+.move-detail-stats:empty {
+  display: none;
+}
+
 .move-detail-stat {
   display: inline-flex;
   align-items: center;
@@ -20419,6 +20429,16 @@ textarea,
   font-weight: 400;
   font-size: 12px;
   color: var(--text-dim);
+}
+
+/* A terse card keeps every row's claim and drops the sentence under it. One-line rows
+   need less air between them than a claim-plus-sentence pair did. */
+.move-detail-card.is-terse .move-detail-effect-note {
+  display: none;
+}
+
+.move-detail-card.is-terse .move-detail-effects {
+  gap: 5px;
 }
 
 .move-detail-forecast {
@@ -23349,9 +23369,42 @@ textarea,
    the panel is deliberately allowed to be short. */
 
 .moveoffer-panel {
+  position: relative;
   width: min(420px, 92vw);
-  max-height: 88%;
+  /* Was 88%: at the cap the dossier, four candidates and the button pair sit right on the
+     fold, and the Learn/Decline pair is the one thing here that must not need a scroll. */
+  max-height: 96%;
   overflow-y: auto;
+}
+
+/* The offer's cards are terse — a card with three riders was pushing the Learn/Decline pair
+   below the fold — so the rules the notes carried live behind this instead. */
+.moveoffer-reference {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 1;
+  width: 30px;
+  height: 30px;
+  padding: 6px;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: none;
+  color: var(--text-dim);
+  opacity: 0.72;
+  cursor: pointer;
+  box-shadow: none;
+  transition: color var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out);
+}
+
+.moveoffer-reference > svg {
+  width: 100%;
+  height: 100%;
+}
+
+.moveoffer-reference:hover {
+  color: var(--accent);
+  opacity: 1;
 }
 
 .offer-hero-eyebrow {

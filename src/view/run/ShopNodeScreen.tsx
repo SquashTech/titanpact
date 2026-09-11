@@ -2,9 +2,10 @@ import { useState, type CSSProperties } from 'react';
 import type { RunState } from '../../run/state';
 import type { GuildHallOffers } from '../../run/shop';
 import type { GuildHallOffer } from '../../run/recruitment';
-import { GuildHallPanel } from './GuildHallPanel';
+import { GuildHallPanel, guildHallTabs, type GuildHallTab } from './GuildHallPanel';
 import { RosterPeek } from './RosterPeek';
 import { NodeHeader, NodePurse, NodeSky, NODE_TINT_MANA } from '../shared/NodeStage';
+import { TabStrip } from '../shared/TabStrip';
 
 interface Props {
   run: RunState;
@@ -32,6 +33,7 @@ export function ShopNodeScreen({
   muster = false,
 }: Props) {
   const [overlayOpen, setOverlayOpen] = useState(false);
+  const [tab, setTab] = useState<GuildHallTab>('heroes');
   return (
     <div className="node-screen shop-node-screen" style={{ '--node-rgb': NODE_TINT_MANA } as CSSProperties}>
       <NodeSky />
@@ -50,6 +52,10 @@ export function ShopNodeScreen({
         readout={muster ? 'The last shelf, and the last hands.' : 'People and gear — for gold.'}
       />
 
+      {/* Above the scroll, not in it: the two counters (2026-09-10, per user direction) are a
+          control the thumb comes back to, and one that scrolled away with the shelf was not. */}
+      <TabStrip className="guild-hall-tabs" tabs={guildHallTabs(run, offers, muster)} active={tab} onSelect={setTab} />
+
       <div className="screen-scroll">
         <GuildHallPanel
           run={run}
@@ -59,7 +65,7 @@ export function ShopNodeScreen({
           onBuyEquipment={onBuyEquipment}
           onRequestRosterReplace={onRequestRosterReplace}
           onOverlayChange={setOverlayOpen}
-          title={muster ? 'The Vigil' : 'Guild Hall'}
+          tab={tab}
           freeRecruits={muster}
         />
       </div>

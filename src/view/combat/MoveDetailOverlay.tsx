@@ -207,12 +207,14 @@ interface CardProps {
   context?: MoveDossierContext;
   /** Who is casting, for screens with a hero but no live fight. A `context` supersedes it. Without either, a heal falls back to its authored HealPower. */
   caster?: HealCaster;
+  /** Payload rows keep their one-line claim and drop the rule sentence under it — for a screen that has to fit a decision beneath the card. */
+  terse?: boolean;
 }
 
 const SCALES_BASE_POWER = 'scales base power, not the finished hit';
 
 /** The move dossier: a live damage band, the priority bracket, and the mana left after casting. */
-export function MoveDetailCard({ move, label, context, caster }: CardProps) {
+export function MoveDetailCard({ move, label, context, caster, terse }: CardProps) {
   const typeColor = getTypeColor(move.type);
   const attacker = context ? context.combat.combatants[context.attackerId] : undefined;
   const attackerHero = attacker ? allCombatants[attacker.heroId] : undefined;
@@ -325,7 +327,7 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
   const forecastIds = context && move.kind === 'damage' ? context.defenderIds : [];
 
   return (
-    <div className="move-detail-card" style={{ '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}>
+    <div className={`move-detail-card${terse ? ' is-terse' : ''}`} style={{ '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}>
       {label && <div className="move-detail-label">{label}</div>}
 
       <div className="move-detail-head">

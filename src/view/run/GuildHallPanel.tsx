@@ -1,4 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
 import { heroes } from '../../data/heroes';
 import { equipment } from '../../data/equipment';
 import { guildHallOffers, CONTRACT_PURCHASE_COST, SCROLL_PURCHASE_COST } from '../../data/recruitment';
@@ -23,15 +24,38 @@ import { getTypeColor } from '../combat/typeColors';
 import { EquipmentIcon, ItemEffectChips, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { overlayHost } from '../shared/overlayHost';
+import type { TabSpec } from '../shared/TabStrip';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { EquipInspectOverlay } from './EquipChoiceCard';
 import { RecruitFanfare } from './RecruitFanfare';
 import { SellSection } from './SellSection';
 
+export type GuildHallTab = 'heroes' | 'gear';
+
+/** The hero shelf as the panel shows it: heroes already on the roster are off it, and the Vigil's are free. */
+export function guildHeroOffers(run: RunState, offers: GuildHallOffers, freeRecruits: boolean): GuildHallOffer[] {
+  return offers.heroOfferIds
+    .map((id) => guildHallOffers.find((o) => o.id === id))
+    .filter((o): o is GuildHallOffer => !!o && !run.roster.some((r) => r.heroId === o.heroId))
+    // Every downstream read goes through the offer's own cost, so zeroing it here is the whole discount.
+    .map((offer) => (freeRecruits ? { ...offer, cost: 0 } : offer));
+}
+
+/** The two counters (2026-09-10, per user direction): people on one, gear on the other. */
+export function guildHallTabs(run: RunState, offers: GuildHallOffers, freeRecruits: boolean): readonly TabSpec<GuildHallTab>[] {
+  return [
+    { id: 'heroes', label: 'Heroes', glyph: 'heroes', count: guildHeroOffers(run, offers, freeRecruits).length },
+    { id: 'gear', label: 'Gear', glyph: 'equipment', count: offers.equipmentOfferIds.length },
+  ];
+}
+
 interface Props {
   run: RunState;
   /** Rolled once at node-select time (App.tsx, run/shop.ts rollGuildHallOffers). */
   offers: GuildHallOffers;
+  /** Which counter is showing; the host owns the strip so it stays put above the scroll. */
+  tab: GuildHallTab;
   /** Bought on this visit; carried by App.tsx so a re-render of this panel cannot forget it. */
   soldOutEquipmentIds: readonly string[];
   onRunChange: (next: RunState) => void;
@@ -41,8 +65,6 @@ interface Props {
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
   /** Fires when this panel opens/closes a modal, so the host can pull its own bottom CTA. */
   onOverlayChange?: (open: boolean) => void;
-  /** Heading, so Act 6's Vigil is not a fourth Guild Hall (docs/run-loop.md §4). */
-  title?: string;
   /** The Vigil musters rather than sells: a 6v4 finale is a bug the player cannot see coming. */
   freeRecruits?: boolean;
 }
@@ -128,7 +150,7 @@ export function GuildHallPanel({
   onBuyEquipment,
   onRequestRosterReplace,
   onOverlayChange,
-  title = 'Guild Hall',
+  tab,
   freeRecruits = false,
 }: Props) {
   const [previewOfferId, setPreviewOfferId] = useState<string | null>(null);
@@ -138,11 +160,7 @@ export function GuildHallPanel({
   /** The hero the joining cinematic is running for. The roster-full path fires it from App instead. */
   const [fanfareHeroId, setFanfareHeroId] = useState<string | null>(null);
 
-  const heroOffers = offers.heroOfferIds
-    .map((id) => guildHallOffers.find((o) => o.id === id))
-    .filter((o): o is GuildHallOffer => !!o && !run.roster.some((r) => r.heroId === o.heroId))
-    // Every downstream read goes through the offer's own cost, so zeroing it here is the whole discount.
-    .map((offer) => (freeRecruits ? { ...offer, cost: 0 } : offer));
+  const heroOffers = guildHeroOffers(run, offers, freeRecruits);
   const equipmentOffers = offers.equipmentOfferIds.map((id) => equipment[id]).filter((i): i is EquipmentDefinition => !!i);
 
   const rosterFull = run.roster.length >= ROSTER_CAP;
@@ -190,199 +208,210 @@ export function GuildHallPanel({
 
   return (
     <div className="guild-hall">
-      <div className="guild-hall-section">
-        <div className="guild-hall-section-head">
-          <span className="guild-hall-section-title">
-            <SectionGlyph name="moves" /> Recruits
-          </span>
-          {/* What 50g buys is now half of what it used to (docs/growth-overhaul.md §6): a hire
-              arrives RAW — no Evolution, rank 1, its own three moves — where a Recruit Contract's
-              hero arrives finished. The hint has to say so, or the two routes look interchangeable
-              and the cheaper-looking one is quietly the weaker. */}
-          <span className="guild-hall-section-hint">
-            Unevolved, unranked — yours to build
-            {rosterFull ? ` · roster is full (${ROSTER_CAP}/${ROSTER_CAP}), so a hire asks who leaves` : ''}
-          </span>
-        </div>
-        {heroOffers.length > 0 ? (
-          <div className="guild-hall-hero-grid">
-            {heroOffers.map((offer) => {
-              const hero = heroes[offer.heroId];
-              return (
-                <GuildHallHeroCard
-                  key={offer.id}
-                  hero={hero}
-                  offer={offer}
-                  level={guildHallLevel(run.actNumber)}
-                  affordable={run.gold >= offer.cost}
-                  onInspect={() => setPreviewOfferId(offer.id)}
-                />
-              );
-            })}
+      {tab === 'heroes' && (
+        <div className="guild-hall-section">
+          <div className="guild-hall-section-head">
+            <span className="guild-hall-section-title">
+              <SectionGlyph name="heroes" /> Recruits
+            </span>
+            {/* What 50g buys is now half of what it used to (docs/growth-overhaul.md §6): a hire
+                arrives RAW — no Evolution, rank 1, its own three moves — where a Recruit Contract's
+                hero arrives finished. The hint has to say so, or the two routes look interchangeable
+                and the cheaper-looking one is quietly the weaker. */}
+            <span className="guild-hall-section-hint">
+              Unevolved, unranked — yours to build
+              {rosterFull ? ` · roster is full (${ROSTER_CAP}/${ROSTER_CAP}), so a hire asks who leaves` : ''}
+            </span>
           </div>
-        ) : (
-          <p className="hint">No recruits on offer this visit.</p>
-        )}
-        {/* Two goods on a shelf, side by side. They used to be two full-width rows — glyph,
-            name, gray sentence, price hard right — which is a shopping-cart line item, and it
-            is what made the whole panel read as an invoice rather than as a counter. */}
-        <div className="guild-hall-shelf">
-          <button className="guild-hall-good is-contract" disabled={!canBuyContract} onClick={() => setConfirmingContract(true)}>
-            <span className="guild-hall-good-glyph">
-              <ResourceGlyph kind="contract" tone="inherit" />
-            </span>
-            <span className="guild-hall-good-name">Recruit Contract</span>
-            <span className="guild-hall-good-desc">Claim a beaten enemy hero, free, later.</span>
-            <span className="guild-hall-good-price">
-              <ResourceGlyph kind="gold" /> {CONTRACT_PURCHASE_COST}
-            </span>
-            {run.recruitContracts > 0 && (
-              <span className="guild-hall-good-held" aria-label={`${run.recruitContracts} held`}>
-                {run.recruitContracts}
+          {heroOffers.length > 0 ? (
+            <div className="guild-hall-hero-grid">
+              {heroOffers.map((offer) => {
+                const hero = heroes[offer.heroId];
+                return (
+                  <GuildHallHeroCard
+                    key={offer.id}
+                    hero={hero}
+                    offer={offer}
+                    level={guildHallLevel(run.actNumber)}
+                    affordable={run.gold >= offer.cost}
+                    onInspect={() => setPreviewOfferId(offer.id)}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <p className="hint">No recruits on offer this visit.</p>
+          )}
+          {/* Two goods on a shelf, side by side. They used to be two full-width rows — glyph,
+              name, gray sentence, price hard right — which is a shopping-cart line item, and it
+              is what made the whole panel read as an invoice rather than as a counter. */}
+          <div className="guild-hall-shelf">
+            <button className="guild-hall-good is-contract" disabled={!canBuyContract} onClick={() => setConfirmingContract(true)}>
+              <span className="guild-hall-good-glyph">
+                <ResourceGlyph kind="contract" tone="inherit" />
               </span>
-            )}
-          </button>
-          {/* No confirm, unlike the Contract: a Scroll is spent later and on whoever you like, so
-              there is nothing here to get wrong. Buying is the reversible half of the decision. */}
-          <button className="guild-hall-good is-scroll" disabled={!canBuyScroll} onClick={handleBuyScroll}>
-            <span className="guild-hall-good-glyph">
-              <ResourceGlyph kind="scroll" tone="inherit" />
-            </span>
-            <span className="guild-hall-good-name">Mastery Scroll</span>
-            {/* No held count: a Scroll bought here is poured the moment the Guild Hall is left
-                (App.tsx raises MasteryScreen on the way back to the map), never carried. */}
-            <span className="guild-hall-good-desc">Teach one hero a move, on the way out.</span>
-            <span className="guild-hall-good-price">
-              <ResourceGlyph kind="gold" /> {SCROLL_PURCHASE_COST}
-            </span>
-          </button>
-        </div>
-      </div>
-
-      <div className="guild-hall-section">
-        <div className="guild-hall-section-head">
-          <span className="guild-hall-section-title">
-            <SectionGlyph name="equipment" /> Equipment
-          </span>
-          <span className="guild-hall-section-hint">Bought outright, and worn from the roster</span>
-        </div>
-        {equipmentOffers.length > 0 ? (
-          <div className="equip-cache-list guild-hall-equip-list">
-            {equipmentOffers.map((item) => {
-              const cost = EQUIPMENT_PRICE_BY_RARITY[item.rarity];
-              return (
-                <GuildHallEquipCard
-                  key={item.id}
-                  item={item}
-                  cost={cost}
-                  affordable={run.gold >= cost}
-                  soldOut={soldOutEquipmentIds.includes(item.id)}
-                  onInspect={() => setPreviewEquipId(item.id)}
-                />
-              );
-            })}
+              <span className="guild-hall-good-name">Recruit Contract</span>
+              <span className="guild-hall-good-desc">Claim a beaten enemy hero, free, later.</span>
+              <span className="guild-hall-good-price">
+                <ResourceGlyph kind="gold" /> {CONTRACT_PURCHASE_COST}
+              </span>
+              {run.recruitContracts > 0 && (
+                <span className="guild-hall-good-held" aria-label={`${run.recruitContracts} held`}>
+                  {run.recruitContracts}
+                </span>
+              )}
+            </button>
+            {/* No confirm, unlike the Contract: a Scroll is spent later and on whoever you like, so
+                there is nothing here to get wrong. Buying is the reversible half of the decision. */}
+            <button className="guild-hall-good is-scroll" disabled={!canBuyScroll} onClick={handleBuyScroll}>
+              <span className="guild-hall-good-glyph">
+                <ResourceGlyph kind="scroll" tone="inherit" />
+              </span>
+              <span className="guild-hall-good-name">Mastery Scroll</span>
+              {/* No held count: a Scroll bought here is poured the moment the Guild Hall is left
+                  (App.tsx raises MasteryScreen on the way back to the map), never carried. */}
+              <span className="guild-hall-good-desc">Teach one hero a move, on the way out.</span>
+              <span className="guild-hall-good-price">
+                <ResourceGlyph kind="gold" /> {SCROLL_PURCHASE_COST}
+              </span>
+            </button>
           </div>
-        ) : (
-          <p className="hint">No gear on offer this visit.</p>
-        )}
-      </div>
+        </div>
+      )}
+
+      {tab === 'gear' && (
+        <div className="guild-hall-section">
+          <div className="guild-hall-section-head">
+            <span className="guild-hall-section-title">
+              <SectionGlyph name="equipment" /> Equipment
+            </span>
+            <span className="guild-hall-section-hint">Bought outright, and worn from the roster</span>
+          </div>
+          {equipmentOffers.length > 0 ? (
+            <div className="equip-cache-list guild-hall-equip-list">
+              {equipmentOffers.map((item) => {
+                const cost = EQUIPMENT_PRICE_BY_RARITY[item.rarity];
+                return (
+                  <GuildHallEquipCard
+                    key={item.id}
+                    item={item}
+                    cost={cost}
+                    affordable={run.gold >= cost}
+                    soldOut={soldOutEquipmentIds.includes(item.id)}
+                    onInspect={() => setPreviewEquipId(item.id)}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <p className="hint">No gear on offer this visit.</p>
+          )}
+        </div>
+      )}
 
       {/* The Anvil and the Enchanter moved to the Blacksmith (2026-09-08, per user direction):
           the Guild Hall trades in heroes and gear, the Blacksmith works on gear you already own. */}
-      <SellSection run={run} onRunChange={onRunChange} open={sellOpen} onOpenChange={setSellOpen} />
+      {tab === 'gear' && <SellSection run={run} onRunChange={onRunChange} open={sellOpen} onOpenChange={setSellOpen} />}
 
       {fanfareHeroId && (
         <RecruitFanfare heroId={fanfareHeroId} source="guild" onDone={() => setFanfareHeroId(null)} />
       )}
 
-      {previewOffer &&
-        (() => {
-          const affordable = run.gold >= previewOffer.cost;
-          return (
-            <HeroPreviewOverlay
-              hero={heroes[previewOffer.heroId]}
-              entry={guildHallEntry(run, previewOffer, 'preview')}
-              equipmentLookup={equipment}
-              relicIds={run.relics}
-              unowned
-              action={{
-                label:
-                  previewOffer.cost === 0
-                    ? `Muster ${heroes[previewOffer.heroId].name}`
-                    : `Recruit ${heroes[previewOffer.heroId].name} — ${previewOffer.cost}g`,
-                disabled: !affordable,
-                note: !affordable
-                  ? `Not enough gold — ${previewOffer.cost}g needed, you have ${run.gold}g.`
-                  : rosterFull
-                    ? `Roster is full (${ROSTER_CAP}/${ROSTER_CAP}) — you'll choose a hero to terminate next.`
-                    : undefined,
-                onConfirm: () => {
-                  handleRecruit(previewOffer);
-                  setPreviewOfferId(null);
-                },
-              }}
-              onClose={() => setPreviewOfferId(null)}
-            />
-          );
-        })()}
+      {/* Portalled: this panel lives inside the node screen's .screen-scroll, which is lifted to
+          its own stacking context, and a modal rendered in there paints UNDER the corner buttons. */}
+      {createPortal(
+        <>
+          {previewOffer &&
+            (() => {
+              const affordable = run.gold >= previewOffer.cost;
+              return (
+                <HeroPreviewOverlay
+                  hero={heroes[previewOffer.heroId]}
+                  entry={guildHallEntry(run, previewOffer, 'preview')}
+                  equipmentLookup={equipment}
+                  relicIds={run.relics}
+                  unowned
+                  action={{
+                    label:
+                      previewOffer.cost === 0
+                        ? `Muster ${heroes[previewOffer.heroId].name}`
+                        : `Recruit ${heroes[previewOffer.heroId].name} — ${previewOffer.cost}g`,
+                    disabled: !affordable,
+                    note: !affordable
+                      ? `Not enough gold — ${previewOffer.cost}g needed, you have ${run.gold}g.`
+                      : rosterFull
+                        ? `Roster is full (${ROSTER_CAP}/${ROSTER_CAP}) — you'll choose a hero to terminate next.`
+                        : undefined,
+                    onConfirm: () => {
+                      handleRecruit(previewOffer);
+                      setPreviewOfferId(null);
+                    },
+                  }}
+                  onClose={() => setPreviewOfferId(null)}
+                />
+              );
+            })()}
 
-      {previewEquip &&
-        (() => {
-          const cost = EQUIPMENT_PRICE_BY_RARITY[previewEquip.rarity];
-          const affordable = run.gold >= cost;
-          return (
-            <EquipInspectOverlay
-              item={previewEquip}
-              roster={run.roster}
-              action={{
-                label: `Buy ${previewEquip.name} — ${cost}g`,
-                disabled: !affordable,
-                note: !affordable
-                  ? `Not enough gold — ${cost}g needed, you have ${run.gold}g.`
-                  : 'It goes to your inventory. Hand it out from the Roster whenever you like.',
-                onConfirm: () => {
-                  setPreviewEquipId(null);
-                  onBuyEquipment(previewEquip.id);
-                },
-              }}
-              onClose={() => setPreviewEquipId(null)}
-            />
-          );
-        })()}
+          {previewEquip &&
+            (() => {
+              const cost = EQUIPMENT_PRICE_BY_RARITY[previewEquip.rarity];
+              const affordable = run.gold >= cost;
+              return (
+                <EquipInspectOverlay
+                  item={previewEquip}
+                  roster={run.roster}
+                  action={{
+                    label: `Buy ${previewEquip.name} — ${cost}g`,
+                    disabled: !affordable,
+                    note: !affordable
+                      ? `Not enough gold — ${cost}g needed, you have ${run.gold}g.`
+                      : 'It goes to your inventory. Hand it out from the Roster whenever you like.',
+                    onConfirm: () => {
+                      setPreviewEquipId(null);
+                      onBuyEquipment(previewEquip.id);
+                    },
+                  }}
+                  onClose={() => setPreviewEquipId(null)}
+                />
+              );
+            })()}
 
-      {/* The one purchase with nothing to open first, so it gets its own confirm. */}
-      {confirmingContract && (
-        <div className="log-overlay" onClick={() => setConfirmingContract(false)}>
-          <div className="log-panel move-popup-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="move-info-panel">
-              <div className="move-info-head">
-                <span className="move-info-name">
-                  <ResourceGlyph kind="contract" /> Recruit Contract
-                </span>
-                <span className="move-info-kind">{CONTRACT_PURCHASE_COST}g</span>
-              </div>
-              <div className="guild-hall-confirm-body">
-                A blank contract lets you claim one beaten enemy hero onto your roster, free, after any winnable fight.
-              </div>
-              <div className="guild-hall-confirm-ledger">
-                <span>
-                  Gold {run.gold}g → <strong>{run.gold - CONTRACT_PURCHASE_COST}g</strong>
-                </span>
-                <span>
-                  Contracts {run.recruitContracts} → <strong>{run.recruitContracts + 1}</strong>
-                </span>
+          {/* The one purchase with nothing to open first, so it gets its own confirm. */}
+          {confirmingContract && (
+            <div className="log-overlay" onClick={() => setConfirmingContract(false)}>
+              <div className="log-panel move-popup-panel" onClick={(e) => e.stopPropagation()}>
+                <div className="move-info-panel">
+                  <div className="move-info-head">
+                    <span className="move-info-name">
+                      <ResourceGlyph kind="contract" /> Recruit Contract
+                    </span>
+                    <span className="move-info-kind">{CONTRACT_PURCHASE_COST}g</span>
+                  </div>
+                  <div className="guild-hall-confirm-body">
+                    A blank contract lets you claim one beaten enemy hero onto your roster, free, after any winnable fight.
+                  </div>
+                  <div className="guild-hall-confirm-ledger">
+                    <span>
+                      Gold {run.gold}g → <strong>{run.gold - CONTRACT_PURCHASE_COST}g</strong>
+                    </span>
+                    <span>
+                      Contracts {run.recruitContracts} → <strong>{run.recruitContracts + 1}</strong>
+                    </span>
+                  </div>
+                </div>
+                <div className="detail-action">
+                  <button className="resolve-button" disabled={!canBuyContract} onClick={handleBuyContract}>
+                    Buy for {CONTRACT_PURCHASE_COST}g
+                  </button>
+                  <button className="detail-action-cancel" onClick={() => setConfirmingContract(false)}>
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
-            <div className="detail-action">
-              <button className="resolve-button" disabled={!canBuyContract} onClick={handleBuyContract}>
-                Buy for {CONTRACT_PURCHASE_COST}g
-              </button>
-              <button className="detail-action-cancel" onClick={() => setConfirmingContract(false)}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+          )}
+        </>,
+        overlayHost()
       )}
     </div>
   );

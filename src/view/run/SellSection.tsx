@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { equipment } from '../../data/equipment';
 import type { RunState } from '../../run/state';
 import { sellFromStash, RunProgressError } from '../../run/runProgress';
@@ -5,6 +6,7 @@ import { sellValueFor } from '../../run/shop';
 import { EquipmentFormGlyph } from '../shared/equipmentIcons';
 import { RARITY_LABELS } from '../shared/EquipmentBox';
 import { ResourceGlyph } from '../shared/RunGlyph';
+import { overlayHost } from '../shared/overlayHost';
 
 interface Props {
   run: RunState;
@@ -59,47 +61,50 @@ export function SellSection({ run, onRunChange, open, onOpenChange }: Props) {
         </button>
       </div>
 
-      {open && (
-        <div className="log-overlay" onClick={() => onOpenChange(false)}>
-          <div className="log-panel roster-peek-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="log-panel-header">
-              <span>
-                <ResourceGlyph kind="gold" /> Sell — {run.gold}g
-              </span>
-              <button className="log-close-button" onClick={() => onOpenChange(false)}>
-                ✕
-              </button>
-            </div>
+      {/* Portalled out of the node screen's lifted .screen-scroll — see GuildHallPanel. */}
+      {open &&
+        createPortal(
+          <div className="log-overlay" onClick={() => onOpenChange(false)}>
+            <div className="log-panel roster-peek-panel" onClick={(e) => e.stopPropagation()}>
+              <div className="log-panel-header">
+                <span>
+                  <ResourceGlyph kind="gold" /> Sell — {run.gold}g
+                </span>
+                <button className="log-close-button" onClick={() => onOpenChange(false)}>
+                  ✕
+                </button>
+              </div>
 
-            <div className="screen-scroll">
-              {empty ? (
-                <p className="hint">The bag is empty.</p>
-              ) : (
-                <div className="item-service-list">
-                  {run.stash.map((itemId, index) => {
-                    const item = equipment[itemId];
-                    if (!item) return null;
-                    return (
-                      <div key={`${itemId}-${index}`} className={`item-service-row tier-${item.rarity}`}>
-                        <EquipmentFormGlyph item={item} className="item-service-glyph" />
-                        <span className="item-service-body">
-                          <span className="item-service-name">{item.name}</span>
-                          <span className="item-service-holder">{RARITY_LABELS[item.rarity]}</span>
-                        </span>
-                        <button className="item-service-button is-sell" onClick={() => sell(index)}>
-                          <ResourceGlyph kind="gold" /> {sellValueFor(item)}
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+              <div className="screen-scroll">
+                {empty ? (
+                  <p className="hint">The bag is empty.</p>
+                ) : (
+                  <div className="item-service-list">
+                    {run.stash.map((itemId, index) => {
+                      const item = equipment[itemId];
+                      if (!item) return null;
+                      return (
+                        <div key={`${itemId}-${index}`} className={`item-service-row tier-${item.rarity}`}>
+                          <EquipmentFormGlyph item={item} className="item-service-glyph" />
+                          <span className="item-service-body">
+                            <span className="item-service-name">{item.name}</span>
+                            <span className="item-service-holder">{RARITY_LABELS[item.rarity]}</span>
+                          </span>
+                          <button className="item-service-button is-sell" onClick={() => sell(index)}>
+                            <ResourceGlyph kind="gold" /> {sellValueFor(item)}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
 
-            <div className="move-popup-hint">From the bag only — unequip at the Roster first</div>
-          </div>
-        </div>
-      )}
+              <div className="move-popup-hint">From the bag only — unequip at the Roster first</div>
+            </div>
+          </div>,
+          overlayHost()
+        )}
     </div>
   );
 }
