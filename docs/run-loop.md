@@ -632,7 +632,7 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
 
   | Banner | Grant |
   |---|---|
-  | Banner of Vitality | Team-wide +30 HP |
+  | Banner of Vitality | Team-wide +50 HP |
   | Banner of the Warcry | Team-wide +20 Attack, +20 Intelligence |
   | Banner of the Bulwark | Team-wide +15 Defense, +15 Wisdom |
   | Banner of Swiftness | Team-wide +20 Speed |
@@ -653,7 +653,7 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
 
   **Stacking** needs no new mechanism: duplicate relic ids already sum in
   `relicTeamStatModifiers`. What is new is how a stack is *written* — one card named
-  `Banner of Vitality +2` carrying the summed `+90 HP`, rather than three identical cards
+  `Banner of Vitality +2` carrying the summed `+150 HP`, rather than three identical cards
   (`src/view/shared/relicStacks.ts`, used by `RosterPeek` and the map's Banner shelf). The suffix
   counts copies **beyond the first**, the upgrade-pip convention: 3 copies reads "+2".
 

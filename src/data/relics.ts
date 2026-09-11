@@ -20,8 +20,8 @@ const guardianBanners: Record<string, RelicDefinition> = {
   bannerOfVitality: {
     id: 'bannerOfVitality',
     name: 'Banner of Vitality',
-    description: 'Team-wide +30 HP.',
-    statGrants: { hp: 60 },
+    description: 'Team-wide +50 HP.',
+    statGrants: { hp: 50 },
     guardianBanner: true,
   },
   bannerOfTheWarcry: {

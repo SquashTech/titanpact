@@ -399,7 +399,7 @@ what's still unimplemented:
   now come only from that per-act grant, a beaten enemy's contract claim, or a Guild
   Hall purchase). Beating an act's Guardian also grants **the Guardian's
   Banner** (2026-08-30; reshaped 2026-09-07): a fixed, never-rolled **1-of-5** team-wide relic,
-  one per axis — Vitality (+30 HP), Warcry (+20 Atk, +20 Int), Bulwark (+15 Def, +15 Wis),
+  one per axis — Vitality (+50 HP), Warcry (+20 Atk, +20 Int), Bulwark (+15 Def, +15 Wis),
   Swiftness (+20 Speed), Wellspring (+40 Mana, +10 MP Regen) — stackable across the
   five acts and displayed folded ("Banner of Vitality +2"). The Warcry carries two stats at
   full value because a hero swings with one or the other; the Bulwark's two are both live on
