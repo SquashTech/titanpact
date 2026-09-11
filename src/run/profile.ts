@@ -91,9 +91,20 @@ export function recordTutorialDone(profile: Profile): Profile {
   return profile.tutorialDone ? profile : { ...profile, tutorialDone: true };
 }
 
+/**
+ * DISABLED (2026-09-10, per user direction: "it needs a lot of work and I want to look at it
+ * later"). Flip to `true` to put the scripted first run back in front of a fresh profile.
+ *
+ * A flag rather than a deletion, and it sits HERE rather than at the call site so there is exactly
+ * one thing to flip: the script, the curated Act 1 map, the beat machinery and `Profile.tutorialDone`
+ * are all untouched and all still work. The Dev menu's "Replay Tutorial" calls `beginRun(true)`
+ * directly and never consulted this gate, so the tutorial stays reachable for the work it needs.
+ */
+const TUTORIAL_ENABLED = false;
+
 /** Whether a fresh run should be the scripted one (docs/tutorial.md). */
 export function shouldPlayTutorial(profile: Profile): boolean {
-  return !profile.tutorialDone;
+  return TUTORIAL_ENABLED && !profile.tutorialDone;
 }
 
 /** Monotonic: reaching Act 2 after a run that reached Act 4 does not walk the record back. */

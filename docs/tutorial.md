@@ -8,6 +8,22 @@
 > mode: a tutorial run is a normal run with Act 1 pinned, and nothing survives the first
 > Guardian except the profile bit saying it happened.
 
+> ## ⚠ TURNED OFF (2026-09-10)
+>
+> Per user direction — *"it needs a lot of work and I want to look at it later"*. A fresh profile
+> now starts an **ordinary** run; everything below still describes what is built, and none of it was
+> removed.
+>
+> The switch is `TUTORIAL_ENABLED` in `src/run/profile.ts`, read by `shouldPlayTutorial` — which has
+> exactly one caller (`handleStartNewRun`). Flip it to `true` to put the scripted run back. It lives
+> in `profile.ts` rather than at the call site so there is one thing to flip rather than a condition
+> to reconstruct.
+>
+> **Still reachable while it is off**: the Dev menu's *Replay Tutorial* calls `beginRun(true)`
+> directly and never consulted the gate, so the whole scripted act can still be played and worked
+> on. `Profile.tutorialDone`, the curated Act 1 map, the beat machinery and every test in
+> `test/tutorial.test.ts` are untouched and still pass.
+
 ---
 
 ## 1. What it is
