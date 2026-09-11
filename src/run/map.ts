@@ -21,8 +21,7 @@ export const MAP_NODE_TYPES = [
   'passiveReward',
   'currencyReward',
   'forgeReward',
-  'crucibleReward',
-  'classReward',
+  'mentorReward',
   'tutorReward',
   'event',
   // Act 6 only (docs/run-loop.md §4). `muster` is the Vigil, `finale` the Endbringer.
@@ -56,19 +55,18 @@ const BASE_ROW_WIDTHS = [1, 3, 1, 3, 2, 3, 1, 1] as const;
 const SKIRMISH_ROW = 2;
 
 /**
- * Forced single classReward row, spliced in immediately BEFORE the Skirmish — the ONLY
- * place a Class offer appears in any act. It sits ahead of the Skirmish so the Class is in
- * hand for the act's first recruitable fight rather than arriving after it, which pushes
- * the Skirmish down one row in every act that has one.
+ * Forced single-node row spliced in immediately BEFORE the Skirmish, acts 1-4. In acts 1-3 it is
+ * the Mentor (`mentorReward`, docs/growth-overhaul.md §11) — the ONLY place one appears, since it
+ * is absent from REWARD_WEIGHTS — sitting ahead of the Skirmish so the move is in hand for the
+ * act's first recruitable fight. Act 4's row is a forced Forge instead (2026-09-11, per user
+ * direction): a free slot at about the time a third slot on the carry matters, and the row was
+ * already paid for. The splice pushes the Skirmish down one row in every act that has it.
  */
 const MENTOR_ROW = SKIRMISH_ROW;
 
-/**
- * Acts 1-4 each guarantee a Mentor (2026-09-05, per user direction — it was Act 1 only).
- * Act 5 deliberately has none: a different beat is being designed for it. Act 6 never
- * reaches here at all, being the finale corridor.
- */
-const LAST_MENTOR_ACT = 4;
+/** Acts 1-3 carry the Mentor; act 4's spliced row is the Forge. Act 5 has no spliced row, and Act 6 is the finale corridor. */
+const LAST_MENTOR_ACT = 3;
+const LAST_SPLICED_ACT = 4;
 
 /**
  * The Tutor (2026-09-07, per user direction): one guaranteed seat in each of acts 4 and 5,
@@ -83,13 +81,19 @@ function hasTutor(actNumber: number): boolean {
   return TUTOR_ACTS.includes(actNumber);
 }
 
-function hasMentorRow(actNumber: number): boolean {
-  return actNumber >= 1 && actNumber <= LAST_MENTOR_ACT;
+/** Whether the act carries the spliced row at all — Mentor or Forge. */
+function hasSplicedRow(actNumber: number): boolean {
+  return actNumber >= 1 && actNumber <= LAST_SPLICED_ACT;
 }
 
-/** The Mentor row pushes the Skirmish down one wherever it appears. */
+/** What the spliced row holds: the Mentor through LAST_MENTOR_ACT, the Forge after. */
+function splicedRowType(actNumber: number): MapNodeType {
+  return actNumber <= LAST_MENTOR_ACT ? 'mentorReward' : 'forgeReward';
+}
+
+/** The spliced row pushes the Skirmish down one wherever it appears. */
 function skirmishRowFor(actNumber: number): number {
-  return hasMentorRow(actNumber) ? SKIRMISH_ROW + 1 : SKIRMISH_ROW;
+  return hasSplicedRow(actNumber) ? SKIRMISH_ROW + 1 : SKIRMISH_ROW;
 }
 
 /**
@@ -106,10 +110,10 @@ function hasBlacksmith(actNumber: number): boolean {
 }
 
 function rowWidthsFor(actNumber: number): number[] {
-  const widths = hasMentorRow(actNumber)
+  const widths = hasSplicedRow(actNumber)
     ? [...BASE_ROW_WIDTHS.slice(0, MENTOR_ROW), 1, ...BASE_ROW_WIDTHS.slice(MENTOR_ROW)]
     : [...BASE_ROW_WIDTHS];
-  // The funnel is always the row under the boss, wherever the Mentor splice left it.
+  // The funnel is always the row under the boss, wherever the splice left it.
   if (hasBlacksmith(actNumber)) widths[widths.length - 2] = 2;
   return widths;
 }
@@ -117,21 +121,15 @@ function rowWidthsFor(actNumber: number): number[] {
 /** The pick-1-of-3 width. The Tutor only ever seats in a reward row this wide. */
 const TUTOR_ROW_WIDTH = 3;
 
-/**
- * The act from which a Crucible can appear on a reward row (2026-09-10, per user direction).
- * Acts 1-2 already get one apiece off their own Guardian, and a roster still forming is not
- * where a SECOND Evolution is the interesting pick.
- */
-const CRUCIBLE_FIRST_ACT = 3;
-
-/** Reward-row pool. `classReward` and `tutorReward` are deliberately absent — each has its own forced seat. Weights are a first-pass balance. */
+/** Reward-row pool. `mentorReward` and `tutorReward` are deliberately absent — each has its own forced seat. Weights are a first-pass balance. */
 const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // equipmentReward absorbs most of the frequency the three slot caches used to carry.
   ['equipmentReward', 40],
   // The Scroll cache. Weighted level with equipment: they are the run's two growth axes now,
   // one per hero's numbers and one per hero's kit, and neither should be the one you plan
-  // around. On top of the 2 an act every Guardian pays (docs/growth-overhaul.md §4).
-  ['scrollReward', 34],
+  // around. On top of what the fights pay (docs/growth-overhaul.md §11). 34 -> 46 (2026-09-11):
+  // the deleted Crucible node's 12, since a longer ladder is what its Evolutions moved onto.
+  ['scrollReward', 46],
   // The Boon: the part of the deleted relic pool that was actually worth having, handed to ONE
   // hero instead of all four. It is the only reward row node that changes how a hero plays
   // rather than how big its numbers are.
@@ -148,34 +146,9 @@ const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // further drop into a sell. Slots are what was taken and slots are what is handed back. The node
   // is also no longer half-dead on arrival — nobody starts one Forge from the cap any more.
   ['forgeReward', 38],
-  // The extra Crucible (docs/growth-overhaul.md §5). Scarce on purpose: five arrive free off the
-  // Guardians, and this is the sixth — the one that finishes a roster rather than starting it.
-  ['crucibleReward', 12],
   // FLAGGED FOR THE DESIGNER: 16 is an inference, not a decision — how often a run meets an event is a real tuning question.
   ['event', 16],
 ];
-
-/**
- * The pool this act's reward rows actually roll from. The Crucible drops out below
- * `CRUCIBLE_FIRST_ACT`, and out entirely when no hero has an Evolution left to take — a reward
- * row is a pick of THREE, so a card nobody can spend is a third of the choice gone.
- *
- * It has to be filtered here rather than at the node, the way a type-locked Boon filters itself
- * (`src/run/boons.ts`): a Boon rolls its offers when the player arrives, where a map rolls its
- * nodes an act ahead. So the caller passes what it knows, and `generateMap` cannot answer it.
- */
-function rewardPoolFor(actNumber: number, options: MapOptions): readonly [MapNodeType, number][] {
-  const crucible = actNumber >= CRUCIBLE_FIRST_ACT && options.evolutionsLeft !== false;
-  return crucible ? REWARD_WEIGHTS : REWARD_WEIGHTS.filter(([type]) => type !== 'crucibleReward');
-}
-
-export interface MapOptions {
-  /**
-   * Whether any roster hero still has an Evolution to take (`anyEvolutionAvailable`). Defaults to
-   * true, so a caller with no roster to consult — a test, a fixture — gets the full pool.
-   */
-  evolutionsLeft?: boolean;
-}
 
 /** Weighted sample WITHOUT replacement — a reward row never repeats a type. REWARD_WEIGHTS is wider than any row, so `count` is always satisfiable. */
 function pickWeightedDistinct(
@@ -233,7 +206,7 @@ function finaleMap(seed: number): RunMap {
  * repair pass so every node has an incoming edge. eliteRow/funnelRow/bossRow
  * are derived from the shape's length so the Mentor acts' extra row lands correctly.
  */
-export function generateMap(seed: number, actNumber: number = 1, options: MapOptions = {}): RunMap {
+export function generateMap(seed: number, actNumber: number = 1): RunMap {
   if (actNumber >= FINALE_ACT) return finaleMap(seed);
   const rowWidths = rowWidthsFor(actNumber);
   const bossRow = rowWidths.length - 1;
@@ -241,7 +214,7 @@ export function generateMap(seed: number, actNumber: number = 1, options: MapOpt
   // A pick-1-of-3 reward row sits between the Elite/Battle choice and the funnel, so the Elite
   // row is two up from the funnel rather than one.
   const eliteRow = funnelRow - 2;
-  const mentorRow = hasMentorRow(actNumber) ? MENTOR_ROW : -1;
+  const mentorRow = hasSplicedRow(actNumber) ? MENTOR_ROW : -1;
   const skirmishRow = skirmishRowFor(actNumber);
 
   function isRewardRow(row: number): boolean {
@@ -251,14 +224,13 @@ export function generateMap(seed: number, actNumber: number = 1, options: MapOpt
   function fixedNodeType(row: number, col: number): MapNodeType {
     if (row === 0) return 'fight';
     // Mentor first: where it exists it OWNS SKIRMISH_ROW, and the Skirmish has moved down to skirmishRow.
-    if (row === mentorRow) return 'classReward';
+    if (row === mentorRow) return splicedRowType(actNumber);
     if (row === skirmishRow) return 'skirmish';
     if (row === eliteRow) return col === 0 ? 'elite' : 'battle';
     if (row === funnelRow) return col === 0 ? 'shop' : 'blacksmith';
     return 'boss';
   }
 
-  const rewardPool = rewardPoolFor(actNumber, options);
   let rng = createRng(seed);
 
   // The Tutor's seat is rolled BEFORE any row is generated, so its two draws sit at a fixed
@@ -292,7 +264,7 @@ export function generateMap(seed: number, actNumber: number = 1, options: MapOpt
       // A Tutor row rolls one fewer reward and the Tutor takes the freed seat rather than
       // overwriting a rolled one — the row still offers three distinct things.
       const forced = row === tutorRow ? 1 : 0;
-      const picked = pickWeightedDistinct(rng, rewardPool, rowWidths[row] - forced);
+      const picked = pickWeightedDistinct(rng, REWARD_WEIGHTS, rowWidths[row] - forced);
       rewardTypes = picked.values;
       rng = picked.nextState;
       if (forced) rewardTypes.splice(tutorCol, 0, 'tutorReward');

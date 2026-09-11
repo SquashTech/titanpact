@@ -5,17 +5,24 @@ import { progressionTable } from '../../data/progression';
 import type { HeroDefinition } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
 import {
+  EVOLUTION_SCROLLS,
   MAX_MASTERY_RANK,
   MOVE_CAP,
-  SCROLLS_PER_RANK,
+  RANK_THRESHOLDS,
+  SCROLLS_TO_MAX_RANK,
+  applyEvolutionMoves,
+  availableEvolution,
   canSpendScroll,
+  chooseEvolutionPath,
   grantOfferedMove,
+  masteryMovePool,
   masteryRank,
   recordMoveOffer,
   rosterEntryTypes,
   scrollMovePool,
   scrollsToNextRank,
   spendMasteryScroll,
+  type EvolutionNode,
 } from '../../run/progression';
 import { playSfx } from '../../audio/sfx';
 import { getTypeColor } from '../combat/typeColors';
@@ -23,12 +30,6 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
 import { useLongPress } from '../shared/MoveTile';
 import { MoveLearnedOverlay, MoveOfferOverlay } from './MoveOfferOverlay';
-
-interface Props {
-  run: RunState;
-  onRunChange: (next: RunState) => void;
-  onInspect: (entry: RosterEntry, hero: HeroDefinition) => void;
-}
 
 /** How long the row drinks the Scroll before the move is put in front of the player (styles.css mastery-pour). */
 const POUR_MS = 760;
@@ -42,7 +43,163 @@ interface ScrollOffer {
   moveId: string;
   /** Read off the PRE-spend entry, so the line can say what the spend just did. */
   rankedUp: boolean;
+  /** This pour was the Evolution's, and the offer is what came after it. */
+  evolved: boolean;
   learned: boolean;
+}
+
+/** The 6th Scroll's Evolution, waiting on the player. The Scroll's own offer rolls once it is chosen. */
+interface Evolving {
+  rosterId: string;
+  node: EvolutionNode;
+  rankedUp: boolean;
+}
+
+/** A path's granted move the four-move cap refused, offered as a replace-or-decline before the Scroll's own roll. */
+interface Overflow {
+  rosterId: string;
+  queue: string[];
+  rankedUp: boolean;
+}
+
+/**
+ * The state of one pour, owned by the screen rather than the board because the Evolution is a
+ * whole screen of its own (docs/growth-overhaul.md §11): the 6th Scroll into a hero raises it for
+ * that hero, its move grant's overflow is offered, and only then does the Scroll's own offer roll
+ * — from the post-Evolution pool, so a graft's line is in it the same pour.
+ */
+export interface PourFlow {
+  /** The row mid-pour. Nothing else on the board takes a tap until it has finished drinking. */
+  pouring: string | null;
+  /** The move that landed on the pouring row, so its chip can arrive rather than appear. */
+  landing: { rosterId: string; moveId: string } | null;
+  offer: ScrollOffer | null;
+  evolving: Evolving | null;
+  overflow: Overflow | null;
+  spend: (entry: RosterEntry) => void;
+  resolveOffer: (replaceMoveId: string | null, learn: boolean) => void;
+  closeOffer: () => void;
+  chooseEvolution: (pathId: string) => void;
+  resolveOverflow: (replaceMoveId: string | null, learn: boolean) => void;
+}
+
+export function useScrollPour(run: RunState, onRunChange: (next: RunState) => void): PourFlow {
+  const [offer, setOffer] = useState<ScrollOffer | null>(null);
+  const [pouring, setPouring] = useState<string | null>(null);
+  const [landing, setLanding] = useState<{ rosterId: string; moveId: string } | null>(null);
+  const [evolving, setEvolving] = useState<Evolving | null>(null);
+  const [overflow, setOverflow] = useState<Overflow | null>(null);
+
+  useEffect(() => {
+    if (!pouring) return;
+    const timer = window.setTimeout(() => setPouring(null), POUR_MS);
+    return () => window.clearTimeout(timer);
+  }, [pouring]);
+
+  /**
+   * The Scroll's offer, rolled off `next` — the run AFTER the spend and after any Evolution it
+   * raised. A dry band buys the tick and nothing is put in front of anyone: the row's own pips
+   * are the whole of what changed.
+   */
+  function rollOffer(next: RunState, rosterId: string, rankedUp: boolean, evolved: boolean, delay: number) {
+    const current = next.roster.find((r) => r.rosterId === rosterId)!;
+    const pool = masteryMovePool(progressionTable, moves, current);
+    if (pool.length === 0) {
+      onRunChange(next);
+      return;
+    }
+    const moveId = pool[Math.floor(Math.random() * pool.length)];
+    // The offer is spent by being MADE — declining still burns it (docs/leveling-and-ranks.md).
+    next = recordMoveOffer(next, rosterId, [moveId]);
+    // Room in the kit: the move simply lands (2026-09-10, per user direction). "Learn or decline"
+    // was a question with one sane answer, and the chip filling on the row while it pours is the
+    // payoff — the box after only names what it was. At the cap the question is real, and it is
+    // still asked.
+    const learned = current.unlockedMoveIds.length < MOVE_CAP;
+    if (learned) {
+      next = grantOfferedMove(next, rosterId, moveId);
+      setLanding({ rosterId, moveId });
+    }
+    onRunChange(next);
+    window.setTimeout(() => setOffer({ rosterId, moveId, rankedUp, evolved, learned }), delay);
+  }
+
+  function spend(entry: RosterEntry) {
+    if (pouring || !canSpendScroll(progressionTable, moves, run, entry)) return;
+    // Tick first, roll after: the Scroll that reaches a rung is the one that opens it, so the
+    // move it offers is already from the band it just unlocked.
+    const next = spendMasteryScroll(run, entry.rosterId);
+    const ranked = next.roster.find((r) => r.rosterId === entry.rosterId)!;
+    const rankedUp = masteryRank(ranked) > masteryRank(entry);
+    playSfx('scroll.spend', { pitch: rankedUp ? 1.18 : 1 });
+    setPouring(entry.rosterId);
+
+    // The Evolution rung: the pour lands, then the hero's Evolution screen rises. The Scroll's
+    // own offer waits for it, so it can draw from whatever the path opened.
+    const node = availableEvolution(progressionTable, ranked);
+    if (node && node.paths.length > 0) {
+      onRunChange(next);
+      window.setTimeout(() => setEvolving({ rosterId: entry.rosterId, node, rankedUp }), POUR_MS);
+      return;
+    }
+    rollOffer(next, entry.rosterId, rankedUp, false, POUR_MS);
+  }
+
+  function resolveOffer(replaceMoveId: string | null, learn: boolean) {
+    if (!offer) return;
+    if (learn) onRunChange(grantOfferedMove(run, offer.rosterId, offer.moveId, replaceMoveId ?? undefined));
+    setOffer(null);
+  }
+
+  function chooseEvolution(pathId: string) {
+    if (!evolving) return;
+    const entry = run.roster.find((r) => r.rosterId === evolving.rosterId);
+    const path = evolving.node.paths.find((p) => p.id === pathId);
+    if (!entry || !path) return;
+    // Read BEFORE the choice lands: the path's moves that MOVE_CAP refused become the same
+    // replace-or-decline offer a Scroll makes, one at a time, ahead of the Scroll's own.
+    const refused = applyEvolutionMoves(entry.unlockedMoveIds, path.unlocksMoveIds).overflow;
+    const next = chooseEvolutionPath(run, progressionTable, heroes, entry.rosterId, pathId);
+    setEvolving(null);
+    if (refused.length > 0) {
+      onRunChange(next);
+      setOverflow({ rosterId: entry.rosterId, queue: refused, rankedUp: evolving.rankedUp });
+    } else {
+      rollOffer(next, entry.rosterId, evolving.rankedUp, true, 0);
+    }
+  }
+
+  function resolveOverflow(replaceMoveId: string | null, learn: boolean) {
+    if (!overflow) return;
+    const [moveId, ...rest] = overflow.queue;
+    const next = learn ? grantOfferedMove(run, overflow.rosterId, moveId, replaceMoveId ?? undefined) : run;
+    if (rest.length > 0) {
+      onRunChange(next);
+      setOverflow({ ...overflow, queue: rest });
+    } else {
+      setOverflow(null);
+      rollOffer(next, overflow.rosterId, overflow.rankedUp, true, 0);
+    }
+  }
+
+  return {
+    pouring,
+    landing,
+    offer,
+    evolving,
+    overflow,
+    spend,
+    resolveOffer,
+    closeOffer: () => setOffer(null),
+    chooseEvolution,
+    resolveOverflow,
+  };
+}
+
+interface Props {
+  run: RunState;
+  flow: PourFlow;
+  onInspect: (entry: RosterEntry, hero: HeroDefinition) => void;
 }
 
 /**
@@ -60,20 +217,24 @@ function isFinished(entry: RosterEntry): boolean {
 }
 
 /**
- * Six pips, one per Scroll it takes to max a hero. The bar is the whole readout: rank is what the
- * pips have crossed, and the next threshold is where the gap is. Drawn rather than written because
- * "Rank 2, 1 to go" is two numbers for one fact.
+ * One pip per Scroll to the top rung. The bar is the whole readout: rank is what the pips have
+ * crossed, the next threshold is where the gap is, and the Evolution's pip is drawn differently
+ * because it is the one the player is pouring toward. Drawn rather than written because "Rank 2,
+ * 2 to go" is two numbers for one fact. Past the top rung the bar stays full — Rank 3 is open-ended.
  */
 function RankPips({ spent }: { spent: number }) {
-  const total = (MAX_MASTERY_RANK - 1) * SCROLLS_PER_RANK;
   return (
     <span className="mastery-pips" aria-hidden="true">
-      {Array.from({ length: total }, (_, i) => (
-        <span
-          key={i}
-          className={`mastery-pip${i < spent ? ' is-filled' : ''}${(i + 1) % SCROLLS_PER_RANK === 0 && i + 1 < total ? ' is-threshold' : ''}`}
-        />
-      ))}
+      {Array.from({ length: SCROLLS_TO_MAX_RANK }, (_, i) => {
+        const at = i + 1;
+        const threshold = at < SCROLLS_TO_MAX_RANK && RANK_THRESHOLDS.includes(at);
+        return (
+          <span
+            key={i}
+            className={`mastery-pip${at <= spent ? ' is-filled' : ''}${threshold ? ' is-threshold' : ''}${at === EVOLUTION_SCROLLS ? ' is-evolution' : ''}`}
+          />
+        );
+      })}
     </span>
   );
 }
@@ -85,65 +246,16 @@ function RankPips({ spent }: { spent: number }) {
  *
  * The list only, with no count and no chrome: since 2026-09-10 a Scroll is never held, so this is
  * mounted by MasteryScreen at the moment one is won and by nothing else. How many are left to
- * pour is the SCREEN's readout — this is the six answers to it.
+ * pour is the SCREEN's readout — this is the six answers to it. The pour itself is the screen's
+ * too (`useScrollPour`), because the 6th Scroll's Evolution is a screen of its own.
  *
  * **Six rows have to fit the screen without scrolling.** Six is ROSTER_CAP, so that is the worst
  * case, and it is the budget anything added to a row comes out of.
  */
-export function MasteryBoard({ run, onRunChange, onInspect }: Props) {
-  const [offer, setOffer] = useState<ScrollOffer | null>(null);
-  /** The row mid-pour. Nothing else on the board takes a tap until it has finished drinking. */
-  const [pouring, setPouring] = useState<string | null>(null);
-  /** The move that landed on the pouring row, so its chip can arrive rather than appear. */
-  const [landing, setLanding] = useState<{ rosterId: string; moveId: string } | null>(null);
-
+export function MasteryBoard({ run, flow, onInspect }: Props) {
+  const { pouring, landing, offer, overflow } = flow;
   const offerEntry = offer ? (run.roster.find((r) => r.rosterId === offer.rosterId) ?? null) : null;
-
-  useEffect(() => {
-    if (!pouring) return;
-    const timer = window.setTimeout(() => setPouring(null), POUR_MS);
-    return () => window.clearTimeout(timer);
-  }, [pouring]);
-
-  function spend(entry: RosterEntry) {
-    if (pouring || !canSpendScroll(progressionTable, moves, run, entry)) return;
-    // Tick first, roll after: the third Scroll into a hero is the one that opens Mid, so the
-    // move it offers is already from the band it just unlocked.
-    let next = spendMasteryScroll(run, entry.rosterId);
-    const ranked = next.roster.find((r) => r.rosterId === entry.rosterId)!;
-    const rankedUp = masteryRank(ranked) > masteryRank(entry);
-    playSfx('scroll.spend', { pitch: rankedUp ? 1.18 : 1 });
-    setPouring(entry.rosterId);
-
-    // A dry band below the cap: the Scroll buys the tick and there is no move to put in front of
-    // anyone. No box — the row's own pips are the whole of what changed.
-    const pool = scrollMovePool(progressionTable, moves, entry);
-    if (pool.length === 0) {
-      onRunChange(next);
-      return;
-    }
-
-    const moveId = pool[Math.floor(Math.random() * pool.length)];
-    // The offer is spent by being MADE — declining still burns it (docs/leveling-and-ranks.md).
-    next = recordMoveOffer(next, entry.rosterId, [moveId]);
-    // Room in the kit: the move simply lands (2026-09-10, per user direction). "Learn or decline"
-    // was a question with one sane answer, and the chip filling on the row while it pours is the
-    // payoff — the box after only names what it was. At the cap the question is real, and it is
-    // still asked.
-    const learned = entry.unlockedMoveIds.length < MOVE_CAP;
-    if (learned) {
-      next = grantOfferedMove(next, entry.rosterId, moveId);
-      setLanding({ rosterId: entry.rosterId, moveId });
-    }
-    onRunChange(next);
-    window.setTimeout(() => setOffer({ rosterId: entry.rosterId, moveId, rankedUp, learned }), POUR_MS);
-  }
-
-  function resolve(replaceMoveId: string | null, learn: boolean) {
-    if (!offer) return;
-    if (learn) onRunChange(grantOfferedMove(run, offer.rosterId, offer.moveId, replaceMoveId ?? undefined));
-    setOffer(null);
-  }
+  const overflowEntry = overflow ? (run.roster.find((r) => r.rosterId === overflow.rosterId) ?? null) : null;
 
   return (
     <div className="mastery-board">
@@ -161,15 +273,26 @@ export function MasteryBoard({ run, onRunChange, onInspect }: Props) {
               landingMoveId={landing?.rosterId === entry.rosterId ? landing.moveId : null}
               note={poolNote(entry)}
               finished={isFinished(entry)}
-              onSpend={() => spend(entry)}
+              onSpend={() => flow.spend(entry)}
               onInspect={() => onInspect(entry, hero)}
             />
           );
         })}
       </div>
 
+      {/* The overflow outranks the Scroll's own offer: finish what the Evolution owes first. */}
+      {overflow && overflowEntry && (
+        <MoveOfferOverlay
+          run={run}
+          entry={overflowEntry}
+          moveId={overflow.queue[0]}
+          eyebrow="The path grants a move — your kit is full"
+          onResolve={flow.resolveOverflow}
+        />
+      )}
+
       {offer && offerEntry && (
-        <ScrollOfferBox run={run} entry={offerEntry} offer={offer} onResolve={resolve} onClose={() => setOffer(null)} />
+        <ScrollOfferBox run={run} entry={offerEntry} offer={offer} onResolve={flow.resolveOffer} onClose={flow.closeOffer} />
       )}
     </div>
   );
@@ -187,7 +310,11 @@ interface OfferBoxProps {
 function ScrollOfferBox({ run, entry, offer, onResolve, onClose }: OfferBoxProps) {
   const rank = masteryRank(entry);
   const toNext = scrollsToNextRank(entry);
-  const eyebrow = offer.rankedUp ? `Rank ${rank} — a deeper band opens` : `Rank ${rank}${toNext > 0 ? ` — ${toNext} to the next` : ''}`;
+  const eyebrow = offer.evolved
+    ? 'Evolved — and the Scroll teaches on'
+    : offer.rankedUp
+      ? `Rank ${rank} — a deeper band opens`
+      : `Rank ${rank}${toNext > 0 ? ` — ${toNext} to the next` : ''}`;
   return offer.learned ? (
     <MoveLearnedOverlay run={run} entry={entry} moveId={offer.moveId} eyebrow={eyebrow} onClose={onClose} />
   ) : (
@@ -238,7 +365,7 @@ function MasteryRow({ hero, entry, rank, canSpend, pouring, landingMoveId, note,
         </span>
         <span className={`mastery-hero-rank${rank >= MAX_MASTERY_RANK ? ' is-max' : ''}`}>
           <span className="mastery-rank-num">Rank {rank}</span>
-          <RankPips spent={Math.min(entry.masteryScrollsSpent, (MAX_MASTERY_RANK - 1) * SCROLLS_PER_RANK)} />
+          <RankPips spent={entry.masteryScrollsSpent} />
         </span>
       </div>
 

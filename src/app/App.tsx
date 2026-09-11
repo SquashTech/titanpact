@@ -33,7 +33,6 @@ import { CrucibleScreen } from '../view/run/CrucibleScreen';
 import { RosterReplaceScreen } from '../view/run/RosterReplaceScreen';
 import { RecruitScreen } from '../view/run/RecruitScreen';
 import { RecruitFanfare } from '../view/run/RecruitFanfare';
-import { ClassNodeScreen } from '../view/run/ClassNodeScreen';
 import { EventNodeScreen } from '../view/run/EventNodeScreen';
 import { runEvents } from '../data/events';
 import { rollRunEvent } from '../run/events';
@@ -72,6 +71,7 @@ import {
 import { guildHallOffers } from '../data/recruitment';
 import { rollGuildHallOffers, buyEquipment, ShopError, type GuildHallOffers } from '../run/shop';
 import { guildHallEntry } from '../run/guildRecruit';
+import { anyClassAvailable } from '../run/classes';
 import { generateMap, type MapNodeType } from '../run/map';
 import {
   generateTutorialMap,
@@ -119,12 +119,13 @@ import {
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
 import { createStatusTestSides } from '../run/statusTestFight';
 import {
-  anyEvolutionAvailable,
-  availableEvolution,
   canSpendScroll,
   fullMovepool,
   grantMasteryScrolls,
   SCROLLS_PER_ACT,
+  EVOLUTION_SCROLLS,
+  SCROLLS_PER_ELITE,
+  SCROLLS_PER_FIGHT,
   SCROLLS_PER_SKIRMISH,
 } from '../run/progression';
 import { progressionTable } from '../data/progression';
@@ -165,10 +166,9 @@ type Screen =
   /** The Forge: +1 item slot to one hero. */
   | { kind: 'forge'; nodeId: string }
   | { kind: 'blacksmith'; nodeId: string }
-  | { kind: 'classNode'; nodeId: string }
   | { kind: 'boonNode'; nodeId: string }
-  /** The Tutor: one hero learns any move off its own level-up pool. Acts 4-5 only (run/map.ts). */
-  | { kind: 'tutorNode'; nodeId: string }
+  /** The Tutor (acts 4-5) and the Mentor (acts 1-3): the same screen with a tier ceiling. */
+  | { kind: 'tutorNode'; nodeId: string; variant: 'tutor' | 'mentor' }
   /** Which event this node is gets rolled ONCE at node-select time — the screen re-renders on every onRunChange. */
   | { kind: 'event'; nodeId: string; eventId: string }
   /** What the fight just did to the roster. First in the post-fight chain — it is the fight's own consequence. */
@@ -177,8 +177,8 @@ type Screen =
   | { kind: 'mastery'; next: Screen }
   /** Guardian's Banner after a Guardian win in acts 1-4. Not a map node, so no nodeId. */
   | { kind: 'guardianBanner'; next: Screen }
-  /** The Crucible: pick one hero, and that hero evolves. A `nodeId` means it came off a map node. */
-  | { kind: 'crucible'; nodeId?: string; next: Screen }
+  /** The Crucible: pick one hero, and that hero takes a Class. The Guardian's beat. */
+  | { kind: 'crucible'; next: Screen }
   /** Roster-full replacement, Guild Hall path only; the contract path resolves in RecruitScreen. */
   | { kind: 'rosterReplace'; candidate: RosterReplaceCandidate; next: Screen }
   /** Offers sampled once in handleFightResolved; only pushed when the player holds a contract. */
@@ -261,14 +261,19 @@ function shuffled<T>(items: readonly T[]): T[] {
   return out;
 }
 
-/** TEMPORARY DEV/TEST — a full roster one level under Evolution with one point to spend. Remove with its TitleScreen button. */
+/** TEMPORARY DEV/TEST — a full roster with its first hero one Scroll short of its Evolution and two to pour. Remove with its TitleScreen button. */
 function createLevel4TestRun(): RunState {
   const base = addHeroes(createRunState(999), Object.keys(heroes).slice(0, ROSTER_CAP), 4);
   // Some worn, some carried: Manage Roster's gear half is only exercisable with both.
   const worn = ['sword.common', 'staff.common', 'sword.common.blazing'];
   return {
     ...base,
-    roster: base.roster.map((entry, i) => (worn[i] ? { ...entry, equipment: equipItem(entry.equipment, worn[i]) } : entry)),
+    roster: base.roster.map((entry, i) => ({
+      ...entry,
+      equipment: worn[i] ? equipItem(entry.equipment, worn[i]) : entry.equipment,
+      // The first hero sits one pour short of the Evolution rung, so the fixture reaches it.
+      masteryScrollsSpent: i === 0 ? EVOLUTION_SCROLLS - 1 : entry.masteryScrollsSpent,
+    })),
     // Two mergeable pairs: a plain one, and one where both halves are enchanted so the
     // keep-which-enchant choice has somewhere to fire.
     stash: ['dagger.common', 'dagger.common', 'bow.common', 'spear.rare.blazing', 'spear.rare.tidal'],
@@ -303,11 +308,23 @@ function goldRewardFor(nodeType: EncounterMapNodeType): number {
 }
 
 /**
- * The Skirmish lane's Scroll (progression.ts SCROLLS_PER_SKIRMISH): `skirmish` and `elite`, the
- * two recruitable node kinds, and the counterpart to the guaranteed drop the Monsters lane pays.
+ * What a won fight pays in Scrolls, by lane (docs/growth-overhaul.md §11): the Skirmish lane
+ * (`skirmish`, `elite`) is where Scrolls come from, the Monster lane (`fight`, `battle`) is where
+ * loot does. The Elite-or-Battle fork is the player's hand on the run's income. The Guardian's
+ * own grant is separate, below.
  */
 function scrollRewardFor(nodeType: EncounterMapNodeType): number {
-  return nodeType === 'skirmish' || nodeType === 'elite' ? SCROLLS_PER_SKIRMISH : 0;
+  switch (nodeType) {
+    case 'elite':
+      return SCROLLS_PER_ELITE;
+    case 'skirmish':
+      return SCROLLS_PER_SKIRMISH;
+    case 'fight':
+    case 'battle':
+      return SCROLLS_PER_FIGHT;
+    default:
+      return 0;
+  }
 }
 
 /**
@@ -360,11 +377,11 @@ function tutorialBeatKeyFor(screen: Screen, run: RunState): TutorialBeatKey | nu
     case 'mastery':
       return 'scroll';
     case 'crucible':
-      return 'evolution';
+      return 'crucible';
     case 'reward':
       return rewardBeatKey(screen.nodeType);
-    case 'classNode':
-      return 'classNode';
+    case 'tutorNode':
+      return screen.variant === 'mentor' ? 'mentorNode' : null;
     case 'recruit':
       return 'recruit';
     case 'shop':
@@ -638,22 +655,12 @@ export function App() {
       setScreen({ kind: 'forge', nodeId });
     } else if (node.type === 'blacksmith') {
       setScreen({ kind: 'blacksmith', nodeId });
-    } else if (node.type === 'crucibleReward') {
-      // Nothing left to evolve skips the node rather than opening a screen with no move in it —
-      // the same rule the event node follows. The map roll already filters for this an act
-      // ahead (map.ts rewardPoolFor); this catches a roster that evolved since.
-      if (anyEvolutionAvailable(progressionTable, playerRun.roster)) {
-        setPlayerRun((run) => advanceToNode(run, nodeId));
-        setScreen({ kind: 'crucible', next: { kind: 'map' } });
-      } else {
-        handleNodeContinue(nodeId);
-      }
-    } else if (node.type === 'classReward') {
-      setScreen({ kind: 'classNode', nodeId });
+    } else if (node.type === 'mentorReward') {
+      setScreen({ kind: 'tutorNode', nodeId, variant: 'mentor' });
     } else if (node.type === 'passiveReward') {
       setScreen({ kind: 'boonNode', nodeId });
     } else if (node.type === 'tutorReward') {
-      setScreen({ kind: 'tutorNode', nodeId });
+      setScreen({ kind: 'tutorNode', nodeId, variant: 'tutor' });
     } else if (node.type === 'event') {
       const rolled = rollRunEvent(runEvents, playerRun.actNumber, location.id);
       // Nothing eligible skips the node rather than stranding the player on an empty screen.
@@ -714,7 +721,7 @@ export function App() {
     // recovered from the roster afterwards.
     const levelled = applyEncounterLevels(next, heroes);
     next = levelled.run;
-    // The Skirmish lane's Scroll. Granted here rather than at squad-confirm for the same reason
+    // The fight's Scrolls. Granted here rather than at squad-confirm for the same reason
     // gold is: a fight that is lost pays nothing.
     const scrolls = scrollRewardFor(mapNodeType as EncounterMapNodeType);
     if (scrolls > 0) next = grantMasteryScrolls(next, scrolls);
@@ -727,8 +734,8 @@ export function App() {
       // in is offered again (docs/tutorial.md). The rest of the run is a normal run either way.
       if (isTutorialAct(playerRun)) updateProfile(recordTutorialDone);
       next = grantContractReward(next, 1);
-      // The guaranteed Scroll income: 2 an act, 10 over a run, against the 6 that max one hero
-      // (docs/growth-overhaul.md §4). Everything past this is the Scroll Cache and the Guild Hall.
+      // The Guardian's Scrolls — THE income dial (docs/growth-overhaul.md §11): the one number that
+      // moves the run's total without moving the Skirmish-vs-Monster lane split.
       next = grantMasteryScrolls(next, SCROLLS_PER_ACT);
       // The seal, snapshotted at the power it was beaten at, so the finale can field it
       // again (docs/lore.md §6). The champion rides the Guardian's bench, so it is in the
@@ -745,7 +752,7 @@ export function App() {
         });
       }
       if (next.actNumber < TOTAL_ACTS) {
-        next = advanceToNextAct(next, randomSeed(), anyEvolutionAvailable(progressionTable, next.roster));
+        next = advanceToNextAct(next, randomSeed());
         setActBreak(true);
         // The seal grants nothing, so it goes last in the chain — the socket fills, then
         // you arrive somewhere new. The opposite of the Banner's placement, for the same reason.
@@ -763,19 +770,20 @@ export function App() {
 
     setPlayerRun(next);
 
-    // The Crucible is the GUARDIAN's beat, not every fight's (docs/growth-overhaul.md §5): five
-    // forced a run, one per act, in the chain Guardian → Banner → Crucible → Pact Seal → act
-    // intro. Team, hero, run — three scales ascending. Skipped when nothing is left to evolve.
+    // The Crucible is the GUARDIAN's beat, not every fight's (docs/growth-overhaul.md §5, §11): one
+    // hero takes a Class, in the chain Guardian → Banner → Crucible → Pact Seal → act intro. Team,
+    // hero, run — three scales ascending. Skipped when every hero already holds one.
     // A Scroll is poured the moment it is won, never held (docs/growth-overhaul.md §4). LAST in
     // the chain — after the Banner, the contract and the Crucible — so a hero recruited or evolved
     // this beat can take the Scroll it has only just become eligible for.
     const afterMastery: Screen = masteryDue(next) ? { kind: 'mastery', next: afterScreen } : afterScreen;
 
-    const crucible = isGuardian && anyEvolutionAvailable(progressionTable, next.roster);
+    const crucible = isGuardian && anyClassAvailable(next.roster);
     const afterCrucible: Screen = crucible ? { kind: 'crucible', next: afterMastery } : afterMastery;
 
     // Gate order is deliberate: banner, then recruit, then the Crucible — so a hero recruited
-    // this beat already stands under the Banner, and can walk into the Crucible itself.
+    // this beat already stands under the Banner, and can walk into the Crucible itself; and the
+    // Scrolls last, so a hero Classed here pours with its verb in hand.
     // `next`, not `playerRun`: a boss node has just granted the contract that is spendable here.
     const recruitable = defeatedRoster.filter((entry) => isRecruitable(entry.heroId, heroes));
     // The scripted act names its one contract and refuses to let it be walked past; a non-null
@@ -1145,16 +1153,12 @@ export function App() {
         <BlacksmithScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
-      {screen.kind === 'classNode' && (
-        <ClassNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
-      )}
-
       {screen.kind === 'boonNode' && (
         <BoonNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
       {screen.kind === 'tutorNode' && (
-        <TutorNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+        <TutorNodeScreen run={playerRun} onRunChange={setPlayerRun} variant={screen.variant} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
       {screen.kind === 'event' &&

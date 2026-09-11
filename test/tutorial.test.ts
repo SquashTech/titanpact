@@ -16,7 +16,15 @@ import {
 } from '../src/data/tutorial';
 import { MAP_NODE_TYPES } from '../src/run/map';
 import { generateEncounter } from '../src/run/enemyGen';
-import { EVOLUTION_LEVEL, availableEvolution } from '../src/run/progression';
+import {
+  EVOLUTION_LEVEL,
+  EVOLUTION_SCROLLS,
+  SCROLLS_PER_ACT,
+  SCROLLS_PER_FIGHT,
+  SCROLLS_PER_SKIRMISH,
+  SCROLL_REWARD_COUNT,
+  availableEvolution,
+} from '../src/run/progression';
 import { addRosterEntry, createRosterEntry, createRunState } from '../src/run/state';
 import { resolveTypeMult } from '../src/engine/damage/typeMult';
 import { calcDamage, VARIANCE_MAX, statKeysForMove } from '../src/engine/damage/damagePipeline';
@@ -151,20 +159,23 @@ test('tutorial: a scripted encounter is fielded verbatim when nothing is exclude
 
 // --- Payouts ---
 
-test('every act reaches an Evolution, on every route, because the Crucible is the Guardian', () => {
-  // Not a tutorial property, and since phase 4 not a LEVEL property either: the Crucible fires on
-  // the act's Guardian, so the fork lands once an act whatever route the player walked and
-  // whatever level they are (docs/growth-overhaul.md §5). This test used to pin a level threshold
-  // — it survives as the thing that fails if anyone re-attaches Evolution to the level track.
+test('the tutorial act pays enough Scrolls to reach the Evolution rung on one hero, and level never opens it', () => {
+  // Not a LEVEL property since phase 4, and since §11 not a beat property either: the Evolution is
+  // the 6th Scroll into a hero (docs/growth-overhaul.md §11), so a player who concentrates on
+  // Valor can see the fork inside the scripted act — the lesson is not deferred to Act 2. This
+  // test survives as the thing that fails if anyone re-attaches Evolution to the level track.
   const solo = addRosterEntry(createRunState(0), createRosterEntry('valor', 'valor', heroes.valor.moveIds));
-  assert.ok(
-    availableEvolution(progressionTable, solo.roster[0]),
-    'a level-1 hero must be a legal Crucible target — nothing gates on EVOLUTION_LEVEL any more'
+  assert.strictEqual(
+    availableEvolution(progressionTable, { ...solo.roster[0], level: EVOLUTION_LEVEL }),
+    null,
+    'nothing gates on EVOLUTION_LEVEL any more, so reaching it opens nothing'
   );
   assert.ok(
-    availableEvolution(progressionTable, { ...solo.roster[0], level: EVOLUTION_LEVEL - 1 }),
-    'and so must one below the old threshold'
+    availableEvolution(progressionTable, { ...solo.roster[0], masteryScrollsSpent: EVOLUTION_SCROLLS }),
+    'the rung opens it at level 1'
   );
+  const act1 = SCROLLS_PER_FIGHT * 2 + SCROLLS_PER_SKIRMISH + SCROLL_REWARD_COUNT + SCROLLS_PER_ACT;
+  assert.ok(act1 >= EVOLUTION_SCROLLS, `the corridor pays ${act1} Scrolls, fewer than the ${EVOLUTION_SCROLLS} an Evolution costs`);
 });
 
 test('tutorial: payouts and encounters apply in Act 1 only', () => {

@@ -19,8 +19,7 @@ export const NODE_NAMES: Record<MapNodeType, string> = {
   currencyReward: 'Gold',
   loneScrollReward: 'Scroll',
   forgeReward: 'Forge',
-  crucibleReward: 'Crucible',
-  classReward: 'Mentor',
+  mentorReward: 'Mentor',
   tutorReward: 'Tutor',
   event: 'Event',
   muster: 'The Vigil',
@@ -48,9 +47,7 @@ export const NODE_COLORS: Record<MapNodeType, string> = {
   loneScrollReward: '#c9a2ff',
   // Forge orange: the only node that hands out a permanent SLOT rather than a thing to put in one.
   forgeReward: '#f0913c',
-  // Guardian gold: the Crucible is that beat's grant, wherever it is met.
-  crucibleReward: 'var(--accent)',
-  classReward: 'var(--buff)',
+  mentorReward: 'var(--buff)',
   // The only cyan on the map — the Tutor is rare enough that it should never be mistaken at a
   // glance for the Mana Well beside it.
   tutorReward: '#48c9e8',
@@ -78,8 +75,7 @@ const NODE_DESCRIPTIONS: Record<MapNodeType, string> = {
   currencyReward: '15–30g',
   loneScrollReward: '1 Mastery Scroll',
   forgeReward: '+1 item slot to one hero, for the rest of the run',
-  crucibleReward: 'One hero evolves — the same choice a Guardian pays, off the road — acts 3+',
-  classReward: '1 of 3 Classes, taught to one hero',
+  mentorReward: 'One hero learns ANY Early or Mid move from its Mastery pool — acts 1 to 3',
   tutorReward: 'One hero learns ANY move from its Mastery pool — acts 4 and 5 only',
   event: 'Hidden until you arrive: a move, a passive, gear or a trade',
   muster: 'Fill the roster to six, then spend everything left',
@@ -109,8 +105,7 @@ export const NODE_TIERS: Record<MapNodeType, NodeTier> = {
   currencyReward: 'reward',
   loneScrollReward: 'reward',
   forgeReward: 'reward',
-  crucibleReward: 'reward',
-  classReward: 'reward',
+  mentorReward: 'reward',
   tutorReward: 'reward',
   event: 'reward',
   muster: 'landmark',

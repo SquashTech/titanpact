@@ -2,7 +2,7 @@
 // When this file and App.tsx disagree, App.tsx is right and this is a bug —
 // the numbers are only worth reading while the two stay in step.
 
-import type { StatKey } from '../../src/engine/content';
+import type { MoveTier, StatKey } from '../../src/engine/content';
 import { heroes } from '../../src/data/heroes';
 import { moves } from '../../src/data/moves';
 import { equipment } from '../../src/data/equipment';
@@ -40,11 +40,11 @@ import {
 import {
   MOVE_CAP,
   SCROLLS_PER_ACT,
+  SCROLLS_PER_ELITE,
+  SCROLLS_PER_FIGHT,
+  SCROLLS_PER_SKIRMISH,
   SCROLL_REWARD_COUNT,
   LONE_SCROLL_COUNT,
-  anyEvolutionAvailable,
-  availableEvolution,
-  chooseEvolutionPath,
   grantMasteryScrolls,
   masteryRank,
   grantOfferedMove,
@@ -53,8 +53,8 @@ import {
 } from '../../src/run/progression';
 import { claimContract, claimContractReplacing, deriveContractOffer, isRecruitable, pickContractOffers, recruitFromGuildHall, recruitFromGuildHallReplacing, freshRosterId, buyContract } from '../../src/run/recruitment';
 import { rollGuildHallOffers, buyEquipment, sellValueFor, EQUIPMENT_PRICE_BY_RARITY } from '../../src/run/shop';
-import { tutorMovePool } from '../../src/run/tutor';
-import { grantClass } from '../../src/run/classes';
+import { MENTOR_TIER_CEILING, tutorMovePool } from '../../src/run/tutor';
+import { grantClass, rollClassOffers } from '../../src/run/classes';
 import { boonMoveCount, pickBoonOffers } from '../../src/run/boons';
 import { applyStatShift, grantEventPassive, rollRunEvent, rollEventMove, statShiftAllowed } from '../../src/run/events';
 import { MAX_ITEM_SLOTS, pickWeightedEquipment, rarityWeightsFor, EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, type EquipmentDefinition } from '../../src/run/equipment';
@@ -64,6 +64,7 @@ import { createCombatant } from '../../src/engine/state';
 
 import { simulateFight, PLAYER_SIDE, type PilotKind } from './fight';
 import * as policy from './policy';
+import type { PourEvolution } from './policy';
 import { makeRng, pick, randomSeed, sample, withRandom, type Rng } from './rng';
 
 const EQUIPMENT_POOL = Object.values(equipment);
@@ -131,7 +132,10 @@ export interface RunRecord {
   /** heroId -> best level reached this run, for every hero that was ever on the roster. */
   heroLevels: Record<string, number>;
   /** Best Mastery Rank each hero reached — the movepool gate now that level does not gate it. */
-  heroRanks: Record<string, number>;
+  /** Best `masteryScrollsSpent` seen per hero — rank, Evolution and Late are all read off it. */
+  heroScrolls: Record<string, number>;
+  /** Share of the roster that had evolved when the run ended — the §11 target is 1.0. */
+  rosterEvolvedEnd: number;
   fights: FightRecord[];
   choices: ChoiceEvent[];
   /** Rarity of every item actually equipped, keyed `act:rarity`. */
@@ -146,40 +150,35 @@ function entryOf(run: RunState, rosterId: string): RosterEntry {
   return entry;
 }
 
-/**
- * ONE Crucible: the strongest hero that still has an Evolution takes a path
- * (docs/growth-overhaul.md §5). Five arrive free off the Guardians and a sixth off a map node.
- *
- * BOTH halves are uniformly random, which is policy.ts rule 1 and it costs almost nothing here.
- * A hero has exactly ONE Evolution node, so a greedy pick cannot compound — it only reorders who
- * gets the five, and every eligible hero ends up taking one anyway. What it DOES do is starve the
- * data: always taking the strongest means the same handful of heroes absorb every Evolution
- * across a batch, and the path lift table goes dark for everyone else. That table is the reason
- * this measurement exists.
- */
-function resolveCrucible(run: RunState, rng: Rng, choices: ChoiceEvent[], encountersWon: number): RunState {
-  const eligible = run.roster.filter((r) => !!availableEvolution(progressionTable, r));
-  if (eligible.length === 0) return run;
-  const entry = pick(rng, eligible);
-  const node = availableEvolution(progressionTable, entry);
-  if (!node || node.paths.length === 0) return run;
-
-  const path = pick(rng, node.paths);
-  choices.push({
-    bucket: 'evolution',
-    offered: node.paths.map((p) => p.id),
-    picked: [path.id],
-    encountersWonAtChoice: encountersWon,
-  });
-  let next = chooseEvolutionPath(run, progressionTable, heroes, entry.rosterId, path.id);
-  // Overflow: a path's granted move that would exceed MOVE_CAP is offered as replace-or-decline.
-  const after = entryOf(next, entry.rosterId);
-  const granted = path.unlocksMoveIds.filter((id) => !after.unlockedMoveIds.includes(id));
-  for (const moveId of granted) {
-    const replaceId = policy.replacementTarget(entryOf(next, entry.rosterId), moveId);
-    if (replaceId) next = grantOfferedMove(next, entry.rosterId, moveId, replaceId);
+/** What a won fight pays in Scrolls, by lane — App.tsx scrollRewardFor, mirrored. */
+function scrollRewardFor(nodeType: MapNodeType): number {
+  switch (nodeType) {
+    case 'elite':
+      return SCROLLS_PER_ELITE;
+    case 'skirmish':
+      return SCROLLS_PER_SKIRMISH;
+    case 'fight':
+    case 'battle':
+      return SCROLLS_PER_FIGHT;
+    default:
+      return 0;
   }
-  return next;
+}
+
+/**
+ * The Crucible: one Class into one hero (docs/growth-overhaul.md §11). Three offered, one a kind,
+ * taken at random — the catalog is under test, not the policy — and the target is the strongest
+ * hero with no Class yet, since the screen offers only those and an offer nobody can take is
+ * wasted. Random across the offer rather than greedy so the lift table lights up for all nine.
+ */
+function resolveCrucible(run: RunState, rng: Rng, choices: ChoiceEvent[]): RunState {
+  const target = policy.passiveTarget(run.roster.filter((entry) => entry.classId === null));
+  const offered = rollClassOffers(classes, rng);
+  if (!target || offered.length === 0) return run;
+  const picked = pick(rng, offered);
+  choices.push({ bucket: 'class', offered: offered.map((c) => c.id), picked: [picked.id], encountersWonAtChoice: run.encountersWon });
+  const replaceId = picked.grantsMoveId ? policy.replacementTarget(target, picked.grantsMoveId) : undefined;
+  return grantClass(run, classes, target.rosterId, picked.id, replaceId ?? undefined);
 }
 
 /**
@@ -232,7 +231,8 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     goldEnd: 0,
     rosterLevelEnd: 0,
     heroLevels: {},
-    heroRanks: {},
+    heroScrolls: {},
+    rosterEvolvedEnd: 0,
     fights: [],
     choices: [],
     equipped: [],
@@ -269,7 +269,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
 
     for (const entry of run.roster) {
       record.heroLevels[entry.heroId] = Math.max(record.heroLevels[entry.heroId] ?? 0, entry.level);
-      record.heroRanks[entry.heroId] = Math.max(record.heroRanks[entry.heroId] ?? 0, masteryRank(entry));
+      record.heroScrolls[entry.heroId] = Math.max(record.heroScrolls[entry.heroId] ?? 0, entry.masteryScrollsSpent);
     }
 
     if (isEncounterNode(node.type)) {
@@ -305,12 +305,11 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
             statGrants: champion.evolutionStatGrants,
           });
         }
-        // Guardian → Banner → Crucible → Pact Seal. The Crucible resolves BEFORE the next
-        // act's map is rolled, which is what lets that roll know whether a Crucible node is
-        // still worth seating (map.ts rewardPoolFor).
-        run = resolveCrucible(run, rng, record.choices, run.encountersWon);
+        // Guardian → Banner → Crucible (a Class) → Pact Seal.
+        run = resolveCrucible(run, rng, record.choices);
+        run = grantMasteryScrolls(run, SCROLLS_PER_ACT);
         if (run.actNumber < TOTAL_ACTS) {
-          run = advanceToNextAct(run, randomSeed(rng), anyEvolutionAvailable(progressionTable, run.roster));
+          run = advanceToNextAct(run, randomSeed(rng));
         }
         else {
           record.won = true;
@@ -320,6 +319,8 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
 
       run = tryRecruitContracts(run, outcome.defeatedRoster, rng);
       if (outcome.drop) run = resolveDrop(run, outcome.drop.id, record.equipped, run.actNumber);
+      // The fight's Scrolls, by lane (docs/growth-overhaul.md §11); the Guardian's are above.
+      if (node.type !== 'boss') run = grantMasteryScrolls(run, scrollRewardFor(node.type));
       continue;
     }
 
@@ -328,11 +329,13 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
   }
 
   record.goldEnd = run.gold;
+  record.rosterEvolvedEnd =
+    run.roster.length > 0 ? run.roster.filter((r) => r.chosenPathIds.length > 0).length / run.roster.length : 0;
   record.rosterLevelEnd =
     run.roster.length > 0 ? run.roster.reduce((sum, r) => sum + r.level, 0) / run.roster.length : 0;
   for (const entry of run.roster) {
     record.heroLevels[entry.heroId] = Math.max(record.heroLevels[entry.heroId] ?? 0, entry.level);
-    record.heroRanks[entry.heroId] = Math.max(record.heroRanks[entry.heroId] ?? 0, masteryRank(entry));
+    record.heroScrolls[entry.heroId] = Math.max(record.heroScrolls[entry.heroId] ?? 0, entry.masteryScrollsSpent);
   }
   return record;
 }
@@ -414,8 +417,13 @@ function resolveEncounterNode(
     : null;
 
   // Scrolls are spent before the fight, not at the grant: the player holds them until there is
-  // a hero worth pouring them into, and a recruit arriving mid-act changes who that is.
-  workingRun = policy.pourScrolls(workingRun, rng);
+  // a hero worth pouring them into, and a recruit arriving mid-act changes who that is. The 6th
+  // into a hero evolves it (policy.pourScrolls), logged here as the choice it is.
+  const evolutions: PourEvolution[] = [];
+  workingRun = policy.pourScrolls(workingRun, rng, evolutions);
+  for (const e of evolutions) {
+    record.choices.push({ bucket: 'evolution', offered: e.offered, picked: [e.picked], encountersWonAtChoice: workingRun.encountersWon });
+  }
   const playerSquad = rosterSquad(workingRun, squadSize);
   const fight = simulateFight({
     seed: randomSeed(rng),
@@ -511,10 +519,6 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       return grantCurrencyReward(run, 15 + Math.floor(rng() * 16));
     case 'loneScrollReward':
       return grantMasteryScrolls(run, LONE_SCROLL_COUNT);
-    // The extra Crucible, acts 3+. A node with nobody left to evolve is skipped by the map roll
-    // an act ahead, and by resolveCrucible itself if the roster evolved since.
-    case 'crucibleReward':
-      return resolveCrucible(run, rng, record.choices, run.encountersWon);
     case 'equipmentReward': {
       // Three offered; the policy takes the one worth most to somebody. Equipment is a
       // power question, not a design experiment — the rarity curve is what's under test.
@@ -546,22 +550,9 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
         .sort((a, b) => policy.powerScore(b) - policy.powerScore(a))[0];
       return target ? grantItemSlot(run, target.rosterId, heroes) : run;
     }
-    case 'classReward': {
-      const offered = sample(rng, Object.values(classes), 3);
-      // ClassNodeScreen offers only heroes with no Class yet, and an offer with nobody
-      // eligible is simply wasted. Matters now that acts 1-4 each field a Mentor: picking
-      // the strongest hero every time would overwrite one hero four times and measure nothing.
-      const target = policy.passiveTarget(run.roster.filter((entry) => entry.classId === null));
-      if (offered.length === 0 || !target) return run;
-      const picked = pick(rng, offered);
-      record.choices.push({
-        bucket: 'class',
-        offered: offered.map((c) => c.id),
-        picked: [picked.id],
-        encountersWonAtChoice: run.encountersWon,
-      });
-      return grantClass(run, classes, target.rosterId, picked.id);
-    }
+    // The Mentor (acts 1-3): the Tutor with a Mid ceiling.
+    case 'mentorReward':
+      return resolveTutor(run, MENTOR_TIER_CEILING);
     case 'tutorReward':
       return resolveTutor(run);
     case 'blacksmith':
@@ -582,10 +573,10 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
  * rather than the node. The hero is the one the pool is worth most to (most moves it does not
  * already hold, strongest as the tiebreak), and the move is the best of them.
  */
-function resolveTutor(run: RunState): RunState {
+function resolveTutor(run: RunState, ceiling: MoveTier = 'late'): RunState {
   let best: { rosterId: string; moveId: string; value: number } | null = null;
   for (const entry of run.roster) {
-    for (const moveId of tutorMovePool(progressionTable, moves, entry)) {
+    for (const moveId of tutorMovePool(progressionTable, moves, entry, ceiling)) {
       if (entry.unlockedMoveIds.includes(moveId)) continue;
       const value = policy.moveValue(moveId) + policy.powerScore(entry) * 0.01;
       if (!best || value > best.value) best = { rosterId: entry.rosterId, moveId, value };

@@ -42,7 +42,6 @@ const REWARD_TYPES = new Set([
   'currencyReward',
   'loneScrollReward',
   'forgeReward',
-  'crucibleReward',
   'event',
 ]);
 
@@ -81,7 +80,7 @@ test('map: the Blacksmith widens the funnel from act 3 on, and never appears bef
         assert.deepStrictEqual(funnelTypes, ['shop'], `act ${actNumber} seed ${seed}`);
       }
       // Never a rolled reward — the funnel row is its only source, the way the Mentor row is
-      // classReward's.
+      // mentorReward's.
       for (let r = 0; r < map.rows.length; r++) {
         if (r === funnelRow) continue;
         for (const nodeId of map.rows[r]) {
@@ -150,7 +149,7 @@ test('map: the boss node has no outgoing edges; every other node has at least on
   }
 });
 
-test('map: Act 1 inserts a standalone single-node Mentor (classReward) row right BEFORE the Skirmish row', () => {
+test('map: Act 1 inserts a standalone single-node Mentor (mentorReward) row right BEFORE the Skirmish row', () => {
   for (const seed of [1, 2, 3, 4, 5]) {
     const map = generateMap(seed, 1);
     const rows = map.rows;
@@ -162,11 +161,11 @@ test('map: Act 1 inserts a standalone single-node Mentor (classReward) row right
     // The Mentor OWNS the base Skirmish row and the Skirmish moves down one, so the Class is
     // in hand for the run's first recruitable fight instead of arriving just after it.
     assert.strictEqual(rows[2].length, 1, `Mentor row (seed ${seed}) should be a single node`);
-    assert.deepStrictEqual(rowTypes(2), ['classReward']);
+    assert.deepStrictEqual(rowTypes(2), ['mentorReward']);
     assert.deepStrictEqual(rowTypes(3), ['skirmish']);
-    // classReward is excluded from REWARD_WEIGHTS, so the Mentor row is the only place it can appear.
+    // mentorReward is excluded from REWARD_WEIGHTS, so the Mentor row is the only place it can appear.
     assert.ok(rowTypes(4).every((t) => REWARD_TYPES.has(t)), `row 4 (seed ${seed}) has a non-reward type: ${rowTypes(4)}`);
-    assert.ok(!rowTypes(4).includes('classReward'), `row 4 (seed ${seed}) rerolled classReward — it should only ever appear in the forced Mentor row`);
+    assert.ok(!rowTypes(4).includes('mentorReward'), `row 4 (seed ${seed}) rerolled mentorReward — it should only ever appear in the forced Mentor row`);
     assert.strictEqual(rows[4].length, 3);
     assert.strictEqual(rows[5].length, 2);
     assert.deepStrictEqual(rowTypes(5).slice().sort(), ['battle', 'elite']);
@@ -186,13 +185,14 @@ test('map: Act 1 — the Mentor row connects into the Skirmish, and the Skirmish
   }
 });
 
-test('map: acts 1-4 each guarantee a Mentor before their Skirmish; Act 5 alone keeps the base 7-row shape', () => {
+test('map: acts 1-3 each guarantee a Mentor before their Skirmish, act 4 a Forge in its seat; Act 5 alone keeps the base 7-row shape', () => {
   for (const seed of [1, 2, 3, 4, 5]) {
     for (const actNumber of [1, 2, 3, 4]) {
       const map = generateMap(seed, actNumber);
-      assert.strictEqual(map.rows.length, 9, `Act ${actNumber} (seed ${seed}) is missing the Mentor row`);
-      assert.strictEqual(map.rows[2].length, 1, `Act ${actNumber} (seed ${seed}) Mentor row should be a single node`);
-      assert.strictEqual(map.nodes[map.rows[2][0]].type, 'classReward', `Act ${actNumber} (seed ${seed})`);
+      assert.strictEqual(map.rows.length, 9, `Act ${actNumber} (seed ${seed}) is missing the spliced row`);
+      assert.strictEqual(map.rows[2].length, 1, `Act ${actNumber} (seed ${seed}) spliced row should be a single node`);
+      // Acts 1-3 teach; act 4's row is the Forge (docs/growth-overhaul.md §11).
+      assert.strictEqual(map.nodes[map.rows[2][0]].type, actNumber <= 3 ? 'mentorReward' : 'forgeReward', `Act ${actNumber} (seed ${seed})`);
       assert.strictEqual(map.nodes[map.rows[3][0]].type, 'skirmish', `Act ${actNumber} (seed ${seed}) Skirmish should follow the Mentor`);
     }
     // Act 5 is deliberately left without one — a different beat is planned for it.
@@ -201,13 +201,13 @@ test('map: acts 1-4 each guarantee a Mentor before their Skirmish; Act 5 alone k
     assert.strictEqual(act5.nodes[act5.rows[2][0]].type, 'skirmish');
     for (const row of act5.rows) {
       for (const nodeId of row) {
-        assert.notStrictEqual(act5.nodes[nodeId].type, 'classReward', `Act 5 (seed ${seed}) grew a Mentor`);
+        assert.notStrictEqual(act5.nodes[nodeId].type, 'mentorReward', `Act 5 (seed ${seed}) grew a Mentor`);
       }
     }
   }
 });
 
-test('map: classReward never rerolls into a pick-1-of-3 reward row — the forced Mentor row is its only source', () => {
+test('map: mentorReward never rerolls into a pick-1-of-3 reward row — the forced Mentor row is its only source', () => {
   for (const seed of Array.from({ length: 30 }, (_, i) => i + 1)) {
     for (const actNumber of [1, 2, 3, 4, 5]) {
       const map = generateMap(seed, actNumber);
@@ -215,7 +215,7 @@ test('map: classReward never rerolls into a pick-1-of-3 reward row — the force
       const rewardRowIndices = actNumber <= 4 ? [1, 4, 6] : [1, 3, 5];
       for (const r of rewardRowIndices) {
         for (const nodeId of map.rows[r]) {
-          assert.notStrictEqual(map.nodes[nodeId].type, 'classReward', `Act ${actNumber} row ${r} (seed ${seed}) rolled classReward outside the Mentor row`);
+          assert.notStrictEqual(map.nodes[nodeId].type, 'mentorReward', `Act ${actNumber} row ${r} (seed ${seed}) rolled mentorReward outside the Mentor row`);
         }
       }
     }
@@ -225,7 +225,7 @@ test('map: classReward never rerolls into a pick-1-of-3 reward row — the force
 test('map: omitting actNumber defaults to Act 1 (the standalone Mentor row still applies)', () => {
   const map = generateMap(1);
   assert.strictEqual(map.rows.length, 9);
-  assert.strictEqual(map.nodes[map.rows[2][0]].type, 'classReward');
+  assert.strictEqual(map.nodes[map.rows[2][0]].type, 'mentorReward');
   assert.strictEqual(map.nodes[map.rows[3][0]].type, 'skirmish');
 });
 
@@ -277,44 +277,3 @@ test('map: the reward row above Elite-or-Battle has nothing left to signpost', (
   }
 });
 
-
-// --- The Crucible node (docs/growth-overhaul.md §5) -------------------------------------------
-
-/** Every node type on a map, across enough seeds that a rare weight still shows up. */
-function typesAcrossSeeds(actNumber: number, options?: { evolutionsLeft?: boolean }): Set<string> {
-  const seen = new Set<string>();
-  for (let seed = 0; seed < 300; seed++) {
-    const map = generateMap(seed, actNumber, options);
-    for (const node of Object.values(map.nodes)) seen.add(node.type);
-  }
-  return seen;
-}
-
-test('map: a Crucible cannot appear before act 3, and can from act 3 on', () => {
-  // Acts 1-2 already get one apiece off their own Guardian, and a roster still forming is not
-  // where a SECOND Evolution is the interesting pick.
-  for (const act of [1, 2]) {
-    assert.ok(!typesAcrossSeeds(act).has('crucibleReward'), `act ${act} seated a Crucible`);
-  }
-  for (const act of [3, 4, 5]) {
-    assert.ok(typesAcrossSeeds(act).has('crucibleReward'), `act ${act} never seated a Crucible in 300 maps`);
-  }
-});
-
-test('map: a Crucible is never seated when the roster has nothing left to evolve', () => {
-  // It has to be filtered at GENERATION, an act ahead, because a reward row is a pick of three
-  // and a card nobody can spend is a third of the choice gone. A Boon can filter itself at the
-  // node because it rolls its offers on arrival; a map cannot.
-  for (const act of [3, 4, 5]) {
-    const types = typesAcrossSeeds(act, { evolutionsLeft: false });
-    assert.ok(!types.has('crucibleReward'), `act ${act} seated a Crucible with nobody able to take it`);
-    // The rest of the pool is untouched — only the one type drops out.
-    assert.ok(types.has('equipmentReward') && types.has('scrollReward'));
-  }
-});
-
-test('map: omitting the option leaves the full pool, so a fixture or a test is not silently thinned', () => {
-  assert.ok(typesAcrossSeeds(3).has('crucibleReward'));
-  assert.ok(typesAcrossSeeds(3, {}).has('crucibleReward'));
-  assert.ok(typesAcrossSeeds(3, { evolutionsLeft: true }).has('crucibleReward'));
-});

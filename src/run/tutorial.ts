@@ -96,7 +96,7 @@ export function unknownIconTokens(text: string): string[] {
  * - `intro` / `arrival` / `outro` — the run's own bookends.
  * - `map:<nodeType>` — the map is showing and the one node ahead is of that type.
  * - `reward:<nodeType>` — that reward node's own screen is open.
- * - everything else names a screen (`equip`, `levelUp`, `evolution`, `recruit`, …).
+ * - everything else names a screen (`equip`, `levelUp`, `crucible`, `recruit`, …).
  *
  * Each node type appears exactly once on the tutorial map, so a node type is a unique address.
  */
@@ -114,8 +114,8 @@ export const TUTORIAL_SCREEN_BEAT_KEYS = [
   'equip',
   'scroll',
   'levelUp',
-  'evolution',
-  'classNode',
+  'crucible',
+  'mentorNode',
   'recruit',
   'shop',
   'outro',
@@ -238,7 +238,7 @@ export function matchTutorialCue(
 export const TUTORIAL_ROW_TYPES: readonly MapNodeType[] = [
   'fight',
   'equipmentReward',
-  'classReward',
+  'mentorReward',
   'skirmish',
   'forgeReward',
   'battle',

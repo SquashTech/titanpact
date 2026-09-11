@@ -3,7 +3,10 @@
 > **STATUS: DECIDED AND BUILT (2026-09-10, per user direction). ALL SEVEN PHASES OF §8 ARE IN.**
 > Gems are gone, moves come only from Mastery Scrolls, levels are automatic and cap 30,
 > Evolutions come from the Crucible, a Guild hire arrives raw, the difficulty curve has been
-> re-fitted against all of it, and all 36 heroes carry authored growth grades. `CLAUDE.md`'s remaining invariants still
+> re-fitted against all of it, and all 36 heroes carry authored growth grades.
+> **§11 (2026-09-11) is a SECOND PASS that supersedes §5**: Evolutions moved off the Crucible onto
+> the 6th Scroll of a longer ladder, the Crucible now grants a Class, Classes are verbs, and the
+> Mentor is an Early–Mid Tutor. `CLAUDE.md`'s remaining invariants still
 > describe *that* game and are
 > still the rules in force until the phase that replaces each one lands. This module is the
 > destination, and §8 is the route — **check its Status column before assuming anything here
@@ -286,6 +289,10 @@ rather than linger.
 
 ## 5. The Crucible — Evolution's new home
 
+> **SUPERSEDED by §11 (2026-09-11).** The Crucible beat and screen survive; what they grant is a
+> Class. Evolutions come from the ladder. Kept for the reasoning that still holds — the wall
+> argument against a level trigger, the naming, why gold stays off the Evolution axis.
+
 **Evolutions leave the level track entirely.** At level 30, `EVOLUTION_LEVEL` = 5 would arrive in
 Act 1, and under uniform levelling **all six heroes would hit any level threshold in the same
 fight** — a six-decision wall. That rules out the level track outright, so this is a consequence
@@ -542,3 +549,153 @@ them. **None of these has changed yet** — they are in force until the phase th
 - **Does the roster read too flat?** Uniform levelling means differentiation comes entirely from
   base stats, growth grades and the scarce axes. If it is not enough, the focus-hero XP dial (§3) is
   the drafted answer — but reach for it only after Rank has been played, not before.
+
+---
+
+## 11. Second pass (2026-09-11): Evolution on the ladder, Classes in the Crucible
+
+Playtest of the finished overhaul surfaced two things that were true but not good. Listed as
+findings first, because the fix reverses part of §5 and the reversal should be legible.
+
+**Finding 1 — the Crucible handed out what nobody built toward.** §5 was correct that a level
+trigger under roster-wide levelling is a six-decision wall, and correct that the act boundary was
+the only place a forced beat could go. But an Evolution arriving on a fixed cadence, one per
+Guardian, is a *reward* — the player picks who, and that is the whole of their part in it. What the
+level trigger had, and the Crucible lost, was the hero *approaching* its Evolution across an act.
+A Scroll ladder has that property by construction: Scrolls are poured one hero at a time, so a
+threshold on the ladder can never wall, and the player watches the pips fill toward it.
+
+**Finding 2 — Classes were the last Gem.** §1's rule is *a bare number never gets a screen, and a
+screen never buys a bare number*. Sixteen `+10/+10` Classes behind a forced Mentor row is exactly
+that, and the sim measured them statistically inert until there were four of them. They have the
+right fiction and the wrong payload.
+
+Both fixes are the same move: put the Evolution where the player is already investing, and put the
+Class where the Evolution was.
+
+### The ladder
+
+`SCROLLS_PER_RANK` is gone. The ladder is authored as thresholds, and it is longer:
+
+| Scrolls into this hero | Rung | What that Scroll does |
+|---|---|---|
+| 1–3 | Rank 1 | offers Early |
+| **4** | **Rank 2** | ticks, then offers **Mid** (Early expires) |
+| 5 | | offers Mid |
+| **6** | **Evolution** | the branch choice, its move grant, then the Scroll's offer — from Mid, or from the graft's line |
+| 7 | | offers Mid (and the graft's line) |
+| **8** | **Rank 3** | ticks, then offers **Late** |
+| 9+ | | offers Late until the pool is dry |
+
+`RANK_THRESHOLDS = [0, 4, 8]` and `EVOLUTION_SCROLLS = 6` (`src/run/progression.ts`). Rank stays
+DERIVED from `masteryScrollsSpent`; so does whether the Evolution is due. Rank 3 is open-ended on
+purpose: `canSpendScroll` already refuses only when the pool is dry, and a carry's last Scrolls are
+never wasted. The tick-before-roll rule is unchanged and is what makes the 4th and 8th Scroll the
+bigger moments — the 4th Scroll's offer is already a Mid move.
+
+The Evolution sits mid-ladder rather than at the top because the top rung stacking Evolution + Late
++ a graft's whole line onto one pour made every rung below it a deposit. At 6 each rung is a
+distinct milestone: the 4th Scroll changes what a hero can *do*, the 6th changes what it *is*, the
+8th opens the ceiling.
+
+**Ordering on the 6th Scroll:** the Evolution screen raises for that one hero *before* the Scroll's
+offer rolls, so a retype's line is in the pool for the same pour. The Evolution's own outright
+grant (and its replace-or-decline overflow) is unchanged. Two moves in one pour is a lot of screen;
+that is the milestone, and learning moves is the part of the game people love — the screen count
+was weighed and accepted (2026-09-11, per user direction).
+
+**Six evolved is the expected ending.** Six Evolutions cost 36 Scrolls. That is a deliberate
+reversal of §5's "scarce when it matters, universal by the end" into *universal by the end, paced by
+the player*. What the player chooses is the order and how much depth to buy before breadth is done.
+
+### Income: the Skirmish lane pays Scrolls, the Monster lane pays loot
+
+The floor goes from ~20 to ~50, and the player steers it (`src/run/progression.ts`, read by
+`App.tsx` `scrollsForNode`):
+
+| Encounter | Lane | Scrolls |
+|---|---|---|
+| Fight (forced) | Monsters | `SCROLLS_PER_FIGHT` = 1 |
+| Battle | Monsters | `SCROLLS_PER_FIGHT` = 1 |
+| Skirmish | recruitable | `SCROLLS_PER_SKIRMISH` = 2 |
+| Elite | recruitable | `SCROLLS_PER_ELITE` = 3 |
+| Guardian | — | `SCROLLS_PER_ACT` = 4 |
+
+Elite route 10 an act, Battle route 7: **50 vs 35** over five acts, plus the Cache, the lone
+Scroll and the Guild Hall. A Skirmish-heavy run evolves everyone by the Act 4 Guardian with ~15
+left for depth; a Battle-heavy run evolves everyone in Act 5 with nothing spare, and got the loot.
+The Monster lane's loot side needs no new grant — the guaranteed drop already sits there — only
+the Scroll gap. **The Guardian's 4 is the dial**: it is the one number that moves the total without
+moving the lane split. First-pass figures for playtest.
+
+**Enemy equivalence** (`src/run/enemyGen.ts`): a generated hero still reads its ladder position
+off level. `ENEMY_SCROLLS_BY_LEVEL` maps level bands to a `masteryScrollsSpent` — 0 under 10, 4 at
+10, 6 at 16, 8 at 21 — so rank and Evolution come from ONE table where `ENEMY_RANK_LEVELS` and
+`ENEMY_EVOLUTION_LEVEL` used to be two. Level 16 is Act 3's enemy level, so "a contract hero arrives
+evolved from Act 3" (§6) still holds. `EVOLUTION_LEVEL` remains inert data.
+
+### The Crucible grants a Class
+
+The chain is unchanged — *Guardian falls → Banner → Crucible → Pact Seal → act intro* — and so is
+the screen's shape (pick one hero, pick one of three). What the Crucible tempers a hero into is now
+a **Class**. Five Guardians, five Classes, six heroes: one hero ends Classless, and that is the
+price of a late recruit rather than a reason for a sixth source. The `crucibleReward` reward-row
+node is deleted with its `CRUCIBLE_FIRST_ACT` filter; its 12 weight goes to `scrollReward`.
+
+**A Class is a verb, never a number** (2026-09-11, per user direction). Its schema is the Evolution
+path's minus the graft and hero clauses: a name, a kind (offensive / defensive / utility), and
+*either* a granted move (`grantMove`, replace-or-decline at `MOVE_CAP`, exactly as an Evolution's
+grant works) *or* a passive with a real effect. No stat line. The Crucible offers one of each kind,
+so it reads as an Evolution branch that any hero can take. Nine to start, three per kind
+(`src/data/classes.ts`).
+
+Two exclusivity rules, without which a Class is a Boon with a hat:
+
+- A class passive is not in the Boon pool, and no Boon passive is a Class.
+- A class move is in no Scroll pool and no Tutor pool, and carries no `tier`. It wears a type
+  for flavour like every move (a type is required), but because any hero can hold it, it is
+  authored to be worth a slot **without** STAB — so class moves are **role verbs** (a redirect, a
+  priority strike, a spread, a heal, a hit-and-switch: the doubles toolkit no type slate covers
+  evenly), never nukes. The type slates' own tests exempt them (`classMoves`).
+
+One Class per hero, replace-not-stack, unchanged (`src/run/classes.ts`).
+
+### The Mentor teaches the basics, the Tutor the masterworks
+
+The Mentor row keeps its seat in **acts 1–3** (`LAST_MENTOR_ACT` = 3) and becomes the Tutor's early
+sibling: pick a hero, then pick **any Early or Mid move** from that hero's own pool — un-rolled,
+un-rank-gated, a declined offer included (`tutorMovePool` with a tier ceiling, `src/run/tutor.ts`).
+The Tutor in acts 4–5 keeps the full pool. That is a vocabulary handoff, not two nodes doing one job.
+
+Why an un-rank-gated Mid move in Act 1 does not break "the ceiling sits behind the spend": rank
+progress and the Evolution both live *only* on the Scroll. A Mentor move fills a slot and ticks
+nothing, so it buys exactly one thing — an answer to the measured Acts 1–2 wall — and leaves every
+reason to pour a Scroll intact.
+
+**Act 4's row becomes a forced Forge** (`forgeReward`), a free +1 slot to one hero at about the
+time a third slot on the carry matters. The Blacksmith sells the same thing one row later; that
+redundancy was weighed against dropping the row and the Forge was kept (2026-09-11, per user
+direction).
+
+### What this reverses
+
+| §5 / §9 said | Now |
+|---|---|
+| Evolutions come from the Crucible, never from a level | Evolutions come from the **6th Scroll** into a hero, never from a level and never from the Crucible |
+| Five forced a run plus the `crucibleReward` node | As many as the player pours for; `crucibleReward` deleted |
+| Scarce when it matters, universal by the end | Universal by the end, paced by the player |
+| `SCROLLS_PER_RANK` = 3, six maxes a hero | `RANK_THRESHOLDS` = [0, 4, 8], Rank 3 open-ended |
+| Guardians pay 2, Skirmish/Elite pay 1 | Guardian 4, Elite 3, Skirmish 2, Fight/Battle 1 |
+| Classes are `+10/+10` stat pairs from a Mentor row in acts 1–4 | Classes are a move or a passive, from the Crucible at every Guardian |
+| The Mentor grants a Class | The Mentor is an Early–Mid Tutor, acts 1–3; Act 4's row is a Forge |
+
+### Watch in playtest
+
+- **Screens per act.** Ten Scrolls an act is ten pours and up to ten offers. Accepted on the
+  argument that a move offer is the game's best screen; the number to re-check is whether the
+  *sixth* offer in a beat still feels like one.
+- **Front-loading.** Two heroes can evolve by the Act 1 Guardian and a Mentor can hand a Mid move
+  out in Act 1. Phase 6 fitted `ACT_STEP_CURVE` against one Evolution an act; re-run the sim pilot
+  before trusting the curve.
+- **The Elite/Battle fork.** It is now Scrolls vs loot. If Elite is always right the Battle's loot
+  side needs a grant, not the Elite's Scroll a cut.

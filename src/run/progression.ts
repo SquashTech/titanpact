@@ -17,43 +17,66 @@ export const MOVE_CAP = 4;
 
 /**
  * The level an Evolution node is authored at. **Nothing gates on it any more** (2026-09-10,
- * Growth Overhaul phase 4): Evolutions left the level track for the Crucible, a beat at the act
- * boundary. Under automatic roster-wide levelling every hero crosses any threshold on the same
- * fight, so a level trigger IS a six-decision wall — the move was a consequence, not a taste.
+ * Growth Overhaul phase 4; re-homed 2026-09-11, §11): Evolutions left the level track for the
+ * Scroll ladder — `EVOLUTION_SCROLLS`. Under automatic roster-wide levelling every hero crosses
+ * any threshold on the same fight, so a level trigger IS a six-decision wall — the move was a
+ * consequence, not a taste.
  *
  * Kept because `EvolutionNode.level` is still authored data and per-hero depth is still deferred;
  * the tutorial and the docs also date the fork by it. Do not re-attach a gate to it.
  */
 export const EVOLUTION_LEVEL = 5;
 
-// --- Mastery Rank: the gate on the movepool (docs/growth-overhaul.md §4) ---
+// --- Mastery Rank: the gate on the movepool (docs/growth-overhaul.md §4, ladder §11) ---
 //
 // Rank sits BEHIND THE SPEND rather than behind a clock, and that is the whole point. Gate the
 // tiers on the act and holding a Scroll always beats spending one; gate them on how many have
 // gone into THIS hero and the incentive inverts. It also prices the carry build in breadth:
 // concentrate and the ceiling rises, spread six ways and nobody ranks up.
 
-/** Scrolls to climb one rank. Six maxes a hero. */
-export const SCROLLS_PER_RANK = 3;
+/**
+ * Scrolls spent into a hero at which each rank opens. Rank 1 at 0, Rank 2 at 4, Rank 3 at 8 —
+ * and Rank 3 is open-ended: past it every Scroll offers Late until the pool is dry
+ * (`canSpendScroll`). Authored as thresholds rather than a per-rank cost because the Evolution
+ * sits between two of them.
+ */
+export const RANK_THRESHOLDS: readonly number[] = [0, 4, 8];
 
 /**
- * Guaranteed income: what every Guardian pays. Ten over a run against the six that max one hero,
- * so the floor alone is one maxed hero and a second half-ranked — the Scroll Cache and the Guild
- * Hall are what turn that into a real spread-vs-concentrate call. First-pass figure for playtest.
+ * The Scroll that evolves a hero (2026-09-11, per user direction — replacing the Crucible, which
+ * now grants a Class). Mid-ladder rather than at the top: the top rung stacking Evolution + Late +
+ * a graft's whole line onto one pour made every rung below it a deposit. The 4th Scroll changes
+ * what a hero can DO, the 6th what it IS, the 8th opens the ceiling. Six evolved is the expected
+ * ending, so six Evolutions cost 36 of a ~50 floor.
  */
-export const SCROLLS_PER_ACT = 2;
+export const EVOLUTION_SCROLLS = 6;
 
 /**
- * What a won Skirmish or Elite pays (2026-09-10, per user direction). The Guardian's two an act
- * was the whole guaranteed income, which left every mid-act row paying in gold and gear and
- * nothing a hero could learn from; this puts a Scroll on the recruitable lane the way a
- * guaranteed drop sits on the Monsters lane, and roughly doubles the run's floor — about two an
- * act on top of the Guardian's two, so ~20 guaranteed against the six that max one hero.
- *
- * First-pass figure for playtest, and the one to watch: Scrolls are the whole of the breadth-vs-
- * depth call, so a floor this high is what would make spreading six ways stop costing anything.
+ * What a won Monster-lane fight pays — `fight` and `battle`. One, so the lane is not Scroll-less,
+ * but the Skirmish lane is where Scrolls come from and the Monster lane is where loot does
+ * (the guaranteed drop already sits there). First-pass figure for playtest.
  */
-export const SCROLLS_PER_SKIRMISH = 1;
+export const SCROLLS_PER_FIGHT = 1;
+
+/**
+ * What a won Skirmish pays. Two: the recruitable lane's counterpart to the guaranteed drop the
+ * Monsters lane pays, and the run's steady Scroll income. First-pass figure for playtest.
+ */
+export const SCROLLS_PER_SKIRMISH = 2;
+
+/**
+ * What a won Elite pays. Three against the Battle's one is the Elite-or-Battle fork's whole
+ * price: Scrolls vs loot, and the harder fight. First-pass figure for playtest — if Elite is
+ * always right, the Battle's loot side needs a grant, not this a cut.
+ */
+export const SCROLLS_PER_ELITE = 3;
+
+/**
+ * What every Guardian pays. Four. Elite route 10 an act, Battle route 7, so 50 vs 35 over a run
+ * against the 36 that evolve six heroes. THE dial: the one number that moves the total without
+ * moving the lane split. First-pass figure for playtest.
+ */
+export const SCROLLS_PER_ACT = 4;
 
 /**
  * What the `scrollReward` Scroll Cache pays. Two, so a cache is a whole rank's worth of a
@@ -69,20 +92,25 @@ export const SCROLL_REWARD_COUNT = 2;
  */
 export const LONE_SCROLL_COUNT = 1;
 
-export const MAX_MASTERY_RANK = 3;
+export const MAX_MASTERY_RANK = RANK_THRESHOLDS.length;
 
-/**
- * DERIVED from `masteryScrollsSpent`, never stored (state.ts). Rank 1 at 0-2 spent, 2 at 3-5,
- * 3 from 6 on.
- */
+/** The Scroll that reaches the top rung — the pips the board draws. Not a cap on spending. */
+export const SCROLLS_TO_MAX_RANK = RANK_THRESHOLDS[RANK_THRESHOLDS.length - 1];
+
+/** DERIVED from `masteryScrollsSpent`, never stored (state.ts): the rungs the spend has crossed. */
 export function masteryRank(entry: RosterEntry): number {
-  return Math.min(MAX_MASTERY_RANK, 1 + Math.floor(entry.masteryScrollsSpent / SCROLLS_PER_RANK));
+  return RANK_THRESHOLDS.filter((at) => entry.masteryScrollsSpent >= at).length;
 }
 
 /** Scrolls still owed for the next rank; 0 at the cap. */
 export function scrollsToNextRank(entry: RosterEntry): number {
-  if (masteryRank(entry) >= MAX_MASTERY_RANK) return 0;
-  return SCROLLS_PER_RANK - (entry.masteryScrollsSpent % SCROLLS_PER_RANK);
+  const next = RANK_THRESHOLDS.find((at) => at > entry.masteryScrollsSpent);
+  return next === undefined ? 0 : next - entry.masteryScrollsSpent;
+}
+
+/** Whether the ladder has reached the Evolution rung — the gate `availableEvolution` applies. */
+export function evolutionRungReached(entry: RosterEntry): boolean {
+  return entry.masteryScrollsSpent >= EVOLUTION_SCROLLS;
 }
 
 /** Rank at which each move tier becomes offerable. Maps 1:1 onto the authored 6 Early / 6 Mid / 4 Late. */
@@ -129,9 +157,11 @@ export function isMoveTierOfferable(move: MoveDefinition | undefined, rank: numb
  * It is no longer DERIVED from a curve, because there is no curve: Scrolls make offers-per-hero
  * player-controlled and unbounded, so no depth can promise a pool "cannot be emptied" the way
  * MOVE_POOL_MARGIN did (docs/growth-overhaul.md §4). Running a band dry is now a legal state the
- * spend refuses rather than a data bug — and `SCROLLS_PER_RANK` offers is what a band has to
- * survive to get the hero out of it, which is what these numbers are. In practice every pool is
- * authored well past them (6 Early / 6 Mid / 4 Late). Enforced by test/moveTiers.test.ts.
+ * spend refuses rather than a data bug — and the offers it takes to climb OUT of a band is what
+ * the band has to survive, read off `RANK_THRESHOLDS`: Early is offered by the Scrolls before the
+ * one that opens Mid, Mid by every Scroll from that one to the one that opens Late. Rank 3 is
+ * open-ended, so Mid+Late only has to offer once. In practice every pool is authored well past
+ * these (6 Early / 6 Mid / 4 Late). Enforced by test/moveTiers.test.ts.
  */
 export interface MovePoolFloor {
   /** Early alone: rank 1. */
@@ -143,7 +173,7 @@ export interface MovePoolFloor {
 }
 
 export function movePoolFloor(): MovePoolFloor {
-  return { early: SCROLLS_PER_RANK, mid: SCROLLS_PER_RANK, midLate: SCROLLS_PER_RANK };
+  return { early: RANK_THRESHOLDS[1] - 1, mid: RANK_THRESHOLDS[2] - RANK_THRESHOLDS[1], midLate: 1 };
 }
 
 export interface EvolutionPath {
@@ -333,17 +363,14 @@ export function pendingEvolution(table: ProgressionTable, entry: RosterEntry): E
 }
 
 /**
- * The node a Crucible would resolve for this hero, or null when the hero has no Evolution left.
- * Ungated since 2026-09-10 — identical to `pendingEvolution`, and kept as its own name because
- * every caller means "can this hero take one NOW", which is the question the Crucible asks.
+ * The node this hero can take NOW, or null: the next unresolved one, once the ladder has reached
+ * `EVOLUTION_SCROLLS` (docs/growth-overhaul.md §11). Gated on the spend, not on level and not on
+ * a beat — the 6th Scroll into a hero raises the Evolution screen for that one hero, so there is
+ * no wall to cross. A generated hero reads its spend off level (enemyGen.ts) and passes the same
+ * gate.
  */
 export function availableEvolution(table: ProgressionTable, entry: RosterEntry): EvolutionNode | null {
-  return pendingEvolution(table, entry);
-}
-
-/** Whether any roster hero still has an Evolution to take — what a Crucible needs to be worth opening. */
-export function anyEvolutionAvailable(table: ProgressionTable, roster: readonly RosterEntry[]): boolean {
-  return roster.some((entry) => !!availableEvolution(table, entry));
+  return evolutionRungReached(entry) ? pendingEvolution(table, entry) : null;
 }
 
 /** The primary plus the current graft — the out-of-combat mirror of engine/state.ts effectiveTypes, and it must stay identical to it. UI must read this, not `hero.types`. */

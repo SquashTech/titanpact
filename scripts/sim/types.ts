@@ -88,6 +88,9 @@ export interface Aggregate {
   goldEndSum: number;
   /** Sum of the mean roster level at run end. */
   rosterLevelEndSum: number;
+  rosterEvolvedEndSum: number;
+  /** Runs that ended with EVERY roster hero evolved. */
+  runsRosterEvolved: number;
   /** Fight outcomes keyed `act:nodeType`. */
   fightKinds: Record<string, FightKindAgg>;
   /** Guardian fights keyed by location id. */
@@ -108,8 +111,9 @@ export interface Aggregate {
   /** Best level each roster hero reached, histogram over (hero, run) pairs — index = level. */
   heroLevelHistogram: number[];
   /** Best Mastery Rank reached, per (hero, run) pair — the movepool gate since 2026-09-10. */
-  heroRankHistogram: number[];
-  heroRankHistogramDeep: number[];
+  /** Indexed by best Scrolls spent into the hero. */
+  heroScrollHistogram: number[];
+  heroScrollHistogramDeep: number[];
   /** The same, restricted to runs that reached act 4+ — the aggregate is dominated by Act 1 deaths. */
   heroLevelHistogramDeep: number[];
   /** Player-side move casts, by the move's authored tier. Every 70+ mana move is `late`. */
@@ -137,6 +141,8 @@ export function emptyAggregate(): Aggregate {
     encountersWonSum: 0,
     goldEndSum: 0,
     rosterLevelEndSum: 0,
+    rosterEvolvedEndSum: 0,
+    runsRosterEvolved: 0,
     fightKinds: {},
     guardians: {},
     heroes: {},
@@ -150,8 +156,8 @@ export function emptyAggregate(): Aggregate {
     equipRarityByAct: {},
     roundHistogram: [],
     heroLevelHistogram: [],
-    heroRankHistogram: [],
-    heroRankHistogramDeep: [],
+    heroScrollHistogram: [],
+    heroScrollHistogramDeep: [],
     heroLevelHistogramDeep: [],
     castsByTier: {},
     castsByManaBand: {},
@@ -213,6 +219,8 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   into.encountersWonSum += from.encountersWonSum;
   into.goldEndSum += from.goldEndSum;
   into.rosterLevelEndSum += from.rosterLevelEndSum;
+  into.rosterEvolvedEndSum += from.rosterEvolvedEndSum;
+  into.runsRosterEvolved += from.runsRosterEvolved;
   into.elapsedMs += from.elapsedMs;
   into.playerTurns += from.playerTurns;
   into.playerRests += from.playerRests;
@@ -223,8 +231,8 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   mergeArray(into.deathAct, from.deathAct);
   mergeArray(into.roundHistogram, from.roundHistogram);
   mergeArray(into.heroLevelHistogram, from.heroLevelHistogram);
-  mergeArray(into.heroRankHistogram, from.heroRankHistogram);
-  mergeArray(into.heroRankHistogramDeep, from.heroRankHistogramDeep);
+  mergeArray(into.heroScrollHistogram, from.heroScrollHistogram);
+  mergeArray(into.heroScrollHistogramDeep, from.heroScrollHistogramDeep);
   mergeArray(into.heroLevelHistogramDeep, from.heroLevelHistogramDeep);
   for (const key of Object.keys(from.castsByTier)) into.castsByTier[key] = (into.castsByTier[key] ?? 0) + from.castsByTier[key];
   for (const key of Object.keys(from.castsByManaBand)) into.castsByManaBand[key] = (into.castsByManaBand[key] ?? 0) + from.castsByManaBand[key];

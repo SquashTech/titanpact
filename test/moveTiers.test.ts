@@ -9,6 +9,7 @@
 import * as assert from 'assert';
 import { test } from './harness';
 import { moves } from '../src/data/moves';
+import { classMoves } from '../src/data/classes';
 import { progressionTable } from '../src/data/progression';
 import { createRunState, createRosterEntry, addRosterEntry } from '../src/run/state';
 import type { RunState } from '../src/run/state';
@@ -29,9 +30,11 @@ import {
   MOVE_TIER_RANK,
   MOVE_TIER_RANK_EXPIRY,
   MAX_MASTERY_RANK,
-  SCROLLS_PER_RANK,
+  RANK_THRESHOLDS,
+  SCROLLS_TO_MAX_RANK,
+  EVOLUTION_SCROLLS,
   MOVE_CAP,
-  EVOLUTION_LEVEL,
+  availableEvolution,
 } from '../src/run/progression';
 import { heroes as heroesById } from '../src/data/heroes';
 import type { MoveTier, TypeId } from '../src/engine/content';
@@ -54,14 +57,14 @@ const TIERED_TYPES: readonly TypeId[] = [
   'Mech',
 ];
 
-/** Scrolls to max a hero — the pips the board draws, and the most any one hero can ever spend usefully. */
-const SCROLLS_TO_MAX = (MAX_MASTERY_RANK - 1) * SCROLLS_PER_RANK;
+/** Scrolls to the top rung — the pips the board draws. Rank 3 is open-ended past it. */
+const SCROLLS_TO_MAX = SCROLLS_TO_MAX_RANK;
 
 function entryAtRank(heroId: string, rank: number, unlocked: readonly string[] = []) {
   let run = createRunState(0);
   run = addRosterEntry(run, {
     ...createRosterEntry(heroId, heroId, unlocked),
-    masteryScrollsSpent: (rank - 1) * SCROLLS_PER_RANK,
+    masteryScrollsSpent: RANK_THRESHOLDS[rank - 1],
   });
   return run.roster[0];
 }
@@ -76,6 +79,8 @@ function runWith(heroId: string, scrolls: number, unlocked: readonly string[] = 
 
 test('move tiers: every move of a tiered slate carries a tier, and no other type does', () => {
   for (const move of Object.values(moves)) {
+    // A class move wears a type for flavour and no tier: it is in no pool (test/classes.test.ts).
+    if (classMoves[move.id]) continue;
     if (TIERED_TYPES.includes(move.type)) {
       assert.ok(move.tier, `${move.id} (${move.type}) has no tier`);
     } else {
@@ -106,18 +111,15 @@ test('move tiers: Early EXPIRES when Mid opens, Mid and Late accumulate, and an 
   assert.strictEqual(MAX_MASTERY_RANK, MOVE_TIER_RANK.late, 'the top rank is the one that opens the last band');
 });
 
-test('mastery rank: DERIVED from Scrolls spent, three to a rank, clamped at the top', () => {
-  const spentToRank = [0, 1, 2, 3, 4, 5, 6, 7, 20].map((spent) => masteryRank(entryAtRank('ironWarden', 1) && {
-    ...entryAtRank('ironWarden', 1),
-    masteryScrollsSpent: spent,
-  }));
-  assert.deepStrictEqual(spentToRank, [1, 1, 1, 2, 2, 2, 3, 3, 3], 'three Scrolls a rank, and it stops at the cap');
+test('mastery rank: DERIVED from Scrolls spent along the ladder — Rank 2 at 4, the Evolution at 6, Rank 3 at 8, open-ended past it', () => {
+  assert.deepStrictEqual(RANK_THRESHOLDS, [0, 4, 8]);
+  assert.strictEqual(EVOLUTION_SCROLLS, 6, 'the Evolution sits between the two rungs');
+  const spentToRank = [0, 3, 4, 5, 6, 7, 8, 9, 20].map((spent) => masteryRank({ ...entryAtRank('ironWarden', 1), masteryScrollsSpent: spent }));
+  assert.deepStrictEqual(spentToRank, [1, 1, 2, 2, 2, 2, 3, 3, 3], 'rungs at 4 and 8, and it stops at the cap');
 
-  const owed = [0, 1, 2, 3, 5, 6, 9].map((spent) =>
-    scrollsToNextRank({ ...entryAtRank('ironWarden', 1), masteryScrollsSpent: spent })
-  );
-  assert.deepStrictEqual(owed, [3, 2, 1, 3, 1, 0, 0], 'and it counts down to the next threshold, 0 at the cap');
-  assert.strictEqual(SCROLLS_TO_MAX, 6, 'six Scrolls max a hero');
+  const owed = [0, 1, 3, 4, 6, 7, 8, 9].map((spent) => scrollsToNextRank({ ...entryAtRank('ironWarden', 1), masteryScrollsSpent: spent }));
+  assert.deepStrictEqual(owed, [4, 3, 1, 4, 2, 1, 0, 0], 'and it counts down to the next threshold, 0 at the cap');
+  assert.strictEqual(SCROLLS_TO_MAX, 8, 'eight Scrolls reach the top rung');
 });
 
 test('move tiers: masteryMovePool only offers what the hero\'s RANK has reached', () => {
@@ -177,9 +179,9 @@ test('move tiers: every move pool holds something a rank-1 hero can be offered',
   assert.deepStrictEqual(starved, [], 'these pools hold no move a rank-1 hero can be offered');
 });
 
-test('mastery scrolls: the rank ticks BEFORE the roll, so the third Scroll offers from the band it opens', () => {
-  // The whole reason every third spend is the bigger moment rather than a silent deposit.
-  const twoIn = { ...entryAtRank('ironWarden', 1), masteryScrollsSpent: SCROLLS_PER_RANK - 1 };
+test('mastery scrolls: the rank ticks BEFORE the roll, so the Scroll that reaches a rung offers from the band it opens', () => {
+  // The whole reason the rung Scroll is the bigger moment rather than a silent deposit.
+  const twoIn = { ...entryAtRank('ironWarden', 1), masteryScrollsSpent: RANK_THRESHOLDS[1] - 1 };
   assert.strictEqual(masteryRank(twoIn), 1);
   const pool = scrollMovePool(progressionTable, moves, twoIn);
   assert.ok(pool.includes('rendArmor'), 'the Scroll that reaches rank 2 rolls from Mid, not from Early');
@@ -224,13 +226,10 @@ test('mastery scrolls: a dry band still takes a Scroll below the cap, and is ref
 
 test('move tiers: the floor is a BAND surviving its own rank, not a curve', () => {
   // Scrolls make offers-per-hero player-controlled, so no depth can promise a pool "cannot be
-  // emptied" the way MOVE_POOL_MARGIN did. What a band must survive is the SCROLLS_PER_RANK
-  // offers it takes to climb out of it.
-  assert.deepStrictEqual(movePoolFloor(), {
-    early: SCROLLS_PER_RANK,
-    mid: SCROLLS_PER_RANK,
-    midLate: SCROLLS_PER_RANK,
-  });
+  // emptied" the way MOVE_POOL_MARGIN did. What a band must survive is the offers it takes to
+  // climb out of it: three Early before the 4th Scroll opens Mid, four Mid from there to the 8th,
+  // and Mid+Late only has to offer once because Rank 3 is open-ended.
+  assert.deepStrictEqual(movePoolFloor(), { early: 3, mid: 4, midLate: 1 });
 });
 
 test('move tiers: every hero clears every band without it running dry', () => {
@@ -247,33 +246,33 @@ test('move tiers: every hero clears every band without it running dry', () => {
   }
 });
 
-test('move tiers: every hero spends all six Scrolls with a move to show for each, down every path', () => {
+test('move tiers: every hero climbs the whole ladder with a move to show for each Scroll, down every path', () => {
   // The arithmetic above models the drain; this WALKS it through the real calls, so the
-  // offeredMoveIds bookkeeping is in the loop. Both answers to an offer are exercised because both
-  // spend it: declining burns the move exactly as taking it does.
+  // offeredMoveIds bookkeeping is in the loop, and the Evolution lands where the ladder puts it
+  // — on the 6th Scroll, BEFORE that Scroll's offer, so a graft's line is in the pool the same
+  // pour. Both answers to an offer are exercised because both spend it: declining burns the move
+  // exactly as taking it does.
   for (const hero of Object.values(heroesById)) {
     const paths = (progressionTable.evolutions[hero.id] ?? []).flatMap((node) => node.paths);
     for (const path of paths) {
       let run = grantMasteryScrolls(
-        addRosterEntry(createRunState(0), {
-          ...createRosterEntry(hero.id, hero.id, hero.moveIds),
-          // The Evolution is on the level track, which no longer touches the movepool — take it
-          // up front so the graft's line is in the pool for the whole climb.
-          level: EVOLUTION_LEVEL,
-        }),
+        addRosterEntry(createRunState(0), createRosterEntry(hero.id, hero.id, hero.moveIds)),
         SCROLLS_TO_MAX
       );
-      run = chooseEvolutionPath(run, progressionTable, heroesById, hero.id, path.id);
 
       let decline = false;
       for (let spent = 0; spent < SCROLLS_TO_MAX; spent++) {
-        const before = run.roster[0];
-        const offerable = scrollMovePool(progressionTable, moves, before);
+        run = spendMasteryScroll(run, hero.id);
+        if (availableEvolution(progressionTable, run.roster[0])) {
+          assert.strictEqual(run.roster[0].masteryScrollsSpent, EVOLUTION_SCROLLS, `${hero.id}: the Evolution opened off the rung`);
+          run = chooseEvolutionPath(run, progressionTable, heroesById, hero.id, path.id);
+        }
+        const after = run.roster[0];
+        const offerable = masteryMovePool(progressionTable, moves, after);
         assert.ok(
           offerable.length > 0,
-          `${hero.id} via ${path.id}: Scroll ${spent + 1} of ${SCROLLS_TO_MAX} had nothing to offer at rank ${masteryRank(before)}`
+          `${hero.id} via ${path.id}: Scroll ${spent + 1} of ${SCROLLS_TO_MAX} had nothing to offer at rank ${masteryRank(after)}`
         );
-        run = spendMasteryScroll(run, hero.id);
         const moveId = offerable[0];
         run = decline
           ? recordMoveOffer(run, hero.id, [moveId])
@@ -281,6 +280,7 @@ test('move tiers: every hero spends all six Scrolls with a move to show for each
         decline = !decline;
       }
       assert.strictEqual(masteryRank(run.roster[0]), MAX_MASTERY_RANK, `${hero.id} via ${path.id} did not reach max rank`);
+      assert.ok(run.roster[0].chosenPathIds.includes(path.id), `${hero.id} via ${path.id} never evolved`);
     }
   }
 });
@@ -306,10 +306,9 @@ test('move tiers: a loadout filled from the hero\'s own pool still leaves every 
   }
 });
 
-test('move tiers: every hero has an Evolution node — the precondition the test above skips a level on', () => {
-  // The FLOOR test skips EVOLUTION_LEVEL because that level-up surfaces the Evolution instead of a
-  // move. A hero with no node gets a move offer there instead, so the skip quietly over-credits it —
-  // which is how Tempest sat evolution-less without a single test noticing.
+test('move tiers: every hero has an Evolution node — the precondition the ladder walk asserts on', () => {
+  // The walk above asserts the 6th Scroll evolves; a hero with no node would pass it as a plain
+  // offer, which is how Tempest sat evolution-less without a single test noticing.
   const missing = Object.keys(heroesById)
     .filter((heroId) => (progressionTable.evolutions[heroId] ?? []).length === 0)
     .sort();

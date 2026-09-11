@@ -344,7 +344,7 @@ export const sounds: Record<SfxId, SoundSpec> = {
   },
 
   /**
-   * Class conferred (ClassNodeScreen phase 2; ui.commit already played on the discipline pick). A chord struck whole — sus4, not major — with a late bell.
+   * Class conferred (CrucibleScreen; ui.confirm already played on entering the fire). A chord struck whole — sus4, not major — with a late bell.
    * Timed to styles.css class-learn-flash-burst 0.6s / class-learn-pop 0.5s.
    */
   'class.learn': {

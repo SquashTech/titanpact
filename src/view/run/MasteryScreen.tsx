@@ -1,5 +1,6 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
+import { heroes } from '../../data/heroes';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
 import type { HeroDefinition } from '../../engine/content';
@@ -9,7 +10,8 @@ import { equipment } from '../../data/equipment';
 import { NodeSky, NODE_TINT_ARCANE } from '../shared/NodeStage';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
-import { MasteryBoard } from './MasteryBoard';
+import { EvolutionScreen } from './EvolutionScreen';
+import { MasteryBoard, useScrollPour } from './MasteryBoard';
 
 interface Props {
   run: RunState;
@@ -33,7 +35,11 @@ interface Props {
  * feeling punished.
  *
  * Last in the post-fight chain, AFTER the Banner, the contract and the Crucible, so a hero
- * recruited or evolved this beat can take the Scroll it just became eligible for.
+ * recruited or Classed this beat can take the Scroll it just became eligible for.
+ *
+ * The 6th Scroll into a hero is its Evolution (docs/growth-overhaul.md §11), and that is a
+ * screen of its own, so the pour's state lives here (`useScrollPour`) and the Evolution screen
+ * replaces the board outright while the choice is open.
  *
  * The header is the count and nothing else: a Scroll glyph and how many are left. The title it
  * used to carry ("2 Scrolls to Pour") and the line under it ("Tap a hero to pour one in · 3 to a
@@ -47,12 +53,28 @@ export function MasteryScreen({ run, onRunChange, onDone }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const flow = useScrollPour(run, onRunChange);
+
   const left = run.masteryScrolls;
   // Every hero at max rank with nothing left to teach: the Scroll buys literally nothing, and the
   // screen has to let go or it is a wall. The count is left standing rather than swallowed — it
   // is a dead end in the run, not a bug, and App refuses to raise this screen on it again.
   const stuck = left > 0 && !run.roster.some((entry) => canSpendScroll(progressionTable, moves, run, entry));
-  const done = left <= 0 || stuck;
+  // Never while a pour is still resolving — the Scroll's offer after an Evolution has not rolled yet.
+  const done = (left <= 0 || stuck) && !flow.evolving && !flow.overflow;
+
+  const evolvingEntry = flow.evolving ? (run.roster.find((r) => r.rosterId === flow.evolving!.rosterId) ?? null) : null;
+  if (flow.evolving && evolvingEntry) {
+    return (
+      <EvolutionScreen
+        hero={heroes[evolvingEntry.heroId]}
+        entry={evolvingEntry}
+        node={flow.evolving.node}
+        run={run}
+        onChoose={flow.chooseEvolution}
+      />
+    );
+  }
 
   return (
     <div className="node-screen mastery-screen" style={{ '--node-rgb': NODE_TINT_ARCANE } as CSSProperties}>
@@ -68,7 +90,7 @@ export function MasteryScreen({ run, onRunChange, onDone }: Props) {
       </header>
 
       <div className="screen-scroll">
-        <MasteryBoard run={run} onRunChange={onRunChange} onInspect={(entry, hero) => setInspecting({ hero, entry })} />
+        <MasteryBoard run={run} flow={flow} onInspect={(entry, hero) => setInspecting({ hero, entry })} />
       </div>
 
       {/* Only once every Scroll is poured. Held in the layout while hidden so the centred board

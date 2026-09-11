@@ -77,7 +77,9 @@ export interface SaveContentIndex {
   equipmentIds: ReadonlySet<string>;
   relicIds: ReadonlySet<string>;
   passiveIds: ReadonlySet<PassiveId>;
-  classIds: ReadonlySet<PassiveId>;
+  classIds: ReadonlySet<string>;
+  /** classId -> the passive it grants, or null for a move-Class (classes.ts). */
+  classPassiveIds: ReadonlyMap<string, PassiveId | null>;
   locationIds: ReadonlySet<string>;
   championIds: ReadonlySet<string>;
   typeIds: ReadonlySet<TypeId>;
@@ -97,7 +99,7 @@ export interface SaveCatalogs {
   equipment: Record<string, unknown>;
   relics: Record<string, unknown>;
   passives: Record<string, unknown>;
-  classes: Record<string, unknown>;
+  classes: Record<string, { grantsPassiveId?: PassiveId }>;
   locations: Record<string, unknown>;
   /** Faction champion ids (enemies.ts CHAMPION_IDS) — a broken seal names one, and it is never a hero. */
   championIds: readonly string[];
@@ -120,8 +122,9 @@ export function buildContentIndex(catalogs: SaveCatalogs): SaveContentIndex {
     equipmentIds: new Set(Object.keys(catalogs.equipment)),
     relicIds: new Set(Object.keys(catalogs.relics)),
     passiveIds: new Set(Object.keys(catalogs.passives)),
-    // Narrow on purpose: `passives` folds the Class catalog in, but a classId must name a Class.
+    // Narrow on purpose: `passives` folds the Class passives in, but a classId must name a Class.
     classIds: new Set(Object.keys(catalogs.classes)),
+    classPassiveIds: new Map(Object.entries(catalogs.classes).map(([id, cls]) => [id, cls.grantsPassiveId ?? null])),
     locationIds: new Set(Object.keys(catalogs.locations)),
     championIds: new Set(catalogs.championIds),
     typeIds: new Set<string>(catalogs.types),
@@ -249,6 +252,9 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
     if (typeof classId !== 'string') reject(`${label}.classId is not an id`);
     if (!index.classIds.has(classId)) reject(`${label} references unknown class "${classId}"`);
   }
+  // Derived from the Class rather than trusted: a Class's passive is fixed content, and an older
+  // save wrote no such field.
+  const classPassiveId = classId !== null ? (index.classPassiveIds.get(classId) ?? null) : null;
 
   if (!isInt(value.bonusItemSlots, 0, MAX_ITEM_SLOTS)) reject(`${label}.bonusItemSlots is not a slot count`);
   // Uncapped: it keeps climbing past MAX_MASTERY_RANK, which masteryRank clamps on read.
@@ -277,7 +283,8 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
     masteryScrollsSpent: value.masteryScrollsSpent,
     bonusItemSlots: value.bonusItemSlots,
     evolutionTypeGraft: graft as TypeId | null,
-    classId: classId as PassiveId | null,
+    classId: classId as string | null,
+    classPassiveId,
   };
 }
 

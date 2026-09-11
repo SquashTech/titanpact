@@ -55,7 +55,9 @@ export interface RosterEntry {
   /** Current secondary-type grant from the latest type-graft path; a later graft overwrites. Innate primary never changes. */
   evolutionTypeGraft: TypeId | null;
   /** One Class per run holds structurally — a single slot, and classes.ts grantClass replaces. */
-  classId: PassiveId | null;
+  classId: string | null;
+  /** The Class's passive, when it grants one — recorded so entryStats.ts can count it without the Class catalog. Written only by grantClass. */
+  classPassiveId: PassiveId | null;
 }
 
 /**
@@ -161,6 +163,7 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     bonusItemSlots: 0,
     evolutionTypeGraft: null,
     classId: null,
+    classPassiveId: null,
   };
 }
 

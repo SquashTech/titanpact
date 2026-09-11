@@ -1,105 +1,189 @@
-// A Class is a statGrants-only Passive; a hero holds at most one per run (src/run/classes.ts).
-// Fifteen cover every pair of the six core stats — manaPool/mpRegen deliberately excluded, an
-// open mana-tuning question (docs/mana.md) — and Champion is +5 to all six. `name` carries the
-// "Class - " prefix because Classes share the Passive display surface; `id` stays bare.
+// The Class catalog (docs/growth-overhaul.md §11): nine verbs, three a kind, tempered into one
+// hero at each Guardian's Crucible. A Class is a role any hero can take — the doubles toolkit no
+// single type slate covers evenly — so a class move is authored to be worth a slot without STAB,
+// and a class passive is exclusive to its Class (never in the Boon pool: run/boons.ts).
+//
+// `classMoves` fold into data/moves.ts and `classPassives` into data/passives.ts. Class moves
+// carry no `tier`: they are in no Scroll pool and no Tutor pool (test/moveTiers.test.ts).
 
-import type { PassiveDefinition } from '../engine/content';
+import type { MoveDefinition, PassiveDefinition } from '../engine/content';
+import type { ClassDefinition } from '../run/classes';
 
-export const classes: Record<string, PassiveDefinition> = {
-  warrior: {
-    id: 'warrior',
-    name: 'Class - Warrior',
-    description: 'A frontline fighter built to trade blows: +10 Attack, +10 Defense.',
-    statGrants: { attack: 10, defense: 10 },
+export const classMoves: Record<string, MoveDefinition> = {
+  feint: {
+    id: 'feint',
+    name: 'Feint',
+    type: 'Iron',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 40,
+    statusApplication: { statusId: 'Daze', chance: 0.4, target: 'moveTarget' },
+    manaCost: 30,
+    priority: 2,
+    target: 'singleEnemy',
+    description: 'A quick strike before anything else moves — sometimes enough to make the foe lose the round (40% chance of Daze).',
   },
-  guardian: {
-    id: 'guardian',
-    name: 'Class - Guardian',
-    description: 'Built to outlast: +10 HP, +10 Defense.',
-    statGrants: { hp: 20, defense: 10 },
+  volley: {
+    id: 'volley',
+    name: 'Volley',
+    type: 'Nature',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 55,
+    manaCost: 30,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'A flight of shafts across the whole enemy line.',
   },
+  intercept: {
+    id: 'intercept',
+    name: 'Intercept',
+    type: 'Iron',
+    category: 'physical',
+    kind: 'buff',
+    statusApplication: { statusId: 'Provoke', duration: 1, target: 'self' },
+    statDeltas: [{ stat: 'defense', amount: 10 }],
+    statDeltaTarget: 'self',
+    manaCost: 30,
+    priority: 1,
+    target: 'self',
+    description: 'Steps in front of the partner — single-target enemy moves aimed at either ally land here this round, and the guard holds (+10 Defense).',
+  },
+  succor: {
+    id: 'succor',
+    name: 'Succor',
+    type: 'Light',
+    category: 'magical',
+    kind: 'heal',
+    healPower: 50,
+    manaCost: 30,
+    priority: 0,
+    target: 'singleAlly',
+    description: 'Closes an ally’s wounds.',
+  },
+  vanish: {
+    id: 'vanish',
+    name: 'Vanish',
+    type: 'Shadow',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 50,
+    switchesUserOut: true,
+    manaCost: 25,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A cut on the way out — the user withdraws to the bench after striking.',
+  },
+};
+
+export const classPassives: Record<string, PassiveDefinition> = {
   berserker: {
     id: 'berserker',
-    name: 'Class - Berserker',
-    description: 'Hits hard and shrugs it off: +10 Attack, +10 HP.',
-    statGrants: { attack: 10, hp: 20 },
-  },
-  duelist: {
-    id: 'duelist',
-    name: 'Class - Duelist',
-    description: 'Fast in, fast out: +10 Attack, +10 Speed.',
-    statGrants: { attack: 10, speed: 10 },
-  },
-  ranger: {
-    id: 'ranger',
-    name: 'Class - Ranger',
-    description: 'Quick and hard to burn down magically: +10 Speed, +10 Wisdom.',
-    statGrants: { speed: 10, wisdom: 10 },
-  },
-  monk: {
-    id: 'monk',
-    name: 'Class - Monk',
-    description: 'Mobile and physically sturdy: +10 Speed, +10 Defense.',
-    statGrants: { speed: 10, defense: 10 },
-  },
-  mystic: {
-    id: 'mystic',
-    name: 'Class - Mystic',
-    description: 'A pure caster, hits and resists in kind: +10 Intelligence, +10 Wisdom.',
-    statGrants: { intelligence: 10, wisdom: 10 },
-  },
-  sorcerer: {
-    id: 'sorcerer',
-    name: 'Class - Sorcerer',
-    description: 'A mobile spellcaster: +10 Intelligence, +10 Speed.',
-    statGrants: { intelligence: 10, speed: 10 },
-  },
-  templar: {
-    id: 'templar',
-    name: 'Class - Templar',
-    description: 'A magic-bulwark caster: +10 Defense, +10 Intelligence.',
-    statGrants: { defense: 10, intelligence: 10 },
+    name: 'Frenzy',
+    description: 'Every hit this hero lands raises its Attack and Intelligence by 5.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], amount: 5 },
+    },
   },
   warden: {
     id: 'warden',
-    name: 'Class - Warden',
-    description: 'Bulwark against both damage types: +10 Defense, +10 Wisdom.',
-    statGrants: { defense: 10, wisdom: 10 },
+    name: 'Stalwart',
+    description: 'When this hero enters the battlefield, it gains 10 Defense and 10 Wisdom.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'self', stat: ['defense', 'wisdom'], amount: 10 },
+    },
   },
-  sage: {
-    id: 'sage',
-    name: 'Class - Sage',
-    description: 'A defensive caster built to stick around: +10 HP, +10 Wisdom.',
-    statGrants: { hp: 20, wisdom: 10 },
+  monk: {
+    id: 'monk',
+    name: 'Second Wind',
+    description: 'Every hit this hero takes restores 5 Mana.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 5 } },
+    },
   },
-  champion: {
-    id: 'champion',
-    name: 'Class - Champion',
-    description: 'A generalist, a little better at everything: +5 to every stat.',
-    statGrants: { hp: 10, attack: 5, defense: 5, intelligence: 5, wisdom: 5, speed: 5 },
+  herald: {
+    id: 'herald',
+    name: 'Wayfinder',
+    description: 'Whenever a partner enters the battlefield beside this hero, that partner gains 20 Mana.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'ally' },
+      effect: { kind: 'manaGrant', target: 'triggerSubject', amount: { kind: 'flat', value: 20 } },
+    },
   },
-  battlemage: {
-    id: 'battlemage',
-    name: 'Class - Battlemage',
-    description: 'A hybrid striker, hits hard on the swing and the cast: +10 Attack, +10 Intelligence.',
-    statGrants: { attack: 10, intelligence: 10 },
+};
+
+export const classes: Record<string, ClassDefinition> = {
+  // --- Offensive ---
+  duelist: {
+    id: 'duelist',
+    name: 'Duelist',
+    kind: 'offensive',
+    description: 'Learns Feint: a priority strike that can Daze its target.',
+    grantsMoveId: 'feint',
   },
-  crusader: {
-    id: 'crusader',
-    name: 'Class - Crusader',
-    description: 'An aggressive attacker who shrugs off magic: +10 Attack, +10 Wisdom.',
-    statGrants: { attack: 10, wisdom: 10 },
+  berserker: {
+    id: 'berserker',
+    name: 'Berserker',
+    kind: 'offensive',
+    description: 'Frenzy: every hit landed raises Attack and Intelligence.',
+    grantsPassiveId: 'berserker',
   },
-  shaman: {
-    id: 'shaman',
-    name: 'Class - Shaman',
-    description: 'A bulky caster who sticks around long enough to cast: +10 HP, +10 Intelligence.',
-    statGrants: { hp: 20, intelligence: 10 },
+  ranger: {
+    id: 'ranger',
+    name: 'Ranger',
+    kind: 'offensive',
+    description: 'Learns Volley: a physical strike across both foes.',
+    grantsMoveId: 'volley',
   },
-  outrider: {
-    id: 'outrider',
-    name: 'Class - Outrider',
-    description: 'Hard to pin down and hard to kill: +10 HP, +10 Speed.',
-    statGrants: { hp: 20, speed: 10 },
+  // --- Defensive ---
+  guardian: {
+    id: 'guardian',
+    name: 'Guardian',
+    kind: 'defensive',
+    description: 'Learns Intercept: pull every single-target enemy move onto yourself this round.',
+    grantsMoveId: 'intercept',
+  },
+  warden: {
+    id: 'warden',
+    name: 'Warden',
+    kind: 'defensive',
+    description: 'Stalwart: arrive on the field braced, +10 Defense and +10 Wisdom.',
+    grantsPassiveId: 'warden',
+  },
+  cleric: {
+    id: 'cleric',
+    name: 'Cleric',
+    kind: 'defensive',
+    description: 'Learns Succor: a single-ally heal, whatever your type.',
+    grantsMoveId: 'succor',
+  },
+  // --- Utility ---
+  monk: {
+    id: 'monk',
+    name: 'Monk',
+    kind: 'utility',
+    description: 'Second Wind: every hit taken restores 5 Mana.',
+    grantsPassiveId: 'monk',
+  },
+  rogue: {
+    id: 'rogue',
+    name: 'Rogue',
+    kind: 'utility',
+    description: 'Learns Vanish: strike, then withdraw to the bench in the same turn.',
+    grantsMoveId: 'vanish',
+  },
+  herald: {
+    id: 'herald',
+    name: 'Herald',
+    kind: 'utility',
+    description: 'Wayfinder: every partner that enters beside you arrives with 20 extra Mana.',
+    grantsPassiveId: 'herald',
   },
 };

@@ -19,10 +19,15 @@ import type { EquipmentDefinition } from '../../src/run/equipment';
 import { holdsItem } from '../../src/run/equipment';
 import type { RosterEntry, RunState } from '../../src/run/state';
 import {
+  EVOLUTION_SCROLLS,
   MOVE_CAP,
+  applyEvolutionMoves,
+  availableEvolution,
   canSpendScroll,
+  chooseEvolutionPath,
   grantOfferedMove,
   itemSlotsFor,
+  masteryMovePool,
   recordMoveOffer,
   rosterEntryTypes,
   scrollMovePool,
@@ -246,30 +251,62 @@ export function levelUpTarget(roster: readonly RosterEntry[], policy: LevelPolic
   return [...core].sort((a, b) => a.level - b.level || powerScore(b) - powerScore(a))[0];
 }
 
+/** One Evolution taken inside a pour, reported back so run.ts can log it as a choice. */
+export interface PourEvolution {
+  rosterId: string;
+  offered: string[];
+  picked: string;
+}
+
 /**
  * Every held Mastery Scroll, poured into the hero it is worth most to — highest power score that
  * can still take one. CONCENTRATED rather than spread, because that is the play the rank ladder
  * rewards and a sim that spread them evenly would measure a ceiling nobody reaches.
  *
+ * The 6th Scroll into a hero is its Evolution (docs/growth-overhaul.md §11): the path is taken at
+ * random (the path table is what is under test), its granted move's overflow resolved, and only
+ * then does the Scroll's own offer roll — from the post-Evolution pool, as the screen does it.
+ *
  * The move is taken when it beats the worst one held (or there is room), declined otherwise —
  * either way the Scroll is gone, which is the rule the screen enforces too.
  */
-export function pourScrolls(run: RunState, rng: () => number): RunState {
+export function pourScrolls(run: RunState, rng: () => number, evolutions: PourEvolution[] = []): RunState {
   let next = run;
   // Bounded by the pool: every iteration spends one or breaks.
   while (next.masteryScrolls > 0) {
     const takers = next.roster.filter((entry) => canSpendScroll(progressionTable, moves, next, entry));
     if (takers.length === 0) break;
-    const target = takers.reduce((best, entry) => (powerScore(entry) > powerScore(best) ? entry : best));
-    const pool = scrollMovePool(progressionTable, moves, target);
-    // A dry band below the cap still takes the Scroll — the tick is what opens the next one.
-    if (pool.length === 0) {
-      next = spendMasteryScroll(next, target.rosterId);
-      continue;
+    // Breadth first, then depth (docs/growth-overhaul.md §11: six evolved is the expected ending):
+    // the strongest hero still short of its Evolution takes the Scroll; once everyone has one, the
+    // strongest hero outright does, so the ladder's open-ended top is measured as well.
+    const short = takers.filter((entry) => entry.masteryScrollsSpent < EVOLUTION_SCROLLS);
+    const candidates = short.length > 0 ? short : takers;
+    const target = candidates.reduce((best, entry) => (powerScore(entry) > powerScore(best) ? entry : best));
+    next = spendMasteryScroll(next, target.rosterId);
+
+    const ranked = next.roster.find((r) => r.rosterId === target.rosterId)!;
+    const node = availableEvolution(progressionTable, ranked);
+    if (node && node.paths.length > 0) {
+      const path = node.paths[Math.floor(rng() * node.paths.length)];
+      const refused = applyEvolutionMoves(ranked.unlockedMoveIds, path.unlocksMoveIds).overflow;
+      try {
+        next = chooseEvolutionPath(next, progressionTable, heroes, target.rosterId, path.id);
+        evolutions.push({ rosterId: target.rosterId, offered: node.paths.map((p) => p.id), picked: path.id });
+        for (const moveId of refused) {
+          const replaceId = replacementTarget(next.roster.find((r) => r.rosterId === target.rosterId)!, moveId);
+          if (replaceId) next = grantOfferedMove(next, target.rosterId, moveId, replaceId);
+        }
+      } catch {
+        // Illegal path for this hero (content bug) — the Scroll still ticked; carry on unevolved.
+      }
     }
-    const moveId = pool[Math.floor(rng() * pool.length)];
-    next = recordMoveOffer(spendMasteryScroll(next, target.rosterId), target.rosterId, [moveId]);
+
     const current = next.roster.find((r) => r.rosterId === target.rosterId)!;
+    const pool = masteryMovePool(progressionTable, moves, current);
+    // A dry band still takes the Scroll — the tick is what opens the next one.
+    if (pool.length === 0) continue;
+    const moveId = pool[Math.floor(rng() * pool.length)];
+    next = recordMoveOffer(next, target.rosterId, [moveId]);
     if (current.unlockedMoveIds.length < MOVE_CAP) {
       next = grantOfferedMove(next, target.rosterId, moveId);
     } else {

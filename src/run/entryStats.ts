@@ -20,7 +20,7 @@ export function entryPassiveCounts(
   for (const id of entry.evolutionPassiveGrants) evolutionGrants[id] = (evolutionGrants[id] ?? 0) + 1;
   const eventGrants: Record<PassiveId, number> = {};
   for (const id of entry.bonusPassiveGrants) eventGrants[id] = (eventGrants[id] ?? 0) + 1;
-  const classGrants: Record<PassiveId, number> = entry.classId ? { [entry.classId]: 1 } : {};
+  const classGrants: Record<PassiveId, number> = entry.classPassiveId ? { [entry.classPassiveId]: 1 } : {};
   return mergePassiveGrants(
     equipmentPassiveGrants(entry.equipment, equipmentLookup),
     evolutionGrants,

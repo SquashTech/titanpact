@@ -7,12 +7,12 @@
 > demo fight into the roguelike run CLAUDE.md's north star describes: draft →
 > escalating fights → relics.
 
-> **Partly superseded by `growth-overhaul.md` (2026-09-10).** Its **phases 1-4 have LANDED**
-> and this file is updated for them: Gems and the two stat shrines are deleted, the reward-row
-> pool is re-weighted around two Scroll nodes and a `crucibleReward`, and the post-fight gates
-> lose both the Gem offer and the Level Up screen — **the Crucible** stands where the latter did,
-> on Guardian nodes only. Still **pending**: what a recruit arrives as (phase 5) and the
-> difficulty re-fit (phase 6). **Everything not called pending describes what the code does.**
+> **Partly superseded by `growth-overhaul.md`.** Its seven phases landed 2026-09-10 and its
+> **§11 second pass landed 2026-09-11**: Evolutions come from the 6th Scroll into a hero, the
+> Crucible on a Guardian node grants a **Class** (a move or a passive), the Mentor row in acts
+> 1-3 is an Early-Mid Tutor (`mentorReward`) with a Forge in act 4's seat, and `crucibleReward`
+> is deleted. Where a paragraph below still says the Crucible evolves or the Mentor teaches a
+> stat-pair Class, §11 wins. **Everything else describes what the code does.**
 
 Slay the Spire is the direct reference (per user direction, 2026-08-16): a branching
 map of nodes, most of which reward something (a Guild Hall shop, equipment, a relic,
@@ -40,8 +40,8 @@ between; per user direction, the shape is now forced and uniform):
   first choice among identical-weight openers.
 - **Row 1: 3 nodes, pick 1 of 3 — reward types only** (`equipmentReward`/`scrollReward`/
   `loneScrollReward`/`passiveReward`/`currencyReward`/`forgeReward`/`event`, weighted). No
-  `fight`/`shop`/`elite`/`classReward` mixed in — every reward row is a genuine reward
-  choice, not a chance to draw another fight or dodge one, and `classReward` is reserved
+  `fight`/`shop`/`elite`/`mentorReward` mixed in — every reward row is a genuine reward
+  choice, not a chance to draw another fight or dodge one, and `mentorReward` is reserved
   for its own forced Mentor row (2026-08-22 revision, per user direction — see the Mentor
   row note below), never a random pick-1-of-3 option. In acts 4 and 5 one seat on one of
   the act's two pick-3 rows is taken by a forced `tutorReward` (see "The Tutor" below); the
@@ -66,10 +66,13 @@ The upshot: every act is exactly **Fight → pick 1 of 3 → Skirmish → pick 1
 (Elite or Battle) → pick 1 of 3 → (Guild Hall or Blacksmith) → Guardian** — no path through
 an act ever skips a fight, and none arrives at the funnel holding only half the fork.
 
-**The Mentor row (acts 1-4).** Acts 1 through 4 each splice one extra forced single-node
-`classReward` row into the shape above, giving them 9 rows against Act 5's 8. It sits
+**The Mentor row (acts 1-3), the Forge row (act 4).** Acts 1 through 4 each splice one extra
+forced single-node row into the shape above, giving them 9 rows against Act 5's 8. In acts 1-3
+it is the Mentor (`mentorReward`): pick a hero, then any Early or Mid move from its own pool,
+chosen rather than rolled (2026-09-11, `growth-overhaul.md` §11 — it taught a stat-pair Class
+until then). In act 4 the same seat is a forced Forge (`forgeReward`, `LAST_SPLICED_ACT`). It sits
 **immediately before the Skirmish** (2026-09-05, per user direction — it was immediately
-*after*, and Act 1 only, until then), so the Class is in hand for the act's first
+*after*, and Act 1 only, until then), so the move is in hand for the act's first
 recruitable fight rather than arriving just after it. A Mentor act therefore reads
 **Fight → pick 1 of 3 → Mentor → Skirmish → pick 1 of 3 → (Elite or Battle) → pick 1 of 3
 → (Guild Hall or Blacksmith) → Guardian**, and its Skirmish lands one row later than Act 5's (`MENTOR_ROW`,
@@ -148,12 +151,9 @@ Note what did NOT change: `RunMap`, `generateMap`, `reachableNodeIds`, `advanceT
 format are all untouched, and every map test still passes without edit. The act still HAS its
 shape; the player is simply walked through it rather than shown it.
 
-Four Mentors means a run can Class up to four heroes rather than one, since the offer
-filters to heroes with no Class yet. Measured (`scripts/sim`, 40,000 runs at 3× XP), that
-took the Classes from statistically inert — every one of the sixteen inside ±0.03 lift —
-to a real spread: Berserker +0.20 (z 2.4) and Warden +0.17 (z 2.1) at the top, Warrior
-−0.19 (z −2.4) at the bottom. Whether that spread wants flattening is now a live question
-where it previously could not even be asked.
+Classes left the Mentor for the Crucible on 2026-09-11 (`growth-overhaul.md` §11). The old
+stat-pair Classes had measured statistically inert until there were four of them (`scripts/sim`,
+40,000 runs), which is the finding that made them verbs.
 
 **The Tutor seat (acts 4-5).** Acts 4 and 5 each guarantee exactly one `tutorReward`
 (2026-09-07, per user direction). Unlike the Mentor it gets **no row of its own**: it is
@@ -234,7 +234,7 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `forgeReward` ("The Forge") | `ForgeScreen` — pick one roster hero to gain **+1 item slot** for the rest of the run (`runProgress.ts` `grantItemSlot`, stored on `RosterEntry.bonusItemSlots`, capped at `MAX_ITEM_SLOTS` = 3). **2026-09-06**, replacing the three slot-specific cache nodes (`weaponReward`/`armorReward`/`accessoryReward`), which lost their meaning when items stopped having categories — most of their frequency went to `equipmentReward`, whose weight went 20 → 40. The scarcest thing on the reward row (weight 8) on purpose: it is permanent, it compounds with every drop after it, and it is the only reward here a hero can be at the cap for — a roster entirely at 3 slots makes the node a dead draw, which is what makes spending it a choice — and at the 2026-09-07 cap of 3 that arrives materially sooner. |
 | `scrollReward` ("Scroll Cache") | `NodeRewardScreen` — an instant grant of `SCROLL_REWARD_COUNT` = 2 Mastery Scrolls, counted up on arrival like gold and XP. Which hero they go to is not asked here, but it is asked immediately after: `MasteryScreen` is raised on the way back to the map. See "Mastery Scrolls" below. |
 | `passiveReward` ("Boon") | `BoonNodeScreen` — pick 1 of 3 passives, then the hero it settles on (`grantEventPassive`, stored on `RosterEntry.bonusPassiveGrants`). See "Boons" below. |
-| `classReward` ("Mentor's Hall") | `ClassNodeScreen` — pick 1 of 3 Classes (`src/data/classes.ts`), then pick which roster hero learns it, filtered to heroes with no Class yet (`src/run/classes.ts` `grantClass`, stored on `RosterEntry.classId` — a hero can hold at most one Class per run, so `grantClass` REPLACES rather than stacks). If every roster hero already has a Class, the offer is simply wasted. The screen names the heroes it CAN still teach, portraits and all, while the three disciplines are being read (2026-09-08) — that filtered roster is the whole reason to take or leave one, and it used to be a screen away behind the roster glyph. **Not in `REWARD_WEIGHTS`** (2026-08-22 revision, per user direction) — the only way to encounter this node type is a forced Mentor row (§1), never a random pick-1-of-3 option in any act. Acts 1-4 each guarantee one, so a run can Class up to four heroes; the offer filters to heroes with no Class yet and is wasted only once every hero has one. |
+| `mentorReward` ("Mentor's Hall") | `TutorNodeScreen` with `variant: 'mentor'` — pick a hero, then ANY Early or Mid move from that hero's own Scroll pool, un-rolled and un-rank-gated (`tutorMovePool` with `MENTOR_TIER_CEILING`, `src/run/tutor.ts`). The Tutor's early sibling (2026-09-11, `growth-overhaul.md` §11): what it buys is a chosen answer to the Acts 1-2 wall, and it does not undercut the Scroll ladder because rank progress and the Evolution live only on the Scroll — a Mentor move fills a slot and ticks nothing. **Not in `REWARD_WEIGHTS`** — the only way to meet one is the forced row in acts 1-3 (§1). Until 2026-09-11 this node (`classReward`) taught a stat-pair Class; Classes are now verbs, granted at the Crucible. |
 | `tutorReward` ("Tutor") | `TutorNodeScreen` — pick one roster hero, then **any** move from that hero's Scroll pool. See "The Tutor" below. Acts 4-5 only. |
 | `event` | `EventNodeScreen` — rolls one of the authored map events (`src/data/events.ts`, `src/run/events.ts`) and resolves it: a move taught to a chosen hero, a Passive taught to a chosen hero, a flat stat trade, or a pile of act-curve loot dropped straight into the bag. Which event a node turns out to be is rolled once at node-select time and gated by act and Location. See **docs/events.md**. |
 
@@ -433,9 +433,10 @@ A won encounter resolves through up to five gates before the map comes back
    be taken. On a boss node the act-end contract (§3) is granted *before* this check, so
    it is spendable on the heroes that boss fight just beat.
 2. **The Crucible** (`CrucibleScreen`) — **boss nodes only**: pick ONE roster hero, and that
-   hero evolves. Five a run, one per act. Skipped when no hero has an Evolution left. See
-   `docs/leveling-and-ranks.md` Part 2 for the trigger and the economy, including the acts-3+
-   `crucibleReward` node that pays a sixth.
+   hero takes a Class — one of three rolled one per kind, a move or a passive (2026-09-11,
+   `growth-overhaul.md` §11; it granted the Evolution until then). Five a run, one per act.
+   Skipped when every hero already holds a Class. Evolutions come from the 6th Scroll into a
+   hero, inside the Mastery beat below.
 
 **The levels themselves are not a gate.** They are granted in the same `RunState` transform as
 the gold, before any screen opens (`grantEncounterLevels`), and reported on the victory overlay

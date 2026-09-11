@@ -4,7 +4,7 @@ import { TYPES } from '../src/data/typechart';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { passives, boonPassives, typeDamagePassiveFor, TYPE_DAMAGE_BONUS, TYPE_DAMAGE_PASSIVE_TYPES } from '../src/data/passives';
-import { classes } from '../src/data/classes';
+import { classPassives } from '../src/data/classes';
 import { progressionTable } from '../src/data/progression';
 import { BOON_OFFER_COUNT, boonMoveCount, boonMoveType, boonPool, pickBoonOffers, rosterTypes } from '../src/run/boons';
 import { createRunState, createRosterEntry, addRosterEntry } from '../src/run/state';
@@ -52,7 +52,7 @@ test('boons: the generic pool is roster-agnostic — no Evolution passive and no
   }
   for (const id of Object.keys(boonPassives)) {
     assert.ok(!evolutionGranted.has(id), `${id} is an Evolution path's identity and must not be a Boon`);
-    assert.ok(!classes[id], `${id} is a Class and has its own node`);
+    assert.ok(!classPassives[id], `${id} is a Class's verb and belongs to the Crucible alone`);
     assert.ok(passives[id], `${id} is missing from the passive catalog`);
   }
 });

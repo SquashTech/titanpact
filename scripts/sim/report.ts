@@ -8,6 +8,7 @@ import { passives } from '../../src/data/passives';
 import { classes } from '../../src/data/classes';
 import { locations } from '../../src/data/locations';
 import { progressionTable } from '../../src/data/progression';
+import { EVOLUTION_SCROLLS, RANK_THRESHOLDS } from '../../src/run/progression';
 import { TOTAL_ACTS } from '../../src/run/state';
 import type { Aggregate, ChoiceAgg } from './types';
 
@@ -288,37 +289,34 @@ export function formatReport(
   out.push(`    spent cycling out        ${pct(agg.playerSwitches, agg.playerTurns)}`);
   out.push(`    fights reaching lock-in  ${pct(agg.lockInFights, totalFights)}  (player side lost 2+ heroes)`);
 
-  // The movepool gate is MASTERY RANK, not level (docs/growth-overhaul.md §4): rank 1 offers
-  // Early, 2 Mid, 3 Mid+Late, and EVERY move costing 70+ mana is late-tier — so this table says
-  // whether the expensive half of the catalog is reachable at all, which is what makes a big
-  // Mana pool worth anything. Three Scrolls a rank; six max a hero.
-  const ranks = agg.heroRankHistogram;
-  const heroRuns = ranks.reduce((sum, n) => sum + (n ?? 0), 0);
-  const atLeast = (rank: number) => ranks.slice(rank).reduce((sum, n) => sum + (n ?? 0), 0);
+  // The movepool gate is the SCROLL LADDER, not level (docs/growth-overhaul.md §4, §11): the 4th
+  // Scroll into a hero opens Mid, the 6th is its Evolution, the 8th opens Late — and EVERY move
+  // costing 70+ mana is late-tier, so this table says whether the expensive half of the catalog is
+  // reachable at all, which is what makes a big Mana pool worth anything.
+  const spentHist = agg.heroScrollHistogram;
+  const heroRuns = spentHist.reduce((sum, n) => sum + (n ?? 0), 0);
+  const atLeast = (spent: number) => spentHist.slice(spent).reduce((sum, n) => sum + (n ?? 0), 0);
   const gates: readonly (readonly [string, number])[] = [
-    ['Mid tier (rank 2)', 2],
-    ['LATE tier (rank 3)', 3],
+    [`Mid tier (${RANK_THRESHOLDS[1]} Scrolls)`, RANK_THRESHOLDS[1]],
+    [`Evolution (${EVOLUTION_SCROLLS} Scrolls)`, EVOLUTION_SCROLLS],
+    [`LATE tier (${RANK_THRESHOLDS[2]} Scrolls)`, RANK_THRESHOLDS[2]],
   ];
   // Split, because the whole-batch column is dominated by heroes that died in Act 1 and
   // never saw the later acts' income at all. The DEEP column is the one that answers
   // "does a player who gets there actually reach the late-tier movepool".
-  const deep = agg.heroRankHistogramDeep;
+  const deep = agg.heroScrollHistogramDeep;
   const deepRuns = deep.reduce((sum, n) => sum + (n ?? 0), 0);
-  const atLeastDeep = (rank: number) => deep.slice(rank).reduce((sum, n) => sum + (n ?? 0), 0);
+  const atLeastDeep = (spent: number) => deep.slice(spent).reduce((sum, n) => sum + (n ?? 0), 0);
   out.push('');
-  out.push(`  the movepool gate — best Mastery Rank reached, all ${heroRuns} (hero, run) pairs vs. the ${deepRuns} that reached act 4+:`);
-  out.push(`    ${pad('', 20)}${padStart('all', 10)}${padStart('act 4+', 10)}`);
-  for (const [label, rank] of gates) {
+  out.push(`  the movepool gate — best Scrolls poured, all ${heroRuns} (hero, run) pairs vs. the ${deepRuns} that reached act 4+:`);
+  out.push(`    ${pad('', 24)}${padStart('all', 10)}${padStart('act 4+', 10)}`);
+  for (const [label, spent] of gates) {
     out.push(
-      `    ${pad(label, 20)}${padStart(pct(atLeast(rank), heroRuns), 10)}${padStart(pct(atLeastDeep(rank), deepRuns), 10)}`
+      `    ${pad(label, 24)}${padStart(pct(atLeast(spent), heroRuns), 10)}${padStart(pct(atLeastDeep(spent), deepRuns), 10)}`
     );
   }
-
-  // Level still matters — it is what pays stats — so it keeps a line, just not the gate table.
-  const levels = agg.heroLevelHistogram;
-  const levelRuns = levels.reduce((sum, n) => sum + (n ?? 0), 0);
-  const atLeastLevel = (level: number) => levels.slice(level).reduce((sum, n) => sum + (n ?? 0), 0);
-  out.push(`    ${pad('Evolution (lvl 5)', 20)}${padStart(pct(atLeastLevel(5), levelRuns), 10)}${padStart(pct(agg.heroLevelHistogramDeep.slice(5).reduce((s, n) => s + (n ?? 0), 0), agg.heroLevelHistogramDeep.reduce((s, n) => s + (n ?? 0), 0)), 10)}`);
+  // §11's stated target is a fully evolved roster by the end of a run.
+  out.push(`    ${pad('roster evolved at end', 24)}${padStart(pct(agg.rosterEvolvedEndSum, R), 10)}   (every hero: ${pct(agg.runsRosterEvolved, R)} of runs)`);
 
   const totalCasts = Object.values(agg.castsByTier).reduce((sum, n) => sum + n, 0);
   out.push('');

@@ -27,15 +27,15 @@ import {
   applyEvolutionMoves,
   rosterEntryTypes,
   EVOLUTION_LEVEL,
+  EVOLUTION_SCROLLS,
   ProgressionError,
 } from '../src/run/progression';
 
-/** Raises a hero `n` LEVELS. Levels are automatic and roster-wide now (run/growth.ts), so this
- *  is a fixture, not a spend — the growth roll itself is test/growth.test.ts's subject. */
-function levelUpTimes(run: import('../src/run/state').RunState, rosterId: string, n: number) {
+/** Places a hero on the Evolution rung of the Scroll ladder (docs/growth-overhaul.md §11) — a fixture, not a spend. */
+function atEvolutionRung(run: import('../src/run/state').RunState, rosterId: string) {
   return {
     ...run,
-    roster: run.roster.map((r) => (r.rosterId === rosterId ? { ...r, level: r.level + n } : r)),
+    roster: run.roster.map((r) => (r.rosterId === rosterId ? { ...r, masteryScrollsSpent: EVOLUTION_SCROLLS } : r)),
   };
 }
 
@@ -263,18 +263,21 @@ test('progression: an offer is spent by being MADE — declined or swapped away,
   assert.throws(() => recordMoveOffer(run, 'nobody', ['moltenLash']), ProgressionError);
 });
 
-test('progression: an Evolution is UNGATED by level, offers exactly three paths, grants stats, and is one-shot', () => {
-  // The Crucible replaced the level trigger on 2026-09-10 (docs/growth-overhaul.md §5): under
-  // automatic roster-wide levelling every hero crosses any threshold on the same fight, so a
-  // level gate IS a six-decision wall. A level-1 hero is a legal Crucible target.
+test('progression: an Evolution is gated on the Scroll ladder, never on level; offers exactly three paths, grants stats, and is one-shot', () => {
+  // The 6th Scroll into a hero is its Evolution (docs/growth-overhaul.md §11): under automatic
+  // roster-wide levelling every hero crosses any level threshold on the same fight, so a level
+  // gate IS a six-decision wall, where Scrolls are poured one hero at a time.
   let run = seedRoster(['cinderKnight']);
-  const atOne = availableEvolution(progressionTable, run.roster[0]);
-  assert.ok(atOne, 'a level-1 hero can walk into the Crucible');
+  assert.strictEqual(availableEvolution(progressionTable, run.roster[0]), null, 'nothing poured, nothing offered');
   assert.strictEqual(run.roster[0].level, 1);
+  const highLevel = { ...run.roster[0], level: 30 };
+  assert.strictEqual(availableEvolution(progressionTable, highLevel), null, 'level alone never opens it');
+  const oneShort = { ...run.roster[0], masteryScrollsSpent: EVOLUTION_SCROLLS - 1 };
+  assert.strictEqual(availableEvolution(progressionTable, oneShort), null, 'nor the Scroll before the rung');
 
-  run = levelUpTimes(run, 'cinderKnight', EVOLUTION_LEVEL - 1);
+  run = atEvolutionRung(run, 'cinderKnight');
   const node = availableEvolution(progressionTable, run.roster[0]);
-  assert.ok(node, 'and the offer is unchanged at any level');
+  assert.ok(node, 'the rung opens it, at level 1');
   assert.strictEqual(node!.paths.length, 3, 'CLAUDE.md: a choice of three options');
 
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'cinderKnight', 'cinderKnight-offensive');
@@ -289,7 +292,7 @@ test('progression: an Evolution is UNGATED by level, offers exactly three paths,
 
 test('progression: an Evolution path with a non-multiple-of-5 stat grant is rejected', () => {
   let run = seedRoster(['cinderKnight']);
-  run = levelUpTimes(run, 'cinderKnight', EVOLUTION_LEVEL - 1);
+  run = atEvolutionRung(run, 'cinderKnight');
 
   const badTable = {
     moveTiers: {},
@@ -311,7 +314,7 @@ test('progression: an Evolution path with a non-multiple-of-5 stat grant is reje
 
 test('progression: a graft path adds its learnableMoveIds to the level-up pool without granting them', () => {
   let run = seedRoster(['crimson']);
-  run = levelUpTimes(run, 'crimson', EVOLUTION_LEVEL - 1);
+  run = atEvolutionRung(run, 'crimson');
 
   const before = masteryMovePool(progressionTable, moves, { ...run.roster[0], masteryScrollsSpent: 99 });
   assert.ok(!before.includes('soulRend'), 'Spirit moves must not be offerable before the graft');
@@ -331,7 +334,7 @@ test('progression: a graft path adds its learnableMoveIds to the level-up pool w
 
 test('progression: an untaken path\'s learnableMoveIds stay out of the pool, and tier gating still applies', () => {
   let run = seedRoster(['crimson']);
-  run = levelUpTimes(run, 'crimson', EVOLUTION_LEVEL - 1);
+  run = atEvolutionRung(run, 'crimson');
 
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'crimson', 'crimson-utility');
   const atEvolutionLevel = masteryMovePool(progressionTable, moves, next.roster[0]);
@@ -343,7 +346,7 @@ test('progression: an untaken path\'s learnableMoveIds stay out of the pool, and
 
 test('progression: a path that grants a Passive records it on the entry (Crimson\'s Pyroclasm)', () => {
   let run = seedRoster(['crimson']);
-  run = levelUpTimes(run, 'crimson', EVOLUTION_LEVEL - 1);
+  run = atEvolutionRung(run, 'crimson');
 
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'crimson', 'crimson-offensive');
   assert.deepStrictEqual(next.roster[0].evolutionPassiveGrants, ['firestarter']);
@@ -354,7 +357,7 @@ test('progression: a path that grants a Passive records it on the entry (Crimson
 
 test('progression: Warhowl inverts Fang\'s attacking stat — a NEGATIVE Evolution grant is legal and lands', () => {
   let run = seedRoster(['packAlpha']);
-  run = levelUpTimes(run, 'packAlpha', EVOLUTION_LEVEL - 1);
+  run = atEvolutionRung(run, 'packAlpha');
 
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'packAlpha', 'packAlpha-utility');
   const grants = next.roster[0].evolutionStatGrants;
@@ -392,7 +395,7 @@ test('progression: an Evolution grant fills an open slot, and the cap refuses th
 test('progression: choosing Stonehide at the move cap leaves the loadout untouched — the grant does not silently displace a move', () => {
   let run = createRunState(0);
   run = addRosterEntry(run, createRosterEntry('packAlpha', 'packAlpha', [...heroes.packAlpha.moveIds, 'maul']));
-  run = levelUpTimes(run, 'packAlpha', EVOLUTION_LEVEL - 1);
+  run = atEvolutionRung(run, 'packAlpha');
   assert.strictEqual(run.roster[0].unlockedMoveIds.length, 4);
 
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'packAlpha', 'packAlpha-defensive');
@@ -408,7 +411,7 @@ test('progression: choosing Stonehide at the move cap leaves the loadout untouch
 
 test('progression: a type-graft path grants a second type without touching the innate HeroDefinition', () => {
   let run = seedRoster(['tidecaller']);
-  run = levelUpTimes(run, 'tidecaller', EVOLUTION_LEVEL - 1);
+  run = atEvolutionRung(run, 'tidecaller');
 
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'tidecaller', 'tidecaller-defensive');
   assert.strictEqual(next.roster[0].evolutionTypeGraft, 'Frost');
@@ -428,7 +431,7 @@ test('progression: a type-graft path grants a second type without touching the i
 
 test('progression: a graft on an already-dual-typed hero TRADES the innate secondary, never stacks a third', () => {
   let run = seedRoster(['ironWarden']);
-  run = levelUpTimes(run, 'ironWarden', EVOLUTION_LEVEL - 1);
+  run = atEvolutionRung(run, 'ironWarden');
 
   // Synthetic dual-typed override so this exercises the rule rather than any hero's canonical typing.
   const dualHeroes = { ...heroes, ironWarden: { ...heroes.ironWarden, types: ['Iron', 'Stone'] as const } };
@@ -482,7 +485,7 @@ test('progression: a graft on an already-dual-typed hero TRADES the innate secon
 
 test('progression: a later type-graft path shifts (replaces) the secondary type rather than stacking a third', () => {
   let run = seedRoster(['tidecaller']);
-  run = levelUpTimes(run, 'tidecaller', EVOLUTION_LEVEL - 1);
+  run = atEvolutionRung(run, 'tidecaller');
   run = chooseEvolutionPath(run, progressionTable, heroes, 'tidecaller', 'tidecaller-defensive');
   assert.strictEqual(run.roster[0].evolutionTypeGraft, 'Frost');
 

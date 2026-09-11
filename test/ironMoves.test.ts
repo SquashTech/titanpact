@@ -6,6 +6,7 @@ import { test } from './harness';
 import { createFightState, fixtureMaxHp, withFullPools } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
+import { classMoves } from '../src/data/classes';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
@@ -222,7 +223,7 @@ test('iron: Reinforce pays BOTH allies, including the caster', () => {
 // --- Conduct: Iron cashes, never plants ---
 
 test('iron: every damage row detonates Conduct for free, and the slate plants it zero times', () => {
-  const ironMoves = Object.values(moves).filter((m) => m.type === 'Iron');
+  const ironMoves = Object.values(moves).filter((m) => m.type === 'Iron' && !classMoves[m.id]);
   const damage = ironMoves.filter((m) => m.kind === 'damage');
   const planters = ironMoves.filter((m) => firstStatusApplication(m)?.statusId === 'Conduct');
 
@@ -255,7 +256,7 @@ test('iron: an Iron hit on a marked foe is worth 15% max HP more than the same h
 // --- What the slate does NOT have ---
 
 test('iron: every priority row is a POSITIVE bracket, and the slate has no heal, cleanse or field effect', () => {
-  const ironMoves = Object.values(moves).filter((m) => m.type === 'Iron');
+  const ironMoves = Object.values(moves).filter((m) => m.type === 'Iron' && !classMoves[m.id]);
   const bracketed = ironMoves.filter((m) => m.priority !== 0);
   // Two rows now, not one: Opening Strike traded 30 BP for 25 and a bracket (2026-09-10), which is
   // a deliberate jab rather than a slip. What the type must never do is swing SLOW — so the

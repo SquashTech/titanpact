@@ -11,7 +11,8 @@ import { createRunState, createRosterEntry, addRosterEntry } from './state';
 import { unsealedIdFor } from '../data/enemies';
 import {
   MOVE_CAP,
-  SCROLLS_PER_RANK,
+  EVOLUTION_SCROLLS,
+  RANK_THRESHOLDS,
   availableEvolution,
   chooseEvolutionPath,
   masteryMovePool,
@@ -36,39 +37,27 @@ export type EncounterNodeType = 'fight' | 'elite' | 'boss';
 const GROWTH_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed'];
 
 /**
- * The levels at which a generated hero's Mastery Rank ticks up. A hero it is generating holds no
- * Scrolls, so its rank has to be read off something — and level is the only thing it has.
+ * Where on the Scroll ladder a generated hero stands, read off level — the only thing it has,
+ * since it holds no Scrolls. One table for rank AND Evolution (docs/growth-overhaul.md §11):
+ * `masteryScrollsSpent` is what both are derived from on a roster hero, so an enemy gets the
+ * same number and passes the same gates.
  *
- * Re-banded 2026-09-10 (Growth Overhaul phase 6). These were [4, 7], the OLD movepool gate's level
- * thresholds, carried over unchanged when rank replaced level in phase 2. Against the re-derived
- * `ENEMY_LEVEL_BY_ACT` that put Act 1 enemies at rank 2 and everything from Act 2 at rank 3 — while
- * the PLAYER, whose rank comes from a Scroll economy paying two a Guardian, measured 38% at rank 2
- * and 23% at rank 3 by Act 4. Enemies were out-kitting the player for the whole run, worst at the
- * start, and Act 1's Skirmish went from 83% to 80% because of it.
- *
- * So the bands track the PLAYER'S rank, not the old gate's: rank 1 through Act 1, rank 2 through
- * Acts 2-3, rank 3 from Act 4 — read off the enemy level table those acts produce.
+ * The bands track the PLAYER's ladder position by act, not any authored gate. Re-banded
+ * 2026-09-10 (phase 6) against `ENEMY_LEVEL_BY_ACT`: rank 1 through Act 1, rank 2 through Acts
+ * 2-3, rank 3 from Act 4 — enemies used to out-kit the player for the whole run. Level 16 is Act
+ * 3's enemy level, so Acts 1-2 field unevolved enemies and Acts 3+ evolved ones, which is what
+ * keeps "a contract hero arrives evolved from Act 3" true.
  */
-const ENEMY_RANK_LEVELS: readonly number[] = [10, 21];
-
-/**
- * The level from which a generated hero arrives EVOLVED. Deliberately not `EVOLUTION_LEVEL`.
- *
- * The player's Evolutions come from the Crucible now — one per act's Guardian
- * (docs/growth-overhaul.md §5) — so a roster is 1-of-4 evolved entering Act 2 and 2-of-4 entering
- * Act 3, where under the old level trigger it was 4-of-4 by the end of Act 1. Gating enemies on
- * `EVOLUTION_LEVEL` = 5 against the re-derived level table evolved EVERY enemy from Act 2, which
- * measured as the run's only remaining spike: the Act 2 Guardian at 70% where its neighbours sat
- * at 95% and 94%.
- *
- * 16 is Act 3's enemy level, so Acts 1-2 field unevolved enemies and Acts 3+ evolved ones —
- * the player is 2-of-4 evolved entering Act 3, which is the closest a single threshold gets to a
- * schedule that is really one hero an act.
- */
-const ENEMY_EVOLUTION_LEVEL = 16;
+const ENEMY_SCROLLS_BY_LEVEL: readonly [level: number, spent: number][] = [
+  [10, RANK_THRESHOLDS[1]],
+  [16, EVOLUTION_SCROLLS],
+  [21, RANK_THRESHOLDS[2]],
+];
 
 function enemyScrollsForLevel(level: number): number {
-  return ENEMY_RANK_LEVELS.filter((at) => level >= at).length * SCROLLS_PER_RANK;
+  let spent = 0;
+  for (const [at, scrolls] of ENEMY_SCROLLS_BY_LEVEL) if (level >= at) spent = scrolls;
+  return spent;
 }
 
 function shuffledPick<T>(rng: RngState, pool: readonly T[], count: number): { picked: T[]; nextState: RngState } {
@@ -161,9 +150,10 @@ export interface EncounterOptions {
 }
 
 /**
- * Evolutions first (that level-up rolls no move), then remaining level-ups spent on random pool
- * moves up to MOVE_CAP. Path choice is unweighted. Exported because a Guild Hall hire arrives
- * pre-raised the same way an enemy does (`run/guildRecruit.ts`).
+ * Places the hero on the Scroll ladder for its level, takes every Evolution that position opens
+ * (path choice unweighted), then spends its remaining level-ups on random pool moves up to
+ * MOVE_CAP. Exported because a Guild Hall hire arrives pre-raised the same way an enemy does
+ * (`run/guildRecruit.ts`).
  */
 export function rollLevelProgression(
   run: RunState,
@@ -174,7 +164,12 @@ export function rollLevelProgression(
   rng: RngState
 ): { run: RunState; nextState: RngState } {
   let state = rng;
-  let next = run;
+  // The spend lands FIRST, so `availableEvolution` and `masteryMovePool` gate the enemy exactly as
+  // they gate a roster hero at the same position (docs/growth-overhaul.md §11).
+  let next: RunState = {
+    ...run,
+    roster: run.roster.map((r) => (r.rosterId === rosterId ? { ...r, masteryScrollsSpent: enemyScrollsForLevel(level) } : r)),
+  };
   let levelUpsSpent = 0;
 
   // Bounded by the authored node count; `availableEvolution` returns null once every node is resolved.
@@ -183,11 +178,6 @@ export function rollLevelProgression(
     if (!entry) break;
     const node = availableEvolution(table, entry);
     if (!node || node.paths.length === 0) break;
-    // A generated hero holds no Crucible, so its Evolution is read off LEVEL — the same
-    // equivalence enemyScrollsForLevel uses for Mastery Rank. The threshold is the ENEMY one,
-    // not `node.level`: it has to track how many of the player's heroes a Crucible has reached
-    // by that act, not when a level-up used to fire.
-    if (level < ENEMY_EVOLUTION_LEVEL) break;
     const { picked, nextState } = shuffledPick(state, node.paths, 1);
     state = nextState;
     try {
@@ -202,26 +192,17 @@ export function rollLevelProgression(
   const entry = next.roster.find((r) => r.rosterId === rosterId);
   if (!entry) return { run: next, nextState: state };
 
-  // An enemy has no Scrolls to spend, so its Mastery Rank is read off its LEVEL — the same
-  // three bands the level gate drew before Scrolls replaced it (Early under 4, Mid at 4, Late
-  // at 7), so enemy kits keep the shape the curve was tuned against. Revisit in phase 6, where
-  // enemy level is re-derived against a 30-level player (docs/growth-overhaul.md §8).
-  const ranked: RosterEntry = { ...entry, masteryScrollsSpent: enemyScrollsForLevel(level) };
   const moveLevelUps = Math.max(0, level - 1 - levelUpsSpent);
   const room = Math.max(0, MOVE_CAP - entry.unlockedMoveIds.length);
   const { picked: learned, nextState: afterMoves } = shuffledPick(
     state,
-    masteryMovePool(table, moves, ranked),
+    masteryMovePool(table, moves, entry),
     Math.min(moveLevelUps, room)
   );
   state = afterMoves;
   next = {
     ...next,
-    roster: next.roster.map((r) =>
-      r.rosterId === rosterId
-        ? { ...r, masteryScrollsSpent: ranked.masteryScrollsSpent, unlockedMoveIds: [...r.unlockedMoveIds, ...learned] }
-        : r
-    ),
+    roster: next.roster.map((r) => (r.rosterId === rosterId ? { ...r, unlockedMoveIds: [...r.unlockedMoveIds, ...learned] } : r)),
   };
   return { run: next, nextState: state };
 }

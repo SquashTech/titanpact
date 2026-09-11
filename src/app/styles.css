@@ -23683,6 +23683,19 @@ textarea,
   margin-right: 6px;
 }
 
+/* The Evolution's pip: a diamond among circles, so the rung the player is pouring toward reads
+   on the bar without a label. Guardian gold, the colour the Evolution screen already wears. */
+.mastery-pip.is-evolution {
+  border-radius: 1px;
+  transform: rotate(45deg) scale(0.92);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+.mastery-pip.is-evolution.is-filled {
+  background: var(--accent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 65%, transparent);
+}
+
 /* Four slots always, filled or not: an empty one is the room a Scroll would land in, and the
    difference between "learns it" and "replaces something" is the whole of the second question. */
 .mastery-move-row {
@@ -25626,4 +25639,85 @@ textarea,
     opacity: 1;
     transform: none;
   }
+}
+
+/* --- The Crucible's Class choice (CrucibleScreen.tsx ClassChoice) --------------------------
+   The Mentor's card, re-cut for a verb: the kind sits beside the name in the kind's colour, and
+   the body is the move's own card or the passive's line — the verb is the whole of the choice, so
+   nothing else is on the card. `--kind-color` is set inline per card. */
+.crucible-choice-portrait {
+  width: 48px;
+  height: 48px;
+}
+
+.crucible-class-kind {
+  margin-left: auto;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.crucible-class-verb {
+  margin-top: 4px;
+}
+
+.crucible-class-verb .move-detail-card {
+  width: 100%;
+}
+
+.crucible-class-passive {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--kind-color, var(--buff)) 10%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--kind-color, var(--buff)) 30%, transparent);
+}
+
+.crucible-class-passive.is-reveal {
+  --kind-color: var(--accent);
+  margin-top: 8px;
+  max-width: 280px;
+}
+
+.crucible-class-passive-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.crucible-class-passive-desc {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--text-dim);
+}
+
+.class-shrine-card.picked {
+  border-color: var(--kind-color, var(--buff));
+  box-shadow: 0 0 0 1px var(--kind-color, var(--buff)), 0 4px 18px color-mix(in srgb, var(--kind-color, var(--buff)) 35%, transparent);
+  background: linear-gradient(165deg, color-mix(in srgb, var(--kind-color, var(--buff)) 14%, transparent), var(--panel) 70%);
+}
+
+.crucible-choice-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.crucible-choice-actions .resolve-button {
+  flex: 1 1 auto;
+}
+
+/* The Crucible's three cards each carry a move row, so they need more of the stage than the
+   Mentor's stat chips did; the header above them is a portrait, not the Mentor and his class. */
+.crucible-choice .stage-centered > .class-shrine-list {
+  --stage-card-max: 136px;
+}
+
+.crucible-class-card {
+  cursor: pointer;
+}
+
+.crucible-class-verb .move-button {
+  width: 100%;
 }

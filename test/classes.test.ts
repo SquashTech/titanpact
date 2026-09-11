@@ -1,44 +1,76 @@
-// The Class system (src/data/classes.ts, src/run/classes.ts): a Class is a statGrants-only Passive; one per hero per run.
+// The Class system (src/data/classes.ts, src/run/classes.ts): a Class is a VERB — a move or a
+// passive, never a stat line — one per hero per run, tempered in at the Crucible
+// (docs/growth-overhaul.md §11).
 
 import * as assert from 'assert';
 import { test } from './harness';
 import { isValidPassiveDefinition } from '../src/engine/content';
-import { classes } from '../src/data/classes';
+import { classes, classMoves, classPassives } from '../src/data/classes';
+import { boonPassives, passives } from '../src/data/passives';
+import { moves } from '../src/data/moves';
+import { progressionTable } from '../src/data/progression';
 import { heroes } from '../src/data/heroes';
 import { equipment } from '../src/data/equipment';
 import { createRunState, createRosterEntry, addRosterEntry } from '../src/run/state';
 import { pickSquad } from '../src/run/squad';
 import { buildCombatState } from '../src/run/buildCombatState';
-import { getEffectiveStat } from '../src/engine/state';
-import { grantClass, chosenClass, ClassError } from '../src/run/classes';
-import { passiveStatModifiers } from '../src/run/passives';
+import { fullMovepool, MOVE_CAP } from '../src/run/progression';
+import { tutorMovePool } from '../src/run/tutor';
+import {
+  CLASS_KINDS,
+  anyClassAvailable,
+  chosenClass,
+  classMoveOverflows,
+  grantClass,
+  isValidClassDefinition,
+  rollClassOffers,
+  ClassError,
+} from '../src/run/classes';
+import { entryPassiveCounts } from '../src/run/entryStats';
 
 // --- Catalog validity ---
 
-test('classes: every fixture class is valid content (multiples of 5/10, does something)', () => {
+test('classes: every Class grants exactly one verb — a move or a passive, never both, never a stat line', () => {
   for (const cls of Object.values(classes)) {
-    assert.ok(isValidPassiveDefinition(cls), `${cls.id} is not a valid PassiveDefinition`);
-  }
-});
-
-test('classes: exactly the 15 two-stat pairs plus Champion — every non-Champion class grants exactly two stats, Champion grants all six', () => {
-  const entries = Object.values(classes);
-  assert.strictEqual(entries.length, 16);
-  for (const cls of entries) {
-    const grantedStats = Object.keys(cls.statGrants ?? {});
-    if (cls.id === 'champion') {
-      assert.strictEqual(grantedStats.length, 6, 'Champion should touch all six core stats');
-    } else {
-      assert.strictEqual(grantedStats.length, 2, `${cls.id} should grant exactly two stats`);
+    assert.ok(isValidClassDefinition(cls), `${cls.id} must grant exactly one of a move or a passive`);
+    assert.ok(!('statGrants' in cls), `${cls.id} carries a stat line — a Class is a verb`);
+    if (cls.grantsMoveId) assert.ok(classMoves[cls.grantsMoveId] && moves[cls.grantsMoveId], `${cls.id}'s move ${cls.grantsMoveId} is not in the catalog`);
+    if (cls.grantsPassiveId) {
+      assert.ok(classPassives[cls.grantsPassiveId] && passives[cls.grantsPassiveId], `${cls.id}'s passive is not in the catalog`);
+      assert.ok(isValidPassiveDefinition(passives[cls.grantsPassiveId]), `${cls.id}'s passive is not valid content`);
+      assert.strictEqual(passives[cls.grantsPassiveId].statGrants, undefined, `${cls.id}'s passive is a bare stat grant`);
     }
   }
 });
 
-test('classes: no class touches manaPool/mpRegen (open question, not yet decided per CLAUDE.md conversation)', () => {
-  for (const cls of Object.values(classes)) {
-    assert.strictEqual(cls.statGrants?.manaPool, undefined, `${cls.id} unexpectedly grants manaPool`);
-    assert.strictEqual(cls.statGrants?.mpRegen, undefined, `${cls.id} unexpectedly grants mpRegen`);
+test('classes: three of each kind, so the Crucible can always offer one per kind', () => {
+  for (const kind of CLASS_KINDS) {
+    const ofKind = Object.values(classes).filter((cls) => cls.kind === kind);
+    assert.strictEqual(ofKind.length, 3, `${kind} has ${ofKind.length} Classes`);
   }
+});
+
+test('classes: a class move is in no Scroll pool and no Tutor pool, and a class passive is in no Boon pool', () => {
+  // The exclusivity that keeps a Class from being a Boon with a hat (docs/growth-overhaul.md §11).
+  for (const id of Object.keys(classMoves)) {
+    assert.strictEqual(moves[id].tier, undefined, `${id} carries a tier — class moves are un-ranked`);
+    for (const hero of Object.values(heroes)) {
+      assert.ok(!fullMovepool(progressionTable, hero).includes(id), `${id} is in ${hero.id}'s Scroll pool`);
+      const entry = createRosterEntry(hero.id, hero.id, hero.moveIds);
+      assert.ok(!tutorMovePool(progressionTable, moves, entry).includes(id), `${id} is in ${hero.id}'s Tutor pool`);
+    }
+  }
+  for (const id of Object.keys(classPassives)) {
+    assert.ok(!boonPassives[id], `${id} is in the Boon pool`);
+  }
+});
+
+test('classes: rollClassOffers returns one Class per kind, in kind order', () => {
+  const offers = rollClassOffers(classes, () => 0.5);
+  assert.deepStrictEqual(offers.map((c) => c.kind), [...CLASS_KINDS]);
+  const first = rollClassOffers(classes, () => 0);
+  const last = rollClassOffers(classes, () => 0.999);
+  assert.notDeepStrictEqual(first.map((c) => c.id), last.map((c) => c.id), 'the roll should reach different Classes');
 });
 
 // --- grantClass / chosenClass ---
@@ -51,55 +83,78 @@ function seedRoster(heroIds: string[]) {
   return run;
 }
 
-test('classes: grantClass sets classId on the targeted roster entry only', () => {
+test('classes: a passive-Class sets classId and classPassiveId on the targeted entry only', () => {
   const run = seedRoster(['cinderKnight', 'tidecaller']);
-  const next = grantClass(run, classes, 'cinderKnight', 'warrior');
-  assert.strictEqual(next.roster.find((r) => r.rosterId === 'cinderKnight')?.classId, 'warrior');
+  const next = grantClass(run, classes, 'cinderKnight', 'warden');
+  const knight = next.roster.find((r) => r.rosterId === 'cinderKnight')!;
+  assert.strictEqual(knight.classId, 'warden');
+  assert.strictEqual(knight.classPassiveId, 'warden');
+  assert.deepStrictEqual(knight.unlockedMoveIds, [...heroes.cinderKnight.moveIds], 'a passive-Class teaches no move');
   assert.strictEqual(next.roster.find((r) => r.rosterId === 'tidecaller')?.classId, null);
+  assert.strictEqual(entryPassiveCounts(knight, equipment).warden, 1, 'the passive is counted off the entry, catalog-free');
 });
 
-test('classes: a hero can only hold one Class per run — granting a second REPLACES the first', () => {
+test('classes: a move-Class lands its move in an open slot, and records no passive', () => {
   const run = seedRoster(['cinderKnight']);
-  const withWarrior = grantClass(run, classes, 'cinderKnight', 'warrior');
-  const withSage = grantClass(withWarrior, classes, 'cinderKnight', 'sage');
-  assert.strictEqual(withSage.roster[0].classId, 'sage');
+  assert.ok(run.roster[0].unlockedMoveIds.length < MOVE_CAP, 'fixture: the starting kit leaves a slot open');
+  const next = grantClass(run, classes, 'cinderKnight', 'duelist');
+  assert.strictEqual(next.roster[0].classId, 'duelist');
+  assert.strictEqual(next.roster[0].classPassiveId, null);
+  assert.ok(next.roster[0].unlockedMoveIds.includes('feint'));
+  assert.deepStrictEqual(entryPassiveCounts(next.roster[0], equipment), {}, 'no phantom passive for a move-Class');
+});
+
+test('classes: at the cap a move-Class replaces on request, or takes the Class without the move when declined', () => {
+  let run = seedRoster(['cinderKnight']);
+  const full = [...heroes.cinderKnight.moveIds, 'feint'].slice(0, MOVE_CAP);
+  run = { ...run, roster: [{ ...run.roster[0], unlockedMoveIds: full }] };
+  assert.ok(classMoveOverflows(classes.ranger, run.roster[0]), 'the kit is full, so Volley overflows');
+
+  const replaced = grantClass(run, classes, 'cinderKnight', 'ranger', full[0]);
+  assert.ok(replaced.roster[0].unlockedMoveIds.includes('volley'));
+  assert.ok(!replaced.roster[0].unlockedMoveIds.includes(full[0]));
+  assert.strictEqual(replaced.roster[0].unlockedMoveIds.length, MOVE_CAP);
+
+  const declined = grantClass(run, classes, 'cinderKnight', 'ranger');
+  assert.strictEqual(declined.roster[0].classId, 'ranger', 'the Class is still taken');
+  assert.deepStrictEqual(declined.roster[0].unlockedMoveIds, full, 'and the kit is untouched');
+});
+
+test('classes: a hero can only hold one Class per run — granting a second REPLACES the first, passive and all', () => {
+  const run = seedRoster(['cinderKnight']);
+  const withWarden = grantClass(run, classes, 'cinderKnight', 'warden');
+  const withDuelist = grantClass(withWarden, classes, 'cinderKnight', 'duelist');
+  assert.strictEqual(withDuelist.roster[0].classId, 'duelist');
+  assert.strictEqual(withDuelist.roster[0].classPassiveId, null, 'the replaced Class takes its passive with it');
 });
 
 test('classes: grantClass throws on an unknown roster id or an unknown class id', () => {
   const run = seedRoster(['cinderKnight']);
-  assert.throws(() => grantClass(run, classes, 'nonexistent', 'warrior'), ClassError);
+  assert.throws(() => grantClass(run, classes, 'nonexistent', 'warden'), ClassError);
   assert.throws(() => grantClass(run, classes, 'cinderKnight', 'nonexistentClass'), ClassError);
 });
 
 test('classes: chosenClass resolves a granted classId back to its full data, or null if none chosen', () => {
   const run = seedRoster(['cinderKnight']);
   assert.strictEqual(chosenClass(classes, run.roster[0]), null);
-  const withWarrior = grantClass(run, classes, 'cinderKnight', 'warrior');
-  assert.strictEqual(chosenClass(classes, withWarrior.roster[0])?.name, 'Class - Warrior');
+  const withWarden = grantClass(run, classes, 'cinderKnight', 'warden');
+  assert.strictEqual(chosenClass(classes, withWarden.roster[0])?.name, 'Warden');
 });
 
-// --- passiveStatModifiers (src/run/passives.ts) ---
-
-test('classes: passiveStatModifiers reads a held Class passive\'s statGrants back into StatModifiers', () => {
-  const mods = passiveStatModifiers({ warrior: 1 }, classes);
-  assert.deepStrictEqual(mods, { attack: 10, defense: 10 });
-});
-
-test('classes: passiveStatModifiers scales by stack count, same "N stacks resolves N times" discipline as reactive/damage-modifier passives', () => {
-  const mods = passiveStatModifiers({ warrior: 2 }, classes);
-  assert.deepStrictEqual(mods, { attack: 20, defense: 20 });
-});
-
-test('classes: passiveStatModifiers ignores passives with no statGrants (e.g. purely reactive ones)', () => {
-  const mods = passiveStatModifiers({ sanguine: 1 }, { sanguine: { id: 'sanguine', name: 'Sanguine', description: '' } });
-  assert.deepStrictEqual(mods, {});
+test('classes: anyClassAvailable is what the Crucible opens on — false only once every hero holds one', () => {
+  let run = seedRoster(['cinderKnight', 'tidecaller']);
+  assert.ok(anyClassAvailable(run.roster));
+  run = grantClass(run, classes, 'cinderKnight', 'warden');
+  assert.ok(anyClassAvailable(run.roster));
+  run = grantClass(run, classes, 'tidecaller', 'monk');
+  assert.ok(!anyClassAvailable(run.roster));
 });
 
 // --- buildCombatState integration ---
 
-test('buildCombatState: a granted Class raises the combatant\'s effective stats in a real fight', () => {
+test('buildCombatState: a granted passive-Class stands on the combatant as a passive in a real fight', () => {
   let run = seedRoster(['cinderKnight', 'tidecaller']);
-  run = grantClass(run, classes, 'cinderKnight', 'warrior');
+  run = grantClass(run, classes, 'cinderKnight', 'berserker');
   const squad = pickSquad(run.roster, ['cinderKnight', 'tidecaller']);
   const aiRun = seedRoster(['ironWarden', 'wildOracle']);
   const aiSquad = pickSquad(aiRun.roster, ['ironWarden', 'wildOracle']);
@@ -112,21 +167,9 @@ test('buildCombatState: a granted Class raises the combatant\'s effective stats 
       { side: 'A', squad, roster: run.roster },
       { side: 'B', squad: aiSquad, roster: aiRun.roster },
     ],
-    classes
+    passives
   );
 
-  const combatant = state.combatants['A:cinderKnight'];
-  assert.strictEqual(combatant.passives.warrior?.stacks, 1);
-  assert.strictEqual(getEffectiveStat(heroes.cinderKnight, combatant, 'attack'), heroes.cinderKnight.baseStats.attack + 10);
-  assert.strictEqual(getEffectiveStat(heroes.cinderKnight, combatant, 'defense'), heroes.cinderKnight.baseStats.defense + 10);
-});
-
-test('buildCombatState: omitting the passiveDefs argument (existing call sites) leaves a granted Class inert rather than throwing', () => {
-  let run = seedRoster(['cinderKnight']);
-  run = grantClass(run, classes, 'cinderKnight', 'warrior');
-  const squad = pickSquad(run.roster, ['cinderKnight']);
-
-  const state = buildCombatState(1, heroes, equipment, [{ side: 'A', squad, roster: run.roster }]);
-  const combatant = state.combatants['A:cinderKnight'];
-  assert.strictEqual(getEffectiveStat(heroes.cinderKnight, combatant, 'attack'), heroes.cinderKnight.baseStats.attack);
+  assert.strictEqual(state.combatants['A:cinderKnight'].passives.berserker?.stacks, 1);
+  assert.strictEqual(state.combatants['A:tidecaller'].passives.berserker, undefined);
 });

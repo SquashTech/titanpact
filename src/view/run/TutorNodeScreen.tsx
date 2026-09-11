@@ -7,7 +7,8 @@ import { progressionTable } from '../../data/progression';
 import type { HeroDefinition, MoveTier } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
 import { grantMove, MOVE_CAP, MOVE_TIER_RANK } from '../../run/progression';
-import { tutorMovePool, tutorTeachableCount } from '../../run/tutor';
+import { MENTOR_TIER_CEILING, tutorMovePool, tutorTeachableCount } from '../../run/tutor';
+import mentorArt from '../../../art/npc/mentor.png';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
@@ -22,6 +23,8 @@ interface Props {
   run: RunState;
   onRunChange: (next: RunState) => void;
   onContinue: () => void;
+  /** The Mentor (acts 1-3) is the same screen with a tier ceiling and its own face (docs/growth-overhaul.md §11). */
+  variant?: 'tutor' | 'mentor';
 }
 
 const TIER_ORDER: readonly MoveTier[] = ['early', 'mid', 'late'];
@@ -36,7 +39,10 @@ const TIER_LABELS: Record<MoveTier, string> = { early: 'Early', mid: 'Mid', late
  * `grantMove`, not `grantLevelUpMove`: the Tutor is a faucet, not a level-up offer, so teaching a
  * move must not burn it out of the hero's own pool for the level-ups still to come.
  */
-export function TutorNodeScreen({ run, onRunChange, onContinue }: Props) {
+export function TutorNodeScreen({ run, onRunChange, onContinue, variant = 'tutor' }: Props) {
+  const mentor = variant === 'mentor';
+  const ceiling = mentor ? MENTOR_TIER_CEILING : 'late';
+  const who = mentor ? 'Mentor' : 'Tutor';
   const [studentId, setStudentId] = useState<string | null>(null);
   const [pickedMoveId, setPickedMoveId] = useState<string | null>(null);
   /** At MOVE_CAP the pick opens the swap panel instead of resolving. */
@@ -51,10 +57,10 @@ export function TutorNodeScreen({ run, onRunChange, onContinue }: Props) {
   const studentHero = student ? heroes[student.heroId] : null;
   const caster = student && studentHero ? healCasterForEntry(studentHero, student, run.relics) : undefined;
 
-  const teachableOf = (entry: RosterEntry) => tutorTeachableCount(progressionTable, moves, entry);
+  const teachableOf = (entry: RosterEntry) => tutorTeachableCount(progressionTable, moves, entry, ceiling);
   const anyTeachable = run.roster.some((entry) => teachableOf(entry) > 0);
 
-  const pool = student ? tutorMovePool(progressionTable, moves, student) : [];
+  const pool = student ? tutorMovePool(progressionTable, moves, student, ceiling) : [];
   const byTier = TIER_ORDER.map((tier) => ({
     tier,
     moveIds: pool.filter((id) => (moves[id].tier ?? 'early') === tier),
@@ -88,14 +94,20 @@ export function TutorNodeScreen({ run, onRunChange, onContinue }: Props) {
       {!taught && !swapping && (
         <NodeHeader
           compact
-          glyph={student ? undefined : <NodeGlyph type="tutorReward" />}
-          eyebrow={student ? 'Choose a Technique' : 'A Master Waits'}
-          title={student && studentHero ? studentHero.name : 'The Tutor'}
+          glyph={student || mentor ? undefined : <NodeGlyph type="tutorReward" />}
+          art={student || !mentor ? undefined : <img src={mentorArt} className="class-shrine-mentor" alt="" draggable={false} />}
+          ring={!student && mentor}
+          eyebrow={student ? 'Choose a Technique' : mentor ? 'The Mentor Awaits' : 'A Master Waits'}
+          title={student && studentHero ? studentHero.name : mentor ? "Mentor's Hall" : 'The Tutor'}
           readout={
             student && studentHero
-              ? `Everything ${studentHero.name} could ever have learned — take any one of it. Greyed techniques are already known; hold one to read it in full.`
+              ? mentor
+                ? `${studentHero.name}'s early and middle repertoire — take any one of it, chosen rather than rolled. Greyed techniques are already known; hold one to read it in full.`
+                : `Everything ${studentHero.name} could ever have learned — take any one of it. Greyed techniques are already known; hold one to read it in full.`
               : anyTeachable
-                ? 'Choose a hero and they may learn any single move from their own pool, whatever their level. Hold a card to review its sheet.'
+                ? mentor
+                  ? 'Choose a hero and they may learn any Early or Mid move from their own pool, whatever their rank. Hold a card to review its sheet.'
+                  : 'Choose a hero and they may learn any single move from their own pool, whatever their level. Hold a card to review its sheet.'
                 : 'Every hero already knows everything their pool holds — there is nothing here to teach.'
           }
         />
@@ -108,9 +120,13 @@ export function TutorNodeScreen({ run, onRunChange, onContinue }: Props) {
           <div className="class-learn-reveal">
             <div className="class-learn-flash" aria-hidden="true" />
             <div className="class-learn-portraits">
-              <span className="tutor-reveal-badge">
-                <NodeGlyph type="tutorReward" className="tutor-reveal-icon" />
-              </span>
+              {mentor ? (
+                <img src={mentorArt} className="class-learn-mentor" alt="" draggable={false} />
+              ) : (
+                <span className="tutor-reveal-badge">
+                  <NodeGlyph type="tutorReward" className="tutor-reveal-icon" />
+                </span>
+              )}
               <span className="class-learn-arrow" aria-hidden="true">
                 →
               </span>
@@ -135,7 +151,7 @@ export function TutorNodeScreen({ run, onRunChange, onContinue }: Props) {
                 Already knows {MOVE_CAP} moves — pick one to replace, or go back.
               </p>
               <div className="offer-move-highlight">
-                <MoveDetailCard move={moves[pickedMoveId]} label="Taught by the Tutor" caster={caster} />
+                <MoveDetailCard move={moves[pickedMoveId]} label={`Taught by the ${who}`} caster={caster} />
               </div>
               <div className="offer-swap-arrow" aria-hidden="true">
                 ↓ replaces one of

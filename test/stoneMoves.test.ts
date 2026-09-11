@@ -5,6 +5,7 @@ import { test } from './harness';
 import { createFightState, withFullPools } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
+import { classMoves } from '../src/data/classes';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
@@ -415,6 +416,8 @@ test('stone: no move is unreachable that was not already known to be', () => {
   const reachable = new Set<string>();
   for (const hero of Object.values({ ...heroes, ...enemies })) for (const id of hero.moveIds) reachable.add(id);
   for (const pool of Object.values(progressionTable.moveTiers)) for (const id of pool) reachable.add(id);
+  // A class move is reached through its Class alone (src/data/classes.ts).
+  for (const id of Object.keys(classMoves)) reachable.add(id);
   // An Evolution path reaches moves two ways: granted outright, or added to the level-up pool.
   for (const nodes of Object.values(progressionTable.evolutions)) {
     for (const node of nodes) {

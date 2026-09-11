@@ -164,16 +164,16 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
 
   // --- Row 2: the Mentor ---
   {
-    id: 'map:classReward',
+    id: 'map:mentorReward',
     topic: 'Mentor',
     lines: [
-      'A Mentor that can teach us a class. Each of us may learn one. The decision is permanent.',
-      'We will find more of these Mentors on the road ahead.',
+      'A Mentor. One of us may learn any technique from the early part of our repertoire — chosen, not chanced.',
+      'We will find more of these Mentors on the road ahead, until the road gets too hard for them to help.',
     ],
   },
   {
-    id: 'classNode',
-    lines: ['Choose one, then which of us that will learn it.'],
+    id: 'mentorNode',
+    lines: ['Choose which of us, then the technique.'],
   },
 
   // --- Row 3: the Skirmish ---
@@ -219,11 +219,11 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     ],
   },
   {
-    id: 'evolution',
-    topic: 'Evolution',
+    id: 'crucible',
+    topic: 'The Crucible',
     lines: [
-      'There. Level five, and now my path can go many directions.',
-      'The choice is permanent for the rest of the journey. My potential varies wildly, and it is up to you to choose my fate.',
+      'The Guardian is down, and the fire of the Crucible is lit. One of us walks into it and comes out with a Class — a discipline any of us could take.',
+      'A move, or a talent. The choice is permanent for the rest of the journey, and each Guardian lights the fire once.',
     ],
   },
 
@@ -232,7 +232,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     topic: 'Mastery Scrolls',
     lines: [
       'A Mastery Scroll. Pour it into one of us and it teaches a move — the only way any of us learns one. It goes in now; a Scroll is not something you carry.',
-      'Three into the same hero and that hero ranks up, and deeper moves come within reach. Spread them thin and nobody gets there. Choose.',
+      'Four into the same hero and that hero ranks up, and deeper moves come within reach. Six, and that hero evolves — a permanent choice of path. Spread them thin and nobody gets there. Choose.',
     ],
   },
 

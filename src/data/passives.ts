@@ -1,8 +1,8 @@
 // Passive catalog, grouped by where a passive comes from. `passives` is the single lookup every
-// screen and resolveRound import, so the Class catalog (classes.ts) is merged in here too.
+// screen and resolveRound import, so the Class passives (classes.ts) are merged in here too.
 
 import type { PassiveDefinition } from '../engine/content';
-import { classes } from './classes';
+import { classPassives } from './classes';
 import { TYPES, type TitanpactType } from './typechart';
 
 // --- Evolution-granted, outside the per-hero tables ---
@@ -753,7 +753,7 @@ export const passives: Record<string, PassiveDefinition> = {
   ...eventPassives,
   ...typeDamagePassives,
   ...evolutionPassives,
-  ...classes,
+  ...classPassives,
 };
 
 /**

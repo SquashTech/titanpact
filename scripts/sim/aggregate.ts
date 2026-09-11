@@ -35,6 +35,8 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
   agg.encountersWonSum += record.encountersWon;
   agg.goldEndSum += record.goldEnd;
   agg.rosterLevelEndSum += record.rosterLevelEnd;
+  agg.rosterEvolvedEndSum += record.rosterEvolvedEnd;
+  if (record.rosterEvolvedEnd >= 1) agg.runsRosterEvolved += 1;
 
   for (let act = 1; act <= Math.min(record.actReached, TOTAL_ACTS); act++) agg.actEntered[act] += 1;
   for (const act of record.actsCleared) agg.actCleared[act] += 1;
@@ -112,9 +114,9 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
     const best = record.heroLevels[heroId];
     agg.heroLevelHistogram[best] = (agg.heroLevelHistogram[best] ?? 0) + 1;
     if (record.actReached >= 4) agg.heroLevelHistogramDeep[best] = (agg.heroLevelHistogramDeep[best] ?? 0) + 1;
-    const rank = record.heroRanks[heroId] ?? 1;
-    agg.heroRankHistogram[rank] = (agg.heroRankHistogram[rank] ?? 0) + 1;
-    if (record.actReached >= 4) agg.heroRankHistogramDeep[rank] = (agg.heroRankHistogramDeep[rank] ?? 0) + 1;
+    const spent = record.heroScrolls[heroId] ?? 0;
+    agg.heroScrollHistogram[spent] = (agg.heroScrollHistogram[spent] ?? 0) + 1;
+    if (record.actReached >= 4) agg.heroScrollHistogramDeep[spent] = (agg.heroScrollHistogramDeep[spent] ?? 0) + 1;
     if (record.won) hero.runsWon += 1;
   }
 

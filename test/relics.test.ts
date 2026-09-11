@@ -85,7 +85,8 @@ test('entryStats: the out-of-combat sheet math equals the combatant a fight actu
   const relicIds = ['bannerOfSwiftness', 'bannerOfTheBulwark', 'bannerOfTheBulwark'];
   let run = createRunState(0);
   run = addRosterEntry(run, createRosterEntry('cinderKnight', 'cinderKnight', heroes.cinderKnight.moveIds));
-  run = grantClass(run, classes, 'cinderKnight', 'warrior');
+  // A passive-Class rides the same pipeline as everything else the sheet counts.
+  run = grantClass(run, classes, 'cinderKnight', 'warden');
 
   const teamStatModifiers = relicTeamStatModifiers(relicIds, relics);
   const teamPassiveGrants = relicTeamPassiveGrants(relicIds, relics);
@@ -103,7 +104,8 @@ test('entryStats: the out-of-combat sheet math equals the combatant a fight actu
 
   assert.deepStrictEqual(sheetMods, state.combatants['A:cinderKnight'].baselineStatModifiers);
   assert.strictEqual(sheetMods.speed, 20);
-  assert.strictEqual(sheetMods.defense, 30 + (classes.warrior.statGrants?.defense ?? 0));
+  assert.strictEqual(sheetMods.defense, 30);
+  assert.strictEqual(state.combatants['A:cinderKnight'].passives.warden?.stacks, 1);
 });
 
 test('entryStats: relicStatContribution isolates the relic-sourced slice', () => {

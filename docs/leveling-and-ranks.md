@@ -14,8 +14,10 @@
 > curve and the mastery stat reel are all deleted, Evolutions come from **the Crucible** at
 > the act boundary rather than from a level, a Guild hire arrives RAW — unevolved, rank 1, its
 > own three moves — the difficulty curve is re-fitted against all of it, and all 36 heroes
-> carry authored growth grades. **Everything here describes what the code does.** Read both
-> before changing anything.
+> carry authored growth grades. **Its §11 second pass (2026-09-11) then moved the Evolution
+> onto the Scroll ladder** — the 6th Scroll into a hero, rungs at 4 and 8 — and made the
+> Crucible a Class beat; Part 2's "Trigger" section below is superseded by that. **Everything
+> else here describes what the code does.** Read both before changing anything.
 
 ---
 
@@ -206,14 +208,19 @@ the moment a Scroll is won, and not leavable until it is spent.** Full rationale
 
 - **A Scroll offers ONE move** from the hero's eligible pool — take it or decline, and the move
   is burned either way (the offer-spent-by-being-made rule above, unchanged).
-- **Every Scroll also ticks the rank bar.** `SCROLLS_PER_RANK` = 3, `MAX_MASTERY_RANK` = 3, so
-  **six max a hero**. Rank is DERIVED from `RosterEntry.masteryScrollsSpent` (`masteryRank`),
+- **Every Scroll also ticks the rank bar.** The ladder is authored as thresholds (2026-09-11,
+  `growth-overhaul.md` §11): `RANK_THRESHOLDS` = [0, 4, 8] — the 4th Scroll opens Mid, the 8th
+  Late — with the **Evolution on the 6th** (`EVOLUTION_SCROLLS`), and Rank 3 open-ended past the
+  8th until the pool is dry. Rank is DERIVED from `RosterEntry.masteryScrollsSpent` (`masteryRank`),
   never stored — two figures for one fact drift, and the board's pips need the count anyway.
-- **The tick lands BEFORE the roll.** The third Scroll into a hero offers from the band it just
-  opened, which is what makes every third spend the bigger moment rather than a silent deposit.
-- **Income:** `SCROLLS_PER_ACT` = 2 at every Guardian (10 guaranteed), the `scrollReward` Scroll
-  Cache (`SCROLL_REWARD_COUNT` = 2, weight 34), and the Guild Hall at `SCROLL_PURCHASE_COST` =
-  35g. ~15-18 reachable. All first-pass figures for playtest.
+- **The tick lands BEFORE the roll.** The Scroll that reaches a rung offers from the band it just
+  opened, which is what makes the rung Scroll the bigger moment rather than a silent deposit. The
+  6th Scroll raises the hero's Evolution screen first, then its offer rolls from the post-Evolution
+  pool (`useScrollPour`, `src/view/run/MasteryBoard.tsx`).
+- **Income, by lane** (2026-09-11): Guardian `SCROLLS_PER_ACT` = 4, Elite 3, Skirmish 2, Fight and
+  Battle 1 — 50 a run on the Elite route, 35 on the Battle route — plus the `scrollReward` Scroll
+  Cache (`SCROLL_REWARD_COUNT` = 2, weight 46), the lone Scroll and the Guild Hall at
+  `SCROLL_PURCHASE_COST` = 35g. Six Evolutions cost 36. All first-pass figures for playtest.
 - **A Scroll is refused only when it would buy literally nothing** — max rank AND nothing left to
   teach (`canSpendScroll`). A dry band below the cap still takes one: the rank tick is the only
   thing that opens the next band, so refusing there would strand the hero at that rank forever.
@@ -266,8 +273,8 @@ one; `test/moveTiers.test.ts` now asserts that **every pool holds something a le
 hero can be offered**, which is the invariant the gate creates.
 
 That thinness is gone: no pool holds fewer than **6 Early, 6 Mid and 4 Late** offerable entries.
-The floor is now `SCROLLS_PER_RANK` per band — what a band must survive to get the hero out of
-it — rather than a margin derived from a fixed curve, because Scrolls make offers-per-hero
+The floor is now the offers it takes to climb out of a band — 3 Early, 4 Mid, 1 Mid+Late — rather
+than a margin derived from a fixed curve, because Scrolls make offers-per-hero
 player-controlled and unbounded (`movePoolFloor`). Depth is also what buys **run diversity**: a
 Scroll draws ONE move at random, so the six a maxed hero spends sample 16-odd entries rather
 than exhausting a pool of 12.
@@ -317,7 +324,19 @@ design detail to specify in `/data`; the invariant is that offerings are
 
 # Part 2 — The Evolution system
 
-## Trigger: the CRUCIBLE (2026-09-10, Growth Overhaul phase 4)
+## Trigger: the 6th SCROLL (2026-09-11, `growth-overhaul.md` §11)
+
+> **Supersedes the Crucible trigger below** (2026-09-10, phase 4), kept for its reasoning. The
+> Crucible beat and screen survive and now grant a **Class** (`growth-overhaul.md` §11).
+
+**An Evolution is what the 6th Mastery Scroll into a hero buys** (`EVOLUTION_SCROLLS`,
+`availableEvolution`). Pouring it raises that hero's **choice of three paths** before the
+Scroll's own move offer rolls, so a retype's line is in the pool the same pour. Scrolls are
+poured one hero at a time, so the threshold can never wall the way a level threshold did under
+roster-wide levelling, and the player watches the pips fill toward it. Six evolved is the
+expected ending. A generated hero reads its position off level (`ENEMY_SCROLLS_BY_LEVEL`).
+
+## The Crucible (2026-09-10, phase 4 — superseded as the Evolution's trigger)
 
 **An Evolution is not triggered by anything a hero does. It is spent on a hero.** The Crucible
 picks **ONE** hero from the roster, and that hero is presented with its **choice of three paths**.

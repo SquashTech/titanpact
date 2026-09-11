@@ -22,9 +22,9 @@ import { pickSquad } from '../src/run/squad';
 import { progressionTable } from '../src/data/progression';
 import { levelUpEntry } from '../src/run/growth';
 import {
-  MAX_MASTERY_RANK,
+
   MOVE_CAP,
-  SCROLLS_PER_RANK,
+  SCROLLS_TO_MAX_RANK,
   availableEvolution,
   chooseEvolutionPath,
   grantMasteryScrolls,
@@ -62,7 +62,7 @@ function entryAtLevel(heroId: string, level: number): RosterEntry {
   const cached = kitCache.get(key);
   if (cached) return cached;
 
-  const maxScrolls = (MAX_MASTERY_RANK - 1) * SCROLLS_PER_RANK;
+  const maxScrolls = SCROLLS_TO_MAX_RANK;
   let run = grantMasteryScrolls(
     addRosterEntry(createRunState(0), createRosterEntry(heroId, heroId, heroes[heroId].moveIds)),
     Math.max(1, maxScrolls)

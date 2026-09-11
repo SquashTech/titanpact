@@ -8,6 +8,7 @@
 // Omitted reads as Early; Ancient is deliberately untiered (test/moveTiers.test.ts).
 
 import type { MoveDefinition, StatKey } from '../engine/content';
+import { classMoves } from './classes';
 
 // The reel Mech's random-stat moves draw from, and the set Overdrive grants at
 // once. Combat stats only: +20 HP / Mana / MP Regen are not worth the same thing.
@@ -3284,4 +3285,6 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'Old authority spoken aloud — and the speaker steadies behind it (+20 Wisdom).',
   },
+  // The Class moves (classes.ts): untiered, in no hero's pool — a Class is their only source.
+  ...classMoves,
 };
