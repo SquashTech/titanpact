@@ -23,7 +23,7 @@ don't silently override it.
 > Crucible onto the **6th Scroll** of a longer ladder ([0, 4, 8] rungs), the Crucible now grants
 > a **Class**, Classes are **verbs** (a move or a passive, never stats), the Mentor is an
 > Early–Mid Tutor in acts 1–3 with a Forge in act 4's seat, and Scroll income is by lane
-> (Guardian 4 / Elite 3 / Skirmish 2 / Fight & Battle 1).
+> (Guardian 3 / Elite 3 / Skirmish 2 / Fight & Battle 1).
 
 ---
 
@@ -172,11 +172,12 @@ don't silently override it.
   `RosterEntry.masteryScrollsSpent`, never stored. **The tick lands before the roll**, so the
   Scroll that reaches a rung offers from the band it just opened.
   Income, **by lane** (2026-09-11): the Skirmish lane pays Scrolls, the Monster lane pays loot.
-  **`SCROLLS_PER_ACT` = 4 at every Guardian, `SCROLLS_PER_ELITE` = 3, `SCROLLS_PER_SKIRMISH` = 2,
-  `SCROLLS_PER_FIGHT` = 1** (Fight and Battle) — Elite route 10 an act, Battle route 7, so
-  **50 vs 35** a run plus the Scroll Cache, the lone Scroll and the Guild Hall, against the 36
-  that evolve six heroes. The Elite-or-Battle fork is the player's hand on the income.
-  **The Guardian's 4 is THE dial**: the one number that moves the total without moving the lane
+  **`SCROLLS_PER_ACT` = 3 at every Guardian (lowered from 4 the same day — four poured at once
+  was too much screen), `SCROLLS_PER_ELITE` = 3, `SCROLLS_PER_SKIRMISH` = 2,
+  `SCROLLS_PER_FIGHT` = 1** (Fight and Battle) — Elite route 9 an act, Battle route 6, so
+  **45 vs 30** a run plus the Scroll Cache, the lone Scroll and the Guild Hall (2 a visit), against
+  the 36 that evolve six heroes. The Elite-or-Battle fork is the player's hand on the income.
+  **The Guardian's 3 is THE dial**: the one number that moves the total without moving the lane
   split. Every figure is first-pass for playtest.
   **Rank puts the ceiling behind the SPEND, never behind a clock** — act-gating the movepool
   makes holding a Scroll always better than spending one, and a currency whose optimal play is
@@ -211,7 +212,10 @@ don't silently override it.
   **A Class is a VERB, never a number**: its schema is the Evolution path's minus the graft and
   the hero — a name, a kind, and exactly ONE of a granted move (`grantMove`, replace-or-decline
   at `MOVE_CAP`) or a passive (`ClassDefinition`, `src/run/classes.ts`; nine in
-  `src/data/classes.ts`, three a kind, offered one per kind). One per hero, replace-not-stack.
+  `src/data/classes.ts`, three a kind; the Crucible rolls **three distinct from the whole catalog**,
+  un-labelled — the one-per-kind roll and its Offensive/Defensive/Utility tags came off 2026-09-11
+  per user direction). One per hero, replace-not-stack. **The hero at the rim is the hero
+  tempered**: the Class choice has no way back to the roster.
   **Two exclusivity rules**, without which a Class is a Boon with a hat: a class passive is in no
   Boon pool, and a class move is in no Scroll pool and no Tutor pool — untiered, and it **wears
   its holder's innate primary type** (`typeFollowsUser`, resolved once at the edge by

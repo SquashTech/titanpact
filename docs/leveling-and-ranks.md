@@ -218,8 +218,8 @@ the moment a Scroll is won, and not leavable until it is spent.** Full rationale
   6th Scroll raises the hero's Evolution screen INSTEAD of an offer (2026-09-11, per user
   direction) — the Evolution is that Scroll's reward, and the 7th draws from the post-Evolution
   pool (`useScrollPour`, `src/view/run/MasteryBoard.tsx`).
-- **Income, by lane** (2026-09-11): Guardian `SCROLLS_PER_ACT` = 4, Elite 3, Skirmish 2, Fight and
-  Battle 1 — 50 a run on the Elite route, 35 on the Battle route — plus the `scrollReward` Scroll
+- **Income, by lane** (2026-09-11): Guardian `SCROLLS_PER_ACT` = 3, Elite 3, Skirmish 2, Fight and
+  Battle 1 — 45 a run on the Elite route, 30 on the Battle route — plus the `scrollReward` Scroll
   Cache (`SCROLL_REWARD_COUNT` = 2, weight 46), the lone Scroll and the Guild Hall at
   `SCROLL_PURCHASE_COST` = 35g, no more than `SCROLL_PURCHASE_LIMIT` = 2 a visit. Six Evolutions cost 36. All first-pass figures for playtest.
 - **A Scroll is refused only when it would buy literally nothing** — max rank AND nothing left to

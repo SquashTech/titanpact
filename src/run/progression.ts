@@ -72,11 +72,12 @@ export const SCROLLS_PER_SKIRMISH = 2;
 export const SCROLLS_PER_ELITE = 3;
 
 /**
- * What every Guardian pays. Four. Elite route 10 an act, Battle route 7, so 50 vs 35 over a run
- * against the 36 that evolve six heroes. THE dial: the one number that moves the total without
- * moving the lane split. First-pass figure for playtest.
+ * What every Guardian pays. Three (2026-09-11, per user direction — four poured at once was too
+ * much screen). Elite route 9 an act, Battle route 6, so 45 vs 30 over a run against the 36 that
+ * evolve six heroes. THE dial: the one number that moves the total without moving the lane split.
+ * First-pass figure for playtest.
  */
-export const SCROLLS_PER_ACT = 4;
+export const SCROLLS_PER_ACT = 3;
 
 /**
  * What the `scrollReward` Scroll Cache pays. Two, so a cache is a whole rank's worth of a

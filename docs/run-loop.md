@@ -434,8 +434,9 @@ A won encounter resolves through up to five gates before the map comes back
    be taken. On a boss node the act-end contract (§3) is granted *before* this check, so
    it is spendable on the heroes that boss fight just beat.
 2. **The Crucible** (`CrucibleScreen`) — **boss nodes only**: pick ONE roster hero, and that
-   hero takes a Class — one of three rolled one per kind, a move or a passive (2026-09-11,
-   `growth-overhaul.md` §11; it granted the Evolution until then). Five a run, one per act.
+   hero takes a Class — one of three rolled from the whole catalog, a move or a passive
+   (2026-09-11, `growth-overhaul.md` §11; it granted the Evolution until then). Once a hero
+   stands at the rim there is no way back to the roster. Five a run, one per act.
    Skipped when every hero already holds a Class. Evolutions come from the 6th Scroll into a
    hero, inside the Mastery beat below.
 

@@ -622,10 +622,10 @@ The floor goes from ~20 to ~50, and the player steers it (`src/run/progression.t
 | Battle | Monsters | `SCROLLS_PER_FIGHT` = 1 |
 | Skirmish | recruitable | `SCROLLS_PER_SKIRMISH` = 2 |
 | Elite | recruitable | `SCROLLS_PER_ELITE` = 3 |
-| Guardian | — | `SCROLLS_PER_ACT` = 4 |
+| Guardian | — | `SCROLLS_PER_ACT` = 3 (was 4; lowered 2026-09-11, four poured at once was too much screen) |
 
-Elite route 10 an act, Battle route 7: **50 vs 35** over five acts, plus the Cache, the lone
-Scroll and the Guild Hall. A Skirmish-heavy run evolves everyone by the Act 4 Guardian with ~15
+Elite route 9 an act, Battle route 6: **45 vs 30** over five acts, plus the Cache, the lone
+Scroll and the Guild Hall (`SCROLL_PURCHASE_LIMIT` = 2 a visit). A Skirmish-heavy run evolves everyone by the Act 4 Guardian with ~15
 left for depth; a Battle-heavy run evolves everyone in Act 5 with nothing spare, and got the loot.
 The Monster lane's loot side needs no new grant — the guaranteed drop already sits there — only
 the Scroll gap. **The Guardian's 4 is the dial**: it is the one number that moves the total without
@@ -648,9 +648,10 @@ node is deleted with its `CRUCIBLE_FIRST_ACT` filter; its 12 weight goes to `scr
 **A Class is a verb, never a number** (2026-09-11, per user direction). Its schema is the Evolution
 path's minus the graft and hero clauses: a name, a kind (offensive / defensive / utility), and
 *either* a granted move (`grantMove`, replace-or-decline at `MOVE_CAP`, exactly as an Evolution's
-grant works) *or* a passive with a real effect. No stat line. The Crucible offers one of each kind,
-so it reads as an Evolution branch that any hero can take. Nine to start, three per kind
-(`src/data/classes.ts`).
+grant works) *or* a passive with a real effect. No stat line. The Crucible rolls three distinct
+from the whole catalog and prints no kind (revised 2026-09-11, per user direction — it offered one
+per kind under an Offensive/Defensive/Utility tag, which read as a category the screen then had to
+explain). Nine to start, three per kind as authoring intent (`src/data/classes.ts`).
 
 Two exclusivity rules, without which a Class is a Boon with a hat:
 
@@ -702,7 +703,7 @@ direction).
 | Five forced a run plus the `crucibleReward` node | As many as the player pours for; `crucibleReward` deleted |
 | Scarce when it matters, universal by the end | Universal by the end, paced by the player |
 | `SCROLLS_PER_RANK` = 3, six maxes a hero | `RANK_THRESHOLDS` = [0, 4, 8], Rank 3 open-ended |
-| Guardians pay 2, Skirmish/Elite pay 1 | Guardian 4, Elite 3, Skirmish 2, Fight/Battle 1 |
+| Guardians pay 2, Skirmish/Elite pay 1 | Guardian 3, Elite 3, Skirmish 2, Fight/Battle 1 |
 | Classes are `+10/+10` stat pairs from a Mentor row in acts 1–4 | Classes are a move or a passive, from the Crucible at every Guardian |
 | The Mentor grants a Class | The Mentor is an Early–Mid Tutor, acts 1–3; Act 4's row is a Forge |
 

@@ -41,15 +41,21 @@ export function isValidClassDefinition(cls: ClassDefinition): boolean {
 }
 
 /**
- * The Crucible's three: one per kind, each drawn uniformly from its kind. `rng` in [0, 1).
- * An Evolution branch is three paths differing in kind; the Crucible reads the same way.
+ * The Crucible's three: distinct, drawn uniformly from the whole catalog (2026-09-11, per user
+ * direction — it was one per kind, which read as a category the screen then had to label). `rng`
+ * in [0, 1). `kind` stays on the schema as authoring intent; the roll no longer reads it.
  */
 export function rollClassOffers(classes: Record<string, ClassDefinition>, rng: () => number): ClassDefinition[] {
-  return CLASS_KINDS.flatMap((kind) => {
-    const pool = Object.values(classes).filter((cls) => cls.kind === kind);
-    return pool.length > 0 ? [pool[Math.floor(rng() * pool.length)]] : [];
-  });
+  const pool = Object.values(classes);
+  const picked: ClassDefinition[] = [];
+  while (picked.length < Math.min(CRUCIBLE_OFFER_COUNT, pool.length)) {
+    picked.push(pool.splice(Math.floor(rng() * pool.length), 1)[0]);
+  }
+  return picked;
 }
+
+/** How many Classes the Crucible lays out. */
+export const CRUCIBLE_OFFER_COUNT = 3;
 
 /** Whether the Crucible has anyone to temper: a hero holding no Class. */
 export function anyClassAvailable(roster: readonly RosterEntry[]): boolean {

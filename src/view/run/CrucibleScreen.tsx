@@ -37,8 +37,6 @@ const KIND_COLORS: Record<ClassKind, string> = {
   utility: STAT_COLORS.speed,
 };
 
-const KIND_LABELS: Record<ClassKind, string> = { offensive: 'Offensive', defensive: 'Defensive', utility: 'Utility' };
-
 /**
  * The Crucible — the Guardian's beat (docs/growth-overhaul.md §5, §11): pick ONE hero, and the fire
  * tempers it into a Class. Chain: Guardian falls → Banner → Crucible → Pact Seal → act intro. Team,
@@ -55,7 +53,7 @@ export function CrucibleScreen({ run, onRunChange, onContinue }: Props) {
   /** Standing at the rim — chosen, not yet committed. */
   const [armedRosterId, setArmedRosterId] = useState<string | null>(null);
   const [chosenRosterId, setChosenRosterId] = useState<string | null>(null);
-  /** Rolled once, on mount: one Class a kind. */
+  /** Rolled once, on mount: three from the whole catalog. */
   const [offers] = useState(() => rollClassOffers(classes, Math.random));
   const [pickedClassId, setPickedClassId] = useState<string | null>(null);
   /** A move-Class whose move the kit refuses: the replace-or-decline before the grant lands. */
@@ -113,10 +111,6 @@ export function CrucibleScreen({ run, onRunChange, onContinue }: Props) {
         pickedClassId={pickedClassId}
         onPick={(id) => setPickedClassId(pickedClassId === id ? null : id)}
         onConfirm={confirm}
-        onBack={() => {
-          playSfx('ui.back');
-          setChosenRosterId(null);
-        }}
       />
     );
   }
@@ -140,11 +134,13 @@ export function CrucibleScreen({ run, onRunChange, onContinue }: Props) {
     setChosenRosterId(armedEntry.rosterId);
   }
 
+  // The place, then the ask (2026-09-11, per user direction): "One of you is tempered" and its
+  // instruction line were two sentences about a screen that shows a bowl of fire and six heroes.
   const readout = cold
     ? 'Every hero already carries a Class.'
     : armedEntry
       ? `${heroes[armedEntry.heroId].name} stands at the rim. The Class they take is theirs for the run.`
-      : 'Choose the hero to be tempered — hold one to read its sheet first.';
+      : 'Choose a hero to learn a Class.';
 
   return (
     <div
@@ -154,8 +150,8 @@ export function CrucibleScreen({ run, onRunChange, onContinue }: Props) {
       <NodeSky />
       <RosterPeek run={run} />
       <NodeHeader
-        eyebrow="The Crucible"
-        title={cold ? 'The fire is cold' : 'One of you is tempered'}
+        eyebrow={cold ? 'The Crucible' : undefined}
+        title={cold ? 'The fire is cold' : 'The Crucible'}
         readout={readout}
         readoutKey={armedRosterId ?? String(cold)}
         readoutLive={!!armedEntry}
@@ -261,16 +257,16 @@ interface ChoiceProps {
   pickedClassId: string | null;
   onPick: (classId: string) => void;
   onConfirm: () => void;
-  onBack: () => void;
 }
 
 /**
- * Three Classes differing in kind, read as an Evolution branch — pick, then confirm. No prose
- * (2026-09-11, per user direction): a card is the verb itself, drawn the way the rest of the game
- * draws it — a move as its detail card, at the type it will have on THIS hero; a passive as its
- * readout — under the Class's name and kind.
+ * Three Classes, read as an Evolution branch — pick, then confirm. No prose (2026-09-11, per user
+ * direction): a card is the verb itself, drawn the way the rest of the game draws it — a move as
+ * its detail card, at the type it will have on THIS hero; a passive as its readout — under the
+ * Class's name. No way back: the hero at the rim is the hero tempered (same day, per user
+ * direction), so the only press is the one that commits.
  */
-function ClassChoice({ run, entry, offers, pickedClassId, onPick, onConfirm, onBack }: ChoiceProps) {
+function ClassChoice({ run, entry, offers, pickedClassId, onPick, onConfirm }: ChoiceProps) {
   const hero = heroes[entry.heroId];
   const caster = healCasterForEntry(hero, entry, run.relics);
   const picked = pickedClassId ? offers.find((c) => c.id === pickedClassId) ?? null : null;
@@ -291,14 +287,9 @@ function ClassChoice({ run, entry, offers, pickedClassId, onPick, onConfirm, onB
           ))}
         </div>
       </div>
-      <div className="reward-panel-actions crucible-choice-actions">
-        <button className="secondary-button" onClick={onBack}>
-          Back
-        </button>
-        <button className="resolve-button" disabled={!picked} onClick={onConfirm}>
-          {picked ? `Temper — ${picked.name}` : 'Select a Class'}
-        </button>
-      </div>
+      <button className="resolve-button" disabled={!picked} onClick={onConfirm}>
+        {picked ? `Temper — ${picked.name}` : 'Select a Class'}
+      </button>
     </div>
   );
 }
@@ -310,7 +301,7 @@ interface CardProps {
   onPick: () => void;
 }
 
-/** One Class: name and kind, then exactly what it grants. A div rather than a button because the move card is interactive already. */
+/** One Class: name, then exactly what it grants. A div rather than a button because the move card is interactive already. */
 function ClassCard({ cls, picked, caster, onPick }: CardProps) {
   const move = cls.grantsMoveId ? moves[cls.grantsMoveId] : null;
   const passive = cls.grantsPassiveId ? passives[cls.grantsPassiveId] : null;
@@ -335,9 +326,6 @@ function ClassCard({ cls, picked, caster, onPick }: CardProps) {
           <ClassGlyph cls={cls} className="class-shrine-card-glyph" />
         </span>
         <span className="relic-card-name">{cls.name}</span>
-        <span className="crucible-class-kind" style={{ color }}>
-          {KIND_LABELS[cls.kind]}
-        </span>
       </div>
       <div className="crucible-class-verb">
         {/* `caster` carries the hero's types, so the card is drawn at the type the move will have on them. */}

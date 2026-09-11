@@ -24,6 +24,7 @@ import {
   grantClass,
   isValidClassDefinition,
   rollClassOffers,
+  CRUCIBLE_OFFER_COUNT,
   ClassError,
 } from '../src/run/classes';
 import { entryPassiveCounts } from '../src/run/entryStats';
@@ -43,7 +44,7 @@ test('classes: every Class grants exactly one verb — a move or a passive, neve
   }
 });
 
-test('classes: three of each kind, so the Crucible can always offer one per kind', () => {
+test('classes: three of each kind, as authored', () => {
   for (const kind of CLASS_KINDS) {
     const ofKind = Object.values(classes).filter((cls) => cls.kind === kind);
     assert.strictEqual(ofKind.length, 3, `${kind} has ${ofKind.length} Classes`);
@@ -65,12 +66,15 @@ test('classes: a class move is in no Scroll pool and no Tutor pool, and a class 
   }
 });
 
-test('classes: rollClassOffers returns one Class per kind, in kind order', () => {
+test('classes: rollClassOffers returns three distinct Classes from the whole catalog', () => {
   const offers = rollClassOffers(classes, () => 0.5);
-  assert.deepStrictEqual(offers.map((c) => c.kind), [...CLASS_KINDS]);
+  assert.strictEqual(offers.length, CRUCIBLE_OFFER_COUNT);
+  assert.strictEqual(new Set(offers.map((c) => c.id)).size, CRUCIBLE_OFFER_COUNT, 'no Class is offered twice');
   const first = rollClassOffers(classes, () => 0);
   const last = rollClassOffers(classes, () => 0.999);
   assert.notDeepStrictEqual(first.map((c) => c.id), last.map((c) => c.id), 'the roll should reach different Classes');
+  // Kind no longer constrains the roll: three of one kind is a legal spread.
+  assert.ok(first.every((c) => c.kind === first[0].kind), 'the lowest rolls walk the catalog in authored order');
 });
 
 // --- grantClass / chosenClass ---
