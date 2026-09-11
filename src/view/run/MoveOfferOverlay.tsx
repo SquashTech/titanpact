@@ -71,7 +71,6 @@ export function MoveOfferOverlay({ run, entry, moveId, eyebrow, onResolve }: Pro
 
         {atCap && (
           <>
-            <p className="offer-hero-sub">Already knows {MOVE_CAP} moves — pick one to replace, or decline.</p>
             <div className="offer-swap-arrow" aria-hidden="true">
               ↓ replaces one of
             </div>
@@ -95,7 +94,7 @@ export function MoveOfferOverlay({ run, entry, moveId, eyebrow, onResolve }: Pro
             <span className="moveoffer-icon" aria-hidden="true">
               ✕
             </span>
-            <span className="moveoffer-label">Decline</span>
+            <span className="moveoffer-label">{atCap ? 'Keep current moveset' : 'Decline'}</span>
             {/* Says the price out loud: the Scroll is spent and the move does not come back. */}
             <span className="moveoffer-sub">The move is gone either way</span>
           </button>

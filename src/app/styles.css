@@ -23854,10 +23854,18 @@ textarea,
 .moveoffer-panel {
   position: relative;
   width: min(420px, 92vw);
-  /* Was 88%: at the cap the dossier, four candidates and the button pair sit right on the
-     fold, and the Learn/Decline pair is the one thing here that must not need a scroll. */
-  max-height: 96%;
+  /* The whole height, and a tight top: at the cap the dossier, four candidates and the button
+     pair sit right on the fold, and the Learn/Decline pair is the one thing here that must not
+     need a scroll. `.reward-panel` gives 24px above the head; this is the one place that air
+     costs a button. */
+  max-height: 100%;
   overflow-y: auto;
+  padding-top: 8px;
+  gap: 6px;
+}
+
+.moveoffer-overlay {
+  padding: 10px 16px;
 }
 
 /* The offer's cards are terse — a card with three riders was pushing the Learn/Decline pair
