@@ -23,10 +23,18 @@ const HOLD_CANCEL_PX = 12;
  * A ~500ms press calls `onLongPress`, a tap calls `onClick`; the click after a completed hold is
  * swallowed. Returns `data-holding` while the timer runs (styles.css `[data-holding]`) and cancels
  * on movement — on touch the pointer stays captured, so `pointerleave` never fires mid-scroll.
+ *
+ * A tap COMMITS ON POINTERUP, not on the click that follows (2026-09-11, per user direction). On
+ * touch the browser cancels the pointer the moment it decides a touch is a scroll, and inside a
+ * scrolling panel a thumb that wanders a few px past its slop gets no `click` at all — which is
+ * why the replace offer sometimes took a tap without lighting the row. The travel threshold here
+ * is the one judge of what a tap is; the click that does still arrive is swallowed so nothing
+ * fires twice. A synthetic `.click()` with no pointer behind it still goes through `onClick`.
  */
 export function useLongPress(onLongPress?: () => void, onClick?: () => void) {
   const timer = useRef<number | null>(null);
-  const fired = useRef(false);
+  /** The hold fired, or the tap was already committed on pointerup: the trailing click is spent. */
+  const consumed = useRef(false);
   const origin = useRef<{ x: number; y: number } | null>(null);
   const [holding, setHolding] = useState(false);
 
@@ -35,8 +43,12 @@ export function useLongPress(onLongPress?: () => void, onClick?: () => void) {
       clearTimeout(timer.current);
       timer.current = null;
     }
-    origin.current = null;
     setHolding(false);
+  }
+
+  function cancel() {
+    clearTimer();
+    origin.current = null;
   }
 
   return {
@@ -44,13 +56,13 @@ export function useLongPress(onLongPress?: () => void, onClick?: () => void) {
     'data-holding': holding ? '' : undefined,
     onContextMenu: (e: MouseEvent) => e.preventDefault(),
     onPointerDown: (e: PointerEvent) => {
-      if (!onLongPress) return;
-      fired.current = false;
+      consumed.current = false;
       origin.current = { x: e.clientX, y: e.clientY };
+      if (!onLongPress) return;
       setHolding(true);
       timer.current = window.setTimeout(() => {
-        fired.current = true;
-        clearTimer();
+        consumed.current = true;
+        cancel();
         // Feature-detected: iOS Safari has no Vibration API.
         if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') navigator.vibrate(12);
         onLongPress();
@@ -59,15 +71,21 @@ export function useLongPress(onLongPress?: () => void, onClick?: () => void) {
     onPointerMove: (e: PointerEvent) => {
       const from = origin.current;
       if (!from) return;
-      if (Math.abs(e.clientX - from.x) > HOLD_CANCEL_PX || Math.abs(e.clientY - from.y) > HOLD_CANCEL_PX) clearTimer();
+      if (Math.abs(e.clientX - from.x) > HOLD_CANCEL_PX || Math.abs(e.clientY - from.y) > HOLD_CANCEL_PX) cancel();
     },
-    onPointerUp: clearTimer,
-    onPointerCancel: clearTimer,
-    onPointerLeave: clearTimer,
+    onPointerUp: () => {
+      const tapped = origin.current !== null && !consumed.current;
+      cancel();
+      if (!tapped) return;
+      consumed.current = true;
+      onClick?.();
+    },
+    onPointerCancel: cancel,
+    onPointerLeave: cancel,
     onClick: (e: MouseEvent) => {
       e.stopPropagation();
-      if (fired.current) {
-        fired.current = false;
+      if (consumed.current) {
+        consumed.current = false;
         return;
       }
       onClick?.();

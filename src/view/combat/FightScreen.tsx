@@ -67,6 +67,7 @@ import { MoveKindBadge, MoveTraitChips, TARGET_MODE_LABELS, healReadout, moveEff
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { AudioSettings } from '../shared/AudioSettings';
 import { ManaCost } from '../shared/ManaCost';
+import { MoveKindGlyph } from '../shared/statIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { STAT_LABELS } from '../shared/StatBars';
 import { HubGlyph } from '../shared/nodeIcons';
@@ -1252,6 +1253,18 @@ export function FightScreen({
               )}
               {beat.bannerSub && <span className="combat-banner-sub">{beat.bannerSub}</span>}
               {beat.bannerTag && <span className="combat-banner-tag">{beat.bannerTag}</span>}
+              {beat.bannerCast && (
+                <span className="combat-banner-cast" aria-label={`${beat.bannerCast.label}, ${beat.bannerCast.cost} mana`}>
+                  <span className={`combat-banner-cast-kind is-${beat.bannerCast.kind}`}>
+                    <MoveKindGlyph kind={beat.bannerCast.kind} className="combat-banner-cast-glyph" />
+                    {beat.bannerCast.label}
+                  </span>
+                  <span className="combat-banner-cast-cost">
+                    <ManaCost cost={beat.bannerCast.cost} />
+                    <span className="combat-banner-cast-unit">Mana</span>
+                  </span>
+                </span>
+              )}
               {beat.bannerMeta && (
                 <span className={`combat-banner-meta${beat.bannerMetaClass ? ` ${beat.bannerMetaClass}` : ''}`}>{beat.bannerMeta}</span>
               )}

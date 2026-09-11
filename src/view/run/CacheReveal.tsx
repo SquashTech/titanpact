@@ -52,13 +52,12 @@ const SPARKS = Array.from({ length: 12 }, (_, i) => {
 
 interface CacheOpeningProps {
   phase: CachePhase;
-  caption: string;
   /** Silhouette of what is inside, rising out of the lid. Omitted where the contents are a choice. */
   payload?: ReactNode;
 }
 
 /** Renders nothing once `phase` is `open` — the caller owns what replaces it. */
-export function CacheOpening({ phase, caption, payload }: CacheOpeningProps) {
+export function CacheOpening({ phase, payload }: CacheOpeningProps) {
   if (phase === 'open') return null;
 
   return (
@@ -108,7 +107,6 @@ export function CacheOpening({ phase, caption, payload }: CacheOpeningProps) {
         </svg>
       </div>
 
-      <p className="cache-open-caption">{caption}</p>
     </div>
   );
 }

@@ -20,6 +20,8 @@ import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
 import { getTypeColor } from './typeColors';
 import { dramaticEntranceFor } from '../shared/entrances';
+import { moveKindGlyph } from '../shared/MoveTile';
+import type { MoveKindGlyphKind } from '../shared/statIcons';
 
 export interface BeatPopup {
   combatantId: string;
@@ -82,7 +84,13 @@ export interface BeatFlavor {
   bannerAccent?: string;
   /** Stamp under the headline — "Critical hit!", "Super effective!". */
   bannerTag?: string;
-  /** Secondary readout — a mana cost, or a Field Effect's rules text. */
+  /**
+   * The declaration beat's readout (2026-09-11, per user direction): what kind of move this is
+   * and what it cost, as the same objects the move tile wears — the kind glyph and the mana gem —
+   * rather than "20 MP" in small type. FightScreen draws it; buildBeats only says what it is.
+   */
+  bannerCast?: { kind: MoveKindGlyphKind; label: string; cost: number };
+  /** Secondary readout — a Field Effect's rules text. */
   bannerMeta?: string;
   /** Extra class for the bannerMeta span. */
   bannerMetaClass?: string;
@@ -107,6 +115,13 @@ export interface BeatFlavor {
    * by the type and wearing its glyph, for a target on the caster's own side.
    */
   fx?: readonly BeatFx[];
+}
+
+/** What the cast strip calls the move's kind: the damage pipeline it swings on, or what a non-damage move does. */
+function castLabel(move: MoveDefinition): string {
+  if (move.kind === 'damage') return move.category === 'physical' ? 'Physical' : 'Magical';
+  if (move.kind === 'heal') return 'Heal';
+  return moveKindGlyph(move) === 'debuff' ? 'Debuff' : 'Buff';
 }
 
 export interface BeatFx {
@@ -284,7 +299,7 @@ export function buildBeats(
           // `clause` is " on X and Y" — slice past " on".
           bannerSub: clause ? `▸${clause.slice(3)}` : undefined,
           bannerAccent: getTypeColor(move.type),
-          bannerMeta: `${cost} MP`,
+          bannerCast: { kind: moveKindGlyph(move), label: castLabel(move), cost },
         });
         break;
       }

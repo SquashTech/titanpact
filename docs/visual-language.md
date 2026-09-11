@@ -3308,6 +3308,35 @@ nameplate; a per-move animation layer; the cast sound under the hit is untested 
 noise-led sounds in one beat could mush — the gain step is the dial); and at Fast auto-play the
 element is mostly gone before it is seen.
 
+## Thirty-first pass — the battle preview, the cast strip, and a tap that lands (2026-09-11)
+
+Per user direction, six fixes in one pass:
+
+- **A tap commits on pointerup** (`useLongPress`, MoveTile.tsx). The replace offer's rows
+  sometimes took a tap without lighting: on touch the browser cancels the pointer the moment
+  it decides a touch is a scroll, and inside a scrolling panel a thumb that wanders a few px
+  gets no `click` at all. The hook's own 12px travel threshold is now the one judge of what a
+  tap is; the click that still arrives is swallowed. Every tile, item box and squad cell shares
+  the hook, so all of them got the fix.
+- **The battle preview** (`SquadSelectScreen`) lost its two bordered panels. Each half is a
+  centred chapter mark in its side's colour with rules fading away from it, the VS is struck
+  between hairlines like the fight's opening beat, the stage floats to the vertical middle, and
+  the squad's three rows are BANDS with their own heads — *Active · Open the fight* lit in blue,
+  *Bench · Switch in* plain, *Reserve · Sit this one out* dashed with its cells drained. The
+  two corner glyphs moved to the foot as tiles either side of Start Fight: on a phone the top
+  right corner is the one place a thumb cannot reach without re-gripping.
+- **The cast strip** (`bannerCast`, buildBeats.ts → `.combat-banner-cast`). The declaration
+  beat printed "20 MP" in 10px under a 30px headline and said nothing about the move's kind. It
+  now wears the two objects the move tile already wears for both: the kind glyph in its own
+  colour as a struck pill (PHYSICAL / MAGICAL / HEAL / BUFF / DEBUFF), and the mana gem with
+  the cost cut into it.
+- **The victory screen scrolled sideways.** `.fight-result-body` is a scroll container, and a
+  scroll container counts transformed boxes: the banner's flash bursts to ~540px and the rays
+  are a spinning 300px square. `overflow-x: hidden`.
+- **The Equipment Cache** dropped "Three ways this could go" (the caption prop is gone from
+  `CacheOpening`), and its three cards — grown to ~130px by the stage stack — now carry their
+  grants as 30px pills with 17px glyphs under a 19px name, instead of 10px chips.
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.

@@ -1634,6 +1634,80 @@ textarea,
   }
 }
 
+/* The declaration beat's strip (2026-09-11, per user direction): the move's
+   kind and its price, as the objects the move tile already uses for both — the
+   kind glyph in the category's own colour, and the mana gem with the cost cut
+   into it. "20 MP" in 10px type under a 30px headline was the one figure on
+   the beat the eye could not find, and the kind was not on it at all. */
+.combat-banner-cast {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  animation: banner-lead-in 0.2s var(--ease-out) 0.08s both;
+}
+
+.combat-banner-cast-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 9px 0 6px;
+  border-radius: var(--radius-pill);
+  border: 1px solid color-mix(in srgb, currentColor 55%, transparent);
+  background: color-mix(in srgb, currentColor 12%, rgba(10, 12, 18, 0.7));
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  box-shadow: 0 0 12px -4px currentColor, 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.combat-banner-cast-kind.is-physical {
+  color: var(--physical);
+}
+
+.combat-banner-cast-kind.is-magical {
+  color: var(--magical);
+}
+
+.combat-banner-cast-kind.is-heal {
+  color: var(--hp-high);
+}
+
+.combat-banner-cast-kind.is-buff {
+  color: var(--buff);
+}
+
+.combat-banner-cast-kind.is-debuff {
+  color: var(--hp-low);
+}
+
+.combat-banner-cast-glyph {
+  width: 14px;
+  height: 14px;
+}
+
+.combat-banner-cast-cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 9px 0 3px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(74, 144, 217, 0.45);
+  background: rgba(10, 12, 18, 0.7);
+  box-shadow: 0 0 12px -4px var(--mana), 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.combat-banner-cast-unit {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9ccbff;
+}
+
 .combat-banner-meta {
   font-size: 10px;
   font-weight: 600;
@@ -10455,19 +10529,6 @@ textarea,
   gap: 10px;
 }
 
-/* The scouted-enemy panel sat directly under the two worded chips that the
-   corner glyphs replaced. The glyphs float over the scroll area instead of
-   occupying a row of their own, so this section reserves the corner for them:
-   the title keeps clear horizontally, and the whole panel drops far enough
-   that the rightmost enemy chip clears the buttons' 44px bottom edge. */
-.squad-select > .screen-scroll > .squad-section-enemy {
-  margin-top: 16px;
-}
-
-.squad-select > .screen-scroll > .squad-section-enemy .squad-section-title {
-  padding-right: 100px;
-}
-
 /* Same containment pattern as FightScreen's .action-area — the roster/guild
    hall list scrolls internally so "Start Fight" stays reachable without the
    page itself ever growing past the viewport (see .app-shell). */
@@ -10510,65 +10571,100 @@ textarea,
   margin: 0 0 10px;
 }
 
-/* Enemy/player halves of the team-preview screen, colored to match the
-   combat screen's --enemy/--ally palette so the layout reads consistently
-   between "who am I about to fight" here and the battlefield itself. */
+/* --- The battle preview, unboxed (2026-09-11, per user direction) ---------
+   Two bordered panels — a red one and a blue one, each with a bold left-tick
+   heading — stacked at the top of the screen with the sky empty under them.
+   The panels are gone: each half is a centred chapter mark in its side's
+   colour with rules fading away from it, the whole stage floats to the
+   vertical middle of what is left above the footer, and the three rows of
+   the squad are BANDS with their own headers rather than a left column of
+   three small words. */
+.squad-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-block: auto;
+  padding: 6px 0 8px;
+}
+
 .squad-section {
-  border-radius: var(--radius-md);
-  padding: 10px 10px 4px;
-  margin-bottom: 4px;
-  border: 1px solid var(--border);
-  box-shadow: var(--hairline), var(--elev-1);
-}
-
-.squad-section-enemy {
-  background: linear-gradient(180deg, rgba(217, 83, 79, 0.1), transparent 60%);
-  border-color: rgba(217, 83, 79, 0.35);
-}
-
-.squad-section-player {
-  background: linear-gradient(180deg, rgba(74, 144, 217, 0.1), transparent 60%);
-  border-color: rgba(74, 144, 217, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .squad-section-title {
+  --side-rgb: 217, 83, 79;
   display: flex;
   align-items: center;
-  gap: 7px;
-  font-size: 15px;
-  margin: 2px 0 4px;
-  letter-spacing: -0.01em;
-}
-
-/* Accent tick keyed to the section's own side color — red for the scouted
-   enemies, blue for your squad — so the two halves of the screen are
-   distinguishable from the header alone while scrolling, matching the
-   --enemy/--ally split their panel tints already use. */
-.squad-section-title::before {
-  content: '';
-  width: 3px;
-  height: 14px;
-  border-radius: var(--radius-pill);
-  background: currentColor;
-  opacity: 0.85;
-  flex-shrink: 0;
-}
-
-.squad-section-enemy .squad-section-title::before {
-  background: var(--enemy);
-}
-
-.squad-section-player .squad-section-title::before {
-  background: var(--ally);
-}
-
-.squad-vs-divider {
-  text-align: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  margin: 0;
   font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.15em;
-  color: var(--text-dim);
-  margin: 2px 0 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgb(var(--side-rgb));
+  text-shadow: 0 0 12px rgba(var(--side-rgb), 0.45);
+}
+
+.squad-section-player .squad-section-title {
+  --side-rgb: 74, 144, 217;
+}
+
+.squad-section-title::before,
+.squad-section-title::after {
+  content: '';
+  flex: 1 1 auto;
+  min-width: 16px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(var(--side-rgb), 0.55));
+}
+
+.squad-section-title::after {
+  transform: scaleX(-1);
+}
+
+/* How many are fielded, as a figure beside the mark rather than a bracket in it. */
+.squad-section-count {
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(var(--side-rgb), 0.14);
+  border: 1px solid rgba(var(--side-rgb), 0.4);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: none;
+}
+
+/* The VS, struck between two hairlines the way the fight's opening beat draws it. */
+.squad-vs-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 18px;
+}
+
+.squad-vs-divider::before,
+.squad-vs-divider::after {
+  content: '';
+  flex: 1 1 auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16));
+}
+
+.squad-vs-divider::after {
+  transform: scaleX(-1);
+}
+
+.squad-vs-divider > span {
+  font-size: 13px;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  text-shadow: 0 0 12px rgba(224, 166, 60, 0.55);
 }
 
 /* --- Start-of-run draft (DraftScreen) ----------------------------------
@@ -11677,18 +11773,19 @@ textarea,
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 6px;
-  margin-bottom: 16px;
 }
 
+/* The same plate every hero card in the run wears (the shared plate rule
+   below), washed in the enemy's own type, with the name under the figure —
+   a scouted enemy is read here, not only counted. */
 .enemy-scout-chip {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 6px 2px;
+  border-radius: var(--radius-md);
+  padding: 8px 2px 7px;
+  color: var(--text);
   cursor: pointer;
   box-shadow: var(--hairline), var(--elev-1);
   transition: border-color var(--dur-mid) var(--ease-out), transform var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
@@ -11698,6 +11795,16 @@ textarea,
   border-color: var(--accent);
   transform: translateY(-1px);
   box-shadow: var(--hairline-strong), var(--elev-2);
+}
+
+.enemy-scout-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 /* `.enemy-scout-chip-bench` used to dim the two who start on the bench. Gone
@@ -11751,8 +11858,8 @@ textarea,
 
 .enemy-scout-portrait {
   display: block;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   image-rendering: pixelated;
 }
 
@@ -11858,30 +11965,78 @@ textarea,
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 16px;
 }
 
-.squad-grid-row {
+/* One band per row of the rack. Each carries its own head — the label and
+   what the row means for the fight — and its own weight: the active pair is
+   the lit one, the bench is plain, the reserve is dimmed and its cells are
+   drained, so "these two open, these two rotate in, these two sit out" is
+   read from the shape of the screen before a word of it is. */
+.squad-band {
+  --band-rgb: 150, 160, 180;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 8px 8px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(var(--band-rgb), 0.16);
+  background: linear-gradient(180deg, rgba(var(--band-rgb), 0.07), rgba(var(--band-rgb), 0.02));
+}
+
+.squad-band-active {
+  --band-rgb: 74, 144, 217;
+  border-color: rgba(var(--band-rgb), 0.45);
+  background:
+    radial-gradient(ellipse 90% 70% at 50% -20%, rgba(var(--band-rgb), 0.22), transparent 70%),
+    linear-gradient(180deg, rgba(var(--band-rgb), 0.1), rgba(var(--band-rgb), 0.03));
+  box-shadow: 0 0 22px -8px rgba(var(--band-rgb), 0.55), inset 0 1px 0 rgba(var(--band-rgb), 0.3);
+}
+
+.squad-band-reserve {
+  border-style: dashed;
+  background: none;
+}
+
+.squad-band-reserve .squad-slot.filled {
+  opacity: 0.68;
+  filter: saturate(0.55);
+}
+
+.squad-band-reserve .squad-slot.filled.selected,
+.squad-band-reserve .squad-slot.filled.drop-target,
+.squad-band-reserve .squad-slot.filled.drag-over {
+  opacity: 1;
+  filter: none;
+}
+
+.squad-band-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
   gap: 8px;
+  padding: 0 2px;
 }
 
-.squad-grid-row-label {
-  flex: 0 0 52px;
+.squad-band-label {
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-weight: 800;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--text-dim);
+  color: rgb(var(--band-rgb));
 }
 
-.squad-grid-row-active .squad-grid-row-label {
-  color: var(--ally);
+.squad-band-active .squad-band-label {
+  text-shadow: 0 0 10px rgba(var(--band-rgb), 0.55);
+}
+
+.squad-band-note {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-dim);
+  white-space: nowrap;
 }
 
 .squad-grid-row-cells {
-  flex: 1 1 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
@@ -12898,9 +13053,59 @@ textarea,
    the bank-and-leave out for a pool the player would rather keep. Spending
    stays the primary action and lives on the hero cards themselves. */
 .levelup-screen > .secondary-button,
-.squad-select > .resolve-button,
+.squad-select > .squad-footer,
 .draft-screen > .resolve-button {
   margin-bottom: 12px;
+}
+
+/* The battle preview's foot: Manage Roster and the reference as two square
+   tiles either side of Start Fight (2026-09-11, per user direction). They
+   were corner glyphs at the top right — on a phone, the one place a thumb
+   cannot reach without re-gripping. Same raised-tile language as the corner
+   glyph, at the CTA's own height, so the row reads as one bar with one big
+   press and two small ones. */
+.squad-footer {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.squad-footer > .resolve-button {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+
+.squad-tool-button {
+  flex: 0 0 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-top-color: color-mix(in srgb, var(--border) 60%, #ffffff);
+  border-radius: var(--radius-lg);
+  color: var(--text-dim);
+  cursor: pointer;
+  box-shadow: var(--hairline), var(--elev-1);
+  transition: border-color var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), color var(--dur-mid) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.squad-tool-button .node-glyph {
+  width: 26px;
+  height: 26px;
+}
+
+.squad-tool-button:hover {
+  color: var(--text);
+  border-color: var(--accent);
+  box-shadow: var(--hairline), var(--elev-2);
+}
+
+.squad-tool-button:active {
+  transform: translateY(1px);
 }
 
 /* Lifted out of the sky's paint order for the same reason .draft-header /
@@ -13338,6 +13543,68 @@ textarea,
   gap: 2px 8px;
   font-size: 12px;
   color: var(--text-dim);
+}
+
+/* The Equipment Cache's three, on the stage (2026-09-11, per user direction).
+   The stage stack grew the cards to ~130px each and left the 10px chips on
+   them at the Guild Hall shelf's scale, so a plate the height of a thumb was
+   carrying its whole reason for being in type the eye had to hunt for. Here
+   the grants are the subject: struck as pills, glyph and figure at the size a
+   move tile prints its power, under a name that can be read across the room. */
+.stage-centered > .equip-cache-list .equip-cache-card {
+  gap: 16px;
+  padding: 14px 18px;
+}
+
+.stage-centered > .equip-cache-list .equip-cache-card-icon-badge {
+  width: 64px;
+  height: 64px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--rarity-color, var(--border)) 30%, transparent), transparent 74%);
+}
+
+.stage-centered > .equip-cache-list .equip-cache-card-icon {
+  font-size: 40px;
+}
+
+.stage-centered > .equip-cache-list .equip-cache-card-body {
+  gap: 6px;
+}
+
+.stage-centered > .equip-cache-list .equip-cache-card-name {
+  font-size: 19px;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+.stage-centered > .equip-cache-list .equip-cache-card-rarity {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+
+.stage-centered > .equip-cache-list .equip-cache-card-stats {
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.stage-centered > .equip-cache-list .item-chip {
+  gap: 5px;
+  height: 30px;
+  padding: 0 11px 0 8px;
+  border-radius: var(--radius-pill);
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  background: color-mix(in srgb, currentColor 12%, rgba(0, 0, 0, 0.35));
+  border: 1px solid color-mix(in srgb, currentColor 40%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.stage-centered > .equip-cache-list .item-chip-glyph {
+  width: 17px;
+  height: 17px;
+}
+
+.stage-centered > .equip-cache-list .item-chip-mark {
+  font-size: 15px;
 }
 
 /* --- A cache opening (CacheReveal.tsx) ------------------------------------
@@ -13782,29 +14049,6 @@ textarea,
   }
   100% {
     transform: rotate(-42deg) translateY(-0.5px);
-  }
-}
-
-.cache-open-caption {
-  margin: 0;
-  max-width: 30ch;
-  font-size: 12px;
-  font-style: italic;
-  line-height: 1.45;
-  text-align: center;
-  color: var(--text-dim);
-  animation: title-tagline-fade 0.5s ease 0.18s both;
-}
-
-/* The caption goes first — it was describing a shut chest. */
-.cache-open.is-opening .cache-open-caption {
-  animation: cache-caption-out 0.22s var(--ease-out) forwards;
-}
-
-@keyframes cache-caption-out {
-  to {
-    opacity: 0;
-    transform: translateY(-4px);
   }
 }
 
@@ -25863,6 +26107,7 @@ textarea,
 .passive-readout,
 .roster-card,
 .squad-slot,
+.enemy-scout-chip,
 .relic-card,
 .guild-hall-hero-card,
 .guild-hall-good,
@@ -25898,6 +26143,7 @@ textarea,
 .passive-readout,
 .roster-card,
 .squad-slot,
+.enemy-scout-chip,
 .relic-card,
 .guild-hall-hero-card,
 .guild-hall-good,
@@ -26041,6 +26287,11 @@ textarea,
   justify-content: center;
   gap: 22px;
   overflow-y: auto;
+  /* The banner's flash bursts to ~540px and its rays are a 300px square that
+     spins, so both poke past a 362px column — and a scroll container counts
+     transformed boxes, which left the whole screen sliding sideways. Clipped
+     on this axis only; they were never meant to be seen past the edge. */
+  overflow-x: hidden;
 }
 
 /* --- The banner ------------------------------------------------------ */

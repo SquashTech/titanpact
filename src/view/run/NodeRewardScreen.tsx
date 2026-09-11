@@ -255,7 +255,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
         {instant && <Hoard kind={instant} amount={amount} from={startFrom} />}
 
         {nodeType === 'equipmentReward' && chestPhase !== 'open' && (
-          <CacheOpening phase={chestPhase} caption="Three ways this could go." />
+          <CacheOpening phase={chestPhase} />
         )}
 
         {nodeType === 'equipmentReward' && chestPhase === 'open' && (
