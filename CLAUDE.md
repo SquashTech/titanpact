@@ -68,7 +68,7 @@ don't silently override it.
   coming in under the total. The re-base took its points out of **HP** and held **Speed**
   fixed on every hero, compressing the roster's HP range from 160–300 to 180–250.
   **It deliberately over-charges HP** — measured break-even is ≈0.33 a point, enemy lines
-  still pay `HP_BUDGET_VALUE` = 0.5 and equipment 0.25 — so it is a legibility call to be
+  still pay `HP_BUDGET_VALUE` = 0.5 and equipment ⅓ (`HP_PER_POINT` = 3, 2026-09-11) — so it is a legibility call to be
   judged in playtest, and the walls are what to watch (`docs/progression.md` "Pricing HP").
 - **Stat modifiers are flat additive integers, multiples of 5 or 10.** No % stat mods.
   **Automatic stat growth from levelling is the one systemic exemption** (2026-09-10, Growth
@@ -300,7 +300,8 @@ don't silently override it.
 - **Item rarity is a point budget, spent exactly** (2026-08-30; rebased 2026-09-06): Common 30 /
   Rare 50 / Epic 70 / Legendary 90 / Mythic 110, paid in stats, Elemental Force magnitude, or
   granted passives (`RARITY_BUDGET`, `src/run/equipment.ts`; enforced by `test/equipment.test.ts`).
-  Not every stat costs 1 — HP is ½, MP Regen is 3× (`STAT_POINT_VALUE`); Force is 2 a magnitude.
+  Not every stat costs 1 — a point buys 3 HP (`HP_PER_POINT`, the measured break-even), MP Regen is
+  3× (`STAT_POINT_VALUE`); Force is 2 a magnitude.
   **From Epic up an item must spend ≥⅓ of its budget on effects** — a passive or a Force, never
   stats alone (`EFFECT_FLOOR_SHARE`). Budgets tripled when heroes went from three slots to one,
   so the floor is what keeps a bigger item from being merely a bigger number.

@@ -11,7 +11,7 @@ import {
   RARITY_BUDGET,
   RARITY_ORDER,
   RARITY_WEIGHTS_BY_TIER,
-  STAT_POINT_VALUE,
+  statGrantCost,
   EFFECT_FLOOR_MIN_RARITY,
   EFFECT_FLOOR,
   ENCHANTMENTS,
@@ -41,7 +41,7 @@ const STAT_KEYS = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed',
 
 /** Total stat POINTS an item spends, which is what must never drop as a family climbs its ladder. */
 function statPoints(item: { statGrants: Partial<Record<string, number>> }): number {
-  return STAT_KEYS.reduce((sum, stat) => sum + (item.statGrants[stat] ?? 0) * STAT_POINT_VALUE[stat], 0);
+  return STAT_KEYS.reduce((sum, stat) => sum + statGrantCost(stat, item.statGrants[stat] ?? 0), 0);
 }
 
 // --- The rarity budget ---

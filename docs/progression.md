@@ -411,17 +411,18 @@ focus. Two things about the new row are deliberate:
 | Common | 30 | Torch — 10 Attack, 10 Fire Force |
 | Rare | 50 | Ember Band — 20 Attack, 15 Fire Force |
 | Epic | 70 | Bloodletter Fang — 30 Attack + Bloodthirst |
-| Legendary | 90 | Ring of Vitality — 60 HP, 10 MP Regen + Quickening |
-| Mythic | 110 | Crown of the Ancients — 20 HP, 15 each of Atk/Def/Int/Wis + Rallying Standard |
+| Legendary | 90 | Plate — 35 Defense, 105 HP + Warden's Vigil |
+| Mythic | 110 | Crown of the Ancients — 90 HP, 15 each of Atk/Def/Int/Wis + Rallying Standard |
 
 Three things convert into those points:
 
 - **Stats**, via `STAT_POINT_VALUE`. Attack/Defense/Intelligence/Wisdom/Speed cost 1
   per unit, which is the user's "roughly 10 total stats" read literally. Two stats are
   **deliberately not 1:1** — the one judgment call layered on the spec, and the first
-  knob to turn if tiers feel wrong. **HP costs ½** (heroes sit at 80-150 HP,
-  and it never enters the locked damage ratio at all, so at 1:1 every HP item would be a
-  trap pick — which the north star forbids). **MP Regen costs 3×** (every hero's base is
+  knob to turn if tiers feel wrong. **A point buys 3 HP** (`HP_PER_POINT`, 2026-09-11 —
+  the measured break-even below, and the rate a growth roll pays; it never enters the locked
+  damage ratio at all, so at 1:1 every HP item would be a trap pick — which the north star
+  forbids). **MP Regen costs 3×** (every hero's base is
   exactly 10, so +10 is a 100% swing in the resource-cycling engine the whole switching
   game runs on).
 
@@ -601,7 +602,7 @@ The codebase now holds three answers, which disagree by 4×:
 |---|---|---|
 | Hero stat lines | **1.0** | `heroStatTotal`, `src/run/statBudget.ts` |
 | Enemy stat lines | 0.5 | `HP_BUDGET_VALUE`, `src/run/statBudget.ts` |
-| Equipment rarity tiers | 0.25 | `STAT_POINT_VALUE.hp`, `src/run/equipment.ts` |
+| Equipment rarity tiers | ⅓ (was 0.25 until 2026-09-11) | `HP_PER_POINT`, `src/run/equipment.ts` |
 
 The lower two predate the doubling and neither was ever measured. Every budget figure in the
 game (the roster's 550, a faction's flat 400, a champion's 550, the Endbringer's 900) still goes
@@ -621,8 +622,10 @@ the same 40 budget points, so the win rate IS the relative price.
 
 **Break-even is 3.0 HP per budget point on both challengers** — an HP rate of ≈0.33. So no
 figure in the table above is the measured one: the roster (now 1.0) over-charges HP three-fold,
-enemies (0.5) by half, equipment (0.25) under-charges by a quarter, and the truth sits nearest
-equipment's.
+enemies (0.5) by half, and equipment under-charged by a quarter at 0.25 until 2026-09-11, when
+it was set to the measured rate outright — every item and Evolution HP grant was re-authored as
+points × 3 (Greataxe/Plate 45/75/75/105/135, Evolutions 15/30/45/60), per user direction, so
+the printed figure IS the priced one.
 
 This settles the direction, and the roster re-base above knowingly went the other way. The
 doubling had halved what the roster charged for HP, moving it from badly over-charged toward

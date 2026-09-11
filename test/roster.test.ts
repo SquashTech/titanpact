@@ -11,7 +11,7 @@ import { moves } from '../src/data/moves';
 import { passives } from '../src/data/passives';
 import { statuses } from '../src/data/statuses';
 import { progressionTable } from '../src/data/progression';
-import { BASE_ITEM_SLOTS, MAX_ITEM_SLOTS, STAT_POINT_VALUE } from '../src/run/equipment';
+import { BASE_ITEM_SLOTS, MAX_ITEM_SLOTS, statGrantCost } from '../src/run/equipment';
 import type { GrowthStatKey, StatKey } from '../src/engine/content';
 import { GRADE_BUDGET, GROWTH_STATS, gradeBudgetOf, gradeExpectedPoints, gradesFor } from '../src/run/growth';
 import { HERO_STAT_TOTAL, heroStatTotal } from '../src/run/statBudget';
@@ -221,7 +221,7 @@ test('roster: an Evolution stat line is Rare-to-Epic in equipment currency, spen
     for (const node of nodes) {
       for (const path of node.paths) {
         const gross = (Object.entries(path.statGrants) as [StatKey, number | undefined][]).reduce(
-          (sum, [stat, amount]) => sum + Math.abs(amount ?? 0) * STAT_POINT_VALUE[stat],
+          (sum, [stat, amount]) => sum + Math.abs(statGrantCost(stat, amount ?? 0)),
           0
         );
         assert.ok(gross <= 120, `${path.id} spends ${gross} points — past anything authored so far`);

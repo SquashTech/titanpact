@@ -176,24 +176,27 @@ export const RARITY_BUDGET: Record<EquipmentRarity, number> = {
 };
 
 /**
- * Points one unit of each stat costs. HP is a quarter (never in the damage ratio, and authored
- * in the doubled units the HP bar draws); MP Regen is triple (every hero's base is 10, so +10
- * doubles it). The first knob to turn if tiers feel wrong; nothing else reads this table.
+ * HP one budget point buys on an item: three, the measured break-even (docs/progression.md
+ * "Pricing HP") and the same rate a growth roll pays ("+3 HP is one point", run/growth.ts). HP
+ * is priced by the point it buys rather than as a fraction so the budget arithmetic stays exact
+ * — 45 / 3 is 15 where 45 × ⅓ is not. Set 2026-09-11, per user direction, replacing the 0.25
+ * that had been halved to absorb the HP doubling rather than chosen.
+ */
+export const HP_PER_POINT = 3;
+
+/**
+ * Points one unit of each stat costs. HP is a third (never in the damage ratio — `HP_PER_POINT`
+ * above is the authoritative form); MP Regen is triple (every hero's base is 10, so +10 doubles
+ * it). The first knob to turn if tiers feel wrong; nothing else reads this table.
  *
  * Mana Pool went 0.5 -> 1 with the 2026-09-06 budget pass. At half price the tripled budgets
  * bought +60 to +80 Mana on a single item against a roster whose pools are 50-65 — an item
  * that more than doubles a pool prices every move's mana cost out of meaning, and mana cost
  * is the primary balance lever on reliable moves (CLAUDE.md). HP has no equivalent problem:
  * it is not a resource that gates what a hero may cast.
- *
- * HP went 0.5 -> 0.25 when the HP x2 was baked into the authored lines: the same item, the same
- * budget, twice the printed figure. Whether a quarter is the RIGHT price is a separate and older
- * question — the hero roster charges 1.0 since 2026-09-09 and enemy lines 0.5, so the three
- * disagree by 4x and the measured break-even (~0.33) is nearest this one. Deliberate, not drift:
- * docs/progression.md "Pricing HP".
  */
 export const STAT_POINT_VALUE: Record<StatKey, number> = {
-  hp: 0.25,
+  hp: 1 / HP_PER_POINT,
   attack: 1,
   defense: 1,
   intelligence: 1,
@@ -228,8 +231,9 @@ export const EFFECT_FLOOR_MIN_RARITY: EquipmentRarity = 'epic';
 export const EFFECT_FLOOR = 20;
 
 /** A negative grant refunds its full value — a downside can fund a spike. Nothing caps how much of a tier drawbacks may pay for (open question, docs/progression.md). */
-function statGrantCost(stat: StatKey, amount: number): number {
-  return amount * STAT_POINT_VALUE[stat];
+/** Exported so the tests and the even-split authoring price a stat the one way the budget does. */
+export function statGrantCost(stat: StatKey, amount: number): number {
+  return stat === 'hp' ? amount / HP_PER_POINT : amount * STAT_POINT_VALUE[stat];
 }
 
 /**
