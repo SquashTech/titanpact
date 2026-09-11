@@ -3175,8 +3175,9 @@ class flip, and a tap anywhere lands all of them.
   dimmer, but in the same rank, because that IS the rule — with a level badge and a bar under
   each. The bar is a CSS animation iterated once a level (`--fills`), with a 45ms wave down the
   row; each iteration boundary is the frame the badge ticks (`onAnimationIteration`) and the
-  figure blooms. One `xp.orb` a level for the whole roster, not one a hero. A capped hero shows
-  MAX on a grey full bar. "Whole roster +1 Level" pops once the bars have shown it.
+  figure blooms. The whole sequence lands inside ~2.2s for a three-row ledger (tightened from
+  ~3s the same day, per user direction). One `xp.orb` a level for the whole roster, not one a hero. A capped hero shows
+  MAX on a grey full bar. "Heroes +1 Level" pops once the bars have shown it.
 - **The ledger.** Chromeless rows with hairlines: gold counting up with coin strikes from the
   moment its row lands (and the purse it lands in), the Scroll, and the drop as the *chit* it will
   be on the roster — `ItemPiece` plus `ItemEffectChips`, rarity as a word on the right — the one

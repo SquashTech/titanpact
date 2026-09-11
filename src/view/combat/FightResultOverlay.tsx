@@ -15,18 +15,18 @@ import { getTypeColor } from './typeColors';
 const TINT_LOSS = '217, 83, 79';
 
 /** The strike lands and is read before anything under it moves. */
-const TITLE_HOLD_MS = 640;
+const TITLE_HOLD_MS = 480;
 /** One level's worth of bar. Roster-wide, so every bar runs the same clock. */
-const FILL_MS = 620;
+const FILL_MS = 460;
 /** A wave down the row rather than six bars in lockstep — small enough that they still read as ONE grant. */
-const HERO_STAGGER_MS = 45;
-const CAPTION_LEAD_MS = 90;
-const LEDGER_LEAD_MS = 280;
-const LEDGER_STAGGER_MS = 200;
-const CTA_LEAD_MS = 260;
+const HERO_STAGGER_MS = 35;
+const CAPTION_LEAD_MS = 60;
+const LEDGER_LEAD_MS = 200;
+const LEDGER_STAGGER_MS = 150;
+const CTA_LEAD_MS = 180;
 
 /** Gold counts up in the ledger the way a Cache does, at one strike a step until it has to stride. */
-const COIN_TICK_MS = 60;
+const COIN_TICK_MS = 50;
 const COIN_MAX_TICKS = 12;
 
 const STAGE_TITLE = 0;
@@ -161,7 +161,7 @@ export function FightResultOverlay({
               ))}
             </div>
             <span className={`fight-result-caption${stage >= STAGE_CAPTION ? ' is-shown' : ''}`}>
-              Whole roster +{levelsGained} {levelsGained === 1 ? 'Level' : 'Levels'}
+              Heroes +{levelsGained} {levelsGained === 1 ? 'Level' : 'Levels'}
             </span>
           </section>
         )}

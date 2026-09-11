@@ -25372,7 +25372,7 @@ textarea,
    at each boundary, which is the moment an XP bar tops out and what the
    badge's onAnimationIteration keys off. */
 .fight-result-xp-fill.is-running {
-  animation: fight-result-xp-fill 620ms cubic-bezier(0.3, 0, 0.2, 1) var(--hero-delay, 0ms) var(--fills, 1) both;
+  animation: fight-result-xp-fill 460ms cubic-bezier(0.3, 0, 0.2, 1) var(--hero-delay, 0ms) var(--fills, 1) both;
 }
 
 @keyframes fight-result-xp-fill {
@@ -25407,7 +25407,7 @@ textarea,
   color: var(--text-dim);
 }
 
-/* "Whole roster +1 Level": the rule, stated once the bars have shown it. */
+/* "Heroes +1 Level", stated once the bars have shown it. */
 .fight-result-caption {
   display: inline-flex;
   align-items: center;
