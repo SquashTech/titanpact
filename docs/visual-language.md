@@ -3068,20 +3068,36 @@ in gold beside every name — and under roster-wide levelling that figure is *id
 cards*, which CLAUDE.md already says carries no information. Gold was giving the loudest treatment
 on the card to its least informative word.
 
-### And a correction to the `i` removal above
+### And the `i` comes off Squad Select too — but only after the hold exists
 
-The twenty-seventh pass took the `i` off `HeroPickCard`. **Squad Select has a second, separate one**
-— `.info-button`, a bordered circle with a serif italic `i`, used by that screen alone — and it is
-*more* web-looking than the chromeless mark that was removed.
+The twenty-seventh pass took the `i` off `HeroPickCard`. Squad Select had a second, separate one —
+`.info-button`, a bordered circle with a serif italic `i`, used by that screen alone, and *more*
+web-looking than the chromeless mark that had just gone.
 
-It stays, for now, and the reason is worth recording so the next sweep does not "finish the job"
-and break the screen: **`SquadSelectScreen` has no long press.** Its slots handle a tap (swap into
-a slot) and a drag, and nothing else — so unlike a pick card, the `i` there is not a redundant
-second way into the hero sheet, it is the *only* way. Removing it strands the sheet.
+It could not simply be deleted, and the reason is the interesting part: **`SquadSelectScreen` had no
+long press.** Its cells handled a tap (swap) and an HTML5 drag and nothing else — so unlike a pick
+card, that `i` was not a redundant second route to the hero sheet, it was the **only** one.
+Removing it would have stranded the sheet on the screen where you decide who fights. *An audit that
+counts affordances has to check what each one is the only way to reach.*
 
-The real fix is to give the slot the long press every other card in the game has, and then drop the
-`i`. That is a genuine change rather than a restyle — the slot already carries a click and a
-`DragEvent` handler for reordering, and a hold has to be introduced without eating either.
+So the hold went in first. Three notes on doing that:
+
+- **The cell became its own component.** `SquadSlot` exists because `useLongPress` is a hook and a
+  hook cannot live in a `.map()` body. Nothing else about the cell changed.
+- **A hold, a tap and a drag now share one element, and they do not collide.** The hook cancels its
+  timer once the pointer travels 12px — which any drag does long before `dragstart` — and it
+  swallows the click a completed hold would otherwise deliver to the swap handler. Both were
+  verified rather than assumed: a synthetic press-plus-30px-travel does not open the sheet, and a
+  completed hold leaves the grid order and the selection untouched.
+- **The cell answers the keyboard now**, which it did not before. It carried `role="button"` and a
+  tab stop and responded to no key at all; Enter and Space do what a tap does. The sheet itself is
+  still not keyboard-reachable from here — that is the honest cost of trading a `<button>` for a
+  gesture — but it is reachable through the roster button in the corner, and this is a
+  touch-first game where hold is the inspect verb everywhere.
+
+`.info-button` and `.hero-grid-info-button` are deleted; the game's last bordered-circle `i` is
+`.draft-info`, which survives because the draft is the one screen where a hero has no roster entry
+to hold.
 
 ## Open / future improvements
 

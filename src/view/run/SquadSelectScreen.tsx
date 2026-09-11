@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type DragEvent } from 'react';
+import { useState, type CSSProperties, type DragEvent, type ReactNode } from 'react';
 import { heroes } from '../../data/heroes';
 import { allCombatants } from '../../data/content';
 import { equipment } from '../../data/equipment';
@@ -15,6 +15,7 @@ import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { hasDramaticEntrance } from '../shared/entrances';
+import { useLongPress } from '../shared/MoveTile';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { NodeSky, NODE_TINT_GOLD } from '../shared/NodeStage';
 import { HubGlyph } from '../shared/nodeIcons';
@@ -58,6 +59,81 @@ function shuffled<T>(items: readonly T[]): T[] {
     [out[i], out[j]] = [out[j], out[i]];
   }
   return out;
+}
+
+interface SquadSlotProps {
+  hero?: HeroDefinition;
+  entry?: RosterEntry;
+  selected: boolean;
+  dropTarget: boolean;
+  dragOver: boolean;
+  locked: boolean;
+  /** Tap: begin or complete a swap. */
+  onActivate: () => void;
+  /** Hold: open the hero's sheet. Absent on an empty cell, which has nothing to review. */
+  onInspect?: () => void;
+  onDragStart: (e: DragEvent) => void;
+  onDragOver: (e: DragEvent) => void;
+  onDragLeave: () => void;
+  onDrop: (e: DragEvent) => void;
+}
+
+/**
+ * One cell of the bring-6-pick-4 grid.
+ *
+ * Extracted from the grid's `.map()` for one reason: it holds a `useLongPress`, and a hook cannot
+ * live inside a loop body. Holding is what this screen was missing — every other card in the game
+ * opens its sheet that way, and this one alone had a small circled `i` doing it instead, which is
+ * why that `i` survived the twenty-seventh pass: it was not a redundant second route to the sheet
+ * here, it was the only one.
+ *
+ * The hold has to share the cell with a tap AND an HTML5 drag, and does: the hook cancels its timer
+ * once the pointer travels 12px, which any drag does long before `dragstart`, and it swallows the
+ * click that a completed hold would otherwise deliver to the swap handler.
+ */
+function SquadSlot({
+  hero,
+  entry,
+  selected,
+  dropTarget,
+  dragOver,
+  locked,
+  onActivate,
+  onInspect,
+  onDragStart,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  children,
+}: SquadSlotProps & { children: ReactNode }) {
+  const press = useLongPress(onInspect, onActivate);
+  return (
+    <div
+      className={`squad-slot${hero ? ' filled' : ' empty'}${selected ? ' selected' : ''}${dropTarget ? ' drop-target' : ''}${
+        dragOver ? ' drag-over' : ''
+      }${locked ? ' is-pinned' : ''}`}
+      style={hero ? ({ '--plate-color': getTypeColor(hero.types[0]) } as CSSProperties) : undefined}
+      role="button"
+      tabIndex={0}
+      draggable={!!hero}
+      aria-label={hero && entry ? `${hero.name}, level ${entry.level} — tap to move, hold to review` : 'Empty slot'}
+      // The cell had `role="button"` and a tab stop and answered neither key. Enter and Space now
+      // do what a tap does; the sheet is keyboard-reachable through the roster button in the corner.
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onActivate();
+        }
+      }}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+      {...press}
+    >
+      {children}
+    </div>
+  );
 }
 
 /** Bring-6-pick-4 squad selection before every fight node (docs/combat.md "Bring-6-pick-4 sideboard"). Drag, or tap-then-tap, swaps two cells. */
@@ -225,16 +301,16 @@ export function SquadSelectScreen({
                     const isDragOver = dragOverSlot === index;
                     const isLocked = isLockedSlot(index);
                     return (
-                      <div
+                      <SquadSlot
                         key={index}
-                        className={`squad-slot${hero ? ' filled' : ' empty'}${isSelected ? ' selected' : ''}${
-                          isDropTarget ? ' drop-target' : ''
-                        }${isDragOver ? ' drag-over' : ''}${isLocked ? ' is-pinned' : ''}`}
-                        style={hero ? ({ '--plate-color': getTypeColor(hero.types[0]) } as CSSProperties) : undefined}
-                        role="button"
-                        tabIndex={0}
-                        draggable={!!hero}
-                        onClick={() => handleSlotClick(index)}
+                        hero={hero}
+                        entry={entry}
+                        selected={isSelected}
+                        dropTarget={isDropTarget}
+                        dragOver={isDragOver}
+                        locked={isLocked}
+                        onActivate={() => handleSlotClick(index)}
+                        onInspect={hero && entry ? () => setInspecting({ hero, entry, enemy: false }) : undefined}
                         onDragStart={(e: DragEvent) => {
                           if (!hero) return;
                           e.dataTransfer.setData(DRAG_KEY, String(index));
@@ -263,16 +339,6 @@ export function SquadSelectScreen({
                                 <HubGlyph name="lock" />
                               </span>
                             )}
-                            <button
-                              className="info-button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setInspecting({ hero, entry, enemy: false });
-                              }}
-                              aria-label={`View ${hero.name} details`}
-                            >
-                              i
-                            </button>
                             <HeroPortrait heroId={hero.id} className="roster-card-portrait" />
                             <div className="roster-card-name">
                               {hero.name} <span className="hint">Lv {entry.level}</span>
@@ -286,7 +352,7 @@ export function SquadSelectScreen({
                         ) : (
                           <div className="squad-slot-empty-label">Empty</div>
                         )}
-                      </div>
+                      </SquadSlot>
                     );
                   })}
                 </div>
