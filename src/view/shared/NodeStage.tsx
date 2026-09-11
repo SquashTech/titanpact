@@ -54,7 +54,6 @@ const NODE_MOTE_DENSITY = 0.5;
  * the node's `--node-rgb` keeps the wash and header, the location owns ground, horizon and weather.
  */
 export function NodeSky({ motes = MOTE_COUNT }: NodeSkyProps) {
-  const field = useMotes(motes);
   const location = useAmbientLocation();
 
   return (
@@ -63,24 +62,32 @@ export function NodeSky({ motes = MOTE_COUNT }: NodeSkyProps) {
       {location ? (
         <LocationAmbience location={location} density={NODE_MOTE_DENSITY} className="node-location" />
       ) : (
-        <div className="node-motes">
-          {field.map((m, i) => (
-            <span
-              key={i}
-              className="node-mote"
-              style={
-                {
-                  left: `${m.left}%`,
-                  width: `${m.size}px`,
-                  height: `${m.size}px`,
-                  animationDelay: `${m.delay}s`,
-                  animationDuration: `${m.duration}s`,
-                } as CSSProperties
-              }
-            />
-          ))}
-        </div>
+        <NodeMotes count={motes} />
       )}
+    </div>
+  );
+}
+
+/** The generic motes on their own, for a surface that has a scene behind it already and wants only the air (the fight result). */
+export function NodeMotes({ count = MOTE_COUNT }: { count?: number }) {
+  const field = useMotes(count);
+  return (
+    <div className="node-motes" aria-hidden="true">
+      {field.map((m, i) => (
+        <span
+          key={i}
+          className="node-mote"
+          style={
+            {
+              left: `${m.left}%`,
+              width: `${m.size}px`,
+              height: `${m.size}px`,
+              animationDelay: `${m.delay}s`,
+              animationDuration: `${m.duration}s`,
+            } as CSSProperties
+          }
+        />
+      ))}
     </div>
   );
 }

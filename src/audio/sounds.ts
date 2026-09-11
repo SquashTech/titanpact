@@ -20,6 +20,8 @@ export type SfxId =
   | 'ui.commit'
   | 'ui.launch'
   // Run
+  | 'victory'
+  | 'defeat'
   | 'levelUp'
   | 'pact.bind'
   | 'equip'
@@ -193,6 +195,42 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'sine', freq: 441, gain: 0.2, attack: 0.006, decay: 0.85, delay: 0.1 },
       { wave: 'sine', freq: 882, detune: 16, gain: 0.09, attack: 0.01, decay: 0.8, delay: 0.11 },
       { wave: 'noise', gain: 0.2, attack: 0.16, decay: 0.55, filter: { type: 'bandpass', freq: 400, freqEnd: 4200, q: 0.8 } },
+    ],
+  },
+
+  /**
+   * The fight won (view/combat/FightResultOverlay.tsx): a struck drum under a rising triad in G, landing a fifth above where
+   * `levelUp` lands so the two fanfares, which play a screen apart, are not the same tune twice. Once a fight, so it may have
+   * a body; no jitter, same reasoning as levelUp.
+   */
+  victory: {
+    gain: 0.46,
+    jitter: 0.003,
+    voices: [
+      // The drum.
+      { wave: 'noise', gain: 0.3, attack: 0.002, decay: 0.22, filter: { type: 'lowpass', freq: 1600, freqEnd: 180, q: 1 } },
+      { wave: 'sine', freq: 98, freqEnd: 65, gain: 0.4, attack: 0.004, hold: 0.04, decay: 0.42 },
+      // The triad, then the octave.
+      { wave: 'triangle', freq: 392, gain: 0.24, attack: 0.004, hold: 0.03, decay: 0.14, delay: 0.06 },
+      { wave: 'triangle', freq: 494, gain: 0.24, attack: 0.004, hold: 0.03, decay: 0.14, delay: 0.16 },
+      { wave: 'triangle', freq: 587, gain: 0.26, attack: 0.004, hold: 0.03, decay: 0.16, delay: 0.26 },
+      { wave: 'triangle', freq: 784, detune: 9, gain: 0.32, attack: 0.005, hold: 0.12, decay: 0.7, delay: 0.38 },
+      { wave: 'sine', freq: 1568, gain: 0.12, attack: 0.005, decay: 0.8, delay: 0.39 },
+      { wave: 'sine', freq: 196, gain: 0.32, attack: 0.008, hold: 0.1, decay: 0.8, delay: 0.37 },
+      // Shimmer under the held note.
+      { wave: 'noise', gain: 0.1, attack: 0.16, decay: 0.5, delay: 0.3, filter: { type: 'bandpass', freq: 2200, freqEnd: 6000, q: 1.2 } },
+    ],
+  },
+
+  /** The fight lost: the same drum, and one low note falling a minor third with nothing rising over it. */
+  defeat: {
+    gain: 0.42,
+    jitter: 0.003,
+    voices: [
+      { wave: 'noise', gain: 0.3, attack: 0.004, decay: 0.4, filter: { type: 'lowpass', freq: 900, freqEnd: 120, q: 1 } },
+      { wave: 'sine', freq: 73, freqEnd: 49, gain: 0.44, attack: 0.01, hold: 0.1, decay: 0.9 },
+      { wave: 'triangle', freq: 220, freqEnd: 185, detune: 12, gain: 0.22, attack: 0.05, hold: 0.2, decay: 1.1, delay: 0.08 },
+      { wave: 'sine', freq: 330, freqEnd: 277, gain: 0.1, attack: 0.08, decay: 1.0, delay: 0.12 },
     ],
   },
 

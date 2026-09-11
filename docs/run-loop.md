@@ -439,7 +439,10 @@ A won encounter resolves through up to five gates before the map comes back
 
 **The levels themselves are not a gate.** They are granted in the same `RunState` transform as
 the gold, before any screen opens (`grantEncounterLevels`), and reported on the victory overlay
-as "+2 Levels" rather than asked about. The item drop is banked the same way, with the map's
+rather than asked about — since 2026-09-11 as the whole roster standing in a row with a bar
+under each that fills once per level and ticks the badge, reserve heroes included, so the
+stat cells on the report screen that follows read as this fight's consequence
+(`FightResultOverlay`, `docs/visual-language.md` twenty-ninth pass). The item drop is banked the same way, with the map's
 Roster badge saying so (`docs/progression.md` "The bag notification" and "The uncapped bag").
 
 Recruiting comes before the Evolution gate on purpose: the gear this same win paid out can then

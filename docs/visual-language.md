@@ -3147,6 +3147,55 @@ Rendered through the throwaway harness at 394×780: six heroes with two evolved,
 a four-hero roster, and the cold state. The chains converge on a point above the title in every
 case, and the CTA stays on the bottom edge with the vessel's plinth running off the frame under it.
 
+## Twenty-ninth pass — the fight ends on a curtain, not a card (2026-09-11)
+
+*Per user direction: "significantly improve the victory overlay … more sleek and professional …
+add some pizazz to the rewards … show the player that their heroes are leveling up."*
+
+### What was wrong
+
+The fight ended on a 340px card: "Victory!" in green, three pill chips (`+40g`, `⭐ +1 Level`,
+`+1 Scroll`), the drop as a boxed spotlight, a Continue. Everything arrived at once, so nothing
+was an event; and the one thing the card could not say was *why* the next screen — the level-up
+report — was about to hand every hero a row of stat rolls. `+1 Level` in a chip is a number; it
+is not a hero levelling.
+
+### What replaced it
+
+**`FightResultOverlay`** (`src/view/combat/`), the node-screen shape laid over the dimmed field:
+banner, content, one chunky CTA on the bottom edge, so the chain a win opens (this → Level Up →
+Banner → …) is one kind of screen from its first beat. It is a *sequence*, each beat a timed
+class flip, and a tap anywhere lands all of them.
+
+- **The strike.** A gilded "Victory!" — a top-lit gold gradient clipped to the letterforms —
+  dropped in with the level-up report's flash, rays and sheen, in gold where the report's is
+  white; one fact under it in the horizon register ("Won in 6 rounds"). A loss strikes "Defeat"
+  in red and goes straight to the CTA. Each has its own fanfare (`victory`, `defeat`).
+- **The roster, with bars.** Every roster hero stands in a row — reserve heroes tagged and a step
+  dimmer, but in the same rank, because that IS the rule — with a level badge and a bar under
+  each. The bar is a CSS animation iterated once a level (`--fills`), with a 45ms wave down the
+  row; each iteration boundary is the frame the badge ticks (`onAnimationIteration`) and the
+  figure blooms. One `xp.orb` a level for the whole roster, not one a hero. A capped hero shows
+  MAX on a grey full bar. "Whole roster +1 Level" pops once the bars have shown it.
+- **The ledger.** Chromeless rows with hairlines: gold counting up with coin strikes from the
+  moment its row lands (and the purse it lands in), the Scroll, and the drop as the *chit* it will
+  be on the roster — `ItemPiece` plus `ItemEffectChips`, rarity as a word on the right — the one
+  box on the screen, because it is the one thing that opens (`ItemSummaryPopup`).
+- **The CTA** arrives grey and takes the gold when the sequence has played or been tapped
+  through. Never disabled: a press at any point resolves the fight.
+
+`RunSummaryScreen` still wears the old `.result-*` card; the chips and the quiet spotlight copy
+were deleted with the panel, and the `.equip-spotlight` card block — which nothing had rendered
+since the item gate went — went with them. `NodeSky`'s motes came out as `NodeMotes` so the
+overlay could have the air without the wash.
+
+### Verification
+
+Rendered through the throwaway harness at 394×780: six heroes with two reserve (+1), four with
+one at the cap (+2, frames at 900/1250/1900ms showing the wave, the tick to Lv 2 and the bloom),
+the tutorial's two, a loss, and a Quick Battle with nothing to pay. The Browser pane's tab was
+hidden throughout (`document.hidden`, timeline at 0) so every frame came from headless Edge.
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.

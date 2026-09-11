@@ -19,6 +19,8 @@ const UI_IDS: SfxId[] = [
   'ui.target',
   'ui.denied',
   'ui.page',
+  'victory',
+  'defeat',
   'levelUp',
   'pact.bind',
   'equip',

@@ -51,6 +51,7 @@ import { CombatantCard, type Popup } from './CombatantCard';
 import { HeroDetailOverlay } from './HeroDetailOverlay';
 import { SwitchInPanel, type SwitchOption } from './SwitchInPanel';
 import { FieldEffectDetailOverlay } from './FieldEffectDetailOverlay';
+import { FightResultOverlay } from './FightResultOverlay';
 import { MoveDetailOverlay, formatMult, multClass } from './MoveDetailOverlay';
 import { formatEvents, type LogLine } from './formatEvent';
 import { applyEventToState } from './applyEventToState';
@@ -66,11 +67,9 @@ import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { AudioSettings } from '../shared/AudioSettings';
 import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
-import { ResourceGlyph } from '../shared/RunGlyph';
+import { STAT_LABELS } from '../shared/StatBars';
 import { HubGlyph } from '../shared/nodeIcons';
 import { SectionGlyph } from '../shared/sectionIcons';
-import { EquipmentEffectList, EquipmentIcon, RARITY_COLOR_VARS, RARITY_LABELS, fmtGrant } from '../shared/EquipmentBox';
 import { useAmbientLocation } from '../shared/LocationContext';
 import { LocationAmbience } from '../shared/LocationSky';
 import { LocationHorizon } from '../shared/locationArt';
@@ -1723,74 +1722,21 @@ export function FightScreen({
           );
         })()}
 
-      {winner &&
-        !resolving &&
-        (() => {
-          const equipGrants = equipmentReward ? (Object.entries(equipmentReward.statGrants) as [StatKey, number][]) : [];
-
-          return (
-            <div className={`result-overlay ${winner === PLAYER_SIDE ? 'result-win' : 'result-loss'}`}>
-              <div className="result-panel">
-                <div className="result-glow" aria-hidden="true" />
-                <h2>{winner === PLAYER_SIDE ? 'Victory!' : 'Defeat'}</h2>
-
-                {winner === PLAYER_SIDE && (goldReward > 0 || levelsGained > 0 || scrollReward > 0) && (
-                  <div className="result-rewards">
-                    {goldReward > 0 && (
-                      <div className="result-reward-chip">
-                        <ResourceGlyph kind="gold" /> <strong>+{goldReward}</strong>g
-                      </div>
-                    )}
-                    {levelsGained > 0 && (
-                      <div className="result-reward-chip">
-                        ⭐ <strong>+{levelsGained}</strong> {levelsGained === 1 ? 'Level' : 'Levels'}
-                      </div>
-                    )}
-                    {scrollReward > 0 && (
-                      <div className="result-reward-chip">
-                        <ResourceGlyph kind="scroll" />
-                        <strong>+{scrollReward}</strong> {scrollReward === 1 ? 'Scroll' : 'Scrolls'}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {winner === PLAYER_SIDE && equipmentReward && (
-                  <div
-                    className="equip-spotlight result-equip-spotlight"
-                    style={{ '--rarity-color': RARITY_COLOR_VARS[equipmentReward.rarity] } as CSSProperties}
-                  >
-                    <div className="equip-spotlight-header">
-                      <EquipmentIcon item={equipmentReward} className="equip-spotlight-icon" />
-                      <div>
-                        <div className="equip-spotlight-name">{equipmentReward.name}</div>
-                        <div className="equip-spotlight-rarity">
-                          {RARITY_LABELS[equipmentReward.rarity]}
-                        </div>
-                      </div>
-                    </div>
-                    {equipGrants.length > 0 && (
-                      <div className="detail-modifier-list">
-                        {equipGrants
-                          .filter(([, amount]) => amount)
-                          .map(([stat, amount]) => (
-                            <span key={stat} className={`detail-modifier-chip ${amount > 0 ? 'stat-buff' : 'stat-debuff'}`}>
-                              <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} {fmtGrant(amount)}
-                            </span>
-                          ))}
-                      </div>
-                    )}
-                    <EquipmentEffectList item={equipmentReward} />
-                  </div>
-                )}
-
-                <div className="result-buttons">
-                  <button onClick={() => onResolved(winner === PLAYER_SIDE ? 'win' : 'loss', combat)}>Continue</button>
-                </div>
-              </div>
-            </div>
-          );
-        })()}
+      {winner && !resolving && (
+        <FightResultOverlay
+          outcome={winner === PLAYER_SIDE ? 'win' : 'loss'}
+          /* resolveRound advances the counter past the round it just played. */
+          roundsFought={Math.max(1, combat.round - 1)}
+          roster={playerRun.roster}
+          fieldedIds={new Set([...playerSquad.activeIds, ...playerSquad.benchIds].filter((id): id is string => id !== null))}
+          levelsGained={levelsGained}
+          goldFrom={playerRun.gold}
+          goldReward={goldReward}
+          scrollReward={scrollReward}
+          equipmentReward={equipmentReward}
+          onContinue={() => onResolved(winner === PLAYER_SIDE ? 'win' : 'loss', combat)}
+        />
+      )}
 
       {tutorialCue && (
         <TutorialOverlay
