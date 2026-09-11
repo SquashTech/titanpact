@@ -167,13 +167,13 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'map:mentorReward',
     topic: 'Mentor',
     lines: [
-      'A Mentor. One of us may learn any technique from the early part of our repertoire — chosen, not chanced.',
+      'A Mentor. They can teach any one of us a powerful move — which move is theirs to choose, not ours.',
       'We will find more of these Mentors on the road ahead, until the road gets too hard for them to help.',
     ],
   },
   {
     id: 'mentorNode',
-    lines: ['Choose which of us, then the technique.'],
+    lines: ['Choose which of us learns.'],
   },
 
   // --- Row 3: the Skirmish ---

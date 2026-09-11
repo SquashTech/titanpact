@@ -75,7 +75,7 @@ const NODE_DESCRIPTIONS: Record<MapNodeType, string> = {
   currencyReward: '15–30g',
   loneScrollReward: '1 Mastery Scroll',
   forgeReward: '+1 item slot to one hero, for the rest of the run',
-  mentorReward: 'One hero learns ANY Early or Mid move from its Mastery pool — acts 1 to 3',
+  mentorReward: 'The Mentor teaches one hero a powerful move — a Mid move, rolled — acts 1 to 3',
   tutorReward: 'One hero learns ANY move from its Mastery pool — acts 4 and 5 only',
   event: 'Hidden until you arrive: a move, a passive, gear or a trade',
   muster: 'Fill the roster to six, then spend everything left',

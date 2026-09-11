@@ -6,7 +6,7 @@ import { progressionTable } from '../src/data/progression';
 import { createRosterEntry } from '../src/run/state';
 import { MAP_NODE_TYPES, generateMap } from '../src/run/map';
 import { MOVE_TIER_RANK } from '../src/run/progression';
-import { tutorMovePool, tutorTeachableCount } from '../src/run/tutor';
+import { mentorMovePool, tutorMovePool, tutorTeachableCount } from '../src/run/tutor';
 
 const entry = (heroId: string) => createRosterEntry(heroId, heroId, heroes[heroId].moveIds);
 
@@ -132,4 +132,28 @@ test('tutor: over many seeds the Tutor lands in both of an act\'s reward rows an
   // Acts 4 and 5 index their reward rows differently (the Mentor row shifts act 4's second one).
   assert.ok(rows.size >= 3, `Tutor rows seen: ${[...rows]}`);
   assert.deepStrictEqual([...cols].sort(), [0, 1, 2]);
+});
+
+// --- The Mentor (docs/growth-overhaul.md §11): one Mid move, rolled, un-rank-gated ---
+
+test('mentor: the pool is the hero\'s Mid tier alone, whatever its rank, minus what it holds or was offered', () => {
+  const entry = createRosterEntry('ironWarden', 'ironWarden', heroes.ironWarden.moveIds);
+  const pool = mentorMovePool(progressionTable, moves, entry);
+  assert.ok(pool.length > 0, 'a rank-1 hero still gets a Mid move — the Mentor is un-rank-gated');
+  for (const id of pool) assert.strictEqual(moves[id].tier, 'mid', `${id} is not Mid`);
+  assert.ok(pool.includes('rendArmor'));
+  assert.ok(!pool.includes('ironFist') && !pool.includes('juggernaut'), 'no Early, no Late');
+
+  // A rolled offer is spent by being made, so a Mid move a Scroll already burned stays burned.
+  const burned = { ...entry, offeredMoveIds: ['rendArmor'] };
+  assert.ok(!mentorMovePool(progressionTable, moves, burned).includes('rendArmor'));
+  const held = { ...entry, unlockedMoveIds: [...entry.unlockedMoveIds, 'rendArmor'] };
+  assert.ok(!mentorMovePool(progressionTable, moves, held).includes('rendArmor'));
+});
+
+test('mentor: every hero has a Mid move for the Mentor to roll from a fresh kit', () => {
+  for (const hero of Object.values(heroes)) {
+    const entry = createRosterEntry(hero.id, hero.id, hero.moveIds);
+    assert.ok(mentorMovePool(progressionTable, moves, entry).length > 0, `${hero.id} has nothing for the Mentor`);
+  }
 });

@@ -2,7 +2,7 @@
 // When this file and App.tsx disagree, App.tsx is right and this is a bug —
 // the numbers are only worth reading while the two stay in step.
 
-import type { MoveTier, StatKey } from '../../src/engine/content';
+import type { StatKey } from '../../src/engine/content';
 import { heroes } from '../../src/data/heroes';
 import { moves } from '../../src/data/moves';
 import { equipment } from '../../src/data/equipment';
@@ -46,6 +46,7 @@ import {
   SCROLL_REWARD_COUNT,
   LONE_SCROLL_COUNT,
   grantMasteryScrolls,
+  recordMoveOffer,
   masteryRank,
   grantOfferedMove,
   itemSlotsFor,
@@ -53,7 +54,7 @@ import {
 } from '../../src/run/progression';
 import { claimContract, claimContractReplacing, deriveContractOffer, isRecruitable, pickContractOffers, recruitFromGuildHall, recruitFromGuildHallReplacing, freshRosterId, buyContract } from '../../src/run/recruitment';
 import { rollGuildHallOffers, buyEquipment, sellValueFor, EQUIPMENT_PRICE_BY_RARITY } from '../../src/run/shop';
-import { MENTOR_TIER_CEILING, tutorMovePool } from '../../src/run/tutor';
+import { mentorMovePool, tutorMovePool } from '../../src/run/tutor';
 import { grantClass, rollClassOffers } from '../../src/run/classes';
 import { boonMoveCount, pickBoonOffers } from '../../src/run/boons';
 import { applyStatShift, grantEventPassive, rollRunEvent, rollEventMove, statShiftAllowed } from '../../src/run/events';
@@ -550,9 +551,9 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
         .sort((a, b) => policy.powerScore(b) - policy.powerScore(a))[0];
       return target ? grantItemSlot(run, target.rosterId, heroes) : run;
     }
-    // The Mentor (acts 1-3): the Tutor with a Mid ceiling.
+    // The Mentor (acts 1-3): one Mid move ROLLED for the hero whose Mid pool is worth most.
     case 'mentorReward':
-      return resolveTutor(run, MENTOR_TIER_CEILING);
+      return resolveMentor(run, rng);
     case 'tutorReward':
       return resolveTutor(run);
     case 'blacksmith':
@@ -568,15 +569,38 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
 }
 
 /**
+ * The Mentor: a Mid move rolled for one hero (docs/growth-overhaul.md §11). The hero is the one
+ * whose Mid pool is worth most on average — WHO is the player's only decision — and the roll is
+ * the roll. Taken when it beats the worst move held (or there is room), declined otherwise; the
+ * offer burns either way, as a Scroll's does.
+ */
+function resolveMentor(run: RunState, rng: Rng): RunState {
+  let best: { entry: RosterEntry; value: number } | null = null;
+  for (const entry of run.roster) {
+    const pool = mentorMovePool(progressionTable, moves, entry);
+    if (pool.length === 0) continue;
+    const value = pool.reduce((sum, id) => sum + policy.moveValue(id), 0) / pool.length + policy.powerScore(entry) * 0.01;
+    if (!best || value > best.value) best = { entry, value };
+  }
+  if (!best) return run;
+  const pool = mentorMovePool(progressionTable, moves, best.entry);
+  const moveId = pick(rng, pool);
+  const next = recordMoveOffer(run, best.entry.rosterId, [moveId]);
+  if (best.entry.unlockedMoveIds.length < MOVE_CAP) return grantOfferedMove(next, best.entry.rosterId, moveId);
+  const replaceId = policy.replacementTarget(best.entry, moveId);
+  return replaceId ? grantOfferedMove(next, best.entry.rosterId, moveId, replaceId) : next;
+}
+
+/**
  * The Tutor: one hero, then any move off its own level-up pool, un-rolled and un-gated. Not a
  * randomized experiment — WHICH move to teach is a play, and rolling it would measure the pool
  * rather than the node. The hero is the one the pool is worth most to (most moves it does not
  * already hold, strongest as the tiebreak), and the move is the best of them.
  */
-function resolveTutor(run: RunState, ceiling: MoveTier = 'late'): RunState {
+function resolveTutor(run: RunState): RunState {
   let best: { rosterId: string; moveId: string; value: number } | null = null;
   for (const entry of run.roster) {
-    for (const moveId of tutorMovePool(progressionTable, moves, entry, ceiling)) {
+    for (const moveId of tutorMovePool(progressionTable, moves, entry)) {
       if (entry.unlockedMoveIds.includes(moveId)) continue;
       const value = policy.moveValue(moveId) + policy.powerScore(entry) * 0.01;
       if (!best || value > best.value) best = { rosterId: entry.rosterId, moveId, value };

@@ -667,12 +667,19 @@ Two exclusivity rules, without which a Class is a Boon with a hat:
 
 One Class per hero, replace-not-stack, unchanged (`src/run/classes.ts`).
 
-### The Mentor teaches the basics, the Tutor the masterworks
+### The Mentor teaches any hero a powerful move
 
-The Mentor row keeps its seat in **acts 1–3** (`LAST_MENTOR_ACT` = 3) and becomes the Tutor's early
-sibling: pick a hero, then pick **any Early or Mid move** from that hero's own pool — un-rolled,
-un-rank-gated, a declined offer included (`tutorMovePool` with a tier ceiling, `src/run/tutor.ts`).
-The Tutor in acts 4–5 keeps the full pool. That is a vocabulary handoff, not two nodes doing one job.
+The Mentor row keeps its seat in **acts 1–3** (`LAST_MENTOR_ACT` = 3). Pick a hero, and the Mentor
+**rolls one Mid-tier move** from that hero's pool — a Scroll pour with the band fixed at Mid,
+un-rank-gated, ticking nothing (`mentorMovePool`, `src/run/tutor.ts`; `MentorNodeScreen`). The
+rolled offer is spent by being made, exactly as a Scroll's is: declined is burned. "A powerful move"
+is the whole of the flavour, and in Act 1 a Mid move is exactly that.
+
+It was first built as the Tutor's early sibling — a curated pick from the hero's whole Early-and-Mid
+list — and revised the same day (2026-09-11, per user direction): that is a designer's screen, and
+on one of the first nodes a new player meets a twelve-move list is overwhelming rather than
+empowering. The roll keeps the payoff and leaves *who* as the only decision. The Tutor in acts 4–5
+keeps its curated full pool, where the player has the context to use it.
 
 Why an un-rank-gated Mid move in Act 1 does not break "the ceiling sits behind the spend": rank
 progress and the Evolution both live *only* on the Scroll. A Mentor move fills a slot and ticks

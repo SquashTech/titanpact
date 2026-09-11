@@ -218,12 +218,15 @@ don't silently override it.
   STAB is guaranteed and the chart is read at the hero's element. Authored as **role verbs** (a
   redirect, a priority strike, a spread, a heal, a hit-and-switch: the doubles toolkit no type
   slate covers evenly), never nukes.
-- **The Mentor is the Tutor's early sibling** (2026-09-11): acts 1–3 (`LAST_MENTOR_ACT`), pick a
-  hero, then **any Early or Mid** move from its own pool — un-rolled, un-rank-gated
-  (`MENTOR_TIER_CEILING`, `src/run/tutor.ts`; `TutorNodeScreen` with `variant: 'mentor'`). It
-  does not break "the ceiling sits behind the spend" because rank progress and the Evolution
-  both live only on the Scroll — a Mentor move fills a slot and ticks nothing. **Act 4's spliced
-  row is a forced Forge** (`LAST_SPLICED_ACT`, `src/run/map.ts`).
+- **The Mentor "teaches any hero a powerful move"** (2026-09-11, revised same day): acts 1–3
+  (`LAST_MENTOR_ACT`), pick a hero, and **one Mid-tier move is ROLLED** from its pool —
+  un-rank-gated, a Scroll pour with the band fixed at Mid that ticks nothing (`mentorMovePool`,
+  `src/run/tutor.ts`; `MentorNodeScreen`). The rolled offer is spent by being made, as a
+  Scroll's is. It was briefly a curated pick from the hero's Early-and-Mid list, which read as a
+  designer's screen on one of a new player's first nodes; the roll keeps the payoff and leaves
+  WHO as the only decision. It does not break "the ceiling sits behind the spend" because rank
+  progress and the Evolution both live only on the Scroll. **Act 4's spliced row is a forced
+  Forge** (`LAST_SPLICED_ACT`, `src/run/map.ts`).
 - **Evolutions are authored branch points**, each option carrying a **single
   identifiable name** (e.g. Cinder's Explosive / Ironclad / Thunderblaze).
   **All 36 heroes are on the five-clause Evolution framework** as of 2026-09-05 — no

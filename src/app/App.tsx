@@ -23,6 +23,7 @@ import { MapScreen } from '../view/run/MapScreen';
 import { ShopNodeScreen } from '../view/run/ShopNodeScreen';
 import { BoonNodeScreen } from '../view/run/BoonNodeScreen';
 import { TutorNodeScreen } from '../view/run/TutorNodeScreen';
+import { MentorNodeScreen } from '../view/run/MentorNodeScreen';
 import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScreen';
 import { ForgeScreen } from '../view/run/ForgeScreen';
 import { BlacksmithScreen } from '../view/run/BlacksmithScreen';
@@ -167,8 +168,10 @@ type Screen =
   | { kind: 'forge'; nodeId: string }
   | { kind: 'blacksmith'; nodeId: string }
   | { kind: 'boonNode'; nodeId: string }
-  /** The Tutor (acts 4-5) and the Mentor (acts 1-3): the same screen with a tier ceiling. */
-  | { kind: 'tutorNode'; nodeId: string; variant: 'tutor' | 'mentor' }
+  /** The Mentor (acts 1-3): pick a hero, and one Mid move is rolled for it. */
+  | { kind: 'mentorNode'; nodeId: string }
+  /** The Tutor (acts 4-5): pick a hero, then ANY move off its own pool. */
+  | { kind: 'tutorNode'; nodeId: string }
   /** Which event this node is gets rolled ONCE at node-select time — the screen re-renders on every onRunChange. */
   | { kind: 'event'; nodeId: string; eventId: string }
   /** What the fight just did to the roster. First in the post-fight chain — it is the fight's own consequence. */
@@ -380,8 +383,8 @@ function tutorialBeatKeyFor(screen: Screen, run: RunState): TutorialBeatKey | nu
       return 'crucible';
     case 'reward':
       return rewardBeatKey(screen.nodeType);
-    case 'tutorNode':
-      return screen.variant === 'mentor' ? 'mentorNode' : null;
+    case 'mentorNode':
+      return 'mentorNode';
     case 'recruit':
       return 'recruit';
     case 'shop':
@@ -656,11 +659,11 @@ export function App() {
     } else if (node.type === 'blacksmith') {
       setScreen({ kind: 'blacksmith', nodeId });
     } else if (node.type === 'mentorReward') {
-      setScreen({ kind: 'tutorNode', nodeId, variant: 'mentor' });
+      setScreen({ kind: 'mentorNode', nodeId });
     } else if (node.type === 'passiveReward') {
       setScreen({ kind: 'boonNode', nodeId });
     } else if (node.type === 'tutorReward') {
-      setScreen({ kind: 'tutorNode', nodeId, variant: 'tutor' });
+      setScreen({ kind: 'tutorNode', nodeId });
     } else if (node.type === 'event') {
       const rolled = rollRunEvent(runEvents, playerRun.actNumber, location.id);
       // Nothing eligible skips the node rather than stranding the player on an empty screen.
@@ -1158,7 +1161,11 @@ export function App() {
       )}
 
       {screen.kind === 'tutorNode' && (
-        <TutorNodeScreen run={playerRun} onRunChange={setPlayerRun} variant={screen.variant} onContinue={() => handleNodeContinue(screen.nodeId)} />
+        <TutorNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+      )}
+
+      {screen.kind === 'mentorNode' && (
+        <MentorNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
       {screen.kind === 'event' &&
