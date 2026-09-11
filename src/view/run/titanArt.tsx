@@ -16,7 +16,7 @@ const VIEW_H = 754;
 const FILL = { width: '100%', height: '100%' } as const;
 
 /** The eyes: where each sits, and the tilt that makes the pair read as looking at you. */
-const EYE_Y = 136;
+const EYE_Y = 114;
 const EYES = [
   { x: 94, tilt: 7 },
   { x: 272, tilt: -7 },
@@ -78,7 +78,7 @@ export function TitanColossus() {
             a brow that lifts at the middle is surprised, and this one is not. */}
         <path
           className="titan-mass"
-          d="M-10 -10 L376 -10 L376 84 C 320 84 240 96 183 116 C 126 96 46 84 -10 84 Z"
+          d="M-10 -10 L376 -10 L376 62 C 320 62 240 74 183 94 C 126 74 46 62 -10 62 Z"
         />
 
         {/* The same eye TitanWakeScreen opens on: a lens that tapers to points at both

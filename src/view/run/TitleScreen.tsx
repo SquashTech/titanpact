@@ -122,9 +122,9 @@ export function TitleScreen({
     window.setTimeout(action, LAUNCH_ANIM_MS);
   }
 
-  /** With a run parked, starting over deletes it — so it arms first, like the in-run Abandon. */
+  /** With a run parked, starting over deletes it — so it asks first. */
   function handleStart() {
-    if (parkedRun && !confirmingNewRun) {
+    if (parkedRun) {
       setConfirmingNewRun(true);
       return;
     }
@@ -220,20 +220,17 @@ export function TitleScreen({
         </>
       )}
 
-      {/* Two entries only. Everything else on this screen is either a lookup
-          tool (Reference) or scaffolding (Dev), and both are pushed to a corner
-          so the choice here reads as "play" or "read". A parked run takes the
-          primary slot: coming back to a run in progress is the likelier intent. */}
+      {/* One entry: play. Everything else on this screen is a lookup tool or
+          scaffolding, and all of it is pushed to the bottom edge so the middle
+          of the screen is the seal and the press that leaves it. A parked run
+          takes the primary slot: coming back to a run in progress is the
+          likelier intent. */}
       <div className="title-buttons">
         {parkedRun ? (
           <>
             <PactButton label="Continue Run" disabled={launching} onClick={() => launch(onContinueRun)} />
-            <button
-              className={`title-newrun-button${confirmingNewRun ? ' armed' : ''}`}
-              onClick={handleStart}
-              disabled={launching}
-            >
-              {confirmingNewRun ? 'Tap again — this discards the parked run' : 'Start a New Run'}
+            <button className="title-newrun-button" onClick={handleStart} disabled={launching}>
+              Start a New Run
             </button>
           </>
         ) : (
@@ -246,18 +243,17 @@ export function TitleScreen({
             A run saved by an earlier version of the game could not be loaded, and has been cleared. Tap to dismiss.
           </button>
         )}
-        <button className="title-compendium-button" onClick={() => setShowCompendium(true)}>
-          <span className="title-compendium-icon" aria-hidden="true">
-            <HubGlyph name="codex" />
-          </span>
-          <span className="title-compendium-text">
-            <span className="title-compendium-label">Compendium</span>
-            <span className="title-compendium-sub">Heroes, moves, relics</span>
-          </span>
-        </button>
       </div>
 
       <div className="title-icon-row">
+        <button
+          className="title-icon-button"
+          onClick={() => setShowCompendium(true)}
+          aria-label="Compendium"
+          title="Compendium"
+        >
+          <HubGlyph name="codex" />
+        </button>
         <button className="title-icon-button" onClick={() => setShowReference(true)} aria-label="Reference" title="Reference">
           <HubGlyph name="reference" />
         </button>
@@ -310,6 +306,35 @@ export function TitleScreen({
 
       {/* Plain <div>, so the delegated sfx listener leaves a dismissing tap silent. */}
       {showDev && <div className="title-dev-backdrop" onClick={() => setShowDev(false)} />}
+
+      {/* Starting over with a run parked deletes it, so it asks — a sheet, not a
+          re-labelled button, because a button that changes what it says under
+          the thumb is the one that gets pressed twice by accident. */}
+      {confirmingNewRun && (
+        <div className="log-overlay" onClick={() => setConfirmingNewRun(false)}>
+          <div className="log-panel title-confirm-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="title-confirm-title">Start a new run?</div>
+            <p className="title-confirm-copy">
+              The parked run is deleted — its roster, gear and progress are gone for good.
+            </p>
+            <button
+              className="options-item options-item-danger"
+              onClick={() => {
+                setConfirmingNewRun(false);
+                launch(onStartRun);
+              }}
+            >
+              <span className="options-item-glyph" aria-hidden="true">
+                <HubGlyph name="discard" />
+              </span>
+              Discard it and start over
+            </button>
+            <button className="options-item" onClick={() => setConfirmingNewRun(false)}>
+              Keep the run
+            </button>
+          </div>
+        </div>
+      )}
 
       {showLocations && <LocationSelectOverlay onPick={onVisitLocation} onClose={() => setShowLocations(false)} />}
       {showCompendium && <CompendiumScreen heroStars={profile.heroStars} onClose={() => setShowCompendium(false)} />}

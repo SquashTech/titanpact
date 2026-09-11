@@ -48,8 +48,8 @@ const CHORDS = WHEEL_TYPES.flatMap((attacker, a) =>
 
 export function TitleTypeWheel() {
   return (
-    // The wrapper carries the fade below the wordmark and does not turn; the dial inside it
-    // does. A mask on the turning element would turn with it.
+    // The wrapper is the fixed box the dial turns inside — the launch's lock spin and the
+    // resting spin both land on the dial, and the wrapper is what positions it.
     <span className="title-seal-wheel" aria-hidden="true">
       <svg className="title-seal-dial" width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
         <defs>
