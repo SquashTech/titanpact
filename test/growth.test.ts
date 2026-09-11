@@ -14,39 +14,80 @@ import {
   GRADE_BUDGET,
   GRADE_CHANCE,
   GRADE_COST,
+  GRADE_ROLL,
   GROWTH_STATS,
-  GROWTH_STEP,
-  GROWTH_STEP_HP,
+  GROWTH_UNIT,
+  GROWTH_UNIT_HP,
   LEVEL_AFTER_ENCOUNTER,
   MAX_LEVEL,
   applyEncounterLevels,
   gradeBudgetOf,
+  gradeExpectedPoints,
+  gradeMaxPoints,
   gradesFor,
   grantEncounterLevels,
   levelAfterEncounters,
   levelUpEntry,
   levelsForEncounter,
+  rollGradePoints,
   rollLevelGrowth,
+  type GrowthGrade,
 } from '../src/run/growth';
 import { EVOLUTION_LEVEL } from '../src/run/progression';
 import { STAT_ORDER, type StatKey } from '../src/engine/content';
 
-/** Every roll succeeds / every roll fails — the two ends, so a grant's SIZE is testable apart from its odds. */
-const ALWAYS = () => 0;
-const NEVER = () => 0.999999;
+const GRADES: readonly GrowthGrade[] = ['F', 'E', 'D', 'C', 'B', 'A', 'S'];
+
+/**
+ * Every roll lands its grade's TOP / every roll misses — the two ends, so a grant's size is
+ * testable apart from its odds. A draw of 0.999999 sits in the last bucket of every row.
+ */
+const ALWAYS = () => 0.999999;
+const NEVER = () => 0;
 
 function soloRun(heroId = 'cinderKnight') {
   return addRosterEntry(createRunState(0), createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
 }
 
 test('growth: the grade table is the authored one, and cost rises with chance', () => {
-  assert.deepStrictEqual(GRADE_CHANCE, { S: 0.95, A: 0.8, B: 0.65, C: 0.5, D: 0.35, E: 0.2, F: 0.05 });
+  assert.deepStrictEqual(GRADE_CHANCE, { S: 0.9, A: 0.82, B: 0.7, C: 0.6, D: 0.48, E: 0.32, F: 0.08 });
   assert.deepStrictEqual(GRADE_COST, { S: 6, A: 5, B: 4, C: 3, D: 2, E: 1, F: 0 });
 
-  const grades = ['F', 'E', 'D', 'C', 'B', 'A', 'S'] as const;
-  for (let i = 1; i < grades.length; i++) {
-    assert.ok(GRADE_CHANCE[grades[i]] > GRADE_CHANCE[grades[i - 1]], `${grades[i]} must beat ${grades[i - 1]}`);
-    assert.ok(GRADE_COST[grades[i]] > GRADE_COST[grades[i - 1]], `${grades[i]} must cost more than ${grades[i - 1]}`);
+  for (let i = 1; i < GRADES.length; i++) {
+    assert.ok(GRADE_CHANCE[GRADES[i]] > GRADE_CHANCE[GRADES[i - 1]], `${GRADES[i]} must beat ${GRADES[i - 1]}`);
+    assert.ok(GRADE_COST[GRADES[i]] > GRADE_COST[GRADES[i - 1]], `${GRADES[i]} must cost more than ${GRADES[i - 1]}`);
+    assert.ok(gradeMaxPoints(GRADES[i]) >= gradeMaxPoints(GRADES[i - 1]), `${GRADES[i]} must reach at least as far as ${GRADES[i - 1]}`);
+  }
+});
+
+test('growth: every grade row is a distribution whose mean is exactly linear in its cost', () => {
+  // The whole reason the roll can carry variance without breaking the grade budget: a row's mean
+  // is what the flat +2 paid (0.1 + 0.3 x cost), so an on-budget line still buys every hero the
+  // same growth and the difficulty curve fitted against the flat roll still holds.
+  for (const grade of GRADES) {
+    const row = GRADE_ROLL[grade];
+    assert.strictEqual(row.reduce((a, b) => a + b, 0), 100, `${grade}'s odds must sum to 100`);
+    assert.ok(row.every((w) => w >= 0), `${grade} carries a negative weight`);
+    assert.ok(row[row.length - 1] > 0, `${grade}'s top bucket must be reachable, or its max is a lie`);
+    const mean = Math.round(gradeExpectedPoints(grade) * 100) / 100;
+    assert.strictEqual(mean, Math.round((0.1 + 0.3 * GRADE_COST[grade]) * 100) / 100, `${grade} pays ${mean} points a level`);
+  }
+  assert.strictEqual(gradeMaxPoints('S'), 4, 'an S can jump +4 (+12 HP) in one level');
+  assert.strictEqual(gradeMaxPoints('F'), 2, 'an F never passes +2');
+});
+
+test('growth: a draw walks the row in order, so the ends of the die are the ends of the row', () => {
+  assert.strictEqual(rollGradePoints('S', NEVER), 0);
+  assert.strictEqual(rollGradePoints('S', ALWAYS), 4);
+  assert.strictEqual(rollGradePoints('F', ALWAYS), 2);
+  // Just past S's 10% miss band lands the +1 bucket; just past that, the +2 one.
+  assert.strictEqual(rollGradePoints('S', () => 0.1), 1);
+  assert.strictEqual(rollGradePoints('S', () => 0.34), 2);
+  // Sampled: the sweep reproduces the authored odds exactly, since each 1% step is one bucket.
+  for (const grade of GRADES) {
+    const counts = [0, 0, 0, 0, 0];
+    for (let i = 0; i < 100; i++) counts[rollGradePoints(grade, () => i / 100)]++;
+    assert.deepStrictEqual(counts.slice(0, GRADE_ROLL[grade].length), [...GRADE_ROLL[grade]], `${grade}'s sweep`);
   }
 });
 
@@ -69,13 +110,14 @@ test('growth: the all-B fallback is exactly on budget, so an un-authored hero is
 
 // The per-hero budget check lives in roster.test.ts, beside the 550 it is the second half of.
 
-test('growth: a success grants +2, or +6 HP, and a failure grants nothing', () => {
+test('growth: a point is +1, or +3 HP, and a miss grants nothing', () => {
   const all = rollLevelGrowth(DEFAULT_GRADES, ALWAYS);
   assert.strictEqual(Object.keys(all).length, GROWTH_STATS.length, 'every stat rolled and every roll landed');
-  assert.strictEqual(all.hp, GROWTH_STEP_HP);
+  const top = gradeMaxPoints('B');
+  assert.strictEqual(all.hp, top * GROWTH_UNIT_HP);
   for (const stat of GROWTH_STATS) {
     if (stat === 'hp') continue;
-    assert.strictEqual(all[stat], GROWTH_STEP, `${stat} should gain the flat step`);
+    assert.strictEqual(all[stat], top * GROWTH_UNIT, `${stat} should gain its grade's top`);
   }
   assert.deepStrictEqual(rollLevelGrowth(DEFAULT_GRADES, NEVER), {}, 'nothing lands when nothing succeeds');
 });
@@ -83,31 +125,32 @@ test('growth: a success grants +2, or +6 HP, and a failure grants nothing', () =
 test('growth: an F stat is nearly never granted and an S stat nearly always is', () => {
   // Sampled against the table rather than mocked: this is the one place the odds themselves are
   // the thing under test, so it runs the real roll with a deterministic sweep.
-  const sweep = (i: number) => (i % 100) / 100;
   let f = 0;
   let s = 0;
   for (let i = 0; i < 100; i++) {
-    if (sweep(i) < GRADE_CHANCE.F) f++;
-    if (sweep(i) < GRADE_CHANCE.S) s++;
+    if (rollGradePoints('F', () => i / 100) > 0) f++;
+    if (rollGradePoints('S', () => i / 100) > 0) s++;
   }
-  assert.strictEqual(f, 5);
-  assert.strictEqual(s, 95);
+  assert.strictEqual(f, Math.round(GRADE_CHANCE.F * 100));
+  assert.strictEqual(s, Math.round(GRADE_CHANCE.S * 100));
+  assert.ok(f <= 10 && s >= 90);
 });
 
 test('growth: levelling accumulates onto growthStatGrants and stops at MAX_LEVEL', () => {
   const entry = soloRun().roster[0];
+  const topHp = gradeMaxPoints(gradesFor(heroes.cinderKnight).hp) * GROWTH_UNIT_HP;
   const one = levelUpEntry(entry, heroes.cinderKnight, 1, ALWAYS);
   assert.strictEqual(one.entry.level, 2);
-  assert.strictEqual(one.entry.growthStatGrants.hp, GROWTH_STEP_HP);
+  assert.strictEqual(one.entry.growthStatGrants.hp, topHp);
 
   const three = levelUpEntry(one.entry, heroes.cinderKnight, 3, ALWAYS);
   assert.strictEqual(three.entry.level, 5);
-  assert.strictEqual(three.entry.growthStatGrants.hp, GROWTH_STEP_HP * 4, 'four levels of HP, accumulated');
-  assert.strictEqual(three.gained.hp, GROWTH_STEP_HP * 3, 'and `gained` is only what THIS call rolled');
+  assert.strictEqual(three.entry.growthStatGrants.hp, topHp * 4, 'four levels of HP, accumulated');
+  assert.strictEqual(three.gained.hp, topHp * 3, 'and `gained` is only what THIS call rolled');
 
   const past = levelUpEntry({ ...entry, level: MAX_LEVEL - 1 }, heroes.cinderKnight, 10, ALWAYS);
   assert.strictEqual(past.entry.level, MAX_LEVEL, 'the cap holds');
-  assert.strictEqual(past.entry.growthStatGrants.hp, GROWTH_STEP_HP, 'and only the one legal level rolled');
+  assert.strictEqual(past.entry.growthStatGrants.hp, topHp, 'and only the one legal level rolled');
 
   const capped = levelUpEntry({ ...entry, level: MAX_LEVEL }, heroes.cinderKnight, 5, ALWAYS);
   assert.deepStrictEqual(capped.gained, {}, 'a hero at the cap gains nothing at all');
@@ -210,23 +253,26 @@ test('growth: a hero that joins late stays behind — the grant is a DELTA, neve
 });
 
 test('growth: an all-B hero grows by roughly half again over a full climb', () => {
-  // The figure §3 sizes the whole system on: ~4.5 successes a level, ~9 BUDGET points a level,
-  // ~264 over 29 levels. Budget points, not raw stat numbers — a success is worth 2 whatever it
-  // lands on, which is the whole reason HP grants 6 and everything else 2 (CLAUDE.md's measured
-  // HP break-even is ≈0.33 a point). Read off the table's own odds, not sampled.
-  const successesPerLevel = GROWTH_STATS.reduce((sum, stat) => sum + GRADE_CHANCE[DEFAULT_GRADES[stat]], 0);
-  assert.ok(successesPerLevel > 4.4 && successesPerLevel < 4.7, `${successesPerLevel} successes a level, expected ~4.5`);
+  // The figure §3 sizes the whole system on: ~9 BUDGET points a level, ~264 over 29 levels.
+  // Budget points, not raw stat numbers — a point is worth 1 whatever it lands on, which is the
+  // whole reason HP grants 3 a point and everything else 1 (CLAUDE.md's measured HP break-even
+  // is ≈0.33 a point). Read off the table's own odds, not sampled.
+  const pointsPerLevel = GROWTH_STATS.reduce((sum, stat) => sum + gradeExpectedPoints(DEFAULT_GRADES[stat]), 0);
+  assert.ok(pointsPerLevel > 9.0 && pointsPerLevel < 9.2, `${pointsPerLevel} points a level, expected ~9.1`);
 
-  const pointsOverClimb = successesPerLevel * GROWTH_STEP * (MAX_LEVEL - 1);
+  const pointsOverClimb = pointsPerLevel * (MAX_LEVEL - 1);
   assert.ok(
     pointsOverClimb > 230 && pointsOverClimb < 300,
     `an all-B climb grants ${pointsOverClimb.toFixed(0)} budget points, expected ~264`
   );
   assert.ok(pointsOverClimb > 90, 'below ~90 the whole arc is invisible and the underwhelm returns');
 
-  // And in raw numbers, which is what a stat line actually shows: HP triples the step it lands on.
+  // And in raw numbers, which is what a stat line actually shows: HP triples the point it lands on.
   const rawOverClimb =
-    GROWTH_STATS.reduce((sum, stat) => sum + GRADE_CHANCE[DEFAULT_GRADES[stat]] * (stat === 'hp' ? GROWTH_STEP_HP : GROWTH_STEP), 0) *
+    GROWTH_STATS.reduce(
+      (sum, stat) => sum + gradeExpectedPoints(DEFAULT_GRADES[stat]) * (stat === 'hp' ? GROWTH_UNIT_HP : GROWTH_UNIT),
+      0
+    ) *
     (MAX_LEVEL - 1);
   assert.ok(rawOverClimb > pointsOverClimb, 'HP grants 3x the raw number for the same budget worth');
 });

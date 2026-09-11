@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { overlayHost } from './overlayHost';
+import { canvasPoint, overlayHost } from './overlayHost';
 
 /**
  * Picking a piece up and carrying it, on a phone.
@@ -29,9 +29,10 @@ export interface GearDragState {
   fromKey: string;
   /** The slot key currently under the finger, or null over dead ground. */
   overKey: string | null;
+  /** Where the finger is, in CANVAS px — the piece is drawn inside the scaled shell, not the viewport. */
   x: number;
   y: number;
-  /** Half the source box, so the carried piece sits centred on the finger at the size it left at. */
+  /** The source box's side, in canvas px, so the carried piece leaves at the size it sat at. */
   size: number;
 }
 
@@ -78,13 +79,15 @@ export function useGearDrag({ render, canDrop, onDrop, onLift }: Options): GearD
       if (armed && !dragRef.current) {
         if (Math.hypot(e.clientX - armed.x, e.clientY - armed.y) < DRAG_START_PX) return;
         onLift?.(armed.key);
-        setDrag({ fromKey: armed.key, overKey: slotKeyAt(e.clientX, e.clientY), x: e.clientX, y: e.clientY, size: armed.size });
+        const at = canvasPoint(e.clientX, e.clientY);
+        setDrag({ fromKey: armed.key, overKey: slotKeyAt(e.clientX, e.clientY), x: at.x, y: at.y, size: armed.size });
         return;
       }
       if (!dragRef.current) return;
       e.preventDefault();
       const overKey = slotKeyAt(e.clientX, e.clientY);
-      setDrag((d) => (d ? { ...d, overKey, x: e.clientX, y: e.clientY } : d));
+      const at = canvasPoint(e.clientX, e.clientY);
+      setDrag((d) => (d ? { ...d, overKey, x: at.x, y: at.y } : d));
     }
     function up(e: PointerEvent) {
       const current = dragRef.current;
@@ -110,8 +113,10 @@ export function useGearDrag({ render, canDrop, onDrop, onLift }: Options): GearD
     return {
       onPointerDown: (e: ReactPointerEvent) => {
         if (e.button !== 0 && e.pointerType === 'mouse') return;
+        // The box measures in viewport px; the carry is drawn in canvas px, so it comes off the scale.
         const box = (e.currentTarget as HTMLElement).getBoundingClientRect();
-        arm.current = { key, x: e.clientX, y: e.clientY, size: Math.max(box.width, box.height), pointerId: e.pointerId };
+        const { scale } = canvasPoint(e.clientX, e.clientY);
+        arm.current = { key, x: e.clientX, y: e.clientY, size: Math.max(box.width, box.height) / scale, pointerId: e.pointerId };
       },
     };
   }, []);

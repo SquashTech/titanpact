@@ -67,8 +67,8 @@ don't silently override it.
   judged in playtest, and the walls are what to watch (`docs/progression.md` "Pricing HP").
 - **Stat modifiers are flat additive integers, multiples of 5 or 10.** No % stat mods.
   **Automatic stat growth from levelling is the one systemic exemption** (2026-09-10, Growth
-  Overhaul phase 3): a growth roll grants **+2**, or **+6 HP**, neither of which is a multiple
-  of 5. The rule was written to keep authored grants legible, and a roll nobody authors per-hero
+  Overhaul phase 3): a growth roll grants **+1 to +4**, or **+3 to +12 HP**, none of which is a
+  multiple of 5. The rule was written to keep authored grants legible, and a roll nobody authors per-hero
   is not that kind of grant — the legibility lives in the GRADE instead (`src/run/growth.ts`).
   A further exemption
   (2026-08-30): a **derived** grant, whose amount is read off live state rather than
@@ -118,8 +118,13 @@ don't silently override it.
   whole roster, benched included, and gives **every** growth stat a cell whether or not it rolled,
   because the misses are what make the hits read as a roll against a grade. One button, no choice.
 - **Each level rolls EVERY stat independently against that hero's growth grade for it.**
-  S 95% / A 80% / B 65% / C 50% / D 35% / E 20% / F 5%; a success grants **+2**, or **+6 HP**
-  (CLAUDE.md's own measured HP break-even is ≈0.33 a point, so 6 HP IS 2 points' worth). Grades
+  A grade is a **distribution over points, not a coin** (`GRADE_ROLL`, 2026-09-10, per user
+  direction — the flat "+2 or nothing" it replaced read as a schedule): a level lands **+0 to
+  +4 points** on a stat, an S rarely missing (10%) and reaching +4, an F almost always missing
+  (92%) and never passing +2. **A point is +1, or +3 HP** (CLAUDE.md's own measured HP
+  break-even is ≈0.33 a point, so 3 HP IS 1 point's worth). **Every row's mean is exactly
+  `0.1 + 0.3 × cost`** — what the flat roll paid — so the budget below and the phase-6
+  difficulty re-fit both still hold; only the shape changed. Grades
   cover the **seven stats the 550 budget covers** — MP Regen excluded, as from every other
   per-hero grant. **Every hero's grades sum to exactly `GRADE_BUDGET` = 28** (an average of B):
   a SECOND budget, enforced by test beside the 550 one, because the 550 rule alone stops being
@@ -127,8 +132,8 @@ don't silently override it.
   **Base and growth are independent axes and that is the point** — low base + high growth is a
   late bloomer, high base + low growth is front-loaded. **All 36 heroes are authored**
   (2026-09-10); the budget and the no-placeholder rule are pinned in `test/roster.test.ts`,
-  beneath the 550. Because a grade's chance is exactly linear in its cost, an on-budget line
-  buys every hero the same 4.55 successes a level — **a line decides where a hero grows, never
+  beneath the 550. Because a grade's mean is exactly linear in its cost, an on-budget line
+  buys every hero the same 9.1 points a level — **a line decides where a hero grows, never
   how much** — so the two archetypes are placement, not size. Two authoring rules bound them: a
   hero's dump stat stays dumped (E/F, since that is what the 550 charged for), and a stat it
   genuinely swings or defends with never drops below C, which is where a trap pick comes from.

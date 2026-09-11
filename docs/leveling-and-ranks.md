@@ -69,15 +69,28 @@ next win erases. Setting each hero to the curve's level instead would erase it.
 
 ## Growth grades — what a level actually pays
 
-Each level rolls **each stat independently** against that hero's authored grade for it.
+Each level rolls **each stat independently** against that hero's authored grade for it. A grade
+is a **distribution over points** (`GRADE_ROLL`, `src/run/growth.ts`), replacing the flat
+"+2 or nothing" coin on 2026-09-10 (per user direction: a roll with one outcome read as a
+schedule, and a level-up that always says +2 is not a roll the player watches):
 
 | Grade | S | A | B | C | D | E | F |
 |---|---|---|---|---|---|---|---|
-| Chance | 95% | 80% | 65% | 50% | 35% | 20% | 5% |
 | Budget cost | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+| Miss | 10% | 18% | 30% | 40% | 52% | 68% | 92% |
+| +1 | 24% | 30% | 28% | 28% | 30% | 24% | 6% |
+| +2 | 38% | 30% | 28% | 24% | 14% | 8% | 2% |
+| +3 | 22% | 18% | 10% | 8% | 4% | — | — |
+| +4 | 6% | 4% | 4% | — | — | — | — |
+| Mean points | 1.9 | 1.6 | 1.3 | 1.0 | 0.7 | 0.4 | 0.1 |
 
-- **A success grants +2, or +6 HP.** HP is not a special case: `CLAUDE.md`'s own measured
-  break-even is ≈0.33 a point, so 6 HP *is* 2 points' worth of anything else.
+- **A point is +1, or +3 HP.** HP is not a special case: `CLAUDE.md`'s own measured
+  break-even is ≈0.33 a point, so 3 HP *is* 1 point's worth of anything else. An S stat can
+  jump +4 (+12 HP) in one level; an F never passes +2.
+- **Every row's mean is exactly `0.1 + 0.3 × cost`**, the figure the flat roll paid, so the
+  difficulty curve fitted against the flat roll holds and the grade budget below still means
+  what it meant. What the grade decides is BOTH how often a stat grows and how far it can jump —
+  the miss rate is what the hero sheet's legend prints (`GRADE_CHANCE`, derived from the row).
 - Grades cover the **seven stats the 550 budget covers** — MP Regen excluded, exactly as it is
   from every other per-hero grant, and for the same reason.
 - **Every hero's grades sum to exactly `GRADE_BUDGET` = 28** (an average of B). This is a
@@ -86,12 +99,11 @@ Each level rolls **each stat independently** against that hero's authored grade 
   low base with S-grades outruns a high base with F-grades however the 550 is spent. Taking one
   stat to S costs another from B to D, or two from B to C.
 
-That is **4.55 successes a level for every hero**, ~9 budget points a level, **~264 over 29
-levels** — a hero grows by roughly half again. Below ~90 the arc is invisible and the underwhelm
-returns.
+That is **9.1 points a level for every hero**, **~264 over 29 levels** — a hero grows by
+roughly half again. Below ~90 the arc is invisible and the underwhelm returns.
 
-"For every hero" is exact, not approximate: a grade's chance is `0.05 + 0.15 × cost` with no
-rounding, so any line summing to 28 buys the same 4.55. **A grade line is a shape, never a
+"For every hero" is exact, not approximate: a grade's mean is `0.1 + 0.3 × cost` with no
+rounding, so any line summing to 28 buys the same 9.1. **A grade line is a shape, never a
 size** — which is what lets a mismatch be authored without also handing that hero more growth
 than the roster gets.
 
@@ -112,7 +124,7 @@ where the question is what a hero IS rather than what it becomes. Without it the
 archetype would exist in the data and in no decision the player can make.
 
 **The multiple-of-5 rule does not apply to a growth roll.** `CLAUDE.md` locks flat stat modifiers
-to multiples of 5 or 10; +2 and +6 are neither. That rule exists to keep AUTHORED grants legible,
+to multiples of 5 or 10; a roll of +1 to +4 (+3 to +12 HP) is none of them. That rule exists to keep AUTHORED grants legible,
 and a roll nobody authors per-hero is not that kind of grant — the legibility lives in the grade
 instead.
 

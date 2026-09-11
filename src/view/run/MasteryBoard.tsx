@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { heroes } from '../../data/heroes';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
@@ -22,7 +22,7 @@ import { getTypeColor } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
 import { useLongPress } from '../shared/MoveTile';
-import { MoveOfferOverlay } from './MoveOfferOverlay';
+import { MoveLearnedOverlay, MoveOfferOverlay } from './MoveOfferOverlay';
 
 interface Props {
   run: RunState;
@@ -30,12 +30,19 @@ interface Props {
   onInspect: (entry: RosterEntry, hero: HeroDefinition) => void;
 }
 
-/** The offer a spend has raised. The Scroll is already gone; only the move is still a question. */
+/** How long the row drinks the Scroll before the move is put in front of the player (styles.css mastery-pour). */
+const POUR_MS = 760;
+
+/**
+ * What a spend has raised. The Scroll is already gone. Below the cap the move is already
+ * LEARNED and the box only says so; at the cap it is still a question — which of the four goes.
+ */
 interface ScrollOffer {
   rosterId: string;
   moveId: string;
   /** Read off the PRE-spend entry, so the line can say what the spend just did. */
   rankedUp: boolean;
+  learned: boolean;
 }
 
 /**
@@ -85,30 +92,51 @@ function RankPips({ spent }: { spent: number }) {
  */
 export function MasteryBoard({ run, onRunChange, onInspect }: Props) {
   const [offer, setOffer] = useState<ScrollOffer | null>(null);
+  /** The row mid-pour. Nothing else on the board takes a tap until it has finished drinking. */
+  const [pouring, setPouring] = useState<string | null>(null);
+  /** The move that landed on the pouring row, so its chip can arrive rather than appear. */
+  const [landing, setLanding] = useState<{ rosterId: string; moveId: string } | null>(null);
 
   const offerEntry = offer ? (run.roster.find((r) => r.rosterId === offer.rosterId) ?? null) : null;
 
+  useEffect(() => {
+    if (!pouring) return;
+    const timer = window.setTimeout(() => setPouring(null), POUR_MS);
+    return () => window.clearTimeout(timer);
+  }, [pouring]);
+
   function spend(entry: RosterEntry) {
-    if (!canSpendScroll(progressionTable, moves, run, entry)) return;
+    if (pouring || !canSpendScroll(progressionTable, moves, run, entry)) return;
     // Tick first, roll after: the third Scroll into a hero is the one that opens Mid, so the
     // move it offers is already from the band it just unlocked.
-    const spent = spendMasteryScroll(run, entry.rosterId);
-    const ranked = spent.roster.find((r) => r.rosterId === entry.rosterId)!;
+    let next = spendMasteryScroll(run, entry.rosterId);
+    const ranked = next.roster.find((r) => r.rosterId === entry.rosterId)!;
     const rankedUp = masteryRank(ranked) > masteryRank(entry);
     playSfx('scroll.spend', { pitch: rankedUp ? 1.18 : 1 });
+    setPouring(entry.rosterId);
 
     // A dry band below the cap: the Scroll buys the tick and there is no move to put in front of
-    // anyone. No overlay — the row's own pips are the whole of what changed.
+    // anyone. No box — the row's own pips are the whole of what changed.
     const pool = scrollMovePool(progressionTable, moves, entry);
     if (pool.length === 0) {
-      onRunChange(spent);
+      onRunChange(next);
       return;
     }
 
     const moveId = pool[Math.floor(Math.random() * pool.length)];
     // The offer is spent by being MADE — declining still burns it (docs/leveling-and-ranks.md).
-    onRunChange(recordMoveOffer(spent, entry.rosterId, [moveId]));
-    setOffer({ rosterId: entry.rosterId, moveId, rankedUp });
+    next = recordMoveOffer(next, entry.rosterId, [moveId]);
+    // Room in the kit: the move simply lands (2026-09-10, per user direction). "Learn or decline"
+    // was a question with one sane answer, and the chip filling on the row while it pours is the
+    // payoff — the box after only names what it was. At the cap the question is real, and it is
+    // still asked.
+    const learned = entry.unlockedMoveIds.length < MOVE_CAP;
+    if (learned) {
+      next = grantOfferedMove(next, entry.rosterId, moveId);
+      setLanding({ rosterId: entry.rosterId, moveId });
+    }
+    onRunChange(next);
+    window.setTimeout(() => setOffer({ rosterId: entry.rosterId, moveId, rankedUp, learned }), POUR_MS);
   }
 
   function resolve(replaceMoveId: string | null, learn: boolean) {
@@ -128,7 +156,9 @@ export function MasteryBoard({ run, onRunChange, onInspect }: Props) {
               hero={hero}
               entry={entry}
               rank={masteryRank(entry)}
-              canSpend={canSpendScroll(progressionTable, moves, run, entry)}
+              canSpend={!pouring && canSpendScroll(progressionTable, moves, run, entry)}
+              pouring={pouring === entry.rosterId}
+              landingMoveId={landing?.rosterId === entry.rosterId ? landing.moveId : null}
               note={poolNote(entry)}
               finished={isFinished(entry)}
               onSpend={() => spend(entry)}
@@ -139,19 +169,29 @@ export function MasteryBoard({ run, onRunChange, onInspect }: Props) {
       </div>
 
       {offer && offerEntry && (
-        <MoveOfferOverlay
-          run={run}
-          entry={offerEntry}
-          moveId={offer.moveId}
-          eyebrow={
-            offer.rankedUp
-              ? `Rank ${masteryRank(offerEntry)} — a deeper band opens`
-              : `Rank ${masteryRank(offerEntry)}${scrollsToNextRank(offerEntry) > 0 ? ` — ${scrollsToNextRank(offerEntry)} to the next` : ''}`
-          }
-          onResolve={resolve}
-        />
+        <ScrollOfferBox run={run} entry={offerEntry} offer={offer} onResolve={resolve} onClose={() => setOffer(null)} />
       )}
     </div>
+  );
+}
+
+interface OfferBoxProps {
+  run: RunState;
+  entry: RosterEntry;
+  offer: ScrollOffer;
+  onResolve: (replaceMoveId: string | null, learn: boolean) => void;
+  onClose: () => void;
+}
+
+/** The box a pour ends in: a receipt below the cap, the replace question at it. */
+function ScrollOfferBox({ run, entry, offer, onResolve, onClose }: OfferBoxProps) {
+  const rank = masteryRank(entry);
+  const toNext = scrollsToNextRank(entry);
+  const eyebrow = offer.rankedUp ? `Rank ${rank} — a deeper band opens` : `Rank ${rank}${toNext > 0 ? ` — ${toNext} to the next` : ''}`;
+  return offer.learned ? (
+    <MoveLearnedOverlay run={run} entry={entry} moveId={offer.moveId} eyebrow={eyebrow} onClose={onClose} />
+  ) : (
+    <MoveOfferOverlay run={run} entry={entry} moveId={offer.moveId} eyebrow={eyebrow} onResolve={onResolve} />
   );
 }
 
@@ -160,6 +200,10 @@ interface RowProps {
   entry: RosterEntry;
   rank: number;
   canSpend: boolean;
+  /** Drinking a Scroll right now (styles.css `.is-pouring`). */
+  pouring: boolean;
+  /** The chip that just filled, if one did — it lands with the pour instead of simply being there. */
+  landingMoveId: string | null;
   /**
    * The ONLY line a row still carries, and only when the band has nothing left in it. Everything
    * else it used to say — how many Scrolls to the next rank, that the kit is full, that the hero
@@ -172,15 +216,16 @@ interface RowProps {
   onInspect: () => void;
 }
 
-function MasteryRow({ hero, entry, rank, canSpend, note, finished, onSpend, onInspect }: RowProps) {
+function MasteryRow({ hero, entry, rank, canSpend, pouring, landingMoveId, note, finished, onSpend, onInspect }: RowProps) {
   const press = useLongPress(onInspect, canSpend ? onSpend : undefined);
 
   return (
     <div
-      className={`mastery-hero-row${canSpend ? ' can-take' : ''}${finished ? ' is-inert' : ''}`}
+      className={`mastery-hero-row${canSpend ? ' can-take' : ''}${finished ? ' is-inert' : ''}${pouring ? ' is-pouring' : ''}`}
       style={{ '--plate-color': getTypeColor(hero.types[0]) } as CSSProperties}
       {...press}
     >
+      {pouring && <span className="mastery-pour" aria-hidden="true" />}
       <div className="mastery-hero-head">
         <HeroPortrait heroId={hero.id} className="mastery-hero-portrait" />
         <span className="mastery-hero-ident">
@@ -205,7 +250,7 @@ function MasteryRow({ hero, entry, rank, canSpend, note, finished, onSpend, onIn
           return (
             <span
               key={i}
-              className={`mastery-move-chip${move ? '' : ' is-empty'}`}
+              className={`mastery-move-chip${move ? '' : ' is-empty'}${move && moveId === landingMoveId ? ' is-landing' : ''}`}
               style={move ? { '--chip-color': getTypeColor(move.type) } as React.CSSProperties : undefined}
             >
               {move ? move.name : ''}

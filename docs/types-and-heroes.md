@@ -274,9 +274,11 @@ costed the moment growth exists — a low base with S grades outruns a high base
 grades however the 550 is spent. Grades cover the same seven stats the total covers;
 MP Regen is outside both.
 
-**A grade line is a shape, never a size.** A grade's success chance is exactly
-`0.05 + 0.15 × cost` — linear, no rounding — so any line summing to 28 buys the same
-**4.55 successes a level** whatever its shape. "This hero grows more" is not an
+**A grade line is a shape, never a size.** A grade's mean roll is exactly
+`0.1 + 0.3 × cost` points — linear, no rounding — so any line summing to 28 buys the same
+**9.1 points a level** whatever its shape (a point is +1, or +3 HP; the roll itself is a
+per-grade distribution, `GRADE_ROLL`, so a level lands +0 to +4 and the grade shapes both
+the odds and the reach). "This hero grows more" is not an
 authorable property. Only *placement* is, and that is the whole Est/Oifey axis:
 
 | | Where the budget goes | Reads as |

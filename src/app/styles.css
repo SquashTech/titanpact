@@ -8153,6 +8153,20 @@ textarea,
   width: auto;
   height: auto;
   aspect-ratio: 1;
+  /* No automatic minimum: the button's height comes from the ratio and from NOTHING inside it.
+     On iOS a filled socket grew taller the moment a piece landed in it (per user report,
+     2026-09-10) — the aspect-ratio box was taking its content's min-height, which Chrome never
+     does. The piece below is lifted out of flow for the same reason: nothing in flow, nothing
+     to grow. */
+  min-height: 0;
+  min-width: 0;
+}
+
+.roster-mgmt-card .equip-slot-row .item-box .item-piece {
+  position: absolute;
+  inset: 3px;
+  width: auto;
+  height: auto;
 }
 
 .roster-mgmt-card .equip-slot-row .item-box-icon {
@@ -13875,6 +13889,24 @@ textarea,
 
 .class-shrine-card .relic-card-icon {
   font-size: 20px;
+}
+
+/* The Class mark, in its lead stat's colour, with that colour's own halo behind it. */
+.class-shrine-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: color-mix(in srgb, currentColor 16%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 40%, transparent);
+}
+
+.class-shrine-card-glyph {
+  width: 18px;
+  height: 18px;
+  filter: drop-shadow(0 0 5px color-mix(in srgb, currentColor 70%, transparent));
 }
 
 .class-shrine-card .relic-card-name {
@@ -22957,10 +22989,86 @@ textarea,
    2026-09-10; a Scroll is now poured the moment it is won, so MasteryScreen mounts this and owns
    everything around it — the header, the count still owed, and the way out. */
 
+/* The header is the count and nothing else (2026-09-10, per user direction): a Scroll glyph
+   and a number. It sits where NodeHeader's title did, at NodeHeader's compact height, so the
+   board underneath lands where it always has. */
+.mastery-header {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding-top: 4px;
+  text-align: center;
+}
+
+.mastery-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  text-shadow: 0 0 14px rgba(var(--node-rgb), 0.45);
+  /* Re-keyed on every pour, so the number that changed is the thing that moves. */
+  animation: mastery-count-tick 0.36s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.mastery-count.is-spent {
+  color: var(--text-dim);
+  text-shadow: none;
+}
+
+.mastery-count-glyph {
+  font-size: 26px;
+  color: var(--scroll-color, #c9a2ff);
+  filter: drop-shadow(0 0 8px rgba(201, 162, 255, 0.55));
+}
+
+.mastery-count.is-spent .mastery-count-glyph {
+  filter: none;
+  opacity: 0.5;
+}
+
+@keyframes mastery-count-tick {
+  from {
+    transform: scale(1.25);
+    filter: brightness(1.8);
+  }
+  to {
+    transform: none;
+    filter: none;
+  }
+}
+
+.mastery-stuck {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* Held in the layout, invisible, until every Scroll is poured — the board is centred in the
+   space above it, and a button arriving would move the whole party by half its height. */
+.mastery-continue.is-hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* The board centres in whatever is left under the count: auto margins, the level-up list's
+   trick, since `justify-content: center` clips the top of an overflowing scroll container. */
+.mastery-screen .screen-scroll {
+  display: flex;
+  flex-direction: column;
+}
+
 .mastery-board {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  margin-block: auto;
   gap: 10px;
 }
 
@@ -22982,7 +23090,113 @@ textarea,
   gap: 6px;
   padding: 7px 11px;
   border-radius: var(--radius-lg);
+  overflow: hidden;
   transition: border-color 140ms ease, background 140ms ease, opacity 140ms ease;
+}
+
+/* --- The pour (`.is-pouring`, POUR_MS) -----------------------------------
+   The row drinks the Scroll before anything is put in front of the player: the plate flares
+   in Scroll purple and settles, a wash runs down it top to bottom, the portrait swells, and
+   the pips light. It is the beat that used to be missing — the tap and the offer were the
+   same frame, so the hero the player chose never got to be the subject of anything.
+   Duration must stay in step with MasteryBoard's POUR_MS. */
+.mastery-hero-row.is-pouring {
+  border-color: var(--scroll-color, #c9a2ff);
+  animation: mastery-row-drink 760ms var(--ease-out);
+}
+
+@keyframes mastery-row-drink {
+  0% {
+    box-shadow: 0 0 0 0 rgba(201, 162, 255, 0);
+    transform: scale(1);
+  }
+  18% {
+    box-shadow: 0 0 0 2px rgba(201, 162, 255, 0.9), 0 0 26px rgba(201, 162, 255, 0.55);
+    transform: scale(1.025);
+  }
+  60% {
+    box-shadow: 0 0 0 1px rgba(201, 162, 255, 0.5), 0 0 14px rgba(201, 162, 255, 0.3);
+    transform: scale(1);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(201, 162, 255, 0);
+    transform: scale(1);
+  }
+}
+
+/* The wash: a band of purple light poured down the row, top to bottom. */
+.mastery-pour {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 20%, rgba(201, 162, 255, 0.38) 45%, rgba(255, 255, 255, 0.2) 50%, rgba(201, 162, 255, 0.25) 55%, transparent 80%);
+  transform: translateY(-100%);
+  animation: mastery-pour-wash 620ms ease-in-out 40ms both;
+  pointer-events: none;
+}
+
+@keyframes mastery-pour-wash {
+  to {
+    transform: translateY(100%);
+  }
+}
+
+.mastery-hero-row.is-pouring .mastery-hero-portrait {
+  animation: mastery-pour-swell 520ms cubic-bezier(0.2, 1.5, 0.4, 1) 80ms;
+}
+
+@keyframes mastery-pour-swell {
+  0% {
+    transform: scale(1);
+    filter: none;
+  }
+  35% {
+    transform: scale(1.3);
+    filter: brightness(1.9) drop-shadow(0 0 10px rgba(201, 162, 255, 0.9));
+  }
+  100% {
+    transform: scale(1);
+    filter: none;
+  }
+}
+
+.mastery-hero-row.is-pouring .mastery-pip.is-filled {
+  animation: mastery-pip-light 520ms ease-out 120ms;
+}
+
+@keyframes mastery-pip-light {
+  30% {
+    box-shadow: 0 0 10px 2px rgba(201, 162, 255, 0.95);
+    transform: scale(1.5);
+  }
+}
+
+/* The chip the pour filled, arriving as the wash passes it rather than being simply there. */
+.mastery-move-chip.is-landing {
+  animation: mastery-chip-land 460ms cubic-bezier(0.2, 1.5, 0.4, 1) 260ms backwards;
+}
+
+@keyframes mastery-chip-land {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+    filter: brightness(2.2);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mastery-hero-row.is-pouring,
+  .mastery-pour,
+  .mastery-hero-row.is-pouring .mastery-hero-portrait,
+  .mastery-hero-row.is-pouring .mastery-pip.is-filled,
+  .mastery-move-chip.is-landing,
+  .mastery-count {
+    animation: none;
+  }
 }
 
 .mastery-hero-row.can-take {
@@ -23163,6 +23377,188 @@ textarea,
    without them the hits read as an authored grant instead of a roll against a
    grade. */
 
+/* The banner: two words and a number, and the burst that carries them in. It replaced a
+   NodeHeader with an eyebrow and a two-sentence readout — the rows below already show the
+   rule the readout was restating, so the header only has to say that it happened. */
+.level-up-banner {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 0 6px;
+  text-align: center;
+}
+
+/* A white-hot bloom that fires once behind the title and is gone in 700ms — the same shape
+   as the Mentor's class-learn burst, in this screen's own colour. */
+.level-up-flash {
+  position: absolute;
+  top: 46%;
+  left: 50%;
+  width: 300px;
+  height: 200px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 255, 255, 0.5), rgba(var(--node-rgb), 0.45) 30%, transparent 68%);
+  animation: level-up-flash-burst 0.7s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes level-up-flash-burst {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.7);
+  }
+}
+
+/* Rays wheeling slowly behind the title, faded at the rim so they read as light off the
+   words rather than as a sticker. A conic gradient of alternating spokes, masked to a disc. */
+.level-up-rays {
+  position: absolute;
+  top: calc(46% - 130px);
+  left: calc(50% - 130px);
+  width: 260px;
+  height: 260px;
+  background: repeating-conic-gradient(from 0deg, rgba(var(--node-rgb), 0.2) 0deg 9deg, transparent 9deg 24deg);
+  -webkit-mask: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.55) 28%, transparent 52%);
+  mask: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.55) 28%, transparent 52%);
+  animation: level-up-rays-in 0.9s ease-out both, level-up-rays-spin 24s linear infinite;
+  pointer-events: none;
+}
+
+/* The individual scale and rotate properties rather than one transform, so the two
+   animations can run on the same element without one overwriting the other. */
+@keyframes level-up-rays-in {
+  from {
+    opacity: 0;
+    scale: 0.5;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@keyframes level-up-rays-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+/* Struck in, not faded: it drops from above, overshoots, and lands with a brightness flash
+   that decays as the flash behind it does. Italic and tight, because it is an exclamation. */
+.level-up-title {
+  position: relative;
+  margin: 0;
+  font-size: 34px;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: #fff;
+  text-shadow: 0 0 18px rgba(var(--node-rgb), 0.7), 0 2px 0 rgba(0, 0, 0, 0.35);
+  animation: level-up-title-strike 0.62s cubic-bezier(0.2, 1.4, 0.4, 1) 0.08s both;
+}
+
+@keyframes level-up-title-strike {
+  from {
+    opacity: 0;
+    transform: translateY(-18px) scale(1.4);
+    filter: brightness(2.6);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(2px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* The bloom copy behind the crisp one — .node-title-glow's trick, one size up. */
+.level-up-title-glow {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  color: rgb(var(--node-rgb));
+  filter: blur(14px);
+  opacity: 0.7;
+}
+
+/* A sheen runs across the title once the strike has landed. Background-clipped text, so the
+   highlight is the letterforms themselves lighting up and not a bar passing over them. */
+.level-up-title::after {
+  content: 'Level Up!';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.95) 48%, rgba(255, 244, 200, 0.9) 52%, transparent 70%);
+  background-size: 260% 100%;
+  background-position: 120% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: level-up-title-sheen 1.1s ease-in-out 0.55s;
+  pointer-events: none;
+}
+
+@keyframes level-up-title-sheen {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -40% 0;
+  }
+}
+
+/* How many levels. A pill, arriving a beat after the title so the two read as call and
+   answer rather than as one block. */
+.level-up-delta {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--node-rgb), 0.55);
+  background: rgba(var(--node-rgb), 0.16);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: rgb(var(--node-rgb));
+  box-shadow: 0 0 14px rgba(var(--node-rgb), 0.3);
+  animation: level-up-delta-pop 0.4s cubic-bezier(0.2, 1.5, 0.4, 1) 0.36s both;
+}
+
+.level-up-delta.is-max {
+  color: var(--text-dim);
+  border-color: var(--border);
+  background: transparent;
+  box-shadow: none;
+}
+
+@keyframes level-up-delta-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* The list centres in whatever is left under the header. Auto margins rather than
    `justify-content: center`, which clips the top of an overflowing scroll container —
    auto margins collapse to 0 the moment the content is taller than the box. */
@@ -23180,17 +23576,39 @@ textarea,
 }
 
 .level-up-row {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 9px;
   padding: 7px 10px;
   border-radius: var(--radius-lg);
+  overflow: hidden;
   /* Held out of the layout's way until its turn: `visibility` rather than
      `display` so the list's full height is reserved from the first paint and
      nothing below shifts as the rows arrive. */
   visibility: hidden;
   opacity: 0;
   transform: translateY(6px);
+}
+
+/* A band of light crossing the row as it lands, left to right — the same direction the cells
+   pop in, so the two read as one thing passing over the hero rather than as two effects. */
+.level-up-sweep {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 25%, rgba(var(--node-rgb), 0.28) 45%, rgba(255, 255, 255, 0.22) 50%, transparent 72%);
+  transform: translateX(-100%);
+  pointer-events: none;
+}
+
+.level-up-row.is-shown .level-up-sweep {
+  animation: level-up-sweep 520ms ease-out 80ms both;
+}
+
+@keyframes level-up-sweep {
+  to {
+    transform: translateX(100%);
+  }
 }
 
 .level-up-row.is-shown {
@@ -23316,6 +23734,7 @@ textarea,
 }
 
 .level-up-cell {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -23356,6 +23775,67 @@ textarea,
   }
 }
 
+/* A big roll — BIG_ROLL_POINTS and up. The roll has a top now, and a cell that reached it is
+   the one thing on the row worth a louder landing: it comes in larger, lit white, with a ring
+   of its own colour flung off it, and stays brighter than its neighbours when it settles. */
+.level-up-cell.is-big {
+  background: color-mix(in srgb, var(--stat-color) 30%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--stat-color) 55%, transparent), 0 0 10px color-mix(in srgb, var(--stat-color) 40%, transparent);
+}
+
+.level-up-cell.is-big .level-up-cell-amount {
+  font-size: 12px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 8px var(--stat-color);
+}
+
+.level-up-row.is-shown .level-up-cell.is-big {
+  animation: level-up-cell-slam 460ms cubic-bezier(0.2, 1.5, 0.4, 1) 140ms backwards;
+}
+
+@keyframes level-up-cell-slam {
+  from {
+    opacity: 0;
+    transform: scale(1.9);
+    filter: brightness(2.2);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+.level-up-cell.is-big::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1.5px solid var(--stat-color);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.level-up-row.is-shown .level-up-cell.is-big::after {
+  animation: level-up-cell-ring 560ms ease-out 200ms both;
+}
+
+@keyframes level-up-cell-ring {
+  from {
+    opacity: 0.9;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}
+
 .level-up-cell-amount {
   line-height: 1;
 }
@@ -23364,8 +23844,19 @@ textarea,
   .level-up-row,
   .level-up-row.is-shown,
   .level-up-row.is-shown .level-up-to,
-  .level-up-row.is-shown .level-up-cell.is-hit {
+  .level-up-row.is-shown .level-up-cell.is-hit,
+  .level-up-row.is-shown .level-up-cell.is-big::after,
+  .level-up-row.is-shown .level-up-sweep,
+  .level-up-flash,
+  .level-up-rays,
+  .level-up-title,
+  .level-up-title::after,
+  .level-up-delta {
     animation: none;
+  }
+
+  .level-up-flash {
+    display: none;
   }
 
   .level-up-row.is-shown {

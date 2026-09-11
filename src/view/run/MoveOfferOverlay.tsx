@@ -114,3 +114,48 @@ export function MoveOfferOverlay({ run, entry, moveId, eyebrow, onResolve }: Pro
     overlayHost()
   );
 }
+
+interface LearnedProps {
+  run: RunState;
+  entry: RosterEntry;
+  moveId: string;
+  eyebrow: string;
+  onClose: () => void;
+}
+
+/**
+ * The receipt for a Scroll poured into a hero with room in its kit (2026-09-10, per user
+ * direction): the move is already learned by the time this mounts, so there is nothing to ask —
+ * one card and one button. The same panel the offer wears, so a pour below the cap and a pour at
+ * it read as the same beat with a question added, not as two screens.
+ */
+export function MoveLearnedOverlay({ run, entry, moveId, eyebrow, onClose }: LearnedProps) {
+  const hero = heroes[entry.heroId];
+  const caster = healCasterForEntry(hero, entry, run.relics);
+  return createPortal(
+    <div className="log-overlay moveoffer-overlay">
+      <div className="reward-panel moveoffer-panel is-learned">
+        <div className="offer-hero-head">
+          <HeroPortrait heroId={hero.id} className="offer-hero-portrait" />
+          <h3>{hero.name}</h3>
+        </div>
+        <p className="offer-hero-eyebrow">{eyebrow}</p>
+
+        <div className="offer-move-highlight">
+          <MoveDetailCard move={moves[moveId]} label="Move learned" caster={caster} />
+        </div>
+
+        <div className="reward-panel-actions moveoffer-actions">
+          <button className="moveoffer-button moveoffer-confirm" onClick={onClose}>
+            <span className="moveoffer-icon" aria-hidden="true">
+              ✓
+            </span>
+            <span className="moveoffer-label">Continue</span>
+            <span className="moveoffer-sub">{moves[moveId].name} learned</span>
+          </button>
+        </div>
+      </div>
+    </div>,
+    overlayHost()
+  );
+}

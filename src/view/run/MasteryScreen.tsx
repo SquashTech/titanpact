@@ -3,10 +3,10 @@ import { playSfx } from '../../audio/sfx';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
 import type { HeroDefinition } from '../../engine/content';
-import { SCROLLS_PER_RANK, canSpendScroll } from '../../run/progression';
+import { canSpendScroll } from '../../run/progression';
 import type { RosterEntry, RunState } from '../../run/state';
 import { equipment } from '../../data/equipment';
-import { NodeHeader, NodeSky, NODE_TINT_ARCANE } from '../shared/NodeStage';
+import { NodeSky, NODE_TINT_ARCANE } from '../shared/NodeStage';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { MasteryBoard } from './MasteryBoard';
@@ -34,6 +34,10 @@ interface Props {
  *
  * Last in the post-fight chain, AFTER the Banner, the contract and the Crucible, so a hero
  * recruited or evolved this beat can take the Scroll it just became eligible for.
+ *
+ * The header is the count and nothing else: a Scroll glyph and how many are left. The title it
+ * used to carry ("2 Scrolls to Pour") and the line under it ("Tap a hero to pour one in · 3 to a
+ * rank") were both saying what the board already shows — every row that can take one is lit.
  */
 export function MasteryScreen({ run, onRunChange, onDone }: Props) {
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
@@ -54,30 +58,23 @@ export function MasteryScreen({ run, onRunChange, onDone }: Props) {
     <div className="node-screen mastery-screen" style={{ '--node-rgb': NODE_TINT_ARCANE } as CSSProperties}>
       <NodeSky />
 
-      <NodeHeader
-        compact
-        eyebrow="Mastery"
-        title={left > 1 ? `${left} Scrolls to Pour` : left === 1 ? 'A Scroll to Pour' : 'Poured'}
-        glyph={left > 0 ? <ResourceGlyph kind="scroll" tone="inherit" /> : undefined}
-        readoutKey={stuck ? 'stuck' : String(left)}
-        readoutLive={left <= 0}
-        readout={
-          stuck
-            ? 'Every hero is at Mastery Rank 3 with nothing left to learn. This one has nowhere to go.'
-            : left > 0
-              ? `Tap a hero to pour one in · ${SCROLLS_PER_RANK} to a rank`
-              : 'Poured. Concentrate and the ceiling rises; spread thin and nobody ranks up.'
-        }
-      />
+      <header className="mastery-header">
+        <span className="node-eyebrow">Mastery</span>
+        <span className={`mastery-count${left <= 0 ? ' is-spent' : ''}`} key={left} aria-label={`${left} Scrolls left`}>
+          <ResourceGlyph kind="scroll" tone="inherit" className="mastery-count-glyph" />
+          <span className="mastery-count-num">{left}</span>
+        </span>
+        {stuck && <span className="mastery-stuck">Nobody has anything left to learn</span>}
+      </header>
 
       <div className="screen-scroll">
         <MasteryBoard run={run} onRunChange={onRunChange} onInspect={(entry, hero) => setInspecting({ hero, entry })} />
       </div>
 
-      {/* Disabled rather than absent while a Scroll is still in hand, the same shape the Banner
-          uses: the button is where the eye goes, so it is the thing that should say what is owed. */}
-      <button className="resolve-button" disabled={!done} onClick={onDone}>
-        {done ? 'Continue' : left > 1 ? `Pour a Scroll — ${left} left` : 'Pour the Scroll'}
+      {/* Only once every Scroll is poured. Held in the layout while hidden so the centred board
+          does not jump when the button arrives. */}
+      <button className={`resolve-button mastery-continue${done ? '' : ' is-hidden'}`} disabled={!done} onClick={onDone}>
+        Continue
       </button>
 
       {inspecting && (

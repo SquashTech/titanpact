@@ -102,15 +102,27 @@ then **dropped** once Rank made it unnecessary. Do not re-introduce it without r
 
 ### Growth grades (Fire Emblem model)
 
-Each level rolls **each stat independently** against that hero's authored grade for it.
+Each level rolls **each stat independently** against that hero's authored grade for it. A grade
+is a **distribution over points**, not a coin (`GRADE_ROLL`, 2026-09-10, per user direction —
+the flat "+2 or nothing" roll it replaced was predictable enough to read as a schedule):
 
 | Grade | S | A | B | C | D | E | F |
 |---|---|---|---|---|---|---|---|
-| Chance | 95% | 80% | 65% | 50% | 35% | 20% | 5% |
 | Budget cost | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+| Miss | 10% | 18% | 30% | 40% | 52% | 68% | 92% |
+| +1 | 24% | 30% | 28% | 28% | 30% | 24% | 6% |
+| +2 | 38% | 30% | 28% | 24% | 14% | 8% | 2% |
+| +3 | 22% | 18% | 10% | 8% | 4% | — | — |
+| +4 | 6% | 4% | 4% | — | — | — | — |
+| Mean points | 1.9 | 1.6 | 1.3 | 1.0 | 0.7 | 0.4 | 0.1 |
 
-- **A success grants +2**, or **+6 HP**. HP is not a special case: `CLAUDE.md`'s own measured
-  break-even is ≈0.33 a point, so 6 HP *is* 2 points' worth.
+- **A point is +1, or +3 HP.** HP is not a special case: `CLAUDE.md`'s own measured break-even
+  is ≈0.33 a point, so 3 HP *is* 1 point's worth. So one level lands anywhere from nothing to
+  +4 (+12 HP) on an S stat, and never past +2 on an F.
+- **Every row's mean is exactly `0.1 + 0.3 × cost`** — the figure the flat roll paid — so the
+  grade budget below still buys every on-budget line the same growth, and phase 6's difficulty
+  re-fit, measured against the flat roll, still holds. A grade is both how often a stat grows
+  and how far it can jump; the shape of the row is what changed, never its size.
 - Grades cover the **seven stats the 550 budget covers** — MP Regen excluded, exactly as it is from
   the Gem catalog, and for the same reason.
 - **Every hero's grades sum to exactly 28** (an average of B). This is a **second budget**, and it
@@ -118,8 +130,8 @@ Each level rolls **each stat independently** against that hero's authored grade 
   being sufficient to say a hero is fairly costed the moment grades exist. Taking one stat to S
   costs another from B to D, or two from B to C.
 
-At all-B that is ~4.5 successes a level, ~9 points a level, **~264 points over 29 levels** — a hero
-grows by roughly half again. Below ~90 the arc is invisible and the underwhelm returns.
+At all-B that is ~9.1 points a level, **~264 points over 29 levels** — a hero grows by roughly
+half again. Below ~90 the arc is invisible and the underwhelm returns.
 
 **Base and growth are independent axes**, and that is the point. Low base + high growth is a late
 bloomer; high base + low growth is front-loaded. This is Fire Emblem's Est/Oifey axis, and it lands
@@ -127,8 +139,8 @@ on a problem the game already had: a Guild Hall hire arriving underlevelled is a
 Give that archetype S-grades and arriving underlevelled *is* the build.
 
 **What phase 7 found when it authored them: a grade line is a shape, never a size.** A grade's
-chance is exactly `0.05 + 0.15 × cost`, linear with no rounding, so a line summing to 28 buys
-*every* hero the same **4.55 successes a level** whatever its shape. "High growth" and "low growth"
+mean is exactly `0.1 + 0.3 × cost`, linear with no rounding, so a line summing to 28 buys
+*every* hero the same **9.1 points a level** whatever its shape. "High growth" and "low growth"
 are therefore not available as authored properties — only *placement* is. So the axis is:
 
 - A **late bloomer** stacks the budget on the stat it swings with and on Speed, where growth

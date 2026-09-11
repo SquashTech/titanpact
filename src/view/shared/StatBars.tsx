@@ -1,6 +1,6 @@
 import type { StatKey, StatLine } from '../../engine/content';
 import { STAT_ORDER } from '../../engine/content';
-import { GRADE_CHANCE, type GrowthGrade, type GrowthGrades } from '../../run/growth';
+import { GRADE_CHANCE, gradeMaxPoints, growthUnitFor, type GrowthGrade, type GrowthGrades } from '../../run/growth';
 import { STAT_COLORS, StatGlyph } from './statIcons';
 
 // Re-exported so screens keep one import site for the stat-block vocabulary.
@@ -123,7 +123,7 @@ export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {}, 
                 <span
                   className="stat-bar-grade"
                   style={{ color: GRADE_TONE[grade].color, opacity: GRADE_TONE[grade].opacity, fontWeight: GRADE_TONE[grade].weight }}
-                  title={`Growth ${grade} — ${Math.round(GRADE_CHANCE[grade] * 100)}% chance each level raises ${STAT_LABELS[stat]}`}
+                  title={`Growth ${grade} — ${Math.round(GRADE_CHANCE[grade] * 100)}% chance each level raises ${STAT_LABELS[stat]}, by up to +${gradeMaxPoints(grade) * growthUnitFor(stat)}`}
                 >
                   {grade}
                 </span>

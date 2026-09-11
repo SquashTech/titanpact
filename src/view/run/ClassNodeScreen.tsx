@@ -13,7 +13,7 @@ import { NodeHeader, NodeSky, NODE_TINT_TEAL } from '../shared/NodeStage';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
-import { RunGlyph } from '../shared/RunGlyph';
+import { PassiveGlyph, passiveColor } from '../shared/passiveIcons';
 
 interface Props {
   run: RunState;
@@ -44,8 +44,11 @@ function ClassChoiceCard({ cls, picked, onPick }: ClassChoiceCardProps) {
   return (
     <button className={`relic-card class-shrine-card${picked ? ' picked' : ''}`} onClick={onPick}>
       <div className="relic-card-head">
-        <span className="relic-card-icon" aria-hidden="true">
-          <RunGlyph kind="class" />
+        {/* The Class mark — chevrons in the lead stat's colour (passiveIcons.tsx), the same glyph the
+            hero sheet draws for a Class it already holds. It was a pixel-art shield off the icon
+            sheet, the one raster mark on a screen of vector ones (2026-09-10, per user direction). */}
+        <span className="relic-card-icon class-shrine-card-icon" style={{ color: passiveColor(cls.id) }} aria-hidden="true">
+          <PassiveGlyph passiveId={cls.id} className="class-shrine-card-glyph" />
         </span>
         <span className="relic-card-name">{cls.name}</span>
       </div>

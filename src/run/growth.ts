@@ -27,16 +27,40 @@ export const GROWTH_STATS: readonly GrowthStatKey[] = [
 
 export type GrowthGrade = 'S' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F';
 
-/** Chance a level's roll for that stat SUCCEEDS. */
-export const GRADE_CHANCE: Record<GrowthGrade, number> = {
-  S: 0.95,
-  A: 0.8,
-  B: 0.65,
-  C: 0.5,
-  D: 0.35,
-  E: 0.2,
-  F: 0.05,
+/**
+ * What one level can do to one stat, per grade: the odds (in %) of gaining 0, 1, 2, 3 or 4
+ * POINTS, indexed by the points. A grade is both how often a stat grows and how far it can jump —
+ * an S rarely misses and reaches +4; an F almost always misses and never passes +2.
+ *
+ * Every row's mean is exactly `0.1 + 0.3 × GRADE_COST`, the figure the flat +2 roll paid, so the
+ * grade budget still buys every on-budget line the same growth and the difficulty curve fitted
+ * against the flat roll still holds. Only the shape changed: a level is a roll, not a schedule
+ * (docs/growth-overhaul.md §3).
+ */
+export const GRADE_ROLL: Record<GrowthGrade, readonly number[]> = {
+  S: [10, 24, 38, 22, 6],
+  A: [18, 30, 30, 18, 4],
+  B: [30, 28, 28, 10, 4],
+  C: [40, 28, 24, 8],
+  D: [52, 30, 14, 4],
+  E: [68, 24, 8],
+  F: [92, 6, 2],
 };
+
+/** Chance a level's roll for that stat lands at all — everything in the row past the miss. */
+export const GRADE_CHANCE: Record<GrowthGrade, number> = Object.fromEntries(
+  (Object.entries(GRADE_ROLL) as [GrowthGrade, readonly number[]][]).map(([grade, row]) => [grade, (100 - row[0]) / 100])
+) as Record<GrowthGrade, number>;
+
+/** Mean points a level pays that stat. Linear in cost — see GRADE_ROLL. */
+export function gradeExpectedPoints(grade: GrowthGrade): number {
+  return GRADE_ROLL[grade].reduce((sum, weight, points) => sum + (weight / 100) * points, 0);
+}
+
+/** The most points one level can land on a stat of that grade. */
+export function gradeMaxPoints(grade: GrowthGrade): number {
+  return GRADE_ROLL[grade].length - 1;
+}
 
 /**
  * What a grade costs against the grade budget. The SECOND budget: the 550 stat rule alone stops
@@ -49,14 +73,26 @@ export const GRADE_COST: Record<GrowthGrade, number> = { S: 6, A: 5, B: 4, C: 3,
 export const GRADE_BUDGET = 28;
 
 /**
- * What one success grants. HP is NOT a special case: CLAUDE.md's own measured break-even is
- * ≈0.33 a point, so 6 HP is 2 points' worth of anything else.
+ * What one POINT of a roll is worth on the stat line. HP is NOT a special case: CLAUDE.md's own
+ * measured break-even is ≈0.33 a point, so 3 HP is 1 point's worth of anything else.
  */
-export const GROWTH_STEP = 2;
-export const GROWTH_STEP_HP = 6;
+export const GROWTH_UNIT = 1;
+export const GROWTH_UNIT_HP = 3;
 
-export function growthStepFor(stat: StatKey): number {
-  return stat === 'hp' ? GROWTH_STEP_HP : GROWTH_STEP;
+export function growthUnitFor(stat: StatKey): number {
+  return stat === 'hp' ? GROWTH_UNIT_HP : GROWTH_UNIT;
+}
+
+/** One stat's roll: the points the grade's row lands on, for one uniform draw. */
+export function rollGradePoints(grade: GrowthGrade, random: () => number = Math.random): number {
+  const row = GRADE_ROLL[grade];
+  const draw = random();
+  let cumulative = 0;
+  for (let points = 0; points < row.length; points++) {
+    cumulative += row[points];
+    if (draw < cumulative / 100) return points;
+  }
+  return row.length - 1;
 }
 
 export type GrowthGrades = Record<GrowthStatKey, GrowthGrade>;
@@ -129,7 +165,8 @@ export function rollLevelGrowth(
 ): Partial<Record<StatKey, number>> {
   const gained: Partial<Record<StatKey, number>> = {};
   for (const stat of GROWTH_STATS) {
-    if (random() < GRADE_CHANCE[grades[stat]]) gained[stat] = growthStepFor(stat);
+    const points = rollGradePoints(grades[stat], random);
+    if (points > 0) gained[stat] = points * growthUnitFor(stat);
   }
   return gained;
 }

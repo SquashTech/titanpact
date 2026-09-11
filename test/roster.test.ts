@@ -13,7 +13,7 @@ import { statuses } from '../src/data/statuses';
 import { progressionTable } from '../src/data/progression';
 import { BASE_ITEM_SLOTS, MAX_ITEM_SLOTS, STAT_POINT_VALUE } from '../src/run/equipment';
 import type { GrowthStatKey, StatKey } from '../src/engine/content';
-import { GRADE_BUDGET, GRADE_CHANCE, GROWTH_STATS, gradeBudgetOf, gradesFor } from '../src/run/growth';
+import { GRADE_BUDGET, GROWTH_STATS, gradeBudgetOf, gradeExpectedPoints, gradesFor } from '../src/run/growth';
 import { HERO_STAT_TOTAL, heroStatTotal } from '../src/run/statBudget';
 import { itemSlotsFor } from '../src/run/progression';
 import { createRosterEntry } from '../src/run/state';
@@ -52,18 +52,19 @@ test('roster: every growth-grade line sums to 28, and no hero is still on the pl
 });
 
 /**
- * Chance is linear in cost (0.05 + 0.15 x cost), so an on-budget line buys every hero the SAME
- * number of successes a level. A grade line is a shape, never a size — which is what lets a
- * mismatch be authored without also handing that hero more growth than the roster.
+ * A grade's mean is linear in cost (0.1 + 0.3 x cost), so an on-budget line buys every hero the
+ * SAME points a level, however each grade splits them between odds and size. A grade line is a
+ * shape, never a size — which is what lets a mismatch be authored without also handing that hero
+ * more growth than the roster.
  */
 test('roster: the grade budget buys every hero the same expected growth', () => {
   const perLevel = Object.values(heroes).map((hero) => {
     const grades = gradesFor(hero);
     const stats: readonly GrowthStatKey[] = GROWTH_STATS;
-    const total = stats.reduce((sum, stat) => sum + GRADE_CHANCE[grades[stat]], 0);
+    const total = stats.reduce((sum, stat) => sum + gradeExpectedPoints(grades[stat]), 0);
     return Math.round(total * 100) / 100;
   });
-  assert.deepStrictEqual([...new Set(perLevel)], [4.55], 'an on-budget line must not out-grow another on-budget line');
+  assert.deepStrictEqual([...new Set(perLevel)], [9.1], 'an on-budget line must not out-grow another on-budget line');
 });
 
 test('roster: no hero starts with a move it cannot pay for', () => {
