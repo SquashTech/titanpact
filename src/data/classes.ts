@@ -24,7 +24,7 @@ export const classMoves: Record<string, MoveDefinition> = {
     manaCostGainOnUse: 20,
     priority: 2,
     target: 'singleEnemy',
-    description: 'A quick strike before anything else moves, and the foe loses the round to it (inflicts Daze). Each cast costs 20 more Mana for the rest of the fight.',
+    description: 'A quick strike before anything else moves, and the foe loses the round to it (inflicts Daze). Takes the type of whoever holds it. Each cast costs 20 more Mana for the rest of the fight.',
   },
   volley: {
     id: 'volley',
@@ -37,7 +37,7 @@ export const classMoves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 0,
     target: 'bothEnemies',
-    description: 'A flight of shafts across the whole enemy line.',
+    description: 'A flight of shafts across the whole enemy line. Takes the type of whoever holds it.',
   },
   intercept: {
     id: 'intercept',
@@ -52,7 +52,7 @@ export const classMoves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 1,
     target: 'self',
-    description: 'Steps in front of the partner — single-target enemy moves aimed at either ally land here this round, and the guard holds (+10 Defense).',
+    description: 'Steps in front of the partner — single-target enemy moves aimed at either ally land here this round, and the guard holds (+10 Defense). Takes the type of whoever holds it.',
   },
   succor: {
     id: 'succor',
@@ -65,7 +65,7 @@ export const classMoves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 0,
     target: 'singleAlly',
-    description: 'Closes an ally’s wounds.',
+    description: 'Closes an ally’s wounds. Takes the type of whoever holds it.',
   },
   vanish: {
     id: 'vanish',
@@ -79,7 +79,7 @@ export const classMoves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A cut on the way out — the user withdraws to the bench after striking.',
+    description: 'A cut on the way out — the user withdraws to the bench after striking. Takes the type of whoever holds it.',
   },
 };
 
@@ -132,7 +132,7 @@ export const classes: Record<string, ClassDefinition> = {
     id: 'duelist',
     name: 'Duelist',
     kind: 'offensive',
-    description: 'Learns Feint: a priority strike that Dazes its target, dearer every cast.',
+    description: 'Learns Feint, in your own type: a priority strike that Dazes its target. Costs 20 more Mana with every cast.',
     grantsMoveId: 'feint',
   },
   berserker: {
@@ -146,7 +146,7 @@ export const classes: Record<string, ClassDefinition> = {
     id: 'ranger',
     name: 'Ranger',
     kind: 'offensive',
-    description: 'Learns Volley: a physical strike across both foes.',
+    description: 'Learns Volley, in your own type: a physical strike across both foes.',
     grantsMoveId: 'volley',
   },
   // --- Defensive ---
@@ -154,7 +154,7 @@ export const classes: Record<string, ClassDefinition> = {
     id: 'guardian',
     name: 'Guardian',
     kind: 'defensive',
-    description: 'Learns Intercept: pull every single-target enemy move onto yourself this round.',
+    description: 'Learns Intercept, in your own type: pull every single-target enemy move onto yourself this round.',
     grantsMoveId: 'intercept',
   },
   warden: {
@@ -168,7 +168,7 @@ export const classes: Record<string, ClassDefinition> = {
     id: 'cleric',
     name: 'Cleric',
     kind: 'defensive',
-    description: 'Learns Succor: a single-ally heal, whatever your type.',
+    description: 'Learns Succor, in your own type: a single-ally heal, with STAB.',
     grantsMoveId: 'succor',
   },
   // --- Utility ---
@@ -183,7 +183,7 @@ export const classes: Record<string, ClassDefinition> = {
     id: 'rogue',
     name: 'Rogue',
     kind: 'utility',
-    description: 'Learns Vanish: strike, then withdraw to the bench in the same turn.',
+    description: 'Learns Vanish, in your own type: strike, then withdraw to the bench in the same turn.',
     grantsMoveId: 'vanish',
   },
   herald: {
