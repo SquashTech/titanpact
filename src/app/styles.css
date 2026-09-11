@@ -16481,7 +16481,8 @@ textarea,
     linear-gradient(104deg, transparent 28%, rgba(255, 255, 255, 0.2) 47%, transparent 66%),
     linear-gradient(180deg, color-mix(in srgb, var(--btn-color) 72%, #ffffff), var(--btn-color) 52%, color-mix(in srgb, var(--btn-color) 74%, #000000));
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.28);
-  animation: map-footer-alert 1.5s ease-in-out infinite;
+  box-shadow: 0 0 26px -2px var(--btn-color), var(--elev-2);
+  overflow: hidden;
 }
 
 .map-footer-button.has-unopened:hover {
@@ -16491,17 +16492,28 @@ textarea,
     linear-gradient(180deg, color-mix(in srgb, var(--btn-color) 60%, #ffffff), var(--btn-color) 52%, color-mix(in srgb, var(--btn-color) 74%, #000000));
 }
 
-/* The glow breathes AND the plate lifts a hair — a colour alone can be learned away, a thing that
-   moves in the corner of the eye cannot. */
-@keyframes map-footer-alert {
-  0%,
-  100% {
-    transform: translateY(0);
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--btn-color) 55%, transparent), 0 0 18px -4px var(--btn-color), var(--elev-2);
+/* The plate does not move (2026-09-11, second pass, per user direction — the lift-and-pulse
+   read as a jitter). What moves is LIGHT across it: a band sweeps the slab every few seconds,
+   which is the one thing a lit object does that a merely coloured one cannot, and it leaves
+   every edge exactly where it was. Shared with the Mastery screen's Continue (`plate-sweep`). */
+.map-footer-button.has-unopened::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  z-index: 1;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.42) 48%, rgba(255, 255, 255, 0.55) 50%, rgba(255, 255, 255, 0.42) 52%, transparent 62%);
+  transform: translateX(-100%);
+  animation: plate-sweep 2.6s cubic-bezier(0.4, 0, 0.3, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes plate-sweep {
+  0% {
+    transform: translateX(-100%);
   }
-  50% {
-    transform: translateY(-2px);
-    box-shadow: 0 0 0 5px color-mix(in srgb, var(--btn-color) 0%, transparent), 0 0 34px 2px var(--btn-color), var(--elev-2);
+  45%,
+  100% {
+    transform: translateX(100%);
   }
 }
 
@@ -16534,23 +16546,11 @@ textarea,
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35), 0 2px 6px rgba(0, 0, 0, 0.45);
-  animation: map-footer-badge-pulse 1.5s var(--ease-out) infinite;
-}
-
-@keyframes map-footer-badge-pulse {
-  0%,
-  70%,
-  100% {
-    transform: scale(1);
-  }
-  80% {
-    transform: scale(1.18);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .map-footer-badge,
-  .map-footer-button.has-unopened {
+  .map-footer-button.has-unopened::after,
+  .mastery-continue::after {
     animation: none;
   }
 }
@@ -24677,7 +24677,20 @@ textarea,
   background:
     linear-gradient(104deg, transparent 28%, rgba(255, 255, 255, 0.22) 47%, transparent 66%),
     linear-gradient(180deg, #e6d3ff, rgb(var(--scroll-rgb)) 52%, #9a6fe0);
-  animation: mastery-continue-glow 1.6s ease-in-out infinite;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.55), 0 0 30px -2px rgb(var(--scroll-rgb));
+  position: relative;
+  overflow: hidden;
+}
+
+/* Lit, not lifted: the same light sweep the map's gear alert wears (`plate-sweep`). */
+.mastery-continue:not(.is-hidden):not(:disabled)::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.4) 48%, rgba(255, 255, 255, 0.55) 50%, rgba(255, 255, 255, 0.4) 52%, transparent 62%);
+  transform: translateX(-100%);
+  animation: plate-sweep 2.6s cubic-bezier(0.4, 0, 0.3, 1) infinite;
+  pointer-events: none;
 }
 
 .mastery-continue:not(.is-hidden):not(:disabled):hover {
@@ -24685,24 +24698,6 @@ textarea,
   background:
     linear-gradient(104deg, transparent 28%, rgba(255, 255, 255, 0.32) 47%, transparent 66%),
     linear-gradient(180deg, #efe3ff, #d4b6ff 52%, #9a6fe0);
-}
-
-@keyframes mastery-continue-glow {
-  0%,
-  100% {
-    transform: translateY(0);
-    box-shadow: 0 0 0 0 rgba(var(--scroll-rgb), 0.55), 0 3px 10px rgba(0, 0, 0, 0.55), 0 0 18px -4px rgb(var(--scroll-rgb));
-  }
-  50% {
-    transform: translateY(-2px);
-    box-shadow: 0 0 0 6px rgba(var(--scroll-rgb), 0), 0 3px 10px rgba(0, 0, 0, 0.55), 0 0 36px 2px rgb(var(--scroll-rgb));
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .mastery-continue:not(.is-hidden):not(:disabled) {
-    animation: none;
-  }
 }
 
 /* The board centres in whatever is left under the count: auto margins, the level-up list's

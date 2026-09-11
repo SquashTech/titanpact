@@ -272,7 +272,8 @@ lit after a visit that had plainly seen the bag. Inside the screen the arrivals 
 mark until tapped, held as local state for that one visit, so what was new is still findable.
 
 **The lit button is a FILLED plate** (2026-09-11, per user direction): a solid slab of the alert
-colour with dark ink, lifting and glowing on a loop. It was a tinted outline, and a stylesheet
+colour with dark ink and a band of light sweeping across it every few seconds — it never moves
+(a lift-and-pulse was tried the same day and read as a jitter). It was a tinted outline, and a stylesheet
 fault had left it with no background at all — fainter than at rest, on the one screen it exists
 to interrupt.
 
