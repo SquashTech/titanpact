@@ -4,7 +4,8 @@ import type { HeroDefinition, StatKey, TypeId } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
 import { MOVE_CAP, type EvolutionNode, type EvolutionPath } from '../../run/progression';
 import { passives } from '../../data/passives';
-import { PassiveGlyph, PassiveInfoPanel, passiveColor, passiveTint } from '../shared/passiveIcons';
+import { PassiveGlyph, passiveColor, passiveTint } from '../shared/passiveIcons';
+import { PassiveDetailCard } from '../shared/PassiveDossier';
 import { moves } from '../../data/moves';
 import { MoveDetailCard, MoveDetailOverlay } from '../combat/MoveDetailOverlay';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
@@ -353,7 +354,7 @@ function PathDossier({
             <section className="evolution-dossier-section">
               <div className="evo-path-label">Passive</div>
               {grantedPassives.map((id) => (
-                <PassiveInfoPanel key={id} passive={passives[id]} />
+                <PassiveDetailCard key={id} passive={passives[id]} />
               ))}
             </section>
           )}

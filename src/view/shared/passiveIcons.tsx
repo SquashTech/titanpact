@@ -173,45 +173,9 @@ export function PassiveStatChips({ def }: { def: PassiveDefinition }) {
   );
 }
 
-
 /**
- * Full readout for one passive, opened from any passive chip. Same head/medallion/description
- * shape as StatusDetailOverlay's panel, so the two content types read as one family — and the
- * same fixed `.move-info-panel` box, so swapping between passives never reflows the popup.
- */
-export function PassiveInfoPanel({ passive }: { passive: PassiveDefinition | null }) {
-  if (!passive) {
-    return (
-      <div className="move-info-panel passive-info-panel">
-        <div className="move-info-placeholder">No passive selected.</div>
-      </div>
-    );
-  }
-  const color = passiveColor(passive.id);
-  const summary = passiveEffectSummary(passive);
-  return (
-    <div className="move-info-panel passive-info-panel" style={{ borderColor: color }}>
-      <div className="passive-info-head">
-        <span className="passive-info-icon" style={{ color, background: passiveTint(passive.id, 0.16) }}>
-          <PassiveGlyph passiveId={passive.id} />
-        </span>
-        <div className="passive-info-titles">
-          <div className="passive-info-name" style={{ color }}>
-            {passive.name}
-          </div>
-          <div className="passive-info-kind">{passiveKindLabel(passive)}</div>
-        </div>
-      </div>
-      <div className="passive-info-desc">{passive.description}</div>
-      <PassiveStatChips def={passive} />
-      {summary && <div className="passive-info-meta">{summary}</div>}
-    </div>
-  );
-}
-
-/**
- * The same readout as `PassiveInfoPanel`, laid out as a full-width card in a list rather than as a
- * fixed-size popup box. `source` says where the passive came from, and `count` its stack — the two
+ * One passive as a full-width card in a list — the popup form is `PassiveDetailCard`
+ * (PassiveDossier.tsx). `source` says where the passive came from, and `count` its stack — the two
  * things a player asks about a passive they did not choose. Used by the hero sheet's Passives page,
  * which spells every passive out instead of making each one a button to be discovered.
  */

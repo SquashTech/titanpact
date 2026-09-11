@@ -26,7 +26,8 @@ import { TypeBadge } from '../shared/TypeBadge';
 import { TypeMatchups } from '../shared/TypeMatchups';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { getTypeColor } from '../combat/typeColors';
-import { PassiveInfoPanel, PassiveReadout } from '../shared/passiveIcons';
+import { PassiveReadout } from '../shared/passiveIcons';
+import { PassiveDetailCard } from '../shared/PassiveDossier';
 import { HubGlyph } from '../shared/nodeIcons';
 
 interface Props {
@@ -326,7 +327,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
                 return classMove ? (
                   <MoveDetailCard move={classMove} caster={healCaster} />
                 ) : (
-                  <PassiveInfoPanel passive={cls?.grantsPassiveId ? passives[cls.grantsPassiveId] ?? null : null} />
+                  cls?.grantsPassiveId && passives[cls.grantsPassiveId] ? <PassiveDetailCard passive={passives[cls.grantsPassiveId]} /> : null
                 );
               })()
             )}

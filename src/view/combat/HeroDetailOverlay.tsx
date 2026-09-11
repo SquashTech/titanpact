@@ -18,7 +18,8 @@ import { TypeMatchups } from '../shared/TypeMatchups';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { StatusGlyph, statusColor, statusTint, PoisonPips } from '../shared/statusIcons';
 import { passives } from '../../data/passives';
-import { PassiveGlyph, passiveColor, passiveTint, PassiveInfoPanel } from '../shared/passiveIcons';
+import { PassiveGlyph, passiveColor, passiveTint } from '../shared/passiveIcons';
+import { PassiveDetailCard } from '../shared/PassiveDossier';
 
 interface Props {
   hero: HeroDefinition;
@@ -244,7 +245,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
             ) : popup.kind === 'equipment' ? (
               equipmentLookup[popup.id] ? <ItemDetailCard item={equipmentLookup[popup.id]} /> : null
             ) : (
-              <PassiveInfoPanel passive={passives[popup.id] ?? null} />
+              passives[popup.id] ? <PassiveDetailCard passive={passives[popup.id]} /> : null
             )}
             <div className="move-popup-hint">Tap anywhere to close</div>
           </div>

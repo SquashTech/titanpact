@@ -12242,38 +12242,6 @@ textarea,
   margin-top: 4px;
 }
 
-/* --- What a chip's tap opens. Same .move-popup-panel box every other tap-to-read
-   popup in the run uses, so the relic sheet reads as one family with them. */
-
-.relic-summary-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.relic-summary-art {
-  font-size: 30px;
-}
-
-.relic-summary-name {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.relic-summary-grant {
-  margin-top: 6px;
-  font-size: 12px;
-  color: var(--text);
-}
-
-.relic-summary-count {
-  margin-top: 3px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-dim);
-}
-
 .relic-card {
   --plate-color: var(--magical);
   border-radius: var(--radius-sm);
@@ -19680,85 +19648,6 @@ textarea,
   color: var(--text-dim);
 }
 
-/* --- Passive info panel (passiveIcons.tsx PassiveInfoPanel) -------------
-
-   The passive's readout, opened from any passive chip. It shares
-   .move-info-panel's box so the popup keeps one chassis whatever kind of
-   thing is being examined, and borrows StatusDetailOverlay's head shape —
-   medallion, coloured name, kind label — so a Passive and a Status read as
-   two members of one family rather than two different apps. It deliberately
-   does NOT inherit that box's min-height floor as a ceiling: a passive
-   carries a full sentence of description plus grant chips, so it grows.
-   border-color arrives inline (passiveColor), replacing the panel's flat
-   gold with the passive's own identity colour — the same colour the chip
-   that opened it was wearing, which is what ties the two together. */
-.passive-info-panel {
-  justify-content: flex-start;
-  gap: 7px;
-  margin-bottom: 0;
-}
-
-.passive-info-head {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
-
-/* Same tinted disc as .status-detail-icon, one step down: this one sits in a
-   popup panel rather than owning its own overlay. */
-.passive-info-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.passive-info-icon .status-glyph {
-  width: 22px;
-  height: 22px;
-}
-
-.passive-info-titles {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-/* color set inline (passiveColor) — no default, every caller supplies one. */
-.passive-info-name {
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.passive-info-kind {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
-.passive-info-desc {
-  font-size: 12px;
-  line-height: 1.45;
-  color: var(--text);
-}
-
-/* The derived line (a damage modifier's %, a conditional grant's condition) —
-   italic and dim, the same "and here is the fine print" role
-   .status-detail-meta plays under a status. */
-.passive-info-meta {
-  font-size: 11px;
-  line-height: 1.4;
-  color: var(--text-dim);
-  font-style: italic;
-}
-
 /* Name/type/category and the Power/heal/mana-cost numbers share one row
    (rather than stacking as two) so the panel stays short enough that a full
    6-hero roster never pushes LevelUpScreen into scrolling. Power/heal and
@@ -27050,7 +26939,7 @@ textarea,
 }
 
 /* A passive row: name in the passive's colour, its kind under it in the
-   register PassiveInfoPanel uses, then the whole description, then its chips. */
+   register the passive dossier uses, then the whole description, then its chips. */
 .item-detail-passive-kind {
   display: block;
   margin-top: 1px;
@@ -27084,4 +26973,139 @@ textarea,
 
 .item-detail-sell .move-detail-unit {
   color: var(--text-dim);
+}
+
+/* --- The passive dossier (PassiveDossier.tsx) -------------------------- */
+/* What a tap on a passive chip opens — the hero sheets, a Class's passive, an
+   Evolution path's. The move dossier's three facets: tinted disc and coloured
+   name, the grants as a numbers strip, and the rule as ROWS (When / Then /
+   Limit / Damage / While) read off the fields the passiveEngine matches on.
+   The authored sentence stays as fine print under the rows. It replaced the
+   grey .move-info-panel box (2026-09-11, per user direction). */
+.passive-detail-panel {
+  gap: 0;
+  border-top-width: 3px;
+  background:
+    linear-gradient(155deg, color-mix(in srgb, var(--passive-color) 16%, transparent), transparent 46%),
+    var(--surface-raised);
+}
+
+.passive-detail-card {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+/* .move-detail-disc in the passive's own colour — the same disc the chip that opened it wears. */
+.passive-detail-disc {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--passive-color);
+  background: radial-gradient(
+    circle at 32% 28%,
+    color-mix(in srgb, var(--passive-color) 34%, transparent),
+    color-mix(in srgb, var(--passive-color) 10%, transparent)
+  );
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--passive-color) 40%, transparent),
+    0 0 18px -6px var(--passive-color);
+}
+
+.passive-detail-disc .status-glyph {
+  width: 30px;
+  height: 30px;
+}
+
+.passive-detail-facts {
+  display: flex;
+  flex-direction: column;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+/* Register word left, the rule right, the payload's own colour on the mark:
+   a status row wears the status's glyph and colour, the pair the badge on
+   the battlefield will wear when it lands. */
+.passive-detail-fact {
+  display: grid;
+  grid-template-columns: 19px 44px 1fr;
+  align-items: start;
+  column-gap: 9px;
+  padding: 6px 0;
+  color: var(--fact-color, var(--passive-color));
+}
+
+.passive-detail-fact + .passive-detail-fact {
+  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+}
+
+.passive-detail-fact-glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 19px;
+  height: 19px;
+}
+
+.passive-detail-fact-glyph svg {
+  width: 17px;
+  height: 17px;
+}
+
+.passive-detail-fact-label {
+  padding-top: 2px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.passive-detail-fact-text {
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text);
+}
+
+.passive-detail-desc {
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+/* --- The Banner dossier (BannerDossierOverlay.tsx) --------------------- */
+/* What a tap on a raised standard opens: the standard at the head, the
+   summed grant as figures with the per-copy amount as fine print, and a
+   two-row ledger — how many fly, whom it reaches. Same chassis as the node
+   dossier; the ledger rows are its rows. It replaced a grey box holding
+   "Team-wide +90 HP." (2026-09-11, per user direction). */
+.banner-dossier-panel {
+  gap: 0;
+  border-top-width: 3px;
+  background:
+    linear-gradient(155deg, color-mix(in srgb, var(--relic-color) 16%, transparent), transparent 46%),
+    var(--surface-raised);
+}
+
+.banner-dossier-panel .move-detail-stats {
+  margin-top: 10px;
+}
+
+.banner-dossier-art {
+  font-size: 56px;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.6));
+}
+
+.banner-dossier-per {
+  color: var(--text-dim);
+  font-weight: 700;
 }

@@ -3,7 +3,7 @@ import { relics } from '../../data/relics';
 import type { RunState } from '../../run/state';
 import { RelicArt } from '../shared/relicArt';
 import { relicColor } from '../shared/relicIcons';
-import { stackedGrantSummary } from '../shared/relicStacks';
+import { BannerDossierOverlay } from './BannerDossierOverlay';
 
 /**
  * What the run has RAISED, flown along the bottom-right of the map (2026-09-10, per user
@@ -26,31 +26,6 @@ function countHoldings(run: RunState): { id: string; count: number }[] {
     counts.set(id, (counts.get(id) ?? 0) + 1);
   }
   return order.map((id) => ({ id, count: counts.get(id) ?? 0 }));
-}
-
-/** What a standard's tap opens: which Banner, how many are flying, and what that adds up to. */
-function BannerSummaryPopup({ relicId, count, onClose }: { relicId: string | null; count: number; onClose: () => void }) {
-  const relic = relicId ? relics[relicId] : null;
-  if (!relicId || !relic) return null;
-  return (
-    <div
-      className="log-overlay"
-      onClick={(e) => {
-        e.stopPropagation();
-        onClose();
-      }}
-    >
-      <div className="log-panel move-popup-panel">
-        <div className="relic-summary-head">
-          <RelicArt relicId={relicId} className="relic-summary-art" />
-          <span className="relic-summary-name">{relic.name}</span>
-        </div>
-        <div className="relic-summary-grant">Team-wide {stackedGrantSummary(relic, Math.max(count, 1))}.</div>
-        <div className="relic-summary-count">Flying ×{count}</div>
-        <div className="move-popup-hint">Tap anywhere to close</div>
-      </div>
-    </div>
-  );
 }
 
 export function BannerShelf({ run }: { run: RunState }) {
@@ -77,7 +52,7 @@ export function BannerShelf({ run }: { run: RunState }) {
           </button>
         ))}
       </div>
-      <BannerSummaryPopup
+      <BannerDossierOverlay
         relicId={inspectingId}
         count={inspectingId ? held.find((h) => h.id === inspectingId)?.count ?? 0 : 0}
         onClose={() => setInspectingId(null)}
