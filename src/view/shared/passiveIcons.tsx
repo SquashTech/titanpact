@@ -5,6 +5,7 @@ import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
 import { getTypeColor } from '../combat/typeColors';
+import { CLASS_PATHS } from './classIcons';
 import { ELEMENT_PATHS } from './elementIcons';
 import { SECTION_PATHS } from './sectionIcons';
 import { StatGlyph, STAT_COLORS, STAT_PATHS } from './statIcons';
@@ -14,7 +15,7 @@ import { hexTint, STATUS_PATHS, statusColor } from './statusIcons';
 // Two marks the shared vocabularies don't already carry. Same contract as STATUS_PATHS:
 // 24x24, `currentColor` only, nothing finer than ~2 units.
 
-/** Rank chevrons — the Class mark. Classes are stat grants alone, so nothing else identifies them. */
+/** Rank chevrons — the fallback Class mark, for a Class classIcons.tsx has not drawn yet. */
 const CLASS_CHEVRONS = (
   <g fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M4 12.4 12 5l8 7.4" />
@@ -86,15 +87,16 @@ function dominantStat(grants: Partial<Record<StatKey, number>>): StatKey | undef
 /**
  * Glyph and identity colour, DERIVED from what the passive is made of rather than authored per id:
  * a type-locked damage bonus wears its element, a status-applying reaction wears that status, a
- * stat reaction wears that stat, a Class wears chevrons in its lead stat's colour. Nothing needs a
- * table entry to look like itself, so new content is drawn the moment it is written.
+ * stat reaction wears that stat, a Class wears its own mark (classIcons.tsx) in its lead stat's
+ * colour. Nothing else needs a table entry to look like itself, so new content is drawn the moment
+ * it is written; a Class is the one exception, because sixteen stat pairs are one picture.
  */
 function passiveArt(def: PassiveDefinition | undefined): PassiveArt {
   const derived =
     (def?.damageModifier && elementArt(def.damageModifier.eventFieldEquals?.moveType)) ||
     statusArt(def?.conditionalStatGrants?.requiresEnemyStatus) ||
     (def?.reactive && reactiveArt(def.reactive.effect)) ||
-    (def?.statGrants && { path: CLASS_CHEVRONS, color: STAT_COLORS[dominantStat(def.statGrants) ?? 'attack'] });
+    (def?.statGrants && { path: CLASS_PATHS[def.id] ?? CLASS_CHEVRONS, color: STAT_COLORS[dominantStat(def.statGrants) ?? 'attack'] });
   return derived || { path: SECTION_PATHS.passives, color: FALLBACK_COLOR };
 }
 
