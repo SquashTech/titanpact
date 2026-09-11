@@ -25708,16 +25708,30 @@ textarea,
   flex: 1 1 auto;
 }
 
-/* The Crucible's three cards each carry a move row, so they need more of the stage than the
-   Mentor's stat chips did; the header above them is a portrait, not the Mentor and his class. */
-.crucible-choice .stage-centered > .class-shrine-list {
-  --stage-card-max: 136px;
+/* The Crucible's three cards each carry a full move card or passive readout, so they are not
+   clamped to a stage slot the way the Mentor's stat-chip cards were: they take their own height
+   and the list scrolls when three do not fit. */
+.crucible-class-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 0 8px;
+}
+
+.crucible-class-list > * {
+  flex: 0 0 auto;
 }
 
 .crucible-class-card {
   cursor: pointer;
 }
 
-.crucible-class-verb .move-button {
+.crucible-class-verb .move-detail-card,
+.crucible-class-verb .passive-readout {
   width: 100%;
+}
+
+/* Everything on the card is one tap target — the move card inside it must not swallow the pick. */
+.crucible-class-card .move-detail-card {
+  pointer-events: none;
 }

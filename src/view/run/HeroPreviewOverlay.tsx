@@ -318,7 +318,16 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
             ) : popup.kind === 'equipment' ? (
               <EquipmentInfoPanel item={equipmentLookup[popup.id] ?? null} />
             ) : (
-              <PassiveInfoPanel passive={classes[popup.id] ?? null} />
+              // A Class is a verb: its move at this hero's type, or its passive.
+              (() => {
+                const cls = classes[popup.id];
+                const classMove = cls?.grantsMoveId ? moves[cls.grantsMoveId] : null;
+                return classMove ? (
+                  <MoveDetailCard move={classMove} caster={healCaster} />
+                ) : (
+                  <PassiveInfoPanel passive={cls?.grantsPassiveId ? passives[cls.grantsPassiveId] ?? null : null} />
+                );
+              })()
             )}
             <div className="move-popup-hint">Tap anywhere to close</div>
           </div>

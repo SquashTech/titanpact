@@ -19,8 +19,6 @@ export interface ClassDefinition {
   name: string;
   /** Documentation of intent ("differ in kind") — the Crucible offers one of each. */
   kind: ClassKind;
-  /** Shown on the Crucible's cards. */
-  description: string;
   /** Granted outright on the choice, replace-or-decline at MOVE_CAP exactly as an Evolution's grant. */
   grantsMoveId?: string;
   /** In the passive catalog under the same id (data/passives.ts folds classPassives in). */
