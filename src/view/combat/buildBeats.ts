@@ -99,12 +99,20 @@ export interface BeatFlavor {
    */
   strikeCombatantId?: string;
   /**
-   * The element manifesting on this beat: the declared move's type, played over
-   * each of its targets (TypeFx.tsx), and the cast sound beatSfx voices in that
-   * type. One effect per type whatever the move — the type is what the chart is
-   * read at, so it is the one thing every move of a type has in common.
+   * A move's payload LANDING on a figure this beat (TypeFx.tsx), and the cast
+   * sound beatSfx layers under it. Stamped on the beat where the target takes it
+   * — the damage, the heal, the stat change — never on the declaration, so the
+   * element arrives with its consequence. An `element` is the move's type
+   * manifesting on a foe; a `buff` is the one universal grant animation, tinted
+   * by the type and wearing its glyph, for a target on the caster's own side.
    */
-  fx?: { type: string; combatantIds: readonly string[] };
+  fx?: readonly BeatFx[];
+}
+
+export interface BeatFx {
+  combatantId: string;
+  type: string;
+  kind: 'element' | 'buff';
 }
 
 export interface Beat extends BeatFlavor {
@@ -212,10 +220,31 @@ export function buildBeats(
   // Who declared the move currently being narrated, held until an event that
   // can't belong to it comes through (ACTION_EVENTS below).
   let striker: string | undefined;
+  // The move being narrated, and who has already had its landing animated. A
+  // move animates ONCE per target — on its first payload beat against them, so a
+  // rider status behind a hit doesn't light the figure twice — except that every
+  // hit of a multi-hit move lands (DamageDealt bypasses the set).
+  let strikerMove: MoveDefinition | undefined;
+  let landed = new Set<string>();
 
   function push(applied: CombatEvent[], banner: string, popups: BeatPopup[] = [], flavor: BeatFlavor = {}) {
     beats.push({ events: [...carry, ...applied], banner, popups, strikeCombatantId: striker, ...flavor });
     carry = [];
+  }
+
+  /** The landing on `targetId` of the move being narrated, or nothing if there is no move or it already landed there. */
+  function landing(targetId: string, force = false): BeatFx[] | undefined {
+    if (!striker || !strikerMove) return undefined;
+    if (!force && landed.has(targetId)) return undefined;
+    landed.add(targetId);
+    const kind = combatants[targetId]?.side === combatants[striker]?.side ? 'buff' : 'element';
+    return [{ combatantId: targetId, type: strikerMove.type, kind }];
+  }
+
+  /** One landing per target group, for a beat that folds several targets. */
+  function landings(targetIds: readonly string[]): BeatFx[] | undefined {
+    const all = targetIds.flatMap((id) => landing(id) ?? []);
+    return all.length > 0 ? all : undefined;
   }
 
   while (i < events.length) {
@@ -232,6 +261,7 @@ export function buildBeats(
 
       case 'MoveDeclared': {
         striker = e.combatantId;
+        landed = new Set();
         const applied: CombatEvent[] = [e];
         i++;
         let manaSpent: number | undefined;
@@ -243,6 +273,7 @@ export function buildBeats(
 
         const actorHero = heroes[combatants[e.combatantId]?.heroId];
         const move = actorHero ? moveForHero(moves[e.moveId], actorHero) : moves[e.moveId];
+        strikerMove = move;
         const actorSide = combatants[e.combatantId]?.side;
         const actorName = `${actorSide && actorSide !== playerSide ? 'Enemy ' : ''}${name(e.combatantId)}`;
         const clause = targetClause(e.targetCombatantIds, e.combatantId, name);
@@ -254,7 +285,6 @@ export function buildBeats(
           bannerSub: clause ? `▸${clause.slice(3)}` : undefined,
           bannerAccent: getTypeColor(move.type),
           bannerMeta: `${cost} MP`,
-          fx: { type: move.type, combatantIds: e.targetCombatantIds },
         });
         break;
       }
@@ -301,6 +331,8 @@ export function buildBeats(
             bannerFocus: `${e.amount} damage`,
             bannerFocusKind: tagKind,
             bannerTag: tagText,
+            // The caster paying its own price is not the element arriving anywhere.
+            fx: e.recoil || e.retribution || e.selfCost ? undefined : landing(e.targetCombatantId, true),
           }
         );
         if (faintEvent) push([faintEvent], `${targetName} is knocked out!`, [], { bannerFocusKind: 'ko' });
@@ -442,6 +474,7 @@ export function buildBeats(
             bannerLead: drainedFrom ? `${targetName} drains ${drainedFrom}` : `${targetName} recovers`,
             bannerFocus: `+${e.amount} HP`,
             bannerFocusKind: 'heal',
+            fx: landing(e.targetCombatantId),
           }
         );
         break;
@@ -474,6 +507,7 @@ export function buildBeats(
             bannerLead: lead,
             bannerFocus: deltaSummary(groups[0].changes),
             bannerFocusKind: falling ? 'debuff' : 'buff',
+            fx: landings(groups.map((g) => g.combatantId)),
           }
         );
         break;
@@ -488,7 +522,7 @@ export function buildBeats(
           [e],
           `${targetName} ${verb} ${e.statusId}${detail}`,
           [{ combatantId: e.combatantId, text: e.statusId, className: 'popup-status' }],
-          { bannerLead: `${targetName} ${verb}`, bannerFocus: `${e.statusId}${detail}`, bannerFocusKind: 'status' }
+          { bannerLead: `${targetName} ${verb}`, bannerFocus: `${e.statusId}${detail}`, bannerFocusKind: 'status', fx: landing(e.combatantId) }
         );
         i++;
         break;

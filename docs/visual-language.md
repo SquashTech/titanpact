@@ -3200,23 +3200,38 @@ hidden throughout (`document.hidden`, timeline at 0) so every frame came from he
 ## Thirtieth pass — the element manifests (2026-09-11)
 
 *Per user direction: "one animation for each type in the game, and they can just display
-regardless of the attack … better than nothing … a natural accompanying sound effect as well."*
+regardless of the attack … better than nothing … a natural accompanying sound effect as well";
+then, same day: "a universal buff animation and just have it change color and/or be accompanied
+by something denoting the type", and "have the animation play when the enemy actually receives
+the damage instead of when the hero casts it."*
 
 ### Where it sits
 
 A move already had three beats of presentation — the actor's strike lean (seventeenth pass), the
 target's recoil, the number — and none of them said what TYPE the move was except the banner's
-tint. This pass adds the element itself, and puts it on the **declaration beat**: "Cinder uses
-Ember ▸ Fang" is now the frame the fire climbs Fang, and the next tap is still the damage, with
-the recoil and the number. That split is the Pokémon order (animation, then the bar drains) and
-it fell out of the beat model for free — buildBeats stamps `fx: { type, combatantIds }` on the
-MoveDeclared beat, over every target the engine resolved, self included, so a buff shows its
-element on the hero that cast it and a spread move lights both foes at once.
+tint. This pass adds the element itself, on the beat **the payload lands**: "Fang takes 52
+damage" is the frame the bolt drops on Fang, with the recoil and the number, the way a crit's
+flash and its stamp share a beat. buildBeats stamps `fx: BeatFx[]` on the beat a target takes
+the move's payload — the DamageDealt, the Healed, the StatChanged, the StatusApplied — once per
+target per declaration (a rider status behind a hit does not light the figure twice), except that
+every hit of a multi-hit move lands. The caster paying its own price (recoil, retribution, a
+self-HP cost) is not the element arriving anywhere and gets nothing.
 
-**One effect per type, whatever the move.** The type is the column the chart is read at, so it
-is the one thing every move of a type has in common, and the one thing the player is already
-tracking when the move is declared. A per-move animation is the obvious later refinement; this
-is the floor every move stands on the day it is authored.
+It went on the **declaration** beat first, the Pokémon order — animation, then the bar drains —
+which the beat model gave for free; the user moved it. On the declaration nothing has happened
+yet, and an element blazing over a target whose number is still a tap away read as the animation
+being early rather than the damage being late.
+
+**Two shapes, chosen by side.** A target on the caster's OWN side takes the one universal
+**buff** — a ring rising off the ground through the figure, motes climbing inside a tinted aura,
+and the type's glyph lifting out as a medallion off the shoulder (centred, it covered exactly the
+part of the sprite that identifies the hero). What is said is "granted", and only the ink and the
+glyph say of what; a Fire buff and a Light heal are the same verb in two colours. A foe takes the
+type's own **element**, one effect per type whatever the move — the type is the column the chart
+is read at, so it is the one thing every move of a type has in common. This keeps the fifteen
+element effects the vocabulary of harm: fire climbing a hero that was just *Stoked* read as the
+hero being burned. A per-move animation is the obvious later refinement; this is the floor every
+move stands on the day it is authored.
 
 ### The effects (`TypeFx.tsx`, styles.css "Type FX")
 
@@ -3225,8 +3240,8 @@ the keyframes; the particles are bare `<i>`s numbered by `--i`/`--n` so one rule
 with `--j` a fixed shuffle for staggers so nothing lights up left-to-right like a marquee. Each is
 anchored to the figure's centre by the independent `translate` property, which is what lets every
 keyframe set own `transform` outright. It plays over the sprite (`z-index` in the stage), under the
-popup, times itself out (`TYPE_FX_MS`) rather than clearing on the next beat — so a quick tap into
-the damage beat leaves the claw marks still fading as the number lands, which is the exchange read
+popup, times itself out (`TYPE_FX_MS`) rather than clearing on the next beat — so a quick tap past
+the damage beat leaves the claw marks still fading over the next line, which is the exchange read
 as one thing.
 
 Fire climbs from the ground in six flickering tongues over a bloom · Water surges up with a white
@@ -3244,11 +3259,13 @@ the slowest (1080ms) and Iron the fastest (380ms), on purpose.
 
 ### The sounds (`sounds.ts` "The element itself")
 
-Fifteen `cast.<Type>` rows in the same voice vocabulary, played by `beatSfx` on the declaration
-beat in place of the plain `cast` wind-up — which stays, for a type with no cast of its own. Each
-is the element *manifesting*, never the blow: the hit still lands on the next beat and has to be
-free to land on top, so every cast leaves the low end alone except the three that are themselves
-a weight landing (Stone, Ancient, Storm's thunder). Fire is a gust catching with three crackle
+Fifteen `cast.<Type>` rows in the same voice vocabulary, layered by `beatSfx` under whatever
+the landing beat already plays — the hit, the heal, the stat chime — the way a crit layers under
+a hit, a step quieter (0.8, and 0.6 under a buff) so the type is the colour of the beat and not
+the event. The plain `cast` wind-up stays on the declaration. Each is the element *manifesting*,
+never the blow: it sits under `hit.*` and has to stay audible through it, so every cast leaves the
+low end alone except the three that are themselves a weight landing (Stone, Ancient, Storm's
+thunder). Fire is a gust catching with three crackle
 ticks; Water a splash with two bloops; Frost three high bells and a brittle tick; Storm the crack
 with thunder 40ms behind; Stone one thud and two tumbling; Nature a rustle; Light rising sines
 with no low end; Shadow a detuned swell; Arcane a saw opening under bells; Mind wide-detuned pairs
@@ -3259,17 +3276,18 @@ page. Offline-rendered peaks were evened to 0.17–0.40 (the hits sit at 0.39–
 ### Verification
 
 A throwaway harness mounting fifteen real `CombatantCard`s (one hero per type) at 394×780,
-frames at ~120/300/520ms from headless Edge with animations paused; then a real Quick Battle
-driven over CDP, which caught Fang's Beast gashes on the enemy row and Brimstone's *Stoke the
-Flames* putting fire on both itself and Sylva. Two fixes came out of the frames: the bolt was
+frames at ~120/300/520ms from headless Edge with animations paused, and the buff over six types;
+then a real Quick Battle driven over CDP, which caught a Storm bolt on "Lucius takes 52 damage"
+with the recoil, and a Beast team buff (+20 ATK) raising two amber rings with paw medallions on
+the beat the banner said so. Two fixes came out of the frames: the bolt was
 too thin to register at 28px and was widened to 38px with a fatter polygon; Shadow's vignette
 and Light's column both showed the stage's rectangular edge and were softened to a halo and a
 horizontally masked column.
 
 **Open:** the bolt and the column both reach above the stage, which on the enemy row is the
-nameplate; a per-move animation layer; and whether the declaration beat is the right home once
-auto-play is the common way to watch a round (at 450ms a step the two beats overlap as intended;
-at Fast they do not, and the element is mostly gone before it is seen).
+nameplate; a per-move animation layer; the cast sound under the hit is untested by ear (two
+noise-led sounds in one beat could mush — the gain step is the dial); and at Fast auto-play the
+element is mostly gone before it is seen.
 
 ## Open / future improvements
 

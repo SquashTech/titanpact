@@ -85,6 +85,15 @@ export function playBeatSfx(beat: Beat): void {
   const lead = leadEvent(beat);
   if (!lead) return;
 
+  // The element arriving (sounds.ts "The element itself"), layered under the beat's own sound —
+  // the thud, the heal, the stat chime — the way a crit layers under a hit. Under, so the type is
+  // the colour of the beat and not the event: it is played a step quieter for that reason.
+  const landing = beat.fx?.[0];
+  if (landing) {
+    const typed = `cast.${landing.type}` as SfxId;
+    if (typed in sounds) playSfx(typed, { gain: landing.kind === 'buff' ? 0.6 : 0.8 });
+  }
+
   switch (lead.type) {
     case 'DamageDealt': {
       const id: SfxId = lead.category === 'physical' ? 'hit.physical' : 'hit.magical';
@@ -127,12 +136,9 @@ export function playBeatSfx(beat: Beat): void {
     case 'ManaRegenTicked':
       playSfx('mana', { gain: 0.7 });
       break;
-    case 'MoveUsed': {
-      // The type's own cast (sounds.ts "The element itself") when it has one; the plain wind-up otherwise.
-      const typed = beat.fx ? (`cast.${beat.fx.type}` as SfxId) : null;
-      playSfx(typed && typed in sounds ? typed : 'cast');
+    case 'MoveUsed':
+      playSfx('cast');
       break;
-    }
     case 'ActionBlocked':
       playSfx('ui.denied', { gain: 0.8 });
       break;

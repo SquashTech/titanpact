@@ -4067,13 +4067,13 @@ textarea,
 }
 
 /* ── Type FX: the element manifests on the target ──────────────────────
-   One effect per TYPE, played over the target's stage on the beat a move is
-   declared (buildBeats' `fx`, TypeFx.tsx), whatever the move — so every move
-   has an animation the day it is authored, and the animation says the one
-   thing every move of a type shares, which is the column the chart is read
-   at. The blow is still the NEXT beat (.hit-struck above): this is the
-   element arriving, not the damage landing, and it plays on a self-target
-   just the same, since a buff is the element too.
+   One effect per TYPE, played over a figure on the beat the move's payload
+   LANDS on it (buildBeats' `fx`, TypeFx.tsx) — with the damage, the recoil
+   and the number, not on the declaration — so the element arrives with its
+   consequence. Whatever the move: every move has an animation the day it is
+   authored, and it says the one thing every move of a type shares, which is
+   the column the chart is read at. A grant to the caster's own side plays
+   the universal BUFF instead (at the end of this block), in the type's ink.
 
    Built entirely from the container's two pseudo-elements and a handful of
    bare <i>s the component numbers with --i (0-based) and --n. Every piece is
@@ -4867,6 +4867,94 @@ textarea,
   0% { opacity: 0; transform: rotate(var(--a)) translateY(-54px) scale(0.5); }
   40% { opacity: 1; transform: rotate(var(--a)) translateY(-54px) scale(1.2); }
   100% { opacity: 0; transform: rotate(var(--a)) translateY(-54px) scale(0.8); }
+}
+
+/* BUFF — the one grant animation, for anything a move gives to the caster's
+   own side: a ring rising off the ground through the figure, motes climbing
+   inside it, and the type's glyph lifting out of the top. Universal on
+   purpose: what happened is "granted", and only the colour and the glyph say
+   of what — so a Fire buff and a Light heal read as the same verb in two
+   inks, and the fifteen element effects stay the vocabulary of harm. */
+.type-fx-buff::before {
+  width: 96px;
+  height: 22px;
+  top: var(--ground);
+  border-radius: 50%;
+  border: 2px solid rgba(var(--fx-rgb), 0.9);
+  box-shadow: 0 0 10px var(--fx-a), inset 0 0 10px var(--fx-faint);
+  animation: fx-buff-ring 820ms ease-out;
+}
+
+.type-fx-buff::after {
+  width: 90px;
+  height: 104px;
+  top: 52px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 100%, var(--fx-a), var(--fx-faint) 45%, transparent 72%);
+  animation: fx-buff-aura 820ms ease-out;
+}
+
+.type-fx-buff i {
+  width: 5px;
+  height: 5px;
+  top: var(--ground);
+  margin-left: calc((var(--i) - 2.5) * 15px);
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 6px var(--fx);
+  animation: fx-buff-mote 760ms ease-out;
+  animation-delay: calc(var(--j) * 45ms);
+}
+
+/* Off the shoulder, not over the face: centred it covered exactly the part of the sprite that identifies the hero. */
+.type-fx-buff .type-fx-glyph {
+  position: absolute;
+  left: calc(var(--cx) + 36px);
+  top: 28px;
+  translate: -50% -50%;
+  display: flex;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  background: rgba(var(--fx-rgb), 0.85);
+  box-shadow: 0 0 14px var(--fx-a), 0 0 0 2px rgba(255, 255, 255, 0.35);
+  animation: fx-buff-glyph 900ms ease-out both;
+  animation-delay: 120ms;
+}
+
+.type-fx-buff .type-fx-glyph .element-glyph {
+  width: 16px;
+  height: 16px;
+  vertical-align: 0;
+}
+
+@keyframes fx-buff-ring {
+  0% { opacity: 0; transform: translateY(0) scale(0.5, 1); }
+  20% { opacity: 1; transform: translateY(-4px) scale(1, 1); }
+  100% { opacity: 0; transform: translateY(-84px) scale(0.6, 0.7); }
+}
+
+@keyframes fx-buff-aura {
+  0% { opacity: 0; transform: scale(0.8, 0.3); }
+  35% { opacity: 1; transform: scale(1, 1); }
+  100% { opacity: 0; transform: scale(1.1, 1.15); }
+}
+
+@keyframes fx-buff-mote {
+  0% { opacity: 0; transform: translateY(6px) scale(0.5); }
+  20% { opacity: 1; transform: translateY(-10px) scale(1); }
+  100% { opacity: 0; transform: translateY(-74px) scale(0.4); }
+}
+
+@keyframes fx-buff-glyph {
+  0% { opacity: 0; transform: translateY(14px) scale(0.4); }
+  30% { opacity: 1; transform: translateY(-4px) scale(1.15); }
+  45% { transform: translateY(-2px) scale(1); }
+  80% { opacity: 1; transform: translateY(-12px) scale(1); }
+  100% { opacity: 0; transform: translateY(-26px) scale(0.8); }
 }
 
 /* Crit gets its own punchier overshoot-scale instead of the plain float, plus

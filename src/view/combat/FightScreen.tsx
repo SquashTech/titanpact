@@ -999,8 +999,11 @@ export function FightScreen({
       )
     );
     if (revealed.fx) {
-      const { type, combatantIds } = revealed.fx;
-      setFigureFx((prev) => ({ ...prev, ...Object.fromEntries(combatantIds.map((id) => [id, { key: popupSeq.current++, type }])) }));
+      const landings = revealed.fx;
+      setFigureFx((prev) => ({
+        ...prev,
+        ...Object.fromEntries(landings.map((l) => [l.combatantId, { key: popupSeq.current++, type: l.type, kind: l.kind }])),
+      }));
     }
     return true;
   }

@@ -575,13 +575,14 @@ export const sounds: Record<SfxId, SoundSpec> = {
   },
 
   /* ── The element itself ──────────────────────────────────────────────────
-     One cast per type, played on the declaration beat under the type's effect
-     (view/combat/TypeFx.tsx) in place of the plain wind-up above. Each is the
-     element MANIFESTING — a whoosh, a splash, a crack — and never the blow,
-     which is still the next beat's hit.* and must still be free to land on
-     top. So every one of these sits under 0.5s and leaves the low end alone
-     for the impact, except the three that are themselves a weight landing
-     (Stone, Ancient, Storm's thunder), which take it and hand it back fast. */
+     One cast per type, layered by beatSfx under the beat on which the move's
+     payload LANDS — under the hit, the heal, the stat chime — while the type's
+     effect plays over the figure (view/combat/TypeFx.tsx). Each is the element
+     MANIFESTING — a whoosh, a splash, a crack — and never the blow, which is
+     the hit.* it sits under and must stay audible through it. So every one of
+     these sits under 0.5s and leaves the low end alone for the impact, except
+     the three that are themselves a weight landing (Stone, Ancient, Storm's
+     thunder), which take it and hand it back fast. */
 
   /** A gust catching, then the crackle riding on it. Three short ticks, not one hiss: fire pops. */
   'cast.Fire': {
