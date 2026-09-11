@@ -384,8 +384,8 @@ export function App() {
   const shellRef = useRef<HTMLDivElement>(null);
 
   // A Guardian's fall bumps `actNumber` before its spoils are handed out, so between that win
-  // and the arrival screen the run is standing in a place it has not travelled to yet. Only the
-  // music reads this (see `trackId`) — the reward screens keep the new act's tint.
+  // and the arrival screen the run is standing in a place it has not travelled to yet. The
+  // ambient Location — sky and music both — stays with the act just cleared until `enterAct`.
   const [actBreak, setActBreak] = useState(false);
 
   // Read once at boot. A save this build refuses (older version, content since removed) is
@@ -911,20 +911,18 @@ export function App() {
     });
   }
 
+  // Across an act break the place stays with the act just cleared: the Banner, the contract, the
+  // Crucible and the spoils belong to the fight that paid them, and the next act's sky and music
+  // are the arrival screen's to start (`enterAct`).
   const ambientLocation =
     PLACELESS_SCREENS.has(screen.kind) || playerRun.locationIds.length === 0
       ? null
-      : locationForAct(playerRun.locationIds, playerRun.actNumber);
+      : locationForAct(playerRun.locationIds, actBreak ? playerRun.actNumber - 1 : playerRun.actNumber);
 
   // The act's location IS the track; computed above the screen switch so music survives map <-> fight.
   // A location with no authored track fades to silence rather than carrying the previous act's music.
   // The title is the exception — it is placeless, so it names its own track (audio/tracks.ts).
-  // Except across an act break, where it stays with the act just cleared: the Banner, the
-  // contract and the spoils belong to the fight that paid them, and the next act's music is
-  // the arrival screen's to start (`enterAct`).
-  const musicLocation =
-    actBreak && ambientLocation ? locationForAct(playerRun.locationIds, playerRun.actNumber - 1) : ambientLocation;
-  const trackId = screen.kind === 'title' ? 'titleScreen' : hasTrack(musicLocation?.id) ? musicLocation.id : null;
+  const trackId = screen.kind === 'title' ? 'titleScreen' : hasTrack(ambientLocation?.id) ? ambientLocation.id : null;
   useEffect(() => {
     setTrack(trackId);
   }, [trackId]);

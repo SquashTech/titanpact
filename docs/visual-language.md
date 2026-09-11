@@ -3099,6 +3099,54 @@ So the hold went in first. Three notes on doing that:
 `.draft-info`, which survives because the draft is the one screen where a hero has no roster entry
 to hold.
 
+## Twenty-eighth pass — the Crucible is a place (2026-09-10)
+
+*Per user direction: "make the Crucible screen way more interesting and epic. Currently it's just
+a bunch of boring boxes."*
+
+### What was wrong
+
+The Crucible was the tenth pass's pick-a-hero grid — six `.pick-card`s under a header — and the
+tenth pass was right that one shape should serve every pick-a-hero screen *of the same weight*.
+The Crucible is not of the same weight. The Forge asks which hero gets a slot; the Crucible asks
+which hero is permanently remade, once an act, with no way back once the next screen opens. It
+was drawn identically to the screen that hands out an item slot, and the only thing that said
+otherwise was the readout.
+
+### What replaced it
+
+**A hanging bowl of molten gold, and the roster standing around it.** `crucibleArt.tsx` draws the
+vessel the way `titanArt.tsx` draws the Titan — one near-black fill for every plate, structure
+carried by the rim highlights, the whole thing cut into a light (`.crucible-heat`) emitted
+*before* it. The bowl is authored once at 394×200 and sized off one dial (`--vessel-scale`);
+the chains, the embers' source line and the ranks' floor are all derived from the rim it puts
+at y=74, so the composition survives the dial being turned.
+
+- **Two ranks, lit from below.** The nearer three stand on the far side of the rim with their
+  names on it; the rest a step up and behind, at 72% brightness. Depth is carried by light and
+  never by size — a 48px source scales to 96 and to nothing in between. Every portrait's drop
+  shadow falls *up* and warm, where every other portrait's in the game falls down.
+- **No boxes at rest.** A figure is the battlefield idiom: nothing around it until it is the one
+  chosen, then a hot frame in the *fire's* colour rather than the hero's type, because it is the
+  Crucible claiming them. That frame is also a new step — the old screen went straight from tap
+  to the Evolution screen, which has no back button, so a mis-tap on the most permanent choice
+  in the run was unrecoverable. Now a tap **arms** (the hero steps toward the bowl, the fire
+  brightens, the rest step back into the dark) and the CTA commits, carrying the name.
+- **Ash.** An evolved hero stands greyed, still holdable for its sheet, with a small tag. It
+  stays on the screen because the narrowing choice is the point of showing it.
+- **Nothing here loops.** Heat 2.7s, slick 5.3, bubbles 3.9, smoke 9.7/12.3/14.9, embers
+  4.2–7.8 — the same no-common-divisor rule as the Titan, so the fire never returns to a frame
+  the eye has seen. Everything is transform/opacity on its own layer, and the global
+  reduced-motion collapse at the top of the stylesheet takes all of it down at once.
+- **Cold.** With nobody left to evolve the melt goes dark, the glow, embers and smoke stop, the
+  title changes, and the CTA is the exit. The chains and the lip keep their metal.
+
+### Verification
+
+Rendered through the throwaway harness at 394×780: six heroes with two evolved, a hero armed,
+a four-hero roster, and the cold state. The chains converge on a point above the title in every
+case, and the CTA stays on the bottom edge with the vessel's plinth running off the frame under it.
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.

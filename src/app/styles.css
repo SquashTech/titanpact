@@ -21795,6 +21795,489 @@ textarea,
   }
 }
 
+/* --- The Crucible (CrucibleScreen.tsx) ------------------------------------
+
+   A place, not a grid (2026-09-10, per user direction — "just a bunch of boring
+   boxes"). A hanging bowl of molten gold at the foot of the frame is the one
+   light source; the roster stands around it in two ranks, lit from below, and
+   the chosen hero steps to the rim. Same idiom as the battlefield: no figure
+   wears a box at rest, and the frame arrives with the choice.
+
+   Everything animated here is transform/opacity on its own layer, and none of
+   the periods divide into each other (heat 2.7, slick 5.3, bubbles 3.9, embers
+   4.2–7.8), so the fire never settles into a loop the eye can catch. */
+
+.crucible-stage {
+  /* The vessel is authored 394×200 with its rim at y=74 and the rim ends at x=47/347; everything
+     that hangs from it or stands on it is placed off these, so one dial resizes the bowl. */
+  --vessel-scale: 1.22;
+  --vessel-w: calc(394px * var(--vessel-scale));
+  --vessel-h: calc(200px * var(--vessel-scale));
+  --rim-up: calc(126px * var(--vessel-scale));
+  --rim-half: calc(150px * var(--vessel-scale));
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  /* The stage owns its own light; the sky's wash stays behind it. */
+  overflow: hidden;
+  margin: 0 calc(var(--shell-pad) * -1);
+}
+
+/* The fire's throw: a warm pool rising from the bowl, breathing. It is emitted
+   BEFORE the vessel and the figures so both are cut into it. */
+.crucible-heat {
+  position: absolute;
+  left: 50%;
+  bottom: -40px;
+  width: 560px;
+  height: 460px;
+  transform: translateX(-50%);
+  transform-origin: 50% 100%;
+  background: radial-gradient(
+    ellipse at 50% 100%,
+    rgba(255, 196, 90, 0.62),
+    rgba(240, 120, 40, 0.34) 28%,
+    rgba(160, 50, 20, 0.14) 52%,
+    transparent 72%
+  );
+  animation: crucible-heat-breathe 2.7s ease-in-out infinite;
+  transition: opacity 0.6s var(--ease-out), filter 0.6s var(--ease-out);
+  pointer-events: none;
+}
+
+@keyframes crucible-heat-breathe {
+  0%,
+  100% {
+    opacity: 0.82;
+    transform: translateX(-50%) scale(1, 1);
+  }
+  38% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.04, 1.03);
+  }
+  71% {
+    opacity: 0.9;
+    transform: translateX(-50%) scale(0.98, 1.01);
+  }
+}
+
+/* Armed, the fire leans up to meet the hero at the rim. */
+.crucible-screen.is-armed .crucible-heat {
+  filter: brightness(1.25) saturate(1.15);
+}
+
+.crucible-screen.is-cold .crucible-heat {
+  opacity: 0.12;
+  animation: none;
+}
+
+/* The bowl. Sized to the frame and pinned to the floor; the ranks stand on it. */
+.crucible-vessel {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: var(--vessel-w);
+  height: var(--vessel-h);
+  transform: translateX(-50%);
+  filter: drop-shadow(0 -6px 22px rgba(255, 170, 60, 0.35));
+}
+
+.crucible-melt {
+  transform-origin: 197px 74px;
+  animation: crucible-melt-pulse 3.9s ease-in-out infinite;
+}
+
+@keyframes crucible-melt-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.86;
+  }
+}
+
+/* A slick of the brightest gold drifting across the surface. */
+.crucible-slick {
+  animation: crucible-slick-drift 5.3s ease-in-out infinite;
+}
+
+@keyframes crucible-slick-drift {
+  0%,
+  100% {
+    transform: translateX(-14px) scaleX(1);
+    opacity: 0.42;
+  }
+  50% {
+    transform: translateX(14px) scaleX(1.12);
+    opacity: 0.6;
+  }
+}
+
+/* Bubbles: each grows from nothing, holds, and pops. Delays are staggered per bubble inline. */
+.crucible-bubble {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: crucible-bubble-pop 3.9s ease-in-out infinite;
+}
+
+@keyframes crucible-bubble-pop {
+  0%,
+  55% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  82% {
+    transform: scale(1.3);
+    opacity: 0.6;
+  }
+  86%,
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+.crucible-screen.is-cold .crucible-vessel {
+  filter: none;
+}
+
+.crucible-screen.is-cold .crucible-melt,
+.crucible-screen.is-cold .crucible-slick,
+.crucible-screen.is-cold .crucible-bubble {
+  animation: none;
+}
+
+.crucible-screen.is-cold .crucible-melt {
+  opacity: 0.18;
+  filter: saturate(0.3);
+}
+
+.crucible-screen.is-cold .crucible-slick,
+.crucible-screen.is-cold .crucible-bubble {
+  opacity: 0;
+}
+
+/* The chains it hangs from — from the rim's two ends up out of the frame, converging on
+   a point somewhere above the title, and lit only near the fire. */
+.crucible-chain {
+  position: absolute;
+  bottom: calc(var(--rim-up) - 8px);
+  width: 16px;
+  height: calc(100% - var(--rim-up) + 8px);
+  transform-origin: 50% 100%;
+  -webkit-mask-image: linear-gradient(to top, #000 0, rgba(0, 0, 0, 0.75) 40%, rgba(0, 0, 0, 0.3) 100%);
+  mask-image: linear-gradient(to top, #000 0, rgba(0, 0, 0, 0.75) 40%, rgba(0, 0, 0, 0.3) 100%);
+  pointer-events: none;
+}
+
+.crucible-chain.is-left {
+  left: calc(50% - var(--rim-half) - 8px);
+  transform: rotate(9deg);
+}
+
+.crucible-chain.is-right {
+  left: calc(50% + var(--rim-half) - 8px);
+  transform: rotate(-9deg);
+}
+
+/* Embers, shed from the melt and climbing the whole stage. */
+.crucible-embers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.crucible-ember {
+  position: absolute;
+  left: var(--ember-x);
+  bottom: calc(var(--rim-up) - 14px);
+  width: var(--ember-size);
+  height: var(--ember-size);
+  border-radius: 50%;
+  background: #ffd27a;
+  box-shadow: 0 0 6px 1px rgba(255, 160, 50, 0.8);
+  opacity: 0;
+  animation: crucible-ember-rise var(--ember-dur) linear infinite;
+  animation-delay: var(--ember-delay);
+}
+
+@keyframes crucible-ember-rise {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  60% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(var(--ember-drift), -420px) scale(0.3);
+    opacity: 0;
+  }
+}
+
+.crucible-screen.is-cold .crucible-ember {
+  animation: none;
+}
+
+/* Smoke: three soft plumes climbing from the melt through the dark above the ranks, so the
+   upper half of the stage is heat-haze rather than nothing. Periods 9.7 / 12.3 / 14.9. */
+.crucible-smoke {
+  position: absolute;
+  left: 50%;
+  bottom: var(--rim-up);
+  width: 170px;
+  height: 170px;
+  margin-left: -85px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 190, 120, 0.16), rgba(200, 120, 70, 0.07) 45%, transparent 70%);
+  filter: blur(14px);
+  opacity: 0;
+  animation: crucible-smoke-rise var(--smoke-dur) ease-out infinite;
+  animation-delay: var(--smoke-delay);
+  pointer-events: none;
+}
+
+@keyframes crucible-smoke-rise {
+  0% {
+    transform: translate(0, 40px) scale(0.5);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--smoke-drift), -520px) scale(1.9);
+    opacity: 0;
+  }
+}
+
+.crucible-screen.is-cold .crucible-smoke {
+  animation: none;
+}
+
+/* --- The ranks --- */
+
+.crucible-ranks {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* The front rank stands on the far side of the bowl, names on its rim; the back rank a step
+     up and behind. The melt stays in front of everyone. */
+  padding-bottom: calc(var(--rim-up) + 30px);
+}
+
+.crucible-rank {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.crucible-rank.is-back {
+  margin-bottom: -22px;
+  z-index: 0;
+}
+
+.crucible-rank.is-front {
+  z-index: 1;
+}
+
+.crucible-figure {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 112px;
+  padding: 6px 4px 4px;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: transform var(--dur-mid) var(--ease-spring), opacity var(--dur-mid) var(--ease-out), filter var(--dur-mid) var(--ease-out);
+}
+
+/* Further from the fire: darker, and the ground under it barely catches the light. */
+.crucible-rank.is-back .crucible-figure {
+  filter: brightness(0.72);
+}
+
+.crucible-portrait {
+  position: relative;
+  z-index: 1;
+  width: 96px;
+  height: 96px;
+  image-rendering: pixelated;
+  /* Lit from below: the shadow falls UP and warm, where every other portrait's falls down. */
+  filter: drop-shadow(0 -4px 8px rgba(255, 160, 60, 0.35)) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+  transform-origin: center bottom;
+  --idle-period: 3.1s;
+  --idle-squash: 0.035;
+  animation: hero-idle-breath calc(var(--idle-period) * var(--idle-rate, 1)) ease-in-out infinite;
+  animation-delay: calc(var(--idle-period) * var(--idle-rate, 1) * var(--idle-phase, 0) * -1);
+}
+
+/* The fire on the floor under each hero. */
+.crucible-figure-ground {
+  position: absolute;
+  left: 50%;
+  top: 92px;
+  width: 92px;
+  height: 22px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 50%, rgba(255, 190, 90, 0.55), rgba(240, 120, 40, 0.22) 55%, transparent 75%);
+  filter: blur(1px);
+  transition: opacity var(--dur-mid) var(--ease-out), transform var(--dur-mid) var(--ease-out);
+}
+
+.crucible-figure-name {
+  position: relative;
+  z-index: 1;
+  margin-top: 2px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  transition: color var(--dur-mid) var(--ease-out);
+}
+
+.crucible-figure-types {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 1px;
+}
+
+/* The frame: nothing at rest, the affordance once chosen. A hot rim in the fire's
+   colour rather than the hero's type — it is the Crucible claiming them. */
+.crucible-figure-frame {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 200, 110, 0);
+  box-shadow: 0 0 0 0 rgba(255, 170, 60, 0);
+  transition: border-color var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out);
+  pointer-events: none;
+}
+
+.crucible-figure:hover:not(.is-ashen) .crucible-portrait {
+  filter: drop-shadow(0 -6px 10px rgba(255, 170, 60, 0.55)) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+}
+
+/* Chosen: a step down toward the bowl, brighter, framed, and the ground flares. */
+.crucible-figure.is-armed {
+  z-index: 2;
+  transform: translateY(8px) scale(1.06);
+  filter: none;
+}
+
+.crucible-figure.is-armed .crucible-figure-frame {
+  border-color: rgba(255, 200, 110, 0.85);
+  background: linear-gradient(180deg, rgba(255, 170, 60, 0.05), rgba(255, 140, 40, 0.16));
+  box-shadow:
+    0 0 0 1px rgba(255, 140, 40, 0.35),
+    0 0 22px 4px rgba(255, 160, 50, 0.45),
+    inset 0 -18px 24px -12px rgba(255, 150, 40, 0.45);
+  animation: crucible-frame-pulse 1.9s ease-in-out infinite;
+}
+
+@keyframes crucible-frame-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(255, 140, 40, 0.35),
+      0 0 22px 4px rgba(255, 160, 50, 0.45),
+      inset 0 -18px 24px -12px rgba(255, 150, 40, 0.45);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(255, 170, 70, 0.6),
+      0 0 34px 8px rgba(255, 170, 60, 0.7),
+      inset 0 -22px 28px -12px rgba(255, 170, 60, 0.6);
+  }
+}
+
+.crucible-figure.is-armed .crucible-figure-ground {
+  transform: translateX(-50%) scale(1.25);
+  opacity: 1;
+}
+
+.crucible-figure.is-armed .crucible-figure-name {
+  color: var(--accent);
+}
+
+.crucible-figure.is-armed .crucible-portrait {
+  filter: drop-shadow(0 -8px 14px rgba(255, 180, 70, 0.75)) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+}
+
+/* The rest step back into the dark once someone is at the rim. */
+.crucible-figure.is-dimmed {
+  opacity: 0.55;
+}
+
+.crucible-rank.is-back .crucible-figure.is-dimmed {
+  filter: brightness(0.5);
+}
+
+/* Already walked it: ash. Still holdable for the sheet, never armable. */
+.crucible-figure.is-ashen {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.crucible-figure.is-ashen .crucible-portrait {
+  filter: grayscale(0.85) brightness(0.7) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+  animation: none;
+}
+
+.crucible-figure.is-ashen .crucible-figure-ground {
+  opacity: 0.25;
+}
+
+.crucible-figure.is-ashen .crucible-figure-name {
+  color: var(--text-dim);
+}
+
+.crucible-figure-ashen {
+  position: absolute;
+  top: 8px;
+  right: 6px;
+  z-index: 2;
+  padding: 2px 5px;
+  border-radius: var(--radius-xs);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(10, 11, 15, 0.8);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.crucible-screen.is-cold .crucible-figure-ground {
+  opacity: 0.1;
+}
+
+/* The commit. Disabled, it is the instruction; armed, it carries the name. */
+.crucible-enter:disabled {
+  opacity: 0.55;
+}
+
 /* --- The scripted first run (docs/tutorial.md) -------------------------------
    Valor talking the player through Act 1. Docked at the bottom rather than
    centred, and the scrim dims WITHOUT the blur every modal panel uses: she is
