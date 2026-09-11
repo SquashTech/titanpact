@@ -16297,7 +16297,7 @@ textarea,
    not sprites). Back to front: the layered-gradient ground plus the faint
    tactical grid .battlefield also carries, so the title reads as the same
    world; the backlight the figure is a hole in (.title-backlight); the bound
-   Titan itself (.title-titan, authored in titanArt.tsx); three slow blurred
+   Titan's eyes (.title-titan, authored in titanArt.tsx); three slow blurred
    fog bands drifting at different speeds and in opposite directions
    (.title-fog-*), which is what makes the stillness feel like held breath
    rather than a static image; a cold ash field rising and swaying
@@ -16496,13 +16496,12 @@ textarea,
 }
 
 /* --- The Titan (titanArt.tsx `TitanColossus`) -----------------------------
-   The screen's subject, and the reason it is not just a wordmark on fog. It
-   sits BEHIND the three drifting fog bands on purpose: a colossus you can see
-   the whole of is a statue, and one the weather keeps taking pieces of is
-   still moving. Nothing here is a raster asset (see the CSS-not-sprites rule
-   at the top of the status block) — it is one masked SVG plus four animations
-   that never resolve: a breath, a rim that swells, chains that carry a slow
-   strain, and two eyes that will not settle. */
+   The screen's subject, and the reason it is not just a wordmark on fog: two
+   eyes and the brow over them, no body. It sits BEHIND the three drifting fog
+   bands on purpose — a thing the weather keeps taking pieces of is still
+   moving. Nothing here is a raster asset (see the CSS-not-sprites rule at the
+   top of the status block) — one SVG plus two animations that never resolve:
+   a breath, and two eyes that will not settle. */
 .title-titan {
   position: absolute;
   inset: 0;
@@ -16513,10 +16512,7 @@ textarea,
   transform-origin: 50% 100%;
 }
 
-/* Every plate, horn and band in the figure. One flat near-black rather than a
-   gradient per shape: the plates are told apart by the rim strokes laid over
-   their edges, and any fill difference between two overlapping plates draws a
-   seam where the figure is supposed to be one mass. */
+/* The brow: near-black, read only by where it cuts the backlight. */
 .titan-mass {
   fill: #02050a;
 }
@@ -16537,60 +16533,6 @@ textarea,
   }
   46% {
     transform: scale(1.008, 1.012);
-  }
-}
-
-.titan-rim {
-  stroke: rgba(176, 216, 232, 0.6);
-  stroke-width: 1.5;
-  filter: drop-shadow(0 0 4px rgba(140, 190, 214, 0.45));
-  animation: titan-rim-swell 13s ease-in-out infinite;
-}
-
-/* Interior detail rather than an edge of the figure — the ridges across a
-   plate, not the plate's own outline, so it has to sit well under it. */
-.titan-rim .is-faint {
-  stroke-width: 1;
-  stroke-opacity: 0.34;
-}
-
-/* The haze thickens and thins, so the edge is never a fixed drawn line. On
-   `opacity` rather than `stroke-opacity`: the group carries a drop-shadow, and
-   opacity applies AFTER the filter, so the blur is rasterized once instead of
-   on every frame of a 13-second loop. */
-@keyframes titan-rim-swell {
-  0%,
-  100% {
-    opacity: 0.72;
-  }
-  38% {
-    opacity: 1;
-  }
-}
-
-/* The intact chain is taut and the broken length swings, which is the only
-   part of this figure that moves independently of the breath — a hanging
-   chain is the tell that the thing it was holding has already shifted. */
-.titan-chains {
-  stroke: rgba(160, 202, 220, 0.3);
-}
-
-.titan-chain-loose {
-  fill: none;
-  stroke: rgba(160, 202, 220, 0.42);
-  stroke-width: 1.8;
-  transform-box: fill-box;
-  transform-origin: 50% 0%;
-  animation: titan-chain-swing 7.4s ease-in-out infinite;
-}
-
-@keyframes titan-chain-swing {
-  0%,
-  100% {
-    transform: rotate(-3.5deg);
-  }
-  50% {
-    transform: rotate(3.5deg);
   }
 }
 
@@ -16858,7 +16800,11 @@ textarea,
    The rings counter-rotate at unrelated periods so the figure never returns
    to a pose it has held before — a seal that visibly loops is a spinner. The
    outer ring's ticks are a repeating-conic-gradient masked to an annulus
-   rather than N elements, so the count costs nothing. */
+   rather than N elements, so the count costs nothing.
+   ┄
+   The outer ring is the type chart (.title-seal-wheel, titleTypeWheel.tsx):
+   fifteen glyphs on its hairline and a chord for every 2× cell, spinning with
+   the ticks at the ticks' own period so the two never drift apart. */
 .title-seal {
   position: absolute;
   top: 50%;
@@ -16882,10 +16828,12 @@ textarea,
   height: 300px;
   /* Graduation ticks. The mask is what makes it a ring of marks instead of a
      filled pinwheel; without it the conic gradient paints all the way in. */
+  /* One tick between each pair of type glyphs: 24° apart, offset to the
+     glyphs' own 6° start so each lands mid-gap (titleTypeWheel.tsx START_DEG). */
   background: repeating-conic-gradient(
-    from 0deg,
+    from 18deg,
     rgba(224, 166, 60, 0.34) 0deg 1.1deg,
-    transparent 1.1deg 15deg
+    transparent 1.1deg 24deg
   );
   /* `closest-side` is load-bearing: a bare `circle` sizes to farthest-CORNER,
      so 46–50% would land at radius ~100 on a 300px box instead of ~150 and the
@@ -16911,6 +16859,62 @@ textarea,
   border: 1px solid rgba(224, 166, 60, 0.22);
   box-shadow: inset 0 0 26px rgba(224, 166, 60, 0.07);
   animation: title-seal-breathe 9s ease-in-out infinite;
+}
+
+/* The chart. Kept well under the wordmark's light: the chords and the glyphs
+   are what you find when you look, not what you see first. Below the wordmark
+   the dial dissolves into the fog rather than running under the buttons, so
+   the lower types are the ones still to come round rather than half a glyph
+   showing past a button's corner. */
+.title-seal-wheel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 364px;
+  height: 364px;
+  transform: translate(-50%, -50%);
+  opacity: 0.62;
+  -webkit-mask-image: linear-gradient(to bottom, #000 56%, transparent 82%);
+  mask-image: linear-gradient(to bottom, #000 56%, transparent 82%);
+}
+
+.title-seal-dial {
+  display: block;
+  overflow: visible;
+  animation: title-dial-spin 220s linear infinite;
+}
+
+@keyframes title-dial-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.title-seal-chords line {
+  stroke-width: 0.9;
+}
+
+.title-seal-node {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: title-wheel-unspin 220s linear infinite;
+}
+
+.title-seal-node circle {
+  fill: rgba(6, 12, 18, 0.92);
+  stroke: currentColor;
+  stroke-opacity: 0.55;
+  stroke-width: 1;
+}
+
+.title-seal-node svg {
+  opacity: 0.85;
+}
+
+@keyframes title-wheel-unspin {
+  to {
+    transform: rotate(-360deg);
+  }
 }
 
 @keyframes title-seal-spin {

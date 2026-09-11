@@ -4,6 +4,7 @@ import { LocationSelectOverlay } from './LocationSelectOverlay';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { RecordsScreen } from './RecordsScreen';
 import { TitanColossus, TitanRidge } from './titanArt';
+import { TitleTypeWheel } from './titleTypeWheel';
 import { HubGlyph } from '../shared/nodeIcons';
 import type { SaveSummary } from '../../run/save';
 import type { Profile } from '../../run/profile';
@@ -188,6 +189,7 @@ export function TitleScreen({
             <span className="title-seal-ring is-outer" />
             <span className="title-seal-ring is-mid" />
             <span className="title-seal-ring is-inner" />
+            <TitleTypeWheel />
             <span className="title-seal-sigils">
               {SEAL_SIGILS.map((s) => (
                 <span
