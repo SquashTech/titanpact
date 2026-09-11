@@ -7,8 +7,13 @@ import { ElementGlyph } from './elementIcons';
 import { HeroPortrait } from './HeroPortrait';
 import { useLongPress } from './MoveTile';
 
-// The shared "pick a hero" card: figure on type-tinted ground, one CTA line. Tap acts; hold (or
-// the `i` button) opens `onPreview`. Portrait is 48px in a 3-column grid, 96px in a 2-column one.
+// The shared "pick a hero" card: figure on type-tinted ground, one CTA line. Tap acts; HOLD opens
+// `onPreview`. Portrait is 48px in a 3-column grid, 96px in a 2-column one.
+//
+// There used to be a small `i` in the corner doing what the hold does — so a card offered three
+// affordances for two verbs, and the one that looked most like a button was the one that did not
+// commit anything. Holding is already the game's inspect verb everywhere else (a move, a status, an
+// item, a roster card), and every screen that mounts this says so in its own readout.
 interface HeroPickCardProps {
   hero: HeroDefinition;
   entry: RosterEntry;
@@ -59,20 +64,6 @@ export function HeroPickCard({
       }}
       {...longPress}
     >
-      {onPreview && (
-        <button
-          type="button"
-          className="pick-info"
-          onClick={(e) => {
-            e.stopPropagation();
-            onPreview();
-          }}
-          aria-label={`View ${hero.name} details`}
-        >
-          i
-        </button>
-      )}
-
       {overlay}
 
       <div className="pick-figure">

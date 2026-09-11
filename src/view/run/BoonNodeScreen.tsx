@@ -106,7 +106,7 @@ export function BoonNodeScreen({ run, onRunChange, onContinue }: Props) {
           glyph={confirmed ? <PassiveGlyph passiveId={confirmed.id} /> : undefined}
           readout={
             confirmed
-              ? confirmed.description
+              ? `${confirmed.description} Hold a hero to review its sheet.`
               : 'Tap a boon to select it, then choose who it settles on. It stays with them for the rest of the run.'
           }
         />

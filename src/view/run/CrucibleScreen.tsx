@@ -109,7 +109,7 @@ export function CrucibleScreen({ run, onRunChange, onContinue }: Props) {
         title="One of you changes"
         readout={
           eligible.length > 0
-            ? 'Choose the hero. The path they take is permanent for the rest of the run.'
+            ? 'Choose the hero — hold one to review its sheet first. The path they take is permanent for the rest of the run.'
             : 'Every hero has already walked it. Nothing left to burn.'
         }
       />

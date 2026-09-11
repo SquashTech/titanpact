@@ -2842,9 +2842,8 @@ files committed here are view-only.
 
 ### What is still open, across the whole sweep
 
-- **The hamburger**, on the map header and the fight console's Menu key. Named in the audit,
-  deliberately not taken: the fix is a new object rather than a restyle.
-- **Two affordances for one thing** on `HeroPickCard` — a corner `i` button and an INSPECT line on
+- ~~**The hamburger**~~ — resolved as KEPT in the twenty-seventh pass below, with the reason.
+- ~~**Two affordances for one thing**~~ — done in the twenty-seventh pass below. Was: on `HeroPickCard` — a corner `i` button and an INSPECT line on
   the same card, with long-press doing it too. Three ways into one sheet.
 - **The equipment card is still a row** (icon, name, RARITY in caps, stat chips, price) even though
   the plate now carries the rarity as light. Removing the caps word is a content call.
@@ -2960,6 +2959,100 @@ plus the Banner row at 3× to check the charges against the cloth.
 Shadow, Spirit, Iron, Beast and Undead move slates in the same tree all day. The failing set is
 identical to the one standing before this pass began (passives, per-type slates, the grade budget),
 the engine tests do not compile `src/view`, and the four files committed here are view-only.
+
+## Twenty-seventh pass — the battlefield gauge, and one affordance too many (2026-09-10)
+
+*The last two items off the audit. Per user direction after a review of what was left: "do the
+hp/mp bars and drop the i".*
+
+### The bars were the last stock widget in the arena
+
+Flat saturated capsules — `#4caf6a` and `#4a90d9`, Material's own green and blue at full strength
+— with white numerals set inside them. An HTML `<progress>` element, and it mattered more than its
+size: **everything around it had been authored**, so being surrounded by that made the bars louder
+rather than quieter. The figures stand on type-tinted platforms, the console is lit in the
+commanding hero's domain, the popups wear their status's own mark, and then the single most-read
+object on the screen is a Bootstrap progress bar.
+
+**Six treatments were rendered at the real 13px and looked at before picking anything**, the same
+method the ninth glyph and the Titan's head needed. What that settled, in order of usefulness:
+
+- **The pill had to go first.** A full-width capsule with rounded ends is the canonical progress
+  bar and no amount of bevel survives it. Every good variant was squared.
+- **A chamfered plate was handsome and was doing none of the work.** It looked the most "designed"
+  of the six, but side by side with a squared track the difference was carried entirely by the lit
+  head and the saturation drop — and a 3px chamfer at 13px tall is invisible anyway. It would also
+  have cost the track its outer ring, since a `clip-path` takes the `box-shadow` with it
+  (twentieth pass). Dropped.
+- **Discrete cells at an 8px pitch fought the numerals into mush**, and ten-percent ticks crowded a
+  186px bar. **Quarters** are the most a bar this wide takes before the marks read as texture.
+
+So: a squared slot cut into the figure's ground, graduated at the quarters over the **whole** track
+so the empty part is graduated too, with the fill's leading edge lit. The head is the part that
+matters — it is the reading, so it is the one part of the bar that should look lit, and an `inset`
+shadow rides the fill's own right edge at any value for free. The fills are held back to
+`saturate(0.86)` so the gauge sits **in** the scene's palette rather than on top of it; at full
+chroma these two were the most saturated objects on the battlefield, brighter than the hero sprites
+they belong to.
+
+The graduation is not decoration. It turns "a green bar" into "about half", readable without
+reading the numerals — which is what a player scanning four of these mid-fight is actually doing.
+
+### Three kinds of bar, two shapes — and the line is not where it looks
+
+The gauge goes to the battlefield figures, the target picker and the target panel's bench. The
+bench's own 5px sliver, the switch picker's 7px gauge and the hero sheet's 8px stat bars keep the
+capsule.
+
+**The line between them is where the NUMERALS sit, not what the bar measures.** The three that got
+the gauge carry their figure *inside* the track at 13px, which is what makes them instruments: the
+bar is the reading. The other three print their figure *beside* the bar — there the number is the
+reading and the bar is a second, softer cue, so a capsule is right and a notch at that height would
+only be noise. A first draft of this comment claimed the distinction was "live reading versus
+static", which the switch picker immediately falsifies: it is as live as anything on the
+battlefield and it still wants the capsule.
+
+### The `i` comes off the pick card
+
+A `HeroPickCard` offered **three affordances for two verbs**: a small `i` in the corner and a long
+press both opened the sheet, while a tap did the thing. The one that looked most like a button was
+the one that committed nothing — and it got worse when the twenty-sixth pass doubled the cards, at
+which point the `i` was a 20px target floating over a 96px portrait.
+
+Holding is already the game's inspect verb everywhere else — a move, a status, an item, a roster
+card — so the `i` was the odd one out rather than the safety net. It is gone, and with it
+`.pick-info`.
+
+**The cost is real and is paid in copy.** The Forge, the Tutor and the Mentor already said "hold to
+review" in their own readouts; three screens did not, and two of those commit something permanent.
+The Crucible, the Boon's vessel step and the roster-replacement screen now say it. **A screen that
+removes an affordance owes the remaining one a sentence** — particularly the two where the tap
+being explained is irreversible.
+
+### Verification
+
+Typecheck clean. Screenshotted in a real fight at 3× — full bars, and a spread of partial values
+driven in to check the lit head and the quarter marks at every level — plus the switch picker and a
+hero sheet to confirm the three capsule contexts are untouched, and the Crucible to confirm zero
+`.pick-info` nodes with long-press still opening the sheet.
+
+**The engine suite's nine failures are, again, not this**: another session has been authoring move
+slates in this tree all day, the failing set is unchanged, and the engine tests do not compile
+`src/view`.
+
+### What is left, and deliberately
+
+- **The hamburger stays.** Both the map's Options button and the fight console's Menu key open the
+  same system menu — sound, save, quit, abandon — which is not part of the fiction and is not
+  something a player should hunt for. Three bars is the one mark everybody already reads as
+  "everything else lives here", and the obvious alternative, a cog, collides with the Mech type
+  glyph, which can be on screen at the same time in combat. **This is the second thing the audit
+  flagged that turned out to be right** (the hero sheet's fixed height was the first), and it is
+  recorded here as decided rather than left on a list.
+- `.hint` is globally `color: var(--accent)`; only the shop screens have been scoped to the dim
+  voice. Everywhere else a loose advisory still reads as a warning.
+- The equipment card still prints its rarity in caps under the name, now that the plate carries
+  rarity as light. A content call, not a styling one.
 
 ## Open / future improvements
 

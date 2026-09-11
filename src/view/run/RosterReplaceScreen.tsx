@@ -100,7 +100,8 @@ export function RosterReplaceScreen({ roster, candidate, incomingEntry, relicIds
                 ))}
               </span>
               <span className="roster-replace-note">
-                Pick who {hero.name} replaces — they inherit that hero's gear, not their level, Evolutions or Class. Permanent.
+                Pick who {hero.name} replaces — hold one to review its sheet. They inherit that hero's gear, not their level,
+                Evolutions or Class. Permanent.
               </span>
             </>
           }

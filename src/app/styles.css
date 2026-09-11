@@ -2387,11 +2387,79 @@ textarea,
   position: relative;
 }
 
+/*
+ * THE BATTLEFIELD GAUGE (2026-09-10).
+ *
+ * These were flat saturated capsules with white numerals set inside them —
+ * `#4caf6a` and `#4a90d9`, Material's own green and blue, at full strength —
+ * which is an HTML `<progress>` element and was the last stock widget left in
+ * the arena. It mattered more than its size: everything around it had been
+ * authored (figures on type-tinted platforms, a console lit in the commanding
+ * hero's domain, popups wearing their status's own mark), and being surrounded
+ * by that made the bars louder rather than quieter.
+ *
+ * Three changes, and the pill is the one that had to go first: a full-width
+ * capsule with rounded ends is the canonical progress bar, and no amount of
+ * bevel survives it. The track is now a squared slot cut into the figure's
+ * ground, the fill is graduated at the quarters, and its head is lit.
+ *
+ * Six treatments were rendered at 13px and looked at before picking. Discrete
+ * cells (an 8px pitch) fought the numerals into mush; ten-percent ticks read as
+ * an instrument but crowded a 186px bar; a chamfered plate was handsome and
+ * turned out to be doing none of the work — the lit head and the saturation
+ * drop carried it, and a 3px chamfer at 13px tall is invisible anyway. It also
+ * would have cost the track its outer ring, since a clip-path takes the
+ * box-shadow with it (twentieth pass).
+ */
 .team-row .bar-track,
-.target-row .bar-track {
+.target-row .bar-track,
+.target-panel .bench-row .bar-track {
+  position: relative;
   height: var(--figure-bar-h);
   margin-bottom: 0;
+  border-radius: 2px;
+  /* Deeper than the shared track's, and a lit bottom lip: the bar is a slot cut
+     into the platform the figure stands on, not a pill laid on top of it. */
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8), inset 0 -1px 0 rgba(255, 255, 255, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.5);
 }
+
+.team-row .bar-fill,
+.target-row .bar-fill,
+.target-panel .bench-row .bar-fill {
+  border-radius: 1px;
+  /* Held back off full chroma so the gauge sits IN the scene's palette instead
+     of on top of it. At full strength these two were the most saturated objects
+     on the battlefield — brighter than the hero sprites they belong to. */
+  filter: saturate(0.86);
+  box-shadow: inset -2px 0 0 rgba(255, 255, 255, 0.45);
+}
+
+/* Graduated at the quarters, drawn over the whole track so the empty part is
+   graduated too — which is the point: it turns "a green bar" into "about half",
+   readable without reading the numerals, which is what a player scanning four
+   of these mid-fight is actually doing. Quarters and not tenths because a 186px
+   bar has room for three marks before they start reading as texture. */
+.team-row .bar-track::after,
+.target-row .bar-track::after,
+.target-panel .bench-row .bar-track::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(90deg, transparent 0 calc(25% - 1px), rgba(0, 0, 0, 0.5) calc(25% - 1px) 25%);
+}
+
+/* The other three bars keep the capsule, and the line between them is where the
+   NUMERALS sit, not what the bar measures.
+   ┄
+   These three carry their figure INSIDE the track at 13px, which is what makes
+   them instruments: the bar is the reading, taken at a glance across four
+   combatants mid-fight, and graduating it is what lets that glance land on
+   "about a quarter left" without stopping to read. The bench's own 5px sliver,
+   the switch picker's 7px gauge and the hero sheet's 8px stat bar all print
+   their figure BESIDE the bar — there the number is the reading and the bar is
+   a second, softer cue, so a capsule is right and a notch at that height would
+   only be noise. */
 
 .team-row .bar-label,
 .target-row .bar-label {
@@ -3450,6 +3518,11 @@ textarea,
   border-radius: var(--radius-pill);
   transition: width 0.45s var(--ease-out), background 0.3s var(--ease-out);
   background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.05) 52%, rgba(0, 0, 0, 0.18));
+  /* The head of the fill catches the light. It is what separates a gauge with a
+     level in it from a div with a width: the leading edge is the reading, so it
+     is the one part of the bar that should look lit. Inset, so it rides the
+     fill's own right edge at any value and costs no extra element. */
+  box-shadow: inset -2px 0 0 rgba(255, 255, 255, 0.4);
 }
 
 .bar-fill.hp-high {
@@ -17368,31 +17441,6 @@ textarea,
   opacity: 0.7;
 }
 
-/* Chromeless glyph, the same treatment as .draft-info: circle, border, fill
-   and shadow all go, the glyph stays for discoverability and for
-   keyboard/screen-reader users. */
-.pick-info {
-  position: absolute;
-  z-index: 3;
-  top: 1px;
-  right: 2px;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  background: none;
-  border: none;
-  color: var(--text-dim);
-  font-size: 11px;
-  font-weight: 700;
-  font-style: italic;
-  cursor: pointer;
-  opacity: 0.42;
-  transition: opacity var(--dur-mid) var(--ease-out);
-}
-
-.pick-info:hover {
-  opacity: 1;
-}
 
 .pick-name {
   max-width: 100%;
