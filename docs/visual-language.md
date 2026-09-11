@@ -2848,11 +2848,118 @@ files committed here are view-only.
   the same card, with long-press doing it too. Three ways into one sheet.
 - **The equipment card is still a row** (icon, name, RARITY in caps, stat chips, price) even though
   the plate now carries the rarity as light. Removing the caps word is a content call.
-- **Composition, not chrome.** Several node screens still float a short list in the middle of a tall
+- ~~**Composition, not chrome.**~~ — done in the twenty-sixth pass below. Was: several node screens float a short list in the middle of a tall
   screen: Crucible 416px of dead band, then reward-equip 177, Forge 167, Boon 161, Banner 161,
   Tutor 157, draft 153. The Gold Cache and the act intro *compose* their space and are the
   counterexample to copy. This is the biggest thing the sweep did not touch, and it is a layout
   problem rather than a styling one.
+
+## Twenty-sixth pass — the node screens fill their frames (2026-09-10)
+
+*The thing the audit's first five passes deliberately did not touch: composition rather than
+chrome. Per user direction, "now fix the dead space on the node screens".*
+
+### What was wrong, measured
+
+Painted content versus empty band, at 394x780, excluding sky and parallax:
+
+| Screen | Empty above | Empty below |
+|---|---|---|
+| Crucible | — | **416px** |
+| Equipment Cache | 170px | 173px |
+| Boon shrine | 160px | 161px |
+| Guardian's Banner | 161px | 161px |
+| Mentor's Hall | 100px | 101px |
+
+**These were two different faults wearing the same symptom, and measuring alone could not tell them
+apart.** The band totals looked similar; the causes were not.
+
+- **The Crucible was a plumbing bug.** `.pick-grid.is-filling` claims its height with
+  `flex: 1 1 auto`, which does nothing inside a block — and the Crucible was the one pick-a-hero
+  screen that wrapped its grid in `.screen-scroll` instead of mounting it as a direct child of the
+  flex-column screen. So the grid sat content-sized at the top with 416px of nothing under it.
+  Every other such screen (Forge, Tutor, Mentor, the Boon's second phase) already did it the other
+  way. One line of JSX.
+- **The rest were composed but under-filled.** Their content *was* centred — `.stage-centered`
+  has done that for a while — so the air was symmetric, which is why it looked deliberate. It was
+  not: three cards occupying 271px of a ~600px stage means the thing the screen exists to ask
+  fills 45% of the frame.
+
+**Centred air is not itself the problem**, and this is the distinction the pass turns on. The Gold
+Cache has 234px either side of its numeral and reads as composed, because its subject is a **focal
+point**. A stack of small rows is not one. So the fix is to let the content fill the stage, not to
+take the air away.
+
+### What replaced it
+
+**A stage stack.** A short list of choice cards inside `.stage-centered` — three Boons, three
+pieces of gear, three disciplines — now shares the stage: each card takes a share of the height and
+caps out, with the leftover still centred. Equalising them is a bonus rather than a cost: three
+plates of one height read as a set of things offered, where three different heights read as a list
+that happened to be that long.
+
+**A grown card has to re-centre what is in it.** The first attempt produced a 132px Boon plate with
+11px above its badge and 51px of nothing below — the same dead space, moved *inside* the card. The
+axis differs by card: the shrine cards are flex rows whose cross axis is vertical, the Mentor's are
+columns whose main axis is, and the equipment card already centred. That is a trap worth naming,
+because it turns a fix into a smaller version of the bug it fixed.
+
+**Two columns when the grid owns the stage.** `HeroPickGrid` chose columns from the hero count
+alone (`count > 4 ? 3 : 2`), so a six-hero roster always went to three — six 118×124 cards with
+48px portraits floating in a 570–660px box. The screen's whole question is *which hero*, and it was
+asking in thumbnails. Six heroes at two columns is three rows of ~190px, which fills those boxes
+almost exactly and buys the 96px portrait the card was already built for. The rule is now
+`count > (fill ? 6 : 4)`: a grid without `fill` is embedded in a panel (the roster peek, the run
+summary) where the room is genuinely tight.
+
+**And one screen has to opt out, which is the interesting part.** The Event node passes `fill` but
+does *not* own the stage — it prints the move on offer above the grid and leaves it half the height
+the Crucible gives it. Two columns there squashed the cards to 104px and `overflow: hidden` ate the
+name, the types and the CTA **silently**: the cards still looked like cards, just with nothing
+written on them. It takes `columns={3}` explicitly, and `.pick-card` now carries a
+`min-height` per column count so the same situation overflows the grid — a scrollbar — rather than
+disappearing content. A floor is worth more than the fix, because the next screen with a tall
+header will hit this and nobody will be looking.
+
+### The Banner, and two things found by growing it
+
+Five standards at 86px art occupied 276px of the stage. Growing the art alone **re-wrapped them
+2+2+1**, stranding Wellspring alone on a line: a flex item sized by its own content stops fitting
+three to a row past about 90px. The cell is now pinned to a third of the row, so 3+2 holds — which
+is the shape the row is composed as — and the art grows inside it.
+
+That surfaced a **pre-existing** defect. The two-stat Banners (Warcry, Bulwark) draw two charges at
+the single glyph's size, and the cloth is only 62% of the art's box (the swallowtail runs x 12..52
+of a 64 viewBox), so the pair hung off both folds. It always did; making the banners bigger is what
+made it visible. `RelicCharge` now marks a pair and a pair is set at `0.2em` against a single's
+`0.3em`, so both marks land on the cloth. Everything is in `em` of the art's own font-size, so a
+Banner drawn at any scale keeps the same charge.
+
+### Result
+
+| Screen | Was | Is |
+|---|---|---|
+| Crucible | 416px | none |
+| Guardian's Banner | 161 / 161 | none |
+| Mentor's Hall | 100 / 101 | 40 / 41 |
+| Equipment Cache | 170 / 173 | 93 / 96 |
+| Boon shrine | 160 / 161 | 93 / 93 |
+
+Nothing overflows: every stage stack and pick grid measures `scrollHeight === clientHeight`.
+
+**The Gold Cache is deliberately untouched at 234 / 234.** It is the counterexample the rest of
+this pass is calibrated against — one lit numeral with air around it — and filling that frame would
+make it worse. The draft's 40–48px bands are ordinary spacing between three composed regions.
+
+### Verification
+
+Typecheck clean; every affected screen screenshotted at 394x780 and measured before and after,
+plus the Banner row at 3× to check the charges against the cloth.
+
+**The engine suite reports nine failures and none is this**: another session has been authoring the
+Shadow, Spirit, Iron, Beast and Undead move slates in the same tree all day. The failing set is
+identical to the one standing before this pass began (passives, per-type slates, the grade budget),
+the engine tests do not compile `src/view`, and the four files committed here are view-only.
 
 ## Open / future improvements
 

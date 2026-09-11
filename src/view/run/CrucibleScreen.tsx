@@ -114,10 +114,15 @@ export function CrucibleScreen({ run, onRunChange, onContinue }: Props) {
         }
       />
 
-      <div className="screen-scroll">
-        {/* Every hero, not just the eligible ones: an already-evolved hero is the reason the
-            choice is narrowing, and showing only what is left hides that. */}
-        <HeroPickGrid count={run.roster.length} fill>
+      {/* Every hero, not just the eligible ones: an already-evolved hero is the reason the
+          choice is narrowing, and showing only what is left hides that.
+          ┄
+          A DIRECT child of the screen, not wrapped in `.screen-scroll` — `.pick-grid.is-filling`
+          claims its height with `flex: 1 1 auto`, which does nothing inside a block, so the grid
+          was content-sized at the top of the scroller and left 416px of nothing under it. Every
+          other pick-a-hero screen (Forge, Tutor, the Mentor, the Boon's second phase) already
+          mounts it this way. */}
+      <HeroPickGrid count={run.roster.length} fill>
           {run.roster.map((entry) => {
             const hero = heroes[entry.heroId];
             const pending = availableEvolution(progressionTable, entry);
@@ -135,8 +140,7 @@ export function CrucibleScreen({ run, onRunChange, onContinue }: Props) {
               />
             );
           })}
-        </HeroPickGrid>
-      </div>
+      </HeroPickGrid>
 
       {/* Only when nobody can take it. An unspent Crucible is never walked past otherwise — it
           does not bank, so leaving is the same as burning it. */}

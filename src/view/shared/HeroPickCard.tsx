@@ -105,16 +105,38 @@ export function HeroPickCard({
 export function HeroPickGrid({
   count,
   fill,
+  columns: forced,
   className,
   children,
 }: {
   count: number;
   /** Fill the space between header and CTA, scrolling internally. */
   fill?: boolean;
+  /**
+   * Override the column count. For a screen that passes `fill` but does not actually own the whole
+   * stage — the Event node, which prints the move on offer above the roster and leaves the grid
+   * about half the height the Crucible gives it. Two columns there squash the card past what its
+   * content needs and `overflow: hidden` eats the name, the types and the CTA without a trace.
+   */
+  columns?: 2 | 3;
   className?: string;
   children: ReactNode;
 }) {
-  const columns: 2 | 3 = count > 4 ? 3 : 2;
+  /*
+   * `fill` decides the columns, not the count alone.
+   *
+   * It was `count > 4 ? 3 : 2`, so a six-hero roster always went to three — and on the screens
+   * where this grid OWNS the stage that put six 118x124 cards, portraits at 48px, in the middle of
+   * a 570-660px box with ~150-200px of nothing above and below them (measured on the Crucible, the
+   * Forge and the Tutor). The screen's whole question is "which hero", and it was asking it in
+   * thumbnails with most of the frame empty.
+   *
+   * Two columns at six heroes is three rows of ~190px, which fills those boxes almost exactly and
+   * buys the 96px portrait the card was already built for. A grid WITHOUT `fill` is embedded in a
+   * panel (the roster peek, the run summary) where the room is genuinely tight, so it keeps the
+   * old threshold.
+   */
+  const columns: 2 | 3 = forced ?? (count > (fill ? 6 : 4) ? 3 : 2);
   const classes = ['pick-grid', `pick-cols-${columns}`, fill ? 'is-filling' : '', className ?? ''].filter(Boolean).join(' ');
   return <div className={classes}>{children}</div>;
 }

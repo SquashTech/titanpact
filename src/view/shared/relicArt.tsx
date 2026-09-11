@@ -26,8 +26,11 @@ function RelicCharge({ relicId, className }: { relicId: string; className?: stri
   const grants = grantsFor(relicId);
   const stats = STAT_ORDER.filter((stat) => !!grants[stat]);
   if (stats.length === 0) return null;
+  // The two-stat Banners (Warcry, Bulwark) carry twice the width in the same cloth, which is 62%
+  // of the art's box — so a pair set at the single glyph's size hangs off both folds. It always
+  // did; growing the banners for the stage is what made it visible.
   return (
-    <span className={className}>
+    <span className={`${className ?? ''}${stats.length > 1 ? ' is-pair' : ''}`}>
       {stats.map((stat) => (
         <StatGlyph key={stat} stat={stat} tone="inherit" />
       ))}

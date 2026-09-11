@@ -311,9 +311,12 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onC
             </div>
           )}
 
-          {/* --- the hero grid --- */}
+          {/* --- the hero grid ---
+              Three columns, explicitly: the move on offer sits above this grid and takes half the
+              stage, so the fill-aware default would pick two and squash the cards past what their
+              content needs. */}
           {heroPicking && (
-            <HeroPickGrid count={run.roster.length} fill className={arrived ? 'is-waking' : 'is-asleep'}>
+            <HeroPickGrid count={run.roster.length} fill columns={3} className={arrived ? 'is-waking' : 'is-asleep'}>
               {run.roster.map((entry) => {
                 const hero = heroes[entry.heroId];
                 const isResolved = resolvedTo === entry.rosterId;

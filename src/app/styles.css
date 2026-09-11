@@ -12110,6 +12110,83 @@ textarea,
   min-height: 100%;
 }
 
+/* --- The stage stack -----------------------------------------------------
+ *
+ * A short list of choice cards — three Boons, three pieces of gear — used to
+ * sit at its natural height in the middle of `.stage-centered`, which left
+ * ~165px of featureless gradient above it and the same below. Measured on a
+ * 780px screen: three cards occupied 271px of a ~600px stage, so the thing the
+ * screen exists to ask filled 45% of the frame.
+ *
+ * Centred air is not the problem — the Gold Cache has 234px of it either side
+ * of one numeral and reads as composed, because its subject is a FOCAL POINT.
+ * A stack of small rows is not one, so the fix is to let the stack fill the
+ * stage rather than to take the air away.
+ *
+ * The cards share the height and cap out, so two cards do not become two
+ * slabs; the leftover is still centred. Equalising them is a bonus rather than
+ * a cost — three plates of one height read as a set of things offered, where
+ * three different heights read as a list that happened to be that long.
+ */
+.stage-centered > .relic-shrine-list,
+.stage-centered > .equip-cache-list,
+.stage-centered > .class-shrine-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  justify-content: center;
+}
+
+.stage-centered > .relic-shrine-list > *,
+.stage-centered > .equip-cache-list > *,
+.stage-centered > .class-shrine-list > * {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: var(--stage-card-max, 132px);
+}
+
+/* A card that GREW has to re-centre what is in it, or the height it gained
+   lands underneath its content — which is the same dead space this rule set out
+   to remove, moved inside the card. Measured on the first attempt: a 132px Boon
+   plate with 11px above its badge and 51px of nothing below it.
+   ┄
+   Split by flex direction because the axis differs: the shrine cards are rows
+   whose cross axis is vertical, the Mentor's are columns whose main axis is.
+   The equipment card already centres and is untouched. */
+.stage-centered > .relic-shrine-list > * {
+  align-items: center;
+}
+
+.stage-centered > .class-shrine-list > * {
+  justify-content: center;
+}
+
+/* The Mentor's three disciplines share their stage with his portrait and the
+   strip of heroes who can learn, so they get less of it than a Boon does. */
+.stage-centered > .class-shrine-list {
+  --stage-card-max: 108px;
+}
+
+/* The five Banners, which ARE the subject — five objects on a wall, not five
+   options in a list. 86px of art left two rows occupying 276px of a ~600px
+   stage.
+   ┄
+   The cell is a fixed third of the row, NOT content-sized. Growing the art
+   alone was tried first and re-wrapped the five to 2+2+1, stranding Wellspring
+   alone on a line: a flex item sized by its own content stops fitting three to
+   a row the moment the art passes about 90px. Pinning the cell to a third keeps
+   3+2 — which is the shape the row is composed as, and `justify-content:
+   center` centres the pair underneath — and lets the art grow inside it. */
+.relic-pick-row.is-banners {
+  flex: 1 1 auto;
+  min-height: 0;
+  align-content: center;
+  gap: 16px 8px;
+}
+
+.relic-pick-row.is-banners > * {
+  flex: 0 0 calc(33.333% - 6px);
+}
+
 .reward-panel .roster-grid {
   width: 100%;
   text-align: left;
@@ -12918,13 +12995,17 @@ textarea,
 /* Circular glow badge behind the relic glyph/art — same wrap-don't-style-
    directly trick as .equip-cache-card-icon-badge so the fixed circle doesn't
    fight .equip-icon-img's 1em sizing for relics with dedicated art. */
+/* Grown with the card (2026-09-10). A 46px badge on a 132px plate is a list
+   row's bullet; at 62px it is the thing the card is ABOUT, which is what makes
+   a stack of three read as objects on a shrine rather than as options in a
+   form. */
 .relic-shrine-card-icon-badge {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 46px;
-  height: 46px;
+  width: 62px;
+  height: 62px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(139, 127, 224, 0.28), transparent 75%);
   box-shadow: inset 0 0 0 1px rgba(139, 127, 224, 0.35);
@@ -13093,6 +13174,10 @@ textarea,
   display: flex;
   align-items: center;
   gap: 0.06em;
+  /* Both marks inside the cloth, which is 62% of this box (the swallowtail path
+     runs x 12..52 of a 64 viewBox). Everything here is in `em` of the art's own
+     font-size, so a Banner drawn at any scale keeps the same charge. */
+  max-width: 52%;
   transform: translate(-50%, -50%);
   font-size: 0.3em;
   color: #ffffff;
@@ -13221,7 +13306,15 @@ textarea,
 
 /* Banners are named: a run plans four acts around "Banner of Vitality +2". */
 .relic-pick-row.is-banners .relic-pick-art {
-  font-size: 86px;
+  font-size: 104px;
+}
+
+/* A pair has to share the width one glyph had. The cloth is 0.55em wide (62% of
+   the art box), so two marks plus their gap have to come in under that: at
+   0.2em each they measure 0.45em together and clear both folds. */
+.banner-standard-charge.is-pair {
+  font-size: 0.2em;
+  gap: 0.05em;
 }
 
 .relic-pick-name {
@@ -17115,12 +17208,14 @@ textarea,
   grid-template-columns: repeat(2, 1fr);
   --pick-portrait: 96px;
   --pick-name-size: 14px;
+  --pick-card-min: 168px;
 }
 
 .pick-cols-3 {
   grid-template-columns: repeat(3, 1fr);
   --pick-portrait: 48px;
   --pick-name-size: 12px;
+  --pick-card-min: 116px;
 }
 
 /* The card is boxed because it genuinely is a button. Everything inside it is
@@ -23947,4 +24042,14 @@ textarea,
 .stat-bar-grade.is-none {
   color: var(--text-dim);
   opacity: 0.3;
+}
+
+/* A pick card never squashes below what it holds. Without this a grid whose
+   stage turns out shorter than expected (the Event node, which prints a move
+   above it) silently loses the name, the types and the CTA to `overflow:
+   hidden` — the card still LOOKS like a card, just with nothing on it. With a
+   floor, the same situation overflows `.pick-grid.is-filling` instead, which is
+   a scrollbar rather than missing content. */
+.pick-card {
+  min-height: var(--pick-card-min, 0);
 }
