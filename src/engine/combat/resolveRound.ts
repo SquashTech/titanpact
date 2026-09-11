@@ -5,7 +5,7 @@
 import type { FieldEffectDefinition, MoveDefinition, PassiveDefinition, StatDelta, StatKey, StatusDefinition } from '../content';
 import { statusApplicationsOf } from '../content';
 import type { CombatState, HeroLookup } from '../state';
-import { activePartnerTypes, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveCastBasePower, resolveTargetMode, effectiveTypes, hasStatus } from '../state';
+import { activePartnerTypes, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveCastBasePower, resolveTargetMode, effectiveTypes, hasStatus, moveForHero } from '../state';
 import type { CombatEvent } from '../events';
 import type { Action } from './actions';
 import { orderActions } from './priority';
@@ -124,8 +124,9 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       continue;
     }
 
-    // action.kind === 'move'
-    const move = moves[action.moveId];
+    // action.kind === 'move'. Resolved for the actor once, here: a typeFollowsUser move is the
+    // actor's type for every read below — STAB, the chart, Force, Conduct, the events' moveType.
+    const move = moveForHero(moves[action.moveId], heroes[actor.heroId]);
 
     if (hasStatus(actor, 'Daze')) {
       events.push({ type: 'ActionBlocked', round, combatantId: action.combatantId, reason: 'dazed' });
@@ -200,9 +201,11 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
     const previousMana = actor.currentMana;
     const newMana = previousMana - manaCost;
+    // One ledger for both ramps: a discount adds, a gain subtracts (state.ts effectiveManaCost).
+    const manaShift = (move.manaDiscountOnUse ?? 0) - (move.manaCostGainOnUse ?? 0);
     const nextDiscounts =
-      move.manaDiscountOnUse !== undefined
-        ? { ...actor.moveManaDiscounts, [move.id]: (actor.moveManaDiscounts[move.id] ?? 0) + move.manaDiscountOnUse }
+      manaShift !== 0
+        ? { ...actor.moveManaDiscounts, [move.id]: (actor.moveManaDiscounts[move.id] ?? 0) + manaShift }
         : actor.moveManaDiscounts;
     // Banked on the actor BEFORE the hit rolls, so this cast lands at the pre-increment power.
     const nextBasePowerBonuses = move.basePowerGainOnUse

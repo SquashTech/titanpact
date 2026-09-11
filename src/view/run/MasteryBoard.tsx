@@ -25,6 +25,7 @@ import {
   type EvolutionNode,
 } from '../../run/progression';
 import { playSfx } from '../../audio/sfx';
+import { moveForHero } from '../../engine/state';
 import { getTypeColor } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
@@ -373,7 +374,7 @@ function MasteryRow({ hero, entry, rank, canSpend, pouring, landingMoveId, note,
       <div className="mastery-move-row">
         {Array.from({ length: MOVE_CAP }, (_, i) => {
           const moveId = entry.unlockedMoveIds[i];
-          const move = moveId ? moves[moveId] : null;
+          const move = moveId ? moveForHero(moves[moveId], hero) : null;
           return (
             <span
               key={i}

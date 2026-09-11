@@ -3,6 +3,7 @@ import type { MoveDefinition, StatusApplication } from '../../engine/content';
 import { statusApplicationsOf } from '../../engine/content';
 import { resolveHealFor, type HealCaster } from '../../engine/heal/healPipeline';
 import { resolveStatusMagnitudeFor } from '../../engine/status/statusMagnitude';
+import { moveForPrimaryType } from '../../engine/state';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
@@ -362,6 +363,7 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
   if (move.cleanses) parts.push(move.cleanseCount != null ? `Cleanses ${move.cleanseCount} at random` : 'Cleanses');
 
   if (move.manaDiscountOnUse) parts.push(`−${move.manaDiscountOnUse} MP each use`);
+  if (move.manaCostGainOnUse) parts.push(`+${move.manaCostGainOnUse} MP each use`);
 
   if (move.randomPriority?.length) {
     const brackets = [...move.randomPriority].sort((a, b) => a - b).map((p) => (p >= 0 ? `+${p}` : `${p}`));
@@ -458,7 +460,7 @@ export function MoveTile({
  * no `liveTargetMode` — there is no board here.
  */
 export function MoveButtonReplica({
-  move,
+  move: authored,
   selected,
   unusable,
   tag,
@@ -477,6 +479,8 @@ export function MoveButtonReplica({
   onClick?: () => void;
   onLongPress?: () => void;
 }) {
+  // A Class move wears the caster's type (state.ts) — resolved here so every replica agrees with the fight.
+  const move = caster ? moveForPrimaryType(authored, caster.types[0]) : authored;
   const longPress = useLongPress(onLongPress, onClick);
   const heal = healReadout(move, caster);
   return (

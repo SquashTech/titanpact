@@ -652,11 +652,18 @@ so it reads as an Evolution branch that any hero can take. Nine to start, three 
 Two exclusivity rules, without which a Class is a Boon with a hat:
 
 - A class passive is not in the Boon pool, and no Boon passive is a Class.
-- A class move is in no Scroll pool and no Tutor pool, and carries no `tier`. It wears a type
-  for flavour like every move (a type is required), but because any hero can hold it, it is
-  authored to be worth a slot **without** STAB — so class moves are **role verbs** (a redirect, a
-  priority strike, a spread, a heal, a hit-and-switch: the doubles toolkit no type slate covers
-  evenly), never nukes. The type slates' own tests exempt them (`classMoves`).
+- A class move is in no Scroll pool and no Tutor pool, and carries no `tier`. It **wears its
+  holder's innate primary type** (`MoveDefinition.typeFollowsUser`, 2026-09-11 per user
+  direction): Feint is Fire on Cinder and Water on Riptide, so STAB is guaranteed and the chart is
+  read at the hero's element. Resolved once at the edge — `moveForHero` in `src/engine/state.ts`
+  — by `resolveRound`, the AI and every hero-scoped tile, so the catalog is never mutated and the
+  authored `type` is only the fallback with no hero in hand. Class moves are still **role verbs**
+  (a redirect, a priority strike, a spread, a heal, a hit-and-switch: the doubles toolkit no type
+  slate covers evenly), never nukes. The type slates' own tests exempt them (`classMoves`).
+- **A guaranteed lockout is priced by the fight, not the cast.** Feint's Daze is guaranteed, and
+  Feint, Blind and Barrier all carry `manaCostGainOnUse` = 20 — each cast dearer for the rest of
+  the fight — so none of them is a permanent lock. It banks as a negative entry in the same
+  per-move ledger as `manaDiscountOnUse`.
 
 One Class per hero, replace-not-stack, unchanged (`src/run/classes.ts`).
 

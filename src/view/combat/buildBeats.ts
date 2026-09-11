@@ -12,6 +12,7 @@ import type {
   StatusAppliedEvent,
 } from '../../engine/events';
 import type { CombatState, Side } from '../../engine/state';
+import { moveForHero } from '../../engine/state';
 import type { HeroDefinition, MoveDefinition, StatKey } from '../../engine/content';
 import { STAT_LABELS } from '../shared/StatBars';
 import { passives } from '../../data/passives';
@@ -233,7 +234,8 @@ export function buildBeats(
         }
         if (events[i]?.type === 'ManaChanged') applied.push(events[i++]);
 
-        const move = moves[e.moveId];
+        const actorHero = heroes[combatants[e.combatantId]?.heroId];
+        const move = actorHero ? moveForHero(moves[e.moveId], actorHero) : moves[e.moveId];
         const actorSide = combatants[e.combatantId]?.side;
         const actorName = `${actorSide && actorSide !== playerSide ? 'Enemy ' : ''}${name(e.combatantId)}`;
         const clause = targetClause(e.targetCombatantIds, e.combatantId, name);

@@ -365,6 +365,13 @@ export interface MoveDefinition {
   /** Each cast drops this move's cost for THAT combatant by this much for the rest of the fight, stacking, floored at 0 (Wave Shred; Combatant.moveManaDiscounts). */
   manaDiscountOnUse?: number;
   /**
+   * The mirror: each cast RAISES this move's cost for THAT combatant by this much for the rest of the
+   * fight, stacking (Feint, Blind, Barrier — the guaranteed lockouts, so none of them is a permanent
+   * lock). Banked in the same per-move ledger as the discount (Combatant.moveManaDiscounts, as a
+   * negative entry), so every price reader sees it. Pays the pre-increment price.
+   */
+  manaCostGainOnUse?: number;
+  /**
    * damage-kind only, the mana ramp's mirror: each cast raises this move's BasePower for THAT
    * combatant by `amount` for the rest of the fight, capped at `max` TOTAL (Snowball;
    * Combatant.moveBasePowerBonuses, read via state.ts effectiveBasePower). The cast pays the
@@ -384,6 +391,13 @@ export interface MoveDefinition {
   };
   /** Sends the user to the bench after its payload; the incoming hero is chosen at declaration (MoveAction.switchToCombatantId). Under lock-in only the pivot fizzles (ActionBlocked 'switchBlocked') — payload lands, mana spent. */
   switchesUserOut?: boolean;
+  /**
+   * The move wears the USER's innate primary type instead of its authored one — STAB guaranteed,
+   * the type chart read against the user's element, the tile coloured to match (Class moves,
+   * data/classes.ts). `type` is then only the fallback with no user in hand. Resolved once, at the
+   * edge, by state.ts moveForHero; engine and view both read the resolved move, never this flag.
+   */
+  typeFollowsUser?: boolean;
   target: TargetMode;
   /** Level-up tier gate (MOVE_TIER_LEVEL, src/run/progression.ts); cumulative. Omitted = 'early'. The engine never reads it. */
   tier?: MoveTier;

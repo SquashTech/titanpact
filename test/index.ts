@@ -37,6 +37,7 @@ import './enemyGen.test';
 import './difficulty.test';
 import './runProgress.test';
 import './classes.test';
+import './classMoves.test';
 import './locations.test';
 import './goblinLord.test';
 import './entrances.test';

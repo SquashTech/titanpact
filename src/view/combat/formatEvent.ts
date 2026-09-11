@@ -46,7 +46,7 @@ export function formatEvents(
         break;
       case 'MoveUsed': {
         const move = moves[e.moveId];
-        const discount = e.manaDiscount ? `, -${e.manaDiscount} discount` : '';
+        const discount = e.manaDiscount ? (e.manaDiscount > 0 ? `, -${e.manaDiscount} discount` : `, +${-e.manaDiscount} surcharge`) : '';
         lines.push({
           key,
           text: `${name(e.combatantId)} uses ${move?.name ?? e.moveId} (-${e.manaSpent} MP${discount})`,

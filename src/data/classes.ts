@@ -1,6 +1,7 @@
 // The Class catalog (docs/growth-overhaul.md §11): nine verbs, three a kind, tempered into one
 // hero at each Guardian's Crucible. A Class is a role any hero can take — the doubles toolkit no
-// single type slate covers evenly — so a class move is authored to be worth a slot without STAB,
+// single type slate covers evenly. A class move wears the HOLDER's type (`typeFollowsUser`, so STAB is
+// guaranteed and the tile is the hero's colour) and is authored as a role verb rather than a nuke,
 // and a class passive is exclusive to its Class (never in the Boon pool: run/boons.ts).
 //
 // `classMoves` fold into data/moves.ts and `classPassives` into data/passives.ts. Class moves
@@ -14,19 +15,22 @@ export const classMoves: Record<string, MoveDefinition> = {
     id: 'feint',
     name: 'Feint',
     type: 'Iron',
+    typeFollowsUser: true,
     category: 'physical',
     kind: 'damage',
     basePower: 40,
-    statusApplication: { statusId: 'Daze', chance: 0.4, target: 'moveTarget' },
+    statusApplication: { statusId: 'Daze', target: 'moveTarget' },
     manaCost: 30,
+    manaCostGainOnUse: 20,
     priority: 2,
     target: 'singleEnemy',
-    description: 'A quick strike before anything else moves — sometimes enough to make the foe lose the round (40% chance of Daze).',
+    description: 'A quick strike before anything else moves, and the foe loses the round to it (inflicts Daze). Each cast costs 20 more Mana for the rest of the fight.',
   },
   volley: {
     id: 'volley',
     name: 'Volley',
     type: 'Nature',
+    typeFollowsUser: true,
     category: 'physical',
     kind: 'damage',
     basePower: 55,
@@ -39,6 +43,7 @@ export const classMoves: Record<string, MoveDefinition> = {
     id: 'intercept',
     name: 'Intercept',
     type: 'Iron',
+    typeFollowsUser: true,
     category: 'physical',
     kind: 'buff',
     statusApplication: { statusId: 'Provoke', duration: 1, target: 'self' },
@@ -53,6 +58,7 @@ export const classMoves: Record<string, MoveDefinition> = {
     id: 'succor',
     name: 'Succor',
     type: 'Light',
+    typeFollowsUser: true,
     category: 'magical',
     kind: 'heal',
     healPower: 50,
@@ -65,6 +71,7 @@ export const classMoves: Record<string, MoveDefinition> = {
     id: 'vanish',
     name: 'Vanish',
     type: 'Shadow',
+    typeFollowsUser: true,
     category: 'physical',
     kind: 'damage',
     basePower: 50,
@@ -99,12 +106,12 @@ export const classPassives: Record<string, PassiveDefinition> = {
   },
   monk: {
     id: 'monk',
-    name: 'Second Wind',
-    description: 'Every hit this hero takes restores 5 Mana.',
+    name: 'Inner Focus',
+    description: 'Every hit this hero takes restores 10 Mana.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 5 } },
+      effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 10 } },
     },
   },
   herald: {
@@ -125,7 +132,7 @@ export const classes: Record<string, ClassDefinition> = {
     id: 'duelist',
     name: 'Duelist',
     kind: 'offensive',
-    description: 'Learns Feint: a priority strike that can Daze its target.',
+    description: 'Learns Feint: a priority strike that Dazes its target, dearer every cast.',
     grantsMoveId: 'feint',
   },
   berserker: {
@@ -169,7 +176,7 @@ export const classes: Record<string, ClassDefinition> = {
     id: 'monk',
     name: 'Monk',
     kind: 'utility',
-    description: 'Second Wind: every hit taken restores 5 Mana.',
+    description: 'Inner Focus: every hit taken restores 10 Mana.',
     grantsPassiveId: 'monk',
   },
   rogue: {

@@ -44,7 +44,7 @@ export interface Combatant {
   baselineStatusMagnitudes: Partial<Record<StatusId, number>>;
   /** One instance per status id — never stacked as multiple instances. */
   statuses: Record<StatusId, StatusInstance>;
-  /** Accumulated manaDiscountOnUse per move id; grows only within a fight. Read via effectiveManaCost. */
+  /** Accumulated manaDiscountOnUse (positive) and manaCostGainOnUse (negative) per move id; grows only within a fight. Read via effectiveManaCost. */
   moveManaDiscounts: Partial<Record<string, number>>;
   /** Accumulated basePowerGainOnUse per move id; grows only within a fight. Read via effectiveBasePower. */
   moveBasePowerBonuses: Partial<Record<string, number>>;
@@ -101,6 +101,22 @@ export function hasAffordableMove(
   discounts?: Partial<Record<string, number>>
 ): boolean {
   return moveIds.some((id) => currentMana >= effectiveManaCost(moves[id], discounts));
+}
+
+/**
+ * A move as THIS hero casts it: a `typeFollowsUser` move wears the hero's innate primary type
+ * (never a graft — the primary is the hero's identity and it never changes). The one place the
+ * flag is read; resolveRound, the AI and every hero-scoped tile resolve through here, so a class
+ * move is Fire on Cinder and Water on Riptide everywhere it is drawn or rolled. Identity for any
+ * other move, so it is safe to apply blindly.
+ */
+export function moveForHero(move: MoveDefinition, hero: HeroDefinition): MoveDefinition {
+  return moveForPrimaryType(move, hero.types[0]);
+}
+
+/** The same, off a bare primary type — for fight-free surfaces that hold a HealCaster (types, primary first) rather than a hero. */
+export function moveForPrimaryType(move: MoveDefinition, primary: TypeId | undefined): MoveDefinition {
+  return move.typeFollowsUser && primary !== undefined && move.type !== primary ? { ...move, type: primary } : move;
 }
 
 /** Authored cost less accumulated discount, floored at 0. The single source of a move's price on fight-free surfaces — never read `move.manaCost` directly for display. */

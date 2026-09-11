@@ -82,7 +82,10 @@ don't silently override it.
   own current Attack (`MoveDefinition.derivedStatDeltas`, `docs/combat.md`). Two
   sources, one exemption; a third should be a conversation, not a habit.
 - **No accuracy stat.** Moves always land. **Mana cost is the primary balance lever** on
-  reliable moves.
+  reliable moves. **A guaranteed lockout is priced by the fight, not the cast** (2026-09-11):
+  Feint, Blind and Barrier carry `manaCostGainOnUse` = 20, so each cast is dearer for the rest
+  of the fight and none of them is a permanent lock. It banks in the same per-move ledger as
+  `manaDiscountOnUse` (`Combatant.moveManaDiscounts`, negative), so every price reader sees it.
 - **Priority uses integer brackets; Speed is the tiebreaker within a bracket.**
 - **No spread damage reduction** — this is a doubles-only game.
 
@@ -209,9 +212,12 @@ don't silently override it.
   at `MOVE_CAP`) or a passive (`ClassDefinition`, `src/run/classes.ts`; nine in
   `src/data/classes.ts`, three a kind, offered one per kind). One per hero, replace-not-stack.
   **Two exclusivity rules**, without which a Class is a Boon with a hat: a class passive is in no
-  Boon pool, and a class move is in no Scroll pool and no Tutor pool — untiered, typed for
-  flavour, authored as a **role verb** worth a slot without STAB (a redirect, a priority strike,
-  a spread, a heal, a hit-and-switch: the doubles toolkit no type slate covers evenly).
+  Boon pool, and a class move is in no Scroll pool and no Tutor pool — untiered, and it **wears
+  its holder's innate primary type** (`typeFollowsUser`, resolved once at the edge by
+  `moveForHero` in `src/engine/state.ts` for the engine, the AI and every hero-scoped tile), so
+  STAB is guaranteed and the chart is read at the hero's element. Authored as **role verbs** (a
+  redirect, a priority strike, a spread, a heal, a hit-and-switch: the doubles toolkit no type
+  slate covers evenly), never nukes.
 - **The Mentor is the Tutor's early sibling** (2026-09-11): acts 1–3 (`LAST_MENTOR_ACT`), pick a
   hero, then **any Early or Mid** move from its own pool — un-rolled, un-rank-gated
   (`MENTOR_TIER_CEILING`, `src/run/tutor.ts`; `TutorNodeScreen` with `variant: 'mentor'`). It

@@ -3,7 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { MoveDefinition, StatKey } from '../../engine/content';
 import { statusApplicationsOf, STAT_ORDER } from '../../engine/content';
 import type { CombatState } from '../../engine/state';
-import { activePartnerTypes, effectiveManaCost, effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, effectiveBasePower, hasStatus, resolveCastBasePower, resolveManaCost } from '../../engine/state';
+import { activePartnerTypes, effectiveManaCost, effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, effectiveBasePower, hasStatus, resolveCastBasePower, resolveManaCost, moveForHero, moveForPrimaryType } from '../../engine/state';
 import { allCombatants } from '../../data/content';
 import { statuses } from '../../data/statuses';
 import { passives } from '../../data/passives';
@@ -214,10 +214,12 @@ interface CardProps {
 const SCALES_BASE_POWER = 'scales base power, not the finished hit';
 
 /** The move dossier: a live damage band, the priority bracket, and the mana left after casting. */
-export function MoveDetailCard({ move, label, context, caster, terse }: CardProps) {
-  const typeColor = getTypeColor(move.type);
+export function MoveDetailCard({ move: authored, label, context, caster, terse }: CardProps) {
   const attacker = context ? context.combat.combatants[context.attackerId] : undefined;
   const attackerHero = attacker ? allCombatants[attacker.heroId] : undefined;
+  // A Class move wears its holder's type (state.ts): the live attacker's, else the caster's.
+  const move = attackerHero ? moveForHero(authored, attackerHero) : caster ? moveForPrimaryType(authored, caster.types[0]) : authored;
+  const typeColor = getTypeColor(move.type);
   const statCtx = { active: context?.combat.activeFieldEffect ?? null, defs: fieldEffects, board: context ? { state: context.combat, passives } : undefined };
 
   // Heals take STAB too (docs/combat.md "The healing formula").
@@ -312,6 +314,8 @@ export function MoveDetailCard({ move, label, context, caster, terse }: CardProp
       move.critChance != null ||
       move.drainPercent ||
       move.manaDiscountOnUse ||
+      move.manaCostGainOnUse ||
+      move.typeFollowsUser ||
       move.basePowerGainOnUse ||
       move.conditionalPriority ||
       move.conditionalManaCost ||
@@ -692,6 +696,25 @@ export function MoveDetailCard({ move, label, context, caster, terse }: CardProp
                     )} after this cast — for the rest of the fight, up to ${move.basePowerGainOnUse.max}`
                   : `stacks for the rest of the fight, on this hero only, up to ${move.basePowerGainOnUse.max}`
               }
+            />
+          )}
+          {move.manaCostGainOnUse != null && (
+            <EffectRow
+              glyph={<StatGlyph stat="manaPool" />}
+              text={`+${move.manaCostGainOnUse} mana each use`}
+              note={
+                attacker
+                  ? `costs ${liveCost} now, ${liveCost + move.manaCostGainOnUse} after this cast — for the rest of the fight`
+                  : 'stacks for the rest of the fight, on this hero only — a lockout priced by the fight, not the cast'
+              }
+            />
+          )}
+          {move.typeFollowsUser && (
+            <EffectRow
+              glyph={<ElementGlyph type={move.type} />}
+              color={getTypeColor(move.type)}
+              text="Wears the user's type"
+              note="a Class move: it takes the element of whoever holds it, so it always carries STAB"
             />
           )}
           {move.manaDiscountOnUse != null && (

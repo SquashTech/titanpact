@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { moves } from '../../data/moves';
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { Combatant, StatContext } from '../../engine/state';
-import { effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana } from '../../engine/state';
+import { effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, moveForHero } from '../../engine/state';
 import type { RosterEntry } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { chosenEvolutionPaths, itemSlotsFor } from '../../run/progression';
@@ -211,7 +211,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
           <div className="move-tile-row">
             {rosterEntry.unlockedMoveIds.map((moveId) =>
               moves[moveId] ? (
-                <MoveTile key={moveId} move={moves[moveId]} onLongPress={() => openPopup({ kind: 'move', id: moveId })} />
+                <MoveTile key={moveId} move={moveForHero(moves[moveId], hero)} onLongPress={() => openPopup({ kind: 'move', id: moveId })} />
               ) : null
             )}
           </div>

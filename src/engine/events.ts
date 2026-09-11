@@ -30,7 +30,7 @@ export interface MoveUsedEvent extends BaseEvent {
   moveId: string;
   /** What was actually paid (state.ts effectiveManaCost). */
   manaSpent: number;
-  /** The discount applied, when any. Absent (not 0) otherwise. */
+  /** Authored cost minus what was paid: positive for a discount, NEGATIVE for a manaCostGainOnUse surcharge. Absent (not 0) otherwise. */
   manaDiscount?: number;
 }
 

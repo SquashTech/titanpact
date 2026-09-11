@@ -1418,9 +1418,12 @@ export const moves: Record<string, MoveDefinition> = {
     statDeltas: [],
     statusApplication: { statusId: 'Daze', target: 'moveTarget' },
     manaCost: 25,
+    // A guaranteed lockout is priced by the fight, not the cast: dearer every time, so it is never
+    // a permanent lock (2026-09-11, per user direction — Feint and Barrier carry the same).
+    manaCostGainOnUse: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Floods a foe with white until there is nothing to aim at (inflicts Daze).',
+    description: 'Floods a foe with white until there is nothing to aim at (inflicts Daze). Each cast costs 20 more Mana for the rest of the fight.',
   },
   holyStrike: {
     id: 'holyStrike',
@@ -1845,8 +1848,8 @@ export const moves: Record<string, MoveDefinition> = {
   // casters whose problem is being the weakest body on the field rather than a weak one. Priority 2
   // is a bracket of its own above every other move, so the guard is always up before what it stops.
   // Not spam-proofed by a consecutive-use rule — mana is the balance lever on reliable moves
-  // (CLAUDE.md), and 25 a round against a 75-85 pool is what limits it. The counterplay is the
-  // partner: a guard protects one body of two, and the far side simply hits the other one.
+  // (CLAUDE.md), so the price is what limits it: 25, then 45, then 65 (manaCostGainOnUse). The
+  // counterplay is the partner: a guard protects one body of two, and the far side hits the other.
   barrier: {
     id: 'barrier',
     name: 'Barrier',
@@ -1859,9 +1862,11 @@ export const moves: Record<string, MoveDefinition> = {
     kind: 'buff',
     statusApplication: { statusId: 'Barrier', target: 'self' },
     manaCost: 25,
+    // Dearer every cast, like Blind and Feint: a wall every round was a lock, not a guard.
+    manaCostGainOnUse: 20,
     priority: 2,
     target: 'self',
-    description: 'Shapes mana into a wall for one round — the far side cannot reach them at all.',
+    description: 'Shapes mana into a wall for one round — the far side cannot reach them at all. Each cast costs 20 more Mana for the rest of the fight.',
   },
   magicBolt: {
     id: 'magicBolt',

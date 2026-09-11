@@ -22,6 +22,7 @@ import {
   getEffectiveStat,
   getMaxHp,
   getMaxMana,
+  moveForHero,
 } from '../../engine/state';
 import type { HealCaster } from '../../engine/heal/healPipeline';
 import { resolveRound } from '../../engine/combat/resolveRound';
@@ -456,7 +457,7 @@ function ConsoleCrest({
     const c = combatants[cid];
     const cHero = allCombatants[c.heroId];
     const committed = isComplete(pending[cid]) ? pending[cid] : undefined;
-    const committedMove = committed?.kind === 'move' ? moves[committed.moveId!] : undefined;
+    const committedMove = committed?.kind === 'move' ? moveForHero(moves[committed.moveId!], cHero) : undefined;
     const acting = cid === actingId;
     const slotLabel = acting
       ? label
@@ -1398,7 +1399,7 @@ export function FightScreen({
                 {canAffordAnyMove && (
                 <div className="move-list">
                   {entry.unlockedMoveIds.map((moveId) => {
-                    const move = moves[moveId];
+                    const move = moveForHero(moves[moveId], hero);
                     const cost = resolveManaCost(combat, id, move, allCombatants);
                     const isSelected =
                       (pending[id]?.kind === 'move' && pending[id]?.moveId === moveId) ||

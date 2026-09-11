@@ -16,6 +16,7 @@ import {
   getMaxHp,
   hasAffordableMoveInFight,
   hasStatus,
+  moveForHero,
   resolveManaCost,
   declarationTargetMode,
   resolveTargetMode,
@@ -286,28 +287,30 @@ export function pickAiAction(state: CombatState, combatantId: string, ctx: AiCon
   const random = ctx.random ?? Math.random;
   const combatant = state.combatants[combatantId];
   const moveIds = ctx.moveIdsFor(combatantId);
+  // As this actor casts them — a typeFollowsUser move is weighed at the actor's type (state.ts).
+  const moveOf = (id: string) => moveForHero(ctx.moves[id], ctx.heroes[combatant.heroId]);
 
   // `heroes` threaded so a currently-discounted move (state.ts resolveManaCost) prices correctly.
   if (!hasAffordableMoveInFight(state, combatantId, moveIds, ctx.moves, ctx.heroes)) {
     return { kind: 'rest', combatantId };
   }
 
-  const affordable = moveIds.filter((id) => combatant.currentMana >= resolveManaCost(state, combatantId, ctx.moves[id], ctx.heroes));
+  const affordable = moveIds.filter((id) => combatant.currentMana >= resolveManaCost(state, combatantId, moveOf(id), ctx.heroes));
   // The one HARD filter in the cascade — every narrowing below it falls back, this one cannot.
-  const declarable = affordable.filter((id) => isDeclarable(state, combatantId, ctx.moves[id], ctx));
+  const declarable = affordable.filter((id) => isDeclarable(state, combatantId, moveOf(id), ctx));
   if (declarable.length === 0) return { kind: 'rest', combatantId };
 
-  const legal = declarable.filter((id) => hasLegalTarget(state, combatantId, ctx.moves[id], ctx));
+  const legal = declarable.filter((id) => hasLegalTarget(state, combatantId, moveOf(id), ctx));
   const withTargets = legal.length > 0 ? legal : declarable;
-  const useful = withTargets.filter((id) => !isInertOnBoard(state, combatantId, ctx.moves[id], ctx));
+  const useful = withTargets.filter((id) => !isInertOnBoard(state, combatantId, moveOf(id), ctx));
   const pickable = useful.length > 0 ? useful : withTargets;
 
   const moveId = weightedPick(
     pickable,
-    pickable.map((id) => weightFor(state, combatantId, ctx.moves[id], ctx)),
+    pickable.map((id) => weightFor(state, combatantId, moveOf(id), ctx)),
     random
   );
-  const move = ctx.moves[moveId];
+  const move = moveOf(moveId);
 
   // A switchesUserOut move with no replacement resolves into an ActionBlocked; first benched hero standing.
   const switchToCombatantId = move.switchesUserOut
