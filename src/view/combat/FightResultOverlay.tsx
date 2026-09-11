@@ -4,7 +4,8 @@ import { heroes } from '../../data/heroes';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { MAX_LEVEL } from '../../run/growth';
 import type { RosterEntry } from '../../run/state';
-import { ItemEffectChips, ItemPiece, ItemSummaryPopup, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
+import { ItemEffectChips, ItemPiece, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
+import { ItemDetailOverlay } from '../shared/ItemDossier';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { NODE_TINT_GOLD, NodeMotes } from '../shared/NodeStage';
 import { prefersReducedMotion } from '../shared/reducedMotion';
@@ -190,7 +191,7 @@ export function FightResultOverlay({
         Continue
       </button>
 
-      {inspecting && <ItemSummaryPopup item={equipmentReward} onClose={() => setInspecting(false)} />}
+      {inspecting && <ItemDetailOverlay item={equipmentReward} onClose={() => setInspecting(false)} />}
     </div>
   );
 }

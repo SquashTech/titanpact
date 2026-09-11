@@ -18,7 +18,8 @@ import {
 import { equipFromStash, markStashItemSeen, mergeFromStash, moveEquipment, unequipToStash, RunProgressError } from '../../run/runProgress';
 import { itemSlotsFor } from '../../run/progression';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
-import { ItemBox, ItemEffectChips, ItemPiece, ItemSummaryPopup, RARITY_COLOR_VARS, slotBoxes } from '../shared/EquipmentBox';
+import { ItemBox, ItemEffectChips, ItemPiece, RARITY_COLOR_VARS, slotBoxes } from '../shared/EquipmentBox';
+import { ItemDetailOverlay } from '../shared/ItemDossier';
 import { HeroSlotCard, HeroSlotGrid } from '../shared/HeroSlotCard';
 import { EquipSwapScreen } from './EquipSwapScreen';
 import { MergeBurst } from './MergeBurst';
@@ -568,7 +569,7 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
 
       {mergedItem && <MergeBurst result={mergedItem} onDone={() => setMergedItem(null)} />}
 
-      <ItemSummaryPopup item={viewedItemId ? (equipment[viewedItemId] ?? null) : null} onClose={() => setViewedItemId(null)} />
+      <ItemDetailOverlay item={viewedItemId ? (equipment[viewedItemId] ?? null) : null} onClose={() => setViewedItemId(null)} />
     </div>
   );
 }

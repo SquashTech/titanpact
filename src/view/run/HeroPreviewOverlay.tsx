@@ -20,7 +20,8 @@ import { StatBars, StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { TabStrip, type TabSpec } from '../shared/TabStrip';
 import { MoveButtonReplica, swallowGhostClick, useLongPress } from '../shared/MoveTile';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
-import { EquipmentInfoPanel, EquipmentSlotGrid, ItemReadout } from '../shared/EquipmentBox';
+import { EquipmentSlotGrid, ItemReadout } from '../shared/EquipmentBox';
+import { ItemDetailCard } from '../shared/ItemDossier';
 import { TypeBadge } from '../shared/TypeBadge';
 import { TypeMatchups } from '../shared/TypeMatchups';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -316,7 +317,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
                 <MoveDetailCard move={moves[popup.id]} caster={healCaster} />
               ) : null
             ) : popup.kind === 'equipment' ? (
-              <EquipmentInfoPanel item={equipmentLookup[popup.id] ?? null} />
+              equipmentLookup[popup.id] ? <ItemDetailCard item={equipmentLookup[popup.id]} /> : null
             ) : (
               // A Class is a verb: its move at this hero's type, or its passive.
               (() => {

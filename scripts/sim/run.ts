@@ -36,6 +36,9 @@ import {
   reachableNodeIds,
   recordBrokenSeal,
   sellFromStash,
+  GOLD_REWARD_RANGE,
+  PURSE_GOLD_RANGE,
+  rollGoldRange,
 } from '../../src/run/runProgress';
 import {
   MOVE_CAP,
@@ -77,9 +80,7 @@ type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' |
 // EQUIPMENT_DROP_CHANCE and LOOT_SOURCE come from run/equipment.ts, so the sim rolls the odds the game ships.
 
 function goldRewardFor(nodeType: EncounterMapNodeType, rng: Rng): number {
-  if (nodeType === 'boss' || nodeType === 'finale') return 0;
-  if (nodeType === 'battle') return 30 + Math.floor(rng() * 16);
-  return 15 + Math.floor(rng() * 11);
+  return rollGoldRange(GOLD_REWARD_RANGE[nodeType], rng);
 }
 
 /** NodeRewardScreen's flat XP cache. */
@@ -517,7 +518,7 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
     case 'scrollReward':
       return grantMasteryScrolls(run, SCROLL_REWARD_COUNT);
     case 'currencyReward':
-      return grantCurrencyReward(run, 15 + Math.floor(rng() * 16));
+      return grantCurrencyReward(run, rollGoldRange(PURSE_GOLD_RANGE, rng));
     case 'loneScrollReward':
       return grantMasteryScrolls(run, LONE_SCROLL_COUNT);
     case 'equipmentReward': {

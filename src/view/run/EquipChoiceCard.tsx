@@ -1,24 +1,12 @@
 import { useState, type CSSProperties } from 'react';
 import { equipment } from '../../data/equipment';
 import { heroes } from '../../data/heroes';
-import { passives } from '../../data/passives';
-import { statuses } from '../../data/statuses';
-import type { StatKey } from '../../engine/content';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { itemSlotsFor } from '../../run/progression';
 import type { RosterEntry } from '../../run/state';
-import {
-  EquipmentEffectList,
-  EquipmentIcon,
-  ItemEffectChips,
-  ItemSummaryPopup,
-  fmtGrant,
-  RARITY_COLOR_VARS,
-  RARITY_LABELS,
-} from '../shared/EquipmentBox';
+import { EquipmentIcon, ItemEffectChips, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
+import { ItemDetailCard, ItemDetailOverlay } from '../shared/ItemDossier';
 import { HeroSlotCard, HeroSlotGrid } from '../shared/HeroSlotCard';
-import { StatGlyph } from '../shared/StatBars';
-import { STAT_FULL_LABELS } from '../shared/relicStacks';
 import { useLongPress } from '../shared/MoveTile';
 
 interface EquipChoiceCardProps {
@@ -88,7 +76,7 @@ function SlotOwners({ roster }: { roster: readonly RosterEntry[] }) {
           );
         })}
       </HeroSlotGrid>
-      <ItemSummaryPopup item={summaryItem} onClose={() => setSummaryItem(null)} />
+      <ItemDetailOverlay item={summaryItem} onClose={() => setSummaryItem(null)} />
     </div>
   );
 }
@@ -108,31 +96,21 @@ interface EquipInspectOverlayProps {
   onClose: () => void;
 }
 
+/**
+ * The item dossier with a decision under it — the Guild Hall's buy, or a plain inspect from a
+ * reward or event pick. Same card as every other item hold (ItemDossier.tsx); the wrapper is the
+ * `.log-panel` one rather than `.detail-overlay` because it carries a footer that must not close
+ * on a tap, and it takes the tier stripe so it still reads as the same thing opening.
+ */
 export function EquipInspectOverlay({ item, roster, action, onClose }: EquipInspectOverlayProps) {
-  const grants = Object.entries(item.statGrants).filter(([, amount]) => amount) as [StatKey, number][];
-  const hasEffects = grants.length > 0 || (item.grantsPassiveIds?.length ?? 0) > 0 || (item.grantsStatusIds?.length ?? 0) > 0;
   return (
     <div className="log-overlay" onClick={onClose}>
-      <div className="log-panel move-popup-panel" onClick={(e) => e.stopPropagation()}>
-        <div className="move-info-panel" style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}>
-          <div className="move-info-head">
-            <span className="move-info-name">{item.name}</span>
-            <span className="move-info-kind">
-              {RARITY_LABELS[item.rarity]}
-            </span>
-          </div>
-          {grants.length > 0 && (
-            <div className="detail-modifier-list">
-              {grants.map(([stat, amount]) => (
-                <span key={stat} className={`detail-modifier-chip ${amount > 0 ? 'stat-buff' : 'stat-debuff'}`}>
-                  <StatGlyph stat={stat} tone="inherit" /> {STAT_FULL_LABELS[stat]} {fmtGrant(amount)}
-                </span>
-              ))}
-            </div>
-          )}
-          <EquipmentEffectList item={item} />
-          {!hasEffects && <div className="move-info-placeholder">No effects.</div>}
-        </div>
+      <div
+        className="log-panel move-popup-panel equip-inspect-panel"
+        style={{ borderTopColor: RARITY_COLOR_VARS[item.rarity] } as CSSProperties}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <ItemDetailCard item={item} />
         {roster && roster.length > 0 && <SlotOwners roster={roster} />}
         {action ? (
           <div className="detail-action">

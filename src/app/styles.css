@@ -26799,3 +26799,289 @@ textarea,
 .crucible-class-card .move-detail-card {
   pointer-events: none;
 }
+
+/* --- The node dossier (NodeDossierOverlay.tsx) ------------------------- */
+/* What a hold on a map node opens. It sits on the move dossier's chassis —
+   identity stripe and disc in the node's own colour, sections on scored
+   hairlines — and it is a LEDGER: a row per thing the node pays or costs,
+   glyph, label, figure. It replaced a grey .log-panel carrying one sentence
+   (2026-09-11, per user direction): the numbers were in the prose, and prose
+   is read once where a column of figures is compared. A lane the node does
+   not pay is still a row, dimmed to a dash, so the Elite-or-Battle fork reads
+   as two columns of one table rather than two paragraphs. */
+.node-dossier-panel {
+  gap: 0;
+  border-top-width: 3px;
+  background:
+    linear-gradient(155deg, color-mix(in srgb, var(--node-color) 16%, transparent), transparent 46%),
+    var(--surface-raised);
+}
+
+.node-dossier-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* .move-detail-disc, lit from the node colour rather than from a type's rgb. */
+.node-dossier-disc {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--node-color);
+  background: radial-gradient(
+    circle at 32% 28%,
+    color-mix(in srgb, var(--node-color) 34%, transparent),
+    color-mix(in srgb, var(--node-color) 10%, transparent)
+  );
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--node-color) 40%, transparent),
+    0 0 18px -6px var(--node-color);
+}
+
+.node-dossier-disc svg {
+  width: 31px;
+  height: 31px;
+}
+
+.node-dossier-titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.node-dossier-name {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.node-dossier-line {
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.node-dossier-facts {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.node-dossier-fact {
+  display: grid;
+  grid-template-columns: 19px 1fr auto;
+  align-items: center;
+  column-gap: 9px;
+  padding: 7px 0;
+}
+
+.node-dossier-fact + .node-dossier-fact {
+  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+}
+
+.node-dossier-fact-glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 19px;
+  height: 19px;
+  color: var(--node-color);
+}
+
+.node-dossier-fact-glyph svg {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+}
+
+.node-dossier-fact-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.node-dossier-fact-value {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.node-dossier-fact-value strong {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.node-dossier-fact-note {
+  font-size: 10px;
+  line-height: 1.3;
+  color: var(--text-dim);
+}
+
+/* The lane this node does not pay: kept in the table, taken out of the eye. */
+.node-dossier-fact.is-none .node-dossier-fact-glyph,
+.node-dossier-fact.is-none .node-dossier-fact-label,
+.node-dossier-fact.is-none .node-dossier-fact-value strong {
+  opacity: 0.38;
+}
+
+/* The act's rarity odds as one bar: every tier in order, each as wide as its
+   weight, in the tier colour every item box already wears. */
+.node-dossier-odds {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 2px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.node-dossier-odds-bar {
+  display: flex;
+  gap: 2px;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.node-dossier-odds-seg {
+  flex: 0 1 0;
+  min-width: 3px;
+  background: var(--rarity-color);
+}
+
+.node-dossier-odds-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.node-dossier-odds-key strong {
+  font-size: 12px;
+  color: var(--rarity-color);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- The item dossier (ItemDossier.tsx) -------------------------------- */
+/* What a hold on any item box opens, on the move dossier's chassis with the
+   tier colour for the stripe, the wash and the disc. Three facets in the
+   move card's order — identity, numbers, payload — and the payload is spelled
+   out whole: every passive with its full description and its grant chips,
+   every Elemental Force with its rule. It replaced the grey .move-info-panel
+   that printed "Grants: Sunder" and left the player to find out what Sunder
+   was (2026-09-11, per user direction). */
+.item-detail-card {
+  --move-type-rgb: var(--rarity-rgb);
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.item-detail-disc {
+  position: relative;
+  color: var(--rarity-color);
+}
+
+.item-detail-disc .equip-glyph {
+  width: 30px;
+  height: 30px;
+  color: var(--rarity-color);
+}
+
+/* The enchant's element, on the disc's rim the way ItemPiece pins it to the chit's corner. */
+.item-detail-enchant {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 21px;
+  height: 21px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--panel);
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.item-detail-enchant svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* The one figure about an item that is not on its face: what a Guild Hall pays for it. */
+.item-detail-sell {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.item-detail-sell .resource-glyph {
+  width: 14px;
+  height: 14px;
+}
+
+.move-detail-stat.is-loss strong,
+.move-detail-stat.is-loss .move-detail-unit {
+  color: var(--hp-low);
+}
+
+/* A passive row: name in the passive's colour, its kind under it in the
+   register PassiveInfoPanel uses, then the whole description, then its chips. */
+.item-detail-passive-kind {
+  display: block;
+  margin-top: 1px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.item-detail-effects .move-detail-effect-note {
+  margin-top: 3px;
+}
+
+.item-detail-effects .detail-modifier-list {
+  margin-top: 6px;
+  color: var(--text);
+}
+
+.item-detail-passive-meta {
+  font-style: italic;
+}
+
+/* The Guild Hall's buy sheet and the reward pick's inspect (EquipInspectOverlay): the same card
+   on the .log-panel chassis, because a footer with a confirm in it must not close on a tap.
+   The tier stripe comes with it, so it still reads as the same thing opening. */
+.equip-inspect-panel {
+  gap: 10px;
+  border-top-width: 3px;
+}
+
+.item-detail-sell .move-detail-unit {
+  color: var(--text-dim);
+}

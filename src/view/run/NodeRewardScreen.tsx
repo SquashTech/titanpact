@@ -4,7 +4,7 @@ import { equipment, rollEquipmentDrops } from '../../data/equipment';
 import type { RunState } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { rarityWeightsFor } from '../../run/equipment';
-import { grantCurrencyReward } from '../../run/runProgress';
+import { grantCurrencyReward, PURSE_GOLD_RANGE, rollGoldRange } from '../../run/runProgress';
 import { grantMasteryScrolls, LONE_SCROLL_COUNT, SCROLL_REWARD_COUNT } from '../../run/progression';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { SectionGlyph } from '../shared/sectionIcons';
@@ -173,7 +173,7 @@ const INSTANT_KIND: Partial<Record<RewardNodeType, HoardKind>> = {
  * to the map — the node hands the Scroll over, it does not spend it.
  */
 export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onClaimEquipment }: Props) {
-  const [currencyAmount] = useState(() => 15 + Math.floor(Math.random() * 16)); // 15-30
+  const [currencyAmount] = useState(() => rollGoldRange(PURSE_GOLD_RANGE));
   const [equipmentChoices] = useState<EquipmentDefinition[]>(() =>
     nodeType === 'equipmentReward'
       ? rollEquipmentDrops(3, rarityWeightsFor(run.actNumber, 'standard'))

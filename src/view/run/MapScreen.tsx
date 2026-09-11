@@ -11,7 +11,8 @@ import { ResourceGlyph, type ResourceKind } from '../shared/RunGlyph';
 import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
 import { MapRoute } from './MapRoute';
 import { BannerShelf } from './BannerShelf';
-import { NODE_COLORS, NODE_NAMES, NODE_TIERS, nodeRewardText, type NodeTier } from './mapNodes';
+import { NODE_COLORS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
+import { NodeDossierOverlay } from './NodeDossierOverlay';
 import { levelAfterEncounters } from '../../run/growth';
 import { footerWaiting } from './mapFooter';
 import { locationForAct } from '../../run/locations';
@@ -90,24 +91,6 @@ function ProgressRail({ map, currentRow }: { map: RunMap; currentRow: number }) 
     </div>
   );
 }
-
-/** What a hold says: which place this is, and what it pays. The only words on the screen. */
-function MapNodePreviewPopup({ node, onClose }: { node: MapNode; onClose: () => void }) {
-  return (
-    <div className="log-overlay" onClick={onClose}>
-      <div className="log-panel move-popup-panel" style={{ '--node-color': NODE_COLORS[node.type] } as CSSProperties}>
-        <div className="log-panel-header">
-          <span>
-            <NodeGlyph type={node.type} className="map-popup-glyph" /> {NODE_NAMES[node.type]}
-          </span>
-        </div>
-        <div className="move-popup-description">{nodeRewardText(node.type)}</div>
-        <div className="move-popup-hint">Tap anywhere to close</div>
-      </div>
-    </div>
-  );
-}
-
 
 // docs/locations.md §4 — the well carries the act's Location at a fraction of
 // the arrival screen's strength.
@@ -241,6 +224,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
           originNode={originNode}
           omen={location.omen}
           choiceIds={choiceIds}
+          actNumber={run.actNumber}
           onSelectNode={onSelectNode}
           onPreviewNode={setPreviewNode}
         />
@@ -322,7 +306,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
 
       {rosterOpen && <RosterManagementScreen run={run} onRunChange={onRunChange} onClose={() => setRosterOpen(false)} />}
       {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
-      {previewNode && <MapNodePreviewPopup node={previewNode} onClose={() => setPreviewNode(null)} />}
+      {previewNode && <NodeDossierOverlay node={previewNode} actNumber={run.actNumber} onClose={() => setPreviewNode(null)} />}
     </div>
   );
 }

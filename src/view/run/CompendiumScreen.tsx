@@ -2,16 +2,14 @@ import { useState, type CSSProperties } from 'react';
 import { heroes } from '../../data/heroes';
 import { TYPES } from '../../data/typechart';
 import { equipment, EQUIPMENT_DROP_POOL, UNIQUE_EQUIPMENT } from '../../data/equipment';
-import { passives } from '../../data/passives';
-import { statuses } from '../../data/statuses';
-import type { HeroDefinition, StatKey } from '../../engine/content';
+import type { HeroDefinition } from '../../engine/content';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { RARITY_ORDER } from '../../run/equipment';
 import { getTypeAbbr, getTypeColor, getTypeColorRgb } from '../combat/typeColors';
-import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { ElementGlyph } from '../shared/elementIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { EquipmentEffectList, EquipmentIcon, ItemEffectChips, fmtGrant, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
+import { EquipmentIcon, ItemEffectChips, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
+import { ItemDetailOverlay } from '../shared/ItemDossier';
 import { HeroDossierOverlay } from './HeroDossierOverlay';
 
 interface Props {
@@ -145,39 +143,7 @@ export function CompendiumScreen({ heroStars, onClose }: Props) {
 
       {dossierHero && <HeroDossierOverlay hero={dossierHero} onClose={() => setDossierHeroId(null)} />}
 
-      {inspectItem &&
-        (() => {
-          const grants = Object.entries(inspectItem.statGrants).filter(([, amount]) => amount) as [StatKey, number][];
-          const grantedPassives = inspectItem.grantsPassiveIds ?? [];
-          const grantedStatuses = inspectItem.grantsStatusIds ?? [];
-          const hasEffects = grants.length > 0 || grantedPassives.length > 0 || grantedStatuses.length > 0;
-          return (
-            <div className="log-overlay" onClick={(e) => { e.stopPropagation(); setInspectItemId(null); }}>
-              <div className="log-panel move-popup-panel" onClick={(e) => e.stopPropagation()}>
-                <div className="move-info-panel" style={{ '--rarity-color': RARITY_COLOR_VARS[inspectItem.rarity] } as CSSProperties}>
-                  <div className="move-info-head">
-                    <span className="move-info-name">{inspectItem.name}</span>
-                    <span className="move-info-kind">
-                      {RARITY_LABELS[inspectItem.rarity]}
-                    </span>
-                  </div>
-                  {grants.length > 0 && (
-                    <div className="detail-modifier-list">
-                      {grants.map(([stat, amount]) => (
-                        <span key={stat} className={`detail-modifier-chip ${amount > 0 ? 'stat-buff' : 'stat-debuff'}`}>
-                          <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} {fmtGrant(amount)}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <EquipmentEffectList item={inspectItem} />
-                  {!hasEffects && <div className="move-info-placeholder">No effects.</div>}
-                </div>
-                <div className="move-popup-hint">Tap anywhere to close</div>
-              </div>
-            </div>
-          );
-        })()}
+      <ItemDetailOverlay item={inspectItem} onClose={() => setInspectItemId(null)} />
     </div>
   );
 }

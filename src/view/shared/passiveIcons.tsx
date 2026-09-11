@@ -151,7 +151,7 @@ export function passiveEffectSummary(def: PassiveDefinition): string | undefined
   return `Only an enemy on the field counts — a benched ${name} carrier does nothing.`;
 }
 
-/** Grant chips, in the same `.detail-modifier-chip` vocabulary EquipmentInfoPanel uses for an item's. */
+/** Grant chips, in the same `.detail-modifier-chip` vocabulary the hero sheet uses for a stat mod. */
 export function PassiveStatChips({ def }: { def: PassiveDefinition }) {
   const grants = passiveStatGrants(def);
   const modifier = def.damageModifier;

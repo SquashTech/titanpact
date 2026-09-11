@@ -1922,7 +1922,7 @@ mid-fight, so it is left alone rather than special-cased here.
 Per user direction, alongside the item rework: **wherever an item is part of a hero's KIT it is
 drawn, not written.** `ItemBox` (`src/view/shared/EquipmentBox.tsx`) is the one representation —
 the item's silhouette in a square, rarity-edged box, no label. The name and the full effect list
-are one tap away (`ItemSummaryPopup`), and both stay in the `aria-label` and the `title`, so the
+are one tap away (`ItemDetailOverlay`), and both stay in the `aria-label` and the `title`, so the
 text is unprinted rather than lost.
 
 What forced it: a hero holds up to five items now, and the forced-equip table shows six heroes at
@@ -3181,7 +3181,7 @@ class flip, and a tap anywhere lands all of them.
 - **The ledger.** Chromeless rows with hairlines: gold counting up with coin strikes from the
   moment its row lands (and the purse it lands in), the Scroll, and the drop as the *chit* it will
   be on the roster — `ItemPiece` plus `ItemEffectChips`, rarity as a word on the right — the one
-  box on the screen, because it is the one thing that opens (`ItemSummaryPopup`).
+  box on the screen, because it is the one thing that opens (`ItemDetailOverlay`).
 - **The CTA** arrives grey and takes the gold when the sequence has played or been tapped
   through. Never disabled: a press at any point resolves the fight.
 

@@ -1,4 +1,5 @@
-// What a map node LOOKS like: its name, its colour, what it pays, and how much weight it carries.
+// What a map node LOOKS like: its name, its colour, and how much weight it carries. What it PAYS
+// is nodeFacts.ts, read off the run constants.
 // Shared by the route the player picks from (MapRoute) and the screen around it (MapScreen).
 
 import type { MapNodeType } from '../../run/map';
@@ -56,37 +57,6 @@ export const NODE_COLORS: Record<MapNodeType, string> = {
   // The only node in a run that wears the mythic red, because there is only one of it.
   finale: 'var(--tier-mythic)',
 };
-
-// The line under a choice card's name: what the node pays out, and nothing else. Difficulty
-// rides on NODE_COLORS, recruitability on NODE_NAMES.
-const NODE_DESCRIPTIONS: Record<MapNodeType, string> = {
-  // No levels listed: every won encounter pays the same automatic roster-wide level, so naming
-  // it here would only be noise on every card at once (run/growth.ts).
-  fight: '15–25g · item',
-  skirmish: '15–25g · 1 Mastery Scroll · 25% item · recruitable',
-  battle: '30–45g · item',
-  elite: '15–25g · 1 Mastery Scroll · 55% elite item · recruitable — enemies carry +10 to 2 stats',
-  boss: '2 Mastery Scrolls · 70% elite item · 1 Recruit Contract',
-  shop: 'Buy heroes, contracts and gear — and sell what you are not carrying',
-  blacksmith: 'Buy an item slot, a tier at the Anvil, or an element at the Enchanter — acts 3+',
-  equipmentReward: '1 of 3 items',
-  scrollReward: '2 Mastery Scrolls — the run\'s only way to teach a hero a new move',
-  passiveReward: '1 of 3 Boons, granted to one hero for the rest of the run',
-  currencyReward: '15–30g',
-  loneScrollReward: '1 Mastery Scroll',
-  forgeReward: '+1 item slot to one hero, for the rest of the run',
-  mentorReward: 'The Mentor teaches one hero a powerful move — a Mid move, rolled — acts 1 to 3',
-  tutorReward: 'One hero learns ANY move from its Mastery pool — acts 4 and 5 only',
-  event: 'Hidden until you arrive: a move, a passive, gear or a trade',
-  muster: 'Fill the roster to six, then spend everything left',
-  finale: 'The five seals you broke — then the thing they were holding',
-};
-
-// Every Guardian pays a Banner now that the finale act follows act 5 (App.tsx).
-export function nodeRewardText(type: MapNodeType): string {
-  const base = NODE_DESCRIPTIONS[type];
-  return type === 'boss' ? `${base} · Guardian’s Banner` : base;
-}
 
 // How much weight a choice card carries — the Guardian is not a Boon.
 export type NodeTier = 'reward' | 'encounter' | 'landmark' | 'ancient';

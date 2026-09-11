@@ -116,6 +116,8 @@ import {
   grantContractReward,
   stashItem,
   recordBrokenSeal,
+  GOLD_REWARD_RANGE,
+  rollGoldRange,
 } from '../run/runProgress';
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
 import { createStatusTestSides } from '../run/statusTestFight';
@@ -299,15 +301,9 @@ function equipTestDagger(encounter: Encounter): Encounter {
 /** Payouts key on the MAP node type: `skirmish` and `battle` both flatten to a `fight` encounter but sit in opposite reward lanes. */
 type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' | 'finale';
 
-// Two reward lanes: Monsters (fight/battle) is loot-and-gold with a guaranteed drop and 1 lane of
-// XP; Skirmish (skirmish/elite) is the XP lane with a thin gold band and a rolled drop. The
-// Guardian pays in the Banner, not coin.
+// The bands live in runProgress.ts (GOLD_REWARD_RANGE) so the map's node readout prints the roll it describes.
 function goldRewardFor(nodeType: EncounterMapNodeType): number {
-  // The finale pays nothing at all: the run ends on it, and there is no node after it.
-  if (nodeType === 'boss' || nodeType === 'finale') return 0;
-  // The row-0 opener stays on the thin band: it is the lightest fight and already ships a drop.
-  if (nodeType === 'battle') return 30 + Math.floor(Math.random() * 16); // 30-45
-  return 15 + Math.floor(Math.random() * 11); // 15-25
+  return rollGoldRange(GOLD_REWARD_RANGE[nodeType]);
 }
 
 /**

@@ -9,7 +9,8 @@ import { chosenEvolutionPaths, itemSlotsFor } from '../../run/progression';
 import { progressionTable } from '../../data/progression';
 import { StatGlyph, STAT_LABELS, STAT_ORDER, StatBars, hpTier } from '../shared/StatBars';
 import { SectionGlyph } from '../shared/sectionIcons';
-import { EquipmentInfoPanel, EquipmentSlotGrid } from '../shared/EquipmentBox';
+import { EquipmentSlotGrid } from '../shared/EquipmentBox';
+import { ItemDetailCard } from '../shared/ItemDossier';
 import { MoveTile, swallowGhostClick } from '../shared/MoveTile';
 import { MoveDetailCard } from './MoveDetailOverlay';
 import { TypeBadge } from '../shared/TypeBadge';
@@ -241,7 +242,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
               // No combat context: this sheet is read out of a fight as often as in one, so the forecast half does not render.
               moves[popup.id] ? <MoveDetailCard move={moves[popup.id]} caster={healCaster} /> : null
             ) : popup.kind === 'equipment' ? (
-              <EquipmentInfoPanel item={equipmentLookup[popup.id] ?? null} />
+              equipmentLookup[popup.id] ? <ItemDetailCard item={equipmentLookup[popup.id]} /> : null
             ) : (
               <PassiveInfoPanel passive={passives[popup.id] ?? null} />
             )}

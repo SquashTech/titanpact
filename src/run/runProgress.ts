@@ -3,6 +3,7 @@
 
 import type { HeroDefinition, StatKey } from '../engine/content';
 import type { BrokenSeal, RunState, RosterEntry } from './state';
+import type { EncounterNodeKind } from './difficulty';
 import type { EnchantmentId, EquipmentDefinition, EquipmentRarity, Stash } from './equipment';
 import {
   actAllowsRarity,
@@ -48,6 +49,29 @@ export function advanceToNode(run: RunState, nodeId: string): RunState {
     currentNodeId: nodeId,
     visitedNodeIds: run.visitedNodeIds.includes(nodeId) ? run.visitedNodeIds : [...run.visitedNodeIds, nodeId],
   };
+}
+
+/**
+ * Inclusive gold band a won encounter pays, by map node type. Two lanes: Monsters (`fight`,
+ * `battle`) is the loot-and-gold lane, Skirmish (`skirmish`, `elite`) the Scroll lane on a thin
+ * band; the row-0 opener stays thin because it already ships a drop. The Guardian pays in the
+ * Banner, not coin, and the finale ends the run. One table, so the map's node readout and the
+ * roll it describes cannot drift.
+ */
+export const GOLD_REWARD_RANGE: Record<EncounterNodeKind, readonly [number, number]> = {
+  fight: [15, 25],
+  skirmish: [15, 25],
+  battle: [30, 45],
+  elite: [15, 25],
+  boss: [0, 0],
+  finale: [0, 0],
+};
+
+/** What the `currencyReward` purse pays, inclusive. */
+export const PURSE_GOLD_RANGE: readonly [number, number] = [15, 30];
+
+export function rollGoldRange([min, max]: readonly [number, number], random: () => number = Math.random): number {
+  return min + Math.floor(random() * (max - min + 1));
 }
 
 export function grantCurrencyReward(run: RunState, amount: number): RunState {

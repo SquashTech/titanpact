@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type PointerEvent, type ReactNode } from 'react';
+import type { CSSProperties, PointerEvent, ReactNode } from 'react';
 import type { StatKey } from '../../engine/content';
 import type { EquipmentDefinition, EquipmentLoadout, EquipmentRarity } from '../../run/equipment';
 import { ENCHANTMENTS, RARITY_ORDER, parseEquipmentId } from '../../run/equipment';
@@ -75,7 +75,7 @@ export function slotBoxes(loadout: EquipmentLoadout, capacity: number): (string 
  * granted Force status: an enchant IS the third segment of the id (`sword.epic.blazing`), while a
  * Unique may grant a Force without being enchanted.
  */
-function enchantTypeOf(item: EquipmentDefinition | null): string | null {
+export function enchantTypeOf(item: EquipmentDefinition | null): string | null {
   if (!item) return null;
   const { enchantId } = parseEquipmentId(item.id);
   return enchantId ? (ENCHANTMENTS[enchantId] ?? null) : null;
@@ -269,45 +269,22 @@ export function ItemEffectChips({ item }: { item: EquipmentDefinition }) {
   );
 }
 
-/**
- * The tap target's payload: the full readout, dismissed by tapping anywhere. Every surface that
- * shows an ItemBox wires this, so "tap an item to see what it does" is one behaviour and not six.
- */
-export function ItemSummaryPopup({ item, onClose }: { item: EquipmentDefinition | null; onClose: () => void }) {
-  if (!item) return null;
-  return (
-    <div
-      className="log-overlay"
-      onClick={(e) => {
-        e.stopPropagation();
-        onClose();
-      }}
-    >
-      <div className="log-panel move-popup-panel">
-        <EquipmentInfoPanel item={item} />
-        <div className="move-popup-hint">Tap anywhere to close</div>
-      </div>
-    </div>
-  );
-}
-
 interface EquipmentSlotGridProps {
   loadout: EquipmentLoadout;
   capacity: number;
   equipmentLookup: Record<string, EquipmentDefinition>;
-  /** Tap on a filled slot. Omit and the grid summarises the item itself; pass it to route the tap somewhere else. */
-  onInspect?: (itemId: string) => void;
+  /** Tap on a filled slot — the caller opens its ItemDetailOverlay (ItemDossier.tsx). */
+  onInspect: (itemId: string) => void;
   /** Slot index to mark with the .target outline — where an incoming item would land. */
   highlightIndex?: number | null;
 }
 
 /**
  * A hero's slots as icon boxes, one per slot it has. Read-only: the only interaction is a tap,
- * which shows what the item does — handled here unless `onInspect` routes it to the caller's own
- * popup (HeroPreviewOverlay already owns one for moves and relics).
+ * which shows what the item does — routed to the caller's own popup, which already holds moves
+ * and passives (HeroPreviewOverlay, HeroDetailOverlay).
  */
 export function EquipmentSlotGrid({ loadout, capacity, equipmentLookup, onInspect, highlightIndex }: EquipmentSlotGridProps) {
-  const [summaryId, setSummaryId] = useState<string | null>(null);
   return (
     <div className="equip-slot-row">
       {slotBoxes(loadout, capacity).map((itemId, index) => {
@@ -317,11 +294,10 @@ export function EquipmentSlotGrid({ loadout, capacity, equipmentLookup, onInspec
             key={index}
             item={item}
             className={index === highlightIndex ? 'target' : undefined}
-            onTap={item ? () => (onInspect ? onInspect(item.id) : setSummaryId(item.id)) : undefined}
+            onTap={item ? () => onInspect(item.id) : undefined}
           />
         );
       })}
-      {!onInspect && <ItemSummaryPopup item={summaryId ? (equipmentLookup[summaryId] ?? null) : null} onClose={() => setSummaryId(null)} />}
     </div>
   );
 }
@@ -362,71 +338,10 @@ export function EquipmentEffectList({ item }: { item: EquipmentDefinition | null
   );
 }
 
-interface EquipmentInfoPanelProps {
-  item: EquipmentDefinition | null;
-  placeholder?: string;
-}
-
-/** Fixed-size detail readout, same `.move-info-panel` box as MoveInfoPanel. */
-export function EquipmentInfoPanel({ item, placeholder = 'Tap a held item to see what it does.' }: EquipmentInfoPanelProps) {
-  const grants = item ? (Object.entries(item.statGrants) as [StatKey, number][]) : [];
-  const grantedPassives = item?.grantsPassiveIds ?? [];
-  const grantedStatuses = item?.grantsStatusIds ?? [];
-  return (
-    <div className="move-info-panel">
-      {item ? (
-        <>
-          <div className="move-info-head">
-            <span className="move-info-name">{item.name}</span>
-            <span className="move-info-kind">{RARITY_LABELS[item.rarity]}</span>
-          </div>
-          {grants.length > 0 && (
-            <div className="detail-modifier-list">
-              {grants.map(([stat, amount]) => (
-                <span key={stat} className={`detail-modifier-chip ${amount > 0 ? 'stat-buff' : 'stat-debuff'}`}>
-                  <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} {fmtGrant(amount)}
-                </span>
-              ))}
-            </div>
-          )}
-          {(grantedPassives.length > 0 || grantedStatuses.length > 0) && (
-            <div className="detail-modifier-list">
-              {grantedPassives.map((passiveId) => {
-                const def = passives[passiveId];
-                if (!def) return null;
-                return (
-                  <span key={passiveId} className="detail-modifier-chip">
-                    <PassiveGlyph passiveId={passiveId} />{" "}
-                    Grants: {def.name}
-                  </span>
-                );
-              })}
-              {grantedStatuses.map(({ statusId, magnitude }) => {
-                const def = statuses[statusId];
-                if (!def) return null;
-                return (
-                  <span key={statusId} className="detail-modifier-chip">
-                    Grants: {def.name} +{magnitude}
-                  </span>
-                );
-              })}
-            </div>
-          )}
-          {grants.length === 0 && grantedPassives.length === 0 && grantedStatuses.length === 0 && (
-            <div className="move-info-placeholder">No stat effects.</div>
-          )}
-        </>
-      ) : (
-        <div className="move-info-placeholder">{placeholder}</div>
-      )}
-    </div>
-  );
-}
-
 /**
  * One held item spelled out in full: its icon and tier, every stat it grants, and the whole
  * description of every passive and Elemental Force it carries. The list form of
- * `EquipmentInfoPanel` — the hero sheet's Gear page shows these outright rather than making each
+ * `ItemDetailCard` (ItemDossier.tsx) — the hero sheet's Gear page shows these outright rather than making each
  * held item a button that has to be tapped before it says anything.
  */
 export function ItemReadout({ item }: { item: EquipmentDefinition }) {

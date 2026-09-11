@@ -3,7 +3,8 @@ import type { MapNode, MapNodeType, RunMap } from '../../run/map';
 import { NodeGlyph } from '../shared/nodeIcons';
 import { useLongPress } from '../shared/MoveTile';
 import { playSfx, type SfxId } from '../../audio/sfx';
-import { NODE_COLORS, NODE_NAMES, NODE_TIERS, nodeRewardText, type NodeTier } from './mapNodes';
+import { NODE_COLORS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
+import { nodeFactsLine } from './nodeFacts';
 
 /**
  * The route out of where the player is standing (2026-09-08, per user direction): the node just
@@ -121,6 +122,7 @@ interface RouteSegment {
 function ChoiceMedallion({
   map,
   node,
+  actNumber,
   showLeadOn,
   landDelayMs,
   onSelect,
@@ -129,6 +131,7 @@ function ChoiceMedallion({
 }: {
   map: RunMap;
   node: MapNode;
+  actNumber: number;
   showLeadOn: boolean;
   landDelayMs: number;
   onSelect: () => void;
@@ -153,7 +156,7 @@ function ChoiceMedallion({
         type="button"
         className="map-medallion"
         ref={measureRef}
-        aria-label={`${NODE_NAMES[node.type]} — ${nodeRewardText(node.type)}`}
+        aria-label={nodeFactsLine(NODE_NAMES[node.type], node.type, actNumber)}
         data-sfx="none"
         {...press}
       >
@@ -170,6 +173,7 @@ export function MapRoute({
   originNode,
   omen,
   choiceIds,
+  actNumber,
   onSelectNode,
   onPreviewNode,
 }: {
@@ -179,6 +183,8 @@ export function MapRoute({
   /** The Location's faction line, shown in the origin's place at the act's first Monsters node. */
   omen: string;
   choiceIds: readonly string[];
+  /** The act the map belongs to — the ledger's drop odds and hire level are per act. */
+  actNumber: number;
   onSelectNode: (nodeId: string) => void;
   onPreviewNode: (node: MapNode) => void;
 }) {
@@ -317,6 +323,7 @@ export function MapRoute({
             key={nodeId}
             map={map}
             node={map.nodes[nodeId]}
+            actNumber={actNumber}
             showLeadOn={showLeadOn}
             landDelayMs={i * PATH_STAGGER_MS + PATH_DRAW_MS}
             onSelect={() => {

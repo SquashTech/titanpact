@@ -16,7 +16,7 @@ export const CONTRACT_PURCHASE_COST = 20;
 export const SCROLL_PURCHASE_COST = 35;
 
 /** Gold cost to recruit any Guild Hall hero outright. */
-const GUILD_HALL_RECRUIT_COST = 50;
+export const GUILD_HALL_RECRUIT_COST = 50;
 
 export const guildHallOffers: GuildHallOffer[] = Object.values(heroes)
   .filter((hero) => !hero.starter)
