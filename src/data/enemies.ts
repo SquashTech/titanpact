@@ -384,7 +384,11 @@ export const enemies: Record<string, HeroDefinition> = {
     id: 'skullShambler',
     name: 'Skull Shambler',
     types: ['Spirit'],
-    baseStats: { hp: 140, attack: 25, defense: 60, intelligence: 90, wisdom: 65, speed: 90, manaPool: 55, mpRegen: 12 },
+    // MP Regen 13, not 12: `drain` went from 20 mana to 40 in the same pass that made it a 55 BP
+    // nuke, and it had been this body's cheap row — with Torment and Spite both at 25, a Shambler
+    // regenerating 24 over two rounds arrived able only to Rest, for ever. The stat moves rather
+    // than the move because the retune is the point; 13 is the smallest number that clears 25/2.
+    baseStats: { hp: 140, attack: 25, defense: 60, intelligence: 90, wisdom: 65, speed: 90, manaPool: 55, mpRegen: 13 },
     moveIds: ['torment', 'spite', 'drain'],
     starter: false,
   },

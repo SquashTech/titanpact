@@ -253,7 +253,10 @@ test('spirit: three moves plant Haunt and all twelve damage moves cash it in', (
     .map((m) => m.id)
     .sort();
   assert.deepStrictEqual(planters, ['poltergeist', 'torment', 'wisp']);
-  assert.strictEqual(firstStatusApplication(moves.wisp)?.chance, 0.2);
+  // One of the three rolls for it and two are certain — which is the shape, where the roll's odds
+  // are a balance figure. Pinning them made the tuning pass fail this.
+  const wispChance = firstStatusApplication(moves.wisp)?.chance;
+  assert.ok(wispChance != null && wispChance < 1, 'Wisp should be the chanced planter');
   assert.strictEqual(firstStatusApplication(moves.torment)?.chance, undefined);
   assert.strictEqual(firstStatusApplication(moves.poltergeist)?.chance, undefined);
 });

@@ -318,7 +318,10 @@ test('shadow: every Poison the slate applies is chanced, and every one runs the 
   const poisoners = Object.values(moves).filter((m) => m.type === 'Shadow' && firstStatusApplication(m)?.statusId === 'Poison');
   assert.deepStrictEqual(poisoners.map((m) => m.id).sort(), ['umbraBolt', 'umbralBeam', 'umbralWave']);
   for (const move of poisoners) {
-    assert.strictEqual(firstStatusApplication(move)!.chance, 0.2, `${move.id} is not a 20% Poison`);
+    // CHANCED, not a fixed 20%: the rule this test exists for is that no Shadow row applies Poison
+    // for certain, and pinning the exact figure made a balance pass fail a design assertion.
+    const chance = firstStatusApplication(move)!.chance;
+    assert.ok(chance != null && chance < 1, `${move.id} applies Poison for certain — that is Nature's job`);
     assert.strictEqual(firstStatusApplication(move)!.duration, 3, `${move.id} authors a non-standard Poison timer`);
   }
 });

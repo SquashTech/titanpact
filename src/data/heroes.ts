@@ -70,7 +70,11 @@ export const heroes: Record<string, HeroDefinition> = {
     baseStats: { hp: 210, attack: 55, defense: 55, intelligence: 59, wisdom: 40, speed: 66, manaPool: 65, mpRegen: 10 },
     moveIds: ['splash', 'tideGuard', 'refresh'],
     starter: true,
-    growthGrades: { hp: 'A', attack: 'C', defense: 'B', intelligence: 'B', wisdom: 'C', speed: 'A', manaPool: 'A' },
+    // Mana takes the point the line was over by (29 -> GRADE_BUDGET's 28). Of the three A's it is
+    // the one the reshape cares least about: this is no longer the S-Intelligence caster whose
+    // ceiling was its pool, and 65 base is already comfortable. Attack stays C and Intelligence
+    // stays B — those are the two the reshape exists to lift off the floor.
+    growthGrades: { hp: 'A', attack: 'C', defense: 'B', intelligence: 'B', wisdom: 'C', speed: 'A', manaPool: 'B' },
   },
   pincer: {
     id: 'pincer',

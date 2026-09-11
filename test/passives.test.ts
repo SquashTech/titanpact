@@ -627,7 +627,10 @@ test('passives: Entanglement reads the STAT — Lull drops Intelligence and mark
   const state = withPassive(cortexFixture(372), 'a1', 'entanglement');
   const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'lull', declaredTarget: 'b1' } as Action], config);
 
-  assert.strictEqual(next.combatants.b1.statModifiers.intelligence, -20, 'the debuff landed');
+  // Read off the move rather than pinned: this test is about Entanglement reading the STAT, and the
+  // size of Lull's drop is a balance figure that has nothing to do with what is being asserted.
+  const lullDrop = moves.lull.statDeltas!.find((d) => d.stat === 'intelligence')!.amount;
+  assert.strictEqual(next.combatants.b1.statModifiers.intelligence, lullDrop, 'the debuff landed');
   assert.ok(!hasStatus(next.combatants.b1, 'Haunt'));
 });
 

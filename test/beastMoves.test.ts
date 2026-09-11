@@ -145,7 +145,13 @@ test('beast: the pack condition reads the ACTIVE partner — a downed one counts
   assert.strictEqual(damageOf(events)?.basePowerMultiplier, 1, 'a corpse is not a pack');
 });
 
-test('beast: Prowl grants +10/+10 alone and +20/+20 beside a Beast, as one delta either way', () => {
+test('beast: Prowl grants its authored delta alone and double beside a Beast, as one delta either way', () => {
+  // Derived from what Prowl authors: the claim is the DOUBLING and that it arrives as one delta,
+  // not that the grant is any particular size.
+  const base = {
+    attack: moves.prowl.statDeltas!.find((d) => d.stat === 'attack')!.amount,
+    speed: moves.prowl.statDeltas!.find((d) => d.stat === 'speed')!.amount,
+  };
   const prowl = (partnerHeroId: string) => {
     const state = withDeepPools(beastFixture(712, partnerHeroId));
     const { state: after, events } = resolveRound(
@@ -157,12 +163,12 @@ test('beast: Prowl grants +10/+10 alone and +20/+20 beside a Beast, as one delta
   };
 
   const alone = prowl('cinderKnight');
-  assert.strictEqual(alone.mods.attack, 10);
-  assert.strictEqual(alone.mods.speed, 10);
+  assert.strictEqual(alone.mods.attack, base.attack);
+  assert.strictEqual(alone.mods.speed, base.speed);
 
   const pack = prowl('packAlpha');
-  assert.strictEqual(pack.mods.attack, 20);
-  assert.strictEqual(pack.mods.speed, 20);
+  assert.strictEqual(pack.mods.attack, base.attack * 2);
+  assert.strictEqual(pack.mods.speed, base.speed * 2);
   // The multiplier scales the amounts rather than applying the deltas twice.
   assert.strictEqual(pack.changes.length, 2, 'one beat per stat, not per application');
 });

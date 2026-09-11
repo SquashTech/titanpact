@@ -157,7 +157,10 @@ test('iron: every conditionalManaCost in the game authors exactly one side', () 
 test('iron: the Attack ramp compounds across casts and is never spent', () => {
   let state = withDeepPools(ironFixture(610));
   const casts = ['sharpen', 'momentumSwing', 'ironFist'];
-  const expected = [30, 50, 55];
+  // The running total is DERIVED from what each row authors, because the claim here is that the
+  // grants compound and are never spent — not that they add up to any particular number.
+  let running = 0;
+  const expected = casts.map((moveId) => (running += moves[moveId].statDeltas!.find((d) => d.stat === 'attack')!.amount));
 
   casts.forEach((moveId, i) => {
     const declaredTarget = moves[moveId].target === 'self' ? undefined : 'b1';
@@ -251,11 +254,16 @@ test('iron: an Iron hit on a marked foe is worth 15% max HP more than the same h
 
 // --- What the slate does NOT have ---
 
-test('iron: the slate authors exactly one priority row, and no heal, cleanse or field effect', () => {
+test('iron: every priority row is a POSITIVE bracket, and the slate has no heal, cleanse or field effect', () => {
   const ironMoves = Object.values(moves).filter((m) => m.type === 'Iron');
   const bracketed = ironMoves.filter((m) => m.priority !== 0);
-  assert.deepStrictEqual(bracketed.map((m) => m.id), ['swiftBlow']);
-  assert.strictEqual(moves.swiftBlow.priority, 1, 'and it is a POSITIVE bracket — Iron never swings slow');
+  // Two rows now, not one: Opening Strike traded 30 BP for 25 and a bracket (2026-09-10), which is
+  // a deliberate jab rather than a slip. What the type must never do is swing SLOW — so the
+  // assertion is the sign of the bracket, not how many rows hold one.
+  assert.deepStrictEqual(bracketed.map((m) => m.id).sort(), ['openingStrike', 'swiftBlow']);
+  for (const move of bracketed) {
+    assert.ok((move.priority ?? 0) > 0, `${move.id} swings slow — Iron never does`);
+  }
 
   for (const move of ironMoves) {
     assert.notStrictEqual(move.kind, 'heal', `${move.id} is heal-kind`);
