@@ -149,6 +149,46 @@ test('passives: two stacks of Sanguine heal twice per enemy Bleed tick', () => {
   assert.strictEqual(next.combatants.a1.currentHp, 10 + expectedTick * 2);
 });
 
+// --- Reactions fire from the field only, and only when they do something ---
+
+const singeB1: Action = { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' };
+
+test('passives: a benched Bloodthirst holder does not heal off its side\'s hits', () => {
+  const state = createFightState(
+    310,
+    [
+      { combatantId: 'a1', heroId: 'cinderKnight', side: 'A' },
+      { combatantId: 'a2', heroId: 'tidecaller', side: 'A' },
+      { combatantId: 'a3', heroId: 'ironWarden', side: 'A' },
+    ],
+    [
+      { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
+      { combatantId: 'b2', heroId: 'wildOracle', side: 'B' },
+    ]
+  );
+  const hurt = {
+    ...state,
+    combatants: { ...state.combatants, a1: { ...state.combatants.a1, currentHp: 10 }, a3: { ...state.combatants.a3, currentHp: 10 } },
+  };
+  const armed = withPassive(withPassive(hurt, 'a1', 'bloodthirst'), 'a3', 'bloodthirst');
+
+  const { events } = resolveRound(armed, [singeB1], config);
+
+  assert.ok(events.some((e) => e.type === 'PassiveTriggered' && e.combatantId === 'a1' && e.passiveId === 'bloodthirst'));
+  assert.ok(!events.some((e) => e.type === 'PassiveTriggered' && e.combatantId === 'a3'));
+});
+
+test('passives: a heal reaction at full HP is a no-op — no trigger, no HpChanged', () => {
+  const state = twoVTwoFixture(311);
+  const armed = withPassive(state, 'a1', 'bloodthirst');
+
+  const { events } = resolveRound(armed, [singeB1], config);
+
+  assert.ok(events.some((e) => e.type === 'HpChanged' && e.combatantId === 'b1'));
+  assert.ok(!events.some((e) => e.type === 'PassiveTriggered' && e.combatantId === 'a1'));
+  assert.ok(!events.some((e) => e.type === 'HpChanged' && e.combatantId === 'a1'));
+});
+
 // --- Emberheart: damage-pipeline modifier, conditional + stacking ---
 
 test('passives: collectPassiveDamageModifiers only matches the conditioned move type', () => {

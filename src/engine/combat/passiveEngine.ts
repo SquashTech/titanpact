@@ -203,6 +203,8 @@ function resolveEffectOn(
       const amount = resolveAmount(effect.amount, context);
       if (amount <= 0) return { state, events: [] };
       const maxHp = getMaxHp(heroes[target.heroId], target);
+      // Nothing to restore is a no-op, not a "+0 HP" beat.
+      if (target.currentHp >= maxHp) return { state, events: [] };
       return applyHpDelta(state, round, targetId, amount, maxHp);
     }
     case 'applyStatus': {
@@ -301,6 +303,8 @@ export function resolvePassiveReactions(
     for (const ownerId of Object.keys(working.combatants)) {
       const owner = working.combatants[ownerId];
       if (!owner || owner.fainted) continue;
+      // A passive reacts only from the field: a benched Bloodthirst holder does not drink its side's hits.
+      if (!working.active[owner.side].includes(ownerId)) continue;
 
       for (const instance of Object.values(owner.passives)) {
         const reactive = passiveDefs[instance.passiveId]?.reactive;
@@ -319,7 +323,8 @@ export function resolvePassiveReactions(
         for (let i = 0; i < (reactive.oncePerFight ? 1 : instance.stacks); i++) {
           const resolved = resolveEffect(working, round, heroes, statusDefs, fieldEffectDefs, ownerId, subjectId, eventTargetId, reactive.effect, context);
           working = resolved.state;
-          // Emitted even when the effect no-op'd, so the view knows the passive attempted to fire.
+          // A no-op (a heal at full HP, a target already fainted) is not a trigger: nothing to log.
+          if (resolved.events.length === 0) continue;
           produced.push({ type: 'PassiveTriggered', round, combatantId: ownerId, passiveId: instance.passiveId }, ...resolved.events);
         }
       }

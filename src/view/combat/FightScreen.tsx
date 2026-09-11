@@ -673,6 +673,8 @@ export function FightScreen({
   const openReplacementSlots = ([0, 1] as const).filter((slot) => combat.active[PLAYER_SIDE][slot] === null && playerBench.length > 0);
 
   const canAct = !resolving && openReplacementSlots.length === 0 && playerActiveAlive.length > 0;
+  /** The VS card is up: it takes a tap and nothing else — no hold, no latched key. */
+  const awaitingEngagementTap = resolving && beat?.engagement === true;
   const stepIndex = canAct ? Math.min(actionStep, playerActiveAlive.length - 1) : 0;
   const actingId: string | null = canAct ? playerActiveAlive[stepIndex] : null;
 
@@ -947,8 +949,15 @@ export function FightScreen({
     finalState.current = nextFinalState;
     beatQueue.current = beats;
     setResolving(true);
-    // A latched Auto key survives the round that engaged it, so every later round — and the
-    // next fight — opens already playing.
+    // A latched Auto key survives the round that engaged it, so every later round opens already
+    // playing. The engagement beat is the exception: Auto is for the fight, not the VS card, which
+    // waits for a tap however the keys are set (resumeAfterEngagement).
+    const opensOnEngagement = beats[0]?.engagement === true;
+    if (handleAdvance() && !opensOnEngagement && autoModeRef.current !== 'off') startAutoPlay(autoModeRef.current);
+  }
+
+  /** The VS card's one tap: reveal what follows it, and only then let a latched Auto key take over. */
+  function resumeAfterEngagement() {
     if (handleAdvance() && autoModeRef.current !== 'off') startAutoPlay(autoModeRef.current);
   }
 
@@ -1021,7 +1030,7 @@ export function FightScreen({
     setAutoMode(next);
     writeAutoPlayMode(next);
     stopAutoAdvance();
-    if (next !== 'off' && resolving) startAutoPlay(next);
+    if (next !== 'off' && resolving && !awaitingEngagementTap) startAutoPlay(next);
   }
 
   function handleAdvancePointerDown() {
@@ -1078,16 +1087,22 @@ export function FightScreen({
     <>
       {/* Full-screen tap-to-advance catcher; sits below the log overlay's z-index.
           Inert while an Auto key is latched — it still gates the screen, but a stray
-          tap must not step an extra beat and a pointerup must not kill the timer. */}
-      {resolving && (
-        <div
-          className="advance-overlay"
-          onClick={autoMode === 'off' ? handleAdvanceClick : undefined}
-          onPointerDown={autoMode === 'off' ? handleAdvancePointerDown : undefined}
-          onPointerUp={autoMode === 'off' ? stopAutoAdvance : undefined}
-          onPointerLeave={autoMode === 'off' ? stopAutoAdvance : undefined}
-          onPointerCancel={autoMode === 'off' ? stopAutoAdvance : undefined}
-        />
+          tap must not step an extra beat and a pointerup must not kill the timer.
+          The VS card is tap-only whatever the keys say: no hold, and a latched key
+          only takes over once it has been dismissed. */}
+      {awaitingEngagementTap ? (
+        <div className="advance-overlay" onClick={resumeAfterEngagement} />
+      ) : (
+        resolving && (
+          <div
+            className="advance-overlay"
+            onClick={autoMode === 'off' ? handleAdvanceClick : undefined}
+            onPointerDown={autoMode === 'off' ? handleAdvancePointerDown : undefined}
+            onPointerUp={autoMode === 'off' ? stopAutoAdvance : undefined}
+            onPointerLeave={autoMode === 'off' ? stopAutoAdvance : undefined}
+            onPointerCancel={autoMode === 'off' ? stopAutoAdvance : undefined}
+          />
+        )
       )}
 
       <div
@@ -1230,7 +1245,11 @@ export function FightScreen({
               )}
             </div>
             <span className="combat-banner-hint">
-              {autoMode === 'off' ? 'tap ▸ or hold to auto-play ⏵⏵' : 'auto-playing — press the lit key to stop'}
+              {awaitingEngagementTap
+                ? 'tap to begin'
+                : autoMode === 'off'
+                  ? 'tap ▸ or hold to auto-play ⏵⏵'
+                  : 'auto-playing — press the lit key to stop'}
             </span>
           </div>
         )}
