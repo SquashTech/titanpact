@@ -11,7 +11,7 @@ import { classes } from '../../src/data/classes';
 import { runEvents } from '../../src/data/events';
 import { progressionTable } from '../../src/data/progression';
 import { enemies, factions, basicEnemiesOf, finaleEnemies, ENDBRINGER_ID } from '../../src/data/enemies';
-import { guildHallOffers, CONTRACT_PURCHASE_COST } from '../../src/data/recruitment';
+import { guildHallOffers, CONTRACT_PURCHASE_COST, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT } from '../../src/data/recruitment';
 
 import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry, ROSTER_CAP, TOTAL_ACTS, type RunState, type RosterEntry } from '../../src/run/state';
 import { generateMap, type MapNodeType } from '../../src/run/map';
@@ -49,13 +49,15 @@ import {
   SCROLL_REWARD_COUNT,
   LONE_SCROLL_COUNT,
   grantMasteryScrolls,
+  canSpendScroll,
   recordMoveOffer,
   masteryRank,
   grantOfferedMove,
   itemSlotsFor,
   grantMove,
 } from '../../src/run/progression';
-import { claimContract, claimContractReplacing, deriveContractOffer, isRecruitable, pickContractOffers, recruitFromGuildHall, recruitFromGuildHallReplacing, freshRosterId, buyContract } from '../../src/run/recruitment';
+import { claimContract, claimContractReplacing, deriveContractOffer, isRecruitable, pickContractOffers, recruitFromGuildHall, recruitFromGuildHallReplacing, freshRosterId, buyContract, buyMasteryScroll } from '../../src/run/recruitment';
+import { guildHallEntry } from '../../src/run/guildRecruit';
 import { rollGuildHallOffers, buyEquipment, sellValueFor, EQUIPMENT_PRICE_BY_RARITY } from '../../src/run/shop';
 import { mentorMovePool, tutorMovePool } from '../../src/run/tutor';
 import { grantClass, rollClassOffers } from '../../src/run/classes';
@@ -142,6 +144,10 @@ export interface RunRecord {
   choices: ChoiceEvent[];
   /** Rarity of every item actually equipped, keyed `act:rarity`. */
   equipped: string[];
+  /** Scrolls granted this run, by source; `unspent` is what nobody could take. */
+  scrollsBySource: Record<string, number>;
+  /** Heroes joining after the draft: `contract` (claimed or bought), `hire` (Guild Hall). */
+  recruitsBySource: Record<string, number>;
 }
 
 // --- Helpers ---
@@ -238,6 +244,8 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     fights: [],
     choices: [],
     equipped: [],
+    scrollsBySource: {},
+    recruitsBySource: {},
   };
 
   // --- Draft: 4 starters offered, 2 taken at random (the experiment). ---
@@ -309,7 +317,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
         }
         // Guardian → Banner → Crucible (a Class) → Pact Seal.
         run = resolveCrucible(run, rng, record.choices);
-        run = grantMasteryScrolls(run, SCROLLS_PER_ACT);
+        run = grantScrolls(run, SCROLLS_PER_ACT, 'guardian', record);
         if (run.actNumber < TOTAL_ACTS) {
           run = advanceToNextAct(run, randomSeed(rng));
         }
@@ -319,18 +327,21 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
         }
       }
 
-      run = tryRecruitContracts(run, outcome.defeatedRoster, rng);
+      run = tryRecruitContracts(run, outcome.defeatedRoster, rng, record);
       if (outcome.drop) run = resolveDrop(run, outcome.drop.id, record.equipped, run.actNumber);
       // The fight's Scrolls, by lane (docs/growth-overhaul.md §11); the Guardian's are above.
-      if (node.type !== 'boss') run = grantMasteryScrolls(run, scrollRewardFor(node.type));
+      if (node.type !== 'boss') run = grantScrolls(run, scrollRewardFor(node.type), node.type, record);
+      run = pourHeldScrolls(run, rng, record);
       continue;
     }
 
     run = resolveRewardNode(run, node.type, location.id, rng, record, options);
+    run = pourHeldScrolls(run, rng, record);
     run = advanceToNode(run, nodeId);
   }
 
   record.goldEnd = run.gold;
+  if (run.masteryScrolls > 0) record.scrollsBySource.unspent = run.masteryScrolls;
   record.rosterEvolvedEnd =
     run.roster.length > 0 ? run.roster.filter((r) => r.chosenPathIds.length > 0).length / run.roster.length : 0;
   record.rosterLevelEnd =
@@ -340,6 +351,21 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     record.heroScrolls[entry.heroId] = Math.max(record.heroScrolls[entry.heroId] ?? 0, entry.masteryScrollsSpent);
   }
   return record;
+}
+
+/**
+ * A Scroll is poured where it is won, never held (App.tsx `masteryDue`): last in the post-fight
+ * chain, after the contract and the Crucible, and on the way out of a Cache or the Guild Hall. The
+ * 6th into a hero evolves it (policy.pourScrolls), logged here as the choice it is.
+ */
+function pourHeldScrolls(run: RunState, rng: Rng, record: RunRecord): RunState {
+  if (run.masteryScrolls <= 0) return run;
+  const evolutions: PourEvolution[] = [];
+  const next = policy.pourScrolls(run, rng, evolutions);
+  for (const e of evolutions) {
+    record.choices.push({ bucket: 'evolution', offered: e.offered, picked: [e.picked], encountersWonAtChoice: next.encountersWon });
+  }
+  return next;
 }
 
 function isEncounterNode(type: MapNodeType): boolean {
@@ -418,14 +444,6 @@ function resolveEncounterNode(
     ? pickWeightedEquipment(EQUIPMENT_POOL, 1, rarityWeightsFor(workingRun.actNumber, LOOT_SOURCE[kindKey]))[0] ?? null
     : null;
 
-  // Scrolls are spent before the fight, not at the grant: the player holds them until there is
-  // a hero worth pouring them into, and a recruit arriving mid-act changes who that is. The 6th
-  // into a hero evolves it (policy.pourScrolls), logged here as the choice it is.
-  const evolutions: PourEvolution[] = [];
-  workingRun = policy.pourScrolls(workingRun, rng, evolutions);
-  for (const e of evolutions) {
-    record.choices.push({ bucket: 'evolution', offered: e.offered, picked: [e.picked], encountersWonAtChoice: workingRun.encountersWon });
-  }
   const playerSquad = rosterSquad(workingRun, squadSize);
   const fight = simulateFight({
     seed: randomSeed(rng),
@@ -496,7 +514,7 @@ function claimBanner(run: RunState, rng: Rng, record: RunRecord): RunState {
 }
 
 /** A beaten hero-pool enemy can be claimed with a contract. Free power below the cap; above it, only for a real upgrade. */
-function tryRecruitContracts(run: RunState, defeatedRoster: readonly RosterEntry[], rng: Rng): RunState {
+function tryRecruitContracts(run: RunState, defeatedRoster: readonly RosterEntry[], rng: Rng, record: RunRecord): RunState {
   if (run.recruitContracts <= 0) return run;
   const eligible = defeatedRoster.filter((entry) => isRecruitable(entry.heroId, heroes));
   const offers = pickContractOffers(eligible);
@@ -505,10 +523,21 @@ function tryRecruitContracts(run: RunState, defeatedRoster: readonly RosterEntry
   const offer = deriveContractOffer(best);
   const rosterId = freshRosterId(run, best.heroId);
 
-  if (run.roster.length < ROSTER_CAP) return claimContract(run, offer, rosterId);
+  if (run.roster.length < ROSTER_CAP) {
+    record.recruitsBySource.contract = (record.recruitsBySource.contract ?? 0) + 1;
+    return claimContract(run, offer, rosterId);
+  }
   const weakest = policy.byPower(run.roster)[run.roster.length - 1];
   if (policy.powerScore(best) <= policy.powerScore(weakest)) return run;
+  record.recruitsBySource.contractReplacing = (record.recruitsBySource.contractReplacing ?? 0) + 1;
   return claimContractReplacing(run, offer, rosterId, weakest.rosterId);
+}
+
+/** grantMasteryScrolls, with the source tallied on the run record. */
+function grantScrolls(run: RunState, count: number, source: string, record: RunRecord): RunState {
+  if (count <= 0) return run;
+  record.scrollsBySource[source] = (record.scrollsBySource[source] ?? 0) + count;
+  return grantMasteryScrolls(run, count);
 }
 
 function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: string, rng: Rng, record: RunRecord, options: RunOptions): RunState {
@@ -516,11 +545,11 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
     // The Scroll Cache. The GRANT is what is under test; who it goes to is policy.pourScrolls,
     // which runs before every fight.
     case 'scrollReward':
-      return grantMasteryScrolls(run, SCROLL_REWARD_COUNT);
+      return grantScrolls(run, SCROLL_REWARD_COUNT, 'scrollCache', record);
     case 'currencyReward':
       return grantCurrencyReward(run, rollGoldRange(PURSE_GOLD_RANGE, rng));
     case 'loneScrollReward':
-      return grantMasteryScrolls(run, LONE_SCROLL_COUNT);
+      return grantScrolls(run, LONE_SCROLL_COUNT, 'loneScroll', record);
     case 'equipmentReward': {
       // Three offered; the policy takes the one worth most to somebody. Equipment is a
       // power question, not a design experiment — the rarity curve is what's under test.
@@ -707,14 +736,24 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
     if (!offer || next.gold < offer.cost) continue;
     const rosterId = freshRosterId(next, offer.heroId);
     if (next.roster.length < ROSTER_CAP) {
+      record.recruitsBySource.hire = (record.recruitsBySource.hire ?? 0) + 1;
       next = recruitFromGuildHall(next, offer, rosterId);
       continue;
     }
-    // A Guild Hall recruit arrives at level 1, so replacing a veteran is almost never right.
+    // A hire arrives raw and one act behind (guildHallEntry), so it replaces only a hero it outscores as-is.
     const weakest = policy.byPower(next.roster)[next.roster.length - 1];
-    if (weakest.level <= 1 && policy.powerScore(weakest) < policy.powerScore({ ...weakest, heroId: offer.heroId })) {
+    if (policy.powerScore(weakest) < policy.powerScore(guildHallEntry(next, offer, rosterId))) {
+      record.recruitsBySource.hireReplacing = (record.recruitsBySource.hireReplacing ?? 0) + 1;
       next = recruitFromGuildHallReplacing(next, offer, rosterId, weakest.rosterId);
     }
+  }
+
+  // The shelf's Scrolls (SCROLL_PURCHASE_LIMIT a visit), bought while a hero can take one and the
+  // gold is there — a Scroll is the one purchase whose value never decays.
+  while (next.masteryScrolls < SCROLL_PURCHASE_LIMIT && next.gold >= SCROLL_PURCHASE_COST) {
+    if (!next.roster.some((entry) => canSpendScroll(progressionTable, moves, { ...next, masteryScrolls: 1 }, entry))) break;
+    next = buyMasteryScroll(next, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT);
+    record.scrollsBySource.guildHall = (record.scrollsBySource.guildHall ?? 0) + 1;
   }
 
   for (const itemId of offers.equipmentOfferIds) {

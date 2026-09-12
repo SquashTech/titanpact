@@ -264,8 +264,8 @@ export interface PourEvolution {
  * rewards and a sim that spread them evenly would measure a ceiling nobody reaches.
  *
  * The 6th Scroll into a hero is its Evolution (docs/growth-overhaul.md §11): the path is taken at
- * random (the path table is what is under test), its granted move's overflow resolved, and only
- * then does the Scroll's own offer roll — from the post-Evolution pool, as the screen does it.
+ * random (the path table is what is under test) and its granted move's overflow resolved. The
+ * Evolution is that Scroll's whole reward — no offer rolls behind it (`useScrollPour`).
  *
  * The move is taken when it beats the worst one held (or there is room), declined otherwise —
  * either way the Scroll is gone, which is the rule the screen enforces too.
@@ -299,6 +299,7 @@ export function pourScrolls(run: RunState, rng: () => number, evolutions: PourEv
       } catch {
         // Illegal path for this hero (content bug) — the Scroll still ticked; carry on unevolved.
       }
+      continue;
     }
 
     const current = next.roster.find((r) => r.rosterId === target.rosterId)!;

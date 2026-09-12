@@ -126,6 +126,12 @@ export interface Aggregate {
   playerSwitches: number;
   /** Fights where the player side reached the 2-KO lock-in threshold. */
   lockInFights: number;
+  /** Mastery Scrolls granted, by source — the income the §11 lane split promises. */
+  scrollsBySource: Record<string, number>;
+  /** The same, restricted to completed runs — the whole-run income a full clear actually saw. */
+  scrollsBySourceWon: Record<string, number>;
+  /** Heroes who joined the roster after the draft, by route. */
+  recruitsBySource: Record<string, number>;
   /** Wall-clock ms spent simulating. */
   elapsedMs: number;
 }
@@ -165,6 +171,9 @@ export function emptyAggregate(): Aggregate {
     playerRests: 0,
     playerSwitches: 0,
     lockInFights: 0,
+    scrollsBySource: {},
+    scrollsBySourceWon: {},
+    recruitsBySource: {},
     elapsedMs: 0,
   };
 }
@@ -236,6 +245,9 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   mergeArray(into.heroLevelHistogramDeep, from.heroLevelHistogramDeep);
   for (const key of Object.keys(from.castsByTier)) into.castsByTier[key] = (into.castsByTier[key] ?? 0) + from.castsByTier[key];
   for (const key of Object.keys(from.castsByManaBand)) into.castsByManaBand[key] = (into.castsByManaBand[key] ?? 0) + from.castsByManaBand[key];
+  for (const key of Object.keys(from.scrollsBySource)) into.scrollsBySource[key] = (into.scrollsBySource[key] ?? 0) + from.scrollsBySource[key];
+  for (const key of Object.keys(from.scrollsBySourceWon)) into.scrollsBySourceWon[key] = (into.scrollsBySourceWon[key] ?? 0) + from.scrollsBySourceWon[key];
+  for (const key of Object.keys(from.recruitsBySource)) into.recruitsBySource[key] = (into.recruitsBySource[key] ?? 0) + from.recruitsBySource[key];
   for (const key of Object.keys(from.deathByNodeType)) {
     into.deathByNodeType[key] = (into.deathByNodeType[key] ?? 0) + from.deathByNodeType[key];
   }

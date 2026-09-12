@@ -48,6 +48,11 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
   }
 
   for (const key of record.equipped) agg.equipRarityByAct[key] = (agg.equipRarityByAct[key] ?? 0) + 1;
+  for (const key of Object.keys(record.scrollsBySource)) {
+    agg.scrollsBySource[key] = (agg.scrollsBySource[key] ?? 0) + record.scrollsBySource[key];
+    if (record.won) agg.scrollsBySourceWon[key] = (agg.scrollsBySourceWon[key] ?? 0) + record.scrollsBySource[key];
+  }
+  for (const key of Object.keys(record.recruitsBySource)) agg.recruitsBySource[key] = (agg.recruitsBySource[key] ?? 0) + record.recruitsBySource[key];
 
   for (const fight of record.fights) {
     const key = `${fight.act}:${fight.mapNodeType}`;

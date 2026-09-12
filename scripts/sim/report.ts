@@ -21,6 +21,10 @@ function num(value: number, digits = 1): string {
   return Number.isFinite(value) ? value.toFixed(digits) : '-';
 }
 
+function mean(sum: number, n: number): string {
+  return n > 0 ? num(sum / n, 2) : '-';
+}
+
 function pad(text: string, width: number): string {
   return text.length >= width ? text.slice(0, width) : text + ' '.repeat(width - text.length);
 }
@@ -288,6 +292,30 @@ export function formatReport(
   out.push(`    spent Resting            ${pct(agg.playerRests, agg.playerTurns)}`);
   out.push(`    spent cycling out        ${pct(agg.playerSwitches, agg.playerTurns)}`);
   out.push(`    fights reaching lock-in  ${pct(agg.lockInFights, totalFights)}  (player side lost 2+ heroes)`);
+
+  // Scroll income by source (docs/growth-overhaul.md §11 promises 45 vs 30 a run by route, against
+  // the 36 that evolve six heroes). Per completed run is the whole-run figure; per run overall is
+  // dragged down by every act-1 death.
+  out.push('');
+  out.push(`  Mastery Scrolls granted, by source — per run (all ${R}) and per completed run (${agg.wins}):`);
+  const sources = Object.keys(agg.scrollsBySource).sort((a, b) => (agg.scrollsBySourceWon[b] ?? 0) - (agg.scrollsBySourceWon[a] ?? 0));
+  let totalAll = 0;
+  let totalWon = 0;
+  for (const source of sources) {
+    const all = agg.scrollsBySource[source] ?? 0;
+    const won = agg.scrollsBySourceWon[source] ?? 0;
+    if (source !== 'unspent') {
+      totalAll += all;
+      totalWon += won;
+    }
+    out.push(`    ${pad(source, 24)}${padStart(mean(all, R), 8)}${padStart(agg.wins > 0 ? mean(won, agg.wins) : '-', 10)}`);
+  }
+  out.push(`    ${pad('TOTAL granted', 24)}${padStart(mean(totalAll, R), 8)}${padStart(agg.wins > 0 ? mean(totalWon, agg.wins) : '-', 10)}`);
+  out.push('');
+  out.push('  heroes joining after the draft, per run, by route:');
+  for (const source of Object.keys(agg.recruitsBySource).sort()) {
+    out.push(`    ${pad(source, 24)}${padStart(mean(agg.recruitsBySource[source], R), 8)}`);
+  }
 
   // The movepool gate is the SCROLL LADDER, not level (docs/growth-overhaul.md §4, §11): the 4th
   // Scroll into a hero opens Mid, the 6th is its Evolution, the 8th opens Late — and EVERY move
