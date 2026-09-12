@@ -334,12 +334,15 @@ function statDeltaValue(
     }
     case 'defense':
     case 'wisdom': {
-      // Damage is linear in 1/defStat: +amount cuts incoming by amount/(current+amount).
+      // Damage is linear in 1/defStat: +amount cuts incoming by amount/(current+amount). The
+      // engine floors a stat at 1 (getEffectiveStat), so a debuff past zero is priced at what it
+      // actually does rather than dividing by nothing.
       const incoming = aliveActiveIdsOn(state, otherSide(receiver.side)).reduce(
         (worst, foeId) => Math.max(worst, threatOf(state, ctx, foeId, cache)),
         0
       );
-      const cut = amount / (current + amount);
+      const after = Math.max(1, current + amount);
+      const cut = (after - current) / after;
       return incoming * cut * HORIZON;
     }
     default:
@@ -501,17 +504,29 @@ function resolveSelfHpCost(state: CombatState, casterId: string, move: MoveDefin
   return Math.max(0, combatant.currentHp - cost.amount);
 }
 
+/**
+ * Mana is worth what it buys, and it buys nothing a receiver could already afford: only the
+ * part of the grant that covers a SHORTFALL over the horizon — the receiver's priciest attack
+ * every round, against the pool it holds plus what it regenerates — is priced, at that
+ * attack's rate. Pricing the whole grant made a 40-for-20 Infuse score as two attacks on any
+ * full-pool carry, so the pilot played Crimson as a battery that never swung (measured: its
+ * early trade ratio 1.76 under this pilot against 4.00 under the chart one).
+ */
 function manaValue(state: CombatState, ctx: AiContext, receiverId: string, amount: number, cache: Map<string, number>): number {
   const receiver = state.combatants[receiverId];
   if (!receiver) return 0;
-  let cheapest = Infinity;
+  let priciest = 0;
   for (const moveId of ctx.moveIdsFor(receiverId)) {
     const move = moves[moveId];
     if (!move || !isDamaging(move)) continue;
-    cheapest = Math.min(cheapest, Math.max(5, resolveManaCost(state, receiverId, move, allCombatants)));
+    priciest = Math.max(priciest, Math.max(5, resolveManaCost(state, receiverId, move, allCombatants)));
   }
-  if (!Number.isFinite(cheapest)) return amount * 0.3;
-  return (threatOf(state, ctx, receiverId, cache) / cheapest) * amount;
+  if (priciest <= 0) return amount * 0.3;
+  const hero = allCombatants[receiver.heroId];
+  const have = receiver.currentMana + getEffectiveStat(hero, receiver, 'mpRegen') * HORIZON;
+  const shortfall = Math.max(0, priciest * HORIZON - have);
+  const useful = Math.min(amount, shortfall);
+  return (threatOf(state, ctx, receiverId, cache) / priciest) * useful;
 }
 
 /** Where a rider lands, with each receiver's share of it. */
