@@ -10,7 +10,7 @@ import { locations } from '../../src/data/locations';
 import { progressionTable } from '../../src/data/progression';
 import { EVOLUTION_SCROLLS, RANK_THRESHOLDS } from '../../src/run/progression';
 import { TOTAL_ACTS } from '../../src/run/state';
-import type { Aggregate, ChoiceAgg } from './types';
+import type { Aggregate, ChoiceAgg, HeroAgg } from './types';
 
 function pct(numerator: number, denominator: number): string {
   if (denominator === 0) return '   -  ';
@@ -202,6 +202,32 @@ export function formatReport(
     const tpr = h.roundsActive > 0 ? h.damageTaken / h.roundsActive : 0;
     out.push(
       `  ${pad(allCombatants[id]?.name ?? id, 20)}${padStart(String(h.runs), 6)}${padStart(String(h.fielded), 8)}${padStart(pct(h.fieldedWins, h.fielded), 7)}${padStart(num(dpr, 1), 7)}${padStart(num(tpr, 1), 7)}${padStart(num(tpr > 0 ? dpr / tpr : 0, 2), 7)}${padStart(num(h.kos / h.fielded, 2), 7)}${padStart(pct(h.deaths, h.fielded), 7)}${padStart(num(h.roundsActive > 0 ? h.healingDone / h.roundsActive : 0, 1), 7)}${padStart(num(h.runs > 0 ? h.finalLevelSum / h.runs : 0, 1), 6)}`
+    );
+  }
+
+  // Growth grades are authored to make placement, not size, the difference between heroes
+  // (CLAUDE.md "Growth grades"): a late bloomer should read weak here and strong there. The
+  // trade ratio is the per-hero number least confounded by which fights it was fielded in.
+  out.push('');
+  out.push('  HEROES BY HALF — acts 1-2 vs acts 3-6. ratio = damage dealt / damage taken per round on');
+  out.push('  the field; delta = late minus early. Every hero grows the same 9.1 points a level, so a');
+  out.push('  big positive delta is a late bloomer and a big negative one is front-loaded — or a kit');
+  out.push('  the enemy curve outruns, which is the trap-pick shape to look for.');
+  out.push(`  ${pad('hero', 20)}${padStart('early n', 8)}${padStart('ratio', 7)}${padStart('die%', 7)}${padStart('KO/f', 6)}${padStart('late n', 8)}${padStart('ratio', 7)}${padStart('die%', 7)}${padStart('KO/f', 6)}${padStart('delta', 7)}`);
+  const halfRows = heroRows
+    .map((id) => {
+      const e = agg.heroesByHalf[`${id}:early`];
+      const l = agg.heroesByHalf[`${id}:late`];
+      const ratioOf = (h: HeroAgg | undefined) => (h && h.damageTaken > 0 ? h.damageDealt / h.damageTaken : NaN);
+      return { id, e, l, re: ratioOf(e), rl: ratioOf(l) };
+    })
+    .filter((r) => r.e && r.l && r.e.fielded >= 20 && r.l.fielded >= 20)
+    .sort((a, b) => b.rl - b.re - (a.rl - a.re));
+  for (const r of halfRows) {
+    const e = r.e!;
+    const l = r.l!;
+    out.push(
+      `  ${pad(allCombatants[r.id]?.name ?? r.id, 20)}${padStart(String(e.fielded), 8)}${padStart(num(r.re, 2), 7)}${padStart(pct(e.deaths, e.fielded), 7)}${padStart(num(e.kos / e.fielded, 2), 6)}${padStart(String(l.fielded), 8)}${padStart(num(r.rl, 2), 7)}${padStart(pct(l.deaths, l.fielded), 7)}${padStart(num(l.kos / l.fielded, 2), 6)}${padStart((r.rl - r.re >= 0 ? '+' : '') + num(r.rl - r.re, 2), 7)}`
     );
   }
 

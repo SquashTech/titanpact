@@ -96,6 +96,8 @@ export interface Aggregate {
   /** Guardian fights keyed by location id. */
   guardians: Record<string, FightKindAgg>;
   heroes: Record<string, HeroAgg>;
+  /** The same fight telemetry keyed `heroId:early` (acts 1-2) and `heroId:late` (acts 3-6) — the late-bloomer / front-loaded split growth grades are authored to produce. */
+  heroesByHalf: Record<string, HeroAgg>;
   enemies: Record<string, EnemyAgg>;
   boonChoices: Record<string, ChoiceAgg>;
   bannerChoices: Record<string, ChoiceAgg>;
@@ -152,6 +154,7 @@ export function emptyAggregate(): Aggregate {
     fightKinds: {},
     guardians: {},
     heroes: {},
+    heroesByHalf: {},
     enemies: {},
     boonChoices: {},
     bannerChoices: {},
@@ -257,6 +260,7 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   mergeCounts(into.fightKinds, from.fightKinds, emptyFightKind);
   mergeCounts(into.guardians, from.guardians, emptyFightKind);
   mergeCounts(into.heroes, from.heroes, emptyHero);
+  mergeCounts(into.heroesByHalf, from.heroesByHalf, emptyHero);
   mergeCounts(into.enemies, from.enemies, emptyEnemy);
   mergeCounts(into.boonChoices, from.boonChoices, emptyChoice);
   mergeCounts(into.bannerChoices, from.bannerChoices, emptyChoice);

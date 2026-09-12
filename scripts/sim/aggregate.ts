@@ -89,15 +89,17 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
 
     for (const heroId of Object.keys(fight.playerHeroes)) {
       const t = fight.playerHeroes[heroId];
-      const hero = (agg.heroes[heroId] ??= emptyHero());
-      hero.fielded += 1;
-      if (fight.won) hero.fieldedWins += 1;
-      hero.roundsActive += t.rounds;
-      hero.damageDealt += t.dealt;
-      hero.damageTaken += t.taken;
-      hero.healingDone += t.healed;
-      hero.kos += t.kos;
-      if (t.died) hero.deaths += 1;
+      const half = fight.act <= 2 ? 'early' : 'late';
+      for (const hero of [(agg.heroes[heroId] ??= emptyHero()), (agg.heroesByHalf[`${heroId}:${half}`] ??= emptyHero())]) {
+        hero.fielded += 1;
+        if (fight.won) hero.fieldedWins += 1;
+        hero.roundsActive += t.rounds;
+        hero.damageDealt += t.dealt;
+        hero.damageTaken += t.taken;
+        hero.healingDone += t.healed;
+        hero.kos += t.kos;
+        if (t.died) hero.deaths += 1;
+      }
     }
     for (const heroId of Object.keys(fight.enemyHeroes)) {
       const t = fight.enemyHeroes[heroId];
