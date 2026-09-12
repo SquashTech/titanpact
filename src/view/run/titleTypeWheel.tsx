@@ -16,12 +16,12 @@ import { getTypeColor } from '../combat/typeColors';
 // OUTSIDE it, like the labels on a dial, so a glyph turning past the wordmark's ends is
 // beside the letters rather than under them.
 
-const SIZE = 364;
+const SIZE = 366;
 const CENTRE = SIZE / 2;
 const RING = 150;
 const LABEL = 168;
-const NODE_R = 11;
-const GLYPH = 12;
+const NODE_R = 13;
+const GLYPH = 15;
 
 const WHEEL_TYPES = TYPES.filter((t) => t !== 'Ancient');
 

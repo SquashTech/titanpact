@@ -16594,9 +16594,10 @@ textarea,
   /* The in-flow stack — wordmark, then the buttons — hugs the BOTTOM, with
      the icon row's height reserved under it, so the whole seal always clears
      the buttons and a taller phone gives its extra height to the eyes rather
-     than pushing the buttons into the dial. */
+     than pushing the buttons into the dial. The padding is more than the icon
+     row needs so the wordmark sits a little above the vertical centre. */
   justify-content: flex-end;
-  padding-bottom: 66px;
+  padding-bottom: 100px;
   gap: 6px;
   text-align: center;
   overflow: hidden;
@@ -17197,10 +17198,10 @@ textarea,
   position: relative;
   z-index: 2;
   /* The gap down to the CTA is the rest of the dial: the wheel's glyphs reach
-     182px below the wordmark's centre (titleTypeWheel.tsx, half of SIZE), the
+     183px below the wordmark's centre (titleTypeWheel.tsx, half of SIZE), the
      wordmark is 54px tall, and the screen's own flex gap covers the last 6px —
      so the buttons start just under the lowest glyph rather than on it. */
-  margin-bottom: 167px;
+  margin-bottom: 168px;
   animation: title-heading-drop 0.7s var(--ease-spring) both;
 }
 
@@ -17302,8 +17303,8 @@ textarea,
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 364px;
-  height: 364px;
+  width: 366px;
+  height: 366px;
   transform: translate(-50%, -50%);
   opacity: 0.72;
 }
