@@ -103,13 +103,14 @@ Covered by `test/statuses.test.ts`.
   curve is `LEVEL_AFTER_ENCOUNTER`. Each level rolls **every stat independently** against that
   hero's growth grade (S 95% down to F 5%), granting +2 or +6 HP; every hero's grades sum to
   `GRADE_BUDGET` = 28, a second budget beside the 550 stat rule.
-- **Mastery Scrolls** (`progression.ts`): the run's only faucet for moves. A Scroll offers ONE
-  move from the hero's `moveTiers` pool — gained outright under the 4-move cap, or an
-  accept/decline replacement at it (`MOVE_CAP`) — and ticks that hero's **Mastery Rank**, which
-  is what gates the tiers (Early at 1, Mid at 2, Late at 3; three Scrolls a rank).
-  Reaching `EVOLUTION_LEVEL` (currently 5, flat and uniform) surfaces the hero's Evolution: a
-  one-shot choice of three named paths (`chooseEvolutionPath`) granting permanent stats and/or
-  a type-graft.
+- **Mastery Scrolls** (`progression.ts`): the run's only faucet for moves. Scrolls buy a hero
+  its next RUNG — priced 1, 2, 3, 4, then 5 (`scrollCost`), with income rising by act
+  (`difficulty.ts scrollsFor`) and a purse that banks. A rung offers ONE move from the hero's
+  `moveTiers` pool — gained outright under the 4-move cap, or an accept/decline replacement at it
+  (`MOVE_CAP`) — and ticks that hero's **Mastery Rank**, which is what gates the tiers (Early at
+  1, Mid at 2, Late at 3; rungs at 3 and 6). The 4th rung (`EVOLUTION_RUNG`) surfaces the hero's
+  Evolution instead of an offer: a one-shot choice of three named paths (`chooseEvolutionPath`)
+  granting permanent stats and/or a type-graft.
   **`moveTiers` pool content covers all 12 fixture heroes** (`src/data/
   progression.ts`), each drawing from a handful of thematically-appropriate moves
   beyond their starting kit. **Evolution paths now cover all 12** as well, each with

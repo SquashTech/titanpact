@@ -17,7 +17,7 @@ import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry
 import { generateMap, type MapNodeType } from '../../src/run/map';
 import { generateStarterOptions, STARTER_PICK_COUNT } from '../../src/run/draft';
 import { generateItinerary, locationBias, locationForAct } from '../../src/run/locations';
-import { actScaling, encounterHeroCountOverride, type ScalingTrack } from '../../src/run/difficulty';
+import { actScaling, encounterHeroCountOverride, type ScalingTrack, scrollsFor } from '../../src/run/difficulty';
 import { grantEncounterLevels, levelsForEncounter, MAX_LEVEL } from '../../src/run/growth';
 import { generateEncounter, generateLeaderEncounter, generateFinaleEncounter, appendFinalEnemy, type Encounter, type EncounterNodeType } from '../../src/run/enemyGen';
 import { pickSquad, requiredSquadSize, STANDARD_SQUAD_SIZE, type Squad } from '../../src/run/squad';
@@ -42,14 +42,11 @@ import {
 } from '../../src/run/runProgress';
 import {
   MOVE_CAP,
-  SCROLLS_PER_ACT,
-  SCROLLS_PER_ELITE,
-  SCROLLS_PER_FIGHT,
-  SCROLLS_PER_SKIRMISH,
   SCROLL_REWARD_COUNT,
   LONE_SCROLL_COUNT,
   grantMasteryScrolls,
   canSpendScroll,
+  canAffordAnyScroll,
   recordMoveOffer,
   masteryRank,
   grantOfferedMove,
@@ -158,16 +155,16 @@ function entryOf(run: RunState, rosterId: string): RosterEntry {
   return entry;
 }
 
-/** What a won fight pays in Scrolls, by lane — App.tsx scrollRewardFor, mirrored. */
-function scrollRewardFor(nodeType: MapNodeType): number {
+/** What a won fight pays in Scrolls, by kind and act — difficulty.ts scrollsFor, as App.tsx reads it. */
+function scrollRewardFor(nodeType: MapNodeType, actNumber: number): number {
   switch (nodeType) {
-    case 'elite':
-      return SCROLLS_PER_ELITE;
-    case 'skirmish':
-      return SCROLLS_PER_SKIRMISH;
     case 'fight':
     case 'battle':
-      return SCROLLS_PER_FIGHT;
+    case 'skirmish':
+    case 'elite':
+    case 'boss':
+    case 'finale':
+      return scrollsFor(nodeType, actNumber);
     default:
       return 0;
   }
@@ -317,7 +314,8 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
         }
         // Guardian → Banner → Crucible (a Class) → Pact Seal.
         run = resolveCrucible(run, rng, record.choices);
-        run = grantScrolls(run, SCROLLS_PER_ACT, 'guardian', record);
+        // Before advanceToNextAct: the Guardian pays at the act it was beaten in.
+        run = grantScrolls(run, scrollRewardFor('boss', run.actNumber), 'guardian', record);
         if (run.actNumber < TOTAL_ACTS) {
           run = advanceToNextAct(run, randomSeed(rng));
         }
@@ -329,8 +327,8 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
 
       run = tryRecruitContracts(run, outcome.defeatedRoster, rng, record);
       if (outcome.drop) run = resolveDrop(run, outcome.drop.id, record.equipped, run.actNumber);
-      // The fight's Scrolls, by lane (docs/growth-overhaul.md §11); the Guardian's are above.
-      if (node.type !== 'boss') run = grantScrolls(run, scrollRewardFor(node.type), node.type, record);
+      // The fight's Scrolls, scaled by act (docs/growth-overhaul.md §12); the Guardian's are above.
+      if (node.type !== 'boss') run = grantScrolls(run, scrollRewardFor(node.type, run.actNumber), node.type, record);
       run = pourHeldScrolls(run, rng, record);
       continue;
     }
@@ -354,12 +352,13 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
 }
 
 /**
- * A Scroll is poured where it is won, never held (App.tsx `masteryDue`): last in the post-fight
+ * The purse, spent wherever it can buy a rung (App.tsx `masteryDue`): last in the post-fight
  * chain, after the contract and the Crucible, and on the way out of a Cache or the Guild Hall. The
- * 6th into a hero evolves it (policy.pourScrolls), logged here as the choice it is.
+ * sim never banks by choice — what it cannot afford banks on its own, as it does in the game. The
+ * Evolution rung evolves the hero (policy.pourScrolls), logged here as the choice it is.
  */
 function pourHeldScrolls(run: RunState, rng: Rng, record: RunRecord): RunState {
-  if (run.masteryScrolls <= 0) return run;
+  if (!canAffordAnyScroll(progressionTable, moves, run)) return run;
   const evolutions: PourEvolution[] = [];
   const next = policy.pourScrolls(run, rng, evolutions);
   for (const e of evolutions) {
@@ -748,12 +747,14 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
     }
   }
 
-  // The shelf's Scrolls (SCROLL_PURCHASE_LIMIT a visit), bought while a hero can take one and the
-  // gold is there — a Scroll is the one purchase whose value never decays.
-  while (next.masteryScrolls < SCROLL_PURCHASE_LIMIT && next.gold >= SCROLL_PURCHASE_COST) {
-    if (!next.roster.some((entry) => canSpendScroll(progressionTable, moves, { ...next, masteryScrolls: 1 }, entry))) break;
-    next = buyMasteryScroll(next, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT);
-    record.scrollsBySource.guildHall = (record.scrollsBySource.guildHall ?? 0) + 1;
+  // The shelf's Scroll bundles (SCROLL_PURCHASE_LIMIT a visit, a fight's worth each), bought while a
+  // hero can still take a rung and the gold is there — Scrolls are the one purchase whose value
+  // never decays.
+  const bundle = scrollsFor('fight', next.actNumber);
+  for (let bought = 0; bought < SCROLL_PURCHASE_LIMIT && next.gold >= SCROLL_PURCHASE_COST; bought++) {
+    if (!next.roster.some((entry) => canSpendScroll(progressionTable, moves, { ...next, masteryScrolls: Infinity }, entry))) break;
+    next = buyMasteryScroll(next, SCROLL_PURCHASE_COST, bundle, bought, SCROLL_PURCHASE_LIMIT);
+    record.scrollsBySource.guildHall = (record.scrollsBySource.guildHall ?? 0) + bundle;
   }
 
   for (const itemId of offers.equipmentOfferIds) {

@@ -201,9 +201,47 @@ export const NO_SCALING: ActScaling = { statSteps: 0, level: 1 };
 /**
  * The map node types that resolve into an encounter. `skirmish`/`battle` flatten to `fight`
  * encounters but sit in opposite reward lanes, so the loot tables key on this rather than on the
- * flattened kind (equipment.ts EQUIPMENT_DROP_CHANCE, LOOT_SOURCE).
- *
- * It carried the Training Point income table until 2026-09-10, when levels went automatic and
- * roster-wide (run/growth.ts) and there was no longer a pool to pay into.
+ * flattened kind (equipment.ts EQUIPMENT_DROP_CHANCE, LOOT_SOURCE) and the Scroll income below does too.
  */
 export type EncounterNodeKind = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' | 'finale';
+
+// --- Mastery Scroll income (docs/growth-overhaul.md §12) ---
+//
+// The pre-overhaul Training Point table, brought back whole (2026-09-12, per user direction) as
+// the income side of the Scroll price curve (progression.ts scrollCost). A curve is meaningless
+// without the income it is denominated in, so the two moved together then and move together now.
+
+/**
+ * Per win, before the act step: 3 the act opener, 3 Monsters, 4 Skirmish and Guardian. The
+ * finale pays nothing — the run ends on it.
+ *
+ * The opener pays 3 rather than 2 so that an act's fights can pay for an Evolution before that
+ * act's Guardian: reaching EVOLUTION_RUNG costs EVOLUTION_SCROLLS (10), and Act 1 pays 13-14 on
+ * either route, so an all-in on one hero is a plan and not a coin toss over a routing choice made
+ * two rows earlier. It went on the opener because row 0 is forced in every act, so the point lands
+ * on every route; putting it on `battle` would have flattened the Skirmish lane's premium, which is
+ * the whole of the two-lanes split (docs/run-loop.md): Monsters pays loot, Skirmish pays Scrolls.
+ */
+const BASE_SCROLLS: Record<EncounterNodeKind, number> = {
+  fight: 3,
+  battle: 3,
+  skirmish: 4,
+  elite: 4,
+  boss: 4,
+  finale: 0,
+};
+
+/**
+ * Added to every payout per act past the first, so an Act 5 fight pays this much more than the
+ * same fight in Act 1. Measured, not guessed: under flat income 0.0% of heroes ever reached the
+ * Late band and 99.2% of casts stayed early-tier, because the Late rung costs 20 and a flat run
+ * paid ~70 for the whole roster. Total income, not the price curve, was the binding constraint.
+ */
+export const ACT_SCROLL_STEP = 2;
+
+/** Mastery Scrolls for winning `nodeType` in `actNumber`. An act's four fights pay 13-14 in Act 1, 21-22 in Act 2, ... 45-46 in Act 5. */
+export function scrollsFor(nodeType: EncounterNodeKind, actNumber: number): number {
+  const base = BASE_SCROLLS[nodeType];
+  if (base === 0) return 0;
+  return base + Math.max(0, clampAct(actNumber) - 1) * ACT_SCROLL_STEP;
+}

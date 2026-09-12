@@ -277,18 +277,20 @@ colour with dark ink and a band of light sweeping across it every few seconds �
 fault had left it with no background at all — fainter than at rest, on the one screen it exists
 to interrupt.
 
-**Mastery Scrolls do not ride that label either, because they never wait** (2026-09-10, revised
-the same day). They were briefly a stock with a purse chip and a Roster tab; a Scroll is now poured
-on the beat it is won (`MasteryScreen`), so there is no count to state and no badge to suppress.
-The waiting-gear problem this section is about simply has no Scroll equivalent.
+**Mastery Scrolls do not ride that label either** (2026-09-10; revised 2026-09-12). The purse is
+back — a rung's price rises, so a purse banks (`growth-overhaul.md` §12) — but it is a purse the
+player chose to keep, never an inbox: the Mastery board is pushed on its own after every node that
+leaves the purse able to buy a rung, so nothing on the map waits that the player did not bank. The
+map's Scroll chip states the count, and is a button while it can buy somebody a rung. The
+waiting-gear problem this section is about has no Scroll equivalent.
 
 **One board, not two** (2026-09-10, revised the same day). Gear and Mastery briefly shared the
 screen under a tab strip. `growth-overhaul.md` §10 had flagged that split as a watch item — "if the
 screen reads as a chore hub once both are on it, that is the signal to separate them" — and it did,
-so they are separated: the Roster screen is Gear alone, and Mastery is now a screen raised at the
-moment a Scroll is won (`MasteryScreen`). It keeps the full-width rows, because a row has to carry
-the four moves the hero already holds — "is there room, and for what" is half of what a Scroll asks,
-and that is unreadable at half width.
+so they are separated: the Roster screen is Gear alone, and Mastery is its own screen, pushed
+after a node that funds a rung and pulled from the map's Scroll chip (`MasteryScreen`). It keeps
+the full-width rows, because a row has to carry the four moves the hero already holds — "is there
+room, and for what" is half of what a rung asks, and that is unreadable at half width.
 
 The reason is that the gate had stopped being a decision and become a toll. Its cost was one
 mandatory screen per drop, and it was buying nothing:

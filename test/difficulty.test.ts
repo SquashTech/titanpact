@@ -10,7 +10,9 @@ import {
   ENEMY_LEVEL_LAG,
   NO_SCALING,
   ACT_ONE_ELITE_HERO_COUNT,
+  ACT_SCROLL_STEP,
   encounterHeroCountOverride,
+  scrollsFor,
 } from '../src/run/difficulty';
 import { generateEncounter, generateLeaderEncounter } from '../src/run/enemyGen';
 import { EVOLUTION_LEVEL, MOVE_CAP } from '../src/run/progression';
@@ -113,6 +115,23 @@ test('difficulty: every act-step grant stays a multiple of 5 or 10 (CLAUDE.md "S
       assert.strictEqual((amount ?? 0) % 5, 0);
     }
   }
+});
+
+test('difficulty: Scroll income is the old Training Point table — 3/3/4/4/4 a win, +2 per act past the first', () => {
+  // docs/growth-overhaul.md §12. The price curve (progression.ts scrollCost) is denominated in this.
+  assert.strictEqual(ACT_SCROLL_STEP, 2);
+  assert.deepStrictEqual(
+    (['fight', 'battle', 'skirmish', 'elite', 'boss', 'finale'] as const).map((kind) => scrollsFor(kind, 1)),
+    [3, 3, 4, 4, 4, 0]
+  );
+  assert.strictEqual(scrollsFor('skirmish', 5), 4 + 4 * ACT_SCROLL_STEP, 'an Act 5 Skirmish pays 12 where an Act 1 one pays 4');
+  assert.strictEqual(scrollsFor('finale', 5), 0, 'the finale pays nothing — the run ends on it');
+  assert.strictEqual(scrollsFor('fight', 0), 3, 'an act below 1 reads as Act 1');
+  // An act's four fights: 14 (Battle route) or 15 (Elite) in Act 1, rising 8 an act. Either route
+  // clears EVOLUTION_SCROLLS (10) inside Act 1, which is the claim the opener's 3 exists for.
+  const actPay = (act: number, fork: 'battle' | 'elite') => scrollsFor('fight', act) + scrollsFor('skirmish', act) + scrollsFor(fork, act) + scrollsFor('boss', act);
+  assert.deepStrictEqual([1, 2, 3, 4, 5].map((act) => actPay(act, 'elite')), [15, 23, 31, 39, 47]);
+  assert.deepStrictEqual([1, 2, 3, 4, 5].map((act) => actPay(act, 'battle')), [14, 22, 30, 38, 46]);
 });
 
 test('difficulty: scaled enemies arrive at the act level, and evolve on the CRUCIBLE schedule', () => {

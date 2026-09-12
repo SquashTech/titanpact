@@ -717,3 +717,135 @@ direction).
   before trusting the curve.
 - **The Elite/Battle fork.** It is now Scrolls vs loot. If Elite is always right the Battle's loot
   side needs a grant, not the Elite's Scroll a cut.
+
+## 12. Third pass (2026-09-12): the ladder is priced, and the purse banks
+
+Per user direction, and it is a reversal: the pre-overhaul level-up curve — *a level-up costs as
+many points as the level being left, flattening at 5; the game pays more the deeper the run goes*
+— was the part of the old system that felt right, and §4 did not carry it over when Scrolls
+replaced the pool. It is brought back whole, on Scrolls, with the old thresholds. The record of
+why it was a curve and not a cap, and of how the income was measured, is in the pre-overhaul
+`docs/leveling-and-ranks.md` (git history, `fcdc365^`); the shape of the argument is repeated
+here only where it changed.
+
+### The price
+
+A hero climbs the ladder in **rungs**, and a rung's price rises with the rung:
+
+| Rung bought | Price | Poured so far | What it opens |
+|---|---|---|---|
+| 1st | 1 | 1 | Early offer |
+| 2nd | 2 | 3 | Early offer |
+| 3rd | 3 | 6 | **Rank 2** — Mid opens, Early expires |
+| 4th | 4 | 10 | **Evolution** — no offer behind it |
+| 5th | 5 | 15 | Mid offer |
+| 6th | 5 | 20 | **Rank 3** — Late opens, open-ended past here |
+| 7th+ | 5 | +5 each | Mid+Late offers until the pool is dry |
+
+`scrollCost(rung)` = `min(MAX_SCROLL_COST, rung + 1)`; `RANK_THRESHOLDS` = [0, 3, 6] in rungs,
+`EVOLUTION_RUNG` = 4 (`src/run/progression.ts`). These are the old curve's levels 4 / 5 / 7 with
+"level 1" as "no rung climbed", so the landmarks land on the same cumulative prices they did: Mid
+at 6, the Evolution at 10, Late at 20. Only `RosterEntry.masteryScrollsSpent` — the cumulative
+price paid — is stored; the rung (`masteryRung`), the rank and the next price are derived from it,
+and since every spend adds exactly the next rung's price, the inversion is exact. A generated hero
+is placed by rung and given that rung's price (`ENEMY_RUNGS_BY_LEVEL`, `enemyGen.ts`).
+
+The tick still lands before the roll (§11), the Evolution is still the rung's whole reward, and
+the pips are still one a rung — a pip is not a Scroll any more, so the row wears the price of its
+next rung beside the bar, dimmed when the purse falls short. **No hero needed re-authoring**: the
+6/6/4 pools sit well above a floor of 2 Early / 3 Mid / 1 Mid+Late (`movePoolFloor`).
+
+### The income
+
+The old Training Point table, verbatim (`scrollsFor`, `src/run/difficulty.ts`): **3** the act
+opener, **3** Battle, **4** Skirmish, **4** Elite, **4** the Guardian, and **+2 per act past the
+first** (`ACT_SCROLL_STEP`). An act's four fights pay:
+
+| Act | Elite route | Battle route |
+|---|---|---|
+| 1 | 15 | 14 |
+| 2 | 23 | 22 |
+| 3 | 31 | 30 |
+| 4 | 39 | 38 |
+| 5 | 47 | 46 |
+| run | ~155 | ~150 |
+
+plus the Scroll Cache (2, flat), the lone Scroll (1, flat) and the Guild Hall's shelf. Against
+that: one hero rushed to its Evolution is **10**, a four-hero core lifted one rung each is **4**,
+six Evolutions are **60**, six heroes to the Late band are **120**. Act 1 pays for an Evolution
+before its own Guardian on either route — the opener's 3 rather than 2 is what guarantees that,
+and it is the reason an all-in on one hero is a plan rather than a coin toss over a routing choice.
+§11's lane split (Skirmish pays Scrolls, Monsters pays loot) survives as the Skirmish lane's +1
+premium, which is what it was before §11 widened it.
+
+The Guardian's separate `SCROLLS_PER_ACT` grant is gone; the Guardian is a fight and pays through
+the same table, at the act it was beaten in.
+
+**The Guild Hall's shelf sells a bundle, not a Scroll.** One purchase is a fight's worth in the
+current act (`scrollsFor('fight', act)`: 3 in Act 1, 11 in Act 5) for `SCROLL_PURCHASE_COST` = 35g,
+`SCROLL_PURCHASE_LIMIT` = 2 a visit. A single Scroll is a fraction of a rung now, and 35g for one
+would have been a trap. This is the one figure in this pass that is NEW rather than restored — the
+old system sold no XP for gold — and the sim (below) says it is generous. First-pass for playtest.
+
+### The purse
+
+A rising price needs a purse: a leftover that buys nobody is normal and banks; one that could buy
+somebody may be banked by choice. This reverses §4's "poured where it is won, never held"
+(2026-09-10), which was right for a flat price — holding a 1-Scroll rung never paid — and is wrong
+for a rising one, where saving toward the carry's 5 while the bench's 1s sit affordable is exactly
+the decision the curve exists to create. The old flow is restored (`fd263fd`):
+
+- The board is pushed after every node that leaves the purse able to buy a rung (`masteryDue` =
+  `canAffordAnyScroll` and not `run.masteryDeferred`), last in the post-fight chain as before.
+- **Bank** is the out; it sets `masteryDeferred`. **Every grant clears it** (`grantMasteryScrolls`,
+  `buyMasteryScroll`), so new income always re-asks and banking is never a dead end. An Evolution
+  or an overflow in flight blocks the out — those are payouts already bought.
+- The map's Scroll chip is a button whenever the purse can buy somebody a rung.
+- The Vigil clears the bank on the way out: the last node before the Endbringer is re-offered or
+  never.
+- `SAVE_VERSION` 10 → 11: a v10 file's spent counts are rungs, not prices.
+
+What §4 gave up for "never held" — saving for a hero not yet recruited — is back. The thing §4
+was protecting against, a count on a menu button that "signals admin waiting", is answered by the
+push: the board still arrives on its own after every fight that funds a rung, so the chip only
+ever shows what the player chose to keep.
+
+### Measured (400 runs, `--pilot chart`, before → after)
+
+| | before | after |
+|---|---|---|
+| full-clear | 24.3% | 26.8% |
+| encounters won / run | 8.39 | 8.97 |
+| Scrolls granted / completed run | 52 | 199 |
+| reached Mid (act 4+ heroes) | 81.5% | 89.0% |
+| reached the Evolution | 80.4% | 84.9% |
+| reached Late | 35.4% | 36.9% |
+| every hero evolved at the end | 34.5% | 41.0% |
+
+The ladder reaches about where it did — the curve and the income were re-based together, so the
+run's shape is the same and only the unit changed. Two things the sim flags: the Guild Hall bundle
+is ~40 Scrolls a completed run, level with the Skirmish lane, because the greedy policy buys it
+whenever the gold is there; and the sim never banks by choice, so the pivot the purse exists for
+is unmeasured. Both are playtest questions.
+
+### What this reverses
+
+| §4 / §11 said | Now |
+|---|---|
+| A Scroll is poured where it is won, never held | The purse banks; a Bank button, and a grant re-asks |
+| `RANK_THRESHOLDS` = [0, 4, 8] Scrolls, `EVOLUTION_SCROLLS` = 6 | [0, 3, 6] **rungs**, `EVOLUTION_RUNG` = 4; a rung costs 1/2/3/4/5 |
+| Guardian 3, Elite 3, Skirmish 2, Fight/Battle 1, flat across acts | 4 / 4 / 4 / 3 / 3, +2 per act past the first |
+| The Guild Hall sells a Scroll for 35g | A fight's worth in the act, for 35g |
+| Six Evolutions cost 36 of ~50 | 60 of ~150 |
+
+### Watch in playtest
+
+- **Banking against the bench.** The cheap rungs are on the heroes you are not building. If the
+  purse always empties into 1s and 2s on the bench because they are affordable and lit, the
+  price is teaching breadth the player did not choose; the fix would be presentation (dim the
+  bench harder, or lead with the carry's short-fall), not the curve.
+- **The Guild Hall bundle.** ~20% of a completed run's Scrolls at 35g a bundle. If gold stops
+  competing with it, halve the bundle before touching the price.
+- **Screens per act.** Fewer pours than §11 (a rung is several Scrolls), and a bank exit: the
+  worry inverts — is the board arriving *often enough* to feel like progress in Acts 4–5, where a
+  win pays two rungs on the carry and one on everyone else?

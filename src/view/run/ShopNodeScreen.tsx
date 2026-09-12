@@ -13,8 +13,11 @@ interface Props {
   offers: GuildHallOffers;
   /** Carried on the `shop` Screen (App.tsx) because a purchase unmounts this screen through the equip gate. */
   soldOutEquipmentIds: readonly string[];
+  /** Scroll bundles bought this visit, carried the same way. */
+  scrollsBought: number;
   onRunChange: (next: RunState) => void;
   onBuyEquipment: (itemId: string) => void;
+  onBuyScrolls: () => void;
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
   onContinue: () => void;
   /** Act 6's Vigil: the last node of the run, and the one that musters rather than sells. */
@@ -32,8 +35,10 @@ export function ShopNodeScreen({
   run,
   offers,
   soldOutEquipmentIds,
+  scrollsBought,
   onRunChange,
   onBuyEquipment,
+  onBuyScrolls,
   onRequestRosterReplace,
   onContinue,
   muster = false,
@@ -56,8 +61,10 @@ export function ShopNodeScreen({
           run={run}
           offers={offers}
           soldOutEquipmentIds={soldOutEquipmentIds}
+          scrollsBought={scrollsBought}
           onRunChange={onRunChange}
           onBuyEquipment={onBuyEquipment}
+          onBuyScrolls={onBuyScrolls}
           onRequestRosterReplace={onRequestRosterReplace}
           onOverlayChange={setOverlayOpen}
           tab={tab}

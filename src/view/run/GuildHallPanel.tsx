@@ -3,19 +3,17 @@ import { createPortal } from 'react-dom';
 import { heroes } from '../../data/heroes';
 import { equipment } from '../../data/equipment';
 import { guildHallOffers, CONTRACT_PURCHASE_COST, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT } from '../../data/recruitment';
-import { playSfx } from '../../audio/sfx';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { SectionGlyph } from '../shared/sectionIcons';
 import type { HeroDefinition } from '../../engine/content';
 import type { RunState } from '../../run/state';
 import { ROSTER_CAP, RosterFullError } from '../../run/state';
 import { guildHallEntry } from '../../run/guildRecruit';
-import { guildHallLevel } from '../../run/difficulty';
+import { guildHallLevel, scrollsFor } from '../../run/difficulty';
 import type { EquipmentDefinition } from '../../run/equipment';
 import {
   recruitFromGuildHall,
   buyContract,
-  buyMasteryScroll,
   RecruitmentError,
   type GuildHallOffer,
 } from '../../run/recruitment';
@@ -58,9 +56,13 @@ interface Props {
   tab: GuildHallTab;
   /** Bought on this visit; carried by App.tsx so a re-render of this panel cannot forget it. */
   soldOutEquipmentIds: readonly string[];
+  /** Scroll bundles bought this visit; carried by App.tsx for the same reason. */
+  scrollsBought: number;
   onRunChange: (next: RunState) => void;
   /** Hands off to App.tsx, which charges the gold and drops the item in the bag. */
   onBuyEquipment: (itemId: string) => void;
+  /** Hands off to App.tsx, which charges the gold, grants the act's bundle and counts the visit. */
+  onBuyScrolls: () => void;
   /** Recruiting at a full roster hands off to App.tsx's RosterReplaceScreen gate. */
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
   /** Fires when this panel opens/closes a modal, so the host can pull its own bottom CTA. */
@@ -146,8 +148,10 @@ export function GuildHallPanel({
   run,
   offers,
   soldOutEquipmentIds,
+  scrollsBought,
   onRunChange,
   onBuyEquipment,
+  onBuyScrolls,
   onRequestRosterReplace,
   onOverlayChange,
   tab,
@@ -167,9 +171,9 @@ export function GuildHallPanel({
   const previewOffer = previewOfferId ? heroOffers.find((o) => o.id === previewOfferId) : undefined;
   const previewEquip = previewEquipId ? equipmentOffers.find((i) => i.id === previewEquipId) : undefined;
   const canBuyContract = run.gold >= CONTRACT_PURCHASE_COST;
-  // Bought this visit: a Scroll is poured on the way out, so the count is zero on the way in.
-  const scrollsBought = run.masteryScrolls;
   const scrollsSoldOut = scrollsBought >= SCROLL_PURCHASE_LIMIT;
+  // A fight's worth in this act (difficulty.ts scrollsFor): a single Scroll is a fraction of a rung now.
+  const scrollBundle = scrollsFor('fight', run.actNumber);
   const canBuyScroll = !scrollsSoldOut && run.gold >= SCROLL_PURCHASE_COST;
 
   // Derived from state rather than pushed from each setter, so a later modal can't forget to report.
@@ -188,15 +192,6 @@ export function GuildHallPanel({
       setFanfareHeroId(offer.heroId);
     } catch (err) {
       if (!(err instanceof RecruitmentError) && !(err instanceof RosterFullError)) throw err;
-    }
-  }
-
-  function handleBuyScroll() {
-    try {
-      onRunChange(buyMasteryScroll(run, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT));
-      playSfx('scroll.spend');
-    } catch (err) {
-      if (!(err instanceof RecruitmentError)) throw err;
     }
   }
 
@@ -258,19 +253,19 @@ export function GuildHallPanel({
                 </span>
               )}
             </button>
-            {/* No confirm, unlike the Contract: a Scroll is spent later and on whoever you like, so
+            {/* No confirm, unlike the Contract: Scrolls are spent later and on whoever you like, so
                 there is nothing here to get wrong. Buying is the reversible half of the decision.
-                The shelf holds SCROLL_PURCHASE_LIMIT a visit, and the corner count is how many of
-                them are already taken — poured on the way out, never carried. */}
+                The shelf holds SCROLL_PURCHASE_LIMIT bundles a visit, and the corner count is how
+                many of them are already taken. */}
             <button
               className={`guild-hall-good is-scroll${scrollsSoldOut ? ' sold-out' : ''}`}
               disabled={!canBuyScroll}
-              onClick={handleBuyScroll}
+              onClick={onBuyScrolls}
             >
               <span className="guild-hall-good-glyph">
                 <ResourceGlyph kind="scroll" tone="inherit" />
               </span>
-              <span className="guild-hall-good-name">Mastery Scroll</span>
+              <span className="guild-hall-good-name">{scrollBundle} Mastery Scrolls</span>
               {scrollsSoldOut ? (
                 <span className="guild-hall-good-price is-soldout">Sold out</span>
               ) : (

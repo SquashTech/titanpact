@@ -8,15 +8,16 @@ import { heroes } from './heroes';
 export const CONTRACT_PURCHASE_COST = 20;
 
 /**
- * A Mastery Scroll off the Guild Hall shelf. Dearer than a Contract because it is the run's
- * only faucet for moves, and cheap enough that a gold-rich run can convert — gold is the one
- * currency that buys either objective power or growth, so the conversion is the decision.
- * First-pass figure for playtest.
+ * A Scroll bundle off the Guild Hall shelf — a fight's worth of Scrolls in the current act
+ * (difficulty.ts scrollsFor, 2026-09-12; it was a single Scroll when a rung cost one). Dearer
+ * than a Contract because Scrolls are the run's only faucet for moves, and cheap enough that a
+ * gold-rich run can convert — gold is the one currency that buys either objective power or
+ * growth, so the conversion is the decision. First-pass figure for playtest.
  */
 export const SCROLL_PURCHASE_COST = 35;
 
 /**
- * How many Scrolls one Guild Hall visit sells (2026-09-11, per user direction). Gold is the one
+ * How many bundles one Guild Hall visit sells (2026-09-11, per user direction). Gold is the one
  * currency that buys either objective power or growth, and an uncapped shelf let a rich run turn
  * the whole purse into rank in one stop; two keeps the conversion a decision rather than a dump.
  * First-pass figure for playtest.

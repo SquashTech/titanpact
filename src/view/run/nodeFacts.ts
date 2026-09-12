@@ -6,16 +6,9 @@ import type { MapNodeType } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
 import { EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, MAX_ITEM_SLOTS, RARITY_ORDER, rarityWeightsFor } from '../../run/equipment';
 import { GOLD_REWARD_RANGE, PURSE_GOLD_RANGE } from '../../run/runProgress';
-import {
-  LONE_SCROLL_COUNT,
-  SCROLL_REWARD_COUNT,
-  SCROLLS_PER_ACT,
-  SCROLLS_PER_ELITE,
-  SCROLLS_PER_FIGHT,
-  SCROLLS_PER_SKIRMISH,
-} from '../../run/progression';
+import { LONE_SCROLL_COUNT, SCROLL_REWARD_COUNT } from '../../run/progression';
 import { BOON_OFFER_COUNT } from '../../run/boons';
-import { guildHallLevel, type EncounterNodeKind } from '../../run/difficulty';
+import { guildHallLevel, scrollsFor, type EncounterNodeKind } from '../../run/difficulty';
 import { ROSTER_CAP, SEAL_ACTS } from '../../run/state';
 import {
   ANVIL_PRICE_BY_TARGET,
@@ -78,19 +71,10 @@ function priceBand(table: Record<EquipmentRarity, number>): string {
   return `${Math.min(...prices)}–${Math.max(...prices)}g`;
 }
 
-const SCROLLS_BY_ENCOUNTER: Record<EncounterNodeKind, number> = {
-  fight: SCROLLS_PER_FIGHT,
-  battle: SCROLLS_PER_FIGHT,
-  skirmish: SCROLLS_PER_SKIRMISH,
-  elite: SCROLLS_PER_ELITE,
-  boss: SCROLLS_PER_ACT,
-  finale: 0,
-};
-
-/** The four lanes every fight is compared on, in one order, so Elite and Battle read as two columns of one table. */
-function encounterFacts(type: EncounterNodeKind): NodeFact[] {
+/** The four lanes every fight is compared on, in one order, so Elite and Battle read as two columns of one table. Scrolls scale by act (difficulty.ts scrollsFor). */
+function encounterFacts(type: EncounterNodeKind, actNumber: number): NodeFact[] {
   const gold = GOLD_REWARD_RANGE[type];
-  const scrolls = SCROLLS_BY_ENCOUNTER[type];
+  const scrolls = scrollsFor(type, actNumber);
   const drop = EQUIPMENT_DROP_CHANCE[type];
   return [
     { glyph: 'gold', label: 'Gold', value: gold[1] > 0 ? range(gold) : null },
@@ -111,26 +95,26 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
 
   switch (type) {
     case 'fight':
-      return { kind: 'Encounter · Monsters', facts: encounterFacts('fight'), odds: odds('fight') };
+      return { kind: 'Encounter · Monsters', facts: encounterFacts('fight', actNumber), odds: odds('fight') };
     case 'battle':
       return {
         kind: 'Encounter · Monsters',
-        facts: [...encounterFacts('battle'), { glyph: 'enemy', label: 'Enemies', value: 'Faction leader' }],
+        facts: [...encounterFacts('battle', actNumber), { glyph: 'enemy', label: 'Enemies', value: 'Faction leader' }],
         odds: odds('battle'),
       };
     case 'skirmish':
-      return { kind: 'Encounter · Recruitable', facts: encounterFacts('skirmish'), odds: odds('skirmish') };
+      return { kind: 'Encounter · Recruitable', facts: encounterFacts('skirmish', actNumber), odds: odds('skirmish') };
     case 'elite':
       return {
         kind: 'Elite · Recruitable',
-        facts: [...encounterFacts('elite'), { glyph: 'enemy', label: 'Enemies', value: '+10', note: 'to 2 stats each' }],
+        facts: [...encounterFacts('elite', actNumber), { glyph: 'enemy', label: 'Enemies', value: '+10', note: 'to 2 stats each' }],
         odds: odds('elite'),
       };
     case 'boss':
       return {
         kind: 'Act boss · Recruitable',
         facts: [
-          ...encounterFacts('boss'),
+          ...encounterFacts('boss', actNumber),
           { glyph: 'contract', label: 'Contract', value: '1' },
           { glyph: 'banner', label: 'Banner', value: '1 of 5', note: 'team-wide' },
           { glyph: 'class', label: 'Class', value: '1 hero', note: 'the Crucible' },
@@ -153,7 +137,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         facts: [
           { glyph: 'hero', label: 'Hire', value: `${GUILD_HALL_RECRUIT_COST}g`, note: `Lv ${guildHallLevel(actNumber)}, raw` },
           { glyph: 'contract', label: 'Contract', value: `${CONTRACT_PURCHASE_COST}g` },
-          { glyph: 'scroll', label: 'Scroll', value: `${SCROLL_PURCHASE_COST}g`, note: `up to ${SCROLL_PURCHASE_LIMIT}` },
+          { glyph: 'scroll', label: `${scrollsFor('fight', actNumber)} Scrolls`, value: `${SCROLL_PURCHASE_COST}g`, note: `up to ${SCROLL_PURCHASE_LIMIT}` },
           { glyph: 'item', label: 'Gear', value: `${GUILD_HALL_EQUIPMENT_OFFER_COUNT} on shelf`, note: priceBand(EQUIPMENT_PRICE_BY_RARITY) },
           { glyph: 'sell', label: 'Sell', value: `${Math.round(EQUIPMENT_SELL_SHARE * 100)}%`, note: 'of buy price' },
         ],

@@ -18,7 +18,7 @@ export const MOVE_CAP = 4;
 /**
  * The level an Evolution node is authored at. **Nothing gates on it any more** (2026-09-10,
  * Growth Overhaul phase 4; re-homed 2026-09-11, §11): Evolutions left the level track for the
- * Scroll ladder — `EVOLUTION_SCROLLS`. Under automatic roster-wide levelling every hero crosses
+ * Scroll ladder — `EVOLUTION_RUNG`. Under automatic roster-wide levelling every hero crosses
  * any threshold on the same fight, so a level trigger IS a six-decision wall — the move was a
  * consequence, not a taste.
  *
@@ -27,61 +27,64 @@ export const MOVE_CAP = 4;
  */
 export const EVOLUTION_LEVEL = 5;
 
-// --- Mastery Rank: the gate on the movepool (docs/growth-overhaul.md §4, ladder §11) ---
+// --- Mastery Rank: the gate on the movepool (docs/growth-overhaul.md §4, ladder §11, price §12) ---
 //
 // Rank sits BEHIND THE SPEND rather than behind a clock, and that is the whole point. Gate the
 // tiers on the act and holding a Scroll always beats spending one; gate them on how many have
 // gone into THIS hero and the incentive inverts. It also prices the carry build in breadth:
 // concentrate and the ceiling rises, spread six ways and nobody ranks up.
+//
+// The ladder is climbed in RUNGS, and a rung has a PRICE in Scrolls that rises with the rung
+// (2026-09-12, per user direction — the pre-overhaul level-up curve, brought back whole). A hero's
+// first rung costs 1 Scroll, its second 2, then 3, 4, and every rung from the fifth costs
+// MAX_SCROLL_COST. Income rises by act to match (difficulty.ts scrollsFor). A flat 1-a-rung price
+// had made every Scroll the same size of decision; the curve makes the first rungs into a fresh
+// hero cheap and the deep ones dear, which is what gives a recruit-over-raise pivot a price the
+// player can feel.
 
 /**
- * Scrolls spent into a hero at which each rank opens. Rank 1 at 0, Rank 2 at 4, Rank 3 at 8 —
- * and Rank 3 is open-ended: past it every Scroll offers Late until the pool is dry
- * (`canSpendScroll`). Authored as thresholds rather than a per-rank cost because the Evolution
- * sits between two of them.
+ * Ceiling on a rung's price. Unbounded, the triangular curve priced the Late band out of a real
+ * run: reaching it cost 21 of the ~70 a pre-scaling run paid. At 5 the Late rung costs 20, and a
+ * hero is never more than 5 Scrolls from its next rung.
  */
-export const RANK_THRESHOLDS: readonly number[] = [0, 4, 8];
+export const MAX_SCROLL_COST = 5;
+
+/** What climbing from `rung` rungs climbed to the next costs: 1, 2, 3, 4, then MAX_SCROLL_COST. */
+export function scrollCost(rung: number): number {
+  return Math.min(MAX_SCROLL_COST, Math.max(1, rung + 1));
+}
+
+/** Triangular sum of scrollCost over the rungs below `rung`: what a hero standing there has poured in. */
+export function scrollsToReachRung(rung: number): number {
+  let total = 0;
+  for (let r = 0; r < rung; r++) total += scrollCost(r);
+  return total;
+}
 
 /**
- * The Scroll that evolves a hero (2026-09-11, per user direction — replacing the Crucible, which
- * now grants a Class). Mid-ladder rather than at the top: the top rung stacking Evolution + Late +
- * a graft's whole line onto one pour made every rung below it a deposit. The 4th Scroll changes
- * what a hero can DO, the 6th what it IS, the 8th opens the ceiling. Six evolved is the expected
- * ending, so six Evolutions cost 36 of a ~50 floor.
+ * Rungs climbed at which each rank opens. Rank 1 at 0, Rank 2 at 3, Rank 3 at 6 — and Rank 3 is
+ * open-ended: past it every rung offers Late until the pool is dry (`canSpendScroll`). Authored
+ * as thresholds rather than a per-rank count because the Evolution sits between two of them.
+ * These are the old level curve's 4 / 7 as rungs (a level-1 hero had climbed none).
  */
-export const EVOLUTION_SCROLLS = 6;
+export const RANK_THRESHOLDS: readonly number[] = [0, 3, 6];
 
 /**
- * What a won Monster-lane fight pays — `fight` and `battle`. One, so the lane is not Scroll-less,
- * but the Skirmish lane is where Scrolls come from and the Monster lane is where loot does
- * (the guaranteed drop already sits there). First-pass figure for playtest.
+ * The rung that evolves a hero (2026-09-11, per user direction — replacing the Crucible, which
+ * now grants a Class; re-priced 2026-09-12 onto the old curve's level 5). Mid-ladder rather
+ * than at the top: the top rung stacking Evolution + Late + a graft's whole line onto one pour
+ * made every rung below it a deposit. The 3rd rung changes what a hero can DO, the 4th what it
+ * IS, the 6th opens the ceiling.
  */
-export const SCROLLS_PER_FIGHT = 1;
+export const EVOLUTION_RUNG = 4;
+
+/** Scrolls poured by the time a hero evolves: 1 + 2 + 3 + 4. Derived; the rung is what is authored. */
+export const EVOLUTION_SCROLLS = scrollsToReachRung(EVOLUTION_RUNG);
 
 /**
- * What a won Skirmish pays. Two: the recruitable lane's counterpart to the guaranteed drop the
- * Monsters lane pays, and the run's steady Scroll income. First-pass figure for playtest.
- */
-export const SCROLLS_PER_SKIRMISH = 2;
-
-/**
- * What a won Elite pays. Three against the Battle's one is the Elite-or-Battle fork's whole
- * price: Scrolls vs loot, and the harder fight. First-pass figure for playtest — if Elite is
- * always right, the Battle's loot side needs a grant, not this a cut.
- */
-export const SCROLLS_PER_ELITE = 3;
-
-/**
- * What every Guardian pays. Three (2026-09-11, per user direction — four poured at once was too
- * much screen). Elite route 9 an act, Battle route 6, so 45 vs 30 over a run against the 36 that
- * evolve six heroes. THE dial: the one number that moves the total without moving the lane split.
- * First-pass figure for playtest.
- */
-export const SCROLLS_PER_ACT = 3;
-
-/**
- * What the `scrollReward` Scroll Cache pays. Two, so a cache is a whole rank's worth of a
- * decision rather than a top-up. First-pass figure for playtest.
+ * What the `scrollReward` Scroll Cache pays. Two, flat across acts and deliberately under one
+ * fight's pay: a cache is a top-up the player can take instead of gold or an item, not a
+ * substitute for fighting. First-pass figure for playtest.
  */
 export const SCROLL_REWARD_COUNT = 2;
 
@@ -95,23 +98,48 @@ export const LONE_SCROLL_COUNT = 1;
 
 export const MAX_MASTERY_RANK = RANK_THRESHOLDS.length;
 
-/** The Scroll that reaches the top rung — the pips the board draws. Not a cap on spending. */
-export const SCROLLS_TO_MAX_RANK = RANK_THRESHOLDS[RANK_THRESHOLDS.length - 1];
+/** The rung that reaches the top rank — the pips the board draws. Not a cap on climbing. */
+export const RUNGS_TO_MAX_RANK = RANK_THRESHOLDS[RANK_THRESHOLDS.length - 1];
 
-/** DERIVED from `masteryScrollsSpent`, never stored (state.ts): the rungs the spend has crossed. */
-export function masteryRank(entry: RosterEntry): number {
-  return RANK_THRESHOLDS.filter((at) => entry.masteryScrollsSpent >= at).length;
+/** Scrolls poured by the time a hero reaches the top rank. Derived. */
+export const SCROLLS_TO_MAX_RANK = scrollsToReachRung(RUNGS_TO_MAX_RANK);
+
+/**
+ * Rungs climbed, DERIVED from `masteryScrollsSpent` (state.ts) — the only thing stored is how
+ * many Scrolls went in, and every spend lands exactly on a rung, so the inversion is exact.
+ * A figure set by hand (a fixture, enemyGen) that falls between rungs counts the rungs completed.
+ */
+export function masteryRung(entry: RosterEntry): number {
+  let rung = 0;
+  let paid = 0;
+  while (paid + scrollCost(rung) <= entry.masteryScrollsSpent) {
+    paid += scrollCost(rung);
+    rung++;
+  }
+  return rung;
 }
 
-/** Scrolls still owed for the next rank; 0 at the cap. */
-export function scrollsToNextRank(entry: RosterEntry): number {
-  const next = RANK_THRESHOLDS.find((at) => at > entry.masteryScrollsSpent);
-  return next === undefined ? 0 : next - entry.masteryScrollsSpent;
+/** What this hero's NEXT rung costs. */
+export function nextScrollCost(entry: RosterEntry): number {
+  return scrollCost(masteryRung(entry));
+}
+
+/** DERIVED, never stored: the rungs the climb has crossed. */
+export function masteryRank(entry: RosterEntry): number {
+  const rung = masteryRung(entry);
+  return RANK_THRESHOLDS.filter((at) => rung >= at).length;
+}
+
+/** Rungs still owed for the next rank; 0 at the cap. */
+export function rungsToNextRank(entry: RosterEntry): number {
+  const rung = masteryRung(entry);
+  const next = RANK_THRESHOLDS.find((at) => at > rung);
+  return next === undefined ? 0 : next - rung;
 }
 
 /** Whether the ladder has reached the Evolution rung — the gate `availableEvolution` applies. */
 export function evolutionRungReached(entry: RosterEntry): boolean {
-  return entry.masteryScrollsSpent >= EVOLUTION_SCROLLS;
+  return masteryRung(entry) >= EVOLUTION_RUNG;
 }
 
 /** Rank at which each move tier becomes offerable. Maps 1:1 onto the authored 6 Early / 6 Mid / 4 Late. */
@@ -159,9 +187,10 @@ export function isMoveTierOfferable(move: MoveDefinition | undefined, rank: numb
  * player-controlled and unbounded, so no depth can promise a pool "cannot be emptied" the way
  * MOVE_POOL_MARGIN did (docs/growth-overhaul.md §4). Running a band dry is now a legal state the
  * spend refuses rather than a data bug — and the offers it takes to climb OUT of a band is what
- * the band has to survive, read off `RANK_THRESHOLDS`: Early is offered by the Scrolls before the
- * one that opens Mid, Mid by every Scroll from that one to the one that opens Late. Rank 3 is
- * open-ended, so Mid+Late only has to offer once. In practice every pool is authored well past
+ * the band has to survive, read off `RANK_THRESHOLDS`: Early is offered by the rungs before the
+ * one that opens Mid, Mid by every rung from that one to the one that opens Late (one of which is
+ * the Evolution, which offers nothing — so this over-counts Mid by one, on the safe side). Rank 3
+ * is open-ended, so Mid+Late only has to offer once. In practice every pool is authored well past
  * these (6 Early / 6 Mid / 4 Late). Enforced by test/moveTiers.test.ts.
  */
 export interface MovePoolFloor {
@@ -252,8 +281,8 @@ export function fullMovepool(table: ProgressionTable, hero: HeroDefinition): str
 
 /**
  * Table pool plus chosen paths' learnableMoveIds, minus unlocked, minus already offered, minus
- * tiers above the hero's Mastery Rank. Pass the POST-spend entry: the Scroll ticks the rank
- * before it rolls, so the third one into a hero is the one that opens Mid.
+ * tiers above the hero's Mastery Rank. Pass the POST-spend entry: the rung ticks the rank
+ * before it rolls, so the third rung into a hero is the one that opens Mid.
  */
 export function masteryMovePool(
   table: ProgressionTable,
@@ -272,7 +301,7 @@ export function masteryMovePool(
 }
 
 /**
- * What a Scroll spent on this hero would open up — the POST-tick pool, which is what the spend
+ * What the next rung into this hero would open up — the POST-tick pool, which is what the spend
  * actually rolls from.
  */
 export function scrollMovePool(
@@ -280,12 +309,13 @@ export function scrollMovePool(
   moves: Record<string, MoveDefinition>,
   entry: RosterEntry
 ): string[] {
-  return masteryMovePool(table, moves, { ...entry, masteryScrollsSpent: entry.masteryScrollsSpent + 1 });
+  return masteryMovePool(table, moves, { ...entry, masteryScrollsSpent: entry.masteryScrollsSpent + nextScrollCost(entry) });
 }
 
 /**
- * Whether a Scroll can legally be poured into this hero. Refused only when it would buy
- * LITERALLY nothing: the band is dry AND the rank cannot rise.
+ * Whether the run can buy this hero's next rung: the purse covers its price (nextScrollCost),
+ * and the rung buys something. Refused only when it would buy LITERALLY nothing: the band is
+ * dry AND the rank cannot rise.
  *
  * The dry-band case is otherwise allowed on purpose, and it is the fix for a real dead end. A
  * band can empty — an event's gifts fill the loadout out of the hero's own pool, and offers burn
@@ -300,8 +330,17 @@ export function canSpendScroll(
   run: RunState,
   entry: RosterEntry
 ): boolean {
-  if (run.masteryScrolls < 1) return false;
+  if (run.masteryScrolls < nextScrollCost(entry)) return false;
   return scrollMovePool(table, moves, entry).length > 0 || masteryRank(entry) < MAX_MASTERY_RANK;
+}
+
+/**
+ * The gate every Mastery screen must use instead of `masteryScrolls > 0` — a non-empty purse
+ * may buy nobody. A leftover that buys nobody BANKS; it is normal, and it is the whole reason
+ * the purse exists (docs/growth-overhaul.md §12).
+ */
+export function canAffordAnyScroll(table: ProgressionTable, moves: Record<string, MoveDefinition>, run: RunState): boolean {
+  return run.roster.some((entry) => canSpendScroll(table, moves, run, entry));
 }
 
 /**
@@ -326,25 +365,38 @@ export function grantOfferedMove(run: RunState, rosterId: string, moveId: string
 }
 
 /**
- * Pours one Mastery Scroll into a hero: takes it off the run's pool and ticks the rank bar.
- * The move it offers is the caller's roll off the POST-spend entry (scrollMovePool) — the tick
- * lands FIRST, so the third Scroll into a hero is the one that opens Mid. That is what makes
- * every third spend the bigger moment rather than a silent deposit.
+ * Buys a hero its next rung: takes the rung's price (nextScrollCost) off the run's purse and
+ * pours it into the hero, which ticks the rank bar. The move it offers is the caller's roll off
+ * the POST-spend entry (scrollMovePool) — the tick lands FIRST, so the third rung into a hero is
+ * the one that opens Mid. That is what makes that spend the bigger moment rather than a silent
+ * deposit.
  *
  * The offer itself is banked by recordMoveOffer, as a level-up's was: an offer is spent by
  * being MADE, so declining still burns the move.
  */
 export function spendMasteryScroll(run: RunState, rosterId: string): RunState {
   const entry = requireEntry(run, rosterId);
-  if (run.masteryScrolls < 1) throw new ProgressionError('No Mastery Scrolls to spend');
-  const next = replaceEntry(run, rosterId, { ...entry, masteryScrollsSpent: entry.masteryScrollsSpent + 1 });
-  return { ...next, masteryScrolls: next.masteryScrolls - 1 };
+  const cost = nextScrollCost(entry);
+  if (run.masteryScrolls < cost) {
+    throw new ProgressionError(`${rosterId}'s next rung costs ${cost} Mastery Scrolls, only ${run.masteryScrolls} held`);
+  }
+  const next = replaceEntry(run, rosterId, { ...entry, masteryScrollsSpent: entry.masteryScrollsSpent + cost });
+  return { ...next, masteryScrolls: next.masteryScrolls - cost };
 }
 
-/** Income. Scrolls land on the RUN, never on a hero — who they go to is the whole decision. */
+/**
+ * Income. Scrolls land on the RUN, never on a hero — who they go to is the whole decision. New
+ * Scrolls always re-open the Mastery gate, whatever the player banked before them: banking is
+ * never a dead end because the next win re-asks.
+ */
 export function grantMasteryScrolls(run: RunState, count: number = 1): RunState {
   if (!Number.isInteger(count) || count < 1) throw new ProgressionError(`${count} is not a Scroll count`);
-  return { ...run, masteryScrolls: run.masteryScrolls + count };
+  return { ...run, masteryScrolls: run.masteryScrolls + count, masteryDeferred: false };
+}
+
+/** The player chose to bank rather than spend (MasteryScreen's Bank button). Suppresses the gate until the next grant. */
+export function deferMastery(run: RunState): RunState {
+  return { ...run, masteryDeferred: true };
 }
 
 /**
@@ -365,8 +417,8 @@ export function pendingEvolution(table: ProgressionTable, entry: RosterEntry): E
 
 /**
  * The node this hero can take NOW, or null: the next unresolved one, once the ladder has reached
- * `EVOLUTION_SCROLLS` (docs/growth-overhaul.md §11). Gated on the spend, not on level and not on
- * a beat — the 6th Scroll into a hero raises the Evolution screen for that one hero, so there is
+ * `EVOLUTION_RUNG` (docs/growth-overhaul.md §11). Gated on the spend, not on level and not on
+ * a beat — the 4th rung into a hero raises the Evolution screen for that one hero, so there is
  * no wall to cross. A generated hero reads its spend off level (enemyGen.ts) and passes the same
  * gate.
  */

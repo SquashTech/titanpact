@@ -15589,6 +15589,27 @@ textarea,
   text-align: right;
 }
 
+/*
+ * The one chip that is a control: a Scroll purse the player banked instead of spending has
+ * somewhere to go from here, and a HUD number you can act on has to say so. Tinted rather than
+ * raised — it is still a readout first, and the raised pressable language on this screen
+ * belongs to .map-footer-button.
+ */
+.map-stat.is-spendable {
+  cursor: pointer;
+  color: var(--scroll-color, #c9a2ff);
+  background: linear-gradient(180deg, rgba(201, 162, 255, 0.24), rgba(201, 162, 255, 0.1));
+  box-shadow: var(--hairline), 0 0 0 1px rgba(201, 162, 255, 0.34);
+}
+
+.map-stat.is-spendable:hover {
+  box-shadow: var(--hairline), 0 0 0 1px rgba(201, 162, 255, 0.6);
+}
+
+.map-stat.is-spendable:active {
+  transform: translateY(1px);
+}
+
 /* Supplied pixel-art used for durable run landmarks.  These are kept at a
    true 16px half-scale (the same rule as combat status glyphs) so they stay
    crisp rather than becoming soft browser-scaled stickers. */
@@ -24694,6 +24715,17 @@ textarea,
   color: var(--text-dim);
 }
 
+/* The bank-and-leave out, in the Continue's slot. Reserves the strip and draws nothing while it
+   cannot be pressed — mid-pour, or under an offer — so the board centred above it does not slide
+   under the player's thumb when the button comes and goes. */
+.mastery-bank {
+  flex: none;
+}
+
+.mastery-bank.is-inert {
+  visibility: hidden;
+}
+
 /* Held in the layout, invisible, until every Scroll is poured — the board is centred in the
    space above it, and a button arriving would move the whole party by half its height. */
 .mastery-continue.is-hidden {
@@ -24940,6 +24972,32 @@ textarea,
 
 .mastery-hero-rank.is-max .mastery-rank-num {
   color: var(--scroll-color, #c9a2ff);
+}
+
+/* The next rung's price, under the pips. A rung costs more the higher it is (1, 2, 3, 4, 5 ...),
+   so the tag is the one number the bar cannot carry; it goes dim when the purse falls short, and
+   the row with it (.is-short) — still a row being saved toward, not an inert one. */
+.mastery-hero-price {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--scroll-color, #c9a2ff);
+}
+
+.mastery-hero-price .resource-glyph {
+  width: 11px;
+  height: 11px;
+}
+
+.mastery-hero-price.is-short {
+  color: var(--text-dim);
+}
+
+.mastery-hero-row.is-short:not(.is-pouring) {
+  opacity: 0.72;
 }
 
 /* Six pips: the bar IS the readout, and the two wider gaps are the rank thresholds — so "one

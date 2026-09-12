@@ -4,7 +4,7 @@ import { heroes } from '../../data/heroes';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
 import type { HeroDefinition } from '../../engine/content';
-import { canSpendScroll } from '../../run/progression';
+import { canAffordAnyScroll, canSpendScroll, deferMastery } from '../../run/progression';
 import type { RosterEntry, RunState } from '../../run/state';
 import { equipment } from '../../data/equipment';
 import { NodeSky, NODE_TINT_ARCANE } from '../shared/NodeStage';
@@ -20,30 +20,25 @@ interface Props {
 }
 
 /**
- * A won Scroll, poured now (2026-09-10, per user direction — it replaces the Roster's Mastery
- * board tab). Scrolls used to sit in a purse until the player went looking for them, and
- * `docs/growth-overhaul.md` §10 had already named the failure that produced: a count on a menu
- * button "still signals admin waiting". The deeper reason it had to go is that Mastery Rank was
- * built so the ceiling sits behind the SPEND rather than behind a clock — holding a Scroll is
- * never better than spending one — and a stock with no reason to be held is not a strategy, it is
- * a to-do list.
+ * The Mastery board, pushed after every node that leaves the purse able to buy somebody a rung
+ * (App.tsx `masteryDue`), and pulled from the map's Scroll chip for a purse the player banked.
  *
- * So the board is pushed rather than pulled, and there is no way out but pouring. What that costs
- * is the churn hedge: a Scroll can no longer be saved for a hero you have not recruited yet. That
- * is consistent with how recruitment already works — a Guild hire arrives raw on purpose and a
- * contract hero arrives finished on purpose — but it is the thing to watch if pivoting starts
- * feeling punished.
+ * A rung's price rises with the rung (docs/growth-overhaul.md §12, 2026-09-12 — the pre-overhaul
+ * level-up curve, brought back per user direction), so the purse is a purse again: a leftover
+ * that buys nobody banks on its own, and a purse that could buy somebody can be banked by choice —
+ * the Bank button is the out, and the next grant re-asks. That reverses 2026-09-10's "poured
+ * where it is won, never held", which was built for a flat price where holding never paid; under
+ * a rising one, saving toward a dear rung is the strategy the curve exists to create.
  *
  * Last in the post-fight chain, AFTER the Banner, the contract and the Crucible, so a hero
- * recruited or Classed this beat can take the Scroll it just became eligible for.
+ * recruited or Classed this beat can take the rung it just became eligible for.
  *
- * The 6th Scroll into a hero is its Evolution (docs/growth-overhaul.md §11), and that is a
- * screen of its own, so the pour's state lives here (`useScrollPour`) and the Evolution screen
- * replaces the board outright while the choice is open.
+ * The Evolution rung is a screen of its own (docs/growth-overhaul.md §11), so the pour's state
+ * lives here (`useScrollPour`) and the Evolution screen replaces the board outright while the
+ * choice is open.
  *
- * The header is the count and nothing else: a Scroll glyph and how many are left. The title it
- * used to carry ("2 Scrolls to Pour") and the line under it ("Tap a hero to pour one in · 3 to a
- * rank") were both saying what the board already shows — every row that can take one is lit.
+ * The header is the count and nothing else: a Scroll glyph and how many are held. Every row that
+ * can take a rung is lit, and every row carries its own price.
  */
 export function MasteryScreen({ run, onRunChange, onDone }: Props) {
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
@@ -56,12 +51,23 @@ export function MasteryScreen({ run, onRunChange, onDone }: Props) {
   const flow = useScrollPour(run, onRunChange);
 
   const left = run.masteryScrolls;
-  // Every hero at max rank with nothing left to teach: the Scroll buys literally nothing, and the
-  // screen has to let go or it is a wall. The count is left standing rather than swallowed — it
-  // is a dead end in the run, not a bug, and App refuses to raise this screen on it again.
-  const stuck = left > 0 && !run.roster.some((entry) => canSpendScroll(progressionTable, moves, run, entry));
-  // Never while a pour is still resolving — the Scroll's offer after an Evolution has not rolled yet.
-  const done = (left <= 0 || stuck) && !flow.evolving && !flow.overflow;
+  // Affordability, not emptiness: a purse that buys nobody banks, and the screen lets go on it.
+  const spendable = canAffordAnyScroll(progressionTable, moves, run);
+  // Every hero at max rank with nothing left to teach: the purse buys literally nothing, ever.
+  // The count is left standing rather than swallowed — it is a dead end in the run, not a bug.
+  const stuck = left > 0 && !run.roster.some((entry) => canSpendScroll(progressionTable, moves, { ...run, masteryScrolls: Infinity }, entry));
+  const idle = !flow.pouring && !flow.offer && !flow.evolving && !flow.overflow;
+  // Never while a pour is still resolving — the rung's offer after an Evolution has not rolled yet.
+  const done = !spendable && idle;
+  // The out for a purse the player wants to keep. Not while anything is mid-resolution: an
+  // Evolution or an overflow is a payout already bought, not a spend to walk away from.
+  const canBank = spendable && idle;
+
+  function bank() {
+    playSfx('ui.page');
+    onRunChange(deferMastery(run));
+    onDone();
+  }
 
   const evolvingEntry = flow.evolving ? (run.roster.find((r) => r.rosterId === flow.evolving!.rosterId) ?? null) : null;
   if (flow.evolving && evolvingEntry) {
@@ -86,18 +92,29 @@ export function MasteryScreen({ run, onRunChange, onDone }: Props) {
           <ResourceGlyph kind="scroll" tone="inherit" className="mastery-count-glyph" />
           <span className="mastery-count-num">{left}</span>
         </span>
-        {stuck && <span className="mastery-stuck">Nobody has anything left to learn</span>}
+        {stuck ? (
+          <span className="mastery-stuck">Nobody has anything left to learn</span>
+        ) : (
+          left > 0 && !spendable && idle && <span className="mastery-stuck">Not enough for a rung yet — banked</span>
+        )}
       </header>
 
       <div className="screen-scroll">
         <MasteryBoard run={run} flow={flow} onInspect={(entry, hero) => setInspecting({ hero, entry })} />
       </div>
 
-      {/* Only once every Scroll is poured. Held in the layout while hidden so the centred board
-          does not jump when the button arrives. */}
-      <button className={`resolve-button mastery-continue${done ? '' : ' is-hidden'}`} disabled={!done} onClick={onDone}>
-        Continue
-      </button>
+      {/* One slot, two buttons: Continue once the purse buys nobody, Bank while it still could.
+          Both are held in the layout while unavailable so the centred board does not jump when
+          the button arrives or leaves mid-pour. */}
+      {done ? (
+        <button className="resolve-button mastery-continue" onClick={onDone}>
+          Continue
+        </button>
+      ) : (
+        <button className={`secondary-button mastery-bank${canBank ? '' : ' is-inert'}`} disabled={!canBank} onClick={bank}>
+          Bank {left} Scroll{left === 1 ? '' : 's'} for later
+        </button>
+      )}
 
       {inspecting && (
         <HeroPreviewOverlay

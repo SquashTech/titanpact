@@ -15,9 +15,11 @@
 > the act boundary rather than from a level, a Guild hire arrives RAW — unevolved, rank 1, its
 > own three moves — the difficulty curve is re-fitted against all of it, and all 36 heroes
 > carry authored growth grades. **Its §11 second pass (2026-09-11) then moved the Evolution
-> onto the Scroll ladder** — the 6th Scroll into a hero, rungs at 4 and 8 — and made the
-> Crucible a Class beat; Part 2's "Trigger" section below is superseded by that. **Everything
-> else here describes what the code does.** Read both before changing anything.
+> onto the Scroll ladder** and made the Crucible a Class beat; Part 2's "Trigger" section below
+> is superseded by that. **Its §12 third pass (2026-09-12) priced the ladder** — a rung costs 1,
+> 2, 3, 4, then 5 Scrolls, income rises by act, the purse banks — which is this file's own old
+> "What a level-up COSTS" curve, restored on Scrolls. **Everything else here describes what the
+> code does.** Read both before changing anything.
 
 ---
 
@@ -202,30 +204,39 @@ declining every offer — and asserts no level-up ever falls through to a master
 
 # Part 1b — Mastery Scrolls and Mastery Rank (2026-09-10)
 
-**Moves come from ONE faucet: a Mastery Scroll, poured into one hero on `MasteryScreen` — raised
-the moment a Scroll is won, and not leavable until it is spent.** Full rationale in
-`docs/growth-overhaul.md` §4; this section is the spec.
+**Moves come from ONE faucet: Mastery Scrolls, which buy a hero its next RUNG on
+`MasteryScreen` — pushed after every node that leaves the purse able to buy one, leavable by
+banking.** Full rationale in `docs/growth-overhaul.md` §4 and §12; this section is the spec.
 
-- **A Scroll offers ONE move** from the hero's eligible pool — take it or decline, and the move
+- **A rung offers ONE move** from the hero's eligible pool — take it or decline, and the move
   is burned either way (the offer-spent-by-being-made rule above, unchanged).
-- **Every Scroll also ticks the rank bar.** The ladder is authored as thresholds (2026-09-11,
-  `growth-overhaul.md` §11): `RANK_THRESHOLDS` = [0, 4, 8] — the 4th Scroll opens Mid, the 8th
-  Late — with the **Evolution on the 6th** (`EVOLUTION_SCROLLS`), and Rank 3 open-ended past the
-  8th until the pool is dry. Rank is DERIVED from `RosterEntry.masteryScrollsSpent` (`masteryRank`),
-  never stored — two figures for one fact drift, and the board's pips need the count anyway.
-- **The tick lands BEFORE the roll.** The Scroll that reaches a rung offers from the band it just
-  opened, which is what makes the rung Scroll the bigger moment rather than a silent deposit. The
-  6th Scroll raises the hero's Evolution screen INSTEAD of an offer (2026-09-11, per user
-  direction) — the Evolution is that Scroll's reward, and the 7th draws from the post-Evolution
+- **A rung has a PRICE that rises with the rung** (2026-09-12, `growth-overhaul.md` §12): the
+  1st costs 1 Scroll, then 2, 3, 4, and every rung from the 5th costs `MAX_SCROLL_COST` = 5
+  (`scrollCost`, `nextScrollCost`). Cumulatively: Mid at 6, the Evolution at 10, Late at 20.
+- **Every rung also ticks the rank bar.** The ladder is authored as thresholds in rungs
+  (2026-09-11, re-priced 2026-09-12): `RANK_THRESHOLDS` = [0, 3, 6] — the 3rd rung opens Mid, the
+  6th Late — with the **Evolution on the 4th** (`EVOLUTION_RUNG`), and Rank 3 open-ended past the
+  6th until the pool is dry. Only `RosterEntry.masteryScrollsSpent` — the cumulative price paid —
+  is stored; the rung (`masteryRung`), the rank (`masteryRank`) and the next price are DERIVED.
+- **The tick lands BEFORE the roll.** The rung that reaches a rank offers from the band it just
+  opened, which is what makes that rung the bigger moment rather than a silent deposit. The
+  Evolution rung raises the hero's Evolution screen INSTEAD of an offer (2026-09-11, per user
+  direction) — the Evolution is that rung's reward, and the 5th draws from the post-Evolution
   pool (`useScrollPour`, `src/view/run/MasteryBoard.tsx`).
-- **Income, by lane** (2026-09-11): Guardian `SCROLLS_PER_ACT` = 3, Elite 3, Skirmish 2, Fight and
-  Battle 1 — 45 a run on the Elite route, 30 on the Battle route — plus the `scrollReward` Scroll
-  Cache (`SCROLL_REWARD_COUNT` = 2, weight 46), the lone Scroll and the Guild Hall at
-  `SCROLL_PURCHASE_COST` = 35g, no more than `SCROLL_PURCHASE_LIMIT` = 2 a visit. Six Evolutions cost 36. All first-pass figures for playtest.
-- **A Scroll is refused only when it would buy literally nothing** — max rank AND nothing left to
-  teach (`canSpendScroll`). A dry band below the cap still takes one: the rank tick is the only
-  thing that opens the next band, so refusing there would strand the hero at that rank forever.
-  The board says "Band is dry — a Scroll buys the rank only" rather than greying the row out.
+- **Income scales by act** (2026-09-12, `scrollsFor`, `src/run/difficulty.ts` — the old Training
+  Point table): the act opener 3, Battle 3, Skirmish 4, Elite 4, the Guardian 4, +`ACT_SCROLL_STEP`
+  = 2 per act past the first — 14–15 an act in Act 1, 46–47 in Act 5, ~150 a run — plus the
+  `scrollReward` Scroll Cache (`SCROLL_REWARD_COUNT` = 2, flat), the lone Scroll (1) and the Guild
+  Hall, which sells a fight's worth in the act for `SCROLL_PURCHASE_COST` = 35g, no more than
+  `SCROLL_PURCHASE_LIMIT` = 2 bundles a visit. Six Evolutions cost 60. All first-pass figures for playtest.
+- **The purse BANKS.** A leftover that buys nobody is normal; one that could buy somebody may be
+  banked (`deferMastery`, `RunState.masteryDeferred`), every grant clears the bank so the next win
+  re-asks, and the map's Scroll chip reopens the board whenever it can buy a rung.
+- **A rung is refused only when the purse cannot cover it, or when it would buy literally
+  nothing** — max rank AND nothing left to teach (`canSpendScroll`). A dry band below the cap
+  still takes one: the rank tick is the only thing that opens the next band, so refusing there
+  would strand the hero at that rank forever. The board says "Band is dry — the rung buys the
+  rank only" rather than greying the row out.
 
 ### Which move is offered: the tier gate (2026-08-31; re-pointed to RANK 2026-09-10)
 

@@ -66,10 +66,11 @@ import {
   isRecruitable,
   pickContractOffers,
   RecruitmentError,
+  buyMasteryScroll,
   type GuildHallOffer,
   type RosterReplaceCandidate,
 } from '../run/recruitment';
-import { guildHallOffers } from '../data/recruitment';
+import { guildHallOffers, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT } from '../data/recruitment';
 import { rollGuildHallOffers, buyEquipment, ShopError, type GuildHallOffers } from '../run/shop';
 import { guildHallEntry } from '../run/guildRecruit';
 import { anyClassAvailable } from '../run/classes';
@@ -99,13 +100,14 @@ import {
   type EncounterNodeType,
   type Encounter,
 } from '../run/enemyGen';
-import { actScaling, encounterHeroCountOverride, type ScalingTrack } from '../run/difficulty';
+import { actScaling, encounterHeroCountOverride, scrollsFor, type ScalingTrack } from '../run/difficulty';
 import { applyEncounterLevels, levelsForEncounter, type HeroLevelUp } from '../run/growth';
 import { generateItinerary, locationBias, locationForAct } from '../run/locations';
 import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
 import { LocationProvider } from '../view/shared/LocationContext';
 import { NODE_TINT_MANA, NODE_TINT_VITAL } from '../view/shared/NodeStage';
 import { prefetchTrack, setTrack } from '../audio/music';
+import { playSfx } from '../audio/sfx';
 import { hasTrack } from '../audio/tracks';
 import { pickSquad, STANDARD_SQUAD_SIZE } from '../run/squad';
 import {
@@ -122,14 +124,11 @@ import {
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
 import { createStatusTestSides } from '../run/statusTestFight';
 import {
-  canSpendScroll,
+  canAffordAnyScroll,
   fullMovepool,
   grantMasteryScrolls,
-  SCROLLS_PER_ACT,
-  EVOLUTION_SCROLLS,
-  SCROLLS_PER_ELITE,
-  SCROLLS_PER_FIGHT,
-  SCROLLS_PER_SKIRMISH,
+  EVOLUTION_RUNG,
+  scrollsToReachRung,
 } from '../run/progression';
 import { progressionTable } from '../data/progression';
 import type { RunState, RosterEntry } from '../run/state';
@@ -153,7 +152,7 @@ type Screen =
       encounter: Encounter;
       goldReward: number;
       levelsGained: number;
-      /** The Skirmish lane's Mastery Scroll, 0 on every other node kind. */
+      /** This win's Mastery Scrolls (difficulty.ts scrollsFor) — every encounter pays, scaled by act. */
       scrollReward: number;
       /** Rolled at squad-confirm time so the victory screen can spotlight it; handleFightResolved reuses it. */
       equipmentReward: EquipmentDefinition | null;
@@ -164,7 +163,7 @@ type Screen =
   /** TEMPORARY DEV/TEST — src/run/statusTestFight.ts. Own kind so leaving returns to the title. */
   | { kind: 'statusTestFight'; player: Encounter; ai: Encounter }
   /** `offers` and `soldOutEquipmentIds` live on the screen, not in the shop component: a purchase re-renders the shop and component-local state would reroll / forget. */
-  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; soldOutEquipmentIds: string[] }
+  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; soldOutEquipmentIds: string[]; scrollsBought: number }
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType }
   /** The Forge: +1 item slot to one hero. */
   | { kind: 'forge'; nodeId: string }
@@ -178,7 +177,7 @@ type Screen =
   | { kind: 'event'; nodeId: string; eventId: string }
   /** What the fight just did to the roster. First in the post-fight chain — it is the fight's own consequence. */
   | { kind: 'levelUp'; report: readonly HeroLevelUp[]; next: Screen }
-  /** A won Scroll, poured now. Never held, so this is the only place the Mastery board appears. */
+  /** The Mastery board: after every node that leaves the purse able to buy a rung, and from the map's Scroll chip. */
   | { kind: 'mastery'; next: Screen }
   /** Guardian's Banner after a Guardian win in acts 1-4. Not a map node, so no nodeId. */
   | { kind: 'guardianBanner'; next: Screen }
@@ -266,7 +265,7 @@ function shuffled<T>(items: readonly T[]): T[] {
   return out;
 }
 
-/** TEMPORARY DEV/TEST — a full roster with its first hero one Scroll short of its Evolution and two to pour. Remove with its TitleScreen button. */
+/** TEMPORARY DEV/TEST — a full roster with its first hero one rung short of its Evolution and a purse that covers it. Remove with its TitleScreen button. */
 function createLevel4TestRun(): RunState {
   const base = addHeroes(createRunState(999), Object.keys(heroes).slice(0, ROSTER_CAP), 4);
   // Some worn, some carried: Manage Roster's gear half is only exercisable with both.
@@ -276,15 +275,15 @@ function createLevel4TestRun(): RunState {
     roster: base.roster.map((entry, i) => ({
       ...entry,
       equipment: worn[i] ? equipItem(entry.equipment, worn[i]) : entry.equipment,
-      // The first hero sits one pour short of the Evolution rung, so the fixture reaches it.
-      masteryScrollsSpent: i === 0 ? EVOLUTION_SCROLLS - 1 : entry.masteryScrollsSpent,
+      // The first hero sits one rung short of the Evolution rung, so the fixture reaches it.
+      masteryScrollsSpent: i === 0 ? scrollsToReachRung(EVOLUTION_RUNG - 1) : entry.masteryScrollsSpent,
     })),
     // Two mergeable pairs: a plain one, and one where both halves are enchanted so the
     // keep-which-enchant choice has somewhere to fire.
     stash: ['dagger.common', 'dagger.common', 'bow.common', 'spear.rare.blazing', 'spear.rare.tidal'],
-    // Two, not nine: a Scroll is poured where it is won, so anything parked here is a forced
-    // MasteryScreen standing between this fixture and the map it exists to open.
-    masteryScrolls: 2,
+    // The Evolution rung's price and a cheap rung or two elsewhere; the Mastery gate raises on it
+    // before the map, which is the screen this fixture exists to open.
+    masteryScrolls: scrollsToReachRung(EVOLUTION_RUNG) - scrollsToReachRung(EVOLUTION_RUNG - 1) + 2,
     map: generateMap(randomSeed()),
     locationIds: generateItinerary(randomSeed()),
   };
@@ -307,32 +306,13 @@ function goldRewardFor(nodeType: EncounterMapNodeType): number {
 }
 
 /**
- * What a won fight pays in Scrolls, by lane (docs/growth-overhaul.md §11): the Skirmish lane
- * (`skirmish`, `elite`) is where Scrolls come from, the Monster lane (`fight`, `battle`) is where
- * loot does. The Elite-or-Battle fork is the player's hand on the run's income. The Guardian's
- * own grant is separate, below.
- */
-function scrollRewardFor(nodeType: EncounterMapNodeType): number {
-  switch (nodeType) {
-    case 'elite':
-      return SCROLLS_PER_ELITE;
-    case 'skirmish':
-      return SCROLLS_PER_SKIRMISH;
-    case 'fight':
-    case 'battle':
-      return SCROLLS_PER_FIGHT;
-    default:
-      return 0;
-  }
-}
-
-/**
- * Whether a Scroll is owed AND somebody can take it. The second half is what stops the forced
- * screen becoming a wall: past the point where every hero is at max rank with an empty pool, a
- * Scroll buys literally nothing, and raising a screen that cannot be resolved would trap the run.
+ * The map, behind the Mastery gate if the purse can buy anyone a rung and the player has not
+ * banked it (docs/growth-overhaul.md §12). Affordability, not emptiness: a rung's price rises,
+ * so a purse that buys nobody yet is normal and banks on its own. The second half is also what
+ * stops the gate becoming a wall once every hero is at max rank with an empty pool.
  */
 function masteryDue(run: RunState): boolean {
-  return run.masteryScrolls > 0 && run.roster.some((entry) => canSpendScroll(progressionTable, moves, run, entry));
+  return canAffordAnyScroll(progressionTable, moves, run) && !run.masteryDeferred;
 }
 
 function equipmentDropFor(nodeType: EncounterMapNodeType, actNumber: number): EquipmentDefinition | null {
@@ -441,14 +421,10 @@ export function App() {
   // checkpoints does not, so a mid-fight reload would still cost the fight.
   useReloadOnNewBuild(screen.kind === 'title');
 
-  // A Scroll is never held (docs/growth-overhaul.md §4), so arriving at the map with one owed is
-  // the one thing that must not happen — that is the banked stock the forced screen replaced.
-  // Caught here rather than at each faucet: the fight chain slots the screen in explicitly, and
-  // this catches everything else at once — the Scroll Cache, the Guild Hall, and a save written
-  // by a build that still had a purse. It cannot loop, because `masteryDue` is false the moment
-  // the count is spent or nothing can spend it.
-  //
-  // Ahead of the autosave below on purpose: a checkpoint must never record an owed Scroll.
+  // The post-node Mastery gate. The fight chain slots the screen in explicitly; this catches every
+  // other faucet at once — the Scroll Cache, the lone Scroll, the Guild Hall's shelf. It cannot
+  // loop: `masteryDue` is false the moment the purse is spent down, banked (every grant clears the
+  // bank, so new income always re-asks), or nothing can spend it.
   useEffect(() => {
     if (screen.kind !== 'map' || !masteryDue(playerRun)) return;
     setScreen({ kind: 'mastery', next: { kind: 'map' } });
@@ -649,6 +625,7 @@ export function App() {
         nodeId,
         offers: rollGuildHallOffers(playerRun, guildHallOffers, EQUIPMENT_POOL, node.type === 'muster'),
         soldOutEquipmentIds: [],
+        scrollsBought: 0,
       });
     } else if (node.type === 'forgeReward') {
       setScreen({ kind: 'forge', nodeId });
@@ -686,7 +663,7 @@ export function App() {
       // Read off the win this fight WILL be: the curve is a function of encounters won, so the
       // figure is known before the fight rather than rolled after it.
       levelsGained: levelsForEncounter(playerRun.encountersWon + 1),
-      scrollReward: scrollRewardFor(mapNodeType),
+      scrollReward: scrollsFor(mapNodeType, playerRun.actNumber),
       equipmentReward,
     });
   }
@@ -720,9 +697,9 @@ export function App() {
     // recovered from the roster afterwards.
     const levelled = applyEncounterLevels(next, heroes);
     next = levelled.run;
-    // The fight's Scrolls. Granted here rather than at squad-confirm for the same reason
-    // gold is: a fight that is lost pays nothing.
-    const scrolls = scrollRewardFor(mapNodeType as EncounterMapNodeType);
+    // The fight's Scrolls, the Guardian's included (difficulty.ts scrollsFor). Granted here rather
+    // than at squad-confirm for the same reason gold is: a fight that is lost pays nothing.
+    const scrolls = scrollsFor(mapNodeType as EncounterMapNodeType, playerRun.actNumber);
     if (scrolls > 0) next = grantMasteryScrolls(next, scrolls);
 
     let afterScreen: Screen;
@@ -733,9 +710,6 @@ export function App() {
       // in is offered again (docs/tutorial.md). The rest of the run is a normal run either way.
       if (isTutorialAct(playerRun)) updateProfile(recordTutorialDone);
       next = grantContractReward(next, 1);
-      // The Guardian's Scrolls — THE income dial (docs/growth-overhaul.md §11): the one number that
-      // moves the run's total without moving the Skirmish-vs-Monster lane split.
-      next = grantMasteryScrolls(next, SCROLLS_PER_ACT);
       // The seal, snapshotted at the power it was beaten at, so the finale can field it
       // again (docs/lore.md §6). The champion rides the Guardian's bench, so it is in the
       // defeated roster under its own id.
@@ -772,9 +746,9 @@ export function App() {
     // The Crucible is the GUARDIAN's beat, not every fight's (docs/growth-overhaul.md §5, §11): one
     // hero takes a Class, in the chain Guardian → Banner → Crucible → Pact Seal → act intro. Team,
     // hero, run — three scales ascending. Skipped when every hero already holds one.
-    // A Scroll is poured the moment it is won, never held (docs/growth-overhaul.md §4). LAST in
-    // the chain — after the Banner, the contract and the Crucible — so a hero recruited or evolved
-    // this beat can take the Scroll it has only just become eligible for.
+    // The Mastery board is LAST in the chain — after the Banner, the contract and the Crucible —
+    // so a hero recruited or Classed this beat can take the rung it has only just become eligible
+    // for. Skipped when the purse buys nobody; it banks (docs/growth-overhaul.md §12).
     const afterMastery: Screen = masteryDue(next) ? { kind: 'mastery', next: afterScreen } : afterScreen;
 
     const crucible = isGuardian && anyClassAvailable(next.roster);
@@ -806,8 +780,26 @@ export function App() {
   }
 
   function handleNodeContinue(nodeId: string) {
-    setPlayerRun((run) => advanceToNode(run, nodeId));
+    // The Vigil is the run's last node before the Endbringer, so a banked purse is re-offered
+    // there or never — walking on clears the bank rather than honouring it.
+    const unbank = playerRun.map?.nodes[nodeId]?.type === 'muster';
+    setPlayerRun((run) => advanceToNode(unbank ? { ...run, masteryDeferred: false } : run, nodeId));
     setScreen({ kind: 'map' });
+  }
+
+  /** One bundle off the Guild Hall shelf; the visit's count rides the shop screen, as sold-out gear does. */
+  function handleBuyGuildScrolls() {
+    if (screen.kind !== 'shop') return;
+    let next: RunState;
+    try {
+      next = buyMasteryScroll(playerRun, SCROLL_PURCHASE_COST, scrollsFor('fight', playerRun.actNumber), screen.scrollsBought, SCROLL_PURCHASE_LIMIT);
+    } catch (err) {
+      if (!(err instanceof RecruitmentError)) throw err;
+      return;
+    }
+    playSfx('scroll.spend');
+    setPlayerRun(next);
+    setScreen({ ...screen, scrollsBought: screen.scrollsBought + 1 });
   }
 
   /**
@@ -1021,6 +1013,7 @@ export function App() {
           run={playerRun}
           onRunChange={setPlayerRun}
           onSelectNode={handleSelectNode}
+          onOpenMastery={() => setScreen({ kind: 'mastery', next: { kind: 'map' } })}
           onSaveAndQuit={() => setScreen({ kind: 'title' })}
           onAbandonRun={handleAbandonRun}
         />
@@ -1083,8 +1076,10 @@ export function App() {
           run={playerRun}
           offers={screen.offers}
           soldOutEquipmentIds={screen.soldOutEquipmentIds}
+          scrollsBought={screen.scrollsBought}
           onRunChange={setPlayerRun}
           onBuyEquipment={handleBuyGuildEquipment}
+          onBuyScrolls={handleBuyGuildScrolls}
           onRequestRosterReplace={handleRequestRosterReplace}
           onContinue={() => handleNodeContinue(screen.nodeId)}
           muster={playerRun.map?.nodes[screen.nodeId]?.type === 'muster'}

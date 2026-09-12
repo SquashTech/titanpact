@@ -5,11 +5,11 @@ import { progressionTable } from '../../data/progression';
 import type { HeroDefinition } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
 import {
-  EVOLUTION_SCROLLS,
+  EVOLUTION_RUNG,
   MAX_MASTERY_RANK,
   MOVE_CAP,
   RANK_THRESHOLDS,
-  SCROLLS_TO_MAX_RANK,
+  RUNGS_TO_MAX_RANK,
   applyEvolutionMoves,
   availableEvolution,
   canSpendScroll,
@@ -17,13 +17,16 @@ import {
   grantOfferedMove,
   masteryMovePool,
   masteryRank,
+  masteryRung,
+  nextScrollCost,
   recordMoveOffer,
   rosterEntryTypes,
   scrollMovePool,
-  scrollsToNextRank,
+  rungsToNextRank,
   spendMasteryScroll,
   type EvolutionNode,
 } from '../../run/progression';
+import { ResourceGlyph } from '../shared/RunGlyph';
 import { playSfx } from '../../audio/sfx';
 import { moveForHero } from '../../engine/state';
 import { getTypeColor } from '../combat/typeColors';
@@ -32,11 +35,11 @@ import { TypeBadge } from '../shared/TypeBadge';
 import { useLongPress } from '../shared/MoveTile';
 import { MoveLearnedOverlay, MoveOfferOverlay } from './MoveOfferOverlay';
 
-/** How long the row drinks the Scroll before the move is put in front of the player (styles.css mastery-pour). */
+/** How long the row drinks the Scrolls before the move is put in front of the player (styles.css mastery-pour). */
 const POUR_MS = 760;
 
 /**
- * What a spend has raised. The Scroll is already gone. Below the cap the move is already
+ * What a spend has raised. The Scrolls are already gone. Below the cap the move is already
  * LEARNED and the box only says so; at the cap it is still a question — which of the four goes.
  */
 interface ScrollOffer {
@@ -47,7 +50,7 @@ interface ScrollOffer {
   learned: boolean;
 }
 
-/** The 6th Scroll's Evolution, waiting on the player. */
+/** The Evolution rung, waiting on the player. */
 interface Evolving {
   rosterId: string;
   node: EvolutionNode;
@@ -61,8 +64,8 @@ interface Overflow {
 
 /**
  * The state of one pour, owned by the screen rather than the board because the Evolution is a
- * whole screen of its own (docs/growth-overhaul.md §11): the 6th Scroll into a hero raises it for
- * that hero, and its move grant's overflow is offered. The Evolution IS that Scroll's whole
+ * whole screen of its own (docs/growth-overhaul.md §11): the EVOLUTION_RUNG into a hero raises it
+ * for that hero, and its move grant's overflow is offered. The Evolution IS that rung's whole
  * payoff (2026-09-11, per user direction) — no move offer rolls behind it.
  */
 export interface PourFlow {
@@ -94,7 +97,7 @@ export function useScrollPour(run: RunState, onRunChange: (next: RunState) => vo
   }, [pouring]);
 
   /**
-   * The Scroll's offer, rolled off `next` — the run AFTER the spend. A dry band buys the tick
+   * The rung's offer, rolled off `next` — the run AFTER the spend. A dry band buys the tick
    * and nothing is put in front of anyone: the row's own pips are the whole of what changed.
    */
   function rollOffer(next: RunState, rosterId: string, rankedUp: boolean, delay: number) {
@@ -122,7 +125,7 @@ export function useScrollPour(run: RunState, onRunChange: (next: RunState) => vo
 
   function spend(entry: RosterEntry) {
     if (pouring || !canSpendScroll(progressionTable, moves, run, entry)) return;
-    // Tick first, roll after: the Scroll that reaches a rung is the one that opens it, so the
+    // Tick first, roll after: the rung that reaches a rank is the one that opens it, so the
     // move it offers is already from the band it just unlocked.
     const next = spendMasteryScroll(run, entry.rosterId);
     const ranked = next.roster.find((r) => r.rosterId === entry.rosterId)!;
@@ -131,7 +134,7 @@ export function useScrollPour(run: RunState, onRunChange: (next: RunState) => vo
     setPouring(entry.rosterId);
 
     // The Evolution rung: the pour lands, then the hero's Evolution screen rises in place of an
-    // offer — the Evolution is what this Scroll bought.
+    // offer — the Evolution is what this rung bought.
     const node = availableEvolution(progressionTable, ranked);
     if (node && node.paths.length > 0) {
       onRunChange(next);
@@ -191,34 +194,35 @@ interface Props {
 
 /**
  * What the row says instead of its progress line. A dry band below the cap is NOT a block — the
- * Scroll still buys the tick that opens the next band — so it gets a note, not the inert style.
+ * rung still buys the tick that opens the next band — so it gets a note, not the inert style.
  */
 function poolNote(entry: RosterEntry): string | null {
   if (scrollMovePool(progressionTable, moves, entry).length > 0) return null;
-  return masteryRank(entry) >= MAX_MASTERY_RANK ? 'Nothing left to teach' : 'Band is dry — a Scroll buys the rank only';
+  return masteryRank(entry) >= MAX_MASTERY_RANK ? 'Nothing left to teach' : 'Band is dry — the rung buys the rank only';
 }
 
-/** Finished: max rank and no move left. The only state a Scroll cannot buy anything in. */
+/** Finished: max rank and no move left. The only state a rung cannot buy anything in. */
 function isFinished(entry: RosterEntry): boolean {
   return masteryRank(entry) >= MAX_MASTERY_RANK && scrollMovePool(progressionTable, moves, entry).length === 0;
 }
 
 /**
- * One pip per Scroll to the top rung. The bar is the whole readout: rank is what the pips have
+ * One pip per RUNG to the top rank. The bar is the whole readout: rank is what the pips have
  * crossed, the next threshold is where the gap is, and the Evolution's pip is drawn differently
  * because it is the one the player is pouring toward. Drawn rather than written because "Rank 2,
  * 2 to go" is two numbers for one fact. Past the top rung the bar stays full — Rank 3 is open-ended.
+ * A pip is a rung, not a Scroll: the rungs get dearer, and the price tag beside the bar says by how much.
  */
-function RankPips({ spent }: { spent: number }) {
+function RankPips({ rung }: { rung: number }) {
   return (
     <span className="mastery-pips" aria-hidden="true">
-      {Array.from({ length: SCROLLS_TO_MAX_RANK }, (_, i) => {
+      {Array.from({ length: RUNGS_TO_MAX_RANK }, (_, i) => {
         const at = i + 1;
-        const threshold = at < SCROLLS_TO_MAX_RANK && RANK_THRESHOLDS.includes(at);
+        const threshold = at < RUNGS_TO_MAX_RANK && RANK_THRESHOLDS.includes(at);
         return (
           <span
             key={i}
-            className={`mastery-pip${at <= spent ? ' is-filled' : ''}${threshold ? ' is-threshold' : ''}${at === EVOLUTION_SCROLLS ? ' is-evolution' : ''}`}
+            className={`mastery-pip${at <= rung ? ' is-filled' : ''}${threshold ? ' is-threshold' : ''}${at === EVOLUTION_RUNG ? ' is-evolution' : ''}`}
           />
         );
       })}
@@ -228,13 +232,12 @@ function RankPips({ spent }: { spent: number }) {
 
 /**
  * Where Mastery Scrolls are poured (docs/growth-overhaul.md §4). One row a hero, because the row
- * has to carry the four moves the hero already holds — the whole question a Scroll asks is "is
+ * has to carry the four moves the hero already holds — the whole question a rung asks is "is
  * there room, and for what", and that is unreadable on a half-width card.
  *
- * The list only, with no count and no chrome: since 2026-09-10 a Scroll is never held, so this is
- * mounted by MasteryScreen at the moment one is won and by nothing else. How many are left to
- * pour is the SCREEN's readout — this is the six answers to it. The pour itself is the screen's
- * too (`useScrollPour`), because the 6th Scroll's Evolution is a screen of its own.
+ * The list only, with no count and no chrome: how many Scrolls are held is the SCREEN's readout —
+ * this is the six answers to it, each with the price of its next rung (§12). The pour itself is
+ * the screen's too (`useScrollPour`), because the Evolution rung is a screen of its own.
  *
  * **Six rows have to fit the screen without scrolling.** Six is ROSTER_CAP, so that is the worst
  * case, and it is the budget anything added to a row comes out of.
@@ -255,6 +258,9 @@ export function MasteryBoard({ run, flow, onInspect }: Props) {
               hero={hero}
               entry={entry}
               rank={masteryRank(entry)}
+              rung={masteryRung(entry)}
+              cost={nextScrollCost(entry)}
+              short={run.masteryScrolls < nextScrollCost(entry)}
               canSpend={!pouring && canSpendScroll(progressionTable, moves, run, entry)}
               pouring={pouring === entry.rosterId}
               landingMoveId={landing?.rosterId === entry.rosterId ? landing.moveId : null}
@@ -295,10 +301,10 @@ interface OfferBoxProps {
 /** The box a pour ends in: a receipt below the cap, the replace question at it. */
 function ScrollOfferBox({ run, entry, offer, onResolve, onClose }: OfferBoxProps) {
   const rank = masteryRank(entry);
-  const toNext = scrollsToNextRank(entry);
+  const toNext = rungsToNextRank(entry);
   const eyebrow = offer.rankedUp
     ? `Rank ${rank} — a deeper band opens`
-    : `Rank ${rank}${toNext > 0 ? ` — ${toNext} to the next` : ''}`;
+    : `Rank ${rank}${toNext > 0 ? ` — ${toNext} rung${toNext === 1 ? '' : 's'} to the next` : ''}`;
   return offer.learned ? (
     <MoveLearnedOverlay run={run} entry={entry} moveId={offer.moveId} eyebrow={eyebrow} onClose={onClose} />
   ) : (
@@ -310,6 +316,12 @@ interface RowProps {
   hero: HeroDefinition;
   entry: RosterEntry;
   rank: number;
+  /** Rungs climbed — the pips. */
+  rung: number;
+  /** What the next rung costs (progression.ts nextScrollCost): the tag beside the pips. */
+  cost: number;
+  /** The purse cannot cover the tag. Not inert — the row is still the thing being saved toward. */
+  short: boolean;
   canSpend: boolean;
   /** Drinking a Scroll right now (styles.css `.is-pouring`). */
   pouring: boolean;
@@ -327,12 +339,12 @@ interface RowProps {
   onInspect: () => void;
 }
 
-function MasteryRow({ hero, entry, rank, canSpend, pouring, landingMoveId, note, finished, onSpend, onInspect }: RowProps) {
+function MasteryRow({ hero, entry, rank, rung, cost, short, canSpend, pouring, landingMoveId, note, finished, onSpend, onInspect }: RowProps) {
   const press = useLongPress(onInspect, canSpend ? onSpend : undefined);
 
   return (
     <div
-      className={`mastery-hero-row${canSpend ? ' can-take' : ''}${finished ? ' is-inert' : ''}${pouring ? ' is-pouring' : ''}`}
+      className={`mastery-hero-row${canSpend ? ' can-take' : ''}${finished ? ' is-inert' : ''}${short && !finished ? ' is-short' : ''}${pouring ? ' is-pouring' : ''}`}
       style={{ '--plate-color': getTypeColor(hero.types[0]) } as CSSProperties}
       {...press}
     >
@@ -349,7 +361,16 @@ function MasteryRow({ hero, entry, rank, canSpend, pouring, landingMoveId, note,
         </span>
         <span className={`mastery-hero-rank${rank >= MAX_MASTERY_RANK ? ' is-max' : ''}`}>
           <span className="mastery-rank-num">Rank {rank}</span>
-          <RankPips spent={entry.masteryScrollsSpent} />
+          <RankPips rung={rung} />
+          {/* The price of the next rung. It rises (1, 2, 3, 4, 5 ...), so it is the one number the
+              pips cannot carry — and dimmed when the purse falls short, which is what makes
+              "bank toward it" a thing the board shows rather than a rule held in the head. */}
+          {!finished && (
+            <span className={`mastery-hero-price${short ? ' is-short' : ''}`} aria-label={`Next rung costs ${cost} Scrolls`}>
+              <ResourceGlyph kind="scroll" tone="inherit" />
+              {cost}
+            </span>
+          )}
         </span>
       </div>
 

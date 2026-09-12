@@ -45,9 +45,10 @@ export interface RosterEntry {
   /** Everything this hero's levels have rolled up (run/growth.ts). Automatic; never a decision. */
   growthStatGrants: Partial<Record<StatKey, number>>;
   /**
-   * Mastery Scrolls poured into this hero. Mastery Rank is DERIVED from it
-   * (progression.ts masteryRank), never stored: two figures for one fact drift, and the
-   * bar the hero card draws needs the count anyway. Keeps climbing past the max rank.
+   * Mastery Scrolls poured into this hero, in total. The rung it stands on, its Mastery Rank and
+   * its next rung's price are all DERIVED from it (progression.ts masteryRung, masteryRank,
+   * nextScrollCost), never stored: two figures for one fact drift. Every spend lands exactly on
+   * a rung, so the inversion is exact. Keeps climbing past the max rank.
    */
   masteryScrollsSpent: number;
   /** Item slots granted on top of the hero's authored count (the Forge). Never negative; itemSlotsFor caps the sum. */
@@ -87,11 +88,16 @@ export interface RunState {
   /** Owned relic ids — duplicates stack. */
   relics: string[];
   /**
-   * Unspent Mastery Scrolls — the run's only faucet for moves (docs/growth-overhaul.md §4).
-   * A stock, not an inbox: banking one is a legitimate play, so nothing anywhere may flag it
-   * as waiting.
+   * Unspent Mastery Scrolls — the run's only faucet for moves (docs/growth-overhaul.md §4), and
+   * a PURSE since 2026-09-12 (§12): a rung's price rises with the rung, so a purse that buys
+   * nobody yet is normal and banks toward the rung it is short of.
    */
   masteryScrolls: number;
+  /**
+   * The player banked a spendable purse rather than spending it (MasteryScreen's Bank button).
+   * Suppresses the post-node Mastery gate until the next grant clears it (grantMasteryScrolls).
+   */
+  masteryDeferred: boolean;
   /** Starts at 1; +1 at the end of every act; purchasable at a shop. */
   recruitContracts: number;
   /** Null for a RunState that never gets a map (enemyGen.ts throwaway rosters). */
@@ -131,6 +137,7 @@ export function createRunState(gold = 0, recruitContracts = 1): RunState {
     unseenItemIds: [],
     relics: [],
     masteryScrolls: 0,
+    masteryDeferred: false,
     recruitContracts,
     map: null,
     currentNodeId: null,

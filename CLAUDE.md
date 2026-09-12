@@ -20,10 +20,11 @@ don't silently override it.
 > all of it, and all 36 heroes carry authored growth grades. Everything else below is still the
 > rule in force.
 > **Second pass, 2026-09-11 (`docs/growth-overhaul.md` §11):** Evolutions moved off the
-> Crucible onto the **6th Scroll** of a longer ladder ([0, 4, 8] rungs), the Crucible now grants
-> a **Class**, Classes are **verbs** (a move or a passive, never stats), the Mentor is an
-> Early–Mid Tutor in acts 1–3 with a Forge in act 4's seat, and Scroll income is by lane
-> (Guardian 3 / Elite 3 / Skirmish 2 / Fight & Battle 1).
+> Crucible onto the Scroll ladder, the Crucible now grants a **Class**, Classes are **verbs** (a
+> move or a passive, never stats), and the Mentor is an Early–Mid Tutor in acts 1–3 with a Forge
+> in act 4's seat. **Third pass, 2026-09-12 (§12):** the ladder is PRICED — a rung costs 1, 2,
+> 3, 4, then 5 Scrolls, income rises by act (3/3/4/4/4, +2 an act), the purse banks, and the
+> thresholds are the old level curve's (Mid at rung 3, Evolution at 4, Late at 6).
 
 ---
 
@@ -147,64 +148,67 @@ don't silently override it.
   genuinely swings or defends with never drops below C, which is where a trap pick comes from.
   `docs/types-and-heroes.md` "Growth grades".
 - **Moves come from ONE faucet: Mastery Scrolls, gated by Mastery Rank** (2026-09-10,
-  `docs/growth-overhaul.md` §4). A Scroll is poured into one hero on the Roster's Mastery
-  board; it offers **one** move from that hero's pool — take it or decline, and the move is
-  burned either way — and it ticks the rank bar.
-  **A Scroll is POURED WHERE IT IS WON, never held** (2026-09-10, per user direction, replacing
-  the Roster's Mastery tab): winning one raises `MasteryScreen` — the same six-row board, pushed
-  rather than pulled — and there is no way out but pouring. Rank was built so the ceiling sits
-  behind the SPEND rather than behind a clock, so holding is never better than spending, and a
-  stock with no reason to be held is not a strategy but a to-do list (`docs/growth-overhaul.md`
-  §10 had named this: "a Roster button wearing 4 Scrolls still signals admin waiting"). It is LAST
-  in the post-fight chain, after the Banner, the contract and the Crucible, so a hero recruited or
-  evolved this beat can take it. **What it costs is the churn hedge** — a Scroll can no longer be
-  saved for a hero not yet recruited; that matches recruitment, where a hire arrives raw and a
-  contract hero arrives finished, but it is what to watch if pivoting starts feeling punished.
-  `run.masteryScrolls` survives only as the count owed DURING that beat: App refuses to reach the
-  map with one outstanding, which is also what catches a Cache, a Guild Hall purchase and an old
-  save. The one exception is a Scroll nothing can take (every hero max rank, pool empty) — the
-  screen would be a wall, so it is not raised (`masteryDue`).
-  **The ladder is authored as thresholds** (2026-09-11, `docs/growth-overhaul.md` §11):
-  **`RANK_THRESHOLDS` = [0, 4, 8]** — Rank 1 offers Early, the 4th Scroll opens Mid (Early
-  expires), the 8th opens Late — and **`EVOLUTION_SCROLLS` = 6** sits between them. Rank 3 is
-  **open-ended**: past the 8th every Scroll offers Late until the pool is dry. The rungs map 1:1
-  onto the authored 6/6/4 pools, so **no hero needed re-authoring**. Rank is **DERIVED** from
-  `RosterEntry.masteryScrollsSpent`, never stored. **The tick lands before the roll**, so the
-  Scroll that reaches a rung offers from the band it just opened.
-  Income, **by lane** (2026-09-11): the Skirmish lane pays Scrolls, the Monster lane pays loot.
-  **`SCROLLS_PER_ACT` = 3 at every Guardian (lowered from 4 the same day — four poured at once
-  was too much screen), `SCROLLS_PER_ELITE` = 3, `SCROLLS_PER_SKIRMISH` = 2,
-  `SCROLLS_PER_FIGHT` = 1** (Fight and Battle) — Elite route 9 an act, Battle route 6, so
-  **45 vs 30** a run plus the Scroll Cache, the lone Scroll and the Guild Hall (2 a visit), against
-  the 36 that evolve six heroes. The Elite-or-Battle fork is the player's hand on the income.
-  **The Guardian's 3 is THE dial**: the one number that moves the total without moving the lane
-  split. Every figure is first-pass for playtest.
+  `docs/growth-overhaul.md` §4). Scrolls buy a hero its next RUNG on the Mastery board; a rung
+  offers **one** move from that hero's pool — take it or decline, and the move is burned either
+  way — and it ticks the rank bar.
+  **A rung has a PRICE that rises with the rung, and the purse BANKS** (2026-09-12, per user
+  direction, `docs/growth-overhaul.md` §12 — the pre-overhaul level-up curve brought back whole,
+  because it "felt close to perfect"): a hero's first rung costs **1** Scroll, then **2, 3, 4**,
+  and every rung from the fifth costs **`MAX_SCROLL_COST` = 5** (`scrollCost`,
+  `src/run/progression.ts`). Income rises by act to match (`scrollsFor`,
+  `src/run/difficulty.ts`): **3** the act opener, **3** Battle, **4** Skirmish, **4** Elite,
+  **4** the Guardian, **+`ACT_SCROLL_STEP` = 2 per act past the first** — an act's four fights
+  pay 14–15 in Act 1 and 46–47 in Act 5, ~150 a run, plus the flat Scroll Cache (2), the lone
+  Scroll (1) and the Guild Hall's shelf (a fight's worth a bundle, 2 a visit). This REVERSES
+  2026-09-10's "poured where it is won, never held", which was built for a flat price where holding
+  never paid: under a rising one, **a purse that buys nobody yet is NORMAL and banks on its own**,
+  and one that could buy somebody may be banked by choice — `MasteryScreen` is pushed after every
+  node that leaves the purse able to buy a rung (`masteryDue` = `canAffordAnyScroll` and not
+  `run.masteryDeferred`), its Bank button is the out, **every grant clears the bank** so new
+  income always re-asks, and the map's Scroll chip is the way back. The Vigil clears it on the
+  way out — the last node before the Endbringer is re-offered or never. It is LAST in the
+  post-fight chain, after the Banner, the contract and the Crucible, so a hero recruited or Classed
+  this beat can take the rung it just became eligible for. What the old churn hedge gave up —
+  saving for a hero not yet recruited — is back.
+  **The ladder is authored as thresholds in RUNGS** (2026-09-11, re-priced 2026-09-12):
+  **`RANK_THRESHOLDS` = [0, 3, 6]** — Rank 1 offers Early, the 3rd rung opens Mid (Early
+  expires), the 6th opens Late — and **`EVOLUTION_RUNG` = 4** sits between them, exactly the old
+  curve's levels 4 / 5 / 7. In Scrolls that is Mid at 6, the Evolution at 10 (`EVOLUTION_SCROLLS`,
+  derived) and Late at 20 (`SCROLLS_TO_MAX_RANK`, derived): one hero rushed to its Evolution is
+  10, a four-hero core lifted one rung each is 4, and Act 1 pays 14, so an act buys the all-in OR
+  the spread and either route affords the Evolution before its own Guardian. Rank 3 is
+  **open-ended**: past the 6th rung every rung offers Late until the pool is dry. **No hero needed
+  re-authoring** (6/6/4 pools against a 2/3/1 floor). Only `RosterEntry.masteryScrollsSpent` —
+  the cumulative price paid — is stored; rung (`masteryRung`), rank and the next price are all
+  **DERIVED**, and every spend lands exactly on a rung. **The tick lands before the roll**, so the
+  rung that reaches a rank offers from the band it just opened.
   **Rank puts the ceiling behind the SPEND, never behind a clock** — act-gating the movepool
   makes holding a Scroll always better than spending one, and a currency whose optimal play is
-  *don't spend it* can never feel good to receive. It is also where the carry build is priced
-  in breadth, which uniform levelling would otherwise delete.
-- **A Scroll is refused only when it would buy LITERALLY nothing** — max rank AND nothing left
-  to teach (`canSpendScroll`). A dry band below the cap still takes one, because the rank tick
-  is the only thing that opens the next band and refusing there would strand the hero forever.
-  The move-pool floor is **the offers it takes to climb out of a band** (`movePoolFloor`,
-  `test/moveTiers.test.ts`): 3 Early, 4 Mid, 1 Mid+Late. Scrolls make offers-per-hero
-  player-controlled, so no depth can promise a pool "cannot be emptied" the way the old
-  curve-derived margin did.
-- **Evolutions come from the 6th SCROLL into a hero — never from a level, never from a beat**
-  (2026-09-11, `docs/growth-overhaul.md` §11, superseding §5's Crucible). Pouring the
-  `EVOLUTION_SCROLLS`th Scroll raises that hero's Evolution screen **in place of a move offer**
-  (revised 2026-09-11, per user direction: the Evolution is that Scroll's whole reward — no
+  *don't spend it* can never feel good to receive. Banking toward a priced rung is not that: the
+  rung is still what the ceiling sits behind. It is also where the carry build is priced in
+  breadth, which uniform levelling would otherwise delete.
+- **A rung is refused only when the purse cannot cover it, or when it would buy LITERALLY
+  nothing** — max rank AND nothing left to teach (`canSpendScroll`). A dry band below the cap
+  still takes one, because the rank tick is the only thing that opens the next band and refusing
+  there would strand the hero forever. The move-pool floor is **the offers it takes to climb out
+  of a band** (`movePoolFloor`, `test/moveTiers.test.ts`): 2 Early, 3 Mid, 1 Mid+Late. Scrolls
+  make offers-per-hero player-controlled, so no depth can promise a pool "cannot be emptied" the
+  way the old curve-derived margin did.
+- **Evolutions come from the 4th RUNG into a hero — never from a level, never from a beat**
+  (2026-09-11, `docs/growth-overhaul.md` §11, superseding §5's Crucible; re-priced §12). Buying
+  the `EVOLUTION_RUNG` raises that hero's Evolution screen **in place of a move offer**
+  (revised 2026-09-11, per user direction: the Evolution is that rung's whole reward — no
   offer rolls behind it, and the path's own outright grant is the only move it teaches;
-  `useScrollPour`, `src/view/run/MasteryBoard.tsx`). Scrolls are poured one hero at a time, so a ladder threshold
-  can never wall the way a level threshold did under roster-wide levelling — and the player
-  watches the pips fill toward it, which is what the Crucible's fixed cadence had lost.
-  **Six evolved is the expected ending** (36 of a ~50 floor), a deliberate reversal of "scarce
+  `useScrollPour`, `src/view/run/MasteryBoard.tsx`). Rungs are bought one hero at a time, so a
+  ladder threshold can never wall the way a level threshold did under roster-wide levelling — and
+  the player watches the pips fill toward it, which is what the Crucible's fixed cadence had lost.
+  **Six evolved is the expected ending** (60 of ~150), a deliberate reversal of "scarce
   when it matters, universal by the end" into *universal by the end, paced by the player*: what
   is chosen is the order, and how much depth to buy before breadth is done.
   `EVOLUTION_LEVEL` **gates nothing**; it survives only as authored data. A generated hero — an
   enemy, a Guild hire — reads its ladder position off level through ONE table
-  (`ENEMY_SCROLLS_BY_LEVEL`, `src/run/enemyGen.ts`: 4 at 10, 6 at 16, 8 at 21), so rank and
-  Evolution come from the same number a roster hero uses.
+  (`ENEMY_RUNGS_BY_LEVEL`, `src/run/enemyGen.ts`: rung 3 at 10, 4 at 16, 6 at 21, given as the
+  Scrolls each rung costs), so rank and Evolution come from the same number a roster hero uses.
 - **The Crucible grants a CLASS** (2026-09-11). Same beat, same stage — *Guardian falls → Banner →
   Crucible → Pact Seal → act intro*, non-bankable, pick ONE hero — but what the fire tempers a
   hero into is a Class. Five Guardians, five Classes, six heroes: one hero ends Classless, the

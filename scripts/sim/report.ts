@@ -8,7 +8,7 @@ import { passives } from '../../src/data/passives';
 import { classes } from '../../src/data/classes';
 import { locations } from '../../src/data/locations';
 import { progressionTable } from '../../src/data/progression';
-import { EVOLUTION_SCROLLS, RANK_THRESHOLDS } from '../../src/run/progression';
+import { EVOLUTION_RUNG, EVOLUTION_SCROLLS, RANK_THRESHOLDS, scrollsToReachRung } from '../../src/run/progression';
 import { TOTAL_ACTS } from '../../src/run/state';
 import type { Aggregate, ChoiceAgg, HeroAgg } from './types';
 
@@ -319,9 +319,10 @@ export function formatReport(
   out.push(`    spent cycling out        ${pct(agg.playerSwitches, agg.playerTurns)}`);
   out.push(`    fights reaching lock-in  ${pct(agg.lockInFights, totalFights)}  (player side lost 2+ heroes)`);
 
-  // Scroll income by source (docs/growth-overhaul.md §11 promises 45 vs 30 a run by route, against
-  // the 36 that evolve six heroes). Per completed run is the whole-run figure; per run overall is
-  // dragged down by every act-1 death.
+  // Scroll income by source (docs/growth-overhaul.md §12: the fights pay ~155 a run on the Elite
+  // route and ~150 on the Battle route, rising by act, against the 60 that evolve six heroes and the
+  // 120 that take six to the Late band). Per completed run is the whole-run figure; per run overall
+  // is dragged down by every act-1 death.
   out.push('');
   out.push(`  Mastery Scrolls granted, by source — per run (all ${R}) and per completed run (${agg.wins}):`);
   const sources = Object.keys(agg.scrollsBySource).sort((a, b) => (agg.scrollsBySourceWon[b] ?? 0) - (agg.scrollsBySourceWon[a] ?? 0));
@@ -343,17 +344,19 @@ export function formatReport(
     out.push(`    ${pad(source, 24)}${padStart(mean(agg.recruitsBySource[source], R), 8)}`);
   }
 
-  // The movepool gate is the SCROLL LADDER, not level (docs/growth-overhaul.md §4, §11): the 4th
-  // Scroll into a hero opens Mid, the 6th is its Evolution, the 8th opens Late — and EVERY move
-  // costing 70+ mana is late-tier, so this table says whether the expensive half of the catalog is
-  // reachable at all, which is what makes a big Mana pool worth anything.
+  // The movepool gate is the SCROLL LADDER, not level (docs/growth-overhaul.md §4, §11, §12): the
+  // 3rd rung into a hero opens Mid, the 4th is its Evolution, the 6th opens Late, and the rungs
+  // are priced 1, 2, 3, 4, 5... so the histogram is in Scrolls poured and the gates are read at
+  // each rung's cumulative price. EVERY move costing 70+ mana is late-tier, so this table says
+  // whether the expensive half of the catalog is reachable at all, which is what makes a big Mana
+  // pool worth anything.
   const spentHist = agg.heroScrollHistogram;
   const heroRuns = spentHist.reduce((sum, n) => sum + (n ?? 0), 0);
   const atLeast = (spent: number) => spentHist.slice(spent).reduce((sum, n) => sum + (n ?? 0), 0);
   const gates: readonly (readonly [string, number])[] = [
-    [`Mid tier (${RANK_THRESHOLDS[1]} Scrolls)`, RANK_THRESHOLDS[1]],
-    [`Evolution (${EVOLUTION_SCROLLS} Scrolls)`, EVOLUTION_SCROLLS],
-    [`LATE tier (${RANK_THRESHOLDS[2]} Scrolls)`, RANK_THRESHOLDS[2]],
+    [`Mid tier (${scrollsToReachRung(RANK_THRESHOLDS[1])} Scrolls)`, scrollsToReachRung(RANK_THRESHOLDS[1])],
+    [`Evolution (${EVOLUTION_SCROLLS} Scrolls)`, scrollsToReachRung(EVOLUTION_RUNG)],
+    [`LATE tier (${scrollsToReachRung(RANK_THRESHOLDS[2])} Scrolls)`, scrollsToReachRung(RANK_THRESHOLDS[2])],
   ];
   // Split, because the whole-batch column is dominated by heroes that died in Act 1 and
   // never saw the later acts' income at all. The DEEP column is the one that answers

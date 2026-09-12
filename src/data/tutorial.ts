@@ -231,8 +231,8 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'scroll',
     topic: 'Mastery Scrolls',
     lines: [
-      'A Mastery Scroll. Pour it into one of us and it teaches a move — the only way any of us learns one. It goes in now; a Scroll is not something you carry.',
-      'Four into the same hero and that hero ranks up, and deeper moves come within reach. Six, and that hero evolves — a permanent choice of path. Spread them thin and nobody gets there. Choose.',
+      'Mastery Scrolls. Pour them into one of us and they teach a move — the only way any of us learns one. The first lesson is cheap; each one after costs more.',
+      'Three lessons into the same hero and that hero ranks up, and deeper moves come within reach. Four, and that hero evolves — a permanent choice of path. Spread them thin and nobody gets there. Or bank them, and choose later.',
     ],
   },
 

@@ -11,8 +11,9 @@ import { createRunState, createRosterEntry, addRosterEntry } from './state';
 import { unsealedIdFor } from '../data/enemies';
 import {
   MOVE_CAP,
-  EVOLUTION_SCROLLS,
+  EVOLUTION_RUNG,
   RANK_THRESHOLDS,
+  scrollsToReachRung,
   availableEvolution,
   chooseEvolutionPath,
   masteryMovePool,
@@ -38,9 +39,9 @@ const GROWTH_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligen
 
 /**
  * Where on the Scroll ladder a generated hero stands, read off level — the only thing it has,
- * since it holds no Scrolls. One table for rank AND Evolution (docs/growth-overhaul.md §11):
- * `masteryScrollsSpent` is what both are derived from on a roster hero, so an enemy gets the
- * same number and passes the same gates.
+ * since it holds no Scrolls. One table for rank AND Evolution (docs/growth-overhaul.md §11), in
+ * RUNGS: `masteryScrollsSpent` is what both are derived from on a roster hero, so an enemy is
+ * given the Scrolls that rung costs (scrollsToReachRung) and passes the same gates.
  *
  * The bands track the PLAYER's ladder position by act, not any authored gate. Re-banded
  * 2026-09-10 (phase 6) against `ENEMY_LEVEL_BY_ACT`: rank 1 through Act 1, rank 2 through Acts
@@ -48,16 +49,16 @@ const GROWTH_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligen
  * 3's enemy level, so Acts 1-2 field unevolved enemies and Acts 3+ evolved ones, which is what
  * keeps "a contract hero arrives evolved from Act 3" true.
  */
-const ENEMY_SCROLLS_BY_LEVEL: readonly [level: number, spent: number][] = [
+const ENEMY_RUNGS_BY_LEVEL: readonly [level: number, rung: number][] = [
   [10, RANK_THRESHOLDS[1]],
-  [16, EVOLUTION_SCROLLS],
+  [16, EVOLUTION_RUNG],
   [21, RANK_THRESHOLDS[2]],
 ];
 
 function enemyScrollsForLevel(level: number): number {
-  let spent = 0;
-  for (const [at, scrolls] of ENEMY_SCROLLS_BY_LEVEL) if (level >= at) spent = scrolls;
-  return spent;
+  let rung = 0;
+  for (const [at, to] of ENEMY_RUNGS_BY_LEVEL) if (level >= at) rung = to;
+  return scrollsToReachRung(rung);
 }
 
 function shuffledPick<T>(rng: RngState, pool: readonly T[], count: number): { picked: T[]; nextState: RngState } {

@@ -19,7 +19,8 @@ import type { EquipmentDefinition } from '../../src/run/equipment';
 import { holdsItem } from '../../src/run/equipment';
 import type { RosterEntry, RunState } from '../../src/run/state';
 import {
-  EVOLUTION_SCROLLS,
+  EVOLUTION_RUNG,
+  masteryRung,
   MOVE_CAP,
   applyEvolutionMoves,
   availableEvolution,
@@ -259,27 +260,30 @@ export interface PourEvolution {
 }
 
 /**
- * Every held Mastery Scroll, poured into the hero it is worth most to — highest power score that
- * can still take one. CONCENTRATED rather than spread, because that is the play the rank ladder
- * rewards and a sim that spread them evenly would measure a ceiling nobody reaches.
+ * The purse, poured into the hero it is worth most to — highest power score whose next rung it
+ * can afford (docs/growth-overhaul.md §12: a rung's price rises, so the purse may cover a weak
+ * hero's cheap rung and not the carry's dear one; this policy takes the cheap rung rather than
+ * bank, which is the greedy baseline the old Training Point sim also played). CONCENTRATED rather
+ * than spread, because that is the play the rank ladder rewards and a sim that spread them evenly
+ * would measure a ceiling nobody reaches.
  *
- * The 6th Scroll into a hero is its Evolution (docs/growth-overhaul.md §11): the path is taken at
- * random (the path table is what is under test) and its granted move's overflow resolved. The
- * Evolution is that Scroll's whole reward — no offer rolls behind it (`useScrollPour`).
+ * The Evolution rung into a hero is its Evolution (docs/growth-overhaul.md §11): the path is taken
+ * at random (the path table is what is under test) and its granted move's overflow resolved. The
+ * Evolution is that rung's whole reward — no offer rolls behind it (`useScrollPour`).
  *
  * The move is taken when it beats the worst one held (or there is room), declined otherwise —
- * either way the Scroll is gone, which is the rule the screen enforces too.
+ * either way the Scrolls are gone, which is the rule the screen enforces too.
  */
 export function pourScrolls(run: RunState, rng: () => number, evolutions: PourEvolution[] = []): RunState {
   let next = run;
-  // Bounded by the pool: every iteration spends one or breaks.
+  // Bounded by the purse: every iteration spends at least one Scroll or breaks.
   while (next.masteryScrolls > 0) {
     const takers = next.roster.filter((entry) => canSpendScroll(progressionTable, moves, next, entry));
     if (takers.length === 0) break;
     // Breadth first, then depth (docs/growth-overhaul.md §11: six evolved is the expected ending):
     // the strongest hero still short of its Evolution takes the Scroll; once everyone has one, the
     // strongest hero outright does, so the ladder's open-ended top is measured as well.
-    const short = takers.filter((entry) => entry.masteryScrollsSpent < EVOLUTION_SCROLLS);
+    const short = takers.filter((entry) => masteryRung(entry) < EVOLUTION_RUNG);
     const candidates = short.length > 0 ? short : takers;
     const target = candidates.reduce((best, entry) => (powerScore(entry) > powerScore(best) ? entry : best));
     next = spendMasteryScroll(next, target.rosterId);
@@ -297,14 +301,14 @@ export function pourScrolls(run: RunState, rng: () => number, evolutions: PourEv
           if (replaceId) next = grantOfferedMove(next, target.rosterId, moveId, replaceId);
         }
       } catch {
-        // Illegal path for this hero (content bug) — the Scroll still ticked; carry on unevolved.
+        // Illegal path for this hero (content bug) — the rung still ticked; carry on unevolved.
       }
       continue;
     }
 
     const current = next.roster.find((r) => r.rosterId === target.rosterId)!;
     const pool = masteryMovePool(progressionTable, moves, current);
-    // A dry band still takes the Scroll — the tick is what opens the next one.
+    // A dry band still takes the rung — the tick is what opens the next one.
     if (pool.length === 0) continue;
     const moveId = pool[Math.floor(rng() * pool.length)];
     next = recordMoveOffer(next, target.rosterId, [moveId]);

@@ -16,11 +16,19 @@ import type { RunState } from '../src/run/state';
 import {
   masteryMovePool,
   masteryRank,
-  scrollsToNextRank,
+  rungsToNextRank,
+  masteryRung,
+  nextScrollCost,
+  scrollCost,
+  scrollsToReachRung,
+  MAX_SCROLL_COST,
+  EVOLUTION_RUNG,
+  RUNGS_TO_MAX_RANK,
   scrollMovePool,
   canSpendScroll,
   spendMasteryScroll,
   grantMasteryScrolls,
+  deferMastery,
   isMoveTierOfferable,
   grantOfferedMove,
   recordMoveOffer,
@@ -57,14 +65,14 @@ const TIERED_TYPES: readonly TypeId[] = [
   'Mech',
 ];
 
-/** Scrolls to the top rung — the pips the board draws. Rank 3 is open-ended past it. */
+/** Scrolls poured by the top rung — the pips the board draws reach it. Rank 3 is open-ended past it. */
 const SCROLLS_TO_MAX = SCROLLS_TO_MAX_RANK;
 
 function entryAtRank(heroId: string, rank: number, unlocked: readonly string[] = []) {
   let run = createRunState(0);
   run = addRosterEntry(run, {
     ...createRosterEntry(heroId, heroId, unlocked),
-    masteryScrollsSpent: RANK_THRESHOLDS[rank - 1],
+    masteryScrollsSpent: scrollsToReachRung(RANK_THRESHOLDS[rank - 1]),
   });
   return run.roster[0];
 }
@@ -111,15 +119,32 @@ test('move tiers: Early EXPIRES when Mid opens, Mid and Late accumulate, and an 
   assert.strictEqual(MAX_MASTERY_RANK, MOVE_TIER_RANK.late, 'the top rank is the one that opens the last band');
 });
 
-test('mastery rank: DERIVED from Scrolls spent along the ladder — Rank 2 at 4, the Evolution at 6, Rank 3 at 8, open-ended past it', () => {
-  assert.deepStrictEqual(RANK_THRESHOLDS, [0, 4, 8]);
-  assert.strictEqual(EVOLUTION_SCROLLS, 6, 'the Evolution sits between the two rungs');
-  const spentToRank = [0, 3, 4, 5, 6, 7, 8, 9, 20].map((spent) => masteryRank({ ...entryAtRank('ironWarden', 1), masteryScrollsSpent: spent }));
-  assert.deepStrictEqual(spentToRank, [1, 1, 2, 2, 2, 2, 3, 3, 3], 'rungs at 4 and 8, and it stops at the cap');
+test('mastery ladder: a rung costs 1, 2, 3, 4, then MAX_SCROLL_COST — the old level-up curve, whole', () => {
+  // docs/growth-overhaul.md §12. The price of the rung being climbed, flattening rather than rising forever.
+  assert.strictEqual(MAX_SCROLL_COST, 5);
+  assert.deepStrictEqual([0, 1, 2, 3, 4, 5, 6, 20].map(scrollCost), [1, 2, 3, 4, 5, 5, 5, 5]);
+  assert.deepStrictEqual([0, 1, 2, 3, 4, 5, 6, 7].map(scrollsToReachRung), [0, 1, 3, 6, 10, 15, 20, 25], 'the triangular sum, then +5 a rung');
 
-  const owed = [0, 1, 3, 4, 6, 7, 8, 9].map((spent) => scrollsToNextRank({ ...entryAtRank('ironWarden', 1), masteryScrollsSpent: spent }));
-  assert.deepStrictEqual(owed, [4, 3, 1, 4, 2, 1, 0, 0], 'and it counts down to the next threshold, 0 at the cap');
-  assert.strictEqual(SCROLLS_TO_MAX, 8, 'eight Scrolls reach the top rung');
+  // The old curve's landmarks, in Scrolls: Mid at 6 (level 4), the Evolution at 10 (level 5), Late at 20 (level 7).
+  assert.strictEqual(scrollsToReachRung(RANK_THRESHOLDS[1]), 6);
+  assert.strictEqual(EVOLUTION_SCROLLS, 10);
+  assert.strictEqual(SCROLLS_TO_MAX, 20);
+
+  // Rungs are DERIVED from the cumulative spend, exactly, and a between-rungs figure counts the rungs completed.
+  const at = (spent: number) => ({ ...entryAtRank('ironWarden', 1), masteryScrollsSpent: spent });
+  assert.deepStrictEqual([0, 1, 2, 3, 5, 6, 10, 15, 20, 99].map((spent) => masteryRung(at(spent))), [0, 1, 1, 2, 2, 3, 4, 5, 6, 21]);
+  assert.deepStrictEqual([0, 1, 3, 6, 10, 20].map((spent) => nextScrollCost(at(spent))), [1, 2, 3, 4, 5, 5], 'the next rung is priced off the rung stood on');
+});
+
+test('mastery rank: DERIVED from rungs along the ladder — Rank 2 at 3, the Evolution at 4, Rank 3 at 6, open-ended past it', () => {
+  assert.deepStrictEqual(RANK_THRESHOLDS, [0, 3, 6]);
+  assert.strictEqual(EVOLUTION_RUNG, 4, 'the Evolution sits between the two rungs');
+  assert.strictEqual(RUNGS_TO_MAX_RANK, 6);
+  const rungToRank = [0, 2, 3, 4, 5, 6, 7, 20].map((rung) => masteryRank({ ...entryAtRank('ironWarden', 1), masteryScrollsSpent: scrollsToReachRung(rung) }));
+  assert.deepStrictEqual(rungToRank, [1, 1, 2, 2, 2, 3, 3, 3], 'rungs at 3 and 6, and it stops at the cap');
+
+  const owed = [0, 1, 2, 3, 4, 5, 6, 7].map((rung) => rungsToNextRank({ ...entryAtRank('ironWarden', 1), masteryScrollsSpent: scrollsToReachRung(rung) }));
+  assert.deepStrictEqual(owed, [3, 2, 1, 3, 2, 1, 0, 0], 'and it counts down to the next threshold, 0 at the cap');
 });
 
 test('move tiers: masteryMovePool only offers what the hero\'s RANK has reached', () => {
@@ -181,22 +206,38 @@ test('move tiers: every move pool holds something a rank-1 hero can be offered',
 
 test('mastery scrolls: the rank ticks BEFORE the roll, so the Scroll that reaches a rung offers from the band it opens', () => {
   // The whole reason the rung Scroll is the bigger moment rather than a silent deposit.
-  const twoIn = { ...entryAtRank('ironWarden', 1), masteryScrollsSpent: RANK_THRESHOLDS[1] - 1 };
+  const twoIn = { ...entryAtRank('ironWarden', 1), masteryScrollsSpent: scrollsToReachRung(RANK_THRESHOLDS[1] - 1) };
   assert.strictEqual(masteryRank(twoIn), 1);
   const pool = scrollMovePool(progressionTable, moves, twoIn);
-  assert.ok(pool.includes('rendArmor'), 'the Scroll that reaches rank 2 rolls from Mid, not from Early');
+  assert.ok(pool.includes('rendArmor'), 'the rung that reaches rank 2 rolls from Mid, not from Early');
   assert.ok(!pool.includes('ironFist'), 'and Early is already expired for it');
 });
 
-test('mastery scrolls: a spend takes one off the run and puts it on the hero, and never goes negative', () => {
-  let run = runWith('ironWarden', 2);
-  assert.strictEqual(run.masteryScrolls, 2);
+test('mastery scrolls: a spend takes the rung\'s price off the run and puts it on the hero, and never goes negative', () => {
+  let run = runWith('ironWarden', 3);
+  assert.strictEqual(run.masteryScrolls, 3);
   run = spendMasteryScroll(run, 'ironWarden');
-  assert.strictEqual(run.masteryScrolls, 1);
+  assert.strictEqual(run.masteryScrolls, 2, 'the first rung cost 1');
   assert.strictEqual(run.roster[0].masteryScrollsSpent, 1);
   run = spendMasteryScroll(run, 'ironWarden');
-  assert.strictEqual(run.masteryScrolls, 0);
-  assert.throws(() => spendMasteryScroll(run, 'ironWarden'), /No Mastery Scrolls/);
+  assert.strictEqual(run.masteryScrolls, 0, 'the second cost 2');
+  assert.strictEqual(run.roster[0].masteryScrollsSpent, 3);
+  assert.strictEqual(masteryRung(run.roster[0]), 2);
+  assert.throws(() => spendMasteryScroll(run, 'ironWarden'), /costs 3 Mastery Scrolls, only 0 held/);
+  // Two in the purse against a third rung priced 3: affordability, not emptiness, is the gate.
+  const twoHeld = grantMasteryScrolls(run, 2);
+  assert.ok(!canSpendScroll(progressionTable, moves, twoHeld, twoHeld.roster[0]), 'short of the price, the purse banks');
+  assert.throws(() => spendMasteryScroll(twoHeld, 'ironWarden'), /only 2 held/);
+  assert.ok(canSpendScroll(progressionTable, moves, grantMasteryScrolls(twoHeld, 1), twoHeld.roster[0]));
+});
+
+test('mastery scrolls: a grant clears a banked deferral, and the Vigil-less default is unbanked', () => {
+  // docs/growth-overhaul.md §12: banking is never a dead end, because the next win re-asks.
+  const run = runWith('ironWarden', 1);
+  assert.strictEqual(run.masteryDeferred, false);
+  const banked = deferMastery(run);
+  assert.strictEqual(banked.masteryDeferred, true);
+  assert.strictEqual(grantMasteryScrolls(banked, 1).masteryDeferred, false);
 });
 
 test('mastery scrolls: a dry band still takes a Scroll below the cap, and is refused only at the top', () => {
@@ -214,8 +255,8 @@ test('mastery scrolls: a dry band still takes a Scroll below the cap, and is ref
   const finished = { ...entryAtRank('ironWarden', MAX_MASTERY_RANK), offeredMoveIds: wholePool };
   assert.deepStrictEqual(scrollMovePool(progressionTable, moves, finished), []);
   assert.ok(
-    !canSpendScroll(progressionTable, moves, runWith('ironWarden', 1), finished),
-    'at the cap with nothing left to teach, a Scroll would buy literally nothing'
+    !canSpendScroll(progressionTable, moves, runWith('ironWarden', 99), finished),
+    'at the cap with nothing left to teach, a rung would buy literally nothing'
   );
 
   assert.ok(
@@ -227,9 +268,10 @@ test('mastery scrolls: a dry band still takes a Scroll below the cap, and is ref
 test('move tiers: the floor is a BAND surviving its own rank, not a curve', () => {
   // Scrolls make offers-per-hero player-controlled, so no depth can promise a pool "cannot be
   // emptied" the way MOVE_POOL_MARGIN did. What a band must survive is the offers it takes to
-  // climb out of it: three Early before the 4th Scroll opens Mid, four Mid from there to the 8th,
-  // and Mid+Late only has to offer once because Rank 3 is open-ended.
-  assert.deepStrictEqual(movePoolFloor(), { early: 3, mid: 4, midLate: 1 });
+  // climb out of it: two Early before the 3rd rung opens Mid, three Mid from there to the 6th (one
+  // of them the Evolution, which offers nothing — the over-count is on the safe side), and
+  // Mid+Late only has to offer once because Rank 3 is open-ended.
+  assert.deepStrictEqual(movePoolFloor(), { early: 2, mid: 3, midLate: 1 });
 });
 
 test('move tiers: every hero clears every band without it running dry', () => {
@@ -246,12 +288,13 @@ test('move tiers: every hero clears every band without it running dry', () => {
   }
 });
 
-test('move tiers: every hero climbs the whole ladder with a move to show for each Scroll, down every path', () => {
+test('move tiers: every hero climbs the whole ladder with a move to show for each rung, down every path', () => {
   // The arithmetic above models the drain; this WALKS it through the real calls, so the
   // offeredMoveIds bookkeeping is in the loop, and the Evolution lands where the ladder puts it
-  // — on the 6th Scroll, BEFORE that Scroll's offer, so a graft's line is in the pool the same
+  // — on the EVOLUTION_RUNG, BEFORE that rung's offer, so a graft's line is in the pool the same
   // pour. Both answers to an offer are exercised because both spend it: declining burns the move
-  // exactly as taking it does.
+  // exactly as taking it does. The purse holds exactly what the top rung costs, so the walk is
+  // also the price curve summed.
   for (const hero of Object.values(heroesById)) {
     const paths = (progressionTable.evolutions[hero.id] ?? []).flatMap((node) => node.paths);
     for (const path of paths) {
@@ -261,8 +304,9 @@ test('move tiers: every hero climbs the whole ladder with a move to show for eac
       );
 
       let decline = false;
-      for (let spent = 0; spent < SCROLLS_TO_MAX; spent++) {
+      for (let rung = 0; rung < RUNGS_TO_MAX_RANK; rung++) {
         run = spendMasteryScroll(run, hero.id);
+        assert.strictEqual(masteryRung(run.roster[0]), rung + 1);
         if (availableEvolution(progressionTable, run.roster[0])) {
           assert.strictEqual(run.roster[0].masteryScrollsSpent, EVOLUTION_SCROLLS, `${hero.id}: the Evolution opened off the rung`);
           run = chooseEvolutionPath(run, progressionTable, heroesById, hero.id, path.id);
@@ -271,7 +315,7 @@ test('move tiers: every hero climbs the whole ladder with a move to show for eac
         const offerable = masteryMovePool(progressionTable, moves, after);
         assert.ok(
           offerable.length > 0,
-          `${hero.id} via ${path.id}: Scroll ${spent + 1} of ${SCROLLS_TO_MAX} had nothing to offer at rank ${masteryRank(after)}`
+          `${hero.id} via ${path.id}: rung ${rung + 1} of ${RUNGS_TO_MAX_RANK} had nothing to offer at rank ${masteryRank(after)}`
         );
         const moveId = offerable[0];
         run = decline
@@ -280,6 +324,7 @@ test('move tiers: every hero climbs the whole ladder with a move to show for eac
         decline = !decline;
       }
       assert.strictEqual(masteryRank(run.roster[0]), MAX_MASTERY_RANK, `${hero.id} via ${path.id} did not reach max rank`);
+      assert.strictEqual(run.masteryScrolls, 0, `${hero.id}: the top rung costs exactly SCROLLS_TO_MAX_RANK`);
       assert.ok(run.roster[0].chosenPathIds.includes(path.id), `${hero.id} via ${path.id} never evolved`);
     }
   }
@@ -307,7 +352,7 @@ test('move tiers: a loadout filled from the hero\'s own pool still leaves every 
 });
 
 test('move tiers: every hero has an Evolution node — the precondition the ladder walk asserts on', () => {
-  // The walk above asserts the 6th Scroll evolves; a hero with no node would pass it as a plain
+  // The walk above asserts the Evolution rung evolves; a hero with no node would pass it as a plain
   // offer, which is how Tempest sat evolution-less without a single test noticing.
   const missing = Object.keys(heroesById)
     .filter((heroId) => (progressionTable.evolutions[heroId] ?? []).length === 0)

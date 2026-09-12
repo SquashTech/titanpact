@@ -8,7 +8,7 @@
 > escalating fights → relics.
 
 > **Partly superseded by `growth-overhaul.md`.** Its seven phases landed 2026-09-10 and its
-> **§11 second pass landed 2026-09-11**: Evolutions come from the 6th Scroll into a hero, the
+> **§11 second pass landed 2026-09-11** (and §12's price curve 2026-09-12): Evolutions come from the 4th rung into a hero, the
 > Crucible on a Guardian node grants a **Class** (a move or a passive), the Mentor row in acts
 > 1-3 is an Early-Mid Tutor (`mentorReward`) with a Forge in act 4's seat, and `crucibleReward`
 > is deleted. Where a paragraph below still says the Crucible evolves or the Mentor teaches a
@@ -232,7 +232,7 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30). **2026-09-08, per user direction:** it pays out on arrival and the screen counts the PURSE up to its new total, coin by coin, over a Claim button that was never a decision — the drop size is a chip beside a number the player can act on, rather than a number they cannot. The two Scroll nodes share that beat. |
 | `loneScrollReward` ("A Lone Scroll") | `NodeRewardScreen` — an instant grant of `LONE_SCROLL_COUNT` = 1 Mastery Scroll. The commoner, smaller half of the Scroll Cache's grant. It was the XP Cache until 2026-09-10, when levels went automatic and there was no pool left to pay into; it kept its seat rather than being deleted (per user direction) because the reward rows were already down to six types. Distinguished from the Cache on the map by its glyph — one sealed sheet against a bundle — since the tiles carry no labels. |
 | `forgeReward` ("The Forge") | `ForgeScreen` — pick one roster hero to gain **+1 item slot** for the rest of the run (`runProgress.ts` `grantItemSlot`, stored on `RosterEntry.bonusItemSlots`, capped at `MAX_ITEM_SLOTS` = 3). **2026-09-06**, replacing the three slot-specific cache nodes (`weaponReward`/`armorReward`/`accessoryReward`), which lost their meaning when items stopped having categories — most of their frequency went to `equipmentReward`, whose weight went 20 → 40. The scarcest thing on the reward row (weight 8) on purpose: it is permanent, it compounds with every drop after it, and it is the only reward here a hero can be at the cap for — a roster entirely at 3 slots makes the node a dead draw, which is what makes spending it a choice — and at the 2026-09-07 cap of 3 that arrives materially sooner. |
-| `scrollReward` ("Scroll Cache") | `NodeRewardScreen` — an instant grant of `SCROLL_REWARD_COUNT` = 2 Mastery Scrolls, counted up on arrival like gold and XP. Which hero they go to is not asked here, but it is asked immediately after: `MasteryScreen` is raised on the way back to the map. See "Mastery Scrolls" below. |
+| `scrollReward` ("Scroll Cache") | `NodeRewardScreen` — an instant grant of `SCROLL_REWARD_COUNT` = 2 Mastery Scrolls, counted up on arrival like gold and XP. Which hero they go to is not asked here, but it is asked on the way back to the map if the purse can now buy somebody a rung: `MasteryScreen` is raised there. See "Mastery Scrolls" below. |
 | `passiveReward` ("Boon") | `BoonNodeScreen` — pick 1 of 3 passives, then the hero it settles on (`grantEventPassive`, stored on `RosterEntry.bonusPassiveGrants`). See "Boons" below. |
 | `mentorReward` ("Mentor's Hall") | `MentorNodeScreen` — "the Mentor can teach any hero a powerful move": pick a hero, and ONE Mid-tier move is rolled from that hero's own pool, un-rank-gated (`mentorMovePool`, `src/run/tutor.ts`). A Scroll pour with the band fixed at Mid that ticks nothing; the rolled offer is spent by being made. Who is the only decision, on purpose — it is one of a new player's first nodes (2026-09-11, `growth-overhaul.md` §11; it was briefly a curated Early-Mid pick, and before that a stat-pair Class). **Not in `REWARD_WEIGHTS`** — the only way to meet one is the forced row in acts 1-3 (§1). |
 | `tutorReward` ("Tutor") | `TutorNodeScreen` — pick one roster hero, then **any** move from that hero's Scroll pool. See "The Tutor" below. Acts 4-5 only. |
@@ -373,31 +373,37 @@ Playtest.
 
 ### Mastery Scrolls (2026-09-10, Growth Overhaul phase 2)
 
-**The run's only faucet for moves.** A Scroll is poured into one hero on `MasteryScreen`, which
-is raised the moment one is won and cannot be left until it is spent; it offers **one** move from that hero's pool — take it or decline, and the move is
-burned either way — and it ticks that hero's **Mastery Rank**, which is what gates the tiers
-(Early at 1, Mid at 2, Late at 3; three Scrolls a rank, six to max). Spec and rationale:
-`docs/leveling-and-ranks.md` Part 1b and `docs/growth-overhaul.md` §4.
+**The run's only faucet for moves.** Scrolls buy a hero its next RUNG on `MasteryScreen`,
+which is pushed after every node that leaves the purse able to buy one; a rung offers **one**
+move from that hero's pool — take it or decline, and the move is burned either way — and it ticks
+that hero's **Mastery Rank**, which is what gates the tiers (Early at 1, Mid at 2, Late at 3;
+rungs at 3 and 6, the Evolution at 4). **A rung's price rises with the rung** (2026-09-12,
+`growth-overhaul.md` §12 — the pre-overhaul level-up curve, restored): 1, 2, 3, 4, then 5 a rung.
+Spec and rationale: `docs/leveling-and-ranks.md` Part 1b and `docs/growth-overhaul.md` §4, §12.
 
-**Where they come from.** `SCROLLS_PER_ACT` = 2 from every Guardian (10 guaranteed over a run),
-the `scrollReward` Scroll Cache at `SCROLL_REWARD_COUNT` = 2 a visit (weight 34), and the Guild
-Hall at `SCROLL_PURCHASE_COST` = 35g, `SCROLL_PURCHASE_LIMIT` = 2 a visit (2026-09-11, per user
-direction — an uncapped shelf let a rich run turn the whole purse into rank in one stop). ~15-18 reachable, against the six that max one hero — so
-the floor alone is one maxed hero and a second half-ranked, and everything past that is a real
-spread-vs-concentrate call.
+**Where they come from.** Every won fight, scaled by act (`scrollsFor`, `src/run/difficulty.ts`):
+the act opener 3, Battle 3, Skirmish 4, Elite 4, the Guardian 4, +2 per act past the first —
+14–15 an act in Act 1, 46–47 in Act 5, ~150 a run. Plus the `scrollReward` Scroll Cache at
+`SCROLL_REWARD_COUNT` = 2 (flat), the lone Scroll (1), and the Guild Hall, which sells a fight's
+worth in the act for `SCROLL_PURCHASE_COST` = 35g, `SCROLL_PURCHASE_LIMIT` = 2 bundles a visit
+(2026-09-11, per user direction — an uncapped shelf let a rich run turn the whole purse into rank
+in one stop). Against that, six Evolutions are 60 and six heroes to the Late band are 120, so
+everything past "everyone evolves" is a real spread-vs-concentrate call.
 
-**They are neither a stock nor an inbox — they are an EVENT** (2026-09-10, per user direction,
-reversing the stock reading below). A Scroll is poured on the beat it is won, so there is nothing
-to bank, nothing to flag and no count to carry: the map's purse chip is gone and the Roster is
-back to being the Gear screen alone. What banking used to buy was the hedge against roster churn —
-not pouring into a hero you are about to terminate — and that is now simply gone, which is the
-thing to watch. Everything else it appeared to buy, Rank had already neutralised.
+**They are a PURSE** (2026-09-12, reversing 2026-09-10's "an EVENT, poured where it is won"). A
+rising price means a leftover that buys nobody is normal and banks on its own, and a purse that
+could buy somebody may be banked by choice: the board's Bank button is the out, every grant clears
+the bank so the next win re-asks, the map's Scroll chip is a button whenever the purse can buy a
+rung, and the Vigil clears the bank on the way out. The churn hedge — not pouring into a hero you
+are about to terminate — is back with it. What "never held" was protecting against, a count on a
+button that signals admin waiting, is answered by the push: the board still arrives on its own
+after every fight that funds a rung.
 
-**Open — the income figures are all first-pass.** Measured at 200 batch runs, only 38% of heroes
-that reach act 4+ get to rank 2 and 23% to rank 3, against 97.9%/54.9% under the level gate this
-replaced. The shape is intended (concentrating is meant to cost breadth); whether the *level* is
-right is a phase 6 question, since the difficulty curve was fitted to the old, far more generous
-move economy.
+**Open — the income figures are all first-pass.** Measured at 400 batch runs, of heroes that
+reach act 4+ 89% get to rank 2, 85% evolve and 37% reach rank 3 — about where the flat ladder
+left them, since the curve and the income were re-based together. The shape is intended
+(concentrating is meant to cost breadth); the Guild Hall bundle's size is the newest figure and
+the one the sim says is generous.
 
 ### Gems — DELETED (2026-09-10, Growth Overhaul phase 1)
 
@@ -437,7 +443,7 @@ A won encounter resolves through up to five gates before the map comes back
    hero takes a Class — one of three rolled from the whole catalog, a move or a passive
    (2026-09-11, `growth-overhaul.md` §11; it granted the Evolution until then). Once a hero
    stands at the rim there is no way back to the roster. Five a run, one per act.
-   Skipped when every hero already holds a Class. Evolutions come from the 6th Scroll into a
+   Skipped when every hero already holds a Class. Evolutions come from the 4th rung into a
    hero, inside the Mastery beat below.
 
 **The levels themselves are not a gate.** They are granted in the same `RunState` transform as

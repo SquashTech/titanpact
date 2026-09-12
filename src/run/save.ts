@@ -47,8 +47,11 @@ import { ROSTER_CAP, TOTAL_ACTS } from './state';
  * v10 (2026-09-10): its third — levels went automatic and roster-wide. `levelUpPool` and
  * `levelUpDeferred` are gone, `masteryStatGrants` became `growthStatGrants`, and MAX_LEVEL went
  * 10 -> 30. A v9 file's levels mean something else entirely.
+ * v11 (2026-09-12): the Scroll price curve. `masteryScrollsSpent` became a cumulative price
+ * (1 + 2 + 3 ...) rather than a rung count, and RunState gained `masteryDeferred`. A v10 file's
+ * spent counts would read as rungs never climbed.
  */
-export const SAVE_VERSION = 10;
+export const SAVE_VERSION = 11;
 
 /**
  * Where a restored run resumes. Both are settled points: every reward is banked, the
@@ -369,6 +372,7 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
   if (!isInt(value.gold, 0)) reject('run.gold is not a count');
   if (!isInt(value.recruitContracts, 0)) reject('run.recruitContracts is not a count');
   if (!isInt(value.masteryScrolls, 0)) reject('run.masteryScrolls is not a count');
+  if (typeof value.masteryDeferred !== 'boolean') reject('run.masteryDeferred is not a flag');
   if (!isInt(value.fightsStarted, 0)) reject('run.fightsStarted is not a count');
   if (!isInt(value.encountersWon, 0)) reject('run.encountersWon is not a count');
   if (!isInt(value.actNumber, 1, TOTAL_ACTS)) reject(`run.actNumber is not an act in 1-${TOTAL_ACTS}`);
@@ -400,6 +404,7 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
     unseenItemIds: decodeUnseen(value.unseenItemIds, stash),
     relics: requireIds(value.relics, index.relicIds, 'run.relics'),
     masteryScrolls: value.masteryScrolls,
+    masteryDeferred: value.masteryDeferred,
     recruitContracts: value.recruitContracts,
     map,
     currentNodeId,
