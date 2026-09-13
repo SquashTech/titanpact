@@ -33,6 +33,14 @@ export function RunGlyph({ kind, className, title }: { kind: RunGlyphKind; class
 // (11-14px) are the ones docs/icon-pack.md measures the pixel sheet as being destroyed by.
 // Gold, XP and the Scroll deliberately reuse the map node that pays them out: one picture per
 // concept.
+const FLASK_PATH = (
+  <>
+    <path d="M9 2h6v2h-1v4.6l4.9 8.2A2.6 2.6 0 0 1 16.7 21H7.3a2.6 2.6 0 0 1-2.2-4.2L10 8.6V4H9Z" opacity="0.35" />
+    <path d="M10 9.2V4h4v5.2l4.2 7a1.4 1.4 0 0 1-1.2 2.1H7a1.4 1.4 0 0 1-1.2-2.1Zm-2.4 8.1h8.8l-2.3-3.8H9.9Z" />
+    <rect x="8.5" y="2" width="7" height="2" rx="0.6" />
+  </>
+);
+
 const RESOURCE_PATHS = {
   gold: NODE_PATHS.currencyReward,
   // A quill, not the document it signs: a sealed sheet drawn this small is a floppy disk
@@ -46,6 +54,10 @@ const RESOURCE_PATHS = {
   ),
   // The single sealed sheet, not the Cache's bundle: a Scroll in the purse is one Scroll's worth.
   scroll: NODE_PATHS.loneScrollReward,
+  // The two potions share one flask and differ by colour alone, since they are the same verb at
+  // two gauges. A round-bottomed flask with a stoppered neck: the bulb is what survives 12px.
+  hpPotion: FLASK_PATH,
+  mpPotion: FLASK_PATH,
 } satisfies Record<string, ReactNode>;
 
 export type ResourceKind = keyof typeof RESOURCE_PATHS;
@@ -57,6 +69,9 @@ export const RESOURCE_COLORS: Record<ResourceKind, string> = {
   // Violet, the run's "this changes how a hero plays" colour — apart from gold, XP-green and the
   // Contract's blue, and it is the only resource that buys a MOVE.
   scroll: '#c9a2ff',
+  // The gauges' own colours, so a potion reads as the bar it refills.
+  hpPotion: '#ff8a8a',
+  mpPotion: '#8fb4ff',
 };
 
 /** The one place a run resource is drawn. `aria-hidden`: it always sits beside its own count or label. */

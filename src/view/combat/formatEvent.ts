@@ -188,6 +188,13 @@ export function formatEvents(
       case 'Rested':
         lines.push({ key, text: `${name(e.combatantId)} rests, restoring Mana to full`, className: 'log-mana' });
         break;
+      case 'ConsumableUsed':
+        lines.push({
+          key,
+          text: `${name(e.combatantId)} drinks an ${e.kind === 'hpPotion' ? 'HP' : 'MP'} Potion, restoring ${e.amount} ${e.kind === 'hpPotion' ? 'HP' : 'Mana'}`,
+          className: e.kind === 'hpPotion' ? 'log-heal' : 'log-mana',
+        });
+        break;
       case 'MoveGuarded':
         lines.push({
           key,

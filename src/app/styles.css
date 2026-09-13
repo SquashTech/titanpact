@@ -2123,6 +2123,147 @@ textarea,
     inset 0 -1px 0 rgba(214, 228, 250, 0.28), inset 0 0 24px -7px rgba(190, 208, 238, 0.7);
 }
 
+/* The Flask: opens a picker like Switch, so it takes Switch's shape at Rest's
+   width, lit in the HP gauge's rose. The count rides the key as a small corner
+   tally rather than replacing the label — "Flask" reads; a bare "2" does not. */
+.bottom-action-flask {
+  flex: 1.35 1 0;
+}
+
+.bottom-action-flask:not(:disabled) {
+  background: linear-gradient(180deg, rgba(255, 138, 138, 0.12), rgba(255, 138, 138, 0.02));
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 138, 138, 0.34),
+    inset 0 -1px 0 rgba(255, 170, 170, 0.13);
+}
+
+.bottom-action-flask:not(:disabled) .bottom-action-glyph {
+  color: rgba(255, 160, 160, 0.95);
+}
+
+.bottom-action-flask:hover:not(:disabled) {
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 138, 138, 0.75),
+    inset 0 -1px 0 rgba(255, 170, 170, 0.22), inset 0 0 22px -6px rgba(255, 138, 138, 0.5);
+}
+
+.bottom-action-flask-glyph {
+  width: 15px;
+  height: 15px;
+  display: block;
+  flex: 0 0 auto;
+}
+
+/* A corner tally inside the key's own rectangle (the key clips overflow), so the
+   count costs the label no width at the row's narrowest. */
+.bottom-action-flask-count {
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  min-width: 14px;
+  padding: 0 4px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.45);
+  font-size: 9px;
+  line-height: 14px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+
+.bottom-action-flask {
+  position: relative;
+  gap: 5px;
+}
+
+.bottom-action-flask:not(:disabled) .bottom-action-flask-count {
+  color: rgba(255, 190, 190, 0.95);
+}
+
+/* The MP Potion row under the out-of-mana Rest row: the same row shape as a move, lit in
+   the Mana gauge's blue so it reads as what it refills. */
+.move-button.flask-button {
+  border-color: rgba(143, 180, 255, 0.4);
+  background: linear-gradient(180deg, rgba(143, 180, 255, 0.1), rgba(143, 180, 255, 0.02));
+}
+
+.flask-button-glyph {
+  width: 13px;
+  height: 13px;
+  vertical-align: -2px;
+  color: #8fb4ff;
+}
+
+.flask-button-count {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: #8fb4ff;
+}
+
+/* The Flask picker: SwitchInPanel's shell with a two-way potion selector on top. */
+.flask-kinds {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 10px 12px 0;
+}
+
+.flask-kind {
+  --flask-rgb: 255, 138, 138;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(var(--flask-rgb), 0.28);
+  background: rgba(var(--flask-rgb), 0.06);
+  color: var(--text-dim);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background var(--dur-mid) var(--ease-out), border-color var(--dur-mid) var(--ease-out), color var(--dur-mid) var(--ease-out);
+}
+
+.flask-kind.is-mpPotion {
+  --flask-rgb: 143, 180, 255;
+}
+
+.flask-kind.selected {
+  color: var(--text);
+  background: rgba(var(--flask-rgb), 0.2);
+  border-color: rgba(var(--flask-rgb), 0.8);
+}
+
+.flask-kind.is-empty {
+  opacity: 0.5;
+}
+
+.flask-kind-glyph {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  color: rgb(var(--flask-rgb));
+}
+
+.flask-kind-glyph > svg {
+  width: 100%;
+  height: 100%;
+}
+
+.flask-kind-count {
+  font-variant-numeric: tabular-nums;
+  color: rgb(var(--flask-rgb));
+}
+
+.flask-blurb {
+  margin: 8px 12px 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.flask-blurb strong {
+  color: var(--text);
+}
+
 /* Menu: consulted, not played. Narrow, and the glyph stacks over a caption so
    it keeps its label at that width instead of degrading to a bare icon. It
    inherits the whole utility width Log and Ref used to split with it, which is
@@ -12864,6 +13005,24 @@ textarea,
 
 .guild-hall-good.is-sell {
   --plate-color: var(--accent);
+}
+
+.guild-hall-good.is-hpPotion {
+  --plate-color: #ff8a8a;
+}
+
+.guild-hall-good.is-mpPotion {
+  --plate-color: #8fb4ff;
+}
+
+.guild-hall-good-held.is-hpPotion {
+  border-color: color-mix(in srgb, #ff8a8a 55%, var(--border));
+  color: #ff8a8a;
+}
+
+.guild-hall-good-held.is-mpPotion {
+  border-color: color-mix(in srgb, #8fb4ff 55%, var(--border));
+  color: #8fb4ff;
 }
 
 /* One good, and not stretched across the row: a plate that fills the width is

@@ -10,6 +10,7 @@ import type { RunState } from '../../run/state';
 import { ROSTER_CAP, RosterFullError } from '../../run/state';
 import { guildHallEntry } from '../../run/guildRecruit';
 import { guildHallLevel, scrollsFor } from '../../run/difficulty';
+import { CONSUMABLE_HOLD_CAP, CONSUMABLE_KINDS, CONSUMABLE_NAMES, CONSUMABLE_PRICE, canBuyConsumable, type ConsumableKind } from '../../run/consumables';
 import type { EquipmentDefinition } from '../../run/equipment';
 import {
   recruitFromGuildHall,
@@ -63,6 +64,8 @@ interface Props {
   onBuyEquipment: (itemId: string) => void;
   /** Hands off to App.tsx, which charges the gold, grants the act's bundle and counts the visit. */
   onBuyScrolls: () => void;
+  /** Hands off to App.tsx, which charges the gold and fills the flask (run/consumables.ts). */
+  onBuyConsumable: (kind: ConsumableKind) => void;
   /** Recruiting at a full roster hands off to App.tsx's RosterReplaceScreen gate. */
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
   /** Fires when this panel opens/closes a modal, so the host can pull its own bottom CTA. */
@@ -152,6 +155,7 @@ export function GuildHallPanel({
   onRunChange,
   onBuyEquipment,
   onBuyScrolls,
+  onBuyConsumable,
   onRequestRosterReplace,
   onOverlayChange,
   tab,
@@ -309,6 +313,39 @@ export function GuildHallPanel({
           ) : (
             <p className="hint">No gear on offer this visit.</p>
           )}
+          {/* The potions, on the gear counter: consumed rather than worn, but bought the same way.
+              No per-visit limit — the flask's own cap (CONSUMABLE_HOLD_CAP) is the shelf's. */}
+          <div className="guild-hall-shelf">
+            {CONSUMABLE_KINDS.map((kind) => {
+              const held = run.consumables[kind];
+              const atCap = held >= CONSUMABLE_HOLD_CAP;
+              return (
+                <button
+                  key={kind}
+                  className={`guild-hall-good is-${kind}${atCap ? ' sold-out' : ''}`}
+                  disabled={!canBuyConsumable(run, kind)}
+                  onClick={() => onBuyConsumable(kind)}
+                >
+                  <span className="guild-hall-good-glyph">
+                    <ResourceGlyph kind={kind} tone="inherit" />
+                  </span>
+                  <span className="guild-hall-good-name">{CONSUMABLE_NAMES[kind]}</span>
+                  {atCap ? (
+                    <span className="guild-hall-good-price is-soldout">Flask full</span>
+                  ) : (
+                    <span className="guild-hall-good-price">
+                      <ResourceGlyph kind="gold" /> {CONSUMABLE_PRICE}
+                    </span>
+                  )}
+                  {held > 0 && (
+                    <span className={`guild-hall-good-held is-${kind}`} aria-label={`${held} of ${CONSUMABLE_HOLD_CAP} held`}>
+                      {held}/{CONSUMABLE_HOLD_CAP}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 

@@ -356,6 +356,19 @@ don't silently override it.
   that is ahead still wins and only the stall loses. Round 30 is a placeholder for a
   measurement — see `docs/combat.md`.
 
+### Consumables
+- **Two potions, a team purse, a FREE action** (2026-09-13, `src/run/consumables.ts`,
+  `src/engine/combat/consumables.ts`). HP Potion and MP Potion each restore **half of max**,
+  flat — outside the heal formula, no variance, no STAB. Drunk during the command phase on any
+  **active** hero and applied to state on the spot, NOT declared into the round: the player sees
+  the outcome before declaring, which is the point (an out-of-mana Rest row turns back into
+  moves). **Not a passive trigger source**, like the Pact Clock. **A restore, never a grant** —
+  Mana caps at the pool and overflow reads as full. **Player-only**; enemies never drink.
+  Irreversible once drunk. Every run opens with one of each; **hold cap 3 a kind**, an over-cap
+  drop or purchase is lost; faucets are the Guild Hall shelf (flat 20 gold, a pure sink) and a
+  low-odds drop off a won encounter — deliberately no reward-node type. What a fight drank comes
+  off the purse at resolve, so a replayed fight refunds it. `docs/run-loop.md` "Consumables".
+
 ### Architecture
 - **All acquirable content — heroes, moves, abilities, relics, equipment — is pure data**
   referencing a shared engine vocabulary. No bespoke per-content logic. This is what makes the
@@ -395,7 +408,10 @@ what's still unimplemented:
   inherent duals. Which specific type each hero starts mono as is still open (below).
 - Run structure (2026-08-16 sign-off, multi-act extension 2026-08-17): **a Slay the
   Spire-style branching map** — a uniform per-act shape of forced Fight → pick 1 of 3
-  reward → Skirmish → pick 1 of 3 reward → pick 1 of 2 (Elite or Battle) → pick 1 of 3
+  reward → Skirmish → pick 1 of 3 reward → pick 1 of 2 (**Elite or Skirmish** since
+  2026-09-13, both recruitable, each tile previewing the enemy typing it fields from a draw
+  seeded off the map so the preview IS the fight, and the two guaranteed to differ in a type —
+  `src/run/encounters.ts`; it was Elite or Battle) → pick 1 of 3
   reward → the funnel → an end-of-act **Guardian** boss fight, no path ever skipping a
   fight, and no path ever losing a choice (`docs/run-loop.md`). **2026-09-08:** a third
   reward row was added and the funnel became a **pick 1 of 2 from act 3** — Guild Hall

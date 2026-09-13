@@ -5,6 +5,7 @@ import type { PassiveId, StatKey, TypeId } from '../engine/content';
 import type { EquipmentLoadout, Stash, UnseenItems } from './equipment';
 import { createEmptyLoadout } from './equipment';
 import type { RunMap } from './map';
+import { STARTING_CONSUMABLES, type ConsumablePurse } from './consumables';
 
 export const ROSTER_CAP = 6;
 
@@ -100,6 +101,8 @@ export interface RunState {
   masteryDeferred: boolean;
   /** Starts at 1; +1 at the end of every act; purchasable at a shop. */
   recruitContracts: number;
+  /** The potions, a TEAM purse capped per kind (run/consumables.ts). Spent only in a fight. */
+  consumables: ConsumablePurse;
   /** Null for a RunState that never gets a map (enemyGen.ts throwaway rosters). */
   map: RunMap | null;
   /** Null = map generated but not yet entered. */
@@ -139,6 +142,7 @@ export function createRunState(gold = 0, recruitContracts = 1): RunState {
     masteryScrolls: 0,
     masteryDeferred: false,
     recruitContracts,
+    consumables: { ...STARTING_CONSUMABLES },
     map: null,
     currentNodeId: null,
     visitedNodeIds: [],

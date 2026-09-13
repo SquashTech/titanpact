@@ -227,6 +227,8 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenMastery, onSav
             onSpend={canAffordAnyScroll(progressionTable, moves, run) ? onOpenMastery : undefined}
           />
           <ResourceStat kind="contract" label="Recruit Contracts" value={run.recruitContracts} />
+          <ResourceStat kind="hpPotion" label="HP Potions" value={run.consumables.hpPotion} />
+          <ResourceStat kind="mpPotion" label="MP Potions" value={run.consumables.mpPotion} />
         </div>
         <button
           type="button"

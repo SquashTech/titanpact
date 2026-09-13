@@ -48,11 +48,11 @@ between; per user direction, the shape is now forced and uniform):
   other two seats roll normally, so the row still offers three distinct things.
 - **Row 2: a single forced `skirmish` node.**
 - **Row 3: 3 nodes, pick 1 of 3 — reward types only**, same pool as row 1.
-- **Row 4: 2 nodes, pick 1 of 2 — `elite` or `battle`** (2026-08-17, per user direction:
-  "give the player the option to fight the Elite OR a regular Battle"). `elite` is the
-  act's difficulty spike (+10 to 2 stats on all 4 AI heroes); `battle` is a plain,
-  no-bonus alternative — same risk profile as `skirmish`, just later in the act. Always
-  presented as a real choice (see edges, below), not one that depends on luck.
+- **Row 4: 2 nodes, pick 1 of 2 — `elite` or `skirmish`** (2026-09-13, Titanspawn
+  overhaul phase 3; `elite` or `battle` from 2026-08-17). `elite` is the act's difficulty
+  spike (+10 to 2 stats on all 4 AI heroes, loot one tier ahead); the `skirmish` is a plain,
+  no-bonus, recruitable alternative, and both tiles preview the typing they field (below).
+  Always presented as a real choice (see edges, below), not one that depends on luck.
 - **Row 5: 3 nodes, pick 1 of 3 — reward types only** (2026-09-08, per user direction), same
   pool as rows 1 and 3. A third reward row, affordable once the map stopped having to fit its
   well ("A map that scrolls", below): the act had two reward seats to spend across a
@@ -63,8 +63,19 @@ between; per user direction, the shape is now forced and uniform):
 - **Row 7: the single `boss` node** — the act's Guardian.
 
 The upshot: every act is exactly **Fight → pick 1 of 3 → Skirmish → pick 1 of 3 →
-(Elite or Battle) → pick 1 of 3 → (Guild Hall or Blacksmith) → Guardian** — no path through
+(Elite or Skirmish) → pick 1 of 3 → (Guild Hall or Blacksmith) → Guardian** — no path through
 an act ever skips a fight, and none arrives at the funnel holding only half the fork.
+
+**The fork is Elite-or-Skirmish since 2026-09-13** (Titanspawn overhaul phase 3; it was
+Elite-or-Battle). Both options draw the recruitable pool and both pay a contract, so claim
+supply is one higher an act; what separates them is the Elite's risk/reward axis (harder, loot
+one tier ahead) and the TACTICAL one, which is new: each tile previews the enemy typing it
+fields — a row of element marks under the sigil — and the Skirmish row does too. The preview
+is honest by construction: every encounter node draws from a seed derived from the map's seed
+and the node's id (`src/run/encounters.ts`, the one place App.tsx, the sim and the map's
+preview all build an encounter), so the tile and the tap are the same draw, and the fork's
+Skirmish is re-rolled against its Elite until the two differ in at least one type. `battle`
+survives as a node type only for the tutorial's curated corridor.
 
 **The Mentor row (acts 1-3), the Forge row (act 4).** Acts 1 through 4 each splice one extra
 forced single-node row into the shape above, giving them 9 rows against Act 5's 8. In acts 1-3
@@ -74,7 +85,7 @@ act 4 the same seat is a forced Forge (`forgeReward`, `LAST_SPLICED_ACT`). It si
 **immediately before the Skirmish** (2026-09-05, per user direction — it was immediately
 *after*, and Act 1 only, until then), so the move is in hand for the act's first
 recruitable fight rather than arriving just after it. A Mentor act therefore reads
-**Fight → pick 1 of 3 → Mentor → Skirmish → pick 1 of 3 → (Elite or Battle) → pick 1 of 3
+**Fight → pick 1 of 3 → Mentor → Skirmish → pick 1 of 3 → (Elite or Skirmish) → pick 1 of 3
 → (Guild Hall or Blacksmith) → Guardian**, and its Skirmish lands one row later than Act 5's (`MENTOR_ROW`,
 `LAST_MENTOR_ACT`, `skirmishRowFor`, `src/run/map.ts`). Both are single-node rows, so no
 path can bypass either.
@@ -424,6 +435,58 @@ late Legendary.
 encounters; the same batch after the excision reads 33.0% and 10.70. The roster is exactly that
 much lighter and nothing has been handed back yet — automatic per-level stat growth (phase 3) is
 the replacement, and re-fitting the curve is phase 6. Do not read the drop as a regression.
+
+### Consumables — the Flask (2026-09-13, per user direction)
+
+Two potions, held as a TEAM purse beside gold and the Scrolls (`RunState.consumables`,
+`src/run/consumables.ts`) and drunk in a fight on any active hero. **HP Potion** restores half of
+max HP; **MP Potion** restores half of max Mana. Every run opens with one of each — the early
+lever against an awkward first matchup, before a hero has a kit that answers it.
+
+**A potion is a FREE action, not a declared one.** `actions.ts` forbids an action seeing another's
+outcome inside a round; a potion's whole point is that the player sees its outcome before
+declaring — drink, and the Mana is simply there to spend. So it is not a fourth `Action` kind. It
+is applied to `CombatState` on the spot during the command phase (`useConsumable`,
+`src/engine/combat/consumables.ts`, the same out-of-round shape as `applyForcedReplacement`),
+emits `ConsumableUsed` then the ordinary `HpChanged`/`ManaChanged`, and the command grid
+re-derives: the out-of-mana Rest row turns back into moves because `canAffordAnyMove` is read
+off live state. A hero that had already committed Rest is un-committed and re-asked. Like the Rest
+key it is irreversible — Back cannot un-drink.
+
+**Five rules, each answering a way the potion could quietly become something else:**
+
+- **Not a trigger source.** No passive reaction pass runs behind a potion, exactly as behind the
+  Pact Clock. A heal-reactive passive would otherwise get a free trigger for no turn, and the
+  potion would be a combo piece instead of a lever.
+- **A RESTORE, never a grant.** Mana caps at the pool; overflow (docs/mana.md) reads as full and
+  refuses the potion. Overflow is Arcane's identity and `manaGrant`'s alone.
+- **Flat, outside the heal formula.** No WisdomMult, no STAB, no variance — a run resource, not
+  a move. The third direct-HP family beside the Clock and bench regen.
+- **Player-only.** Enemies never drink. A no-turn-cost restore on an AI would be a stat bump
+  wearing a hat; if an Ascension ever wants it, it is a dial with its own AI line, not a default.
+- **Active, alive, command phase.** The bench regenerates on its own; a KO'd hero is a different
+  item's business (a Revive is a different conversation, and `ConsumableKind` leaves the door
+  open).
+
+**Scarcity is the whole price, so scarcity is capped.** The mana invariant — *investment pays out
+later than the point at which a weak team dies* — is bent on purpose by one MP potion and broken
+by five banked. `CONSUMABLE_HOLD_CAP` = 3 a kind; a drop or a purchase onto a full flask is
+refused, never banked. Three faucets: the starting pair; the Guild Hall's gear counter at a flat
+`CONSUMABLE_PRICE` = 20 gold, a pure sink with no per-visit limit because the cap is the limit;
+and a **drop** off a won encounter (`CONSUMABLE_DROP_CHANCE`: 12% on a fight, 20% an Elite, 25%
+a Guardian, none from the finale), one potion of an even kind, rolled at squad-confirm like the
+item drop so the victory ledger can show it. No `consumableReward` node type: the reward pool's
+weights were just re-fitted, and a 1-of-3 seat spent on a potion is a seat not spent on a Forge.
+
+**What a fight drank comes off the purse at resolve**, not on the sip, so a fight quit and
+replayed refunds it whole — the same reason gold is granted at resolve. On the map the flask
+shows on the header purse as two counts; it is a purse, not an inbox, so the footer never flags
+it.
+
+**Open, deliberately:** the hold cap, the price and the drop odds are all playtest numbers; and
+whether a potion should be drinkable during a forced-replacement beat after a KO — the moment a
+player most wants one, and the moment the board is mid-transition — is not decided. The scripted
+first run does not yet mention the flask at all.
 
 ### Winning a fight: the post-fight gates
 

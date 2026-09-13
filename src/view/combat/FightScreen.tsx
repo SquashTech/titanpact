@@ -28,6 +28,11 @@ import type { HealCaster } from '../../engine/heal/healPipeline';
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { DEFAULT_PACT_CLOCK, PACT_WARNING_ROUNDS, pactFractionFor } from '../../engine/combat/pactClock';
 import { applyForcedReplacement } from '../../engine/combat/switching';
+import { consumableRefusal, useConsumable, type ConsumableKind } from '../../engine/combat/consumables';
+import { CONSUMABLE_KINDS, CONSUMABLE_NAMES, type ConsumablePurse } from '../../run/consumables';
+import { FlaskPanel, type FlaskTarget } from './FlaskPanel';
+import { ResourceGlyph } from '../shared/RunGlyph';
+import { playSfx } from '../../audio/sfx';
 import { resolveBattleStartEntries, resolvePassiveReactions } from '../../engine/combat/passiveEngine';
 import { selectableTargets, statusGatedTargets } from '../../engine/combat/statusEngine';
 import { FIELD_EFFECT_DURATION_ROUNDS } from '../../engine/combat/fieldEffectEngine';
@@ -528,8 +533,13 @@ interface Props {
   scrollReward?: number;
   /** The opener fight's guaranteed drop, rolled up front so the victory screen can show it. Displayed only. */
   equipmentReward: EquipmentDefinition | null;
-  /** Fired when the player dismisses the result overlay — the caller owns what a win/loss means for the run. */
-  onResolved: (outcome: 'win' | 'loss', finalState: CombatState) => void;
+  /** A potion this win drops (run/consumables.ts), rolled up front like the item. Displayed only. */
+  consumableReward?: ConsumableKind | null;
+  /**
+   * Fired when the player dismisses the result overlay — the caller owns what a win/loss means for
+   * the run. `consumablesUsed` is what this fight drank, for the caller to take off the purse.
+   */
+  onResolved: (outcome: 'win' | 'loss', finalState: CombatState, consumablesUsed: ConsumablePurse) => void;
   /** Leave to the title with the run left parked at its map checkpoint — this fight replays. Omit for fights outside a run. */
   onSaveAndQuit?: () => void;
   /** Discard the run and its save (two-tap armed). Omit for fights outside a run. */
@@ -554,6 +564,7 @@ export function FightScreen({
   levelsGained,
   scrollReward = 0,
   equipmentReward,
+  consumableReward = null,
   onResolved,
   onSaveAndQuit,
   onAbandonRun,
@@ -600,6 +611,9 @@ export function FightScreen({
   const [logOpen, setLogOpen] = useState(false);
   const [referenceOpen, setReferenceOpen] = useState(false);
   const [switchOpen, setSwitchOpen] = useState(false);
+  const [flaskOpen, setFlaskOpen] = useState(false);
+  /** Potions drunk this fight. The run's purse is only debited at resolve, so a replayed fight refunds them. */
+  const [usedConsumables, setUsedConsumables] = useState<ConsumablePurse>({ hpPotion: 0, mpPotion: 0 });
   const [menuOpen, setMenuOpen] = useState(false);
   /** Quit is armed by a first tap and fires on the second; reset whenever the menu opens. */
   const [confirmingQuit, setConfirmingQuit] = useState(false);
@@ -721,6 +735,16 @@ export function FightScreen({
     actingId !== null &&
     combat.combatants[actingId].currentMana <
       getMaxMana(allCombatants[combat.combatants[actingId].heroId], combat.combatants[actingId]);
+
+  // What is left in the flask this fight. Shown on the key at all times, drinkable while commanding.
+  const flaskPurse: ConsumablePurse = {
+    hpPotion: playerRun.consumables.hpPotion - usedConsumables.hpPotion,
+    mpPotion: playerRun.consumables.mpPotion - usedConsumables.mpPotion,
+  };
+  const flaskHeld = flaskPurse.hpPotion + flaskPurse.mpPotion;
+  const maxHpOf = (id: string) => getMaxHp(allCombatants[combat.combatants[id].heroId], combat.combatants[id]);
+  const maxManaOf = (id: string) => getMaxMana(allCombatants[combat.combatants[id].heroId], combat.combatants[id]);
+  const flaskRefusal = (id: string, kind: ConsumableKind) => consumableRefusal(combat, id, kind, maxHpOf, maxManaOf);
 
   // The console is lit in the commanding hero's domain color, from under that hero's side of the
   // field; gold and centred while a round resolves (nobody is commanding).
@@ -854,6 +878,38 @@ export function FightScreen({
 
   function handleRestClick(combatantId: string) {
     commitAction(combatantId, { kind: 'rest' });
+  }
+
+  /**
+   * A potion is a FREE action applied to the board on the spot (engine/combat/consumables.ts) —
+   * not declared into the round, so the grid re-derives at once: the out-of-mana Rest row turns
+   * back into moves because the Mana is simply there now. Irreversible, like the Rest key.
+   */
+  function handleDrinkPotion(combatantId: string, kind: ConsumableKind) {
+    if (flaskPurse[kind] <= 0 || flaskRefusal(combatantId, kind) !== null) return;
+    const result = useConsumable(combat, combat.round, combatantId, kind, maxHpOf, maxManaOf);
+    const used = result.events[0];
+    const amount = used.type === 'ConsumableUsed' ? used.amount : 0;
+    setCombat(result.state);
+    appendLog(formatEvents(result.events, allCombatants, result.state.combatants, moves));
+    playSfx(kind === 'hpPotion' ? 'heal' : 'mana');
+    setPopups((prev) => ({
+      ...prev,
+      [combatantId]: {
+        key: popupSeq.current++,
+        text: kind === 'hpPotion' ? `+${amount}` : `+${amount} MP`,
+        className: kind === 'hpPotion' ? 'popup-heal' : 'popup-mana',
+      },
+    }));
+    setUsedConsumables((prev) => ({ ...prev, [kind]: prev[kind] + 1 }));
+    setFlaskOpen(false);
+    // A hero that had committed Rest has lost its reason for it: the console goes back and re-asks.
+    if (pending[combatantId]?.kind === 'rest') {
+      const next = { ...pending };
+      delete next[combatantId];
+      setPending(next);
+      setActionStep(Math.max(0, playerActiveAlive.indexOf(combatantId)));
+    }
   }
 
   function handleForcedReplacement(slot: 0 | 1, benchedCombatantId: string) {
@@ -1418,6 +1474,20 @@ export function FightScreen({
                         <span className="move-effect-text">Out of Mana — recovers to full, but skips the turn</span>
                       </div>
                     </button>
+                    {/* The potion at its moment: offered right under the Rest it replaces, for this hero, one tap. */}
+                    {flaskPurse.mpPotion > 0 && flaskRefusal(id, 'mpPotion') === null && (
+                      <button className="move-button flask-button" onClick={() => handleDrinkPotion(id, 'mpPotion')}>
+                        <div className="move-row-top">
+                          <span className="move-name">
+                            <ResourceGlyph kind="mpPotion" className="flask-button-glyph" /> {CONSUMABLE_NAMES.mpPotion}
+                          </span>
+                          <span className="flask-button-count">×{flaskPurse.mpPotion}</span>
+                        </div>
+                        <div className="move-row-effect">
+                          <span className="move-effect-text">Restores half of max Mana — no turn spent</span>
+                        </div>
+                      </button>
+                    )}
                   </div>
                 )}
                 {canAffordAnyMove && (
@@ -1538,6 +1608,22 @@ export function FightScreen({
                   ⇄
                 </span>
                 Switch
+              </button>
+              {/* The Flask opens a picker, like Switch; the drinking itself is one tap inside it. Dark
+                  with nothing left to drink, never removed — the row does not reflow mid-fight. */}
+              <button
+                className="bottom-action bottom-action-primary bottom-action-flask"
+                disabled={!(actingId !== null && flaskHeld > 0)}
+                onClick={() => setFlaskOpen(true)}
+                aria-label={`Flask — ${CONSUMABLE_KINDS.map((k) => `${flaskPurse[k]} ${CONSUMABLE_NAMES[k]}`).join(', ')}`}
+              >
+                <span className="bottom-action-glyph" aria-hidden="true">
+                  <ResourceGlyph kind="hpPotion" tone="inherit" className="bottom-action-flask-glyph" />
+                </span>
+                Flask
+                <span className="bottom-action-flask-count" aria-hidden="true">
+                  {flaskHeld}
+                </span>
               </button>
               {/* A one-tap commit, like the out-of-mana Rest row it duplicates. Deliberately not
                   adjacent to Back: the keys either side of it only open panels, so the row's one
@@ -1717,6 +1803,23 @@ export function FightScreen({
           );
         })()}
 
+      {flaskOpen && actingId && (
+        <FlaskPanel
+          purse={flaskPurse}
+          actingId={actingId}
+          targets={playerActiveAlive.map(
+            (id): FlaskTarget => ({
+              combatantId: id,
+              hero: allCombatants[combat.combatants[id].heroId],
+              combatant: combat.combatants[id],
+              refusal: { hpPotion: flaskRefusal(id, 'hpPotion'), mpPotion: flaskRefusal(id, 'mpPotion') },
+            })
+          )}
+          onDrink={handleDrinkPotion}
+          onClose={() => setFlaskOpen(false)}
+        />
+      )}
+
       {movePopup && (
         <MoveDetailOverlay
           move={movePopup.move}
@@ -1778,7 +1881,8 @@ export function FightScreen({
           goldReward={goldReward}
           scrollReward={scrollReward}
           equipmentReward={equipmentReward}
-          onContinue={() => onResolved(winner === PLAYER_SIDE ? 'win' : 'loss', combat)}
+          consumableReward={consumableReward}
+          onContinue={() => onResolved(winner === PLAYER_SIDE ? 'win' : 'loss', combat, usedConsumables)}
         />
       )}
 

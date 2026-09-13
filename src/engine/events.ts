@@ -192,6 +192,18 @@ export interface RestedEvent extends BaseEvent {
   combatantId: string;
 }
 
+/**
+ * A potion drunk during the command phase (combat/consumables.ts). Followed by the HpChanged or
+ * ManaChanged carrying the restore. Never a passive trigger source.
+ */
+export interface ConsumableUsedEvent extends BaseEvent {
+  type: 'ConsumableUsed';
+  combatantId: string;
+  kind: 'hpPotion' | 'mpPotion';
+  /** What actually landed, after the cap. */
+  amount: number;
+}
+
 export interface ManaChangedEvent extends BaseEvent {
   type: 'ManaChanged';
   combatantId: string;
@@ -278,6 +290,7 @@ export type CombatEvent =
   | SwitchedInEvent
   | BenchRegenTickedEvent
   | RestedEvent
+  | ConsumableUsedEvent
   | ManaChangedEvent
   | ManaGrantedEvent
   | ManaRegenTickedEvent

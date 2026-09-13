@@ -72,6 +72,7 @@ import {
 } from '../run/recruitment';
 import { guildHallOffers, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT } from '../data/recruitment';
 import { rollGuildHallOffers, buyEquipment, ShopError, type GuildHallOffers } from '../run/shop';
+import { ConsumableError, buyConsumable, grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse } from '../run/consumables';
 import { guildHallEntry } from '../run/guildRecruit';
 import { anyClassAvailable } from '../run/classes';
 import { generateMap, type MapNodeType } from '../run/map';
@@ -156,6 +157,8 @@ type Screen =
       scrollReward: number;
       /** Rolled at squad-confirm time so the victory screen can spotlight it; handleFightResolved reuses it. */
       equipmentReward: EquipmentDefinition | null;
+      /** The potion drop, rolled and carried the same way. */
+      consumableReward: ConsumableKind | null;
     }
   | { kind: 'quickBattle'; player: Encounter; ai: Encounter }
   | { kind: 'sandboxBattle' }
@@ -662,6 +665,7 @@ export function App() {
       levelsGained: levelsForEncounter(playerRun.encountersWon + 1),
       scrollReward: scrollsFor(mapNodeType, playerRun.actNumber),
       equipmentReward,
+      consumableReward: rollConsumableDrop(mapNodeType),
     });
   }
 
@@ -669,9 +673,12 @@ export function App() {
     nodeId: string,
     goldReward: number,
     equipmentReward: EquipmentDefinition | null,
+    consumableReward: ConsumableKind | null,
     /** This fight's AI roster — the beaten builds a Recruit Contract can claim. */
     defeatedRoster: readonly RosterEntry[],
-    outcome: 'win' | 'loss'
+    outcome: 'win' | 'loss',
+    /** What the fight drank; debited here, so a fight quit and replayed refunds it. */
+    consumablesUsed: ConsumablePurse
   ) {
     if (outcome === 'loss') {
       setScreen({ kind: 'runFailed' });
@@ -684,8 +691,10 @@ export function App() {
     // used to pay none (nothing left to spend it on) is void (docs/run-loop.md §4).
     const banner = isGuardian;
 
-    let next = grantCurrencyReward(playerRun, goldReward);
+    let next = grantCurrencyReward(spendConsumables(playerRun, consumablesUsed), goldReward);
     next = advanceToNode(next, nodeId);
+    // Onto the purse, clamped at the cap — a full flask spills the drop rather than banking it.
+    if (consumableReward) next = grantConsumable(next, consumableReward);
     // Every node kind, unlike `fightsStarted` — this one is the run summary's tally, and since
     // 2026-09-10 it is also what the level curve reads (run/growth.ts).
     next = { ...next, encountersWon: next.encountersWon + 1 };
@@ -785,6 +794,18 @@ export function App() {
   }
 
   /** One bundle off the Guild Hall shelf; the visit's count rides the shop screen, as sold-out gear does. */
+  function handleBuyGuildConsumable(kind: ConsumableKind) {
+    let next: RunState;
+    try {
+      next = buyConsumable(playerRun, kind);
+    } catch (err) {
+      if (!(err instanceof ConsumableError)) throw err;
+      return;
+    }
+    playSfx('gold.coin');
+    setPlayerRun(next);
+  }
+
   function handleBuyGuildScrolls() {
     if (screen.kind !== 'shop') return;
     let next: RunState;
@@ -1038,13 +1059,16 @@ export function App() {
           levelsGained={screen.levelsGained}
           scrollReward={screen.scrollReward}
           equipmentReward={screen.equipmentReward}
-          onResolved={(outcome) =>
+          consumableReward={screen.consumableReward}
+          onResolved={(outcome, _finalState, consumablesUsed) =>
             handleFightResolved(
               screen.nodeId,
               screen.goldReward,
               screen.equipmentReward,
+              screen.consumableReward,
               screen.encounter.run.roster,
-              outcome
+              outcome,
+              consumablesUsed
             )
           }
           onSaveAndQuit={() => setScreen({ kind: 'title' })}
@@ -1077,6 +1101,7 @@ export function App() {
           onRunChange={setPlayerRun}
           onBuyEquipment={handleBuyGuildEquipment}
           onBuyScrolls={handleBuyGuildScrolls}
+          onBuyConsumable={handleBuyGuildConsumable}
           onRequestRosterReplace={handleRequestRosterReplace}
           onContinue={() => handleNodeContinue(screen.nodeId)}
           muster={playerRun.map?.nodes[screen.nodeId]?.type === 'muster'}

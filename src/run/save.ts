@@ -20,6 +20,7 @@ import { MAP_NODE_TYPES } from './map';
 import type { ProgressionTable } from './progression';
 import type { BrokenSeal, RosterEntry, RunState } from './state';
 import { ROSTER_CAP, TOTAL_ACTS } from './state';
+import { CONSUMABLE_HOLD_CAP, CONSUMABLE_KINDS, type ConsumablePurse } from './consumables';
 
 /**
  * Bump whenever a change to RunState or RunMap makes older files unreadable. Older versions
@@ -356,6 +357,17 @@ function decodeBrokenSeals(value: unknown, index: SaveContentIndex): BrokenSeal[
   return seals.sort((a, b) => a.actNumber - b.actNumber);
 }
 
+function decodeConsumables(value: unknown): ConsumablePurse {
+  if (!isObject(value)) reject('run.consumables is not an object');
+  const purse = {} as ConsumablePurse;
+  for (const kind of CONSUMABLE_KINDS) {
+    const held = value[kind];
+    if (!isInt(held, 0, CONSUMABLE_HOLD_CAP)) reject(`run.consumables.${kind} is not a count in 0-${CONSUMABLE_HOLD_CAP}`);
+    purse[kind] = held;
+  }
+  return purse;
+}
+
 function decodeRun(value: unknown, index: SaveContentIndex): RunState {
   if (!isObject(value)) reject('run is not an object');
   if (!Array.isArray(value.roster)) reject('run.roster is not a list');
@@ -373,6 +385,7 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
   if (!isInt(value.recruitContracts, 0)) reject('run.recruitContracts is not a count');
   if (!isInt(value.masteryScrolls, 0)) reject('run.masteryScrolls is not a count');
   if (typeof value.masteryDeferred !== 'boolean') reject('run.masteryDeferred is not a flag');
+  const consumables = decodeConsumables(value.consumables);
   if (!isInt(value.fightsStarted, 0)) reject('run.fightsStarted is not a count');
   if (!isInt(value.encountersWon, 0)) reject('run.encountersWon is not a count');
   if (!isInt(value.actNumber, 1, TOTAL_ACTS)) reject(`run.actNumber is not an act in 1-${TOTAL_ACTS}`);
@@ -406,6 +419,7 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
     masteryScrolls: value.masteryScrolls,
     masteryDeferred: value.masteryDeferred,
     recruitContracts: value.recruitContracts,
+    consumables,
     map,
     currentNodeId,
     visitedNodeIds: [...value.visitedNodeIds],

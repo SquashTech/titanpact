@@ -1,6 +1,7 @@
 import { useState, type CSSProperties } from 'react';
 import type { RunState } from '../../run/state';
 import type { GuildHallOffers } from '../../run/shop';
+import type { ConsumableKind } from '../../run/consumables';
 import type { GuildHallOffer } from '../../run/recruitment';
 import { GuildHallPanel, guildHallTabs, type GuildHallTab } from './GuildHallPanel';
 import { GuildSign } from './guildHallArt';
@@ -18,6 +19,7 @@ interface Props {
   onRunChange: (next: RunState) => void;
   onBuyEquipment: (itemId: string) => void;
   onBuyScrolls: () => void;
+  onBuyConsumable: (kind: ConsumableKind) => void;
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
   onContinue: () => void;
   /** Act 6's Vigil: the last node of the run, and the one that musters rather than sells. */
@@ -39,6 +41,7 @@ export function ShopNodeScreen({
   onRunChange,
   onBuyEquipment,
   onBuyScrolls,
+  onBuyConsumable,
   onRequestRosterReplace,
   onContinue,
   muster = false,
@@ -65,6 +68,7 @@ export function ShopNodeScreen({
           onRunChange={onRunChange}
           onBuyEquipment={onBuyEquipment}
           onBuyScrolls={onBuyScrolls}
+          onBuyConsumable={onBuyConsumable}
           onRequestRosterReplace={onRequestRosterReplace}
           onOverlayChange={setOverlayOpen}
           tab={tab}

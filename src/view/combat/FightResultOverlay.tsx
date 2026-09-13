@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type AnimationEvent, type CSSProperties, 
 import { playSfx } from '../../audio/sfx';
 import { heroes } from '../../data/heroes';
 import type { EquipmentDefinition } from '../../run/equipment';
+import { CONSUMABLE_NAMES, type ConsumableKind } from '../../run/consumables';
 import { MAX_LEVEL } from '../../run/growth';
 import type { RosterEntry } from '../../run/state';
 import { ItemEffectChips, ItemPiece, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
@@ -48,6 +49,8 @@ export interface FightResultProps {
   goldReward: number;
   scrollReward: number;
   equipmentReward: EquipmentDefinition | null;
+  /** A potion drop (run/consumables.ts). Null on the common no-drop win. */
+  consumableReward?: ConsumableKind | null;
   onContinue: () => void;
 }
 
@@ -71,6 +74,7 @@ export function FightResultOverlay({
   goldReward,
   scrollReward,
   equipmentReward,
+  consumableReward = null,
   onContinue,
 }: FightResultProps) {
   const won = outcome === 'win';
@@ -82,8 +86,9 @@ export function FightResultOverlay({
     if (goldReward > 0) rows.push({ key: 'gold', render: (shown) => <GoldRow from={goldFrom} amount={goldReward} shown={shown} /> });
     if (scrollReward > 0) rows.push({ key: 'scroll', render: () => <ScrollRow amount={scrollReward} /> });
     if (equipmentReward) rows.push({ key: 'item', render: () => <ItemRow item={equipmentReward} onInspect={() => setInspecting(true)} /> });
+    if (consumableReward) rows.push({ key: 'potion', render: () => <PotionRow kind={consumableReward} /> });
     return rows;
-  }, [won, goldFrom, goldReward, scrollReward, equipmentReward]);
+  }, [won, goldFrom, goldReward, scrollReward, equipmentReward, consumableReward]);
 
   const stageDone = STAGE_LEDGER + ledger.length;
   const [stage, setStage] = useState(() => (prefersReducedMotion() ? stageDone : STAGE_TITLE));
@@ -331,6 +336,21 @@ function ScrollRow({ amount }: { amount: number }) {
         <span className="fight-result-row-sub">Teaches a move</span>
       </span>
       <span className="fight-result-row-value">+{amount}</span>
+    </div>
+  );
+}
+
+function PotionRow({ kind }: { kind: ConsumableKind }) {
+  return (
+    <div className="fight-result-row">
+      <span className={`fight-result-row-glyph is-${kind}`}>
+        <ResourceGlyph kind={kind} />
+      </span>
+      <span className="fight-result-row-text">
+        <span className="fight-result-row-label">{CONSUMABLE_NAMES[kind]}</span>
+        <span className="fight-result-row-sub">{kind === 'hpPotion' ? 'Restores half of max HP' : 'Restores half of max Mana'}</span>
+      </span>
+      <span className="fight-result-row-value">+1</span>
     </div>
   );
 }
