@@ -2,11 +2,9 @@
 // FightScreen reveals per tap. Presentation-only grouping.
 
 import type {
-  BenchRegenTickedEvent,
   FaintedEvent,
   CombatEvent,
   HpChangedEvent,
-  ManaRegenTickedEvent,
   MoveUsedEvent,
   StatChangedEvent,
   StatusAppliedEvent,
@@ -543,52 +541,102 @@ export function buildBeats(
         break;
       }
 
+      // The round's end is ONE beat. Bench and mana regen, every status tick and every expiry
+      // arrive as one contiguous block between the last action and RoundEnded, and used to cost a
+      // tap apiece — a quarter of a round's beats, measured, none of it a decision. Each figure
+      // gets one popup: its net HP from ticks (glyph of the biggest), or its regen if only mana
+      // touched it. A KO still splits off so the bar drains before the card leaves.
+      case 'BenchRegenTicked':
+      case 'ManaRegenTicked':
       case 'StatusTicked': {
-        const applied: CombatEvent[] = [e];
-        i++;
-        if (events[i]?.type === 'HpChanged') applied.push(events[i++]);
-        let faintEvent: CombatEvent | null = null;
-        if (events[i]?.type === 'Fainted') faintEvent = events[i++];
-        const targetName = name(e.combatantId);
-        if (e.kind === 'duration') {
-          push(applied, `${targetName}'s ${e.statusId} counts down (${e.newDuration} left)`);
-          break;
-        }
-        const verb = e.kind === 'damage' ? 'takes' : 'recovers';
-        const flavorBanner = STATUS_TICK_BANNER[e.statusId]?.(targetName, e.amount);
-        const popupClass = flavorBanner ? `popup-${e.statusId.toLowerCase()}` : e.kind === 'damage' ? 'popup-damage' : 'popup-heal';
-        push(
-          applied,
-          flavorBanner ?? `${targetName} ${verb} ${e.amount} from ${e.statusId}`,
-          [
-            {
-              combatantId: e.combatantId,
-              text: `${e.kind === 'damage' ? '-' : '+'}${e.amount}`,
-              className: popupClass,
-              glyph: e.statusId,
-            },
-          ],
-          {
-            bannerLead: `${targetName}'s ${e.statusId}`,
-            bannerFocus: `${e.kind === 'damage' ? '-' : '+'}${e.amount} HP`,
-            bannerFocusKind: e.kind === 'damage' ? 'damage' : 'heal',
+        const applied: CombatEvent[] = [];
+        const faints: FaintedEvent[] = [];
+        const hp = new Map<string, { delta: number; glyph: string; glyphAmount: number }>();
+        const mana = new Map<string, number>();
+        const clauses: string[] = [];
+        for (;;) {
+          const next = events[i];
+          if (!next) break;
+          if (next.type === 'BenchRegenTicked') {
+            applied.push(next);
+            const cur = hp.get(next.combatantId) ?? { delta: 0, glyph: '', glyphAmount: -1 };
+            cur.delta += next.hpRegen;
+            hp.set(next.combatantId, cur);
+            i++;
+          } else if (next.type === 'ManaRegenTicked') {
+            applied.push(next);
+            mana.set(next.combatantId, (mana.get(next.combatantId) ?? 0) + next.manaRegen);
+            i++;
+          } else if (next.type === 'StatusTicked') {
+            applied.push(next);
+            i++;
+            if (next.kind !== 'duration') {
+              const cur = hp.get(next.combatantId) ?? { delta: 0, glyph: '', glyphAmount: -1 };
+              cur.delta += next.kind === 'damage' ? -next.amount : next.amount;
+              if (next.amount > cur.glyphAmount) {
+                cur.glyph = next.statusId;
+                cur.glyphAmount = next.amount;
+              }
+              hp.set(next.combatantId, cur);
+              clauses.push(STATUS_TICK_BANNER[next.statusId]?.(name(next.combatantId), next.amount) ?? `${name(next.combatantId)} ${next.kind === 'damage' ? 'takes' : 'recovers'} ${next.amount} from ${next.statusId}`);
+            }
+            if (events[i]?.type === 'HpChanged') applied.push(events[i++]);
+            if (events[i]?.type === 'Fainted') faints.push(events[i++] as FaintedEvent);
+          } else if (next.type === 'StatusRemoved' && (next.reason === 'expired' || next.reason === 'decay')) {
+            applied.push(next);
+            i++;
+          } else {
+            break;
           }
-        );
-        if (faintEvent) push([faintEvent], `${targetName} is knocked out!`, [], { bannerFocusKind: 'ko' });
+        }
+
+        const popups: BeatPopup[] = [];
+        for (const [combatantId, tick] of hp) {
+          if (tick.delta === 0) continue;
+          const flavored = tick.glyph !== '' && STATUS_TICK_BANNER[tick.glyph] !== undefined;
+          popups.push({
+            combatantId,
+            text: `${tick.delta > 0 ? '+' : ''}${tick.delta}`,
+            className: flavored ? `popup-${tick.glyph.toLowerCase()}` : tick.delta > 0 ? 'popup-heal' : 'popup-damage',
+            glyph: tick.glyph || undefined,
+          });
+        }
+        for (const [combatantId, regen] of mana) {
+          if (regen <= 0 || hp.has(combatantId)) continue;
+          popups.push({ combatantId, text: `+${regen}`, className: 'popup-mana' });
+        }
+
+        let net = 0;
+        const focus: string[] = [];
+        const statusNames: string[] = [];
+        for (const [combatantId, tick] of hp) {
+          net += tick.delta;
+          if (tick.glyph === '') continue;
+          focus.push(`${name(combatantId)} ${tick.delta > 0 ? '+' : '−'}${Math.abs(tick.delta)}`);
+          if (!statusNames.includes(tick.glyph)) statusNames.push(tick.glyph);
+        }
+        const ticked = clauses.length > 0;
+        push(applied, ticked ? clauses.join('; ') : 'Mana recovers', popups, {
+          bannerLead: ticked ? 'The round ends' : undefined,
+          bannerFocus: ticked ? focus.join(' · ') : 'Mana recovers',
+          bannerSub: ticked ? `▸${statusNames.join(' · ')}` : undefined,
+          bannerFocusKind: !ticked ? 'mana' : net < 0 ? 'damage' : 'heal',
+        });
+        for (const faint of faints) {
+          push([faint], `${name(faint.combatantId)} is knocked out!`, [], { bannerFocusKind: 'ko' });
+        }
         break;
       }
 
+      // A status leaving on its own — expiry, decay, a switch — is bookkeeping, carried so the
+      // badge still clears. Only a cleanse is somebody's payload.
       case 'StatusRemoved': {
-        // A flinch-shaped status (Daze) expiring is bookkeeping, not news — carried so the badge still clears.
-        if (statuses[e.statusId]?.clearsAtEndOfRound && e.reason === 'expired') {
+        if (e.reason !== 'cleanse') {
           carry.push(e);
           i++;
           break;
         }
-        const targetName = name(e.combatantId);
-        const verb =
-          e.reason === 'switch' ? 'clears' : e.reason === 'cleanse' ? 'is cleansed' : e.reason === 'consumed' ? 'is consumed' : 'fades';
-        push([e], `${targetName}'s ${e.statusId} ${verb}`);
+        push([e], `${name(e.combatantId)}'s ${e.statusId} is cleansed`);
         i++;
         break;
       }
@@ -676,25 +724,6 @@ export function buildBeats(
         break;
       }
 
-      case 'BenchRegenTicked': {
-        const applied: CombatEvent[] = [];
-        const popups: BeatPopup[] = [];
-        const names: string[] = [];
-        while (events[i]?.type === 'BenchRegenTicked') {
-          const be = events[i] as BenchRegenTickedEvent;
-          applied.push(be);
-          popups.push({ combatantId: be.combatantId, text: `+${be.hpRegen}`, className: 'popup-heal' });
-          names.push(name(be.combatantId));
-          i++;
-        }
-        push(applied, `${names.join(' and ')} recover HP on the bench`, popups, {
-          bannerLead: 'On the bench',
-          bannerFocus: `${names.join(' and ')} recover`,
-          bannerFocusKind: 'heal',
-        });
-        break;
-      }
-
       // One beat per grant, mirroring Healed. The popup names overflow since the bar's fill clamps.
       case 'ManaGranted': {
         const targetName = name(e.targetCombatantId);
@@ -711,19 +740,6 @@ export function buildBeats(
           }
         );
         i++;
-        break;
-      }
-
-      case 'ManaRegenTicked': {
-        const applied: CombatEvent[] = [];
-        const popups: BeatPopup[] = [];
-        while (events[i]?.type === 'ManaRegenTicked') {
-          const me = events[i] as ManaRegenTickedEvent;
-          applied.push(me);
-          popups.push({ combatantId: me.combatantId, text: `+${me.manaRegen}`, className: 'popup-mana' });
-          i++;
-        }
-        push(applied, 'Mana recovers', popups, { bannerFocus: 'Mana recovers', bannerFocusKind: 'mana' });
         break;
       }
 

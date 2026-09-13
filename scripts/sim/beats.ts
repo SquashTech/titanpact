@@ -3,7 +3,6 @@
 // React in — when that file changes its grouping, this must change with it.
 
 import type { CombatEvent } from '../../src/engine/events';
-import { statuses } from '../../src/data/statuses';
 import { passives } from '../../src/data/passives';
 
 export function countBeats(events: readonly CombatEvent[]): number {
@@ -20,7 +19,6 @@ export function countBeats(events: readonly CombatEvent[]): number {
         break;
 
       case 'DamageDealt':
-      case 'StatusTicked':
         beats += 1;
         i++;
         if (events[i]?.type === 'HpChanged') i++;
@@ -71,8 +69,29 @@ export function countBeats(events: readonly CombatEvent[]): number {
         break;
 
       case 'StatusRemoved':
-        if (!(statuses[e.statusId]?.clearsAtEndOfRound && e.reason === 'expired')) beats += 1;
+        if (e.reason === 'cleanse') beats += 1;
         i++;
+        break;
+
+      // The round's end: one beat for the whole regen-and-tick block, plus one per KO.
+      case 'BenchRegenTicked':
+      case 'ManaRegenTicked':
+      case 'StatusTicked':
+        beats += 1;
+        for (;;) {
+          const next = events[i];
+          if (!next) break;
+          if (next.type === 'BenchRegenTicked' || next.type === 'ManaRegenTicked') i++;
+          else if (next.type === 'StatusTicked') {
+            i++;
+            if (events[i]?.type === 'HpChanged') i++;
+            if (events[i]?.type === 'Fainted') {
+              beats += 1;
+              i++;
+            }
+          } else if (next.type === 'StatusRemoved' && (next.reason === 'expired' || next.reason === 'decay')) i++;
+          else break;
+        }
         break;
 
       case 'PactTicked':
@@ -82,16 +101,6 @@ export function countBeats(events: readonly CombatEvent[]): number {
           if (events[i].type === 'Fainted') beats += 1;
           i++;
         }
-        break;
-
-      case 'BenchRegenTicked':
-        beats += 1;
-        while (events[i]?.type === 'BenchRegenTicked') i++;
-        break;
-
-      case 'ManaRegenTicked':
-        beats += 1;
-        while (events[i]?.type === 'ManaRegenTicked') i++;
         break;
 
       case 'SwitchedIn':
