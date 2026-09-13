@@ -4,6 +4,8 @@
 
 import type { StatKey } from '../../src/engine/content';
 import { heroes } from '../../src/data/heroes';
+import { rosterHeroes } from '../../src/data/content';
+import { absorbCompanions, companionCandidate, companionJoinDue, joinCompanion } from '../../src/run/companion';
 import { moves } from '../../src/data/moves';
 import { equipment } from '../../src/data/equipment';
 import { relics, guardianBannerRelics } from '../../src/data/relics';
@@ -130,6 +132,9 @@ export interface RunRecord {
   deathAct: number;
   deathNodeType: string | null;
   encountersWon: number;
+  /** The companion this run took, and the encounter count at which a knockout took it back (null = it survived, or never joined). */
+  companionHeroId: string | null;
+  companionLostAt: number | null;
   goldEnd: number;
   rosterLevelEnd: number;
   /** heroId -> best level reached this run, for every hero that was ever on the roster. */
@@ -199,7 +204,7 @@ function resolveDrop(run: RunState, itemId: string, equipped: string[], actNumbe
   const target = policy.bestWearer(run.roster, item);
   if (!target || target.gain <= 0) return grantCurrencyReward(run, sellValueFor(item));
   equipped.push(`${actNumber}:${item.rarity}`);
-  let next = equipToRoster(run, target.rosterId, itemId, equipment, heroes, target.replaceIndex);
+  let next = equipToRoster(run, target.rosterId, itemId, equipment, rosterHeroes, target.replaceIndex);
   while (next.stash.length > 0) next = sellFromStash(next, 0, equipment);
   return next;
 }
@@ -234,6 +239,8 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     actsCleared: [],
     deathAct: 0,
     deathNodeType: null,
+    companionHeroId: null,
+    companionLostAt: null,
     encountersWon: 0,
     goldEnd: 0,
     rosterLevelEnd: 0,
@@ -296,9 +303,19 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
       }
       run = advanceToNode(run, nodeId);
       run = { ...run, encountersWon: run.encountersWon + 1 };
+      // A KO'd companion is gone from the run, before the levels roll (src/run/companion.ts).
+      const absorbed = absorbCompanions(run, outcome.koRosterIds, equipment);
+      if (absorbed.absorbed.length > 0) record.companionLostAt ??= run.encountersWon;
+      run = absorbed.run;
       // Automatic and roster-wide, benched heroes included (src/run/growth.ts).
-      run = grantEncounterLevels(run, heroes, rng);
+      run = grantEncounterLevels(run, rosterHeroes, rng);
       record.encountersWon = run.encountersWon;
+      // The run's first fight: one of the Earlies it beat joins, and there is no declining.
+      const companionId = companionJoinDue(run, node.type) && outcome.encounter ? companionCandidate(outcome.encounter) : null;
+      if (companionId) {
+        run = joinCompanion(run, companionId, rosterHeroes, rng);
+        record.companionHeroId = companionId;
+      }
 
       if (node.type === 'boss') {
         record.actsCleared.push(run.actNumber);
@@ -378,6 +395,10 @@ interface EncounterOutcome {
   won: boolean;
   defeatedRoster: readonly RosterEntry[];
   drop: EquipmentDefinition | null;
+  /** The enemy side as fielded — what the companion's join beat reads. */
+  encounter: Encounter | null;
+  /** The player's roster ids that ended the fight KO'd — what the companion's mortality reads. */
+  koRosterIds: readonly string[];
 }
 
 function resolveEncounterNode(
@@ -472,10 +493,13 @@ function resolveEncounterNode(
     enemyHeroes,
   });
 
-  if (!fight.won) return { run: workingRun, won: false, defeatedRoster: encounter.run.roster, drop: null };
+  const koRosterIds = Object.values(fight.telemetry)
+    .filter((t) => t.side === PLAYER_SIDE && t.died)
+    .map((t) => t.rosterId);
+  if (!fight.won) return { run: workingRun, won: false, defeatedRoster: encounter.run.roster, drop: null, encounter, koRosterIds };
 
   workingRun = grantCurrencyReward(workingRun, goldRewardFor(kindKey, rng));
-  return { run: workingRun, won: true, defeatedRoster: encounter.run.roster, drop };
+  return { run: workingRun, won: true, defeatedRoster: encounter.run.roster, drop, encounter, koRosterIds };
 }
 
 /** The Guardian's Banner: a fixed 1-of-5, taken at random. */
@@ -536,7 +560,7 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       // random though: a type-locked Boon goes to whoever has the most moves of its type, which
       // is what a player does, and measuring it on the strongest hero regardless would score the
       // type half of the pool as weaker than it is. Generic Boons ride the strongest hero.
-      const offered = pickBoonOffers(run.roster, heroes, undefined, rng);
+      const offered = pickBoonOffers(run.roster, rosterHeroes, undefined, rng);
       if (offered.length === 0) return run;
       const picked = pick(rng, offered);
       const byFit = [...run.roster].sort(
@@ -550,9 +574,9 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
     case 'forgeReward': {
       // Whoever is holding the most already: an extra slot is worth most where the gear is.
       const target = [...run.roster]
-        .filter((entry) => itemSlotsFor(heroes[entry.heroId], entry) < MAX_ITEM_SLOTS)
+        .filter((entry) => itemSlotsFor(rosterHeroes[entry.heroId], entry) < MAX_ITEM_SLOTS)
         .sort((a, b) => policy.powerScore(b) - policy.powerScore(a))[0];
-      return target ? grantItemSlot(run, target.rosterId, heroes) : run;
+      return target ? grantItemSlot(run, target.rosterId, rosterHeroes) : run;
     }
     // The Mentor (acts 1-3): one Mid move ROLLED for the hero whose Mid pool is worth most.
     case 'mentorReward':
@@ -628,11 +652,11 @@ function resolveBlacksmith(run: RunState): RunState {
 
   const slotTarget = [...next.roster]
     .filter((entry) => {
-      const quote = slotQuote(next, entry.rosterId, heroes);
+      const quote = slotQuote(next, entry.rosterId, rosterHeroes);
       return quote != null && quote.cost <= next.gold;
     })
     .sort((a, b) => policy.powerScore(b) - policy.powerScore(a))[0];
-  if (slotTarget) next = buyItemSlot(next, slotTarget.rosterId, heroes);
+  if (slotTarget) next = buyItemSlot(next, slotTarget.rosterId, rosterHeroes);
 
   // One lift per visit: the most valuable item on the strongest hero that can afford it.
   for (const entry of policy.byPower(next.roster)) {
@@ -676,7 +700,7 @@ function resolveEvent(run: RunState, locationId: string, rng: Rng, record: RunRe
     // Trades are accepted whenever the floor allows and the hero can use what it gains.
     const candidates = run.roster.filter((entry) => {
       const combatant = createCombatant('probe', entry.heroId, 'A', 0, 0);
-      const maxHp = getMaxHp(heroes[entry.heroId], {
+      const maxHp = getMaxHp(rosterHeroes[entry.heroId], {
         ...combatant,
         baselineStatModifiers: { ...entry.evolutionStatGrants, ...entry.bonusStatGrants },
       });

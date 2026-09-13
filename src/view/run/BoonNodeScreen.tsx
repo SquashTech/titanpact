@@ -1,6 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
-import { heroes } from '../../data/heroes';
+import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import { moves } from '../../data/moves';
 import { passives } from '../../data/passives';
@@ -52,7 +52,7 @@ function BoonChoiceCard({ passiveId, picked, onPick }: { passiveId: string; pick
  * many they already hold, and a card showing "×1 already" is an invitation rather than a block.
  */
 export function BoonNodeScreen({ run, onRunChange, onContinue }: Props) {
-  const [boonChoices] = useState(() => pickBoonOffers(run.roster, heroes));
+  const [boonChoices] = useState(() => pickBoonOffers(run.roster, rosterHeroes));
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [confirmedId, setConfirmedId] = useState<string | null>(null);
   const [assignedTo, setAssignedTo] = useState<string | null>(null);
@@ -60,7 +60,7 @@ export function BoonNodeScreen({ run, onRunChange, onContinue }: Props) {
 
   const confirmed = confirmedId ? passives[confirmedId] : null;
   const assignedEntry = assignedTo ? run.roster.find((r) => r.rosterId === assignedTo) ?? null : null;
-  const assignedHero = assignedEntry ? heroes[assignedEntry.heroId] : null;
+  const assignedHero = assignedEntry ? rosterHeroes[assignedEntry.heroId] : null;
 
   function handleAssign(rosterId: string) {
     if (!confirmedId) return;
@@ -127,7 +127,7 @@ export function BoonNodeScreen({ run, onRunChange, onContinue }: Props) {
       ) : !assignedTo ? (
         <HeroPickGrid count={run.roster.length} fill>
           {run.roster.map((entry) => {
-            const hero = heroes[entry.heroId];
+            const hero = rosterHeroes[entry.heroId];
             return (
               <HeroPickCard
                 key={entry.rosterId}

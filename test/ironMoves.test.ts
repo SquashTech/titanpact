@@ -340,7 +340,8 @@ test('iron: Conjured Sword is the one magical row, and no Iron hero holds it', (
     assert.ok(!reachable.includes('conjuredSword'), `${heroId} is an Iron hero and can learn Conjured Sword`);
   }
 
-  const holders = Object.entries(progressionTable.moveTiers).filter(([, pool]) => pool.includes('conjuredSword'));
+  // Hero pools only: a spawn's pool is its type's whole slate by construction (data/titanspawn.ts spawnSlate).
+  const holders = Object.entries(progressionTable.moveTiers).filter(([id, pool]) => id in heroes && pool.includes('conjuredSword'));
   assert.ok(holders.length > 0, 'nothing points at Conjured Sword at all');
   for (const [heroId] of holders) {
     const hero = heroes[heroId];

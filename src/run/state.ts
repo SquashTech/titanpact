@@ -60,6 +60,12 @@ export interface RosterEntry {
   classId: string | null;
   /** The Class's passive, when it grants one — recorded so entryStats.ts can count it without the Class catalog. Written only by grantClass. */
   classPassiveId: PassiveId | null;
+  /**
+   * The companion (run/companion.ts, docs/titanspawn-overhaul.md §5): a hero in every respect
+   * but one — a knockout removes it from the run. The ONLY rule the flag carries; everything
+   * else it does, it does by being on the roster.
+   */
+  mortal: boolean;
 }
 
 /**
@@ -103,6 +109,12 @@ export interface RunState {
   recruitContracts: number;
   /** The potions, a TEAM purse capped per kind (run/consumables.ts). Spent only in a fight. */
   consumables: ConsumablePurse;
+  /**
+   * The companion this run took, by the body it joined as (run/companion.ts) — kept after its
+   * death, since one per run is the rule and a replacement is not (docs/titanspawn-overhaul.md
+   * §10). Null until the join beat.
+   */
+  companionHeroId: string | null;
   /** Null for a RunState that never gets a map (enemyGen.ts throwaway rosters). */
   map: RunMap | null;
   /** Null = map generated but not yet entered. */
@@ -143,6 +155,7 @@ export function createRunState(gold = 0, recruitContracts = 1): RunState {
     masteryDeferred: false,
     recruitContracts,
     consumables: { ...STARTING_CONSUMABLES },
+    companionHeroId: null,
     map: null,
     currentNodeId: null,
     visitedNodeIds: [],
@@ -175,6 +188,7 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     evolutionTypeGraft: null,
     classId: null,
     classPassiveId: null,
+    mortal: false,
   };
 }
 

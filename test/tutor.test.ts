@@ -26,7 +26,7 @@ function heroWithPathMoves(): { heroId: string; pathId: string; learnable: strin
 }
 
 test('tutor: the pool is the hero level-up pool, whole and un-gated by tier', () => {
-  for (const [heroId, pool] of Object.entries(progressionTable.moveTiers)) {
+  for (const [heroId, pool] of Object.entries(progressionTable.moveTiers).filter(([id]) => id in heroes)) {
     const offered = tutorMovePool(progressionTable, moves, entry(heroId));
     assert.deepStrictEqual([...offered].sort(), [...new Set(pool)].sort(), heroId);
     // A level-1 hero is offered its Late moves too — "any of them" is the node (docs/run-loop.md).
@@ -39,7 +39,7 @@ test('tutor: the pool is the hero level-up pool, whole and un-gated by tier', ()
 
 test('tutor: the pool is sorted by tier, then mana cost', () => {
   const rank = { early: 0, mid: 1, late: 2 } as const;
-  for (const heroId of Object.keys(progressionTable.moveTiers)) {
+  for (const heroId of Object.keys(progressionTable.moveTiers).filter((id) => id in heroes)) {
     const pool = tutorMovePool(progressionTable, moves, entry(heroId));
     for (let i = 1; i < pool.length; i++) {
       const a = moves[pool[i - 1]];
@@ -67,7 +67,7 @@ test('tutor: a chosen Evolution path adds BOTH its learnable and its granted mov
 });
 
 test('tutor: a move already offered and declined is still on the shelf; one currently held is not counted', () => {
-  const heroId = Object.keys(progressionTable.moveTiers)[0];
+  const heroId = Object.keys(progressionTable.moveTiers).filter((id) => id in heroes)[0];
   const pool = tutorMovePool(progressionTable, moves, entry(heroId));
   const declined = pool[0];
 
@@ -82,7 +82,7 @@ test('tutor: a move already offered and declined is still on the shelf; one curr
 });
 
 test('tutor: the starting kit is not on the shelf — it was never learned from a level-up', () => {
-  for (const heroId of Object.keys(progressionTable.moveTiers)) {
+  for (const heroId of Object.keys(progressionTable.moveTiers).filter((id) => id in heroes)) {
     const pool = tutorMovePool(progressionTable, moves, entry(heroId));
     for (const id of heroes[heroId].moveIds) {
       if ((progressionTable.moveTiers[heroId] ?? []).includes(id)) continue;

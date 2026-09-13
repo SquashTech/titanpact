@@ -2,7 +2,7 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { equipment, rollEquipmentDrops } from '../../data/equipment';
-import { heroes } from '../../data/heroes';
+import { rosterHeroes } from '../../data/content';
 import { moves } from '../../data/moves';
 import { passives } from '../../data/passives';
 import type { EventTone, RunEventDefinition } from '../../data/events';
@@ -117,9 +117,9 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onC
   const offeredMove = offeredMoveId ? moves[offeredMoveId] : undefined;
   const grantedPassive = outcome.kind === 'grantPassive' ? passives[outcome.passiveId] : undefined;
   const resolvedEntry = resolvedTo ? run.roster.find((r) => r.rosterId === resolvedTo) ?? null : null;
-  const resolvedHero = resolvedEntry ? heroes[resolvedEntry.heroId] : null;
+  const resolvedHero = resolvedEntry ? rosterHeroes[resolvedEntry.heroId] : null;
   const swappingEntry = swapping ? run.roster.find((r) => r.rosterId === swapping) ?? null : null;
-  const swappingCaster = swappingEntry ? healCasterForEntry(heroes[swappingEntry.heroId], swappingEntry, run.relics) : undefined;
+  const swappingCaster = swappingEntry ? healCasterForEntry(rosterHeroes[swappingEntry.heroId], swappingEntry, run.relics) : undefined;
 
   function teach(rosterId: string, replaceMoveId?: string) {
     if (!offeredMoveId) return;
@@ -154,7 +154,7 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onC
   // and cannot change WHICH hero is eligible.
   function heroBlocked(entry: RosterEntry): boolean {
     if (outcome.kind !== 'statShift') return false;
-    return !statShiftAllowed(outcome.deltas, entryStatTotals(heroes[entry.heroId], entry).hp);
+    return !statShiftAllowed(outcome.deltas, entryStatTotals(rosterHeroes[entry.heroId], entry).hp);
   }
 
   function heroCta(entry: RosterEntry, blocked: boolean): ReactNode {
@@ -228,7 +228,7 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onC
           <div className="stage-centered">
             <div className="reward-panel">
               <p className="offer-hero-sub">
-                {heroes[swappingEntry.heroId].name} already knows {MOVE_CAP} moves — pick one to replace, or go back.
+                {rosterHeroes[swappingEntry.heroId].name} already knows {MOVE_CAP} moves — pick one to replace, or go back.
               </p>
               <div className="offer-move-highlight">
                 <MoveDetailCard
@@ -318,7 +318,7 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onC
           {heroPicking && (
             <HeroPickGrid count={run.roster.length} fill columns={3} className={arrived ? 'is-waking' : 'is-asleep'}>
               {run.roster.map((entry) => {
-                const hero = heroes[entry.heroId];
+                const hero = rosterHeroes[entry.heroId];
                 const isResolved = resolvedTo === entry.rosterId;
                 const blocked = heroBlocked(entry);
                 return (

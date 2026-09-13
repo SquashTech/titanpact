@@ -871,6 +871,19 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   take the **act curve**, which is the only thing that ever moves a champion (`ENEMY_LEVEL_BY_ACT`
   is inert for one; see §3).
 
+- **The companion (2026-09-13, Titanspawn overhaul phase 4, `src/run/companion.ts`).** After
+  the run's first fight is won, the beaten side's lead Early asks to join, and does — the screen
+  (`CompanionScreen`) has one button, a welcome, and the creature dances and chirps while you
+  read it (per user direction: "the friendly {name} wants to accompany you", no declining). It is
+  a hero in every respect but one — a slot, roster-wide levels, Scrolls off its type's whole
+  slate, items, restores between nodes — and the one is `RosterEntry.mortal`: a knockout takes it
+  back into the Titan, first in the post-fight chain, ahead of the level report, its items to the
+  bag. Its Evolution rung is a tier-step in place of a branch (Early → Mid at `EVOLUTION_RUNG`,
+  Mid → Late where the Late band opens), raised from the Mastery board's pour like an Evolution.
+  The post-fight chain is therefore: **companion lost → levels → companion joined → Banner →
+  contract → Crucible → Mastery**. One per run; a dead one is not replaced (open in the overhaul
+  doc's §10). `rosterHeroes` (`data/content.ts`) is what the roster-facing screens read now.
+
 - **The mob layer is Titanspawn (2026-09-13, Titanspawn overhaul phase 2).** Everything below
   this bullet about Goblins, factions, `FactionRoster`, `basicEnemiesOf` and
   `generateLeaderEncounter` is history: the six factions were deleted whole and their sprites

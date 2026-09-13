@@ -18,7 +18,7 @@ import { resolveRound } from '../../src/engine/combat/resolveRound';
 import { applyForcedReplacement } from '../../src/engine/combat/switching';
 import { resolveBattleStartEntries, resolvePassiveReactions } from '../../src/engine/combat/passiveEngine';
 import { DEFAULT_PACT_CLOCK } from '../../src/engine/combat/pactClock';
-import { buildCombatState } from '../../src/run/buildCombatState';
+import { buildCombatState, rosterIdOfCombatant } from '../../src/run/buildCombatState';
 import { pickAiAction, type AiContext } from '../../src/run/ai';
 import { hasAffordableMoveInFight, isLockedIn } from '../../src/engine/state';
 import { relicTeamStatModifiers } from '../../src/run/relics';
@@ -43,6 +43,8 @@ const config = { typeChart, heroes: allCombatants, moves, statuses, passives, fi
 
 export interface CombatantTelemetry {
   heroId: string;
+  /** The roster entry it was placed from (buildCombatState rosterIdOfCombatant). */
+  rosterId: string;
   side: Side;
   roundsActive: number;
   damageDealt: number;
@@ -268,6 +270,7 @@ export function simulateFight(input: FightInput): FightOutcome {
   for (const combatant of Object.values(start.combatants)) {
     telemetry[combatant.combatantId] = {
       heroId: combatant.heroId,
+      rosterId: rosterIdOfCombatant(combatant.combatantId),
       side: combatant.side,
       roundsActive: 0,
       damageDealt: 0,

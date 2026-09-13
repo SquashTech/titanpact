@@ -1,5 +1,5 @@
 import { useState, type CSSProperties } from 'react';
-import { heroes } from '../../data/heroes';
+import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import { passives } from '../../data/passives';
 import { classes } from '../../data/classes';
@@ -71,7 +71,7 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
 
   const featured = offers.find((entry) => entry.rosterId === featuredRosterId) ?? offers[0];
   const arriving: RosterEntry = { ...featured, equipment: createEmptyLoadout() };
-  const hero = heroes[featured.heroId];
+  const hero = rosterHeroes[featured.heroId];
   const featuredClaimed = claimedRosterIds.includes(featured.rosterId);
   const contracts = run.recruitContracts;
   const rosterFull = run.roster.length >= ROSTER_CAP;
@@ -100,7 +100,7 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
     setFanfare(entry);
     const nextClaimed = [...claimedRosterIds, entry.rosterId];
     setClaimedRosterIds(nextClaimed);
-    setSigned(heroes[entry.heroId].name);
+    setSigned(rosterHeroes[entry.heroId].name);
     const remaining = offers.find((o) => !nextClaimed.includes(o.rosterId));
     if (remaining) setFeaturedRosterId(remaining.rosterId);
   }
@@ -202,7 +202,7 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
       {offers.length > 1 && (
         <StageRail>
           {offers.map((entry) => {
-            const railHero = heroes[entry.heroId];
+            const railHero = rosterHeroes[entry.heroId];
             return (
               <StageCandidate
                 key={entry.rosterId}
@@ -250,7 +250,7 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
         <RecruitFanfare
           heroId={fanfare.heroId}
           source="contract"
-          types={rosterEntryTypes(heroes[fanfare.heroId], fanfare)}
+          types={rosterEntryTypes(rosterHeroes[fanfare.heroId], fanfare)}
           onDone={() => setFanfare(null)}
         />
       )}

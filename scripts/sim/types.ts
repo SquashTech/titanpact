@@ -86,6 +86,10 @@ export interface Aggregate {
   /** Encounters won, summed over all runs. */
   encountersWonSum: number;
   goldEndSum: number;
+  /** The companion (src/run/companion.ts): runs it joined, runs a knockout took it, and the encounter count it was lost at, summed. */
+  companionJoined: number;
+  companionLost: number;
+  companionLostAtSum: number;
   /** Sum of the mean roster level at run end. */
   rosterLevelEndSum: number;
   rosterEvolvedEndSum: number;
@@ -148,6 +152,9 @@ export function emptyAggregate(): Aggregate {
     deathByNodeType: {},
     encountersWonSum: 0,
     goldEndSum: 0,
+    companionJoined: 0,
+    companionLost: 0,
+    companionLostAtSum: 0,
     rosterLevelEndSum: 0,
     rosterEvolvedEndSum: 0,
     runsRosterEvolved: 0,
@@ -230,6 +237,9 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   into.wins += from.wins;
   into.encountersWonSum += from.encountersWonSum;
   into.goldEndSum += from.goldEndSum;
+  into.companionJoined += from.companionJoined;
+  into.companionLost += from.companionLost;
+  into.companionLostAtSum += from.companionLostAtSum;
   into.rosterLevelEndSum += from.rosterLevelEndSum;
   into.rosterEvolvedEndSum += from.rosterEvolvedEndSum;
   into.runsRosterEvolved += from.runsRosterEvolved;

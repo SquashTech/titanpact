@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { heroes } from '../../data/heroes';
+import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import { createEmptyLoadout } from '../../run/equipment';
 import type { HeroDefinition } from '../../engine/content';
@@ -60,7 +60,7 @@ function ReplaceHeroCard({ hero, entry, selected, onSelect, onPreview }: Replace
 }
 
 /**
- * Roster-full replacement gate: pick one of the current heroes to terminate for the incoming one.
+ * Roster-full replacement gate: pick one of the current rosterHeroes to terminate for the incoming one.
  * Rendered as an App Screen from the Guild Hall but as an in-place modal from RecruitScreen (a
  * remount there would lose which offers were already signed); this component doesn't care which.
  */
@@ -69,7 +69,7 @@ export function RosterReplaceScreen({ roster, candidate, incomingEntry, relicIds
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
 
   const heroId = candidate.offer.heroId;
-  const hero = heroes[heroId];
+  const hero = rosterHeroes[heroId];
   const previewNewEntry: RosterEntry =
     candidate.source === 'guildHall'
       ? (incomingEntry ?? createRosterEntry('preview', heroId, candidate.offer.startingMoveIds))
@@ -113,7 +113,7 @@ export function RosterReplaceScreen({ roster, candidate, incomingEntry, relicIds
             cards fit outright — and the roster is always full here, so it is always six. */}
         <HeroPickGrid count={roster.length} fill columns={3}>
           {roster.map((entry) => {
-            const rosterHero = heroes[entry.heroId];
+            const rosterHero = rosterHeroes[entry.heroId];
             return (
               <ReplaceHeroCard
                 key={entry.rosterId}
@@ -132,7 +132,7 @@ export function RosterReplaceScreen({ roster, candidate, incomingEntry, relicIds
             Cancel
           </button>
           <button className="resolve-button" disabled={!selectedEntry} onClick={handleConfirm}>
-            {selectedEntry ? `Terminate ${heroes[selectedEntry.heroId].name} & Add ${hero.name}` : 'Select a Hero to Terminate'}
+            {selectedEntry ? `Terminate ${rosterHeroes[selectedEntry.heroId].name} & Add ${hero.name}` : 'Select a Hero to Terminate'}
           </button>
         </div>
       </div>

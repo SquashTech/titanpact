@@ -30,6 +30,18 @@ function combatantIdFor(side: Side, rosterId: string): string {
   return `${side}:${rosterId}`;
 }
 
+/** The inverse: the roster entry a combatant id was placed from. */
+export function rosterIdOfCombatant(combatantId: string): string {
+  return combatantId.slice(combatantId.indexOf(':') + 1);
+}
+
+/** Roster ids on `side` that ended the fight KO'd — what the companion's mortality reads (run/companion.ts). */
+export function koRosterIdsOf(state: CombatState, side: Side): string[] {
+  return Object.values(state.combatants)
+    .filter((c) => c.side === side && c.fainted)
+    .map((c) => rosterIdOfCombatant(c.combatantId));
+}
+
 // Starting HP/mana are full (docs/mana.md, docs/run-loop.md), computed AFTER
 // grants so a +HP item raises the fight's starting resources.
 function placeEntry(

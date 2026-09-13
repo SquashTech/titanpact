@@ -28016,3 +28016,196 @@ textarea,
   width: 30px;
   height: 30px;
 }
+
+/* ===========================================================================
+ * THE COMPANION (CompanionScreen.tsx, docs/titanspawn-overhaul.md §5)
+ * ---------------------------------------------------------------------------
+ * Three beats on one stage: the join (a small creature hops and chirps at you
+ * — the cute IS the price, so it gets to be cute), the tier-step (the same
+ * creature, bigger), and the loss (the Titan's eyes open behind it and it goes
+ * back). The figure is the spawn's own generated glyph at 3x the battlefield's
+ * scale, so an Early reads small on purpose and a Late fills the stage.
+ * ======================================================================== */
+.companion-stage {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 220px;
+  margin: 6px 0 0;
+}
+
+.companion-platform {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  width: 170px;
+  height: 34px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 50%, rgba(var(--node-rgb), 0.34), rgba(var(--node-rgb), 0.08) 55%, transparent 72%);
+}
+
+.companion-figure {
+  position: relative;
+  display: block;
+  margin-bottom: 26px;
+  transform-origin: 50% 100%;
+}
+
+.companion-portrait {
+  display: block;
+  width: 144px;
+  height: 144px;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
+}
+
+/* One hop per beat: up, a lean to the side it is facing, and a squash on the
+   landing. Restarted by remounting the figure on each hop (the key), so every
+   hop is a full hop and the last one is followed by stillness rather than a loop
+   that never lets the creature finish saying hello. */
+.companion-screen.is-dancing .companion-figure {
+  animation: companion-hop 0.52s cubic-bezier(0.3, 0, 0.2, 1) both;
+}
+
+@keyframes companion-hop {
+  0% {
+    transform: translateY(0) scale(1, 1) rotate(0deg);
+  }
+  18% {
+    transform: translateY(0) scale(1.12, 0.86) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-34px) scale(0.94, 1.08) rotate(-7deg);
+  }
+  78% {
+    transform: translateY(0) scale(1.1, 0.9) rotate(4deg);
+  }
+  100% {
+    transform: translateY(0) scale(1, 1) rotate(0deg);
+  }
+}
+
+/* The join and the tier-step arrive the way a recruit does; the loss sinks. */
+.companion-screen.is-join .companion-figure,
+.companion-screen.is-grown .companion-figure {
+  animation-delay: 0s;
+}
+
+.companion-screen.is-lost .companion-figure {
+  animation: companion-sink 2.4s cubic-bezier(0.4, 0, 0.8, 0.4) 0.6s both;
+}
+
+@keyframes companion-sink {
+  0% {
+    opacity: 1;
+    filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6)) brightness(1);
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    filter: drop-shadow(0 0 22px rgba(var(--tier-mythic-rgb), 0.6)) brightness(0.1);
+    transform: translateY(18px) scale(0.72);
+  }
+}
+
+/* The Eyes, behind the figure: the same two the wake opens on, held open and
+   dim, so what takes the creature back is the thing the title showed you. */
+.companion-eyes {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 54px;
+  pointer-events: none;
+}
+
+.companion-eye {
+  width: 88px;
+  height: 88px;
+  opacity: 0;
+  animation: companion-eye-open 1.6s ease-out 0.2s both;
+}
+
+.companion-eye .titan-eye-halo {
+  opacity: 0.32;
+  inset: -40px;
+}
+
+.companion-eye .titan-eye-clip {
+  height: 40px;
+}
+
+.companion-eye .titan-eye-globe,
+.companion-eye .titan-eye-pupil {
+  height: 88px;
+  margin-top: -44px;
+}
+
+.companion-eye .titan-eye-pupil {
+  width: 18px;
+  margin-left: -9px;
+  transform: scaleX(0.5);
+}
+
+@keyframes companion-eye-open {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0.85;
+  }
+}
+
+.companion-plate {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.companion-name {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #fff;
+  text-shadow: 0 0 14px rgba(var(--node-rgb), 0.7);
+}
+
+.companion-types {
+  display: flex;
+  gap: 4px;
+}
+
+/* The one new rule, worn as a tag from the first moment: it is not a surprise later. */
+.companion-mortal {
+  padding: 2px 8px;
+  border: 1px solid rgba(var(--tier-mythic-rgb), 0.7);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgb(var(--tier-mythic-rgb));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .companion-screen .companion-figure,
+  .companion-eye {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+.companion-mortal.is-small {
+  padding: 1px 6px;
+  font-size: 8px;
+  letter-spacing: 0.1em;
+}

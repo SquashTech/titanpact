@@ -1,7 +1,7 @@
 import { useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
 import mentorArt from '../../../art/npc/mentor.png';
-import { heroes } from '../../data/heroes';
+import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
@@ -85,7 +85,7 @@ export function MentorNodeScreen({ run, onRunChange, onContinue }: Props) {
       {anyTeachable ? (
         <HeroPickGrid count={run.roster.length} fill>
           {run.roster.map((entry) => {
-            const hero = heroes[entry.heroId];
+            const hero = rosterHeroes[entry.heroId];
             const teachable = poolOf(entry).length > 0;
             return (
               <HeroPickCard

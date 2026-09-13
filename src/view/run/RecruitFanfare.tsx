@@ -2,7 +2,7 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import type { TypeId } from '../../engine/content';
 import { playSfx } from '../../audio/sfx';
-import { heroes } from '../../data/heroes';
+import { rosterHeroes } from '../../data/content';
 import { getTypeColorRgb } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
@@ -33,11 +33,11 @@ const SOURCE_KICKER: Record<Props['source'], string> = {
  *
  * One beat: the seal closes on the hero (rings drawing in, the figure rising out of the dark),
  * then the oath lands and the name and typing print under it. Tap skips; a player recruiting four
- * heroes in one Guild Hall visit should not have to watch it four times.
+ * rosterHeroes in one Guild Hall visit should not have to watch it four times.
  */
 export function RecruitFanfare({ heroId, source, types, onDone }: Props) {
   const [sworn, setSworn] = useState(false);
-  const hero = heroes[heroId];
+  const hero = rosterHeroes[heroId];
 
   useEffect(() => {
     if (prefersReducedMotion()) {

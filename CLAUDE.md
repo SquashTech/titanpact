@@ -37,6 +37,9 @@ don't silently override it.
 > exist and render, the factions are deleted, `LocationDefinition.spawnTypes` is the mob layer's
 > hard filter, `fight`/`battle` and the Guardian's escorts draw spawn by act tier
 > (`SPAWN_TIER_BY_ACT`), and every spawn — escorts included — rides the monsters track.
+> **Phases 3–5 are IN too:** the fork is Elite-or-Skirmish with the enemy typing previewed on the
+> tile from a draw seeded off the map (`src/run/encounters.ts`), the Pact Clock takes the field
+> only, and the mortal companion joins after the first fight. **Only phase 6, the re-fit, remains.**
 
 ---
 
@@ -278,6 +281,14 @@ don't silently override it.
   `test/recruitment.test.ts` carries the assertion that catches it inverting again.
 - **Roster hard cap = 6**, doubling as the bring-6-pick-4 battle sideboard. Gaining a hero
   requires **terminating** an existing one. Equipment strips on termination; no gold refund.
+  **One exception, the companion** (2026-09-13, Titanspawn overhaul §5, `src/run/companion.ts`):
+  after the run's first fight one of the Early spawn it beat joins — it cannot be declined —
+  as a hero in every respect but one: `RosterEntry.mortal`, and **a knockout removes it from
+  the run** (its items strip to the bag). It takes a slot, levels roster-wide, takes Scrolls off
+  its type's whole slate, and its Evolution rung is a **tier-step** (Early → Mid at
+  `EVOLUTION_RUNG`, Mid → Late at the rung that opens Late) in place of a branch. One per run;
+  a dead one is not replaced. `rosterHeroes` (`data/content.ts`) is the roster-facing hero
+  lookup for that reason; `heroes` stays the recruitable pool.
 - **Items are uncategorised, and the SLOT is the scarce thing** (2026-09-06, replacing the
   weapon/armor/accessory split, which playtested as fiddly and unintuitive). Any item goes in
   any slot; **every hero starts on `BASE_ITEM_SLOTS` = 1** and there is no per-hero dial

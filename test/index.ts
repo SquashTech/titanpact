@@ -46,6 +46,7 @@ import './entrances.test';
 import './guardians.test';
 import './mobLayer.test';
 import './encounters.test';
+import './companion.test';
 import './finale.test';
 import './events.test';
 import './ai.test';

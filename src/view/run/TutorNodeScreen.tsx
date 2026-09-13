@@ -1,6 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
-import { heroes } from '../../data/heroes';
+import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
@@ -48,7 +48,7 @@ export function TutorNodeScreen({ run, onRunChange, onContinue }: Props) {
 
   // Read off `run` rather than held, so the entry is the post-grant one on the reveal.
   const student = studentId ? (run.roster.find((r) => r.rosterId === studentId) ?? null) : null;
-  const studentHero = student ? heroes[student.heroId] : null;
+  const studentHero = student ? rosterHeroes[student.heroId] : null;
   const caster = student && studentHero ? healCasterForEntry(studentHero, student, run.relics) : undefined;
 
   const teachableOf = (entry: RosterEntry) => tutorTeachableCount(progressionTable, moves, entry);
@@ -211,7 +211,7 @@ export function TutorNodeScreen({ run, onRunChange, onContinue }: Props) {
       ) : (
         <HeroPickGrid count={run.roster.length} fill>
           {run.roster.map((entry) => {
-            const hero = heroes[entry.heroId];
+            const hero = rosterHeroes[entry.heroId];
             const teachable = teachableOf(entry);
             return (
               <HeroPickCard

@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
-import { heroes } from '../../data/heroes';
+import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import type { HeroDefinition } from '../../engine/content';
 import { MAX_ITEM_SLOTS } from '../../run/equipment';
@@ -36,14 +36,14 @@ export function ForgeScreen({ run, onRunChange, onContinue }: Props) {
 
   function handleGrant(rosterId: string) {
     playSfx('equip');
-    onRunChange(grantItemSlot(run, rosterId, heroes));
+    onRunChange(grantItemSlot(run, rosterId, rosterHeroes));
     setGrantedTo(rosterId);
   }
 
-  const grantedHero = grantedTo ? heroes[run.roster.find((r) => r.rosterId === grantedTo)!.heroId] : null;
+  const grantedHero = grantedTo ? rosterHeroes[run.roster.find((r) => r.rosterId === grantedTo)!.heroId] : null;
   // A roster entirely at the cap would strand the player, so Continue opens for that case too.
   const anyEligible = run.roster.some((entry) => {
-    const hero = heroes[entry.heroId];
+    const hero = rosterHeroes[entry.heroId];
     return hero && itemSlotsFor(hero, entry) < MAX_ITEM_SLOTS;
   });
 
@@ -73,7 +73,7 @@ export function ForgeScreen({ run, onRunChange, onContinue }: Props) {
 
       <HeroPickGrid count={run.roster.length} fill>
         {run.roster.map((entry) => {
-          const hero = heroes[entry.heroId];
+          const hero = rosterHeroes[entry.heroId];
           const slots = itemSlotsFor(hero, entry);
           const isGranted = grantedTo === entry.rosterId;
           const atCap = slots >= MAX_ITEM_SLOTS;

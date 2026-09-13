@@ -9,6 +9,7 @@
 
 import type { ProgressionTable } from '../run/progression';
 import { EVOLUTION_LEVEL } from '../run/progression';
+import { spawnMoveTiers } from './titanspawn';
 
 export const progressionTable: ProgressionTable = {
   moveTiers: {
@@ -529,6 +530,10 @@ export const progressionTable: ProgressionTable = {
       'psychicBlow',
       'mentalFortress',
     ],
+    // The companion's bodies (run/companion.ts): a spawn's pool is its type's whole slate, so
+    // the ladder gates it by band like anyone's. No Evolution node — the EVOLUTION_RUNG is its
+    // tier-step instead.
+    ...spawnMoveTiers,
   },
   evolutions: {
     // --- Fire ---

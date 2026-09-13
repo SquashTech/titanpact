@@ -1,6 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
-import { heroes } from '../../data/heroes';
+import { rosterHeroes } from '../../data/content';
 import type { HeroDefinition, MoveDefinition } from '../../engine/content';
 import { createRosterEntry } from '../../run/state';
 import { STARTER_PICK_COUNT } from '../../run/draft';
@@ -35,7 +35,7 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
   /** Keyed by a rising counter so remounting replays the mount-once flare; `final` marks the pact-completing bind. */
   const [bindFlare, setBindFlare] = useState<{ tick: number; final: boolean } | null>(null);
 
-  const featured = heroes[featuredId];
+  const featured = rosterHeroes[featuredId];
   const featuredRgb = getTypeColorRgb(featured.types[0]);
   const featuredChosen = pickedIds.includes(featuredId);
   const pactFull = pickedIds.length >= STARTER_PICK_COUNT;
@@ -80,7 +80,7 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
         <div className="draft-sockets" aria-label={`${pickedIds.length} of ${STARTER_PICK_COUNT} allies chosen`}>
           {Array.from({ length: STARTER_PICK_COUNT }, (_, i) => {
             const id = pickedIds[i];
-            const hero = id ? heroes[id] : null;
+            const hero = id ? rosterHeroes[id] : null;
             return (
               <span
                 key={i}
@@ -132,7 +132,7 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
 
       <StageRail>
         {optionIds.map((heroId) => {
-          const hero = heroes[heroId];
+          const hero = rosterHeroes[heroId];
           return (
             <StageCandidate
               key={heroId}

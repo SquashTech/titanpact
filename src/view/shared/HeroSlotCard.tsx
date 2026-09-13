@@ -85,6 +85,8 @@ export function HeroSlotCard({
           {rosterEntryTypes(hero, entry).map((t) => (
             <TypeBadge key={t} type={t} />
           ))}
+          {/* The companion's one rule, worn where the roster is managed (run/companion.ts). */}
+          {entry.mortal && <span className="companion-mortal is-small">Mortal</span>}
         </span>
       </span>
     </>

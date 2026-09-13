@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { heroes } from '../../data/heroes';
+import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import type { RunState } from '../../run/state';
 import type { EnchantmentId } from '../../run/equipment';
@@ -38,7 +38,7 @@ function ownedItems(run: RunState): OwnedItem[] {
         key: `hero:${entry.rosterId}:${index}`,
         ref: { kind: 'hero', rosterId: entry.rosterId, index },
         itemId,
-        holder: heroes[entry.heroId]?.name ?? entry.heroId,
+        holder: rosterHeroes[entry.heroId]?.name ?? entry.heroId,
       });
     });
   }

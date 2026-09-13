@@ -2,7 +2,7 @@ import { type CSSProperties, useState } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { classes } from '../../data/classes';
 import { equipment } from '../../data/equipment';
-import { heroes } from '../../data/heroes';
+import { rosterHeroes } from '../../data/content';
 import { moves } from '../../data/moves';
 import { passives } from '../../data/passives';
 import type { HeroDefinition } from '../../engine/content';
@@ -135,11 +135,11 @@ export function CrucibleScreen({ run, onRunChange, onContinue }: Props) {
   }
 
   // The place, then the ask (2026-09-11, per user direction): "One of you is tempered" and its
-  // instruction line were two sentences about a screen that shows a bowl of fire and six heroes.
+  // instruction line were two sentences about a screen that shows a bowl of fire and six rosterHeroes.
   const readout = cold
     ? 'Every hero already carries a Class.'
     : armedEntry
-      ? `${heroes[armedEntry.heroId].name} stands at the rim. The Class they take is theirs for the run.`
+      ? `${rosterHeroes[armedEntry.heroId].name} stands at the rim. The Class they take is theirs for the run.`
       : 'Choose a hero to learn a Class.';
 
   return (
@@ -201,7 +201,7 @@ export function CrucibleScreen({ run, onRunChange, onContinue }: Props) {
                   armed={entry.rosterId === armedRosterId}
                   dimmed={!!armedEntry && entry.rosterId !== armedRosterId}
                   onArm={() => arm(entry.rosterId)}
-                  onPreview={() => setPreviewing({ hero: heroes[entry.heroId], entry })}
+                  onPreview={() => setPreviewing({ hero: rosterHeroes[entry.heroId], entry })}
                 />
               ))}
             </div>
@@ -219,7 +219,7 @@ export function CrucibleScreen({ run, onRunChange, onContinue }: Props) {
         </button>
       ) : (
         <button className="resolve-button crucible-enter" disabled={!armedEntry} onClick={enter}>
-          {armedEntry ? `Enter the Crucible — ${heroes[armedEntry.heroId].name}` : 'Choose a hero'}
+          {armedEntry ? `Enter the Crucible — ${rosterHeroes[armedEntry.heroId].name}` : 'Choose a hero'}
         </button>
       )}
 
@@ -267,7 +267,7 @@ interface ChoiceProps {
  * direction), so the only press is the one that commits.
  */
 function ClassChoice({ run, entry, offers, pickedClassId, onPick, onConfirm }: ChoiceProps) {
-  const hero = heroes[entry.heroId];
+  const hero = rosterHeroes[entry.heroId];
   const caster = healCasterForEntry(hero, entry, run.relics);
   const picked = pickedClassId ? offers.find((c) => c.id === pickedClassId) ?? null : null;
   return (
@@ -345,7 +345,7 @@ interface RevealProps {
 
 /** What the fire made: the hero, the Class, and the verb it now carries. */
 function ClassLearnedReveal({ run, entry, cls, onContinue }: RevealProps) {
-  const hero = heroes[entry.heroId];
+  const hero = rosterHeroes[entry.heroId];
   const caster = healCasterForEntry(hero, entry, run.relics);
   const move = cls.grantsMoveId ? moves[cls.grantsMoveId] : null;
   const passive = cls.grantsPassiveId ? passives[cls.grantsPassiveId] : null;
@@ -400,7 +400,7 @@ interface FigureProps {
 
 /** One hero at the rim: figure on fire-lit ground, name, types. Tap arms; hold opens the sheet. */
 function CrucibleFigure({ entry, pending, armed, dimmed, onArm, onPreview }: FigureProps) {
-  const hero = heroes[entry.heroId];
+  const hero = rosterHeroes[entry.heroId];
   const longPress = useLongPress(onPreview, pending ? onArm : undefined);
   const classes = ['crucible-figure', pending ? '' : 'is-ashen', armed ? 'is-armed' : '', dimmed ? 'is-dimmed' : '']
     .filter(Boolean)

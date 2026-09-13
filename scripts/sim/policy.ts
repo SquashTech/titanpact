@@ -10,7 +10,8 @@
 
 import type { MoveDefinition, StatKey } from '../../src/engine/content';
 import { statusApplicationsOf } from '../../src/engine/content';
-import { heroes } from '../../src/data/heroes';
+import { rosterHeroes as heroes } from '../../src/data/content';
+import { applyCompanionTierStep, companionTierStep } from '../../src/run/companion';
 import { moves } from '../../src/data/moves';
 import { equipment } from '../../src/data/equipment';
 import { passives } from '../../src/data/passives';
@@ -289,6 +290,11 @@ export function pourScrolls(run: RunState, rng: () => number, evolutions: PourEv
     next = spendMasteryScroll(next, target.rosterId);
 
     const ranked = next.roster.find((r) => r.rosterId === target.rosterId)!;
+    // The companion's tier-step, in place of a branch and of an offer (src/run/companion.ts).
+    if (companionTierStep(ranked)) {
+      next = applyCompanionTierStep(next, target.rosterId);
+      continue;
+    }
     const node = availableEvolution(progressionTable, ranked);
     if (node && node.paths.length > 0) {
       const path = node.paths[Math.floor(rng() * node.paths.length)];

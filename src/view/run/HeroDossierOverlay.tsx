@@ -14,6 +14,7 @@ import { PassiveReadout } from '../shared/passiveIcons';
 import { StatBars, StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { TabStrip, type TabSpec } from '../shared/TabStrip';
 import { TypeBadge } from '../shared/TypeBadge';
+import { isTitanspawn } from '../../data/titanspawn';
 import { TypeMatchups } from '../shared/TypeMatchups';
 
 interface Props {
@@ -213,8 +214,9 @@ export function HeroDossierOverlay({ hero, onClose }: Props) {
             </div>
             <div className="detail-evolution-row">
               <span className={`dossier-badge ${hero.starter ? 'badge-ally' : 'badge-recruit'}`}>
-                {hero.starter ? 'Starter' : 'Recruit only'}
+                {hero.starter ? 'Starter' : isTitanspawn(hero.id) ? 'Titanspawn' : 'Recruit only'}
               </span>
+              {isTitanspawn(hero.id) && <span className="companion-mortal is-small">Mortal</span>}
             </div>
           </div>
         </div>

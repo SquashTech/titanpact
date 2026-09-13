@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type AnimationEvent, type CSSProperties, type ReactNode } from 'react';
 import { playSfx } from '../../audio/sfx';
-import { heroes } from '../../data/heroes';
+import { rosterHeroes } from '../../data/content';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { CONSUMABLE_NAMES, type ConsumableKind } from '../../run/consumables';
 import { MAX_LEVEL } from '../../run/growth';
@@ -218,7 +218,7 @@ interface MemberProps {
  * the frame the bar tops out, without a timer per hero per level.
  */
 function PartyMember({ entry, index, levels, fielded, filling, landed }: MemberProps) {
-  const definition = heroes[entry.heroId];
+  const definition = rosterHeroes[entry.heroId];
   const [fills, setFills] = useState(0);
   if (!definition) return null;
 

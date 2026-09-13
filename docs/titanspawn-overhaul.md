@@ -1,6 +1,6 @@
 # titanspawn-overhaul.md — The Titanspawn Overhaul
 
-> **STATUS: DECIDED; PHASES 1, 2, 3 AND 5 OF §9 ARE IN (content + renderer, the mob layer, the fork, the Clock off the bench; 2026-09-13). Phases 4 and 6 are not.**
+> **STATUS: DECIDED; PHASES 1–5 OF §9 ARE IN (content + renderer, the mob layer, the fork, the companion, the Clock off the bench; 2026-09-13). Phase 6 — the re-fit — is not.**
 > This module replaces the location factions with a single per-type mob family (**Titanspawn**),
 > partitions the fourteen mortal types across the five run locations, gives the run a **mortal
 > companion**, takes the Pact Clock off the bench, and turns the map's Elite-or-Battle fork into
@@ -275,7 +275,7 @@ Each phase leaves the game playable. Dependencies drive the order; 3 and 5 are i
 | 1 | Content + renderer: `src/data/titanspawn.ts` (14 × 3: stats, tier, kit band, growth grades for the companion), `TitanspawnGlyph` ported from the gallery script into the figure system beside `heroPoses` | **Done 2026-09-13** | `titanspawn` folds into `allCombatants` only — no run pool draws it yet. Totals 200 / 400 / 600, kits 3 / 4 / 4, one grade line per type on the 28 budget; all pinned in `test/titanspawn.test.ts`. The renderer is `src/view/shared/titanspawnArt.tsx`, and `HeroPortrait` dispatches to it for a spawn id, so every screen that shows a hero shows a spawn with no other change. See "Phase 1 notes" below. |
 | 2 | Mob layer: `fight`/`battle` draw spawn by the Location's types and the act's tier; Guardian escorts become spawn; §7's deletions; `LocationDefinition.spawnTypes` replaces `factionId`; `locations.md` §3/§5.2 and `lore.md` §2 rewritten | **Done 2026-09-13** | `src/run/spawn.ts` composes, `generateSpawnEncounter` draws, `SPAWN_TIER_BY_ACT` in `difficulty.ts` says which tier; `test/mobLayer.test.ts` pins it. Faction sprites archived under `art/archive/factions/`, faction tests replaced by `test/guardians.test.ts`. See "Phase 2 notes". |
 | 3 | The fork: Elite-or-Skirmish, typing preview on the Skirmish and fork tiles, generator guarantees the two differ | **Done 2026-09-13** | `src/run/encounters.ts` is the one node→encounter function (App, sim, preview); seeds derive from the map seed and node id, so nothing new is stored and the tile IS the fight; the fork's Skirmish re-rolls its seed against the Elite's typing. `test/encounters.test.ts`. See "Phase 3 notes". |
-| 4 | The companion: mortality flag, join beat after fight one, absorption screen first in the post-fight chain, ladder reuse with the tier-step at `EVOLUTION_RUNG`, Late ≥ 600, Act 1 script kept functional | Pending | Needs 1 and 2. Needs §10's equipment decision. |
+| 4 | The companion: mortality flag, join beat after fight one, absorption screen first in the post-fight chain, ladder reuse with the tier-step at `EVOLUTION_RUNG`, Late ≥ 600, Act 1 script kept functional | **Done 2026-09-13** | `src/run/companion.ts` (`RosterEntry.mortal`, `RunState.companionHeroId`), `CompanionScreen` for the three beats — join (it dances and chirps, and there is no declining, per user direction), grown, lost — `rosterHeroes` as the roster-facing lookup, the spawn slates in the progression table. `test/companion.test.ts`. See "Phase 4 notes". |
 | 5 | Pact Clock off the bench; `lore.md` §3 row deleted; sim re-measures stall length | **Done 2026-09-13** | `tickPactClock` walks the active slots only. Measured over 892 simulated fights: 0.8% reach round 30 and none hit the engine cap (0.9% / none with the bench in) — the Clock closes every stall it did before. `combat.md` and `CLAUDE.md` updated with it. |
 | 6 | Difficulty re-fit and a sim pass: is Act 1's opener the auto-win; claim supply on the fork; the companion's trade ratio by run half; whether the Guild Hall tilted | Pending | After everything. |
 | — | Tutorial rewrite | **Deferred** | Until systems are complete, per user. |
@@ -351,6 +351,37 @@ Verify each phase as the repo does: `npm test`, `npm run typecheck`, `npm run ty
   fields its scripted warband there, and a save can still hold one. The node-facts readout for it
   now says "a leader over Earlies".
 
+**Phase 4 notes:**
+
+- **The join cannot be declined** (per user direction): the screen's one button is a welcome.
+  `joinCompanion` lands on the run before the screen shows, after the fight's levels roll — the
+  level report is the fight's, and the newcomer arrives at the roster's par with those levels'
+  growth rolled (`levelUpEntry`, as a Guild hire does): RAW is unbuilt, not hollow.
+- **The candidate is the beaten side's lead** — `squad.activeIds[0]` if it is an Early — so the
+  scripted Act 1 always offers the Cubling, and a normal Act 1 any of the fourteen. Deterministic
+  off the encounter, which is deterministic off the map.
+- **`rosterHeroes`** (`data/content.ts`) is the roster-facing lookup — `heroes` plus the
+  spawn — and every screen and helper that reads a roster entry's hero was pointed at it; the
+  pools a run draws from still read `heroes`, which is what keeps a spawn out of the draft, the
+  Guild Hall, the contracts and the Skirmish. The save catalog is `rosterHeroes` too.
+- **The spawn's Scroll pool is its type's whole slate**, folded into `progressionTable.moveTiers`
+  as data (`spawnMoveTiers`) rather than special-cased in `masteryMovePool` — so the ladder
+  gates it by band exactly as it gates a hero's authored pool, and the same table key follows
+  the body through its tier-steps.
+- **The tier-step is a heroId swap**: the entry keeps its moves, items, levels, growth and
+  Scrolls and takes the next body's base line and figure. It fires from the Mastery board's
+  pour in place of an offer, like the Evolution it replaces, and shows the `grown` beat.
+- **Mortality is read at resolution**: `koRosterIdsOf(finalState, 'A')` from the fight's last
+  state, `absorbCompanions` before `applyEncounterLevels`, items to the bag, and the `lost`
+  beat is pushed AHEAD of the level report. A KO on a lost fight is moot — the run ended.
+- **The three beats are one screen** (`CompanionScreen`): join and grown dance (five hops on a
+  fixed beat, a chirp a little higher on each, then stillness), lost opens the two Eyes behind
+  the figure as it sinks. The roster peek is deliberately absent — the title is the point.
+- **The sim fields it too** (`scripts/sim`): join after the first fight, absorption on a KO, the
+  tier-step in the policy's pour, and one report line. First measurement: it joins in 100% of runs
+  and the chart pilot loses it in ~47% of those, at a mean encounter of 2.5 — the pilot fields
+  everyone in Act 1, so that is the pilot's number, not the design's. Phase 6's.
+
 ## 10. Open questions — DO NOT silently resolve
 
 - ~~**Equipment on a dead companion**~~ **DECIDED 2026-09-13: strip to bag**, as termination
@@ -360,17 +391,20 @@ Verify each phase as the repo does: `npm test`, `npm run typecheck`, `npm run ty
   Location's types leading Earlies, and the Earlies are scaled up by holding gear rather than by a
   second stat dial. Phase 2 repurposes `generateLeaderEncounter` and decides how the gear is
   rolled (rarity by act, as drops are, is the obvious read).
-- **Where the companion's second tier-step sits** on the rung ladder (the first is the
-  `EVOLUTION_RUNG`; the second has no existing threshold to borrow).
-- **A replacement companion after a death** — never, or possible. One at a time is decided;
-  replacement is not.
+- ~~**Where the companion's second tier-step sits**~~ **BUILT 2026-09-13 at `RANK_THRESHOLDS[2]`**
+  (rung 6, where the Late band opens): the body that holds Late moves is the Late body
+  (`COMPANION_TIER_STEP_RUNGS`). A build call, not a user decision — cheap to move.
+- **A replacement companion after a death** — built as **never** (`RunState.companionHeroId` is
+  kept after the loss and gates the join), which is the conservative reading of "one per run";
+  reversing it is one condition in `companionJoinDue`. Still open as a design question.
 - ~~**Early and Mid stat totals**, and the per-tier kit size~~ **DECIDED 2026-09-13: kits are
   3 / 4 / 4** (an Early is thin, Mid and Late are full — the Act 1 opener stays trivially simple
   without a Mid feeling half-built). Totals are phase 1's figures: **200 / 400 / 600** on the
   enemy convention (six combat stats, HP at `HP_BUDGET_VALUE`) — below the cast, at it, above it,
   which is the trainee curve in three numbers (`SPAWN_COMBAT_TOTAL`, `src/data/titanspawn.ts`).
-- **Which Earlies can be the companion** — all fourteen authored to one cuteness bar, or the
-  join beat rolls from a subset (Rivetling and Runeling are the hard sells).
+- **Which Earlies can be the companion** — built as **the beaten side's lead**, so any of the
+  fourteen can ask (`companionCandidate`). A subset would be a filter on that one function; the
+  cuteness bar is still open.
 - **The Guardian exception** — every champion sits inside its Location's triple (§3); whether
   one is moved off it on purpose.
 - **The Necropolis as "the deep location"** — Late spawn a step early if the sim keeps calling

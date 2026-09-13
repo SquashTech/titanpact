@@ -12,6 +12,7 @@
 
 import type { GrowthStatKey, HeroDefinition, MoveTier, StatLine, TypeId } from '../engine/content';
 import type { GrowthGrade } from '../run/growth';
+import { moves } from './moves';
 
 export type SpawnTier = MoveTier;
 
@@ -193,3 +194,20 @@ export function spawnPool(types: readonly TypeId[] | null, tier: SpawnTier): Rec
   const lines = types ? titanspawnLines.filter((line) => types.includes(line.type)) : titanspawnLines;
   return Object.fromEntries(lines.map((line) => [spawnId(line, tier), titanspawn[spawnId(line, tier)]]));
 }
+
+/**
+ * A type's authored slate — every tiered move of the type, class moves excluded (they carry
+ * no tier and wear their holder's type). What a spawn's kit is read from, and what the
+ * companion's Scroll pool is (docs/titanspawn-overhaul.md §5): the ladder gates it by band
+ * exactly as it gates a hero's authored pool.
+ */
+export function spawnSlate(type: TypeId): string[] {
+  return Object.values(moves)
+    .filter((move) => move.type === type && move.tier !== undefined && !move.typeFollowsUser)
+    .map((move) => move.id);
+}
+
+/** heroId -> the whole slate, for every spawn body; folded into the progression table (data/progression.ts). */
+export const spawnMoveTiers: Record<string, string[]> = Object.fromEntries(
+  titanspawnLines.flatMap((line) => SPAWN_TIERS.map((tier) => [spawnId(line, tier), spawnSlate(line.type)]))
+);

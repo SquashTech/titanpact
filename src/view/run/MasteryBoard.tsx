@@ -1,6 +1,7 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import { heroes } from '../../data/heroes';
+import { rosterHeroes as heroes } from '../../data/content';
 import { moves } from '../../data/moves';
+import { applyCompanionTierStep, companionTierStep } from '../../run/companion';
 import { progressionTable } from '../../data/progression';
 import type { HeroDefinition } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
@@ -62,6 +63,13 @@ interface Overflow {
   queue: string[];
 }
 
+/** The companion's tier-step (run/companion.ts): its Evolution rung, and the rung that opens Late. */
+interface Grown {
+  rosterId: string;
+  fromHeroId: string;
+  toHeroId: string;
+}
+
 /**
  * The state of one pour, owned by the screen rather than the board because the Evolution is a
  * whole screen of its own (docs/growth-overhaul.md §11): the EVOLUTION_RUNG into a hero raises it
@@ -75,8 +83,11 @@ export interface PourFlow {
   landing: { rosterId: string; moveId: string } | null;
   offer: ScrollOffer | null;
   evolving: Evolving | null;
+  /** The companion in its next body, for the reveal; the step itself has already landed on the run. */
+  grown: Grown | null;
   overflow: Overflow | null;
   spend: (entry: RosterEntry) => void;
+  closeGrown: () => void;
   resolveOffer: (replaceMoveId: string | null, learn: boolean) => void;
   closeOffer: () => void;
   chooseEvolution: (pathId: string) => void;
@@ -88,6 +99,7 @@ export function useScrollPour(run: RunState, onRunChange: (next: RunState) => vo
   const [pouring, setPouring] = useState<string | null>(null);
   const [landing, setLanding] = useState<{ rosterId: string; moveId: string } | null>(null);
   const [evolving, setEvolving] = useState<Evolving | null>(null);
+  const [grown, setGrown] = useState<Grown | null>(null);
   const [overflow, setOverflow] = useState<Overflow | null>(null);
 
   useEffect(() => {
@@ -133,6 +145,14 @@ export function useScrollPour(run: RunState, onRunChange: (next: RunState) => vo
     playSfx('scroll.spend', { pitch: rankedUp ? 1.18 : 1 });
     setPouring(entry.rosterId);
 
+    // The companion's tier-step, in place of a branch and in place of an offer (docs/titanspawn-
+    // overhaul.md §5): the same creature in its next body is what this rung bought.
+    const stepTo = companionTierStep(ranked);
+    if (stepTo) {
+      onRunChange(applyCompanionTierStep(next, entry.rosterId));
+      window.setTimeout(() => setGrown({ rosterId: entry.rosterId, fromHeroId: entry.heroId, toHeroId: stepTo }), POUR_MS);
+      return;
+    }
     // The Evolution rung: the pour lands, then the hero's Evolution screen rises in place of an
     // offer — the Evolution is what this rung bought.
     const node = availableEvolution(progressionTable, ranked);
@@ -177,7 +197,9 @@ export function useScrollPour(run: RunState, onRunChange: (next: RunState) => vo
     landing,
     offer,
     evolving,
+    grown,
     overflow,
+    closeGrown: () => setGrown(null),
     spend,
     resolveOffer,
     closeOffer: () => setOffer(null),

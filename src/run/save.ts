@@ -289,6 +289,8 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
     evolutionTypeGraft: graft as TypeId | null,
     classId: classId as string | null,
     classPassiveId,
+    // Absent on a file written before the companion; a hero that never was one is not one.
+    mortal: value.mortal === true,
   };
 }
 
@@ -420,6 +422,8 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
     masteryDeferred: value.masteryDeferred,
     recruitContracts: value.recruitContracts,
     consumables,
+    // Absent on a file written before the companion; a run that never had one has none.
+    companionHeroId: typeof value.companionHeroId === 'string' && index.heroIds.has(value.companionHeroId) ? value.companionHeroId : null,
     map,
     currentNodeId,
     visitedNodeIds: [...value.visitedNodeIds],

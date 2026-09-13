@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { equipment } from '../../data/equipment';
-import { heroes } from '../../data/heroes';
+import { rosterHeroes } from '../../data/content';
 import { actAllowsRarity, canMergeItems, mergeResultId, nextRarity, type EquipmentDefinition } from '../../run/equipment';
 import type { RunState } from '../../run/state';
 import { ItemPiece, RARITY_COLOR_VARS, RARITY_LABELS, RARITY_RGB_VARS } from '../shared/EquipmentBox';
@@ -49,7 +49,7 @@ function mergePartners(item: EquipmentDefinition, run: RunState): MergePartner[]
   };
   for (const stashId of run.stash) consider(stashId, 'in your bag', true);
   for (const entry of run.roster) {
-    for (const wornId of entry.equipment) consider(wornId, `worn by ${heroes[entry.heroId]?.name ?? entry.heroId}`, false);
+    for (const wornId of entry.equipment) consider(wornId, `worn by ${rosterHeroes[entry.heroId]?.name ?? entry.heroId}`, false);
   }
   return [...rows.values()].sort((a, b) => Number(b.ready) - Number(a.ready));
 }

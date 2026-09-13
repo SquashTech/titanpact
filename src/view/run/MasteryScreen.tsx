@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
-import { heroes } from '../../data/heroes';
+import { rosterHeroes } from '../../data/content';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
 import type { HeroDefinition } from '../../engine/content';
@@ -11,6 +11,7 @@ import { NodeSky, NODE_TINT_ARCANE } from '../shared/NodeStage';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { EvolutionScreen } from './EvolutionScreen';
+import { CompanionScreen } from './CompanionScreen';
 import { MasteryBoard, useScrollPour } from './MasteryBoard';
 
 interface Props {
@@ -56,7 +57,7 @@ export function MasteryScreen({ run, onRunChange, onDone }: Props) {
   // Every hero at max rank with nothing left to teach: the purse buys literally nothing, ever.
   // The count is left standing rather than swallowed — it is a dead end in the run, not a bug.
   const stuck = left > 0 && !run.roster.some((entry) => canSpendScroll(progressionTable, moves, { ...run, masteryScrolls: Infinity }, entry));
-  const idle = !flow.pouring && !flow.offer && !flow.evolving && !flow.overflow;
+  const idle = !flow.pouring && !flow.offer && !flow.evolving && !flow.grown && !flow.overflow;
   // Never while a pour is still resolving — the rung's offer after an Evolution has not rolled yet.
   const done = !spendable && idle;
   // The out for a purse the player wants to keep. Not while anything is mid-resolution: an
@@ -69,11 +70,15 @@ export function MasteryScreen({ run, onRunChange, onDone }: Props) {
     onDone();
   }
 
+  if (flow.grown) {
+    return <CompanionScreen run={run} beat={{ kind: 'grown', fromHeroId: flow.grown.fromHeroId, toHeroId: flow.grown.toHeroId }} onContinue={flow.closeGrown} />;
+  }
+
   const evolvingEntry = flow.evolving ? (run.roster.find((r) => r.rosterId === flow.evolving!.rosterId) ?? null) : null;
   if (flow.evolving && evolvingEntry) {
     return (
       <EvolutionScreen
-        hero={heroes[evolvingEntry.heroId]}
+        hero={rosterHeroes[evolvingEntry.heroId]}
         entry={evolvingEntry}
         node={flow.evolving.node}
         run={run}

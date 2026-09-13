@@ -39,6 +39,8 @@ export type SfxId =
   | 'seal.shatter'
   | 'titan.stir'
   | 'titan.gaze'
+  | 'companion.chirp'
+  | 'companion.gone'
   | 'map.path'
   | 'map.select'
   | 'map.boon'
@@ -425,6 +427,33 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'triangle', freq: 784, gain: 0.24, attack: 0.002, hold: 0.015, decay: 0.13 },
       { wave: 'sine', freq: 1568, gain: 0.1, attack: 0.003, decay: 0.2, delay: 0.005 },
       { wave: 'noise', gain: 0.05, attack: 0.004, decay: 0.07, filter: { type: 'highpass', freq: 4000 } },
+    ],
+  },
+
+  /**
+   * The companion's cute noise (CompanionScreen): two rising chirps, a fifth apart, small and
+   * round — a creature, not a bell. No noise transient at all; a mouth, not a strike. Played once
+   * per hop of the dance, with `pitch` stepping so the hops are not one sound repeated.
+   */
+  'companion.chirp': {
+    gain: 0.34,
+    jitter: 0.03,
+    voices: [
+      { wave: 'sine', freq: 880, freqEnd: 1320, gain: 0.3, attack: 0.008, hold: 0.02, decay: 0.09 },
+      { wave: 'triangle', freq: 440, freqEnd: 660, gain: 0.1, attack: 0.008, decay: 0.08 },
+      { wave: 'sine', freq: 1175, freqEnd: 1760, gain: 0.26, attack: 0.008, hold: 0.03, decay: 0.12, delay: 0.13 },
+      { wave: 'triangle', freq: 587, freqEnd: 880, gain: 0.08, attack: 0.008, decay: 0.1, delay: 0.13 },
+    ],
+  },
+
+  /** The companion taken back (CompanionScreen 'lost'): a falling third, low and slow, under a breath of air pulled inward. */
+  'companion.gone': {
+    gain: 0.38,
+    jitter: 0.006,
+    voices: [
+      { wave: 'sine', freq: 392, freqEnd: 311, gain: 0.26, attack: 0.06, hold: 0.2, decay: 0.9 },
+      { wave: 'sine', freq: 196, freqEnd: 155, gain: 0.2, attack: 0.08, hold: 0.2, decay: 1.1 },
+      { wave: 'noise', gain: 0.12, attack: 0.5, decay: 0.7, filter: { type: 'bandpass', freq: 1800, freqEnd: 300, q: 0.8 } },
     ],
   },
 

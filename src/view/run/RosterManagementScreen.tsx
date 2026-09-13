@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { heroes } from '../../data/heroes';
+import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import type { HeroDefinition } from '../../engine/content';
 import type { RunState, RosterEntry } from '../../run/state';
@@ -151,7 +151,7 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
       if (!itemId) return false;
       if (to.kind === 'stash') return from.kind === 'hero' || mergeableInBag(from.index, to.index);
       const entry = run.roster.find((r) => r.rosterId === to.rosterId);
-      if (!entry || !heroes[entry.heroId]) return false;
+      if (!entry || !rosterHeroes[entry.heroId]) return false;
       if (from.kind === 'hero' && from.rosterId === to.rosterId) return false;
       // A hero never holds two copies. The box the item is already IN is not a destination either.
       return !entry.equipment.includes(itemId);
@@ -181,7 +181,7 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
     try {
       if (to.kind === 'hero') {
         const entry = run.roster.find((r) => r.rosterId === to.rosterId);
-        const hero = entry ? heroes[entry.heroId] : undefined;
+        const hero = entry ? rosterHeroes[entry.heroId] : undefined;
         if (!entry || !hero) return true;
         const full = entry.equipment.length >= itemSlotsFor(hero, entry);
         // Dropped on the card rather than on a box: seat it where it fits, or ask which one goes.
@@ -198,10 +198,10 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
           if (from.rosterId === to.rosterId) return true;
           // `index` only matters when the destination is full; moveEquipment ignores it otherwise,
           // so an empty box and a filled one on the same hero can share this one call.
-          onRunChange(moveEquipment(run, from.rosterId, from.index, to.rosterId, heroes, index).run);
+          onRunChange(moveEquipment(run, from.rosterId, from.index, to.rosterId, rosterHeroes, index).run);
         } else {
           // A free slot takes it outright; a full hero gives up whatever box was tapped.
-          onRunChange(equipFromStash(run, from.index, to.rosterId, equipment, heroes, full ? index : undefined));
+          onRunChange(equipFromStash(run, from.index, to.rosterId, equipment, rosterHeroes, full ? index : undefined));
         }
         playSfx('equip');
         setSeatingRosterId(to.rosterId);
@@ -505,7 +505,7 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
                 list to scroll, and each card gets a full card-width row underneath it for slots. */}
             <HeroSlotGrid>
               {run.roster.map((entry) => {
-                const hero = heroes[entry.heroId];
+                const hero = rosterHeroes[entry.heroId];
                 const capacity = itemSlotsFor(hero, entry);
                 const cardRef: SlotRef = { kind: 'hero', rosterId: entry.rosterId, index: AUTO_SLOT };
                 const takeable = !!selected && canMove(selected, cardRef);
@@ -556,7 +556,7 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
 
       {swapTarget && selected && selectedItem && (
         <EquipSwapScreen
-          hero={heroes[swapTarget.heroId]}
+          hero={rosterHeroes[swapTarget.heroId]}
           entry={swapTarget}
           held={swapTarget.equipment.flatMap((id) => (equipment[id] ? [equipment[id]] : []))}
           offered={selectedItem}

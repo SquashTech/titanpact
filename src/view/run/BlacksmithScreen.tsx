@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
-import { heroes } from '../../data/heroes';
+import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import type { HeroDefinition } from '../../engine/content';
 import { MAX_ITEM_SLOTS } from '../../run/equipment';
@@ -27,7 +27,7 @@ interface Props {
  * The Blacksmith (2026-09-08, per user direction): the paid counterpart to the Forge, and from
  * act 3 the other half of the funnel row's fork. Three verbs, all of them about gear the player
  * already owns — buy a hero another item slot, lift an item a tier at the Anvil, or bind an
- * element at the Enchanter. The Guild Hall beside it trades in heroes and new gear instead.
+ * element at the Enchanter. The Guild Hall beside it trades in rosterHeroes and new gear instead.
  *
  * The slot is the dear one on purpose (shop.ts SLOT_PRICE_BY_TARGET). It is the same grant the
  * Forge hands out free on the reward row, and the reward row keeps that node at its lowest
@@ -43,7 +43,7 @@ export function BlacksmithScreen({ run, onRunChange, onContinue }: Props) {
 
   function handleBuySlot(rosterId: string) {
     try {
-      onRunChange(buyItemSlot(run, rosterId, heroes));
+      onRunChange(buyItemSlot(run, rosterId, rosterHeroes));
       playSfx('equip');
     } catch (err) {
       if (!(err instanceof RunProgressError)) throw err;
@@ -74,8 +74,8 @@ export function BlacksmithScreen({ run, onRunChange, onContinue }: Props) {
             </div>
             <HeroSlotGrid>
               {run.roster.map((entry) => {
-                const hero = heroes[entry.heroId];
-                const quote = slotQuote(run, entry.rosterId, heroes);
+                const hero = rosterHeroes[entry.heroId];
+                const quote = slotQuote(run, entry.rosterId, rosterHeroes);
                 const affordable = !!quote && run.gold >= quote.cost;
                 return (
                   <HeroSlotCard

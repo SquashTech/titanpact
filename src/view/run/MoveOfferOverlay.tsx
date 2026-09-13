@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { heroes } from '../../data/heroes';
+import { rosterHeroes } from '../../data/content';
 import { moves } from '../../data/moves';
 import type { RosterEntry, RunState } from '../../run/state';
 import { MOVE_CAP } from '../../run/progression';
@@ -36,7 +36,7 @@ export function MoveOfferOverlay({ run, entry, moveId, eyebrow, onResolve }: Pro
   const [popupMoveId, setPopupMoveId] = useState<string | null>(null);
   const [referenceOpen, setReferenceOpen] = useState(false);
 
-  const hero = heroes[entry.heroId];
+  const hero = rosterHeroes[entry.heroId];
   const caster = healCasterForEntry(hero, entry, run.relics);
   const atCap = entry.unlockedMoveIds.length >= MOVE_CAP;
   const headPress = useLongPress(() => setPopupMoveId(moveId));
@@ -141,7 +141,7 @@ interface LearnedProps {
  * it read as the same beat with a question added, not as two screens.
  */
 export function MoveLearnedOverlay({ run, entry, moveId, eyebrow, onClose }: LearnedProps) {
-  const hero = heroes[entry.heroId];
+  const hero = rosterHeroes[entry.heroId];
   const caster = healCasterForEntry(hero, entry, run.relics);
   return createPortal(
     <div className="log-overlay moveoffer-overlay">

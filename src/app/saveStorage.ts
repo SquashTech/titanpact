@@ -4,7 +4,7 @@
 import { classes } from '../data/classes';
 import { CHAMPION_IDS } from '../data/enemies';
 import { equipment } from '../data/equipment';
-import { heroes } from '../data/heroes';
+import { rosterHeroes } from '../data/content';
 import { locations } from '../data/locations';
 import { moves } from '../data/moves';
 import { progressionTable } from '../data/progression';
@@ -24,7 +24,8 @@ import type { RunState } from '../run/state';
 const STORAGE_KEY = 'titanpact.run';
 
 const contentIndex = buildContentIndex({
-  heroes,
+  // The roster may hold the companion, whose body is a spawn, so the catalog is the roster's.
+  heroes: rosterHeroes,
   moves,
   equipment,
   relics,

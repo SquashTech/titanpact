@@ -41,7 +41,10 @@ import { SandboxBattleScreen } from '../view/run/SandboxBattleScreen';
 import { RunSummaryScreen } from '../view/run/RunSummaryScreen';
 import { heroes } from '../data/heroes';
 import { moves } from '../data/moves';
-import { allCombatants } from '../data/content';
+import { allCombatants, rosterHeroes } from '../data/content';
+import { CompanionScreen, type CompanionBeat } from '../view/run/CompanionScreen';
+import { absorbCompanions, companionCandidate, companionJoinDue, joinCompanion } from '../run/companion';
+import { koRosterIdsOf } from '../run/buildCombatState';
 import { enemies, finaleEnemies, ENDBRINGER_ID } from '../data/enemies';
 import { ActIntroScreen } from '../view/run/ActIntroScreen';
 import { PactSealScreen } from '../view/run/PactSealScreen';
@@ -179,6 +182,8 @@ type Screen =
   | { kind: 'event'; nodeId: string; eventId: string }
   /** What the fight just did to the roster. First in the post-fight chain — it is the fight's own consequence. */
   | { kind: 'levelUp'; report: readonly HeroLevelUp[]; next: Screen }
+  /** The companion's beats (run/companion.ts): the loss goes AHEAD of the level report; the join right after it; the tier-step is the Mastery board's. */
+  | { kind: 'companion'; beat: CompanionBeat; next: Screen }
   /** The Mastery board: after every node that leaves the purse able to buy a rung, and from the map's Scroll chip. */
   | { kind: 'mastery'; next: Screen }
   /** Guardian's Banner after a Guardian win in acts 1-4. Not a map node, so no nodeId. */
@@ -637,16 +642,19 @@ export function App() {
     goldReward: number,
     equipmentReward: EquipmentDefinition | null,
     consumableReward: ConsumableKind | null,
-    /** This fight's AI roster — the beaten builds a Recruit Contract can claim. */
-    defeatedRoster: readonly RosterEntry[],
+    /** This fight's enemy side — the beaten builds a Recruit Contract can claim, and the Early that asks to join. */
+    encounter: Encounter,
     outcome: 'win' | 'loss',
     /** What the fight drank; debited here, so a fight quit and replayed refunds it. */
-    consumablesUsed: ConsumablePurse
+    consumablesUsed: ConsumablePurse,
+    /** The player's own KO'd roster ids at the end — what the companion's mortality reads. */
+    koRosterIds: readonly string[] = []
   ) {
     if (outcome === 'loss') {
       setScreen({ kind: 'runFailed' });
       return;
     }
+    const defeatedRoster = encounter.run.roster;
     const mapNodeType = playerRun.map!.nodes[nodeId].type;
     const isGuardian = mapNodeType === 'boss';
     const isFinale = mapNodeType === 'finale';
@@ -661,11 +669,19 @@ export function App() {
     // Every node kind, unlike `fightsStarted` — this one is the run summary's tally, and since
     // 2026-09-10 it is also what the level curve reads (run/growth.ts).
     next = { ...next, encountersWon: next.encountersWon + 1 };
+    // A KO'd companion is gone from the run — BEFORE the level report, so the report never lists
+    // a hero that is already gone (docs/titanspawn-overhaul.md §5). Its items are in the bag.
+    const absorption = absorbCompanions(next, koRosterIds, equipment);
+    next = absorption.run;
     // Automatic and roster-wide, benched heroes included: no pool and no allocation. The report
     // is what the screen after the fight reads — the roll is destructive, so it cannot be
     // recovered from the roster afterwards.
-    const levelled = applyEncounterLevels(next, heroes);
+    const levelled = applyEncounterLevels(next, rosterHeroes);
     next = levelled.run;
+    // The run's first fight is won: one of the Earlies it beat asks to come along, and it does.
+    // Joined after the levels roll so the report is the fight's and the newcomer arrives at par.
+    const companionId = companionJoinDue(playerRun, mapNodeType) ? companionCandidate(encounter) : null;
+    if (companionId) next = joinCompanion(next, companionId, rosterHeroes);
     // The fight's Scrolls, the Guardian's included (difficulty.ts scrollsFor). Granted here rather
     // than at squad-confirm for the same reason gold is: a fight that is lost pays nothing.
     const scrolls = scrollsFor(mapNodeType as EncounterMapNodeType, playerRun.actNumber);
@@ -738,13 +754,20 @@ export function App() {
         : afterCrucible;
     const afterBanner: Screen = banner ? { kind: 'guardianBanner', next: afterRecruit } : afterRecruit;
 
+    // The join beat sits right after the level report: the fight's consequence, then who it brought.
+    const afterLevels: Screen = companionId ? { kind: 'companion', beat: { kind: 'join', heroId: companionId }, next: afterBanner } : afterBanner;
     // Levels go FIRST, ahead of the Banner and everything under it: they are what this fight did,
     // and the rest of the chain is what the ACT pays. Skipped when the curve owes nothing — past
     // the finale, and on a roster that is entirely at the cap.
+    const afterLoss: Screen = levelled.report.some((hero) => hero.toLevel > hero.fromLevel)
+      ? { kind: 'levelUp', report: levelled.report, next: afterLevels }
+      : afterLevels;
+    // And the companion's loss ahead of even that — the one thing the fight took (§5).
     setScreen(
-      levelled.report.some((hero) => hero.toLevel > hero.fromLevel)
-        ? { kind: 'levelUp', report: levelled.report, next: afterBanner }
-        : afterBanner
+      absorption.absorbed.reduce<Screen>(
+        (rest, gone) => ({ kind: 'companion', beat: { kind: 'lost', heroId: gone.heroId, returnedItems: gone.equipment.length }, next: rest }),
+        afterLoss
+      )
     );
   }
 
@@ -1023,15 +1046,16 @@ export function App() {
           scrollReward={screen.scrollReward}
           equipmentReward={screen.equipmentReward}
           consumableReward={screen.consumableReward}
-          onResolved={(outcome, _finalState, consumablesUsed) =>
+          onResolved={(outcome, finalState, consumablesUsed) =>
             handleFightResolved(
               screen.nodeId,
               screen.goldReward,
               screen.equipmentReward,
               screen.consumableReward,
-              screen.encounter.run.roster,
+              screen.encounter,
               outcome,
-              consumablesUsed
+              consumablesUsed,
+              koRosterIdsOf(finalState, 'A')
             )
           }
           onSaveAndQuit={() => setScreen({ kind: 'title' })}
@@ -1162,6 +1186,8 @@ export function App() {
       {screen.kind === 'levelUp' && (
         <LevelUpScreen run={playerRun} report={screen.report} onContinue={() => setScreen(screen.next)} />
       )}
+
+      {screen.kind === 'companion' && <CompanionScreen run={playerRun} beat={screen.beat} onContinue={() => setScreen(screen.next)} />}
 
       {screen.kind === 'mastery' && (
         <MasteryScreen run={playerRun} onRunChange={setPlayerRun} onDone={() => setScreen(screen.next)} />

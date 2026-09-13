@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
-import { heroes } from '../../data/heroes';
+import { rosterHeroes } from '../../data/content';
 import type { StatKey } from '../../engine/content';
 import { GROWTH_STATS, growthUnitFor, type HeroLevelUp } from '../../run/growth';
 import type { RunState } from '../../run/state';
@@ -38,7 +38,7 @@ function isBigRoll(points: number, levels: number): boolean {
  * roster-wide and unallocatable, which removed the screen that used to report them — so the
  * player could see a number climb on the hero sheet and never see the moment it climbed.
  *
- * The whole roster is listed, benched heroes included, because that IS the rule and one fielded
+ * The whole roster is listed, benched rosterHeroes included, because that IS the rule and one fielded
  * hero levelling would read as participation XP. Every stat gets a cell whether or not it rolled:
  * the misses are what make the hits read as a ROLL against a grade rather than an authored grant,
  * and a row of constant width is what lets six of them be scanned at a glance.
@@ -113,7 +113,7 @@ interface RowProps {
 }
 
 function LevelUpRow({ hero, shown }: RowProps) {
-  const definition = heroes[hero.heroId];
+  const definition = rosterHeroes[hero.heroId];
   if (!definition) return null;
   const levels = hero.toLevel - hero.fromLevel;
   const capped = levels <= 0;

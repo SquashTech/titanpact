@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { heroes } from '../../data/heroes';
+import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import { relics } from '../../data/relics';
 import { classes } from '../../data/classes';
@@ -95,7 +95,7 @@ export function RosterPeek({ run, className, onRunChange }: Props) {
             <div className="screen-scroll">
               <HeroPickGrid count={run.roster.length}>
                 {run.roster.map((entry) => {
-                  const hero = heroes[entry.heroId];
+                  const hero = rosterHeroes[entry.heroId];
                   const heroClass = chosenClass(classes, entry);
                   return (
                     <HeroPickCard

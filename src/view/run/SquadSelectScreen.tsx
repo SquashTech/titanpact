@@ -1,5 +1,5 @@
 import { useState, type CSSProperties, type DragEvent, type ReactNode } from 'react';
-import { heroes } from '../../data/heroes';
+import { rosterHeroes } from '../../data/content';
 import { allCombatants } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import type { HeroDefinition } from '../../engine/content';
@@ -140,7 +140,7 @@ function SquadSlot({
 }
 
 /**
- * The arrow under a scouted enemy while one of the player's heroes is held: up for a matchup the
+ * The arrow under a scouted enemy while one of the player's rosterHeroes is held: up for a matchup the
  * hero comes out ahead in, down for one it comes out behind in, and an empty slot otherwise — the
  * slot is always drawn so the chips never change height when a hero is picked up or put down.
  */
@@ -167,7 +167,7 @@ export function SquadSelectScreen({
 }: Props) {
   const locked = new Set(lockedActiveRosterIds.filter((id) => run.roster.some((r) => r.rosterId === id)));
   const [slots, setSlots] = useState<(string | null)[]>(() => {
-    // Locked heroes first, so they land in the two active slots before anyone else is placed.
+    // Locked rosterHeroes first, so they land in the two active slots before anyone else is placed.
     const ids = run.roster.map((r) => r.rosterId).sort((a, b) => Number(locked.has(b)) - Number(locked.has(a)));
     return Array.from({ length: SLOT_COUNT }, (_, i) => ids[i] ?? null);
   });
@@ -188,7 +188,7 @@ export function SquadSelectScreen({
   // (matchupVerdict), so "who does this one want to see across the field" is answered by the same
   // tap that starts a swap. Post-Evolution types, since that is the typing that fights.
   const heldEntry = selectedSlot !== null && slots[selectedSlot] ? rosterById.get(slots[selectedSlot]!) : undefined;
-  const heldTypes = heldEntry ? rosterEntryTypes(heroes[heldEntry.heroId], heldEntry) : null;
+  const heldTypes = heldEntry ? rosterEntryTypes(rosterHeroes[heldEntry.heroId], heldEntry) : null;
 
   const activeIds = [slots[0], slots[1]] as const;
   const benchIds = slots.slice(2, squadSize).filter((id): id is string => id !== null);
@@ -314,7 +314,7 @@ export function SquadSelectScreen({
                     {row.indices.map((index) => {
                       const rosterId = slots[index];
                       const entry = rosterId ? rosterById.get(rosterId) : undefined;
-                      const hero = entry ? heroes[entry.heroId] : undefined;
+                      const hero = entry ? rosterHeroes[entry.heroId] : undefined;
                       const isSelected = selectedSlot === index;
                       const isDropTarget = selectedSlot !== null && canSwap(selectedSlot, index);
                       const isDragOver = dragOverSlot === index;

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { heroes } from '../../data/heroes';
+import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import { relics } from '../../data/relics';
 import { classes } from '../../data/classes';
@@ -132,7 +132,7 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
             <div className="run-summary-section-title">{won ? 'The team that finished' : 'Your final squad'}</div>
             <HeroPickGrid count={run.roster.length}>
               {run.roster.map((entry) => {
-                const hero = heroes[entry.heroId];
+                const hero = rosterHeroes[entry.heroId];
                 const heroClass = chosenClass(classes, entry);
                 const earnedStar = starsAwarded.some((e) => e.rosterId === entry.rosterId);
                 return (
@@ -165,7 +165,7 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
             <div className="run-summary-records">
               {starsAwarded.map((entry) => (
                 <span key={entry.rosterId} className="run-summary-record-chip is-star">
-                  ★ {heroes[entry.heroId].name}
+                  ★ {rosterHeroes[entry.heroId].name}
                 </span>
               ))}
               {newFurthestAct && (

@@ -1,7 +1,7 @@
 import { useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { playSfx } from '../../audio/sfx';
-import { heroes } from '../../data/heroes';
+import { rosterHeroes } from '../../data/content';
 import {
   normalizeLine,
   parseTutorialText,
@@ -71,7 +71,7 @@ export function TutorialOverlay({ beat, onDone }: Props) {
   // are idempotent, so the extra taps at the end are harmless once the line itself is pinned.
   const index = Math.min(step, beat.lines.length - 1);
   const line = normalizeLine(beat.lines[index]);
-  const hero = heroes[SPEAKER_HERO_ID[line.speaker]];
+  const hero = rosterHeroes[SPEAKER_HERO_ID[line.speaker]];
   const last = index >= beat.lines.length - 1;
 
   function advance() {
