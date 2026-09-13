@@ -39,7 +39,9 @@ don't silently override it.
 > (`SPAWN_TIER_BY_ACT`), and every spawn — escorts included — rides the monsters track.
 > **Phases 3–5 are IN too:** the fork is Elite-or-Skirmish with the enemy typing previewed on the
 > tile from a draw seeded off the map (`src/run/encounters.ts`), the Pact Clock takes the field
-> only, and the mortal companion joins after the first fight. **Only phase 6, the re-fit, remains.**
+> only, and the mortal companion joins after the first fight. **Phase 6 measured (sim pass 8) and
+> left two balance dials for playtest** — the overhaul is built in full; its §11 table is now the
+> rule in force wherever it disagrees with a line below.
 
 ---
 

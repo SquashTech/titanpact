@@ -1,6 +1,6 @@
 # titanspawn-overhaul.md — The Titanspawn Overhaul
 
-> **STATUS: DECIDED; PHASES 1–5 OF §9 ARE IN (content + renderer, the mob layer, the fork, the companion, the Clock off the bench; 2026-09-13). Phase 6 — the re-fit — is not.**
+> **STATUS: BUILT IN FULL (2026-09-13). All six phases of §9 are in; phase 6's measurements are in "Phase 6 findings" below, and the two balance dials it surfaced are the user's to turn, not the sim's.**
 > This module replaces the location factions with a single per-type mob family (**Titanspawn**),
 > partitions the fourteen mortal types across the five run locations, gives the run a **mortal
 > companion**, takes the Pact Clock off the bench, and turns the map's Elite-or-Battle fork into
@@ -277,7 +277,7 @@ Each phase leaves the game playable. Dependencies drive the order; 3 and 5 are i
 | 3 | The fork: Elite-or-Skirmish, typing preview on the Skirmish and fork tiles, generator guarantees the two differ | **Done 2026-09-13** | `src/run/encounters.ts` is the one node→encounter function (App, sim, preview); seeds derive from the map seed and node id, so nothing new is stored and the tile IS the fight; the fork's Skirmish re-rolls its seed against the Elite's typing. `test/encounters.test.ts`. See "Phase 3 notes". |
 | 4 | The companion: mortality flag, join beat after fight one, absorption screen first in the post-fight chain, ladder reuse with the tier-step at `EVOLUTION_RUNG`, Late ≥ 600, Act 1 script kept functional | **Done 2026-09-13** | `src/run/companion.ts` (`RosterEntry.mortal`, `RunState.companionHeroId`), `CompanionScreen` for the three beats — join (it dances and chirps, and there is no declining, per user direction), grown, lost — `rosterHeroes` as the roster-facing lookup, the spawn slates in the progression table. `test/companion.test.ts`. See "Phase 4 notes". |
 | 5 | Pact Clock off the bench; `lore.md` §3 row deleted; sim re-measures stall length | **Done 2026-09-13** | `tickPactClock` walks the active slots only. Measured over 892 simulated fights: 0.8% reach round 30 and none hit the engine cap (0.9% / none with the bench in) — the Clock closes every stall it did before. `combat.md` and `CLAUDE.md` updated with it. |
-| 6 | Difficulty re-fit and a sim pass: is Act 1's opener the auto-win; claim supply on the fork; the companion's trade ratio by run half; whether the Guild Hall tilted | Pending | After everything. |
+| 6 | Difficulty re-fit and a sim pass: is Act 1's opener the auto-win; claim supply on the fork; the companion's trade ratio by run half; whether the Guild Hall tilted | **Done 2026-09-13** | 2000 skilled-pilot runs + 1000 chart, two A/Bs. Nothing mechanical needed fixing; the report gained a companion by-half row. Findings below; the re-fit itself is deferred to playtest per the repo's standing rule that sims find faults and play makes balance calls. |
 | — | Tutorial rewrite | **Deferred** | Until systems are complete, per user. |
 
 Verify each phase as the repo does: `npm test`, `npm run typecheck`, `npm run typecheck:view`.
@@ -381,6 +381,51 @@ Verify each phase as the repo does: `npm test`, `npm run typecheck`, `npm run ty
   tier-step in the policy's pour, and one report line. First measurement: it joins in 100% of runs
   and the chart pilot loses it in ~47% of those, at a mean encounter of 2.5 — the pilot fields
   everyone in Act 1, so that is the pilot's number, not the design's. Phase 6's.
+
+## Phase 6 findings (2026-09-13, sim pass 8)
+
+2000 runs under the skilled pilot (`scripts/sim/pilot.ts`, the default) and 1000 under the
+chart pilot, against pass 7 (`docs/growth-overhaul.md` §8; the last batch before this overhaul).
+Directional, as every batch is: the pilot is one ply deep and absolute win rates are a floor.
+
+**The four questions §9 asked:**
+
+1. **Act 1's opener is the auto-win.** 99.6% won, 1.7 rounds, 96% HP at the end, fielded ratio
+   2.07 (chart pilot: 99.3%, 3.1 rounds). Two bare Earlies from every line do exactly what §4 says.
+2. **Claim supply on the fork went up, and the fork stayed fair.** Contract joins per run 3.75
+   (1.50 claimed + 2.25 replacing; pass 7 measured 1.97 replacing). Node lift Skirmish +0.14 /
+   Elite −0.14 (z ±1.1) — the same near-fairness pass 7 found for Elite-or-Battle (±0.08).
+3. **The companion is the game's biggest late bloomer, and mostly does not live to be one.** All
+   bodies summed, by run half: early ratio **0.43**, dying in **29%** of the fights it is fielded
+   in; late ratio **3.36**, above every hero's late half but Glyph's; delta **+2.93** (chart pilot
+   0.44 → 2.69). Only 707 late-half fights against 4880 early ones: it joins in 99.6% of runs and
+   a knockout takes it in **53%** of those, at a mean encounter of 3.3 — the Act 1 Skirmish and
+   Elite. Its Mid bodies trade at 2–5 (Hoarfang 5.5) and its Late Behemoth at 2.9 with the
+   highest DPR on the player side, so "the Late must be strictly better than a hero" holds; the
+   question is whether the trainee should die this often before it gets there.
+4. **The Guild Hall did not visibly tilt.** Hires 2.26 a run (1.54 + 0.72 replacing) against
+   contracts 3.75; pass 7 carried no hire count to compare against, so this is the baseline for
+   the next pass rather than a finding.
+
+**The run's shape, skilled pilot, against pass 7:** full clear **51.2%** (was 55.0%); act clears
+**78 / 95 / 97 / 83 / 87 / 99%** (was 77 / 90–93 all the way). Act 1 is where it was. Acts 2–3
+got easier (Mid escorts at 400 are the old faction basics); Acts 4–5 got harder, because the
+Late escorts at 600 arrive there — the back half pass 7 called "easier than it was" now carries
+two real Guardians (Act 4 Shrine 78%, Foundry 82%, Necropolis 82%; Act 5 Shrine 81%). The
+Necropolis is still among the worst in every act it appears in (91.7% in Act 2, the act's worst).
+No mechanical fault surfaced: no sign flips between pilots, the fork is fair, the Clock closes
+every stall (0.6% of fights reach round 30, none cap), and the draft table is pass 7's.
+
+**Two dials, measured and left alone** (balance calls are made by playing, not by batch):
+
+| Dial | As built | Alternative | What moved (2000 skilled runs) |
+|---|---|---|---|
+| Act 1's enemy count caps at the roster size — **does the companion count?** | Yes: it is a body the player has, so the Skirmish fields 3 the moment it joins | Count only immortal heroes | Act 1 clear 78.1% → **83.0%**, Elite 86.4% → 94.0%, companion lost 53% → 50%, full clear 51.2% → 52.5%. As built, the companion's body and the enemy it invites roughly cancel (pass 7's Act 1 was 77.2%). One `.filter` in `run/encounters.ts`. |
+| **`SPAWN_TIER_BY_ACT`** — where Late spawn first stand as Guardian escorts | Early / Mid / Mid / **Late** / Late | Late from Act 5 only | Act 4 clear 82.9% → **96.1%**, full clear 51.2% → **59.0%**, Act 5 unchanged. As built the run has a back-half wall; the alternative returns it to pass 7's shape where Act 1 is the only one. |
+
+Neither is turned here. The tier table is the phase-2 first pass and reads as intended — a Late
+in Act 4 is not a breather — and the count rule is the rule as written; both are one line if
+playtest disagrees.
 
 ## 10. Open questions — DO NOT silently resolve
 

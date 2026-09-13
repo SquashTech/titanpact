@@ -3,6 +3,7 @@
 
 import { heroes } from '../../src/data/heroes';
 import { allCombatants } from '../../src/data/content';
+import { isTitanspawn } from '../../src/data/titanspawn';
 import { relics } from '../../src/data/relics';
 import { passives } from '../../src/data/passives';
 import { classes } from '../../src/data/classes';
@@ -232,6 +233,31 @@ export function formatReport(
     const l = r.l!;
     out.push(
       `  ${pad(allCombatants[r.id]?.name ?? r.id, 20)}${padStart(String(e.fielded), 8)}${padStart(num(r.re, 2), 7)}${padStart(pct(e.deaths, e.fielded), 7)}${padStart(num(e.kos / e.fielded, 2), 6)}${padStart(String(l.fielded), 8)}${padStart(num(r.rl, 2), 7)}${padStart(pct(l.deaths, l.fielded), 7)}${padStart(num(l.kos / l.fielded, 2), 6)}${padStart((r.rl - r.re >= 0 ? '+' : '') + num(r.rl - r.re, 2), 7)}`
+    );
+  }
+  // The companion is one hero across up to three bodies (src/run/companion.ts), so its bodies
+  // are summed into one row here — the question the overhaul's phase 6 asks is its trade ratio
+  // by run half, and 42 rows of under-twenty fights cannot answer it.
+  const companionHalf = (half: 'early' | 'late') => {
+    const sum = { fielded: 0, deaths: 0, kos: 0, damageDealt: 0, damageTaken: 0 };
+    for (const [key, h] of Object.entries(agg.heroesByHalf)) {
+      const [id, at] = key.split(':');
+      if (at !== half || !isTitanspawn(id)) continue;
+      sum.fielded += h.fielded;
+      sum.deaths += h.deaths;
+      sum.kos += h.kos;
+      sum.damageDealt += h.damageDealt;
+      sum.damageTaken += h.damageTaken;
+    }
+    return sum;
+  };
+  const ce = companionHalf('early');
+  const cl = companionHalf('late');
+  if (ce.fielded > 0 && cl.fielded > 0) {
+    const re = ce.damageTaken > 0 ? ce.damageDealt / ce.damageTaken : 0;
+    const rl = cl.damageTaken > 0 ? cl.damageDealt / cl.damageTaken : 0;
+    out.push(
+      `  ${pad('THE COMPANION (all)', 20)}${padStart(String(ce.fielded), 8)}${padStart(num(re, 2), 7)}${padStart(pct(ce.deaths, ce.fielded), 7)}${padStart(num(ce.kos / ce.fielded, 2), 6)}${padStart(String(cl.fielded), 8)}${padStart(num(rl, 2), 7)}${padStart(pct(cl.deaths, cl.fielded), 7)}${padStart(num(cl.kos / cl.fielded, 2), 6)}${padStart((rl - re >= 0 ? '+' : '') + num(rl - re, 2), 7)}`
     );
   }
 
