@@ -46,7 +46,7 @@ const REWARD_TYPES = new Set([
 ]);
 
 // Act 5 is the base shape's only representative now — acts 1-4 all carry a Mentor row.
-test('map: base per-act shape (Act 5) — Fight, pick-3 reward, Skirmish, pick-3 reward, (Elite or Battle), Guild Hall, Guardian', () => {
+test('map: base per-act shape (Act 5) — Fight, pick-3 reward, Skirmish, pick-3 reward, (Elite or Skirmish), Guild Hall, Guardian', () => {
   for (const seed of [1, 2, 3, 4, 5]) {
     const map = generateMap(seed, 5);
     const rows = map.rows;
@@ -60,9 +60,9 @@ test('map: base per-act shape (Act 5) — Fight, pick-3 reward, Skirmish, pick-3
     assert.ok(rowTypes(3).every((t) => REWARD_TYPES.has(t)), `row 3 (seed ${seed}) has a non-reward type: ${rowTypes(3)}`);
     assert.strictEqual(rows[3].length, 3);
     assert.strictEqual(rows[4].length, 2);
-    assert.deepStrictEqual(rowTypes(4).slice().sort(), ['battle', 'elite']);
+    assert.deepStrictEqual(rowTypes(4).slice().sort(), ['elite', 'skirmish']);
     assert.ok(rowTypes(5).every((t) => REWARD_TYPES.has(t)), `row 5 (seed ${seed}) has a non-reward type: ${rowTypes(5)}`);
-    assert.strictEqual(rows[5].length, 3, 'the third reward row sits between Elite-or-Battle and the funnel');
+    assert.strictEqual(rows[5].length, 3, 'the third reward row sits between Elite-or-Skirmish and the funnel');
     assert.deepStrictEqual(rowTypes(6), ['shop', 'blacksmith'], 'Act 5 funnel is the Guild Hall / Blacksmith fork');
     assert.deepStrictEqual(rowTypes(7), ['boss']);
   }
@@ -123,17 +123,17 @@ test('map: the single-node rows before a pick-3 reward row connect to all 3 of t
   }
 });
 
-test('map: the Elite/Battle choice stays reachable from the reward row on every seed (Act 5)', () => {
+test('map: the Elite/Skirmish choice stays reachable from the reward row on every seed (Act 5)', () => {
   for (const seed of [1, 2, 3, 4, 5]) {
     const map = generateMap(seed, 5);
-    assert.deepStrictEqual(map.rows[4].map((id) => map.nodes[id].type).sort(), ['battle', 'elite'], 'row 4 must be the Elite/Battle row');
+    assert.deepStrictEqual(map.rows[4].map((id) => map.nodes[id].type).sort(), ['elite', 'skirmish'], 'row 4 must be the Elite/Skirmish row');
     const reachableFromRow3 = new Set(map.rows[3].flatMap((id) => map.nodes[id].nextIds));
     for (const optionId of map.rows[4]) {
       assert.ok(reachableFromRow3.has(optionId), `seed ${seed}: ${optionId} unreachable from row 3`);
     }
     assert.ok(
       map.rows[3].some((id) => map.rows[4].every((o) => map.nodes[id].nextIds.includes(o))),
-      `seed ${seed}: no row-3 node preserves the full Elite/Battle choice`,
+      `seed ${seed}: no row-3 node preserves the full Elite/Skirmish choice`,
     );
   }
 });
@@ -168,7 +168,7 @@ test('map: Act 1 inserts a standalone single-node Mentor (mentorReward) row righ
     assert.ok(!rowTypes(4).includes('mentorReward'), `row 4 (seed ${seed}) rerolled mentorReward — it should only ever appear in the forced Mentor row`);
     assert.strictEqual(rows[4].length, 3);
     assert.strictEqual(rows[5].length, 2);
-    assert.deepStrictEqual(rowTypes(5).slice().sort(), ['battle', 'elite']);
+    assert.deepStrictEqual(rowTypes(5).slice().sort(), ['elite', 'skirmish']);
   }
 });
 
@@ -242,22 +242,22 @@ test('map: every node past row 0 has at least one incoming edge (no orphans)', (
 // Every path arrives at the fork holding both options (2026-09-08). The reward row above used to
 // steer left->Elite / right->Battle; with only one row on screen at a time that priced a choice
 // against a row the player can no longer see, so it was removed.
-test('map: every node in the reward row above Elite-or-Battle keeps both options open', () => {
+test('map: every node in the reward row above Elite-or-Skirmish keeps both options open', () => {
   for (const act of [1, 2, 3]) {
     for (const seed of [1, 7, 42, 99, 2024]) {
       const map = generateMap(seed, act);
       const eliteRow = map.rows.length - 4;
       const feeding = map.rows[eliteRow - 1];
-      const [eliteId, battleId] = map.rows[eliteRow];
+      const [eliteId, skirmishId] = map.rows[eliteRow];
       assert.strictEqual(map.nodes[eliteId].type, 'elite');
-      assert.strictEqual(map.nodes[battleId].type, 'battle');
+      assert.strictEqual(map.nodes[skirmishId].type, 'skirmish');
       assert.strictEqual(feeding.length, 3, `act ${act} seed ${seed}: expected a 3-wide feeding row`);
 
       for (const fromId of feeding) {
         assert.deepStrictEqual(
           [...map.nodes[fromId].nextIds].sort(),
-          [eliteId, battleId].sort(),
-          `act ${act} seed ${seed}: ${fromId} must reach both the Elite and the Battle`,
+          [eliteId, skirmishId].sort(),
+          `act ${act} seed ${seed}: ${fromId} must reach both the Elite and the Skirmish`,
         );
       }
     }
@@ -266,7 +266,7 @@ test('map: every node in the reward row above Elite-or-Battle keeps both options
 
 // The lead-on markers on a choice card are derived from where its options actually go
 // (MapRoute's leadOnsDiffer), so an unsteered row is also what takes them off it.
-test('map: the reward row above Elite-or-Battle has nothing left to signpost', () => {
+test('map: the reward row above Elite-or-Skirmish has nothing left to signpost', () => {
   for (const act of [1, 2, 3, 4, 5]) {
     for (const seed of [1, 7, 42, 99, 2024]) {
       const map = generateMap(seed, act);

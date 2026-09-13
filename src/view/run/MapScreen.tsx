@@ -24,6 +24,32 @@ import { ElementGlyph } from '../shared/elementIcons';
 import { getTypeColor } from '../combat/typeColors';
 import { LocationAmbience } from '../shared/LocationSky';
 import { AudioSettings } from '../shared/AudioSettings';
+import { nodeEncounter, scoutedTypes } from '../../run/encounters';
+import { tutorialEncounterFor } from '../../run/tutorial';
+import { TUTORIAL_ENCOUNTERS } from '../../data/tutorial';
+import { heroes } from '../../data/heroes';
+import { enemies } from '../../data/enemies';
+import { allCombatants } from '../../data/content';
+import type { TypeId } from '../../engine/content';
+
+/**
+ * What the Skirmish and Elite tiles in front of the player preview: the typing of the squad
+ * each one fields, from the same deterministic draw the tap will start (run/encounters.ts).
+ * Only the hero-pool nodes — the mob layer's tier already says what a Monsters tile is.
+ */
+function scoutChoices(run: RunState, choiceIds: readonly string[]): Record<string, TypeId[]> {
+  const map = run.map!;
+  const location = locationForAct(run.locationIds, run.actNumber);
+  const scouted: Record<string, TypeId[]> = {};
+  for (const id of choiceIds) {
+    const node = map.nodes[id];
+    if (!node || (node.type !== 'skirmish' && node.type !== 'elite')) continue;
+    const scripted = tutorialEncounterFor(TUTORIAL_ENCOUNTERS, run, node.type);
+    const encounter = nodeEncounter(node, { run, location, heroes, allCombatants, enemies, progression: progressionTable, scripted });
+    scouted[id] = scoutedTypes(encounter, allCombatants);
+  }
+  return scouted;
+}
 
 interface Props {
   run: RunState;
@@ -170,6 +196,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenMastery, onSav
 
   // The whole view: where the player stands, and what they may take from here.
   const choiceIds = reachableNodeIds(run);
+  const scouted = scoutChoices(run, choiceIds);
   const currentRow = run.currentNodeId != null ? map.nodes[run.currentNodeId]?.row ?? 0 : -1;
   const originNode = run.currentNodeId != null ? map.nodes[run.currentNodeId] ?? null : null;
 
@@ -262,6 +289,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenMastery, onSav
           originNode={originNode}
           omen={location.omen}
           choiceIds={choiceIds}
+          scouted={scouted}
           actNumber={run.actNumber}
           onSelectNode={onSelectNode}
           onPreviewNode={setPreviewNode}

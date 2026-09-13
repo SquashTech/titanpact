@@ -16432,6 +16432,29 @@ textarea,
   height: 16px;
 }
 
+/* Who is in there. BELOW the sigil, in the space the labels vacated (2026-09-08): the enemy typing
+   the Skirmish and the fork's tiles preview, lit in each type's own colour so the fork reads as a
+   tactical choice before it is a difficulty one. Small and unlit like the lead-ons above — a read,
+   not a second thing to choose. */
+.map-choice-scout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 15px;
+}
+
+.map-choice-scout-mark {
+  display: flex;
+  opacity: 0.88;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+.map-choice-scout-mark .element-glyph {
+  width: 14px;
+  height: 14px;
+}
+
 /* The sigil. A dark disc cut into the ground with its own light coming up out of it — the ring
    and the glyph are the only lit things, so the well's weather reads THROUGH the choice rather
    than behind a plate. */

@@ -99,7 +99,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
     case 'battle':
       return {
         kind: 'Encounter · Monsters',
-        facts: [...encounterFacts('battle', actNumber), { glyph: 'enemy', label: 'Enemies', value: 'Faction leader' }],
+        facts: [...encounterFacts('battle', actNumber), { glyph: 'enemy', label: 'Enemies', value: 'A leader over Earlies' }],
         odds: odds('battle'),
       };
     case 'skirmish':

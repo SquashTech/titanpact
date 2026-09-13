@@ -96,14 +96,13 @@ import { generateStarterOptions } from '../run/draft';
 import {
   generateEncounter,
   generateFinaleEncounter,
-  appendFinalEnemy,
   type EncounterNodeType,
   type Encounter,
 } from '../run/enemyGen';
-import { actScaling, encounterHeroCountOverride, scrollsFor, type ScalingTrack } from '../run/difficulty';
+import { actScaling, scrollsFor } from '../run/difficulty';
 import { applyEncounterLevels, levelsForEncounter, type HeroLevelUp } from '../run/growth';
-import { generateItinerary, locationBias, locationForAct } from '../run/locations';
-import { mobEncounter, guardianEscortPool } from '../run/spawn';
+import { generateItinerary, locationForAct } from '../run/locations';
+import { encounterKindOf, nodeEncounter } from '../run/encounters';
 import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
 import { LocationProvider } from '../view/shared/LocationContext';
 import { NODE_TINT_MANA, NODE_TINT_VITAL } from '../view/shared/NodeStage';
@@ -553,58 +552,22 @@ export function App() {
       node.type === 'elite' ||
       node.type === 'boss'
     ) {
-      // Generated at node-select time so SquadSelectScreen can scout the enemy squad.
-      // `fight`/`battle` and the Guardian's escorts draw Titanspawn by the Location's types
-      // (run/spawn.ts); `skirmish`/`elite` draw the recruitable hero pool.
-      const mobNode = node.type === 'fight' || node.type === 'battle' ? node.type : null;
-      const isMobFight = mobNode !== null;
-      // `skirmish` and `battle` are mechanically plain `fight` encounters.
-      const encounterKind: EncounterNodeType = node.type === 'skirmish' || node.type === 'battle' ? 'fight' : node.type;
-      // The run's 2nd plain encounter is a deliberately lighter 2v2.
-      const isSecondFight = encounterKind === 'fight' && playerRun.fightsStarted === 1;
-      // Every spawn rides the monsters track — the Guardian's escorts included, since a Late at 600
-      // is authored against that curve (docs/titanspawn-overhaul.md §2). Only the champion itself
-      // keeps the `skirmish` track; the two are appended separately below.
-      const track: ScalingTrack = isMobFight || node.type === 'boss' ? 'monsters' : 'skirmish';
-      const scaling = actScaling(track, playerRun.actNumber);
+      // Built at node-select time so SquadSelectScreen can scout the enemy squad — from the same
+      // deterministic draw the map's tile previewed (run/encounters.ts).
+      const isMobFight = node.type === 'fight' || node.type === 'battle';
+      const encounterKind = encounterKindOf(node.type);
       // The scripted first act names its own enemies (docs/tutorial.md), so the fight is the one
       // Valor has just talked the player through. Null in every normal run and every later act.
       const scripted = tutorialEncounterFor(TUTORIAL_ENCOUNTERS, playerRun, node.type);
-      let encounter: Encounter;
-      if (mobNode && !scripted) {
-        encounter = mobEncounter(mobNode, location, playerRun.actNumber, randomSeed(), scaling);
-      } else {
-        // A scripted roster names its own combatants, so it draws from the WHOLE table
-        // (docs/tutorial.md); a Guardian's escorts are the act's tier of the Location's spawn.
-        const encounterPool = scripted ? allCombatants : node.type === 'boss' ? guardianEscortPool(location, playerRun.actNumber) : heroes;
-        // A hero already on the roster is barred from the recruitable SPAWN, so two copies can never
-        // reach one roster via a contract claim (mirrors rollGuildHallOffers). Passed unconditionally:
-        // enemy and hero ids never collide (test/recruitment.test.ts), so it is inert on a mob pool.
-        const excludeHeroIds = playerRun.roster.map((r) => r.heroId);
-        const standardCount = encounterKind === 'boss' ? 2 : 4;
-        const heroCountOverride =
-          node.type === 'fight' || isSecondFight
-            ? 2
-            : encounterHeroCountOverride(node.type, playerRun.actNumber, playerRun.roster.length, standardCount);
-        const heroCount = heroCountOverride ?? standardCount;
-        // Location affinity bias applies to the recruitable pool only (docs/locations.md §2).
-        const bias = encounterPool === heroes ? locationBias(location, heroes, heroCount) : undefined;
-        encounter = generateEncounter(encounterKind, randomSeed(), encounterPool, {
-          forcedHeroIds: scripted?.heroIds,
-          statGrants: scripted?.statGrants,
-          heroCount: heroCountOverride,
-          bias,
-          excludeHeroIds,
-          scaling,
-          // A spawn has no progression data; only the hero pool cashes a level in.
-          progression: encounterPool === heroes || scripted ? progressionTable : undefined,
-        });
-        // The Location's held-back champion arrives benched, so the first enemy KO brings him in.
-        const finalEnemyId = node.type === 'boss' ? location.guardianFinalEnemyId : null;
-        if (finalEnemyId) {
-          encounter = appendFinalEnemy(encounter, finalEnemyId, enemies, randomSeed(), actScaling('skirmish', playerRun.actNumber));
-        }
-      }
+      let encounter = nodeEncounter(node, {
+        run: playerRun,
+        location,
+        heroes,
+        allCombatants,
+        enemies,
+        progression: progressionTable,
+        scripted,
+      });
       const isFirstFight = encounterKind === 'fight' && playerRun.fightsStarted === 0;
       if (isMobFight && isFirstFight) {
         encounter = equipTestDagger(encounter);

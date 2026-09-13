@@ -1,6 +1,6 @@
 # titanspawn-overhaul.md — The Titanspawn Overhaul
 
-> **STATUS: DECIDED; PHASES 1, 2 AND 5 OF §9 ARE IN (content + renderer, the mob layer, the Clock off the bench; 2026-09-13). Phases 3, 4 and 6 are not.**
+> **STATUS: DECIDED; PHASES 1, 2, 3 AND 5 OF §9 ARE IN (content + renderer, the mob layer, the fork, the Clock off the bench; 2026-09-13). Phases 4 and 6 are not.**
 > This module replaces the location factions with a single per-type mob family (**Titanspawn**),
 > partitions the fourteen mortal types across the five run locations, gives the run a **mortal
 > companion**, takes the Pact Clock off the bench, and turns the map's Elite-or-Battle fork into
@@ -274,7 +274,7 @@ Each phase leaves the game playable. Dependencies drive the order; 3 and 5 are i
 | 0 | This doc; `CLAUDE.md` pointer; gallery into `docs/art/` | **Done 2026-09-13** | |
 | 1 | Content + renderer: `src/data/titanspawn.ts` (14 × 3: stats, tier, kit band, growth grades for the companion), `TitanspawnGlyph` ported from the gallery script into the figure system beside `heroPoses` | **Done 2026-09-13** | `titanspawn` folds into `allCombatants` only — no run pool draws it yet. Totals 200 / 400 / 600, kits 3 / 4 / 4, one grade line per type on the 28 budget; all pinned in `test/titanspawn.test.ts`. The renderer is `src/view/shared/titanspawnArt.tsx`, and `HeroPortrait` dispatches to it for a spawn id, so every screen that shows a hero shows a spawn with no other change. See "Phase 1 notes" below. |
 | 2 | Mob layer: `fight`/`battle` draw spawn by the Location's types and the act's tier; Guardian escorts become spawn; §7's deletions; `LocationDefinition.spawnTypes` replaces `factionId`; `locations.md` §3/§5.2 and `lore.md` §2 rewritten | **Done 2026-09-13** | `src/run/spawn.ts` composes, `generateSpawnEncounter` draws, `SPAWN_TIER_BY_ACT` in `difficulty.ts` says which tier; `test/mobLayer.test.ts` pins it. Faction sprites archived under `art/archive/factions/`, faction tests replaced by `test/guardians.test.ts`. See "Phase 2 notes". |
-| 3 | The fork: Elite-or-Skirmish, typing preview on the Skirmish and fork tiles, generator guarantees the two differ | Pending | Independent; small. |
+| 3 | The fork: Elite-or-Skirmish, typing preview on the Skirmish and fork tiles, generator guarantees the two differ | **Done 2026-09-13** | `src/run/encounters.ts` is the one node→encounter function (App, sim, preview); seeds derive from the map seed and node id, so nothing new is stored and the tile IS the fight; the fork's Skirmish re-rolls its seed against the Elite's typing. `test/encounters.test.ts`. See "Phase 3 notes". |
 | 4 | The companion: mortality flag, join beat after fight one, absorption screen first in the post-fight chain, ladder reuse with the tier-step at `EVOLUTION_RUNG`, Late ≥ 600, Act 1 script kept functional | Pending | Needs 1 and 2. Needs §10's equipment decision. |
 | 5 | Pact Clock off the bench; `lore.md` §3 row deleted; sim re-measures stall length | **Done 2026-09-13** | `tickPactClock` walks the active slots only. Measured over 892 simulated fights: 0.8% reach round 30 and none hit the engine cap (0.9% / none with the bench in) — the Clock closes every stall it did before. `combat.md` and `CLAUDE.md` updated with it. |
 | 6 | Difficulty re-fit and a sim pass: is Act 1's opener the auto-win; claim supply on the fork; the companion's trade ratio by run half; whether the Guild Hall tilted | Pending | After everything. |
@@ -331,6 +331,25 @@ Verify each phase as the repo does: `npm test`, `npm run typecheck`, `npm run ty
 - **The scripted Act 1 stands where the Goblins stood** — Cubling/Duskling, Ravager, Cubling/
   Rivetling are the same Beast/Shadow/Iron chart the act was built on — and Valor's three lines
   that named Goblins were reworded. The rewrite proper stays deferred (§9).
+
+**Phase 3 notes:**
+
+- **Encounters are deterministic per node now**, everywhere. The preview needed the draw before
+  the tap, and storing ids on the node would have meant a save-format change (and the roster can
+  grow between map generation and the fork, which changes the count and the exclusions), so the
+  seed is derived — FNV over the node id, folded into the map seed — and the encounter is built
+  from the run as it stands when the tile is drawn. Same inputs at render and at select, so the
+  preview is the fight. The sim no longer consults its own rng for encounters, which makes a map
+  seed reproduce its fights.
+- **The guarantee is on the TYPE SET**, not the heroes: the fork's Skirmish is re-rolled (a salt
+  on its seed, up to eight times) until its scouted types differ from the Elite's. Sharing a hero
+  between the two is allowed; sharing a reading is not.
+- **The preview is the whole enemy side's effective types**, active heroes first, deduped — a
+  grafted Evolution shows the grafted type, since that is what the fight fields. Only the
+  Skirmish and the fork preview; a Monsters tile's tier already says what it is.
+- **`battle` is off the generated map** but not deleted: the tutorial's curated corridor still
+  fields its scripted warband there, and a save can still hold one. The node-facts readout for it
+  now says "a leader over Earlies".
 
 ## 10. Open questions — DO NOT silently resolve
 

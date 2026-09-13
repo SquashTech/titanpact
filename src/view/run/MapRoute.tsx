@@ -5,6 +5,9 @@ import { useLongPress } from '../shared/MoveTile';
 import { playSfx, type SfxId } from '../../audio/sfx';
 import { NODE_COLORS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
 import { nodeFactsLine } from './nodeFacts';
+import { ElementGlyph } from '../shared/elementIcons';
+import { getTypeColor } from '../combat/typeColors';
+import type { TypeId } from '../../engine/content';
 
 /**
  * The route out of where the player is standing (2026-09-08, per user direction): the node just
@@ -122,6 +125,7 @@ interface RouteSegment {
 function ChoiceMedallion({
   map,
   node,
+  scouted,
   actNumber,
   showLeadOn,
   landDelayMs,
@@ -131,6 +135,8 @@ function ChoiceMedallion({
 }: {
   map: RunMap;
   node: MapNode;
+  /** The enemy typing this tile previews, or none — the Skirmish and the fork only (MapScreen). */
+  scouted: readonly TypeId[] | undefined;
   actNumber: number;
   showLeadOn: boolean;
   landDelayMs: number;
@@ -164,6 +170,19 @@ function ChoiceMedallion({
         <span className="map-choice-burst" aria-hidden="true" />
         <NodeGlyph type={node.type} className="map-medallion-glyph" />
       </button>
+      {/* Who is in there, in the space the labels vacated (2026-09-08): the enemy typing, so the
+          fork is a tactical read and bring-6-pick-4 starts on the map. On the tile rather than in
+          the long-press readout because a rule held in the head does not survive the map being a
+          scene (docs/titanspawn-overhaul.md §4). */}
+      {scouted && scouted.length > 0 && (
+        <span className="map-choice-scout" aria-label={`Enemies: ${scouted.join(', ')}`}>
+          {scouted.map((type) => (
+            <span key={type} className="map-choice-scout-mark" style={{ color: getTypeColor(type) }} title={type}>
+              <ElementGlyph type={type} />
+            </span>
+          ))}
+        </span>
+      )}
     </div>
   );
 }
@@ -173,6 +192,7 @@ export function MapRoute({
   originNode,
   omen,
   choiceIds,
+  scouted,
   actNumber,
   onSelectNode,
   onPreviewNode,
@@ -183,6 +203,8 @@ export function MapRoute({
   /** The Location's omen — what leaks here — shown in the origin's place at the act's first Monsters node. */
   omen: string;
   choiceIds: readonly string[];
+  /** nodeId → the enemy typing its tile previews (MapScreen scoutChoices). */
+  scouted: Readonly<Record<string, readonly TypeId[]>>;
   /** The act the map belongs to — the ledger's drop odds and hire level are per act. */
   actNumber: number;
   onSelectNode: (nodeId: string) => void;
@@ -323,6 +345,7 @@ export function MapRoute({
             key={nodeId}
             map={map}
             node={map.nodes[nodeId]}
+            scouted={scouted[nodeId]}
             actNumber={actNumber}
             showLeadOn={showLeadOn}
             landDelayMs={i * PATH_STAGGER_MS + PATH_DRAW_MS}

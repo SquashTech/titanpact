@@ -11,16 +11,17 @@ import { classes } from '../../src/data/classes';
 import { runEvents } from '../../src/data/events';
 import { progressionTable } from '../../src/data/progression';
 import { enemies, finaleEnemies, ENDBRINGER_ID } from '../../src/data/enemies';
-import { mobEncounter, guardianEscortPool } from '../../src/run/spawn';
+import { encounterKindOf, nodeEncounter } from '../../src/run/encounters';
+import { allCombatants } from '../../src/data/content';
 import { guildHallOffers, CONTRACT_PURCHASE_COST, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT } from '../../src/data/recruitment';
 
 import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry, ROSTER_CAP, TOTAL_ACTS, type RunState, type RosterEntry } from '../../src/run/state';
-import { generateMap, type MapNodeType } from '../../src/run/map';
+import { generateMap, type MapNode, type MapNodeType } from '../../src/run/map';
 import { generateStarterOptions, STARTER_PICK_COUNT } from '../../src/run/draft';
-import { generateItinerary, locationBias, locationForAct } from '../../src/run/locations';
-import { actScaling, encounterHeroCountOverride, type ScalingTrack, scrollsFor } from '../../src/run/difficulty';
+import { generateItinerary, locationForAct } from '../../src/run/locations';
+import { actScaling, scrollsFor } from '../../src/run/difficulty';
 import { grantEncounterLevels, levelsForEncounter, MAX_LEVEL } from '../../src/run/growth';
-import { generateEncounter, generateFinaleEncounter, appendFinalEnemy, type Encounter, type EncounterNodeType } from '../../src/run/enemyGen';
+import { generateFinaleEncounter, type Encounter, type EncounterNodeType } from '../../src/run/enemyGen';
 import { pickSquad, requiredSquadSize, STANDARD_SQUAD_SIZE, type Squad } from '../../src/run/squad';
 import {
   advanceToNode,
@@ -281,7 +282,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     }
 
     if (isEncounterNode(node.type)) {
-      const outcome = resolveEncounterNode(run, node.type, location.id, rng, options, record);
+      const outcome = resolveEncounterNode(run, node, location.id, rng, options, record);
       run = outcome.run;
       if (!outcome.won) {
         alive = false;
@@ -381,13 +382,14 @@ interface EncounterOutcome {
 
 function resolveEncounterNode(
   run: RunState,
-  mapNodeType: MapNodeType,
+  node: MapNode,
   locationId: string,
   rng: Rng,
   options: RunOptions,
   record: RunRecord
 ): EncounterOutcome {
   const location = locationForAct(run.locationIds, run.actNumber);
+  const mapNodeType = node.type;
   const kindKey = mapNodeType as EncounterMapNodeType;
   const isRunOpener = run.actNumber === 1 && run.encountersWon === 0;
   let encounter: Encounter;
@@ -404,40 +406,10 @@ function resolveEncounterNode(
     );
     squadSize = ROSTER_CAP;
   } else {
-    const mobNode = mapNodeType === 'fight' || mapNodeType === 'battle' ? mapNodeType : null;
-    const isMobFight = mobNode !== null;
-    const encounterKind: EncounterNodeType =
-      mapNodeType === 'skirmish' || mapNodeType === 'battle' ? 'fight' : (mapNodeType as EncounterNodeType);
-    const isSecondFight = encounterKind === 'fight' && run.fightsStarted === 1;
-    // Spawn ride the monsters track, the Guardian's escorts included; only the champion keeps the skirmish one (App.tsx).
-    const track: ScalingTrack = isMobFight || mapNodeType === 'boss' ? 'monsters' : 'skirmish';
-    const scaling = actScaling(track, run.actNumber);
-
-    // Mirrors App.tsx handleSelectNode: the mob layer draws spawn (run/spawn.ts), the Guardian's
-    // escorts are the act's tier of the Location's spawn, and the hero pool is everything else.
-    if (mobNode) {
-      encounter = mobEncounter(mobNode, location, run.actNumber, randomSeed(rng), scaling);
-    } else {
-      const encounterPool = mapNodeType === 'boss' ? guardianEscortPool(location, run.actNumber) : heroes;
-      const excludeHeroIds = encounterPool === heroes ? run.roster.map((r) => r.heroId) : undefined;
-      const standardCount = encounterKind === 'boss' ? 2 : 4;
-      const heroCountOverride =
-        mapNodeType === 'fight' || isSecondFight
-          ? 2
-          : encounterHeroCountOverride(mapNodeType, workingRun.actNumber, workingRun.roster.length, standardCount);
-      const heroCount = heroCountOverride ?? standardCount;
-      const bias = encounterPool === heroes ? locationBias(location, heroes, heroCount) : undefined;
-      encounter = generateEncounter(encounterKind, randomSeed(rng), encounterPool, {
-        heroCount: heroCountOverride,
-        bias,
-        excludeHeroIds,
-        scaling,
-        progression: encounterPool === heroes ? progressionTable : undefined,
-      });
-      if (mapNodeType === 'boss' && location.guardianFinalEnemyId) {
-        encounter = appendFinalEnemy(encounter, location.guardianFinalEnemyId, enemies, randomSeed(rng), actScaling('skirmish', run.actNumber));
-      }
-    }
+    // The same deterministic draw the game makes (run/encounters.ts): seeded off the map, so the
+    // sim's own rng is not consulted here and a map seed reproduces its fights.
+    const encounterKind = encounterKindOf(mapNodeType as Exclude<EncounterMapNodeType, 'finale'>);
+    encounter = nodeEncounter(node, { run, location, heroes, allCombatants, enemies, progression: progressionTable });
     if (encounterKind === 'fight') workingRun = { ...workingRun, fightsStarted: workingRun.fightsStarted + 1 };
   }
 
