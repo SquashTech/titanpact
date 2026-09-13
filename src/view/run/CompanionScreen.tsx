@@ -37,7 +37,7 @@ function copyFor(beat: CompanionBeat): { eyebrow: string; title: string; readout
       return {
         eyebrow: 'Something small stirs',
         title: `The friendly ${named(beat.heroId)} wants to accompany you!`,
-        readout: 'It takes a seat, it grows with the pact, and it feeds on Scrolls like anyone — but it is mortal. A knockout takes it back into the Titan.',
+        readout: 'It has great potential, but death is permanent.',
         button: `Welcome, ${named(beat.heroId)}`,
       };
     case 'grown':

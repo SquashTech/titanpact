@@ -2123,58 +2123,79 @@ textarea,
     inset 0 -1px 0 rgba(214, 228, 250, 0.28), inset 0 0 24px -7px rgba(190, 208, 238, 0.7);
 }
 
-/* The Flask: opens a picker like Switch, so it takes Switch's shape at Rest's
-   width, lit in the HP gauge's rose. The count rides the key as a small corner
-   tally rather than replacing the label — "Flask" reads; a bare "2" does not. */
-.bottom-action-flask {
-  flex: 1.35 1 0;
-}
-
-.bottom-action-flask:not(:disabled) {
-  background: linear-gradient(180deg, rgba(255, 138, 138, 0.12), rgba(255, 138, 138, 0.02));
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 138, 138, 0.34),
-    inset 0 -1px 0 rgba(255, 170, 170, 0.13);
-}
-
-.bottom-action-flask:not(:disabled) .bottom-action-glyph {
-  color: rgba(255, 160, 160, 0.95);
-}
-
-.bottom-action-flask:hover:not(:disabled) {
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 138, 138, 0.75),
-    inset 0 -1px 0 rgba(255, 170, 170, 0.22), inset 0 0 22px -6px rgba(255, 138, 138, 0.5);
-}
-
-.bottom-action-flask-glyph {
-  width: 15px;
-  height: 15px;
-  display: block;
-  flex: 0 0 auto;
-}
-
-/* A corner tally inside the key's own rectangle (the key clips overflow), so the
-   count costs the label no width at the row's narrowest. */
-.bottom-action-flask-count {
+/* The two potions, in the field's bottom corners (2026-09-13, per user direction — one Flask key
+   in the bottom row had crowded it): HP on the left, MP on the right, each in its gauge's colour,
+   the count as a pip on the rim. Round, like nothing in the console, because they sit on the
+   field and not in it — a thing you reach for, not a command. Dark with nothing left to drink. */
+.field-flask {
+  --flask-rgb: 255, 138, 138;
   position: absolute;
-  top: 3px;
-  right: 5px;
-  min-width: 14px;
+  bottom: 9px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid rgba(var(--flask-rgb), 0.5);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 38%, rgba(var(--flask-rgb), 0.24), rgba(6, 8, 12, 0.72) 72%);
+  color: rgb(var(--flask-rgb));
+  box-shadow: inset 0 0 12px -4px rgba(var(--flask-rgb), 0.7), 0 0 16px -6px rgba(var(--flask-rgb), 0.8),
+    0 2px 6px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  transition: transform var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out);
+}
+
+.field-flask.is-hpPotion {
+  left: 12px;
+}
+
+.field-flask.is-mpPotion {
+  --flask-rgb: 143, 180, 255;
+  right: 12px;
+}
+
+.field-flask:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: inset 0 0 14px -3px rgba(var(--flask-rgb), 0.9), 0 0 22px -4px rgba(var(--flask-rgb), 0.9),
+    0 3px 8px rgba(0, 0, 0, 0.5);
+}
+
+.field-flask:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.field-flask:disabled {
+  opacity: 0.38;
+  filter: saturate(0.35);
+  cursor: default;
+}
+
+.field-flask-glyph {
+  width: 21px;
+  height: 21px;
+  display: block;
+  filter: drop-shadow(0 0 4px rgba(var(--flask-rgb), 0.7));
+}
+
+.field-flask-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 17px;
+  height: 17px;
   padding: 0 4px;
+  border: 1px solid rgba(var(--flask-rgb), 0.7);
   border-radius: var(--radius-pill);
-  background: rgba(0, 0, 0, 0.45);
-  font-size: 9px;
-  line-height: 14px;
+  background: rgba(4, 5, 8, 0.92);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 15px;
+  text-align: center;
   font-variant-numeric: tabular-nums;
-  color: var(--text-dim);
-}
-
-.bottom-action-flask {
-  position: relative;
-  gap: 5px;
-}
-
-.bottom-action-flask:not(:disabled) .bottom-action-flask-count {
-  color: rgba(255, 190, 190, 0.95);
+  color: rgb(var(--flask-rgb));
 }
 
 /* The MP Potion row under the out-of-mana Rest row: the same row shape as a move, lit in
@@ -2197,44 +2218,20 @@ textarea,
   color: #8fb4ff;
 }
 
-/* The Flask picker: SwitchInPanel's shell with a two-way potion selector on top. */
-.flask-kinds {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  padding: 10px 12px 0;
-}
-
-.flask-kind {
+/* A corner flask's picker: SwitchInPanel's shell, titled by the potion that opened it — the
+   effect in one line, then the heroes. */
+.flask-panel {
   --flask-rgb: 255, 138, 138;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-height: 40px;
-  padding: 6px 8px;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(var(--flask-rgb), 0.28);
-  background: rgba(var(--flask-rgb), 0.06);
-  color: var(--text-dim);
-  font-weight: 700;
-  font-size: 13px;
-  cursor: pointer;
-  transition: background var(--dur-mid) var(--ease-out), border-color var(--dur-mid) var(--ease-out), color var(--dur-mid) var(--ease-out);
 }
 
-.flask-kind.is-mpPotion {
+.flask-panel.is-mpPotion {
   --flask-rgb: 143, 180, 255;
 }
 
-.flask-kind.selected {
-  color: var(--text);
-  background: rgba(var(--flask-rgb), 0.2);
-  border-color: rgba(var(--flask-rgb), 0.8);
-}
-
-.flask-kind.is-empty {
-  opacity: 0.5;
+.flask-panel-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
 }
 
 .flask-kind-glyph {
@@ -16432,27 +16429,55 @@ textarea,
   height: 16px;
 }
 
-/* Who is in there. BELOW the sigil, in the space the labels vacated (2026-09-08): the enemy typing
-   the Skirmish and the fork's tiles preview, lit in each type's own colour so the fork reads as a
-   tactical choice before it is a difficulty one. Small and unlit like the lead-ons above — a read,
-   not a second thing to choose. */
-.map-choice-scout {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  min-height: 15px;
+/* Who is in there IS the sigil (2026-09-13, per user direction — it was a row of marks under a
+   helm): a recruitable encounter's disc is cut into one wedge per enemy type, each tinted and
+   wearing its element, so the fork reads as a tactical choice before it is a difficulty one. The
+   tint is shallow and the seams are dark so it is still a dark disc with light in it, not a chart
+   laid over one; the ring keeps the node colour, which is what still says Skirmish from Elite. */
+.map-medallion-pie {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  pointer-events: none;
 }
 
-.map-choice-scout-mark {
-  display: flex;
-  opacity: 0.88;
-  filter: drop-shadow(0 0 4px currentColor);
+.element-pie-wedge {
+  fill-opacity: 0.26;
 }
 
-.map-choice-scout-mark .element-glyph {
-  width: 14px;
-  height: 14px;
+.element-pie-seam {
+  fill: none;
+  stroke: rgba(4, 5, 8, 0.7);
+  stroke-width: 1.6;
+}
+
+.element-pie-glyph {
+  filter: drop-shadow(0 0 5px currentColor);
+}
+
+.map-medallion.is-scouted {
+  box-shadow: inset 0 0 22px -6px var(--node-color), inset 0 0 0 1px rgba(4, 5, 8, 0.5), 0 0 20px -8px var(--node-color);
+}
+
+/* The Elite's crown, on the rim above its typing: what tells the two forks apart at a glance,
+   before the ring colour is read. */
+.map-medallion-crown {
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  transform: translateX(-50%);
+  color: var(--node-color);
+  filter: drop-shadow(0 0 5px var(--node-color)) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.8));
+  pointer-events: none;
+}
+
+.map-medallion-crown .node-glyph {
+  width: 100%;
+  height: 100%;
 }
 
 /* The sigil. A dark disc cut into the ground with its own light coming up out of it — the ring

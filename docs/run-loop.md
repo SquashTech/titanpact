@@ -118,8 +118,9 @@ outright (`docs/equipment.md` §5).
 **Tiles with no names (2026-09-08, per user direction).** A nine-row act did not fit the well at
 the old 84px rows. Rather than pay for the extra row in scrolling, the tiles dropped their
 LABELS: the glyph, the silhouette tier and the colour already carry what the word did —
-recruitability included, since `fight`/`battle` draw a claw and `skirmish`/`elite` a helm
-(`nodeIcons.tsx`) — and a long press still reads any node out in full. That took rows to 56px and
+recruitability included, since `fight`/`battle` draw the Titan's eye and `skirmish`/`elite`
+their enemy typing (`nodeIcons.tsx`, `ElementPie.tsx`) — and a long press still reads any
+node out in full. That took rows to 56px and
 the tier min-widths from 74/92/106/124 to 46/58/66/84, which fits nine rows inside the well with
 room to spare.
 
@@ -217,14 +218,20 @@ to prove branching *choice* within a row.
 
 ## 2. Node types
 
-**What the map calls them (2026-08-29, per user direction).** The four encounter types
-share **two** player-facing names, not four. `fight` and `battle` both read **Monsters**;
-`skirmish` and `elite` both read **Skirmish**. The split is recruitability — the one fact
-a player needs before choosing a route — and difficulty is carried by colour and glyph
+**What the map calls them (2026-08-29, per user direction; renamed 2026-09-13).** The four
+encounter types share **two** player-facing names, not four. `fight` and `battle` both read
+**Titanspawn** (they read Monsters until the Titanspawn overhaul made that literally what they
+field); `skirmish` and `elite` both read **Skirmish**. The split is recruitability — the one
+fact a player needs before choosing a route — and difficulty is carried by colour and glyph
 instead (`MapScreen`'s `NODE_COLORS`, `nodeIcons.tsx`: `--enemy` the soft opener,
-`--ally` a standard fight, `--crit` the Elite spike; Monsters wear a claw, Skirmishes a
-helm, the Elite that helm under a crown). `boss` reads **Guardian**. The type *ids* below
-are unchanged; this is labelling only.
+`--ally` a standard fight, `--crit` the Elite spike). **Titanspawn tiles wear the Titan's
+eye** — the lens the title and TitanWakeScreen open on, since what leaks through the seal is
+the thing watching — and **a Skirmish tile's face is its enemy typing**: the disc cut into one
+wedge per type, each wearing its element (`ElementPie.tsx`), in place of the helm and the row
+of marks it used to carry underneath. The Elite keeps its crown as a badge on the rim. The
+helm survives only where no typing is drawn — the rail, the lead-on chips, the origin mark and
+the dossier head. `boss` reads **Guardian**. The type *ids* below are unchanged; this is
+labelling only.
 
 The two channels are deliberately **not** redundant — name for recruitability, colour for
 difficulty. Making colour agree with the label instead was tried and reverted the same
@@ -436,7 +443,7 @@ encounters; the same batch after the excision reads 33.0% and 10.70. The roster 
 much lighter and nothing has been handed back yet — automatic per-level stat growth (phase 3) is
 the replacement, and re-fitting the curve is phase 6. Do not read the drop as a regression.
 
-### Consumables — the Flask (2026-09-13, per user direction)
+### Consumables — the two flasks (2026-09-13, per user direction)
 
 Two potions, held as a TEAM purse beside gold and the Scrolls (`RunState.consumables`,
 `src/run/consumables.ts`) and drunk in a fight on any active hero. **HP Potion** restores half of
@@ -481,7 +488,11 @@ weights were just re-fitted, and a 1-of-3 seat spent on a potion is a seat not s
 **What a fight drank comes off the purse at resolve**, not on the sip, so a fight quit and
 replayed refunds it whole — the same reason gold is granted at resolve. On the map the flask
 shows on the header purse as two counts; it is a purse, not an inbox, so the footer never flags
-it.
+it. In a fight the two potions sit in the **field's bottom corners** — HP left, MP right, each
+with its count on the rim (`.field-flask`) — and pressing one opens a picker for WHO drinks
+it, headed by the effect in one line (`FlaskPanel`). They began as one Flask key in the
+console's bottom row, which the fifth key had crowded (2026-09-13, per user direction); the
+corners are the field's, not the console's, which is also why they leave while a round plays.
 
 **Open, deliberately:** the hold cap, the price and the drop odds are all playtest numbers; and
 whether a potion should be drinkable during a forced-replacement beat after a KO — the moment a

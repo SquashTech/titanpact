@@ -1,9 +1,9 @@
-import { useState, type CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 import type { HeroDefinition } from '../../engine/content';
 import type { Combatant } from '../../engine/state';
 import { effectiveTypes, getMaxHp, getMaxMana } from '../../engine/state';
 import type { ConsumableKind } from '../../engine/combat/consumables';
-import { CONSUMABLE_KINDS, CONSUMABLE_NAMES, type ConsumablePurse } from '../../run/consumables';
+import { CONSUMABLE_NAMES } from '../../run/consumables';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
 import { ResourceGlyph } from '../shared/RunGlyph';
@@ -19,8 +19,10 @@ export interface FlaskTarget {
 }
 
 interface Props {
-  /** What is left to drink this fight. */
-  purse: ConsumablePurse;
+  /** The potion this picker pours — the corner flask that opened it. */
+  kind: ConsumableKind;
+  /** How many of it are left to drink this fight. */
+  held: number;
   targets: readonly FlaskTarget[];
   /** The hero the console is on — the row the panel opens pre-lit. */
   actingId: string | null;
@@ -52,41 +54,26 @@ function Gauge({ kind, value, max }: { kind: 'hp' | 'mana'; value: number; max: 
 }
 
 /**
- * The Flask key's picker: which potion, then which active hero drinks it. Drinking is
- * IMMEDIATE and has no Back — the row says so once, in the note, the way Switch's does.
- * Presentation-only; the engine call is FightScreen's.
+ * A corner flask's picker: which active hero drinks it. The potion is decided by the flask that
+ * was pressed, so the panel is the effect in one line and the heroes — nothing to choose but WHO.
+ * Drinking is IMMEDIATE and has no Back — the row says so once, in the note, the way Switch's
+ * does. Presentation-only; the engine call is FightScreen's.
  */
-export function FlaskPanel({ purse, targets, actingId, onDrink, onClose }: Props) {
-  const [kind, setKind] = useState<ConsumableKind>(() => CONSUMABLE_KINDS.find((k) => purse[k] > 0) ?? 'hpPotion');
-  const held = purse[kind];
-
+export function FlaskPanel({ kind, held, targets, actingId, onDrink, onClose }: Props) {
   return (
     <div className="log-overlay" onClick={onClose}>
-      <div className="log-panel switch-panel flask-panel" onClick={(e) => e.stopPropagation()}>
+      <div className={`log-panel switch-panel flask-panel is-${kind}`} onClick={(e) => e.stopPropagation()}>
         <div className="log-panel-header">
-          <span>Flask</span>
+          <span className="flask-panel-title">
+            <span className="flask-kind-glyph">
+              <ResourceGlyph kind={kind} tone="inherit" />
+            </span>
+            {CONSUMABLE_NAMES[kind]}
+            <span className="flask-kind-count">×{held}</span>
+          </span>
           <button className="log-close-button" onClick={onClose}>
             ✕
           </button>
-        </div>
-
-        <div className="flask-kinds" role="tablist">
-          {CONSUMABLE_KINDS.map((k) => (
-            <button
-              key={k}
-              type="button"
-              role="tab"
-              aria-selected={k === kind}
-              className={`flask-kind is-${k}${k === kind ? ' selected' : ''}${purse[k] === 0 ? ' is-empty' : ''}`}
-              onClick={() => setKind(k)}
-            >
-              <span className="flask-kind-glyph">
-                <ResourceGlyph kind={k} tone="inherit" />
-              </span>
-              <span className="flask-kind-name">{CONSUMABLE_NAMES[k]}</span>
-              <span className="flask-kind-count">×{purse[k]}</span>
-            </button>
-          ))}
         </div>
         <p className="flask-blurb">
           {BLURB[kind]}. <strong>No turn spent.</strong>

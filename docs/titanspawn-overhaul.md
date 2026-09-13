@@ -162,9 +162,12 @@ draw spawn; the rows between draw the hero pool.
   (harder, rarity one tier ahead, `rarityWeightsFor`); the preview adds the tactical one, and it
   is what makes bring-6-pick-4 a map-level decision. **The generator guarantees the two options
   differ in at least one type**, or the choice is empty. The Skirmish row (row 2) previews too,
-  for consistency. The preview lives *on the tile* — a glyph pair in the space the labels
-  vacated on 2026-09-08 — not in the long-press readout, for the same reason steering came off
-  that row: a rule held in the head does not survive the map being a scene.
+  for consistency. The preview lives *on the tile* — since 2026-09-13 (per user direction) it IS
+  the tile, the disc cut into one wedge per type in place of the helm (`ElementPie.tsx`); it
+  began as a glyph pair in the space the labels vacated on 2026-09-08 — not in the long-press
+  readout, for the same reason steering came off that row: a rule held in the head does not
+  survive the map being a scene. The `fight` tile wears the Titan's eye and reads
+  **Titanspawn**, no longer Monsters.
 - **`battle` (leader + 3 basics) loses its seat** on the fork. Whether the opener from Act 2
   takes that shape (a Mid among Earlies) or every opener is four scaled Earlies is **open**, §10.
   The node type ids are unchanged either way; what changes is what `fight`/`battle` draw.
@@ -374,6 +377,9 @@ Verify each phase as the repo does: `npm test`, `npm run typecheck`, `npm run ty
 - **Mortality is read at resolution**: `koRosterIdsOf(finalState, 'A')` from the fight's last
   state, `absorbCompanions` before `applyEncounterLevels`, items to the bag, and the `lost`
   beat is pushed AHEAD of the level report. A KO on a lost fight is moot — the run ended.
+  The victory overlay runs BEFORE resolution, off `playerRun.roster`, so it filters the KO'd
+  companion out itself (`FightScreen` `resultRoster`, 2026-09-13, per user direction): a
+  creature the fight took fills no level bar.
 - **The three beats are one screen** (`CompanionScreen`): join and grown dance (five hops on a
   fixed beat, a chirp a little higher on each, then stillness), lost opens the two Eyes behind
   the figure as it sinks. The roster peek is deliberately absent — the title is the point.

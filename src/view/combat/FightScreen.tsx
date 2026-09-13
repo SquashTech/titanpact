@@ -48,7 +48,7 @@ import { TUTORIAL_FIGHT_CUES } from '../../data/tutorial';
 import { TutorialOverlay } from '../run/TutorialOverlay';
 import type { Squad } from '../../run/squad';
 import type { EquipmentDefinition } from '../../run/equipment';
-import { buildCombatState } from '../../run/buildCombatState';
+import { buildCombatState, koRosterIdsOf } from '../../run/buildCombatState';
 import { pickAiAction, type AiContext } from '../../run/ai';
 import { relicTeamStatModifiers } from '../../run/relics';
 import { relicTeamPassiveGrants } from '../../run/passives';
@@ -611,7 +611,8 @@ export function FightScreen({
   const [logOpen, setLogOpen] = useState(false);
   const [referenceOpen, setReferenceOpen] = useState(false);
   const [switchOpen, setSwitchOpen] = useState(false);
-  const [flaskOpen, setFlaskOpen] = useState(false);
+  /** The potion whose picker is open — one of the two corner flasks on the field — or none. */
+  const [flaskKind, setFlaskKind] = useState<ConsumableKind | null>(null);
   /** Potions drunk this fight. The run's purse is only debited at resolve, so a replayed fight refunds them. */
   const [usedConsumables, setUsedConsumables] = useState<ConsumablePurse>({ hpPotion: 0, mpPotion: 0 });
   const [menuOpen, setMenuOpen] = useState(false);
@@ -682,6 +683,10 @@ export function FightScreen({
   const playerLockedIn = isLockedIn(combat, PLAYER_SIDE);
 
   const winner: Side | null = sideDefeated(combat, PLAYER_SIDE) ? AI_SIDE : sideDefeated(combat, AI_SIDE) ? PLAYER_SIDE : null;
+  // A KO'd companion is gone from the run (run/companion.ts absorbCompanions): it is still on the
+  // roster this side of onResolved, but the result fills no bar for it — the fight took it.
+  const playerKoIds = winner ? koRosterIdsOf(combat, PLAYER_SIDE) : [];
+  const resultRoster = playerRun.roster.filter((entry) => !(entry.mortal && playerKoIds.includes(entry.rosterId)));
 
   // Bound to both hold and tap: a Field Effect must be one obvious tap away.
   const inspectFieldEffect = combat.activeFieldEffect ? () => setInspectingFieldEffect(true) : undefined;
@@ -736,12 +741,11 @@ export function FightScreen({
     combat.combatants[actingId].currentMana <
       getMaxMana(allCombatants[combat.combatants[actingId].heroId], combat.combatants[actingId]);
 
-  // What is left in the flask this fight. Shown on the key at all times, drinkable while commanding.
+  // What is left in the flask this fight. Shown on the field's corners at all times, drinkable while commanding.
   const flaskPurse: ConsumablePurse = {
     hpPotion: playerRun.consumables.hpPotion - usedConsumables.hpPotion,
     mpPotion: playerRun.consumables.mpPotion - usedConsumables.mpPotion,
   };
-  const flaskHeld = flaskPurse.hpPotion + flaskPurse.mpPotion;
   const maxHpOf = (id: string) => getMaxHp(allCombatants[combat.combatants[id].heroId], combat.combatants[id]);
   const maxManaOf = (id: string) => getMaxMana(allCombatants[combat.combatants[id].heroId], combat.combatants[id]);
   const flaskRefusal = (id: string, kind: ConsumableKind) => consumableRefusal(combat, id, kind, maxHpOf, maxManaOf);
@@ -902,7 +906,7 @@ export function FightScreen({
       },
     }));
     setUsedConsumables((prev) => ({ ...prev, [kind]: prev[kind] + 1 }));
-    setFlaskOpen(false);
+    setFlaskKind(null);
     // A hero that had committed Rest has lost its reason for it: the console goes back and re-asks.
     if (pending[combatantId]?.kind === 'rest') {
       const next = { ...pending };
@@ -1251,6 +1255,27 @@ export function FightScreen({
           {renderActiveSlot(PLAYER_SIDE, 0)}
           {renderActiveSlot(PLAYER_SIDE, 1)}
         </div>
+
+        {/* The two potions, in the field's bottom corners over the console (2026-09-13, per user
+            direction — they were one Flask key in the bottom row, which had grown crowded): HP on
+            the left, MP on the right, each opening its own picker. Dark with nothing left to drink,
+            never removed; off the field while the round plays out, since nothing can be drunk then. */}
+        {!resolving && !winner &&
+          CONSUMABLE_KINDS.map((kind) => (
+            <button
+              key={kind}
+              type="button"
+              className={`field-flask is-${kind}`}
+              disabled={!(actingId !== null && flaskPurse[kind] > 0)}
+              onClick={() => setFlaskKind(kind)}
+              aria-label={`${CONSUMABLE_NAMES[kind]} — ${flaskPurse[kind]} left`}
+            >
+              <ResourceGlyph kind={kind} tone="inherit" className="field-flask-glyph" />
+              <span className="field-flask-count" aria-hidden="true">
+                {flaskPurse[kind]}
+              </span>
+            </button>
+          ))}
       </div>
 
       <div className="action-area" style={consoleStyle}>
@@ -1609,22 +1634,6 @@ export function FightScreen({
                 </span>
                 Switch
               </button>
-              {/* The Flask opens a picker, like Switch; the drinking itself is one tap inside it. Dark
-                  with nothing left to drink, never removed — the row does not reflow mid-fight. */}
-              <button
-                className="bottom-action bottom-action-primary bottom-action-flask"
-                disabled={!(actingId !== null && flaskHeld > 0)}
-                onClick={() => setFlaskOpen(true)}
-                aria-label={`Flask — ${CONSUMABLE_KINDS.map((k) => `${flaskPurse[k]} ${CONSUMABLE_NAMES[k]}`).join(', ')}`}
-              >
-                <span className="bottom-action-glyph" aria-hidden="true">
-                  <ResourceGlyph kind="hpPotion" tone="inherit" className="bottom-action-flask-glyph" />
-                </span>
-                Flask
-                <span className="bottom-action-flask-count" aria-hidden="true">
-                  {flaskHeld}
-                </span>
-              </button>
               {/* A one-tap commit, like the out-of-mana Rest row it duplicates. Deliberately not
                   adjacent to Back: the keys either side of it only open panels, so the row's one
                   irreversible key never sits under the thumb that is reaching for undo. Dark at
@@ -1803,9 +1812,10 @@ export function FightScreen({
           );
         })()}
 
-      {flaskOpen && actingId && (
+      {flaskKind && actingId && (
         <FlaskPanel
-          purse={flaskPurse}
+          kind={flaskKind}
+          held={flaskPurse[flaskKind]}
           actingId={actingId}
           targets={playerActiveAlive.map(
             (id): FlaskTarget => ({
@@ -1816,7 +1826,7 @@ export function FightScreen({
             })
           )}
           onDrink={handleDrinkPotion}
-          onClose={() => setFlaskOpen(false)}
+          onClose={() => setFlaskKind(null)}
         />
       )}
 
@@ -1874,7 +1884,7 @@ export function FightScreen({
           outcome={winner === PLAYER_SIDE ? 'win' : 'loss'}
           /* resolveRound advances the counter past the round it just played. */
           roundsFought={Math.max(1, combat.round - 1)}
-          roster={playerRun.roster}
+          roster={resultRoster}
           fieldedIds={new Set([...playerSquad.activeIds, ...playerSquad.benchIds].filter((id): id is string => id !== null))}
           levelsGained={levelsGained}
           goldFrom={playerRun.gold}

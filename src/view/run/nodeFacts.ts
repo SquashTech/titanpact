@@ -8,7 +8,9 @@ import { EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, MAX_ITEM_SLOTS, RARITY_ORDER, rarit
 import { GOLD_REWARD_RANGE, PURSE_GOLD_RANGE } from '../../run/runProgress';
 import { LONE_SCROLL_COUNT, SCROLL_REWARD_COUNT } from '../../run/progression';
 import { BOON_OFFER_COUNT } from '../../run/boons';
-import { guildHallLevel, scrollsFor, type EncounterNodeKind } from '../../run/difficulty';
+import { OPENER_ESCORT_COUNT, guildHallLevel, scrollsFor, spawnLeaderTierFor, type EncounterNodeKind } from '../../run/difficulty';
+import { ACT_ONE_OPENER_COUNT } from '../../run/spawn';
+import type { SpawnTier } from '../../data/titanspawn';
 import { ROSTER_CAP, SEAL_ACTS } from '../../run/state';
 import {
   ANVIL_PRICE_BY_TARGET,
@@ -89,17 +91,29 @@ function encounterFacts(type: EncounterNodeKind, actNumber: number): NodeFact[] 
   ];
 }
 
+const SPAWN_TIER_NAMES: Record<SpawnTier, string> = { early: 'Early', mid: 'Mid', late: 'Late' };
+
+/** What a Titanspawn tile fields, read off the opener's shape (run/spawn.ts mobEncounter): two bare Earlies in Act 1, a leader over Earlies after. */
+function spawnLine(actNumber: number): { value: string; note: string } {
+  if (actNumber <= 1) return { value: `${ACT_ONE_OPENER_COUNT} Titanspawn`, note: `both ${SPAWN_TIER_NAMES.early}` };
+  return { value: `${OPENER_ESCORT_COUNT + 1} Titanspawn`, note: `a ${SPAWN_TIER_NAMES[spawnLeaderTierFor(actNumber)]} over ${SPAWN_TIER_NAMES.early}s` };
+}
+
 export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
   const odds = (kind: EncounterNodeKind | 'standard') =>
     rarityWeightsFor(actNumber, kind === 'standard' ? 'standard' : LOOT_SOURCE[kind]);
 
   switch (type) {
     case 'fight':
-      return { kind: 'Encounter · Monsters', facts: encounterFacts('fight', actNumber), odds: odds('fight') };
+      return {
+        kind: 'Encounter · Not recruitable',
+        facts: [...encounterFacts('fight', actNumber), { glyph: 'enemy', label: 'Enemies', ...spawnLine(actNumber) }],
+        odds: odds('fight'),
+      };
     case 'battle':
       return {
-        kind: 'Encounter · Monsters',
-        facts: [...encounterFacts('battle', actNumber), { glyph: 'enemy', label: 'Enemies', value: 'A leader over Earlies' }],
+        kind: 'Encounter · Not recruitable',
+        facts: [...encounterFacts('battle', actNumber), { glyph: 'enemy', label: 'Enemies', ...spawnLine(Math.max(2, actNumber)) }],
         odds: odds('battle'),
       };
     case 'skirmish':

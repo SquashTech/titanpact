@@ -4,12 +4,14 @@ import { STAT_PATHS } from './statIcons';
 import { SECTION_PATHS } from './sectionIcons';
 
 // One glyph per map node type, 24x24, `currentColor` only. The grouping is the information:
-// encounters say who you fight (claw = monsters, helm = recruitable heroes, skull = Guardian);
-// stat/gear rewards reuse the exact glyph of what they grant; landmarks get authored shapes.
+// encounters say who you fight (the Titan's eye = Titanspawn, helm = recruitable heroes, skull =
+// Guardian); stat/gear rewards reuse the exact glyph of what they grant; landmarks get authored
+// shapes.
 
 const CLAW_GASH = <path d="M12 5C15.4 9.4 17 14.4 16.4 19.6 12.4 15.2 10.6 10.2 12 5Z" />;
 
-// Three gashes fanned about a pivot below the box, leaned right as a group.
+// Three gashes fanned about a pivot below the box, leaned right as a group. Off the map since the
+// Titanspawn took the Monsters tiles; kept for the dossier's "Enemies" row (HUB_PATHS.foe).
 const CLAW = (
   <g transform="translate(12 12) translate(-13.8 -11.3)">
     <g transform="translate(-5.2 3)">
@@ -21,6 +23,21 @@ const CLAW = (
     </g>
   </g>
 );
+
+// The Titan's eye: the same lens TitanWakeScreen and the title open on, tapering to points at
+// both corners, with the slit pupil cut out of it. What the Titanspawn are — a leak from the thing
+// that is watching — rather than a claw, which said only "monster". The lens runs nearly edge to
+// edge so it holds at 16px on the rail; the slit is a hole, not a stroke, so it stays dark on any
+// disc.
+const TITAN_EYE = (
+  <path
+    fillRule="evenodd"
+    d="M1.4 12C4.2 6.4 7.9 3.6 12 3.6s7.8 2.8 10.6 8.4C19.8 17.6 16.1 20.4 12 20.4S4.2 17.6 1.4 12Zm10.6-5.2c-1.7 0-2.6 2.1-2.6 5.2s.9 5.2 2.6 5.2 2.6-2.1 2.6-5.2-.9-5.2-2.6-5.2Z"
+  />
+);
+
+// The Elite's crown, drawn where it sits on the helm below; HUB_PATHS.crown centres it.
+const CROWN = <path d="M4.6 2.2 8 5.6l4-3.4 4 3.4 3.4-3.4-1 5.4H5.6Z" />;
 
 // Great-helm; the eye slit is two pieces so a nose bridge keeps the dome attached.
 const HELM = (
@@ -39,14 +56,14 @@ const OPEN_BOOK = (
 
 // Exported so the run HUD can wear the exact glyph of the node that pays it out (RunGlyph.tsx).
 export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
-  fight: CLAW,
+  fight: TITAN_EYE,
   skirmish: HELM,
-  // Same monster pool as `fight`, same glyph.
-  battle: CLAW,
+  // Same spawn pool as `fight`, same glyph.
+  battle: TITAN_EYE,
   // Crowned helm; the crown floats clear of the dome or the two merge.
   elite: (
     <>
-      <path d="M4.6 2.2 8 5.6l4-3.4 4 3.4 3.4-3.4-1 5.4H5.6Z" />
+      {CROWN}
       <g transform="translate(12 23.4) scale(0.82) translate(-12 -20.6)">{HELM}</g>
     </>
   ),
@@ -257,6 +274,10 @@ const HUB_PATHS = {
   hand: (
     <path d="M5 13.4V7.2a1.9 1.9 0 0 1 3.8 0v2.2h.6V3.8a1.9 1.9 0 0 1 3.8 0v5.6h.6V4.6a1.9 1.9 0 0 1 3.8 0v4.8h.6V7.4a1.9 1.9 0 0 1 3.8 0v6.6c0 4.6-3.2 7.8-7.6 7.8-2.5 0-4.4-1-6-3.1l-4-5.2a1.9 1.9 0 0 1 2.9-2.4Z" />
   ),
+  // The enemy side of a ledger row, whatever it fields — the claw the Monsters tile used to wear.
+  foe: CLAW,
+  // The Elite's crown on its own, for the badge over a tile whose face is its enemy typing.
+  crown: <g transform="translate(12 12) scale(1.4) translate(-12 -4.9)">{CROWN}</g>,
   // A hero's Class. A fluted column — the discipline they were taught in, not a thing they carry.
   hall: (
     <>

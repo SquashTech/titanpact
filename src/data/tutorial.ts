@@ -128,7 +128,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
   // --- Row 0: the opener ---
   {
     id: 'map:fight',
-    topic: 'Monsters',
+    topic: 'Titanspawn',
     lines: [
       'A couple of Titanspawn — what leaks through the seal, still small this far out. They surely have some valuable loot that will aid us on the journey. We will take them on together.',
     ],

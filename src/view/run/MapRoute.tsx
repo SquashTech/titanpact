@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import type { MapNode, MapNodeType, RunMap } from '../../run/map';
-import { NodeGlyph } from '../shared/nodeIcons';
+import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
 import { useLongPress } from '../shared/MoveTile';
 import { playSfx, type SfxId } from '../../audio/sfx';
 import { NODE_COLORS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
 import { nodeFactsLine } from './nodeFacts';
-import { ElementGlyph } from '../shared/elementIcons';
-import { getTypeColor } from '../combat/typeColors';
+import { ElementPie } from '../shared/ElementPie';
 import type { TypeId } from '../../engine/content';
 
 /**
@@ -146,6 +145,14 @@ function ChoiceMedallion({
 }) {
   const leadOns = showLeadOn ? leadOnTypes(map, node.id) : [];
   const press = useLongPress(onPreview, onSelect);
+  // Who is in there IS the tile (2026-09-13, per user direction): a recruitable encounter's face
+  // is its enemy typing, cut into wedges, in place of the helm — so the fork is a tactical read and
+  // bring-6-pick-4 starts on the map. On the tile rather than in the long-press readout because a
+  // rule held in the head does not survive the map being a scene (docs/titanspawn-overhaul.md §4).
+  // The Elite keeps its crown, as a badge on the rim: colour carries difficulty, and the crown is
+  // what lets it be told from the Skirmish beside it before the colour is read.
+  const scoutedFace = scouted && scouted.length > 0 ? scouted : null;
+  const label = nodeFactsLine(NODE_NAMES[node.type], node.type, actNumber);
   return (
     <div
       className={`map-choice tier-${NODE_TIERS[node.type]}`}
@@ -160,29 +167,25 @@ function ChoiceMedallion({
       </span>
       <button
         type="button"
-        className="map-medallion"
+        className={`map-medallion${scoutedFace ? ' is-scouted' : ''}`}
         ref={measureRef}
-        aria-label={nodeFactsLine(NODE_NAMES[node.type], node.type, actNumber)}
+        aria-label={scoutedFace ? `${label}. Enemies: ${scoutedFace.join(', ')}` : label}
         data-sfx="none"
         {...press}
       >
         <span className="map-medallion-glow" aria-hidden="true" />
         <span className="map-choice-burst" aria-hidden="true" />
-        <NodeGlyph type={node.type} className="map-medallion-glyph" />
+        {scoutedFace ? (
+          <ElementPie types={scoutedFace} className="map-medallion-pie" />
+        ) : (
+          <NodeGlyph type={node.type} className="map-medallion-glyph" />
+        )}
+        {scoutedFace && node.type === 'elite' && (
+          <span className="map-medallion-crown" aria-hidden="true">
+            <HubGlyph name="crown" />
+          </span>
+        )}
       </button>
-      {/* Who is in there, in the space the labels vacated (2026-09-08): the enemy typing, so the
-          fork is a tactical read and bring-6-pick-4 starts on the map. On the tile rather than in
-          the long-press readout because a rule held in the head does not survive the map being a
-          scene (docs/titanspawn-overhaul.md §4). */}
-      {scouted && scouted.length > 0 && (
-        <span className="map-choice-scout" aria-label={`Enemies: ${scouted.join(', ')}`}>
-          {scouted.map((type) => (
-            <span key={type} className="map-choice-scout-mark" style={{ color: getTypeColor(type) }} title={type}>
-              <ElementGlyph type={type} />
-            </span>
-          ))}
-        </span>
-      )}
     </div>
   );
 }
