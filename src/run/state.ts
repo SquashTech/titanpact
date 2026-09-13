@@ -6,6 +6,7 @@ import type { EquipmentLoadout, Stash, UnseenItems } from './equipment';
 import { createEmptyLoadout } from './equipment';
 import type { RunMap } from './map';
 import { STARTING_CONSUMABLES, type ConsumablePurse } from './consumables';
+import { xpForLevel } from './growth';
 
 export const ROSTER_CAP = 6;
 
@@ -29,8 +30,11 @@ export interface RosterEntry {
    * away. levelUpMovePool filters these out: an offer is spent by being made, not by being taken.
    */
   offeredMoveIds: readonly string[];
-  /** A plain count of level-ups taken this run, starting at 1 — not an XP bar. Sole gate on Evolution. */
-  level: number;
+  /**
+   * Cumulative XP on the run's one curve (growth.ts xpForLevel). Level is DERIVED from it
+   * (growth.ts levelOf), never stored beside it: two figures for one fact drift.
+   */
+  xp: number;
   /** Evolution path ids chosen so far, in order. */
   chosenPathIds: string[];
   // The four stat-grant sources below are kept separate (not folded into one)
@@ -176,7 +180,7 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     equipment: createEmptyLoadout(),
     unlockedMoveIds: [...startingMoveIds],
     offeredMoveIds: [],
-    level: 1,
+    xp: xpForLevel(1),
     chosenPathIds: [],
     evolutionStatGrants: {},
     evolutionPassiveGrants: [],

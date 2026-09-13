@@ -3,7 +3,7 @@ import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { CONSUMABLE_NAMES, type ConsumableKind } from '../../run/consumables';
-import { MAX_LEVEL } from '../../run/growth';
+import { MAX_XP, levelForXp, levelOf } from '../../run/growth';
 import type { RosterEntry } from '../../run/state';
 import { ItemEffectChips, ItemPiece, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import { ItemDetailOverlay } from '../shared/ItemDossier';
@@ -43,7 +43,8 @@ export interface FightResultProps {
   roster: readonly RosterEntry[];
   /** Roster ids that took the field. The rest are the reserve, and level all the same. */
   fieldedIds: ReadonlySet<string>;
-  levelsGained: number;
+  /** XP this win pays every roster hero. How many levels that is, is each hero's own (run/growth.ts). */
+  xpGained: number;
   /** The purse before this fight paid, so the ledger can show where it lands. */
   goldFrom: number;
   goldReward: number;
@@ -69,7 +70,7 @@ export function FightResultOverlay({
   roundsFought,
   roster,
   fieldedIds,
-  levelsGained,
+  xpGained,
   goldFrom,
   goldReward,
   scrollReward,
@@ -78,7 +79,12 @@ export function FightResultOverlay({
   onContinue,
 }: FightResultProps) {
   const won = outcome === 'win';
-  const showParty = won && levelsGained > 0 && roster.length > 0;
+  const showParty = won && xpGained > 0 && roster.length > 0;
+  // The same XP lands a different number of levels on each hero — a hero behind par climbs
+  // further — so the bar count is per hero and the caption reads the spread.
+  const fillsByHero = roster.map((entry) => levelsCrossed(entry, xpGained));
+  const mostFills = Math.max(0, ...fillsByHero);
+  const fewestFills = Math.min(mostFills, ...fillsByHero.filter((n) => n > 0));
 
   const ledger = useMemo(() => {
     const rows: { key: string; render: (shown: boolean) => ReactNode }[] = [];
@@ -111,10 +117,10 @@ export function FightResultOverlay({
       at(t, () => setStage((s) => Math.max(s, STAGE_FILL)));
       // One pip a level for the whole roster, not one a hero: six bars landing together is one
       // event, and six pips inside 45ms is a machine.
-      for (let level = 0; level < levelsGained; level++) {
+      for (let level = 0; level < mostFills; level++) {
         at(t + FILL_MS * (level + 1), () => playSfx('xp.orb', { pitch: 1 + level * 0.12 }));
       }
-      t += FILL_MS * levelsGained + HERO_STAGGER_MS * (roster.length - 1) + CAPTION_LEAD_MS;
+      t += FILL_MS * mostFills + HERO_STAGGER_MS * (roster.length - 1) + CAPTION_LEAD_MS;
       at(t, () => setStage((s) => Math.max(s, STAGE_CAPTION)));
     }
     t += LEDGER_LEAD_MS;
@@ -159,7 +165,7 @@ export function FightResultOverlay({
                   key={entry.rosterId}
                   entry={entry}
                   index={i}
-                  levels={levelsGained}
+                  xp={xpGained}
                   fielded={fieldedIds.has(entry.rosterId)}
                   filling={stage >= STAGE_FILL && !landed && stage < STAGE_CAPTION}
                   landed={landed || stage >= STAGE_CAPTION}
@@ -167,7 +173,9 @@ export function FightResultOverlay({
               ))}
             </div>
             <span className={`fight-result-caption${stage >= STAGE_CAPTION ? ' is-shown' : ''}`}>
-              Heroes +{levelsGained} {levelsGained === 1 ? 'Level' : 'Levels'}
+              {mostFills === 0
+                ? 'Heroes at max'
+                : `Heroes +${fewestFills === mostFills ? mostFills : `${fewestFills}–${mostFills}`} ${mostFills === 1 ? 'Level' : 'Levels'}`}
             </span>
           </section>
         )}
@@ -204,7 +212,7 @@ export function FightResultOverlay({
 interface MemberProps {
   entry: RosterEntry;
   index: number;
-  levels: number;
+  xp: number;
   fielded: boolean;
   /** The bar is running its fills. */
   filling: boolean;
@@ -212,21 +220,27 @@ interface MemberProps {
   landed: boolean;
 }
 
+/** Levels `xp` more would cross for this hero — zero at the cap. */
+function levelsCrossed(entry: RosterEntry, xp: number): number {
+  return levelForXp(Math.min(MAX_XP, entry.xp + xp)) - levelOf(entry);
+}
+
 /**
  * One hero: the figure, its level, and the bar under it. The bar is a CSS animation iterated
  * once a level, and each iteration boundary ticks the badge — so the number climbs on exactly
  * the frame the bar tops out, without a timer per hero per level.
  */
-function PartyMember({ entry, index, levels, fielded, filling, landed }: MemberProps) {
+function PartyMember({ entry, index, xp, fielded, filling, landed }: MemberProps) {
   const definition = rosterHeroes[entry.heroId];
   const [fills, setFills] = useState(0);
   if (!definition) return null;
 
-  const toLevel = Math.min(MAX_LEVEL, entry.level + levels);
-  const fillsToRun = toLevel - entry.level;
+  const fromLevel = levelOf(entry);
+  const fillsToRun = levelsCrossed(entry, xp);
+  const toLevel = fromLevel + fillsToRun;
   const capped = fillsToRun <= 0;
   const shownFills = landed ? fillsToRun : Math.min(fills, fillsToRun);
-  const shownLevel = entry.level + shownFills;
+  const shownLevel = fromLevel + shownFills;
   const barDone = capped || landed || shownFills >= fillsToRun;
 
   const onFillEvent = (e: AnimationEvent<HTMLElement>) => {
@@ -243,7 +257,7 @@ function PartyMember({ entry, index, levels, fielded, filling, landed }: MemberP
           '--hero-delay': `${index * HERO_STAGGER_MS}ms`,
         } as CSSProperties
       }
-      title={`${definition.name} — Level ${entry.level}${capped ? ' (max)' : ` → ${toLevel}`}`}
+      title={`${definition.name} — Level ${fromLevel}${capped ? ' (max)' : ` → ${toLevel}`}`}
     >
       <div className="fight-result-figure">
         {shownFills > 0 && !landed && <span key={shownFills} className="fight-result-figure-bloom" aria-hidden="true" />}

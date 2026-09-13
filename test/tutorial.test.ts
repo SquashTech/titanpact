@@ -8,7 +8,7 @@ import { moves } from '../src/data/moves';
 import { locations } from '../src/data/locations';
 import { typeChart } from '../src/data/typechart';
 import { progressionTable } from '../src/data/progression';
-import { levelAfterEncounters } from '../src/run/growth';
+import { levelAfterEncounters, xpForLevel } from '../src/run/growth';
 import {
   TUTORIAL_ENCOUNTERS,
   TUTORIAL_FIGHT_CUES,
@@ -158,7 +158,7 @@ test('the tutorial act pays enough Scrolls to reach the Evolution rung on one he
   // test survives as the thing that fails if anyone re-attaches Evolution to the level track.
   const solo = addRosterEntry(createRunState(0), createRosterEntry('valor', 'valor', heroes.valor.moveIds));
   assert.strictEqual(
-    availableEvolution(progressionTable, { ...solo.roster[0], level: EVOLUTION_LEVEL }),
+    availableEvolution(progressionTable, { ...solo.roster[0], xp: xpForLevel(EVOLUTION_LEVEL) }),
     null,
     'nothing gates on EVOLUTION_LEVEL any more, so reaching it opens nothing'
   );

@@ -11,6 +11,7 @@ import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
+import { levelOf } from '../../run/growth';
 
 /** Matches the Forge's map colour (MapScreen NODE_COLORS forgeReward), as bare `r, g, b`. */
 const NODE_TINT_FORGE = '240, 145, 60';
@@ -86,7 +87,7 @@ export function ForgeScreen({ run, onRunChange, onContinue }: Props) {
               disabled={atCap || (!!grantedTo && !isGranted)}
               onActivate={() => !grantedTo && !atCap && handleGrant(entry.rosterId)}
               onPreview={() => setPreviewEntry({ hero, entry })}
-              ariaLabel={`${hero.name}, level ${entry.level} — ${
+              ariaLabel={`${hero.name}, level ${levelOf(entry)} — ${
                 atCap ? `already at the ${MAX_ITEM_SLOTS}-slot cap` : `${slots} item slots, grant a ${slots + 1}th`
               }`}
               /* Mounted only on the granted card, so mounting is what starts it. */

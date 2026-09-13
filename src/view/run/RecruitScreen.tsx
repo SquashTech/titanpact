@@ -29,6 +29,7 @@ import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RecruitFanfare } from './RecruitFanfare';
 import { RosterPeek } from './RosterPeek';
 import { RosterReplaceScreen } from './RosterReplaceScreen';
+import { levelOf } from '../../run/growth';
 
 /** Past this many, the contract track collapses to a single seal and a count. */
 const MAX_CONTRACT_PIPS = 6;
@@ -157,8 +158,8 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
         )}
 
         <StageFigure key={featured.rosterId} heroId={hero.id} heroName={hero.name} onInspect={() => setInspecting(true)}>
-          <span className="recruit-level" aria-label={`Level ${featured.level}`}>
-            Lv {featured.level}
+          <span className="recruit-level" aria-label={`Level ${levelOf(featured)}`}>
+            Lv {levelOf(featured)}
           </span>
         </StageFigure>
 

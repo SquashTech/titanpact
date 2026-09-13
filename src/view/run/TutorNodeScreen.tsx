@@ -17,6 +17,7 @@ import { NodeHeader, NodeSky, NODE_TINT_INSIGHT } from '../shared/NodeStage';
 import { healCasterForEntry } from '../shared/healCaster';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
+import { levelOf } from '../../run/growth';
 
 interface Props {
   run: RunState;
@@ -224,7 +225,7 @@ export function TutorNodeScreen({ run, onRunChange, onContinue }: Props) {
                   setStudentId(entry.rosterId);
                 }}
                 onPreview={() => setPreviewEntry({ hero, entry })}
-                ariaLabel={`${hero.name}, level ${entry.level} — ${teachable} techniques to learn`}
+                ariaLabel={`${hero.name}, level ${levelOf(entry)} — ${teachable} techniques to learn`}
                 ctaClassName="is-accent"
                 cta={teachable === 0 ? 'Nothing left' : 'Study'}
                 detail={<span className="tutor-count">{teachable === 0 ? 'pool exhausted' : `${teachable} untaken`}</span>}

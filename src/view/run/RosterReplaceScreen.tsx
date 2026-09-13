@@ -12,6 +12,7 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
+import { levelOf } from '../../run/growth';
 
 export type { RosterReplaceCandidate };
 
@@ -45,7 +46,7 @@ function ReplaceHeroCard({ hero, entry, selected, onSelect, onPreview }: Replace
       selected={selected}
       onActivate={onSelect}
       onPreview={onPreview}
-      ariaLabel={`${hero.name}, level ${entry.level} — ${selected ? 'selected for termination' : 'select to terminate'}`}
+      ariaLabel={`${hero.name}, level ${levelOf(entry)} — ${selected ? 'selected for termination' : 'select to terminate'}`}
       detail={
         <span className="pick-slot empty">
           <span className="pick-slot-item">

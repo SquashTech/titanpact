@@ -35,6 +35,7 @@ import {
 } from '../src/run/state';
 import type { StatKey } from '../src/engine/content';
 import { COMBAT_BUDGET_STATS, statBudgetTotal, grantBudgetTotal } from '../src/run/statBudget';
+import { levelOf } from '../src/run/growth';
 
 const COMBAT_STATS = COMBAT_BUDGET_STATS;
 
@@ -135,11 +136,11 @@ test('finale: a champion arrives at the level and act scaling it was beaten at, 
   const { run } = generateFinaleEncounter([seal(4, 'lavaBeast', 7, grants)], ENDBRINGER_ID, finaleEnemies);
   const entry = run.roster.find((r) => r.rosterId === unsealedIdFor('lavaBeast'));
   assert.ok(entry);
-  assert.strictEqual(entry!.level, 7);
+  assert.strictEqual(levelOf(entry!), 7);
   assert.deepStrictEqual(entry!.evolutionStatGrants, grants);
   // Which is what makes the fight escalate across itself: an Act 2 seal comes back at Act 2.
   const { run: early } = generateFinaleEncounter([seal(2, 'lavaBeast', 3, {})], ENDBRINGER_ID, finaleEnemies);
-  assert.strictEqual(early.roster[0].level, 3);
+  assert.strictEqual(levelOf(early.roster[0]), 3);
   assert.deepStrictEqual(early.roster[0].evolutionStatGrants, {});
 });
 

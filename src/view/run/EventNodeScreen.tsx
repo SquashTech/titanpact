@@ -31,6 +31,7 @@ import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
+import { levelOf } from '../../run/growth';
 
 interface Props {
   /** Rolled at node-select time (App.tsx) — see src/run/events.ts. */
@@ -329,7 +330,7 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onC
                     disabled={!arrived || (resolvedTo !== null && !isResolved) || blocked}
                     onActivate={() => handleHeroPick(entry)}
                     onPreview={() => setPreviewEntry({ hero, entry })}
-                    ariaLabel={`${hero.name}, level ${entry.level} — ${event.name}`}
+                    ariaLabel={`${hero.name}, level ${levelOf(entry)} — ${event.name}`}
                     ctaClassName={isResolved ? 'is-done' : 'is-accent'}
                     cta={heroCta(entry, blocked)}
                   />

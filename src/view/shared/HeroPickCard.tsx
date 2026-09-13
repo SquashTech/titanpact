@@ -6,6 +6,7 @@ import { getTypeAbbr, getTypeColor, getTypeColorRgb } from '../combat/typeColors
 import { ElementGlyph } from './elementIcons';
 import { HeroPortrait } from './HeroPortrait';
 import { useLongPress } from './MoveTile';
+import { levelOf } from '../../run/growth';
 
 // The shared "pick a hero" card: figure on type-tinted ground, one CTA line. Tap acts; HOLD opens
 // `onPreview`. Portrait is 48px in a 3-column grid, 96px in a 2-column one.
@@ -55,7 +56,7 @@ export function HeroPickCard({
       role="button"
       tabIndex={disabled ? -1 : 0}
       aria-disabled={disabled}
-      aria-label={ariaLabel ?? `${hero.name}, level ${entry.level}`}
+      aria-label={ariaLabel ?? `${hero.name}, level ${levelOf(entry)}`}
       onKeyDown={(e) => {
         if ((e.key === 'Enter' || e.key === ' ') && !disabled) {
           e.preventDefault();
@@ -70,7 +71,7 @@ export function HeroPickCard({
         <span className="pick-ground" aria-hidden="true" />
         <HeroPortrait heroId={hero.id} className="pick-portrait" />
         <span className="pick-level" aria-hidden="true">
-          {entry.level}
+          {levelOf(entry)}
         </span>
       </div>
 

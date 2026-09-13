@@ -103,7 +103,7 @@ import {
   type Encounter,
 } from '../run/enemyGen';
 import { actScaling, scrollsFor } from '../run/difficulty';
-import { applyEncounterLevels, levelsForEncounter, type HeroLevelUp } from '../run/growth';
+import { applyEncounterLevels, levelOf, xpForEncounter, xpForLevel, type HeroLevelUp } from '../run/growth';
 import { generateItinerary, locationForAct } from '../run/locations';
 import { encounterKindOf, nodeEncounter } from '../run/encounters';
 import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
@@ -154,7 +154,7 @@ type Screen =
       squad: Squad;
       encounter: Encounter;
       goldReward: number;
-      levelsGained: number;
+      xpGained: number;
       /** This win's Mastery Scrolls (difficulty.ts scrollsFor) — every encounter pays, scaled by act. */
       scrollReward: number;
       /** Rolled at squad-confirm time so the victory screen can spotlight it; handleFightResolved reuses it. */
@@ -227,7 +227,7 @@ function randomSeed(): number {
 function addHeroes(run: RunState, heroIds: readonly string[], level?: number): RunState {
   for (const heroId of heroIds) {
     const entry = createRosterEntry(heroId, heroId, heroes[heroId].moveIds);
-    run = addRosterEntry(run, level === undefined ? entry : { ...entry, level });
+    run = addRosterEntry(run, level === undefined ? entry : { ...entry, xp: xpForLevel(level) });
   }
   return run;
 }
@@ -630,7 +630,7 @@ export function App() {
       goldReward: payout?.gold ?? goldRewardFor(mapNodeType),
       // Read off the win this fight WILL be: the curve is a function of encounters won, so the
       // figure is known before the fight rather than rolled after it.
-      levelsGained: levelsForEncounter(playerRun.encountersWon + 1),
+      xpGained: xpForEncounter(playerRun.encountersWon + 1),
       scrollReward: scrollsFor(mapNodeType, playerRun.actNumber),
       equipmentReward,
       consumableReward: rollConsumableDrop(mapNodeType),
@@ -705,7 +705,7 @@ export function App() {
           actNumber: playerRun.actNumber,
           locationId: location.id,
           championId: champion.heroId,
-          level: champion.level,
+          level: levelOf(champion),
           statGrants: champion.evolutionStatGrants,
         });
       }
@@ -979,7 +979,7 @@ export function App() {
           aiSquad={screen.ai.squad}
           playerRelicIds={screen.playerRelics}
           goldReward={0}
-          levelsGained={0}
+          xpGained={0}
           equipmentReward={null}
           onResolved={() => setScreen({ kind: 'sandboxBattle' })}
         />
@@ -992,7 +992,7 @@ export function App() {
           aiRun={screen.ai.run}
           aiSquad={screen.ai.squad}
           goldReward={0}
-          levelsGained={0}
+          xpGained={0}
           equipmentReward={null}
           onResolved={() => setScreen({ kind: 'title' })}
         />
@@ -1042,7 +1042,7 @@ export function App() {
           aiSquad={screen.encounter.squad}
           playerRelicIds={playerRun.relics}
           goldReward={screen.goldReward}
-          levelsGained={screen.levelsGained}
+          xpGained={screen.xpGained}
           scrollReward={screen.scrollReward}
           equipmentReward={screen.equipmentReward}
           consumableReward={screen.consumableReward}
@@ -1071,7 +1071,7 @@ export function App() {
           aiRun={screen.ai.run}
           aiSquad={screen.ai.squad}
           goldReward={0}
-          levelsGained={0}
+          xpGained={0}
           equipmentReward={null}
           onResolved={() => setScreen({ kind: 'title' })}
           /* No run behind a Quick Battle: a plain one-tap exit, not the armed quit run fights get. */

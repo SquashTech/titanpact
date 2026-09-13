@@ -21,6 +21,7 @@ import { NodeSky, NODE_TINT_GOLD } from '../shared/NodeStage';
 import { HubGlyph } from '../shared/nodeIcons';
 import { useAmbientLocation } from '../shared/LocationContext';
 import { matchupVerdict } from '../shared/matchupVerdict';
+import { levelOf } from '../../run/growth';
 
 interface Props {
   run: RunState;
@@ -119,7 +120,7 @@ function SquadSlot({
       role="button"
       tabIndex={0}
       draggable={!!hero}
-      aria-label={hero && entry ? `${hero.name}, level ${entry.level} — tap to move, hold to review` : 'Empty slot'}
+      aria-label={hero && entry ? `${hero.name}, level ${levelOf(entry)} — tap to move, hold to review` : 'Empty slot'}
       // The cell had `role="button"` and a tab stop and answered neither key. Enter and Space now
       // do what a tap does; the sheet is keyboard-reachable through the roster button in the corner.
       onKeyDown={(e) => {
@@ -360,7 +361,7 @@ export function SquadSelectScreen({
                               )}
                               <HeroPortrait heroId={hero.id} className="roster-card-portrait" />
                               <div className="roster-card-name">
-                                {hero.name} <span className="hint">Lv {entry.level}</span>
+                                {hero.name} <span className="hint">Lv {levelOf(entry)}</span>
                               </div>
                               <div className="roster-card-types">
                                 {rosterEntryTypes(hero, entry).map((t) => (

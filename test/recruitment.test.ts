@@ -5,7 +5,7 @@ import { enemies } from '../src/data/enemies';
 import { guildHallOffers, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT } from '../src/data/recruitment';
 import { ENEMY_LEVEL_BY_ACT, GUILD_HALL_ACT_LAG, guildHallLevel, scrollsFor } from '../src/run/difficulty';
 import { EVOLUTION_LEVEL, EVOLUTION_SCROLLS } from '../src/run/progression';
-import { ENCOUNTERS_PER_ACT, MAX_LEVEL, levelAfterEncounters } from '../src/run/growth';
+import { ENCOUNTERS_PER_ACT, MAX_LEVEL, levelAfterEncounters, levelOf, xpForLevel } from '../src/run/growth';
 import { guildHallEntry } from '../src/run/guildRecruit';
 import { createRunState, createRosterEntry, addRosterEntry, ROSTER_CAP } from '../src/run/state';
 import { equipItem } from '../src/run/equipment';
@@ -42,7 +42,7 @@ test('recruitment: Guild Hall recruit spends gold and adds an entry at the act h
   const entry = next.roster.find((r) => r.rosterId === 'ironWarden');
   assert.ok(entry);
   assert.strictEqual(entry!.heroId, 'ironWarden');
-  assert.strictEqual(entry!.level, guildHallLevel(1));
+  assert.strictEqual(levelOf(entry!), guildHallLevel(1));
   assert.deepStrictEqual(entry!.chosenPathIds, []);
 });
 
@@ -60,16 +60,17 @@ test('recruitment: Guild Hall recruit still enforces the roster cap', () => {
   assert.throws(() => recruitFromGuildHall(run, offer, 'extra-ironWarden'));
 });
 
-test('recruitment: a hire arrives ONE ACT behind the roster, and never catches up', () => {
+test('recruitment: a hire arrives ONE ACT behind the roster', () => {
   // Derived from the level curve since 2026-09-10, not authored beside it: a hire arrives at the
   // level the roster held when this act began, plus one (docs/growth-overhaul.md §6). That IS
   // "decaying runway value" — the gap is a fixed act, so it is worth most early, when one act is
-  // most of the run.
+  // most of the run. Whether it stays behind is the XP curve's business (test/growth.test.ts):
+  // it does, but by less every win.
   for (let act = 1; act <= 5; act++) {
     const level = guildHallLevel(act);
     assert.ok(level >= guildHallLevel(act - 1), `act ${act}: the hire curve must not go backwards`);
     assert.ok(level < MAX_LEVEL, `act ${act}: a hire at ${level} is already at the cap`);
-    // Behind on arrival, and the curve is a delta, so it stays behind for the rest of the run.
+    // Behind on arrival.
     assert.ok(
       level < levelAfterEncounters(act * ENCOUNTERS_PER_ACT),
       `act ${act}: a hire at ${level} is not underlevelled at all`
@@ -94,7 +95,7 @@ test('recruitment: a hire arrives RAW — rank 1, no Evolution, its own starting
     const offer = guildHallOffers.find((o) => o.heroId === 'ironWarden')!;
     const entry = recruitFromGuildHall(run, offer, 'ironWarden').roster.find((r) => r.rosterId === 'ironWarden')!;
 
-    assert.strictEqual(entry.level, guildHallLevel(act));
+    assert.strictEqual(levelOf(entry), guildHallLevel(act));
     assert.deepStrictEqual(entry.chosenPathIds, [], `act ${act}: a hire must not arrive evolved`);
     assert.strictEqual(entry.masteryScrollsSpent, 0, `act ${act}: a hire must arrive at rank 1`);
     assert.deepStrictEqual(
@@ -113,12 +114,13 @@ test('recruitment: RAW is unbuilt, not hollow — a hire has the growth its leve
   const offer = guildHallOffers.find((o) => o.heroId === 'ironWarden')!;
   const entry = recruitFromGuildHall(run, offer, 'ironWarden').roster.find((r) => r.rosterId === 'ironWarden')!;
 
-  assert.ok(entry.level > 1);
+  const level = levelOf(entry);
+  assert.ok(level > 1);
   const gained = Object.values(entry.growthStatGrants).reduce((sum, n) => sum + (n ?? 0), 0);
   assert.ok(gained > 0, 'a hire past level 1 must carry growth grants');
   // Loosely bounded rather than pinned: the roll is seeded but the grades are placeholder, and
   // pinning an exact figure would fail on any growth-grade re-author for no reason.
-  assert.ok(gained > (entry.level - 1) * 4, `${gained} points over ${entry.level - 1} levels is too thin to be a real roll`);
+  assert.ok(gained > (level - 1) * 4, `${gained} points over ${level - 1} levels is too thin to be a real roll`);
 });
 
 test('recruitment: the previewed hire is the hire that is bought', () => {
@@ -137,7 +139,7 @@ test('recruitment: a contract offer carries over Evolution state but not equipme
   const defeated = {
     ...run.roster[0],
     equipment: equipItem(run.roster[0].equipment, equipment['sword.common'].id),
-    level: 5,
+    xp: xpForLevel(5),
     chosenPathIds: ['ironWarden-veteran'],
     evolutionStatGrants: { defense: 10 },
     evolutionTypeGraft: null,
@@ -146,7 +148,7 @@ test('recruitment: a contract offer carries over Evolution state but not equipme
   const offer = deriveContractOffer(defeated);
   assert.strictEqual((offer as any).rosterId, undefined);
   assert.strictEqual((offer as any).equipment, undefined);
-  assert.strictEqual(offer.level, 5);
+  assert.strictEqual(levelOf(offer), 5);
   assert.deepStrictEqual(offer.chosenPathIds, ['ironWarden-veteran']);
   assert.deepStrictEqual(offer.evolutionStatGrants, { defense: 10 });
 });
@@ -157,7 +159,7 @@ test('recruitment: claiming a contract is free in gold and adds the offer ungear
     ...run.roster[0],
     heroId: 'ironWarden',
     equipment: equipItem(run.roster[0].equipment, equipment['sword.common'].id),
-    level: 5,
+    xp: xpForLevel(5),
   };
   const offer = deriveContractOffer(defeated);
 
@@ -167,7 +169,7 @@ test('recruitment: claiming a contract is free in gold and adds the offer ungear
   const entry = next.roster.find((r) => r.rosterId === 'claimed-ironWarden');
   assert.ok(entry);
   assert.strictEqual(entry!.heroId, 'ironWarden');
-  assert.strictEqual(entry!.level, 5);
+  assert.strictEqual(levelOf(entry!), 5);
   assert.deepStrictEqual(entry!.equipment, []);
 });
 
@@ -215,7 +217,7 @@ test('recruitment: recruitFromGuildHallReplacing swaps the terminated hero for a
   let run = seedRoster(allSix, 1000);
   run = {
     ...run,
-    roster: run.roster.map((r) => (r.rosterId === 'tidecaller' ? { ...r, equipment: equipItem(r.equipment, equipment['sword.common'].id), level: 4 } : r)),
+    roster: run.roster.map((r) => (r.rosterId === 'tidecaller' ? { ...r, equipment: equipItem(r.equipment, equipment['sword.common'].id), xp: xpForLevel(4) } : r)),
   };
   const incomingOffer = guildHallOffers.find((o) => !allSix.includes(o.heroId))!;
   assert.ok(incomingOffer, 'expected a Guild Hall offer for a hero not already on the fixture roster');
@@ -227,7 +229,7 @@ test('recruitment: recruitFromGuildHallReplacing swaps the terminated hero for a
   const entry = next.roster.find((r) => r.rosterId === incomingOffer.heroId);
   assert.ok(entry);
   assert.strictEqual(entry!.heroId, incomingOffer.heroId);
-  assert.strictEqual(entry!.level, guildHallLevel(run.actNumber)); // the act's hire, not the terminated hero's level
+  assert.strictEqual(levelOf(entry!), guildHallLevel(run.actNumber)); // the act's hire, not the terminated hero's level
   assert.strictEqual(entry!.equipment[0], 'sword.common'); // inherited from the terminated hero
 });
 
@@ -248,7 +250,7 @@ test('recruitment: claimContractReplacing swaps the terminated hero for the clai
     ...run,
     roster: run.roster.map((r) => (r.rosterId === 'ironWarden' ? { ...r, equipment: equipItem(r.equipment, equipment['sword.common'].id) } : r)),
   };
-  const defeated = { ...run.roster.find((r) => r.rosterId === 'cinderKnight')!, heroId: 'shadowMonk', level: 5 };
+  const defeated = { ...run.roster.find((r) => r.rosterId === 'cinderKnight')!, heroId: 'shadowMonk', xp: xpForLevel(5) };
   const offer = deriveContractOffer(defeated); // shadowMonk is already on this roster, but rosterId is derived fresh below
   const rosterId = freshRosterId(run, 'shadowMonk');
   assert.strictEqual(rosterId, 'shadowMonk-2'); // shadowMonk already occupies its own rosterId
@@ -260,7 +262,7 @@ test('recruitment: claimContractReplacing swaps the terminated hero for the clai
   const entry = next.roster.find((r) => r.rosterId === rosterId);
   assert.ok(entry);
   assert.strictEqual(entry!.heroId, 'shadowMonk');
-  assert.strictEqual(entry!.level, 5); // veteran progress carried over
+  assert.strictEqual(levelOf(entry!), 5); // veteran progress carried over
   assert.strictEqual(entry!.equipment[0], 'sword.common'); // inherited from the terminated hero, not the veteran's own (offer is ungeared)
 });
 

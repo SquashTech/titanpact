@@ -18,6 +18,7 @@ import { equipItem } from '../src/run/equipment';
 import { pickSquad, SquadSelectionError } from '../src/run/squad';
 import { buildCombatState } from '../src/run/buildCombatState';
 import { getEffectiveStat } from '../src/engine/state';
+import { levelOf, xpForLevel } from '../src/run/growth';
 import {
   masteryMovePool,
   grantOfferedMove,
@@ -269,8 +270,8 @@ test('progression: an Evolution is gated on the Scroll ladder, never on level; o
   // gate IS a six-decision wall, where Scrolls are poured one hero at a time.
   let run = seedRoster(['cinderKnight']);
   assert.strictEqual(availableEvolution(progressionTable, run.roster[0]), null, 'nothing poured, nothing offered');
-  assert.strictEqual(run.roster[0].level, 1);
-  const highLevel = { ...run.roster[0], level: 30 };
+  assert.strictEqual(levelOf(run.roster[0]), 1);
+  const highLevel = { ...run.roster[0], xp: xpForLevel(30) };
   assert.strictEqual(availableEvolution(progressionTable, highLevel), null, 'level alone never opens it');
   const oneShort = { ...run.roster[0], masteryScrollsSpent: EVOLUTION_SCROLLS - 1 };
   assert.strictEqual(availableEvolution(progressionTable, oneShort), null, 'nor the Scroll before the rung');

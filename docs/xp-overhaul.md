@@ -1,10 +1,12 @@
 # xp-overhaul.md — The XP Overhaul
 
-> **STATUS: DRAFT, NOT DECIDED (2026-09-13).** Nothing here runs. `CLAUDE.md` and
-> `growth-overhaul.md` describe the game in force; this module is a proposal for what replaces
-> part of it, written in the same shape so that if it is decided, §8 is the route and §9 the
-> list of sign-offs it costs. Where a number below is a first pass it says so — the design is the
-> shape, and the sim (§8, phase 6) is where the numbers get set.
+> **STATUS: §2–4 DECIDED (2026-09-13, per user direction); §5 (four acts) DEFERRED, not decided.
+> PHASE 1 OF §8 IS IN.** `CLAUDE.md` and `growth-overhaul.md` still describe the game in force
+> wherever a §8 phase has not yet landed; §8 is the route and §9 the list of sign-offs each phase
+> spends — **check its Status column before assuming anything here is live.** Where a number
+> below is a first pass it says so — the design is the shape, and the sim (§8, phase 6) is where
+> the numbers get set. §5 is phased last so the rest ships without it, and is to be revisited
+> once the clock is re-measured with the ladder gone.
 
 ---
 
@@ -300,14 +302,23 @@ Sequenced so the tree is playable at every boundary. Numbering is dependency ord
 
 | # | Phase | Exit criterion | Status |
 |---|---|---|---|
-| 1 | **XP under the hood.** `RosterEntry.xp`; level derived off `XP(L) = L³`; encounter XP derived from `LEVEL_AFTER_ENCOUNTER` so par is unchanged to the point. Growth rolls fire per level crossed, as now. No visible change. | Every existing test green with no numeric change at par. A hire behind par measurably gains on it — the new test that replaces "stays behind permanently". | |
+| 1 | **XP under the hood.** `RosterEntry.xp`; level derived off `XP(L) = L³`; encounter XP derived from `LEVEL_AFTER_ENCOUNTER` so par is unchanged to the point. Growth rolls fire per level crossed, as now. No visible change. | Every existing test green with no numeric change at par. A hire behind par measurably gains on it — the new test that replaces "stays behind permanently". | **DONE 2026-09-13.** `xpForLevel` / `levelForXp` / `levelOf` / `xpForEncounter` / `grantXp` (`src/run/growth.ts`); `level` is gone from `RosterEntry` and every reader derives it; `SAVE_VERSION` 12. Measured below. |
 | 2 | **Candy.** The two Scroll nodes re-pointed; the shelf; the *who* screen; the report shows the jump. Scrolls still exist and still buy moves — this is a working bridge state where candy buys levels-and-stats and Scrolls buy moves. | Both nodes grant XP to one hero; the sim tallies candy by source and the paired focus/spread batch runs. | |
 | 3 | **Levels teach.** The destructive one. `HeroDefinition.schedule` on the default table; offers roll from the report; the Evolution raises from `evolutionLevel`; enemies and hires read the same schedule; delete everything in §7. Tutorial re-checked. | No Scroll anywhere. `test/moveTiers.test.ts` rewritten against the schedule. A run completable end to end. | |
 | 4 | **Author 36 schedules.** Parallelisable from phase 3 on. The interesting authoring is the spread: who evolves at 12 and who at 22, and whether the low-base/high-grade late bloomers from the grade pass are also the late evolvers (they should not all be — a hero can bloom in stats and turn early, or the reverse). | No hero on the default schedule; the 10–24 Evolution window pinned by test beside the grade budget. | |
 | 5 | **Four acts and the finale.** §5's table, in one pass. The Herald rename; the Eyes as a second finale champion through `appendFinalEnemy`. | `TOTAL_ACTS` = 5; the sim's act table reads four; 18 encounters at par reach 30. | |
 | 6 | **Re-fit.** Candy supply, `ACT_STEP_CURVE`, `ENEMY_LEVEL_LAG`, champion multipliers, reward weights, against the sim and the skilled pilot; then the length report. | No dead node, no unreachable band, no wall the old curve did not have; run length reported per profile. Win-rate targets are a playtest question. | |
 
-**What each phase measures.** Phase 1: nothing moves, which is the point. Phase 2: focus vs spread
+**What each phase measures.** Phase 1: nothing moves *at par*, and that held — but the roster is
+not all at par. A contract hero arrives at the act's enemy level (par − `ENEMY_LEVEL_LAG`) and a
+hire an act behind, and under the cube both now gain on par with every win where they used to
+trail by a fixed count. Measured (1000 runs, seed 11, greedy pilot): full-clear **51.7% → 61.9%**,
+Act 1 flat (82.0% → 82.2%: nobody is off par yet), Act 2 94.1 → 96.8, Act 3 96.5 → 99.2, Act 4
+83.0 → 89.0, Act 5 84.8 → 88.8. The whole lift is the catch-up §2 promised, landing on recruits
+before candy exists to aim it — so phase 6's re-fit starts ten points looser than the growth
+overhaul left it, and the contract hero's "arrives finished" value is now also "arrives and
+closes". A hire that misses eight wins ends the run two levels short (`test/growth.test.ts`).
+Phase 2: focus vs spread
 under candy — if the sign of the carry's lift flips between pilots it is a scorer fault, not a
 finding (`docs/growth-overhaul.md` §8's lesson). Phase 3: full-clear and encounters-won against
 phase 2 — expect a drop, since ~47 rung offers become ~40 scheduled ones at a different cadence,

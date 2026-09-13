@@ -43,6 +43,16 @@ don't silently override it.
 > left two balance dials for playtest** — the overhaul is built in full; its §11 table is now the
 > rule in force wherever it disagrees with a line below.
 
+> **A third overhaul is DECIDED and PHASE 1 IS IN: `docs/xp-overhaul.md`** (2026-09-13, §2–4
+> decided per user direction; §5's four acts DEFERRED, not decided). One curve — `XP(L) = L³`,
+> `src/run/growth.ts` — for stats, moves and Evolutions; **candy** nodes aim XP at one hero; the
+> Scroll ladder is deleted and moves come from a per-hero level **schedule** with the roll kept.
+> Its §9 lists the invariants below it reverses; until the §8 phase that replaces each one lands,
+> the rule below is still the rule in force. **Phase 1 is IN:** `RosterEntry.xp` is stored and
+> level is DERIVED (`levelOf`); a won encounter pays XP derived from `LEVEL_AFTER_ENCOUNTER`, so
+> par is unchanged to the point and only a hero off par can tell — it now gains on par instead of
+> trailing by a fixed count (measured: +10 points full-clear, all of it in acts 2–5; §8).
+
 ---
 
 ## Locked invariants — do not violate without an explicit decision
@@ -128,9 +138,14 @@ don't silently override it.
   levels every won encounter, fielded or benched. **No pool and no allocation** —
   `MAX_LEVEL` = 30, and the curve is authored outright as `LEVEL_AFTER_ENCOUNTER` (act ends
   **8/14/19/24/28/30**, four encounters an act; front-loaded in phase 6 because acts 1-2 measured
-  as the run's wall and their enemy stat steps were already zero). It is a **DELTA, never a target**: a hero that
-  joins late has missed the grants before it and stays behind permanently, which is what keeps
-  "arrives underlevelled" a real archetype rather than a rounding error.
+  as the run's wall and their enemy stat steps were already zero). **Level is DERIVED from XP on
+  `XP(L) = L³`** (2026-09-13, XP Overhaul phase 1, `xpForLevel` / `levelOf`); the table stays the
+  one authored object and a won encounter pays exactly what it costs (`xpForEncounter`), so a hero
+  at par walks it to the point. It is a **DELTA, never a target**: a hero that joins late has
+  missed the grants before it and is behind — but the same XP climbs further from lower down the
+  cube, so the gap closes slowly on its own. "Arrives underlevelled" stays a real archetype;
+  "permanently" was reversed on purpose (`docs/xp-overhaul.md` §2) so that closing it is
+  something the player can spend a node on (candy, phase 2).
   Participation-based XP was considered and **rejected** — it produces the runaway where your
   best four level, the sideboard rots, and by Act 4 you cannot rotate. Roster-wide gets the
   screen removal without buying that; a hero rotated in is at parity, so rotating is free.

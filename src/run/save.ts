@@ -21,6 +21,7 @@ import type { ProgressionTable } from './progression';
 import type { BrokenSeal, RosterEntry, RunState } from './state';
 import { ROSTER_CAP, TOTAL_ACTS } from './state';
 import { CONSUMABLE_HOLD_CAP, CONSUMABLE_KINDS, type ConsumablePurse } from './consumables';
+import { MAX_XP, xpForLevel } from './growth';
 
 /**
  * Bump whenever a change to RunState or RunMap makes older files unreadable. Older versions
@@ -51,8 +52,10 @@ import { CONSUMABLE_HOLD_CAP, CONSUMABLE_KINDS, type ConsumablePurse } from './c
  * v11 (2026-09-12): the Scroll price curve. `masteryScrollsSpent` became a cumulative price
  * (1 + 2 + 3 ...) rather than a rung count, and RunState gained `masteryDeferred`. A v10 file's
  * spent counts would read as rungs never climbed.
+ * v12 (2026-09-13): the XP Overhaul's first phase — entries store `xp` and level is derived
+ * from it (docs/xp-overhaul.md §2). A v11 file's `level` has no XP under it.
  */
-export const SAVE_VERSION = 11;
+export const SAVE_VERSION = 12;
 
 /**
  * Where a restored run resumes. Both are settled points: every reward is banked, the
@@ -249,7 +252,7 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
   if (typeof value.rosterId !== 'string' || value.rosterId.length === 0) reject(`${label}.rosterId is missing`);
   if (typeof value.heroId !== 'string') reject(`${label}.heroId is missing`);
   if (!index.heroIds.has(value.heroId)) reject(`${label} references unknown hero "${value.heroId}"`);
-  if (!isInt(value.level, 1)) reject(`${label}.level is not a level`);
+  if (!isInt(value.xp, xpForLevel(1), MAX_XP)) reject(`${label}.xp is not on the curve`);
 
   const classId = value.classId ?? null;
   if (classId !== null) {
@@ -277,7 +280,7 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
     unlockedMoveIds: requireIds(value.unlockedMoveIds, index.moveIds, `${label}.unlockedMoveIds`),
     // Absent on saves written before the offer pool existed; an empty list is the honest default.
     offeredMoveIds: requireIds(value.offeredMoveIds ?? [], index.moveIds, `${label}.offeredMoveIds`),
-    level: value.level,
+    xp: value.xp,
     chosenPathIds: requireIds(value.chosenPathIds, index.evolutionPathIds, `${label}.chosenPathIds`),
     evolutionStatGrants: decodeStatGrants(value.evolutionStatGrants, `${label}.evolutionStatGrants`),
     evolutionPassiveGrants: requireIds(value.evolutionPassiveGrants, index.passiveIds, `${label}.evolutionPassiveGrants`),

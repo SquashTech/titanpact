@@ -7,6 +7,7 @@ import { createRosterEntry, addRosterEntry, createRunState, type RunState } from
 import type { Squad } from './squad';
 import { createEmptyLoadout, type EquipmentLoadout } from './equipment';
 import { chooseEvolutionPath, EVOLUTION_LEVEL, type ProgressionTable } from './progression';
+import { xpForLevel } from './growth';
 
 export interface SandboxHeroConfig {
   rosterId: string;
@@ -56,19 +57,19 @@ export function buildSandboxSide(config: SandboxSideConfig, heroes: HeroLookup, 
 
   for (const hc of config.heroes) {
     const base = createRosterEntry(hc.rosterId, hc.heroId, hc.moveIds);
-    run = addRosterEntry(run, { ...base, level: hc.level, equipment: hc.equipment, bonusStatGrants: hc.bonusStatGrants });
+    run = addRosterEntry(run, { ...base, xp: xpForLevel(hc.level), equipment: hc.equipment, bonusStatGrants: hc.bonusStatGrants });
 
     if (hc.pathId) {
       run = {
         ...run,
-        roster: run.roster.map((r) => (r.rosterId === hc.rosterId ? { ...r, level: Math.max(r.level, EVOLUTION_LEVEL) } : r)),
+        roster: run.roster.map((r) => (r.rosterId === hc.rosterId ? { ...r, xp: Math.max(r.xp, xpForLevel(EVOLUTION_LEVEL)) } : r)),
       };
       try {
         run = chooseEvolutionPath(run, table, heroes, hc.rosterId, hc.pathId);
       } catch {
         // Invalid path for this hero — leave it un-evolved so a bad preset can't crash the builder.
       }
-      run = { ...run, roster: run.roster.map((r) => (r.rosterId === hc.rosterId ? { ...r, level: hc.level } : r)) };
+      run = { ...run, roster: run.roster.map((r) => (r.rosterId === hc.rosterId ? { ...r, xp: xpForLevel(hc.level) } : r)) };
     }
   }
 

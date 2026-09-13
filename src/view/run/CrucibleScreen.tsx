@@ -23,6 +23,7 @@ import { CrucibleChain, CrucibleVessel } from './crucibleArt';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { MoveOfferOverlay } from './MoveOfferOverlay';
 import { RosterPeek } from './RosterPeek';
+import { levelOf } from '../../run/growth';
 
 interface Props {
   run: RunState;
@@ -413,7 +414,7 @@ function CrucibleFigure({ entry, pending, armed, dimmed, onArm, onPreview }: Fig
       tabIndex={pending ? 0 : -1}
       aria-disabled={!pending}
       aria-pressed={armed}
-      aria-label={`${hero.name}, level ${entry.level} — ${pending ? 'stand at the rim' : 'already tempered'}`}
+      aria-label={`${hero.name}, level ${levelOf(entry)} — ${pending ? 'stand at the rim' : 'already tempered'}`}
       onKeyDown={(e) => {
         if ((e.key === 'Enter' || e.key === ' ') && pending) {
           e.preventDefault();

@@ -14,6 +14,7 @@ import { NodeHeader, NodeSky, NODE_TINT_INSIGHT } from '../shared/NodeStage';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { MoveLearnedOverlay, MoveOfferOverlay } from './MoveOfferOverlay';
 import { RosterPeek } from './RosterPeek';
+import { levelOf } from '../../run/growth';
 
 interface Props {
   run: RunState;
@@ -95,7 +96,7 @@ export function MentorNodeScreen({ run, onRunChange, onContinue }: Props) {
                 disabled={!teachable || !!lesson}
                 onActivate={() => teach(entry)}
                 onPreview={() => setPreviewEntry({ hero, entry })}
-                ariaLabel={`${hero.name}, level ${entry.level} — ${teachable ? 'learn a move' : 'nothing left to teach'}`}
+                ariaLabel={`${hero.name}, level ${levelOf(entry)} — ${teachable ? 'learn a move' : 'nothing left to teach'}`}
                 ctaClassName="is-accent"
                 cta={teachable ? 'Learn' : 'Nothing left'}
               />

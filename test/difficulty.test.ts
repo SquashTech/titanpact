@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import { test } from './harness';
-import { ENCOUNTERS_PER_ACT, levelAfterEncounters } from '../src/run/growth';
+import { ENCOUNTERS_PER_ACT, levelAfterEncounters, levelOf } from '../src/run/growth';
 import {
   actScaling,
   ACT_STEP_CURVE,
@@ -144,7 +144,7 @@ test('difficulty: scaled enemies arrive at the act level, and evolve on the CRUC
     const { run } = generateEncounter('elite', 12, heroes, { scaling, progression: progressionTable });
     const evolved = act >= 3;
     for (const entry of run.roster) {
-      assert.strictEqual(entry.level, scaling.level, `act ${act} level`);
+      assert.strictEqual(levelOf(entry), scaling.level, `act ${act} level`);
       assert.strictEqual(
         entry.chosenPathIds.length,
         evolved ? 1 : 0,
@@ -170,7 +170,7 @@ test('difficulty: a scaled enemy spends its remaining level-ups on moves, never 
 test('difficulty: an unscaled encounter is byte-for-byte the authored content at level 1', () => {
   const { run } = generateEncounter('fight', 4, heroes, { scaling: NO_SCALING, progression: progressionTable });
   for (const entry of run.roster) {
-    assert.strictEqual(entry.level, 1);
+    assert.strictEqual(levelOf(entry), 1);
     assert.deepStrictEqual(entry.evolutionStatGrants, {});
     assert.deepStrictEqual(entry.chosenPathIds, []);
     assert.deepStrictEqual(entry.unlockedMoveIds, [...heroes[entry.heroId].moveIds]);
@@ -181,7 +181,7 @@ test('difficulty: a spawn encounter takes the monsters curve, and a spawn has no
   const act5 = actScaling('monsters', 5);
   const { run } = generateSpawnEncounter(11, { types: null, leaderTier: 'mid', escortTier: 'early', escortCount: 3, scaling: act5 });
   for (const entry of run.roster) {
-    assert.strictEqual(entry.level, act5.level);
+    assert.strictEqual(levelOf(entry), act5.level);
     assert.strictEqual(statTotal(entry.evolutionStatGrants), act5.statSteps * ACT_STEP_STAT_TOTAL);
     assert.deepStrictEqual(entry.chosenPathIds, []);
     assert.deepStrictEqual(entry.unlockedMoveIds, [...titanspawn[entry.heroId].moveIds]);
@@ -192,7 +192,7 @@ test('difficulty: a spawn encounter takes the monsters curve, and a spawn has no
   const { run: opener } = mobEncounter('fight', locations.wildsEdge, 1, 7, actScaling('monsters', 1));
   for (const entry of opener.roster) {
     assert.deepStrictEqual(entry.evolutionStatGrants, {}, 'act 1 monsters take no stat steps');
-    assert.strictEqual(entry.level, ENEMY_LEVEL_BY_ACT[0]);
+    assert.strictEqual(levelOf(entry), ENEMY_LEVEL_BY_ACT[0]);
   }
 });
 

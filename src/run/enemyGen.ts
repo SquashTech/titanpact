@@ -8,6 +8,7 @@ import type { HeroLookup } from '../engine/state';
 import { createRng, nextFloat, type RngState } from '../engine/rng/seededRng';
 import type { BrokenSeal, RunState, RosterEntry } from './state';
 import { createRunState, createRosterEntry, addRosterEntry } from './state';
+import { xpForLevel } from './growth';
 import { unsealedIdFor } from '../data/enemies';
 import { spawnPool, type SpawnTier } from '../data/titanspawn';
 import { rollEquipmentDrops } from '../data/equipment';
@@ -275,7 +276,7 @@ export function generateEncounter(
       statGrants = mergeStatMods(statGrants, bonus);
     }
 
-    entry = { ...entry, level: scaling.level, evolutionStatGrants: statGrants };
+    entry = { ...entry, xp: xpForLevel(scaling.level), evolutionStatGrants: statGrants };
     run = addRosterEntry(run, entry);
   }
 
@@ -313,7 +314,7 @@ export function appendFinalEnemy(
   // only axis it has (difficulty.ts CHAMPION_STEP_MULTIPLIER).
   const { bonus } = actStatBonus(createRng(seed), championSteps(scaling.statSteps));
   const entry = createRosterEntry(enemyId, enemyId, definition.moveIds);
-  const run = addRosterEntry(encounter.run, { ...entry, level: scaling.level, evolutionStatGrants: bonus });
+  const run = addRosterEntry(encounter.run, { ...entry, xp: xpForLevel(scaling.level), evolutionStatGrants: bonus });
   return { run, squad: { ...encounter.squad, benchIds: [...encounter.squad.benchIds, enemyId] } };
 }
 
@@ -341,14 +342,14 @@ export function generateFinaleEncounter(
     const definition = enemyPool[unsealedId];
     if (!definition || run.roster.some((r) => r.rosterId === unsealedId)) continue;
     const entry = createRosterEntry(unsealedId, unsealedId, definition.moveIds);
-    run = addRosterEntry(run, { ...entry, level: seal.level, evolutionStatGrants: seal.statGrants });
+    run = addRosterEntry(run, { ...entry, xp: xpForLevel(seal.level), evolutionStatGrants: seal.statGrants });
     orderedIds.push(unsealedId);
   }
 
   const endbringer = enemyPool[endbringerId];
   if (endbringer) {
     const entry = createRosterEntry(endbringerId, endbringerId, endbringer.moveIds);
-    run = addRosterEntry(run, { ...entry, level: endbringerScaling.level });
+    run = addRosterEntry(run, { ...entry, xp: xpForLevel(endbringerScaling.level) });
     orderedIds.push(endbringerId);
   }
 
@@ -425,7 +426,7 @@ export function generateSpawnEncounter(seed: number, options: SpawnEncounterOpti
     let entry = createRosterEntry(rosterId, heroId, pool[heroId].moveIds);
     const { bonus, nextState } = actStatBonus(rng, scaling.statSteps);
     rng = nextState;
-    entry = { ...entry, level: scaling.level, evolutionStatGrants: bonus };
+    entry = { ...entry, xp: xpForLevel(scaling.level), evolutionStatGrants: bonus };
     const isEscort = i >= leaderIds.length;
     if (isEscort && escortGear) {
       const [item] = rollEquipmentDrops(1, escortGear, undefined, random);

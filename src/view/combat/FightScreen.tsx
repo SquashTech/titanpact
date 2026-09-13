@@ -527,8 +527,8 @@ interface Props {
   /** Displayed only — the caller grants it in onResolved. */
   goldReward: number;
   /** Displayed only — the caller grants it in onResolved. */
-  /** Levels this win pays the WHOLE roster (run/growth.ts). A report, not a screen — nothing is spent. */
-  levelsGained: number;
+  /** XP this win pays the WHOLE roster (run/growth.ts). A report, not a screen — nothing is spent. */
+  xpGained: number;
   /** The Skirmish lane's Mastery Scroll. Displayed only — the caller grants it in onResolved. */
   scrollReward?: number;
   /** The opener fight's guaranteed drop, rolled up front so the victory screen can show it. Displayed only. */
@@ -561,7 +561,7 @@ export function FightScreen({
   aiSquad,
   playerRelicIds = [],
   goldReward,
-  levelsGained,
+  xpGained,
   scrollReward = 0,
   equipmentReward,
   consumableReward = null,
@@ -1886,7 +1886,7 @@ export function FightScreen({
           roundsFought={Math.max(1, combat.round - 1)}
           roster={resultRoster}
           fieldedIds={new Set([...playerSquad.activeIds, ...playerSquad.benchIds].filter((id): id is string => id !== null))}
-          levelsGained={levelsGained}
+          xpGained={xpGained}
           goldFrom={playerRun.gold}
           goldReward={goldReward}
           scrollReward={scrollReward}

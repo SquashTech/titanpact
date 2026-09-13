@@ -15,6 +15,7 @@ import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { RelicIcon } from '../shared/EquipmentBox';
 import { stackedGrantSummary, stackedRelicName } from '../shared/relicStacks';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
+import { levelOf } from '../../run/growth';
 
 interface Props {
   outcome: 'win' | 'loss';
@@ -142,7 +143,7 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
                     entry={entry}
                     onActivate={() => setInspecting({ hero, entry })}
                     onPreview={() => setInspecting({ hero, entry })}
-                    ariaLabel={`${hero.name}, level ${entry.level} — view sheet`}
+                    ariaLabel={`${hero.name}, level ${levelOf(entry)} — view sheet`}
                     overlay={
                       earnedStar ? (
                         <span className="run-summary-card-star" aria-hidden="true">

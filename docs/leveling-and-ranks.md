@@ -66,10 +66,14 @@ Level 5 lands on the **third encounter of act 1**, which is where the Evolution 
 phase 4 moves it to the Crucible. Every figure is a first-pass placeholder for playtest; only the
 shape is decided.
 
-**It is a DELTA, never a target** (`levelsForEncounter`). A hero that joins late has missed the
-grants before it and stays behind permanently — which is what keeps "arrives underlevelled" a real
-archetype for a Guild Hall hire (`docs/growth-overhaul.md` §6) rather than a rounding error the
-next win erases. Setting each hero to the curve's level instead would erase it.
+**It is a DELTA, never a target** (`xpForEncounter`). A hero that joins late has missed the
+grants before it and is behind — which is what keeps "arrives underlevelled" a real archetype for
+a Guild Hall hire (`docs/growth-overhaul.md` §6) rather than a rounding error the next win erases.
+Setting each hero to the curve's level instead would erase it. **Since 2026-09-13 the delta is
+paid in XP on `XP(L) = L³`** (`docs/xp-overhaul.md` §2, phase 1): at par that is the table above
+to the point, and off par the same XP is worth more levels from lower down, so a late hero gains on
+par with every win rather than trailing by a fixed count. It never catches up on its own — a
+recruit that missed eight wins ends the run two levels short (`test/growth.test.ts`).
 
 ## Growth grades — what a level actually pays
 

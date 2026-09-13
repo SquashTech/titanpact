@@ -20,17 +20,22 @@ import {
   GROWTH_UNIT_HP,
   LEVEL_AFTER_ENCOUNTER,
   MAX_LEVEL,
+  MAX_XP,
   applyEncounterLevels,
   gradeBudgetOf,
   gradeExpectedPoints,
   gradeMaxPoints,
   gradesFor,
   grantEncounterLevels,
+  grantXp,
   levelAfterEncounters,
+  levelForXp,
+  levelOf,
   levelUpEntry,
-  levelsForEncounter,
   rollGradePoints,
   rollLevelGrowth,
+  xpForEncounter,
+  xpForLevel,
   type GrowthGrade,
 } from '../src/run/growth';
 import { EVOLUTION_LEVEL } from '../src/run/progression';
@@ -140,19 +145,20 @@ test('growth: levelling accumulates onto growthStatGrants and stops at MAX_LEVEL
   const entry = soloRun().roster[0];
   const topHp = gradeMaxPoints(gradesFor(heroes.cinderKnight).hp) * GROWTH_UNIT_HP;
   const one = levelUpEntry(entry, heroes.cinderKnight, 1, ALWAYS);
-  assert.strictEqual(one.entry.level, 2);
+  assert.strictEqual(levelOf(one.entry), 2);
   assert.strictEqual(one.entry.growthStatGrants.hp, topHp);
 
   const three = levelUpEntry(one.entry, heroes.cinderKnight, 3, ALWAYS);
-  assert.strictEqual(three.entry.level, 5);
+  assert.strictEqual(levelOf(three.entry), 5);
   assert.strictEqual(three.entry.growthStatGrants.hp, topHp * 4, 'four levels of HP, accumulated');
   assert.strictEqual(three.gained.hp, topHp * 3, 'and `gained` is only what THIS call rolled');
 
-  const past = levelUpEntry({ ...entry, level: MAX_LEVEL - 1 }, heroes.cinderKnight, 10, ALWAYS);
-  assert.strictEqual(past.entry.level, MAX_LEVEL, 'the cap holds');
+  const past = levelUpEntry({ ...entry, xp: xpForLevel(MAX_LEVEL - 1) }, heroes.cinderKnight, 10, ALWAYS);
+  assert.strictEqual(levelOf(past.entry), MAX_LEVEL, 'the cap holds');
+  assert.strictEqual(past.entry.xp, MAX_XP, 'and XP stops at the bar');
   assert.strictEqual(past.entry.growthStatGrants.hp, topHp, 'and only the one legal level rolled');
 
-  const capped = levelUpEntry({ ...entry, level: MAX_LEVEL }, heroes.cinderKnight, 5, ALWAYS);
+  const capped = levelUpEntry({ ...entry, xp: MAX_XP }, heroes.cinderKnight, 5, ALWAYS);
   assert.deepStrictEqual(capped.gained, {}, 'a hero at the cap gains nothing at all');
 });
 
@@ -174,7 +180,7 @@ test('growth: the curve hits the authored act-end levels, and reaches MAX_LEVEL 
 
 test('growth: the curve never goes backwards, and level 5 lands inside act 1', () => {
   for (let n = 1; n < LEVEL_AFTER_ENCOUNTER.length; n++) {
-    assert.ok(levelsForEncounter(n) >= 0, `encounter ${n} pays a negative level`);
+    assert.ok(xpForEncounter(n) >= 0, `encounter ${n} pays negative XP`);
   }
   // The curve still DECELERATES: a run's early acts pay more levels than its late ones.
   const perAct = [1, 2, 3, 4, 5].map(
@@ -194,7 +200,7 @@ test('growth: a won encounter levels the WHOLE roster, benched heroes included',
   const after = grantEncounterLevels(run, heroes, ALWAYS);
   const expected = levelAfterEncounters(1);
   assert.deepStrictEqual(
-    after.roster.map((e) => e.level),
+    after.roster.map(levelOf),
     [expected, expected],
     'both heroes level, and neither had to be fielded'
   );
@@ -214,8 +220,8 @@ test('growth: the report says what each hero actually rolled, and matches the ro
   for (const line of report) {
     const before = run.roster.find((e) => e.rosterId === line.rosterId)!;
     const entry = after.roster.find((e) => e.rosterId === line.rosterId)!;
-    assert.strictEqual(line.fromLevel, before.level);
-    assert.strictEqual(line.toLevel, entry.level);
+    assert.strictEqual(line.fromLevel, levelOf(before));
+    assert.strictEqual(line.toLevel, levelOf(entry));
     for (const stat of GROWTH_STATS) {
       const delta = (entry.growthStatGrants[stat] ?? 0) - (before.growthStatGrants[stat] ?? 0);
       assert.strictEqual(line.gained[stat] ?? 0, delta, `${line.heroId}'s reported ${stat} is what it actually banked`);
@@ -226,7 +232,7 @@ test('growth: the report says what each hero actually rolled, and matches the ro
 test('growth: a hero at the cap is still reported, gaining nothing', () => {
   // The screen lists the whole roster; a row quietly missing reads as a bug rather than as a cap.
   let run = soloRun();
-  run = { ...run, encountersWon: 1, roster: run.roster.map((e) => ({ ...e, level: MAX_LEVEL })) };
+  run = { ...run, encountersWon: 1, roster: run.roster.map((e) => ({ ...e, xp: MAX_XP })) };
 
   const { report } = applyEncounterLevels(run, heroes, ALWAYS);
   assert.strictEqual(report.length, 1);
@@ -235,21 +241,86 @@ test('growth: a hero at the cap is still reported, gaining nothing', () => {
   assert.deepStrictEqual(report[0].gained, {}, 'nothing rolled, even with every roll succeeding');
 });
 
-test('growth: a hero that joins late stays behind — the grant is a DELTA, never a target', () => {
-  // What keeps "arrives underlevelled" a real archetype for a Guild Hall hire rather than a
-  // rounding error that the next win erases (docs/growth-overhaul.md §6).
+test('growth: XP is the cube of the level, and level is read back off it exactly', () => {
+  // Pokémon's Medium Fast (docs/xp-overhaul.md §2). Every level is a cube, so a hero at par sits
+  // exactly on one and the inversion has no rounding to get wrong.
+  assert.strictEqual(xpForLevel(1), 1);
+  assert.strictEqual(xpForLevel(2), 8);
+  assert.strictEqual(xpForLevel(MAX_LEVEL), 27000);
+  assert.strictEqual(MAX_XP, xpForLevel(MAX_LEVEL));
+  for (let level = 1; level <= MAX_LEVEL; level++) {
+    assert.strictEqual(levelForXp(xpForLevel(level)), level, `level ${level} round-trips`);
+    assert.strictEqual(levelForXp(xpForLevel(level) - 1), Math.max(1, level - 1), `one XP short of ${level} is the level below`);
+  }
+  assert.strictEqual(levelForXp(0), 1, 'nothing is level 1');
+  assert.strictEqual(levelForXp(MAX_XP * 10), MAX_LEVEL, 'and the cap holds past the bar');
+  assert.strictEqual(levelOf(soloRun().roster[0]), 1, 'a fresh entry is level 1');
+});
+
+test('growth: encounter XP is DERIVED from the level table — a hero at par walks it to the point', () => {
+  // The table stays the single authored object; the XP is what it costs to keep it true.
+  let xp = xpForLevel(1);
+  for (let n = 1; n < LEVEL_AFTER_ENCOUNTER.length; n++) {
+    xp += xpForEncounter(n);
+    assert.strictEqual(xp, xpForLevel(levelAfterEncounters(n)), `encounter ${n} lands exactly on the table`);
+  }
+  assert.strictEqual(xp, MAX_XP, 'the whole table pays exactly the bar');
+  assert.strictEqual(xpForEncounter(999), 0, 'and nothing past it');
+
+  // Through the real grant, not just the arithmetic: a solo roster at par after every win.
   let run = soloRun();
-  for (let n = 1; n <= 4; n++) run = grantEncounterLevels({ ...run, encountersWon: n }, heroes, ALWAYS);
-  const veteran = run.roster[0].level;
-  assert.strictEqual(veteran, levelAfterEncounters(4));
+  for (let n = 1; n < LEVEL_AFTER_ENCOUNTER.length; n++) {
+    run = grantEncounterLevels({ ...run, encountersWon: n }, heroes, NEVER);
+    assert.strictEqual(levelOf(run.roster[0]), levelAfterEncounters(n), `at par after encounter ${n}`);
+    assert.strictEqual(run.roster[0].xp, xpForLevel(levelAfterEncounters(n)), 'sitting exactly on the level, not part-way to the next');
+  }
+});
+
+test('growth: a grant rolls growth once per level crossed, whatever size the grant is', () => {
+  const entry = soloRun().roster[0];
+  const topHp = gradeMaxPoints(gradesFor(heroes.cinderKnight).hp) * GROWTH_UNIT_HP;
+  // 1 -> 4 in one grant: three levels, three rolls.
+  const jump = grantXp(entry, heroes.cinderKnight, xpForLevel(4) - xpForLevel(1), ALWAYS);
+  assert.strictEqual(levelOf(jump.entry), 4);
+  assert.strictEqual(jump.gained.hp, topHp * 3);
+  // Part-way to a level rolls nothing and banks the XP.
+  const partial = grantXp(jump.entry, heroes.cinderKnight, 1, ALWAYS);
+  assert.strictEqual(levelOf(partial.entry), 4);
+  assert.strictEqual(partial.entry.xp, xpForLevel(4) + 1);
+  assert.deepStrictEqual(partial.gained, {});
+  // And the banked XP counts toward the next: one more grant to the cube crosses it.
+  const across = grantXp(partial.entry, heroes.cinderKnight, xpForLevel(5) - partial.entry.xp, ALWAYS);
+  assert.strictEqual(levelOf(across.entry), 5);
+  assert.strictEqual(across.gained.hp, topHp);
+});
+
+test('growth: a hero that joins late is behind — and the convex curve closes the gap slowly on its own', () => {
+  // Still a DELTA, never a target: the recruit missed the grants before it and is behind. But the
+  // same XP is worth more levels lower down the cube, so it GAINS on par with every win rather
+  // than trailing by a fixed count for the rest of the run. "Permanently" is what the XP Overhaul
+  // reversed (docs/xp-overhaul.md §2, §9); "arrives underlevelled" is what it kept.
+  let run = soloRun();
+  for (let n = 1; n <= 8; n++) run = grantEncounterLevels({ ...run, encountersWon: n }, heroes, ALWAYS);
+  assert.strictEqual(levelOf(run.roster[0]), levelAfterEncounters(8));
 
   run = addRosterEntry(run, createRosterEntry('crimson', 'crimson', heroes.crimson.moveIds));
-  run = grantEncounterLevels({ ...run, encountersWon: 5 }, heroes, ALWAYS);
+  const gapOnArrival = levelOf(run.roster[0]) - levelOf(run.roster[1]);
 
+  run = grantEncounterLevels({ ...run, encountersWon: 9 }, heroes, ALWAYS);
   const [vet, recruit] = run.roster;
-  assert.strictEqual(vet.level, levelAfterEncounters(5));
-  assert.strictEqual(recruit.level, 1 + levelsForEncounter(5), 'the recruit got THIS win only');
-  assert.ok(recruit.level < vet.level, 'and is still behind, permanently');
+  assert.strictEqual(levelOf(vet), levelAfterEncounters(9), 'the veteran is at par');
+  assert.strictEqual(recruit.xp, xpForLevel(1) + xpForEncounter(9), 'the recruit got THIS win only');
+  assert.ok(levelOf(recruit) < levelOf(vet), 'and is still behind');
+  assert.ok(levelOf(vet) - levelOf(recruit) < gapOnArrival, 'but by less than it arrived behind');
+
+  let gap = levelOf(vet) - levelOf(recruit);
+  for (let n = 10; n < LEVEL_AFTER_ENCOUNTER.length; n++) {
+    run = grantEncounterLevels({ ...run, encountersWon: n }, heroes, ALWAYS);
+    const next = levelOf(run.roster[0]) - levelOf(run.roster[1]);
+    assert.ok(next <= gap, `encounter ${n}: the gap widened from ${gap} to ${next}`);
+    gap = next;
+  }
+  assert.ok(gap > 0, 'a recruit that missed eight wins does not reach the cap with the veteran');
 });
 
 test('growth: an all-B hero grows by roughly half again over a full climb', () => {

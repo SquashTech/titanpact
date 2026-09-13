@@ -22,7 +22,7 @@ import { generateMap, type MapNode, type MapNodeType } from '../../src/run/map';
 import { generateStarterOptions, STARTER_PICK_COUNT } from '../../src/run/draft';
 import { generateItinerary, locationForAct } from '../../src/run/locations';
 import { actScaling, scrollsFor } from '../../src/run/difficulty';
-import { grantEncounterLevels, levelsForEncounter, MAX_LEVEL } from '../../src/run/growth';
+import { grantEncounterLevels, levelOf, MAX_LEVEL } from '../../src/run/growth';
 import { generateFinaleEncounter, type Encounter, type EncounterNodeType } from '../../src/run/enemyGen';
 import { pickSquad, requiredSquadSize, STANDARD_SQUAD_SIZE, type Squad } from '../../src/run/squad';
 import {
@@ -298,7 +298,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     tally(record, run.actNumber, 'mapPick');
 
     for (const entry of run.roster) {
-      record.heroLevels[entry.heroId] = Math.max(record.heroLevels[entry.heroId] ?? 0, entry.level);
+      record.heroLevels[entry.heroId] = Math.max(record.heroLevels[entry.heroId] ?? 0, levelOf(entry));
       record.heroScrolls[entry.heroId] = Math.max(record.heroScrolls[entry.heroId] ?? 0, entry.masteryScrollsSpent);
     }
 
@@ -343,7 +343,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
             actNumber: run.actNumber,
             locationId: location.id,
             championId: champion.heroId,
-            level: champion.level,
+            level: levelOf(champion),
             statGrants: champion.evolutionStatGrants,
           });
         }
@@ -386,9 +386,9 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
   record.rosterEvolvedEnd =
     run.roster.length > 0 ? run.roster.filter((r) => r.chosenPathIds.length > 0).length / run.roster.length : 0;
   record.rosterLevelEnd =
-    run.roster.length > 0 ? run.roster.reduce((sum, r) => sum + r.level, 0) / run.roster.length : 0;
+    run.roster.length > 0 ? run.roster.reduce((sum, r) => sum + levelOf(r), 0) / run.roster.length : 0;
   for (const entry of run.roster) {
-    record.heroLevels[entry.heroId] = Math.max(record.heroLevels[entry.heroId] ?? 0, entry.level);
+    record.heroLevels[entry.heroId] = Math.max(record.heroLevels[entry.heroId] ?? 0, levelOf(entry));
     record.heroScrolls[entry.heroId] = Math.max(record.heroScrolls[entry.heroId] ?? 0, entry.masteryScrollsSpent);
   }
   return record;

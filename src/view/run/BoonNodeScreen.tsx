@@ -15,6 +15,7 @@ import { NodeHeader, NodeSky, NODE_TINT_ARCANE } from '../shared/NodeStage';
 import { PassiveGlyph, passiveColor, passiveKindLabel, passiveTint } from '../shared/passiveIcons';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
+import { levelOf } from '../../run/growth';
 
 interface Props {
   run: RunState;
@@ -135,7 +136,7 @@ export function BoonNodeScreen({ run, onRunChange, onContinue }: Props) {
                 entry={entry}
                 onActivate={() => handleAssign(entry.rosterId)}
                 onPreview={() => setPreviewEntry({ hero, entry })}
-                ariaLabel={`${hero.name}, level ${entry.level} — grant this boon`}
+                ariaLabel={`${hero.name}, level ${levelOf(entry)} — grant this boon`}
                 ctaClassName="is-accent"
                 cta="Grant"
                 detail={boonDetail(entry)}

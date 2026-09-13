@@ -3,6 +3,11 @@
 // that hero's authored grade for it. There is no pool, no allocation and no screen: Level is what
 // a hero IS, and the only lane of growth the player never touches.
 //
+// Level is DERIVED from XP on a convex curve (docs/xp-overhaul.md §2, phase 1): a won encounter
+// pays the roster XP, not levels, and the same XP is worth more levels to a hero below par than
+// to one above it. At par the two are indistinguishable — the encounter's XP is exactly what the
+// authored level table costs — so only a hero off par can tell the curve changed.
+//
 // Roster-wide rather than participation-based (Fire Emblem's actual model) on purpose. Per-hero XP
 // produces the runaway where your best four level, your sideboard rots, and by Act 4 you cannot
 // rotate. This gets the screen removal without buying that problem — a hero rotated in is at
@@ -147,13 +152,46 @@ export function levelAfterEncounters(encountersWon: number): number {
   return Math.min(MAX_LEVEL, LEVEL_AFTER_ENCOUNTER[at]);
 }
 
+// --- The XP curve ---
+
 /**
- * Levels one won encounter pays. A DELTA, never a target: a hero that joined late has missed the
- * grants before it and stays behind permanently, which is what keeps "arrives underlevelled" a
- * real archetype for a Guild Hall hire (docs/growth-overhaul.md §6) instead of a rounding error.
+ * The cumulative XP to BE a level — Pokémon's Medium Fast, `L³`, 27,000 to the cap
+ * (docs/xp-overhaul.md §2). Convex on purpose: a fixed grant is worth more levels to a hero
+ * below par and fewer to one above it, which is what makes one encounter's XP both the catch-up
+ * and the carry's throttle without a rule for either.
  */
-export function levelsForEncounter(encountersWon: number): number {
-  return Math.max(0, levelAfterEncounters(encountersWon) - levelAfterEncounters(encountersWon - 1));
+export function xpForLevel(level: number): number {
+  const at = Math.max(1, Math.min(MAX_LEVEL, Math.floor(level)));
+  return at * at * at;
+}
+
+/** The bar's top: XP never accumulates past it. */
+export const MAX_XP = xpForLevel(MAX_LEVEL);
+
+/** The level `xp` has reached — the largest L in 1..MAX_LEVEL with `xpForLevel(L) ≤ xp`. */
+export function levelForXp(xp: number): number {
+  let level = Math.max(1, Math.min(MAX_LEVEL, Math.floor(Math.cbrt(Math.max(0, xp)))));
+  while (level < MAX_LEVEL && xpForLevel(level + 1) <= xp) level++;
+  while (level > 1 && xpForLevel(level) > xp) level--;
+  return level;
+}
+
+/** A hero's level is read off its XP, never stored beside it: two figures for one fact drift. */
+export function levelOf(entry: Pick<RosterEntry, 'xp'>): number {
+  return levelForXp(entry.xp);
+}
+
+/**
+ * XP one won encounter pays every roster hero. DERIVED from the level table, never authored
+ * beside it: encounter N pays exactly what the curve charges from the table's level at N−1 to its
+ * level at N, so a hero at par walks the authored table to the point. Still a DELTA, never a
+ * target — a hero that joined late missed the grants before it and is behind — but the same XP
+ * climbs further from lower down, so the gap closes slowly on its own. "Arrives underlevelled"
+ * stays a real archetype for a Guild Hall hire; "permanently" became "until the player spends a
+ * node on it" (docs/xp-overhaul.md §2).
+ */
+export function xpForEncounter(encountersWon: number): number {
+  return Math.max(0, xpForLevel(levelAfterEncounters(encountersWon)) - xpForLevel(levelAfterEncounters(encountersWon - 1)));
 }
 
 // --- The roll ---
@@ -172,8 +210,31 @@ export function rollLevelGrowth(
 }
 
 /**
- * `levels` levels onto one hero, capped at MAX_LEVEL, rolling growth for each. Returns the entry
- * and what it gained, so a caller can report it without re-deriving.
+ * `xp` onto one hero, capped at MAX_XP, rolling growth for every level the grant crosses. Returns
+ * the entry and what it gained, so a caller can report it without re-deriving.
+ */
+export function grantXp(
+  entry: RosterEntry,
+  hero: HeroDefinition | undefined,
+  xp: number,
+  random: () => number = Math.random
+): { entry: RosterEntry; gained: Partial<Record<StatKey, number>> } {
+  const grades = gradesFor(hero);
+  const next = Math.min(MAX_XP, entry.xp + Math.max(0, xp));
+  const target = levelForXp(next);
+  let gained: Partial<Record<StatKey, number>> = {};
+  for (let level = levelOf(entry); level < target; level++) {
+    gained = mergeStatMods(gained, rollLevelGrowth(grades, random));
+  }
+  return {
+    entry: { ...entry, xp: next, growthStatGrants: mergeStatMods(entry.growthStatGrants, gained) },
+    gained,
+  };
+}
+
+/**
+ * `levels` whole levels onto one hero — what a generated hero takes on arrival (a Guild hire, the
+ * companion), landing it exactly ON a level rather than part-way to the next.
  */
 export function levelUpEntry(
   entry: RosterEntry,
@@ -181,16 +242,8 @@ export function levelUpEntry(
   levels: number,
   random: () => number = Math.random
 ): { entry: RosterEntry; gained: Partial<Record<StatKey, number>> } {
-  const grades = gradesFor(hero);
-  const target = Math.min(MAX_LEVEL, entry.level + Math.max(0, levels));
-  let gained: Partial<Record<StatKey, number>> = {};
-  for (let level = entry.level; level < target; level++) {
-    gained = mergeStatMods(gained, rollLevelGrowth(grades, random));
-  }
-  return {
-    entry: { ...entry, level: target, growthStatGrants: mergeStatMods(entry.growthStatGrants, gained) },
-    gained,
-  };
+  const target = Math.min(MAX_LEVEL, levelOf(entry) + Math.max(0, levels));
+  return grantXp(entry, hero, xpForLevel(target) - entry.xp, random);
 }
 
 /**
@@ -216,16 +269,16 @@ export function applyEncounterLevels(
   heroLookup: Record<string, HeroDefinition>,
   random: () => number = Math.random
 ): { run: RunState; report: HeroLevelUp[] } {
-  const levels = levelsForEncounter(run.encountersWon);
-  if (levels <= 0) return { run, report: [] };
+  const xp = xpForEncounter(run.encountersWon);
+  if (xp <= 0) return { run, report: [] };
   const report: HeroLevelUp[] = [];
   const roster = run.roster.map((entry) => {
-    const { entry: levelled, gained } = levelUpEntry(entry, heroLookup[entry.heroId], levels, random);
+    const { entry: levelled, gained } = grantXp(entry, heroLookup[entry.heroId], xp, random);
     report.push({
       rosterId: entry.rosterId,
       heroId: entry.heroId,
-      fromLevel: entry.level,
-      toLevel: levelled.level,
+      fromLevel: levelOf(entry),
+      toLevel: levelOf(levelled),
       gained,
     });
     return levelled;

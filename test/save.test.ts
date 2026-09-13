@@ -14,6 +14,7 @@ import { generateMap } from '../src/run/map';
 import { addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
 import { equipItem } from '../src/run/equipment';
 import { buildContentIndex, decodeSave, encodeSave, saveSummary, SAVE_VERSION } from '../src/run/save';
+import { xpForLevel } from '../src/run/growth';
 
 const index = buildContentIndex({
   heroes,
@@ -37,7 +38,7 @@ function sampleRun(): RunState {
   run = addRosterEntry(run, createRosterEntry('rime-1', 'rime', heroes.rime.moveIds));
   const geared = {
     ...run.roster[0],
-    level: 6,
+    xp: xpForLevel(6),
     equipment: equipItem(run.roster[0].equipment, equipment['dagger.common'].id),
     bonusStatGrants: { attack: 10, speed: 5 },
     growthStatGrants: { hp: 10 },
@@ -168,7 +169,7 @@ test('save: nonsense numbers are refused', () => {
   assert.ok(rejectionOf((raw) => (raw.run.gold = -5)).includes('gold'));
   assert.ok(rejectionOf((raw) => (raw.run.gold = 1.5)).includes('gold'));
   assert.ok(rejectionOf((raw) => (raw.run.actNumber = 9)).includes('actNumber'));
-  assert.ok(rejectionOf((raw) => (raw.run.roster[0].level = 0)).includes('level'));
+  assert.ok(rejectionOf((raw) => (raw.run.roster[0].xp = 0)).includes('xp'));
   assert.ok(rejectionOf((raw) => (raw.run.roster[0].bonusStatGrants.charisma = 10)).includes('charisma'));
 });
 

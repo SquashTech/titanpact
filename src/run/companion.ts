@@ -9,7 +9,7 @@ import type { HeroLookup } from '../engine/state';
 import type { EquipmentDefinition } from './equipment';
 import type { Encounter } from './enemyGen';
 import { SPAWN_TIERS, spawnId, spawnPosition, type SpawnTier } from '../data/titanspawn';
-import { levelUpEntry } from './growth';
+import { levelOf, levelUpEntry } from './growth';
 import { EVOLUTION_RUNG, RANK_THRESHOLDS, masteryRung } from './progression';
 import { stashItem } from './runProgress';
 import { ROSTER_CAP, addRosterEntry, createRosterEntry, type RosterEntry, type RunState } from './state';
@@ -53,7 +53,7 @@ export function companionCandidate(encounter: Encounter): string | null {
 export function joinCompanion(run: RunState, heroId: string, heroes: HeroLookup, random: () => number = Math.random): RunState {
   const hero = heroes[heroId];
   if (!hero || !spawnPosition(heroId)) throw new Error(`${heroId} is not a spawn and cannot be the companion`);
-  const par = run.roster.reduce((best, entry) => Math.max(best, entry.level), 1);
+  const par = run.roster.reduce((best, entry) => Math.max(best, levelOf(entry)), 1);
   const base = { ...createRosterEntry(freshRosterId(run, heroId), heroId, hero.moveIds), mortal: true };
   const entry = levelUpEntry(base, hero, par - 1, random).entry;
   return { ...addRosterEntry(run, entry), companionHeroId: heroId };

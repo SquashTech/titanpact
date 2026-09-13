@@ -38,6 +38,7 @@ import {
 import { progressionTable } from '../../src/data/progression';
 import { mergeStatMods } from '../../src/run/statMods';
 import type { Rng } from './rng';
+import { levelOf } from '../../src/run/growth';
 
 /** How a level-up pool is spread across the roster. */
 export type LevelPolicy = 'spread' | 'focus';
@@ -80,7 +81,7 @@ export function powerScore(entry: RosterEntry): number {
   const stats = effectiveStats(entry);
   const offense = Math.max(stats.attack, stats.intelligence);
   return (
-    entry.level * 25 +
+    levelOf(entry) * 25 +
     stats.hp * 0.4 +
     offense +
     stats.defense * 0.6 +
@@ -250,7 +251,7 @@ export function levelUpTarget(roster: readonly RosterEntry[], policy: LevelPolic
   if (policy === 'focus') return ordered[0];
   // The four that will actually be fielded, lowest level first — Evolution at 5 is the spike worth chasing on everyone.
   const core = ordered.slice(0, Math.min(4, ordered.length));
-  return [...core].sort((a, b) => a.level - b.level || powerScore(b) - powerScore(a))[0];
+  return [...core].sort((a, b) => levelOf(a) - levelOf(b) || powerScore(b) - powerScore(a))[0];
 }
 
 /** One Evolution taken inside a pour, reported back so run.ts can log it as a choice. */

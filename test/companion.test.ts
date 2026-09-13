@@ -34,10 +34,11 @@ import { relics } from '../src/data/relics';
 import { passives } from '../src/data/passives';
 import { CHAMPION_IDS } from '../src/data/enemies';
 import { TYPES } from '../src/data/typechart';
+import { levelOf, xpForLevel } from '../src/run/growth';
 
 function starterRun(level = 3): RunState {
   let run = createRunState(50);
-  for (const id of ['valor', 'packAlpha']) run = addRosterEntry(run, { ...createRosterEntry(id, id, heroes[id].moveIds), level });
+  for (const id of ['valor', 'packAlpha']) run = addRosterEntry(run, { ...createRosterEntry(id, id, heroes[id].moveIds), xp: xpForLevel(level) });
   return { ...run, fightsStarted: 1 };
 }
 
@@ -65,7 +66,7 @@ test('companion: it joins at the roster\'s par with its growth rolled, mortal, i
   assert.strictEqual(next.roster.length, 3);
   assert.strictEqual(companion.heroId, 'cubling');
   assert.strictEqual(companion.mortal, true);
-  assert.strictEqual(companion.level, 3);
+  assert.strictEqual(levelOf(companion), 3);
   assert.ok(Object.keys(companion.growthStatGrants).length > 0, 'two levels of growth rolled — RAW is unbuilt, not hollow');
   assert.deepStrictEqual(companion.unlockedMoveIds, [...titanspawn.cubling.moveIds]);
   assert.strictEqual(next.companionHeroId, 'cubling');

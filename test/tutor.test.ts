@@ -7,6 +7,7 @@ import { createRosterEntry } from '../src/run/state';
 import { MAP_NODE_TYPES, generateMap } from '../src/run/map';
 import { MOVE_TIER_RANK } from '../src/run/progression';
 import { mentorMovePool, tutorMovePool, tutorTeachableCount } from '../src/run/tutor';
+import { xpForLevel } from '../src/run/growth';
 
 const entry = (heroId: string) => createRosterEntry(heroId, heroId, heroes[heroId].moveIds);
 
@@ -57,7 +58,7 @@ test('tutor: the pool is sorted by tier, then mana cost', () => {
 test('tutor: a chosen Evolution path adds BOTH its learnable and its granted moves to the shelf', () => {
   const { heroId, pathId, learnable, unlocks } = heroWithPathMoves();
   const before = tutorMovePool(progressionTable, moves, entry(heroId));
-  const evolved = { ...entry(heroId), level: 5, chosenPathIds: [pathId] };
+  const evolved = { ...entry(heroId), xp: xpForLevel(5), chosenPathIds: [pathId] };
   const after = tutorMovePool(progressionTable, moves, evolved);
 
   for (const id of learnable) assert.ok(after.includes(id), `${heroId}: ${id} (learnable) missing from the shelf`);

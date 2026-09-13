@@ -13,7 +13,7 @@ import { MapRoute } from './MapRoute';
 import { BannerShelf } from './BannerShelf';
 import { NODE_COLORS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
 import { NodeDossierOverlay } from './NodeDossierOverlay';
-import { levelAfterEncounters } from '../../run/growth';
+import { levelAfterEncounters, levelOf } from '../../run/growth';
 import { canAffordAnyScroll } from '../../run/progression';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
@@ -191,7 +191,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenMastery, onSav
   // The roster's PAR, which under automatic levelling is everyone but a late joiner. Read off the
   // roster rather than off the curve so it is right for a hero the curve does not describe — a
   // contract recruit arriving at act level, or a fixture. Falls back to the curve for an empty one.
-  const rosterLevel = run.roster.reduce((best, entry) => Math.max(best, entry.level), levelAfterEncounters(run.encountersWon));
+  const rosterLevel = run.roster.reduce((best, entry) => Math.max(best, levelOf(entry)), levelAfterEncounters(run.encountersWon));
   const waiting = footerWaiting(unopened, mergeablePairIndices(run.stash, equipment, run.actNumber).size / 2);
 
   // The whole view: where the player stands, and what they may take from here.

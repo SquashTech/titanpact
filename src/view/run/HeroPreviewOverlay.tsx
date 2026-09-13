@@ -6,7 +6,7 @@ import { passives } from '../../data/passives';
 import { relics } from '../../data/relics';
 import type { HeroDefinition, PassiveId, StatKey } from '../../engine/content';
 import { STAT_ORDER } from '../../engine/content';
-import { gradesFor } from '../../run/growth';
+import { gradesFor, levelOf } from '../../run/growth';
 import type { StatModifiers } from '../../engine/state';
 import type { RosterEntry } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
@@ -198,7 +198,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
                 every fight. */}
             <div className="detail-name">
               {hero.name}
-              <span className="detail-level">Lv {entry.level}</span>
+              <span className="detail-level">Lv {levelOf(entry)}</span>
             </div>
             <div className="combatant-types">
               {types.map((t) => (
