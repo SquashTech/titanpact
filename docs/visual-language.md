@@ -3337,6 +3337,20 @@ Per user direction, six fixes in one pass:
   `CacheOpening`), and its three cards — grown to ~130px by the stage stack — now carry their
   grants as 30px pills with 17px glyphs under a 19px name, instead of 10px chips.
 
+## Thirty-second pass — the Titanspawn figures (2026-09-13)
+
+Phase 1 of `docs/titanspawn-overhaul.md`. The mob layer's 42 bodies are generated geometry
+(`src/view/shared/titanspawnArt.tsx`), ported verbatim from the approved gallery
+(`docs/art/titanspawn-bestiary.html`) — flat fills in three tones of the type hue, primitives
+only, the Titan's eye the one un-typed feature — and mounted through `HeroPortrait`, which is
+the single chokepoint every screen already draws a hero through. So a spawn takes the same
+class, the same seeded idle breath, and the same strike/hit keyframes a sprite takes, with no
+screen touched. The rule this pass adds is about SCALE: the figure's viewBox is fixed to the
+gallery's compare cell with the ground line on the box's bottom edge, so an Early reads at half
+a hero, a Mid near one, and a Late past one — the tier is legible from the silhouette before the
+fight is entered, which is the overhaul's §4 "readable difficulty gauge". No per-side flip: this
+battlefield never flips a sprite, and the spawn must not be the one thing that turns.
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.

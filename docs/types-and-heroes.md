@@ -16,6 +16,13 @@ Author every hero by asking *where does this hero's power come from?*, not *what
 this hero physically?* A knight whose strength is divine conviction is **Light**, not
 **Iron**, even in plate armor. Apply this filter first, always.
 
+**The one deliberate inversion: the Titanspawn** (`docs/titanspawn-overhaul.md` §2,
+`src/data/titanspawn.ts`). A hero *draws on* a domain; a spawn *is* the domain, leaked through
+the failing seal into flesh in the colour of the land it leaked into. So a Fire spawn's body is
+made of fire, and that is a rule rather than a contradiction: the mob layer is the type chart
+made flesh, with no exception on it, which is what makes it legible as a mob layer at all. The
+filter above still governs every hero; it governs no spawn.
+
 ---
 
 ## The 15 types

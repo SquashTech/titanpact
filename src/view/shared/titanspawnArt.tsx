@@ -1,0 +1,443 @@
+// The Titanspawn figures (docs/titanspawn-overhaul.md §2 "Art"): geometric SVG, one generator
+// per line, built from primitives in three tones of the type hue. Ported verbatim from the
+// approved gallery (docs/art/titanspawn-bestiary.html), whose rules this keeps: the Titan's eye
+// is the one thing on every body not type-coloured — one at Early, two from Mid, a Late's
+// wrong-placed and half-lidded; the element is a feature, then a tool, then the body; poses are
+// a global transform plus a per-line accent; everything faces right and the enemy row mirrors.
+//
+// A pose is a STATE, exactly as a hero's PNG frame is (heroArt.ts) — HeroPortrait picks the
+// frame, the figure system's timing is untouched. Markup is built as a string, as the gallery
+// builds it, and mounted with innerHTML: nothing in it comes from outside this file.
+
+import type { CSSProperties } from 'react';
+import { useMemo } from 'react';
+import type { TypeId } from '../../engine/content';
+import { spawnPosition, type SpawnTier } from '../../data/titanspawn';
+import { getTypeColor } from '../combat/typeColors';
+
+export type SpawnPose = 'idle' | 'attack' | 'hurt';
+
+interface Pal {
+  c: string;
+  d: string;
+  dd: string;
+  l: string;
+  ll: string;
+}
+
+type EyeState = 'open' | 'narrow' | 'wide' | 'stare';
+type Eye = (x: number, y: number, r: number, state?: EyeState) => string;
+type Draw = (p: Pal, pose: SpawnPose, eye: Eye) => string;
+
+// ---------- palette ----------
+function hex(c: string): number[] {
+  const n = parseInt(c.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function mix(a: string, t: number, b: string): string {
+  const A = hex(a), B = hex(b);
+  return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join('');
+}
+function pal(c: string): Pal {
+  return { c, d: mix(c, 0.36, '#000000'), dd: mix(c, 0.6, '#07050a'), l: mix(c, 0.32, '#ffffff'), ll: mix(c, 0.62, '#ffffff') };
+}
+
+// ---------- primitives ----------
+const P = (pts: string, f: string, extra = '') => `<polygon points="${pts}" fill="${f}" ${extra}/>`;
+const C = (x: number, y: number, r: number, f: string, extra = '') => `<circle cx="${x}" cy="${y}" r="${r}" fill="${f}" ${extra}/>`;
+const E = (x: number, y: number, rx: number, ry: number, f: string, extra = '') => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${f}" ${extra}/>`;
+const R = (x: number, y: number, w: number, h: number, f: string, rx = 0, extra = '') => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${f}" ${extra}/>`;
+const D = (d: string, f: string, extra = '') => `<path d="${d}" fill="${f}" ${extra}/>`;
+const L = (d: string, s: string, w = 1.5, extra = '') => `<path d="${d}" fill="none" stroke="${s}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" ${extra}/>`;
+const G = (t: string, inner: string) => `<g transform="${t}">${inner}</g>`;
+
+/** The eye's fill: gold burning to the mythic red (TitanWakeScreen's). Defined once per figure. */
+const EYE_GRADIENT = (id: string) =>
+  `<defs><radialGradient id="${id}" cx="50%" cy="50%" r="55%"><stop offset="0" stop-color="#f6dc96"/><stop offset=".42" stop-color="#e9a24e"/><stop offset=".78" stop-color="#e0393f"/><stop offset="1" stop-color="#6e1a20"/></radialGradient></defs>`;
+
+/** The Titan's eye: vertical slit pupil, horizontal lids. `ids` keeps clip paths unique across every figure on a screen. */
+function makeEye(uid: string, gradientId: string): Eye {
+  let n = 0;
+  return (x, y, r, state = 'open') => {
+    const id = `${uid}c${n++}`;
+    const k = state === 'narrow' ? 0.3 : state === 'wide' ? 1.0 : state === 'stare' ? 0.52 : 0.72;
+    const rr = state === 'wide' ? r * 1.08 : r;
+    const halo = state === 'wide' ? C(x, y, rr * 1.9, '#e0393f', 'opacity=".28" class="halo"') : state === 'stare' ? C(x, y, rr * 1.7, '#e0393f', 'opacity=".14"') : '';
+    return `<defs><clipPath id="${id}"><ellipse cx="${x}" cy="${y}" rx="${rr}" ry="${rr * k}"/></clipPath></defs>${halo}
+  <g clip-path="url(#${id})">${C(x, y, rr, `url(#${gradientId})`)}${E(x, y, rr * 0.2, rr * 0.95, '#07050a')}</g>
+  ${E(x, y, rr, rr * k, 'none', `stroke="#07050a" stroke-width="${Math.max(0.6, r * 0.09)}" opacity=".55"`)}`;
+  };
+}
+// Impact ticks on the struck side.
+const ticks = (x: number, y: number) =>
+  [[-25, -18], [10, -30], [28, -8]].map(([a, b]) => L(`M${x + a * 0.55},${y + b * 0.55} L${x + a},${y + b}`, '#fff', 1.6, 'opacity=".85"')).join('');
+// Spark scatter for attacks.
+const sparks = (x: number, y: number, f: string, n = 4, s = 1) =>
+  Array.from({ length: n }, (_, i) => C(x + [10, 18, 24, 14, 28][i % 5] * s, y + [-12, -4, -18, 6, 2][i % 5] * s, 1.4, f)).join('');
+
+// ---------- lines ----------
+// Each draw returns untransformed markup, facing right, ground y=88. Indexed Early, Mid, Late.
+const LINES: Record<TypeId, readonly [Draw, Draw, Draw]> = {
+  Fire: [
+    // Emberling: a live coal that hops. Three flame tips, one eye in the glow.
+    (p, po, ey) => {
+      const h = po === 'attack' ? 1.7 : po === 'hurt' ? 0.45 : 1;
+      const fl = (x: number, hh: number) => P(`${x - 4},60 ${x},${60 - hh} ${x + 4},60`, p.c) + P(`${x - 1.5},60 ${x},${60 - hh * 0.55} ${x + 1.5},60`, p.ll);
+      return C(50, 73, 15, p.dd) + L('M40,80 q4,-3 8,0 M52,66 q3,4 8,2', p.c, 1.4) + fl(42, 11 * h) + fl(50, 18 * h) + fl(58, 11 * h) + (po === 'attack' ? sparks(64, 64, p.l) : '') + ey(56, 74, 6.5);
+    },
+    // Kindlehide: a squat imp of banked embers, cracks glowing, a crown of flame; two eyes.
+    (p, po, ey) => {
+      const h = po === 'attack' ? 1.6 : po === 'hurt' ? 0.5 : 1;
+      const fl = (x: number, hh: number) => P(`${x - 4},58 ${x},${58 - hh} ${x + 4},58`, p.c) + P(`${x - 1.5},58 ${x},${58 - hh * 0.55} ${x + 1.5},58`, p.ll);
+      return R(36, 84, 8, 5, p.dd, 1) + R(56, 84, 8, 5, p.dd, 1) + D('M28,86 L33,60 Q50,50 67,60 L72,86 Z', p.dd) + L('M38,78 l5,-6 l-3,-4 M55,80 l4,-5 l-2,-5 M46,70 l-3,-4', p.c, 1.6)
+        + [34, 42, 50, 58, 66].map((x, i) => fl(x, (i % 2 ? 16 : 11) * h)).join('') + (po === 'attack' ? C(86, 58, 3, p.c) + L('M74,62 q6,-6 12,-4', p.l, 1.2) : '') + ey(45, 69, 4.8) + ey(59, 69, 4.8);
+    },
+    // Pyroclast: a hunched mass of cooled crust over molten cracks, a crest of flame down the back. The eyes are two fissures.
+    (p, po, ey) => {
+      const hh = po === 'attack' ? 1.6 : po === 'hurt' ? 0.45 : 1;
+      const crack = po === 'attack' ? p.ll : po === 'hurt' ? p.d : p.c;
+      const crest = [[16, 44], [26, 34], [38, 26], [52, 22], [66, 24], [80, 32]].map(([x, y], i) => P(`${x - 5},${y + 6} ${x},${y - (9 + i * 2) * hh} ${x + 5},${y + 6}`, p.c) + P(`${x - 2},${y + 6} ${x},${y - (9 + i * 2) * hh * 0.55} ${x + 2},${y + 6}`, p.ll)).join('');
+      return crest + D('M6,88 L10,52 C16,32 40,20 64,22 C86,24 98,42 96,62 L98,88 Z', p.dd) + D('M16,62 L30,38 L52,30 L46,62 Z', p.d, 'opacity=".45"') + D('M60,32 L84,40 L90,64 L62,62 Z', p.d, 'opacity=".3"')
+        + L('M28,52 l8,10 l-4,12 M60,36 l6,14 l-8,10 M80,54 l6,12 M42,72 l10,8 M20,74 l6,6', crack, 2.2) + [22, 42, 60, 78].map((x, i) => R(x, 86, 5, 8 + (i % 2) * 4, crack, 2.5)).join('')
+        + (po === 'attack' ? P('96,52 118,46 116,62 98,64', p.c) + P('96,56 110,52 108,60', p.ll) : '') + ey(58, 50, 6) + ey(80, 46, 4.4);
+    },
+  ],
+  Water: [
+    // Puddling: a bead of water, the eye suspended inside it.
+    (p, po, ey) => {
+      const sx = po === 'attack' ? 1.25 : po === 'hurt' ? 1.15 : 1, sy = po === 'hurt' ? 0.88 : 1;
+      return E(50, 88, 16, 3, p.d, 'opacity=".6"') + G(`translate(50 74) scale(${sx} ${sy}) translate(-50 -74)`, D('M50,52 C60,62 64,70 64,76 A14,14 0 0 1 36,76 C36,70 40,62 50,52 Z', p.c) + D('M50,56 C56,64 58,68 58,72 A8,8 0 0 1 42,72 C42,68 44,64 50,56 Z', p.l, 'opacity=".45"'))
+        + (po === 'attack' ? C(70, 66, 2, p.l) + C(76, 70, 1.4, p.l) : '') + (po === 'hurt' ? [[30, 58], [24, 70], [70, 56], [78, 66], [36, 50]].map(([x, y]) => D(`M${x},${y - 4} c2,3 3,5 0,7 c-3,-2 -2,-4 0,-7 z`, p.c)).join('') : '') + ey(53, 76, 6);
+    },
+    // Rillfin: a finned eel, fast, all curve.
+    (p, po, ey) => {
+      const body = po === 'attack' ? 'M18,84 C30,60 42,92 56,72 C64,60 72,64 80,66' : 'M18,86 C28,66 42,92 56,72 C62,64 70,68 78,70';
+      return L(body, p.c, 9) + L(body, p.l, 3, 'opacity=".5"') + P('40,70 46,52 52,70', p.d) + P('58,68 62,56 66,70', p.d)
+        + C(78, 68, 8, p.c) + (po === 'attack' ? L('M84,62 q8,-2 12,4 M84,72 q8,2 12,-2', p.ll, 1.2) : '') + ey(80, 66, 3.4) + ey(74, 71, 3.2);
+    },
+    // Breakwater: a cresting wave-serpent; one eye in the barrel, one smaller under it.
+    (p, po, ey) => {
+      return E(50, 89, 34, 3, p.d, 'opacity=".6"') + D('M8,88 C10,50 30,20 60,22 C86,24 92,48 76,60 C66,68 52,60 56,50 C60,42 70,44 70,52 L74,88 Z', p.c)
+        + D('M14,88 C16,58 32,30 58,30 C78,32 82,48 72,56', p.l, 'opacity=".35"') + [[26, 40], [36, 30], [48, 26], [60, 26], [72, 36]].map(([x, y]) => C(x, y, 2.2, p.ll)).join('')
+        + (po === 'attack' ? D('M74,60 Q90,58 98,70 Q88,68 74,66 Z', p.ll, 'opacity=".8"') : '')
+        + ey(58, 42, 7) + ey(70, 52, 3.6);
+    },
+  ],
+  Frost: [
+    // Sleetling: a six-spoked frost-flake with a lidded eye at the hub.
+    (p, po, ey) => {
+      const spin = po === 'attack' ? 15 : po === 'hurt' ? -10 : 0;
+      const s = po === 'attack' ? 1.12 : 1;
+      return G(`rotate(${spin} 50 68) scale(${s}) translate(${(1 - s) * 50} ${(1 - s) * 68})`, [0, 60, 120, 180, 240, 300].map((a) => G(`rotate(${a} 50 68)`, L('M50,68 L50,46 M50,52 l-4,-4 M50,52 l4,-4', p.c, 2.4))).join('') + C(50, 68, 9, p.l))
+        + (po === 'attack' ? sparks(66, 60, p.ll, 3) : '') + ey(50, 68, 5.5);
+    },
+    // Hoarfang: a crystal-plated quadruped with a jaw of icicles.
+    (p, po, ey) => {
+      const jaw = po === 'attack' ? 'M66,72 l3,12 l3,-12 l3,10 l3,-10 l3,8 l3,-8' : 'M66,72 l3,7 l3,-7 l3,6 l3,-6 l3,4 l3,-4';
+      return P('30,86 34,74 28,64 44,52 62,54 74,62 84,72 82,86 74,86 70,78 44,78 38,86', p.d) + P('34,74 44,56 60,58 70,64 66,76 44,76', p.c) + P('44,56 52,44 60,58', p.l) + P('60,58 70,48 74,62', p.l)
+        + P('74,62 90,64 88,74 76,76', p.c) + D(jaw + ' Z', p.ll) + (po === 'attack' ? C(94, 66, 2, p.ll) + C(97, 60, 1.4, p.ll) : '') + ey(80, 67, 3.2) + ey(87, 67, 2.8);
+    },
+    // Frostheave: a low crawling glacier with a spine of shards and a heavy front block. The eyes are sunk in a socket, one deeper than the other.
+    (p, po, ey) => {
+      const sh = po === 'attack' ? 1.3 : po === 'hurt' ? 0.7 : 1;
+      const jaw = po === 'attack' ? 6 : 0;
+      return P('14,88 18,70 30,72 26,88', p.d) + P('40,88 42,72 54,74 50,88', p.d) + P('60,88 62,72 74,74 70,88', p.d) + P('10,72 16,52 36,44 72,42 92,50 100,66 96,76 14,76', p.c)
+        + [[20, 52, 26], [32, 46, 40], [46, 42, 50], [60, 41, 42], [72, 42, 30]].map(([x, y, hh]) => P(`${x - 6},${y} ${x},${y - hh * sh} ${x + 7},${y}`, p.l) + P(`${x - 2},${y} ${x},${y - hh * sh * 0.6} ${x + 3},${y}`, p.ll, 'opacity=".6"')).join('')
+        + P('78,50 102,46 108,60 104,78 80,78', p.c) + P('84,54 102,52 102,68 86,68', p.dd) + [84, 93, 102].map((x) => P(`${x - 3},78 ${x},${86 + jaw} ${x + 3},78`, p.ll)).join('')
+        + (po === 'attack' ? P('106,58 122,54 110,66', p.ll) + P('108,68 120,70 108,74', p.ll) : '') + ey(90, 60, 4.8) + ey(99, 58, 3);
+    },
+  ],
+  Storm: [
+    // Arcling: a static wisp with a zigzag tail; its eye is a single arc.
+    (p, po, ey) => {
+      const tail = po === 'attack' ? 'M40,70 l-8,-6 l6,-8 l-9,-5 l6,-8' : 'M40,72 l-7,-4 l5,-6 l-7,-4';
+      return L(tail, p.c, 2.2) + L(tail, p.ll, 1, 'opacity=".7"') + C(50, 70, 13, p.d) + C(50, 70, 10, p.c) + (po === 'attack' ? L('M64,62 l8,-4 l-3,6 l8,-2', p.ll, 1.6) : '') + ey(54, 70, 6);
+    },
+    // Voltail: a crackling stoat; the tail throws arcs.
+    (p, po, ey) => {
+      const tail = po === 'attack' ? 'M24,76 l-8,-10 l8,-6 l-10,-8 l8,-6' : 'M24,78 l-7,-8 l7,-4 l-7,-7';
+      return L(tail, p.c, 3) + L(tail, p.ll, 1.2, 'opacity=".7"') + D('M22,84 C20,66 40,60 60,64 C72,66 80,64 84,72 C86,80 78,86 68,84 Z', p.d) + D('M26,80 C30,68 44,66 60,68 C70,70 76,72 78,76', p.c, 'opacity=".7"')
+        + R(30, 84, 6, 5, p.d, 1) + R(44, 84, 6, 5, p.d, 1) + R(60, 84, 6, 5, p.d, 1) + R(72, 84, 6, 5, p.d, 1) + P('74,66 78,58 82,66', p.d) + P('82,66 86,58 90,66', p.d)
+        + (po === 'attack' ? L('M88,72 l7,-5 l-3,6 l8,-3', p.ll, 1.8) : '') + ey(78, 72, 3.2) + ey(85, 72, 3);
+    },
+    // Stormfront: a living stormcloud, two eyes set low and wide in it.
+    (p, po, ey) => {
+      const bolts = po === 'attack' ? [[36, 62], [58, 66], [80, 60]] : [[48, 64], [70, 64]];
+      return C(30, 48, 16, p.d) + C(52, 34, 22, p.d) + C(76, 44, 18, p.d) + C(50, 52, 20, p.d) + C(30, 48, 12, p.c, 'opacity=".35"') + C(52, 34, 17, p.c, 'opacity=".35"') + C(76, 44, 13, p.c, 'opacity=".35"')
+        + bolts.map(([x, y]) => L(`M${x},${y} l-4,10 l6,-2 l-5,${po === 'attack' ? 18 : 12}`, p.ll, 2)).join('')
+        + ey(36, 50, 5.5) + ey(70, 46, 5.5);
+    },
+  ],
+  Stone: [
+    // Pebbling: a pebble with an eye. It rolls.
+    (p, po, ey) => {
+      const rot = po === 'attack' ? 18 : po === 'hurt' ? -12 : 0;
+      return G(`rotate(${rot} 50 74)`, E(50, 74, 17, 13, p.c) + E(46, 70, 10, 6, p.l, 'opacity=".35"') + L('M38,80 l6,2 M56,82 l6,-1', p.d, 1.4)) + (po === 'attack' ? C(70, 84, 2, p.d) + C(76, 86, 1.4, p.d) : '') + ey(56, 74, 5.5);
+    },
+    // Slabback: a tortoise of stacked slabs.
+    (p, po, ey) => {
+      const neck = po === 'attack' ? 8 : 0;
+      return R(30, 82, 8, 6, p.d, 1) + R(44, 82, 8, 6, p.d, 1) + R(60, 82, 8, 6, p.d, 1) + R(22, 70, 54, 12, p.c, 2) + R(26, 60, 50, 10, p.d, 2) + R(32, 52, 40, 8, p.c, 2) + R(40, 46, 26, 6, p.d, 2)
+        + D(`M70,66 C78,62 88,64 ${92 + neck},72 C90,80 80,82 70,80 Z`, p.c) + P(`${90 + neck},70 ${98 + neck},74 ${90 + neck},78`, p.d) + ey(80 + neck, 71, 3.4) + ey(87 + neck, 72, 3);
+    },
+    // Monolith: a standing stone that walks; two eyes carved one above the other.
+    (p, po, ey) => {
+      return R(30, 86, 16, 6, p.d, 1) + R(54, 86, 16, 6, p.d, 1) + P('34,88 30,10 70,6 68,88', p.c) + P('30,10 70,6 66,12 36,16', p.l, 'opacity=".5"') + L('M40,30 l6,10 l-4,8 M60,50 l-5,12', p.d, 1.6)
+        + (po === 'attack' ? P('70,60 96,74 68,72', p.c) + P('70,64 90,74 70,70', p.l, 'opacity=".5"') : '')
+        + ey(50, 30, 5.5) + ey(50, 62, 5.5);
+    },
+  ],
+  Nature: [
+    // Sproutling: a seed with one leaf and one eye.
+    (p, po, ey) => {
+      const lean = po === 'attack' ? 14 : po === 'hurt' ? -16 : 0;
+      return E(50, 76, 15, 12, p.d) + E(50, 76, 11, 8, p.c, 'opacity=".5"') + G(`rotate(${lean} 50 64)`, L('M50,64 q2,-12 8,-18', p.c, 2) + D('M58,46 c8,-8 14,-4 12,4 c-6,6 -12,2 -12,-4 z', p.c) + L('M58,46 c6,-2 10,0 12,4', p.ll, 1)) + ey(55, 77, 5.5);
+    },
+    // Bramblehide: a hedgehog of thorns, sap-veined.
+    (p, po, ey) => {
+      const th = po === 'attack' ? 1.5 : po === 'hurt' ? 0.6 : 1;
+      const spikes: string[] = [];
+      for (let a = 200; a <= 340; a += 14) {
+        const r = (Math.PI * a) / 180, cx = 48, cy = 78, r1 = 26, r2 = 26 + 12 * th;
+        spikes.push(P(`${cx + Math.cos(r - 0.09) * r1},${cy + Math.sin(r - 0.09) * r1} ${cx + Math.cos(r) * r2},${cy + Math.sin(r) * r2} ${cx + Math.cos(r + 0.09) * r1},${cy + Math.sin(r + 0.09) * r1}`, p.d));
+      }
+      return spikes.join('') + D('M22,84 A26,26 0 0 1 74,84 Z', p.c) + L('M36,72 l6,6 M48,64 l4,10 M60,70 l-4,8', p.ll, 1.2, 'opacity=".7"') + R(30, 84, 8, 5, p.d, 1) + R(58, 84, 8, 5, p.d, 1)
+        + D('M70,84 Q84,82 88,76 Q84,72 72,72 Z', p.c) + C(88, 77, 2, p.dd) + (po === 'attack' ? sparks(80, 60, p.d, 3) : '') + ey(74, 76, 3.2) + ey(80, 74, 3);
+    },
+    // Wildwood: a walking thicket; two of the blooms are eyes.
+    (p, po, ey) => {
+      const leaf = (x: number, y: number, a: number, s = 1) => G(`rotate(${a} ${x} ${y}) scale(${s}) translate(${((1 - s) * x) / s} ${((1 - s) * y) / s})`, D(`M${x},${y} c10,-14 22,-10 22,0 c-10,10 -22,6 -22,0 z`, p.c) + L(`M${x},${y} c8,-4 16,-4 22,0`, p.ll, 1, 'opacity=".7"'));
+      const sw = po === 'attack' ? 18 : po === 'hurt' ? -10 : 0;
+      return R(28, 86, 14, 6, p.dd, 1) + R(58, 86, 14, 6, p.dd, 1) + D('M18,88 C10,60 24,34 50,24 C78,20 92,46 84,88 Z', p.d) + leaf(30, 50, -30) + leaf(20, 72, 10) + leaf(64, 40, -70) + leaf(74, 66, -10 + sw) + leaf(44, 30, -50) + leaf(52, 70, 20 + sw) + leaf(12, 44, -40)
+        + (po === 'attack' ? leaf(84, 54, -20, 1.3) + L('M88,62 l10,-4 M90,70 l9,2', p.ll, 1.4) : '')
+        + [[40, 44], [62, 54], [30, 64], [54, 80], [72, 36]].map(([x, y], i) => [0, 72, 144, 216, 288].map((a) => G(`rotate(${a} ${x} ${y})`, E(x, y - 6, 2.2, 3.6, p.ll))).join('') + (i < 2 ? ey(x, y, i ? 4.2 : 5.2) : C(x, y, 2.4, p.dd))).join('');
+    },
+  ],
+  Light: [
+    // Gleamling: a glowing mote with a four-point sparkle.
+    (p, po, ey) => {
+      const s = po === 'attack' ? 1.5 : po === 'hurt' ? 0.6 : 1;
+      return C(50, 66, 17 * s, p.l, 'opacity=".18"') + P(`50,${66 - 24 * s} 54,62 ${50 + 24 * s},66 54,70 50,${66 + 24 * s} 46,70 ${50 - 24 * s},66 46,62`, p.c) + C(50, 66, 9, p.ll) + ey(50, 66, 5.5);
+    },
+    // Lanternmoth: a moth whose wings are the light source.
+    (p, po, ey) => {
+      const wy = po === 'attack' ? -10 : po === 'hurt' ? 6 : 0;
+      const wing = (m: number) => G(`scale(${m} 1) translate(${m < 0 ? -100 : 0} 0)`, D(`M50,66 C42,${44 + wy} 14,${38 + wy} 10,${56 + wy / 2} C8,66 16,72 24,68 C24,76 36,80 50,72 Z`, p.c) + D(`M50,72 C38,80 24,90 28,${84 - wy / 2} C34,90 44,86 50,80 Z`, p.d) + C(28, 58, 4, p.ll) + C(30, 58, 2, p.dd, 'opacity=".5"'));
+      return wing(1) + wing(-1) + E(50, 70, 5, 16, p.dd) + L('M48,56 q-6,-10 -10,-12 M52,56 q6,-10 10,-12', p.ll, 1.2) + ey(46, 60, 2.8) + ey(54, 60, 2.8);
+    },
+    // Dawnwing: four pointed wings, tall not wide; streamers behind. The eyes are on the upper wings — the head has none.
+    (p, po, ey) => {
+      const wy = po === 'attack' ? -14 : po === 'hurt' ? 8 : 0;
+      const rays = [0, 30, 60, 90, 120, 150, 180].map((a) => G(`rotate(${a} 50 50)`, L('M50,50 L2,50', p.l, 1, 'opacity=".26"'))).join('');
+      const wing = (m: number) => G(`scale(${m} 1) translate(${m < 0 ? -100 : 0} 0)`, D(`M50,58 C44,${22 + wy} 20,${2 + wy} 6,${24 + wy} C2,46 26,62 50,62 Z`, p.c) + D(`M50,64 C36,72 10,82 8,${94 - wy / 2} C22,98 44,86 50,76 Z`, p.d) + D(`M46,56 C40,${30 + wy} 20,${16 + wy} 12,${28 + wy}`, p.ll, 'opacity=".5"'));
+      return rays + wing(1) + wing(-1) + E(50, 62, 5, 24, p.dd) + L('M48,86 q-4,12 -10,18 M52,86 q4,12 10,18', p.l, 1.2) + L('M47,40 q-8,-12 -14,-14 M53,40 q8,-12 14,-14', p.ll, 1.2)
+        + C(24, 38, 7, p.dd, 'opacity=".5"') + C(76, 38, 7, p.dd, 'opacity=".5"') + ey(24, 38, 5.5) + ey(76, 38, 5.5);
+    },
+  ],
+  Shadow: [
+    // Duskling: a smear of dark with one bright eye.
+    (p, po, ey) => {
+      const st = po === 'attack' ? 'M30,88 C24,70 36,54 52,54 C70,52 78,64 76,76 C82,84 70,90 60,86 Z' : 'M32,88 C26,72 36,58 50,58 C66,56 74,66 72,76 C76,84 66,88 58,86 Z';
+      return D(st, '#1a1822') + D(st, p.c, 'opacity=".55"') + D('M36,86 C34,76 40,66 50,64', p.l, 'opacity=".25"') + (po === 'attack' ? L('M76,66 l14,-6 M78,76 l16,0', p.dd, 2) : '') + ey(58, 72, 7, po === 'hurt' ? 'narrow' : 'wide');
+    },
+    // Gloomfang: a lean ink-panther, low to the ground.
+    (p, po, ey) => {
+      const lunge = po === 'attack' ? 'M12,80 C20,62 44,58 66,62 C78,64 88,64 92,72 C94,80 86,86 74,84 L70,88 L64,80 L44,80 L38,88 L32,80 Z' : 'M14,84 C22,66 44,64 64,66 C76,68 84,70 86,76 C88,82 80,86 72,84 L70,88 L64,82 L44,82 L40,88 L32,82 Z';
+      return L('M14,84 q-10,-8 -4,-18', p.dd, 3) + D(lunge, '#1a1822') + D(lunge, p.c, 'opacity=".5"') + P('76,66 80,56 84,66', p.dd) + P('84,66 88,58 90,68', p.dd)
+        + P('86,80 89,88 92,80', p.ll) + P('92,80 94,86 96,80', p.ll) + ey(82, 72, 3.2, po === 'hurt' ? 'narrow' : 'wide') + ey(89, 73, 2.8, po === 'hurt' ? 'narrow' : 'wide');
+    },
+    // Nocturne: a tall headless dark on jointed stilt-limbs; spikes past the top of the frame. The eyes are low in the torso.
+    (p, po, ey) => {
+      const r = po === 'attack' ? 10 : po === 'hurt' ? -6 : 0;
+      const limbs = [[36, 58, 12, 70, 6, 90], [44, 62, 38, 80, 30, 92], [60, 62, 64 + r, 80, 74 + r, 92], [68, 54, 88 + r, 64, 98 + r, 90]].map(([a, b, c, d, e, f]) => L(`M${a},${b} L${c},${d} L${e},${f}`, '#1a1822', 4.5) + L(`M${a},${b} L${c},${d} L${e},${f}`, p.c, 1.6, 'opacity=".35"')).join('');
+      const state: EyeState = po === 'hurt' ? 'narrow' : po === 'attack' ? 'wide' : 'stare';
+      return limbs + P('44,18 47,-8 53,14', '#1a1822') + P('56,16 63,-6 66,18', '#1a1822') + P('34,36 20,22 42,30', '#1a1822') + P('66,36 82,20 60,30', '#1a1822')
+        + D('M40,30 C40,14 64,12 66,28 L70,60 C70,68 36,68 34,60 Z', '#1a1822') + D('M40,30 C40,14 64,12 66,28 L70,60 C70,68 36,68 34,60 Z', p.c, 'opacity=".35"')
+        + ey(46, 48, 5, state) + ey(60, 54, 3.6, state);
+    },
+  ],
+  Arcane: [
+    // Runeling: a floating rune with an eye. Never touches the ground.
+    (p, po, ey) => {
+      const spin = po === 'attack' ? 20 : po === 'hurt' ? -15 : 0;
+      const y = po === 'hurt' ? 70 : 64;
+      return E(50, 88, 10, 2, p.d, 'opacity=".4"') + G(`rotate(${spin} 50 ${y})`, P(`50,${y - 22} 66,${y} 50,${y + 22} 34,${y}`, p.c) + P(`50,${y - 14} 58,${y} 50,${y + 14} 42,${y}`, p.ll, 'opacity=".35"') + L(`M42,${y - 4} h16 M50,${y - 10} v6`, p.dd, 1.6))
+        + (po === 'attack' ? [0, 1, 2].map((i) => C(72 + i * 9, 60 - i * 4, 1.6 + i * 0.4, p.ll)).join('') : '') + ey(50, y, 5.5);
+    },
+    // Sigilwing: a bird made of glyph-strokes.
+    (p, po, ey) => {
+      const wy = po === 'attack' ? -16 : po === 'hurt' ? 8 : 0;
+      return E(50, 88, 14, 2, p.d, 'opacity=".4"') + L(`M46,62 L28,${44 + wy} L10,${52 + wy} M46,64 L26,${56 + wy}`, p.c, 3) + L(`M54,62 L72,${44 + wy} L90,${52 + wy} M54,64 L74,${56 + wy}`, p.c, 3)
+        + L(`M46,62 L28,${44 + wy} M54,62 L72,${44 + wy}`, p.ll, 1, 'opacity=".6"') + D('M42,56 C42,44 62,44 64,56 C64,68 44,70 42,56 Z', p.d) + P('62,54 78,58 62,62', p.ll) + L('M44,66 l-6,14 M50,68 l0,14 M56,66 l6,14', p.c, 2)
+        + (po === 'attack' ? L('M70,30 l6,-6 M78,36 l8,-2', p.ll, 1.6) : '') + ey(52, 54, 3.4) + ey(58, 53, 3);
+    },
+    // Armillary: rotating rings with orbs; two eyes at the centre where the sun should be.
+    (p, po, ey) => {
+      const spin = po === 'attack' ? 25 : po === 'hurt' ? -15 : 0;
+      return E(50, 88, 20, 2, p.d, 'opacity=".4"') + G(`rotate(${spin} 50 50)`, E(50, 50, 44, 14, 'none', `stroke="${p.c}" stroke-width="2"`) + G('rotate(60 50 50)', E(50, 50, 40, 12, 'none', `stroke="${p.d}" stroke-width="2"`)) + G('rotate(-60 50 50)', E(50, 50, 36, 11, 'none', `stroke="${p.l}" stroke-width="1.5"`))
+        + C(50, 50, 16, p.dd) + C(50, 50, 13, p.c, 'opacity=".5"')) + [[8, 44], [92, 56], [30, 22], [70, 80], [74, 24], [26, 76]].map(([x, y]) => C(x, y, 4, p.l)).join('') + ey(43, 50, 6.5) + ey(58, 50, 6.5);
+    },
+  ],
+  Mind: [
+    // Whimling: a floating brain-blob with one eye; a single sulcus line.
+    (p, po, ey) => {
+      const y = po === 'hurt' ? 72 : 66;
+      return E(50, 88, 12, 2, p.d, 'opacity=".4"') + G(`translate(0 ${y - 66})`, D('M34,70 C30,54 44,46 52,50 C62,44 74,54 70,68 C72,78 56,82 50,78 C42,82 32,78 34,70 Z', p.c) + L('M42,58 q6,4 4,12 M58,52 q-2,8 6,12', p.d, 1.6))
+        + (po === 'attack' ? [0, 1, 2].map((i) => C(74 + i * 8, 58 - i * 3, 3 - i * 0.6, 'none', `stroke="${p.ll}" stroke-width="1.2"`)).join('') : '') + ey(54, y, 6);
+    },
+    // Mesmerid: a jellyfish — eyes on the bell, trailing tendrils.
+    (p, po, ey) => {
+      const sway = po === 'attack' ? 10 : po === 'hurt' ? -8 : 0;
+      return D('M22,58 A28,28 0 0 1 78,58 Q50,66 22,58 Z', p.c) + D('M28,56 A22,22 0 0 1 72,56', p.ll, 'opacity=".3"') + [30, 40, 50, 60, 70].map((x, i) => L(`M${x},60 q${sway + (i % 2 ? 4 : -4)},14 ${sway}, 26`, p.d, 1.8)).join('')
+        + (po === 'attack' ? L('M78,58 q10,-4 18,4', p.ll, 1.4) : '') + ey(40, 48, 3.6) + ey(60, 48, 3.6);
+    },
+    // Cerebra: a lobed mass hovering over its own tendrils. The eyes are on the underside, wide apart, looking down.
+    (p, po, ey) => {
+      const sway = po === 'attack' ? 8 : po === 'hurt' ? -6 : 0;
+      return E(50, 88, 24, 2.5, p.d, 'opacity=".4"') + E(50, 44, 46, 15, 'none', `stroke="${p.d}" stroke-width="1.5" opacity=".7"`) + (po === 'attack' ? E(50, 44, 54, 19, 'none', `stroke="${p.ll}" stroke-width="1.2" opacity=".8"`) : '')
+        + [30, 40, 50, 60, 70].map((x, i) => L(`M${x},64 q${sway + (i % 2 ? 5 : -5)},12 ${sway},22`, p.d, 2)).join('')
+        + C(34, 42, 18, p.c) + C(54, 30, 20, p.c) + C(72, 44, 16, p.c) + C(50, 50, 22, p.c) + C(54, 30, 13, p.l, 'opacity=".3"') + L('M24,44 q8,-6 12,4 q6,-8 12,0 M54,22 q8,6 4,16 M72,40 q4,6 -2,12 M40,56 q6,4 12,-2', p.d, 2)
+        + ey(36, 62, 5.5) + ey(66, 62, 5.5);
+    },
+  ],
+  Spirit: [
+    // Wispling: a candle-flame ghost, translucent.
+    (p, po, ey) => {
+      const s = po === 'attack' ? 1.2 : po === 'hurt' ? 0.8 : 1;
+      return E(50, 88, 10, 2, p.d, 'opacity=".4"') + G(`translate(50 68) scale(${s}) translate(-50 -68)`, D('M50,42 C62,56 64,70 58,84 C54,88 46,88 42,84 C36,70 38,56 50,42 Z', p.c, 'opacity=".8"') + D('M50,50 C57,60 58,70 54,80 C52,84 48,84 46,80 C42,70 43,60 50,50 Z', p.ll, 'opacity=".5"'))
+        + ey(50, 70, 5.5);
+    },
+    // Shroudkin: a hooded shape, hollow-eyed, ragged at the hem.
+    (p, po, ey) => {
+      const rise = po === 'attack' ? -6 : 0;
+      return E(50, 88, 14, 2, p.d, 'opacity=".4"') + G(`translate(0 ${rise})`, D('M50,30 C64,36 70,54 70,70 L70,84 L64,80 L58,86 L52,80 L46,86 L40,80 L34,84 L30,70 C30,54 36,36 50,30 Z', p.c, 'opacity=".9"') + D('M50,38 C58,44 60,56 58,66 L42,66 C40,56 42,44 50,38 Z', p.dd)
+        + (po === 'attack' ? L('M70,62 q14,-6 22,2', p.ll, 2) : '')) + ey(45, 54 + rise, 3.4) + ey(55, 54 + rise, 3.4);
+    },
+    // Threnody: a tall veil rising past the frame, hem trailing. A dark hollow where a face would be; the eyes sit too low in it.
+    (p, po, ey) => {
+      const sw = po === 'attack' ? 10 : po === 'hurt' ? -8 : 0;
+      return E(50, 88, 16, 2, p.d, 'opacity=".4"') + D(`M${56 + sw},-8 C${74 + sw},10 82,40 78,64 L74,84 L66,78 L60,88 L52,80 L44,88 L38,78 L30,84 C24,60 30,20 ${56 + sw},-8 Z`, p.c, 'opacity=".85"')
+        + P('28,58 10,64 26,70', p.c, 'opacity=".55"') + P('30,74 12,86 30,82', p.c, 'opacity=".55"') + (po === 'hurt' ? P('8,50 0,54 10,58', p.c, 'opacity=".4"') : '')
+        + D('M42,48 C48,42 64,42 68,50 L68,74 L42,74 Z', p.dd, 'opacity=".85"') + (po === 'attack' ? D('M74,56 Q92,52 100,62 Q90,60 74,64 Z', p.ll, 'opacity=".7"') : '') + ey(49, 68, 4.6) + ey(61, 68, 4.6);
+    },
+  ],
+  Iron: [
+    // Rivetling: a bolt with an eye on the dome.
+    (p, po, ey) => {
+      const tilt = po === 'attack' ? 12 : po === 'hurt' ? -10 : 0;
+      return G(`rotate(${tilt} 50 76)`, P('38,88 38,70 62,70 62,88', p.d) + L('M40,76 h20 M40,82 h20', p.dd, 1.4) + P('36,70 42,54 58,54 64,70', p.c) + E(50, 54, 8, 3, p.l)) + (po === 'attack' ? sparks(66, 66, p.ll, 3) : '') + ey(51, 62, 5.5);
+    },
+    // Ingot: a squat anvil-shaped ram, riveted.
+    (p, po, ey) => {
+      const ram = po === 'attack' ? 8 : 0;
+      return R(30, 84, 10, 6, p.d, 1) + R(60, 84, 10, 6, p.d, 1) + P('26,84 32,68 68,68 74,84', p.d) + P(`18,58 ${82 + ram},54 ${86 + ram},64 ${80 + ram},68 24,68`, p.c) + P('18,58 30,52 44,52 44,58', p.l, 'opacity=".5"')
+        + [36, 50, 64].map((x) => C(x, 63, 1.6, p.dd)).join('') + ey(70 + ram, 61, 3.4) + ey(78 + ram, 60, 3);
+    },
+    // Siegework: a walking siege engine of plate; the eyes are in the turret, the ports are dark.
+    (p, po, ey) => {
+      const ram = po === 'attack' ? 10 : 0;
+      return C(26, 84, 8, p.dd) + C(50, 84, 8, p.dd) + C(74, 84, 8, p.dd) + R(12, 40, 72, 40, p.d, 3) + R(18, 34, 60, 10, p.c, 2) + R(30, 18, 30, 18, p.c, 2) + R(36, 10, 18, 10, p.d, 2)
+        + P(`84,52 ${98 + ram},58 ${98 + ram},66 84,72`, p.l) + [20, 32, 44, 56, 68, 80].map((x) => C(x, 44, 1.4, p.dd)).join('') + [20, 32, 44, 56, 68, 80].map((x) => C(x, 76, 1.4, p.dd)).join('')
+        + [26, 42, 58, 74].map((x) => C(x, 60, 4, p.dd)).join('') + ey(38, 26, 4.6) + ey(52, 26, 4.6);
+    },
+  ],
+  Mech: [
+    // Cogling: a single gear with an eye at the hub.
+    (p, po, ey) => {
+      const spin = po === 'attack' ? 22 : po === 'hurt' ? -14 : 0;
+      const teeth = Array.from({ length: 8 }, (_, i) => G(`rotate(${i * 45 + spin} 50 70)`, R(46, 50, 8, 8, p.c, 1))).join('');
+      return teeth + C(50, 70, 15, p.c) + C(50, 70, 10, p.d) + (po === 'attack' ? P('64,66 74,70 64,74', p.ll) + sparks(70, 60, p.ll, 3) : '') + ey(50, 70, 5.5);
+    },
+    // Gearhound: a spider of pistons around a gear body.
+    (p, po, ey) => {
+      const legs = po === 'attack' ? [[22, 88, 30, 66], [36, 88, 40, 62], [62, 88, 60, 62], [78, 88, 72, 66]] : [[26, 88, 34, 68], [38, 88, 42, 64], [60, 88, 58, 64], [74, 88, 68, 68]];
+      return legs.map(([x1, y1, x2, y2]) => L(`M${x2},${y2} L${(x1 + x2) / 2 - 4},${(y1 + y2) / 2} L${x1},${y1}`, p.d, 3) + C((x1 + x2) / 2 - 4, (y1 + y2) / 2, 2, p.l)).join('')
+        + Array.from({ length: 8 }, (_, i) => G(`rotate(${i * 45} 50 58)`, R(47, 42, 6, 6, p.c, 1))).join('') + C(50, 58, 13, p.c) + C(50, 58, 8, p.dd) + R(60, 52, 14, 10, p.d, 2) + (po === 'attack' ? R(74, 55, 10, 4, p.ll, 1) + sparks(84, 56, p.ll, 3) : '') + ey(64, 56, 2.6) + ey(70, 56, 2.6);
+    },
+    // Dynamo: a flywheel walker: one great gear on piston legs, an exhaust stack, mismatched headlamps for eyes.
+    (p, po, ey) => {
+      const spin = po === 'attack' ? 30 : po === 'hurt' ? -12 : 0;
+      const puff = po === 'attack' ? p.ll : p.d;
+      const teeth = Array.from({ length: 12 }, (_, i) => G(`rotate(${i * 30 + spin} 44 38)`, R(41, 6, 6, 9, p.c, 1))).join('');
+      return R(18, 86, 20, 4, p.dd, 1) + R(62, 86, 20, 4, p.dd, 1) + R(26, 68, 6, 18, p.d) + R(23, 62, 12, 8, p.dd, 1) + R(68, 68, 6, 18, p.d) + R(65, 62, 12, 8, p.dd, 1) + R(16, 56, 66, 14, p.d, 3)
+        + R(76, 26, 8, 32, p.dd, 2) + [0, 1, 2].map((i) => C(80 - i * 3, 20 - i * 7, 3 + i, puff, 'opacity=".6"')).join('') + teeth + C(44, 38, 25, p.c) + C(44, 38, 18, p.d) + [0, 60, 120].map((a) => G(`rotate(${a + spin} 44 38)`, L('M26,38 h36', p.c, 3))).join('') + C(44, 38, 6, p.dd)
+        + R(74, 52, 24, 14, p.c, 3) + (po === 'attack' ? R(98, 58, 14, 5, p.ll, 1) : '') + C(84, 60, 6.2, p.dd) + ey(84, 60, 4.8) + C(95, 55, 3.6, p.dd) + ey(95, 55, 2.6);
+    },
+  ],
+  Beast: [
+    // Cubling: a fuzzy cub: round body, two ears, one big eye.
+    (p, po, ey) => {
+      const bounce = po === 'attack' ? -6 : 0;
+      return E(50, 88, 14, 2, p.d, 'opacity=".4"') + G(`translate(0 ${bounce})`, P('34,64 40,48 48,60', p.c) + P('52,60 60,48 66,64', p.c) + P('38,62 41,54 45,60', p.l) + P('55,60 59,54 62,62', p.l) + C(50, 72, 17, p.c) + E(50, 80, 9, 6, p.l, 'opacity=".5"')
+        + E(40, 86, 5, 3, p.d) + E(60, 86, 5, 3, p.d) + E(56, 80, 2, 1.4, p.dd)) + ey(52, 70 + bounce, 6.5);
+    },
+    // Ravager: a lean hunting beast, angular, all forward.
+    (p, po, ey) => {
+      const lunge = po === 'attack' ? 6 : 0;
+      const state: EyeState = po === 'hurt' ? 'narrow' : 'open';
+      return L('M18,72 q-10,-10 -2,-20', p.c, 3) + P(`18,74 26,60 60,56 ${82 + lunge},62 ${86 + lunge},74 74,76 62,72 30,76`, p.c) + P('26,60 40,52 60,56', p.l, 'opacity=".4"')
+        + P('22,76 18,88 26,88 30,76', p.d) + P('34,76 32,88 40,88 42,76', p.d) + P('60,74 58,88 66,88 68,74', p.d) + P('72,74 74,88 82,88 80,74', p.d)
+        + P(`${82 + lunge},62 ${94 + lunge},58 ${92 + lunge},72 ${84 + lunge},74`, p.c) + P(`${86 + lunge},72 ${88 + lunge},78 ${90 + lunge},72`, p.ll) + P(`${78 + lunge},58 ${80 + lunge},50 ${84 + lunge},60`, p.d)
+        + ey(85 + lunge, 65, 3.2, state) + ey(91 + lunge, 64, 2.6, state);
+    },
+    // Behemoth: huge and horned; two eyes too small for the body.
+    (p, po, ey) => {
+      const lunge = po === 'attack' ? 6 : 0;
+      return P('12,88 14,68 18,88', p.d) + P('30,88 30,70 38,88', p.d) + P('60,88 60,70 68,88', p.d) + P('78,88 80,68 86,88', p.d)
+        + D('M10,72 C8,44 30,28 56,30 C78,32 92,44 90,64 L92,76 L64,74 L30,76 Z', p.c) + D('M20,60 C26,42 44,36 60,38', p.l, 'opacity=".35"')
+        + P(`${66 + lunge},40 ${98 + lunge},18 ${92 + lunge},46`, p.d) + P(`${70 + lunge},38 ${92 + lunge},22 ${88 + lunge},44`, p.c, 'opacity=".6"') + P(`${60 + lunge},34 ${74 + lunge},8 ${76 + lunge},36`, p.d)
+        + P(`${84 + lunge},64 ${86 + lunge},74 ${90 + lunge},64`, p.ll) + P(`${74 + lunge},66 ${76 + lunge},74 ${80 + lunge},66`, p.ll)
+        + ey(74 + lunge, 52, 3.2) + ey(86 + lunge, 56, 3.2);
+    },
+  ],
+};
+
+const TIER_INDEX: Record<SpawnTier, 0 | 1 | 2> = { early: 0, mid: 1, late: 2 };
+
+// ---------- assembly ----------
+/** The figure's inner markup: body under the pose transform, impact ticks on a hurt. Facing right, ground y=88. */
+export function titanspawnMarkup(type: TypeId, tier: SpawnTier, pose: SpawnPose, uid: string): string {
+  const draw = LINES[type]?.[TIER_INDEX[tier]];
+  if (!draw) return '';
+  const p = pal(getTypeColor(type));
+  const gradientId = `${uid}eg`;
+  const eye = makeEye(uid, gradientId);
+  const ey: Eye = (x, y, r, st) => eye(x, y, r, st ?? (pose === 'hurt' ? 'narrow' : pose === 'attack' ? 'wide' : tier === 'late' ? 'stare' : 'open'));
+  const body = draw(p, pose, ey);
+  const t = pose === 'attack' ? 'translate(5 0) rotate(6 50 88)' : pose === 'hurt' ? 'translate(-6 0) rotate(-6 50 88) translate(50 88) scale(1.07 .92) translate(-50 -88)' : '';
+  const hit = pose === 'hurt' ? ticks(78, 60) : '';
+  return `${EYE_GRADIENT(gradientId)}${G(t, body)}${hit}`;
+}
+
+let nextUid = 0;
+
+interface Props {
+  heroId: string;
+  className: string;
+  pose?: SpawnPose;
+  /** HeroPortrait's idle-breath variables; the figure breathes exactly as a sprite does. */
+  style?: CSSProperties;
+}
+
+/**
+ * A spawn's figure, sized by the same class a hero's <img> takes. The viewBox puts the ground
+ * (y=88) on the box's bottom edge, so a spawn stands on the platform where a sprite's feet are,
+ * and `overflow: visible` lets a Late leave the box the way the gallery's does. Renders nothing
+ * for an id that is not a spawn, so callers can place it unconditionally.
+ */
+export function TitanspawnGlyph({ heroId, className, pose = 'idle', style }: Props) {
+  const uid = useMemo(() => `ts${(nextUid++).toString(36)}`, []);
+  const position = spawnPosition(heroId);
+  if (!position) return null;
+  const markup = titanspawnMarkup(position.line.type, position.tier, pose, uid);
+  return (
+    <svg
+      className={className}
+      viewBox="-4 -20 108 108"
+      preserveAspectRatio="xMidYMax meet"
+      style={{ overflow: 'visible', ...style }}
+      aria-hidden="true"
+      dangerouslySetInnerHTML={{ __html: markup }}
+    />
+  );
+}

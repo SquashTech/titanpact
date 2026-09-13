@@ -24,6 +24,7 @@ import './mechMoves.test';
 import './growth.test';
 import './moveTiers.test';
 import './roster.test';
+import './titanspawn.test';
 import './run.test';
 import './recruitment.test';
 import './shop.test';

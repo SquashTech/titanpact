@@ -1,6 +1,6 @@
 # titanspawn-overhaul.md — The Titanspawn Overhaul
 
-> **STATUS: DECIDED, NOT BUILT (2026-09-13, per user direction). NO PHASE OF §9 IS IN.**
+> **STATUS: DECIDED; PHASE 1 OF §9 IS IN (content + renderer, 2026-09-13). Phases 2–6 are not.**
 > This module replaces the location factions with a single per-type mob family (**Titanspawn**),
 > partitions the fourteen mortal types across the five run locations, gives the run a **mortal
 > companion**, takes the Pact Clock off the bench, and turns the map's Elite-or-Battle fork into
@@ -272,7 +272,7 @@ Each phase leaves the game playable. Dependencies drive the order; 3 and 5 are i
 | # | Phase | Status | Notes |
 |---|---|---|---|
 | 0 | This doc; `CLAUDE.md` pointer; gallery into `docs/art/` | **Done 2026-09-13** | |
-| 1 | Content + renderer: `src/data/titanspawn.ts` (14 × 3: stats, tier, kit band, growth grades for the companion), `TitanspawnGlyph` ported from the gallery script into the figure system beside `heroPoses` | Pending | Nothing else is visible without it. The port keeps the generator's rules (§2) verbatim. |
+| 1 | Content + renderer: `src/data/titanspawn.ts` (14 × 3: stats, tier, kit band, growth grades for the companion), `TitanspawnGlyph` ported from the gallery script into the figure system beside `heroPoses` | **Done 2026-09-13** | `titanspawn` folds into `allCombatants` only — no run pool draws it yet. Totals 200 / 400 / 600, kits 3 / 4 / 4, one grade line per type on the 28 budget; all pinned in `test/titanspawn.test.ts`. The renderer is `src/view/shared/titanspawnArt.tsx`, and `HeroPortrait` dispatches to it for a spawn id, so every screen that shows a hero shows a spawn with no other change. See "Phase 1 notes" below. |
 | 2 | Mob layer: `fight`/`battle` draw spawn by the Location's types and the act's tier; Guardian escorts become spawn; §7's deletions; `LocationDefinition.spawnTypes` replaces `factionId`; `locations.md` §3/§5.2 and `lore.md` §2 rewritten | Pending | The big deletion. Needs §10's opener decision. |
 | 3 | The fork: Elite-or-Skirmish, typing preview on the Skirmish and fork tiles, generator guarantees the two differ | Pending | Independent; small. |
 | 4 | The companion: mortality flag, join beat after fight one, absorption screen first in the post-fight chain, ladder reuse with the tier-step at `EVOLUTION_RUNG`, Late ≥ 600, Act 1 script kept functional | Pending | Needs 1 and 2. Needs §10's equipment decision. |
@@ -282,18 +282,47 @@ Each phase leaves the game playable. Dependencies drive the order; 3 and 5 are i
 
 Verify each phase as the repo does: `npm test`, `npm run typecheck`, `npm run typecheck:view`.
 
+**Phase 1 notes** (what the port decided that §2 did not say):
+
+- **Scale is the gallery's compare cell.** The figure's viewBox is the gallery's 108 units wide,
+  with the ground line (y=88) on the box's bottom edge, so a spawn stands where a sprite's feet
+  are and takes the same class and size a sprite does (96px on the battlefield, 2× of 48). An
+  Early therefore reads at roughly half a hero's height, a Mid near it, and a Late past it —
+  `overflow: visible` is what lets the Late leave the box. If the Late should break the frame
+  harder than it does, the dial is that viewBox, not the art.
+- **No per-side flip.** The gallery said "faces right; enemies mirror, as sprites do" — but this
+  battlefield never flips a sprite (the "mirror" in `styles.css` is the far row's column
+  reversal), so heroes face the same way on both rows and the spawn do too. Flipping only the
+  spawn would have made them the one thing on the field that turns to face the player.
+- **The gallery's ground shadow was dropped** — the card's own `.combatant-platform` is that
+  object, and a second ellipse under it read as a figure pasted on. The per-line accent shadows
+  inside a draw (Puddling's, Runeling's) are kept, being part of the body.
+- **The Early names share roots with slate moves**, and the repo pins exact names only.
+  Emberling/Ember, Wispling/Wisp, Cogling/Cog Bop and Duskling/Dusk Blade all stand, because the
+  approved gallery was checked for exact collisions and its names are the deliverable; §2's "or a
+  root" is a guideline for the next name, not a test. The test pins name uniqueness across every
+  content table and id uniqueness across every combatant.
+- **The idle-breath, strike and hit treatments apply unchanged** — they are class-keyed on the
+  portrait, and the glyph takes the same class and the same seeded phase variables.
+
 ## 10. Open questions — DO NOT silently resolve
 
-- **Equipment on a dead companion**: strip to bag (recommended, §5) or lost with it. Changes
-  phase 4's code.
-- **The opener's shape from Act 2**: `battle`'s leader-plus-basics kept as a Mid among Earlies,
-  or four Earlies scaled by act. Changes phase 2's generator.
+- ~~**Equipment on a dead companion**~~ **DECIDED 2026-09-13: strip to bag**, as termination
+  does. The unit is the price, the item is not.
+- ~~**The opener's shape from Act 2**~~ **DECIDED 2026-09-13: a Mid among Earlies, and the
+  Earlies carry equipment** — `battle`'s leader-plus-basics shape survives with a Mid of the
+  Location's types leading Earlies, and the Earlies are scaled up by holding gear rather than by a
+  second stat dial. Phase 2 repurposes `generateLeaderEncounter` and decides how the gear is
+  rolled (rarity by act, as drops are, is the obvious read).
 - **Where the companion's second tier-step sits** on the rung ladder (the first is the
   `EVOLUTION_RUNG`; the second has no existing threshold to borrow).
 - **A replacement companion after a death** — never, or possible. One at a time is decided;
   replacement is not.
-- **Early and Mid stat totals**, and the per-tier kit size (2 / 3 / 4 moves is the obvious
-  read of the ladder; not decided).
+- ~~**Early and Mid stat totals**, and the per-tier kit size~~ **DECIDED 2026-09-13: kits are
+  3 / 4 / 4** (an Early is thin, Mid and Late are full — the Act 1 opener stays trivially simple
+  without a Mid feeling half-built). Totals are phase 1's figures: **200 / 400 / 600** on the
+  enemy convention (six combat stats, HP at `HP_BUDGET_VALUE`) — below the cast, at it, above it,
+  which is the trainee curve in three numbers (`SPAWN_COMBAT_TOTAL`, `src/data/titanspawn.ts`).
 - **Which Earlies can be the companion** — all fourteen authored to one cuteness bar, or the
   join beat rolls from a subset (Rivetling and Runeling are the hard sells).
 - **The Guardian exception** — every champion sits inside its Location's triple (§3); whether
