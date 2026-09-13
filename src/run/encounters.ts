@@ -79,8 +79,12 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
   // enemy and hero ids never collide (test/recruitment.test.ts), so it is inert on a mob pool.
   const excludeHeroIds = run.roster.map((r) => r.heroId);
   const standardCount = encounterKind === 'boss' ? 2 : 4;
+  // Act 1 caps the enemy count at the roster — the IMMORTAL roster (2026-09-13, per user
+  // direction, titanspawn-overhaul.md "Phase 6 findings"): the companion is half a hero and must
+  // not invite a whole enemy, so the Act 1 Skirmish is 3v2 with it on the bench.
+  const immortalRoster = run.roster.filter((entry) => !entry.mortal).length;
   const heroCountOverride =
-    type === 'fight' || isSecondFight ? 2 : encounterHeroCountOverride(type, run.actNumber, run.roster.length, standardCount);
+    type === 'fight' || isSecondFight ? 2 : encounterHeroCountOverride(type, run.actNumber, immortalRoster, standardCount);
   const heroCount = heroCountOverride ?? standardCount;
   // Location affinity bias applies to the recruitable pool only (docs/locations.md §2).
   const bias = pool === heroes ? locationBias(location, heroes, heroCount) : undefined;

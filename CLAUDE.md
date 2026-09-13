@@ -289,7 +289,8 @@ don't silently override it.
   the run** (its items strip to the bag). It takes a slot, levels roster-wide, takes Scrolls off
   its type's whole slate, and its Evolution rung is a **tier-step** (Early → Mid at
   `EVOLUTION_RUNG`, Mid → Late at the rung that opens Late) in place of a branch. One per run;
-  a dead one is not replaced. `rosterHeroes` (`data/content.ts`) is the roster-facing hero
+  a dead one is not replaced. **It does not count toward Act 1's enemy-count cap** (per user
+  direction, same day): the cap reads the immortal roster, so the Act 1 Skirmish is 3v2. `rosterHeroes` (`data/content.ts`) is the roster-facing hero
   lookup for that reason; `heroes` stays the recruitable pool.
 - **Items are uncategorised, and the SLOT is the scarce thing** (2026-09-06, replacing the
   weapon/armor/accessory split, which playtested as fiddly and unintuitive). Any item goes in

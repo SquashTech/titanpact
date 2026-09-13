@@ -27,6 +27,7 @@ import { EVOLUTION_RUNG, RANK_THRESHOLDS, masteryMovePool, masteryRank, masteryR
 import { ROSTER_CAP, addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
 import { equipItem } from '../src/run/equipment';
 import { isRecruitable } from '../src/run/recruitment';
+import { nodeEncounter } from '../src/run/encounters';
 import { decodeSave, encodeSave, buildContentIndex } from '../src/run/save';
 import { classes } from '../src/data/classes';
 import { relics } from '../src/data/relics';
@@ -139,4 +140,17 @@ test('companion: it presses on the cap like anyone — a full roster refuses the
   assert.strictEqual(run.roster.length, ROSTER_CAP);
   assert.ok(!companionJoinDue(run, 'fight'));
   assert.throws(() => joinCompanion(run, 'cubling', rosterHeroes));
+});
+
+test('companion: it does not count toward Act 1\'s enemy-count cap — the Skirmish is 3v2 with it on the roster', () => {
+  // Per user direction (2026-09-13): the companion is half a hero and must not invite a whole enemy.
+  let run = joinCompanion({ ...starterRun(), map: generateMap(5, 1), locationIds: Object.keys(locations).slice(0, 5), actNumber: 1, fightsStarted: 2 }, 'cubling', rosterHeroes);
+  // fightsStarted 2: past the run's 2v2 breather, so the count is the cap's and nothing else's.
+  assert.strictEqual(run.roster.length, 3);
+  const skirmish = Object.values(run.map!.nodes).find((n) => n.type === 'skirmish')!;
+  const ctx = { run, location: locations.wildsEdge, heroes, allCombatants: rosterHeroes, enemies: {}, progression: progressionTable };
+  assert.strictEqual(nodeEncounter(skirmish, ctx).run.roster.length, 2, 'two enemies against two heroes and a companion');
+  // A real third hero does raise it.
+  run = addRosterEntry(run, createRosterEntry('crimson', 'crimson', heroes.crimson.moveIds));
+  assert.strictEqual(nodeEncounter(skirmish, { ...ctx, run }).run.roster.length, 3);
 });

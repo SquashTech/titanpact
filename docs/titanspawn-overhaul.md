@@ -420,12 +420,12 @@ every stall (0.6% of fights reach round 30, none cap), and the draft table is pa
 
 | Dial | As built | Alternative | What moved (2000 skilled runs) |
 |---|---|---|---|
-| Act 1's enemy count caps at the roster size — **does the companion count?** | Yes: it is a body the player has, so the Skirmish fields 3 the moment it joins | Count only immortal heroes | Act 1 clear 78.1% → **83.0%**, Elite 86.4% → 94.0%, companion lost 53% → 50%, full clear 51.2% → 52.5%. As built, the companion's body and the enemy it invites roughly cancel (pass 7's Act 1 was 77.2%). One `.filter` in `run/encounters.ts`. |
+| Act 1's enemy count caps at the roster size — **does the companion count?** | ~~Yes~~ **No (decided 2026-09-13, per user direction): the count is the immortal roster, so the Act 1 Skirmish is 3v2 with the companion on the bench.** | It counted, in the first measurement | Excluding it: Act 1 clear 78.1% → **83.0%**, Elite 86.4% → 94.0%, companion lost 53% → 50%, full clear 51.2% → 52.5%. Counting it, its body and the enemy it invited roughly cancelled (pass 7's Act 1 was 77.2%). |
 | **`SPAWN_TIER_BY_ACT`** — where Late spawn first stand as Guardian escorts | Early / Mid / Mid / **Late** / Late | Late from Act 5 only | Act 4 clear 82.9% → **96.1%**, full clear 51.2% → **59.0%**, Act 5 unchanged. As built the run has a back-half wall; the alternative returns it to pass 7's shape where Act 1 is the only one. |
 
-Neither is turned here. The tier table is the phase-2 first pass and reads as intended — a Late
-in Act 4 is not a breather — and the count rule is the rule as written; both are one line if
-playtest disagrees.
+The count rule was turned per user direction (the 3v2 Skirmish is the on-ramp the companion is
+meant to have); the tier table stays as built — a Late in Act 4 is not a breather, and that is
+the point of it.
 
 ## 10. Open questions — DO NOT silently resolve
 
