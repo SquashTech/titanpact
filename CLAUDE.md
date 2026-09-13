@@ -26,6 +26,15 @@ don't silently override it.
 > 3, 4, then 5 Scrolls, income rises by act (3/3/4/4/4, +2 an act), the purse banks, and the
 > thresholds are the old level curve's (Mid at rung 3, Evolution at 4, Late at 6).
 
+> **A second overhaul is DECIDED and NOT YET BUILT: `docs/titanspawn-overhaul.md`** (2026-09-13).
+> Location factions are replaced by **Titanspawn** — one mob line per mortal type in three tiers
+> (Early/Mid/Late), geometric SVG art against the heroes' pixel art, kits from the type slates;
+> locations **partition** the fourteen types (Necropolis at two); the fork becomes a previewed
+> Elite-or-Skirmish; a **mortal companion** joins after the first fight (a hero in every respect
+> except that a KO removes it from the run); and the **Pact Clock comes off the bench**. Its §11
+> lists the invariants below it reverses; until the phase in its §9 that replaces each one lands,
+> the rule below is still the rule in force.
+
 ---
 
 ## Locked invariants — do not violate without an explicit decision
