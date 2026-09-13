@@ -12,6 +12,7 @@ import { progressionTable } from '../../src/data/progression';
 import { EVOLUTION_RUNG, EVOLUTION_SCROLLS, RANK_THRESHOLDS, scrollsToReachRung } from '../../src/run/progression';
 import { TOTAL_ACTS } from '../../src/run/state';
 import type { Aggregate, ChoiceAgg, HeroAgg } from './types';
+import { addTimeCounts, emptyTimeCounts, PACE_PROFILES, SCREEN_SECONDS, secondsFor, type ScreenKind } from './time';
 
 function pct(numerator: number, denominator: number): string {
   if (denominator === 0) return '   -  ';
@@ -32,6 +33,26 @@ function pad(text: string, width: number): string {
 
 function padStart(text: string, width: number): string {
   return text.length >= width ? text : ' '.repeat(width - text.length) + text;
+}
+
+/** Mean and quantiles of a whole-minute histogram (index = minutes). */
+function quantiles(histogram: readonly number[]): { mean: number; p10: number; p50: number; p90: number } {
+  let n = 0;
+  let sum = 0;
+  for (let m = 0; m < histogram.length; m++) {
+    n += histogram[m] ?? 0;
+    sum += (histogram[m] ?? 0) * (m + 0.5);
+  }
+  if (n === 0) return { mean: NaN, p10: NaN, p50: NaN, p90: NaN };
+  const at = (q: number) => {
+    let seen = 0;
+    for (let m = 0; m < histogram.length; m++) {
+      seen += histogram[m] ?? 0;
+      if (seen >= q * n) return m + 0.5;
+    }
+    return histogram.length;
+  };
+  return { mean: sum / n, p10: at(0.1), p50: at(0.5), p90: at(0.9) };
 }
 
 function heading(title: string): string {
@@ -149,6 +170,55 @@ export function formatReport(
   out.push('  runs ended at node type:');
   for (const [type, count] of Object.entries(agg.deathByNodeType).sort((a, b) => b[1] - a[1])) {
     out.push(`    ${pad(type, 12)}${padStart(String(count), 7)}${padStart(pct(count, agg.runs - agg.wins), 8)}`);
+  }
+
+  // --- Run length ---
+  out.push(heading('1b. RUN LENGTH (estimated wall-clock)'));
+  out.push('  The sim counts beats, action declarations and screens; scripts/sim/time.ts prices each in');
+  out.push('  seconds. The counts are measured, the prices are assumptions — read the shape, then fix');
+  out.push('  the prices against a stopwatch.');
+  out.push('');
+  out.push(
+    `  ${pad('completed runs, minutes', 26)}${padStart('mean', 8)}${padStart('p10', 8)}${padStart('median', 8)}${padStart('p90', 8)}${padStart('beats', 8)}${padStart('actions', 9)}${padStart('screens', 9)}`
+  );
+  const wholeWon = emptyTimeCounts();
+  for (let act = 1; act <= TOTAL_ACTS; act++) addTimeCounts(wholeWon, agg.timeByActWon[act]);
+  PACE_PROFILES.forEach((profile, i) => {
+    const q = quantiles(agg.runMinutesWon[i]);
+    const split = secondsFor(wholeWon, profile);
+    const share = (part: number) => (split.total > 0 ? pct(part, split.total) : '-');
+    out.push(
+      `  ${pad(profile.label, 26)}${padStart(num(q.mean, 1), 8)}${padStart(num(q.p10, 0), 8)}${padStart(num(q.p50, 0), 8)}${padStart(num(q.p90, 0), 8)}${padStart(share(split.beats), 8)}${padStart(share(split.actions), 9)}${padStart(share(split.screens), 9)}`
+    );
+  });
+  out.push('');
+  out.push(`  ${pad('lost runs, minutes', 26)}${padStart('mean', 8)}${padStart('p10', 8)}${padStart('median', 8)}${padStart('p90', 8)}`);
+  PACE_PROFILES.forEach((profile, i) => {
+    const q = quantiles(agg.runMinutesLost[i]);
+    out.push(`  ${pad(profile.label, 26)}${padStart(num(q.mean, 1), 8)}${padStart(num(q.p10, 0), 8)}${padStart(num(q.p50, 0), 8)}${padStart(num(q.p90, 0), 8)}`);
+  });
+  out.push('');
+  out.push('  per act, completed runs, Reader profile (rounds = per fight, beats = per round):');
+  out.push(
+    `  ${pad('act', 6)}${padStart('fights', 8)}${padStart('rounds', 8)}${padStart('beats', 8)}${padStart('actions', 9)}${padStart('screens', 9)}${padStart('fight min', 11)}${padStart('other min', 11)}${padStart('total', 8)}`
+  );
+  const reader = PACE_PROFILES[0];
+  const W = agg.wins || 1;
+  for (let act = 1; act <= TOTAL_ACTS; act++) {
+    const t = agg.timeByActWon[act];
+    const split = secondsFor(t, reader);
+    const screens = Object.values(t.screens).reduce((a, b) => a + (b ?? 0), 0);
+    out.push(
+      `  ${pad(String(act), 6)}${padStart(num(t.fights / W, 1), 8)}${padStart(num(t.fights > 0 ? t.rounds / t.fights : 0, 1), 8)}${padStart(num(t.rounds > 0 ? t.beats / t.rounds : 0, 1), 8)}${padStart(num(t.actions / W, 0), 9)}${padStart(num(screens / W, 0), 9)}${padStart(num((split.beats + split.actions) / W / 60, 1), 11)}${padStart(num(split.screens / W / 60, 1), 11)}${padStart(num(split.total / W / 60, 1), 8)}`
+    );
+  }
+  out.push('');
+  out.push('  where the out-of-fight minutes go, completed runs (Reader):');
+  const screenRows = (Object.keys(wholeWon.screens) as ScreenKind[])
+    .map((kind) => ({ kind, n: wholeWon.screens[kind] ?? 0, seconds: (wholeWon.screens[kind] ?? 0) * SCREEN_SECONDS[kind] }))
+    .sort((a, b) => b.seconds - a.seconds);
+  for (const row of screenRows) {
+    out.push(`    ${pad(row.kind, 18)}${padStart(num(row.n / W, 1), 7)} /run${padStart(num(row.seconds / W / 60, 1), 8)} min`);
   }
 
   // --- Fight difficulty ---

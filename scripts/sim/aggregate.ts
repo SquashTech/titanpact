@@ -2,6 +2,7 @@
 // fold thousands of runs without keeping any of them.
 
 import { TOTAL_ACTS } from '../../src/run/state';
+import { addTimeCounts, emptyTimeCounts, PACE_PROFILES, secondsFor } from './time';
 import type { RunRecord } from './run';
 import {
   emptyChoice,
@@ -58,6 +59,18 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
     if (record.won) agg.scrollsBySourceWon[key] = (agg.scrollsBySourceWon[key] ?? 0) + record.scrollsBySource[key];
   }
   for (const key of Object.keys(record.recruitsBySource)) agg.recruitsBySource[key] = (agg.recruitsBySource[key] ?? 0) + record.recruitsBySource[key];
+
+  const whole = emptyTimeCounts();
+  for (let act = 1; act < record.timeByAct.length; act++) {
+    addTimeCounts(agg.timeByAct[act], record.timeByAct[act]);
+    if (record.won) addTimeCounts(agg.timeByActWon[act], record.timeByAct[act]);
+    addTimeCounts(whole, record.timeByAct[act]);
+  }
+  PACE_PROFILES.forEach((profile, i) => {
+    const minutes = Math.floor(secondsFor(whole, profile).total / 60);
+    const histogram = record.won ? agg.runMinutesWon[i] : agg.runMinutesLost[i];
+    histogram[minutes] = (histogram[minutes] ?? 0) + 1;
+  });
 
   for (const fight of record.fights) {
     const key = `${fight.act}:${fight.mapNodeType}`;

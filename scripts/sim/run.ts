@@ -53,6 +53,7 @@ import {
   canAffordAnyScroll,
   recordMoveOffer,
   masteryRank,
+  masteryRung,
   grantOfferedMove,
   itemSlotsFor,
   grantMove,
@@ -73,6 +74,7 @@ import { simulateFight, PLAYER_SIDE, type PilotKind } from './fight';
 import * as policy from './policy';
 import type { PourEvolution } from './policy';
 import { makeRng, pick, randomSeed, sample, withRandom, type Rng } from './rng';
+import { emptyTimeCounts, type ScreenKind, type TimeCounts } from './time';
 
 const EQUIPMENT_POOL = Object.values(equipment);
 const STARTER_IDS = Object.values(heroes).filter((h) => h.starter).map((h) => h.id);
@@ -107,6 +109,7 @@ export interface FightRecord {
   won: boolean;
   stalemate: boolean;
   rounds: number;
+  beats: number;
   pactTicked: boolean;
   playerHpFrac: number;
   playerTurns: number;
@@ -152,9 +155,17 @@ export interface RunRecord {
   scrollsBySource: Record<string, number>;
   /** Heroes joining after the draft: `contract` (claimed or bought), `hire` (Guild Hall). */
   recruitsBySource: Record<string, number>;
+  /** What the run cost in taps and screens, [act]; index 0 unused (time.ts prices it). */
+  timeByAct: TimeCounts[];
 }
 
 // --- Helpers ---
+
+/** One more pass through a screen, on the act's time ledger. */
+function tally(record: RunRecord, act: number, kind: ScreenKind, n = 1): void {
+  const screens = record.timeByAct[act].screens;
+  screens[kind] = (screens[kind] ?? 0) + n;
+}
 
 function entryOf(run: RunState, rosterId: string): RosterEntry {
   const entry = run.roster.find((r) => r.rosterId === rosterId);
@@ -252,12 +263,14 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     equipped: [],
     scrollsBySource: {},
     recruitsBySource: {},
+    timeByAct: Array.from({ length: TOTAL_ACTS + 1 }, emptyTimeCounts),
   };
 
   // --- Draft: 4 starters offered, 2 taken at random (the experiment). ---
   const draftOptions = generateStarterOptions(randomSeed(rng), STARTER_IDS);
   const drafted = sample(rng, draftOptions, STARTER_PICK_COUNT);
   record.choices.push({ bucket: 'draft', offered: draftOptions, picked: drafted, encountersWonAtChoice: 0 });
+  tally(record, 1, 'draft');
 
   let run: RunState = createRunState(40);
   for (const heroId of drafted) {
@@ -282,6 +295,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
       record.choices.push({ bucket: 'node', offered: offeredTypes, picked: [node.type], encountersWonAtChoice: run.encountersWon });
     }
     const location = locationForAct(run.locationIds, run.actNumber);
+    tally(record, run.actNumber, 'mapPick');
 
     for (const entry of run.roster) {
       record.heroLevels[entry.heroId] = Math.max(record.heroLevels[entry.heroId] ?? 0, entry.level);
@@ -309,12 +323,14 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
       run = absorbed.run;
       // Automatic and roster-wide, benched heroes included (src/run/growth.ts).
       run = grantEncounterLevels(run, rosterHeroes, rng);
+      tally(record, run.actNumber, 'levelUp');
       record.encountersWon = run.encountersWon;
       // The run's first fight: one of the Earlies it beat joins, and there is no declining.
       const companionId = companionJoinDue(run, node.type) && outcome.encounter ? companionCandidate(outcome.encounter) : null;
       if (companionId) {
         run = joinCompanion(run, companionId, rosterHeroes, rng);
         record.companionHeroId = companionId;
+        tally(record, run.actNumber, 'companion');
       }
 
       if (node.type === 'boss') {
@@ -333,10 +349,14 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
         }
         // Guardian → Banner → Crucible (a Class) → Pact Seal.
         run = resolveCrucible(run, rng, record.choices);
+        tally(record, run.actNumber, 'banner');
+        tally(record, run.actNumber, 'crucible');
+        tally(record, run.actNumber, 'pactSeal');
         // Before advanceToNextAct: the Guardian pays at the act it was beaten in.
         run = grantScrolls(run, scrollRewardFor('boss', run.actNumber), 'guardian', record);
         if (run.actNumber < TOTAL_ACTS) {
           run = advanceToNextAct(run, randomSeed(rng));
+          tally(record, run.actNumber, 'actIntro');
         }
         else {
           record.won = true;
@@ -345,13 +365,17 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
       }
 
       run = tryRecruitContracts(run, outcome.defeatedRoster, rng, record);
-      if (outcome.drop) run = resolveDrop(run, outcome.drop.id, record.equipped, run.actNumber);
+      if (outcome.drop) {
+        tally(record, run.actNumber, 'drop');
+        run = resolveDrop(run, outcome.drop.id, record.equipped, run.actNumber);
+      }
       // The fight's Scrolls, scaled by act (docs/growth-overhaul.md §12); the Guardian's are above.
       if (node.type !== 'boss') run = grantScrolls(run, scrollRewardFor(node.type, run.actNumber), node.type, record);
       run = pourHeldScrolls(run, rng, record);
       continue;
     }
 
+    tally(record, run.actNumber, node.type as ScreenKind);
     run = resolveRewardNode(run, node.type, location.id, rng, record, options);
     run = pourHeldScrolls(run, rng, record);
     run = advanceToNode(run, nodeId);
@@ -379,10 +403,15 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
 function pourHeldScrolls(run: RunState, rng: Rng, record: RunRecord): RunState {
   if (!canAffordAnyScroll(progressionTable, moves, run)) return run;
   const evolutions: PourEvolution[] = [];
+  const rungsBefore = run.roster.reduce((sum, entry) => sum + masteryRung(entry), 0);
   const next = policy.pourScrolls(run, rng, evolutions);
   for (const e of evolutions) {
     record.choices.push({ bucket: 'evolution', offered: e.offered, picked: [e.picked], encountersWonAtChoice: next.encountersWon });
   }
+  // The Evolution rung raises its screen in place of a move offer.
+  const rungs = next.roster.reduce((sum, entry) => sum + masteryRung(entry), 0) - rungsBefore;
+  tally(record, run.actNumber, 'evolution', evolutions.length);
+  tally(record, run.actNumber, 'rung', Math.max(0, rungs - evolutions.length));
   return next;
 }
 
@@ -479,6 +508,7 @@ function resolveEncounterNode(
     won: fight.won,
     stalemate: fight.stalemate,
     rounds: fight.rounds,
+    beats: fight.beats,
     pactTicked: fight.pactTicked,
     playerHpFrac: fight.playerHpFrac,
     playerTurns: fight.playerTurns,
@@ -492,6 +522,15 @@ function resolveEncounterNode(
     playerHeroes,
     enemyHeroes,
   });
+
+  const time = record.timeByAct[workingRun.actNumber];
+  time.fights += 1;
+  time.rounds += fight.rounds;
+  time.beats += fight.beats;
+  time.actions += fight.playerTurns;
+  tally(record, workingRun.actNumber, 'squadSelect');
+  tally(record, workingRun.actNumber, 'fightOpen');
+  tally(record, workingRun.actNumber, 'fightResult');
 
   const koRosterIds = Object.values(fight.telemetry)
     .filter((t) => t.side === PLAYER_SIDE && t.died)
@@ -516,6 +555,7 @@ function tryRecruitContracts(run: RunState, defeatedRoster: readonly RosterEntry
   const eligible = defeatedRoster.filter((entry) => isRecruitable(entry.heroId, heroes));
   const offers = pickContractOffers(eligible);
   if (offers.length === 0) return run;
+  tally(record, run.actNumber, 'contract');
   const best = policy.byPower(offers)[0];
   const offer = deriveContractOffer(best);
   const rosterId = freshRosterId(run, best.heroId);

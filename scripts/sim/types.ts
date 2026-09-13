@@ -1,6 +1,8 @@
 // Shapes the simulator produces. Workers aggregate as they go and ship an
 // `Aggregate` back; nothing keeps per-run records for a 10k-run batch.
 
+import { addTimeCounts, emptyTimeCounts, PACE_PROFILES, type TimeCounts } from './time';
+
 /**
  * A randomized-offer experiment. Every reward screen this simulator drives
  * offers N options and the policy takes one UNIFORMLY AT RANDOM, so the set a
@@ -73,6 +75,9 @@ export interface FightKindAgg {
   enemyStatsSum: number;
 }
 
+/** A per-run minute histogram, one per pace profile (time.ts PACE_PROFILES order); index = whole minutes. */
+export type MinuteHistograms = number[][];
+
 export interface Aggregate {
   runs: number;
   wins: number;
@@ -138,6 +143,13 @@ export interface Aggregate {
   scrollsBySourceWon: Record<string, number>;
   /** Heroes who joined the roster after the draft, by route. */
   recruitsBySource: Record<string, number>;
+  /** What runs cost in taps and screens (time.ts), [act], summed over runs that ENTERED the act. */
+  timeByAct: TimeCounts[];
+  /** The same, over completed runs only — a full clear's shape, undiluted by Act 1 deaths. */
+  timeByActWon: TimeCounts[];
+  /** Estimated whole-run minutes, completed runs / lost runs, per pace profile. */
+  runMinutesWon: MinuteHistograms;
+  runMinutesLost: MinuteHistograms;
   /** Wall-clock ms spent simulating. */
   elapsedMs: number;
 }
@@ -184,6 +196,10 @@ export function emptyAggregate(): Aggregate {
     scrollsBySource: {},
     scrollsBySourceWon: {},
     recruitsBySource: {},
+    timeByAct: Array.from({ length: 7 }, emptyTimeCounts),
+    timeByActWon: Array.from({ length: 7 }, emptyTimeCounts),
+    runMinutesWon: PACE_PROFILES.map(() => []),
+    runMinutesLost: PACE_PROFILES.map(() => []),
     elapsedMs: 0,
   };
 }
@@ -244,6 +260,10 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   into.rosterEvolvedEndSum += from.rosterEvolvedEndSum;
   into.runsRosterEvolved += from.runsRosterEvolved;
   into.elapsedMs += from.elapsedMs;
+  for (let act = 0; act < from.timeByAct.length; act++) addTimeCounts(into.timeByAct[act], from.timeByAct[act]);
+  for (let act = 0; act < from.timeByActWon.length; act++) addTimeCounts(into.timeByActWon[act], from.timeByActWon[act]);
+  for (let i = 0; i < from.runMinutesWon.length; i++) mergeArray(into.runMinutesWon[i], from.runMinutesWon[i]);
+  for (let i = 0; i < from.runMinutesLost.length; i++) mergeArray(into.runMinutesLost[i], from.runMinutesLost[i]);
   into.playerTurns += from.playerTurns;
   into.playerRests += from.playerRests;
   into.playerSwitches += from.playerSwitches;

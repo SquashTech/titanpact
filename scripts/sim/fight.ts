@@ -28,6 +28,7 @@ import type { RosterEntry } from '../../src/run/state';
 import type { Squad } from '../../src/run/squad';
 import { pilotActions, type PilotOptions } from './pilot';
 import type { Rng } from './rng';
+import { countBeats } from './beats';
 
 const PLAYER_SIDE: Side = 'A';
 const AI_SIDE: Side = 'B';
@@ -59,6 +60,8 @@ export interface FightOutcome {
   /** True when neither side was wiped inside MAX_ROUNDS. Counts as a loss. */
   stalemate: boolean;
   rounds: number;
+  /** Taps the fight costs to watch: one per beat in buildBeats.ts' grouping, opening included. */
+  beats: number;
   /** The Pact Clock ticked at least once. */
   pactTicked: boolean;
   /** Player-side turns taken, and how many were spent Resting or cycling out. */
@@ -284,6 +287,7 @@ export function simulateFight(input: FightInput): FightOutcome {
   const opening = resolveBattleStartEntries(start, 1, allCombatants, statuses, passives, fieldEffects);
   let state = opening.state;
   recordEvents(opening.events, telemetry);
+  let beats = countBeats(opening.events);
 
   const playerCtx = { ...contextFor(playerRoster, state), random: rng };
   const aiCtx = { ...contextFor(aiRoster, state), random: rng };
@@ -301,6 +305,7 @@ export function simulateFight(input: FightInput): FightOutcome {
     // resolution — the same order the screen enforces.
     state = fillOpenSlots(state, PLAYER_SIDE, events);
     recordEvents(events, telemetry);
+    beats += countBeats(events);
 
     const playerActive = aliveActiveIdsOn(state, PLAYER_SIDE);
     const aiActive = aliveActiveIdsOn(state, AI_SIDE);
@@ -331,6 +336,7 @@ export function simulateFight(input: FightInput): FightOutcome {
     roundEvents.push(...replacementEvents);
 
     recordEvents(roundEvents, telemetry, casts);
+    beats += countBeats(roundEvents);
     creditKos(roundEvents, telemetry);
   }
 
@@ -350,6 +356,7 @@ export function simulateFight(input: FightInput): FightOutcome {
     won: aiDown && !playerDown,
     stalemate,
     rounds,
+    beats,
     pactTicked,
     playerTurns,
     playerRests,
