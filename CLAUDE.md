@@ -345,9 +345,11 @@ don't silently override it.
 - **Mana tuning invariant:** *mana investment must pay out later than the point at which a weak
   team dies.* Keep this true when tuning any mana node or regen value.
 - **The Pact Clock — the upper bracket on the invariant above** (2026-09-01,
-  `src/engine/combat/pactClock.ts`). From **round 30** every combatant — both sides,
-  **active and benched** — loses **10%** of max HP at the round boundary, rising **+5% per
-  round**, so a full-HP hero dies five rounds in. Direct HP loss: no Defense, no type
+  `src/engine/combat/pactClock.ts`). From **round 30** every **active** combatant — both
+  sides; **the bench is out of the leak** since 2026-09-13 (Titanspawn overhaul §6, phase 5) —
+  loses **10%** of max HP at the round boundary, rising **+5% per round**, so a full-HP hero
+  dies five rounds in. Rotation spreads it, but every switch-in eats a tick, so stalls end
+  later, not never. Direct HP loss: no Defense, no type
   chart, no variance, and **no passive reaction pass** — the terminator is not a trigger
   source. It closes the stall nothing else bracketed (mana regenerates, rounds were
   unbounded, stat mods have no ceiling). Escalating chip, not instant death, so the side

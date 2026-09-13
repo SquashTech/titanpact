@@ -65,13 +65,16 @@ test('pact: the tick is inert before the start round and emits nothing', () => {
   assert.strictEqual(result.state, state);
 });
 
-test('pact: the tick hits every living combatant on BOTH sides, bench included', () => {
+test('pact: the tick hits every living ACTIVE combatant on both sides, and the bench is out of the leak', () => {
   const state = fixture(2);
   const result = tickPactClock(state, SHORT_CLOCK.startRound, SHORT_CLOCK, maxHpOf(state));
 
   const hit = new Set(result.events.filter((e) => e.type === 'HpChanged').map((e) => (e as { combatantId: string }).combatantId));
-  // a3 is on the bench (fixtures.ts places slot 2 onward there) and is hit anyway.
-  assert.deepStrictEqual([...hit].sort(), ['a1', 'a2', 'a3', 'b1', 'b2']);
+  // a3 is on the bench (fixtures.ts places slot 2 onward there) and is spared (2026-09-13,
+  // docs/titanspawn-overhaul.md §6): a benched mortal dying to the Clock was the one death
+  // that is not a decision.
+  assert.deepStrictEqual([...hit].sort(), ['a1', 'a2', 'b1', 'b2']);
+  assert.strictEqual(result.state.combatants.a3.currentHp, state.combatants.a3.currentHp);
 
   for (const id of hit) {
     const expected = Math.ceil(fixtureMaxHp(state.combatants[id].heroId) * SHORT_CLOCK.baseFraction);
@@ -103,9 +106,10 @@ test('pact: it faints, and a fainted combatant is not hit twice', () => {
   const first = tickPactClock(state, 1, lethal, maxHpOf(state));
 
   const faints = first.events.filter((e) => e.type === 'Fainted');
-  assert.strictEqual(faints.length, 5, 'every combatant on the board goes down at 100%');
-  assert.strictEqual(first.state.koCount.A, 3);
+  assert.strictEqual(faints.length, 4, 'every combatant on the field goes down at 100%; the bench stands');
+  assert.strictEqual(first.state.koCount.A, 2);
   assert.strictEqual(first.state.koCount.B, 2);
+  assert.strictEqual(first.state.combatants.a3.fainted, false);
 
   const second = tickPactClock(first.state, 2, lethal, maxHpOf(state));
   assert.deepStrictEqual(

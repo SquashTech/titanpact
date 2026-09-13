@@ -1150,7 +1150,7 @@ export function FightScreen({
             <span className="pact-warning-mark" aria-hidden="true" />
             <span className="pact-warning-text">
               {combat.round >= DEFAULT_PACT_CLOCK.startRound
-                ? `The pact is due — ${Math.round(pactFractionFor(combat.round, DEFAULT_PACT_CLOCK) * 100)}% HP from everyone this round`
+                ? `The pact is due — ${Math.round(pactFractionFor(combat.round, DEFAULT_PACT_CLOCK) * 100)}% HP from everyone on the field this round`
                 : `The pact comes due in ${DEFAULT_PACT_CLOCK.startRound - combat.round} ${
                     DEFAULT_PACT_CLOCK.startRound - combat.round === 1 ? 'round' : 'rounds'
                   }`}

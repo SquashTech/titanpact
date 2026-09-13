@@ -1,6 +1,7 @@
 // The Pact Clock (docs/combat.md "The Pact Clock") — the upper bracket on fight
-// length. Direct HP loss to EVERY combatant, both sides, active and benched:
-// no Defense, no type chart, no variance, no passive reactions.
+// length. Direct HP loss to every ACTIVE combatant, both sides: no Defense, no type
+// chart, no variance, no passive reactions. The bench is out of the leak (2026-09-13,
+// docs/titanspawn-overhaul.md §6).
 
 import type { CombatState } from '../state';
 import type { CombatEvent } from '../events';
@@ -32,10 +33,12 @@ export function pactFractionFor(round: number, config: PactClockConfig): number 
 }
 
 /**
- * One PactTicked for the whole board, then the ordinary HpChanged/Fainted stream via
+ * One PactTicked for the field, then the ordinary HpChanged/Fainted stream via
  * applyHpDelta. Not followed by a passive-reaction pass: the terminator is not a
  * trigger source. A simultaneous double wipe reads as a player loss (FightScreen
- * tests the player side first).
+ * tests the player side first). It still terminates without the bench: every switch-in
+ * eats at least one boundary tick, and the escalation makes any active body lethal
+ * within a few rounds — stalls end later, not never.
  */
 export function tickPactClock(
   state: CombatState,
@@ -52,9 +55,9 @@ export function tickPactClock(
   let working = state;
 
   for (const side of ['A', 'B'] as const) {
-    // Active first, then bench, each in slot order — a fixed traversal for replay.
-    const ids = [...working.active[side].filter((id): id is string => id !== null), ...working.bench[side]];
-    for (const id of ids) {
+    // Slot order — a fixed traversal for replay.
+    for (const id of working.active[side]) {
+      if (id === null) continue;
       const combatant = working.combatants[id];
       if (!combatant || combatant.fainted) continue;
       const maxHp = maxHpOf(id);

@@ -66,17 +66,18 @@ Three things fall out of this at no cost:
 it — *"the pact comes due on everyone who showed up."* That line is now the whole cosmology.
 
 The binding leaks. Any engagement that runs long enough starts taking the Titan's weight
-through the failing seal, which is why from round 30 **every combatant on both sides, bench
-included**, loses an escalating fraction of max HP, and why it is direct HP loss that no
+through the failing seal, which is why from round 30 **every combatant on the field, both
+sides**, loses an escalating fraction of max HP, and why it is direct HP loss that no
 Defense, type chart, variance or passive can touch. It is not an attack. It is the world's
-condition arriving on schedule.
+condition arriving on schedule. **The bench is out of the leak** (2026-09-13,
+`titanspawn-overhaul.md` §6): what stands in the seal's draught takes its weight; what
+stands behind the line does not, yet.
 
 Three properties the mechanic already has become fiction for free:
 
 | Mechanic (locked in `combat.md`) | What it means |
 |---|---|
 | Hits **both sides** | Nobody is on the Titan's side. It has no allies, only a leash. |
-| Hits the **bench** | The pact comes due on everyone who showed up, not everyone who swung. |
 | **No passive-reaction pass** — the terminator is not a trigger source | There is nothing to react *to*. It is not a source, it is a condition. |
 
 The same countdown runs at three scales: the fight, the run, and the world.

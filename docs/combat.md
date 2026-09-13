@@ -1603,10 +1603,14 @@ Four properties, each deliberate:
 - **It is direct HP loss, not a damage-pipeline hit.** No Defense, no type chart, no
   variance, no crit — nothing to buff, resist, or wall. A stall is not supposed to be
   survivable by playing the stall better.
-- **It hits the BENCH as well as the field.** This is what makes it airtight: a stalling
-  side with two healthy heroes in reserve could otherwise cycle fresh bodies in and outlast
-  a clock that only touched the active pair. It also matches the fiction — the pact comes
-  due on everyone who showed up.
+- **It hits the FIELD, not the bench** (reversed 2026-09-13, per user direction —
+  `titanspawn-overhaul.md` §6; it hit both from 2026-09-01). A stalling side can rotate to
+  spread the loss across four bodies, but every switch-in eats at least one boundary tick and
+  the escalation (10 → 15 → 20 …) makes any active body lethal within a few rounds, so stalls
+  end later, not never, and "the side that is ahead still wins" holds. The immediate reason
+  is the mortal companion — a benched mortal dying to the Clock was the one death that is not
+  a decision — but the rule is general: the Clock has no exceptions and keeps none. Phase 5
+  re-measured stall length (below).
 - **No passive-reaction pass follows it** (unlike the status ticks it sits beside in
   `resolveRound`). A passive that healed off the pact would blunt the exact thing that must
   not be blunted, and "the terminator is not a trigger source" is a cheaper rule to hold

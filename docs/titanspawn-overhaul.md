@@ -1,6 +1,6 @@
 # titanspawn-overhaul.md — The Titanspawn Overhaul
 
-> **STATUS: DECIDED; PHASES 1–2 OF §9 ARE IN (content + renderer, the mob layer; 2026-09-13). Phases 3–6 are not.**
+> **STATUS: DECIDED; PHASES 1, 2 AND 5 OF §9 ARE IN (content + renderer, the mob layer, the Clock off the bench; 2026-09-13). Phases 3, 4 and 6 are not.**
 > This module replaces the location factions with a single per-type mob family (**Titanspawn**),
 > partitions the fourteen mortal types across the five run locations, gives the run a **mortal
 > companion**, takes the Pact Clock off the bench, and turns the map's Elite-or-Battle fork into
@@ -276,7 +276,7 @@ Each phase leaves the game playable. Dependencies drive the order; 3 and 5 are i
 | 2 | Mob layer: `fight`/`battle` draw spawn by the Location's types and the act's tier; Guardian escorts become spawn; §7's deletions; `LocationDefinition.spawnTypes` replaces `factionId`; `locations.md` §3/§5.2 and `lore.md` §2 rewritten | **Done 2026-09-13** | `src/run/spawn.ts` composes, `generateSpawnEncounter` draws, `SPAWN_TIER_BY_ACT` in `difficulty.ts` says which tier; `test/mobLayer.test.ts` pins it. Faction sprites archived under `art/archive/factions/`, faction tests replaced by `test/guardians.test.ts`. See "Phase 2 notes". |
 | 3 | The fork: Elite-or-Skirmish, typing preview on the Skirmish and fork tiles, generator guarantees the two differ | Pending | Independent; small. |
 | 4 | The companion: mortality flag, join beat after fight one, absorption screen first in the post-fight chain, ladder reuse with the tier-step at `EVOLUTION_RUNG`, Late ≥ 600, Act 1 script kept functional | Pending | Needs 1 and 2. Needs §10's equipment decision. |
-| 5 | Pact Clock off the bench; `lore.md` §3 row deleted; sim re-measures stall length | Pending | Independent; one engine file plus the doc. |
+| 5 | Pact Clock off the bench; `lore.md` §3 row deleted; sim re-measures stall length | **Done 2026-09-13** | `tickPactClock` walks the active slots only. Measured over 892 simulated fights: 0.8% reach round 30 and none hit the engine cap (0.9% / none with the bench in) — the Clock closes every stall it did before. `combat.md` and `CLAUDE.md` updated with it. |
 | 6 | Difficulty re-fit and a sim pass: is Act 1's opener the auto-win; claim supply on the fork; the companion's trade ratio by run half; whether the Guild Hall tilted | Pending | After everything. |
 | — | Tutorial rewrite | **Deferred** | Until systems are complete, per user. |
 
