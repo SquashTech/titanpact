@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { locations } from '../../data/locations';
+import { locationDomains, locations } from '../../data/locations';
 import { LocationHorizon } from '../shared/locationArt';
 import { ElementGlyph } from '../shared/elementIcons';
 import { getTypeColor } from '../combat/typeColors';
@@ -38,12 +38,11 @@ export function LocationSelectOverlay({ onPick, onClose }: Props) {
 
               <span className="location-select-body">
                 <span className="location-select-name">{location.name}</span>
-                <span className="location-select-faction">{location.faction}</span>
               </span>
 
               <span className="location-select-domains">
-                {location.affinity ? (
-                  location.affinity.map((type) => (
+                {locationDomains(location) ? (
+                  locationDomains(location)!.map((type) => (
                     <span key={type} className="location-select-domain" style={{ color: getTypeColor(type) }} title={type}>
                       <ElementGlyph type={type} />
                     </span>

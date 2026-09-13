@@ -14,12 +14,12 @@ import {
   encounterHeroCountOverride,
   scrollsFor,
 } from '../src/run/difficulty';
-import { generateEncounter, generateLeaderEncounter } from '../src/run/enemyGen';
+import { generateEncounter, generateSpawnEncounter } from '../src/run/enemyGen';
 import { EVOLUTION_LEVEL, MOVE_CAP } from '../src/run/progression';
 import { heroes } from '../src/data/heroes';
-import { enemies, factions, basicEnemiesOf } from '../src/data/enemies';
-
-const GOBLINS = factions.goblins;
+import { titanspawn } from '../src/data/titanspawn';
+import { locations } from '../src/data/locations';
+import { mobEncounter } from '../src/run/spawn';
 import { progressionTable } from '../src/data/progression';
 import { SEAL_ACTS, TOTAL_ACTS } from '../src/run/state';
 import { grantBudgetTotal } from '../src/run/statBudget';
@@ -177,23 +177,19 @@ test('difficulty: an unscaled encounter is byte-for-byte the authored content at
   }
 });
 
-test('difficulty: the Goblin Chief encounter takes the monsters curve, and its pool has no progression to cash a level in for', () => {
+test('difficulty: a spawn encounter takes the monsters curve, and a spawn has no progression to cash a level in for', () => {
   const act5 = actScaling('monsters', 5);
-  const { run } = generateLeaderEncounter(11, GOBLINS.basicIds, GOBLINS.leaderId, enemies, act5);
+  const { run } = generateSpawnEncounter(11, { types: null, leaderTier: 'mid', escortTier: 'early', escortCount: 3, scaling: act5 });
   for (const entry of run.roster) {
     assert.strictEqual(entry.level, act5.level);
     assert.strictEqual(statTotal(entry.evolutionStatGrants), act5.statSteps * ACT_STEP_STAT_TOTAL);
     assert.deepStrictEqual(entry.chosenPathIds, []);
-    assert.deepStrictEqual(entry.unlockedMoveIds, [...enemies[entry.heroId].moveIds]);
+    assert.deepStrictEqual(entry.unlockedMoveIds, [...titanspawn[entry.heroId].moveIds]);
   }
 
   // The row-0 opener is on the same track: unSCALED in Act 1, though no longer level 1 —
   // enemy level tracks the player curve now, and the two axes are independent.
-  const { run: opener } = generateEncounter('fight', 7, basicEnemiesOf(GOBLINS), {
-    heroCount: 2,
-    scaling: actScaling('monsters', 1),
-    progression: progressionTable,
-  });
+  const { run: opener } = mobEncounter('fight', locations.wildsEdge, 1, 7, actScaling('monsters', 1));
   for (const entry of opener.roster) {
     assert.deepStrictEqual(entry.evolutionStatGrants, {}, 'act 1 monsters take no stat steps');
     assert.strictEqual(entry.level, ENEMY_LEVEL_BY_ACT[0]);

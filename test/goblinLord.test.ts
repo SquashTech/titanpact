@@ -60,7 +60,7 @@ test('goblinLord: the kit is four moves — the MOVE_CAP — spanning both damag
   for (const type of lord.types) assert.ok(kitTypes.has(type), `nothing in the kit gets STAB off ${type}`);
 });
 
-test('goblinLord: only the locations with an authored faction field a Guardian champion today', () => {
+test('goblinLord: every location fields a Guardian champion, and the finale bench ends on the Endbringer', () => {
   assert.strictEqual(locations[ACT_ONE_LOCATION_ID].guardianFinalEnemyId, GOBLIN_LORD_ID);
   const withChampions = Object.values(locations).filter((l) => l.guardianFinalEnemyId !== null);
   // The Threshold's "champion" is the Endbringer itself — the finale's bench ends on it.

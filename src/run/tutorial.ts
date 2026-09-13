@@ -277,7 +277,7 @@ export interface TutorialEncounter {
   heroIds: readonly string[];
   /**
    * Flat stats on every enemy here, so a scripted fight lasts long enough to be talked through.
-   * A scripted fight has to survive its own dialogue: the Goblins are authored as fodder, and a
+   * A scripted fight has to survive its own dialogue: an Early spawn is authored as fodder, and a
    * mob that dies in round 1 takes every round-2 lesson with it.
    */
   statGrants?: Partial<Record<StatKey, number>>;

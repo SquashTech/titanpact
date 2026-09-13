@@ -6,8 +6,8 @@
 
 A run chains 5 acts of the standard shape, then the finale act (`run-loop.md` §3-4). Until now every act was the same
 act — same generated map shape, same encounter pools, same Goblins, differing only in
-seed. A **Location** is the identity an act wears: a name, a faction, a type affinity, a
-set of heroes findable nowhere else, and a look.
+seed. A **Location** is the identity an act wears: a name, the spawn types it fields, a type
+affinity, a set of heroes findable nowhere else, and a look.
 
 ---
 
@@ -15,13 +15,13 @@ set of heroes findable nowhere else, and a look.
 
 **Act 1 is always Wild's Edge.** It is the tutorial ground and the only location whose
 Skirmishes draw on *every* type — the player has no team identity yet, so nothing should
-be pressuring it. Its faction is the Goblins, which is also the enemy content that
-already exists (`src/data/enemies.ts`).
+be pressuring it. Its mob layer is every line's Early — the leak runs thin out here
+(`spawnTypes: null`, §3).
 
 **Acts 2-5 draw from the remaining locations without replacement.** A location is never
 visited twice in one run.
 
-**Act 6 is a fixed location the draw can never produce** — no faction, no affinity, and no
+**Act 6 is a fixed location the draw can never produce** — no mob layer, no affinity, and no
 map of the `run-loop.md` §1 shape. It is where the binding was made (`run-loop.md` §4).
 
 **Exactly one location goes unvisited every run**, and that is load-bearing rather than
@@ -95,7 +95,7 @@ wilderness.
 | Surface | Location-aware? |
 |---|---|
 | `skirmish` / `elite` encounter pool | **Yes** — affinity-biased (§2). |
-| `fight` / `battle` / `boss` encounter pool | **Yes** — the faction's `basicIds`, exactly. The Guardian's escorts joined this row on 2026-09-06 (`run-loop.md` "The Guardian's escorts"); affinity never applies here, because the faction *is* the filter. |
+| `fight` / `battle` / `boss` encounter pool | **Yes** — the Location's `spawnTypes`, exactly (§3 "The mob layer"). The Guardian's escorts joined this row on 2026-09-06 (`run-loop.md` "The Guardian's escorts"); affinity never applies here, because the spawn types *are* the filter. |
 | Recruit Contract offers | **Yes, transitively** — contracts are claimed off beaten Skirmish heroes, so biasing Skirmishes is what makes a hero "findable here". |
 | Guild Hall recruit pool | **No, deliberately** — see below. |
 | Map shape, node types, rewards | No. `run-loop.md` §1 is unchanged. |
@@ -119,139 +119,35 @@ reads it** (§5.4). Which heroes are rare and where they live is authoring work 
 real roster lands (`run-loop.md` §4, README "Next steps" #5) — the schema is here so that
 work is data entry rather than plumbing.
 
-### The faction bill
+### The mob layer — Titanspawn (2026-09-13, replacing the factions)
 
-`enemies.ts` groups its content by **faction** (`FactionRoster`: a `baselineAct`, a list of
-`basicIds`, and one `leaderId`), and a Location names the one it fields through
-`LocationDefinition.factionId`. `fight`, `battle` and (since 2026-09-06) `boss` are the node
-types that read as *faction*; `skirmish` reads as *region*.
+The six factions — Goblins, Cultists, Raiders, Fae, Vulcans, Undead — were deleted whole
+(`docs/titanspawn-overhaul.md` §7; their sprites are archived under `art/archive/factions/`).
+What `fight`, `battle` and the Guardian's escorts field now is **Titanspawn**
+(`src/data/titanspawn.ts`): one mob line per mortal type in three tiers, and a Location names
+the lines it fields through `LocationDefinition.spawnTypes` — a **hard filter**, where
+`affinity` stays a weighting. The five run Locations partition the fourteen spawning types
+between them (§3 of the overhaul doc has the table and why the Necropolis holds two).
 
-**The bill is paid (2026-09-05).** All six: **Goblins** (5 basics + the Chief, Wild's Edge),
-**Cultists** (4 + the Cult Mystic, Blighted Shrine) and **Raiders** (4 + the Champion Raider,
-Storm Coast) since 2026-09-02, then **Fae** (4 + the Pixie Queen, Forbidden Forest),
-**Vulcans** (4 + the Vulcadozer, Molten Foundry) and **Undead** (4 + the Dread Raven,
-Necropolis). Every Location fields its own roster and its own Guardian champion; nothing
-falls back to `DEFAULT_FACTION_ID` any more, and Wild's Edge names it only because Act 1 *is*
-the Goblins.
+What the factions were for is still done, by fewer parts. The Location still decides who
+you fight; the mob layer is still the easy track by construction (Early 200, Mid 400, Late
+600 against the hero pool, all on the monsters curve — `difficulty.ts`); and a Location is
+still counterable as a unit, now *exactly* so, because a spawn has no second type and no
+exception. The faction "tell" (the Fae's Renew, the Vulcans' Scorched Land, the Undead's
+Haunt) survives as the slate's own shape — a spawn's kit is its type's authored moves read
+at its tier's band, so a Necropolis still Haunts and a Foundry still Burns. The one thing a
+faction could do that a spawn cannot — put an exception inside the roster — is now the
+Guardian's alone, which is the overhaul's whole thesis: **the mob layer is the type chart
+made flesh, and the Guardian is where the chart lies.**
 
-The Molten Foundry's faction was called **Automatons** until 2026-09-05 and is now the
-**Vulcans**, because four of its six are not Mechs at all — the name is the place's, not
-either half's. `LocationDefinition.faction` is the only place the old name lived.
+The composition by act lives in `src/run/spawn.ts` and is pinned by `test/mobLayer.test.ts`:
+Act 1's opener is two bare Earlies from every line; from Act 2 the opener is a leader at the
+act's tier (`SPAWN_TIER_BY_ACT`, floored at Mid) over three Earlies that each carry an item
+rolled on the act's drop curve; the `battle` node is that shape in every act until phase 3
+retires it; the Guardian's escorts are two spawn at the act's tier. A two-line Location
+repeats a body rather than coming up short.
 
-Each one was a block of data in `enemies.ts` plus one field on its Location, exactly as this
-section predicted — no engine change was needed for any of the five, which is the pure-data
-architecture doing its job. The five tells below are built entirely out of status and field
-effect vocabulary that already existed.
-
-The upside buried in it: `run-loop.md` §4 still lists "a real Guardian boss hero" as
-unbuilt, and locations supply the reason to author six of them rather than one. Each
-location's Guardian is its faction's apex. That is a far better authoring prompt than
-"make a Guardian."
-
-**What a faction is authored against (2026-09-02, the Cultists).** `FactionRoster
-.baselineAct` is the act a roster's stat lines *are* — `difficulty.ts`'s `actScaling` takes
-it as an override on the `monsters` track default, so the same four Cultists are an Act 2
-encounter as written and pick up +30 stats per act beyond it. The Goblins' 2 is a fudge (they
-are Act 1 content that never appears past Act 1, so the clamp does the work); the Cultists' 2
-is a real figure, and the field exists so the next faction can honestly say 3 without moving
-a global.
-
-How far above the Goblins is a **decision that was made twice** (2026-09-02), and the second
-answer is the one to reason from. The first pass read "considerably stronger than Goblins"
-as ~280 against their ~180 — more than a full act-step of daylight, and deliberately under
-the weakest authored hero at 325, on the theory that a mob should stay under the hero band.
-Per user direction that theory is wrong at this point in a run: an Act 2 squad is four heroes
-carrying two acts of equipment and level-ups, and a 280-stat enemy is deleted before it acts.
-The basics are now a flat **400** — level with the *strongest* authored hero, not under the
-weakest — and the Mystic 500. Fodder is what the Goblins are for; a faction with a shrine and
-a Guardian is not fodder.
-
-What keeps them from simply being heroes is **mana**, which was left where it was when the
-stat lines went up: 50-65 pools against a hero band of 30-90, with kits costing 15-30 a cast.
-They hit like the top of the roster and run dry like a mob, which is the intended shape — the
-fight is decided in the first few rounds or it is decided by who can still cast.
-
-The Cultists are also the first faction with a **shared type spine** — every one of them
-leads on Shadow, with the second type fanning out (Iron / none / Nature / Frost, then Arcane
-on the Mystic and Ancient on Yugzulach). That is the legibility trade the shape is for: the
-faction reads as one cult at a glance, and it pays for that with one common answer — Light
-and Spirit are super-effective against the whole roster. Whether a faction *should* be
-counterable as a unit is an open balance question (§6), not a settled one; the Goblins, whose
-five basics are five different types, are the counter-example already in the game.
-
-The shared spine is now the house shape rather than one faction's experiment: the Raiders
-lead on Iron and the Fae on Nature, each fanning its second type out across the basics the
-way the Cultists do. What each spine costs is the whole point of picking one — Shadow gives
-up two attacking types (Light, Spirit), Iron three (Fire, Storm, Mech), and Nature four
-(Fire, Frost, Shadow, Beast). The Fae are therefore the most counterable faction in the game
-on purpose, and the Renew engine below is what they are paid for it.
-
-**The counter-example, and the better answer (2026-09-05, the Vulcans).** The Molten Foundry
-has **no single spine** — Fire leads four of its six and Mech the other two, which is what
-the rename is for. It did not escape the §6 problem: Water is 2x into Fire *and* 2x into
-Mech, so it is super-effective on the entire fightable roster, tighter than the Cultists'
-Light/Spirit rather than looser. A mixed faction is not automatically an uncounterable one.
-
-What makes it work anyway is **where the exception sits**. The one Vulcan Water does not
-beat is the **Lava Beast**, whose Ancient half drags it back to 1x — so a squad that brought
-Water cuts through the whole Foundry and then meets the Guardian with its answer gone. That
-is the pattern to reuse: not a faction with a hole in its counter, a faction whose *boss* is
-the hole. It costs nothing to author (every champion is already Ancient-second) and it makes
-the type-answer decision a real one instead of a solved one.
-
-**What a faction's tell is (2026-09-05, the Fae, the Vulcans and the Undead).** A roster at the same 400/500/700 band as
-the last two has to be a different *fight*, not a different colour, and the lever is a status
-the whole kit is built around. The Raiders' is Conduct — a mark that pays out on the next hit.
-The Fae's is **Renew**, which pays out three ways off one turn: the end-of-round heal, the
-x2 on Seed Shot and Branch Slam while the user carries it, and — under **Verdant Earth**, set
-by the Light Fairy's Magic Growth at a plain `fight` node — Attack and Intelligence equal to
-the live Renew value. Two brakes keep it honest: Renew halves every round, so the engine
-decays on its own clock, and Verdant Earth is **symmetric**, so a player side carrying its own
-Renew gets the same stats out of the Fae's ground. The Elder Bough is the apex of it —
-Overgrowth is Renew 100 on itself, three payouts from one action — and Speed 30, the slowest
-champion by 20, is what it pays. Whether that self-plant is too much on top of 260 HP is a
-first-pass number for playtest, not a decision.
-
-The Vulcans' is **Burn that does not go out**. Spreading Blaze sets **Scorched Land**, whose
-whole text is "Burn no longer decays", and Burn stacks *additively* — so once the ground is
-lit the stack only ever climbs, and Immolate triples against a Burned target. The
-counterplay is authored into the status rather than into the kits: Burn `clearsOnSwitch`, so
-one switch wipes it clean. Which means this engine **sharpens as the fight grinds**, because
-the lock-in rule takes voluntary switching away at 2 KO'd heroes — the mirror image of the
-Fae's Renew, which decays on its own whether you engage with it or not.
-
-One thing the same field effect ruled out, worth recording so it is not re-added: the
-Guardian originally carried **Volcanic Surge**, whose self-inflicted Burn 30 *also* stops
-decaying on the boss's own Scorched Land. Measured at 265 -> 190 HP in two rounds with the
-decay still on; with it suppressed the fight becomes "outlast its suicide". The self-cooking
-belongs on the Automaton, where 110 HP and a one-cast pool make Overheat a cost rather than
-an exit. `test/vulcans.test.ts` guards the Guardian against any self-targeted status.
-
-The Undead's is **Haunt**, and it is the first tell that changes *who gets hit* rather than
-how hard. A Haunted hero takes every Spirit or Mind attack aimed at its **partner**
-(`spreadTriggerTypes`, `statusEngine.ts`) — which is most of this roster's damage — so one
-25-mana Torment turns each of the faction's single-target casts into two hits, with nothing
-scaling the second one down, because "no spread damage reduction" is a locked invariant.
-Measured across the roster: 10 of its 17 single-target attacks spread, and the seven that do
-not are the Knight's Iron half, the King's Ancient half, and all four of the Raven's.
-
-The second half is what makes the first half a trap rather than a grind. **Spite** doubles
-below 50% of the *user's* HP and **Vengeance** triples below 25%, so an Undead gets stronger
-the closer it is to dead — and the two interlock, because spreading the player's damage
-across both enemies walks *both* into Spite range together instead of letting either be
-removed cleanly. Chipping the Necropolis arms it. The counterplay is to burst one target
-through the spread, or to switch: Haunt `clearsOnSwitch`, and it is the switch-*out* that
-clears it.
-
-The Skeleton King is that at apex, and its stat line is the argument: 210 HP, the **lowest**
-of the five champions, with the points that would have been HP in Attack and Intelligence.
-The Vengeance window is ~52 HP wide — roughly one player turn — so the whole fight is whether
-that turn kills it or hands it a 180-power swing. It does **not** carry Last Rites (bp120,
-user drops to 1 HP) for the same reason the Lava Beast lost Volcanic Surge: a boss that ends
-itself makes turtling the answer. Vengeance punishes a sloppy finish instead of performing
-one, which is the opposite trade.
-
-### `guardianFinalEnemyId` — the faction champion
+### `guardianFinalEnemyId` — the champion
 
 One enemy id per location, held on the **bench** of that location's Guardian fight so it
 is the last combatant to reach the field (`run-loop.md` "The Guardian's champion" for the
@@ -354,59 +250,15 @@ Until it lands, acts 2-5 are effectively random-without-replacement, which is
 explicitly **not** the decided design. Do not read the current behaviour as a
 decision.
 
-### 5.2 Faction enemy content — still the largest chunk of actual work
+### 5.2 The mob layer — built, then replaced
 
-**Plumbed and half-paid (2026-09-02).** `LocationDefinition.factionId` names a
-`FactionRoster` in `enemies.ts`, and `App.tsx`'s `handleSelectNode` reads it for
-both mob node types — `basicEnemiesOf(faction)` for `fight`,
-`generateLeaderEncounter(…, faction.basicIds, faction.leaderId, …)` for `battle`.
-Nothing about a Goblin is hardcoded in the app layer any more; the old
-`generateGoblinChiefEncounter` is the same function under a name that no longer
-names a faction.
-
-All six rosters exist as of 2026-09-05. Nothing points at `DEFAULT_FACTION_ID` as a
-*fallback* any more — Wild's Edge names it because Act 1 is the Goblins, and the constant is
-kept only for a Location that ever ships without a faction.
-
-Roughly 4-5 basics + 1 leader per faction, `HeroDefinition`s in the shape
-`enemies.ts` already uses (a Goblin does not need a different schema, it needs
-different numbers — `run-loop.md` §3), plus a `baselineAct` saying which act the
-numbers are for. Each faction that lands is a block of data and one field here.
-The Cultists are the worked example.
-
-**The Raiders (2026-09-03), and what a second faction settled.** The Storm Coast now
-fields `'raiders'` — four basics at a flat 400, the Champion Raider at 500, the
-Leviathan at 700, and `baselineAct: 2`. Every one of those figures is the Cultists'
-figure, deliberately: Storm Coast and Blighted Shrine are both drawn from the same
-acts 2-5 pool, so the two rosters are interchangeable in an itinerary and a second
-stat band would only make the location pick a difficulty roll. Separating them is
-`difficulty.ts`'s job, not the roster's.
-
-They keep the **shared type spine** the Cultists introduced — every Raider is
-Iron-primary, second types fanning out over none / Storm / Water / Arcane, then Storm
-again on the Champion. So the open balance question in §6 now has two data points
-rather than one: an Iron warband answers to Fire, Storm and Mech as a unit the same
-way a Shadow cult answers to Light and Spirit.
-
-What makes it a *different fight* at the same numbers is **Conduct**. The status
-detonates off `triggerTypes: ['Storm', 'Iron', 'Mech']` (`statuses.ts`) — which is what this
-faction is made of — and two of their moves go free against a marked field:
-`metallicBlade` on any mark, `overcharge` on both. The Stormraider's Ionize is
-therefore worth a whole turn: it buys the warband a round where the mana brake is off
-*and* every hit carries an extra 15% of max HP. The counterplay is built in, because
-detonating consumes the mark — the discount and the damage compete for it.
-
-Two things that fell out of authoring it, both worth knowing before the next faction:
-
-- **A faction gimmick wants a cheap detonator on every member.** The Surfraider's
-  first kit was two Water moves and a non-damaging Iron debuff, which left the fastest
-  Raider unable to cash a mark at all. `swiftBlow` (Iron, 15 power, priority +1) fixed
-  it and is better content besides — the fast one detonates before the round starts.
-- **The Mysticraider still cannot**, and that is a content gap rather than a choice:
-  the only Iron move that runs off Intelligence is `conjuredSword` at 80 mana, well
-  past the faction's mana brake. An Iron **magical** move in the 20-30 range would
-  close it. Until then the caster plants nothing and cashes nothing — it makes the
-  marks affordable, which is a clean enough division of labour to leave alone.
+The faction content this section tracked was paid in full on 2026-09-05 and retired whole on
+2026-09-13 by the Titanspawn overhaul (§3 above, `docs/titanspawn-overhaul.md`). Nothing here
+is outstanding: `spawnTypes` replaced `factionId`, `run/spawn.ts` replaced
+`generateLeaderEncounter` and `basicEnemiesOf`, and the monsters track's baseline is the
+track default again. What the factions taught — a shared type spine reads as one answer, a
+gimmick wants a cheap detonator on every body, mana is the brake on a hero-sized stat line —
+is in the git history and in the spawn's authoring (a spawn's mana is where it is still a mob).
 
 ### 5.3 Per-location Guardians
 
@@ -510,15 +362,15 @@ own — it was a small italic caption at the foot of the well first, which read 
 over a scene rather than as part of one. It is the only text on the map that is neither a control
 nor a readout, and the only one that gets to be big.
 
-It is deliberately about the **faction**, not the place: `flavor` already answers *where
+It is deliberately about the **spawn**, not the place: `flavor` already answers *where
 you are* on the arrival screen a moment earlier, so a second line about the terrain would
-be the same beat twice. This answers *who is already here*, and it answers it standing in
+be the same beat twice. This answers *what leaks here*, and it answers it standing in
 front of the fight that proves it. Gated on the node kind rather than on being row 0, so
 act 6's Vigil never gets a line naming enemies that are not there.
 
 #### The name
 
-`MapScreen`'s `MapPlacard` etches the location's name and its faction into the
+`MapScreen`'s `MapPlacard` etches the location's name and its spawn types' marks into the
 well's **bottom-left corner**. It is unboxed, per `visual-language.md`'s rule
 that the only rectangles are controls, and `pointer-events: none` so no map
 shape can lose a tap to it.
@@ -682,7 +534,10 @@ enough that half of it clears whatever button the screen ends in.
   a Foundry that re-lights itself, is the natural marriage of this system and
   `field-effects.md`. Deliberately not attempted — Field Effects has exactly one authored
   effect today, and the second one should not be a location's ambient passive.
-- **May a faction share one type spine?** Still open, but no longer abstract — all six
+- **May a faction share one type spine?** *Closed by the Titanspawn overhaul (2026-09-13):
+  every Location's mob layer is now a pure type partition with no exception in it, and the
+  exception lives on the Guardian alone — which is the finding below, made into the rule.*
+  The history: all six
   factions are authored now and four answers are on the table. The Cultists (Shadow),
   Raiders (Iron), Fae (Nature) and Undead (Spirit) each share a spine, and what that costs
   varies more than expected: Spirit and Shadow give up two attacking types, Iron three,
@@ -696,8 +551,11 @@ enough that half of it clears whatever button the screen ends in.
   Lava Beast) or whose leader sits outside its own tell (the Dread Raven) stays interesting
   at every stat band, spine or no spine. Measure whether that holds before writing it down
   as house style.
-- **Where does the mob curve sit against the player curve?** `FactionRoster.baselineAct`
-  makes "which act is this roster for" authorable, but the Cultists' 400 stat total at
+- **Where does the mob curve sit against the player curve?** The monsters track's baseline
+  is the track default again (`BASELINE_ACT`, 2026-09-13), and the mob layer's tier by act
+  (`SPAWN_TIER_BY_ACT`) is the new dial; phase 6 of the Titanspawn overhaul measures it.
+  The history: `FactionRoster.baselineAct`
+  made "which act is this roster for" authorable, but the Cultists' 400 stat total at
   Act 2 and the +30/act above it are figures chosen against the hero roster as written,
   not measured against a played Act 3. The 400 already replaced a 280 that was wrong by
   inspection rather than by measurement; the +30/act has had neither test. Same status as

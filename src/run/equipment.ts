@@ -423,18 +423,19 @@ export function rarityWeightsFor(actNumber: number, source: LootSource = 'standa
 /** Act-1 standard odds — the default, so an un-threaded call site is conservative. */
 export const RARITY_DROP_WEIGHTS: Record<EquipmentRarity, number> = rarityWeightsFor(1, 'standard');
 
-/** Weighted sample of `count` distinct items. Zero-weight rarities are filtered out (not left in at 0 — float drift); the unfiltered pool is the fallback only if the filter empties it. */
+/** Weighted sample of `count` distinct items. Zero-weight rarities are filtered out (not left in at 0 — float drift); the unfiltered pool is the fallback only if the filter empties it. `random` is the seeded generators' hook. */
 export function pickWeightedEquipment(
   pool: readonly EquipmentDefinition[],
   count: number,
-  weights: Record<EquipmentRarity, number> = RARITY_DROP_WEIGHTS
+  weights: Record<EquipmentRarity, number> = RARITY_DROP_WEIGHTS,
+  random: () => number = Math.random
 ): EquipmentDefinition[] {
   const eligible = pool.filter((item) => weights[item.rarity] > 0);
   const remaining = eligible.length > 0 ? eligible : [...pool];
   const picked: EquipmentDefinition[] = [];
   while (picked.length < Math.min(count, remaining.length)) {
     const total = remaining.reduce((sum, item) => sum + weights[item.rarity], 0);
-    let roll = Math.random() * total;
+    let roll = random() * total;
     let index = remaining.length - 1;
     for (let i = 0; i < remaining.length; i++) {
       roll -= weights[remaining[i].rarity];
@@ -462,10 +463,11 @@ export const ENCHANT_DROP_CHANCE = 0.25;
 export function maybeEnchantDrop(
   item: EquipmentDefinition,
   equipmentLookup: Record<string, EquipmentDefinition>,
-  chance: number = ENCHANT_DROP_CHANCE
+  chance: number = ENCHANT_DROP_CHANCE,
+  random: () => number = Math.random
 ): EquipmentDefinition {
-  if (item.enchantId !== undefined || Math.random() >= chance) return item;
-  const enchantId = ENCHANTMENT_IDS[Math.floor(Math.random() * ENCHANTMENT_IDS.length)];
+  if (item.enchantId !== undefined || random() >= chance) return item;
+  const enchantId = ENCHANTMENT_IDS[Math.floor(random() * ENCHANTMENT_IDS.length)];
   const id = equipmentIdFor(item.familyId ?? item.id, item.familyId ? item.rarity : null, enchantId);
   return equipmentLookup[id] ?? item;
 }

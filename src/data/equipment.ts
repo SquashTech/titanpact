@@ -235,9 +235,10 @@ export const EQUIPMENT_FAMILY_NOUNS: Readonly<Record<EquipmentFamilyId, string>>
 export function rollEquipmentDrops(
   count: number,
   weights: Record<EquipmentRarity, number>,
-  enchantChance?: number
+  enchantChance?: number,
+  random: () => number = Math.random
 ): EquipmentDefinition[] {
-  return pickWeightedEquipment(EQUIPMENT_DROP_POOL, count, weights).map((item) =>
-    maybeEnchantDrop(item, equipment, enchantChance)
+  return pickWeightedEquipment(EQUIPMENT_DROP_POOL, count, weights, random).map((item) =>
+    maybeEnchantDrop(item, equipment, enchantChance, random)
   );
 }

@@ -3,12 +3,15 @@
 // Two independent difficulty axes: node KIND (fixed bonuses here) and ACT
 // (difficulty.ts ActScaling, passed in by the caller — never derived here).
 
-import type { StatKey } from '../engine/content';
+import type { StatKey, TypeId } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
 import { createRng, nextFloat, type RngState } from '../engine/rng/seededRng';
 import type { BrokenSeal, RunState, RosterEntry } from './state';
 import { createRunState, createRosterEntry, addRosterEntry } from './state';
 import { unsealedIdFor } from '../data/enemies';
+import { spawnPool, type SpawnTier } from '../data/titanspawn';
+import { rollEquipmentDrops } from '../data/equipment';
+import { equipItem, type EquipmentRarity } from './equipment';
 import {
   MOVE_CAP,
   EVOLUTION_RUNG,
@@ -19,7 +22,8 @@ import {
   masteryMovePool,
   type ProgressionTable,
 } from './progression';
-// The one content import: there is exactly one move table, and tier gating needs it.
+// Content imports: there is exactly one move table, and tier gating needs it; the spawn
+// generator draws the mob layer straight from its own table, as the finale draws its champions.
 import { moves } from '../data/moves';
 import { mergeStatMods } from './statMods';
 import {
@@ -288,7 +292,7 @@ export function generateEncounter(
 }
 
 /**
- * Appends one fixed enemy to an encounter's BENCH (a Location's faction champion
+ * Appends one fixed enemy to an encounter's BENCH (a Location's champion
  * reinforcing its Guardian — it reaches the field only via forced replacement).
  * Separate from generateEncounter because it draws from a different, non-recruitable
  * pool. Unknown ids return the encounter unchanged.
@@ -357,27 +361,80 @@ export function generateFinaleEncounter(
   return { run, squad };
 }
 
-/** The `battle` node: the faction's leader always present plus 3 of its basics. No node-kind bonus; takes the act curve on the monsters track. */
-export function generateLeaderEncounter(
-  seed: number,
-  basicIds: readonly string[],
-  leaderId: string,
-  enemyPool: HeroLookup,
-  scaling: ActScaling = NO_SCALING
-): Encounter {
+export interface SpawnEncounterOptions {
+  /** The Location's lines; null = every spawning type (`spawnPool`). */
+  types: readonly TypeId[] | null;
+  /** The body that leads, first on the field; omitted = no leader (Act 1's opener). */
+  leaderTier?: SpawnTier;
+  escortTier: SpawnTier;
+  escortCount: number;
+  /** Rarity weights for the one item each escort arrives holding; omitted = bare escorts. */
+  escortGear?: Record<EquipmentRarity, number>;
+  /** Omitted = NO_SCALING. */
+  scaling?: ActScaling;
+}
+
+/**
+ * Draws `count` spawn from a pool, without replacement until the pool runs dry and then again
+ * from the top — a two-type Location fielding three Earlies has to repeat one, and a repeated
+ * body is what a mob layer looks like. Every roster id is unique even when the hero id is not.
+ */
+function drawSpawn(rng: RngState, pool: HeroLookup, count: number): { picked: string[]; nextState: RngState } {
+  const ids = Object.keys(pool);
+  const picked: string[] = [];
+  let state = rng;
+  while (picked.length < count && ids.length > 0) {
+    const { picked: round, nextState } = shuffledPick(state, ids, count - picked.length);
+    state = nextState;
+    picked.push(...round);
+  }
+  return { picked, nextState: state };
+}
+
+/**
+ * The mob layer's own encounter (docs/titanspawn-overhaul.md §4): a leader at one tier ahead
+ * of its escorts, or bare escorts alone, drawn from the Location's lines. No node-kind bonus —
+ * the tier IS the difficulty axis here — and the act curve rides on the monsters track. The
+ * escorts' gear is the second axis from Act 2 (difficulty.ts OPENER_GEAR_FROM_ACT): rolled on
+ * the act's rarity curve exactly as a drop is, seeded with the rest of the encounter.
+ */
+export function generateSpawnEncounter(seed: number, options: SpawnEncounterOptions): Encounter {
+  const { types, leaderTier, escortTier, escortCount, escortGear, scaling = NO_SCALING } = options;
   let rng = createRng(seed);
-  const { picked: supportIds, nextState } = shuffledPick(rng, basicIds, 3);
-  rng = nextState;
-  const heroIds = [leaderId, ...supportIds];
+  const random = () => {
+    const { value, nextState } = nextFloat(rng);
+    rng = nextState;
+    return value;
+  };
+
+  const leaderPool = leaderTier ? spawnPool(types, leaderTier) : {};
+  const escortPool = spawnPool(types, escortTier);
+  const { picked: leaderIds, nextState: afterLeader } = drawSpawn(rng, leaderPool, leaderTier ? 1 : 0);
+  rng = afterLeader;
+  const { picked: escortIds, nextState: afterEscorts } = drawSpawn(rng, escortPool, escortCount);
+  rng = afterEscorts;
+  const pool: HeroLookup = { ...leaderPool, ...escortPool };
 
   let run = createRunState(0);
-  for (const heroId of heroIds) {
-    const base = createRosterEntry(heroId, heroId, enemyPool[heroId].moveIds);
-    const { bonus, nextState: afterBonus } = actStatBonus(rng, scaling.statSteps);
-    rng = afterBonus;
-    run = addRosterEntry(run, { ...base, level: scaling.level, evolutionStatGrants: bonus });
+  const rosterIds: string[] = [];
+  const seen = new Map<string, number>();
+  for (const [i, heroId] of [...leaderIds, ...escortIds].entries()) {
+    const n = (seen.get(heroId) ?? 0) + 1;
+    seen.set(heroId, n);
+    const rosterId = n === 1 ? heroId : `${heroId}-${n}`;
+    let entry = createRosterEntry(rosterId, heroId, pool[heroId].moveIds);
+    const { bonus, nextState } = actStatBonus(rng, scaling.statSteps);
+    rng = nextState;
+    entry = { ...entry, level: scaling.level, evolutionStatGrants: bonus };
+    const isEscort = i >= leaderIds.length;
+    if (isEscort && escortGear) {
+      const [item] = rollEquipmentDrops(1, escortGear, undefined, random);
+      if (item) entry = { ...entry, equipment: equipItem(entry.equipment, item.id) };
+    }
+    run = addRosterEntry(run, entry);
+    rosterIds.push(rosterId);
   }
 
-  const squad = pickSquad(run.roster, heroIds);
+  const squad = pickSquad(run.roster, rosterIds);
   return { run, squad };
 }

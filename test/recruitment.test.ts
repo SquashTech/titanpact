@@ -282,7 +282,7 @@ test('recruitment: freshRosterId returns the heroId itself when unclaimed, else 
 
 test('recruitment: isRecruitable accepts a heroId from the recruitable pool and rejects one that is not in it', () => {
   assert.strictEqual(isRecruitable('cinderKnight', heroes), true);
-  assert.strictEqual(isRecruitable('goblinGrunt', heroes), false);
+  assert.strictEqual(isRecruitable('cubling', heroes), false);
 });
 
 test('recruitment: the enemy pool shares no ids with the recruitable hero pool', () => {

@@ -34,52 +34,16 @@ import steamColossusArt from '../../../art/heroes/steamcolossus.png';
 import fangArt from '../../../art/heroes/starters/fang.png';
 import widowArt from '../../../art/heroes/Widow.png';
 import coilArt from '../../../art/heroes/coil.png';
-import goblinGruntArt from '../../../art/enemies/goblingrunt.png';
-import goblinSkulkerArt from '../../../art/enemies/goblinskulker.png';
-import spookyGoblinArt from '../../../art/enemies/spookygoblin.png';
-import goblinWarriorArt from '../../../art/enemies/goblinwarrior.png';
-import torchGoblinArt from '../../../art/enemies/torchgoblin.png';
-import goblinChiefArt from '../../../art/enemies/goblinchief.png';
 import goblinLordArt from '../../../art/enemies/goblinlord.png';
-
-import cultBladeArt from '../../../art/enemies/cultists/cultblade.png';
-import dreadCultistArt from '../../../art/enemies/cultists/dreadcultist.png';
-import blightedCultistArt from '../../../art/enemies/cultists/blightedcultist.png';
-import frozenCultistArt from '../../../art/enemies/cultists/frozencultist.png';
-import cultMysticArt from '../../../art/enemies/cultists/cultmystic.png';
 import yugzulachArt from '../../../art/enemies/cultists/yugzulach.png';
-
-import pixieArt from '../../../art/enemies/fae/pixie.png';
-import faeWarriorArt from '../../../art/enemies/fae/faewarrior.png';
-import lightFairyArt from '../../../art/enemies/fae/lightfairy.png';
-import mechaFairyArt from '../../../art/enemies/fae/mechafairy.png';
-import pixieQueenArt from '../../../art/enemies/fae/pixiequeen.png';
 import elderBoughArt from '../../../art/enemies/fae/elderbough.png';
-
-import flameSpriteArt from '../../../art/enemies/vulcans/flamesprite.png';
-import steamSpiritArt from '../../../art/enemies/vulcans/steamspirit.png';
-import emberLizardArt from '../../../art/enemies/vulcans/emberlizard.png';
-import automatonArt from '../../../art/enemies/vulcans/automaton.png';
-import vulcadozerArt from '../../../art/enemies/vulcans/vulcadozer.png';
 import lavaBeastArt from '../../../art/enemies/vulcans/lavabeast.png';
-
-import skullShamblerArt from '../../../art/enemies/necropolis/skullshambler.png';
-import skeletonKnightArt from '../../../art/enemies/necropolis/skeletonknight.png';
-import shamblingHuskArt from '../../../art/enemies/necropolis/shamblinghusk.png';
-import boneConjurerArt from '../../../art/enemies/necropolis/boneconjurer.png';
-import dreadRavenArt from '../../../art/enemies/necropolis/dreadraven.png';
 import skeletonKingArt from '../../../art/enemies/necropolis/skeletonking.png';
-
-import raiderArt from '../../../art/enemies/raiders/raider.png';
-import stormRaiderArt from '../../../art/enemies/raiders/stormraider.png';
-import surfRaiderArt from '../../../art/enemies/raiders/surfraider.png';
-import mysticRaiderArt from '../../../art/enemies/raiders/mysticraider.png';
-import championRaiderArt from '../../../art/enemies/raiders/championraider.png';
 import leviathanArt from '../../../art/enemies/raiders/leviathan.png';
 import endbringerArt from '../../../art/enemies/final boss/endbringer.png';
 import { CHAMPION_IDS, unsealedIdFor } from '../../data/enemies';
 
-/** Portraits keyed by hero id (heroes.ts order, then enemies.ts order). A missing entry renders text-only. */
+/** Portraits keyed by hero id (heroes.ts order, then enemies.ts order). A missing entry renders text-only; a Titanspawn id never reaches this — HeroPortrait draws it. */
 export const heroArt: Partial<Record<string, string>> = {
   // --- Fire ---
   cinderKnight: cinderKnightArt,
@@ -131,48 +95,12 @@ export const heroArt: Partial<Record<string, string>> = {
   packAlpha: fangArt,
   widow: widowArt,
   coil: coilArt,
-  // --- Enemies: Goblins ---
-  goblinGrunt: goblinGruntArt,
-  goblinSkulker: goblinSkulkerArt,
-  spookyGoblin: spookyGoblinArt,
-  goblinWarrior: goblinWarriorArt,
-  torchGoblin: torchGoblinArt,
-  goblinChief: goblinChiefArt,
+  // --- The Guardians' champions (data/enemies.ts). The mob layer is generated, not painted: titanspawnArt.tsx ---
   goblinLord: goblinLordArt,
-  // --- Enemies: Cultists ---
-  cultBlade: cultBladeArt,
-  dreadCultist: dreadCultistArt,
-  blightedCultist: blightedCultistArt,
-  frozenCultist: frozenCultistArt,
-  cultMystic: cultMysticArt,
   yugzulach: yugzulachArt,
-  // --- Enemies: Fae ---
-  pixie: pixieArt,
-  faeWarrior: faeWarriorArt,
-  lightFairy: lightFairyArt,
-  mechaFairy: mechaFairyArt,
-  pixieQueen: pixieQueenArt,
   elderBough: elderBoughArt,
-  // --- Enemies: Vulcans ---
-  flameSprite: flameSpriteArt,
-  steamSpirit: steamSpiritArt,
-  emberLizard: emberLizardArt,
-  automaton: automatonArt,
-  vulcadozer: vulcadozerArt,
   lavaBeast: lavaBeastArt,
-  // --- Enemies: Undead ---
-  skullShambler: skullShamblerArt,
-  skeletonKnight: skeletonKnightArt,
-  shamblingHusk: shamblingHuskArt,
-  boneConjurer: boneConjurerArt,
-  dreadRaven: dreadRavenArt,
   skeletonKing: skeletonKingArt,
-  // --- Enemies: Raiders ---
-  raider: raiderArt,
-  stormRaider: stormRaiderArt,
-  surfRaider: surfRaiderArt,
-  mysticRaider: mysticRaiderArt,
-  championRaider: championRaiderArt,
   leviathan: leviathanArt,
   // --- The Threshold ---
   endbringer: endbringerArt,
@@ -198,10 +126,11 @@ const POSE_SUFFIX: Record<keyof HeroPoses, string> = { attack: 'attack', hurt: '
 
 /**
  * Every sprite in the figure directories, source path → URL. Scoped to those
- * three on purpose: `art/` also holds ~2,200 icons that nothing here wants, and
- * an eager glob over all of it would bundle every one. These three hold 82 files
- * and 80 of them are imported above already, so the glob costs essentially
- * nothing on top of what the page loads anyway.
+ * two on purpose: `art/` also holds ~2,200 icons that nothing here wants, and
+ * an eager glob over all of it would bundle every one — and `art/archive/` holds
+ * the retired faction sprites, which must stay out of it or the orphan check below
+ * throws on their pose frames. Nearly every file the glob finds is imported above
+ * already, so it costs essentially nothing on top of what the page loads anyway.
  */
 const spriteFiles = import.meta.glob<string>(['../../../art/heroes/**/*.png', '../../../art/enemies/**/*.png'], {
   eager: true,

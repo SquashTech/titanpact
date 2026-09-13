@@ -1,6 +1,6 @@
 # titanspawn-overhaul.md — The Titanspawn Overhaul
 
-> **STATUS: DECIDED; PHASE 1 OF §9 IS IN (content + renderer, 2026-09-13). Phases 2–6 are not.**
+> **STATUS: DECIDED; PHASES 1–2 OF §9 ARE IN (content + renderer, the mob layer; 2026-09-13). Phases 3–6 are not.**
 > This module replaces the location factions with a single per-type mob family (**Titanspawn**),
 > partitions the fourteen mortal types across the five run locations, gives the run a **mortal
 > companion**, takes the Pact Clock off the bench, and turns the map's Elite-or-Battle fork into
@@ -273,7 +273,7 @@ Each phase leaves the game playable. Dependencies drive the order; 3 and 5 are i
 |---|---|---|---|
 | 0 | This doc; `CLAUDE.md` pointer; gallery into `docs/art/` | **Done 2026-09-13** | |
 | 1 | Content + renderer: `src/data/titanspawn.ts` (14 × 3: stats, tier, kit band, growth grades for the companion), `TitanspawnGlyph` ported from the gallery script into the figure system beside `heroPoses` | **Done 2026-09-13** | `titanspawn` folds into `allCombatants` only — no run pool draws it yet. Totals 200 / 400 / 600, kits 3 / 4 / 4, one grade line per type on the 28 budget; all pinned in `test/titanspawn.test.ts`. The renderer is `src/view/shared/titanspawnArt.tsx`, and `HeroPortrait` dispatches to it for a spawn id, so every screen that shows a hero shows a spawn with no other change. See "Phase 1 notes" below. |
-| 2 | Mob layer: `fight`/`battle` draw spawn by the Location's types and the act's tier; Guardian escorts become spawn; §7's deletions; `LocationDefinition.spawnTypes` replaces `factionId`; `locations.md` §3/§5.2 and `lore.md` §2 rewritten | Pending | The big deletion. Needs §10's opener decision. |
+| 2 | Mob layer: `fight`/`battle` draw spawn by the Location's types and the act's tier; Guardian escorts become spawn; §7's deletions; `LocationDefinition.spawnTypes` replaces `factionId`; `locations.md` §3/§5.2 and `lore.md` §2 rewritten | **Done 2026-09-13** | `src/run/spawn.ts` composes, `generateSpawnEncounter` draws, `SPAWN_TIER_BY_ACT` in `difficulty.ts` says which tier; `test/mobLayer.test.ts` pins it. Faction sprites archived under `art/archive/factions/`, faction tests replaced by `test/guardians.test.ts`. See "Phase 2 notes". |
 | 3 | The fork: Elite-or-Skirmish, typing preview on the Skirmish and fork tiles, generator guarantees the two differ | Pending | Independent; small. |
 | 4 | The companion: mortality flag, join beat after fight one, absorption screen first in the post-fight chain, ladder reuse with the tier-step at `EVOLUTION_RUNG`, Late ≥ 600, Act 1 script kept functional | Pending | Needs 1 and 2. Needs §10's equipment decision. |
 | 5 | Pact Clock off the bench; `lore.md` §3 row deleted; sim re-measures stall length | Pending | Independent; one engine file plus the doc. |
@@ -305,6 +305,33 @@ Verify each phase as the repo does: `npm test`, `npm run typecheck`, `npm run ty
 - **The idle-breath, strike and hit treatments apply unchanged** — they are class-keyed on the
   portrait, and the glyph takes the same class and the same seeded phase variables.
 
+**Phase 2 notes** (what the build decided that §4 did not say):
+
+- **"The act's tier" is one table**, `SPAWN_TIER_BY_ACT` = Early / Mid / Mid / Late / Late,
+  and it is read twice: the Guardian's escorts field it outright, and the opener's leader from
+  Act 2 fields it floored at Mid (`spawnLeaderTierFor`). The opener's escorts are always Early
+  — the decided "Mid among Earlies", with the Earlies carrying one item each from Act 2
+  (`OPENER_GEAR_FROM_ACT`) on the act's standard drop curve, seeded with the encounter. The
+  leader is bare: it is the upgrade already. Early in Act 1 keeps that Guardian the run's
+  lightest; Late from Act 4 is a first-pass figure for phase 6.
+- **Every spawn rides the monsters track, the Guardian's escorts included.** §2's arithmetic
+  ("a Late at 600 plus the monster track's Act-5 steps") assumed it, and the 2026-09-06 rule
+  that escorts keep the skirmish track was written for 400-line faction basics. Measured in a
+  40-run sim before the change the Act 4-5 Guardians won 25-43%; after, 71-100%, the run's
+  hardest Guardians rather than its walls. The champion alone keeps the skirmish track.
+- **The hero-pool `affinity` was aligned to the partition** where the two disagreed (the
+  Forest Stone→Beast, the Coast Iron→Stone), so the arrival screen's marks say one thing. The
+  Necropolis keeps Shadow in its affinity — a weighting, not a partition — so the Skirmish there
+  still matches more than one type's worth of heroes. The screens mark `spawnTypes`
+  (`locationDomains`), falling back to the affinity only where nothing spawns.
+- **A two-line Location repeats a body.** Three Earlies from Spirit/Frost is two Wisplings
+  and a Sleetling, with suffixed roster ids; a repeated body is what a mob layer looks like.
+- **The `battle` node fields the leader shape in every act** (Act 1 included, bare) until
+  phase 3 takes it off the fork; the node type ids are untouched.
+- **The scripted Act 1 stands where the Goblins stood** — Cubling/Duskling, Ravager, Cubling/
+  Rivetling are the same Beast/Shadow/Iron chart the act was built on — and Valor's three lines
+  that named Goblins were reworded. The rewrite proper stays deferred (§9).
+
 ## 10. Open questions — DO NOT silently resolve
 
 - ~~**Equipment on a dead companion**~~ **DECIDED 2026-09-13: strip to bag**, as termination
@@ -329,8 +356,9 @@ Verify each phase as the repo does: `npm test`, `npm run typecheck`, `npm run ty
   one is moved off it on purpose.
 - **The Necropolis as "the deep location"** — Late spawn a step early if the sim keeps calling
   it the wall (§3).
-- **Whether `art/enemies/*` faction PNGs are deleted or archived.** They are finished art; the
-  cheap answer is a folder move, not a delete.
+- ~~**Whether `art/enemies/*` faction PNGs are deleted or archived.**~~ **DECIDED 2026-09-13:
+  archived**, under `art/archive/factions/<faction>/`, outside the sprite glob so the orphan
+  check never sees them.
 
 ## 11. Locked invariants this overturns
 

@@ -1,7 +1,9 @@
 import * as assert from 'assert';
 import { test } from './harness';
 import { heroes } from '../src/data/heroes';
-import { enemies, factions } from '../src/data/enemies';
+import { enemies } from '../src/data/enemies';
+import { titanspawn } from '../src/data/titanspawn';
+import { guardianEscortPool } from '../src/run/spawn';
 import { moves } from '../src/data/moves';
 import { locations } from '../src/data/locations';
 import { typeChart } from '../src/data/typechart';
@@ -91,8 +93,8 @@ test('tutorial: the forced starters are Valor and Fang, and both are draftable s
 test('tutorial: every scripted encounter names real content from the pool its node draws', () => {
   for (const [nodeType, encounter] of Object.entries(TUTORIAL_ENCOUNTERS)) {
     assert.ok(encounter && encounter.heroIds.length > 0, `${nodeType} scripts at least one enemy`);
-    // Only the Skirmish draws the recruitable hero pool; fight/battle/boss are all faction content.
-    const pool = nodeType === 'skirmish' ? heroes : enemies;
+    // Only the Skirmish draws the recruitable hero pool; fight/battle/boss are all the mob layer.
+    const pool = nodeType === 'skirmish' ? heroes : titanspawn;
     for (const id of encounter.heroIds) {
       assert.ok(pool[id], `${nodeType} names ${id}, which is not in the pool that node draws from`);
     }
@@ -115,15 +117,12 @@ test('tutorial: the scripted Skirmish is recruitable and answers the Guardian', 
 });
 
 test('tutorial: the scripted Guardian is shaped like every other Guardian', () => {
-  // The tutorial must not teach a fight the rest of the run never presents. Since 2026-09-06 a
-  // `boss` fields two of the Location faction's own BASICS with its champion on the bench
-  // (run-loop.md "The Guardian's escorts"), so the scripted one has to draw from that same list.
-  const faction = factions[locations.wildsEdge.factionId];
+  // The tutorial must not teach a fight the rest of the run never presents. A `boss` fields two
+  // of the Location's spawn at the act's tier with its champion on the bench (run-loop.md "The
+  // Guardian's escorts"), so the scripted one has to draw from that same pool.
+  const escorts = guardianEscortPool(locations.wildsEdge, 1);
   for (const id of TUTORIAL_ENCOUNTERS.boss!.heroIds) {
-    assert.ok(
-      faction.basicIds.includes(id),
-      `${id} is not a Wild's Edge basic — a scripted Guardian must field what a real one fields`
-    );
+    assert.ok(escorts[id], `${id} is not an Act 1 Wild's Edge escort — a scripted Guardian must field what a real one fields`);
   }
   assert.strictEqual(TUTORIAL_ENCOUNTERS.boss!.heroIds.length, 2, 'a Guardian fields two escorts');
   // And the champion behind them is the Location's, not something the script invented.
@@ -146,7 +145,7 @@ test('tutorial: a scripted enemy the player already recruited is dropped and the
 
 test('tutorial: a scripted encounter is fielded verbatim when nothing is excluded', () => {
   const scripted = TUTORIAL_ENCOUNTERS.boss!.heroIds;
-  const encounter = generateEncounter('boss', 5, enemies, { forcedHeroIds: scripted });
+  const encounter = generateEncounter('boss', 5, titanspawn, { forcedHeroIds: scripted });
   assert.deepStrictEqual(encounter.run.roster.map((e) => e.heroId), [...scripted]);
 });
 
@@ -323,25 +322,25 @@ test('tutorial: the Ancient cue waits for the champion to walk on', () => {
 });
 
 test('tutorial: the scripted opener has no super-effective read to teach, and says so', () => {
-  // Guards the fight:types line: it talks about a resist, not a weakness, because the Goblin
-  // pool holds nothing Iron or Beast is strong against. If that changes, rewrite the line.
+  // Guards the fight:types line: it talks about a resist, not a weakness, because the scripted
+  // opener holds nothing Iron or Beast is strong against. If that changes, rewrite the line.
   const opener = TUTORIAL_ENCOUNTERS.fight!.heroIds;
   for (const starterId of TUTORIAL_STARTER_IDS) {
     const attacker = heroes[starterId].types[0];
-    const best = Math.max(...opener.map((id) => resolveTypeMult(typeChart, attacker, enemies[id].types)));
+    const best = Math.max(...opener.map((id) => resolveTypeMult(typeChart, attacker, titanspawn[id].types)));
     assert.ok(best <= 1, `${starterId} is strong against the opener — the "watch the resist" cue no longer matches`);
   }
 });
 
-test('tutorial: the opener still ships the Skulker the equip-inspect fixture arms', () => {
-  // App.tsx equipTestDagger hands the first fight's Goblin Skulker a Dagger so the enemy
-  // equipment UI has something in it from turn one; the scripted opener must keep him.
-  assert.ok(TUTORIAL_ENCOUNTERS.fight!.heroIds.includes('goblinSkulker'));
+test('tutorial: the opener still ships the Duskling the equip-inspect fixture arms', () => {
+  // App.tsx equipTestDagger hands the first fight's Duskling a Dagger so the enemy
+  // equipment UI has something in it from turn one; the scripted opener must keep it.
+  assert.ok(TUTORIAL_ENCOUNTERS.fight!.heroIds.includes('duskling'));
 });
 
 test('tutorial: every move on a scripted enemy exists', () => {
   for (const [nodeType, encounter] of Object.entries(TUTORIAL_ENCOUNTERS)) {
-    const pool = nodeType === 'skirmish' ? heroes : enemies;
+    const pool = nodeType === 'skirmish' ? heroes : titanspawn;
     for (const id of encounter!.heroIds) {
       for (const moveId of pool[id].moveIds) assert.ok(moves[moveId], `${id} carries unknown move ${moveId}`);
     }
@@ -462,14 +461,14 @@ test('tutorial: the field lock pins the caster at its nodes and nowhere else', (
 // --- The opener has to survive its own dialogue ---
 
 test('tutorial: no starter can one-shot an opener enemy, so a round-2 cue has somewhere to land', () => {
-  // The bug this pins: the Goblins are authored as fodder, and fodder dies in round 1 — which
+  // The bug this pins: an Early spawn is authored as fodder, and fodder dies in round 1 — which
   // took every round-2 lesson with it. Computed through the real damage pipeline at MAXIMUM
   // variance (the fastest possible kill) and against the grants the scripted opener carries.
   const opener = TUTORIAL_ENCOUNTERS.fight!;
   const grants = opener.statGrants ?? {};
 
   for (const enemyId of opener.heroIds) {
-    const enemy = enemies[enemyId];
+    const enemy = titanspawn[enemyId];
     const effectiveHp = enemy.baseStats.hp + (grants.hp ?? 0);
 
     for (const starterId of TUTORIAL_STARTER_IDS) {

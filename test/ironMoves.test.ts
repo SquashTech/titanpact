@@ -393,8 +393,8 @@ test('iron: no hero attacks off its weaker stat — the three Iron heroes are al
 });
 
 test('iron: the enemy side can demonstrate the type end to end', () => {
-  const { enemies } = require('../src/data/enemies') as typeof import('../src/data/enemies');
-  const warrior = enemies.goblinWarrior;
+  const { titanspawn } = require('../src/data/titanspawn') as typeof import('../src/data/titanspawn');
+  const warrior = titanspawn.ingot;
   const kit = warrior.moveIds.map((id: string) => moves[id]);
   assert.ok(kit.every((m) => m.type === 'Iron'));
   assert.ok(kit.some((m) => m.statDeltaTarget === 'self'), 'no way to show the Attack ramp');

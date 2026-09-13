@@ -46,18 +46,23 @@ export const TUTORIAL_LOCKS: TutorialLocks = {
 /**
  * Act 1's fights, forced. The pairings are the lesson:
  *
- *  - `fight` — two soft goblins, one of whom (Shadow) Fang half-resists. No super-effective
+ *  - `fight` — two Early spawn, one of whom (Shadow) Fang half-resists. No super-effective
  *    exists here on purpose: the opener teaches the loop, not the chart.
  *  - `skirmish` — two Frost heroes. Frost doubles into Fang's Beast and halves into Valor's
  *    Iron, so the same move reads two ways on one screen. It is also the recruit the Guardian
  *    is weak to, which is the whole shape of the act: what beats you beats what is ahead. Rime
  *    swings physical and Flurry casts, so the pair is also the first place the two damage
  *    pipelines stand side by side (`TUTORIAL_LOCKS` forces Flurry onto the roster).
- *  - `battle` — the Chief as a body to grind, two basics as the bench lesson.
- *  - `boss` — two of the faction's own basics, because that is what a Guardian is everywhere
- *    else (run-loop.md "The Guardian's escorts"): the Grunt is a Beast for the caster to double
- *    into, the Warrior is Iron so teeth do little to it. The Goblin Lord rides the bench as he
+ *  - `battle` — the Ravager (a Mid) as a body to grind, two Earlies as the bench lesson.
+ *  - `boss` — two Early spawn, because that is what a Guardian's escorts are everywhere else
+ *    (run-loop.md "The Guardian's escorts"): the Cubling is a Beast for the caster to double
+ *    into, the Rivetling is Iron so teeth do little to it. The Goblin Lord rides the bench as he
  *    always does (locations.ts `guardianFinalEnemyId`) and walks on after the first KO.
+ *
+ *    The spawn stand exactly where the Goblins stood (Beast/Shadow, Beast, Beast/Iron), so the
+ *    Frost/Iron/Beast chart the act is built on is unchanged (docs/tutorial.md). The lines are
+ *    still Valor's first draft against a mob layer that has since been replaced — the rewrite is
+ *    deferred until the systems are complete (docs/titanspawn-overhaul.md §9).
  *
  *    He is also the physical/magical proof, and it needed no staging: 75 Defense against 60
  *    Wisdom, so Flurry's Rime Wind reads 42 where Valor's Iron Fist reads 20 and Fang's Claw
@@ -66,14 +71,14 @@ export const TUTORIAL_LOCKS: TutorialLocks = {
  */
 export const TUTORIAL_ENCOUNTERS: Partial<Record<MapNodeType, TutorialEncounter>> = {
   // The opener is the ONLY scripted fight that needed propping up. Two authored-as-fodder
-  // Goblins died to one round of Valor and Fang — Iron Fist reads 40 x (60/25) x 1.25 = ~120
-  // into a 100 HP Grunt — which took every round-2 lesson with them. Defense is most of the
-  // grant because the ratio, not the HP, is what was ending it: +35 takes Valor's read from
-  // 2.4x down to ~1.0x, and the fight from one round to three or four.
-  fight: { heroIds: ['goblinGrunt', 'goblinSkulker'], statGrants: { hp: 50, defense: 35 } },
+  // bodies die to one round of Valor and Fang — Iron Fist reads 40 x (60/30) x 1.25 = ~100
+  // into a 76 HP Cubling — which takes every round-2 lesson with them. Defense is most of the
+  // grant because the ratio, not the HP, is what ends it: +35 takes Valor's read from 2x
+  // down to ~0.9x, and the fight from one round to three or four.
+  fight: { heroIds: ['cubling', 'duskling'], statGrants: { hp: 50, defense: 35 } },
   skirmish: { heroIds: ['rime', 'glacialWarden'] },
-  battle: { heroIds: ['goblinChief', 'goblinGrunt', 'goblinSkulker'] },
-  boss: { heroIds: ['goblinGrunt', 'goblinWarrior'] },
+  battle: { heroIds: ['ravager', 'cubling', 'duskling'] },
+  boss: { heroIds: ['cubling', 'rivetling'] },
 };
 
 /**
@@ -115,7 +120,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'arrival',
     topic: 'The Map',
     lines: [
-      "Wild's Edge. Land of the Goblins, and many others attempting to complete the Pact.",
+      "Wild's Edge. The Titan's leak runs thin out here, and many others are attempting to complete the Pact.",
       'Venture forth when you are ready.',
     ],
   },
@@ -125,7 +130,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'map:fight',
     topic: 'Monsters',
     lines: [
-      'A couple of Goblins. They surely have some valuable loot that will aid us on the journey. We will take them on together.',
+      'A couple of Titanspawn — what leaks through the seal, still small this far out. They surely have some valuable loot that will aid us on the journey. We will take them on together.',
     ],
   },
   {
@@ -264,7 +269,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'map:boss',
     topic: 'The Guardian',
     lines: [
-      'The Goblin Lord. He is no mere typical Goblin. He is a Guardian, and he holds one of the five seals.',
+      'The Goblin Lord. He is no spawn. He is a Guardian, and he holds one of the five seals.',
       'He is known as an Ancient. Nothing we own is strong against him, and nothing ever will be.',
       'Two of his warband stand in front. Clear one of them and he comes out, so be sure that we are well-prepared.',
     ],

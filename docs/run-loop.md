@@ -222,11 +222,11 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 
 | Type | Resolution |
 |---|---|
-| `fight` | `FightScreen` vs. a generated 4-hero AI squad (`src/run/enemyGen.ts`), no bonus. Always row 0, each act's opening node — draws from the non-recruitable enemy pool (Goblins), not the draftable hero roster. |
+| `fight` | **2026-09-13: draws Titanspawn — Act 1 two bare Earlies from every line, from Act 2 a leader at the act's tier over three geared Earlies (`run/spawn.ts`, "The mob layer is Titanspawn" below).** Before that: `FightScreen` vs. a generated 4-hero AI squad (`src/run/enemyGen.ts`), no bonus. Always row 0, each act's opening node — draws from the non-recruitable enemy pool (Goblins), not the draftable hero roster. |
 | `skirmish` | Mechanically identical to `fight` (same 4-hero, no-bonus `generateEncounter` call — App.tsx collapses it to `EncounterNodeType: 'fight'`), but draws from the **recruitable hero pool** and is named differently on the map (2026-08-17, per user direction) so the player can see, before committing a squad, that beating this one is a shot at a Recruit Contract claim. Always row 2. |
-| `battle` (map-facing name "Monsters", 2026-08-22 revision) | Also mechanically identical to `fight`/`skirmish` (collapses to `EncounterNodeType: 'fight'`), but draws from the **non-recruitable enemy pool**, same as `fight` — not `skirmish`'s recruitable pool. Row 4's non-Elite alternative to `elite`. **2026-08-23 revision, per user direction:** no longer a plain `generateEncounter` call over the whole enemy pool — `App.tsx`'s `handleSelectNode` calls the dedicated `generateLeaderEncounter` (`enemyGen.ts`) instead, which always fields the Location faction's leader plus 3 random draws from its basics. This is what makes `battle` a real, considerably-tougher alternative to `elite` rather than a same-difficulty reskin of the opener — see "Goblin roster" and "Factions, and the Cultists" below for the content this draws on. |
+| `battle` (map-facing name "Monsters", 2026-08-22 revision) | **2026-09-13: the same leader-over-Earlies spawn shape as the Act 2+ opener, in every act, until the fork becomes Elite-or-Skirmish (overhaul phase 3).** Before that: also mechanically identical to `fight`/`skirmish` (collapses to `EncounterNodeType: 'fight'`), but draws from the **non-recruitable enemy pool**, same as `fight` — not `skirmish`'s recruitable pool. Row 4's non-Elite alternative to `elite`. **2026-08-23 revision, per user direction:** no longer a plain `generateEncounter` call over the whole enemy pool — `App.tsx`'s `handleSelectNode` calls the dedicated `generateLeaderEncounter` (`enemyGen.ts`) instead, which always fields the Location faction's leader plus 3 random draws from its basics. This is what makes `battle` a real, considerably-tougher alternative to `elite` rather than a same-difficulty reskin of the opener — see "Goblin roster" and "Factions, and the Cultists" below for the content this draws on. |
 | `elite` | The AI's 4 heroes each carry a flat +10 bonus to 2 random growth stats. Draws from the recruitable pool, same as `skirmish`/`battle`. Row 4's difficulty-spike alternative to `battle` — the player picks one or the other, never both. |
-| `boss` | `FightScreen` vs. **2 of the Location faction's basics** (no bench — a real no-cycling fight), each with a flat +20 bonus to 3 random growth stats. Hero-pool escorts until 2026-09-06 — see "The Guardian's escorts" below. Winning grants 1 Recruit Contract, the Guardian's Banner in acts 1-4, and ends the act (§3). **2026-09-01 exception:** a location may hold a **faction champion** on the boss's bench — see "The Guardian's champion" below. |
+| `boss` | **2026-09-13: the two escorts are Titanspawn of the Location's `spawnTypes` at the act's tier, on the monsters track; the champion alone keeps the skirmish track.** Before that: `FightScreen` vs. **2 of the Location faction's basics** (no bench — a real no-cycling fight), each with a flat +20 bonus to 3 random growth stats. Hero-pool escorts until 2026-09-06 — see "The Guardian's escorts" below. Winning grants 1 Recruit Contract, the Guardian's Banner in acts 1-4, and ends the act (§3). **2026-09-01 exception:** a location may hold a **faction champion** on the boss's bench — see "The Guardian's champion" below. |
 | `shop` | `ShopNodeScreen` — the existing `GuildHallPanel`, given an exit for the first time. Overhauled 2026-08-18: offers 2-3 curated hero recruits (50g each, `GUILD_HALL_RECRUIT_COST`) rather than the full catalog, plus a rarity-priced equipment shelf, rolled once per visit (`src/run/shop.ts` `rollGuildHallOffers`). Second pass 2026-08-31: relics are no longer sold anywhere, the shelf is 4 wide and readable on its face, sold stock greys out, and Recruit Contracts confirm before buying (`docs/progression.md` "Second pass"). |
 | `equipmentReward` ("Item") | `NodeRewardScreen` — pick 1 of 3 items, rarity-weighted (`equipment.ts` `pickWeightedEquipment`); claiming bags it and lights the Roster badge — see "The bag notification" in `docs/progression.md`. Items are uncategorised as of 2026-09-06, so the three on offer are simply the three rolled (`docs/progression.md` "Uncategorised slots"). |
 | `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30). **2026-09-08, per user direction:** it pays out on arrival and the screen counts the PURSE up to its new total, coin by coin, over a Claim button that was never a decision — the drop size is a chip beside a number the player can act on, rather than a number they cannot. The two Scroll nodes share that beat. |
@@ -807,6 +807,25 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   the 550 is the authored number and the escorts' +20×3 is not applied to it — but he does
   take the **act curve**, which is the only thing that ever moves a champion (`ENEMY_LEVEL_BY_ACT`
   is inert for one; see §3).
+
+- **The mob layer is Titanspawn (2026-09-13, Titanspawn overhaul phase 2).** Everything below
+  this bullet about Goblins, factions, `FactionRoster`, `basicEnemiesOf` and
+  `generateLeaderEncounter` is history: the six factions were deleted whole and their sprites
+  archived (`art/archive/factions/`), and what `fight`, `battle` and the Guardian's escorts
+  field is a **Titanspawn** — one mob line per mortal type in three tiers, drawn by the
+  Location's `spawnTypes` and the act's tier (`docs/titanspawn-overhaul.md` §2-§4;
+  `src/data/titanspawn.ts`, `src/run/spawn.ts`, `SPAWN_TIER_BY_ACT` in `difficulty.ts`).
+  The composition: Act 1's opener is two bare Earlies from every line; from Act 2 the opener
+  is a leader at the act's tier (floored at Mid) over three Earlies that each carry one item
+  rolled on the act's drop curve — the Earlies stay Earlies all run and equipment is what
+  scales them, per user direction; `battle` is that shape in every act until phase 3; the
+  Guardian's escorts are two spawn at the act's tier. **The escorts ride the monsters track
+  now**, reversing the 2026-09-06 "the pool moves; the scaling does not" below: a Late is
+  600 base, authored against the monsters curve, and on the skirmish track it made the Act 4-5
+  Guardians 25-43% fights (40-run sim). On the monsters track they measure 71-100% and are the
+  run's hardest Guardians rather than its walls — phase 6's re-fit starts from there. The
+  champion alone keeps the skirmish track, appended separately. Nothing the Monsters word
+  meant on the map changed; only what it points at.
 
 - **The Guardian's escorts are its own faction (2026-09-06, per user direction).** A `boss`
   node now draws its two active enemies from `basicEnemiesOf(factions[location.factionId])`,

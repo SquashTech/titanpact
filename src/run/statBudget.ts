@@ -6,7 +6,7 @@
 // break-even is nearer 0.33 HP per point, so this over-charges HP roughly 3x and the roster's HP
 // range compressed to 170–270 in consequence — docs/progression.md "Pricing HP".
 //
-// EVERY OTHER budget figure — a faction's flat 400, a champion's 550, the Endbringer's 900 —
+// EVERY OTHER budget figure — a spawn's 200/400/600, a champion's 550, the Endbringer's 900 —
 // still prices HP at HP_BUDGET_VALUE. Those lines carry no Mana and are authored against a
 // measured baseline that assumes the discount; enemies were not re-based with the roster.
 

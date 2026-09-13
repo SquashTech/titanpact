@@ -81,16 +81,18 @@ you is what beats what is ahead* is the whole act in one sentence, and the playe
 feel it before they are told it.
 
 **The Guardian is shaped like every other Guardian.** It fields two of Wild's Edge's own
-**Goblin basics** with the Lord on the bench, because that is what a `boss` node is everywhere
-since 2026-09-06 (`run-loop.md` "The Guardian's escorts"). The tutorial only names *which* two,
-so Valor can be specific: the **Grunt** is a Beast for the caster to double into, the **Warrior**
-is Iron so claws barely mark it. Killing one brings the Lord out, which is where the Ancient
-wall gets explained with the wall in front of them.
+**Early Titanspawn** with the Lord on the bench, because that is what a `boss` node is
+everywhere (`run-loop.md` "The Guardian's escorts"). The tutorial only names *which* two, so
+Valor can be specific: the **Cubling** is a Beast for the caster to double into, the
+**Rivetling** is Iron so claws barely mark it. Killing one brings the Lord out, which is where
+the Ancient wall gets explained with the wall in front of them. (Until 2026-09-13 these were the
+Goblin Grunt and Warrior — the spawn stand on the same two types, so the chart the act is built
+on did not move; `docs/titanspawn-overhaul.md`.)
 
 An earlier pass scripted hero escorts — Stone for Valor, Nature for Fang — to stage a
-super-effective read for each starter. That is gone: no Goblin typing is weak to both Iron and
-Beast, and a tutorial must not teach a fight the rest of the run never presents. The lesson it
-was staging turned out not to need staging (§5).
+super-effective read for each starter. That is gone: nothing in the scripted opener is weak to
+both Iron and Beast, and a tutorial must not teach a fight the rest of the run never presents.
+The lesson it was staging turned out not to need staging (§5).
 
 Two tests pin what is left: the Skirmish pair must threaten a starter *and* not be resisted by
 the Guardian, and every scripted Guardian escort must be in the Location faction's `basicIds`.
@@ -207,7 +209,7 @@ several fights, for a lesson that turns on a condition rather than a moment — 
 promised to any one fight. Cue progress is **FightScreen-local**, not run state: a fight is
 atomic and a reload replays it.
 
-**A scripted fight has to survive its own dialogue.** The Goblins are authored as fodder, and
+**A scripted fight has to survive its own dialogue.** An Early spawn is authored as fodder (as the Goblins it replaced were), and
 the opener was ending in round 1 — Iron Fist reads `40 x (60 Atk / 25 Def) x 1.25` = ~120 into a
 100 HP Grunt — which took every round-2 lesson with it, and (before the guard above) left a cue
 landing on top of the victory panel. `TutorialEncounter.statGrants` is the lever: the opener

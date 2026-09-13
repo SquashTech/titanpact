@@ -183,3 +183,13 @@ export function spawnPosition(heroId: string): { line: TitanspawnLine; tier: Spa
 export function spawnLineOf(type: TypeId): TitanspawnLine | undefined {
   return titanspawnLines.find((line) => line.type === type);
 }
+
+/**
+ * The spawn a Location fields at one tier: `types` null is every spawning type (Wild's Edge), and
+ * an empty list is nothing (The Threshold). Keyed by id, so it is a HeroLookup any generator draws
+ * from the way it draws from `heroes`.
+ */
+export function spawnPool(types: readonly TypeId[] | null, tier: SpawnTier): Record<string, TitanspawnDefinition> {
+  const lines = types ? titanspawnLines.filter((line) => types.includes(line.type)) : titanspawnLines;
+  return Object.fromEntries(lines.map((line) => [spawnId(line, tier), titanspawn[spawnId(line, tier)]]));
+}

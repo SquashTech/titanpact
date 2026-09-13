@@ -10,7 +10,8 @@ import { relics, guardianBannerRelics } from '../../src/data/relics';
 import { classes } from '../../src/data/classes';
 import { runEvents } from '../../src/data/events';
 import { progressionTable } from '../../src/data/progression';
-import { enemies, factions, basicEnemiesOf, finaleEnemies, ENDBRINGER_ID } from '../../src/data/enemies';
+import { enemies, finaleEnemies, ENDBRINGER_ID } from '../../src/data/enemies';
+import { mobEncounter, guardianEscortPool } from '../../src/run/spawn';
 import { guildHallOffers, CONTRACT_PURCHASE_COST, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT } from '../../src/data/recruitment';
 
 import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry, ROSTER_CAP, TOTAL_ACTS, type RunState, type RosterEntry } from '../../src/run/state';
@@ -19,7 +20,7 @@ import { generateStarterOptions, STARTER_PICK_COUNT } from '../../src/run/draft'
 import { generateItinerary, locationBias, locationForAct } from '../../src/run/locations';
 import { actScaling, encounterHeroCountOverride, type ScalingTrack, scrollsFor } from '../../src/run/difficulty';
 import { grantEncounterLevels, levelsForEncounter, MAX_LEVEL } from '../../src/run/growth';
-import { generateEncounter, generateLeaderEncounter, generateFinaleEncounter, appendFinalEnemy, type Encounter, type EncounterNodeType } from '../../src/run/enemyGen';
+import { generateEncounter, generateFinaleEncounter, appendFinalEnemy, type Encounter, type EncounterNodeType } from '../../src/run/enemyGen';
 import { pickSquad, requiredSquadSize, STANDARD_SQUAD_SIZE, type Squad } from '../../src/run/squad';
 import {
   advanceToNode,
@@ -403,20 +404,21 @@ function resolveEncounterNode(
     );
     squadSize = ROSTER_CAP;
   } else {
-    const isMobFight = mapNodeType === 'fight' || mapNodeType === 'battle';
-    // Guardians field their own faction (App.tsx handleSelectNode). Pool only — the track below is unchanged.
-    const isFactionFight = isMobFight || mapNodeType === 'boss';
-    const faction = factions[location.factionId];
+    const mobNode = mapNodeType === 'fight' || mapNodeType === 'battle' ? mapNodeType : null;
+    const isMobFight = mobNode !== null;
     const encounterKind: EncounterNodeType =
       mapNodeType === 'skirmish' || mapNodeType === 'battle' ? 'fight' : (mapNodeType as EncounterNodeType);
     const isSecondFight = encounterKind === 'fight' && run.fightsStarted === 1;
-    const track: ScalingTrack = isMobFight ? 'monsters' : 'skirmish';
-    const scaling = actScaling(track, run.actNumber, isMobFight ? faction.baselineAct : undefined);
+    // Spawn ride the monsters track, the Guardian's escorts included; only the champion keeps the skirmish one (App.tsx).
+    const track: ScalingTrack = isMobFight || mapNodeType === 'boss' ? 'monsters' : 'skirmish';
+    const scaling = actScaling(track, run.actNumber);
 
-    if (mapNodeType === 'battle') {
-      encounter = generateLeaderEncounter(randomSeed(rng), faction.basicIds, faction.leaderId, enemies, scaling);
+    // Mirrors App.tsx handleSelectNode: the mob layer draws spawn (run/spawn.ts), the Guardian's
+    // escorts are the act's tier of the Location's spawn, and the hero pool is everything else.
+    if (mobNode) {
+      encounter = mobEncounter(mobNode, location, run.actNumber, randomSeed(rng), scaling);
     } else {
-      const encounterPool = isFactionFight ? basicEnemiesOf(faction) : heroes;
+      const encounterPool = mapNodeType === 'boss' ? guardianEscortPool(location, run.actNumber) : heroes;
       const excludeHeroIds = encounterPool === heroes ? run.roster.map((r) => r.heroId) : undefined;
       const standardCount = encounterKind === 'boss' ? 2 : 4;
       const heroCountOverride =
@@ -430,10 +432,10 @@ function resolveEncounterNode(
         bias,
         excludeHeroIds,
         scaling,
-        progression: progressionTable,
+        progression: encounterPool === heroes ? progressionTable : undefined,
       });
       if (mapNodeType === 'boss' && location.guardianFinalEnemyId) {
-        encounter = appendFinalEnemy(encounter, location.guardianFinalEnemyId, enemies, randomSeed(rng), scaling);
+        encounter = appendFinalEnemy(encounter, location.guardianFinalEnemyId, enemies, randomSeed(rng), actScaling('skirmish', run.actNumber));
       }
     }
     if (encounterKind === 'fight') workingRun = { ...workingRun, fightsStarted: workingRun.fightsStarted + 1 };

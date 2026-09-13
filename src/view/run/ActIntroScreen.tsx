@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import type { LocationDefinition } from '../../data/locations';
+import { locationDomains, type LocationDefinition } from '../../data/locations';
 import type { RunState } from '../../run/state';
 import { SEAL_ACTS } from '../../run/state';
 import { LocationSky } from '../shared/LocationSky';
@@ -24,7 +24,8 @@ function actLabel(actNumber: number): string {
 // Per-act arrival beat (docs/locations.md §4), shown at the top of every act.
 // LocationSky rather than NodeSky: this screen says what PLACE, not what kind of moment.
 export function ActIntroScreen({ run, location, onEnter }: Props) {
-  const { affinity } = location;
+  // What spawns here — the counter-pick the player is choosing against (docs/titanspawn-overhaul.md §3).
+  const domains = locationDomains(location);
   // The finale is not a sixth act but what the five unsealed, so it takes neither the
   // numeral nor a denominator (docs/run-loop.md §4).
   const isFinale = run.actNumber > SEAL_ACTS;
@@ -50,16 +51,14 @@ export function ActIntroScreen({ run, location, onEnter }: Props) {
         />
 
         <div className="act-intro-dossier">
-          <p className="act-intro-faction">
-            Held by the <strong>{location.faction}</strong>
-          </p>
+          <p className="act-intro-faction">{location.omen}</p>
 
           <div className="act-intro-domains">
-            {affinity ? (
+            {domains ? (
               <>
                 <span className="act-intro-domains-label">Domains here</span>
                 <span className="act-intro-domain-marks">
-                  {affinity.map((type) => (
+                  {domains.map((type) => (
                     <span key={type} className="act-intro-domain" style={{ color: getTypeColor(type) }} title={type}>
                       <ElementGlyph type={type} />
                     </span>

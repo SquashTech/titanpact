@@ -1,10 +1,8 @@
 import * as assert from 'assert';
 import { test } from './harness';
-import { generateEncounter, generateLeaderEncounter, appendFinalEnemy } from '../src/run/enemyGen';
+import { generateEncounter, appendFinalEnemy } from '../src/run/enemyGen';
 import { heroes } from '../src/data/heroes';
-import { enemies, factions, basicEnemiesOf, GOBLIN_LORD_ID } from '../src/data/enemies';
-
-const GOBLINS = factions.goblins;
+import { enemies, GOBLIN_LORD_ID } from '../src/data/enemies';
 
 test('enemyGen: fight encounters field 4 heroes (2 active + 2 bench) with no stat bonus', () => {
   const { run, squad } = generateEncounter('fight', 1, heroes);
@@ -96,37 +94,6 @@ test('enemyGen: options.excludeHeroIds beats the location bias — the preferred
   }
 });
 
-test('enemyGen: the opening (row 0) fight draws exactly 2 random heroes from the basic-Goblin pool, never the Chief', () => {
-  const { run, squad } = generateEncounter('fight', 7, basicEnemiesOf(GOBLINS), { heroCount: 2 });
-  assert.strictEqual(run.roster.length, 2);
-  assert.strictEqual(squad.activeIds.filter(Boolean).length, 2);
-  assert.strictEqual(squad.benchIds.length, 0);
-  for (const entry of run.roster) {
-    assert.ok(GOBLINS.basicIds.includes(entry.heroId as string));
-    assert.notStrictEqual(entry.heroId, GOBLINS.leaderId);
-  }
-});
-
-test('enemyGen: generateLeaderEncounter always fields the Chief plus 3 distinct random basic Goblins', () => {
-  const { run, squad } = generateLeaderEncounter(11, GOBLINS.basicIds, GOBLINS.leaderId, enemies);
-  assert.strictEqual(run.roster.length, 4);
-  assert.strictEqual(squad.activeIds.filter(Boolean).length, 2);
-  assert.strictEqual(squad.benchIds.length, 2);
-  const heroIds = run.roster.map((r) => r.heroId);
-  assert.strictEqual(heroIds[0], GOBLINS.leaderId);
-  assert.strictEqual(new Set(heroIds).size, 4);
-  for (const id of heroIds.slice(1)) assert.ok(GOBLINS.basicIds.includes(id as string));
-});
-
-test('enemyGen: generateLeaderEncounter is deterministic for a given seed', () => {
-  const a = generateLeaderEncounter(99, GOBLINS.basicIds, GOBLINS.leaderId, enemies);
-  const b = generateLeaderEncounter(99, GOBLINS.basicIds, GOBLINS.leaderId, enemies);
-  assert.deepStrictEqual(
-    a.run.roster.map((r) => r.heroId),
-    b.run.roster.map((r) => r.heroId)
-  );
-});
-
 // --- The Guardian's final enemy (appendFinalEnemy, locations.ts guardianFinalEnemyId) ---
 
 test('enemyGen: appendFinalEnemy puts the champion on the bench, behind everyone already in the fight', () => {
@@ -159,6 +126,5 @@ test('enemyGen: appendFinalEnemy is a no-op on an unknown id rather than a crash
 test('enemyGen: the champion is not recruitable — he is enemy-pool content, so a Contract can never claim him', () => {
   const { isRecruitable } = require('../src/run/recruitment') as typeof import('../src/run/recruitment');
   assert.ok(!isRecruitable(GOBLIN_LORD_ID, heroes));
-  assert.ok(!GOBLINS.basicIds.includes(GOBLIN_LORD_ID as string));
   assert.ok(!(GOBLIN_LORD_ID in heroes));
 });

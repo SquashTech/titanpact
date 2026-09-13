@@ -375,8 +375,9 @@ test('beast: every Beast hero and enemy can afford its own kit, and Fang attacks
   const attacks = fang.moveIds.map((id) => moves[id]).filter((m) => m.kind === 'damage');
   assert.ok(attacks.length > 0 && attacks.every((m) => m.category === 'physical'));
 
-  for (const id of ['goblinGrunt', 'goblinChief']) {
-    const enemy = enemies[id];
+  const { titanspawn } = require('../src/data/titanspawn') as typeof import('../src/data/titanspawn');
+  for (const id of ['cubling', 'ravager', 'behemoth']) {
+    const enemy = titanspawn[id];
     const floor = Math.min(...enemy.moveIds.map((mid) => moves[mid].manaCost));
     assert.ok(floor <= enemy.baseStats.manaPool, `${id} cannot afford its own cheapest move`);
   }

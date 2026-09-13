@@ -353,10 +353,10 @@ test('spirit: Sorrow is a recruit-only mirror of Revenant, and its kit is all it
 });
 
 test('spirit: the enemy side can demonstrate Haunt end to end', () => {
-  const { enemies } = require('../src/data/enemies') as typeof import('../src/data/enemies');
-  const spookyGoblin = enemies.spookyGoblin;
-  const kit = spookyGoblin.moveIds.map((id: string) => moves[id]);
+  const { titanspawn } = require('../src/data/titanspawn') as typeof import('../src/data/titanspawn');
+  const wispling = titanspawn.wispling;
+  const kit = wispling.moveIds.map((id: string) => moves[id]);
   assert.ok(kit.some((m) => firstStatusApplication(m)?.statusId === 'Haunt'), 'no way to plant the mark');
   assert.ok(kit.some((m) => m.kind === 'damage' && m.type === 'Spirit'), 'no way to cash it in');
-  for (const move of kit) assert.ok(move.manaCost <= spookyGoblin.baseStats.manaPool);
+  for (const move of kit) assert.ok(move.manaCost <= wispling.baseStats.manaPool);
 });

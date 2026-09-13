@@ -45,11 +45,15 @@ resisted: a seal is only ever a wall.
 
 Three things fall out of this at no cost:
 
-- **The factions are the wardens' descendants.** Goblins, Cultists, Raiders, Fae, Vulcans
-  and Undead are what six warden-peoples decayed into over the age the seal held —
-  warbands and cults who no longer remember what they are guarding, only that nobody gets
-  past. They are not evil and they are not wrong. They are a garrison that outlived its
-  briefing.
+- **The Guardians are what the wardens decayed into.** The Goblin Lord, Yugzulach, the
+  Leviathan, the Elder Bough, the Lava Beast and the Skeleton King are six wardens after an
+  age of holding the seal — a garrison that no longer remembers what it is guarding, only
+  that nobody gets past. They are not evil and they are not wrong. They are a garrison that
+  outlived its briefing. **What stands around them is the leak.** The binding is failing
+  (§3), and what comes through a failing seal takes the colour of the land it comes through
+  into: the **Titanspawn** (`docs/titanspawn-overhaul.md` §2), one line per mortal type,
+  small where the seal still mostly holds and grown where it is almost gone. A spawn is not
+  a people. It is the Titan's weight, felt before the Titan.
 - **The run is a sacrilege, deliberately.** Every Guardian broken is a lock broken. The
   player is not clearing dungeons; they are dismantling the thing keeping the world
   shut, because it is coming apart anyway and an accident is worse than a decision.

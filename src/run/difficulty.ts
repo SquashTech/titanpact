@@ -2,6 +2,7 @@
 // Pure act -> numbers; enemyGen.ts applies the result. All figures placeholder.
 
 import type { StatKey } from '../engine/content';
+import type { SpawnTier } from '../data/titanspawn';
 import { ENCOUNTERS_PER_ACT, MAX_LEVEL, levelAfterEncounters } from './growth';
 
 /** `monsters` = non-recruitable pool (fight/battle); `skirmish` = hero pool (skirmish/elite/boss). Same rate, different baseline act. */
@@ -9,10 +10,9 @@ export type ScalingTrack = 'monsters' | 'skirmish';
 
 /**
  * The act each track's authored stat lines represent (zero scaling); Act 1 clamps to zero
- * steps rather than going negative. The `monsters` default is the fallback for callers with
- * no faction in hand — a faction that authors its own line overrides it with
- * `FactionRoster.baselineAct` (enemies.ts), which is why the Cultists' 2 is a real figure
- * where the Goblins' is still a placeholder.
+ * steps rather than going negative. The `monsters` figure is the Titanspawn's: a Mid at 400
+ * is the old faction basic's line, authored for Act 2, and there is no per-roster override any
+ * more (docs/titanspawn-overhaul.md §4).
  */
 export const BASELINE_ACT: Record<ScalingTrack, number> = {
   monsters: 2,
@@ -183,10 +183,10 @@ export function championSteps(statSteps: number): number {
   return Math.round(statSteps * CHAMPION_STEP_MULTIPLIER);
 }
 
-/** Acts past the level table hold at its last entry. `baselineAct` overrides the track default — a faction authored for a later act. */
-export function actScaling(track: ScalingTrack, actNumber: number, baselineAct: number = BASELINE_ACT[track]): ActScaling {
+/** Acts past the level table hold at its last entry. */
+export function actScaling(track: ScalingTrack, actNumber: number): ActScaling {
   const act = clampAct(actNumber);
-  const stepsPastBaseline = Math.max(0, act - baselineAct);
+  const stepsPastBaseline = Math.max(0, act - BASELINE_ACT[track]);
   return {
     statSteps: ACT_STEP_CURVE[Math.min(stepsPastBaseline, ACT_STEP_CURVE.length - 1)],
     level: ENEMY_LEVEL_BY_ACT[Math.min(act, ENEMY_LEVEL_BY_ACT.length) - 1],
@@ -195,6 +195,43 @@ export function actScaling(track: ScalingTrack, actNumber: number, baselineAct: 
 
 /** Authored content as written, level 1 — the default for Quick Battle, Sandbox and tests. */
 export const NO_SCALING: ActScaling = { statSteps: 0, level: 1 };
+
+// --- The mob layer's tier by act (docs/titanspawn-overhaul.md §4) ---
+
+/**
+ * "The act's tier": what the Guardian's escorts are, and what leads the opener from Act 2. The
+ * silhouette is the difficulty gauge — an Early is fodder, a Late is not — so this is the one
+ * table that says which acts field which body. Acts past the table hold at its last entry.
+ * Early in Act 1 because the Act 1 Guardian was already the run's lightest with 200-total
+ * escorts; Late from Act 4, where the old 400-line escorts plus the curve had stopped scaling.
+ * First-pass figures for phase 6's re-fit.
+ */
+export const SPAWN_TIER_BY_ACT: readonly SpawnTier[] = ['early', 'mid', 'mid', 'late', 'late'];
+
+export function spawnTierFor(actNumber: number): SpawnTier {
+  const act = clampAct(actNumber);
+  return SPAWN_TIER_BY_ACT[Math.min(act, SPAWN_TIER_BY_ACT.length) - 1];
+}
+
+/**
+ * The opener's leader from Act 2 — "a Mid among Earlies" (§10, decided 2026-09-13): the act's
+ * tier, floored at Mid so a leader is never just another Early. The `battle` node fields the
+ * same shape in every act until phase 3 takes it off the fork.
+ */
+export function spawnLeaderTierFor(actNumber: number): SpawnTier {
+  const tier = spawnTierFor(actNumber);
+  return tier === 'early' ? 'mid' : tier;
+}
+
+/** Act 1's opener is two bare Earlies — the on-ramp. From Act 2 the opener is a leader plus this many Earlies. */
+export const OPENER_ESCORT_COUNT = 3;
+
+/**
+ * The act from which the opener's Earlies carry an item each (§10, decided 2026-09-13): the
+ * Earlies stay Earlies all run and equipment is what scales them, rolled on the same rarity
+ * curve a drop is. Act 1's opener is bare so the first fight is the auto-win it is meant to be.
+ */
+export const OPENER_GEAR_FROM_ACT = 2;
 
 // --- Encounter node types ---
 

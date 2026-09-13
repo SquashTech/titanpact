@@ -19,7 +19,9 @@ import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
 import { footerWaiting } from './mapFooter';
 import { locationForAct } from '../../run/locations';
-import type { LocationDefinition } from '../../data/locations';
+import { locationDomains, type LocationDefinition } from '../../data/locations';
+import { ElementGlyph } from '../shared/elementIcons';
+import { getTypeColor } from '../combat/typeColors';
 import { LocationAmbience } from '../shared/LocationSky';
 import { AudioSettings } from '../shared/AudioSettings';
 
@@ -126,12 +128,22 @@ const FOOTER_COLORS = {
 } as const;
 
 // Bottom-left: the bottom row is a width-1 encounter tile that fits its column;
-// the top row's Guardian tile spills into both neighbours.
+// the top row's Guardian tile spills into both neighbours. Under the name, what spawns here —
+// the marks rather than the words, since the placard is a quarter of the screen wide.
 function MapPlacard({ location }: { location: LocationDefinition }) {
+  const domains = locationDomains(location);
   return (
     <div className="map-placard">
       <span className="map-placard-name">{location.name}</span>
-      <span className="map-placard-faction">{location.faction}</span>
+      <span className="map-placard-faction">
+        {domains
+          ? domains.map((type) => (
+              <span key={type} style={{ color: getTypeColor(type) }} title={type}>
+                <ElementGlyph type={type} />
+              </span>
+            ))
+          : 'Every domain'}
+      </span>
     </div>
   );
 }

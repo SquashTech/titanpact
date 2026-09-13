@@ -26,14 +26,17 @@ don't silently override it.
 > 3, 4, then 5 Scrolls, income rises by act (3/3/4/4/4, +2 an act), the purse banks, and the
 > thresholds are the old level curve's (Mid at rung 3, Evolution at 4, Late at 6).
 
-> **A second overhaul is DECIDED and NOT YET BUILT: `docs/titanspawn-overhaul.md`** (2026-09-13).
+> **A second overhaul is DECIDED and PARTLY BUILT: `docs/titanspawn-overhaul.md`** (2026-09-13).
 > Location factions are replaced by **Titanspawn** — one mob line per mortal type in three tiers
 > (Early/Mid/Late), geometric SVG art against the heroes' pixel art, kits from the type slates;
 > locations **partition** the fourteen types (Necropolis at two); the fork becomes a previewed
 > Elite-or-Skirmish; a **mortal companion** joins after the first fight (a hero in every respect
 > except that a KO removes it from the run); and the **Pact Clock comes off the bench**. Its §11
 > lists the invariants below it reverses; until the phase in its §9 that replaces each one lands,
-> the rule below is still the rule in force.
+> the rule below is still the rule in force. **Phases 1-2 are IN (2026-09-13):** the 42 spawn
+> exist and render, the factions are deleted, `LocationDefinition.spawnTypes` is the mob layer's
+> hard filter, `fight`/`battle` and the Guardian's escorts draw spawn by act tier
+> (`SPAWN_TIER_BY_ACT`), and every spawn — escorts included — rides the monsters track.
 
 ---
 
@@ -425,7 +428,8 @@ what's still unimplemented:
   every hero, so they are priced at +15. Their relative values
   are an open balance question (`docs/run-loop.md`). **Encounters scale by act**
   (2026-08-30) on two tracks (`src/run/difficulty.ts`): **Monsters** baselines at Act 2
-  (placeholder — per-act monster content isn't authored yet), **Skirmish/Guardian** at
+  (every Titanspawn, the Guardian's escorts included, since 2026-09-13 — a Mid at 400 is
+  the Act 2 line; only the champion itself rides the other track), **Skirmish/Guardian** at
   Act 1, and acts past a track's baseline walk an **accelerating** `ACT_STEP_CURVE`
   (`[0, 1, 3, 6, 10]` cumulative steps of +30 stat total each) on top of the node-kind
   bonus. It accelerates because it has to track a player whose growth does: measured, a

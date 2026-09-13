@@ -42,7 +42,7 @@ import { RunSummaryScreen } from '../view/run/RunSummaryScreen';
 import { heroes } from '../data/heroes';
 import { moves } from '../data/moves';
 import { allCombatants } from '../data/content';
-import { enemies, factions, basicEnemiesOf, finaleEnemies, ENDBRINGER_ID } from '../data/enemies';
+import { enemies, finaleEnemies, ENDBRINGER_ID } from '../data/enemies';
 import { ActIntroScreen } from '../view/run/ActIntroScreen';
 import { PactSealScreen } from '../view/run/PactSealScreen';
 import { TitanWakeScreen } from '../view/run/TitanWakeScreen';
@@ -94,7 +94,6 @@ import { TutorialOverlay } from '../view/run/TutorialOverlay';
 import { generateStarterOptions } from '../run/draft';
 import {
   generateEncounter,
-  generateLeaderEncounter,
   generateFinaleEncounter,
   appendFinalEnemy,
   type EncounterNodeType,
@@ -103,6 +102,7 @@ import {
 import { actScaling, encounterHeroCountOverride, scrollsFor, type ScalingTrack } from '../run/difficulty';
 import { applyEncounterLevels, levelsForEncounter, type HeroLevelUp } from '../run/growth';
 import { generateItinerary, locationBias, locationForAct } from '../run/locations';
+import { mobEncounter, guardianEscortPool } from '../run/spawn';
 import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
 import { LocationProvider } from '../view/shared/LocationContext';
 import { NODE_TINT_MANA, NODE_TINT_VITAL } from '../view/shared/NodeStage';
@@ -289,10 +289,10 @@ function createLevel4TestRun(): RunState {
   };
 }
 
-/** TEST FIXTURE — arms the opener's Goblin Skulker with a Dagger so the equip-inspect UI has an item from turn one. */
+/** TEST FIXTURE — arms the scripted opener's Duskling with a Dagger so the equip-inspect UI has an item from turn one. */
 function equipTestDagger(encounter: Encounter): Encounter {
   const roster = encounter.run.roster.map((entry) =>
-    entry.heroId === 'goblinSkulker' ? { ...entry, equipment: equipItem(entry.equipment, equipment['dagger.common'].id) } : entry
+    entry.heroId === 'duskling' ? { ...entry, equipment: equipItem(entry.equipment, equipment['dagger.common'].id) } : entry
   );
   return { ...encounter, run: { ...encounter.run, roster } };
 }
@@ -551,32 +551,29 @@ export function App() {
       node.type === 'boss'
     ) {
       // Generated at node-select time so SquadSelectScreen can scout the enemy squad.
-      // `fight`/`battle`/`boss` draw from the Location's faction; `skirmish`/`elite` from the recruitable hero pool.
-      const isMobFight = node.type === 'fight' || node.type === 'battle';
-      // The Guardian's escorts are its own faction (2026-09-06, per user direction). Two recruitable
-      // heroes read as a Skirmish with a boss stapled on; a champion is the apex of the warband the
-      // act has been fighting. Only the POOL moves — the Guardian keeps the `skirmish` scaling track
-      // below, so its escorts ride the boss curve rather than the mob one (docs/run-loop.md).
-      const isFactionFight = isMobFight || node.type === 'boss';
-      const faction = factions[location.factionId];
+      // `fight`/`battle` and the Guardian's escorts draw Titanspawn by the Location's types
+      // (run/spawn.ts); `skirmish`/`elite` draw the recruitable hero pool.
+      const mobNode = node.type === 'fight' || node.type === 'battle' ? node.type : null;
+      const isMobFight = mobNode !== null;
       // `skirmish` and `battle` are mechanically plain `fight` encounters.
       const encounterKind: EncounterNodeType = node.type === 'skirmish' || node.type === 'battle' ? 'fight' : node.type;
       // The run's 2nd plain encounter is a deliberately lighter 2v2.
       const isSecondFight = encounterKind === 'fight' && playerRun.fightsStarted === 1;
-      const track: ScalingTrack = isMobFight ? 'monsters' : 'skirmish';
-      const scaling = actScaling(track, playerRun.actNumber, isMobFight ? faction.baselineAct : undefined);
+      // Every spawn rides the monsters track — the Guardian's escorts included, since a Late at 600
+      // is authored against that curve (docs/titanspawn-overhaul.md §2). Only the champion itself
+      // keeps the `skirmish` track; the two are appended separately below.
+      const track: ScalingTrack = isMobFight || node.type === 'boss' ? 'monsters' : 'skirmish';
+      const scaling = actScaling(track, playerRun.actNumber);
       // The scripted first act names its own enemies (docs/tutorial.md), so the fight is the one
       // Valor has just talked the player through. Null in every normal run and every later act.
       const scripted = tutorialEncounterFor(TUTORIAL_ENCOUNTERS, playerRun, node.type);
       let encounter: Encounter;
-      if (node.type === 'battle' && !scripted) {
-        encounter = generateLeaderEncounter(randomSeed(), faction.basicIds, faction.leaderId, enemies, scaling);
+      if (mobNode && !scripted) {
+        encounter = mobEncounter(mobNode, location, playerRun.actNumber, randomSeed(), scaling);
       } else {
-        // A scripted roster names its own combatants, so it draws from the WHOLE table rather
-        // than the basics: the tutorial's warband names the Goblin Chief, whom `basicIds`
-        // deliberately omits. Pool membership still follows the faction rule either way — the
-        // scripted Guardian fields Goblin basics like every other one (docs/tutorial.md).
-        const encounterPool = scripted ? allCombatants : isFactionFight ? basicEnemiesOf(faction) : heroes;
+        // A scripted roster names its own combatants, so it draws from the WHOLE table
+        // (docs/tutorial.md); a Guardian's escorts are the act's tier of the Location's spawn.
+        const encounterPool = scripted ? allCombatants : node.type === 'boss' ? guardianEscortPool(location, playerRun.actNumber) : heroes;
         // A hero already on the roster is barred from the recruitable SPAWN, so two copies can never
         // reach one roster via a contract claim (mirrors rollGuildHallOffers). Passed unconditionally:
         // enemy and hero ids never collide (test/recruitment.test.ts), so it is inert on a mob pool.
@@ -596,13 +593,13 @@ export function App() {
           bias,
           excludeHeroIds,
           scaling,
-          // No-op for a faction pool, which has no progression data.
-          progression: progressionTable,
+          // A spawn has no progression data; only the hero pool cashes a level in.
+          progression: encounterPool === heroes || scripted ? progressionTable : undefined,
         });
         // The Location's held-back champion arrives benched, so the first enemy KO brings him in.
         const finalEnemyId = node.type === 'boss' ? location.guardianFinalEnemyId : null;
         if (finalEnemyId) {
-          encounter = appendFinalEnemy(encounter, finalEnemyId, enemies, randomSeed(), scaling);
+          encounter = appendFinalEnemy(encounter, finalEnemyId, enemies, randomSeed(), actScaling('skirmish', playerRun.actNumber));
         }
       }
       const isFirstFight = encounterKind === 'fight' && playerRun.fightsStarted === 0;

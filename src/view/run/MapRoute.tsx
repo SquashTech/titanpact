@@ -180,7 +180,7 @@ export function MapRoute({
   map: RunMap;
   /** The node just resolved, or null on an act's first row — there is nothing behind you yet. */
   originNode: MapNode | null;
-  /** The Location's faction line, shown in the origin's place at the act's first Monsters node. */
+  /** The Location's omen — what leaks here — shown in the origin's place at the act's first Monsters node. */
   omen: string;
   choiceIds: readonly string[];
   /** The act the map belongs to — the ledger's drop odds and hire level are per act. */
@@ -199,7 +199,7 @@ export function MapRoute({
   const choiceKey = choiceIds.join(',');
   const revealKey = originNode ? `${map.seed}:${originNode.id}` : null;
   const showLeadOn = leadOnsDiffer(map, choiceIds);
-  // Gated on the node kind, not just on being row 0: act 6 opens on the Vigil, and a faction line
+  // Gated on the node kind, not just on being row 0: act 6 opens on the Vigil, and an omen
   // over a muster would be naming enemies that are not there.
   const showOmen = !originNode && map.nodes[choiceIds[0]]?.type === 'fight';
 
