@@ -6,6 +6,7 @@ import { test } from './harness';
 import { createFightState, withFullPools } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
+import { signatureMoves } from '../src/data/signatures';
 import { classMoves } from '../src/data/classes';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
@@ -247,6 +248,7 @@ test('shadow: every Ambush grant in the game is self-targeted and carries a magn
   const grants = Object.values(moves).filter((m) => firstStatusApplication(m)?.statusId === 'Ambush');
   assert.deepStrictEqual(grants.map((m) => m.id).sort(), [
     'cutthroat',
+    'duskStep',
     'enervate',
     'fortify',
     'lieInWait',
@@ -266,7 +268,7 @@ test('shadow: every Ambush grant in the game is self-targeted and carries a magn
 
 test('shadow: the slate is sixteen moves, and every status and condition it names exists', () => {
   // The type's authored slate — a class move wears a type for flavour and is not a row of it.
-  const shadow = Object.values(moves).filter((m) => m.type === 'Shadow' && !classMoves[m.id]);
+  const shadow = Object.values(moves).filter((m) => m.type === 'Shadow' && !signatureMoves[m.id] && !classMoves[m.id]);
   assert.strictEqual(shadow.length, 16);
   for (const move of shadow) {
     for (const app of statusApplicationsOf(move)) {
@@ -317,7 +319,7 @@ test('shadow: no move in the GAME authors two sides of conditionalPower', () => 
 
 test('shadow: every Poison the slate applies is chanced, and every one runs the standard 3-round timer', () => {
   // Shadow accumulates Poison as a side effect; a guaranteed applier would make it a second Nature.
-  const poisoners = Object.values(moves).filter((m) => m.type === 'Shadow' && firstStatusApplication(m)?.statusId === 'Poison');
+  const poisoners = Object.values(moves).filter((m) => m.type === 'Shadow' && !signatureMoves[m.id] && firstStatusApplication(m)?.statusId === 'Poison');
   assert.deepStrictEqual(poisoners.map((m) => m.id).sort(), ['umbraBolt', 'umbralBeam', 'umbralWave']);
   for (const move of poisoners) {
     // CHANCED, not a fixed 20%: the rule this test exists for is that no Shadow row applies Poison
@@ -329,7 +331,7 @@ test('shadow: every Poison the slate applies is chanced, and every one runs the 
 });
 
 test('shadow: Dusk Blade is the only guaranteed Bleed, and Bleed is the type flat attrition', () => {
-  const bleeders = Object.values(moves).filter((m) => m.type === 'Shadow' && firstStatusApplication(m)?.statusId === 'Bleed');
+  const bleeders = Object.values(moves).filter((m) => m.type === 'Shadow' && !signatureMoves[m.id] && firstStatusApplication(m)?.statusId === 'Bleed');
   assert.deepStrictEqual(bleeders.map((m) => m.id).sort(), ['backstab', 'duskBlade', 'shadowSlice']);
   assert.strictEqual(firstStatusApplication(moves.duskBlade)!.chance, undefined);
   assert.strictEqual(firstStatusApplication(moves.backstab)!.chance, 0.3);
@@ -340,7 +342,7 @@ test('shadow: Dusk Blade is the only guaranteed Bleed, and Bleed is the type fla
 
 test('shadow: Shadowstrike is the slate only bracket play — everything else resolves at priority 0', () => {
   for (const move of Object.values(moves)) {
-    if (move.type !== 'Shadow') continue;
+    if (move.type !== 'Shadow' || signatureMoves[move.id]) continue;
     assert.strictEqual(move.priority, move.id === 'shadowstrike' ? 1 : 0, `${move.id} has an unexpected priority bracket`);
   }
 });
@@ -395,7 +397,7 @@ test('shadow: every authored Shadow move has a holder', () => {
   }
 
   const orphans = Object.values(moves)
-    .filter((m) => m.type === 'Shadow' && !reachable.has(m.id))
+    .filter((m) => m.type === 'Shadow' && !signatureMoves[m.id] && !reachable.has(m.id))
     .map((m) => m.id)
     .sort();
   assert.deepStrictEqual(orphans, []);

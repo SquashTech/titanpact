@@ -90,7 +90,7 @@ don't silently override it.
 > day): the signature slot** — `HeroDefinition.signatureMoveId`, `src/data/signatures.ts`, owed at
 > the tenth pip and spent by being made, replace-or-decline at `MOVE_CAP`, in no pool by test;
 > Lizard Rush is Riptide's, and Tidecaller grants Maelstrom (off Riptide's pool) in its place.
-> Phase 4 authors the other 35.
+> **Phase 4 is DRAFTED** — all 35 in `src/data/signatures.ts`, under review.
 
 ---
 

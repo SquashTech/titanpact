@@ -7,6 +7,7 @@ import { test } from './harness';
 import { createFightState } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
+import { signatureMoves } from '../src/data/signatures';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
@@ -57,7 +58,7 @@ function burn(state: CombatState, combatantId: string, magnitude: number): Comba
 // --- The pool itself ---
 
 test('fire: the authored pool is exactly the sixteen designed moves, all Fire-typed', () => {
-  const fire = Object.values(moves).filter((m) => m.type === 'Fire');
+  const fire = Object.values(moves).filter((m) => m.type === 'Fire' && !signatureMoves[m.id]);
   assert.deepStrictEqual(
     fire.map((m) => m.id).sort(),
     [
@@ -95,7 +96,7 @@ test('fire: Fire Force from Stoke the Flames reaches the PARTNER\'s Fire moves a
 
 test('fire: every "Spread" move in the design table targets both enemies, and no other Fire move does', () => {
   const spread = Object.values(moves)
-    .filter((m) => m.type === 'Fire' && m.target === 'bothEnemies')
+    .filter((m) => m.type === 'Fire' && !signatureMoves[m.id] && m.target === 'bothEnemies')
     .map((m) => m.id)
     .sort();
   assert.deepStrictEqual(spread, ['backdraft', 'firestorm', 'sparkBurst', 'sparkFlash', 'spreadingBlaze']);
@@ -103,7 +104,7 @@ test('fire: every "Spread" move in the design table targets both enemies, and no
 
 test('fire: no Fire move applies a status the catalog does not define', () => {
   for (const move of Object.values(moves)) {
-    if (move.type !== 'Fire') continue;
+    if (move.type !== 'Fire' || signatureMoves[move.id]) continue;
     for (const app of statusApplicationsOf(move)) {
       assert.ok(statuses[app.statusId], `${move.id} applies unknown status ${app.statusId}`);
     }

@@ -6,6 +6,7 @@ import { createFightState, withFullPools } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { enemies } from '../src/data/enemies';
 import { moves } from '../src/data/moves';
+import { signatureMoves } from '../src/data/signatures';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
@@ -282,7 +283,7 @@ test('beast: Rampage bills a quarter of the damage it actually dealt back to its
 // --- The slate's own shape ---
 
 test('beast: the slate is fifteen moves, and every status it names exists', () => {
-  const beast = Object.values(moves).filter((m) => m.type === 'Beast');
+  const beast = Object.values(moves).filter((m) => m.type === 'Beast' && !signatureMoves[m.id]);
   assert.strictEqual(beast.length, 15);
   for (const move of beast) {
     for (const app of statusApplicationsOf(move)) {
@@ -292,7 +293,7 @@ test('beast: the slate is fifteen moves, and every status it names exists', () =
 });
 
 test('beast: three rows plant Bleed, two cash it, and one move applies two statuses at once', () => {
-  const beast = Object.values(moves).filter((m) => m.type === 'Beast');
+  const beast = Object.values(moves).filter((m) => m.type === 'Beast' && !signatureMoves[m.id]);
   const planters = beast.filter((m) => statusApplicationsOf(m).some((a) => a.statusId === 'Bleed'));
   assert.deepStrictEqual(planters.map((m) => m.id).sort(), ['claw', 'lacerate', 'toxicFangs']);
 
@@ -305,7 +306,7 @@ test('beast: three rows plant Bleed, two cash it, and one move applies two statu
 });
 
 test('beast: three rows read the partner, and none of them reads anything else', () => {
-  const beast = Object.values(moves).filter((m) => m.type === 'Beast');
+  const beast = Object.values(moves).filter((m) => m.type === 'Beast' && !signatureMoves[m.id]);
   const pack = beast.filter(
     (m) =>
       m.conditionalPower?.requiresPartnerType != null ||
@@ -330,7 +331,7 @@ test('beast: no damage row carries a free type-keyed rider — Beast triggers no
 });
 
 test('beast: exactly one bracket row, exactly one magical row, and no heal, cleanse, field effect or debuff', () => {
-  const beast = Object.values(moves).filter((m) => m.type === 'Beast');
+  const beast = Object.values(moves).filter((m) => m.type === 'Beast' && !signatureMoves[m.id]);
   assert.deepStrictEqual(beast.filter((m) => m.priority !== 0).map((m) => m.id), ['pounce']);
   assert.strictEqual(moves.pounce.priority, 1, 'and it is a positive bracket — the type buys speed, never trades it');
 
@@ -390,7 +391,7 @@ test('beast: every authored Beast move has a holder', () => {
   for (const pool of Object.values(progressionTable.moveTiers)) for (const id of pool) held.add(id);
 
   const orphans = Object.values(moves)
-    .filter((m) => m.type === 'Beast' && !held.has(m.id))
+    .filter((m) => m.type === 'Beast' && !signatureMoves[m.id] && !held.has(m.id))
     .map((m) => m.id);
   assert.deepStrictEqual(orphans, [], `unreachable Beast moves: ${orphans.join(', ')}`);
 });

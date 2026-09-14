@@ -349,7 +349,7 @@ test('stone: the target picker narrows to the taunt, so the player never aims wh
 
 test('stone: the slate authors no new field effect and no type-keyed status hook', () => {
   // If a status ever adds 'Stone' to triggerTypes, every number in this slate silently changes.
-  const stone = Object.values(moves).filter((m) => m.type === 'Stone');
+  const stone = Object.values(moves).filter((m) => m.type === 'Stone' && !signatureMoves[m.id]);
   // The designed fifteen, plus the two Evolution moves — Fang's Spire Claw and Crag's Titanic Crush.
   assert.strictEqual(stone.length, 17);
 
@@ -361,7 +361,7 @@ test('stone: the slate authors no new field effect and no type-keyed status hook
 });
 
 test('stone: every retribution move authors no basePower, and every other damage move authors one', () => {
-  for (const move of Object.values(moves).filter((m) => m.type === 'Stone')) {
+  for (const move of Object.values(moves).filter((m) => m.type === 'Stone' && !signatureMoves[m.id])) {
     if (move.retributionPercent != null) {
       assert.strictEqual(move.kind, 'damage', `${move.id} deals damage, so it is a damage-kind move`);
       assert.strictEqual(move.basePower, undefined, `${move.id} has no BasePower — the counter IS its body`);

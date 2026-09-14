@@ -6,6 +6,7 @@ import { test } from './harness';
 import { createFightState, withFullPools } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
+import { signatureMoves } from '../src/data/signatures';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
@@ -237,7 +238,7 @@ test('spirit: no move authors a selfHpCost the engine cannot price', () => {
 // --- The Haunt hook ---
 
 test('spirit: every damage move in the slate is single-target, and Haunt is what makes them spread', () => {
-  const spirit = Object.values(moves).filter((m) => m.type === 'Spirit');
+  const spirit = Object.values(moves).filter((m) => m.type === 'Spirit' && !signatureMoves[m.id]);
   const damage = spirit.filter((m) => m.kind === 'damage');
   assert.strictEqual(spirit.length, 17);
   assert.strictEqual(damage.length, 12);
@@ -249,7 +250,7 @@ test('spirit: every damage move in the slate is single-target, and Haunt is what
 
 test('spirit: three moves plant Haunt and all twelve damage moves cash it in', () => {
   const planters = Object.values(moves)
-    .filter((m) => m.type === 'Spirit' && firstStatusApplication(m)?.statusId === 'Haunt')
+    .filter((m) => m.type === 'Spirit' && !signatureMoves[m.id] && firstStatusApplication(m)?.statusId === 'Haunt')
     .map((m) => m.id)
     .sort();
   assert.deepStrictEqual(planters, ['poltergeist', 'torment', 'wisp']);
@@ -262,14 +263,14 @@ test('spirit: three moves plant Haunt and all twelve damage moves cash it in', (
 });
 
 test('spirit: Flicker is the slate only bracket play — everything else resolves at priority 0', () => {
-  const bracketed = Object.values(moves).filter((m) => m.type === 'Spirit' && (m.priority ?? 0) !== 0);
+  const bracketed = Object.values(moves).filter((m) => m.type === 'Spirit' && !signatureMoves[m.id] && (m.priority ?? 0) !== 0);
   assert.deepStrictEqual(bracketed.map((m) => m.id), ['flicker']);
   assert.strictEqual(moves.flicker.priority, 1);
 });
 
 test('spirit: the slate authors no heal-kind move and no cleanse', () => {
   // Deliberate (authoring-moves.md §6): Spirit heals only its caster, via drain and a self HoT.
-  const spirit = Object.values(moves).filter((m) => m.type === 'Spirit');
+  const spirit = Object.values(moves).filter((m) => m.type === 'Spirit' && !signatureMoves[m.id]);
   assert.ok(!spirit.some((m) => m.kind === 'heal'));
   assert.ok(!spirit.some((m) => m.cleanses));
   assert.deepStrictEqual(
@@ -316,7 +317,7 @@ test('spirit: Revenant holds the magical line and Sorrow the physical one — sp
   ];
   const revenant = reachableBy('revenant');
   const sorrow = reachableBy('sorrow');
-  const spiritMoves = Object.values(moves).filter((m) => m.type === 'Spirit');
+  const spiritMoves = Object.values(moves).filter((m) => m.type === 'Spirit' && !signatureMoves[m.id]);
 
   for (const move of spiritMoves) {
     if (move.category === 'physical') {
@@ -357,6 +358,6 @@ test('spirit: the enemy side can demonstrate Haunt end to end', () => {
   const wispling = titanspawn.wispling;
   const kit = wispling.moveIds.map((id: string) => moves[id]);
   assert.ok(kit.some((m) => firstStatusApplication(m)?.statusId === 'Haunt'), 'no way to plant the mark');
-  assert.ok(kit.some((m) => m.kind === 'damage' && m.type === 'Spirit'), 'no way to cash it in');
+  assert.ok(kit.some((m) => m.kind === 'damage' && m.type === 'Spirit' && !signatureMoves[m.id]), 'no way to cash it in');
   for (const move of kit) assert.ok(move.manaCost <= wispling.baseStats.manaPool);
 });

@@ -6,6 +6,7 @@ import { createFightState, withFullPools } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { enemies } from '../src/data/enemies';
 import { moves, RANDOM_STAT_POOL } from '../src/data/moves';
+import { signatureMoves } from '../src/data/signatures';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
@@ -316,14 +317,14 @@ test('mech: the slate cashes the Conduct it plants and plants a Haunt it cannot 
   assert.ok(statuses.Conduct.triggerTypes?.includes('Mech'), 'Mech can no longer detonate Conduct');
   assert.ok(!statuses.Haunt.spreadTriggerTypes?.includes('Mech'), 'Mech can now spread Haunt');
 
-  const mechMoves = Object.values(moves).filter((m) => m.type === 'Mech');
+  const mechMoves = Object.values(moves).filter((m) => m.type === 'Mech' && !signatureMoves[m.id]);
   const allRiders = mechMoves.flatMap((m) => [...statusApplicationsOf(m), ...(m.randomStatusApplication ?? [])]);
   assert.strictEqual(allRiders.filter((a) => a.statusId === 'Conduct').length, 2, 'Conduct planters');
   assert.strictEqual(allRiders.filter((a) => a.statusId === 'Haunt').length, 1, 'Haunt planters');
 });
 
 test('mech: the slate is fifteen rows with the authored shape', () => {
-  const mechMoves = Object.values(moves).filter((m) => m.type === 'Mech');
+  const mechMoves = Object.values(moves).filter((m) => m.type === 'Mech' && !signatureMoves[m.id]);
   assert.strictEqual(mechMoves.length, 15, 'the authored slate is fifteen rows');
 
   // Four magical rows against a roster whose best Intelligence is 45 — pinned so it cannot silently grow.
@@ -403,7 +404,7 @@ test('mech: every authored Mech move has a holder', () => {
   for (const pool of Object.values(progressionTable.moveTiers)) for (const id of pool) held.add(id);
 
   const orphans = Object.values(moves)
-    .filter((m) => m.type === 'Mech' && !held.has(m.id))
+    .filter((m) => m.type === 'Mech' && !signatureMoves[m.id] && !held.has(m.id))
     .map((m) => m.id);
   assert.deepStrictEqual(orphans, [], `unreachable Mech moves: ${orphans.join(', ')}`);
 });

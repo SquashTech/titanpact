@@ -6,6 +6,7 @@ import { test } from './harness';
 import { createFightState } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
+import { signatureMoves } from '../src/data/signatures';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
@@ -67,7 +68,7 @@ function outspeeds(state: CombatState, combatantId: string): CombatState {
 // --- The pool itself ---
 
 test('storm: the authored pool is exactly the fifteen designed moves, all Storm-typed', () => {
-  const storm = Object.values(moves).filter((m) => m.type === 'Storm');
+  const storm = Object.values(moves).filter((m) => m.type === 'Storm' && !signatureMoves[m.id]);
   assert.deepStrictEqual(
     storm.map((m) => m.id).sort(),
     [
@@ -80,7 +81,7 @@ test('storm: the authored pool is exactly the fifteen designed moves, all Storm-
 test('storm: every "Spread" move in the design table targets both enemies, and no Storm move catches its own partner', () => {
   const byTarget = (target: string) =>
     Object.values(moves)
-      .filter((m) => m.type === 'Storm' && m.target === target)
+      .filter((m) => m.type === 'Storm' && !signatureMoves[m.id] && m.target === target)
       .map((m) => m.id)
       .sort();
   assert.deepStrictEqual(byTarget('bothEnemies'), ['chainLightning', 'ionize']);
@@ -89,7 +90,7 @@ test('storm: every "Spread" move in the design table targets both enemies, and n
 
 test('storm: the four priority-bracket moves are the ones the table marks, and nothing else moved out of bracket 0', () => {
   const fast = Object.values(moves)
-    .filter((m) => m.type === 'Storm' && m.priority > 0)
+    .filter((m) => m.type === 'Storm' && !signatureMoves[m.id] && m.priority > 0)
     .map((m) => m.id)
     .sort();
   assert.deepStrictEqual(fast, ['ionicZap', 'ionize', 'zap']);
@@ -101,7 +102,7 @@ test('storm: the four priority-bracket moves are the ones the table marks, and n
 test('storm: every damage move in the slate carries Conduct detonation for free — the type-keyed hook, not an authored field', () => {
   const detonators = statuses.Conduct.triggerTypes ?? [];
   assert.ok(detonators.includes('Storm'));
-  const damage = Object.values(moves).filter((m) => m.type === 'Storm' && m.kind === 'damage');
+  const damage = Object.values(moves).filter((m) => m.type === 'Storm' && !signatureMoves[m.id] && m.kind === 'damage');
   assert.strictEqual(damage.length, 10);
   assert.strictEqual(damage.some((m) => firstStatusApplication(m)?.statusId === 'Conduct' && m.id === 'thunderbolt'), true);
 });

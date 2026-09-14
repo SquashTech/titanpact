@@ -7,6 +7,7 @@ import { test } from './harness';
 import { createFightState } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
+import { signatureMoves } from '../src/data/signatures';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
@@ -71,7 +72,7 @@ function outspeeds(state: CombatState, combatantId: string): CombatState {
 // --- The pool itself ---
 
 test('frost: the authored pool is the fifteen designed moves plus Snowball, Rime\'s Evolution move, all Frost-typed', () => {
-  const frost = Object.values(moves).filter((m) => m.type === 'Frost');
+  const frost = Object.values(moves).filter((m) => m.type === 'Frost' && !signatureMoves[m.id]);
   assert.deepStrictEqual(
     frost.map((m) => m.id).sort(),
     [
@@ -85,7 +86,7 @@ test('frost: the authored pool is the fifteen designed moves plus Snowball, Rime
 test('frost: every "Spread" move in the design table targets both enemies, and the two "all other heroes" moves catch the partner', () => {
   const byTarget = (target: string) =>
     Object.values(moves)
-      .filter((m) => m.type === 'Frost' && m.target === target)
+      .filter((m) => m.type === 'Frost' && !signatureMoves[m.id] && m.target === target)
       .map((m) => m.id)
       .sort();
   assert.deepStrictEqual(byTarget('bothEnemies'), ['avalanche', 'permafrost', 'rimeWind']);
@@ -94,7 +95,7 @@ test('frost: every "Spread" move in the design table targets both enemies, and t
 
 test('frost: no Frost move applies a status the catalog does not define, or gates on one', () => {
   for (const move of Object.values(moves)) {
-    if (move.type !== 'Frost') continue;
+    if (move.type !== 'Frost' || signatureMoves[move.id]) continue;
     for (const app of statusApplicationsOf(move)) {
       assert.ok(statuses[app.statusId], `${move.id} applies unknown status ${app.statusId}`);
     }
@@ -110,7 +111,7 @@ test('frost: no Frost move applies a status the catalog does not define, or gate
 
 test('frost: Quick Freeze is the pool\'s only bracket play — everything else resolves at priority 0', () => {
   for (const move of Object.values(moves)) {
-    if (move.type !== 'Frost') continue;
+    if (move.type !== 'Frost' || signatureMoves[move.id]) continue;
     assert.strictEqual(move.priority, move.id === 'quickFreeze' ? 1 : 0, `${move.id} has an unexpected priority bracket`);
   }
 });

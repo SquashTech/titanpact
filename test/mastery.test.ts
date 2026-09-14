@@ -207,7 +207,7 @@ test('signature: the tenth pip owes it once — below the cap it lands, at the c
   assert.strictEqual(pendingSignature(hero, { ...run.roster[0], mastery: MASTERY_SIGNATURE - 1 }), null, 'nine pips owe nothing');
   run = grantMastery(run, 'tidecaller', MASTERY_SIGNATURE);
   assert.strictEqual(pendingSignature(hero, run.roster[0]), 'lizardRush');
-  assert.strictEqual(pendingSignature(heroes.cinderKnight, { ...run.roster[0], heroId: 'cinderKnight' }), null, 'a hero with none authored is simply mastered');
+  assert.strictEqual(pendingSignature(rosterHeroes.cubling, { ...run.roster[0], heroId: 'cubling' }), null, 'a hero with none authored — a spawn — is simply mastered');
   // Below the cap: granted, and the offer is spent.
   const landed = grantOfferedMove(run, 'tidecaller', 'lizardRush');
   assert.ok(landed.roster[0].unlockedMoveIds.includes('lizardRush'));

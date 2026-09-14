@@ -6,6 +6,7 @@ import { test } from './harness';
 import { createFightState } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
+import { signatureMoves } from '../src/data/signatures';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
@@ -62,11 +63,11 @@ function afflict(state: CombatState, combatantId: string, statusId: string, magn
 // --- The pool itself ---
 
 test('water: the authored slate is the fifteen designed moves, Riptide\'s Evolution move and its signature, all Water-typed', () => {
-  const water = Object.values(moves).filter((m) => m.type === 'Water');
+  const water = Object.values(moves).filter((m) => m.type === 'Water' && !signatureMoves[m.id]);
   assert.deepStrictEqual(
     water.map((m) => m.id).sort(),
     [
-      'aquaSlice', 'deluge', 'engulf', 'highTide', 'lizardRush', 'maelstrom', 'oasis', 'refresh',
+      'aquaSlice', 'deluge', 'engulf', 'highTide', 'maelstrom', 'oasis', 'refresh',
       'shockBubble', 'siphon', 'splash', 'tideGuard', 'torrent', 'tsunami', 'undertow', 'washAway',
       'waveShred',
     ]
@@ -75,7 +76,7 @@ test('water: the authored slate is the fifteen designed moves, Riptide\'s Evolut
 
 test('water: every "Spread" move in the design table targets both enemies, and no other Water move does', () => {
   const spread = Object.values(moves)
-    .filter((m) => m.type === 'Water' && m.target === 'bothEnemies')
+    .filter((m) => m.type === 'Water' && !signatureMoves[m.id] && m.target === 'bothEnemies')
     .map((m) => m.id)
     .sort();
   assert.deepStrictEqual(spread, ['deluge', 'maelstrom']);
@@ -83,7 +84,7 @@ test('water: every "Spread" move in the design table targets both enemies, and n
 
 test('water: no Water move applies a status the catalog does not define', () => {
   for (const move of Object.values(moves)) {
-    if (move.type !== 'Water') continue;
+    if (move.type !== 'Water' || signatureMoves[move.id]) continue;
     for (const app of statusApplicationsOf(move)) {
       assert.ok(statuses[app.statusId], `${move.id} applies unknown status ${app.statusId}`);
     }
@@ -92,7 +93,7 @@ test('water: no Water move applies a status the catalog does not define', () => 
 
 test('water: the authored pool resolves entirely in priority bracket 0 — Water has no priority move', () => {
   for (const move of Object.values(moves)) {
-    if (move.type !== 'Water') continue;
+    if (move.type !== 'Water' || signatureMoves[move.id]) continue;
     assert.strictEqual(move.priority, 0, `${move.id} should be priority 0`);
   }
 });

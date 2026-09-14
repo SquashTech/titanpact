@@ -6,6 +6,7 @@ import { test } from './harness';
 import { createFightState, withFullPools } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
+import { signatureMoves } from '../src/data/signatures';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
@@ -236,11 +237,11 @@ test('mind: buffing the caster Wisdom actually makes Mind Shatter hit harder', (
 test('mind: every single-target Mind damage move carries the Haunt spread for free', () => {
   assert.deepStrictEqual(statuses.Haunt.spreadTriggerTypes, ['Spirit', 'Mind']);
   const singleTargetMindDamage = Object.values(moves).filter(
-    (m) => m.type === 'Mind' && m.kind === 'damage' && m.target === 'singleEnemy'
+    (m) => m.type === 'Mind' && !signatureMoves[m.id] && m.kind === 'damage' && m.target === 'singleEnemy'
   );
   assert.strictEqual(singleTargetMindDamage.length, 6);
   const haunters = Object.values(moves).filter(
-    (m) => m.type === 'Mind' && firstStatusApplication(m)?.statusId === 'Haunt'
+    (m) => m.type === 'Mind' && !signatureMoves[m.id] && firstStatusApplication(m)?.statusId === 'Haunt'
   );
   assert.deepStrictEqual(haunters.map((m) => m.id), ['wickedFear']);
 });
@@ -281,7 +282,7 @@ test('mind: each Mind hero attacks with a stat it is actually good at', () => {
 });
 
 test('mind: the authored slate is 16 moves and every authored stat delta is still a multiple of 5', () => {
-  const mind = Object.values(moves).filter((m) => m.type === 'Mind');
+  const mind = Object.values(moves).filter((m) => m.type === 'Mind' && !signatureMoves[m.id]);
   assert.strictEqual(mind.length, 16);
   for (const m of mind) {
     for (const d of m.statDeltas ?? []) {

@@ -6,6 +6,7 @@ import { test } from './harness';
 import { createFightState, withFullPools } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
+import { signatureMoves } from '../src/data/signatures';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
@@ -226,7 +227,7 @@ test('nature: detonatesStatus is gated on the timer SHAPE, not on a status id', 
 
 test('nature: no Nature move applies, gates on, or detonates a status the catalog does not define', () => {
   for (const move of Object.values(moves)) {
-    if (move.type !== 'Nature') continue;
+    if (move.type !== 'Nature' || signatureMoves[move.id]) continue;
     for (const app of statusApplicationsOf(move)) {
       assert.ok(statuses[app.statusId], `${move.id} applies unknown status ${app.statusId}`);
     }
@@ -244,7 +245,7 @@ test('nature: no Nature move applies, gates on, or detonates a status the catalo
 
 test('nature: every Nature move resolves in bracket 0 — the slate authors no priority column', () => {
   for (const move of Object.values(moves)) {
-    if (move.type !== 'Nature') continue;
+    if (move.type !== 'Nature' || signatureMoves[move.id]) continue;
     assert.strictEqual(move.priority, 0, `${move.id} has an unexpected priority bracket`);
   }
 });

@@ -53,6 +53,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     growthGrades: { hp: 'S', attack: 'A', defense: 'A', intelligence: 'F', wisdom: 'B', speed: 'B', manaPool: 'B' },
     schedule: { offerLevels: [4, 9, 14, 18, 22, 26], midLevel: 11, lateLevel: 21 },
+    signatureMoveId: 'quench',
   },
   crimson: {
     id: 'crimson',
@@ -63,6 +64,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: true,
     growthGrades: { hp: 'B', attack: 'F', defense: 'B', intelligence: 'S', wisdom: 'A', speed: 'B', manaPool: 'A' },
     schedule: { offerLevels: [4, 9, 13, 18, 21, 26], midLevel: 11, lateLevel: 21 },
+    signatureMoveId: 'flashover',
   },
   brimstone: {
     id: 'brimstone',
@@ -73,6 +75,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     growthGrades: { hp: 'S', attack: 'E', defense: 'A', intelligence: 'D', wisdom: 'A', speed: 'B', manaPool: 'A' },
     schedule: { offerLevels: [5, 8, 12, 17, 21, 26], midLevel: 10, lateLevel: 20 },
+    signatureMoveId: 'hearthfire',
   },
 
   // --- Water ---
@@ -100,6 +103,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     growthGrades: { hp: 'A', attack: 'S', defense: 'A', intelligence: 'F', wisdom: 'B', speed: 'B', manaPool: 'B' },
     schedule: { offerLevels: [5, 8, 13, 16, 20, 25], midLevel: 10, lateLevel: 19 },
+    signatureMoveId: 'vise',
   },
 
   // --- Frost ---
@@ -112,6 +116,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     growthGrades: { hp: 'A', attack: 'F', defense: 'B', intelligence: 'S', wisdom: 'A', speed: 'B', manaPool: 'B' },
     schedule: { offerLevels: [5, 9, 14, 18, 22, 26], midLevel: 11, lateLevel: 21 },
+    signatureMoveId: 'hoarfrost',
   },
   rime: {
     id: 'rime',
@@ -125,6 +130,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: true,
     growthGrades: { hp: 'B', attack: 'B', defense: 'A', intelligence: 'D', wisdom: 'B', speed: 'A', manaPool: 'B' },
     schedule: { offerLevels: [4, 8, 12, 15, 19, 24], midLevel: 9, lateLevel: 18 },
+    signatureMoveId: 'icefall',
   },
   cube: {
     id: 'cube',
@@ -135,6 +141,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     growthGrades: { hp: 'A', attack: 'S', defense: 'A', intelligence: 'F', wisdom: 'S', speed: 'C', manaPool: 'C' },
     schedule: { offerLevels: [6, 11, 16, 20, 23, 27], midLevel: 13, lateLevel: 22 },
+    signatureMoveId: 'coldMass',
   },
 
   // --- Storm ---
@@ -147,6 +154,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     growthGrades: { hp: 'B', attack: 'A', defense: 'A', intelligence: 'D', wisdom: 'B', speed: 'B', manaPool: 'B' },
     schedule: { offerLevels: [4, 8, 13, 17, 20, 25], midLevel: 10, lateLevel: 20 },
+    signatureMoveId: 'galeVolley',
   },
   tempest: {
     id: 'tempest',
@@ -157,6 +165,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: true,
     growthGrades: { hp: 'B', attack: 'S', defense: 'C', intelligence: 'S', wisdom: 'C', speed: 'C', manaPool: 'C' },
     schedule: { offerLevels: [4, 8, 12, 17, 21, 26], midLevel: 10, lateLevel: 20 },
+    signatureMoveId: 'forkedLightning',
   },
   scallywag: {
     id: 'scallywag',
@@ -167,6 +176,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     growthGrades: { hp: 'B', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'A', speed: 'A', manaPool: 'B' },
     schedule: { offerLevels: [4, 8, 12, 15, 19, 24], midLevel: 9, lateLevel: 18 },
+    signatureMoveId: 'broadside',
   },
 
   // --- Stone ---
@@ -179,6 +189,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: true,
     growthGrades: { hp: 'A', attack: 'S', defense: 'A', intelligence: 'E', wisdom: 'A', speed: 'B', manaPool: 'D' },
     schedule: { offerLevels: [4, 8, 13, 16, 19, 24], midLevel: 9, lateLevel: 18 },
+    signatureMoveId: 'groundsplit',
   },
   sentinel: {
     id: 'sentinel',
@@ -189,6 +200,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     growthGrades: { hp: 'S', attack: 'B', defense: 'A', intelligence: 'F', wisdom: 'S', speed: 'C', manaPool: 'B' },
     schedule: { offerLevels: [6, 11, 15, 19, 23, 27], midLevel: 12, lateLevel: 22 },
+    signatureMoveId: 'roostGuard',
   },
 
   // --- Nature ---
@@ -201,6 +213,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: true,
     growthGrades: { hp: 'B', attack: 'D', defense: 'C', intelligence: 'A', wisdom: 'A', speed: 'B', manaPool: 'A' },
     schedule: { offerLevels: [4, 8, 13, 17, 21, 26], midLevel: 10, lateLevel: 20 },
+    signatureMoveId: 'verdure',
   },
   mordax: {
     id: 'mordax',
@@ -211,6 +224,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     growthGrades: { hp: 'S', attack: 'S', defense: 'A', intelligence: 'F', wisdom: 'B', speed: 'B', manaPool: 'C' },
     schedule: { offerLevels: [4, 8, 13, 16, 20, 25], midLevel: 10, lateLevel: 19 },
+    signatureMoveId: 'rendAndRoot',
   },
   hollowbark: {
     id: 'hollowbark',
@@ -221,6 +235,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     growthGrades: { hp: 'S', attack: 'A', defense: 'A', intelligence: 'E', wisdom: 'A', speed: 'B', manaPool: 'D' },
     schedule: { offerLevels: [5, 9, 14, 18, 22, 26], midLevel: 11, lateLevel: 21 },
+    signatureMoveId: 'deadfall',
   },
 
   // --- Light ---
@@ -233,6 +248,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: true,
     growthGrades: { hp: 'B', attack: 'F', defense: 'B', intelligence: 'B', wisdom: 'S', speed: 'B', manaPool: 'S' },
     schedule: { offerLevels: [5, 9, 14, 18, 22, 26], midLevel: 11, lateLevel: 21 },
+    signatureMoveId: 'daybreak',
   },
   aegis: {
     id: 'aegis',
@@ -243,6 +259,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     growthGrades: { hp: 'A', attack: 'D', defense: 'A', intelligence: 'B', wisdom: 'A', speed: 'C', manaPool: 'B' },
     schedule: { offerLevels: [5, 10, 14, 19, 22, 26], midLevel: 12, lateLevel: 21 },
+    signatureMoveId: 'bulwarkStrike',
   },
 
   // --- Shadow ---
@@ -255,6 +272,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     growthGrades: { hp: 'B', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'A', speed: 'A', manaPool: 'B' },
     schedule: { offerLevels: [4, 8, 13, 17, 20, 25], midLevel: 10, lateLevel: 20 },
+    signatureMoveId: 'duskStep',
   },
   marrow: {
     id: 'marrow',
@@ -265,6 +283,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     growthGrades: { hp: 'D', attack: 'F', defense: 'C', intelligence: 'S', wisdom: 'A', speed: 'S', manaPool: 'S' },
     schedule: { offerLevels: [4, 9, 14, 19, 23, 27], midLevel: 12, lateLevel: 22 },
+    signatureMoveId: 'marrowfeast',
   },
   nightshade: {
     id: 'nightshade',
@@ -275,6 +294,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: true,
     growthGrades: { hp: 'B', attack: 'S', defense: 'B', intelligence: 'C', wisdom: 'C', speed: 'A', manaPool: 'C' },
     schedule: { offerLevels: [3, 7, 11, 14, 18, 23], midLevel: 9, lateLevel: 17 },
+    signatureMoveId: 'nightfall',
   },
 
   // --- Arcane ---
@@ -287,6 +307,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: true,
     growthGrades: { hp: 'S', attack: 'E', defense: 'A', intelligence: 'B', wisdom: 'A', speed: 'D', manaPool: 'A' },
     schedule: { offerLevels: [4, 8, 12, 15, 19, 22, 26], midLevel: 10, lateLevel: 21 },
+    signatureMoveId: 'palimpsest',
   },
   zenith: {
     id: 'zenith',
@@ -297,6 +318,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     growthGrades: { hp: 'B', attack: 'F', defense: 'C', intelligence: 'S', wisdom: 'A', speed: 'B', manaPool: 'S' },
     schedule: { offerLevels: [5, 10, 15, 19, 23, 27], midLevel: 12, lateLevel: 22 },
+    signatureMoveId: 'culmination',
   },
 
   // --- Mind ---
@@ -309,6 +331,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: true,
     growthGrades: { hp: 'B', attack: 'A', defense: 'D', intelligence: 'A', wisdom: 'C', speed: 'A', manaPool: 'B' },
     schedule: { offerLevels: [4, 8, 12, 15, 19, 24], midLevel: 9, lateLevel: 18 },
+    signatureMoveId: 'mindlink',
   },
   lucius: {
     id: 'lucius',
@@ -319,6 +342,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     growthGrades: { hp: 'B', attack: 'F', defense: 'B', intelligence: 'S', wisdom: 'A', speed: 'B', manaPool: 'A' },
     schedule: { offerLevels: [5, 9, 14, 18, 22, 26], midLevel: 11, lateLevel: 21 },
+    signatureMoveId: 'hollowing',
   },
   trance: {
     id: 'trance',
@@ -329,6 +353,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     growthGrades: { hp: 'B', attack: 'E', defense: 'B', intelligence: 'A', wisdom: 'S', speed: 'C', manaPool: 'A' },
     schedule: { offerLevels: [5, 10, 15, 19, 23, 27], midLevel: 12, lateLevel: 22 },
+    signatureMoveId: 'somnolence',
   },
 
   // --- Spirit ---
@@ -341,6 +366,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: true,
     growthGrades: { hp: 'B', attack: 'F', defense: 'A', intelligence: 'S', wisdom: 'B', speed: 'B', manaPool: 'A' },
     schedule: { offerLevels: [4, 9, 14, 18, 21, 26], midLevel: 11, lateLevel: 21 },
+    signatureMoveId: 'soulTithe',
   },
   sorrow: {
     id: 'sorrow',
@@ -351,6 +377,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     growthGrades: { hp: 'C', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'A', speed: 'S', manaPool: 'B' },
     schedule: { offerLevels: [4, 8, 13, 16, 20, 25], midLevel: 10, lateLevel: 19 },
+    signatureMoveId: 'dirgeOfAsh',
   },
 
   // --- Iron ---
@@ -363,6 +390,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     growthGrades: { hp: 'A', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'A', speed: 'B', manaPool: 'B' },
     schedule: { offerLevels: [5, 10, 14, 19, 22, 26], midLevel: 12, lateLevel: 21 },
+    signatureMoveId: 'wallStrike',
   },
   valor: {
     id: 'valor',
@@ -373,6 +401,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: true,
     growthGrades: { hp: 'A', attack: 'A', defense: 'B', intelligence: 'C', wisdom: 'B', speed: 'B', manaPool: 'C' },
     schedule: { offerLevels: [3, 6, 11, 14, 18, 23], midLevel: 9, lateLevel: 17 },
+    signatureMoveId: 'oathstrike',
   },
   gallant: {
     id: 'gallant',
@@ -383,6 +412,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     growthGrades: { hp: 'B', attack: 'B', defense: 'A', intelligence: 'D', wisdom: 'A', speed: 'A', manaPool: 'C' },
     schedule: { offerLevels: [3, 7, 12, 15, 19, 24], midLevel: 9, lateLevel: 18 },
+    signatureMoveId: 'fullTilt',
   },
 
   // --- Mech ---
@@ -395,6 +425,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: true,
     growthGrades: { hp: 'B', attack: 'S', defense: 'A', intelligence: 'A', wisdom: 'C', speed: 'B', manaPool: 'E' },
     schedule: { offerLevels: [4, 8, 13, 17, 21, 25], midLevel: 10, lateLevel: 20 },
+    signatureMoveId: 'overwind',
   },
   steamColossus: {
     id: 'steamColossus',
@@ -405,6 +436,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     growthGrades: { hp: 'S', attack: 'A', defense: 'S', intelligence: 'F', wisdom: 'S', speed: 'C', manaPool: 'D' },
     schedule: { offerLevels: [6, 11, 16, 20, 24, 28], midLevel: 13, lateLevel: 22 },
+    signatureMoveId: 'boilerBlow',
   },
 
   // --- Beast ---
@@ -417,6 +449,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: true,
     growthGrades: { hp: 'A', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'B', speed: 'A', manaPool: 'B' },
     schedule: { offerLevels: [3, 7, 13, 16, 19, 24], midLevel: 9, lateLevel: 18 },
+    signatureMoveId: 'packCall',
   },
   widow: {
     id: 'widow',
@@ -427,6 +460,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     growthGrades: { hp: 'S', attack: 'B', defense: 'A', intelligence: 'D', wisdom: 'A', speed: 'B', manaPool: 'D' },
     schedule: { offerLevels: [4, 8, 13, 16, 20, 25], midLevel: 10, lateLevel: 19 },
+    signatureMoveId: 'widowbite',
   },
   coil: {
     id: 'coil',
@@ -437,5 +471,6 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     growthGrades: { hp: 'S', attack: 'E', defense: 'A', intelligence: 'A', wisdom: 'A', speed: 'D', manaPool: 'B' },
     schedule: { offerLevels: [5, 10, 15, 19, 23, 27], midLevel: 12, lateLevel: 22 },
+    signatureMoveId: 'stranglehold',
   },
 };

@@ -6,6 +6,7 @@ import { test } from './harness';
 import { createFightState, withFullPools } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
+import { signatureMoves } from '../src/data/signatures';
 import { classMoves } from '../src/data/classes';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
@@ -166,7 +167,7 @@ test('light: the new field draws no RNG and leaves board-free callers answering 
 
 test('light: no Light move applies or scales off something the catalog does not define', () => {
   for (const move of Object.values(moves)) {
-    if (move.type !== 'Light') continue;
+    if (move.type !== 'Light' || signatureMoves[move.id]) continue;
     for (const app of statusApplicationsOf(move)) {
       assert.ok(statuses[app.statusId], `${move.id} applies unknown status ${app.statusId}`);
     }
@@ -234,14 +235,14 @@ test("light: Daze is a bet on turn order — Solace's own riders only pay when i
   );
 
   for (const move of Object.values(moves)) {
-    if (move.type !== 'Light' || firstStatusApplication(move)?.statusId !== 'Daze') continue;
+    if (move.type !== 'Light' || signatureMoves[move.id] || firstStatusApplication(move)?.statusId !== 'Daze') continue;
     assert.strictEqual(move.priority, 0, `${move.id} would let Light buy its way past Speed`);
   }
 });
 
 test('light: every Light move resolves in bracket 0 — the slate authors no priority column', () => {
   for (const move of Object.values(moves)) {
-    if (move.type !== 'Light') continue;
+    if (move.type !== 'Light' || signatureMoves[move.id]) continue;
     assert.strictEqual(move.priority, 0, `${move.id} has an unexpected priority bracket`);
   }
 });
@@ -295,7 +296,7 @@ test('light: every authored Light move has a holder', () => {
   }
 
   const orphans = Object.values(moves)
-    .filter((m) => m.type === 'Light' && !reachable.has(m.id))
+    .filter((m) => m.type === 'Light' && !signatureMoves[m.id] && !reachable.has(m.id))
     .map((m) => m.id)
     .sort();
   assert.deepStrictEqual(orphans, []);
