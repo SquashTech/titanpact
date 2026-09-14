@@ -38,8 +38,8 @@ between; per user direction, the shape is now forced and uniform):
 - **Row 0: a single forced `fight` node.** Slay the Spire convention — the act always
   opens on an easy, unambiguous fight, no early reward-node luck and no meaningless
   first choice among identical-weight openers.
-- **Row 1: 3 nodes, pick 1 of 3 — reward types only** (`equipmentReward`/`scrollReward`/
-  `loneScrollReward`/`passiveReward`/`currencyReward`/`forgeReward`/`event`, weighted). No
+- **Row 1: 3 nodes, pick 1 of 3 — reward types only** (`equipmentReward`/`candyReward`/
+  `smallCandyReward`/`passiveReward`/`currencyReward`/`forgeReward`/`event`, weighted). No
   `fight`/`shop`/`elite`/`mentorReward` mixed in — every reward row is a genuine reward
   choice, not a chance to draw another fight or dodge one, and `mentorReward` is reserved
   for its own forced Mentor row (2026-08-22 revision, per user direction — see the Mentor
@@ -248,9 +248,9 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `shop` | `ShopNodeScreen` — the existing `GuildHallPanel`, given an exit for the first time. Overhauled 2026-08-18: offers 2-3 curated hero recruits (50g each, `GUILD_HALL_RECRUIT_COST`) rather than the full catalog, plus a rarity-priced equipment shelf, rolled once per visit (`src/run/shop.ts` `rollGuildHallOffers`). Second pass 2026-08-31: relics are no longer sold anywhere, the shelf is 4 wide and readable on its face, sold stock greys out, and Recruit Contracts confirm before buying (`docs/progression.md` "Second pass"). |
 | `equipmentReward` ("Item") | `NodeRewardScreen` — pick 1 of 3 items, rarity-weighted (`equipment.ts` `pickWeightedEquipment`); claiming bags it and lights the Roster badge — see "The bag notification" in `docs/progression.md`. Items are uncategorised as of 2026-09-06, so the three on offer are simply the three rolled (`docs/progression.md` "Uncategorised slots"). |
 | `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30). **2026-09-08, per user direction:** it pays out on arrival and the screen counts the PURSE up to its new total, coin by coin, over a Claim button that was never a decision — the drop size is a chip beside a number the player can act on, rather than a number they cannot. The two Scroll nodes share that beat. |
-| `loneScrollReward` ("A Lone Scroll") | `NodeRewardScreen` — an instant grant of `LONE_SCROLL_COUNT` = 1 Mastery Scroll. The commoner, smaller half of the Scroll Cache's grant. It was the XP Cache until 2026-09-10, when levels went automatic and there was no pool left to pay into; it kept its seat rather than being deleted (per user direction) because the reward rows were already down to six types. Distinguished from the Cache on the map by its glyph — one sealed sheet against a bundle — since the tiles carry no labels. |
+| `smallCandyReward` ("Small Candy") | `CandyNodeScreen` — **one level at par** of XP, to ONE hero the player picks; the pick raises the level-up report for that hero (`src/run/candy.ts`, `docs/xp-overhaul.md` §3, 2026-09-13). The commoner, smaller half of the Candy's grant. It took the Lone Scroll's seat and weight (14); the seat was the XP Cache before that (2026-09-10), so it has come round to paying XP again. Distinguished from the Candy on the map by its glyph — one sweet against two — since the tiles carry no labels. |
 | `forgeReward` ("The Forge") | `ForgeScreen` — pick one roster hero to gain **+1 item slot** for the rest of the run (`runProgress.ts` `grantItemSlot`, stored on `RosterEntry.bonusItemSlots`, capped at `MAX_ITEM_SLOTS` = 3). **2026-09-06**, replacing the three slot-specific cache nodes (`weaponReward`/`armorReward`/`accessoryReward`), which lost their meaning when items stopped having categories — most of their frequency went to `equipmentReward`, whose weight went 20 → 40. The scarcest thing on the reward row (weight 8) on purpose: it is permanent, it compounds with every drop after it, and it is the only reward here a hero can be at the cap for — a roster entirely at 3 slots makes the node a dead draw, which is what makes spending it a choice — and at the 2026-09-07 cap of 3 that arrives materially sooner. |
-| `scrollReward` ("Scroll Cache") | `NodeRewardScreen` — an instant grant of `SCROLL_REWARD_COUNT` = 2 Mastery Scrolls, counted up on arrival like gold and XP. Which hero they go to is not asked here, but it is asked on the way back to the map if the purse can now buy somebody a rung: `MasteryScreen` is raised there. See "Mastery Scrolls" below. |
+| `candyReward` ("Candy") | `CandyNodeScreen` — **two levels at par** of XP, to ONE hero the player picks (`src/run/candy.ts`, `docs/xp-overhaul.md` §3, 2026-09-13). The screen collects one thing, who, and every card says the level that hero would land on — a hero behind par climbs further on the same candy, a hero ahead of par less, which is the convex curve doing the catch-up and the throttle at once. A hero at `MAX_LEVEL` is refused. The pick hands straight off to the level-up report. It took the Scroll Cache's seat and weight (46). See "Candy" below. |
 | `passiveReward` ("Boon") | `BoonNodeScreen` — pick 1 of 3 passives, then the hero it settles on (`grantEventPassive`, stored on `RosterEntry.bonusPassiveGrants`). See "Boons" below. |
 | `mentorReward` ("Mentor's Hall") | `MentorNodeScreen` — "the Mentor can teach any hero a powerful move": pick a hero, and ONE Mid-tier move is rolled from that hero's own pool, un-rank-gated (`mentorMovePool`, `src/run/tutor.ts`). A Scroll pour with the band fixed at Mid that ticks nothing; the rolled offer is spent by being made. Who is the only decision, on purpose — it is one of a new player's first nodes (2026-09-11, `growth-overhaul.md` §11; it was briefly a curated Early-Mid pick, and before that a stat-pair Class). **Not in `REWARD_WEIGHTS`** — the only way to meet one is the forced row in acts 1-3 (§1). |
 | `tutorReward` ("Tutor") | `TutorNodeScreen` — pick one roster hero, then **any** move from that hero's Scroll pool. See "The Tutor" below. Acts 4-5 only. |
@@ -401,12 +401,26 @@ Spec and rationale: `docs/leveling-and-ranks.md` Part 1b and `docs/growth-overha
 
 **Where they come from.** Every won fight, scaled by act (`scrollsFor`, `src/run/difficulty.ts`):
 the act opener 3, Battle 3, Skirmish 4, Elite 4, the Guardian 4, +2 per act past the first —
-14–15 an act in Act 1, 46–47 in Act 5, ~150 a run. Plus the `scrollReward` Scroll Cache at
-`SCROLL_REWARD_COUNT` = 2 (flat), the lone Scroll (1), and the Guild Hall, which sells a fight's
-worth in the act for `SCROLL_PURCHASE_COST` = 35g, `SCROLL_PURCHASE_LIMIT` = 2 bundles a visit
-(2026-09-11, per user direction — an uncapped shelf let a rich run turn the whole purse into rank
-in one stop). Against that, six Evolutions are 60 and six heroes to the Late band are 120, so
-everything past "everyone evolves" is a real spread-vs-concentrate call.
+14–15 an act in Act 1, 46–47 in Act 5, ~150 a run. **The fights are the only faucet since
+2026-09-13** (XP Overhaul phase 2): the Scroll Cache, the lone Scroll and the Guild Hall's Scroll
+bundle all became candy (below). Against that, six Evolutions are 60 and six heroes to the Late
+band are 120, so everything past "everyone evolves" is a real spread-vs-concentrate call. This is
+the bridge state — phase 3 deletes the ladder whole.
+
+### Candy
+
+**XP the player aims at ONE hero** (`src/run/candy.ts`, `docs/xp-overhaul.md` §3, 2026-09-13).
+Encounter XP is roster-wide and automatic; a candy is the one place the player says *who* grows.
+Denominated in **levels at par** — `candyXp` is the XP from `parLevel(run)` (the curve's level at
+`encountersWon`) to par + `CANDY_LEVELS[kind]` — so a Candy is always +2 for a hero at par, more
+for a hero behind, less for a hero ahead, and it grows with the act because the cube does. Three
+sources, every one a seat that displaced another reward: the `candyReward` node (2, weight 46),
+the `smallCandyReward` node (1, weight 14), and the Guild Hall shelf, which sells a Small for
+`CANDY_PURCHASE_COST` = 35g, `CANDY_PURCHASE_LIMIT` = 2 a visit — the tap opens the who screen
+and the gold is charged on the pick. `CandyNodeScreen` is the who screen; the payoff is the
+level-up report, same screen and same rows as a fight's. The supply is the only balance number:
+measured at these weights it is **~13 levels-at-par a completed run** (candy 6.3, shelf 5.7,
+Small 1.1 — the shelf is nearly half), against the ~7 §3 estimated, and phase 6 sets it.
 
 **They are a PURSE** (2026-09-12, reversing 2026-09-10's "an EVENT, poured where it is won"). A
 rising price means a leftover that buys nobody is normal and banks on its own, and a purse that

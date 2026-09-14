@@ -242,11 +242,10 @@ export const TUTORIAL_ROW_TYPES: readonly MapNodeType[] = [
   'skirmish',
   'forgeReward',
   'battle',
-  // The act's third reward row. Scrolls, because they are the run's ONLY faucet for moves and
-  // the Guardian's own pay arrives after the scripted stretch is over — so without this seat the
-  // player finishes the tutorial never having spent one. It displaces the Boon, whose
-  // pick-a-hero grammar the Scroll teaches anyway.
-  'scrollReward',
+  // The act's third reward row. The Candy: the one place the player aims growth, and the
+  // pick-a-hero grammar every later reward (Boon, Forge, Mentor) shares — so the corridor teaches
+  // it once, on the cheapest thing it can be taught on. It displaces the Boon.
+  'candyReward',
   'shop',
   'boss',
 ];

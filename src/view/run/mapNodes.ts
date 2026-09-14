@@ -15,10 +15,10 @@ export const NODE_NAMES: Record<MapNodeType, string> = {
   shop: 'Guild Hall',
   blacksmith: 'Blacksmith',
   equipmentReward: 'Item',
-  scrollReward: 'Scrolls',
+  candyReward: 'Candy',
   passiveReward: 'Boon',
   currencyReward: 'Gold',
-  loneScrollReward: 'Scroll',
+  smallCandyReward: 'Small Candy',
   forgeReward: 'Forge',
   mentorReward: 'Mentor',
   tutorReward: 'Tutor',
@@ -40,12 +40,12 @@ export const NODE_COLORS: Record<MapNodeType, string> = {
   // carry), different silhouette tier, so they read as related rather than as each other.
   blacksmith: '#c67a4c',
   equipmentReward: 'var(--physical)',
-  // The Scroll's own violet (RunGlyph RESOURCE_COLORS) — one colour per concept, wherever it is drawn.
-  scrollReward: '#c9a2ff',
+  // The level-up report's own green (NodeStage NODE_TINT_VITAL) — a candy IS a level-up, aimed.
+  candyReward: '#4caf6a',
   // Arcane violet, the hue the whole passive vocabulary already sits on (passiveIcons' fallback).
   passiveReward: 'var(--magical)',
   currencyReward: 'var(--accent)',
-  loneScrollReward: '#c9a2ff',
+  smallCandyReward: '#4caf6a',
   // Forge orange: the only node that hands out a permanent SLOT rather than a thing to put in one.
   forgeReward: '#f0913c',
   mentorReward: 'var(--buff)',
@@ -70,10 +70,10 @@ export const NODE_TIERS: Record<MapNodeType, NodeTier> = {
   shop: 'landmark',
   blacksmith: 'landmark',
   equipmentReward: 'reward',
-  scrollReward: 'reward',
+  candyReward: 'reward',
   passiveReward: 'reward',
   currencyReward: 'reward',
-  loneScrollReward: 'reward',
+  smallCandyReward: 'reward',
   forgeReward: 'reward',
   mentorReward: 'reward',
   tutorReward: 'reward',

@@ -81,21 +81,6 @@ export const EVOLUTION_RUNG = 4;
 /** Scrolls poured by the time a hero evolves: 1 + 2 + 3 + 4. Derived; the rung is what is authored. */
 export const EVOLUTION_SCROLLS = scrollsToReachRung(EVOLUTION_RUNG);
 
-/**
- * What the `scrollReward` Scroll Cache pays. Two, flat across acts and deliberately under one
- * fight's pay: a cache is a top-up the player can take instead of gold or an item, not a
- * substitute for fighting. First-pass figure for playtest.
- */
-export const SCROLL_REWARD_COUNT = 2;
-
-/**
- * What the `loneScrollReward` node pays. One — the commoner, smaller half of the same grant
- * (2026-09-10, per user direction). It was the XP Cache until levels went automatic and there
- * was no pool left to pay into; it kept its seat rather than being deleted because the reward
- * rows were already down to six types.
- */
-export const LONE_SCROLL_COUNT = 1;
-
 export const MAX_MASTERY_RANK = RANK_THRESHOLDS.length;
 
 /** The rung that reaches the top rank — the pips the board draws. Not a cap on climbing. */

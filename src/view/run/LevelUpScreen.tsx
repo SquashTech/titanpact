@@ -66,8 +66,8 @@ export function LevelUpScreen({ run, report, onContinue }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Levels are roster-wide, so every hero that moved moved by the same amount — but one parked
-  // at the cap must not be allowed to name the beat, so it is the biggest climb, not the first.
+  // The biggest climb names the beat, not the first row: a hero parked at the cap must not, and
+  // under the XP curve a hero behind par climbs further than the rest on the same grant.
   const levels = report.reduce((best, hero) => Math.max(best, hero.toLevel - hero.fromLevel), 0);
 
   return (

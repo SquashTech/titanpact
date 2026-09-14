@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import { test } from './harness';
 import { heroes } from '../src/data/heroes';
 import { enemies } from '../src/data/enemies';
-import { guildHallOffers, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT } from '../src/data/recruitment';
+import { guildHallOffers } from '../src/data/recruitment';
 import { ENEMY_LEVEL_BY_ACT, GUILD_HALL_ACT_LAG, guildHallLevel, scrollsFor } from '../src/run/difficulty';
 import { EVOLUTION_LEVEL, EVOLUTION_SCROLLS } from '../src/run/progression';
 import { ENCOUNTERS_PER_ACT, MAX_LEVEL, levelAfterEncounters, levelOf, xpForLevel } from '../src/run/growth';
@@ -17,7 +17,6 @@ import {
   claimContract,
   claimContractReplacing,
   buyContract,
-  buyMasteryScroll,
   isRecruitable,
   freshRosterId,
   RecruitmentError,
@@ -193,21 +192,6 @@ test('recruitment: buyContract spends gold and grants a Recruit Contract; insuff
   const next = buyContract(run, 12);
   assert.strictEqual(next.gold, 0);
   assert.strictEqual(next.recruitContracts, run.recruitContracts + 1);
-});
-
-test('recruitment: buyMasteryScroll owes the bundle for the gold, and a visit sells no more than the limit', () => {
-  // A bundle is a fight's worth in the act (difficulty.ts scrollsFor): 3 in Act 1, 5 in Act 2.
-  const bundle = scrollsFor('fight', 2);
-  assert.strictEqual(bundle, 5);
-  let run = { ...seedRoster(['cinderKnight'], SCROLL_PURCHASE_COST * (SCROLL_PURCHASE_LIMIT + 1)), masteryDeferred: true };
-  for (let bought = 0; bought < SCROLL_PURCHASE_LIMIT; bought++) run = buyMasteryScroll(run, SCROLL_PURCHASE_COST, bundle, bought, SCROLL_PURCHASE_LIMIT);
-  assert.strictEqual(run.masteryScrolls, SCROLL_PURCHASE_LIMIT * bundle);
-  assert.strictEqual(run.gold, SCROLL_PURCHASE_COST);
-  assert.strictEqual(run.masteryDeferred, false, 'a purchase is a grant, and a grant clears the bank');
-  // Gold left, shelf empty: the limit is what refuses, not the purse. The visit count is the
-  // caller's, because the purse can be non-zero on the way in.
-  assert.throws(() => buyMasteryScroll(run, SCROLL_PURCHASE_COST, bundle, SCROLL_PURCHASE_LIMIT, SCROLL_PURCHASE_LIMIT), RecruitmentError);
-  assert.throws(() => buyMasteryScroll(seedRoster(['cinderKnight'], 1), SCROLL_PURCHASE_COST, bundle), RecruitmentError);
 });
 
 // --- Roster-full replacement (RosterReplaceScreen) ---

@@ -18,7 +18,7 @@ import {
 } from '../src/data/tutorial';
 import { MAP_NODE_TYPES } from '../src/run/map';
 import { generateEncounter } from '../src/run/enemyGen';
-import { EVOLUTION_LEVEL, EVOLUTION_SCROLLS, SCROLL_REWARD_COUNT, availableEvolution } from '../src/run/progression';
+import { EVOLUTION_LEVEL, EVOLUTION_SCROLLS, availableEvolution } from '../src/run/progression';
 import { scrollsFor } from '../src/run/difficulty';
 import { addRosterEntry, createRosterEntry, createRunState } from '../src/run/state';
 import { resolveTypeMult } from '../src/engine/damage/typeMult';
@@ -168,7 +168,7 @@ test('the tutorial act pays enough Scrolls to reach the Evolution rung on one he
   );
   // Before the Guardian, so Valor can evolve inside the scripted act (the old curve's claim: an
   // act's fights pay for an Evolution ahead of its Guardian, docs/growth-overhaul.md §12).
-  const beforeGuardian = scrollsFor('fight', 1) + scrollsFor('skirmish', 1) + scrollsFor('battle', 1) + SCROLL_REWARD_COUNT;
+  const beforeGuardian = scrollsFor('fight', 1) + scrollsFor('skirmish', 1) + scrollsFor('battle', 1);
   assert.ok(beforeGuardian >= EVOLUTION_SCROLLS, `the corridor pays ${beforeGuardian} Scrolls before the Guardian, fewer than the ${EVOLUTION_SCROLLS} an Evolution costs`);
 });
 

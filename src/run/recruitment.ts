@@ -62,25 +62,6 @@ export function buyContract(run: RunState, cost: number): RunState {
   return { ...run, gold: run.gold - cost, recruitContracts: run.recruitContracts + 1 };
 }
 
-/**
- * One purchase off the Guild Hall's shelf: `count` Scrolls for `cost` gold. The shelf sells a
- * bundle the size of the act's Monster-lane fight (difficulty.ts scrollsFor) rather than a single
- * Scroll, because under the price curve a single Scroll is a fraction of a rung and 35g for one
- * would be a trap. `bought` is how many bundles this VISIT has already taken and `limit` the
- * shelf's stock; both are the caller's, since the purse is a purse now and cannot count them.
- * Granting clears any banked deferral, as every grant does.
- */
-export function buyMasteryScroll(run: RunState, cost: number, count: number, bought = 0, limit = Infinity): RunState {
-  if (bought >= limit) {
-    throw new RecruitmentError(`The Guild Hall sells ${limit} Scroll bundles a visit`);
-  }
-  if (run.gold < cost) {
-    throw new RecruitmentError(`A Scroll bundle costs ${cost} gold, only ${run.gold} available`);
-  }
-  if (!Number.isInteger(count) || count < 1) throw new RecruitmentError(`${count} is not a Scroll count`);
-  return { ...run, gold: run.gold - cost, masteryScrolls: run.masteryScrolls + count, masteryDeferred: false };
-}
-
 /** What's arriving when the roster is at ROSTER_CAP (RosterReplaceScreen). */
 export type RosterReplaceCandidate =
   | { source: 'guildHall'; offer: GuildHallOffer }

@@ -18,8 +18,8 @@ export const MAP_NODE_TYPES = [
   'shop',
   'blacksmith',
   'equipmentReward',
-  'scrollReward',
-  'loneScrollReward',
+  'candyReward',
+  'smallCandyReward',
   'passiveReward',
   'currencyReward',
   'forgeReward',
@@ -124,21 +124,21 @@ function rowWidthsFor(actNumber: number): number[] {
 const TUTOR_ROW_WIDTH = 3;
 
 /** Reward-row pool. `mentorReward` and `tutorReward` are deliberately absent — each has its own forced seat. Weights are a first-pass balance. */
-const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
+export const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // equipmentReward absorbs most of the frequency the three slot caches used to carry.
   ['equipmentReward', 40],
-  // The Scroll cache. Weighted level with equipment: they are the run's two growth axes now,
-  // one per hero's numbers and one per hero's kit, and neither should be the one you plan
-  // around. On top of what the fights pay (docs/growth-overhaul.md §11). 34 -> 46 (2026-09-11):
-  // the deleted Crucible node's 12, since a longer ladder is what its Evolutions moved onto.
-  ['scrollReward', 46],
+  // Candy: two levels at par, aimed at ONE hero (run/candy.ts) — the Scroll Cache's seat and
+  // weight, re-pointed (docs/xp-overhaul.md §3). Weighted level with equipment: they are the
+  // run's two growth axes, one per hero's numbers and one per hero's kit, and neither should be
+  // the one you plan around. The supply is the only balance number and phase 6 sets it.
+  ['candyReward', 46],
   // The Boon: the part of the deleted relic pool that was actually worth having, handed to ONE
   // hero instead of all four. It is the only reward row node that changes how a hero plays
   // rather than how big its numbers are.
   ['passiveReward', 22],
   ['currencyReward', 20],
-  // The lone Scroll: the same grant as the Cache at half the size, and commoner for it.
-  ['loneScrollReward', 14],
+  // The Small Candy: the same grant at half the size, and commoner for it.
+  ['smallCandyReward', 14],
   // The Forge (+1 item slot) is permanent, compounds with every later drop, and is the only thing
   // here a hero can be at the cap for, so it stays the scarcest of the grants.
   //

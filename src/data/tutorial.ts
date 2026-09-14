@@ -241,13 +241,13 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     ],
   },
 
-  // --- Row 6: the Scrolls ---
+  // --- Row 6: the Candy ---
   {
-    id: 'map:scrollReward',
-    topic: 'Mastery Scrolls',
+    id: 'map:candyReward',
+    topic: 'Candy',
     lines: [
       'Someone came this way before us, and did not leave with what they were carrying.',
-      'Scrolls. Nothing on this road teaches us a move but these — a level only hardens what we already are.',
+      'Candy. Two levels\u2019 worth of growth, and it goes to whoever you hand it to. A hero that has fallen behind gets the most from it; a hero out in front, the least.',
     ],
   },
 

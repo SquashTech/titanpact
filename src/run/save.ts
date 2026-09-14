@@ -54,8 +54,10 @@ import { MAX_XP, xpForLevel } from './growth';
  * spent counts would read as rungs never climbed.
  * v12 (2026-09-13): the XP Overhaul's first phase — entries store `xp` and level is derived
  * from it (docs/xp-overhaul.md §2). A v11 file's `level` has no XP under it.
+ * v13 (2026-09-13): its second — the two Scroll reward nodes became `candyReward` and
+ * `smallCandyReward`, so a v12 map may hold node types this build does not have.
  */
-export const SAVE_VERSION = 12;
+export const SAVE_VERSION = 13;
 
 /**
  * Where a restored run resumes. Both are settled points: every reward is banked, the

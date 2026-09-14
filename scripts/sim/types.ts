@@ -141,6 +141,9 @@ export interface Aggregate {
   scrollsBySource: Record<string, number>;
   /** The same, restricted to completed runs — the whole-run income a full clear actually saw. */
   scrollsBySourceWon: Record<string, number>;
+  /** Candy eaten, by source, in levels-at-par (run/candy.ts) — and the same on completed runs. */
+  candyBySource: Record<string, number>;
+  candyBySourceWon: Record<string, number>;
   /** Heroes who joined the roster after the draft, by route. */
   recruitsBySource: Record<string, number>;
   /** What runs cost in taps and screens (time.ts), [act], summed over runs that ENTERED the act. */
@@ -195,6 +198,8 @@ export function emptyAggregate(): Aggregate {
     lockInFights: 0,
     scrollsBySource: {},
     scrollsBySourceWon: {},
+    candyBySource: {},
+    candyBySourceWon: {},
     recruitsBySource: {},
     timeByAct: Array.from({ length: 7 }, emptyTimeCounts),
     timeByActWon: Array.from({ length: 7 }, emptyTimeCounts),
@@ -280,6 +285,8 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   for (const key of Object.keys(from.castsByManaBand)) into.castsByManaBand[key] = (into.castsByManaBand[key] ?? 0) + from.castsByManaBand[key];
   for (const key of Object.keys(from.scrollsBySource)) into.scrollsBySource[key] = (into.scrollsBySource[key] ?? 0) + from.scrollsBySource[key];
   for (const key of Object.keys(from.scrollsBySourceWon)) into.scrollsBySourceWon[key] = (into.scrollsBySourceWon[key] ?? 0) + from.scrollsBySourceWon[key];
+  for (const key of Object.keys(from.candyBySource)) into.candyBySource[key] = (into.candyBySource[key] ?? 0) + from.candyBySource[key];
+  for (const key of Object.keys(from.candyBySourceWon)) into.candyBySourceWon[key] = (into.candyBySourceWon[key] ?? 0) + from.candyBySourceWon[key];
   for (const key of Object.keys(from.recruitsBySource)) into.recruitsBySource[key] = (into.recruitsBySource[key] ?? 0) + from.recruitsBySource[key];
   for (const key of Object.keys(from.deathByNodeType)) {
     into.deathByNodeType[key] = (into.deathByNodeType[key] ?? 0) + from.deathByNodeType[key];

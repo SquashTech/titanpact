@@ -6,7 +6,7 @@ import type { MapNodeType } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
 import { EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, MAX_ITEM_SLOTS, RARITY_ORDER, rarityWeightsFor } from '../../run/equipment';
 import { GOLD_REWARD_RANGE, PURSE_GOLD_RANGE } from '../../run/runProgress';
-import { LONE_SCROLL_COUNT, SCROLL_REWARD_COUNT } from '../../run/progression';
+import { CANDY_LEVELS } from '../../run/candy';
 import { BOON_OFFER_COUNT } from '../../run/boons';
 import { OPENER_ESCORT_COUNT, guildHallLevel, scrollsFor, spawnLeaderTierFor, type EncounterNodeKind } from '../../run/difficulty';
 import { ACT_ONE_OPENER_COUNT } from '../../run/spawn';
@@ -20,12 +20,13 @@ import {
   GUILD_HALL_EQUIPMENT_OFFER_COUNT,
   SLOT_PRICE_BY_TARGET,
 } from '../../run/shop';
-import { CONTRACT_PURCHASE_COST, GUILD_HALL_RECRUIT_COST, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT } from '../../data/recruitment';
+import { CANDY_PURCHASE_COST, CANDY_PURCHASE_LIMIT, CONTRACT_PURCHASE_COST, GUILD_HALL_RECRUIT_COST } from '../../data/recruitment';
 
 /** The mark at the head of a row — resolved to a glyph by the view. */
 export type NodeFactGlyph =
   | 'gold'
   | 'scroll'
+  | 'candy'
   | 'contract'
   | 'item'
   | 'banner'
@@ -151,7 +152,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         facts: [
           { glyph: 'hero', label: 'Hire', value: `${GUILD_HALL_RECRUIT_COST}g`, note: `Lv ${guildHallLevel(actNumber)}, raw` },
           { glyph: 'contract', label: 'Contract', value: `${CONTRACT_PURCHASE_COST}g` },
-          { glyph: 'scroll', label: `${scrollsFor('fight', actNumber)} Scrolls`, value: `${SCROLL_PURCHASE_COST}g`, note: `up to ${SCROLL_PURCHASE_LIMIT}` },
+          { glyph: 'candy', label: 'Small Candy', value: `${CANDY_PURCHASE_COST}g`, note: `up to ${CANDY_PURCHASE_LIMIT}` },
           { glyph: 'item', label: 'Gear', value: `${GUILD_HALL_EQUIPMENT_OFFER_COUNT} on shelf`, note: priceBand(EQUIPMENT_PRICE_BY_RARITY) },
           { glyph: 'sell', label: 'Sell', value: `${Math.round(EQUIPMENT_SELL_SHARE * 100)}%`, note: 'of buy price' },
         ],
@@ -183,10 +184,10 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         facts: [{ glyph: 'item', label: 'Item', value: '1 of 3' }],
         odds: odds('standard'),
       };
-    case 'scrollReward':
-      return { kind: 'Reward · Growth', facts: [{ glyph: 'scroll', label: 'Scrolls', value: `${SCROLL_REWARD_COUNT}` }], odds: null };
-    case 'loneScrollReward':
-      return { kind: 'Reward · Growth', facts: [{ glyph: 'scroll', label: 'Scroll', value: `${LONE_SCROLL_COUNT}` }], odds: null };
+    case 'candyReward':
+      return { kind: 'Reward · Growth', facts: [{ glyph: 'candy', label: 'Levels', value: `+${CANDY_LEVELS.candy}`, note: 'to 1 hero, at par' }], odds: null };
+    case 'smallCandyReward':
+      return { kind: 'Reward · Growth', facts: [{ glyph: 'candy', label: 'Level', value: `+${CANDY_LEVELS.small}`, note: 'to 1 hero, at par' }], odds: null };
     case 'currencyReward':
       return { kind: 'Reward · Purse', facts: [{ glyph: 'gold', label: 'Gold', value: range(PURSE_GOLD_RANGE) }], odds: null };
     case 'passiveReward':

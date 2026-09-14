@@ -48,10 +48,13 @@ don't silently override it.
 > `src/run/growth.ts` — for stats, moves and Evolutions; **candy** nodes aim XP at one hero; the
 > Scroll ladder is deleted and moves come from a per-hero level **schedule** with the roll kept.
 > Its §9 lists the invariants below it reverses; until the §8 phase that replaces each one lands,
-> the rule below is still the rule in force. **Phase 1 is IN:** `RosterEntry.xp` is stored and
+> the rule below is still the rule in force. **Phases 1–2 are IN:** `RosterEntry.xp` is stored and
 > level is DERIVED (`levelOf`); a won encounter pays XP derived from `LEVEL_AFTER_ENCOUNTER`, so
 > par is unchanged to the point and only a hero off par can tell — it now gains on par instead of
-> trailing by a fixed count (measured: +10 points full-clear, all of it in acts 2–5; §8).
+> trailing by a fixed count (measured: +10 points full-clear, all of it in acts 2–5; §8). **Candy**
+> (`src/run/candy.ts`) took the two Scroll nodes' seats and the Guild Hall shelf: XP worth 2 (or 1)
+> levels AT PAR, aimed at ONE hero through a who screen, paid out on the level-up report; a hero
+> at the cap is refused. Scrolls still come from fights and still buy moves — the bridge state.
 
 ---
 
@@ -190,8 +193,9 @@ don't silently override it.
   `src/run/progression.ts`). Income rises by act to match (`scrollsFor`,
   `src/run/difficulty.ts`): **3** the act opener, **3** Battle, **4** Skirmish, **4** Elite,
   **4** the Guardian, **+`ACT_SCROLL_STEP` = 2 per act past the first** — an act's four fights
-  pay 14–15 in Act 1 and 46–47 in Act 5, ~150 a run, plus the flat Scroll Cache (2), the lone
-  Scroll (1) and the Guild Hall's shelf (a fight's worth a bundle, 2 a visit). This REVERSES
+  pay 14–15 in Act 1 and 46–47 in Act 5, ~150 a run — **the fights alone, since 2026-09-13**:
+  the Scroll Cache, the lone Scroll and the shelf's bundle are candy now (XP Overhaul phase 2,
+  `src/run/candy.ts`; the bridge state until phase 3 deletes the ladder). This REVERSES
   2026-09-10's "poured where it is won, never held", which was built for a flat price where holding
   never paid: under a rising one, **a purse that buys nobody yet is NORMAL and banks on its own**,
   and one that could buy somebody may be banked by choice — `MasteryScreen` is pushed after every

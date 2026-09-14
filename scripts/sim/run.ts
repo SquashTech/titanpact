@@ -15,7 +15,8 @@ import { progressionTable } from '../../src/data/progression';
 import { enemies, finaleEnemies, ENDBRINGER_ID } from '../../src/data/enemies';
 import { encounterKindOf, nodeEncounter } from '../../src/run/encounters';
 import { allCombatants } from '../../src/data/content';
-import { guildHallOffers, CONTRACT_PURCHASE_COST, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT } from '../../src/data/recruitment';
+import { guildHallOffers, CONTRACT_PURCHASE_COST, CANDY_PURCHASE_COST, CANDY_PURCHASE_LIMIT } from '../../src/data/recruitment';
+import { CANDY_LEVELS, buyCandy, canBuyCandy, canEatCandy, grantCandy, type CandyKind } from '../../src/run/candy';
 
 import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry, ROSTER_CAP, TOTAL_ACTS, type RunState, type RosterEntry } from '../../src/run/state';
 import { generateMap, type MapNode, type MapNodeType } from '../../src/run/map';
@@ -46,8 +47,6 @@ import {
 } from '../../src/run/runProgress';
 import {
   MOVE_CAP,
-  SCROLL_REWARD_COUNT,
-  LONE_SCROLL_COUNT,
   grantMasteryScrolls,
   canSpendScroll,
   canAffordAnyScroll,
@@ -58,7 +57,7 @@ import {
   itemSlotsFor,
   grantMove,
 } from '../../src/run/progression';
-import { claimContract, claimContractReplacing, deriveContractOffer, isRecruitable, pickContractOffers, recruitFromGuildHall, recruitFromGuildHallReplacing, freshRosterId, buyContract, buyMasteryScroll } from '../../src/run/recruitment';
+import { claimContract, claimContractReplacing, deriveContractOffer, isRecruitable, pickContractOffers, recruitFromGuildHall, recruitFromGuildHallReplacing, freshRosterId, buyContract } from '../../src/run/recruitment';
 import { guildHallEntry } from '../../src/run/guildRecruit';
 import { rollGuildHallOffers, buyEquipment, sellValueFor, EQUIPMENT_PRICE_BY_RARITY } from '../../src/run/shop';
 import { mentorMovePool, tutorMovePool } from '../../src/run/tutor';
@@ -153,6 +152,8 @@ export interface RunRecord {
   equipped: string[];
   /** Scrolls granted this run, by source; `unspent` is what nobody could take. */
   scrollsBySource: Record<string, number>;
+  /** Candy eaten this run, by source, in levels-at-par (run/candy.ts CANDY_LEVELS). */
+  candyBySource: Record<string, number>;
   /** Heroes joining after the draft: `contract` (claimed or bought), `hire` (Guild Hall). */
   recruitsBySource: Record<string, number>;
   /** What the run cost in taps and screens, [act]; index 0 unused (time.ts prices it). */
@@ -262,6 +263,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     choices: [],
     equipped: [],
     scrollsBySource: {},
+    candyBySource: {},
     recruitsBySource: {},
     timeByAct: Array.from({ length: TOTAL_ACTS + 1 }, emptyTimeCounts),
   };
@@ -577,16 +579,26 @@ function grantScrolls(run: RunState, count: number, source: string, record: RunR
   return grantMasteryScrolls(run, count);
 }
 
+/**
+ * A candy eaten by the hero the level policy names (policy.levelUpTarget: `focus` feeds the
+ * strongest, `spread` the lowest of the fielded four) — the focus-vs-spread experiment
+ * docs/xp-overhaul.md §3 asks for. A hero at the cap is skipped, as the screen refuses it.
+ */
+function eatCandy(run: RunState, kind: CandyKind, source: string, rng: Rng, record: RunRecord, options: RunOptions): RunState {
+  const target = policy.levelUpTarget(run.roster.filter(canEatCandy), options.levelPolicy);
+  if (!target) return run;
+  record.candyBySource[source] = (record.candyBySource[source] ?? 0) + CANDY_LEVELS[kind];
+  return grantCandy(run, rosterHeroes, target.rosterId, kind, rng).run;
+}
+
 function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: string, rng: Rng, record: RunRecord, options: RunOptions): RunState {
   switch (nodeType) {
-    // The Scroll Cache. The GRANT is what is under test; who it goes to is policy.pourScrolls,
-    // which runs before every fight.
-    case 'scrollReward':
-      return grantScrolls(run, SCROLL_REWARD_COUNT, 'scrollCache', record);
+    case 'candyReward':
+      return eatCandy(run, 'candy', 'candy', rng, record, options);
     case 'currencyReward':
       return grantCurrencyReward(run, rollGoldRange(PURSE_GOLD_RANGE, rng));
-    case 'loneScrollReward':
-      return grantScrolls(run, LONE_SCROLL_COUNT, 'loneScroll', record);
+    case 'smallCandyReward':
+      return eatCandy(run, 'small', 'smallCandy', rng, record, options);
     case 'equipmentReward': {
       // Three offered; the policy takes the one worth most to somebody. Equipment is a
       // power question, not a design experiment — the rarity curve is what's under test.
@@ -629,7 +641,7 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       return resolveEvent(run, locationId, rng, record);
     case 'shop':
     case 'muster':
-      return resolveShop(run, nodeType === 'muster', rng, record);
+      return resolveShop(run, nodeType === 'muster', rng, record, options);
     default:
       return run;
   }
@@ -764,7 +776,7 @@ function resolveEvent(run: RunState, locationId: string, rng: Rng, record: RunRe
 }
 
 /** Guild Hall: fill empty roster slots first, then buy gear that is a real upgrade, then bank the rest. */
-function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord): RunState {
+function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord, options: RunOptions): RunState {
   let next = run;
   const offers = rollGuildHallOffers(next, guildHallOffers, EQUIPMENT_POOL, muster);
 
@@ -785,14 +797,10 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
     }
   }
 
-  // The shelf's Scroll bundles (SCROLL_PURCHASE_LIMIT a visit, a fight's worth each), bought while a
-  // hero can still take a rung and the gold is there — Scrolls are the one purchase whose value
-  // never decays.
-  const bundle = scrollsFor('fight', next.actNumber);
-  for (let bought = 0; bought < SCROLL_PURCHASE_LIMIT && next.gold >= SCROLL_PURCHASE_COST; bought++) {
-    if (!next.roster.some((entry) => canSpendScroll(progressionTable, moves, { ...next, masteryScrolls: Infinity }, entry))) break;
-    next = buyMasteryScroll(next, SCROLL_PURCHASE_COST, bundle, bought, SCROLL_PURCHASE_LIMIT);
-    record.scrollsBySource.guildHall = (record.scrollsBySource.guildHall ?? 0) + bundle;
+  // The shelf's Small Candy (CANDY_PURCHASE_LIMIT a visit), bought while somebody can still eat
+  // it and the gold is there.
+  for (let bought = 0; canBuyCandy(next, CANDY_PURCHASE_COST, bought, CANDY_PURCHASE_LIMIT); bought++) {
+    next = eatCandy(buyCandy(next, CANDY_PURCHASE_COST, bought, CANDY_PURCHASE_LIMIT), 'small', 'guildHall', rng, record, options);
   }
 
   for (const itemId of offers.equipmentOfferIds) {

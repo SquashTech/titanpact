@@ -303,7 +303,7 @@ Sequenced so the tree is playable at every boundary. Numbering is dependency ord
 | # | Phase | Exit criterion | Status |
 |---|---|---|---|
 | 1 | **XP under the hood.** `RosterEntry.xp`; level derived off `XP(L) = L³`; encounter XP derived from `LEVEL_AFTER_ENCOUNTER` so par is unchanged to the point. Growth rolls fire per level crossed, as now. No visible change. | Every existing test green with no numeric change at par. A hire behind par measurably gains on it — the new test that replaces "stays behind permanently". | **DONE 2026-09-13.** `xpForLevel` / `levelForXp` / `levelOf` / `xpForEncounter` / `grantXp` (`src/run/growth.ts`); `level` is gone from `RosterEntry` and every reader derives it; `SAVE_VERSION` 12. Measured below. |
-| 2 | **Candy.** The two Scroll nodes re-pointed; the shelf; the *who* screen; the report shows the jump. Scrolls still exist and still buy moves — this is a working bridge state where candy buys levels-and-stats and Scrolls buy moves. | Both nodes grant XP to one hero; the sim tallies candy by source and the paired focus/spread batch runs. | |
+| 2 | **Candy.** The two Scroll nodes re-pointed; the shelf; the *who* screen; the report shows the jump. Scrolls still exist and still buy moves — this is a working bridge state where candy buys levels-and-stats and Scrolls buy moves. | Both nodes grant XP to one hero; the sim tallies candy by source and the paired focus/spread batch runs. | **DONE 2026-09-13.** `src/run/candy.ts`, `CandyNodeScreen`; nodes are `candyReward` / `smallCandyReward` (renamed, not just re-pointed — a node named for Scrolls that grants levels would outlive phase 3); the shelf sells a Small for the bundle's 35g, 2 a visit; `SAVE_VERSION` 13. Measured below. |
 | 3 | **Levels teach.** The destructive one. `HeroDefinition.schedule` on the default table; offers roll from the report; the Evolution raises from `evolutionLevel`; enemies and hires read the same schedule; delete everything in §7. Tutorial re-checked. | No Scroll anywhere. `test/moveTiers.test.ts` rewritten against the schedule. A run completable end to end. | |
 | 4 | **Author 36 schedules.** Parallelisable from phase 3 on. The interesting authoring is the spread: who evolves at 12 and who at 22, and whether the low-base/high-grade late bloomers from the grade pass are also the late evolvers (they should not all be — a hero can bloom in stats and turn early, or the reverse). | No hero on the default schedule; the 10–24 Evolution window pinned by test beside the grade budget. | |
 | 5 | **Four acts and the finale.** §5's table, in one pass. The Herald rename; the Eyes as a second finale champion through `appendFinalEnemy`. | `TOTAL_ACTS` = 5; the sim's act table reads four; 18 encounters at par reach 30. | |
@@ -318,9 +318,19 @@ Act 1 flat (82.0% → 82.2%: nobody is off par yet), Act 2 94.1 → 96.8, Act 3 
 before candy exists to aim it — so phase 6's re-fit starts ten points looser than the growth
 overhaul left it, and the contract hero's "arrives finished" value is now also "arrives and
 closes". A hire that misses eight wins ends the run two levels short (`test/growth.test.ts`).
-Phase 2: focus vs spread
-under candy — if the sign of the carry's lift flips between pilots it is a scorer fault, not a
-finding (`docs/growth-overhaul.md` §8's lesson). Phase 3: full-clear and encounters-won against
+Phase 2, measured (1000 runs, seed 11, greedy pilot; the ladder still in, so candy is purely
+additive): **supply is ~13 levels-at-par a completed run, not the ~7 §3 estimated** — candy 6.3,
+Small 1.1, and the Guild Hall shelf **5.7**, which §3's estimate left out and which is nearly half
+of it (the sim buys both Smalls every visit; a player may not). **Focus vs spread is a wash:
+60.3% vs 61.8% full-clear**, and spread is 61.8% against phase 1's 61.9% with no candy at all —
+13 levels-at-par per run moved the clear rate by nothing measurable. Mean end level rose 22.6 →
+23.5, so the candy landed; it just is not a lever at this size, which is consistent with a level
+being ~9 budget points (a Candy at par ≈ 18 points ≈ six-tenths of a Common item, for one hero).
+Two readings, both for phase 6: candy is under-sized for what its seat displaces (an item or a
+Boon), or the greedy pilot cannot exploit a carry the way a player would. The sign did not flip
+between policies, so it is not a scorer fault (`docs/growth-overhaul.md` §8's lesson) — but the
+focus policy feeds the *strongest* hero, who is already ahead of par and so gets the least from
+each candy; a player's carry is a hero they are *about* to make strong. §10 gains the question. Phase 3: full-clear and encounters-won against
 phase 2 — expect a drop, since ~47 rung offers become ~40 scheduled ones at a different cadence,
 and the drop is what phase 6 re-fits. Phase 5: the act table and the clock. Phase 6: the clock
 against the target, per profile, and a named decision about which profile the target is for.
@@ -374,8 +384,15 @@ family, the Pact Clock, the companion, potions, the map shape within an act.
   felt. Steeper (Slow, 1.25·L³) makes the carry throttle harder and the hire catch up faster;
   shallower does the reverse. Phase 6's focus/spread batch is where this gets set; ship the cube.
 - **Does the Guild Hall shelf sell one candy or two?** The Scroll limit was 2 a visit. Two Smalls
-  a visit at flat gold is a purchased +2 for one hero — fine against a 50g hire, but it makes the
-  Blacksmith-or-Guild-Hall funnel choice heavier on the Guild side. Start at 2 and watch.
+  a visit at flat gold is NOT a purchased +2 for one hero — the second is eaten by a hero now
+  ahead of par and buys less than a level (the throttle, §2, pinned in `test/candy.test.ts`) — but
+  it is nearly half the run's candy in the sim (phase 2's measurement). Start at 2 and watch.
+- **Is a candy big enough to be worth its seat?** Phase 2 measured 13 levels-at-par a run moving
+  the clear rate by nothing, and a Candy at par is ~18 budget points against the ~30 of the Common
+  item the same seat could have paid. Either the size goes up (3 / 2?), the seat goes down (weight
+  46 is the Scroll Cache's, sized for a currency that bought Evolutions), or the value is in what
+  a level *opens* once phase 3 puts offers and the Evolution on the schedule — in which case the
+  question is not answerable until then. Do not resize before phase 3; do not skip resizing after.
 
 ### Watch in playtest
 

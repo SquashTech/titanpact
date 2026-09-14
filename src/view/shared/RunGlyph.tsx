@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import iconset from '../../../art/2500plusIcons/No Border/Iconset.png';
 import { NODE_PATHS } from './nodeIcons';
+import { SECTION_PATHS } from './sectionIcons';
 
 /** RPG Maker icon indices into the 2500+ Pixel Odyssey sheet (docs/icon-pack.md). */
 const ICON_INDEX = {
@@ -53,7 +54,9 @@ const RESOURCE_PATHS = {
     </>
   ),
   // The single sealed sheet, not the Cache's bundle: a Scroll in the purse is one Scroll's worth.
-  scroll: NODE_PATHS.loneScrollReward,
+  scroll: SECTION_PATHS.mastery,
+  // The one sweet, not the Candy node's pair: a candy on the shelf is one level's worth.
+  candy: NODE_PATHS.smallCandyReward,
   // The two potions share one flask and differ by colour alone, since they are the same verb at
   // two gauges. A round-bottomed flask with a stoppered neck: the bulb is what survives 12px.
   hpPotion: FLASK_PATH,
@@ -69,6 +72,8 @@ export const RESOURCE_COLORS: Record<ResourceKind, string> = {
   // Violet, the run's "this changes how a hero plays" colour — apart from gold, XP-green and the
   // Contract's blue, and it is the only resource that buys a MOVE.
   scroll: '#c9a2ff',
+  // The level-up report's green: a candy is a level-up the player aims.
+  candy: '#4caf6a',
   // The gauges' own colours, so a potion reads as the bar it refills.
   hpPotion: '#ff8a8a',
   mpPotion: '#8fb4ff',
