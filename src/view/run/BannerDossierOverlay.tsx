@@ -14,7 +14,7 @@ import { overlayHost } from '../shared/overlayHost';
 
 /**
  * What a tap on a raised standard opens: the Banner's ledger. The standard itself at the head
- * with the folded name ("Banner of Vitality +2"), every stat it grants as the SUMMED figure the
+ * with the folded name ("Banner of the Bulwark +2"), every stat it grants as the SUMMED figure the
  * team is actually getting with the per-copy grant as fine print, and how many are flying against
  * the five a run can raise. Same chassis as every other dossier; the stripe and the wash take
  * the Banner's colour, which is its lead stat's. It replaced a grey box holding one sentence.

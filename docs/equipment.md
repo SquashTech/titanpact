@@ -429,7 +429,7 @@ finger while it is carried, which is the whole of "gear is a game piece rather t
 
 They were a rail across the top of the Roster sheet, showing all five held or not. That was so
 spread-vs-commit would be visible from act 1 — but the decision is taken on the Guardian's own
-1-of-5 screen, which shows all five anyway, so the rail was charging the gear screen its entire
+1-of-3 screen, which shows all three anyway, so the rail was charging the gear screen its entire
 first fold to restate a choice already made.
 
 They now fly along the **bottom-right of the map well** (`BannerShelf.tsx`), opposite the location

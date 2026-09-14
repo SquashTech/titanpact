@@ -522,13 +522,18 @@ what's still unimplemented:
   every act (replacing the removed `contractReward` map-node type — Recruit Contracts
   now come only from that per-act grant, a beaten enemy's contract claim, or a Guild
   Hall purchase). Beating an act's Guardian also grants **the Guardian's
-  Banner** (2026-08-30; reshaped 2026-09-07): a fixed, never-rolled **1-of-5** team-wide relic,
-  one per axis — Vitality (+50 HP), Warcry (+20 Atk, +20 Int), Bulwark (+15 Def, +15 Wis),
-  Swiftness (+20 Speed), Wellspring (+40 Mana, +10 MP Regen) — stackable across the
-  five acts and displayed folded ("Banner of Vitality +2"). The Warcry carries two stats at
-  full value because a hero swings with one or the other; the Bulwark's two are both live on
-  every hero, so they are priced at +15. Their relative values
-  are an open balance question (`docs/run-loop.md`). **Encounters scale by act**
+  Banner** (2026-08-30; reshaped 2026-09-07; **three since 2026-09-14**, per user direction): a
+  fixed, never-rolled **1-of-3** team-wide relic, one per CONCEPT — Warcry (offense: +20 Atk,
+  +20 Int), Bulwark (defense: +30 HP, +10 Def, +10 Wis), Wellspring (mana: +40 Mana, +10 MP
+  Regen) — stackable across the five acts and displayed folded ("Banner of the Bulwark +2"), so a
+  run's picks read as a team shape. The Warcry carries two stats at full value because a hero
+  swings with one or the other; every defensive stat is live on every hero, so the Bulwark's
+  three are priced down to the same 30 points. It was five, one per STAT: Vitality folded into
+  the Bulwark, and **Swiftness was deleted** — Speed pays only at a threshold, so a flat
+  team-wide grant of it measured dead in every batch under both pilots and in play; no Banner
+  carries Speed. Measured after the fold: the Bulwark leads under both pilots by a margin price
+  does not close, and the Wellspring trails — an open balance question for playtest
+  (`docs/run-loop.md` "The Guardian's Banner"). **Encounters scale by act**
   (2026-08-30) on two tracks (`src/run/difficulty.ts`): **Monsters** baselines at Act 2
   (every Titanspawn, the Guardian's escorts included, since 2026-09-13 — a Mid at 400 is
   the Act 2 line; only the champion itself rides the other track), **Skirmish/Guardian** at

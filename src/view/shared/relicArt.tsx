@@ -19,18 +19,19 @@ function relicStyle(relicId: string): CSSProperties {
 
 /**
  * The charge a relic carries: a glyph per stat it grants, in STAT_ORDER. Every stat rather than
- * just the lead one, because the two-stat Banners (the Warcry, the Bulwark) are exactly the pair
+ * just the lead one, because the multi-stat Banners (the Warcry, the Bulwark) are exactly the ones
  * a single glyph could not tell apart — and the glyphs are the only thing these screens print.
  */
 function RelicCharge({ relicId, className }: { relicId: string; className?: string }) {
   const grants = grantsFor(relicId);
   const stats = STAT_ORDER.filter((stat) => !!grants[stat]);
   if (stats.length === 0) return null;
-  // The two-stat Banners (Warcry, Bulwark) carry twice the width in the same cloth, which is 62%
-  // of the art's box — so a pair set at the single glyph's size hangs off both folds. It always
+  // A multi-stat Banner carries two or three glyphs in the same cloth, which is 62% of the art's
+  // box — so a pair or a trio set at the single glyph's size hangs off both folds. It always
   // did; growing the banners for the stage is what made it visible.
+  const charge = stats.length === 3 ? ' is-trio' : stats.length === 2 ? ' is-pair' : '';
   return (
-    <span className={`${className ?? ''}${stats.length > 1 ? ' is-pair' : ''}`}>
+    <span className={`${className ?? ''}${charge}`}>
       {stats.map((stat) => (
         <StatGlyph key={stat} stat={stat} tone="inherit" />
       ))}

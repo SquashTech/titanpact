@@ -551,7 +551,7 @@ A won encounter resolves through up to five gates before the map comes back
 (`App.tsx handleFightResolved`), in this order:
 
 0. **The Guardian's Banner** (`GuardianBannerScreen`) — boss nodes only; a fixed 1-of-3
-   team-wide relic, ahead of everything else remaining so a hero recruited at gate 1
+   team-wide relic (offense, defense or mana), ahead of everything else remaining so a hero recruited at gate 1
    arrives under it. See §3.
 1. **Recruit Contract claim** (`RecruitScreen`) — the beaten recruitable heroes, up to
    `MAX_CONTRACT_OFFERS` = 2 of them (`recruitment.ts pickContractOffers`). **Skipped
@@ -745,9 +745,10 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   - **Authored encounters are the intended successor,** not a rewrite of this. The
     generator takes an `ActScaling` rather than deriving one, so a hand-built encounter
     can hand over its own numbers — or ignore the table entirely — through the same seam.
-- **The Guardian's Banner (2026-08-30, per user direction; widened to five 2026-09-07).**
+- **The Guardian's Banner (2026-08-30, per user direction; widened to five 2026-09-07;
+  compressed to three 2026-09-14).**
   Beating an act's Guardian
-  grants a second reward on top of the Recruit Contract: a **fixed 1-of-5 relic choice**
+  grants a second reward on top of the Recruit Contract: a **fixed 1-of-3 relic choice**
   (`GuardianBannerScreen`), shown after the wins that end **acts 1-4** and not after act
   5's, whose Guardian ends the run — a team-wide permanent handed to a finished run is a
   choice with nothing to spend it on. Not a map node; it hangs off the boss win itself
@@ -755,63 +756,78 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   in the post-fight chain, ahead of the recruit/equip/level-up gates, so a hero recruited
   in that same beat already arrives under the banner.
 
-  The five options never change and never roll — **one per axis**, so a run's five picks are a
-  spread-or-commit decision across the whole stat line rather than across HP and mana:
+  The three options never change and never roll — **one per concept**, offense, defense and
+  mana, so a run's picks read as a team shape ("two Warcries, a Bulwark, a Wellspring"):
 
-  | Banner | Grant |
-  |---|---|
-  | Banner of Vitality | Team-wide +50 HP |
-  | Banner of the Warcry | Team-wide +20 Attack, +20 Intelligence |
-  | Banner of the Bulwark | Team-wide +15 Defense, +15 Wisdom |
-  | Banner of Swiftness | Team-wide +20 Speed |
-  | Banner of the Wellspring | Team-wide +40 Mana Pool, +10 MP Regen |
+  | Banner | Concept | Grant |
+  |---|---|---|
+  | Banner of the Warcry | Offense | Team-wide +20 Attack, +20 Intelligence |
+  | Banner of the Bulwark | Defense | Team-wide +30 HP, +10 Defense, +10 Wisdom |
+  | Banner of the Wellspring | Mana | Team-wide +40 Mana Pool, +10 MP Regen |
 
-  **The two-stat Banners are not the same shape.** A hero swings with Attack *or* with
-  Intelligence, never both, so the Warcry's two stats are worth *one* stat to any given hero and
-  are priced at full value — it is one offensive Banner that refuses to be a trap for either half
-  of the roster. Defense and Wisdom are both live on every hero, because everyone is hit by both
-  pipelines, so the Bulwark's two are worth two and are priced at +15 each. The Wellspring pairs
-  both halves of the mana axis because neither carries a pick alone: pool saturates (below), and
+  **The Banners are not the same shape.** A hero swings with Attack *or* with Intelligence,
+  never both, so the Warcry's two stats are worth *one* stat to any given hero and are priced at
+  full value — it is one offensive Banner that refuses to be a trap for either half of the
+  roster. Every defensive stat is live on every hero, because everyone is hit by both pipelines,
+  so the Bulwark's three are priced down: +30 HP, +10 and +10 is the same 30 points on the
+  equipment scale (`HP_PER_POINT` = 3) the old +15/+15 pair carried. The Wellspring pairs both
+  halves of the mana axis because neither carries a pick alone: pool saturates (below), and
   MP Regen alone was the auto-take that got Peridot deleted.
 
-  Being **fixed** is the design, not a placeholder. Because the same five come back every act,
-  the real decision is *spread them or commit to one axis*, and that only becomes a decision if
-  the player can see all five offers coming from act 1. There is no random relic pool for one to
-  leak into any more (2026-09-07); `RelicDefinition.guardianBanner` is now display grouping only.
+  **Five became three (2026-09-14, per user direction).** The five were one per STAT AXIS —
+  Vitality (+50 HP), Warcry, Bulwark (+15/+15), Swiftness (+20 Speed), Wellspring — and two of
+  them went. **Swiftness was dead in every batch**, under both pilots (−0.43 / −0.69, z −11 at
+  n≈2400; the only Banner ever significant in the wrong direction) and in the designer's own
+  runs. The reason is the stat, not the number: Speed pays only at a THRESHOLD — it does
+  nothing until it flips an ordering — and a flat team-wide grant never changes the intra-team
+  order, is overridden by priority brackets, and flips perhaps one enemy matchup a fight, where
+  every other stat pays continuously through the ratio. Citrine (−0.17) is the same finding in
+  the equipment family. Speed is fine as a HERO stat, because a hero's base line pays for it; it
+  is a bad GRANT, and no Banner carries it. **Vitality folded into the Bulwark** so that
+  "defense" means the whole surviving axis and a player asking where HP went finds it there.
+  `test/relics.test.ts` pins all three shapes and the absence of Speed.
+
+  Measured at the fold (`scripts/sim`, 3000 runs a batch, both pilots): folding HP
+  in against dropping it (Bulwark at +15/+15, HP off the axis) is worth +1.9 points of
+  full-clear under the skilled pilot (52.9 vs 51.0%), inside 2σ. **The finding that matters is
+  that the Bulwark leads under both shapes and both pilots** — +0.34 (z 4.0) / +0.74 (z 7.2)
+  folded, +0.28 / +0.63 dropped — and the five-Banner passes were simply too small to see it
+  (n≈490 a Banner, se 0.26, where the four non-Speed Banners shuffled order every batch). It is
+  not a price: the Warcry at +25/+25 moved from −0.14 to −0.06 and the Bulwark did not move. The
+  simulator's lift is encounters won, which prices survival above kill speed; whether a player
+  reads it the same way is the playtest question below.
+
+  Being **fixed** is the design, not a placeholder. Because the same three come back every act,
+  the real decision is *what shape is this team*, and that only becomes a decision if the player
+  can see all three offers coming from act 1. There is no random relic pool for one to leak into
+  any more (2026-09-07); `RelicDefinition.guardianBanner` is now display grouping only.
 
   **Stacking** needs no new mechanism: duplicate relic ids already sum in
   `relicTeamStatModifiers`. What is new is how a stack is *written* — one card named
-  `Banner of Vitality +2` carrying the summed `+150 HP`, rather than three identical cards
+  `Banner of the Bulwark +2` carrying the summed `+90 HP`, rather than three identical cards
   (`src/view/shared/relicStacks.ts`, used by `RosterPeek` and the map's Banner shelf). The suffix
   counts copies **beyond the first**, the upgrade-pip convention: 3 copies reads "+2".
 
   **Where a raised Banner lives (2026-09-10, per user direction):** the bottom-right of the map
   well, flying opposite the location placard (`BannerShelf.tsx`). It was a rail across the top of
-  the Roster sheet listing all five held or not, which was there so spread-vs-commit would be
-  visible from act 1 — but that decision is taken on this screen, which shows all five anyway, so
+  the Roster sheet listing every Banner held or not, which was there so spread-vs-commit would be
+  visible from act 1 — but that decision is taken on this screen, which shows all three anyway, so
   the rail was charging the gear board its whole first fold to restate a choice already made. The
   shelf shows only what is HELD, with a count past one; an act-1 run flies nothing, which is
   correct. See `docs/equipment.md` §9.3 for what the freed room went to. Like
   every relic, a banner applies to heroes obtained before *and* after it — the grant is
   broadcast to the side at fight-build time (`entryStats.ts`), never written onto a hero.
 
-  **Open balance question — the five are not equal, and the Wellspring is still the one to
-  watch.** Against the roster's averages (~105 HP, ~58 Mana pool, a flat **10** MP Regen on
-  every hero, ~55 in each combat stat), +30 HP is about +29%, +20 Attack about +36%, +15 Defense
-  about +27%, +20 Speed about +36% — and the Wellspring's +10 MP Regen alone is **+100%**, with
-  +40 Mana Pool on top of it. Regen is throughput, not a one-time buffer, so over a six-round
-  fight it is worth ~60 mana; that is also the side of the ledger CLAUDE.md's mana-tuning
-  invariant ("mana investment must pay out later than the point at which a weak team dies") is
-  most sensitive to. Mana pool is the counterweight and it **saturates** — batch simulation
-  measures +50, +150 and +300 identically, a fight ending long before a deeper reserve is
-  reached — so most of the Wellspring's measured value is the regen half. The balance-pass
-  alternative on record is dropping it to **+5 MP Regen**. Flag before hardening either way.
-
-  **Also open: five Banners against five Guardians means a run can now take one of each.** With
-  three options and four picks, spreading was forced to double up somewhere. It no longer is,
-  which makes "one of each" the obvious default line and commit the deliberate deviation from
-  it. Whether that reads as a real decision or as a flat menu is exactly what the next playtest
-  should answer; the knob if it does not is offering **3 of the 5** per Guardian.
+  **Open balance question — the Bulwark leads, and the Wellspring trails.** Three options and
+  five picks is a team-shape decision only while no one Banner is the answer; the batches above
+  say the Bulwark is, by a margin price does not close. The Wellspring is last in every batch and
+  significantly so under the chart pilot (−0.52 / −0.55, z −5), which the mana-tuning invariant
+  ("mana investment must pay out later than the point at which a weak team dies") predicts for a
+  pilot that dies early. Its regen half is the live one — pool **saturates**, +50 / +150 / +300
+  measuring identically — so the levers on record are the Wellspring's regen (+10 is +100% of a
+  flat base 10; +5 was the earlier alternative) and whether "take the Bulwark four times" is
+  what a player actually does when the numbers are in front of them. **The sim's answer is
+  directional; the playtest's is the decision.** Flag before hardening either way.
 - **Relics: stat-only, by design.** `src/run/relics.ts` still carries `grantsPassiveIds` and
   `grantsStatusIds` — the team-wide grant shapes the pipeline supports — but as of 2026-09-07 no
   shipped relic uses either, and the ~50-relic random pool that did is deleted. Playtest found

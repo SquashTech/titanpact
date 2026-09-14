@@ -14627,7 +14627,7 @@ textarea,
   font-size: 150px;
 }
 
-/* Banners are named: a run plans four acts around "Banner of Vitality +2". */
+/* Banners are named: a run plans four acts around "Banner of the Bulwark +2". */
 .relic-pick-row.is-banners .relic-pick-art {
   font-size: 104px;
 }
@@ -14637,6 +14637,12 @@ textarea,
    0.2em each they measure 0.45em together and clear both folds. */
 .banner-standard-charge.is-pair {
   font-size: 0.2em;
+  gap: 0.05em;
+}
+
+/* The Bulwark's trio: three marks and two gaps under the same 0.55em — 0.42em + 0.1em. */
+.banner-standard-charge.is-trio {
+  font-size: 0.14em;
   gap: 0.05em;
 }
 

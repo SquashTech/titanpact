@@ -14,7 +14,7 @@ interface Props {
   picked: boolean;
   onPick: () => void;
   revealDelayMs: number;
-  /** Banners carry their name — a run plans four acts around "Banner of Vitality +2". */
+  /** Banners carry their name — a run plans four acts around "Banner of the Bulwark +2". */
   named?: boolean;
 }
 

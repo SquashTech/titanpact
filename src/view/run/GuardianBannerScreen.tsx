@@ -16,8 +16,8 @@ interface Props {
   onContinue: () => void;
 }
 
-// The Guardian's Banner (docs/run-loop.md): a fixed, never-rolled 1-of-5 after each Guardian, so
-// the player can plan four acts of stacking ahead. Five standards on their bars, swaying; the
+// The Guardian's Banner (docs/run-loop.md): a fixed, never-rolled 1-of-3 after each Guardian, so
+// the player can plan four acts of stacking ahead. Three standards on their bars, swaying; the
 // charges on the cloth are the grant, and the claim reveals the whole hall with the new one raised.
 export function GuardianBannerScreen({ run, onRunChange, onContinue }: Props) {
   const [pickedRelicId, setPickedRelicId] = useState<string | null>(null);
