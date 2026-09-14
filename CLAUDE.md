@@ -68,6 +68,18 @@ don't silently override it.
 > finale (was 11 / 18 / 23), the Act 1 wall at 76% untouched by every non-design lever (§8).
 > Phase 5 (four acts) stays deferred.
 
+> **A fourth overhaul is DECIDED and NOT YET BUILT: `docs/mastery.md`** (2026-09-14, per user
+> direction). Evolutions come off the level schedule onto **Mastery**: every hero has ten pips,
+> **5 is its Evolution and 10 its signature move** (one authored per hero, off every pool — Riptide's
+> Lizard Rush is the template), uniform, no per-hero threshold. A pip is one **Mastery Scroll**,
+> assigned the instant it is paid on a who-screen — no purse, no price curve, no move offer per
+> Scroll. **Fights pay XP, the map pays Scrolls**: a forced **Scribe** row every act (pick two
+> heroes, +2 each), a **Scroll Cache** in the reward pool (3, divided freely), and the Guild Hall
+> shelf; never a post-fight drop. **Ichor retires** in its own phase. `evolutionLevel`, the
+> report's Evolution raise, and the 10–24 window are what it deletes; its §9 lists every invariant
+> below it reverses, and until the §8 phase that replaces each one lands, the rule below is still
+> the rule in force.
+
 ---
 
 ## Locked invariants — do not violate without an explicit decision
