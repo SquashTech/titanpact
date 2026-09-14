@@ -46,6 +46,7 @@ import {
   xpProgress,
   xpToNextLevel,
   type GrowthGrade,
+  ENCOUNTERS_PER_ACT,
 } from '../src/run/growth';
 import { STAT_ORDER, type StatKey } from '../src/engine/content';
 
@@ -172,14 +173,14 @@ test('growth: levelling accumulates onto growthStatGrants and stops at MAX_LEVEL
 });
 
 test('growth: the curve hits the decided act-end levels, and reaches MAX_LEVEL on the finale', () => {
-  // Four encounters an act for acts 1-5, then the finale (docs/growth-overhaul.md §3).
+  // Three encounters an act for acts 1-5 (2026-09-14; four before), then the finale (docs/growth-overhaul.md §3).
   // FRONT-LOADED 2026-09-10 (phase 6) from 6/12/18/23/28: acts 1-2 measured as the run's wall
   // and their enemy stat steps were already zero, so the only lever left was the player's own
   // curve. Enemy levels are derived from par, so they moved with it — but their rank and
   // Evolution thresholds are absolute, so the lift lands on the player alone. Par is DERIVED from
   // the authored XP table now (ENCOUNTER_XP_BY_ACT); the act-end figures are what it is sized to.
   assert.deepStrictEqual(
-    [4, 8, 12, 16, 20, 21].map(levelAfterEncounters),
+    [3, 6, 9, 12, 15, 16].map(levelAfterEncounters),
     [8, 14, 19, 24, 28, 30],
     'the act-end figures are the decided shape'
   );
@@ -194,7 +195,7 @@ test('growth: the curve never goes backwards, and level 5 lands inside act 1', (
   }
   // The curve still DECELERATES: a run's early acts pay more levels than its late ones.
   const perAct = [1, 2, 3, 4, 5].map(
-    (act) => levelAfterEncounters(act * 4) - levelAfterEncounters((act - 1) * 4)
+    (act) => levelAfterEncounters(act * ENCOUNTERS_PER_ACT) - levelAfterEncounters((act - 1) * ENCOUNTERS_PER_ACT)
   );
   for (let i = 1; i < perAct.length; i++) {
     assert.ok(perAct[i] <= perAct[i - 1], `act ${i + 1} pays ${perAct[i]} levels against act ${i}'s ${perAct[i - 1]}`);
@@ -272,16 +273,17 @@ test('growth: encounter XP is AUTHORED by act, the Guardian pays double, the Eli
   // whatever the cube makes of it — the reverse of the phase-1 build, where XP was sized to land
   // a hero at par exactly ON a level, so the bar filled to the top every fight and read as nothing.
   assert.strictEqual(ENCOUNTER_XP_BY_ACT.length, 6, 'five acts and the finale');
-  assert.strictEqual(TOTAL_ENCOUNTERS, 21);
+  assert.strictEqual(ENCOUNTERS_PER_ACT, 3, 'the opener, the fork, the Guardian');
+  assert.strictEqual(TOTAL_ENCOUNTERS, 16);
   for (let act = 0; act < 5; act++) {
-    const first = act * 4 + 1;
-    for (let n = first; n < first + 3; n++) assert.strictEqual(xpForEncounter(n), ENCOUNTER_XP_BY_ACT[act], `encounter ${n} pays act ${act + 1}'s figure`);
-    assert.strictEqual(xpForEncounter(first + 3), ENCOUNTER_XP_BY_ACT[act] * ENCOUNTER_XP_MULTIPLIER.guardian, `act ${act + 1}'s Guardian pays double`);
+    const first = act * ENCOUNTERS_PER_ACT + 1;
+    for (let n = first; n < first + 2; n++) assert.strictEqual(xpForEncounter(n), ENCOUNTER_XP_BY_ACT[act], `encounter ${n} pays act ${act + 1}'s figure`);
+    assert.strictEqual(xpForEncounter(first + 2), ENCOUNTER_XP_BY_ACT[act] * ENCOUNTER_XP_MULTIPLIER.guardian, `act ${act + 1}'s Guardian pays double`);
     // The fork: par assumes the Skirmish, and the Elite pays above it.
-    assert.strictEqual(encounterXpKindAtPar(first + 2), 'standard');
-    assert.strictEqual(xpForEncounter(first + 2, 'elite'), Math.round(ENCOUNTER_XP_BY_ACT[act] * ENCOUNTER_XP_MULTIPLIER.elite));
-    assert.ok(xpForEncounter(first + 2, 'elite') > xpForEncounter(first + 2, 'standard'), 'the Elite pays more than the Skirmish beside it');
-    assert.ok(xpForEncounter(first + 2, 'elite') < xpForEncounter(first + 3), 'and less than the Guardian');
+    assert.strictEqual(encounterXpKindAtPar(first + 1), 'standard');
+    assert.strictEqual(xpForEncounter(first + 1, 'elite'), Math.round(ENCOUNTER_XP_BY_ACT[act] * ENCOUNTER_XP_MULTIPLIER.elite));
+    assert.ok(xpForEncounter(first + 1, 'elite') > xpForEncounter(first + 1, 'standard'), 'the Elite pays more than the Skirmish beside it');
+    assert.ok(xpForEncounter(first + 1, 'elite') < xpForEncounter(first + 2), 'and less than the Guardian');
   }
   assert.strictEqual(ENCOUNTER_XP_MULTIPLIER.standard, 1);
   assert.deepStrictEqual(['fight', 'skirmish', 'battle', 'finale'].map((t) => encounterXpKind(t as never)), ['standard', 'standard', 'standard', 'standard']);
@@ -289,10 +291,10 @@ test('growth: encounter XP is AUTHORED by act, the Guardian pays double, the Eli
   assert.strictEqual(encounterXpKind('boss'), 'guardian');
   assert.strictEqual(xpForEncounter(TOTAL_ENCOUNTERS), ENCOUNTER_XP_BY_ACT[5], 'the finale is one fight, not a Guardian');
   // An always-Elite run ends ahead of par, but by a fraction of a level, never an act.
-  const eliteRun = Array.from({ length: 5 }, (_, act) => xpForEncounter(act * 4 + 3, 'elite') - xpForEncounter(act * 4 + 3)).reduce((a, b) => a + b, 0);
-  assert.ok(levelForXp(xpAfterEncounters(20) + eliteRun) - levelAfterEncounters(20) <= 1, 'five Elites are at most one level over par at the end of act 5');
-  const elited = grantEncounterLevels({ ...soloRun(), encountersWon: 3 }, heroes, NEVER, 'elite');
-  assert.strictEqual(elited.roster[0].xp, xpForLevel(1) + xpForEncounter(3, 'elite'), 'the grant pays the kind it was told');
+  const eliteRun = Array.from({ length: 5 }, (_, act) => xpForEncounter(act * ENCOUNTERS_PER_ACT + 2, 'elite') - xpForEncounter(act * ENCOUNTERS_PER_ACT + 2)).reduce((a, b) => a + b, 0);
+  assert.ok(levelForXp(xpAfterEncounters(15) + eliteRun) - levelAfterEncounters(15) <= 1, 'five Elites are at most one level over par at the end of act 5');
+  const elited = grantEncounterLevels({ ...soloRun(), encountersWon: 2 }, heroes, NEVER, 'elite');
+  assert.strictEqual(elited.roster[0].xp, xpForLevel(1) + xpForEncounter(2, 'elite'), 'the grant pays the kind it was told');
   assert.strictEqual(xpForEncounter(0), 0);
   assert.strictEqual(xpForEncounter(999), 0, 'nothing past the finale');
   for (let act = 1; act < ENCOUNTER_XP_BY_ACT.length; act++) {

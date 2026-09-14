@@ -845,7 +845,7 @@ export function App() {
     updateProfile((current) => recordRunStarted(current, Date.now()));
   }
 
-  /** TEMPORARY DEV/TEST — the Crucible sits behind a Guardian, which is four fights away. */
+  /** TEMPORARY DEV/TEST — the Crucible sits behind a Guardian, which is three fights away. */
   function handleStartCrucibleTestRun() {
     setPlayerRun(createLevel4TestRun());
     setScreen({ kind: 'crucible', next: { kind: 'map' } });

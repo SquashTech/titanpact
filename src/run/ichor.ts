@@ -9,9 +9,11 @@
 // bar it moved. It was denominated in levels-at-par — the XP from par to par+2 on the curve — a
 // second currency read off a par the player never saw, built for a world where XP was invisible
 // and a grant had to land a level to exist at all. Sized to what two levels at par cost at each
-// act's END (≈3 fights in every act); flat within the act where the old figure grew with par, so
-// early in an act it is up to a level richer than it was — the direction docs/xp-overhaul.md §10's
-// "worth its seat" question leans. A partial bar is a real outcome now, so nothing promises a level.
+// act's END (≈2.5 fights in every act since 2026-09-14, when an act went to three fights and the
+// base fight grew ×1.25 to pay for it; ≈3 before); flat within the act where the old figure grew
+// with par, so early in an act it is up to a level richer than it was — the direction
+// docs/xp-overhaul.md §10's "worth its seat" question leans. A partial bar is a real outcome now,
+// so nothing promises a level.
 
 import type { HeroDefinition } from '../engine/content';
 import type { MapNodeType } from './map';
@@ -21,7 +23,7 @@ import { MAX_LEVEL, encounterXpForAct, grantXp, levelForXp, levelOf, type HeroLe
 export type IchorKind = 'ichor' | 'drop';
 
 /** What each Ichor is worth, in the act's ordinary fights. The Drop is the commoner, smaller half of the same grant. */
-export const ICHOR_FIGHTS: Record<IchorKind, number> = { ichor: 3, drop: 1.5 };
+export const ICHOR_FIGHTS: Record<IchorKind, number> = { ichor: 2.5, drop: 1.25 };
 
 /** The two reward nodes that pay an Ichor — the old Scroll Cache's and Lone Scroll's seats, weight for weight. */
 export const ICHOR_NODE_KIND: Partial<Record<MapNodeType, IchorKind>> = {

@@ -34,7 +34,7 @@ test('map: row 0 is a single plain fight, the funnel row is a single shop, the b
 });
 
 const REWARD_TYPES = new Set([
-  // Acts 4-5 only, and never from REWARD_WEIGHTS — see tutor.test.ts for the seat itself.
+  // Act 4 only, and never from REWARD_WEIGHTS — see tutor.test.ts for the seat itself.
   'tutorReward',
   'equipmentReward',
   'ichorReward',
@@ -46,26 +46,33 @@ const REWARD_TYPES = new Set([
   'event',
 ]);
 
-// Act 5 is the base shape's only representative now — acts 1-4 all carry a Mentor row.
-test('map: base per-act shape (Act 5) — Fight, pick-3 reward, Skirmish, pick-3 reward, (Elite or Skirmish), Guild Hall, Guardian', () => {
+// One shape for every act 1-5 since 2026-09-14: three fights, and the spliced seat in all five.
+test('map: the per-act shape — Fight, pick-3 reward, spliced seat, pick-3 reward, (Elite or Skirmish), pick-3 reward, funnel, Guardian', () => {
   for (const seed of [1, 2, 3, 4, 5]) {
-    const map = generateMap(seed, 5);
-    const rows = map.rows;
-    const rowTypes = (r: number) => rows[r].map((id) => map.nodes[id].type);
+    for (const actNumber of [1, 2, 3, 4, 5]) {
+      const map = generateMap(seed, actNumber);
+      const rows = map.rows;
+      const rowTypes = (r: number) => rows[r].map((id) => map.nodes[id].type);
+      const where = `act ${actNumber} seed ${seed}`;
 
-    assert.strictEqual(rows.length, 8, `Act 5 should be the unmodified 8-row shape (seed ${seed})`);
-    assert.deepStrictEqual(rowTypes(0), ['fight']);
-    assert.ok(rowTypes(1).every((t) => REWARD_TYPES.has(t)), `row 1 (seed ${seed}) has a non-reward type: ${rowTypes(1)}`);
-    assert.strictEqual(rows[1].length, 3);
-    assert.deepStrictEqual(rowTypes(2), ['skirmish']);
-    assert.ok(rowTypes(3).every((t) => REWARD_TYPES.has(t)), `row 3 (seed ${seed}) has a non-reward type: ${rowTypes(3)}`);
-    assert.strictEqual(rows[3].length, 3);
-    assert.strictEqual(rows[4].length, 2);
-    assert.deepStrictEqual(rowTypes(4).slice().sort(), ['elite', 'skirmish']);
-    assert.ok(rowTypes(5).every((t) => REWARD_TYPES.has(t)), `row 5 (seed ${seed}) has a non-reward type: ${rowTypes(5)}`);
-    assert.strictEqual(rows[5].length, 3, 'the third reward row sits between Elite-or-Skirmish and the funnel');
-    assert.deepStrictEqual(rowTypes(6), ['shop', 'blacksmith'], 'Act 5 funnel is the Guild Hall / Blacksmith fork');
-    assert.deepStrictEqual(rowTypes(7), ['boss']);
+      assert.strictEqual(rows.length, 8, `${where}: every act is the 8-row shape`);
+      assert.deepStrictEqual(rowTypes(0), ['fight']);
+      assert.ok(rowTypes(1).every((t) => REWARD_TYPES.has(t)), `${where} row 1 has a non-reward type: ${rowTypes(1)}`);
+      assert.strictEqual(rows[1].length, 3);
+      assert.strictEqual(rows[2].length, 1, `${where}: the spliced seat is a single node`);
+      assert.ok(rowTypes(3).every((t) => REWARD_TYPES.has(t)), `${where} row 3 has a non-reward type: ${rowTypes(3)}`);
+      assert.strictEqual(rows[3].length, 3);
+      assert.strictEqual(rows[4].length, 2);
+      assert.deepStrictEqual(rowTypes(4).slice().sort(), ['elite', 'skirmish'], `${where}: the fork is the act's one Skirmish`);
+      assert.ok(rowTypes(5).every((t) => REWARD_TYPES.has(t)), `${where} row 5 has a non-reward type: ${rowTypes(5)}`);
+      assert.strictEqual(rows[5].length, 3, 'the third reward row sits between Elite-or-Skirmish and the funnel');
+      assert.deepStrictEqual(rowTypes(6), actNumber >= 3 ? ['shop', 'blacksmith'] : ['shop'], `${where}: the funnel`);
+      assert.deepStrictEqual(rowTypes(7), ['boss']);
+      // No un-forked Skirmish anywhere: the fork is the only one.
+      const skirmishes = Object.values(map.nodes).filter((n) => n.type === 'skirmish');
+      assert.strictEqual(skirmishes.length, 1, `${where}: ${skirmishes.length} Skirmish nodes`);
+      assert.strictEqual(skirmishes[0].row, 4);
+    }
   }
 });
 
@@ -112,8 +119,6 @@ test('map: every path into the funnel keeps BOTH the Guild Hall and the Blacksmi
   }
 });
 
-// Act 5, not Act 2: these index rows by hand, and acts 1-4 now carry a Mentor row that
-// shifts every index past 1. Pointed at Act 2 they still PASSED while testing nothing.
 test('map: the single-node rows before a pick-3 reward row connect to all 3 of them (Act 5)', () => {
   for (const seed of [1, 2, 3, 4, 5]) {
     const map = generateMap(seed, 5);
@@ -150,60 +155,34 @@ test('map: the boss node has no outgoing edges; every other node has at least on
   }
 });
 
-test('map: Act 1 inserts a standalone single-node Mentor (mentorReward) row right BEFORE the Skirmish row', () => {
+test('map: the Mentor row sits between the first two reward rows, and every path runs through it', () => {
   for (const seed of [1, 2, 3, 4, 5]) {
     const map = generateMap(seed, 1);
     const rows = map.rows;
     const rowTypes = (r: number) => rows[r].map((id) => map.nodes[id].type);
 
-    assert.strictEqual(rows.length, 9, `Act 1 should have one extra row over the base shape (seed ${seed})`);
-    assert.deepStrictEqual(rowTypes(0), ['fight']);
-    assert.strictEqual(rows[1].length, 3);
-    // The Mentor OWNS the base Skirmish row and the Skirmish moves down one, so the Class is
-    // in hand for the run's first recruitable fight instead of arriving just after it.
-    assert.strictEqual(rows[2].length, 1, `Mentor row (seed ${seed}) should be a single node`);
+    // Ahead of the fork, so the move is in hand for the act's first recruitable fight.
     assert.deepStrictEqual(rowTypes(2), ['mentorReward']);
-    assert.deepStrictEqual(rowTypes(3), ['skirmish']);
     // mentorReward is excluded from REWARD_WEIGHTS, so the Mentor row is the only place it can appear.
-    assert.ok(rowTypes(4).every((t) => REWARD_TYPES.has(t)), `row 4 (seed ${seed}) has a non-reward type: ${rowTypes(4)}`);
-    assert.ok(!rowTypes(4).includes('mentorReward'), `row 4 (seed ${seed}) rerolled mentorReward — it should only ever appear in the forced Mentor row`);
-    assert.strictEqual(rows[4].length, 3);
-    assert.strictEqual(rows[5].length, 2);
-    assert.deepStrictEqual(rowTypes(5).slice().sort(), ['elite', 'skirmish']);
-  }
-});
-
-test('map: Act 1 — the Mentor row connects into the Skirmish, and the Skirmish into the following pick-3 reward row', () => {
-  for (const seed of [1, 2, 3, 4, 5]) {
-    const map = generateMap(seed, 1);
-    // Both are single-node rows, so each has exactly one outgoing edge and no path can skip either.
-    assert.deepStrictEqual([...map.nodes[map.rows[2][0]].nextIds].sort(), [...map.rows[3]].sort());
-    assert.deepStrictEqual([...map.nodes[map.rows[3][0]].nextIds].sort(), [...map.rows[4]].sort());
-    // And every path out of the opening reward row funnels through the Mentor.
-    for (const nodeId of map.rows[1]) {
-      assert.deepStrictEqual([...map.nodes[nodeId].nextIds], [map.rows[2][0]], `seed ${seed} can bypass the Mentor`);
+    assert.ok(!rowTypes(3).includes('mentorReward'), `row 3 (seed ${seed}) rerolled mentorReward — it should only ever appear in the forced Mentor row`);
+    // A single-node row has exactly one way out, and every node of the row above leads into it.
+    assert.deepStrictEqual([...map.nodes[rows[2][0]].nextIds].sort(), [...rows[3]].sort());
+    for (const nodeId of rows[1]) {
+      assert.deepStrictEqual([...map.nodes[nodeId].nextIds], [rows[2][0]], `seed ${seed} can bypass the Mentor`);
     }
   }
 });
 
-test('map: acts 1-3 each guarantee a Mentor before their Skirmish, act 4 a Forge in its seat; Act 5 alone keeps the base 7-row shape', () => {
+test('map: the spliced seat is the Mentor in acts 1-3, the Forge in act 4 and the Tutor in act 5', () => {
   for (const seed of [1, 2, 3, 4, 5]) {
-    for (const actNumber of [1, 2, 3, 4]) {
+    for (const actNumber of [1, 2, 3, 4, 5]) {
       const map = generateMap(seed, actNumber);
-      assert.strictEqual(map.rows.length, 9, `Act ${actNumber} (seed ${seed}) is missing the spliced row`);
-      assert.strictEqual(map.rows[2].length, 1, `Act ${actNumber} (seed ${seed}) spliced row should be a single node`);
-      // Acts 1-3 teach; act 4's row is the Forge (docs/growth-overhaul.md §11).
-      assert.strictEqual(map.nodes[map.rows[2][0]].type, actNumber <= 3 ? 'mentorReward' : 'forgeReward', `Act ${actNumber} (seed ${seed})`);
-      assert.strictEqual(map.nodes[map.rows[3][0]].type, 'skirmish', `Act ${actNumber} (seed ${seed}) Skirmish should follow the Mentor`);
-    }
-    // Act 5 is deliberately left without one — a different beat is planned for it.
-    const act5 = generateMap(seed, 5);
-    assert.strictEqual(act5.rows.length, 8, `Act 5 (seed ${seed}) should not have the extra Mentor row`);
-    assert.strictEqual(act5.nodes[act5.rows[2][0]].type, 'skirmish');
-    for (const row of act5.rows) {
-      for (const nodeId of row) {
-        assert.notStrictEqual(act5.nodes[nodeId].type, 'mentorReward', `Act 5 (seed ${seed}) grew a Mentor`);
-      }
+      const expected = actNumber <= 3 ? 'mentorReward' : actNumber === 4 ? 'forgeReward' : 'tutorReward';
+      assert.strictEqual(map.nodes[map.rows[2][0]].type, expected, `Act ${actNumber} (seed ${seed})`);
+      // And it is not ALSO rolled elsewhere on the same map (the Forge is a legitimate reward-row roll; the other two are not).
+      if (expected === 'forgeReward') continue;
+      const elsewhere = Object.values(map.nodes).filter((n) => n.type === expected && n.row !== 2);
+      assert.strictEqual(elsewhere.length, 0, `Act ${actNumber} (seed ${seed}) grew a second ${expected}`);
     }
   }
 });
@@ -212,8 +191,7 @@ test('map: mentorReward never rerolls into a pick-1-of-3 reward row — the forc
   for (const seed of Array.from({ length: 30 }, (_, i) => i + 1)) {
     for (const actNumber of [1, 2, 3, 4, 5]) {
       const map = generateMap(seed, actNumber);
-      // Acts 1-4 carry the Mentor, which pushes their second reward row from 3 to 4.
-      const rewardRowIndices = actNumber <= 4 ? [1, 4, 6] : [1, 3, 5];
+      const rewardRowIndices = [1, 3, 5];
       for (const r of rewardRowIndices) {
         for (const nodeId of map.rows[r]) {
           assert.notStrictEqual(map.nodes[nodeId].type, 'mentorReward', `Act ${actNumber} row ${r} (seed ${seed}) rolled mentorReward outside the Mentor row`);
@@ -223,11 +201,10 @@ test('map: mentorReward never rerolls into a pick-1-of-3 reward row — the forc
   }
 });
 
-test('map: omitting actNumber defaults to Act 1 (the standalone Mentor row still applies)', () => {
+test('map: omitting actNumber defaults to Act 1 (the Mentor in the spliced seat)', () => {
   const map = generateMap(1);
-  assert.strictEqual(map.rows.length, 9);
+  assert.strictEqual(map.rows.length, 8);
   assert.strictEqual(map.nodes[map.rows[2][0]].type, 'mentorReward');
-  assert.strictEqual(map.nodes[map.rows[3][0]].type, 'skirmish');
 });
 
 test('map: every node past row 0 has at least one incoming edge (no orphans)', () => {

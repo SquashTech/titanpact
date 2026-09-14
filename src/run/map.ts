@@ -52,51 +52,43 @@ export interface RunMap {
   bossNodeId: string;
 }
 
-// row 0 fight, 1/3/5 pick-1-of-3 rewards, 2 skirmish, 4 elite-or-skirmish,
-// 6 the shop funnel, 7 boss. Acts 1-4 splice in the Mentor row (below).
-const BASE_ROW_WIDTHS = [1, 3, 1, 3, 2, 3, 1, 1] as const;
-const SKIRMISH_ROW = 2;
+// row 0 fight, 1/3/5 pick-1-of-3 rewards, 2 the spliced seat, 4 elite-or-skirmish, 6 the
+// funnel, 7 boss. Three fights an act since 2026-09-14 (per user direction): the un-forked
+// Skirmish row came out to shorten the run without cutting an act, so the fork is the act's one
+// Skirmish and every act 1-5 carries the spliced row — the shape is the same in all five.
+const ROW_WIDTHS = [1, 3, 1, 3, 2, 3, 1, 1] as const;
 
 /**
- * Forced single-node row spliced in immediately BEFORE the Skirmish, acts 1-4. In acts 1-3 it is
- * the Mentor (`mentorReward`, docs/growth-overhaul.md §11) — the ONLY place one appears, since it
- * is absent from REWARD_WEIGHTS — sitting ahead of the Skirmish so the move is in hand for the
- * act's first recruitable fight. Act 4's row is a forced Forge instead (2026-09-11, per user
- * direction): a free slot at about the time a third slot on the carry matters, and the row was
- * already paid for. The splice pushes the Skirmish down one row in every act that has it.
+ * Forced single-node row between the act's first two reward rows. Acts 1-3 it is the Mentor
+ * (`mentorReward`, docs/growth-overhaul.md §11) — the ONLY place one appears, since it is absent
+ * from REWARD_WEIGHTS — sitting ahead of the fork so the move is in hand for the act's first
+ * recruitable fight. Act 4's is a forced Forge (2026-09-11, per user direction): a free slot at
+ * about the time a third slot on the carry matters. Act 5's is a forced Tutor (2026-09-14, per
+ * user direction): a guaranteed Late move going into the run's last Guardian, where it used to
+ * be seated inside one of the act's reward rows.
  */
-const MENTOR_ROW = SKIRMISH_ROW;
+const SPLICED_ROW = 2;
 
-/** Acts 1-3 carry the Mentor; act 4's spliced row is the Forge. Act 5 has no spliced row, and Act 6 is the finale corridor. */
 const LAST_MENTOR_ACT = 3;
-const LAST_SPLICED_ACT = 4;
+const FORGE_ACT = 4;
 
 /**
- * The Tutor (2026-09-07, per user direction): one guaranteed seat in each of acts 4 and 5,
- * taken INSIDE a pick-1-of-3 reward row rather than given a forced row of its own. It is a
- * lategame build node — by act 4 a hero has a deep pool and four slots it is stuck with — so
- * it is priced the only way a reward row can price anything: against the two rolled rewards
- * beside it. Absent from REWARD_WEIGHTS, so those two seats are its only source.
+ * The Tutor (2026-09-07, per user direction): a guaranteed seat in act 4, taken INSIDE a
+ * pick-1-of-3 reward row rather than given a forced row of its own. It is a lategame build
+ * node — by act 4 a hero has a deep pool and four slots it is stuck with — so it is priced the
+ * only way a reward row can price anything: against the two rolled rewards beside it. Absent
+ * from REWARD_WEIGHTS, so this seat and act 5's spliced row are its only sources.
  */
-const TUTOR_ACTS: readonly number[] = [4, 5];
+const TUTOR_SEAT_ACTS: readonly number[] = [4];
 
-function hasTutor(actNumber: number): boolean {
-  return TUTOR_ACTS.includes(actNumber);
+function hasTutorSeat(actNumber: number): boolean {
+  return TUTOR_SEAT_ACTS.includes(actNumber);
 }
 
-/** Whether the act carries the spliced row at all — Mentor or Forge. */
-function hasSplicedRow(actNumber: number): boolean {
-  return actNumber >= 1 && actNumber <= LAST_SPLICED_ACT;
-}
-
-/** What the spliced row holds: the Mentor through LAST_MENTOR_ACT, the Forge after. */
+/** What the spliced row holds: the Mentor through LAST_MENTOR_ACT, the Forge in act 4, the Tutor after. */
 function splicedRowType(actNumber: number): MapNodeType {
-  return actNumber <= LAST_MENTOR_ACT ? 'mentorReward' : 'forgeReward';
-}
-
-/** The spliced row pushes the Skirmish down one wherever it appears. */
-function skirmishRowFor(actNumber: number): number {
-  return hasSplicedRow(actNumber) ? SKIRMISH_ROW + 1 : SKIRMISH_ROW;
+  if (actNumber <= LAST_MENTOR_ACT) return 'mentorReward';
+  return actNumber === FORGE_ACT ? 'forgeReward' : 'tutorReward';
 }
 
 /**
@@ -113,10 +105,7 @@ function hasBlacksmith(actNumber: number): boolean {
 }
 
 function rowWidthsFor(actNumber: number): number[] {
-  const widths = hasSplicedRow(actNumber)
-    ? [...BASE_ROW_WIDTHS.slice(0, MENTOR_ROW), 1, ...BASE_ROW_WIDTHS.slice(MENTOR_ROW)]
-    : [...BASE_ROW_WIDTHS];
-  // The funnel is always the row under the boss, wherever the splice left it.
+  const widths = [...ROW_WIDTHS];
   if (hasBlacksmith(actNumber)) widths[widths.length - 2] = 2;
   return widths;
 }
@@ -211,29 +200,24 @@ function finaleMap(seed: number): RunMap {
 
 /**
  * Rows top-down (types first), forward edges within a column window, then a
- * repair pass so every node has an incoming edge. eliteRow/funnelRow/bossRow
- * are derived from the shape's length so the Mentor acts' extra row lands correctly.
+ * repair pass so every node has an incoming edge.
  */
 export function generateMap(seed: number, actNumber: number = 1): RunMap {
   if (actNumber >= FINALE_ACT) return finaleMap(seed);
   const rowWidths = rowWidthsFor(actNumber);
   const bossRow = rowWidths.length - 1;
   const funnelRow = bossRow - 1;
-  // A pick-1-of-3 reward row sits between the Elite/Battle choice and the funnel, so the Elite
+  // A pick-1-of-3 reward row sits between the Elite/Skirmish choice and the funnel, so the Elite
   // row is two up from the funnel rather than one.
   const eliteRow = funnelRow - 2;
-  const mentorRow = hasSplicedRow(actNumber) ? MENTOR_ROW : -1;
-  const skirmishRow = skirmishRowFor(actNumber);
 
   function isRewardRow(row: number): boolean {
-    return row !== 0 && row !== skirmishRow && row !== mentorRow && row !== eliteRow && row !== funnelRow && row !== bossRow;
+    return row !== 0 && row !== SPLICED_ROW && row !== eliteRow && row !== funnelRow && row !== bossRow;
   }
 
   function fixedNodeType(row: number, col: number): MapNodeType {
     if (row === 0) return 'fight';
-    // Mentor first: where it exists it OWNS SKIRMISH_ROW, and the Skirmish has moved down to skirmishRow.
-    if (row === mentorRow) return splicedRowType(actNumber);
-    if (row === skirmishRow) return 'skirmish';
+    if (row === SPLICED_ROW) return splicedRowType(actNumber);
     // Elite-or-Skirmish since 2026-09-13 — both hero pool, both recruitable, and the two
     // preview their typing on the tile (run/encounters.ts guarantees they differ in a type).
     if (row === eliteRow) return col === 0 ? 'elite' : 'skirmish';
@@ -247,7 +231,7 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
   // point in the seeded stream — a map has to stay reproducible from its seed alone.
   let tutorRow = -1;
   let tutorCol = -1;
-  if (hasTutor(actNumber)) {
+  if (hasTutorSeat(actNumber)) {
     const seats: number[] = [];
     for (let row = 0; row < rowWidths.length; row++) {
       if (isRewardRow(row) && rowWidths[row] === TUTOR_ROW_WIDTH) seats.push(row);

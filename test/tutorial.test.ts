@@ -421,18 +421,17 @@ test('tutorial: the contract offer is forced once, and only while it is claimabl
   assert.strictEqual(tutorialContractOffers(TUTORIAL_LOCKS, { ...run, tutorial: false }, beaten), null);
 });
 
-test('tutorial: the scripted act makes its first move offer on the warband at the latest, not the Guardian', () => {
-  // Act 1's corridor is fight, Skirmish, (Forge), battle, ... Guardian — four ENCOUNTERS. The
-  // schedule's first offer (level 4 by default) has to land before the Guardian so the report's
-  // one decision is taught inside the scripted act.
+test('tutorial: the scripted act makes its first move offer on the Skirmish at the latest, not the Guardian', () => {
+  // Act 1's corridor is fight, Skirmish, ... Guardian — three ENCOUNTERS, the same three every
+  // act has (2026-09-14). The schedule's first offer has to land before the Guardian so the
+  // report's one decision is taught inside the scripted act.
   const encounters = TUTORIAL_ROW_TYPES.filter((type) => TUTORIAL_ENCOUNTERS[type] || type === 'boss');
-  const warband = encounters.indexOf('battle') + 1;
-  const guardian = encounters.indexOf('boss') + 1;
-  assert.ok(warband > 0 && guardian > warband, 'the corridor must run the warband before the Guardian');
+  assert.deepStrictEqual(encounters, ['fight', 'skirmish', 'boss'], 'the corridor fights the three fights an act has');
+  const skirmish = encounters.indexOf('skirmish') + 1;
   const firstOffer = scheduleEntries(scheduleFor(heroes.valor)).find((e) => e.kind === 'offer')!.level;
   assert.ok(
-    levelAfterEncounters(warband) >= firstOffer,
-    `the warband is encounter ${warband}, which reaches level ${levelAfterEncounters(warband)}, short of the first offer at ${firstOffer}`
+    levelAfterEncounters(skirmish) >= firstOffer,
+    `the Skirmish is encounter ${skirmish}, which reaches level ${levelAfterEncounters(skirmish)}, short of the first offer at ${firstOffer}`
   );
 });
 
@@ -546,7 +545,7 @@ test('tutorial: the pipelines cue shows both marks, since showing them is the po
 });
 
 test('tutorial: the caster cue is talking about a move the forced recruit actually has', () => {
-  // `battle:magic` names Rime Wind and claims it lands on both enemies at once. If the forced
+  // `boss:magic` names Rime Wind and claims it lands on both enemies at once. If the forced
   // recruit or her kit ever changes, that is a lie told to a first-time player.
   const caster = heroes[TUTORIAL_LOCKS.recruitHeroId];
   const spread = caster.moveIds
@@ -555,7 +554,7 @@ test('tutorial: the caster cue is talking about a move the forced recruit actual
 
   assert.ok(spread.length > 0, `${caster.name} has no spread damage move — the caster cue has nothing to point at`);
 
-  const cue = TUTORIAL_FIGHT_CUES.find((c) => c.id === 'battle:magic')!;
+  const cue = TUTORIAL_FIGHT_CUES.find((c) => c.id === 'boss:magic')!;
   const text = cue.lines.map((line) => normalizeLine(line).text).join(' ');
   for (const move of spread) {
     assert.ok(text.includes(move.name), `the cue should name ${move.name}, the move it is about`);
@@ -575,9 +574,9 @@ test('tutorial: the scripted act never pays better than a normal one', () => {
   // the tutorial pins nothing about them (src/run/growth.ts).
 
   // Gold has no importable table: `goldRewardFor` lives in src/app, which the node build excludes.
-  // These are its Act 1 bands (30-45 for a battle, 15-25 otherwise, nothing for a boss) as means.
+  // These are its Act 1 bands (15-25 for a fight or Skirmish, nothing for a boss) as means.
   // If that function changes, change these with it.
-  const normalGoldMean: Partial<Record<string, number>> = { fight: 20, skirmish: 20, battle: 37.5, boss: 0 };
+  const normalGoldMean: Partial<Record<string, number>> = { fight: 20, skirmish: 20, boss: 0 };
   const tutorialGold = fights.reduce(
     (sum, type) => sum + (TUTORIAL_PAYOUTS[type]?.gold ?? normalGoldMean[type] ?? 0),
     0

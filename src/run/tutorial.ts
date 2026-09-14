@@ -224,23 +224,24 @@ export function matchTutorialCue(
 // --- The curated map ---
 
 /**
- * Act 1, one node per row (per user direction): the standard nine-row Mentor-act shape with
- * every choice row narrowed to a single node, so Valor can walk the player through each one and
+ * Act 1, one node per row (per user direction): the standard eight-row act shape with every
+ * choice row narrowed to a single node, so Valor can walk the player through each one and
  * nothing is missed to routing luck. The 1-of-3 choices *inside* a reward node are untouched —
- * the choosing is the lesson, the routing is not.
+ * the choosing is the lesson, the routing is not. The Elite-or-Skirmish fork narrows to its
+ * Skirmish, so the corridor's fights are the opener, the Skirmish and the Guardian — the three
+ * every act has (2026-09-14; the warband `battle` went with the fourth fight).
  *
- * This list mirrors `BASE_ROW_WIDTHS` (map.ts) by hand and cannot be derived from it — the
- * tutorial picks WHICH reward each row offers, which a width says nothing about. When the real
- * shape gains a row, this has to gain one too, or the act the player is taught on is not the
- * shape of the act they play next (the third reward row was missed exactly that way, 2026-09-08).
+ * This list mirrors `ROW_WIDTHS` (map.ts) by hand and cannot be derived from it — the tutorial
+ * picks WHICH reward each row offers, which a width says nothing about. When the real shape
+ * gains a row, this has to gain one too, or the act the player is taught on is not the shape
+ * of the act they play next (the third reward row was missed exactly that way, 2026-09-08).
  */
 export const TUTORIAL_ROW_TYPES: readonly MapNodeType[] = [
   'fight',
   'equipmentReward',
   'mentorReward',
-  'skirmish',
   'forgeReward',
-  'battle',
+  'skirmish',
   // The act's third reward row. The Ichor: the one place the player aims growth, and the
   // pick-a-hero grammar every later reward (Boon, Forge, Mentor) shares — so the corridor teaches
   // it once, on the cheapest thing it can be taught on. It displaces the Boon.

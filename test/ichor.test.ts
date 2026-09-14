@@ -35,19 +35,20 @@ function runAtPar(encountersWon: number, heroIds: readonly string[] = ['cinderKn
 
 test('Ichor: an Ichor is worth a fixed number of the act\'s FIGHTS, so it grows with the act and reads in the XP the fights pay', () => {
   // 2026-09-14: priced in fights, not levels-at-par — the same currency the fight result and the
-  // level-up report show. Sized to what two levels at par cost at each act's end, ≈3 fights in every
-  // act; flat within the act, so an act's opener pays up to a level more than the old figure did.
-  assert.deepStrictEqual(ICHOR_FIGHTS, { ichor: 3, drop: 1.5 });
+  // level-up report show. Sized to what two levels at par cost at each act's end, ≈2.5 fights in
+  // every act (≈3 until 2026-09-14, when the act went to three fights and the base fight grew to
+  // pay for it); flat within the act, so an act's opener pays up to a level more than the old figure did.
+  assert.deepStrictEqual(ICHOR_FIGHTS, { ichor: 2.5, drop: 1.25 });
   for (let act = 1; act <= 6; act++) {
-    assert.strictEqual(ichorXpForAct(act, 'ichor'), Math.round(3 * encounterXpForAct(act)), `Ichor in act ${act}`);
-    assert.strictEqual(ichorXpForAct(act, 'drop'), Math.round(1.5 * encounterXpForAct(act)), `Drop in act ${act}`);
+    assert.strictEqual(ichorXpForAct(act, 'ichor'), Math.round(2.5 * encounterXpForAct(act)), `Ichor in act ${act}`);
+    assert.strictEqual(ichorXpForAct(act, 'drop'), Math.round(1.25 * encounterXpForAct(act)), `Drop in act ${act}`);
     assert.strictEqual(ichorXp({ actNumber: act }, 'ichor'), ichorXpForAct(act, 'ichor'));
   }
-  assert.deepStrictEqual([1, 2, 3, 4, 5].map((act) => ichorXpForAct(act, 'ichor')), [360, 1350, 2550, 4200, 4800]);
-  // Act 5's Ichor is the same three fights Act 1's was, at Act 5's price.
+  assert.deepStrictEqual([1, 2, 3, 4, 5].map((act) => ichorXpForAct(act, 'ichor')), [375, 1400, 2650, 4375, 5000]);
+  // Act 5's Ichor is the same fights Act 1's was, at Act 5's price.
   assert.ok(ichorXpForAct(5, 'ichor') > 4 * ichorXpForAct(1, 'ichor'));
   // And it buys roughly what the old denomination did: two or three levels for a hero at par, in every act.
-  for (const encountersWon of [1, 5, 9, 13, 17]) {
+  for (const encountersWon of [1, 4, 7, 10, 13]) {
     const run = runAtPar(encountersWon);
     const gained = ichorLevelAfter(run, run.roster[0], 'ichor') - levelOf(run.roster[0]);
     assert.ok(gained >= 1 && gained <= 3, `after ${encountersWon} wins an Ichor at par lands ${gained} levels`);
@@ -56,9 +57,9 @@ test('Ichor: an Ichor is worth a fixed number of the act\'s FIGHTS, so it grows 
 
 test('Ichor: the same drink lands more levels on a hero behind par than on one ahead of it', () => {
   // The convex curve is the mechanism (docs/xp-overhaul.md §2): one grant, three outcomes.
-  const run = runAtPar(8, ['cinderKnight', 'crimson', 'rime']);
+  const run = runAtPar(7, ['cinderKnight', 'crimson', 'rime']);
   const par = levelOf(run.roster[0]);
-  assert.strictEqual(par, levelAfterEncounters(8));
+  assert.strictEqual(par, levelAfterEncounters(7));
   const behind = { ...run.roster[1], xp: xpForLevel(par - 5) };
   const ahead = { ...run.roster[2], xp: xpForLevel(par + 3) };
   const fixture = { ...run, roster: [run.roster[0], behind, ahead] };
@@ -102,7 +103,7 @@ test('Ichor: the shelf charges flat gold, sells no more than the limit a visit, 
     run = grantIchor(run, heroes, 'cinderKnight', 'drop', ALWAYS).run;
   }
   assert.strictEqual(run.gold, ICHOR_PURCHASE_COST);
-  // Two Drops are three fights' XP onto one hero — banked exactly, whatever levels that crosses.
+  // Two Drops are an Ichor's XP onto one hero — banked exactly, whatever levels that crosses.
   assert.strictEqual(run.roster[0].xp, xpAfterEncounters(4) + 2 * ichorXp(run, 'drop'));
   assert.ok(levelOf(run.roster[0]) > levelAfterEncounters(4), 'and it is ahead of par for it');
   // Gold left, shelf empty: the limit is what refuses, not the purse.

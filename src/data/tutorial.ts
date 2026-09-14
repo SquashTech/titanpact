@@ -29,7 +29,7 @@ import type { TutorialBeat, TutorialEncounter, TutorialFightCue, TutorialLocks, 
  * Flurry is the forced recruit because she is the roster's least ambiguous MAGICAL specialist —
  * 25 Attack against 80 Intelligence, and a damage move that is magical. The split between the
  * two pipelines is invisible until the player holds one of each, and no draft can be relied on
- * to hand them one. She is then locked onto the field for the warband and the Guardian, because
+ * to hand them one. She is then locked onto the field for the Guardian, because
  * the Goblin Lord is authored at 75 Defense against 60 Wisdom: her Rime Wind reads 42 on him
  * where Valor's Iron Fist reads 20 and Fang's Claw reads 30 — and she is not even strong against
  * him, since the Ancient half halves her Frost right back. That one screen is the whole lesson,
@@ -38,7 +38,7 @@ import type { TutorialBeat, TutorialEncounter, TutorialFightCue, TutorialLocks, 
 export const TUTORIAL_LOCKS: TutorialLocks = {
   recruitHeroId: 'glacialWarden',
   fieldHeroId: 'glacialWarden',
-  fieldAtNodes: ['battle', 'boss'],
+  fieldAtNodes: ['boss'],
 };
 
 // --- Curated encounters ---
@@ -53,7 +53,6 @@ export const TUTORIAL_LOCKS: TutorialLocks = {
  *    is weak to, which is the whole shape of the act: what beats you beats what is ahead. Rime
  *    swings physical and Flurry casts, so the pair is also the first place the two damage
  *    pipelines stand side by side (`TUTORIAL_LOCKS` forces Flurry onto the roster).
- *  - `battle` — the Ravager (a Mid) as a body to grind, two Earlies as the bench lesson.
  *  - `boss` — two Early spawn, because that is what a Guardian's escorts are everywhere else
  *    (run-loop.md "The Guardian's escorts"): the Cubling is a Beast for the caster to double
  *    into, the Rivetling is Iron so teeth do little to it. The Goblin Lord rides the bench as he
@@ -77,7 +76,6 @@ export const TUTORIAL_ENCOUNTERS: Partial<Record<MapNodeType, TutorialEncounter>
   // down to ~0.9x, and the fight from one round to three or four.
   fight: { heroIds: ['cubling', 'duskling'], statGrants: { hp: 50, defense: 35 } },
   skirmish: { heroIds: ['rime', 'glacialWarden'] },
-  battle: { heroIds: ['ravager', 'cubling', 'duskling'] },
   boss: { heroIds: ['cubling', 'rivetling'] },
 };
 
@@ -90,15 +88,13 @@ export const TUTORIAL_ENCOUNTERS: Partial<Record<MapNodeType, TutorialEncounter>
  * roster-wide, and the act's fights pay the whole roster the same authored XP (run/growth.ts
  * ENCOUNTER_XP_BY_ACT) whatever the player does.
  *
- * Gold IS pinned, and only to its own average (goldRewardFor rolls 30-45 for a battle and 15-25
- * otherwise). Not for power — 77 against a ~77.5 mean — but for determinism: Valor tells the
+ * Gold IS pinned, and only to its own average (goldRewardFor rolls 15-25 for a fight or Skirmish). Not for power — 77 against a ~77.5 mean — but for determinism: Valor tells the
  * player what to spend at the Guild Hall, so what they are holding when they get there cannot be
- * a coin flip.
+ * a coin flip. The warband `battle` and its 37 went with the fourth fight (2026-09-14).
  */
 export const TUTORIAL_PAYOUTS: Partial<Record<MapNodeType, TutorialPayout>> = {
   fight: { gold: 20 },
   skirmish: { gold: 20 },
-  battle: { gold: 37 },
   boss: { gold: 0 },
 };
 
@@ -181,7 +177,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     lines: ['Choose which of us learns.'],
   },
 
-  // --- Row 3: the Skirmish ---
+  // --- Row 4: the Skirmish ---
   {
     id: 'map:skirmish',
     topic: 'Skirmish',
@@ -203,7 +199,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     ],
   },
 
-  // --- Row 4: the forge ---
+  // --- Row 3: the forge ---
   {
     id: 'map:forgeReward',
     topic: 'The Forge',
@@ -213,16 +209,6 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     ],
   },
 
-  // --- Row 5: the warband ---
-  {
-    id: 'map:battle',
-    topic: 'The Bench',
-    lines: [
-      'A chief and his warband.',
-      'We are a team of three now, meaning one must sit on the bench. Whoever sits there regenerates Mana every round, and you can bring them in whenever you like. Switching costs only a turn.',
-      "Let's bring the caster to the field for this one. Their abilities may come in handy.",
-    ],
-  },
   {
     id: 'crucible',
     topic: 'The Crucible',
@@ -232,7 +218,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     ],
   },
 
-  // --- Row 6: the Ichor ---
+  // --- Row 5: the Ichor ---
   {
     id: 'map:ichorReward',
     topic: 'Ichor',
@@ -242,7 +228,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     ],
   },
 
-  // --- Row 7: the Guild Hall ---
+  // --- Row 6: the Guild Hall ---
   {
     id: 'map:shop',
     topic: 'Guild Hall',
@@ -255,7 +241,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     lines: ['A fourth hero is worth more than anything else.'],
   },
 
-  // --- Row 8: the Guardian ---
+  // --- Row 7: the Guardian ---
   {
     id: 'map:boss',
     topic: 'The Guardian',
@@ -263,6 +249,8 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
       'The Goblin Lord. He is no spawn. He is a Guardian, and he holds one of the five seals.',
       'He is known as an Ancient. Nothing we own is strong against him, and nothing ever will be.',
       'Two of his warband stand in front. Clear one of them and he comes out, so be sure that we are well-prepared.',
+      'We are more than two now, so some of us must sit on the bench. Whoever sits there regenerates Mana every round, and you can bring them in whenever you like. Switching costs only a turn.',
+      "Let's bring the caster to the field for this one. Their abilities may come in handy.",
     ],
   },
   {
@@ -301,7 +289,7 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
   },
   {
     id: 'fight:rest',
-    node: ['fight', 'skirmish', 'battle', 'boss'],
+    node: ['fight', 'skirmish', 'boss'],
     when: { outOfMana: true },
     topic: 'Rest',
     lines: [
@@ -333,18 +321,6 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     ],
   },
 
-  // --- The warband ---
-  {
-    id: 'battle:magic',
-    node: 'battle',
-    when: { round: 1 },
-    topic: 'The Caster',
-    lines: [
-      "Flurry's stat sheet shows a pitiful Attack stat. However, their Intelligence is impressive. Their Rime Wind will be effective here.",
-      'Rime Wind does not pick a target. It is a ⇉ Spread move, meaning it strikes both of the enemies.',
-    ],
-  },
-
   // --- The Guardian ---
   {
     id: 'boss:escorts',
@@ -354,6 +330,16 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     lines: [
       'His warband. Far less threatening than what awaits us.',
       'Kill one and the Lord takes its place. Be ready.',
+    ],
+  },
+  {
+    id: 'boss:magic',
+    node: 'boss',
+    when: { round: 2 },
+    topic: 'The Caster',
+    lines: [
+      "Flurry's stat sheet shows a pitiful Attack stat. However, their Intelligence is impressive. Their Rime Wind will be effective here.",
+      'Rime Wind does not pick a target. It is a ⇉ Spread move, meaning it strikes both of the enemies.',
     ],
   },
   {

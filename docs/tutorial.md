@@ -47,9 +47,12 @@ teach what the game is, and "losing is free" is the one thing that would be a li
 
 ## 2. The corridor
 
-`TUTORIAL_ROW_TYPES` (`src/run/tutorial.ts`) is the standard nine-row Mentor-act shape from
-`run-loop.md` §1 with **every choice row narrowed to a single node**. The 1-of-3 choices *inside*
-a reward node are untouched — the choosing is the lesson; the routing is not.
+`TUTORIAL_ROW_TYPES` (`src/run/tutorial.ts`) is the standard eight-row act shape from
+`run-loop.md` §1 with **every choice row narrowed to a single node** — the Elite-or-Skirmish
+fork to its Skirmish. The 1-of-3 choices *inside* a reward node are untouched — the choosing is
+the lesson; the routing is not. Three fights, the same three every act has since 2026-09-14; the
+warband `battle` that stood between the Forge and the Ichor went with the fourth fight, and its
+bench lesson moved onto the Guardian.
 
 | Row | Node | What Valor teaches |
 | --- | --- | --- |
@@ -57,13 +60,12 @@ a reward node are untouched — the choosing is the lesson; the routing is not.
 | — | *post-fight gates* | XP as a pot · the bag badge, on the map that follows |
 | 1 | Equipment | comparing three pieces; rarity as a budget |
 | 2 | Mentor | Classes: permanent, one per hero, four on the road |
-| 3 | Skirmish | type advantage both ways, **physical vs magical**, the forced Recruit Contract |
-| 4 | Forge | the item slot as the scarce thing |
-| — | *post-fight gate* | **a move offer** on the level-up report (the schedule's first offer, level 4, lands here; the Evolution is level 16 under the default schedule, Act 3 — whether Valor is authored earlier is the per-hero pass's call) |
-| 5 | Monsters | the bench, switching, the lock-in rule, flying the caster |
-| 6 | Ichor | growth the player aims: two levels at par, to whoever is handed it — and why a hero behind gets more |
-| 7 | Guild Hall | gold: a hero, gear, or a contract |
-| 8 | Guardian | the faction-escort shape, the Ancient wall, **reading the number not the colour**, the Pact Clock |
+| 3 | Forge | the item slot as the scarce thing |
+| 4 | Skirmish | type advantage both ways, **physical vs magical**, the forced Recruit Contract |
+| — | *post-fight gate* | **a move offer** on the level-up report (Valor's first offer is level 3, reached on the opener; the Skirmish reaches 6) |
+| 5 | Ichor | growth the player aims: two levels at par, to whoever is handed it — and why a hero behind gets more |
+| 6 | Guild Hall | gold: a hero, gear, or a contract |
+| 7 | Guardian | the escort shape, the bench, switching, flying the caster, the Ancient wall, **reading the number not the colour**, the Pact Clock |
 
 Every node type appears **exactly once**, which is what lets a beat be addressed by node type
 alone (`map:<type>`); a test pins that.
@@ -106,11 +108,11 @@ the option rather than advising against it (2026-09-06, per user direction). Thr
 | Lock | What it closes | Lifts when |
 | --- | --- | --- |
 | `recruitHeroId` | The Skirmish contract is one offer, and the screen has no leave button | It is signed |
-| `fieldHeroId` / `fieldAtNodes` | Flurry is pinned to an ACTIVE slot at the warband and the Guardian | Act 1 ends |
+| `fieldHeroId` / `fieldAtNodes` | Flurry is pinned to an ACTIVE slot at the Guardian | Act 1 ends |
 
 **The Evolution needs no lock, and since 2026-09-10 no schedule either.** `EvolutionScreen` has
 no decline, and levels are automatic and roster-wide — so the whole roster crosses
-`EVOLUTION_LEVEL` on the act's **third encounter**, the warband, whatever the player does. The
+its schedule entries whatever the player does (Valor evolves at 10, inside Act 2). The
 `focusHeroId` lock that used to funnel a pool to guarantee that went with the pool. A test still
 asserts *which node* the fork lands on, so retuning the level curve fails loudly rather than
 quietly moving the beat.
@@ -157,11 +159,13 @@ the run. It briefly paid double (26 against 13) before this was measured.
 
 | Node | XP | Tutorial gold | Normal gold (mean) |
 | --- | --- | --- | --- |
-| Monsters (opener) | 3 | 20 | 20 |
-| Skirmish | 4 | 20 | 20 |
-| Monsters (warband) | 3 | 37 | 37.5 |
-| Guardian | 4 | 0 | 0 |
-| **Total** | **14** | **77** | **~77.5** |
+| Monsters (opener) | — | 20 | 20 |
+| Skirmish | — | 20 | 20 |
+| Guardian | — | 0 | 0 |
+| **Total** | — | **40** | **40** |
+
+(XP is no longer a per-node figure — a won fight pays the whole roster `ENCOUNTER_XP_BY_ACT`;
+the warband row and its 37 gold went with the fourth fight, 2026-09-14.)
 
 Reaching the Evolution before the Guardian is what an override used to buy, and it is bought
 properly now: the row-0 opener pays **3 rather than 2** across the whole game
@@ -174,8 +178,8 @@ the Level Up screen immediately before the Guild Hall and the Guardian. Two test
 (*a normal act*, on either route, must afford the fork before its own Guardian) and a ceiling
 (neither the tutorial's effective XP nor its gold may exceed a normal act's).
 
-**Gold is pinned, and only to its own average** — `goldRewardFor` rolls 30-45 for a battle and
-15-25 otherwise. Not for power, but for determinism: Valor tells the player what to spend at the
+**Gold is pinned, and only to its own average** — `goldRewardFor` rolls 15-25 for a fight or
+Skirmish. Not for power, but for determinism: Valor tells the player what to spend at the
 Guild Hall, so what they are holding when they arrive cannot be a coin flip.
 
 Everything else is already the normal roll — the equipment drop table, the act-end Recruit

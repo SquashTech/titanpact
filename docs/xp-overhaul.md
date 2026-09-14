@@ -117,9 +117,13 @@ pay, on the bar it moved:
 
 | Node | Size | Act 1 · 2 · 3 · 4 · 5 |
 |---|---|---|
-| Ichor (the old Scroll Cache's seat, weight 46) | **3 fights' worth** | 360 · 1,350 · 2,550 · 4,200 · 4,800 XP |
-| Drop of Ichor (the old Lone Scroll's seat, weight 14) | **1.5 fights' worth** | 180 · 675 · 1,275 · 2,100 · 2,400 XP |
+| Ichor (the old Scroll Cache's seat, weight 46) | **2.5 fights' worth** | 375 · 1,400 · 2,650 · 4,375 · 5,000 XP |
+| Drop of Ichor (the old Lone Scroll's seat, weight 14) | **1.25 fights' worth** | 188 · 700 · 1,325 · 2,188 · 2,500 XP |
 | Guild Hall shelf | a Drop, flat gold, limit 2 a visit | replaces `SCROLL_PURCHASE_*` |
+
+(3 and 1.5 fights for a few hours on 2026-09-14, until the act went from four fights to three and
+the base fight grew ×1.25 to hold the act ends — `run-loop.md` "Three fights an act". The re-fit
+holds the XP an Ichor pays, so it is still ≈ two levels at par at an act's end.)
 
 It was denominated in **levels-at-par** — the XP from `levelAfterEncounters` to par+2 — under the
 "every Ichor is a moment" rule (`growth-overhaul.md` §4's silent-deposit objection: XP that lands

@@ -44,10 +44,12 @@ between; per user direction, the shape is now forced and uniform):
   `fight`/`shop`/`elite`/`mentorReward` mixed in — every reward row is a genuine reward
   choice, not a chance to draw another fight or dodge one, and `mentorReward` is reserved
   for its own forced Mentor row (2026-08-22 revision, per user direction — see the Mentor
-  row note below), never a random pick-1-of-3 option. In acts 4 and 5 one seat on one of
-  the act's two pick-3 rows is taken by a forced `tutorReward` (see "The Tutor" below); the
-  other two seats roll normally, so the row still offers three distinct things.
-- **Row 2: a single forced `skirmish` node.**
+  row note below), never a random pick-1-of-3 option. In act 4 one seat on one of the act's
+  three pick-3 rows is taken by a forced `tutorReward` (see "The Tutor" below); the other two
+  seats roll normally, so the row still offers three distinct things.
+- **Row 2: the spliced seat — a single forced node in every act 1-5.** The Mentor in acts
+  1-3, the Forge in act 4, the Tutor in act 5 (below). Until 2026-09-14 this row was a second,
+  un-forked `skirmish` and the spliced seat sat above it; see "Three fights an act" below.
 - **Row 3: 3 nodes, pick 1 of 3 — reward types only**, same pool as row 1.
 - **Row 4: 2 nodes, pick 1 of 2 — `elite` or `skirmish`** (2026-09-13, Titanspawn
   overhaul phase 3; `elite` or `battle` from 2026-08-17). `elite` is the act's difficulty
@@ -64,9 +66,24 @@ between; per user direction, the shape is now forced and uniform):
   path converges here — the standard Slay the Spire "everything narrows before the boss" beat.
 - **Row 7: the single `boss` node** — the act's Guardian.
 
-The upshot: every act is exactly **Fight → pick 1 of 3 → Skirmish → pick 1 of 3 →
-(Elite or Skirmish) → pick 1 of 3 → (Guild Hall or Blacksmith) → Guardian** — no path through
-an act ever skips a fight, and none arrives at the funnel holding only half the fork.
+The upshot: every act is exactly **Fight → pick 1 of 3 → Mentor / Forge / Tutor → pick 1 of 3
+→ (Elite or Skirmish) → pick 1 of 3 → (Guild Hall or Blacksmith) → Guardian** — three fights,
+no path through an act ever skips one, and none arrives at the funnel holding only half the fork.
+
+**Three fights an act (2026-09-14, per user direction).** The un-forked Skirmish row came out:
+the run was measuring ~92 minutes for a player who taps every beat against a 45-minute target
+(`scripts/sim/time.ts`), and cutting an act — the other lever the same size — would have cost a
+Location, which is where the run's flavour lives. The plain Skirmish was the fight to lose: in
+acts 2-5 it won at 100% with three-quarters of the squad's HP left, so it cost the run time and
+nothing else, and in Act 1 it was one of three ~80% hurdles in the run's wall. The fork is now
+the act's one Skirmish, the reward rows stay at three (per user direction — a call to be judged
+in play, since Act 5 now runs two reward rows back-to-back either side of its Tutor), and the
+act's XP is re-sized ×1.25 so par still lands the decided act ends
+(`ENCOUNTER_XP_BY_ACT`, `ENCOUNTERS_PER_ACT` = 3). Measured on the same 600-run seed and
+pilot: **Reader 92 → 77 min, Auto 63 → 53, Fast 37 → 32**; full-clear 23 → 26%, Act 1 clear
+51 → 65% (the wall softened by exactly the fight it lost), Acts 4-5 Guardians unchanged. The
+tutorial's corridor lost its warband `battle` with it, and its bench lesson moved onto the
+Guardian.
 
 **The fork is Elite-or-Skirmish since 2026-09-13** (Titanspawn overhaul phase 3; it was
 Elite-or-Battle). Both options draw the recruitable pool and both pay a contract, so claim
@@ -79,22 +96,18 @@ preview all build an encounter), so the tile and the tap are the same draw, and 
 Skirmish is re-rolled against its Elite until the two differ in at least one type. `battle`
 survives as a node type only for the tutorial's curated corridor.
 
-**The Mentor row (acts 1-3), the Forge row (act 4).** Acts 1 through 4 each splice one extra
-forced single-node row into the shape above, giving them 9 rows against Act 5's 8. In acts 1-3
-it is the Mentor (`mentorReward`): pick a hero, and one Mid-tier move is rolled for it from its
-own pool (2026-09-11, `growth-overhaul.md` §11 — it taught a stat-pair Class until then). In
-act 4 the same seat is a forced Forge (`forgeReward`, `LAST_SPLICED_ACT`). It sits
-**immediately before the Skirmish** (2026-09-05, per user direction — it was immediately
-*after*, and Act 1 only, until then), so the move is in hand for the act's first
-recruitable fight rather than arriving just after it. A Mentor act therefore reads
-**Fight → pick 1 of 3 → Mentor → Skirmish → pick 1 of 3 → (Elite or Skirmish) → pick 1 of 3
-→ (Guild Hall or Blacksmith) → Guardian**, and its Skirmish lands one row later than Act 5's (`MENTOR_ROW`,
-`LAST_MENTOR_ACT`, `skirmishRowFor`, `src/run/map.ts`). Both are single-node rows, so no
-path can bypass either.
-
-**Act 5 deliberately has none** — a different beat is being designed for it (2026-09-05,
-per user direction). It is currently the only act on the bare 8-row shape, which is why
-`test/map.test.ts` uses Act 5, not Act 2, wherever it indexes rows by hand.
+**The spliced seat: Mentor (acts 1-3), Forge (act 4), Tutor (act 5).** Row 2 is a forced
+single-node row in every act. In acts 1-3 it is the Mentor (`mentorReward`): pick a hero, and
+one Mid-tier move is rolled for it from its own pool (2026-09-11, `growth-overhaul.md` §11 — it
+taught a stat-pair Class until then). In act 4 the same seat is a forced Forge (`forgeReward`,
+2026-09-11). In act 5 it is a forced Tutor (`tutorReward`, 2026-09-14, per user direction): a
+guaranteed Late move going into the run's last Guardian, in the seat Act 5 had been holding
+empty since 2026-09-05 "for a different beat". It sits **ahead of the fork** (the row was
+placed immediately before the Skirmish on 2026-09-05, per user direction, and the fork is the
+Skirmish now), so the move is in hand for the act's first recruitable fight rather than
+arriving just after it. Since the seat exists in every act and the Skirmish row is gone, the
+shape no longer varies by act: 8 rows in all five (`SPLICED_ROW`, `LAST_MENTOR_ACT`,
+`FORGE_ACT`, `src/run/map.ts`). A single-node row is one no path can bypass.
 
 **The Blacksmith (act 3 on).** From act 3 the funnel widens to two and the act's guaranteed
 spend becomes a fork: the **Guild Hall** trades in people and new gear — recruits, Recruit
@@ -250,10 +263,10 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `shop` | `ShopNodeScreen` — the existing `GuildHallPanel`, given an exit for the first time. Overhauled 2026-08-18: offers 2-3 curated hero recruits (50g each, `GUILD_HALL_RECRUIT_COST`) rather than the full catalog, plus a rarity-priced equipment shelf, rolled once per visit (`src/run/shop.ts` `rollGuildHallOffers`). Second pass 2026-08-31: relics are no longer sold anywhere, the shelf is 4 wide and readable on its face, sold stock greys out, and Recruit Contracts confirm before buying (`docs/progression.md` "Second pass"). |
 | `equipmentReward` ("Item") | `NodeRewardScreen` — pick 1 of 3 items, rarity-weighted (`equipment.ts` `pickWeightedEquipment`); claiming bags it and lights the Roster badge — see "The bag notification" in `docs/progression.md`. Items are uncategorised as of 2026-09-06, so the three on offer are simply the three rolled (`docs/progression.md` "Uncategorised slots"). |
 | `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30). **2026-09-08, per user direction:** it pays out on arrival and the screen counts the PURSE up to its new total, coin by coin, over a Claim button that was never a decision — the drop size is a chip beside a number the player can act on, rather than a number they cannot. The two Scroll nodes share that beat. |
-| `ichorDropReward` ("Drop of Ichor") | `IchorNodeScreen` — **1.5 fights' worth** of the act's XP (2026-09-14; one level at par before), to ONE hero the player picks; the pick raises the level-up report for that hero (`src/run/ichor.ts`, `docs/xp-overhaul.md` §3, 2026-09-13). The commoner, smaller half of the Ichor's grant. It took the Lone Scroll's seat and weight (14); the seat was the XP Cache before that (2026-09-10), so it has come round to paying XP again. Distinguished from the Ichor on the map by its glyph — one sweet against two — since the tiles carry no labels. |
+| `ichorDropReward` ("Drop of Ichor") | `IchorNodeScreen` — **1.25 fights' worth** of the act's XP (2026-09-14, 1.5 for a few hours before the act went to three fights; one level at par before that), to ONE hero the player picks; the pick raises the level-up report for that hero (`src/run/ichor.ts`, `docs/xp-overhaul.md` §3, 2026-09-13). The commoner, smaller half of the Ichor's grant. It took the Lone Scroll's seat and weight (14); the seat was the XP Cache before that (2026-09-10), so it has come round to paying XP again. Distinguished from the Ichor on the map by its glyph — one sweet against two — since the tiles carry no labels. |
 | `forgeReward` ("The Forge") | `ForgeScreen` — pick one roster hero to gain **+1 item slot** for the rest of the run (`runProgress.ts` `grantItemSlot`, stored on `RosterEntry.bonusItemSlots`, capped at `MAX_ITEM_SLOTS` = 3). **2026-09-06**, replacing the three slot-specific cache nodes (`weaponReward`/`armorReward`/`accessoryReward`), which lost their meaning when items stopped having categories — most of their frequency went to `equipmentReward`, whose weight went 20 → 40. The scarcest thing on the reward row (weight 8) on purpose: it is permanent, it compounds with every drop after it, and it is the only reward here a hero can be at the cap for — a roster entirely at 3 slots makes the node a dead draw, which is what makes spending it a choice — and at the 2026-09-07 cap of 3 that arrives materially sooner. |
 | `manaWellReward` ("Mana Well") | `ManaWellScreen` — pick one roster hero to gain **+`MANA_WELL_AMOUNT` = 30 max Mana** for the rest of the run (`runProgress.ts` `grantManaWell`, onto `bonusStatGrants`; stacks; never refused). **2026-09-13, per user direction** — the one bare-number screen the constitution allows. See "The Mana Well" below. |
-| `ichorReward` ("Ichor") | `IchorNodeScreen` — **3 fights' worth** of the act's XP (2026-09-14; two levels at par before), to ONE hero the player picks (`src/run/ichor.ts`, `docs/xp-overhaul.md` §3, 2026-09-13). The screen collects one thing, who, and every card shows the bar that hero's XP would run — a hero behind par climbs further on the same Ichor, a hero ahead of par less, which is the convex curve doing the catch-up and the throttle at once. A hero at `MAX_LEVEL` is refused. The pick hands straight off to the level-up report. It took the Scroll Cache's seat and weight (46). See "Ichor" below. |
+| `ichorReward` ("Ichor") | `IchorNodeScreen` — **2.5 fights' worth** of the act's XP (2026-09-14, 3 for a few hours before the act went to three fights; two levels at par before that), to ONE hero the player picks (`src/run/ichor.ts`, `docs/xp-overhaul.md` §3, 2026-09-13). The screen collects one thing, who, and every card shows the bar that hero's XP would run — a hero behind par climbs further on the same Ichor, a hero ahead of par less, which is the convex curve doing the catch-up and the throttle at once. A hero at `MAX_LEVEL` is refused. The pick hands straight off to the level-up report. It took the Scroll Cache's seat and weight (46). See "Ichor" below. |
 | `passiveReward` ("Boon") | `BoonNodeScreen` — pick 1 of 3 passives, then the hero it settles on (`grantEventPassive`, stored on `RosterEntry.bonusPassiveGrants`). See "Boons" below. |
 | `mentorReward` ("Mentor's Hall") | `MentorNodeScreen` — "the Mentor can teach any hero a powerful move": pick a hero, and ONE Mid-tier move is rolled from that hero's own pool, un-rank-gated (`mentorMovePool`, `src/run/tutor.ts`). A Scroll pour with the band fixed at Mid that ticks nothing; the rolled offer is spent by being made. Who is the only decision, on purpose — it is one of a new player's first nodes (2026-09-11, `growth-overhaul.md` §11; it was briefly a curated Early-Mid pick, and before that a stat-pair Class). **Not in `REWARD_WEIGHTS`** — the only way to meet one is the forced row in acts 1-3 (§1). |
 | `tutorReward` ("Tutor") | `TutorNodeScreen` — pick one roster hero, then **any** move from that hero's Scroll pool. See "The Tutor" below. Acts 4-5 only. |
@@ -432,8 +445,10 @@ band will not price it that way; watch it in playtest rather than the sim.
 
 **XP the player aims at ONE hero** (`src/run/ichor.ts`, `docs/xp-overhaul.md` §3, 2026-09-13).
 Encounter XP is roster-wide and automatic; an Ichor is the one place the player says *who* grows.
-Denominated in **the act's fights** since 2026-09-14 — `ichorXp` is `ICHOR_FIGHTS[kind]` (3, or 1.5
-for a Drop) times the act's base encounter XP — the same number the fight result just showed,
+Denominated in **the act's fights** since 2026-09-14 — `ichorXp` is `ICHOR_FIGHTS[kind]` (2.5, or
+1.25 for a Drop; 3 and 1.5 until the act went to three fights the same day and the base fight
+grew ×1.25 to pay for it — the re-fit holds the XP) times the act's base encounter XP — the same
+number the fight result just showed,
 so an Ichor is ~two levels for a hero at par, more for a hero behind, less for a hero ahead, and
 it grows with the act because the fights do. It was levels-at-par (par to par+2 on the curve),
 which was the same value read off a figure the player never saw; the who screen now draws each

@@ -128,8 +128,8 @@ export function gradeBudgetOf(grades: GrowthGrades): number {
 
 // --- The XP curve ---
 
-/** Acts 1-5 each run four: the forced fight, the Skirmish, the Elite-or-Skirmish, the Guardian. */
-export const ENCOUNTERS_PER_ACT = 4;
+/** Acts 1-5 each run three: the forced fight, the Elite-or-Skirmish, the Guardian (2026-09-14; the un-forked Skirmish came out to shorten the run). */
+export const ENCOUNTERS_PER_ACT = 3;
 
 /**
  * The cumulative XP to BE a level — Pokémon's Medium Fast, `L³`, 27,000 to the cap
@@ -183,19 +183,20 @@ export function xpToNextLevel(xp: number): number {
  * (`levelAfterEncounters`) and no longer authored.
  *
  * Sized so par still reaches the decided act-end levels — 8 / 14 / 19 / 24 / 28 / 30 — which
- * `ENEMY_LEVEL_BY_ACT`, the Guild Hall's lag and the difficulty re-fit all read. Inside an act the
- * walk changed: par is 4/6/7/8, 10/11/12/14, 15/16/17/19, 20/21/22/24, 25/25/26/28 — one fight
- * in act 5 pays no level at par, and its bar shows why. Index is the act, 0-based; the last entry
- * is the finale's one fight. First-pass playtest figures.
+ * `ENEMY_LEVEL_BY_ACT`, the Guild Hall's lag and the difficulty re-fit all read. Re-sized ×1.25 on
+ * 2026-09-14 when the act went from four fights to three (two standard and the Guardian's double,
+ * so an act pays four fights' worth where it paid five): the act-end levels are unchanged and
+ * inside an act par walks 5/6/8, 10/11/14, 15/17/19, 20/21/24, 25/26/28. Index is the act,
+ * 0-based; the last entry is the finale's one fight. First-pass playtest figures.
  */
-export const ENCOUNTER_XP_BY_ACT: readonly number[] = [120, 450, 850, 1400, 1600, 5000];
+export const ENCOUNTER_XP_BY_ACT: readonly number[] = [150, 560, 1060, 1750, 2000, 5000];
 
 /**
  * What a fight's KIND pays over the act's base — the one place a node type prices its XP. The
  * Guardian is two fights' worth; the Elite (2026-09-14, per user direction) one and a half, so
  * the fork's harder tile pays in XP as well as in loot and the preview reads as a reason, not
  * only a risk. Par (below) assumes the Skirmish, so an Elite is XP ABOVE par — a player who takes
- * every Elite runs ~2,200 XP ahead over a run, about half a level at the end and a fuller bar
+ * every Elite runs ~2,800 XP ahead over a run, a level by the end of act 5 and a fuller bar
  * throughout, never a whole act.
  */
 export type EncounterXpKind = 'standard' | 'elite' | 'guardian';
@@ -211,12 +212,12 @@ export function encounterXpKind(nodeType: MapNodeType): EncounterXpKind {
   return nodeType === 'boss' ? 'guardian' : nodeType === 'elite' ? 'elite' : 'standard';
 }
 
-/** Won encounters in a full clear: four an act for acts 1-5, then the finale's one fight. Nothing past it pays. */
+/** Won encounters in a full clear: three an act for acts 1-5, then the finale's one fight. Nothing past it pays. */
 export const TOTAL_ENCOUNTERS = ENCOUNTERS_PER_ACT * (ENCOUNTER_XP_BY_ACT.length - 1) + 1;
 
 /**
- * The kind par assumes for the Nth won encounter: the map guarantees four an act with the
- * Guardian fourth, and the fork is taken as its Skirmish — the floor, so that the Elite's bonus
+ * The kind par assumes for the Nth won encounter: the map guarantees three an act with the
+ * Guardian last, and the fork is taken as its Skirmish — the floor, so that the Elite's bonus
  * is above par rather than baked into it.
  */
 export function encounterXpKindAtPar(encountersWon: number): EncounterXpKind {

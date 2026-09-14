@@ -78,32 +78,35 @@ test('tutor: tutorReward is a known node type and never rolls out of the reward 
   }
 });
 
-test('tutor: acts 4 and 5 each seat exactly one Tutor, always in a pick-1-of-3 reward row', () => {
+test('tutor: act 4 seats exactly one Tutor inside a pick-1-of-3 reward row; act 5 holds it in the forced spliced seat', () => {
   for (const seed of Array.from({ length: 40 }, (_, i) => i + 1)) {
-    for (const actNumber of [4, 5]) {
-      const map = generateMap(seed, actNumber);
-      const seats = Object.values(map.nodes).filter((n) => n.type === 'tutorReward');
-      assert.strictEqual(seats.length, 1, `Act ${actNumber} (seed ${seed}) seated ${seats.length} Tutors`);
-      assert.strictEqual(map.rows[seats[0].row].length, 3, `Act ${actNumber} (seed ${seed}): Tutor is not on a pick-3 row`);
-      // The row it takes still offers three DISTINCT things.
-      const rowTypes = map.rows[seats[0].row].map((id) => map.nodes[id].type);
-      assert.strictEqual(new Set(rowTypes).size, 3, `Act ${actNumber} (seed ${seed}): duplicate on the Tutor's row — ${rowTypes}`);
-    }
+    const act4 = generateMap(seed, 4);
+    const seats = Object.values(act4.nodes).filter((n) => n.type === 'tutorReward');
+    assert.strictEqual(seats.length, 1, `Act 4 (seed ${seed}) seated ${seats.length} Tutors`);
+    assert.strictEqual(act4.rows[seats[0].row].length, 3, `Act 4 (seed ${seed}): Tutor is not on a pick-3 row`);
+    // The row it takes still offers three DISTINCT things.
+    const rowTypes = act4.rows[seats[0].row].map((id) => act4.nodes[id].type);
+    assert.strictEqual(new Set(rowTypes).size, 3, `Act 4 (seed ${seed}): duplicate on the Tutor's row — ${rowTypes}`);
+
+    // Act 5 (2026-09-14, per user direction): a forced Tutor in the Mentor's seat — a guaranteed
+    // Late move going into the last Guardian, and the act's only one.
+    const act5 = generateMap(seed, 5);
+    const forced = Object.values(act5.nodes).filter((n) => n.type === 'tutorReward');
+    assert.strictEqual(forced.length, 1, `Act 5 (seed ${seed}) seated ${forced.length} Tutors`);
+    assert.strictEqual(forced[0].row, 2);
+    assert.strictEqual(act5.rows[2].length, 1, `Act 5 (seed ${seed}): the Tutor is a forced single-node row`);
   }
 });
 
-test('tutor: over many seeds the Tutor lands in both of an act\'s reward rows and in every column', () => {
+test('tutor: over many seeds act 4\'s seat lands in every reward row and every column', () => {
   const rows = new Set<number>();
   const cols = new Set<number>();
   for (let seed = 1; seed <= 60; seed++) {
-    for (const actNumber of [4, 5]) {
-      const seat = Object.values(generateMap(seed, actNumber).nodes).find((n) => n.type === 'tutorReward')!;
-      rows.add(seat.row);
-      cols.add(seat.col);
-    }
+    const seat = Object.values(generateMap(seed, 4).nodes).find((n) => n.type === 'tutorReward')!;
+    rows.add(seat.row);
+    cols.add(seat.col);
   }
-  // Acts 4 and 5 index their reward rows differently (the Mentor row shifts act 4's second one).
-  assert.ok(rows.size >= 3, `Tutor rows seen: ${[...rows]}`);
+  assert.deepStrictEqual([...rows].sort(), [1, 3, 5], `Tutor rows seen: ${[...rows]}`);
   assert.deepStrictEqual([...cols].sort(), [0, 1, 2]);
 });
 

@@ -153,13 +153,15 @@ don't silently override it.
   levels every won encounter, fielded or benched. **No pool and no allocation** —
   `MAX_LEVEL` = 30. **Level is DERIVED from XP on `XP(L) = L³`** (2026-09-13, XP Overhaul
   phase 1, `xpForLevel` / `levelOf`), and **the XP a won encounter pays is the authored object**
-  (2026-09-13, per user direction): `ENCOUNTER_XP_BY_ACT` = 120 / 450 / 850 / 1400 / 1600 a fight
+  (2026-09-13, per user direction): `ENCOUNTER_XP_BY_ACT` = 150 / 560 / 1060 / 1750 / 2000 a
+  fight (×1.25 on 2026-09-14, three fights an act)
   by act, the finale 5000, times the fought node's kind — **the Guardian ×2, the Elite ×1.5**
   (`ENCOUNTER_XP_MULTIPLIER`, 2026-09-14) — the one place a fight's kind prices its XP. Par
   (`levelAfterEncounters`) assumes the Skirmish at the fork, so an Elite is XP above par (five of
-  them: under a level by the end of act 5). Par is DERIVED from the sum and sized to reach the
+  them: a level by the end of act 5). Par is DERIVED from the sum and sized to reach the
   decided act ends, **8/14/19/24/28/30** (front-loaded in phase 6 because acts 1-2 measured as the
-  run's wall); inside an act it walks 4/6/7/8, 10/11/12/14, 15/16/17/19, 20/21/22/24, 25/25/26/28.
+  run's wall); inside an act it walks 5/6/8, 10/11/14, 15/17/19, 20/21/24, 25/26/28 — three
+  fights an act since 2026-09-14, the figures ×1.25 (150/560/1060/1750/2000) to hold the act ends.
   It replaced a level table paid out in XP sized to land par exactly ON a level every fight —
   which filled the bar to the top every time, so XP was invisible and the level count read as
   arbitrary. **The bar is real now**: the fight result and the level-up report sweep it from where
@@ -337,13 +339,14 @@ don't silently override it.
   equipment and the Boon node. Nothing team-wide grants a passive or an Elemental Force, and a
   Banner is the ONLY team-wide grant of any kind.
 - **The Tutor: one guaranteed seat in each of acts 4 and 5** (2026-09-07; reshaped 2026-09-13
-  per user direction). `tutorReward` is **the Mentor's beat at the Late band**: pick a hero, and
+  per user direction; act 5's moved to the forced spliced row 2026-09-14). `tutorReward` is **the Mentor's beat at the Late band**: pick a hero, and
   one **Late-tier move is ROLLED** from its pool — un-gated by level, taking no schedule entry,
   spent by being made (`tierMovePool`, `src/run/tutor.ts`; the Mentor is the same function at
   Mid). A guaranteed Late move, ahead of the band or beside it. It was a curated pick of ANY move
   off the pool — the run's strongest reward and its longest screen. It takes a seat **inside** a
   pick-1-of-3 reward row rather than a forced row of its own: that displacement (a Forge, a Boon,
-  a purse) is the only price a reward row can charge. `docs/run-loop.md` "The Tutor".
+  a purse) is the only price a reward row can charge — in act 4; act 5's is the forced
+  spliced seat where the Mentor and Forge sit in earlier acts. `docs/run-loop.md` "The Tutor".
 - **Boons: the `passiveReward` node grants ONE hero a passive** (2026-09-07), the salvage of the
   passive relics — same effects, hero-scoped, so the scope that broke them is gone. 1-of-3 then
   pick a hero, via `grantEventPassive`; it stacks. The pool is every equipment/event passive plus
@@ -458,12 +461,19 @@ what's still unimplemented:
   inherent duals. Which specific type each hero starts mono as is still open (below).
 - Run structure (2026-08-16 sign-off, multi-act extension 2026-08-17): **a Slay the
   Spire-style branching map** — a uniform per-act shape of forced Fight → pick 1 of 3
-  reward → Skirmish → pick 1 of 3 reward → pick 1 of 2 (**Elite or Skirmish** since
+  reward → **the spliced seat** (Mentor in acts 1–3, Forge in 4, Tutor in 5) → pick 1 of 3
+  reward → pick 1 of 2 (**Elite or Skirmish** since
   2026-09-13, both recruitable, each tile previewing the enemy typing it fields from a draw
   seeded off the map so the preview IS the fight, and the two guaranteed to differ in a type —
   `src/run/encounters.ts`; it was Elite or Battle) → pick 1 of 3
   reward → the funnel → an end-of-act **Guardian** boss fight, no path ever skipping a
-  fight, and no path ever losing a choice (`docs/run-loop.md`). **2026-09-08:** a third
+  fight, and no path ever losing a choice (`docs/run-loop.md`). **Three fights an act since
+  2026-09-14** (per user direction): the un-forked Skirmish row between the opener and the
+  fork came out to shorten the run without cutting a Location — it was the fight the sim
+  measured as costing time and nothing else — the reward rows stayed at three, the act's XP
+  was re-sized ×1.25 so par still lands 8/14/19/24/28, and Act 5's seat became a forced
+  Tutor (its in-row seat stays in act 4 only). Measured: Reader 92 → 77 min, Auto 63 → 53,
+  Act 1 clear 51 → 65% (`run-loop.md` "Three fights an act"). **2026-09-08:** a third
   reward row was added and the funnel became a **pick 1 of 2 from act 3** — Guild Hall
   (people and new gear, and the run's only place to SELL) or **Blacksmith** (item slots,
   the Anvil, the Enchanter, all for gold). One verb family per node; the Anvil and
