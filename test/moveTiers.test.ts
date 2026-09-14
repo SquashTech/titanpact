@@ -60,16 +60,20 @@ const TIERED_TYPES: readonly TypeId[] = [
   'Mech',
 ];
 
-/** The level at which band `rank` opens on the default schedule: 1 for Early, midLevel for Mid, lateLevel for Late. */
-function levelForRank(rank: number): number {
-  return rank >= MOVE_TIER_RANK.late ? DEFAULT_SCHEDULE.lateLevel : rank >= MOVE_TIER_RANK.mid ? DEFAULT_SCHEDULE.midLevel : 1;
+/** The level at which band `rank` opens on the hero's own schedule: 1 for Early, midLevel for Mid, lateLevel for Late. */
+function levelForRank(heroId: string, rank: number): number {
+  const schedule = scheduleFor(heroesById[heroId]);
+  return rank >= MOVE_TIER_RANK.late ? schedule.lateLevel : rank >= MOVE_TIER_RANK.mid ? schedule.midLevel : 1;
 }
 
 function entryAtRank(heroId: string, rank: number, unlocked: readonly string[] = []) {
   let run = createRunState(0);
-  run = addRosterEntry(run, { ...createRosterEntry(heroId, heroId, unlocked), xp: xpForLevel(levelForRank(rank)) });
+  run = addRosterEntry(run, { ...createRosterEntry(heroId, heroId, unlocked), xp: xpForLevel(levelForRank(heroId, rank)) });
   return run.roster[0];
 }
+
+const WARDEN = scheduleFor(heroesById.ironWarden);
+const WARDEN_FIRST_OFFER = scheduleEntries(WARDEN).find((e) => e.kind === 'offer')!.level;
 
 function poolOf(entry: RunState['roster'][number]): string[] {
   return levelMovePool(progressionTable, moves, heroesById[entry.heroId], entry);
@@ -125,11 +129,12 @@ test('schedule: the default is the table a generated hero already read — offer
   // A level not on the list is a plain level; an entry is owed once the level reaches it.
   for (let level = 1; level <= MAX_LEVEL; level++) {
     const owed = pendingScheduleEntry(heroesById.ironWarden, { ...entryAtRank('ironWarden', 1), xp: xpForLevel(level) });
-    assert.strictEqual(owed?.level, level >= 4 ? 4 : undefined, `level ${level} with nothing taken owes the first entry once it has reached it`);
+    assert.strictEqual(owed?.level, level >= WARDEN_FIRST_OFFER ? WARDEN_FIRST_OFFER : undefined, `level ${level} with nothing taken owes the first entry once it has reached it`);
   }
+  const wardenEntries = scheduleEntries(WARDEN);
   assert.strictEqual(scheduleEntriesBelow(heroesById.ironWarden, 1), 0);
-  assert.strictEqual(scheduleEntriesBelow(heroesById.ironWarden, 16), 5);
-  assert.strictEqual(scheduleEntriesBelow(heroesById.ironWarden, 30), 9);
+  assert.strictEqual(scheduleEntriesBelow(heroesById.ironWarden, WARDEN.evolutionLevel), wardenEntries.filter((e) => e.level <= WARDEN.evolutionLevel).length);
+  assert.strictEqual(scheduleEntriesBelow(heroesById.ironWarden, MAX_LEVEL), wardenEntries.length);
   assert.strictEqual(scheduleFor(undefined), DEFAULT_SCHEDULE, 'an unauthored hero reads the default');
 });
 
@@ -197,7 +202,7 @@ test('move tiers: every move pool holds something a level-1 hero can be offered'
 
 test('schedule: the band is read at the level the offer lands on, so the level that reaches midLevel offers from Mid', () => {
   // The whole reason that level is the bigger moment rather than one more roll.
-  const atMid = { ...entryAtRank('ironWarden', 1), xp: xpForLevel(DEFAULT_SCHEDULE.midLevel) };
+  const atMid = { ...entryAtRank('ironWarden', 1), xp: xpForLevel(WARDEN.midLevel) };
   const pool = poolOf(atMid);
   assert.ok(pool.includes('rendArmor'), 'the level that reaches midLevel rolls from Mid, not from Early');
   assert.ok(!pool.includes('ironFist'), 'and Early is already expired for it');
@@ -207,31 +212,35 @@ test('schedule: entries are taken in order, one per level-up, and a hero owed se
   // What a raw hire's runway IS (docs/xp-overhaul.md §4): it arrives with the entries below its
   // level un-taken, and each level-up pays the next one until it has caught up.
   const hero = heroesById.ironWarden;
-  let run = addRosterEntry(createRunState(0), { ...createRosterEntry('ironWarden', 'ironWarden', hero.moveIds), xp: xpForLevel(15) });
+  const entries = scheduleEntries(WARDEN);
+  const arriveAt = WARDEN.evolutionLevel - 1;
+  let run = addRosterEntry(createRunState(0), { ...createRosterEntry('ironWarden', 'ironWarden', hero.moveIds), xp: xpForLevel(arriveAt) });
   assert.strictEqual(run.roster[0].scheduleTaken, 0);
   const owed = [];
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < entries.length; i++) {
     const next = pendingScheduleEntry(hero, run.roster[0]);
     if (!next) break;
     owed.push(next.level);
     run = takeScheduleEntry(run, 'ironWarden');
   }
-  assert.deepStrictEqual(owed, [4, 7, 10, 13], 'the four offers below 15, in order — the Evolution at 16 is not yet reached');
+  const below = entries.filter((e) => e.level <= arriveAt).map((e) => e.level);
+  assert.ok(below.length >= 2, 'the fixture needs a backlog');
+  assert.deepStrictEqual(owed, below, `the offers below ${arriveAt}, in order — the Evolution at ${WARDEN.evolutionLevel} is not yet reached`);
   assert.strictEqual(pendingScheduleEntry(hero, run.roster[0]), null, 'and then nothing, until the level moves');
   assert.ok(scheduleRemaining(hero, run.roster[0]), 'but the schedule is not finished');
   run = { ...run, roster: [levelUpEntry(run.roster[0], hero, 1).entry] };
-  assert.strictEqual(pendingScheduleEntry(hero, run.roster[0])?.kind, 'evolution', 'level 16 owes the Evolution');
+  assert.strictEqual(pendingScheduleEntry(hero, run.roster[0])?.kind, 'evolution', `level ${WARDEN.evolutionLevel} owes the Evolution`);
   assert.ok(availableEvolution(progressionTable, hero, run.roster[0]), 'and availableEvolution reads the same entry');
-  const done = { ...run.roster[0], xp: xpForLevel(MAX_LEVEL), scheduleTaken: scheduleEntries(DEFAULT_SCHEDULE).length };
+  const done = { ...run.roster[0], xp: xpForLevel(MAX_LEVEL), scheduleTaken: entries.length };
   assert.strictEqual(scheduleRemaining(hero, done), false, 'past the last entry the hero is finished learning from levels');
   assert.strictEqual(pendingScheduleEntry(hero, done), null);
 });
 
 test('schedule: a dry band pays nothing and the entry is still taken — the next level is what opens the next band', () => {
   const wardenEarly = (progressionTable.moveTiers.ironWarden ?? []).filter((id) => (moves[id].tier ?? 'early') === 'early');
-  const dryAtOne = { ...entryAtRank('ironWarden', 1), xp: xpForLevel(4), offeredMoveIds: wardenEarly };
+  const dryAtOne = { ...entryAtRank('ironWarden', 1), xp: xpForLevel(WARDEN_FIRST_OFFER), offeredMoveIds: wardenEarly };
   assert.deepStrictEqual(poolOf(dryAtOne), [], 'the band really is dry');
-  assert.strictEqual(pendingScheduleEntry(heroesById.ironWarden, dryAtOne)?.level, 4, 'the entry is still owed');
+  assert.strictEqual(pendingScheduleEntry(heroesById.ironWarden, dryAtOne)?.level, WARDEN_FIRST_OFFER, 'the entry is still owed');
   const wholePool = progressionTable.moveTiers.ironWarden ?? [];
   const finished = { ...entryAtRank('ironWarden', MAX_BAND_RANK), offeredMoveIds: wholePool };
   assert.deepStrictEqual(poolOf(finished), [], 'nothing left to teach');
@@ -373,4 +382,25 @@ test("schedule: every hero's schedule is legal — sorted offers, the Evolution 
     void atEvolution;
     void levelOf;
   }
+});
+
+test('schedule: every hero authors its own — none on the default — with 4-7 offers, and the roster turns at different times', () => {
+  // The per-hero pass (docs/xp-overhaul.md §8 phase 4). A hero left on DEFAULT_SCHEDULE would be
+  // indistinguishable from a contract hero of the same level; the spread is the identity the
+  // roster was missing, so both ends of the 10-24 window have to be populated.
+  const evolutions: number[] = [];
+  let offers = 0;
+  for (const hero of Object.values(heroesById)) {
+    assert.ok(hero.schedule, `${hero.id} is on the default schedule`);
+    assert.notStrictEqual(hero.schedule, DEFAULT_SCHEDULE);
+    const count = hero.schedule.offerLevels.filter((l) => l !== hero.schedule!.evolutionLevel).length;
+    assert.ok(count >= 4 && count <= 7, `${hero.id} makes ${count} offers`);
+    offers += count;
+    evolutions.push(hero.schedule.evolutionLevel);
+  }
+  const heroCount = Object.keys(heroesById).length;
+  assert.ok(offers / heroCount < 6, `${(offers / heroCount).toFixed(1)} offers a hero on average — the ladder's nine was 41 decisions a run`);
+  assert.ok(evolutions.filter((l) => l <= 12).length >= 6, 'too few early turners');
+  assert.ok(evolutions.filter((l) => l >= 20).length >= 5, 'too few late turners');
+  assert.ok(new Set(evolutions).size >= 8, 'the roster turns on too few distinct levels');
 });

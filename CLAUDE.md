@@ -56,9 +56,11 @@ don't silently override it.
 > levels AT PAR, aimed at ONE hero through a who screen, paid out on the level-up report; a hero
 > at the cap is refused. **The Scroll ladder is DELETED** (phase 3): moves and the Evolution come
 > from a per-hero **schedule** read off level (`DEFAULT_SCHEDULE`, `src/run/progression.ts`) and
-> paid out on the level-up report — the invariants below say so. Phase 4 (author 36 schedules)
-> and phase 6 (re-fit) are not started; measured, phase 3 cost 8 points of full-clear, all of it
-> the Act 1 wall, and did NOT shorten the clock (§8).
+> paid out on the level-up report — the invariants below say so. **Phase 4 is IN too:** all 36
+> heroes author their own schedule (`src/data/heroes.ts`), 5–6 offers a hero (7 for Glyph) against
+> the default's nine, Evolutions spread 10–24 in three groups. Phase 6 (re-fit) is not started;
+> measured, phase 3 cost 8 points of full-clear (all the Act 1 wall) and did not shorten the
+> clock, and phase 4 cut offers 41 → 26 a run for 3 more points (§8).
 
 ---
 
@@ -209,14 +211,20 @@ don't silently override it.
   with the entries below its level UN-taken and works them off one fight at a time — which is what
   its runway is — while a contract hero arrives with every entry below its level taken
   (`scheduleEntriesBelow`). A dry band pays nothing and the entry is still taken; the next level
-  is what opens the next band. **Every hero is on `DEFAULT_SCHEDULE`** (offers 4/7/10/13/16/19/
-  22/25/28, Mid 10, Evolution 16, Late 21 — the enemy table verbatim, so a starter and a contract
-  hero of one level are one hero) **until phase 4 authors 36**, inside the rules `test/moveTiers`
-  pins: sorted offers, the Evolution in 10–24, Mid before Late, an offer from every band
-  (`movePoolFloor(schedule)`). Per-hero timing is the lever the roster was missing — a sheet that
-  says *evolves at 12* against one that says *evolves at 20* is an identity a player reads before
-  drafting. `growth-overhaul.md` §4's *ceiling behind the spend* guard rail retired with its
-  premise: nothing is held, so nothing needs to sit behind a spend.
+  is what opens the next band. **All 36 heroes author their own schedule** (2026-09-13, phase 4,
+  `src/data/heroes.ts`), inside the rules `test/moveTiers` pins: sorted offers, **4–7 a hero and
+  under 6 on average** (the ladder's open-ended nine measured as 41 decisions a run), the
+  Evolution in 10–24 with both ends populated, Mid before Late, an offer from every band
+  (`movePoolFloor(schedule)`). Three groups by `evolutionLevel`: **early turners** (10–12, the
+  Evolution inside Act 2 — Valor the fight after the tutorial, the brawlers and glass cannons),
+  the **middle** (13–19, Act 3), **late turners** (20–24, Act 4 on — the slow tanks, the Colossus,
+  and the front-loaded casters Marrow and Zenith). Deliberately NOT aligned with the grade
+  archetype: a hero can bloom in stats and turn early, or the reverse. Per-hero timing is the
+  lever the roster was missing — a sheet that says *evolves at 12* against one that says *evolves
+  at 20* is an identity a player reads before drafting. `DEFAULT_SCHEDULE` (the old enemy table,
+  nine offers) is what an unauthored definition — the Titanspawn — reads. `growth-overhaul.md`
+  §4's *ceiling behind the spend* guard rail retired with its premise: nothing is held, so
+  nothing needs to sit behind a spend.
 - **Evolutions come from the schedule's `evolutionLevel` — never from a beat, never from a
   spend** (2026-09-13, superseding the 4th rung). The level that reaches it raises that ONE
   hero's Evolution screen from the level-up report, in place of an offer — the Evolution is that
