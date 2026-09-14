@@ -1,9 +1,12 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
+import { moves } from '../../data/moves';
+import { progressionTable } from '../../data/progression';
 import type { StatKey } from '../../engine/content';
-import { GROWTH_STATS, growthUnitFor, levelOf, type HeroLevelUp } from '../../run/growth';
-import { entryBandRank, scheduleFor } from '../../run/progression';
+import { companionTierStep } from '../../run/companion';
+import { GROWTH_STATS, MAX_LEVEL, growthUnitFor, levelOf, xpProgress, xpToNextLevel, type HeroLevelUp } from '../../run/growth';
+import { availableEvolution, entryBandRank, levelMovePool, pendingScheduleEntry, scheduleFor } from '../../run/progression';
 import type { RosterEntry, RunState } from '../../run/state';
 import { getTypeColor } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -14,6 +17,7 @@ import { RosterPeek } from './RosterPeek';
 import { CompanionScreen } from './CompanionScreen';
 import { EvolutionScreen } from './EvolutionScreen';
 import { MoveLearnedOverlay, MoveOfferOverlay } from './MoveOfferOverlay';
+import { playXpBar, xpBarSegments } from '../shared/xpBar';
 import { useLevelUpFlow } from './levelUpFlow';
 
 interface Props {
@@ -55,24 +59,29 @@ function isBigRoll(points: number, levels: number): boolean {
  * changed what anybody did.
  *
  * Since the XP Overhaul's phase 3 (docs/xp-overhaul.md §4) the report is also where a level PAYS:
- * once the rows have landed, every hero whose level has reached a schedule entry takes it here,
- * in roster order — a move offer over the report, or the Evolution as a screen of its own. It is
- * the one decision kind the report carries, and it was a screen of its own before; it must not
- * gain a second.
+ * every hero whose level has reached a schedule entry takes it here, in roster order — a move
+ * offer over the report, or the Evolution as a screen of its own. It is the one decision kind the
+ * report carries, and it was a screen of its own before; it must not gain a second.
+ *
+ * The payoffs wait for Continue (2026-09-13, per user direction): they used to fire the moment
+ * the last row landed, which put an offer over stat cells still popping in. Now the report is
+ * read in full, each row owed something wears a tag saying so, and Continue starts the payoffs —
+ * one at a time, the report still behind them — and leaves the screen once nobody is owed.
  */
 export function LevelUpScreen({ run, onRunChange, report, onContinue }: Props) {
   const [revealed, setRevealed] = useState(() => (prefersReducedMotion() ? report.length : 0));
   const flow = useLevelUpFlow(run, onRunChange);
-  const [paid, setPaid] = useState(false);
+  const [paying, setPaying] = useState(false);
   const rosterIds = report.map((hero) => hero.rosterId);
+  const landed = revealed >= report.length;
 
-  // The schedule pays out after the rows have landed, one entry at a time: each payoff changes
-  // the run, the run comes back, and the next hero owed is asked. Done when nobody is.
+  // Once Continue is pressed the schedule pays out one entry at a time: each payoff changes the
+  // run, the run comes back, and the next hero owed is asked. Out when nobody is.
   useEffect(() => {
-    if (paid || flow.busy || revealed < report.length) return;
-    if (!flow.next(rosterIds)) setPaid(true);
+    if (!paying || flow.busy) return;
+    if (!flow.next(rosterIds)) onContinue();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [run, paid, flow.busy, revealed]);
+  }, [run, paying, flow.busy]);
 
   useEffect(() => {
     if (prefersReducedMotion()) return;
@@ -90,8 +99,11 @@ export function LevelUpScreen({ run, onRunChange, report, onContinue }: Props) {
   }, []);
 
   // The biggest climb names the beat, not the first row: a hero parked at the cap must not, and
-  // under the XP curve a hero behind par climbs further than the rest on the same grant.
+  // under the XP curve a hero behind par climbs further than the rest on the same grant. The XP
+  // figure is the same for everybody not at the cap, so the largest is the grant.
   const levels = report.reduce((best, hero) => Math.max(best, hero.toLevel - hero.fromLevel), 0);
+  const xpGained = report.reduce((best, hero) => Math.max(best, hero.toXp - hero.fromXp), 0);
+  const allAtCap = report.every((hero) => hero.toLevel >= MAX_LEVEL);
 
   if (flow.grown) {
     return <CompanionScreen run={run} beat={{ kind: 'grown', fromHeroId: flow.grown.fromHeroId, toHeroId: flow.grown.toHeroId }} onContinue={flow.closeGrown} />;
@@ -127,9 +139,12 @@ export function LevelUpScreen({ run, onRunChange, report, onContinue }: Props) {
           </span>
           Level Up!
         </h2>
-        <span className={`level-up-delta${levels <= 0 ? ' is-max' : ''}`}>
-          {levels > 0 ? `+${levels} ${levels === 1 ? 'Level' : 'Levels'}` : 'Max Level'}
-        </span>
+        <div className="level-up-figures">
+          {xpGained > 0 && <span className="level-up-xp-gain">+{xpGained} XP</span>}
+          <span className={`level-up-delta${levels <= 0 ? ' is-max' : ''}`}>
+            {levels > 0 ? `+${levels} ${levels === 1 ? 'Level' : 'Levels'}` : allAtCap ? 'Max Level' : 'No level yet'}
+          </span>
+        </div>
       </header>
 
       {/* Tap the list to land every row at once: this plays after every won fight, so waiting
@@ -137,12 +152,12 @@ export function LevelUpScreen({ run, onRunChange, report, onContinue }: Props) {
       <div className="screen-scroll" onClick={() => setRevealed(report.length)}>
         <div className="level-up-list">
           {report.map((hero, i) => (
-            <LevelUpRow key={hero.rosterId} hero={hero} index={i} shown={i < revealed} />
+            <LevelUpRow key={hero.rosterId} hero={hero} index={i} shown={i < revealed} owed={owedLabel(run, hero.rosterId)} />
           ))}
         </div>
       </div>
 
-      <button className="resolve-button" disabled={!paid} onClick={onContinue}>
+      <button className="resolve-button" disabled={!landed || paying} onClick={() => setPaying(true)}>
         Continue
       </button>
 
@@ -186,17 +201,55 @@ function OfferBox({ run, entry, offer, onResolve, onClose }: OfferBoxProps) {
   );
 }
 
+/**
+ * What a hero's row is still owed off its schedule, as the tag the row wears — read off the LIVE
+ * run, so a tag comes off the moment its payoff is taken. Null when the entry would pay nothing
+ * (a dry band, a body with nowhere to step), which the flow takes silently.
+ */
+function owedLabel(run: RunState, rosterId: string): string | null {
+  const entry = run.roster.find((r) => r.rosterId === rosterId);
+  if (!entry) return null;
+  const hero = rosterHeroes[entry.heroId];
+  const owed = pendingScheduleEntry(hero, entry);
+  if (!owed) return null;
+  if (owed.kind === 'step') return companionTierStep(hero, entry) ? 'Grows!' : null;
+  if (owed.kind === 'evolution') {
+    const node = availableEvolution(progressionTable, hero, entry);
+    return node && node.paths.length > 0 ? 'Evolution!' : null;
+  }
+  return levelMovePool(progressionTable, moves, hero, entry).length > 0 ? 'New Move!' : null;
+}
+
 interface RowProps {
   hero: HeroLevelUp;
   index: number;
   shown: boolean;
+  /** The tag for what this level still owes the hero, or null for nothing. */
+  owed: string | null;
 }
 
-function LevelUpRow({ hero, shown }: RowProps) {
+function LevelUpRow({ hero, shown, owed }: RowProps) {
   const definition = rosterHeroes[hero.heroId];
+  const fillRef = useRef<HTMLElement>(null);
+  const segments = useMemo(() => xpBarSegments(hero.fromXp, hero.toXp), [hero.fromXp, hero.toXp]);
+
+  // The bar sweeps as the row lands — the same sweep the fight result ran, here beside the cells
+  // it paid for. An Ichor's row is the only place its sweep is seen at all.
+  useEffect(() => {
+    const fill = fillRef.current;
+    if (!shown || !fill || segments.length === 0 || prefersReducedMotion()) return;
+    return playXpBar(fill, segments, 0, () => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shown]);
+
   if (!definition) return null;
   const levels = hero.toLevel - hero.fromLevel;
-  const capped = levels <= 0;
+  const atCap = hero.toLevel >= MAX_LEVEL;
+  // Dimmed only at the cap. A row the grant left part-way to its next level is not a miss: the
+  // bar moved, and the bar is the point.
+  const capped = atCap && levels <= 0;
+  const restingWidth = shown && !prefersReducedMotion() && segments.length > 0 ? xpProgress(hero.fromXp) : xpProgress(hero.toXp);
+  const toNext = xpToNextLevel(hero.toXp);
 
   return (
     <div
@@ -209,9 +262,12 @@ function LevelUpRow({ hero, shown }: RowProps) {
       <div className="level-up-body">
         <div className="level-up-ident">
           <span className="level-up-name">{definition.name}</span>
+          {owed && shown && <span className="level-up-owed">{owed}</span>}
           <span className="level-up-level">
             {capped ? (
               <span className="level-up-max">Max</span>
+            ) : levels <= 0 ? (
+              <span className="level-up-from">Lv {hero.toLevel}</span>
             ) : (
               <>
                 <span className="level-up-from">{hero.fromLevel}</span>
@@ -222,6 +278,13 @@ function LevelUpRow({ hero, shown }: RowProps) {
               </>
             )}
           </span>
+        </div>
+
+        <div className="level-up-xp" title={atCap ? `${definition.name} is at the cap` : `${toNext} XP to level ${hero.toLevel + 1}`}>
+          <span className="level-up-xp-track" aria-hidden="true">
+            <i ref={fillRef} className="level-up-xp-fill" style={{ width: `${restingWidth * 100}%` }} />
+          </span>
+          <span className="level-up-xp-next">{atCap ? 'Max' : `${toNext} to Lv ${hero.toLevel + 1}`}</span>
         </div>
 
         <div className="level-up-gains">

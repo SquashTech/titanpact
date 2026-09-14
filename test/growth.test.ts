@@ -19,9 +19,12 @@ import {
   GROWTH_UNIT,
   GROWTH_UNIT_HP,
   GROWTH_UNIT_MANA,
+  ENCOUNTER_XP_BY_ACT,
+  GUARDIAN_XP_MULTIPLIER,
   LEVEL_AFTER_ENCOUNTER,
   MAX_LEVEL,
   MAX_XP,
+  TOTAL_ENCOUNTERS,
   applyEncounterLevels,
   gradeBudgetOf,
   gradeExpectedPoints,
@@ -35,8 +38,11 @@ import {
   levelUpEntry,
   rollGradePoints,
   rollLevelGrowth,
+  xpAfterEncounters,
   xpForEncounter,
   xpForLevel,
+  xpProgress,
+  xpToNextLevel,
   type GrowthGrade,
 } from '../src/run/growth';
 import { STAT_ORDER, type StatKey } from '../src/engine/content';
@@ -163,12 +169,13 @@ test('growth: levelling accumulates onto growthStatGrants and stops at MAX_LEVEL
   assert.deepStrictEqual(capped.gained, {}, 'a hero at the cap gains nothing at all');
 });
 
-test('growth: the curve hits the authored act-end levels, and reaches MAX_LEVEL on the finale', () => {
+test('growth: the curve hits the decided act-end levels, and reaches MAX_LEVEL on the finale', () => {
   // Four encounters an act for acts 1-5, then the finale (docs/growth-overhaul.md §3).
   // FRONT-LOADED 2026-09-10 (phase 6) from 6/12/18/23/28: acts 1-2 measured as the run's wall
   // and their enemy stat steps were already zero, so the only lever left was the player's own
-  // curve. Enemy levels are derived from this table, so they moved with it — but their rank and
-  // Evolution thresholds are absolute, so the lift lands on the player alone.
+  // curve. Enemy levels are derived from par, so they moved with it — but their rank and
+  // Evolution thresholds are absolute, so the lift lands on the player alone. Par is DERIVED from
+  // the authored XP table now (ENCOUNTER_XP_BY_ACT); the act-end figures are what it is sized to.
   assert.deepStrictEqual(
     [4, 8, 12, 16, 20, 21].map(levelAfterEncounters),
     [8, 14, 19, 24, 28, 30],
@@ -258,23 +265,59 @@ test('growth: XP is the cube of the level, and level is read back off it exactly
   assert.strictEqual(levelOf(soloRun().roster[0]), 1, 'a fresh entry is level 1');
 });
 
-test('growth: encounter XP is DERIVED from the level table — a hero at par walks it to the point', () => {
-  // The table stays the single authored object; the XP is what it costs to keep it true.
-  let xp = xpForLevel(1);
-  for (let n = 1; n < LEVEL_AFTER_ENCOUNTER.length; n++) {
-    xp += xpForEncounter(n);
-    assert.strictEqual(xp, xpForLevel(levelAfterEncounters(n)), `encounter ${n} lands exactly on the table`);
+test('growth: encounter XP is AUTHORED by act, the Guardian pays double, and par is read off the sum', () => {
+  // 2026-09-13, per user direction: the number a fight pays is the authored object and par is
+  // whatever the cube makes of it — the reverse of the phase-1 build, where XP was sized to land
+  // a hero at par exactly ON a level, so the bar filled to the top every fight and read as nothing.
+  assert.strictEqual(ENCOUNTER_XP_BY_ACT.length, 6, 'five acts and the finale');
+  assert.strictEqual(TOTAL_ENCOUNTERS, 21);
+  for (let act = 0; act < 5; act++) {
+    const first = act * 4 + 1;
+    for (let n = first; n < first + 3; n++) assert.strictEqual(xpForEncounter(n), ENCOUNTER_XP_BY_ACT[act], `encounter ${n} pays act ${act + 1}'s figure`);
+    assert.strictEqual(xpForEncounter(first + 3), ENCOUNTER_XP_BY_ACT[act] * GUARDIAN_XP_MULTIPLIER, `act ${act + 1}'s Guardian pays double`);
   }
-  assert.strictEqual(xp, MAX_XP, 'the whole table pays exactly the bar');
-  assert.strictEqual(xpForEncounter(999), 0, 'and nothing past it');
+  assert.strictEqual(xpForEncounter(TOTAL_ENCOUNTERS), ENCOUNTER_XP_BY_ACT[5], 'the finale is one fight, not a Guardian');
+  assert.strictEqual(xpForEncounter(0), 0);
+  assert.strictEqual(xpForEncounter(999), 0, 'nothing past the finale');
+  for (let act = 1; act < ENCOUNTER_XP_BY_ACT.length; act++) {
+    assert.ok(ENCOUNTER_XP_BY_ACT[act] > ENCOUNTER_XP_BY_ACT[act - 1], 'a later act pays more a fight: the cube gets steeper');
+  }
+
+  assert.strictEqual(xpAfterEncounters(0), xpForLevel(1));
+  assert.strictEqual(xpAfterEncounters(TOTAL_ENCOUNTERS), MAX_XP, 'the whole table reaches the bar');
+  assert.strictEqual(LEVEL_AFTER_ENCOUNTER.length, TOTAL_ENCOUNTERS + 1);
+  for (let n = 1; n <= TOTAL_ENCOUNTERS; n++) {
+    assert.ok(levelAfterEncounters(n) >= levelAfterEncounters(n - 1), 'par never goes backwards');
+  }
+  // The point of the change: a hero at par is NOT always sitting on a level.
+  const partWay = Array.from({ length: TOTAL_ENCOUNTERS }, (_, i) => xpAfterEncounters(i + 1)).filter((xp) => xp < MAX_XP && xp !== xpForLevel(levelForXp(xp)));
+  assert.ok(partWay.length >= TOTAL_ENCOUNTERS / 2, `only ${partWay.length} of ${TOTAL_ENCOUNTERS} encounters leave the bar part-way`);
 
   // Through the real grant, not just the arithmetic: a solo roster at par after every win.
   let run = soloRun();
-  for (let n = 1; n < LEVEL_AFTER_ENCOUNTER.length; n++) {
+  for (let n = 1; n <= TOTAL_ENCOUNTERS; n++) {
     run = grantEncounterLevels({ ...run, encountersWon: n }, heroes, NEVER);
+    assert.strictEqual(run.roster[0].xp, xpAfterEncounters(n), `holding par's XP after encounter ${n}`);
     assert.strictEqual(levelOf(run.roster[0]), levelAfterEncounters(n), `at par after encounter ${n}`);
-    assert.strictEqual(run.roster[0].xp, xpForLevel(levelAfterEncounters(n)), 'sitting exactly on the level, not part-way to the next');
   }
+});
+
+test('growth: the bar reads how far into a level the XP sits, and what the next level still costs', () => {
+  assert.strictEqual(xpProgress(xpForLevel(1)), 0);
+  assert.strictEqual(xpProgress(xpForLevel(4)), 0, 'exactly on a level is an empty bar');
+  assert.strictEqual(xpToNextLevel(xpForLevel(4)), xpForLevel(5) - xpForLevel(4));
+  const half = xpForLevel(4) + (xpForLevel(5) - xpForLevel(4)) / 2;
+  assert.ok(Math.abs(xpProgress(half) - 0.5) < 1e-9);
+  assert.strictEqual(xpToNextLevel(xpForLevel(5) - 1), 1);
+  assert.strictEqual(xpProgress(MAX_XP), 1, 'a full bar at the cap');
+  assert.strictEqual(xpToNextLevel(MAX_XP), 0, 'and nothing owed');
+
+  // The report carries both ends of the bar, so the screen never re-derives them off a roster the roll has already moved.
+  const run = { ...soloRun(), encountersWon: 1 };
+  const { run: after, report } = applyEncounterLevels(run, heroes, ALWAYS);
+  assert.strictEqual(report[0].fromXp, xpForLevel(1));
+  assert.strictEqual(report[0].toXp, after.roster[0].xp);
+  assert.strictEqual(report[0].toXp - report[0].fromXp, xpForEncounter(1));
 });
 
 test('growth: a grant rolls growth once per level crossed, whatever size the grant is', () => {
@@ -314,13 +357,17 @@ test('growth: a hero that joins late is behind — and the convex curve closes t
   assert.ok(levelOf(recruit) < levelOf(vet), 'and is still behind');
   assert.ok(levelOf(vet) - levelOf(recruit) < gapOnArrival, 'but by less than it arrived behind');
 
-  let gap = levelOf(vet) - levelOf(recruit);
-  for (let n = 10; n < LEVEL_AFTER_ENCOUNTER.length; n++) {
+  // In XP the gap is a constant (both get the same grants), so in the cube's terms it only ever
+  // shrinks; in whole levels it can wobble by one where a level boundary falls between them, so
+  // what is pinned is the envelope — never further behind than on arrival, and closer at the end.
+  const gapAfterFirst = levelOf(vet) - levelOf(recruit);
+  let gap = gapAfterFirst;
+  for (let n = 10; n <= TOTAL_ENCOUNTERS; n++) {
     run = grantEncounterLevels({ ...run, encountersWon: n }, heroes, ALWAYS);
-    const next = levelOf(run.roster[0]) - levelOf(run.roster[1]);
-    assert.ok(next <= gap, `encounter ${n}: the gap widened from ${gap} to ${next}`);
-    gap = next;
+    gap = levelOf(run.roster[0]) - levelOf(run.roster[1]);
+    assert.ok(gap <= gapOnArrival, `encounter ${n}: the gap is ${gap}, wider than the ${gapOnArrival} it arrived behind`);
   }
+  assert.ok(gap < gapOnArrival, 'the gap has closed over the run');
   assert.ok(gap > 0, 'a recruit that missed eight wins does not reach the cap with the veteran');
 });
 

@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState, type AnimationEvent, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { CONSUMABLE_NAMES, type ConsumableKind } from '../../run/consumables';
-import { MAX_XP, levelForXp, levelOf } from '../../run/growth';
+import { MAX_LEVEL, MAX_XP, levelForXp, levelOf, xpForLevel, xpProgress } from '../../run/growth';
 import type { RosterEntry } from '../../run/state';
 import { ItemEffectChips, ItemPiece, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import { ItemDetailOverlay } from '../shared/ItemDossier';
@@ -11,6 +11,7 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { NODE_TINT_GOLD, NodeMotes } from '../shared/NodeStage';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { ResourceGlyph } from '../shared/RunGlyph';
+import { playXpBar, xpBarSegments, xpBarTickTimes, xpBarTotalMs } from '../shared/xpBar';
 import { getTypeColor } from './typeColors';
 
 /** A loss wears the enemy's red; a win, the run's gold — the Location's own tint stays on the field behind. */
@@ -18,8 +19,6 @@ const TINT_LOSS = '217, 83, 79';
 
 /** The strike lands and is read before anything under it moves. */
 const TITLE_HOLD_MS = 480;
-/** One level's worth of bar. Roster-wide, so every bar runs the same clock. */
-const FILL_MS = 460;
 /** A wave down the row rather than six bars in lockstep — small enough that they still read as ONE grant. */
 const HERO_STAGGER_MS = 35;
 const CAPTION_LEAD_MS = 60;
@@ -79,10 +78,13 @@ export function FightResultOverlay({
   const won = outcome === 'win';
   const showParty = won && xpGained > 0 && roster.length > 0;
   // The same XP lands a different number of levels on each hero — a hero behind par climbs
-  // further — so the bar count is per hero and the caption reads the spread.
+  // further, one part-way to a level tops out sooner — so the bar count is per hero and the
+  // caption reads the spread. The longest bar sets the clock.
   const fillsByHero = roster.map((entry) => levelsCrossed(entry, xpGained));
   const mostFills = Math.max(0, ...fillsByHero);
   const fewestFills = Math.min(mostFills, ...fillsByHero.filter((n) => n > 0));
+  const barsByHero = roster.map((entry) => xpBarSegments(entry.xp, entry.xp + xpGained));
+  const longestBar = barsByHero.reduce((best, bar) => (xpBarTotalMs(bar) > xpBarTotalMs(best) ? bar : best), barsByHero[0] ?? []);
 
   const ledger = useMemo(() => {
     const rows: { key: string; render: (shown: boolean) => ReactNode }[] = [];
@@ -113,11 +115,12 @@ export function FightResultOverlay({
     if (showParty) {
       at(t, () => setStage((s) => Math.max(s, STAGE_FILL)));
       // One pip a level for the whole roster, not one a hero: six bars landing together is one
-      // event, and six pips inside 45ms is a machine.
-      for (let level = 0; level < mostFills; level++) {
-        at(t + FILL_MS * (level + 1), () => playSfx('xp.orb', { pitch: 1 + level * 0.12 }));
-      }
-      t += FILL_MS * mostFills + HERO_STAGGER_MS * (roster.length - 1) + CAPTION_LEAD_MS;
+      // event, and six pips inside 45ms is a machine. Timed off the longest bar; a hero on a
+      // different footing ticks a beat off it, silently.
+      xpBarTickTimes(longestBar).forEach((tick, level) => {
+        at(t + tick, () => playSfx('xp.orb', { pitch: 1 + level * 0.12 }));
+      });
+      t += xpBarTotalMs(longestBar) + HERO_STAGGER_MS * (roster.length - 1) + CAPTION_LEAD_MS;
       at(t, () => setStage((s) => Math.max(s, STAGE_CAPTION)));
     }
     t += LEDGER_LEAD_MS;
@@ -169,11 +172,18 @@ export function FightResultOverlay({
                 />
               ))}
             </div>
-            <span className={`fight-result-caption${stage >= STAGE_CAPTION ? ' is-shown' : ''}`}>
-              {mostFills === 0
-                ? 'Heroes at max'
-                : `Heroes +${fewestFills === mostFills ? mostFills : `${fewestFills}–${mostFills}`} ${mostFills === 1 ? 'Level' : 'Levels'}`}
-            </span>
+            <div className="fight-result-captions">
+              {/* The number itself, as the bars start: XP is what a fight pays, and the level is what
+                  the cube makes of it per hero. */}
+              <span className={`fight-result-xp-gain${stage >= STAGE_FILL ? ' is-shown' : ''}`}>+{xpGained} XP</span>
+              <span className={`fight-result-caption${stage >= STAGE_CAPTION ? ' is-shown' : ''}`}>
+                {mostFills === 0
+                  ? roster.every((entry) => levelOf(entry) >= MAX_LEVEL)
+                    ? 'Heroes at max'
+                    : 'No level yet'
+                  : `Heroes +${fewestFills === mostFills ? mostFills : `${fewestFills}–${mostFills}`} ${mostFills === 1 ? 'Level' : 'Levels'}`}
+              </span>
+            </div>
           </section>
         )}
 
@@ -223,38 +233,51 @@ function levelsCrossed(entry: RosterEntry, xp: number): number {
 }
 
 /**
- * One hero: the figure, its level, and the bar under it. The bar is a CSS animation iterated
- * once a level, and each iteration boundary ticks the badge — so the number climbs on exactly
- * the frame the bar tops out, without a timer per hero per level.
+ * One hero: the figure, its level, and the bar under it. The bar starts wherever this hero's XP
+ * already stood in its level and sweeps to wherever the grant leaves it — through the top once
+ * a level, ticking the badge on exactly the frame it does (shared/xpBar.ts). A grant that lands
+ * no level still moves the bar; that partial IS the information.
  */
 function PartyMember({ entry, index, xp, fielded, filling, landed }: MemberProps) {
   const definition = rosterHeroes[entry.heroId];
   const [fills, setFills] = useState(0);
+  const fillRef = useRef<HTMLElement>(null);
+  const segments = useMemo(() => xpBarSegments(entry.xp, entry.xp + xp), [entry.xp, xp]);
+
+  useEffect(() => {
+    const fill = fillRef.current;
+    if (!filling || landed || !fill || segments.length === 0) return;
+    return playXpBar(fill, segments, index * HERO_STAGGER_MS, (n) => setFills(n));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filling, landed]);
+
+  // Tapped through: whatever was mid-sweep gives way to the resting width.
+  useEffect(() => {
+    if (landed) fillRef.current?.getAnimations().forEach((a) => a.cancel());
+  }, [landed]);
+
   if (!definition) return null;
 
   const fromLevel = levelOf(entry);
+  const toXp = Math.min(MAX_XP, entry.xp + xp);
   const fillsToRun = levelsCrossed(entry, xp);
   const toLevel = fromLevel + fillsToRun;
-  const capped = fillsToRun <= 0;
+  const capped = fromLevel >= MAX_LEVEL;
   const shownFills = landed ? fillsToRun : Math.min(fills, fillsToRun);
   const shownLevel = fromLevel + shownFills;
-  const barDone = capped || landed || shownFills >= fillsToRun;
-
-  const onFillEvent = (e: AnimationEvent<HTMLElement>) => {
-    if (e.animationName !== 'fight-result-xp-fill') return;
-    setFills((n) => Math.min(fillsToRun, n + 1));
-  };
+  const restingWidth = landed || segments.length === 0 ? xpProgress(toXp) : xpProgress(entry.xp);
+  const nextCost = toLevel >= MAX_LEVEL ? null : xpForLevel(toLevel + 1);
 
   return (
     <div
-      className={`fight-result-hero${fielded ? '' : ' is-reserve'}${capped ? ' is-capped' : ''}${barDone ? ' is-done' : ''}`}
+      className={`fight-result-hero${fielded ? '' : ' is-reserve'}${capped ? ' is-capped' : ''}${landed || capped ? ' is-done' : ''}`}
       style={
         {
           '--plate-color': getTypeColor(definition.types[0]),
           '--hero-delay': `${index * HERO_STAGGER_MS}ms`,
         } as CSSProperties
       }
-      title={`${definition.name} — Level ${fromLevel}${capped ? ' (max)' : ` → ${toLevel}`}`}
+      title={`${definition.name} — Level ${fromLevel}${capped ? ' (max)' : ` → ${toLevel}`}${nextCost ? ` · ${toXp} / ${nextCost} XP` : ''}`}
     >
       <div className="fight-result-figure">
         {shownFills > 0 && !landed && <span key={shownFills} className="fight-result-figure-bloom" aria-hidden="true" />}
@@ -275,15 +298,7 @@ function PartyMember({ entry, index, xp, fielded, filling, landed }: MemberProps
       </span>
 
       <span className="fight-result-xp" aria-hidden="true">
-        {!capped && filling && !barDone && (
-          <i
-            className="fight-result-xp-fill is-running"
-            style={{ '--fills': fillsToRun } as CSSProperties}
-            onAnimationIteration={onFillEvent}
-            onAnimationEnd={onFillEvent}
-          />
-        )}
-        {(capped || barDone) && <i className="fight-result-xp-fill is-full" />}
+        <i ref={fillRef} className="fight-result-xp-fill" style={{ width: `${restingWidth * 100}%` }} />
       </span>
 
       {!fielded && <span className="fight-result-reserve-tag">Reserve</span>}

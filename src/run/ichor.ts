@@ -78,6 +78,8 @@ export function grantIchor(
     heroId: entry.heroId,
     fromLevel: levelOf(entry),
     toLevel: levelOf(fed),
+    fromXp: entry.xp,
+    toXp: fed.xp,
     gained,
   };
   return { run: { ...run, roster: run.roster.map((r) => (r.rosterId === rosterId ? fed : r)) }, report };

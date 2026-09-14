@@ -24976,6 +24976,27 @@ textarea,
   }
 }
 
+/* The two figures under the title: the XP the fight paid, and how many levels that came to.
+   The XP is the same for every hero and the louder of the two; the levels pill answers it. */
+.level-up-figures {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.level-up-xp-gain {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: #fff;
+  text-shadow:
+    0 0 10px rgba(var(--node-rgb), 0.9),
+    0 2px 2px rgba(0, 0, 0, 0.7);
+  animation: level-up-strike 0.42s cubic-bezier(0.2, 1.4, 0.4, 1) 0.24s both;
+}
+
 /* How many levels. A pill, arriving a beat after the title so the two read as call and
    answer rather than as one block. */
 .level-up-delta {
@@ -25177,6 +25198,73 @@ textarea,
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+/* What the level still owes this hero — a move, its Evolution, the companion's next body — worn
+   on the row until Continue pays it, so the offer that follows is never a surprise. */
+.level-up-owed {
+  flex: none;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--node-rgb), 0.6);
+  background: rgba(var(--node-rgb), 0.18);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: rgb(var(--node-rgb));
+  animation:
+    level-up-delta-pop 0.4s cubic-bezier(0.2, 1.5, 0.4, 1) 0.5s both,
+    level-up-owed-pulse 1.8s ease-in-out 0.9s infinite;
+}
+
+@keyframes level-up-owed-pulse {
+  50% {
+    box-shadow: 0 0 10px rgba(var(--node-rgb), 0.55);
+  }
+}
+
+/* The XP line: the bar, then what the next level still costs. The bar starts where the hero's
+   XP already stood and sweeps to where the grant left it (shared/xpBar.ts), so a row that
+   landed no level still shows what the fight was worth. */
+.level-up-xp {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.level-up-xp-track {
+  position: relative;
+  flex: 1 1 auto;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--well);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.7), 0 1px 0 rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+.level-up-xp-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--hp-high) 70%, #fff) 0%, var(--hp-high) 60%, color-mix(in srgb, var(--hp-high) 80%, #fff));
+  box-shadow: 0 0 6px color-mix(in srgb, var(--hp-high) 70%, transparent);
+}
+
+.level-up-row.is-capped .level-up-xp-fill {
+  background: linear-gradient(90deg, #6f7688, #8a91a3);
+  box-shadow: none;
+}
+
+.level-up-xp-next {
+  flex: none;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--text-dim);
 }
 
 .level-up-gains {
@@ -26366,10 +26454,11 @@ textarea,
   color: var(--text-dim);
 }
 
-/* The bar: a sunken track, a fill in the outcome's gold. It has no XP to
-   report — levels are per encounter, not per point — so it is a telling
-   device: one sweep per level, and the sweep is what the report screen's
-   stat cells are the consequence of. */
+/* The bar: a sunken track, a fill in the outcome's gold. It reports the
+   hero's XP for real — it starts wherever the hero already stood in its
+   level and ends wherever the grant leaves it, topping out once a level
+   (shared/xpBar.ts drives the sweeps). The width is inline; the sweeps are
+   Web Animations over it. */
 .fight-result-xp {
   position: relative;
   display: block;
@@ -26384,33 +26473,12 @@ textarea,
 .fight-result-xp-fill {
   position: absolute;
   inset: 0;
-  width: 0;
   border-radius: 999px;
   background: linear-gradient(90deg, color-mix(in srgb, rgb(var(--result-rgb)) 70%, #fff) 0%, rgb(var(--result-rgb)) 60%, color-mix(in srgb, rgb(var(--result-rgb)) 80%, #fff));
   box-shadow: 0 0 8px rgba(var(--result-rgb), 0.7);
 }
 
-/* Iterated once a level — `--fills` from the component — with a hard reset
-   at each boundary, which is the moment an XP bar tops out and what the
-   badge's onAnimationIteration keys off. */
-.fight-result-xp-fill.is-running {
-  animation: fight-result-xp-fill 460ms cubic-bezier(0.3, 0, 0.2, 1) var(--hero-delay, 0ms) var(--fills, 1) both;
-}
-
-@keyframes fight-result-xp-fill {
-  from {
-    width: 0;
-  }
-  to {
-    width: 100%;
-  }
-}
-
-.fight-result-xp-fill.is-full {
-  width: 100%;
-}
-
-.fight-result-hero.is-capped .fight-result-xp-fill.is-full {
+.fight-result-hero.is-capped .fight-result-xp-fill {
   background: linear-gradient(90deg, #6f7688, #8a91a3);
   box-shadow: none;
 }
@@ -26430,6 +26498,34 @@ textarea,
 }
 
 /* "Heroes +1 Level", stated once the bars have shown it. */
+/* The XP figure over the level caption: the number a fight pays, then what
+   the cube made of it. Stacked, and the figure is the louder of the two —
+   it is the one that is the same for everybody. */
+.fight-result-captions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.fight-result-xp-gain {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: #fff;
+  text-shadow:
+    0 0 10px rgba(var(--result-rgb), 0.9),
+    0 2px 2px rgba(0, 0, 0, 0.7);
+  opacity: 0;
+}
+
+.fight-result-xp-gain.is-shown {
+  animation: fight-result-lv-strike 0.42s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  opacity: 1;
+}
+
 .fight-result-caption {
   display: inline-flex;
   align-items: center;
@@ -26640,6 +26736,7 @@ textarea,
   }
 
   .fight-result-ledger-slot,
+  .fight-result-xp-gain,
   .fight-result-caption {
     opacity: 1;
     transform: none;

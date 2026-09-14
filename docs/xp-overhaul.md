@@ -61,10 +61,20 @@ curve. Pokémon's Medium Fast is the baseline:
 
 > `XP(L) = L³` — the cumulative XP to *be* level L. 27,000 to the cap of 30.
 
-**Encounter XP is derived from the authored level table, not the other way round.** The decided
-pacing is a level per encounter (`LEVEL_AFTER_ENCOUNTER`), so encounter *k* pays exactly
-`XP(L_k) − XP(L_{k−1})`: a hero at par walks the authored table to the point. The table stays the
-single authored object; the XP amounts are what it costs to keep it true.
+**Encounter XP is the authored object; par is derived from it** (2026-09-13, per user direction —
+reversing the phase-1 build, which derived encounter XP from `LEVEL_AFTER_ENCOUNTER` so that a hero
+at par landed exactly ON a level every fight). That build kept par identical to the point and was
+invisible for exactly that reason: the bar filled to the top every time, XP was never a number the
+player saw, and a fight paying two levels and the next paying one read as arbitrary. Now
+`ENCOUNTER_XP_BY_ACT` — 120 / 450 / 850 / 1400 / 1600 a fight by act, the finale 5000 — is what a
+win pays, **the Guardian pays ×2**, a level costs what the cube says, and the bar lands wherever that
+leaves it. Sized so par still reaches 8 / 14 / 19 / 24 / 28 / 30 at the act ends (everything
+downstream reads those); inside an act par walks 4/6/7/8, 10/11/12/14, 15/16/17/19, 20/21/22/24,
+25/25/26/28 — one fight in Act 5 pays no level at par, and its bar shows why. **The bar is real:**
+the fight result sweeps each hero's bar from where its XP stood to where the grant left it,
+topping out once a level (`src/view/shared/xpBar.ts`), and the level-up report repeats the sweep
+beside the cells it paid for, with *N to Lv X* under it. A partial bar is the normal state and the
+whole of how catch-up reads.
 
 **Roster-wide and automatic**, benched included, as today. No pool, no allocation.
 
@@ -399,7 +409,7 @@ Each is a sign-off. In force until the phase that replaces it lands.
 
 | Today (`CLAUDE.md`) | Becomes | Phase |
 |---|---|---|
-| Levels are automatic and roster-wide; the curve is authored as levels | Still automatic and roster-wide; the curve is authored as levels and *paid* in XP on a convex scale | 1 |
+| Levels are automatic and roster-wide; the curve is authored as levels | Still automatic and roster-wide; **the curve is authored as XP a fight pays** (by act, Guardian ×2) and par is derived from it — revised 2026-09-13 from "authored as levels, paid in XP sized to land on them" | 1 |
 | A level grant is a delta; a late hero stays behind **permanently** | XP is the delta; a convex curve closes the gap slowly on its own, and Ichor closes it on purpose | 1 |
 | There is no per-hero stat-investment currency (Gems deleted) | Still no *stat* currency. Ichor is per-hero **level** investment — it buys a story, not a number — and it is the focus dial §3 dropped, in node form | 2 |
 | Moves come from ONE faucet: Mastery Scrolls, gated by Rank | Moves come from ONE faucet: **levels**, on a per-hero schedule, rolled from the band the level opens | 3 |

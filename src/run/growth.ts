@@ -3,10 +3,10 @@
 // that hero's authored grade for it. There is no pool, no allocation and no screen: Level is what
 // a hero IS, and the only lane of growth the player never touches.
 //
-// Level is DERIVED from XP on a convex curve (docs/xp-overhaul.md §2, phase 1): a won encounter
-// pays the roster XP, not levels, and the same XP is worth more levels to a hero below par than
-// to one above it. At par the two are indistinguishable — the encounter's XP is exactly what the
-// authored level table costs — so only a hero off par can tell the curve changed.
+// Level is DERIVED from XP on a convex curve (docs/xp-overhaul.md §2): a won encounter pays the
+// roster an AUTHORED amount of XP by act (ENCOUNTER_XP_BY_ACT), a level costs what the cube says,
+// and the same XP is worth more levels to a hero below par than to one above it. Par is whatever
+// that adds up to, and a bar part-way to the next level is the normal state, not an edge case.
 //
 // Roster-wide rather than participation-based (Fire Emblem's actual model) on purpose. Per-hero XP
 // produces the runaway where your best four level, your sideboard rots, and by Act 4 you cannot
@@ -125,39 +125,10 @@ export function gradeBudgetOf(grades: GrowthGrades): number {
   return GROWTH_STATS.reduce((total, stat) => total + GRADE_COST[grades[stat]], 0);
 }
 
-// --- The level curve ---
-
-/** Acts 1-5 each run four: the forced fight, the Skirmish, the Elite-or-Battle, the Guardian. */
-export const ENCOUNTERS_PER_ACT = 4;
-
-/**
- * Cumulative level after N won encounters, roster-wide. Authored outright rather than derived
- * from a per-fight rate: the act-end figures are the decided shape (6 / 12 / 18 / 23 / 28 / 30,
- * docs/growth-overhaul.md §3) and a rate would only approximate them. Four encounters an act
- * for acts 1-5 — forced fight, Skirmish, Elite-or-Battle, Guardian — then the finale.
- *
- * Level 5 lands on the THIRD encounter of act 1, which is where the Evolution surfaces until
- * phase 4 moves it to the Crucible.
- *
- * Every figure is a first-pass placeholder for playtest; only the shape is decided.
- */
-export const LEVEL_AFTER_ENCOUNTER: readonly number[] = [
-  1, // nothing won yet
-  3, 5, 7, 8, // act 1
-  10, 11, 13, 14, // act 2
-  16, 17, 18, 19, // act 3
-  21, 22, 23, 24, // act 4
-  25, 26, 27, 28, // act 5
-  30, // the finale
-];
-
-/** The curve's level at `encountersWon`, flat at MAX_LEVEL past the end of the table. */
-export function levelAfterEncounters(encountersWon: number): number {
-  const at = Math.max(0, Math.min(encountersWon, LEVEL_AFTER_ENCOUNTER.length - 1));
-  return Math.min(MAX_LEVEL, LEVEL_AFTER_ENCOUNTER[at]);
-}
-
 // --- The XP curve ---
+
+/** Acts 1-5 each run four: the forced fight, the Skirmish, the Elite-or-Skirmish, the Guardian. */
+export const ENCOUNTERS_PER_ACT = 4;
 
 /**
  * The cumulative XP to BE a level — Pokémon's Medium Fast, `L³`, 27,000 to the cap
@@ -186,18 +157,73 @@ export function levelOf(entry: Pick<RosterEntry, 'xp'>): number {
   return levelForXp(entry.xp);
 }
 
+/** How far into its level `xp` sits, 0..1 — the bar. 1 at the cap: full, with nowhere to go. */
+export function xpProgress(xp: number): number {
+  const level = levelForXp(xp);
+  if (level >= MAX_LEVEL) return 1;
+  const floor = xpForLevel(level);
+  return Math.max(0, Math.min(1, (xp - floor) / (xpForLevel(level + 1) - floor)));
+}
+
+/** XP still owed before the next level — 0 at the cap. */
+export function xpToNextLevel(xp: number): number {
+  const level = levelForXp(xp);
+  return level >= MAX_LEVEL ? 0 : xpForLevel(level + 1) - xp;
+}
+
 /**
- * XP one won encounter pays every roster hero. DERIVED from the level table, never authored
- * beside it: encounter N pays exactly what the curve charges from the table's level at N−1 to its
- * level at N, so a hero at par walks the authored table to the point. Still a DELTA, never a
- * target — a hero that joined late missed the grants before it and is behind — but the same XP
- * climbs further from lower down, so the gap closes slowly on its own. "Arrives underlevelled"
- * stays a real archetype for a Guild Hall hire; "permanently" became "until the player spends a
- * node on it" (docs/xp-overhaul.md §2).
+ * XP a won encounter pays every roster hero, by act — the AUTHORED object (2026-09-13, per user
+ * direction, reversing docs/xp-overhaul.md §2's "derived from the level table"). A level table
+ * paid out in XP sized to land a hero at par exactly ON a level filled the bar to the top every
+ * fight, so XP was a number nobody ever saw and a level-up count with no rhyme to it. Now the
+ * number is what a fight pays, a level costs what the cube says, and the bar lands wherever that
+ * leaves it — sometimes part-way, which is how a player reads that a hero behind par is climbing
+ * faster and that the next fight is worth more than the last. Par is DERIVED
+ * (`levelAfterEncounters`) and no longer authored.
+ *
+ * Sized so par still reaches the decided act-end levels — 8 / 14 / 19 / 24 / 28 / 30 — which
+ * `ENEMY_LEVEL_BY_ACT`, the Guild Hall's lag and the difficulty re-fit all read. Inside an act the
+ * walk changed: par is 4/6/7/8, 10/11/12/14, 15/16/17/19, 20/21/22/24, 25/25/26/28 — one fight
+ * in act 5 pays no level at par, and its bar shows why. Index is the act, 0-based; the last entry
+ * is the finale's one fight. First-pass playtest figures.
+ */
+export const ENCOUNTER_XP_BY_ACT: readonly number[] = [120, 450, 850, 1400, 1600, 5000];
+
+/** The Guardian pays this many ordinary encounters' worth — the one place a fight's kind prices its XP. */
+export const GUARDIAN_XP_MULTIPLIER = 2;
+
+/** Won encounters in a full clear: four an act for acts 1-5, then the finale's one fight. Nothing past it pays. */
+export const TOTAL_ENCOUNTERS = ENCOUNTERS_PER_ACT * (ENCOUNTER_XP_BY_ACT.length - 1) + 1;
+
+/**
+ * XP the Nth won encounter of a run pays every roster hero (1-based), read off the count rather
+ * than the node: the map guarantees four encounters an act with the Guardian fourth, so the count
+ * IS the act and the kind, and the figure is known before the fight rather than rolled after it.
+ * A DELTA, never a target — a hero that joined late missed the grants before it and is behind —
+ * but the same XP climbs further from lower down the cube, so the gap closes slowly on its own.
  */
 export function xpForEncounter(encountersWon: number): number {
-  return Math.max(0, xpForLevel(levelAfterEncounters(encountersWon)) - xpForLevel(levelAfterEncounters(encountersWon - 1)));
+  if (encountersWon < 1 || encountersWon > TOTAL_ENCOUNTERS) return 0;
+  const act = Math.floor((encountersWon - 1) / ENCOUNTERS_PER_ACT);
+  const base = ENCOUNTER_XP_BY_ACT[act];
+  const guardian = act < ENCOUNTER_XP_BY_ACT.length - 1 && encountersWon % ENCOUNTERS_PER_ACT === 0;
+  return guardian ? base * GUARDIAN_XP_MULTIPLIER : base;
 }
+
+/** Par, in XP: what a hero that never missed a win holds after `encountersWon`. */
+export function xpAfterEncounters(encountersWon: number): number {
+  let xp = xpForLevel(1);
+  for (let n = 1; n <= Math.min(encountersWon, TOTAL_ENCOUNTERS); n++) xp += xpForEncounter(n);
+  return Math.min(MAX_XP, xp);
+}
+
+/** Par, in levels — DERIVED from the XP table, never authored beside it. */
+export function levelAfterEncounters(encountersWon: number): number {
+  return levelForXp(xpAfterEncounters(encountersWon));
+}
+
+/** Par after each encounter, index = encounters won. Derived; here so the tests and the docs can read the walk at a glance. */
+export const LEVEL_AFTER_ENCOUNTER: readonly number[] = Array.from({ length: TOTAL_ENCOUNTERS + 1 }, (_, n) => levelAfterEncounters(n));
 
 // --- The roll ---
 
@@ -262,6 +288,9 @@ export interface HeroLevelUp {
   fromLevel: number;
   /** Equal to `fromLevel` for a hero already at MAX_LEVEL; it is still on the roster and still reported. */
   toLevel: number;
+  /** The bar's two ends: where the XP stood and where the grant left it. Capped at MAX_XP, so a hero at the cap gains none. */
+  fromXp: number;
+  toXp: number;
   gained: Partial<Record<StatKey, number>>;
 }
 
@@ -284,6 +313,8 @@ export function applyEncounterLevels(
       heroId: entry.heroId,
       fromLevel: levelOf(entry),
       toLevel: levelOf(levelled),
+      fromXp: entry.xp,
+      toXp: levelled.xp,
       gained,
     });
     return levelled;

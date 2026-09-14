@@ -87,8 +87,8 @@ export const TUTORIAL_ENCOUNTERS: Partial<Record<MapNodeType, TutorialEncounter>
  * strongest opening move in the run. It used to pay double.
  *
  * XP is not pinned because there is nothing to pin (2026-09-10): levels are automatic and
- * roster-wide, and the act's fights walk the whole roster up the same table (run/growth.ts
- * LEVEL_AFTER_ENCOUNTER) whatever the player does.
+ * roster-wide, and the act's fights pay the whole roster the same authored XP (run/growth.ts
+ * ENCOUNTER_XP_BY_ACT) whatever the player does.
  *
  * Gold IS pinned, and only to its own average (goldRewardFor rolls 30-45 for a battle and 15-25
  * otherwise). Not for power — 77 against a ~77.5 mean — but for determinism: Valor tells the

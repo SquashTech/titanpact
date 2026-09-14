@@ -77,7 +77,7 @@ export const ENEMY_LEVEL_BY_ACT: readonly number[] = [1, 2, 3, 4, 5].map((act) =
  * DERIVED from the level curve since 2026-09-10 rather than authored beside it (Growth
  * Overhaul phase 5). The old table — 2/4/5/6/7 — was written against a 10-level cap; against 30
  * it would have put an Act 3 hire at level 5 with the roster at 18, which is not "underlevelled"
- * but unusable. Deriving it means phase 6 retunes `LEVEL_AFTER_ENCOUNTER` once and this follows.
+ * but unusable. Deriving it means a retune of `ENCOUNTER_XP_BY_ACT` moves par once and this follows.
  *
  * **A hire arrives one act behind**, at the level the roster held when this act began, plus one.
  * That is the whole of what "decaying runway value" means now: the gap is a fixed act, so it is

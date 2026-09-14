@@ -127,7 +127,7 @@ import {
 } from '../run/runProgress';
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
 import { createStatusTestSides } from '../run/statusTestFight';
-import { atEvolution, fullMovepool } from '../run/progression';
+import { atEvolution, fullMovepool, pendingScheduleEntry } from '../run/progression';
 import { progressionTable } from '../data/progression';
 import type { RunState, RosterEntry } from '../run/state';
 import type { Squad } from '../run/squad';
@@ -724,9 +724,12 @@ export function App() {
     // The join beat sits right after the level report: the fight's consequence, then who it brought.
     const afterLevels: Screen = companionId ? { kind: 'companion', beat: { kind: 'join', heroId: companionId }, next: afterBanner } : afterBanner;
     // Levels go FIRST, ahead of the Banner and everything under it: they are what this fight did,
-    // and the rest of the chain is what the ACT pays. Skipped when the curve owes nothing — past
-    // the finale, and on a roster that is entirely at the cap.
-    const afterLoss: Screen = levelled.report.some((hero) => hero.toLevel > hero.fromLevel)
+    // and the rest of the chain is what the ACT pays. Skipped when nobody levelled and nobody is
+    // owed a schedule entry — a fight the XP left part-way to the next level (the fight result
+    // already showed the bars move), past the finale, a roster entirely at the cap. A raw hire
+    // with a backlog still gets its one entry a fight, level or no level.
+    const owed = levelled.run.roster.some((entry) => pendingScheduleEntry(rosterHeroes[entry.heroId], entry) !== null);
+    const afterLoss: Screen = levelled.report.some((hero) => hero.toLevel > hero.fromLevel) || owed
       ? { kind: 'levelUp', report: levelled.report, next: afterLevels }
       : afterLevels;
     // And the companion's loss ahead of even that — the one thing the fight took (§5).

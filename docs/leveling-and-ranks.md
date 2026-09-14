@@ -55,31 +55,32 @@ re-reading `docs/growth-overhaul.md` §4.
 
 ### The curve
 
-`LEVEL_AFTER_ENCOUNTER` is authored outright rather than derived from a per-fight rate: the
-act-end figures are the decided shape, and a rate would only approximate them. Acts 1-5 run four
-encounters each — the forced fight, the Skirmish, the Elite-or-Battle, and the Guardian — then the
-finale.
+**The XP a won encounter pays is what is authored** (`ENCOUNTER_XP_BY_ACT`, 2026-09-13, per user
+direction); par (`levelAfterEncounters`, `LEVEL_AFTER_ENCOUNTER`) is derived from the sum on
+`XP(L) = L³`. Acts 1-5 run four encounters each — the forced fight, the Skirmish, the
+Elite-or-Skirmish, and the Guardian, which pays **×2** — then the finale's one fight.
 
-| Act | Encounters | Level at act end |
-|---|---|---|
-| 1 | 4 | 6 |
-| 2 | 4 | 12 |
-| 3 | 4 | 18 |
-| 4 | 4 | 23 |
-| 5 | 4 | 28 |
-| 6 | 1 | 30 |
+| Act | XP a fight (Guardian ×2) | Par after each fight | Par at act end |
+|---|---|---|---|
+| 1 | 120 | 4 · 6 · 7 · 8 | 8 |
+| 2 | 450 | 10 · 11 · 12 · 14 | 14 |
+| 3 | 850 | 15 · 16 · 17 · 19 | 19 |
+| 4 | 1400 | 20 · 21 · 22 · 24 | 24 |
+| 5 | 1600 | 25 · 25 · 26 · 28 | 28 |
+| 6 | 5000 | 30 | 30 |
 
-Level 5 lands on the **third encounter of act 1**, which is where the Evolution surfaces until
-phase 4 moves it to the Crucible. Every figure is a first-pass placeholder for playtest; only the
-shape is decided.
+A fight can leave a hero's bar part-way — Act 5's second fight pays no level at par — and that is
+the point of authoring the XP rather than the level: the bar is a real quantity the player watches
+fill, a hero behind par visibly climbs faster on the same figure, and the next fight is visibly
+worth more than the last. Every figure is a first-pass placeholder for playtest; the act-end
+levels are the shape everything downstream (enemy level, the Guild Hall's lag, Ichor's par) reads.
 
 **It is a DELTA, never a target** (`xpForEncounter`). A hero that joins late has missed the
 grants before it and is behind — which is what keeps "arrives underlevelled" a real archetype for
 a Guild Hall hire (`docs/growth-overhaul.md` §6) rather than a rounding error the next win erases.
 Setting each hero to the curve's level instead would erase it. **Since 2026-09-13 the delta is
-paid in XP on `XP(L) = L³`** (`docs/xp-overhaul.md` §2, phase 1): at par that is the table above
-to the point, and off par the same XP is worth more levels from lower down, so a late hero gains on
-par with every win rather than trailing by a fixed count. It never catches up on its own — a
+paid in XP on `XP(L) = L³`** (`docs/xp-overhaul.md` §2): the same XP is worth more levels from lower
+down, so a late hero gains on par with every win rather than trailing by a fixed count. It never catches up on its own — a
 recruit that missed eight wins ends the run two levels short (`test/growth.test.ts`).
 
 ## Growth grades — what a level actually pays

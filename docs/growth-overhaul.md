@@ -97,9 +97,11 @@ automatic XP gets the screen removal — which was the only thing level 30 actua
 buying that problem. A hero rotated in at Act 4 is at parity, and rotating costs nothing, which is
 *better* for strategic churn than participation XP, not worse.
 
-**BUILT 2026-09-10.** `src/run/growth.ts`; the curve is `LEVEL_AFTER_ENCOUNTER`, authored
+**BUILT 2026-09-10.** `src/run/growth.ts`; the curve was `LEVEL_AFTER_ENCOUNTER`, authored
 outright rather than derived from a per-fight rate, because the act-end figures below are the
-decided shape and a rate would only approximate them.
+decided shape and a rate would only approximate them. **Since 2026-09-13 the XP a fight pays is
+the authored object and par is derived from it** (`ENCOUNTER_XP_BY_ACT`, `docs/xp-overhaul.md` §2);
+the act-end figures are what it is sized to hit.
 
 **The cost, and it is a real deletion:** hyperfocus dies as a *levelling* strategy. `CLAUDE.md`
 protects it — "the carry build stays legal and is charged for in breadth." It is bought back

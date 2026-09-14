@@ -49,8 +49,10 @@ don't silently override it.
 > Scroll ladder is deleted and moves come from a per-hero level **schedule** with the roll kept.
 > Its §9 lists the invariants below it reverses; until the §8 phase that replaces each one lands,
 > the rule below is still the rule in force. **Phases 1–3 are IN:** `RosterEntry.xp` is stored and
-> level is DERIVED (`levelOf`); a won encounter pays XP derived from `LEVEL_AFTER_ENCOUNTER`, so
-> par is unchanged to the point and only a hero off par can tell — it now gains on par instead of
+> level is DERIVED (`levelOf`); a won encounter pays an **authored XP figure by act**
+> (`ENCOUNTER_XP_BY_ACT`, Guardian ×2 — 2026-09-13, per user direction, replacing XP derived from a
+> level table, which filled every bar to the top and made XP a number nobody saw) and par is
+> derived from the sum, still 8/14/19/24/28/30 at act ends; a hero off par gains on par instead of
 > trailing by a fixed count (measured: +10 points full-clear, all of it in acts 2–5; §8). **Ichor**
 > (`src/run/ichor.ts`) took the two Scroll nodes' seats and the Guild Hall shelf: XP worth 2 (or 1)
 > levels AT PAR, aimed at ONE hero through a who screen, paid out on the level-up report; a hero
@@ -149,12 +151,18 @@ don't silently override it.
   Normal/Water/Bug. A numerically common mono type is not a design flaw.
 - **Levels are AUTOMATIC and ROSTER-WIDE** (2026-09-10, `src/run/growth.ts`). Every roster hero
   levels every won encounter, fielded or benched. **No pool and no allocation** —
-  `MAX_LEVEL` = 30, and the curve is authored outright as `LEVEL_AFTER_ENCOUNTER` (act ends
-  **8/14/19/24/28/30**, four encounters an act; front-loaded in phase 6 because acts 1-2 measured
-  as the run's wall and their enemy stat steps were already zero). **Level is DERIVED from XP on
-  `XP(L) = L³`** (2026-09-13, XP Overhaul phase 1, `xpForLevel` / `levelOf`); the table stays the
-  one authored object and a won encounter pays exactly what it costs (`xpForEncounter`), so a hero
-  at par walks it to the point. It is a **DELTA, never a target**: a hero that joins late has
+  `MAX_LEVEL` = 30. **Level is DERIVED from XP on `XP(L) = L³`** (2026-09-13, XP Overhaul
+  phase 1, `xpForLevel` / `levelOf`), and **the XP a won encounter pays is the authored object**
+  (2026-09-13, per user direction): `ENCOUNTER_XP_BY_ACT` = 120 / 450 / 850 / 1400 / 1600 a fight
+  by act, the finale 5000, **the Guardian ×2** (`GUARDIAN_XP_MULTIPLIER`) — the one place a fight's
+  kind prices its XP. Par (`levelAfterEncounters`) is DERIVED from the sum and sized to reach the
+  decided act ends, **8/14/19/24/28/30** (front-loaded in phase 6 because acts 1-2 measured as the
+  run's wall); inside an act it walks 4/6/7/8, 10/11/12/14, 15/16/17/19, 20/21/22/24, 25/25/26/28.
+  It replaced a level table paid out in XP sized to land par exactly ON a level every fight —
+  which filled the bar to the top every time, so XP was invisible and the level count read as
+  arbitrary. **The bar is real now**: the fight result and the level-up report sweep it from where
+  the hero's XP stood to where the grant left it, a fight can leave it part-way (`xpProgress`,
+  `xpToNextLevel`), and that partial is how catch-up reads. It is a **DELTA, never a target**: a hero that joins late has
   missed the grants before it and is behind — but the same XP climbs further from lower down the
   cube, so the gap closes slowly on its own. "Arrives underlevelled" stays a real archetype;
   "permanently" was reversed on purpose (`docs/xp-overhaul.md` §2) so that closing it is

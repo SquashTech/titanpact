@@ -281,10 +281,13 @@ indistinguishable once collapsed to `EncounterNodeType`) make the two lanes pay 
 | `boss` | Guardian | 0 | 70%, one tier ahead |
 
 **The XP column is gone (2026-09-10, Growth Overhaul phase 3).** Levels are automatic and
-roster-wide, so no encounter pays a currency for them and no node type can be richer in levels
-than another — the curve is a function of encounters WON, not of which ones
-(`LEVEL_AFTER_ENCOUNTER`, `src/run/growth.ts`). `BASE_TRAINING_POINTS`, `ACT_XP_STEP` and
-`trainingPointsFor` are all deleted.
+roster-wide, so no encounter pays a currency for them. XP is an authored figure by ACT, read off
+the count of encounters won rather than the node — the fourth of an act is the Guardian and pays
+×2, and that is the only way a node kind is richer in XP than another (`ENCOUNTER_XP_BY_ACT`,
+`GUARDIAN_XP_MULTIPLIER`, `src/run/growth.ts`; 2026-09-13). Whether the Elite should out-pay the
+Skirmish beside it is an open dial: it would make the fork's XP a reason as well as a risk, and it
+would put a player who always takes the Elite ahead of par. `BASE_TRAINING_POINTS`, `ACT_XP_STEP`
+and `trainingPointsFor` are all deleted.
 
 That flattens one half of the two-lane split, and the half that remains is the one that was
 always the sharper of the two:
