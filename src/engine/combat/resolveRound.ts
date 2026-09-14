@@ -24,6 +24,7 @@ import {
 import type { TypeChart } from '../damage/typeMult';
 import { resolveHeal } from '../heal/healPipeline';
 import { scaleStatusMagnitude } from '../status/statusMagnitude';
+import { scaleStatDelta } from './statDeltaScaling';
 import { applyHpDelta } from './faintHandling';
 import {
   detonateTriggeredStatuses,
@@ -605,14 +606,40 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       }
 
       const deltas = rolledDeltas.length ? [...allStatDeltas, ...rolledDeltas] : allStatDeltas;
-      for (const delta of deltas) {
+      // Authored (and rolled) deltas are BASES scaled off the caster (docs/stat-scaling.md §2);
+      // a derived delta already reads live state and passes through. The caster's stat is read
+      // once here, at cast, so the figure is a snapshot.
+      const landsOnCasterSide = working.combatants[targetId].side === actor.side;
+      const derivedCount = derivedDeltas.length;
+      const scaled = deltas.map((delta, i) =>
+        i >= authoredDeltas.length && i < authoredDeltas.length + derivedCount
+          ? delta
+          : {
+              ...delta,
+              amount: scaleStatDelta(delta.stat, delta.amount, move, attackerHero, working.combatants[action.combatantId], landsOnCasterSide, {
+                active: working.activeFieldEffect,
+                defs: fieldEffects,
+                board: { state: working, passives },
+              }),
+              authored: delta.amount,
+            }
+      );
+      for (const delta of scaled) {
         const current = working.combatants[targetId];
         const newValue = (current.statModifiers[delta.stat] ?? 0) + delta.amount;
         working = {
           ...working,
           combatants: { ...working.combatants, [targetId]: { ...current, statModifiers: { ...current.statModifiers, [delta.stat]: newValue } } },
         };
-        const statChanged: CombatEvent = { type: 'StatChanged', round, combatantId: targetId, stat: delta.stat, delta: delta.amount, newValue };
+        const statChanged: CombatEvent = {
+          type: 'StatChanged',
+          round,
+          combatantId: targetId,
+          stat: delta.stat,
+          delta: delta.amount,
+          ...('authored' in delta ? { authored: delta.authored } : {}),
+          newValue,
+        };
         events.push(statChanged);
         statChangedEvents.push(statChanged);
       }

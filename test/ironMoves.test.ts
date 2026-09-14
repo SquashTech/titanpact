@@ -3,7 +3,7 @@
 import { firstStatusApplication } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
-import { createFightState, fixtureMaxHp, withFullPools } from './fixtures';
+import { createFightState, fixtureMaxHp, landedDelta, withFullPools } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { signatureMoves } from '../src/data/signatures';
@@ -161,8 +161,11 @@ test('iron: the Attack ramp compounds across casts and is never spent', () => {
   const casts = ['sharpen', 'momentumSwing', 'ironFist'];
   // The running total is DERIVED from what each row authors, because the claim here is that the
   // grants compound and are never spent — not that they add up to any particular number.
+  // Each row's base lands scaled off the caster's Wisdom (docs/stat-scaling.md §2), which no cast here moves.
   let running = 0;
-  const expected = casts.map((moveId) => (running += moves[moveId].statDeltas!.find((d) => d.stat === 'attack')!.amount));
+  const expected = casts.map(
+    (moveId) => (running += landedDelta(state, 'a1', moves[moveId], 'attack', moves[moveId].statDeltas!.find((d) => d.stat === 'attack')!.amount, 'a1'))
+  );
 
   casts.forEach((moveId, i) => {
     const declaredTarget = moves[moveId].target === 'self' ? undefined : 'b1';
@@ -186,10 +189,11 @@ test('iron: a damage row\'s stat delta lands AFTER its own hit, so Opening Strik
     [{ kind: 'move', combatantId: 'a1', moveId: 'openingStrike', declaredTarget: 'b1' }],
     config
   );
-  assert.strictEqual(modifiersOf(first.state, 'b1').defense ?? 0, -10);
+  const drop = landedDelta(state, 'a1', moves.openingStrike, 'defense', -10, 'b1');
+  assert.strictEqual(modifiersOf(first.state, 'b1').defense ?? 0, drop);
 
   const second = twice('openingStrike');
-  assert.strictEqual(modifiersOf(second.state, 'b1').defense ?? 0, -20);
+  assert.strictEqual(modifiersOf(second.state, 'b1').defense ?? 0, drop * 2);
 });
 
 test('iron: Pin Down is a debuff — a buff-kind move with a negative payload aimed at an enemy', () => {
@@ -202,8 +206,8 @@ test('iron: Pin Down is a debuff — a buff-kind move with a negative payload ai
 
   assert.strictEqual(moves.pinDown.kind, 'buff');
   assert.strictEqual(moves.pinDown.target, 'singleEnemy');
-  assert.strictEqual(modifiersOf(next, 'b1').defense, -10);
-  assert.strictEqual(modifiersOf(next, 'b1').speed, -10);
+  assert.strictEqual(modifiersOf(next, 'b1').defense, landedDelta(state, 'a1', moves.pinDown, 'defense', -10, 'b1'));
+  assert.strictEqual(modifiersOf(next, 'b1').speed, landedDelta(state, 'a1', moves.pinDown, 'speed', -10, 'b1'));
   assert.strictEqual(events.some((e) => e.type === 'DamageDealt'), false, 'no damage body');
 });
 
@@ -215,8 +219,8 @@ test('iron: Reinforce pays BOTH allies, including the caster', () => {
     config
   );
   for (const id of ['a1', 'a2']) {
-    assert.strictEqual(modifiersOf(next, id).attack, 20, `${id} attack`);
-    assert.strictEqual(modifiersOf(next, id).defense, 20, `${id} defense`);
+    assert.strictEqual(modifiersOf(next, id).attack, landedDelta(state, 'a1', moves.reinforce, 'attack', 20, id), `${id} attack`);
+    assert.strictEqual(modifiersOf(next, id).defense, landedDelta(state, 'a1', moves.reinforce, 'defense', 20, id), `${id} defense`);
   }
   assert.strictEqual(modifiersOf(next, 'b1').attack ?? 0, 0, 'and nothing on the enemy side');
 });

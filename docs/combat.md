@@ -1224,6 +1224,17 @@ target read off something other than the one global field slot.
   A +10 Attack modifier adds 10 to effective Attack.
 - They flow through the **stat pipeline**, so they change the `Atk/Def` ratio (and
   Speed, and so on), never the damage multiplier term.
+- **A move's authored delta is a BASE the caster scales** (2026-09-14, `docs/stat-scaling.md`
+  phase 1; `src/engine/combat/statDeltaScaling.ts`): `landed = round(authored × StatMult × STAB)`
+  on the status-magnitude formula's constants, a **buff** reading the caster's **Wisdom** and a
+  **debuff** the **offensive stat its move swings with**, snapshotted at cast, rounded on the
+  magnitude so ±20 land the same distance from 0. The SIGN classes each delta, not the move's
+  target, so Landslide's ally buff reads Wisdom while its hit reads Attack. Flat and unscaled: a
+  negative delta on the caster's own side (a COST, the self-Burn rule), a derived delta (Apex
+  Predator, Arcane Overflow — already read off live state), a passive's `statDelta` effect (no
+  move to take STAB from), and `mpRegen` (a resource grant, not a ratio). `StatChanged.authored`
+  carries the base beside `delta`; `statDeltaReadout` (`MoveTile`) prints the landed figure on a
+  card for the hero holding it, as `riderMagnitude` does a Burn. The ceiling is still open (below).
 
 ### A stat grant with no authored number (2026-08-30, Arcane)
 

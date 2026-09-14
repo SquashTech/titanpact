@@ -1,8 +1,9 @@
 import { useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
-import type { MoveDefinition, StatusApplication } from '../../engine/content';
+import type { MoveDefinition, StatKey, StatusApplication } from '../../engine/content';
 import { statusApplicationsOf } from '../../engine/content';
 import { resolveHealFor, type HealCaster } from '../../engine/heal/healPipeline';
 import { resolveStatusMagnitudeFor } from '../../engine/status/statusMagnitude';
+import { resolveStatDeltaFor, statDeltaLandsOnCasterSide } from '../../engine/combat/statDeltaScaling';
 import { moveForPrimaryType } from '../../engine/state';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { fieldEffects } from '../../data/fieldEffects';
@@ -233,6 +234,15 @@ export function healReadout(move: MoveDefinition | undefined, caster?: HealCaste
   return { value: resolveHealFor(move, caster).heal, resolved: true };
 }
 
+/**
+ * What a delta comes to for this caster (docs/stat-scaling.md §2) — the same rule as riderMagnitude:
+ * the authored figure is a base, and without a caster the base stands.
+ */
+export function statDeltaReadout(move: MoveDefinition, stat: StatKey, amount: number, caster?: HealCaster): number {
+  if (!caster) return amount;
+  return resolveStatDeltaFor(stat, amount, move, { stats: caster.stats ?? {}, types: caster.types }, statDeltaLandsOnCasterSide(move));
+}
+
 // Display rule for `statDeltaTarget` (content.ts): a side is named only when the deltas land somewhere
 // OTHER than the move's own target, so a bothAllies move never prints "(Both Allies) — Both Allies".
 function statDeltaWhere(move: MoveDefinition): string {
@@ -254,7 +264,12 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
   if (move.manaGrant) parts.push(`Gives ${move.manaGrant} MP, past their max`);
 
   if (move.statDeltas?.length) {
-    const deltas = move.statDeltas.map(({ stat, amount }) => `${amount >= 0 ? '+' : ''}${amount} ${STAT_LABELS[stat]}`).join(', ');
+    const deltas = move.statDeltas
+      .map(({ stat, amount }) => {
+        const landed = statDeltaReadout(move, stat, amount, caster);
+        return `${landed >= 0 ? '+' : ''}${landed} ${STAT_LABELS[stat]}`;
+      })
+      .join(', ');
     const odds = move.statDeltaChance != null ? `${Math.round(move.statDeltaChance * 100)}% chance: ` : '';
     const pack = move.conditionalStatDeltas
       ? `, ×${move.conditionalStatDeltas.multiplier} beside a ${move.conditionalStatDeltas.requiresPartnerType} partner`
@@ -263,7 +278,8 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
   }
 
   if (move.randomStatDeltas) {
-    const { count, amount } = move.randomStatDeltas;
+    const { count } = move.randomStatDeltas;
+    const amount = statDeltaReadout(move, 'attack', move.randomStatDeltas.amount, caster);
     parts.push(`+${amount} to ${count === 1 ? 'a random stat' : `${count} random stats`}${statDeltaWhere(move)}`);
   }
 

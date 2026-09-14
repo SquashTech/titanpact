@@ -2,7 +2,7 @@
 
 import * as assert from 'assert';
 import { test } from './harness';
-import { createFightState, withFullPools } from './fixtures';
+import { createFightState, landedDelta, withFullPools } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { enemies } from '../src/data/enemies';
 import { moves } from '../src/data/moves';
@@ -160,16 +160,18 @@ test('beast: Prowl grants its authored delta alone and double beside a Beast, as
       [{ kind: 'move', combatantId: 'a1', moveId: 'prowl', declaredTarget: 'a1' }],
       config
     );
-    return { mods: modifiersOf(after, 'a1'), changes: events.filter((e) => e.type === 'StatChanged') };
+    // The pack multiplier doubles the BASE, and the scaling lands on that (docs/stat-scaling.md §2).
+    const landed = (stat: 'attack' | 'speed', pack: number) => landedDelta(state, 'a1', moves.prowl, stat, base[stat] * pack, 'a1');
+    return { mods: modifiersOf(after, 'a1'), changes: events.filter((e) => e.type === 'StatChanged'), landed };
   };
 
   const alone = prowl('cinderKnight');
-  assert.strictEqual(alone.mods.attack, base.attack);
-  assert.strictEqual(alone.mods.speed, base.speed);
+  assert.strictEqual(alone.mods.attack, alone.landed('attack', 1));
+  assert.strictEqual(alone.mods.speed, alone.landed('speed', 1));
 
   const pack = prowl('packAlpha');
-  assert.strictEqual(pack.mods.attack, base.attack * 2);
-  assert.strictEqual(pack.mods.speed, base.speed * 2);
+  assert.strictEqual(pack.mods.attack, pack.landed('attack', 2));
+  assert.strictEqual(pack.mods.speed, pack.landed('speed', 2));
   // The multiplier scales the amounts rather than applying the deltas twice.
   assert.strictEqual(pack.changes.length, 2, 'one beat per stat, not per application');
 });
@@ -194,15 +196,15 @@ test('beast: the pack price is spent at the price the BOARD says, not the one th
       [{ kind: 'move', combatantId: 'a1', moveId: 'packLeader', declaredTarget: 'a1' }],
       config
     );
-    return after;
+    return { state, after };
   };
   // Compare the two casts rather than the absolute spend: both regen identically at the round boundary.
-  const alonePaid = cast('cinderKnight').combatants.a1.currentMana;
-  const after = cast('packAlpha');
+  const alonePaid = cast('cinderKnight').after.combatants.a1.currentMana;
+  const { state, after } = cast('packAlpha');
   assert.strictEqual(after.combatants.a1.currentMana - alonePaid, 50);
-  assert.strictEqual(modifiersOf(after, 'a1').attack, 50);
-  assert.strictEqual(modifiersOf(after, 'a2').attack, 50);
-  assert.strictEqual(modifiersOf(after, 'a2').speed, 50);
+  assert.strictEqual(modifiersOf(after, 'a1').attack, landedDelta(state, 'a1', moves.packLeader, 'attack', 50, 'a1'));
+  assert.strictEqual(modifiersOf(after, 'a2').attack, landedDelta(state, 'a1', moves.packLeader, 'attack', 50, 'a2'));
+  assert.strictEqual(modifiersOf(after, 'a2').speed, landedDelta(state, 'a1', moves.packLeader, 'speed', 50, 'a2'));
 });
 
 // --- Apex Predator: the derived grant ---
@@ -230,21 +232,22 @@ test('beast: Apex Predator COMPOUNDS, and a buff cast first is doubled with ever
     [{ kind: 'move', combatantId: 'a1', moveId: 'rally', declaredTarget: 'a1' }],
     config
   ).state;
-  assert.strictEqual(getEffectiveStat(fang, rallied.combatants.a1, 'attack'), base + 20);
+  const rally = landedDelta(state, 'a1', moves.rally, 'attack', 20, 'a1');
+  assert.strictEqual(getEffectiveStat(fang, rallied.combatants.a1, 'attack'), base + rally);
 
   const once = resolveRound(
     rallied,
     [{ kind: 'move', combatantId: 'a1', moveId: 'apexPredator', declaredTarget: 'a1' }],
     config
   ).state;
-  assert.strictEqual(getEffectiveStat(fang, once.combatants.a1, 'attack'), (base + 20) * 2, 'the Rally is inside the doubling');
+  assert.strictEqual(getEffectiveStat(fang, once.combatants.a1, 'attack'), (base + rally) * 2, 'the Rally is inside the doubling');
 
   const twice = resolveRound(
     once,
     [{ kind: 'move', combatantId: 'a1', moveId: 'apexPredator', declaredTarget: 'a1' }],
     config
   ).state;
-  assert.strictEqual(getEffectiveStat(fang, twice.combatants.a1, 'attack'), (base + 20) * 4, 'and a second cast doubles again');
+  assert.strictEqual(getEffectiveStat(fang, twice.combatants.a1, 'attack'), (base + rally) * 4, 'and a second cast doubles again');
 });
 
 // --- Bleed as a currency ---

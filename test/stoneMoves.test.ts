@@ -2,7 +2,7 @@
 
 import * as assert from 'assert';
 import { test } from './harness';
-import { createFightState, withFullPools } from './fixtures';
+import { createFightState, landedDelta, withFullPools } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { classMoves } from '../src/data/classes';
@@ -269,14 +269,14 @@ test('stone: Landslide hits both enemies and buffs both ALLIES', () => {
   assert.deepStrictEqual(buffs.sort(), ['a1', 'a2'], 'and the deltas land on the caster side, caster included');
 
   assert.strictEqual(after.state.combatants.b1.statModifiers.defense ?? 0, 0, 'no enemy was buffed');
-  assert.strictEqual(after.state.combatants.a1.statModifiers.defense, 20);
-  assert.strictEqual(after.state.combatants.a2.statModifiers.defense, 20);
+  assert.strictEqual(after.state.combatants.a1.statModifiers.defense, landedDelta(state, 'a1', moves.landslide, 'defense', 20, 'a1'));
+  assert.strictEqual(after.state.combatants.a2.statModifiers.defense, landedDelta(state, 'a1', moves.landslide, 'defense', 20, 'a2'));
 });
 
 test('stone: a move authoring no statDeltaTarget still puts its deltas on its own target', () => {
   const state = withDeepPools(stoneFixture(502));
   const after = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'mudBall', declaredTarget: 'b1' }], config);
-  assert.strictEqual(after.state.combatants.b1.statModifiers.speed, -10, 'the debuff is on the enemy it hit');
+  assert.strictEqual(after.state.combatants.b1.statModifiers.speed, landedDelta(state, 'a1', moves.mudBall, 'speed', -10, 'b1'), 'the debuff is on the enemy it hit');
   assert.strictEqual(after.state.combatants.a1.statModifiers.speed ?? 0, 0);
 });
 
@@ -449,7 +449,7 @@ test('stone: Spire Claw hits an enemy and puts its +20 Defense on the CASTER, no
     config
   );
 
-  assert.strictEqual(next.combatants.a1.statModifiers.defense, 20);
+  assert.strictEqual(next.combatants.a1.statModifiers.defense, landedDelta(state, 'a1', moves.spireClaw, 'defense', 20, 'a1'));
   assert.strictEqual(next.combatants.b1.statModifiers.defense ?? 0, 0);
   assert.ok(next.combatants.b1.currentHp < state.combatants.b1.currentHp);
 });

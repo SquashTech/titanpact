@@ -47,6 +47,7 @@ import {
 } from '../../src/engine/damage/damagePipeline';
 import { resolveHeal } from '../../src/engine/heal/healPipeline';
 import { scaleStatusMagnitude } from '../../src/engine/status/statusMagnitude';
+import { scaleStatDelta } from '../../src/engine/combat/statDeltaScaling';
 import { allCombatants } from '../../src/data/content';
 import { moves } from '../../src/data/moves';
 import { statuses } from '../../src/data/statuses';
@@ -312,7 +313,13 @@ function cleanseValue(state: CombatState, ctx: AiContext, holderId: string, cach
 
 // --- Stat deltas, converted through the threat figure ---
 
-/** One stat delta on one receiver, in HP. Offensive stats scale that hero's output; defensive stats scale what reaches it. */
+/**
+ * One stat delta on one receiver, in HP, from the RECEIVER's point of view — positive when it
+ * helps the receiver. Offensive stats scale that hero's output; defensive stats scale what
+ * reaches it. Bounded by the HP the change can actually move: extra output by what the other
+ * side has left, damage prevented by what the receiver has left — a −75 Defense on a 20-HP
+ * foe is worth 20, not three rounds of a quintupled hit (docs/stat-scaling.md §8 phase 1).
+ */
 function statDeltaValue(
   state: CombatState,
   ctx: AiContext,
@@ -325,12 +332,14 @@ function statDeltaValue(
   if (!receiver || amount === 0) return 0;
   const hero = allCombatants[receiver.heroId];
   const current = Math.max(1, getEffectiveStat(hero, receiver, stat));
+  const bound = (value: number, pool: number) => Math.sign(value) * Math.min(Math.abs(value), Math.max(0, pool));
 
   switch (stat) {
     case 'attack':
     case 'intelligence': {
       // Damage is linear in the offensive stat, so a delta is a proportional change to this hero's output.
-      return threatOf(state, ctx, receiverId, cache) * (amount / current) * HORIZON;
+      const foesHp = aliveActiveIdsOn(state, otherSide(receiver.side)).reduce((sum, id) => sum + Math.max(0, state.combatants[id].currentHp), 0);
+      return bound(threatOf(state, ctx, receiverId, cache) * (amount / current) * HORIZON, foesHp);
     }
     case 'defense':
     case 'wisdom': {
@@ -343,7 +352,7 @@ function statDeltaValue(
       );
       const after = Math.max(1, current + amount);
       const cut = (after - current) / after;
-      return incoming * cut * HORIZON;
+      return bound(incoming * cut * HORIZON, receiver.currentHp);
     }
     default:
       return (FLAT_STAT_VALUE[stat] ?? 0.3) * amount;
@@ -463,8 +472,13 @@ function scoreCast(
         ? move.conditionalStatDeltas.multiplier
         : 1;
     for (const { id, share } of receivers) {
+      const onCasterSide = state.combatants[id]?.side === casterSide;
       for (const delta of move.statDeltas) {
-        score += statDeltaValue(state, ctx, id, delta.stat, delta.amount * conditional, cache) * share * chance;
+        // The authored figure is a base scaled off the caster (docs/stat-scaling.md §2) — price what lands.
+        const landed = scaleStatDelta(delta.stat, delta.amount * conditional, move, allCombatants[caster.heroId], caster, onCasterSide, fieldCtx(state));
+        // statDeltaValue is the receiver's gain; a drop on the far side is the caster's.
+        const value = statDeltaValue(state, ctx, id, delta.stat, landed, cache);
+        score += (onCasterSide ? value : -value) * share * chance;
       }
     }
     priced = true;

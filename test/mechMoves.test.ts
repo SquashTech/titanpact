@@ -2,7 +2,7 @@
 
 import * as assert from 'assert';
 import { test } from './harness';
-import { createFightState, withFullPools } from './fixtures';
+import { createFightState, landedDelta, withFullPools } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { enemies } from '../src/data/enemies';
 import { moves, RANDOM_STAT_POOL } from '../src/data/moves';
@@ -164,7 +164,7 @@ test('mech: Overclock rolls independently for each ally, and only over the autho
     const two = Object.keys(modifiersOf(after, 'a2')).filter((k) => k !== 'manaPool' && k !== 'hp');
     assert.strictEqual(one.length, 1, 'Overclock granted more than one stat');
     assert.strictEqual(two.length, 1, 'Overclock granted more than one stat');
-    assert.strictEqual(modifiersOf(after, 'a1')[one[0]], 20);
+    assert.strictEqual(modifiersOf(after, 'a1')[one[0]], landedDelta(state, 'a1', moves.overclock, one[0] as any, 20, 'a1'));
     seen.a1.add(one[0]);
     seen.a2.add(two[0]);
     if (one[0] !== two[0]) differed = true;
@@ -183,7 +183,7 @@ test('mech: Jury-Rig grants two DIFFERENT stats, never +40 to one', () => {
     const { state: after } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'juryRig' }], config);
     const granted = Object.entries(modifiersOf(after, 'a1')).filter(([k]) => k !== 'manaPool' && k !== 'hp');
     assert.strictEqual(granted.length, 2, `seed ${seed}: Jury-Rig granted ${granted.length} stats`);
-    for (const [, amount] of granted) assert.strictEqual(amount, 20, 'a stat was granted twice over');
+    for (const [stat, amount] of granted) assert.strictEqual(amount, landedDelta(state, 'a1', moves.juryRig, stat as any, 20, 'a1'), 'a stat was granted twice over');
   }
 });
 
@@ -197,7 +197,7 @@ test('mech: Piston Punch damages the enemy and buffs the CASTER', () => {
   assert.ok(after.combatants.b1.currentHp < state.combatants.b1.currentHp, 'Piston Punch dealt no damage');
   const buffed = Object.entries(modifiersOf(after, 'a1')).filter(([k]) => k !== 'manaPool' && k !== 'hp');
   assert.strictEqual(buffed.length, 1);
-  assert.strictEqual(buffed[0][1], 5, 'the smallest legal grant');
+  assert.strictEqual(buffed[0][1], landedDelta(state, 'a1', moves.pistonPunch, buffed[0][0] as any, 5, 'a1'), 'the smallest legal base, scaled');
   const onTarget = Object.keys(modifiersOf(after, 'b1')).filter((k) => k !== 'manaPool' && k !== 'hp');
   assert.deepStrictEqual(onTarget, [], 'the buff landed on the victim');
 });

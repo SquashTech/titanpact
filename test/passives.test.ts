@@ -3,7 +3,7 @@
 
 import * as assert from 'assert';
 import { test } from './harness';
-import { createFightState, fixtureMaxHp, withFullPools } from './fixtures';
+import { createFightState, fixtureMaxHp, landedDelta, withFullPools } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
@@ -669,7 +669,7 @@ test('passives: Entanglement reads the STAT — Lull drops Intelligence and mark
 
   // Read off the move rather than pinned: this test is about Entanglement reading the STAT, and the
   // size of Lull's drop is a balance figure that has nothing to do with what is being asserted.
-  const lullDrop = moves.lull.statDeltas!.find((d) => d.stat === 'intelligence')!.amount;
+  const lullDrop = landedDelta(state, 'a1', moves.lull, 'intelligence', moves.lull.statDeltas!.find((d) => d.stat === 'intelligence')!.amount, 'b1');
   assert.strictEqual(next.combatants.b1.statModifiers.intelligence, lullDrop, 'the debuff landed');
   assert.ok(!hasStatus(next.combatants.b1, 'Haunt'));
 });

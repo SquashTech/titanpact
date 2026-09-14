@@ -481,6 +481,17 @@ export function formatReport(
     out.push(`    ${pad(tier, 20)}${padStart(String(n), 11)}${padStart(pct(n, totalCasts), 9)}   ${byAct.join('')}`);
   }
   out.push(`    ${pad('', 40)}   ${[1, 2, 3, 4, 5, 6].map((act) => padStart(`act ${act}`, 8)).join('')}`);
+  out.push('  stat deltas (docs/stat-scaling.md), by the CASTER\'s side: landed/authored is the scaling; "past +S" / "under -S/2" the share of fights a [-1/2 S, +S] ceiling would have clamped on that side, "floored" the share where a used stat reached 0 and the floor at 1 took over (§10):');
+  out.push(`    ${pad('', 20)}${padStart('player', 9)}${padStart('landed/auth', 13)}${padStart('enemy', 9)}${padStart('landed/auth', 13)}${padStart('peak mod/S', 12)}${padStart('past +S', 10)}${padStart('under -S/2', 12)}${padStart('floored', 10)}`);
+  for (const act of [1, 2, 3, 4, 5, 6]) {
+    const n = agg.statDeltaCountByAct[act] ?? 0;
+    const fights = agg.fightsByAct[act] ?? 0;
+    const ratio = (agg.statDeltaAuthoredByAct[act] ?? 0) > 0 ? ((agg.statDeltaLandedByAct[act] ?? 0) / (agg.statDeltaAuthoredByAct[act] ?? 1)).toFixed(2) : '-';
+    const peak = fights > 0 ? ((agg.peakModifierFracSumByAct[act] ?? 0) / fights).toFixed(2) : '-';
+    const en = agg.enemyStatDeltaCountByAct[act] ?? 0;
+    const eRatio = (agg.enemyStatDeltaAuthoredByAct[act] ?? 0) > 0 ? ((agg.enemyStatDeltaLandedByAct[act] ?? 0) / (agg.enemyStatDeltaAuthoredByAct[act] ?? 1)).toFixed(2) : '-';
+    out.push(`    ${pad(`act ${act}`, 20)}${padStart(String(n), 9)}${padStart(ratio, 13)}${padStart(String(en), 9)}${padStart(eRatio, 13)}${padStart(peak, 12)}${padStart(pct(agg.wouldHaveCappedUpByAct[act] ?? 0, fights), 10)}${padStart(pct(agg.wouldHaveCappedDownByAct[act] ?? 0, fights), 12)}${padStart(pct(agg.flooredByAct[act] ?? 0, fights), 10)}`);
+  }
   out.push('  player casts by mana spent:');
   for (const band of ['0-19', '20-39', '40-59', '60-79', '80+']) {
     const n = agg.castsByManaBand[band] ?? 0;

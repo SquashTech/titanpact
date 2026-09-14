@@ -109,6 +109,17 @@ export interface FightRecord {
   enemySquadStats: number;
   castsByTier: Record<string, number>;
   castsByManaBand: Record<string, number>;
+  statDeltaCount: number;
+  statDeltaAuthored: number;
+  statDeltaLanded: number;
+  enemyStatDeltaCount: number;
+  enemyStatDeltaAuthored: number;
+  enemyStatDeltaLanded: number;
+  peakModifierFrac: number;
+  wouldHaveCapped: boolean;
+  wouldHaveCappedUp: boolean;
+  wouldHaveCappedDown: boolean;
+  floored: boolean;
   /** heroId -> per-fight telemetry, player side. */
   playerHeroes: Record<string, { rounds: number; dealt: number; taken: number; healed: number; kos: number; died: boolean }>;
   enemyHeroes: Record<string, { rounds: number; dealt: number; taken: number; kos: number; died: boolean }>;
@@ -479,6 +490,17 @@ function resolveEncounterNode(
     enemySquadStats: fight.enemySquadStats,
     castsByTier: fight.castsByTier,
     castsByManaBand: fight.castsByManaBand,
+    statDeltaCount: fight.statDeltaCount,
+    statDeltaAuthored: fight.statDeltaAuthored,
+    statDeltaLanded: fight.statDeltaLanded,
+    enemyStatDeltaCount: fight.enemyStatDeltaCount,
+    enemyStatDeltaAuthored: fight.enemyStatDeltaAuthored,
+    enemyStatDeltaLanded: fight.enemyStatDeltaLanded,
+    peakModifierFrac: fight.peakModifierFrac,
+    wouldHaveCapped: fight.wouldHaveCapped,
+    wouldHaveCappedUp: fight.wouldHaveCappedUp,
+    wouldHaveCappedDown: fight.wouldHaveCappedDown,
+    floored: fight.floored,
     playerHeroes,
     enemyHeroes,
   });

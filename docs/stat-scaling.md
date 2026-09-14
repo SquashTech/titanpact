@@ -1,8 +1,8 @@
 # stat-scaling.md — Buffs and debuffs: scaled bases, the ceiling, the noise floor
 
-> **STATUS: DRAFT 2026-09-14 (per user direction — option A of two, after a Pokémon-shaped
-> stage system was weighed and set aside, §0). NOTHING IN §8 IS BUILT. The ceiling (§3, phase 2)
-> is NOT decided — the designer is unsure it is needed at all; it stays in the doc as the
+> **STATUS: DECIDED 2026-09-14 (per user direction — option A of two, after a Pokémon-shaped
+> stage system was weighed and set aside, §0). PHASE 1 OF §8 IS IN (same day); the rest is not.
+> The ceiling (§3, phase 2) is NOT decided — the designer is unsure it is needed at all; it stays in the doc as the
 > proposal and §10 carries the case against it.** `CLAUDE.md` and
 > `combat.md` describe the game in force wherever a §8 phase has not landed; §8 is the route
 > and §9 the list of sign-offs each phase spends — **check its Status column before assuming
@@ -257,14 +257,38 @@ Sequenced so the tree is playable at every boundary and each phase can be refuse
 
 | # | Phase | Exit criterion | Status |
 |---|---|---|---|
-| 1 | **The formula.** `scaleStatDelta` beside `scaleStatusMagnitude`, reading Wisdom for a buff and the move's offensive stat for a debuff, STAB, snapshot; wired into `resolveRound`'s delta loop (authored, random and pack-multiplied deltas; derived and passive deltas pass through); `StatChanged.authored / landed`; the tile and overlay print the landed figure for the holder. No content change. | Every authored delta lands at base × StatMult × STAB; `test/arcaneMoves` still passes on bases; the sim reports buff magnitude landed per act. | — |
+| 1 | **The formula.** `scaleStatDelta` beside `scaleStatusMagnitude`, reading Wisdom for a buff and the move's offensive stat for a debuff, STAB, snapshot; wired into `resolveRound`'s delta loop (authored, random and pack-multiplied deltas; derived and passive deltas pass through); `StatChanged.authored / landed`; the tile and overlay print the landed figure for the holder. No content change. | Every authored delta lands at base × StatMult × STAB; `test/arcaneMoves` still passes on bases; the sim reports buff magnitude landed per act. | **DONE 2026-09-14.** `src/engine/combat/statDeltaScaling.ts` (`scaleStatDelta`, `resolveStatDeltaFor` for a board-free screen, `statDeltaRole` — the sign classes the delta, a negative on the caster's side is a cost); wired into `resolveRound`'s delta loop with derived deltas passing through; `StatChanged.authored`; `statDeltaReadout` on the tile summary and the overlay rows (the row notes the base and what it scaled off); `landedDelta` in `test/fixtures.ts` for the slate tests, `test/statScaling.test.ts` for the rule. The sim prices the landed figure and reports it (below). No save change. Measured below. |
 | 2 | **The ceiling.** Clamp at write to `[−½S, +S]`; `capped` on the event; Apex Predator, Brain Flay and Arcane Overflow measured against it; the Font of Power decision (§10). **Separable — veto leaves phase 1 standing.** | No fight modifier outside the band on any combatant at any round; the three compounders' sim win-rate deltas reported. | **UNDECIDED** — the designer is unsure a cap is needed. Phase 1 ships first and measures how often a modifier would have exceeded `+S` (§10); that figure decides this row. |
 | 3 | **The floor re-author.** §4's sub-floor entries; Exalt's decision; the signatures' deltas re-read against the bands; `test/moveTiers` (or a sibling) pins the body floor at 20 and forbids 5. | No authored body under 20, no delta of 5; the Ancient hand-off in `authoring-moves.md` §10 names the bands. | — |
 | 4 | **Presentation.** The pip strip, the `→` on the hero sheet, the cap as a bar end, the flash pair on a cap hit, "at the limit" on the tile before the press. | A player can read a hero's modifier state from the fight screen without opening the sheet. | — |
 | 5 | **Re-fit.** The AI's utility for a scaled delta and a capped one; a sim pass on the pilot against the pre-phase-1 baseline (full-clear 54%, Reader 77 / Auto 53 / Fast 32 min); the Act 1 wall re-read, since a buff above the noise floor is the kind of lever the wall has not been given; then the `stat / 50` dial if the Late-act decay reads as a fault in play. | Win-rate targets are a playtest question; the measurement is buffs' share of casts by act, and whether it rose. | — |
 
 **What each phase measures.** Phase 1: the landed/authored ratio by act and by caster (is the
-buffer archetype real, or is Wisdom too flat to make one?). Phase 2: how often the cap binds,
+buffer archetype real, or is Wisdom too flat to make one?).
+
+Phase 1, measured (1000 runs, seed 11, greedy pilot, HEAD + only this phase against HEAD, the
+Banner fold of the same day in both). **First, a pilot fault the measurement found and fixed
+before it could be read:** `statDeltaValue` returned the receiver's gain and `scoreMove` added
+it unsigned, so a drop on an enemy scored as a loss and the pilot had never cast a debuff on
+purpose. With the sign fixed and the value bounded by the HP it can move (extra output by what
+the foes have left, damage prevented by what the receiver has), the PRE-scaling baseline is
+**61.6%** full-clear, not the 52.5% the unfixed pilot printed. Every figure below is against the
+fixed pilot. Scaling alone: **61.6% → 58.5%**, encounters won 12.18 → 12.19; Acts 1–3 clear
+89.2 / 92.0 / 98.9 → 89.8 / 93.1 / 97.7, Acts 4–5 **84.6 / 89.8 → 82.4 / 87.8** — the whole loss
+is late, where the enemy's debuffs land at ×2.0–2.2 (the step curve puts a Late spawn's
+offensive stat past the clamp) against the player's own ×2.0–2.2. Landed/authored by act,
+player then enemy: 1.31 / 1.19, 1.69 / 1.39, 1.91 / 1.55, 2.03 / 2.02, 2.18 / 2.22, finale
+2.16 / 1.73 — so the scaling tracks the run as §2 wanted, and the buffer archetype is real
+(the player side out-scales the enemy through Act 3 on Wisdom and STAB). Late-tier casts 12.1% →
+11.0% of the run. Clock unmoved (Reader 70.3 → 69.3 min). A pure-decomposition set on the
+unfixed pilot put enemy-side scaling at −6.5 points and player-side at +5.4, which is the same
+story. **The ceiling question, answered in numbers (§10):** a used stat's fight modifier passed
+`+S` in 5 / 3 / 1 / 5 / 4% of fights by act before scaling and **10 / 6 / 6 / 23 / 24%** after
+(finale 3% → 28%); it went under `−½S` in **35 / 22 / 12 / 6 / 5%** BEFORE scaling (finale 39%)
+and 45 / 45 / 32 / 29 / 26% after (finale 79%); and it reached the floor at 1 — a stat zeroed,
+the ratio against it unbounded — in **14 / 7 / 2 / 1 / 0%** before (finale 4%) and 21 / 19 / 9 /
+7 / 6% after (finale 34%). The debuff side was already past any sane ceiling before this
+phase, once the pilot cast debuffs at all; scaling made the buff side reach it too, in Acts 4+. Phase 2: how often the cap binds,
 and on whom — if it binds on ordinary two-cast setup it is too low; if it never binds on Apex
 Predator it is too high. Phase 3: nothing measurable; it is an authoring pass. Phase 5: whether
 buffs are cast more, and whether the Act 1 wall moved.
@@ -295,7 +319,14 @@ never gets a screen" — a buff's landed figure is shown on a card, never chosen
 
 ## 10. Open questions — DO NOT silently resolve
 
-- **Whether there is a ceiling at all.** The designer's doubt, and it is a fair one. The case
+- **Whether there is a ceiling at all.** The designer's doubt, and it is a fair one. **Phase 1
+  measured it (§8):** the DEBUFF half of the band is crossed in a third of Act 1 fights before
+  scaling and half after, and a stat is zeroed outright in a fifth of them — that is the floor
+  at 1 turning a −26 into an unbounded ratio, and it is where the late-act loss lives. The BUFF
+  half is crossed in a quarter of Act 4–5 fights after scaling, a twentieth before. So the two
+  halves are different questions: `−½S` is answering a fault that predates this doc, `+S` is
+  answering the thing this doc made bigger. Building the debuff half alone is a coherent
+  phase 2 if the buff half stays undecided. The case
   against: scaling already fixes the two findings that are about *feel*; the third (no cap) is a
   stall problem the Pact Clock already brackets; a cap is a rule the player has to learn and a
   moment ("nothing happened") the fight has to explain; and the compounders are three moves,

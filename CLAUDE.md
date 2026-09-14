@@ -138,6 +138,15 @@ don't silently override it.
   still pay `HP_BUDGET_VALUE` = 0.5 and equipment ⅓ (`HP_PER_POINT` = 3, 2026-09-11) — so it is a legibility call to be
   judged in playtest, and the walls are what to watch (`docs/progression.md` "Pricing HP").
 - **Stat modifiers are flat additive integers, multiples of 5 or 10.** No % stat mods.
+  **A MOVE's delta is authored as a BASE and lands scaled off the caster** (2026-09-14,
+  `docs/stat-scaling.md` phase 1, per user direction — a stage system was weighed and set
+  aside): `landed = round(authored × StatMult × STAB)`, the status-magnitude formula, a buff
+  reading the caster's Wisdom and a debuff the offensive stat its move swings with. The rule
+  binds the BASE, as it binds a Burn's; loadout grants (equipment, Banners, Evolution, Class)
+  stay exactly authored, and a self-side cost, a derived grant, a passive's delta and MP Regen
+  land flat. Still additive, still the stat pipeline — no % term touches a stat. The ceiling
+  (`[−½S, +S]`) is written up and **undecided**; phase 1 measured the debuff half crossed in a
+  third of Act 1 fights before scaling existed.
   **Automatic stat growth from levelling is the one systemic exemption** (2026-09-10, Growth
   Overhaul phase 3): a growth roll grants **+1 to +4**, or **+3 to +12 HP**, none of which is a
   multiple of 5. The rule was written to keep authored grants legible, and a roll nobody authors per-hero

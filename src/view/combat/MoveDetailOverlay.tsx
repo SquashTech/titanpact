@@ -31,7 +31,7 @@ import { fieldEffectFactsLine } from '../shared/fieldEffectFacts';
 import { STAT_LABELS, hpTier } from '../shared/StatBars';
 import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { TARGET_MODE_LABELS, grantsRatherThanInflicts, healReadout, moveKindGlyph, moveKindLabel, riderTargetLabel } from '../shared/MoveTile';
+import { TARGET_MODE_LABELS, grantsRatherThanInflicts, healReadout, moveKindGlyph, moveKindLabel, riderTargetLabel, statDeltaReadout } from '../shared/MoveTile';
 import { overlayHost } from '../shared/overlayHost';
 
 /** The live fight a move is inspected inside. Optional: the hero sheet, level-up and recruit preview have no combat to forecast against. */
@@ -423,7 +423,9 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
               text={`+${move.manaGrant} MP to ${TARGET_MODE_LABELS[move.target].toLowerCase()}, past the pool`}
             />
           )}
-          {move.statDeltas?.map(({ stat, amount }) => (
+          {move.statDeltas?.map(({ stat, amount: authored }) => {
+            const amount = statDeltaReadout(move, stat, authored, healCaster);
+            return (
             <EffectRow
               key={stat}
               glyph={<StatGlyph stat={stat} />}
@@ -433,9 +435,17 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
                   ? TARGET_MODE_LABELS.self
                   : TARGET_MODE_LABELS[move.target]
               ).toLowerCase()}`}
-              note={move.statDeltaChance != null ? `${Math.round(move.statDeltaChance * 100)}% chance, rolled per target` : undefined}
+              note={
+                [
+                  amount !== authored ? `base ${authored >= 0 ? '+' : ''}${authored}, scaled off your ${amount > 0 ? 'Wisdom' : 'attacking stat'}` : undefined,
+                  move.statDeltaChance != null ? `${Math.round(move.statDeltaChance * 100)}% chance, rolled per target` : undefined,
+                ]
+                  .filter(Boolean)
+                  .join(' — ') || undefined
+              }
             />
-          ))}
+            );
+          })}
           {move.doublesStatReductions && (
             <EffectRow
               glyph={<StatGlyph stat="intelligence" />}

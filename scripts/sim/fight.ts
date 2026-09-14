@@ -13,6 +13,7 @@ import { relics } from '../../src/data/relics';
 import type { CombatState, Side } from '../../src/engine/state';
 import { getMaxHp, getEffectiveStat } from '../../src/engine/state';
 import type { CombatEvent } from '../../src/engine/events';
+import type { StatKey } from '../../src/engine/content';
 import type { Action } from '../../src/engine/combat/actions';
 import { resolveRound } from '../../src/engine/combat/resolveRound';
 import { applyForcedReplacement } from '../../src/engine/combat/switching';
@@ -74,6 +75,22 @@ export interface FightOutcome {
   castsByTier: Record<string, number>;
   /** Player-side casts by mana actually spent, in 20-point bands. */
   castsByManaBand: Record<string, number>;
+  /** Move stat deltas by the CASTER's side: how many landed, and |landed| against |authored| summed (docs/stat-scaling.md §8 phase 1). */
+  statDeltaCount: number;
+  statDeltaAuthored: number;
+  statDeltaLanded: number;
+  enemyStatDeltaCount: number;
+  enemyStatDeltaAuthored: number;
+  enemyStatDeltaLanded: number;
+  /** The largest |fight modifier| any combatant's stat reached, as a fraction of base + loadout — 1.0 is "doubled" (§10, the ceiling question). */
+  peakModifierFrac: number;
+  /** Any combatant's stat modifier passed +S or −½S at some round end — what a [−½S, +S] ceiling would have clamped. */
+  wouldHaveCapped: boolean;
+  /** The same, split: a modifier past +S (a buff the ceiling would have clamped) / under −½S (a debuff). */
+  wouldHaveCappedUp: boolean;
+  wouldHaveCappedDown: boolean;
+  /** A used stat's modifier reached −S — the floor at 1 bit, and the ratio against it went to the moon. */
+  floored: boolean;
   /** Total effective stats (the six combat stats) each side FIELDED — who is out-scaling whom. */
   playerSquadStats: number;
   enemySquadStats: number;
@@ -147,9 +164,24 @@ function manaBand(spent: number): string {
 function recordEvents(
   events: readonly CombatEvent[],
   telemetry: Record<string, CombatantTelemetry>,
-  casts?: { byTier: Record<string, number>; byManaBand: Record<string, number> }
+  casts?: { byTier: Record<string, number>; byManaBand: Record<string, number> },
+  deltas?: { count: number; authored: number; landed: number; enemyCount: number; enemyAuthored: number; enemyLanded: number }
 ): void {
+  // A StatChanged names its holder, not its caster; the caster is the side of the last MoveUsed.
+  let casterSide: Side | undefined;
   for (const event of events) {
+    if (event.type === 'MoveUsed') casterSide = telemetry[event.combatantId]?.side;
+    if (event.type === 'StatChanged' && deltas && event.authored !== undefined && casterSide) {
+      if (casterSide === PLAYER_SIDE) {
+        deltas.count += 1;
+        deltas.authored += Math.abs(event.authored);
+        deltas.landed += Math.abs(event.delta);
+      } else {
+        deltas.enemyCount += 1;
+        deltas.enemyAuthored += Math.abs(event.authored);
+        deltas.enemyLanded += Math.abs(event.delta);
+      }
+    }
     if (event.type === 'MoveUsed' && casts && telemetry[event.combatantId]?.side === PLAYER_SIDE) {
       const tier = moves[event.moveId]?.tier ?? 'early';
       casts.byTier[tier] = (casts.byTier[tier] ?? 0) + 1;
@@ -298,6 +330,12 @@ export function simulateFight(input: FightInput): FightOutcome {
   let playerRests = 0;
   let playerSwitches = 0;
   const casts = { byTier: {} as Record<string, number>, byManaBand: {} as Record<string, number> };
+  const deltas = { count: 0, authored: 0, landed: 0, enemyCount: 0, enemyAuthored: 0, enemyLanded: 0 };
+  let peakModifierFrac = 0;
+  let wouldHaveCapped = false;
+  let floored = false;
+  let wouldHaveCappedUp = false;
+  let wouldHaveCappedDown = false;
 
   while (rounds < MAX_ROUNDS && !sideDefeated(state, PLAYER_SIDE) && !sideDefeated(state, AI_SIDE)) {
     const events: CombatEvent[] = [];
@@ -335,9 +373,27 @@ export function simulateFight(input: FightInput): FightOutcome {
     state = fillOpenSlots(state, AI_SIDE, replacementEvents);
     roundEvents.push(...replacementEvents);
 
-    recordEvents(roundEvents, telemetry, casts);
+    recordEvents(roundEvents, telemetry, casts, deltas);
     beats += countBeats(roundEvents);
     creditKos(roundEvents, telemetry);
+
+    // The ceiling question (docs/stat-scaling.md §10) is asked of stats a hero USES: the offensive
+    // stat it does not swing with is skipped, since a flat +25 on a caster's 25 Attack is past +S
+    // and means nothing.
+    for (const combatant of Object.values(state.combatants)) {
+      const line = allCombatants[combatant.heroId].baseStats;
+      const dumpStat: StatKey = line.attack >= line.intelligence ? 'intelligence' : 'attack';
+      for (const [stat, modifier] of Object.entries(combatant.statModifiers) as [StatKey, number][]) {
+        if (!modifier || stat === 'mpRegen' || stat === dumpStat) continue;
+        const s = line[stat] + (combatant.baselineStatModifiers[stat] ?? 0);
+        if (s <= 0) continue;
+        peakModifierFrac = Math.max(peakModifierFrac, Math.abs(modifier) / s);
+        if (modifier > s || modifier < -s / 2) wouldHaveCapped = true;
+        if (modifier > s) wouldHaveCappedUp = true;
+        if (modifier < -s / 2) wouldHaveCappedDown = true;
+        if (modifier <= -s) floored = true;
+      }
+    }
   }
 
   const playerDown = sideDefeated(state, PLAYER_SIDE);
@@ -366,6 +422,17 @@ export function simulateFight(input: FightInput): FightOutcome {
     enemySquadStats: squadStatTotal(opening.state, AI_SIDE),
     castsByTier: casts.byTier,
     castsByManaBand: casts.byManaBand,
+    statDeltaCount: deltas.count,
+    statDeltaAuthored: deltas.authored,
+    statDeltaLanded: deltas.landed,
+    enemyStatDeltaCount: deltas.enemyCount,
+    enemyStatDeltaAuthored: deltas.enemyAuthored,
+    enemyStatDeltaLanded: deltas.enemyLanded,
+    peakModifierFrac,
+    wouldHaveCapped,
+    wouldHaveCappedUp,
+    wouldHaveCappedDown,
+    floored,
     playerHpFrac: maxHp > 0 ? hp / maxHp : 0,
     telemetry,
     final: state,

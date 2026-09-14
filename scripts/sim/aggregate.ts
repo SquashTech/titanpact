@@ -107,6 +107,18 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
     agg.playerRests += fight.playerRests;
     agg.playerSwitches += fight.playerSwitches;
     if (fight.lockedIn) agg.lockInFights += 1;
+    agg.statDeltaCountByAct[fight.act] = (agg.statDeltaCountByAct[fight.act] ?? 0) + fight.statDeltaCount;
+    agg.statDeltaAuthoredByAct[fight.act] = (agg.statDeltaAuthoredByAct[fight.act] ?? 0) + fight.statDeltaAuthored;
+    agg.statDeltaLandedByAct[fight.act] = (agg.statDeltaLandedByAct[fight.act] ?? 0) + fight.statDeltaLanded;
+    agg.enemyStatDeltaCountByAct[fight.act] = (agg.enemyStatDeltaCountByAct[fight.act] ?? 0) + fight.enemyStatDeltaCount;
+    agg.enemyStatDeltaAuthoredByAct[fight.act] = (agg.enemyStatDeltaAuthoredByAct[fight.act] ?? 0) + fight.enemyStatDeltaAuthored;
+    agg.enemyStatDeltaLandedByAct[fight.act] = (agg.enemyStatDeltaLandedByAct[fight.act] ?? 0) + fight.enemyStatDeltaLanded;
+    agg.fightsByAct[fight.act] = (agg.fightsByAct[fight.act] ?? 0) + 1;
+    agg.wouldHaveCappedByAct[fight.act] = (agg.wouldHaveCappedByAct[fight.act] ?? 0) + (fight.wouldHaveCapped ? 1 : 0);
+    agg.peakModifierFracSumByAct[fight.act] = (agg.peakModifierFracSumByAct[fight.act] ?? 0) + fight.peakModifierFrac;
+    agg.flooredByAct[fight.act] = (agg.flooredByAct[fight.act] ?? 0) + (fight.floored ? 1 : 0);
+    agg.wouldHaveCappedUpByAct[fight.act] = (agg.wouldHaveCappedUpByAct[fight.act] ?? 0) + (fight.wouldHaveCappedUp ? 1 : 0);
+    agg.wouldHaveCappedDownByAct[fight.act] = (agg.wouldHaveCappedDownByAct[fight.act] ?? 0) + (fight.wouldHaveCappedDown ? 1 : 0);
 
     for (const heroId of Object.keys(fight.playerHeroes)) {
       const t = fight.playerHeroes[heroId];

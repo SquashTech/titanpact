@@ -133,6 +133,19 @@ export interface Aggregate {
   playerSwitches: number;
   /** Fights where the player side reached the 2-KO lock-in threshold. */
   lockInFights: number;
+  /** Per act (index = act): scaled stat deltas landed, |authored| and |landed| summed, fights, fights a [−½S, +S] ceiling would have clamped, and the peak modifier/S summed (docs/stat-scaling.md §8, §10). */
+  statDeltaCountByAct: number[];
+  statDeltaAuthoredByAct: number[];
+  statDeltaLandedByAct: number[];
+  enemyStatDeltaCountByAct: number[];
+  enemyStatDeltaAuthoredByAct: number[];
+  enemyStatDeltaLandedByAct: number[];
+  fightsByAct: number[];
+  wouldHaveCappedByAct: number[];
+  wouldHaveCappedUpByAct: number[];
+  wouldHaveCappedDownByAct: number[];
+  flooredByAct: number[];
+  peakModifierFracSumByAct: number[];
   /** Mastery pips landed, by source (scribe / shelf; the Cache from phase 2), all runs and won runs. */
   pipsBySource: Record<string, number>;
   pipsBySourceWon: Record<string, number>;
@@ -186,6 +199,18 @@ export function emptyAggregate(): Aggregate {
     playerRests: 0,
     playerSwitches: 0,
     lockInFights: 0,
+    statDeltaCountByAct: [],
+    statDeltaAuthoredByAct: [],
+    statDeltaLandedByAct: [],
+    enemyStatDeltaCountByAct: [],
+    enemyStatDeltaAuthoredByAct: [],
+    enemyStatDeltaLandedByAct: [],
+    fightsByAct: [],
+    wouldHaveCappedByAct: [],
+    wouldHaveCappedUpByAct: [],
+    wouldHaveCappedDownByAct: [],
+    flooredByAct: [],
+    peakModifierFracSumByAct: [],
     pipsBySource: {},
     pipsBySourceWon: {},
     recruitsBySource: {},
@@ -261,6 +286,18 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   into.playerRests += from.playerRests;
   into.playerSwitches += from.playerSwitches;
   into.lockInFights += from.lockInFights;
+  mergeArray(into.statDeltaCountByAct, from.statDeltaCountByAct);
+  mergeArray(into.statDeltaAuthoredByAct, from.statDeltaAuthoredByAct);
+  mergeArray(into.statDeltaLandedByAct, from.statDeltaLandedByAct);
+  mergeArray(into.enemyStatDeltaCountByAct, from.enemyStatDeltaCountByAct);
+  mergeArray(into.enemyStatDeltaAuthoredByAct, from.enemyStatDeltaAuthoredByAct);
+  mergeArray(into.enemyStatDeltaLandedByAct, from.enemyStatDeltaLandedByAct);
+  mergeArray(into.fightsByAct, from.fightsByAct);
+  mergeArray(into.wouldHaveCappedByAct, from.wouldHaveCappedByAct);
+  mergeArray(into.flooredByAct, from.flooredByAct);
+  mergeArray(into.wouldHaveCappedUpByAct, from.wouldHaveCappedUpByAct);
+  mergeArray(into.wouldHaveCappedDownByAct, from.wouldHaveCappedDownByAct);
+  mergeArray(into.peakModifierFracSumByAct, from.peakModifierFracSumByAct);
   mergeArray(into.actEntered, from.actEntered);
   mergeArray(into.actCleared, from.actCleared);
   mergeArray(into.deathAct, from.deathAct);

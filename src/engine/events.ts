@@ -80,7 +80,10 @@ export interface StatChangedEvent extends BaseEvent {
   type: 'StatChanged';
   combatantId: string;
   stat: string;
+  /** What landed. */
   delta: number;
+  /** The authored base when a move scaled the delta (docs/stat-scaling.md §2); absent when delta IS the authored figure (a passive, a derived grant). */
+  authored?: number;
   newValue: number;
 }
 

@@ -3,6 +3,10 @@ import { createCombatant, getMaxHp, getMaxMana } from '../src/engine/state';
 import { createRng } from '../src/engine/rng/seededRng';
 import { heroes } from '../src/data/heroes';
 import { allCombatants } from '../src/data/content';
+import { fieldEffects } from '../src/data/fieldEffects';
+import { passives } from '../src/data/passives';
+import type { MoveDefinition, StatKey } from '../src/engine/content';
+import { scaleStatDelta } from '../src/engine/combat/statDeltaScaling';
 
 export interface FixtureCombatant {
   combatantId: string;
@@ -62,4 +66,19 @@ export function createFightState(seed: number, sideA: FixtureCombatant[], sideB:
     koCount: { A: 0, B: 0 },
     activeFieldEffect: null,
   };
+}
+
+/**
+ * What a move's authored delta lands as for this caster, on a board where the target is on that
+ * side or not (docs/stat-scaling.md §2). A slate test pins THIS, since the authored base is no
+ * longer the figure that lands. Read off the pre-cast state, as the engine snapshots it.
+ */
+export function landedDelta(state: CombatState, casterId: string, move: MoveDefinition, stat: StatKey, authored: number, targetId: string): number {
+  const caster = state.combatants[casterId];
+  const onCasterSide = state.combatants[targetId].side === caster.side;
+  return scaleStatDelta(stat, authored, move, allCombatants[caster.heroId], caster, onCasterSide, {
+    active: state.activeFieldEffect,
+    defs: fieldEffects,
+    board: { state, passives },
+  });
 }

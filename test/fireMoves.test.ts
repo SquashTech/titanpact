@@ -4,7 +4,7 @@
 import { statusApplicationsOf } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
-import { createFightState } from './fixtures';
+import { createFightState, landedDelta } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { signatureMoves } from '../src/data/signatures';
@@ -221,8 +221,11 @@ test("fire: Molten Lash deals damage, applies Burn, and drops the target's Defen
   assert.ok(events.some((e) => e.type === 'DamageDealt'));
   // Cinder Knight (Fire/Iron, Attack 85) on a PHYSICAL move: Burn 15 x 1.35 x 1.25 STAB = 25, halved.
   assert.strictEqual(next.combatants.b1.statuses.Burn?.magnitude, 12);
-  assert.strictEqual(next.combatants.b1.statModifiers.defense, -10);
-  assert.ok(events.some((e) => e.type === 'StatChanged' && (e as any).stat === 'defense' && (e as any).delta === -10));
+  // The −10 is a base a PHYSICAL move scales off Attack: −10 × 1.35 × 1.25 STAB = −17 (docs/stat-scaling.md §2).
+  const drop = landedDelta(state, 'a2', moves.moltenLash, 'defense', -10, 'b1');
+  assert.strictEqual(drop, -17);
+  assert.strictEqual(next.combatants.b1.statModifiers.defense, drop);
+  assert.ok(events.some((e) => e.type === 'StatChanged' && (e as any).stat === 'defense' && (e as any).delta === drop && (e as any).authored === -10));
 });
 
 test('fire: the Defense drop lands AFTER the hit that delivered it, so it only pays off next round', () => {
@@ -235,7 +238,7 @@ test('fire: the Defense drop lands AFTER the hit that delivered it, so it only p
 
   const second = resolveRound(first.state, once, config);
   const secondHit = second.events.find((e: any) => e.type === 'DamageDealt') as any;
-  assert.strictEqual(secondHit.defStat, heroes.ironWarden.baseStats.defense - 10);
+  assert.strictEqual(secondHit.defStat, heroes.ironWarden.baseStats.defense + landedDelta(state, 'a2', moves.moltenLash, 'defense', -10, 'b1'));
 });
 
 // --- Spread + field effect + self-inflicted riders ---
