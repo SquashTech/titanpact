@@ -438,4 +438,21 @@ export interface HeroDefinition {
    * exactly the grade budget — so a hero with no authored line is fairly costed, not free.
    */
   growthGrades?: Record<GrowthStatKey, 'S' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F'>;
+  /**
+   * What this hero's levels pay (run/progression.ts, docs/xp-overhaul.md §4). Optional: absent
+   * reads as DEFAULT_SCHEDULE until the per-hero pass authors one.
+   */
+  schedule?: LevelSchedule;
+}
+
+/**
+ * The levels that teach. `offerLevels` each roll one move from the band the level has opened;
+ * `midLevel` opens Mid (and expires Early), `lateLevel` opens Late; `evolutionLevel` raises the
+ * Evolution in place of that level's offer.
+ */
+export interface LevelSchedule {
+  offerLevels: readonly number[];
+  midLevel: number;
+  evolutionLevel: number;
+  lateLevel: number;
 }

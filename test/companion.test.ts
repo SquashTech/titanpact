@@ -12,7 +12,6 @@ import { spawnPosition, spawnSlate, titanspawn } from '../src/data/titanspawn';
 import { locations } from '../src/data/locations';
 import { generateMap } from '../src/run/map';
 import {
-  COMPANION_TIER_STEP_RUNGS,
   absorbCompanions,
   applyCompanionTierStep,
   companionCandidate,
@@ -23,7 +22,7 @@ import {
 } from '../src/run/companion';
 import { mobEncounter } from '../src/run/spawn';
 import { actScaling } from '../src/run/difficulty';
-import { EVOLUTION_RUNG, RANK_THRESHOLDS, masteryMovePool, masteryRank, masteryRung, scrollsToReachRung } from '../src/run/progression';
+import { DEFAULT_SCHEDULE, entryBandRank, levelMovePool, scheduleEntries, scheduleFor } from '../src/run/progression';
 import { ROSTER_CAP, addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
 import { equipItem } from '../src/run/equipment';
 import { isRecruitable } from '../src/run/recruitment';
@@ -34,7 +33,7 @@ import { relics } from '../src/data/relics';
 import { passives } from '../src/data/passives';
 import { CHAMPION_IDS } from '../src/data/enemies';
 import { TYPES } from '../src/data/typechart';
-import { levelOf, xpForLevel } from '../src/run/growth';
+import { levelOf, xpForLevel, MAX_XP } from '../src/run/growth';
 
 function starterRun(level = 3): RunState {
   let run = createRunState(50);
@@ -89,37 +88,51 @@ test('companion: a knockout takes it — off the roster, its items to the bag; a
   assert.strictEqual(untouched.run, run);
 });
 
-test('companion: the tier-steps sit on the Evolution rung and the rung that opens Late, and everything carries', () => {
-  assert.deepStrictEqual(COMPANION_TIER_STEP_RUNGS, { early: EVOLUTION_RUNG, mid: RANK_THRESHOLDS[2], late: null });
+test('companion: the tier-steps sit on the schedule\'s Evolution level and its Late level, and everything carries', () => {
+  // A mortal entry's schedule carries a `step` where a branch would be and where Late opens
+  // (progression.ts scheduleEntries); the steps are taken in order like any entry.
+  const schedule = scheduleFor(rosterHeroes.cubling);
+  const entries = scheduleEntries(schedule, true);
+  assert.deepStrictEqual(
+    entries.filter((e) => e.kind === 'step').map((e) => e.level),
+    [schedule.evolutionLevel, schedule.lateLevel]
+  );
+  assert.ok(entries.every((e) => e.kind !== 'evolution'), 'a companion has no branch');
   let run = joinCompanion(starterRun(), 'cubling', rosterHeroes);
   const id = companionOf(run)!.rosterId;
-  const at = (rung: number) => ({ ...run, roster: run.roster.map((r) => (r.rosterId === id ? { ...r, masteryScrollsSpent: scrollsToReachRung(rung), unlockedMoveIds: ['claw', 'venomBite', 'prowl', 'lacerate'], equipment: ['dagger.common'] } : r)) });
-  assert.strictEqual(companionTierStep(companionOf(at(EVOLUTION_RUNG - 1))!), null);
-  assert.strictEqual(companionTierStep(companionOf(at(EVOLUTION_RUNG))!), 'ravager');
-  const mid = applyCompanionTierStep(at(EVOLUTION_RUNG), id);
+  const stepIndex = entries.findIndex((e) => e.kind === 'step');
+  const at = (level: number, taken: number) => ({ ...run, roster: run.roster.map((r) => (r.rosterId === id ? { ...r, xp: xpForLevel(level), scheduleTaken: taken, unlockedMoveIds: ['claw', 'venomBite', 'prowl', 'lacerate'], equipment: ['dagger.common'] } : r)) });
+  const hero = rosterHeroes.cubling;
+  assert.strictEqual(companionTierStep(hero, companionOf(at(schedule.evolutionLevel - 1, stepIndex))!), null, 'not before the level');
+  assert.strictEqual(companionTierStep(hero, companionOf(at(schedule.evolutionLevel, stepIndex - 1))!), null, 'not before the entries ahead of it are taken');
+  assert.strictEqual(companionTierStep(hero, companionOf(at(schedule.evolutionLevel, stepIndex))!), 'ravager');
+  const mid = applyCompanionTierStep(at(schedule.evolutionLevel, stepIndex), id, rosterHeroes);
   const grown = companionOf(mid)!;
   assert.strictEqual(grown.heroId, 'ravager');
   assert.deepStrictEqual(grown.unlockedMoveIds, ['claw', 'venomBite', 'prowl', 'lacerate']);
   assert.deepStrictEqual(grown.equipment, ['dagger.common']);
-  assert.strictEqual(masteryRung(grown), EVOLUTION_RUNG);
-  assert.strictEqual(companionTierStep(grown), null, 'one step per rung');
-  const lateReady = { ...grown, masteryScrollsSpent: scrollsToReachRung(RANK_THRESHOLDS[2]) };
-  assert.strictEqual(companionTierStep(lateReady), 'behemoth');
-  assert.strictEqual(companionTierStep({ ...lateReady, heroId: 'behemoth' }), null, 'the Late is the end of the line');
-  // A hero on the same rung is not stepped: the flag is what the rule reads.
-  assert.strictEqual(companionTierStep({ ...run.roster[0], masteryScrollsSpent: scrollsToReachRung(EVOLUTION_RUNG) }), null);
+  assert.strictEqual(grown.scheduleTaken, stepIndex + 1, 'the step is taken');
+  assert.strictEqual(companionTierStep(rosterHeroes.ravager, grown), null, 'one step per entry');
+  const lateIndex = entries.findIndex((e) => e.kind === 'step' && e.level === schedule.lateLevel);
+  const lateReady = { ...grown, xp: xpForLevel(schedule.lateLevel), scheduleTaken: lateIndex };
+  assert.strictEqual(companionTierStep(rosterHeroes.ravager, lateReady), 'behemoth');
+  assert.strictEqual(companionTierStep(rosterHeroes.behemoth, { ...lateReady, heroId: 'behemoth' }), null, 'the Late is the end of the line');
+  // A hero at the same level is not stepped: the flag is what the rule reads.
+  assert.strictEqual(companionTierStep(rosterHeroes.valor, { ...run.roster[0], xp: xpForLevel(schedule.evolutionLevel), scheduleTaken: stepIndex }), null);
 });
 
-test('companion: its Scroll pool is its type\'s slate, gated by rank like anyone\'s', () => {
+test('companion: its level-up pool is its type\'s slate, gated by band like anyone\'s', () => {
   const run = joinCompanion(starterRun(), 'cubling', rosterHeroes);
   const entry = companionOf(run)!;
+  const hero = rosterHeroes.cubling;
   assert.deepStrictEqual([...progressionTable.moveTiers.cubling].sort(), spawnSlate('Beast').sort());
-  const rank1 = masteryMovePool(progressionTable, moves, entry);
-  assert.ok(rank1.length > 0 && rank1.every((id) => moves[id].tier === 'early'), 'rank 1 offers Early only');
-  assert.ok(!rank1.includes('claw'), 'the kit is filtered out');
-  const rank2 = { ...entry, masteryScrollsSpent: scrollsToReachRung(RANK_THRESHOLDS[1]) };
-  assert.strictEqual(masteryRank(rank2), 2);
-  assert.ok(masteryMovePool(progressionTable, moves, rank2).some((id) => moves[id].tier === 'mid'));
+  const early = levelMovePool(progressionTable, moves, hero, entry);
+  assert.ok(early.length > 0 && early.every((id: string) => moves[id].tier === 'early'), 'below midLevel offers Early only');
+  assert.ok(!early.includes('claw'), 'the kit is filtered out');
+  const mid = { ...entry, xp: xpForLevel(DEFAULT_SCHEDULE.midLevel) };
+  assert.strictEqual(entryBandRank(hero, mid), 2);
+  assert.ok(levelMovePool(progressionTable, moves, hero, mid).some((id: string) => moves[id].tier === 'mid'));
+  void MAX_XP;
 });
 
 test('companion: the flag and the run\'s memory of it survive a save', () => {

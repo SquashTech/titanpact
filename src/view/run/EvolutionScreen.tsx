@@ -68,8 +68,8 @@ function paletteStyle(hero: HeroDefinition, path: EvolutionPath): CSSProperties 
 function poolPromise(path: EvolutionPath): string | null {
   if (!path.learnableMoveIds?.length) return null;
   return path.typeGraft
-    ? `New ${path.typeGraft} moves join what a Mastery Scroll can teach.`
-    : 'New moves join what a Mastery Scroll can teach.';
+    ? `New ${path.typeGraft} moves join what a level can teach.`
+    : 'New moves join what a level can teach.';
 }
 
 function statEntriesOf(path: EvolutionPath): [StatKey, number][] {

@@ -3,8 +3,8 @@ import { test } from './harness';
 import { heroes } from '../src/data/heroes';
 import { enemies } from '../src/data/enemies';
 import { guildHallOffers } from '../src/data/recruitment';
-import { ENEMY_LEVEL_BY_ACT, GUILD_HALL_ACT_LAG, guildHallLevel, scrollsFor } from '../src/run/difficulty';
-import { EVOLUTION_LEVEL, EVOLUTION_SCROLLS } from '../src/run/progression';
+import { ENEMY_LEVEL_BY_ACT, GUILD_HALL_ACT_LAG, guildHallLevel } from '../src/run/difficulty';
+import { scheduleEntriesBelow } from '../src/run/progression';
 import { ENCOUNTERS_PER_ACT, MAX_LEVEL, levelAfterEncounters, levelOf, xpForLevel } from '../src/run/growth';
 import { guildHallEntry } from '../src/run/guildRecruit';
 import { createRunState, createRosterEntry, addRosterEntry, ROSTER_CAP } from '../src/run/state';
@@ -96,7 +96,7 @@ test('recruitment: a hire arrives RAW — rank 1, no Evolution, its own starting
 
     assert.strictEqual(levelOf(entry), guildHallLevel(act));
     assert.deepStrictEqual(entry.chosenPathIds, [], `act ${act}: a hire must not arrive evolved`);
-    assert.strictEqual(entry.masteryScrollsSpent, 0, `act ${act}: a hire must arrive at rank 1`);
+    assert.strictEqual(entry.scheduleTaken, 0, `act ${act}: a hire must arrive with its schedule un-crossed`);
     assert.deepStrictEqual(
       [...entry.unlockedMoveIds],
       [...offer.startingMoveIds],
@@ -280,7 +280,7 @@ test('recruitment: the enemy pool shares no ids with the recruitable hero pool',
 
 test('recruitment: a contract hero arrives FINISHED where a hire arrives RAW — three axes, not one', () => {
   // CLAUDE.md's line — "Guild heroes have decaying runway value; contract heroes have flat value"
-  // — used to be true on LEVEL alone. Since 2026-09-10 it is true on level, rank and Evolution,
+  // — used to be true on LEVEL alone. Since 2026-09-10 it is true on level, schedule and Evolution,
   // which is what makes the two routes worth choosing between rather than ranking.
   const act = 4;
   const run = { ...seedRoster(['cinderKnight'], 200), actNumber: act };
@@ -288,8 +288,8 @@ test('recruitment: a contract hero arrives FINISHED where a hire arrives RAW —
   // The contract hero IS the enemy you beat: whatever that build carried, it carries.
   const beaten = {
     ...createRosterEntry('beaten', 'ironWarden', heroes.ironWarden.moveIds),
-    level: 12,
-    masteryScrollsSpent: EVOLUTION_SCROLLS,
+    xp: xpForLevel(16),
+    scheduleTaken: scheduleEntriesBelow(heroes.ironWarden, 16),
     chosenPathIds: ['ironWarden-defensive'],
     unlockedMoveIds: [...heroes.ironWarden.moveIds, 'rendArmor'],
   };
@@ -304,9 +304,9 @@ test('recruitment: a contract hero arrives FINISHED where a hire arrives RAW —
   assert.deepStrictEqual(claimed.chosenPathIds, ['ironWarden-defensive']);
   assert.deepStrictEqual(hired.chosenPathIds, []);
 
-  // Axis 2 — Rank. The Evolution rung's worth already poured in, or none.
-  assert.strictEqual(claimed.masteryScrollsSpent, EVOLUTION_SCROLLS);
-  assert.strictEqual(hired.masteryScrollsSpent, 0);
+  // Axis 2 — Schedule. Every entry below its level taken, or none: the hire is owed them all.
+  assert.strictEqual(claimed.scheduleTaken, scheduleEntriesBelow(heroes.ironWarden, 16));
+  assert.strictEqual(hired.scheduleTaken, 0);
 
   // Axis 3 — Kit. Picked by the game, or the hero's own authored three.
   assert.ok(claimed.unlockedMoveIds.length > offer.startingMoveIds.length);

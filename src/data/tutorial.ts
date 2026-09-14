@@ -86,9 +86,9 @@ export const TUTORIAL_ENCOUNTERS: Partial<Record<MapNodeType, TutorialEncounter>
  * experience a normal one does, so that erasing a profile to replay the tutorial is never the
  * strongest opening move in the run. It used to pay double.
  *
- * XP is not pinned because there is none to pin (2026-09-10): levels are automatic and
- * roster-wide, so the act's third encounter takes the whole roster to EVOLUTION_LEVEL on its own
- * (run/growth.ts LEVEL_AFTER_ENCOUNTER).
+ * XP is not pinned because there is nothing to pin (2026-09-10): levels are automatic and
+ * roster-wide, and the act's fights walk the whole roster up the same table (run/growth.ts
+ * LEVEL_AFTER_ENCOUNTER) whatever the player does.
  *
  * Gold IS pinned, and only to its own average (goldRewardFor rolls 30-45 for a battle and 15-25
  * otherwise). Not for power — 77 against a ~77.5 mean — but for determinism: Valor tells the
@@ -147,7 +147,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     lines: [
       'Every fight we win hardens all of us — the ones who stood in it and the ones who did not. You will never have to choose who grows.',
       'What we grow INTO is not up to either of us. Each of my statistics rolls on its own, against whatever I am naturally suited to. My sheet on the Roster shows those leanings.',
-      'A level teaches me nothing, mind. New moves come from Mastery Scrolls.',
+      'And every few levels, a level teaches. A new move is offered from whatever I am ready for — take it or let it go, it will not come round again. Deeper down the same road is where each of us evolves.',
     ],
   },
 
@@ -229,15 +229,6 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     lines: [
       'The Guardian is down, and the fire of the Crucible is lit. One of us walks into it and comes out with a Class — a discipline any of us could take.',
       'A move, or a talent. The choice is permanent for the rest of the journey, and each Guardian lights the fire once.',
-    ],
-  },
-
-  {
-    id: 'scroll',
-    topic: 'Mastery Scrolls',
-    lines: [
-      'Mastery Scrolls. Pour them into one of us and they teach a move — the only way any of us learns one. The first lesson is cheap; each one after costs more.',
-      'Three lessons into the same hero and that hero ranks up, and deeper moves come within reach. Four, and that hero evolves — a permanent choice of path. Spread them thin and nobody gets there. Or bank them, and choose later.',
     ],
   },
 

@@ -8,7 +8,6 @@
 // `learnableMoveIds` JOIN the level-up pool rather than being handed over (docs/leveling-and-ranks.md).
 
 import type { ProgressionTable } from '../run/progression';
-import { EVOLUTION_LEVEL } from '../run/progression';
 import { spawnMoveTiers } from './titanspawn';
 
 export const progressionTable: ProgressionTable = {
@@ -531,7 +530,7 @@ export const progressionTable: ProgressionTable = {
       'mentalFortress',
     ],
     // The companion's bodies (run/companion.ts): a spawn's pool is its type's whole slate, so
-    // the ladder gates it by band like anyone's. No Evolution node — the EVOLUTION_RUNG is its
+    // the schedule gates it by band like anyone's. No Evolution node — its evolutionLevel is its
     // tier-step instead.
     ...spawnMoveTiers,
   },
@@ -539,7 +538,6 @@ export const progressionTable: ProgressionTable = {
     // --- Fire ---
     cinderKnight: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'cinderKnight-offensive',
@@ -577,7 +575,6 @@ export const progressionTable: ProgressionTable = {
     ],
     crimson: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'crimson-offensive',
@@ -616,7 +613,6 @@ export const progressionTable: ProgressionTable = {
     ],
     brimstone: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'brimstone-offensive',
@@ -656,7 +652,6 @@ export const progressionTable: ProgressionTable = {
     // --- Water ---
     tidecaller: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'tidecaller-offensive',
@@ -695,7 +690,6 @@ export const progressionTable: ProgressionTable = {
     ],
     pincer: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'pincer-offensive',
@@ -735,7 +729,6 @@ export const progressionTable: ProgressionTable = {
     // --- Frost ---
     glacialWarden: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'glacialWarden-offensive',
@@ -774,7 +767,6 @@ export const progressionTable: ProgressionTable = {
     ],
     rime: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'rime-offensive',
@@ -813,7 +805,6 @@ export const progressionTable: ProgressionTable = {
     ],
     cube: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'cube-offensive',
@@ -853,7 +844,6 @@ export const progressionTable: ProgressionTable = {
     // --- Storm ---
     stormRanger: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'stormRanger-offensive',
@@ -892,7 +882,6 @@ export const progressionTable: ProgressionTable = {
     ],
     tempest: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'tempest-offensive',
@@ -931,7 +920,6 @@ export const progressionTable: ProgressionTable = {
     ],
     scallywag: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'scallywag-offensive',
@@ -971,7 +959,6 @@ export const progressionTable: ProgressionTable = {
     // --- Stone ---
     crag: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'crag-offensive',
@@ -1010,7 +997,6 @@ export const progressionTable: ProgressionTable = {
     ],
     sentinel: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'sentinel-offensive',
@@ -1049,7 +1035,6 @@ export const progressionTable: ProgressionTable = {
     // --- Nature ---
     wildOracle: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'wildOracle-offensive',
@@ -1089,7 +1074,6 @@ export const progressionTable: ProgressionTable = {
     ],
     mordax: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'mordax-offensive',
@@ -1128,7 +1112,6 @@ export const progressionTable: ProgressionTable = {
     ],
     hollowbark: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'hollowbark-offensive',
@@ -1168,7 +1151,6 @@ export const progressionTable: ProgressionTable = {
     // --- Light ---
     dawnwarden: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'dawnwarden-offensive',
@@ -1207,7 +1189,6 @@ export const progressionTable: ProgressionTable = {
     ],
     aegis: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'aegis-offensive',
@@ -1247,7 +1228,6 @@ export const progressionTable: ProgressionTable = {
     // --- Shadow ---
     shadowMonk: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'shadowMonk-offensive',
@@ -1285,7 +1265,6 @@ export const progressionTable: ProgressionTable = {
     ],
     marrow: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'marrow-offensive',
@@ -1323,7 +1302,6 @@ export const progressionTable: ProgressionTable = {
     ],
     nightshade: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'nightshade-offensive',
@@ -1363,7 +1341,6 @@ export const progressionTable: ProgressionTable = {
     // --- Arcane ---
     runescribe: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'runescribe-offensive',
@@ -1402,7 +1379,6 @@ export const progressionTable: ProgressionTable = {
     ],
     zenith: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'zenith-offensive',
@@ -1441,7 +1417,6 @@ export const progressionTable: ProgressionTable = {
     // --- Mind ---
     mindweaver: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'mindweaver-offensive',
@@ -1480,7 +1455,6 @@ export const progressionTable: ProgressionTable = {
     ],
     lucius: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'lucius-offensive',
@@ -1519,7 +1493,6 @@ export const progressionTable: ProgressionTable = {
     ],
     trance: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'trance-offensive',
@@ -1559,7 +1532,6 @@ export const progressionTable: ProgressionTable = {
     // --- Spirit ---
     revenant: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'revenant-offensive',
@@ -1598,7 +1570,6 @@ export const progressionTable: ProgressionTable = {
     ],
     sorrow: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'sorrow-offensive',
@@ -1638,7 +1609,6 @@ export const progressionTable: ProgressionTable = {
     // --- Iron ---
     ironWarden: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'ironWarden-offensive',
@@ -1677,7 +1647,6 @@ export const progressionTable: ProgressionTable = {
     ],
     valor: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'valor-offensive',
@@ -1716,7 +1685,6 @@ export const progressionTable: ProgressionTable = {
     ],
     gallant: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'gallant-offensive',
@@ -1756,7 +1724,6 @@ export const progressionTable: ProgressionTable = {
     // --- Mech ---
     forgewright: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'forgewright-offensive',
@@ -1795,7 +1762,6 @@ export const progressionTable: ProgressionTable = {
     ],
     steamColossus: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'steamColossus-offensive',
@@ -1834,7 +1800,6 @@ export const progressionTable: ProgressionTable = {
     // --- Beast ---
     packAlpha: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'packAlpha-offensive',
@@ -1873,7 +1838,6 @@ export const progressionTable: ProgressionTable = {
     ],
     widow: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'widow-offensive',
@@ -1911,7 +1875,6 @@ export const progressionTable: ProgressionTable = {
     ],
     coil: [
       {
-        level: EVOLUTION_LEVEL,
         paths: [
           {
             id: 'coil-offensive',

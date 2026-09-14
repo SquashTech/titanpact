@@ -20,20 +20,17 @@ import type { EquipmentDefinition } from '../../src/run/equipment';
 import { holdsItem } from '../../src/run/equipment';
 import type { RosterEntry, RunState } from '../../src/run/state';
 import {
-  EVOLUTION_RUNG,
-  masteryRung,
   MOVE_CAP,
   applyEvolutionMoves,
   availableEvolution,
-  canSpendScroll,
   chooseEvolutionPath,
   grantOfferedMove,
   itemSlotsFor,
-  masteryMovePool,
+  levelMovePool,
+  pendingScheduleEntry,
   recordMoveOffer,
   rosterEntryTypes,
-  scrollMovePool,
-  spendMasteryScroll,
+  takeScheduleEntry,
 } from '../../src/run/progression';
 import { progressionTable } from '../../src/data/progression';
 import { mergeStatMods } from '../../src/run/statMods';
@@ -261,69 +258,68 @@ export interface PourEvolution {
   picked: string;
 }
 
-/**
- * The purse, poured into the hero it is worth most to — highest power score whose next rung it
- * can afford (docs/growth-overhaul.md §12: a rung's price rises, so the purse may cover a weak
- * hero's cheap rung and not the carry's dear one; this policy takes the cheap rung rather than
- * bank, which is the greedy baseline the old Training Point sim also played). CONCENTRATED rather
- * than spread, because that is the play the rank ladder rewards and a sim that spread them evenly
- * would measure a ceiling nobody reaches.
- *
- * The Evolution rung into a hero is its Evolution (docs/growth-overhaul.md §11): the path is taken
- * at random (the path table is what is under test) and its granted move's overflow resolved. The
- * Evolution is that rung's whole reward — no offer rolls behind it (`useScrollPour`).
- *
- * The move is taken when it beats the worst one held (or there is room), declined otherwise —
- * either way the Scrolls are gone, which is the rule the screen enforces too.
- */
-export function pourScrolls(run: RunState, rng: () => number, evolutions: PourEvolution[] = []): RunState {
-  let next = run;
-  // Bounded by the purse: every iteration spends at least one Scroll or breaks.
-  while (next.masteryScrolls > 0) {
-    const takers = next.roster.filter((entry) => canSpendScroll(progressionTable, moves, next, entry));
-    if (takers.length === 0) break;
-    // Breadth first, then depth (docs/growth-overhaul.md §11: six evolved is the expected ending):
-    // the strongest hero still short of its Evolution takes the Scroll; once everyone has one, the
-    // strongest hero outright does, so the ladder's open-ended top is measured as well.
-    const short = takers.filter((entry) => masteryRung(entry) < EVOLUTION_RUNG);
-    const candidates = short.length > 0 ? short : takers;
-    const target = candidates.reduce((best, entry) => (powerScore(entry) > powerScore(best) ? entry : best));
-    next = spendMasteryScroll(next, target.rosterId);
+/** What one pass of the schedule paid, so run.ts can tally it. */
+export interface SchedulePayout {
+  /** Offers that were a DECISION: the kit was full, so the screen asked replace-or-decline. */
+  offers: number;
+  /** Offers that simply landed: room in the kit, so the screen was a receipt. */
+  receipts: number;
+  evolutions: PourEvolution[];
+}
 
-    const ranked = next.roster.find((r) => r.rosterId === target.rosterId)!;
-    // The companion's tier-step, in place of a branch and of an offer (src/run/companion.ts).
-    if (companionTierStep(ranked)) {
-      next = applyCompanionTierStep(next, target.rosterId);
+/**
+ * The level-up report's payout (src/view/run/levelUpFlow.ts): every hero owed a schedule entry
+ * takes ONE — a tier-step, its Evolution (the path taken at random, since the path table is what
+ * is under test, and its granted move's overflow resolved), or an offer rolled from the band its
+ * level has opened. The move is taken when it beats the worst one held (or there is room),
+ * declined otherwise — either way the entry is taken, which is the rule the screen enforces too.
+ */
+export function takeSchedule(run: RunState, rng: () => number, payout: SchedulePayout = { offers: 0, receipts: 0, evolutions: [] }): RunState {
+  let next = run;
+  for (const { rosterId } of run.roster) {
+    const entry = next.roster.find((r) => r.rosterId === rosterId);
+    if (!entry) continue;
+    const hero = heroes[entry.heroId];
+    const owed = pendingScheduleEntry(hero, entry);
+    if (!owed) continue;
+    if (owed.kind === 'step') {
+      next = companionTierStep(hero, entry) ? applyCompanionTierStep(next, rosterId, heroes) : takeScheduleEntry(next, rosterId);
       continue;
     }
-    const node = availableEvolution(progressionTable, ranked);
-    if (node && node.paths.length > 0) {
+    if (owed.kind === 'evolution') {
+      const node = availableEvolution(progressionTable, hero, entry);
+      if (!node || node.paths.length === 0) {
+        next = takeScheduleEntry(next, rosterId);
+        continue;
+      }
       const path = node.paths[Math.floor(rng() * node.paths.length)];
-      const refused = applyEvolutionMoves(ranked.unlockedMoveIds, path.unlocksMoveIds).overflow;
+      const refused = applyEvolutionMoves(entry.unlockedMoveIds, path.unlocksMoveIds).overflow;
       try {
-        next = chooseEvolutionPath(next, progressionTable, heroes, target.rosterId, path.id);
-        evolutions.push({ rosterId: target.rosterId, offered: node.paths.map((p) => p.id), picked: path.id });
+        next = chooseEvolutionPath(next, progressionTable, heroes, rosterId, path.id);
+        payout.evolutions.push({ rosterId, offered: node.paths.map((p) => p.id), picked: path.id });
         for (const moveId of refused) {
-          const replaceId = replacementTarget(next.roster.find((r) => r.rosterId === target.rosterId)!, moveId);
-          if (replaceId) next = grantOfferedMove(next, target.rosterId, moveId, replaceId);
+          const replaceId = replacementTarget(next.roster.find((r) => r.rosterId === rosterId)!, moveId);
+          if (replaceId) next = grantOfferedMove(next, rosterId, moveId, replaceId);
         }
       } catch {
-        // Illegal path for this hero (content bug) — the rung still ticked; carry on unevolved.
+        // Illegal path for this hero (content bug) — take the entry; carry on unevolved.
+        next = takeScheduleEntry(next, rosterId);
       }
       continue;
     }
-
-    const current = next.roster.find((r) => r.rosterId === target.rosterId)!;
-    const pool = masteryMovePool(progressionTable, moves, current);
-    // A dry band still takes the rung — the tick is what opens the next one.
+    const pool = levelMovePool(progressionTable, moves, hero, entry);
+    next = takeScheduleEntry(next, rosterId);
+    // A dry band pays nothing; the level's growth was the whole of it.
     if (pool.length === 0) continue;
     const moveId = pool[Math.floor(rng() * pool.length)];
-    next = recordMoveOffer(next, target.rosterId, [moveId]);
-    if (current.unlockedMoveIds.length < MOVE_CAP) {
-      next = grantOfferedMove(next, target.rosterId, moveId);
+    next = recordMoveOffer(next, rosterId, [moveId]);
+    if (entry.unlockedMoveIds.length < MOVE_CAP) {
+      payout.receipts++;
+      next = grantOfferedMove(next, rosterId, moveId);
     } else {
-      const replaceId = replacementTarget(current, moveId);
-      if (replaceId) next = grantOfferedMove(next, target.rosterId, moveId, replaceId);
+      payout.offers++;
+      const replaceId = replacementTarget(entry, moveId);
+      if (replaceId) next = grantOfferedMove(next, rosterId, moveId, replaceId);
     }
   }
   return next;

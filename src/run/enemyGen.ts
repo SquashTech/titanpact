@@ -15,12 +15,12 @@ import { rollEquipmentDrops } from '../data/equipment';
 import { equipItem, type EquipmentRarity } from './equipment';
 import {
   MOVE_CAP,
-  EVOLUTION_RUNG,
-  RANK_THRESHOLDS,
-  scrollsToReachRung,
   availableEvolution,
   chooseEvolutionPath,
-  masteryMovePool,
+  levelMovePool,
+  scheduleEntries,
+  scheduleFor,
+  takeScheduleEntry,
   type ProgressionTable,
 } from './progression';
 // Content imports: there is exactly one move table, and tier gating needs it; the spawn
@@ -41,30 +41,6 @@ import { pickSquad } from './squad';
 export type EncounterNodeType = 'fight' | 'elite' | 'boss';
 
 const GROWTH_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed'];
-
-/**
- * Where on the Scroll ladder a generated hero stands, read off level — the only thing it has,
- * since it holds no Scrolls. One table for rank AND Evolution (docs/growth-overhaul.md §11), in
- * RUNGS: `masteryScrollsSpent` is what both are derived from on a roster hero, so an enemy is
- * given the Scrolls that rung costs (scrollsToReachRung) and passes the same gates.
- *
- * The bands track the PLAYER's ladder position by act, not any authored gate. Re-banded
- * 2026-09-10 (phase 6) against `ENEMY_LEVEL_BY_ACT`: rank 1 through Act 1, rank 2 through Acts
- * 2-3, rank 3 from Act 4 — enemies used to out-kit the player for the whole run. Level 16 is Act
- * 3's enemy level, so Acts 1-2 field unevolved enemies and Acts 3+ evolved ones, which is what
- * keeps "a contract hero arrives evolved from Act 3" true.
- */
-const ENEMY_RUNGS_BY_LEVEL: readonly [level: number, rung: number][] = [
-  [10, RANK_THRESHOLDS[1]],
-  [16, EVOLUTION_RUNG],
-  [21, RANK_THRESHOLDS[2]],
-];
-
-function enemyScrollsForLevel(level: number): number {
-  let rung = 0;
-  for (const [at, to] of ENEMY_RUNGS_BY_LEVEL) if (level >= at) rung = to;
-  return scrollsToReachRung(rung);
-}
 
 function shuffledPick<T>(rng: RngState, pool: readonly T[], count: number): { picked: T[]; nextState: RngState } {
   const remaining = [...pool];
@@ -156,10 +132,11 @@ export interface EncounterOptions {
 }
 
 /**
- * Places the hero on the Scroll ladder for its level, takes every Evolution that position opens
- * (path choice unweighted), then spends its remaining level-ups on random pool moves up to
- * MOVE_CAP. Exported because a Guild Hall hire arrives pre-raised the same way an enemy does
- * (`run/guildRecruit.ts`).
+ * Walks the hero's schedule (progression.ts scheduleEntries) up to its level, exactly as a roster
+ * hero would have: each offer rolls one move from the band open at that level and learns it if
+ * there is room (an enemy never swaps), and the Evolution takes a path, choice unweighted. The
+ * same schedule a roster hero reads, so a contract hero is the enemy you beat, finished
+ * (docs/xp-overhaul.md §4).
  */
 export function rollLevelProgression(
   run: RunState,
@@ -170,46 +147,45 @@ export function rollLevelProgression(
   rng: RngState
 ): { run: RunState; nextState: RngState } {
   let state = rng;
-  // The spend lands FIRST, so `availableEvolution` and `masteryMovePool` gate the enemy exactly as
-  // they gate a roster hero at the same position (docs/growth-overhaul.md §11).
-  let next: RunState = {
-    ...run,
-    roster: run.roster.map((r) => (r.rosterId === rosterId ? { ...r, masteryScrollsSpent: enemyScrollsForLevel(level) } : r)),
-  };
-  let levelUpsSpent = 0;
-
-  // Bounded by the authored node count; `availableEvolution` returns null once every node is resolved.
-  for (let i = 0; i < 8; i++) {
-    const entry = next.roster.find((r) => r.rosterId === rosterId);
-    if (!entry) break;
-    const node = availableEvolution(table, entry);
-    if (!node || node.paths.length === 0) break;
-    const { picked, nextState } = shuffledPick(state, node.paths, 1);
-    state = nextState;
-    try {
-      next = chooseEvolutionPath(next, table, heroPool, rosterId, picked[0].id);
-    } catch {
-      // Illegal path for this hero (content bug) — field the enemy un-evolved rather than crash.
-      break;
+  let next: RunState = run;
+  const first = run.roster.find((r) => r.rosterId === rosterId);
+  if (!first) return { run, nextState: state };
+  const hero = heroPool[first.heroId];
+  // The band an offer rolls from is the band open at the level of THAT entry, not at the level
+  // the hero arrives at — a level-13 enemy's first offer was an Early move, as a roster hero's was.
+  for (const step of scheduleEntries(scheduleFor(hero), first.mortal)) {
+    if (step.level > level) break;
+    const entry = next.roster.find((r) => r.rosterId === rosterId)!;
+    if (step.kind === 'evolution') {
+      const node = availableEvolution(table, hero, entry);
+      if (!node || node.paths.length === 0) {
+        next = takeScheduleEntry(next, rosterId);
+        continue;
+      }
+      const { picked, nextState } = shuffledPick(state, node.paths, 1);
+      state = nextState;
+      try {
+        next = chooseEvolutionPath(next, table, heroPool, rosterId, picked[0].id);
+      } catch {
+        // Illegal path for this hero (content bug) — field the enemy un-evolved rather than crash.
+        next = takeScheduleEntry(next, rosterId);
+      }
+      continue;
     }
-    levelUpsSpent++;
+    if (step.kind === 'offer') {
+      const atLevel = { ...entry, xp: xpForLevel(step.level) };
+      const { picked, nextState } = shuffledPick(state, levelMovePool(table, moves, hero, atLevel), 1);
+      state = nextState;
+      const moveId = picked[0];
+      if (moveId && entry.unlockedMoveIds.length < MOVE_CAP) {
+        next = {
+          ...next,
+          roster: next.roster.map((r) => (r.rosterId === rosterId ? { ...r, unlockedMoveIds: [...r.unlockedMoveIds, moveId], offeredMoveIds: [...r.offeredMoveIds, moveId] } : r)),
+        };
+      }
+    }
+    next = takeScheduleEntry(next, rosterId);
   }
-
-  const entry = next.roster.find((r) => r.rosterId === rosterId);
-  if (!entry) return { run: next, nextState: state };
-
-  const moveLevelUps = Math.max(0, level - 1 - levelUpsSpent);
-  const room = Math.max(0, MOVE_CAP - entry.unlockedMoveIds.length);
-  const { picked: learned, nextState: afterMoves } = shuffledPick(
-    state,
-    masteryMovePool(table, moves, entry),
-    Math.min(moveLevelUps, room)
-  );
-  state = afterMoves;
-  next = {
-    ...next,
-    roster: next.roster.map((r) => (r.rosterId === rosterId ? { ...r, unlockedMoveIds: [...r.unlockedMoveIds, ...learned] } : r)),
-  };
   return { run: next, nextState: state };
 }
 

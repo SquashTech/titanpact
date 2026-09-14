@@ -55,7 +55,7 @@ export function tutorTeachableCount(
 // --- The Mentor (acts 1-3, docs/growth-overhaul.md §11) ---
 //
 // "Teaches any hero a powerful move": pick a hero, and the Mentor ROLLS one Mid-tier move from
-// that hero's pool — a Scroll pour with the band fixed at Mid, un-rank-gated, ticking nothing. A
+// that hero's pool — a schedule offer with the band fixed at Mid, un-gated, taking no entry. A
 // Mid move in Act 1 is a powerful move, which is the whole of what the node needs to say. It used
 // to be a curated pick from the hero's Early-and-Mid list (2026-09-11), and that read as a
 // designer's screen on one of the first nodes a new player meets; a roll keeps the payoff and
@@ -65,7 +65,7 @@ export function tutorTeachableCount(
  * What the Mentor can roll for `entry`: Mid-tier moves in the hero's pool — the authored table
  * plus a chosen path's line — not held and not already offered. `offeredMoveIds` IS honoured,
  * unlike the Tutor: the Mentor's offer is a roll, and a rolled offer is spent by being made
- * (docs/leveling-and-ranks.md), so a Mid move a Scroll already burned stays burned.
+ * (docs/leveling-and-ranks.md), so a Mid move a level's offer already burned stays burned.
  */
 export function mentorMovePool(
   table: ProgressionTable,

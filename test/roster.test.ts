@@ -117,7 +117,7 @@ test('roster: every Evolution node keeps at least one mono path, so mono stays a
     for (const node of nodes) {
       assert.ok(
         node.paths.some((path) => !path.typeGraft),
-        `${heroId} at level ${node.level} offers nothing but grafts`
+        `${heroId} offers nothing but grafts`
       );
     }
   }

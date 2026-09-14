@@ -529,8 +529,6 @@ interface Props {
   /** Displayed only — the caller grants it in onResolved. */
   /** XP this win pays the WHOLE roster (run/growth.ts). A report, not a screen — nothing is spent. */
   xpGained: number;
-  /** The Skirmish lane's Mastery Scroll. Displayed only — the caller grants it in onResolved. */
-  scrollReward?: number;
   /** The opener fight's guaranteed drop, rolled up front so the victory screen can show it. Displayed only. */
   equipmentReward: EquipmentDefinition | null;
   /** A potion this win drops (run/consumables.ts), rolled up front like the item. Displayed only. */
@@ -562,7 +560,6 @@ export function FightScreen({
   playerRelicIds = [],
   goldReward,
   xpGained,
-  scrollReward = 0,
   equipmentReward,
   consumableReward = null,
   onResolved,
@@ -1889,7 +1886,6 @@ export function FightScreen({
           xpGained={xpGained}
           goldFrom={playerRun.gold}
           goldReward={goldReward}
-          scrollReward={scrollReward}
           equipmentReward={equipmentReward}
           consumableReward={consumableReward}
           onContinue={() => onResolved(winner === PLAYER_SIDE ? 'win' : 'loss', combat, usedConsumables)}

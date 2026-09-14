@@ -48,7 +48,6 @@ export interface FightResultProps {
   /** The purse before this fight paid, so the ledger can show where it lands. */
   goldFrom: number;
   goldReward: number;
-  scrollReward: number;
   equipmentReward: EquipmentDefinition | null;
   /** A potion drop (run/consumables.ts). Null on the common no-drop win. */
   consumableReward?: ConsumableKind | null;
@@ -73,7 +72,6 @@ export function FightResultOverlay({
   xpGained,
   goldFrom,
   goldReward,
-  scrollReward,
   equipmentReward,
   consumableReward = null,
   onContinue,
@@ -90,11 +88,10 @@ export function FightResultOverlay({
     const rows: { key: string; render: (shown: boolean) => ReactNode }[] = [];
     if (!won) return rows;
     if (goldReward > 0) rows.push({ key: 'gold', render: (shown) => <GoldRow from={goldFrom} amount={goldReward} shown={shown} /> });
-    if (scrollReward > 0) rows.push({ key: 'scroll', render: () => <ScrollRow amount={scrollReward} /> });
     if (equipmentReward) rows.push({ key: 'item', render: () => <ItemRow item={equipmentReward} onInspect={() => setInspecting(true)} /> });
     if (consumableReward) rows.push({ key: 'potion', render: () => <PotionRow kind={consumableReward} /> });
     return rows;
-  }, [won, goldFrom, goldReward, scrollReward, equipmentReward, consumableReward]);
+  }, [won, goldFrom, goldReward, equipmentReward, consumableReward]);
 
   const stageDone = STAGE_LEDGER + ledger.length;
   const [stage, setStage] = useState(() => (prefersReducedMotion() ? stageDone : STAGE_TITLE));
@@ -335,21 +332,6 @@ function GoldRow({ from, amount, shown }: { from: number; amount: number; shown:
         <span className="fight-result-row-sub">Purse {from + counted}g</span>
       </span>
       <span className="fight-result-row-value">+{counted}g</span>
-    </div>
-  );
-}
-
-function ScrollRow({ amount }: { amount: number }) {
-  return (
-    <div className="fight-result-row">
-      <span className="fight-result-row-glyph is-scroll">
-        <ResourceGlyph kind="scroll" />
-      </span>
-      <span className="fight-result-row-text">
-        <span className="fight-result-row-label">Mastery {amount === 1 ? 'Scroll' : 'Scrolls'}</span>
-        <span className="fight-result-row-sub">Teaches a move</span>
-      </span>
-      <span className="fight-result-row-value">+{amount}</span>
     </div>
   );
 }

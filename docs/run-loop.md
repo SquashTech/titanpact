@@ -389,7 +389,24 @@ changes how a hero *plays* rather than how big its numbers are, which argues for
 also the node most likely to be the reason a run comes together, which argues for commoner.
 Playtest.
 
-### Mastery Scrolls (2026-09-10, Growth Overhaul phase 2)
+### The schedule (2026-09-13, XP Overhaul phase 3)
+
+**The run's only faucet for moves is the level-up SCHEDULE** (`src/run/progression.ts`,
+`docs/xp-overhaul.md` §4). Every hero reads a `LevelSchedule` — `offerLevels`, `midLevel`,
+`evolutionLevel`, `lateLevel` — off its own level: a level on the list rolls ONE move from the
+band that level has opened (Early below `midLevel`, where it expires; Mid from there; Mid+Late
+from `lateLevel`), take it or decline, burned either way, replace-or-decline at `MOVE_CAP`; the
+level at `evolutionLevel` raises the Evolution in place of an offer. It pays out on the **level-up
+report** (`LevelUpScreen`, `levelUpFlow.ts`) after the rows land, one entry a hero a beat, in
+roster order — a receipt below the cap, the replace question at it, the Evolution as a screen of
+its own. `RosterEntry.scheduleTaken` walks the entries in order, which is what lets a raw hire
+arrive with its entries un-taken and work them off one fight at a time. Every hero is on
+`DEFAULT_SCHEDULE` (offers every three levels from 4, Mid 10, Evolution 16, Late 21) until the
+per-hero pass. No Scroll, no purse, no Mastery screen, no map chip: the section below is history.
+
+### Mastery Scrolls (2026-09-10, Growth Overhaul phase 2 — DELETED 2026-09-13)
+
+> Superseded whole by the schedule above; kept for the reasoning. Nothing in it runs.
 
 **The run's only faucet for moves.** Scrolls buy a hero its next RUNG on `MasteryScreen`,
 which is pushed after every node that leaves the purse able to buy one; a rung offers **one**

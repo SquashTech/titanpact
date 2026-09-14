@@ -8,7 +8,7 @@ import { EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, MAX_ITEM_SLOTS, RARITY_ORDER, rarit
 import { GOLD_REWARD_RANGE, PURSE_GOLD_RANGE } from '../../run/runProgress';
 import { CANDY_LEVELS } from '../../run/candy';
 import { BOON_OFFER_COUNT } from '../../run/boons';
-import { OPENER_ESCORT_COUNT, guildHallLevel, scrollsFor, spawnLeaderTierFor, type EncounterNodeKind } from '../../run/difficulty';
+import { OPENER_ESCORT_COUNT, guildHallLevel, spawnLeaderTierFor, type EncounterNodeKind } from '../../run/difficulty';
 import { ACT_ONE_OPENER_COUNT } from '../../run/spawn';
 import type { SpawnTier } from '../../data/titanspawn';
 import { ROSTER_CAP, SEAL_ACTS } from '../../run/state';
@@ -25,7 +25,6 @@ import { CANDY_PURCHASE_COST, CANDY_PURCHASE_LIMIT, CONTRACT_PURCHASE_COST, GUIL
 /** The mark at the head of a row — resolved to a glyph by the view. */
 export type NodeFactGlyph =
   | 'gold'
-  | 'scroll'
   | 'candy'
   | 'contract'
   | 'item'
@@ -74,14 +73,12 @@ function priceBand(table: Record<EquipmentRarity, number>): string {
   return `${Math.min(...prices)}–${Math.max(...prices)}g`;
 }
 
-/** The four lanes every fight is compared on, in one order, so Elite and Battle read as two columns of one table. Scrolls scale by act (difficulty.ts scrollsFor). */
+/** The lanes every fight is compared on, in one order, so Elite and Battle read as two columns of one table. */
 function encounterFacts(type: EncounterNodeKind, actNumber: number): NodeFact[] {
   const gold = GOLD_REWARD_RANGE[type];
-  const scrolls = scrollsFor(type, actNumber);
   const drop = EQUIPMENT_DROP_CHANCE[type];
   return [
     { glyph: 'gold', label: 'Gold', value: gold[1] > 0 ? range(gold) : null },
-    { glyph: 'scroll', label: 'Scrolls', value: scrolls > 0 ? `${scrolls}` : null },
     {
       glyph: 'item',
       label: 'Item',
@@ -226,7 +223,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
   }
 }
 
-/** The ledger as one line, for an aria-label: `Skirmish — Gold 15–25, Scrolls 2, Item 60%, Recruit Contract`. */
+/** The ledger as one line, for an aria-label: `Skirmish — Gold 15–25, Item 60%, Recruit Contract`. */
 export function nodeFactsLine(name: string, type: MapNodeType, actNumber: number): string {
   const parts = nodeDossier(type, actNumber)
     .facts.filter((fact) => fact.value !== null)

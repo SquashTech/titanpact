@@ -5,7 +5,8 @@ import { progressionTable } from '../../data/progression';
 import type { HeroDefinition, MoveTier, StatKey, TypeId } from '../../engine/content';
 import { gradesFor } from '../../run/growth';
 import type { EvolutionPath } from '../../run/progression';
-import { MOVE_TIER_RANK, MOVE_TIER_RANK_EXPIRY } from '../../run/progression';
+import { scheduleFor } from '../../run/progression';
+import type { LevelSchedule } from '../../engine/content';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { getTypeColor } from '../combat/typeColors';
@@ -32,10 +33,10 @@ function tierOf(moveId: string): MoveTier {
   return moves[moveId]?.tier ?? 'early';
 }
 
-/** The ranks a tier can actually be OFFERED at — a closed range for Early, which expires when Mid opens. */
-function tierRanks(tier: MoveTier): string {
-  const expiry = MOVE_TIER_RANK_EXPIRY[tier];
-  return expiry === Infinity ? `${MOVE_TIER_RANK[tier]}+` : `${MOVE_TIER_RANK[tier]}`;
+/** The levels a tier can actually be OFFERED at — a closed range for Early, which expires when Mid opens (progression.ts bandRank). */
+function tierLevels(tier: MoveTier, schedule: LevelSchedule): string {
+  if (tier === 'early') return `to ${schedule.midLevel - 1}`;
+  return `from ${tier === 'mid' ? schedule.midLevel : schedule.lateLevel}`;
 }
 
 function fmtGrant(amount: number): string {
@@ -149,7 +150,7 @@ function EvolutionPathCard({
 
       {learnable.length > 0 && (
         <>
-          <div className="evo-path-label">Joins the Scroll pool</div>
+          <div className="evo-path-label">Joins the level-up pool</div>
           <MoveList moveIds={learnable} caster={pathCaster} onInspect={onInspect} />
         </>
       )}
@@ -239,7 +240,7 @@ export function HeroDossierOverlay({ hero, onClose }: Props) {
                 moveIds.length > 0 ? (
                   <div key={tier}>
                     <div className="evo-path-label">
-                      {TIER_LABELS[tier]} — Rank {tierRanks(tier)}
+                      {TIER_LABELS[tier]} — Lv {tierLevels(tier, scheduleFor(hero))}
                     </div>
                     <MoveList moveIds={moveIds} caster={caster} onInspect={setPopupMoveId} />
                   </div>
@@ -249,9 +250,9 @@ export function HeroDossierOverlay({ hero, onClose }: Props) {
           )}
 
           {tab === 'evolution' &&
-            nodes.map((node) => (
-              <div key={node.level}>
-                <div className="tab-subhead">Level {node.level}</div>
+            nodes.map((node, i) => (
+              <div key={i}>
+                <div className="tab-subhead">Level {scheduleFor(hero).evolutionLevel}</div>
                 {node.paths.map((path) => (
                   <EvolutionPathCard key={path.id} hero={hero} path={path} caster={caster} onInspect={setPopupMoveId} />
                 ))}

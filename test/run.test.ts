@@ -18,26 +18,36 @@ import { equipItem } from '../src/run/equipment';
 import { pickSquad, SquadSelectionError } from '../src/run/squad';
 import { buildCombatState } from '../src/run/buildCombatState';
 import { getEffectiveStat } from '../src/engine/state';
-import { levelOf, xpForLevel } from '../src/run/growth';
+import { MAX_XP, levelOf, xpForLevel } from '../src/run/growth';
 import {
-  masteryMovePool,
+  levelMovePool,
+  atEvolution,
   grantOfferedMove,
   recordMoveOffer,
   availableEvolution,
   chooseEvolutionPath,
   applyEvolutionMoves,
   rosterEntryTypes,
-  EVOLUTION_LEVEL,
-  EVOLUTION_SCROLLS,
+  DEFAULT_SCHEDULE,
   ProgressionError,
 } from '../src/run/progression';
 
-/** Places a hero on the Evolution rung of the Scroll ladder (docs/growth-overhaul.md §11) — a fixture, not a spend. */
+/** Stands a hero at its schedule's Evolution (docs/xp-overhaul.md §4) — a fixture, not a walk. */
 function atEvolutionRung(run: import('../src/run/state').RunState, rosterId: string) {
   return {
     ...run,
-    roster: run.roster.map((r) => (r.rosterId === rosterId ? { ...r, masteryScrollsSpent: EVOLUTION_SCROLLS } : r)),
+    roster: run.roster.map((r) => (r.rosterId === rosterId ? atEvolution(heroes[r.heroId], r) : r)),
   };
+}
+
+/** The pool at the top of the schedule — every band open, Early expired. */
+function poolAtTop(entry: import('../src/run/state').RosterEntry) {
+  return levelMovePool(progressionTable, moves, heroes[entry.heroId], { ...entry, xp: MAX_XP });
+}
+
+/** The pool at level 1 — Early only. */
+function poolAtStart(entry: import('../src/run/state').RosterEntry) {
+  return levelMovePool(progressionTable, moves, heroes[entry.heroId], { ...entry, xp: xpForLevel(1) });
 }
 
 function seedRoster(heroIds: string[]) {
@@ -205,12 +215,12 @@ test('buildCombatState: same rosterId on both sides does not collide (side-prefi
 
 // --- The movepool and the Evolution tree (levels themselves: test/growth.test.ts) ---
 
-test('progression: masteryMovePool + grantOfferedMove resolve a Scroll\'s move offer', () => {
+test('progression: levelMovePool + grantOfferedMove resolve a level\'s move offer', () => {
   let run = seedRoster(['cinderKnight']);
   const entry = run.roster[0];
   // Read at the two ends of the curve rather than at one level: Early EXPIRES when Mid opens, so
   // no single level sees the whole authored pool. Together these two pin all of it.
-  assert.deepStrictEqual(masteryMovePool(progressionTable, moves, { ...entry, masteryScrollsSpent: 0 }), [
+  assert.deepStrictEqual(poolAtStart(entry), [
     'heavyBlow',
     'ironFist',
     'openingStrike',
@@ -218,7 +228,7 @@ test('progression: masteryMovePool + grantOfferedMove resolve a Scroll\'s move o
     'pinDown',
     'swiftBlow',
   ]);
-  assert.deepStrictEqual(masteryMovePool(progressionTable, moves, { ...entry, masteryScrollsSpent: 99 }), [
+  assert.deepStrictEqual(poolAtTop(entry), [
     'moltenLash',
     'firebrand',
     'volcanicSurge',
@@ -233,7 +243,7 @@ test('progression: masteryMovePool + grantOfferedMove resolve a Scroll\'s move o
 
   const withMove = grantOfferedMove(run, 'cinderKnight', 'firebrand');
   assert.ok(withMove.roster[0].unlockedMoveIds.includes('firebrand'));
-  assert.ok(!masteryMovePool(progressionTable, moves, { ...withMove.roster[0], masteryScrollsSpent: 99 }).includes('firebrand')); // granted move drops out of the pool
+  assert.ok(!poolAtTop(withMove.roster[0]).includes('firebrand')); // granted move drops out of the pool
   assert.strictEqual(withMove.roster[0].unlockedMoveIds.length, 4); // starting 3 + this grant hits MOVE_CAP
 
   // Already at MOVE_CAP: further offers require replacing an unlocked move.
@@ -245,18 +255,17 @@ test('progression: masteryMovePool + grantOfferedMove resolve a Scroll\'s move o
 
 test('progression: an offer is spent by being MADE — declined or swapped away, it never comes back', () => {
   const run = seedRoster(['cinderKnight']);
-  const atCap = (entry: import('../src/run/state').RosterEntry) => ({ ...entry, masteryScrollsSpent: 99 });
 
   // Declined: recordMoveOffer grants nothing and still burns the move out of the pool.
   const declined = recordMoveOffer(run, 'cinderKnight', ['moltenLash']);
   assert.ok(!declined.roster[0].unlockedMoveIds.includes('moltenLash'));
-  assert.ok(!masteryMovePool(progressionTable, moves, atCap(declined.roster[0])).includes('moltenLash'));
+  assert.ok(!poolAtTop(declined.roster[0]).includes('moltenLash'));
 
   // Taught, then swapped away for something else: still gone.
   const taught = grantOfferedMove(declined, 'cinderKnight', 'firebrand');
   const dropped = grantOfferedMove(taught, 'cinderKnight', 'heavyBlow', 'firebrand');
   assert.ok(!dropped.roster[0].unlockedMoveIds.includes('firebrand'));
-  assert.ok(!masteryMovePool(progressionTable, moves, atCap(dropped.roster[0])).includes('firebrand'));
+  assert.ok(!poolAtTop(dropped.roster[0]).includes('firebrand'));
 
   // Re-offering an already-spent move is a no-op, not a duplicate entry.
   const again = recordMoveOffer(dropped, 'cinderKnight', ['moltenLash']);
@@ -264,21 +273,21 @@ test('progression: an offer is spent by being MADE — declined or swapped away,
   assert.throws(() => recordMoveOffer(run, 'nobody', ['moltenLash']), ProgressionError);
 });
 
-test('progression: an Evolution is gated on the Scroll ladder, never on level; offers exactly three paths, grants stats, and is one-shot', () => {
-  // The 6th Scroll into a hero is its Evolution (docs/growth-overhaul.md §11): under automatic
-  // roster-wide levelling every hero crosses any level threshold on the same fight, so a level
-  // gate IS a six-decision wall, where Scrolls are poured one hero at a time.
+test('progression: an Evolution is the schedule entry at evolutionLevel — level AND the entries before it; offers exactly three paths, grants stats, and is one-shot', () => {
+  // docs/xp-overhaul.md §4: the level that reaches `evolutionLevel` raises the Evolution, for that
+  // hero, from the level-up report — after the offers the schedule owed it first.
   let run = seedRoster(['cinderKnight']);
-  assert.strictEqual(availableEvolution(progressionTable, run.roster[0]), null, 'nothing poured, nothing offered');
+  const hero = heroes.cinderKnight;
+  assert.strictEqual(availableEvolution(progressionTable, hero, run.roster[0]), null, 'level 1: nothing owed');
   assert.strictEqual(levelOf(run.roster[0]), 1);
   const highLevel = { ...run.roster[0], xp: xpForLevel(30) };
-  assert.strictEqual(availableEvolution(progressionTable, highLevel), null, 'level alone never opens it');
-  const oneShort = { ...run.roster[0], masteryScrollsSpent: EVOLUTION_SCROLLS - 1 };
-  assert.strictEqual(availableEvolution(progressionTable, oneShort), null, 'nor the Scroll before the rung');
+  assert.strictEqual(availableEvolution(progressionTable, hero, highLevel), null, 'level alone never opens it — the offers before it are owed first');
+  const oneShort = { ...atEvolution(hero, run.roster[0]), xp: xpForLevel(DEFAULT_SCHEDULE.evolutionLevel - 1) };
+  assert.strictEqual(availableEvolution(progressionTable, hero, oneShort), null, 'nor the level before it');
 
   run = atEvolutionRung(run, 'cinderKnight');
-  const node = availableEvolution(progressionTable, run.roster[0]);
-  assert.ok(node, 'the rung opens it, at level 1');
+  const node = availableEvolution(progressionTable, hero, run.roster[0]);
+  assert.ok(node, 'the entry opens it');
   assert.strictEqual(node!.paths.length, 3, 'CLAUDE.md: a choice of three options');
 
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'cinderKnight', 'cinderKnight-offensive');
@@ -287,8 +296,9 @@ test('progression: an Evolution is gated on the Scroll ladder, never on level; o
   assert.strictEqual(next.roster[0].evolutionStatGrants.intelligence, 60);
   assert.ok(next.roster[0].chosenPathIds.includes('cinderKnight-offensive'));
 
+  assert.strictEqual(next.roster[0].scheduleTaken, run.roster[0].scheduleTaken + 1, 'the entry is taken');
   // one-shot: no second node authored for cinderKnight, so nothing further is offered
-  assert.strictEqual(availableEvolution(progressionTable, next.roster[0]), null);
+  assert.strictEqual(availableEvolution(progressionTable, hero, next.roster[0]), null);
 });
 
 test('progression: an Evolution path with a non-multiple-of-5 stat grant is rejected', () => {
@@ -300,7 +310,6 @@ test('progression: an Evolution path with a non-multiple-of-5 stat grant is reje
     evolutions: {
       cinderKnight: [
         {
-          level: EVOLUTION_LEVEL,
           paths: [
             { id: 'bad', heroId: 'cinderKnight', kind: 'offensive' as const, name: 'Bad Path', statGrants: { attack: 7 }, unlocksMoveIds: [] },
           ],
@@ -317,11 +326,11 @@ test('progression: a graft path adds its learnableMoveIds to the level-up pool w
   let run = seedRoster(['crimson']);
   run = atEvolutionRung(run, 'crimson');
 
-  const before = masteryMovePool(progressionTable, moves, { ...run.roster[0], masteryScrollsSpent: 99 });
+  const before = poolAtTop(run.roster[0]);
   assert.ok(!before.includes('soulRend'), 'Spirit moves must not be offerable before the graft');
 
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'crimson', 'crimson-defensive');
-  const after = masteryMovePool(progressionTable, moves, { ...next.roster[0], masteryScrollsSpent: 99 });
+  const after = poolAtTop(next.roster[0]);
 
   for (const id of ['drain', 'secondWind', 'soulRend', 'banish']) {
     assert.ok(after.includes(id), `${id} should be learnable after Cinderveil`);
@@ -338,10 +347,10 @@ test('progression: an untaken path\'s learnableMoveIds stay out of the pool, and
   run = atEvolutionRung(run, 'crimson');
 
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'crimson', 'crimson-utility');
-  const atEvolutionLevel = masteryMovePool(progressionTable, moves, next.roster[0]);
+  const atEvolutionLevel = levelMovePool(progressionTable, moves, heroes.crimson, next.roster[0]);
 
   assert.ok(atEvolutionLevel.includes('manaTap')); // Early — reachable the moment the graft lands
-  assert.ok(!atEvolutionLevel.includes('cataclysm')); // Late — still gated until level 7
+  assert.ok(!atEvolutionLevel.includes('cataclysm')); // Late — still gated until lateLevel
   assert.ok(!atEvolutionLevel.includes('soulRend')); // Cinderveil's, and Cinderveil was not taken
 });
 
@@ -372,7 +381,7 @@ test('progression: Warhowl inverts Fang\'s attacking stat — a NEGATIVE Evoluti
   assert.ok(base.intelligence + grants.intelligence! > base.attack + grants.attack!, 'Warhowl Fang attacks with Intelligence');
 
   // Animal Spirit is Beast's one magical row, absent from base Fang's pool (Int 20); Warhowl makes it reachable.
-  const pool = masteryMovePool(progressionTable, moves, { ...next.roster[0], masteryScrollsSpent: 99 });
+  const pool = poolAtTop(next.roster[0]);
   assert.ok(!progressionTable.moveTiers.packAlpha.includes('animalSpirit'));
   assert.ok(pool.includes('animalSpirit'));
   assert.strictEqual(moves.animalSpirit.type, 'Beast');
@@ -442,7 +451,6 @@ test('progression: a graft on an already-dual-typed hero TRADES the innate secon
     evolutions: {
       ironWarden: [
         {
-          level: EVOLUTION_LEVEL,
           paths: [
             {
               id: 'iw-graft',
@@ -495,9 +503,8 @@ test('progression: a later type-graft path shifts (replaces) the secondary type 
     moveTiers: {},
     evolutions: {
       tidecaller: [
-        { level: EVOLUTION_LEVEL, paths: [] },
+        { paths: [] },
         {
-          level: EVOLUTION_LEVEL,
           paths: [
             {
               id: 'tidecaller-shift',
@@ -513,7 +520,9 @@ test('progression: a later type-graft path shifts (replaces) the secondary type 
       ],
     },
   };
-  const shifted = chooseEvolutionPath(run, shiftTable, heroes, 'tidecaller', 'tidecaller-shift');
+  // A schedule carries one Evolution entry today, so the second node is stood at it by hand: what
+  // is under test is the graft rule, not where a second node would sit on the schedule.
+  const shifted = chooseEvolutionPath(atEvolutionRung(run, 'tidecaller'), shiftTable, heroes, 'tidecaller', 'tidecaller-shift');
   assert.strictEqual(shifted.roster[0].evolutionTypeGraft, 'Spirit'); // replaced, not stacked
 
   const squad = pickSquad(shifted.roster, ['tidecaller']);

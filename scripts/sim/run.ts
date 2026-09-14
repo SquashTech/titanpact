@@ -22,7 +22,7 @@ import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry
 import { generateMap, type MapNode, type MapNodeType } from '../../src/run/map';
 import { generateStarterOptions, STARTER_PICK_COUNT } from '../../src/run/draft';
 import { generateItinerary, locationForAct } from '../../src/run/locations';
-import { actScaling, scrollsFor } from '../../src/run/difficulty';
+import { actScaling } from '../../src/run/difficulty';
 import { grantEncounterLevels, levelOf, MAX_LEVEL } from '../../src/run/growth';
 import { generateFinaleEncounter, type Encounter, type EncounterNodeType } from '../../src/run/enemyGen';
 import { pickSquad, requiredSquadSize, STANDARD_SQUAD_SIZE, type Squad } from '../../src/run/squad';
@@ -45,18 +45,7 @@ import {
   PURSE_GOLD_RANGE,
   rollGoldRange,
 } from '../../src/run/runProgress';
-import {
-  MOVE_CAP,
-  grantMasteryScrolls,
-  canSpendScroll,
-  canAffordAnyScroll,
-  recordMoveOffer,
-  masteryRank,
-  masteryRung,
-  grantOfferedMove,
-  itemSlotsFor,
-  grantMove,
-} from '../../src/run/progression';
+import { MOVE_CAP, recordMoveOffer, grantOfferedMove, itemSlotsFor, grantMove } from '../../src/run/progression';
 import { claimContract, claimContractReplacing, deriveContractOffer, isRecruitable, pickContractOffers, recruitFromGuildHall, recruitFromGuildHallReplacing, freshRosterId, buyContract } from '../../src/run/recruitment';
 import { guildHallEntry } from '../../src/run/guildRecruit';
 import { rollGuildHallOffers, buyEquipment, sellValueFor, EQUIPMENT_PRICE_BY_RARITY } from '../../src/run/shop';
@@ -141,17 +130,12 @@ export interface RunRecord {
   rosterLevelEnd: number;
   /** heroId -> best level reached this run, for every hero that was ever on the roster. */
   heroLevels: Record<string, number>;
-  /** Best Mastery Rank each hero reached — the movepool gate now that level does not gate it. */
-  /** Best `masteryScrollsSpent` seen per hero — rank, Evolution and Late are all read off it. */
-  heroScrolls: Record<string, number>;
   /** Share of the roster that had evolved when the run ended — the §11 target is 1.0. */
   rosterEvolvedEnd: number;
   fights: FightRecord[];
   choices: ChoiceEvent[];
   /** Rarity of every item actually equipped, keyed `act:rarity`. */
   equipped: string[];
-  /** Scrolls granted this run, by source; `unspent` is what nobody could take. */
-  scrollsBySource: Record<string, number>;
   /** Candy eaten this run, by source, in levels-at-par (run/candy.ts CANDY_LEVELS). */
   candyBySource: Record<string, number>;
   /** Heroes joining after the draft: `contract` (claimed or bought), `hire` (Guild Hall). */
@@ -172,21 +156,6 @@ function entryOf(run: RunState, rosterId: string): RosterEntry {
   const entry = run.roster.find((r) => r.rosterId === rosterId);
   if (!entry) throw new Error(`${rosterId} left the roster`);
   return entry;
-}
-
-/** What a won fight pays in Scrolls, by kind and act — difficulty.ts scrollsFor, as App.tsx reads it. */
-function scrollRewardFor(nodeType: MapNodeType, actNumber: number): number {
-  switch (nodeType) {
-    case 'fight':
-    case 'battle':
-    case 'skirmish':
-    case 'elite':
-    case 'boss':
-    case 'finale':
-      return scrollsFor(nodeType, actNumber);
-    default:
-      return 0;
-  }
 }
 
 /**
@@ -257,12 +226,10 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     goldEnd: 0,
     rosterLevelEnd: 0,
     heroLevels: {},
-    heroScrolls: {},
     rosterEvolvedEnd: 0,
     fights: [],
     choices: [],
     equipped: [],
-    scrollsBySource: {},
     candyBySource: {},
     recruitsBySource: {},
     timeByAct: Array.from({ length: TOTAL_ACTS + 1 }, emptyTimeCounts),
@@ -301,7 +268,6 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
 
     for (const entry of run.roster) {
       record.heroLevels[entry.heroId] = Math.max(record.heroLevels[entry.heroId] ?? 0, levelOf(entry));
-      record.heroScrolls[entry.heroId] = Math.max(record.heroScrolls[entry.heroId] ?? 0, entry.masteryScrollsSpent);
     }
 
     if (isEncounterNode(node.type)) {
@@ -323,9 +289,11 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
       const absorbed = absorbCompanions(run, outcome.koRosterIds, equipment);
       if (absorbed.absorbed.length > 0) record.companionLostAt ??= run.encountersWon;
       run = absorbed.run;
-      // Automatic and roster-wide, benched heroes included (src/run/growth.ts).
+      // Automatic and roster-wide, benched heroes included (src/run/growth.ts); the report pays
+      // the schedule (docs/xp-overhaul.md §4).
       run = grantEncounterLevels(run, rosterHeroes, rng);
       tally(record, run.actNumber, 'levelUp');
+      run = paySchedule(run, rng, record);
       record.encountersWon = run.encountersWon;
       // The run's first fight: one of the Earlies it beat joins, and there is no declining.
       const companionId = companionJoinDue(run, node.type) && outcome.encounter ? companionCandidate(outcome.encounter) : null;
@@ -354,8 +322,6 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
         tally(record, run.actNumber, 'banner');
         tally(record, run.actNumber, 'crucible');
         tally(record, run.actNumber, 'pactSeal');
-        // Before advanceToNextAct: the Guardian pays at the act it was beaten in.
-        run = grantScrolls(run, scrollRewardFor('boss', run.actNumber), 'guardian', record);
         if (run.actNumber < TOTAL_ACTS) {
           run = advanceToNextAct(run, randomSeed(rng));
           tally(record, run.actNumber, 'actIntro');
@@ -371,49 +337,40 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
         tally(record, run.actNumber, 'drop');
         run = resolveDrop(run, outcome.drop.id, record.equipped, run.actNumber);
       }
-      // The fight's Scrolls, scaled by act (docs/growth-overhaul.md §12); the Guardian's are above.
-      if (node.type !== 'boss') run = grantScrolls(run, scrollRewardFor(node.type, run.actNumber), node.type, record);
-      run = pourHeldScrolls(run, rng, record);
       continue;
     }
 
     tally(record, run.actNumber, node.type as ScreenKind);
     run = resolveRewardNode(run, node.type, location.id, rng, record, options);
-    run = pourHeldScrolls(run, rng, record);
     run = advanceToNode(run, nodeId);
   }
 
   record.goldEnd = run.gold;
-  if (run.masteryScrolls > 0) record.scrollsBySource.unspent = run.masteryScrolls;
   record.rosterEvolvedEnd =
     run.roster.length > 0 ? run.roster.filter((r) => r.chosenPathIds.length > 0).length / run.roster.length : 0;
   record.rosterLevelEnd =
     run.roster.length > 0 ? run.roster.reduce((sum, r) => sum + levelOf(r), 0) / run.roster.length : 0;
   for (const entry of run.roster) {
     record.heroLevels[entry.heroId] = Math.max(record.heroLevels[entry.heroId] ?? 0, levelOf(entry));
-    record.heroScrolls[entry.heroId] = Math.max(record.heroScrolls[entry.heroId] ?? 0, entry.masteryScrollsSpent);
   }
   return record;
 }
 
 /**
- * The purse, spent wherever it can buy a rung (App.tsx `masteryDue`): last in the post-fight
- * chain, after the contract and the Crucible, and on the way out of a Cache or the Guild Hall. The
- * sim never banks by choice — what it cannot afford banks on its own, as it does in the game. The
- * Evolution rung evolves the hero (policy.pourScrolls), logged here as the choice it is.
+ * What the level-up report pays out (src/view/run/levelUpFlow.ts): after every level-up — a won
+ * fight's, a candy's — each hero owed a schedule entry takes one (policy.takeSchedule). The
+ * Evolution is logged as the choice it is; offers and Evolutions are tallied as the screens they
+ * cost.
  */
-function pourHeldScrolls(run: RunState, rng: Rng, record: RunRecord): RunState {
-  if (!canAffordAnyScroll(progressionTable, moves, run)) return run;
-  const evolutions: PourEvolution[] = [];
-  const rungsBefore = run.roster.reduce((sum, entry) => sum + masteryRung(entry), 0);
-  const next = policy.pourScrolls(run, rng, evolutions);
-  for (const e of evolutions) {
+function paySchedule(run: RunState, rng: Rng, record: RunRecord): RunState {
+  const payout: policy.SchedulePayout = { offers: 0, receipts: 0, evolutions: [] };
+  const next = policy.takeSchedule(run, rng, payout);
+  for (const e of payout.evolutions) {
     record.choices.push({ bucket: 'evolution', offered: e.offered, picked: [e.picked], encountersWonAtChoice: next.encountersWon });
   }
-  // The Evolution rung raises its screen in place of a move offer.
-  const rungs = next.roster.reduce((sum, entry) => sum + masteryRung(entry), 0) - rungsBefore;
-  tally(record, run.actNumber, 'evolution', evolutions.length);
-  tally(record, run.actNumber, 'rung', Math.max(0, rungs - evolutions.length));
+  tally(record, run.actNumber, 'evolution', payout.evolutions.length);
+  tally(record, run.actNumber, 'offer', payout.offers);
+  tally(record, run.actNumber, 'moveLearned', payout.receipts);
   return next;
 }
 
@@ -572,13 +529,6 @@ function tryRecruitContracts(run: RunState, defeatedRoster: readonly RosterEntry
   return claimContractReplacing(run, offer, rosterId, weakest.rosterId);
 }
 
-/** grantMasteryScrolls, with the source tallied on the run record. */
-function grantScrolls(run: RunState, count: number, source: string, record: RunRecord): RunState {
-  if (count <= 0) return run;
-  record.scrollsBySource[source] = (record.scrollsBySource[source] ?? 0) + count;
-  return grantMasteryScrolls(run, count);
-}
-
 /**
  * A candy eaten by the hero the level policy names (policy.levelUpTarget: `focus` feeds the
  * strongest, `spread` the lowest of the fielded four) — the focus-vs-spread experiment
@@ -588,7 +538,8 @@ function eatCandy(run: RunState, kind: CandyKind, source: string, rng: Rng, reco
   const target = policy.levelUpTarget(run.roster.filter(canEatCandy), options.levelPolicy);
   if (!target) return run;
   record.candyBySource[source] = (record.candyBySource[source] ?? 0) + CANDY_LEVELS[kind];
-  return grantCandy(run, rosterHeroes, target.rosterId, kind, rng).run;
+  tally(record, run.actNumber, 'levelUp');
+  return paySchedule(grantCandy(run, rosterHeroes, target.rosterId, kind, rng).run, rng, record);
 }
 
 function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: string, rng: Rng, record: RunRecord, options: RunOptions): RunState {

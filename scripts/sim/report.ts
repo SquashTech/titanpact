@@ -9,7 +9,7 @@ import { passives } from '../../src/data/passives';
 import { classes } from '../../src/data/classes';
 import { locations } from '../../src/data/locations';
 import { progressionTable } from '../../src/data/progression';
-import { EVOLUTION_RUNG, EVOLUTION_SCROLLS, RANK_THRESHOLDS, scrollsToReachRung } from '../../src/run/progression';
+import { DEFAULT_SCHEDULE } from '../../src/run/progression';
 import { TOTAL_ACTS } from '../../src/run/state';
 import type { Aggregate, ChoiceAgg, HeroAgg } from './types';
 import { addTimeCounts, emptyTimeCounts, PACE_PROFILES, SCREEN_SECONDS, secondsFor, type ScreenKind } from './time';
@@ -419,26 +419,6 @@ export function formatReport(
   out.push(`    spent cycling out        ${pct(agg.playerSwitches, agg.playerTurns)}`);
   out.push(`    fights reaching lock-in  ${pct(agg.lockInFights, totalFights)}  (player side lost 2+ heroes)`);
 
-  // Scroll income by source (docs/growth-overhaul.md §12: the fights pay ~155 a run on the Elite
-  // route and ~150 on the Battle route, rising by act, against the 60 that evolve six heroes and the
-  // 120 that take six to the Late band). Per completed run is the whole-run figure; per run overall
-  // is dragged down by every act-1 death.
-  out.push('');
-  out.push(`  Mastery Scrolls granted, by source — per run (all ${R}) and per completed run (${agg.wins}):`);
-  const sources = Object.keys(agg.scrollsBySource).sort((a, b) => (agg.scrollsBySourceWon[b] ?? 0) - (agg.scrollsBySourceWon[a] ?? 0));
-  let totalAll = 0;
-  let totalWon = 0;
-  for (const source of sources) {
-    const all = agg.scrollsBySource[source] ?? 0;
-    const won = agg.scrollsBySourceWon[source] ?? 0;
-    if (source !== 'unspent') {
-      totalAll += all;
-      totalWon += won;
-    }
-    out.push(`    ${pad(source, 24)}${padStart(mean(all, R), 8)}${padStart(agg.wins > 0 ? mean(won, agg.wins) : '-', 10)}`);
-  }
-  out.push(`    ${pad('TOTAL granted', 24)}${padStart(mean(totalAll, R), 8)}${padStart(agg.wins > 0 ? mean(totalWon, agg.wins) : '-', 10)}`);
-
   // Candy by source, in levels-at-par (docs/xp-overhaul.md §3): the supply is the only balance
   // number, and this is where it is read. ~7 a run at the inherited weights is the first pass.
   out.push('');
@@ -459,32 +439,31 @@ export function formatReport(
     out.push(`    ${pad(source, 24)}${padStart(mean(agg.recruitsBySource[source], R), 8)}`);
   }
 
-  // The movepool gate is the SCROLL LADDER, not level (docs/growth-overhaul.md §4, §11, §12): the
-  // 3rd rung into a hero opens Mid, the 4th is its Evolution, the 6th opens Late, and the rungs
-  // are priced 1, 2, 3, 4, 5... so the histogram is in Scrolls poured and the gates are read at
-  // each rung's cumulative price. EVERY move costing 70+ mana is late-tier, so this table says
-  // whether the expensive half of the catalog is reachable at all, which is what makes a big Mana
-  // pool worth anything.
-  const spentHist = agg.heroScrollHistogram;
-  const heroRuns = spentHist.reduce((sum, n) => sum + (n ?? 0), 0);
-  const atLeast = (spent: number) => spentHist.slice(spent).reduce((sum, n) => sum + (n ?? 0), 0);
+  // The movepool gate is the SCHEDULE (docs/xp-overhaul.md §4): a level opens Mid, one is the
+  // Evolution, one opens Late, so the gates are read off best level reached. EVERY move costing
+  // 70+ mana is late-tier, so this table says whether the expensive half of the catalog is
+  // reachable at all, which is what makes a big Mana pool worth anything. Read at the DEFAULT
+  // schedule; an authored per-hero one (phase 4) moves a hero's own gates, not the table's.
+  const levelHist = agg.heroLevelHistogram;
+  const heroRuns = levelHist.reduce((sum, n) => sum + (n ?? 0), 0);
+  const atLeast = (level: number) => levelHist.slice(level).reduce((sum, n) => sum + (n ?? 0), 0);
   const gates: readonly (readonly [string, number])[] = [
-    [`Mid tier (${scrollsToReachRung(RANK_THRESHOLDS[1])} Scrolls)`, scrollsToReachRung(RANK_THRESHOLDS[1])],
-    [`Evolution (${EVOLUTION_SCROLLS} Scrolls)`, scrollsToReachRung(EVOLUTION_RUNG)],
-    [`LATE tier (${scrollsToReachRung(RANK_THRESHOLDS[2])} Scrolls)`, scrollsToReachRung(RANK_THRESHOLDS[2])],
+    [`Mid tier (Lv ${DEFAULT_SCHEDULE.midLevel})`, DEFAULT_SCHEDULE.midLevel],
+    [`Evolution (Lv ${DEFAULT_SCHEDULE.evolutionLevel})`, DEFAULT_SCHEDULE.evolutionLevel],
+    [`LATE tier (Lv ${DEFAULT_SCHEDULE.lateLevel})`, DEFAULT_SCHEDULE.lateLevel],
   ];
-  // Split, because the whole-batch column is dominated by heroes that died in Act 1 and
-  // never saw the later acts' income at all. The DEEP column is the one that answers
-  // "does a player who gets there actually reach the late-tier movepool".
-  const deep = agg.heroScrollHistogramDeep;
+  // Split, because the whole-batch column is dominated by heroes that died in Act 1. The DEEP
+  // column is the one that answers "does a player who gets there actually reach the late-tier
+  // movepool".
+  const deep = agg.heroLevelHistogramDeep;
   const deepRuns = deep.reduce((sum, n) => sum + (n ?? 0), 0);
-  const atLeastDeep = (spent: number) => deep.slice(spent).reduce((sum, n) => sum + (n ?? 0), 0);
+  const atLeastDeep = (level: number) => deep.slice(level).reduce((sum, n) => sum + (n ?? 0), 0);
   out.push('');
-  out.push(`  the movepool gate — best Scrolls poured, all ${heroRuns} (hero, run) pairs vs. the ${deepRuns} that reached act 4+:`);
+  out.push(`  the movepool gate — best level reached, all ${heroRuns} (hero, run) pairs vs. the ${deepRuns} that reached act 4+:`);
   out.push(`    ${pad('', 24)}${padStart('all', 10)}${padStart('act 4+', 10)}`);
-  for (const [label, spent] of gates) {
+  for (const [label, level] of gates) {
     out.push(
-      `    ${pad(label, 24)}${padStart(pct(atLeast(spent), heroRuns), 10)}${padStart(pct(atLeastDeep(spent), deepRuns), 10)}`
+      `    ${pad(label, 24)}${padStart(pct(atLeast(level), heroRuns), 10)}${padStart(pct(atLeastDeep(level), deepRuns), 10)}`
     );
   }
   // §11's stated target is a fully evolved roster by the end of a run.

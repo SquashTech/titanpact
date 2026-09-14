@@ -14,7 +14,8 @@ export type ScreenKind =
   | 'companion'
   | 'contract'
   | 'drop'
-  | 'rung'
+  | 'offer'
+  | 'moveLearned'
   | 'evolution'
   | 'banner'
   | 'crucible'
@@ -48,7 +49,10 @@ export const SCREEN_SECONDS: Record<ScreenKind, number> = {
   companion: 8,
   contract: 15,
   drop: 12,
-  rung: 12,
+  // A schedule offer at the cap is the replace-or-decline question; below it the move simply
+  // lands and the screen is a receipt — one look, one tap.
+  offer: 12,
+  moveLearned: 4,
   evolution: 30,
   banner: 12,
   crucible: 20,

@@ -54,10 +54,6 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
   }
 
   for (const key of record.equipped) agg.equipRarityByAct[key] = (agg.equipRarityByAct[key] ?? 0) + 1;
-  for (const key of Object.keys(record.scrollsBySource)) {
-    agg.scrollsBySource[key] = (agg.scrollsBySource[key] ?? 0) + record.scrollsBySource[key];
-    if (record.won) agg.scrollsBySourceWon[key] = (agg.scrollsBySourceWon[key] ?? 0) + record.scrollsBySource[key];
-  }
   for (const key of Object.keys(record.candyBySource)) {
     agg.candyBySource[key] = (agg.candyBySource[key] ?? 0) + record.candyBySource[key];
     if (record.won) agg.candyBySourceWon[key] = (agg.candyBySourceWon[key] ?? 0) + record.candyBySource[key];
@@ -143,9 +139,6 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
     const best = record.heroLevels[heroId];
     agg.heroLevelHistogram[best] = (agg.heroLevelHistogram[best] ?? 0) + 1;
     if (record.actReached >= 4) agg.heroLevelHistogramDeep[best] = (agg.heroLevelHistogramDeep[best] ?? 0) + 1;
-    const spent = record.heroScrolls[heroId] ?? 0;
-    agg.heroScrollHistogram[spent] = (agg.heroScrollHistogram[spent] ?? 0) + 1;
-    if (record.actReached >= 4) agg.heroScrollHistogramDeep[spent] = (agg.heroScrollHistogramDeep[spent] ?? 0) + 1;
     if (record.won) hero.runsWon += 1;
   }
 

@@ -22,17 +22,14 @@ import { pickSquad } from '../src/run/squad';
 import { progressionTable } from '../src/data/progression';
 import { levelUpEntry } from '../src/run/growth';
 import {
-
   MOVE_CAP,
-  SCROLLS_TO_MAX_RANK,
   availableEvolution,
   chooseEvolutionPath,
-  grantMasteryScrolls,
   grantOfferedMove,
-  pendingEvolution,
+  levelMovePool,
+  pendingScheduleEntry,
   recordMoveOffer,
-  scrollMovePool,
-  spendMasteryScroll,
+  takeScheduleEntry,
 } from '../src/run/progression';
 import { moveValue as policyMoveValue, replacementTarget } from './sim/policy';
 import { simulateFight } from './sim/fight';
@@ -43,17 +40,12 @@ const STARTERS = ALL.filter((h) => h.starter);
 const LEVEL = 5;
 
 /**
- * A hero as a real run would have it at `level`: the Evolution taken at EVOLUTION_LEVEL, and a
- * kit built by pouring Mastery Scrolls, one per level climbed, up to the six that max a hero.
- * Built through the run's OWN progression functions, so the tier gates are the ones the game
- * applies.
- *
- * One Scroll a level is a MODEL, not the run's economy — Scrolls come per act and per node, and
- * who they go to is the player's. It is the same equivalence enemyGen uses, and it is here for
- * the same reason: this harness prices stats, so what it needs is a kit that deepens with level
- * rather than the exact kit any one run would hold. Before 2026-09-08 it handed every hero its
- * three-move STARTING KIT at whatever level was asked for, which made a hero designed to be weak
- * early and strong late unmeasurable by construction.
+ * A hero as a real run would have it at `level`: walked up its schedule (src/run/progression.ts)
+ * one level at a time, the Evolution taken where the schedule puts it and every offer the schedule
+ * makes taken when it beats the worst move held. Built through the run's OWN progression
+ * functions, so the tier gates are the ones the game applies — the same walk enemyGen does, and
+ * here for the same reason: this harness prices stats, so what it needs is a kit that deepens
+ * with level rather than the exact kit any one run would hold.
  */
 const kitCache = new Map<string, RosterEntry>();
 
@@ -62,25 +54,20 @@ function entryAtLevel(heroId: string, level: number): RosterEntry {
   const cached = kitCache.get(key);
   if (cached) return cached;
 
-  const maxScrolls = SCROLLS_TO_MAX_RANK;
-  let run = grantMasteryScrolls(
-    addRosterEntry(createRunState(0), createRosterEntry(heroId, heroId, heroes[heroId].moveIds)),
-    Math.max(1, maxScrolls)
-  );
+  const hero = heroes[heroId];
+  let run = addRosterEntry(createRunState(0), createRosterEntry(heroId, heroId, hero.moveIds));
   for (let next = 2; next <= level; next++) {
-    // Levels are automatic now (src/run/growth.ts), and they roll stats rather than being spent.
-    run = { ...run, roster: [levelUpEntry(run.roster[0], heroes[heroId], 1, () => 0.5).entry] };
-    if (availableEvolution(progressionTable, run.roster[0])) {
-      const node = pendingEvolution(progressionTable, run.roster[0]);
-      if (node && node.paths.length > 0) {
-        run = chooseEvolutionPath(run, progressionTable, heroes, heroId, node.paths[0].id);
-      }
+    // Levels are automatic (src/run/growth.ts), and they roll stats rather than being spent.
+    run = { ...run, roster: [levelUpEntry(run.roster[0], hero, 1, () => 0.5).entry] };
+    const owed = pendingScheduleEntry(hero, run.roster[0]);
+    if (!owed) continue;
+    if (owed.kind !== 'offer') {
+      const node = availableEvolution(progressionTable, hero, run.roster[0]);
+      run = node && node.paths.length > 0 ? chooseEvolutionPath(run, progressionTable, heroes, heroId, node.paths[0].id) : takeScheduleEntry(run, heroId);
       continue;
     }
-    if (run.roster[0].masteryScrollsSpent >= maxScrolls) continue;
-    // Rank ticks first, so the pool is the band the Scroll just opened.
-    const pool = scrollMovePool(progressionTable, moves, run.roster[0]);
-    run = spendMasteryScroll(run, heroId);
+    const pool = levelMovePool(progressionTable, moves, hero, run.roster[0]);
+    run = takeScheduleEntry(run, heroId);
     if (pool.length === 0) continue;
     const best = pool.reduce((a, b) => (policyMoveValue(b) > policyMoveValue(a) ? b : a));
     const entry = run.roster[0];

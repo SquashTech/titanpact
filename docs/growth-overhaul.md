@@ -1,6 +1,10 @@
 # growth-overhaul.md — The Growth Overhaul
 
 > **STATUS: DECIDED AND BUILT (2026-09-10, per user direction). ALL SEVEN PHASES OF §8 ARE IN.**
+> **Then partly REVERSED by `xp-overhaul.md` (2026-09-13, phases 1–3):** the Scroll ladder of §4,
+> §11 and §12 is deleted — moves and the Evolution come from a per-hero level schedule, and a
+> late hero gains on par instead of staying behind. §1's rule, §3's grades and §6's raw hire
+> stand. Read `xp-overhaul.md` §9 for exactly which lines here it reversed.
 > Gems are gone, moves come only from Mastery Scrolls, levels are automatic and cap 30,
 > Evolutions come from the Crucible, a Guild hire arrives raw, the difficulty curve has been
 > re-fitted against all of it, and all 36 heroes carry authored growth grades.

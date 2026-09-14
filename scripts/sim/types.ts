@@ -121,10 +121,6 @@ export interface Aggregate {
   roundHistogram: number[];
   /** Best level each roster hero reached, histogram over (hero, run) pairs — index = level. */
   heroLevelHistogram: number[];
-  /** Best Mastery Rank reached, per (hero, run) pair — the movepool gate since 2026-09-10. */
-  /** Indexed by best Scrolls spent into the hero. */
-  heroScrollHistogram: number[];
-  heroScrollHistogramDeep: number[];
   /** The same, restricted to runs that reached act 4+ — the aggregate is dominated by Act 1 deaths. */
   heroLevelHistogramDeep: number[];
   /** Player-side move casts, by the move's authored tier. Every 70+ mana move is `late`. */
@@ -137,10 +133,6 @@ export interface Aggregate {
   playerSwitches: number;
   /** Fights where the player side reached the 2-KO lock-in threshold. */
   lockInFights: number;
-  /** Mastery Scrolls granted, by source — the income the §11 lane split promises. */
-  scrollsBySource: Record<string, number>;
-  /** The same, restricted to completed runs — the whole-run income a full clear actually saw. */
-  scrollsBySourceWon: Record<string, number>;
   /** Candy eaten, by source, in levels-at-par (run/candy.ts) — and the same on completed runs. */
   candyBySource: Record<string, number>;
   candyBySourceWon: Record<string, number>;
@@ -187,8 +179,6 @@ export function emptyAggregate(): Aggregate {
     equipRarityByAct: {},
     roundHistogram: [],
     heroLevelHistogram: [],
-    heroScrollHistogram: [],
-    heroScrollHistogramDeep: [],
     heroLevelHistogramDeep: [],
     castsByTier: {},
     castsByManaBand: {},
@@ -196,8 +186,6 @@ export function emptyAggregate(): Aggregate {
     playerRests: 0,
     playerSwitches: 0,
     lockInFights: 0,
-    scrollsBySource: {},
-    scrollsBySourceWon: {},
     candyBySource: {},
     candyBySourceWon: {},
     recruitsBySource: {},
@@ -278,13 +266,9 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   mergeArray(into.deathAct, from.deathAct);
   mergeArray(into.roundHistogram, from.roundHistogram);
   mergeArray(into.heroLevelHistogram, from.heroLevelHistogram);
-  mergeArray(into.heroScrollHistogram, from.heroScrollHistogram);
-  mergeArray(into.heroScrollHistogramDeep, from.heroScrollHistogramDeep);
   mergeArray(into.heroLevelHistogramDeep, from.heroLevelHistogramDeep);
   for (const key of Object.keys(from.castsByTier)) into.castsByTier[key] = (into.castsByTier[key] ?? 0) + from.castsByTier[key];
   for (const key of Object.keys(from.castsByManaBand)) into.castsByManaBand[key] = (into.castsByManaBand[key] ?? 0) + from.castsByManaBand[key];
-  for (const key of Object.keys(from.scrollsBySource)) into.scrollsBySource[key] = (into.scrollsBySource[key] ?? 0) + from.scrollsBySource[key];
-  for (const key of Object.keys(from.scrollsBySourceWon)) into.scrollsBySourceWon[key] = (into.scrollsBySourceWon[key] ?? 0) + from.scrollsBySourceWon[key];
   for (const key of Object.keys(from.candyBySource)) into.candyBySource[key] = (into.candyBySource[key] ?? 0) + from.candyBySource[key];
   for (const key of Object.keys(from.candyBySourceWon)) into.candyBySourceWon[key] = (into.candyBySourceWon[key] ?? 0) + from.candyBySourceWon[key];
   for (const key of Object.keys(from.recruitsBySource)) into.recruitsBySource[key] = (into.recruitsBySource[key] ?? 0) + from.recruitsBySource[key];

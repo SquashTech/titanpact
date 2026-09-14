@@ -30,7 +30,6 @@ import { CandyNodeScreen } from '../view/run/CandyNodeScreen';
 import { BlacksmithScreen } from '../view/run/BlacksmithScreen';
 import { GuardianBannerScreen } from '../view/run/GuardianBannerScreen';
 import { LevelUpScreen } from '../view/run/LevelUpScreen';
-import { MasteryScreen } from '../view/run/MasteryScreen';
 import { CrucibleScreen } from '../view/run/CrucibleScreen';
 import { RosterReplaceScreen } from '../view/run/RosterReplaceScreen';
 import { RecruitScreen } from '../view/run/RecruitScreen';
@@ -103,7 +102,7 @@ import {
   type EncounterNodeType,
   type Encounter,
 } from '../run/enemyGen';
-import { actScaling, scrollsFor } from '../run/difficulty';
+import { actScaling } from '../run/difficulty';
 import { applyEncounterLevels, levelOf, xpForEncounter, xpForLevel, type HeroLevelUp } from '../run/growth';
 import { generateItinerary, locationForAct } from '../run/locations';
 import { encounterKindOf, nodeEncounter } from '../run/encounters';
@@ -127,13 +126,7 @@ import {
 } from '../run/runProgress';
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
 import { createStatusTestSides } from '../run/statusTestFight';
-import {
-  canAffordAnyScroll,
-  fullMovepool,
-  grantMasteryScrolls,
-  EVOLUTION_RUNG,
-  scrollsToReachRung,
-} from '../run/progression';
+import { atEvolution, fullMovepool } from '../run/progression';
 import { progressionTable } from '../data/progression';
 import type { RunState, RosterEntry } from '../run/state';
 import type { Squad } from '../run/squad';
@@ -156,8 +149,6 @@ type Screen =
       encounter: Encounter;
       goldReward: number;
       xpGained: number;
-      /** This win's Mastery Scrolls (difficulty.ts scrollsFor) — every encounter pays, scaled by act. */
-      scrollReward: number;
       /** Rolled at squad-confirm time so the victory screen can spotlight it; handleFightResolved reuses it. */
       equipmentReward: EquipmentDefinition | null;
       /** The potion drop, rolled and carried the same way. */
@@ -188,10 +179,8 @@ type Screen =
   | { kind: 'event'; nodeId: string; eventId: string }
   /** What the fight just did to the roster. First in the post-fight chain — it is the fight's own consequence. */
   | { kind: 'levelUp'; report: readonly HeroLevelUp[]; next: Screen }
-  /** The companion's beats (run/companion.ts): the loss goes AHEAD of the level report; the join right after it; the tier-step is the Mastery board's. */
+  /** The companion's beats (run/companion.ts): the loss goes AHEAD of the level report; the join right after it; the tier-step is the report's own. */
   | { kind: 'companion'; beat: CompanionBeat; next: Screen }
-  /** The Mastery board: after every node that leaves the purse able to buy a rung, and from the map's Scroll chip. */
-  | { kind: 'mastery'; next: Screen }
   /** Guardian's Banner after a Guardian win in acts 1-4. Not a map node, so no nodeId. */
   | { kind: 'guardianBanner'; next: Screen }
   /** The Crucible: pick one hero, and that hero takes a Class. The Guardian's beat. */
@@ -278,25 +267,21 @@ function shuffled<T>(items: readonly T[]): T[] {
   return out;
 }
 
-/** TEMPORARY DEV/TEST — a full roster with its first hero one rung short of its Evolution and a purse that covers it. Remove with its TitleScreen button. */
+/** TEMPORARY DEV/TEST — a full roster with its first hero stood at its Evolution. Remove with its TitleScreen button. */
 function createLevel4TestRun(): RunState {
   const base = addHeroes(createRunState(999), Object.keys(heroes).slice(0, ROSTER_CAP), 4);
   // Some worn, some carried: Manage Roster's gear half is only exercisable with both.
   const worn = ['sword.common', 'staff.common', 'sword.common.blazing'];
   return {
     ...base,
-    roster: base.roster.map((entry, i) => ({
-      ...entry,
-      equipment: worn[i] ? equipItem(entry.equipment, worn[i]) : entry.equipment,
-      // The first hero sits one rung short of the Evolution rung, so the fixture reaches it.
-      masteryScrollsSpent: i === 0 ? scrollsToReachRung(EVOLUTION_RUNG - 1) : entry.masteryScrollsSpent,
-    })),
+    roster: base.roster.map((entry, i) => {
+      const geared = { ...entry, equipment: worn[i] ? equipItem(entry.equipment, worn[i]) : entry.equipment };
+      // The first hero stands at its Evolution, so the next level-up report raises it.
+      return i === 0 ? atEvolution(heroes[entry.heroId], geared) : geared;
+    }),
     // Two mergeable pairs: a plain one, and one where both halves are enchanted so the
     // keep-which-enchant choice has somewhere to fire.
     stash: ['dagger.common', 'dagger.common', 'bow.common', 'spear.rare.blazing', 'spear.rare.tidal'],
-    // The Evolution rung's price and a cheap rung or two elsewhere; the Mastery gate raises on it
-    // before the map, which is the screen this fixture exists to open.
-    masteryScrolls: scrollsToReachRung(EVOLUTION_RUNG) - scrollsToReachRung(EVOLUTION_RUNG - 1) + 2,
     map: generateMap(randomSeed()),
     locationIds: generateItinerary(randomSeed()),
   };
@@ -316,16 +301,6 @@ type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' |
 // The bands live in runProgress.ts (GOLD_REWARD_RANGE) so the map's node readout prints the roll it describes.
 function goldRewardFor(nodeType: EncounterMapNodeType): number {
   return rollGoldRange(GOLD_REWARD_RANGE[nodeType]);
-}
-
-/**
- * The map, behind the Mastery gate if the purse can buy anyone a rung and the player has not
- * banked it (docs/growth-overhaul.md §12). Affordability, not emptiness: a rung's price rises,
- * so a purse that buys nobody yet is normal and banks on its own. The second half is also what
- * stops the gate becoming a wall once every hero is at max rank with an empty pool.
- */
-function masteryDue(run: RunState): boolean {
-  return canAffordAnyScroll(progressionTable, moves, run) && !run.masteryDeferred;
 }
 
 function equipmentDropFor(nodeType: EncounterMapNodeType, actNumber: number): EquipmentDefinition | null {
@@ -365,9 +340,6 @@ function tutorialBeatKeyFor(screen: Screen, run: RunState): TutorialBeatKey | nu
     }
     case 'levelUp':
       return 'levelUp';
-    // On the screen that is asking for the decision, which is the only place a Scroll now exists.
-    case 'mastery':
-      return 'scroll';
     case 'crucible':
       return 'crucible';
     case 'reward':
@@ -435,15 +407,6 @@ export function App() {
   // Title screen only. A checkpointed run now survives a reload, but everything between two
   // checkpoints does not, so a mid-fight reload would still cost the fight.
   useReloadOnNewBuild(screen.kind === 'title');
-
-  // The post-node Mastery gate. The fight chain slots the screen in explicitly; this catches every
-  // other faucet at once — the Scroll Cache, the lone Scroll, the Guild Hall's shelf. It cannot
-  // loop: `masteryDue` is false the moment the purse is spent down, banked (every grant clears the
-  // bank, so new income always re-asks), or nothing can spend it.
-  useEffect(() => {
-    if (screen.kind !== 'map' || !masteryDue(playerRun)) return;
-    setScreen({ kind: 'mastery', next: { kind: 'map' } });
-  }, [playerRun, screen.kind]);
 
   // Autosave. An effect rather than a call inside each transition handler for two reasons:
   // it sees state that has actually committed (several handlers still read the pre-setState
@@ -641,7 +604,6 @@ export function App() {
       // Read off the win this fight WILL be: the curve is a function of encounters won, so the
       // figure is known before the fight rather than rolled after it.
       xpGained: xpForEncounter(playerRun.encountersWon + 1),
-      scrollReward: scrollsFor(mapNodeType, playerRun.actNumber),
       equipmentReward,
       consumableReward: rollConsumableDrop(mapNodeType),
     });
@@ -692,10 +654,6 @@ export function App() {
     // Joined after the levels roll so the report is the fight's and the newcomer arrives at par.
     const companionId = companionJoinDue(playerRun, mapNodeType) ? companionCandidate(encounter) : null;
     if (companionId) next = joinCompanion(next, companionId, rosterHeroes);
-    // The fight's Scrolls, the Guardian's included (difficulty.ts scrollsFor). Granted here rather
-    // than at squad-confirm for the same reason gold is: a fight that is lost pays nothing.
-    const scrolls = scrollsFor(mapNodeType as EncounterMapNodeType, playerRun.actNumber);
-    if (scrolls > 0) next = grantMasteryScrolls(next, scrolls);
 
     let afterScreen: Screen;
     if (isFinale) {
@@ -741,17 +699,11 @@ export function App() {
     // The Crucible is the GUARDIAN's beat, not every fight's (docs/growth-overhaul.md §5, §11): one
     // hero takes a Class, in the chain Guardian → Banner → Crucible → Pact Seal → act intro. Team,
     // hero, run — three scales ascending. Skipped when every hero already holds one.
-    // The Mastery board is LAST in the chain — after the Banner, the contract and the Crucible —
-    // so a hero recruited or Classed this beat can take the rung it has only just become eligible
-    // for. Skipped when the purse buys nobody; it banks (docs/growth-overhaul.md §12).
-    const afterMastery: Screen = masteryDue(next) ? { kind: 'mastery', next: afterScreen } : afterScreen;
-
     const crucible = isGuardian && anyClassAvailable(next.roster);
-    const afterCrucible: Screen = crucible ? { kind: 'crucible', next: afterMastery } : afterMastery;
+    const afterCrucible: Screen = crucible ? { kind: 'crucible', next: afterScreen } : afterScreen;
 
     // Gate order is deliberate: banner, then recruit, then the Crucible — so a hero recruited
-    // this beat already stands under the Banner, and can walk into the Crucible itself; and the
-    // Scrolls last, so a hero Classed here pours with its verb in hand.
+    // this beat already stands under the Banner, and can walk into the Crucible itself.
     // `next`, not `playerRun`: a boss node has just granted the contract that is spendable here.
     const recruitable = defeatedRoster.filter((entry) => isRecruitable(entry.heroId, heroes));
     // The scripted act names its one contract and refuses to let it be walked past; a non-null
@@ -782,10 +734,7 @@ export function App() {
   }
 
   function handleNodeContinue(nodeId: string) {
-    // The Vigil is the run's last node before the Endbringer, so a banked purse is re-offered
-    // there or never — walking on clears the bank rather than honouring it.
-    const unbank = playerRun.map?.nodes[nodeId]?.type === 'muster';
-    setPlayerRun((run) => advanceToNode(unbank ? { ...run, masteryDeferred: false } : run, nodeId));
+    setPlayerRun((run) => advanceToNode(run, nodeId));
     setScreen({ kind: 'map' });
   }
 
@@ -1042,7 +991,6 @@ export function App() {
           run={playerRun}
           onRunChange={setPlayerRun}
           onSelectNode={handleSelectNode}
-          onOpenMastery={() => setScreen({ kind: 'mastery', next: { kind: 'map' } })}
           onSaveAndQuit={() => setScreen({ kind: 'title' })}
           onAbandonRun={handleAbandonRun}
         />
@@ -1068,7 +1016,6 @@ export function App() {
           playerRelicIds={playerRun.relics}
           goldReward={screen.goldReward}
           xpGained={screen.xpGained}
-          scrollReward={screen.scrollReward}
           equipmentReward={screen.equipmentReward}
           consumableReward={screen.consumableReward}
           onResolved={(outcome, finalState, consumablesUsed) =>
@@ -1219,14 +1166,10 @@ export function App() {
         })()}
 
       {screen.kind === 'levelUp' && (
-        <LevelUpScreen run={playerRun} report={screen.report} onContinue={() => setScreen(screen.next)} />
+        <LevelUpScreen run={playerRun} onRunChange={setPlayerRun} report={screen.report} onContinue={() => setScreen(screen.next)} />
       )}
 
       {screen.kind === 'companion' && <CompanionScreen run={playerRun} beat={screen.beat} onContinue={() => setScreen(screen.next)} />}
-
-      {screen.kind === 'mastery' && (
-        <MasteryScreen run={playerRun} onRunChange={setPlayerRun} onDone={() => setScreen(screen.next)} />
-      )}
 
       {screen.kind === 'guardianBanner' && (
         <GuardianBannerScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => setScreen(screen.next)} />

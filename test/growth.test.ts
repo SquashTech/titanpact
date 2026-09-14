@@ -38,7 +38,6 @@ import {
   xpForLevel,
   type GrowthGrade,
 } from '../src/run/growth';
-import { EVOLUTION_LEVEL } from '../src/run/progression';
 import { STAT_ORDER, type StatKey } from '../src/engine/content';
 
 const GRADES: readonly GrowthGrade[] = ['F', 'E', 'D', 'C', 'B', 'A', 'S'];

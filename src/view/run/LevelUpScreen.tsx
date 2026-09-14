@@ -2,18 +2,24 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
 import type { StatKey } from '../../engine/content';
-import { GROWTH_STATS, growthUnitFor, type HeroLevelUp } from '../../run/growth';
-import type { RunState } from '../../run/state';
+import { GROWTH_STATS, growthUnitFor, levelOf, type HeroLevelUp } from '../../run/growth';
+import { entryBandRank, scheduleFor } from '../../run/progression';
+import type { RosterEntry, RunState } from '../../run/state';
 import { getTypeColor } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { NodeSky, NODE_TINT_VITAL } from '../shared/NodeStage';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { STAT_COLORS, STAT_LABELS, StatGlyph } from '../shared/StatBars';
 import { RosterPeek } from './RosterPeek';
+import { CompanionScreen } from './CompanionScreen';
+import { EvolutionScreen } from './EvolutionScreen';
+import { MoveLearnedOverlay, MoveOfferOverlay } from './MoveOfferOverlay';
+import { useLevelUpFlow } from './levelUpFlow';
 
 interface Props {
   run: RunState;
-  /** One entry per roster hero, in roster order — including any that were already at the cap. */
+  onRunChange: (next: RunState) => void;
+  /** One entry per roster hero, in roster order — including any that were already at the cap. A candy's is one row. */
   report: readonly HeroLevelUp[];
   onContinue: () => void;
 }
@@ -47,9 +53,26 @@ function isBigRoll(points: number, levels: number): boolean {
  * used to spell out ("everyone gains, each stat rolls its grade") is what the rows themselves
  * show, and a sentence restating what the eye is about to see was the one thing here that never
  * changed what anybody did.
+ *
+ * Since the XP Overhaul's phase 3 (docs/xp-overhaul.md §4) the report is also where a level PAYS:
+ * once the rows have landed, every hero whose level has reached a schedule entry takes it here,
+ * in roster order — a move offer over the report, or the Evolution as a screen of its own. It is
+ * the one decision kind the report carries, and it was a screen of its own before; it must not
+ * gain a second.
  */
-export function LevelUpScreen({ run, report, onContinue }: Props) {
+export function LevelUpScreen({ run, onRunChange, report, onContinue }: Props) {
   const [revealed, setRevealed] = useState(() => (prefersReducedMotion() ? report.length : 0));
+  const flow = useLevelUpFlow(run, onRunChange);
+  const [paid, setPaid] = useState(false);
+  const rosterIds = report.map((hero) => hero.rosterId);
+
+  // The schedule pays out after the rows have landed, one entry at a time: each payoff changes
+  // the run, the run comes back, and the next hero owed is asked. Done when nobody is.
+  useEffect(() => {
+    if (paid || flow.busy || revealed < report.length) return;
+    if (!flow.next(rosterIds)) setPaid(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [run, paid, flow.busy, revealed]);
 
   useEffect(() => {
     if (prefersReducedMotion()) return;
@@ -69,6 +92,26 @@ export function LevelUpScreen({ run, report, onContinue }: Props) {
   // The biggest climb names the beat, not the first row: a hero parked at the cap must not, and
   // under the XP curve a hero behind par climbs further than the rest on the same grant.
   const levels = report.reduce((best, hero) => Math.max(best, hero.toLevel - hero.fromLevel), 0);
+
+  if (flow.grown) {
+    return <CompanionScreen run={run} beat={{ kind: 'grown', fromHeroId: flow.grown.fromHeroId, toHeroId: flow.grown.toHeroId }} onContinue={flow.closeGrown} />;
+  }
+
+  const evolvingEntry = flow.evolving ? (run.roster.find((r) => r.rosterId === flow.evolving!.rosterId) ?? null) : null;
+  if (flow.evolving && evolvingEntry) {
+    return (
+      <EvolutionScreen
+        hero={rosterHeroes[evolvingEntry.heroId]}
+        entry={evolvingEntry}
+        node={flow.evolving.node}
+        run={run}
+        onChoose={flow.chooseEvolution}
+      />
+    );
+  }
+
+  const offerEntry = flow.offer ? (run.roster.find((r) => r.rosterId === flow.offer!.rosterId) ?? null) : null;
+  const overflowEntry = flow.overflow ? (run.roster.find((r) => r.rosterId === flow.overflow!.rosterId) ?? null) : null;
 
   return (
     <div className="node-screen level-up-screen" style={{ '--node-rgb': NODE_TINT_VITAL } as CSSProperties}>
@@ -99,10 +142,47 @@ export function LevelUpScreen({ run, report, onContinue }: Props) {
         </div>
       </div>
 
-      <button className="resolve-button" onClick={onContinue}>
+      <button className="resolve-button" disabled={!paid} onClick={onContinue}>
         Continue
       </button>
+
+      {flow.overflow && overflowEntry && (
+        <MoveOfferOverlay
+          run={run}
+          entry={overflowEntry}
+          moveId={flow.overflow.queue[0]}
+          eyebrow="The path grants a move — your kit is full"
+          onResolve={flow.resolveOverflow}
+        />
+      )}
+
+      {flow.offer && offerEntry && (
+        <OfferBox run={run} entry={offerEntry} offer={flow.offer} onResolve={flow.resolveOffer} onClose={flow.closeOffer} />
+      )}
     </div>
+  );
+}
+
+interface OfferBoxProps {
+  run: RunState;
+  entry: RosterEntry;
+  offer: { moveId: string; learned: boolean };
+  onResolve: (replaceMoveId: string | null, learn: boolean) => void;
+  onClose: () => void;
+}
+
+/** The box a level's offer ends in: a receipt below the cap, the replace question at it. */
+function OfferBox({ run, entry, offer, onResolve, onClose }: OfferBoxProps) {
+  const hero = rosterHeroes[entry.heroId];
+  const level = levelOf(entry);
+  const band = ['Early', 'Mid', 'Late'][entryBandRank(hero, entry) - 1];
+  const schedule = scheduleFor(hero);
+  const opened = level >= schedule.lateLevel ? schedule.lateLevel : level >= schedule.midLevel ? schedule.midLevel : null;
+  const eyebrow = `Level ${level} — ${band} band${opened === level ? ', just opened' : ''}`;
+  return offer.learned ? (
+    <MoveLearnedOverlay run={run} entry={entry} moveId={offer.moveId} eyebrow={eyebrow} onClose={onClose} />
+  ) : (
+    <MoveOfferOverlay run={run} entry={entry} moveId={offer.moveId} eyebrow={eyebrow} onResolve={onResolve} />
   );
 }
 

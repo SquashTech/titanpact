@@ -21,6 +21,13 @@
 > "What a level-up COSTS" curve, restored on Scrolls. **Everything else here describes what the
 > code does.** Read both before changing anything.
 
+> **SUPERSEDED AGAIN by `xp-overhaul.md` (2026-09-13), phases 1–3 built:** level is DERIVED from
+> XP on `L³`; candy nodes aim XP at one hero; and **the Scroll ladder is deleted** — moves and the
+> Evolution come from a per-hero **schedule** read off level (`DEFAULT_SCHEDULE`,
+> `src/run/progression.ts`) and paid out on the level-up report. Part 1b and Part 2's "Trigger"
+> below describe the deleted ladder and are kept for their reasoning; `run-loop.md` "The schedule"
+> and `xp-overhaul.md` §4 are the spec now.
+
 ---
 
 # Part 1 — Levelling
@@ -206,7 +213,7 @@ whole loadout with event gifts out of its own Early pool first, then alternating
 declining every offer — and asserts no level-up ever falls through to a mastery stat
 (`test/moveTiers.test.ts`).
 
-# Part 1b — Mastery Scrolls and Mastery Rank (2026-09-10)
+# Part 1b — Mastery Scrolls and Mastery Rank (2026-09-10 — DELETED 2026-09-13, see the banner)
 
 **Moves come from ONE faucet: Mastery Scrolls, which buy a hero its next RUNG on
 `MasteryScreen` — pushed after every node that leaves the purse able to buy one, leavable by
@@ -340,7 +347,7 @@ design detail to specify in `/data`; the invariant is that offerings are
 
 # Part 2 — The Evolution system
 
-## Trigger: the 6th SCROLL (2026-09-11, `growth-overhaul.md` §11)
+## Trigger: the 6th SCROLL (2026-09-11, `growth-overhaul.md` §11 — SUPERSEDED 2026-09-13 by the schedule's `evolutionLevel`)
 
 > **Supersedes the Crucible trigger below** (2026-09-10, phase 4), kept for its reasoning. The
 > Crucible beat and screen survive and now grant a **Class** (`growth-overhaul.md` §11).

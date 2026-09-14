@@ -112,7 +112,6 @@ export const TUTORIAL_SCREEN_BEAT_KEYS = [
   'intro',
   'arrival',
   'equip',
-  'scroll',
   'levelUp',
   'crucible',
   'mentorNode',
@@ -325,10 +324,9 @@ export function isTutorialAct(run: RunState): boolean {
  * act removes the option rather than recommending against it (2026-09-06, per user direction).
  * Three locks, each lifting the moment its lesson has landed — none of them survives Act 1.
  *
- * The Evolution needs no lock of its own, and since 2026-09-10 no schedule either: levels are
- * automatic and roster-wide (run/growth.ts), so the whole roster crosses EVOLUTION_LEVEL on the
- * act's third encounter whatever the player does. The `focusHeroId` lock that used to funnel a
- * pool to guarantee it went with the pool.
+ * The Evolution needs no lock of its own: levels are automatic and roster-wide (run/growth.ts),
+ * and each hero's schedule (run/progression.ts) says where its Evolution sits. The `focusHeroId`
+ * lock that used to funnel a pool to guarantee it went with the pool.
  */
 export interface TutorialLocks {
   /**

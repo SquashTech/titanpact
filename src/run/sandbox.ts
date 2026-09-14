@@ -6,7 +6,7 @@ import type { HeroLookup } from '../engine/state';
 import { createRosterEntry, addRosterEntry, createRunState, type RunState } from './state';
 import type { Squad } from './squad';
 import { createEmptyLoadout, type EquipmentLoadout } from './equipment';
-import { chooseEvolutionPath, EVOLUTION_LEVEL, type ProgressionTable } from './progression';
+import { atEvolution, chooseEvolutionPath, type ProgressionTable } from './progression';
 import { xpForLevel } from './growth';
 
 export interface SandboxHeroConfig {
@@ -62,7 +62,7 @@ export function buildSandboxSide(config: SandboxSideConfig, heroes: HeroLookup, 
     if (hc.pathId) {
       run = {
         ...run,
-        roster: run.roster.map((r) => (r.rosterId === hc.rosterId ? { ...r, xp: Math.max(r.xp, xpForLevel(EVOLUTION_LEVEL)) } : r)),
+        roster: run.roster.map((r) => (r.rosterId === hc.rosterId ? atEvolution(heroes[r.heroId], r) : r)),
       };
       try {
         run = chooseEvolutionPath(run, table, heroes, hc.rosterId, hc.pathId);

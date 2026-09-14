@@ -56,8 +56,10 @@ import { MAX_XP, xpForLevel } from './growth';
  * from it (docs/xp-overhaul.md §2). A v11 file's `level` has no XP under it.
  * v13 (2026-09-13): its second — the two Scroll reward nodes became `candyReward` and
  * `smallCandyReward`, so a v12 map may hold node types this build does not have.
+ * v14 (2026-09-13): its third — the Scroll ladder is gone. `masteryScrolls` and
+ * `masteryDeferred` left RunState, and an entry's `masteryScrollsSpent` became `scheduleTaken`.
  */
-export const SAVE_VERSION = 13;
+export const SAVE_VERSION = 14;
 
 /**
  * Where a restored run resumes. Both are settled points: every reward is banked, the
@@ -266,8 +268,7 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
   const classPassiveId = classId !== null ? (index.classPassiveIds.get(classId) ?? null) : null;
 
   if (!isInt(value.bonusItemSlots, 0, MAX_ITEM_SLOTS)) reject(`${label}.bonusItemSlots is not a slot count`);
-  // Uncapped: it keeps climbing past MAX_MASTERY_RANK, which masteryRank clamps on read.
-  if (!isInt(value.masteryScrollsSpent, 0)) reject(`${label}.masteryScrollsSpent is not a count`);
+  if (!isInt(value.scheduleTaken, 0)) reject(`${label}.scheduleTaken is not a count`);
 
   const graft = value.evolutionTypeGraft ?? null;
   if (graft !== null) {
@@ -289,7 +290,7 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
     bonusPassiveGrants: requireIds(value.bonusPassiveGrants, index.passiveIds, `${label}.bonusPassiveGrants`),
     bonusStatGrants: decodeStatGrants(value.bonusStatGrants, `${label}.bonusStatGrants`),
     growthStatGrants: decodeStatGrants(value.growthStatGrants, `${label}.growthStatGrants`),
-    masteryScrollsSpent: value.masteryScrollsSpent,
+    scheduleTaken: value.scheduleTaken,
     bonusItemSlots: value.bonusItemSlots,
     evolutionTypeGraft: graft as TypeId | null,
     classId: classId as string | null,
@@ -390,8 +391,6 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
 
   if (!isInt(value.gold, 0)) reject('run.gold is not a count');
   if (!isInt(value.recruitContracts, 0)) reject('run.recruitContracts is not a count');
-  if (!isInt(value.masteryScrolls, 0)) reject('run.masteryScrolls is not a count');
-  if (typeof value.masteryDeferred !== 'boolean') reject('run.masteryDeferred is not a flag');
   const consumables = decodeConsumables(value.consumables);
   if (!isInt(value.fightsStarted, 0)) reject('run.fightsStarted is not a count');
   if (!isInt(value.encountersWon, 0)) reject('run.encountersWon is not a count');
@@ -423,8 +422,6 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
     stash,
     unseenItemIds: decodeUnseen(value.unseenItemIds, stash),
     relics: requireIds(value.relics, index.relicIds, 'run.relics'),
-    masteryScrolls: value.masteryScrolls,
-    masteryDeferred: value.masteryDeferred,
     recruitContracts: value.recruitContracts,
     consumables,
     // Absent on a file written before the companion; a run that never had one has none.

@@ -14,7 +14,6 @@ import { BannerShelf } from './BannerShelf';
 import { NODE_COLORS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
 import { NodeDossierOverlay } from './NodeDossierOverlay';
 import { levelAfterEncounters, levelOf } from '../../run/growth';
-import { canAffordAnyScroll } from '../../run/progression';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
 import { footerWaiting } from './mapFooter';
@@ -55,36 +54,19 @@ interface Props {
   run: RunState;
   onRunChange: (next: RunState) => void;
   onSelectNode: (nodeId: string) => void;
-  /** Re-opens the Mastery board for a purse the player banked rather than spent. */
-  onOpenMastery: () => void;
   /** Leave to the title with the run saved here. Omit and the pause menu drops both quit entries. */
   onSaveAndQuit?: () => void;
   /** Discard the run and its save (two-tap armed). */
   onAbandonRun?: () => void;
 }
 
-/**
- * One run resource in the header track. A spendable Scroll purse is the only one with somewhere
- * to go from this screen, so it is the only one that is ever a button.
- */
-function ResourceStat({ kind, label, value, onSpend }: { kind: ResourceKind; label: string; value: number; onSpend?: () => void }) {
-  const body = (
-    <>
+/** One run resource in the header track. */
+function ResourceStat({ kind, label, value }: { kind: ResourceKind; label: string; value: number }) {
+  return (
+    <span className="map-stat" aria-label={`${label}: ${value}`}>
       <ResourceGlyph kind={kind} />
       <span className="map-stat-value">{value}</span>
-    </>
-  );
-  if (!onSpend) {
-    return (
-      <span className="map-stat" aria-label={`${label}: ${value}`}>
-        {body}
-      </span>
-    );
-  }
-  return (
-    <button type="button" className="map-stat is-spendable" onClick={onSpend} aria-label={`${label}: ${value} — spend now`} title="Spend Scrolls">
-      {body}
-    </button>
+    </span>
   );
 }
 
@@ -174,9 +156,9 @@ function MapPlacard({ location }: { location: LocationDefinition }) {
   );
 }
 
-// The run's hub (docs/run-loop.md). Levels are automatic (run/growth.ts); Scrolls are spent on
-// the Mastery board, not here, and a banked purse on the map is normal (docs/growth-overhaul.md §12).
-export function MapScreen({ run, onRunChange, onSelectNode, onOpenMastery, onSaveAndQuit, onAbandonRun }: Props) {
+// The run's hub (docs/run-loop.md). Levels are automatic (run/growth.ts) and pay out on the
+// level-up report, not here.
+export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAbandonRun }: Props) {
   const [rosterOpen, setRosterOpen] = useState(false);
   const [showReference, setShowReference] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -244,15 +226,6 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenMastery, onSav
         </span>
         <div className="map-purse">
           <ResourceStat kind="gold" label="Gold" value={run.gold} />
-          {/* A purse, not an inbox: banking toward a dear rung is a legitimate play, so the count is
-              stated and nothing flags it as waiting. The chip is the way back to the board whenever
-              the purse can buy somebody a rung. */}
-          <ResourceStat
-            kind="scroll"
-            label="Mastery Scrolls"
-            value={run.masteryScrolls}
-            onSpend={canAffordAnyScroll(progressionTable, moves, run) ? onOpenMastery : undefined}
-          />
           <ResourceStat kind="contract" label="Recruit Contracts" value={run.recruitContracts} />
           <ResourceStat kind="hpPotion" label="HP Potions" value={run.consumables.hpPotion} />
           <ResourceStat kind="mpPotion" label="MP Potions" value={run.consumables.mpPotion} />

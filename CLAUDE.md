@@ -48,13 +48,17 @@ don't silently override it.
 > `src/run/growth.ts` — for stats, moves and Evolutions; **candy** nodes aim XP at one hero; the
 > Scroll ladder is deleted and moves come from a per-hero level **schedule** with the roll kept.
 > Its §9 lists the invariants below it reverses; until the §8 phase that replaces each one lands,
-> the rule below is still the rule in force. **Phases 1–2 are IN:** `RosterEntry.xp` is stored and
+> the rule below is still the rule in force. **Phases 1–3 are IN:** `RosterEntry.xp` is stored and
 > level is DERIVED (`levelOf`); a won encounter pays XP derived from `LEVEL_AFTER_ENCOUNTER`, so
 > par is unchanged to the point and only a hero off par can tell — it now gains on par instead of
 > trailing by a fixed count (measured: +10 points full-clear, all of it in acts 2–5; §8). **Candy**
 > (`src/run/candy.ts`) took the two Scroll nodes' seats and the Guild Hall shelf: XP worth 2 (or 1)
 > levels AT PAR, aimed at ONE hero through a who screen, paid out on the level-up report; a hero
-> at the cap is refused. Scrolls still come from fights and still buy moves — the bridge state.
+> at the cap is refused. **The Scroll ladder is DELETED** (phase 3): moves and the Evolution come
+> from a per-hero **schedule** read off level (`DEFAULT_SCHEDULE`, `src/run/progression.ts`) and
+> paid out on the level-up report — the invariants below say so. Phase 4 (author 36 schedules)
+> and phase 6 (re-fit) are not started; measured, phase 3 cost 8 points of full-clear, all of it
+> the Act 1 wall, and did NOT shorten the clock (§8).
 
 ---
 
@@ -152,15 +156,23 @@ don't silently override it.
   Participation-based XP was considered and **rejected** — it produces the runaway where your
   best four level, the sideboard rots, and by Act 4 you cannot rotate. Roster-wide gets the
   screen removal without buying that; a hero rotated in is at parity, so rotating is free.
-  **The cost is real: hyperfocus dies as a LEVELLING strategy**, and is bought back wholesale by
-  Mastery Rank. A focus-hero XP dial was drafted as a consolation and dropped; do not
-  re-introduce it without re-reading `docs/growth-overhaul.md` §4.
+  **The cost is real: hyperfocus dies as a LEVELLING strategy**, and is bought back by **candy**
+  (2026-09-13, `src/run/candy.ts`, `docs/xp-overhaul.md` §3): the two reward-row seats the Scroll
+  Cache and Lone Scroll held, and the Guild Hall shelf, pay XP worth **2 (or 1) levels AT PAR** to
+  ONE hero the player picks — more levels for a hero behind par, fewer for one ahead, since the
+  cube throttles the carry and closes the gap with the same grant. A hero at the cap is refused.
+  Every source is a seat that displaced another reward, so a candy is never free and never
+  compounds. The supply is the only balance number and phase 6 sets it.
   **A level-up REPORT screen is not an allocation screen** (2026-09-10,
   `src/view/run/LevelUpScreen.tsx`): the ban is on a screen that collects a decision which is
   really a spreadsheet, not on the player seeing growth happen. It is first in the post-fight
   chain — the fight's own consequence, ahead of the Banner and everything under it — lists the
   whole roster, benched included, and gives **every** growth stat a cell whether or not it rolled,
-  because the misses are what make the hits read as a roll against a grade. One button, no choice.
+  because the misses are what make the hits read as a roll against a grade. **It carries exactly
+  ONE decision kind** (2026-09-13, XP Overhaul phase 3): once the rows have landed, each hero whose
+  level has reached a schedule entry takes it there — a move offer over the report (a receipt
+  below `MOVE_CAP`, replace-or-decline at it) or its Evolution as a screen of its own — in roster
+  order, one entry a hero a beat (`src/view/run/levelUpFlow.ts`). It must not gain a second.
 - **Each level rolls EVERY stat independently against that hero's growth grade for it.**
   A grade is a **distribution over points, not a coin** (`GRADE_ROLL`, 2026-09-10, per user
   direction — the flat "+2 or nothing" it replaced read as a schedule): a level lands **+0 to
@@ -182,73 +194,40 @@ don't silently override it.
   hero's dump stat stays dumped (E/F, since that is what the 550 charged for), and a stat it
   genuinely swings or defends with never drops below C, which is where a trap pick comes from.
   `docs/types-and-heroes.md` "Growth grades".
-- **Moves come from ONE faucet: Mastery Scrolls, gated by Mastery Rank** (2026-09-10,
-  `docs/growth-overhaul.md` §4). Scrolls buy a hero its next RUNG on the Mastery board; a rung
-  offers **one** move from that hero's pool — take it or decline, and the move is burned either
-  way — and it ticks the rank bar.
-  **A rung has a PRICE that rises with the rung, and the purse BANKS** (2026-09-12, per user
-  direction, `docs/growth-overhaul.md` §12 — the pre-overhaul level-up curve brought back whole,
-  because it "felt close to perfect"): a hero's first rung costs **1** Scroll, then **2, 3, 4**,
-  and every rung from the fifth costs **`MAX_SCROLL_COST` = 5** (`scrollCost`,
-  `src/run/progression.ts`). Income rises by act to match (`scrollsFor`,
-  `src/run/difficulty.ts`): **3** the act opener, **3** Battle, **4** Skirmish, **4** Elite,
-  **4** the Guardian, **+`ACT_SCROLL_STEP` = 2 per act past the first** — an act's four fights
-  pay 14–15 in Act 1 and 46–47 in Act 5, ~150 a run — **the fights alone, since 2026-09-13**:
-  the Scroll Cache, the lone Scroll and the shelf's bundle are candy now (XP Overhaul phase 2,
-  `src/run/candy.ts`; the bridge state until phase 3 deletes the ladder). This REVERSES
-  2026-09-10's "poured where it is won, never held", which was built for a flat price where holding
-  never paid: under a rising one, **a purse that buys nobody yet is NORMAL and banks on its own**,
-  and one that could buy somebody may be banked by choice — `MasteryScreen` is pushed after every
-  node that leaves the purse able to buy a rung (`masteryDue` = `canAffordAnyScroll` and not
-  `run.masteryDeferred`), its Bank button is the out, **every grant clears the bank** so new
-  income always re-asks, and the map's Scroll chip is the way back. The Vigil clears it on the
-  way out — the last node before the Endbringer is re-offered or never. It is LAST in the
-  post-fight chain, after the Banner, the contract and the Crucible, so a hero recruited or Classed
-  this beat can take the rung it just became eligible for. What the old churn hedge gave up —
-  saving for a hero not yet recruited — is back.
-  **The ladder is authored as thresholds in RUNGS** (2026-09-11, re-priced 2026-09-12):
-  **`RANK_THRESHOLDS` = [0, 3, 6]** — Rank 1 offers Early, the 3rd rung opens Mid (Early
-  expires), the 6th opens Late — and **`EVOLUTION_RUNG` = 4** sits between them, exactly the old
-  curve's levels 4 / 5 / 7. In Scrolls that is Mid at 6, the Evolution at 10 (`EVOLUTION_SCROLLS`,
-  derived) and Late at 20 (`SCROLLS_TO_MAX_RANK`, derived): one hero rushed to its Evolution is
-  10, a four-hero core lifted one rung each is 4, and Act 1 pays 14, so an act buys the all-in OR
-  the spread and either route affords the Evolution before its own Guardian. Rank 3 is
-  **open-ended**: past the 6th rung every rung offers Late until the pool is dry. **No hero needed
-  re-authoring** (6/6/4 pools against a 2/3/1 floor). Only `RosterEntry.masteryScrollsSpent` —
-  the cumulative price paid — is stored; rung (`masteryRung`), rank and the next price are all
-  **DERIVED**, and every spend lands exactly on a rung. **The tick lands before the roll**, so the
-  rung that reaches a rank offers from the band it just opened.
-  **Rank puts the ceiling behind the SPEND, never behind a clock** — act-gating the movepool
-  makes holding a Scroll always better than spending one, and a currency whose optimal play is
-  *don't spend it* can never feel good to receive. Banking toward a priced rung is not that: the
-  rung is still what the ceiling sits behind. It is also where the carry build is priced in
-  breadth, which uniform levelling would otherwise delete.
-- **A rung is refused only when the purse cannot cover it, or when it would buy LITERALLY
-  nothing** — max rank AND nothing left to teach (`canSpendScroll`). A dry band below the cap
-  still takes one, because the rank tick is the only thing that opens the next band and refusing
-  there would strand the hero forever. The move-pool floor is **the offers it takes to climb out
-  of a band** (`movePoolFloor`, `test/moveTiers.test.ts`): 2 Early, 3 Mid, 1 Mid+Late. Scrolls
-  make offers-per-hero player-controlled, so no depth can promise a pool "cannot be emptied" the
-  way the old curve-derived margin did.
-- **Evolutions come from the 4th RUNG into a hero — never from a level, never from a beat**
-  (2026-09-11, `docs/growth-overhaul.md` §11, superseding §5's Crucible; re-priced §12). Buying
-  the `EVOLUTION_RUNG` raises that hero's Evolution screen **in place of a move offer**
-  (revised 2026-09-11, per user direction: the Evolution is that rung's whole reward — no
-  offer rolls behind it, and the path's own outright grant is the only move it teaches;
-  `useScrollPour`, `src/view/run/MasteryBoard.tsx`). Rungs are bought one hero at a time, so a
-  ladder threshold can never wall the way a level threshold did under roster-wide levelling — and
-  the player watches the pips fill toward it, which is what the Crucible's fixed cadence had lost.
-  **Six evolved is the expected ending** (60 of ~150), a deliberate reversal of "scarce
-  when it matters, universal by the end" into *universal by the end, paced by the player*: what
-  is chosen is the order, and how much depth to buy before breadth is done.
-  `EVOLUTION_LEVEL` **gates nothing**; it survives only as authored data. A generated hero — an
-  enemy, a Guild hire — reads its ladder position off level through ONE table
-  (`ENEMY_RUNGS_BY_LEVEL`, `src/run/enemyGen.ts`: rung 3 at 10, 4 at 16, 6 at 21, given as the
-  Scrolls each rung costs), so rank and Evolution come from the same number a roster hero uses.
+- **Moves come from ONE faucet: the level-up SCHEDULE** (2026-09-13, XP Overhaul phase 3,
+  `docs/xp-overhaul.md` §4, `src/run/progression.ts`; superseding the Mastery Scroll ladder of
+  2026-09-10/§11/§12, deleted whole — no currency, no rung, no price, no purse, no bank, no
+  Mastery screen). Every hero reads a `LevelSchedule` — `offerLevels`, `midLevel`,
+  `evolutionLevel`, `lateLevel` — off its own LEVEL, the same schedule an enemy, a contract
+  hero and a Guild hire read, so there is no longer a progression model the player's six carry
+  that nobody else uses. **Keep the roll, lose the currency**: a level on `offerLevels` rolls ONE
+  move from the band that level has opened (Early below `midLevel`, where it EXPIRES; Mid from
+  there; Mid+Late from `lateLevel`) — take it or decline, burned either way, replace-or-decline at
+  `MOVE_CAP`. The schedule says WHEN, the band says FROM WHAT, the roll says WHICH.
+  **The schedule is walked one entry at a time** (`RosterEntry.scheduleTaken`, DERIVED owed entry
+  via `pendingScheduleEntry`): a hero takes at most one entry per level-up, so a raw hire arrives
+  with the entries below its level UN-taken and works them off one fight at a time — which is what
+  its runway is — while a contract hero arrives with every entry below its level taken
+  (`scheduleEntriesBelow`). A dry band pays nothing and the entry is still taken; the next level
+  is what opens the next band. **Every hero is on `DEFAULT_SCHEDULE`** (offers 4/7/10/13/16/19/
+  22/25/28, Mid 10, Evolution 16, Late 21 — the enemy table verbatim, so a starter and a contract
+  hero of one level are one hero) **until phase 4 authors 36**, inside the rules `test/moveTiers`
+  pins: sorted offers, the Evolution in 10–24, Mid before Late, an offer from every band
+  (`movePoolFloor(schedule)`). Per-hero timing is the lever the roster was missing — a sheet that
+  says *evolves at 12* against one that says *evolves at 20* is an identity a player reads before
+  drafting. `growth-overhaul.md` §4's *ceiling behind the spend* guard rail retired with its
+  premise: nothing is held, so nothing needs to sit behind a spend.
+- **Evolutions come from the schedule's `evolutionLevel` — never from a beat, never from a
+  spend** (2026-09-13, superseding the 4th rung). The level that reaches it raises that ONE
+  hero's Evolution screen from the level-up report, in place of an offer — the Evolution is that
+  level's whole reward — and takes the entry. Under the default it is level 16, Act 3 for a hero
+  at par; the per-hero pass places it. A generated hero walks the same entries
+  (`enemyGen.ts rollLevelProgression`), so rank and Evolution come from the same number a roster
+  hero uses. `atEvolution` is the fixture helper that stands a hero at its entry.
 - **The Crucible grants a CLASS** (2026-09-11). Same beat, same stage — *Guardian falls → Banner →
   Crucible → Pact Seal → act intro*, non-bankable, pick ONE hero — but what the fire tempers a
   hero into is a Class. Five Guardians, five Classes, six heroes: one hero ends Classless, the
-  price of a late recruit. `crucibleReward` is deleted; its weight went to the Scroll Cache.
+  price of a late recruit. `crucibleReward` is deleted; its weight went to the (now Candy) seat.
   **A Class is a VERB, never a number**: its schema is the Evolution path's minus the graft and
   the hero — a name, a kind, and exactly ONE of a granted move (`grantMove`, replace-or-decline
   at `MOVE_CAP`) or a passive (`ClassDefinition`, `src/run/classes.ts`; nine in
@@ -257,7 +236,7 @@ don't silently override it.
   per user direction). One per hero, replace-not-stack. **The hero at the rim is the hero
   tempered**: the Class choice has no way back to the roster.
   **Two exclusivity rules**, without which a Class is a Boon with a hat: a class passive is in no
-  Boon pool, and a class move is in no Scroll pool and no Tutor pool — untiered, and it **wears
+  Boon pool, and a class move is in no level-up pool and no Tutor pool — untiered, and it **wears
   its holder's innate primary type** (`typeFollowsUser`, resolved once at the edge by
   `moveForHero` in `src/engine/state.ts` for the engine, the AI and every hero-scoped tile), so
   STAB is guaranteed and the chart is read at the hero's element. Authored as **role verbs** (a
@@ -265,12 +244,12 @@ don't silently override it.
   slate covers evenly), never nukes.
 - **The Mentor "teaches any hero a powerful move"** (2026-09-11, revised same day): acts 1–3
   (`LAST_MENTOR_ACT`), pick a hero, and **one Mid-tier move is ROLLED** from its pool —
-  un-rank-gated, a Scroll pour with the band fixed at Mid that ticks nothing (`mentorMovePool`,
+  un-gated, a schedule offer with the band fixed at Mid that takes no entry (`mentorMovePool`,
   `src/run/tutor.ts`; `MentorNodeScreen`). The rolled offer is spent by being made, as a
-  Scroll's is. It was briefly a curated pick from the hero's Early-and-Mid list, which read as a
+  level's is. It was briefly a curated pick from the hero's Early-and-Mid list, which read as a
   designer's screen on one of a new player's first nodes; the roll keeps the payoff and leaves
-  WHO as the only decision. It does not break "the ceiling sits behind the spend" because rank
-  progress and the Evolution both live only on the Scroll. **Act 4's spliced row is a forced
+  WHO as the only decision. With the Tutor it is the only way to a move AHEAD of its schedule.
+  **Act 4's spliced row is a forced
   Forge** (`LAST_SPLICED_ACT`, `src/run/map.ts`).
 - **Evolutions are authored branch points**, each option carrying a **single
   identifiable name** (e.g. Cinder's Explosive / Ironclad / Thunderblaze).
@@ -287,9 +266,10 @@ don't silently override it.
   Growth Overhaul phase 5). The line — *Guild heroes have decaying runway value; contract heroes
   have flat value* — is now true on **three axes**, where it used to be true on level alone.
   A **contract** hero (free, and it IS the enemy you beat) arrives with its Evolution already
-  chosen, the Mastery Rank its level bought, and a kit the game picked. A **Guild hire** (50g)
-  arrives unevolved, at rank 1, holding its authored three moves. You save six Scrolls and a
-  Crucible on a contract, and in exchange you authored none of it.
+  chosen, every schedule entry below its level taken, and a kit the game picked. A **Guild hire**
+  (50g) arrives unevolved, its whole schedule still owed, holding its authored three moves — and
+  works the backlog off one entry a fight. You save the walk on a contract, and in exchange you
+  authored none of it.
   **RAW is unbuilt, not hollow** — a hire still gets the growth its levels earned, or it would be
   ~120 points behind a roster hero of the same level and simply a waste of gold.
   A hire arrives **one act behind**, `guildHallLevel` DERIVED from the level curve
@@ -305,9 +285,9 @@ don't silently override it.
   **One exception, the companion** (2026-09-13, Titanspawn overhaul §5, `src/run/companion.ts`):
   after the run's first fight one of the Early spawn it beat joins — it cannot be declined —
   as a hero in every respect but one: `RosterEntry.mortal`, and **a knockout removes it from
-  the run** (its items strip to the bag). It takes a slot, levels roster-wide, takes Scrolls off
-  its type's whole slate, and its Evolution rung is a **tier-step** (Early → Mid at
-  `EVOLUTION_RUNG`, Mid → Late at the rung that opens Late) in place of a branch. One per run;
+  the run** (its items strip to the bag). It takes a slot, levels roster-wide, takes its schedule's
+  offers off its type's whole slate, and its schedule's `evolutionLevel` and `lateLevel` are
+  **tier-steps** (Early → Mid, then Mid → Late) in place of a branch. One per run;
   a dead one is not replaced. **It does not count toward Act 1's enemy-count cap** (per user
   direction, same day): the cap reads the immortal roster, so the Act 1 Skirmish is 3v2. `rosterHeroes` (`data/content.ts`) is the roster-facing hero
   lookup for that reason; `heroes` stays the recruitable pool.
@@ -327,8 +307,8 @@ don't silently override it.
   equipment and the Boon node. Nothing team-wide grants a passive or an Elemental Force, and a
   Banner is the ONLY team-wide grant of any kind.
 - **The Tutor: one guaranteed seat in each of acts 4 and 5** (2026-09-07). `tutorReward` lets
-  the player pick a hero and teach it **any** move from that hero's own Scroll pool — un-rolled,
-  un-rank-gated, and including moves a Scroll already offered and had declined. It takes a seat
+  the player pick a hero and teach it **any** move from that hero's own level-up pool — un-rolled,
+  un-gated, and including moves a level already offered and had declined. It takes a seat
   **inside** a pick-1-of-3 reward row rather than a forced row of its own: that displacement (a
   Forge, a Boon, a purse) is the only price a reward row can charge, and it is why the strongest
   reward in the run is not free. Lategame-only because earlier the level curve is handing out

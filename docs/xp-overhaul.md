@@ -304,7 +304,7 @@ Sequenced so the tree is playable at every boundary. Numbering is dependency ord
 |---|---|---|---|
 | 1 | **XP under the hood.** `RosterEntry.xp`; level derived off `XP(L) = L³`; encounter XP derived from `LEVEL_AFTER_ENCOUNTER` so par is unchanged to the point. Growth rolls fire per level crossed, as now. No visible change. | Every existing test green with no numeric change at par. A hire behind par measurably gains on it — the new test that replaces "stays behind permanently". | **DONE 2026-09-13.** `xpForLevel` / `levelForXp` / `levelOf` / `xpForEncounter` / `grantXp` (`src/run/growth.ts`); `level` is gone from `RosterEntry` and every reader derives it; `SAVE_VERSION` 12. Measured below. |
 | 2 | **Candy.** The two Scroll nodes re-pointed; the shelf; the *who* screen; the report shows the jump. Scrolls still exist and still buy moves — this is a working bridge state where candy buys levels-and-stats and Scrolls buy moves. | Both nodes grant XP to one hero; the sim tallies candy by source and the paired focus/spread batch runs. | **DONE 2026-09-13.** `src/run/candy.ts`, `CandyNodeScreen`; nodes are `candyReward` / `smallCandyReward` (renamed, not just re-pointed — a node named for Scrolls that grants levels would outlive phase 3); the shelf sells a Small for the bundle's 35g, 2 a visit; `SAVE_VERSION` 13. Measured below. |
-| 3 | **Levels teach.** The destructive one. `HeroDefinition.schedule` on the default table; offers roll from the report; the Evolution raises from `evolutionLevel`; enemies and hires read the same schedule; delete everything in §7. Tutorial re-checked. | No Scroll anywhere. `test/moveTiers.test.ts` rewritten against the schedule. A run completable end to end. | |
+| 3 | **Levels teach.** The destructive one. `HeroDefinition.schedule` on the default table; offers roll from the report; the Evolution raises from `evolutionLevel`; enemies and hires read the same schedule; delete everything in §7. Tutorial re-checked. | No Scroll anywhere. `test/moveTiers.test.ts` rewritten against the schedule. A run completable end to end. | **DONE 2026-09-13.** `LevelSchedule` / `DEFAULT_SCHEDULE` / `scheduleEntries` / `pendingScheduleEntry` / `takeScheduleEntry` / `levelMovePool` (`src/run/progression.ts`); `RosterEntry.scheduleTaken`; `levelUpFlow.ts` pays the report; `MasteryScreen`/`MasteryBoard` deleted; `SAVE_VERSION` 14. **One rule added:** a hero takes at most ONE entry per level-up, so a raw hire's backlog is worked off one fight at a time (§4's "un-crossed"), and the report never stacks two decisions on one hero. Measured below. |
 | 4 | **Author 36 schedules.** Parallelisable from phase 3 on. The interesting authoring is the spread: who evolves at 12 and who at 22, and whether the low-base/high-grade late bloomers from the grade pass are also the late evolvers (they should not all be — a hero can bloom in stats and turn early, or the reverse). | No hero on the default schedule; the 10–24 Evolution window pinned by test beside the grade budget. | |
 | 5 | **Four acts and the finale.** §5's table, in one pass. The Herald rename; the Eyes as a second finale champion through `appendFinalEnemy`. | `TOTAL_ACTS` = 5; the sim's act table reads four; 18 encounters at par reach 30. | |
 | 6 | **Re-fit.** Candy supply, `ACT_STEP_CURVE`, `ENEMY_LEVEL_LAG`, champion multipliers, reward weights, against the sim and the skilled pilot; then the length report. | No dead node, no unreachable band, no wall the old curve did not have; run length reported per profile. Win-rate targets are a playtest question. | |
@@ -334,6 +334,22 @@ each candy; a player's carry is a hero they are *about* to make strong. §10 gai
 phase 2 — expect a drop, since ~47 rung offers become ~40 scheduled ones at a different cadence,
 and the drop is what phase 6 re-fits. Phase 5: the act table and the clock. Phase 6: the clock
 against the target, per profile, and a named decision about which profile the target is for.
+
+Phase 3, measured (1000 runs, seed 11): **full-clear 61.8% → 54.1%, all of it the Act 1 wall
+(83.2% → 76.0%)** — the ladder let a player buy Mid moves and an Evolution inside Act 1 for 10
+Scrolls; the default schedule's Act 1 is two Early offers and the Evolution is Act 3, which is
+§10's "can the carry rush an Evolution" question answered *no* before anyone chose. Acts 2–5 held
+(96.8 / 99.0 / 87.8 / 85.8). Gates on the level histogram, act 4+: Mid 93.9%, Evolution 87.9%,
+Late 80.6% — against the ladder's 87 / 81 / **37**: the Late band is reached by twice as many,
+because it sits behind a level everyone crosses rather than 20 Scrolls poured into one hero.
+Late-tier casts still fell, 9.3% → 6.0%, since Late opens at 21 (Act 4). **The clock did not
+move: 86 → 90 min tapping.** §0's arithmetic assumed the ladder's ~47 screens would become ~40;
+the schedule makes **41.5 replace-or-decline offers a run and only 3.9 receipts**, because a hero
+starts with three moves and hits `MOVE_CAP` on its first offer — nine offers a hero to six heroes
+is MORE decisions than a breadth-limited purse ever bought. The schedule did not cut the screens;
+it moved the decision from *who* to *which*. Two levers, both phase 4/6: fewer `offerLevels`
+(nine is the ladder's open-ended top handed to everybody; `movePoolFloor` bounds it from below),
+and a cheaper offer screen. `time.ts` now prices a receipt (4s) apart from a decision (12s).
 
 ---
 
@@ -380,6 +396,11 @@ family, the Pact Clock, the companion, potions, the map shape within an act.
   heroes cross offer levels at once is three prompts in one screen. The default schedule staggers
   offer levels 3 apart, and par moves ~1–2 a fight, so it should be rare — measure it in phase 3
   (`time.ts` tallies it) before adding any batching.
+- **How many offers a hero?** Nine on the default is the ladder's open-ended top for everyone,
+  and phase 3 measured it as 41 decisions a run — the clock the overhaul set out to cut. The
+  per-hero pass should author FEWER for most heroes (`movePoolFloor` is the lower bound: one
+  offer from every band the schedule opens), and the count is itself identity — a hero that
+  learns six things against one that learns nine.
 - **Is `L³` the right curve?** Medium Fast is the baseline because it is the one everyone has
   felt. Steeper (Slow, 1.25·L³) makes the carry throttle harder and the hire catch up faster;
   shallower does the reverse. Phase 6's focus/spread batch is where this gets set; ship the cube.

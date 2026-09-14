@@ -18,8 +18,7 @@ import {
 } from '../src/data/tutorial';
 import { MAP_NODE_TYPES } from '../src/run/map';
 import { generateEncounter } from '../src/run/enemyGen';
-import { EVOLUTION_LEVEL, EVOLUTION_SCROLLS, availableEvolution } from '../src/run/progression';
-import { scrollsFor } from '../src/run/difficulty';
+import { DEFAULT_SCHEDULE, availableEvolution, scheduleEntries, scheduleFor } from '../src/run/progression';
 import { addRosterEntry, createRosterEntry, createRunState } from '../src/run/state';
 import { resolveTypeMult } from '../src/engine/damage/typeMult';
 import { calcDamage, VARIANCE_MAX, statKeysForMove } from '../src/engine/damage/damagePipeline';
@@ -151,25 +150,22 @@ test('tutorial: a scripted encounter is fielded verbatim when nothing is exclude
 
 // --- Payouts ---
 
-test('the tutorial act pays enough Scrolls to reach the Evolution rung on one hero, and level never opens it', () => {
-  // Not a LEVEL property since phase 4, and since §11 not a beat property either: the Evolution is
-  // the 6th Scroll into a hero (docs/growth-overhaul.md §11), so a player who concentrates on
-  // Valor can see the fork inside the scripted act — the lesson is not deferred to Act 2. This
-  // test survives as the thing that fails if anyone re-attaches Evolution to the level track.
+test('the tutorial act teaches at least one move off the schedule before the Guardian, and the Evolution is the schedule\'s to place', () => {
+  // docs/xp-overhaul.md §4: a level on the schedule rolls an offer from the report. Act 1's curve
+  // reaches 8, so the default schedule's offers at 4 and 7 both land inside the scripted act — the
+  // lesson is not deferred to Act 2. Level alone never opens the Evolution: the entries before it
+  // are owed first, and on the default schedule the Evolution sits at 16, in Act 3. Whether Valor
+  // is authored to evolve inside Act 1 is the per-hero pass's call (docs/xp-overhaul.md §10).
   const solo = addRosterEntry(createRunState(0), createRosterEntry('valor', 'valor', heroes.valor.moveIds));
+  const valor = heroes.valor;
   assert.strictEqual(
-    availableEvolution(progressionTable, { ...solo.roster[0], xp: xpForLevel(EVOLUTION_LEVEL) }),
+    availableEvolution(progressionTable, valor, { ...solo.roster[0], xp: xpForLevel(scheduleFor(valor).evolutionLevel) }),
     null,
-    'nothing gates on EVOLUTION_LEVEL any more, so reaching it opens nothing'
+    'reaching the level with the offers before it untaken opens nothing'
   );
-  assert.ok(
-    availableEvolution(progressionTable, { ...solo.roster[0], masteryScrollsSpent: EVOLUTION_SCROLLS }),
-    'the rung opens it at level 1'
-  );
-  // Before the Guardian, so Valor can evolve inside the scripted act (the old curve's claim: an
-  // act's fights pay for an Evolution ahead of its Guardian, docs/growth-overhaul.md §12).
-  const beforeGuardian = scrollsFor('fight', 1) + scrollsFor('skirmish', 1) + scrollsFor('battle', 1);
-  assert.ok(beforeGuardian >= EVOLUTION_SCROLLS, `the corridor pays ${beforeGuardian} Scrolls before the Guardian, fewer than the ${EVOLUTION_SCROLLS} an Evolution costs`);
+  const offersInAct1 = scheduleEntries(scheduleFor(valor)).filter((e) => e.kind === 'offer' && e.level <= levelAfterEncounters(3));
+  assert.ok(offersInAct1.length >= 1, 'the corridor makes no move offer before the Guardian');
+  void DEFAULT_SCHEDULE;
 });
 
 test('tutorial: payouts and encounters apply in Act 1 only', () => {
@@ -425,21 +421,18 @@ test('tutorial: the contract offer is forced once, and only while it is claimabl
   assert.strictEqual(tutorialContractOffers(TUTORIAL_LOCKS, { ...run, tutorial: false }, beaten), null);
 });
 
-test('tutorial: the scripted act reaches the Evolution on the warband, not the Guardian', () => {
-  // Act 1's corridor is fight, Skirmish, (Forge), battle, ... Guardian — four ENCOUNTERS, and the
-  // curve puts the fork on the third. The lock that used to funnel a pool to guarantee this went
-  // with the pool: levels are automatic, so the schedule is a property of the curve now.
+test('tutorial: the scripted act makes its first move offer on the warband at the latest, not the Guardian', () => {
+  // Act 1's corridor is fight, Skirmish, (Forge), battle, ... Guardian — four ENCOUNTERS. The
+  // schedule's first offer (level 4 by default) has to land before the Guardian so the report's
+  // one decision is taught inside the scripted act.
   const encounters = TUTORIAL_ROW_TYPES.filter((type) => TUTORIAL_ENCOUNTERS[type] || type === 'boss');
   const warband = encounters.indexOf('battle') + 1;
   const guardian = encounters.indexOf('boss') + 1;
   assert.ok(warband > 0 && guardian > warband, 'the corridor must run the warband before the Guardian');
+  const firstOffer = scheduleEntries(scheduleFor(heroes.valor)).find((e) => e.kind === 'offer')!.level;
   assert.ok(
-    levelAfterEncounters(warband) >= EVOLUTION_LEVEL,
-    `the warband is encounter ${warband}, which reaches level ${levelAfterEncounters(warband)}`
-  );
-  assert.ok(
-    levelAfterEncounters(guardian - 1) >= EVOLUTION_LEVEL,
-    'the Evolution must be taken BEFORE the Guardian, not after'
+    levelAfterEncounters(warband) >= firstOffer,
+    `the warband is encounter ${warband}, which reaches level ${levelAfterEncounters(warband)}, short of the first offer at ${firstOffer}`
   );
 });
 
