@@ -551,7 +551,7 @@ A won encounter resolves through up to five gates before the map comes back
 (`App.tsx handleFightResolved`), in this order:
 
 0. **The Guardian's Banner** (`GuardianBannerScreen`) — boss nodes only; a fixed 1-of-3
-   team-wide relic (offense, defense or mana), ahead of everything else remaining so a hero recruited at gate 1
+   team-wide relic (offense, defense or staying power), ahead of everything else remaining so a hero recruited at gate 1
    arrives under it. See §3.
 1. **Recruit Contract claim** (`RecruitScreen`) — the beaten recruitable heroes, up to
    `MAX_CONTRACT_OFFERS` = 2 of them (`recruitment.ts pickContractOffers`). **Skipped
@@ -757,45 +757,46 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   in that same beat already arrives under the banner.
 
   The three options never change and never roll — **one per concept**, offense, defense and
-  mana, so a run's picks read as a team shape ("two Warcries, a Bulwark, a Wellspring"):
+  staying power, so a run's picks read as a team shape ("two Warcries, a Bulwark, a Wellspring"):
 
   | Banner | Concept | Grant |
   |---|---|---|
-  | Banner of the Warcry | Offense | Team-wide +20 Attack, +20 Intelligence |
-  | Banner of the Bulwark | Defense | Team-wide +30 HP, +10 Defense, +10 Wisdom |
-  | Banner of the Wellspring | Mana | Team-wide +40 Mana Pool, +10 MP Regen |
+  | Banner of the Warcry | Offense | Team-wide +40 Attack, +40 Intelligence |
+  | Banner of the Bulwark | Defense | Team-wide +15 Defense, +15 Wisdom |
+  | Banner of the Wellspring | Staying power | Team-wide +40 HP, +30 Mana Pool, +10 MP Regen |
 
-  **The Banners are not the same shape.** A hero swings with Attack *or* with Intelligence,
-  never both, so the Warcry's two stats are worth *one* stat to any given hero and are priced at
-  full value — it is one offensive Banner that refuses to be a trap for either half of the
-  roster. Every defensive stat is live on every hero, because everyone is hit by both pipelines,
-  so the Bulwark's three are priced down: +30 HP, +10 and +10 is the same 30 points on the
-  equipment scale (`HP_PER_POINT` = 3) the old +15/+15 pair carried. The Wellspring pairs both
-  halves of the mana axis because neither carries a pick alone: pool saturates (below), and
-  MP Regen alone was the auto-take that got Peridot deleted.
+  **The figures are measured parity, not a point scale.** A hero swings with Attack *or* with
+  Intelligence, never both, so the Warcry's two stats are worth *one* stat to any given hero —
+  that is why it carries both, so neither half of the roster finds it a trap. But the sim prices
+  the stats themselves very unequally: **a point of Defense or Wisdom is worth roughly six
+  points of Attack or Intelligence** (the Bulwark from +10 to +15 moved its lift +0.3 and the
+  full-clear +4.7; the Warcry from +25 to +50 moved +0.2 and +6.3). So the Warcry's +40 stands
+  against the Bulwark's +15, and at those figures the three come out within half a standard
+  error of each other under the skilled pilot, the order flipping between seed blocks (3000 and
+  4000 runs: +0.05 / 0.00 / −0.05, then +0.07 / +0.04 / −0.11). The hypothesis for the
+  asymmetry is discrete: what wins a fight is HITS-TO-KO, and the player is usually on the
+  favourable side of that threshold already (a ~1.13 stat ratio at the Guardian), so shaving
+  incoming damage flips an enemy's 2-hit KO to a 3-hit far more often than +15% outgoing flips
+  the player's 2-hit to a 1-hit — and the side with a bench turns every survived round into a
+  switch and a regen tick. A hypothesis, not a measurement. The Wellspring carries HP beside
+  both halves of the mana axis (2026-09-14, per user direction — HP came off the Bulwark, and
+  the pool came down from +40): pool saturates (below) and regen alone was the auto-take, and
+  HP is the half that still pays when a team dies before its mana does.
 
   **Five became three (2026-09-14, per user direction).** The five were one per STAT AXIS —
-  Vitality (+50 HP), Warcry, Bulwark (+15/+15), Swiftness (+20 Speed), Wellspring — and two of
-  them went. **Swiftness was dead in every batch**, under both pilots (−0.43 / −0.69, z −11 at
-  n≈2400; the only Banner ever significant in the wrong direction) and in the designer's own
-  runs. The reason is the stat, not the number: Speed pays only at a THRESHOLD — it does
-  nothing until it flips an ordering — and a flat team-wide grant never changes the intra-team
-  order, is overridden by priority brackets, and flips perhaps one enemy matchup a fight, where
-  every other stat pays continuously through the ratio. Citrine (−0.17) is the same finding in
-  the equipment family. Speed is fine as a HERO stat, because a hero's base line pays for it; it
-  is a bad GRANT, and no Banner carries it. **Vitality folded into the Bulwark** so that
-  "defense" means the whole surviving axis and a player asking where HP went finds it there.
-  `test/relics.test.ts` pins all three shapes and the absence of Speed.
-
-  Measured at the fold (`scripts/sim`, 3000 runs a batch, both pilots): folding HP
-  in against dropping it (Bulwark at +15/+15, HP off the axis) is worth +1.9 points of
-  full-clear under the skilled pilot (52.9 vs 51.0%), inside 2σ. **The finding that matters is
-  that the Bulwark leads under both shapes and both pilots** — +0.34 (z 4.0) / +0.74 (z 7.2)
-  folded, +0.28 / +0.63 dropped — and the five-Banner passes were simply too small to see it
-  (n≈490 a Banner, se 0.26, where the four non-Speed Banners shuffled order every batch). It is
-  not a price: the Warcry at +25/+25 moved from −0.14 to −0.06 and the Bulwark did not move. The
-  simulator's lift is encounters won, which prices survival above kill speed; whether a player
-  reads it the same way is the playtest question below.
+  Vitality (+50 HP), Warcry (+20/+20), Bulwark (+15/+15), Swiftness (+20 Speed), Wellspring
+  (+40/+10) — and two of them went. **Swiftness was dead in every batch**, under both pilots
+  (−0.43 / −0.69, z −11 at n≈2400; the only Banner ever significant in the wrong direction) and
+  in the designer's own runs. The reason is the stat, not the number: Speed pays only at a
+  THRESHOLD — it does nothing until it flips an ordering — and a flat team-wide grant never
+  changes the intra-team order, is overridden by priority brackets, and flips perhaps one enemy
+  matchup a fight, where every other stat pays continuously through the ratio. Citrine (−0.17)
+  is the same finding in the equipment family. Speed is fine as a HERO stat, because a hero's
+  base line pays for it; it is a bad GRANT, and no Banner carries it. Vitality was first folded
+  into the Bulwark and then, the same day, moved to the Wellspring — the Bulwark led every batch
+  at either shape (+0.28 to +0.74, z 3–7), and it was the five-Banner passes (n≈490 a Banner,
+  se 0.26, the four non-Speed Banners shuffling order every batch) that had been too small to
+  see it. `test/relics.test.ts` pins all three shapes and the absence of Speed.
 
   Being **fixed** is the design, not a placeholder. Because the same three come back every act,
   the real decision is *what shape is this team*, and that only becomes a decision if the player
@@ -804,7 +805,7 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
 
   **Stacking** needs no new mechanism: duplicate relic ids already sum in
   `relicTeamStatModifiers`. What is new is how a stack is *written* — one card named
-  `Banner of the Bulwark +2` carrying the summed `+90 HP`, rather than three identical cards
+  `Banner of the Bulwark +2` carrying the summed `+45 Defense`, rather than three identical cards
   (`src/view/shared/relicStacks.ts`, used by `RosterPeek` and the map's Banner shelf). The suffix
   counts copies **beyond the first**, the upgrade-pip convention: 3 copies reads "+2".
 
@@ -818,16 +819,15 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   every relic, a banner applies to heroes obtained before *and* after it — the grant is
   broadcast to the side at fight-build time (`entryStats.ts`), never written onto a hero.
 
-  **Open balance question — the Bulwark leads, and the Wellspring trails.** Three options and
-  five picks is a team-shape decision only while no one Banner is the answer; the batches above
-  say the Bulwark is, by a margin price does not close. The Wellspring is last in every batch and
-  significantly so under the chart pilot (−0.52 / −0.55, z −5), which the mana-tuning invariant
-  ("mana investment must pay out later than the point at which a weak team dies") predicts for a
-  pilot that dies early. Its regen half is the live one — pool **saturates**, +50 / +150 / +300
-  measuring identically — so the levers on record are the Wellspring's regen (+10 is +100% of a
-  flat base 10; +5 was the earlier alternative) and whether "take the Bulwark four times" is
-  what a player actually does when the numbers are in front of them. **The sim's answer is
-  directional; the playtest's is the decision.** Flag before hardening either way.
+  **Open balance question — parity is measured against the skilled pilot only.** Under the
+  chart pilot the same figures spread to +0.21 / 0.00 / −0.21 (Bulwark / Warcry / Wellspring,
+  z ±2): a pilot that dies early values mana less, which is what the mana-tuning invariant
+  ("mana investment must pay out later than the point at which a weak team dies") predicts, and
+  a new player is nearer that pilot than the skilled one. The two levers if playtest agrees
+  are the Wellspring's HP (+40 → +50) and its regen; the Warcry's +40 is the number a player
+  will read as "why is offense priced so high", and the six-to-one above is the answer to
+  keep on hand. **The sim's answer is directional; the playtest's is the decision.** Flag
+  before hardening either way.
 - **Relics: stat-only, by design.** `src/run/relics.ts` still carries `grantsPassiveIds` and
   `grantsStatusIds` — the team-wide grant shapes the pipeline supports — but as of 2026-09-07 no
   shipped relic uses either, and the ~50-relic random pool that did is deleted. Playtest found

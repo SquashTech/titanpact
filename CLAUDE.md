@@ -523,17 +523,18 @@ what's still unimplemented:
   now come only from that per-act grant, a beaten enemy's contract claim, or a Guild
   Hall purchase). Beating an act's Guardian also grants **the Guardian's
   Banner** (2026-08-30; reshaped 2026-09-07; **three since 2026-09-14**, per user direction): a
-  fixed, never-rolled **1-of-3** team-wide relic, one per CONCEPT — Warcry (offense: +20 Atk,
-  +20 Int), Bulwark (defense: +30 HP, +10 Def, +10 Wis), Wellspring (mana: +40 Mana, +10 MP
-  Regen) — stackable across the five acts and displayed folded ("Banner of the Bulwark +2"), so a
-  run's picks read as a team shape. The Warcry carries two stats at full value because a hero
-  swings with one or the other; every defensive stat is live on every hero, so the Bulwark's
-  three are priced down to the same 30 points. It was five, one per STAT: Vitality folded into
-  the Bulwark, and **Swiftness was deleted** — Speed pays only at a threshold, so a flat
-  team-wide grant of it measured dead in every batch under both pilots and in play; no Banner
-  carries Speed. Measured after the fold: the Bulwark leads under both pilots by a margin price
-  does not close, and the Wellspring trails — an open balance question for playtest
-  (`docs/run-loop.md` "The Guardian's Banner"). **Encounters scale by act**
+  fixed, never-rolled **1-of-3** team-wide relic, one per CONCEPT — Warcry (offense: +40 Atk,
+  +40 Int), Bulwark (defense: +15 Def, +15 Wis), Wellspring (staying power: +40 HP, +30 Mana,
+  +10 MP Regen) — stackable across the five acts and displayed folded ("Banner of the Bulwark
+  +2"), so a run's picks read as a team shape. The Warcry carries two stats because a hero
+  swings with one or the other. **The figures are MEASURED parity, not a point scale**: the sim
+  prices a point of Def/Wis at ~6× a point of Atk/Int, so +40 stands against +15 and the three
+  land within half a standard error of each other under the skilled pilot. It was five, one per
+  STAT: Vitality's HP moved to the Wellspring, and **Swiftness was deleted** — Speed pays only
+  at a threshold, so a flat team-wide grant of it measured dead in every batch under both
+  pilots and in play; no Banner carries Speed. Under the weak pilot the Bulwark still leads and
+  the Wellspring trails (z ±2) — the open balance question for playtest (`docs/run-loop.md`
+  "The Guardian's Banner"). **Encounters scale by act**
   (2026-08-30) on two tracks (`src/run/difficulty.ts`): **Monsters** baselines at Act 2
   (every Titanspawn, the Guardian's escorts included, since 2026-09-13 — a Mid at 400 is
   the Act 2 line; only the champion itself rides the other track), **Skirmish/Guardian** at

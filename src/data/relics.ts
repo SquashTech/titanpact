@@ -9,40 +9,40 @@
 import type { RelicDefinition } from '../run/relics';
 
 // --- Guardian's Banner: the fixed, stackable pick after every Guardian (docs/run-loop.md).
-// Three Banners, one concept each — offense, defense, mana — so a run's picks read as a team
-// shape ("two Warcries, a Bulwark, a Wellspring"). `guardianBanner: true` is the family flag the
-// run sheet groups on.
+// Three Banners, one concept each — offense, defense, staying power — so a run's picks read as a
+// team shape ("two Warcries, a Bulwark, a Wellspring"). `guardianBanner: true` is the family flag
+// the run sheet groups on.
 //
-// The values are NOT symmetric, and deliberately: a hero swings with Attack or with
-// Intelligence, never both, so the Warcry's two stats are worth one stat to any given hero.
-// Every defensive stat is live on every hero — everyone is hit by both pipelines — so the
-// Bulwark's three are priced down to the same 30 points the old Defense/Wisdom pair carried.
+// The values are NOT symmetric, and deliberately. They are sized to MEASURED parity, not to a
+// point scale: batch simulation prices a point of Defense/Wisdom at roughly six times a point of
+// Attack/Intelligence, so the Warcry carries +40 against the Bulwark's +15 and the three come
+// out within one standard error of each other (docs/run-loop.md "The Guardian's Banner").
 // Speed has no Banner: a flat team-wide grant never flips an intra-team ordering and pays only
-// at a threshold, and it measured dead in every batch (docs/run-loop.md "The Guardian's Banner").
+// at a threshold, and it measured dead in every batch.
 const guardianBanners: Record<string, RelicDefinition> = {
   bannerOfTheWarcry: {
     id: 'bannerOfTheWarcry',
     name: 'Banner of the Warcry',
-    description: 'Team-wide +20 Attack, +20 Intelligence.',
-    statGrants: { attack: 20, intelligence: 20 },
+    description: 'Team-wide +40 Attack, +40 Intelligence.',
+    statGrants: { attack: 40, intelligence: 40 },
     guardianBanner: true,
   },
   bannerOfTheBulwark: {
     id: 'bannerOfTheBulwark',
     name: 'Banner of the Bulwark',
-    description: 'Team-wide +30 HP, +10 Defense, +10 Wisdom.',
-    statGrants: { hp: 30, defense: 10, wisdom: 10 },
+    description: 'Team-wide +15 Defense, +15 Wisdom.',
+    statGrants: { defense: 15, wisdom: 15 },
     guardianBanner: true,
   },
   bannerOfTheWellspring: {
     id: 'bannerOfTheWellspring',
     name: 'Banner of the Wellspring',
-    // Both halves of the mana axis on one Banner, because neither carries a pick alone. Mana
-    // pool SATURATES — batch simulation measures +50, +150 and +300 identically, a fight ending
-    // long before a deeper reserve is reached — and MP Regen alone was the auto-take, being
-    // +100% of a flat base 10. Paired, mana is one axis competing with two others.
-    description: 'Team-wide +40 Mana Pool, +10 MP Regen.',
-    statGrants: { manaPool: 40, mpRegen: 10 },
+    // HP and both halves of the mana axis: what keeps a hero on the field and casting. Mana pool
+    // SATURATES — batch simulation measures +50, +150 and +300 identically, a fight ending long
+    // before a deeper reserve is reached — and MP Regen alone was the auto-take, being +100% of
+    // a flat base 10; HP is the half that pays when the pilot dies before mana does.
+    description: 'Team-wide +40 HP, +30 Mana Pool, +10 MP Regen.',
+    statGrants: { hp: 40, manaPool: 30, mpRegen: 10 },
     guardianBanner: true,
   },
 };
