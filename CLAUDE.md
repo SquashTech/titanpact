@@ -50,7 +50,7 @@ don't silently override it.
 > Its §9 lists the invariants below it reverses; until the §8 phase that replaces each one lands,
 > the rule below is still the rule in force. **Phases 1–3 are IN:** `RosterEntry.xp` is stored and
 > level is DERIVED (`levelOf`); a won encounter pays an **authored XP figure by act**
-> (`ENCOUNTER_XP_BY_ACT`, Guardian ×2 — 2026-09-13, per user direction, replacing XP derived from a
+> (`ENCOUNTER_XP_BY_ACT`, Guardian ×2, Elite ×1.5 — 2026-09-13/14, per user direction, replacing XP derived from a
 > level table, which filled every bar to the top and made XP a number nobody saw) and par is
 > derived from the sum, still 8/14/19/24/28/30 at act ends; a hero off par gains on par instead of
 > trailing by a fixed count (measured: +10 points full-clear, all of it in acts 2–5; §8). **Ichor**
@@ -154,8 +154,10 @@ don't silently override it.
   `MAX_LEVEL` = 30. **Level is DERIVED from XP on `XP(L) = L³`** (2026-09-13, XP Overhaul
   phase 1, `xpForLevel` / `levelOf`), and **the XP a won encounter pays is the authored object**
   (2026-09-13, per user direction): `ENCOUNTER_XP_BY_ACT` = 120 / 450 / 850 / 1400 / 1600 a fight
-  by act, the finale 5000, **the Guardian ×2** (`GUARDIAN_XP_MULTIPLIER`) — the one place a fight's
-  kind prices its XP. Par (`levelAfterEncounters`) is DERIVED from the sum and sized to reach the
+  by act, the finale 5000, times the fought node's kind — **the Guardian ×2, the Elite ×1.5**
+  (`ENCOUNTER_XP_MULTIPLIER`, 2026-09-14) — the one place a fight's kind prices its XP. Par
+  (`levelAfterEncounters`) assumes the Skirmish at the fork, so an Elite is XP above par (five of
+  them: under a level by the end of act 5). Par is DERIVED from the sum and sized to reach the
   decided act ends, **8/14/19/24/28/30** (front-loaded in phase 6 because acts 1-2 measured as the
   run's wall); inside an act it walks 4/6/7/8, 10/11/12/14, 15/16/17/19, 20/21/22/24, 25/25/26/28.
   It replaced a level table paid out in XP sized to land par exactly ON a level every fight —

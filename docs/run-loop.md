@@ -51,7 +51,8 @@ between; per user direction, the shape is now forced and uniform):
 - **Row 3: 3 nodes, pick 1 of 3 — reward types only**, same pool as row 1.
 - **Row 4: 2 nodes, pick 1 of 2 — `elite` or `skirmish`** (2026-09-13, Titanspawn
   overhaul phase 3; `elite` or `battle` from 2026-08-17). `elite` is the act's difficulty
-  spike (+10 to 2 stats on all 4 AI heroes, loot one tier ahead); the `skirmish` is a plain,
+  spike (+10 to 2 stats on all 4 AI heroes, loot one tier ahead, **XP ×1.5** since 2026-09-14 —
+  `ENCOUNTER_XP_MULTIPLIER`, above par, which assumes the Skirmish); the `skirmish` is a plain,
   no-bonus, recruitable alternative, and both tiles preview the typing they field (below).
   Always presented as a real choice (see edges, below), not one that depends on luck.
 - **Row 5: 3 nodes, pick 1 of 3 — reward types only** (2026-09-08, per user direction), same
@@ -70,7 +71,7 @@ an act ever skips a fight, and none arrives at the funnel holding only half the 
 **The fork is Elite-or-Skirmish since 2026-09-13** (Titanspawn overhaul phase 3; it was
 Elite-or-Battle). Both options draw the recruitable pool and both pay a contract, so claim
 supply is one higher an act; what separates them is the Elite's risk/reward axis (harder, loot
-one tier ahead) and the TACTICAL one, which is new: each tile previews the enemy typing it
+one tier ahead, XP ×1.5) and the TACTICAL one, which is new: each tile previews the enemy typing it
 fields — a row of element marks under the sigil — and the Skirmish row does too. The preview
 is honest by construction: every encounter node draws from a seed derived from the map's seed
 and the node's id (`src/run/encounters.ts`, the one place App.tsx, the sim and the map's
@@ -283,11 +284,12 @@ indistinguishable once collapsed to `EncounterNodeType`) make the two lanes pay 
 **The XP column is gone (2026-09-10, Growth Overhaul phase 3).** Levels are automatic and
 roster-wide, so no encounter pays a currency for them. XP is an authored figure by ACT, read off
 the count of encounters won rather than the node — the fourth of an act is the Guardian and pays
-×2, and that is the only way a node kind is richer in XP than another (`ENCOUNTER_XP_BY_ACT`,
-`GUARDIAN_XP_MULTIPLIER`, `src/run/growth.ts`; 2026-09-13). Whether the Elite should out-pay the
-Skirmish beside it is an open dial: it would make the fork's XP a reason as well as a risk, and it
-would put a player who always takes the Elite ahead of par. `BASE_TRAINING_POINTS`, `ACT_XP_STEP`
-and `trainingPointsFor` are all deleted.
+×2 and **the Elite ×1.5** (2026-09-14, per user direction), read off the node that was fought
+(`ENCOUNTER_XP_BY_ACT`, `ENCOUNTER_XP_MULTIPLIER`, `encounterXpKind`, `src/run/growth.ts`). Par
+assumes the Skirmish, so the Elite's XP is above par: a player who takes every Elite ends act 5
+~2,200 XP ahead — under a level at that height, and a fuller bar all the way. The node dossier
+prints the figure beside the loot tier so the fork's XP is a reason the player can read.
+`BASE_TRAINING_POINTS`, `ACT_XP_STEP` and `trainingPointsFor` are all deleted.
 
 That flattens one half of the two-lane split, and the half that remains is the one that was
 always the sharper of the two:

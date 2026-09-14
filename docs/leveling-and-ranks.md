@@ -58,7 +58,8 @@ re-reading `docs/growth-overhaul.md` §4.
 **The XP a won encounter pays is what is authored** (`ENCOUNTER_XP_BY_ACT`, 2026-09-13, per user
 direction); par (`levelAfterEncounters`, `LEVEL_AFTER_ENCOUNTER`) is derived from the sum on
 `XP(L) = L³`. Acts 1-5 run four encounters each — the forced fight, the Skirmish, the
-Elite-or-Skirmish, and the Guardian, which pays **×2** — then the finale's one fight.
+Elite-or-Skirmish (the Elite pays **×1.5**, above par, which assumes the Skirmish), and the
+Guardian, which pays **×2** — then the finale's one fight.
 
 | Act | XP a fight (Guardian ×2) | Par after each fight | Par at act end |
 |---|---|---|---|

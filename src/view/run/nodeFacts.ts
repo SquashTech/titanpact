@@ -7,6 +7,7 @@ import type { EquipmentRarity } from '../../run/equipment';
 import { EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, MAX_ITEM_SLOTS, RARITY_ORDER, rarityWeightsFor } from '../../run/equipment';
 import { GOLD_REWARD_RANGE, PURSE_GOLD_RANGE } from '../../run/runProgress';
 import { ICHOR_LEVELS } from '../../run/ichor';
+import { ENCOUNTER_XP_BY_ACT, ENCOUNTER_XP_MULTIPLIER, encounterXpKind } from '../../run/growth';
 import { MANA_WELL_AMOUNT } from '../../run/runProgress';
 import { BOON_OFFER_COUNT } from '../../run/boons';
 import { OPENER_ESCORT_COUNT, guildHallLevel, spawnLeaderTierFor, type EncounterNodeKind } from '../../run/difficulty';
@@ -26,6 +27,7 @@ import { ICHOR_PURCHASE_COST, ICHOR_PURCHASE_LIMIT, CONTRACT_PURCHASE_COST, GUIL
 /** The mark at the head of a row — resolved to a glyph by the view. */
 export type NodeFactGlyph =
   | 'gold'
+  | 'xp'
   | 'ichor'
   | 'mana'
   | 'contract'
@@ -75,11 +77,14 @@ function priceBand(table: Record<EquipmentRarity, number>): string {
   return `${Math.min(...prices)}–${Math.max(...prices)}g`;
 }
 
-/** The lanes every fight is compared on, in one order, so Elite and Battle read as two columns of one table. */
+/** The lanes every fight is compared on, in one order, so Elite and Skirmish read as two columns of one table. */
 function encounterFacts(type: EncounterNodeKind, actNumber: number): NodeFact[] {
   const gold = GOLD_REWARD_RANGE[type];
   const drop = EQUIPMENT_DROP_CHANCE[type];
+  const xpKind = encounterXpKind(type);
+  const xp = Math.round(ENCOUNTER_XP_BY_ACT[Math.min(actNumber, ENCOUNTER_XP_BY_ACT.length) - 1] * ENCOUNTER_XP_MULTIPLIER[xpKind]);
   return [
+    { glyph: 'xp', label: 'XP', value: `${xp}`, note: xpKind === 'standard' ? undefined : `×${ENCOUNTER_XP_MULTIPLIER[xpKind]}` },
     { glyph: 'gold', label: 'Gold', value: gold[1] > 0 ? range(gold) : null },
     {
       glyph: 'item',

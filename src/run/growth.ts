@@ -14,6 +14,7 @@
 // parity, so rotating is free, which is BETTER for strategic churn than participation XP.
 
 import type { GrowthStatKey, HeroDefinition, StatKey } from '../engine/content';
+import type { MapNodeType } from './map';
 import type { RosterEntry, RunState } from './state';
 import { mergeStatMods } from './statMods';
 
@@ -189,25 +190,47 @@ export function xpToNextLevel(xp: number): number {
  */
 export const ENCOUNTER_XP_BY_ACT: readonly number[] = [120, 450, 850, 1400, 1600, 5000];
 
-/** The Guardian pays this many ordinary encounters' worth — the one place a fight's kind prices its XP. */
-export const GUARDIAN_XP_MULTIPLIER = 2;
+/**
+ * What a fight's KIND pays over the act's base — the one place a node type prices its XP. The
+ * Guardian is two fights' worth; the Elite (2026-09-14, per user direction) one and a half, so
+ * the fork's harder tile pays in XP as well as in loot and the preview reads as a reason, not
+ * only a risk. Par (below) assumes the Skirmish, so an Elite is XP ABOVE par — a player who takes
+ * every Elite runs ~2,200 XP ahead over a run, about half a level at the end and a fuller bar
+ * throughout, never a whole act.
+ */
+export type EncounterXpKind = 'standard' | 'elite' | 'guardian';
+export const ENCOUNTER_XP_MULTIPLIER: Record<EncounterXpKind, number> = { standard: 1, elite: 1.5, guardian: 2 };
+
+/** The kind a map node pays as. The finale is its own base figure, not a Guardian. */
+export function encounterXpKind(nodeType: MapNodeType): EncounterXpKind {
+  return nodeType === 'boss' ? 'guardian' : nodeType === 'elite' ? 'elite' : 'standard';
+}
 
 /** Won encounters in a full clear: four an act for acts 1-5, then the finale's one fight. Nothing past it pays. */
 export const TOTAL_ENCOUNTERS = ENCOUNTERS_PER_ACT * (ENCOUNTER_XP_BY_ACT.length - 1) + 1;
 
 /**
- * XP the Nth won encounter of a run pays every roster hero (1-based), read off the count rather
- * than the node: the map guarantees four encounters an act with the Guardian fourth, so the count
- * IS the act and the kind, and the figure is known before the fight rather than rolled after it.
- * A DELTA, never a target — a hero that joined late missed the grants before it and is behind —
- * but the same XP climbs further from lower down the cube, so the gap closes slowly on its own.
+ * The kind par assumes for the Nth won encounter: the map guarantees four an act with the
+ * Guardian fourth, and the fork is taken as its Skirmish — the floor, so that the Elite's bonus
+ * is above par rather than baked into it.
  */
-export function xpForEncounter(encountersWon: number): number {
+export function encounterXpKindAtPar(encountersWon: number): EncounterXpKind {
+  const act = Math.floor((encountersWon - 1) / ENCOUNTERS_PER_ACT);
+  const guardian = act < ENCOUNTER_XP_BY_ACT.length - 1 && encountersWon % ENCOUNTERS_PER_ACT === 0;
+  return guardian ? 'guardian' : 'standard';
+}
+
+/**
+ * XP the Nth won encounter of a run pays every roster hero (1-based): the act's base, read off
+ * the count, times the kind's multiplier, read off the node that was fought (par's kind when no
+ * node is named). Known before the fight rather than rolled after it. A DELTA, never a target —
+ * a hero that joined late missed the grants before it and is behind — but the same XP climbs
+ * further from lower down the cube, so the gap closes slowly on its own.
+ */
+export function xpForEncounter(encountersWon: number, kind: EncounterXpKind = encounterXpKindAtPar(encountersWon)): number {
   if (encountersWon < 1 || encountersWon > TOTAL_ENCOUNTERS) return 0;
   const act = Math.floor((encountersWon - 1) / ENCOUNTERS_PER_ACT);
-  const base = ENCOUNTER_XP_BY_ACT[act];
-  const guardian = act < ENCOUNTER_XP_BY_ACT.length - 1 && encountersWon % ENCOUNTERS_PER_ACT === 0;
-  return guardian ? base * GUARDIAN_XP_MULTIPLIER : base;
+  return Math.round(ENCOUNTER_XP_BY_ACT[act] * ENCOUNTER_XP_MULTIPLIER[kind]);
 }
 
 /** Par, in XP: what a hero that never missed a win holds after `encountersWon`. */
@@ -301,9 +324,11 @@ export interface HeroLevelUp {
 export function applyEncounterLevels(
   run: RunState,
   heroLookup: Record<string, HeroDefinition>,
-  random: () => number = Math.random
+  random: () => number = Math.random,
+  /** What was fought — the Elite and the Guardian pay more than the count alone says. */
+  kind: EncounterXpKind = encounterXpKindAtPar(run.encountersWon)
 ): { run: RunState; report: HeroLevelUp[] } {
-  const xp = xpForEncounter(run.encountersWon);
+  const xp = xpForEncounter(run.encountersWon, kind);
   if (xp <= 0) return { run, report: [] };
   const report: HeroLevelUp[] = [];
   const roster = run.roster.map((entry) => {
@@ -326,7 +351,8 @@ export function applyEncounterLevels(
 export function grantEncounterLevels(
   run: RunState,
   heroLookup: Record<string, HeroDefinition>,
-  random: () => number = Math.random
+  random: () => number = Math.random,
+  kind: EncounterXpKind = encounterXpKindAtPar(run.encountersWon)
 ): RunState {
-  return applyEncounterLevels(run, heroLookup, random).run;
+  return applyEncounterLevels(run, heroLookup, random, kind).run;
 }

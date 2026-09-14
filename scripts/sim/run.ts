@@ -23,7 +23,7 @@ import { generateMap, type MapNode, type MapNodeType } from '../../src/run/map';
 import { generateStarterOptions, STARTER_PICK_COUNT } from '../../src/run/draft';
 import { generateItinerary, locationForAct } from '../../src/run/locations';
 import { actScaling } from '../../src/run/difficulty';
-import { grantEncounterLevels, levelOf, MAX_LEVEL } from '../../src/run/growth';
+import { encounterXpKind, grantEncounterLevels, levelOf, MAX_LEVEL } from '../../src/run/growth';
 import { generateFinaleEncounter, type Encounter, type EncounterNodeType } from '../../src/run/enemyGen';
 import { pickSquad, requiredSquadSize, STANDARD_SQUAD_SIZE, type Squad } from '../../src/run/squad';
 import {
@@ -292,7 +292,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
       run = absorbed.run;
       // Automatic and roster-wide, benched heroes included (src/run/growth.ts); the report pays
       // the schedule (docs/xp-overhaul.md §4).
-      run = grantEncounterLevels(run, rosterHeroes, rng);
+      run = grantEncounterLevels(run, rosterHeroes, rng, encounterXpKind(node.type));
       tally(record, run.actNumber, 'levelUp');
       run = paySchedule(run, rng, record);
       record.encountersWon = run.encountersWon;

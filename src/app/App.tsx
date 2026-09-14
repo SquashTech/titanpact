@@ -104,7 +104,7 @@ import {
   type Encounter,
 } from '../run/enemyGen';
 import { actScaling } from '../run/difficulty';
-import { applyEncounterLevels, levelOf, xpForEncounter, xpForLevel, type HeroLevelUp } from '../run/growth';
+import { applyEncounterLevels, encounterXpKind, levelOf, xpForEncounter, xpForLevel, type HeroLevelUp } from '../run/growth';
 import { generateItinerary, locationForAct } from '../run/locations';
 import { encounterKindOf, nodeEncounter } from '../run/encounters';
 import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
@@ -606,9 +606,9 @@ export function App() {
       squad,
       encounter,
       goldReward: payout?.gold ?? goldRewardFor(mapNodeType),
-      // Read off the win this fight WILL be: the curve is a function of encounters won, so the
-      // figure is known before the fight rather than rolled after it.
-      xpGained: xpForEncounter(playerRun.encountersWon + 1),
+      // Read off the win this fight WILL be: the act's base is a function of encounters won and
+      // the kind is the tile's, so the figure is known before the fight rather than rolled after it.
+      xpGained: xpForEncounter(playerRun.encountersWon + 1, encounterXpKind(mapNodeType)),
       equipmentReward,
       consumableReward: rollConsumableDrop(mapNodeType),
     });
@@ -653,7 +653,7 @@ export function App() {
     // Automatic and roster-wide, benched heroes included: no pool and no allocation. The report
     // is what the screen after the fight reads — the roll is destructive, so it cannot be
     // recovered from the roster afterwards.
-    const levelled = applyEncounterLevels(next, rosterHeroes);
+    const levelled = applyEncounterLevels(next, rosterHeroes, Math.random, encounterXpKind(mapNodeType));
     next = levelled.run;
     // The run's first fight is won: one of the Earlies it beat asks to come along, and it does.
     // Joined after the levels roll so the report is the fight's and the newcomer arrives at par.
