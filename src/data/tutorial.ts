@@ -232,13 +232,13 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     ],
   },
 
-  // --- Row 6: the Ichor ---
+  // --- Row 6: the Scroll Cache ---
   {
-    id: 'map:ichorReward',
-    topic: 'Ichor',
+    id: 'map:scrollReward',
+    topic: 'Scroll Cache',
     lines: [
       'Someone came this way before us, and did not leave with what they were carrying.',
-      'Ichor \u2014 what leaks from the Titan. Two levels\u2019 worth of growth for whoever drinks it. A hero that has fallen behind gets the most from it; a hero out in front, the least.',
+      'Three Mastery Scrolls, and these are ours to divide as we like. Put all three on one of us and they are that much closer to Evolving — or spread them, if you would rather nobody is far from it.',
     ],
   },
 
@@ -247,7 +247,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'map:shop',
     topic: 'Guild Hall',
     lines: [
-      'Last stop before the Guardian. Gold buys three things here: a hero outright, a piece of gear, or another recruit contract.',
+      'Last stop before the Guardian. Gold buys four things here: a hero outright, a piece of gear, another recruit contract, or a Mastery Scroll.',
     ],
   },
   {

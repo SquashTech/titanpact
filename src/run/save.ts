@@ -61,8 +61,10 @@ import { MASTERY_CAP } from './mastery';
  * `masteryDeferred` left RunState, and an entry's `masteryScrollsSpent` became `scheduleTaken`.
  * v15 (2026-09-14): Mastery pips (docs/mastery.md). An entry stores `mastery`, the Evolution
  * reads it rather than a schedule level, and a v14 map may hold no `scribeReward` row.
+ * v16 (2026-09-14): Mastery phase 2 — Ichor retired. `ichorReward` and `ichorDropReward` are gone
+ * and `scrollReward` sits where the first was, so a v15 map may hold node types this build lacks.
  */
-export const SAVE_VERSION = 15;
+export const SAVE_VERSION = 16;
 
 /**
  * Where a restored run resumes. Both are settled points: every reward is banked, the

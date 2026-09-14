@@ -47,12 +47,13 @@ teach what the game is, and "losing is free" is the one thing that would be a li
 
 ## 2. The corridor
 
-`TUTORIAL_ROW_TYPES` (`src/run/tutorial.ts`) is the standard eight-row act shape from
+`TUTORIAL_ROW_TYPES` (`src/run/tutorial.ts`) is the standard nine-row act shape from
 `run-loop.md` §1 with **every choice row narrowed to a single node** — the Elite-or-Skirmish
 fork to its Skirmish. The 1-of-3 choices *inside* a reward node are untouched — the choosing is
 the lesson; the routing is not. Three fights, the same three every act has since 2026-09-14; the
-warband `battle` that stood between the Forge and the Ichor went with the fourth fight, and its
-bench lesson moved onto the Guardian.
+warband `battle` that stood between the Forge and the third reward row went with the fourth fight,
+and its bench lesson moved onto the Guardian. The Scribe row joined the same day, where every act
+has it (`docs/mastery.md`).
 
 | Row | Node | What Valor teaches |
 | --- | --- | --- |
@@ -61,11 +62,12 @@ bench lesson moved onto the Guardian.
 | 1 | Equipment | comparing three pieces; rarity as a budget |
 | 2 | Mentor | Classes: permanent, one per hero, four on the road |
 | 3 | Forge | the item slot as the scarce thing |
-| 4 | Skirmish | type advantage both ways, **physical vs magical**, the forced Recruit Contract |
+| 4 | Scribe | Mastery: two pips each to two of the three; five Evolves, ten masters a signature |
+| 5 | Skirmish | type advantage both ways, **physical vs magical**, the forced Recruit Contract |
 | — | *post-fight gate* | **a move offer** on the level-up report (Valor's first offer is level 3, reached on the opener; the Skirmish reaches 6) |
-| 5 | Ichor | growth the player aims: two levels at par, to whoever is handed it — and why a hero behind gets more |
-| 6 | Guild Hall | gold: a hero, gear, or a contract |
-| 7 | Guardian | the escort shape, the bench, switching, flying the caster, the Ancient wall, **reading the number not the colour**, the Pact Clock |
+| 6 | Scroll Cache | three pips in any split — concentrate and Valor can turn before the Guardian, or spread |
+| 7 | Guild Hall | gold: a hero, gear, a contract, or a Scroll |
+| 8 | Guardian | the escort shape, the bench, switching, flying the caster, the Ancient wall, **reading the number not the colour**, the Pact Clock |
 
 Every node type appears **exactly once**, which is what lets a beat be addressed by node type
 alone (`map:<type>`); a test pins that.

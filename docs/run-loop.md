@@ -38,9 +38,8 @@ between; per user direction, the shape is now forced and uniform):
 - **Row 0: a single forced `fight` node.** Slay the Spire convention — the act always
   opens on an easy, unambiguous fight, no early reward-node luck and no meaningless
   first choice among identical-weight openers.
-- **Row 1: 3 nodes, pick 1 of 3 — reward types only** (`equipmentReward`/`ichorReward`/
-  `ichorDropReward`/`manaWellReward`/`passiveReward`/`currencyReward`/`forgeReward`/`event`,
-  weighted). No
+- **Row 1: 3 nodes, pick 1 of 3 — reward types only** (`equipmentReward`/`scrollReward`/
+  `manaWellReward`/`passiveReward`/`currencyReward`/`forgeReward`/`event`, weighted). No
   `fight`/`shop`/`elite`/`mentorReward` mixed in — every reward row is a genuine reward
   choice, not a chance to draw another fight or dodge one, and `mentorReward` is reserved
   for its own forced Mentor row (2026-08-22 revision, per user direction — see the Mentor
@@ -263,10 +262,9 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `shop` | `ShopNodeScreen` — the existing `GuildHallPanel`, given an exit for the first time. Overhauled 2026-08-18: offers 2-3 curated hero recruits (50g each, `GUILD_HALL_RECRUIT_COST`) rather than the full catalog, plus a rarity-priced equipment shelf, rolled once per visit (`src/run/shop.ts` `rollGuildHallOffers`). Second pass 2026-08-31: relics are no longer sold anywhere, the shelf is 4 wide and readable on its face, sold stock greys out, and Recruit Contracts confirm before buying (`docs/progression.md` "Second pass"). |
 | `equipmentReward` ("Item") | `NodeRewardScreen` — pick 1 of 3 items, rarity-weighted (`equipment.ts` `pickWeightedEquipment`); claiming bags it and lights the Roster badge — see "The bag notification" in `docs/progression.md`. Items are uncategorised as of 2026-09-06, so the three on offer are simply the three rolled (`docs/progression.md` "Uncategorised slots"). |
 | `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30). **2026-09-08, per user direction:** it pays out on arrival and the screen counts the PURSE up to its new total, coin by coin, over a Claim button that was never a decision — the drop size is a chip beside a number the player can act on, rather than a number they cannot. The two Scroll nodes share that beat. |
-| `ichorDropReward` ("Drop of Ichor") | `IchorNodeScreen` — **1.25 fights' worth** of the act's XP (2026-09-14, 1.5 for a few hours before the act went to three fights; one level at par before that), to ONE hero the player picks; the pick raises the level-up report for that hero (`src/run/ichor.ts`, `docs/xp-overhaul.md` §3, 2026-09-13). The commoner, smaller half of the Ichor's grant. It took the Lone Scroll's seat and weight (14); the seat was the XP Cache before that (2026-09-10), so it has come round to paying XP again. Distinguished from the Ichor on the map by its glyph — one sweet against two — since the tiles carry no labels. |
+| `scrollReward` ("Scroll Cache") | `ScrollNodeScreen` — **`SCROLL_CACHE_COUNT` = 3 Mastery pips**, one tap each, in any split (`src/run/mastery.ts`, `docs/mastery.md` §3, 2026-09-14). Five pips is a hero's Evolution and the fifth raises it right there; the Scribe seeds two heroes an act, this is where the player prioritises. Weight 46 — the seat the Scroll Cache held before Ichor, taken back when Ichor retired (Mastery phase 2). See "Mastery Scrolls" below. |
 | `forgeReward` ("The Forge") | `ForgeScreen` — pick one roster hero to gain **+1 item slot** for the rest of the run (`runProgress.ts` `grantItemSlot`, stored on `RosterEntry.bonusItemSlots`, capped at `MAX_ITEM_SLOTS` = 3). **2026-09-06**, replacing the three slot-specific cache nodes (`weaponReward`/`armorReward`/`accessoryReward`), which lost their meaning when items stopped having categories — most of their frequency went to `equipmentReward`, whose weight went 20 → 40. The scarcest thing on the reward row (weight 8) on purpose: it is permanent, it compounds with every drop after it, and it is the only reward here a hero can be at the cap for — a roster entirely at 3 slots makes the node a dead draw, which is what makes spending it a choice — and at the 2026-09-07 cap of 3 that arrives materially sooner. |
 | `manaWellReward` ("Mana Well") | `ManaWellScreen` — pick one roster hero to gain **+`MANA_WELL_AMOUNT` = 30 max Mana** for the rest of the run (`runProgress.ts` `grantManaWell`, onto `bonusStatGrants`; stacks; never refused). **2026-09-13, per user direction** — the one bare-number screen the constitution allows. See "The Mana Well" below. |
-| `ichorReward` ("Ichor") | `IchorNodeScreen` — **2.5 fights' worth** of the act's XP (2026-09-14, 3 for a few hours before the act went to three fights; two levels at par before that), to ONE hero the player picks (`src/run/ichor.ts`, `docs/xp-overhaul.md` §3, 2026-09-13). The screen collects one thing, who, and every card shows the bar that hero's XP would run — a hero behind par climbs further on the same Ichor, a hero ahead of par less, which is the convex curve doing the catch-up and the throttle at once. A hero at `MAX_LEVEL` is refused. The pick hands straight off to the level-up report. It took the Scroll Cache's seat and weight (46). See "Ichor" below. |
 | `passiveReward` ("Boon") | `BoonNodeScreen` — pick 1 of 3 passives, then the hero it settles on (`grantEventPassive`, stored on `RosterEntry.bonusPassiveGrants`). See "Boons" below. |
 | `mentorReward` ("Mentor's Hall") | `MentorNodeScreen` — "the Mentor can teach any hero a powerful move": pick a hero, and ONE Mid-tier move is rolled from that hero's own pool, un-rank-gated (`mentorMovePool`, `src/run/tutor.ts`). A Scroll pour with the band fixed at Mid that ticks nothing; the rolled offer is spent by being made. Who is the only decision, on purpose — it is one of a new player's first nodes (2026-09-11, `growth-overhaul.md` §11; it was briefly a curated Early-Mid pick, and before that a stat-pair Class). **Not in `REWARD_WEIGHTS`** — the only way to meet one is the forced row in acts 1-3 (§1). |
 | `tutorReward` ("Tutor") | `TutorNodeScreen` — pick one roster hero, then **any** move from that hero's Scroll pool. See "The Tutor" below. Acts 4-5 only. |
@@ -442,41 +440,31 @@ Measured on the greedy pilot (1000 runs, two seeds): a node lift of −0.15 (Ich
 that does not plan its Late casts values higher than pool depth. A player who wants the Late
 band will not price it that way; watch it in playtest rather than the sim.
 
-### Ichor
+### Mastery Scrolls — the Scribe, the Cache, and the shelf
 
-**XP the player aims at ONE hero** (`src/run/ichor.ts`, `docs/xp-overhaul.md` §3, 2026-09-13).
-Encounter XP is roster-wide and automatic; an Ichor is the one place the player says *who* grows.
-Denominated in **the act's fights** since 2026-09-14 — `ichorXp` is `ICHOR_FIGHTS[kind]` (2.5, or
-1.25 for a Drop; 3 and 1.5 until the act went to three fights the same day and the base fight
-grew ×1.25 to pay for it — the re-fit holds the XP) times the act's base encounter XP — the same
-number the fight result just showed,
-so an Ichor is ~two levels for a hero at par, more for a hero behind, less for a hero ahead, and
-it grows with the act because the fights do. It was levels-at-par (par to par+2 on the curve),
-which was the same value read off a figure the player never saw; the who screen now draws each
-hero's bar from → to instead of promising a level. Three
-sources, every one a seat that displaced another reward: the `ichorReward` node (2, weight 46),
-the `ichorDropReward` node (1, weight 14), and the Guild Hall shelf, which sells a Drop for
-`ICHOR_PURCHASE_COST` = 35g, `ICHOR_PURCHASE_LIMIT` = 2 a visit — the tap opens the who screen
-and the gold is charged on the pick. `IchorNodeScreen` is the who screen; the payoff is the
-level-up report, same screen and same rows as a fight's. The supply is the only balance number:
-measured at these weights (in the old levels-at-par, ≈1.5 fights each) it is **~13 levels-at-par
-a completed run** (Ichor 6.3, shelf 5.7, Drop 1.1 — the shelf is nearly half), against the ~7 §3
-estimated, and phase 6 sets it.
+**Pips the player aims at ONE hero** (`src/run/mastery.ts`, `docs/mastery.md`, 2026-09-14). Every
+hero has ten; **five is its Evolution, ten its signature move** — uniform, no per-hero figure. A
+Scroll is one pip, landed the instant it is paid on `ScrollNodeScreen`, and a pip between the two
+milestones does nothing but count. Three faucets, every one on the map and none in a fight — *fights
+pay XP, the map pays Scrolls*: the **Scribe** (`scribeReward`, a forced row every act 1–5: pick two
+heroes, `SCRIBE_PIPS_EACH` = 2 each — it cannot be concentrated, and that is what seeds the roster),
+the **Scroll Cache** (`scrollReward`, weight 46 in the reward pool: `SCROLL_CACHE_COUNT` = 3 in any
+split — where the player prioritises), and the Guild Hall shelf (`SCROLL_PURCHASE_COST` = 25g,
+`SCROLL_PURCHASE_LIMIT` = 2 a visit, the tap charges the gold and opens the who screen). The fifth
+pip raises the Evolution screen over the node that paid it (`masteryFlow.ts`); the level-up report
+raises it only as the catch-all for a hire that arrived past the pip. The supply is the only balance
+number: measured on the greedy pilot at these weights, **~35 pips a completed run** (Scribe 20,
+Cache 9, shelf 6), against a target of every hero evolved and ~3 signatures; phase 5 sets it.
 
-**They are a PURSE** (2026-09-12, reversing 2026-09-10's "an EVENT, poured where it is won"). A
-rising price means a leftover that buys nobody is normal and banks on its own, and a purse that
-could buy somebody may be banked by choice: the board's Bank button is the out, every grant clears
-the bank so the next win re-asks, the map's Scroll chip is a button whenever the purse can buy a
-rung, and the Vigil clears the bank on the way out. The churn hedge — not pouring into a hero you
-are about to terminate — is back with it. What "never held" was protecting against, a count on a
-button that signals admin waiting, is answered by the push: the board still arrives on its own
-after every fight that funds a rung.
-
-**Open — the income figures are all first-pass.** Measured at 400 batch runs, of heroes that
-reach act 4+ 89% get to rank 2, 85% evolve and 37% reach rank 3 — about where the flat ladder
-left them, since the curve and the income were re-based together. The shape is intended
-(concentrating is meant to cost breadth); the Guild Hall bundle's size is the newest figure and
-the one the sim says is generous.
+**Ichor — RETIRED (2026-09-14, Mastery phase 2).** The two aimed-XP nodes (`ichorReward` at 46,
+`ichorDropReward` at 14) and the shelf's Drops are gone whole with `src/run/ichor.ts` and
+`IchorNodeScreen`; the Cache took the 46 back (it was the Scroll Cache's seat before Ichor took it)
+and the 14 was not re-pointed. Three reasons (`docs/mastery.md` §4): it was XP paid by the map, the
+one thing that broke *fights pay XP, the map pays Scrolls*; its measured effect was nothing
+(`docs/xp-overhaul.md` §8, phase 2: 13 levels-at-par a run moved full-clear by ~0, and removing it
+moved it by ~0 again); and it was a second aimed currency with the same who screen as Scrolls,
+which is one too many to teach. Levels stay roster-wide and automatic on `L³`, and a hero behind
+par still closes on it on its own.
 
 ### Gems — DELETED (2026-09-10, Growth Overhaul phase 1)
 

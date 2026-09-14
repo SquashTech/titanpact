@@ -38,7 +38,12 @@ import { mergeStatMods } from '../../src/run/statMods';
 import type { Rng } from './rng';
 import { levelOf } from '../../src/run/growth';
 
-/** How a level-up pool is spread across the roster. */
+/**
+ * How Scrolls are aimed (docs/mastery.md §2, §8 phase 5's rotate / carry pair). `focus`
+ * concentrates: the fielded hero closest to its next milestone. `spread` rotates: the fielded hero
+ * with the fewest pips, so the roster evolves in step. Ichor's focus-vs-spread dial before it
+ * (docs/xp-overhaul.md §3), on the currency that replaced it.
+ */
 export type LevelPolicy = 'spread' | 'focus';
 
 export interface PolicyOptions {
@@ -242,16 +247,6 @@ export function fieldedSquadIds(roster: readonly RosterEntry[], size: number): s
   return byPower(roster).slice(0, size).map((r) => r.rosterId);
 }
 
-/** Who eats the next level-up. `spread` levels the weakest of the fielded four; `focus` pours everything into the single strongest. */
-export function levelUpTarget(roster: readonly RosterEntry[], policy: LevelPolicy): RosterEntry | null {
-  if (roster.length === 0) return null;
-  const ordered = byPower(roster);
-  if (policy === 'focus') return ordered[0];
-  // The four that will actually be fielded, lowest level first — Evolution at 5 is the spike worth chasing on everyone.
-  const core = ordered.slice(0, Math.min(4, ordered.length));
-  return [...core].sort((a, b) => levelOf(a) - levelOf(b) || powerScore(b) - powerScore(a))[0];
-}
-
 /** One Evolution taken inside a pour, reported back so run.ts can log it as a choice. */
 export interface PourEvolution {
   rosterId: string;
@@ -303,11 +298,12 @@ export function payMastery(run: RunState, rng: () => number, payout: SchedulePay
 
 /**
  * Who the next Scroll goes to (docs/mastery.md §2: concentrating is dominant, and the question
- * is which hero's next step). The fielded four first; among them the hero closest to its next
- * milestone — an unevolved hero before an evolved one, since an Evolution outranks a signature —
- * and the stronger on a tie. Null when nobody can take one.
+ * is which hero's next step). The fielded four first. `focus`: among them the hero closest to its
+ * next milestone — an unevolved hero before an evolved one, since an Evolution outranks a
+ * signature — and the stronger on a tie. `spread`: the fewest pips first, so the four evolve in
+ * step. Null when nobody can take one.
  */
-export function scrollTarget(roster: readonly RosterEntry[], exclude: readonly string[] = []): RosterEntry | null {
+export function scrollTarget(roster: readonly RosterEntry[], policy: LevelPolicy, exclude: readonly string[] = []): RosterEntry | null {
   const ordered = byPower(roster).filter((r) => canTakeMastery(r) && !exclude.includes(r.rosterId));
   if (ordered.length === 0) return null;
   const rank = (r: RosterEntry) => ordered.indexOf(r);
@@ -315,6 +311,7 @@ export function scrollTarget(roster: readonly RosterEntry[], exclude: readonly s
   return [...ordered].sort((a, b) => {
     const fielded = Number(core.has(b.rosterId)) - Number(core.has(a.rosterId));
     if (fielded !== 0) return fielded;
+    if (policy === 'spread') return a.mastery - b.mastery || rank(a) - rank(b);
     const unevolved = Number(b.mastery < MASTERY_EVOLUTION) - Number(a.mastery < MASTERY_EVOLUTION);
     if (unevolved !== 0) return unevolved;
     return b.mastery - a.mastery || rank(a) - rank(b);
@@ -322,10 +319,10 @@ export function scrollTarget(roster: readonly RosterEntry[], exclude: readonly s
 }
 
 /** The Scribe's two picks: the first two scrollTarget names, distinct. */
-export function scribeTargets(roster: readonly RosterEntry[]): RosterEntry[] {
+export function scribeTargets(roster: readonly RosterEntry[], policy: LevelPolicy): RosterEntry[] {
   const picked: RosterEntry[] = [];
   while (picked.length < SCRIBE_PICKS) {
-    const next = scrollTarget(roster, picked.map((r) => r.rosterId));
+    const next = scrollTarget(roster, policy, picked.map((r) => r.rosterId));
     if (!next) break;
     picked.push(next);
   }

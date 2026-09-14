@@ -156,7 +156,7 @@ const INSTANT_KIND: Partial<Record<RewardNodeType, HoardKind>> = {
  * The instant reward node and the Equipment Cache (docs/run-loop.md): the Cache offers 3, and
  * gold pays out on arrival — there was never a decision behind its Claim button, only a tap
  * between the player and the same Continue every other node ends on (2026-09-08, per user
- * direction). Ichor is not here: which hero eats it IS a decision (IchorNodeScreen).
+ * direction). The Scroll nodes are not here: which hero takes a pip IS a decision (ScrollNodeScreen).
  */
 export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onClaimEquipment }: Props) {
   const [currencyAmount] = useState(() => rollGoldRange(PURSE_GOLD_RANGE));

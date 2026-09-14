@@ -23,7 +23,6 @@ import './ironMoves.test';
 import './beastMoves.test';
 import './mechMoves.test';
 import './growth.test';
-import './ichor.test';
 import './mastery.test';
 import './moveTiers.test';
 import './roster.test';

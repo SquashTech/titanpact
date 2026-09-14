@@ -68,7 +68,7 @@ don't silently override it.
 > finale (was 11 / 18 / 23), the Act 1 wall at 76% untouched by every non-design lever (§8).
 > Phase 5 (four acts) stays deferred.
 
-> **A fourth overhaul is DECIDED and PHASE 1 IS IN: `docs/mastery.md`** (2026-09-14, per user
+> **A fourth overhaul is DECIDED and PHASES 1–2 ARE IN: `docs/mastery.md`** (2026-09-14, per user
 > direction). Evolutions come off the level schedule onto **Mastery**: every hero has ten pips,
 > **5 is its Evolution and 10 its signature move** (one authored per hero, off every pool — Riptide's
 > Lizard Rush is the template), uniform, no per-hero threshold. A pip is one **Mastery Scroll**,
@@ -82,8 +82,11 @@ don't silently override it.
 > the Evolution opens at 5 pips and at no level (`evolutionLevel` is gone from every schedule),
 > the Scribe is a forced row every act 1–5 (`ScrollNodeScreen`, the Evolution raised over it),
 > the Guild Hall shelf sells a Scroll (25g, 2 a visit), enemies / contracts / hires hold
-> `masteryForAct` (`2N−1`, hires `2N−2`), and the companion steps at 5 / 10. Ichor still stands
-> beside it until phase 2; the Cache and the signature are phases 2 and 3.
+> `masteryForAct` (`2N−1`, hires `2N−2`), and the companion steps at 5 / 10. **Phase 2 is IN
+> (same day): Ichor is RETIRED** — `src/run/ichor.ts`, both nodes, the screen and the shelf's Drops
+> are gone; the **Scroll Cache** (`scrollReward`, 3 pips in any split) sits in the reward pool at
+> the 46 it held before Ichor. Measured: 35 pips a completed run, every hero evolved 64%, full-clear
+> unmoved by the swap; enemies evolving from Act 3 is the phase-5 dial. The signature is phase 3.
 
 ---
 

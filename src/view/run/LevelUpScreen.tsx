@@ -23,7 +23,7 @@ import { useLevelUpFlow } from './levelUpFlow';
 interface Props {
   run: RunState;
   onRunChange: (next: RunState) => void;
-  /** One entry per roster hero, in roster order — including any that were already at the cap. An Ichor's is one row. */
+  /** One entry per roster hero, in roster order — including any that were already at the cap. */
   report: readonly HeroLevelUp[];
   onContinue: () => void;
 }
@@ -232,7 +232,7 @@ function LevelUpRow({ hero, shown, owed }: RowProps) {
   const segments = useMemo(() => xpBarSegments(hero.fromXp, hero.toXp), [hero.fromXp, hero.toXp]);
 
   // The bar sweeps as the row lands — the same sweep the fight result ran, here beside the cells
-  // it paid for. An Ichor's row is the only place its sweep is seen at all.
+  // it paid for.
   useEffect(() => {
     const fill = fillRef.current;
     if (!shown || !fill || segments.length === 0 || prefersReducedMotion()) return;

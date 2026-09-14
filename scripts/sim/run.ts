@@ -15,9 +15,8 @@ import { progressionTable } from '../../src/data/progression';
 import { enemies, finaleEnemies, ENDBRINGER_ID } from '../../src/data/enemies';
 import { encounterKindOf, nodeEncounter } from '../../src/run/encounters';
 import { allCombatants } from '../../src/data/content';
-import { guildHallOffers, CONTRACT_PURCHASE_COST, ICHOR_PURCHASE_COST, ICHOR_PURCHASE_LIMIT } from '../../src/data/recruitment';
-import { ICHOR_FIGHTS, buyIchor, canBuyIchor, canDrinkIchor, grantIchor, type IchorKind } from '../../src/run/ichor';
-import { SCRIBE_PIPS_EACH, buyScroll, canBuyScroll, grantMastery } from '../../src/run/mastery';
+import { guildHallOffers, CONTRACT_PURCHASE_COST } from '../../src/data/recruitment';
+import { SCRIBE_PIPS_EACH, SCROLL_CACHE_COUNT, buyScroll, canBuyScroll, grantMastery } from '../../src/run/mastery';
 
 import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry, ROSTER_CAP, TOTAL_ACTS, type RunState, type RosterEntry } from '../../src/run/state';
 import { generateMap, type MapNode, type MapNodeType } from '../../src/run/map';
@@ -138,8 +137,6 @@ export interface RunRecord {
   choices: ChoiceEvent[];
   /** Rarity of every item actually equipped, keyed `act:rarity`. */
   equipped: string[];
-  /** Ichor eaten this run, by source, in fights' worth (run/ichor.ts ICHOR_FIGHTS). */
-  ichorBySource: Record<string, number>;
   /** Mastery pips landed this run, by source (run/mastery.ts). */
   pipsBySource: Record<string, number>;
   /** Heroes joining after the draft: `contract` (claimed or bought), `hire` (Guild Hall). */
@@ -234,7 +231,6 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     fights: [],
     choices: [],
     equipped: [],
-    ichorBySource: {},
     pipsBySource: {},
     recruitsBySource: {},
     timeByAct: Array.from({ length: TOTAL_ACTS + 1 }, emptyTimeCounts),
@@ -363,7 +359,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
 
 /**
  * What the level-up report pays out (src/view/run/levelUpFlow.ts): after every level-up — a won
- * fight's, an Ichor's — each hero owed a schedule entry takes one (policy.takeSchedule). The
+ * fight's — each hero owed a schedule entry takes one (policy.takeSchedule). The
  * Evolution is logged as the choice it is; offers and Evolutions are tallied as the screens they
  * cost.
  */
@@ -535,19 +531,6 @@ function tryRecruitContracts(run: RunState, defeatedRoster: readonly RosterEntry
 }
 
 /**
- * An Ichor eaten by the hero the level policy names (policy.levelUpTarget: `focus` feeds the
- * strongest, `spread` the lowest of the fielded four) — the focus-vs-spread experiment
- * docs/xp-overhaul.md §3 asks for. A hero at the cap is skipped, as the screen refuses it.
- */
-function drinkIchor(run: RunState, kind: IchorKind, source: string, rng: Rng, record: RunRecord, options: RunOptions): RunState {
-  const target = policy.levelUpTarget(run.roster.filter(canDrinkIchor), options.levelPolicy);
-  if (!target) return run;
-  record.ichorBySource[source] = (record.ichorBySource[source] ?? 0) + ICHOR_FIGHTS[kind];
-  tally(record, run.actNumber, 'levelUp');
-  return paySchedule(grantIchor(run, rosterHeroes, target.rosterId, kind, rng).run, rng, record);
-}
-
-/**
  * Pips onto one hero (policy.scrollTarget), and what they open paid on the spot — the Scribe's
  * two picks, a shelf Scroll. The Evolution is logged as the choice it is, as the report's is.
  */
@@ -562,23 +545,32 @@ function landPips(run: RunState, rosterId: string, pips: number, source: string,
   return next;
 }
 
-/** The Scribe: two heroes, SCRIBE_PIPS_EACH each, the policy's two closest to a milestone. */
-function resolveScribe(run: RunState, rng: Rng, record: RunRecord): RunState {
+/** The Scribe: two heroes, SCRIBE_PIPS_EACH each, the policy's two. */
+function resolveScribe(run: RunState, rng: Rng, record: RunRecord, options: RunOptions): RunState {
   let next = run;
-  for (const target of policy.scribeTargets(run.roster)) next = landPips(next, target.rosterId, SCRIBE_PIPS_EACH, 'scribe', rng, record);
+  for (const target of policy.scribeTargets(run.roster, options.levelPolicy)) next = landPips(next, target.rosterId, SCRIBE_PIPS_EACH, 'scribe', rng, record);
+  return next;
+}
+
+/** The Scroll Cache: SCROLL_CACHE_COUNT pips one at a time, each to the hero the policy names as it stands after the last. */
+function resolveScrollCache(run: RunState, rng: Rng, record: RunRecord, options: RunOptions): RunState {
+  let next = run;
+  for (let i = 0; i < SCROLL_CACHE_COUNT; i++) {
+    const target = policy.scrollTarget(next.roster, options.levelPolicy);
+    if (!target) break;
+    next = landPips(next, target.rosterId, 1, 'cache', rng, record);
+  }
   return next;
 }
 
 function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: string, rng: Rng, record: RunRecord, options: RunOptions): RunState {
   switch (nodeType) {
     case 'scribeReward':
-      return resolveScribe(run, rng, record);
-    case 'ichorReward':
-      return drinkIchor(run, 'ichor', 'ichor', rng, record, options);
+      return resolveScribe(run, rng, record, options);
+    case 'scrollReward':
+      return resolveScrollCache(run, rng, record, options);
     case 'currencyReward':
       return grantCurrencyReward(run, rollGoldRange(PURSE_GOLD_RANGE, rng));
-    case 'ichorDropReward':
-      return drinkIchor(run, 'drop', 'drop', rng, record, options);
     case 'manaWellReward': {
       // The hero the pool is worth most to (policy.statBoostTarget) — the one screen that asks who.
       const target = policy.statBoostTarget(run.roster, 'manaPool');
@@ -772,16 +764,10 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
     }
   }
 
-  // The shelf's Drop of Ichor (ICHOR_PURCHASE_LIMIT a visit), bought while somebody can still eat
-  // it and the gold is there.
-  for (let bought = 0; canBuyIchor(next, ICHOR_PURCHASE_COST, bought, ICHOR_PURCHASE_LIMIT); bought++) {
-    next = drinkIchor(buyIchor(next, ICHOR_PURCHASE_COST, bought, ICHOR_PURCHASE_LIMIT), 'drop', 'guildHall', rng, record, options);
-  }
-
   // The shelf's Mastery Scrolls (SCROLL_PURCHASE_LIMIT a visit), bought while somebody can still
   // take one and the gold is there, to the hero the policy names.
   for (let bought = 0; canBuyScroll(next, bought); bought++) {
-    const target = policy.scrollTarget(next.roster);
+    const target = policy.scrollTarget(next.roster, options.levelPolicy);
     if (!target) break;
     next = landPips(buyScroll(next, bought), target.rosterId, 1, 'shelf', rng, record);
   }

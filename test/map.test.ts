@@ -37,10 +37,9 @@ const REWARD_TYPES = new Set([
   // Act 4 only, and never from REWARD_WEIGHTS — see tutor.test.ts for the seat itself.
   'tutorReward',
   'equipmentReward',
-  'ichorReward',
+  'scrollReward',
   'passiveReward',
   'currencyReward',
-  'ichorDropReward',
   'manaWellReward',
   'forgeReward',
   'event',

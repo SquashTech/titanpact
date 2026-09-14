@@ -21,9 +21,8 @@ export type ScreenKind =
   | 'crucible'
   | 'pactSeal'
   | 'actIntro'
-  | 'ichorReward'
+  | 'scrollReward'
   | 'currencyReward'
-  | 'ichorDropReward'
   | 'manaWellReward'
   | 'equipmentReward'
   | 'passiveReward'
@@ -60,10 +59,9 @@ export const SCREEN_SECONDS: Record<ScreenKind, number> = {
   crucible: 20,
   pactSeal: 8,
   actIntro: 8,
-  // A pick-a-hero screen (the Forge's 10) plus the one-row level-up report it hands off to.
-  ichorReward: 14,
+  // Three taps on a pick-a-hero screen, no comparison asked: the Forge's price.
+  scrollReward: 10,
   currencyReward: 4,
-  ichorDropReward: 14,
   // A pick-a-hero screen, the Forge's price.
   manaWellReward: 10,
   equipmentReward: 25,

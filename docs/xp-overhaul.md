@@ -1,7 +1,9 @@
 # xp-overhaul.md — The XP Overhaul
 
 > **STATUS: §2–4 DECIDED (2026-09-13, per user direction); §5 (four acts) DEFERRED, not decided.
-> PHASE 1 OF §8 IS IN.** `CLAUDE.md` and `growth-overhaul.md` still describe the game in force
+> PHASE 1 OF §8 IS IN.** **Superseded in part by `docs/mastery.md` (2026-09-14): §3's Ichor is
+> RETIRED (its seats went back to the Scroll Cache) and §4's Evolution moved off the level schedule
+> onto Mastery pips; the XP curve, the offers and the bands stand.** `CLAUDE.md` and `growth-overhaul.md` still describe the game in force
 > wherever a §8 phase has not yet landed; §8 is the route and §9 the list of sign-offs each phase
 > spends — **check its Status column before assuming anything here is live.** Where a number
 > below is a first pass it says so — the design is the shape, and the sim (§8, phase 6) is where

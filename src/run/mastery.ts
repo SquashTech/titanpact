@@ -18,6 +18,9 @@ export const MASTERY_SIGNATURE = MASTERY_CAP;
 export const SCRIBE_PICKS = 2;
 export const SCRIBE_PIPS_EACH = 2;
 
+/** The Scroll Cache, a reward-row seat: this many pips, divided as the player likes. */
+export const SCROLL_CACHE_COUNT = 3;
+
 /**
  * The Guild Hall shelf's Scroll: one pip for flat gold, a pure sink like a potion, capped a
  * visit so a rich run cannot buy a signature in one stop. First-pass figures (docs/mastery.md §3).

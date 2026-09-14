@@ -133,9 +133,6 @@ export interface Aggregate {
   playerSwitches: number;
   /** Fights where the player side reached the 2-KO lock-in threshold. */
   lockInFights: number;
-  /** Ichor eaten, by source, in levels-at-par (run/ichor.ts) — and the same on completed runs. */
-  ichorBySource: Record<string, number>;
-  ichorBySourceWon: Record<string, number>;
   /** Mastery pips landed, by source (scribe / shelf; the Cache from phase 2), all runs and won runs. */
   pipsBySource: Record<string, number>;
   pipsBySourceWon: Record<string, number>;
@@ -189,8 +186,6 @@ export function emptyAggregate(): Aggregate {
     playerRests: 0,
     playerSwitches: 0,
     lockInFights: 0,
-    ichorBySource: {},
-    ichorBySourceWon: {},
     pipsBySource: {},
     pipsBySourceWon: {},
     recruitsBySource: {},
@@ -274,8 +269,6 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   mergeArray(into.heroLevelHistogramDeep, from.heroLevelHistogramDeep);
   for (const key of Object.keys(from.castsByTier)) into.castsByTier[key] = (into.castsByTier[key] ?? 0) + from.castsByTier[key];
   for (const key of Object.keys(from.castsByManaBand)) into.castsByManaBand[key] = (into.castsByManaBand[key] ?? 0) + from.castsByManaBand[key];
-  for (const key of Object.keys(from.ichorBySource)) into.ichorBySource[key] = (into.ichorBySource[key] ?? 0) + from.ichorBySource[key];
-  for (const key of Object.keys(from.ichorBySourceWon)) into.ichorBySourceWon[key] = (into.ichorBySourceWon[key] ?? 0) + from.ichorBySourceWon[key];
   for (const key of Object.keys(from.pipsBySource)) into.pipsBySource[key] = (into.pipsBySource[key] ?? 0) + from.pipsBySource[key];
   for (const key of Object.keys(from.pipsBySourceWon)) into.pipsBySourceWon[key] = (into.pipsBySourceWon[key] ?? 0) + from.pipsBySourceWon[key];
   for (const key of Object.keys(from.recruitsBySource)) into.recruitsBySource[key] = (into.recruitsBySource[key] ?? 0) + from.recruitsBySource[key];

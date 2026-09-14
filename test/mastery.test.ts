@@ -13,6 +13,7 @@ import {
   MasteryError,
   SCRIBE_PICKS,
   SCRIBE_PIPS_EACH,
+  SCROLL_CACHE_COUNT,
   SCROLL_PURCHASE_COST,
   SCROLL_PURCHASE_LIMIT,
   anyMasteryEligible,
@@ -121,6 +122,23 @@ test('mastery: the shelf sells a Scroll for flat gold, capped a visit, only whil
   const capped = { ...run, roster: [{ ...run.roster[0], mastery: MASTERY_CAP }] };
   assert.ok(!canBuyScroll(capped, 0), 'nobody to take it');
   assert.throws(() => buyScroll(capped, 0), MasteryError);
+});
+
+test('mastery: the Scroll Cache sits in the reward pool at the seat Ichor held, and Ichor is gone', () => {
+  assert.strictEqual(SCROLL_CACHE_COUNT, 3);
+  assert.ok(MAP_NODE_TYPES.includes('scrollReward'));
+  const types = MAP_NODE_TYPES as readonly string[];
+  assert.ok(!types.includes('ichorReward') && !types.includes('ichorDropReward'), 'Ichor retired (docs/mastery.md §4)');
+  const cache = REWARD_WEIGHTS.find(([type]) => type === 'scrollReward');
+  assert.ok(cache && cache[1] === 46, 'the Scroll Cache took back its own weight from Ichor');
+  assert.ok(!REWARD_WEIGHTS.some(([type]) => (type as string).startsWith('ichor')), 'and the Drop seat is not re-pointed');
+  assert.ok(TUTORIAL_ROW_TYPES.includes('scrollReward'), 'the corridor shows both Scroll grammars');
+  // Three pips, any split: three on one hero from two lands the fifth.
+  let run = seed(['cinderKnight', 'crimson']);
+  run = grantMastery(run, 'cinderKnight', 2);
+  for (let i = 0; i < SCROLL_CACHE_COUNT; i++) run = grantMastery(run, 'cinderKnight', 1);
+  assert.strictEqual(run.roster[0].mastery, MASTERY_EVOLUTION);
+  assert.ok(availableEvolution(progressionTable, run.roster[0]));
 });
 
 test('mastery: the Scribe is a forced row every act, never in the reward pool, and the tutorial corridor carries it', () => {

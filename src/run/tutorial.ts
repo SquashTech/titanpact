@@ -247,8 +247,10 @@ export const TUTORIAL_ROW_TYPES: readonly MapNodeType[] = [
   // taught on the beat that pays it every act.
   'scribeReward',
   'skirmish',
-  // The act's third reward row. The Ichor: the one place the player aims growth. It displaces the Boon.
-  'ichorReward',
+  // The act's third reward row. The Scroll Cache: three pips in any split, right after the Scribe's
+  // two-each — the corridor shows both Scroll grammars, and the Cache is where Valor can reach five
+  // before the Guardian. It displaces the Boon.
+  'scrollReward',
   'shop',
   'boss',
 ];

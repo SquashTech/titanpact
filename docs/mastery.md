@@ -1,7 +1,7 @@
 # mastery.md — Mastery: pips, the Scribe, and the signature
 
 > **STATUS: DECIDED 2026-09-14 (per user direction, after a same-day draft on "fights survived"
-> was playtested on paper and rejected — §0); PHASE 1 OF §8 IS IN.** `CLAUDE.md` and `xp-overhaul.md`
+> was playtested on paper and rejected — §0); PHASES 1–2 OF §8 ARE IN.** `CLAUDE.md` and `xp-overhaul.md`
 > describe the game in force wherever a §8 phase has not landed; §8 is the route and §9 the list
 > of sign-offs each phase spends — **check its Status column before assuming anything here is
 > live.** Every number below is a first pass unless it says otherwise; the design is the shape,
@@ -236,7 +236,7 @@ Sequenced so the tree is playable at every boundary. `SAVE_VERSION` bumps at eac
 | # | Phase | Exit criterion | Status |
 |---|---|---|---|
 | 1 | **Mastery in.** `RosterEntry.mastery`; the who-screen (Ichor's, renamed, with the pip row); the **Scribe** row (`scribeReward`, forced, acts 1–5, pick two, +2 each); the **shelf** (Guild Hall and Vigil, 25g, 2 a visit); the Evolution raised at 5 from the node; `masteryForAct` for enemies, contracts, hires; the companion's steps at 5 / 10; delete §7's first four items. Ichor untouched — both seats stay. Tutorial re-checked (the Scribe with three heroes in a one-node-per-row act). | No reader of `evolutionLevel`; a run completable end to end; `test/recruitment.test.ts` pins contract > hire on pips. Measured against the XP Overhaul's phase-6 baseline (full-clear 57%, Evolutions 5.0 a run): Evolutions per run, "every hero evolved" %, the clock with one more row an act. | **DONE 2026-09-14.** `src/run/mastery.ts`; `ScrollNodeScreen` (a new screen beside Ichor's, since Ichor stays until phase 2) with `masteryFlow.ts` carrying the Evolution / tier-step / overflow raise that `levelUpFlow.ts` now composes as its catch-all; `MasteryPips` on the who-screen and the hero sheet; `ROW_WIDTHS` gained the Scribe at row 4 and the tutorial corridor a beat for it; `ActScaling.mastery`; `SAVE_VERSION` 15. Measured below. |
-| 2 | **The Cache takes Ichor's seats.** `scrollReward` at 46; `ichorReward` / `ichorDropReward` / `ichor.ts` / the Drops deleted; the Drop's 14 retires. | No Ichor anywhere; the sim tallies pips by source. **Separable — veto here leaves phase 1 standing.** | |
+| 2 | **The Cache takes Ichor's seats.** `scrollReward` at 46; `ichorReward` / `ichorDropReward` / `ichor.ts` / the Drops deleted; the Drop's 14 retires. | No Ichor anywhere; the sim tallies pips by source. **Separable — veto here leaves phase 1 standing.** | **DONE 2026-09-14.** `scrollReward` (`SCROLL_CACHE_COUNT` = 3) in the pool at 46, on the same `ScrollNodeScreen`; `src/run/ichor.ts`, `IchorNodeScreen`, the shelf's Drops and `ICHOR_PURCHASE_*` deleted; the phial stays as XP's glyph; the corridor's third reward row is the Cache; the sim's `--policy focus / spread` is now the Scroll dial (`scrollTarget`). `SAVE_VERSION` 16. Measured below. |
 | 3 | **The signature slot.** `signatureMoveId`; the tenth pip's replace-or-decline on the who-screen; the exclusivity test (no pool, no Tutor, no graft list, no path grant); Lizard Rush promoted and pulled from its three pools; the Tidecaller decision (§10); enemies at 10 hold it. | Riptide reaches Lizard Rush at 10 and nowhere else; the test catches a signature in any pool. | |
 | 4 | **Author 35 signatures.** Parallelisable from 3; ships hero by hero (an unauthored hero's tenth pip pays nothing, which is what today pays). | Every hero has one, on the template — a hit or a verb at the hero's primary, Late-priced, never a bare nuke. | |
 | 5 | **Re-fit.** Cache weight, shelf price, the Scribe's 2 + 2, `masteryForAct`, against the sim with a Scroll policy on the pilot (concentrate on the fielded; evolve first, then signatures; the Scribe to the two most-fielded unevolved) and `time.ts` pricing the two screens; then the Act 1 wall re-read. | ~3 signatures a run on the middle path, every hero evolved on the Scribe alone; the clock reported against the 77 / 53 / 32 baseline. Win-rate targets are a playtest question. | |
@@ -253,7 +253,19 @@ shelf only when gold is left after recruits and gear, which it mostly is not. Th
 state §3 predicts: the Scribe alone evolves four, and the ~12 the Cache pays are phase 2's. Acts:
 87 / 90 / 95 / 84 / 88, so the loss is spread rather than an Act 1 wall (the Scribe pays Act 1 its
 4 before the fork, and the early Evolution the level window forbade is now the pilot's default).
-Clock: Reader 71.1 → 72.4 min, the Scribe row 0.7 min a run — the smallest node on the map. Phase 2: whether removing Ichor moves full-clear at all (it
+Clock: Reader 71.1 → 72.4 min, the Scribe row 0.7 min a run — the smallest node on the map.
+
+Phase 2, measured (300 runs, seed 11, `--policy focus`, against phase 1): **full-clear 54.7% →
+54.7%** — removing Ichor and adding the Cache moved the clear rate by nothing, which is the null
+Ichor's own measurement predicted — while **"every hero evolved" went 25.0% → 63.7%** and roster
+evolved at end 66.7 → 79.3%. Pips a completed run: **Scribe 20.0 + Cache 9.3 + shelf 5.8 = 35**,
+the middle path §3 estimated. `--policy spread` (fewest pips first, so the four evolve in step)
+clears 42.0%: spreading is the trap §2 says it is, by twelve points, and the pair is the rotate /
+carry measurement phase 5 asked for. **Against the tree before Mastery the run is still 60.3 →
+54.7**, and the per-act table says where: Act 3 99.1 → 96.1 and **Act 4 89.3 → 81.6**, Acts 1, 2
+and 5 unmoved. That is §4's derivation biting — under `masteryForAct` every hero-pool enemy from
+Act 3 arrives evolved, where the level schedule left the late turners unevolved until Act 4 or 5.
+A phase-5 dial (a lag on `masteryForAct`, or Act 3 at 4 pips), listed in §10. Phase 2: whether removing Ichor moves full-clear at all (it
 should not, by its own measurement); if it does, the catch-up was doing more than the batch showed
 and §10 gains a question. Phase 5: the signature count per run against the target of three, and
 which faucet bought them.
@@ -307,6 +319,11 @@ Clock, potions, and the one-decision-kind rule on the report.
   collapses to "my best hero", and no Scroll rule fixes that — it is a content finding about the
   paths. The one mechanical retreat is a per-hero cap of 2 pips a Cache, which forces *which two*
   at the cost of friction; hold it, do not build it.
+- **Enemies evolve a full act earlier than they used to.** `masteryForAct` puts every hero-pool
+  enemy at 5 pips from Act 3, where `evolutionLevel` 20–24 left the late turners unevolved until
+  Act 4–5; phase 2 measured it as the whole of the 60 → 55 full-clear drop (Act 4 89 → 82). One
+  model for everybody is the rule, so the fix is the figure, not an exception: `2N − 2` (Act 3 at 4,
+  evolved from Act 4) or a one-act lag. Phase 5's first dial.
 - **The shelf's price and cap.** 25g and 2 are a first pass; the potion shelf is the analogue.
   If the shelf is where signatures get bought, it is competing with recruits for the same gold,
   which is the intended tension — watch whether it reads as one.

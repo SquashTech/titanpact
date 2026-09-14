@@ -2,7 +2,7 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { heroes } from '../../data/heroes';
 import { equipment } from '../../data/equipment';
-import { guildHallOffers, CONTRACT_PURCHASE_COST, ICHOR_PURCHASE_COST, ICHOR_PURCHASE_LIMIT } from '../../data/recruitment';
+import { guildHallOffers, CONTRACT_PURCHASE_COST } from '../../data/recruitment';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { SectionGlyph } from '../shared/sectionIcons';
 import type { HeroDefinition } from '../../engine/content';
@@ -10,7 +10,6 @@ import type { RunState } from '../../run/state';
 import { ROSTER_CAP, RosterFullError } from '../../run/state';
 import { guildHallEntry } from '../../run/guildRecruit';
 import { guildHallLevel } from '../../run/difficulty';
-import { canBuyIchor, ichorXp } from '../../run/ichor';
 import { SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT, canBuyScroll } from '../../run/mastery';
 import { CONSUMABLE_HOLD_CAP, CONSUMABLE_KINDS, CONSUMABLE_NAMES, CONSUMABLE_PRICE, canBuyConsumable, type ConsumableKind } from '../../run/consumables';
 import type { EquipmentDefinition } from '../../run/equipment';
@@ -59,15 +58,11 @@ interface Props {
   tab: GuildHallTab;
   /** Bought on this visit; carried by App.tsx so a re-render of this panel cannot forget it. */
   soldOutEquipmentIds: readonly string[];
-  /** Drops of Ichor bought this visit; carried by App.tsx for the same reason. */
-  ichorBought: number;
   /** Mastery Scrolls bought this visit, carried the same way (run/mastery.ts SCROLL_PURCHASE_LIMIT). */
   scrollsBought: number;
   onRunChange: (next: RunState) => void;
   /** Hands off to App.tsx, which charges the gold and drops the item in the bag. */
   onBuyEquipment: (itemId: string) => void;
-  /** Hands off to App.tsx, which charges the gold, grants the act's bundle and counts the visit. */
-  onBuyIchor: () => void;
   /** Hands off to App.tsx, which charges the gold and opens the who screen for the pip. */
   onBuyScroll: () => void;
   /** Hands off to App.tsx, which charges the gold and fills the flask (run/consumables.ts). */
@@ -157,11 +152,9 @@ export function GuildHallPanel({
   run,
   offers,
   soldOutEquipmentIds,
-  ichorBought,
   scrollsBought,
   onRunChange,
   onBuyEquipment,
-  onBuyIchor,
   onBuyScroll,
   onBuyConsumable,
   onRequestRosterReplace,
@@ -183,8 +176,6 @@ export function GuildHallPanel({
   const previewOffer = previewOfferId ? heroOffers.find((o) => o.id === previewOfferId) : undefined;
   const previewEquip = previewEquipId ? equipmentOffers.find((i) => i.id === previewEquipId) : undefined;
   const canBuyContract = run.gold >= CONTRACT_PURCHASE_COST;
-  const ichorSoldOut = ichorBought >= ICHOR_PURCHASE_LIMIT;
-  const canBuyIchorNow = canBuyIchor(run, ICHOR_PURCHASE_COST, ichorBought, ICHOR_PURCHASE_LIMIT);
   const scrollsSoldOut = scrollsBought >= SCROLL_PURCHASE_LIMIT;
   const canBuyScrollNow = canBuyScroll(run, scrollsBought);
 
@@ -265,34 +256,10 @@ export function GuildHallPanel({
                 </span>
               )}
             </button>
-            {/* No confirm, unlike the Contract: the tap opens the who screen, and that is the
-                decision. The shelf holds ICHOR_PURCHASE_LIMIT a visit, and the corner count is how
-                many of them are already eaten. */}
-            <button
-              className={`guild-hall-good is-ichor${ichorSoldOut ? ' sold-out' : ''}`}
-              disabled={!canBuyIchorNow}
-              onClick={onBuyIchor}
-            >
-              <span className="guild-hall-good-glyph">
-                <ResourceGlyph kind="ichor" tone="inherit" />
-              </span>
-              <span className="guild-hall-good-name">Drop of Ichor</span>
-              <span className="guild-hall-good-desc">{ichorXp(run, 'drop')} XP</span>
-              {ichorSoldOut ? (
-                <span className="guild-hall-good-price is-soldout">Sold out</span>
-              ) : (
-                <span className="guild-hall-good-price">
-                  <ResourceGlyph kind="gold" /> {ICHOR_PURCHASE_COST}
-                </span>
-              )}
-              {ichorBought > 0 && (
-                <span className="guild-hall-good-held is-ichor" aria-label={`${ichorBought} of ${ICHOR_PURCHASE_LIMIT} bought`}>
-                  {ichorBought}/{ICHOR_PURCHASE_LIMIT}
-                </span>
-              )}
-            </button>
-            {/* The Mastery Scroll (docs/mastery.md §3): one pip, the who screen is the decision, the
-                shelf holds SCROLL_PURCHASE_LIMIT a visit. */}
+
+            {/* The Mastery Scroll (docs/mastery.md §3): one pip. No confirm, unlike the Contract — the
+                tap opens the who screen, and that is the decision. The shelf holds
+                SCROLL_PURCHASE_LIMIT a visit, and the corner count is how many are already landed. */}
             <button
               className={`guild-hall-good is-scroll${scrollsSoldOut ? ' sold-out' : ''}`}
               disabled={!canBuyScrollNow}

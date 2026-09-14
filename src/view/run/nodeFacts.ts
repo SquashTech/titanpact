@@ -6,8 +6,7 @@ import type { MapNodeType } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
 import { EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, MAX_ITEM_SLOTS, RARITY_ORDER, rarityWeightsFor } from '../../run/equipment';
 import { GOLD_REWARD_RANGE, PURSE_GOLD_RANGE } from '../../run/runProgress';
-import { ICHOR_FIGHTS, ichorXpForAct } from '../../run/ichor';
-import { MASTERY_EVOLUTION, SCRIBE_PICKS, SCRIBE_PIPS_EACH, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT } from '../../run/mastery';
+import { MASTERY_EVOLUTION, SCRIBE_PICKS, SCRIBE_PIPS_EACH, SCROLL_CACHE_COUNT, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT } from '../../run/mastery';
 import { ENCOUNTER_XP_MULTIPLIER, encounterXpForAct, encounterXpKind } from '../../run/growth';
 import { MANA_WELL_AMOUNT } from '../../run/runProgress';
 import { BOON_OFFER_COUNT } from '../../run/boons';
@@ -23,13 +22,12 @@ import {
   GUILD_HALL_EQUIPMENT_OFFER_COUNT,
   SLOT_PRICE_BY_TARGET,
 } from '../../run/shop';
-import { ICHOR_PURCHASE_COST, ICHOR_PURCHASE_LIMIT, CONTRACT_PURCHASE_COST, GUILD_HALL_RECRUIT_COST } from '../../data/recruitment';
+import { CONTRACT_PURCHASE_COST, GUILD_HALL_RECRUIT_COST } from '../../data/recruitment';
 
 /** The mark at the head of a row — resolved to a glyph by the view. */
 export type NodeFactGlyph =
   | 'gold'
   | 'xp'
-  | 'ichor'
   | 'scroll'
   | 'mana'
   | 'contract'
@@ -65,12 +63,6 @@ export interface NodeDossier {
 }
 
 const RECRUITABLE: readonly MapNodeType[] = ['skirmish', 'elite', 'boss'];
-
-/** An Ichor's size in the currency the fights are paid in: "3 fights' worth". */
-export function fightsWorth(kind: keyof typeof ICHOR_FIGHTS): string {
-  const n = ICHOR_FIGHTS[kind];
-  return `${n} fights' worth`;
-}
 
 function range([min, max]: readonly [number, number]): string {
   return min === max ? `${min}` : `${min}–${max}`;
@@ -164,7 +156,6 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         facts: [
           { glyph: 'hero', label: 'Hire', value: `${GUILD_HALL_RECRUIT_COST}g`, note: `Lv ${guildHallLevel(actNumber)}, raw` },
           { glyph: 'contract', label: 'Contract', value: `${CONTRACT_PURCHASE_COST}g` },
-          { glyph: 'ichor', label: 'Drop of Ichor', value: `${ICHOR_PURCHASE_COST}g`, note: `up to ${ICHOR_PURCHASE_LIMIT}` },
           { glyph: 'scroll', label: 'Mastery Scroll', value: `${SCROLL_PURCHASE_COST}g`, note: `up to ${SCROLL_PURCHASE_LIMIT}` },
           { glyph: 'item', label: 'Gear', value: `${GUILD_HALL_EQUIPMENT_OFFER_COUNT} on shelf`, note: priceBand(EQUIPMENT_PRICE_BY_RARITY) },
           { glyph: 'sell', label: 'Sell', value: `${Math.round(EQUIPMENT_SELL_SHARE * 100)}%`, note: 'of buy price' },
@@ -197,10 +188,8 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         facts: [{ glyph: 'item', label: 'Item', value: '1 of 3' }],
         odds: odds('standard'),
       };
-    case 'ichorReward':
-      return { kind: 'Reward · Growth', facts: [{ glyph: 'ichor', label: 'XP', value: `${ichorXpForAct(actNumber, 'ichor')}`, note: `${fightsWorth('ichor')}, to 1 hero` }], odds: null };
-    case 'ichorDropReward':
-      return { kind: 'Reward · Growth', facts: [{ glyph: 'ichor', label: 'XP', value: `${ichorXpForAct(actNumber, 'drop')}`, note: `${fightsWorth('drop')}, to 1 hero` }], odds: null };
+    case 'scrollReward':
+      return { kind: 'Reward · Growth', facts: [{ glyph: 'scroll', label: 'Mastery', value: `+${SCROLL_CACHE_COUNT}`, note: `divided as you like — ${MASTERY_EVOLUTION} Evolves` }], odds: null };
     case 'manaWellReward':
       return { kind: 'Reward · Growth', facts: [{ glyph: 'mana', label: 'Max Mana', value: `+${MANA_WELL_AMOUNT}`, note: 'to 1 hero, permanent' }], odds: null };
     case 'currencyReward':

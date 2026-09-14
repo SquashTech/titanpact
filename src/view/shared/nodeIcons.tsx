@@ -10,8 +10,9 @@ import { SECTION_PATHS } from './sectionIcons';
 
 const CLAW_GASH = <path d="M12 5C15.4 9.4 17 14.4 16.4 19.6 12.4 15.2 10.6 10.2 12 5Z" />;
 
-// A stoppered phial about the origin — the Ichor's vessel: stopper, neck, round body. Three solid
-// pieces, so it holds as a silhouette at 16px.
+// A stoppered phial about the origin — what leaks from the Titan: stopper, neck, round body. Three
+// solid pieces, so it holds as a silhouette at 16px. It was the Ichor node's mark; the node retired
+// with Mastery phase 2 (docs/mastery.md §4) and the phial stays as XP's glyph (RunGlyph RESOURCE_PATHS.xp).
 const PHIAL = (
   <>
     <rect x="-2.4" y="-10.4" width="4.8" height="2.6" rx="0.9" />
@@ -19,6 +20,9 @@ const PHIAL = (
     <circle cx="0" cy="3.6" r="6" />
   </>
 );
+
+/** The one phial, centred in the 24-box, as the XP resource. */
+export const XP_PHIAL = <g transform="translate(12 12.4) scale(0.95)">{PHIAL}</g>;
 
 // Three gashes fanned about a pivot below the box, leaned right as a group. Off the map since the
 // Titanspawn took the Monsters tiles; kept for the dossier's "Enemies" row (HUB_PATHS.foe).
@@ -55,6 +59,14 @@ const HELM = (
     fillRule="evenodd"
     d="M12 2.4c-4.9 0-8 3.4-8 8.4v4.4c0 3.4 1.2 6.2 2.6 6.2h10.8c1.4 0 2.6-2.8 2.6-6.2v-4.4c0-5-3.1-8.4-8-8.4ZM6 10.6h4.6V14H6Zm7.4 0H18V14h-4.6Z"
   />
+);
+
+// A rolled scroll, its two curls the thing that survives 20px (the Scribe, the Cache, the shelf).
+const SCROLL = (
+  <>
+    <path d="M6.2 3.2h11.2a3.4 3.4 0 0 1 3.4 3.4v1.6h-4.2V6.8H8.4v10.4h8.2v-1.8h4.2v1.8a3.4 3.4 0 0 1-3.4 3.4H6.2a3.4 3.4 0 0 1-3.4-3.4V6.6a3.4 3.4 0 0 1 3.4-3.4Z" />
+    <path d="M10.2 9.2h4.8v1.7h-4.8Zm0 3h4.8v1.7h-4.8Z" />
+  </>
 );
 
 const OPEN_BOOK = (
@@ -105,12 +117,13 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
     </>
   ),
   equipmentReward: SECTION_PATHS.equipment,
-  // Two phials, against the Drop of Ichor's one below: the Ichor pays two levels and the Drop
-  // one, and with map labels gone the count IS the mark.
-  ichorReward: (
+  // The Scroll Cache: three of the Scribe's scroll, fanned — three pips against the Scribe's two
+  // each, and with map labels gone the count IS the mark.
+  scrollReward: (
     <>
-      <g transform="translate(6.6 12.4) scale(0.8)">{PHIAL}</g>
-      <g transform="translate(17.4 12.4) scale(0.8)">{PHIAL}</g>
+      <g transform="translate(3 5) scale(0.55)">{SCROLL}</g>
+      <g transform="translate(8.5 8.5) scale(0.55)">{SCROLL}</g>
+      <g transform="translate(14 12) scale(0.55)">{SCROLL}</g>
     </>
   ),
   // The Passives section mark, for the node that hands one over — same rule.
@@ -122,7 +135,6 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
       <path d="M9 7.8h6c3.6 1.9 5.8 5.2 5.8 8.6 0 3.2-2.4 5.2-6 5.2h-5.6c-3.6 0-6-2-6-5.2 0-3.4 2.2-6.7 5.8-8.6Z" />
     </>
   ),
-  ichorDropReward: <g transform="translate(12 12.4) scale(0.95)">{PHIAL}</g>,
   // The Mana stat's own drop: a stat reward reuses the exact glyph of what it grants.
   manaWellReward: STAT_PATHS.manaPool,
   // Anvil on its stump: the Forge adds a slot, so it draws the place gear is made, not gear.
@@ -136,12 +148,7 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
   mentorReward: OPEN_BOOK,
   // A rolled scroll, its two curls the thing that survives 20px: the Scribe hands out Mastery
   // Scrolls, and the Guild Hall shelf sells the same glyph (RunGlyph RESOURCE_PATHS scroll).
-  scribeReward: (
-    <>
-      <path d="M6.2 3.2h11.2a3.4 3.4 0 0 1 3.4 3.4v1.6h-4.2V6.8H8.4v10.4h8.2v-1.8h4.2v1.8a3.4 3.4 0 0 1-3.4 3.4H6.2a3.4 3.4 0 0 1-3.4-3.4V6.6a3.4 3.4 0 0 1 3.4-3.4Z" />
-      <path d="M10.2 9.2h4.8v1.7h-4.8Zm0 3h4.8v1.7h-4.8Z" />
-    </>
-  ),
+  scribeReward: SCROLL,
   // A branching skill tree, not a second book: the Mentor hands over something new, the Tutor
   // opens a door the hero was already standing in front of.
   tutorReward: (

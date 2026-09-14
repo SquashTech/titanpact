@@ -18,8 +18,7 @@ export const MAP_NODE_TYPES = [
   'shop',
   'blacksmith',
   'equipmentReward',
-  'ichorReward',
-  'ichorDropReward',
+  'scrollReward',
   'manaWellReward',
   'passiveReward',
   'currencyReward',
@@ -129,18 +128,18 @@ const TUTOR_ROW_WIDTH = 3;
 export const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // equipmentReward absorbs most of the frequency the three slot caches used to carry.
   ['equipmentReward', 40],
-  // Ichor: two levels at par, aimed at ONE hero (run/ichor.ts) — the Scroll Cache's seat and
-  // weight, re-pointed (docs/xp-overhaul.md §3). Weighted level with equipment: they are the
-  // run's two growth axes, one per hero's numbers and one per hero's kit, and neither should be
-  // the one you plan around. The supply is the only balance number and phase 6 sets it.
-  ['ichorReward', 46],
+  // The Scroll Cache: SCROLL_CACHE_COUNT Mastery pips, divided as the player likes (run/mastery.ts,
+  // docs/mastery.md §3) — the seat and weight it held before Ichor took them (2026-09-14, Mastery
+  // phase 2). Weighted level with equipment: they are the run's two growth axes, one per hero's
+  // form and one per hero's kit, and neither should be the one you plan around. The supply is the
+  // only balance number and phase 5 sets it; the Drop's seat (14) retired with Ichor and was not
+  // re-pointed.
+  ['scrollReward', 46],
   // The Boon: the part of the deleted relic pool that was actually worth having, handed to ONE
   // hero instead of all four. It is the only reward row node that changes how a hero plays
   // rather than how big its numbers are.
   ['passiveReward', 22],
   ['currencyReward', 20],
-  // The Drop of Ichor: the same grant at half the size, and commoner for it.
-  ['ichorDropReward', 14],
   // The Forge (+1 item slot) is permanent, compounds with every later drop, and is the only thing
   // here a hero can be at the cap for, so it stays the scarcest of the grants.
   //

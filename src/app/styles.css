@@ -12990,14 +12990,10 @@ textarea,
 }
 
 /* Each good is lit by the resource it buys, not by the panel's gold — the
-   Contract's blue and the Ichor's green are the same hues their glyphs
+   Contract's blue and the Scroll's parchment are the same hues their glyphs
    already wear (RunGlyph RESOURCE_COLORS). */
 .guild-hall-good.is-contract {
   --plate-color: #9bc9ff;
-}
-
-.guild-hall-good.is-ichor {
-  --plate-color: #4caf6a;
 }
 
 .guild-hall-good.is-scroll {
@@ -13074,10 +13070,9 @@ textarea,
   line-height: 1.2;
 }
 
-/* The Sell good carries a line (SellSection), and the Drop of Ichor its XP figure (2026-09-14: a
-   number in the currency the fights pay, so the gold conversion is readable). The Contract's and the
-   Scroll's came off (2026-09-11, per user direction) — a good named "Recruit Contract" with a coin
-   under it is read. */
+/* The Sell good carries a line (SellSection), and the Mastery Scroll its "+1 Mastery" (the pip is
+   the whole of what it buys, and the who screen is where it lands). The Contract's came off
+   (2026-09-11, per user direction) — a good named "Recruit Contract" with a coin under it is read. */
 .guild-hall-good-desc {
   font-size: 10px;
   line-height: 1.3;
@@ -13119,11 +13114,6 @@ textarea,
 
 .guild-hall-good.sold-out:disabled {
   opacity: 0.55;
-}
-
-.guild-hall-good-held.is-ichor {
-  border-color: color-mix(in srgb, #4caf6a 55%, var(--border));
-  color: #4caf6a;
 }
 
 .guild-hall-good-held.is-scroll {
@@ -19005,59 +18995,6 @@ textarea,
 
 .pick-card.is-locked .pick-cta {
   text-shadow: none;
-}
-
-/* The Ichor card's bar (IchorNodeScreen IchorBarPreview): what the drink would
-   do to THIS hero's bar. The banked part is dim, the Ichor's share is lit in
-   the screen's colour, and a bar that would cross a level shows the level it
-   ends in with the count struck beside it. */
-.ichor-bar {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  width: 100%;
-  margin-top: 3px;
-}
-
-.ichor-bar-track {
-  position: relative;
-  flex: 1 1 auto;
-  height: 4px;
-  border-radius: 999px;
-  background: var(--well);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.7);
-  overflow: hidden;
-}
-
-.ichor-bar-held,
-.ichor-bar-gain {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  border-radius: 999px;
-}
-
-.ichor-bar-held {
-  background: #6f7688;
-}
-
-.ichor-bar-gain {
-  background: linear-gradient(90deg, color-mix(in srgb, rgb(var(--node-rgb)) 70%, #fff), rgb(var(--node-rgb)));
-  box-shadow: 0 0 6px rgba(var(--node-rgb), 0.7);
-}
-
-.ichor-bar-levels {
-  flex: none;
-  font-size: 9px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: rgb(var(--node-rgb));
-}
-
-.pick-card.is-locked .ichor-bar-gain {
-  background: #6f7688;
-  box-shadow: none;
 }
 
 /* A hero's ten Mastery pips (MasteryPips, run/mastery.ts): held pips lit in the
