@@ -4,7 +4,7 @@
 // (synchronous, evaluated before a hit is rolled).
 
 import type { HeroLookup, CombatState, Combatant, Side } from '../state';
-import { getMaxHp, getMaxMana } from '../state';
+import { getMaxHp, getMaxMana, applyStatModifierDelta } from '../state';
 import type { FieldEffectDefinition, PassiveDefinition, PassiveId, PassiveEffect, PassiveEffectTarget, PassiveTriggerCondition, PassiveAmount, StatKey, StatusDefinition, MoveDefinition } from '../content';
 import type { CombatEvent } from '../events';
 import type { DamageModifier } from '../damage/damagePipeline';
@@ -254,9 +254,10 @@ function resolveEffectOn(
       let modifiers = target.statModifiers;
       const changes: CombatEvent[] = [];
       for (const stat of stats) {
-        const newValue = (modifiers[stat] ?? 0) + effect.amount;
+        // Flat (no move to scale off), but held at the same floor as a move's drop.
+        const { newValue, landed, capped } = applyStatModifierDelta(heroes[target.heroId], { ...target, statModifiers: modifiers }, stat, effect.amount);
         modifiers = { ...modifiers, [stat]: newValue };
-        changes.push({ type: 'StatChanged', round, combatantId: targetId, stat, delta: effect.amount, newValue });
+        changes.push({ type: 'StatChanged', round, combatantId: targetId, stat, delta: landed, ...(capped ? { capped: true } : {}), newValue });
       }
       const nextState: CombatState = {
         ...state,

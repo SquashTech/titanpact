@@ -113,6 +113,8 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
     agg.enemyStatDeltaCountByAct[fight.act] = (agg.enemyStatDeltaCountByAct[fight.act] ?? 0) + fight.enemyStatDeltaCount;
     agg.enemyStatDeltaAuthoredByAct[fight.act] = (agg.enemyStatDeltaAuthoredByAct[fight.act] ?? 0) + fight.enemyStatDeltaAuthored;
     agg.enemyStatDeltaLandedByAct[fight.act] = (agg.enemyStatDeltaLandedByAct[fight.act] ?? 0) + fight.enemyStatDeltaLanded;
+    agg.heldDropsByAct[fight.act] = (agg.heldDropsByAct[fight.act] ?? 0) + fight.heldDrops;
+    agg.enemyHeldDropsByAct[fight.act] = (agg.enemyHeldDropsByAct[fight.act] ?? 0) + fight.enemyHeldDrops;
     agg.fightsByAct[fight.act] = (agg.fightsByAct[fight.act] ?? 0) + 1;
     agg.wouldHaveCappedByAct[fight.act] = (agg.wouldHaveCappedByAct[fight.act] ?? 0) + (fight.wouldHaveCapped ? 1 : 0);
     agg.peakModifierFracSumByAct[fight.act] = (agg.peakModifierFracSumByAct[fight.act] ?? 0) + fight.peakModifierFrac;

@@ -21,6 +21,7 @@ import { statusApplicationsOf } from '../../src/engine/content';
 import type { Action } from '../../src/engine/combat/actions';
 import type { CombatState, FieldEffectContext, Side } from '../../src/engine/state';
 import {
+  applyStatModifierDelta,
   activePartnerTypes,
   effectiveTypes,
   getEffectiveStat,
@@ -475,7 +476,9 @@ function scoreCast(
       const onCasterSide = state.combatants[id]?.side === casterSide;
       for (const delta of move.statDeltas) {
         // The authored figure is a base scaled off the caster (docs/stat-scaling.md §2) — price what lands.
-        const landed = scaleStatDelta(delta.stat, delta.amount * conditional, move, allCombatants[caster.heroId], caster, onCasterSide, fieldCtx(state));
+        const scaled = scaleStatDelta(delta.stat, delta.amount * conditional, move, allCombatants[caster.heroId], caster, onCasterSide, fieldCtx(state));
+        // ...and held at the receiver's floor (state.ts statModifierFloor), which the card will say (phase 4).
+        const landed = applyStatModifierDelta(allCombatants[state.combatants[id].heroId], state.combatants[id], delta.stat, scaled).landed;
         // statDeltaValue is the receiver's gain; a drop on the far side is the caster's.
         const value = statDeltaValue(state, ctx, id, delta.stat, landed, cache);
         score += (onCasterSide ? value : -value) * share * chance;

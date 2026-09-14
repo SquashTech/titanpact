@@ -89,6 +89,9 @@ export interface FightOutcome {
   /** The same, split: a modifier past +S (a buff the ceiling would have clamped) / under −½S (a debuff). */
   wouldHaveCappedUp: boolean;
   wouldHaveCappedDown: boolean;
+  /** Drops the floor held (StatChanged.capped), by the caster's side. */
+  heldDrops: number;
+  enemyHeldDrops: number;
   /** A used stat's modifier reached −S — the floor at 1 bit, and the ratio against it went to the moon. */
   floored: boolean;
   /** Total effective stats (the six combat stats) each side FIELDED — who is out-scaling whom. */
@@ -165,12 +168,16 @@ function recordEvents(
   events: readonly CombatEvent[],
   telemetry: Record<string, CombatantTelemetry>,
   casts?: { byTier: Record<string, number>; byManaBand: Record<string, number> },
-  deltas?: { count: number; authored: number; landed: number; enemyCount: number; enemyAuthored: number; enemyLanded: number }
+  deltas?: { count: number; authored: number; landed: number; enemyCount: number; enemyAuthored: number; enemyLanded: number; held: number; enemyHeld: number }
 ): void {
   // A StatChanged names its holder, not its caster; the caster is the side of the last MoveUsed.
   let casterSide: Side | undefined;
   for (const event of events) {
     if (event.type === 'MoveUsed') casterSide = telemetry[event.combatantId]?.side;
+    if (event.type === 'StatChanged' && deltas && event.capped && casterSide) {
+      if (casterSide === PLAYER_SIDE) deltas.held += 1;
+      else deltas.enemyHeld += 1;
+    }
     if (event.type === 'StatChanged' && deltas && event.authored !== undefined && casterSide) {
       if (casterSide === PLAYER_SIDE) {
         deltas.count += 1;
@@ -330,7 +337,7 @@ export function simulateFight(input: FightInput): FightOutcome {
   let playerRests = 0;
   let playerSwitches = 0;
   const casts = { byTier: {} as Record<string, number>, byManaBand: {} as Record<string, number> };
-  const deltas = { count: 0, authored: 0, landed: 0, enemyCount: 0, enemyAuthored: 0, enemyLanded: 0 };
+  const deltas = { count: 0, authored: 0, landed: 0, enemyCount: 0, enemyAuthored: 0, enemyLanded: 0, held: 0, enemyHeld: 0 };
   let peakModifierFrac = 0;
   let wouldHaveCapped = false;
   let floored = false;
@@ -428,6 +435,8 @@ export function simulateFight(input: FightInput): FightOutcome {
     enemyStatDeltaCount: deltas.enemyCount,
     enemyStatDeltaAuthored: deltas.enemyAuthored,
     enemyStatDeltaLanded: deltas.enemyLanded,
+    heldDrops: deltas.held,
+    enemyHeldDrops: deltas.enemyHeld,
     peakModifierFrac,
     wouldHaveCapped,
     wouldHaveCappedUp,

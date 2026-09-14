@@ -84,6 +84,8 @@ export interface StatChangedEvent extends BaseEvent {
   delta: number;
   /** The authored base when a move scaled the delta (docs/stat-scaling.md §2); absent when delta IS the authored figure (a passive, a derived grant). */
   authored?: number;
+  /** The floor took some or all of the drop (state.ts statModifierFloor); `delta` is what landed, and may be 0. */
+  capped?: boolean;
   newValue: number;
 }
 

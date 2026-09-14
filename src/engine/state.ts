@@ -341,6 +341,29 @@ export function statusMagnitude(combatant: Combatant, statusId: StatusId): numbe
   return combatant.statuses[statusId]?.magnitude ?? 0;
 }
 
+/**
+ * The lowest a stat's fight modifier may go: −½ of base + loadout (docs/stat-scaling.md §3, the
+ * DEBUFF half of the ceiling — a debuff can at most halve a stat). The buff half is undecided
+ * and nothing here bounds a positive modifier. Applied at WRITE, so StatChanged reports what
+ * landed and every reader of statModifiers sees a figure already inside the band.
+ */
+export function statModifierFloor(hero: HeroDefinition, combatant: Combatant, stat: StatKey): number {
+  const s = hero.baseStats[stat] + (combatant.baselineStatModifiers[stat] ?? 0);
+  return -Math.floor(Math.max(0, s) / 2);
+}
+
+/** A delta against a fight modifier, held at the floor: the value to store, the delta that actually landed, and whether the floor took any of it. */
+export function applyStatModifierDelta(
+  hero: HeroDefinition,
+  combatant: Combatant,
+  stat: StatKey,
+  delta: number
+): { newValue: number; landed: number; capped: boolean } {
+  const current = combatant.statModifiers[stat] ?? 0;
+  const newValue = Math.max(statModifierFloor(hero, combatant, stat), current + delta);
+  return { newValue, landed: newValue - current, capped: newValue !== current + delta };
+}
+
 /** Effective minus loadout baseline — the part this fight contributed. Badges temporary buffs/debuffs only. */
 export function getCombatStatDelta(hero: HeroDefinition, combatant: Combatant, stat: StatKey, fieldEffectCtx?: FieldEffectContext): number {
   const baseline = hero.baseStats[stat] + (combatant.baselineStatModifiers[stat] ?? 0);

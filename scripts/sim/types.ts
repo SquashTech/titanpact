@@ -140,6 +140,8 @@ export interface Aggregate {
   enemyStatDeltaCountByAct: number[];
   enemyStatDeltaAuthoredByAct: number[];
   enemyStatDeltaLandedByAct: number[];
+  heldDropsByAct: number[];
+  enemyHeldDropsByAct: number[];
   fightsByAct: number[];
   wouldHaveCappedByAct: number[];
   wouldHaveCappedUpByAct: number[];
@@ -205,6 +207,8 @@ export function emptyAggregate(): Aggregate {
     enemyStatDeltaCountByAct: [],
     enemyStatDeltaAuthoredByAct: [],
     enemyStatDeltaLandedByAct: [],
+    heldDropsByAct: [],
+    enemyHeldDropsByAct: [],
     fightsByAct: [],
     wouldHaveCappedByAct: [],
     wouldHaveCappedUpByAct: [],
@@ -292,6 +296,8 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   mergeArray(into.enemyStatDeltaCountByAct, from.enemyStatDeltaCountByAct);
   mergeArray(into.enemyStatDeltaAuthoredByAct, from.enemyStatDeltaAuthoredByAct);
   mergeArray(into.enemyStatDeltaLandedByAct, from.enemyStatDeltaLandedByAct);
+  mergeArray(into.heldDropsByAct, from.heldDropsByAct);
+  mergeArray(into.enemyHeldDropsByAct, from.enemyHeldDropsByAct);
   mergeArray(into.fightsByAct, from.fightsByAct);
   mergeArray(into.wouldHaveCappedByAct, from.wouldHaveCappedByAct);
   mergeArray(into.flooredByAct, from.flooredByAct);

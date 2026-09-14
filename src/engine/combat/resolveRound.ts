@@ -5,7 +5,7 @@
 import type { FieldEffectDefinition, MoveDefinition, PassiveDefinition, StatDelta, StatKey, StatusDefinition } from '../content';
 import { statusApplicationsOf } from '../content';
 import type { CombatState, HeroLookup } from '../state';
-import { activePartnerTypes, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveCastBasePower, resolveTargetMode, effectiveTypes, hasStatus, moveForHero } from '../state';
+import { activePartnerTypes, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveCastBasePower, resolveTargetMode, effectiveTypes, hasStatus, moveForHero, applyStatModifierDelta } from '../state';
 import type { CombatEvent } from '../events';
 import type { Action } from './actions';
 import { orderActions } from './priority';
@@ -626,7 +626,8 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       );
       for (const delta of scaled) {
         const current = working.combatants[targetId];
-        const newValue = (current.statModifiers[delta.stat] ?? 0) + delta.amount;
+        // Held at the floor (state.ts statModifierFloor); a drop that lands at 0 still emits, so the player sees why nothing moved.
+        const { newValue, landed, capped } = applyStatModifierDelta(heroes[current.heroId], current, delta.stat, delta.amount);
         working = {
           ...working,
           combatants: { ...working.combatants, [targetId]: { ...current, statModifiers: { ...current.statModifiers, [delta.stat]: newValue } } },
@@ -636,8 +637,9 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           round,
           combatantId: targetId,
           stat: delta.stat,
-          delta: delta.amount,
+          delta: landed,
           ...('authored' in delta ? { authored: delta.authored } : {}),
+          ...(capped ? { capped: true } : {}),
           newValue,
         };
         events.push(statChanged);
@@ -646,17 +648,18 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     }
 
     // doublesStatReductions reads/writes statModifiers ONLY (never baselineStatModifiers) and
-    // compounds by design. No clamp: getEffectiveStat floors every stat at 1 for every reader.
+    // compounds — down to the floor, where a further Flay lands 0 and says so.
     if (move.doublesStatReductions) {
       for (const targetId of targetIds) {
         const target = working.combatants[targetId];
         if (!target || target.fainted) continue;
         const doubled: Partial<Record<StatKey, number>> = {};
-        const doubledEntries: [StatKey, number][] = [];
+        const doubledEntries: [StatKey, number, boolean][] = [];
         for (const [stat, value] of Object.entries(target.statModifiers) as [StatKey, number][]) {
           if (value >= 0) continue;
-          doubled[stat] = value * 2;
-          doubledEntries.push([stat, value * 2]);
+          const { newValue, capped } = applyStatModifierDelta(heroes[target.heroId], target, stat, value);
+          doubled[stat] = newValue;
+          doubledEntries.push([stat, newValue, capped]);
         }
         if (!doubledEntries.length) continue;
         working = {
@@ -666,7 +669,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             [targetId]: { ...target, statModifiers: { ...target.statModifiers, ...doubled } },
           },
         };
-        for (const [stat, newValue] of doubledEntries) {
+        for (const [stat, newValue, capped] of doubledEntries) {
           // `delta` is the amount ADDED, not the new total.
           const statChanged: CombatEvent = {
             type: 'StatChanged',
@@ -674,6 +677,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             combatantId: targetId,
             stat,
             delta: newValue - (target.statModifiers[stat] ?? 0),
+            ...(capped ? { capped: true } : {}),
             newValue,
           };
           events.push(statChanged);

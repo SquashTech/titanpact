@@ -1234,7 +1234,14 @@ target read off something other than the one global field slot.
   Predator, Arcane Overflow — already read off live state), a passive's `statDelta` effect (no
   move to take STAB from), and `mpRegen` (a resource grant, not a ratio). `StatChanged.authored`
   carries the base beside `delta`; `statDeltaReadout` (`MoveTile`) prints the landed figure on a
-  card for the hero holding it, as `riderMagnitude` does a Burn. The ceiling is still open (below).
+  card for the hero holding it, as `riderMagnitude` does a Burn.
+- **A stat's fight modifier is held at −½(base + loadout)** (2026-09-14, `stat-scaling.md`
+  phase 2a, per user direction): `statModifierFloor` / `applyStatModifierDelta` (state.ts),
+  applied at WRITE by every writer of `statModifiers` — a move's deltas, Brain Flay's doubling,
+  a passive's `statDelta` — so a debuff can at most halve a stat, the third Brain Flay into a
+  bottomed target lands 0 and says so (`StatChanged.capped`), and the floor at 1 below is a
+  defence no content reaches. Loadout raises the floor with the base. **Nothing bounds a
+  positive modifier** — the buff half of the ceiling is undecided (`stat-scaling.md` §10).
 
 ### A stat grant with no authored number (2026-08-30, Arcane)
 
@@ -1491,10 +1498,10 @@ details:
   `manaPool` or `mpRegen` today, so the floor cannot bind on those — and a future
   "MP Regen 0" debuff should be a conversation rather than something this clamp
   silently forbids.
-- **The modifier itself is not clamped**, only what is read out of it. A stat driven to
-  −9999 stays at −9999 on `statModifiers`; healing it back is still a real amount of
-  work, and Brain Flay's third cast into an already-bottomed target is a visible waste
-  rather than a hidden one.
+- **The modifier itself was not clamped** here, only what is read out of it — until
+  2026-09-14, when `stat-scaling.md` phase 2a held every WRITE at −½(base + loadout)
+  (`applyStatModifierDelta`, above). A modifier written directly by a fixture can still sit at
+  −9999 and this floor still answers it; content cannot put one there any more.
 
 `test/mindMoves.test.ts` pins it from both ends: the floored value itself, and that an
 attack into a floored defender still deals positive, finite damage.

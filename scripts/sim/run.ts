@@ -115,6 +115,8 @@ export interface FightRecord {
   enemyStatDeltaCount: number;
   enemyStatDeltaAuthored: number;
   enemyStatDeltaLanded: number;
+  heldDrops: number;
+  enemyHeldDrops: number;
   peakModifierFrac: number;
   wouldHaveCapped: boolean;
   wouldHaveCappedUp: boolean;
@@ -496,6 +498,8 @@ function resolveEncounterNode(
     enemyStatDeltaCount: fight.enemyStatDeltaCount,
     enemyStatDeltaAuthored: fight.enemyStatDeltaAuthored,
     enemyStatDeltaLanded: fight.enemyStatDeltaLanded,
+    heldDrops: fight.heldDrops,
+    enemyHeldDrops: fight.enemyHeldDrops,
     peakModifierFrac: fight.peakModifierFrac,
     wouldHaveCapped: fight.wouldHaveCapped,
     wouldHaveCappedUp: fight.wouldHaveCappedUp,

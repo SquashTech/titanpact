@@ -1,8 +1,9 @@
 # stat-scaling.md — Buffs and debuffs: scaled bases, the ceiling, the noise floor
 
 > **STATUS: DECIDED 2026-09-14 (per user direction — option A of two, after a Pokémon-shaped
-> stage system was weighed and set aside, §0). PHASE 1 OF §8 IS IN (same day); the rest is not.
-> The ceiling (§3, phase 2) is NOT decided — the designer is unsure it is needed at all; it stays in the doc as the
+> stage system was weighed and set aside, §0). PHASES 1 AND 2a OF §8 ARE IN (same day); the rest is not.
+> The ceiling's DEBUFF half is in (phase 2a, per user direction after phase 1's measurement);
+> its BUFF half (§3, phase 2b) is NOT decided — the designer is unsure it is needed at all; it stays in the doc as the
 > proposal and §10 carries the case against it.** `CLAUDE.md` and
 > `combat.md` describe the game in force wherever a §8 phase has not landed; §8 is the route
 > and §9 the list of sign-offs each phase spends — **check its Status column before assuming
@@ -131,11 +132,18 @@ because it would be a second rule where the family has one.
 
 ---
 
-## 3. The ceiling — UNDECIDED
+## 3. The ceiling — the debuff half IN, the buff half UNDECIDED
 
-> Not signed off. The designer's doubt is whether a cap is needed once deltas scale and the
-> Pact Clock already brackets the stall; see §10 for the case each way. The shape below is
-> what would be built IF phase 2 is taken, and phases 1, 3, 4 and 5 do not depend on it.
+> **The `−½S` floor is built (phase 2a, 2026-09-14, per user direction):** a stat's fight
+> modifier is held at −½(base + loadout) at write — `statModifierFloor` /
+> `applyStatModifierDelta` in `src/engine/state.ts`, used by every writer of `statModifiers`
+> (a move's deltas, Brain Flay's doubling, a passive's `statDelta`) — so a debuff can at most
+> halve a stat, and the floor at 1 is a defence nothing authored can reach any more.
+> `StatChanged.capped` marks a drop the floor shortened; a drop that lands 0 still emits.
+> **The `+S` half is not signed off.** The designer's doubt is whether a cap on buffs is
+> needed once deltas scale and the Pact Clock already brackets the stall; §10 carries the
+> case each way and phase 1's numbers. The shape below describes both halves; only the debuff
+> half is live, and nothing bounds a positive modifier.
 
 **A stat's fight modifier is clamped to `[−½S, +S]`, where `S = base + loadout`. A buff can at
 most double a stat; a debuff can at most halve it.** One sentence, symmetric in the ratio (×2
@@ -258,7 +266,8 @@ Sequenced so the tree is playable at every boundary and each phase can be refuse
 | # | Phase | Exit criterion | Status |
 |---|---|---|---|
 | 1 | **The formula.** `scaleStatDelta` beside `scaleStatusMagnitude`, reading Wisdom for a buff and the move's offensive stat for a debuff, STAB, snapshot; wired into `resolveRound`'s delta loop (authored, random and pack-multiplied deltas; derived and passive deltas pass through); `StatChanged.authored / landed`; the tile and overlay print the landed figure for the holder. No content change. | Every authored delta lands at base × StatMult × STAB; `test/arcaneMoves` still passes on bases; the sim reports buff magnitude landed per act. | **DONE 2026-09-14.** `src/engine/combat/statDeltaScaling.ts` (`scaleStatDelta`, `resolveStatDeltaFor` for a board-free screen, `statDeltaRole` — the sign classes the delta, a negative on the caster's side is a cost); wired into `resolveRound`'s delta loop with derived deltas passing through; `StatChanged.authored`; `statDeltaReadout` on the tile summary and the overlay rows (the row notes the base and what it scaled off); `landedDelta` in `test/fixtures.ts` for the slate tests, `test/statScaling.test.ts` for the rule. The sim prices the landed figure and reports it (below). No save change. Measured below. |
-| 2 | **The ceiling.** Clamp at write to `[−½S, +S]`; `capped` on the event; Apex Predator, Brain Flay and Arcane Overflow measured against it; the Font of Power decision (§10). **Separable — veto leaves phase 1 standing.** | No fight modifier outside the band on any combatant at any round; the three compounders' sim win-rate deltas reported. | **UNDECIDED** — the designer is unsure a cap is needed. Phase 1 ships first and measures how often a modifier would have exceeded `+S` (§10); that figure decides this row. |
+| 2a | **The floor — the debuff half.** Clamp at write to `≥ −½S`; `capped` on the event; Brain Flay measured against it. **Separable — veto leaves phase 1 standing.** | No fight modifier under −½S on any combatant at any round; the floor at 1 unreachable by content. | **DONE 2026-09-14** (per user direction, after phase 1 measured the debuff side crossing the band in a third of Act 1 fights before scaling existed). `statModifierFloor` / `applyStatModifierDelta` (`state.ts`), used by `resolveRound`'s delta loop and its `doublesStatReductions` block and by `passiveEngine`'s `statDelta`; `StatChanged.capped`; `landedDelta` in the fixtures applies it; the pilot prices the held figure. Measured below. |
+| 2b | **The ceiling — the buff half.** Clamp at write to `≤ +S`; Apex Predator and Arcane Overflow measured against it; the Font of Power decision (§10). | No fight modifier over +S. | **UNDECIDED** — the designer is unsure a cap on buffs is needed. Phase 1 measured a used stat passing +S in 23–28% of Act 4+ fights after scaling, 3–5% before (§10). |
 | 3 | **The floor re-author.** §4's sub-floor entries; Exalt's decision; the signatures' deltas re-read against the bands; `test/moveTiers` (or a sibling) pins the body floor at 20 and forbids 5. | No authored body under 20, no delta of 5; the Ancient hand-off in `authoring-moves.md` §10 names the bands. | — |
 | 4 | **Presentation.** The pip strip, the `→` on the hero sheet, the cap as a bar end, the flash pair on a cap hit, "at the limit" on the tile before the press. | A player can read a hero's modifier state from the fight screen without opening the sheet. | — |
 | 5 | **Re-fit.** The AI's utility for a scaled delta and a capped one; a sim pass on the pilot against the pre-phase-1 baseline (full-clear 54%, Reader 77 / Auto 53 / Fast 32 min); the Act 1 wall re-read, since a buff above the noise floor is the kind of lever the wall has not been given; then the `stat / 50` dial if the Late-act decay reads as a fault in play. | Win-rate targets are a playtest question; the measurement is buffs' share of casts by act, and whether it rose. | — |
@@ -288,7 +297,21 @@ story. **The ceiling question, answered in numbers (§10):** a used stat's fight
 and 45 / 45 / 32 / 29 / 26% after (finale 79%); and it reached the floor at 1 — a stat zeroed,
 the ratio against it unbounded — in **14 / 7 / 2 / 1 / 0%** before (finale 4%) and 21 / 19 / 9 /
 7 / 6% after (finale 34%). The debuff side was already past any sane ceiling before this
-phase, once the pilot cast debuffs at all; scaling made the buff side reach it too, in Acts 4+. Phase 2: how often the cap binds,
+phase, once the pilot cast debuffs at all; scaling made the buff side reach it too, in Acts 4+.
+
+Phase 2a, measured (1000 runs, seed 11, against phase 1 on the same seed and pilot). The floor
+alone, with the pilot still pricing a drop as if it landed in full: **58.5% → 57.3%**, Act 1
+89.8 → **80.2%**, Acts 4–5 82.4 / 87.8 → 88.5 / 91.3 — the late acts recovered the whole
+phase-1 loss and Act 1 collapsed, because 37% of the player's Act 1 drops were being held and
+the pilot kept casting them. With the pilot pricing the HELD figure (`applyStatModifierDelta`
+on the receiver, which is what the card will say in phase 4): **67.7%** full-clear, Act 1
+**90.4%**, Acts 2–5 94.7 / 99.1 / 88.0 / 90.8, encounters won 12.67 (baseline 12.18) — six
+points over the pre-scaling baseline, the first lever in this tree to move Act 1 at all. "Under
+−½S" and "floored" read 0.0% in every act, as they must. Drops the floor shortened, player /
+enemy, by act: 14 / 36%, 24 / 10%, 20 / 9%, 12 / 7%, 9 / 6%, finale 16 / 24% — **the enemy AI
+does not know the floor** (`src/run/ai.ts` prices nothing about stat deltas) and wastes a third
+of its Act 1 drops into it, which is a share of that six points and a §10 question. Late casts
+11.0 → 11.6%; clock 69.3 → 68.6 min Reader. Phase 2: how often the cap binds,
 and on whom — if it binds on ordinary two-cast setup it is too low; if it never binds on Apex
 Predator it is too high. Phase 3: nothing measurable; it is an authoring pass. Phase 5: whether
 buffs are cast more, and whether the Act 1 wall moved.
@@ -319,14 +342,19 @@ never gets a screen" — a buff's landed figure is shown on a card, never chosen
 
 ## 10. Open questions — DO NOT silently resolve
 
-- **Whether there is a ceiling at all.** The designer's doubt, and it is a fair one. **Phase 1
-  measured it (§8):** the DEBUFF half of the band is crossed in a third of Act 1 fights before
+- **Whether the BUFF half of the ceiling is built.** The debuff half is in (phase 2a); this is
+  what remains of the designer's doubt, and it is a fair one. **Phase 1 measured it (§8):** the DEBUFF half of the band is crossed in a third of Act 1 fights before
   scaling and half after, and a stat is zeroed outright in a fifth of them — that is the floor
   at 1 turning a −26 into an unbounded ratio, and it is where the late-act loss lives. The BUFF
   half is crossed in a quarter of Act 4–5 fights after scaling, a twentieth before. So the two
   halves are different questions: `−½S` is answering a fault that predates this doc, `+S` is
-  answering the thing this doc made bigger. Building the debuff half alone is a coherent
-  phase 2 if the buff half stays undecided. The case
+  answering the thing this doc made bigger. The debuff half was built alone (phase 2a) on that
+  reading; `+S` waits on play.
+- **The enemy AI and the floor.** `src/run/ai.ts` prices nothing about a stat delta, so an
+  enemy Enfeeble into a hero already at the floor is a wasted turn it cannot see — a third of
+  its Act 1 drops after phase 2a. Teaching it the held figure (as the pilot was taught) is a
+  phase-5 item and will take some of the six points back; that is the AI catching up to a rule,
+  not the rule moving. The case
   against: scaling already fixes the two findings that are about *feel*; the third (no cap) is a
   stall problem the Pact Clock already brackets; a cap is a rule the player has to learn and a
   moment ("nothing happened") the fight has to explain; and the compounders are three moves,

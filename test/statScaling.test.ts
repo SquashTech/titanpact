@@ -13,6 +13,7 @@ import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import type { Action } from '../src/engine/combat/actions';
 import type { CombatState } from '../src/engine/state';
+import { getEffectiveStat, statModifierFloor } from '../src/engine/state';
 import {
   resolveStatDeltaFor,
   statDeltaLandsOnCasterSide,
@@ -59,14 +60,15 @@ test('scaling: a buff reads the caster\'s WISDOM — Kindle off Cinder Knight (W
 });
 
 test('scaling: a debuff reads the OFFENSIVE stat the move swings with — Weaken (magical) off Int, Pin Down (physical) off Attack', () => {
-  // Crimson, Int 80, off-type for Shadow: 20 × 1.3 = 26 each.
+  // Crimson, Int 80, off-type for Shadow: 20 × 1.3 = 26 each — and Iron Warden's Wisdom is 50,
+  // so the second lands at the floor, −25 (§3, the debuff half of the ceiling).
   const weaken = cast(fixture(2), 'a1', 'weaken', 'b1');
   assert.strictEqual(weaken.state.combatants.b1.statModifiers.defense, -26);
-  assert.strictEqual(weaken.state.combatants.b1.statModifiers.wisdom, -26);
-  // Cinder Knight, Attack 85, Iron STAB: 10 × 1.35 × 1.25 = 16.875 → 17.
+  assert.strictEqual(weaken.state.combatants.b1.statModifiers.wisdom, -25);
+  // Cinder Knight, Attack 85, Iron STAB: 10 × 1.35 × 1.25 = 16.875 → 17 — held at −15 on Iron Warden's Speed 30.
   const pin = cast(fixture(2), 'a2', 'pinDown', 'b1');
   assert.strictEqual(pin.state.combatants.b1.statModifiers.defense, -17);
-  assert.strictEqual(pin.state.combatants.b1.statModifiers.speed, -17);
+  assert.strictEqual(pin.state.combatants.b1.statModifiers.speed, -15);
 });
 
 test('scaling: the SIGN classes each delta — Landslide\'s ally buff reads Wisdom while its hit reads Attack', () => {
@@ -133,6 +135,42 @@ test('scaling: the card-only side read — self, ally and bothAllies deltas are 
   assert.strictEqual(statDeltaLandsOnCasterSide(moves.spireClaw), true);
   assert.strictEqual(statDeltaLandsOnCasterSide(moves.moltenLash), false);
   assert.strictEqual(statDeltaLandsOnCasterSide(moves.weaken), false);
+});
+
+// --- The floor: a debuff can at most halve a stat (§3, phase 2 — the debuff half) ---
+
+test('floor: a stat\'s fight modifier never goes under −½(base + loadout), and the drop that hits it lands short and says so', () => {
+  // Iron Warden's Wisdom 50: floor −25. Weaken lands −26 → −25 capped; a second Weaken lands 0, capped, and still emits.
+  const state = fixture(20);
+  const once = cast(state, 'a1', 'weaken', 'b1');
+  const first = statChanged(once.events).find((e) => e.stat === 'wisdom');
+  assert.strictEqual(first.delta, -25);
+  assert.strictEqual(first.authored, -20);
+  assert.strictEqual(first.capped, true);
+  assert.strictEqual(statModifierFloor(heroes.ironWarden, state.combatants.b1, 'wisdom'), -25);
+
+  const twice = cast(once.state, 'a1', 'weaken', 'b1');
+  const second = statChanged(twice.events).find((e) => e.stat === 'wisdom');
+  assert.strictEqual(second.delta, 0, 'a drop at the floor lands nothing');
+  assert.strictEqual(second.capped, true);
+  assert.strictEqual(twice.state.combatants.b1.statModifiers.wisdom, -25);
+  assert.strictEqual(getEffectiveStat(heroes.ironWarden, twice.state.combatants.b1, 'wisdom'), 25, 'halved, never floored at 1');
+});
+
+test('floor: loadout raises it — the same drop on a hero wearing +50 Wisdom lands in full', () => {
+  const state = fixture(21);
+  const b1 = state.combatants.b1;
+  const geared = { ...state, combatants: { ...state.combatants, b1: { ...b1, baselineStatModifiers: { ...b1.baselineStatModifiers, wisdom: 50 } } } } as CombatState;
+  const { events } = cast(geared, 'a1', 'weaken', 'b1');
+  const drop = statChanged(events).find((e) => e.stat === 'wisdom');
+  assert.strictEqual(drop.delta, -26);
+  assert.strictEqual(drop.capped, undefined);
+});
+
+test('floor: a buff is not bounded — nothing here touches a positive modifier', () => {
+  let state = fixture(22);
+  for (let i = 0; i < 6; i++) state = cast(state, 'a1', 'kindle').state;
+  assert.strictEqual(state.combatants.a1.statModifiers.attack, 6 * 31, 'six Kindles at +31 stack past double');
 });
 
 // --- The authoring rule the formula stands on ---
