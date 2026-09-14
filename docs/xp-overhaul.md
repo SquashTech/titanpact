@@ -111,18 +111,30 @@ weight (`scrollReward` 46, `loneScrollReward` 14 in `REWARD_WEIGHTS`), and the G
 sells one for gold where it sold a Scroll. Every source is a node that displaced another reward —
 the Tutor's pricing principle — so an Ichor is never free and never compounds.
 
-**Every Ichor is a moment.** `growth-overhaul.md` §4's "silent deposit" objection applies: XP that
-lands no level-up is invisible. So Ichor are denominated in **levels-at-par**, not raw XP:
+**Priced in FIGHTS** (2026-09-14, per user direction; `ICHOR_FIGHTS`, `ichorXpForAct`). An Ichor
+is a fixed number of the act's ordinary fights' XP — the figure the player just watched a Skirmish
+pay, on the bar it moved:
 
-| Node | Size | Meaning |
+| Node | Size | Act 1 · 2 · 3 · 4 · 5 |
 |---|---|---|
-| Ichor (the old Scroll Cache's seat, weight 46) | **2 levels-at-par** | the XP from par to par+2 on the run's own curve |
-| Drop of Ichor (the old Lone Scroll's seat, weight 14) | **1 level-at-par** | the XP from par to par+1 |
-| Guild Hall shelf | Small, flat gold, limit 2 a visit | replaces `SCROLL_PURCHASE_*` |
+| Ichor (the old Scroll Cache's seat, weight 46) | **3 fights' worth** | 360 · 1,350 · 2,550 · 4,200 · 4,800 XP |
+| Drop of Ichor (the old Lone Scroll's seat, weight 14) | **1.5 fights' worth** | 180 · 675 · 1,275 · 2,100 · 2,400 XP |
+| Guild Hall shelf | a Drop, flat gold, limit 2 a visit | replaces `SCROLL_PURCHASE_*` |
 
-"Par" is `levelAfterEncounters(run.encountersWon)`. An Ichor so sized always crosses at least one
-level for any hero **at or behind** par — the behind gets more — and only a carry already ahead
-can ever see a partial. The level-up report is where it pays out, same screen, same rows.
+It was denominated in **levels-at-par** — the XP from `levelAfterEncounters` to par+2 — under the
+"every Ichor is a moment" rule (`growth-overhaul.md` §4's silent-deposit objection: XP that lands
+no level is invisible). Two things retired that: XP became a visible number with a real bar, so a
+grant that fills most of a bar is no longer invisible; and par was a figure the player never saw,
+so "2 levels at par" was a second currency beside the one the fights pay in. Sized to what two
+levels at par cost at each act's END (488 / 1,352 / 2,402 / 3,752 / 5,048 against 3× 120 / 450 /
+850 / 1,400 / 1,600), and FLAT within the act where the old figure grew with par — so at an act's
+first reward row it is up to a level richer than it was (Act 3's opener: +3 at par, not +2), and
+at its last it is what it was. A modest upsizing, in the direction §10's "worth its seat" question
+leans; the sim's Ichor tally now counts fights' worth, so re-measure before resizing.
+What changed is legibility: the who screen shows **each hero's bar, from → to**, with the levels it
+would cross struck beside it — a hero behind par visibly crosses more, a carry visibly less — and
+the node dossier prints the XP beside the fights'. The level-up report is where it pays out, same
+screen, same rows, same bar.
 
 **The screen is one tap: who.** Pushed on the node, like every other reward screen. A hero at
 `MAX_LEVEL` is refused rather than wasted, which is the one place the cap quietly pushes spread.

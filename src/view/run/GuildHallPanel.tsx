@@ -10,7 +10,7 @@ import type { RunState } from '../../run/state';
 import { ROSTER_CAP, RosterFullError } from '../../run/state';
 import { guildHallEntry } from '../../run/guildRecruit';
 import { guildHallLevel } from '../../run/difficulty';
-import { canBuyIchor } from '../../run/ichor';
+import { canBuyIchor, ichorXp } from '../../run/ichor';
 import { CONSUMABLE_HOLD_CAP, CONSUMABLE_KINDS, CONSUMABLE_NAMES, CONSUMABLE_PRICE, canBuyConsumable, type ConsumableKind } from '../../run/consumables';
 import type { EquipmentDefinition } from '../../run/equipment';
 import {
@@ -268,6 +268,7 @@ export function GuildHallPanel({
                 <ResourceGlyph kind="ichor" tone="inherit" />
               </span>
               <span className="guild-hall-good-name">Drop of Ichor</span>
+              <span className="guild-hall-good-desc">{ichorXp(run, 'drop')} XP</span>
               {ichorSoldOut ? (
                 <span className="guild-hall-good-price is-soldout">Sold out</span>
               ) : (

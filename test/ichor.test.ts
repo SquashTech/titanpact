@@ -5,7 +5,7 @@ import { test } from './harness';
 import { heroes } from '../src/data/heroes';
 import { ICHOR_PURCHASE_COST, ICHOR_PURCHASE_LIMIT } from '../src/data/recruitment';
 import {
-  ICHOR_LEVELS,
+  ICHOR_FIGHTS,
   ICHOR_NODE_KIND,
   IchorError,
   anyIchorEligible,
@@ -14,58 +14,66 @@ import {
   canDrinkIchor,
   ichorLevelAfter,
   ichorXp,
+  ichorXpForAct,
   grantIchor,
-  parLevel,
 } from '../src/run/ichor';
-import { MAX_LEVEL, MAX_XP, levelAfterEncounters, levelOf, xpForLevel } from '../src/run/growth';
+import { ENCOUNTERS_PER_ACT, MAX_XP, encounterXpForAct, levelAfterEncounters, levelOf, xpAfterEncounters, xpForLevel } from '../src/run/growth';
 import { REWARD_WEIGHTS } from '../src/run/map';
 import { addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
 
 const ALWAYS = () => 0.999999;
 
+/** A run `encountersWon` in, every hero holding par's XP (part-way into its level, as par is). */
 function runAtPar(encountersWon: number, heroIds: readonly string[] = ['cinderKnight']): RunState {
-  let run: RunState = { ...createRunState(100), encountersWon };
+  const actNumber = Math.min(6, Math.floor(Math.max(0, encountersWon - 1) / ENCOUNTERS_PER_ACT) + 1);
+  let run: RunState = { ...createRunState(100), encountersWon, actNumber };
   for (const id of heroIds) {
-    run = addRosterEntry(run, { ...createRosterEntry(id, id, heroes[id].moveIds), xp: xpForLevel(levelAfterEncounters(encountersWon)) });
+    run = addRosterEntry(run, { ...createRosterEntry(id, id, heroes[id].moveIds), xp: xpAfterEncounters(encountersWon) });
   }
   return run;
 }
 
-test('Ichor: an Ichor is worth its levels AT PAR on the run curve, so it grows with the act', () => {
-  assert.deepStrictEqual(ICHOR_LEVELS, { ichor: 2, drop: 1 });
-  for (const encountersWon of [0, 4, 8, 12, 16, 20]) {
-    const run = runAtPar(encountersWon);
-    const par = parLevel(run);
-    assert.strictEqual(par, levelAfterEncounters(encountersWon));
-    if (par + 2 <= MAX_LEVEL) {
-      assert.strictEqual(ichorXp(run, 'ichor'), xpForLevel(par + 2) - xpForLevel(par), `Ichor after ${encountersWon} wins`);
-      assert.strictEqual(ichorXp(run, 'drop'), xpForLevel(par + 1) - xpForLevel(par), `Small after ${encountersWon} wins`);
-    }
+test('Ichor: an Ichor is worth a fixed number of the act\'s FIGHTS, so it grows with the act and reads in the XP the fights pay', () => {
+  // 2026-09-14: priced in fights, not levels-at-par — the same currency the fight result and the
+  // level-up report show. Sized to what two levels at par cost at each act's end, ≈3 fights in every
+  // act; flat within the act, so an act's opener pays up to a level more than the old figure did.
+  assert.deepStrictEqual(ICHOR_FIGHTS, { ichor: 3, drop: 1.5 });
+  for (let act = 1; act <= 6; act++) {
+    assert.strictEqual(ichorXpForAct(act, 'ichor'), Math.round(3 * encounterXpForAct(act)), `Ichor in act ${act}`);
+    assert.strictEqual(ichorXpForAct(act, 'drop'), Math.round(1.5 * encounterXpForAct(act)), `Drop in act ${act}`);
+    assert.strictEqual(ichorXp({ actNumber: act }, 'ichor'), ichorXpForAct(act, 'ichor'));
   }
-  // Act 5's Ichor is the same two levels Act 1's was, at Act 5's price.
-  assert.ok(ichorXp(runAtPar(16), 'ichor') > 4 * ichorXp(runAtPar(0), 'ichor'));
-  // At the cap the Ichor is still two steps on the curve, ending at the cap — never zero.
-  const late = { ...runAtPar(21), encountersWon: 999 };
-  assert.strictEqual(parLevel(late), MAX_LEVEL);
-  assert.strictEqual(ichorXp(late, 'ichor'), MAX_XP - xpForLevel(MAX_LEVEL - 2));
+  assert.deepStrictEqual([1, 2, 3, 4, 5].map((act) => ichorXpForAct(act, 'ichor')), [360, 1350, 2550, 4200, 4800]);
+  // Act 5's Ichor is the same three fights Act 1's was, at Act 5's price.
+  assert.ok(ichorXpForAct(5, 'ichor') > 4 * ichorXpForAct(1, 'ichor'));
+  // And it buys roughly what the old denomination did: two or three levels for a hero at par, in every act.
+  for (const encountersWon of [1, 5, 9, 13, 17]) {
+    const run = runAtPar(encountersWon);
+    const gained = ichorLevelAfter(run, run.roster[0], 'ichor') - levelOf(run.roster[0]);
+    assert.ok(gained >= 1 && gained <= 3, `after ${encountersWon} wins an Ichor at par lands ${gained} levels`);
+  }
 });
 
-test('Ichor: at par it lands exactly the promised levels; behind par it lands more; ahead, fewer', () => {
+test('Ichor: the same drink lands more levels on a hero behind par than on one ahead of it', () => {
   // The convex curve is the mechanism (docs/xp-overhaul.md §2): one grant, three outcomes.
   const run = runAtPar(8, ['cinderKnight', 'crimson', 'rime']);
-  const par = parLevel(run);
+  const par = levelOf(run.roster[0]);
+  assert.strictEqual(par, levelAfterEncounters(8));
   const behind = { ...run.roster[1], xp: xpForLevel(par - 5) };
   const ahead = { ...run.roster[2], xp: xpForLevel(par + 3) };
   const fixture = { ...run, roster: [run.roster[0], behind, ahead] };
 
-  assert.strictEqual(ichorLevelAfter(fixture, run.roster[0], 'ichor'), par + 2, 'at par: exactly +2');
-  assert.ok(ichorLevelAfter(fixture, behind, 'ichor') - (par - 5) > 2, 'behind par: more than +2');
-  assert.ok(ichorLevelAfter(fixture, ahead, 'ichor') - (par + 3) < 2, 'ahead of par: fewer than +2');
+  const atPar = ichorLevelAfter(fixture, run.roster[0], 'ichor') - par;
+  const behindBy = ichorLevelAfter(fixture, behind, 'ichor') - (par - 5);
+  const aheadBy = ichorLevelAfter(fixture, ahead, 'ichor') - (par + 3);
+  assert.ok(behindBy > atPar, `behind par: ${behindBy} levels against ${atPar} at par`);
+  assert.ok(aheadBy < atPar, `ahead of par: ${aheadBy} levels against ${atPar} at par`);
 
   const fed = grantIchor(fixture, heroes, 'cinderKnight', 'ichor', ALWAYS);
   assert.strictEqual(fed.report.fromLevel, par);
-  assert.strictEqual(fed.report.toLevel, par + 2);
-  assert.strictEqual(levelOf(fed.run.roster[0]), par + 2);
+  assert.strictEqual(fed.report.toLevel, par + atPar);
+  assert.strictEqual(fed.report.toXp - fed.report.fromXp, ichorXp(fixture, 'ichor'), 'the report carries the bar\'s two ends');
+  assert.strictEqual(levelOf(fed.run.roster[0]), par + atPar);
   assert.ok((fed.report.gained.hp ?? 0) > 0, 'the levels crossed rolled growth');
   assert.strictEqual(fed.run.roster[1], behind, 'nobody else moved');
   assert.strictEqual(fed.run.roster[2], ahead);
@@ -94,10 +102,9 @@ test('Ichor: the shelf charges flat gold, sells no more than the limit a visit, 
     run = grantIchor(run, heroes, 'cinderKnight', 'drop', ALWAYS).run;
   }
   assert.strictEqual(run.gold, ICHOR_PURCHASE_COST);
-  // Two Drops are NOT +2: the first lands at par+1, and the second is eaten by a hero now ahead of
-  // par, where the same XP is worth less than a level. The carry throttles itself (docs/xp-overhaul.md §2).
-  assert.strictEqual(levelOf(run.roster[0]), levelAfterEncounters(4) + 1);
-  assert.ok(run.roster[0].xp > xpForLevel(levelAfterEncounters(4) + 1), 'and banks the rest part-way to the next');
+  // Two Drops are three fights' XP onto one hero — banked exactly, whatever levels that crosses.
+  assert.strictEqual(run.roster[0].xp, xpAfterEncounters(4) + 2 * ichorXp(run, 'drop'));
+  assert.ok(levelOf(run.roster[0]) > levelAfterEncounters(4), 'and it is ahead of par for it');
   // Gold left, shelf empty: the limit is what refuses, not the purse.
   assert.strictEqual(canBuyIchor(run, ICHOR_PURCHASE_COST, ICHOR_PURCHASE_LIMIT, ICHOR_PURCHASE_LIMIT), false);
   assert.throws(() => buyIchor(run, ICHOR_PURCHASE_COST, ICHOR_PURCHASE_LIMIT, ICHOR_PURCHASE_LIMIT), IchorError);

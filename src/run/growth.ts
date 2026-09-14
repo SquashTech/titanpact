@@ -201,6 +201,11 @@ export const ENCOUNTER_XP_BY_ACT: readonly number[] = [120, 450, 850, 1400, 1600
 export type EncounterXpKind = 'standard' | 'elite' | 'guardian';
 export const ENCOUNTER_XP_MULTIPLIER: Record<EncounterXpKind, number> = { standard: 1, elite: 1.5, guardian: 2 };
 
+/** The act's base fight, 1-based; the finale act reads its own entry. What an Ichor and the node dossier price against. */
+export function encounterXpForAct(actNumber: number): number {
+  return ENCOUNTER_XP_BY_ACT[Math.max(1, Math.min(actNumber, ENCOUNTER_XP_BY_ACT.length)) - 1];
+}
+
 /** The kind a map node pays as. The finale is its own base figure, not a Guardian. */
 export function encounterXpKind(nodeType: MapNodeType): EncounterXpKind {
   return nodeType === 'boss' ? 'guardian' : nodeType === 'elite' ? 'elite' : 'standard';
@@ -230,7 +235,7 @@ export function encounterXpKindAtPar(encountersWon: number): EncounterXpKind {
 export function xpForEncounter(encountersWon: number, kind: EncounterXpKind = encounterXpKindAtPar(encountersWon)): number {
   if (encountersWon < 1 || encountersWon > TOTAL_ENCOUNTERS) return 0;
   const act = Math.floor((encountersWon - 1) / ENCOUNTERS_PER_ACT);
-  return Math.round(ENCOUNTER_XP_BY_ACT[act] * ENCOUNTER_XP_MULTIPLIER[kind]);
+  return Math.round(encounterXpForAct(act + 1) * ENCOUNTER_XP_MULTIPLIER[kind]);
 }
 
 /** Par, in XP: what a hero that never missed a win holds after `encountersWon`. */

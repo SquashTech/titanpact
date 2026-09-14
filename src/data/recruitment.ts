@@ -8,7 +8,7 @@ import { heroes } from './heroes';
 export const CONTRACT_PURCHASE_COST = 20;
 
 /**
- * A Drop of Ichor off the Guild Hall shelf — one level at par for one hero (run/ichor.ts), where
+ * A Drop of Ichor off the Guild Hall shelf — a fight and a half's XP for one hero (run/ichor.ts), where
  * the shelf sold a Scroll bundle until the XP Overhaul's phase 2 (docs/xp-overhaul.md §3). Priced
  * where the bundle was: gold is the one currency that buys either objective power or growth, so
  * the conversion is the decision. First-pass figure for playtest.

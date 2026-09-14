@@ -6,8 +6,8 @@ import type { MapNodeType } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
 import { EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, MAX_ITEM_SLOTS, RARITY_ORDER, rarityWeightsFor } from '../../run/equipment';
 import { GOLD_REWARD_RANGE, PURSE_GOLD_RANGE } from '../../run/runProgress';
-import { ICHOR_LEVELS } from '../../run/ichor';
-import { ENCOUNTER_XP_BY_ACT, ENCOUNTER_XP_MULTIPLIER, encounterXpKind } from '../../run/growth';
+import { ICHOR_FIGHTS, ichorXpForAct } from '../../run/ichor';
+import { ENCOUNTER_XP_MULTIPLIER, encounterXpForAct, encounterXpKind } from '../../run/growth';
 import { MANA_WELL_AMOUNT } from '../../run/runProgress';
 import { BOON_OFFER_COUNT } from '../../run/boons';
 import { OPENER_ESCORT_COUNT, guildHallLevel, spawnLeaderTierFor, type EncounterNodeKind } from '../../run/difficulty';
@@ -64,6 +64,12 @@ export interface NodeDossier {
 
 const RECRUITABLE: readonly MapNodeType[] = ['skirmish', 'elite', 'boss'];
 
+/** An Ichor's size in the currency the fights are paid in: "3 fights' worth". */
+export function fightsWorth(kind: keyof typeof ICHOR_FIGHTS): string {
+  const n = ICHOR_FIGHTS[kind];
+  return `${n} fights' worth`;
+}
+
 function range([min, max]: readonly [number, number]): string {
   return min === max ? `${min}` : `${min}–${max}`;
 }
@@ -82,7 +88,7 @@ function encounterFacts(type: EncounterNodeKind, actNumber: number): NodeFact[] 
   const gold = GOLD_REWARD_RANGE[type];
   const drop = EQUIPMENT_DROP_CHANCE[type];
   const xpKind = encounterXpKind(type);
-  const xp = Math.round(ENCOUNTER_XP_BY_ACT[Math.min(actNumber, ENCOUNTER_XP_BY_ACT.length) - 1] * ENCOUNTER_XP_MULTIPLIER[xpKind]);
+  const xp = Math.round(encounterXpForAct(actNumber) * ENCOUNTER_XP_MULTIPLIER[xpKind]);
   return [
     { glyph: 'xp', label: 'XP', value: `${xp}`, note: xpKind === 'standard' ? undefined : `×${ENCOUNTER_XP_MULTIPLIER[xpKind]}` },
     { glyph: 'gold', label: 'Gold', value: gold[1] > 0 ? range(gold) : null },
@@ -189,9 +195,9 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         odds: odds('standard'),
       };
     case 'ichorReward':
-      return { kind: 'Reward · Growth', facts: [{ glyph: 'ichor', label: 'Levels', value: `+${ICHOR_LEVELS.ichor}`, note: 'to 1 hero, at par' }], odds: null };
+      return { kind: 'Reward · Growth', facts: [{ glyph: 'ichor', label: 'XP', value: `${ichorXpForAct(actNumber, 'ichor')}`, note: `${fightsWorth('ichor')}, to 1 hero` }], odds: null };
     case 'ichorDropReward':
-      return { kind: 'Reward · Growth', facts: [{ glyph: 'ichor', label: 'Level', value: `+${ICHOR_LEVELS.drop}`, note: 'to 1 hero, at par' }], odds: null };
+      return { kind: 'Reward · Growth', facts: [{ glyph: 'ichor', label: 'XP', value: `${ichorXpForAct(actNumber, 'drop')}`, note: `${fightsWorth('drop')}, to 1 hero` }], odds: null };
     case 'manaWellReward':
       return { kind: 'Reward · Growth', facts: [{ glyph: 'mana', label: 'Max Mana', value: `+${MANA_WELL_AMOUNT}`, note: 'to 1 hero, permanent' }], odds: null };
     case 'currencyReward':

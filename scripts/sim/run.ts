@@ -16,7 +16,7 @@ import { enemies, finaleEnemies, ENDBRINGER_ID } from '../../src/data/enemies';
 import { encounterKindOf, nodeEncounter } from '../../src/run/encounters';
 import { allCombatants } from '../../src/data/content';
 import { guildHallOffers, CONTRACT_PURCHASE_COST, ICHOR_PURCHASE_COST, ICHOR_PURCHASE_LIMIT } from '../../src/data/recruitment';
-import { ICHOR_LEVELS, buyIchor, canBuyIchor, canDrinkIchor, grantIchor, type IchorKind } from '../../src/run/ichor';
+import { ICHOR_FIGHTS, buyIchor, canBuyIchor, canDrinkIchor, grantIchor, type IchorKind } from '../../src/run/ichor';
 
 import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry, ROSTER_CAP, TOTAL_ACTS, type RunState, type RosterEntry } from '../../src/run/state';
 import { generateMap, type MapNode, type MapNodeType } from '../../src/run/map';
@@ -137,7 +137,7 @@ export interface RunRecord {
   choices: ChoiceEvent[];
   /** Rarity of every item actually equipped, keyed `act:rarity`. */
   equipped: string[];
-  /** Ichor eaten this run, by source, in levels-at-par (run/ichor.ts ICHOR_LEVELS). */
+  /** Ichor eaten this run, by source, in fights' worth (run/ichor.ts ICHOR_FIGHTS). */
   ichorBySource: Record<string, number>;
   /** Heroes joining after the draft: `contract` (claimed or bought), `hire` (Guild Hall). */
   recruitsBySource: Record<string, number>;
@@ -538,7 +538,7 @@ function tryRecruitContracts(run: RunState, defeatedRoster: readonly RosterEntry
 function drinkIchor(run: RunState, kind: IchorKind, source: string, rng: Rng, record: RunRecord, options: RunOptions): RunState {
   const target = policy.levelUpTarget(run.roster.filter(canDrinkIchor), options.levelPolicy);
   if (!target) return run;
-  record.ichorBySource[source] = (record.ichorBySource[source] ?? 0) + ICHOR_LEVELS[kind];
+  record.ichorBySource[source] = (record.ichorBySource[source] ?? 0) + ICHOR_FIGHTS[kind];
   tally(record, run.actNumber, 'levelUp');
   return paySchedule(grantIchor(run, rosterHeroes, target.rosterId, kind, rng).run, rng, record);
 }

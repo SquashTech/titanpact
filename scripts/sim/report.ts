@@ -422,7 +422,7 @@ export function formatReport(
   // Ichor by source, in levels-at-par (docs/xp-overhaul.md §3): the supply is the only balance
   // number, and this is where it is read. ~7 a run at the inherited weights is the first pass.
   out.push('');
-  out.push(`  Ichor eaten, in levels at par, by source — per run (all ${R}) and per completed run (${agg.wins}):`);
+  out.push(`  Ichor eaten, in fights' worth of XP, by source — per run (all ${R}) and per completed run (${agg.wins}):`);
   let IchorAll = 0;
   let IchorWon = 0;
   for (const source of Object.keys(agg.ichorBySource).sort()) {

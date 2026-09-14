@@ -3,8 +3,8 @@ import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import type { HeroDefinition } from '../../engine/content';
-import { ICHOR_LEVELS, anyIchorEligible, canDrinkIchor, ichorLevelAfter, parLevel, type IchorKind } from '../../run/ichor';
-import { levelOf } from '../../run/growth';
+import { ICHOR_FIGHTS, anyIchorEligible, canDrinkIchor, ichorLevelAfter, ichorXp, type IchorKind } from '../../run/ichor';
+import { MAX_XP, levelOf, xpProgress } from '../../run/growth';
 import type { RosterEntry, RunState } from '../../run/state';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { NodeHeader, NodeSky, NODE_TINT_VITAL } from '../shared/NodeStage';
@@ -27,9 +27,10 @@ const TITLES: Record<IchorKind, string> = { ichor: 'Ichor', drop: 'Drop of Ichor
 
 /**
  * Ichor: XP aimed at ONE hero (docs/xp-overhaul.md §3, run/ichor.ts). The screen collects one
- * thing, who, and every card says what that hero would become — a hero behind par climbs
- * further on the same Ichor, which is the whole reason the number is on the card. The payoff is
- * the level-up report, not this screen: the pick hands straight off.
+ * thing, who, and every card shows what that hero's bar would do — a hero behind par climbs
+ * further on the same Ichor, a carry ahead of it less, and the bar is where that is read rather
+ * than a sentence about par. The payoff is the level-up report, not this screen: the pick hands
+ * straight off.
  */
 export function IchorNodeScreen({ run, kind, bought = false, onPick, onSkip }: Props) {
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
@@ -39,8 +40,7 @@ export function IchorNodeScreen({ run, kind, bought = false, onPick, onSkip }: P
     playSfx('shrine', { pitch: 1.1, delay: 0.12 });
   }, []);
 
-  const levels = ICHOR_LEVELS[kind];
-  const par = parLevel(run);
+  const xp = ichorXp(run, kind);
   const anyEligible = anyIchorEligible(run.roster);
 
   function handlePick(rosterId: string) {
@@ -64,7 +64,7 @@ export function IchorNodeScreen({ run, kind, bought = false, onPick, onSkip }: P
         glyph={<ResourceGlyph kind="ichor" className="node-header-resource" />}
         readout={
           anyEligible
-            ? `${levels === 1 ? "A level's" : `${levels} levels'`} worth of growth at par (Lv ${par}), for whoever drinks it. Choose who — a hero behind gets more of it. Hold to review a sheet.`
+            ? `${xp} XP — ${ICHOR_FIGHTS[kind]} fights' worth — for whoever drinks it. Choose who; a hero behind climbs further on it. Hold to review a sheet.`
             : 'Every hero is already at max level — there is nobody left to drink it.'
         }
       />
@@ -75,6 +75,7 @@ export function IchorNodeScreen({ run, kind, bought = false, onPick, onSkip }: P
           const from = levelOf(entry);
           const eligible = canDrinkIchor(entry);
           const to = eligible ? ichorLevelAfter(run, entry, kind) : from;
+          const toXp = Math.min(MAX_XP, entry.xp + xp);
           return (
             <HeroPickCard
               key={entry.rosterId}
@@ -85,6 +86,7 @@ export function IchorNodeScreen({ run, kind, bought = false, onPick, onSkip }: P
               onPreview={() => setPreviewEntry({ hero, entry })}
               ariaLabel={`${hero.name}, level ${from} — ${eligible ? `drinks it, to level ${to}` : 'already at max level'}`}
               ctaClassName={eligible ? 'is-accent' : undefined}
+              detail={<IchorBarPreview fromXp={entry.xp} toXp={toXp} crossed={to - from} />}
               cta={eligible ? (to > from ? `Lv ${from} → ${to}` : `Lv ${from}, part-way`) : 'Max'}
             />
           );
@@ -107,5 +109,24 @@ export function IchorNodeScreen({ run, kind, bought = false, onPick, onSkip }: P
         />
       )}
     </div>
+  );
+}
+
+/**
+ * What the Ichor would do to this hero's bar. Inside one level: the XP already banked, dim, and
+ * the Ichor's share bright after it. Across a level: the bar it ENDS in, all bright, with the
+ * levels crossed struck beside it — the CTA under the card names the two levels.
+ */
+function IchorBarPreview({ fromXp, toXp, crossed }: { fromXp: number; toXp: number; crossed: number }) {
+  const held = crossed > 0 ? 0 : xpProgress(fromXp);
+  const after = xpProgress(toXp);
+  return (
+    <span className="ichor-bar" aria-hidden="true">
+      <span className="ichor-bar-track">
+        <i className="ichor-bar-held" style={{ width: `${held * 100}%` }} />
+        <i className="ichor-bar-gain" style={{ left: `${held * 100}%`, width: `${Math.max(0, after - held) * 100}%` }} />
+      </span>
+      {crossed > 0 && <span className="ichor-bar-levels">+{crossed}</span>}
+    </span>
   );
 }

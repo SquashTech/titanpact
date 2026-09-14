@@ -174,9 +174,11 @@ don't silently override it.
   screen removal without buying that; a hero rotated in is at parity, so rotating is free.
   **The cost is real: hyperfocus dies as a LEVELLING strategy**, and is bought back by **Ichor**
   (2026-09-13, `src/run/ichor.ts`, `docs/xp-overhaul.md` §3): the two reward-row seats the Scroll
-  Cache and Lone Scroll held, and the Guild Hall shelf, pay XP worth **2 (or 1) levels AT PAR** to
-  ONE hero the player picks — more levels for a hero behind par, fewer for one ahead, since the
-  cube throttles the carry and closes the gap with the same grant. A hero at the cap is refused.
+  Cache and Lone Scroll held, and the Guild Hall shelf, pay **3 (or 1.5) of the act's FIGHTS' worth
+  of XP** (`ICHOR_FIGHTS`, 2026-09-14 — it was 2 (or 1) levels-at-par, the same value in a currency
+  the player never saw) to ONE hero the player picks — more levels for a hero behind par, fewer for
+  one ahead, since the cube throttles the carry and closes the gap with the same grant, and the who
+  screen draws each hero's bar from → to so that is read, not told. A hero at the cap is refused.
   Every source is a seat that displaced another reward, so an Ichor is never free and never
   compounds. The supply is the only balance number and phase 6 sets it.
   **A level-up REPORT screen is not an allocation screen** (2026-09-10,
