@@ -11,6 +11,7 @@ import * as assert from 'assert';
 import { test } from './harness';
 import { moves } from '../src/data/moves';
 import { classMoves } from '../src/data/classes';
+import { signatureMoves } from '../src/data/signatures';
 import { progressionTable } from '../src/data/progression';
 import { createRunState, createRosterEntry, addRosterEntry } from '../src/run/state';
 import type { RunState } from '../src/run/state';
@@ -83,7 +84,8 @@ function poolOf(entry: RunState['roster'][number]): string[] {
 test('move tiers: every move of a tiered slate carries a tier, and no other type does', () => {
   for (const move of Object.values(moves)) {
     // A class move wears a type for flavour and no tier: it is in no pool (test/classes.test.ts).
-    if (classMoves[move.id]) continue;
+    // A signature likewise: its only source is the tenth Mastery pip (test/mastery.test.ts).
+    if (classMoves[move.id] || signatureMoves[move.id]) continue;
     if (TIERED_TYPES.includes(move.type)) {
       assert.ok(move.tier, `${move.id} (${move.type}) has no tier`);
     } else {

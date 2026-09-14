@@ -7,6 +7,7 @@ import type { StatKey } from '../../engine/content';
 import { GROWTH_STATS, MAX_LEVEL, growthUnitFor, levelOf, xpProgress, xpToNextLevel, type HeroLevelUp } from '../../run/growth';
 import { availableEvolution, entryBandRank, levelMovePool, pendingScheduleEntry, scheduleFor } from '../../run/progression';
 import { companionTierStep } from '../../run/companion';
+import { pendingSignature } from '../../run/mastery';
 import type { RosterEntry, RunState } from '../../run/state';
 import { getTypeColor } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -16,7 +17,7 @@ import { STAT_COLORS, STAT_LABELS, StatGlyph } from '../shared/StatBars';
 import { RosterPeek } from './RosterPeek';
 import { CompanionScreen } from './CompanionScreen';
 import { EvolutionScreen } from './EvolutionScreen';
-import { MoveLearnedOverlay, MoveOfferOverlay } from './MoveOfferOverlay';
+import { MoveLearnedOverlay, MoveOfferOverlay, SignatureBox } from './MoveOfferOverlay';
 import { playXpBar, xpBarSegments } from '../shared/xpBar';
 import { useLevelUpFlow } from './levelUpFlow';
 
@@ -124,6 +125,7 @@ export function LevelUpScreen({ run, onRunChange, report, onContinue }: Props) {
 
   const offerEntry = flow.offer ? (run.roster.find((r) => r.rosterId === flow.offer!.rosterId) ?? null) : null;
   const overflowEntry = flow.overflow ? (run.roster.find((r) => r.rosterId === flow.overflow!.rosterId) ?? null) : null;
+  const signatureEntry = flow.signature ? (run.roster.find((r) => r.rosterId === flow.signature!.rosterId) ?? null) : null;
 
   return (
     <div className="node-screen level-up-screen" style={{ '--node-rgb': NODE_TINT_VITAL } as CSSProperties}>
@@ -160,6 +162,10 @@ export function LevelUpScreen({ run, onRunChange, report, onContinue }: Props) {
       <button className="resolve-button" disabled={!landed || paying} onClick={() => setPaying(true)}>
         Continue
       </button>
+
+      {flow.signature && signatureEntry && (
+        <SignatureBox run={run} entry={signatureEntry} offer={flow.signature} onResolve={flow.resolveSignature} onClose={flow.closeSignature} />
+      )}
 
       {flow.overflow && overflowEntry && (
         <MoveOfferOverlay
@@ -214,6 +220,7 @@ function owedLabel(run: RunState, rosterId: string): string | null {
   const node = availableEvolution(progressionTable, entry);
   if (node && node.paths.length > 0) return 'Evolution!';
   const hero = rosterHeroes[entry.heroId];
+  if (pendingSignature(hero, entry)) return 'Signature!';
   if (!pendingScheduleEntry(hero, entry)) return null;
   return levelMovePool(progressionTable, moves, hero, entry).length > 0 ? 'New Move!' : null;
 }

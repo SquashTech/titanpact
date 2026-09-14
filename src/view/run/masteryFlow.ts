@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { rosterHeroes as heroes } from '../../data/content';
 import { progressionTable } from '../../data/progression';
 import { applyCompanionTierStep, companionTierStep } from '../../run/companion';
+import { pendingSignature } from '../../run/mastery';
 import type { RunState } from '../../run/state';
-import { applyEvolutionMoves, availableEvolution, chooseEvolutionPath, grantOfferedMove, type EvolutionNode } from '../../run/progression';
+import { MOVE_CAP, applyEvolutionMoves, availableEvolution, chooseEvolutionPath, grantOfferedMove, recordMoveOffer, type EvolutionNode } from '../../run/progression';
 
 /** The Evolution, waiting on the player. */
 export interface Evolving {
@@ -17,6 +18,16 @@ export interface Overflow {
   queue: string[];
 }
 
+/**
+ * The signature the tenth pip has raised (docs/mastery.md §5). Below the cap the move is already
+ * LEARNED and the box only says so; at the cap it is still a question — which of the four goes.
+ */
+export interface SignatureOffer {
+  rosterId: string;
+  moveId: string;
+  learned: boolean;
+}
+
 /** The companion's tier-step (run/companion.ts): the pip a hero would evolve at, and the pip it would take its signature at. */
 export interface Grown {
   rosterId: string;
@@ -26,14 +37,16 @@ export interface Grown {
 
 /**
  * What a hero's Mastery pips owe it, paid one screen at a time (docs/mastery.md §2): the
- * Evolution as a screen of its own, the companion's tier-step as its plate, and the granted
- * move's overflow as the replace-or-decline a level makes. Raised on the node that landed the
- * pip, and — for a hire that arrived past the pip unevolved — on its next level-up report.
+ * Evolution as a screen of its own, the companion's tier-step as its plate, the granted move's
+ * overflow as the replace-or-decline a level makes, and the signature at ten as the same box a
+ * level's offer ends in. Raised on the node that landed the pip, and — for a hire that arrived
+ * past a pip unpaid — on its next level-up report.
  */
 export interface MasteryFlow {
   evolving: Evolving | null;
   grown: Grown | null;
   overflow: Overflow | null;
+  signature: SignatureOffer | null;
   /** Something is on screen waiting on the player. */
   busy: boolean;
   /**
@@ -44,12 +57,15 @@ export interface MasteryFlow {
   closeGrown: () => void;
   chooseEvolution: (pathId: string) => void;
   resolveOverflow: (replaceMoveId: string | null, learn: boolean) => void;
+  resolveSignature: (replaceMoveId: string | null, learn: boolean) => void;
+  closeSignature: () => void;
 }
 
 export function useMasteryFlow(run: RunState, onRunChange: (next: RunState) => void): MasteryFlow {
   const [evolving, setEvolving] = useState<Evolving | null>(null);
   const [grown, setGrown] = useState<Grown | null>(null);
   const [overflow, setOverflow] = useState<Overflow | null>(null);
+  const [signature, setSignature] = useState<SignatureOffer | null>(null);
 
   function raise(rosterId: string, on: RunState = run): boolean {
     const entry = on.roster.find((r) => r.rosterId === rosterId);
@@ -65,7 +81,23 @@ export function useMasteryFlow(run: RunState, onRunChange: (next: RunState) => v
       setEvolving({ rosterId, node });
       return true;
     }
+    const moveId = pendingSignature(heroes[entry.heroId], entry);
+    if (moveId) {
+      // Spent by being made, as a level's offer is; below the cap it simply lands.
+      let next = recordMoveOffer(on, rosterId, [moveId]);
+      const learned = entry.unlockedMoveIds.length < MOVE_CAP;
+      if (learned) next = grantOfferedMove(next, rosterId, moveId);
+      onRunChange(next);
+      setSignature({ rosterId, moveId, learned });
+      return true;
+    }
     return false;
+  }
+
+  function resolveSignature(replaceMoveId: string | null, learn: boolean) {
+    if (!signature) return;
+    if (learn) onRunChange(grantOfferedMove(run, signature.rosterId, signature.moveId, replaceMoveId ?? undefined));
+    setSignature(null);
   }
 
   function chooseEvolution(pathId: string) {
@@ -94,10 +126,13 @@ export function useMasteryFlow(run: RunState, onRunChange: (next: RunState) => v
     evolving,
     grown,
     overflow,
-    busy: !!evolving || !!grown || !!overflow,
+    signature,
+    busy: !!evolving || !!grown || !!overflow || !!signature,
     raise,
     closeGrown: () => setGrown(null),
     chooseEvolution,
     resolveOverflow,
+    resolveSignature,
+    closeSignature: () => setSignature(null),
   };
 }

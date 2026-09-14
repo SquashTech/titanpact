@@ -80,7 +80,7 @@ export const progressionTable: ProgressionTable = {
       'banish',
     ],
     // --- Water ---
-    tidecaller: ['siphon', 'torrent', 'engulf', 'deluge', 'oasis', 'maelstrom', 'tsunami', 'highTide', 'undertow', 'iceShard', 'psiBolt', 'glimmer', 'jolt', 'aquaSlice', 'shockBubble', 'waveShred'],
+    tidecaller: ['siphon', 'torrent', 'engulf', 'deluge', 'oasis', 'tsunami', 'highTide', 'undertow', 'iceShard', 'psiBolt', 'glimmer', 'jolt', 'aquaSlice', 'shockBubble', 'waveShred'],
     // Shock Bubble plants Conduct and the Iron column detonates it — the mark and the payoff are
     // both already in the pool, which is what Tideclaw's Static Tide then makes free.
     pincer: [
@@ -97,7 +97,6 @@ export const progressionTable: ProgressionTable = {
       'claw',
       'mudBall',
       'oasis',
-      'lizardRush',
       'highTide',
       'titanicCrush',
     ],
@@ -660,7 +659,12 @@ export const progressionTable: ProgressionTable = {
             name: 'Tidecaller',
             description: 'Stays water all the way down, and hits with everything at once.',
             statGrants: { attack: 10, intelligence: 10, speed: 10 },
-            unlocksMoveIds: ['lizardRush'],
+            // A Late Water spread at the Evolution, an act before lateLevel opens the band, and off
+            // Riptide's own pool so the grant is not timing alone (test/roster.test.ts) — the thing a
+            // graft cannot offer (docs/leveling-and-ranks.md clause 5), as Rime's Avalanche grants
+            // Snowball. It was Lizard Rush until that became Riptide's signature (2026-09-14,
+            // Mastery phase 3, per user direction).
+            unlocksMoveIds: ['maelstrom'],
           },
           {
             id: 'tidecaller-defensive',
@@ -798,7 +802,7 @@ export const progressionTable: ProgressionTable = {
             statGrants: { attack: 10, wisdom: 10, manaPool: 10 },
             unlocksMoveIds: ['aquaSlice'],
             typeGraft: 'Water',
-            learnableMoveIds: ['tideGuard', 'waveShred', 'lizardRush'],
+            learnableMoveIds: ['tideGuard', 'waveShred'],
           },
         ],
       },
@@ -950,7 +954,7 @@ export const progressionTable: ProgressionTable = {
             statGrants: { speed: 10, manaPool: 20 },
             unlocksMoveIds: ['aquaSlice'],
             typeGraft: 'Water',
-            learnableMoveIds: ['tideGuard', 'undertow', 'refresh', 'waveShred', 'lizardRush'],
+            learnableMoveIds: ['tideGuard', 'undertow', 'refresh', 'waveShred'],
             grantsPassiveIds: ['plunder'],
           },
         ],

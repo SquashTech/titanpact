@@ -522,9 +522,13 @@ identity.
 > **A default, not a law** (2026-09-02): Riptide and Rime both put the passive on a
 > GRAFT instead — Siren's Enthrall, Glacier's Frozen Stone — and pay for it in
 > the stat line (Siren grants no stats at all). What the clause protects is that a
-> mono path must carry something a graft cannot, and a signature MOVE (clause 5) serves
-> that too: Riptide's Tidecaller has Lizard Rush, Rime's Avalanche has Snowball. What
-> stays true is that a mono path offering *only stats* cannot compete.
+> mono path must carry something a graft cannot, and a MOVE off the hero's own pool (clause 5)
+> serves that too: Riptide's Tidecaller grants Maelstrom, Rime's Avalanche Snowball. (Tidecaller
+> granted Lizard Rush until 2026-09-14, when that became Riptide's *signature* — the move held at
+> ten Mastery pips and nowhere else, `docs/mastery.md` §5 — and a signature is in no path's grant
+> by rule; Maelstrom came off Riptide's pool to take the seat, since a grant that duplicates the
+> pool pays in timing alone.) What stays true is that a mono path offering *only stats* cannot
+> compete.
 >
 > Tempest's Thunderhead breaks the other half (2026-09-02): +30 Speed ties Lightning
 > Rod's net 30 rather than sitting under it, and it carries Feedback Loop on top. The

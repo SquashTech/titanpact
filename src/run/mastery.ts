@@ -4,6 +4,7 @@
 // does nothing but count. Scrolls come from the map — the Scribe, the Scroll Cache, the Guild
 // Hall shelf — and never from a fight: fights pay XP, the map pays Scrolls.
 
+import type { HeroDefinition } from '../engine/content';
 import type { RosterEntry, RunState } from './state';
 
 export const MASTERY_CAP = 10;
@@ -58,6 +59,18 @@ export function anyMasteryEligible(roster: readonly RosterEntry[]): boolean {
 /** How many of `pips` this hero can actually hold — the rest is lost, and the card says so. */
 export function masteryRoom(entry: Pick<RosterEntry, 'mastery'>, pips: number): number {
   return Math.max(0, Math.min(pips, MASTERY_CAP - entry.mastery));
+}
+
+/**
+ * The signature this hero is owed: its authored move, once its pips have reached the tenth and
+ * the offer has not yet been made (docs/mastery.md §5). Made once — spent by being made, as a
+ * level's offer is (`offeredMoveIds`) — and inside MOVE_CAP: replace-or-decline at the rim. Null
+ * for a hero with none authored, which reaches ten and is simply mastered.
+ */
+export function pendingSignature(hero: HeroDefinition | undefined, entry: RosterEntry): string | null {
+  const moveId = hero?.signatureMoveId;
+  if (!moveId || entry.mastery < MASTERY_SIGNATURE) return null;
+  return entry.unlockedMoveIds.includes(moveId) || entry.offeredMoveIds.includes(moveId) ? null : moveId;
 }
 
 /** Whether a grant of `pips` would carry this hero across `milestone`. */

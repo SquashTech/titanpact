@@ -451,8 +451,11 @@ heroes, `SCRIBE_PIPS_EACH` = 2 each — it cannot be concentrated, and that is w
 the **Scroll Cache** (`scrollReward`, weight 46 in the reward pool: `SCROLL_CACHE_COUNT` = 3 in any
 split — where the player prioritises), and the Guild Hall shelf (`SCROLL_PURCHASE_COST` = 25g,
 `SCROLL_PURCHASE_LIMIT` = 2 a visit, the tap charges the gold and opens the who screen). The fifth
-pip raises the Evolution screen over the node that paid it (`masteryFlow.ts`); the level-up report
-raises it only as the catch-all for a hire that arrived past the pip. The supply is the only balance
+pip raises the Evolution screen over the node that paid it (`masteryFlow.ts`), and the tenth the
+hero's **signature move** (`HeroDefinition.signatureMoveId`, `src/data/signatures.ts` — one
+authored move a hero, in no pool, replace-or-decline at `MOVE_CAP`; Riptide's Lizard Rush is the
+template and, until phase 4 authors the rest, the only one); the level-up report raises either
+only as the catch-all for a hire that arrived past the pip. The supply is the only balance
 number: measured on the greedy pilot at these weights, **~35 pips a completed run** (Scribe 20,
 Cache 9, shelf 6), against a target of every hero evolved and ~3 signatures; phase 5 sets it.
 

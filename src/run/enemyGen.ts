@@ -9,7 +9,7 @@ import { createRng, nextFloat, type RngState } from '../engine/rng/seededRng';
 import type { BrokenSeal, RunState, RosterEntry } from './state';
 import { createRunState, createRosterEntry, addRosterEntry } from './state';
 import { xpForLevel } from './growth';
-import { MASTERY_CAP } from './mastery';
+import { MASTERY_CAP, pendingSignature } from './mastery';
 import { unsealedIdFor } from '../data/enemies';
 import { spawnPool, type SpawnTier } from '../data/titanspawn';
 import { rollEquipmentDrops } from '../data/equipment';
@@ -135,9 +135,10 @@ export interface EncounterOptions {
 /**
  * Walks the hero's schedule (progression.ts scheduleEntries) up to its level, exactly as a roster
  * hero would have: the Evolution first, when the entry's Mastery has reached the pip that opens
- * it (a path taken unweighted, so the offers that follow can draw on a graft's line), then each
- * offer rolls one move from the band open at that level and learns it if there is room (an enemy
- * never swaps). The same schedule and the same pips a roster hero reads, so a contract hero is the
+ * it (a path taken unweighted, so the offers that follow can draw on a graft's line), then the
+ * signature at ten — into the kit ahead of the offers, in the last slot if the kit is full, since
+ * a hero at ten holds it by definition — then each offer rolls one move from the band open at
+ * that level and learns it if there is room (an enemy never swaps). The same schedule and the same pips a roster hero reads, so a contract hero is the
  * enemy you beat, finished (docs/xp-overhaul.md §4, docs/mastery.md §4).
  */
 export function rollLevelProgression(
@@ -162,6 +163,17 @@ export function rollLevelProgression(
     } catch {
       // Illegal path for this hero (content bug) — field the enemy un-evolved rather than crash.
     }
+  }
+  const signature = pendingSignature(hero, next.roster.find((r) => r.rosterId === rosterId)!);
+  if (signature) {
+    next = {
+      ...next,
+      roster: next.roster.map((r) => {
+        if (r.rosterId !== rosterId) return r;
+        const kit = r.unlockedMoveIds.length < MOVE_CAP ? [...r.unlockedMoveIds, signature] : [...r.unlockedMoveIds.slice(0, MOVE_CAP - 1), signature];
+        return { ...r, unlockedMoveIds: kit, offeredMoveIds: [...r.offeredMoveIds, signature] };
+      }),
+    };
   }
   // The band an offer rolls from is the band open at the level of THAT entry, not at the level
   // the hero arrives at — a level-13 enemy's first offer was an Early move, as a roster hero's was.

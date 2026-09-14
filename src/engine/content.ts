@@ -443,6 +443,12 @@ export interface HeroDefinition {
    * reads as DEFAULT_SCHEDULE until the per-hero pass authors one.
    */
   schedule?: LevelSchedule;
+  /**
+   * The move this hero holds at MASTERY_SIGNATURE pips and nowhere else (run/mastery.ts,
+   * data/signatures.ts, docs/mastery.md §5). Optional until every hero's is authored; a hero
+   * without one reaches ten and is simply mastered.
+   */
+  signatureMoveId?: string;
 }
 
 /**

@@ -7,7 +7,7 @@ import { MOVE_CAP, grantOfferedMove, levelMovePool, pendingScheduleEntry, record
 import { playSfx } from '../../audio/sfx';
 import { useMasteryFlow, type MasteryFlow } from './masteryFlow';
 
-export type { Evolving, Grown, Overflow } from './masteryFlow';
+export type { Evolving, Grown, Overflow, SignatureOffer } from './masteryFlow';
 
 /**
  * What a schedule entry has raised. Below the cap the move is already LEARNED and the box only

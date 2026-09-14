@@ -4,6 +4,7 @@ import { rosterHeroes } from '../../data/content';
 import { moves } from '../../data/moves';
 import type { RosterEntry, RunState } from '../../run/state';
 import { MOVE_CAP } from '../../run/progression';
+import { MASTERY_SIGNATURE } from '../../run/mastery';
 import { playSfx } from '../../audio/sfx';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -168,5 +169,27 @@ export function MoveLearnedOverlay({ run, entry, moveId, eyebrow, onClose }: Lea
       </div>
     </div>,
     overlayHost()
+  );
+}
+
+interface SignatureBoxProps {
+  run: RunState;
+  entry: RosterEntry;
+  offer: { moveId: string; learned: boolean };
+  onResolve: (replaceMoveId: string | null, learn: boolean) => void;
+  onClose: () => void;
+}
+
+/**
+ * The box the tenth Mastery pip's signature ends in (docs/mastery.md §5; masteryFlow.ts): a
+ * receipt below the cap, the replace question at it — the same two boxes a level's offer uses,
+ * under the one line that says what this is.
+ */
+export function SignatureBox({ run, entry, offer, onResolve, onClose }: SignatureBoxProps) {
+  const eyebrow = `Mastery ${MASTERY_SIGNATURE} — ${rosterHeroes[entry.heroId].name}'s signature`;
+  return offer.learned ? (
+    <MoveLearnedOverlay run={run} entry={entry} moveId={offer.moveId} eyebrow={eyebrow} onClose={onClose} />
+  ) : (
+    <MoveOfferOverlay run={run} entry={entry} moveId={offer.moveId} eyebrow={eyebrow} onResolve={onResolve} />
   );
 }

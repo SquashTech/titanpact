@@ -22,7 +22,7 @@ import { ResourceGlyph } from '../shared/RunGlyph';
 import { CompanionScreen } from './CompanionScreen';
 import { EvolutionScreen } from './EvolutionScreen';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
-import { MoveOfferOverlay } from './MoveOfferOverlay';
+import { MoveOfferOverlay, SignatureBox } from './MoveOfferOverlay';
 import { RosterPeek } from './RosterPeek';
 import { useMasteryFlow } from './masteryFlow';
 
@@ -105,6 +105,7 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
   }
 
   const overflowEntry = flow.overflow ? (run.roster.find((r) => r.rosterId === flow.overflow!.rosterId) ?? null) : null;
+  const signatureEntry = flow.signature ? (run.roster.find((r) => r.rosterId === flow.signature!.rosterId) ?? null) : null;
 
   const title = 'Mastery Scrolls';
   const eyebrow = plan.kind === 'scribe' ? 'The Scribe' : bought ? 'Off the shelf' : 'Scroll Cache';
@@ -130,17 +131,20 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
           const picked = pickedIds.includes(entry.rosterId);
           const open = !finished && canTakeMastery(entry) && !picked;
           const room = masteryRoom(entry, pipsPerTap);
-          // The fifth pip is a hero's Evolution and the companion's first step; the tenth is the
-          // companion's second (a hero's signature is phase 3 and pays nothing yet).
-          const turns = crossesMastery(entry, pipsPerTap, MASTERY_EVOLUTION) || (entry.mortal && crossesMastery(entry, pipsPerTap, MASTERY_CAP));
+          // The fifth pip is a hero's Evolution and the companion's first step; the tenth is a
+          // hero's signature (when one is authored) and the companion's second step.
+          const evolves = crossesMastery(entry, pipsPerTap, MASTERY_EVOLUTION);
+          const masters = crossesMastery(entry, pipsPerTap, MASTERY_CAP) && (entry.mortal || !!hero.signatureMoveId);
           const cta = !canTakeMastery(entry)
             ? 'Mastered'
             : picked
               ? `+${SCRIBE_PIPS_EACH} · ${entry.mastery}/${MASTERY_CAP}`
-              : turns
+              : evolves || masters
                 ? entry.mortal
                   ? 'Grows!'
-                  : 'Evolves!'
+                  : evolves
+                    ? 'Evolves!'
+                    : 'Signature!'
                 : `+${room} · ${entry.mastery + room}/${MASTERY_CAP}`;
           return (
             <HeroPickCard
@@ -152,7 +156,7 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
               onActivate={() => open && handleTap(entry)}
               onPreview={() => setPreviewEntry({ hero, entry })}
               ariaLabel={`${hero.name}, Mastery ${entry.mastery} of ${MASTERY_CAP} — ${cta}`}
-              ctaClassName={picked ? 'is-done' : turns ? 'is-accent' : undefined}
+              ctaClassName={picked ? 'is-done' : evolves || masters ? 'is-accent' : undefined}
               detail={<MasteryPips mastery={entry.mastery} gain={open ? room : 0} />}
               cta={cta}
             />
@@ -164,6 +168,10 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
         <button className="resolve-button" onClick={onDone}>
           Continue
         </button>
+      )}
+
+      {flow.signature && signatureEntry && (
+        <SignatureBox run={run} entry={signatureEntry} offer={flow.signature} onResolve={flow.resolveSignature} onClose={flow.closeSignature} />
       )}
 
       {flow.overflow && overflowEntry && (

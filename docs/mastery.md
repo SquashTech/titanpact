@@ -1,7 +1,7 @@
 # mastery.md — Mastery: pips, the Scribe, and the signature
 
 > **STATUS: DECIDED 2026-09-14 (per user direction, after a same-day draft on "fights survived"
-> was playtested on paper and rejected — §0); PHASES 1–2 OF §8 ARE IN.** `CLAUDE.md` and `xp-overhaul.md`
+> was playtested on paper and rejected — §0); PHASES 1–3 OF §8 ARE IN.** `CLAUDE.md` and `xp-overhaul.md`
 > describe the game in force wherever a §8 phase has not landed; §8 is the route and §9 the list
 > of sign-offs each phase spends — **check its Status column before assuming anything here is
 > live.** Every number below is a first pass unless it says otherwise; the design is the shape,
@@ -174,10 +174,13 @@ the rider.
 **Exclusivity, the Class-move rule's sibling.** A signature is in no type pool, no Mentor or Tutor
 pool, no graft's `learnableMoveIds`, and no path's `unlocksMoveIds` — untiered the way a Class
 move is. Authored at the hero's innate primary type, so STAB is guaranteed without
-`typeFollowsUser`. Lizard Rush today fails this three ways (the Water pool,
-`data/progression.ts:100`; two grafts' lists at `:801` and `:953`; Tidecaller's clause 5 at
-`:663`) — it is the right *shape* and not yet a signature by the rule that makes it one. Phase 3
-pulls it; §10 carries the Tidecaller question.
+`typeFollowsUser`. Lizard Rush failed this three ways until phase 3 — the Water pool, two grafts'
+`learnableMoveIds`, Tidecaller's clause-5 grant — and was pulled from all three
+(`src/data/signatures.ts` is the catalog, folded into `moves`). **Tidecaller grants Maelstrom
+instead** (2026-09-14, per user direction): a Late Water spread at the Evolution, an act before
+the band opens, and taken OFF Riptide's own pool so the grant is not timing alone — the same shape
+as Rime's Avalanche granting Snowball. So every Riptide reaches Lizard Rush at ten, and Tidecaller
+still carries something no graft can.
 
 **Inside the cap.** `MOVE_CAP` is 4 and stays 4: the tenth pip's offer is replace-or-decline on
 the who-screen, like a Class move at the rim. A fifth slot is a bigger power spike and breaks the
@@ -237,7 +240,7 @@ Sequenced so the tree is playable at every boundary. `SAVE_VERSION` bumps at eac
 |---|---|---|---|
 | 1 | **Mastery in.** `RosterEntry.mastery`; the who-screen (Ichor's, renamed, with the pip row); the **Scribe** row (`scribeReward`, forced, acts 1–5, pick two, +2 each); the **shelf** (Guild Hall and Vigil, 25g, 2 a visit); the Evolution raised at 5 from the node; `masteryForAct` for enemies, contracts, hires; the companion's steps at 5 / 10; delete §7's first four items. Ichor untouched — both seats stay. Tutorial re-checked (the Scribe with three heroes in a one-node-per-row act). | No reader of `evolutionLevel`; a run completable end to end; `test/recruitment.test.ts` pins contract > hire on pips. Measured against the XP Overhaul's phase-6 baseline (full-clear 57%, Evolutions 5.0 a run): Evolutions per run, "every hero evolved" %, the clock with one more row an act. | **DONE 2026-09-14.** `src/run/mastery.ts`; `ScrollNodeScreen` (a new screen beside Ichor's, since Ichor stays until phase 2) with `masteryFlow.ts` carrying the Evolution / tier-step / overflow raise that `levelUpFlow.ts` now composes as its catch-all; `MasteryPips` on the who-screen and the hero sheet; `ROW_WIDTHS` gained the Scribe at row 4 and the tutorial corridor a beat for it; `ActScaling.mastery`; `SAVE_VERSION` 15. Measured below. |
 | 2 | **The Cache takes Ichor's seats.** `scrollReward` at 46; `ichorReward` / `ichorDropReward` / `ichor.ts` / the Drops deleted; the Drop's 14 retires. | No Ichor anywhere; the sim tallies pips by source. **Separable — veto here leaves phase 1 standing.** | **DONE 2026-09-14.** `scrollReward` (`SCROLL_CACHE_COUNT` = 3) in the pool at 46, on the same `ScrollNodeScreen`; `src/run/ichor.ts`, `IchorNodeScreen`, the shelf's Drops and `ICHOR_PURCHASE_*` deleted; the phial stays as XP's glyph; the corridor's third reward row is the Cache; the sim's `--policy focus / spread` is now the Scroll dial (`scrollTarget`). `SAVE_VERSION` 16. Measured below. |
-| 3 | **The signature slot.** `signatureMoveId`; the tenth pip's replace-or-decline on the who-screen; the exclusivity test (no pool, no Tutor, no graft list, no path grant); Lizard Rush promoted and pulled from its three pools; the Tidecaller decision (§10); enemies at 10 hold it. | Riptide reaches Lizard Rush at 10 and nowhere else; the test catches a signature in any pool. | |
+| 3 | **The signature slot.** `signatureMoveId`; the tenth pip's replace-or-decline on the who-screen; the exclusivity test (no pool, no Tutor, no graft list, no path grant); Lizard Rush promoted and pulled from its three pools; the Tidecaller decision (§10); enemies at 10 hold it. | Riptide reaches Lizard Rush at 10 and nowhere else; the test catches a signature in any pool. | **DONE 2026-09-14.** `HeroDefinition.signatureMoveId`, `src/data/signatures.ts` (untiered, folded into `moves`), `pendingSignature` (`src/run/mastery.ts`: owed at ten, spent by being made); `masteryFlow.ts` raises it as `SignatureBox` — a receipt below the cap, replace-or-decline at it — on the Scroll node and, as the catch-all, the report; `rollLevelProgression` puts it in a generated hero's kit ahead of the offers, in the last slot if the kit is full; the Dossier's Moves tab lists it under *Signature — Mastery 10*. Tidecaller grants Maelstrom, off the pool (§5). The sim's `payMastery` takes it on the offer rule. |
 | 4 | **Author 35 signatures.** Parallelisable from 3; ships hero by hero (an unauthored hero's tenth pip pays nothing, which is what today pays). | Every hero has one, on the template — a hit or a verb at the hero's primary, Late-priced, never a bare nuke. | |
 | 5 | **Re-fit.** Cache weight, shelf price, the Scribe's 2 + 2, `masteryForAct`, against the sim with a Scroll policy on the pilot (concentrate on the fielded; evolve first, then signatures; the Scribe to the two most-fielded unevolved) and `time.ts` pricing the two screens; then the Act 1 wall re-read. | ~3 signatures a run on the middle path, every hero evolved on the Scribe alone; the clock reported against the 77 / 53 / 32 baseline. Win-rate targets are a playtest question. | |
 
@@ -310,11 +313,10 @@ Clock, potions, and the one-decision-kind rule on the report.
   looks, the Scribe can share the spliced row in acts where that row's tenant is weakest.
 - **A hero at 9 on the Scribe**: takes 1 and loses 1 (this doc), or is greyed out like a hero at
   10. The first is more honest about what the Scribe is; the second never wastes a pip.
-- **Tidecaller's clause 5.** A mono path must carry something a graft cannot, and Tidecaller
-  carried Lizard Rush. (a) A mono path may grant the hero's signature *early*, at the Evolution —
-  precisely a thing no graft can offer, and the tenth pip then pays nothing on that path; or (b)
-  Tidecaller gets a new clause-5 move. (a) is the more interesting rule; it needs Rime's
-  Avalanche / Snowball read the same way.
+- ~~**Tidecaller's clause 5.**~~ **Decided 2026-09-14, per user direction: (b).** Tidecaller grants
+  Maelstrom, off Riptide's own pool; the signature is at ten for every Riptide. (a) — a mono path
+  granting the signature early — was the more interesting rule and is not taken: a signature has
+  ONE source, and a path that hands it out is a second.
 - **Does "who first" read as situational?** If every Evolution is a uniform power-up, the Cache
   collapses to "my best hero", and no Scroll rule fixes that — it is a content finding about the
   paths. The one mechanical retreat is a per-hero cap of 2 pips a Cache, which forces *which two*

@@ -68,7 +68,7 @@ don't silently override it.
 > finale (was 11 / 18 / 23), the Act 1 wall at 76% untouched by every non-design lever (§8).
 > Phase 5 (four acts) stays deferred.
 
-> **A fourth overhaul is DECIDED and PHASES 1–2 ARE IN: `docs/mastery.md`** (2026-09-14, per user
+> **A fourth overhaul is DECIDED and PHASES 1–3 ARE IN: `docs/mastery.md`** (2026-09-14, per user
 > direction). Evolutions come off the level schedule onto **Mastery**: every hero has ten pips,
 > **5 is its Evolution and 10 its signature move** (one authored per hero, off every pool — Riptide's
 > Lizard Rush is the template), uniform, no per-hero threshold. A pip is one **Mastery Scroll**,
@@ -86,7 +86,11 @@ don't silently override it.
 > (same day): Ichor is RETIRED** — `src/run/ichor.ts`, both nodes, the screen and the shelf's Drops
 > are gone; the **Scroll Cache** (`scrollReward`, 3 pips in any split) sits in the reward pool at
 > the 46 it held before Ichor. Measured: 35 pips a completed run, every hero evolved 64%, full-clear
-> unmoved by the swap; enemies evolving from Act 3 is the phase-5 dial. The signature is phase 3.
+> unmoved by the swap; enemies evolving from Act 3 is the phase-5 dial. **Phase 3 is IN (same
+> day): the signature slot** — `HeroDefinition.signatureMoveId`, `src/data/signatures.ts`, owed at
+> the tenth pip and spent by being made, replace-or-decline at `MOVE_CAP`, in no pool by test;
+> Lizard Rush is Riptide's, and Tidecaller grants Maelstrom (off Riptide's pool) in its place.
+> Phase 4 authors the other 35.
 
 ---
 

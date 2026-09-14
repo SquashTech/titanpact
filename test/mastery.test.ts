@@ -25,8 +25,12 @@ import {
   guildHallMastery,
   masteryForAct,
   masteryRoom,
+  pendingSignature,
 } from '../src/run/mastery';
-import { atEvolution, availableEvolution, chooseEvolutionPath, pendingScheduleEntry, scheduleEntries, scheduleFor } from '../src/run/progression';
+import { MOVE_CAP, atEvolution, availableEvolution, chooseEvolutionPath, grantOfferedMove, pendingScheduleEntry, recordMoveOffer, scheduleEntries, scheduleFor } from '../src/run/progression';
+import { signatureMoves } from '../src/data/signatures';
+import { generateEncounter } from '../src/run/enemyGen';
+import { mentorMovePool, tutorMovePool } from '../src/run/tutor';
 import { companionOf, companionTierStep, joinCompanion } from '../src/run/companion';
 import { addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
 import { generateMap, MAP_NODE_TYPES, REWARD_WEIGHTS } from '../src/run/map';
@@ -165,4 +169,67 @@ test('mastery: pips round-trip through a save', () => {
   const bad = JSON.parse(JSON.stringify(encodeSave(run, 'map', 0)));
   bad.run.roster[0].mastery = MASTERY_CAP + 1;
   assert.ok(!decodeSave(bad, index).ok, 'a pip count past the cap is refused');
+});
+
+// --- The signature (docs/mastery.md §5) ---
+
+test('signature: every authored signature exists, wears its hero\'s primary type, carries no tier, and is in NO pool, list or grant — the Class-move rule\'s sibling', () => {
+  const authored = Object.values(heroes).filter((h) => h.signatureMoveId);
+  assert.ok(authored.length >= 1, 'Riptide\'s Lizard Rush is the template');
+  const pools = new Set(Object.values(progressionTable.moveTiers).flat());
+  const pathMoves = new Set(
+    Object.values(progressionTable.evolutions).flatMap((nodes) => nodes.flatMap((node) => node.paths.flatMap((p) => [...p.unlocksMoveIds, ...(p.learnableMoveIds ?? [])])))
+  );
+  const kits = new Set(Object.values(heroes).flatMap((h) => h.moveIds));
+  for (const hero of authored) {
+    const id = hero.signatureMoveId!;
+    const move = moves[id];
+    assert.ok(move && signatureMoves[id], `${hero.id}: ${id} is not in the signature catalog`);
+    assert.strictEqual(move.type, hero.types[0], `${hero.id}: ${id} is not at the hero's primary type`);
+    assert.strictEqual(move.tier, undefined, `${hero.id}: ${id} carries a tier`);
+    assert.strictEqual(move.typeFollowsUser, undefined, `${hero.id}: ${id} needs no typeFollowsUser — it is authored at the type`);
+    assert.ok(!pools.has(id), `${hero.id}: ${id} is in a level-up pool`);
+    assert.ok(!pathMoves.has(id), `${hero.id}: ${id} is granted or made learnable by an Evolution path`);
+    assert.ok(!kits.has(id), `${hero.id}: ${id} is in a starting kit`);
+    for (const entry of [createRosterEntry('x', hero.id, hero.moveIds)]) {
+      assert.deepStrictEqual(mentorMovePool(progressionTable, moves, entry).includes(id), false, `${hero.id}: the Mentor could roll it`);
+      assert.deepStrictEqual(tutorMovePool(progressionTable, moves, entry).includes(id), false, `${hero.id}: the Tutor could roll it`);
+    }
+  }
+  // One per hero: no two heroes point at one move.
+  const ids = authored.map((h) => h.signatureMoveId);
+  assert.strictEqual(new Set(ids).size, ids.length);
+});
+
+test('signature: the tenth pip owes it once — below the cap it lands, at the cap it is replace-or-decline, and made is spent', () => {
+  const hero = heroes.tidecaller;
+  let run = seed(['tidecaller']);
+  assert.strictEqual(pendingSignature(hero, { ...run.roster[0], mastery: MASTERY_SIGNATURE - 1 }), null, 'nine pips owe nothing');
+  run = grantMastery(run, 'tidecaller', MASTERY_SIGNATURE);
+  assert.strictEqual(pendingSignature(hero, run.roster[0]), 'lizardRush');
+  assert.strictEqual(pendingSignature(heroes.cinderKnight, { ...run.roster[0], heroId: 'cinderKnight' }), null, 'a hero with none authored is simply mastered');
+  // Below the cap: granted, and the offer is spent.
+  const landed = grantOfferedMove(run, 'tidecaller', 'lizardRush');
+  assert.ok(landed.roster[0].unlockedMoveIds.includes('lizardRush'));
+  assert.strictEqual(pendingSignature(hero, landed.roster[0]), null, 'held is not owed');
+  // Declined at the cap: the offer was made, so it is spent — a signature is offered once.
+  const declined = recordMoveOffer(run, 'tidecaller', ['lizardRush']);
+  assert.ok(!declined.roster[0].unlockedMoveIds.includes('lizardRush'));
+  assert.strictEqual(pendingSignature(hero, declined.roster[0]), null, 'declined is not owed either');
+});
+
+test('signature: a generated hero at ten holds it — in the last slot when its kit is full — and one below ten does not', () => {
+  const at = (mastery: number) => generateEncounter('elite', 5, heroes, { forcedHeroIds: ['tidecaller'], scaling: { statSteps: 0, level: 25, mastery }, progression: progressionTable }).run.roster.find((r) => r.heroId === 'tidecaller')!;
+  const mastered = at(MASTERY_SIGNATURE);
+  assert.ok(mastered.unlockedMoveIds.includes('lizardRush'), `a Riptide at ten fights with Lizard Rush: ${mastered.unlockedMoveIds}`);
+  assert.ok(mastered.unlockedMoveIds.length <= MOVE_CAP);
+  assert.ok(mastered.chosenPathIds.length === 1, 'and is evolved');
+  assert.ok(!at(MASTERY_SIGNATURE - 1).unlockedMoveIds.includes('lizardRush'));
+});
+
+test('signature: Tidecaller grants Maelstrom at the Evolution — off Riptide\'s own pool, as Rime\'s Avalanche grants Snowball — and Lizard Rush is nobody\'s to grant', () => {
+  const path = progressionTable.evolutions.tidecaller[0].paths.find((p) => p.id === 'tidecaller-offensive')!;
+  assert.deepStrictEqual(path.unlocksMoveIds, ['maelstrom']);
+  assert.ok(!(progressionTable.moveTiers.tidecaller ?? []).includes('maelstrom'), 'a grant that duplicates the pool pays in timing alone (test/roster.test.ts)');
+  assert.ok((progressionTable.moveTiers.tidecaller ?? []).includes('tsunami'), 'the pool keeps its other Late moves');
 });

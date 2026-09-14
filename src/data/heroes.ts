@@ -89,6 +89,7 @@ export const heroes: Record<string, HeroDefinition> = {
     // stays B — those are the two the reshape exists to lift off the floor.
     growthGrades: { hp: 'A', attack: 'C', defense: 'B', intelligence: 'B', wisdom: 'C', speed: 'A', manaPool: 'B' },
     schedule: { offerLevels: [4, 8, 12, 16, 20, 25], midLevel: 10, lateLevel: 19 },
+    signatureMoveId: 'lizardRush',
   },
   pincer: {
     id: 'pincer',

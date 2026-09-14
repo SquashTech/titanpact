@@ -17,6 +17,7 @@
 
 import type { MoveDefinition, StatKey } from '../engine/content';
 import { classMoves } from './classes';
+import { signatureMoves } from './signatures';
 
 // The reel Mech's random-stat moves draw from, and the set Overdrive grants at
 // once. Combat stats only: +20 HP / Mana / MP Regen are not worth the same thing.
@@ -460,20 +461,6 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'singleEnemy',
     description: 'Cuts a channel through the water — and every cut after it runs easier (costs 20 less each use).',
-  },
-  lizardRush: {
-    id: 'lizardRush',
-    name: 'Lizard Rush',
-    tier: 'late',
-    type: 'Water',
-    category: 'physical',
-    kind: 'damage',
-    basePower: 75,
-    statusApplication: { statusId: 'Renew', magnitude: 25, target: 'bothAllies' },
-    manaCost: 45,
-    priority: 0,
-    target: 'singleEnemy',
-    description: 'A charge that drags the whole tide behind it (grants both allies Renew 25).',
   },
 
   // --- Frost ---
@@ -3300,4 +3287,6 @@ export const moves: Record<string, MoveDefinition> = {
   },
   // The Class moves (classes.ts): untiered, in no hero's pool — a Class is their only source.
   ...classMoves,
+  // The signature moves (signatures.ts): untiered, in no pool — the tenth Mastery pip is their only source.
+  ...signatureMoves,
 };

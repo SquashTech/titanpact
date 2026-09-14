@@ -19,7 +19,7 @@ import { statuses } from '../../src/data/statuses';
 import type { EquipmentDefinition } from '../../src/run/equipment';
 import { holdsItem } from '../../src/run/equipment';
 import type { RosterEntry, RunState } from '../../src/run/state';
-import { MASTERY_EVOLUTION, SCRIBE_PICKS, canTakeMastery } from '../../src/run/mastery';
+import { MASTERY_EVOLUTION, SCRIBE_PICKS, canTakeMastery, pendingSignature } from '../../src/run/mastery';
 import {
   MOVE_CAP,
   applyEvolutionMoves,
@@ -279,7 +279,22 @@ export function payMastery(run: RunState, rng: () => number, payout: SchedulePay
       continue;
     }
     const node = availableEvolution(progressionTable, entry);
-    if (!node || node.paths.length === 0) continue;
+    if (!node || node.paths.length === 0) {
+      // The signature at ten (docs/mastery.md §5): the same take-if-it-beats-the-worst rule an
+      // offer gets, and spent by being made either way.
+      const signature = pendingSignature(heroes[entry.heroId], entry);
+      if (!signature) continue;
+      next = recordMoveOffer(next, rosterId, [signature]);
+      if (entry.unlockedMoveIds.length < MOVE_CAP) {
+        payout.receipts++;
+        next = grantOfferedMove(next, rosterId, signature);
+      } else {
+        payout.offers++;
+        const replaceId = replacementTarget(entry, signature);
+        if (replaceId) next = grantOfferedMove(next, rosterId, signature, replaceId);
+      }
+      continue;
+    }
     const path = node.paths[Math.floor(rng() * node.paths.length)];
     const refused = applyEvolutionMoves(entry.unlockedMoveIds, path.unlocksMoveIds).overflow;
     try {

@@ -6,7 +6,7 @@ import type { HeroDefinition, MoveTier, StatKey, TypeId } from '../../engine/con
 import { gradesFor } from '../../run/growth';
 import type { EvolutionPath } from '../../run/progression';
 import { scheduleFor } from '../../run/progression';
-import { MASTERY_EVOLUTION } from '../../run/mastery';
+import { MASTERY_EVOLUTION, MASTERY_SIGNATURE } from '../../run/mastery';
 import type { LevelSchedule } from '../../engine/content';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -183,7 +183,7 @@ export function HeroDossierOverlay({ hero, onClose }: Props) {
 
   const tabs: TabSpec<TabId>[] = [
     { id: 'stats', label: 'Stats', glyph: 'stats' },
-    { id: 'moves', label: 'Moves', glyph: 'moves', count: startingKit.length + pool.length },
+    { id: 'moves', label: 'Moves', glyph: 'moves', count: startingKit.length + pool.length + (hero.signatureMoveId ? 1 : 0) },
     { id: 'evolution', label: 'Evolution', glyph: 'buffs' },
   ];
 
@@ -247,6 +247,13 @@ export function HeroDossierOverlay({ hero, onClose }: Props) {
                     <MoveList moveIds={moveIds} caster={caster} onInspect={setPopupMoveId} />
                   </div>
                 ) : null
+              )}
+              {hero.signatureMoveId && (
+                <>
+                  {/* The one move no pool ever offers: the line a player reads before drafting. */}
+                  <div className="tab-subhead">Signature — Mastery {MASTERY_SIGNATURE}</div>
+                  <MoveList moveIds={[hero.signatureMoveId]} caster={caster} onInspect={setPopupMoveId} />
+                </>
               )}
             </>
           )}

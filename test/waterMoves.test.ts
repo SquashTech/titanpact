@@ -61,7 +61,7 @@ function afflict(state: CombatState, combatantId: string, statusId: string, magn
 
 // --- The pool itself ---
 
-test('water: the authored pool is the fifteen designed moves plus Riptide\'s two Evolution moves, all Water-typed', () => {
+test('water: the authored slate is the fifteen designed moves, Riptide\'s Evolution move and its signature, all Water-typed', () => {
   const water = Object.values(moves).filter((m) => m.type === 'Water');
   assert.deepStrictEqual(
     water.map((m) => m.id).sort(),
