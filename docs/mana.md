@@ -137,13 +137,13 @@ On top of those, **Late-tier mana was re-priced ×0.75** the same day (`docs/aut
 which is the other half of the same fix. Together: Late casts went from 4.5% of the run to 14%,
 and from 11% of Act 4's casts to 21%, 18% of Act 5's to 33%, 23% of the finale's to 40%.
 
-**What is deliberately NOT here: a Mana Well node.** A map node that hands one hero +N max Mana
-is the `manaBoostReward` shrine the Growth Overhaul deleted (2026-09-10) under the rule it
-reduces to — *a bare number never gets a screen, and a screen never buys a bare number*. The
-Deep Well is the in-grammar shape: a trade the player weighs on a hero they name. If playtest
-says the pool still runs dry, the dials in order are `GROWTH_UNIT_MANA` (3?), the Wellspring's
-+40, a second trade event, and only then a shrine — and a shrine is a constitutional decision,
-not a number (`CLAUDE.md` "There is no per-hero stat-investment currency").
+| **The Mana Well** (`manaWellReward`) | one chosen hero, a reward-row seat at weight 20 | **+30 max Mana** (`MANA_WELL_AMOUNT`), stacks | the one bare-number screen — pick who |
+
+**The Mana Well is the exception to *a bare number never gets a screen*, decided 2026-09-13**
+(per user direction, on the argument that a pool is the stat a whole tier of moves is priced in,
+so the number IS the capability where +10 Attack never was). It is an exception for mana alone —
+`docs/run-loop.md` "The Mana Well" and `CLAUDE.md`. If playtest says the pool still runs dry, the
+dials are `GROWTH_UNIT_MANA` (3?), `MANA_WELL_AMOUNT`, the Wellspring's +40, and the Well's weight.
 
 ## Overflow: mana above the pool (2026-08-30 designer sign-off, Arcane)
 

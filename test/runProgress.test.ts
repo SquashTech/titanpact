@@ -20,6 +20,8 @@ import {
   equipFromStash,
   equipToRoster,
   grantItemSlot,
+  grantManaWell,
+  MANA_WELL_AMOUNT,
   moveEquipment,
   sellFromStash,
   stashItem,
@@ -130,6 +132,19 @@ test('runProgress: a Forge grant opens a slot, and the next item lands in it wit
   const next = equipToRoster(run, 'cinderKnight', 'dagger.common', equipment, heroes);
   assert.deepStrictEqual(next.roster[0].equipment, ['sword.common', 'dagger.common']);
   assert.deepStrictEqual(next.stash, []);
+});
+
+test("runProgress: a Mana Well grant deepens one hero's pool by MANA_WELL_AMOUNT, stacks, and refuses nobody but a stranger", () => {
+  // The one bare-number screen the constitution allows (docs/run-loop.md "The Mana Well"): a
+  // pool gates a whole tier of moves, so the number IS the capability. No cap, so no refusal.
+  assert.strictEqual(MANA_WELL_AMOUNT % 10, 0, 'a stat grant is a multiple of 5 or 10');
+  let run = seedRoster(['cinderKnight', 'crimson']);
+  run = grantManaWell(run, 'cinderKnight');
+  assert.strictEqual(run.roster[0].bonusStatGrants.manaPool, MANA_WELL_AMOUNT);
+  assert.strictEqual(run.roster[1].bonusStatGrants.manaPool, undefined, 'one hero, not the team');
+  run = grantManaWell(run, 'cinderKnight');
+  assert.strictEqual(run.roster[0].bonusStatGrants.manaPool, MANA_WELL_AMOUNT * 2, 'a second well stacks');
+  assert.throws(() => grantManaWell(run, 'nobody'), RunProgressError);
 });
 
 test('runProgress: grantItemSlot refuses a hero already at the cap', () => {

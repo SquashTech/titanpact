@@ -125,6 +125,23 @@ export function grantItemSlot(run: RunState, rosterId: string, heroLookup: Recor
   return { ...run, roster: run.roster.map((r) => (r.rosterId === rosterId ? nextEntry : r)) };
 }
 
+/**
+ * The Mana Well node (docs/run-loop.md "The Mana Well"): +MANA_WELL_AMOUNT max Mana to one hero,
+ * permanently, onto `bonusStatGrants` beside every other map grant. A multiple of 10, as every
+ * authored stat grant is. Never refused — there is no cap on a pool.
+ */
+export const MANA_WELL_AMOUNT = 30;
+
+export function grantManaWell(run: RunState, rosterId: string): RunState {
+  const entry = run.roster.find((r) => r.rosterId === rosterId);
+  if (!entry) throw new RunProgressError(`${rosterId} is not on the roster`);
+  const nextEntry: RosterEntry = {
+    ...entry,
+    bonusStatGrants: { ...entry.bonusStatGrants, manaPool: (entry.bonusStatGrants.manaPool ?? 0) + MANA_WELL_AMOUNT },
+  };
+  return { ...run, roster: run.roster.map((r) => (r.rosterId === rosterId ? nextEntry : r)) };
+}
+
 /** What the Blacksmith charges this hero for its next slot, or null at the cap. */
 export function slotQuote(
   run: RunState,

@@ -39,7 +39,8 @@ between; per user direction, the shape is now forced and uniform):
   opens on an easy, unambiguous fight, no early reward-node luck and no meaningless
   first choice among identical-weight openers.
 - **Row 1: 3 nodes, pick 1 of 3 — reward types only** (`equipmentReward`/`candyReward`/
-  `smallCandyReward`/`passiveReward`/`currencyReward`/`forgeReward`/`event`, weighted). No
+  `smallCandyReward`/`manaWellReward`/`passiveReward`/`currencyReward`/`forgeReward`/`event`,
+  weighted). No
   `fight`/`shop`/`elite`/`mentorReward` mixed in — every reward row is a genuine reward
   choice, not a chance to draw another fight or dodge one, and `mentorReward` is reserved
   for its own forced Mentor row (2026-08-22 revision, per user direction — see the Mentor
@@ -250,6 +251,7 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30). **2026-09-08, per user direction:** it pays out on arrival and the screen counts the PURSE up to its new total, coin by coin, over a Claim button that was never a decision — the drop size is a chip beside a number the player can act on, rather than a number they cannot. The two Scroll nodes share that beat. |
 | `smallCandyReward` ("Small Candy") | `CandyNodeScreen` — **one level at par** of XP, to ONE hero the player picks; the pick raises the level-up report for that hero (`src/run/candy.ts`, `docs/xp-overhaul.md` §3, 2026-09-13). The commoner, smaller half of the Candy's grant. It took the Lone Scroll's seat and weight (14); the seat was the XP Cache before that (2026-09-10), so it has come round to paying XP again. Distinguished from the Candy on the map by its glyph — one sweet against two — since the tiles carry no labels. |
 | `forgeReward` ("The Forge") | `ForgeScreen` — pick one roster hero to gain **+1 item slot** for the rest of the run (`runProgress.ts` `grantItemSlot`, stored on `RosterEntry.bonusItemSlots`, capped at `MAX_ITEM_SLOTS` = 3). **2026-09-06**, replacing the three slot-specific cache nodes (`weaponReward`/`armorReward`/`accessoryReward`), which lost their meaning when items stopped having categories — most of their frequency went to `equipmentReward`, whose weight went 20 → 40. The scarcest thing on the reward row (weight 8) on purpose: it is permanent, it compounds with every drop after it, and it is the only reward here a hero can be at the cap for — a roster entirely at 3 slots makes the node a dead draw, which is what makes spending it a choice — and at the 2026-09-07 cap of 3 that arrives materially sooner. |
+| `manaWellReward` ("Mana Well") | `ManaWellScreen` — pick one roster hero to gain **+`MANA_WELL_AMOUNT` = 30 max Mana** for the rest of the run (`runProgress.ts` `grantManaWell`, onto `bonusStatGrants`; stacks; never refused). **2026-09-13, per user direction** — the one bare-number screen the constitution allows. See "The Mana Well" below. |
 | `candyReward` ("Candy") | `CandyNodeScreen` — **two levels at par** of XP, to ONE hero the player picks (`src/run/candy.ts`, `docs/xp-overhaul.md` §3, 2026-09-13). The screen collects one thing, who, and every card says the level that hero would land on — a hero behind par climbs further on the same candy, a hero ahead of par less, which is the convex curve doing the catch-up and the throttle at once. A hero at `MAX_LEVEL` is refused. The pick hands straight off to the level-up report. It took the Scroll Cache's seat and weight (46). See "Candy" below. |
 | `passiveReward` ("Boon") | `BoonNodeScreen` — pick 1 of 3 passives, then the hero it settles on (`grantEventPassive`, stored on `RosterEntry.bonusPassiveGrants`). See "Boons" below. |
 | `mentorReward` ("Mentor's Hall") | `MentorNodeScreen` — "the Mentor can teach any hero a powerful move": pick a hero, and ONE Mid-tier move is rolled from that hero's own pool, un-rank-gated (`mentorMovePool`, `src/run/tutor.ts`). A Scroll pour with the band fixed at Mid that ticks nothing; the rolled offer is spent by being made. Who is the only decision, on purpose — it is one of a new player's first nodes (2026-09-11, `growth-overhaul.md` §11; it was briefly a curated Early-Mid pick, and before that a stat-pair Class). **Not in `REWARD_WEIGHTS`** — the only way to meet one is the forced row in acts 1-3 (§1). |
@@ -401,6 +403,25 @@ the act opener 3, Battle 3, Skirmish 4, Elite 4, the Guardian 4, +2 per act past
 bundle all became candy (below). Against that, six Evolutions are 60 and six heroes to the Late
 band are 120, so everything past "everyone evolves" is a real spread-vs-concentrate call. This is
 the bridge state — phase 3 deletes the ladder whole.
+
+### The Mana Well
+
+**2026-09-13, per user direction.** `manaWellReward` → `ManaWellScreen`, weight 20 in the reward
+rows beside the purse: pick a hero, and its max Mana rises by `MANA_WELL_AMOUNT` = 30 for the
+rest of the run. The Forge's grammar — one tap, who — and every card says the pool it would
+leave the hero with.
+
+It is the `manaBoostReward` shrine the Growth Overhaul deleted under *a bare number never gets a
+screen*, brought back on purpose and for one stat only. The rule stands for the numbers it was
+written against: +10 Attack was never something a player could see happen. A pool is different
+in kind — it is the stat a whole tier of moves is priced in, so +30 Mana is a Late cast a fight,
+visibly, and the choice of who reads off what each hero could then cast. That is the exception's
+whole justification; a Vitality shrine does not get to ride on it.
+
+Measured on the greedy pilot (1000 runs, two seeds): a node lift of −0.15 (candy's), and about
+4 points of full-clear at weight 20 — the seats it takes from items and Forges, which a pilot
+that does not plan its Late casts values higher than pool depth. A player who wants the Late
+band will not price it that way; watch it in playtest rather than the sim.
 
 ### Candy
 

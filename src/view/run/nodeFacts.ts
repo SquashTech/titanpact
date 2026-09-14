@@ -7,6 +7,7 @@ import type { EquipmentRarity } from '../../run/equipment';
 import { EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, MAX_ITEM_SLOTS, RARITY_ORDER, rarityWeightsFor } from '../../run/equipment';
 import { GOLD_REWARD_RANGE, PURSE_GOLD_RANGE } from '../../run/runProgress';
 import { CANDY_LEVELS } from '../../run/candy';
+import { MANA_WELL_AMOUNT } from '../../run/runProgress';
 import { BOON_OFFER_COUNT } from '../../run/boons';
 import { OPENER_ESCORT_COUNT, guildHallLevel, spawnLeaderTierFor, type EncounterNodeKind } from '../../run/difficulty';
 import { ACT_ONE_OPENER_COUNT } from '../../run/spawn';
@@ -26,6 +27,7 @@ import { CANDY_PURCHASE_COST, CANDY_PURCHASE_LIMIT, CONTRACT_PURCHASE_COST, GUIL
 export type NodeFactGlyph =
   | 'gold'
   | 'candy'
+  | 'mana'
   | 'contract'
   | 'item'
   | 'banner'
@@ -185,6 +187,8 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
       return { kind: 'Reward · Growth', facts: [{ glyph: 'candy', label: 'Levels', value: `+${CANDY_LEVELS.candy}`, note: 'to 1 hero, at par' }], odds: null };
     case 'smallCandyReward':
       return { kind: 'Reward · Growth', facts: [{ glyph: 'candy', label: 'Level', value: `+${CANDY_LEVELS.small}`, note: 'to 1 hero, at par' }], odds: null };
+    case 'manaWellReward':
+      return { kind: 'Reward · Growth', facts: [{ glyph: 'mana', label: 'Max Mana', value: `+${MANA_WELL_AMOUNT}`, note: 'to 1 hero, permanent' }], odds: null };
     case 'currencyReward':
       return { kind: 'Reward · Purse', facts: [{ glyph: 'gold', label: 'Gold', value: range(PURSE_GOLD_RANGE) }], odds: null };
     case 'passiveReward':

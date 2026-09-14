@@ -442,10 +442,10 @@ family, the Pact Clock, the companion, potions, the map shape within an act.
   Late-tier casts. The count is itself identity — a hero that learns five things against one that
   learns seven — but the Late band needs an offer AFTER `lateLevel` that a run at par actually
   reaches, and at 25–29 on the late turners it mostly does not. Phase 6's dial.
-- **A Mana Well node?** The user asked for map nodes that grow pools. The Deep Well event is
-  the in-grammar answer (a trade); a shrine that hands one hero +N Mana is the `manaBoostReward`
-  the Growth Overhaul deleted under *a bare number never gets a screen*. Building one is a
-  constitutional decision; `docs/mana.md` lists the dials to turn first.
+- ~~**A Mana Well node?**~~ **Decided 2026-09-13, per user direction: built** (`manaWellReward`,
+  +30 to one hero, weight 20) as the one exception to *a bare number never gets a screen*,
+  because a pool is the stat a tier of moves is priced in. Measured ~4 points of full-clear on
+  the greedy pilot at that weight (`docs/run-loop.md` "The Mana Well"); a playtest number.
 - **The Act 1 wall (76%, was 82%).** Not a number. The candidates are all decisions: let the
   early turners' `evolutionLevel` sit at 8 (the Act 1 Guardian's report — the window's floor of
   10 was written to keep the Evolution out of Act 1, and this would put it exactly at the

@@ -27,6 +27,7 @@ import { MentorNodeScreen } from '../view/run/MentorNodeScreen';
 import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScreen';
 import { ForgeScreen } from '../view/run/ForgeScreen';
 import { CandyNodeScreen } from '../view/run/CandyNodeScreen';
+import { ManaWellScreen } from '../view/run/ManaWellScreen';
 import { BlacksmithScreen } from '../view/run/BlacksmithScreen';
 import { GuardianBannerScreen } from '../view/run/GuardianBannerScreen';
 import { LevelUpScreen } from '../view/run/LevelUpScreen';
@@ -164,6 +165,8 @@ type Screen =
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType }
   /** The Forge: +1 item slot to one hero. */
   | { kind: 'forge'; nodeId: string }
+  /** The Mana Well: +MANA_WELL_AMOUNT max Mana to one hero. */
+  | { kind: 'manaWell'; nodeId: string }
   /**
    * Candy: XP to one hero (run/candy.ts). A map node (`nodeId`, free) or the Guild Hall shelf
    * (`cost`, `nodeId` null); the pick raises the level-up report and then `next`.
@@ -568,6 +571,8 @@ export function App() {
       });
     } else if (node.type === 'forgeReward') {
       setScreen({ kind: 'forge', nodeId });
+    } else if (node.type === 'manaWellReward') {
+      setScreen({ kind: 'manaWell', nodeId });
     } else if (node.type === 'candyReward' || node.type === 'smallCandyReward') {
       setScreen({ kind: 'candy', kindOfCandy: node.type === 'candyReward' ? 'candy' : 'small', nodeId, cost: 0, next: { kind: 'map' } });
     } else if (node.type === 'blacksmith') {
@@ -1128,6 +1133,10 @@ export function App() {
           onPick={handleCandyPick}
           onSkip={() => (screen.nodeId ? handleNodeContinue(screen.nodeId) : setScreen(screen.next))}
         />
+      )}
+
+      {screen.kind === 'manaWell' && (
+        <ManaWellScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
       {screen.kind === 'forge' && (

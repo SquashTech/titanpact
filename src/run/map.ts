@@ -20,6 +20,7 @@ export const MAP_NODE_TYPES = [
   'equipmentReward',
   'candyReward',
   'smallCandyReward',
+  'manaWellReward',
   'passiveReward',
   'currencyReward',
   'forgeReward',
@@ -150,6 +151,11 @@ export const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   ['forgeReward', 38],
   // FLAGGED FOR THE DESIGNER: 16 is an inference, not a decision — how often a run meets an event is a real tuning question.
   ['event', 16],
+  // The Mana Well (2026-09-13, per user direction): +MANA_WELL_AMOUNT max Mana to one hero. The
+  // one bare-number screen the constitution allows, because a pool is the stat that gates a
+  // whole tier of moves — +30 Mana is a Late cast a fight, where +10 Attack was never visible.
+  // Weighted with the purse: a top-up, not the axis you plan around.
+  ['manaWellReward', 20],
 ];
 
 /** Weighted sample WITHOUT replacement — a reward row never repeats a type. REWARD_WEIGHTS is wider than any row, so `count` is always satisfiable. */

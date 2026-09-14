@@ -44,6 +44,7 @@ import {
   GOLD_REWARD_RANGE,
   PURSE_GOLD_RANGE,
   rollGoldRange,
+  grantManaWell,
 } from '../../src/run/runProgress';
 import { MOVE_CAP, recordMoveOffer, grantOfferedMove, itemSlotsFor, grantMove } from '../../src/run/progression';
 import { claimContract, claimContractReplacing, deriveContractOffer, isRecruitable, pickContractOffers, recruitFromGuildHall, recruitFromGuildHallReplacing, freshRosterId, buyContract } from '../../src/run/recruitment';
@@ -550,6 +551,11 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       return grantCurrencyReward(run, rollGoldRange(PURSE_GOLD_RANGE, rng));
     case 'smallCandyReward':
       return eatCandy(run, 'small', 'smallCandy', rng, record, options);
+    case 'manaWellReward': {
+      // The hero the pool is worth most to (policy.statBoostTarget) — the one screen that asks who.
+      const target = policy.statBoostTarget(run.roster, 'manaPool');
+      return target ? grantManaWell(run, target.rosterId) : run;
+    }
     case 'equipmentReward': {
       // Three offered; the policy takes the one worth most to somebody. Equipment is a
       // power question, not a design experiment — the rarity curve is what's under test.

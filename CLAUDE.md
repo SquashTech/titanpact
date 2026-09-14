@@ -339,7 +339,13 @@ don't silently override it.
   **only when a roster hero fields that type** — the filter is what keeps it from ever being a
   dead card. Evolution passives and Classes are excluded: both are somebody's identity already.
   `src/run/boons.ts`, `docs/run-loop.md` "Boons".
-- **There is no per-hero stat-investment currency.** Gems were deleted whole on 2026-09-10
+- **There is no per-hero stat-investment currency** — with ONE authored exception since
+  2026-09-13, per user direction: **the Mana Well** node (`manaWellReward`, `ManaWellScreen`,
+  `grantManaWell`), pick a hero for +30 max Mana. Allowed because a pool is different in kind from
+  the numbers the rule was written against: it is the stat a whole tier of moves is priced in, so
+  +30 Mana is a Late cast a fight, visibly, where +10 Attack never was. It is an exception for
+  mana alone; a Vitality shrine does not get to ride on it (`docs/run-loop.md` "The Mana Well").
+  Gems were deleted whole on 2026-09-10
   (Growth Overhaul phase 1), and with them the `gemReward` Gem Cache and the two stat shrines
   (`hpBoostReward` Vitality, `manaBoostReward` Mana Well) — the reward pool's 40 freed weight
   went to the Boon and the purse. They failed against the rule the overhaul reduces to,

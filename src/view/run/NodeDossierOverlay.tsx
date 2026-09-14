@@ -7,6 +7,7 @@ import { NODE_COLORS, NODE_NAMES } from './mapNodes';
 import { nodeDossier, type NodeFactGlyph } from './nodeFacts';
 import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
 import { ResourceGlyph } from '../shared/RunGlyph';
+import { StatGlyph } from '../shared/statIcons';
 import { SectionGlyph } from '../shared/sectionIcons';
 import { BANNER } from '../shared/relicIcons';
 import { RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
@@ -16,6 +17,7 @@ import { overlayHost } from '../shared/overlayHost';
 const FACT_GLYPHS: Record<NodeFactGlyph, ReactNode> = {
   gold: <ResourceGlyph kind="gold" tone="inherit" />,
   candy: <ResourceGlyph kind="candy" tone="inherit" />,
+  mana: <StatGlyph stat="manaPool" tone="inherit" />,
   contract: <ResourceGlyph kind="contract" tone="inherit" />,
   item: <SectionGlyph name="equipment" />,
   banner: (

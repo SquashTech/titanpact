@@ -123,6 +123,8 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
     </>
   ),
   smallCandyReward: <g transform="translate(12 12) rotate(-35) scale(0.92)">{SWEET}</g>,
+  // The Mana stat's own drop: a stat reward reuses the exact glyph of what it grants.
+  manaWellReward: STAT_PATHS.manaPool,
   // Anvil on its stump: the Forge adds a slot, so it draws the place gear is made, not gear.
   forgeReward: (
     <>
