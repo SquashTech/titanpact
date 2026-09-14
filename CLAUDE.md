@@ -45,14 +45,14 @@ don't silently override it.
 
 > **A third overhaul is DECIDED and PHASE 1 IS IN: `docs/xp-overhaul.md`** (2026-09-13, §2–4
 > decided per user direction; §5's four acts DEFERRED, not decided). One curve — `XP(L) = L³`,
-> `src/run/growth.ts` — for stats, moves and Evolutions; **candy** nodes aim XP at one hero; the
+> `src/run/growth.ts` — for stats, moves and Evolutions; **Ichor** nodes aim XP at one hero; the
 > Scroll ladder is deleted and moves come from a per-hero level **schedule** with the roll kept.
 > Its §9 lists the invariants below it reverses; until the §8 phase that replaces each one lands,
 > the rule below is still the rule in force. **Phases 1–3 are IN:** `RosterEntry.xp` is stored and
 > level is DERIVED (`levelOf`); a won encounter pays XP derived from `LEVEL_AFTER_ENCOUNTER`, so
 > par is unchanged to the point and only a hero off par can tell — it now gains on par instead of
-> trailing by a fixed count (measured: +10 points full-clear, all of it in acts 2–5; §8). **Candy**
-> (`src/run/candy.ts`) took the two Scroll nodes' seats and the Guild Hall shelf: XP worth 2 (or 1)
+> trailing by a fixed count (measured: +10 points full-clear, all of it in acts 2–5; §8). **Ichor**
+> (`src/run/ichor.ts`) took the two Scroll nodes' seats and the Guild Hall shelf: XP worth 2 (or 1)
 > levels AT PAR, aimed at ONE hero through a who screen, paid out on the level-up report; a hero
 > at the cap is refused. **The Scroll ladder is DELETED** (phase 3): moves and the Evolution come
 > from a per-hero **schedule** read off level (`DEFAULT_SCHEDULE`, `src/run/progression.ts`) and
@@ -158,16 +158,16 @@ don't silently override it.
   missed the grants before it and is behind — but the same XP climbs further from lower down the
   cube, so the gap closes slowly on its own. "Arrives underlevelled" stays a real archetype;
   "permanently" was reversed on purpose (`docs/xp-overhaul.md` §2) so that closing it is
-  something the player can spend a node on (candy, phase 2).
+  something the player can spend a node on (Ichor, phase 2).
   Participation-based XP was considered and **rejected** — it produces the runaway where your
   best four level, the sideboard rots, and by Act 4 you cannot rotate. Roster-wide gets the
   screen removal without buying that; a hero rotated in is at parity, so rotating is free.
-  **The cost is real: hyperfocus dies as a LEVELLING strategy**, and is bought back by **candy**
-  (2026-09-13, `src/run/candy.ts`, `docs/xp-overhaul.md` §3): the two reward-row seats the Scroll
+  **The cost is real: hyperfocus dies as a LEVELLING strategy**, and is bought back by **Ichor**
+  (2026-09-13, `src/run/ichor.ts`, `docs/xp-overhaul.md` §3): the two reward-row seats the Scroll
   Cache and Lone Scroll held, and the Guild Hall shelf, pay XP worth **2 (or 1) levels AT PAR** to
   ONE hero the player picks — more levels for a hero behind par, fewer for one ahead, since the
   cube throttles the carry and closes the gap with the same grant. A hero at the cap is refused.
-  Every source is a seat that displaced another reward, so a candy is never free and never
+  Every source is a seat that displaced another reward, so an Ichor is never free and never
   compounds. The supply is the only balance number and phase 6 sets it.
   **A level-up REPORT screen is not an allocation screen** (2026-09-10,
   `src/view/run/LevelUpScreen.tsx`): the ban is on a screen that collects a decision which is
@@ -245,7 +245,7 @@ don't silently override it.
 - **The Crucible grants a CLASS** (2026-09-11). Same beat, same stage — *Guardian falls → Banner →
   Crucible → Pact Seal → act intro*, non-bankable, pick ONE hero — but what the fire tempers a
   hero into is a Class. Five Guardians, five Classes, six heroes: one hero ends Classless, the
-  price of a late recruit. `crucibleReward` is deleted; its weight went to the (now Candy) seat.
+  price of a late recruit. `crucibleReward` is deleted; its weight went to the (now Ichor) seat.
   **A Class is a VERB, never a number**: its schema is the Evolution path's minus the graft and
   the hero — a name, a kind, and exactly ONE of a granted move (`grantMove`, replace-or-decline
   at `MOVE_CAP`) or a passive (`ClassDefinition`, `src/run/classes.ts`; nine in

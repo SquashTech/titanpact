@@ -16,7 +16,7 @@ import { overlayHost } from '../shared/overlayHost';
 /** Every mark a ledger row can lead with, drawn from the glyph sets the rest of the run already uses. */
 const FACT_GLYPHS: Record<NodeFactGlyph, ReactNode> = {
   gold: <ResourceGlyph kind="gold" tone="inherit" />,
-  candy: <ResourceGlyph kind="candy" tone="inherit" />,
+  ichor: <ResourceGlyph kind="ichor" tone="inherit" />,
   mana: <StatGlyph stat="manaPool" tone="inherit" />,
   contract: <ResourceGlyph kind="contract" tone="inherit" />,
   item: <SectionGlyph name="equipment" />,

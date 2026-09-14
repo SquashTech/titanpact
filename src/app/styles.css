@@ -12990,13 +12990,13 @@ textarea,
 }
 
 /* Each good is lit by the resource it buys, not by the panel's gold — the
-   Contract's blue and the Candy's green are the same hues their glyphs
+   Contract's blue and the Ichor's green are the same hues their glyphs
    already wear (RunGlyph RESOURCE_COLORS). */
 .guild-hall-good.is-contract {
   --plate-color: #9bc9ff;
 }
 
-.guild-hall-good.is-candy {
+.guild-hall-good.is-ichor {
   --plate-color: #4caf6a;
 }
 
@@ -13115,7 +13115,7 @@ textarea,
   opacity: 0.55;
 }
 
-.guild-hall-good-held.is-candy {
+.guild-hall-good-held.is-ichor {
   border-color: color-mix(in srgb, #4caf6a 55%, var(--border));
   color: #4caf6a;
 }

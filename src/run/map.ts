@@ -18,8 +18,8 @@ export const MAP_NODE_TYPES = [
   'shop',
   'blacksmith',
   'equipmentReward',
-  'candyReward',
-  'smallCandyReward',
+  'ichorReward',
+  'ichorDropReward',
   'manaWellReward',
   'passiveReward',
   'currencyReward',
@@ -128,18 +128,18 @@ const TUTOR_ROW_WIDTH = 3;
 export const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // equipmentReward absorbs most of the frequency the three slot caches used to carry.
   ['equipmentReward', 40],
-  // Candy: two levels at par, aimed at ONE hero (run/candy.ts) — the Scroll Cache's seat and
+  // Ichor: two levels at par, aimed at ONE hero (run/ichor.ts) — the Scroll Cache's seat and
   // weight, re-pointed (docs/xp-overhaul.md §3). Weighted level with equipment: they are the
   // run's two growth axes, one per hero's numbers and one per hero's kit, and neither should be
   // the one you plan around. The supply is the only balance number and phase 6 sets it.
-  ['candyReward', 46],
+  ['ichorReward', 46],
   // The Boon: the part of the deleted relic pool that was actually worth having, handed to ONE
   // hero instead of all four. It is the only reward row node that changes how a hero plays
   // rather than how big its numbers are.
   ['passiveReward', 22],
   ['currencyReward', 20],
-  // The Small Candy: the same grant at half the size, and commoner for it.
-  ['smallCandyReward', 14],
+  // The Drop of Ichor: the same grant at half the size, and commoner for it.
+  ['ichorDropReward', 14],
   // The Forge (+1 item slot) is permanent, compounds with every later drop, and is the only thing
   // here a hero can be at the cap for, so it stays the scarcest of the grants.
   //

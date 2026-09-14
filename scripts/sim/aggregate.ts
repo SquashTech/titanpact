@@ -54,9 +54,9 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
   }
 
   for (const key of record.equipped) agg.equipRarityByAct[key] = (agg.equipRarityByAct[key] ?? 0) + 1;
-  for (const key of Object.keys(record.candyBySource)) {
-    agg.candyBySource[key] = (agg.candyBySource[key] ?? 0) + record.candyBySource[key];
-    if (record.won) agg.candyBySourceWon[key] = (agg.candyBySourceWon[key] ?? 0) + record.candyBySource[key];
+  for (const key of Object.keys(record.ichorBySource)) {
+    agg.ichorBySource[key] = (agg.ichorBySource[key] ?? 0) + record.ichorBySource[key];
+    if (record.won) agg.ichorBySourceWon[key] = (agg.ichorBySourceWon[key] ?? 0) + record.ichorBySource[key];
   }
   for (const key of Object.keys(record.recruitsBySource)) agg.recruitsBySource[key] = (agg.recruitsBySource[key] ?? 0) + record.recruitsBySource[key];
 

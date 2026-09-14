@@ -419,20 +419,20 @@ export function formatReport(
   out.push(`    spent cycling out        ${pct(agg.playerSwitches, agg.playerTurns)}`);
   out.push(`    fights reaching lock-in  ${pct(agg.lockInFights, totalFights)}  (player side lost 2+ heroes)`);
 
-  // Candy by source, in levels-at-par (docs/xp-overhaul.md §3): the supply is the only balance
+  // Ichor by source, in levels-at-par (docs/xp-overhaul.md §3): the supply is the only balance
   // number, and this is where it is read. ~7 a run at the inherited weights is the first pass.
   out.push('');
-  out.push(`  Candy eaten, in levels at par, by source — per run (all ${R}) and per completed run (${agg.wins}):`);
-  let candyAll = 0;
-  let candyWon = 0;
-  for (const source of Object.keys(agg.candyBySource).sort()) {
-    const all = agg.candyBySource[source] ?? 0;
-    const won = agg.candyBySourceWon[source] ?? 0;
-    candyAll += all;
-    candyWon += won;
+  out.push(`  Ichor eaten, in levels at par, by source — per run (all ${R}) and per completed run (${agg.wins}):`);
+  let IchorAll = 0;
+  let IchorWon = 0;
+  for (const source of Object.keys(agg.ichorBySource).sort()) {
+    const all = agg.ichorBySource[source] ?? 0;
+    const won = agg.ichorBySourceWon[source] ?? 0;
+    IchorAll += all;
+    IchorWon += won;
     out.push(`    ${pad(source, 24)}${padStart(mean(all, R), 8)}${padStart(agg.wins > 0 ? mean(won, agg.wins) : '-', 10)}`);
   }
-  out.push(`    ${pad('TOTAL', 24)}${padStart(mean(candyAll, R), 8)}${padStart(agg.wins > 0 ? mean(candyWon, agg.wins) : '-', 10)}`);
+  out.push(`    ${pad('TOTAL', 24)}${padStart(mean(IchorAll, R), 8)}${padStart(agg.wins > 0 ? mean(IchorWon, agg.wins) : '-', 10)}`);
   out.push('');
   out.push('  heroes joining after the draft, per run, by route:');
   for (const source of Object.keys(agg.recruitsBySource).sort()) {

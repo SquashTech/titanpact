@@ -241,10 +241,10 @@ export const TUTORIAL_ROW_TYPES: readonly MapNodeType[] = [
   'skirmish',
   'forgeReward',
   'battle',
-  // The act's third reward row. The Candy: the one place the player aims growth, and the
+  // The act's third reward row. The Ichor: the one place the player aims growth, and the
   // pick-a-hero grammar every later reward (Boon, Forge, Mentor) shares — so the corridor teaches
   // it once, on the cheapest thing it can be taught on. It displaces the Boon.
-  'candyReward',
+  'ichorReward',
   'shop',
   'boss',
 ];

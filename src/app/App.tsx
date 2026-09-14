@@ -26,7 +26,7 @@ import { TutorNodeScreen } from '../view/run/TutorNodeScreen';
 import { MentorNodeScreen } from '../view/run/MentorNodeScreen';
 import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScreen';
 import { ForgeScreen } from '../view/run/ForgeScreen';
-import { CandyNodeScreen } from '../view/run/CandyNodeScreen';
+import { IchorNodeScreen } from '../view/run/IchorNodeScreen';
 import { ManaWellScreen } from '../view/run/ManaWellScreen';
 import { BlacksmithScreen } from '../view/run/BlacksmithScreen';
 import { GuardianBannerScreen } from '../view/run/GuardianBannerScreen';
@@ -73,8 +73,8 @@ import {
   type GuildHallOffer,
   type RosterReplaceCandidate,
 } from '../run/recruitment';
-import { guildHallOffers, CANDY_PURCHASE_COST, CANDY_PURCHASE_LIMIT } from '../data/recruitment';
-import { CandyError, buyCandy, canBuyCandy, grantCandy, type CandyKind } from '../run/candy';
+import { guildHallOffers, ICHOR_PURCHASE_COST, ICHOR_PURCHASE_LIMIT } from '../data/recruitment';
+import { IchorError, buyIchor, canBuyIchor, grantIchor, type IchorKind } from '../run/ichor';
 import { rollGuildHallOffers, buyEquipment, ShopError, type GuildHallOffers } from '../run/shop';
 import { ConsumableError, buyConsumable, grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse } from '../run/consumables';
 import { guildHallEntry } from '../run/guildRecruit';
@@ -161,17 +161,17 @@ type Screen =
   /** TEMPORARY DEV/TEST — src/run/statusTestFight.ts. Own kind so leaving returns to the title. */
   | { kind: 'statusTestFight'; player: Encounter; ai: Encounter }
   /** `offers` and `soldOutEquipmentIds` live on the screen, not in the shop component: a purchase re-renders the shop and component-local state would reroll / forget. */
-  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; soldOutEquipmentIds: string[]; candiesBought: number }
+  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; soldOutEquipmentIds: string[]; ichorBought: number }
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType }
   /** The Forge: +1 item slot to one hero. */
   | { kind: 'forge'; nodeId: string }
   /** The Mana Well: +MANA_WELL_AMOUNT max Mana to one hero. */
   | { kind: 'manaWell'; nodeId: string }
   /**
-   * Candy: XP to one hero (run/candy.ts). A map node (`nodeId`, free) or the Guild Hall shelf
+   * Ichor: XP to one hero (run/ichor.ts). A map node (`nodeId`, free) or the Guild Hall shelf
    * (`cost`, `nodeId` null); the pick raises the level-up report and then `next`.
    */
-  | { kind: 'candy'; kindOfCandy: CandyKind; nodeId: string | null; cost: number; next: Screen }
+  | { kind: 'ichor'; kindOfIchor: IchorKind; nodeId: string | null; cost: number; next: Screen }
   | { kind: 'blacksmith'; nodeId: string }
   | { kind: 'boonNode'; nodeId: string }
   /** The Mentor (acts 1-3): pick a hero, and one Mid move is rolled for it. */
@@ -347,8 +347,8 @@ function tutorialBeatKeyFor(screen: Screen, run: RunState): TutorialBeatKey | nu
       return 'crucible';
     case 'reward':
       return rewardBeatKey(screen.nodeType);
-    case 'candy':
-      return screen.nodeId ? rewardBeatKey(screen.kindOfCandy === 'candy' ? 'candyReward' : 'smallCandyReward') : null;
+    case 'ichor':
+      return screen.nodeId ? rewardBeatKey(screen.kindOfIchor === 'ichor' ? 'ichorReward' : 'ichorDropReward') : null;
     case 'mentorNode':
       return 'mentorNode';
     case 'recruit':
@@ -567,14 +567,14 @@ export function App() {
         nodeId,
         offers: rollGuildHallOffers(playerRun, guildHallOffers, EQUIPMENT_POOL, node.type === 'muster'),
         soldOutEquipmentIds: [],
-        candiesBought: 0,
+        ichorBought: 0,
       });
     } else if (node.type === 'forgeReward') {
       setScreen({ kind: 'forge', nodeId });
     } else if (node.type === 'manaWellReward') {
       setScreen({ kind: 'manaWell', nodeId });
-    } else if (node.type === 'candyReward' || node.type === 'smallCandyReward') {
-      setScreen({ kind: 'candy', kindOfCandy: node.type === 'candyReward' ? 'candy' : 'small', nodeId, cost: 0, next: { kind: 'map' } });
+    } else if (node.type === 'ichorReward' || node.type === 'ichorDropReward') {
+      setScreen({ kind: 'ichor', kindOfIchor: node.type === 'ichorReward' ? 'ichor' : 'drop', nodeId, cost: 0, next: { kind: 'map' } });
     } else if (node.type === 'blacksmith') {
       setScreen({ kind: 'blacksmith', nodeId });
     } else if (node.type === 'mentorReward') {
@@ -756,32 +756,32 @@ export function App() {
     setPlayerRun(next);
   }
 
-  /** The shelf's Small Candy: the tap opens the who screen, and the gold is charged on the pick. */
-  function handleBuyGuildCandy() {
+  /** The shelf's Drop of Ichor: the tap opens the who screen, and the gold is charged on the pick. */
+  function handleBuyGuildIchor() {
     if (screen.kind !== 'shop') return;
-    if (!canBuyCandy(playerRun, CANDY_PURCHASE_COST, screen.candiesBought, CANDY_PURCHASE_LIMIT)) return;
+    if (!canBuyIchor(playerRun, ICHOR_PURCHASE_COST, screen.ichorBought, ICHOR_PURCHASE_LIMIT)) return;
     setScreen({
-      kind: 'candy',
-      kindOfCandy: 'small',
+      kind: 'ichor',
+      kindOfIchor: 'drop',
       nodeId: null,
-      cost: CANDY_PURCHASE_COST,
-      next: { ...screen, candiesBought: screen.candiesBought + 1 },
+      cost: ICHOR_PURCHASE_COST,
+      next: { ...screen, ichorBought: screen.ichorBought + 1 },
     });
   }
 
-  /** The candy eaten: charge the shelf if it was bought, feed the hero, walk the node, and show the jump. */
-  function handleCandyPick(rosterId: string) {
-    if (screen.kind !== 'candy') return;
+  /** The Ichor eaten: charge the shelf if it was bought, feed the hero, walk the node, and show the jump. */
+  function handleIchorPick(rosterId: string) {
+    if (screen.kind !== 'ichor') return;
     let next: RunState;
     try {
-      next = screen.cost > 0 ? buyCandy(playerRun, screen.cost, 0, 1) : playerRun;
-      const fed = grantCandy(next, rosterHeroes, rosterId, screen.kindOfCandy);
+      next = screen.cost > 0 ? buyIchor(playerRun, screen.cost, 0, 1) : playerRun;
+      const fed = grantIchor(next, rosterHeroes, rosterId, screen.kindOfIchor);
       next = screen.nodeId ? advanceToNode(fed.run, screen.nodeId) : fed.run;
       if (screen.cost > 0) playSfx('gold.coin');
       setPlayerRun(next);
       setScreen({ kind: 'levelUp', report: [fed.report], next: screen.next });
     } catch (err) {
-      if (!(err instanceof CandyError)) throw err;
+      if (!(err instanceof IchorError)) throw err;
     }
   }
 
@@ -1061,10 +1061,10 @@ export function App() {
           run={playerRun}
           offers={screen.offers}
           soldOutEquipmentIds={screen.soldOutEquipmentIds}
-          candiesBought={screen.candiesBought}
+          ichorBought={screen.ichorBought}
           onRunChange={setPlayerRun}
           onBuyEquipment={handleBuyGuildEquipment}
-          onBuyCandy={handleBuyGuildCandy}
+          onBuyIchor={handleBuyGuildIchor}
           onBuyConsumable={handleBuyGuildConsumable}
           onRequestRosterReplace={handleRequestRosterReplace}
           onContinue={() => handleNodeContinue(screen.nodeId)}
@@ -1125,12 +1125,12 @@ export function App() {
         />
       )}
 
-      {screen.kind === 'candy' && (
-        <CandyNodeScreen
+      {screen.kind === 'ichor' && (
+        <IchorNodeScreen
           run={playerRun}
-          kind={screen.kindOfCandy}
+          kind={screen.kindOfIchor}
           bought={screen.cost > 0}
-          onPick={handleCandyPick}
+          onPick={handleIchorPick}
           onSkip={() => (screen.nodeId ? handleNodeContinue(screen.nodeId) : setScreen(screen.next))}
         />
       )}

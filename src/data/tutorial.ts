@@ -232,13 +232,13 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     ],
   },
 
-  // --- Row 6: the Candy ---
+  // --- Row 6: the Ichor ---
   {
-    id: 'map:candyReward',
-    topic: 'Candy',
+    id: 'map:ichorReward',
+    topic: 'Ichor',
     lines: [
       'Someone came this way before us, and did not leave with what they were carrying.',
-      'Candy. Two levels\u2019 worth of growth, and it goes to whoever you hand it to. A hero that has fallen behind gets the most from it; a hero out in front, the least.',
+      'Ichor \u2014 what leaks from the Titan. Two levels\u2019 worth of growth for whoever drinks it. A hero that has fallen behind gets the most from it; a hero out in front, the least.',
     ],
   },
 

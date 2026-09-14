@@ -61,7 +61,7 @@ a reward node are untouched — the choosing is the lesson; the routing is not.
 | 4 | Forge | the item slot as the scarce thing |
 | — | *post-fight gate* | **a move offer** on the level-up report (the schedule's first offer, level 4, lands here; the Evolution is level 16 under the default schedule, Act 3 — whether Valor is authored earlier is the per-hero pass's call) |
 | 5 | Monsters | the bench, switching, the lock-in rule, flying the caster |
-| 6 | Candy | growth the player aims: two levels at par, to whoever is handed it — and why a hero behind gets more |
+| 6 | Ichor | growth the player aims: two levels at par, to whoever is handed it — and why a hero behind gets more |
 | 7 | Guild Hall | gold: a hero, gear, or a contract |
 | 8 | Guardian | the faction-escort shape, the Ancient wall, **reading the number not the colour**, the Pact Clock |
 

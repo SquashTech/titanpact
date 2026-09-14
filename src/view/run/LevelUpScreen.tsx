@@ -19,7 +19,7 @@ import { useLevelUpFlow } from './levelUpFlow';
 interface Props {
   run: RunState;
   onRunChange: (next: RunState) => void;
-  /** One entry per roster hero, in roster order — including any that were already at the cap. A candy's is one row. */
+  /** One entry per roster hero, in roster order — including any that were already at the cap. An Ichor's is one row. */
   report: readonly HeroLevelUp[];
   onContinue: () => void;
 }

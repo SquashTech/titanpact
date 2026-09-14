@@ -15,10 +15,10 @@ export const NODE_NAMES: Record<MapNodeType, string> = {
   shop: 'Guild Hall',
   blacksmith: 'Blacksmith',
   equipmentReward: 'Item',
-  candyReward: 'Candy',
+  ichorReward: 'Ichor',
   passiveReward: 'Boon',
   currencyReward: 'Gold',
-  smallCandyReward: 'Small Candy',
+  ichorDropReward: 'Drop of Ichor',
   manaWellReward: 'Mana Well',
   forgeReward: 'Forge',
   mentorReward: 'Mentor',
@@ -41,12 +41,12 @@ export const NODE_COLORS: Record<MapNodeType, string> = {
   // carry), different silhouette tier, so they read as related rather than as each other.
   blacksmith: '#c67a4c',
   equipmentReward: 'var(--physical)',
-  // The level-up report's own green (NodeStage NODE_TINT_VITAL) — a candy IS a level-up, aimed.
-  candyReward: '#4caf6a',
+  // The level-up report's own green (NodeStage NODE_TINT_VITAL) — an Ichor IS a level-up, aimed.
+  ichorReward: '#4caf6a',
   // Arcane violet, the hue the whole passive vocabulary already sits on (passiveIcons' fallback).
   passiveReward: 'var(--magical)',
   currencyReward: 'var(--accent)',
-  smallCandyReward: '#4caf6a',
+  ichorDropReward: '#4caf6a',
   // The MP gauge's own blue (RunGlyph RESOURCE_COLORS mpPotion): a Mana Well reads as the bar it deepens.
   manaWellReward: '#8fb4ff',
   // Forge orange: the only node that hands out a permanent SLOT rather than a thing to put in one.
@@ -73,10 +73,10 @@ export const NODE_TIERS: Record<MapNodeType, NodeTier> = {
   shop: 'landmark',
   blacksmith: 'landmark',
   equipmentReward: 'reward',
-  candyReward: 'reward',
+  ichorReward: 'reward',
   passiveReward: 'reward',
   currencyReward: 'reward',
-  smallCandyReward: 'reward',
+  ichorDropReward: 'reward',
   manaWellReward: 'reward',
   forgeReward: 'reward',
   mentorReward: 'reward',

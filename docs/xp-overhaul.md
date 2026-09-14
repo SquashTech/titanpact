@@ -74,9 +74,9 @@ A fixed XP amount is worth more levels to a hero below par and fewer to one abov
 rule anyone has to write; it is what the cube does. Two consequences, both wanted:
 
 - **Catch-up is built in.** A Guild hire one act behind receives the same XP per encounter as the
-  roster and climbs faster for being lower. The gap closes on its own — slowly — and a candy (§3)
+  roster and climbs faster for being lower. The gap closes on its own — slowly — and an Ichor (§3)
   closes it in one node.
-- **The carry throttles itself.** Every candy into the same hero buys less level than the last.
+- **The carry throttles itself.** Every Ichor into the same hero buys less level than the last.
   What it *does* buy is the next threshold sooner — the Evolution, the Late band — and a threshold
   is a step in power, not in level. The player is trading a smaller, earlier step against breadth.
   Both curves are readable on the sheet.
@@ -92,24 +92,24 @@ the player chooses to spend a node on. **§9 lists it as a reversal; the test mo
 
 ---
 
-## 3. Candy — XP the player aims
+## 3. Ichor — XP the player aims
 
-**A candy is a map-node reward that grants XP to ONE hero.** Pokémon's EXP Candy, as a node. It
+**An Ichor is a map-node reward that grants XP to ONE hero.** Pokémon's EXP Ichor, as a node. It
 replaces the Scroll Cache and the Lone Scroll in the reward rows, seat for seat and weight for
 weight (`scrollReward` 46, `loneScrollReward` 14 in `REWARD_WEIGHTS`), and the Guild Hall shelf
 sells one for gold where it sold a Scroll. Every source is a node that displaced another reward —
-the Tutor's pricing principle — so a candy is never free and never compounds.
+the Tutor's pricing principle — so an Ichor is never free and never compounds.
 
-**Every candy is a moment.** `growth-overhaul.md` §4's "silent deposit" objection applies: XP that
-lands no level-up is invisible. So candies are denominated in **levels-at-par**, not raw XP:
+**Every Ichor is a moment.** `growth-overhaul.md` §4's "silent deposit" objection applies: XP that
+lands no level-up is invisible. So Ichor are denominated in **levels-at-par**, not raw XP:
 
 | Node | Size | Meaning |
 |---|---|---|
-| Candy (the old Scroll Cache's seat, weight 46) | **2 levels-at-par** | the XP from par to par+2 on the run's own curve |
-| Small Candy (the old Lone Scroll's seat, weight 14) | **1 level-at-par** | the XP from par to par+1 |
+| Ichor (the old Scroll Cache's seat, weight 46) | **2 levels-at-par** | the XP from par to par+2 on the run's own curve |
+| Drop of Ichor (the old Lone Scroll's seat, weight 14) | **1 level-at-par** | the XP from par to par+1 |
 | Guild Hall shelf | Small, flat gold, limit 2 a visit | replaces `SCROLL_PURCHASE_*` |
 
-"Par" is `levelAfterEncounters(run.encountersWon)`. A candy so sized always crosses at least one
+"Par" is `levelAfterEncounters(run.encountersWon)`. An Ichor so sized always crosses at least one
 level for any hero **at or behind** par — the behind gets more — and only a carry already ahead
 can ever see a partial. The level-up report is where it pays out, same screen, same rows.
 
@@ -119,7 +119,7 @@ can ever see a partial. The level-up report is where it pays out, same screen, s
 ### Why this is not the two things already rejected
 
 - **Not participation XP** (`growth-overhaul.md` §3): that compounds — the four who fight level,
-  so they win, so they fight. A candy is finite, node-priced, and goes where the player points.
+  so they win, so they fight. An Ichor is finite, node-priced, and goes where the player points.
   The bench never rots because encounter XP is still roster-wide.
 - **Not Gems** (§1 there): the screen buys a level, and a level is stat rolls against a grade, an
   offer from a band, and maybe an Evolution — a story with a hero's name on it, not "+5 Attack."
@@ -130,7 +130,7 @@ can ever see a partial. The level-up report is where it pays out, same screen, s
 
 ### The supply is the only balance number
 
-Expected candy nodes a run at the inherited weights: ~3 Candy + ~1 Small ≈ **7 levels-at-par**
+Expected Ichor nodes a run at the inherited weights: ~3 Ichor + ~1 Small ≈ **7 levels-at-par**
 across a run (first pass — the sim's Scroll node counts, 3.1 and 1.1 a run, are the basis).
 Poured into one hero that is a carry ~+5 by Act 3 after the curve's throttle; spread, it is a
 hire lifted from −5 to par with change. Too little and the carry cannot exist; too much and par
@@ -198,7 +198,7 @@ band — rewritten against the schedule.
 **One model for everybody.** A generated hero reads the same schedule as a roster hero;
 `enemyScrollsForLevel` goes. A contract hero arriving at the act's enemy level has crossed its
 levels and rolled its kit — what it does today, by the same code now. A Guild hire arrives one act
-behind with its levels *un*-crossed, which is what raw means, and its first candy is where the
+behind with its levels *un*-crossed, which is what raw means, and its first Ichor is where the
 player decides whether that runway is worth closing.
 
 **What survives, and why:**
@@ -218,7 +218,7 @@ player decides whether that runway is worth closing.
 The carry build as **increasing returns inside a hero**. `growth-overhaul.md` §4 priced
 concentration in breadth: pour Scrolls into one hero and its ceiling rises, spread them and nobody
 ranks up. Under one curve, concentration has *decreasing* returns in level and *stepped* returns
-in power, and it is bought with candy the player could have spread. That is a different texture —
+in power, and it is bought with Ichor the player could have spread. That is a different texture —
 Pokémon's, not Slay the Spire's — and it means **Titanpact's team-building is about who and which,
 never how much.** If that is not acceptable, this overhaul is not the answer, and the Scroll ladder
 is the right system carrying the wrong price.
@@ -266,13 +266,13 @@ Say which.
 
 Node → do a thing → node. The post-fight chain is *Level-up report (with any offers and any
 Evolution) → Banner → Crucible → map*. No Mastery screen behind it, no Scroll chip on the map, no
-purse to read. A candy node is one tap. The Guild Hall sells people, gear and candy.
+purse to read. An Ichor node is one tap. The Guild Hall sells people, gear and Ichor.
 
 The arc, under four acts and authored schedules: Act 1 is who you are (draft, companion, first
 contract, Early kits); Act 2 is who you are becoming (the early evolvers turn, Mid bands open,
 the roster fills); Act 3 is the team taking shape (the late evolvers turn, Late bands, the Tutor);
 Act 4 is the finished team under test; the finale is the test. What the player chose is the
-roster, the paths, the Classes, the Boons, the items, and **where the candy went** — and the last
+roster, the paths, the Classes, the Boons, the items, and **where the Ichor went** — and the last
 one is the one that says "this is my carry."
 
 ---
@@ -284,11 +284,11 @@ one is the one that says "this is my carry."
 | **Mastery Scrolls, entire** | `RunState.masteryScrolls`, `masteryDeferred`, `RosterEntry.masteryScrollsSpent`, `scrollCost`, `MAX_SCROLL_COST`, `scrollsToReachRung`, `masteryRung`, `masteryRank`, `RANK_THRESHOLDS`, `EVOLUTION_RUNG`, `EVOLUTION_SCROLLS`, `SCROLLS_TO_MAX_RANK`, `canSpendScroll`, `canAffordAnyScroll`, `spendMasteryScroll`, `grantMasteryScrolls`, `masteryMovePool` (re-pointed at the schedule) |
 | **Scroll income** | `scrollsFor`, `ACT_SCROLL_STEP`, `SCROLL_REWARD_COUNT`, `LONE_SCROLL_COUNT`, `SCROLL_PURCHASE_COST`, `SCROLL_PURCHASE_LIMIT`, `buyMasteryScroll`, the Guild Hall shelf's Scroll bundle |
 | **The screens** | `MasteryScreen.tsx`, `MasteryBoard.tsx`, `useScrollPour`, the map's Scroll chip, the Bank button, the Vigil's clear-on-exit |
-| **The nodes** | `scrollReward`, `loneScrollReward` — RE-POINTED at candy, seat and weight kept (§3) |
+| **The nodes** | `scrollReward`, `loneScrollReward` — RE-POINTED at Ichor, seat and weight kept (§3) |
 | **Level as inert data** | `EVOLUTION_LEVEL` as a flat 5 — REPLACED by `schedule.evolutionLevel`, per hero |
 | **The enemy's private table** | `ENEMY_RUNGS_BY_LEVEL`, `enemyScrollsForLevel` — REPLACED by the shared schedule |
 | **The level table as levels** | `LEVEL_AFTER_ENCOUNTER` stays authored; `levelsForEncounter` becomes `xpForEncounter`, and `grantEncounterLevels` grants XP |
-| **The sim's Scroll telemetry** | `scrollsBySource`, `heroScrollHistogram*`, the `rung`/`evolution` screen tallies in `time.ts` → candy and offer tallies |
+| **The sim's Scroll telemetry** | `scrollsBySource`, `heroScrollHistogram*`, the `rung`/`evolution` screen tallies in `time.ts` → Ichor and offer tallies |
 
 The tutorial script (`src/data/tutorial.ts`) narrates Scroll beats and must be re-checked in
 phase 3, as it was in the growth overhaul's.
@@ -303,11 +303,11 @@ Sequenced so the tree is playable at every boundary. Numbering is dependency ord
 | # | Phase | Exit criterion | Status |
 |---|---|---|---|
 | 1 | **XP under the hood.** `RosterEntry.xp`; level derived off `XP(L) = L³`; encounter XP derived from `LEVEL_AFTER_ENCOUNTER` so par is unchanged to the point. Growth rolls fire per level crossed, as now. No visible change. | Every existing test green with no numeric change at par. A hire behind par measurably gains on it — the new test that replaces "stays behind permanently". | **DONE 2026-09-13.** `xpForLevel` / `levelForXp` / `levelOf` / `xpForEncounter` / `grantXp` (`src/run/growth.ts`); `level` is gone from `RosterEntry` and every reader derives it; `SAVE_VERSION` 12. Measured below. |
-| 2 | **Candy.** The two Scroll nodes re-pointed; the shelf; the *who* screen; the report shows the jump. Scrolls still exist and still buy moves — this is a working bridge state where candy buys levels-and-stats and Scrolls buy moves. | Both nodes grant XP to one hero; the sim tallies candy by source and the paired focus/spread batch runs. | **DONE 2026-09-13.** `src/run/candy.ts`, `CandyNodeScreen`; nodes are `candyReward` / `smallCandyReward` (renamed, not just re-pointed — a node named for Scrolls that grants levels would outlive phase 3); the shelf sells a Small for the bundle's 35g, 2 a visit; `SAVE_VERSION` 13. Measured below. |
+| 2 | **Ichor.** The two Scroll nodes re-pointed; the shelf; the *who* screen; the report shows the jump. Scrolls still exist and still buy moves — this is a working bridge state where Ichor buys levels-and-stats and Scrolls buy moves. | Both nodes grant XP to one hero; the sim tallies Ichor by source and the paired focus/spread batch runs. | **DONE 2026-09-13.** `src/run/ichor.ts`, `IchorNodeScreen`; nodes are `ichorReward` / `ichorDropReward` (renamed, not just re-pointed — a node named for Scrolls that grants levels would outlive phase 3); the shelf sells a Drop for the bundle's 35g, 2 a visit; `SAVE_VERSION` 13. Measured below. |
 | 3 | **Levels teach.** The destructive one. `HeroDefinition.schedule` on the default table; offers roll from the report; the Evolution raises from `evolutionLevel`; enemies and hires read the same schedule; delete everything in §7. Tutorial re-checked. | No Scroll anywhere. `test/moveTiers.test.ts` rewritten against the schedule. A run completable end to end. | **DONE 2026-09-13.** `LevelSchedule` / `DEFAULT_SCHEDULE` / `scheduleEntries` / `pendingScheduleEntry` / `takeScheduleEntry` / `levelMovePool` (`src/run/progression.ts`); `RosterEntry.scheduleTaken`; `levelUpFlow.ts` pays the report; `MasteryScreen`/`MasteryBoard` deleted; `SAVE_VERSION` 14. **One rule added:** a hero takes at most ONE entry per level-up, so a raw hire's backlog is worked off one fight at a time (§4's "un-crossed"), and the report never stacks two decisions on one hero. Measured below. |
 | 4 | **Author 36 schedules.** Parallelisable from phase 3 on. The interesting authoring is the spread: who evolves at 12 and who at 22, and whether the low-base/high-grade late bloomers from the grade pass are also the late evolvers (they should not all be — a hero can bloom in stats and turn early, or the reverse). | No hero on the default schedule; the 10–24 Evolution window pinned by test beside the grade budget. | **DONE 2026-09-13** (per user direction: fewer offers a hero). `src/data/heroes.ts`: 11 early turners (10–12), 18 middle (13–19), 7 late (20–24); 5–6 offers a hero, Glyph 7, 5.4 on average; Mid 9–13 and Late 18–25 move with the Evolution. Crossed against the grades on purpose: Marrow, Zenith and Bellows are front-loaded in stats and turn LAST; Riptide and Pincer bloom in stats and turn early/mid. Pinned in `test/moveTiers.test.ts`. Measured below. |
 | 5 | **Four acts and the finale.** §5's table, in one pass. The Herald rename; the Eyes as a second finale champion through `appendFinalEnemy`. | `TOTAL_ACTS` = 5; the sim's act table reads four; 18 encounters at par reach 30. | |
-| 6 | **Re-fit.** Candy supply, `ACT_STEP_CURVE`, `ENEMY_LEVEL_LAG`, champion multipliers, reward weights, against the sim and the skilled pilot; then the length report. | No dead node, no unreachable band, no wall the old curve did not have; run length reported per profile. Win-rate targets are a playtest question. | **DONE 2026-09-13** (per user direction: Late moves realistically accessible). Three dials: each band offers ITS OWN tier (`MOVE_TIER_RANK_EXPIRY.mid` = Late); every schedule re-authored to two offers a band, Late opening 17–22; **Late-tier mana ×0.75** (floor 45, the 100+ whole-pool casts exempt) and `ACT_STEP_CURVE` 9/15 → 8/13 to pay for its enemy half. Measured below. The Act 1 wall is NOT re-fitted — see §10. |
+| 6 | **Re-fit.** Ichor supply, `ACT_STEP_CURVE`, `ENEMY_LEVEL_LAG`, champion multipliers, reward weights, against the sim and the skilled pilot; then the length report. | No dead node, no unreachable band, no wall the old curve did not have; run length reported per profile. Win-rate targets are a playtest question. | **DONE 2026-09-13** (per user direction: Late moves realistically accessible). Three dials: each band offers ITS OWN tier (`MOVE_TIER_RANK_EXPIRY.mid` = Late); every schedule re-authored to two offers a band, Late opening 17–22; **Late-tier mana ×0.75** (floor 45, the 100+ whole-pool casts exempt) and `ACT_STEP_CURVE` 9/15 → 8/13 to pay for its enemy half. Measured below. The Act 1 wall is NOT re-fitted — see §10. |
 
 **What each phase measures.** Phase 1: nothing moves *at par*, and that held — but the roster is
 not all at par. A contract hero arrives at the act's enemy level (par − `ENEMY_LEVEL_LAG`) and a
@@ -315,22 +315,22 @@ hire an act behind, and under the cube both now gain on par with every win where
 trail by a fixed count. Measured (1000 runs, seed 11, greedy pilot): full-clear **51.7% → 61.9%**,
 Act 1 flat (82.0% → 82.2%: nobody is off par yet), Act 2 94.1 → 96.8, Act 3 96.5 → 99.2, Act 4
 83.0 → 89.0, Act 5 84.8 → 88.8. The whole lift is the catch-up §2 promised, landing on recruits
-before candy exists to aim it — so phase 6's re-fit starts ten points looser than the growth
+before Ichor exists to aim it — so phase 6's re-fit starts ten points looser than the growth
 overhaul left it, and the contract hero's "arrives finished" value is now also "arrives and
 closes". A hire that misses eight wins ends the run two levels short (`test/growth.test.ts`).
-Phase 2, measured (1000 runs, seed 11, greedy pilot; the ladder still in, so candy is purely
-additive): **supply is ~13 levels-at-par a completed run, not the ~7 §3 estimated** — candy 6.3,
-Small 1.1, and the Guild Hall shelf **5.7**, which §3's estimate left out and which is nearly half
-of it (the sim buys both Smalls every visit; a player may not). **Focus vs spread is a wash:
-60.3% vs 61.8% full-clear**, and spread is 61.8% against phase 1's 61.9% with no candy at all —
+Phase 2, measured (1000 runs, seed 11, greedy pilot; the ladder still in, so Ichor is purely
+additive): **supply is ~13 levels-at-par a completed run, not the ~7 §3 estimated** — Ichor 6.3,
+Drop 1.1, and the Guild Hall shelf **5.7**, which §3's estimate left out and which is nearly half
+of it (the sim buys both Drops every visit; a player may not). **Focus vs spread is a wash:
+60.3% vs 61.8% full-clear**, and spread is 61.8% against phase 1's 61.9% with no Ichor at all —
 13 levels-at-par per run moved the clear rate by nothing measurable. Mean end level rose 22.6 →
-23.5, so the candy landed; it just is not a lever at this size, which is consistent with a level
-being ~9 budget points (a Candy at par ≈ 18 points ≈ six-tenths of a Common item, for one hero).
-Two readings, both for phase 6: candy is under-sized for what its seat displaces (an item or a
+23.5, so the Ichor landed; it just is not a lever at this size, which is consistent with a level
+being ~9 budget points (an Ichor at par ≈ 18 points ≈ six-tenths of a Common item, for one hero).
+Two readings, both for phase 6: Ichor is under-sized for what its seat displaces (an item or a
 Boon), or the greedy pilot cannot exploit a carry the way a player would. The sign did not flip
 between policies, so it is not a scorer fault (`docs/growth-overhaul.md` §8's lesson) — but the
 focus policy feeds the *strongest* hero, who is already ahead of par and so gets the least from
-each candy; a player's carry is a hero they are *about* to make strong. §10 gains the question. Phase 3: full-clear and encounters-won against
+each Ichor; a player's carry is a hero they are *about* to make strong. §10 gains the question. Phase 3: full-clear and encounters-won against
 phase 2 — expect a drop, since ~47 rung offers become ~40 scheduled ones at a different cadence,
 and the drop is what phase 6 re-fits. Phase 5: the act table and the clock. Phase 6: the clock
 against the target, per profile, and a named decision about which profile the target is for.
@@ -400,11 +400,11 @@ Each is a sign-off. In force until the phase that replaces it lands.
 | Today (`CLAUDE.md`) | Becomes | Phase |
 |---|---|---|
 | Levels are automatic and roster-wide; the curve is authored as levels | Still automatic and roster-wide; the curve is authored as levels and *paid* in XP on a convex scale | 1 |
-| A level grant is a delta; a late hero stays behind **permanently** | XP is the delta; a convex curve closes the gap slowly on its own, and candy closes it on purpose | 1 |
-| There is no per-hero stat-investment currency (Gems deleted) | Still no *stat* currency. Candy is per-hero **level** investment — it buys a story, not a number — and it is the focus dial §3 dropped, in node form | 2 |
+| A level grant is a delta; a late hero stays behind **permanently** | XP is the delta; a convex curve closes the gap slowly on its own, and Ichor closes it on purpose | 1 |
+| There is no per-hero stat-investment currency (Gems deleted) | Still no *stat* currency. Ichor is per-hero **level** investment — it buys a story, not a number — and it is the focus dial §3 dropped, in node form | 2 |
 | Moves come from ONE faucet: Mastery Scrolls, gated by Rank | Moves come from ONE faucet: **levels**, on a per-hero schedule, rolled from the band the level opens | 3 |
 | A rung has a price that rises; the purse banks; the ceiling sits behind the spend | Deleted. Nothing is held, so nothing needs to be behind a spend | 3 |
-| Evolutions come from the 4th rung, paced by the player | From `schedule.evolutionLevel`, authored per hero; the player paces it only with candy | 3 |
+| Evolutions come from the 4th rung, paced by the player | From `schedule.evolutionLevel`, authored per hero; the player paces it only with Ichor | 3 |
 | A level-up REPORT is not an allocation screen — one button, no choice | Still not allocation. It gains exactly one decision kind: the move offer (take / replace / decline), which was its own screen before | 3 |
 | A generated hero reads its ladder off level through `ENEMY_RUNGS_BY_LEVEL` | Through the same schedule a roster hero uses; the private table goes | 3 |
 | `EVOLUTION_LEVEL` gates nothing; authored data only | Per-hero and load-bearing again | 3–4 |
@@ -425,12 +425,12 @@ family, the Pact Clock, the companion, potions, the map shape within an act.
   (declaring actions is ~25 min a run at a guessed 6 s each — preselected targets and a
   "same as last round" tap are UX, not design). Decide the player before deciding the number.
 - **Can the carry rush an Evolution in Act 1?** Under the default schedule, no: Act 1 pays
-  roughly one candy, so a carry leaves Act 1 about +2 over a par of 9 and crosses 16 early in
+  roughly one Ichor, so a carry leaves Act 1 about +2 over a par of 9 and crosses 16 early in
   Act 2 rather than at its end — an act early, not two. An authored `evolutionLevel` of 10 says
   yes for that hero. That is a fact about the hero, and it should be authored on purpose for a
   few — the early powerhouses — and refused for the rest.
-- **Does candy make Ascension's job harder?** A +5 carry beside a par partner is what a harder
-  mode has to punish first (`memory: project_ascension_scope`). Candy supply per Ascension is a
+- **Does Ichor make Ascension's job harder?** A +5 carry beside a par partner is what a harder
+  mode has to punish first (`memory: project_ascension_scope`). Ichor supply per Ascension is a
   dial; so is a Guardian that targets the highest level on the field.
 - **Do offers on the report read as a chain?** The report was one button. A round where three
   heroes cross offer levels at once is three prompts in one screen. The default schedule staggers
@@ -457,12 +457,12 @@ family, the Pact Clock, the companion, potions, the map shape within an act.
 - **Is `L³` the right curve?** Medium Fast is the baseline because it is the one everyone has
   felt. Steeper (Slow, 1.25·L³) makes the carry throttle harder and the hire catch up faster;
   shallower does the reverse. Phase 6's focus/spread batch is where this gets set; ship the cube.
-- **Does the Guild Hall shelf sell one candy or two?** The Scroll limit was 2 a visit. Two Smalls
+- **Does the Guild Hall shelf sell one Ichor or two?** The Scroll limit was 2 a visit. Two Drops
   a visit at flat gold is NOT a purchased +2 for one hero — the second is eaten by a hero now
-  ahead of par and buys less than a level (the throttle, §2, pinned in `test/candy.test.ts`) — but
-  it is nearly half the run's candy in the sim (phase 2's measurement). Start at 2 and watch.
-- **Is a candy big enough to be worth its seat?** Phase 2 measured 13 levels-at-par a run moving
-  the clear rate by nothing, and a Candy at par is ~18 budget points against the ~30 of the Common
+  ahead of par and buys less than a level (the throttle, §2, pinned in `test/Ichor.test.ts`) — but
+  it is nearly half the run's Ichor in the sim (phase 2's measurement). Start at 2 and watch.
+- **Is an Ichor big enough to be worth its seat?** Phase 2 measured 13 levels-at-par a run moving
+  the clear rate by nothing, and an Ichor at par is ~18 budget points against the ~30 of the Common
   item the same seat could have paid. Either the size goes up (3 / 2?), the seat goes down (weight
   46 is the Scroll Cache's, sized for a currency that bought Evolutions), or the value is in what
   a level *opens* once phase 3 puts offers and the Evolution on the schedule — in which case the
@@ -471,7 +471,7 @@ family, the Pact Clock, the companion, potions, the map shape within an act.
 ### Watch in playtest
 
 - **Does the roster read too flat *without* the ladder?** The growth overhaul's own watch item,
-  now with its drafted answer built in. If six heroes at par with one candy-carry still read as
+  now with its drafted answer built in. If six heroes at par with one Ichor-carry still read as
   interchangeable, the schedules are too similar — that is a phase 4 authoring finding, not a
   systems one.
 - **Does declining an offer feel bad when it was free?** A Scroll declined was a Scroll spent, and

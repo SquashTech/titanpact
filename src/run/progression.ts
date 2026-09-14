@@ -23,7 +23,7 @@ export const MOVE_CAP = 4;
 // band the offer rolls from, and which level is the Evolution. Nothing is held and nothing is
 // spent, so there is no purse, no price and no gate to sit behind a spend — the ceiling sits
 // behind the level, and the level is paid by what the roster won and what the player aimed
-// (run/candy.ts).
+// (run/ichor.ts).
 //
 // Keep the roll, lose the currency: a level on `offerLevels` rolls ONE move from the band that
 // level has opened, take it or decline, burned either way (the Scroll rung minus the Scroll). The
@@ -135,7 +135,7 @@ export function isMoveTierOfferable(move: MoveDefinition | undefined, rank: numb
  * Floor on a hero's move pool, by band: each band offers its own tier, so what a band has to
  * survive is exactly the offers the schedule makes from it — Early is every offer below midLevel,
  * Mid every offer from midLevel to below lateLevel (the Evolution offers nothing, so it is not
- * counted), Late every offer from lateLevel. Candy can pull offers forward but never adds one, so
+ * counted), Late every offer from lateLevel. Ichor can pull offers forward but never adds one, so
  * the schedule bounds the drain exactly. In practice every pool is authored well past these
  * (6 Early / 6 Mid / 4 Late against 2 / 2 / 2). Enforced by test/moveTiers.test.ts.
  */

@@ -15,8 +15,8 @@ import { progressionTable } from '../../src/data/progression';
 import { enemies, finaleEnemies, ENDBRINGER_ID } from '../../src/data/enemies';
 import { encounterKindOf, nodeEncounter } from '../../src/run/encounters';
 import { allCombatants } from '../../src/data/content';
-import { guildHallOffers, CONTRACT_PURCHASE_COST, CANDY_PURCHASE_COST, CANDY_PURCHASE_LIMIT } from '../../src/data/recruitment';
-import { CANDY_LEVELS, buyCandy, canBuyCandy, canEatCandy, grantCandy, type CandyKind } from '../../src/run/candy';
+import { guildHallOffers, CONTRACT_PURCHASE_COST, ICHOR_PURCHASE_COST, ICHOR_PURCHASE_LIMIT } from '../../src/data/recruitment';
+import { ICHOR_LEVELS, buyIchor, canBuyIchor, canDrinkIchor, grantIchor, type IchorKind } from '../../src/run/ichor';
 
 import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry, ROSTER_CAP, TOTAL_ACTS, type RunState, type RosterEntry } from '../../src/run/state';
 import { generateMap, type MapNode, type MapNodeType } from '../../src/run/map';
@@ -137,8 +137,8 @@ export interface RunRecord {
   choices: ChoiceEvent[];
   /** Rarity of every item actually equipped, keyed `act:rarity`. */
   equipped: string[];
-  /** Candy eaten this run, by source, in levels-at-par (run/candy.ts CANDY_LEVELS). */
-  candyBySource: Record<string, number>;
+  /** Ichor eaten this run, by source, in levels-at-par (run/ichor.ts ICHOR_LEVELS). */
+  ichorBySource: Record<string, number>;
   /** Heroes joining after the draft: `contract` (claimed or bought), `hire` (Guild Hall). */
   recruitsBySource: Record<string, number>;
   /** What the run cost in taps and screens, [act]; index 0 unused (time.ts prices it). */
@@ -231,7 +231,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     fights: [],
     choices: [],
     equipped: [],
-    candyBySource: {},
+    ichorBySource: {},
     recruitsBySource: {},
     timeByAct: Array.from({ length: TOTAL_ACTS + 1 }, emptyTimeCounts),
   };
@@ -359,7 +359,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
 
 /**
  * What the level-up report pays out (src/view/run/levelUpFlow.ts): after every level-up — a won
- * fight's, a candy's — each hero owed a schedule entry takes one (policy.takeSchedule). The
+ * fight's, an Ichor's — each hero owed a schedule entry takes one (policy.takeSchedule). The
  * Evolution is logged as the choice it is; offers and Evolutions are tallied as the screens they
  * cost.
  */
@@ -531,26 +531,26 @@ function tryRecruitContracts(run: RunState, defeatedRoster: readonly RosterEntry
 }
 
 /**
- * A candy eaten by the hero the level policy names (policy.levelUpTarget: `focus` feeds the
+ * An Ichor eaten by the hero the level policy names (policy.levelUpTarget: `focus` feeds the
  * strongest, `spread` the lowest of the fielded four) — the focus-vs-spread experiment
  * docs/xp-overhaul.md §3 asks for. A hero at the cap is skipped, as the screen refuses it.
  */
-function eatCandy(run: RunState, kind: CandyKind, source: string, rng: Rng, record: RunRecord, options: RunOptions): RunState {
-  const target = policy.levelUpTarget(run.roster.filter(canEatCandy), options.levelPolicy);
+function drinkIchor(run: RunState, kind: IchorKind, source: string, rng: Rng, record: RunRecord, options: RunOptions): RunState {
+  const target = policy.levelUpTarget(run.roster.filter(canDrinkIchor), options.levelPolicy);
   if (!target) return run;
-  record.candyBySource[source] = (record.candyBySource[source] ?? 0) + CANDY_LEVELS[kind];
+  record.ichorBySource[source] = (record.ichorBySource[source] ?? 0) + ICHOR_LEVELS[kind];
   tally(record, run.actNumber, 'levelUp');
-  return paySchedule(grantCandy(run, rosterHeroes, target.rosterId, kind, rng).run, rng, record);
+  return paySchedule(grantIchor(run, rosterHeroes, target.rosterId, kind, rng).run, rng, record);
 }
 
 function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: string, rng: Rng, record: RunRecord, options: RunOptions): RunState {
   switch (nodeType) {
-    case 'candyReward':
-      return eatCandy(run, 'candy', 'candy', rng, record, options);
+    case 'ichorReward':
+      return drinkIchor(run, 'ichor', 'ichor', rng, record, options);
     case 'currencyReward':
       return grantCurrencyReward(run, rollGoldRange(PURSE_GOLD_RANGE, rng));
-    case 'smallCandyReward':
-      return eatCandy(run, 'small', 'smallCandy', rng, record, options);
+    case 'ichorDropReward':
+      return drinkIchor(run, 'drop', 'drop', rng, record, options);
     case 'manaWellReward': {
       // The hero the pool is worth most to (policy.statBoostTarget) — the one screen that asks who.
       const target = policy.statBoostTarget(run.roster, 'manaPool');
@@ -744,10 +744,10 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
     }
   }
 
-  // The shelf's Small Candy (CANDY_PURCHASE_LIMIT a visit), bought while somebody can still eat
+  // The shelf's Drop of Ichor (ICHOR_PURCHASE_LIMIT a visit), bought while somebody can still eat
   // it and the gold is there.
-  for (let bought = 0; canBuyCandy(next, CANDY_PURCHASE_COST, bought, CANDY_PURCHASE_LIMIT); bought++) {
-    next = eatCandy(buyCandy(next, CANDY_PURCHASE_COST, bought, CANDY_PURCHASE_LIMIT), 'small', 'guildHall', rng, record, options);
+  for (let bought = 0; canBuyIchor(next, ICHOR_PURCHASE_COST, bought, ICHOR_PURCHASE_LIMIT); bought++) {
+    next = drinkIchor(buyIchor(next, ICHOR_PURCHASE_COST, bought, ICHOR_PURCHASE_LIMIT), 'drop', 'guildHall', rng, record, options);
   }
 
   for (const itemId of offers.equipmentOfferIds) {

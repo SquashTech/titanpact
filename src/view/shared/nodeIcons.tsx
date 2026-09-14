@@ -10,13 +10,13 @@ import { SECTION_PATHS } from './sectionIcons';
 
 const CLAW_GASH = <path d="M12 5C15.4 9.4 17 14.4 16.4 19.6 12.4 15.2 10.6 10.2 12 5Z" />;
 
-// A wrapped sweet about the origin: the body, and a fan of wrapper pinched off either end. Three
-// solid pieces, so it holds as a silhouette at 16px.
-const SWEET = (
+// A stoppered phial about the origin — the Ichor's vessel: stopper, neck, round body. Three solid
+// pieces, so it holds as a silhouette at 16px.
+const PHIAL = (
   <>
-    <ellipse cx="0" cy="0" rx="5.4" ry="4.2" />
-    <path d="M-4.4-1.8-10.8-4.8-9.2 0l-1.6 4.8 6.4-3Z" />
-    <path d="M4.4-1.8 10.8-4.8 9.2 0l1.6 4.8-6.4-3Z" />
+    <rect x="-2.4" y="-10.4" width="4.8" height="2.6" rx="0.9" />
+    <rect x="-1.7" y="-8" width="3.4" height="3.6" />
+    <circle cx="0" cy="3.6" r="6" />
   </>
 );
 
@@ -105,12 +105,12 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
     </>
   ),
   equipmentReward: SECTION_PATHS.equipment,
-  // Two wrapped sweets, against the Small Candy's one below: the Candy pays two levels and the
-  // Small one, and with map labels gone the count IS the mark.
-  candyReward: (
+  // Two phials, against the Drop of Ichor's one below: the Ichor pays two levels and the Drop
+  // one, and with map labels gone the count IS the mark.
+  ichorReward: (
     <>
-      <g transform="translate(7.2 7.4) rotate(-35) scale(0.62)">{SWEET}</g>
-      <g transform="translate(16.8 16.6) rotate(-35) scale(0.62)">{SWEET}</g>
+      <g transform="translate(6.6 12.4) scale(0.8)">{PHIAL}</g>
+      <g transform="translate(17.4 12.4) scale(0.8)">{PHIAL}</g>
     </>
   ),
   // The Passives section mark, for the node that hands one over — same rule.
@@ -122,7 +122,7 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
       <path d="M9 7.8h6c3.6 1.9 5.8 5.2 5.8 8.6 0 3.2-2.4 5.2-6 5.2h-5.6c-3.6 0-6-2-6-5.2 0-3.4 2.2-6.7 5.8-8.6Z" />
     </>
   ),
-  smallCandyReward: <g transform="translate(12 12) rotate(-35) scale(0.92)">{SWEET}</g>,
+  ichorDropReward: <g transform="translate(12 12.4) scale(0.95)">{PHIAL}</g>,
   // The Mana stat's own drop: a stat reward reuses the exact glyph of what it grants.
   manaWellReward: STAT_PATHS.manaPool,
   // Anvil on its stump: the Forge adds a slot, so it draws the place gear is made, not gear.

@@ -3,7 +3,7 @@ import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import type { HeroDefinition } from '../../engine/content';
-import { CANDY_LEVELS, anyCandyEligible, canEatCandy, candyLevelAfter, parLevel, type CandyKind } from '../../run/candy';
+import { ICHOR_LEVELS, anyIchorEligible, canDrinkIchor, ichorLevelAfter, parLevel, type IchorKind } from '../../run/ichor';
 import { levelOf } from '../../run/growth';
 import type { RosterEntry, RunState } from '../../run/state';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
@@ -14,7 +14,7 @@ import { RosterPeek } from './RosterPeek';
 
 interface Props {
   run: RunState;
-  kind: CandyKind;
+  kind: IchorKind;
   /** The Guild Hall's shelf, rather than a map node: the header says what was paid. */
   bought?: boolean;
   /** The pick IS the decision — the caller feeds the hero and raises the level-up report. */
@@ -23,15 +23,15 @@ interface Props {
   onSkip: () => void;
 }
 
-const TITLES: Record<CandyKind, string> = { candy: 'Candy', small: 'Small Candy' };
+const TITLES: Record<IchorKind, string> = { ichor: 'Ichor', drop: 'Drop of Ichor' };
 
 /**
- * Candy: XP aimed at ONE hero (docs/xp-overhaul.md §3, run/candy.ts). The screen collects one
+ * Ichor: XP aimed at ONE hero (docs/xp-overhaul.md §3, run/ichor.ts). The screen collects one
  * thing, who, and every card says what that hero would become — a hero behind par climbs
- * further on the same candy, which is the whole reason the number is on the card. The payoff is
+ * further on the same Ichor, which is the whole reason the number is on the card. The payoff is
  * the level-up report, not this screen: the pick hands straight off.
  */
-export function CandyNodeScreen({ run, kind, bought = false, onPick, onSkip }: Props) {
+export function IchorNodeScreen({ run, kind, bought = false, onPick, onSkip }: Props) {
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
   const [picked, setPicked] = useState(false);
 
@@ -39,9 +39,9 @@ export function CandyNodeScreen({ run, kind, bought = false, onPick, onSkip }: P
     playSfx('shrine', { pitch: 1.1, delay: 0.12 });
   }, []);
 
-  const levels = CANDY_LEVELS[kind];
+  const levels = ICHOR_LEVELS[kind];
   const par = parLevel(run);
-  const anyEligible = anyCandyEligible(run.roster);
+  const anyEligible = anyIchorEligible(run.roster);
 
   function handlePick(rosterId: string) {
     if (picked) return;
@@ -59,13 +59,13 @@ export function CandyNodeScreen({ run, kind, bought = false, onPick, onSkip }: P
       <RosterPeek run={run} />
 
       <NodeHeader
-        eyebrow={bought ? 'Off the shelf' : 'Spoils'}
+        eyebrow={bought ? 'Off the shelf' : 'What the Titan Leaks'}
         title={TITLES[kind]}
-        glyph={<ResourceGlyph kind="candy" className="node-header-resource" />}
+        glyph={<ResourceGlyph kind="ichor" className="node-header-resource" />}
         readout={
           anyEligible
-            ? `${levels === 1 ? "A level's" : `${levels} levels'`} worth of growth at par (Lv ${par}), for one hero. Choose who — a hero behind gets more of it. Hold to review a sheet.`
-            : 'Every hero is already at max level — there is nobody left to feed.'
+            ? `${levels === 1 ? "A level's" : `${levels} levels'`} worth of growth at par (Lv ${par}), for whoever drinks it. Choose who — a hero behind gets more of it. Hold to review a sheet.`
+            : 'Every hero is already at max level — there is nobody left to drink it.'
         }
       />
 
@@ -73,8 +73,8 @@ export function CandyNodeScreen({ run, kind, bought = false, onPick, onSkip }: P
         {run.roster.map((entry) => {
           const hero = rosterHeroes[entry.heroId];
           const from = levelOf(entry);
-          const eligible = canEatCandy(entry);
-          const to = eligible ? candyLevelAfter(run, entry, kind) : from;
+          const eligible = canDrinkIchor(entry);
+          const to = eligible ? ichorLevelAfter(run, entry, kind) : from;
           return (
             <HeroPickCard
               key={entry.rosterId}
@@ -83,7 +83,7 @@ export function CandyNodeScreen({ run, kind, bought = false, onPick, onSkip }: P
               disabled={!eligible || picked}
               onActivate={() => eligible && handlePick(entry.rosterId)}
               onPreview={() => setPreviewEntry({ hero, entry })}
-              ariaLabel={`${hero.name}, level ${from} — ${eligible ? `feed it, to level ${to}` : 'already at max level'}`}
+              ariaLabel={`${hero.name}, level ${from} — ${eligible ? `drinks it, to level ${to}` : 'already at max level'}`}
               ctaClassName={eligible ? 'is-accent' : undefined}
               cta={eligible ? (to > from ? `Lv ${from} → ${to}` : `Lv ${from}, part-way`) : 'Max'}
             />

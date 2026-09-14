@@ -23,7 +23,7 @@ import './ironMoves.test';
 import './beastMoves.test';
 import './mechMoves.test';
 import './growth.test';
-import './candy.test';
+import './ichor.test';
 import './moveTiers.test';
 import './roster.test';
 import './titanspawn.test';

@@ -22,7 +22,7 @@
 > code does.** Read both before changing anything.
 
 > **SUPERSEDED AGAIN by `xp-overhaul.md` (2026-09-13), phases 1–3 built:** level is DERIVED from
-> XP on `L³`; candy nodes aim XP at one hero; and **the Scroll ladder is deleted** — moves and the
+> XP on `L³`; Ichor nodes aim XP at one hero; and **the Scroll ladder is deleted** — moves and the
 > Evolution come from a per-hero **schedule** read off level (`DEFAULT_SCHEDULE`,
 > `src/run/progression.ts`) and paid out on the level-up report. Part 1b and Part 2's "Trigger"
 > below describe the deleted ladder and are kept for their reasoning; `run-loop.md` "The schedule"
