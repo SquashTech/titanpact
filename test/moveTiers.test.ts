@@ -40,6 +40,7 @@ import {
 } from '../src/run/progression';
 import { heroes as heroesById } from '../src/data/heroes';
 import { MAX_LEVEL, levelOf, levelUpEntry, xpForLevel } from '../src/run/growth';
+import { MASTERY_EVOLUTION } from '../src/run/mastery';
 import type { MoveTier, TypeId } from '../src/engine/content';
 
 /** Every authored slate; Ancient is the only type still untiered (no authored slate yet). */
@@ -113,18 +114,13 @@ test('move tiers: each band offers its own tier — Early expires when Mid opens
   assert.strictEqual(MAX_BAND_RANK, MOVE_TIER_RANK.late, 'the top band is the last one');
 });
 
-test('schedule: the default is the table a generated hero already read — offers every three levels, Mid at 10, the Evolution at 16, Late at 21', () => {
-  assert.deepStrictEqual(DEFAULT_SCHEDULE, { offerLevels: [4, 7, 10, 13, 16, 19, 22, 25, 28], midLevel: 10, evolutionLevel: 16, lateLevel: 21 });
+test('schedule: the default is the table a generated hero already read — offers every three levels, Mid at 10, Late at 21, and no Evolution on it', () => {
+  assert.deepStrictEqual(DEFAULT_SCHEDULE, { offerLevels: [4, 7, 10, 13, 16, 19, 22, 25, 28], midLevel: 10, lateLevel: 21 });
   const entries = scheduleEntries(DEFAULT_SCHEDULE);
   assert.deepStrictEqual(
     entries.map((e) => [e.level, e.kind]),
-    [[4, 'offer'], [7, 'offer'], [10, 'offer'], [13, 'offer'], [16, 'evolution'], [19, 'offer'], [22, 'offer'], [25, 'offer'], [28, 'offer']],
-    'the offer at evolutionLevel IS the Evolution'
-  );
-  // A mortal entry: the Evolution level and the Late level are tier-steps, Late added if it was not an offer level.
-  assert.deepStrictEqual(
-    scheduleEntries(DEFAULT_SCHEDULE, true).filter((e) => e.kind !== 'offer').map((e) => [e.level, e.kind]),
-    [[16, 'step'], [21, 'step']]
+    [[4, 'offer'], [7, 'offer'], [10, 'offer'], [13, 'offer'], [16, 'offer'], [19, 'offer'], [22, 'offer'], [25, 'offer'], [28, 'offer']],
+    'every entry is an offer — the Evolution sits behind Mastery pips, not a level (docs/mastery.md)'
   );
   // A level not on the list is a plain level; an entry is owed once the level reaches it.
   for (let level = 1; level <= MAX_LEVEL; level++) {
@@ -133,7 +129,7 @@ test('schedule: the default is the table a generated hero already read — offer
   }
   const wardenEntries = scheduleEntries(WARDEN);
   assert.strictEqual(scheduleEntriesBelow(heroesById.ironWarden, 1), 0);
-  assert.strictEqual(scheduleEntriesBelow(heroesById.ironWarden, WARDEN.evolutionLevel), wardenEntries.filter((e) => e.level <= WARDEN.evolutionLevel).length);
+  assert.strictEqual(scheduleEntriesBelow(heroesById.ironWarden, WARDEN.midLevel), wardenEntries.filter((e) => e.level <= WARDEN.midLevel).length);
   assert.strictEqual(scheduleEntriesBelow(heroesById.ironWarden, MAX_LEVEL), wardenEntries.length);
   assert.strictEqual(scheduleFor(undefined), DEFAULT_SCHEDULE, 'an unauthored hero reads the default');
 });
@@ -213,7 +209,8 @@ test('schedule: entries are taken in order, one per level-up, and a hero owed se
   // level un-taken, and each level-up pays the next one until it has caught up.
   const hero = heroesById.ironWarden;
   const entries = scheduleEntries(WARDEN);
-  const arriveAt = WARDEN.evolutionLevel - 1;
+  const last = entries[entries.length - 1].level;
+  const arriveAt = last - 1;
   let run = addRosterEntry(createRunState(0), { ...createRosterEntry('ironWarden', 'ironWarden', hero.moveIds), xp: xpForLevel(arriveAt) });
   assert.strictEqual(run.roster[0].scheduleTaken, 0);
   const owed = [];
@@ -225,12 +222,13 @@ test('schedule: entries are taken in order, one per level-up, and a hero owed se
   }
   const below = entries.filter((e) => e.level <= arriveAt).map((e) => e.level);
   assert.ok(below.length >= 2, 'the fixture needs a backlog');
-  assert.deepStrictEqual(owed, below, `the offers below ${arriveAt}, in order — the Evolution at ${WARDEN.evolutionLevel} is not yet reached`);
+  assert.deepStrictEqual(owed, below, `the offers below ${arriveAt}, in order`);
   assert.strictEqual(pendingScheduleEntry(hero, run.roster[0]), null, 'and then nothing, until the level moves');
   assert.ok(scheduleRemaining(hero, run.roster[0]), 'but the schedule is not finished');
   run = { ...run, roster: [levelUpEntry(run.roster[0], hero, 1).entry] };
-  assert.strictEqual(pendingScheduleEntry(hero, run.roster[0])?.kind, 'evolution', `level ${WARDEN.evolutionLevel} owes the Evolution`);
-  assert.ok(availableEvolution(progressionTable, hero, run.roster[0]), 'and availableEvolution reads the same entry');
+  assert.strictEqual(pendingScheduleEntry(hero, run.roster[0])?.level, last, `level ${last} owes its offer`);
+  assert.strictEqual(availableEvolution(progressionTable, run.roster[0]), null, 'and no level ever raises the Evolution');
+  assert.ok(availableEvolution(progressionTable, atEvolution(run.roster[0])), `${MASTERY_EVOLUTION} pips do`);
   const done = { ...run.roster[0], xp: xpForLevel(MAX_LEVEL), scheduleTaken: entries.length };
   assert.strictEqual(scheduleRemaining(hero, done), false, 'past the last entry the hero is finished learning from levels');
   assert.strictEqual(pendingScheduleEntry(hero, done), null);
@@ -248,10 +246,10 @@ test('schedule: a dry band pays nothing and the entry is still taken — the nex
 
 test('move tiers: the floor is a BAND surviving the offers the schedule makes from it', () => {
   // What a band must survive is the offers the schedule makes from it: two Early (4, 7) before
-  // midLevel opens Mid, three Mid (10, 13, 19 — 16 is the Evolution and offers nothing) before
-  // lateLevel, and three Late (22, 25, 28) from it.
-  assert.deepStrictEqual(movePoolFloor(), { early: 2, mid: 3, late: 3 });
-  assert.deepStrictEqual(movePoolFloor({ offerLevels: [3, 5, 8, 12, 20], midLevel: 6, evolutionLevel: 12, lateLevel: 20 }), { early: 2, mid: 1, late: 1 });
+  // midLevel opens Mid, four Mid (10, 13, 16, 19) before lateLevel, and three Late (22, 25, 28)
+  // from it.
+  assert.deepStrictEqual(movePoolFloor(), { early: 2, mid: 4, late: 3 });
+  assert.deepStrictEqual(movePoolFloor({ offerLevels: [3, 5, 8, 12, 20], midLevel: 6, lateLevel: 20 }), { early: 2, mid: 2, late: 1 });
 });
 
 test('move tiers: every hero clears every band without it running dry', () => {
@@ -270,12 +268,14 @@ test('move tiers: every hero clears every band without it running dry', () => {
 
 test('move tiers: every hero walks its whole schedule with a move to show for each offer, down every path', () => {
   // The arithmetic above models the drain; this WALKS it through the real calls, so the
-  // offeredMoveIds bookkeeping is in the loop, and the Evolution lands where the schedule puts it
-  // — at evolutionLevel, with a graft's line in the pool for the offer after. Both answers to an
-  // offer are exercised because both spend it: declining burns the move exactly as taking it does.
+  // offeredMoveIds bookkeeping is in the loop, and the Evolution lands where the pips put it —
+  // taken at the hero's midLevel here, with a graft's line in the pool for the offers after. Both
+  // answers to an offer are exercised because both spend it: declining burns the move exactly as
+  // taking it does.
   for (const hero of Object.values(heroesById)) {
     const paths = (progressionTable.evolutions[hero.id] ?? []).flatMap((node) => node.paths);
-    const entries = scheduleEntries(scheduleFor(hero));
+    const schedule = scheduleFor(hero);
+    const entries = scheduleEntries(schedule);
     for (const path of paths) {
       let run = addRosterEntry(createRunState(0), createRosterEntry(hero.id, hero.id, hero.moveIds));
       let decline = false;
@@ -283,10 +283,10 @@ test('move tiers: every hero walks its whole schedule with a move to show for ea
         run = { ...run, roster: [{ ...run.roster[0], xp: xpForLevel(step.level) }] };
         const owed = pendingScheduleEntry(hero, run.roster[0]);
         assert.strictEqual(owed?.level, step.level, `${hero.id}: level ${step.level} owes its entry`);
-        if (step.kind === 'evolution') {
-          assert.ok(availableEvolution(progressionTable, hero, run.roster[0]), `${hero.id}: the Evolution opened at ${step.level}`);
+        if (step.level >= schedule.midLevel && run.roster[0].chosenPathIds.length === 0) {
+          run = { ...run, roster: [atEvolution(run.roster[0])] };
+          assert.ok(availableEvolution(progressionTable, run.roster[0]), `${hero.id}: the Evolution opened at ${MASTERY_EVOLUTION} pips`);
           run = chooseEvolutionPath(run, progressionTable, heroesById, hero.id, path.id);
-          continue;
         }
         const offerable = poolOf(run.roster[0]);
         assert.ok(
@@ -339,7 +339,7 @@ test('move tiers: every Evolution node offers exactly three paths, differing in 
   for (const [heroId, nodes] of Object.entries(progressionTable.evolutions)) {
     for (const node of nodes) {
       const kinds = node.paths.map((p) => p.kind).sort();
-      assert.deepStrictEqual(kinds, ['defensive', 'offensive', 'utility'], `${heroId} at level ${scheduleFor(heroesById[heroId]).evolutionLevel}`);
+      assert.deepStrictEqual(kinds, ['defensive', 'offensive', 'utility'], heroId);
     }
   }
 });
@@ -374,33 +374,26 @@ test("schedule: every hero's schedule is legal — sorted offers, the Evolution 
     assert.deepStrictEqual([...schedule.offerLevels], sorted, `${hero.id}: offer levels out of order`);
     assert.strictEqual(new Set(schedule.offerLevels).size, schedule.offerLevels.length, `${hero.id}: a level listed twice`);
     assert.ok(schedule.offerLevels.every((l) => l >= 2 && l <= MAX_LEVEL), `${hero.id}: an offer level off the curve`);
-    assert.ok(schedule.evolutionLevel >= 10 && schedule.evolutionLevel <= 24, `${hero.id}: evolves at ${schedule.evolutionLevel}, outside 10-24`);
     assert.ok(schedule.midLevel < schedule.lateLevel, `${hero.id}: Late opens before Mid`);
     assert.ok(schedule.midLevel > 1 && schedule.lateLevel <= MAX_LEVEL, `${hero.id}: a band outside the curve`);
     const floor = movePoolFloor(schedule);
     assert.ok(floor.early >= 1 && floor.mid >= 1 && floor.late >= 1, `${hero.id}: a band with no offer from it`);
-    void atEvolution;
     void levelOf;
   }
 });
 
-test('schedule: every hero authors its own — none on the default — with 4-7 offers, and the roster turns at different times', () => {
+test('schedule: every hero authors its own — none on the default — with 4-7 offers', () => {
   // The per-hero pass (docs/xp-overhaul.md §8 phase 4). A hero left on DEFAULT_SCHEDULE would be
-  // indistinguishable from a contract hero of the same level; the spread is the identity the
-  // roster was missing, so both ends of the 10-24 window have to be populated.
-  const evolutions: number[] = [];
+  // indistinguishable from a contract hero of the same level. The Evolution's timing is no longer
+  // here (every hero turns at MASTERY_EVOLUTION pips, docs/mastery.md); the offers are.
   let offers = 0;
   for (const hero of Object.values(heroesById)) {
     assert.ok(hero.schedule, `${hero.id} is on the default schedule`);
     assert.notStrictEqual(hero.schedule, DEFAULT_SCHEDULE);
-    const count = hero.schedule.offerLevels.filter((l) => l !== hero.schedule!.evolutionLevel).length;
+    const count = hero.schedule.offerLevels.length;
     assert.ok(count >= 4 && count <= 7, `${hero.id} makes ${count} offers`);
     offers += count;
-    evolutions.push(hero.schedule.evolutionLevel);
   }
   const heroCount = Object.keys(heroesById).length;
   assert.ok(offers / heroCount <= 6.5, `${(offers / heroCount).toFixed(1)} offers a hero on average — the ladder's nine was 41 decisions a run`);
-  assert.ok(evolutions.filter((l) => l <= 12).length >= 6, 'too few early turners');
-  assert.ok(evolutions.filter((l) => l >= 20).length >= 5, 'too few late turners');
-  assert.ok(new Set(evolutions).size >= 8, 'the roster turns on too few distinct levels');
 });

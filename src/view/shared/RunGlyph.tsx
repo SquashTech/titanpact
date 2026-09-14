@@ -53,6 +53,8 @@ const RESOURCE_PATHS = {
   ),
   // The one phial, not the Ichor node's pair: what the shelf sells is a Drop.
   ichor: NODE_PATHS.ichorDropReward,
+  // The Mastery Scroll: the Scribe's node glyph, since a Scroll is what the Scribe hands over.
+  scroll: NODE_PATHS.scribeReward,
   // The two potions share one flask and differ by colour alone, since they are the same verb at
   // two gauges. A round-bottomed flask with a stoppered neck: the bulb is what survives 12px.
   hpPotion: FLASK_PATH,
@@ -67,6 +69,8 @@ export const RESOURCE_COLORS: Record<ResourceKind, string> = {
   contract: '#9bc9ff',
   // The level-up report's green: an Ichor is a level-up the player aims.
   ichor: '#4caf6a',
+  // The Scribe's parchment (mapNodes NODE_COLORS scribeReward).
+  scroll: '#e0c27a',
   // The gauges' own colours, so a potion reads as the bar it refills.
   hpPotion: '#ff8a8a',
   mpPotion: '#8fb4ff',

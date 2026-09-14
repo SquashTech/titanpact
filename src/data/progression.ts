@@ -530,8 +530,8 @@ export const progressionTable: ProgressionTable = {
       'mentalFortress',
     ],
     // The companion's bodies (run/companion.ts): a spawn's pool is its type's whole slate, so
-    // the schedule gates it by band like anyone's. No Evolution node — its evolutionLevel is its
-    // tier-step instead.
+    // the schedule gates it by band like anyone's. No Evolution node — its Mastery pips are its
+    // tier-steps instead.
     ...spawnMoveTiers,
   },
   evolutions: {

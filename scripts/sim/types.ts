@@ -136,6 +136,9 @@ export interface Aggregate {
   /** Ichor eaten, by source, in levels-at-par (run/ichor.ts) — and the same on completed runs. */
   ichorBySource: Record<string, number>;
   ichorBySourceWon: Record<string, number>;
+  /** Mastery pips landed, by source (scribe / shelf; the Cache from phase 2), all runs and won runs. */
+  pipsBySource: Record<string, number>;
+  pipsBySourceWon: Record<string, number>;
   /** Heroes who joined the roster after the draft, by route. */
   recruitsBySource: Record<string, number>;
   /** What runs cost in taps and screens (time.ts), [act], summed over runs that ENTERED the act. */
@@ -188,6 +191,8 @@ export function emptyAggregate(): Aggregate {
     lockInFights: 0,
     ichorBySource: {},
     ichorBySourceWon: {},
+    pipsBySource: {},
+    pipsBySourceWon: {},
     recruitsBySource: {},
     timeByAct: Array.from({ length: 7 }, emptyTimeCounts),
     timeByActWon: Array.from({ length: 7 }, emptyTimeCounts),
@@ -271,6 +276,8 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   for (const key of Object.keys(from.castsByManaBand)) into.castsByManaBand[key] = (into.castsByManaBand[key] ?? 0) + from.castsByManaBand[key];
   for (const key of Object.keys(from.ichorBySource)) into.ichorBySource[key] = (into.ichorBySource[key] ?? 0) + from.ichorBySource[key];
   for (const key of Object.keys(from.ichorBySourceWon)) into.ichorBySourceWon[key] = (into.ichorBySourceWon[key] ?? 0) + from.ichorBySourceWon[key];
+  for (const key of Object.keys(from.pipsBySource)) into.pipsBySource[key] = (into.pipsBySource[key] ?? 0) + from.pipsBySource[key];
+  for (const key of Object.keys(from.pipsBySourceWon)) into.pipsBySourceWon[key] = (into.pipsBySourceWon[key] ?? 0) + from.pipsBySourceWon[key];
   for (const key of Object.keys(from.recruitsBySource)) into.recruitsBySource[key] = (into.recruitsBySource[key] ?? 0) + from.recruitsBySource[key];
   for (const key of Object.keys(from.deathByNodeType)) {
     into.deathByNodeType[key] = (into.deathByNodeType[key] ?? 0) + from.deathByNodeType[key];

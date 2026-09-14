@@ -30,6 +30,7 @@ export type ScreenKind =
   | 'forgeReward'
   | 'mentorReward'
   | 'tutorReward'
+  | 'scribeReward'
   | 'blacksmith'
   | 'event'
   | 'shop'
@@ -70,6 +71,8 @@ export const SCREEN_SECONDS: Record<ScreenKind, number> = {
   forgeReward: 10,
   mentorReward: 15,
   tutorReward: 30,
+  // Two taps on a pick-a-hero screen, no comparison asked: the Forge's price, less.
+  scribeReward: 8,
   blacksmith: 30,
   event: 15,
   shop: 45,

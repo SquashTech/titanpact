@@ -4,9 +4,9 @@ import { rosterHeroes } from '../../data/content';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
 import type { StatKey } from '../../engine/content';
-import { companionTierStep } from '../../run/companion';
 import { GROWTH_STATS, MAX_LEVEL, growthUnitFor, levelOf, xpProgress, xpToNextLevel, type HeroLevelUp } from '../../run/growth';
 import { availableEvolution, entryBandRank, levelMovePool, pendingScheduleEntry, scheduleFor } from '../../run/progression';
+import { companionTierStep } from '../../run/companion';
 import type { RosterEntry, RunState } from '../../run/state';
 import { getTypeColor } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -202,21 +202,19 @@ function OfferBox({ run, entry, offer, onResolve, onClose }: OfferBoxProps) {
 }
 
 /**
- * What a hero's row is still owed off its schedule, as the tag the row wears — read off the LIVE
- * run, so a tag comes off the moment its payoff is taken. Null when the entry would pay nothing
- * (a dry band, a body with nowhere to step), which the flow takes silently.
+ * What a hero's row is still owed — its pips' catch-all first (a hire that arrived past the pip
+ * unevolved), then its schedule — as the tag the row wears. Read off the LIVE run, so a tag comes
+ * off the moment its payoff is taken. Null when the entry would pay nothing (a dry band), which
+ * the flow takes silently.
  */
 function owedLabel(run: RunState, rosterId: string): string | null {
   const entry = run.roster.find((r) => r.rosterId === rosterId);
   if (!entry) return null;
+  if (companionTierStep(entry)) return 'Grows!';
+  const node = availableEvolution(progressionTable, entry);
+  if (node && node.paths.length > 0) return 'Evolution!';
   const hero = rosterHeroes[entry.heroId];
-  const owed = pendingScheduleEntry(hero, entry);
-  if (!owed) return null;
-  if (owed.kind === 'step') return companionTierStep(hero, entry) ? 'Grows!' : null;
-  if (owed.kind === 'evolution') {
-    const node = availableEvolution(progressionTable, hero, entry);
-    return node && node.paths.length > 0 ? 'Evolution!' : null;
-  }
+  if (!pendingScheduleEntry(hero, entry)) return null;
   return levelMovePool(progressionTable, moves, hero, entry).length > 0 ? 'New Move!' : null;
 }
 

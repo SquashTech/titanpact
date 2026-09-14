@@ -26,6 +26,7 @@ export const MAP_NODE_TYPES = [
   'forgeReward',
   'mentorReward',
   'tutorReward',
+  'scribeReward',
   'event',
   // Act 6 only (docs/run-loop.md §4). `muster` is the Vigil, `finale` the Endbringer.
   'muster',
@@ -52,11 +53,13 @@ export interface RunMap {
   bossNodeId: string;
 }
 
-// row 0 fight, 1/3/5 pick-1-of-3 rewards, 2 the spliced seat, 4 elite-or-skirmish, 6 the
-// funnel, 7 boss. Three fights an act since 2026-09-14 (per user direction): the un-forked
+// row 0 fight, 1/3/6 pick-1-of-3 rewards, 2 the spliced seat, 4 the Scribe, 5 elite-or-skirmish,
+// 7 the funnel, 8 boss. Three fights an act since 2026-09-14 (per user direction): the un-forked
 // Skirmish row came out to shorten the run without cutting an act, so the fork is the act's one
-// Skirmish and every act 1-5 carries the spliced row — the shape is the same in all five.
-const ROW_WIDTHS = [1, 3, 1, 3, 2, 3, 1, 1] as const;
+// Skirmish and every act 1-5 carries the spliced row — the shape is the same in all five. The
+// Scribe row joined the same day (docs/mastery.md §3), ahead of the fork so the Evolution it buys
+// is in hand for the previewed Elite and the Guardian.
+const ROW_WIDTHS = [1, 3, 1, 3, 1, 2, 3, 1, 1] as const;
 
 /**
  * Forced single-node row between the act's first two reward rows. Acts 1-3 it is the Mentor
@@ -68,6 +71,15 @@ const ROW_WIDTHS = [1, 3, 1, 3, 2, 3, 1, 1] as const;
  * be seated inside one of the act's reward rows.
  */
 const SPLICED_ROW = 2;
+
+/**
+ * The Scribe (2026-09-14, per user direction, docs/mastery.md §3): a forced row every act 1-5
+ * between the second reward row and the fork — pick two heroes, two Mastery pips each. It
+ * cannot be concentrated, which is what keeps the forced beat from being "everything on the
+ * carry" every act; the Scroll Cache in the reward pool and the Guild Hall shelf are where the
+ * player prioritises. Absent from REWARD_WEIGHTS, so this row is its only seat.
+ */
+const SCRIBE_ROW = 4;
 
 const LAST_MENTOR_ACT = 3;
 const FORGE_ACT = 4;
@@ -212,12 +224,13 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
   const eliteRow = funnelRow - 2;
 
   function isRewardRow(row: number): boolean {
-    return row !== 0 && row !== SPLICED_ROW && row !== eliteRow && row !== funnelRow && row !== bossRow;
+    return row !== 0 && row !== SPLICED_ROW && row !== SCRIBE_ROW && row !== eliteRow && row !== funnelRow && row !== bossRow;
   }
 
   function fixedNodeType(row: number, col: number): MapNodeType {
     if (row === 0) return 'fight';
     if (row === SPLICED_ROW) return splicedRowType(actNumber);
+    if (row === SCRIBE_ROW) return 'scribeReward';
     // Elite-or-Skirmish since 2026-09-13 — both hero pool, both recruitable, and the two
     // preview their typing on the tile (run/encounters.ts guarantees they differ in a type).
     if (row === eliteRow) return col === 0 ? 'elite' : 'skirmish';

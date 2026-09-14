@@ -2,21 +2,12 @@ import { useState } from 'react';
 import { rosterHeroes as heroes } from '../../data/content';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
-import { applyCompanionTierStep, companionTierStep } from '../../run/companion';
 import type { RunState } from '../../run/state';
-import {
-  MOVE_CAP,
-  applyEvolutionMoves,
-  availableEvolution,
-  chooseEvolutionPath,
-  grantOfferedMove,
-  levelMovePool,
-  pendingScheduleEntry,
-  recordMoveOffer,
-  takeScheduleEntry,
-  type EvolutionNode,
-} from '../../run/progression';
+import { MOVE_CAP, grantOfferedMove, levelMovePool, pendingScheduleEntry, recordMoveOffer, takeScheduleEntry } from '../../run/progression';
 import { playSfx } from '../../audio/sfx';
+import { useMasteryFlow, type MasteryFlow } from './masteryFlow';
+
+export type { Evolving, Grown, Overflow } from './masteryFlow';
 
 /**
  * What a schedule entry has raised. Below the cap the move is already LEARNED and the box only
@@ -28,52 +19,24 @@ export interface ScheduleOffer {
   learned: boolean;
 }
 
-/** The Evolution, waiting on the player. */
-export interface Evolving {
-  rosterId: string;
-  node: EvolutionNode;
-}
-
-/** A path's granted move the four-move cap refused, offered as a replace-or-decline. */
-export interface Overflow {
-  rosterId: string;
-  queue: string[];
-}
-
-/** The companion's tier-step (run/companion.ts): its Evolution level, and the level that opens Late. */
-export interface Grown {
-  rosterId: string;
-  fromHeroId: string;
-  toHeroId: string;
-}
-
 /**
  * What the level-up report is paying out, one hero at a time (docs/xp-overhaul.md §4): a hero
  * whose level has reached a schedule entry takes it here — an offer rolled from the band the
- * level opened, or the Evolution, which is a screen of its own, or the companion's tier-step.
- * The report gains exactly one decision kind and must not gain a second.
+ * level opened. The report carries exactly one decision kind and must not gain a second. What
+ * Mastery owes a hero (masteryFlow.ts) is raised on the Scroll node that paid the pip; the
+ * report raises it only as the catch-all — a hire that arrived past the pip unevolved.
  */
-export interface LevelUpFlow {
+export interface LevelUpFlow extends MasteryFlow {
   offer: ScheduleOffer | null;
-  evolving: Evolving | null;
-  grown: Grown | null;
-  overflow: Overflow | null;
-  /** Something is on screen waiting on the player. */
-  busy: boolean;
   /** Pay the next owed entry among `rosterIds`, in that order. False when nobody is owed anything. */
   next: (rosterIds: readonly string[]) => boolean;
-  closeGrown: () => void;
   resolveOffer: (replaceMoveId: string | null, learn: boolean) => void;
   closeOffer: () => void;
-  chooseEvolution: (pathId: string) => void;
-  resolveOverflow: (replaceMoveId: string | null, learn: boolean) => void;
 }
 
 export function useLevelUpFlow(run: RunState, onRunChange: (next: RunState) => void): LevelUpFlow {
   const [offer, setOffer] = useState<ScheduleOffer | null>(null);
-  const [evolving, setEvolving] = useState<Evolving | null>(null);
-  const [grown, setGrown] = useState<Grown | null>(null);
-  const [overflow, setOverflow] = useState<Overflow | null>(null);
+  const mastery = useMasteryFlow(run, onRunChange);
 
   /**
    * The entry's offer, rolled off the post-level entry. A dry band takes the entry and puts
@@ -104,33 +67,11 @@ export function useLevelUpFlow(run: RunState, onRunChange: (next: RunState) => v
     for (const rosterId of rosterIds) {
       const entry = run.roster.find((r) => r.rosterId === rosterId);
       if (!entry) continue;
-      const hero = heroes[entry.heroId];
-      const owed = pendingScheduleEntry(hero, entry);
+      if (mastery.raise(rosterId)) return true;
+      const owed = pendingScheduleEntry(heroes[entry.heroId], entry);
       if (!owed) continue;
-      if (owed.kind === 'step') {
-        // The companion's tier-step, in place of a branch and in place of an offer (docs/titanspawn-
-        // overhaul.md §5): the same creature in its next body is what this level bought. A Late
-        // body has nowhere to step to, and the entry is simply taken.
-        const stepTo = companionTierStep(hero, entry);
-        if (!stepTo) {
-          onRunChange(takeScheduleEntry(run, rosterId));
-          continue;
-        }
-        onRunChange(applyCompanionTierStep(run, rosterId, heroes));
-        setGrown({ rosterId, fromHeroId: entry.heroId, toHeroId: stepTo });
-        return true;
-      }
-      if (owed.kind === 'evolution') {
-        const node = availableEvolution(progressionTable, hero, entry);
-        if (!node || node.paths.length === 0) {
-          onRunChange(takeScheduleEntry(run, rosterId));
-          continue;
-        }
-        setEvolving({ rosterId, node });
-        return true;
-      }
-      if (rollOffer(rosterId)) return true;
-      // A dry band took the entry; the run has changed under us, so let the caller re-enter.
+      // A dry band took the entry; the run has changed under us either way, so let the caller re-enter.
+      rollOffer(rosterId);
       return true;
     }
     return false;
@@ -142,39 +83,12 @@ export function useLevelUpFlow(run: RunState, onRunChange: (next: RunState) => v
     setOffer(null);
   }
 
-  function chooseEvolution(pathId: string) {
-    if (!evolving) return;
-    const entry = run.roster.find((r) => r.rosterId === evolving.rosterId);
-    const path = evolving.node.paths.find((p) => p.id === pathId);
-    if (!entry || !path) return;
-    // Read BEFORE the choice lands: the path's moves that MOVE_CAP refused become the same
-    // replace-or-decline offer a level makes, one at a time.
-    const refused = applyEvolutionMoves(entry.unlockedMoveIds, path.unlocksMoveIds).overflow;
-    const next = chooseEvolutionPath(run, progressionTable, heroes, entry.rosterId, pathId);
-    setEvolving(null);
-    onRunChange(next);
-    if (refused.length > 0) setOverflow({ rosterId: entry.rosterId, queue: refused });
-  }
-
-  function resolveOverflow(replaceMoveId: string | null, learn: boolean) {
-    if (!overflow) return;
-    const [moveId, ...rest] = overflow.queue;
-    const next = learn ? grantOfferedMove(run, overflow.rosterId, moveId, replaceMoveId ?? undefined) : run;
-    onRunChange(next);
-    setOverflow(rest.length > 0 ? { ...overflow, queue: rest } : null);
-  }
-
   return {
+    ...mastery,
     offer,
-    evolving,
-    grown,
-    overflow,
-    busy: !!offer || !!evolving || !!grown || !!overflow,
+    busy: !!offer || mastery.busy,
     next,
-    closeGrown: () => setGrown(null),
     resolveOffer,
     closeOffer: () => setOffer(null),
-    chooseEvolution,
-    resolveOverflow,
   };
 }

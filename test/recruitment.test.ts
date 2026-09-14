@@ -5,6 +5,7 @@ import { enemies } from '../src/data/enemies';
 import { guildHallOffers } from '../src/data/recruitment';
 import { ENEMY_LEVEL_BY_ACT, GUILD_HALL_ACT_LAG, guildHallLevel } from '../src/run/difficulty';
 import { scheduleEntriesBelow } from '../src/run/progression';
+import { MASTERY_CAP, MASTERY_EVOLUTION, guildHallMastery, masteryForAct } from '../src/run/mastery';
 import { ENCOUNTERS_PER_ACT, MAX_LEVEL, levelAfterEncounters, levelOf, xpForLevel } from '../src/run/growth';
 import { guildHallEntry } from '../src/run/guildRecruit';
 import { createRunState, createRosterEntry, addRosterEntry, ROSTER_CAP } from '../src/run/state';
@@ -311,6 +312,22 @@ test('recruitment: a contract hero arrives FINISHED where a hire arrives RAW —
   // Axis 3 — Kit. Picked by the game, or the hero's own authored three.
   assert.ok(claimed.unlockedMoveIds.length > offer.startingMoveIds.length);
   assert.deepStrictEqual([...hired.unlockedMoveIds], [...offer.startingMoveIds]);
+
+  // Axis 4 — Mastery (docs/mastery.md §4). A hire arrives a pip behind what an enemy of the act
+  // holds, and past MASTERY_EVOLUTION its Evolution is still the player's to choose: raw, not hollow.
+  assert.strictEqual(hired.mastery, guildHallMastery(act));
+  assert.strictEqual(guildHallMastery(act), masteryForAct(act) - 1);
+  assert.ok(hired.mastery >= MASTERY_EVOLUTION && hired.chosenPathIds.length === 0, `an act-${act} hire arrives with the pips and without the choice`);
+});
+
+test('recruitment: the MASTERY axis points the right way — an enemy, and the contract off it, is a pip ahead of a hire in every act', () => {
+  for (let act = 1; act <= 5; act++) {
+    assert.strictEqual(masteryForAct(act), 2 * act - 1, `act ${act}`);
+    assert.ok(masteryForAct(act) > guildHallMastery(act), `act ${act}: a contract hero at ${masteryForAct(act)} pips must outrank a hire at ${guildHallMastery(act)}`);
+  }
+  assert.strictEqual(masteryForAct(6), MASTERY_CAP, 'the finale holds the signature pip');
+  assert.strictEqual(guildHallMastery(1), 0, 'an act-1 hire is raw to the bone');
+  assert.ok(masteryForAct(3) >= MASTERY_EVOLUTION && masteryForAct(2) < MASTERY_EVOLUTION, 'every hero-pool enemy from Act 3 arrives evolved, none in Act 2');
 });
 
 test('recruitment: the LEVEL axis points the right way — a contract hero outranks a hire', () => {

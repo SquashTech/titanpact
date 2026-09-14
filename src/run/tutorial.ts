@@ -115,6 +115,7 @@ export const TUTORIAL_SCREEN_BEAT_KEYS = [
   'levelUp',
   'crucible',
   'mentorNode',
+  'scribeNode',
   'recruit',
   'shop',
   'outro',
@@ -224,7 +225,7 @@ export function matchTutorialCue(
 // --- The curated map ---
 
 /**
- * Act 1, one node per row (per user direction): the standard eight-row act shape with every
+ * Act 1, one node per row (per user direction): the standard nine-row act shape with every
  * choice row narrowed to a single node, so Valor can walk the player through each one and
  * nothing is missed to routing luck. The 1-of-3 choices *inside* a reward node are untouched —
  * the choosing is the lesson, the routing is not. The Elite-or-Skirmish fork narrows to its
@@ -241,10 +242,12 @@ export const TUTORIAL_ROW_TYPES: readonly MapNodeType[] = [
   'equipmentReward',
   'mentorReward',
   'forgeReward',
+  // The Scribe, where every act has it: two pips each on two of the three heroes the corridor
+  // holds here (Valor, Fang, the companion) — the pick-a-hero grammar every later reward shares,
+  // taught on the beat that pays it every act.
+  'scribeReward',
   'skirmish',
-  // The act's third reward row. The Ichor: the one place the player aims growth, and the
-  // pick-a-hero grammar every later reward (Boon, Forge, Mentor) shares — so the corridor teaches
-  // it once, on the cheapest thing it can be taught on. It displaces the Boon.
+  // The act's third reward row. The Ichor: the one place the player aims growth. It displaces the Boon.
   'ichorReward',
   'shop',
   'boss',

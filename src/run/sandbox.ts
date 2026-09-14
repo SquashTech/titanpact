@@ -62,7 +62,7 @@ export function buildSandboxSide(config: SandboxSideConfig, heroes: HeroLookup, 
     if (hc.pathId) {
       run = {
         ...run,
-        roster: run.roster.map((r) => (r.rosterId === hc.rosterId ? atEvolution(heroes[r.heroId], r) : r)),
+        roster: run.roster.map((r) => (r.rosterId === hc.rosterId ? atEvolution(r) : r)),
       };
       try {
         run = chooseEvolutionPath(run, table, heroes, hc.rosterId, hc.pathId);

@@ -106,7 +106,7 @@ test('tutor: over many seeds act 4\'s seat lands in every reward row and every c
     rows.add(seat.row);
     cols.add(seat.col);
   }
-  assert.deepStrictEqual([...rows].sort(), [1, 3, 5], `Tutor rows seen: ${[...rows]}`);
+  assert.deepStrictEqual([...rows].sort(), [1, 3, 6], `Tutor rows seen: ${[...rows]}`);
   assert.deepStrictEqual([...cols].sort(), [0, 1, 2]);
 });
 

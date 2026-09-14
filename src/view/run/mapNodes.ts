@@ -23,6 +23,7 @@ export const NODE_NAMES: Record<MapNodeType, string> = {
   forgeReward: 'Forge',
   mentorReward: 'Mentor',
   tutorReward: 'Tutor',
+  scribeReward: 'Scribe',
   event: 'Event',
   muster: 'The Vigil',
   finale: 'Endbringer',
@@ -55,6 +56,9 @@ export const NODE_COLORS: Record<MapNodeType, string> = {
   // The only cyan on the map — the Tutor is rare enough that it should never be mistaken at a
   // glance for the Mana Well beside it.
   tutorReward: '#48c9e8',
+  // Parchment: the only warm neutral on the map, so the Scroll's row reads as its own thing
+  // beside the Mentor's green book and the Forge's orange.
+  scribeReward: '#e0c27a',
   event: 'var(--tier-common)',
   muster: 'var(--accent)',
   // The only node in a run that wears the mythic red, because there is only one of it.
@@ -81,6 +85,7 @@ export const NODE_TIERS: Record<MapNodeType, NodeTier> = {
   forgeReward: 'reward',
   mentorReward: 'reward',
   tutorReward: 'reward',
+  scribeReward: 'reward',
   event: 'reward',
   muster: 'landmark',
   finale: 'ancient',

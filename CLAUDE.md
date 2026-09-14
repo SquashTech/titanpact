@@ -68,7 +68,7 @@ don't silently override it.
 > finale (was 11 / 18 / 23), the Act 1 wall at 76% untouched by every non-design lever (§8).
 > Phase 5 (four acts) stays deferred.
 
-> **A fourth overhaul is DECIDED and NOT YET BUILT: `docs/mastery.md`** (2026-09-14, per user
+> **A fourth overhaul is DECIDED and PHASE 1 IS IN: `docs/mastery.md`** (2026-09-14, per user
 > direction). Evolutions come off the level schedule onto **Mastery**: every hero has ten pips,
 > **5 is its Evolution and 10 its signature move** (one authored per hero, off every pool — Riptide's
 > Lizard Rush is the template), uniform, no per-hero threshold. A pip is one **Mastery Scroll**,
@@ -78,7 +78,12 @@ don't silently override it.
 > shelf; never a post-fight drop. **Ichor retires** in its own phase. `evolutionLevel`, the
 > report's Evolution raise, and the 10–24 window are what it deletes; its §9 lists every invariant
 > below it reverses, and until the §8 phase that replaces each one lands, the rule below is still
-> the rule in force.
+> the rule in force. **Phase 1 is IN (2026-09-14):** `RosterEntry.mastery` (`src/run/mastery.ts`),
+> the Evolution opens at 5 pips and at no level (`evolutionLevel` is gone from every schedule),
+> the Scribe is a forced row every act 1–5 (`ScrollNodeScreen`, the Evolution raised over it),
+> the Guild Hall shelf sells a Scroll (25g, 2 a visit), enemies / contracts / hires hold
+> `masteryForAct` (`2N−1`, hires `2N−2`), and the companion steps at 5 / 10. Ichor still stands
+> beside it until phase 2; the Cache and the signature are phases 2 and 3.
 
 ---
 

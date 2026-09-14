@@ -17,6 +17,7 @@ import { encounterKindOf, nodeEncounter } from '../../src/run/encounters';
 import { allCombatants } from '../../src/data/content';
 import { guildHallOffers, CONTRACT_PURCHASE_COST, ICHOR_PURCHASE_COST, ICHOR_PURCHASE_LIMIT } from '../../src/data/recruitment';
 import { ICHOR_FIGHTS, buyIchor, canBuyIchor, canDrinkIchor, grantIchor, type IchorKind } from '../../src/run/ichor';
+import { SCRIBE_PIPS_EACH, buyScroll, canBuyScroll, grantMastery } from '../../src/run/mastery';
 
 import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry, ROSTER_CAP, TOTAL_ACTS, type RunState, type RosterEntry } from '../../src/run/state';
 import { generateMap, type MapNode, type MapNodeType } from '../../src/run/map';
@@ -139,6 +140,8 @@ export interface RunRecord {
   equipped: string[];
   /** Ichor eaten this run, by source, in fights' worth (run/ichor.ts ICHOR_FIGHTS). */
   ichorBySource: Record<string, number>;
+  /** Mastery pips landed this run, by source (run/mastery.ts). */
+  pipsBySource: Record<string, number>;
   /** Heroes joining after the draft: `contract` (claimed or bought), `hire` (Guild Hall). */
   recruitsBySource: Record<string, number>;
   /** What the run cost in taps and screens, [act]; index 0 unused (time.ts prices it). */
@@ -232,6 +235,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     choices: [],
     equipped: [],
     ichorBySource: {},
+    pipsBySource: {},
     recruitsBySource: {},
     timeByAct: Array.from({ length: TOTAL_ACTS + 1 }, emptyTimeCounts),
   };
@@ -543,8 +547,32 @@ function drinkIchor(run: RunState, kind: IchorKind, source: string, rng: Rng, re
   return paySchedule(grantIchor(run, rosterHeroes, target.rosterId, kind, rng).run, rng, record);
 }
 
+/**
+ * Pips onto one hero (policy.scrollTarget), and what they open paid on the spot — the Scribe's
+ * two picks, a shelf Scroll. The Evolution is logged as the choice it is, as the report's is.
+ */
+function landPips(run: RunState, rosterId: string, pips: number, source: string, rng: Rng, record: RunRecord): RunState {
+  record.pipsBySource[source] = (record.pipsBySource[source] ?? 0) + pips;
+  const payout: policy.SchedulePayout = { offers: 0, receipts: 0, evolutions: [] };
+  const next = policy.payMastery(grantMastery(run, rosterId, pips), rng, payout);
+  for (const e of payout.evolutions) {
+    record.choices.push({ bucket: 'evolution', offered: e.offered, picked: [e.picked], encountersWonAtChoice: next.encountersWon });
+  }
+  tally(record, run.actNumber, 'evolution', payout.evolutions.length);
+  return next;
+}
+
+/** The Scribe: two heroes, SCRIBE_PIPS_EACH each, the policy's two closest to a milestone. */
+function resolveScribe(run: RunState, rng: Rng, record: RunRecord): RunState {
+  let next = run;
+  for (const target of policy.scribeTargets(run.roster)) next = landPips(next, target.rosterId, SCRIBE_PIPS_EACH, 'scribe', rng, record);
+  return next;
+}
+
 function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: string, rng: Rng, record: RunRecord, options: RunOptions): RunState {
   switch (nodeType) {
+    case 'scribeReward':
+      return resolveScribe(run, rng, record);
     case 'ichorReward':
       return drinkIchor(run, 'ichor', 'ichor', rng, record, options);
     case 'currencyReward':
@@ -748,6 +776,14 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
   // it and the gold is there.
   for (let bought = 0; canBuyIchor(next, ICHOR_PURCHASE_COST, bought, ICHOR_PURCHASE_LIMIT); bought++) {
     next = drinkIchor(buyIchor(next, ICHOR_PURCHASE_COST, bought, ICHOR_PURCHASE_LIMIT), 'drop', 'guildHall', rng, record, options);
+  }
+
+  // The shelf's Mastery Scrolls (SCROLL_PURCHASE_LIMIT a visit), bought while somebody can still
+  // take one and the gold is there, to the hero the policy names.
+  for (let bought = 0; canBuyScroll(next, bought); bought++) {
+    const target = policy.scrollTarget(next.roster);
+    if (!target) break;
+    next = landPips(buyScroll(next, bought), target.rosterId, 1, 'shelf', rng, record);
   }
 
   for (const itemId of offers.equipmentOfferIds) {

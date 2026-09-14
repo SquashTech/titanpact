@@ -447,12 +447,11 @@ export interface HeroDefinition {
 
 /**
  * The levels that teach. `offerLevels` each roll one move from the band the level has opened;
- * `midLevel` opens Mid (and expires Early), `lateLevel` opens Late; `evolutionLevel` raises the
- * Evolution in place of that level's offer.
+ * `midLevel` opens Mid (and expires Early), `lateLevel` opens Late. The Evolution is not on it:
+ * it sits behind Mastery pips (run/mastery.ts, docs/mastery.md), not a level.
  */
 export interface LevelSchedule {
   offerLevels: readonly number[];
   midLevel: number;
-  evolutionLevel: number;
   lateLevel: number;
 }

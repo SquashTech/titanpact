@@ -22,6 +22,7 @@ import type { BrokenSeal, RosterEntry, RunState } from './state';
 import { ROSTER_CAP, TOTAL_ACTS } from './state';
 import { CONSUMABLE_HOLD_CAP, CONSUMABLE_KINDS, type ConsumablePurse } from './consumables';
 import { MAX_XP, xpForLevel } from './growth';
+import { MASTERY_CAP } from './mastery';
 
 /**
  * Bump whenever a change to RunState or RunMap makes older files unreadable. Older versions
@@ -58,8 +59,10 @@ import { MAX_XP, xpForLevel } from './growth';
  * `ichorDropReward`, so a v12 map may hold node types this build does not have.
  * v14 (2026-09-13): its third — the Scroll ladder is gone. `masteryScrolls` and
  * `masteryDeferred` left RunState, and an entry's `masteryScrollsSpent` became `scheduleTaken`.
+ * v15 (2026-09-14): Mastery pips (docs/mastery.md). An entry stores `mastery`, the Evolution
+ * reads it rather than a schedule level, and a v14 map may hold no `scribeReward` row.
  */
-export const SAVE_VERSION = 14;
+export const SAVE_VERSION = 15;
 
 /**
  * Where a restored run resumes. Both are settled points: every reward is banked, the
@@ -269,6 +272,7 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
 
   if (!isInt(value.bonusItemSlots, 0, MAX_ITEM_SLOTS)) reject(`${label}.bonusItemSlots is not a slot count`);
   if (!isInt(value.scheduleTaken, 0)) reject(`${label}.scheduleTaken is not a count`);
+  if (!isInt(value.mastery, 0, MASTERY_CAP)) reject(`${label}.mastery is not a pip count`);
 
   const graft = value.evolutionTypeGraft ?? null;
   if (graft !== null) {
@@ -291,6 +295,7 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
     bonusStatGrants: decodeStatGrants(value.bonusStatGrants, `${label}.bonusStatGrants`),
     growthStatGrants: decodeStatGrants(value.growthStatGrants, `${label}.growthStatGrants`),
     scheduleTaken: value.scheduleTaken,
+    mastery: value.mastery,
     bonusItemSlots: value.bonusItemSlots,
     evolutionTypeGraft: graft as TypeId | null,
     classId: classId as string | null,

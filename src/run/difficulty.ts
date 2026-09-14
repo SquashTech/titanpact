@@ -4,6 +4,7 @@
 import type { StatKey } from '../engine/content';
 import type { SpawnTier } from '../data/titanspawn';
 import { ENCOUNTERS_PER_ACT, MAX_LEVEL, levelAfterEncounters } from './growth';
+import { masteryForAct } from './mastery';
 
 /** `monsters` = non-recruitable pool (fight/battle); `skirmish` = hero pool (skirmish/elite/boss). Same rate, different baseline act. */
 export type ScalingTrack = 'monsters' | 'skirmish';
@@ -137,6 +138,8 @@ export interface ActScaling {
   /** Act-steps of stats on top of the node kind's own bonus — two independent axes. */
   statSteps: number;
   level: number;
+  /** Mastery pips (run/mastery.ts masteryForAct): whether the enemy arrives evolved, and what a contract claims. */
+  mastery: number;
 }
 
 function clampAct(actNumber: number): number {
@@ -195,11 +198,12 @@ export function actScaling(track: ScalingTrack, actNumber: number): ActScaling {
   return {
     statSteps: ACT_STEP_CURVE[Math.min(stepsPastBaseline, ACT_STEP_CURVE.length - 1)],
     level: ENEMY_LEVEL_BY_ACT[Math.min(act, ENEMY_LEVEL_BY_ACT.length) - 1],
+    mastery: masteryForAct(act),
   };
 }
 
-/** Authored content as written, level 1 — the default for Quick Battle, Sandbox and tests. */
-export const NO_SCALING: ActScaling = { statSteps: 0, level: 1 };
+/** Authored content as written, level 1, no pips — the default for Quick Battle, Sandbox and tests. */
+export const NO_SCALING: ActScaling = { statSteps: 0, level: 1, mastery: 0 };
 
 // --- The mob layer's tier by act (docs/titanspawn-overhaul.md §4) ---
 

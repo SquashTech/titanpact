@@ -2,16 +2,18 @@
 // src/data/progression.ts. Spec: docs/xp-overhaul.md §4, docs/leveling-and-ranks.md.
 //
 // Levels themselves are NOT here: they are automatic and roster-wide (run/growth.ts). What lives
-// here is what a level PAYS: the per-hero schedule that says which levels roll a move offer, which
-// band they roll from, and which one is the Evolution.
+// here is what a level PAYS: the per-hero schedule that says which levels roll a move offer and
+// which band they roll from. The Evolution is not a level's to pay — it sits behind Mastery pips
+// (run/mastery.ts, docs/mastery.md) — but the tree and the choice live here.
 
 import type { HeroDefinition, LevelSchedule, MoveDefinition, MoveTier, PassiveId, StatKey, TypeId } from '../engine/content';
 import { isValidFlatStatGrant } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
 import { BASE_ITEM_SLOTS, MAX_ITEM_SLOTS } from './equipment';
+import { MASTERY_EVOLUTION } from './mastery';
 import type { RosterEntry, RunState } from './state';
 import { mergeStatMods } from './statMods';
-import { levelOf, xpForLevel } from './growth';
+import { levelOf } from './growth';
 
 /** Past the cap, growth is substitution, never expansion. */
 export const MOVE_CAP = 4;
@@ -19,11 +21,10 @@ export const MOVE_CAP = 4;
 // --- The schedule: what a level pays (docs/xp-overhaul.md §4) ---
 //
 // One model for everybody. A roster hero, an enemy, a contract hero and a Guild hire all read the
-// same per-hero schedule off the same number, their level: which levels roll a move offer, which
-// band the offer rolls from, and which level is the Evolution. Nothing is held and nothing is
-// spent, so there is no purse, no price and no gate to sit behind a spend — the ceiling sits
-// behind the level, and the level is paid by what the roster won and what the player aimed
-// (run/ichor.ts).
+// same per-hero schedule off the same number, their level: which levels roll a move offer and
+// which band the offer rolls from. Nothing is held and nothing is spent, so there is no purse, no
+// price and no gate to sit behind a spend — the ceiling sits behind the level, and the level is
+// paid by what the roster won.
 //
 // Keep the roll, lose the currency: a level on `offerLevels` rolls ONE move from the band that
 // level has opened, take it or decline, burned either way (the Scroll rung minus the Scroll). The
@@ -31,15 +32,12 @@ export const MOVE_CAP = 4;
 // 12 every game, and in a roguelike that makes every Cinder the same Cinder.
 
 /**
- * The default every hero ships on until its own is authored (phase 4): the table a generated
- * hero already read its ladder off — Mid at 10, the Evolution at 16, Late at 21 — with an offer
- * every three levels. Authored per hero, the spread is the identity the roster was missing: a
- * hero whose sheet says `evolves at 12` against one that says `evolves at 20`.
+ * The default an unauthored definition reads — the Titanspawn: Mid at 10, Late at 21, an offer
+ * every three levels. Every hero authors its own (src/data/heroes.ts).
  */
 export const DEFAULT_SCHEDULE: LevelSchedule = {
   offerLevels: [4, 7, 10, 13, 16, 19, 22, 25, 28],
   midLevel: 10,
-  evolutionLevel: 16,
   lateLevel: 21,
 };
 
@@ -47,14 +45,8 @@ export function scheduleFor(hero: HeroDefinition | undefined): LevelSchedule {
   return hero?.schedule ?? DEFAULT_SCHEDULE;
 }
 
-/**
- * What a schedule level pays. `offer` rolls a move from the open band; `evolution` raises the
- * hero's Evolution screen in its place — the Evolution is that level's whole reward, no offer
- * rolls behind it; `step` is the companion's tier-step (run/companion.ts), which stands where a
- * branch would and where the Late band opens, since the body that holds Late moves is the Late
- * body.
- */
-export type ScheduleEntryKind = 'offer' | 'evolution' | 'step';
+/** What a schedule level pays: an offer, rolled from the open band. The one kind there is. */
+export type ScheduleEntryKind = 'offer';
 
 export interface ScheduleEntry {
   level: number;
@@ -65,17 +57,10 @@ export interface ScheduleEntry {
  * The schedule as the ordered list of things it pays. A hero walks it one entry at a time
  * (`RosterEntry.scheduleTaken`), which is what lets a raw hire arrive with its levels UN-crossed:
  * the entries below its level are still owed, and it takes one per level-up until it has caught
- * up. `mortal` is the companion, whose Evolution and Late levels are tier-steps.
+ * up.
  */
-export function scheduleEntries(schedule: LevelSchedule, mortal = false): ScheduleEntry[] {
-  const levels = new Set<number>([...schedule.offerLevels, schedule.evolutionLevel]);
-  if (mortal) levels.add(schedule.lateLevel);
-  return [...levels]
-    .sort((a, b) => a - b)
-    .map((level) => ({
-      level,
-      kind: mortal && (level === schedule.evolutionLevel || level === schedule.lateLevel) ? 'step' : level === schedule.evolutionLevel ? 'evolution' : 'offer',
-    }));
+export function scheduleEntries(schedule: LevelSchedule): ScheduleEntry[] {
+  return [...new Set(schedule.offerLevels)].sort((a, b) => a - b).map((level) => ({ level, kind: 'offer' }));
 }
 
 /** Rank at which each move tier becomes offerable. Maps 1:1 onto the authored 6 Early / 6 Mid / 4 Late. */
@@ -134,10 +119,9 @@ export function isMoveTierOfferable(move: MoveDefinition | undefined, rank: numb
 /**
  * Floor on a hero's move pool, by band: each band offers its own tier, so what a band has to
  * survive is exactly the offers the schedule makes from it — Early is every offer below midLevel,
- * Mid every offer from midLevel to below lateLevel (the Evolution offers nothing, so it is not
- * counted), Late every offer from lateLevel. Ichor can pull offers forward but never adds one, so
- * the schedule bounds the drain exactly. In practice every pool is authored well past these
- * (6 Early / 6 Mid / 4 Late against 2 / 2 / 2). Enforced by test/moveTiers.test.ts.
+ * Mid every offer from midLevel to below lateLevel, Late every offer from lateLevel. Nothing adds
+ * an offer, so the schedule bounds the drain exactly. In practice every pool is authored well
+ * past these (6 Early / 6 Mid / 4 Late against 2 / 2 / 2). Enforced by test/moveTiers.test.ts.
  */
 export interface MovePoolFloor {
   /** Below midLevel. */
@@ -149,7 +133,7 @@ export interface MovePoolFloor {
 }
 
 export function movePoolFloor(schedule: LevelSchedule = DEFAULT_SCHEDULE): MovePoolFloor {
-  const offers = scheduleEntries(schedule).filter((e) => e.kind === 'offer');
+  const offers = scheduleEntries(schedule);
   return {
     early: offers.filter((e) => e.level < schedule.midLevel).length,
     mid: offers.filter((e) => e.level >= schedule.midLevel && e.level < schedule.lateLevel).length,
@@ -176,7 +160,7 @@ export interface EvolutionPath {
 }
 
 export interface EvolutionNode {
-  /** Exactly three, differing in kind. The level it opens at is the hero's schedule's evolutionLevel. */
+  /** Exactly three, differing in kind. Opens at MASTERY_EVOLUTION pips, the same for every hero. */
   paths: EvolutionPath[];
 }
 
@@ -257,13 +241,13 @@ export function levelMovePool(
  * them off one fight at a time, which is what its runway is.
  */
 export function pendingScheduleEntry(hero: HeroDefinition | undefined, entry: RosterEntry): ScheduleEntry | null {
-  const next = scheduleEntries(scheduleFor(hero), entry.mortal)[entry.scheduleTaken];
+  const next = scheduleEntries(scheduleFor(hero))[entry.scheduleTaken];
   return next && next.level <= levelOf(entry) ? next : null;
 }
 
 /** How many entries a hero arriving at `level` with everything already taken has behind it — a contract hero, an enemy. */
-export function scheduleEntriesBelow(hero: HeroDefinition | undefined, level: number, mortal = false): number {
-  return scheduleEntries(scheduleFor(hero), mortal).filter((e) => e.level <= level).length;
+export function scheduleEntriesBelow(hero: HeroDefinition | undefined, level: number): number {
+  return scheduleEntries(scheduleFor(hero)).filter((e) => e.level <= level).length;
 }
 
 /** The entry is taken — whatever it paid. Declining an offer takes it exactly as learning does. */
@@ -278,23 +262,12 @@ export function takeScheduleEntry(run: RunState, rosterId: string): RunState {
  * learning from levels, and only the Tutor can teach it more.
  */
 export function scheduleRemaining(hero: HeroDefinition | undefined, entry: RosterEntry): boolean {
-  return entry.scheduleTaken < scheduleEntries(scheduleFor(hero), entry.mortal).length;
+  return entry.scheduleTaken < scheduleEntries(scheduleFor(hero)).length;
 }
 
-/**
- * A fixture helper: the entry stood at its Evolution — level raised to the schedule's
- * evolutionLevel if it is below it, and every entry before the Evolution taken. What the sandbox
- * and the tests use to evolve a hero without walking it there.
- */
-export function atEvolution(hero: HeroDefinition | undefined, entry: RosterEntry): RosterEntry {
-  const schedule = scheduleFor(hero);
-  const entries = scheduleEntries(schedule, entry.mortal);
-  const index = entries.findIndex((e) => e.kind !== 'offer');
-  return {
-    ...entry,
-    xp: Math.max(entry.xp, xpForLevel(schedule.evolutionLevel)),
-    scheduleTaken: index < 0 ? entries.length : index,
-  };
+/** A fixture helper: the entry stood at its Evolution — Mastery raised to the pip that opens it. What the sandbox and the tests use to evolve a hero without walking it there. */
+export function atEvolution(entry: RosterEntry): RosterEntry {
+  return { ...entry, mastery: Math.max(entry.mastery, MASTERY_EVOLUTION) };
 }
 
 /**
@@ -335,13 +308,14 @@ export function pendingEvolution(table: ProgressionTable, entry: RosterEntry): E
 }
 
 /**
- * The node this hero can take NOW, or null: the next unresolved one, when the schedule entry it
- * is owed is the Evolution (docs/xp-overhaul.md §4). Gated on the entry, not on a beat — the
- * level that reaches `evolutionLevel` raises the Evolution screen for that one hero, from the
- * level-up report. A generated hero walks the same entries (enemyGen.ts) and passes the same gate.
+ * The node this hero can take NOW, or null: the next unresolved one, once its Mastery has reached
+ * the pip that opens it (docs/mastery.md §2). Gated on the pips, not on a beat — the Scroll that
+ * lands the fifth raises the Evolution screen for that one hero on the node that paid it, and a
+ * hire that arrives past the pip unevolved takes it on its next level-up report. A generated hero
+ * reads the same pips (enemyGen.ts) and passes the same gate.
  */
-export function availableEvolution(table: ProgressionTable, hero: HeroDefinition | undefined, entry: RosterEntry): EvolutionNode | null {
-  return pendingScheduleEntry(hero, entry)?.kind === 'evolution' ? pendingEvolution(table, entry) : null;
+export function availableEvolution(table: ProgressionTable, entry: RosterEntry): EvolutionNode | null {
+  return entry.mastery >= MASTERY_EVOLUTION ? pendingEvolution(table, entry) : null;
 }
 
 /** The primary plus the current graft — the out-of-combat mirror of engine/state.ts effectiveTypes, and it must stay identical to it. UI must read this, not `hero.types`. */
@@ -374,7 +348,7 @@ export function chosenEvolutionPaths(table: ProgressionTable, entry: RosterEntry
     .filter((p): p is EvolutionPath => p !== undefined);
 }
 
-/** Free — the level paid for it. Takes the schedule entry. `heroes` also validates a type-graft against innate types. */
+/** Free — the pips paid for it. `heroes` also validates a type-graft against innate types. */
 export function chooseEvolutionPath(
   run: RunState,
   table: ProgressionTable,
@@ -383,7 +357,7 @@ export function chooseEvolutionPath(
   pathId: string
 ): RunState {
   const entry = requireEntry(run, rosterId);
-  const node = availableEvolution(table, heroes[entry.heroId], entry);
+  const node = availableEvolution(table, entry);
   if (!node) throw new ProgressionError(`No Evolution is currently available for ${rosterId}`);
   const path = node.paths.find((p) => p.id === pathId);
   if (!path) throw new ProgressionError(`${pathId} is not one of the offered paths`);
@@ -408,7 +382,6 @@ export function chooseEvolutionPath(
 
   const nextEntry: RosterEntry = {
     ...entry,
-    scheduleTaken: entry.scheduleTaken + 1,
     chosenPathIds: [...entry.chosenPathIds, path.id],
     unlockedMoveIds: applyEvolutionMoves(entry.unlockedMoveIds, path.unlocksMoveIds).unlockedMoveIds,
     // Both halves are spent: what the cap took, and the overflow the caller is about to offer.

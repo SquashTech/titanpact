@@ -55,6 +55,12 @@ export interface RosterEntry {
    * A contract hero arrives with everything below its level taken; a Guild hire with none.
    */
   scheduleTaken: number;
+  /**
+   * Pips toward the Evolution (at MASTERY_EVOLUTION) and the signature (at MASTERY_CAP),
+   * run/mastery.ts. Bought one Scroll each on the map, never in a fight; an enemy, a contract
+   * hero and a hire read theirs off the act (masteryForAct).
+   */
+  mastery: number;
   /** Item slots granted on top of the hero's authored count (the Forge). Never negative; itemSlotsFor caps the sum. */
   bonusItemSlots: number;
   /** Current secondary-type grant from the latest type-graft path; a later graft overwrites. Innate primary never changes. */
@@ -174,6 +180,7 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     bonusStatGrants: {},
     growthStatGrants: {},
     scheduleTaken: 0,
+    mastery: 0,
     bonusItemSlots: 0,
     evolutionTypeGraft: null,
     classId: null,

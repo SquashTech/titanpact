@@ -9,6 +9,7 @@ import { createRng, nextFloat, type RngState } from '../engine/rng/seededRng';
 import type { BrokenSeal, RunState, RosterEntry } from './state';
 import { createRunState, createRosterEntry, addRosterEntry } from './state';
 import { xpForLevel } from './growth';
+import { MASTERY_CAP } from './mastery';
 import { unsealedIdFor } from '../data/enemies';
 import { spawnPool, type SpawnTier } from '../data/titanspawn';
 import { rollEquipmentDrops } from '../data/equipment';
@@ -127,16 +128,17 @@ export interface EncounterOptions {
   statGrants?: Partial<Record<StatKey, number>>;
   /** Omitted = NO_SCALING. */
   scaling?: ActScaling;
-  /** Needed only to cash `scaling.level` in for Evolutions and move unlocks; the monster pool has none by design. */
+  /** Needed only to cash `scaling.level` and `scaling.mastery` in for move unlocks and the Evolution; the monster pool has none by design. */
   progression?: ProgressionTable;
 }
 
 /**
  * Walks the hero's schedule (progression.ts scheduleEntries) up to its level, exactly as a roster
- * hero would have: each offer rolls one move from the band open at that level and learns it if
- * there is room (an enemy never swaps), and the Evolution takes a path, choice unweighted. The
- * same schedule a roster hero reads, so a contract hero is the enemy you beat, finished
- * (docs/xp-overhaul.md §4).
+ * hero would have: the Evolution first, when the entry's Mastery has reached the pip that opens
+ * it (a path taken unweighted, so the offers that follow can draw on a graft's line), then each
+ * offer rolls one move from the band open at that level and learns it if there is room (an enemy
+ * never swaps). The same schedule and the same pips a roster hero reads, so a contract hero is the
+ * enemy you beat, finished (docs/xp-overhaul.md §4, docs/mastery.md §4).
  */
 export function rollLevelProgression(
   run: RunState,
@@ -151,38 +153,30 @@ export function rollLevelProgression(
   const first = run.roster.find((r) => r.rosterId === rosterId);
   if (!first) return { run, nextState: state };
   const hero = heroPool[first.heroId];
+  const node = availableEvolution(table, first);
+  if (node && node.paths.length > 0) {
+    const { picked, nextState } = shuffledPick(state, node.paths, 1);
+    state = nextState;
+    try {
+      next = chooseEvolutionPath(next, table, heroPool, rosterId, picked[0].id);
+    } catch {
+      // Illegal path for this hero (content bug) — field the enemy un-evolved rather than crash.
+    }
+  }
   // The band an offer rolls from is the band open at the level of THAT entry, not at the level
   // the hero arrives at — a level-13 enemy's first offer was an Early move, as a roster hero's was.
-  for (const step of scheduleEntries(scheduleFor(hero), first.mortal)) {
+  for (const step of scheduleEntries(scheduleFor(hero))) {
     if (step.level > level) break;
     const entry = next.roster.find((r) => r.rosterId === rosterId)!;
-    if (step.kind === 'evolution') {
-      const node = availableEvolution(table, hero, entry);
-      if (!node || node.paths.length === 0) {
-        next = takeScheduleEntry(next, rosterId);
-        continue;
-      }
-      const { picked, nextState } = shuffledPick(state, node.paths, 1);
-      state = nextState;
-      try {
-        next = chooseEvolutionPath(next, table, heroPool, rosterId, picked[0].id);
-      } catch {
-        // Illegal path for this hero (content bug) — field the enemy un-evolved rather than crash.
-        next = takeScheduleEntry(next, rosterId);
-      }
-      continue;
-    }
-    if (step.kind === 'offer') {
-      const atLevel = { ...entry, xp: xpForLevel(step.level) };
-      const { picked, nextState } = shuffledPick(state, levelMovePool(table, moves, hero, atLevel), 1);
-      state = nextState;
-      const moveId = picked[0];
-      if (moveId && entry.unlockedMoveIds.length < MOVE_CAP) {
-        next = {
-          ...next,
-          roster: next.roster.map((r) => (r.rosterId === rosterId ? { ...r, unlockedMoveIds: [...r.unlockedMoveIds, moveId], offeredMoveIds: [...r.offeredMoveIds, moveId] } : r)),
-        };
-      }
+    const atLevel = { ...entry, xp: xpForLevel(step.level) };
+    const { picked, nextState } = shuffledPick(state, levelMovePool(table, moves, hero, atLevel), 1);
+    state = nextState;
+    const moveId = picked[0];
+    if (moveId && entry.unlockedMoveIds.length < MOVE_CAP) {
+      next = {
+        ...next,
+        roster: next.roster.map((r) => (r.rosterId === rosterId ? { ...r, unlockedMoveIds: [...r.unlockedMoveIds, moveId], offeredMoveIds: [...r.offeredMoveIds, moveId] } : r)),
+      };
     }
     next = takeScheduleEntry(next, rosterId);
   }
@@ -252,11 +246,11 @@ export function generateEncounter(
       statGrants = mergeStatMods(statGrants, bonus);
     }
 
-    entry = { ...entry, xp: xpForLevel(scaling.level), evolutionStatGrants: statGrants };
+    entry = { ...entry, xp: xpForLevel(scaling.level), mastery: scaling.mastery, evolutionStatGrants: statGrants };
     run = addRosterEntry(run, entry);
   }
 
-  if (progression && scaling.level > 1) {
+  if (progression && (scaling.level > 1 || scaling.mastery > 0)) {
     for (const heroId of heroIds) {
       const { run: next, nextState } = rollLevelProgression(run, heroId, progression, heroPool, scaling.level, rng);
       run = next;
@@ -290,7 +284,7 @@ export function appendFinalEnemy(
   // only axis it has (difficulty.ts CHAMPION_STEP_MULTIPLIER).
   const { bonus } = actStatBonus(createRng(seed), championSteps(scaling.statSteps));
   const entry = createRosterEntry(enemyId, enemyId, definition.moveIds);
-  const run = addRosterEntry(encounter.run, { ...entry, xp: xpForLevel(scaling.level), evolutionStatGrants: bonus });
+  const run = addRosterEntry(encounter.run, { ...entry, xp: xpForLevel(scaling.level), mastery: scaling.mastery, evolutionStatGrants: bonus });
   return { run, squad: { ...encounter.squad, benchIds: [...encounter.squad.benchIds, enemyId] } };
 }
 
@@ -318,14 +312,14 @@ export function generateFinaleEncounter(
     const definition = enemyPool[unsealedId];
     if (!definition || run.roster.some((r) => r.rosterId === unsealedId)) continue;
     const entry = createRosterEntry(unsealedId, unsealedId, definition.moveIds);
-    run = addRosterEntry(run, { ...entry, xp: xpForLevel(seal.level), evolutionStatGrants: seal.statGrants });
+    run = addRosterEntry(run, { ...entry, xp: xpForLevel(seal.level), mastery: MASTERY_CAP, evolutionStatGrants: seal.statGrants });
     orderedIds.push(unsealedId);
   }
 
   const endbringer = enemyPool[endbringerId];
   if (endbringer) {
     const entry = createRosterEntry(endbringerId, endbringerId, endbringer.moveIds);
-    run = addRosterEntry(run, { ...entry, xp: xpForLevel(endbringerScaling.level) });
+    run = addRosterEntry(run, { ...entry, xp: xpForLevel(endbringerScaling.level), mastery: MASTERY_CAP });
     orderedIds.push(endbringerId);
   }
 

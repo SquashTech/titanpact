@@ -19,6 +19,7 @@ import { pickSquad, SquadSelectionError } from '../src/run/squad';
 import { buildCombatState } from '../src/run/buildCombatState';
 import { getEffectiveStat } from '../src/engine/state';
 import { MAX_XP, levelOf, xpForLevel } from '../src/run/growth';
+import { MASTERY_EVOLUTION } from '../src/run/mastery';
 import {
   levelMovePool,
   atEvolution,
@@ -33,11 +34,11 @@ import {
   scheduleFor,
 } from '../src/run/progression';
 
-/** Stands a hero at its schedule's Evolution (docs/xp-overhaul.md §4) — a fixture, not a walk. */
+/** Stands a hero at its Evolution — MASTERY_EVOLUTION pips (docs/mastery.md §2) — a fixture, not a walk. */
 function atEvolutionRung(run: import('../src/run/state').RunState, rosterId: string) {
   return {
     ...run,
-    roster: run.roster.map((r) => (r.rosterId === rosterId ? atEvolution(heroes[r.heroId], r) : r)),
+    roster: run.roster.map((r) => (r.rosterId === rosterId ? atEvolution(r) : r)),
   };
 }
 
@@ -270,20 +271,19 @@ test('progression: an offer is spent by being MADE — declined or swapped away,
   assert.throws(() => recordMoveOffer(run, 'nobody', ['moltenLash']), ProgressionError);
 });
 
-test('progression: an Evolution is the schedule entry at evolutionLevel — level AND the entries before it; offers exactly three paths, grants stats, and is one-shot', () => {
-  // docs/xp-overhaul.md §4: the level that reaches `evolutionLevel` raises the Evolution, for that
-  // hero, from the level-up report — after the offers the schedule owed it first.
+test('progression: an Evolution opens at MASTERY_EVOLUTION pips and at no level; offers exactly three paths, grants stats, and is one-shot', () => {
+  // docs/mastery.md §2: the Scroll that lands the fifth pip raises the Evolution, for that hero,
+  // on the node that paid it. Level has nothing to do with it.
   let run = seedRoster(['cinderKnight']);
-  const hero = heroes.cinderKnight;
-  assert.strictEqual(availableEvolution(progressionTable, hero, run.roster[0]), null, 'level 1: nothing owed');
+  assert.strictEqual(availableEvolution(progressionTable, run.roster[0]), null, 'no pips: nothing owed');
   assert.strictEqual(levelOf(run.roster[0]), 1);
   const highLevel = { ...run.roster[0], xp: xpForLevel(30) };
-  assert.strictEqual(availableEvolution(progressionTable, hero, highLevel), null, 'level alone never opens it — the offers before it are owed first');
-  const oneShort = { ...atEvolution(hero, run.roster[0]), xp: xpForLevel(DEFAULT_SCHEDULE.evolutionLevel - 1) };
-  assert.strictEqual(availableEvolution(progressionTable, hero, oneShort), null, 'nor the level before it');
+  assert.strictEqual(availableEvolution(progressionTable, highLevel), null, 'level alone never opens it');
+  const oneShort = { ...run.roster[0], mastery: MASTERY_EVOLUTION - 1 };
+  assert.strictEqual(availableEvolution(progressionTable, oneShort), null, 'nor the pip before it');
 
   run = atEvolutionRung(run, 'cinderKnight');
-  const node = availableEvolution(progressionTable, hero, run.roster[0]);
+  const node = availableEvolution(progressionTable, run.roster[0]);
   assert.ok(node, 'the entry opens it');
   assert.strictEqual(node!.paths.length, 3, 'CLAUDE.md: a choice of three options');
 
@@ -293,9 +293,9 @@ test('progression: an Evolution is the schedule entry at evolutionLevel — leve
   assert.strictEqual(next.roster[0].evolutionStatGrants.intelligence, 60);
   assert.ok(next.roster[0].chosenPathIds.includes('cinderKnight-offensive'));
 
-  assert.strictEqual(next.roster[0].scheduleTaken, run.roster[0].scheduleTaken + 1, 'the entry is taken');
+  assert.strictEqual(next.roster[0].scheduleTaken, run.roster[0].scheduleTaken, 'no schedule entry is spent — the pips paid');
   // one-shot: no second node authored for cinderKnight, so nothing further is offered
-  assert.strictEqual(availableEvolution(progressionTable, hero, next.roster[0]), null);
+  assert.strictEqual(availableEvolution(progressionTable, next.roster[0]), null);
 });
 
 test('progression: an Evolution path with a non-multiple-of-5 stat grant is rejected', () => {

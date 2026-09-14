@@ -433,23 +433,37 @@ export function formatReport(
     out.push(`    ${pad(source, 24)}${padStart(mean(all, R), 8)}${padStart(agg.wins > 0 ? mean(won, agg.wins) : '-', 10)}`);
   }
   out.push(`    ${pad('TOTAL', 24)}${padStart(mean(IchorAll, R), 8)}${padStart(agg.wins > 0 ? mean(IchorWon, agg.wins) : '-', 10)}`);
+  // Mastery pips by source (docs/mastery.md §3): the supply is the only balance number — the
+  // target is every hero evolved and ~3 signatures a run, ~35-40 pips on the middle path.
+  out.push('');
+  out.push(`  Mastery pips landed, by source — per run (all ${R}) and per completed run (${agg.wins}):`);
+  let pipsAll = 0;
+  let pipsWon = 0;
+  for (const source of Object.keys(agg.pipsBySource).sort()) {
+    const all = agg.pipsBySource[source] ?? 0;
+    const won = agg.pipsBySourceWon[source] ?? 0;
+    pipsAll += all;
+    pipsWon += won;
+    out.push(`    ${pad(source, 24)}${padStart(mean(all, R), 8)}${padStart(agg.wins > 0 ? mean(won, agg.wins) : '-', 10)}`);
+  }
+  out.push(`    ${pad('TOTAL', 24)}${padStart(mean(pipsAll, R), 8)}${padStart(agg.wins > 0 ? mean(pipsWon, agg.wins) : '-', 10)}`);
   out.push('');
   out.push('  heroes joining after the draft, per run, by route:');
   for (const source of Object.keys(agg.recruitsBySource).sort()) {
     out.push(`    ${pad(source, 24)}${padStart(mean(agg.recruitsBySource[source], R), 8)}`);
   }
 
-  // The movepool gate is the SCHEDULE (docs/xp-overhaul.md §4): a level opens Mid, one is the
-  // Evolution, one opens Late, so the gates are read off best level reached. EVERY move costing
-  // Late-tier is the expensive half of the catalog (45+ since the phase-6 re-price), so this table says whether it is
-  // reachable at all, which is what makes a big Mana pool worth anything. Read at the DEFAULT
-  // schedule; an authored per-hero one (phase 4) moves a hero's own gates, not the table's.
+  // The movepool gate is the SCHEDULE (docs/xp-overhaul.md §4): a level opens Mid, one opens
+  // Late, so the gates are read off best level reached (the Evolution is on Mastery pips now, not
+  // a level — docs/mastery.md). EVERY move costing Late-tier is the expensive half of the catalog
+  // (45+ since the phase-6 re-price), so this table says whether it is reachable at all, which is
+  // what makes a big Mana pool worth anything. Read at the DEFAULT schedule; an authored per-hero
+  // one (phase 4) moves a hero's own gates, not the table's.
   const levelHist = agg.heroLevelHistogram;
   const heroRuns = levelHist.reduce((sum, n) => sum + (n ?? 0), 0);
   const atLeast = (level: number) => levelHist.slice(level).reduce((sum, n) => sum + (n ?? 0), 0);
   const gates: readonly (readonly [string, number])[] = [
     [`Mid tier (Lv ${DEFAULT_SCHEDULE.midLevel})`, DEFAULT_SCHEDULE.midLevel],
-    [`Evolution (Lv ${DEFAULT_SCHEDULE.evolutionLevel})`, DEFAULT_SCHEDULE.evolutionLevel],
     [`LATE tier (Lv ${DEFAULT_SCHEDULE.lateLevel})`, DEFAULT_SCHEDULE.lateLevel],
   ];
   // Split, because the whole-batch column is dominated by heroes that died in Act 1. The DEEP

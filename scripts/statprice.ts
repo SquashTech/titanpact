@@ -23,8 +23,6 @@ import { progressionTable } from '../src/data/progression';
 import { levelUpEntry } from '../src/run/growth';
 import {
   MOVE_CAP,
-  availableEvolution,
-  chooseEvolutionPath,
   grantOfferedMove,
   levelMovePool,
   pendingScheduleEntry,
@@ -41,8 +39,8 @@ const LEVEL = 5;
 
 /**
  * A hero as a real run would have it at `level`: walked up its schedule (src/run/progression.ts)
- * one level at a time, the Evolution taken where the schedule puts it and every offer the schedule
- * makes taken when it beats the worst move held. Built through the run's OWN progression
+ * one level at a time, every offer the schedule makes taken when it beats the worst move held —
+ * unevolved, since the Evolution sits behind Mastery pips a level never pays (docs/mastery.md). Built through the run's OWN progression
  * functions, so the tier gates are the ones the game applies — the same walk enemyGen does, and
  * here for the same reason: this harness prices stats, so what it needs is a kit that deepens
  * with level rather than the exact kit any one run would hold.
@@ -61,11 +59,6 @@ function entryAtLevel(heroId: string, level: number): RosterEntry {
     run = { ...run, roster: [levelUpEntry(run.roster[0], hero, 1, () => 0.5).entry] };
     const owed = pendingScheduleEntry(hero, run.roster[0]);
     if (!owed) continue;
-    if (owed.kind !== 'offer') {
-      const node = availableEvolution(progressionTable, hero, run.roster[0]);
-      run = node && node.paths.length > 0 ? chooseEvolutionPath(run, progressionTable, heroes, heroId, node.paths[0].id) : takeScheduleEntry(run, heroId);
-      continue;
-    }
     const pool = levelMovePool(progressionTable, moves, hero, run.roster[0]);
     run = takeScheduleEntry(run, heroId);
     if (pool.length === 0) continue;

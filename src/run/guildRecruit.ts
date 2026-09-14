@@ -16,6 +16,7 @@
 import { heroes } from '../data/heroes';
 import { createRng, nextFloat, type RngState } from '../engine/rng/seededRng';
 import { guildHallLevel } from './difficulty';
+import { guildHallMastery } from './mastery';
 import { levelUpEntry } from './growth';
 import type { GuildHallOffer } from './recruitment';
 import type { RosterEntry, RunState } from './state';
@@ -33,7 +34,9 @@ function offerSeed(offer: GuildHallOffer, actNumber: number, locationId: string)
 /** The entry `offer` would join the roster as. Pure — the preview sheet and the purchase both call it. */
 export function guildHallEntry(run: RunState, offer: GuildHallOffer, rosterId: string): RosterEntry {
   const level = guildHallLevel(run.actNumber);
-  const base = createRosterEntry(rosterId, offer.heroId, offer.startingMoveIds);
+  // Its pips arrive with it, one behind a contract's; what they open — the Evolution, once past
+  // the pip — is left for the player to choose. That is what "raw" means (docs/mastery.md §4).
+  const base = { ...createRosterEntry(rosterId, offer.heroId, offer.startingMoveIds), mastery: guildHallMastery(run.actNumber) };
   if (level <= 1) return base;
 
   // Seeded rather than Math.random: the growth roll is part of what the player is buying, so the

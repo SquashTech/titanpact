@@ -14,11 +14,14 @@ interface Props {
   offers: GuildHallOffers;
   /** Carried on the `shop` Screen (App.tsx) because a purchase unmounts this screen through the equip gate. */
   soldOutEquipmentIds: readonly string[];
-  /** Scroll bundles bought this visit, carried the same way. */
+  /** Drops of Ichor bought this visit, carried the same way. */
   ichorBought: number;
+  /** Mastery Scrolls bought this visit, carried the same way. */
+  scrollsBought: number;
   onRunChange: (next: RunState) => void;
   onBuyEquipment: (itemId: string) => void;
   onBuyIchor: () => void;
+  onBuyScroll: () => void;
   onBuyConsumable: (kind: ConsumableKind) => void;
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
   onContinue: () => void;
@@ -38,9 +41,11 @@ export function ShopNodeScreen({
   offers,
   soldOutEquipmentIds,
   ichorBought,
+  scrollsBought,
   onRunChange,
   onBuyEquipment,
   onBuyIchor,
+  onBuyScroll,
   onBuyConsumable,
   onRequestRosterReplace,
   onContinue,
@@ -65,9 +70,11 @@ export function ShopNodeScreen({
           offers={offers}
           soldOutEquipmentIds={soldOutEquipmentIds}
           ichorBought={ichorBought}
+          scrollsBought={scrollsBought}
           onRunChange={onRunChange}
           onBuyEquipment={onBuyEquipment}
           onBuyIchor={onBuyIchor}
+          onBuyScroll={onBuyScroll}
           onBuyConsumable={onBuyConsumable}
           onRequestRosterReplace={onRequestRosterReplace}
           onOverlayChange={setOverlayOpen}

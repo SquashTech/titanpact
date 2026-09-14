@@ -27,6 +27,7 @@ import { MentorNodeScreen } from '../view/run/MentorNodeScreen';
 import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScreen';
 import { ForgeScreen } from '../view/run/ForgeScreen';
 import { IchorNodeScreen } from '../view/run/IchorNodeScreen';
+import { ScrollNodeScreen, type ScrollPlan } from '../view/run/ScrollNodeScreen';
 import { ManaWellScreen } from '../view/run/ManaWellScreen';
 import { BlacksmithScreen } from '../view/run/BlacksmithScreen';
 import { GuardianBannerScreen } from '../view/run/GuardianBannerScreen';
@@ -75,6 +76,7 @@ import {
 } from '../run/recruitment';
 import { guildHallOffers, ICHOR_PURCHASE_COST, ICHOR_PURCHASE_LIMIT } from '../data/recruitment';
 import { IchorError, buyIchor, canBuyIchor, grantIchor, type IchorKind } from '../run/ichor';
+import { buyScroll, canBuyScroll } from '../run/mastery';
 import { rollGuildHallOffers, buyEquipment, ShopError, type GuildHallOffers } from '../run/shop';
 import { ConsumableError, buyConsumable, grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse } from '../run/consumables';
 import { guildHallEntry } from '../run/guildRecruit';
@@ -161,7 +163,7 @@ type Screen =
   /** TEMPORARY DEV/TEST — src/run/statusTestFight.ts. Own kind so leaving returns to the title. */
   | { kind: 'statusTestFight'; player: Encounter; ai: Encounter }
   /** `offers` and `soldOutEquipmentIds` live on the screen, not in the shop component: a purchase re-renders the shop and component-local state would reroll / forget. */
-  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; soldOutEquipmentIds: string[]; ichorBought: number }
+  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; soldOutEquipmentIds: string[]; ichorBought: number; scrollsBought: number }
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType }
   /** The Forge: +1 item slot to one hero. */
   | { kind: 'forge'; nodeId: string }
@@ -172,6 +174,12 @@ type Screen =
    * (`cost`, `nodeId` null); the pick raises the level-up report and then `next`.
    */
   | { kind: 'ichor'; kindOfIchor: IchorKind; nodeId: string | null; cost: number; next: Screen }
+  /**
+   * Mastery Scrolls to whoever the player taps (run/mastery.ts, docs/mastery.md): the Scribe's
+   * forced row and the Guild Hall shelf (`bought`, `nodeId` null, the gold already charged). The
+   * Evolution the fifth pip raises is the screen's own; it walks the node when every pip is down.
+   */
+  | { kind: 'scrolls'; plan: ScrollPlan; nodeId: string | null; bought: boolean; next: Screen }
   | { kind: 'blacksmith'; nodeId: string }
   | { kind: 'boonNode'; nodeId: string }
   /** The Mentor (acts 1-3): pick a hero, and one Mid move is rolled for it. */
@@ -280,7 +288,7 @@ function createLevel4TestRun(): RunState {
     roster: base.roster.map((entry, i) => {
       const geared = { ...entry, equipment: worn[i] ? equipItem(entry.equipment, worn[i]) : entry.equipment };
       // The first hero stands at its Evolution, so the next level-up report raises it.
-      return i === 0 ? atEvolution(heroes[entry.heroId], geared) : geared;
+      return i === 0 ? atEvolution(geared) : geared;
     }),
     // Two mergeable pairs: a plain one, and one where both halves are enchanted so the
     // keep-which-enchant choice has somewhere to fire.
@@ -351,6 +359,8 @@ function tutorialBeatKeyFor(screen: Screen, run: RunState): TutorialBeatKey | nu
       return screen.nodeId ? rewardBeatKey(screen.kindOfIchor === 'ichor' ? 'ichorReward' : 'ichorDropReward') : null;
     case 'mentorNode':
       return 'mentorNode';
+    case 'scrolls':
+      return screen.plan.kind === 'scribe' ? 'scribeNode' : null;
     case 'recruit':
       return 'recruit';
     case 'shop':
@@ -568,6 +578,7 @@ export function App() {
         offers: rollGuildHallOffers(playerRun, guildHallOffers, EQUIPMENT_POOL, node.type === 'muster'),
         soldOutEquipmentIds: [],
         ichorBought: 0,
+        scrollsBought: 0,
       });
     } else if (node.type === 'forgeReward') {
       setScreen({ kind: 'forge', nodeId });
@@ -575,6 +586,8 @@ export function App() {
       setScreen({ kind: 'manaWell', nodeId });
     } else if (node.type === 'ichorReward' || node.type === 'ichorDropReward') {
       setScreen({ kind: 'ichor', kindOfIchor: node.type === 'ichorReward' ? 'ichor' : 'drop', nodeId, cost: 0, next: { kind: 'map' } });
+    } else if (node.type === 'scribeReward') {
+      setScreen({ kind: 'scrolls', plan: { kind: 'scribe' }, nodeId, bought: false, next: { kind: 'map' } });
     } else if (node.type === 'blacksmith') {
       setScreen({ kind: 'blacksmith', nodeId });
     } else if (node.type === 'mentorReward') {
@@ -770,6 +783,14 @@ export function App() {
       cost: ICHOR_PURCHASE_COST,
       next: { ...screen, ichorBought: screen.ichorBought + 1 },
     });
+  }
+
+  /** The shelf's Mastery Scroll: the gold is charged on the tap, and the who screen lands the pip. */
+  function handleBuyGuildScroll() {
+    if (screen.kind !== 'shop' || !canBuyScroll(playerRun, screen.scrollsBought)) return;
+    setPlayerRun(buyScroll(playerRun, screen.scrollsBought));
+    playSfx('gold.coin');
+    setScreen({ kind: 'scrolls', plan: { kind: 'scrolls', count: 1 }, nodeId: null, bought: true, next: { ...screen, scrollsBought: screen.scrollsBought + 1 } });
   }
 
   /** The Ichor eaten: charge the shelf if it was bought, feed the hero, walk the node, and show the jump. */
@@ -1065,9 +1086,11 @@ export function App() {
           offers={screen.offers}
           soldOutEquipmentIds={screen.soldOutEquipmentIds}
           ichorBought={screen.ichorBought}
+          scrollsBought={screen.scrollsBought}
           onRunChange={setPlayerRun}
           onBuyEquipment={handleBuyGuildEquipment}
           onBuyIchor={handleBuyGuildIchor}
+          onBuyScroll={handleBuyGuildScroll}
           onBuyConsumable={handleBuyGuildConsumable}
           onRequestRosterReplace={handleRequestRosterReplace}
           onContinue={() => handleNodeContinue(screen.nodeId)}
@@ -1135,6 +1158,16 @@ export function App() {
           bought={screen.cost > 0}
           onPick={handleIchorPick}
           onSkip={() => (screen.nodeId ? handleNodeContinue(screen.nodeId) : setScreen(screen.next))}
+        />
+      )}
+
+      {screen.kind === 'scrolls' && (
+        <ScrollNodeScreen
+          run={playerRun}
+          onRunChange={setPlayerRun}
+          plan={screen.plan}
+          bought={screen.bought}
+          onDone={() => (screen.nodeId ? handleNodeContinue(screen.nodeId) : setScreen(screen.next))}
         />
       )}
 

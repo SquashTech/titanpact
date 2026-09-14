@@ -134,6 +134,14 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
   ),
   // Open tome: the Mentor teaches.
   mentorReward: OPEN_BOOK,
+  // A rolled scroll, its two curls the thing that survives 20px: the Scribe hands out Mastery
+  // Scrolls, and the Guild Hall shelf sells the same glyph (RunGlyph RESOURCE_PATHS scroll).
+  scribeReward: (
+    <>
+      <path d="M6.2 3.2h11.2a3.4 3.4 0 0 1 3.4 3.4v1.6h-4.2V6.8H8.4v10.4h8.2v-1.8h4.2v1.8a3.4 3.4 0 0 1-3.4 3.4H6.2a3.4 3.4 0 0 1-3.4-3.4V6.6a3.4 3.4 0 0 1 3.4-3.4Z" />
+      <path d="M10.2 9.2h4.8v1.7h-4.8Zm0 3h4.8v1.7h-4.8Z" />
+    </>
+  ),
   // A branching skill tree, not a second book: the Mentor hands over something new, the Tutor
   // opens a door the hero was already standing in front of.
   tutorReward: (

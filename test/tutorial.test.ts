@@ -8,7 +8,7 @@ import { moves } from '../src/data/moves';
 import { locations } from '../src/data/locations';
 import { typeChart } from '../src/data/typechart';
 import { progressionTable } from '../src/data/progression';
-import { levelAfterEncounters, xpForLevel } from '../src/run/growth';
+import { MAX_LEVEL, levelAfterEncounters, xpForLevel } from '../src/run/growth';
 import {
   TUTORIAL_ENCOUNTERS,
   TUTORIAL_FIGHT_CUES,
@@ -150,20 +150,16 @@ test('tutorial: a scripted encounter is fielded verbatim when nothing is exclude
 
 // --- Payouts ---
 
-test('the tutorial act teaches at least one move off the schedule before the Guardian, and the Evolution is the schedule\'s to place', () => {
+test('the tutorial act teaches at least one move off the schedule before the Guardian, and the Evolution is the Scribe\'s to place', () => {
   // docs/xp-overhaul.md §4: a level on the schedule rolls an offer from the report. Act 1's curve
   // reaches 8, so the default schedule's offers at 4 and 7 both land inside the scripted act — the
-  // lesson is not deferred to Act 2. Level alone never opens the Evolution: the entries before it
-  // are owed first, and on the default schedule the Evolution sits at 16, in Act 3. Whether Valor
-  // is authored to evolve inside Act 1 is the per-hero pass's call (docs/xp-overhaul.md §10).
+  // lesson is not deferred to Act 2. No level opens the Evolution (docs/mastery.md): the corridor's
+  // Scribe pays Valor two pips, and whether the Cache it also carries lands the fifth is the player's.
   const solo = addRosterEntry(createRunState(0), createRosterEntry('valor', 'valor', heroes.valor.moveIds));
   const valor = heroes.valor;
-  assert.strictEqual(
-    availableEvolution(progressionTable, valor, { ...solo.roster[0], xp: xpForLevel(scheduleFor(valor).evolutionLevel) }),
-    null,
-    'reaching the level with the offers before it untaken opens nothing'
-  );
-  const offersInAct1 = scheduleEntries(scheduleFor(valor)).filter((e) => e.kind === 'offer' && e.level <= levelAfterEncounters(3));
+  assert.strictEqual(availableEvolution(progressionTable, { ...solo.roster[0], xp: xpForLevel(MAX_LEVEL) }), null, 'no level opens it');
+  assert.ok(TUTORIAL_ROW_TYPES.includes('scribeReward'), 'the corridor carries the Scribe, where every act has it');
+  const offersInAct1 = scheduleEntries(scheduleFor(valor)).filter((e) => e.level <= levelAfterEncounters(3));
   assert.ok(offersInAct1.length >= 1, 'the corridor makes no move offer before the Guardian');
   void DEFAULT_SCHEDULE;
 });

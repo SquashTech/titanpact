@@ -13,7 +13,8 @@ import {
   encounterHeroCountOverride,
 } from '../src/run/difficulty';
 import { generateEncounter, generateSpawnEncounter } from '../src/run/enemyGen';
-import { MOVE_CAP, scheduleFor } from '../src/run/progression';
+import { MOVE_CAP } from '../src/run/progression';
+import { MASTERY_EVOLUTION, masteryForAct } from '../src/run/mastery';
 import { heroes } from '../src/data/heroes';
 import { titanspawn } from '../src/data/titanspawn';
 import { locations } from '../src/data/locations';
@@ -115,17 +116,18 @@ test('difficulty: every act-step grant stays a multiple of 5 or 10 (CLAUDE.md "S
   }
 });
 
-test('difficulty: scaled enemies arrive at the act level, and evolve on the SAME schedule a roster hero reads', () => {
-  // One model for everybody (docs/xp-overhaul.md §4): an enemy at the act's level has taken every
-  // schedule entry at or below it, so it is evolved exactly when a roster hero at that level would
-  // be — an early turner from Act 2, a late one from Act 4 — and a contract hero IS the enemy you
-  // beat, at whatever point of its own schedule that is.
+test('difficulty: scaled enemies arrive at the act level and the act\'s pips, and evolve on the SAME gate a roster hero reads', () => {
+  // One model for everybody (docs/xp-overhaul.md §4, docs/mastery.md §4): an enemy holds the
+  // act's Mastery (masteryForAct), so it is evolved exactly when a roster hero with those pips
+  // would be — every hero-pool enemy from Act 3 — and a contract hero IS the enemy you beat.
   for (const act of [1, 2, 3, 4, 5]) {
     const scaling = actScaling('skirmish', act);
+    assert.strictEqual(scaling.mastery, masteryForAct(act));
     const { run } = generateEncounter('elite', 12, heroes, { scaling, progression: progressionTable });
     for (const entry of run.roster) {
-      const evolved = scaling.level >= scheduleFor(heroes[entry.heroId]).evolutionLevel;
+      const evolved = scaling.mastery >= MASTERY_EVOLUTION;
       assert.strictEqual(levelOf(entry), scaling.level, `act ${act} level`);
+      assert.strictEqual(entry.mastery, scaling.mastery, `act ${act} pips`);
       assert.strictEqual(
         entry.chosenPathIds.length,
         evolved ? 1 : 0,

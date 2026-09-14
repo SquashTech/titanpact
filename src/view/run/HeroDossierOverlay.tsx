@@ -6,6 +6,7 @@ import type { HeroDefinition, MoveTier, StatKey, TypeId } from '../../engine/con
 import { gradesFor } from '../../run/growth';
 import type { EvolutionPath } from '../../run/progression';
 import { scheduleFor } from '../../run/progression';
+import { MASTERY_EVOLUTION } from '../../run/mastery';
 import type { LevelSchedule } from '../../engine/content';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -253,7 +254,7 @@ export function HeroDossierOverlay({ hero, onClose }: Props) {
           {tab === 'evolution' &&
             nodes.map((node, i) => (
               <div key={i}>
-                <div className="tab-subhead">Level {scheduleFor(hero).evolutionLevel}</div>
+                <div className="tab-subhead">Mastery {MASTERY_EVOLUTION}</div>
                 {node.paths.map((path) => (
                   <EvolutionPathCard key={path.id} hero={hero} path={path} caster={caster} onInspect={setPopupMoveId} />
                 ))}

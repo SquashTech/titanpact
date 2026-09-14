@@ -1,18 +1,18 @@
 // The companion (docs/titanspawn-overhaul.md §5): the Fire Emblem trainee fused with death
 // fodder. One of the two Early spawn the player beats in the run's first fight asks to join, and
 // it does — there is no declining (per user direction). It takes a roster slot, levels roster-wide,
-// takes its schedule's offers, holds items and restores between nodes like anyone; its schedule's
-// Evolution level is a TIER-STEP (Early → Mid), and the level that opens Late a second one
-// (Mid → Late), in place of a branch; and the only new rule is
-// `RosterEntry.mortal` — a knockout removes it from the run. What it held strips to the bag.
+// takes its schedule's offers, holds items and restores between nodes like anyone; the Mastery
+// pip that opens a hero's Evolution is a TIER-STEP for it (Early → Mid), and the pip that offers
+// the signature a second one (Mid → Late), in place of a branch (docs/mastery.md §2); and the only
+// new rule is `RosterEntry.mortal` — a knockout removes it from the run, its pips with it. What it
+// held strips to the bag.
 
 import type { HeroLookup } from '../engine/state';
 import type { EquipmentDefinition } from './equipment';
 import type { Encounter } from './enemyGen';
-import type { HeroDefinition } from '../engine/content';
 import { SPAWN_TIERS, spawnId, spawnPosition } from '../data/titanspawn';
 import { levelOf, levelUpEntry } from './growth';
-import { pendingScheduleEntry } from './progression';
+import { MASTERY_EVOLUTION, MASTERY_SIGNATURE } from './mastery';
 import { stashItem } from './runProgress';
 import { ROSTER_CAP, addRosterEntry, createRosterEntry, type RosterEntry, type RunState } from './state';
 import { freshRosterId } from './recruitment';
@@ -69,27 +69,32 @@ export function absorbCompanions(run: RunState, koRosterIds: readonly string[], 
   return { run: next, absorbed };
 }
 
+/** The pip each body steps up at: an Early to Mid where a hero would evolve, a Mid to Late where a hero would take its signature. */
+const STEP_PIPS: Record<string, number> = { early: MASTERY_EVOLUTION, mid: MASTERY_SIGNATURE };
+
 /**
- * The body the entry's owed tier-step turns it into, when the schedule entry it is owed is one
- * (progression.ts scheduleEntries: the schedule's Evolution level and its Late level, for a mortal
- * entry); null otherwise. A Late body has no next, so its step pays nothing and is simply taken.
+ * The body the entry's Mastery has earned it, when it is standing in the one below: DERIVED off
+ * the pips and the body it is in, so nothing is owed and nothing is taken — a Mid at ten pips is
+ * a Late the moment anyone asks. Null for a hero, an immortal, or a body with nowhere to step.
  */
-export function companionTierStep(hero: HeroDefinition | undefined, entry: RosterEntry): string | null {
-  if (!entry.mortal || pendingScheduleEntry(hero, entry)?.kind !== 'step') return null;
+export function companionTierStep(entry: RosterEntry): string | null {
+  if (!entry.mortal) return null;
   const position = spawnPosition(entry.heroId);
   if (!position) return null;
+  const pip = STEP_PIPS[position.tier];
+  if (pip === undefined || entry.mastery < pip) return null;
   const nextTier = SPAWN_TIERS[SPAWN_TIERS.indexOf(position.tier) + 1];
   return nextTier ? spawnId(position.line, nextTier) : null;
 }
 
 /**
- * The step itself: the same entry in the next body, the schedule entry taken. Everything it has —
- * moves, items, levels, growth — carries; only the base line and the figure change, which is what
- * an objective upgrade in the Squirtle/Wartortle/Blastoise sense means.
+ * The step itself: the same entry in the next body. Everything it has — moves, items, levels,
+ * growth — carries; only the base line and the figure change, which is what an objective upgrade
+ * in the Squirtle/Wartortle/Blastoise sense means.
  */
-export function applyCompanionTierStep(run: RunState, rosterId: string, heroes: HeroLookup): RunState {
+export function applyCompanionTierStep(run: RunState, rosterId: string): RunState {
   const entry = run.roster.find((r) => r.rosterId === rosterId);
-  const nextId = entry && companionTierStep(heroes[entry.heroId], entry);
+  const nextId = entry && companionTierStep(entry);
   if (!entry || !nextId) return run;
-  return { ...run, roster: run.roster.map((r) => (r === entry ? { ...r, heroId: nextId, scheduleTaken: r.scheduleTaken + 1 } : r)) };
+  return { ...run, roster: run.roster.map((r) => (r === entry ? { ...r, heroId: nextId } : r)) };
 }

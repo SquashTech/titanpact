@@ -11,6 +11,7 @@ import { ROSTER_CAP, RosterFullError } from '../../run/state';
 import { guildHallEntry } from '../../run/guildRecruit';
 import { guildHallLevel } from '../../run/difficulty';
 import { canBuyIchor, ichorXp } from '../../run/ichor';
+import { SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT, canBuyScroll } from '../../run/mastery';
 import { CONSUMABLE_HOLD_CAP, CONSUMABLE_KINDS, CONSUMABLE_NAMES, CONSUMABLE_PRICE, canBuyConsumable, type ConsumableKind } from '../../run/consumables';
 import type { EquipmentDefinition } from '../../run/equipment';
 import {
@@ -58,13 +59,17 @@ interface Props {
   tab: GuildHallTab;
   /** Bought on this visit; carried by App.tsx so a re-render of this panel cannot forget it. */
   soldOutEquipmentIds: readonly string[];
-  /** Scroll bundles bought this visit; carried by App.tsx for the same reason. */
+  /** Drops of Ichor bought this visit; carried by App.tsx for the same reason. */
   ichorBought: number;
+  /** Mastery Scrolls bought this visit, carried the same way (run/mastery.ts SCROLL_PURCHASE_LIMIT). */
+  scrollsBought: number;
   onRunChange: (next: RunState) => void;
   /** Hands off to App.tsx, which charges the gold and drops the item in the bag. */
   onBuyEquipment: (itemId: string) => void;
   /** Hands off to App.tsx, which charges the gold, grants the act's bundle and counts the visit. */
   onBuyIchor: () => void;
+  /** Hands off to App.tsx, which charges the gold and opens the who screen for the pip. */
+  onBuyScroll: () => void;
   /** Hands off to App.tsx, which charges the gold and fills the flask (run/consumables.ts). */
   onBuyConsumable: (kind: ConsumableKind) => void;
   /** Recruiting at a full roster hands off to App.tsx's RosterReplaceScreen gate. */
@@ -153,9 +158,11 @@ export function GuildHallPanel({
   offers,
   soldOutEquipmentIds,
   ichorBought,
+  scrollsBought,
   onRunChange,
   onBuyEquipment,
   onBuyIchor,
+  onBuyScroll,
   onBuyConsumable,
   onRequestRosterReplace,
   onOverlayChange,
@@ -178,6 +185,8 @@ export function GuildHallPanel({
   const canBuyContract = run.gold >= CONTRACT_PURCHASE_COST;
   const ichorSoldOut = ichorBought >= ICHOR_PURCHASE_LIMIT;
   const canBuyIchorNow = canBuyIchor(run, ICHOR_PURCHASE_COST, ichorBought, ICHOR_PURCHASE_LIMIT);
+  const scrollsSoldOut = scrollsBought >= SCROLL_PURCHASE_LIMIT;
+  const canBuyScrollNow = canBuyScroll(run, scrollsBought);
 
   // Derived from state rather than pushed from each setter, so a later modal can't forget to report.
   const overlayOpen = !!previewOffer || !!previewEquip || confirmingContract || sellOpen || !!fanfareHeroId;
@@ -279,6 +288,31 @@ export function GuildHallPanel({
               {ichorBought > 0 && (
                 <span className="guild-hall-good-held is-ichor" aria-label={`${ichorBought} of ${ICHOR_PURCHASE_LIMIT} bought`}>
                   {ichorBought}/{ICHOR_PURCHASE_LIMIT}
+                </span>
+              )}
+            </button>
+            {/* The Mastery Scroll (docs/mastery.md §3): one pip, the who screen is the decision, the
+                shelf holds SCROLL_PURCHASE_LIMIT a visit. */}
+            <button
+              className={`guild-hall-good is-scroll${scrollsSoldOut ? ' sold-out' : ''}`}
+              disabled={!canBuyScrollNow}
+              onClick={onBuyScroll}
+            >
+              <span className="guild-hall-good-glyph">
+                <ResourceGlyph kind="scroll" tone="inherit" />
+              </span>
+              <span className="guild-hall-good-name">Mastery Scroll</span>
+              <span className="guild-hall-good-desc">+1 Mastery</span>
+              {scrollsSoldOut ? (
+                <span className="guild-hall-good-price is-soldout">Sold out</span>
+              ) : (
+                <span className="guild-hall-good-price">
+                  <ResourceGlyph kind="gold" /> {SCROLL_PURCHASE_COST}
+                </span>
+              )}
+              {scrollsBought > 0 && (
+                <span className="guild-hall-good-held is-scroll" aria-label={`${scrollsBought} of ${SCROLL_PURCHASE_LIMIT} bought`}>
+                  {scrollsBought}/{SCROLL_PURCHASE_LIMIT}
                 </span>
               )}
             </button>

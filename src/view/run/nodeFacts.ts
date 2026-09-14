@@ -7,6 +7,7 @@ import type { EquipmentRarity } from '../../run/equipment';
 import { EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, MAX_ITEM_SLOTS, RARITY_ORDER, rarityWeightsFor } from '../../run/equipment';
 import { GOLD_REWARD_RANGE, PURSE_GOLD_RANGE } from '../../run/runProgress';
 import { ICHOR_FIGHTS, ichorXpForAct } from '../../run/ichor';
+import { MASTERY_EVOLUTION, SCRIBE_PICKS, SCRIBE_PIPS_EACH, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT } from '../../run/mastery';
 import { ENCOUNTER_XP_MULTIPLIER, encounterXpForAct, encounterXpKind } from '../../run/growth';
 import { MANA_WELL_AMOUNT } from '../../run/runProgress';
 import { BOON_OFFER_COUNT } from '../../run/boons';
@@ -29,6 +30,7 @@ export type NodeFactGlyph =
   | 'gold'
   | 'xp'
   | 'ichor'
+  | 'scroll'
   | 'mana'
   | 'contract'
   | 'item'
@@ -163,6 +165,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
           { glyph: 'hero', label: 'Hire', value: `${GUILD_HALL_RECRUIT_COST}g`, note: `Lv ${guildHallLevel(actNumber)}, raw` },
           { glyph: 'contract', label: 'Contract', value: `${CONTRACT_PURCHASE_COST}g` },
           { glyph: 'ichor', label: 'Drop of Ichor', value: `${ICHOR_PURCHASE_COST}g`, note: `up to ${ICHOR_PURCHASE_LIMIT}` },
+          { glyph: 'scroll', label: 'Mastery Scroll', value: `${SCROLL_PURCHASE_COST}g`, note: `up to ${SCROLL_PURCHASE_LIMIT}` },
           { glyph: 'item', label: 'Gear', value: `${GUILD_HALL_EQUIPMENT_OFFER_COUNT} on shelf`, note: priceBand(EQUIPMENT_PRICE_BY_RARITY) },
           { glyph: 'sell', label: 'Sell', value: `${Math.round(EQUIPMENT_SELL_SHARE * 100)}%`, note: 'of buy price' },
         ],
@@ -212,6 +215,12 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
       return {
         kind: 'Reward · Build',
         facts: [{ glyph: 'slot', label: 'Item slot', value: '+1', note: `to 1 hero, max ${MAX_ITEM_SLOTS}` }],
+        odds: null,
+      };
+    case 'scribeReward':
+      return {
+        kind: 'Reward · Growth',
+        facts: [{ glyph: 'scroll', label: 'Mastery', value: `+${SCRIBE_PIPS_EACH}`, note: `to ${SCRIBE_PICKS} heroes — ${MASTERY_EVOLUTION} Evolves` }],
         odds: null,
       };
     case 'mentorReward':

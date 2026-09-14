@@ -1,7 +1,7 @@
 # mastery.md — Mastery: pips, the Scribe, and the signature
 
 > **STATUS: DECIDED 2026-09-14 (per user direction, after a same-day draft on "fights survived"
-> was playtested on paper and rejected — §0); NOTHING BUILT.** `CLAUDE.md` and `xp-overhaul.md`
+> was playtested on paper and rejected — §0); PHASE 1 OF §8 IS IN.** `CLAUDE.md` and `xp-overhaul.md`
 > describe the game in force wherever a §8 phase has not landed; §8 is the route and §9 the list
 > of sign-offs each phase spends — **check its Status column before assuming anything here is
 > live.** Every number below is a first pass unless it says otherwise; the design is the shape,
@@ -62,7 +62,8 @@ is also why Ichor retires (§4): it was XP paid by the map, the one thing that b
 **Mastery** is an integer on `RosterEntry`, 0–10. Nothing happens at 1–4 or 6–9. Reaching **5**
 raises that hero's Evolution screen; reaching **10** offers its signature move (§5). Both fire
 **on the node that paid the pip**, not on the level-up report — the report goes back to offers
-only, which is simpler than it is today.
+only, which is simpler than it is today, with one catch-all: a Guild hire that arrived past the
+pip unevolved (§4) takes its Evolution on its next report, since no node paid it a pip.
 
 **The who-screen** is Ichor's (`IchorNodeScreen`, renamed): every roster hero as a card, each with
 a ten-pip row and markers at 5 and 10, a tap a pip. A tap that crosses a marker hands straight
@@ -234,7 +235,7 @@ Sequenced so the tree is playable at every boundary. `SAVE_VERSION` bumps at eac
 
 | # | Phase | Exit criterion | Status |
 |---|---|---|---|
-| 1 | **Mastery in.** `RosterEntry.mastery`; the who-screen (Ichor's, renamed, with the pip row); the **Scribe** row (`scribeReward`, forced, acts 1–5, pick two, +2 each); the **shelf** (Guild Hall and Vigil, 25g, 2 a visit); the Evolution raised at 5 from the node; `masteryForAct` for enemies, contracts, hires; the companion's steps at 5 / 10; delete §7's first four items. Ichor untouched — both seats stay. Tutorial re-checked (the Scribe with three heroes in a one-node-per-row act). | No reader of `evolutionLevel`; a run completable end to end; `test/recruitment.test.ts` pins contract > hire on pips. Measured against the XP Overhaul's phase-6 baseline (full-clear 57%, Evolutions 5.0 a run): Evolutions per run, "every hero evolved" %, the clock with one more row an act. | |
+| 1 | **Mastery in.** `RosterEntry.mastery`; the who-screen (Ichor's, renamed, with the pip row); the **Scribe** row (`scribeReward`, forced, acts 1–5, pick two, +2 each); the **shelf** (Guild Hall and Vigil, 25g, 2 a visit); the Evolution raised at 5 from the node; `masteryForAct` for enemies, contracts, hires; the companion's steps at 5 / 10; delete §7's first four items. Ichor untouched — both seats stay. Tutorial re-checked (the Scribe with three heroes in a one-node-per-row act). | No reader of `evolutionLevel`; a run completable end to end; `test/recruitment.test.ts` pins contract > hire on pips. Measured against the XP Overhaul's phase-6 baseline (full-clear 57%, Evolutions 5.0 a run): Evolutions per run, "every hero evolved" %, the clock with one more row an act. | **DONE 2026-09-14.** `src/run/mastery.ts`; `ScrollNodeScreen` (a new screen beside Ichor's, since Ichor stays until phase 2) with `masteryFlow.ts` carrying the Evolution / tier-step / overflow raise that `levelUpFlow.ts` now composes as its catch-all; `MasteryPips` on the who-screen and the hero sheet; `ROW_WIDTHS` gained the Scribe at row 4 and the tutorial corridor a beat for it; `ActScaling.mastery`; `SAVE_VERSION` 15. Measured below. |
 | 2 | **The Cache takes Ichor's seats.** `scrollReward` at 46; `ichorReward` / `ichorDropReward` / `ichor.ts` / the Drops deleted; the Drop's 14 retires. | No Ichor anywhere; the sim tallies pips by source. **Separable — veto here leaves phase 1 standing.** | |
 | 3 | **The signature slot.** `signatureMoveId`; the tenth pip's replace-or-decline on the who-screen; the exclusivity test (no pool, no Tutor, no graft list, no path grant); Lizard Rush promoted and pulled from its three pools; the Tidecaller decision (§10); enemies at 10 hold it. | Riptide reaches Lizard Rush at 10 and nowhere else; the test catches a signature in any pool. | |
 | 4 | **Author 35 signatures.** Parallelisable from 3; ships hero by hero (an unauthored hero's tenth pip pays nothing, which is what today pays). | Every hero has one, on the template — a hit or a verb at the hero's primary, Late-priced, never a bare nuke. | |
@@ -243,7 +244,16 @@ Sequenced so the tree is playable at every boundary. `SAVE_VERSION` bumps at eac
 **What each phase measures.** Phase 1: Evolutions per run and their *timing* — the greedy pilot
 with the simplest policy (Scribe to the two most-fielded, shelf never) is the floor a real player
 beats — and the row's clock cost, since the Scribe is the first forced row added since the
-Skirmish row was cut to pay for time. Phase 2: whether removing Ichor moves full-clear at all (it
+Skirmish row was cut to pay for time.
+
+Phase 1, measured (300 runs, seed 11, greedy pilot, against the same seed on the tree before it):
+**full-clear 60.3% → 54.7%**, roster evolved at end 78.6% → 66.7%, **"every hero evolved" 67.7% →
+25.0%**. Pips a completed run: **20.0 Scribe + 2.1 shelf** — the pilot's `scrollTarget` buys the
+shelf only when gold is left after recruits and gear, which it mostly is not. This is the bridge
+state §3 predicts: the Scribe alone evolves four, and the ~12 the Cache pays are phase 2's. Acts:
+87 / 90 / 95 / 84 / 88, so the loss is spread rather than an Act 1 wall (the Scribe pays Act 1 its
+4 before the fork, and the early Evolution the level window forbade is now the pilot's default).
+Clock: Reader 71.1 → 72.4 min, the Scribe row 0.7 min a run — the smallest node on the map. Phase 2: whether removing Ichor moves full-clear at all (it
 should not, by its own measurement); if it does, the catch-up was doing more than the batch showed
 and §10 gains a question. Phase 5: the signature count per run against the target of three, and
 which faucet bought them.

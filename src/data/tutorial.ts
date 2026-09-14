@@ -177,7 +177,21 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     lines: ['Choose which of us learns.'],
   },
 
-  // --- Row 4: the Skirmish ---
+  // --- Row 4: the Scribe ---
+  {
+    id: 'map:scribeReward',
+    topic: 'The Scribe',
+    lines: [
+      'A Scribe. Every act has one, and they hand out Mastery Scrolls — two each, to two of us.',
+      'Five Scrolls and a hero Evolves: a new form, chosen from three. Ten, and they master their signature move. The Scribe starts us off; where the rest come from is ours to find.',
+    ],
+  },
+  {
+    id: 'scribeNode',
+    lines: ['Choose two of us.'],
+  },
+
+  // --- Row 5: the Skirmish ---
   {
     id: 'map:skirmish',
     topic: 'Skirmish',
@@ -218,7 +232,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     ],
   },
 
-  // --- Row 5: the Ichor ---
+  // --- Row 6: the Ichor ---
   {
     id: 'map:ichorReward',
     topic: 'Ichor',
@@ -228,7 +242,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     ],
   },
 
-  // --- Row 6: the Guild Hall ---
+  // --- Row 7: the Guild Hall ---
   {
     id: 'map:shop',
     topic: 'Guild Hall',
