@@ -6,7 +6,7 @@ import { progressionTable } from '../src/data/progression';
 import { createRosterEntry } from '../src/run/state';
 import { MAP_NODE_TYPES, generateMap } from '../src/run/map';
 import { MOVE_TIER_RANK } from '../src/run/progression';
-import { mentorMovePool, tutorMovePool, tutorTeachableCount } from '../src/run/tutor';
+import { mentorMovePool, tutorMovePool } from '../src/run/tutor';
 import { xpForLevel } from '../src/run/growth';
 
 const entry = (heroId: string) => createRosterEntry(heroId, heroId, heroes[heroId].moveIds);
@@ -26,69 +26,41 @@ function heroWithPathMoves(): { heroId: string; pathId: string; learnable: strin
   throw new Error('no Evolution path carries both learnableMoveIds and unlocksMoveIds');
 }
 
-test('tutor: the pool is the hero level-up pool, whole and un-gated by tier', () => {
-  for (const [heroId, pool] of Object.entries(progressionTable.moveTiers).filter(([id]) => id in heroes)) {
-    const offered = tutorMovePool(progressionTable, moves, entry(heroId));
-    assert.deepStrictEqual([...offered].sort(), [...new Set(pool)].sort(), heroId);
-    // A level-1 hero is offered its Late moves too — "any of them" is the node (docs/run-loop.md).
-    assert.ok(
-      offered.some((id) => (moves[id].tier ?? 'early') !== 'early'),
-      `${heroId}: a tier-gated move should still be on the Tutor's shelf`
-    );
-  }
+test("tutor: the pool is the hero's Late tier alone, whatever its level, minus what it holds or was offered", () => {
+  // The Mentor's beat at Late (2026-09-13): a guaranteed Late move, rolled, un-gated by level.
+  const entry = createRosterEntry('ironWarden', 'ironWarden', heroes.ironWarden.moveIds);
+  const pool = tutorMovePool(progressionTable, moves, entry);
+  assert.ok(pool.length > 0, 'a level-1 hero still gets a Late move — the Tutor is un-gated');
+  for (const id of pool) assert.strictEqual(moves[id].tier, 'late', `${id} is not Late`);
+  assert.ok(pool.includes('juggernaut'));
+  assert.ok(!pool.includes('ironFist') && !pool.includes('rendArmor'), 'no Early, no Mid');
+
+  // A rolled offer is spent by being made, so a Late move a level already burned stays burned.
+  const burned = { ...entry, offeredMoveIds: ['juggernaut'] };
+  assert.ok(!tutorMovePool(progressionTable, moves, burned).includes('juggernaut'));
+  const held = { ...entry, unlockedMoveIds: [...entry.unlockedMoveIds, 'juggernaut'] };
+  assert.ok(!tutorMovePool(progressionTable, moves, held).includes('juggernaut'));
 });
 
-test('tutor: the pool is sorted by tier, then mana cost', () => {
-  const rank = { early: 0, mid: 1, late: 2 } as const;
-  for (const heroId of Object.keys(progressionTable.moveTiers).filter((id) => id in heroes)) {
-    const pool = tutorMovePool(progressionTable, moves, entry(heroId));
-    for (let i = 1; i < pool.length; i++) {
-      const a = moves[pool[i - 1]];
-      const b = moves[pool[i]];
-      const ta = rank[a.tier ?? 'early'];
-      const tb = rank[b.tier ?? 'early'];
-      assert.ok(ta <= tb, `${heroId}: ${a.name} (${ta}) sorted before ${b.name} (${tb})`);
-      if (ta === tb) assert.ok(a.manaCost <= b.manaCost, `${heroId}: ${a.name} costs more than ${b.name}`);
-    }
-    // The sort keys are readable off MOVE_TIER_RANK; assert the table is the one being sorted on.
-    assert.ok(MOVE_TIER_RANK.early <= MOVE_TIER_RANK.mid && MOVE_TIER_RANK.mid <= MOVE_TIER_RANK.late);
-  }
-});
-
-test('tutor: a chosen Evolution path adds BOTH its learnable and its granted moves to the shelf', () => {
-  const { heroId, pathId, learnable, unlocks } = heroWithPathMoves();
-  const before = tutorMovePool(progressionTable, moves, entry(heroId));
+test('tutor: a chosen Evolution path adds its learnable Late moves to the roll, and the two rolls never overlap', () => {
+  const { heroId, pathId, learnable } = heroWithPathMoves();
   const evolved = { ...entry(heroId), xp: xpForLevel(5), chosenPathIds: [pathId] };
   const after = tutorMovePool(progressionTable, moves, evolved);
-
-  for (const id of learnable) assert.ok(after.includes(id), `${heroId}: ${id} (learnable) missing from the shelf`);
-  // The grant is the point: refused at MOVE_CAP it is otherwise gone for the run.
-  for (const id of unlocks) assert.ok(after.includes(id), `${heroId}: ${id} (granted) missing from the shelf`);
-  assert.ok(after.length > before.length);
+  for (const id of learnable.filter((m) => moves[m].tier === 'late')) assert.ok(after.includes(id), `${heroId}: ${id} (learnable Late) missing from the roll`);
+  for (const hero of Object.values(heroes)) {
+    const e = entry(hero.id);
+    const mid = new Set(mentorMovePool(progressionTable, moves, e));
+    for (const id of tutorMovePool(progressionTable, moves, e)) assert.ok(!mid.has(id), `${id} is on both rolls`);
+  }
 });
 
-test('tutor: a move already offered and declined is still on the shelf; one currently held is not counted', () => {
-  const heroId = Object.keys(progressionTable.moveTiers).filter((id) => id in heroes)[0];
-  const pool = tutorMovePool(progressionTable, moves, entry(heroId));
-  const declined = pool[0];
-
-  const spent = { ...entry(heroId), offeredMoveIds: [declined] };
-  assert.ok(tutorMovePool(progressionTable, moves, spent).includes(declined), 'a declined offer must still be teachable');
-  assert.strictEqual(tutorTeachableCount(progressionTable, moves, spent), pool.length);
-
-  const holding = { ...entry(heroId), unlockedMoveIds: [...entry(heroId).unlockedMoveIds, declined] };
-  // Still listed — the screen greys it in place — but no longer something the node can hand over.
-  assert.ok(tutorMovePool(progressionTable, moves, holding).includes(declined));
-  assert.strictEqual(tutorTeachableCount(progressionTable, moves, holding), pool.length - 1);
-});
-
-test('tutor: the starting kit is not on the shelf — it was never learned from a level-up', () => {
-  for (const heroId of Object.keys(progressionTable.moveTiers).filter((id) => id in heroes)) {
-    const pool = tutorMovePool(progressionTable, moves, entry(heroId));
-    for (const id of heroes[heroId].moveIds) {
-      if ((progressionTable.moveTiers[heroId] ?? []).includes(id)) continue;
-      assert.ok(!pool.includes(id), `${heroId}: starting move ${id} leaked onto the Tutor's shelf`);
-    }
+test('tutor: every hero has a Late move for the Tutor to roll from a fresh kit, and the roll survives both schedule offers', () => {
+  // Two Late offers a hero (docs/xp-overhaul.md §8 phase 6) against four Late a slate: the
+  // Tutor's seat must still have something to hand over after both.
+  for (const hero of Object.values(heroes)) {
+    const e = entry(hero.id);
+    const pool = tutorMovePool(progressionTable, moves, e);
+    assert.ok(pool.length >= 3, `${hero.id} has ${pool.length} Late moves — two schedule offers and the Tutor need three`);
   }
 });
 

@@ -303,42 +303,20 @@ that is still an even trade is a phase 6 question, not one to patch here.
 
 ### The Tutor
 
-**2026-09-07, per user direction.** `tutorReward` → `TutorNodeScreen`. Pick a roster hero,
-then pick **any one move** off that hero's own Scroll pool and it is taught outright. The node
-grants through `grantMove` — the same free faucet an event's gift uses, not `grantOfferedMove` —
-so teaching a move does **not** spend an offer, and the pool the hero's remaining Scrolls draw
-from is untouched.
+**2026-09-13, per user direction — the Mentor's beat at the Late band.** `tutorReward` →
+`TutorNodeScreen`, acts 4–5, one seat an act inside a pick-1-of-3 reward row. Pick a roster hero,
+and **one Late-tier move is rolled** from that hero's pool (`tutorMovePool` = `tierMovePool` at
+Late, `src/run/tutor.ts`: the authored table plus a chosen path's line, minus what the hero holds
+or was already offered), un-gated by level and taking no schedule entry. Below `MOVE_CAP` it
+lands and the box says so; at the cap it is the replace-or-decline question. The offer is spent by
+being made. With the Mentor it is the only way to a move AHEAD of its schedule — a Late move in
+Act 4 before `lateLevel`, or a third one once the schedule's two have landed (every Late slate
+holds four, pinned in `test/tutor.test.ts`).
 
-What "its own Scroll pool" means is `tutorMovePool` (`src/run/tutor.ts`), and it is deliberately
-wider than the pool a Scroll draws from:
-
-- **The authored pool**, `progressionTable.moveTiers[heroId]`, entire.
-- **Plus everything the Evolution paths the hero actually took brought with them** — both
-  the moves a path JOINS to the pool (`learnableMoveIds`) and the ones it GRANTED outright
-  (`unlocksMoveIds`). The second half is the interesting one: an Evolution grant refused at
-  `MOVE_CAP` is otherwise gone for the rest of the run, and the Tutor is the only thing in
-  the game that can hand it back.
-- **Not tier-gated.** A level-3 hero may be taught a Late move. "Any of them" is the node;
-  the mana cost is what stops a level-3 hero casting it.
-- **Not filtered by `offeredMoveIds`.** A move offered once and declined is still on the
-  shelf — that hole is most of what the node exists to fill.
-- **Not filtered by what the hero currently holds.** Known moves are listed and greyed in
-  place rather than hidden, so the list reads as the hero's whole repertoire rather than as
-  a leftovers bin.
-- **The starting kit is absent**, because it was never learned from a level-up. A starting
-  move swapped away is still gone for good; whether the Tutor should also recover those is
-  open (below).
-
-At `MOVE_CAP` — which by act 4 is the normal case — the pick hands off to the same
-replace-or-decline panel a level-up move offer uses, so nothing about the swap is new to
-the player. Every hero on the roster is eligible however many Tutors they have already
-used; a hero whose pool is exhausted is shown greyed with "pool exhausted", and a roster
-where every hero is exhausted lets the player walk on rather than stranding them.
-
-**Open (flagged, not decided).** Three calls above are inferences from "the player can
-choose ANY of them" rather than designer decisions: (1) that a chosen Evolution path's
-`unlocksMoveIds` join the shelf; (2) that the shelf is not tier-gated; (3) that the
-starting kit stays off it. Each is a one-line change in `tutorMovePool`.
+It was (2026-09-07) a curated pick of **any** move off the hero's whole pool, declined offers and
+refused Evolution grants included, taught through `grantMove` so nothing was spent. That was the
+run's strongest reward and its longest screen, and once the schedule made the Late band
+reachable for everyone the shelf's breadth stopped being what the seat was for.
 
 ### Boons (2026-09-07, per user direction)
 

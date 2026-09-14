@@ -585,7 +585,7 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
     case 'mentorReward':
       return resolveMentor(run, rng);
     case 'tutorReward':
-      return resolveTutor(run);
+      return resolveTutor(run, rng);
     case 'blacksmith':
       return resolveBlacksmith(run);
     case 'event':
@@ -605,15 +605,19 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
  * offer burns either way, as a Scroll's does.
  */
 function resolveMentor(run: RunState, rng: Rng): RunState {
+  return resolveTierRoll(run, rng, mentorMovePool);
+}
+
+function resolveTierRoll(run: RunState, rng: Rng, poolOf: typeof mentorMovePool): RunState {
   let best: { entry: RosterEntry; value: number } | null = null;
   for (const entry of run.roster) {
-    const pool = mentorMovePool(progressionTable, moves, entry);
+    const pool = poolOf(progressionTable, moves, entry);
     if (pool.length === 0) continue;
     const value = pool.reduce((sum, id) => sum + policy.moveValue(id), 0) / pool.length + policy.powerScore(entry) * 0.01;
     if (!best || value > best.value) best = { entry, value };
   }
   if (!best) return run;
-  const pool = mentorMovePool(progressionTable, moves, best.entry);
+  const pool = poolOf(progressionTable, moves, best.entry);
   const moveId = pick(rng, pool);
   const next = recordMoveOffer(run, best.entry.rosterId, [moveId]);
   if (best.entry.unlockedMoveIds.length < MOVE_CAP) return grantOfferedMove(next, best.entry.rosterId, moveId);
@@ -622,25 +626,11 @@ function resolveMentor(run: RunState, rng: Rng): RunState {
 }
 
 /**
- * The Tutor: one hero, then any move off its own level-up pool, un-rolled and un-gated. Not a
- * randomized experiment — WHICH move to teach is a play, and rolling it would measure the pool
- * rather than the node. The hero is the one the pool is worth most to (most moves it does not
- * already hold, strongest as the tiebreak), and the move is the best of them.
+ * The Tutor: the Mentor's beat at Late (src/run/tutor.ts) — the hero whose Late pool is worth
+ * most on average takes the roll, and the move is taken when it beats the worst one held.
  */
-function resolveTutor(run: RunState): RunState {
-  let best: { rosterId: string; moveId: string; value: number } | null = null;
-  for (const entry of run.roster) {
-    for (const moveId of tutorMovePool(progressionTable, moves, entry)) {
-      if (entry.unlockedMoveIds.includes(moveId)) continue;
-      const value = policy.moveValue(moveId) + policy.powerScore(entry) * 0.01;
-      if (!best || value > best.value) best = { rosterId: entry.rosterId, moveId, value };
-    }
-  }
-  if (!best) return run;
-  const entry = entryOf(run, best.rosterId);
-  if (entry.unlockedMoveIds.length < MOVE_CAP) return grantMove(run, best.rosterId, best.moveId);
-  const replaceId = policy.replacementTarget(entry, best.moveId);
-  return replaceId ? grantMove(run, best.rosterId, best.moveId, replaceId) : run;
+function resolveTutor(run: RunState, rng: Rng): RunState {
+  return resolveTierRoll(run, rng, tutorMovePool);
 }
 
 /**
