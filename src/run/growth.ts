@@ -79,13 +79,18 @@ export const GRADE_BUDGET = 28;
 
 /**
  * What one POINT of a roll is worth on the stat line. HP is NOT a special case: CLAUDE.md's own
- * measured break-even is ≈0.33 a point, so 3 HP is 1 point's worth of anything else.
+ * measured break-even is ≈0.33 a point, so 3 HP is 1 point's worth of anything else. Mana grows
+ * 2 a point (2026-09-13, XP Overhaul phase 6): a Late move is priced in mana, and with the pool
+ * at 1 a point a 50-pool hero could cast one once a fight at level 25. Player-only — an enemy
+ * rolls no growth — and measured: Late casts 18 → 22% of Act 4, 29 → 34% of Act 5, 36 → 40% of
+ * the finale, full-clear 57 → 59%.
  */
 export const GROWTH_UNIT = 1;
 export const GROWTH_UNIT_HP = 3;
+export const GROWTH_UNIT_MANA = 2;
 
 export function growthUnitFor(stat: StatKey): number {
-  return stat === 'hp' ? GROWTH_UNIT_HP : GROWTH_UNIT;
+  return stat === 'hp' ? GROWTH_UNIT_HP : stat === 'manaPool' ? GROWTH_UNIT_MANA : GROWTH_UNIT;
 }
 
 /** One stat's roll: the points the grade's row lands on, for one uniform draw. */

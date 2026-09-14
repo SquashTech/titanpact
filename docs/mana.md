@@ -116,6 +116,35 @@ intended shape.
 **Classes remain the exception**: `src/data/classes.ts` deliberately grants neither
 `manaPool` nor `mpRegen`, which is still an open question and is unaffected by this.
 
+### Growing the pool (2026-09-13, XP Overhaul phase 6 — supersedes the axes table above)
+
+The axes table is history: the relic pool is gone (the Banner is the only team-wide grant) and
+levels DO grow stats now. Measured against the schedule, a Late move at 70+ against a 50–95 pool
+plus 10 a round was castable **once a fight**, so "reachable" was never the question — twice a
+fight is. Every faucet a pool has today, and what each is:
+
+| Faucet | Scope | Size | Kind |
+|---|---|---|---|
+| **Growth** (`run/growth.ts`) | every hero, every level | **2 mana a point** (`GROWTH_UNIT_MANA`; a B grade ≈ +2.6 a level, ~+65 by level 25) | automatic, no screen |
+| **Banner of Wellspring** | team-wide, 1-of-5 at each Guardian | +40 pool, +10 regen, stackable | a choice against four other Banners |
+| **Equipment** | per hero, per slot | authored on the item, ⅓ point a mana | the item's whole budget |
+| **An Evolution path** | per hero, once | +10–20 on the mana-flavoured paths | part of a branch |
+| **The Deep Well** (`data/events.ts`) | one chosen hero, when the event rolls | **−20 HP for +30 Mana** | a TRADE, narrated — the events grammar's `statShift` |
+| **Arcane overflow** | the caster, in a fight | a mana grant past the pool | a move |
+| **MP Potion** | one active hero, in a fight | half of max, 3 held | a consumable |
+
+On top of those, **Late-tier mana was re-priced ×0.75** the same day (`docs/authoring-moves.md`),
+which is the other half of the same fix. Together: Late casts went from 4.5% of the run to 14%,
+and from 11% of Act 4's casts to 21%, 18% of Act 5's to 33%, 23% of the finale's to 40%.
+
+**What is deliberately NOT here: a Mana Well node.** A map node that hands one hero +N max Mana
+is the `manaBoostReward` shrine the Growth Overhaul deleted (2026-09-10) under the rule it
+reduces to — *a bare number never gets a screen, and a screen never buys a bare number*. The
+Deep Well is the in-grammar shape: a trade the player weighs on a hero they name. If playtest
+says the pool still runs dry, the dials in order are `GROWTH_UNIT_MANA` (3?), the Wellspring's
++40, a second trade event, and only then a shrine — and a shrine is a constitutional decision,
+not a number (`CLAUDE.md` "There is no per-hero stat-investment currency").
+
 ## Overflow: mana above the pool (2026-08-30 designer sign-off, Arcane)
 
 Until the Arcane slate, `Combatant.currentMana` was bounded by `getMaxMana` at every

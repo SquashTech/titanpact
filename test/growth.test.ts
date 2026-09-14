@@ -18,6 +18,7 @@ import {
   GROWTH_STATS,
   GROWTH_UNIT,
   GROWTH_UNIT_HP,
+  GROWTH_UNIT_MANA,
   LEVEL_AFTER_ENCOUNTER,
   MAX_LEVEL,
   MAX_XP,
@@ -114,13 +115,14 @@ test('growth: the all-B fallback is exactly on budget, so an un-authored hero is
 
 // The per-hero budget check lives in roster.test.ts, beside the 550 it is the second half of.
 
-test('growth: a point is +1, or +3 HP, and a miss grants nothing', () => {
+test('growth: a point is +1, or +3 HP, or +2 Mana, and a miss grants nothing', () => {
   const all = rollLevelGrowth(DEFAULT_GRADES, ALWAYS);
   assert.strictEqual(Object.keys(all).length, GROWTH_STATS.length, 'every stat rolled and every roll landed');
   const top = gradeMaxPoints('B');
   assert.strictEqual(all.hp, top * GROWTH_UNIT_HP);
+  assert.strictEqual(all.manaPool, top * GROWTH_UNIT_MANA, 'mana grows 2 a point — a Late move is priced in it');
   for (const stat of GROWTH_STATS) {
-    if (stat === 'hp') continue;
+    if (stat === 'hp' || stat === 'manaPool') continue;
     assert.strictEqual(all[stat], top * GROWTH_UNIT, `${stat} should gain its grade's top`);
   }
   assert.deepStrictEqual(rollLevelGrowth(DEFAULT_GRADES, NEVER), {}, 'nothing lands when nothing succeeds');

@@ -44,6 +44,7 @@ otherwise do.
 | **Fruit Slicer** | A random *Slice* move (`{ nameIncludes: 'Slice' }` — seven moves across seven types), taught to a chosen hero. |
 | **Wildcard** | A random move from the **entire** catalog, taught to a chosen hero. Ancient-type moves join this pool automatically the day they are authored — the filter is the catalog, not a list. |
 | **Soul Transfer** | A chosen hero trades **−30 max HP for +15 Intelligence, +15 Wisdom, +15 Mana**. |
+| **The Deep Well** | A chosen hero trades **−20 max HP for +30 Mana** (2026-09-13) — the map's one mana faucet that is a choice rather than a roll (`docs/mana.md` "Growing the pool"). |
 | **Assertiveness Training** | A chosen hero learns **Imposing Presence** (§4). |
 | **Loot Pile** | **3** random pieces of equipment on the act's rarity curve. |
 

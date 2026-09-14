@@ -384,6 +384,13 @@ in which Late cannot exist. Clock 87 min tapping / 60 Auto, unchanged. **The Act
 every lever that is a number is symmetric there (a first offer at 3 for everyone, regen, lag:
 each measured ±0). What would move it is a design decision, listed in §10.
 
+Same day, two follow-ups (per user direction). **The Tutor is the Mentor's beat at Late** — a
+guaranteed Late move rolled for a chosen hero, in place of the any-move shelf (`docs/run-loop.md`
+"The Tutor"). And **mana grows 2 a point** (`GROWTH_UNIT_MANA`), player-only, with **The Deep
+Well** event (−20 HP for +30 Mana on a chosen hero) as the map's in-grammar mana faucet
+(`docs/mana.md` "Growing the pool", which also says why a Mana Well node is not built). Measured:
+Late casts 21 / 33 / 40% of Acts 4 / 5 / finale, 13.6% of the run, full-clear 58%.
+
 ---
 
 ## 9. Locked invariants this overturns
@@ -435,6 +442,10 @@ family, the Pact Clock, the companion, potions, the map shape within an act.
   Late-tier casts. The count is itself identity — a hero that learns five things against one that
   learns seven — but the Late band needs an offer AFTER `lateLevel` that a run at par actually
   reaches, and at 25–29 on the late turners it mostly does not. Phase 6's dial.
+- **A Mana Well node?** The user asked for map nodes that grow pools. The Deep Well event is
+  the in-grammar answer (a trade); a shrine that hands one hero +N Mana is the `manaBoostReward`
+  the Growth Overhaul deleted under *a bare number never gets a screen*. Building one is a
+  constitutional decision; `docs/mana.md` lists the dials to turn first.
 - **The Act 1 wall (76%, was 82%).** Not a number. The candidates are all decisions: let the
   early turners' `evolutionLevel` sit at 8 (the Act 1 Guardian's report — the window's floor of
   10 was written to keep the Evolution out of Act 1, and this would put it exactly at the

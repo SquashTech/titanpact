@@ -183,8 +183,11 @@ don't silently override it.
   A grade is a **distribution over points, not a coin** (`GRADE_ROLL`, 2026-09-10, per user
   direction — the flat "+2 or nothing" it replaced read as a schedule): a level lands **+0 to
   +4 points** on a stat, an S rarely missing (10%) and reaching +4, an F almost always missing
-  (92%) and never passing +2. **A point is +1, or +3 HP** (CLAUDE.md's own measured HP
-  break-even is ≈0.33 a point, so 3 HP IS 1 point's worth). **Every row's mean is exactly
+  (92%) and never passing +2. **A point is +1, or +3 HP, or +2 Mana** (CLAUDE.md's own
+  measured HP break-even is ≈0.33 a point, so 3 HP IS 1 point's worth; Mana grows 2 since
+  2026-09-13 because a Late move is priced in it and at 1 a point a 50-pool hero cast one once a
+  fight at level 25 — player-only, since an enemy rolls no growth; `docs/mana.md` "Growing the
+  pool" lists every faucet and why a Mana Well node is not one of them). **Every row's mean is exactly
   `0.1 + 0.3 × cost`** — what the flat roll paid — so the budget below and the phase-6
   difficulty re-fit both still hold; only the shape changed. Grades
   cover the **seven stats the 550 budget covers** — MP Regen excluded, as from every other

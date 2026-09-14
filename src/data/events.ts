@@ -80,6 +80,20 @@ export const runEvents: Record<string, RunEventDefinition> = {
     outcome: { kind: 'statShift', deltas: { hp: -30, intelligence: 15, wisdom: 15, manaPool: 15 } },
   },
 
+  deepWell: {
+    id: 'deepWell',
+    name: 'The Deep Well',
+    eyebrow: 'Cold Water, Far Down',
+    flavor: 'A shaft with no bottom you can see. Whoever drinks comes up lighter, and does not run dry for a long time after.',
+    tone: 'mana',
+    // The run's one mana FAUCET that is a choice rather than a roll (docs/mana.md "Growing the
+    // pool", 2026-09-13): HP for Mana, on the hero you name. HP is the over-charged stat
+    // (CLAUDE.md: break-even ≈ 0.33 a point) and Mana the one a Late move is priced in, so the
+    // trade is even at break-even and reads as a gift on a caster. Not a Mana Well: a bare
+    // number never gets a screen, and a trade is a decision, not a deposit.
+    outcome: { kind: 'statShift', deltas: { hp: -20, manaPool: 30 } },
+  },
+
   assertivenessTraining: {
     id: 'assertivenessTraining',
     name: 'Assertiveness Training',
