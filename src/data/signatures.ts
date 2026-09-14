@@ -19,9 +19,9 @@ export const signatureMoves: Record<string, MoveDefinition> = {
   // --- Fire ---
   // Cinder: the knight. Brings the hammer down glowing; what it hits catches, and the plate
   // comes off the anvil harder.
-  quench: {
-    id: 'quench',
-    name: 'Quench',
+  hammerbrand: {
+    id: 'hammerbrand',
+    name: 'Hammerbrand',
     type: 'Fire',
     category: 'physical',
     kind: 'damage',
@@ -156,9 +156,9 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     description: 'Loosed before anyone else has moved, and at both of them (priority +1).',
   },
   // Tempest: one bolt, both of them, and the charge stays in.
-  forkedLightning: {
-    id: 'forkedLightning',
-    name: 'Forked Lightning',
+  twinbolt: {
+    id: 'twinbolt',
+    name: 'Twinbolt',
     type: 'Storm',
     category: 'magical',
     kind: 'damage',
@@ -218,9 +218,9 @@ export const signatureMoves: Record<string, MoveDefinition> = {
 
   // --- Nature ---
   // Sylva: everything on the far side rots, everything on this side grows.
-  verdure: {
-    id: 'verdure',
-    name: 'Verdure',
+  blightbloom: {
+    id: 'blightbloom',
+    name: 'Blightbloom',
     type: 'Nature',
     category: 'magical',
     kind: 'damage',
@@ -235,9 +235,9 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     description: 'Seeds the whole field: the far side rots and this side grows (Poison 10% to both foes; Renew 25 to both allies).',
   },
   // Mordrax: opens them up and puts down roots in the gap.
-  rendAndRoot: {
-    id: 'rendAndRoot',
-    name: 'Rend and Root',
+  rootrend: {
+    id: 'rootrend',
+    name: 'Rootrend',
     type: 'Nature',
     category: 'physical',
     kind: 'damage',
@@ -313,9 +313,9 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     description: 'Lands before they have turned round, and is already setting up the next one (priority +1; Ambush 30 on self).',
   },
   // Marrow: takes the marrow out of them and keeps it.
-  marrowfeast: {
-    id: 'marrowfeast',
-    name: 'Marrowfeast',
+  deathdrink: {
+    id: 'deathdrink',
+    name: 'Deathdrink',
     type: 'Shadow',
     category: 'magical',
     kind: 'damage',
@@ -343,9 +343,9 @@ export const signatureMoves: Record<string, MoveDefinition> = {
 
   // --- Arcane ---
   // Glyph: overwrites what both of them knew.
-  palimpsest: {
-    id: 'palimpsest',
-    name: 'Palimpsest',
+  erasure: {
+    id: 'erasure',
+    name: 'Erasure',
     type: 'Arcane',
     category: 'magical',
     kind: 'damage',
@@ -405,9 +405,9 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     description: 'Empties the room behind their eyes (-30 Wisdom).',
   },
   // Trance: they were asleep before they knew they were tired.
-  somnolence: {
-    id: 'somnolence',
-    name: 'Somnolence',
+  sandman: {
+    id: 'sandman',
+    name: 'Sandman',
     type: 'Mind',
     category: 'magical',
     kind: 'damage',
