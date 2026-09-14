@@ -30,6 +30,7 @@ import {
   rosterEntryTypes,
   DEFAULT_SCHEDULE,
   ProgressionError,
+  scheduleFor,
 } from '../src/run/progression';
 
 /** Stands a hero at its schedule's Evolution (docs/xp-overhaul.md §4) — a fixture, not a walk. */
@@ -43,6 +44,12 @@ function atEvolutionRung(run: import('../src/run/state').RunState, rosterId: str
 /** The pool at the top of the schedule — every band open, Early expired. */
 function poolAtTop(entry: import('../src/run/state').RosterEntry) {
   return levelMovePool(progressionTable, moves, heroes[entry.heroId], { ...entry, xp: MAX_XP });
+}
+
+/** The pool in the Mid band — Mid only. */
+function poolAtMid(entry: import('../src/run/state').RosterEntry) {
+  const hero = heroes[entry.heroId];
+  return levelMovePool(progressionTable, moves, hero, { ...entry, xp: xpForLevel(scheduleFor(hero).midLevel) });
 }
 
 /** The pool at level 1 — Early only. */
@@ -218,8 +225,8 @@ test('buildCombatState: same rosterId on both sides does not collide (side-prefi
 test('progression: levelMovePool + grantOfferedMove resolve a level\'s move offer', () => {
   let run = seedRoster(['cinderKnight']);
   const entry = run.roster[0];
-  // Read at the two ends of the curve rather than at one level: Early EXPIRES when Mid opens, so
-  // no single level sees the whole authored pool. Together these two pin all of it.
+  // Read at the three bands rather than at one level: each band offers its own tier, so no single
+  // level sees the whole authored pool. Together these three pin all of it.
   assert.deepStrictEqual(poolAtStart(entry), [
     'heavyBlow',
     'ironFist',
@@ -228,18 +235,8 @@ test('progression: levelMovePool + grantOfferedMove resolve a level\'s move offe
     'pinDown',
     'swiftBlow',
   ]);
-  assert.deepStrictEqual(poolAtTop(entry), [
-    'moltenLash',
-    'firebrand',
-    'volcanicSurge',
-    'momentumSwing',
-    'serratedSlice',
-    'rendArmor',
-    'metallicBlade',
-    'onslaught',
-    'swingingChain',
-    'juggernaut',
-  ]);
+  assert.deepStrictEqual(poolAtMid(entry), ['moltenLash', 'firebrand', 'momentumSwing', 'serratedSlice', 'rendArmor', 'metallicBlade']);
+  assert.deepStrictEqual(poolAtTop(entry), ['volcanicSurge', 'onslaught', 'swingingChain', 'juggernaut']);
 
   const withMove = grantOfferedMove(run, 'cinderKnight', 'firebrand');
   assert.ok(withMove.roster[0].unlockedMoveIds.includes('firebrand'));

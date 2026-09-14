@@ -99,7 +99,10 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
 
     agg.roundHistogram[fight.rounds] = (agg.roundHistogram[fight.rounds] ?? 0) + 1;
     agg.playerTurns += fight.playerTurns;
-    for (const tier of Object.keys(fight.castsByTier)) agg.castsByTier[tier] = (agg.castsByTier[tier] ?? 0) + fight.castsByTier[tier];
+    for (const tier of Object.keys(fight.castsByTier)) {
+      agg.castsByTier[tier] = (agg.castsByTier[tier] ?? 0) + fight.castsByTier[tier];
+      agg.castsByTier[`${fight.act}:${tier}`] = (agg.castsByTier[`${fight.act}:${tier}`] ?? 0) + fight.castsByTier[tier];
+    }
     for (const band of Object.keys(fight.castsByManaBand)) agg.castsByManaBand[band] = (agg.castsByManaBand[band] ?? 0) + fight.castsByManaBand[band];
     agg.playerRests += fight.playerRests;
     agg.playerSwitches += fight.playerSwitches;

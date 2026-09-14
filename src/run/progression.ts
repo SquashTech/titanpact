@@ -99,14 +99,17 @@ export function entryBandRank(hero: HeroDefinition | undefined, entry: RosterEnt
 }
 
 /**
- * Rank at which a tier stops being offerable. Early EXPIRES the moment Mid opens: a hero past
- * midLevel handed a starter-tier move is the schedule paying out backwards, and Early
- * outnumbering everything else is what buried the Late band under a random draw. Mid and Late
- * accumulate instead — the Late slates hold 4-5 moves a type, far too few to carry a band alone.
+ * Rank at which a tier stops being offerable. **Each band offers its own tier and nothing else**
+ * (2026-09-13, XP Overhaul phase 6): Early EXPIRES the moment Mid opens, and Mid the moment Late
+ * does. A hero past midLevel handed a starter-tier move is the schedule paying out backwards, and
+ * a Late-band offer rolled from Mid+Late was Late only ~40% of the time — with 4 Late a slate
+ * against 6 Mid, the band that exists to teach the expensive half of the catalog mostly did not.
+ * Mid used to accumulate because the Late slates were too thin to carry an open-ended band;
+ * under a schedule the Late band makes two offers a hero, and four moves carry two.
  */
 export const MOVE_TIER_RANK_EXPIRY: Record<MoveTier, number> = {
   early: MOVE_TIER_RANK.mid,
-  mid: Infinity,
+  mid: MOVE_TIER_RANK.late,
   late: Infinity,
 };
 
@@ -129,21 +132,20 @@ export function isMoveTierOfferable(move: MoveDefinition | undefined, rank: numb
 }
 
 /**
- * Floor on a hero's move pool, by OFFERABLE SET rather than by cumulative band — Early expiring
- * at midLevel means the three sets are Early alone, Mid alone, and Mid+Late. What a band has to
- * survive is the offers the schedule makes from it: Early is every offer below midLevel, Mid every
- * offer from midLevel to below lateLevel (the Evolution offers nothing, so it is not counted), and
- * Mid+Late only has to offer once, since the Late band is open-ended. Candy can pull offers
- * forward but never adds one, so the schedule bounds the drain exactly. In practice every pool is
- * authored well past these (6 Early / 6 Mid / 4 Late). Enforced by test/moveTiers.test.ts.
+ * Floor on a hero's move pool, by band: each band offers its own tier, so what a band has to
+ * survive is exactly the offers the schedule makes from it — Early is every offer below midLevel,
+ * Mid every offer from midLevel to below lateLevel (the Evolution offers nothing, so it is not
+ * counted), Late every offer from lateLevel. Candy can pull offers forward but never adds one, so
+ * the schedule bounds the drain exactly. In practice every pool is authored well past these
+ * (6 Early / 6 Mid / 4 Late against 2 / 2 / 2). Enforced by test/moveTiers.test.ts.
  */
 export interface MovePoolFloor {
-  /** Early alone: below midLevel. */
+  /** Below midLevel. */
   early: number;
-  /** Mid alone: from midLevel, where Mid has opened and Early has expired. */
+  /** From midLevel, where Mid has opened and Early has expired. */
   mid: number;
-  /** Mid and Late together: from lateLevel. */
-  midLate: number;
+  /** From lateLevel, where Late has opened and Mid has expired. */
+  late: number;
 }
 
 export function movePoolFloor(schedule: LevelSchedule = DEFAULT_SCHEDULE): MovePoolFloor {
@@ -151,7 +153,7 @@ export function movePoolFloor(schedule: LevelSchedule = DEFAULT_SCHEDULE): MoveP
   return {
     early: offers.filter((e) => e.level < schedule.midLevel).length,
     mid: offers.filter((e) => e.level >= schedule.midLevel && e.level < schedule.lateLevel).length,
-    midLate: Math.min(1, offers.filter((e) => e.level >= schedule.lateLevel).length),
+    late: offers.filter((e) => e.level >= schedule.lateLevel).length,
   };
 }
 

@@ -162,8 +162,13 @@ function clampAct(actNumber: number): number {
  * So the stat curve is the only live lever on a champion, and it has to bend rather than
  * climb. Index 1 is left at 1 step deliberately: act 2 is already the hardest Guardian in
  * the run and does not need help.
+ *
+ * Indices 3-4 came down from 9 / 15 on 2026-09-13 (XP Overhaul phase 6): the Late-tier mana
+ * re-price is symmetric, and an Act 4-5 enemy arriving with a Late kit at the old steps put
+ * those acts at 84 / 82% against 88 / 89% before it. `ENEMY_LEVEL_LAG` was the other candidate
+ * and is ruled out — at 3 an Act 5 contract hero ties a hire on level.
  */
-export const ACT_STEP_CURVE: readonly number[] = [0, 0, 4, 9, 15];
+export const ACT_STEP_CURVE: readonly number[] = [0, 0, 4, 8, 13];
 
 /**
  * Extra act-steps a Guardian's held-back champion takes on top of its escort's

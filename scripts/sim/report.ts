@@ -441,7 +441,7 @@ export function formatReport(
 
   // The movepool gate is the SCHEDULE (docs/xp-overhaul.md §4): a level opens Mid, one is the
   // Evolution, one opens Late, so the gates are read off best level reached. EVERY move costing
-  // 70+ mana is late-tier, so this table says whether the expensive half of the catalog is
+  // Late-tier is the expensive half of the catalog (45+ since the phase-6 re-price), so this table says whether it is
   // reachable at all, which is what makes a big Mana pool worth anything. Read at the DEFAULT
   // schedule; an authored per-hero one (phase 4) moves a hero's own gates, not the table's.
   const levelHist = agg.heroLevelHistogram;
@@ -469,13 +469,18 @@ export function formatReport(
   // §11's stated target is a fully evolved roster by the end of a run.
   out.push(`    ${pad('roster evolved at end', 24)}${padStart(pct(agg.rosterEvolvedEndSum, R), 10)}   (every hero: ${pct(agg.runsRosterEvolved, R)} of runs)`);
 
-  const totalCasts = Object.values(agg.castsByTier).reduce((sum, n) => sum + n, 0);
+  const totalCasts = ['early', 'mid', 'late'].reduce((sum, tier) => sum + (agg.castsByTier[tier] ?? 0), 0);
   out.push('');
-  out.push('  player casts by move tier:');
+  out.push('  player casts by move tier (whole run, then by act — the Late band cannot exist before it opens):');
   for (const tier of ['early', 'mid', 'late']) {
     const n = agg.castsByTier[tier] ?? 0;
-    out.push(`    ${pad(tier, 20)}${padStart(String(n), 11)}${padStart(pct(n, totalCasts), 9)}`);
+    const byAct = [1, 2, 3, 4, 5, 6].map((act) => {
+      const total = ['early', 'mid', 'late'].reduce((sum, t) => sum + (agg.castsByTier[`${act}:${t}`] ?? 0), 0);
+      return padStart(pct(agg.castsByTier[`${act}:${tier}`] ?? 0, total), 8);
+    });
+    out.push(`    ${pad(tier, 20)}${padStart(String(n), 11)}${padStart(pct(n, totalCasts), 9)}   ${byAct.join('')}`);
   }
+  out.push(`    ${pad('', 40)}   ${[1, 2, 3, 4, 5, 6].map((act) => padStart(`act ${act}`, 8)).join('')}`);
   out.push('  player casts by mana spent:');
   for (const band of ['0-19', '20-39', '40-59', '60-79', '80+']) {
     const n = agg.castsByManaBand[band] ?? 0;

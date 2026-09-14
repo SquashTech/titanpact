@@ -91,7 +91,7 @@ test('move tiers: every move of a tiered slate carries a tier, and no other type
   }
 });
 
-test('move tiers: Early EXPIRES when Mid opens, Mid and Late accumulate, and an untiered move is ungated', () => {
+test('move tiers: each band offers its own tier — Early expires when Mid opens, Mid when Late does — and an untiered move is ungated', () => {
   const early = moves.swiftBlow; // Iron, Early
   const mid = moves.momentumSwing; // Iron, Mid
   const late = moves.juggernaut; // Iron, Late
@@ -99,8 +99,8 @@ test('move tiers: Early EXPIRES when Mid opens, Mid and Late accumulate, and an 
 
   assert.deepStrictEqual(
     [1, 2, 3].map((rank) => [early, mid, late].filter((m) => isMoveTierOfferable(m, rank)).map((m) => m.tier)),
-    [['early'], ['mid'], ['mid', 'late']],
-    'Early is off the table from MOVE_TIER_RANK.mid; nothing else ever closes'
+    [['early'], ['mid'], ['late']],
+    'the band you are in is the band you learn from'
   );
 
   assert.strictEqual(moves.runicBlast.tier, undefined);
@@ -109,7 +109,7 @@ test('move tiers: Early EXPIRES when Mid opens, Mid and Late accumulate, and an 
   assert.ok(isMoveTierOfferable(undefined, 1), 'a missing move must not gate — it is a content bug, not a lock');
 
   assert.deepStrictEqual(MOVE_TIER_RANK, { early: 1, mid: 2, late: 3 });
-  assert.deepStrictEqual(MOVE_TIER_RANK_EXPIRY, { early: MOVE_TIER_RANK.mid, mid: Infinity, late: Infinity });
+  assert.deepStrictEqual(MOVE_TIER_RANK_EXPIRY, { early: MOVE_TIER_RANK.mid, mid: MOVE_TIER_RANK.late, late: Infinity });
   assert.strictEqual(MAX_BAND_RANK, MOVE_TIER_RANK.late, 'the top band is the last one');
 });
 
@@ -157,7 +157,7 @@ test('move tiers: levelMovePool only offers what the hero\'s LEVEL has opened', 
 
   const atThree = poolOf(entryAtRank('ironWarden', 3));
   assert.ok(atThree.includes('juggernaut'), 'Late unlocks at lateLevel');
-  assert.ok(atThree.includes('rendArmor'), 'and Mid is still on the table — only Early ever closes');
+  assert.ok(!atThree.includes('rendArmor'), 'and Mid has EXPIRED — the Late band teaches Late');
   assert.ok(!atThree.includes('ironFist'));
 
   const held = poolOf(entryAtRank('ironWarden', 3, ['juggernaut']));
@@ -249,9 +249,9 @@ test('schedule: a dry band pays nothing and the entry is still taken — the nex
 test('move tiers: the floor is a BAND surviving the offers the schedule makes from it', () => {
   // What a band must survive is the offers the schedule makes from it: two Early (4, 7) before
   // midLevel opens Mid, three Mid (10, 13, 19 — 16 is the Evolution and offers nothing) before
-  // lateLevel, and Mid+Late only has to offer once, since the Late band is open-ended.
-  assert.deepStrictEqual(movePoolFloor(), { early: 2, mid: 3, midLate: 1 });
-  assert.deepStrictEqual(movePoolFloor({ offerLevels: [3, 5, 8, 12, 20], midLevel: 6, evolutionLevel: 12, lateLevel: 20 }), { early: 2, mid: 1, midLate: 1 });
+  // lateLevel, and three Late (22, 25, 28) from it.
+  assert.deepStrictEqual(movePoolFloor(), { early: 2, mid: 3, late: 3 });
+  assert.deepStrictEqual(movePoolFloor({ offerLevels: [3, 5, 8, 12, 20], midLevel: 6, evolutionLevel: 12, lateLevel: 20 }), { early: 2, mid: 1, late: 1 });
 });
 
 test('move tiers: every hero clears every band without it running dry', () => {
@@ -261,10 +261,10 @@ test('move tiers: every hero clears every band without it running dry', () => {
     const pool = (progressionTable.moveTiers[hero.id] ?? []).filter((id) => !hero.moveIds.includes(id));
     const early = pool.filter((id) => tierOf(id) === 'early').length;
     const mid = pool.filter((id) => tierOf(id) === 'mid').length;
-    const midLate = pool.filter((id) => tierOf(id) !== 'early').length;
+    const late = pool.filter((id) => tierOf(id) === 'late').length;
     assert.ok(early >= floor.early, `${hero.id} holds ${early} Early, floor is ${floor.early}`);
     assert.ok(mid >= floor.mid, `${hero.id} holds ${mid} Mid, floor is ${floor.mid}`);
-    assert.ok(midLate >= floor.midLate, `${hero.id} holds ${midLate} Mid+Late, floor is ${floor.midLate}`);
+    assert.ok(late >= floor.late, `${hero.id} holds ${late} Late, floor is ${floor.late}`);
   }
 });
 
@@ -378,7 +378,7 @@ test("schedule: every hero's schedule is legal — sorted offers, the Evolution 
     assert.ok(schedule.midLevel < schedule.lateLevel, `${hero.id}: Late opens before Mid`);
     assert.ok(schedule.midLevel > 1 && schedule.lateLevel <= MAX_LEVEL, `${hero.id}: a band outside the curve`);
     const floor = movePoolFloor(schedule);
-    assert.ok(floor.early >= 1 && floor.mid >= 1 && floor.midLate >= 1, `${hero.id}: a band with no offer from it`);
+    assert.ok(floor.early >= 1 && floor.mid >= 1 && floor.late >= 1, `${hero.id}: a band with no offer from it`);
     void atEvolution;
     void levelOf;
   }
@@ -399,7 +399,7 @@ test('schedule: every hero authors its own — none on the default — with 4-7 
     evolutions.push(hero.schedule.evolutionLevel);
   }
   const heroCount = Object.keys(heroesById).length;
-  assert.ok(offers / heroCount < 6, `${(offers / heroCount).toFixed(1)} offers a hero on average — the ladder's nine was 41 decisions a run`);
+  assert.ok(offers / heroCount <= 6.5, `${(offers / heroCount).toFixed(1)} offers a hero on average — the ladder's nine was 41 decisions a run`);
   assert.ok(evolutions.filter((l) => l <= 12).length >= 6, 'too few early turners');
   assert.ok(evolutions.filter((l) => l >= 20).length >= 5, 'too few late turners');
   assert.ok(new Set(evolutions).size >= 8, 'the roster turns on too few distinct levels');

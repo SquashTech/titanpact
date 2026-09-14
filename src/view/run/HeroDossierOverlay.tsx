@@ -33,10 +33,11 @@ function tierOf(moveId: string): MoveTier {
   return moves[moveId]?.tier ?? 'early';
 }
 
-/** The levels a tier can actually be OFFERED at — a closed range for Early, which expires when Mid opens (progression.ts bandRank). */
+/** The levels a tier is OFFERED at — each band offers its own tier (progression.ts bandRank, MOVE_TIER_RANK_EXPIRY). */
 function tierLevels(tier: MoveTier, schedule: LevelSchedule): string {
   if (tier === 'early') return `to ${schedule.midLevel - 1}`;
-  return `from ${tier === 'mid' ? schedule.midLevel : schedule.lateLevel}`;
+  if (tier === 'mid') return `${schedule.midLevel}–${schedule.lateLevel - 1}`;
+  return `from ${schedule.lateLevel}`;
 }
 
 function fmtGrant(amount: number): string {

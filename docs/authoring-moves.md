@@ -1125,6 +1125,15 @@ three level-ups paying out nothing the player can press. Three rules:
   gain mana all run (`docs/mana.md`, 2026-08-30) — a capstone the roster cannot cast on
   turn one is the intended shape, not a defect. **The trap is not the move; it is the
   reflex to check a cost against a starting pool.**
+  **Addendum, 2026-09-13 (XP Overhaul phase 6):** the reachability finding stays retired, but
+  its neighbour turned out to be real and MEASURED. A pool grows to ~75 by level 25 and a
+  capstone at 70–80 is reachable — and castable **once a fight**, after which the hero fills
+  with its 20-mana Early moves: Late was 4.5% of all casts and 11% of Act 4's, Early 55% of Act
+  4's, on a roster whose kits held Late moves. What binds is not pool ≥ cost but
+  pool + a fight's regen ≥ 2 × cost. Every Late move under 100 was re-priced ×0.75 (rounded to
+  5, floor 45); the 100+ whole-pool casts kept their price. **The Late convention is 45+ now,
+  not 70+**, and a new slate's Late column should be priced so a hero at the Late band can cast
+  it twice in a six-round fight.
 - **Enemies are the real version of that check.** Enemies get no relics, no equipment
   and no Evolution, so an enemy's pool genuinely is fixed for the whole game. An enemy
   that cannot afford its own kit is a live finding — bump its mana rather than

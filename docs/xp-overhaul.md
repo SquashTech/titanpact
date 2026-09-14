@@ -307,7 +307,7 @@ Sequenced so the tree is playable at every boundary. Numbering is dependency ord
 | 3 | **Levels teach.** The destructive one. `HeroDefinition.schedule` on the default table; offers roll from the report; the Evolution raises from `evolutionLevel`; enemies and hires read the same schedule; delete everything in §7. Tutorial re-checked. | No Scroll anywhere. `test/moveTiers.test.ts` rewritten against the schedule. A run completable end to end. | **DONE 2026-09-13.** `LevelSchedule` / `DEFAULT_SCHEDULE` / `scheduleEntries` / `pendingScheduleEntry` / `takeScheduleEntry` / `levelMovePool` (`src/run/progression.ts`); `RosterEntry.scheduleTaken`; `levelUpFlow.ts` pays the report; `MasteryScreen`/`MasteryBoard` deleted; `SAVE_VERSION` 14. **One rule added:** a hero takes at most ONE entry per level-up, so a raw hire's backlog is worked off one fight at a time (§4's "un-crossed"), and the report never stacks two decisions on one hero. Measured below. |
 | 4 | **Author 36 schedules.** Parallelisable from phase 3 on. The interesting authoring is the spread: who evolves at 12 and who at 22, and whether the low-base/high-grade late bloomers from the grade pass are also the late evolvers (they should not all be — a hero can bloom in stats and turn early, or the reverse). | No hero on the default schedule; the 10–24 Evolution window pinned by test beside the grade budget. | **DONE 2026-09-13** (per user direction: fewer offers a hero). `src/data/heroes.ts`: 11 early turners (10–12), 18 middle (13–19), 7 late (20–24); 5–6 offers a hero, Glyph 7, 5.4 on average; Mid 9–13 and Late 18–25 move with the Evolution. Crossed against the grades on purpose: Marrow, Zenith and Bellows are front-loaded in stats and turn LAST; Riptide and Pincer bloom in stats and turn early/mid. Pinned in `test/moveTiers.test.ts`. Measured below. |
 | 5 | **Four acts and the finale.** §5's table, in one pass. The Herald rename; the Eyes as a second finale champion through `appendFinalEnemy`. | `TOTAL_ACTS` = 5; the sim's act table reads four; 18 encounters at par reach 30. | |
-| 6 | **Re-fit.** Candy supply, `ACT_STEP_CURVE`, `ENEMY_LEVEL_LAG`, champion multipliers, reward weights, against the sim and the skilled pilot; then the length report. | No dead node, no unreachable band, no wall the old curve did not have; run length reported per profile. Win-rate targets are a playtest question. | |
+| 6 | **Re-fit.** Candy supply, `ACT_STEP_CURVE`, `ENEMY_LEVEL_LAG`, champion multipliers, reward weights, against the sim and the skilled pilot; then the length report. | No dead node, no unreachable band, no wall the old curve did not have; run length reported per profile. Win-rate targets are a playtest question. | **DONE 2026-09-13** (per user direction: Late moves realistically accessible). Three dials: each band offers ITS OWN tier (`MOVE_TIER_RANK_EXPIRY.mid` = Late); every schedule re-authored to two offers a band, Late opening 17–22; **Late-tier mana ×0.75** (floor 45, the 100+ whole-pool casts exempt) and `ACT_STEP_CURVE` 9/15 → 8/13 to pay for its enemy half. Measured below. The Act 1 wall is NOT re-fitted — see §10. |
 
 **What each phase measures.** Phase 1: nothing moves *at par*, and that held — but the roster is
 not all at par. A contract hero arrives at the act's enemy level (par − `ENEMY_LEVEL_LAG`) and a
@@ -363,6 +363,27 @@ early turners' Evolution is Act 2, not Act 1, and that is §10's question decide
 late turners' 22–24 is a turn the player gets to see. What the numbers cannot say is whether the
 roster now READS as thirty-six different heroes, which is the watch item this phase existed for.
 
+Phase 6, measured (1000 runs, seed 11, each step against the last). The 4.5% had three causes
+stacked, and only one was the schedule. (1) *The Late band diluted itself*: a Late offer rolled
+from Mid+Late was Late ~40% of the time — each band now offers its own tier, and the two Late
+offers are two Late moves. (2) *Late offers sat at 25–29* — re-authored to two a band with Late
+opening 17–22, both reachable inside Act 5 on every hero. Together: Late 4.5% → 7.9%, full-clear
+51.3% → 55.6%. (3) *Mana*: with Late kits in hand, Act 4 was still 55% Early casts, because a
+70+ move against a 50–95 pool is cast **once a fight** and the hero fills with 20-mana Early.
+MP Regen 10 → 15 moved Late casts 7.9 → 8.3% and cost Act 1 (enemies regen too) — not the lever.
+**Late-tier mana ×0.75** (floor 45; the 100+ whole-pool casts exempt, since Pack Leader's 100/50
+and Overdrive's 100 are designed numbers) took Late to 11.2% overall and 17.6 / 25.9 / 33.6% of
+Acts 4 / 5 / finale — and full-clear to 49.5%, the re-price being symmetric and an Act 4–5 enemy
+arriving with a Late kit. `ENEMY_LEVEL_LAG` 3 compensated best but ties an Act 5 contract hero
+with a hire on level, a pinned invariant, so `ACT_STEP_CURVE` 9/15 → 8/13 carries it instead.
+**Landed: full-clear 57.1%, Acts 4–5 at 89.4 / 89.4 (phase 2's 88 / 89), Late casts 18.5 / 28.9
+/ 36.4% of Acts 4 / 5 / finale, 12% of the run** — the whole-run figure is bounded by three acts
+in which Late cannot exist. Clock 87 min tapping / 60 Auto, unchanged. **The Act 1 wall stays at
+76%** (the old curve's 82%): stat ratios are byte-identical to before the overhaul (1.31 / 1.20 /
+1.56), so it is kit — the ladder bought one hero Mid moves and an Evolution inside Act 1 — and
+every lever that is a number is symmetric there (a first offer at 3 for everyone, regen, lag:
+each measured ±0). What would move it is a design decision, listed in §10.
+
 ---
 
 ## 9. Locked invariants this overturns
@@ -414,6 +435,14 @@ family, the Pact Clock, the companion, potions, the map shape within an act.
   Late-tier casts. The count is itself identity — a hero that learns five things against one that
   learns seven — but the Late band needs an offer AFTER `lateLevel` that a run at par actually
   reaches, and at 25–29 on the late turners it mostly does not. Phase 6's dial.
+- **The Act 1 wall (76%, was 82%).** Not a number. The candidates are all decisions: let the
+  early turners' `evolutionLevel` sit at 8 (the Act 1 Guardian's report — the window's floor of
+  10 was written to keep the Evolution out of Act 1, and this would put it exactly at the
+  boundary), a Mid offer inside Act 1 for the early turners (their `midLevel` at 7–8), an
+  asymmetric Act 1 enemy kit (Act 1 enemies on `DEFAULT_SCHEDULE` rather than their own — the
+  one place "one model for everybody" would bend), or accepting that the run's first wall moved
+  from 82 to 76 when the Act-1 Evolution rush stopped being a play. Decide the player, then the
+  number.
 - **Is `L³` the right curve?** Medium Fast is the baseline because it is the one everyone has
   felt. Steeper (Slow, 1.25·L³) makes the carry throttle harder and the hire catch up faster;
   shallower does the reverse. Phase 6's focus/spread batch is where this gets set; ship the cube.

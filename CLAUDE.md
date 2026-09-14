@@ -57,10 +57,14 @@ don't silently override it.
 > at the cap is refused. **The Scroll ladder is DELETED** (phase 3): moves and the Evolution come
 > from a per-hero **schedule** read off level (`DEFAULT_SCHEDULE`, `src/run/progression.ts`) and
 > paid out on the level-up report — the invariants below say so. **Phase 4 is IN too:** all 36
-> heroes author their own schedule (`src/data/heroes.ts`), 5–6 offers a hero (7 for Glyph) against
-> the default's nine, Evolutions spread 10–24 in three groups. Phase 6 (re-fit) is not started;
-> measured, phase 3 cost 8 points of full-clear (all the Act 1 wall) and did not shorten the
-> clock, and phase 4 cut offers 41 → 26 a run for 3 more points (§8).
+> heroes author their own schedule (`src/data/heroes.ts`), two offers from every band (six a
+> hero, Glyph seven), Evolutions spread 10–24 in three groups. **Phase 6 is IN (2026-09-13):**
+> each band offers its own tier (Mid expires at Late as Early does at Mid), **Late-tier mana is
+> re-priced ×0.75** (floor 45; the 100+ whole-pool casts keep their price) so a Late move is
+> castable twice a fight, and `ACT_STEP_CURVE`'s last two steps came down to pay for the
+> symmetric half of that. Measured: full-clear 57%, Late casts 19 / 29 / 36% of Acts 4 / 5 /
+> finale (was 11 / 18 / 23), the Act 1 wall at 76% untouched by every non-design lever (§8).
+> Phase 5 (four acts) stays deferred.
 
 ---
 
@@ -222,7 +226,10 @@ don't silently override it.
   archetype: a hero can bloom in stats and turn early, or the reverse. Per-hero timing is the
   lever the roster was missing — a sheet that says *evolves at 12* against one that says *evolves
   at 20* is an identity a player reads before drafting. `DEFAULT_SCHEDULE` (the old enemy table,
-  nine offers) is what an unauthored definition — the Titanspawn — reads. `growth-overhaul.md`
+  nine offers) is what an unauthored definition — the Titanspawn — reads. **Each band offers its
+  own tier** (phase 6): Early expires at `midLevel`, Mid at `lateLevel`, so the two Late offers are
+  two Late moves; a graft's line is gated on reaching, not on the band, since its Early moves are
+  the way into the new type. `growth-overhaul.md`
   §4's *ceiling behind the spend* guard rail retired with its premise: nothing is held, so
   nothing needs to sit behind a spend.
 - **Evolutions come from the schedule's `evolutionLevel` — never from a beat, never from a
@@ -470,8 +477,9 @@ what's still unimplemented:
   (every Titanspawn, the Guardian's escorts included, since 2026-09-13 — a Mid at 400 is
   the Act 2 line; only the champion itself rides the other track), **Skirmish/Guardian** at
   Act 1, and acts past a track's baseline walk an **accelerating** `ACT_STEP_CURVE`
-  (`[0, 1, 3, 6, 10]` cumulative steps of +30 stat total each) on top of the node-kind
-  bonus. It accelerates because it has to track a player whose growth does: measured, a
+  (`[0, 0, 4, 8, 13]` cumulative steps of +30 stat total each; the last two came down from
+  9 / 15 in the XP Overhaul's phase 6 to pay for the Late-tier re-price) on top of the
+  node-kind bonus. It accelerates because it has to track a player whose growth does: measured, a
   linear curve had enemy stats growing +239/+161/+90/+87 an act against the player's
   +254/+192/+364/+399 (2026-09-05, `scripts/sim`). Enemy level runs **6 / 12 / 17 / 22 / 26**
   by act, so from Act 3 on every hero-pool enemy arrives already **evolved**, and a Recruit
