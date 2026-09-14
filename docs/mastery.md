@@ -1,7 +1,7 @@
 # mastery.md — Mastery: pips, the Scribe, and the signature
 
 > **STATUS: DECIDED 2026-09-14 (per user direction, after a same-day draft on "fights survived"
-> was playtested on paper and rejected — §0); PHASES 1–3 OF §8 ARE IN.** `CLAUDE.md` and `xp-overhaul.md`
+> was playtested on paper and rejected — §0); ALL FIVE PHASES OF §8 ARE IN.** `CLAUDE.md` and `xp-overhaul.md`
 > describe the game in force wherever a §8 phase has not landed; §8 is the route and §9 the list
 > of sign-offs each phase spends — **check its Status column before assuming anything here is
 > live.** Every number below is a first pass unless it says otherwise; the design is the shape,
@@ -118,7 +118,7 @@ sat before Ichor took its seat; the Drop's seat (14) retires and is not re-point
 
 ### Supply
 
-Demand is smaller than 6 × 10 looks. Recruits arrive with pips (§4) — a contract from Act 3 on
+Demand is smaller than 6 × 10 looks. Recruits arrive with pips (§4) — a contract from Act 4 on
 arrives evolved — so a roster with two mid-run recruits needs ~20–25 pips to evolve everyone, not
 30, plus 5 a signature. **The target is every hero evolved and about three signatures a run,
 ~35–40 pips; 60 maxes the roster.**
@@ -143,14 +143,15 @@ not the price.
 Nobody is on a private model. A hero the player does not control reads its pips off the act the
 way `guildHallLevel` reads the level curve:
 
-> An enemy or a **contract** hero in act N holds `2 × N − 1` pips (1 / 3 / 5 / 7 / 9, the finale
-> 10): the Scribe's pace for a hero it touched every act, less the pip this act has not yet paid.
-> A **Guild hire** arrives one behind, `2 × N − 2` (0 / 2 / 4 / 6 / 8).
+> An enemy or a **contract** hero in act N holds `2 × N − 2` pips (0 / 2 / 4 / 6 / 8, the finale
+> 10): the Scribe's pace for a hero it touched every act BEFORE this one. A **Guild hire** arrives
+> one behind, `max(0, 2N − 3)` (0 / 1 / 3 / 5 / 7) — both raw in Act 1.
 
-So every hero-pool enemy from Act 3 arrives **evolved** (exactly where `ENEMY_LEVEL_BY_ACT` puts
-them today), the finale's carries its signature, a contract is always a pip ahead of a hire
-(`test/recruitment.test.ts` gains the axis beside level, Evolution and kit), and *contract
-finished, hire raw* is now true four ways. `rollLevelProgression` stops walking an Evolution entry
+So every hero-pool enemy from Act 4 arrives **evolved**, the finale's carries its signature, a
+contract is a pip ahead of a hire from Act 2 on (`test/recruitment.test.ts` gains the axis beside
+level, Evolution and kit), and *contract finished, hire raw* is now true four ways. It was `2N − 1`
+for a day (phase 2), which evolved every enemy from Act 3; phase 5 set it here per user direction
+(§8). `rollLevelProgression` stops walking an Evolution entry
 and reads the figure. The Titanspawn have no Evolution and no pips; their tiers are by act.
 
 **Ichor retires.** Its two seats and its shelf were the Scroll Cache's, Lone Scroll's and
@@ -242,7 +243,7 @@ Sequenced so the tree is playable at every boundary. `SAVE_VERSION` bumps at eac
 | 2 | **The Cache takes Ichor's seats.** `scrollReward` at 46; `ichorReward` / `ichorDropReward` / `ichor.ts` / the Drops deleted; the Drop's 14 retires. | No Ichor anywhere; the sim tallies pips by source. **Separable — veto here leaves phase 1 standing.** | **DONE 2026-09-14.** `scrollReward` (`SCROLL_CACHE_COUNT` = 3) in the pool at 46, on the same `ScrollNodeScreen`; `src/run/ichor.ts`, `IchorNodeScreen`, the shelf's Drops and `ICHOR_PURCHASE_*` deleted; the phial stays as XP's glyph; the corridor's third reward row is the Cache; the sim's `--policy focus / spread` is now the Scroll dial (`scrollTarget`). `SAVE_VERSION` 16. Measured below. |
 | 3 | **The signature slot.** `signatureMoveId`; the tenth pip's replace-or-decline on the who-screen; the exclusivity test (no pool, no Tutor, no graft list, no path grant); Lizard Rush promoted and pulled from its three pools; the Tidecaller decision (§10); enemies at 10 hold it. | Riptide reaches Lizard Rush at 10 and nowhere else; the test catches a signature in any pool. | **DONE 2026-09-14.** `HeroDefinition.signatureMoveId`, `src/data/signatures.ts` (untiered, folded into `moves`), `pendingSignature` (`src/run/mastery.ts`: owed at ten, spent by being made); `masteryFlow.ts` raises it as `SignatureBox` — a receipt below the cap, replace-or-decline at it — on the Scroll node and, as the catch-all, the report; `rollLevelProgression` puts it in a generated hero's kit ahead of the offers, in the last slot if the kit is full; the Dossier's Moves tab lists it under *Signature — Mastery 10*. Tidecaller grants Maelstrom, off the pool (§5). The sim's `payMastery` takes it on the offer rule. |
 | 4 | **Author 35 signatures.** Parallelisable from 3; ships hero by hero (an unauthored hero's tenth pip pays nothing, which is what today pays). | Every hero has one, on the template — a hit or a verb at the hero's primary, Late-priced, never a bare nuke. | **DONE 2026-09-14** (drafted, reviewed per user direction the same day: seven renamed, the numbers left as first-pass — the weaker ones wait on a buff/debuff rework, not on this table). All 36 point at a signature (`src/data/signatures.ts`): a hit sized like the type's Late moves plus the hero's own verb — the thing its paths keep circling — no two alike. Two written to the tests' pinned decisions rather than the first draft: Roost Guard grants Defense only (Wisdom off-Mind is a decision the Iron test guards), and Crag's is *Groundsplit* (the slate already had a Fault Line). Every per-type slate test now filters the catalog out, since a signature is a hero's, not a type's. |
-| 5 | **Re-fit.** Cache weight, shelf price, the Scribe's 2 + 2, `masteryForAct`, against the sim with a Scroll policy on the pilot (concentrate on the fielded; evolve first, then signatures; the Scribe to the two most-fielded unevolved) and `time.ts` pricing the two screens; then the Act 1 wall re-read. | ~3 signatures a run on the middle path, every hero evolved on the Scribe alone; the clock reported against the 77 / 53 / 32 baseline. Win-rate targets are a playtest question. | |
+| 5 | **Re-fit.** Cache weight, shelf price, the Scribe's 2 + 2, `masteryForAct`, against the sim with a Scroll policy on the pilot (concentrate on the fielded; evolve first, then signatures; the Scribe to the two most-fielded unevolved) and `time.ts` pricing the two screens; then the Act 1 wall re-read. | ~3 signatures a run on the middle path, every hero evolved on the Scribe alone; the clock reported against the 77 / 53 / 32 baseline. Win-rate targets are a playtest question. | **DONE 2026-09-14** (per user direction: `masteryForAct` = `2N − 2`; the Scribe's 2 + 2, the Cache's 46 and the shelf's 25g / 2 left where they were, with the dial table below for the designer). Measured below. |
 
 **What each phase measures.** Phase 1: Evolutions per run and their *timing* — the greedy pilot
 with the simplest policy (Scribe to the two most-fielded, shelf never) is the floor a real player
@@ -257,6 +258,20 @@ state §3 predicts: the Scribe alone evolves four, and the ~12 the Cache pays ar
 87 / 90 / 95 / 84 / 88, so the loss is spread rather than an Act 1 wall (the Scribe pays Act 1 its
 4 before the fork, and the early Evolution the level window forbade is now the pilot's default).
 Clock: Reader 71.1 → 72.4 min, the Scribe row 0.7 min a run — the smallest node on the map.
+
+Phase 5, measured (1000 runs, seed 11, every batch on the same seed). **`2N − 2` moved nothing
+measurable**: full-clear 54.2% (`focus`), Act 3 96.4, Act 4 81.6 — Act 4's enemies are at 6 pips
+either way, and Act 3's being unevolved is worth under a point. Against the pre-Mastery tree at the
+same 1000 runs (62.0%; Acts 2–4 at 93.3 / 98.9 / 87.9 against 90.5 / 96.4 / 81.6) the eight-point
+gap is the PLAYER's side: the level schedule evolved all six by Act 3–4 at par for free, and 35
+pips evolve about four by the same point and the rest by Act 5 ("every hero evolved" 69 → 61%).
+The rotate / carry pair: `focus` 54.2% against `spread` 48.6% — concentrating by six points, which
+is §2's claim measured at scale. Supply sensitivity (all `focus`, 1000 runs): Cache weight 46 → 70
+pays 2 more pips and +1.0; a Cache of 4 pays 3 more and +2.5; **the Scribe at 3 + 3 pays 10 more
+and +3.8 (58.0%, every hero evolved 72%)** — the guaranteed faucet buys the most clear per pip,
+since it is the roster-wide Evolutions the run lost. The clock: Reader 71.0 → 71.7 min, the Scribe
+row 0.7 and the Cache 0.5 a run, the Evolution screens 2.4 → 2.5. Left where they were, per user
+direction, with the table in §10: 2 + 2, 46, 25g / 2.
 
 Phase 2, measured (300 runs, seed 11, `--policy focus`, against phase 1): **full-clear 54.7% →
 54.7%** — removing Ichor and adding the Cache moved the clear rate by nothing, which is the null
@@ -286,8 +301,8 @@ Each is a sign-off. In force until the phase that replaces it lands.
 | The level-up report carries exactly ONE decision kind, and raises the Evolution | Still one kind — the offer. **The Evolution raises from the Scroll node**, so the report is lighter | 1 |
 | The Scroll ladder is DELETED whole — no currency, no rung, no price, no purse | **A currency returns: the Scroll, one pip, flat.** No rung, no price curve, no purse — assigned on the node it is paid | 1 |
 | The map's per-act shape: Fight → reward → spliced seat → reward → fork → reward → funnel → Guardian | Gains **the Scribe** between the second reward row and the fork — one forced row an act, acts 1–5 | 1 |
-| A generated hero walks the schedule's Evolution entry (`rollLevelProgression`) | Reads `masteryForAct`: evolved from Act 3, a signature in the finale | 1 |
-| Contract finished, hire raw — three axes (level, Evolution, kit) | **Four**: pips, `2N − 1` against `2N − 2` | 1 |
+| A generated hero walks the schedule's Evolution entry (`rollLevelProgression`) | Reads `masteryForAct`: evolved from Act 4 (Act 3 until phase 5), a signature in the finale | 1 |
+| Contract finished, hire raw — three axes (level, Evolution, kit) | **Four**: pips, `2N − 2` against `2N − 3` (phase 5; a pip more each until then) | 1 |
 | The companion's `evolutionLevel` and `lateLevel` are tier-steps | Its steps are 5 and 10 pips; its pips die with it | 1 |
 | Ichor: the two reward-row seats and the Guild Hall shelf pay aimed XP; the only way the player paces an Evolution | **Retired.** The seats go back to the Scroll Cache, the shelf sells Scrolls; fielding paces nothing and Scrolls pace the Evolution | 2 |
 | Moves come from ONE faucet, the schedule (the Mentor and Tutor named as the exceptions) | A **third** named exception: the signature, at ten pips, one per hero | 3 |
@@ -321,11 +336,17 @@ Clock, potions, and the one-decision-kind rule on the report.
   collapses to "my best hero", and no Scroll rule fixes that — it is a content finding about the
   paths. The one mechanical retreat is a per-hero cap of 2 pips a Cache, which forces *which two*
   at the cost of friction; hold it, do not build it.
-- **Enemies evolve a full act earlier than they used to.** `masteryForAct` puts every hero-pool
-  enemy at 5 pips from Act 3, where `evolutionLevel` 20–24 left the late turners unevolved until
-  Act 4–5; phase 2 measured it as the whole of the 60 → 55 full-clear drop (Act 4 89 → 82). One
-  model for everybody is the rule, so the fix is the figure, not an exception: `2N − 2` (Act 3 at 4,
-  evolved from Act 4) or a one-act lag. Phase 5's first dial.
+- ~~**Enemies evolve a full act earlier than they used to.**~~ **Decided 2026-09-14, per user
+  direction: `2N − 2`.** Enemies evolve from Act 4. It did NOT recover the clear rate — see phase 5
+  in §8: the gap to the pre-Mastery tree is the PLAYER's Evolutions arriving later and fewer under
+  35 pips, not the enemy's arriving earlier. The supply dials are the open question now.
+- **How much supply?** Phase 5 measured the run at 35 pips a completed run (Scribe 20 / Cache 9 /
+  shelf 6) against the pre-Mastery tree: full-clear 62.0 → 54.2%, every hero evolved 69 → 61%. One
+  point of clear a ~2.5 pips: a Cache of 4 (38 pips) 56.7%; Cache weight 70 (37) 55.2%; **the
+  Scribe at 3 + 3 (45 pips) 58.0% and every hero evolved 72%** — the guaranteed, un-concentrable
+  faucet is the efficient one, since what the run lost is the schedule's roster-WIDE Evolutions,
+  not the carry's. The Scribe's 2 + 2 is the user's figure; raising it is the user's call, and
+  the case for leaving it is that the eight points are the price of Evolutions being earned.
 - **The shelf's price and cap.** 25g and 2 are a first pass; the potion shelf is the analogue.
   If the shelf is where signatures get bought, it is competing with recruits for the same gold,
   which is the intended tension — watch whether it reads as one.

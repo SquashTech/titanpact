@@ -322,12 +322,13 @@ test('recruitment: a contract hero arrives FINISHED where a hire arrives RAW —
 
 test('recruitment: the MASTERY axis points the right way — an enemy, and the contract off it, is a pip ahead of a hire in every act', () => {
   for (let act = 1; act <= 5; act++) {
-    assert.strictEqual(masteryForAct(act), 2 * act - 1, `act ${act}`);
-    assert.ok(masteryForAct(act) > guildHallMastery(act), `act ${act}: a contract hero at ${masteryForAct(act)} pips must outrank a hire at ${guildHallMastery(act)}`);
+    assert.strictEqual(masteryForAct(act), 2 * act - 2, `act ${act}`);
+    assert.ok(masteryForAct(act) >= guildHallMastery(act), `act ${act}: a contract hero at ${masteryForAct(act)} pips must not trail a hire at ${guildHallMastery(act)}`);
+    if (act > 1) assert.ok(masteryForAct(act) > guildHallMastery(act), `act ${act}: and past Act 1 it is a pip ahead`);
   }
   assert.strictEqual(masteryForAct(6), MASTERY_CAP, 'the finale holds the signature pip');
   assert.strictEqual(guildHallMastery(1), 0, 'an act-1 hire is raw to the bone');
-  assert.ok(masteryForAct(3) >= MASTERY_EVOLUTION && masteryForAct(2) < MASTERY_EVOLUTION, 'every hero-pool enemy from Act 3 arrives evolved, none in Act 2');
+  assert.ok(masteryForAct(4) >= MASTERY_EVOLUTION && masteryForAct(3) < MASTERY_EVOLUTION, 'every hero-pool enemy from Act 4 arrives evolved, none in Act 3 (2N-2, phase 5)');
 });
 
 test('recruitment: the LEVEL axis points the right way — a contract hero outranks a hire', () => {

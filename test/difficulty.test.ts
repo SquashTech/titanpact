@@ -119,7 +119,7 @@ test('difficulty: every act-step grant stays a multiple of 5 or 10 (CLAUDE.md "S
 test('difficulty: scaled enemies arrive at the act level and the act\'s pips, and evolve on the SAME gate a roster hero reads', () => {
   // One model for everybody (docs/xp-overhaul.md §4, docs/mastery.md §4): an enemy holds the
   // act's Mastery (masteryForAct), so it is evolved exactly when a roster hero with those pips
-  // would be — every hero-pool enemy from Act 3 — and a contract hero IS the enemy you beat.
+  // would be — every hero-pool enemy from Act 4 — and a contract hero IS the enemy you beat.
   for (const act of [1, 2, 3, 4, 5]) {
     const scaling = actScaling('skirmish', act);
     assert.strictEqual(scaling.mastery, masteryForAct(act));

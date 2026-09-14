@@ -98,11 +98,12 @@ test('mastery: the fifth pip opens the Evolution, at any level, and the Evolutio
 });
 
 test('mastery: enemies, contracts and hires read their pips off the act — one model for everybody', () => {
-  assert.deepStrictEqual([1, 2, 3, 4, 5, 6].map(masteryForAct), [1, 3, 5, 7, 9, 10]);
-  assert.deepStrictEqual([1, 2, 3, 4, 5, 6].map(guildHallMastery), [0, 2, 4, 6, 8, 9]);
-  assert.strictEqual(masteryForAct(0), 1, 'clamped below');
+  assert.deepStrictEqual([1, 2, 3, 4, 5, 6].map(masteryForAct), [0, 2, 4, 6, 8, 10]);
+  assert.deepStrictEqual([1, 2, 3, 4, 5, 6].map(guildHallMastery), [0, 1, 3, 5, 7, 9]);
+  assert.strictEqual(masteryForAct(0), 0, 'clamped below');
   assert.strictEqual(masteryForAct(99), MASTERY_CAP, 'clamped above');
-  for (let act = 1; act <= 6; act++) assert.ok(masteryForAct(act) > guildHallMastery(act), `act ${act}: a contract is a pip ahead of a hire`);
+  for (let act = 2; act <= 6; act++) assert.ok(masteryForAct(act) > guildHallMastery(act), `act ${act}: a contract is a pip ahead of a hire`);
+  assert.strictEqual(guildHallMastery(1), 0, 'and both are raw in Act 1');
 });
 
 test('mastery: the companion steps up at the pips a hero would evolve and master at, and its pips die with it', () => {
