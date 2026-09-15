@@ -198,7 +198,7 @@ function StatModBadge({ stat, mod, tier, held }: { stat: StatKey; mod: number; t
   return (
     <span
       className={`stat-mod-badge ${mod > 0 ? 'stat-buff' : 'stat-debuff'}${held ? ' stat-held' : ''}`}
-      title={`${stat} ${mod > 0 ? '+' : ''}${mod}${held ? ' — at the floor, no lower' : ''}`}
+      title={`${stat} ${mod > 0 ? '+' : ''}${mod}${held ? " — can't go any lower" : ''}`}
     >
       <StatGlyph stat={stat} tone="inherit" />
       <span className="stat-mod-pips" aria-hidden="true">

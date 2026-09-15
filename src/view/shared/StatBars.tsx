@@ -124,7 +124,7 @@ export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {}, 
                 <div
                   className={`stat-bar-floor${(fight.deltas[stat] ?? 0) < 0 && totals[i] <= fight.floors[stat]! ? ' is-held' : ''}`}
                   style={{ left: `${Math.min(100, (fight.floors[stat]! / STAT_SCALE_MAX[stat]) * 100)}%` }}
-                  title={`Floor ${fight.floors[stat]} — a debuff can take ${STAT_LABELS[stat]} no lower`}
+                  title={`${STAT_LABELS[stat]} can't go lower than ${fight.floors[stat]}`}
                 />
               )}
             </div>

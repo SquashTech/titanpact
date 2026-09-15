@@ -436,7 +436,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
                   const { landed, capped } = applyStatModifierDelta(allCombatants[d.heroId], d, stat, amount);
                   if (!capped) return null;
                   const who = allCombatants[d.heroId]?.name ?? id;
-                  return landed === 0 ? `${who} is at the floor — lands nothing` : `held at ${who}'s floor — lands ${landed}`;
+                  return landed === 0 ? `${who}'s ${STAT_LABELS[stat]} can't go any lower — lands nothing` : `${who}'s ${STAT_LABELS[stat]} can't go much lower — lands ${landed}`;
                 })
                 .filter(Boolean);
               return parts.length ? parts.join('; ') : undefined;

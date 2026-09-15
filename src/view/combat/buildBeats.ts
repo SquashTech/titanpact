@@ -190,15 +190,15 @@ function groupByCombatant(changes: readonly StatChangedEvent[]): { combatantId: 
   return groups;
 }
 
-/** "falls" for one stat on one hero, "fall" once the subject is plural; "holds at the floor" when the floor took the whole drop. */
+/** "falls" for one stat on one hero, "fall" once the subject is plural; "can't go any lower" when the floor took the whole drop. */
 function statVerb(changes: readonly StatChangedEvent[], plural: boolean): string {
   const rising = changes.every((c) => c.delta > 0);
-  // A drop the floor took whole is still a fall in kind, so "-24 DEF (floor), WIS at floor" reads as one.
+  // A drop the floor took whole is still a fall in kind, so "-24 DEF (no lower), WIS can't go lower" reads as one.
   const falling = changes.every((c) => c.delta < 0 || (c.capped && c.delta === 0));
   const heldWhole = changes.every((c) => c.capped && c.delta === 0);
-  const verb = heldWhole ? 'hold at the floor' : rising ? 'rise' : falling ? 'fall' : 'shift';
+  const verb = heldWhole ? "can't go any lower" : rising ? 'rise' : falling ? 'fall' : 'shift';
   if (plural || changes.length > 1) return verb;
-  return heldWhole ? 'holds at the floor' : `${verb}s`;
+  return heldWhole ? "can't go any lower" : `${verb}s`;
 }
 
 /** What two targets have to match on for the beat to read as one sentence about both. */
@@ -208,16 +208,16 @@ function signatureOf(changes: readonly StatChangedEvent[]): string {
 
 /**
  * The console's big line: "-10 DEF/WIS" when one number covers them all, else "+10 ATK -5 DEF".
- * A drop the floor held reads "DEF at floor" when nothing landed and "-12 DEF (floor)" when some did.
+ * A drop the floor held reads "DEF can't go lower" when nothing landed and "-12 DEF (no lower)" when some did.
  */
 function deltaSummary(changes: readonly StatChangedEvent[]): string {
   const sign = (d: number) => (d > 0 ? '+' : '');
   const one = (c: StatChangedEvent) =>
-    c.capped && c.delta === 0 ? `${statLabel(c.stat)} at floor` : `${sign(c.delta)}${c.delta} ${statLabel(c.stat)}${c.capped ? ' (floor)' : ''}`;
+    c.capped && c.delta === 0 ? `${statLabel(c.stat)} can't go lower` : `${sign(c.delta)}${c.delta} ${statLabel(c.stat)}${c.capped ? ' (no lower)' : ''}`;
   const first = changes[0];
   if (changes.every((c) => c.delta === first.delta && !!c.capped === !!first.capped)) {
-    if (first.capped && first.delta === 0) return `${changes.map((c) => statLabel(c.stat)).join('/')} at floor`;
-    return `${sign(first.delta)}${first.delta} ${changes.map((c) => statLabel(c.stat)).join('/')}${first.capped ? ' (floor)' : ''}`;
+    if (first.capped && first.delta === 0) return `${changes.map((c) => statLabel(c.stat)).join('/')} can't go lower`;
+    return `${sign(first.delta)}${first.delta} ${changes.map((c) => statLabel(c.stat)).join('/')}${first.capped ? ' (no lower)' : ''}`;
   }
   return changes.map(one).join(' ');
 }

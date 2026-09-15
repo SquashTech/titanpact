@@ -155,7 +155,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
               return (
                 <span key={stat} className={`detail-modifier-chip ${mod > 0 ? 'stat-buff' : 'stat-debuff'}${heldAtFloor(stat) ? ' stat-held' : ''}`}>
                   <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} {fmtMod(mod)}
-                  {heldAtFloor(stat) && <span className="detail-modifier-floor"> · at the floor</span>}
+                  {heldAtFloor(stat) && <span className="detail-modifier-floor"> · can't go any lower</span>}
                 </span>
               );
             })}

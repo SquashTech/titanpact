@@ -160,7 +160,7 @@ export function formatEvents(
         break;
       case 'StatChanged': {
         const sign = e.delta > 0 ? '+' : '';
-        const held = e.capped ? (e.delta === 0 ? ' (at the floor)' : ' (held at the floor)') : '';
+        const held = e.capped ? (e.delta === 0 ? " (can't go any lower)" : " (can't go much lower)") : '';
         lines.push({ key, text: `${name(e.combatantId)}'s ${e.stat} ${sign}${e.delta}${held}`, className: e.delta > 0 ? 'log-buff' : 'log-debuff' });
         break;
       }
