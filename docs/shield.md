@@ -282,7 +282,9 @@ Sequenced so the tree is playable at every boundary and each phase can be refuse
   the Rivetling holds Iron Skin in place of Sharpen, the Monolith Rampart in place of Landslide (a
   60 BP magical spread on a 40-Int body), the Slabback keeps Bastion, and the Puddling holds Tide
   Guard in place of Siphon (the Water kits held no Shield before — Act 1's enemy casts were
-  hero-pool enemies whose starting kits carry it). Measured on the same seed: full-clear 22.5 → 22.8%, Act 1 unmoved; the Rivetling
+  hero-pool enemies whose starting kits carry it); the Hoarfang holds Ice Shell in place of Icicle
+  Thrust (physical, on an 85-Int caster) and the Gleamling Vigil in place of Blind (a flinch on a
+  34-Speed body). Measured on the same seed: full-clear 22.5 → 22.8%, Act 1 unmoved; the Rivetling
   takes 120 → 114 a round and deals 18 → 17, the Monolith 116 → 104 taken and 87 → 69 dealt;
   enemy Shield casts 861 → 1038 in Act 1 and 225 → 617 in Act 4.
 - **The cap on the view:** `StatBars.tsx ShieldFill` draws the band past the fill and, for what
