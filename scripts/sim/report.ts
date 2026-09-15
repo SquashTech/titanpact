@@ -6,6 +6,7 @@ import { allCombatants } from '../../src/data/content';
 import { isTitanspawn } from '../../src/data/titanspawn';
 import { relics } from '../../src/data/relics';
 import { passives } from '../../src/data/passives';
+import { fieldEffects } from '../../src/data/fieldEffects';
 import { classes } from '../../src/data/classes';
 import { locations } from '../../src/data/locations';
 import { progressionTable } from '../../src/data/progression';
@@ -524,6 +525,14 @@ export function formatReport(
   for (const id of ['tideGuard', 'crest', 'seawall', 'bastion', 'ironSkin', 'livingWall', 'rampart', 'vigil', 'benediction', 'iceShell', 'rimeCoat']) {
     const n = agg.castsByMove[id] ?? 0;
     out.push(`    ${pad(id, 20)}${padStart(String(n), 11)}${padStart((agg.playerTurns > 0 ? (n * 1000) / agg.playerTurns : 0).toFixed(1), 9)}`);
+  }
+  out.push('  Field Effects (docs/field-effects.md "Heralds"): sets by the player side / the enemy side, both per 1000 player turns, and the share of every round that ended with the field up:');
+  out.push(`    ${pad('', 20)}${padStart('sets p/e', 14)}${padStart('per 1000', 12)}${padStart('rounds up', 12)}`);
+  for (const id of ['all', ...Object.keys(fieldEffects)]) {
+    const p = agg.fieldSets[id] ?? 0;
+    const e = agg.enemyFieldSets[id] ?? 0;
+    const per = agg.playerTurns > 0 ? ((p + e) * 1000) / agg.playerTurns : 0;
+    out.push(`    ${pad(id, 20)}${padStart(`${p} / ${e}`, 14)}${padStart(per.toFixed(1), 12)}${padStart(pct(agg.fieldRounds[id] ?? 0, agg.fightRounds), 12)}`);
   }
   out.push('  player casts by mana spent:');
   for (const band of ['0-19', '20-39', '40-59', '60-79', '80+']) {

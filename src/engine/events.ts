@@ -102,6 +102,8 @@ export interface HealedEvent extends BaseEvent {
   healPower?: number;
   wisdomMult?: number;
   stab?: number;
+  /** The active Field Effect's healMultiplier (Sanctuary); 1 with none up. Absent on a drain. */
+  fieldMult?: number;
   /** Present iff this heal came from a drainPercent rider. `targetCombatantId` is the drainer; this says whose HP it came from. */
   drain?: { fromCombatantId: string; damageDealt: number; percent: number };
 }

@@ -29,9 +29,10 @@ export const fieldEffects: Record<string, FieldEffectDefinition> = {
   sanctuary: {
     id: 'sanctuary',
     name: 'Sanctuary',
-    description: 'Healing moves gain +1 priority.',
+    description: 'Healing moves gain +1 priority and heal half again as much.',
     flavorType: 'Light',
     healPriorityBonus: 1,
+    healMultiplier: 1.5,
   },
   verdantEarth: {
     id: 'verdantEarth',

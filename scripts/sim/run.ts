@@ -108,6 +108,9 @@ export interface FightRecord {
   castsByTier: Record<string, number>;
   castsByManaBand: Record<string, number>;
   castsByMove: Record<string, number>;
+  fieldSets: Record<string, number>;
+  enemyFieldSets: Record<string, number>;
+  fieldRounds: Record<string, number>;
   statDeltaCount: number;
   statDeltaAuthored: number;
   statDeltaLanded: number;
@@ -505,6 +508,9 @@ function resolveEncounterNode(
     castsByTier: fight.castsByTier,
     castsByManaBand: fight.castsByManaBand,
     castsByMove: fight.castsByMove,
+    fieldSets: fight.fieldSets,
+    enemyFieldSets: fight.enemyFieldSets,
+    fieldRounds: fight.fieldRounds,
     statDeltaCount: fight.statDeltaCount,
     statDeltaAuthored: fight.statDeltaAuthored,
     statDeltaLanded: fight.statDeltaLanded,

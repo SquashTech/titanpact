@@ -530,6 +530,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             healPower: healed.healPower,
             wisdomMult: healed.wisdomMult,
             stab: healed.stab,
+            fieldMult: healed.fieldMult,
           };
           events.push(healedEvent);
 

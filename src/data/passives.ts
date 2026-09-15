@@ -4,6 +4,7 @@
 import type { PassiveDefinition } from '../engine/content';
 import { classPassives } from './classes';
 import { TYPES, type TitanpactType } from './typechart';
+import { fieldEffects } from './fieldEffects';
 
 // --- Evolution-granted, outside the per-hero tables ---
 const fixturePassives: Record<string, PassiveDefinition> = {
@@ -271,6 +272,43 @@ export const typeDamagePassiveFor: Partial<Record<TitanpactType, string>> = Obje
 
 /** Every type that has one, in TYPES order — the order any surface listing them uses. */
 export const TYPE_DAMAGE_PASSIVE_TYPES: readonly TitanpactType[] = TYPES.filter((type) => !!typeDamagePassiveFor[type]);
+
+// --- Boon-granted, the field Heralds (docs/field-effects.md "Heralds") ---
+//
+// One per Field Effect: when this hero enters the battlefield, set it. The Drizzle shape — a field
+// that is the consequence of a pick and costs no turn — on the SwitchedIn hook Imposing Presence
+// uses, every arrival, so a pivot out and back re-sets a field that has lapsed (re-setting the
+// active one is a no-op and never refreshes the clock). Offered on the type Boons' gate — a roster
+// hero fields the field's flavour type — but the HOLDER need not: a Stasis Herald belongs on the
+// slowest hero on the team, whatever its type.
+const FIELD_HERALD_NAMES: Record<string, { id: string; name: string }> = {
+  surgingMagic: { id: 'heraldOfSurge', name: 'Herald of Surge' },
+  scorchedLand: { id: 'heraldOfCinders', name: 'Herald of Cinders' },
+  stasisBubble: { id: 'heraldOfStillness', name: 'Herald of Stillness' },
+  sanctuary: { id: 'heraldOfDawn', name: 'Herald of Dawn' },
+  verdantEarth: { id: 'heraldOfBloom', name: 'Herald of Bloom' },
+};
+
+const fieldHeraldPassives: Record<string, PassiveDefinition> = Object.fromEntries(
+  Object.entries(FIELD_HERALD_NAMES).map(([fieldEffectId, { id, name }]) => [
+    id,
+    {
+      id,
+      name,
+      description: `When this hero enters the battlefield, set ${fieldEffects[fieldEffectId].name}.`,
+      reactive: {
+        hook: 'SwitchedIn',
+        condition: { relativeTo: 'self' },
+        effect: { kind: 'setFieldEffect', fieldEffectId },
+      },
+    } satisfies PassiveDefinition,
+  ])
+);
+
+/** Flavour type -> the Herald of the field it colours, for the roster filter in `src/run/boons.ts`. */
+export const fieldHeraldPassiveFor: Partial<Record<TitanpactType, string>> = Object.fromEntries(
+  Object.entries(FIELD_HERALD_NAMES).map(([fieldEffectId, { id }]) => [fieldEffects[fieldEffectId].flavorType, id])
+);
 
 // --- Evolution-granted (progression.ts grantsPassiveIds) ---
 const evolutionPassives: Record<string, PassiveDefinition> = {
@@ -752,6 +790,7 @@ export const passives: Record<string, PassiveDefinition> = {
   ...equipmentPassives,
   ...eventPassives,
   ...typeDamagePassives,
+  ...fieldHeraldPassives,
   ...evolutionPassives,
   ...classPassives,
 };

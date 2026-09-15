@@ -252,6 +252,8 @@ export interface FieldEffectDefinition {
   reversesSpeedOrder?: boolean;
   /** Added to heal-kind moves' priority bracket (Sanctuary +1). priority.ts orderActions. */
   healPriorityBonus?: number;
+  /** Multiplies a heal-kind move's restored HP (Sanctuary 1.5). A heal-pipeline term (healPipeline.ts), never folded into Wisdom; a HoT tick and a drain are not heals and do not read it. */
+  healMultiplier?: number;
   /** Each stat in `stats` gains the combatant's OWN current magnitude of `statusId` (Verdant Earth / Renew). Stat pipeline — state.ts getEffectiveStat. */
   statBonusEqualToStatusMagnitude?: { statusId: StatusId; stats: readonly StatKey[] };
 }

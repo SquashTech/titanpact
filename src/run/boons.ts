@@ -4,7 +4,7 @@
 // which passives this particular roster may be offered.
 
 import type { HeroDefinition, MoveDefinition, PassiveDefinition } from '../engine/content';
-import { boonPassives, typeDamagePassiveFor } from '../data/passives';
+import { boonPassives, fieldHeraldPassiveFor, typeDamagePassiveFor } from '../data/passives';
 import type { RosterEntry } from './state';
 import { rosterEntryTypes } from './progression';
 
@@ -26,8 +26,8 @@ export function rosterTypes(roster: readonly RosterEntry[], heroLookup: Record<s
 }
 
 /**
- * What this roster may be offered: every roster-agnostic passive, plus the type-locked one for
- * each type somebody actually fields.
+ * What this roster may be offered: every roster-agnostic passive, plus the type-locked ones for
+ * each type somebody actually fields — the +20% damage Boon and the field Herald.
  *
  * The filter is the whole reason type-locked Boons can exist at all. Unfiltered they would be
  * fourteen entries against sixteen generic ones, so a typical 1-of-3 would show two grants nobody
@@ -40,10 +40,10 @@ export function rosterTypes(roster: readonly RosterEntry[], heroLookup: Record<s
  */
 export function boonPool(roster: readonly RosterEntry[], heroLookup: Record<string, HeroDefinition>): string[] {
   const owned = rosterTypes(roster, heroLookup);
-  const typeBoons = Object.entries(typeDamagePassiveFor)
+  const typeLocked = [...Object.entries(typeDamagePassiveFor), ...Object.entries(fieldHeraldPassiveFor)]
     .filter(([type]) => owned.has(type))
     .map(([, id]) => id);
-  return [...Object.keys(boonPassives), ...typeBoons];
+  return [...Object.keys(boonPassives), ...typeLocked];
 }
 
 /** The type a Boon is locked to, or null for the roster-agnostic ones. Read off the definition rather than a table, so a new type Boon needs no registration. */

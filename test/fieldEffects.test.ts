@@ -8,13 +8,14 @@ import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
-import { passives } from '../src/data/passives';
+import { passives, fieldHeraldPassiveFor } from '../src/data/passives';
 import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import type { Action } from '../src/engine/combat/actions';
 import { setFieldEffect, tickFieldEffect, FIELD_EFFECT_DURATION_ROUNDS } from '../src/engine/combat/fieldEffectEngine';
 import { applyManaRegen } from '../src/engine/combat/manaRegen';
 import { tickEndOfRound, applyStatus } from '../src/engine/combat/statusEngine';
+import { resolveBattleStartEntries } from '../src/engine/combat/passiveEngine';
 import { orderActions } from '../src/engine/combat/priority';
 import { resolveStatRatio } from '../src/engine/damage/damagePipeline';
 import { getEffectiveStat, getMaxHp } from '../src/engine/state';
@@ -338,4 +339,75 @@ test('fieldEffects: Verdant Earth — a DamageDealt event\'s offStat reflects th
   if (dmg && dmg.type === 'DamageDealt') {
     assert.strictEqual(dmg.offStat, heroes.cinderKnight.baseStats.attack + 20);
   }
+});
+
+// --- Sanctuary's second job (2026-09-15, per user direction): a heal-pipeline term, beside the priority ---
+
+test('fieldEffects: Sanctuary multiplies a heal-kind move\'s restored HP by healMultiplier, as a pipeline term, and the Healed event says so', () => {
+  const built = twoVTwoFixture(450);
+  const hurt: CombatState = { ...built, combatants: { ...built.combatants, a1: { ...built.combatants.a1, currentHp: 1 } } };
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'mend', declaredTarget: 'a1' }];
+
+  const plain = resolveRound(hurt, actions, config).events.find((e) => e.type === 'Healed');
+  const sanctuary = { ...hurt, activeFieldEffect: { fieldEffectId: 'sanctuary', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
+  const blessed = resolveRound(sanctuary, actions, config).events.find((e) => e.type === 'Healed');
+  assert.ok(plain && plain.type === 'Healed' && blessed && blessed.type === 'Healed');
+  if (plain?.type === 'Healed' && blessed?.type === 'Healed') {
+    assert.strictEqual(plain.fieldMult, 1);
+    assert.strictEqual(blessed.fieldMult, fieldEffects.sanctuary.healMultiplier);
+    assert.strictEqual(blessed.amount, Math.round(plain.healPower! * plain.wisdomMult! * plain.stab! * fieldEffects.sanctuary.healMultiplier!));
+    // The term is the field's, not Wisdom's — the Wisdom multiplier is unchanged under it.
+    assert.strictEqual(blessed.wisdomMult, plain.wisdomMult);
+  }
+});
+
+test('fieldEffects: Sanctuary\'s heal term does not reach a Renew tick — a HoT is not a heal-kind move', () => {
+  const built = withRenew(twoVTwoFixture(451), 'a1', 40);
+  const hurt: CombatState = { ...built, combatants: { ...built.combatants, a1: { ...built.combatants.a1, currentHp: 1 } } };
+  const maxHpOf = (id: string) => getMaxHp(heroes[hurt.combatants[id].heroId], hurt.combatants[id]);
+  const plainTick = tickEndOfRound(hurt, 1, statuses, fieldEffects, maxHpOf).events.find((e) => e.type === 'StatusTicked');
+  const sanctuary = { ...hurt, activeFieldEffect: { fieldEffectId: 'sanctuary', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
+  const blessedTick = tickEndOfRound(sanctuary, 1, statuses, fieldEffects, maxHpOf).events.find((e) => e.type === 'StatusTicked');
+  assert.ok(plainTick && plainTick.type === 'StatusTicked' && blessedTick && blessedTick.type === 'StatusTicked');
+  if (plainTick?.type === 'StatusTicked' && blessedTick?.type === 'StatusTicked') {
+    assert.strictEqual(blessedTick.amount, plainTick.amount);
+  }
+});
+
+// --- The Heralds (docs/field-effects.md "Heralds"): a field set on entry, costing no turn ---
+
+test('fieldEffects: every field has a Herald that sets it on entry, and a Herald on the opening lead sets it before round 1', () => {
+  for (const [fieldEffectId, def] of Object.entries(fieldEffects)) {
+    const heraldId = fieldHeraldPassiveFor[def.flavorType as keyof typeof fieldHeraldPassiveFor];
+    assert.ok(heraldId, `${fieldEffectId} has no Herald`);
+    const herald = passives[heraldId!];
+    assert.deepStrictEqual(herald.reactive, {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'setFieldEffect', fieldEffectId },
+    });
+    assert.ok(!herald.reactive?.oncePerFight, `${heraldId} is once-per-fight — a lapsed field must be re-settable by a pivot`);
+  }
+
+  const built = twoVTwoFixture(452);
+  const a1 = built.combatants.a1;
+  const state = { ...built, combatants: { ...built.combatants, a1: { ...a1, passives: { heraldOfDawn: { passiveId: 'heraldOfDawn', stacks: 1 } } } } };
+  const opened = resolveBattleStartEntries(state, 1, heroes, statuses, passives, fieldEffects);
+  assert.strictEqual(opened.state.activeFieldEffect?.fieldEffectId, 'sanctuary');
+  assert.ok(opened.events.some((e) => e.type === 'FieldEffectSet' && e.fieldEffectId === 'sanctuary'));
+});
+
+test('fieldEffects: a Herald\'s re-entry re-sets a LAPSED field but never refreshes an active one — the clock is the locked shape', () => {
+  const built = twoVTwoFixture(453);
+  const a1 = built.combatants.a1;
+  const state = { ...built, combatants: { ...built.combatants, a1: { ...a1, passives: { heraldOfSurge: { passiveId: 'heraldOfSurge', stacks: 1 } } } } };
+  const opened = resolveBattleStartEntries(state, 1, heroes, statuses, passives, fieldEffects).state;
+  const ticked = tickFieldEffect(opened, 1).state; // 5 -> 4
+  const again = resolveBattleStartEntries(ticked, 2, heroes, statuses, passives, fieldEffects);
+  assert.strictEqual(again.state.activeFieldEffect?.roundsRemaining, 4);
+  assert.ok(!again.events.some((e) => e.type === 'FieldEffectSet'));
+
+  const lapsed = { ...ticked, activeFieldEffect: null };
+  const reset = resolveBattleStartEntries(lapsed, 3, heroes, statuses, passives, fieldEffects);
+  assert.strictEqual(reset.state.activeFieldEffect?.roundsRemaining, FIELD_EFFECT_DURATION_ROUNDS);
 });

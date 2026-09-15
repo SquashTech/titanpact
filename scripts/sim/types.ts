@@ -129,6 +129,11 @@ export interface Aggregate {
   castsByManaBand: Record<string, number>;
   /** Player-side move casts by move id, all runs. */
   castsByMove: Record<string, number>;
+  /** Field Effects: sets by side and rounds ended with one up, keyed by field id plus 'all' (fight.ts); fightRounds is the denominator. */
+  fieldSets: Record<string, number>;
+  enemyFieldSets: Record<string, number>;
+  fieldRounds: Record<string, number>;
+  fightRounds: number;
   /** Player-side turns, Rests and voluntary switches — is the mana economy live? */
   playerTurns: number;
   playerRests: number;
@@ -210,6 +215,10 @@ export function emptyAggregate(): Aggregate {
     castsByTier: {},
     castsByManaBand: {},
     castsByMove: {},
+    fieldSets: {},
+    enemyFieldSets: {},
+    fieldRounds: {},
+    fightRounds: 0,
     playerTurns: 0,
     playerRests: 0,
     playerSwitches: 0,
@@ -307,6 +316,10 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   for (let i = 0; i < from.runMinutesWon.length; i++) mergeArray(into.runMinutesWon[i], from.runMinutesWon[i]);
   for (let i = 0; i < from.runMinutesLost.length; i++) mergeArray(into.runMinutesLost[i], from.runMinutesLost[i]);
   for (const id of Object.keys(from.castsByMove)) into.castsByMove[id] = (into.castsByMove[id] ?? 0) + from.castsByMove[id];
+  for (const id of Object.keys(from.fieldSets)) into.fieldSets[id] = (into.fieldSets[id] ?? 0) + from.fieldSets[id];
+  for (const id of Object.keys(from.enemyFieldSets)) into.enemyFieldSets[id] = (into.enemyFieldSets[id] ?? 0) + from.enemyFieldSets[id];
+  for (const id of Object.keys(from.fieldRounds)) into.fieldRounds[id] = (into.fieldRounds[id] ?? 0) + from.fieldRounds[id];
+  into.fightRounds += from.fightRounds;
   into.playerTurns += from.playerTurns;
   into.playerRests += from.playerRests;
   into.playerSwitches += from.playerSwitches;

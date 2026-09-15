@@ -102,6 +102,10 @@ export interface FightOutcome {
   castsByManaBand: Record<string, number>;
   /** Player-side casts by move id. */
   castsByMove: Record<string, number>;
+  /** Field Effects (docs/field-effects.md "Heralds"): sets by the player side, sets by the enemy side, and rounds the field ended still up, each keyed by field id and summed under 'all'. */
+  fieldSets: Record<string, number>;
+  enemyFieldSets: Record<string, number>;
+  fieldRounds: Record<string, number>;
   /** Move stat deltas by the CASTER's side: how many landed, and |landed| against |authored| summed (docs/stat-scaling.md §8 phase 1). */
   statDeltaCount: number;
   statDeltaAuthored: number;
@@ -197,12 +201,25 @@ function recordEvents(
   telemetry: Record<string, CombatantTelemetry>,
   casts?: { byTier: Record<string, number>; byManaBand: Record<string, number>; byMove: Record<string, number> },
   deltas?: { count: number; authored: number; landed: number; enemyCount: number; enemyAuthored: number; enemyLanded: number; held: number; enemyHeld: number },
-  shield?: { tally: ShieldTally; held: Record<string, number> }
+  shield?: { tally: ShieldTally; held: Record<string, number> },
+  field?: { sets: Record<string, number>; enemySets: Record<string, number>; rounds: Record<string, number> }
 ): void {
   // A StatChanged names its holder, not its caster; the caster is the side of the last MoveUsed.
   let casterSide: Side | undefined;
+  // A FieldEffectSet names no side either: it follows the MoveUsed that carried it, or the SwitchedIn a Herald fired on.
+  let fieldSetterSide: Side | undefined;
   for (const event of events) {
-    if (event.type === 'MoveUsed') casterSide = telemetry[event.combatantId]?.side;
+    if (event.type === 'MoveUsed') casterSide = fieldSetterSide = telemetry[event.combatantId]?.side;
+    if (event.type === 'SwitchedIn') fieldSetterSide = event.side;
+    if (field && event.type === 'FieldEffectSet') {
+      const bucket = fieldSetterSide === AI_SIDE ? field.enemySets : field.sets;
+      bucket[event.fieldEffectId] = (bucket[event.fieldEffectId] ?? 0) + 1;
+      bucket.all = (bucket.all ?? 0) + 1;
+    }
+    if (field && (event.type === 'FieldEffectTicked' || event.type === 'FieldEffectExpired')) {
+      field.rounds[event.fieldEffectId] = (field.rounds[event.fieldEffectId] ?? 0) + 1;
+      field.rounds.all = (field.rounds.all ?? 0) + 1;
+    }
     if (event.type === 'StatChanged' && deltas && event.capped && casterSide) {
       if (casterSide === PLAYER_SIDE) deltas.held += 1;
       else deltas.enemyHeld += 1;
@@ -389,9 +406,11 @@ export function simulateFight(input: FightInput): FightOutcome {
     };
   }
 
+  const field = { sets: {} as Record<string, number>, enemySets: {} as Record<string, number>, rounds: {} as Record<string, number> };
   const opening = resolveBattleStartEntries(start, 1, allCombatants, statuses, passives, fieldEffects);
   let state = opening.state;
-  recordEvents(opening.events, telemetry);
+  // A Herald on the opening lead sets its field here, before any round.
+  recordEvents(opening.events, telemetry, undefined, undefined, undefined, field);
   let beats = countBeats(opening.events);
 
   const playerCtx = { ...contextFor(playerRoster, state), random: rng };
@@ -447,7 +466,7 @@ export function simulateFight(input: FightInput): FightOutcome {
     state = fillOpenSlots(state, AI_SIDE, replacementEvents);
     roundEvents.push(...replacementEvents);
 
-    recordEvents(roundEvents, telemetry, casts, deltas, shield);
+    recordEvents(roundEvents, telemetry, casts, deltas, shield, field);
     beats += countBeats(roundEvents);
     creditKos(roundEvents, telemetry);
 
@@ -497,6 +516,9 @@ export function simulateFight(input: FightInput): FightOutcome {
     castsByTier: casts.byTier,
     castsByManaBand: casts.byManaBand,
     castsByMove: casts.byMove,
+    fieldSets: field.sets,
+    enemyFieldSets: field.enemySets,
+    fieldRounds: field.rounds,
     statDeltaCount: deltas.count,
     statDeltaAuthored: deltas.authored,
     statDeltaLanded: deltas.landed,

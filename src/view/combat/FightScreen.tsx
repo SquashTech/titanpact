@@ -24,7 +24,7 @@ import {
   getMaxMana,
   moveForHero,
 } from '../../engine/state';
-import type { HealCaster } from '../../engine/heal/healPipeline';
+import { fieldHealMultiplier, type HealCaster } from '../../engine/heal/healPipeline';
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { DEFAULT_PACT_CLOCK, PACT_WARNING_ROUNDS, pactFractionFor } from '../../engine/combat/pactClock';
 import { applyForcedReplacement } from '../../engine/combat/switching';
@@ -1484,6 +1484,7 @@ export function FightScreen({
               wisdom: casterStats.wisdom,
               types: effectiveTypes(hero, combatant),
               stats: casterStats,
+              fieldMult: fieldHealMultiplier(statCtx),
             };
             return (
               <div className="action-panel" key={id}>

@@ -3,7 +3,7 @@ import { test } from './harness';
 import { TYPES } from '../src/data/typechart';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
-import { passives, boonPassives, typeDamagePassiveFor, TYPE_DAMAGE_BONUS, TYPE_DAMAGE_PASSIVE_TYPES } from '../src/data/passives';
+import { passives, boonPassives, fieldHeraldPassiveFor, typeDamagePassiveFor, TYPE_DAMAGE_BONUS, TYPE_DAMAGE_PASSIVE_TYPES } from '../src/data/passives';
 import { classPassives } from '../src/data/classes';
 import { progressionTable } from '../src/data/progression';
 import { BOON_OFFER_COUNT, boonMoveCount, boonMoveType, boonPool, pickBoonOffers, rosterTypes } from '../src/run/boons';
@@ -126,4 +126,18 @@ test('boons: boonMoveCount counts the moves a type Boon would actually fire on',
 
 test('boons: the map carries the Boon node', () => {
   assert.ok((MAP_NODE_TYPES as readonly string[]).includes('passiveReward'));
+});
+
+test('boons: the field Heralds are type-locked on the field\'s flavour type, offered beside the damage Boon and withheld the same way', () => {
+  let run = createRunState();
+  run = addRosterEntry(run, entry(heroOfType('Light')));
+  const pool = new Set(boonPool(run.roster, heroes));
+  assert.ok(pool.has(fieldHeraldPassiveFor.Light!), 'a Light hero was not offered the Sanctuary Herald');
+  const owned = rosterTypes(run.roster, heroes);
+  for (const [type, id] of Object.entries(fieldHeraldPassiveFor)) {
+    if (owned.has(type)) continue;
+    assert.ok(!pool.has(id!), `${type} Herald offered to a roster with no ${type} hero`);
+  }
+  // A Herald is not a move-count Boon: the fit readout has nothing to count, since any hero can carry the field.
+  assert.strictEqual(boonMoveType(passives[fieldHeraldPassiveFor.Light!]), null);
 });

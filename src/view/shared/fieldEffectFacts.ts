@@ -31,6 +31,7 @@ function effectFacts(def: FieldEffectDefinition): FieldEffectFact[] {
   if (def.healPriorityBonus != null) {
     rows.push({ label: 'Priority', text: `${def.healPriorityBonus > 0 ? '+' : ''}${def.healPriorityBonus} on every healing move` });
   }
+  if (def.healMultiplier != null) rows.push({ label: 'Healing', text: `×${def.healMultiplier} on every healing move, both sides` });
   if (def.statBonusEqualToStatusMagnitude) {
     const { statusId, stats } = def.statBonusEqualToStatusMagnitude;
     rows.push({

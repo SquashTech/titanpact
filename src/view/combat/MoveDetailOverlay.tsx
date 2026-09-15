@@ -11,7 +11,7 @@ import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
 import { typeChart } from '../../data/typechart';
 import { resolveStab, resolveTypeMult, TYPE_MULT_FLOOR } from '../../engine/damage/typeMult';
-import { resolveHealFor, type HealCaster } from '../../engine/heal/healPipeline';
+import { fieldHealMultiplier, resolveHealFor, type HealCaster } from '../../engine/heal/healPipeline';
 import { resolveStatusMagnitudeFor, scaleStatusMagnitude } from '../../engine/status/statusMagnitude';
 import {
   calcDamage,
@@ -233,10 +233,12 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
           stats: Object.fromEntries(
             STAT_ORDER.map((stat) => [stat, getEffectiveStat(attackerHero, attacker, stat, statCtx)])
           ) as Record<StatKey, number>,
+          fieldMult: fieldHealMultiplier(statCtx),
         }
       : caster;
   const heal = move.kind === 'heal' ? healReadout(move, healCaster) : null;
   const healTerms = healCaster && move.kind === 'heal' ? resolveHealFor(move, healCaster) : null;
+  const activeFieldName = context?.combat.activeFieldEffect ? fieldEffects[context.combat.activeFieldEffect.fieldEffectId]?.name ?? '' : '';
   const stab =
     (move.kind === 'damage' || move.kind === 'heal') && healCaster ? resolveStab(move.type, healCaster.types) > 1 : false;
   const forceBonus = attacker ? resolveElementalForceBonus(attacker, move.type, statuses) : 0;
@@ -380,7 +382,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
             className="move-detail-stat move-detail-stat-heal"
             title={
               healTerms
-                ? `${healTerms.healPower} HealPower × ${healTerms.wisdomMult.toFixed(2)} Wisdom${healTerms.stab > 1 ? ' × 1.25 STAB' : ''}`
+                ? `${healTerms.healPower} HealPower × ${healTerms.wisdomMult.toFixed(2)} Wisdom${healTerms.stab > 1 ? ' × 1.25 STAB' : ''}${healTerms.fieldMult !== 1 ? ` × ${healTerms.fieldMult} ${activeFieldName}` : ''}`
                 : undefined
             }
           >

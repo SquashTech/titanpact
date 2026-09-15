@@ -1,6 +1,8 @@
 // The healing formula (docs/combat.md "The healing formula"):
 //   Heal = HealPower × WisdomMult × STAB, WisdomMult = 1 + (Wisdom − 50)/100 clamped to [0.5, 2.0]
 // No target max-HP term, no variance, no defender-side term — each a decision (see the doc).
+// A Field Effect's healMultiplier (Sanctuary) is a term of THIS pipeline, as a damage modifier is
+// of the damage pipeline — never a Wisdom bonus (docs/field-effects.md).
 
 import type { HeroDefinition, MoveDefinition, StatKey, TypeId } from '../content';
 import type { Combatant, FieldEffectContext } from '../state';
@@ -47,6 +49,8 @@ export interface HealCaster {
   wisdom: number;
   types: readonly TypeId[];
   stats?: Partial<Record<StatKey, number>>;
+  /** The active Field Effect's healMultiplier, resolved by whoever holds the board (fieldHealMultiplier). Omitted = 1. */
+  fieldMult?: number;
 }
 
 export interface HealCalcResult {
@@ -55,16 +59,23 @@ export interface HealCalcResult {
   healPower: number;
   wisdomMult: number;
   stab: number;
+  fieldMult: number;
 }
 
 /** Pure: takes the resolved terms. */
-export function calcHeal(healPower: number, wisdomMult: number, stab: number): HealCalcResult {
-  return { heal: Math.round(healPower * wisdomMult * stab), healPower, wisdomMult, stab };
+export function calcHeal(healPower: number, wisdomMult: number, stab: number, fieldMult: number = 1): HealCalcResult {
+  return { heal: Math.round(healPower * wisdomMult * stab * fieldMult), healPower, wisdomMult, stab, fieldMult };
+}
+
+/** The active Field Effect's heal term, or 1 with none up. */
+export function fieldHealMultiplier(fieldEffectCtx?: FieldEffectContext): number {
+  const id = fieldEffectCtx?.active?.fieldEffectId;
+  return (id && fieldEffectCtx?.defs[id]?.healMultiplier) || 1;
 }
 
 /** The formula from a plain stat + type pair. */
 export function resolveHealFor(move: MoveDefinition, caster: HealCaster): HealCalcResult {
-  return calcHeal(move.healPower ?? 0, magnitudeMultFromStat(caster.wisdom), resolveStab(move.type, caster.types));
+  return calcHeal(move.healPower ?? 0, magnitudeMultFromStat(caster.wisdom), resolveStab(move.type, caster.types), caster.fieldMult ?? 1);
 }
 
 /** The whole formula for one caster + one heal move. Target-independent, so a bothAllies heal resolves once. */
@@ -77,5 +88,6 @@ export function resolveHeal(
   return resolveHealFor(move, {
     wisdom: getEffectiveStat(casterHero, caster, 'wisdom', fieldEffectCtx),
     types: effectiveTypes(casterHero, caster),
+    fieldMult: fieldHealMultiplier(fieldEffectCtx),
   });
 }
