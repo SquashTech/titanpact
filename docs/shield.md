@@ -1,11 +1,12 @@
 # shield.md — Shield: bonus health, off Defense
 
 > **STATUS: DECIDED 2026-09-14 (per user direction — the six decisions in §3 are the designer's,
-> the cap at 100% of max HP over the proposed 50%). NOTHING IN §8 IS BUILT.** `CLAUDE.md`,
-> `combat.md` and `stat-scaling.md` describe the game in force wherever a §8 phase has not
-> landed; §8 is the route and §9 the list of sign-offs each phase spends — **check its Status
-> column before assuming anything here is live.** Every number below is a first pass unless it
-> says otherwise; the design is the shape, and phase 4 is where the numbers get set.
+> the cap at 100% of max HP over the proposed 50%). PHASES 1–3 ARE BUILT (2026-09-15):** the
+> engine, the seven moves and the presentation are in; §8's Status column says what each phase
+> landed, and §8's "What was built" names the three places the build departed from the text
+> (Vigil for Sanctuary, `onShieldBroken` as the broken trigger's shape, the pool seats). Phase 4
+> is the measurement batch. Every number below is a first pass unless it says otherwise; the
+> design is the shape, and phase 4 is where the numbers get set.
 
 ---
 
@@ -140,7 +141,7 @@ HP (roughly a tenth, a fifth, a third):
 | Move | Slate, tier | Target | Base | The verb |
 |---|---|---|---|---|
 | **Iron Skin** | Iron, Early | self | 30 | The plain one: the tank shields itself and swings next round. |
-| **Sanctuary** | Light, Early | single ally | 25 + Renew 10 | A Shield and a HoT on one card — the healer's version, both halves off its own stats (Defense, Wisdom), so a Light hero with both reads as the best support in the roster and one with only Wisdom reads as a healer who can shield a little. |
+| **Vigil** (authored as *Sanctuary*; renamed at build — Sanctuary is Light's field effect and Halo an Evolution path) | Light, Early | single ally | 25 + Renew 10 | A Shield and a HoT on one card — the healer's version, both halves off its own stats (Defense, Wisdom), so a Light hero with both reads as the best support in the roster and one with only Wisdom reads as a healer who can shield a little. |
 | **Ice Shell** | Frost, Mid | single ally | 50 | Bigger, single target, and the hit that breaks it Freezes the striker (a `trigger` on `'broken'` — one new clause, §4). The reason to hit *around* a Frost Shield. |
 | **Rampart** | Stone, Late | both allies | 65 | The wall. Late-priced, both allies, the biggest pool on the table — the card that makes Stone the Shield type the way Light is the heal type. |
 | **Living Wall** | Iron, Mid | self, then switch | 40 | Shield self and pivot out (`switchesUserOut`): the Shield goes to the bench with the hero and comes back — the one card that spends §3.1's "leaves with the hero" on purpose. |
@@ -257,10 +258,37 @@ Sequenced so the tree is playable at every boundary and each phase can be refuse
 
 | # | Phase | Exit criterion | Status |
 |---|---|---|---|
-| 1 | **The engine.** `'shield'` pipeline; `magnitudeStatKey → defense`; `applyHpDelta(source)` with the absorb at the two `'hit'` sites; capped additive stacking in `applyStatus`; `DamageDealt.absorbed`, `StatusRemoved 'broken'`, `StatusApplied.capped`; the `Shield` status; `test/shield.test.ts` (absorb, overflow to HP, break, cap, snapshot off the caster's Defense, DoT and Clock go through, drain reads HP, an absorbed hit still triggers). One fixture move, in no pool. | Every §2–§4 sentence pinned; nothing in any slate changed. | — |
-| 2 | **The content.** Tide Guard and Bastion converted; Iron Skin, Sanctuary, Ice Shell, Rampart, Living Wall authored on the runbook with slate tests; the `'broken'` trigger for Ice Shell, or Ice Shell plain with the trigger deferred (§4); schedule seats placed by the designer. | Seven Shield moves in five slates; every slate test green; the Water/Stone converts' old pins gone. | — |
-| 3 | **Presentation.** The bar segment, `+N` on the label, *absorbed N* / *Shield broken* popups, *Shield N* on cast, the move card's figure and *can't go any higher*, the status dossier's "what goes through". Verified with the throwaway harness over headless Edge. | A player reads a Shield, a hit into it, and its breaking from the fight screen without the log. | — |
+| 1 | **The engine.** `'shield'` pipeline; `magnitudeStatKey → defense`; `applyHpDelta(source)` with the absorb at the two `'hit'` sites; capped additive stacking in `applyStatus`; `DamageDealt.absorbed`, `StatusRemoved 'broken'`, `StatusApplied.capped`; the `Shield` status; `test/shield.test.ts` (absorb, overflow to HP, break, cap, snapshot off the caster's Defense, DoT and Clock go through, drain reads HP, an absorbed hit still triggers). One fixture move, in no pool. | Every §2–§4 sentence pinned; nothing in any slate changed. | **IN** 2026-09-15 |
+| 2 | **The content.** Tide Guard and Bastion converted; Iron Skin, Sanctuary, Ice Shell, Rampart, Living Wall authored on the runbook with slate tests; the `'broken'` trigger for Ice Shell, or Ice Shell plain with the trigger deferred (§4); schedule seats placed by the designer. | Seven Shield moves in five slates; every slate test green; the Water/Stone converts' old pins gone. | **IN** 2026-09-15 (the trigger built; seats a first pass) |
+| 3 | **Presentation.** The bar segment, `+N` on the label, *absorbed N* / *Shield broken* popups, *Shield N* on cast, the move card's figure and *can't go any higher*, the status dossier's "what goes through". Verified with the throwaway harness over headless Edge. | A player reads a Shield, a hit into it, and its breaking from the fight screen without the log. | **IN** 2026-09-15 |
 | 4 | **Measure and re-fit.** The pilot and the AI price a Shield as a guard with a number and treat a capped one as inert; the sim reports Shield granted / absorbed / broken by act and damage taken by category; a batch against the phase-2b tree (67.1% full-clear, Reader 68 min); the Defense question re-read — does a Defense-heavy hero's draft lift move? | Figures reported; the bases and the cap are the designer's to move. | — |
+
+**What was built, where it departs from the text above (2026-09-15).**
+
+- **The broken trigger is a status field, not a hook:** `StatusDefinition.onShieldBroken`
+  (`content.ts`) — a rider a status lands on the striker whose hit breaks its holder's Shield,
+  then is consumed. Ice Shell plants a second boolean status, `IceShell`, beside its Shield 50;
+  the Shield itself carries no trigger, since Tide Guard's and Ice Shell's pools are one additive
+  status and only the Frost card should punish. `StatusRemoved 'broken'` carries
+  `sourceCombatantId`, the striker, so the rider knows who to pay. `statusEngine.ts
+  resolveShieldBrokenRiders` runs after the hit has resolved, at both `'hit'` sites.
+- **Sanctuary is Vigil** (`vigil`): Light already has a field effect named Sanctuary (Consecrate
+  sets it, Smite doubles under it) and Zenith's Light graft is a path named Halo. Same card —
+  Shield 25 + Renew 10, single ally, Early, 25 mana.
+- **The seats are a first pass, placed by the build, for the designer to move:** Iron Skin in
+  Iron Warden's, Valor's and Gallant's pools; Living Wall in Iron Warden's and Valor's; Rampart in
+  Crag's and Sentinel's; Vigil in Dawnwarden's and Aegis's; Ice Shell in Glacial Warden's and
+  Rime's. The Titanspawn kits are untouched — the Stone Mid and both Water spawn already held
+  Bastion or Tide Guard, so those lines shield off their own Defense now; nothing else does.
+- **The cap on the view:** `StatBars.tsx ShieldFill` draws the band past the fill and, for what
+  will not fit, over it from the left — the mana overflow's answer, since the track's length is
+  max HP and cannot grow. `applyEventToState` takes `DamageDealt.absorbed` off the displayed
+  pool, since the engine's partial absorb emits no status event of its own.
+- **The AI and the pilot** (§3.6): `ai.ts riderIsRedundant` treats a Shield rider as inert when
+  every receiver's pool is at its max HP; the pilot prices a Shield rider at
+  `min(pool, room under the cap, incoming over the horizon × ½)`, prices a hit into a Shield as
+  the absorb plus what reaches HP (no KO credit, no drain off the absorb), and `policy.ts`
+  values a Shield card at its base × 1.2 for the replace-at-cap decision.
 
 **What each phase measures.** Phase 1: nothing — it is a contract. Phase 2: the slate tests.
 Phase 4: absorbed as a share of damage dealt by act; how often the cap binds; whether the Water
@@ -300,10 +328,10 @@ screen" — a Shield is a rider on a move, chosen by casting it.
 - **Bench regen and Shield.** `benchHpRegenFlat` heals HP on the bench; a Shield neither regens
   nor decays there. Nothing to decide unless bench HP regen ever becomes a fraction of max, in
   which case "does the Shield count" is a real question.
-- **The `'broken'` trigger.** Ice Shell wants it; building a status-removal-reason trigger is a
-  small piece of engine vocabulary that other content might want (a Renew that pays out when
-  cleansed, a Barrier that punishes the move it turned). Build it for Ice Shell if phase 2 finds
-  it cheap; otherwise Ice Shell ships plain and the trigger is its own conversation.
+- **The `'broken'` trigger.** Built for Ice Shell as `onShieldBroken` (§8 "What was built") —
+  Shield-specific by design, not a general status-removal hook. A Renew that pays out when
+  cleansed or a Barrier that punishes the move it turned would want the general shape, and that
+  is still its own conversation.
 - **The Class and the signature.** A Class verb ("a shield" beside "a redirect, a priority strike,
   a spread, a heal") is the obvious ninth-plus Class; and one of the Iron or Stone signatures may
   want to be a Shield card once the mechanic exists. Neither is in §8; both are content to place

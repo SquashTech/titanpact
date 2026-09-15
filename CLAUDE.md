@@ -121,6 +121,22 @@ don't silently override it.
 > 20 HP** (his one dial — Mana fed Archon Blast and read worse): the Act 1 Guardian 77 → 82%,
 > Act 1 62%, full-clear 23.1%.
 
+> **A sixth is BUILT, phases 1–3: `docs/shield.md`** (decided 2026-09-14, built 2026-09-15).
+> **Shield is bonus health off Defense**: a `'shield'`-pipeline status (`src/engine/status/shield.ts`)
+> whose magnitude is a pool, scaled off the CASTER's Defense on the status-magnitude formula
+> (`magnitudeStatKey`: `hot` → Wisdom, `dot` → the move's offensive stat, **`shield` → Defense**),
+> taken from before HP by **a move's hit only** — `applyHpDelta` takes a `source`, `'hit'` at the
+> move's hit and the Conduct burst, `'direct'` (the default) everywhere else, so a DoT, the Pact
+> Clock, recoil and a self-cost go straight through — lasting until a hit empties it
+> (`StatusRemoved 'broken'`, carrying the striker), additive up to **the holder's max HP**
+> (`StatusApplied.capped`, voiced *can't go any higher*). `DamageDealt.amount` is what HP lost and
+> `absorbed` what the pool took; an absorbed hit is still a hit for every passive, drain reads HP.
+> Seven cards in five slates: Tide Guard and Bastion converted (Shield 20 / 45 on both allies),
+> Iron Skin, Living Wall (pivots, the pool goes to the bench), Rampart (Late, both allies, 65),
+> Ice Shell (50, and `IceShell` — `StatusDefinition.onShieldBroken` — Freezes whoever breaks
+> it) and Vigil (the doc's Sanctuary, renamed: Sanctuary is Light's field effect). Pool seats are
+> a first pass; the spawn kits are untouched. Phase 4 (measure) is next; its §8 lists what.
+
 ---
 
 ## Locked invariants — do not violate without an explicit decision
@@ -480,8 +496,8 @@ don't silently override it.
   loses **10%** of max HP at the round boundary, rising **+5% per round**, so a full-HP hero
   dies five rounds in. Rotation spreads it, but every switch-in eats a tick, so stalls end
   later, not never. Direct HP loss: no Defense, no type
-  chart, no variance, and **no passive reaction pass** — the terminator is not a trigger
-  source. It closes the stall nothing else bracketed (mana regenerates, rounds were
+  chart, no variance, **no Shield** (2026-09-15, `docs/shield.md` §3.2), and **no passive
+  reaction pass** — the terminator is not a trigger source. It closes the stall nothing else bracketed (mana regenerates, rounds were
   unbounded, stat mods have no ceiling). Escalating chip, not instant death, so the side
   that is ahead still wins and only the stall loses. Round 30 is a placeholder for a
   measurement — see `docs/combat.md`.

@@ -1612,8 +1612,10 @@ small-pool hero is quietly exempt to rounding.
 Four properties, each deliberate:
 
 - **It is direct HP loss, not a damage-pipeline hit.** No Defense, no type chart, no
-  variance, no crit — nothing to buff, resist, or wall. A stall is not supposed to be
-  survivable by playing the stall better.
+  variance, no crit, and **no Shield** (2026-09-15, `docs/shield.md` §3.2 — `applyHpDelta`
+  takes a `source`, and only a move's hit is `'hit'`; everything else, the Clock included, is
+  `'direct'` and reaches HP under a full pool) — nothing to buff, resist, or wall. A stall is
+  not supposed to be survivable by playing the stall better.
 - **It hits the FIELD, not the bench** (reversed 2026-09-13, per user direction —
   `titanspawn-overhaul.md` §6; it hit both from 2026-09-01). A stalling side can rotate to
   spread the loss across four bodies, but every switch-in eats at least one boundary tick and

@@ -476,6 +476,16 @@ statusApplication: { statusId: 'Burn', magnitude: 10, target: 'moveTarget' }
   reference hero — stat 50, no STAB — and the roster spread takes care of itself.
   The one exception is a `dot` aimed at `self`: that is a COST, and it lands
   exactly as authored.
+- **A Shield rider is authored the same way** (2026-09-15, `docs/shield.md`): its magnitude is
+  a base the caster's **Defense** scales on the heal formula's constants, with STAB — so Iron
+  Warden (100 Defense, Iron) turns Iron Skin's 30 into 56 and an off-type 50-Defense caster lands
+  the figure as written. Author against the reference hero; a Shield's band is the buff body's
+  (Early 20–30, Mid 30–50, Late 50–75) read as a fraction of a Mid hero's HP. Bonus health, not
+  Defense: it is the thing to reach for when a row says *protect*, *ward*, *shell* or *wall*, and
+  the two Defense grants that read that way (Tide Guard, Bastion) were converted. A card that
+  should punish being broken plants a second marker status carrying `onShieldBroken` beside the
+  pool, as Ice Shell does — the Shield itself is one additive status per holder and carries no
+  trigger of its own.
 - `chance: 0.1` gates the rider on a roll. **It gates the rider, never the move** —
   the damage still lands (`CLAUDE.md`: no accuracy stat). Rolls once per target.
 - **A move can carry ONE rider or a LIST of them** (2026-08-30, Beast's Toxic
@@ -501,6 +511,8 @@ The catalog (`src/data/statuses.ts`, `docs/conditions new.md`):
 | `Haunt` | boolean | A Spirit/Mind single-target hit on the partner also strikes the holder | Yes |
 | `Ambush` | magnitude, positive | Adds its magnitude as flat Base Power to the next attack the holder lands, whatever the move type, then is spent. No clock | Yes |
 | `Provoke` | duration | Every single-target move the enemy side aims at this side is redirected onto the holder. Spread moves are unaffected | Yes |
+| `Shield` | magnitude, positive | Bonus health (`docs/shield.md`): a move's hit is taken from it before HP; a DoT tick, the Pact Clock, recoil and a self-cost go straight through. Lasts until a hit empties it; adds up to the holder's max HP. X scales off the caster's **Defense** (§3) | No |
+| `IceShell` | boolean, positive | Ice Shell's marker beside its Shield: the striker whose hit breaks the holder's Shield is Frozen, then it is spent (`onShieldBroken`) | No |
 
 Two of these have **type-keyed hooks** that fire automatically off any damage move of
 the right type (`StatusDefinition.triggerTypes` for Conduct, `spreadTriggerTypes` for
@@ -947,11 +959,12 @@ extensions; some are design decisions above your pay grade. Either way, name it.
 - **Two-turn / charge / recharge moves.** Nothing in the round model supports a move
   that spans rounds. (A move that sends its user OUT now exists —
   `switchesUserOut` — but that resolves entirely within its own round.)
-- **Protect / shield / damage negation.** (A *redirect* now exists — Provoke pulls
-  every single-target enemy move onto its holder — but that moves a hit, it does not
-  stop one.) **DECIDED 2026-09-14, not yet built: `docs/shield.md`** — a Shield status, bonus
-  health off the caster's Defense on the heal formula, absorbed before HP at the one chokepoint,
-  hits only. Read that doc before authoring anything that stops a hit.
+- ~~**Protect / shield / damage negation.**~~ **Now exists** (2026-09-15, `docs/shield.md`) —
+  the `Shield` status (§3), bonus health off the caster's Defense on the heal formula, absorbed
+  before HP at the one chokepoint, hits only; seven cards in five slates. A *redirect* exists too
+  (Provoke). What still does not is a Barrier-style negation that lasts more than a round, or
+  damage reduction as a percentage — both would be new vocabulary, and the doc's §3.1 says why
+  the Shield is a pool and not a timer.
 - **A move that applies a damage-pipeline modifier** ("+20% Fire damage for 3 rounds").
   `DamageModifier` exists but is fed only by Passives, never by moves.
 - ~~**A second status on one move.**~~ **Now exists** — `statusApplication` is
