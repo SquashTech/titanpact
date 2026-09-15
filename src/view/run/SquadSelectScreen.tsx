@@ -396,9 +396,12 @@ export function SquadSelectScreen({
                                 </span>
                               )}
                               <HeroPortrait heroId={hero.id} className="roster-card-portrait" />
-                              <div className="roster-card-name">
-                                {hero.name} <span className="hint">Lv {levelOf(entry)}</span>
-                              </div>
+                              {/* On the figure's corner as the pick cards wear it, not on the name line: a row
+                                  cell's line holds a ten-letter name OR a level, not both. */}
+                              <span className="pick-level squad-slot-level" aria-hidden="true">
+                                {levelOf(entry)}
+                              </span>
+                              <div className="roster-card-name">{hero.name}</div>
                               <div className="roster-card-types">
                                 {rosterEntryTypes(hero, entry).map((t) => (
                                   <TypeBadge key={t} type={t} />

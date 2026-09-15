@@ -12406,14 +12406,63 @@ textarea,
 
 .squad-slot {
   position: relative;
-  min-height: 64px;
+  min-height: 56px;
   border-radius: var(--radius-sm);
-  padding: 10px;
+  padding: 8px;
   box-shadow: var(--hairline), var(--elev-1);
   transition: border-color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
   text-align: left;
   color: var(--text);
   cursor: pointer;
+}
+
+/* A filled cell is a ROW — figure left, name and typing beside it — not a
+   stacked card (2026-09-15, per user direction). Stacked, the three bands ran
+   689px against a 586px stage at the 700px reference height and the screen
+   scrolled with four enemies scouted; the six-enemy finale had just been
+   tightened above it and the four-enemy case was left scrolling by 23px even
+   on a tall phone. A row is 56px against the card's 103, and the whole
+   preview sits on one page with room under it. Same shape the switch-in
+   picker's rows use, so the hero reads the same way on both sides of a fight. */
+.squad-slot.filled {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 8px;
+  align-items: center;
+  align-content: center;
+}
+
+/* The move-here key sits on the row's right edge, so a cell that wears one
+   keeps its text clear of it. */
+.squad-slot.filled.drop-target {
+  padding-right: 30px;
+}
+
+.squad-slot.filled .roster-card-portrait {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  margin: 0;
+}
+
+.squad-slot.filled .roster-card-name {
+  grid-column: 2;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.squad-slot.filled .roster-card-types {
+  grid-column: 2;
+  margin-top: 2px;
+}
+
+/* At the figure's feet, not its head: the tutorial's lock pin holds the top-left. */
+.squad-slot-level {
+  left: 5px;
+  top: auto;
+  bottom: 4px;
 }
 
 /* An empty slot is a hole in the layout, not an object in it — so it drops
@@ -12473,14 +12522,15 @@ textarea,
    move is the one that looks like a button. */
 .squad-slot-swap {
   position: absolute;
-  top: -8px;
-  right: -8px;
+  top: 50%;
+  right: -7px;
   z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
+  margin-top: -16px;
   padding: 0;
   border: 1px solid rgba(255, 220, 150, 0.7);
   border-radius: 50%;
@@ -12492,8 +12542,8 @@ textarea,
 }
 
 .squad-slot-swap > svg {
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
   fill: currentColor;
 }
 
@@ -12504,9 +12554,7 @@ textarea,
 /* The empty cell is the one place a plain tap still lands the hero, so its key
    sits inside the recess rather than on a corner it does not draw. */
 .squad-slot.empty .squad-slot-swap {
-  top: 50%;
   right: 12px;
-  margin-top: -17px;
 }
 
 /* --- A hero joining the pact (RecruitFanfare.tsx) -------------------------
