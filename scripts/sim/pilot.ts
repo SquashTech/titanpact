@@ -16,7 +16,7 @@
 // It is still a ONE-PLY greedy pilot: no lookahead, no reading the opponent's
 // declaration, no baiting. It is a better floor, not a ceiling.
 
-import type { MoveDefinition, StatKey, StatusApplication, TargetMode } from '../../src/engine/content';
+import type { MoveDefinition, StatKey, StatusApplication, StatusDefinition, TargetMode } from '../../src/engine/content';
 import { statusApplicationsOf } from '../../src/engine/content';
 import type { Action } from '../../src/engine/combat/actions';
 import type { CombatState, FieldEffectContext, Side } from '../../src/engine/state';
@@ -240,6 +240,51 @@ function threatOf(state: CombatState, ctx: AiContext, combatantId: string, cache
 
 // --- Status valuation, both signs, in HP ---
 
+/**
+ * What a flat-BasePower grant (an Elemental Force, or Ambush) is worth to its holder, in HP: the
+ * damage its best castable attack gains with the status held, off the real pipeline, times the
+ * casts it lasts — one for Ambush, which is spent on the next hit; the horizon for a Force, which
+ * has no clock and no decay. A Force rides the ratio, STAB and the chart, so BasePower is not HP
+ * and a flat conversion under-priced it about four to one (2026-09-15). Capped at what is left to
+ * remove from the far side, so it never pays for overkill.
+ */
+function basePowerGrantValue(
+  state: CombatState,
+  ctx: AiContext,
+  holderId: string,
+  def: StatusDefinition,
+  magnitude: number
+): number {
+  const holder = state.combatants[holderId];
+  if (!holder || holder.fainted || magnitude <= 0) return 0;
+  const held = holder.statuses[def.id]?.magnitude ?? 0;
+  const boosted: CombatState = {
+    ...state,
+    combatants: {
+      ...state.combatants,
+      [holderId]: { ...holder, statuses: { ...holder.statuses, [def.id]: { statusId: def.id, magnitude: held + magnitude } } },
+    },
+  };
+  const foes = aliveActiveIdsOn(state, otherSide(holder.side));
+  let best = 0;
+  for (const moveId of ctx.moveIdsFor(holderId)) {
+    const move = moves[moveId];
+    if (!move || !isDamaging(move)) continue;
+    if (!def.forceAllTypes && move.type !== def.forceType) continue;
+    if (holder.currentMana < resolveManaCost(state, holderId, move, allCombatants)) continue;
+    const spread = move.target === 'bothEnemies' || move.target === 'allOthers';
+    let gain = 0;
+    for (const foeId of foes) {
+      const marginal = expectedHit(boosted, holderId, move, foeId) - expectedHit(state, holderId, move, foeId);
+      gain = spread ? gain + marginal : Math.max(gain, marginal);
+    }
+    best = Math.max(best, gain);
+  }
+  const casts = def.consumedOnDamage ? 1 : HORIZON;
+  const remaining = foes.reduce((sum, id) => sum + state.combatants[id].currentHp, 0);
+  return Math.min(best * casts, remaining);
+}
+
 /** What one applied rider is worth to the side that wanted it, in HP. Negative statuses are priced on the HOLDER's cost. */
 function riderValue(
   state: CombatState,
@@ -298,8 +343,8 @@ function riderValue(
       // A turn taken off the holder is a round of its output.
       return threatOf(state, ctx, holderId, cache) * Math.min(duration, HORIZON);
     case 'basePower':
-      // Elemental Force: magnitude is flat BasePower on the holder's next casts.
-      return magnitude * Math.min(duration, HORIZON) * 0.5;
+      // Elemental Force / Ambush: flat BasePower on the holder's casts, priced off the pipeline.
+      return basePowerGrantValue(state, ctx, holderId, def, magnitude);
     case 'timer':
       return magnitude;
     default:

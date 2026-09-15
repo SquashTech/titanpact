@@ -319,11 +319,14 @@ and leaves the 1:1 grant where it was. If it now reads as broken, that is the pl
 | Heralds + Sanctuary term | 403 / 673 | 14.0 | 10.3% | 55.5% |
 | + riders, readers, kits | 582 / 1,038 | 20.6 | 14.7% | 55.0% |
 
-Full-clear is unmoved — none of this was a power lever. What the pilot cannot price: a Force
-self-buff (Undercurrent, Hoarfrost Edge, Static Charge, Soulfire were cast 0–3 times in 78,558
-turns; `pilot.ts` values Force at half its magnitude over the horizon, about a quarter of what
-it pays), and the Heralds themselves are drawn at random like every Boon. Directional, as
-always; the read that matters is the user's next run.
+Full-clear is unmoved — none of this was a power lever. The first batch cast a Force self-buff
+0–3 times in 78,558 turns because `pilot.ts` priced a BasePower grant at half its magnitude for
+one cast; **fixed the same day** (`basePowerGrantValue`: the holder's best castable attack re-run
+through the pipeline with the status held, times the casts it lasts — one for Ambush, the
+horizon for a Force, capped at the far side's remaining HP). Undercurrent / Hoarfrost Edge /
+Static Charge / Soulfire then cast 49–135 times and Lie in Wait 49 → 431, full-clear paired
+across two seeds a wash (55.0 → 53.8, 52.8 → 55.2). The Heralds are still drawn at random like
+every Boon. Directional, as always; the read that matters is the user's next run.
 
 ### Still deferred
 

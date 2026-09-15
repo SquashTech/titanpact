@@ -2150,6 +2150,6 @@ the readers beside their setters, and one seat in the fitting Titanspawn kit (th
 fixed 3 / 4 / 4, so each is a swap: Gleamling's Mend for Hallow, Whimling's Lull for Distort,
 Sproutling's Regrowth for Sow, Runeling's Focus for Mana Font, Mesmerid's Mental Fortress for
 Stasis, and so on — the enemy side now sets fields, which the "no owner" rule makes into
-counterplay). Sim sanity check in `docs/field-effects.md`: full-clear unmoved at n=600, and the
-pilot casts a Force self-buff almost never — a scorer limit (it prices Force at about a quarter
-of what it pays), not a finding.
+counterplay). Sim sanity check in `docs/field-effects.md`: full-clear unmoved at n=600. The pilot at
+first cast a Force self-buff almost never — a scorer limit, fixed the same day (`pilot.ts`
+`basePowerGrantValue`), not a finding.
