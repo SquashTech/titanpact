@@ -36,6 +36,9 @@
      it has to read as "the same resource, charged past its container", not as
      a different bar. */
   --mana-over: #7fd4ff;
+  /* A Shield's pool (docs/shield.md §5, statusIcons.tsx STATUS_COLOR.Shield): pale steel, so the
+     band past the HP fill reads as health-not-yet-spent rather than a fourth tier of green. */
+  --shield: #d8dde6;
   --accent: #e0a63c;
   --enemy: #d9534f;
   --ally: #4a90d9;
@@ -1594,6 +1597,10 @@ textarea,
 
 .banner-kind-field {
   --banner-kind-color: var(--accent);
+}
+
+.banner-kind-shield {
+  --banner-kind-color: var(--shield);
 }
 
 @keyframes banner-lead-in {
@@ -3846,6 +3853,32 @@ textarea,
   color: #fff;
 }
 
+/*
+ * A Shield on the HP bar (StatBars.tsx ShieldFill). `.shield` is the band drawn AFTER the fill,
+ * offset by the fill's own width; `.shield-over` is what would not fit, laid over the fill from
+ * the left the way mana overflow is — so a full hero with a full Shield reads as twice full.
+ */
+.bar-fill.shield,
+.bar-fill.shield-over {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  height: auto;
+  background-color: var(--shield);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.08) 52%, rgba(0, 0, 0, 0.12));
+  box-shadow: inset -2px 0 0 rgba(255, 255, 255, 0.5), 0 0 5px rgba(216, 221, 230, 0.45);
+  transition: left 0.45s var(--ease-out), width 0.45s var(--ease-out);
+}
+
+.bar-fill.shield-over {
+  left: 0;
+  opacity: 0.85;
+}
+
+.shield-label {
+  color: var(--shield);
+}
+
 @keyframes mana-overcharge {
   0%,
   100% {
@@ -5359,6 +5392,42 @@ textarea,
   color: color-mix(in srgb, var(--hp-high) 70%, var(--text-dim));
   font-size: 12px;
   letter-spacing: 0.02em;
+}
+
+/* A hit a Shield took (buildBeats.ts DamageDealt): the figure in the Shield's tone, its glyph
+   ahead of it. The broken variant flashes and drops, so the pool is seen to go. */
+.dmg-popup.popup-shield {
+  color: var(--shield);
+  font-size: 15px;
+  text-shadow: 0 0 6px rgba(216, 221, 230, 0.55), 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.dmg-popup.popup-shield-broken {
+  color: var(--shield);
+  font-size: 16px;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.7), 0 1px 3px rgba(0, 0, 0, 0.6);
+  animation: dmg-popup-shatter 600ms ease-out forwards;
+}
+
+@keyframes dmg-popup-shatter {
+  0% {
+    opacity: 0;
+    transform: translateY(2px) scale(0.9);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(-3px, 0) scale(1.2);
+  }
+  24% {
+    transform: translate(3px, -1px) scale(1.1);
+  }
+  36% {
+    transform: translate(-1px, -2px) scale(1.05);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-22px) scale(1);
+  }
 }
 
 .dmg-popup.popup-status {

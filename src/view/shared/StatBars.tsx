@@ -41,6 +41,32 @@ function fmtDelta(n: number): string {
   return n > 0 ? `+${n}` : `${n}`;
 }
 
+/**
+ * A Shield on the HP bar (docs/shield.md §5): a pale band drawn past the fill in the bar's own
+ * track, so the pool reads as health the hero has not spent yet. The track's length is still max
+ * HP and cannot grow, so what will not fit after the fill is laid OVER it from the left — the
+ * mana overflow's answer — and a full hero with a full Shield reads as a bar that is twice full.
+ * The exact figure is always beside it in the label.
+ */
+export function ShieldFill({ currentHp, maxHp, shield, as: Tag = 'div' }: { currentHp: number; maxHp: number; shield: number; as?: 'div' | 'span' }) {
+  if (shield <= 0 || maxHp <= 0) return null;
+  const hpFraction = Math.max(0, Math.min(1, currentHp / maxHp));
+  const past = Math.min(shield / maxHp, 1 - hpFraction);
+  const over = Math.max(0, Math.min(1, shield / maxHp - past));
+  return (
+    <>
+      {past > 0 && <Tag className="bar-fill shield" style={{ left: `${hpFraction * 100}%`, width: `${past * 100}%` }} />}
+      {over > 0 && <Tag className="bar-fill shield-over" style={{ width: `${over * 100}%` }} />}
+    </>
+  );
+}
+
+/** The "+N" the HP label gains while a Shield is held, in the Shield's tone. */
+export function ShieldLabel({ shield }: { shield: number }) {
+  if (shield <= 0) return null;
+  return <span className="shield-label"> +{shield}</span>;
+}
+
 /** Shared HP-bar color tiering, so "HP is getting low" is the same threshold everywhere. */
 export function hpTier(fraction: number): 'hp-high' | 'hp-mid' | 'hp-low' {
   if (fraction > 0.5) return 'hp-high';

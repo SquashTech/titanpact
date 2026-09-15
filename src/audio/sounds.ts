@@ -65,6 +65,8 @@ export type SfxId =
   | 'hit.physical'
   | 'hit.magical'
   | 'hit.crit'
+  | 'shield.absorb'
+  | 'shield.break'
   | 'heal'
   | 'buff'
   | 'debuff'
@@ -824,6 +826,29 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'square', freq: 1250, freqEnd: 380, gain: 0.2, attack: 0.001, decay: 0.09, filter: { type: 'lowpass', freq: 4200, freqEnd: 1200, q: 1 } },
       { wave: 'noise', gain: 0.42, attack: 0.001, decay: 0.1, delay: 0.035, filter: { type: 'highpass', freq: 1500 } },
       { wave: 'sine', freq: 96, freqEnd: 44, gain: 0.5, attack: 0.002, decay: 0.28, delay: 0.02 },
+    ],
+  },
+
+  /** A hit landing on plate (docs/shield.md §5): a short metallic ring where flesh would thud. Layered under the hit. */
+  'shield.absorb': {
+    gain: 0.42,
+    jitter: 0.03,
+    voices: [
+      { wave: 'triangle', freq: 880, freqEnd: 640, gain: 0.3, attack: 0.001, decay: 0.16 },
+      { wave: 'sine', freq: 1760, freqEnd: 1420, gain: 0.16, attack: 0.001, decay: 0.24, delay: 0.01 },
+      { wave: 'noise', gain: 0.18, attack: 0.001, decay: 0.045, filter: { type: 'bandpass', freq: 3200, q: 2 } },
+    ],
+  },
+
+  /** The pool going: the ring above, shattered — bright noise and a falling square, with a low thump under it. */
+  'shield.break': {
+    gain: 0.5,
+    jitter: 0.03,
+    voices: [
+      { wave: 'noise', gain: 0.4, attack: 0.001, decay: 0.2, filter: { type: 'highpass', freq: 2600 } },
+      { wave: 'square', freq: 1900, freqEnd: 900, gain: 0.14, attack: 0.001, decay: 0.12 },
+      { wave: 'sine', freq: 2600, freqEnd: 2100, gain: 0.12, attack: 0.001, decay: 0.32, delay: 0.03 },
+      { wave: 'triangle', freq: 240, freqEnd: 120, gain: 0.3, attack: 0.002, decay: 0.2, delay: 0.01 },
     ],
   },
 

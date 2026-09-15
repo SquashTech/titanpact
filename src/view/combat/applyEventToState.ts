@@ -4,9 +4,34 @@
 import type { CombatEvent } from '../../engine/events';
 import type { CombatState } from '../../engine/state';
 import { FIELD_EFFECT_DURATION_ROUNDS } from '../../engine/combat/fieldEffectEngine';
+import { shieldStatusDef } from '../../engine/status/shield';
+import { statuses } from '../../data/statuses';
+
+const SHIELD_ID = shieldStatusDef(statuses)?.id;
+
+/** What a Shield took off a hit comes off its pool (docs/shield.md §4); an emptied pool is the trailing StatusRemoved 'broken'. */
+function absorbShield(state: CombatState, combatantId: string, absorbed: number | undefined): CombatState {
+  if (!absorbed || !SHIELD_ID) return state;
+  const combatant = state.combatants[combatantId];
+  const held = combatant?.statuses[SHIELD_ID];
+  if (!held) return state;
+  return {
+    ...state,
+    combatants: {
+      ...state.combatants,
+      [combatantId]: { ...combatant, statuses: { ...combatant.statuses, [SHIELD_ID]: { ...held, magnitude: Math.max(0, (held.magnitude ?? 0) - absorbed) } } },
+    },
+  };
+}
 
 export function applyEventToState(state: CombatState, event: CombatEvent): CombatState {
   switch (event.type) {
+    case 'DamageDealt':
+      return absorbShield(state, event.targetCombatantId, event.absorbed);
+
+    case 'StatusDetonated':
+      return absorbShield(state, event.combatantId, event.absorbed);
+
     case 'HpChanged':
       return {
         ...state,

@@ -81,9 +81,11 @@ export function formatEvents(
         const tag = e.isCrit ? ' CRIT!' : '';
         const eff = e.typeMult >= 2 ? ' Super effective!' : e.typeMult <= 0.5 ? ' Not very effective...' : '';
         const via = e.viaStatusId ? ` (via ${e.viaStatusId})` : '';
+        // The Shield's share sits beside the HP figure (docs/shield.md §3.3): what the pool took, then what got through.
+        const absorbed = e.absorbed ? `, ${e.absorbed} absorbed by Shield` : '';
         lines.push({
           key,
-          text: `${move?.name ?? e.moveId} -> ${e.amount} dmg to ${name(e.targetCombatantId)}${via}${tag}${eff}`,
+          text: `${move?.name ?? e.moveId} -> ${e.amount} dmg to ${name(e.targetCombatantId)}${absorbed}${via}${tag}${eff}`,
           className: e.viaStatusId ? 'log-haunt' : e.isCrit ? 'log-crit' : 'log-damage',
         });
 
@@ -120,7 +122,8 @@ export function formatEvents(
           key: `${key}-math`,
           text:
             `${bpText} × (${e.offStat} ${offStatLabel} ÷ ${e.defStat} ${defLabel} = ${fmt(e.ratio)}) ` +
-            `× STAB ${fmt(e.stab)}× × Type ${fmt(e.typeMult)}× × Var ${fmt(e.variance)}× × Crit ${fmt(e.critMultiplier)}×${modsText} = ${e.amount} dmg`,
+            `× STAB ${fmt(e.stab)}× × Type ${fmt(e.typeMult)}× × Var ${fmt(e.variance)}× × Crit ${fmt(e.critMultiplier)}×${modsText} = ${e.amount + (e.absorbed ?? 0)} dmg` +
+            (e.absorbed ? ` (${e.absorbed} to the Shield, ${e.amount} to HP)` : ''),
           className: 'log-math',
         });
         break;
@@ -179,10 +182,18 @@ export function formatEvents(
         break;
       }
       case 'StatusRemoved':
-        lines.push({ key, text: `${name(e.combatantId)}'s ${e.statusId} clears (${e.reason})`, className: 'log-status' });
+        lines.push({
+          key,
+          text: e.reason === 'broken' ? `${name(e.combatantId)}'s Shield breaks` : `${name(e.combatantId)}'s ${e.statusId} clears (${e.reason})`,
+          className: 'log-status',
+        });
         break;
       case 'StatusDetonated':
-        lines.push({ key, text: `${name(e.combatantId)}'s ${e.statusId} detonates for ${e.amount} dmg!`, className: 'log-conduct' });
+        lines.push({
+          key,
+          text: `${name(e.combatantId)}'s ${e.statusId} detonates for ${e.amount} dmg!${e.absorbed ? ` (${e.absorbed} absorbed by Shield)` : ''}`,
+          className: 'log-conduct',
+        });
         break;
       case 'PassiveTriggered':
         lines.push({ key, text: `${name(e.combatantId)}'s ${passives[e.passiveId]?.name ?? e.passiveId} triggers`, className: 'log-heal' });

@@ -77,7 +77,8 @@ export interface BeatFlavor {
     | 'damage'
     | 'detonate'
     | 'mana'
-    | 'field';
+    | 'field'
+    | 'shield';
   /** Type color the headline glows in, overriding the kind's own. */
   bannerAccent?: string;
   /** Stamp under the headline — "Critical hit!", "Super effective!". */
@@ -318,6 +319,12 @@ export function buildBeats(
       case 'DamageDealt': {
         const applied: CombatEvent[] = [e];
         i++;
+        // A hit that empties a Shield removes it BEFORE the HP change lands (docs/shield.md §4).
+        let shieldBroken = false;
+        if (events[i]?.type === 'StatusRemoved' && (events[i] as { reason?: string }).reason === 'broken') {
+          applied.push(events[i++]);
+          shieldBroken = true;
+        }
         if (events[i]?.type === 'HpChanged') applied.push(events[i++]);
         // Fainted gets its OWN beat so the bar is seen to hit 0 before the card vanishes.
         let faintEvent: CombatEvent | null = null;
@@ -334,18 +341,34 @@ export function buildBeats(
         const targetName = name(e.targetCombatantId);
         // Haunt dragged this target into a hit declared against its partner.
         const haunted = e.viaStatusId === 'Haunt';
+        const absorbed = e.absorbed ?? 0;
+        // The Shield's share is the figure the player sees, never a silent nothing (docs/shield.md §3.3):
+        // a hit it takes whole rises in the Shield's tone; one that gets through shows both numbers.
+        const shieldPopup: BeatPopup | null =
+          absorbed > 0
+            ? {
+                combatantId: e.targetCombatantId,
+                text: e.amount > 0 ? `-${absorbed} · -${e.amount}` : `-${absorbed}`,
+                className: shieldBroken ? 'popup-shield-broken' : 'popup-shield',
+                glyph: 'Shield',
+              }
+            : null;
         const banner = e.recoil
           ? `${targetName} takes ${e.amount} recoil`
           : e.retribution
             ? `${targetName} takes ${e.amount} damage — everything ${name(e.sourceCombatantId)} absorbed, returned`
-            : haunted
-              ? `${targetName}'s Haunt drags them into the attack — takes ${e.amount} damage${tag}`
-              : `${targetName} takes ${e.amount} damage${tag}`;
+            : shieldBroken
+              ? `${targetName}'s Shield breaks — takes ${e.amount} damage${tag}`
+              : absorbed > 0
+                ? `${targetName}'s Shield absorbs ${absorbed}${tag}`
+                : haunted
+                  ? `${targetName}'s Haunt drags them into the attack — takes ${e.amount} damage${tag}`
+                  : `${targetName} takes ${e.amount} damage${tag}`;
         push(
           applied,
           banner,
           [
-            {
+            shieldPopup ?? {
               combatantId: e.targetCombatantId,
               text: `-${e.amount}`,
               className: haunted ? 'popup-haunt' : e.isCrit ? 'popup-crit' : 'popup-damage',
@@ -353,9 +376,15 @@ export function buildBeats(
             },
           ],
           {
-            bannerLead: haunted ? `${targetName}'s Haunt drags them in` : `${targetName} takes`,
-            bannerFocus: `${e.amount} damage`,
-            bannerFocusKind: tagKind,
+            bannerLead: shieldBroken
+              ? `${targetName}'s Shield breaks — takes`
+              : absorbed > 0
+                ? `${targetName}'s Shield absorbs`
+                : haunted
+                  ? `${targetName}'s Haunt drags them in`
+                  : `${targetName} takes`,
+            bannerFocus: absorbed > 0 && !shieldBroken ? `${absorbed}` : `${e.amount} damage`,
+            bannerFocusKind: absorbed > 0 && !shieldBroken ? 'shield' : tagKind,
             bannerTag: tagText,
             // The caster paying its own price is not the element arriving anywhere.
             fx: e.recoil || e.retribution || e.selfCost ? undefined : landing(e.targetCombatantId, true),
@@ -370,14 +399,19 @@ export function buildBeats(
         const applied: CombatEvent[] = [e];
         i++;
         if (events[i]?.type === 'StatusRemoved') applied.push(events[i++]);
+        if (events[i]?.type === 'StatusRemoved' && (events[i] as { reason?: string }).reason === 'broken') applied.push(events[i++]);
         if (events[i]?.type === 'HpChanged') applied.push(events[i++]);
         let faintEvent: CombatEvent | null = null;
         if (events[i]?.type === 'Fainted') faintEvent = events[i++];
         const targetName = name(e.combatantId);
+        const absorbed = e.absorbed ?? 0;
+        const through = e.amount - absorbed;
         push(
           applied,
-          `${targetName}'s ${e.statusId} detonates for ${e.amount} damage!`,
-          [{ combatantId: e.combatantId, text: `-${e.amount}`, className: 'popup-conduct', glyph: 'Conduct' }],
+          absorbed > 0
+            ? `${targetName}'s ${e.statusId} detonates for ${e.amount} — the Shield takes ${absorbed}!`
+            : `${targetName}'s ${e.statusId} detonates for ${e.amount} damage!`,
+          [{ combatantId: e.combatantId, text: absorbed > 0 && through > 0 ? `-${absorbed} · -${through}` : `-${e.amount}`, className: 'popup-conduct', glyph: 'Conduct' }],
           {
             bannerLead: `${targetName}'s ${e.statusId} detonates`,
             bannerFocus: `${e.amount} damage`,
@@ -550,6 +584,23 @@ export function buildBeats(
         const detail = e.magnitude !== undefined ? ` (${e.magnitude})` : e.duration !== undefined ? ` (${e.duration})` : '';
         // Renew and Ambush are things a hero GAINS; only the rest are afflictions.
         const verb = statuses[e.statusId]?.positive ? 'gains' : 'is afflicted with';
+        if (statuses[e.statusId]?.pipeline === 'shield') {
+          // A pool, not a mark: the figure is the beat, and at the cap the beat says why (docs/shield.md §5).
+          const capped = e.capped === true;
+          push(
+            [e],
+            capped ? `${targetName}'s Shield can't go any higher (${e.magnitude})` : `${targetName} gains Shield ${e.magnitude}`,
+            [{ combatantId: e.combatantId, text: capped ? "Can't go any higher" : `Shield ${e.magnitude}`, className: capped ? 'popup-ceiling' : 'popup-shield', glyph: 'Shield' }],
+            {
+              bannerLead: capped ? `${targetName}'s Shield` : `${targetName} gains`,
+              bannerFocus: capped ? "can't go any higher" : `Shield ${e.magnitude}`,
+              bannerFocusKind: 'shield',
+              fx: landing(e.combatantId),
+            }
+          );
+          i++;
+          break;
+        }
         push(
           [e],
           `${targetName} ${verb} ${e.statusId}${detail}`,

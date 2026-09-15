@@ -44,6 +44,17 @@ export const STATUS_PATHS: Record<string, ReactNode> = {
       d="M12 2.2 4.4 5.3v6.1c0 4.6 3.1 8.6 7.6 10.4 4.5-1.8 7.6-5.8 7.6-10.4V5.3L12 2.2ZM12 5.1l4.9 2v4.3c0 3.2-2 6-4.9 7.4-2.9-1.4-4.9-4.2-4.9-7.4V7.1l4.9-2ZM8.6 10.6h6.8v2.8H8.6Z"
     />
   ),
+  // The Shield's rim with Freeze's spokes inside it: a pool that bites back when it goes.
+  IceShell: (
+    <>
+      <path fillRule="evenodd" d="M12 2.2 4.4 5.3v6.1c0 4.6 3.1 8.6 7.6 10.4 4.5-1.8 7.6-5.8 7.6-10.4V5.3L12 2.2ZM12 5.1l4.9 2v4.3c0 3.2-2 6-4.9 7.4-2.9-1.4-4.9-4.2-4.9-7.4V7.1l4.9-2Z" />
+      <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <path d="M12 7.6v8.8" />
+        <path d="M8.2 9.8l7.6 4.4" />
+        <path d="M8.2 14.2l7.6-4.4" />
+      </g>
+    </>
+  ),
   // Swirl, 1¼ turns — more closes into a disc at badge size.
   Daze: (
     <path
@@ -135,6 +146,7 @@ const STATUS_COLOR: Record<string, string> = {
   Freeze: '#7fd6e0',
   Barrier: '#6fb7d6',
   Shield: '#d8dde6',
+  IceShell: '#a9e4ec',
   Daze: '#c9a0f5',
   Renew: '#4caf6a',
   Conduct: '#f5d90a',

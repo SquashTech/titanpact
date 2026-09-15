@@ -5,7 +5,9 @@ import { effectiveTypes, getMaxHp, getMaxMana, hasAffordableMove } from '../../e
 import { resolveTypeMult, TYPE_MULT_FLOOR, type TypeChart } from '../../engine/damage/typeMult';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
-import { StatGlyph, hpTier } from '../shared/StatBars';
+import { StatGlyph, hpTier, ShieldFill, ShieldLabel } from '../shared/StatBars';
+import { shieldHeld } from '../../engine/status/shield';
+import { statuses } from '../../data/statuses';
 import { StatusGlyph, statusColor, statusTint } from '../shared/statusIcons';
 import { formatMult } from './MoveDetailOverlay';
 import { getTypeColorRgb } from './typeColors';
@@ -61,7 +63,7 @@ function MatchupChip({ mult, higherIsBetter, stat, label }: { mult: number; high
   );
 }
 
-function Gauge({ kind, value, max }: { kind: 'hp' | 'mana'; value: number; max: number }) {
+function Gauge({ kind, value, max, shield = 0 }: { kind: 'hp' | 'mana'; value: number; max: number; shield?: number }) {
   const fraction = max > 0 ? value / max : 0;
   // Mana can exceed its pool (docs/mana.md "Overflow"); the surplus gets its own band.
   const overFraction = kind === 'mana' && max > 0 ? Math.max(0, Math.min(1, (value - max) / max)) : 0;
@@ -74,10 +76,12 @@ function Gauge({ kind, value, max }: { kind: 'hp' | 'mana'; value: number; max: 
           style={{ width: `${Math.max(0, Math.min(1, fraction)) * 100}%` }}
         />
         {overFraction > 0 && <span className="bar-fill mana-over" style={{ width: `${overFraction * 100}%` }} />}
+        {kind === 'hp' && <ShieldFill currentHp={value} maxHp={max} shield={shield} as="span" />}
       </span>
       <span className={`switch-gauge-value${overFraction > 0 ? ' is-overcharged' : ''}`}>
         {value}
         <span className="switch-gauge-max">/{max}</span>
+        <ShieldLabel shield={kind === 'hp' ? shield : 0} />
       </span>
     </div>
   );
@@ -177,7 +181,7 @@ export function SwitchInPanel({
                     </span>
                   </span>
 
-                  <Gauge kind="hp" value={combatant.currentHp} max={getMaxHp(hero, combatant)} />
+                  <Gauge kind="hp" value={combatant.currentHp} max={getMaxHp(hero, combatant)} shield={shieldHeld(combatant, statuses)} />
                   <Gauge kind="mana" value={combatant.currentMana} max={getMaxMana(hero, combatant)} />
 
                   {/* "Ready" is not printed: the common case earns no ink. */}

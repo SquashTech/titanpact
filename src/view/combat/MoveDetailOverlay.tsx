@@ -3,7 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { MoveDefinition, StatKey } from '../../engine/content';
 import { statusApplicationsOf, STAT_ORDER } from '../../engine/content';
 import type { CombatState } from '../../engine/state';
-import { activePartnerTypes, applyStatModifierDelta, effectiveManaCost, effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, effectiveBasePower, hasStatus, resolveCastBasePower, resolveManaCost, moveForHero, moveForPrimaryType } from '../../engine/state';
+import { activePartnerTypes, applyStatModifierDelta, effectiveManaCost, effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, effectiveBasePower, hasStatus, resolveCastBasePower, resolveManaCost, moveForHero, moveForPrimaryType, statusMagnitude } from '../../engine/state';
 import { statDeltaLandsOnCasterSide } from '../../engine/combat/statDeltaScaling';
 import { allCombatants } from '../../data/content';
 import { statuses } from '../../data/statuses';
@@ -517,6 +517,28 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
                 : healCaster
                   ? resolveStatusMagnitudeFor(app.magnitude, def, app, move, { stats: healCaster.stats ?? {}, types: healCaster.types })
                   : app.magnitude;
+            // A Shield into a hero whose pool is at, or near, its max HP lands short — say so before the press (docs/shield.md §5).
+            const shieldHeldNote = (() => {
+              if (def.pipeline !== 'shield' || !context || liveMagnitude == null) return undefined;
+              const side = context.combat.combatants[context.attackerId]?.side ?? 'A';
+              const receivers =
+                app.target === 'self' || move.target === 'self'
+                  ? [context.attackerId]
+                  : app.target === 'bothAllies' || move.target === 'bothAllies'
+                    ? context.combat.active[side].filter((id): id is string => id !== null)
+                    : context.defenderIds;
+              const parts = receivers
+                .map((id) => {
+                  const holder = context.combat.combatants[id];
+                  if (!holder || holder.fainted) return null;
+                  const hero = allCombatants[holder.heroId];
+                  const room = getMaxHp(hero, holder) - statusMagnitude(holder, def.id);
+                  if (room >= liveMagnitude) return null;
+                  return room <= 0 ? `${hero.name}'s Shield can't go any higher — lands nothing` : `${hero.name}'s Shield can't go much higher — lands ${room}`;
+                })
+                .filter(Boolean);
+              return parts.length ? parts.join('; ') : undefined;
+            })();
             return (
               <EffectRow
                 key={app.statusId}
@@ -527,7 +549,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
                 } ${def.name}${
                   liveMagnitude != null ? ` ${liveMagnitude}` : app.duration != null ? ` ${app.duration}` : ''
                 }${where ? ` — ${where}` : ''}`}
-                note={statusFactsLine(def)}
+                note={[shieldHeldNote, statusFactsLine(def)].filter(Boolean).join(' — ')}
               />
             );
           })}

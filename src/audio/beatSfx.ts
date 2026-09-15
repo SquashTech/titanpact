@@ -97,9 +97,14 @@ export function playBeatSfx(beat: Beat): void {
   switch (lead.type) {
     case 'DamageDealt': {
       const id: SfxId = lead.category === 'physical' ? 'hit.physical' : 'hit.magical';
-      playSfx(id, damageVoicing(lead.amount, lead.typeMult));
+      playSfx(id, damageVoicing(lead.amount + (lead.absorbed ?? 0), lead.typeMult));
       // Layered, not substituted: a crit is the same attack landing harder.
       if (lead.isCrit) playSfx('hit.crit', { gain: 1 });
+      // A Shield taking the hit rings over it; a Shield emptied by it shatters instead.
+      if (lead.absorbed) {
+        const broken = beat.events.some((e) => e.type === 'StatusRemoved' && e.reason === 'broken');
+        playSfx(broken ? 'shield.break' : 'shield.absorb');
+      }
       break;
     }
     case 'Fainted':

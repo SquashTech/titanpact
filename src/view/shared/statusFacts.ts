@@ -29,7 +29,7 @@ function tickText(def: StatusDefinition): string | null {
 function stackingText(def: StatusDefinition): string {
   switch (def.stacking) {
     case 'additive':
-      return 'Adds to what is there';
+      return def.pipeline === 'shield' ? "Adds to what is there, up to this hero's max HP" : 'Adds to what is there';
     case 'takeHigher':
       return 'Keeps the higher';
     case 'additiveMagnitudeFixedDuration':
@@ -45,6 +45,13 @@ export function statusFacts(def: StatusDefinition): StatusFact[] {
   if (tick) rows.push({ label: 'Each round', text: tick });
   if (def.shape === 'magnitude' && def.decay === 'halve') rows.push({ label: 'Then', text: 'Halves' });
   if (def.blocksIncomingMoves) rows.push({ label: 'Guard', text: 'Every enemy move aimed here turns away — an ally’s still lands' });
+  // The one thing a player has to learn once about a Shield: what goes through it (docs/shield.md §3.2).
+  if (def.pipeline === 'shield') {
+    rows.push({ label: 'Absorbs', text: "A move's hit, before HP is touched" });
+    rows.push({ label: 'Goes through', text: "Burn, Bleed and Poison ticks, the Pact Clock, recoil, and a move's own HP cost" });
+    rows.push({ label: 'Ends', text: 'When a hit empties it' });
+  }
+  if (def.onShieldBroken) rows.push({ label: 'Broken', text: `The hit that breaks this hero's Shield ${def.onShieldBroken.statusId}s the striker — then spent` });
   if (def.redirectsSingleTargetEnemyMoves) rows.push({ label: 'Pull', text: 'Single-target enemy moves at either ally land here instead' });
   if (def.triggerTypes && def.detonateBonusPercentMaxHp != null) {
     rows.push({
@@ -70,6 +77,8 @@ export function statusFactsLine(def: StatusDefinition): string {
   if (tick) parts.push(tick.replace(/^Deals its magnitude$/, 'ticks its magnitude').replace(/^Heals its magnitude$/, 'heals its magnitude'));
   if (def.shape === 'magnitude' && def.decay === 'halve') parts.push('halves each round');
   if (def.blocksIncomingMoves) parts.push('turns enemy moves away');
+  if (def.pipeline === 'shield') parts.push('absorbs hits before HP', 'DoTs and the Clock go through', 'until broken', 'capped at max HP');
+  if (def.onShieldBroken) parts.push(`${def.onShieldBroken.statusId}s whoever breaks the Shield`);
   if (def.redirectsSingleTargetEnemyMoves) parts.push('pulls single-target enemy moves');
   if (def.triggerTypes && def.detonateBonusPercentMaxHp != null) {
     parts.push(`${typeList(def.triggerTypes)} hit detonates it for ${Math.round(def.detonateBonusPercentMaxHp * 100)}% max HP`);

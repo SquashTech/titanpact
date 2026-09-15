@@ -19,7 +19,9 @@ import { chosenEvolutionPaths, itemSlotsFor } from '../../run/progression';
 import { chosenClass } from '../../run/classes';
 import { levelOf } from '../../run/growth';
 import { progressionTable } from '../../data/progression';
-import { StatGlyph, STAT_LABELS, STAT_ORDER, StatBars, hpTier } from '../shared/StatBars';
+import { StatGlyph, STAT_LABELS, STAT_ORDER, StatBars, hpTier, ShieldFill, ShieldLabel } from '../shared/StatBars';
+import { shieldHeld } from '../../engine/status/shield';
+import { statuses } from '../../data/statuses';
 import { EquipmentSlotGrid, ItemReadout } from '../shared/EquipmentBox';
 import { ItemDetailCard } from '../shared/ItemDossier';
 import { MasteryPips } from '../shared/MasteryPips';
@@ -191,9 +193,11 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
                 <div>
                   <div className="bar-track">
                     <div className={`bar-fill ${hpTier(hpFraction)}`} style={{ width: `${hpFraction * 100}%` }} />
+                    <ShieldFill currentHp={combatant.currentHp} maxHp={maxHp} shield={shieldHeld(combatant, statuses)} />
                   </div>
                   <div className="bar-label">
                     HP {Math.max(0, combatant.currentHp)}/{maxHp}
+                    <ShieldLabel shield={shieldHeld(combatant, statuses)} />
                   </div>
                 </div>
                 <div>

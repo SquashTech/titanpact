@@ -5,7 +5,9 @@ import { effectiveTypes, getCombatStatDelta, getMaxHp, getMaxMana, statModifierC
 import { fieldEffects } from '../../data/fieldEffects';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { StatGlyph, STAT_ORDER, hpTier } from '../shared/StatBars';
+import { StatGlyph, STAT_ORDER, hpTier, ShieldFill, ShieldLabel } from '../shared/StatBars';
+import { shieldHeld } from '../../engine/status/shield';
+import { statuses } from '../../data/statuses';
 import { StatusGlyph, statusColor, statusTint, PoisonPips } from '../shared/statusIcons';
 import { useLongPress } from '../shared/MoveTile';
 import { StatusDetailOverlay } from './StatusDetailOverlay';
@@ -59,6 +61,8 @@ const POPUP_HIT_CLASS: Record<string, string> = {
   'popup-damage': 'hit-struck',
   'popup-haunt': 'hit-struck',
   'popup-conduct': 'hit-struck',
+  'popup-shield': 'hit-struck',
+  'popup-shield-broken': 'hit-crit',
   'popup-poison': 'hit-struck',
   'popup-crit': 'hit-crit',
   'popup-burn': 'hit-wince',
@@ -243,6 +247,7 @@ export function CombatantCard({
   const maxHp = getMaxHp(hero, combatant);
   const maxMana = getMaxMana(hero, combatant);
   const hpFraction = Math.max(0, combatant.currentHp / maxHp);
+  const shield = shieldHeld(combatant, statuses);
   // Mana can exceed its pool (docs/mana.md "Overflow"): fill is clamped, surplus gets its own band.
   const manaFraction = maxMana > 0 ? Math.max(0, Math.min(1, combatant.currentMana / maxMana)) : 0;
   const manaOverFraction = maxMana > 0 ? Math.max(0, Math.min(1, (combatant.currentMana - maxMana) / maxMana)) : 0;
@@ -337,9 +342,11 @@ export function CombatantCard({
             <div className="resource">
               <div className="bar-track">
                 <div className={`bar-fill ${hpTier(hpFraction)}`} style={{ width: `${hpFraction * 100}%` }} />
+                <ShieldFill currentHp={combatant.currentHp} maxHp={maxHp} shield={shield} />
               </div>
               <div className="bar-label">
                 HP {Math.max(0, combatant.currentHp)}/{maxHp}
+                <ShieldLabel shield={shield} />
               </div>
             </div>
             <div className="resource">
