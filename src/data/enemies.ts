@@ -26,6 +26,11 @@ export const enemies: Record<string, HeroDefinition> = {
   // Redistributed 2026-09-02, per user direction: -15 Attack and -10 Intelligence into +25 HP,
   // total untouched. He walks on after a KO with the fight already going the player's way, so
   // his job is to take that back over several rounds rather than to two-shot whoever is left.
+  // The same trade again 2026-09-15, per user direction: -10 Attack into +20 HP. With gear
+  // absorbed and Act 1 two levels lighter he was still the act's wall at 77% and killing two
+  // heroes a fight; Attack is the term his whole kit swings with, and HP is what the trade buys
+  // (Guardian 77 -> 82%, Act 1 58 -> 62%). A shift into Mana measured WORSE — the pool feeds
+  // Archon Blast — and MP Regen barely moved it; Attack is the dial.
   goblinLord: {
     id: 'goblinLord',
     name: 'Goblin Lord',
@@ -34,7 +39,7 @@ export const enemies: Record<string, HeroDefinition> = {
     // the run's lightest Guardian is the escorts (Act 1 fields Early spawn at 200) and a Beast
     // kit that has to set Bleed up with Claw before Maul pays out, rather than the spread damage
     // that was killing a hero per round (docs/run-loop.md).
-    baseStats: { hp: 430, attack: 65, defense: 75, intelligence: 60, wisdom: 60, speed: 75, manaPool: 105, mpRegen: 20 },
+    baseStats: { hp: 450, attack: 55, defense: 75, intelligence: 60, wisdom: 60, speed: 75, manaPool: 105, mpRegen: 20 },
     moveIds: ['claw', 'maul', 'enfeeble', 'archonBlast'],
     starter: false,
     growthGrades: CHAMPION_GRADES,

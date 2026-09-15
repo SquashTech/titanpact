@@ -117,7 +117,9 @@ don't silently override it.
 > Shipped: full-clear 19.9%, 21 items a completed run against 18 seats, merges offered 5.8 →
 > taken 1.0. **The enemy curve then took an act term** (same day, per user direction —
 > `ACT_LEVEL_ADJUST` = Act 1 −2, Acts 3 and 5 +2, `docs/enemy-levels.md` §4): Act 1 50 → 58%,
-> Act 3 98 → 96, Act 5 90 → 88, full-clear 21.9%.
+> Act 3 98 → 96, Act 5 90 → 88, full-clear 21.9%; then **the Goblin Lord traded 10 Attack for
+> 20 HP** (his one dial — Mana fed Archon Blast and read worse): the Act 1 Guardian 77 → 82%,
+> Act 1 62%, full-clear 23.1%.
 
 ---
 

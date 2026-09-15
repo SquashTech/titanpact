@@ -20,8 +20,9 @@ test('goblinLord: the authored stat total is 550, on the same six stats the diff
   assert.strictEqual(total, 550);
   // Mean Act 1 Guardian sits at 432, the Goblin Chief at 218.
   assert.ok(total > 432, 'the champion should out-stat the boss he reinforces');
-  // Attack is the term Enfeeble multiplies, so it carries the cut: 90 -> 65.
-  assert.strictEqual(lord.baseStats.attack, 65);
+  // Attack is the term Enfeeble multiplies, so it carries the cut: 90 -> 65, then 65 -> 55 on
+  // 2026-09-15 (into +20 HP) — the Act 1 Guardian measured 77% with everything else re-fitted.
+  assert.strictEqual(lord.baseStats.attack, 55);
 });
 
 test('goblinLord: every stat is a multiple of 5 — the locked authoring rule, not a coincidence', () => {

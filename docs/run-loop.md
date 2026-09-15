@@ -813,7 +813,10 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
 
   Wild's Edge's is the **Goblin Lord** (`enemies.ts`) — Beast/Ancient, 550 stat total,
   20 MP Regen, four moves across four types (Claw, Maul, Enfeeble, and the
-  Ancient row authored for him, Archon Blast). He is enemy-pool content, so
+  Ancient row authored for him, Archon Blast). **Attack 55 since 2026-09-15** (−10 into +20 HP,
+  per user direction): with gear absorbed and Act 1 two levels lighter he was still the act's
+  wall at 77% and killed two heroes a fight; measured 82% after, Act 1 58 → 62%. Attack is his
+  one dial — a shift into Mana fed Archon Blast and read worse, and MP Regen barely moved him. He is enemy-pool content, so
   `isRecruitable` excludes him by pool membership exactly as it does every Goblin: a
   beaten Goblin Lord produces no contract offer. He carries **no node-kind stat bonus** —
   the 550 is the authored number and the escorts' +20×3 is not applied to it — but he does
