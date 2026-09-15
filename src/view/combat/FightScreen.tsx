@@ -49,6 +49,7 @@ import { TutorialOverlay } from '../run/TutorialOverlay';
 import type { Squad } from '../../run/squad';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { buildCombatState, koRosterIdsOf } from '../../run/buildCombatState';
+import { levelOf } from '../../run/growth';
 import { pickAiAction, type AiContext } from '../../run/ai';
 import { relicTeamStatModifiers } from '../../run/relics';
 import { relicTeamPassiveGrants } from '../../run/passives';
@@ -859,6 +860,12 @@ export function FightScreen({
     commitAction(selecting.combatantId, { kind: 'move', moveId: selecting.move.id, declaredTarget: targetId });
   }
 
+  /** The nameplate's level, either side — the enemy's roster is the encounter's (src/run/enemyGen.ts). */
+  function levelFor(combatantId: string): number {
+    const roster = combat.combatants[combatantId].side === PLAYER_SIDE ? playerRun.roster : aiRun.roster;
+    return levelOf(entryFor(roster, combatantId));
+  }
+
   function handleTargetClick(targetId: string) {
     declareSelectedMove(targetId);
   }
@@ -1121,6 +1128,7 @@ export function FightScreen({
           key={id}
           hero={hero}
           combatant={combat.combatants[id]}
+          level={levelFor(id)}
           targetable={targetableIds.includes(id)}
           acting={id === actingId}
           onSelectTarget={() => handleTargetClick(id)}
@@ -1374,6 +1382,7 @@ export function FightScreen({
                         key={benchId}
                         hero={benchHero}
                         combatant={benchCombatant}
+                        level={levelFor(benchId)}
                         targetable
                         selected={replacementPick === benchId}
                         onSelectTarget={() => setReplacementPick(benchId)}
@@ -1436,6 +1445,7 @@ export function FightScreen({
                           key={tid}
                           hero={allCombatants[tCombatant.heroId]}
                           combatant={tCombatant}
+                          level={levelFor(tid)}
                           targetable={!spread}
                           onSelectTarget={spread ? undefined : () => handleTargetClick(tid)}
                           popup={popups[tid]}

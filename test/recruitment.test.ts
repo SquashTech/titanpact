@@ -3,7 +3,7 @@ import { test } from './harness';
 import { heroes } from '../src/data/heroes';
 import { enemies } from '../src/data/enemies';
 import { guildHallOffers } from '../src/data/recruitment';
-import { ENEMY_LEVEL_BY_ACT, GUILD_HALL_ACT_LAG, guildHallLevel } from '../src/run/difficulty';
+import { GUILD_HALL_ACT_LAG, enemyLevelFor, guildHallLevel } from '../src/run/difficulty';
 import { scheduleEntriesBelow } from '../src/run/progression';
 import { MASTERY_CAP, MASTERY_EVOLUTION, guildHallMastery, masteryForAct } from '../src/run/mastery';
 import { ENCOUNTERS_PER_ACT, MAX_LEVEL, levelAfterEncounters, levelOf, xpForLevel } from '../src/run/growth';
@@ -332,21 +332,23 @@ test('recruitment: the MASTERY axis points the right way — an enemy, and the c
 });
 
 test('recruitment: the LEVEL axis points the right way — a contract hero outranks a hire', () => {
-  // §6's fourth axis, restored by phase 6's re-derivation of ENEMY_LEVEL_BY_ACT. It ran BACKWARDS
-  // between phases 3 and 6 — an act-5 contract hero arrived at level 10 where a hire arrived at
-  // 24 — because the enemy table was still fitted to a 10-level cap. Both tables read off the
-  // same curve now, at different lags: the enemy trails the player's act-end level by
-  // ENEMY_LEVEL_LAG, a hire by a whole act.
+  // §6's fourth axis. It ran BACKWARDS once — an act-5 contract hero arrived at level 10 where a
+  // hire arrived at 24 — because the enemy table was fitted to a 10-level cap. Both read off the
+  // same curve now (docs/enemy-levels.md §4): a Skirmish enemy sits AT the fork's par, a hire a
+  // whole act behind, so a Skirmish contract never trails a hire and an Elite's outranks it.
   for (let act = 1; act <= 5; act++) {
-    assert.ok(
-      ENEMY_LEVEL_BY_ACT[act - 1] > guildHallLevel(act),
-      `act ${act}: a contract hero at ${ENEMY_LEVEL_BY_ACT[act - 1]} must outrank a hire at ${guildHallLevel(act)}`
-    );
-    // And still under the player, or claiming one would be an upgrade with no cost at all.
-    assert.ok(
-      ENEMY_LEVEL_BY_ACT[act - 1] <= levelAfterEncounters(act * ENCOUNTERS_PER_ACT),
-      `act ${act}: an enemy must not out-level the roster it is fought by`
-    );
+    for (const kind of ['skirmish', 'elite'] as const) {
+      const outranks = kind === 'elite' ? enemyLevelFor(kind, act) > guildHallLevel(act) : enemyLevelFor(kind, act) >= guildHallLevel(act);
+      assert.ok(
+        outranks,
+        `act ${act}: a ${kind} contract hero at ${enemyLevelFor(kind, act)} must not trail a hire at ${guildHallLevel(act)}`
+      );
+      // And not past the roster's act-end par, or claiming one would be an upgrade with no cost at all.
+      assert.ok(
+        enemyLevelFor(kind, act) <= levelAfterEncounters(act * ENCOUNTERS_PER_ACT),
+        `act ${act}: a ${kind} contract at ${enemyLevelFor(kind, act)} must not out-level the roster at the act's end`
+      );
+    }
   }
 });
 

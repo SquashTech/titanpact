@@ -294,9 +294,12 @@ export function SquadSelectScreen({
                       key={entry.rosterId}
                       className="enemy-scout-chip enemy-scout-chip-concealed"
                       style={{ '--plate-color': getTypeColor(types[0]) } as CSSProperties}
-                      aria-label={`An unidentified ${types.join('/')} enemy`}
+                      aria-label={`An unidentified ${types.join('/')} enemy, level ${levelOf(entry)}`}
                     >
                       <HeroPortrait heroId={hero.id} className="enemy-scout-portrait" />
+                      <span className="pick-level enemy-scout-level" aria-hidden="true">
+                        {levelOf(entry)}
+                      </span>
                       <div className="enemy-scout-types">
                         {types.map((t) => (
                           <TypeBadge key={t} type={t} />
@@ -312,9 +315,12 @@ export function SquadSelectScreen({
                     className="enemy-scout-chip"
                     style={{ '--plate-color': getTypeColor(hero.types[0]) } as CSSProperties}
                     onClick={() => setInspecting({ hero, entry, enemy: true })}
-                    aria-label={`View ${hero.name} details`}
+                    aria-label={`View ${hero.name} details, level ${levelOf(entry)}`}
                   >
                     <HeroPortrait heroId={hero.id} className="enemy-scout-portrait" />
+                    <span className="pick-level enemy-scout-level" aria-hidden="true">
+                      {levelOf(entry)}
+                    </span>
                     <span className="enemy-scout-name">{hero.name}</span>
                     <div className="enemy-scout-types">
                       {types.map((t) => (

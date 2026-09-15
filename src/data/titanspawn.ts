@@ -6,8 +6,9 @@
 // Early 200, Mid 400, Late 600 — below the cast, at it, above it. Early is round (every priced
 // stat within 1.3× of the others), Mid grows the type's pair, Late spikes the type's primary stat
 // past the hero roster's maximum for it. Kits are the type's own slate read at the tier's band,
-// 3 / 4 / 4 moves. Growth grades are authored once per LINE on the hero budget (GRADE_BUDGET),
-// because the companion (§5) levels roster-wide like anyone; an enemy spawn never rolls them.
+// 3 / 4 / 4 moves. Growth grades are authored once per LINE on the hero budget (GRADE_BUDGET):
+// the companion (§5) levels roster-wide like anyone, and an enemy spawn rolls them up to its
+// node's level on arrival (docs/enemy-levels.md).
 // Every figure is pinned by test/titanspawn.test.ts.
 
 import type { GrowthStatKey, HeroDefinition, MoveTier, StatLine, TypeId } from '../engine/content';

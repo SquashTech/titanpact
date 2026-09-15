@@ -43,8 +43,8 @@ function statTotal(id: string): number {
   return statBudgetTotal(enemies[id].baseStats, COMBAT_STATS);
 }
 
-function seal(actNumber: number, championId: string, level = 1, statGrants: Partial<Record<StatKey, number>> = {}): BrokenSeal {
-  return { actNumber, locationId: 'wildsEdge', championId, level, statGrants };
+function seal(actNumber: number, championId: string, level = 1, statGrants: Partial<Record<StatKey, number>> = {}, growthStatGrants: Partial<Record<StatKey, number>> = {}): BrokenSeal {
+  return { actNumber, locationId: 'wildsEdge', championId, level, statGrants, growthStatGrants };
 }
 
 // --- The Endbringer ---
@@ -120,7 +120,7 @@ test('finale: the seals field in the order they were broken, and the Titan is la
     seal(2, 'yugzulach'),
     seal(4, 'lavaBeast'),
   ];
-  const { squad } = generateFinaleEncounter(seals, ENDBRINGER_ID, finaleEnemies);
+  const { squad } = generateFinaleEncounter(seals, ENDBRINGER_ID, finaleEnemies, 1);
 
   assert.deepStrictEqual([...squad.activeIds], [unsealedIdFor('goblinLord'), unsealedIdFor('yugzulach')]);
   assert.deepStrictEqual(squad.benchIds, [
@@ -131,29 +131,31 @@ test('finale: the seals field in the order they were broken, and the Titan is la
   ]);
 });
 
-test('finale: a champion arrives at the level and act scaling it was beaten at, not a re-roll', () => {
+test('finale: a champion arrives at the level and growth it was beaten at, not a re-roll', () => {
   const grants: Partial<Record<StatKey, number>> = { attack: 30, hp: 20 };
-  const { run } = generateFinaleEncounter([seal(4, 'lavaBeast', 7, grants)], ENDBRINGER_ID, finaleEnemies);
+  const growth: Partial<Record<StatKey, number>> = { attack: 9, hp: 21, wisdom: 4 };
+  const { run } = generateFinaleEncounter([seal(4, 'lavaBeast', 7, grants, growth)], ENDBRINGER_ID, finaleEnemies, 1);
   const entry = run.roster.find((r) => r.rosterId === unsealedIdFor('lavaBeast'));
   assert.ok(entry);
   assert.strictEqual(levelOf(entry!), 7);
   assert.deepStrictEqual(entry!.evolutionStatGrants, grants);
+  assert.deepStrictEqual(entry!.growthStatGrants, growth);
   // Which is what makes the fight escalate across itself: an Act 2 seal comes back at Act 2.
-  const { run: early } = generateFinaleEncounter([seal(2, 'lavaBeast', 3, {})], ENDBRINGER_ID, finaleEnemies);
+  const { run: early } = generateFinaleEncounter([seal(2, 'lavaBeast', 3, {})], ENDBRINGER_ID, finaleEnemies, 1);
   assert.strictEqual(levelOf(early.roster[0]), 3);
   assert.deepStrictEqual(early.roster[0].evolutionStatGrants, {});
 });
 
 test('finale: it is 6 a side, and every one of them is a distinct combatant', () => {
   const seals = CHAMPION_IDS.slice(0, SEAL_ACTS).map((id, i) => seal(i + 1, id));
-  const { run, squad } = generateFinaleEncounter(seals, ENDBRINGER_ID, finaleEnemies);
+  const { run, squad } = generateFinaleEncounter(seals, ENDBRINGER_ID, finaleEnemies, 1);
   assert.strictEqual(run.roster.length, ROSTER_CAP);
   const fielded = [...squad.activeIds.filter((id): id is string => id !== null), ...squad.benchIds];
   assert.strictEqual(new Set(fielded).size, ROSTER_CAP);
 });
 
 test('finale: a run that somehow broke nothing still meets the Titan alone rather than crashing', () => {
-  const { run, squad } = generateFinaleEncounter([], ENDBRINGER_ID, finaleEnemies);
+  const { run, squad } = generateFinaleEncounter([], ENDBRINGER_ID, finaleEnemies, 1);
   assert.strictEqual(run.roster.length, 1);
   assert.deepStrictEqual([...squad.activeIds], [ENDBRINGER_ID, null]);
 });

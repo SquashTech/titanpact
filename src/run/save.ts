@@ -64,7 +64,7 @@ import { MASTERY_CAP } from './mastery';
  * v16 (2026-09-14): Mastery phase 2 — Ichor retired. `ichorReward` and `ichorDropReward` are gone
  * and `scrollReward` sits where the first was, so a v15 map may hold node types this build lacks.
  */
-export const SAVE_VERSION = 16;
+export const SAVE_VERSION = 17;
 
 /**
  * Where a restored run resumes. Both are settled points: every reward is banked, the
@@ -371,6 +371,7 @@ function decodeBrokenSeals(value: unknown, index: SaveContentIndex): BrokenSeal[
       championId: entry.championId,
       level: entry.level,
       statGrants: decodeStatGrants(entry.statGrants, `${label}.statGrants`),
+      growthStatGrants: decodeStatGrants(entry.growthStatGrants, `${label}.growthStatGrants`),
     });
   });
   return seals.sort((a, b) => a.actNumber - b.actNumber);

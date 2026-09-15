@@ -1,14 +1,14 @@
-// Seeded AI encounter generation for map fight/elite/boss nodes. Scaling reuses
-// RosterEntry.evolutionStatGrants rather than a second stat-bonus mechanism.
-// Two independent difficulty axes: node KIND (fixed bonuses here) and ACT
-// (difficulty.ts ActScaling, passed in by the caller — never derived here).
+// Seeded AI encounter generation for map fight/elite/boss nodes. An enemy is a RosterEntry
+// built the way a Guild hire is: its level rolled through its growth grades (docs/enemy-levels.md),
+// its pips read off the act, its kit walked off its schedule. The level comes from the caller
+// (difficulty.ts ActScaling) — never derived here.
 
-import type { StatKey, TypeId } from '../engine/content';
+import type { PassiveId, StatKey, TypeId } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
 import { createRng, nextFloat, type RngState } from '../engine/rng/seededRng';
 import type { BrokenSeal, RunState, RosterEntry } from './state';
 import { createRunState, createRosterEntry, addRosterEntry } from './state';
-import { xpForLevel } from './growth';
+import { levelUpEntry, xpForLevel } from './growth';
 import { MASTERY_CAP, pendingSignature } from './mastery';
 import { unsealedIdFor } from '../data/enemies';
 import { spawnPool, type SpawnTier } from '../data/titanspawn';
@@ -27,21 +27,11 @@ import {
 // Content imports: there is exactly one move table, and tier gating needs it; the spawn
 // generator draws the mob layer straight from its own table, as the finale draws its champions.
 import { moves } from '../data/moves';
-import { mergeStatMods } from './statMods';
-import {
-  NO_SCALING,
-  ACT_STEP_STAT_COUNT,
-  ACT_STEP_AMOUNT,
-  ACT_STEP_STAT_WEIGHT,
-  championSteps,
-  type ActScaling,
-} from './difficulty';
+import { NO_SCALING, championLevel, type ActScaling } from './difficulty';
 import type { Squad } from './squad';
 import { pickSquad } from './squad';
 
 export type EncounterNodeType = 'fight' | 'elite' | 'boss';
-
-const GROWTH_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed'];
 
 function shuffledPick<T>(rng: RngState, pool: readonly T[], count: number): { picked: T[]; nextState: RngState } {
   const remaining = [...pool];
@@ -54,25 +44,6 @@ function shuffledPick<T>(rng: RngState, pool: readonly T[], count: number): { pi
     picked.push(remaining.splice(idx, 1)[0]);
   }
   return { picked, nextState: state };
-}
-
-function randomStatBonus(rng: RngState, statCount: number, amountEach: number): { bonus: Partial<Record<StatKey, number>>; nextState: RngState } {
-  const { picked, nextState } = shuffledPick(rng, GROWTH_STATS, statCount);
-  const bonus: Partial<Record<StatKey, number>> = {};
-  for (const stat of picked) bonus[stat] = amountEach * ACT_STEP_STAT_WEIGHT[stat];
-  return { bonus, nextState };
-}
-
-/** `statSteps` independent rolls, merged — keeps a deep-act line broad instead of dumping +40 into one stat. */
-function actStatBonus(rng: RngState, statSteps: number): { bonus: Partial<Record<StatKey, number>>; nextState: RngState } {
-  let state = rng;
-  let bonus: Partial<Record<StatKey, number>> = {};
-  for (let i = 0; i < statSteps; i++) {
-    const { bonus: step, nextState } = randomStatBonus(state, ACT_STEP_STAT_COUNT, ACT_STEP_AMOUNT);
-    state = nextState;
-    bonus = mergeStatMods(bonus, step);
-  }
-  return { bonus, nextState: state };
 }
 
 /** Fill `slots` from `preferredIds` first, then the rest from the whole pool. Generic on purpose — locations.ts turns a type affinity into one of these. */
@@ -104,6 +75,51 @@ export interface Encounter {
   squad: Squad;
 }
 
+/** What an enemy arrives holding beyond its level: the seam enemy gear and passives hang on. */
+export interface EnemyLoadout {
+  /** Rarity weights for ONE item, rolled as a drop is; omitted = bare. */
+  gear?: Record<EquipmentRarity, number>;
+  /** Granted outright, stacking like a Boon's (RosterEntry.bonusPassiveGrants). */
+  passiveIds?: readonly PassiveId[];
+}
+
+/** A plain `() => number` over a seeded state, for the callers that take one. */
+function drawFrom(rng: RngState): { random: () => number; state: () => RngState } {
+  let state = rng;
+  return {
+    random: () => {
+      const { value, nextState } = nextFloat(state);
+      state = nextState;
+      return value;
+    },
+    state: () => state,
+  };
+}
+
+/**
+ * Level 1 to `level`, every level rolled against the definition's grades — a Titanspawn line's,
+ * a hero's, or DEFAULT_GRADES for a champion with none authored. The same call a hire arrives by.
+ */
+function growTo(entry: RosterEntry, hero: HeroLookup[string], level: number, rng: RngState): { entry: RosterEntry; nextState: RngState } {
+  const draw = drawFrom(rng);
+  const grown = levelUpEntry(entry, hero, level - 1, draw.random).entry;
+  return { entry: grown, nextState: draw.state() };
+}
+
+function applyLoadout(entry: RosterEntry, loadout: EnemyLoadout | undefined, rng: RngState): { entry: RosterEntry; nextState: RngState } {
+  if (!loadout) return { entry, nextState: rng };
+  const draw = drawFrom(rng);
+  let next = entry;
+  if (loadout.gear) {
+    const [item] = rollEquipmentDrops(1, loadout.gear, undefined, draw.random);
+    if (item) next = { ...next, equipment: equipItem(next.equipment, item.id) };
+  }
+  if (loadout.passiveIds && loadout.passiveIds.length > 0) {
+    next = { ...next, bonusPassiveGrants: [...next.bonusPassiveGrants, ...loadout.passiveIds] };
+  }
+  return { entry: next, nextState: draw.state() };
+}
+
 export interface EncounterOptions {
   /**
    * Names the enemy roster outright instead of drawing one — the scripted first act
@@ -121,13 +137,14 @@ export interface EncounterOptions {
   /** Hard filter both pick stages obey — the player's roster, so a beaten enemy can never be a duplicate contract. */
   excludeHeroIds?: readonly string[];
   /**
-   * A flat grant merged onto every enemy in this encounter, on top of the node kind's bonus and
-   * the act curve — the scripted first act's lever for making a fight last (src/data/tutorial.ts).
-   * The Goblin pool is authored as fodder, and fodder dies before a tutorial can say anything.
+   * A flat grant merged onto every enemy in this encounter, on top of its level — the scripted
+   * first act's lever for making a fight last (src/data/tutorial.ts).
    */
   statGrants?: Partial<Record<StatKey, number>>;
   /** Omitted = NO_SCALING. */
   scaling?: ActScaling;
+  /** What every enemy here arrives holding; omitted = bare. */
+  loadout?: EnemyLoadout;
   /** Needed only to cash `scaling.level` and `scaling.mastery` in for move unlocks and the Evolution; the monster pool has none by design. */
   progression?: ProgressionTable;
 }
@@ -196,9 +213,8 @@ export function rollLevelProgression(
 }
 
 /**
- * fight: 4 heroes, no kind bonus. elite: 4 heroes, +10 to 2 random stats.
- * boss: 2 heroes, no bench, +20 to 3 random stats. `scaling` layers on top.
- * Everything granted here rides along on a Recruit Contract claim
+ * fight/elite: 4 heroes; boss: 2, no bench. The node kind sets the SIZE; `scaling.level` is the
+ * whole of the difficulty axis. Everything rolled here rides along on a Recruit Contract claim
  * (recruitment.ts deriveContractOffer) — late-act contracts are strong by design.
  */
 export function generateEncounter(
@@ -215,13 +231,13 @@ export function generateEncounter(
     excludeHeroIds,
     statGrants: flatGrants,
     scaling = NO_SCALING,
+    loadout,
     progression,
   } = options;
   let rng = createRng(seed);
   const excluded = new Set(excludeHeroIds ?? []);
   const scripted = forcedHeroIds?.filter((id) => id in heroPool && !excluded.has(id)) ?? [];
   const heroCount = forcedHeroIds?.length ?? heroCountOverride ?? (nodeType === 'boss' ? 2 : 4);
-  const [statCount, amountEach] = nodeType === 'boss' ? [3, 20] : nodeType === 'elite' ? [2, 10] : [0, 0];
 
   // A scripted roster short of its authored size (an id the player recruited) tops up from the
   // pool, so the fight is never smaller than the one the script was written against.
@@ -244,21 +260,14 @@ export function generateEncounter(
       rng = nextState;
       startingMoveIds = picked;
     }
-    let entry: RosterEntry = createRosterEntry(heroId, heroId, startingMoveIds);
-
-    let statGrants: Partial<Record<StatKey, number>> = flatGrants ? { ...flatGrants } : {};
-    if (statCount > 0) {
-      const { bonus, nextState } = randomStatBonus(rng, statCount, amountEach);
-      rng = nextState;
-      statGrants = mergeStatMods(statGrants, bonus);
-    }
-    if (scaling.statSteps > 0) {
-      const { bonus, nextState } = actStatBonus(rng, scaling.statSteps);
-      rng = nextState;
-      statGrants = mergeStatMods(statGrants, bonus);
-    }
-
-    entry = { ...entry, xp: xpForLevel(scaling.level), mastery: scaling.mastery, evolutionStatGrants: statGrants };
+    const { entry: grown, nextState: afterGrowth } = growTo(createRosterEntry(heroId, heroId, startingMoveIds), heroPool[heroId], scaling.level, rng);
+    rng = afterGrowth;
+    const { entry, nextState: afterLoadout } = applyLoadout(
+      { ...grown, mastery: scaling.mastery, evolutionStatGrants: flatGrants ? { ...flatGrants } : {} },
+      loadout,
+      rng
+    );
+    rng = afterLoadout;
     run = addRosterEntry(run, entry);
   }
 
@@ -285,26 +294,26 @@ export function appendFinalEnemy(
   enemyId: string,
   enemyPool: HeroLookup,
   seed: number,
-  scaling: ActScaling = NO_SCALING
+  scaling: ActScaling = NO_SCALING,
+  loadout?: EnemyLoadout
 ): Encounter {
   const definition = enemyPool[enemyId];
   if (!definition) return encounter;
   // rosterId === enemyId; a collision would mean the two pools share an id.
   if (encounter.run.roster.some((r) => r.rosterId === enemyId)) return encounter;
 
-  // The champion's own step count: level and kit depth are both closed to it, so stats are the
-  // only axis it has (difficulty.ts CHAMPION_STEP_MULTIPLIER).
-  const { bonus } = actStatBonus(createRng(seed), championSteps(scaling.statSteps));
-  const entry = createRosterEntry(enemyId, enemyId, definition.moveIds);
-  const run = addRosterEntry(encounter.run, { ...entry, xp: xpForLevel(scaling.level), mastery: scaling.mastery, evolutionStatGrants: bonus });
+  // Over its escorts by CHAMPION_LEVEL_BONUS: a champion ships a full kit, so its level is stats.
+  const { entry: grown, nextState } = growTo(createRosterEntry(enemyId, enemyId, definition.moveIds), definition, championLevel(scaling.level), createRng(seed));
+  const { entry } = applyLoadout({ ...grown, mastery: scaling.mastery }, loadout, nextState);
+  const run = addRosterEntry(encounter.run, entry);
   return { run, squad: { ...encounter.squad, benchIds: [...encounter.squad.benchIds, enemyId] } };
 }
 
 /**
  * The finale (docs/run-loop.md §4): the five broken seals in the order they were broken,
- * then the Endbringer. Nothing is rolled — every champion is rebuilt verbatim from the
- * snapshot taken when the player beat it, so the fight escalates across itself and ends
- * on the one thing that was never scaled at all.
+ * then the Endbringer. Every champion is rebuilt verbatim from the snapshot taken when the
+ * player beat it — level and growth alike — so the fight escalates across itself. Only the
+ * Endbringer's own growth is rolled, at `seed`.
  *
  * The champions field UNSEALED (`unsealedIdFor`): the Ancient half was the seal, and the
  * player already took it (docs/lore.md §6).
@@ -313,6 +322,7 @@ export function generateFinaleEncounter(
   brokenSeals: readonly BrokenSeal[],
   endbringerId: string,
   enemyPool: HeroLookup,
+  seed: number,
   endbringerScaling: ActScaling = NO_SCALING
 ): Encounter {
   const ordered = [...brokenSeals].sort((a, b) => a.actNumber - b.actNumber);
@@ -324,14 +334,14 @@ export function generateFinaleEncounter(
     const definition = enemyPool[unsealedId];
     if (!definition || run.roster.some((r) => r.rosterId === unsealedId)) continue;
     const entry = createRosterEntry(unsealedId, unsealedId, definition.moveIds);
-    run = addRosterEntry(run, { ...entry, xp: xpForLevel(seal.level), mastery: MASTERY_CAP, evolutionStatGrants: seal.statGrants });
+    run = addRosterEntry(run, { ...entry, xp: xpForLevel(seal.level), mastery: MASTERY_CAP, evolutionStatGrants: seal.statGrants, growthStatGrants: seal.growthStatGrants });
     orderedIds.push(unsealedId);
   }
 
   const endbringer = enemyPool[endbringerId];
   if (endbringer) {
-    const entry = createRosterEntry(endbringerId, endbringerId, endbringer.moveIds);
-    run = addRosterEntry(run, { ...entry, xp: xpForLevel(endbringerScaling.level), mastery: MASTERY_CAP });
+    const { entry } = growTo(createRosterEntry(endbringerId, endbringerId, endbringer.moveIds), endbringer, endbringerScaling.level, createRng(seed));
+    run = addRosterEntry(run, { ...entry, mastery: MASTERY_CAP });
     orderedIds.push(endbringerId);
   }
 
@@ -351,8 +361,8 @@ export interface SpawnEncounterOptions {
   leaderTier?: SpawnTier;
   escortTier: SpawnTier;
   escortCount: number;
-  /** Rarity weights for the one item each escort arrives holding; omitted = bare escorts. */
-  escortGear?: Record<EquipmentRarity, number>;
+  /** What each escort arrives holding; omitted = bare escorts. */
+  escortLoadout?: EnemyLoadout;
   /** Omitted = NO_SCALING. */
   scaling?: ActScaling;
 }
@@ -376,19 +386,14 @@ function drawSpawn(rng: RngState, pool: HeroLookup, count: number): { picked: st
 
 /**
  * The mob layer's own encounter (docs/titanspawn-overhaul.md §4): a leader at one tier ahead
- * of its escorts, or bare escorts alone, drawn from the Location's lines. No node-kind bonus —
- * the tier IS the difficulty axis here — and the act curve rides on the monsters track. The
- * escorts' gear is the second axis from Act 2 (difficulty.ts OPENER_GEAR_FROM_ACT): rolled on
- * the act's rarity curve exactly as a drop is, seeded with the rest of the encounter.
+ * of its escorts, or bare escorts alone, drawn from the Location's lines. The tier is the BODY
+ * and the level is the run-depth axis on it, as everywhere else. The escorts' gear is the third
+ * axis from Act 2 (difficulty.ts OPENER_GEAR_FROM_ACT): rolled on the act's rarity curve exactly
+ * as a drop is, seeded with the rest of the encounter.
  */
 export function generateSpawnEncounter(seed: number, options: SpawnEncounterOptions): Encounter {
-  const { types, leaderTier, escortTier, escortCount, escortGear, scaling = NO_SCALING } = options;
+  const { types, leaderTier, escortTier, escortCount, escortLoadout, scaling = NO_SCALING } = options;
   let rng = createRng(seed);
-  const random = () => {
-    const { value, nextState } = nextFloat(rng);
-    rng = nextState;
-    return value;
-  };
 
   const leaderPool = leaderTier ? spawnPool(types, leaderTier) : {};
   const escortPool = spawnPool(types, escortTier);
@@ -405,15 +410,11 @@ export function generateSpawnEncounter(seed: number, options: SpawnEncounterOpti
     const n = (seen.get(heroId) ?? 0) + 1;
     seen.set(heroId, n);
     const rosterId = n === 1 ? heroId : `${heroId}-${n}`;
-    let entry = createRosterEntry(rosterId, heroId, pool[heroId].moveIds);
-    const { bonus, nextState } = actStatBonus(rng, scaling.statSteps);
-    rng = nextState;
-    entry = { ...entry, xp: xpForLevel(scaling.level), evolutionStatGrants: bonus };
+    const { entry: grown, nextState: afterGrowth } = growTo(createRosterEntry(rosterId, heroId, pool[heroId].moveIds), pool[heroId], scaling.level, rng);
+    rng = afterGrowth;
     const isEscort = i >= leaderIds.length;
-    if (isEscort && escortGear) {
-      const [item] = rollEquipmentDrops(1, escortGear, undefined, random);
-      if (item) entry = { ...entry, equipment: equipItem(entry.equipment, item.id) };
-    }
+    const { entry, nextState: afterLoadout } = applyLoadout(grown, isEscort ? escortLoadout : undefined, rng);
+    rng = afterLoadout;
     run = addRosterEntry(run, entry);
     rosterIds.push(rosterId);
   }

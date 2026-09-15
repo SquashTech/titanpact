@@ -106,10 +106,10 @@ import {
   type EncounterNodeType,
   type Encounter,
 } from '../run/enemyGen';
-import { actScaling } from '../run/difficulty';
+import { encounterScaling } from '../run/difficulty';
 import { applyEncounterLevels, encounterXpKind, levelOf, xpForEncounter, xpForLevel, type HeroLevelUp } from '../run/growth';
 import { generateItinerary, locationForAct } from '../run/locations';
-import { encounterKindOf, nodeEncounter } from '../run/encounters';
+import { encounterKindOf, encounterSeedFor, nodeEncounter } from '../run/encounters';
 import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
 import { LocationProvider } from '../view/shared/LocationContext';
 import { NODE_TINT_MANA, NODE_TINT_VITAL } from '../view/shared/NodeStage';
@@ -518,12 +518,8 @@ export function App() {
         playerRun.brokenSeals,
         location.guardianFinalEnemyId ?? ENDBRINGER_ID,
         finaleEnemies,
-        // Authored FOR act 6, so it takes no act steps — only the level, as its tier label.
-        // The SKIRMISH track, not a self-baselined monsters one (2026-09-10, Growth Overhaul
-        // phase 6). `actScaling('monsters', FINALE_ACT, FINALE_ACT)` baselined the Endbringer
-        // against its own act and so paid it ZERO steps — the run's final fight was the one
-        // piece of content on the map that never scaled at all, and it measured 98% won.
-        actScaling('skirmish', FINALE_ACT)
+        encounterSeedFor(playerRun.map!, nodeId),
+        encounterScaling('finale', FINALE_ACT)
       );
       if (playerRun.roster.length <= 2) {
         handleSquadConfirmed(pickSquad(playerRun.roster, playerRun.roster.map((r) => r.rosterId), ROSTER_CAP), nodeId, 'boss', encounter);
@@ -694,6 +690,7 @@ export function App() {
           championId: champion.heroId,
           level: levelOf(champion),
           statGrants: champion.evolutionStatGrants,
+          growthStatGrants: champion.growthStatGrants,
         });
       }
       if (next.actNumber < TOTAL_ACTS) {

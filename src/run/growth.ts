@@ -82,8 +82,8 @@ export const GRADE_BUDGET = 28;
  * What one POINT of a roll is worth on the stat line. HP is NOT a special case: CLAUDE.md's own
  * measured break-even is ≈0.33 a point, so 3 HP is 1 point's worth of anything else. Mana grows
  * 2 a point (2026-09-13, XP Overhaul phase 6): a Late move is priced in mana, and with the pool
- * at 1 a point a 50-pool hero could cast one once a fight at level 25. Player-only — an enemy
- * rolls no growth — and measured: Late casts 18 → 22% of Act 4, 29 → 34% of Act 5, 36 → 40% of
+ * at 1 a point a 50-pool hero could cast one once a fight at level 25. Enemies grow on it too since
+ * 2026-09-15 (docs/enemy-levels.md). Measured: Late casts 18 → 22% of Act 4, 29 → 34% of Act 5, 36 → 40% of
  * the finale, full-clear 57 → 59%.
  */
 export const GROWTH_UNIT = 1;
@@ -183,7 +183,7 @@ export function xpToNextLevel(xp: number): number {
  * (`levelAfterEncounters`) and no longer authored.
  *
  * Sized so par still reaches the decided act-end levels — 8 / 14 / 19 / 24 / 28 / 30 — which
- * `ENEMY_LEVEL_BY_ACT`, the Guild Hall's lag and the difficulty re-fit all read. Re-sized ×1.25 on
+ * `enemyLevelFor`, the Guild Hall's lag and the difficulty re-fit all read. Re-sized ×1.25 on
  * 2026-09-14 when the act went from four fights to three (two standard and the Guardian's double,
  * so an act pays four fights' worth where it paid five): the act-end levels are unchanged and
  * inside an act par walks 5/6/8, 10/11/14, 15/17/19, 20/21/24, 25/26/28. Index is the act,

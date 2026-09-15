@@ -10,7 +10,7 @@ import { MASTERY_EVOLUTION, SCRIBE_PICKS, SCRIBE_PIPS_EACH, SCROLL_CACHE_COUNT, 
 import { ENCOUNTER_XP_MULTIPLIER, encounterXpForAct, encounterXpKind } from '../../run/growth';
 import { MANA_WELL_AMOUNT } from '../../run/runProgress';
 import { BOON_OFFER_COUNT } from '../../run/boons';
-import { OPENER_ESCORT_COUNT, guildHallLevel, spawnLeaderTierFor, type EncounterNodeKind } from '../../run/difficulty';
+import { OPENER_ESCORT_COUNT, championLevel, enemyLevelFor, guildHallLevel, spawnLeaderTierFor, type EncounterNodeKind } from '../../run/difficulty';
 import { ACT_ONE_OPENER_COUNT } from '../../run/spawn';
 import type { SpawnTier } from '../../data/titanspawn';
 import { ROSTER_CAP, SEAL_ACTS } from '../../run/state';
@@ -84,7 +84,14 @@ function encounterFacts(type: EncounterNodeKind, actNumber: number): NodeFact[] 
   const drop = EQUIPMENT_DROP_CHANCE[type];
   const xpKind = encounterXpKind(type);
   const xp = Math.round(encounterXpForAct(actNumber) * ENCOUNTER_XP_MULTIPLIER[xpKind]);
+  const level = enemyLevelFor(type, actNumber);
   return [
+    {
+      glyph: 'enemy',
+      label: 'Enemies',
+      value: `Lv ${level}`,
+      note: type === 'boss' ? `the Guardian Lv ${championLevel(level)}` : undefined,
+    },
     { glyph: 'xp', label: 'XP', value: `${xp}`, note: xpKind === 'standard' ? undefined : `×${ENCOUNTER_XP_MULTIPLIER[xpKind]}` },
     { glyph: 'gold', label: 'Gold', value: gold[1] > 0 ? range(gold) : null },
     {
@@ -113,13 +120,13 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
     case 'fight':
       return {
         kind: 'Encounter · Not recruitable',
-        facts: [...encounterFacts('fight', actNumber), { glyph: 'enemy', label: 'Enemies', ...spawnLine(actNumber) }],
+        facts: [...encounterFacts('fight', actNumber), { glyph: 'enemy', label: 'Titanspawn', ...spawnLine(actNumber) }],
         odds: odds('fight'),
       };
     case 'battle':
       return {
         kind: 'Encounter · Not recruitable',
-        facts: [...encounterFacts('battle', actNumber), { glyph: 'enemy', label: 'Enemies', ...spawnLine(Math.max(2, actNumber)) }],
+        facts: [...encounterFacts('battle', actNumber), { glyph: 'enemy', label: 'Titanspawn', ...spawnLine(Math.max(2, actNumber)) }],
         odds: odds('battle'),
       };
     case 'skirmish':
@@ -127,7 +134,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
     case 'elite':
       return {
         kind: 'Elite · Recruitable',
-        facts: [...encounterFacts('elite', actNumber), { glyph: 'enemy', label: 'Enemies', value: '+10', note: 'to 2 stats each' }],
+        facts: encounterFacts('elite', actNumber),
         odds: odds('elite'),
       };
     case 'boss':
@@ -138,7 +145,6 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
           { glyph: 'contract', label: 'Contract', value: '1' },
           { glyph: 'banner', label: 'Banner', value: '1 of 5', note: 'team-wide' },
           { glyph: 'class', label: 'Class', value: '1 hero', note: 'the Crucible' },
-          { glyph: 'enemy', label: 'Enemies', value: '+20', note: 'to 3 stats each' },
         ],
         odds: odds('boss'),
       };
@@ -147,6 +153,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         kind: 'The final battle',
         facts: [
           { glyph: 'enemy', label: 'Enemies', value: `${SEAL_ACTS} Guardians`, note: 'as you beat them' },
+          { glyph: 'enemy', label: 'Endbringer', value: `Lv ${enemyLevelFor('finale', actNumber)}` },
           { glyph: 'hero', label: 'Roster', value: '6 v 6' },
         ],
         odds: null,

@@ -14,7 +14,7 @@ import type { MapNode, MapNodeType, RunMap } from './map';
 import type { RunState } from './state';
 import type { ProgressionTable } from './progression';
 import { rosterEntryTypes } from './progression';
-import { actScaling, encounterHeroCountOverride, type ScalingTrack } from './difficulty';
+import { encounterScaling, encounterHeroCountOverride, enemyLoadoutFor } from './difficulty';
 import { appendFinalEnemy, generateEncounter, type Encounter, type EncounterNodeType } from './enemyGen';
 import { locationBias } from './locations';
 import { guardianEscortPool, mobEncounter } from './spawn';
@@ -66,11 +66,8 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
   const encounterKind = encounterKindOf(type);
   // The run's 2nd plain encounter is a deliberately lighter 2v2.
   const isSecondFight = encounterKind === 'fight' && run.fightsStarted === 1;
-  // Every spawn rides the monsters track — the Guardian's escorts included, since a Late at 600
-  // is authored against that curve (docs/titanspawn-overhaul.md §2). Only the champion itself
-  // keeps the `skirmish` track; the two are appended separately below.
-  const track: ScalingTrack = type === 'boss' ? 'monsters' : 'skirmish';
-  const scaling = actScaling(track, run.actNumber);
+  const scaling = encounterScaling(type, run.actNumber);
+  const loadout = enemyLoadoutFor(type, run.actNumber);
   // A scripted roster names its own combatants, so it draws from the WHOLE table
   // (docs/tutorial.md); a Guardian's escorts are the act's tier of the Location's spawn.
   const pool = scripted ? allCombatants : type === 'boss' ? guardianEscortPool(location, run.actNumber) : heroes;
@@ -95,13 +92,14 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
     bias,
     excludeHeroIds,
     scaling,
+    loadout,
     // A spawn has no progression data; only the hero pool cashes a level in.
     progression: pool === heroes || scripted ? progression : undefined,
   });
   // The Location's held-back champion arrives benched, so the first enemy KO brings him in.
   const finalEnemyId = type === 'boss' ? location.guardianFinalEnemyId : null;
   if (finalEnemyId) {
-    encounter = appendFinalEnemy(encounter, finalEnemyId, enemies, encounterSeedFor(ctx.run.map!, `${node.id}:champion`), actScaling('skirmish', run.actNumber));
+    encounter = appendFinalEnemy(encounter, finalEnemyId, enemies, encounterSeedFor(ctx.run.map!, `${node.id}:champion`), scaling, loadout);
   }
   return encounter;
 }
@@ -140,7 +138,7 @@ export function nodeEncounter(node: MapNode, ctx: EncounterContext): Encounter {
   const map = ctx.run.map!;
   const { location, run, scripted } = ctx;
   if ((type === 'fight' || type === 'battle') && !scripted) {
-    return mobEncounter(type, location, run.actNumber, encounterSeedFor(map, node.id), actScaling('monsters', run.actNumber));
+    return mobEncounter(type, location, run.actNumber, encounterSeedFor(map, node.id), encounterScaling(type, run.actNumber));
   }
   const partner = scripted ? null : forkPartner(map, node);
   if (!partner) return heroPoolEncounter(node, type, ctx, encounterSeedFor(map, node.id));

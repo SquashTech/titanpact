@@ -14,7 +14,7 @@ import { classes } from '../../src/data/classes';
 import { runEvents } from '../../src/data/events';
 import { progressionTable } from '../../src/data/progression';
 import { enemies, finaleEnemies, ENDBRINGER_ID } from '../../src/data/enemies';
-import { encounterKindOf, nodeEncounter } from '../../src/run/encounters';
+import { encounterKindOf, encounterSeedFor, nodeEncounter } from '../../src/run/encounters';
 import { allCombatants } from '../../src/data/content';
 import { guildHallOffers, CONTRACT_PURCHASE_COST } from '../../src/data/recruitment';
 import { SCRIBE_PIPS_EACH, SCROLL_CACHE_COUNT, buyScroll, canBuyScroll, grantMastery } from '../../src/run/mastery';
@@ -23,7 +23,7 @@ import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry
 import { generateMap, type MapNode, type MapNodeType } from '../../src/run/map';
 import { generateStarterOptions, STARTER_PICK_COUNT } from '../../src/run/draft';
 import { generateItinerary, locationForAct } from '../../src/run/locations';
-import { actScaling } from '../../src/run/difficulty';
+import { encounterScaling } from '../../src/run/difficulty';
 import { encounterXpKind, grantEncounterLevels, levelOf, MAX_LEVEL } from '../../src/run/growth';
 import { generateFinaleEncounter, type Encounter, type EncounterNodeType } from '../../src/run/enemyGen';
 import { pickSquad, requiredSquadSize, STANDARD_SQUAD_SIZE, type Squad } from '../../src/run/squad';
@@ -330,6 +330,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
             championId: champion.heroId,
             level: levelOf(champion),
             statGrants: champion.evolutionStatGrants,
+            growthStatGrants: champion.growthStatGrants,
           });
         }
         // Guardian → Banner → Crucible (a Class) → Pact Seal.
@@ -425,8 +426,8 @@ function resolveEncounterNode(
       run.brokenSeals,
       location.guardianFinalEnemyId ?? ENDBRINGER_ID,
       finaleEnemies,
-      // The skirmish track, matching App.tsx: baselining the Endbringer against its own act paid it zero steps.
-      actScaling('skirmish', TOTAL_ACTS)
+      encounterSeedFor(run.map!, node.id),
+      encounterScaling('finale', TOTAL_ACTS)
     );
     squadSize = ROSTER_CAP;
   } else {

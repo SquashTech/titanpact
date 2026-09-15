@@ -12,26 +12,17 @@ test('enemyGen: fight encounters field 4 heroes (2 active + 2 bench) with no sta
   for (const entry of run.roster) assert.deepStrictEqual(entry.evolutionStatGrants, {});
 });
 
-test('enemyGen: elite encounters grant +10 to exactly 2 stats per hero', () => {
-  const { run } = generateEncounter('elite', 1, heroes);
-  assert.strictEqual(run.roster.length, 4);
-  for (const entry of run.roster) {
-    const grants = Object.values(entry.evolutionStatGrants);
-    assert.strictEqual(grants.length, 2);
-    assert.ok(grants.every((v) => v === 10));
-  }
-});
+test('enemyGen: the node kind sets the SIZE and nothing else — an elite is four bare heroes, a boss two', () => {
+  // Level is the one stat axis (docs/enemy-levels.md); a kind no longer carries a stat bonus.
+  const { run: elite } = generateEncounter('elite', 1, heroes);
+  assert.strictEqual(elite.roster.length, 4);
+  for (const entry of elite.roster) assert.deepStrictEqual(entry.evolutionStatGrants, {});
 
-test('enemyGen: boss encounters field 2 heroes with no bench and +20 to exactly 3 stats per hero', () => {
   const { run, squad } = generateEncounter('boss', 1, heroes);
   assert.strictEqual(run.roster.length, 2);
   assert.strictEqual(squad.activeIds.filter(Boolean).length, 2);
   assert.strictEqual(squad.benchIds.length, 0);
-  for (const entry of run.roster) {
-    const grants = Object.values(entry.evolutionStatGrants);
-    assert.strictEqual(grants.length, 3);
-    assert.ok(grants.every((v) => v === 20));
-  }
+  for (const entry of run.roster) assert.deepStrictEqual(entry.evolutionStatGrants, {});
 });
 
 test('enemyGen: the same seed produces the same encounter; a different seed can differ', () => {

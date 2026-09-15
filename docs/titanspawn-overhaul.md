@@ -466,6 +466,13 @@ the point of it.
 
 ## 11. Locked invariants this overturns
 
+> **2026-09-15, `docs/enemy-levels.md`:** the monsters track and the act-step curve §2 and §4
+> author against are gone. A spawn's tier is still its BODY (200 / 400 / 600); its level, rolled
+> through the line's grades, is the run-depth axis on top, and "an enemy spawn never rolls them"
+> is reversed. The Guardian's escorts sit three levels under par (the Act 2 Mid escorts on hero
+> grades measured as the wall); the opener's Earlies keep their item from Act 2.
+
+
 | `CLAUDE.md` today | After this |
 |---|---|
 | Locations author a **faction** that `fight`/`battle` draw from; the Guardian's escorts are its basics | Locations name **spawn types**; `fight`/`battle` and the escorts draw Titanspawn |

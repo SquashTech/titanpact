@@ -834,11 +834,12 @@ Deriving it means phase 6 retunes `LEVEL_AFTER_ENCOUNTER` once and this follows.
 for: one act is most of the run early and a fifth of it late, so the same lag is worth most in
 Act 1 and least in Act 5. It answers the NOT-YET-IMPLEMENTED note above.
 
-**The LEVEL axis points the right way again** since phase 6 re-derived `ENEMY_LEVEL_BY_ACT` off
-the same curve, at a smaller lag: an enemy trails the player's act-end level by
-`ENEMY_LEVEL_LAG` = 2 (**6 / 12 / 17 / 22 / 26**) where a hire trails by a whole act
-(**2 / 9 / 15 / 20 / 25**). So a contract hero out-levels a hire at every act, and §6's fourth
-axis reads the way its table says. It ran BACKWARDS between phases 3 and 6, and
+**The LEVEL axis points the right way** (re-based 2026-09-15, `docs/enemy-levels.md` §4): an
+enemy's level is set per NODE off the player's par entering it — the Skirmish's AT par
+(**5 / 10 / 15 / 20 / 25**), the Elite's a step over — where a hire trails by a whole act
+(**2 / 9 / 15 / 20 / 25**). So an Elite's contract out-levels a hire in every act and a Skirmish's
+never trails one (it ties from Act 3; finished-vs-raw and Mastery still separate them), and §6's
+fourth axis reads the way its table says. It ran BACKWARDS between phases 3 and 6, and
 `test/recruitment.test.ts` carries the assertion that would catch it going backwards again.
 
 Gold cost is untouched at a flat 50g. Whether that is right for a hire that now buys strictly

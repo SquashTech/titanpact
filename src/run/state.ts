@@ -95,7 +95,9 @@ export interface BrokenSeal {
   /** The sealed (Ancient-second) id. The finale fields `unsealedIdFor` it. */
   championId: string;
   level: number;
+  /** The champion's flat grants (the tutorial's, if any) and what its level rolled — the power it was beaten at. */
   statGrants: Partial<Record<StatKey, number>>;
+  growthStatGrants: Partial<Record<StatKey, number>>;
 }
 
 export interface RunState {

@@ -33,7 +33,7 @@ export function mobEncounter(
     leaderTier: spawnLeaderTierFor(actNumber),
     escortTier: 'early',
     escortCount: OPENER_ESCORT_COUNT,
-    escortGear: actNumber >= OPENER_GEAR_FROM_ACT ? rarityWeightsFor(actNumber, 'standard') : undefined,
+    escortLoadout: actNumber >= OPENER_GEAR_FROM_ACT ? { gear: rarityWeightsFor(actNumber, 'standard') } : undefined,
     scaling,
   });
 }

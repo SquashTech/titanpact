@@ -122,6 +122,8 @@ interface Props {
   fx?: FigureFx | null;
   /** Field Effect plus the board a conditional passive reads (state.ts StatContext). Omitted, neither hook applies. */
   statCtx?: StatContext;
+  /** The roster entry's level (run/growth.ts levelOf), on the nameplate for both sides so the gap reads at a glance. */
+  level?: number;
 }
 
 /** Icon + bare number (magnitude, falling back to duration). A ~500ms hold opens StatusDetailOverlay; a tap only stops propagation. */
@@ -229,6 +231,7 @@ export function CombatantCard({
   statCtx,
   striking,
   fx,
+  level,
 }: Props) {
   const [inspectingStatus, setInspectingStatus] = useState<string | null>(null);
   const hitClass = popup ? POPUP_HIT_CLASS[popup.className] : undefined;
@@ -317,6 +320,11 @@ export function CombatantCard({
           both sides of the field, where the battlefield mirrors the far side's card. */}
       <div className="combatant-plate">
         <div className="combatant-name">
+          {level !== undefined && (
+            <span className="combatant-level" aria-label={`Level ${level}`}>
+              {level}
+            </span>
+          )}
           <span className="hero-name-text">{hero.name}</span>
           <span className="combatant-types">
             {types.map((t) => (

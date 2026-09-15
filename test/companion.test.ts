@@ -21,7 +21,7 @@ import {
   joinCompanion,
 } from '../src/run/companion';
 import { mobEncounter } from '../src/run/spawn';
-import { actScaling } from '../src/run/difficulty';
+import { encounterScaling } from '../src/run/difficulty';
 import { DEFAULT_SCHEDULE, entryBandRank, levelMovePool, scheduleEntries, scheduleFor } from '../src/run/progression';
 import { MASTERY_CAP, MASTERY_EVOLUTION } from '../src/run/mastery';
 import { ROSTER_CAP, addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
@@ -52,7 +52,7 @@ test('companion: the join is due exactly once — the first fight, won, nothing 
 
 test('companion: the candidate is the beaten side\'s lead Early, and the Act 1 opener always has one', () => {
   for (let seed = 1; seed <= 20; seed++) {
-    const encounter = mobEncounter('fight', locations.wildsEdge, 1, seed, actScaling('monsters', 1));
+    const encounter = mobEncounter('fight', locations.wildsEdge, 1, seed, encounterScaling('fight', 1));
     const id = companionCandidate(encounter);
     assert.ok(id && spawnPosition(id)?.tier === 'early', `seed ${seed}: no Early asked`);
     assert.strictEqual(id, encounter.run.roster.find((r) => r.rosterId === encounter.squad.activeIds[0])!.heroId);

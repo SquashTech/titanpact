@@ -6,8 +6,18 @@
 // factions (docs/titanspawn-overhaul.md §7); what a `fight`, `battle` or Guardian escort draws now
 // is a Titanspawn (data/titanspawn.ts), by the Location's `spawnTypes` and the act's tier.
 
-import type { HeroDefinition } from '../engine/content';
+import type { GrowthStatKey, HeroDefinition } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
+import type { GrowthGrade } from '../run/growth';
+
+/**
+ * A champion is FRONT-LOADED: authored at full strength, so its level buys it little
+ * (docs/enemy-levels.md §5). E across the board — a hero line sums to 28, this to 7 — and the
+ * same for the Endbringer. Measured: on hero grades the Act 2 Guardian fell to 67% cleared.
+ */
+export const CHAMPION_GRADES: Record<GrowthStatKey, GrowthGrade> = {
+  hp: 'E', attack: 'E', defense: 'E', intelligence: 'E', wisdom: 'E', speed: 'E', manaPool: 'E',
+};
 
 export const enemies: Record<string, HeroDefinition> = {
   // Wild's Edge's Guardian reinforcement: held on the enemy bench so the fight's first KO
@@ -27,6 +37,7 @@ export const enemies: Record<string, HeroDefinition> = {
     baseStats: { hp: 430, attack: 65, defense: 75, intelligence: 60, wisdom: 60, speed: 75, manaPool: 105, mpRegen: 20 },
     moveIds: ['claw', 'maul', 'enfeeble', 'archonBlast'],
     starter: false,
+    growthGrades: CHAMPION_GRADES,
   },
 
   // The Blighted Shrine's Guardian reinforcement, and the Goblin Lord's opposite number: the
@@ -44,6 +55,7 @@ export const enemies: Record<string, HeroDefinition> = {
     baseStats: { hp: 330, attack: 70, defense: 85, intelligence: 85, wisdom: 75, speed: 70, manaPool: 140, mpRegen: 20 },
     moveIds: ['runicBlast', 'forgottenCurse', 'duskBlade', 'eclipse'],
     starter: false,
+    growthGrades: CHAMPION_GRADES,
   },
 
   // The Forbidden Forest's Guardian reinforcement: the apex of the Renew engine. Overgrowth is
@@ -62,6 +74,7 @@ export const enemies: Record<string, HeroDefinition> = {
     baseStats: { hp: 410, attack: 85, defense: 90, intelligence: 75, wisdom: 65, speed: 30, manaPool: 150, mpRegen: 20 },
     moveIds: ['runicBlast', 'overgrowth', 'branchSlam', 'forceOfNature'],
     starter: false,
+    growthGrades: CHAMPION_GRADES,
   },
 
   // The Molten Foundry's Guardian reinforcement: it lights its own Scorched Land and then feeds
@@ -84,6 +97,7 @@ export const enemies: Record<string, HeroDefinition> = {
     baseStats: { hp: 420, attack: 85, defense: 80, intelligence: 80, wisdom: 60, speed: 35, manaPool: 150, mpRegen: 20 },
     moveIds: ['runicBlast', 'spreadingBlaze', 'immolate', 'firebrand'],
     starter: false,
+    growthGrades: CHAMPION_GRADES,
   },
 
   // The Necropolis's Guardian reinforcement, and the apex of both halves: it Haunts with
@@ -104,6 +118,7 @@ export const enemies: Record<string, HeroDefinition> = {
     baseStats: { hp: 310, attack: 85, defense: 90, intelligence: 90, wisdom: 80, speed: 50, manaPool: 150, mpRegen: 20 },
     moveIds: ['runicBlast', 'poltergeist', 'wailingFlight', 'vengeance'],
     starter: false,
+    growthGrades: CHAMPION_GRADES,
   },
 
   // The Storm Coast's Guardian reinforcement. 550, matching every other champion.
@@ -116,6 +131,7 @@ export const enemies: Record<string, HeroDefinition> = {
     baseStats: { hp: 350, attack: 75, defense: 80, intelligence: 95, wisdom: 80, speed: 45, manaPool: 150, mpRegen: 20 },
     moveIds: ['aquaSlice', 'maelstrom', 'archonBlast', 'tsunami'],
     starter: false,
+    growthGrades: CHAMPION_GRADES,
   },
 
   // --- The Threshold — the thing the six seals were holding (docs/lore.md) ---
@@ -142,6 +158,7 @@ export const enemies: Record<string, HeroDefinition> = {
     baseStats: { hp: 680, attack: 100, defense: 115, intelligence: 135, wisdom: 115, speed: 95, manaPool: 200, mpRegen: 25 },
     moveIds: ['runicBlast', 'forgottenCurse', 'archonBlast', 'enfeeble'],
     starter: false,
+    growthGrades: CHAMPION_GRADES,
   },
 };
 

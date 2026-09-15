@@ -36,7 +36,8 @@ don't silently override it.
 > the rule below is still the rule in force. **Phases 1-2 are IN (2026-09-13):** the 42 spawn
 > exist and render, the factions are deleted, `LocationDefinition.spawnTypes` is the mob layer's
 > hard filter, `fight`/`battle` and the Guardian's escorts draw spawn by act tier
-> (`SPAWN_TIER_BY_ACT`), and every spawn — escorts included — rides the monsters track.
+> (`SPAWN_TIER_BY_ACT`), and every spawn — escorts included — levels to its node
+> (`docs/enemy-levels.md`, 2026-09-15, which retired the monsters track).
 > **Phases 3–5 are IN too:** the fork is Elite-or-Skirmish with the enemy typing previewed on the
 > tile from a draw seeded off the map (`src/run/encounters.ts`), the Pact Clock takes the field
 > only, and the mortal companion joins after the first fight. **Phase 6 measured (sim pass 8) and
@@ -347,9 +348,11 @@ don't silently override it.
   act-sized gap IS the decaying runway, worth most early when one act is most of the run.
   **Two brakes on two routes:** gold prices the purchased one, the roster cap prices the free one
   (gaining requires terminating, and equipment strips with no refund).
-  The LEVEL axis points the right way again since phase 6 re-derived `ENEMY_LEVEL_BY_ACT`: a
-  contract hero arrives at the act's enemy level (6/12/17/22/26) against a hire's 2/9/15/20/25.
-  `test/recruitment.test.ts` carries the assertion that catches it inverting again.
+  The LEVEL axis points the right way: a contract hero arrives at its NODE's enemy level
+  (2026-09-15, `docs/enemy-levels.md` §4 — the Skirmish's is the player's par, 5/10/15/20/25,
+  the Elite's a step over) against a hire's 2/9/15/20/25, so an Elite's contract outranks a hire
+  and a Skirmish's never trails one. `test/recruitment.test.ts` carries the assertion that
+  catches it inverting again.
 - **Roster hard cap = 6**, doubling as the bring-6-pick-4 battle sideboard. Gaining a hero
   requires **terminating** an existing one. Equipment strips on termination; no gold refund.
   **One exception, the companion** (2026-09-13, Titanspawn overhaul §5, `src/run/companion.ts`):
@@ -548,21 +551,24 @@ what's still unimplemented:
   at a threshold, so a flat team-wide grant of it measured dead in every batch under both
   pilots and in play; no Banner carries Speed. Under the weak pilot the Bulwark still leads and
   the Wellspring trails (z ±2) — the open balance question for playtest (`docs/run-loop.md`
-  "The Guardian's Banner"). **Encounters scale by act**
-  (2026-08-30) on two tracks (`src/run/difficulty.ts`): **Monsters** baselines at Act 2
-  (every Titanspawn, the Guardian's escorts included, since 2026-09-13 — a Mid at 400 is
-  the Act 2 line; only the champion itself rides the other track), **Skirmish/Guardian** at
-  Act 1, and acts past a track's baseline walk an **accelerating** `ACT_STEP_CURVE`
-  (`[0, 0, 4, 8, 13]` cumulative steps of +30 stat total each; the last two came down from
-  9 / 15 in the XP Overhaul's phase 6 to pay for the Late-tier re-price) on top of the
-  node-kind bonus. It accelerates because it has to track a player whose growth does: measured, a
-  linear curve had enemy stats growing +239/+161/+90/+87 an act against the player's
-  +254/+192/+364/+399 (2026-09-05, `scripts/sim`). Enemy level runs **6 / 12 / 17 / 22 / 26**
-  by act, so from Act 3 on every hero-pool enemy arrives already **evolved**, and a Recruit
-  Contract claims it at that level — but note that **level is inert for a Guardian's
-  champion**: every champion ships a full 4-move kit and `appendFinalEnemy` runs no level
-  progression, so the stat curve is the only lever that touches it. Every number here is a
-  first-pass figure for playtest; only the shape is decided. **HP persists across an act's
+  "The Guardian's Banner"). **Enemies are LEVELLED, not stepped** (2026-09-15, per user
+  direction, `docs/enemy-levels.md`, replacing the two-track act-step curve, the Elite's and
+  Guardian's node-kind stat bonuses and the champion multiplier, all deleted): an enemy's ONE
+  stat axis is its level, rolled through its growth grades from 1 exactly as a Guild hire's is —
+  hero-pool enemy, Titanspawn and champion alike — and **shown** on the scouted chips, the node
+  dossier and both sides' fight nameplates. The level is set **per node** off the player's PAR
+  entering it plus a kind offset (`ENEMY_LEVEL_OFFSET`, `enemyLevelFor`,
+  `src/run/difficulty.ts`): opener −3, `battle` −2, **Skirmish at par, Elite +1**, the
+  Guardian's escorts −3 with the champion `CHAMPION_LEVEL_BONUS` = 2 over them, so a row of
+  the map reads *Skirmish at your level, Elite a step over, the Guardian beaten on its body*.
+  Mastery still reads off the act. **A champion is FRONT-LOADED**: `CHAMPION_GRADES`, all E,
+  because on hero grades the Act 2 Guardian measured 67% cleared. **Enemy gear from Act 4**
+  (`ENEMY_GEAR_FROM_ACT`, `EnemyLoadout`): one item each on the node's own rarity curve,
+  stripped on a contract claim — level alone cannot track a player stacking Banners and
+  late-window gear, and gear is the seam passives will share. Measured (sim pass 9): full-clear
+  42.4% against the step curve's 43.6%, acts 79 / 79 / 98 / 76 / 92 against 85 / 85 / 96 / 76 /
+  82 — Act 1 and Act 5 are the two dials named for playtest. Every number here is a first-pass
+  figure; only the shape is decided. **HP persists across an act's
   nodes — Wounds — and mana does not** (2026-09-15, per user direction, FOR PLAYTEST;
   `src/run/wounds.ts`, `docs/run-loop.md` "Wounds"). A fight writes the fielded heroes'
   missing HP onto `RosterEntry.wounds`, the act's end is the one free mend, and **every hero

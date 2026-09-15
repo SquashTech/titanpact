@@ -220,7 +220,7 @@ test('signature: the tenth pip owes it once — below the cap it lands, at the c
 });
 
 test('signature: a generated hero at ten holds it — in the last slot when its kit is full — and one below ten does not', () => {
-  const at = (mastery: number) => generateEncounter('elite', 5, heroes, { forcedHeroIds: ['tidecaller'], scaling: { statSteps: 0, level: 25, mastery }, progression: progressionTable }).run.roster.find((r) => r.heroId === 'tidecaller')!;
+  const at = (mastery: number) => generateEncounter('elite', 5, heroes, { forcedHeroIds: ['tidecaller'], scaling: { level: 25, mastery }, progression: progressionTable }).run.roster.find((r) => r.heroId === 'tidecaller')!;
   const mastered = at(MASTERY_SIGNATURE);
   assert.ok(mastered.unlockedMoveIds.includes('lizardRush'), `a Riptide at ten fights with Lizard Rush: ${mastered.unlockedMoveIds}`);
   assert.ok(mastered.unlockedMoveIds.length <= MOVE_CAP);

@@ -1,21 +1,24 @@
 import * as assert from 'assert';
 import { test } from './harness';
-import { ENCOUNTERS_PER_ACT, levelAfterEncounters, levelOf } from '../src/run/growth';
+import { ENCOUNTERS_PER_ACT, MAX_LEVEL, levelAfterEncounters, levelOf } from '../src/run/growth';
 import {
-  actScaling,
-  ACT_STEP_CURVE,
-  ACT_STEP_STAT_TOTAL,
-  BASELINE_ACT,
-  ENEMY_LEVEL_BY_ACT,
-  ENEMY_LEVEL_LAG,
-  NO_SCALING,
   ACT_ONE_ELITE_HERO_COUNT,
+  CHAMPION_LEVEL_BONUS,
+  ENCOUNTERS_BEFORE_NODE,
+  ENEMY_LEVEL_OFFSET,
+  NO_SCALING,
+  championLevel,
   encounterHeroCountOverride,
+  encounterScaling,
+  enemyLevelFor,
+  parLevelAtNode,
+  type EncounterNodeKind,
 } from '../src/run/difficulty';
-import { generateEncounter, generateSpawnEncounter } from '../src/run/enemyGen';
+import { appendFinalEnemy, generateEncounter, generateSpawnEncounter } from '../src/run/enemyGen';
 import { MOVE_CAP } from '../src/run/progression';
 import { MASTERY_EVOLUTION, masteryForAct } from '../src/run/mastery';
 import { heroes } from '../src/data/heroes';
+import { enemies } from '../src/data/enemies';
 import { titanspawn } from '../src/data/titanspawn';
 import { locations } from '../src/data/locations';
 import { mobEncounter } from '../src/run/spawn';
@@ -24,104 +27,89 @@ import { SEAL_ACTS, TOTAL_ACTS } from '../src/run/state';
 import { grantBudgetTotal } from '../src/run/statBudget';
 import type { StatKey } from '../src/engine/content';
 
-function statTotal(grants: Partial<Record<string, number>>): number {
+const NODE_KINDS: readonly EncounterNodeKind[] = ['fight', 'skirmish', 'battle', 'elite', 'boss'];
+
+function growthTotal(grants: Partial<Record<string, number>>): number {
   return grantBudgetTotal(grants as Partial<Record<StatKey, number>>);
 }
 
-test('difficulty: the skirmish track baselines at Act 1 and walks up the acceleration curve', () => {
-  assert.strictEqual(BASELINE_ACT.skirmish, 1);
-  assert.strictEqual(actScaling('skirmish', 1).statSteps, ACT_STEP_CURVE[0]);
-  assert.strictEqual(actScaling('skirmish', 2).statSteps, ACT_STEP_CURVE[1]);
-  assert.strictEqual(actScaling('skirmish', 5).statSteps, ACT_STEP_CURVE[4]);
-});
-
-test('difficulty: the monsters track baselines at Act 2 and never goes negative in Act 1', () => {
-  assert.strictEqual(BASELINE_ACT.monsters, 2);
-  assert.strictEqual(actScaling('monsters', 1).statSteps, 0);
-  assert.strictEqual(actScaling('monsters', 2).statSteps, ACT_STEP_CURVE[0]);
-  assert.strictEqual(actScaling('monsters', 3).statSteps, ACT_STEP_CURVE[1]);
-  // One act behind the skirmish track throughout, by construction.
-  assert.strictEqual(actScaling('monsters', 5).statSteps, ACT_STEP_CURVE[3]);
-});
-
-test('difficulty: the act-step curve ACCELERATES — that is the whole point of it being a table', () => {
-  // A linear curve let the enemy fall behind: measured, its fielded stats grew +239/+161/+90/+87
-  // an act while the player's grew +254/+192/+364/+399, crossing at act 4.
-  assert.strictEqual(ACT_STEP_CURVE[0], 0, 'a track at its own baseline takes no steps');
-  // Never DECREASES; a repeat is legal, and index 1 is deliberately a repeat of 0 — Act 2 is
-  // where the run meets a real faction for the first time after Act 1's soft Goblins, and it
-  // measured as the run's wall for as long as it carried a step (2026-09-10, phase 6).
-  for (let i = 1; i < ACT_STEP_CURVE.length; i++) {
-    assert.ok(ACT_STEP_CURVE[i] >= ACT_STEP_CURVE[i - 1], `step ${i} goes backwards`);
-  }
-  const gaps = ACT_STEP_CURVE.slice(1).map((n, i) => n - ACT_STEP_CURVE[i]);
-  for (let i = 1; i < gaps.length; i++) {
-    assert.ok(gaps[i] >= gaps[i - 1], `gap ${i} shrinks — the curve must never decelerate`);
-  }
-  assert.ok(gaps[gaps.length - 1] > gaps[0], 'the last act must step harder than the first');
-});
-
-test('difficulty: acts past the curve hold at its last entry rather than running off the end', () => {
-  const last = ACT_STEP_CURVE[ACT_STEP_CURVE.length - 1];
-  assert.strictEqual(actScaling('skirmish', TOTAL_ACTS).statSteps, last);
-  assert.strictEqual(actScaling('skirmish', 99).statSteps, last);
-});
-
-test('difficulty: enemy levels TRACK the player curve at a fixed lag, and hold past the table', () => {
-  // Derived from LEVEL_AFTER_ENCOUNTER since 2026-09-10 (Growth Overhaul phase 6) rather than
-  // authored beside it. The old [1, 3, 5, 7, 10] was fitted to a 10-level cap and left an Act 5
-  // enemy at 10 against a roster at 28.
+test('difficulty: an enemy level is the player par entering its node, plus the kind offset', () => {
   for (let act = 1; act <= SEAL_ACTS; act++) {
-    const playerAtActEnd = levelAfterEncounters(act * ENCOUNTERS_PER_ACT);
-    assert.strictEqual(
-      ENEMY_LEVEL_BY_ACT[act - 1],
-      Math.max(1, playerAtActEnd - ENEMY_LEVEL_LAG),
-      `act ${act}: the enemy table must read off the player curve, not a table beside it`
-    );
-    assert.strictEqual(actScaling('skirmish', act).level, ENEMY_LEVEL_BY_ACT[act - 1]);
-    // The player runs AHEAD all run — that is what keeps the fights winnable while the enemy tracks.
-    assert.ok(ENEMY_LEVEL_BY_ACT[act - 1] < playerAtActEnd, `act ${act}: an enemy must not out-level the roster`);
+    for (const kind of NODE_KINDS) {
+      const par = levelAfterEncounters((act - 1) * ENCOUNTERS_PER_ACT + ENCOUNTERS_BEFORE_NODE[kind]);
+      assert.strictEqual(parLevelAtNode(kind, act), par, `act ${act} ${kind} par`);
+      assert.strictEqual(
+        enemyLevelFor(kind, act),
+        Math.max(1, Math.min(MAX_LEVEL, par + ENEMY_LEVEL_OFFSET[kind])),
+        `act ${act} ${kind}: the level must read off the player curve, not a table beside it`
+      );
+      assert.strictEqual(encounterScaling(kind, act).level, enemyLevelFor(kind, act));
+    }
   }
-  // The table covers the five seal acts; the finale act reuses its last entry.
-  const last = ENEMY_LEVEL_BY_ACT[ENEMY_LEVEL_BY_ACT.length - 1];
-  assert.strictEqual(actScaling('skirmish', TOTAL_ACTS).level, last);
-  // A TOTAL_ACTS bump must not produce an undefined level, nor may a nonsense act number.
-  assert.strictEqual(actScaling('skirmish', TOTAL_ACTS + 3).level, last);
-  assert.strictEqual(actScaling('skirmish', 0).level, ENEMY_LEVEL_BY_ACT[0]);
 });
 
-test('difficulty: each act-step adds exactly ACT_STEP_STAT_TOTAL to a scaled enemy stat total, on top of the node-kind bonus', () => {
+test('difficulty: the offsets order the act — opener under par, Skirmish at it, Elite over it, the champion over its escorts', () => {
+  assert.ok(ENEMY_LEVEL_OFFSET.fight < 0, 'the opener is the act\'s lightest fight');
+  assert.ok(ENEMY_LEVEL_OFFSET.skirmish >= 0, 'a Skirmish contract never trails a hire on level (test/recruitment)');
+  assert.ok(ENEMY_LEVEL_OFFSET.elite > ENEMY_LEVEL_OFFSET.skirmish, 'the Elite is the fork\'s harder tile');
+  // The Guardian is beaten on its BODY — a 550 champion over the act's tier of escorts — so its
+  // level sits under par (docs/enemy-levels.md §4); the champion still tops its own escorts.
+  assert.ok(ENEMY_LEVEL_OFFSET.boss <= 0 && CHAMPION_LEVEL_BONUS > 0);
+  for (let act = 1; act <= SEAL_ACTS; act++) {
+    assert.ok(enemyLevelFor('fight', act) < enemyLevelFor('skirmish', act), `act ${act}: opener under the Skirmish`);
+    assert.ok(enemyLevelFor('skirmish', act) < enemyLevelFor('elite', act), `act ${act}: Skirmish under the Elite`);
+    assert.ok(championLevel(enemyLevelFor('boss', act)) > enemyLevelFor('boss', act), `act ${act}: the champion over its escorts`);
+  }
+});
+
+test('difficulty: levels never run backwards across the run, and clamp at the cap and the floor', () => {
+  for (const kind of NODE_KINDS) {
+    for (let act = 2; act <= SEAL_ACTS; act++) {
+      assert.ok(enemyLevelFor(kind, act) >= enemyLevelFor(kind, act - 1), `${kind} act ${act} goes backwards`);
+    }
+  }
+  assert.strictEqual(enemyLevelFor('fight', 1), 1, 'the run opener is level 1 — the on-ramp');
+  assert.ok(enemyLevelFor('finale', TOTAL_ACTS) <= MAX_LEVEL);
+  assert.strictEqual(championLevel(MAX_LEVEL), MAX_LEVEL);
+  // A junk act clamps rather than producing an undefined level.
+  assert.strictEqual(enemyLevelFor('boss', 0), enemyLevelFor('boss', 1));
+  assert.ok(Number.isInteger(enemyLevelFor('boss', 99)));
+});
+
+test('difficulty: an enemy carries the growth its level earned — the ONE stat axis', () => {
   for (const act of [1, 2, 3, 4, 5]) {
-    const scaling = actScaling('skirmish', act);
-    const { run } = generateEncounter('fight', 3, heroes, { scaling });
+    const scaling = encounterScaling('elite', act);
+    const { run } = generateEncounter('elite', 3, heroes, { scaling });
     for (const entry of run.roster) {
-      assert.strictEqual(statTotal(entry.evolutionStatGrants), scaling.statSteps * ACT_STEP_STAT_TOTAL, `act ${act}`);
-    }
-  }
-
-  // elite's own +10x2 stacks with the curve rather than being replaced by it.
-  const eliteAct4 = actScaling('skirmish', 4);
-  const { run: elite } = generateEncounter('elite', 3, heroes, { scaling: eliteAct4 });
-  for (const entry of elite.roster) {
-    assert.strictEqual(statTotal(entry.evolutionStatGrants), 20 + eliteAct4.statSteps * ACT_STEP_STAT_TOTAL);
-  }
-});
-
-test('difficulty: every act-step grant stays a multiple of 5 or 10 (CLAUDE.md "Stat modifiers")', () => {
-  const { run } = generateEncounter('boss', 8, heroes, { scaling: actScaling('skirmish', 5) });
-  for (const entry of run.roster) {
-    for (const amount of Object.values(entry.evolutionStatGrants)) {
-      assert.strictEqual((amount ?? 0) % 5, 0);
+      assert.strictEqual(levelOf(entry), scaling.level, `act ${act} level`);
+      assert.deepStrictEqual(entry.evolutionStatGrants, {}, `act ${act}: no node-kind bonus, no act-steps`);
+      const gained = growthTotal(entry.growthStatGrants);
+      if (scaling.level > 1) {
+        assert.ok(gained > (scaling.level - 1) * 4, `act ${act} ${entry.heroId}: ${gained} over ${scaling.level - 1} levels is too thin to be a roll`);
+      } else {
+        assert.strictEqual(gained, 0);
+      }
     }
   }
 });
 
-test('difficulty: scaled enemies arrive at the act level and the act\'s pips, and evolve on the SAME gate a roster hero reads', () => {
+test('difficulty: the champion arrives CHAMPION_LEVEL_BONUS over its escorts, grown to that level', () => {
+  const scaling = encounterScaling('boss', 4);
+  const base = generateEncounter('boss', 8, heroes, { scaling });
+  const { run } = appendFinalEnemy(base, 'lavaBeast', enemies, 9, scaling);
+  const champion = run.roster.find((r) => r.rosterId === 'lavaBeast')!;
+  assert.strictEqual(levelOf(champion), championLevel(scaling.level));
+  assert.strictEqual(levelOf(champion), scaling.level + CHAMPION_LEVEL_BONUS);
+  assert.ok(growthTotal(champion.growthStatGrants) > 0, 'a champion is no longer a flat line');
+  assert.strictEqual(champion.mastery, scaling.mastery);
+});
+
+test('difficulty: scaled enemies arrive at the act\'s pips, and evolve on the SAME gate a roster hero reads', () => {
   // One model for everybody (docs/xp-overhaul.md §4, docs/mastery.md §4): an enemy holds the
   // act's Mastery (masteryForAct), so it is evolved exactly when a roster hero with those pips
   // would be — every hero-pool enemy from Act 4 — and a contract hero IS the enemy you beat.
   for (const act of [1, 2, 3, 4, 5]) {
-    const scaling = actScaling('skirmish', act);
+    const scaling = encounterScaling('elite', act);
     assert.strictEqual(scaling.mastery, masteryForAct(act));
     const { run } = generateEncounter('elite', 12, heroes, { scaling, progression: progressionTable });
     for (const entry of run.roster) {
@@ -137,15 +125,15 @@ test('difficulty: scaled enemies arrive at the act level and the act\'s pips, an
   }
 });
 
-test('difficulty: a scaled enemy spends its remaining level-ups on moves, never past MOVE_CAP', () => {
+test('difficulty: a scaled enemy spends its level-ups on moves, never past MOVE_CAP', () => {
   const { run } = generateEncounter('elite', 21, heroes, {
-    scaling: actScaling('skirmish', 5),
+    scaling: encounterScaling('elite', 5),
     progression: progressionTable,
   });
   for (const entry of run.roster) {
     assert.ok(entry.unlockedMoveIds.length <= MOVE_CAP, `${entry.heroId} has ${entry.unlockedMoveIds.length} moves`);
     assert.strictEqual(new Set(entry.unlockedMoveIds).size, entry.unlockedMoveIds.length);
-    // Act 5 is level 26: nine schedule offers on top of three starting moves always reach the cap.
+    // Act 5's Elite is past every schedule offer: six on top of three starting moves always reach the cap.
     assert.strictEqual(entry.unlockedMoveIds.length, MOVE_CAP);
   }
 });
@@ -155,32 +143,47 @@ test('difficulty: an unscaled encounter is byte-for-byte the authored content at
   for (const entry of run.roster) {
     assert.strictEqual(levelOf(entry), 1);
     assert.deepStrictEqual(entry.evolutionStatGrants, {});
+    assert.deepStrictEqual(entry.growthStatGrants, {});
     assert.deepStrictEqual(entry.chosenPathIds, []);
     assert.deepStrictEqual(entry.unlockedMoveIds, [...heroes[entry.heroId].moveIds]);
   }
 });
 
-test('difficulty: a spawn encounter takes the monsters curve, and a spawn has no progression to cash a level in for', () => {
-  const act5 = actScaling('monsters', 5);
+test('difficulty: a spawn levels off its line\'s grades, and has no progression to cash a level in for', () => {
+  const act5 = encounterScaling('fight', 5);
   const { run } = generateSpawnEncounter(11, { types: null, leaderTier: 'mid', escortTier: 'early', escortCount: 3, scaling: act5 });
   for (const entry of run.roster) {
     assert.strictEqual(levelOf(entry), act5.level);
-    assert.strictEqual(statTotal(entry.evolutionStatGrants), act5.statSteps * ACT_STEP_STAT_TOTAL);
+    assert.ok(growthTotal(entry.growthStatGrants) > 0, 'a spawn rolls growth like anyone');
+    assert.deepStrictEqual(entry.evolutionStatGrants, {});
     assert.deepStrictEqual(entry.chosenPathIds, []);
     assert.deepStrictEqual(entry.unlockedMoveIds, [...titanspawn[entry.heroId].moveIds]);
   }
 
-  // The row-0 opener is on the same track: unSCALED in Act 1, though no longer level 1 —
-  // enemy level tracks the player curve now, and the two axes are independent.
-  const { run: opener } = mobEncounter('fight', locations.wildsEdge, 1, 7, actScaling('monsters', 1));
+  // The run's opener is level 1: the authored Early line, untouched.
+  const { run: opener } = mobEncounter('fight', locations.wildsEdge, 1, 7, encounterScaling('fight', 1));
   for (const entry of opener.roster) {
-    assert.deepStrictEqual(entry.evolutionStatGrants, {}, 'act 1 monsters take no stat steps');
-    assert.strictEqual(levelOf(entry), ENEMY_LEVEL_BY_ACT[0]);
+    assert.strictEqual(levelOf(entry), 1);
+    assert.deepStrictEqual(entry.growthStatGrants, {});
+  }
+});
+
+test('difficulty: a loadout hands every enemy its item and passives', () => {
+  const loadout = { gear: { common: 1, rare: 0, epic: 0, legendary: 0, mythic: 0 }, passiveIds: ['bloodthirst'] } as const;
+  const { run } = generateEncounter('elite', 5, heroes, { scaling: encounterScaling('elite', 3), loadout });
+  for (const entry of run.roster) {
+    assert.strictEqual(entry.equipment.length, 1, `${entry.heroId} should hold one item`);
+    assert.deepStrictEqual([...entry.bonusPassiveGrants], ['bloodthirst']);
+  }
+  const { run: bare } = generateEncounter('elite', 5, heroes, { scaling: encounterScaling('elite', 3) });
+  for (const entry of bare.roster) {
+    assert.strictEqual(entry.equipment.length, 0);
+    assert.deepStrictEqual([...entry.bonusPassiveGrants], []);
   }
 });
 
 test('difficulty: scaling stays deterministic per seed', () => {
-  const opts = { scaling: actScaling('skirmish', 4), progression: progressionTable } as const;
+  const opts = { scaling: encounterScaling('elite', 4), progression: progressionTable } as const;
   const a = generateEncounter('elite', 77, heroes, opts);
   const b = generateEncounter('elite', 77, heroes, opts);
   assert.deepStrictEqual(a.run.roster, b.run.roster);

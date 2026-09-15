@@ -52,7 +52,7 @@ between; per user direction, the shape is now forced and uniform):
 - **Row 3: 3 nodes, pick 1 of 3 — reward types only**, same pool as row 1.
 - **Row 4: 2 nodes, pick 1 of 2 — `elite` or `skirmish`** (2026-09-13, Titanspawn
   overhaul phase 3; `elite` or `battle` from 2026-08-17). `elite` is the act's difficulty
-  spike (+10 to 2 stats on all 4 AI heroes, loot one tier ahead, **XP ×1.5** since 2026-09-14 —
+  spike (a level over the Skirmish since 2026-09-15, loot one tier ahead, **XP ×1.5** since 2026-09-14 —
   `ENCOUNTER_XP_MULTIPLIER`, above par, which assumes the Skirmish); the `skirmish` is a plain,
   no-bonus, recruitable alternative, and both tiles preview the typing they field (below).
   Always presented as a real choice (see edges, below), not one that depends on luck.
@@ -257,8 +257,8 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `fight` | **2026-09-13: draws Titanspawn — Act 1 two bare Earlies from every line, from Act 2 a leader at the act's tier over three geared Earlies (`run/spawn.ts`, "The mob layer is Titanspawn" below).** Before that: `FightScreen` vs. a generated 4-hero AI squad (`src/run/enemyGen.ts`), no bonus. Always row 0, each act's opening node — draws from the non-recruitable enemy pool (Goblins), not the draftable hero roster. |
 | `skirmish` | Mechanically identical to `fight` (same 4-hero, no-bonus `generateEncounter` call — App.tsx collapses it to `EncounterNodeType: 'fight'`), but draws from the **recruitable hero pool** and is named differently on the map (2026-08-17, per user direction) so the player can see, before committing a squad, that beating this one is a shot at a Recruit Contract claim. Always row 2. |
 | `battle` (map-facing name "Monsters", 2026-08-22 revision) | **2026-09-13: the same leader-over-Earlies spawn shape as the Act 2+ opener, in every act, until the fork becomes Elite-or-Skirmish (overhaul phase 3).** Before that: also mechanically identical to `fight`/`skirmish` (collapses to `EncounterNodeType: 'fight'`), but draws from the **non-recruitable enemy pool**, same as `fight` — not `skirmish`'s recruitable pool. Row 4's non-Elite alternative to `elite`. **2026-08-23 revision, per user direction:** no longer a plain `generateEncounter` call over the whole enemy pool — `App.tsx`'s `handleSelectNode` calls the dedicated `generateLeaderEncounter` (`enemyGen.ts`) instead, which always fields the Location faction's leader plus 3 random draws from its basics. This is what makes `battle` a real, considerably-tougher alternative to `elite` rather than a same-difficulty reskin of the opener — see "Goblin roster" and "Factions, and the Cultists" below for the content this draws on. |
-| `elite` | The AI's 4 heroes each carry a flat +10 bonus to 2 random growth stats. Draws from the recruitable pool, same as `skirmish`/`battle`. Row 4's difficulty-spike alternative to `battle` — the player picks one or the other, never both. |
-| `boss` | **2026-09-13: the two escorts are Titanspawn of the Location's `spawnTypes` at the act's tier, on the monsters track; the champion alone keeps the skirmish track.** Before that: `FightScreen` vs. **2 of the Location faction's basics** (no bench — a real no-cycling fight), each with a flat +20 bonus to 3 random growth stats. Hero-pool escorts until 2026-09-06 — see "The Guardian's escorts" below. Winning grants 1 Recruit Contract, the Guardian's Banner in acts 1-4, and ends the act (§3). **2026-09-01 exception:** a location may hold a **faction champion** on the boss's bench — see "The Guardian's champion" below. |
+| `elite` | Four heroes from the recruitable pool, same as `skirmish`, one level over it (`ENEMY_LEVEL_OFFSET`, 2026-09-15 — it was a flat +10 to 2 random stats each). Row 4's difficulty-spike alternative to `skirmish` — the player picks one or the other, never both. |
+| `boss` | **2026-09-15: escorts and champion take the node's level (`docs/enemy-levels.md`) — the tracks below are history.** **2026-09-13: the two escorts are Titanspawn of the Location's `spawnTypes` at the act's tier, on the monsters track; the champion alone keeps the skirmish track.** Before that: `FightScreen` vs. **2 of the Location faction's basics** (no bench — a real no-cycling fight), each with a flat +20 bonus to 3 random growth stats. Hero-pool escorts until 2026-09-06 — see "The Guardian's escorts" below. Winning grants 1 Recruit Contract, the Guardian's Banner in acts 1-4, and ends the act (§3). **2026-09-01 exception:** a location may hold a **faction champion** on the boss's bench — see "The Guardian's champion" below. |
 | `shop` | `ShopNodeScreen` — the existing `GuildHallPanel`, given an exit for the first time. Overhauled 2026-08-18: offers 2-3 curated hero recruits (50g each, `GUILD_HALL_RECRUIT_COST`) rather than the full catalog, plus a rarity-priced equipment shelf, rolled once per visit (`src/run/shop.ts` `rollGuildHallOffers`). Second pass 2026-08-31: relics are no longer sold anywhere, the shelf is 4 wide and readable on its face, sold stock greys out, and Recruit Contracts confirm before buying (`docs/progression.md` "Second pass"). |
 | `equipmentReward` ("Item") | `NodeRewardScreen` — pick 1 of 3 items, rarity-weighted (`equipment.ts` `pickWeightedEquipment`); claiming bags it and lights the Roster badge — see "The bag notification" in `docs/progression.md`. Items are uncategorised as of 2026-09-06, so the three on offer are simply the three rolled (`docs/progression.md` "Uncategorised slots"). |
 | `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30). **2026-09-08, per user direction:** it pays out on arrival and the screen counts the PURSE up to its new total, coin by coin, over a Claim button that was never a decision — the drop size is a chip beside a number the player can act on, rather than a number they cannot. The two Scroll nodes share that beat. |
@@ -271,10 +271,10 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `scribeReward` ("Scribe") | `ScrollNodeScreen` — pick TWO heroes, and each takes **2 Mastery** (`SCRIBE_PICKS`, `SCRIBE_PIPS_EACH`, `src/run/mastery.ts`; `docs/mastery.md` §3, 2026-09-14). Five pips is a hero's Evolution, ten its signature; the fifth raises the Evolution screen right there, over the node. Cannot be concentrated — that is what the Scroll Cache (phase 2) and the Guild Hall shelf are for. **Not in `REWARD_WEIGHTS`** — a forced row every act 1-5, between the second reward row and the Elite/Skirmish fork (§1). |
 | `event` | `EventNodeScreen` — rolls one of the authored map events (`src/data/events.ts`, `src/run/events.ts`) and resolves it: a move taught to a chosen hero, a Passive taught to a chosen hero, a flat stat trade, or a pile of act-curve loot dropped straight into the bag. Which event a node turns out to be is rolled once at node-select time and gated by act and Location. See **docs/events.md**. |
 
-The stat bonuses above are the **node-kind** axis only — what `elite` costs relative to
-`battle` *within one act*. Every encounter node also carries the **per-act** axis on top
-(§3 "Per-act difficulty scaling"), so an Act 4 `elite` fields its +10×2 plus six
-act-steps, and its heroes arrive at level 7 already evolved.
+Every encounter node's enemies arrive at a **level** set off the player's par entering that
+node (`docs/enemy-levels.md` §4) — the Skirmish at par, the Elite a step over, the Guardian's
+escorts under and its champion over them — and at the act's Mastery, so from Act 4 every
+hero-pool enemy is evolved.
 
 ### The two reward lanes (2026-09-01, per user direction)
 
@@ -607,144 +607,18 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   Contracts all carry over between acts — only the map itself and per-act position reset,
   same "fully restore HP/mana between nodes" spirit already locked below, just at the
   act boundary instead of the node boundary.
-- **Per-act difficulty scaling (2026-08-30, per user direction).** Resolves the open
-  question this bullet used to carry ("difficulty does not yet scale by act number").
-  `src/run/difficulty.ts` is a pure `(track, actNumber) -> ActScaling` table;
-  `enemyGen.ts` applies what it returns. `App.tsx` reads the track off the node type and
-  the act off `RunState.actNumber` — nothing else in the run loop participates.
-
-  **Why act-indexed.** Locations are drawn in random order (`locations.md`), so act
-  number is the only stable measure of run depth. Without this, an Act 2 power level
-  fight can land in Act 5.
-
-  **Two tracks, differing only in baseline act** — they scale at the same rate:
-
-  | Track | Node types | Baseline act | Why |
-  | --- | --- | --- | --- |
-  | `monsters` | `fight`, `battle` | **2** | ⚠️ Placeholder. Per-act monster content does not exist — every act still fields Goblins (`locations.md` §5). Declaring today's Goblin roster the *Act 2* baseline lets the curve be written now and the content authored later: whatever monster roster ships is tuned to feel right in Act 2 and the curve carries it forward. Act 1 clamps to zero steps rather than going negative (the row-0 opener is meant to be the run's weakest fight, not a debuffed one), so **Acts 1 and 2 currently field identically-scaled monsters** — a known consequence of the placeholder, not a curve decision. |
-  | `skirmish` | `skirmish`, `elite`, `boss` | **1** | The hero roster is authored and already sits at the power level a run starts at, so it starts scaling right away — every act past the first adds a step. Guardians stay on this track even though their escorts are faction content since 2026-09-06: the track is what makes the act's apex fight scale like an apex fight, and moving it to `monsters` would have cut the champion's own curve by 4 steps in Act 5, at the end of the run that measures easiest. |
-
-  **One act-step = +30 to an enemy's stat total** — 3 distinct growth stats at +10 each
-  (both figures satisfy CLAUDE.md's multiples-of-5/10 rule; +10×3 over +5×6 so a step is
-  felt where it lands rather than smeared). Each step rolls its **own** 3 stats and the
-  steps merge, so a deep-act enemy has a broad line rather than +40 in one stat.
-  This is a **second, independent axis** on top of the node-kind bonuses in §2 — kind
-  says how hard a fight is *for its act*, the curve says how deep the act is.
-
-  **How many steps: `ACT_STEP_CURVE`, and it ACCELERATES (2026-09-05; re-derived 2026-09-10).**
-  The number of steps is a cumulative table indexed by how many acts past the track's baseline —
-  `[0, 0, 4, 9, 15]` — not the linear `act − baselineAct` it started as. So a Skirmish-track
-  Act 5 enemy takes 15 steps (+450), and an Act 4 `elite` carries its +10×2 **plus** 9 act-steps.
-
-  **Index 1 is deliberately a repeat, not a step** (2026-09-10, Growth Overhaul phase 6). Act 2 is
-  where a run first meets a real faction after Act 1's deliberately soft Goblins, and it measured
-  as the run's wall for as long as it carried one — 63% cleared against Act 1's 72% and Act 3's
-  87%. That cliff is CONTENT, not curve, so the curve stops adding to it. The other end of the
-  same re-derivation is steeper: the late acts were a victory lap (98% / 96% / 96% cleared) and
-  now cost something (85% / 82% / 93%).
-
-  It has to accelerate because the player's power curve does. Measured over 40,000
-  simulated runs (`scripts/sim`), under the linear curve the enemy's fielded stat total grew
-  by **+239, +161, +90, +87** across the run while the player's grew by **+254, +192, +364,
-  +399**. The two cross at Act 4 — exactly where Guardian win rates ran away (57% → 89% →
-  99%). The player accelerates because Banners stack one per act and the gear-rarity window
-  opens late (Act 5 drops 34% legendary / 27% mythic; Act 1 drops neither). The enemy
-  decelerated for two reasons, and the second is the sharp one:
-
-  - the step was flat, so it never compounded; and
-  - **`ENEMY_LEVEL_BY_ACT` is inert for a Guardian's champion** — fixed 2026-09-10 by giving the
-    champion its own `CHAMPION_STEP_MULTIPLIER` = 1.3 on the act steps, since stats are the only
-    axis left open to it. Every champion ships a
-    full 4-move kit, so `MOVE_CAP` leaves no room for level-up moves, and `appendFinalEnemy`
-    never calls level progression at all. A champion's `level` is a label; levels 7 and 10
-    buy it nothing. The stat curve is the *only* live lever on it.
-
-  Index 1 is deliberately left at 1 step: Act 2 is already the hardest Guardian in the run
-  and needed no help. After the change the player/enemy stat ratio at the Guardian is flat
-  across the run (1.13 / 1.10 / 1.16 / 1.16 / 1.15) where it used to diverge to 1.44.
-
-  > **A flat ratio does not produce a flat win rate, and should not be tuned until it does.**
-  > Guardian win rates still rise late (Act 5 ≈ 81%) because the population reaching Act 5 is
-  > self-selected — only strong runs get there. Scaling hard enough to force a flat win rate
-  > would mean the enemy *out*-growing the player, which is a different design statement.
-  > The ratio is the thing this curve is tuned against.
-
-  **Enemy level by act: 6 / 12 / 17 / 22 / 26**, DERIVED since 2026-09-10 (Growth Overhaul
-  phase 6) as the player's act-end level less `ENEMY_LEVEL_LAG` = 2. The old 1 / 3 / 5 / 7 / 10
-  was fitted to a 10-level cap; against a 30-level player it left an Act 5 enemy — and so, via a
-  Recruit Contract, a claimable hero — 18 levels behind the roster fighting it.
-
-  Level is not a stat multiplier (CLAUDE.md: growth comes from the player's own level rolls, which
-  an enemy never gets), so it buys a generated hero **three** things, and phase 6 found all three
-  mis-set:
-
-  - **Move unlocks**, toward the 4-move cap. An enemy ships three of four slots filled, so this is
-    at most ONE move — which is why moving the level table alone shifted the measured full-clear
-    rate by 1.3pp. Level is a threshold carrier far more than a payout.
-  - **Mastery Rank**, banded by `ENEMY_RANK_LEVELS` = [10, 21] — rank 1 through Act 1, 2 through
-    Acts 2-3, 3 from Act 4. These were [4, 7], the OLD movepool gate's thresholds carried over
-    unchanged, which against the new table gave Act 1 enemies rank 2 and everything from Act 2
-    rank 3 while the player measured 38% at rank 2 by Act 4. The bands track the player's Scroll
-    economy now, not a dead gate.
-  - **Evolution**, at `ENEMY_EVOLUTION_LEVEL` = 16 rather than `EVOLUTION_LEVEL` = 5 — so
-    **from Act 3 on every hero-pool enemy arrives already evolved**. It has to track the player's
-    CRUCIBLE economy (one hero an act) rather than a level-up that no longer exists; gating on 5
-    evolved every enemy from Act 2 against a roster that is 1-of-4 evolved there.
-
-  All three are cashed in by `enemyGen.ts` in the same order a player earns them. The Evolution
-  path is picked at random with no weighting — choosing the path that best suits a hero is authored
-  design, deliberately not guessed at by the generator, and is the natural seam for hand-authored
-  encounters to take over. On the `monsters` track level is still largely cosmetic (the Goblin pool
-  has no progression data), but it is the honest tier label and starts working the moment monster
-  content gets a table.
-
-  **A Guardian's champion takes `CHAMPION_STEP_MULTIPLIER` = 1.3 of its escort's stat steps.**
-  Level and kit depth are both closed to it — a full four-move kit leaves `MOVE_CAP` no room, and
-  an enemy definition carries no Evolution nodes — so stats are the only axis it has, and without
-  its own multiplier the act's apex scaled slower than everything around it. The **Endbringer** was
-  worse: it was baselined against its own act and so took ZERO steps, making the run's final fight
-  the one piece of content on the map that never scaled at all. It takes the skirmish track now.
-
-  **Measured baseline** — mean enemy stat total (HP+Atk+Def+Int+Wis+Spd through
-  `getEffectiveStat`, 40 seeds per act), for reading playtest against:
-
-  | Act | `elite` | `boss` (Guardian) | `battle` (Goblin Chief node) | Level |
-  | --- | --- | --- | --- | --- |
-  | 1 | 392 | 432 | 218 | 1 |
-  | 2 | 422 | 462 | 218 | 3 |
-  | 3 | 464 | 504 | 248 | 5 |
-  | 4 | 494 | 534 | 278 | 7 |
-  | 5 | 524 | 563 | 308 | 10 |
-
-  Note Act 2 → 3 climbs ~42, not the flat 30: that act also turns Evolution on, and the
-  chosen path carries its own stat grant. The Act 3 spike is therefore the largest in
-  the run by design — it is where enemies stop being unevolved.
-
-  Note too how far the `monsters` column sits below the others. The Goblin roster was
-  authored as deliberately-weaker fodder, and the curve moves it without fixing that —
-  more evidence that the Act 2 monster baseline is content still owed, not a number to
-  tune upward here.
-
-  **Open, and deliberately so:**
-  - **Every number is a first-pass figure**, per the direction that set them: only the
-    curve's *shape* is decided. Tune by playtest.
-  - **Stats are drawn uniformly, and a point of HP is not a point of Attack** (the
-    equipment budget already prices HP at ½ — `STAT_POINT_VALUE`). So an enemy that
-    rolls its steps into HP is a genuinely easier fight than one that rolls offense.
-    Acceptable variance for a first curve — `elite`'s existing bonus has the same
-    property — but weighting the draw by `STAT_POINT_VALUE` is the knob to reach for
-    before changing the totals.
-  - **Recruit Contracts carry the whole thing.** `deriveContractOffer` already carries
-    `level`, `chosenPathIds`, `evolutionStatGrants` and `unlockedMoveIds`, so claiming a
-    beaten Act 4 enemy hands the player a level-7, already-evolved hero holding ~90
-    points of act scaling. That is the existing behaviour amplified (elite's +20 always
-    rode along the same way) and it reads as the intended meaning of "recruiting them
-    gets them at the same level" — but it makes late-act contracts dramatically stronger
-    than early-act ones. Flag before assuming it stays. The knob is
-    `deriveContractOffer`, not the curve.
-  - **Authored encounters are the intended successor,** not a rewrite of this. The
-    generator takes an `ActScaling` rather than deriving one, so a hand-built encounter
-    can hand over its own numbers — or ignore the table entirely — through the same seam.
+- **Enemies are levelled, not stepped (2026-09-15, per user direction — `docs/enemy-levels.md`).**
+  This bullet carried the per-act difficulty curve from 2026-08-30 to 2026-09-15: two scaling
+  tracks with different baseline acts, an accelerating `ACT_STEP_CURVE` of +30 stat-total
+  steps, node-kind stat bonuses on the Elite and the Guardian, and a ×1.3 multiplier for the
+  champion. All of it is deleted. An enemy's one stat axis is now its **level**, rolled through
+  its growth grades from 1 as a Guild hire's is, set per NODE off the player's par plus a kind
+  offset (`ENEMY_LEVEL_OFFSET`, `src/run/difficulty.ts`), shown on the scouted chips, the node
+  dossier and the fight nameplate. Enemy **gear from Act 4** is the second axis
+  (`ENEMY_GEAR_FROM_ACT`, the `EnemyLoadout` seam), and a champion is front-loaded
+  (`CHAMPION_GRADES`). The old bullet's open questions — the uniform stat draw ignoring HP's
+  worth, whether a contract carries the act scaling, the monsters track's Act 2 placeholder —
+  are all moot under it; what a contract carries is exactly what a roster hero has.
 - **The Guardian's Banner (2026-08-30, per user direction; widened to five 2026-09-07;
   compressed to three 2026-09-14).**
   Beating an act's Guardian
@@ -974,7 +848,8 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   Guardians 25-43% fights (40-run sim). On the monsters track they measure 71-100% and are the
   run's hardest Guardians rather than its walls — phase 6's re-fit starts from there. The
   champion alone keeps the skirmish track, appended separately. Nothing the Monsters word
-  meant on the map changed; only what it points at.
+  meant on the map changed; only what it points at. **2026-09-15: both tracks are gone** —
+  the escorts and the champion take the Guardian node's level (`docs/enemy-levels.md` §4).
 
 - **The Guardian's escorts are its own faction (2026-09-06, per user direction).** A `boss`
   node now draws its two active enemies from `basicEnemiesOf(factions[location.factionId])`,
@@ -1308,12 +1183,10 @@ Endbringer already out is exactly what it is for.
   and, since 2026-09-07, in and out of the bag that backs them (`moveEquipment` /
   `equipFromStash` / `unequipToStash` / `sellFromStash` — see "…and a capped one came
   back" above, and its two successors). Still not a level-up spend surface.
-- **Per-act difficulty scaling — the curve is built (§3), the numbers are not settled.**
-  `src/run/difficulty.ts` gives every act a baseline; what remains open is the tuning
-  (all figures are first-pass), the uniform stat draw ignoring that HP is worth less
-  than Attack, whether a Recruit Contract should carry the act scaling it was fought
-  under, and the authored per-act monster tiers the `monsters` track's Act 2 baseline is
-  standing in for. Each is written up under §3's bullet.
+- **Enemy levels — the table is built, the two end acts are not settled** (`docs/enemy-levels.md`
+  §6): Act 1 measures 79% cleared against 85 under the old curve, Act 5 92 against 82. The
+  Skirmish's offset and the hire's +1 are the Act 1 levers; gear from Act 3, a second item for
+  the Guardian, or passives through the loadout seam are Act 5's.
 - **Per-location choice.** Acts now happen in named Locations with their own
   faction, type affinity and arrival screen (`locations.md`, 2026-08-28), but the
   itinerary is currently drawn *for* the player. The decided design — **each act
