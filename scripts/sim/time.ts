@@ -24,6 +24,7 @@ export type ScreenKind =
   | 'scrollReward'
   | 'currencyReward'
   | 'manaWellReward'
+  | 'restReward'
   | 'equipmentReward'
   | 'passiveReward'
   | 'forgeReward'
@@ -64,6 +65,8 @@ export const SCREEN_SECONDS: Record<ScreenKind, number> = {
   currencyReward: 4,
   // A pick-a-hero screen, the Forge's price.
   manaWellReward: 10,
+  // A receipt with one tap on it.
+  restReward: 6,
   equipmentReward: 25,
   passiveReward: 20,
   forgeReward: 10,

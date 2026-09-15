@@ -19,6 +19,7 @@ const FACT_GLYPHS: Record<NodeFactGlyph, ReactNode> = {
   xp: <ResourceGlyph kind="xp" tone="inherit" />,
   scroll: <ResourceGlyph kind="scroll" tone="inherit" />,
   mana: <StatGlyph stat="manaPool" tone="inherit" />,
+  hp: <StatGlyph stat="hp" tone="inherit" />,
   contract: <ResourceGlyph kind="contract" tone="inherit" />,
   item: <SectionGlyph name="equipment" />,
   banner: (

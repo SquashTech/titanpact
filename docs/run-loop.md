@@ -1043,24 +1043,57 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   battlefield and changes no rules — `view/shared/entrances.ts` names the hero ids that
   get it, `buildBeats` flags the beat, and the veil/lurch/horn/music-drop hang off that
   flag. See `visual-language.md`.
-- **HP/mana fully restore between map nodes (reversed 2026-08-16, first playtest).**
-  The original pass persisted HP/mana across nodes (`RosterEntry.currentHp`/
-  `currentMana`, clamped to max on the next fight) on the theory that escalating
-  fights need resource tension carried across the run. First playtest hit the failure
-  mode head-on: a hero KO'd in an early fight simply stayed at 0 HP into the next one —
-  permanently bricked for the rest of the run, with no rest-site node type (see below)
-  and no in-run way back. That's not tension, it's a dead roster slot. Per user
-  direction, persistence was removed: `buildCombatState.ts`'s `placeEntry` now always
-  starts every fielded combatant at full HP/mana (computed after equipment/Evolution
-  stat modifiers, same as the LOCKED full-starting-pool decision in `mana.md`).
-  `RosterEntry` no longer carries `currentHp`/`currentMana` fields, and
-  `runProgress.ts`'s `syncRosterVitals` was deleted. If run-length resource tension is
-  wanted later, it needs a different lever than raw persistence — e.g. a cost gated on
-  the *choice* to fight (mana/HP entry cost) rather than an ambient penalty a KO'd hero
-  can't do anything about.
-- **No passive recovery between nodes in this pass** — no rest-site node type; moot for
-  HP/mana now that fights fully heal on their own, but still relevant for anything a
-  future resource-tension mechanic reintroduces.
+- **Wounds: HP persists across an act's nodes; mana does not (2026-09-15, per user
+  direction, FOR PLAYTEST).** `src/run/wounds.ts`. A fight writes each fielded hero's
+  missing HP onto `RosterEntry.wounds`, the next fight places it that far down, and the
+  act's end (`advanceToNextAct`) is the one free mend in a run. It is stored as the HP
+  MISSING rather than the HP held, so a max that moves mid-act — a growth roll, a
+  Banner, an item swapped at the Blacksmith — moves the current by the same amount on
+  its own. Mana still opens full every fight (the LOCKED full-starting-pool decision in
+  `mana.md` stands): mana persistence's failure mode is a Rest on turn 1, which is a
+  dead turn rather than a decision, and Overflow would otherwise carry uncapped across
+  fights. It is a second dial for a second experiment (the walk regenerating N rounds of
+  MP Regen), not part of this one.
+  **The walk floor is what makes this not the 2026-08-16 reversal again.** That pass
+  persisted raw HP and a KO'd hero stayed at 0 into the next fight — a dead roster slot
+  with no way back. Now every hero enters the next node with at least `WALK_FLOOR` (25%)
+  of its max, KO'd or not: a floor on EVERYONE rather than a revive rule, so dying is
+  never a better outcome than surviving at 8%. The floor is applied when the wound is
+  written (`woundsFrom`) and again when it is read (`woundedHp`), the second covering a
+  max that fell.
+  **Why:** with full heals every fight had to be a wall, because a fight that is not a
+  wall is free — and the act was three coin flips and a boss. Under wounds a fight can be
+  individually winnable and still cost something, and the act's threat becomes the
+  Guardian faced with a depleted roster (Slay the Spire's model: hallway fights are easy,
+  the sum is the threat). The follow-on, if it plays, is lowering per-fight enemy stats;
+  the enemy curve is untouched for the first playtest. The second aim is churn: the
+  contract hero standing there after the Elite is at full HP, and "would you like a
+  healthy hero" is a different offer from "would you like a hero".
+  **The faucets, every one priced:** the **sideboard** (bring-6-pick-4 fields a fresh
+  hero over a wounded one — a heal that costs power, on every fight, with no node), the
+  **Rest** (`restReward`, weight 30 in `REWARD_WEIGHTS`: the whole roster whole, in the
+  seat a reward row would have given to gear, Scrolls or a Boon — the Slay the Spire
+  rest-vs-upgrade choice, inside the row the map already has), the **Guild Hall's mend**
+  (`MEND_PRICE` = 40, the whole roster, dark while nobody is hurt), and a **contract**
+  hero, who arrives whole. Potions are NOT drinkable on the map (per user direction):
+  they are a free action in a fight with the outcome shown before declaring, so drinking
+  at a fight's start is strictly better than drinking on the map and the map version is
+  dominated. What wounds change about potions is that the 20g shelf line and the hold
+  cap of 3 become real. `WoundBar` draws the bar wherever a wounded hero is picked from —
+  the squad cells (a rim along the bottom edge, since the preview was just fitted to one
+  page), the map's roster peek, the Rest — and always draws it full too, since a bar that
+  only appears when something is wrong cannot be compared against the ones that are fine.
+  **Open for playtest:** Act 1 (three heroes, no real sideboard, already the wall) gets
+  the same rule with nothing scripted for it; the per-act Recruit Contract lands at the
+  Guardian win, the instant everyone is healed anyway, so it becomes the least
+  persuasive contract in the run; and the sim's walk picks reward nodes uniformly, so
+  its full-clear under wounds is a floor on a pilot that never chooses to Rest.
+  **Measured (2026-09-15, 600 runs, `--pilot chart --seed 7`, same seed both ways):**
+  full-clear 31.8% → 12.0%; act clear 62 → 53% (Act 1), 83 → 68% (2), 96 → 87% (3),
+  74 → 60% (4), 87 → 64% (5); 73% of deaths at a Guardian. The pilot fields a wounded
+  hero at a discount but drinks no potions and takes a Rest only when the uniform walk
+  lands on one, so the number is what an unmanaged roster loses — the curve re-fit, if
+  the feel plays, comes off per-fight enemy stats, not off the floor.
 - **Squad selection happens before every fight/elite/boss node, not once per run.**
   Discovered during implementation: CLAUDE.md frames the bring-6-pick-4 sideboard as
   VGC-style team preview, which is inherently per-battle, not a once-per-run

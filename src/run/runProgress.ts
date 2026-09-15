@@ -26,6 +26,7 @@ import { generateMap } from './map';
 import { itemSlotsFor } from './progression';
 import { ANVIL_PRICE_BY_TARGET, ENCHANT_PRICE_BY_RARITY, SLOT_PRICE_BY_TARGET, sellValueFor } from './shop';
 import { mergeStatMods } from './statMods';
+import { mendRoster } from './wounds';
 
 export class RunProgressError extends Error {}
 
@@ -93,12 +94,13 @@ export function recordBrokenSeal(run: RunState, seal: BrokenSeal): RunState {
 }
 
 /**
- * Fresh map for the next act, per-act position fields reset. Roster/gold/relics/contracts
- * untouched; callers own the TOTAL_ACTS check.
+ * Fresh map for the next act, per-act position fields reset, the roster made whole — the one
+ * free mend in a run (run/wounds.ts). Gold/relics/contracts untouched; callers own the
+ * TOTAL_ACTS check.
  */
 export function advanceToNextAct(run: RunState, seed: number): RunState {
   return {
-    ...run,
+    ...mendRoster(run),
     map: generateMap(seed, run.actNumber + 1),
     currentNodeId: null,
     visitedNodeIds: [],

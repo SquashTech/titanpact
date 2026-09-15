@@ -20,6 +20,7 @@ export const MAP_NODE_TYPES = [
   'equipmentReward',
   'scrollReward',
   'manaWellReward',
+  'restReward',
   'passiveReward',
   'currencyReward',
   'forgeReward',
@@ -156,6 +157,11 @@ export const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // whole tier of moves — +30 Mana is a Late cast a fight, where +10 Attack was never visible.
   // Weighted with the purse: a top-up, not the axis you plan around.
   ['manaWellReward', 20],
+  // The Rest (2026-09-15, per user direction, docs/run-loop.md "Wounds"): the roster made whole,
+  // priced the only way a reward row prices anything — against the two rewards beside it. Weighted
+  // so it is usually somewhere in an act and never in every row; the walk floor and the Guild
+  // Hall's mend are the other two answers to a wound, and this is the one that costs power.
+  ['restReward', 30],
 ];
 
 /** Weighted sample WITHOUT replacement — a reward row never repeats a type. REWARD_WEIGHTS is wider than any row, so `count` is always satisfiable. */

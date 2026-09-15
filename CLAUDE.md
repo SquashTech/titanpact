@@ -562,11 +562,17 @@ what's still unimplemented:
   Contract claims it at that level — but note that **level is inert for a Guardian's
   champion**: every champion ships a full 4-move kit and `appendFinalEnemy` runs no level
   progression, so the stat curve is the only lever that touches it. Every number here is a
-  first-pass figure for playtest; only the shape is decided. HP/mana **fully restore
-  between map nodes** — reversed same-day from an initial persist-across-nodes design
-  after first playtest showed a KO'd hero simply stayed dead-weight into the next
-  fight with no way to recover it (`docs/run-loop.md`). Relics are **stat-only**, by design
-  rather than by deferral (see the relic-catalog invariant above).
+  first-pass figure for playtest; only the shape is decided. **HP persists across an act's
+  nodes — Wounds — and mana does not** (2026-09-15, per user direction, FOR PLAYTEST;
+  `src/run/wounds.ts`, `docs/run-loop.md` "Wounds"). A fight writes the fielded heroes'
+  missing HP onto `RosterEntry.wounds`, the act's end is the one free mend, and **every hero
+  enters the next node with at least `WALK_FLOOR` = 25% of its max, KO'd or not** — a floor on
+  everyone, not a revive rule, which is what separates this from the 2026-08-16 reversal
+  (raw persistence bricked a KO'd hero for the run). The paid faucets: the sideboard, the
+  **Rest** seat in the reward pool, the Guild Hall's **mend** (40g, whole roster), and a
+  contract hero arriving whole. Potions stay in-fight only. Mana still opens full every
+  fight; the enemy curve is untouched until it has been played. Relics are **stat-only**, by
+  design rather than by deferral (see the relic-catalog invariant above).
 - The first run on an account (2026-09-05 sign-off): **scripted through Act 1**, narrated by
   **Valor**, with Valor + Fang forced as the pact and the act's map narrowed to **one node
   per row**. Every line and every curated encounter is content (`src/data/tutorial.ts`);

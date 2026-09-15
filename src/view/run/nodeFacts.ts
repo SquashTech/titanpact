@@ -30,6 +30,7 @@ export type NodeFactGlyph =
   | 'xp'
   | 'scroll'
   | 'mana'
+  | 'hp'
   | 'contract'
   | 'item'
   | 'banner'
@@ -192,6 +193,8 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
       return { kind: 'Reward · Growth', facts: [{ glyph: 'scroll', label: 'Mastery', value: `+${SCROLL_CACHE_COUNT}`, note: `divided as you like — ${MASTERY_EVOLUTION} Evolves` }], odds: null };
     case 'manaWellReward':
       return { kind: 'Reward · Growth', facts: [{ glyph: 'mana', label: 'Max Mana', value: `+${MANA_WELL_AMOUNT}`, note: 'to 1 hero, permanent' }], odds: null };
+    case 'restReward':
+      return { kind: 'Reward · Recovery', facts: [{ glyph: 'hp', label: 'Mend', value: 'whole roster', note: 'HP carries between fights' }], odds: null };
     case 'currencyReward':
       return { kind: 'Reward · Purse', facts: [{ glyph: 'gold', label: 'Gold', value: range(PURSE_GOLD_RANGE) }], odds: null };
     case 'passiveReward':

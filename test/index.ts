@@ -53,6 +53,7 @@ import './finale.test';
 import './events.test';
 import './ai.test';
 import './save.test';
+import './wounds.test';
 import './profile.test';
 import './tutorial.test';
 import { run } from './harness';

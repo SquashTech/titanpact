@@ -42,6 +42,7 @@ function sampleRun(): RunState {
     equipment: equipItem(run.roster[0].equipment, equipment['dagger.common'].id),
     bonusStatGrants: { attack: 10, speed: 5 },
     growthStatGrants: { hp: 10 },
+    wounds: 37,
   };
   return {
     ...run,

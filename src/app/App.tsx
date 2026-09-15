@@ -28,6 +28,7 @@ import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScr
 import { ForgeScreen } from '../view/run/ForgeScreen';
 import { ScrollNodeScreen, type ScrollPlan } from '../view/run/ScrollNodeScreen';
 import { ManaWellScreen } from '../view/run/ManaWellScreen';
+import { RestNodeScreen } from '../view/run/RestNodeScreen';
 import { BlacksmithScreen } from '../view/run/BlacksmithScreen';
 import { GuardianBannerScreen } from '../view/run/GuardianBannerScreen';
 import { LevelUpScreen } from '../view/run/LevelUpScreen';
@@ -45,7 +46,9 @@ import { moves } from '../data/moves';
 import { allCombatants, rosterHeroes } from '../data/content';
 import { CompanionScreen, type CompanionBeat } from '../view/run/CompanionScreen';
 import { absorbCompanions, companionCandidate, companionJoinDue, joinCompanion } from '../run/companion';
+import type { CombatState } from '../engine/state';
 import { koRosterIdsOf } from '../run/buildCombatState';
+import { WoundsError, buyMend, recordWounds } from '../run/wounds';
 import { enemies, finaleEnemies, ENDBRINGER_ID } from '../data/enemies';
 import { ActIntroScreen } from '../view/run/ActIntroScreen';
 import { PactSealScreen } from '../view/run/PactSealScreen';
@@ -167,6 +170,7 @@ type Screen =
   | { kind: 'forge'; nodeId: string }
   /** The Mana Well: +MANA_WELL_AMOUNT max Mana to one hero. */
   | { kind: 'manaWell'; nodeId: string }
+  | { kind: 'rest'; nodeId: string }
   /**
    * Mastery Scrolls to whoever the player taps (run/mastery.ts, docs/mastery.md): the Scribe's
    * forced row, the Scroll Cache's reward seat, and the Guild Hall shelf (`bought`, `nodeId` null,
@@ -575,6 +579,8 @@ export function App() {
       setScreen({ kind: 'forge', nodeId });
     } else if (node.type === 'manaWellReward') {
       setScreen({ kind: 'manaWell', nodeId });
+    } else if (node.type === 'restReward') {
+      setScreen({ kind: 'rest', nodeId });
     } else if (node.type === 'scribeReward') {
       setScreen({ kind: 'scrolls', plan: { kind: 'scribe' }, nodeId, bought: false, next: { kind: 'map' } });
     } else if (node.type === 'scrollReward') {
@@ -629,7 +635,9 @@ export function App() {
     /** What the fight drank; debited here, so a fight quit and replayed refunds it. */
     consumablesUsed: ConsumablePurse,
     /** The player's own KO'd roster ids at the end — what the companion's mortality reads. */
-    koRosterIds: readonly string[] = []
+    koRosterIds: readonly string[] = [],
+    /** The fight's end state — what the roster's wounds are read off (run/wounds.ts). */
+    finalState: CombatState | null = null
   ) {
     if (outcome === 'loss') {
       setScreen({ kind: 'runFailed' });
@@ -645,6 +653,8 @@ export function App() {
 
     let next = grantCurrencyReward(spendConsumables(playerRun, consumablesUsed), goldReward);
     next = advanceToNode(next, nodeId);
+    // HP carries to the next node; the act's end is what makes the roster whole (run/wounds.ts).
+    if (finalState) next = recordWounds(next, finalState, 'A', rosterHeroes);
     // Onto the purse, clamped at the cap — a full flask spills the drop rather than banking it.
     if (consumableReward) next = grantConsumable(next, consumableReward);
     // Every node kind, unlike `fightsStarted` — this one is the run summary's tally, and since
@@ -760,6 +770,19 @@ export function App() {
       return;
     }
     playSfx('gold.coin');
+    setPlayerRun(next);
+  }
+
+  /** The Guild Hall's mend (run/wounds.ts): the whole roster whole, for gold. */
+  function handleBuyGuildMend() {
+    let next: RunState;
+    try {
+      next = buyMend(playerRun);
+    } catch (err) {
+      if (!(err instanceof WoundsError)) throw err;
+      return;
+    }
+    playSfx('blessing');
     setPlayerRun(next);
   }
 
@@ -1018,7 +1041,8 @@ export function App() {
               screen.encounter,
               outcome,
               consumablesUsed,
-              koRosterIdsOf(finalState, 'A')
+              koRosterIdsOf(finalState, 'A'),
+              finalState
             )
           }
           onSaveAndQuit={() => setScreen({ kind: 'title' })}
@@ -1052,6 +1076,7 @@ export function App() {
           onBuyEquipment={handleBuyGuildEquipment}
           onBuyScroll={handleBuyGuildScroll}
           onBuyConsumable={handleBuyGuildConsumable}
+          onBuyMend={handleBuyGuildMend}
           onRequestRosterReplace={handleRequestRosterReplace}
           onContinue={() => handleNodeContinue(screen.nodeId)}
           muster={playerRun.map?.nodes[screen.nodeId]?.type === 'muster'}
@@ -1123,6 +1148,10 @@ export function App() {
 
       {screen.kind === 'manaWell' && (
         <ManaWellScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+      )}
+
+      {screen.kind === 'rest' && (
+        <RestNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
       {screen.kind === 'forge' && (

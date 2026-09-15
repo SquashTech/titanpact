@@ -28119,3 +28119,88 @@ textarea,
   font-size: 8px;
   letter-spacing: 0.1em;
 }
+
+/* --- Wounds (WoundBar.tsx, run/wounds.ts) --------------------------------
+   The out-of-combat HP bar. Three tiers off the same threshold the fight's
+   bars use, so "low" means one thing everywhere. On a squad cell it is a rim
+   along the bottom edge rather than a row of its own: the preview was just
+   fitted to one page at the reference height and a row per cell would undo
+   that; a rim costs no height and reads as the cell's own health. */
+.wound-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  --wound-rgb: var(--hp-high);
+}
+
+.wound-bar.is-hp-mid {
+  --wound-rgb: var(--hp-mid);
+}
+
+.wound-bar.is-hp-low {
+  --wound-rgb: var(--hp-low);
+}
+
+.wound-bar-track {
+  position: relative;
+  flex: 1 1 auto;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--well);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+}
+
+.wound-bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: var(--wound-rgb);
+  box-shadow: 0 0 5px color-mix(in srgb, var(--wound-rgb) 60%, transparent);
+  transition: width var(--dur-slow, 0.5s) var(--ease-out);
+}
+
+.wound-bar-figure {
+  flex: none;
+  font-size: 9px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--text-dim);
+}
+
+.squad-slot .wound-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
+}
+
+.squad-slot .wound-bar-track {
+  height: 3px;
+  border-radius: 0;
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: none;
+}
+
+.pick-card .wound-bar {
+  padding: 0 2px;
+  margin-top: 2px;
+}
+
+/* --- The Rest (RestNodeScreen.tsx) ---------------------------------------- */
+.rest-screen .hero-pick-grid {
+  --pick-card-min: 0;
+}
+
+.rest-screen .pick-card.is-mended .wound-bar-fill {
+  transition-duration: 1.4s;
+}
+
+/* The mend spans the potion shelf: it is the one good that is for everyone at once. */
+.guild-hall-good.is-mend {
+  grid-column: 1 / -1;
+  --plate-color: var(--hp-high);
+}

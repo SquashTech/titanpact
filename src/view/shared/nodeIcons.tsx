@@ -128,6 +128,13 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
   ),
   // The Mana stat's own drop: a stat reward reuses the exact glyph of what it grants.
   manaWellReward: STAT_PATHS.manaPool,
+  // A campfire: one flame over two crossed logs. The Rest is the place, not the stat it refills.
+  restReward: (
+    <>
+      <path d="M12 .8c2.8 3.2 6 5.6 6 9.8a6 6 0 0 1-12 0c0-2 .7-3.7 1.8-5.1.2 1.9 1.2 3.1 2.6 3.5-.7-3.5.1-6 1.6-8.2Z" />
+      <path d="m3.2 15.4 17.6 5.2-.7 2.2L2.5 17.6Zm17.6 0 .7 2.2L3.9 22.8l-.7-2.2Z" />
+    </>
+  ),
   // Anvil on its stump: the Forge adds a slot, so it draws the place gear is made, not gear.
   forgeReward: (
     <>

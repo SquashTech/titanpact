@@ -20,6 +20,7 @@ interface Props {
   onBuyEquipment: (itemId: string) => void;
   onBuyScroll: () => void;
   onBuyConsumable: (kind: ConsumableKind) => void;
+  onBuyMend: () => void;
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
   onContinue: () => void;
   /** Act 6's Vigil: the last node of the run, and the one that musters rather than sells. */
@@ -42,6 +43,7 @@ export function ShopNodeScreen({
   onBuyEquipment,
   onBuyScroll,
   onBuyConsumable,
+  onBuyMend,
   onRequestRosterReplace,
   onContinue,
   muster = false,
@@ -69,6 +71,7 @@ export function ShopNodeScreen({
           onBuyEquipment={onBuyEquipment}
           onBuyScroll={onBuyScroll}
           onBuyConsumable={onBuyConsumable}
+          onBuyMend={onBuyMend}
           onRequestRosterReplace={onRequestRosterReplace}
           onOverlayChange={setOverlayOpen}
           tab={tab}

@@ -6,6 +6,7 @@ import type { StatKey } from '../../src/engine/content';
 import { heroes } from '../../src/data/heroes';
 import { rosterHeroes } from '../../src/data/content';
 import { absorbCompanions, companionCandidate, companionJoinDue, joinCompanion } from '../../src/run/companion';
+import { canBuyMend, buyMend, mendRoster, recordWounds } from '../../src/run/wounds';
 import { moves } from '../../src/data/moves';
 import { equipment } from '../../src/data/equipment';
 import { relics, guardianBannerRelics } from '../../src/data/relics';
@@ -524,6 +525,8 @@ function resolveEncounterNode(
   if (!fight.won) return { run: workingRun, won: false, defeatedRoster: encounter.run.roster, drop: null, encounter, koRosterIds };
 
   workingRun = grantCurrencyReward(workingRun, goldRewardFor(kindKey, rng));
+  // HP carries to the next node (src/run/wounds.ts); the act's end is what makes the roster whole.
+  workingRun = recordWounds(workingRun, fight.final, PLAYER_SIDE, rosterHeroes);
   return { run: workingRun, won: true, defeatedRoster: encounter.run.roster, drop, encounter, koRosterIds };
 }
 
@@ -597,6 +600,8 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       return resolveScrollCache(run, rng, record, options);
     case 'currencyReward':
       return grantCurrencyReward(run, rollGoldRange(PURSE_GOLD_RANGE, rng));
+    case 'restReward':
+      return mendRoster(run);
     case 'manaWellReward': {
       // The hero the pool is worth most to (policy.statBoostTarget) — the one screen that asks who.
       const target = policy.statBoostTarget(run.roster, 'manaPool');
@@ -772,6 +777,9 @@ function resolveEvent(run: RunState, locationId: string, rng: Rng, record: RunRe
 function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord, options: RunOptions): RunState {
   let next = run;
   const offers = rollGuildHallOffers(next, guildHallOffers, EQUIPMENT_POOL, muster);
+
+  // The mend first, when the roster is hurt enough for it to be worth a hire's price.
+  if (canBuyMend(next) && policy.rosterHpFraction(next.roster) < 0.6) next = buyMend(next);
 
   for (const offerId of offers.heroOfferIds) {
     const offer = guildHallOffers.find((o) => o.id === offerId);

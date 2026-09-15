@@ -41,6 +41,7 @@ const REWARD_TYPES = new Set([
   'passiveReward',
   'currencyReward',
   'manaWellReward',
+  'restReward',
   'forgeReward',
   'event',
 ]);

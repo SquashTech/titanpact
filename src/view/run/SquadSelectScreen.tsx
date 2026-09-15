@@ -22,6 +22,7 @@ import { HubGlyph } from '../shared/nodeIcons';
 import { useAmbientLocation } from '../shared/LocationContext';
 import { matchupVerdict } from '../shared/matchupVerdict';
 import { levelOf } from '../../run/growth';
+import { WoundBar, entryHp } from '../shared/WoundBar';
 
 interface Props {
   run: RunState;
@@ -407,6 +408,8 @@ export function SquadSelectScreen({
                                   <TypeBadge key={t} type={t} />
                                 ))}
                               </div>
+                              {/* Where the act has left this hero (run/wounds.ts) — the read the pick is made on. */}
+                              <WoundBar {...entryHp(hero, entry, run.relics)} />
                             </>
                           ) : (
                             <div className="squad-slot-empty-label">Empty</div>

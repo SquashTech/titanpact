@@ -4,6 +4,10 @@
 
 import type { HeroLookup, CombatState, Side, Combatant, StatModifiers } from '../engine/state';
 import { createCombatant, getMaxHp, getMaxMana } from '../engine/state';
+import { combatantIdFor, koRosterIdsOf, rosterIdOfCombatant } from './combatantIds';
+import { woundedHp } from './wounds';
+
+export { koRosterIdsOf, rosterIdOfCombatant };
 import { createRng } from '../engine/rng/seededRng';
 import type { PassiveDefinition, PassiveId, StatusId } from '../engine/content';
 import type { RosterEntry } from './state';
@@ -26,24 +30,8 @@ export interface SquadPlacement {
   teamStatusGrants?: Record<StatusId, number>;
 }
 
-function combatantIdFor(side: Side, rosterId: string): string {
-  return `${side}:${rosterId}`;
-}
-
-/** The inverse: the roster entry a combatant id was placed from. */
-export function rosterIdOfCombatant(combatantId: string): string {
-  return combatantId.slice(combatantId.indexOf(':') + 1);
-}
-
-/** Roster ids on `side` that ended the fight KO'd — what the companion's mortality reads (run/companion.ts). */
-export function koRosterIdsOf(state: CombatState, side: Side): string[] {
-  return Object.values(state.combatants)
-    .filter((c) => c.side === side && c.fainted)
-    .map((c) => rosterIdOfCombatant(c.combatantId));
-}
-
-// Starting HP/mana are full (docs/mana.md, docs/run-loop.md), computed AFTER
-// grants so a +HP item raises the fight's starting resources.
+// Mana starts full (docs/mana.md); HP starts where the act's wounds left it (run/wounds.ts).
+// Both computed AFTER grants, so a +HP item raises the fight's starting resources.
 function placeEntry(
   entry: RosterEntry,
   side: Side,
@@ -70,7 +58,7 @@ function placeEntry(
     passives,
     statuses,
   };
-  return { ...withMods, currentHp: getMaxHp(hero, withMods), currentMana: getMaxMana(hero, withMods) };
+  return { ...withMods, currentHp: woundedHp(getMaxHp(hero, withMods), entry.wounds), currentMana: getMaxMana(hero, withMods) };
 }
 
 export function buildCombatState(

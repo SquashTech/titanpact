@@ -19,6 +19,7 @@ export const NODE_NAMES: Record<MapNodeType, string> = {
   passiveReward: 'Boon',
   currencyReward: 'Gold',
   manaWellReward: 'Mana Well',
+  restReward: 'Rest',
   forgeReward: 'Forge',
   mentorReward: 'Mentor',
   tutorReward: 'Tutor',
@@ -48,6 +49,8 @@ export const NODE_COLORS: Record<MapNodeType, string> = {
   currencyReward: 'var(--accent)',
   // The MP gauge's own blue (RunGlyph RESOURCE_COLORS mpPotion): a Mana Well reads as the bar it deepens.
   manaWellReward: '#8fb4ff',
+  // The HP bar's own green: a Rest reads as the bar it refills.
+  restReward: 'var(--hp-high)',
   // Forge orange: the only node that hands out a permanent SLOT rather than a thing to put in one.
   forgeReward: '#f0913c',
   mentorReward: 'var(--buff)',
@@ -79,6 +82,7 @@ export const NODE_TIERS: Record<MapNodeType, NodeTier> = {
   passiveReward: 'reward',
   currencyReward: 'reward',
   manaWellReward: 'reward',
+  restReward: 'reward',
   forgeReward: 'reward',
   mentorReward: 'reward',
   tutorReward: 'reward',

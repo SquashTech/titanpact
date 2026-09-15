@@ -275,6 +275,9 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
   if (!isInt(value.bonusItemSlots, 0, MAX_ITEM_SLOTS)) reject(`${label}.bonusItemSlots is not a slot count`);
   if (!isInt(value.scheduleTaken, 0)) reject(`${label}.scheduleTaken is not a count`);
   if (!isInt(value.mastery, 0, MASTERY_CAP)) reject(`${label}.mastery is not a pip count`);
+  // Absent on a file written before wounds persisted; whole is the honest default.
+  const wounds = value.wounds ?? 0;
+  if (!isInt(wounds, 0)) reject(`${label}.wounds is not an HP count`);
 
   const graft = value.evolutionTypeGraft ?? null;
   if (graft !== null) {
@@ -304,6 +307,7 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
     classPassiveId,
     // Absent on a file written before the companion; a hero that never was one is not one.
     mortal: value.mortal === true,
+    wounds,
   };
 }
 

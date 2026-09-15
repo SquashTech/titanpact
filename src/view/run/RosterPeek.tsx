@@ -15,6 +15,7 @@ import { ResourceGlyph } from '../shared/RunGlyph';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterManagementScreen } from './RosterManagementScreen';
 import { levelOf } from '../../run/growth';
+import { WoundBar, entryHp } from '../shared/WoundBar';
 
 interface Props {
   run: RunState;
@@ -103,6 +104,7 @@ export function RosterPeek({ run, className, onRunChange }: Props) {
                       onActivate={() => setInspecting({ hero, entry })}
                       onPreview={() => setInspecting({ hero, entry })}
                       ariaLabel={`${hero.name}, level ${levelOf(entry)} — view sheet`}
+                      detail={<WoundBar {...entryHp(hero, entry, run.relics)} />}
                       /* The Class if any; the card's own badge already shows the level. */
                       cta={heroClass ? heroClass.name.replace('Class - ', '') : 'Inspect'}
                     />

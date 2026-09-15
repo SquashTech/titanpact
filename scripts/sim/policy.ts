@@ -37,6 +37,7 @@ import { progressionTable } from '../../src/data/progression';
 import { mergeStatMods } from '../../src/run/statMods';
 import type { Rng } from './rng';
 import { levelOf } from '../../src/run/growth';
+import { woundedHp } from '../../src/run/wounds';
 
 /**
  * How Scrolls are aimed (docs/mastery.md §2, §8 phase 5's rotate / carry pair). `focus`
@@ -242,9 +243,33 @@ export function byPower(roster: readonly RosterEntry[]): RosterEntry[] {
   return [...roster].sort((a, b) => powerScore(b) - powerScore(a));
 }
 
-/** The four (or fewer) heroes the policy fields, strongest first. */
+/** Where a hero's HP stands going into a fight, as a share of its max (src/run/wounds.ts). */
+export function hpFraction(entry: RosterEntry): number {
+  const maxHp = effectiveStats(entry).hp;
+  return woundedHp(maxHp, entry.wounds) / maxHp;
+}
+
+/** The roster's HP over its max, summed — the read the shop's mend and the Rest are priced on. */
+export function rosterHpFraction(roster: readonly RosterEntry[]): number {
+  let hp = 0;
+  let max = 0;
+  for (const entry of roster) {
+    const maxHp = effectiveStats(entry).hp;
+    hp += woundedHp(maxHp, entry.wounds);
+    max += maxHp;
+  }
+  return max > 0 ? hp / max : 1;
+}
+
+/**
+ * The four (or fewer) heroes the policy fields, strongest first — a wounded hero counting for
+ * less, so the sideboard does the rotating the wounds are there to ask for.
+ */
 export function fieldedSquadIds(roster: readonly RosterEntry[], size: number): string[] {
-  return byPower(roster).slice(0, size).map((r) => r.rosterId);
+  return [...roster]
+    .sort((a, b) => powerScore(b) * (0.4 + 0.6 * hpFraction(b)) - powerScore(a) * (0.4 + 0.6 * hpFraction(a)))
+    .slice(0, size)
+    .map((r) => r.rosterId);
 }
 
 /** One Evolution taken inside a pour, reported back so run.ts can log it as a choice. */

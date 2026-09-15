@@ -75,6 +75,11 @@ export interface RosterEntry {
    * else it does, it does by being on the roster.
    */
   mortal: boolean;
+  /**
+   * HP missing going into the next node (run/wounds.ts): a fight writes it, the act's end clears
+   * it, and buildCombatState places the hero that far down. Never past the walk floor.
+   */
+  wounds: number;
 }
 
 /**
@@ -186,6 +191,7 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     classId: null,
     classPassiveId: null,
     mortal: false,
+    wounds: 0,
   };
 }
 

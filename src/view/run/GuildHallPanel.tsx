@@ -12,6 +12,8 @@ import { guildHallEntry } from '../../run/guildRecruit';
 import { guildHallLevel } from '../../run/difficulty';
 import { SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT, canBuyScroll } from '../../run/mastery';
 import { CONSUMABLE_HOLD_CAP, CONSUMABLE_KINDS, CONSUMABLE_NAMES, CONSUMABLE_PRICE, canBuyConsumable, type ConsumableKind } from '../../run/consumables';
+import { MEND_PRICE, anyWounded, canBuyMend } from '../../run/wounds';
+import { StatGlyph } from '../shared/StatBars';
 import type { EquipmentDefinition } from '../../run/equipment';
 import {
   recruitFromGuildHall,
@@ -67,6 +69,8 @@ interface Props {
   onBuyScroll: () => void;
   /** Hands off to App.tsx, which charges the gold and fills the flask (run/consumables.ts). */
   onBuyConsumable: (kind: ConsumableKind) => void;
+  /** The whole roster made whole for MEND_PRICE (run/wounds.ts). */
+  onBuyMend: () => void;
   /** Recruiting at a full roster hands off to App.tsx's RosterReplaceScreen gate. */
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
   /** Fires when this panel opens/closes a modal, so the host can pull its own bottom CTA. */
@@ -157,6 +161,7 @@ export function GuildHallPanel({
   onBuyEquipment,
   onBuyScroll,
   onBuyConsumable,
+  onBuyMend,
   onRequestRosterReplace,
   onOverlayChange,
   tab,
@@ -345,6 +350,21 @@ export function GuildHallPanel({
                 </button>
               );
             })}
+            {/* The mend (run/wounds.ts): the one good here that is for everyone at once, so it takes
+                the whole shelf. Dark while nobody is hurt — a heal with nothing to heal is not for sale. */}
+            <button className={`guild-hall-good is-mend${anyWounded(run) ? '' : ' sold-out'}`} disabled={!canBuyMend(run)} onClick={onBuyMend}>
+              <span className="guild-hall-good-glyph">
+                <StatGlyph stat="hp" tone="inherit" />
+              </span>
+              <span className="guild-hall-good-name">Mend the company</span>
+              {anyWounded(run) ? (
+                <span className="guild-hall-good-price">
+                  <ResourceGlyph kind="gold" /> {MEND_PRICE}
+                </span>
+              ) : (
+                <span className="guild-hall-good-price is-soldout">Nobody hurt</span>
+              )}
+            </button>
           </div>
         </div>
       )}
