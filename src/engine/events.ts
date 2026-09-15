@@ -39,7 +39,10 @@ export interface DamageDealtEvent extends BaseEvent {
   sourceCombatantId: string;
   targetCombatantId: string;
   moveId: string;
+  /** What HP lost. */
   amount: number;
+  /** What the target's Shield took first (docs/shield.md §3.3); absent when no Shield was held. A fully absorbed hit is amount 0. */
+  absorbed?: number;
   category: DamageCategory;
   moveType: TypeId;
   typeMult: number;
@@ -111,6 +114,8 @@ export interface StatusAppliedEvent extends BaseEvent {
   statusId: StatusId;
   magnitude?: number;
   duration?: number;
+  /** A Shield held at the holder's max HP (docs/shield.md §3.1); `magnitude` is the pool that stands, and may equal what it was. */
+  capped?: boolean;
 }
 
 export interface StatusTickedEvent extends BaseEvent {
@@ -132,6 +137,8 @@ export interface StatusRemovedEvent extends BaseEvent {
   combatantId: string;
   statusId: StatusId;
   reason: StatusRemovalReason;
+  /** 'broken' only: the striker whose hit emptied the Shield. */
+  sourceCombatantId?: string;
 }
 
 /** A triggered status (Conduct) detonating — after the base hit's HpChanged, always followed by StatusRemoved 'consumed' and its own HpChanged/Fainted. */
@@ -140,6 +147,8 @@ export interface StatusDetonatedEvent extends BaseEvent {
   combatantId: string;
   statusId: StatusId;
   amount: number;
+  /** What the target's Shield took of the burst — a detonation rides the hit (docs/shield.md §3.2). */
+  absorbed?: number;
 }
 
 /** A held passive's reaction firing, emitted ahead of the state changes it produces. One per stack. */

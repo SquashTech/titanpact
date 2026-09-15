@@ -2,6 +2,7 @@ import './rng.test';
 import './damage.test';
 import './combat.test';
 import './statuses.test';
+import './shield.test';
 import './heal.test';
 import './passives.test';
 import './elementalForce.test';

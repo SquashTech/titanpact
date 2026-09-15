@@ -25,12 +25,15 @@ export interface MagnitudeCaster {
 
 /** Which stat a rider reads: a HoT the caster's Wisdom, a DoT the offensive stat its move swings with. */
 export function magnitudeStatKey(def: StatusDefinition, move: MoveDefinition): StatKey {
-  return def.pipeline === 'hot' ? 'wisdom' : statKeysForMove(move)[0];
+  if (def.pipeline === 'hot') return 'wisdom';
+  // A Shield reads the caster's Defense (docs/shield.md §2) — Defense's support job.
+  if (def.pipeline === 'shield') return 'defense';
+  return statKeysForMove(move)[0];
 }
 
 /** True when the authored magnitude is a BASE the caster scales, rather than the figure that lands. */
 export function magnitudeScales(def: StatusDefinition, app: StatusApplication): boolean {
-  if (def.pipeline !== 'hot' && def.pipeline !== 'dot') return false;
+  if (def.pipeline !== 'hot' && def.pipeline !== 'dot' && def.pipeline !== 'shield') return false;
   return !(def.pipeline === 'dot' && app.target === 'self');
 }
 
@@ -38,7 +41,7 @@ export function magnitudeScales(def: StatusDefinition, app: StatusApplication): 
  * The caster-side scaling for one rider, snapshotted at application — never re-read per
  * tick off whoever ends up holding it. Gated on `StatusDefinition.pipeline`, not on the
  * move's kind, so a damage move that grants Renew scales its Renew and a heal move that
- * inflicts Burn scales its Burn. Everything else passes through untouched.
+ * inflicts Burn scales its Burn, and a Shield scales off Defense. Everything else passes through untouched.
  *
  * A `dot` aimed at `self` is the exception: that is Fire's and Mech's self-Burn, which
  * `docs/authoring-moves.md` bills as a COST whose price is knowable before the button is

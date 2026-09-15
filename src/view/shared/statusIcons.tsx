@@ -36,6 +36,14 @@ export const STATUS_PATHS: Record<string, ReactNode> = {
   // A shield: shoulders squared, base drawn to a point. Nothing else in the set is a closed
   // outline, which is what makes it read as "solid" at badge size against Freeze's open spokes.
   Barrier: <path d="M12 2.2 4.4 5.3v6.1c0 4.6 3.1 8.6 7.6 10.4 4.5-1.8 7.6-5.8 7.6-10.4V5.3L12 2.2Z" />,
+  // Barrier's shield hollowed to a rim (evenodd) with a bar across: a pool held in front,
+  // where Barrier's solid plate is a turn's guard.
+  Shield: (
+    <path
+      fillRule="evenodd"
+      d="M12 2.2 4.4 5.3v6.1c0 4.6 3.1 8.6 7.6 10.4 4.5-1.8 7.6-5.8 7.6-10.4V5.3L12 2.2ZM12 5.1l4.9 2v4.3c0 3.2-2 6-4.9 7.4-2.9-1.4-4.9-4.2-4.9-7.4V7.1l4.9-2ZM8.6 10.6h6.8v2.8H8.6Z"
+    />
+  ),
   // Swirl, 1¼ turns — more closes into a disc at badge size.
   Daze: (
     <path
@@ -126,6 +134,7 @@ const STATUS_COLOR: Record<string, string> = {
   Bleed: '#c0392b',
   Freeze: '#7fd6e0',
   Barrier: '#6fb7d6',
+  Shield: '#d8dde6',
   Daze: '#c9a0f5',
   Renew: '#4caf6a',
   Conduct: '#f5d90a',
@@ -167,6 +176,7 @@ const PIPELINE_LABELS: Record<StatusDefinition['pipeline'], string> = {
   target: 'Targeting effect',
   // Covers both members of the family: the fifteen type-locked Forces and Ambush, the typeless one.
   basePower: 'Base Power bonus',
+  shield: 'Bonus health',
   none: 'Effect',
 };
 

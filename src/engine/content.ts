@@ -56,7 +56,7 @@ export type StatusStacking =
   | 'additiveMagnitudeFixedDuration';
 
 /** Why a status left a combatant — carried on StatusRemovedEvent. */
-export type StatusRemovalReason = 'decay' | 'expired' | 'switch' | 'cleanse' | 'consumed';
+export type StatusRemovalReason = 'decay' | 'expired' | 'switch' | 'cleanse' | 'consumed' | 'broken';
 
 /** One record per status (docs/conditions.md); statusEngine.ts reads these flags generically. */
 export interface StatusDefinition {
@@ -99,8 +99,14 @@ export interface StatusDefinition {
   forceAllTypes?: boolean;
   /** Ambush: spent once the damage move that read it has resolved all of its hits, so a spread pays on every target and still costs one. */
   consumedOnDamage?: boolean;
-  /** Where the effect is wired in. Engine-read only for 'timer' (MoveDefinition.detonatesStatus). */
-  pipeline: 'dot' | 'hot' | 'control' | 'timer' | 'trigger' | 'target' | 'basePower' | 'none';
+  /**
+   * Ice Shell (docs/shield.md §3.5): held beside a Shield, this status lands its rider on the
+   * striker whose hit BREAKS the holder's Shield, then is consumed. Never fires on any other
+   * removal; inert on a holder with no Shield.
+   */
+  onShieldBroken?: { statusId: StatusId; magnitude?: number; duration?: number };
+  /** Where the effect is wired in. Engine-read only for 'timer' (MoveDefinition.detonatesStatus) and 'shield' (a pool taken from before HP — status/shield.ts, docs/shield.md). */
+  pipeline: 'dot' | 'hot' | 'control' | 'timer' | 'trigger' | 'target' | 'basePower' | 'shield' | 'none';
   description?: string;
 }
 

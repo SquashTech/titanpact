@@ -87,6 +87,21 @@ export const statuses: Record<string, StatusDefinition> = {
     pipeline: 'none',
     description: 'Every move the far side aims at this hero turns away for the rest of the round. An ally can still reach them.',
   },
+  // Bonus health off the caster's Defense (docs/shield.md): taken from by a move's hit before
+  // HP is, never by a DoT, the Clock, a cost or recoil; lasts until broken; held at max HP.
+  Shield: {
+    id: 'Shield',
+    name: 'Shield',
+    shape: 'magnitude',
+    ticksAtEndOfRound: false,
+    decay: 'none',
+    stacking: 'additive',
+    clearsOnSwitch: false,
+    positive: true,
+    pipeline: 'shield',
+    description:
+      "Bonus health, taken from before HP by a move's hit. Burn, Bleed, the Pact Clock, recoil and a move's own cost go straight through it. Lasts until a hit empties it, and can't hold more than this hero's max HP.",
+  },
   Renew: {
     id: 'Renew',
     name: 'Renew',

@@ -79,6 +79,8 @@ export interface StatusApplyParams {
   duration?: number;
   /** Passed through onto the StatusApplied event; never read here. */
   sourceCombatantId?: string;
+  /** The holder's max HP — the ceiling a 'shield' pipeline's pool is held at (docs/shield.md §3.1). Read for no other pipeline. */
+  holderMaxHp?: number;
 }
 
 /** Applies (or stacks onto) a status per StatusDefinition.stacking. No-ops on a fainted combatant. */
@@ -89,6 +91,7 @@ export function applyStatus(state: CombatState, round: number, combatantId: stri
   const existing = combatant.statuses[def.id];
   let magnitude = params.magnitude;
   let duration = params.duration;
+  let capped = false;
 
   if (existing) {
     if (def.stacking === 'none') return { state, events: [] };
@@ -104,11 +107,68 @@ export function applyStatus(state: CombatState, round: number, combatantId: stri
     }
   }
 
+  // A Shield never holds more than the holder's own max HP: the pool lands the rest of the
+  // way and says so, the way a stat at its ceiling does.
+  if (def.pipeline === 'shield' && params.holderMaxHp !== undefined && magnitude !== undefined && magnitude > params.holderMaxHp) {
+    magnitude = params.holderMaxHp;
+    capped = true;
+  }
+
   const nextState = setStatus(state, combatantId, def.id, { statusId: def.id, magnitude, duration });
   return {
     state: nextState,
-    events: [{ type: 'StatusApplied', round, combatantId, sourceCombatantId: params.sourceCombatantId, statusId: def.id, magnitude, duration }],
+    events: [
+      {
+        type: 'StatusApplied',
+        round,
+        combatantId,
+        sourceCombatantId: params.sourceCombatantId,
+        statusId: def.id,
+        magnitude,
+        duration,
+        ...(capped ? { capped: true } : {}),
+      },
+    ],
   };
+}
+
+/**
+ * Ice Shell's clause (docs/shield.md §3.5): once a hit has broken the holder's Shield, every
+ * status the holder carries with `onShieldBroken` lands its rider on the striker and is
+ * consumed. Runs after the hit has resolved, so the striker pays with the damage already done.
+ */
+export function resolveShieldBrokenRiders(
+  state: CombatState,
+  round: number,
+  holderId: string,
+  strikerId: string,
+  statusDefs: Record<string, StatusDefinition>,
+  maxHpOf: (combatantId: string) => number
+): StatusResult {
+  let working = state;
+  const events: CombatEvent[] = [];
+  const holder = working.combatants[holderId];
+  if (!holder) return { state, events };
+
+  for (const statusId of Object.keys(holder.statuses)) {
+    const rider = statusDefs[statusId]?.onShieldBroken;
+    if (!rider) continue;
+    const consumed = removeStatus(working, round, holderId, statusId, 'consumed');
+    working = consumed.state;
+    events.push(...consumed.events);
+    const riderDef = statusDefs[rider.statusId];
+    if (!riderDef) continue;
+    const applied = applyStatus(working, round, strikerId, riderDef, {
+      magnitude: rider.magnitude,
+      duration: rider.duration,
+      sourceCombatantId: holderId,
+      holderMaxHp: maxHpOf(strikerId),
+    });
+    working = applied.state;
+    events.push(...applied.events);
+  }
+
+  return { state: working, events };
 }
 
 /**

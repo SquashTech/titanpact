@@ -215,6 +215,7 @@ function resolveEffectOn(
         magnitude: resolveMagnitude(effect.magnitude, context),
         duration: effect.duration,
         sourceCombatantId: ownerId,
+        holderMaxHp: getMaxHp(heroes[target.heroId], target),
       });
     }
     case 'cleanse':

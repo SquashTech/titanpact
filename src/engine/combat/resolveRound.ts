@@ -37,6 +37,7 @@ import {
   blockingStatusId,
   expandSpreadTargets,
   tickEndOfRound,
+  resolveShieldBrokenRiders,
 } from './statusEngine';
 import { collectPassiveDamageModifiers, resolvePassiveReactions } from './passiveEngine';
 import { nextFloat, nextInt } from '../rng/seededRng';
@@ -332,7 +333,17 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
                 );
             working = { ...working, rngState: rolled.nextRngState };
 
-            const amount = Math.round(rolled.damage);
+            const rolledAmount = Math.round(rolled.damage);
+
+            // The hit is computed in full, THEN taken from a Shield (docs/shield.md §4): the event's
+            // formula terms describe the roll, `amount` what reached HP, `absorbed` the difference.
+            const hpBefore = working.combatants[targetId].currentHp;
+            const hpResult = applyHpDelta(working, round, targetId, -rolledAmount, maxHp, {
+              source: 'hit',
+              statusDefs: statuses,
+              sourceCombatantId: action.combatantId,
+            });
+            const amount = rolledAmount - hpResult.absorbed;
 
             const [offKey, defKey] = statKeysForMove(move);
             const damageDealtEvent: CombatEvent = {
@@ -342,6 +353,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
               targetCombatantId: targetId,
               moveId: move.id,
               amount,
+              ...(hpResult.absorbed > 0 ? { absorbed: hpResult.absorbed } : {}),
               category: move.category,
               moveType: move.type,
               typeMult: rolled.typeMult,
@@ -361,11 +373,15 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
               ...(retribution ? { retribution } : {}),
             };
             events.push(damageDealtEvent);
-
-            const hpBefore = working.combatants[targetId].currentHp;
-            const hpResult = applyHpDelta(working, round, targetId, -amount, maxHp);
             working = hpResult.state;
             events.push(...hpResult.events);
+
+            // Ice Shell: the hit that breaks the Shield pays the striker (onShieldBroken), once.
+            if (hpResult.shieldBroken) {
+              const broken = resolveShieldBrokenRiders(working, round, targetId, action.combatantId, statuses, maxHpOf);
+              working = broken.state;
+              events.push(...broken.events);
+            }
 
             // consumesStatus keyed off the multiplier ACTUALLY applied, so on a spread only the doubled target pays.
             if (move.conditionalPower?.consumesStatus && basePowerMultiplier !== 1) {
@@ -417,12 +433,28 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             // Conduct detonation: its own beat after the base hit, never folded into DamageDealt.
             const triggered = detonateTriggeredStatuses(working, round, targetId, move.type, maxHp, statuses);
             working = triggered.state;
-            events.push(...triggered.events);
 
             if (triggered.bonusDamage > 0) {
-              const bonusHpResult = applyHpDelta(working, round, targetId, -triggered.bonusDamage, maxHp);
+              // The burst rides the hit, so a Shield takes it too (docs/shield.md §3.2); the beat carries what it took.
+              const bonusHpResult = applyHpDelta(working, round, targetId, -triggered.bonusDamage, maxHp, {
+                source: 'hit',
+                statusDefs: statuses,
+                sourceCombatantId: action.combatantId,
+              });
+              events.push(
+                ...triggered.events.map((e) =>
+                  e.type === 'StatusDetonated' && bonusHpResult.absorbed > 0 ? { ...e, absorbed: bonusHpResult.absorbed } : e
+                )
+              );
               working = bonusHpResult.state;
               events.push(...bonusHpResult.events);
+              if (bonusHpResult.shieldBroken) {
+                const broken = resolveShieldBrokenRiders(working, round, targetId, action.combatantId, statuses, maxHpOf);
+                working = broken.state;
+                events.push(...broken.events);
+              }
+            } else {
+              events.push(...triggered.events);
             }
           }
         }
@@ -701,7 +733,12 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             working = { ...working, rngState: roll.nextState };
             if (roll.value >= app.chance) continue;
           }
-          const result = applyStatus(working, round, applyTargetId, def, { magnitude, duration: app.duration, sourceCombatantId: action.combatantId });
+          const result = applyStatus(working, round, applyTargetId, def, {
+            magnitude,
+            duration: app.duration,
+            sourceCombatantId: action.combatantId,
+            holderMaxHp: maxHpOf(applyTargetId),
+          });
           working = result.state;
           events.push(...result.events);
           statusAppliedEvents.push(...result.events);
