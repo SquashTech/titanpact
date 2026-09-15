@@ -43,6 +43,7 @@ interface FieldEffectDefinition {
   slowsStatusDecay?: { statusIds: readonly StatusId[]; retain: number }; // e.g. Burn kept at 0.75/round
   reversesSpeedOrder?: boolean;
   healPriorityBonus?: number; // added to a heal-kind move's priority bracket
+  healMultiplier?: number; // multiplies a heal-kind move's restored HP (Sanctuary 1.5)
   statBonusEqualToStatusMagnitude?: { statusId: StatusId; stats: readonly StatKey[] };
 }
 ```
@@ -78,6 +79,11 @@ actually applies it:
 - **`healPriorityBonus`** — `engine/combat/priority.ts` `orderActions`
   (`actionPriority`). Added to a `kind: 'heal'` move's priority bracket, read
   generically off the move's own `kind` rather than a per-move/per-status check.
+- **`healMultiplier`** — `engine/heal/healPipeline.ts` `fieldHealMultiplier` (2026-09-15). A term of the
+  heal pipeline on a `kind: 'heal'` move's restored HP, carried on `HealCaster.fieldMult` so the
+  fight tile and the detail overlay preview the same figure the fight pays, and reported on
+  `Healed.fieldMult`. Never folded into Wisdom; a Renew tick and a drain never ran the formula
+  and do not read it. Same discipline as `mpRegenMultiplier`, one pipeline over.
 - **`statBonusEqualToStatusMagnitude`** — `engine/state.ts` `getEffectiveStat`. A genuine
   stat-pipeline bonus (pipeline 1, not a damage modifier): every stat in `stats` gains a
   bonus equal to the combatant's **own current magnitude of `statusId`** — for Verdant
@@ -122,9 +128,9 @@ unchanged, so nothing else moved.
 | --- | --- | --- | --- |
 | Magical Surge | Arcane | Doubles MP Regen | `manaFont`, `magicCloak` (Glyph) |
 | Scorched Land | Fire | Burn keeps 3/4 of its value a round instead of half | `spreadingBlaze` (Brimstone) |
-| Stasis Field | Mind | Reverses same-bracket Speed order | `stasis` (Cortex) |
-| Sanctuary | Light | Heal-kind moves get +1 priority | `consecrate` (Solace) |
-| Verdant Earth | Nature | +Attack/+Intelligence equal to your own Renew | `magicGrowth`, `forceOfNature` (Sylva) |
+| Stasis Field | Mind | Reverses same-bracket Speed order | `stasis` (Cortex), `distort` |
+| Sanctuary | Light | Heal-kind moves get +1 priority and heal ×1.5 (2026-09-15) | `consecrate` (Solace), `hallow` |
+| Verdant Earth | Nature | +Attack/+Intelligence equal to your own Renew | `magicGrowth`, `forceOfNature` (Sylva), `sow` |
 
 ### A field effect set by a PASSIVE (2026-09-01, Fire)
 
@@ -216,6 +222,113 @@ from `typeColors.ts` `getTypeColorRgb(def.flavorType)`) on `.battlefield`, and
 (`getTypeColor`, not the custom property) since it's portalled to `document.body` and
 so sits outside `.battlefield`'s subtree — custom properties don't cross a portal
 boundary.
+
+## Why four of five never appeared, and the three routes that fix it (2026-09-15)
+
+**The finding.** Nine hours of play saw no field but Scorched Land. The sim agreed: over 600
+runs and 65,384 player casts, every field setter combined was **0.35% of casts** — Spreading
+Blaze 0, Magic Growth 0, Magic Cloak 0, Stasis 15, Consecrate 42, Force of Nature 51, Mana
+Font 110. Scorched Land appeared anyway, because **Firestarter** sets it off a Burn the player
+wanted to land regardless: the one route that costs no turn.
+
+That is the VGC lesson, and the user named it: weather works when an ability summons it
+(Drizzle, Drought) and does not when a turn is spent casting it (Rain Dance). Three faults
+compounded here:
+
+1. **Setter rate.** Eight setter moves, seven of them Mid or Late, one passive on one
+   Evolution path of one hero. A field was something bought at 40–55 mana in place of an attack.
+2. **Readers.** Two moves in the game read a field (Smite, Overload). A field nothing reads is
+   a number nobody looks at.
+3. **Legibility.** Sanctuary's +1 heal priority and Stasis Field's reversed order are
+   un-feelable unless the player is watching resolve order. Scorched Land's retain-0.75 is just
+   as invisible — it survives only because it is *set* constantly.
+
+**The three routes** (per user direction; all three, not one):
+
+### Heralds — a field set on entry, costing no turn
+
+One passive per field, `heraldOf*` in `src/data/passives.ts`, generated off the field catalog:
+*when this hero enters the battlefield, set X*. It is `{ hook: 'SwitchedIn', condition:
+{ relativeTo: 'self' }, effect: { kind: 'setFieldEffect' } }` — the shape Imposing Presence
+uses, reachable since 2026-08-31 and never authored. **Not `oncePerFight`**, on purpose: a pivot
+out and back re-sets a field that has lapsed or been overridden, and the locked shape (re-setting
+the active field is a no-op that never refreshes the clock) is what stops it from being a
+permanent field. That is the weather war — switch Politoed back in.
+
+They live in the **Boon pool**, type-gated exactly as the +20% damage Boons are: offered when a
+roster hero fields the field's flavour type (`fieldHeraldPassiveFor`, `src/run/boons.ts`). The
+holder need not be that type — a Stasis Herald belongs on Crag or the Colossus, which is where
+Trick Room actually lives. Firestarter stays an Evolution passive with a different trigger; the
+Fire Herald in the Boon pool is a second route, not a replacement.
+
+### Riders — an Early move that does its type's job and sets the field on the way past
+
+Scorched Land's shape, one per field, priced as the payload alone:
+
+| Field | Early rider | Payload |
+| --- | --- | --- |
+| Magical Surge | Mana Font (existing) | +10 MP Regen both allies |
+| Scorched Land | — (Firestarter, Spreading Blaze) | — |
+| Stasis Field | **Distort** | −20 Intelligence on one foe |
+| Sanctuary | **Hallow** | heal 35 on one ally |
+| Verdant Earth | **Sow** | Renew 30 on one ally |
+
+**Stasis** was repriced: 45 mana for +20/+20 on self was the worst card in its slate, so the
+field never came with it. It is +20/+20 on **both allies** at 40 now.
+
+The riders sit in the **Titanspawn kits** too (Gleamling holds Hallow, Whimling Distort,
+Sproutling Sow, Runeling Mana Font and Resonant Bolt, the Emberling Flare Up), so the enemy side
+sets fields — and under the "no owner" rule an enemy's Sanctuary arms the player's Smite. The
+field war now happens *to* the player, not only by them.
+
+### Readers — a move that visibly lights up while its field is up
+
+One per field on Smite's `conditionalPower.requiresFieldEffect` shape, so every field has a card
+whose number doubles when it is on:
+
+| Field | Reader | Shape |
+| --- | --- | --- |
+| Magical Surge | **Resonant Bolt** (Early, 35) | ×2; Overload spreads |
+| Scorched Land | **Flare Up** (Early, 40, Burn 10) | ×2 |
+| Stasis Field | **Hindsight** (Mid, 55, priority −1) | ×2 — slow on purpose |
+| Sanctuary | **Sunlance** (Mid, physical, 55) | ×2 — the physical Light line's Smite |
+| Verdant Earth | **Verdant Lash** (Mid, physical, 50) | ×2 |
+
+Every reader is pooled beside a setter (`src/data/progression.ts`), so no hero draws a dead
+conditional.
+
+### Sanctuary's second job
+
+Per user direction, Sanctuary **keeps** +1 heal priority and **also multiplies heal-kind moves
+by 1.5** — `FieldEffectDefinition.healMultiplier`, a term of the heal pipeline
+(`healPipeline.ts` `fieldHealMultiplier`, carried on `HealCaster.fieldMult` and reported on
+`Healed.fieldMult`), never a Wisdom bonus, exactly as `mpRegenMultiplier` is a term of the regen
+pipeline and never an MP Regen stat. A Renew tick and a drain are not heals and do not read it.
+The bigger number is seen on every heal, which is what the priority never was. It is the
+two-jobs shape Magical Surge already has, accepted with eyes open.
+
+**Verdant Earth's number is untouched.** The standing call (2026-09-05) was to play it before
+dividing it, and the play verdict was that it never appeared — so this pass makes it appear
+and leaves the 1:1 grant where it was. If it now reads as broken, that is the playtest result.
+
+### Measured (600 runs, seed 1, skilled pilot; `scripts/sim` now counts field sets)
+
+| | sets (player / enemy) | per 1000 player turns | rounds ending with a field up | full-clear |
+| --- | --- | --- | --- | --- |
+| before (2026-09-15 morning) | ~230 setter casts | ~3.5 | not counted | 54.7% |
+| Heralds + Sanctuary term | 403 / 673 | 14.0 | 10.3% | 55.5% |
+| + riders, readers, kits | 582 / 1,038 | 20.6 | 14.7% | 55.0% |
+
+Full-clear is unmoved — none of this was a power lever. What the pilot cannot price: a Force
+self-buff (Undercurrent, Hoarfrost Edge, Static Charge, Soulfire were cast 0–3 times in 78,558
+turns; `pilot.ts` values Force at half its magnitude over the horizon, about a quarter of what
+it pays), and the Heralds themselves are drawn at random like every Boon. Directional, as
+always; the read that matters is the user's next run.
+
+### Still deferred
+
+- **The type-restricted damage term** (Pokémon terrain: "+X% Fire moves") — asked and declined
+  this pass, to keep the five distinct in kind. Revisit once the setter rate has been played.
 
 ## Open questions — do not silently resolve
 

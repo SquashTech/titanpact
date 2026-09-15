@@ -2104,3 +2104,52 @@ extensions with an obvious shape — they are questions with two or three
 defensible answers each, and picking one silently would have meant rebuilding
 the targeting model or the switch path after the fact. Two questions cost one
 round trip and saved the slate.
+
+
+---
+
+## 11. The 2026-09-15 expansion: two to four a slate, on the existing vocabulary
+
+Thirty-nine moves across the fourteen authored slates, no engine field added (Sanctuary's
+`healMultiplier` is a Field Effect flag, not a move one). Per user direction: the thin slates
+took four (Storm, Nature, Mech, Beast were at 15), the sixteens three, the rest two, and the
+brief was *combine ideas or statuses that already exist* plus the Field Effect fix in
+`docs/field-effects.md` "Why four of five never appeared". What it added, by shape:
+
+- **Field riders** (a type's ordinary Early job that also sets its field): Sow, Hallow, Distort.
+- **Field readers** (`conditionalPower.requiresFieldEffect`, ×2): Flare Up, Resonant Bolt,
+  Hindsight, Sunlance, Verdant Lash. **Pool a reader beside a setter** — the same rule as a
+  status conditional beside its applier (§7); a Herald Boon is a second route, not the one the
+  pool relies on.
+- **Elemental Force self-buffs**: Undercurrent, Hoarfrost Edge, Static Charge, Soulfire (Force
+  25, 20 mana, Early). Force is the one self-buff a pivot keeps (`clearsOnSwitch: false`), it
+  is pre-ratio BasePower so a multi-hit or a spread pays it more than once, and a hero holding
+  one makes the enchant axis readable on its own sheet. Stoke the Flames stays the whole-side
+  version.
+- **Pivots**: Blazing Retreat (Burn then out), Ride the Lightning. Not in a spawn kit — the
+  enemy AI declares no `switchToCombatantId`.
+- **Status combos on one card**: Stunning Bolt (Conduct + chanced Daze), Bodyguard (Shield on
+  the ally, Provoke on self, priority 1), Blood Trail (Bleed + `conditionalPriority` on Bleed),
+  Shield Bash (`offStatOverride` Defense + chanced Daze), Rootbind (Poison + −30 Speed), Grim
+  Harvest (`detonatesStatus` Poison + drain), Blinding Snow (chanced spread Daze at +1, a gamble
+  rather than the lockout Feint prices by the fight), Heat Haze, Parry, Patch Up, Séance.
+- **Plain rows** the slates lacked: a Mind drain (Mind Leech), a Nature drain (Leech), a Mech
+  Conduct planter (Shock Coil — the type detonated it and never planted it), an Arcane
+  two-hit (Twin Cast), Late spreads for Storm, Mech and Beast (Ion Cascade, Salvo, Rending Leap).
+
+**The slate identities held, and the tests said which.** Every `test/*Moves.test.ts` pins a
+shape beyond a count, and three drafts broke one: a Beast intimidate (the slate never debuffs —
+"the type buys speed, never trades it"), an Iron cleanse (the slate has no heal, cleanse or
+field), a magical Mech spread (four magical rows, pinned "against a roster whose best
+Intelligence is 45"), and a Spirit spread (every Spirit hit is single-target; Haunt is what
+spreads it). Each was re-authored inside the identity rather than the pin moved. **A count pin
+moves; an identity pin is a design rule** — read the assertion's message before editing it.
+
+**Distribution** (§7 unchanged): each move went to two or three pools on its category line,
+the readers beside their setters, and one seat in the fitting Titanspawn kit (the kits are a
+fixed 3 / 4 / 4, so each is a swap: Gleamling's Mend for Hallow, Whimling's Lull for Distort,
+Sproutling's Regrowth for Sow, Runeling's Focus for Mana Font, Mesmerid's Mental Fortress for
+Stasis, and so on — the enemy side now sets fields, which the "no owner" rule makes into
+counterplay). Sim sanity check in `docs/field-effects.md`: full-clear unmoved at n=600, and the
+pilot casts a Force self-buff almost never — a scorer limit (it prices Force at about a quarter
+of what it pays), not a finding.

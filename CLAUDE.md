@@ -650,6 +650,20 @@ what's still unimplemented:
   Data-driven (`FieldEffectDefinition`, `docs/field-effects.md`); first content is
   **Magical Surge** (Arcane, displayed as "Surging Magic" until 2026-08-30 — id
   unchanged), doubling every hero's MP Regen while active.
+  **A field is set three ways, and every field has all three** (2026-09-15, per user direction,
+  after nine hours of play saw no field but Scorched Land and the sim put every setter at 0.35% of
+  casts — `docs/field-effects.md` "Why four of five never appeared"): a **Herald** passive in the
+  Boon pool (`heraldOf*`, SwitchedIn → setFieldEffect, type-gated on the flavour type, never
+  once-per-fight, so a pivot re-sets a lapsed field and the locked no-refresh rule bounds it — the
+  Drizzle shape, a field that costs no turn), an **Early rider** that does its type's job and sets
+  the field on the way past (Sow, Hallow, Distort, Mana Font), and a **reader** whose power doubles
+  under it (Flare Up, Resonant Bolt, Hindsight, Sunlance, Verdant Lash beside Smite and Overload),
+  always pooled beside a setter. The spawn kits carry riders and readers, so the enemy side sets
+  fields and "no owner" is counterplay. **Sanctuary keeps +1 heal priority and also heals ×1.5**
+  (`healMultiplier`, a heal-pipeline term, never Wisdom). Verdant Earth's number is still the
+  playtest's, untouched. The type-restricted damage term stays deferred. Measured: sets 14.0 →
+  20.6 per 1000 player turns across the two phases, a field up at 14.7% of round ends,
+  full-clear unmoved.
 
 ## Open questions — DO NOT silently resolve
 
