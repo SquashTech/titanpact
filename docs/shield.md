@@ -280,8 +280,9 @@ Sequenced so the tree is playable at every boundary and each phase can be refuse
   Crag's and Sentinel's; Vigil in Dawnwarden's and Aegis's; Ice Shell in Glacial Warden's and
   Rime's. **The Iron and Stone spawn kits each carry a Shield** (per user direction, same day):
   the Rivetling holds Iron Skin in place of Sharpen, the Monolith Rampart in place of Landslide (a
-  60 BP magical spread on a 40-Int body), and the Slabback keeps Bastion; both Water spawn hold
-  Tide Guard. Measured on the same seed: full-clear 22.5 → 22.8%, Act 1 unmoved; the Rivetling
+  60 BP magical spread on a 40-Int body), the Slabback keeps Bastion, and the Puddling holds Tide
+  Guard in place of Siphon (the Water kits held no Shield before — Act 1's enemy casts were
+  hero-pool enemies whose starting kits carry it). Measured on the same seed: full-clear 22.5 → 22.8%, Act 1 unmoved; the Rivetling
   takes 120 → 114 a round and deals 18 → 17, the Monolith 116 → 104 taken and 87 → 69 dealt;
   enemy Shield casts 861 → 1038 in Act 1 and 225 → 617 in Act 4.
 - **The cap on the view:** `StatBars.tsx ShieldFill` draws the band past the fill and, for what
@@ -311,8 +312,8 @@ tree the Shield landed on, not phase 2b's: full-clear 23.1%, acts 62 / 63 / 95 /
   or a stacked Rampart in the finale (53 of 1184). At 100% of max HP it is a rule the player
   meets a few times a run, not a wall.
 - **Broken:** 39% of player pools in Act 1, 48% in Act 2, then 32–34% — a Shield is a hit's worth
-  most of the time, the doc's "takes the first hit". Enemy pools (the Water and Stone spawn with
-  the converts): 861 / 976 / 442 / 225 / 110 casts by act, 62–77% of them broken.
+  most of the time, the doc's "takes the first hit". Enemy pools (hero-pool enemies holding a
+  convert, and the Slabback): 861 / 976 / 442 / 225 / 110 casts by act, 62–77% of them broken.
 - **The converts were dead as Defense and are live as Shields.** The same seed with Tide Guard
   and Bastion put back to +15 / +30 Defense: full-clear 22.5%, identical — but Tide Guard's casts
   2975 → 3630 and **Bastion's 43 → 2559** (0.1 → 8.0 per 1000 player turns). The pilot never took
