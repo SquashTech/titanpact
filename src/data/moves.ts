@@ -463,6 +463,36 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'Cuts a channel through the water — and every cut after it runs easier (costs 20 less each use).',
   },
+  crest: {
+    id: 'crest',
+    name: 'Crest',
+    tier: 'mid',
+    type: 'Water',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 45,
+    // The hit and the pool read two stats: Intelligence swings, Defense sizes the Shield (docs/shield.md §2).
+    statusApplication: { statusId: 'Shield', magnitude: 25, target: 'self' },
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Rides the swell in on one foe and stands behind what comes back (Shield 25 on self).',
+  },
+  seawall: {
+    id: 'seawall',
+    name: 'Seawall',
+    tier: 'late',
+    type: 'Water',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [],
+    statusApplication: { statusId: 'Shield', magnitude: 70, target: 'moveTarget' },
+    cleanses: true,
+    manaCost: 50,
+    priority: 0,
+    target: 'singleAlly',
+    description: 'Raises the sea between one ally and everything (Shield 70), and washes off what ails them (cleanses).',
+  },
 
   // --- Frost ---
   iceShard: {

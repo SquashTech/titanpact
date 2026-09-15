@@ -78,7 +78,7 @@ export const titanspawnLines: readonly TitanspawnLine[] = [
 
   line('Water', 'speed', ['Puddling', 'Rillfin', 'Breakwater'],
     [st(64, 30, 32, 32, 36, 38, 40, 10), st(120, 50, 55, 65, 80, 90, 60, 12), st(200, 75, 95, 105, 100, 125, 90, 15)],
-    [['splash', 'tideGuard', 'refresh'], ['torrent', 'engulf', 'deluge', 'oasis'], ['tsunami', 'maelstrom', 'highTide', 'waveShred']],
+    [['splash', 'tideGuard', 'refresh'], ['torrent', 'crest', 'deluge', 'oasis'], ['tsunami', 'maelstrom', 'seawall', 'waveShred']],
     { hp: 'B', attack: 'E', defense: 'C', intelligence: 'B', wisdom: 'A', speed: 'S', manaPool: 'A' }),
 
   line('Frost', 'hp', ['Sleetling', 'Hoarfang', 'Frostheave'],

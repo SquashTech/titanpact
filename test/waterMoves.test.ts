@@ -15,7 +15,7 @@ import { resolveRound } from '../src/engine/combat/resolveRound';
 import { applyStatus, cleanseStatuses } from '../src/engine/combat/statusEngine';
 import type { Action } from '../src/engine/combat/actions';
 import type { CombatState } from '../src/engine/state';
-import { effectiveManaCost, hasAffordableMove, statusMagnitude } from '../src/engine/state';
+import { effectiveManaCost, hasAffordableMove, hasStatus, statusMagnitude } from '../src/engine/state';
 import { scaleStatusMagnitude } from '../src/engine/status/statusMagnitude';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
@@ -63,13 +63,13 @@ function afflict(state: CombatState, combatantId: string, statusId: string, magn
 
 // --- The pool itself ---
 
-test('water: the authored slate is the fifteen designed moves, Riptide\'s Evolution move and its signature, all Water-typed', () => {
+test('water: the authored slate is the fifteen designed moves, Riptide\'s Evolution move, its signature and the two Shield cards, all Water-typed', () => {
   const water = Object.values(moves).filter((m) => m.type === 'Water' && !signatureMoves[m.id]);
   assert.deepStrictEqual(
     water.map((m) => m.id).sort(),
     [
-      'aquaSlice', 'deluge', 'engulf', 'highTide', 'maelstrom', 'oasis', 'refresh',
-      'shockBubble', 'siphon', 'splash', 'tideGuard', 'torrent', 'tsunami', 'undertow', 'washAway',
+      'aquaSlice', 'crest', 'deluge', 'engulf', 'highTide', 'maelstrom', 'oasis', 'refresh',
+      'seawall', 'shockBubble', 'siphon', 'splash', 'tideGuard', 'torrent', 'tsunami', 'undertow', 'washAway',
       'waveShred',
     ]
   );
@@ -364,4 +364,32 @@ test('water: a Tide Guard takes the first hit — the swell absorbs before HP do
   assert.ok(hit && hit.type === 'DamageDealt');
   assert.ok((hit.absorbed ?? 0) > 0);
   assert.strictEqual(next.combatants.a1.currentHp, hpBefore - hit.amount);
+});
+
+// --- Crest and Seawall: the Mid and Late Shields (docs/shield.md §3.5, added 2026-09-15) ---
+
+test('water: Crest hits one foe off Intelligence and shields its caster off Defense — two stats, one card', () => {
+  const state = withDeepPools(waterFixture(762));
+  const app = { statusId: 'Shield', magnitude: 25, target: 'self' as const };
+  const expected = scaleStatusMagnitude(25, statuses.Shield, app, moves.crest, heroes.tidecaller, state.combatants.a1);
+  const { state: next, events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'crest', declaredTarget: 'b1' }], config);
+  assert.strictEqual(moves.crest.tier, 'mid');
+  const hit = events.find((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b1');
+  assert.ok(hit && hit.type === 'DamageDealt' && hit.category === 'magical' && hit.amount > 0);
+  assert.strictEqual(statusMagnitude(next.combatants.a1, 'Shield'), expected);
+  assert.strictEqual(statusMagnitude(next.combatants.b1, 'Shield'), 0, 'the pool is the caster\'s, never the target\'s');
+});
+
+test('water: Seawall is the Late single-ally pool, and it cleanses what the ally carries', () => {
+  let state = withDeepPools(waterFixture(763));
+  state = afflict(afflict(state, 'a2', 'Burn', 20), 'a2', 'Renew', 15);
+  const app = { statusId: 'Shield', magnitude: 70, target: 'moveTarget' as const };
+  const expected = scaleStatusMagnitude(70, statuses.Shield, app, moves.seawall, heroes.tidecaller, state.combatants.a1);
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'seawall', declaredTarget: 'a2' }], config);
+  assert.strictEqual(moves.seawall.tier, 'late');
+  assert.strictEqual(moves.seawall.manaCost, 50);
+  assert.strictEqual(statusMagnitude(next.combatants.a2, 'Shield'), expected);
+  assert.strictEqual(hasStatus(next.combatants.a2, 'Burn'), false, 'the Burn is washed off');
+  assert.ok(hasStatus(next.combatants.a2, 'Renew'), 'and the Renew, positive, is kept');
+  assert.strictEqual(statusMagnitude(next.combatants.a1, 'Shield'), 0, 'single ally');
 });

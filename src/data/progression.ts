@@ -80,7 +80,7 @@ export const progressionTable: ProgressionTable = {
       'banish',
     ],
     // --- Water ---
-    tidecaller: ['siphon', 'torrent', 'engulf', 'deluge', 'oasis', 'tsunami', 'highTide', 'undertow', 'iceShard', 'psiBolt', 'glimmer', 'jolt', 'aquaSlice', 'shockBubble', 'waveShred'],
+    tidecaller: ['siphon', 'torrent', 'engulf', 'crest', 'deluge', 'oasis', 'tsunami', 'highTide', 'seawall', 'undertow', 'iceShard', 'psiBolt', 'glimmer', 'jolt', 'aquaSlice', 'shockBubble', 'waveShred'],
     // Shock Bubble plants Conduct and the Iron column detonates it — the mark and the payoff are
     // both already in the pool, which is what Tideclaw's Static Tide then makes free.
     pincer: [
@@ -97,7 +97,9 @@ export const progressionTable: ProgressionTable = {
       'claw',
       'mudBall',
       'oasis',
+      'crest',
       'highTide',
+      'seawall',
       'titanicCrush',
     ],
     // --- Frost ---

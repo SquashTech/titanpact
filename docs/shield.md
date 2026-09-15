@@ -146,7 +146,9 @@ HP (roughly a tenth, a fifth, a third):
 | **Rampart** | Stone, Late | both allies | 65 | The wall. Late-priced, both allies, the biggest pool on the table — the card that makes Stone the Shield type the way Light is the heal type. |
 | **Living Wall** | Iron, Mid | self, then switch | 40 | Shield self and pivot out (`switchesUserOut`): the Shield goes to the bench with the hero and comes back — the one card that spends §3.1's "leaves with the hero" on purpose. |
 
-Five new, two converted, in five slates. **Not** in Wisdom's slates — Mind, Spirit, Arcane
+**Two more Water cards, 2026-09-15 (per user direction), so the Mid and Late Water spawn can shield:** **Crest** (Mid, magical damage 45 on one foe, Shield 25 on self, 40 mana — the hit reads Intelligence and the pool Defense, the one card that swings and shields) and **Seawall** (Late, Shield 70 on one ally and a full cleanse, 50 mana — the biggest single pool, on Water's cleanse verb). Seated in Tidecaller's and Pincer's pools and the Rillfin's and Breakwater's kits (for Engulf and High Tide). Measured on the same seed: full-clear 22.5 → 22.8%, acts inside noise; player casts per 1000 turns Crest 2.6, Seawall 1.0; the Breakwater takes 123 → 110 a round.
+
+Seven new, two converted, in five slates. **Not** in Wisdom's slates — Mind, Spirit, Arcane
 carry the buffs and heals; a Shield there would be Wisdom doing Defense's new job. Each new move
 is authored on the runbook (`authoring-moves.md`): tier, target, mana in its band, a description
 that names the number, a slate test, and it takes the slate's `moveIds`/schedule seat the
