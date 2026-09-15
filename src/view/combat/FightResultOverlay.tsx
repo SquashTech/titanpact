@@ -4,6 +4,7 @@ import { rosterHeroes } from '../../data/content';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { CONSUMABLE_NAMES, type ConsumableKind } from '../../run/consumables';
 import { MAX_LEVEL, MAX_XP, levelForXp, levelOf, xpForLevel, xpProgress } from '../../run/growth';
+import { WoundBar } from '../shared/WoundBar';
 import type { RosterEntry } from '../../run/state';
 import { ItemEffectChips, ItemPiece, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import { ItemDetailOverlay } from '../shared/ItemDossier';
@@ -50,6 +51,12 @@ export interface FightResultProps {
   equipmentReward: EquipmentDefinition | null;
   /** A potion drop (run/consumables.ts). Null on the common no-drop win. */
   consumableReward?: ConsumableKind | null;
+  /**
+   * Where each roster hero's HP stands going into the next node (run/wounds.ts) — the fielded
+   * read off the fight's end, the reserve off what they were already carrying. Omit (a fight
+   * outside a run) and no bar is drawn.
+   */
+  hpAfter?: ReadonlyMap<string, { hp: number; maxHp: number }>;
   onContinue: () => void;
 }
 
@@ -73,6 +80,7 @@ export function FightResultOverlay({
   goldReward,
   equipmentReward,
   consumableReward = null,
+  hpAfter,
   onContinue,
 }: FightResultProps) {
   const won = outcome === 'win';
@@ -169,6 +177,7 @@ export function FightResultOverlay({
                   fielded={fieldedIds.has(entry.rosterId)}
                   filling={stage >= STAGE_FILL && !landed && stage < STAGE_CAPTION}
                   landed={landed || stage >= STAGE_CAPTION}
+                  hpAfter={hpAfter?.get(entry.rosterId)}
                 />
               ))}
             </div>
@@ -225,6 +234,7 @@ interface MemberProps {
   filling: boolean;
   /** Everything this hero gains is on screen, whether it animated there or was tapped there. */
   landed: boolean;
+  hpAfter?: { hp: number; maxHp: number };
 }
 
 /** Levels `xp` more would cross for this hero — zero at the cap. */
@@ -238,7 +248,7 @@ function levelsCrossed(entry: RosterEntry, xp: number): number {
  * a level, ticking the badge on exactly the frame it does (shared/xpBar.ts). A grant that lands
  * no level still moves the bar; that partial IS the information.
  */
-function PartyMember({ entry, index, xp, fielded, filling, landed }: MemberProps) {
+function PartyMember({ entry, index, xp, fielded, filling, landed, hpAfter }: MemberProps) {
   const definition = rosterHeroes[entry.heroId];
   const [fills, setFills] = useState(0);
   const fillRef = useRef<HTMLElement>(null);
@@ -300,6 +310,9 @@ function PartyMember({ entry, index, xp, fielded, filling, landed }: MemberProps
       <span className="fight-result-xp" aria-hidden="true">
         <i ref={fillRef} className="fight-result-xp-fill" style={{ width: `${restingWidth * 100}%` }} />
       </span>
+
+      {/* What the fight left, under what it paid: HP carries to the next node (run/wounds.ts). */}
+      {hpAfter && <WoundBar hp={hpAfter.hp} maxHp={hpAfter.maxHp} className="fight-result-hp" />}
 
       {!fielded && <span className="fight-result-reserve-tag">Reserve</span>}
     </div>

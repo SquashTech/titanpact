@@ -8,6 +8,7 @@ import type { HeroDefinition, PassiveId, StatKey } from '../../engine/content';
 import { STAT_ORDER } from '../../engine/content';
 import { gradesFor, levelOf } from '../../run/growth';
 import { MasteryPips } from '../shared/MasteryPips';
+import { WoundBar, entryHp } from '../shared/WoundBar';
 import type { StatModifiers } from '../../engine/state';
 import type { RosterEntry } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
@@ -208,6 +209,8 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
             </div>
             {/* The pips under the types: how far this hero is from turning, read without a screen. */}
             <MasteryPips mastery={entry.mastery} className="detail-mastery" />
+            {/* Where the act has left this hero (run/wounds.ts) — on the sheet, since the sheet is where a wound is checked. */}
+            {!unowned && <WoundBar {...entryHp(hero, entry, relicIds)} figure className="detail-hp" />}
             {(evolved.length > 0 || heroClass) && (
               <div className="detail-evolution-row">
                 {evolved.map((path) => (

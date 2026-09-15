@@ -49,6 +49,9 @@ import { TutorialOverlay } from '../run/TutorialOverlay';
 import type { Squad } from '../../run/squad';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { buildCombatState, koRosterIdsOf } from '../../run/buildCombatState';
+import { combatantIdFor } from '../../run/combatantIds';
+import { woundedHp, woundsFrom } from '../../run/wounds';
+import { entryHp } from '../shared/WoundBar';
 import { levelOf } from '../../run/growth';
 import { pickAiAction, type AiContext } from '../../run/ai';
 import { relicTeamStatModifiers } from '../../run/relics';
@@ -680,6 +683,18 @@ export function FightScreen({
   // roster this side of onResolved, but the result fills no bar for it — the fight took it.
   const playerKoIds = winner ? koRosterIdsOf(combat, PLAYER_SIDE) : [];
   const resultRoster = playerRun.roster.filter((entry) => !(entry.mortal && playerKoIds.includes(entry.rosterId)));
+  // Where the fight leaves every hero's HP (run/wounds.ts recordWounds, read the same way): the
+  // fielded off the end state against their baseline max, the reserve off what they carried in.
+  const hpAfter = new Map(
+    winner === PLAYER_SIDE
+      ? resultRoster.map((entry) => {
+          const combatant = combat.combatants[combatantIdFor(PLAYER_SIDE, entry.rosterId)];
+          if (!combatant) return [entry.rosterId, entryHp(allCombatants[entry.heroId], entry, playerRelicIds)] as const;
+          const maxHp = getMaxHp(allCombatants[combatant.heroId], { ...combatant, statModifiers: {} });
+          return [entry.rosterId, { hp: woundedHp(maxHp, woundsFrom(maxHp, combatant.currentHp)), maxHp }] as const;
+        })
+      : []
+  );
 
   // Bound to both hold and tap: a Field Effect must be one obvious tap away.
   const inspectFieldEffect = combat.activeFieldEffect ? () => setInspectingFieldEffect(true) : undefined;
@@ -1885,6 +1900,7 @@ export function FightScreen({
           goldReward={goldReward}
           equipmentReward={equipmentReward}
           consumableReward={consumableReward}
+          hpAfter={hpAfter}
           onContinue={() => onResolved(winner === PLAYER_SIDE ? 'win' : 'loss', combat, usedConsumables)}
         />
       )}

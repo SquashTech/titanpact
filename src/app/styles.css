@@ -16936,9 +16936,8 @@ textarea,
   flex: 1 1 0;
   min-width: 0;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 10px;
   background: var(--surface-raised);
   border: 1px solid var(--border);
   border-top: 2px solid var(--btn-color);
@@ -16946,7 +16945,7 @@ textarea,
      the well's frame, and there is no frame left to meet. */
   border-radius: var(--radius-md);
   /* Chunky on purpose: it is the only control under the map and the one the thumb rests on. */
-  padding: 13px 4px 14px;
+  padding: 9px 12px 9px 10px;
   color: var(--text-dim);
   font-size: 12px;
   font-weight: 700;
@@ -28527,19 +28526,22 @@ textarea,
   color: var(--text-dim);
 }
 
+.squad-slot.filled {
+  grid-template-rows: auto auto auto;
+}
+
+.squad-slot.filled .roster-card-portrait {
+  grid-row: 1 / 4;
+}
+
 .squad-slot .wound-bar {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: auto;
+  grid-column: 2;
+  margin-top: 3px;
+  padding-right: 2px;
 }
 
 .squad-slot .wound-bar-track {
-  height: 3px;
-  border-radius: 0;
-  background: rgba(0, 0, 0, 0.45);
-  box-shadow: none;
+  height: 4px;
 }
 
 .pick-card .wound-bar {
@@ -28560,4 +28562,64 @@ textarea,
 .guild-hall-good.is-mend {
   grid-column: 1 / -1;
   --plate-color: var(--hp-high);
+}
+
+/* The party wears the footer button (2026-09-15, wounds): the glyph and its label become a
+   cap on the left, and the six chips take the rest of the slab. A wounded roster is read
+   from the map, not from a tap. */
+.map-footer-cap {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 52px;
+}
+
+.map-footer-party {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.map-party-chip {
+  flex: 0 1 40px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.map-party-portrait {
+  width: 34px;
+  height: 34px;
+  image-rendering: pixelated;
+  object-fit: contain;
+}
+
+.map-party-chip .wound-bar-track {
+  height: 4px;
+}
+
+/* Ink on the alert slab: the bar wells go dark so the fills still read. */
+.map-footer-button.has-unopened .wound-bar-track {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+/* Under the XP bar on the fight result: what the fight LEFT, beneath what it paid. */
+.fight-result-hp {
+  margin-top: 1px;
+}
+
+.fight-result-hp .wound-bar-track {
+  height: 4px;
+}
+
+.detail-hp {
+  max-width: 180px;
+  margin-top: 4px;
 }

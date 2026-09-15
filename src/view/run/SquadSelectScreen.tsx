@@ -415,7 +415,7 @@ export function SquadSelectScreen({
                                 ))}
                               </div>
                               {/* Where the act has left this hero (run/wounds.ts) — the read the pick is made on. */}
-                              <WoundBar {...entryHp(hero, entry, run.relics)} />
+                              <WoundBar {...entryHp(hero, entry, run.relics)} figure />
                             </>
                           ) : (
                             <div className="squad-slot-empty-label">Empty</div>

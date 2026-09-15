@@ -9,6 +9,9 @@ import { RosterManagementScreen } from './RosterManagementScreen';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { ResourceGlyph, type ResourceKind } from '../shared/RunGlyph';
 import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
+import { rosterHeroes } from '../../data/content';
+import { HeroPortrait } from '../shared/HeroPortrait';
+import { WoundBar, entryHp } from '../shared/WoundBar';
 import { MapRoute } from './MapRoute';
 import { BannerShelf } from './BannerShelf';
 import { NODE_COLORS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
@@ -281,11 +284,27 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
           style={{ '--btn-color': FOOTER_COLORS[waiting.kind] } as CSSProperties}
           onClick={() => setRosterOpen(true)}
         >
-          <span className="map-footer-icon"><HubGlyph name="roster" /></span>
-          {/* The label says what is waiting, not where you are going. A badge alone is a mark the
-              eye can learn to skip; a button that has changed its mind about what it is called
-              cannot be skipped, and gear left in the bag is a hero fighting an act without it. */}
-          <span className="map-footer-label">{waiting.label}</span>
+          <span className="map-footer-cap">
+            <span className="map-footer-icon"><HubGlyph name="roster" /></span>
+            {/* The label says what is waiting, not where you are going. A badge alone is a mark the
+                eye can learn to skip; a button that has changed its mind about what it is called
+                cannot be skipped, and gear left in the bag is a hero fighting an act without it. */}
+            <span className="map-footer-label">{waiting.label}</span>
+          </span>
+          {/* The party, where the act has left it (run/wounds.ts): HP carries between fights, so
+              the one button under the map wears the six bars rather than hiding them behind a tap. */}
+          <span className="map-footer-party" aria-label="Party health">
+            {run.roster.map((entry) => {
+              const hero = rosterHeroes[entry.heroId];
+              const { hp, maxHp } = entryHp(hero, entry, run.relics);
+              return (
+                <span key={entry.rosterId} className="map-party-chip" aria-label={`${hero.name}: ${hp} of ${maxHp} HP`}>
+                  <HeroPortrait heroId={hero.id} className="map-party-portrait" />
+                  <WoundBar hp={hp} maxHp={maxHp} />
+                </span>
+              );
+            })}
+          </span>
           {waiting.total > 0 && (
             <span className="map-footer-badge" aria-label={waiting.aria}>
               {waiting.total}

@@ -954,10 +954,16 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   they are a free action in a fight with the outcome shown before declaring, so drinking
   at a fight's start is strictly better than drinking on the map and the map version is
   dominated. What wounds change about potions is that the 20g shelf line and the hold
-  cap of 3 become real. `WoundBar` draws the bar wherever a wounded hero is picked from —
-  the squad cells (a rim along the bottom edge, since the preview was just fitted to one
-  page), the map's roster peek, the Rest — and always draws it full too, since a bar that
-  only appears when something is wrong cannot be compared against the ones that are fine.
+  cap of 3 become real. `WoundBar` draws the bar everywhere the roster is read (2026-09-15, second pass, per user
+  direction — a rim on the squad cell and a bar behind the roster glyph were not a read):
+  the **map's footer button wears the party** as six portrait chips with bars, so the state
+  is on the map rather than behind a tap; the **squad cells** carry a bar row with the
+  figure (it still fits four scouted on one page — stage bottom 594px against the footer at
+  688); the **fight result** draws what the fight LEFT under what it paid, per hero, the
+  fielded off the end state and the reserve off what they carried; the **hero sheet** carries
+  the figure under the pips; and the roster peek and the Rest. It is always drawn full too,
+  since a bar that only appears when something is wrong cannot be compared against the ones
+  that are fine.
   **Open for playtest:** Act 1 (three heroes, no real sideboard, already the wall) gets
   the same rule with nothing scripted for it; the per-act Recruit Contract lands at the
   Guardian win, the instant everyone is healed anyway, so it becomes the least
