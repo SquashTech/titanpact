@@ -59,6 +59,10 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
     if (record.won) agg.pipsBySourceWon[key] = (agg.pipsBySourceWon[key] ?? 0) + record.pipsBySource[key];
   }
   for (const key of Object.keys(record.recruitsBySource)) agg.recruitsBySource[key] = (agg.recruitsBySource[key] ?? 0) + record.recruitsBySource[key];
+  for (const key of Object.keys(record.itemsBySource)) {
+    agg.itemsBySource[key] = (agg.itemsBySource[key] ?? 0) + record.itemsBySource[key];
+    if (record.won) agg.itemsBySourceWon[key] = (agg.itemsBySourceWon[key] ?? 0) + record.itemsBySource[key];
+  }
 
   const whole = emptyTimeCounts();
   for (let act = 1; act < record.timeByAct.length; act++) {

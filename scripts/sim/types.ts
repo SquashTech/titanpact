@@ -153,6 +153,9 @@ export interface Aggregate {
   pipsBySourceWon: Record<string, number>;
   /** Heroes who joined the roster after the draft, by route. */
   recruitsBySource: Record<string, number>;
+  /** Items obtained, keyed `act:source` (run.ts RunRecord.itemsBySource), all runs and won runs. */
+  itemsBySource: Record<string, number>;
+  itemsBySourceWon: Record<string, number>;
   /** What runs cost in taps and screens (time.ts), [act], summed over runs that ENTERED the act. */
   timeByAct: TimeCounts[];
   /** The same, over completed runs only — a full clear's shape, undiluted by Act 1 deaths. */
@@ -218,6 +221,8 @@ export function emptyAggregate(): Aggregate {
     pipsBySource: {},
     pipsBySourceWon: {},
     recruitsBySource: {},
+    itemsBySource: {},
+    itemsBySourceWon: {},
     timeByAct: Array.from({ length: 7 }, emptyTimeCounts),
     timeByActWon: Array.from({ length: 7 }, emptyTimeCounts),
     runMinutesWon: PACE_PROFILES.map(() => []),
@@ -315,6 +320,8 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   for (const key of Object.keys(from.pipsBySource)) into.pipsBySource[key] = (into.pipsBySource[key] ?? 0) + from.pipsBySource[key];
   for (const key of Object.keys(from.pipsBySourceWon)) into.pipsBySourceWon[key] = (into.pipsBySourceWon[key] ?? 0) + from.pipsBySourceWon[key];
   for (const key of Object.keys(from.recruitsBySource)) into.recruitsBySource[key] = (into.recruitsBySource[key] ?? 0) + from.recruitsBySource[key];
+  for (const key of Object.keys(from.itemsBySource)) into.itemsBySource[key] = (into.itemsBySource[key] ?? 0) + from.itemsBySource[key];
+  for (const key of Object.keys(from.itemsBySourceWon)) into.itemsBySourceWon[key] = (into.itemsBySourceWon[key] ?? 0) + from.itemsBySourceWon[key];
   for (const key of Object.keys(from.deathByNodeType)) {
     into.deathByNodeType[key] = (into.deathByNodeType[key] ?? 0) + from.deathByNodeType[key];
   }

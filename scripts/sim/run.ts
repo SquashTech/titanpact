@@ -155,6 +155,8 @@ export interface RunRecord {
   pipsBySource: Record<string, number>;
   /** Heroes joining after the draft: `contract` (claimed or bought), `hire` (Guild Hall). */
   recruitsBySource: Record<string, number>;
+  /** Items obtained, keyed `act:source` — `drop` (a fight), `node` (Equipment Cache), `event` (a loot pile), `shelf` (Guild Hall). */
+  itemsBySource: Record<string, number>;
   /** What the run cost in taps and screens, [act]; index 0 unused (time.ts prices it). */
   timeByAct: TimeCounts[];
 }
@@ -194,9 +196,11 @@ function resolveCrucible(run: RunState, rng: Rng, choices: ChoiceEvent[]): RunSt
  * never wants what it just displaced, so draining the bag each time also keeps it from filling
  * and refusing the next swap — this sim models the floor of the stash, not its use.
  */
-function resolveDrop(run: RunState, itemId: string, equipped: string[], actNumber: number): RunState {
+function resolveDrop(run: RunState, itemId: string, record: RunRecord, actNumber: number, source: 'drop' | 'node' | 'event' | 'shelf'): RunState {
   const item = equipment[itemId];
   if (!item || run.roster.length === 0) return run;
+  const equipped = record.equipped;
+  record.itemsBySource[`${actNumber}:${source}`] = (record.itemsBySource[`${actNumber}:${source}`] ?? 0) + 1;
   const target = policy.bestWearer(run.roster, item);
   if (!target || target.gain <= 0) return grantCurrencyReward(run, sellValueFor(item));
   equipped.push(`${actNumber}:${item.rarity}`);
@@ -247,6 +251,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     equipped: [],
     pipsBySource: {},
     recruitsBySource: {},
+    itemsBySource: {},
     timeByAct: Array.from({ length: TOTAL_ACTS + 1 }, emptyTimeCounts),
   };
 
@@ -286,6 +291,8 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     }
 
     if (isEncounterNode(node.type)) {
+      // The Guardian's drop lands after the act has advanced; it belongs to the act it was fought in.
+      const foughtAct = run.actNumber;
       const outcome = resolveEncounterNode(run, node, location.id, rng, options, record);
       run = outcome.run;
       if (!outcome.won) {
@@ -350,8 +357,8 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
 
       run = tryRecruitContracts(run, outcome.defeatedRoster, rng, record);
       if (outcome.drop) {
-        tally(record, run.actNumber, 'drop');
-        run = resolveDrop(run, outcome.drop.id, record.equipped, run.actNumber);
+        tally(record, foughtAct, 'drop');
+        run = resolveDrop(run, outcome.drop.id, record, foughtAct, 'drop');
       }
       continue;
     }
@@ -614,7 +621,7 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       const choices = pickWeightedEquipment(EQUIPMENT_POOL, 3, rarityWeightsFor(run.actNumber, 'standard'));
       if (choices.length === 0) return run;
       const best = choices.reduce((a, b) => ((policy.bestWearer(run.roster, b)?.gain ?? 0) > (policy.bestWearer(run.roster, a)?.gain ?? 0) ? b : a));
-      return resolveDrop(run, best.id, record.equipped, run.actNumber);
+      return resolveDrop(run, best.id, record, run.actNumber, 'node');
     }
     case 'passiveReward': {
       // Offered 3 and taken at random — the pool is under test, not the policy. The TARGET is not
@@ -770,7 +777,7 @@ function resolveEvent(run: RunState, locationId: string, rng: Rng, record: RunRe
   // loot
   let next = run;
   const drops = pickWeightedEquipment(EQUIPMENT_POOL, outcome.count, rarityWeightsFor(run.actNumber, 'standard'));
-  for (const item of drops) next = resolveDrop(next, item.id, record.equipped, run.actNumber);
+  for (const item of drops) next = resolveDrop(next, item.id, record, run.actNumber, 'event');
   return next;
 }
 
@@ -816,7 +823,7 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
     // Buy only a meaningful upgrade — hoarding gold for a later, better shelf is the alternative.
     if (!wearer || wearer.gain < price * 0.25) continue;
     next = buyEquipment(next, item);
-    next = resolveDrop(next, itemId, record.equipped, next.actNumber);
+    next = resolveDrop(next, itemId, record, next.actNumber, 'shelf');
   }
 
   // Spare gold at the last shop before a Guardian buys a contract rather than rusting.

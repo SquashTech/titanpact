@@ -399,6 +399,25 @@ export function formatReport(
     out.push(`  ${pad(String(act), 6)}${counts.map((c, i) => padStart(`${c} (${total > 0 ? ((100 * c) / total).toFixed(0) : 0}%)`, 11)).join('')}${padStart(String(total), 9)}`);
   }
   out.push('');
+  out.push('  items obtained per run by source and act (all = per run that ENTERED the act; won = completed runs):');
+  const itemSources = ['drop', 'node', 'event', 'shelf'];
+  const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
+  const noShelf = (xs: number[]) => sum(xs) - xs[3];
+  out.push(`  ${pad('act', 6)}${itemSources.map((s) => padStart(s, 8)).join('')}${padStart('no-shelf', 10)}${padStart('total', 8)}   ${itemSources.map((s) => padStart(`won:${s}`, 10)).join('')}${padStart('no-shelf', 10)}${padStart('total', 8)}`);
+  const itemTotals = { all: 0, allNoShelf: 0, won: 0, wonNoShelf: 0 };
+  for (let act = 1; act <= TOTAL_ACTS; act++) {
+    const entered = agg.actEntered[act] || 1;
+    const all = itemSources.map((s) => (agg.itemsBySource[`${act}:${s}`] ?? 0) / entered);
+    const won = itemSources.map((s) => (agg.itemsBySourceWon[`${act}:${s}`] ?? 0) / (agg.wins || 1));
+    itemTotals.all += sum(all);
+    itemTotals.allNoShelf += noShelf(all);
+    itemTotals.won += sum(won);
+    itemTotals.wonNoShelf += noShelf(won);
+    out.push(`  ${pad(String(act), 6)}${all.map((v) => padStart(num(v, 2), 8)).join('')}${padStart(num(noShelf(all), 2), 10)}${padStart(num(sum(all), 2), 8)}   ${won.map((v) => padStart(num(v, 2), 10)).join('')}${padStart(num(noShelf(won), 2), 10)}${padStart(num(sum(won), 2), 8)}`);
+  }
+  out.push(`  ${pad('sum', 6)}${' '.repeat(32)}${padStart(num(itemTotals.allNoShelf, 2), 10)}${padStart(num(itemTotals.all, 2), 8)}   ${' '.repeat(40)}${padStart(num(itemTotals.wonNoShelf, 2), 10)}${padStart(num(itemTotals.won, 2), 8)}`);
+  out.push('  (the "all" sum adds per-act means conditioned on entering each act: a full run\'s expectation, not a mean over dying runs)');
+  out.push('');
   const totalFights = agg.roundHistogram.reduce((a, b) => a + (b ?? 0), 0);
   const pactFights = agg.roundHistogram.slice(30).reduce((a, b) => a + (b ?? 0), 0);
   let cumulative = 0;
