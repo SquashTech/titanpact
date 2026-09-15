@@ -280,11 +280,12 @@ export const moves: Record<string, MoveDefinition> = {
     type: 'Water',
     category: 'physical',
     kind: 'buff',
-    statDeltas: [{ stat: 'defense', amount: 15 }],
+    // A Shield, not Defense (docs/shield.md §3.5): bonus health off the caster's Defense.
+    statusApplication: { statusId: 'Shield', magnitude: 20, target: 'moveTarget' },
     manaCost: 15,
     priority: 0,
     target: 'bothAllies',
-    description: 'A standing swell in front of both allies (+15 Defense).',
+    description: 'A standing swell in front of both allies that takes the first hit (Shield 20).',
   },
   refresh: {
     id: 'refresh',
@@ -681,6 +682,23 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'Every throw packs the next one harder (+40 power each use this fight, up to 200).',
   },
+  iceShell: {
+    id: 'iceShell',
+    name: 'Ice Shell',
+    tier: 'mid',
+    type: 'Frost',
+    category: 'physical',
+    kind: 'buff',
+    // The shell is a marker beside the pool: whoever's hit breaks the Shield is Frozen (statuses.ts IceShell).
+    statusApplication: [
+      { statusId: 'Shield', magnitude: 50, target: 'moveTarget' },
+      { statusId: 'IceShell', target: 'moveTarget' },
+    ],
+    manaCost: 40,
+    priority: 0,
+    target: 'singleAlly',
+    description: 'Cases one ally in ice (Shield 50). The hit that breaks it Freezes the striker.',
+  },
 
   // --- Storm ---
   risingStatic: {
@@ -1000,11 +1018,12 @@ export const moves: Record<string, MoveDefinition> = {
     type: 'Stone',
     category: 'physical',
     kind: 'buff',
-    statDeltas: [{ stat: 'defense', amount: 30 }],
+    // A Shield, not Defense (docs/shield.md §3.5).
+    statusApplication: { statusId: 'Shield', magnitude: 45, target: 'moveTarget' },
     manaCost: 40,
     priority: 0,
     target: 'bothAllies',
-    description: 'Both heroes set their feet and hold the line (+30 Defense).',
+    description: 'Both heroes set their feet and hold the line (Shield 45 on each).',
   },
   retribution: {
     id: 'retribution',
@@ -1130,6 +1149,19 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'bothEnemies',
     description: 'One swing wide enough that there is nowhere on the field to not be under it.',
+  },
+  rampart: {
+    id: 'rampart',
+    name: 'Rampart',
+    tier: 'late',
+    type: 'Stone',
+    category: 'physical',
+    kind: 'buff',
+    statusApplication: { statusId: 'Shield', magnitude: 65, target: 'moveTarget' },
+    manaCost: 55,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'Raises the ground itself in front of both allies (Shield 65 on each).',
   },
 
   // --- Nature ---
@@ -1584,6 +1616,23 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'singleAlly',
     description: 'Raises one ally past what they were built for (+100 Intelligence).',
+  },
+  vigil: {
+    id: 'vigil',
+    name: 'Vigil',
+    tier: 'early',
+    type: 'Light',
+    category: 'magical',
+    kind: 'buff',
+    // Two halves off two stats: the Shield reads the caster's Defense, the Renew its Wisdom.
+    statusApplication: [
+      { statusId: 'Shield', magnitude: 25, target: 'moveTarget' },
+      { statusId: 'Renew', magnitude: 10, target: 'moveTarget' },
+    ],
+    manaCost: 25,
+    priority: 0,
+    target: 'singleAlly',
+    description: 'Keeps watch over one ally: a light that holds a hit and mends beneath it (Shield 25, Renew 10).',
   },
 
   // --- Shadow ---
@@ -2790,6 +2839,34 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'singleEnemy',
     description: 'A blade with no smith and no weight, held together by will (magical).',
+  },
+  ironSkin: {
+    id: 'ironSkin',
+    name: 'Iron Skin',
+    tier: 'early',
+    type: 'Iron',
+    category: 'physical',
+    kind: 'buff',
+    statusApplication: { statusId: 'Shield', magnitude: 30, target: 'self' },
+    manaCost: 20,
+    priority: 0,
+    target: 'self',
+    description: 'Hardens the skin to plate before the next blow lands (Shield 30 on self).',
+  },
+  livingWall: {
+    id: 'livingWall',
+    name: 'Living Wall',
+    tier: 'mid',
+    type: 'Iron',
+    category: 'physical',
+    kind: 'buff',
+    statusApplication: { statusId: 'Shield', magnitude: 40, target: 'self' },
+    // The Shield goes to the bench with the hero and comes back with it (docs/shield.md §3.1, on purpose).
+    switchesUserOut: true,
+    manaCost: 35,
+    priority: 0,
+    target: 'self',
+    description: 'Braces (Shield 40 on self), then steps back and lets an ally through. The Shield comes back with them.',
   },
 
   // --- Mech ---

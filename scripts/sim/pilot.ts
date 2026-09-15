@@ -32,6 +32,7 @@ import {
   resolveManaCost,
   resolveTargetMode,
   declarationTargetMode,
+  statusMagnitude,
 } from '../../src/engine/state';
 import { selectableTargets, statusGatedTargets } from '../../src/engine/combat/statusEngine';
 import { collectPassiveDamageModifiers } from '../../src/engine/combat/passiveEngine';
@@ -48,6 +49,7 @@ import {
 } from '../../src/engine/damage/damagePipeline';
 import { resolveHeal } from '../../src/engine/heal/healPipeline';
 import { scaleStatusMagnitude } from '../../src/engine/status/statusMagnitude';
+import { shieldStatusDef } from '../../src/engine/status/shield';
 import { scaleStatDelta } from '../../src/engine/combat/statDeltaScaling';
 import { allCombatants } from '../../src/data/content';
 import { moves } from '../../src/data/moves';
@@ -68,6 +70,9 @@ const MEAN_VARIANCE = (VARIANCE_MIN + VARIANCE_MAX) / 2;
  * this is deliberately short.
  */
 const HORIZON = 3;
+
+/** The catalog's Shield, read once (docs/shield.md). */
+const shieldStatusId = shieldStatusDef(statuses)?.id ?? '';
 
 /** A payload the scorer cannot price, as a share of what the caster's best attack would have done. Matches ai.ts treating an unevaluable move as neutral. */
 const UNKNOWN_PAYLOAD_CREDIT = 0.6;
@@ -267,6 +272,17 @@ function riderValue(
   }
 
   switch (def.pipeline) {
+    case 'shield': {
+      // A guard with a number (docs/shield.md §3.6): worth the smaller of the pool it adds and what
+      // the far side would land on the holder over the horizon. A pool already at the holder's max
+      // HP can't go any higher, so the room left is what is priced, not the authored figure.
+      const room = Math.max(0, getMaxHp(allCombatants[holder.heroId], holder) - statusMagnitude(holder, def.id));
+      const incoming = aliveActiveIdsOn(state, otherSide(holder.side)).reduce(
+        (sum, foeId) => sum + threatOf(state, ctx, foeId, cache),
+        0
+      );
+      return Math.min(magnitude, room, incoming * Math.min(duration, HORIZON) * 0.5);
+    }
     case 'dot': {
       // decay 'halve' caps lifetime output at ~2x the magnitude (CLAUDE.md); 'none' builds instead.
       const perTick = def.flatPercentOfMaxHp != null ? def.flatPercentOfMaxHp * getMaxHp(allCombatants[holder.heroId], holder) : magnitude;
@@ -395,10 +411,14 @@ function scoreCast(
     const raw = expectedHit(state, casterId, move, id);
     if (raw <= 0) continue;
     priced = true;
-    const landed = Math.min(raw, target.currentHp);
+    // A Shield takes the hit first (docs/shield.md §3.2): what it absorbs is still worth taking
+    // off — the pool is HP the target will not have — but it is not a KO and feeds no drain.
+    const shield = statusMagnitude(target, shieldStatusId);
+    const absorbed = Math.min(raw, shield);
+    const landed = Math.min(raw - absorbed, target.currentHp);
     damageDealt += landed * share;
-    score += landed * share;
-    if (raw >= target.currentHp) score += threatOf(state, ctx, id, cache) * HORIZON * share;
+    score += (landed + absorbed) * share;
+    if (raw - absorbed >= target.currentHp) score += threatOf(state, ctx, id, cache) * HORIZON * share;
   }
 
   if (move.drainPercent != null && damageDealt > 0) {

@@ -176,7 +176,11 @@ export function bestReceiver(
 const GUARD_SLOT_VALUE = 50;
 
 function guardValue(move: MoveDefinition): number {
-  return statusApplicationsOf(move).some((app) => statuses[app.statusId]?.blocksIncomingMoves) ? GUARD_SLOT_VALUE : 0;
+  const riders = statusApplicationsOf(move);
+  if (riders.some((app) => statuses[app.statusId]?.blocksIncomingMoves)) return GUARD_SLOT_VALUE;
+  // A Shield is a guard with a number: the pool it adds is HP, priced as a heal is (docs/shield.md §3.6).
+  const shield = riders.find((app) => statuses[app.statusId]?.pipeline === 'shield');
+  return shield?.magnitude ? shield.magnitude * 1.2 : 0;
 }
 
 /** Crude "is this move worth a slot" score, for the replace-at-cap decision only. */

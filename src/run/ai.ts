@@ -21,6 +21,7 @@ import {
   resolveManaCost,
   declarationTargetMode,
   resolveTargetMode,
+  statusMagnitude,
 } from '../engine/state';
 import { selectableTargets, statusGatedTargets } from '../engine/combat/statusEngine';
 import { resolveTypeMult, TYPE_MULT_FLOOR, type TypeChart } from '../engine/damage/typeMult';
@@ -126,12 +127,23 @@ function riderReceivers(app: StatusApplication, casterId: string, targets: reado
   return null;
 }
 
-/** Every receiver already holds it AND it does not stack (an additive status like Burn is never redundant). */
+/**
+ * Every receiver already holds it AND it does not stack (an additive status like Burn is never
+ * redundant) — or, for a Shield, every receiver's pool is already at its max HP and can't go any
+ * higher (docs/shield.md §3.6), the same clause a capped stat gets.
+ */
 function riderIsRedundant(state: CombatState, ctx: AiContext, app: StatusApplication, casterId: string, targets: readonly string[]): boolean {
   const def = ctx.statuses[app.statusId];
-  if (!def || def.stacking !== 'none') return false;
+  if (!def) return false;
   const receivers = riderReceivers(app, casterId, targets);
   if (!receivers || receivers.length === 0) return false;
+  if (def.pipeline === 'shield') {
+    return receivers.every((id) => {
+      const combatant = state.combatants[id];
+      return combatant != null && statusMagnitude(combatant, app.statusId) >= getMaxHp(ctx.heroes[combatant.heroId], combatant);
+    });
+  }
+  if (def.stacking !== 'none') return false;
   return receivers.every((id) => {
     const combatant = state.combatants[id];
     return combatant != null && hasStatus(combatant, app.statusId);

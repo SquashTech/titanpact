@@ -15,7 +15,8 @@ import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import { FIELD_EFFECT_DURATION_ROUNDS } from '../src/engine/combat/fieldEffectEngine';
 import { calcDamage, resolveConditionalPowerMultiplier } from '../src/engine/damage/damagePipeline';
-import { hasStatus } from '../src/engine/state';
+import { hasStatus, statusMagnitude } from '../src/engine/state';
+import { scaleStatusMagnitude } from '../src/engine/status/statusMagnitude';
 import type { CombatState, FieldEffectContext } from '../src/engine/state';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
@@ -315,4 +316,26 @@ test('light: every hero that can be offered Smite can also reach the field effec
       );
     }
   }
+});
+
+// --- Vigil: a Shield and a Renew on one card, each half off its own stat (docs/shield.md §3.5) ---
+
+test('light: Vigil shields one ally off the caster\'s Defense and Renews it off the caster\'s Wisdom', () => {
+  const state = withDeepPools(lightFixture(1260));
+  const [shieldApp, renewApp] = statusApplicationsOf(moves.vigil);
+  assert.strictEqual(shieldApp.statusId, 'Shield');
+  assert.strictEqual(renewApp.statusId, 'Renew');
+  assert.strictEqual(moves.vigil.tier, 'early');
+  assert.strictEqual(moves.vigil.target, 'singleAlly');
+
+  const caster = state.combatants.a1;
+  const expectedShield = scaleStatusMagnitude(25, statuses.Shield, shieldApp, moves.vigil, heroes.dawnwarden, caster);
+  const expectedRenew = scaleStatusMagnitude(10, statuses.Renew, renewApp, moves.vigil, heroes.dawnwarden, caster);
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'vigil', declaredTarget: 'a2' }], config);
+
+  assert.strictEqual(statusMagnitude(next.combatants.a2, 'Shield'), expectedShield);
+  assert.ok(hasStatus(next.combatants.a2, 'Renew'), 'the Renew landed and ticked once at end of round');
+  assert.strictEqual(statusMagnitude(next.combatants.a2, 'Renew'), Math.floor(expectedRenew! / 2), 'halved after its first tick');
+  assert.notStrictEqual(expectedShield, expectedRenew, 'two stats, two figures');
+  assert.strictEqual(statusMagnitude(next.combatants.a1, 'Shield'), 0, 'single ally');
 });

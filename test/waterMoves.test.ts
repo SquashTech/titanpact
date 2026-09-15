@@ -15,7 +15,8 @@ import { resolveRound } from '../src/engine/combat/resolveRound';
 import { applyStatus, cleanseStatuses } from '../src/engine/combat/statusEngine';
 import type { Action } from '../src/engine/combat/actions';
 import type { CombatState } from '../src/engine/state';
-import { effectiveManaCost, hasAffordableMove } from '../src/engine/state';
+import { effectiveManaCost, hasAffordableMove, statusMagnitude } from '../src/engine/state';
+import { scaleStatusMagnitude } from '../src/engine/status/statusMagnitude';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
@@ -337,4 +338,30 @@ test('water: Shock Bubble plants Conduct for a Storm partner to cash — Water i
   );
   assert.ok(next.combatants.b1.statuses.Conduct, 'the mark is left standing');
   assert.ok(!statuses.Conduct.triggerTypes?.includes('Water'));
+});
+
+// --- Tide Guard: a Shield, not Defense (docs/shield.md §3.5) ---
+
+test('water: Tide Guard shields both allies off the CASTER\'s Defense with Water STAB, and grants no Defense', () => {
+  const state = withDeepPools(waterFixture(760));
+  const app = { statusId: 'Shield', magnitude: 20, target: 'moveTarget' as const };
+  const expected = scaleStatusMagnitude(20, statuses.Shield, app, moves.tideGuard, heroes.tidecaller, state.combatants.a1);
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'tideGuard' }], config);
+
+  assert.strictEqual(moves.tideGuard.statDeltas, undefined, 'the Defense grant is gone');
+  assert.strictEqual(statusMagnitude(next.combatants.a1, 'Shield'), expected);
+  assert.strictEqual(statusMagnitude(next.combatants.a2, 'Shield'), expected, 'the partner holds the same pool — snapshotted off the caster, not the holder');
+  assert.strictEqual(next.combatants.a1.statModifiers.defense ?? 0, 0);
+  // tidecaller: 55 Defense is ×1.05, Water STAB ×1.25: 20 × 1.05 × 1.25 = 26.25 → 26.
+  assert.strictEqual(expected, 26);
+});
+
+test('water: a Tide Guard takes the first hit — the swell absorbs before HP does', () => {
+  const guarded = resolveRound(withDeepPools(waterFixture(761)), [{ kind: 'move', combatantId: 'a1', moveId: 'tideGuard' }], config).state;
+  const hpBefore = guarded.combatants.a1.currentHp;
+  const { state: next, events } = resolveRound({ ...guarded, round: 2 }, [{ kind: 'move', combatantId: 'b1', moveId: 'ironFist', declaredTarget: 'a1' }], config);
+  const hit = events.find((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'a1');
+  assert.ok(hit && hit.type === 'DamageDealt');
+  assert.ok((hit.absorbed ?? 0) > 0);
+  assert.strictEqual(next.combatants.a1.currentHp, hpBefore - hit.amount);
 });

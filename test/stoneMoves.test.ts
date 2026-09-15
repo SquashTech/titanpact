@@ -15,7 +15,8 @@ import { resolveRound } from '../src/engine/combat/resolveRound';
 import { applyStatus, selectableTargets } from '../src/engine/combat/statusEngine';
 import { calcDamage, resolveStatRatio, statKeysForMove } from '../src/engine/damage/damagePipeline';
 import type { CombatState } from '../src/engine/state';
-import { getEffectiveStat, hasStatus } from '../src/engine/state';
+import { getEffectiveStat, hasStatus, statusMagnitude } from '../src/engine/state';
+import { scaleStatusMagnitude } from '../src/engine/status/statusMagnitude';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
@@ -350,8 +351,9 @@ test('stone: the target picker narrows to the taunt, so the player never aims wh
 test('stone: the slate authors no new field effect and no type-keyed status hook', () => {
   // If a status ever adds 'Stone' to triggerTypes, every number in this slate silently changes.
   const stone = Object.values(moves).filter((m) => m.type === 'Stone' && !signatureMoves[m.id]);
-  // The designed fifteen, plus the two Evolution moves — Fang's Spire Claw and Crag's Titanic Crush.
-  assert.strictEqual(stone.length, 17);
+  // The designed fifteen, the two Evolution moves — Fang's Spire Claw and Crag's Titanic Crush — and
+  // Rampart, the Late Shield (docs/shield.md §3.5).
+  assert.strictEqual(stone.length, 18);
 
   for (const def of Object.values(statuses)) {
     assert.ok(!def.triggerTypes?.includes('Stone'), `${def.id} would detonate off every Stone damage move`);
@@ -461,4 +463,42 @@ test('stone: Titanic Crush hits both foes at full power — no spread reduction 
 
   assert.deepStrictEqual(hits.map((h) => h.targetCombatantId).sort(), ['b1', 'b2']);
   for (const hit of hits) assert.strictEqual(hit.basePower, moves.titanicCrush.basePower);
+});
+
+// --- Bastion and Rampart: Stone is the Shield type (docs/shield.md §3.5) ---
+
+test('stone: Bastion shields both allies off crag\'s Defense with Stone STAB, and grants no Defense', () => {
+  const state = withDeepPools(stoneFixture(960));
+  const app = { statusId: 'Shield', magnitude: 45, target: 'moveTarget' as const };
+  const expected = scaleStatusMagnitude(45, statuses.Shield, app, moves.bastion, heroes.crag, state.combatants.a1);
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'bastion' }], config);
+
+  assert.strictEqual(moves.bastion.statDeltas, undefined, 'the Defense grant is gone');
+  assert.strictEqual(moves.bastion.tier, 'mid');
+  assert.strictEqual(statusMagnitude(next.combatants.a1, 'Shield'), expected);
+  assert.strictEqual(statusMagnitude(next.combatants.a2, 'Shield'), expected);
+  assert.strictEqual(next.combatants.a1.statModifiers.defense ?? 0, 0);
+  assert.ok(expected! > 45, 'a Stone hero shields for more than the base');
+});
+
+test('stone: Rampart is the biggest pool on the table — Late, both allies, 65 base, and it stacks onto a Bastion', () => {
+  assert.strictEqual(moves.rampart.tier, 'late');
+  assert.strictEqual(moves.rampart.target, 'bothAllies');
+  assert.strictEqual(moves.rampart.manaCost, 55);
+  const state = withDeepPools(stoneFixture(961));
+  const rampart = { statusId: 'Shield', magnitude: 65, target: 'moveTarget' as const };
+  const bastion = { statusId: 'Shield', magnitude: 45, target: 'moveTarget' as const };
+  const expected =
+    scaleStatusMagnitude(65, statuses.Shield, rampart, moves.rampart, heroes.crag, state.combatants.a1)! +
+    scaleStatusMagnitude(45, statuses.Shield, bastion, moves.bastion, heroes.sentinel, state.combatants.a2)!;
+  const { state: next } = resolveRound(
+    state,
+    [
+      { kind: 'move', combatantId: 'a1', moveId: 'rampart' },
+      { kind: 'move', combatantId: 'a2', moveId: 'bastion' },
+    ],
+    config
+  );
+  assert.strictEqual(statusMagnitude(next.combatants.a1, 'Shield'), expected);
+  assert.strictEqual(statusMagnitude(next.combatants.a2, 'Shield'), expected);
 });

@@ -105,6 +105,7 @@ export const progressionTable: ProgressionTable = {
       'snowBlast',
       'glaciate',
       'permafrost',
+      'iceShell',
       'quickFreeze',
       'frigidAir',
       'absoluteZero',
@@ -125,7 +126,7 @@ export const progressionTable: ProgressionTable = {
     // authors only two physical Mid and two physical Late, so the rest is deliberately off-type —
     // the FLOOR is worth more than tidiness, and Stone/Iron reach what Frost is resisted by.
     rime: [
-      'icicleThrust', 'coldSnap', 'permafrost', 'rubbleRush', 'serratedSlice', 'spireClaw',
+      'icicleThrust', 'coldSnap', 'permafrost', 'iceShell', 'rubbleRush', 'serratedSlice', 'spireClaw',
       'iceShatter', 'frostWall', 'titanicCrush', 'swingingChain',
       'claw', 'frostArmor', 'rockToss', 'undertow', 'thunderclap', 'heavyBlow',
     ],
@@ -207,6 +208,7 @@ export const progressionTable: ProgressionTable = {
       'bastion',
       'spireClaw',
       'stoneheart',
+      'rampart',
       'eviscerate',
     ],
     sentinel: [
@@ -225,6 +227,7 @@ export const progressionTable: ProgressionTable = {
       'rubbleRush',
       'spireClaw',
       'titanicCrush',
+      'rampart',
       'deityBlade',
     ],
     // --- Nature ---
@@ -289,6 +292,7 @@ export const progressionTable: ProgressionTable = {
       'radiantBeam',
       'blind',
       'bless',
+      'vigil',
       'consecrate',
       'smite',
       'radiance',
@@ -303,7 +307,7 @@ export const progressionTable: ProgressionTable = {
       'jolt',
       'corrode',
     ],
-    aegis: ['holySlice', 'blind', 'purify', 'bless', 'exalt', 'consecrate', 'divineGrace', 'reinforce', 'pistonPunch', 'vineLash', 'toughenUp', 'rockToss', 'radiantBeam', 'radiance', 'smite', 'solarFlare', 'judgment'],
+    aegis: ['holySlice', 'blind', 'purify', 'bless', 'vigil', 'exalt', 'consecrate', 'divineGrace', 'reinforce', 'pistonPunch', 'vineLash', 'toughenUp', 'rockToss', 'radiantBeam', 'radiance', 'smite', 'solarFlare', 'judgment'],
     // --- Shadow ---
     shadowMonk: ['backstab', 'weaken', 'cutthroat', 'shadowSlice', 'rend', 'duskBlade', 'thousandCuts', 'claw', 'shadowstrike', 'phantomStrike', 'ironFist', 'thunderclap', 'enfeeble', 'rampage', 'eviscerate', 'swingingChain'],
     marrow: ['lieInWait', 'umbralBeam', 'umbralWave', 'poltergeist', 'enfeeble', 'drain', 'torment', 'soulRend', 'wisp', 'jolt', 'siphon', 'deepChill', 'flicker', 'electricBurst', 'lastRites', 'ionicZap', 'maelstrom'],
@@ -416,7 +420,7 @@ export const progressionTable: ProgressionTable = {
     ],
     sorrow: ['lieInWait', 'backstab', 'fadeStrike', 'spookySlice', 'cutthroat', 'rend', 'soulOffering', 'wailingFlight', 'duskBlade', 'thousandCuts', 'iceShard', 'undertow', 'frostArmor', 'coldSnap', 'aquaSlice', 'ascendant'],
     // --- Iron ---
-    ironWarden: ['ironFist', 'pinDown', 'rendArmor', 'juggernaut', 'rockToss', 'bodyBlow', 'reinforce', 'bastion', 'holyStrike', 'claw', 'metallicBlade', 'heavyBlow', 'momentumSwing', 'onslaught', 'swingingChain', 'stoneheart'],
+    ironWarden: ['ironFist', 'pinDown', 'ironSkin', 'rendArmor', 'livingWall', 'juggernaut', 'rockToss', 'bodyBlow', 'reinforce', 'bastion', 'holyStrike', 'claw', 'metallicBlade', 'heavyBlow', 'momentumSwing', 'onslaught', 'swingingChain', 'stoneheart'],
     valor: [
       'openingStrike',
       'heavyBlow',
@@ -430,7 +434,9 @@ export const progressionTable: ProgressionTable = {
       'rockToss',
       'pinDown',
       'fortify',
+      'ironSkin',
       'rendArmor',
+      'livingWall',
       'bastion',
       'onslaught',
       'deityBlade',
@@ -448,6 +454,7 @@ export const progressionTable: ProgressionTable = {
       'thunderclap',
       'sharpen',
       'pinDown',
+      'ironSkin',
       'reinforce',
       'shockSlice',
       'juggernaut',

@@ -7,7 +7,7 @@ import { statuses } from '../src/data/statuses';
 import type { MoveDefinition } from '../src/engine/content';
 import type { CombatState } from '../src/engine/state';
 import { pickAiAction, type AiContext } from '../src/run/ai';
-import { statModifierCeiling, statModifierFloor } from '../src/engine/state';
+import { getMaxHp, statModifierCeiling, statModifierFloor } from '../src/engine/state';
 import { setFieldEffect } from '../src/engine/combat/fieldEffectEngine';
 
 /** Test-local movepool: the AI's rules are about SHAPES of move, so authored content would make this fail on every slate retune. */
@@ -355,4 +355,26 @@ test('ai: a drop that lands on ONE of a move\'s two stats is not inert', () => {
     if (action.kind === 'move' && action.moveId === 'weakener') debuffs += 1;
   }
   assert.ok(debuffs > 0, 'Wisdom can still drop, so the move stays on the table');
+});
+
+// --- A Shield at the cap can't go any higher (docs/shield.md §3.6) ---
+
+test('ai: a self-Shield on a hero whose pool is already at its max HP is inert, so a hit is cast instead', () => {
+  const shielder: MoveDefinition = { ...base, id: 'shielder', name: 'Shielder', type: 'Iron', kind: 'buff', target: 'self', statusApplication: { statusId: 'Shield', magnitude: 30, target: 'self' } };
+  const ctx: AiContext = { heroes, moves: { ...testMoves, shielder }, statuses, typeChart, moveIdsFor: () => ['shielder', 'fireBolt'], random: () => 0.99 };
+  let state = board('crimson', 'tempest', 'rime');
+  const c = state.combatants[AI];
+  state = { ...state, combatants: { ...state.combatants, [AI]: { ...c, statuses: { ...c.statuses, Shield: { statusId: 'Shield', magnitude: getMaxHp(heroes.crimson, c) } } } } } as CombatState;
+  for (let i = 0; i < 6; i++) {
+    const action = pickAiAction(state, AI, { ...ctx, random: () => i / 6 });
+    assert.strictEqual(action.kind === 'move' && action.moveId, 'fireBolt', 'the pool would take nothing');
+  }
+  // Under the cap it is a real option again.
+  const below = { ...state, combatants: { ...state.combatants, [AI]: { ...c, statuses: { ...c.statuses, Shield: { statusId: 'Shield', magnitude: 10 } } } } } as CombatState;
+  const picked = new Set<string>();
+  for (let i = 0; i < 12; i++) {
+    const action = pickAiAction(below, AI, { ...ctx, random: () => i / 12 });
+    if (action.kind === 'move') picked.add(action.moveId);
+  }
+  assert.ok(picked.has('shielder'), 'a Shield with room to grow is cast');
 });

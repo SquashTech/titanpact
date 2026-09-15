@@ -16,7 +16,8 @@ import { resolveRound } from '../src/engine/combat/resolveRound';
 import { applyStatus, statusGatedTargets } from '../src/engine/combat/statusEngine';
 import type { Action } from '../src/engine/combat/actions';
 import type { CombatState } from '../src/engine/state';
-import { hasStatus } from '../src/engine/state';
+import { hasStatus, statusMagnitude } from '../src/engine/state';
+import { scaleStatusMagnitude } from '../src/engine/status/statusMagnitude';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
@@ -71,13 +72,13 @@ function outspeeds(state: CombatState, combatantId: string): CombatState {
 
 // --- The pool itself ---
 
-test('frost: the authored pool is the fifteen designed moves plus Snowball, Rime\'s Evolution move, all Frost-typed', () => {
+test('frost: the authored pool is the fifteen designed moves plus Snowball, Rime\'s Evolution move, and Ice Shell, all Frost-typed', () => {
   const frost = Object.values(moves).filter((m) => m.type === 'Frost' && !signatureMoves[m.id]);
   assert.deepStrictEqual(
     frost.map((m) => m.id).sort(),
     [
       'absoluteZero', 'avalanche', 'coldSnap', 'deepChill', 'frigidAir', 'frostArmor', 'frostWall',
-      'glaciate', 'iceShard', 'iceShatter', 'icicleThrust', 'permafrost', 'quickFreeze', 'rimeWind',
+      'glaciate', 'iceShard', 'iceShatter', 'iceShell', 'icicleThrust', 'permafrost', 'quickFreeze', 'rimeWind',
       'snowBlast', 'snowball',
     ]
   );
@@ -344,4 +345,37 @@ test('frost: a move with no ramp banks nothing, so no existing move changed shap
   const state = withDeepPools(frostFixture(804));
   const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a2', moveId: 'iceShard', declaredTarget: 'b1' }], config);
   assert.deepStrictEqual(next.combatants.a2.moveBasePowerBonuses, {});
+});
+
+// --- Ice Shell: the Shield that punishes being broken (docs/shield.md §3.5) ---
+
+test('frost: Ice Shell cases one ally in a Shield 50 off the caster\'s Defense, with the shell beside it', () => {
+  const state = withDeepPools(frostFixture(1360));
+  const [shieldApp, shellApp] = statusApplicationsOf(moves.iceShell);
+  assert.strictEqual(shieldApp.statusId, 'Shield');
+  assert.strictEqual(shellApp.statusId, 'IceShell');
+  assert.strictEqual(moves.iceShell.tier, 'mid');
+  const expected = scaleStatusMagnitude(50, statuses.Shield, shieldApp, moves.iceShell, heroes.glacialWarden, state.combatants.a1);
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'iceShell', declaredTarget: 'a2' }], config);
+  assert.strictEqual(statusMagnitude(next.combatants.a2, 'Shield'), expected);
+  assert.ok(hasStatus(next.combatants.a2, 'IceShell'));
+  assert.strictEqual(statuses.IceShell.onShieldBroken?.statusId, 'Freeze');
+});
+
+test('frost: the hit that breaks an Ice Shell Freezes the striker, and a hit that only dents it does not', () => {
+  const cased = resolveRound(withDeepPools(frostFixture(1361)), [{ kind: 'move', combatantId: 'a1', moveId: 'iceShell', declaredTarget: 'a2' }], config).state;
+
+  // Worn down to a sliver, so the next hit is the one that breaks it.
+  const a2 = cased.combatants.a2;
+  const thin: CombatState = { ...cased, round: 2, combatants: { ...cased.combatants, a2: { ...a2, statuses: { ...a2.statuses, Shield: { statusId: 'Shield', magnitude: 1 } } } } };
+  const broken = resolveRound(thin, [{ kind: 'move', combatantId: 'b1', moveId: 'ironFist', declaredTarget: 'a2' }], config);
+  assert.ok(broken.events.some((e) => e.type === 'StatusRemoved' && e.combatantId === 'a2' && e.statusId === 'Shield' && e.reason === 'broken'));
+  assert.strictEqual(hasStatus(broken.state.combatants.b1, 'Freeze'), true, 'the striker is Frozen');
+  assert.strictEqual(hasStatus(broken.state.combatants.a2, 'IceShell'), false, 'the shell is spent');
+
+  // And thickened past anything Iron Fist can take off it, so the hit only dents.
+  const thick: CombatState = { ...cased, round: 2, combatants: { ...cased.combatants, a2: { ...a2, statuses: { ...a2.statuses, Shield: { statusId: 'Shield', magnitude: 1000 } } } } };
+  const dented = resolveRound(thick, [{ kind: 'move', combatantId: 'b1', moveId: 'ironFist', declaredTarget: 'a2' }], config);
+  assert.strictEqual(hasStatus(dented.state.combatants.b1, 'Freeze'), false);
+  assert.strictEqual(hasStatus(dented.state.combatants.a2, 'IceShell'), true);
 });

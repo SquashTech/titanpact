@@ -102,6 +102,21 @@ export const statuses: Record<string, StatusDefinition> = {
     description:
       "Bonus health, taken from before HP by a move's hit. Burn, Bleed, the Pact Clock, recoil and a move's own cost go straight through it. Lasts until a hit empties it, and can't hold more than this hero's max HP.",
   },
+  // Ice Shell's marker beside the Shield it lands with: the striker whose hit breaks the
+  // holder's Shield is Frozen, and the shell is spent. Inert without a Shield.
+  IceShell: {
+    id: 'IceShell',
+    name: 'Ice Shell',
+    shape: 'boolean',
+    ticksAtEndOfRound: false,
+    decay: 'none',
+    stacking: 'none',
+    clearsOnSwitch: false,
+    positive: true,
+    onShieldBroken: { statusId: 'Freeze' },
+    pipeline: 'trigger',
+    description: "Whoever's hit breaks this hero's Shield is Frozen. Spent when it fires.",
+  },
   Renew: {
     id: 'Renew',
     name: 'Renew',

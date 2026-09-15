@@ -13,7 +13,8 @@ import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
 import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
-import { resolveManaCost, effectiveManaCost, hasStatus, getMaxHp } from '../src/engine/state';
+import { resolveManaCost, effectiveManaCost, hasStatus, getMaxHp, statusMagnitude } from '../src/engine/state';
+import { scaleStatusMagnitude } from '../src/engine/status/statusMagnitude';
 import type { CombatState } from '../src/engine/state';
 import type { Action } from '../src/engine/combat/actions';
 
@@ -232,7 +233,7 @@ test('iron: every damage row detonates Conduct for free, and the slate plants it
   const damage = ironMoves.filter((m) => m.kind === 'damage');
   const planters = ironMoves.filter((m) => firstStatusApplication(m)?.statusId === 'Conduct');
 
-  assert.strictEqual(ironMoves.length, 16, 'the authored slate is sixteen rows');
+  assert.strictEqual(ironMoves.length, 18, 'the authored slate is sixteen rows, plus the two Shield cards (docs/shield.md §3.5)');
   assert.strictEqual(damage.length, 11, 'eleven of them detonate Conduct for free');
   assert.strictEqual(planters.length, 0, 'and none of them plants it');
   assert.ok(statuses.Conduct.triggerTypes?.includes('Iron'));
@@ -276,9 +277,11 @@ test('iron: every priority row is a POSITIVE bracket, and the slate has no heal,
     assert.ok(!move.cleanses, `${move.id} cleanses`);
     assert.ok(!move.fieldEffectApplication, `${move.id} sets a field effect`);
   }
-  // Two riders in sixteen rows, both named: the type still does not scatter statuses.
+  // Four riders in eighteen rows, all named: the type still does not scatter statuses.
   const riders = ironMoves.filter((m) => firstStatusApplication(m));
-  assert.deepStrictEqual(riders.map((m) => m.id).sort(), ['fortify', 'serratedSlice']);
+  assert.deepStrictEqual(riders.map((m) => m.id).sort(), ['fortify', 'ironSkin', 'livingWall', 'serratedSlice']);
+  assert.strictEqual(firstStatusApplication(moves.ironSkin)?.statusId, 'Shield');
+  assert.strictEqual(firstStatusApplication(moves.livingWall)?.statusId, 'Shield');
   assert.strictEqual(firstStatusApplication(moves.serratedSlice)?.statusId, 'Bleed');
   assert.strictEqual(firstStatusApplication(moves.serratedSlice)?.chance, 0.3);
   // Fortify's is the Ambush the guard turn now pays (docs/conditions.md "Ambush").
@@ -409,4 +412,48 @@ test('iron: the enemy side can demonstrate the type end to end', () => {
     'no way to show the Defense debuff'
   );
   for (const move of kit) assert.ok(move.manaCost <= warrior.baseStats.manaPool);
+});
+
+// --- Iron Skin and Living Wall: the plain Shield, and the one that pivots (docs/shield.md §3.5) ---
+
+test('iron: Iron Skin shields the user off its own Defense with Iron STAB — the tank shields itself and swings next round', () => {
+  const state = withDeepPools(ironFixture(1160));
+  const app = { statusId: 'Shield', magnitude: 30, target: 'self' as const };
+  const expected = scaleStatusMagnitude(30, statuses.Shield, app, moves.ironSkin, heroes.gallant, state.combatants.a1);
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'ironSkin' }], config);
+  assert.strictEqual(moves.ironSkin.tier, 'early');
+  assert.strictEqual(moves.ironSkin.target, 'self');
+  assert.strictEqual(statusMagnitude(next.combatants.a1, 'Shield'), expected);
+  assert.strictEqual(statusMagnitude(next.combatants.a2, 'Shield'), 0, 'self only');
+  assert.ok(next.active.A.includes('a1'), 'no pivot');
+});
+
+test('iron: Living Wall shields the user, pivots it out, and the Shield goes to the bench and comes back with it', () => {
+  const state = withDeepPools(
+    createFightState(
+      1161,
+      [
+        { combatantId: 'a1', heroId: 'gallant', side: 'A' },
+        { combatantId: 'a2', heroId: 'valor', side: 'A' },
+        { combatantId: 'a3', heroId: 'ironWarden', side: 'A' },
+      ],
+      [
+        { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
+        { combatantId: 'b2', heroId: 'sentinel', side: 'B' },
+      ]
+    )
+  );
+  assert.strictEqual(moves.livingWall.switchesUserOut, true);
+  assert.strictEqual(moves.livingWall.tier, 'mid');
+  const app = { statusId: 'Shield', magnitude: 40, target: 'self' as const };
+  const expected = scaleStatusMagnitude(40, statuses.Shield, app, moves.livingWall, heroes.gallant, state.combatants.a1);
+
+  const out = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'livingWall', switchToCombatantId: 'a3' }], config);
+  assert.ok(out.state.bench.A.includes('a1'), 'the user pivoted out');
+  assert.ok(out.state.active.A.includes('a3'));
+  assert.strictEqual(statusMagnitude(out.state.combatants.a1, 'Shield'), expected, 'the Shield left with the hero');
+
+  const back = resolveRound({ ...out.state, round: 2 }, [{ kind: 'switch', combatantId: 'a3', benchedCombatantId: 'a1' }], config);
+  assert.ok(back.state.active.A.includes('a1'));
+  assert.strictEqual(statusMagnitude(back.state.combatants.a1, 'Shield'), expected, 'and came back with it');
 });
