@@ -12,6 +12,7 @@ import { statusApplicationsOf, type HeroDefinition, type MoveDefinition, type St
 import type { Action } from '../engine/combat/actions';
 import type { CombatState, Side } from '../engine/state';
 import {
+  applyStatModifierDelta,
   effectiveTypes,
   getMaxHp,
   hasAffordableMoveInFight,
@@ -137,6 +138,29 @@ function riderIsRedundant(state: CombatState, ctx: AiContext, app: StatusApplica
   });
 }
 
+/** A move whose only stat payload is drops — the one kind the floor can make a no-op. */
+function isPureDebuff(move: MoveDefinition): boolean {
+  return (
+    !!move.statDeltas?.length &&
+    move.statDeltas.every((d) => d.amount < 0) &&
+    !move.conditionalStatDeltas &&
+    !move.randomStatDeltas &&
+    !move.derivedStatDeltas
+  );
+}
+
+/**
+ * Would every one of this move's drops land 0 on this target — is it at the floor on every stat
+ * the move touches (state.ts statModifierFloor)? Read off the authored figure: the floor is where
+ * a drop stops, whatever it was scaled to.
+ */
+function dropsAllHeld(state: CombatState, ctx: AiContext, move: MoveDefinition, targetId: string): boolean {
+  const target = state.combatants[targetId];
+  if (!target) return false;
+  const hero = ctx.heroes[target.heroId];
+  return move.statDeltas!.every((d) => applyStatModifierDelta(hero, target, d.stat, d.amount).landed === 0);
+}
+
 /**
  * Would this move do literally nothing? Conservative: a payload this function
  * cannot evaluate counts as doing something, so a new field never silently
@@ -145,7 +169,7 @@ function riderIsRedundant(state: CombatState, ctx: AiContext, app: StatusApplica
 function isInertOnBoard(state: CombatState, casterId: string, move: MoveDefinition, ctx: AiContext): boolean {
   if (isDamaging(move)) return false;
   if (
-    move.statDeltas ||
+    (move.statDeltas && !isPureDebuff(move)) ||
     move.conditionalStatDeltas ||
     move.randomStatDeltas ||
     move.derivedStatDeltas ||
@@ -160,6 +184,12 @@ function isInertOnBoard(state: CombatState, casterId: string, move: MoveDefiniti
   const mode = resolveTargetMode(state, move);
   const targets = candidateTargets(state, casterId, move, ctx, mode);
   let sawCheckablePayload = false;
+
+  // A pure debuff into targets whose stats can't go any lower is a wasted turn (docs/stat-scaling.md §3, §6).
+  if (isPureDebuff(move)) {
+    if (!targets.every((id) => dropsAllHeld(state, ctx, move, id))) return false;
+    sawCheckablePayload = true;
+  }
 
   if (move.healPower != null) {
     if (targets.some((id) => isHurt(state, ctx, id))) return false;
@@ -262,7 +292,14 @@ function pickTarget(state: CombatState, casterId: string, move: MoveDefinition, 
   }
 
   const preferred = preferFreshRiderTargets(state, ctx, move, casterId, candidates);
-  if (!isDamaging(move)) return pickOne(preferred, random);
+  if (!isDamaging(move)) {
+    // A drop aims where it still lands — the same preference a non-stacking rider gets above.
+    if (isPureDebuff(move)) {
+      const landing = preferred.filter((id) => !dropsAllHeld(state, ctx, move, id));
+      return pickOne(landing.length > 0 ? landing : preferred, random);
+    }
+    return pickOne(preferred, random);
+  }
 
   let best = -Infinity;
   let tied: string[] = [];

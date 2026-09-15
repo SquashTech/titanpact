@@ -1,7 +1,8 @@
 # stat-scaling.md — Buffs and debuffs: scaled bases, the ceiling, the noise floor
 
 > **STATUS: DECIDED 2026-09-14 (per user direction — option A of two, after a Pokémon-shaped
-> stage system was weighed and set aside, §0). PHASES 1, 2a, 3 AND 4 OF §8 ARE IN (same day); phase 5 is not.
+> stage system was weighed and set aside, §0). PHASES 1, 2a, 3, 4 AND 5 OF §8 ARE IN (same day) — the overhaul is built in full bar the
+> undecided buff half of the ceiling (2b).
 > The ceiling's DEBUFF half is in (phase 2a, per user direction after phase 1's measurement);
 > its BUFF half (§3, phase 2b) is NOT decided — the designer is unsure it is needed at all; it stays in the doc as the
 > proposal and §10 carries the case against it.** `CLAUDE.md` and
@@ -277,10 +278,26 @@ Sequenced so the tree is playable at every boundary and each phase can be refuse
 | 2b | **The ceiling — the buff half.** Clamp at write to `≤ +S`; Apex Predator and Arcane Overflow measured against it; the Font of Power decision (§10). | No fight modifier over +S. | **UNDECIDED** — the designer is unsure a cap on buffs is needed. Phase 1 measured a used stat passing +S in 23–28% of Act 4+ fights after scaling, 3–5% before (§10). |
 | 3 | **The floor re-author.** §4's sub-floor entries; Exalt's decision; the signatures' deltas re-read against the bands; `test/moveTiers` (or a sibling) pins the body floor at 20 and forbids 5. | No authored body under 20, no delta of 5; the Ancient hand-off in `authoring-moves.md` §10 names the bands. | **DONE 2026-09-14.** Toxic Spores −5 → −10, Piston Punch's reel 5 → 10, Tide Guard 10 → 15, Toughen Up 10/10 → 15/15, Charge's and Unbound's Intelligence to 20 (a Speed-and-a-stat card's body is the stat), Fortify 15 → 20, Pin Down's Defense −10 → −20; every signature already sat inside the bands; Exalt kept at 100 (§10 — with only the debuff half of the ceiling built it is simply the biggest number, and stays the one card that says so). `test/statScaling.test.ts` pins the two floors; `authoring-moves.md` "`statDeltas`" carries the bands for the Ancient slate. A Class move is exempt from the body floor — its body is its verb (Intercept is a redirect; its +10 is a rider on that). Measured on the phase-2a pilot: 67.7% → 67.1%, Act 1 90.4 → 90.1 — seven bases moved 5–10 points, noise. |
 | 4 | **Presentation.** The pip strip, the `→` on the hero sheet, the cap as a bar end, the flash pair on a cap hit, "at the limit" on the tile before the press. | A player can read a hero's modifier state from the fight screen without opening the sheet. | **DONE 2026-09-14.** The card's corner badge is a pip strip (`CombatantCard` `modTier`): one, two or three clip-path marks by the modifier against base + loadout (a quarter, a half, past that — a debuff's third mark IS the floor), dimmed with a baseline under the marks when a stat is held at its floor. The hero sheet's row reads `100 → 50` where the fight moved a stat (`StatBars` `fight`), the track carries a tick at the floor that lights when the fill has reached it, and the chip says *can't go any lower*. The move card's delta row says *Warden's DEF can't go any lower — lands nothing* or *Warden's DEF can't go much lower — lands −12* before the press (`MoveDetailOverlay`, off `applyStatModifierDelta` on each live defender). A held drop reads *can't go any lower* / *−24 DEF (no lower)* / *WIS can't go lower* in the beat and the log (per user direction: the player-facing voice is "can't go any lower", never "the floor", which stays the design term), on a `popup-floor` popup rather than a −0. Verified with the throwaway harness over headless Edge (`docs/visual-language.md`'s method). The flash pair on a cap hit was not built: the pip strip's baseline and the popup carry the moment, and a third signal on one beat is noise. |
-| 5 | **Re-fit.** The AI's utility for a scaled delta and a capped one; a sim pass on the pilot against the pre-phase-1 baseline (full-clear 54%, Reader 77 / Auto 53 / Fast 32 min); the Act 1 wall re-read, since a buff above the noise floor is the kind of lever the wall has not been given; then the `stat / 50` dial if the Late-act decay reads as a fault in play. | Win-rate targets are a playtest question; the measurement is buffs' share of casts by act, and whether it rose. | — |
+| 5 | **Re-fit.** The AI's utility for a scaled delta and a capped one; a sim pass on the pilot against the pre-phase-1 baseline (full-clear 54%, Reader 77 / Auto 53 / Fast 32 min); the Act 1 wall re-read, since a buff above the noise floor is the kind of lever the wall has not been given; then the `stat / 50` dial if the Late-act decay reads as a fault in play. | Win-rate targets are a playtest question; the measurement is buffs' share of casts by act, and whether it rose. | **DONE 2026-09-14.** `ai.ts`: `isPureDebuff` / `dropsAllHeld` — a pure debuff into targets that can't go any lower is inert, and a drop aims where it lands (`test/ai.test.ts`, three cases). The pilot was taught the landed figure in phase 1 and the held figure in 2a. The `stat / 50` dial is left where §10 puts it: a play question. Measured below. |
 
 **What each phase measures.** Phase 1: the landed/authored ratio by act and by caster (is the
 buffer archetype real, or is Wisdom too flat to make one?).
+
+Phase 5, measured (1000 runs, seed 11, greedy pilot). The floor-aware AI: **67.1% → 66.4%**,
+Act 1 90.1 → 89.8, Acts 2–5 94.1 / 99.4 / 88.1 / 90.0 — the AI took back under a point of the
+six, because the pilot had already stopped feeding it drops that land nothing; the enemy's
+"held" share in Act 1 (34%) is now partial holds, which are real casts. **The whole doc,
+against the pre-scaling baseline on the same seed and the same (sign-fixed) pilot: full-clear
+61.6% → 66.4%, encounters won 12.18 → 12.56, Act 1 clear 89.2% → 89.8%, Acts 4–5 84.6 / 89.8
+→ 88.1 / 90.0, Late-tier casts 12.1% → 11.5% of the run, Reader 70.3 → 68.3 min.** Buffs'
+share of casts did not move on the pilot — it prices a buff by HP moved and the scaling
+raised both sides together — so "whether it rose" is the playtest question it always was.
+The Act 1 wall: it stands at 89–90% on this pilot before and after, which is to say the
+lever this doc gave it was the floor (a debuff at a fifth of Act 1 fights zeroed a stat
+before phase 2a), not the scaling; the 76% figure the XP overhaul measured was against an
+older tree and an unfixed pilot, and is not this number. Only the greedy pilot measured this
+doc; a `--pilot chart` pass against the pre-scaling tree is owed before any of these figures
+are quoted as final.
 
 Phase 1, measured (1000 runs, seed 11, greedy pilot, HEAD + only this phase against HEAD, the
 Banner fold of the same day in both). **First, a pilot fault the measurement found and fixed
@@ -356,12 +373,7 @@ never gets a screen" — a buff's landed figure is shown on a card, never chosen
   half is crossed in a quarter of Act 4–5 fights after scaling, a twentieth before. So the two
   halves are different questions: `−½S` is answering a fault that predates this doc, `+S` is
   answering the thing this doc made bigger. The debuff half was built alone (phase 2a) on that
-  reading; `+S` waits on play.
-- **The enemy AI and the floor.** `src/run/ai.ts` prices nothing about a stat delta, so an
-  enemy Enfeeble into a hero already at the floor is a wasted turn it cannot see — a third of
-  its Act 1 drops after phase 2a. Teaching it the held figure (as the pilot was taught) is a
-  phase-5 item and will take some of the six points back; that is the AI catching up to a rule,
-  not the rule moving. The case
+  reading; `+S` waits on play. The case
   against: scaling already fixes the two findings that are about *feel*; the third (no cap) is a
   stall problem the Pact Clock already brackets; a cap is a rule the player has to learn and a
   moment ("nothing happened") the fight has to explain; and the compounders are three moves,
@@ -373,6 +385,14 @@ never gets a screen" — a buff's landed figure is shown on a card, never chosen
   per fight, the largest modifier a stat reached as a fraction of `S` — if ordinary play
   rarely passes ×2 and only the three compounders do, the answer is to author those three and
   build no cap; if two casts of a Late buff routinely pass it, the cap is doing real work.
+- **The enemy AI and the floor — RESOLVED in phase 5.** `src/run/ai.ts` now treats a pure
+  debuff whose every drop would land 0 on every candidate as inert (its own no-op rule), and
+  aims a drop at the foe it still lands on (the preference a non-stacking rider already had).
+  It does not price a PARTIAL hold — a drop that lands −12 of −26 is still a cast — so the
+  "held" column stays around a third in Act 1; that is drops shortened, not drops wasted.
+  Measured: 67.1% → 66.4%, noise. The AI is no smarter than that on purpose (`ai.ts` is
+  aim-and-don't-waste, not search); if the floor should shape enemy *choice* beyond no-ops,
+  that is a change to what the shipped AI is.
 - **The constant.** `1 + (stat − 50)/100` under-tracks a run in which stats double; `stat / 50`
   tracks it exactly and is a second rule. Phase 5 decides from play, not from the arithmetic
   above, since the Late bases already carry most of the gap.

@@ -147,8 +147,9 @@ don't silently override it.
   land flat. Still additive, still the stat pipeline — no % term touches a stat. **A fight
   modifier is held at −½(base + loadout) at write** (`statModifierFloor`, phase 2a, same day) —
   a debuff can at most halve a stat, and `StatChanged.capped` says when the floor took some;
-  measured 61.6% → 67.7% full-clear over the pre-scaling baseline, Act 1 included. The BUFF half
-  (`+S`) is written up and **undecided**.
+  measured 61.6% → 66.4% full-clear over the pre-scaling baseline with every phase in, Act 1
+  89.2 → 89.8%. The player-facing voice is **"can't go any lower"**, never "the floor". The BUFF
+  half (`+S`) is written up and **undecided**.
   **Automatic stat growth from levelling is the one systemic exemption** (2026-09-10, Growth
   Overhaul phase 3): a growth roll grants **+1 to +4**, or **+3 to +12 HP**, none of which is a
   multiple of 5. The rule was written to keep authored grants legible, and a roll nobody authors per-hero

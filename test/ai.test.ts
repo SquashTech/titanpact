@@ -7,6 +7,7 @@ import { statuses } from '../src/data/statuses';
 import type { MoveDefinition } from '../src/engine/content';
 import type { CombatState } from '../src/engine/state';
 import { pickAiAction, type AiContext } from '../src/run/ai';
+import { statModifierFloor } from '../src/engine/state';
 import { setFieldEffect } from '../src/engine/combat/fieldEffectEngine';
 
 /** Test-local movepool: the AI's rules are about SHAPES of move, so authored content would make this fail on every slate retune. */
@@ -63,6 +64,14 @@ const testMoves: Record<string, MoveDefinition> = {
 };
 
 const AI = 'ai:caster';
+
+/** Holds a player hero at its floor on `stats` (state.ts statModifierFloor) — the board a drop can do nothing to. */
+function atFloor(state: CombatState, id: string, stats: readonly ('defense' | 'wisdom')[]): CombatState {
+  const c = state.combatants[id];
+  const hero = heroes[c.heroId];
+  const held = Object.fromEntries(stats.map((stat) => [stat, statModifierFloor(hero, c, stat)]));
+  return { ...state, combatants: { ...state.combatants, [id]: { ...c, statModifiers: { ...c.statModifiers, ...held } } } } as CombatState;
+}
 const LEFT = 'p:left';
 const RIGHT = 'p:right';
 
@@ -287,4 +296,51 @@ test('ai carries a declared target for a conditionalTarget move however the fiel
       }
     }
   }
+});
+
+// --- The floor (docs/stat-scaling.md §3, phase 5): a drop that lands nothing is a wasted turn ---
+
+const weakener: MoveDefinition = {
+  ...base,
+  id: 'weakener',
+  name: 'Weakener',
+  type: 'Shadow',
+  kind: 'buff',
+  target: 'singleEnemy',
+  statDeltas: [
+    { stat: 'defense', amount: -20 },
+    { stat: 'wisdom', amount: -20 },
+  ],
+};
+
+test('ai: a pure debuff aims at the foe whose stats can still drop, not the one already at the floor', () => {
+  const ctx: AiContext = { heroes, moves: { ...testMoves, weakener }, statuses, typeChart, moveIdsFor: () => ['weakener'], random: () => 0.9 };
+  const state = atFloor(board('crimson', 'tempest', 'rime'), LEFT, ['defense', 'wisdom']);
+  for (let i = 0; i < 6; i++) {
+    const action = pickAiAction(state, AI, { ...ctx, random: () => i / 6 });
+    assert.strictEqual(action.kind, 'move');
+    assert.strictEqual(action.kind === 'move' && action.declaredTarget, RIGHT, 'aimed at the hero it can still lower');
+  }
+});
+
+test('ai: a pure debuff with nowhere left to land is inert, so a hit is cast instead — and with nothing else, it Rests', () => {
+  const ctx: AiContext = { heroes, moves: { ...testMoves, weakener }, statuses, typeChart, moveIdsFor: () => ['weakener', 'fireBolt'], random: () => 0.99 };
+  const state = atFloor(atFloor(board('crimson', 'tempest', 'rime'), LEFT, ['defense', 'wisdom']), RIGHT, ['defense', 'wisdom']);
+  for (let i = 0; i < 6; i++) {
+    const action = pickAiAction(state, AI, { ...ctx, random: () => i / 6 });
+    assert.strictEqual(action.kind === 'move' && action.moveId, 'fireBolt', 'the drop would land nothing anywhere');
+  }
+  const alone = pickAiAction(state, AI, { ...ctx, moveIdsFor: () => ['weakener'] });
+  assert.strictEqual(alone.kind, 'move', 'the inert filter falls back rather than Resting — a wasted cast beats a wasted Rest by the cascade\'s own rule');
+});
+
+test('ai: a drop that lands on ONE of a move\'s two stats is not inert', () => {
+  const ctx: AiContext = { heroes, moves: { ...testMoves, weakener }, statuses, typeChart, moveIdsFor: () => ['weakener', 'fireBolt'], random: () => 0.01 };
+  const state = atFloor(atFloor(board('crimson', 'tempest', 'rime'), LEFT, ['defense']), RIGHT, ['defense']);
+  let debuffs = 0;
+  for (let i = 0; i < 20; i++) {
+    const action = pickAiAction(state, AI, { ...ctx, random: () => i / 20 });
+    if (action.kind === 'move' && action.moveId === 'weakener') debuffs += 1;
+  }
+  assert.ok(debuffs > 0, 'Wisdom can still drop, so the move stays on the table');
 });
