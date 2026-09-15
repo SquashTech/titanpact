@@ -115,7 +115,9 @@ don't silently override it.
 > eight points of full-clear, all in acts 1–2 — so `EQUIPMENT_DROP_CHANCE` is 1 / 0.6 / 1 / 1
 > (the Elite and Guardian always drop) and the Cache took the Forge's seat weight (40 → 78).
 > Shipped: full-clear 19.9%, 21 items a completed run against 18 seats, merges offered 5.8 →
-> taken 1.0. The enemy curve is untouched and is the next dial (§10).
+> taken 1.0. **The enemy curve then took an act term** (same day, per user direction —
+> `ACT_LEVEL_ADJUST` = Act 1 −2, Acts 3 and 5 +2, `docs/enemy-levels.md` §4): Act 1 50 → 58%,
+> Act 3 98 → 96, Act 5 90 → 88, full-clear 21.9%.
 
 ---
 
@@ -593,7 +595,9 @@ what's still unimplemented:
   entering it plus a kind offset (`ENEMY_LEVEL_OFFSET`, `enemyLevelFor`,
   `src/run/difficulty.ts`): opener −3, `battle` −2, **Skirmish at par, Elite +1**, the
   Guardian's escorts −3 with the champion `CHAMPION_LEVEL_BONUS` = 2 over them, so a row of
-  the map reads *Skirmish at your level, Elite a step over, the Guardian beaten on its body*.
+  the map reads *Skirmish at your level, Elite a step over, the Guardian beaten on its body*;
+  **plus the act's own term** (`ACT_LEVEL_ADJUST`, 2026-09-15: Act 1 −2, Acts 3 and 5 +2), the
+  fine dial that shapes the run where the kind offsets shape a row.
   Mastery still reads off the act. **A champion is FRONT-LOADED**: `CHAMPION_GRADES`, all E,
   because on hero grades the Act 2 Guardian measured 67% cleared. **Enemy gear from Act 4**
   (`ENEMY_GEAR_FROM_ACT`, `EnemyLoadout`): one item each on the node's own rarity curve,

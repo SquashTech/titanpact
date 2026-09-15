@@ -43,6 +43,23 @@ export const ENEMY_LEVEL_OFFSET: Record<EncounterNodeKind, number> = {
 
 export const CHAMPION_LEVEL_BONUS = 2;
 
+/**
+ * The act's own term on every enemy level in it, index 0 unused (2026-09-15, per user
+ * direction; docs/enemy-levels.md §4). The kind offsets shape a ROW of the map — opener under,
+ * Skirmish at par, Elite over — and this shapes the RUN: Act 1 two levels lighter, because its
+ * fork measured as the run's wall (Skirmish 68%, Elite 64%) with the third socket already in;
+ * Acts 3 and 5 two heavier, because both measured near-clean (98 / 90% cleared) and a run that
+ * never loses an act in the middle has no middle. A level is a fine dial — worth ~4 points of
+ * act clear at Act 1's par and ~1 at Act 5's — and this is the measured first pass: Act 1
+ * 50 → 58%, Act 3 98 → 96, Act 5 90 → 88. Acts past the table hold at its last entry.
+ */
+export const ACT_LEVEL_ADJUST: readonly number[] = [0, -2, 0, 2, 0, 2];
+
+export function actLevelAdjust(actNumber: number): number {
+  const act = clampAct(actNumber);
+  return ACT_LEVEL_ADJUST[Math.min(act, ACT_LEVEL_ADJUST.length - 1)];
+}
+
 function clampAct(actNumber: number): number {
   if (!Number.isFinite(actNumber) || actNumber < 1) return 1;
   return Math.floor(actNumber);
@@ -58,9 +75,9 @@ export function parLevelAtNode(kind: EncounterNodeKind, actNumber: number): numb
   return levelAfterEncounters((act - 1) * ENCOUNTERS_PER_ACT + ENCOUNTERS_BEFORE_NODE[kind]);
 }
 
-/** The level every enemy on a node of this kind arrives at. */
+/** The level every enemy on a node of this kind arrives at: par, the kind's offset, the act's. */
 export function enemyLevelFor(kind: EncounterNodeKind, actNumber: number): number {
-  return clampLevel(parLevelAtNode(kind, actNumber) + ENEMY_LEVEL_OFFSET[kind]);
+  return clampLevel(parLevelAtNode(kind, actNumber) + ENEMY_LEVEL_OFFSET[kind] + actLevelAdjust(actNumber));
 }
 
 /** The Guardian's held-back champion, over its escorts. */

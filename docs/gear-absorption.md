@@ -271,9 +271,10 @@ and *a bare number never gets a screen* — the who-screen collects a hero, not 
   merge is meant to compete with a take BEFORE the roster fills, it has to buy more than a tier
   step — a second family Awakening at Legendary, say. Playtest first: a human may merge for the
   Awakening alone.
-- **The enemy curve** was tuned against one socket and a Forge. Full-clear is +8 points over the
-  phase-0 baseline on the same seed, all of it the third socket; whether that is the re-fit or the
-  Act 1 wall coming down a notch is a playtest call, and `docs/enemy-levels.md`'s dials are where
-  it would be paid.
+- **The enemy curve** was tuned against one socket and a Forge; full-clear came up +8 points over
+  the phase-0 baseline, all of it the third socket. Answered the same day with an act term on the
+  enemy level (`ACT_LEVEL_ADJUST`, `docs/enemy-levels.md` §4, per user direction): Act 1 two
+  levels lighter, Acts 3 and 5 two heavier — Act 1 50 → 58%, Act 3 98 → 96, Act 5 90 → 88. The
+  Act 1 Guardian (77%) is the remaining Act 1 wall and is the champion's body, not a level.
 - **The Anvil's prices** are un-rebased: the shelf they were priced against is gone. Re-base
   against hires (50g) and Scrolls (25g) once gold is watched through a few runs.

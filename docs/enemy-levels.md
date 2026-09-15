@@ -56,25 +56,33 @@ doing the same is more than Act 2 can carry.
 ## 4. The level
 
 `enemyLevelFor(kind, act)` = the player's **par entering that node** + a per-kind offset
-(`ENEMY_LEVEL_OFFSET`, `src/run/difficulty.ts`). Par and not the live roster: the tile can
-promise the level before the fight, and a player ahead of par earns the easier one.
+(`ENEMY_LEVEL_OFFSET`, `src/run/difficulty.ts`) + **the act's own term** (`ACT_LEVEL_ADJUST`,
+2026-09-15, per user direction: Act 1 −2, Acts 3 and 5 +2). Par and not the live roster: the tile
+can promise the level before the fight, and a player ahead of par earns the easier one. The kind
+offset shapes a row of the map; the act term shapes the run — it was added after gear absorption
+(`docs/gear-absorption.md`) had lifted full-clear eight points and left Act 1's fork as the wall
+(Skirmish 68%, Elite 64%) with Acts 3 and 5 near-clean. A level is a fine dial: ~4 points of act
+clear at Act 1's par, ~1 at Act 5's. Measured: Act 1 50 → 58%, Act 3 98 → 96, Act 5 90 → 88, the
+Act 1 Guardian unmoved at 77% (its escorts were already at the level floor — that fight is the
+champion's body, §6's other dial).
 
-| Node | Offset | Act 1 | Act 2 | Act 3 | Act 4 | Act 5 |
+| Node | Offset | Act 1 (−2) | Act 2 | Act 3 (+2) | Act 4 | Act 5 (+2) |
 |---|---|---|---|---|---|---|
 | player par entering opener / fork / Guardian | — | 1 / 5 / 6 | 8 / 10 / 11 | 14 / 15 / 17 | 19 / 20 / 21 | 24 / 25 / 26 |
-| `fight` (opener) | −3 | 1 | 5 | 11 | 16 | 21 |
-| `battle` | −2 | 3 | 8 | 13 | 18 | 23 |
-| `skirmish` | 0 | 5 | 10 | 15 | 20 | 25 |
-| `elite` | +1 | 6 | 11 | 16 | 21 | 26 |
-| `boss` escorts | −3 | 3 | 8 | 14 | 18 | 23 |
-| champion (escorts +2) | — | 5 | 10 | 16 | 20 | 25 |
+| `fight` (opener) | −3 | 1 | 5 | 13 | 16 | 23 |
+| `battle` | −2 | 1 | 8 | 15 | 18 | 25 |
+| `skirmish` | 0 | 3 | 10 | 17 | 20 | 27 |
+| `elite` | +1 | 4 | 11 | 18 | 21 | 28 |
+| `boss` escorts | −3 | 1 | 8 | 16 | 18 | 25 |
+| champion (escorts +2) | — | 3 | 10 | 18 | 20 | 27 |
 | finale (Endbringer) | +2 | | | | | 30 |
 | *Guild hire, for reference* | | 2 | 9 | 15 | 20 | 25 |
 
 Read across a row of the map: **the Skirmish is at your level, the Elite a step over, the
 opener under, and the Guardian is beaten on its body, not its level** — a 550 champion over
 the act's tier of escorts, sitting a level under you. The Elite's contract outranks a hire on
-level in every act; the Skirmish's ties it from Act 3 (was "outranks" — see §7).
+level in every act; the Skirmish's ties it in Acts 2 and 4 and outranks it in 3 and 5 (Act 1's
+sits under, and is not the contract a hire competes with).
 
 **Why the Guardian sits under par.** The old curve paid Acts 1–2 *zero* steps and Act 2 was
 still the wall. A level cannot pay zero: the lowest honest reading of a Guardian is a few

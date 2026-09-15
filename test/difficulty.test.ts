@@ -6,6 +6,8 @@ import {
   CHAMPION_LEVEL_BONUS,
   ENCOUNTERS_BEFORE_NODE,
   ENEMY_LEVEL_OFFSET,
+  ACT_LEVEL_ADJUST,
+  actLevelAdjust,
   NO_SCALING,
   championLevel,
   encounterHeroCountOverride,
@@ -35,14 +37,21 @@ function growthTotal(grants: Partial<Record<string, number>>): number {
   return grantBudgetTotal(grants as Partial<Record<StatKey, number>>);
 }
 
-test('difficulty: an enemy level is the player par entering its node, plus the kind offset', () => {
+test('difficulty: the act term is small, lightens Act 1 and never lightens a later act (docs/enemy-levels.md §4)', () => {
+  assert.ok(actLevelAdjust(1) < 0, 'Act 1 is the wall and reads a level lighter');
+  for (let act = 2; act <= SEAL_ACTS; act++) assert.ok(actLevelAdjust(act) >= 0, `act ${act} is never lightened`);
+  for (const adjust of ACT_LEVEL_ADJUST) assert.ok(Math.abs(adjust) <= 2, 'the act term is a fine dial, never a step');
+  assert.strictEqual(actLevelAdjust(9), actLevelAdjust(SEAL_ACTS + 1), 'acts past the table hold at its last entry');
+});
+
+test('difficulty: an enemy level is the player par entering its node, plus the kind offset, plus the act term', () => {
   for (let act = 1; act <= SEAL_ACTS; act++) {
     for (const kind of NODE_KINDS) {
       const par = levelAfterEncounters((act - 1) * ENCOUNTERS_PER_ACT + ENCOUNTERS_BEFORE_NODE[kind]);
       assert.strictEqual(parLevelAtNode(kind, act), par, `act ${act} ${kind} par`);
       assert.strictEqual(
         enemyLevelFor(kind, act),
-        Math.max(1, Math.min(MAX_LEVEL, par + ENEMY_LEVEL_OFFSET[kind])),
+        Math.max(1, Math.min(MAX_LEVEL, par + ENEMY_LEVEL_OFFSET[kind] + actLevelAdjust(act))),
         `act ${act} ${kind}: the level must read off the player curve, not a table beside it`
       );
       assert.strictEqual(encounterScaling(kind, act).level, enemyLevelFor(kind, act));
