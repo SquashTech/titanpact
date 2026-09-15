@@ -5,8 +5,8 @@
 > engine, the seven moves and the presentation are in; §8's Status column says what each phase
 > landed, and §8's "What was built" names the three places the build departed from the text
 > (Vigil for Sanctuary, `onShieldBroken` as the broken trigger's shape, the pool seats). Phase 4
-> is the measurement batch. Every number below is a first pass unless it says otherwise; the
-> design is the shape, and phase 4 is where the numbers get set.
+> is measured (§8 "Measured") and left the bases and the cap where they are — the designer's to
+> move. Every number below is a first pass unless it says otherwise; the design is the shape.
 
 ---
 
@@ -261,7 +261,7 @@ Sequenced so the tree is playable at every boundary and each phase can be refuse
 | 1 | **The engine.** `'shield'` pipeline; `magnitudeStatKey → defense`; `applyHpDelta(source)` with the absorb at the two `'hit'` sites; capped additive stacking in `applyStatus`; `DamageDealt.absorbed`, `StatusRemoved 'broken'`, `StatusApplied.capped`; the `Shield` status; `test/shield.test.ts` (absorb, overflow to HP, break, cap, snapshot off the caster's Defense, DoT and Clock go through, drain reads HP, an absorbed hit still triggers). One fixture move, in no pool. | Every §2–§4 sentence pinned; nothing in any slate changed. | **IN** 2026-09-15 |
 | 2 | **The content.** Tide Guard and Bastion converted; Iron Skin, Sanctuary, Ice Shell, Rampart, Living Wall authored on the runbook with slate tests; the `'broken'` trigger for Ice Shell, or Ice Shell plain with the trigger deferred (§4); schedule seats placed by the designer. | Seven Shield moves in five slates; every slate test green; the Water/Stone converts' old pins gone. | **IN** 2026-09-15 (the trigger built; seats a first pass) |
 | 3 | **Presentation.** The bar segment, `+N` on the label, *absorbed N* / *Shield broken* popups, *Shield N* on cast, the move card's figure and *can't go any higher*, the status dossier's "what goes through". Verified with the throwaway harness over headless Edge. | A player reads a Shield, a hit into it, and its breaking from the fight screen without the log. | **IN** 2026-09-15 |
-| 4 | **Measure and re-fit.** The pilot and the AI price a Shield as a guard with a number and treat a capped one as inert; the sim reports Shield granted / absorbed / broken by act and damage taken by category; a batch against the phase-2b tree (67.1% full-clear, Reader 68 min); the Defense question re-read — does a Defense-heavy hero's draft lift move? | Figures reported; the bases and the cap are the designer's to move. | — |
+| 4 | **Measure and re-fit.** The pilot and the AI price a Shield as a guard with a number and treat a capped one as inert; the sim reports Shield granted / absorbed / broken by act and damage taken by category; a batch against the phase-2b tree (67.1% full-clear, Reader 68 min); the Defense question re-read — does a Defense-heavy hero's draft lift move? | Figures reported; the bases and the cap are the designer's to move. | **MEASURED** 2026-09-15, nothing moved |
 
 **What was built, where it departs from the text above (2026-09-15).**
 
@@ -289,6 +289,43 @@ Sequenced so the tree is playable at every boundary and each phase can be refuse
   `min(pool, room under the cap, incoming over the horizon × ½)`, prices a hit into a Shield as
   the absorb plus what reaches HP (no KO credit, no drain off the absorb), and `policy.ts`
   values a Shield card at its base × 1.2 for the replace-at-cap decision.
+
+**Measured (2026-09-15; 3000 runs, seed 100000, skilled pilot — the same batch as the enemy-curve
+baseline, `sim-out/shield-phase4.txt` against `sim-out/act-curve.txt`).** The baseline is the
+tree the Shield landed on, not phase 2b's: full-clear 23.1%, acts 62 / 63 / 95 / 71 / 88.
+
+- **Full-clear 23.1 → 22.5%**, acts 63 / 61 / 96 / 72 / 85 — inside the batch's noise (±0.8) on
+  the whole and on every act but 5 (88 → 85, z ≈ 2.6; Act 5's fights are the magical-heavy ones,
+  below). Run length 76 → 78 min Reader. **The mechanic is not a player buff at these bases**,
+  which is the right first reading for bonus health that costs a turn.
+- **Absorbed as a share of every hit the player side is dealt:** 4.5 / 3.4 / 5.3 / 4.3 / 4.2% by
+  act, **13% in the finale** — where the roster is built, Rampart is in hand and the pilot has
+  1.8 Shield casts a fight against 0.6–0.8 earlier. Pools granted a fight, player side: 28 / 33 /
+  50 / 65 / 63 / 164 HP by act; **52–68% of what is granted is ever taken off a hit** — the rest
+  is standing when the fight ends.
+- **The cap binds rarely:** 2% of Act 1 casts, under 2% after — Bastion on a full-HP Early body,
+  or a stacked Rampart in the finale (53 of 1184). At 100% of max HP it is a rule the player
+  meets a few times a run, not a wall.
+- **Broken:** 39% of player pools in Act 1, 48% in Act 2, then 32–34% — a Shield is a hit's worth
+  most of the time, the doc's "takes the first hit". Enemy pools (the Water and Stone spawn with
+  the converts): 861 / 976 / 442 / 225 / 110 casts by act, 62–77% of them broken.
+- **The converts were dead as Defense and are live as Shields.** The same seed with Tide Guard
+  and Bastion put back to +15 / +30 Defense: full-clear 22.5%, identical — but Tide Guard's casts
+  2975 → 3630 and **Bastion's 43 → 2559** (0.1 → 8.0 per 1000 player turns). The pilot never took
+  the +30 Defense buff; it takes the Shield 45 on both allies once every hundred-odd turns. That is
+  the swap's whole yield today: a card the game shipped and nobody cast is now a card.
+- **Cast rates per 1000 player turns:** Tide Guard 11.3, Bastion 8.0, Iron Skin 4.6, Ice Shell
+  3.2, Living Wall 2.8, Vigil 2.2, Rampart 1.0 (Late, two pools hold it).
+- **The Defense question, directionally yes and inside the error:** draft lift Crag 1.34 → 1.54,
+  Valor 0.16 → 0.64, Riptide −0.53 → −0.34 (±0.38 each); Sentinel fielded 885 → 1175 fights at
+  87.8 → 90.1% win. No sign flipped. The doc's "reach for Iron and Stone as supports" is a playtest
+  question still.
+- **Damage taken by category, player side:** 73 / 27 physical / magical in Act 1, then **35–40 /
+  60–65** from Act 2 on and 16 / 84 in the finale. The §4 "counts twice" reading — Defense shrinks
+  the hit, then sizes the pool — is worth most in Act 1 and least where the pools are biggest, which
+  is the honest shape for a Defense mechanic against a magical late game and the number to hold
+  against if a Shield base is ever raised: a bigger pool buys more in the finale, where it is
+  already 13% of hits, than in Act 1, where the wall is.
 
 **What each phase measures.** Phase 1: nothing — it is a contract. Phase 2: the slate tests.
 Phase 4: absorbed as a share of damage dealt by act; how often the cap binds; whether the Water

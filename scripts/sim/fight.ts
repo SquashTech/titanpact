@@ -31,6 +31,30 @@ import type { Squad } from '../../src/run/squad';
 import { pilotActions, type PilotOptions } from './pilot';
 import type { Rng } from './rng';
 import { countBeats } from './beats';
+import { shieldStatusDef } from '../../src/engine/status/shield';
+
+const SHIELD_ID = shieldStatusDef(statuses)?.id ?? '';
+
+/** Shield telemetry by the HOLDER's side (docs/shield.md §8 phase 4): pools granted, what they took, how often they broke or hit the cap, and the player side's hits by category so the absorb has a denominator. */
+export interface ShieldTally {
+  casts: number;
+  granted: number;
+  absorbed: number;
+  broken: number;
+  capped: number;
+  enemyCasts: number;
+  enemyGranted: number;
+  enemyAbsorbed: number;
+  enemyBroken: number;
+  enemyCapped: number;
+  /** Full hits (absorbed + through) the PLAYER side took, by the move's category. */
+  takenPhysical: number;
+  takenMagical: number;
+}
+
+export function emptyShieldTally(): ShieldTally {
+  return { casts: 0, granted: 0, absorbed: 0, broken: 0, capped: 0, enemyCasts: 0, enemyGranted: 0, enemyAbsorbed: 0, enemyBroken: 0, enemyCapped: 0, takenPhysical: 0, takenMagical: 0 };
+}
 
 const PLAYER_SIDE: Side = 'A';
 const AI_SIDE: Side = 'B';
@@ -76,6 +100,8 @@ export interface FightOutcome {
   castsByTier: Record<string, number>;
   /** Player-side casts by mana actually spent, in 20-point bands. */
   castsByManaBand: Record<string, number>;
+  /** Player-side casts by move id. */
+  castsByMove: Record<string, number>;
   /** Move stat deltas by the CASTER's side: how many landed, and |landed| against |authored| summed (docs/stat-scaling.md §8 phase 1). */
   statDeltaCount: number;
   statDeltaAuthored: number;
@@ -93,6 +119,7 @@ export interface FightOutcome {
   /** Drops the floor held (StatChanged.capped), by the caster's side. */
   heldDrops: number;
   enemyHeldDrops: number;
+  shield: ShieldTally;
   /** A used stat's modifier reached −S — the floor at 1 bit, and the ratio against it went to the moon. */
   floored: boolean;
   /** Total effective stats (the six combat stats) each side FIELDED — who is out-scaling whom. */
@@ -168,8 +195,9 @@ function manaBand(spent: number): string {
 function recordEvents(
   events: readonly CombatEvent[],
   telemetry: Record<string, CombatantTelemetry>,
-  casts?: { byTier: Record<string, number>; byManaBand: Record<string, number> },
-  deltas?: { count: number; authored: number; landed: number; enemyCount: number; enemyAuthored: number; enemyLanded: number; held: number; enemyHeld: number }
+  casts?: { byTier: Record<string, number>; byManaBand: Record<string, number>; byMove: Record<string, number> },
+  deltas?: { count: number; authored: number; landed: number; enemyCount: number; enemyAuthored: number; enemyLanded: number; held: number; enemyHeld: number },
+  shield?: { tally: ShieldTally; held: Record<string, number> }
 ): void {
   // A StatChanged names its holder, not its caster; the caster is the side of the last MoveUsed.
   let casterSide: Side | undefined;
@@ -195,6 +223,43 @@ function recordEvents(
       casts.byTier[tier] = (casts.byTier[tier] ?? 0) + 1;
       const band = manaBand(event.manaSpent);
       casts.byManaBand[band] = (casts.byManaBand[band] ?? 0) + 1;
+      casts.byMove[event.moveId] = (casts.byMove[event.moveId] ?? 0) + 1;
+    }
+    if (shield && SHIELD_ID) {
+      const t = shield.tally;
+      if (event.type === 'StatusApplied' && event.statusId === SHIELD_ID) {
+        const player = telemetry[event.combatantId]?.side === PLAYER_SIDE;
+        const before = shield.held[event.combatantId] ?? 0;
+        const after = event.magnitude ?? 0;
+        shield.held[event.combatantId] = after;
+        if (player) { t.casts += 1; t.granted += Math.max(0, after - before); if (event.capped) t.capped += 1; }
+        else { t.enemyCasts += 1; t.enemyGranted += Math.max(0, after - before); if (event.capped) t.enemyCapped += 1; }
+      }
+      if (event.type === 'StatusRemoved' && event.statusId === SHIELD_ID) {
+        shield.held[event.combatantId] = 0;
+        if (event.reason === 'broken') {
+          if (telemetry[event.combatantId]?.side === PLAYER_SIDE) t.broken += 1;
+          else t.enemyBroken += 1;
+        }
+      }
+      if (event.type === 'DamageDealt') {
+        const player = telemetry[event.targetCombatantId]?.side === PLAYER_SIDE;
+        const absorbed = event.absorbed ?? 0;
+        if (absorbed > 0) {
+          shield.held[event.targetCombatantId] = Math.max(0, (shield.held[event.targetCombatantId] ?? 0) - absorbed);
+          if (player) t.absorbed += absorbed;
+          else t.enemyAbsorbed += absorbed;
+        }
+        if (player && !event.recoil && !event.selfCost) {
+          if (event.category === 'physical') t.takenPhysical += event.amount + absorbed;
+          else t.takenMagical += event.amount + absorbed;
+        }
+      }
+      if (event.type === 'StatusDetonated' && event.absorbed) {
+        shield.held[event.combatantId] = Math.max(0, (shield.held[event.combatantId] ?? 0) - event.absorbed);
+        if (telemetry[event.combatantId]?.side === PLAYER_SIDE) t.absorbed += event.absorbed;
+        else t.enemyAbsorbed += event.absorbed;
+      }
     }
     switch (event.type) {
       case 'DamageDealt': {
@@ -337,8 +402,9 @@ export function simulateFight(input: FightInput): FightOutcome {
   let playerTurns = 0;
   let playerRests = 0;
   let playerSwitches = 0;
-  const casts = { byTier: {} as Record<string, number>, byManaBand: {} as Record<string, number> };
+  const casts = { byTier: {} as Record<string, number>, byManaBand: {} as Record<string, number>, byMove: {} as Record<string, number> };
   const deltas = { count: 0, authored: 0, landed: 0, enemyCount: 0, enemyAuthored: 0, enemyLanded: 0, held: 0, enemyHeld: 0 };
+  const shield = { tally: emptyShieldTally(), held: {} as Record<string, number> };
   let peakModifierFrac = 0;
   let wouldHaveCapped = false;
   let floored = false;
@@ -381,7 +447,7 @@ export function simulateFight(input: FightInput): FightOutcome {
     state = fillOpenSlots(state, AI_SIDE, replacementEvents);
     roundEvents.push(...replacementEvents);
 
-    recordEvents(roundEvents, telemetry, casts, deltas);
+    recordEvents(roundEvents, telemetry, casts, deltas, shield);
     beats += countBeats(roundEvents);
     creditKos(roundEvents, telemetry);
 
@@ -430,6 +496,7 @@ export function simulateFight(input: FightInput): FightOutcome {
     enemySquadStats: squadStatTotal(opening.state, AI_SIDE),
     castsByTier: casts.byTier,
     castsByManaBand: casts.byManaBand,
+    castsByMove: casts.byMove,
     statDeltaCount: deltas.count,
     statDeltaAuthored: deltas.authored,
     statDeltaLanded: deltas.landed,
@@ -438,6 +505,7 @@ export function simulateFight(input: FightInput): FightOutcome {
     enemyStatDeltaLanded: deltas.enemyLanded,
     heldDrops: deltas.held,
     enemyHeldDrops: deltas.enemyHeld,
+    shield: shield.tally,
     peakModifierFrac,
     wouldHaveCapped,
     wouldHaveCappedUp,

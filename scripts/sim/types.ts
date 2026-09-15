@@ -127,6 +127,8 @@ export interface Aggregate {
   castsByTier: Record<string, number>;
   /** Player-side move casts, by mana actually spent. */
   castsByManaBand: Record<string, number>;
+  /** Player-side move casts by move id, all runs. */
+  castsByMove: Record<string, number>;
   /** Player-side turns, Rests and voluntary switches — is the mana economy live? */
   playerTurns: number;
   playerRests: number;
@@ -142,6 +144,8 @@ export interface Aggregate {
   enemyStatDeltaLandedByAct: number[];
   heldDropsByAct: number[];
   enemyHeldDropsByAct: number[];
+  /** Shield telemetry (docs/shield.md §8 phase 4), [act], keyed by the fight.ts ShieldTally field. */
+  shieldByAct: Record<string, number[]>;
   fightsByAct: number[];
   wouldHaveCappedByAct: number[];
   wouldHaveCappedUpByAct: number[];
@@ -205,11 +209,13 @@ export function emptyAggregate(): Aggregate {
     heroLevelHistogramDeep: [],
     castsByTier: {},
     castsByManaBand: {},
+    castsByMove: {},
     playerTurns: 0,
     playerRests: 0,
     playerSwitches: 0,
     lockInFights: 0,
     statDeltaCountByAct: [],
+    shieldByAct: {},
     statDeltaAuthoredByAct: [],
     statDeltaLandedByAct: [],
     enemyStatDeltaCountByAct: [],
@@ -300,6 +306,7 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   for (let act = 0; act < from.timeByActWon.length; act++) addTimeCounts(into.timeByActWon[act], from.timeByActWon[act]);
   for (let i = 0; i < from.runMinutesWon.length; i++) mergeArray(into.runMinutesWon[i], from.runMinutesWon[i]);
   for (let i = 0; i < from.runMinutesLost.length; i++) mergeArray(into.runMinutesLost[i], from.runMinutesLost[i]);
+  for (const id of Object.keys(from.castsByMove)) into.castsByMove[id] = (into.castsByMove[id] ?? 0) + from.castsByMove[id];
   into.playerTurns += from.playerTurns;
   into.playerRests += from.playerRests;
   into.playerSwitches += from.playerSwitches;
@@ -312,6 +319,10 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   mergeArray(into.enemyStatDeltaLandedByAct, from.enemyStatDeltaLandedByAct);
   mergeArray(into.heldDropsByAct, from.heldDropsByAct);
   mergeArray(into.enemyHeldDropsByAct, from.enemyHeldDropsByAct);
+  for (const key of Object.keys(from.shieldByAct)) {
+    if (!into.shieldByAct[key]) into.shieldByAct[key] = [];
+    mergeArray(into.shieldByAct[key], from.shieldByAct[key]);
+  }
   mergeArray(into.fightsByAct, from.fightsByAct);
   mergeArray(into.wouldHaveCappedByAct, from.wouldHaveCappedByAct);
   mergeArray(into.flooredByAct, from.flooredByAct);

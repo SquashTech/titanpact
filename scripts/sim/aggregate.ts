@@ -114,6 +114,7 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
       agg.castsByTier[`${fight.act}:${tier}`] = (agg.castsByTier[`${fight.act}:${tier}`] ?? 0) + fight.castsByTier[tier];
     }
     for (const band of Object.keys(fight.castsByManaBand)) agg.castsByManaBand[band] = (agg.castsByManaBand[band] ?? 0) + fight.castsByManaBand[band];
+    for (const id of Object.keys(fight.castsByMove)) agg.castsByMove[id] = (agg.castsByMove[id] ?? 0) + fight.castsByMove[id];
     agg.playerRests += fight.playerRests;
     agg.playerSwitches += fight.playerSwitches;
     if (fight.lockedIn) agg.lockInFights += 1;
@@ -125,6 +126,10 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
     agg.enemyStatDeltaLandedByAct[fight.act] = (agg.enemyStatDeltaLandedByAct[fight.act] ?? 0) + fight.enemyStatDeltaLanded;
     agg.heldDropsByAct[fight.act] = (agg.heldDropsByAct[fight.act] ?? 0) + fight.heldDrops;
     agg.enemyHeldDropsByAct[fight.act] = (agg.enemyHeldDropsByAct[fight.act] ?? 0) + fight.enemyHeldDrops;
+    for (const [key, value] of Object.entries(fight.shield) as [string, number][]) {
+      if (!agg.shieldByAct[key]) agg.shieldByAct[key] = [];
+      agg.shieldByAct[key][fight.act] = (agg.shieldByAct[key][fight.act] ?? 0) + value;
+    }
     agg.fightsByAct[fight.act] = (agg.fightsByAct[fight.act] ?? 0) + 1;
     agg.wouldHaveCappedByAct[fight.act] = (agg.wouldHaveCappedByAct[fight.act] ?? 0) + (fight.wouldHaveCapped ? 1 : 0);
     agg.peakModifierFracSumByAct[fight.act] = (agg.peakModifierFracSumByAct[fight.act] ?? 0) + fight.peakModifierFrac;

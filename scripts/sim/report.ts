@@ -510,6 +510,21 @@ export function formatReport(
     const eRatio = (agg.enemyStatDeltaAuthoredByAct[act] ?? 0) > 0 ? ((agg.enemyStatDeltaLandedByAct[act] ?? 0) / (agg.enemyStatDeltaAuthoredByAct[act] ?? 1)).toFixed(2) : '-';
     out.push(`    ${pad(`act ${act}`, 20)}${padStart(String(n), 9)}${padStart(ratio, 13)}${padStart(String(en), 9)}${padStart(eRatio, 13)}${padStart(peak, 12)}${padStart(pct(agg.wouldHaveCappedUpByAct[act] ?? 0, fights), 10)}${padStart(pct(agg.wouldHaveCappedDownByAct[act] ?? 0, fights), 12)}${padStart(pct(agg.flooredByAct[act] ?? 0, fights), 10)}${padStart(`${pct(agg.heldDropsByAct[act] ?? 0, n)} / ${pct(agg.enemyHeldDropsByAct[act] ?? 0, en)}`, 14)}`);
   }
+  out.push('  Shield (docs/shield.md §8 phase 4), by the HOLDER\'s side: casts = Shield riders landed, granted = pool added, absorbed = what pools took off hits, broken = pools a hit emptied, capped = casts the max-HP cap shortened; "absorbed/taken" is the player side\'s absorb as a share of every hit it was dealt (absorbed + through), and phys/mag that share of hits by category:');
+  out.push(`    ${pad('', 20)}${padStart('fights', 8)}${padStart('casts p/e', 14)}${padStart('granted p/e', 18)}${padStart('absorbed p/e', 18)}${padStart('broken p/e', 14)}${padStart('capped p/e', 12)}${padStart('absorbed/taken', 16)}${padStart('phys/mag taken', 16)}`);
+  const sh = (key: string, act: number) => agg.shieldByAct[key]?.[act] ?? 0;
+  for (const act of [1, 2, 3, 4, 5, 6]) {
+    const fights = agg.fightsByAct[act] ?? 0;
+    const taken = sh('takenPhysical', act) + sh('takenMagical', act);
+    out.push(
+      `    ${pad(`act ${act}`, 20)}${padStart(String(fights), 8)}${padStart(`${sh('casts', act)} / ${sh('enemyCasts', act)}`, 14)}${padStart(`${sh('granted', act)} / ${sh('enemyGranted', act)}`, 18)}${padStart(`${sh('absorbed', act)} / ${sh('enemyAbsorbed', act)}`, 18)}${padStart(`${sh('broken', act)} / ${sh('enemyBroken', act)}`, 14)}${padStart(`${sh('capped', act)} / ${sh('enemyCapped', act)}`, 12)}${padStart(pct(sh('absorbed', act), taken), 16)}${padStart(`${pct(sh('takenPhysical', act), taken)} / ${pct(sh('takenMagical', act), taken)}`, 16)}`
+    );
+  }
+  out.push('  the Shield cards, player casts (all runs) and per 1000 player turns:');
+  for (const id of ['tideGuard', 'bastion', 'ironSkin', 'livingWall', 'rampart', 'vigil', 'iceShell']) {
+    const n = agg.castsByMove[id] ?? 0;
+    out.push(`    ${pad(id, 20)}${padStart(String(n), 11)}${padStart((agg.playerTurns > 0 ? (n * 1000) / agg.playerTurns : 0).toFixed(1), 9)}`);
+  }
   out.push('  player casts by mana spent:');
   for (const band of ['0-19', '20-39', '40-59', '60-79', '80+']) {
     const n = agg.castsByManaBand[band] ?? 0;

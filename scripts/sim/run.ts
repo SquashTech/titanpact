@@ -57,7 +57,7 @@ import { passives } from '../../src/data/passives';
 import { getMaxHp } from '../../src/engine/state';
 import { createCombatant } from '../../src/engine/state';
 
-import { simulateFight, PLAYER_SIDE, type PilotKind } from './fight';
+import { simulateFight, PLAYER_SIDE, type PilotKind, type ShieldTally } from './fight';
 import * as policy from './policy';
 import type { PourEvolution } from './policy';
 import { makeRng, pick, randomSeed, sample, withRandom, type Rng } from './rng';
@@ -107,6 +107,7 @@ export interface FightRecord {
   enemySquadStats: number;
   castsByTier: Record<string, number>;
   castsByManaBand: Record<string, number>;
+  castsByMove: Record<string, number>;
   statDeltaCount: number;
   statDeltaAuthored: number;
   statDeltaLanded: number;
@@ -115,6 +116,7 @@ export interface FightRecord {
   enemyStatDeltaLanded: number;
   heldDrops: number;
   enemyHeldDrops: number;
+  shield: ShieldTally;
   peakModifierFrac: number;
   wouldHaveCapped: boolean;
   wouldHaveCappedUp: boolean;
@@ -502,6 +504,7 @@ function resolveEncounterNode(
     enemySquadStats: fight.enemySquadStats,
     castsByTier: fight.castsByTier,
     castsByManaBand: fight.castsByManaBand,
+    castsByMove: fight.castsByMove,
     statDeltaCount: fight.statDeltaCount,
     statDeltaAuthored: fight.statDeltaAuthored,
     statDeltaLanded: fight.statDeltaLanded,
@@ -510,6 +513,7 @@ function resolveEncounterNode(
     enemyStatDeltaLanded: fight.enemyStatDeltaLanded,
     heldDrops: fight.heldDrops,
     enemyHeldDrops: fight.enemyHeldDrops,
+    shield: fight.shield,
     peakModifierFrac: fight.peakModifierFrac,
     wouldHaveCapped: fight.wouldHaveCapped,
     wouldHaveCappedUp: fight.wouldHaveCappedUp,
