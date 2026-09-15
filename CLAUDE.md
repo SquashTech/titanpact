@@ -135,7 +135,9 @@ don't silently override it.
 > Iron Skin, Living Wall (pivots, the pool goes to the bench), Rampart (Late, both allies, 65),
 > Ice Shell (50, and `IceShell` — `StatusDefinition.onShieldBroken` — Freezes whoever breaks
 > it) and Vigil (the doc's Sanctuary, renamed: Sanctuary is Light's field effect). Pool seats are
-> a first pass; the spawn kits are untouched. Phase 4 (measure) is next; its §8 lists what.
+> a first pass; the spawn kits are untouched. **Phase 4 is MEASURED (same day, §8): full-clear
+> 23.1 → 22.5% on the same seed (noise), absorbed 3–5% of hits by act and 13% in the finale, the
+> cap binding on 2% of casts, Bastion cast 43 → 2559 times — dead as Defense, live as a Shield.**
 
 ---
 
