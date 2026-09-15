@@ -65,9 +65,9 @@ test('scaling: a debuff reads the OFFENSIVE stat the move swings with — Weaken
   const weaken = cast(fixture(2), 'a1', 'weaken', 'b1');
   assert.strictEqual(weaken.state.combatants.b1.statModifiers.defense, -26);
   assert.strictEqual(weaken.state.combatants.b1.statModifiers.wisdom, -25);
-  // Cinder Knight, Attack 85, Iron STAB: 10 × 1.35 × 1.25 = 16.875 → 17 — held at −15 on Iron Warden's Speed 30.
+  // Cinder Knight, Attack 85, Iron STAB: 20 × 1.35 × 1.25 = 33.75 → 34; the Speed 10 → 17, held at −15 on Iron Warden's Speed 30.
   const pin = cast(fixture(2), 'a2', 'pinDown', 'b1');
-  assert.strictEqual(pin.state.combatants.b1.statModifiers.defense, -17);
+  assert.strictEqual(pin.state.combatants.b1.statModifiers.defense, -34);
   assert.strictEqual(pin.state.combatants.b1.statModifiers.speed, -15);
 });
 
@@ -171,6 +171,30 @@ test('floor: a buff is not bounded — nothing here touches a positive modifier'
   let state = fixture(22);
   for (let i = 0; i < 6; i++) state = cast(state, 'a1', 'kindle').state;
   assert.strictEqual(state.combatants.a1.statModifiers.attack, 6 * 31, 'six Kindles at +31 stack past double');
+});
+
+// --- The noise floor (§4, phase 3): a body is authored at ≥ 20, a split body ≥ 15 a stat, a rider ≥ 10, nothing at 5 ---
+
+/** Speed is ordering, not a ratio, and MP Regen is exempt from scaling: neither counts toward the floor. */
+const countsTowardFloor = (stat: string) => stat !== 'speed' && stat !== 'mpRegen';
+
+test('floor: no authored delta in any pool is 5, and every rider is at least 10', () => {
+  for (const move of Object.values(moves)) {
+    for (const d of move.statDeltas ?? []) assert.ok(Math.abs(d.amount) >= 10, `${move.id} ${d.stat} ${d.amount}`);
+    if (move.randomStatDeltas) assert.ok(move.randomStatDeltas.amount >= 10, `${move.id} random ${move.randomStatDeltas.amount}`);
+  }
+});
+
+test('floor: a buff move\'s body sits above the variance band — 20 on one stat, 15 a stat when split or paid to both allies', () => {
+  for (const move of Object.values(moves)) {
+    // A Class move's body is its verb (Intercept is a redirect; its +10 is a rider on that).
+    if (move.kind !== 'buff' || move.typeFollowsUser) continue;
+    const body = (move.statDeltas ?? []).filter((d) => countsTowardFloor(d.stat));
+    if (!body.length) continue;
+    const twoTargets = move.target === 'bothAllies' || move.statDeltaTarget === 'bothAllies';
+    const floor = body.length === 1 && !twoTargets ? 20 : 15;
+    for (const d of body) assert.ok(Math.abs(d.amount) >= floor, `${move.id} ${d.stat} ${d.amount} is under the ${floor} body floor`);
+  }
 });
 
 // --- The authoring rule the formula stands on ---

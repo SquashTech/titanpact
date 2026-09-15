@@ -197,7 +197,7 @@ test('mech: Piston Punch damages the enemy and buffs the CASTER', () => {
   assert.ok(after.combatants.b1.currentHp < state.combatants.b1.currentHp, 'Piston Punch dealt no damage');
   const buffed = Object.entries(modifiersOf(after, 'a1')).filter(([k]) => k !== 'manaPool' && k !== 'hp');
   assert.strictEqual(buffed.length, 1);
-  assert.strictEqual(buffed[0][1], landedDelta(state, 'a1', moves.pistonPunch, buffed[0][0] as any, 5, 'a1'), 'the smallest legal base, scaled');
+  assert.strictEqual(buffed[0][1], landedDelta(state, 'a1', moves.pistonPunch, buffed[0][0] as any, 10, 'a1'), 'the smallest legal rider, scaled');
   const onTarget = Object.keys(modifiersOf(after, 'b1')).filter((k) => k !== 'manaPool' && k !== 'hp');
   assert.deepStrictEqual(onTarget, [], 'the buff landed on the victim');
 });

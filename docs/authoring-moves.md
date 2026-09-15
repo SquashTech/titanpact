@@ -722,6 +722,16 @@ Flat additive integers, **multiples of 5 or 10**, no percentages
 damage move the deltas land **after** the hit, so a Defense debuff shapes the next hit
 and not its own.
 
+**The figure you author is a BASE** (2026-09-14, `docs/stat-scaling.md`): it lands as
+`round(base × StatMult × STAB)`, a buff off the caster's Wisdom and a debuff off the stat the
+move swings with, and a drop is held at −½ of the target's base + loadout. So author it at
+par (a Wisdom-50 caster off-type lands the base as written) and to the **noise floor**
+(`test/statScaling.test.ts`): a `buff`-kind move's body is **≥ 20 on one stat, ≥ 15 a stat
+when split or paid to both allies** (Speed and MP Regen do not count — one is ordering, the other is exempt from
+scaling), a rider on a damage or heal move **≥ 10**, and **nothing at 5** anywhere. The bands
+are the bases the slates already use — Early 20–30, Mid 30–50, Late 50–75 for a body, riders
+10 / 10–20 / 20–30 — and the Ancient slate inherits them.
+
 `statDeltaTarget` (Stone's Landslide) sends them somewhere other than the move's own
 targets — `'moveTarget'` (the default, and every move authored before it), `'self'`,
 or `'bothAllies'`. Reach for it the moment a damage row also says "allies gain": that

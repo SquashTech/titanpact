@@ -206,7 +206,7 @@ test('iron: Pin Down is a debuff — a buff-kind move with a negative payload ai
 
   assert.strictEqual(moves.pinDown.kind, 'buff');
   assert.strictEqual(moves.pinDown.target, 'singleEnemy');
-  assert.strictEqual(modifiersOf(next, 'b1').defense, landedDelta(state, 'a1', moves.pinDown, 'defense', -10, 'b1'));
+  assert.strictEqual(modifiersOf(next, 'b1').defense, landedDelta(state, 'a1', moves.pinDown, 'defense', -20, 'b1'));
   assert.strictEqual(modifiersOf(next, 'b1').speed, landedDelta(state, 'a1', moves.pinDown, 'speed', -10, 'b1'));
   assert.strictEqual(events.some((e) => e.type === 'DamageDealt'), false, 'no damage body');
 });
@@ -289,7 +289,7 @@ test('iron: every priority row is a POSITIVE bracket, and the slate has no heal,
 test('iron: the re-authored Fortify is a guard buff only, and Wisdom is grantable off-Mind only by Overdrive', () => {
   // Off-Mind Wisdom grants are a pinned list: Overdrive (safe by price — one fifth of a 100-mana capstone)
   // and Archon Blast (safe by reach — enemy-only, held by no hero kit or pool). A new one is a decision.
-  assert.deepStrictEqual(moves.fortify.statDeltas, [{ stat: 'defense', amount: 15 }]);
+  assert.deepStrictEqual(moves.fortify.statDeltas, [{ stat: 'defense', amount: 20 }]);
   assert.strictEqual(moves.fortify.target, 'self');
   // statDeltaTarget 'self' on a self-target move is a no-op the label renders as "(Self) — Self".
   assert.strictEqual(moves.fortify.statDeltaTarget, undefined);

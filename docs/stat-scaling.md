@@ -1,7 +1,7 @@
 # stat-scaling.md — Buffs and debuffs: scaled bases, the ceiling, the noise floor
 
 > **STATUS: DECIDED 2026-09-14 (per user direction — option A of two, after a Pokémon-shaped
-> stage system was weighed and set aside, §0). PHASES 1 AND 2a OF §8 ARE IN (same day); the rest is not.
+> stage system was weighed and set aside, §0). PHASES 1, 2a AND 3 OF §8 ARE IN (same day); the rest is not.
 > The ceiling's DEBUFF half is in (phase 2a, per user direction after phase 1's measurement);
 > its BUFF half (§3, phase 2b) is NOT decided — the designer is unsure it is needed at all; it stays in the doc as the
 > proposal and §10 carries the case against it.** `CLAUDE.md` and
@@ -182,8 +182,9 @@ specialist stays the specialist.
 Scaling holds a buff's *relative* size across the run — which means a buff inside the dice in
 Act 1 stays inside them for thirty levels. That is an authoring rule, not a formula:
 
-**A buff move's BODY is authored at ≥ 20; a delta RIDING a hit may go to 10; nothing is
-authored at 5.** At the roster medians, 20 is ×1.33 on Attack, ×1.36 on Defense, ×1.5 on
+**A buff move's BODY is authored at ≥ 20 on one stat, or ≥ 15 a stat when split or paid to
+both allies; a delta RIDING a hit may go to 10; nothing is authored at 5.** Speed and MP Regen do not count toward
+a body — one is ordering, the other is exempt from scaling. At the roster medians, 20 is ×1.33 on Attack, ×1.36 on Defense, ×1.5 on
 Intelligence — outside the 1.18 variance band on every stat but Speed, which is ordering and
 exempt from the argument. A rider is allowed under it because the hit is the body and the
 rider is a tilt on the next one.
@@ -199,8 +200,14 @@ The bands are the authored bases, and the ones in the tree are already close:
 **Entries under the floor (the migration, in full — everything else stands as its base):**
 Toxic Spores −5 Speed → −10; Piston Punch's random 5 → 10; Tide Guard +10 Defense to both
 allies → 15 (a two-target body may sit a rung under a one-target one, as the mana already
-prices); Toughen Up 10/10 → 15/15; Iron Fist's +10 rider stands (a rider); Charge 10/10 stands
-as an Early split. **Over the ceiling:** Exalt's +100 Intelligence exceeds `S` for every hero
+prices); Toughen Up 10/10 → 15/15; Iron Fist's +10 rider stands (a rider); Charge 10 Speed / 10
+Intelligence → 10 / **20** (the Speed half does not count, so its Intelligence IS the body and
+takes the single-stat floor — the one departure from this list's first draft, which had let it
+stand; it is now Focus plus 10 Speed for 5 more mana, which is what it was for). Unbound, the same
+card in Spirit, 15 / 15 → **20** Intelligence / 15 Speed for the same reason. Two the first draft
+missed outright: Fortify 15 → **20** Defense, and Pin Down −10 / −10 → **−20** Defense / −10
+Speed (a debuff body takes the same floor; it is Weaken's price with a Speed rider in place of
+the Wisdom half). **Over the ceiling:** Exalt's +100 Intelligence exceeds `S` for every hero
 under 100 Intelligence, so under §3 it reads as "to the cap" — which is what the card says.
 Either author it as 75 and let the cap be the cap, or keep 100 as the one card whose number
 is a promise the ceiling keeps. §10.
@@ -268,7 +275,7 @@ Sequenced so the tree is playable at every boundary and each phase can be refuse
 | 1 | **The formula.** `scaleStatDelta` beside `scaleStatusMagnitude`, reading Wisdom for a buff and the move's offensive stat for a debuff, STAB, snapshot; wired into `resolveRound`'s delta loop (authored, random and pack-multiplied deltas; derived and passive deltas pass through); `StatChanged.authored / landed`; the tile and overlay print the landed figure for the holder. No content change. | Every authored delta lands at base × StatMult × STAB; `test/arcaneMoves` still passes on bases; the sim reports buff magnitude landed per act. | **DONE 2026-09-14.** `src/engine/combat/statDeltaScaling.ts` (`scaleStatDelta`, `resolveStatDeltaFor` for a board-free screen, `statDeltaRole` — the sign classes the delta, a negative on the caster's side is a cost); wired into `resolveRound`'s delta loop with derived deltas passing through; `StatChanged.authored`; `statDeltaReadout` on the tile summary and the overlay rows (the row notes the base and what it scaled off); `landedDelta` in `test/fixtures.ts` for the slate tests, `test/statScaling.test.ts` for the rule. The sim prices the landed figure and reports it (below). No save change. Measured below. |
 | 2a | **The floor — the debuff half.** Clamp at write to `≥ −½S`; `capped` on the event; Brain Flay measured against it. **Separable — veto leaves phase 1 standing.** | No fight modifier under −½S on any combatant at any round; the floor at 1 unreachable by content. | **DONE 2026-09-14** (per user direction, after phase 1 measured the debuff side crossing the band in a third of Act 1 fights before scaling existed). `statModifierFloor` / `applyStatModifierDelta` (`state.ts`), used by `resolveRound`'s delta loop and its `doublesStatReductions` block and by `passiveEngine`'s `statDelta`; `StatChanged.capped`; `landedDelta` in the fixtures applies it; the pilot prices the held figure. Measured below. |
 | 2b | **The ceiling — the buff half.** Clamp at write to `≤ +S`; Apex Predator and Arcane Overflow measured against it; the Font of Power decision (§10). | No fight modifier over +S. | **UNDECIDED** — the designer is unsure a cap on buffs is needed. Phase 1 measured a used stat passing +S in 23–28% of Act 4+ fights after scaling, 3–5% before (§10). |
-| 3 | **The floor re-author.** §4's sub-floor entries; Exalt's decision; the signatures' deltas re-read against the bands; `test/moveTiers` (or a sibling) pins the body floor at 20 and forbids 5. | No authored body under 20, no delta of 5; the Ancient hand-off in `authoring-moves.md` §10 names the bands. | — |
+| 3 | **The floor re-author.** §4's sub-floor entries; Exalt's decision; the signatures' deltas re-read against the bands; `test/moveTiers` (or a sibling) pins the body floor at 20 and forbids 5. | No authored body under 20, no delta of 5; the Ancient hand-off in `authoring-moves.md` §10 names the bands. | **DONE 2026-09-14.** Toxic Spores −5 → −10, Piston Punch's reel 5 → 10, Tide Guard 10 → 15, Toughen Up 10/10 → 15/15, Charge's and Unbound's Intelligence to 20 (a Speed-and-a-stat card's body is the stat), Fortify 15 → 20, Pin Down's Defense −10 → −20; every signature already sat inside the bands; Exalt kept at 100 (§10 — with only the debuff half of the ceiling built it is simply the biggest number, and stays the one card that says so). `test/statScaling.test.ts` pins the two floors; `authoring-moves.md` "`statDeltas`" carries the bands for the Ancient slate. A Class move is exempt from the body floor — its body is its verb (Intercept is a redirect; its +10 is a rider on that). Measured on the phase-2a pilot: 67.7% → 67.1%, Act 1 90.4 → 90.1 — seven bases moved 5–10 points, noise. |
 | 4 | **Presentation.** The pip strip, the `→` on the hero sheet, the cap as a bar end, the flash pair on a cap hit, "at the limit" on the tile before the press. | A player can read a hero's modifier state from the fight screen without opening the sheet. | — |
 | 5 | **Re-fit.** The AI's utility for a scaled delta and a capped one; a sim pass on the pilot against the pre-phase-1 baseline (full-clear 54%, Reader 77 / Auto 53 / Fast 32 min); the Act 1 wall re-read, since a buff above the noise floor is the kind of lever the wall has not been given; then the `stat / 50` dial if the Late-act decay reads as a fault in play. | Win-rate targets are a playtest question; the measurement is buffs' share of casts by act, and whether it rose. | — |
 
