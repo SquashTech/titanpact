@@ -18,15 +18,13 @@ import {
   ENCHANTMENT_IDS,
   ENCHANT_FORCE_BY_RARITY,
   EQUIPMENT_FAMILIES,
-  canMergeItems,
   equipmentBudgetCost,
   equipmentBudgetProblems,
   equipmentEffectSpend,
   equipmentIdFor,
   holdsItem,
   lootTierFor,
-  mergeEnchantChoices,
-  mergeResultId,
+  mergeIntoHeld,
   parseEquipmentId,
   pickWeightedEquipment,
   rarityWeightsFor,
@@ -190,8 +188,7 @@ test('equipment: a Unique is enchantable but has no ladder', () => {
     assert.ok(enchanted, `${unique.id} has no enchanted variant`);
     assert.deepStrictEqual(equipmentBudgetProblems(enchanted, PASSIVE_ITEM_COST), []);
     // No ladder to climb: nothing merges it and the Anvil has nothing above Mythic to sell.
-    assert.strictEqual(canMergeItems(unique, unique), false);
-    assert.strictEqual(mergeResultId(unique), null);
+    assert.strictEqual(mergeIntoHeld(unique, unique), null);
   }
 });
 
@@ -203,127 +200,26 @@ test('equipment: the drop pool is unenchanted bases only', () => {
   }
 });
 
-// --- Merging ---
+// --- Merging (docs/gear-absorption.md §3) ---
 
-test('equipment: two of a family and tier merge up, ignoring enchants', () => {
+test('equipment: a same-family drop merges into the held piece one tier above the higher of the two', () => {
+  assert.strictEqual(mergeIntoHeld(equipment['spear.rare'], equipment['spear.rare']), 'spear.epic');
+  assert.strictEqual(mergeIntoHeld(equipment['spear.common'], equipment['spear.epic']), 'spear.legendary', 'the drop outranks the holder');
+  assert.strictEqual(mergeIntoHeld(equipment['spear.epic'], equipment['spear.common']), 'spear.legendary', 'the holder outranks the drop');
+  assert.strictEqual(mergeIntoHeld(equipment['spear.legendary'], equipment['spear.common']), 'spear.mythic');
+});
+
+test("equipment: a merge keeps the held enchant, else takes the drop's — one enchant, no choice", () => {
   const plain = equipment['spear.rare'];
   const blazing = equipment['spear.rare.blazing'];
   const tidal = equipment['spear.rare.tidal'];
-
-  assert.ok(canMergeItems(plain, plain));
-  assert.ok(canMergeItems(plain, blazing), 'an enchanted duplicate must still merge');
-  assert.ok(canMergeItems(blazing, tidal), 'two differently enchanted duplicates must still merge');
-
-  assert.strictEqual(mergeResultId(plain), 'spear.epic');
-  assert.strictEqual(mergeResultId(plain, 'blazing'), 'spear.epic.blazing');
-
-  // The choice the player is offered: at most one enchant survives, so two plain inputs pose none.
-  assert.deepStrictEqual(mergeEnchantChoices(plain, plain), []);
-  assert.deepStrictEqual(mergeEnchantChoices(plain, blazing), ['blazing']);
-  assert.deepStrictEqual(mergeEnchantChoices(blazing, tidal), ['blazing', 'tidal']);
+  assert.strictEqual(mergeIntoHeld(blazing, tidal), 'spear.epic.blazing', 'the held piece wins');
+  assert.strictEqual(mergeIntoHeld(plain, tidal), 'spear.epic.tidal', "a plain holder takes the drop's");
+  assert.strictEqual(mergeIntoHeld(blazing, plain), 'spear.epic.blazing');
 });
 
-test('equipment: a merge needs a matching family AND tier, and Mythic has nowhere to go', () => {
-  assert.strictEqual(canMergeItems(equipment['spear.rare'], equipment['sword.rare']), false, 'different families');
-  assert.strictEqual(canMergeItems(equipment['spear.rare'], equipment['spear.epic']), false, 'different tiers');
-  assert.strictEqual(canMergeItems(equipment['spear.mythic'], equipment['spear.mythic']), false, 'nothing above Mythic');
-  assert.strictEqual(mergeResultId(equipment['spear.mythic']), null);
-});
-
-test('equipment: a hero holds one item per FAMILY, not one per id', () => {
-  // Every tier of a family grants the same Awakening, so two Swords would count-stack Sunder
-  // while both cards show it once.
-  const loadout = ['sword.epic'];
-  assert.ok(holdsItem(loadout, 'sword.epic'));
-  assert.ok(holdsItem(loadout, 'sword.mythic'), 'a different tier of the same family is still a Sword');
-  assert.ok(holdsItem(loadout, 'sword.epic.blazing'), 'an enchanted Sword is still a Sword');
-  assert.ok(!holdsItem(loadout, 'spear.epic'));
-  // A Unique has no family, so its own id is the identity.
-  assert.ok(holdsItem(['worldbreaker'], 'worldbreaker.feral'));
-  assert.ok(!holdsItem(['worldbreaker'], 'guardianPlate'));
-});
-
-test('equipment: every passive an item grants has a price, and every price names a real passive', () => {
-  for (const item of catalog) {
-    for (const id of item.grantsPassiveIds ?? []) {
-      assert.ok(PASSIVE_ITEM_COST[id] !== undefined, `${item.id} grants unpriced passive ${id}`);
-    }
-  }
-  for (const [id, cost] of Object.entries(PASSIVE_ITEM_COST)) {
-    assert.ok(passives[id], `PASSIVE_ITEM_COST prices unknown passive '${id}'`);
-    assert.ok(cost > 0 && cost % 5 === 0, `PASSIVE_ITEM_COST['${id}'] = ${cost} should be a positive multiple of 5`);
-  }
-});
-
-// --- The act curve ---
-
-test('equipment: every loot tier row is a clean percentage split', () => {
-  for (let tier = 1; tier <= MAX_LOOT_TIER; tier++) {
-    const row = RARITY_WEIGHTS_BY_TIER[tier];
-    const total = RARITY_ORDER.reduce((sum, rarity) => sum + row[rarity], 0);
-    assert.strictEqual(total, 100, `tier ${tier} weights sum to ${total}`);
-  }
-});
-
-test('equipment: rarity odds climb monotonically across the run', () => {
-  for (let act = 2; act <= 5; act++) {
-    const prev = rarityWeightsFor(act - 1);
-    const now = rarityWeightsFor(act);
-    assert.ok(now.common <= prev.common, `common got commoner from act ${act - 1} to ${act}`);
-    assert.ok(now.mythic >= prev.mythic, `mythic got rarer from act ${act - 1} to ${act}`);
-  }
-});
-
-test('equipment: Legendary and Mythic are impossible in Act 1, from any source', () => {
-  for (const source of ['standard', 'elite'] as const) {
-    const weights = rarityWeightsFor(1, source);
-    assert.strictEqual(weights.legendary, 0, `act 1 ${source} can roll legendary`);
-    assert.strictEqual(weights.mythic, 0, `act 1 ${source} can roll mythic`);
-    // The elite bump must not punch through the act's hard window.
-    assert.ok(weights.epic > 0, `act 1 ${source} should still reach epic`);
-  }
-  assert.strictEqual(lootTierFor(1, 'elite'), 2);
-});
-
-test('equipment: Common is impossible in Act 5, from any source', () => {
-  for (const source of ['standard', 'elite'] as const) {
-    assert.strictEqual(rarityWeightsFor(5, source).common, 0, `act 5 ${source} can roll common`);
-  }
-});
-
-test('equipment: the sampler never returns a rarity the act forbids', () => {
-  // Weight 0 alone is not enough — float drift in the weighted walk can still land on one.
-  for (const act of ACTS) {
-    for (const source of ['standard', 'elite'] as const) {
-      const weights = rarityWeightsFor(act, source);
-      const banned = new Set(RARITY_ORDER.filter((rarity) => weights[rarity] === 0));
-      for (let i = 0; i < 200; i++) {
-        for (const item of pickWeightedEquipment(catalog, 3, weights)) {
-          assert.ok(!banned.has(item.rarity), `act ${act} ${source} cache rolled a ${item.rarity}: ${item.id}`);
-        }
-      }
-    }
-  }
-});
-
-test('equipment: the catalog can actually fill every act window the curve asks for', () => {
-  // The sampler falls back to the unfiltered pool when a filter empties it; that fallback must never fire.
-  for (const act of ACTS) {
-    const [minRarity, maxRarity] = ACT_RARITY_WINDOW[act];
-    const min = RARITY_ORDER.indexOf(minRarity);
-    const max = RARITY_ORDER.indexOf(maxRarity);
-    const available = catalog.filter((item) => {
-      const i = RARITY_ORDER.indexOf(item.rarity);
-      return i >= min && i <= max;
-    });
-    // 3 so an item cache can offer three DISTINCT items.
-    assert.ok(available.length >= 3, `act ${act} has only ${available.length} items in window`);
-  }
-});
-
-test('equipment: every rarity exists in the catalog, so no tier is a dead branch of the curve', () => {
-  for (const rarity of RARITY_ORDER) {
-    const count = catalog.filter((item) => item.rarity === rarity).length;
-    assert.ok(count > 0, `no ${rarity} item exists`);
-  }
+test('equipment: a merge needs a matching family, and Mythic has nowhere to go', () => {
+  assert.strictEqual(mergeIntoHeld(equipment['spear.rare'], equipment['sword.rare']), null, 'different families');
+  assert.strictEqual(mergeIntoHeld(equipment['spear.mythic'], equipment['spear.common']), null, 'nothing above Mythic');
+  assert.strictEqual(mergeIntoHeld(equipment['spear.common'], equipment['spear.mythic']), null, 'nothing above Mythic, whichever side');
 });

@@ -220,7 +220,7 @@ test('vigil: it offers enough recruits to fill the roster, plus one so it stays 
     for (let i = 0; i < rosterSize; i++) {
       run = addRosterEntry(run, createRosterEntry(`r${i}`, 'cinderKnight', []));
     }
-    const offers = rollGuildHallOffers(run, guildHallOffers, Object.values(equipment), true);
+    const offers = rollGuildHallOffers(run, guildHallOffers, true);
     assert.ok(
       offers.heroOfferIds.length >= ROSTER_CAP - rosterSize,
       `roster ${rosterSize} cannot be filled from ${offers.heroOfferIds.length} offers`
@@ -231,7 +231,7 @@ test('vigil: it offers enough recruits to fill the roster, plus one so it stays 
 test('vigil: a plain Guild Hall still offers 2-3, so the fill is the Vigil doing it', () => {
   const run = { ...createRunState(), actNumber: 3 };
   for (let i = 0; i < 20; i++) {
-    const offers = rollGuildHallOffers(run, guildHallOffers, Object.values(equipment));
+    const offers = rollGuildHallOffers(run, guildHallOffers);
     assert.ok(offers.heroOfferIds.length === 2 || offers.heroOfferIds.length === 3);
   }
 });

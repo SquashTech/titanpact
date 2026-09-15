@@ -133,8 +133,8 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'equip',
     topic: 'Equipment',
     lines: [
-      'Everything we find goes into the bag, and the bag will tell you when something in it is new.',
-      'Open the Roster and tap it to see what it does. Give it to one of us whenever you like — each of us can hold one for now, and a Forge would widen that.',
+      'Loot. Whatever we find is given to one of us on the spot, and it stays with them — nothing comes off, so choose who it suits.',
+      'Each of us can carry three. Hand a piece to someone already carrying its like and the two are forged into something better. Hold the piece to read it, hold one of us to read a sheet.',
     ],
   },
   {
@@ -197,7 +197,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     topic: 'Skirmish',
     lines: [
       'A Skirmish. These are always against other Pactbearers, just like us. When they go down, we can recruit one among their ranks as long as we have a Recruit Contract.',
-      'There can only be a maximum of six of us on a team. Recruits beyond that point will force one out. Their items will stay with us.',
+      'There can only be a maximum of six of us on a team. Recruits beyond that point will force one out, and whatever they carried goes with them.',
       'Both of these enemies are of the Frost element. Cold eats a Beast such as Fang. We must deal with them quickly.',
       { speaker: 'fang', text: 'Woof.' },
     ],
@@ -213,13 +213,13 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     ],
   },
 
-  // --- Row 3: the forge ---
+  // --- Row 3: the boon ---
   {
-    id: 'map:forgeReward',
-    topic: 'The Forge',
+    id: 'map:passiveReward',
+    topic: 'The Boon',
     lines: [
-      'A forge. I told you our capacity could expand — this is how.',
-      'One of us walks away able to carry a second piece of equipment, for the rest of the journey. Choose whoever you mean to lean on.',
+      'A shrine. It offers three boons, and one of us takes one — a lasting knack, kept for the rest of the journey.',
+      'Read what each does before choosing, and give it to whoever can make the most of it.',
     ],
   },
 

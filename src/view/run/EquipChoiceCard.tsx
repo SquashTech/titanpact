@@ -45,9 +45,8 @@ interface EquipInspectOverlayProps {
 }
 
 /**
- * A plain inspect from a reward or event pick. Same card as every other item hold
- * (ItemDossier.tsx), with the tier stripe so it reads as the same thing opening. The Guild Hall's
- * buy sheet grew out of this and is its own component now (EquipBuyOverlay.tsx).
+ * A plain inspect from a reward, event or who-screen pick. Same card as every other item hold
+ * (ItemDossier.tsx), with the tier stripe so it reads as the same thing opening.
  */
 export function EquipInspectOverlay({ item, onClose }: EquipInspectOverlayProps) {
   return (

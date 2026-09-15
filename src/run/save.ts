@@ -13,8 +13,8 @@
 
 import type { PassiveId, StatKey, TypeId } from '../engine/content';
 import { STAT_ORDER } from '../engine/content';
-import type { EquipmentLoadout, Stash, UnseenItems } from './equipment';
-import { MAX_ITEM_SLOTS, pruneUnseen } from './equipment';
+import type { EquipmentLoadout } from './equipment';
+import { MAX_ITEM_SLOTS } from './equipment';
 import type { MapNode, MapNodeType, RunMap } from './map';
 import { MAP_NODE_TYPES } from './map';
 import type { ProgressionTable } from './progression';
@@ -63,8 +63,10 @@ import { MASTERY_CAP } from './mastery';
  * reads it rather than a schedule level, and a v14 map may hold no `scribeReward` row.
  * v16 (2026-09-14): Mastery phase 2 — Ichor retired. `ichorReward` and `ichorDropReward` are gone
  * and `scrollReward` sits where the first was, so a v15 map may hold node types this build lacks.
+ * v18 (2026-09-15): gear absorption (docs/gear-absorption.md) — the bag is gone (`stash`,
+ * `unseenItemIds`), entries lost `bonusItemSlots`, and a v17 map may hold `forgeReward`.
  */
-export const SAVE_VERSION = 17;
+export const SAVE_VERSION = 18;
 
 /**
  * Where a restored run resumes. Both are settled points: every reward is banked, the
@@ -229,32 +231,6 @@ function decodeLoadout(value: unknown, index: SaveContentIndex, label: string): 
   return [...value];
 }
 
-/**
- * The bag. Absent in files written before it existed, which decode to an empty one — the
- * old model had nowhere to put an unequipped item, so "missing" and "empty" say the same
- * thing and no version bump is owed. Duplicates are legal here, unlike a loadout.
- */
-function decodeStash(value: unknown, index: SaveContentIndex): Stash {
-  if (value === undefined || value === null) return [];
-  if (!isStringArray(value)) reject('run.stash is not a list of item ids');
-  for (const id of value) {
-    if (!index.equipmentIds.has(id)) reject(`run.stash references unknown equipment "${id}"`);
-  }
-  return [...value];
-}
-
-/**
- * The bag's unopened marks. Absent on a file written before them, and an unmarked bag is a
- * quiet badge rather than a broken run, so "missing" decodes to "all seen" and no version bump
- * is owed. Pruned against the decoded bag, since a mark pointing at nothing would light the
- * badge with nothing behind it.
- */
-function decodeUnseen(value: unknown, stash: Stash): UnseenItems {
-  if (value === undefined || value === null) return [];
-  if (!isStringArray(value)) reject('run.unseenItemIds is not a list of item ids');
-  return pruneUnseen([...new Set(value)], stash);
-}
-
 function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number): RosterEntry {
   const label = `roster[${at}]`;
   if (!isObject(value)) reject(`${label} is not an object`);
@@ -272,7 +248,6 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
   // save wrote no such field.
   const classPassiveId = classId !== null ? (index.classPassiveIds.get(classId) ?? null) : null;
 
-  if (!isInt(value.bonusItemSlots, 0, MAX_ITEM_SLOTS)) reject(`${label}.bonusItemSlots is not a slot count`);
   if (!isInt(value.scheduleTaken, 0)) reject(`${label}.scheduleTaken is not a count`);
   if (!isInt(value.mastery, 0, MASTERY_CAP)) reject(`${label}.mastery is not a pip count`);
   // Absent on a file written before wounds persisted; whole is the honest default.
@@ -301,7 +276,6 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
     growthStatGrants: decodeStatGrants(value.growthStatGrants, `${label}.growthStatGrants`),
     scheduleTaken: value.scheduleTaken,
     mastery: value.mastery,
-    bonusItemSlots: value.bonusItemSlots,
     evolutionTypeGraft: graft as TypeId | null,
     classId: classId as string | null,
     classPassiveId,
@@ -426,13 +400,9 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
   // between builds should cost one repeated speech, never the whole run.
   if (!isStringArray(value.tutorialSeenBeatIds)) reject('run.tutorialSeenBeatIds is not a list of ids');
 
-  const stash = decodeStash(value.stash, index);
-
   return {
     roster,
     gold: value.gold,
-    stash,
-    unseenItemIds: decodeUnseen(value.unseenItemIds, stash),
     relics: requireIds(value.relics, index.relicIds, 'run.relics'),
     recruitContracts: value.recruitContracts,
     consumables,

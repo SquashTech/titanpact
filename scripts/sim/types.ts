@@ -156,6 +156,11 @@ export interface Aggregate {
   /** Items obtained, keyed `act:source` (run.ts RunRecord.itemsBySource), all runs and won runs. */
   itemsBySource: Record<string, number>;
   itemsBySourceWon: Record<string, number>;
+  /** Drops that merged into a held piece, all runs / won runs. */
+  merges: number;
+  mergesWon: number;
+  mergeOffers: number;
+  mergeOffersWon: number;
   /** What runs cost in taps and screens (time.ts), [act], summed over runs that ENTERED the act. */
   timeByAct: TimeCounts[];
   /** The same, over completed runs only — a full clear's shape, undiluted by Act 1 deaths. */
@@ -223,6 +228,10 @@ export function emptyAggregate(): Aggregate {
     recruitsBySource: {},
     itemsBySource: {},
     itemsBySourceWon: {},
+    merges: 0,
+    mergesWon: 0,
+    mergeOffers: 0,
+    mergeOffersWon: 0,
     timeByAct: Array.from({ length: 7 }, emptyTimeCounts),
     timeByActWon: Array.from({ length: 7 }, emptyTimeCounts),
     runMinutesWon: PACE_PROFILES.map(() => []),
@@ -322,6 +331,10 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   for (const key of Object.keys(from.recruitsBySource)) into.recruitsBySource[key] = (into.recruitsBySource[key] ?? 0) + from.recruitsBySource[key];
   for (const key of Object.keys(from.itemsBySource)) into.itemsBySource[key] = (into.itemsBySource[key] ?? 0) + from.itemsBySource[key];
   for (const key of Object.keys(from.itemsBySourceWon)) into.itemsBySourceWon[key] = (into.itemsBySourceWon[key] ?? 0) + from.itemsBySourceWon[key];
+  into.merges += from.merges;
+  into.mergesWon += from.mergesWon;
+  into.mergeOffers += from.mergeOffers;
+  into.mergeOffersWon += from.mergeOffersWon;
   for (const key of Object.keys(from.deathByNodeType)) {
     into.deathByNodeType[key] = (into.deathByNodeType[key] ?? 0) + from.deathByNodeType[key];
   }

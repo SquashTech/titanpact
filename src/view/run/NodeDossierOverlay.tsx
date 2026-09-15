@@ -30,13 +30,11 @@ const FACT_GLYPHS: Record<NodeFactGlyph, ReactNode> = {
   recruit: <SectionGlyph name="heroes" />,
   move: <SectionGlyph name="moves" />,
   passive: <SectionGlyph name="passives" />,
-  slot: <HubGlyph name="hand" />,
   class: <HubGlyph name="hall" />,
   enemy: <HubGlyph name="foe" />,
   hero: <SectionGlyph name="heroes" />,
-  anvil: <NodeGlyph type="forgeReward" />,
+  anvil: <HubGlyph name="anvil" />,
   enchant: <SectionGlyph name="matchups" />,
-  sell: <ResourceGlyph kind="gold" tone="inherit" />,
   hidden: <NodeGlyph type="event" />,
 };
 

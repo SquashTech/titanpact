@@ -4,7 +4,7 @@
 
 import type { MapNodeType } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
-import { EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, MAX_ITEM_SLOTS, RARITY_ORDER, rarityWeightsFor } from '../../run/equipment';
+import { EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, RARITY_ORDER, rarityWeightsFor } from '../../run/equipment';
 import { GOLD_REWARD_RANGE, PURSE_GOLD_RANGE } from '../../run/runProgress';
 import { MASTERY_EVOLUTION, SCRIBE_PICKS, SCRIBE_PIPS_EACH, SCROLL_CACHE_COUNT, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT } from '../../run/mastery';
 import { ENCOUNTER_XP_MULTIPLIER, encounterXpForAct, encounterXpKind } from '../../run/growth';
@@ -14,14 +14,7 @@ import { OPENER_ESCORT_COUNT, championLevel, enemyLevelFor, guildHallLevel, spaw
 import { ACT_ONE_OPENER_COUNT } from '../../run/spawn';
 import type { SpawnTier } from '../../data/titanspawn';
 import { ROSTER_CAP, SEAL_ACTS } from '../../run/state';
-import {
-  ANVIL_PRICE_BY_TARGET,
-  ENCHANT_PRICE_BY_RARITY,
-  EQUIPMENT_PRICE_BY_RARITY,
-  EQUIPMENT_SELL_SHARE,
-  GUILD_HALL_EQUIPMENT_OFFER_COUNT,
-  SLOT_PRICE_BY_TARGET,
-} from '../../run/shop';
+import { ANVIL_PRICE_BY_TARGET, ENCHANT_PRICE_BY_RARITY } from '../../run/shop';
 import { CONTRACT_PURCHASE_COST, GUILD_HALL_RECRUIT_COST } from '../../data/recruitment';
 
 /** The mark at the head of a row — resolved to a glyph by the view. */
@@ -37,13 +30,11 @@ export type NodeFactGlyph =
   | 'recruit'
   | 'move'
   | 'passive'
-  | 'slot'
   | 'class'
   | 'enemy'
   | 'hero'
   | 'anvil'
   | 'enchant'
-  | 'sell'
   | 'hidden';
 
 export interface NodeFact {
@@ -165,16 +156,6 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
           { glyph: 'hero', label: 'Hire', value: `${GUILD_HALL_RECRUIT_COST}g`, note: `Lv ${guildHallLevel(actNumber)}, raw` },
           { glyph: 'contract', label: 'Contract', value: `${CONTRACT_PURCHASE_COST}g` },
           { glyph: 'scroll', label: 'Mastery Scroll', value: `${SCROLL_PURCHASE_COST}g`, note: `up to ${SCROLL_PURCHASE_LIMIT}` },
-          { glyph: 'item', label: 'Gear', value: `${GUILD_HALL_EQUIPMENT_OFFER_COUNT} on shelf`, note: priceBand(EQUIPMENT_PRICE_BY_RARITY) },
-          { glyph: 'sell', label: 'Sell', value: `${Math.round(EQUIPMENT_SELL_SHARE * 100)}%`, note: 'of buy price' },
-        ],
-        odds: odds('standard'),
-      };
-    case 'blacksmith':
-      return {
-        kind: 'Landmark · Spend',
-        facts: [
-          { glyph: 'slot', label: 'Item slot', value: `${SLOT_PRICE_BY_TARGET[2]}g`, note: `${SLOT_PRICE_BY_TARGET[3]}g for the ${MAX_ITEM_SLOTS}rd` },
           { glyph: 'anvil', label: 'Anvil', value: priceBand(ANVIL_PRICE_BY_TARGET), note: '+1 tier' },
           { glyph: 'enchant', label: 'Enchanter', value: priceBand(ENCHANT_PRICE_BY_RARITY), note: 'one element' },
         ],
@@ -185,10 +166,8 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         kind: 'Landmark · The last stop',
         facts: [
           { glyph: 'hero', label: 'Recruits', value: `to ${ROSTER_CAP}`, note: 'free' },
-          { glyph: 'item', label: 'Gear', value: `${GUILD_HALL_EQUIPMENT_OFFER_COUNT} on shelf`, note: 'one tier up' },
-          { glyph: 'sell', label: 'Sell', value: `${Math.round(EQUIPMENT_SELL_SHARE * 100)}%`, note: 'of buy price' },
         ],
-        odds: rarityWeightsFor(actNumber, 'elite'),
+        odds: null,
       };
     case 'equipmentReward':
       return {
@@ -208,12 +187,6 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
       return {
         kind: 'Reward · Build',
         facts: [{ glyph: 'passive', label: 'Boon', value: `1 of ${BOON_OFFER_COUNT}`, note: 'to 1 hero, permanent' }],
-        odds: null,
-      };
-    case 'forgeReward':
-      return {
-        kind: 'Reward · Build',
-        facts: [{ glyph: 'slot', label: 'Item slot', value: '+1', note: `to 1 hero, max ${MAX_ITEM_SLOTS}` }],
         odds: null,
       };
     case 'scribeReward':

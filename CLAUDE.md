@@ -93,6 +93,23 @@ don't silently override it.
 > Lizard Rush is Riptide's, and Tidecaller grants Maelstrom (off Riptide's pool) in its place.
 > **Phase 4 is IN** — all 36 heroes carry a signature (`src/data/signatures.ts`); the numbers are a first pass, the weaker ones waiting on a buff/debuff rework. **Phase 5 is IN:** `2N−2` per user direction; the Scribe's 2 + 2, the Cache's 46 and the shelf's 25g / 2 stand, with the supply dials measured in §8 — 35 pips a completed run, full-clear 54% against the pre-Mastery 62%, the gap being the roster-wide Evolutions the level schedule paid for free; the Scribe at 3 + 3 recovers half of it. That figure is the designer's to move.
 
+> **A fifth overhaul is BUILT, phases 1–2: `docs/gear-absorption.md`** (2026-09-15, per user
+> direction). **Gear is absorbed**: every item raises a who-screen the moment it arrives
+> (`ItemWhoScreen`, behind the level report after a fight, after the Cache pick, once per Loot
+> Pile item) and never comes off the hero it is given to; **three sockets for everyone**
+> (`BASE_ITEM_SLOTS` = 3, `bonusItemSlots` and the Forge deleted); a same-family drop **merges
+> into the holder** one tier above the higher of the two, the held enchant surviving, the act
+> window not consulted (`mergeIntoHeld`); **Sell** is the who-screen's one decline, and a drop
+> nobody can receive is gold on the spot. The bag, its marks and the footer label, the swap
+> sheet, the Blacksmith node, the Guild Hall's item shelf and its Sell are DELETED; the funnel is
+> a forced Guild Hall every act with the Anvil and Enchanter on its **Smithy** tab; the spliced
+> row is the Tutor in acts 4 AND 5 (the in-row act-4 seat retired with the Forge); the tutorial
+> corridor's third row is the Boon. Its §9 lists the invariants below it reverses. Measured
+> (sim, 3000 runs): full-clear 12.0 → 18.8% on the same seed — three sockets are a player buff
+> — 17.2 items a completed run, a merge OFFERED 4.7 times a run and TAKEN 0.6 by a pilot that
+> widens while a socket is free (§8). Phases 3 (a contract arrives armed) and 4 (the drop table)
+> are still owed.
+
 ---
 
 ## Locked invariants — do not violate without an explicit decision
@@ -320,8 +337,8 @@ don't silently override it.
   level's is. It was briefly a curated pick from the hero's Early-and-Mid list, which read as a
   designer's screen on one of a new player's first nodes; the roll keeps the payoff and leaves
   WHO as the only decision. With the Tutor it is the only way to a move AHEAD of its schedule.
-  **Act 4's spliced row is a forced
-  Forge** (`LAST_SPLICED_ACT`, `src/run/map.ts`).
+  **Acts 4 and 5's spliced row is a forced Tutor** (2026-09-15; act 4's was the Forge until gear
+  was absorbed — `docs/gear-absorption.md` §4).
 - **Evolutions are authored branch points**, each option carrying a **single
   identifiable name** (e.g. Cinder's Explosive / Ironclad / Thunderblaze).
   **All 36 heroes are on the five-clause Evolution framework** as of 2026-09-05 — no
@@ -364,15 +381,18 @@ don't silently override it.
   a dead one is not replaced. **It does not count toward Act 1's enemy-count cap** (per user
   direction, same day): the cap reads the immortal roster, so the Act 1 Skirmish is 3v2. `rosterHeroes` (`data/content.ts`) is the roster-facing hero
   lookup for that reason; `heroes` stays the recruitable pool.
-- **Items are uncategorised, and the SLOT is the scarce thing** (2026-09-06, replacing the
-  weapon/armor/accessory split, which playtested as fiddly and unintuitive). Any item goes in
-  any slot; **every hero starts on `BASE_ITEM_SLOTS` = 1** and there is no per-hero dial
-  (2026-09-08). Nine heroes at **Speed ≤ 40** used to author 2, but Speed and HP are
-  anti-correlated across the roster, so the rule read as a Speed rule and landed as an HP rule —
-  and a measured 79.3% mirror-match edge for a second item dwarfed the tiebreak loss it was
-  paying for. The **Forge** node grants +1 slot to one hero, to `MAX_ITEM_SLOTS` = 3.
-  **No hero holds two copies of one item**, and capacity is decided in one place, `itemSlotsFor`
-  (`docs/progression.md`). **Relics are the team-wide axis** — a separate axis, not items.
+- **Items are uncategorised, and ABSORBED** (2026-09-06 for the first half, replacing the
+  weapon/armor/accessory split, which playtested as fiddly and unintuitive; 2026-09-15 for the
+  second, `docs/gear-absorption.md`, per user direction). Any item goes in any socket; **every
+  hero has `BASE_ITEM_SLOTS` = 3 = `MAX_ITEM_SLOTS`**, no per-hero dial and nothing that grants
+  more (the Forge and `bonusItemSlots` are deleted). **An item is given to a hero the moment it
+  is received and never comes off** — the who-screen (`ItemWhoScreen`) is the one screen gear
+  ever gets, with take / merge / sell as its verbs; there is no bag, no swap, no move, no later
+  sale, and the Roster screen only reads. Permanence is what makes an item matter; supply is
+  the balance number. **No hero holds two of one family**: the second one MERGES (`mergeIntoHeld`
+  — a tier above the higher of the two, the held enchant surviving, the act window not
+  consulted; Mythic and a Unique cannot). Capacity is decided in one place, `itemSlotsFor`.
+  **Relics are the team-wide axis** — a separate axis, not items.
 - **The relic catalog is ONE closed family of flat stats: the Guardian's Banners** (2026-09-07,
   replacing a ~50-relic random pool and the `relicReward` Shrine node, both deleted). Playtest
   found the pool collapsed into two buckets — a bigger stat grant, or a passive that was
@@ -384,10 +404,10 @@ don't silently override it.
   one **Late-tier move is ROLLED** from its pool — un-gated by level, taking no schedule entry,
   spent by being made (`tierMovePool`, `src/run/tutor.ts`; the Mentor is the same function at
   Mid). A guaranteed Late move, ahead of the band or beside it. It was a curated pick of ANY move
-  off the pool — the run's strongest reward and its longest screen. It takes a seat **inside** a
-  pick-1-of-3 reward row rather than a forced row of its own: that displacement (a Forge, a Boon,
-  a purse) is the only price a reward row can charge — in act 4; act 5's is the forced
-  spliced seat where the Mentor and Forge sit in earlier acts. `docs/run-loop.md` "The Tutor".
+  off the pool — the run's strongest reward and its longest screen. **Both seats are the forced
+  spliced row** since 2026-09-15 (`docs/gear-absorption.md` §4): act 4's used to sit inside a
+  pick-1-of-3 reward row, priced by what it displaced, and moved to the row the Forge vacated.
+  `docs/run-loop.md` "The Tutor".
 - **Boons: the `passiveReward` node grants ONE hero a passive** (2026-09-07), the salvage of the
   passive relics — same effects, hero-scoped, so the scope that broke them is gone. 1-of-3 then
   pick a hero, via `grantEventPassive`; it stacks. The pool is every equipment/event passive plus
@@ -502,7 +522,7 @@ what's still unimplemented:
   inherent duals. Which specific type each hero starts mono as is still open (below).
 - Run structure (2026-08-16 sign-off, multi-act extension 2026-08-17): **a Slay the
   Spire-style branching map** — a uniform per-act shape of forced Fight → pick 1 of 3
-  reward → **the spliced seat** (Mentor in acts 1–3, Forge in 4, Tutor in 5) → pick 1 of 3
+  reward → **the spliced seat** (Mentor in acts 1–3, Tutor in 4–5) → pick 1 of 3
   reward → pick 1 of 2 (**Elite or Skirmish** since
   2026-09-13, both recruitable, each tile previewing the enemy typing it fields from a draw
   seeded off the map so the preview IS the fight, and the two guaranteed to differ in a type —
@@ -515,10 +535,11 @@ what's still unimplemented:
   was re-sized ×1.25 so par still lands 8/14/19/24/28, and Act 5's seat became a forced
   Tutor (its in-row seat stays in act 4 only). Measured: Reader 92 → 77 min, Auto 63 → 53,
   Act 1 clear 51 → 65% (`run-loop.md` "Three fights an act"). **2026-09-08:** a third
-  reward row was added and the funnel became a **pick 1 of 2 from act 3** — Guild Hall
-  (people and new gear, and the run's only place to SELL) or **Blacksmith** (item slots,
-  the Anvil, the Enchanter, all for gold). One verb family per node; the Anvil and
-  Enchanter left the Guild Hall, and the free `forgeReward` Forge is unchanged. Map tiles
+  reward row was added and the funnel became a **pick 1 of 2 from act 3** — Guild Hall or
+  **Blacksmith** (item slots, the Anvil, the Enchanter). **Reversed 2026-09-15**
+  (`docs/gear-absorption.md` §6): the Blacksmith is deleted, the funnel is **one forced Guild
+  Hall every act**, and the Anvil and Enchanter sit on its Smithy tab over worn gear; the shelf
+  sells no gear and nothing is sold. Map tiles
   **dropped their labels** to pay for the extra row — glyph, silhouette and colour carry
   what the words did, a long press still reads any node out, and this supersedes the
   two-word Monsters/Skirmish vocabulary below. **2026-08-29:** the boss was

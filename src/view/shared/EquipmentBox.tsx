@@ -6,7 +6,6 @@ import { StatGlyph, STAT_LABELS } from './StatBars';
 import { RelicGlyph } from './relicIcons';
 import { EquipmentFormGlyph } from './equipmentIcons';
 import { useLongPress } from './MoveTile';
-import { GEAR_SLOT_ATTR } from './useGearDrag';
 import { passives } from '../../data/passives';
 import { PassiveGlyph } from './passiveIcons';
 import { statuses } from '../../data/statuses';
@@ -108,18 +107,9 @@ interface ItemBoxProps {
    * and the two smear together.
    */
   sfx?: string;
-  /**
-   * The board's key for this slot, stamped as `data-gear-slot`. It is what a carried piece
-   * hit-tests against (useGearDrag) — pass it and the box is a drop target; omit it and the box
-   * is inert scenery. NOT the same thing as being draggable FROM: an empty socket takes a piece
-   * and cannot give one.
-   */
-  slotKey?: string;
-  /** Starts the carry gesture (useGearDrag `handleProps`). */
-  onPointerDown?: (e: PointerEvent) => void;
-  /** Marks laid over the socket that belong to the BOARD rather than to the item — the merge pair flag. */
+  /** Marks laid over the socket that belong to the BOARD rather than to the item. */
   children?: ReactNode;
-  /** Merged over the rarity var, so a caller can hand the socket a colour of its own (the merge pair's up-tier). */
+  /** Merged over the rarity var, so a caller can hand the socket a colour of its own (the who-screen's merge target wears the tier it would reach). */
   style?: CSSProperties;
 }
 
@@ -139,8 +129,6 @@ export function ItemBox({
   onLongPress,
   className,
   sfx,
-  slotKey,
-  onPointerDown,
   children,
   style,
 }: ItemBoxProps) {
@@ -153,12 +141,7 @@ export function ItemBox({
       aria-label={item ? itemSummaryLine(item) : 'Empty item slot'}
       data-sfx={sfx}
       title={item ? itemSummaryLine(item) : undefined}
-      {...{ [GEAR_SLOT_ATTR]: slotKey }}
       {...longPress}
-      onPointerDown={(e) => {
-        onPointerDown?.(e);
-        longPress.onPointerDown(e);
-      }}
     >
       <ItemPiece item={item} />
       {children}

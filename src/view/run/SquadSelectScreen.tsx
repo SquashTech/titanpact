@@ -463,7 +463,7 @@ export function SquadSelectScreen({
         />
       )}
       {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
-      {showRoster && <RosterManagementScreen run={run} onRunChange={onRunChange} onClose={() => setShowRoster(false)} />}
+      {showRoster && <RosterManagementScreen run={run} onClose={() => setShowRoster(false)} />}
     </div>
   );
 }

@@ -2,7 +2,7 @@
 // state is built FROM this (buildCombatState.ts) and never writes back.
 
 import type { PassiveId, StatKey, TypeId } from '../engine/content';
-import type { EquipmentLoadout, Stash, UnseenItems } from './equipment';
+import type { EquipmentLoadout } from './equipment';
 import { createEmptyLoadout } from './equipment';
 import type { RunMap } from './map';
 import { STARTING_CONSUMABLES, type ConsumablePurse } from './consumables';
@@ -61,8 +61,6 @@ export interface RosterEntry {
    * hero and a hire read theirs off the act (masteryForAct).
    */
   mastery: number;
-  /** Item slots granted on top of the hero's authored count (the Forge). Never negative; itemSlotsFor caps the sum. */
-  bonusItemSlots: number;
   /** Current secondary-type grant from the latest type-graft path; a later graft overwrites. Innate primary never changes. */
   evolutionTypeGraft: TypeId | null;
   /** One Class per run holds structurally — a single slot, and classes.ts grantClass replaces. */
@@ -104,10 +102,6 @@ export interface RunState {
   roster: RosterEntry[];
   /** Spent at a Guild Hall; contracts are claimed, not bought with this. */
   gold: number;
-  /** Items carried but not equipped. Uncapped. Duplicates allowed — one copy per HERO is the rule. */
-  stash: Stash;
-  /** Bag items the player has not opened yet — the map's Roster badge. Ids, not indices; see equipment.ts. */
-  unseenItemIds: UnseenItems;
   /** Owned relic ids — duplicates stack. */
   relics: string[];
   /** Starts at 1; +1 at the end of every act; purchasable at a shop. */
@@ -153,8 +147,6 @@ export function createRunState(gold = 0, recruitContracts = 1): RunState {
   return {
     roster: [],
     gold,
-    stash: [],
-    unseenItemIds: [],
     relics: [],
     recruitContracts,
     consumables: { ...STARTING_CONSUMABLES },
@@ -188,7 +180,6 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     growthStatGrants: {},
     scheduleTaken: 0,
     mastery: 0,
-    bonusItemSlots: 0,
     evolutionTypeGraft: null,
     classId: null,
     classPassiveId: null,

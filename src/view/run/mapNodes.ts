@@ -13,14 +13,12 @@ export const NODE_NAMES: Record<MapNodeType, string> = {
   elite: 'Skirmish',
   boss: 'Guardian',
   shop: 'Guild Hall',
-  blacksmith: 'Blacksmith',
   equipmentReward: 'Item',
   scrollReward: 'Scroll Cache',
   passiveReward: 'Boon',
   currencyReward: 'Gold',
   manaWellReward: 'Mana Well',
   restReward: 'Rest',
-  forgeReward: 'Forge',
   mentorReward: 'Mentor',
   tutorReward: 'Tutor',
   scribeReward: 'Scribe',
@@ -40,7 +38,6 @@ export const NODE_COLORS: Record<MapNodeType, string> = {
   shop: 'var(--mana)',
   // A burnt copper beside the Forge's orange: same family (both are about what a hero can
   // carry), different silhouette tier, so they read as related rather than as each other.
-  blacksmith: '#c67a4c',
   equipmentReward: 'var(--physical)',
   // The Scribe's parchment: the two Scroll nodes are one currency, and the count on the glyph tells them apart.
   scrollReward: '#e0c27a',
@@ -52,7 +49,6 @@ export const NODE_COLORS: Record<MapNodeType, string> = {
   // The HP bar's own green: a Rest reads as the bar it refills.
   restReward: 'var(--hp-high)',
   // Forge orange: the only node that hands out a permanent SLOT rather than a thing to put in one.
-  forgeReward: '#f0913c',
   mentorReward: 'var(--buff)',
   // The only cyan on the map — the Tutor is rare enough that it should never be mistaken at a
   // glance for the Mana Well beside it.
@@ -76,14 +72,12 @@ export const NODE_TIERS: Record<MapNodeType, NodeTier> = {
   elite: 'encounter',
   boss: 'ancient',
   shop: 'landmark',
-  blacksmith: 'landmark',
   equipmentReward: 'reward',
   scrollReward: 'reward',
   passiveReward: 'reward',
   currencyReward: 'reward',
   manaWellReward: 'reward',
   restReward: 'reward',
-  forgeReward: 'reward',
   mentorReward: 'reward',
   tutorReward: 'reward',
   scribeReward: 'reward',

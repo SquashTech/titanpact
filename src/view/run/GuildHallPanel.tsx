@@ -2,6 +2,7 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { heroes } from '../../data/heroes';
 import { equipment } from '../../data/equipment';
+import { ItemServicesSection } from './ItemServicesSection';
 import { guildHallOffers, CONTRACT_PURCHASE_COST } from '../../data/recruitment';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { SectionGlyph } from '../shared/sectionIcons';
@@ -14,26 +15,22 @@ import { SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT, canBuyScroll } from '../..
 import { CONSUMABLE_HOLD_CAP, CONSUMABLE_KINDS, CONSUMABLE_NAMES, CONSUMABLE_PRICE, canBuyConsumable, type ConsumableKind } from '../../run/consumables';
 import { MEND_PRICE, anyWounded, canBuyMend } from '../../run/wounds';
 import { StatGlyph } from '../shared/StatBars';
-import type { EquipmentDefinition } from '../../run/equipment';
 import {
   recruitFromGuildHall,
   buyContract,
   RecruitmentError,
   type GuildHallOffer,
 } from '../../run/recruitment';
-import { EQUIPMENT_PRICE_BY_RARITY, type GuildHallOffers } from '../../run/shop';
+import type { GuildHallOffers } from '../../run/shop';
 import { getTypeColor } from '../combat/typeColors';
-import { EquipmentIcon, ItemEffectChips, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { overlayHost } from '../shared/overlayHost';
 import type { TabSpec } from '../shared/TabStrip';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
-import { EquipBuyOverlay } from './EquipBuyOverlay';
 import { RecruitFanfare } from './RecruitFanfare';
-import { SellSection } from './SellSection';
 
-export type GuildHallTab = 'heroes' | 'shop';
+export type GuildHallTab = 'heroes' | 'smithy';
 
 /** The hero shelf as the panel shows it: heroes already on the roster are off it, and the Vigil's are free. */
 export function guildHeroOffers(run: RunState, offers: GuildHallOffers, freeRecruits: boolean): GuildHallOffer[] {
@@ -44,11 +41,11 @@ export function guildHeroOffers(run: RunState, offers: GuildHallOffers, freeRecr
     .map((offer) => (freeRecruits ? { ...offer, cost: 0 } : offer));
 }
 
-/** The two counters (2026-09-10, per user direction): people on one, the shop on the other. */
+/** The two counters (2026-09-10, per user direction): people on one, the smithy — gear services, potions, the mend — on the other. */
 export function guildHallTabs(run: RunState, offers: GuildHallOffers, freeRecruits: boolean): readonly TabSpec<GuildHallTab>[] {
   return [
     { id: 'heroes', label: 'Heroes', glyph: 'heroes', count: guildHeroOffers(run, offers, freeRecruits).length },
-    { id: 'shop', label: 'Shop', glyph: 'equipment', count: offers.equipmentOfferIds.length },
+    { id: 'smithy', label: 'Smithy', glyph: 'equipment', count: run.roster.reduce((n, entry) => n + entry.equipment.length, 0) },
   ];
 }
 
@@ -58,13 +55,9 @@ interface Props {
   offers: GuildHallOffers;
   /** Which counter is showing; the host owns the strip so it stays put above the scroll. */
   tab: GuildHallTab;
-  /** Bought on this visit; carried by App.tsx so a re-render of this panel cannot forget it. */
-  soldOutEquipmentIds: readonly string[];
   /** Mastery Scrolls bought this visit, carried the same way (run/mastery.ts SCROLL_PURCHASE_LIMIT). */
   scrollsBought: number;
   onRunChange: (next: RunState) => void;
-  /** Hands off to App.tsx, which charges the gold and drops the item in the bag. */
-  onBuyEquipment: (itemId: string) => void;
   /** Hands off to App.tsx, which charges the gold and opens the who screen for the pip. */
   onBuyScroll: () => void;
   /** Hands off to App.tsx, which charges the gold and fills the flask (run/consumables.ts). */
@@ -109,56 +102,13 @@ function GuildHallHeroCard({ hero, offer, level, affordable, onInspect }: HeroCa
   );
 }
 
-interface EquipCardProps {
-  item: EquipmentDefinition;
-  cost: number;
-  affordable: boolean;
-  soldOut: boolean;
-  onInspect: () => void;
-}
-
-// Same card as the Equipment Cache. A bought item stays on the shelf, greyed
-// and inert — a card that vanishes mid-scroll reads as a bug.
-function GuildHallEquipCard({ item, cost, affordable, soldOut, onInspect }: EquipCardProps) {
-  return (
-    <button
-      className={`equip-cache-card guild-hall-equip-card${soldOut ? ' sold-out' : affordable ? '' : ' unaffordable'}`}
-      style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}
-      disabled={soldOut}
-      onClick={onInspect}
-    >
-      <div className="equip-cache-card-icon-badge">
-        <EquipmentIcon item={item} className="equip-cache-card-icon" />
-      </div>
-      <div className="equip-cache-card-body">
-        <div className="equip-cache-card-name">{item.name}</div>
-        <div className="equip-cache-card-meta">
-          <span className="equip-cache-card-rarity">{RARITY_LABELS[item.rarity]}</span>
-        </div>
-        <div className="equip-cache-card-stats">
-          <ItemEffectChips item={item} />
-        </div>
-      </div>
-      {soldOut ? (
-        <span className="guild-hall-equip-soldout">Sold out</span>
-      ) : (
-        <span className="guild-hall-equip-price">
-          <ResourceGlyph kind="gold" /> {cost}
-        </span>
-      )}
-    </button>
-  );
-}
-
 // Guild Hall (docs/progression.md "The raise-vs-recruit axis"). One rule for
 // every purchase: a tap opens the thing, and the thing asks.
 export function GuildHallPanel({
   run,
   offers,
-  soldOutEquipmentIds,
   scrollsBought,
   onRunChange,
-  onBuyEquipment,
   onBuyScroll,
   onBuyConsumable,
   onBuyMend,
@@ -168,24 +118,20 @@ export function GuildHallPanel({
   freeRecruits = false,
 }: Props) {
   const [previewOfferId, setPreviewOfferId] = useState<string | null>(null);
-  const [previewEquipId, setPreviewEquipId] = useState<string | null>(null);
   const [confirmingContract, setConfirmingContract] = useState(false);
-  const [sellOpen, setSellOpen] = useState(false);
   /** The hero the joining cinematic is running for. The roster-full path fires it from App instead. */
   const [fanfareHeroId, setFanfareHeroId] = useState<string | null>(null);
 
   const heroOffers = guildHeroOffers(run, offers, freeRecruits);
-  const equipmentOffers = offers.equipmentOfferIds.map((id) => equipment[id]).filter((i): i is EquipmentDefinition => !!i);
 
   const rosterFull = run.roster.length >= ROSTER_CAP;
   const previewOffer = previewOfferId ? heroOffers.find((o) => o.id === previewOfferId) : undefined;
-  const previewEquip = previewEquipId ? equipmentOffers.find((i) => i.id === previewEquipId) : undefined;
   const canBuyContract = run.gold >= CONTRACT_PURCHASE_COST;
   const scrollsSoldOut = scrollsBought >= SCROLL_PURCHASE_LIMIT;
   const canBuyScrollNow = canBuyScroll(run, scrollsBought);
 
   // Derived from state rather than pushed from each setter, so a later modal can't forget to report.
-  const overlayOpen = !!previewOffer || !!previewEquip || confirmingContract || sellOpen || !!fanfareHeroId;
+  const overlayOpen = !!previewOffer || confirmingContract || !!fanfareHeroId;
   useEffect(() => {
     onOverlayChange?.(overlayOpen);
   }, [overlayOpen, onOverlayChange]);
@@ -292,33 +238,10 @@ export function GuildHallPanel({
         </div>
       )}
 
-      {tab === 'shop' && (
+      {tab === 'smithy' && (
         <div className="guild-hall-section">
-          <div className="guild-hall-section-head">
-            <span className="guild-hall-section-title">
-              <SectionGlyph name="equipment" /> Equipment
-            </span>
-          </div>
-          {equipmentOffers.length > 0 ? (
-            <div className="equip-cache-list guild-hall-equip-list">
-              {equipmentOffers.map((item) => {
-                const cost = EQUIPMENT_PRICE_BY_RARITY[item.rarity];
-                return (
-                  <GuildHallEquipCard
-                    key={item.id}
-                    item={item}
-                    cost={cost}
-                    affordable={run.gold >= cost}
-                    soldOut={soldOutEquipmentIds.includes(item.id)}
-                    onInspect={() => setPreviewEquipId(item.id)}
-                  />
-                );
-              })}
-            </div>
-          ) : (
-            <p className="hint">No gear on offer this visit.</p>
-          )}
-          {/* The potions, on the gear counter: consumed rather than worn, but bought the same way.
+          <ItemServicesSection run={run} onRunChange={onRunChange} />
+          {/* The potions, on the smithy's counter: consumed rather than worn, but bought the same way.
               No per-visit limit — the flask's own cap (CONSUMABLE_HOLD_CAP) is the shelf's. */}
           <div className="guild-hall-shelf">
             {CONSUMABLE_KINDS.map((kind) => {
@@ -369,10 +292,6 @@ export function GuildHallPanel({
         </div>
       )}
 
-      {/* The Anvil and the Enchanter moved to the Blacksmith (2026-09-08, per user direction):
-          the Guild Hall trades in heroes and gear, the Blacksmith works on gear you already own. */}
-      {tab === 'shop' && <SellSection run={run} onRunChange={onRunChange} open={sellOpen} onOpenChange={setSellOpen} />}
-
       {fanfareHeroId && (
         <RecruitFanfare heroId={fanfareHeroId} source="guild" onDone={() => setFanfareHeroId(null)} />
       )}
@@ -411,19 +330,6 @@ export function GuildHallPanel({
                 />
               );
             })()}
-
-          {previewEquip && (
-            <EquipBuyOverlay
-              item={previewEquip}
-              run={run}
-              cost={EQUIPMENT_PRICE_BY_RARITY[previewEquip.rarity]}
-              onBuy={() => {
-                setPreviewEquipId(null);
-                onBuyEquipment(previewEquip.id);
-              }}
-              onClose={() => setPreviewEquipId(null)}
-            />
-          )}
 
           {/* The one purchase with nothing to open first, so it gets its own confirm. */}
           {confirmingContract && (

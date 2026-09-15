@@ -78,36 +78,21 @@ test('tutor: tutorReward is a known node type and never rolls out of the reward 
   }
 });
 
-test('tutor: act 4 seats exactly one Tutor inside a pick-1-of-3 reward row; act 5 holds it in the forced spliced seat', () => {
+test('tutor: acts 4 and 5 each hold exactly one Tutor, in the forced spliced seat', () => {
+  // The act-4 in-row seat left with the Forge (docs/gear-absorption.md §4): a guaranteed Late
+  // move an act, ahead of the two Guardians it matters most against, and each act's only one.
   for (const seed of Array.from({ length: 40 }, (_, i) => i + 1)) {
-    const act4 = generateMap(seed, 4);
-    const seats = Object.values(act4.nodes).filter((n) => n.type === 'tutorReward');
-    assert.strictEqual(seats.length, 1, `Act 4 (seed ${seed}) seated ${seats.length} Tutors`);
-    assert.strictEqual(act4.rows[seats[0].row].length, 3, `Act 4 (seed ${seed}): Tutor is not on a pick-3 row`);
-    // The row it takes still offers three DISTINCT things.
-    const rowTypes = act4.rows[seats[0].row].map((id) => act4.nodes[id].type);
-    assert.strictEqual(new Set(rowTypes).size, 3, `Act 4 (seed ${seed}): duplicate on the Tutor's row — ${rowTypes}`);
-
-    // Act 5 (2026-09-14, per user direction): a forced Tutor in the Mentor's seat — a guaranteed
-    // Late move going into the last Guardian, and the act's only one.
-    const act5 = generateMap(seed, 5);
-    const forced = Object.values(act5.nodes).filter((n) => n.type === 'tutorReward');
-    assert.strictEqual(forced.length, 1, `Act 5 (seed ${seed}) seated ${forced.length} Tutors`);
-    assert.strictEqual(forced[0].row, 2);
-    assert.strictEqual(act5.rows[2].length, 1, `Act 5 (seed ${seed}): the Tutor is a forced single-node row`);
+    for (const actNumber of [4, 5]) {
+      const map = generateMap(seed, actNumber);
+      const seats = Object.values(map.nodes).filter((n) => n.type === 'tutorReward');
+      assert.strictEqual(seats.length, 1, `Act ${actNumber} (seed ${seed}) seated ${seats.length} Tutors`);
+      assert.strictEqual(seats[0].row, 2);
+      assert.strictEqual(map.rows[2].length, 1, `Act ${actNumber} (seed ${seed}): the Tutor is a forced single-node row`);
+    }
+    for (const actNumber of [1, 2, 3]) {
+      assert.ok(!Object.values(generateMap(seed, actNumber).nodes).some((n) => n.type === 'tutorReward'), `Act ${actNumber} (seed ${seed}) has a Tutor`);
+    }
   }
-});
-
-test('tutor: over many seeds act 4\'s seat lands in every reward row and every column', () => {
-  const rows = new Set<number>();
-  const cols = new Set<number>();
-  for (let seed = 1; seed <= 60; seed++) {
-    const seat = Object.values(generateMap(seed, 4).nodes).find((n) => n.type === 'tutorReward')!;
-    rows.add(seat.row);
-    cols.add(seat.col);
-  }
-  assert.deepStrictEqual([...rows].sort(), [1, 3, 6], `Tutor rows seen: ${[...rows]}`);
-  assert.deepStrictEqual([...cols].sort(), [0, 1, 2]);
 });
 
 // --- The Mentor (docs/growth-overhaul.md §11): one Mid move, rolled, un-rank-gated ---

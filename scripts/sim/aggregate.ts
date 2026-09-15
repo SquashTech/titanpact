@@ -63,6 +63,12 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
     agg.itemsBySource[key] = (agg.itemsBySource[key] ?? 0) + record.itemsBySource[key];
     if (record.won) agg.itemsBySourceWon[key] = (agg.itemsBySourceWon[key] ?? 0) + record.itemsBySource[key];
   }
+  agg.merges += record.merges;
+  agg.mergeOffers += record.mergeOffers;
+  if (record.won) {
+    agg.mergesWon += record.merges;
+    agg.mergeOffersWon += record.mergeOffers;
+  }
 
   const whole = emptyTimeCounts();
   for (let act = 1; act < record.timeByAct.length; act++) {

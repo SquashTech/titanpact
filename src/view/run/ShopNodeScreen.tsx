@@ -12,12 +12,9 @@ import { TabStrip } from '../shared/TabStrip';
 interface Props {
   run: RunState;
   offers: GuildHallOffers;
-  /** Carried on the `shop` Screen (App.tsx) because a purchase unmounts this screen through the equip gate. */
-  soldOutEquipmentIds: readonly string[];
-  /** Mastery Scrolls bought this visit, carried the same way. */
+  /** Mastery Scrolls bought this visit, carried on the `shop` Screen (App.tsx) because a purchase unmounts this screen through the who screen. */
   scrollsBought: number;
   onRunChange: (next: RunState) => void;
-  onBuyEquipment: (itemId: string) => void;
   onBuyScroll: () => void;
   onBuyConsumable: (kind: ConsumableKind) => void;
   onBuyMend: () => void;
@@ -37,10 +34,8 @@ interface Props {
 export function ShopNodeScreen({
   run,
   offers,
-  soldOutEquipmentIds,
   scrollsBought,
   onRunChange,
-  onBuyEquipment,
   onBuyScroll,
   onBuyConsumable,
   onBuyMend,
@@ -54,9 +49,7 @@ export function ShopNodeScreen({
     <div className="node-screen shop-node-screen" style={{ '--node-rgb': NODE_TINT_HEARTH } as CSSProperties}>
       <NodeSky />
       <div className="guild-hall-hearth" aria-hidden="true" />
-      {/* Full Manage Roster behind the glyph, not the read-only peek — a shop's
-          question is "do I already have something better in that slot". */}
-      <RosterPeek run={run} onRunChange={onRunChange} />
+      <RosterPeek run={run} />
       <NodePurse gold={run.gold} />
 
       <NodeHeader compact art={<GuildSign />} eyebrow={muster ? 'The Last Muster' : 'Welcome to'} title={muster ? 'The Vigil' : 'The Guild Hall'} />
@@ -65,10 +58,8 @@ export function ShopNodeScreen({
         <GuildHallPanel
           run={run}
           offers={offers}
-          soldOutEquipmentIds={soldOutEquipmentIds}
           scrollsBought={scrollsBought}
           onRunChange={onRunChange}
-          onBuyEquipment={onBuyEquipment}
           onBuyScroll={onBuyScroll}
           onBuyConsumable={onBuyConsumable}
           onBuyMend={onBuyMend}

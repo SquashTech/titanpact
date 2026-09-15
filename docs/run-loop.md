@@ -108,7 +108,9 @@ arriving just after it. Since the seat exists in every act and the Skirmish row 
 shape no longer varies by act: 8 rows in all five (`SPLICED_ROW`, `LAST_MENTOR_ACT`,
 `FORGE_ACT`, `src/run/map.ts`). A single-node row is one no path can bypass.
 
-**The Blacksmith (act 3 on).** From act 3 the funnel widens to two and the act's guaranteed
+**The Blacksmith (act 3 on) — DELETED 2026-09-15 (`docs/gear-absorption.md` §6): the funnel is one
+forced Guild Hall every act, its Smithy tab holding the Anvil and Enchanter over worn gear; the
+shelf sells no gear and nothing is sold. What follows is the record.** From act 3 the funnel widens to two and the act's guaranteed
 spend becomes a fork: the **Guild Hall** trades in people and new gear — recruits, Recruit
 Contracts, a 4-item shelf, and (2026-09-08, per user direction) **selling** from the bag, behind a
 row that opens it rather than laid out inline — the bag is the one list here whose length is the

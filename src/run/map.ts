@@ -16,14 +16,12 @@ export const MAP_NODE_TYPES = [
   'elite',
   'boss',
   'shop',
-  'blacksmith',
   'equipmentReward',
   'scrollReward',
   'manaWellReward',
   'restReward',
   'passiveReward',
   'currencyReward',
-  'forgeReward',
   'mentorReward',
   'tutorReward',
   'scribeReward',
@@ -65,10 +63,10 @@ const ROW_WIDTHS = [1, 3, 1, 3, 1, 2, 3, 1, 1] as const;
  * Forced single-node row between the act's first two reward rows. Acts 1-3 it is the Mentor
  * (`mentorReward`, docs/growth-overhaul.md §11) — the ONLY place one appears, since it is absent
  * from REWARD_WEIGHTS — sitting ahead of the fork so the move is in hand for the act's first
- * recruitable fight. Act 4's is a forced Forge (2026-09-11, per user direction): a free slot at
- * about the time a third slot on the carry matters. Act 5's is a forced Tutor (2026-09-14, per
- * user direction): a guaranteed Late move going into the run's last Guardian, where it used to
- * be seated inside one of the act's reward rows.
+ * recruitable fight. Acts 4 and 5 are a forced Tutor: a guaranteed Late move an act, ahead of
+ * the two Guardians it matters most against. Act 4's used to be the Forge (2026-09-11), deleted
+ * with item slots (docs/gear-absorption.md §4), and the Tutor that took its place used to be
+ * seated inside one of act 4's reward rows.
  */
 const SPLICED_ROW = 2;
 
@@ -82,48 +80,17 @@ const SPLICED_ROW = 2;
 const SCRIBE_ROW = 4;
 
 const LAST_MENTOR_ACT = 3;
-const FORGE_ACT = 4;
 
-/**
- * The Tutor (2026-09-07, per user direction): a guaranteed seat in act 4, taken INSIDE a
- * pick-1-of-3 reward row rather than given a forced row of its own. It is a lategame build
- * node — by act 4 a hero has a deep pool and four slots it is stuck with — so it is priced the
- * only way a reward row can price anything: against the two rolled rewards beside it. Absent
- * from REWARD_WEIGHTS, so this seat and act 5's spliced row are its only sources.
- */
-const TUTOR_SEAT_ACTS: readonly number[] = [4];
-
-function hasTutorSeat(actNumber: number): boolean {
-  return TUTOR_SEAT_ACTS.includes(actNumber);
-}
-
-/** What the spliced row holds: the Mentor through LAST_MENTOR_ACT, the Forge in act 4, the Tutor after. */
+/** What the spliced row holds: the Mentor through LAST_MENTOR_ACT, the Tutor after. */
 function splicedRowType(actNumber: number): MapNodeType {
-  if (actNumber <= LAST_MENTOR_ACT) return 'mentorReward';
-  return actNumber === FORGE_ACT ? 'forgeReward' : 'tutorReward';
+  return actNumber <= LAST_MENTOR_ACT ? 'mentorReward' : 'tutorReward';
 }
 
-/**
- * The Blacksmith (2026-09-08, per user direction): from act 3 the funnel row widens to TWO, and
- * the act's one guaranteed spend becomes a fork — heroes and gear at the Guild Hall, or slots,
- * tiers and enchants at the Blacksmith. Acts 1-2 keep the single Guild Hall: the early roster is
- * still forming, and a fork that can cost a player their only recruit shelf wants a run with
- * some gold in it.
- */
-const BLACKSMITH_FIRST_ACT = 3;
-
-function hasBlacksmith(actNumber: number): boolean {
-  return actNumber >= BLACKSMITH_FIRST_ACT;
-}
-
+/** Every act's rows are the same width: the funnel is one Guild Hall, forced (docs/gear-absorption.md §6). */
 function rowWidthsFor(actNumber: number): number[] {
-  const widths = [...ROW_WIDTHS];
-  if (hasBlacksmith(actNumber)) widths[widths.length - 2] = 2;
-  return widths;
+  void actNumber;
+  return [...ROW_WIDTHS];
 }
-
-/** The pick-1-of-3 width. The Tutor only ever seats in a reward row this wide. */
-const TUTOR_ROW_WIDTH = 3;
 
 /** Reward-row pool. `mentorReward` and `tutorReward` are deliberately absent — each has its own forced seat. Weights are a first-pass balance. */
 export const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
@@ -141,15 +108,6 @@ export const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // rather than how big its numbers are.
   ['passiveReward', 22],
   ['currencyReward', 20],
-  // The Forge (+1 item slot) is permanent, compounds with every later drop, and is the only thing
-  // here a hero can be at the cap for, so it stays the scarcest of the grants.
-  //
-  // 10 -> 38 (2026-09-08). When the nine heroes' authored second slot was removed, the roster lost
-  // capacity rather than items, and measurement said so: paying the difficulty back through drop
-  // odds alone recovered 0.8pp of the 3.9pp it cost, because a hero holding one item turns every
-  // further drop into a sell. Slots are what was taken and slots are what is handed back. The node
-  // is also no longer half-dead on arrival — nobody starts one Forge from the cap any more.
-  ['forgeReward', 38],
   // FLAGGED FOR THE DESIGNER: 16 is an inference, not a decision — how often a run meets an event is a real tuning question.
   ['event', 16],
   // The Mana Well (2026-09-13, per user direction): +MANA_WELL_AMOUNT max Mana to one hero. The
@@ -239,30 +197,11 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
     // Elite-or-Skirmish since 2026-09-13 — both hero pool, both recruitable, and the two
     // preview their typing on the tile (run/encounters.ts guarantees they differ in a type).
     if (row === eliteRow) return col === 0 ? 'elite' : 'skirmish';
-    if (row === funnelRow) return col === 0 ? 'shop' : 'blacksmith';
+    if (row === funnelRow) return 'shop';
     return 'boss';
   }
 
   let rng = createRng(seed);
-
-  // The Tutor's seat is rolled BEFORE any row is generated, so its two draws sit at a fixed
-  // point in the seeded stream — a map has to stay reproducible from its seed alone.
-  let tutorRow = -1;
-  let tutorCol = -1;
-  if (hasTutorSeat(actNumber)) {
-    const seats: number[] = [];
-    for (let row = 0; row < rowWidths.length; row++) {
-      if (isRewardRow(row) && rowWidths[row] === TUTOR_ROW_WIDTH) seats.push(row);
-    }
-    if (seats.length > 0) {
-      const { value: rowRoll, nextState: s1 } = nextFloat(rng);
-      rng = s1;
-      const { value: colRoll, nextState: s2 } = nextFloat(rng);
-      rng = s2;
-      tutorRow = seats[Math.floor(rowRoll * seats.length)];
-      tutorCol = Math.floor(colRoll * rowWidths[tutorRow]);
-    }
-  }
 
   const nodes: Record<string, MapNode> = {};
   const rows: string[][] = [];
@@ -273,13 +212,9 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
     const rewardRow = isRewardRow(row);
     let rewardTypes: MapNodeType[] = [];
     if (rewardRow) {
-      // A Tutor row rolls one fewer reward and the Tutor takes the freed seat rather than
-      // overwriting a rolled one — the row still offers three distinct things.
-      const forced = row === tutorRow ? 1 : 0;
-      const picked = pickWeightedDistinct(rng, REWARD_WEIGHTS, rowWidths[row] - forced);
+      const picked = pickWeightedDistinct(rng, REWARD_WEIGHTS, rowWidths[row]);
       rewardTypes = picked.values;
       rng = picked.nextState;
-      if (forced) rewardTypes.splice(tutorCol, 0, 'tutorReward');
     }
     for (let col = 0; col < rowWidths[row]; col++) {
       const type = rewardRow ? rewardTypes[col] : fixedNodeType(row, col);

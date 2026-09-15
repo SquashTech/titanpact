@@ -2,7 +2,6 @@ import { useState, type CSSProperties } from 'react';
 import type { RunState } from '../../run/state';
 import { SEAL_ACTS } from '../../run/state';
 import { reachableNodeIds } from '../../run/runProgress';
-import { mergeablePairIndices, unseenCount } from '../../run/equipment';
 import { equipment } from '../../data/equipment';
 import type { MapNode, MapNodeType, RunMap } from '../../run/map';
 import { RosterManagementScreen } from './RosterManagementScreen';
@@ -19,7 +18,6 @@ import { NodeDossierOverlay } from './NodeDossierOverlay';
 import { levelAfterEncounters, levelOf } from '../../run/growth';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
-import { footerWaiting } from './mapFooter';
 import { locationForAct } from '../../run/locations';
 import { locationDomains, type LocationDefinition } from '../../data/locations';
 import { ElementGlyph } from '../shared/elementIcons';
@@ -126,18 +124,6 @@ function ProgressRail({ map, currentRow }: { map: RunMap; currentRow: number }) 
 // the arrival screen's strength.
 const MAP_MOTE_DENSITY = 0.5;
 
-/**
- * What the footer button is lit in, per inbox (mapFooter.ts). Unread gear keeps the alarm red it
- * has always had; a merge waiting is the tier palette's own gold, because what it is announcing is
- * a tier — and the two must not be the same colour, or the button changing its mind about what it
- * is called is the only thing separating them.
- */
-const FOOTER_COLORS = {
-  rest: 'var(--ally)',
-  items: 'var(--physical)',
-  merges: 'var(--tier-legendary)',
-} as const;
-
 // Bottom-left: the bottom row is a width-1 encounter tile that fits its column;
 // the top row's Guardian tile spills into both neighbours. Under the name, what spawns here —
 // the marks rather than the words, since the placard is a quarter of the screen wide.
@@ -172,12 +158,10 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
   if (!map) return null;
 
   const location = locationForAct(run.locationIds, run.actNumber);
-  const unopened = unseenCount(run.unseenItemIds, run.stash);
   // The roster's PAR, which under automatic levelling is everyone but a late joiner. Read off the
   // roster rather than off the curve so it is right for a hero the curve does not describe — a
   // contract recruit arriving at act level, or a fixture. Falls back to the curve for an empty one.
   const rosterLevel = run.roster.reduce((best, entry) => Math.max(best, levelOf(entry)), levelAfterEncounters(run.encountersWon));
-  const waiting = footerWaiting(unopened, mergeablePairIndices(run.stash, equipment, run.actNumber).size / 2);
 
   // The whole view: where the player stands, and what they may take from here.
   const choiceIds = reachableNodeIds(run);
@@ -273,29 +257,13 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
       </div>
 
       {/* One button, because there is one thing down here worth opening: the run's own sheet —
-          Banners, every hero and every item on them (2026-09-07, per user direction). Gear
-          never stops the run to be handed out, so this is the only place the run says any is
-          waiting (docs/progression.md). */}
+          Banners, every hero and every item on them (2026-09-07, per user direction). Nothing
+          ever waits behind it: gear is absorbed where it arrives (docs/gear-absorption.md). */}
       <div className="map-footer">
-        <button
-          className={`map-footer-button${waiting.total > 0 ? ' has-unopened' : ''}`}
-          // Inline, so it has to carry the alert colour too: a custom property set here outranks
-          // anything .has-unopened could say about it from the stylesheet.
-          style={{ '--btn-color': FOOTER_COLORS[waiting.kind] } as CSSProperties}
-          onClick={() => setRosterOpen(true)}
-        >
+        <button className="map-footer-button" style={{ '--btn-color': 'var(--ally)' } as CSSProperties} onClick={() => setRosterOpen(true)}>
           <span className="map-footer-cap">
             <span className="map-footer-icon"><HubGlyph name="roster" /></span>
-            {/* The label says what is waiting, not where you are going. A badge alone is a mark the
-                eye can learn to skip; a button that has changed its mind about what it is called
-                cannot be skipped, and gear left in the bag is a hero fighting an act without it. */}
-            <span className="map-footer-label">{waiting.label}</span>
-            {/* On the cap, not the slab's corner: the corner is the sixth hero's now. */}
-            {waiting.total > 0 && (
-              <span className="map-footer-badge" aria-label={waiting.aria}>
-                {waiting.total}
-              </span>
-            )}
+            <span className="map-footer-label">Roster</span>
           </span>
           {/* The party, where the act has left it (run/wounds.ts): HP carries between fights, so
               the one button under the map wears the six bars rather than hiding them behind a tap. */}
@@ -363,7 +331,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
         </div>
       )}
 
-      {rosterOpen && <RosterManagementScreen run={run} onRunChange={onRunChange} onClose={() => setRosterOpen(false)} />}
+      {rosterOpen && <RosterManagementScreen run={run} onClose={() => setRosterOpen(false)} />}
       {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
       {previewNode && <NodeDossierOverlay node={previewNode} actNumber={run.actNumber} onClose={() => setPreviewNode(null)} />}
     </div>

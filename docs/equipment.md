@@ -1,5 +1,11 @@
 # equipment.md
 
+> **Superseded in part by `docs/gear-absorption.md` (2026-09-15, per user direction).** Gear is
+> absorbed on receipt and never comes off: §5's bag-merge, the shelf and the sale, §8–§11's
+> Manage Roster gear board, carry and bag are gone; merging is `mergeIntoHeld` on the who-screen
+> (any tier, the held enchant surviving, no act window); every hero has three sockets; the Anvil
+> and Enchanter are the Guild Hall's Smithy. §1–§4 and §6 stand.
+
 The item system, reworked 2026-09-07 per user direction. Supersedes the catalog design in
 `progression.md` "Items (per-hero)"; the SLOT rules, the stash, and the act-scaled drop curve
 in that document are unchanged and still authoritative.

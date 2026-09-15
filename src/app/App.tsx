@@ -26,11 +26,10 @@ import { BoonNodeScreen } from '../view/run/BoonNodeScreen';
 import { TutorNodeScreen } from '../view/run/TutorNodeScreen';
 import { MentorNodeScreen } from '../view/run/MentorNodeScreen';
 import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScreen';
-import { ForgeScreen } from '../view/run/ForgeScreen';
+import { ItemWhoScreen } from '../view/run/ItemWhoScreen';
 import { ScrollNodeScreen, type ScrollPlan } from '../view/run/ScrollNodeScreen';
 import { ManaWellScreen } from '../view/run/ManaWellScreen';
 import { RestNodeScreen } from '../view/run/RestNodeScreen';
-import { BlacksmithScreen } from '../view/run/BlacksmithScreen';
 import { GuardianBannerScreen } from '../view/run/GuardianBannerScreen';
 import { LevelUpScreen } from '../view/run/LevelUpScreen';
 import { CrucibleScreen } from '../view/run/CrucibleScreen';
@@ -59,7 +58,6 @@ import {
   equipItem,
   pickWeightedEquipment,
   rarityWeightsFor,
-  unseenCount,
   EQUIPMENT_DROP_CHANCE,
   LOOT_SOURCE,
   type EquipmentDefinition,
@@ -79,7 +77,7 @@ import {
 } from '../run/recruitment';
 import { guildHallOffers } from '../data/recruitment';
 import { SCROLL_CACHE_COUNT, buyScroll, canBuyScroll } from '../run/mastery';
-import { rollGuildHallOffers, buyEquipment, ShopError, type GuildHallOffers } from '../run/shop';
+import { rollGuildHallOffers, type GuildHallOffers } from '../run/shop';
 import { ConsumableError, buyConsumable, grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse } from '../run/consumables';
 import { guildHallEntry } from '../run/guildRecruit';
 import { anyClassAvailable } from '../run/classes';
@@ -124,7 +122,8 @@ import {
   advanceToNextAct,
   grantCurrencyReward,
   grantContractReward,
-  stashItem,
+  anyoneCanReceive,
+  sellItem,
   recordBrokenSeal,
   GOLD_REWARD_RANGE,
   rollGoldRange,
@@ -164,11 +163,12 @@ type Screen =
   | { kind: 'sandboxFight'; player: Encounter; ai: Encounter; playerRelics: string[] }
   /** TEMPORARY DEV/TEST — src/run/statusTestFight.ts. Own kind so leaving returns to the title. */
   | { kind: 'statusTestFight'; player: Encounter; ai: Encounter }
-  /** `offers` and `soldOutEquipmentIds` live on the screen, not in the shop component: a purchase re-renders the shop and component-local state would reroll / forget. */
-  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; soldOutEquipmentIds: string[]; scrollsBought: number }
+  /** `offers` lives on the screen, not in the shop component: a purchase re-renders the shop and component-local state would reroll / forget. */
+  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; scrollsBought: number }
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType }
   /** The Forge: +1 item slot to one hero. */
-  | { kind: 'forge'; nodeId: string }
+  /** An item has arrived and asks who carries it (docs/gear-absorption.md §2). `next` is where the run goes once it is absorbed or sold. */
+  | { kind: 'itemWho'; itemId: string; next: Screen }
   /** The Mana Well: +MANA_WELL_AMOUNT max Mana to one hero. */
   | { kind: 'manaWell'; nodeId: string }
   | { kind: 'rest'; nodeId: string }
@@ -179,7 +179,6 @@ type Screen =
    * the node when every pip is down.
    */
   | { kind: 'scrolls'; plan: ScrollPlan; nodeId: string | null; bought: boolean; next: Screen }
-  | { kind: 'blacksmith'; nodeId: string }
   | { kind: 'boonNode'; nodeId: string }
   /** The Mentor (acts 1-3): pick a hero, and one Mid move is rolled for it. */
   | { kind: 'mentorNode'; nodeId: string }
@@ -219,10 +218,6 @@ const PLACELESS_SCREENS: ReadonlySet<Screen['kind']> = new Set([
   'runComplete',
   'runFailed',
 ]);
-
-// The Guild Hall shelf and every drop roll the BASE pool; enchanted items are reached by
-// rolling an enchant onto a drop, never by sitting in the pool (rollEquipmentDrops).
-const EQUIPMENT_POOL = EQUIPMENT_DROP_POOL;
 
 /** Throwaway (unseeded) seed for the entry-point rolls in this file. */
 function randomSeed(): number {
@@ -280,7 +275,6 @@ function shuffled<T>(items: readonly T[]): T[] {
 /** TEMPORARY DEV/TEST — a full roster with its first hero stood at its Evolution. Remove with its TitleScreen button. */
 function createLevel4TestRun(): RunState {
   const base = addHeroes(createRunState(999), Object.keys(heroes).slice(0, ROSTER_CAP), 4);
-  // Some worn, some carried: Manage Roster's gear half is only exercisable with both.
   const worn = ['sword.common', 'staff.common', 'sword.common.blazing'];
   return {
     ...base,
@@ -289,9 +283,6 @@ function createLevel4TestRun(): RunState {
       // The first hero stands at its Evolution, so the next level-up report raises it.
       return i === 0 ? atEvolution(geared) : geared;
     }),
-    // Two mergeable pairs: a plain one, and one where both halves are enchanted so the
-    // keep-which-enchant choice has somewhere to fire.
-    stash: ['dagger.common', 'dagger.common', 'bow.common', 'spear.rare.blazing', 'spear.rare.tidal'],
     map: generateMap(randomSeed()),
     locationIds: generateItinerary(randomSeed()),
   };
@@ -303,6 +294,13 @@ function equipTestDagger(encounter: Encounter): Encounter {
     entry.heroId === 'duskling' ? { ...entry, equipment: equipItem(entry.equipment, equipment['dagger.common'].id) } : entry
   );
   return { ...encounter, run: { ...encounter.run, roster } };
+}
+
+/** How many who-screens still queue behind this one — a Loot Pile can hand over two of the same item, so the id alone is not a key. */
+function whoScreensBehind(screen: Screen): number {
+  let depth = 0;
+  for (let cursor = screen; cursor.kind === 'itemWho'; cursor = cursor.next) depth += 1;
+  return depth;
 }
 
 /** Payouts key on the MAP node type: `skirmish` and `battle` both flatten to a `fight` encounter but sit in opposite reward lanes. */
@@ -337,11 +335,9 @@ function tutorialBeatKeyFor(screen: Screen, run: RunState): TutorialBeatKey | nu
       return 'intro';
     case 'actIntro':
       return run.actNumber === 1 ? 'arrival' : null;
+    case 'itemWho':
+      return 'equip';
     case 'map': {
-      // Gear teaches itself here now that nothing stops the run to hand it over: the badge is
-      // lit, and this is the screen carrying it. Ahead of the node beat on purpose — it explains
-      // what just happened, and the node beat explains what is next.
-      if (unseenCount(run.unseenItemIds, run.stash) > 0) return 'equip';
       // The scripted act is a corridor, so "the node ahead" is a single node. A branching act
       // has nothing to name and returns null rather than picking one arbitrarily.
       const ahead = reachableNodeIds(run);
@@ -570,12 +566,9 @@ export function App() {
       setScreen({
         kind: 'shop',
         nodeId,
-        offers: rollGuildHallOffers(playerRun, guildHallOffers, EQUIPMENT_POOL, node.type === 'muster'),
-        soldOutEquipmentIds: [],
+        offers: rollGuildHallOffers(playerRun, guildHallOffers, node.type === 'muster'),
         scrollsBought: 0,
       });
-    } else if (node.type === 'forgeReward') {
-      setScreen({ kind: 'forge', nodeId });
     } else if (node.type === 'manaWellReward') {
       setScreen({ kind: 'manaWell', nodeId });
     } else if (node.type === 'restReward') {
@@ -584,8 +577,6 @@ export function App() {
       setScreen({ kind: 'scrolls', plan: { kind: 'scribe' }, nodeId, bought: false, next: { kind: 'map' } });
     } else if (node.type === 'scrollReward') {
       setScreen({ kind: 'scrolls', plan: { kind: 'scrolls', count: SCROLL_CACHE_COUNT }, nodeId, bought: false, next: { kind: 'map' } });
-    } else if (node.type === 'blacksmith') {
-      setScreen({ kind: 'blacksmith', nodeId });
     } else if (node.type === 'mentorReward') {
       setScreen({ kind: 'mentorNode', nodeId });
     } else if (node.type === 'passiveReward') {
@@ -660,8 +651,8 @@ export function App() {
     // 2026-09-10 it is also what the level curve reads (run/growth.ts).
     next = { ...next, encountersWon: next.encountersWon + 1 };
     // A KO'd companion is gone from the run — BEFORE the level report, so the report never lists
-    // a hero that is already gone (docs/titanspawn-overhaul.md §5). Its items are in the bag.
-    const absorption = absorbCompanions(next, koRosterIds, equipment);
+    // a hero that is already gone (docs/titanspawn-overhaul.md §5). Its gear goes with it.
+    const absorption = absorbCompanions(next, koRosterIds);
     next = absorption.run;
     // Automatic and roster-wide, benched heroes included: no pool and no allocation. The report
     // is what the screen after the fight reads — the roll is destructive, so it cannot be
@@ -709,9 +700,9 @@ export function App() {
       afterScreen = { kind: 'map' };
     }
 
-    // The drop is banked, not gated: it goes to the bag and the map's Roster badge says so
-    // (docs/progression.md "The bag notification"). The victory overlay has already shown it.
-    if (equipmentReward) next = stashItem(next, equipmentReward.id, equipment);
+    // A drop nobody can take converts to gold on the spot; the victory overlay has already shown it.
+    const dropId = equipmentReward && anyoneCanReceive(next, equipmentReward, equipment, rosterHeroes) ? equipmentReward.id : null;
+    if (equipmentReward && !dropId) next = sellItem(next, equipmentReward.id, equipment);
 
     setPlayerRun(next);
 
@@ -736,7 +727,10 @@ export function App() {
     const afterBanner: Screen = banner ? { kind: 'guardianBanner', next: afterRecruit } : afterRecruit;
 
     // The join beat sits right after the level report: the fight's consequence, then who it brought.
-    const afterLevels: Screen = companionId ? { kind: 'companion', beat: { kind: 'join', heroId: companionId }, next: afterBanner } : afterBanner;
+    const afterJoin: Screen = companionId ? { kind: 'companion', beat: { kind: 'join', heroId: companionId }, next: afterBanner } : afterBanner;
+    // The drop asks who carries it right behind the levels — the fight's own consequence, ahead of
+    // the Banner and everything under it (docs/gear-absorption.md §2).
+    const afterLevels: Screen = dropId ? { kind: 'itemWho', itemId: dropId, next: afterJoin } : afterJoin;
     // Levels go FIRST, ahead of the Banner and everything under it: they are what this fight did,
     // and the rest of the chain is what the ACT pays. Skipped when nobody levelled and nobody is
     // owed a schedule entry — a fight the XP left part-way to the next level (the fight result
@@ -749,7 +743,7 @@ export function App() {
     // And the companion's loss ahead of even that — the one thing the fight took (§5).
     setScreen(
       absorption.absorbed.reduce<Screen>(
-        (rest, gone) => ({ kind: 'companion', beat: { kind: 'lost', heroId: gone.heroId, returnedItems: gone.equipment.length }, next: rest }),
+        (rest, gone) => ({ kind: 'companion', beat: { kind: 'lost', heroId: gone.heroId }, next: rest }),
         afterLoss
       )
     );
@@ -795,28 +789,28 @@ export function App() {
   }
 
   /**
-   * Claiming an item advances the node and banks the item. A list, because the Loot Pile event
-   * hands over three at once — they all go to the bag, so there is nothing to queue a screen for.
+   * Claiming an item advances the node, then asks who carries it — one who-screen per item, in
+   * order, since the Loot Pile event hands over three at once. An item nobody can take is gold.
    */
   function handleClaimEquipment(nodeId: string, itemIds: string | string[]) {
     const ids = (Array.isArray(itemIds) ? itemIds : [itemIds]).filter((id) => equipment[id]);
-    setPlayerRun((run) => ids.reduce((acc, id) => stashItem(acc, id, equipment), advanceToNode(run, nodeId)));
-    setScreen({ kind: 'map' });
+    const advanced = advanceToNode(playerRun, nodeId);
+    setPlayerRun(advanced);
+    setScreen(whoScreensFor(advanced, ids, { kind: 'map' }));
   }
 
-  /** Guild Hall purchase: validate-before-commit, then the item drops in the bag and the shop stays open. */
-  function handleBuyGuildEquipment(itemId: string) {
-    const item = equipment[itemId];
-    if (!item) return;
-    let next: RunState;
-    try {
-      next = buyEquipment(playerRun, item);
-    } catch (err) {
-      if (!(err instanceof ShopError)) throw err;
-      return;
+  /** Chains a who-screen per item ahead of `next`, selling on the spot whatever the roster cannot receive. */
+  function whoScreensFor(run: RunState, itemIds: readonly string[], next: Screen): Screen {
+    let settled = run;
+    const asking: string[] = [];
+    for (const id of itemIds) {
+      const item = equipment[id];
+      if (!item) continue;
+      if (anyoneCanReceive(settled, item, equipment, rosterHeroes)) asking.push(id);
+      else settled = sellItem(settled, id, equipment);
     }
-    setPlayerRun(stashItem(next, itemId, equipment));
-    if (screen.kind === 'shop') setScreen({ ...screen, soldOutEquipmentIds: [...screen.soldOutEquipmentIds, itemId] });
+    if (settled !== run) setPlayerRun(settled);
+    return asking.reduceRight<Screen>((rest, id) => ({ kind: 'itemWho', itemId: id, next: rest }), next);
   }
 
   /** The title's replay entry (docs/tutorial.md); the profile is bypassed, not rewritten. */
@@ -1071,10 +1065,8 @@ export function App() {
         <ShopNodeScreen
           run={playerRun}
           offers={screen.offers}
-          soldOutEquipmentIds={screen.soldOutEquipmentIds}
           scrollsBought={screen.scrollsBought}
           onRunChange={setPlayerRun}
-          onBuyEquipment={handleBuyGuildEquipment}
           onBuyScroll={handleBuyGuildScroll}
           onBuyConsumable={handleBuyGuildConsumable}
           onBuyMend={handleBuyGuildMend}
@@ -1155,13 +1147,10 @@ export function App() {
         <RestNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
-      {screen.kind === 'forge' && (
-        <ForgeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+      {screen.kind === 'itemWho' && (
+        <ItemWhoScreen key={`${screen.itemId}:${whoScreensBehind(screen.next)}`} run={playerRun} itemId={screen.itemId} onRunChange={setPlayerRun} onDone={() => setScreen(screen.next)} />
       )}
 
-      {screen.kind === 'blacksmith' && (
-        <BlacksmithScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
-      )}
 
       {screen.kind === 'boonNode' && (
         <BoonNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />

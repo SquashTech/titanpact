@@ -69,7 +69,7 @@ test('map: the per-act shape — Fight, pick-3 reward, spliced seat, pick-3 rewa
       assert.deepStrictEqual(rowTypes(5).slice().sort(), ['elite', 'skirmish'], `${where}: the fork is the act's one Skirmish`);
       assert.ok(rowTypes(6).every((t) => REWARD_TYPES.has(t)), `${where} row 6 has a non-reward type: ${rowTypes(6)}`);
       assert.strictEqual(rows[6].length, 3, 'the third reward row sits between Elite-or-Skirmish and the funnel');
-      assert.deepStrictEqual(rowTypes(7), actNumber >= 3 ? ['shop', 'blacksmith'] : ['shop'], `${where}: the funnel`);
+      assert.deepStrictEqual(rowTypes(7), ['shop'], `${where}: the funnel is one forced Guild Hall (docs/gear-absorption.md §6)`);
       assert.deepStrictEqual(rowTypes(8), ['boss']);
       // No un-forked Skirmish anywhere: the fork is the only one.
       const skirmishes = Object.values(map.nodes).filter((n) => n.type === 'skirmish');
@@ -81,44 +81,17 @@ test('map: the per-act shape — Fight, pick-3 reward, spliced seat, pick-3 rewa
   }
 });
 
-test('map: the Blacksmith widens the funnel from act 3 on, and never appears before it', () => {
+test('map: the funnel is one Guild Hall in every act, and a Guild Hall is never rolled elsewhere', () => {
   for (const seed of [1, 2, 3, 4, 5]) {
     for (const actNumber of [1, 2, 3, 4, 5]) {
       const map = generateMap(seed, actNumber);
       const funnelRow = map.rows.length - 2;
-      const funnelTypes = map.rows[funnelRow].map((id) => map.nodes[id].type);
-      if (actNumber >= 3) {
-        assert.deepStrictEqual(funnelTypes, ['shop', 'blacksmith'], `act ${actNumber} seed ${seed}`);
-      } else {
-        assert.deepStrictEqual(funnelTypes, ['shop'], `act ${actNumber} seed ${seed}`);
-      }
-      // Never a rolled reward — the funnel row is its only source, the way the Mentor row is
-      // mentorReward's.
+      assert.deepStrictEqual(map.rows[funnelRow].map((id) => map.nodes[id].type), ['shop'], `act ${actNumber} seed ${seed}`);
       for (let r = 0; r < map.rows.length; r++) {
         if (r === funnelRow) continue;
         for (const nodeId of map.rows[r]) {
-          assert.notStrictEqual(map.nodes[nodeId].type, 'blacksmith', `act ${actNumber} seed ${seed} row ${r}`);
+          assert.notStrictEqual(map.nodes[nodeId].type, 'shop', `act ${actNumber} seed ${seed} row ${r}`);
         }
-      }
-    }
-  }
-});
-
-// The act's one guaranteed spend. If the map could hand a path only one of the two, the fork
-// would be decided by the seed rather than by the player.
-test('map: every path into the funnel keeps BOTH the Guild Hall and the Blacksmith', () => {
-  for (const seed of [1, 7, 42, 99, 2024]) {
-    for (const actNumber of [3, 4, 5]) {
-      const map = generateMap(seed, actNumber);
-      const funnelRow = map.rows.length - 2;
-      const funnel = map.rows[funnelRow];
-      assert.strictEqual(funnel.length, 2, `act ${actNumber} seed ${seed}: expected the two-wide funnel`);
-      for (const fromId of map.rows[funnelRow - 1]) {
-        assert.deepStrictEqual(
-          [...map.nodes[fromId].nextIds].sort(),
-          [...funnel].sort(),
-          `act ${actNumber} seed ${seed}: ${fromId} loses half the funnel fork`
-        );
       }
     }
   }
@@ -176,14 +149,13 @@ test('map: the Mentor row sits between the first two reward rows, and every path
   }
 });
 
-test('map: the spliced seat is the Mentor in acts 1-3, the Forge in act 4 and the Tutor in act 5', () => {
+test('map: the spliced seat is the Mentor in acts 1-3 and the Tutor in acts 4-5', () => {
   for (const seed of [1, 2, 3, 4, 5]) {
     for (const actNumber of [1, 2, 3, 4, 5]) {
       const map = generateMap(seed, actNumber);
-      const expected = actNumber <= 3 ? 'mentorReward' : actNumber === 4 ? 'forgeReward' : 'tutorReward';
+      const expected = actNumber <= 3 ? 'mentorReward' : 'tutorReward';
       assert.strictEqual(map.nodes[map.rows[2][0]].type, expected, `Act ${actNumber} (seed ${seed})`);
-      // And it is not ALSO rolled elsewhere on the same map (the Forge is a legitimate reward-row roll; the other two are not).
-      if (expected === 'forgeReward') continue;
+      // And it is not ALSO rolled elsewhere on the same map — neither is in REWARD_WEIGHTS.
       const elsewhere = Object.values(map.nodes).filter((n) => n.type === expected && n.row !== 2);
       assert.strictEqual(elsewhere.length, 0, `Act ${actNumber} (seed ${seed}) grew a second ${expected}`);
     }

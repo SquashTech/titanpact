@@ -17,7 +17,7 @@ import { equipment } from '../../src/data/equipment';
 import { passives } from '../../src/data/passives';
 import { statuses } from '../../src/data/statuses';
 import type { EquipmentDefinition } from '../../src/run/equipment';
-import { holdsItem } from '../../src/run/equipment';
+import { itemReceiptFor, type ItemReceipt } from '../../src/run/runProgress';
 import type { RosterEntry, RunState } from '../../src/run/state';
 import { MASTERY_EVOLUTION, SCRIBE_PICKS, canTakeMastery, pendingSignature } from '../../src/run/mastery';
 import {
@@ -26,7 +26,6 @@ import {
   availableEvolution,
   chooseEvolutionPath,
   grantOfferedMove,
-  itemSlotsFor,
   levelMovePool,
   pendingScheduleEntry,
   recordMoveOffer,
@@ -143,40 +142,25 @@ export function itemValueFor(entry: RosterEntry, item: EquipmentDefinition | nul
 }
 
 /**
- * Who should wear `item`, and what it costs them: a hero with a free slot compares against
- * nothing, a full one against its WEAKEST held item — that is the one a player would give up, so
- * it is the one the sim gives up. `replaceIndex` is undefined when the slot was free.
+ * Who should receive `item` (docs/gear-absorption.md §2): a free socket takes it for its whole
+ * value, the holder of its family merges it for the difference between the piece it would become
+ * and the piece it holds. `gain` ≤ 0 means selling is the better verb. Null when nobody can.
  */
-export function bestWearer(
+export function bestReceiver(
   roster: readonly RosterEntry[],
   item: EquipmentDefinition
-): { rosterId: string; gain: number; replaceIndex?: number } | null {
-  let best: { rosterId: string; gain: number; replaceIndex?: number } | null = null;
+): { rosterId: string; gain: number; receipt: ItemReceipt } | null {
+  let best: { rosterId: string; gain: number; receipt: ItemReceipt } | null = null;
   for (const entry of roster) {
-    // A hero never holds two copies, so an owner is not a candidate. Through holdsItem, not an id
-    // comparison: the rule is measured on the FAMILY, so a hero carrying an enchanted sibling of
-    // this item already holds it. Comparing ids let the sim pick that hero and then throw inside
-    // equipToRoster, which cost it 15% of every batch — silently, since a crashed run is dropped.
-    if (holdsItem(entry.equipment, item.id)) continue;
-    const offered = itemValueFor(entry, item);
-
-    if (entry.equipment.length < itemSlotsFor(heroes[entry.heroId], entry)) {
-      if (!best || offered > best.gain + 1e-9) best = { rosterId: entry.rosterId, gain: offered };
-      continue;
-    }
-
-    let weakestIndex = -1;
-    let weakestValue = Infinity;
-    entry.equipment.forEach((heldId, index) => {
-      const value = itemValueFor(entry, equipment[heldId] ?? null);
-      if (value < weakestValue) {
-        weakestValue = value;
-        weakestIndex = index;
-      }
-    });
-    if (weakestIndex < 0) continue;
-    const gain = offered - weakestValue;
-    if (!best || gain > best.gain + 1e-9) best = { rosterId: entry.rosterId, gain, replaceIndex: weakestIndex };
+    const hero = heroes[entry.heroId];
+    if (!hero) continue;
+    const receipt = itemReceiptFor(entry, item, hero, equipment);
+    if (receipt.kind === 'none') continue;
+    const gain =
+      receipt.kind === 'take'
+        ? itemValueFor(entry, item)
+        : itemValueFor(entry, equipment[receipt.resultId] ?? null) - itemValueFor(entry, equipment[receipt.heldItemId] ?? null);
+    if (!best || gain > best.gain + 1e-9) best = { rosterId: entry.rosterId, gain, receipt };
   }
   return best;
 }

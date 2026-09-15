@@ -7,7 +7,7 @@ import { ENCHANTMENTS, ENCHANTMENT_IDS, enchantLabel } from '../../run/equipment
 import { anvilQuote, anvilUpgrade, enchantItem, RunProgressError, type ItemRef } from '../../run/runProgress';
 import { ENCHANT_PRICE_BY_RARITY } from '../../run/shop';
 import { EquipmentFormGlyph } from '../shared/equipmentIcons';
-import { NodeGlyph } from '../shared/nodeIcons';
+import { HubGlyph } from '../shared/nodeIcons';
 import { StatGlyph } from '../shared/statIcons';
 import { TypeBadge } from '../shared/TypeBadge';
 
@@ -20,23 +20,18 @@ interface OwnedItem {
   key: string;
   ref: ItemRef;
   itemId: string;
-  /** "Inventory", or the hero carrying it — the player picks the item, not the slot. */
+  /** The hero carrying it — the player picks the item, not the socket. */
   holder: string;
 }
 
-/** Everything the player owns, inventory first. Both services take equipped gear, so nothing comes off to be improved. */
+/** Everything the player owns is on a hero (docs/gear-absorption.md), and both services work on it there. */
 function ownedItems(run: RunState): OwnedItem[] {
-  const out: OwnedItem[] = run.stash.map((itemId, index) => ({
-    key: `stash:${index}`,
-    ref: { kind: 'stash', index },
-    itemId,
-    holder: 'Inventory',
-  }));
+  const out: OwnedItem[] = [];
   for (const entry of run.roster) {
     entry.equipment.forEach((itemId, index) => {
       out.push({
         key: `hero:${entry.rosterId}:${index}`,
-        ref: { kind: 'hero', rosterId: entry.rosterId, index },
+        ref: { rosterId: entry.rosterId, index },
         itemId,
         holder: rosterHeroes[entry.heroId]?.name ?? entry.heroId,
       });
@@ -46,13 +41,11 @@ function ownedItems(run: RunState): OwnedItem[] {
 }
 
 /**
- * The Anvil and the Enchanter (docs/equipment.md §5). Both are Blacksmith services rather than
- * one-shot rewards: repeatable and unbounded so long as the player can pay. There is no free
- * map-node version of either — the reward row's spike in this space is the Forge, which grants
- * a slot rather than improving an item.
- *
- * The Anvil is deliberately dearer than buying that tier outright — you are paying to keep THIS
- * item, its family, its Awakening and its enchant. Merging is the efficient route, and it is free.
+ * The Anvil and the Enchanter (docs/equipment.md §5), the Guild Hall's smithy since the Blacksmith
+ * folded back into it (docs/gear-absorption.md §6). Both are services rather than one-shot
+ * rewards: repeatable and unbounded so long as the player can pay, over the gear the roster
+ * already wears — the only gear there is. Merging is the free route up a tier; the Anvil is the
+ * paid one for a piece with no duplicate coming.
  */
 export function ItemServicesSection({ run, onRunChange }: Props) {
   const [enchanting, setEnchanting] = useState<OwnedItem | null>(null);
@@ -71,10 +64,10 @@ export function ItemServicesSection({ run, onRunChange }: Props) {
       <div className="guild-hall-section">
         <div className="guild-hall-section-head">
           <span className="guild-hall-section-title">
-            <NodeGlyph type="forgeReward" /> Anvil &amp; Enchanter
+            <HubGlyph name="anvil" /> Anvil &amp; Enchanter
           </span>
         </div>
-        <p className="hint">Nothing to work on yet.</p>
+        <p className="hint">Nobody is wearing anything yet.</p>
       </div>
     );
   }
@@ -121,7 +114,7 @@ export function ItemServicesSection({ run, onRunChange }: Props) {
     <div className="guild-hall-section">
       <div className="guild-hall-section-head">
         <span className="guild-hall-section-title">
-            <NodeGlyph type="forgeReward" /> Anvil &amp; Enchanter
+            <HubGlyph name="anvil" /> Anvil &amp; Enchanter
           </span>
         <span className="guild-hall-section-hint">Upgrade a tier, or bind an element</span>
       </div>
@@ -144,7 +137,7 @@ export function ItemServicesSection({ run, onRunChange }: Props) {
                 title={quote ? `Upgrade to ${equipment[quote.targetId]?.name}` : 'Nothing above this'}
                 onClick={() => quote && apply(() => anvilUpgrade(run, owned.ref, equipment))}
               >
-                <NodeGlyph type="forgeReward" /> {quote ? `${quote.cost}g` : '—'}
+                <HubGlyph name="anvil" /> {quote ? `${quote.cost}g` : '—'}
               </button>
               <button
                 className="item-service-button"

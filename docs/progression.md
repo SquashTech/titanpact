@@ -1,5 +1,10 @@
 # progression.md
 
+> **The stash, the bag notification, the uncapped bag, the Forge and `itemSlotsFor`'s Forge
+> grants below are superseded by `docs/gear-absorption.md` (2026-09-15, per user direction):**
+> every item raises a who-screen on receipt and is absorbed by the hero chosen; there is no bag
+> and every hero has three sockets. The sections are kept as the record of why.
+
 > How heroes and teams grow across a run: the level curve, Evolution, equipment,
 > relics, XP, and the raise-vs-recruit axis. Rules only — grant values, XP rates, and
 > equipment/relic content are **data** (`/data`). Combat effects of these systems

@@ -21,15 +21,10 @@ interface Props {
   run: RunState;
   /** Extra classes on the button — `corner-slot-2` steps it left beside a second corner glyph (SquadSelectScreen). */
   className?: string;
-  /**
-   * Opt in to the full Manage Roster screen behind the glyph (the Guild Hall). Omit inside a forced
-   * allocation gate: a panel that can move gear mid-placement could change the thing being placed.
-   */
-  onRunChange?: (next: RunState) => void;
 }
 
 /** The corner roster glyph every pick-a-hero screen carries, and the read-only overlay it opens. */
-export function RosterPeek({ run, className, onRunChange }: Props) {
+export function RosterPeek({ run, className }: Props) {
   const [open, setOpen] = useState(false);
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
 
@@ -52,9 +47,7 @@ export function RosterPeek({ run, className, onRunChange }: Props) {
         <HubGlyph name="roster" />
       </button>
 
-      {open && onRunChange && <RosterManagementScreen run={run} onRunChange={onRunChange} onClose={() => setOpen(false)} />}
-
-      {open && !onRunChange && (
+      {open && (
         <div className="log-overlay roster-peek-overlay" onClick={() => setOpen(false)}>
           <div className="log-panel roster-peek-panel" onClick={(e) => e.stopPropagation()}>
             <div className="log-panel-header">

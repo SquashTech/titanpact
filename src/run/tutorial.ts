@@ -241,7 +241,9 @@ export const TUTORIAL_ROW_TYPES: readonly MapNodeType[] = [
   'fight',
   'equipmentReward',
   'mentorReward',
-  'forgeReward',
+  // The Boon, where the Forge stood until gear was absorbed (docs/gear-absorption.md): a
+  // permanent per-hero grant on the pick-a-hero grammar, the first the corridor teaches.
+  'passiveReward',
   // The Scribe, where every act has it: two pips each on two of the three heroes the corridor
   // holds here (Valor, Fang, the companion) — the pick-a-hero grammar every later reward shares,
   // taught on the beat that pays it every act.

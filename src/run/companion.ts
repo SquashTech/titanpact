@@ -4,16 +4,14 @@
 // takes its schedule's offers, holds items and restores between nodes like anyone; the Mastery
 // pip that opens a hero's Evolution is a TIER-STEP for it (Early → Mid), and the pip that offers
 // the signature a second one (Mid → Late), in place of a branch (docs/mastery.md §2); and the only
-// new rule is `RosterEntry.mortal` — a knockout removes it from the run, its pips with it. What it
-// held strips to the bag.
+// new rule is `RosterEntry.mortal` — a knockout removes it from the run, its pips and its gear
+// with it (docs/gear-absorption.md §7).
 
 import type { HeroLookup } from '../engine/state';
-import type { EquipmentDefinition } from './equipment';
 import type { Encounter } from './enemyGen';
 import { SPAWN_TIERS, spawnId, spawnPosition } from '../data/titanspawn';
 import { levelOf, levelUpEntry } from './growth';
 import { MASTERY_EVOLUTION, MASTERY_SIGNATURE } from './mastery';
-import { stashItem } from './runProgress';
 import { ROSTER_CAP, addRosterEntry, createRosterEntry, type RosterEntry, type RunState } from './state';
 import { freshRosterId } from './recruitment';
 
@@ -57,16 +55,14 @@ export interface Absorption {
 }
 
 /**
- * A KO'd companion is gone from the run: off the roster, its items to the bag (§10, decided —
- * the unit is the price, the item is not). Called on the fight's resolution, before the level
- * report, so the report never lists a hero that is already gone.
+ * A KO'd companion is gone from the run: off the roster, and what it held goes with it — gear is
+ * absorbed, never carried. Called on the fight's resolution, before the level report, so the
+ * report never lists a hero that is already gone.
  */
-export function absorbCompanions(run: RunState, koRosterIds: readonly string[], equipmentLookup: Record<string, EquipmentDefinition>): Absorption {
+export function absorbCompanions(run: RunState, koRosterIds: readonly string[]): Absorption {
   const absorbed = run.roster.filter((entry) => entry.mortal && koRosterIds.includes(entry.rosterId));
   if (absorbed.length === 0) return { run, absorbed };
-  let next: RunState = { ...run, roster: run.roster.filter((entry) => !absorbed.includes(entry)) };
-  for (const entry of absorbed) for (const itemId of entry.equipment) next = stashItem(next, itemId, equipmentLookup);
-  return { run: next, absorbed };
+  return { run: { ...run, roster: run.roster.filter((entry) => !absorbed.includes(entry)) }, absorbed };
 }
 
 /** The pip each body steps up at: an Early to Mid where a hero would evolve, a Mid to Late where a hero would take its signature. */

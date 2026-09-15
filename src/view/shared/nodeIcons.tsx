@@ -103,14 +103,6 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
       <path fillRule="evenodd" d="M3.4 11.2h17.2v10.6H3.4Zm8.6 2.8a3.2 3.2 0 0 0-3.2 3.2v4.6h6.4v-4.6a3.2 3.2 0 0 0-3.2-3.2Z" />
     </>
   ),
-  // The smith's HAMMER against the Forge's anvil below: the Forge is a place you find, the
-  // Blacksmith is someone you pay, and the two must never be read for each other at 20px.
-  blacksmith: (
-    <>
-      <path d="M4.4 3.4h9.4l2.6 1.9v4.2l-2.6 1.9H4.4a1.4 1.4 0 0 1-1.4-1.4V4.8a1.4 1.4 0 0 1 1.4-1.4Z" />
-      <path d="M8.2 11.4h3.4v9.2a1.7 1.7 0 0 1-3.4 0Z" />
-    </>
-  ),
   equipmentReward: SECTION_PATHS.equipment,
   // The Scroll Cache: a bundle of three, seen end-on — three coils stacked, since the count is
   // the mark once map labels are gone (three pips against the Scribe's two each).
@@ -133,13 +125,6 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
     <>
       <path d="M12 .8c2.8 3.2 6 5.6 6 9.8a6 6 0 0 1-12 0c0-2 .7-3.7 1.8-5.1.2 1.9 1.2 3.1 2.6 3.5-.7-3.5.1-6 1.6-8.2Z" />
       <path d="m3.2 15.4 17.6 5.2-.7 2.2L2.5 17.6Zm17.6 0 .7 2.2L3.9 22.8l-.7-2.2Z" />
-    </>
-  ),
-  // Anvil on its stump: the Forge adds a slot, so it draws the place gear is made, not gear.
-  forgeReward: (
-    <>
-      <path d="M2 6.6h9.6c1.6 2.6 4 4.2 7.2 4.8l3.2-3.4v4.4c0 2.4-1.6 4-4.4 4.6H8.2C4.8 16.4 2.6 14 2 10.6Z" />
-      <path d="M9.4 18h6.2l2.2 4H7.2Z" />
     </>
   ),
   // Open tome: the Mentor teaches.
@@ -311,6 +296,13 @@ const HUB_PATHS = {
   // The Elite's crown on its own, for the badge over a tile whose face is its enemy typing.
   crown: <g transform="translate(12 12) scale(1.4) translate(-12 -4.9)">{CROWN}</g>,
   // A hero's Class. A fluted column — the discipline they were taught in, not a thing they carry.
+  // Anvil on its stump — the Guild Hall's Anvil service. It was the Forge node's tile.
+  anvil: (
+    <>
+      <path d="M2 6.6h9.6c1.6 2.6 4 4.2 7.2 4.8l3.2-3.4v4.4c0 2.4-1.6 4-4.4 4.6H8.2C4.8 16.4 2.6 14 2 10.6Z" />
+      <path d="M9.4 18h6.2l2.2 4H7.2Z" />
+    </>
+  ),
   hall: (
     <>
       <path d="M3.4 2.2h17.2v3.2H3.4Z" />

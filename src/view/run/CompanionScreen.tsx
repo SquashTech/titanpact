@@ -18,7 +18,7 @@ import { prefersReducedMotion } from '../shared/reducedMotion';
 export type CompanionBeat =
   | { kind: 'join'; heroId: string }
   | { kind: 'grown'; fromHeroId: string; toHeroId: string }
-  | { kind: 'lost'; heroId: string; returnedItems: number };
+  | { kind: 'lost'; heroId: string };
 
 interface Props {
   run: RunState;
@@ -51,10 +51,7 @@ function copyFor(beat: CompanionBeat): { eyebrow: string; title: string; readout
       return {
         eyebrow: 'The pact comes due',
         title: `${named(beat.heroId)} was taken back into the Titan.`,
-        readout:
-          beat.returnedItems > 0
-            ? `What it carried is in the bag${beat.returnedItems > 1 ? ` — ${beat.returnedItems} items` : ''}. Nothing else of it comes back.`
-            : 'Nothing of it comes back.',
+        readout: 'Nothing of it comes back — what it carried goes with it.',
         button: 'Carry on',
       };
   }

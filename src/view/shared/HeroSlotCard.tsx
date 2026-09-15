@@ -9,7 +9,6 @@ import { HeroPortrait } from './HeroPortrait';
 import { TypeBadge } from './TypeBadge';
 import { ItemBox, slotBoxes } from './EquipmentBox';
 import { useLongPress } from './MoveTile';
-import { GEAR_SLOT_ATTR } from './useGearDrag';
 
 /**
  * One hero as a squad card: who they are, then their item slots as icon boxes underneath.
@@ -26,8 +25,6 @@ export interface SlotBoxProps {
   sfx?: string;
   onTap?: () => void;
   onLongPress?: () => void;
-  slotKey?: string;
-  onPointerDown?: (e: React.PointerEvent) => void;
 }
 
 interface HeroSlotCardProps {
@@ -43,8 +40,6 @@ interface HeroSlotCardProps {
   headLabel?: string;
   /** Per-slot wiring, index-addressed. Omit and the boxes are inert. */
   slotProps?: (index: number, item: EquipmentDefinition | null) => SlotBoxProps;
-  /** Stamps the whole CARD as a landing pad for a carried piece (useGearDrag). Omit and only its sockets are. */
-  dropKey?: string;
   /** Corner mark — the found-item gate's "Equip" / "Full" verdict. */
   badge?: ReactNode;
   /** Anything below the slot row. */
@@ -60,7 +55,6 @@ export function HeroSlotCard({
   onHeadLongPress,
   headLabel,
   slotProps,
-  dropKey,
   badge,
   footer,
 }: HeroSlotCardProps) {
@@ -95,7 +89,6 @@ export function HeroSlotCard({
   return (
     <div
       className={`roster-mgmt-card${className ? ` ${className}` : ''}`}
-      {...{ [GEAR_SLOT_ATTR]: dropKey }}
       style={{ '--hero-color': getTypeColor(hero.types[0]), borderTopColor: getTypeColor(hero.types[0]) } as CSSProperties}
     >
       {badge}

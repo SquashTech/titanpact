@@ -75,17 +75,17 @@ test('companion: it joins at the roster\'s par with its growth rolled, mortal, i
   for (const entry of run.roster) assert.strictEqual(entry.mortal, false);
 });
 
-test('companion: a knockout takes it — off the roster, its items to the bag; a KO\'d hero stays', () => {
+test('companion: a knockout takes it — off the roster, its gear with it; a KO\'d hero stays', () => {
   let run = joinCompanion(starterRun(), 'cubling', rosterHeroes);
   const companion = companionOf(run)!;
   run = { ...run, roster: run.roster.map((r) => (r === companion ? { ...r, equipment: equipItem(r.equipment, 'dagger.common') } : r)) };
-  const { run: after, absorbed } = absorbCompanions(run, [companion.rosterId, 'valor'], equipment);
+  const { run: after, absorbed } = absorbCompanions(run, [companion.rosterId, 'valor']);
   assert.deepStrictEqual(absorbed.map((r) => r.heroId), ['cubling']);
   assert.strictEqual(companionOf(after), null);
   assert.ok(after.roster.some((r) => r.rosterId === 'valor'), 'a hero KO is not a death');
-  assert.ok(after.stash.includes('dagger.common'), 'the unit is the price, the item is not');
+  assert.ok(!after.roster.some((r) => r.equipment.includes('dagger.common')), 'what it carried is gone with it — gear is absorbed, never carried');
   assert.strictEqual(after.companionHeroId, 'cubling', 'the run remembers it had one');
-  const untouched = absorbCompanions(run, ['valor'], equipment);
+  const untouched = absorbCompanions(run, ['valor']);
   assert.strictEqual(untouched.run, run);
 });
 

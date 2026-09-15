@@ -28,34 +28,31 @@ import { encounterXpKind, grantEncounterLevels, levelOf, MAX_LEVEL } from '../..
 import { generateFinaleEncounter, type Encounter, type EncounterNodeType } from '../../src/run/enemyGen';
 import { pickSquad, requiredSquadSize, STANDARD_SQUAD_SIZE, type Squad } from '../../src/run/squad';
 import {
+  absorbItem,
+  itemReceiptFor,
   advanceToNode,
   advanceToNextAct,
-  equipToRoster,
   grantContractReward,
   grantCurrencyReward,
-  grantItemSlot,
   grantRelicReward,
   anvilQuote,
   anvilUpgrade,
-  buyItemSlot,
-  slotQuote,
   reachableNodeIds,
   recordBrokenSeal,
-  sellFromStash,
   GOLD_REWARD_RANGE,
   PURSE_GOLD_RANGE,
   rollGoldRange,
   grantManaWell,
 } from '../../src/run/runProgress';
-import { MOVE_CAP, recordMoveOffer, grantOfferedMove, itemSlotsFor, grantMove } from '../../src/run/progression';
+import { MOVE_CAP, recordMoveOffer, grantOfferedMove, grantMove } from '../../src/run/progression';
 import { claimContract, claimContractReplacing, deriveContractOffer, isRecruitable, pickContractOffers, recruitFromGuildHall, recruitFromGuildHallReplacing, freshRosterId, buyContract } from '../../src/run/recruitment';
 import { guildHallEntry } from '../../src/run/guildRecruit';
-import { rollGuildHallOffers, buyEquipment, sellValueFor, EQUIPMENT_PRICE_BY_RARITY } from '../../src/run/shop';
+import { rollGuildHallOffers, sellValueFor } from '../../src/run/shop';
 import { mentorMovePool, tutorMovePool } from '../../src/run/tutor';
 import { grantClass, rollClassOffers } from '../../src/run/classes';
 import { boonMoveCount, pickBoonOffers } from '../../src/run/boons';
 import { applyStatShift, grantEventPassive, rollRunEvent, rollEventMove, statShiftAllowed } from '../../src/run/events';
-import { MAX_ITEM_SLOTS, pickWeightedEquipment, rarityWeightsFor, EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, type EquipmentDefinition } from '../../src/run/equipment';
+import { pickWeightedEquipment, rarityWeightsFor, EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, type EquipmentDefinition } from '../../src/run/equipment';
 import { passives } from '../../src/data/passives';
 import { getMaxHp } from '../../src/engine/state';
 import { createCombatant } from '../../src/engine/state';
@@ -155,8 +152,11 @@ export interface RunRecord {
   pipsBySource: Record<string, number>;
   /** Heroes joining after the draft: `contract` (claimed or bought), `hire` (Guild Hall). */
   recruitsBySource: Record<string, number>;
-  /** Items obtained, keyed `act:source` — `drop` (a fight), `node` (Equipment Cache), `event` (a loot pile), `shelf` (Guild Hall). */
+  /** Items obtained, keyed `act:source` — `drop` (a fight), `node` (Equipment Cache), `event` (a loot pile). */
   itemsBySource: Record<string, number>;
+  /** Drops that merged into a held piece rather than taking a socket, and drops that COULD have (somebody held the family). */
+  merges: number;
+  mergeOffers: number;
   /** What the run cost in taps and screens, [act]; index 0 unused (time.ts prices it). */
   timeByAct: TimeCounts[];
 }
@@ -192,21 +192,20 @@ function resolveCrucible(run: RunState, rng: Rng, choices: ChoiceEvent[]): RunSt
 }
 
 /**
- * The item policy: worn by whoever gains most, and everything else sold. The greedy wearer
- * never wants what it just displaced, so draining the bag each time also keeps it from filling
- * and refusing the next swap — this sim models the floor of the stash, not its use.
+ * The item policy on the who-screen (docs/gear-absorption.md §2): taken or merged by whoever
+ * gains most, sold when nobody gains. A merge counts as an item obtained and an item worn, at
+ * the tier it reached.
  */
-function resolveDrop(run: RunState, itemId: string, record: RunRecord, actNumber: number, source: 'drop' | 'node' | 'event' | 'shelf'): RunState {
+function resolveDrop(run: RunState, itemId: string, record: RunRecord, actNumber: number, source: 'drop' | 'node' | 'event'): RunState {
   const item = equipment[itemId];
   if (!item || run.roster.length === 0) return run;
-  const equipped = record.equipped;
   record.itemsBySource[`${actNumber}:${source}`] = (record.itemsBySource[`${actNumber}:${source}`] ?? 0) + 1;
-  const target = policy.bestWearer(run.roster, item);
+  const target = policy.bestReceiver(run.roster, item);
+  if (run.roster.some((entry) => itemReceiptFor(entry, item, rosterHeroes[entry.heroId], equipment).kind === 'merge')) record.mergeOffers += 1;
   if (!target || target.gain <= 0) return grantCurrencyReward(run, sellValueFor(item));
-  equipped.push(`${actNumber}:${item.rarity}`);
-  let next = equipToRoster(run, target.rosterId, itemId, equipment, rosterHeroes, target.replaceIndex);
-  while (next.stash.length > 0) next = sellFromStash(next, 0, equipment);
-  return next;
+  if (target.receipt.kind === 'merge') record.merges += 1;
+  record.equipped.push(`${actNumber}:${target.receipt.kind === 'merge' ? target.receipt.resultRarity : item.rarity}`);
+  return absorbItem(run, target.rosterId, itemId, equipment, rosterHeroes);
 }
 
 function rosterSquad(run: RunState, size: number): Squad {
@@ -252,6 +251,8 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     pipsBySource: {},
     recruitsBySource: {},
     itemsBySource: {},
+    merges: 0,
+    mergeOffers: 0,
     timeByAct: Array.from({ length: TOTAL_ACTS + 1 }, emptyTimeCounts),
   };
 
@@ -308,7 +309,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
       run = advanceToNode(run, nodeId);
       run = { ...run, encountersWon: run.encountersWon + 1 };
       // A KO'd companion is gone from the run, before the levels roll (src/run/companion.ts).
-      const absorbed = absorbCompanions(run, outcome.koRosterIds, equipment);
+      const absorbed = absorbCompanions(run, outcome.koRosterIds);
       if (absorbed.absorbed.length > 0) record.companionLostAt ??= run.encountersWon;
       run = absorbed.run;
       // Automatic and roster-wide, benched heroes included (src/run/growth.ts); the report pays
@@ -620,7 +621,7 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       // power question, not a design experiment — the rarity curve is what's under test.
       const choices = pickWeightedEquipment(EQUIPMENT_POOL, 3, rarityWeightsFor(run.actNumber, 'standard'));
       if (choices.length === 0) return run;
-      const best = choices.reduce((a, b) => ((policy.bestWearer(run.roster, b)?.gain ?? 0) > (policy.bestWearer(run.roster, a)?.gain ?? 0) ? b : a));
+      const best = choices.reduce((a, b) => ((policy.bestReceiver(run.roster, b)?.gain ?? 0) > (policy.bestReceiver(run.roster, a)?.gain ?? 0) ? b : a));
       return resolveDrop(run, best.id, record, run.actNumber, 'node');
     }
     case 'passiveReward': {
@@ -639,20 +640,11 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       record.choices.push({ bucket: 'boon', offered, picked: [picked], encountersWonAtChoice: run.encountersWon });
       return grantEventPassive(run, target.rosterId, picked, passives);
     }
-    case 'forgeReward': {
-      // Whoever is holding the most already: an extra slot is worth most where the gear is.
-      const target = [...run.roster]
-        .filter((entry) => itemSlotsFor(rosterHeroes[entry.heroId], entry) < MAX_ITEM_SLOTS)
-        .sort((a, b) => policy.powerScore(b) - policy.powerScore(a))[0];
-      return target ? grantItemSlot(run, target.rosterId, rosterHeroes) : run;
-    }
     // The Mentor (acts 1-3): one Mid move ROLLED for the hero whose Mid pool is worth most.
     case 'mentorReward':
       return resolveMentor(run, rng);
     case 'tutorReward':
       return resolveTutor(run, rng);
-    case 'blacksmith':
-      return resolveBlacksmith(run);
     case 'event':
       return resolveEvent(run, locationId, rng, record);
     case 'shop':
@@ -699,24 +691,13 @@ function resolveTutor(run: RunState, rng: Rng): RunState {
 }
 
 /**
- * The Blacksmith: slots, the Anvil, the Enchanter, all for gold. The sim buys the slot first
- * (the one grant nothing else on the map sells) and then lifts its best-placed item a tier
- * while the gold lasts. The Enchanter is left alone — picking an element is a team-composition
- * read this policy has no model of, and buying one at random would price the node below what a
- * player gets from it.
+ * The Guild Hall's Anvil: one lift a visit, the most valuable item on the strongest hero that can
+ * afford it. The Enchanter is left alone — picking an element is a team-composition read this
+ * policy has no model of, and buying one at random would price the service below what a player
+ * gets from it.
  */
-function resolveBlacksmith(run: RunState): RunState {
+function resolveAnvil(run: RunState): RunState {
   let next = run;
-
-  const slotTarget = [...next.roster]
-    .filter((entry) => {
-      const quote = slotQuote(next, entry.rosterId, rosterHeroes);
-      return quote != null && quote.cost <= next.gold;
-    })
-    .sort((a, b) => policy.powerScore(b) - policy.powerScore(a))[0];
-  if (slotTarget) next = buyItemSlot(next, slotTarget.rosterId, rosterHeroes);
-
-  // One lift per visit: the most valuable item on the strongest hero that can afford it.
   for (const entry of policy.byPower(next.roster)) {
     let bestIndex = -1;
     let bestValue = -Infinity;
@@ -730,7 +711,7 @@ function resolveBlacksmith(run: RunState): RunState {
       }
     });
     if (bestIndex >= 0) {
-      next = anvilUpgrade(next, { kind: 'hero', rosterId: entry.rosterId, index: bestIndex }, equipment);
+      next = anvilUpgrade(next, { rosterId: entry.rosterId, index: bestIndex }, equipment);
       break;
     }
   }
@@ -781,10 +762,10 @@ function resolveEvent(run: RunState, locationId: string, rng: Rng, record: RunRe
   return next;
 }
 
-/** Guild Hall: fill empty roster slots first, then buy gear that is a real upgrade, then bank the rest. */
+/** Guild Hall: fill empty roster slots first, then Scrolls, then the Anvil, then bank the rest. */
 function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord, options: RunOptions): RunState {
   let next = run;
-  const offers = rollGuildHallOffers(next, guildHallOffers, EQUIPMENT_POOL, muster);
+  const offers = rollGuildHallOffers(next, guildHallOffers, muster);
 
   // The mend first, when the roster is hurt enough for it to be worth a hire's price.
   if (canBuyMend(next) && policy.rosterHpFraction(next.roster) < 0.6) next = buyMend(next);
@@ -814,17 +795,7 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
     next = landPips(buyScroll(next, bought), target.rosterId, 1, 'shelf', rng, record);
   }
 
-  for (const itemId of offers.equipmentOfferIds) {
-    const item = equipment[itemId];
-    if (!item) continue;
-    const price = EQUIPMENT_PRICE_BY_RARITY[item.rarity];
-    if (next.gold < price) continue;
-    const wearer = policy.bestWearer(next.roster, item);
-    // Buy only a meaningful upgrade — hoarding gold for a later, better shelf is the alternative.
-    if (!wearer || wearer.gain < price * 0.25) continue;
-    next = buyEquipment(next, item);
-    next = resolveDrop(next, itemId, record, next.actNumber, 'shelf');
-  }
+  next = resolveAnvil(next);
 
   // Spare gold at the last shop before a Guardian buys a contract rather than rusting.
   if (next.gold >= CONTRACT_PURCHASE_COST && next.roster.length < ROSTER_CAP) {

@@ -137,20 +137,14 @@ export function unenchantedIdOf(id: string): string {
 
 // --- Item slots ---
 
-/** What every hero holds at the start of a run. There is no per-hero override; the Forge is the only way up (itemSlotsFor). */
-export const BASE_ITEM_SLOTS = 1;
-
 /**
- * Ceiling on base + Forge grants. Every slot past this is refused, so a Forge can go dead on one
- * hero — which is what makes spending it a choice.
- *
- * 5 -> 3 (2026-09-07, per user direction). Manage Roster lays the squad out two cards across with
- * a slot row under each hero, and three is what a half-width card seats on a phone; five wrapped
- * to a second row that was empty on almost every hero. The knock-on is real and intended: the
- * nine heroes authored at `itemSlots` 2 are now **one Forge from the cap** rather than three, so
- * the node goes dead across a roster sooner and lands harder while it still bites.
+ * Every hero has three sockets, always (docs/gear-absorption.md §4). An item fills one for the
+ * run and never comes off, so the socket count is a constant rather than a dial: permanence is
+ * what makes an item matter, and supply is the balance number. There is no per-hero override and
+ * nothing grants more — the Forge is gone.
  */
-export const MAX_ITEM_SLOTS = 3;
+export const BASE_ITEM_SLOTS = 3;
+export const MAX_ITEM_SLOTS = BASE_ITEM_SLOTS;
 
 // --- The rarity budget ---
 
@@ -473,9 +467,9 @@ export function maybeEnchantDrop(
 }
 
 /**
- * Held item ids in the order they were equipped. Compact — index N IS the Nth slot and a
- * hero never holds a hole, so the list's length is what fills the slot boxes. Capacity is
- * not stored here: it comes from the hero plus the entry's Forge grants (itemSlotsFor).
+ * Held item ids in the order they were absorbed. Compact — index N IS the Nth socket and a
+ * hero never holds a hole, so the list's length is what fills the socket boxes. Capacity is
+ * BASE_ITEM_SLOTS for everyone (itemSlotsFor).
  */
 export type EquipmentLoadout = readonly string[];
 
@@ -494,67 +488,30 @@ export function holdsItem(loadout: EquipmentLoadout, itemId: string): boolean {
   return loadout.some((held) => parseEquipmentId(held).base === base);
 }
 
-// --- Merging ---
+// --- Merging (docs/gear-absorption.md §3) ---
 
 /**
- * Two items of the same family and tier combine into one of the next tier, free (docs/equipment.md
- * §5). Enchantments are ignored for eligibility — if either input carries one the player picks
- * which survives — so an enchanted duplicate is always good news rather than a blocker.
+ * A same-family drop given to the hero holding that family merges: the held piece becomes one
+ * tier above the HIGHER of the two, and the drop is consumed. Never a downgrade — held Common +
+ * dropped Epic is a Legendary, and so is the reverse — so a duplicate of any tier is good news.
+ * The enchant is the held piece's if it has one, otherwise the drop's: one rule, no screen.
  *
- * A Mythic has nothing above it, and a Unique has no ladder to climb.
+ * Null when the pair cannot merge: different families, a Unique (no ladder), or the higher of
+ * the two already Mythic (nothing above it). The act window does NOT cap a merge — it caps what
+ * drops and what the Anvil lifts to; a merge is a finite roll meeting a finite roster and cannot
+ * be bought or hoarded past it.
  */
-export function canMergeItems(a: EquipmentDefinition, b: EquipmentDefinition): boolean {
-  if (a.familyId === undefined || b.familyId === undefined) return false;
-  if (a.familyId !== b.familyId) return false;
-  if (a.rarity !== b.rarity) return false;
-  return nextRarity(a.rarity) !== null;
+export function mergeIntoHeld(held: EquipmentDefinition, drop: EquipmentDefinition): string | null {
+  if (held.familyId === undefined || drop.familyId === undefined) return null;
+  if (held.familyId !== drop.familyId) return null;
+  const higher = RARITY_ORDER.indexOf(held.rarity) >= RARITY_ORDER.indexOf(drop.rarity) ? held.rarity : drop.rarity;
+  const up = nextRarity(higher);
+  if (up === null) return null;
+  return equipmentIdFor(held.familyId, up, held.enchantId ?? drop.enchantId);
 }
 
 export function nextRarity(rarity: EquipmentRarity): EquipmentRarity | null {
   return RARITY_ORDER[RARITY_ORDER.indexOf(rarity) + 1] ?? null;
-}
-
-/** The id a merge produces. `keepEnchantId` is the player's pick between the two inputs' enchants. */
-export function mergeResultId(item: EquipmentDefinition, keepEnchantId?: EnchantmentId): string | null {
-  const up = nextRarity(item.rarity);
-  if (up === null || item.familyId === undefined) return null;
-  return equipmentIdFor(item.familyId, up, keepEnchantId);
-}
-
-/**
- * Which bag slots have a partner sitting in the bag with them (2026-09-10, per user direction).
- * Lives here rather than on the Roster screen because the MAP asks the same question — its one
- * footer button says what is waiting behind it, and a free tier is as much "waiting" as an
- * unopened item is (view/run/mapFooter.ts).
- *
- * The act window is part of the answer, not a filter on it: a pair that cannot reach its next tier
- * in this act is not a merge yet, and must not be announced as one.
- */
-export function mergeablePairIndices(
-  stash: Stash,
-  lookup: Record<string, EquipmentDefinition>,
-  actNumber: number
-): Set<number> {
-  const marked = new Set<number>();
-  for (let a = 0; a < stash.length; a++) {
-    const left = lookup[stash[a]];
-    if (!left) continue;
-    const up = nextRarity(left.rarity);
-    if (!up || !actAllowsRarity(actNumber, up)) continue;
-    for (let b = a + 1; b < stash.length; b++) {
-      const right = lookup[stash[b]];
-      if (!right || !canMergeItems(left, right)) continue;
-      marked.add(a);
-      marked.add(b);
-    }
-  }
-  return marked;
-}
-
-/** The enchants a merge may keep — at most one, so two enchanted inputs pose a choice and two plain ones pose none. */
-export function mergeEnchantChoices(a: EquipmentDefinition, b: EquipmentDefinition): EnchantmentId[] {
-  const choices = [a.enchantId, b.enchantId].filter((id): id is EnchantmentId => id !== undefined);
-  return [...new Set(choices)];
 }
 
 export function isValidEquipmentDefinition(item: EquipmentDefinition): boolean {
@@ -574,56 +531,8 @@ export function equipmentStatModifiers(
   return mergeStatMods(...grants);
 }
 
-/** Appends into the next free slot, or overwrites `replaceIndex` when the hero is full. Whatever it overwrites goes to the stash — callers read the displaced id first (runProgress.ts equipToRoster). */
+/** Appends into the next free socket. Overwrites `replaceIndex` instead when given — what a merge does to the held piece. */
 export function equipItem(loadout: EquipmentLoadout, itemId: string, replaceIndex?: number): EquipmentLoadout {
   if (replaceIndex === undefined) return [...loadout, itemId];
   return loadout.map((held, i) => (i === replaceIndex ? itemId : held));
-}
-
-/** Drops the item in `index`; the slots above it shift down, since the list stays compact. */
-export function unequipSlot(loadout: EquipmentLoadout, index: number): EquipmentLoadout {
-  return loadout.filter((_, i) => i !== index);
-}
-
-// --- The stash ---
-
-/**
- * Unequipped items the player is carrying (docs/progression.md "The stash"). Unlike a loadout
- * it MAY hold two of the same item — one copy per hero is the rule, and two heroes may want it.
- */
-export type Stash = readonly string[];
-
-/**
- * The bag is UNCAPPED (2026-09-08, per user direction), so this never refuses. `STASH_CAPACITY`
- * and `stashIsFull` are gone with the cap — see docs/progression.md "The uncapped bag".
- */
-export function addToStash(stash: Stash, itemId: string): Stash {
-  return [...stash, itemId];
-}
-
-export function removeFromStash(stash: Stash, index: number): Stash {
-  return stash.filter((_, i) => i !== index);
-}
-
-/**
- * Bag items the player has not looked at yet (docs/progression.md "The bag notification").
- * Held as item IDS, not bag indices: merging, selling and equipping all reshuffle indices, and
- * a parallel array would have to be rewritten by each of them to stay aligned. Two copies of one
- * id share one mark, which is the honest reading anyway — what is unchecked is the ITEM, not the
- * slot it happens to be sitting in.
- */
-export type UnseenItems = readonly string[];
-
-export function markItemUnseen(unseen: UnseenItems, itemId: string): UnseenItems {
-  return unseen.includes(itemId) ? unseen : [...unseen, itemId];
-}
-
-/** Drops marks whose item has left the bag, so a mark never outlives what it points at. */
-export function pruneUnseen(unseen: UnseenItems, stash: Stash): UnseenItems {
-  return unseen.length === 0 ? unseen : unseen.filter((id) => stash.includes(id));
-}
-
-/** What the badge prints. Pruned rather than trusted, so a stale mark can never light it. */
-export function unseenCount(unseen: UnseenItems, stash: Stash): number {
-  return pruneUnseen(unseen, stash).length;
 }
