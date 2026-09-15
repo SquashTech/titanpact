@@ -31,9 +31,13 @@ export function sellValueFor(item: EquipmentDefinition): number {
  * §5). Keyed by TARGET, so `ANVIL_PRICE_BY_TARGET.epic` is what Rare -> Epic costs; `common` is
  * unreachable and priced at 0 only so the record is total.
  *
- * The shelf it used to be priced against is gone (docs/gear-absorption.md §6): the table is
- * untuned and owed a re-basing against hires and Scrolls. What is NOT free to retune is the
- * inequality in test/shop.test.ts: no path from gold back to gold may profit.
+ * The shelf it used to be priced against is gone (docs/gear-absorption.md §6), so the basis is
+ * the run's other purchases now: Rare → Epic, the step that Awakens a family, costs about a hire
+ * (50g); Legendary → Mythic about two and a half. Merging is the free route up a tier and the
+ * Anvil is the paid one for a piece with no duplicate coming — deliberately dearer than the shelf
+ * ever was, per tier, so gold is spent to keep THIS piece rather than to farm power. Untuned
+ * against play (2026-09-15; the numbers stand from the shelf era). What is NOT free to retune is
+ * the inequality in test/shop.test.ts: a lift must cost more than the tier it reaches sells for.
  */
 export const ANVIL_PRICE_BY_TARGET: Record<EquipmentRarity, number> = {
   common: 0,

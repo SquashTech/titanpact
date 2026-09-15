@@ -110,8 +110,12 @@ don't silently override it.
 > widens while a socket is free (§8). **Phase 3 is IN (same day): a contract arrives ARMED** —
 > the enemy's piece is rolled to fit it (`rollFittingGear`: a family suiting its offensive stat,
 > an enchant of a type it fields) and `claimContract` keeps it, the fifth finished axis against a
-> bare hire; a terminated hero's gear goes with it, never handed on. Phase 4 (the drop table) is
-> still owed.
+> bare hire; a terminated hero's gear goes with it, never handed on. **Phase 4 is IN (same day):
+> the drop table was MEASURED** — every table without the opener's guaranteed item lost six to
+> eight points of full-clear, all in acts 1–2 — so `EQUIPMENT_DROP_CHANCE` is 1 / 0.6 / 1 / 1
+> (the Elite and Guardian always drop) and the Cache took the Forge's seat weight (40 → 78).
+> Shipped: full-clear 19.9%, 21 items a completed run against 18 seats, merges offered 5.8 →
+> taken 1.0. The enemy curve is untouched and is the next dial (§10).
 
 ---
 
@@ -447,6 +451,9 @@ don't silently override it.
   so the floor is what keeps a bigger item from being merely a bigger number.
   **Drop odds scale by act**: Legendary/Mythic cannot appear in Act 1, Common cannot appear
   in Act 5, elites roll one tier ahead (`rarityWeightsFor`, `docs/progression.md`).
+  **Drop odds by node** (2026-09-15, measured, `docs/gear-absorption.md` §5): the opener always,
+  the Skirmish 0.6, the Elite and the Guardian always — the opener's guaranteed item is the early
+  game's power and every table without it lost the Act 1–2 wall by six to eight points.
 
 ### Mana & tempo
 - Regenerating Mana with two stats: **pool size** and **per-turn MP Regen** (always written "MP Regen" — the bare word collided with the HoT status, now **Renew**).

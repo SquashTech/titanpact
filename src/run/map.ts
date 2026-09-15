@@ -94,8 +94,10 @@ function rowWidthsFor(actNumber: number): number[] {
 
 /** Reward-row pool. `mentorReward` and `tutorReward` are deliberately absent — each has its own forced seat. Weights are a first-pass balance. */
 export const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
-  // equipmentReward absorbs most of the frequency the three slot caches used to carry.
-  ['equipmentReward', 40],
+  // The Equipment Cache: the deliberate gear faucet, where the player picks a family (docs/
+  // gear-absorption.md §5). 40 + the Forge's 38 since 2026-09-15 — the Forge's seat came to the
+  // Cache rather than vanishing, so every other reward keeps the frequency it had.
+  ['equipmentReward', 78],
   // The Scroll Cache: SCROLL_CACHE_COUNT Mastery pips, divided as the player likes (run/mastery.ts,
   // docs/mastery.md §3) — the seat and weight it held before Ichor took them (2026-09-14, Mastery
   // phase 2). Weighted level with equipment: they are the run's two growth axes, one per hero's

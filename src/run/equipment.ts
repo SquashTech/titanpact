@@ -370,23 +370,24 @@ export function lootTierFor(actNumber: number, source: LootSource = 'standard'):
 }
 
 /**
- * Chance a won encounter pays an item, by map node type. Monsters always drop; Skirmish rolls.
+ * Chance a won encounter pays an item, by map node type. The opener always drops, the Skirmish
+ * rolls, and the Elite and the Guardian always drop (2026-09-15, docs/gear-absorption.md §5):
+ * every item is absorbed on receipt now, so this table is the run's whole gear supply, and it
+ * was measured rather than reasoned. Cutting the opener's drop cost seven points of full-clear,
+ * all of it in acts 1–2 — the wall the run already has — while a Guardian that pays nothing one
+ * time in twenty was a sour beat buying nothing. The Skirmish's 0.6 is what separates the fork's
+ * two fights: the Elite is a step over and always pays.
  *
- * Raised 2026-09-08 (skirmish 0.25 -> 0.60, elite 0.55 -> 0.80, boss 0.70 -> 0.95) to pay back the
- * difficulty the universal one-slot change cost: removing the nine heroes' second slot took the
- * measured full-clear rate from 11.4% to 7.5%. `fight` and `battle` were already at 1 and had no
- * headroom, so the whole correction lands on the three that did.
- *
- * This table and LOOT_SOURCE lived in BOTH App.tsx and scripts/sim/run.ts until this pass, hand-
- * synced. They are here now because a simulator measuring different drop odds than the game ships
+ * This table and LOOT_SOURCE lived in BOTH App.tsx and scripts/sim/run.ts until 2026-09-08, hand-
+ * synced. They are here because a simulator measuring different drop odds than the game ships
  * is worse than no simulator.
  */
 export const EQUIPMENT_DROP_CHANCE: Record<EncounterNodeKind, number> = {
   fight: 1,
   battle: 1,
   skirmish: 0.6,
-  elite: 0.8,
-  boss: 0.95,
+  elite: 1,
+  boss: 1,
   finale: 0,
 };
 
