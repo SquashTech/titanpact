@@ -290,6 +290,12 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
                 eye can learn to skip; a button that has changed its mind about what it is called
                 cannot be skipped, and gear left in the bag is a hero fighting an act without it. */}
             <span className="map-footer-label">{waiting.label}</span>
+            {/* On the cap, not the slab's corner: the corner is the sixth hero's now. */}
+            {waiting.total > 0 && (
+              <span className="map-footer-badge" aria-label={waiting.aria}>
+                {waiting.total}
+              </span>
+            )}
           </span>
           {/* The party, where the act has left it (run/wounds.ts): HP carries between fights, so
               the one button under the map wears the six bars rather than hiding them behind a tap. */}
@@ -305,11 +311,6 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
               );
             })}
           </span>
-          {waiting.total > 0 && (
-            <span className="map-footer-badge" aria-label={waiting.aria}>
-              {waiting.total}
-            </span>
-          )}
         </button>
       </div>
 
