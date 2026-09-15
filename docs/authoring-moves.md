@@ -954,7 +954,9 @@ extensions; some are design decisions above your pay grade. Either way, name it.
   `switchesUserOut` — but that resolves entirely within its own round.)
 - **Protect / shield / damage negation.** (A *redirect* now exists — Provoke pulls
   every single-target enemy move onto its holder — but that moves a hit, it does not
-  stop one.)
+  stop one.) **DECIDED 2026-09-14, not yet built: `docs/shield.md`** — a Shield status, bonus
+  health off the caster's Defense on the heal formula, absorbed before HP at the one chokepoint,
+  hits only. Read that doc before authoring anything that stops a hit.
 - **A move that applies a damage-pipeline modifier** ("+20% Fire damage for 3 rounds").
   `DamageModifier` exists but is fed only by Passives, never by moves.
 - ~~**A second status on one move.**~~ **Now exists** — `statusApplication` is
