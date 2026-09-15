@@ -426,17 +426,26 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
           )}
           {move.statDeltas?.map(({ stat, amount: authored }) => {
             const amount = statDeltaReadout(move, stat, authored, healCaster);
-            // A drop into a foe already at, or near, its floor lands short — say so before the press (docs/stat-scaling.md §3).
+            // A change into a hero already at, or near, the edge of the band lands short — say so before the press (docs/stat-scaling.md §3).
             const held = (() => {
-              if (amount >= 0 || !context || statDeltaLandsOnCasterSide(move)) return undefined;
-              const parts = context.defenderIds
+              if (amount === 0 || !context) return undefined;
+              const ownSide = statDeltaLandsOnCasterSide(move);
+              const receivers = ownSide
+                ? move.statDeltaTarget === 'self' || move.target === 'self'
+                  ? [context.attackerId]
+                  : context.combat.active[context.combat.combatants[context.attackerId]?.side ?? 'A'].filter((id): id is string => id !== null)
+                : context.defenderIds;
+              const edge = amount > 0 ? 'higher' : 'lower';
+              const parts = receivers
                 .map((id) => {
                   const d = context.combat.combatants[id];
                   if (!d || d.fainted) return null;
                   const { landed, capped } = applyStatModifierDelta(allCombatants[d.heroId], d, stat, amount);
                   if (!capped) return null;
                   const who = allCombatants[d.heroId]?.name ?? id;
-                  return landed === 0 ? `${who}'s ${STAT_LABELS[stat]} can't go any lower — lands nothing` : `${who}'s ${STAT_LABELS[stat]} can't go much lower — lands ${landed}`;
+                  return landed === 0
+                    ? `${who}'s ${STAT_LABELS[stat]} can't go any ${edge} — lands nothing`
+                    : `${who}'s ${STAT_LABELS[stat]} can't go much ${edge} — lands ${landed > 0 ? '+' : ''}${landed}`;
                 })
                 .filter(Boolean);
               return parts.length ? parts.join('; ') : undefined;

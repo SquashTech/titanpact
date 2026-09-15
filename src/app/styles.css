@@ -3901,9 +3901,21 @@ textarea,
   color: color-mix(in srgb, var(--hp-low) 72%, var(--text-dim));
 }
 
+.stat-mod-badge.stat-buff.stat-held {
+  color: color-mix(in srgb, var(--hp-high) 72%, var(--text-dim));
+}
+
+/* The baseline under a held drop; over a held rise — the line sits at the end that stopped it. */
 .stat-mod-badge.stat-held .stat-mod-pips {
   padding-bottom: 1px;
   border-bottom: 1.5px solid currentColor;
+}
+
+.stat-mod-badge.stat-buff.stat-held .stat-mod-pips {
+  padding-bottom: 0;
+  border-bottom: 0;
+  padding-top: 1px;
+  border-top: 1.5px solid currentColor;
 }
 
 /* Switch-row/bench-panel picker cards are too small for these to read —
@@ -5273,9 +5285,15 @@ textarea,
   font-size: 13px;
 }
 
-/* A drop the floor took whole: nothing moved, and the popup says why rather than printing −0. */
+/* A change the band took whole: nothing moved, and the popup says why rather than printing ±0. */
 .dmg-popup.popup-floor {
   color: color-mix(in srgb, var(--hp-low) 70%, var(--text-dim));
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+.dmg-popup.popup-ceiling {
+  color: color-mix(in srgb, var(--hp-high) 70%, var(--text-dim));
   font-size: 12px;
   letter-spacing: 0.02em;
 }

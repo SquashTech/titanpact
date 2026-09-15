@@ -12,6 +12,7 @@ import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
 import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
+import { statModifierCeiling } from '../src/engine/state';
 import { applyManaRegen } from '../src/engine/combat/manaRegen';
 import { setFieldEffect } from '../src/engine/combat/fieldEffectEngine';
 import { getMaxMana, resolveTargetMode } from '../src/engine/state';
@@ -271,19 +272,22 @@ test('arcane: Arcane Overflow grants Attack and Intelligence equal to the mana h
     config
   );
 
+  // The read is the whole banked figure; what LANDS is held at the band's top, ×4 of base + loadout
+  // (state.ts statModifierCeiling) — which binds the 20–25 Attack of two casters long before the 85–90 Intelligence.
   for (const id of ['a1', 'a2']) {
-    assert.strictEqual(next.combatants[id].statModifiers.attack, banked, `${id} Attack`);
-    assert.strictEqual(next.combatants[id].statModifiers.intelligence, banked, `${id} Intelligence`);
+    const c = next.combatants[id];
+    assert.strictEqual(c.statModifiers.attack, Math.min(banked, statModifierCeiling(heroes[c.heroId], c, 'attack')), `${id} Attack`);
+    assert.strictEqual(c.statModifiers.intelligence, banked, `${id} Intelligence`);
   }
   // Not `banked - manaCost`: the row reads the mana BEFORE the cost.
-  const changes = events.filter((e) => e.type === 'StatChanged') as Array<{ delta: number }>;
+  const changes = events.filter((e) => e.type === 'StatChanged' && (e as { stat: string }).stat === 'intelligence') as Array<{ delta: number }>;
   assert.ok(changes.length > 0 && changes.every((c) => c.delta === banked));
 });
 
 test('arcane: the derived grant is the one stat modifier exempt from the multiples-of-5 rule', () => {
   const built = withMana(survivable(arcaneFixture(14)), 'a2', 173);
   const { state: next } = resolveRound(built, [{ kind: 'move', combatantId: 'a2', moveId: 'arcaneOverflow' }], config);
-  assert.strictEqual(next.combatants.a2.statModifiers.attack! % 5, 3, 'the exact figure lands, unrounded');
+  assert.strictEqual(next.combatants.a2.statModifiers.intelligence! % 5, 3, 'the exact figure lands, unrounded');
 
   for (const move of Object.values(moves)) {
     for (const delta of move.statDeltas ?? []) {
@@ -313,7 +317,8 @@ test('arcane: overflow counts toward the derived grant — the Font of Power int
 
   const held = charged.combatants.a2.currentMana;
   const { state: next } = resolveRound(charged, [{ kind: 'move', combatantId: 'a2', moveId: 'arcaneOverflow' }], config);
-  assert.strictEqual(next.combatants.a1.statModifiers.attack, held, 'the buff is the FULL held figure, overflow included');
+  // Intelligence, since Runescribe's 25 Attack caps at +75 and the held figure passes it.
+  assert.strictEqual(next.combatants.a1.statModifiers.intelligence, held, 'the buff is the FULL held figure, overflow included');
 });
 
 // --- The slate as a whole ---

@@ -1,10 +1,11 @@
 # stat-scaling.md — Buffs and debuffs: scaled bases, the ceiling, the noise floor
 
 > **STATUS: DECIDED 2026-09-14 (per user direction — option A of two, after a Pokémon-shaped
-> stage system was weighed and set aside, §0). PHASES 1, 2a, 3, 4 AND 5 OF §8 ARE IN (same day) — the overhaul is built in full bar the
-> undecided buff half of the ceiling (2b).
-> The ceiling's DEBUFF half is in (phase 2a, per user direction after phase 1's measurement);
-> its BUFF half (§3, phase 2b) is NOT decided — the designer is unsure it is needed at all; it stays in the doc as the
+> stage system was weighed and set aside, §0). EVERY PHASE OF §8 IS IN (same day) — the overhaul is built in full.
+> The ceiling's DEBUFF half went in first (phase 2a, per user direction after phase 1's
+> measurement); its BUFF half (phase 2b) went in after a full playtest run, at **×4**, not the
+> +S (×2) this doc first proposed — the designer's call once buffs landed scaled. Nothing here
+> is undecided any more — the designer is unsure it is needed at all; it stays in the doc as the
 > proposal and §10 carries the case against it.** `CLAUDE.md` and
 > `combat.md` describe the game in force wherever a §8 phase has not landed; §8 is the route
 > and §9 the list of sign-offs each phase spends — **check its Status column before assuming
@@ -133,18 +134,19 @@ because it would be a second rule where the family has one.
 
 ---
 
-## 3. The ceiling — the debuff half IN, the buff half UNDECIDED
+## 3. The ceiling — BUILT, as `[−½S, +3S]`
 
-> **The `−½S` floor is built (phase 2a, 2026-09-14, per user direction):** a stat's fight
-> modifier is held at −½(base + loadout) at write — `statModifierFloor` /
-> `applyStatModifierDelta` in `src/engine/state.ts`, used by every writer of `statModifiers`
-> (a move's deltas, Brain Flay's doubling, a passive's `statDelta`) — so a debuff can at most
-> halve a stat, and the floor at 1 is a defence nothing authored can reach any more.
-> `StatChanged.capped` marks a drop the floor shortened; a drop that lands 0 still emits.
-> **The `+S` half is not signed off.** The designer's doubt is whether a cap on buffs is
-> needed once deltas scale and the Pact Clock already brackets the stall; §10 carries the
-> case each way and phase 1's numbers. The shape below describes both halves; only the debuff
-> half is live, and nothing bounds a positive modifier.
+> **Both ends are in.** A stat's fight modifier is held inside **−½(base + loadout) … +3×(base +
+> loadout)** at write — `statModifierFloor` / `statModifierCeiling` / `applyStatModifierDelta`
+> in `src/engine/state.ts` (`STAT_CEILING_MULTIPLE` = 4), used by every writer of
+> `statModifiers`: a move's deltas, Brain Flay's doubling, a passive's `statDelta`. So a debuff
+> can at most halve a stat and **a buff can at most take it to four times what it started the
+> fight at**; the floor at 1 is a defence nothing authored can reach. `StatChanged.capped` marks
+> a change the band shortened; one that lands 0 still emits. The debuff half went in first
+> (phase 2a) on phase 1's measurement; the buff half (2b) went in after a full playtest run —
+> the designer's own reading that scaled buffs are now strong enough to need a top, set at ×4
+> rather than the ×2 (`+S`) proposed below. The text below keeps `+S` where it argues the shape;
+> read it as `+3S` wherever it names the figure.
 
 **A stat's fight modifier is clamped to `[−½S, +S]`, where `S = base + loadout`. A buff can at
 most double a stat; a debuff can at most halve it.** One sentence, symmetric in the ratio (×2
@@ -275,7 +277,7 @@ Sequenced so the tree is playable at every boundary and each phase can be refuse
 |---|---|---|---|
 | 1 | **The formula.** `scaleStatDelta` beside `scaleStatusMagnitude`, reading Wisdom for a buff and the move's offensive stat for a debuff, STAB, snapshot; wired into `resolveRound`'s delta loop (authored, random and pack-multiplied deltas; derived and passive deltas pass through); `StatChanged.authored / landed`; the tile and overlay print the landed figure for the holder. No content change. | Every authored delta lands at base × StatMult × STAB; `test/arcaneMoves` still passes on bases; the sim reports buff magnitude landed per act. | **DONE 2026-09-14.** `src/engine/combat/statDeltaScaling.ts` (`scaleStatDelta`, `resolveStatDeltaFor` for a board-free screen, `statDeltaRole` — the sign classes the delta, a negative on the caster's side is a cost); wired into `resolveRound`'s delta loop with derived deltas passing through; `StatChanged.authored`; `statDeltaReadout` on the tile summary and the overlay rows (the row notes the base and what it scaled off); `landedDelta` in `test/fixtures.ts` for the slate tests, `test/statScaling.test.ts` for the rule. The sim prices the landed figure and reports it (below). No save change. Measured below. |
 | 2a | **The floor — the debuff half.** Clamp at write to `≥ −½S`; `capped` on the event; Brain Flay measured against it. **Separable — veto leaves phase 1 standing.** | No fight modifier under −½S on any combatant at any round; the floor at 1 unreachable by content. | **DONE 2026-09-14** (per user direction, after phase 1 measured the debuff side crossing the band in a third of Act 1 fights before scaling existed). `statModifierFloor` / `applyStatModifierDelta` (`state.ts`), used by `resolveRound`'s delta loop and its `doublesStatReductions` block and by `passiveEngine`'s `statDelta`; `StatChanged.capped`; `landedDelta` in the fixtures applies it; the pilot prices the held figure. Measured below. |
-| 2b | **The ceiling — the buff half.** Clamp at write to `≤ +S`; Apex Predator and Arcane Overflow measured against it; the Font of Power decision (§10). | No fight modifier over +S. | **UNDECIDED** — the designer is unsure a cap on buffs is needed. Phase 1 measured a used stat passing +S in 23–28% of Act 4+ fights after scaling, 3–5% before (§10). |
+| 2b | **The ceiling — the buff half.** Clamp at write to `≤ +3S` (×4); Apex Predator and Arcane Overflow measured against it; the Font of Power decision (§10). | No fight modifier over +3S. | **DONE 2026-09-14** (per user direction after a full playtest run: "now that buff spells feel truly powerful I see the reasoning for a cap"; ×4 chosen over the proposed ×2). `statModifierCeiling`, one clamp in `applyStatModifierDelta`; a pure stat move whose every rise would land 0 is inert to the AI as a drop is; the pip strip's rise marks are half-again / doubled / tripled-or-past with the line OVER the marks at the top; the sheet ticks the ceiling when it fits the scale; the move card says *can't go any higher* before the press. Apex Predator's second cast lands the rest of the way to ×4 and no further (`test/beastMoves`); Arcane Overflow's Attack half caps on a 20–25 Attack caster while its Intelligence half lands in full (`test/arcaneMoves`). Measured: 66.4% → 67.1%, noise — the pilot never stacks setup four deep, so the top binds in play, not in the sim (0.0% past ×4 in every act). |
 | 3 | **The floor re-author.** §4's sub-floor entries; Exalt's decision; the signatures' deltas re-read against the bands; `test/moveTiers` (or a sibling) pins the body floor at 20 and forbids 5. | No authored body under 20, no delta of 5; the Ancient hand-off in `authoring-moves.md` §10 names the bands. | **DONE 2026-09-14.** Toxic Spores −5 → −10, Piston Punch's reel 5 → 10, Tide Guard 10 → 15, Toughen Up 10/10 → 15/15, Charge's and Unbound's Intelligence to 20 (a Speed-and-a-stat card's body is the stat), Fortify 15 → 20, Pin Down's Defense −10 → −20; every signature already sat inside the bands; Exalt kept at 100 (§10 — with only the debuff half of the ceiling built it is simply the biggest number, and stays the one card that says so). `test/statScaling.test.ts` pins the two floors; `authoring-moves.md` "`statDeltas`" carries the bands for the Ancient slate. A Class move is exempt from the body floor — its body is its verb (Intercept is a redirect; its +10 is a rider on that). Measured on the phase-2a pilot: 67.7% → 67.1%, Act 1 90.4 → 90.1 — seven bases moved 5–10 points, noise. |
 | 4 | **Presentation.** The pip strip, the `→` on the hero sheet, the cap as a bar end, the flash pair on a cap hit, "at the limit" on the tile before the press. | A player can read a hero's modifier state from the fight screen without opening the sheet. | **DONE 2026-09-14.** The card's corner badge is a pip strip (`CombatantCard` `modTier`): one, two or three clip-path marks by the modifier against base + loadout (a quarter, a half, past that — a debuff's third mark IS the floor), dimmed with a baseline under the marks when a stat is held at its floor. The hero sheet's row reads `100 → 50` where the fight moved a stat (`StatBars` `fight`), the track carries a tick at the floor that lights when the fill has reached it, and the chip says *can't go any lower*. The move card's delta row says *Warden's DEF can't go any lower — lands nothing* or *Warden's DEF can't go much lower — lands −12* before the press (`MoveDetailOverlay`, off `applyStatModifierDelta` on each live defender). A held drop reads *can't go any lower* / *−24 DEF (no lower)* / *WIS can't go lower* in the beat and the log (per user direction: the player-facing voice is "can't go any lower", never "the floor", which stays the design term), on a `popup-floor` popup rather than a −0. Verified with the throwaway harness over headless Edge (`docs/visual-language.md`'s method). The flash pair on a cap hit was not built: the pip strip's baseline and the popup carry the moment, and a third signal on one beat is noise. |
 | 5 | **Re-fit.** The AI's utility for a scaled delta and a capped one; a sim pass on the pilot against the pre-phase-1 baseline (full-clear 54%, Reader 77 / Auto 53 / Fast 32 min); the Act 1 wall re-read, since a buff above the noise floor is the kind of lever the wall has not been given; then the `stat / 50` dial if the Late-act decay reads as a fault in play. | Win-rate targets are a playtest question; the measurement is buffs' share of casts by act, and whether it rose. | **DONE 2026-09-14.** `ai.ts`: `isPureDebuff` / `dropsAllHeld` — a pure debuff into targets that can't go any lower is inert, and a drop aims where it lands (`test/ai.test.ts`, three cases). The pilot was taught the landed figure in phase 1 and the held figure in 2a. The `stat / 50` dial is left where §10 puts it: a play question. Measured below. |
@@ -352,9 +354,9 @@ Each is a sign-off. In force until the phase that replaces it lands.
 | Two documented exemptions from the multiples-of-5 rule (derived grants, growth rolls); "a third should be a conversation, not a habit" | This is that conversation. Every in-fight delta lands unrounded-to-5; the rule binds what is authored. | 1 |
 | Passive-applied magnitudes are flat — a passive has no move to take STAB from | **Held**, and extended to a passive's `statDelta` effect for the same reason. | 1 |
 | A `dot` on self is a COST and never scales | **Held**, and a self-debuff delta is the same rule. | 1 |
-| Stat modifiers have no ceiling; a cap is an open lever | **`[−½S, +S]`, clamped at write** — IF phase 2 is taken. Undecided; the lever stays open until it is. | 2 (undecided) |
-| Apex Predator and Arcane Overflow are authored to compound deliberately | Only under phase 2: Apex Predator lands once at the cap; Arcane Overflow lands at the cap and the mana past it is spendable but grants nothing. | 2 (undecided) |
-| `combat.md` "The floor": floors at 1 and never ceilings | Floors at 1, ceilings at `+S` — only under phase 2. | 2 (undecided) |
+| Stat modifiers have no ceiling; a cap is an open lever | **`[−½S, +3S]`, clamped at write.** The lever is closed; the Haze verb stays open. | 2a, 2b |
+| Apex Predator and Arcane Overflow are authored to compound deliberately | Apex Predator's second cast lands the rest of the way to ×4; Arcane Overflow lands to ×4 and the mana past it is spendable but grants nothing more. | 2b |
+| `combat.md` "The floor": floors at 1 and never ceilings | Floors at 1 as a defence; the band is `[−½S, +3S]`. | 2a, 2b |
 
 **Held, and worth saying so:** the two-pipeline separation (a scaled delta is still a stat, and
 the damage pipeline never sees it); persist-on-switch (and the cap is what makes persistence
@@ -366,8 +368,10 @@ never gets a screen" — a buff's landed figure is shown on a card, never chosen
 
 ## 10. Open questions — DO NOT silently resolve
 
-- **Whether the BUFF half of the ceiling is built.** The debuff half is in (phase 2a); this is
-  what remains of the designer's doubt, and it is a fair one. **Phase 1 measured it (§8):** the DEBUFF half of the band is crossed in a third of Act 1 fights before
+- **Whether the BUFF half of the ceiling is built — RESOLVED, ×4, after play.** The debuff half
+  went in on phase 1's numbers; the buff half went in once the designer had played a full run
+  with scaled buffs and read them as strong enough to need a top. The argument below is kept
+  as the record of why it was not obvious beforehand. **Phase 1 measured it (§8):** the DEBUFF half of the band is crossed in a third of Act 1 fights before
   scaling and half after, and a stat is zeroed outright in a fifth of them — that is the floor
   at 1 turning a −26 into an unbounded ratio, and it is where the late-act loss lives. The BUFF
   half is crossed in a quarter of Act 4–5 fights after scaling, a twentieth before. So the two
@@ -396,8 +400,11 @@ never gets a screen" — a buff's landed figure is shown on a card, never chosen
 - **The constant.** `1 + (stat − 50)/100` under-tracks a run in which stats double; `stat / 50`
   tracks it exactly and is a second rule. Phase 5 decides from play, not from the arithmetic
   above, since the Late bases already carry most of the gap.
-- **Font of Power under the cap.** Overflow's 150-past-the-pool is a mana combo first and an
-  Attack combo second; with Arcane Overflow capped at `+S` the second half is gone. Options:
+- **Font of Power under the cap.** At ×4 the second half survives on the Intelligence side (a
+  90-Intelligence caster caps at +270, past any pool the combo banks) and is cut only on the
+  Attack side, which an Arcane caster does not swing with. Kept as written for the record:
+  Overflow's 150-past-the-pool is a mana combo first and an Attack combo second; under a `+S`
+  cap the second half would have been gone. Options:
   accept it (the mana is the combo); let Overflow read mana into *both* stats at half rate so
   it caps later; or exempt derived grants from the ceiling, which reopens the stall the
   ceiling closes. Recommendation: accept, and watch the Arcane heroes in the phase-5 sim.

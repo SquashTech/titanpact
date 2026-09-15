@@ -145,11 +145,13 @@ don't silently override it.
   binds the BASE, as it binds a Burn's; loadout grants (equipment, Banners, Evolution, Class)
   stay exactly authored, and a self-side cost, a derived grant, a passive's delta and MP Regen
   land flat. Still additive, still the stat pipeline — no % term touches a stat. **A fight
-  modifier is held at −½(base + loadout) at write** (`statModifierFloor`, phase 2a, same day) —
-  a debuff can at most halve a stat, and `StatChanged.capped` says when the floor took some;
-  measured 61.6% → 66.4% full-clear over the pre-scaling baseline with every phase in, Act 1
-  89.2 → 89.8%. The player-facing voice is **"can't go any lower"**, never "the floor". The BUFF
-  half (`+S`) is written up and **undecided**.
+  modifier is held inside −½ … +3× of (base + loadout) at write** (`statModifierFloor` /
+  `statModifierCeiling`, `STAT_CEILING_MULTIPLE` = 4; the floor on phase 1's measurement, the
+  ceiling per user direction after a full playtest run, ×4 over the proposed ×2) — a debuff can
+  at most halve a stat, a buff can at most take it to four times what it started the fight at,
+  and `StatChanged.capped` says when an end took some; measured 61.6% → 67.1% full-clear over
+  the pre-scaling baseline with every phase in, Act 1 89.2 → 89.7%. The player-facing voice is
+  **"can't go any lower" / "can't go any higher"**, never "the floor" or "the cap".
   **Automatic stat growth from levelling is the one systemic exemption** (2026-09-10, Growth
   Overhaul phase 3): a growth roll grants **+1 to +4**, or **+3 to +12 HP**, none of which is a
   multiple of 5. The rule was written to keep authored grants legible, and a roll nobody authors per-hero

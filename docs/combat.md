@@ -1235,13 +1235,15 @@ target read off something other than the one global field slot.
   move to take STAB from), and `mpRegen` (a resource grant, not a ratio). `StatChanged.authored`
   carries the base beside `delta`; `statDeltaReadout` (`MoveTile`) prints the landed figure on a
   card for the hero holding it, as `riderMagnitude` does a Burn.
-- **A stat's fight modifier is held at −½(base + loadout)** (2026-09-14, `stat-scaling.md`
-  phase 2a, per user direction): `statModifierFloor` / `applyStatModifierDelta` (state.ts),
-  applied at WRITE by every writer of `statModifiers` — a move's deltas, Brain Flay's doubling,
-  a passive's `statDelta` — so a debuff can at most halve a stat, the third Brain Flay into a
-  bottomed target lands 0 and says so (`StatChanged.capped`), and the floor at 1 below is a
-  defence no content reaches. Loadout raises the floor with the base. **Nothing bounds a
-  positive modifier** — the buff half of the ceiling is undecided (`stat-scaling.md` §10).
+- **A stat's fight modifier is held inside −½(base + loadout) … +3×(base + loadout)**
+  (2026-09-14, `stat-scaling.md` phases 2a and 2b, per user direction — the top after a full
+  playtest run): `statModifierFloor` / `statModifierCeiling` / `applyStatModifierDelta`
+  (state.ts, `STAT_CEILING_MULTIPLE` = 4), applied at WRITE by every writer of `statModifiers`
+  — a move's deltas, Brain Flay's doubling, a passive's `statDelta` — so a debuff can at most
+  halve a stat and a buff can at most take it to **four times** what it started the fight at.
+  The third Brain Flay into a bottomed target and the fourth Kindle on a maxed one land 0 and
+  say so (`StatChanged.capped`); the floor at 1 below is a defence no content reaches. Loadout
+  moves both ends with the base. Player-facing: "can't go any lower" / "can't go any higher".
 
 ### A stat grant with no authored number (2026-08-30, Arcane)
 

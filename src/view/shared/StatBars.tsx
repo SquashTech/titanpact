@@ -87,10 +87,11 @@ interface Props {
   grades?: GrowthGrades;
   /**
    * What THIS fight did to the line, apart from the loadout: the row reads "from → to" for a stat
-   * the fight moved, and the track carries a tick at the floor a debuff can take it to
-   * (docs/stat-scaling.md §3, §5). `floors` are effective values, not modifiers.
+   * the fight moved, and the track carries a tick at the floor a debuff can take it to and, when
+   * it fits the scale, at the ceiling a buff can (docs/stat-scaling.md §3, §5). `floors` and
+   * `ceilings` are effective values, not modifiers.
    */
-  fight?: { deltas: Partial<Record<StatKey, number>>; floors: Partial<Record<StatKey, number>> };
+  fight?: { deltas: Partial<Record<StatKey, number>>; floors: Partial<Record<StatKey, number>>; ceilings?: Partial<Record<StatKey, number>> };
 }
 
 export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {}, grades, fight }: Props) {
@@ -125,6 +126,13 @@ export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {}, 
                   className={`stat-bar-floor${(fight.deltas[stat] ?? 0) < 0 && totals[i] <= fight.floors[stat]! ? ' is-held' : ''}`}
                   style={{ left: `${Math.min(100, (fight.floors[stat]! / STAT_SCALE_MAX[stat]) * 100)}%` }}
                   title={`${STAT_LABELS[stat]} can't go lower than ${fight.floors[stat]}`}
+                />
+              )}
+              {fight && fight.ceilings?.[stat] !== undefined && fight.ceilings[stat]! > 0 && fight.ceilings[stat]! <= STAT_SCALE_MAX[stat] && (
+                <div
+                  className={`stat-bar-floor${(fight.deltas[stat] ?? 0) > 0 && totals[i] >= fight.ceilings[stat]! ? ' is-held' : ''}`}
+                  style={{ left: `${(fight.ceilings[stat]! / STAT_SCALE_MAX[stat]) * 100}%` }}
+                  title={`${STAT_LABELS[stat]} can't go higher than ${fight.ceilings[stat]}`}
                 />
               )}
             </div>

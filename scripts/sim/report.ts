@@ -481,8 +481,8 @@ export function formatReport(
     out.push(`    ${pad(tier, 20)}${padStart(String(n), 11)}${padStart(pct(n, totalCasts), 9)}   ${byAct.join('')}`);
   }
   out.push(`    ${pad('', 40)}   ${[1, 2, 3, 4, 5, 6].map((act) => padStart(`act ${act}`, 8)).join('')}`);
-  out.push('  stat deltas (docs/stat-scaling.md), by the CASTER\'s side: landed/authored is the scaling; "past +S" / "under -S/2" the share of fights a [-1/2 S, +S] ceiling would have clamped on that side, "floored" the share where a used stat reached 0 and the floor at 1 took over (§10); "held" is drops the −½S floor shortened, as a share of that side’s deltas (§3):');
-  out.push(`    ${pad('', 20)}${padStart('player', 9)}${padStart('landed/auth', 13)}${padStart('enemy', 9)}${padStart('landed/auth', 13)}${padStart('peak mod/S', 12)}${padStart('past +S', 10)}${padStart('under -S/2', 12)}${padStart('floored', 10)}${padStart('held p/e', 14)}`);
+  out.push('  stat deltas (docs/stat-scaling.md), by the CASTER\'s side: landed/authored is the scaling; "past x4" / "under -S/2" the share of fights a modifier sat outside the [-1/2 S, +3S] band on that side (0 once each end is built), "floored" the share where a used stat reached 0 and the floor at 1 took over (§10); "held" is drops the −½S floor shortened, as a share of that side’s deltas (§3):');
+  out.push(`    ${pad('', 20)}${padStart('player', 9)}${padStart('landed/auth', 13)}${padStart('enemy', 9)}${padStart('landed/auth', 13)}${padStart('peak mod/S', 12)}${padStart('past x4', 10)}${padStart('under -S/2', 12)}${padStart('floored', 10)}${padStart('held p/e', 14)}`);
   for (const act of [1, 2, 3, 4, 5, 6]) {
     const n = agg.statDeltaCountByAct[act] ?? 0;
     const fights = agg.fightsByAct[act] ?? 0;

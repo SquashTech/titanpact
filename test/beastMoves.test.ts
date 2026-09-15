@@ -18,6 +18,7 @@ import {
   activePartnerTypes,
   effectiveManaCost,
   getEffectiveStat,
+  STAT_CEILING_MULTIPLE,
   hasStatus,
   resolveManaCost,
   statusMagnitude,
@@ -247,7 +248,9 @@ test('beast: Apex Predator COMPOUNDS, and a buff cast first is doubled with ever
     [{ kind: 'move', combatantId: 'a1', moveId: 'apexPredator', declaredTarget: 'a1' }],
     config
   ).state;
-  assert.strictEqual(getEffectiveStat(fang, twice.combatants.a1, 'attack'), (base + rally) * 4, 'and a second cast doubles again');
+  // A second cast would pass the band's top — a stat is at most ×4 what it started the fight at
+  // (state.ts statModifierCeiling) — so it lands the rest of the way to the ceiling and no further.
+  assert.strictEqual(getEffectiveStat(fang, twice.combatants.a1, 'attack'), base * STAT_CEILING_MULTIPLE, 'and a second cast is held at ×4');
 });
 
 // --- Bleed as a currency ---

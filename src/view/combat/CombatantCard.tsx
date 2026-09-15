@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { Combatant, StatContext, StatusInstance } from '../../engine/state';
-import { effectiveTypes, getCombatStatDelta, getMaxHp, getMaxMana, statModifierFloor } from '../../engine/state';
+import { effectiveTypes, getCombatStatDelta, getMaxHp, getMaxMana, statModifierCeiling, statModifierFloor } from '../../engine/state';
 import { fieldEffects } from '../../data/fieldEffects';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -152,18 +152,23 @@ function activeStatMods(hero: HeroDefinition, combatant: Combatant, statCtx: Sta
     const mod = getCombatStatDelta(hero, combatant, stat, fieldEffectCtx);
     if (mod === 0) return [];
     const floor = statModifierFloor(hero, combatant, stat);
-    return [{ stat, mod, tier: modTier(mod, hero.baseStats[stat] + (combatant.baselineStatModifiers[stat] ?? 0)), held: (combatant.statModifiers[stat] ?? 0) <= floor && floor < 0 }];
+    const ceiling = statModifierCeiling(hero, combatant, stat);
+    const fightMod = combatant.statModifiers[stat] ?? 0;
+    const held = mod < 0 ? floor < 0 && fightMod <= floor : ceiling > 0 && fightMod >= ceiling;
+    return [{ stat, mod, tier: modTier(mod, hero.baseStats[stat] + (combatant.baselineStatModifiers[stat] ?? 0)), held }];
   });
 }
 
 /**
  * One, two or three marks by how far a stat has moved against what it started the fight at
- * (docs/stat-scaling.md §5): a quarter, a half, and past that. A debuff's third mark is the
- * floor, since −½S is where a drop stops; a buff's is "past half again", since nothing bounds it.
+ * (docs/stat-scaling.md §5), each side's marks spanning ITS end of the band: a drop's are a
+ * quarter, a half, and the floor (−½S); a rise's are half again, doubled, and tripled-or-past,
+ * the ceiling being ×4.
  */
 function modTier(mod: number, s: number): number {
   const frac = s > 0 ? Math.abs(mod) / s : 1;
-  return frac >= 0.5 ? 3 : frac >= 0.25 ? 2 : 1;
+  if (mod < 0) return frac >= 0.5 ? 3 : frac >= 0.25 ? 2 : 1;
+  return frac >= 2 ? 3 : frac >= 1 ? 2 : 1;
 }
 
 type Pose = 'idle' | 'attack' | 'hurt';
@@ -198,7 +203,7 @@ function StatModBadge({ stat, mod, tier, held }: { stat: StatKey; mod: number; t
   return (
     <span
       className={`stat-mod-badge ${mod > 0 ? 'stat-buff' : 'stat-debuff'}${held ? ' stat-held' : ''}`}
-      title={`${stat} ${mod > 0 ? '+' : ''}${mod}${held ? " — can't go any lower" : ''}`}
+      title={`${stat} ${mod > 0 ? '+' : ''}${mod}${held ? (mod > 0 ? " — can't go any higher" : " — can't go any lower") : ''}`}
     >
       <StatGlyph stat={stat} tone="inherit" />
       <span className="stat-mod-pips" aria-hidden="true">

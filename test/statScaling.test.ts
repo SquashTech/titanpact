@@ -13,7 +13,7 @@ import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import type { Action } from '../src/engine/combat/actions';
 import type { CombatState } from '../src/engine/state';
-import { getEffectiveStat, statModifierFloor } from '../src/engine/state';
+import { getEffectiveStat, statModifierCeiling, statModifierFloor } from '../src/engine/state';
 import {
   resolveStatDeltaFor,
   statDeltaLandsOnCasterSide,
@@ -99,7 +99,7 @@ test('scaling: MP Regen is a resource grant, not a ratio — Mana Font lands its
 test('scaling: a DERIVED delta passes through unscaled and carries no authored base', () => {
   const { state, events } = cast(fixture(4, 'runescribe', 'crimson'), 'a1', 'arcaneOverflow');
   const before = fixture(4, 'runescribe', 'crimson').combatants.a1.currentMana;
-  assert.strictEqual(state.combatants.a1.statModifiers.attack, before);
+  assert.strictEqual(state.combatants.a1.statModifiers.intelligence, Math.min(before, statModifierCeiling(heroes.runescribe, state.combatants.a1, 'intelligence')));
   for (const e of statChanged(events)) assert.strictEqual(e.authored, undefined);
 });
 
@@ -167,10 +167,21 @@ test('floor: loadout raises it — the same drop on a hero wearing +50 Wisdom la
   assert.strictEqual(drop.capped, undefined);
 });
 
-test('floor: a buff is not bounded — nothing here touches a positive modifier', () => {
+test('ceiling: a buffed stat is at most ×4 what it started the fight at, and the rise that hits it lands short and says so', () => {
+  // Crimson's Attack 30: ceiling +90. Two Kindles at +31 land in full (62); the third lands +28, capped; the fourth lands 0.
   let state = fixture(22);
-  for (let i = 0; i < 6; i++) state = cast(state, 'a1', 'kindle').state;
-  assert.strictEqual(state.combatants.a1.statModifiers.attack, 6 * 31, 'six Kindles at +31 stack past double');
+  assert.strictEqual(statModifierCeiling(heroes.crimson, state.combatants.a1, 'attack'), 90);
+  for (let i = 0; i < 2; i++) state = cast(state, 'a1', 'kindle').state;
+  assert.strictEqual(state.combatants.a1.statModifiers.attack, 62);
+  const third = cast(state, 'a1', 'kindle');
+  const rise = statChanged(third.events).find((e) => e.stat === 'attack');
+  assert.strictEqual(rise.delta, 28);
+  assert.strictEqual(rise.capped, true);
+  const fourth = cast(third.state, 'a1', 'kindle');
+  const none = statChanged(fourth.events).find((e) => e.stat === 'attack');
+  assert.strictEqual(none.delta, 0);
+  assert.strictEqual(none.capped, true);
+  assert.strictEqual(getEffectiveStat(heroes.crimson, fourth.state.combatants.a1, 'attack'), 120, 'four times what it started at');
 });
 
 // --- The noise floor (§4, phase 3): a body is authored at ≥ 20, a split body ≥ 15 a stat, a rider ≥ 10, nothing at 5 ---

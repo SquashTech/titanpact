@@ -14,6 +14,7 @@ import type { CombatState, Side } from '../../src/engine/state';
 import { getMaxHp, getEffectiveStat } from '../../src/engine/state';
 import type { CombatEvent } from '../../src/engine/events';
 import type { StatKey } from '../../src/engine/content';
+import { STAT_CEILING_MULTIPLE } from '../../src/engine/state';
 import type { Action } from '../../src/engine/combat/actions';
 import { resolveRound } from '../../src/engine/combat/resolveRound';
 import { applyForcedReplacement } from '../../src/engine/combat/switching';
@@ -396,7 +397,7 @@ export function simulateFight(input: FightInput): FightOutcome {
         if (s <= 0) continue;
         peakModifierFrac = Math.max(peakModifierFrac, Math.abs(modifier) / s);
         if (modifier > s || modifier < -s / 2) wouldHaveCapped = true;
-        if (modifier > s) wouldHaveCappedUp = true;
+        if (modifier > s * (STAT_CEILING_MULTIPLE - 1)) wouldHaveCappedUp = true;
         if (modifier < -s / 2) wouldHaveCappedDown = true;
         if (modifier <= -s) floored = true;
       }

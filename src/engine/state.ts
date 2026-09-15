@@ -342,17 +342,26 @@ export function statusMagnitude(combatant: Combatant, statusId: StatusId): numbe
 }
 
 /**
- * The lowest a stat's fight modifier may go: −½ of base + loadout (docs/stat-scaling.md §3, the
- * DEBUFF half of the ceiling — a debuff can at most halve a stat). The buff half is undecided
- * and nothing here bounds a positive modifier. Applied at WRITE, so StatChanged reports what
- * landed and every reader of statModifiers sees a figure already inside the band.
+ * The band a stat's fight modifier lives in (docs/stat-scaling.md §3): −½ of base + loadout at
+ * the bottom — a debuff can at most halve a stat — and +3× at the top, so a buffed stat is at
+ * most **four times** what it started the fight at (2026-09-14, per user direction after play;
+ * the +S the doc first proposed read as too tight once buffs landed scaled). Applied at WRITE,
+ * so StatChanged reports what landed and every reader of statModifiers sees a figure already
+ * inside the band.
  */
+export const STAT_CEILING_MULTIPLE = 4;
+
 export function statModifierFloor(hero: HeroDefinition, combatant: Combatant, stat: StatKey): number {
   const s = hero.baseStats[stat] + (combatant.baselineStatModifiers[stat] ?? 0);
   return -Math.floor(Math.max(0, s) / 2);
 }
 
-/** A delta against a fight modifier, held at the floor: the value to store, the delta that actually landed, and whether the floor took any of it. */
+export function statModifierCeiling(hero: HeroDefinition, combatant: Combatant, stat: StatKey): number {
+  const s = hero.baseStats[stat] + (combatant.baselineStatModifiers[stat] ?? 0);
+  return Math.max(0, s) * (STAT_CEILING_MULTIPLE - 1);
+}
+
+/** A delta against a fight modifier, held inside the band: the value to store, the delta that actually landed, and whether either end took any of it. */
 export function applyStatModifierDelta(
   hero: HeroDefinition,
   combatant: Combatant,
@@ -360,7 +369,7 @@ export function applyStatModifierDelta(
   delta: number
 ): { newValue: number; landed: number; capped: boolean } {
   const current = combatant.statModifiers[stat] ?? 0;
-  const newValue = Math.max(statModifierFloor(hero, combatant, stat), current + delta);
+  const newValue = Math.min(statModifierCeiling(hero, combatant, stat), Math.max(statModifierFloor(hero, combatant, stat), current + delta));
   return { newValue, landed: newValue - current, capped: newValue !== current + delta };
 }
 

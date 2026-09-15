@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { moves } from '../../data/moves';
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { Combatant, StatContext } from '../../engine/state';
-import { effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, moveForHero, statModifierFloor } from '../../engine/state';
+import { effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, moveForHero, statModifierCeiling, statModifierFloor } from '../../engine/state';
 import type { RosterEntry } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { chosenEvolutionPaths, itemSlotsFor } from '../../run/progression';
@@ -58,10 +58,17 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
     floors: Object.fromEntries(
       STAT_ORDER.map((stat) => [stat, hero.baseStats[stat] + (combatant.baselineStatModifiers[stat] ?? 0) + statModifierFloor(hero, combatant, stat)])
     ) as Partial<Record<StatKey, number>>,
+    ceilings: Object.fromEntries(
+      STAT_ORDER.map((stat) => [stat, hero.baseStats[stat] + (combatant.baselineStatModifiers[stat] ?? 0) + statModifierCeiling(hero, combatant, stat)])
+    ) as Partial<Record<StatKey, number>>,
   };
   const heldAtFloor = (stat: StatKey) => {
     const floor = statModifierFloor(hero, combatant, stat);
     return floor < 0 && (combatant.statModifiers[stat] ?? 0) <= floor;
+  };
+  const heldAtCeiling = (stat: StatKey) => {
+    const ceiling = statModifierCeiling(hero, combatant, stat);
+    return ceiling > 0 && (combatant.statModifiers[stat] ?? 0) >= ceiling;
   };
   const effectiveTotals = Object.fromEntries(
     STAT_ORDER.map((stat) => [stat, getEffectiveStat(hero, combatant, stat, statCtx)])
@@ -153,9 +160,10 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
             {STAT_ORDER.filter((stat) => totalModifiers[stat] !== 0).map((stat) => {
               const mod = totalModifiers[stat];
               return (
-                <span key={stat} className={`detail-modifier-chip ${mod > 0 ? 'stat-buff' : 'stat-debuff'}${heldAtFloor(stat) ? ' stat-held' : ''}`}>
+                <span key={stat} className={`detail-modifier-chip ${mod > 0 ? 'stat-buff' : 'stat-debuff'}${heldAtFloor(stat) || heldAtCeiling(stat) ? ' stat-held' : ''}`}>
                   <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} {fmtMod(mod)}
                   {heldAtFloor(stat) && <span className="detail-modifier-floor"> · can't go any lower</span>}
+                  {heldAtCeiling(stat) && <span className="detail-modifier-floor"> · can't go any higher</span>}
                 </span>
               );
             })}
