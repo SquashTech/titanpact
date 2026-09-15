@@ -57,12 +57,12 @@ function burn(state: CombatState, combatantId: string, magnitude: number): Comba
 
 // --- The pool itself ---
 
-test('fire: the authored pool is exactly the sixteen designed moves, all Fire-typed', () => {
+test('fire: the authored pool is exactly the sixteen designed moves plus the three 2026-09-15 additions, all Fire-typed', () => {
   const fire = Object.values(moves).filter((m) => m.type === 'Fire' && !signatureMoves[m.id]);
   assert.deepStrictEqual(
     fire.map((m) => m.id).sort(),
     [
-      'backdraft', 'ember', 'firebrand', 'firestorm', 'immolate', 'inferno', 'kindle', 'moltenLash',
+      'backdraft', 'blazingRetreat', 'ember', 'firebrand', 'firestorm', 'flareUp', 'heatHaze', 'immolate', 'inferno', 'kindle', 'moltenLash',
       'scorch', 'setAlight', 'singe', 'sparkBurst', 'sparkFlash', 'spreadingBlaze', 'stokeTheFlames',
       'volcanicSurge',
     ]
@@ -99,7 +99,7 @@ test('fire: every "Spread" move in the design table targets both enemies, and no
     .filter((m) => m.type === 'Fire' && !signatureMoves[m.id] && m.target === 'bothEnemies')
     .map((m) => m.id)
     .sort();
-  assert.deepStrictEqual(spread, ['backdraft', 'firestorm', 'sparkBurst', 'sparkFlash', 'spreadingBlaze']);
+  assert.deepStrictEqual(spread, ['backdraft', 'firestorm', 'heatHaze', 'sparkBurst', 'sparkFlash', 'spreadingBlaze']);
 });
 
 test('fire: no Fire move applies a status the catalog does not define', () => {

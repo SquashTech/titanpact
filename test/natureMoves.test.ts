@@ -238,7 +238,9 @@ test('nature: no Nature move applies, gates on, or detonates a status the catalo
     }
     if (move.conditionalPower) {
       const scalesOff = move.conditionalPower.requiresTargetStatus ?? move.conditionalPower.requiresUserStatus;
-      assert.ok(scalesOff && statuses[scalesOff], `${move.id} scales off unknown status`);
+      const field = move.conditionalPower.requiresFieldEffect;
+      if (field) assert.ok(fieldEffects[field], `${move.id} reads unknown field ${field}`);
+      else assert.ok(scalesOff && statuses[scalesOff], `${move.id} scales off unknown status`);
     }
   }
 });

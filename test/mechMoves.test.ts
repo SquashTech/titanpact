@@ -319,18 +319,18 @@ test('mech: the slate cashes the Conduct it plants and plants a Haunt it cannot 
 
   const mechMoves = Object.values(moves).filter((m) => m.type === 'Mech' && !signatureMoves[m.id]);
   const allRiders = mechMoves.flatMap((m) => [...statusApplicationsOf(m), ...(m.randomStatusApplication ?? [])]);
-  assert.strictEqual(allRiders.filter((a) => a.statusId === 'Conduct').length, 2, 'Conduct planters');
+  assert.strictEqual(allRiders.filter((a) => a.statusId === 'Conduct').length, 3, 'Conduct planters');
   assert.strictEqual(allRiders.filter((a) => a.statusId === 'Haunt').length, 1, 'Haunt planters');
 });
 
-test('mech: the slate is fifteen rows with the authored shape', () => {
+test('mech: the slate is fifteen rows with the authored shape, plus the four 2026-09-15 additions', () => {
   const mechMoves = Object.values(moves).filter((m) => m.type === 'Mech' && !signatureMoves[m.id]);
-  assert.strictEqual(mechMoves.length, 15, 'the authored slate is fifteen rows');
+  assert.strictEqual(mechMoves.length, 19, 'the authored slate is fifteen rows, plus four');
 
   // Four magical rows against a roster whose best Intelligence is 45 — pinned so it cannot silently grow.
   assert.strictEqual(mechMoves.filter((m) => m.category === 'magical' && m.kind === 'damage').length, 4);
   const heals = mechMoves.filter((m) => m.kind === 'heal');
-  assert.strictEqual(heals.length, 2);
+  assert.strictEqual(heals.length, 3);
   assert.strictEqual(moves.salvage.target, 'self');
   assert.strictEqual(Object.values(moves).filter((m) => m.kind === 'heal' && m.target === 'self').length, 1);
 
@@ -347,7 +347,7 @@ test('mech: the slate is fifteen rows with the authored shape', () => {
   const selfBurn = mechMoves.filter((m) =>
     statusApplicationsOf(m).some((a) => a.statusId === 'Burn' && a.target === 'self')
   );
-  assert.strictEqual(selfBurn.length, 3, 'three rows Burn their own caster');
+  assert.strictEqual(selfBurn.length, 4, 'four rows Burn their own caster');
 });
 
 // --- Distribution ---

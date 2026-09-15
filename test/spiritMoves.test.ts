@@ -240,15 +240,15 @@ test('spirit: no move authors a selfHpCost the engine cannot price', () => {
 test('spirit: every damage move in the slate is single-target, and Haunt is what makes them spread', () => {
   const spirit = Object.values(moves).filter((m) => m.type === 'Spirit' && !signatureMoves[m.id]);
   const damage = spirit.filter((m) => m.kind === 'damage');
-  assert.strictEqual(spirit.length, 17);
-  assert.strictEqual(damage.length, 12);
+  assert.strictEqual(spirit.length, 19);
+  assert.strictEqual(damage.length, 13);
   for (const move of damage) {
     assert.strictEqual(move.target, 'singleEnemy', `${move.id} is a spread move in a slate that has none`);
   }
   assert.ok(statuses.Haunt.spreadTriggerTypes?.includes('Spirit'));
 });
 
-test('spirit: three moves plant Haunt and all twelve damage moves cash it in', () => {
+test('spirit: three moves plant Haunt and all thirteen damage moves cash it in', () => {
   const planters = Object.values(moves)
     .filter((m) => m.type === 'Spirit' && !signatureMoves[m.id] && firstStatusApplication(m)?.statusId === 'Haunt')
     .map((m) => m.id)

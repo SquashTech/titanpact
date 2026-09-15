@@ -266,10 +266,10 @@ test('shadow: every Ambush grant in the game is self-targeted and carries a magn
 
 // --- The slate's own shape ---
 
-test('shadow: the slate is sixteen moves, and every status and condition it names exists', () => {
+test('shadow: the slate is sixteen moves plus the three 2026-09-15 additions, and every status and condition it names exists', () => {
   // The type's authored slate — a class move wears a type for flavour and is not a row of it.
   const shadow = Object.values(moves).filter((m) => m.type === 'Shadow' && !signatureMoves[m.id] && !classMoves[m.id]);
-  assert.strictEqual(shadow.length, 16);
+  assert.strictEqual(shadow.length, 19);
   for (const move of shadow) {
     for (const app of statusApplicationsOf(move)) {
       assert.ok(statuses[app.statusId], `${move.id} applies unknown status ${app.statusId}`);

@@ -72,13 +72,13 @@ function outspeeds(state: CombatState, combatantId: string): CombatState {
 
 // --- The pool itself ---
 
-test('frost: the authored pool is the fifteen designed moves plus Snowball, Rime\'s Evolution move, Ice Shell and Rime Coat, all Frost-typed', () => {
+test('frost: the authored pool is the fifteen designed moves plus Snowball, Rime\'s Evolution move, Ice Shell, Rime Coat and the two 2026-09-15 additions, all Frost-typed', () => {
   const frost = Object.values(moves).filter((m) => m.type === 'Frost' && !signatureMoves[m.id]);
   assert.deepStrictEqual(
     frost.map((m) => m.id).sort(),
     [
-      'absoluteZero', 'avalanche', 'coldSnap', 'deepChill', 'frigidAir', 'frostArmor', 'frostWall',
-      'glaciate', 'iceShard', 'iceShatter', 'iceShell', 'icicleThrust', 'permafrost', 'quickFreeze', 'rimeCoat', 'rimeWind',
+      'absoluteZero', 'avalanche', 'blindingSnow', 'coldSnap', 'deepChill', 'frigidAir', 'frostArmor', 'frostWall',
+      'glaciate', 'hoarfrostEdge', 'iceShard', 'iceShatter', 'iceShell', 'icicleThrust', 'permafrost', 'quickFreeze', 'rimeCoat', 'rimeWind',
       'snowBlast', 'snowball',
     ]
   );
@@ -90,7 +90,7 @@ test('frost: every "Spread" move in the design table targets both enemies, and t
       .filter((m) => m.type === 'Frost' && !signatureMoves[m.id] && m.target === target)
       .map((m) => m.id)
       .sort();
-  assert.deepStrictEqual(byTarget('bothEnemies'), ['avalanche', 'permafrost', 'rimeWind']);
+  assert.deepStrictEqual(byTarget('bothEnemies'), ['avalanche', 'blindingSnow', 'permafrost', 'rimeWind']);
   assert.deepStrictEqual(byTarget('allOthers'), ['frigidAir', 'snowBlast']);
 });
 
@@ -110,10 +110,10 @@ test('frost: no Frost move applies a status the catalog does not define, or gate
   }
 });
 
-test('frost: Quick Freeze is the pool\'s only bracket play — everything else resolves at priority 0', () => {
+test('frost: Quick Freeze and Blinding Snow are the pool\'s only bracket plays — everything else resolves at priority 0', () => {
   for (const move of Object.values(moves)) {
     if (move.type !== 'Frost' || signatureMoves[move.id]) continue;
-    assert.strictEqual(move.priority, move.id === 'quickFreeze' ? 1 : 0, `${move.id} has an unexpected priority bracket`);
+    assert.strictEqual(move.priority, move.id === 'quickFreeze' || move.id === 'blindingSnow' ? 1 : 0, `${move.id} has an unexpected priority bracket`);
   }
 });
 

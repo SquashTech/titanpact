@@ -351,9 +351,9 @@ test('stone: the target picker narrows to the taunt, so the player never aims wh
 test('stone: the slate authors no new field effect and no type-keyed status hook', () => {
   // If a status ever adds 'Stone' to triggerTypes, every number in this slate silently changes.
   const stone = Object.values(moves).filter((m) => m.type === 'Stone' && !signatureMoves[m.id]);
-  // The designed fifteen, the two Evolution moves — Fang's Spire Claw and Crag's Titanic Crush — and
-  // Rampart, the Late Shield (docs/shield.md §3.5).
-  assert.strictEqual(stone.length, 18);
+  // The designed fifteen, the two Evolution moves — Fang's Spire Claw and Crag's Titanic Crush —
+  // Rampart, the Late Shield (docs/shield.md §3.5), and the two 2026-09-15 additions.
+  assert.strictEqual(stone.length, 20);
 
   for (const def of Object.values(statuses)) {
     assert.ok(!def.triggerTypes?.includes('Stone'), `${def.id} would detonate off every Stone damage move`);

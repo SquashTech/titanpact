@@ -323,16 +323,19 @@ test('arcane: overflow counts toward the derived grant — the Font of Power int
 
 // --- The slate as a whole ---
 
-test('arcane: the slate is seventeen moves, and every field effect and status it names exists', () => {
+test('arcane: the slate is nineteen moves, and every field effect and status it names exists', () => {
   const slate = Object.values(moves).filter((m) => m.type === 'Arcane' && !signatureMoves[m.id]);
   // Seventeen since 2026-09-09: Barrier joined the slate as the roster's only guard. It is Arcane
   // because shaped mana is the domain a wall of nothing draws on, not because Arcane needed a
-  // sixteenth-plus move — Cortex holds it off-type.
-  assert.strictEqual(slate.length, 17);
+  // sixteenth-plus move — Cortex holds it off-type. Nineteen since 2026-09-15 (Resonant Bolt, Twin Cast).
+  assert.strictEqual(slate.length, 19);
   for (const move of slate) {
     if (move.fieldEffectApplication) assert.ok(fieldEffects[move.fieldEffectApplication], `${move.id} sets an unknown field`);
     if (move.conditionalTarget) {
       assert.ok(fieldEffects[move.conditionalTarget.requiresFieldEffect], `${move.id} reads an unknown field`);
+    }
+    if (move.conditionalPower?.requiresFieldEffect) {
+      assert.ok(fieldEffects[move.conditionalPower.requiresFieldEffect], `${move.id} reads an unknown field`);
     }
     for (const app of statusApplicationsOf(move)) assert.ok(statuses[app.statusId], `${move.id} applies an unknown status`);
   }

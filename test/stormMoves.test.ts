@@ -67,13 +67,13 @@ function outspeeds(state: CombatState, combatantId: string): CombatState {
 
 // --- The pool itself ---
 
-test('storm: the authored pool is exactly the fifteen designed moves, all Storm-typed', () => {
+test('storm: the authored pool is exactly the fifteen designed moves plus the four 2026-09-15 additions, all Storm-typed', () => {
   const storm = Object.values(moves).filter((m) => m.type === 'Storm' && !signatureMoves[m.id]);
   assert.deepStrictEqual(
     storm.map((m) => m.id).sort(),
     [
-      'chainLightning', 'charge', 'electricBurst', 'ionicZap', 'ionize', 'jolt', 'overcharge', 'risingStatic',
-      'shockSlice', 'stormLash', 'stormSurge', 'tailwind', 'thunderbolt', 'thunderclap', 'zap',
+      'chainLightning', 'charge', 'electricBurst', 'ionCascade', 'ionicZap', 'ionize', 'jolt', 'overcharge', 'rideTheLightning', 'risingStatic',
+      'shockSlice', 'staticCharge', 'stormLash', 'stormSurge', 'stunningBolt', 'tailwind', 'thunderbolt', 'thunderclap', 'zap',
     ]
   );
 });
@@ -84,7 +84,7 @@ test('storm: every "Spread" move in the design table targets both enemies, and n
       .filter((m) => m.type === 'Storm' && !signatureMoves[m.id] && m.target === target)
       .map((m) => m.id)
       .sort();
-  assert.deepStrictEqual(byTarget('bothEnemies'), ['chainLightning', 'ionize']);
+  assert.deepStrictEqual(byTarget('bothEnemies'), ['chainLightning', 'ionCascade', 'ionize']);
   assert.deepStrictEqual(byTarget('allOthers'), []);
 });
 
@@ -103,7 +103,7 @@ test('storm: every damage move in the slate carries Conduct detonation for free 
   const detonators = statuses.Conduct.triggerTypes ?? [];
   assert.ok(detonators.includes('Storm'));
   const damage = Object.values(moves).filter((m) => m.type === 'Storm' && !signatureMoves[m.id] && m.kind === 'damage');
-  assert.strictEqual(damage.length, 10);
+  assert.strictEqual(damage.length, 13);
   assert.strictEqual(damage.some((m) => firstStatusApplication(m)?.statusId === 'Conduct' && m.id === 'thunderbolt'), true);
 });
 

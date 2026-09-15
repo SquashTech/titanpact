@@ -73,7 +73,7 @@ const st = (hp: number, attack: number, defense: number, intelligence: number, w
 export const titanspawnLines: readonly TitanspawnLine[] = [
   line('Fire', 'intelligence', ['Emberling', 'Kindlehide', 'Pyroclast'],
     [st(64, 30, 30, 38, 34, 36, 40, 10), st(150, 45, 60, 90, 70, 60, 60, 12), st(240, 55, 95, 140, 95, 95, 90, 15)],
-    [['ember', 'singe', 'setAlight'], ['scorch', 'backdraft', 'immolate', 'moltenLash'], ['inferno', 'firestorm', 'sparkBurst', 'volcanicSurge']],
+    [['ember', 'flareUp', 'setAlight'], ['scorch', 'backdraft', 'immolate', 'spreadingBlaze'], ['inferno', 'firestorm', 'sparkBurst', 'volcanicSurge']],
     { hp: 'A', attack: 'F', defense: 'C', intelligence: 'S', wisdom: 'B', speed: 'B', manaPool: 'S' }),
 
   line('Water', 'speed', ['Puddling', 'Rillfin', 'Breakwater'],
@@ -83,63 +83,63 @@ export const titanspawnLines: readonly TitanspawnLine[] = [
 
   line('Frost', 'hp', ['Sleetling', 'Hoarfang', 'Frostheave'],
     [st(76, 30, 32, 36, 32, 32, 40, 10), st(170, 55, 60, 85, 55, 60, 60, 12), st(360, 60, 100, 120, 80, 60, 90, 15)],
-    [['rimeCoat', 'deepChill', 'snowBlast'], ['iceShell', 'glaciate', 'permafrost', 'frigidAir'], ['avalanche', 'absoluteZero', 'iceShatter', 'frostWall']],
+    [['rimeCoat', 'deepChill', 'snowBlast'], ['iceShell', 'glaciate', 'blindingSnow', 'frigidAir'], ['avalanche', 'absoluteZero', 'iceShatter', 'frostWall']],
     { hp: 'S', attack: 'F', defense: 'B', intelligence: 'S', wisdom: 'B', speed: 'C', manaPool: 'A' }),
 
   line('Storm', 'speed', ['Arcling', 'Voltail', 'Stormfront'],
     [st(60, 30, 30, 36, 36, 38, 40, 10), st(110, 50, 50, 85, 60, 100, 60, 12), st(180, 60, 70, 130, 90, 160, 90, 15)],
-    [['jolt', 'zap', 'charge'], ['chainLightning', 'electricBurst', 'ionize', 'stormLash'], ['thunderbolt', 'ionicZap', 'overcharge', 'stormSurge']],
+    [['jolt', 'zap', 'charge'], ['chainLightning', 'stunningBolt', 'ionize', 'stormLash'], ['thunderbolt', 'ionCascade', 'overcharge', 'stormSurge']],
     { hp: 'C', attack: 'E', defense: 'C', intelligence: 'S', wisdom: 'B', speed: 'S', manaPool: 'A' }),
 
   line('Stone', 'defense', ['Pebbling', 'Slabback', 'Monolith'],
     [st(72, 32, 38, 30, 32, 32, 40, 10), st(180, 60, 100, 30, 65, 55, 55, 12), st(300, 90, 160, 40, 90, 70, 80, 15)],
-    [['rockToss', 'tremor', 'provoke'], ['faultLine', 'bodyBlow', 'bastion', 'rockfall'], ['boulderSlam', 'bodyCrush', 'rampart', 'stoneheart']],
+    [['rockToss', 'tremor', 'provoke'], ['faultLine', 'bodyBlow', 'bastion', 'bodyguard'], ['boulderSlam', 'bodyCrush', 'rampart', 'stoneheart']],
     { hp: 'S', attack: 'B', defense: 'S', intelligence: 'F', wisdom: 'A', speed: 'C', manaPool: 'B' }),
 
   line('Nature', 'wisdom', ['Sproutling', 'Bramblehide', 'Wildwood'],
     [st(72, 30, 32, 32, 38, 32, 40, 10), st(170, 60, 60, 55, 90, 50, 60, 12), st(260, 90, 90, 90, 150, 50, 90, 15)],
-    [['vineLash', 'toxicSpores', 'regrowth'], ['corrode', 'blight', 'wildBloom', 'leafSlice'], ['forceOfNature', 'miasma', 'overgrowth', 'branchSlam']],
+    [['vineLash', 'toxicSpores', 'sow'], ['corrode', 'blight', 'magicGrowth', 'leafSlice'], ['forceOfNature', 'miasma', 'overgrowth', 'branchSlam']],
     { hp: 'S', attack: 'C', defense: 'B', intelligence: 'B', wisdom: 'S', speed: 'D', manaPool: 'C' }),
 
   line('Light', 'intelligence', ['Gleamling', 'Lanternmoth', 'Dawnwing'],
     [st(64, 30, 30, 36, 38, 34, 40, 10), st(120, 40, 55, 85, 90, 70, 65, 12), st(200, 50, 80, 150, 120, 100, 100, 15)],
-    [['glimmer', 'mend', 'vigil'], ['radiantBeam', 'benediction', 'consecrate', 'smite'], ['judgment', 'solarFlare', 'divineGrace', 'exalt']],
+    [['glimmer', 'hallow', 'vigil'], ['radiantBeam', 'benediction', 'consecrate', 'smite'], ['judgment', 'solarFlare', 'divineGrace', 'exalt']],
     { hp: 'B', attack: 'F', defense: 'C', intelligence: 'S', wisdom: 'S', speed: 'C', manaPool: 'S' }),
 
   line('Shadow', 'speed', ['Duskling', 'Gloomfang', 'Nocturne'],
     [st(60, 36, 30, 30, 36, 38, 40, 10), st(110, 90, 60, 40, 60, 95, 55, 12), st(180, 130, 70, 60, 80, 170, 80, 15)],
-    [['fadeStrike', 'backstab', 'lieInWait'], ['shadowSlice', 'cutthroat', 'shadowstrike', 'enfeeble'], ['duskBlade', 'thousandCuts', 'shadowForm', 'umbralWave']],
+    [['fadeStrike', 'backstab', 'lieInWait'], ['shadowSlice', 'cutthroat', 'shadowstrike', 'smokeBomb'], ['duskBlade', 'thousandCuts', 'shadowForm', 'umbralWave']],
     { hp: 'C', attack: 'S', defense: 'C', intelligence: 'E', wisdom: 'B', speed: 'S', manaPool: 'A' }),
 
   line('Arcane', 'intelligence', ['Runeling', 'Sigilwing', 'Armillary'],
     [st(60, 30, 30, 38, 36, 36, 50, 10), st(120, 40, 55, 95, 75, 75, 90, 12), st(200, 40, 90, 160, 110, 100, 150, 20)],
-    [['magicBolt', 'focus', 'manaTap'], ['arcaneBlast', 'arcPulse', 'study', 'empower'], ['singularity', 'cataclysm', 'conduit', 'arcaneOverflow']],
+    [['resonantBolt', 'manaFont', 'manaTap'], ['arcaneBlast', 'overload', 'magicCloak', 'empower'], ['singularity', 'cataclysm', 'conduit', 'arcaneOverflow']],
     { hp: 'C', attack: 'F', defense: 'C', intelligence: 'S', wisdom: 'A', speed: 'A', manaPool: 'S' }),
 
   line('Mind', 'wisdom', ['Whimling', 'Mesmerid', 'Cerebra'],
     [st(64, 30, 30, 38, 36, 34, 40, 10), st(130, 40, 55, 85, 90, 65, 60, 12), st(220, 40, 80, 130, 150, 90, 90, 15)],
-    [['psiBolt', 'lull', 'brainWard'], ['psyshock', 'disorient', 'psychicBlow', 'mentalFortress'], ['mindShatter', 'psionicWave', 'breakWill', 'brainFlay']],
+    [['psiBolt', 'distort', 'brainWard'], ['psyshock', 'disorient', 'hindsight', 'stasis'], ['mindShatter', 'psionicWave', 'breakWill', 'brainFlay']],
     { hp: 'B', attack: 'F', defense: 'C', intelligence: 'S', wisdom: 'S', speed: 'B', manaPool: 'A' }),
 
   line('Spirit', 'intelligence', ['Wispling', 'Shroudkin', 'Threnody'],
     [st(72, 30, 30, 38, 34, 32, 40, 10), st(160, 45, 55, 90, 70, 60, 60, 12), st(280, 50, 80, 150, 100, 80, 90, 15)],
-    [['wisp', 'drain', 'torment'], ['soulRend', 'poltergeist', 'flicker', 'vengeance'], ['banish', 'lastRites', 'ascendant', 'wailingFlight']],
+    [['wisp', 'drain', 'torment'], ['soulRend', 'poltergeist', 'flicker', 'vengeance'], ['banish', 'lastRites', 'ascendant', 'seance']],
     { hp: 'S', attack: 'F', defense: 'C', intelligence: 'S', wisdom: 'B', speed: 'B', manaPool: 'A' }),
 
   line('Iron', 'attack', ['Rivetling', 'Ingot', 'Siegework'],
     [st(68, 38, 36, 30, 30, 32, 40, 10), st(140, 95, 95, 30, 50, 60, 55, 12), st(240, 150, 140, 30, 80, 80, 80, 15)],
-    [['ironFist', 'heavyBlow', 'ironSkin'], ['serratedSlice', 'rendArmor', 'momentumSwing', 'reinforce'], ['onslaught', 'juggernaut', 'swingingChain', 'conjuredSword']],
+    [['ironFist', 'heavyBlow', 'ironSkin'], ['serratedSlice', 'rendArmor', 'momentumSwing', 'shieldBash'], ['onslaught', 'juggernaut', 'swingingChain', 'conjuredSword']],
     { hp: 'A', attack: 'S', defense: 'S', intelligence: 'F', wisdom: 'C', speed: 'C', manaPool: 'A' }),
 
   // The spike is MP Regen — outside the combat total, and the one stat no hero grows.
   line('Mech', 'mpRegen', ['Cogling', 'Gearhound', 'Dynamo'],
     [st(64, 36, 32, 36, 30, 34, 40, 12), st(130, 80, 60, 80, 50, 65, 60, 16), st(220, 120, 100, 120, 80, 70, 120, 30)],
-    [['cogBop', 'backfire', 'overclock'], ['cogSlam', 'overheat', 'whirlingBlades', 'juryRig'], ['meltdown', 'jackpot', 'overdrive', 'perfectCreation']],
+    [['cogBop', 'backfire', 'overclock'], ['cogSlam', 'overheat', 'shockCoil', 'juryRig'], ['meltdown', 'jackpot', 'overdrive', 'salvo']],
     { hp: 'B', attack: 'A', defense: 'B', intelligence: 'A', wisdom: 'D', speed: 'C', manaPool: 'A' }),
 
   line('Beast', 'hp', ['Cubling', 'Ravager', 'Behemoth'],
     [st(76, 36, 32, 30, 30, 34, 40, 10), st(170, 95, 55, 30, 55, 80, 55, 12), st(380, 140, 100, 30, 60, 80, 80, 15)],
-    [['claw', 'venomBite', 'prowl'], ['lacerate', 'maul', 'thrash', 'rampage'], ['eviscerate', 'apexPredator', 'animalSpirit', 'packLeader']],
+    [['claw', 'venomBite', 'prowl'], ['lacerate', 'maul', 'thrash', 'bloodTrail'], ['eviscerate', 'apexPredator', 'animalSpirit', 'rendingLeap']],
     { hp: 'S', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'C', speed: 'A', manaPool: 'B' }),
 ];
 

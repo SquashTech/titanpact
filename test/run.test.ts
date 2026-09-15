@@ -236,7 +236,7 @@ test('progression: levelMovePool + grantOfferedMove resolve a level\'s move offe
     'pinDown',
     'swiftBlow',
   ]);
-  assert.deepStrictEqual(poolAtMid(entry), ['moltenLash', 'firebrand', 'momentumSwing', 'serratedSlice', 'rendArmor', 'metallicBlade']);
+  assert.deepStrictEqual(poolAtMid(entry), ['moltenLash', 'firebrand', 'momentumSwing', 'serratedSlice', 'rendArmor', 'metallicBlade', 'blazingRetreat', 'parry']);
   assert.deepStrictEqual(poolAtTop(entry), ['volcanicSurge', 'onslaught', 'swingingChain', 'juggernaut']);
 
   const withMove = grantOfferedMove(run, 'cinderKnight', 'firebrand');
