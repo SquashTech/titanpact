@@ -2152,6 +2152,20 @@ textarea,
   left: 12px;
 }
 
+/* The flasks stand in the ally status band's corners, and a band of four chips
+   centred on the card reached under them — the chip was covered and its hold
+   unreachable. The band keeps clear of its own outer corner instead: the left
+   card's row is inset on the left, the right card's on the right, by the
+   flask's footprint (12px in from the edge, 38px wide, 4px of air). Four
+   chips still fit on one line; a fifth wraps as it did. */
+.team-row.ally .combatant-card:first-child .status-badge-row {
+  padding-left: 42px;
+}
+
+.team-row.ally .combatant-card:last-child .status-badge-row {
+  padding-right: 42px;
+}
+
 .field-flask.is-mpPotion {
   --flask-rgb: 143, 180, 255;
   right: 12px;
@@ -3264,6 +3278,35 @@ textarea,
   justify-content: center;
   font-size: 12px;
   margin-bottom: 4px;
+}
+
+/* Three or four candidates (the finale fields six): 168px cards overflowed
+   the chassis on both sides and the two outer ones were half off-screen. The
+   cards shrink to fit and the figure drops to 1x — the row is still a row. */
+.target-panel .bench-row.is-crowded .combatant-card {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: none;
+  padding: 4px 4px 5px;
+}
+
+.target-panel .bench-row.is-crowded .combatant-portrait {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 3px;
+}
+
+.target-panel .bench-row.is-crowded .combatant-name {
+  font-size: 10.5px;
+  margin-bottom: 3px;
+}
+
+.target-panel .bench-row.is-crowded .bar-track {
+  height: 11px;
+}
+
+.target-panel .bench-row.is-crowded .bar-label {
+  font-size: 8px;
 }
 
 .bench-row {
@@ -12009,6 +12052,58 @@ textarea,
   gap: 6px;
 }
 
+/* The finale scouts six. Four across then two under it was a second row of
+   the same height, and the whole screen scrolled for it; three across in a
+   ROW chip — figure left, name and typing beside it — is two rows that
+   together stand as tall as the one row four take. */
+.enemy-scout-grid-dense {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.enemy-scout-grid-dense .enemy-scout-chip {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 18px;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 4px;
+  row-gap: 2px;
+  padding: 5px 5px 5px 5px;
+  min-width: 0;
+}
+
+.enemy-scout-grid-dense .enemy-scout-portrait {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  width: 32px;
+  height: 32px;
+}
+
+.enemy-scout-grid-dense .enemy-scout-name {
+  grid-column: 2 / 4;
+  justify-self: start;
+  max-width: 100%;
+  text-align: left;
+  font-size: 10px;
+}
+
+.enemy-scout-grid-dense .enemy-scout-types {
+  grid-column: 2;
+  align-items: flex-start;
+}
+
+.enemy-scout-grid-dense .enemy-scout-verdict {
+  grid-column: 3;
+  grid-row: 2;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
+.enemy-scout-grid-dense .enemy-scout-verdict > svg {
+  width: 12px;
+  height: 12px;
+}
+
 /* The same plate every hero card in the run wears (the shared plate rule
    below), washed in the enemy's own type, with the name under the figure —
    a scouted enemy is read here, not only counted. */
@@ -12370,6 +12465,48 @@ textarea,
 .squad-slot.drag-over {
   border-color: var(--accent);
   background: var(--selected-fill);
+}
+
+/* The move-here key (SquadSelectScreen SquadSlot): on every cell the held hero
+   can land in, since a tap on the cell itself only picks its hero up. In the
+   accent, raised off the cell's corner, so the one control that commits a
+   move is the one that looks like a button. */
+.squad-slot-swap {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid rgba(255, 220, 150, 0.7);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #ffd27a, var(--accent) 70%);
+  color: #2a1c06;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.55), 0 0 14px -2px rgba(224, 166, 60, 0.9), 0 3px 8px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  animation: enemy-scout-verdict-in 0.22s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.squad-slot-swap > svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.squad-slot-swap:active {
+  transform: scale(0.92);
+}
+
+/* The empty cell is the one place a plain tap still lands the hero, so its key
+   sits inside the recess rather than on a corner it does not draw. */
+.squad-slot.empty .squad-slot-swap {
+  top: 50%;
+  right: 12px;
+  margin-top: -17px;
 }
 
 /* --- A hero joining the pact (RecruitFanfare.tsx) -------------------------
@@ -19131,14 +19268,16 @@ textarea,
   box-shadow: 0 0 5px rgba(224, 194, 122, 0.55);
 }
 
+/* Hollow, not filled: the parchment screen's tint is a near-gold, and a filled
+   gain pip read as a HELD one — the who-screen looked as if the hero already
+   had what the tap would give it. A ring is a pip waiting to be lit. */
 .mastery-pip.is-gain {
-  background: linear-gradient(135deg, color-mix(in srgb, rgb(var(--node-rgb)) 70%, #fff), rgb(var(--node-rgb)));
-  box-shadow: 0 0 6px rgba(var(--node-rgb), 0.7);
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px rgb(var(--node-rgb)), 0 0 6px rgba(var(--node-rgb), 0.55);
 }
 
 .pick-card.is-locked .mastery-pip.is-gain {
-  background: #6f7688;
-  box-shadow: none;
+  box-shadow: inset 0 0 0 1.5px #6f7688;
 }
 
 /* On the sheet the row sits left under the type badges, at the badges' own width. */

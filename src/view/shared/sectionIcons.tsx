@@ -66,16 +66,13 @@ export const SECTION_PATHS = {
     </>
   ),
   /**
-   * The Mastery Scroll: sealed proclamation — sheet, wax seal, rolled at the FOOT only.
-   * Deliberately not the Reference scroll in nodeIcons, which is ruled lines between two bars;
-   * the tells here are the seal and the single roll. The map node and the run resource wear it
-   * too — one picture per concept.
+   * The Mastery Scroll: a sheet hanging off its top roll, its foot curling into a second — the
+   * coil on each roll is the tell. Deliberately not the Reference scroll in nodeIcons, which is a
+   * page between two bars. The map node, the Cache and the run resource wear it too — one picture
+   * per concept.
    */
   mastery: (
-    <>
-      <path fillRule="evenodd" d="M5.6 2.4h12.8v16H5.6Zm6.4 5.2a2.8 2.8 0 1 0 0 5.6 2.8 2.8 0 0 0 0-5.6Z" />
-      <path d="M4 17.4h16a2.6 2.6 0 0 1 0 5.2H4a2.6 2.6 0 0 1 0-5.2Z" />
-    </>
+    <path d="M2 5.8a3.4 3.4 0 0 1 3.4-3.4h12.4a3.6 3.6 0 0 1 3.6 3.6v1.2h-4v9.6h2.2a2.4 2.4 0 0 1 0 4.8H2Zm3.4-1.8a1.8 1.8 0 1 0 0 3.6 1.8 1.8 0 0 0 0-3.6Zm14.2 13.9a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6ZM11.2 8.2v2.2h4.6V8.2Zm0 4v2.2h3.2v-2.2Z" />
   ),
 } satisfies Record<string, ReactNode>;
 

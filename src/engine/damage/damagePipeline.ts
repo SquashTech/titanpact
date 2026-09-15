@@ -91,6 +91,10 @@ export function resolveConditionalPowerMultiplier(
     if (!targetMaxHp) return 1;
     return target.currentHp < targetMaxHp * conditional.requiresTargetHpBelow ? conditional.multiplier : 1;
   }
+  if (conditional.requiresTargetStatReduction) {
+    // What THIS fight inflicted, never the loadout — a target's armor must not arm its punisher.
+    return hasStatReduction(target) ? conditional.multiplier : 1;
+  }
   if (conditional.requiresFieldEffect) {
     return fieldEffectCtx?.active?.fieldEffectId === conditional.requiresFieldEffect ? conditional.multiplier : 1;
   }
@@ -98,6 +102,11 @@ export function resolveConditionalPowerMultiplier(
   const statusId = conditional.requiresTargetStatus ?? conditional.requiresUserStatus;
   if (!holder || !statusId) return 1;
   return hasStatus(holder, statusId) ? conditional.multiplier : 1;
+}
+
+/** Any in-fight stat reduction standing on a combatant (requiresTargetStatReduction's read; the view's too). */
+export function hasStatReduction(combatant: Combatant): boolean {
+  return Object.values(combatant.statModifiers).some((v) => typeof v === 'number' && v < 0);
 }
 
 /** Which raw stats feed the off/def ratio for a damage category. */

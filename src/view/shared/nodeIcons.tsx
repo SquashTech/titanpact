@@ -61,13 +61,8 @@ const HELM = (
   />
 );
 
-// A rolled scroll, its two curls the thing that survives 20px (the Scribe, the Cache, the shelf).
-const SCROLL = (
-  <>
-    <path d="M6.2 3.2h11.2a3.4 3.4 0 0 1 3.4 3.4v1.6h-4.2V6.8H8.4v10.4h8.2v-1.8h4.2v1.8a3.4 3.4 0 0 1-3.4 3.4H6.2a3.4 3.4 0 0 1-3.4-3.4V6.6a3.4 3.4 0 0 1 3.4-3.4Z" />
-    <path d="M10.2 9.2h4.8v1.7h-4.8Zm0 3h4.8v1.7h-4.8Z" />
-  </>
-);
+// The Mastery Scroll (the Scribe, the Cache, the shelf) — drawn once, in sectionIcons.
+const SCROLL = SECTION_PATHS.mastery;
 
 const OPEN_BOOK = (
   <>
@@ -117,14 +112,10 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
     </>
   ),
   equipmentReward: SECTION_PATHS.equipment,
-  // The Scroll Cache: three of the Scribe's scroll, fanned — three pips against the Scribe's two
-  // each, and with map labels gone the count IS the mark.
+  // The Scroll Cache: a bundle of three, seen end-on — three coils stacked, since the count is
+  // the mark once map labels are gone (three pips against the Scribe's two each).
   scrollReward: (
-    <>
-      <g transform="translate(3 5) scale(0.55)">{SCROLL}</g>
-      <g transform="translate(8.5 8.5) scale(0.55)">{SCROLL}</g>
-      <g transform="translate(14 12) scale(0.55)">{SCROLL}</g>
-    </>
+    <path d="M12 1.9a5.9 5.9 0 1 1 0 11.8 5.9 5.9 0 0 1 0-11.8Zm-4.9 8.6a5.9 5.9 0 1 1 0 11.8 5.9 5.9 0 0 1 0-11.8Zm9.8 0a5.9 5.9 0 1 1 0 11.8 5.9 5.9 0 0 1 0-11.8ZM12 5.7a2.1 2.1 0 1 0 0 4.2 2.1 2.1 0 0 0 0-4.2Zm-4.9 8.6a2.1 2.1 0 1 0 0 4.2 2.1 2.1 0 0 0 0-4.2Zm9.8 0a2.1 2.1 0 1 0 0 4.2 2.1 2.1 0 0 0 0-4.2Z" />
   ),
   // The Passives section mark, for the node that hands one over — same rule.
   passiveReward: SECTION_PATHS.passives,
@@ -213,6 +204,14 @@ const HUB_PATHS = {
         d="M8.4 1.8h7.6l3 3v7.6l-3 3H8.4l-3-3V4.8Zm1 2.4-1.6 1.6v5.6l1.6 1.6h5.6l1.6-1.6V5.8l-1.6-1.6Z"
       />
       <path d="M4.6 16.4h14.8l2.6 5.8H2Z" />
+    </>
+  ),
+  // Two arrows passing: the battle preview's move-here key (SquadSelectScreen), the same ⇄ the
+  // fight's Switch key wears.
+  swap: (
+    <>
+      <path d="M14.4 2.6 21.2 8l-6.8 5.4V10H3.6V6h10.8Z" />
+      <path d="M9.6 21.4 2.8 16l6.8-5.4V14h10.8v4H9.6Z" />
     </>
   ),
   // Same hamburger as FightScreen's `☰` Menu key.

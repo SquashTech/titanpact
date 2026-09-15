@@ -373,22 +373,24 @@ export const signatureMoves: Record<string, MoveDefinition> = {
   },
 
   // --- Mind ---
-  // Cortex: ties the pair together and sharpens both halves of both.
+  // Cortex: strikes, and the pair it threads together runs hotter on both axes — the mixed
+  // attacker's verb. It was the buff alone at 50, which Oathstrike beat with a hit attached.
   mindlink: {
     id: 'mindlink',
     name: 'Mindlink',
     type: 'Mind',
     category: 'magical',
-    kind: 'buff',
+    kind: 'damage',
+    basePower: 70,
     statDeltas: [
       { stat: 'attack', amount: 15 },
       { stat: 'intelligence', amount: 15 },
     ],
     statDeltaTarget: 'bothAllies',
-    manaCost: 50,
+    manaCost: 55,
     priority: 0,
-    target: 'bothAllies',
-    description: 'Threads the two of them together, and both pipelines run hotter for it (+15 Attack and +15 Intelligence to both allies).',
+    target: 'singleEnemy',
+    description: 'A lance of thought that threads the two of you together, and both pipelines run hotter for it (+15 Attack and +15 Intelligence to both allies).',
   },
   // Lucius: empties the room behind their eyes.
   hollowing: {

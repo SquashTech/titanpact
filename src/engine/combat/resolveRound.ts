@@ -647,46 +647,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       }
     }
 
-    // doublesStatReductions reads/writes statModifiers ONLY (never baselineStatModifiers) and
-    // compounds — down to the floor, where a further Flay lands 0 and says so.
-    if (move.doublesStatReductions) {
-      for (const targetId of targetIds) {
-        const target = working.combatants[targetId];
-        if (!target || target.fainted) continue;
-        const doubled: Partial<Record<StatKey, number>> = {};
-        const doubledEntries: [StatKey, number, boolean][] = [];
-        for (const [stat, value] of Object.entries(target.statModifiers) as [StatKey, number][]) {
-          if (value >= 0) continue;
-          const { newValue, capped } = applyStatModifierDelta(heroes[target.heroId], target, stat, value);
-          doubled[stat] = newValue;
-          doubledEntries.push([stat, newValue, capped]);
-        }
-        if (!doubledEntries.length) continue;
-        working = {
-          ...working,
-          combatants: {
-            ...working.combatants,
-            [targetId]: { ...target, statModifiers: { ...target.statModifiers, ...doubled } },
-          },
-        };
-        for (const [stat, newValue, capped] of doubledEntries) {
-          // `delta` is the amount ADDED, not the new total.
-          const statChanged: CombatEvent = {
-            type: 'StatChanged',
-            round,
-            combatantId: targetId,
-            stat,
-            delta: newValue - (target.statModifiers[stat] ?? 0),
-            ...(capped ? { capped: true } : {}),
-            newValue,
-          };
-          events.push(statChanged);
-          statChangedEvents.push(statChanged);
-        }
-      }
-    }
-
-    // One checkpoint for the whole move's stat changes, after both blocks that produce them and
+    // One checkpoint for the whole move's stat changes, after the block that produces them and
     // before the riders — the buff lands, the passive answers it, then the move's own riders resolve.
     if (statChangedEvents.length > 0) {
       const statReactions = resolvePassiveReactions(working, round, statChangedEvents, heroes, statuses, passives, fieldEffects);

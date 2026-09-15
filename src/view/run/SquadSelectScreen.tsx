@@ -72,8 +72,12 @@ interface SquadSlotProps {
   dropTarget: boolean;
   dragOver: boolean;
   locked: boolean;
-  /** Tap: begin or complete a swap. */
+  /** Another hero is held and may land here: the cell wears its move-here key. */
+  swapTarget: boolean;
+  /** Tap: pick this hero up (or put it down); on an empty cell, land the held hero here. */
   onActivate: () => void;
+  /** The move-here key: swap the held hero into this cell. */
+  onSwapHere: () => void;
   /** Hold: open the hero's sheet. Absent on an empty cell, which has nothing to review. */
   onInspect?: () => void;
   onDragStart: (e: DragEvent) => void;
@@ -93,7 +97,12 @@ interface SquadSlotProps {
  *
  * The hold has to share the cell with a tap AND an HTML5 drag, and does: the hook cancels its timer
  * once the pointer travels 12px, which any drag does long before `dragstart`, and it swallows the
- * click that a completed hold would otherwise deliver to the swap handler.
+ * click that a completed hold would otherwise deliver to the tap handler.
+ *
+ * A tap SELECTS (2026-09-14, per user direction); it never swaps. Tap-then-tap used to trade the two
+ * cells, so reading a second hero's matchups moved the first one — the swap is its own key now,
+ * drawn on every cell the held hero can land in, and the key alone commits a move. The key stops
+ * its pointer events at itself so the cell's own tap under it does not fire and re-select.
  */
 function SquadSlot({
   hero,
@@ -102,7 +111,9 @@ function SquadSlot({
   dropTarget,
   dragOver,
   locked,
+  swapTarget,
   onActivate,
+  onSwapHere,
   onInspect,
   onDragStart,
   onDragOver,
@@ -120,7 +131,7 @@ function SquadSlot({
       role="button"
       tabIndex={0}
       draggable={!!hero}
-      aria-label={hero && entry ? `${hero.name}, level ${levelOf(entry)} — tap to move, hold to review` : 'Empty slot'}
+      aria-label={hero && entry ? `${hero.name}, level ${levelOf(entry)} — tap to pick up, hold to review` : 'Empty slot'}
       // The cell had `role="button"` and a tab stop and answered neither key. Enter and Space now
       // do what a tap does; the sheet is keyboard-reachable through the roster button in the corner.
       onKeyDown={(e) => {
@@ -136,6 +147,21 @@ function SquadSlot({
       {...press}
     >
       {children}
+      {swapTarget && (
+        <button
+          type="button"
+          className="squad-slot-swap"
+          aria-label={hero ? `Swap with ${hero.name}` : 'Move here'}
+          onPointerDown={(e) => e.stopPropagation()}
+          onPointerUp={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSwapHere();
+          }}
+        >
+          <HubGlyph name="swap" />
+        </button>
+      )}
     </div>
   );
 }
@@ -157,7 +183,7 @@ function MatchupArrow({ verdict }: { verdict: 'up' | 'down' | null }) {
   );
 }
 
-/** Bring-6-pick-4 squad selection before every fight node (docs/combat.md "Bring-6-pick-4 sideboard"). Drag, or tap-then-tap, swaps two cells. */
+/** Bring-6-pick-4 squad selection before every fight node (docs/combat.md "Bring-6-pick-4 sideboard"). Drag, or tap then the move-here key, swaps two cells; a tap alone reads matchups. */
 export function SquadSelectScreen({
   run,
   encounter,
@@ -218,13 +244,19 @@ export function SquadSelectScreen({
     });
   }
 
+  // A tap picks a hero up or puts it down; tapping a second hero picks THAT one up. Only an empty
+  // cell lands the held hero on a tap, since it has nothing of its own to pick up.
   function handleSlotClick(index: number) {
-    if (selectedSlot === null) {
-      if (slots[index] === null) return;
-      setSelectedSlot(index);
+    if (slots[index] === null) {
+      if (selectedSlot !== null) handleSwapHere(index);
       return;
     }
-    if (selectedSlot !== index) swapSlots(selectedSlot, index);
+    setSelectedSlot(selectedSlot === index ? null : index);
+  }
+
+  function handleSwapHere(index: number) {
+    if (selectedSlot === null) return;
+    swapSlots(selectedSlot, index);
     setSelectedSlot(null);
   }
 
@@ -247,7 +279,9 @@ export function SquadSelectScreen({
               scouted, in an order that says nothing about who opens. */}
           <section className="squad-section squad-section-enemy">
             <h2 className="squad-section-title">Scouted enemies</h2>
-            <div className="enemy-scout-grid">
+            {/* Six scouted (the finale) go three abreast in a row chip, so the band stays the height
+                four take and the screen keeps its one-page shape. */}
+            <div className={`enemy-scout-grid${scoutOrder.length > 4 ? ' enemy-scout-grid-dense' : ''}`}>
               {scoutOrder.map((entry) => {
                 const hero = allCombatants[entry.heroId];
                 const types = rosterEntryTypes(hero, entry);
@@ -329,7 +363,9 @@ export function SquadSelectScreen({
                           dropTarget={isDropTarget}
                           dragOver={isDragOver}
                           locked={isLocked}
+                          swapTarget={isDropTarget}
                           onActivate={() => handleSlotClick(index)}
+                          onSwapHere={() => handleSwapHere(index)}
                           onInspect={hero && entry ? () => setInspecting({ hero, entry, enemy: false }) : undefined}
                           onDragStart={(e: DragEvent) => {
                             if (!hero) return;

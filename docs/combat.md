@@ -1023,8 +1023,7 @@ through `getEffectiveStat`, with three consequences that are the whole point:
   doubled along with everything else, so Beast's buff rows are a ramp rather
   than a list.
 - **A second cast doubles the doubled figure** (90 → 180 → 360). It reads the
-  number on the board, the same rule and the same reasoning as
-  `doublesStatReductions`; nothing memoises the original.
+  number on the board; nothing memoises the original.
 - **A debuffed caster doubles the debuffed number**, and the floor of 1 applies
   here like everywhere else.
 
@@ -1508,32 +1507,24 @@ details:
 `test/mindMoves.test.ts` pins it from both ends: the floored value itself, and that an
 attack into a floored defender still deals positive, finite damage.
 
-### Doubling the reductions already on the board (2026-08-30, Mind)
+### Cashing in the reductions already on the board (2026-08-30, Mind; re-authored 2026-09-14)
 
-Brain Flay is "spread, double stat reductions on enemies" —
-`MoveDefinition.doublesStatReductions`. It carries no `basePower` and no authored
-number: what it is worth is entirely what the type has already spent.
+Brain Flay is the Mind slate's punisher: a Late spread hit at **×2 against any foe whose
+stats have been lowered** — `conditionalPower.requiresTargetStatReduction`, a per-target
+form like `requiresTargetHpBelow`, so a spread doubles against the debuffed foe only.
 
-- **It reads `statModifiers`, never `baselineStatModifiers`.** That split is the whole
-  definition — `statModifiers` is what *this fight* inflicted, `baselineStatModifiers`
-  is the loadout (equipment, relics, class, Evolution grants). Doubling the net of the
-  two would make a target's armor change how hard its debuffs amplify, which is not a
-  relationship anything else in the game has.
-- **Every negatively-modified stat, not a named list.** Break Will reduces Attack and
-  Lull reduces Intelligence, so restricting it to the magical pair would make the
-  slate's own biggest debuff not a payoff for its own capstone. A *positive* modifier is
-  untouched — doubling an enemy's own buff would be the opposite of what the row says.
-- **It COMPOUNDS** (2026-08-30 designer call): −50 → −100 → −200. It doubles the number
-  on the board, which is the rule a player can do in their head, and there is no
-  per-fight flag and no memory of the original reduction. The price is 80 mana, a spread
-  cast, and needing the debuffs to already be there. The ceiling is bounded by the stat
-  floor above rather than by the move.
-- **It needs no exemption from the multiples-of-5/10 lock**, unlike
-  `derivedStatDeltas`: doubling a multiple of 5 is a multiple of 5.
+- **It reads `statModifiers`, never `baselineStatModifiers`.** `statModifiers` is what
+  *this fight* inflicted, `baselineStatModifiers` is the loadout — a target's armor must not
+  arm its own punisher. Any negative entry counts, however small; a positive one never does.
+- **A foe held at its floor still counts.** The sign is read, not the depth.
+- **It writes nothing back.** The reductions are read; the hit is the payoff.
 
-Pressing it on a clean board changes nothing and still spends the mana — the Retribution
-shape (a move worth 0 when mistimed stays *pressable* rather than blinking out of the
-kit). That is why the button carries a live `−N more` chip rather than only the rule.
+It was `doublesStatReductions` — no BasePower, "double every reduction on both foes",
+compounding on recast — from 2026-08-30 until 2026-09-14. Stat scaling's phase 2a floor
+(−½ of base + loadout, `docs/stat-scaling.md`) is what retired it: one scaled Mid debuff
+puts most targets at or near the floor, and a doubling from there landed 0 — playtest
+reported it "doesn't work at all any more". The vocabulary was deleted with it; the floor
+made the shape unauthorable, not just this move.
 
 ---
 

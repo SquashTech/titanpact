@@ -2275,19 +2275,21 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'Breaks a mind open with the strength of your own — swings Wisdom, not Intelligence.',
   },
+  // The slate's cash-in: a debuff sets it up, the hit doubles. It doubled the reductions
+  // themselves until 2026-09-14, and the stat floor left that nothing to double.
   brainFlay: {
     id: 'brainFlay',
     name: 'Brain Flay',
     tier: 'late',
     type: 'Mind',
     category: 'magical',
-    kind: 'buff',
-    statDeltas: [],
-    doublesStatReductions: true,
+    kind: 'damage',
+    basePower: 55,
+    conditionalPower: { requiresTargetStatReduction: true, multiplier: 2 },
     manaCost: 60,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Tears open every wound already in both foes minds — doubles their stat reductions.',
+    description: "Tears open every wound already in both foes' minds — double power against a foe whose stats have been lowered.",
   },
   breakWill: {
     id: 'breakWill',

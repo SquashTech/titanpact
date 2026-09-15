@@ -500,7 +500,6 @@ function scoreCast(
   const opaque =
     move.randomStatDeltas != null ||
     move.derivedStatDeltas != null ||
-    move.doublesStatReductions === true ||
     move.detonatesStatus != null ||
     move.fieldEffectApplication != null;
   if (opaque) {

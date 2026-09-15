@@ -38,7 +38,9 @@ base stats at their roster medians — Attack 60, Defense 55, Intelligence 40, W
 3. **There is no ceiling.** `getEffectiveStat` floors every stat at 1 and caps nothing;
    `combat.md` lists "a cap on stat modifiers" and "a Haze verb" as the two open levers the
    Pact Clock was built beside rather than instead of. Apex Predator, Arcane Overflow and
-   Brain Flay compound by design and the Clock is what ends them.
+   Brain Flay compound by design and the Clock is what ends them. (Brain Flay's doubling did
+   not survive the floor phase 2a built: re-authored as a ×2 hit against a debuffed foe,
+   2026-09-14.)
 
 The slates already know all three. Frost Wall (+60 Defense to both), Storm Surge (+50/+50 to
 both), Exalt (+100 Intelligence), Juggernaut (+50/+50/+50): the authors wanted a big moment and
@@ -110,8 +112,9 @@ that is correct — the buff half is support, the debuff half is offence.
 **What the multiplier reaches.** `conditionalStatDeltas` (Prowl beside a Beast) multiplies the
 AMOUNT, and the scaling multiplies that — one ×2 pack, one StatMult, one rounding.
 `randomStatDeltas` (Overclock, Jury-Rig, Piston Punch) scales its `amount` the same way; which
-stat is drawn is unchanged. `doublesStatReductions` (Brain Flay) doubles what has already
-landed and reads no stat of its own — it doubles scaled figures, so it needs no clause.
+stat is drawn is unchanged. Brain Flay reads the sign of what has already landed and lands
+none of its own (`conditionalPower.requiresTargetStatReduction`, since 2026-09-14 — the
+floor left its old doubling nothing to double), so it needs no clause.
 
 ### Worked numbers
 

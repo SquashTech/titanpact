@@ -275,7 +275,7 @@ test('shadow: the slate is sixteen moves, and every status and condition it name
       assert.ok(statuses[app.statusId], `${move.id} applies unknown status ${app.statusId}`);
     }
     if (move.conditionalPower) {
-      const { requiresTargetStatus, requiresUserStatus, requiresFieldEffect, requiresTargetHpBelow, requiresPartnerType } =
+      const { requiresTargetStatus, requiresUserStatus, requiresFieldEffect, requiresTargetHpBelow, requiresPartnerType, requiresTargetStatReduction } =
         move.conditionalPower;
       const authored = [
         requiresTargetStatus,
@@ -283,6 +283,7 @@ test('shadow: the slate is sixteen moves, and every status and condition it name
         requiresFieldEffect,
         requiresTargetHpBelow,
         requiresPartnerType,
+        requiresTargetStatReduction,
       ].filter((v) => v != null);
       assert.strictEqual(authored.length, 1, `${move.id} must author exactly one side of conditionalPower`);
       if (requiresTargetHpBelow != null) {
@@ -304,6 +305,7 @@ test('shadow: no move in the GAME authors two sides of conditionalPower', () => 
       requiresTargetHpBelow,
       requiresUserHpBelow,
       requiresPartnerType,
+      requiresTargetStatReduction,
     } = move.conditionalPower;
     const authored = [
       requiresTargetStatus,
@@ -312,6 +314,7 @@ test('shadow: no move in the GAME authors two sides of conditionalPower', () => 
       requiresTargetHpBelow,
       requiresPartnerType,
       requiresUserHpBelow,
+      requiresTargetStatReduction,
     ].filter((v) => v != null);
     assert.strictEqual(authored.length, 1, `${move.id} authors ${authored.length} sides of conditionalPower`);
   }

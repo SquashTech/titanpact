@@ -1,4 +1,4 @@
-// Mind slate: statDeltaChance, doublesStatReductions, the stat floor. Hand-off findings: docs/authoring-moves.md §10.
+// Mind slate: statDeltaChance, requiresTargetStatReduction (Brain Flay), the stat floor. Hand-off findings: docs/authoring-moves.md §10.
 
 import { firstStatusApplication } from '../src/engine/content';
 import * as assert from 'assert';
@@ -106,46 +106,45 @@ test('mind: a chanced SPREAD rider rolls per target — Psionic Wave can catch o
   assert.ok(split, 'Psionic Wave never debuffed exactly one of its two targets across 60 seeds');
 });
 
-// --- doublesStatReductions ---
+// --- conditionalPower.requiresTargetStatReduction ---
 
-// Reductions sit inside the floor (−½ of base + loadout, state.ts statModifierFloor): Iron
-// Warden is Attack 60 / Intelligence 20 / Defense 100, Sentinel Wisdom 50.
-test('mind: Brain Flay doubles the reductions standing on both enemies and leaves buffs alone', () => {
+// Brain Flay cashes in the slate's debuffs: ×2 against a foe carrying ANY in-fight reduction.
+// It doubled the reductions themselves until 2026-09-14; the floor (−½ of base + loadout,
+// state.ts statModifierFloor) left a doubling nothing to double once one scaled Mid debuff had
+// landed, so the punisher became a hit and the doubling vocabulary went with it.
+function flayHits(events: readonly { type: string }[]) {
+  return events.filter((e) => e.type === 'DamageDealt') as unknown as { sourceCombatantId: string; targetCombatantId: string; basePowerMultiplier: number; amount: number }[];
+}
+
+test('mind: Brain Flay hits both foes, and doubles against the one whose stats have been lowered — per target', () => {
   let state = withDeepPools(mindFixture(3));
-  state = withModifiers(state, 'b1', { intelligence: -5, attack: -10, defense: 20 });
-  state = withModifiers(state, 'b2', { wisdom: -12 });
+  state = withModifiers(state, 'b1', { attack: -10 });
 
   const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'brainFlay', declaredTarget: 'b1' }];
-  const { state: next } = resolveRound(state, actions, config);
+  const { events } = resolveRound(state, actions, config);
 
-  assert.strictEqual(modifiersOf(next, 'b1').intelligence, -10);
-  assert.strictEqual(modifiersOf(next, 'b1').attack, -20);
-  assert.strictEqual(modifiersOf(next, 'b1').defense, 20);
-  assert.strictEqual(modifiersOf(next, 'b2').wisdom, -24);
+  const hits = flayHits(events).filter((e) => e.sourceCombatantId === 'a1');
+  assert.strictEqual(hits.length, 2, 'a spread lands on both');
+  const onB1 = hits.find((h) => h.targetCombatantId === 'b1')!;
+  const onB2 = hits.find((h) => h.targetCombatantId === 'b2')!;
+  assert.strictEqual(onB1.basePowerMultiplier, 2);
+  assert.strictEqual(onB2.basePowerMultiplier, 1);
+  assert.ok(onB1.amount > 0 && onB2.amount > 0);
 });
 
-test('mind: Brain Flay COMPOUNDS — a second cast doubles the already-doubled figure, and the floor is where it stops', () => {
+test('mind: a foe held at its floor still counts as lowered — the floor is where Brain Flay is strongest, not where it dies', () => {
   let state = withDeepPools(mindFixture(4));
-  state = withModifiers(state, 'b1', { attack: -5 });
-
-  const cast: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'brainFlay', declaredTarget: 'b1' }];
-  const once = resolveRound(state, cast, config).state;
-  assert.strictEqual(modifiersOf(once, 'b1').attack, -10);
-
-  const twice = resolveRound(once, cast, config).state;
-  assert.strictEqual(modifiersOf(twice, 'b1').attack, -20);
-
-  // −40 would pass Iron Warden's Attack floor of −30: held there, and the beat says so.
-  const third = resolveRound(twice, cast, config);
-  assert.strictEqual(modifiersOf(third.state, 'b1').attack, -30);
-  const held = third.events.find((e) => e.type === 'StatChanged' && (e as any).stat === 'attack') as any;
-  assert.strictEqual(held.delta, -10);
-  assert.strictEqual(held.capped, true);
+  // Break Will into Iron Warden (Attack 60) is held at −30; the punisher reads the sign, not the depth.
+  state = withModifiers(state, 'b1', { attack: -30 });
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'brainFlay', declaredTarget: 'b1' }];
+  const { events } = resolveRound(state, actions, config);
+  const onB1 = flayHits(events).find((h) => h.sourceCombatantId === 'a1' && h.targetCombatantId === 'b1')!;
+  assert.strictEqual(onB1.basePowerMultiplier, 2);
 });
 
-test('mind: Brain Flay reads statModifiers, NEVER baselineStatModifiers', () => {
+test('mind: Brain Flay reads statModifiers, NEVER baselineStatModifiers — armor does not arm it, and a buff does not either', () => {
   let state = withDeepPools(mindFixture(5));
-  state = withModifiers(state, 'b1', { intelligence: -5 });
+  state = withModifiers(state, 'b1', { defense: 20 });
   const c = state.combatants.b1;
   state = {
     ...state,
@@ -156,38 +155,26 @@ test('mind: Brain Flay reads statModifiers, NEVER baselineStatModifiers', () => 
   } as CombatState;
 
   const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'brainFlay', declaredTarget: 'b1' }];
-  const { state: next } = resolveRound(state, actions, config);
-
-  assert.strictEqual(modifiersOf(next, 'b1').intelligence, -10);
-  assert.strictEqual(modifiersOf(next, 'b1').wisdom, undefined);
-  assert.strictEqual((next.combatants.b1.baselineStatModifiers as Record<string, number>).wisdom, -40);
+  const { events, state: next } = resolveRound(state, actions, config);
+  const onB1 = flayHits(events).find((h) => h.sourceCombatantId === 'a1' && h.targetCombatantId === 'b1')!;
+  assert.strictEqual(onB1.basePowerMultiplier, 1);
+  // The hit writes nothing back: the reductions on the board are read, never touched.
+  assert.deepStrictEqual(modifiersOf(next, 'b1'), modifiersOf(state, 'b1'));
 });
 
-test('mind: Brain Flay on a clean board changes nothing and still spends the mana', () => {
+test('mind: Brain Flay on a clean board is a plain spread hit and still spends the mana', () => {
   const state = withDeepPools(mindFixture(6));
   const before = state.combatants.a1.currentMana;
   const regen = getEffectiveStat(heroes.mindweaver, state.combatants.a1, 'mpRegen');
   const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'brainFlay', declaredTarget: 'b1' }];
   const { state: next, events } = resolveRound(state, actions, config);
 
-  assert.deepStrictEqual(modifiersOf(next, 'b1'), modifiersOf(state, 'b1'));
+  const hits = flayHits(events).filter((e) => e.sourceCombatantId === 'a1');
+  assert.strictEqual(hits.length, 2);
+  assert.ok(hits.every((h) => h.basePowerMultiplier === 1 && h.amount > 0));
   assert.strictEqual(events.some((e) => e.type === 'StatChanged'), false);
   // Net of the end-of-round MP Regen tick.
   assert.strictEqual(next.combatants.a1.currentMana, before - moves.brainFlay.manaCost + regen);
-});
-
-test('mind: Brain Flay reports the amount ADDED, not the new total', () => {
-  let state = withDeepPools(mindFixture(8));
-  state = withModifiers(state, 'b1', { attack: -10 });
-  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'brainFlay', declaredTarget: 'b1' }];
-  const { events } = resolveRound(state, actions, config);
-
-  const changed = events.find(
-    (e) => e.type === 'StatChanged' && (e as { combatantId: string }).combatantId === 'b1'
-  ) as { delta: number; newValue: number } | undefined;
-  assert.ok(changed);
-  assert.strictEqual(changed.delta, -10);
-  assert.strictEqual(changed.newValue, -20);
 });
 
 // --- The stat floor ---

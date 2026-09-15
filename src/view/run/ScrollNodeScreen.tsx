@@ -135,17 +135,16 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
           // hero's signature (when one is authored) and the companion's second step.
           const evolves = crossesMastery(entry, pipsPerTap, MASTERY_EVOLUTION);
           const masters = crossesMastery(entry, pipsPerTap, MASTERY_CAP) && (entry.mortal || !!hero.signatureMoveId);
+          // The count is what the hero HOLDS — the pips draw the gain in the node's colour, and
+          // printing the post-tap total here read as if the hero already had it.
+          const held = `${entry.mastery}/${MASTERY_CAP}`;
           const cta = !canTakeMastery(entry)
             ? 'Mastered'
             : picked
-              ? `+${SCRIBE_PIPS_EACH} · ${entry.mastery}/${MASTERY_CAP}`
+              ? `${held} ✓`
               : evolves || masters
-                ? entry.mortal
-                  ? 'Grows!'
-                  : evolves
-                    ? 'Evolves!'
-                    : 'Signature!'
-                : `+${room} · ${entry.mastery + room}/${MASTERY_CAP}`;
+                ? `${held} · ${entry.mortal ? 'Grows!' : evolves ? 'Evolves!' : 'Signature!'}`
+                : `${held} · +${room}`;
           return (
             <HeroPickCard
               key={entry.rosterId}

@@ -784,24 +784,19 @@ as well as `heroes.ts`). A condition that reads the roster can be trivially
 unreachable, and the enabler may live in a file the design table never
 mentions.
 
-### `doublesStatReductions`
+### `conditionalPower.requiresTargetStatReduction`
 
-`doublesStatReductions: true` (Mind's Brain Flay) doubles every stat the move's resolved
-targets are already debuffed on. A move authoring this carries no `basePower`; what it
-is worth is entirely what the board already says.
+`{ requiresTargetStatReduction: true, multiplier }` (Mind's Brain Flay) is the
+conditionalPower form for "×N against a foe whose stats have been lowered". Per target,
+like `requiresTargetHpBelow`, so a spread doubles against the debuffed foe only. It reads
+`statModifiers` ONLY, never `baselineStatModifiers` — the first is what this fight
+inflicted, the second is the loadout, and a target's armor must not arm its punisher. Any
+negative entry counts, however small, and a foe held at its floor still counts.
 
-Reads and writes `statModifiers` ONLY, never `baselineStatModifiers` — the first is what
-this fight inflicted, the second is the loadout, and a target's armor must not change how
-hard its debuffs amplify. Every negatively-modified stat, not a named list. Positive
-modifiers are untouched.
-
-It **compounds** (−50 → −100 → −200): it doubles the number on the board, so a second
-cast doubles the doubled one. Nothing clamps here — `getEffectiveStat` floors every stat
-at 1 for every reader at once, which is where that invariant belongs. Pressing it on a
-clean board changes nothing and still costs the mana, the Retribution shape.
-
-If you author one of these, the button needs the LIVE figure and not only the rule:
-FightScreen carries a `−N more` chip for exactly the reason the retribution chip exists.
+It replaced `doublesStatReductions` (2026-09-14): with the stat floor at −½ of base +
+loadout, one scaled Mid debuff floors most targets and a doubling from there landed 0. A
+"double the reductions" verb cannot be authored under that floor; a hit that cashes them in
+can.
 
 ### `offStatOverride`
 

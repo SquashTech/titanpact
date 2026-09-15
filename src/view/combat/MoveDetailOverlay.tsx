@@ -15,6 +15,7 @@ import { resolveHealFor, type HealCaster } from '../../engine/heal/healPipeline'
 import { resolveStatusMagnitudeFor, scaleStatusMagnitude } from '../../engine/status/statusMagnitude';
 import {
   calcDamage,
+  hasStatReduction,
   resolveConditionalPowerMultiplier,
   resolveElementalForceBonus,
   resolveStatRatio,
@@ -258,6 +259,14 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
   // Each conditionalPower form takes its own row; the status form is the fallthrough.
   const conditionalFieldId = move.conditionalPower?.requiresFieldEffect ?? '';
   const conditionalHpBelow = move.conditionalPower?.requiresTargetHpBelow;
+  const conditionalReduced = move.conditionalPower?.requiresTargetStatReduction === true;
+  const conditionalReducedLive = Boolean(
+    conditionalReduced &&
+      context?.defenderIds.some((id) => {
+        const defender = context.combat.combatants[id];
+        return defender && !defender.fainted && hasStatReduction(defender);
+      })
+  );
   const conditionalUserHpBelow = move.conditionalPower?.requiresUserHpBelow;
   const conditionalPartnerType = move.conditionalPower?.requiresPartnerType;
   const livePartnerTypes = context ? activePartnerTypes(context.combat, context.attackerId, allCombatants) : null;
@@ -325,8 +334,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
       move.offStatOverride ||
       move.retributionPercent != null ||
       move.recoilPercent ||
-      move.selfHpCost ||
-      move.doublesStatReductions
+      move.selfHpCost
   );
 
   const forecastIds = context && move.kind === 'damage' ? context.defenderIds : [];
@@ -472,22 +480,6 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
             />
             );
           })}
-          {move.doublesStatReductions && (
-            <EffectRow
-              glyph={<StatGlyph stat="intelligence" />}
-              text="Doubles every stat reduction already on the target"
-              note={(() => {
-                const ids = context?.defenderIds ?? [];
-                const banked = ids.reduce((sum, id) => {
-                  const d = context?.combat.combatants[id];
-                  if (!d || d.fainted) return sum;
-                  return sum + Object.values(d.statModifiers).reduce((a, v) => a + (typeof v === 'number' && v < 0 ? -v : 0), 0);
-                }, 0);
-                if (!ids.length) return undefined;
-                return banked > 0 ? `${banked} standing right now — this adds ${banked} more` : 'nothing is debuffed right now';
-              })()}
-            />
-          )}
           {/* Read before the cost is paid, which is why it is not `manaAfter`. */}
           {move.derivedStatDeltas?.stats.map((stat) => (
             <EffectRow
@@ -562,6 +554,13 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
               note={conditionalHpLive ? 'a target is under the line right now' : 'read before the hit lands'}
             />
           )}
+          {move.conditionalPower && conditionalReduced && (
+            <EffectRow
+              glyph={<StatGlyph stat="intelligence" />}
+              text={`×${move.conditionalPower.multiplier} power vs a target whose stats have been lowered`}
+              note={context ? (conditionalReducedLive ? 'a target is debuffed right now' : 'nothing is debuffed right now') : 'any in-fight reduction counts, however small'}
+            />
+          )}
           {move.conditionalPower && conditionalUserHpBelow != null && (
             <EffectRow
               glyph={<StatGlyph stat="hp" />}
@@ -581,6 +580,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
             !conditionalFieldId &&
             conditionalPartnerType == null &&
             conditionalHpBelow == null &&
+            !conditionalReduced &&
             conditionalUserHpBelow == null && (
             <EffectRow
               glyph={<StatusGlyph statusId={conditionalStatusId} />}

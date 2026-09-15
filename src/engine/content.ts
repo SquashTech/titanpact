@@ -285,6 +285,8 @@ export interface MoveDefinition {
     requiresFieldEffect?: FieldEffectId;
     /** The hit's target is below this fraction of max HP, read BEFORE this hit's own damage; per target. */
     requiresTargetHpBelow?: number;
+    /** The hit's target carries any in-fight stat reduction — a negative `statModifiers` entry, never the loadout (Brain Flay). Per target, so a spread doubles against the debuffed foe only; a foe held at its floor still counts. */
+    requiresTargetStatReduction?: boolean;
     /** The user is below this fraction of max HP, snapshotted before the target loop — all-or-nothing across a spread even on a draining move. */
     requiresUserHpBelow?: number;
     /** The user's ACTIVE partner (live, effective types; never the user itself) is this type. All-or-nothing across a spread. */
@@ -322,8 +324,6 @@ export interface MoveDefinition {
     amount: number;
     from: readonly StatKey[];
   };
-  /** Any kind. Doubles every negative entry of each target's statModifiers (never baselineStatModifiers). Compounds on recast; StatChanged delta = the amount added. */
-  doublesStatReductions?: boolean;
   /** Any kind. Delta read off live state at cast: 'userManaBeforeCast' (before the cost is spent; overflow counts) or 'userEffectiveAttack' (via getEffectiveStat, so a recast doubles the doubled figure). Exempt from the multiples-of-5 rule (CLAUDE.md). */
   derivedStatDeltas?: {
     source: 'userManaBeforeCast' | 'userEffectiveAttack';

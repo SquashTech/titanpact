@@ -103,8 +103,6 @@ interface MoveRowProps {
   forceBonus: number;
   /** damageTakenSinceLastTurn — what a retributionPercent move deals a share of. */
   banked: number;
-  /** Total stat reduction standing on the active enemies — what a doublesStatReductions move would add. */
-  bankedReductions: number;
   /** What a selfHpCost move would take off this hero right now; 0 when the move charges none. */
   selfHpCost: number;
   /** This round's rolled BasePower for a randomBasePower move. Derived from (seed, round, combatant, move), so re-rendering cannot re-roll it. */
@@ -123,7 +121,7 @@ interface MoveRowProps {
 
 // Lifted out of the `.map()` because useLongPress is a hook. Unaffordable rows are
 // `.is-unaffordable` + aria-disabled rather than `disabled` so a hold still opens the dossier.
-function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, bankedReductions, selfHpCost, rolledBasePower, userConditionMet, packBonusActive, liveTargetMode, caster, matchups, onSelect, onInspect }: MoveRowProps) {
+function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, selfHpCost, rolledBasePower, userConditionMet, packBonusActive, liveTargetMode, caster, matchups, onSelect, onInspect }: MoveRowProps) {
   const usable = affordable && !gateUnmet;
   const longPress = useLongPress(onInspect, () => {
     if (usable) onSelect();
@@ -228,6 +226,8 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
                     ? `while you are under ${Math.round(move.conditionalPower.requiresUserHpBelow * 100)}% HP`
                     : move.conditionalPower.requiresTargetHpBelow != null
                       ? `under ${Math.round(move.conditionalPower.requiresTargetHpBelow * 100)}% HP`
+                      : move.conditionalPower.requiresTargetStatReduction
+                        ? 'vs a debuffed foe'
                       : move.conditionalPower.requiresUserStatus
                         ? `with ${move.conditionalPower.requiresUserStatus}`
                         : `vs ${move.conditionalPower.requiresTargetStatus}`}
@@ -319,11 +319,6 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
           <span className="move-eff-row">
             <MoveTraitChips move={move} liveTargetMode={liveTargetMode} />
             <span className="move-effect-text">{moveEffectSummary(move, caster)}</span>
-            {move.doublesStatReductions && (
-              <span className={`move-eff-status${bankedReductions > 0 ? '' : ' move-eff-unmet'}`}>
-                −{bankedReductions} more
-              </span>
-            )}
             {move.selfHpCost != null && <span className="move-eff-status">-{selfHpCost} HP</span>}
             {move.conditionalStatDeltas && (
               <span className={`move-eff-status${packBonusActive ? '' : ' move-eff-unmet'}`}>
@@ -1368,7 +1363,9 @@ export function FightScreen({
                     Choose a Replacement{openReplacementSlots.length > 1 ? ' (1 of 2)' : ''}:
                   </span>
                 </div>
-                <div className="bench-row">
+                {/* The finale benches four: at 2x the figures could not share the row, so past two
+                    candidates the cards go to 1x and the row stays one row. */}
+                <div className={`bench-row${playerBench.length > 2 ? ' is-crowded' : ''}`}>
                   {playerBench.map((benchId) => {
                     const benchCombatant = combat.combatants[benchId];
                     const benchHero = allCombatants[benchCombatant.heroId];
@@ -1463,15 +1460,6 @@ export function FightScreen({
               types: effectiveTypes(hero, combatant),
               stats: casterStats,
             };
-            const bankedReductions = enemyActiveAlive.reduce(
-              (sum, eid) =>
-                sum +
-                Object.values(combat.combatants[eid].statModifiers).reduce(
-                  (acc, v) => acc + (typeof v === 'number' && v < 0 ? -v : 0),
-                  0
-                ),
-              0
-            );
             return (
               <div className="action-panel" key={id}>
                 <ConsoleCrest
@@ -1530,7 +1518,6 @@ export function FightScreen({
                         selected={isSelected}
                         forceBonus={resolveElementalForceBonus(combatant, move.type, statuses)}
                         banked={combatant.damageTakenSinceLastTurn}
-                        bankedReductions={bankedReductions}
                         rolledBasePower={resolveCastBasePower(combat, id, move, combatant.moveBasePowerBonuses)}
                         selfHpCost={
                           move.selfHpCost == null

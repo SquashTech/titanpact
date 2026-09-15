@@ -116,8 +116,6 @@ export function grantsRatherThanInflicts(app: StatusApplication): boolean {
 // colour and label can never disagree. A move carrying both reads as a debuff (open UI question).
 function isDebuff(move: MoveDefinition): boolean {
   if (move.statDeltas?.some(({ amount }) => amount < 0)) return true;
-  // doublesStatReductions authors no deltas and no status of its own.
-  if (move.doublesStatReductions) return true;
   return statusApplicationsOf(move).some((app) => app.target !== 'self' && !statuses[app.statusId]?.positive);
 }
 
@@ -283,7 +281,6 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     parts.push(`+${amount} to ${count === 1 ? 'a random stat' : `${count} random stats`}${statDeltaWhere(move)}`);
   }
 
-  if (move.doublesStatReductions) parts.push('Doubles stat reductions already on the target');
 
   // No number to print: the value is whatever live state says. States the rule.
   if (move.derivedStatDeltas) {
@@ -311,6 +308,7 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     const fieldSide = move.conditionalPower.requiresFieldEffect;
     const userSide = move.conditionalPower.requiresUserStatus;
     const hpSide = move.conditionalPower.requiresTargetHpBelow;
+    const reducedSide = move.conditionalPower.requiresTargetStatReduction;
     const userHpSide = move.conditionalPower.requiresUserHpBelow;
     const partnerSide = move.conditionalPower.requiresPartnerType;
     const gate = move.conditionalPower.requiresTargetStatus ?? userSide ?? '';
@@ -325,6 +323,8 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
         ? `while you are below ${Math.round(userHpSide * 100)}% HP`
         : hpSide != null
           ? `vs a target below ${Math.round(hpSide * 100)}% HP`
+          : reducedSide
+            ? 'vs a target whose stats have been lowered'
           : userSide
             ? `while you have ${gateName}`
             : `vs ${gateName}`;
