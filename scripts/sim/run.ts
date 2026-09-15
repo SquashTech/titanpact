@@ -152,7 +152,7 @@ export interface RunRecord {
   pipsBySource: Record<string, number>;
   /** Heroes joining after the draft: `contract` (claimed or bought), `hire` (Guild Hall). */
   recruitsBySource: Record<string, number>;
-  /** Items obtained, keyed `act:source` — `drop` (a fight), `node` (Equipment Cache), `event` (a loot pile). */
+  /** Items obtained, keyed `act:source` — `drop` (a fight), `node` (Equipment Cache), `event` (a loot pile), `contract` (worn in by a claimed hero). */
   itemsBySource: Record<string, number>;
   /** Drops that merged into a held piece rather than taking a socket, and drops that COULD have (somebody held the family). */
   merges: number;
@@ -557,6 +557,13 @@ function tryRecruitContracts(run: RunState, defeatedRoster: readonly RosterEntry
   const best = policy.byPower(offers)[0];
   const offer = deriveContractOffer(best);
   const rosterId = freshRosterId(run, best.heroId);
+  // A contract arrives armed (docs/gear-absorption.md §7): its gear counts as obtained and worn.
+  for (const itemId of offer.equipment) {
+    const item = equipment[itemId];
+    if (!item) continue;
+    record.itemsBySource[`${run.actNumber}:contract`] = (record.itemsBySource[`${run.actNumber}:contract`] ?? 0) + 1;
+    record.equipped.push(`${run.actNumber}:${item.rarity}`);
+  }
 
   if (run.roster.length < ROSTER_CAP) {
     record.recruitsBySource.contract = (record.recruitsBySource.contract ?? 0) + 1;

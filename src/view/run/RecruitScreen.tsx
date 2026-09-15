@@ -1,13 +1,13 @@
 import { useState, type CSSProperties } from 'react';
 import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
+import { RARITY_COLOR_VARS } from '../shared/EquipmentBox';
 import { passives } from '../../data/passives';
 import { classes } from '../../data/classes';
 import { progressionTable } from '../../data/progression';
 import type { MoveDefinition } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
 import { ROSTER_CAP } from '../../run/state';
-import { createEmptyLoadout } from '../../run/equipment';
 import { entryPassiveCounts, entryStatModifiers } from '../../run/entryStats';
 import { chosenEvolutionPaths, rosterEntryTypes } from '../../run/progression';
 import { chosenClass } from '../../run/classes';
@@ -53,8 +53,9 @@ interface Props {
 
 /**
  * The Recruit Contract claim, on the draft's stage (shared/HeroStage.tsx). App.tsx skips it when the
- * player holds no contracts. A veteran arrives with Evolutions and moves intact but gear stripped
- * (deriveContractOffer), so everything drawn here reads off an ungeared copy of the entry.
+ * player holds no contracts. A veteran arrives finished on every axis — Evolutions, moves, and the
+ * gear it fought in (deriveContractOffer, docs/gear-absorption.md §7) — so the piece it wears is
+ * a veteran mark beside its path and Class, and the silhouette counts it.
  */
 export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, required = false }: Props) {
   const [featuredRosterId, setFeaturedRosterId] = useState<string>(offers[0].rosterId);
@@ -71,7 +72,6 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
   const [fanfare, setFanfare] = useState<RosterEntry | null>(null);
 
   const featured = offers.find((entry) => entry.rosterId === featuredRosterId) ?? offers[0];
-  const arriving: RosterEntry = { ...featured, equipment: createEmptyLoadout() };
   const hero = rosterHeroes[featured.heroId];
   const featuredClaimed = claimedRosterIds.includes(featured.rosterId);
   const contracts = run.recruitContracts;
@@ -80,8 +80,9 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
   const canSign = contracts > 0 && !featuredClaimed;
   const nothingLeftToSign = allClaimed || contracts <= 0;
 
-  const passiveCounts = entryPassiveCounts(arriving, {});
-  const grants = entryStatModifiers(arriving, {}, passives, passiveCounts);
+  const passiveCounts = entryPassiveCounts(featured, equipment);
+  const grants = entryStatModifiers(featured, equipment, passives, passiveCounts);
+  const worn = featured.equipment.map((id) => equipment[id]).filter((item) => item !== undefined);
   const evolutions = chosenEvolutionPaths(progressionTable, featured);
   const heroClass = chosenClass(classes, featured);
 
@@ -167,7 +168,7 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
           <h3 className="draft-name">{hero.name}</h3>
           <StageTypes types={rosterEntryTypes(hero, featured)} />
 
-          {(evolutions.length > 0 || heroClass) && (
+          {(evolutions.length > 0 || heroClass || worn.length > 0) && (
             <div className="recruit-veteran">
               {evolutions.map((path) => (
                 <span key={path.id} className="recruit-veteran-mark">
@@ -175,6 +176,11 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
                 </span>
               ))}
               {heroClass && <span className="recruit-veteran-mark">◆ {heroClass.name}</span>}
+              {worn.map((item) => (
+                <span key={item.id} className="recruit-veteran-mark" style={{ color: RARITY_COLOR_VARS[item.rarity] }}>
+                  ▣ {item.name}
+                </span>
+              ))}
             </div>
           )}
 
@@ -240,7 +246,7 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
       {inspecting && (
         <HeroPreviewOverlay
           hero={hero}
-          entry={arriving}
+          entry={featured}
           equipmentLookup={equipment}
           relicIds={run.relics}
           onClose={() => setInspecting(false)}

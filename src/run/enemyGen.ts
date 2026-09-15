@@ -12,13 +12,14 @@ import { levelUpEntry, xpForLevel } from './growth';
 import { MASTERY_CAP, pendingSignature } from './mastery';
 import { unsealedIdFor } from '../data/enemies';
 import { spawnPool, type SpawnTier } from '../data/titanspawn';
-import { rollEquipmentDrops } from '../data/equipment';
+import { rollFittingGear } from '../data/equipment';
 import { equipItem, type EquipmentRarity } from './equipment';
 import {
   MOVE_CAP,
   availableEvolution,
   chooseEvolutionPath,
   levelMovePool,
+  rosterEntryTypes,
   scheduleEntries,
   scheduleFor,
   takeScheduleEntry,
@@ -106,12 +107,13 @@ function growTo(entry: RosterEntry, hero: HeroLookup[string], level: number, rng
   return { entry: grown, nextState: draw.state() };
 }
 
-function applyLoadout(entry: RosterEntry, loadout: EnemyLoadout | undefined, rng: RngState): { entry: RosterEntry; nextState: RngState } {
+function applyLoadout(entry: RosterEntry, hero: HeroLookup[string], loadout: EnemyLoadout | undefined, rng: RngState): { entry: RosterEntry; nextState: RngState } {
   if (!loadout) return { entry, nextState: rng };
   const draw = drawFrom(rng);
   let next = entry;
   if (loadout.gear) {
-    const [item] = rollEquipmentDrops(1, loadout.gear, undefined, draw.random);
+    // Rolled to fit the wearer — the contract keeps it (docs/gear-absorption.md §7).
+    const item = rollFittingGear(hero.baseStats, rosterEntryTypes(hero, entry), loadout.gear, draw.random);
     if (item) next = { ...next, equipment: equipItem(next.equipment, item.id) };
   }
   if (loadout.passiveIds && loadout.passiveIds.length > 0) {
@@ -264,6 +266,7 @@ export function generateEncounter(
     rng = afterGrowth;
     const { entry, nextState: afterLoadout } = applyLoadout(
       { ...grown, mastery: scaling.mastery, evolutionStatGrants: flatGrants ? { ...flatGrants } : {} },
+      heroPool[heroId],
       loadout,
       rng
     );
@@ -304,7 +307,7 @@ export function appendFinalEnemy(
 
   // Over its escorts by CHAMPION_LEVEL_BONUS: a champion ships a full kit, so its level is stats.
   const { entry: grown, nextState } = growTo(createRosterEntry(enemyId, enemyId, definition.moveIds), definition, championLevel(scaling.level), createRng(seed));
-  const { entry } = applyLoadout({ ...grown, mastery: scaling.mastery }, loadout, nextState);
+  const { entry } = applyLoadout({ ...grown, mastery: scaling.mastery }, definition, loadout, nextState);
   const run = addRosterEntry(encounter.run, entry);
   return { run, squad: { ...encounter.squad, benchIds: [...encounter.squad.benchIds, enemyId] } };
 }
@@ -413,7 +416,7 @@ export function generateSpawnEncounter(seed: number, options: SpawnEncounterOpti
     const { entry: grown, nextState: afterGrowth } = growTo(createRosterEntry(rosterId, heroId, pool[heroId].moveIds), pool[heroId], scaling.level, rng);
     rng = afterGrowth;
     const isEscort = i >= leaderIds.length;
-    const { entry, nextState: afterLoadout } = applyLoadout(grown, isEscort ? escortLoadout : undefined, rng);
+    const { entry, nextState: afterLoadout } = applyLoadout(grown, pool[heroId], isEscort ? escortLoadout : undefined, rng);
     rng = afterLoadout;
     run = addRosterEntry(run, entry);
     rosterIds.push(rosterId);

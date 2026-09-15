@@ -7,11 +7,12 @@
 // enforced by test/equipment.test.ts). An enchant is budgeted separately (ENCHANT_FORCE_BY_RARITY),
 // so it never counts against the base.
 
-import type { StatKey } from '../engine/content';
+import type { StatKey, StatLine, TypeId } from '../engine/content';
 import type { EquipmentDefinition, EquipmentFamilyId, EnchantmentId } from '../run/equipment';
 import {
   ENCHANTMENTS,
   ENCHANTMENT_IDS,
+  ENCHANT_DROP_CHANCE,
   ENCHANT_FORCE_BY_RARITY,
   EQUIPMENT_FAMILIES,
   HP_PER_POINT,
@@ -241,4 +242,39 @@ export function rollEquipmentDrops(
   return pickWeightedEquipment(EQUIPMENT_DROP_POOL, count, weights, random).map((item) =>
     maybeEnchantDrop(item, equipment, enchantChance, random)
   );
+}
+
+/**
+ * Whether a family suits a hero: it grants no offensive stat, or it grants the one the hero
+ * swings with. A Staff on a physical hero is the trap a player would never pick, so an enemy
+ * generated to wear one — and a contract arriving with it (docs/gear-absorption.md §7) — should
+ * not either. Read off base stats: the hero's identity, not its current roll.
+ */
+export function familyFitsHero(familyId: EquipmentFamilyId, baseStats: StatLine): boolean {
+  const stats = FAMILIES[familyId].stats;
+  const physical = baseStats.attack >= baseStats.intelligence;
+  const offStat: StatKey = physical ? 'intelligence' : 'attack';
+  const ownStat: StatKey = physical ? 'attack' : 'intelligence';
+  return !stats.includes(offStat) || stats.includes(ownStat);
+}
+
+/**
+ * The item an ENEMY arrives wearing, rolled to fit it: a family that suits its offensive stat,
+ * on the node's rarity curve, and — on the same odds a drop is enchanted — an enchant of a type
+ * it fields, never one it cannot use. The enemy fights with it, and a contract keeps it, so the
+ * piece the player saw it wearing is the piece they get.
+ */
+export function rollFittingGear(
+  baseStats: StatLine,
+  types: readonly TypeId[],
+  weights: Record<EquipmentRarity, number>,
+  random: () => number = Math.random
+): EquipmentDefinition | undefined {
+  const pool = EQUIPMENT_DROP_POOL.filter((item) => item.familyId !== undefined && familyFitsHero(item.familyId, baseStats));
+  const [item] = pickWeightedEquipment(pool, 1, weights, random);
+  if (!item) return undefined;
+  const enchants = ENCHANTMENT_IDS.filter((id) => types.includes(ENCHANTMENTS[id]));
+  if (enchants.length === 0 || random() >= ENCHANT_DROP_CHANCE) return item;
+  const enchantId = enchants[Math.floor(random() * enchants.length)];
+  return equipment[equipmentIdFor(item.familyId!, item.rarity, enchantId)] ?? item;
 }

@@ -400,9 +400,9 @@ export function formatReport(
   }
   out.push('');
   out.push('  items obtained per run by source and act (all = per run that ENTERED the act; won = completed runs):');
-  const itemSources = ['drop', 'node', 'event'];
+  const itemSources = ['drop', 'node', 'event', 'contract'];
   const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
-  out.push(`  ${pad('act', 6)}${itemSources.map((s) => padStart(s, 8)).join('')}${padStart('total', 8)}   ${itemSources.map((s) => padStart(`won:${s}`, 10)).join('')}${padStart('total', 8)}`);
+  out.push(`  ${pad('act', 6)}${itemSources.map((s) => padStart(s, 10)).join('')}${padStart('total', 8)}   ${itemSources.map((s) => padStart(`won:${s}`, 13)).join('')}${padStart('total', 8)}`);
   const itemTotals = { all: 0, won: 0 };
   for (let act = 1; act <= TOTAL_ACTS; act++) {
     const entered = agg.actEntered[act] || 1;
@@ -410,9 +410,9 @@ export function formatReport(
     const won = itemSources.map((s) => (agg.itemsBySourceWon[`${act}:${s}`] ?? 0) / (agg.wins || 1));
     itemTotals.all += sum(all);
     itemTotals.won += sum(won);
-    out.push(`  ${pad(String(act), 6)}${all.map((v) => padStart(num(v, 2), 8)).join('')}${padStart(num(sum(all), 2), 8)}   ${won.map((v) => padStart(num(v, 2), 10)).join('')}${padStart(num(sum(won), 2), 8)}`);
+    out.push(`  ${pad(String(act), 6)}${all.map((v) => padStart(num(v, 2), 10)).join('')}${padStart(num(sum(all), 2), 8)}   ${won.map((v) => padStart(num(v, 2), 13)).join('')}${padStart(num(sum(won), 2), 8)}`);
   }
-  out.push(`  ${pad('sum', 6)}${' '.repeat(24)}${padStart(num(itemTotals.all, 2), 8)}   ${' '.repeat(30)}${padStart(num(itemTotals.won, 2), 8)}`);
+  out.push(`  ${pad('sum', 6)}${' '.repeat(40)}${padStart(num(itemTotals.all, 2), 8)}   ${' '.repeat(52)}${padStart(num(itemTotals.won, 2), 8)}`);
   out.push('  (the "all" sum adds per-act means conditioned on entering each act: a full run\'s expectation, not a mean over dying runs)');
   out.push(`  merge offered (somebody held the family)  ${num(agg.mergeOffers / R, 2)} /run  (completed runs ${agg.wins > 0 ? num(agg.mergeOffersWon / agg.wins, 2) : '-'})`);
   out.push(`  merge taken by the pilot                  ${num(agg.merges / R, 2)} /run  (completed runs ${agg.wins > 0 ? num(agg.mergesWon / agg.wins, 2) : '-'})`);

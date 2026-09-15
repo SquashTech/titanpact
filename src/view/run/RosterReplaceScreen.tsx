@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
-import { createEmptyLoadout } from '../../run/equipment';
 import type { HeroDefinition } from '../../engine/content';
 import type { RosterEntry } from '../../run/state';
 import { createRosterEntry } from '../../run/state';
@@ -36,7 +35,7 @@ interface ReplaceHeroCardProps {
   onPreview: () => void;
 }
 
-/** Tap selects rather than acts — termination is permanent; the confirm button commits. The detail row shows the gear that strips off. */
+/** Tap selects rather than acts — termination is permanent; the confirm button commits. The detail row shows the gear that goes with them. */
 function ReplaceHeroCard({ hero, entry, selected, onSelect, onPreview }: ReplaceHeroCardProps) {
   const equippedCount = entry.equipment.length;
   return (
@@ -74,7 +73,7 @@ export function RosterReplaceScreen({ roster, candidate, incomingEntry, relicIds
   const previewNewEntry: RosterEntry =
     candidate.source === 'guildHall'
       ? (incomingEntry ?? createRosterEntry('preview', heroId, candidate.offer.startingMoveIds))
-      : { ...candidate.offer, rosterId: 'preview', equipment: createEmptyLoadout() };
+      : { ...candidate.offer, rosterId: 'preview' };
 
   const selectedEntry = selectedRosterId ? (roster.find((r) => r.rosterId === selectedRosterId) ?? null) : null;
 
@@ -101,8 +100,8 @@ export function RosterReplaceScreen({ roster, candidate, incomingEntry, relicIds
                 ))}
               </span>
               <span className="roster-replace-note">
-                Pick who {hero.name} replaces — hold one to review its sheet. They inherit that hero's gear, not their level,
-                Evolutions or Class. Permanent.
+                Pick who {hero.name} replaces — hold one to review its sheet. Whatever that hero wears goes with them.
+                Permanent.
               </span>
             </>
           }

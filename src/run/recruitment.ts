@@ -1,11 +1,10 @@
 // Recruitment mechanism (docs/progression.md "The raise-vs-recruit axis").
-// Guild Hall: gold for a fresh entry. Recruit Contract: claim a beaten enemy's
-// build, ungeared (an assumption — neither doc specifies captured gear).
-// Costs and the offer pool are content (src/data/recruitment.ts).
+// Guild Hall: gold for a fresh entry. Recruit Contract: claim a beaten enemy's build, the gear
+// it wore included (docs/gear-absorption.md §7). Costs and the offer pool are content
+// (src/data/recruitment.ts).
 
 import type { RosterEntry, RunState } from './state';
 import { addRosterEntry, replaceRosterEntry } from './state';
-import { createEmptyLoadout } from './equipment';
 import { guildHallEntry } from './guildRecruit';
 
 export class RecruitmentError extends Error {}
@@ -30,8 +29,8 @@ export interface GuildHallOffer {
   startingMoveIds: readonly string[];
 }
 
-/** A defeated hero's build, minus what a new roster slot supplies itself. */
-export type ContractOffer = Omit<RosterEntry, 'rosterId' | 'equipment'>;
+/** A defeated hero's build — gear included — minus the rosterId a new slot supplies itself. */
+export type ContractOffer = Omit<RosterEntry, 'rosterId'>;
 
 export function recruitFromGuildHall(run: RunState, offer: GuildHallOffer, rosterId: string): RunState {
   if (run.gold < offer.cost) {
@@ -41,9 +40,13 @@ export function recruitFromGuildHall(run: RunState, offer: GuildHallOffer, roste
   return addRosterEntry(withGoldSpent, guildHallEntry(run, offer, rosterId));
 }
 
-/** Carries level, moves, paths, grants and type-graft — the "partially locked" veteran build — but not equipment or rosterId. */
+/**
+ * Carries level, moves, paths, grants, type-graft AND gear — the finished veteran build, on every
+ * axis (docs/gear-absorption.md §7: a contract arrives armed, a hire arrives bare) — but not the
+ * rosterId.
+ */
 export function deriveContractOffer(defeated: RosterEntry): ContractOffer {
-  const { rosterId: _rosterId, equipment: _equipment, ...carried } = defeated;
+  const { rosterId: _rosterId, ...carried } = defeated;
   return carried;
 }
 
@@ -51,7 +54,7 @@ export function claimContract(run: RunState, offer: ContractOffer, rosterId: str
   if (run.recruitContracts <= 0) {
     throw new RecruitmentError('No Recruit Contracts available');
   }
-  const entry: RosterEntry = { ...offer, rosterId, equipment: createEmptyLoadout() };
+  const entry: RosterEntry = { ...offer, rosterId };
   return addRosterEntry({ ...run, recruitContracts: run.recruitContracts - 1 }, entry);
 }
 
@@ -67,7 +70,7 @@ export type RosterReplaceCandidate =
   | { source: 'guildHall'; offer: GuildHallOffer }
   | { source: 'contract'; offer: ContractOffer };
 
-/** Roster-full variant: the incoming hero inherits the outgoing hero's equipment (unlike plain termination, which strips it). */
+/** Roster-full variant. The outgoing hero's gear goes with it — gear is absorbed, never handed on (docs/gear-absorption.md §7). */
 export function recruitFromGuildHallReplacing(
   run: RunState,
   offer: GuildHallOffer,
@@ -81,11 +84,10 @@ export function recruitFromGuildHallReplacing(
   if (!terminated) {
     throw new RecruitmentError(`No roster entry ${terminatedRosterId} to terminate`);
   }
-  const entry: RosterEntry = { ...guildHallEntry(run, offer, rosterId), equipment: terminated.equipment };
-  return replaceRosterEntry({ ...run, gold: run.gold - offer.cost }, terminatedRosterId, entry);
+  return replaceRosterEntry({ ...run, gold: run.gold - offer.cost }, terminatedRosterId, guildHallEntry(run, offer, rosterId));
 }
 
-/** Roster-full variant of claimContract — same equipment inheritance as recruitFromGuildHallReplacing. */
+/** Roster-full variant of claimContract: the incoming hero keeps its own gear, the outgoing hero's goes with it. */
 export function claimContractReplacing(run: RunState, offer: ContractOffer, rosterId: string, terminatedRosterId: string): RunState {
   if (run.recruitContracts <= 0) {
     throw new RecruitmentError('No Recruit Contracts available');
@@ -94,7 +96,7 @@ export function claimContractReplacing(run: RunState, offer: ContractOffer, rost
   if (!terminated) {
     throw new RecruitmentError(`No roster entry ${terminatedRosterId} to terminate`);
   }
-  const entry: RosterEntry = { ...offer, rosterId, equipment: terminated.equipment };
+  const entry: RosterEntry = { ...offer, rosterId };
   return replaceRosterEntry({ ...run, recruitContracts: run.recruitContracts - 1 }, terminatedRosterId, entry);
 }
 

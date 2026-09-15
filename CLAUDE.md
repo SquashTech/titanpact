@@ -107,8 +107,11 @@ don't silently override it.
 > corridor's third row is the Boon. Its §9 lists the invariants below it reverses. Measured
 > (sim, 3000 runs): full-clear 12.0 → 18.8% on the same seed — three sockets are a player buff
 > — 17.2 items a completed run, a merge OFFERED 4.7 times a run and TAKEN 0.6 by a pilot that
-> widens while a socket is free (§8). Phases 3 (a contract arrives armed) and 4 (the drop table)
-> are still owed.
+> widens while a socket is free (§8). **Phase 3 is IN (same day): a contract arrives ARMED** —
+> the enemy's piece is rolled to fit it (`rollFittingGear`: a family suiting its offensive stat,
+> an enchant of a type it fields) and `claimContract` keeps it, the fifth finished axis against a
+> bare hire; a terminated hero's gear goes with it, never handed on. Phase 4 (the drop table) is
+> still owed.
 
 ---
 
@@ -364,7 +367,9 @@ don't silently override it.
   (`GUILD_HALL_ACT_LAG`, `src/run/difficulty.ts`) rather than authored beside it — that fixed
   act-sized gap IS the decaying runway, worth most early when one act is most of the run.
   **Two brakes on two routes:** gold prices the purchased one, the roster cap prices the free one
-  (gaining requires terminating, and equipment strips with no refund).
+  (gaining requires terminating, and the terminated hero's gear goes with it). **A contract arrives
+  ARMED** (2026-09-15, `docs/gear-absorption.md` §7): the piece the enemy fought in — rolled to fit
+  it — is absorbed on the contract hero, the fifth finished axis against a hire's bare sockets.
   The LEVEL axis points the right way: a contract hero arrives at its NODE's enemy level
   (2026-09-15, `docs/enemy-levels.md` §4 — the Skirmish's is the player's par, 5/10/15/20/25,
   the Elite's a step over) against a hire's 2/9/15/20/25, so an Elite's contract outranks a hire

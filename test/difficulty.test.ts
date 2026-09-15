@@ -18,6 +18,8 @@ import { appendFinalEnemy, generateEncounter, generateSpawnEncounter } from '../
 import { MOVE_CAP } from '../src/run/progression';
 import { MASTERY_EVOLUTION, masteryForAct } from '../src/run/mastery';
 import { heroes } from '../src/data/heroes';
+import { equipment, familyFitsHero, rollFittingGear } from '../src/data/equipment';
+import { ENCHANTMENTS } from '../src/run/equipment';
 import { enemies } from '../src/data/enemies';
 import { titanspawn } from '../src/data/titanspawn';
 import { locations } from '../src/data/locations';
@@ -179,6 +181,37 @@ test('difficulty: a loadout hands every enemy its item and passives', () => {
   for (const entry of bare.roster) {
     assert.strictEqual(entry.equipment.length, 0);
     assert.deepStrictEqual([...entry.bonusPassiveGrants], []);
+  }
+});
+
+test('difficulty: an enemy wears gear that FITS it, and a contract keeps that piece (docs/gear-absorption.md §7)', () => {
+  // The family suits the offensive stat the hero swings with, and an enchant is a type it fields:
+  // the piece the player saw it wearing is the piece the contract arrives with, so it must be
+  // a piece the player would have chosen.
+  assert.ok(familyFitsHero('sword', heroes.cinderKnight.baseStats), 'a physical hero fits a Sword');
+  assert.ok(!familyFitsHero('staff', heroes.cinderKnight.baseStats), 'and not a Staff');
+  assert.ok(familyFitsHero('plate', heroes.cinderKnight.baseStats), 'a defensive family fits anyone');
+  assert.ok(familyFitsHero('crest', heroes.cinderKnight.baseStats), 'the Crest carries both and fits anyone');
+
+  const loadout = { gear: { common: 0, rare: 1, epic: 0, legendary: 0, mythic: 0 } } as const;
+  for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+    const { run } = generateEncounter('elite', seed, heroes, { scaling: encounterScaling('elite', 4), loadout });
+    for (const entry of run.roster) {
+      const hero = heroes[entry.heroId];
+      const item = equipment[entry.equipment[0]];
+      assert.ok(item?.familyId, `${entry.heroId} holds nothing`);
+      assert.ok(familyFitsHero(item.familyId!, hero.baseStats), `${entry.heroId} wears a ${item.name}`);
+      if (item.enchantId) assert.ok(hero.types.includes(ENCHANTMENTS[item.enchantId]), `${entry.heroId} wears an off-type ${item.name}`);
+    }
+  }
+
+  // Forced enchant: with the roll pinned high the piece is enchanted, and always in the hero's own type.
+  let calls = 0;
+  const always = () => (calls++ === 0 ? 0.5 : 0);
+  for (let i = 0; i < 20; i++) {
+    calls = 0;
+    const item = rollFittingGear(heroes.cinderKnight.baseStats, heroes.cinderKnight.types, loadout.gear, always)!;
+    assert.ok(item.enchantId && heroes.cinderKnight.types.includes(ENCHANTMENTS[item.enchantId]), item.name);
   }
 });
 

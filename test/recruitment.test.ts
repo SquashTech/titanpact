@@ -134,7 +134,7 @@ test('recruitment: the previewed hire is the hire that is bought', () => {
 
 // --- Recruit Contracts (recruit) ---
 
-test('recruitment: a contract offer carries over Evolution state but not equipment or rosterId', () => {
+test('recruitment: a contract offer carries over Evolution state and gear, but not the rosterId', () => {
   const run = seedRoster(['ironWarden']);
   const defeated = {
     ...run.roster[0],
@@ -147,13 +147,13 @@ test('recruitment: a contract offer carries over Evolution state but not equipme
 
   const offer = deriveContractOffer(defeated);
   assert.strictEqual((offer as any).rosterId, undefined);
-  assert.strictEqual((offer as any).equipment, undefined);
+  assert.deepStrictEqual(offer.equipment, ['sword.common'], 'the piece you saw it wearing is the piece you get (docs/gear-absorption.md §7)');
   assert.strictEqual(levelOf(offer), 5);
   assert.deepStrictEqual(offer.chosenPathIds, ['ironWarden-veteran']);
   assert.deepStrictEqual(offer.evolutionStatGrants, { defense: 10 });
 });
 
-test('recruitment: claiming a contract is free in gold and adds the offer ungeared under a fresh rosterId', () => {
+test('recruitment: claiming a contract is free in gold and adds the offer, gear and all, under a fresh rosterId', () => {
   const run = seedRoster(['cinderKnight'], 0); // createRunState defaults recruitContracts to 1
   const defeated = {
     ...run.roster[0],
@@ -170,7 +170,7 @@ test('recruitment: claiming a contract is free in gold and adds the offer ungear
   assert.ok(entry);
   assert.strictEqual(entry!.heroId, 'ironWarden');
   assert.strictEqual(levelOf(entry!), 5);
-  assert.deepStrictEqual(entry!.equipment, []);
+  assert.deepStrictEqual(entry!.equipment, ['sword.common']);
 });
 
 test('recruitment: claiming a contract still enforces the roster cap', () => {
@@ -197,7 +197,7 @@ test('recruitment: buyContract spends gold and grants a Recruit Contract; insuff
 
 // --- Roster-full replacement (RosterReplaceScreen) ---
 
-test('recruitment: recruitFromGuildHallReplacing swaps the terminated hero for a fresh recruit, inheriting its equipment', () => {
+test('recruitment: recruitFromGuildHallReplacing swaps the terminated hero for a fresh recruit, whose gear goes with it', () => {
   const allSix = ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'shadowMonk'];
   let run = seedRoster(allSix, 1000);
   run = {
@@ -215,7 +215,8 @@ test('recruitment: recruitFromGuildHallReplacing swaps the terminated hero for a
   assert.ok(entry);
   assert.strictEqual(entry!.heroId, incomingOffer.heroId);
   assert.strictEqual(levelOf(entry!), guildHallLevel(run.actNumber)); // the act's hire, not the terminated hero's level
-  assert.strictEqual(entry!.equipment[0], 'sword.common'); // inherited from the terminated hero
+  assert.deepStrictEqual(entry!.equipment, [], 'a hire arrives bare; the terminated hero\'s gear is gone with it');
+  assert.ok(!next.roster.some((r) => r.equipment.includes('sword.common')));
 });
 
 test('recruitment: recruitFromGuildHallReplacing rejects insufficient gold and an unknown terminated rosterId', () => {
@@ -228,14 +229,14 @@ test('recruitment: recruitFromGuildHallReplacing rejects insufficient gold and a
   assert.throws(() => recruitFromGuildHallReplacing(richRun, incomingOffer, incomingOffer.heroId, 'nonexistent'), RecruitmentError);
 });
 
-test('recruitment: claimContractReplacing swaps the terminated hero for the claimed veteran, inheriting its equipment but not the veteran\'s own', () => {
+test('recruitment: claimContractReplacing swaps the terminated hero for the claimed veteran, which keeps its own gear and not the terminated hero\'s', () => {
   const allSix = ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'shadowMonk'];
   let run = seedRoster(allSix, 0);
   run = {
     ...run,
     roster: run.roster.map((r) => (r.rosterId === 'ironWarden' ? { ...r, equipment: equipItem(r.equipment, equipment['sword.common'].id) } : r)),
   };
-  const defeated = { ...run.roster.find((r) => r.rosterId === 'cinderKnight')!, heroId: 'shadowMonk', xp: xpForLevel(5) };
+  const defeated = { ...run.roster.find((r) => r.rosterId === 'cinderKnight')!, heroId: 'shadowMonk', xp: xpForLevel(5), equipment: ['spear.rare'] };
   const offer = deriveContractOffer(defeated); // shadowMonk is already on this roster, but rosterId is derived fresh below
   const rosterId = freshRosterId(run, 'shadowMonk');
   assert.strictEqual(rosterId, 'shadowMonk-2'); // shadowMonk already occupies its own rosterId
@@ -248,7 +249,8 @@ test('recruitment: claimContractReplacing swaps the terminated hero for the clai
   assert.ok(entry);
   assert.strictEqual(entry!.heroId, 'shadowMonk');
   assert.strictEqual(levelOf(entry!), 5); // veteran progress carried over
-  assert.strictEqual(entry!.equipment[0], 'sword.common'); // inherited from the terminated hero, not the veteran's own (offer is ungeared)
+  assert.deepStrictEqual(entry!.equipment, ['spear.rare'], 'its own gear, absorbed as it wore it');
+  assert.ok(!next.roster.some((r) => r.equipment.includes('sword.common')), 'the terminated hero\'s gear went with it');
 });
 
 test('recruitment: claimContractReplacing rejects no contracts available and an unknown terminated rosterId', () => {
@@ -312,6 +314,12 @@ test('recruitment: a contract hero arrives FINISHED where a hire arrives RAW —
   // Axis 3 — Kit. Picked by the game, or the hero's own authored three.
   assert.ok(claimed.unlockedMoveIds.length > offer.startingMoveIds.length);
   assert.deepStrictEqual([...hired.unlockedMoveIds], [...offer.startingMoveIds]);
+
+  // Axis 5 — Gear (docs/gear-absorption.md §7). A contract arrives wearing what it fought in; a hire arrives bare.
+  const armed = { ...beaten, equipment: ['spear.rare'] };
+  const claimedArmed = claimContract(run, deriveContractOffer(armed), 'claimed-armed').roster.find((r) => r.rosterId === 'claimed-armed')!;
+  assert.deepStrictEqual(claimedArmed.equipment, ['spear.rare']);
+  assert.deepStrictEqual(hired.equipment, []);
 
   // Axis 4 — Mastery (docs/mastery.md §4). A hire arrives a pip behind what an enemy of the act
   // holds, and past MASTERY_EVOLUTION its Evolution is still the player's to choose: raw, not hollow.

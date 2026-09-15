@@ -163,7 +163,8 @@ export const OPENER_GEAR_FROM_ACT = 2;
  * The act from which every hero-pool enemy, Guardian escort and champion carries an item, rolled
  * on its node's own rarity curve (equipment.ts LOOT_SOURCE) — the enemy loadout's first faucet.
  * Level alone falls behind a player stacking Banners and late-window gear (docs/enemy-levels.md
- * §5); gear is the axis that grows the way the player's does. Stripped on a contract claim.
+ * §5); gear is the axis that grows the way the player's does. Rolled to fit the wearer
+ * (data/equipment.ts rollFittingGear), and a contract keeps it (docs/gear-absorption.md §7).
  */
 export const ENEMY_GEAR_FROM_ACT = 4;
 
