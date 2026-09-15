@@ -17,6 +17,7 @@ import {
 } from '../run/profile';
 import { FightScreen } from '../view/combat/FightScreen';
 import { TitleScreen } from '../view/run/TitleScreen';
+import { LaunchGate } from '../view/run/LaunchGate';
 import { DraftScreen } from '../view/run/DraftScreen';
 import { SquadSelectScreen } from '../view/run/SquadSelectScreen';
 import { MapScreen } from '../view/run/MapScreen';
@@ -398,6 +399,8 @@ export function App() {
   // profile goes straight to storage (profileStorage.updateProfile) — playtime flushes on a
   // timer, and putting that in React state would re-render the tree for a number nothing shows.
   const [profile, setProfile] = useState<Profile>(() => readProfile());
+  // The cold launch's one tap (LaunchGate): false until it lands, then never again this session.
+  const [launched, setLaunched] = useState(false);
 
   /** The profile either side of the finished run, so the summary can show what the run added. */
   const [runOutcome, setRunOutcome] = useState<{ before: Profile; after: Profile } | null>(null);
@@ -926,7 +929,8 @@ export function App() {
   return (
     <LocationProvider location={ambientLocation}>
     <div className="app-shell" ref={shellRef}>
-      {screen.kind === 'title' && (
+      {screen.kind === 'title' && !launched && <LaunchGate onBegin={() => setLaunched(true)} />}
+      {screen.kind === 'title' && launched && (
         <TitleScreen
           profile={profile}
           onRefreshProfile={() => setProfile(readProfile())}

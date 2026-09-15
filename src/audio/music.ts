@@ -184,10 +184,12 @@ async function applyDesired(): Promise<void> {
   if (current?.id === target) return;
   if (context.state !== 'running') {
     unlockAudio();
-    // Decode does not need a running context, and the gesture that unlocks one is often many
-    // seconds out — a title screen sits there while the player reads it. Warming the buffer now
-    // means the track starts ON the tap rather than a download and a decode after it.
-    void loadBuffer(context, target);
+    // Pull the bytes down now — the gesture that unlocks the context is often many seconds out,
+    // a title screen sits there while the player reads it — but do NOT decode yet. iOS leaves a
+    // decodeAudioData issued against a not-yet-running context hanging, and the hung promise sat
+    // in `loading` where the post-tap load found it and waited on it forever: the title music
+    // never started on a phone. Decoding after the tap costs a beat inside FADE_IN and nothing else.
+    prefetchTrack(target);
     return;
   }
 

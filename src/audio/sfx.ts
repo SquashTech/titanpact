@@ -65,9 +65,13 @@ export function initSfx(): void {
     applyPrefs();
   };
   // pointerdown, not click: the context is running by the time the press's own sound plays.
+  // touchend and click as well: which of a touch's events carries user activation for a
+  // resume() has moved between iOS versions, and a listener on each costs nothing.
   window.addEventListener('pointerdown', unlock, { capture: true });
   window.addEventListener('keydown', unlock, { capture: true });
   window.addEventListener('touchstart', unlock, { capture: true, passive: true });
+  window.addEventListener('touchend', unlock, { capture: true, passive: true });
+  window.addEventListener('click', unlock, { capture: true });
 }
 
 export function playSfx(id: SfxId, opts: PlayOptions = {}): void {

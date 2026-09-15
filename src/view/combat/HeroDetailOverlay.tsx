@@ -1,24 +1,39 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { moves } from '../../data/moves';
+import { classes } from '../../data/classes';
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { Combatant, StatContext } from '../../engine/state';
-import { effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, moveForHero, statModifierCeiling, statModifierFloor } from '../../engine/state';
+import {
+  effectiveManaCost,
+  effectiveTypes,
+  getEffectiveStat,
+  getMaxHp,
+  getMaxMana,
+  moveForHero,
+  statModifierCeiling,
+  statModifierFloor,
+} from '../../engine/state';
 import type { RosterEntry } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { chosenEvolutionPaths, itemSlotsFor } from '../../run/progression';
+import { chosenClass } from '../../run/classes';
+import { levelOf } from '../../run/growth';
 import { progressionTable } from '../../data/progression';
 import { StatGlyph, STAT_LABELS, STAT_ORDER, StatBars, hpTier } from '../shared/StatBars';
-import { SectionGlyph } from '../shared/sectionIcons';
-import { EquipmentSlotGrid } from '../shared/EquipmentBox';
+import { EquipmentSlotGrid, ItemReadout } from '../shared/EquipmentBox';
 import { ItemDetailCard } from '../shared/ItemDossier';
-import { MoveTile, swallowGhostClick } from '../shared/MoveTile';
+import { MasteryPips } from '../shared/MasteryPips';
+import { MoveButtonReplica, swallowGhostClick, useLongPress } from '../shared/MoveTile';
 import { MoveDetailCard } from './MoveDetailOverlay';
+import { TabStrip, type TabSpec } from '../shared/TabStrip';
 import { TypeBadge } from '../shared/TypeBadge';
 import { TypeMatchups } from '../shared/TypeMatchups';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { HubGlyph } from '../shared/nodeIcons';
+import { getTypeColor } from './typeColors';
 import { StatusGlyph, statusColor, statusTint, PoisonPips } from '../shared/statusIcons';
 import { passives } from '../../data/passives';
-import { PassiveGlyph, passiveColor, passiveTint } from '../shared/passiveIcons';
+import { PassiveReadout } from '../shared/passiveIcons';
 import { PassiveDetailCard } from '../shared/PassiveDossier';
 
 interface Props {
@@ -32,7 +47,8 @@ interface Props {
   onClose: () => void;
 }
 
-type PopupRef = { kind: 'move' | 'equipment' | 'passive'; id: string };
+type TabId = 'stats' | 'moves' | 'gear' | 'passives';
+type PopupRef = { kind: 'move' | 'equipment' | 'class'; id: string };
 
 function fmtMod(n: number): string {
   if (n === 0) return '—';
@@ -45,7 +61,17 @@ function fmtStatus(statusId: string, magnitude: number | undefined, duration: nu
   return n !== undefined ? `${statusId} ${n}` : statusId;
 }
 
-/** Full stat/loadout readout for one combatant, either side. Dismisses on any tap. */
+/**
+ * The in-fight hero sheet, either side — the same four-page sheet the run reads a hero on
+ * (HeroPreviewOverlay), so a hero checked mid-fight and a hero checked on the map are one design
+ * (2026-09-15, per user direction; it was the one-scroll sheet the run retired on 2026-09-07).
+ *
+ * What the fight adds sits on the Stats page: the HP and MP bars, the → readout and the
+ * "can't go any lower" tick on every stat, the modifier chips and the statuses. A move on the
+ * Moves page is priced as THIS fight prices it — the per-move ledger applied, an unaffordable row
+ * dimmed the way the console dims it — because the question asked here is "what can it cast next
+ * round", not "what does it know".
+ */
 export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLookup, statCtx, onClose }: Props) {
   // Loadout grants plus in-fight changes — unlike CombatantCard's badges, which flag only the latter.
   const totalModifiers = Object.fromEntries(
@@ -74,6 +100,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
     STAT_ORDER.map((stat) => [stat, getEffectiveStat(hero, combatant, stat, statCtx)])
   ) as Record<StatKey, number>;
   const evolved = rosterEntry ? chosenEvolutionPaths(progressionTable, rosterEntry) : [];
+  const heroClass = rosterEntry ? chosenClass(classes, rosterEntry) : null;
   const types = effectiveTypes(hero, combatant);
   // Effective Wisdom (mid-fight buffs and field effect included), not the loadout baseline.
   const healCaster = { wisdom: effectiveTotals.wisdom, types, stats: effectiveTotals };
@@ -84,8 +111,19 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
   const manaOverFraction = maxMana > 0 ? Math.max(0, Math.min(1, (combatant.currentMana - maxMana) / maxMana)) : 0;
   // Hide a duration-shape status once its counter hits 0 (see CombatantCard).
   const visibleStatuses = Object.values(combatant.statuses).filter((s) => s.duration === undefined || s.duration > 0);
-  const passiveList = Object.values(combatant.passives);
+  const passiveList = Object.values(combatant.passives).filter((instance) => passives[instance.passiveId]);
+  const moveIds = rosterEntry?.unlockedMoveIds.filter((id) => moves[id]) ?? [];
+  const heldItems = rosterEntry?.equipment.flatMap((id) => (equipmentLookup[id] ? [equipmentLookup[id]] : [])) ?? [];
+
+  const [tab, setTab] = useState<TabId>('stats');
   const [popup, setPopup] = useState<PopupRef | null>(null);
+
+  const tabs: TabSpec<TabId>[] = [
+    { id: 'stats', label: 'Stats', glyph: 'stats' },
+    { id: 'moves', label: 'Moves', glyph: 'moves', count: moveIds.length },
+    { id: 'gear', label: 'Gear', glyph: 'equipment', count: heldItems.length },
+    { id: 'passives', label: 'Passives', glyph: 'passives', count: passiveList.length },
+  ];
 
   // swallowGhostClick: releasing the hold fires a synthesized click that would otherwise read as a dismiss (MoveTile.tsx).
   function openPopup(next: PopupRef) {
@@ -93,8 +131,10 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
     setPopup(next);
   }
 
-  // A click anywhere closes only THIS overlay (never bubbles to the screen beneath); with the popup open it closes just the popup.
-  function closeAndStop(e: { stopPropagation: () => void }) {
+  const classLongPress = useLongPress(heroClass ? () => openPopup({ kind: 'class', id: heroClass.id }) : undefined);
+
+  // A click on the backdrop closes only THIS overlay (never bubbles to the screen beneath); with the popup open it closes just the popup.
+  function closeFromBackdrop(e: { stopPropagation: () => void }) {
     e.stopPropagation();
     if (popup) {
       setPopup(null);
@@ -104,168 +144,202 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
   }
 
   return (
-    <div className="detail-overlay" onClick={closeAndStop}>
-      <button className="detail-close-button" onClick={onClose} aria-label="Close">
-        ✕
-      </button>
-      <div className="detail-panel" onClick={closeAndStop}>
-        <HeroPortrait heroId={hero.id} className="detail-portrait" />
-        <div className="detail-header">
-          <div className="detail-name">{hero.name}</div>
-          <div className="combatant-types">
-            {types.map((t) => (
-              <TypeBadge key={t} type={t} />
-            ))}
+    <div className="detail-overlay is-sheet" onClick={closeFromBackdrop}>
+      {/* Cut in the hero's INNATE primary colour, as the run's sheet is: a graft changes what the
+          hero fights like, never who it is. The badges below carry the effective pair. */}
+      <div
+        className="detail-panel is-tabbed is-hero-sheet"
+        style={{ '--hero-color': getTypeColor(hero.types[0]) } as CSSProperties}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="detail-header is-hero">
+          <span className="detail-portrait-plate">
+            <HeroPortrait heroId={hero.id} className="detail-portrait is-inline" />
+          </span>
+          <div className="detail-header-titles">
+            <div className="detail-name">
+              {hero.name}
+              {rosterEntry && <span className="detail-level">Lv {levelOf(rosterEntry)}</span>}
+            </div>
+            <div className="combatant-types">
+              {types.map((t) => (
+                <TypeBadge key={t} type={t} />
+              ))}
+            </div>
+            {rosterEntry && <MasteryPips mastery={rosterEntry.mastery} className="detail-mastery" />}
+            {(evolved.length > 0 || heroClass) && (
+              <div className="detail-evolution-row">
+                {evolved.map((path) => (
+                  <span key={path.id} className={`evolution-badge evolution-${path.kind}`}>
+                    {path.name}
+                  </span>
+                ))}
+                {heroClass && (
+                  <span className="evolution-badge class-badge" {...classLongPress} title="Hold to view details">
+                    <HubGlyph name="hall" /> {heroClass.name}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
-          {evolved.length > 0 && (
-            <div className="detail-evolution-row">
-              {evolved.map((path) => (
-                <span key={path.id} className={`evolution-badge evolution-${path.kind}`}>
-                  {path.name}
-                </span>
+        </div>
+
+        <div className="detail-tab-body" role="tabpanel">
+          {tab === 'stats' && (
+            <>
+              <div className="detail-resource-row">
+                <div>
+                  <div className="bar-track">
+                    <div className={`bar-fill ${hpTier(hpFraction)}`} style={{ width: `${hpFraction * 100}%` }} />
+                  </div>
+                  <div className="bar-label">
+                    HP {Math.max(0, combatant.currentHp)}/{maxHp}
+                  </div>
+                </div>
+                <div>
+                  <div className="bar-track">
+                    <div className="bar-fill mana" style={{ width: `${manaFraction * 100}%` }} />
+                    {manaOverFraction > 0 && <div className="bar-fill mana-over" style={{ width: `${manaOverFraction * 100}%` }} />}
+                  </div>
+                  <div className={`bar-label${manaOverFraction > 0 ? ' is-overcharged' : ''}`}>
+                    MP {combatant.currentMana}/{maxMana}
+                  </div>
+                </div>
+              </div>
+
+              {/* Matchups lead, as on the run's sheet: which columns hurt this hero is the first thing asked. */}
+              <TypeMatchups types={types} />
+              <StatBars baseStats={hero.baseStats} deltas={totalModifiers} totals={effectiveTotals} fight={fightReadout} />
+
+              {hasModifiers && (
+                <>
+                  <div className="tab-subhead">Buffs / Debuffs</div>
+                  <div className="detail-modifier-list">
+                    {STAT_ORDER.filter((stat) => totalModifiers[stat] !== 0).map((stat) => {
+                      const mod = totalModifiers[stat];
+                      return (
+                        <span
+                          key={stat}
+                          className={`detail-modifier-chip ${mod > 0 ? 'stat-buff' : 'stat-debuff'}${heldAtFloor(stat) || heldAtCeiling(stat) ? ' stat-held' : ''}`}
+                        >
+                          <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} {fmtMod(mod)}
+                          {heldAtFloor(stat) && <span className="detail-modifier-floor"> · can't go any lower</span>}
+                          {heldAtCeiling(stat) && <span className="detail-modifier-floor"> · can't go any higher</span>}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+
+              {visibleStatuses.length > 0 && (
+                <>
+                  <div className="tab-subhead">Statuses</div>
+                  <div className="detail-modifier-list">
+                    {visibleStatuses.map((s) => (
+                      <span
+                        key={s.statusId}
+                        className="detail-status-chip"
+                        style={{
+                          color: statusColor(s.statusId),
+                          background: statusTint(s.statusId, 0.12),
+                          borderColor: statusTint(s.statusId, 0.5),
+                        }}
+                      >
+                        <StatusGlyph statusId={s.statusId} />
+                        {fmtStatus(s.statusId, s.magnitude, s.duration)}
+                        {s.statusId === 'Poison' && <PoisonPips duration={s.duration} />}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              )}
+            </>
+          )}
+
+          {tab === 'moves' && (
+            <div className="tab-move-list">
+              {moveIds.map((id) => {
+                // Priced as the fight prices it: the ledger applied, and dim where the pool can't pay.
+                const move = moveForHero(moves[id], hero);
+                const cost = effectiveManaCost(move, combatant.moveManaDiscounts);
+                return (
+                  <MoveButtonReplica
+                    key={id}
+                    move={cost === move.manaCost ? move : { ...move, manaCost: cost }}
+                    unusable={combatant.currentMana < cost}
+                    caster={healCaster}
+                    onClick={() => openPopup({ kind: 'move', id })}
+                  />
+                );
+              })}
+            </div>
+          )}
+
+          {tab === 'gear' && rosterEntry && (
+            <>
+              <EquipmentSlotGrid
+                loadout={rosterEntry.equipment}
+                capacity={itemSlotsFor(hero, rosterEntry)}
+                equipmentLookup={equipmentLookup}
+                onInspect={(id) => openPopup({ kind: 'equipment', id })}
+              />
+              <div className="tab-readout-list">
+                {heldItems.map((item) => (
+                  <ItemReadout key={item.id} item={item} />
+                ))}
+              </div>
+            </>
+          )}
+
+          {tab === 'passives' && (
+            <div className="tab-readout-list">
+              {passiveList.map((instance) => (
+                <PassiveReadout key={instance.passiveId} passive={passives[instance.passiveId]} count={instance.stacks} />
               ))}
             </div>
           )}
         </div>
 
-        <div className="detail-section-title"><SectionGlyph name="matchups" /> Matchups</div>
-        <TypeMatchups types={types} />
+        <TabStrip tabs={tabs} active={tab} onSelect={setTab} />
+      </div>
 
-        <div className="detail-resource-row">
-          <div>
-            <div className="bar-track">
-              <div className={`bar-fill ${hpTier(hpFraction)}`} style={{ width: `${hpFraction * 100}%` }} />
-            </div>
-            <div className="bar-label">
-              HP {Math.max(0, combatant.currentHp)}/{maxHp}
-            </div>
-          </div>
-          <div>
-            <div className="bar-track">
-              <div className="bar-fill mana" style={{ width: `${manaFraction * 100}%` }} />
-              {manaOverFraction > 0 && <div className="bar-fill mana-over" style={{ width: `${manaOverFraction * 100}%` }} />}
-            </div>
-            <div className={`bar-label${manaOverFraction > 0 ? ' is-overcharged' : ''}`}>
-              MP {combatant.currentMana}/{maxMana}
-            </div>
-          </div>
-        </div>
-
-        <div className="detail-section-title"><SectionGlyph name="stats" /> Stats</div>
-        <StatBars baseStats={hero.baseStats} deltas={totalModifiers} totals={effectiveTotals} fight={fightReadout} />
-
-        <div className="detail-section-title"><SectionGlyph name="buffs" /> Buffs / Debuffs</div>
-        {hasModifiers ? (
-          <div className="detail-modifier-list">
-            {STAT_ORDER.filter((stat) => totalModifiers[stat] !== 0).map((stat) => {
-              const mod = totalModifiers[stat];
-              return (
-                <span key={stat} className={`detail-modifier-chip ${mod > 0 ? 'stat-buff' : 'stat-debuff'}${heldAtFloor(stat) || heldAtCeiling(stat) ? ' stat-held' : ''}`}>
-                  <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} {fmtMod(mod)}
-                  {heldAtFloor(stat) && <span className="detail-modifier-floor"> · can't go any lower</span>}
-                  {heldAtCeiling(stat) && <span className="detail-modifier-floor"> · can't go any higher</span>}
-                </span>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="detail-empty">No active modifiers.</div>
-        )}
-
-        <div className="detail-section-title"><SectionGlyph name="statuses" /> Statuses</div>
-        {visibleStatuses.length > 0 ? (
-          <div className="detail-modifier-list">
-            {visibleStatuses.map((s) => (
-              <span
-                key={s.statusId}
-                className="detail-status-chip"
-                style={{
-                  color: statusColor(s.statusId),
-                  background: statusTint(s.statusId, 0.12),
-                  borderColor: statusTint(s.statusId, 0.5),
-                }}
-              >
-                <StatusGlyph statusId={s.statusId} />
-                {fmtStatus(s.statusId, s.magnitude, s.duration)}
-                {s.statusId === 'Poison' && <PoisonPips duration={s.duration} />}
-              </span>
-            ))}
-          </div>
-        ) : (
-          <div className="detail-empty">No active statuses.</div>
-        )}
-
-        <div className="detail-section-title"><SectionGlyph name="passives" /> Passives</div>
-        {passiveList.length > 0 ? (
-          <div className="detail-modifier-list">
-            {passiveList.map((instance) => {
-              const def = passives[instance.passiveId];
-              if (!def) return null;
-              return (
-                <button
-                  key={instance.passiveId}
-                  type="button"
-                  className="detail-status-chip detail-passive-chip"
-                  aria-label={`${def.name} — inspect`}
-                  style={{
-                    color: passiveColor(instance.passiveId),
-                    background: passiveTint(instance.passiveId, 0.12),
-                    borderColor: passiveTint(instance.passiveId, 0.5),
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openPopup({ kind: 'passive', id: instance.passiveId });
-                  }}
-                >
-                  <PassiveGlyph passiveId={instance.passiveId} />
-                  {def.name}
-                  {instance.stacks > 1 && <span className="detail-passive-stacks">×{instance.stacks}</span>}
-                </button>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="detail-empty">No active passives.</div>
-        )}
-
-        <div className="detail-section-title"><SectionGlyph name="moves" /> Moves</div>
-        {rosterEntry && rosterEntry.unlockedMoveIds.length > 0 ? (
-          <div className="move-tile-row">
-            {rosterEntry.unlockedMoveIds.map((moveId) =>
-              moves[moveId] ? (
-                <MoveTile key={moveId} move={moveForHero(moves[moveId], hero)} onLongPress={() => openPopup({ kind: 'move', id: moveId })} />
-              ) : null
-            )}
-          </div>
-        ) : (
-          <div className="detail-empty">No moves.</div>
-        )}
-
-        <div className="detail-section-title"><SectionGlyph name="equipment" /> Items</div>
-        {rosterEntry ? (
-          <EquipmentSlotGrid
-            loadout={rosterEntry.equipment}
-            capacity={itemSlotsFor(hero, rosterEntry)}
-            equipmentLookup={equipmentLookup}
-            onInspect={(id) => openPopup({ kind: 'equipment', id })}
-          />
-        ) : (
-          <div className="detail-empty">No item data.</div>
-        )}
-
-        <div className="detail-close-hint">Hold a move or item, or tap a passive, to inspect it — tap elsewhere to close</div>
+      <div className="sheet-footer" onClick={(e) => e.stopPropagation()}>
+        <button className="resolve-button sheet-close-button" onClick={onClose}>
+          Close
+        </button>
       </div>
 
       {popup && (
-        <div className="log-overlay" onClick={() => setPopup(null)}>
+        <div
+          className="log-overlay"
+          onClick={(e) => {
+            e.stopPropagation();
+            setPopup(null);
+          }}
+        >
           <div className="log-panel move-popup-panel">
             {popup.kind === 'move' ? (
-              // No combat context: this sheet is read out of a fight as often as in one, so the forecast half does not render.
-              moves[popup.id] ? <MoveDetailCard move={moves[popup.id]} caster={healCaster} /> : null
+              // Priced by the fight here too, so the dossier agrees with the row that opened it.
+              moves[popup.id] ? (
+                <MoveDetailCard
+                  move={{ ...moveForHero(moves[popup.id], hero), manaCost: effectiveManaCost(moves[popup.id], combatant.moveManaDiscounts) }}
+                  caster={healCaster}
+                />
+              ) : null
             ) : popup.kind === 'equipment' ? (
               equipmentLookup[popup.id] ? <ItemDetailCard item={equipmentLookup[popup.id]} /> : null
             ) : (
-              passives[popup.id] ? <PassiveDetailCard passive={passives[popup.id]} /> : null
+              // A Class is a verb: its move at this hero's type, or its passive.
+              (() => {
+                const cls = classes[popup.id];
+                const classMove = cls?.grantsMoveId ? moves[cls.grantsMoveId] : null;
+                return classMove ? (
+                  <MoveDetailCard move={moveForHero(classMove, hero)} caster={healCaster} />
+                ) : cls?.grantsPassiveId && passives[cls.grantsPassiveId] ? (
+                  <PassiveDetailCard passive={passives[cls.grantsPassiveId]} />
+                ) : null;
+              })()
             )}
             <div className="move-popup-hint">Tap anywhere to close</div>
           </div>

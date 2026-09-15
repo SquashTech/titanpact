@@ -6391,14 +6391,20 @@ textarea,
    its own leading edge. No ring — a rectangle drawn around one facet would pop
    it back out of the surface, and this state has to read as "this slot is
    loaded", not "this card is on top". */
-.move-list .move-button.selected {
+/* The `:hover` companions are load-bearing, not thoroughness: the hover rule above outranks a
+   bare `.selected` by one class, and a touchscreen leaves the tapped row in :hover until the
+   next tap lands somewhere else — so on a phone the gold was overridden the instant it was
+   applied and only flickered while the hover moved between rows. */
+.move-list .move-button.selected,
+.move-list .move-button.selected:hover {
   background:
     linear-gradient(90deg, rgba(224, 166, 60, 0.3), rgba(224, 166, 60, 0.12) 42%, rgba(224, 166, 60, 0.05) 78%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0));
   box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.055), inset 0 0 34px -8px rgba(224, 166, 60, 0.55);
 }
 
-.move-list .move-button.selected::before {
+.move-list .move-button.selected::before,
+.move-list .move-button.selected:hover::before {
   top: 0;
   bottom: 0;
   width: 4px;
@@ -6484,7 +6490,8 @@ textarea,
    kept underneath at reduced strength rather than replaced outright: the
    player is scanning four buttons of which one is now amber, and the one
    they picked shouldn't be the only one whose type they can no longer read. */
-.move-button.selected {
+.move-button.selected,
+.move-button.selected:hover {
   border-color: var(--accent);
   background:
     linear-gradient(135deg, rgba(var(--move-type-rgb, 53, 59, 74), 0.22), transparent 62%),
@@ -16881,15 +16888,19 @@ textarea,
 }
 
 /* A row of one gets the same treatment: an act's forced single nodes are a place you walk to,
-   not a screen that failed to offer a choice. */
+   not a screen that failed to offer a choice. The reward tier is in this list for the spliced
+   seat — Mentor, Scribe, the Forge and Tutor in acts 4–5 — which used to keep its 84px in-row
+   size on a row of its own and read as a shrunken tile between two full-size fights. */
 .map-choices:has(.map-choice:only-child) .map-choice.tier-encounter .map-medallion,
-.map-choices:has(.map-choice:only-child) .map-choice.tier-landmark .map-medallion {
+.map-choices:has(.map-choice:only-child) .map-choice.tier-landmark .map-medallion,
+.map-choices:has(.map-choice:only-child) .map-choice.tier-reward .map-medallion {
   width: 120px;
   height: 120px;
 }
 
 .map-choices:has(.map-choice:only-child) .map-choice.tier-encounter .map-medallion-glyph,
-.map-choices:has(.map-choice:only-child) .map-choice.tier-landmark .map-medallion-glyph {
+.map-choices:has(.map-choice:only-child) .map-choice.tier-landmark .map-medallion-glyph,
+.map-choices:has(.map-choice:only-child) .map-choice.tier-reward .map-medallion-glyph {
   width: 54px;
   height: 54px;
 }
@@ -17070,6 +17081,153 @@ textarea,
 
 @media (prefers-reduced-motion: reduce) {
   .map-footer-button.has-unopened::after {
+    animation: none;
+  }
+}
+
+/* --- Launch gate (LaunchGate.tsx) ------------------------------------------ */
+
+/* The screen before the title: one tap, in the dark, so the title can open with its score. It
+   is the same ground the title sits on and a fraction of its light — a threshold, not a second
+   title screen. The whole thing is the button. */
+.launch-gate {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 14px;
+  overflow: hidden;
+  isolation: isolate;
+  color: var(--accent);
+  cursor: pointer;
+  background:
+    radial-gradient(ellipse 90% 60% at 50% -12%, rgba(96, 84, 150, 0.22), transparent 70%),
+    radial-gradient(ellipse 120% 46% at 50% 104%, rgba(86, 168, 148, 0.12), transparent 72%),
+    linear-gradient(180deg, #0a0c12, #090d10 52%, #060809);
+  animation: launch-gate-in 0.5s ease-out both;
+}
+
+@keyframes launch-gate-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.launch-gate-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 55% at 50% 48%, transparent 40%, rgba(0, 0, 0, 0.7));
+  pointer-events: none;
+}
+
+/* A seal that has not yet been struck: two rings and an ember, breathing at the title's own
+   slow rate, so the tap reads as waking something rather than dismissing a dialog. */
+.launch-gate-seal {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.launch-gate-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(224, 166, 60, 0.45);
+  box-shadow: 0 0 18px -6px rgba(224, 166, 60, 0.6);
+}
+
+.launch-gate-ring.is-outer {
+  animation: launch-gate-ring-spin 24s linear infinite;
+  border-style: dashed;
+}
+
+.launch-gate-ring.is-inner {
+  inset: 16px;
+  animation: launch-gate-ring-spin 16s linear infinite reverse;
+}
+
+@keyframes launch-gate-ring-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.launch-gate-core {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff3d0, #e0a63c 45%, rgba(224, 166, 60, 0) 72%);
+  animation: launch-gate-breathe 3.6s ease-in-out infinite;
+}
+
+@keyframes launch-gate-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+/* The title's wordmark treatment at a third of its size: the same metal, not yet lit. */
+.launch-gate-wordmark {
+  position: relative;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #eef1e6 0%, #d9c48a 34%, #b08c3c 64%, #5c4a24 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.85));
+}
+
+.launch-gate-prompt {
+  position: relative;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  animation: launch-gate-prompt 2.4s ease-in-out infinite;
+}
+
+@keyframes launch-gate-prompt {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.launch-gate:active .launch-gate-core {
+  animation: none;
+  transform: scale(1.4);
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .launch-gate-ring,
+  .launch-gate-core,
+  .launch-gate-prompt {
     animation: none;
   }
 }
@@ -21490,6 +21648,175 @@ textarea,
 .evolve-cinematic-types {
   display: flex;
   gap: 6px;
+}
+
+/* --- The awakening (EvolutionAwakening) — the beats BEFORE the choice ------
+   Same stage as the seal cinematic above, three beats of its own: stir, crack, call. It stops
+   short of the white-out on purpose — nothing is being swapped, the hero is being asked. */
+
+.evolve-awakening {
+  gap: 14px;
+}
+
+/* Stir: the figure breathes in its own light, a beat slower than a heartbeat. */
+.evolve-cinematic.is-stir .evolve-figure {
+  animation: evolve-awaken-breathe 1.3s ease-in-out infinite;
+}
+
+@keyframes evolve-awaken-breathe {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--path-lead) 40%, transparent));
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 24px color-mix(in srgb, var(--path-lead) 90%, transparent));
+    transform: scale(1.04);
+  }
+}
+
+/* Crack: the seal cinematic's charge — rings closing, the column rising, the shake — with the
+   whitening held at its midpoint so the hero stays itself. */
+.evolve-cinematic.is-crack .evolve-figure {
+  animation: evolve-shake 0.09s linear infinite, evolve-awaken-glow 0.85s ease-in forwards;
+}
+
+@keyframes evolve-awaken-glow {
+  0% {
+    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--path-lead) 60%, transparent));
+  }
+  100% {
+    filter: brightness(1.9) saturate(0.65) drop-shadow(0 0 30px var(--path-lead));
+  }
+}
+
+.evolve-cinematic.is-crack .evolve-ring {
+  animation: evolve-ring-close 0.85s ease-in both;
+}
+
+.evolve-cinematic.is-crack .evolve-ring.is-inner {
+  animation-delay: 0.2s;
+  animation-duration: 0.65s;
+}
+
+.evolve-cinematic.is-crack .evolve-column {
+  animation: evolve-column-rise 0.85s ease-in both;
+}
+
+/* Call: a flash that does not white the screen out, the rays, the figure settling back into its
+   own colour, the column dying down behind it. */
+.evolve-cinematic.is-call .evolve-flash {
+  animation: evolve-awaken-flash 0.55s ease-out forwards;
+}
+
+@keyframes evolve-awaken-flash {
+  0% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(16);
+  }
+}
+
+.evolve-cinematic.is-call .evolve-cinematic-rays {
+  animation: evolve-rays-in 0.8s ease-out forwards, evolve-rays-spin 30s linear infinite;
+}
+
+.evolve-cinematic.is-call .evolve-figure {
+  animation: evolve-awaken-settle 0.7s cubic-bezier(0.2, 1.2, 0.3, 1) both;
+}
+
+@keyframes evolve-awaken-settle {
+  0% {
+    filter: brightness(1.9) saturate(0.65) drop-shadow(0 0 30px var(--path-lead));
+    transform: scale(1.12);
+  }
+  100% {
+    filter: drop-shadow(0 0 20px color-mix(in srgb, var(--path-lead) 75%, transparent));
+    transform: scale(1);
+  }
+}
+
+.evolve-cinematic.is-call .evolve-column {
+  animation: evolve-awaken-column-fade 1.4s ease-out forwards;
+}
+
+@keyframes evolve-awaken-column-fade {
+  0% {
+    opacity: 1;
+    transform: scaleY(1) scaleX(1.15);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleY(1.1) scaleX(0.6);
+  }
+}
+
+.evolve-cinematic.is-call .evolve-cinematic-plate {
+  animation: evolve-plate-in 0.6s cubic-bezier(0.2, 0.9, 0.25, 1) 0.14s both;
+}
+
+/* The pip strip, at twice its sheet size: the five pips are WHY this is happening, and the fifth
+   lights during the stir — the who-screen paid it, this is the hero feeling it land. */
+.evolve-awakening-pips {
+  position: relative;
+  width: auto;
+  margin: 0;
+  gap: 6px;
+  transform: scale(1.8);
+  animation: evolve-veil-in 0.4s ease-out 0.2s backwards;
+}
+
+.evolve-awakening-pips .mastery-pip:nth-child(5) {
+  animation: evolve-awaken-pip 0.9s ease-out 0.55s both;
+}
+
+@keyframes evolve-awaken-pip {
+  0% {
+    background: var(--well);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.7);
+  }
+  60% {
+    background: #fff6dc;
+    box-shadow: 0 0 14px 3px rgba(224, 194, 122, 0.95);
+  }
+  100% {
+    background: #e0c27a;
+    box-shadow: 0 0 5px rgba(224, 194, 122, 0.55);
+  }
+}
+
+.evolve-cinematic.is-crack .evolve-awakening-pips {
+  animation: evolve-awaken-pips-flare 0.85s ease-in forwards;
+}
+
+@keyframes evolve-awaken-pips-flare {
+  0% {
+    filter: brightness(1);
+  }
+  100% {
+    filter: brightness(1.8) drop-shadow(0 0 8px rgba(224, 194, 122, 0.9));
+  }
+}
+
+.evolve-cinematic.is-call .evolve-awakening-pips {
+  filter: drop-shadow(0 0 6px rgba(224, 194, 122, 0.6));
+}
+
+.evolve-awakening .evolve-cinematic-name {
+  font-size: 22px;
+}
+
+.evolve-awakening-prompt {
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  animation: launch-gate-prompt 2.4s ease-in-out 0.8s infinite;
 }
 
 /* --- Sandbox Battle (team-builder tool — App.tsx 'sandboxBattle'/'sandboxFight',

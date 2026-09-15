@@ -74,6 +74,10 @@ function ensureContext(): AudioContext | null {
   if (!Ctor) return null;
 
   ctx = new Ctor();
+  // iOS mutes Web Audio under the ringer switch unless the page declares itself media. Games are
+  // media; a score that only plays with the switch flipped reads as broken, not as polite.
+  const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
+  if (session) session.type = 'playback';
   masterGain = ctx.createGain();
   masterGain.connect(ctx.destination);
 
@@ -89,7 +93,9 @@ function ensureContext(): AudioContext | null {
 /** Resumes the suspended context. Cheap and idempotent — call from any input handler. */
 export function unlockAudio(): void {
   const c = ensureContext();
-  if (c && c.state === 'suspended') void c.resume();
+  // Not `=== 'suspended'`: iOS parks a backgrounded context in a non-standard 'interrupted'
+  // state, and the resume it needs on return is the same one.
+  if (c && c.state !== 'running') void c.resume().catch(() => {});
 }
 
 export function getMusicBus(): { context: AudioContext; bus: GainNode } | null {

@@ -22,6 +22,8 @@ import { overlayHost } from '../shared/overlayHost';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { playSfx } from '../../audio/sfx';
 import { RosterPeek } from './RosterPeek';
+import { MasteryPips } from '../shared/MasteryPips';
+import { MASTERY_EVOLUTION } from '../../run/mastery';
 
 interface Props {
   hero: HeroDefinition;
@@ -82,6 +84,8 @@ function statEntriesOf(path: EvolutionPath): [StatKey, number][] {
  * rather than on a bar under three cards that only print headlines.
  */
 export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
+  /** The awakening has played (or was skipped): the choice is on screen. Reduced motion skips it. */
+  const [awakened, setAwakened] = useState(() => prefersReducedMotion());
   const [inspectedPathId, setInspectedPathId] = useState<string | null>(null);
   /** Set once the choice is spent: the cinematic runs over the screen and calls `onChoose` at the end. */
   const [sealingPathId, setSealingPathId] = useState<string | null>(null);
@@ -134,7 +138,76 @@ export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
           onDone={() => onChoose(sealingPath.id)}
         />
       )}
+
+      {!awakened && <EvolutionAwakening hero={hero} onDone={() => setAwakened(true)} />}
     </div>
+  );
+}
+
+/** Beat boundaries for the awakening, in ms from the screen landing. */
+const AWAKEN_BEATS = { crack: 1300, call: 2150, done: 5200 } as const;
+
+/**
+ * What reaching the Evolution looks like BEFORE the choice (2026-09-15, per user direction).
+ * The fifth pip landed on a who-screen and the next thing on screen was three cards — the
+ * biggest moment a hero has in a run opened as a menu. This is the beat between: the hero
+ * STIRS (the pip strip under it, the fifth lighting), the seal CRACKS (rings closing, the
+ * column rising, the figure shaking and brightening — the seal cinematic's charge, stopped short
+ * of the white-out, because nothing is being swapped yet), and the CALL lands: the name, and the
+ * one line that says what is now being asked. The choice screen is already mounted under it, so
+ * the veil lifting IS the transition. A tap skips to the choice at any beat; it holds for a tap
+ * on the last one and lets itself out after a while for a player who has put the phone down.
+ */
+function EvolutionAwakening({ hero, onDone }: { hero: HeroDefinition; onDone: () => void }) {
+  const [beat, setBeat] = useState<'stir' | 'crack' | 'call'>('stir');
+  const lead = hero.types[0];
+  const trail = hero.types[1] ?? lead;
+
+  useEffect(() => {
+    playSfx('titan.stir');
+    const timers = [
+      window.setTimeout(() => {
+        setBeat('crack');
+        playSfx('seal.strike');
+      }, AWAKEN_BEATS.crack),
+      window.setTimeout(() => {
+        setBeat('call');
+        playSfx('levelUp');
+      }, AWAKEN_BEATS.call),
+      window.setTimeout(onDone, AWAKEN_BEATS.done),
+    ];
+    return () => timers.forEach(window.clearTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Same portal, same stage vocabulary as the seal cinematic below — one look for both halves of
+  // the moment, the awakening washed in the hero's OWN types since no path has been picked yet.
+  return createPortal(
+    <div
+      className={`evolve-cinematic evolve-awakening is-${beat}`}
+      style={{ '--path-lead': getTypeColor(lead), '--path-trail': getTypeColor(trail) } as CSSProperties}
+      onClick={onDone}
+    >
+      <span className="evolve-cinematic-veil" aria-hidden="true" />
+      <span className="evolve-cinematic-rays" aria-hidden="true" />
+
+      <div className="evolve-cinematic-stage">
+        <span className="evolve-ring is-outer" aria-hidden="true" />
+        <span className="evolve-ring is-inner" aria-hidden="true" />
+        <span className="evolve-column" aria-hidden="true" />
+        <HeroPortrait heroId={hero.id} className="evolve-figure" />
+        <span className="evolve-flash" aria-hidden="true" />
+      </div>
+
+      <MasteryPips mastery={MASTERY_EVOLUTION} className="evolve-awakening-pips" />
+
+      <div className="evolve-cinematic-plate">
+        <div className="evolve-cinematic-eyebrow">Mastery {MASTERY_EVOLUTION}</div>
+        <h2 className="evolve-cinematic-name">{hero.name} is ready to evolve</h2>
+        <div className="evolve-awakening-prompt">Tap to choose a path</div>
+      </div>
+    </div>,
+    overlayHost()
   );
 }
 
