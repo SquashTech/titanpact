@@ -339,3 +339,19 @@ test('light: Vigil shields one ally off the caster\'s Defense and Renews it off 
   assert.notStrictEqual(expectedShield, expectedRenew, 'two stats, two figures');
   assert.strictEqual(statusMagnitude(next.combatants.a1, 'Shield'), 0, 'single ally');
 });
+
+test('light: Benediction heals both allies off Wisdom and shields each off Defense — a mend now and a hit held later', () => {
+  let state = withDeepPools(lightFixture(1261));
+  const a2 = state.combatants.a2;
+  state = { ...state, combatants: { ...state.combatants, a2: { ...a2, currentHp: a2.currentHp - 100 } } };
+  const app = { statusId: 'Shield', magnitude: 25, target: 'moveTarget' as const };
+  const expected = scaleStatusMagnitude(25, statuses.Shield, app, moves.benediction, heroes.dawnwarden, state.combatants.a1);
+  const { state: next, events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'benediction' }], config);
+  assert.strictEqual(moves.benediction.tier, 'mid');
+  assert.strictEqual(moves.benediction.kind, 'heal');
+  const heals = events.filter((e) => e.type === 'Healed');
+  assert.strictEqual(heals.length, 2, 'both allies are healed');
+  assert.ok(next.combatants.a2.currentHp > a2.currentHp - 100);
+  assert.strictEqual(statusMagnitude(next.combatants.a1, 'Shield'), expected);
+  assert.strictEqual(statusMagnitude(next.combatants.a2, 'Shield'), expected);
+});

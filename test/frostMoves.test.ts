@@ -72,13 +72,13 @@ function outspeeds(state: CombatState, combatantId: string): CombatState {
 
 // --- The pool itself ---
 
-test('frost: the authored pool is the fifteen designed moves plus Snowball, Rime\'s Evolution move, and Ice Shell, all Frost-typed', () => {
+test('frost: the authored pool is the fifteen designed moves plus Snowball, Rime\'s Evolution move, Ice Shell and Rime Coat, all Frost-typed', () => {
   const frost = Object.values(moves).filter((m) => m.type === 'Frost' && !signatureMoves[m.id]);
   assert.deepStrictEqual(
     frost.map((m) => m.id).sort(),
     [
       'absoluteZero', 'avalanche', 'coldSnap', 'deepChill', 'frigidAir', 'frostArmor', 'frostWall',
-      'glaciate', 'iceShard', 'iceShatter', 'iceShell', 'icicleThrust', 'permafrost', 'quickFreeze', 'rimeWind',
+      'glaciate', 'iceShard', 'iceShatter', 'iceShell', 'icicleThrust', 'permafrost', 'quickFreeze', 'rimeCoat', 'rimeWind',
       'snowBlast', 'snowball',
     ]
   );
@@ -378,4 +378,16 @@ test('frost: the hit that breaks an Ice Shell Freezes the striker, and a hit tha
   const dented = resolveRound(thick, [{ kind: 'move', combatantId: 'b1', moveId: 'ironFist', declaredTarget: 'a2' }], config);
   assert.strictEqual(hasStatus(dented.state.combatants.b1, 'Freeze'), false);
   assert.strictEqual(hasStatus(dented.state.combatants.a2, 'IceShell'), true);
+});
+
+test('frost: Rime Coat is the plain Early pool on one ally, off the caster\'s Defense with Frost STAB', () => {
+  const state = withDeepPools(frostFixture(1362));
+  const app = { statusId: 'Shield', magnitude: 30, target: 'moveTarget' as const };
+  const expected = scaleStatusMagnitude(30, statuses.Shield, app, moves.rimeCoat, heroes.glacialWarden, state.combatants.a1);
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'rimeCoat', declaredTarget: 'a2' }], config);
+  assert.strictEqual(moves.rimeCoat.tier, 'early');
+  assert.strictEqual(moves.rimeCoat.manaCost, 20);
+  assert.strictEqual(statusMagnitude(next.combatants.a2, 'Shield'), expected);
+  assert.strictEqual(statusMagnitude(next.combatants.a1, 'Shield'), 0, 'single ally');
+  assert.strictEqual(hasStatus(next.combatants.a2, 'IceShell'), false, 'no shell — the plain one');
 });

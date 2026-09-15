@@ -83,7 +83,7 @@ export const titanspawnLines: readonly TitanspawnLine[] = [
 
   line('Frost', 'hp', ['Sleetling', 'Hoarfang', 'Frostheave'],
     [st(76, 30, 32, 36, 32, 32, 40, 10), st(170, 55, 60, 85, 55, 60, 60, 12), st(360, 60, 100, 120, 80, 60, 90, 15)],
-    [['iceShard', 'deepChill', 'snowBlast'], ['iceShell', 'glaciate', 'permafrost', 'frigidAir'], ['avalanche', 'absoluteZero', 'iceShatter', 'frostWall']],
+    [['rimeCoat', 'deepChill', 'snowBlast'], ['iceShell', 'glaciate', 'permafrost', 'frigidAir'], ['avalanche', 'absoluteZero', 'iceShatter', 'frostWall']],
     { hp: 'S', attack: 'F', defense: 'B', intelligence: 'S', wisdom: 'B', speed: 'C', manaPool: 'A' }),
 
   line('Storm', 'speed', ['Arcling', 'Voltail', 'Stormfront'],
@@ -103,7 +103,7 @@ export const titanspawnLines: readonly TitanspawnLine[] = [
 
   line('Light', 'intelligence', ['Gleamling', 'Lanternmoth', 'Dawnwing'],
     [st(64, 30, 30, 36, 38, 34, 40, 10), st(120, 40, 55, 85, 90, 70, 65, 12), st(200, 50, 80, 150, 120, 100, 100, 15)],
-    [['glimmer', 'mend', 'vigil'], ['radiantBeam', 'blindingFlash', 'consecrate', 'smite'], ['judgment', 'solarFlare', 'divineGrace', 'exalt']],
+    [['glimmer', 'mend', 'vigil'], ['radiantBeam', 'benediction', 'consecrate', 'smite'], ['judgment', 'solarFlare', 'divineGrace', 'exalt']],
     { hp: 'B', attack: 'F', defense: 'C', intelligence: 'S', wisdom: 'S', speed: 'C', manaPool: 'S' }),
 
   line('Shadow', 'speed', ['Duskling', 'Gloomfang', 'Nocturne'],

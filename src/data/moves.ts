@@ -729,6 +729,19 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleAlly',
     description: 'Cases one ally in ice (Shield 50). The hit that breaks it Freezes the striker.',
   },
+  rimeCoat: {
+    id: 'rimeCoat',
+    name: 'Rime Coat',
+    tier: 'early',
+    type: 'Frost',
+    category: 'physical',
+    kind: 'buff',
+    statusApplication: { statusId: 'Shield', magnitude: 30, target: 'moveTarget' },
+    manaCost: 20,
+    priority: 0,
+    target: 'singleAlly',
+    description: 'Frosts one ally over before the blow lands (Shield 30).',
+  },
 
   // --- Storm ---
   risingStatic: {
@@ -1663,6 +1676,21 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'singleAlly',
     description: 'Keeps watch over one ally: a light that holds a hit and mends beneath it (Shield 25, Renew 10).',
+  },
+  benediction: {
+    id: 'benediction',
+    name: 'Benediction',
+    tier: 'mid',
+    type: 'Light',
+    category: 'magical',
+    kind: 'heal',
+    // The heal reads Wisdom, the pool Defense: a mend now and a hit held later, on both allies.
+    healPower: 30,
+    statusApplication: { statusId: 'Shield', magnitude: 25, target: 'moveTarget' },
+    manaCost: 50,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'Mends both allies and sets a light before them (heals, and Shield 25 on each).',
   },
 
   // --- Shadow ---

@@ -108,6 +108,7 @@ export const progressionTable: ProgressionTable = {
       'glaciate',
       'permafrost',
       'iceShell',
+      'rimeCoat',
       'quickFreeze',
       'frigidAir',
       'absoluteZero',
@@ -128,11 +129,11 @@ export const progressionTable: ProgressionTable = {
     // authors only two physical Mid and two physical Late, so the rest is deliberately off-type —
     // the FLOOR is worth more than tidiness, and Stone/Iron reach what Frost is resisted by.
     rime: [
-      'icicleThrust', 'coldSnap', 'permafrost', 'iceShell', 'rubbleRush', 'serratedSlice', 'spireClaw',
+      'icicleThrust', 'coldSnap', 'permafrost', 'iceShell', 'rimeCoat', 'rubbleRush', 'serratedSlice', 'spireClaw',
       'iceShatter', 'frostWall', 'titanicCrush', 'swingingChain',
       'claw', 'frostArmor', 'rockToss', 'undertow', 'thunderclap', 'heavyBlow',
     ],
-    cube: ['icicleThrust', 'coldSnap', 'deepChill', 'permafrost', 'rockToss', 'openingStrike', 'ironFist', 'frostWall', 'cogBop', 'snowball', 'heavyBlow', 'iceShatter', 'rubbleRush', 'momentumSwing', 'serratedSlice', 'titanicCrush'],
+    cube: ['icicleThrust', 'coldSnap', 'deepChill', 'permafrost', 'rimeCoat', 'rockToss', 'openingStrike', 'ironFist', 'frostWall', 'cogBop', 'snowball', 'heavyBlow', 'iceShatter', 'rubbleRush', 'momentumSwing', 'serratedSlice', 'titanicCrush'],
     // --- Storm ---
     stormRanger: [
       'stormLash',
@@ -296,6 +297,7 @@ export const progressionTable: ProgressionTable = {
       'bless',
       'vigil',
       'consecrate',
+      'benediction',
       'smite',
       'radiance',
       'blindingFlash',
@@ -309,7 +311,7 @@ export const progressionTable: ProgressionTable = {
       'jolt',
       'corrode',
     ],
-    aegis: ['holySlice', 'blind', 'purify', 'bless', 'vigil', 'exalt', 'consecrate', 'divineGrace', 'reinforce', 'pistonPunch', 'vineLash', 'toughenUp', 'rockToss', 'radiantBeam', 'radiance', 'smite', 'solarFlare', 'judgment'],
+    aegis: ['holySlice', 'blind', 'purify', 'bless', 'vigil', 'exalt', 'consecrate', 'benediction', 'divineGrace', 'reinforce', 'pistonPunch', 'vineLash', 'toughenUp', 'rockToss', 'radiantBeam', 'radiance', 'smite', 'solarFlare', 'judgment'],
     // --- Shadow ---
     shadowMonk: ['backstab', 'weaken', 'cutthroat', 'shadowSlice', 'rend', 'duskBlade', 'thousandCuts', 'claw', 'shadowstrike', 'phantomStrike', 'ironFist', 'thunderclap', 'enfeeble', 'rampage', 'eviscerate', 'swingingChain'],
     marrow: ['lieInWait', 'umbralBeam', 'umbralWave', 'poltergeist', 'enfeeble', 'drain', 'torment', 'soulRend', 'wisp', 'jolt', 'siphon', 'deepChill', 'flicker', 'electricBurst', 'lastRites', 'ionicZap', 'maelstrom'],

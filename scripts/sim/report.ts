@@ -521,7 +521,7 @@ export function formatReport(
     );
   }
   out.push('  the Shield cards, player casts (all runs) and per 1000 player turns:');
-  for (const id of ['tideGuard', 'crest', 'seawall', 'bastion', 'ironSkin', 'livingWall', 'rampart', 'vigil', 'iceShell']) {
+  for (const id of ['tideGuard', 'crest', 'seawall', 'bastion', 'ironSkin', 'livingWall', 'rampart', 'vigil', 'benediction', 'iceShell', 'rimeCoat']) {
     const n = agg.castsByMove[id] ?? 0;
     out.push(`    ${pad(id, 20)}${padStart(String(n), 11)}${padStart((agg.playerTurns > 0 ? (n * 1000) / agg.playerTurns : 0).toFixed(1), 9)}`);
   }
