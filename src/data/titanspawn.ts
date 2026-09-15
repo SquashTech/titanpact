@@ -93,7 +93,7 @@ export const titanspawnLines: readonly TitanspawnLine[] = [
 
   line('Stone', 'defense', ['Pebbling', 'Slabback', 'Monolith'],
     [st(72, 32, 38, 30, 32, 32, 40, 10), st(180, 60, 100, 30, 65, 55, 55, 12), st(300, 90, 160, 40, 90, 70, 80, 15)],
-    [['rockToss', 'tremor', 'provoke'], ['faultLine', 'bodyBlow', 'bastion', 'rockfall'], ['boulderSlam', 'bodyCrush', 'landslide', 'stoneheart']],
+    [['rockToss', 'tremor', 'provoke'], ['faultLine', 'bodyBlow', 'bastion', 'rockfall'], ['boulderSlam', 'bodyCrush', 'rampart', 'stoneheart']],
     { hp: 'S', attack: 'B', defense: 'S', intelligence: 'F', wisdom: 'A', speed: 'C', manaPool: 'B' }),
 
   line('Nature', 'wisdom', ['Sproutling', 'Bramblehide', 'Wildwood'],
@@ -128,7 +128,7 @@ export const titanspawnLines: readonly TitanspawnLine[] = [
 
   line('Iron', 'attack', ['Rivetling', 'Ingot', 'Siegework'],
     [st(68, 38, 36, 30, 30, 32, 40, 10), st(140, 95, 95, 30, 50, 60, 55, 12), st(240, 150, 140, 30, 80, 80, 80, 15)],
-    [['ironFist', 'heavyBlow', 'sharpen'], ['serratedSlice', 'rendArmor', 'momentumSwing', 'reinforce'], ['onslaught', 'juggernaut', 'swingingChain', 'conjuredSword']],
+    [['ironFist', 'heavyBlow', 'ironSkin'], ['serratedSlice', 'rendArmor', 'momentumSwing', 'reinforce'], ['onslaught', 'juggernaut', 'swingingChain', 'conjuredSword']],
     { hp: 'A', attack: 'S', defense: 'S', intelligence: 'F', wisdom: 'C', speed: 'C', manaPool: 'A' }),
 
   // The spike is MP Regen — outside the combat total, and the one stat no hero grows.

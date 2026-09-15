@@ -278,8 +278,12 @@ Sequenced so the tree is playable at every boundary and each phase can be refuse
 - **The seats are a first pass, placed by the build, for the designer to move:** Iron Skin in
   Iron Warden's, Valor's and Gallant's pools; Living Wall in Iron Warden's and Valor's; Rampart in
   Crag's and Sentinel's; Vigil in Dawnwarden's and Aegis's; Ice Shell in Glacial Warden's and
-  Rime's. The Titanspawn kits are untouched — the Stone Mid and both Water spawn already held
-  Bastion or Tide Guard, so those lines shield off their own Defense now; nothing else does.
+  Rime's. **The Iron and Stone spawn kits each carry a Shield** (per user direction, same day):
+  the Rivetling holds Iron Skin in place of Sharpen, the Monolith Rampart in place of Landslide (a
+  60 BP magical spread on a 40-Int body), and the Slabback keeps Bastion; both Water spawn hold
+  Tide Guard. Measured on the same seed: full-clear 22.5 → 22.8%, Act 1 unmoved; the Rivetling
+  takes 120 → 114 a round and deals 18 → 17, the Monolith 116 → 104 taken and 87 → 69 dealt;
+  enemy Shield casts 861 → 1038 in Act 1 and 225 → 617 in Act 4.
 - **The cap on the view:** `StatBars.tsx ShieldFill` draws the band past the fill and, for what
   will not fit, over it from the left — the mana overflow's answer, since the track's length is
   max HP and cannot grow. `applyEventToState` takes `DamageDealt.absorbed` off the displayed
