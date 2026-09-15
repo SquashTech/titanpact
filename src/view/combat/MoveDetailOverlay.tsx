@@ -3,7 +3,8 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { MoveDefinition, StatKey } from '../../engine/content';
 import { statusApplicationsOf, STAT_ORDER } from '../../engine/content';
 import type { CombatState } from '../../engine/state';
-import { activePartnerTypes, effectiveManaCost, effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, effectiveBasePower, hasStatus, resolveCastBasePower, resolveManaCost, moveForHero, moveForPrimaryType } from '../../engine/state';
+import { activePartnerTypes, applyStatModifierDelta, effectiveManaCost, effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, effectiveBasePower, hasStatus, resolveCastBasePower, resolveManaCost, moveForHero, moveForPrimaryType } from '../../engine/state';
+import { statDeltaLandsOnCasterSide } from '../../engine/combat/statDeltaScaling';
 import { allCombatants } from '../../data/content';
 import { statuses } from '../../data/statuses';
 import { passives } from '../../data/passives';
@@ -425,6 +426,21 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
           )}
           {move.statDeltas?.map(({ stat, amount: authored }) => {
             const amount = statDeltaReadout(move, stat, authored, healCaster);
+            // A drop into a foe already at, or near, its floor lands short — say so before the press (docs/stat-scaling.md §3).
+            const held = (() => {
+              if (amount >= 0 || !context || statDeltaLandsOnCasterSide(move)) return undefined;
+              const parts = context.defenderIds
+                .map((id) => {
+                  const d = context.combat.combatants[id];
+                  if (!d || d.fainted) return null;
+                  const { landed, capped } = applyStatModifierDelta(allCombatants[d.heroId], d, stat, amount);
+                  if (!capped) return null;
+                  const who = allCombatants[d.heroId]?.name ?? id;
+                  return landed === 0 ? `${who} is at the floor — lands nothing` : `held at ${who}'s floor — lands ${landed}`;
+                })
+                .filter(Boolean);
+              return parts.length ? parts.join('; ') : undefined;
+            })();
             return (
             <EffectRow
               key={stat}
@@ -437,6 +453,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
               ).toLowerCase()}`}
               note={
                 [
+                  held,
                   amount !== authored ? `base ${authored >= 0 ? '+' : ''}${authored}, scaled off your ${amount > 0 ? 'Wisdom' : 'attacking stat'}` : undefined,
                   move.statDeltaChance != null ? `${Math.round(move.statDeltaChance * 100)}% chance, rolled per target` : undefined,
                 ]

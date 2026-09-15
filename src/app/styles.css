@@ -3874,6 +3874,38 @@ textarea,
   height: 11px;
 }
 
+/* The pip strip (docs/stat-scaling.md §5): one, two or three marks by how far the stat has
+   moved against what it started the fight at — a quarter, a half, past that. Drawn as
+   clip-path triangles with a gap rather than as glyphs, which fuse into a saw-tooth at this
+   size. A debuff at its floor (.stat-held) dims to the low tone and gains a baseline under the
+   marks: "this cannot go lower" is a state, not a direction. */
+.stat-mod-pips {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.5px;
+  margin: 0 1px;
+}
+
+.stat-mod-pip {
+  width: 6px;
+  height: 5px;
+  background: currentColor;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.stat-debuff .stat-mod-pip {
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+.stat-mod-badge.stat-held {
+  color: color-mix(in srgb, var(--hp-low) 72%, var(--text-dim));
+}
+
+.stat-mod-badge.stat-held .stat-mod-pips {
+  padding-bottom: 1px;
+  border-bottom: 1.5px solid currentColor;
+}
+
 /* Switch-row/bench-panel picker cards are too small for these to read —
    matches .bench-row .status-badge-row:empty hiding statuses there too. */
 .bench-row .stat-mod-corner {
@@ -5239,6 +5271,13 @@ textarea,
 .dmg-popup.popup-debuff {
   color: var(--hp-low);
   font-size: 13px;
+}
+
+/* A drop the floor took whole: nothing moved, and the popup says why rather than printing −0. */
+.dmg-popup.popup-floor {
+  color: color-mix(in srgb, var(--hp-low) 70%, var(--text-dim));
+  font-size: 12px;
+  letter-spacing: 0.02em;
 }
 
 .dmg-popup.popup-status {
@@ -10349,12 +10388,46 @@ textarea,
 }
 
 .stat-bar-track {
+  position: relative;
   height: 10px;
   border-radius: var(--radius-pill);
   background: var(--well);
   border: 1px solid var(--border);
   overflow: hidden;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+
+/* The floor tick (docs/stat-scaling.md §3): where a debuff stops shrinking this bar. Drawn
+   as a thin bar end rather than a marker on the fill, so it reads at a glance whether the
+   fill has reached it. Brightens when it has. */
+.stat-bar-floor {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+}
+
+.stat-bar-floor.is-held {
+  background: var(--hp-low);
+  box-shadow: 0 0 4px var(--hp-low);
+}
+
+.stat-bar-from {
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.stat-bar-arrow {
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+.detail-modifier-floor {
+  font-weight: 500;
+  opacity: 0.8;
 }
 
 /* Same capsule treatment as the combat HP/MP bars (.bar-fill) — a hero's

@@ -190,27 +190,36 @@ function groupByCombatant(changes: readonly StatChangedEvent[]): { combatantId: 
   return groups;
 }
 
-/** "falls" for one stat on one hero, "fall" once the subject is plural. */
+/** "falls" for one stat on one hero, "fall" once the subject is plural; "holds at the floor" when the floor took the whole drop. */
 function statVerb(changes: readonly StatChangedEvent[], plural: boolean): string {
   const rising = changes.every((c) => c.delta > 0);
-  const falling = changes.every((c) => c.delta < 0);
-  const verb = rising ? 'rise' : falling ? 'fall' : 'shift';
-  return plural || changes.length > 1 ? verb : `${verb}s`;
+  // A drop the floor took whole is still a fall in kind, so "-24 DEF (floor), WIS at floor" reads as one.
+  const falling = changes.every((c) => c.delta < 0 || (c.capped && c.delta === 0));
+  const heldWhole = changes.every((c) => c.capped && c.delta === 0);
+  const verb = heldWhole ? 'hold at the floor' : rising ? 'rise' : falling ? 'fall' : 'shift';
+  if (plural || changes.length > 1) return verb;
+  return heldWhole ? 'holds at the floor' : `${verb}s`;
 }
 
 /** What two targets have to match on for the beat to read as one sentence about both. */
 function signatureOf(changes: readonly StatChangedEvent[]): string {
-  return changes.map((c) => `${c.stat}:${c.delta}`).join(',');
+  return changes.map((c) => `${c.stat}:${c.delta}${c.capped ? 'f' : ''}`).join(',');
 }
 
-/** The console's big line: "-10 DEF/WIS" when one number covers them all, else "+10 ATK -5 DEF". */
+/**
+ * The console's big line: "-10 DEF/WIS" when one number covers them all, else "+10 ATK -5 DEF".
+ * A drop the floor held reads "DEF at floor" when nothing landed and "-12 DEF (floor)" when some did.
+ */
 function deltaSummary(changes: readonly StatChangedEvent[]): string {
   const sign = (d: number) => (d > 0 ? '+' : '');
-  const first = changes[0].delta;
-  if (changes.every((c) => c.delta === first)) {
-    return `${sign(first)}${first} ${changes.map((c) => statLabel(c.stat)).join('/')}`;
+  const one = (c: StatChangedEvent) =>
+    c.capped && c.delta === 0 ? `${statLabel(c.stat)} at floor` : `${sign(c.delta)}${c.delta} ${statLabel(c.stat)}${c.capped ? ' (floor)' : ''}`;
+  const first = changes[0];
+  if (changes.every((c) => c.delta === first.delta && !!c.capped === !!first.capped)) {
+    if (first.capped && first.delta === 0) return `${changes.map((c) => statLabel(c.stat)).join('/')} at floor`;
+    return `${sign(first.delta)}${first.delta} ${changes.map((c) => statLabel(c.stat)).join('/')}${first.capped ? ' (floor)' : ''}`;
   }
-  return changes.map((c) => `${sign(c.delta)}${c.delta} ${statLabel(c.stat)}`).join(' ');
+  return changes.map(one).join(' ');
 }
 
 /** One target's clause, for the case where the targets took different payloads. */
@@ -419,7 +428,7 @@ export function buildBeats(
             groups.map((g) => ({
               combatantId: g.combatantId,
               text: deltaSummary(g.changes),
-              className: g.changes.every((c) => c.delta > 0) ? 'popup-buff' : 'popup-debuff',
+              className: g.changes.every((c) => c.delta > 0) ? 'popup-buff' : g.changes.every((c) => c.capped && c.delta === 0) ? 'popup-floor' : 'popup-debuff',
             })),
             {
               bannerLead: `${label} · ${who}`,
@@ -499,7 +508,7 @@ export function buildBeats(
         const changes: StatChangedEvent[] = [];
         while (events[i]?.type === 'StatChanged') changes.push(events[i++] as StatChangedEvent);
         const groups = groupByCombatant(changes);
-        const falling = changes.every((c) => c.delta < 0);
+        const falling = changes.every((c) => c.delta < 0 || c.capped);
         // Identical payloads across targets read as one sentence about both, not as a list.
         const uniform = groups.every((g) => signatureOf(g.changes) === signatureOf(groups[0].changes));
         const lead = uniform

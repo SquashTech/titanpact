@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { moves } from '../../data/moves';
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { Combatant, StatContext } from '../../engine/state';
-import { effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, moveForHero } from '../../engine/state';
+import { effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, moveForHero, statModifierFloor } from '../../engine/state';
 import type { RosterEntry } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { chosenEvolutionPaths, itemSlotsFor } from '../../run/progression';
@@ -52,6 +52,17 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
     STAT_ORDER.map((stat) => [stat, (combatant.baselineStatModifiers[stat] ?? 0) + (combatant.statModifiers[stat] ?? 0)])
   ) as Record<StatKey, number>;
   const hasModifiers = STAT_ORDER.some((stat) => totalModifiers[stat] !== 0);
+  // What THIS fight did, apart from the loadout: the → readout and the floor tick (docs/stat-scaling.md §5).
+  const fightReadout = {
+    deltas: Object.fromEntries(STAT_ORDER.map((stat) => [stat, combatant.statModifiers[stat] ?? 0])) as Partial<Record<StatKey, number>>,
+    floors: Object.fromEntries(
+      STAT_ORDER.map((stat) => [stat, hero.baseStats[stat] + (combatant.baselineStatModifiers[stat] ?? 0) + statModifierFloor(hero, combatant, stat)])
+    ) as Partial<Record<StatKey, number>>,
+  };
+  const heldAtFloor = (stat: StatKey) => {
+    const floor = statModifierFloor(hero, combatant, stat);
+    return floor < 0 && (combatant.statModifiers[stat] ?? 0) <= floor;
+  };
   const effectiveTotals = Object.fromEntries(
     STAT_ORDER.map((stat) => [stat, getEffectiveStat(hero, combatant, stat, statCtx)])
   ) as Record<StatKey, number>;
@@ -134,7 +145,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
         </div>
 
         <div className="detail-section-title"><SectionGlyph name="stats" /> Stats</div>
-        <StatBars baseStats={hero.baseStats} deltas={totalModifiers} totals={effectiveTotals} />
+        <StatBars baseStats={hero.baseStats} deltas={totalModifiers} totals={effectiveTotals} fight={fightReadout} />
 
         <div className="detail-section-title"><SectionGlyph name="buffs" /> Buffs / Debuffs</div>
         {hasModifiers ? (
@@ -142,8 +153,9 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
             {STAT_ORDER.filter((stat) => totalModifiers[stat] !== 0).map((stat) => {
               const mod = totalModifiers[stat];
               return (
-                <span key={stat} className={`detail-modifier-chip ${mod > 0 ? 'stat-buff' : 'stat-debuff'}`}>
+                <span key={stat} className={`detail-modifier-chip ${mod > 0 ? 'stat-buff' : 'stat-debuff'}${heldAtFloor(stat) ? ' stat-held' : ''}`}>
                   <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} {fmtMod(mod)}
+                  {heldAtFloor(stat) && <span className="detail-modifier-floor"> · at the floor</span>}
                 </span>
               );
             })}

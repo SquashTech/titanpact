@@ -85,9 +85,15 @@ interface Props {
    * a combat card is asking what this hero IS, and only a sheet is asking what it becomes.
    */
   grades?: GrowthGrades;
+  /**
+   * What THIS fight did to the line, apart from the loadout: the row reads "from → to" for a stat
+   * the fight moved, and the track carries a tick at the floor a debuff can take it to
+   * (docs/stat-scaling.md §3, §5). `floors` are effective values, not modifiers.
+   */
+  fight?: { deltas: Partial<Record<StatKey, number>>; floors: Partial<Record<StatKey, number>> };
 }
 
-export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {}, grades }: Props) {
+export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {}, grades, fight }: Props) {
   const totals = STAT_ORDER.map((stat) => Math.max(0, totalOverrides[stat] ?? baseStats[stat] + (deltas[stat] ?? 0)));
   const percents = STAT_ORDER.map((stat, i) => Math.min(100, (totals[i] / STAT_SCALE_MAX[stat]) * 100));
   const bestPercent = Math.max(...percents);
@@ -113,10 +119,29 @@ export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {}, 
             </span>
             <div className="stat-bar-track">
               <div className="stat-bar-fill" style={{ width: `${percents[i]}%`, background: isBest ? 'var(--accent)' : STAT_COLORS[stat] }} />
+              {fight && fight.floors[stat] !== undefined && fight.floors[stat]! > 0 && (
+                // The floor a debuff can take this stat to (docs/stat-scaling.md §3) — where the bar stops shrinking.
+                <div
+                  className={`stat-bar-floor${(fight.deltas[stat] ?? 0) < 0 && totals[i] <= fight.floors[stat]! ? ' is-held' : ''}`}
+                  style={{ left: `${Math.min(100, (fight.floors[stat]! / STAT_SCALE_MAX[stat]) * 100)}%` }}
+                  title={`Floor ${fight.floors[stat]} — a debuff can take ${STAT_LABELS[stat]} no lower`}
+                />
+              )}
             </div>
             <span className="stat-bar-value">
-              {totals[i]}
-              {delta !== 0 && <span className={delta > 0 ? 'stat-buff' : 'stat-debuff'}> {fmtDelta(delta)}</span>}
+              {fight && fight.deltas[stat] ? (
+                // What the fight did, read as from → to: the loadout figure it started at, then where it stands.
+                <>
+                  <span className="stat-bar-from">{totals[i] - fight.deltas[stat]!}</span>
+                  <span className="stat-bar-arrow"> → </span>
+                  <span className={fight.deltas[stat]! > 0 ? 'stat-buff' : 'stat-debuff'}>{totals[i]}</span>
+                </>
+              ) : (
+                <>
+                  {totals[i]}
+                  {delta !== 0 && <span className={delta > 0 ? 'stat-buff' : 'stat-debuff'}> {fmtDelta(delta)}</span>}
+                </>
+              )}
             </span>
             {grades &&
               (grade ? (

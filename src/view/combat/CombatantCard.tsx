@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { Combatant, StatContext, StatusInstance } from '../../engine/state';
-import { effectiveTypes, getCombatStatDelta, getMaxHp, getMaxMana } from '../../engine/state';
+import { effectiveTypes, getCombatStatDelta, getMaxHp, getMaxMana, statModifierFloor } from '../../engine/state';
 import { fieldEffects } from '../../data/fieldEffects';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -146,12 +146,24 @@ function StatusChip({ instance, onInspect }: { instance: StatusInstance; onInspe
 // getCombatStatDelta (effective − loadout baseline), NOT baselineStatModifiers:
 // equipment/relic/Evolution grants read as the hero's stat block, not as a
 // battlefield indicator. Only what changed DURING this fight shows here.
-function activeStatMods(hero: HeroDefinition, combatant: Combatant, statCtx: StatContext | undefined): Array<{ stat: StatKey; mod: number }> {
+function activeStatMods(hero: HeroDefinition, combatant: Combatant, statCtx: StatContext | undefined): Array<{ stat: StatKey; mod: number; tier: number; held: boolean }> {
   const fieldEffectCtx = statCtx ?? { active: null, defs: fieldEffects };
   return STAT_ORDER.flatMap((stat) => {
     const mod = getCombatStatDelta(hero, combatant, stat, fieldEffectCtx);
-    return mod !== 0 ? [{ stat, mod }] : [];
+    if (mod === 0) return [];
+    const floor = statModifierFloor(hero, combatant, stat);
+    return [{ stat, mod, tier: modTier(mod, hero.baseStats[stat] + (combatant.baselineStatModifiers[stat] ?? 0)), held: (combatant.statModifiers[stat] ?? 0) <= floor && floor < 0 }];
   });
+}
+
+/**
+ * One, two or three marks by how far a stat has moved against what it started the fight at
+ * (docs/stat-scaling.md §5): a quarter, a half, and past that. A debuff's third mark is the
+ * floor, since −½S is where a drop stops; a buff's is "past half again", since nothing bounds it.
+ */
+function modTier(mod: number, s: number): number {
+  const frac = s > 0 ? Math.abs(mod) / s : 1;
+  return frac >= 0.5 ? 3 : frac >= 0.25 ? 2 : 1;
 }
 
 type Pose = 'idle' | 'attack' | 'hurt';
@@ -182,11 +194,18 @@ function usePoseRelease(pose: Pose): Pose | null {
   return released;
 }
 
-function StatModBadge({ stat, mod }: { stat: StatKey; mod: number }) {
+function StatModBadge({ stat, mod, tier, held }: { stat: StatKey; mod: number; tier: number; held: boolean }) {
   return (
-    <span className={`stat-mod-badge ${mod > 0 ? 'stat-buff' : 'stat-debuff'}`} title={`${stat} ${mod > 0 ? '+' : ''}${mod}`}>
+    <span
+      className={`stat-mod-badge ${mod > 0 ? 'stat-buff' : 'stat-debuff'}${held ? ' stat-held' : ''}`}
+      title={`${stat} ${mod > 0 ? '+' : ''}${mod}${held ? ' — at the floor, no lower' : ''}`}
+    >
       <StatGlyph stat={stat} tone="inherit" />
-      {mod > 0 ? '▲' : '▼'}
+      <span className="stat-mod-pips" aria-hidden="true">
+        {Array.from({ length: tier }, (_, i) => (
+          <span key={i} className="stat-mod-pip" />
+        ))}
+      </span>
     </span>
   );
 }
@@ -255,15 +274,15 @@ export function CombatantCard({
     >
       {leftMods.length > 0 && (
         <div className="stat-mod-corner stat-mod-corner-left">
-          {leftMods.map(({ stat, mod }) => (
-            <StatModBadge key={stat} stat={stat} mod={mod} />
+          {leftMods.map(({ stat, mod, tier, held }) => (
+            <StatModBadge key={stat} stat={stat} mod={mod} tier={tier} held={held} />
           ))}
         </div>
       )}
       {rightMods.length > 0 && (
         <div className="stat-mod-corner stat-mod-corner-right">
-          {rightMods.map(({ stat, mod }) => (
-            <StatModBadge key={stat} stat={stat} mod={mod} />
+          {rightMods.map(({ stat, mod, tier, held }) => (
+            <StatModBadge key={stat} stat={stat} mod={mod} tier={tier} held={held} />
           ))}
         </div>
       )}
