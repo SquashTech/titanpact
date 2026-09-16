@@ -913,9 +913,15 @@ a single write — and the Records panel's second tab (`RunHistory.tsx`) reads i
 folded to outcome / where / faces, opened on a tap to the roster. Banners are on neither the
 summary nor the history (per user direction, same day): what a run came to is its team.
 
-**The SPENDING half is undesigned.** Stars are to purchase "new things for runs" (per user
-direction, same day). Read against the locked paragraph above, that is only consistent if what
-they buy are **unlocks** — new heroes, items, relics entering the pool a run draws from — and
-not account-level power carried into a run. That is a design question to settle before the
-shop is built, not one this section resolves. The pre-2026-09-16 `heroStars` (a run count per
-hero) is dropped on decode rather than migrated: a count names no path.
+**The SPENDING half: the shop is PLUMBED, its catalog is EMPTY.** Stars are to purchase "new
+things for runs" (per user direction, same day). Read against the locked paragraph above, that
+is only consistent if what they buy are **unlocks** — new heroes, items, relics entering the pool
+a run draws from — and not account-level power carried into a run; that is the design still
+owed, and the catalog (`src/data/starShop.ts`) stays empty until an offer has a grant to make.
+What is built (same day): `Profile.purchases` (offer ids, each held once), the rules in
+`src/run/starShop.ts` — **balance = stars earned − cost of what is held**, a star never coming
+off a hero, so the Compendium keeps every star ever earned — `buyOffer` refusing a held offer or
+one past the balance, the **Star Shop** panel (`StarShopScreen.tsx`: the balance, the ledger,
+the offers or the empty state) and its tile on the title with the balance as a badge. The name
+is a placeholder in one constant (`STAR_SHOP_NAME`). The pre-2026-09-16 `heroStars` (a run
+count per hero) is dropped on decode rather than migrated: a count names no path.

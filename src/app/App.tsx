@@ -116,6 +116,8 @@ import { encounterKindOf, encounterSeedFor, nodeEncounter } from '../run/encount
 import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
 import { LocationProvider } from '../view/shared/LocationContext';
 import { ProfileProvider } from '../view/shared/ProfileContext';
+import { starShopCatalog } from '../data/starShop';
+import { buyOffer, type StarShopOffer } from '../run/starShop';
 import { NODE_TINT_MANA, NODE_TINT_VITAL } from '../view/shared/NodeStage';
 import { prefetchTrack, setTrack } from '../audio/music';
 import { playSfx } from '../audio/sfx';
@@ -527,6 +529,11 @@ export function App() {
     eraseAllData();
     setProfile(readProfile());
     setSaveSlot({ save: null, staleReason: null });
+  }
+
+  /** A Star Shop purchase (run/starShop.ts): written to storage, then the title re-reads it so the balance moves. */
+  function handleBuyOffer(offer: StarShopOffer) {
+    setProfile(updateProfile((current) => buyOffer(current, starShopCatalog, offer)));
   }
 
   /** Abandon: the parked run is discarded, not just left behind. */
@@ -1009,6 +1016,7 @@ export function App() {
           profile={profile}
           onRefreshProfile={() => setProfile(readProfile())}
           onEraseAllData={handleEraseAllData}
+          onBuyOffer={handleBuyOffer}
           parkedRun={saveSlot.save ? saveSummary(saveSlot.save) : null}
           staleSaveReason={saveSlot.staleReason}
           onContinueRun={handleContinueRun}

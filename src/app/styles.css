@@ -8888,6 +8888,148 @@ textarea,
   color: var(--text-dim);
 }
 
+/* --- Star Shop (StarShopScreen.tsx) ----------------------------------------
+   Where stars are spent (run/starShop.ts). The balance leads as the thing
+   itself — one big star, the count, the earned/spent ledger under it — and
+   the offers follow as rows with one Buy each. Same chassis as the Compendium
+   (.roster-panel), same bottom Close. */
+.star-shop-balance {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 14px 8px 10px;
+}
+
+.star-shop-balance-star {
+  width: 44px;
+  height: 44px;
+  color: var(--accent);
+  filter: drop-shadow(0 0 12px rgba(224, 166, 60, 0.55));
+}
+
+.star-shop-balance-star > svg {
+  width: 100%;
+  height: 100%;
+}
+
+.star-shop-balance-count {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 10px rgba(224, 166, 60, 0.35);
+}
+
+.star-shop-balance-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.star-shop-balance-ledger {
+  margin-top: 4px;
+  font-size: 10.5px;
+  color: var(--text-dim);
+  opacity: 0.8;
+  font-variant-numeric: tabular-nums;
+}
+
+.star-shop-note {
+  text-align: center;
+  margin: 2px 8px 10px;
+}
+
+.star-shop-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 6px 2px 14px;
+  padding: 18px 14px;
+  border-radius: var(--radius-md);
+  border: 1px dashed rgba(224, 166, 60, 0.3);
+  background: var(--well);
+  text-align: center;
+}
+
+.star-shop-empty-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.star-shop-empty-note {
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.star-shop-offers {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 2px 12px;
+}
+
+.star-shop-offer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(224, 166, 60, 0.22);
+  background: var(--surface-raised);
+  box-shadow: var(--hairline), var(--elev-1);
+}
+
+.star-shop-offer.is-held {
+  opacity: 0.65;
+}
+
+.star-shop-offer-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.star-shop-offer-name {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.star-shop-offer-desc {
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+
+.star-shop-offer-buy {
+  flex: none;
+  min-width: 56px;
+  padding: 7px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(224, 166, 60, 0.6);
+  background: rgba(224, 166, 60, 0.12);
+  color: var(--accent);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.star-shop-offer-buy:disabled {
+  border-color: var(--border);
+  background: none;
+  color: var(--text-dim);
+  cursor: default;
+}
+
 /* --- Run History (RunHistory.tsx, on the Records panel) -------------------
    Every run that ended, newest first. A row is folded to what the summary
    screen led with — the outcome, where and when, the team's faces — and
@@ -17923,13 +18065,12 @@ textarea,
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* The in-flow stack — wordmark, then the buttons — hugs the BOTTOM, with
-     the icon row's height reserved under it, so the whole seal always clears
-     the buttons and a taller phone gives its extra height to the eyes rather
-     than pushing the buttons into the dial. The padding is more than the icon
-     row needs so the wordmark sits a little above the vertical centre. */
+  /* The in-flow stack — wordmark, the buttons, then the hub tiles — hugs the BOTTOM, with
+     the corner row's height reserved under it, so the whole seal always clears the buttons
+     and a taller phone gives its extra height to the eyes rather than pushing the buttons
+     into the dial. */
   justify-content: flex-end;
-  padding-bottom: 100px;
+  padding-bottom: 62px;
   gap: 6px;
   text-align: center;
   overflow: hidden;
@@ -19297,9 +19438,101 @@ textarea,
   height: 100%;
 }
 
-/* Compendium, Reference, Records — lookup tools, not run-starting actions,
-   so they take the small icon treatment along the bottom edge opposite Dev
-   rather than competing with the one real action for vertical weight. */
+/* --- The hub (TitleScreen .title-hub) ------------------------------------
+   The three places between runs — Compendium, the shop, Records — as a row of
+   labelled tiles under the one real action (2026-09-16, per user direction;
+   they were 36px circles in the corner beside Reference). Quieter than the
+   pact button: dark plates with a gold hairline that only lights on hover, the
+   glyph over the word. The shop tile carries the star balance as a badge, so
+   the number the shop is about is read from the title without opening it. */
+.title-hub {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 300px;
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  animation: title-icon-row-fade 0.7s ease 0.7s both;
+}
+
+.title-hub-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  min-height: 62px;
+  padding: 9px 4px 8px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(224, 166, 60, 0.22);
+  background:
+    radial-gradient(ellipse 120% 90% at 50% -20%, rgba(224, 166, 60, 0.16), transparent 62%),
+    linear-gradient(180deg, rgba(24, 32, 40, 0.92), rgba(12, 16, 22, 0.94));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 6px 16px rgba(0, 0, 0, 0.5);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-mid) var(--ease-out),
+    transform var(--dur-mid) var(--ease-out),
+    box-shadow var(--dur-mid) var(--ease-out);
+}
+
+.title-hub-tile:hover {
+  border-color: rgba(224, 166, 60, 0.6);
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 20px rgba(0, 0, 0, 0.55), 0 0 18px rgba(224, 166, 60, 0.16);
+}
+
+.title-hub-tile:active {
+  transform: translateY(0);
+}
+
+.title-hub-glyph {
+  width: 22px;
+  height: 22px;
+  color: var(--accent);
+  filter: drop-shadow(0 0 6px rgba(224, 166, 60, 0.35));
+}
+
+.title-hub-glyph > svg {
+  width: 100%;
+  height: 100%;
+}
+
+.title-hub-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.title-hub-tile:hover .title-hub-label {
+  color: var(--text);
+}
+
+/* The balance, on the shop's top corner: gold on dark, the same star the Compendium lights. */
+.title-hub-badge {
+  position: absolute;
+  top: -8px;
+  right: -4px;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(224, 166, 60, 0.6);
+  background: #14171f;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--accent);
+  text-shadow: 0 0 6px rgba(224, 166, 60, 0.5);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Reference — a lookup mid-thought, not a place — keeps the small icon in the
+   corner opposite Dev rather than a tile of its own. */
 .title-icon-row {
   position: absolute;
   bottom: 12px;

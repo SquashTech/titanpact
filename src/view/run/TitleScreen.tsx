@@ -3,6 +3,9 @@ import { CompendiumScreen } from './CompendiumScreen';
 import { LocationSelectOverlay } from './LocationSelectOverlay';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { RecordsScreen } from './RecordsScreen';
+import { STAR_SHOP_NAME, StarShopScreen } from './StarShopScreen';
+import { starShopCatalog } from '../../data/starShop';
+import { starBalance, type StarShopOffer } from '../../run/starShop';
 import { TitanColossus, TitanRidge } from './titanArt';
 import { TypeWheel } from '../shared/TypeWheel';
 import { HubGlyph } from '../shared/nodeIcons';
@@ -15,6 +18,8 @@ interface Props {
   /** Pulls a fresh profile before Records opens, so playtime is not as of screen entry. */
   onRefreshProfile: () => void;
   onEraseAllData: () => void;
+  /** Spends stars on a Star Shop offer (run/starShop.ts buyOffer) and re-reads the profile. */
+  onBuyOffer: (offer: StarShopOffer) => void;
   /** The parked run a Continue would resume, or null when there is none. */
   parkedRun: SaveSummary | null;
   /** Set when a stored run was refused on load — shown once so a vanished Continue is explained, not just missing. */
@@ -96,6 +101,7 @@ export function TitleScreen({
   profile,
   onRefreshProfile,
   onEraseAllData,
+  onBuyOffer,
   parkedRun,
   staleSaveReason,
   onContinueRun,
@@ -111,6 +117,7 @@ export function TitleScreen({
 }: Props) {
   const [showCompendium, setShowCompendium] = useState(false);
   const [showRecords, setShowRecords] = useState(false);
+  const [showShop, setShowShop] = useState(false);
   const [showReference, setShowReference] = useState(false);
   const [showLocations, setShowLocations] = useState(false);
   const [showDev, setShowDev] = useState(false);
@@ -248,28 +255,50 @@ export function TitleScreen({
         )}
       </div>
 
-      <div className="title-icon-row">
+      {/* The three places a player goes BETWEEN runs (2026-09-16, per user direction — they were
+          three 36px circles in the corner, which is what a lookup tool deserves and a shop does
+          not): the Compendium, the shop with its star balance on it, and Records. Labelled tiles
+          under the one real action, quieter than it and louder than the corner. */}
+      <div className="title-hub">
+        <button className="title-hub-tile" onClick={() => setShowCompendium(true)}>
+          <span className="title-hub-glyph" aria-hidden="true">
+            <HubGlyph name="codex" />
+          </span>
+          <span className="title-hub-label">Compendium</span>
+        </button>
         <button
-          className="title-icon-button"
-          onClick={() => setShowCompendium(true)}
-          aria-label="Compendium"
-          title="Compendium"
+          className="title-hub-tile is-shop"
+          onClick={() => {
+            onRefreshProfile();
+            setShowShop(true);
+          }}
         >
-          <HubGlyph name="codex" />
-        </button>
-        <button className="title-icon-button" onClick={() => setShowReference(true)} aria-label="Reference" title="Reference">
-          <HubGlyph name="reference" />
+          <span className="title-hub-glyph" aria-hidden="true">
+            <HubGlyph name="star" />
+          </span>
+          <span className="title-hub-label">{STAR_SHOP_NAME}</span>
+          <span className="title-hub-badge" title={`${starBalance(profile, starShopCatalog)} stars to spend`}>
+            ★ {starBalance(profile, starShopCatalog)}
+          </span>
         </button>
         <button
-          className="title-icon-button"
+          className="title-hub-tile"
           onClick={() => {
             onRefreshProfile();
             setShowRecords(true);
           }}
-          aria-label="Records"
-          title="Records"
         >
-          <HubGlyph name="trophy" />
+          <span className="title-hub-glyph" aria-hidden="true">
+            <HubGlyph name="trophy" />
+          </span>
+          <span className="title-hub-label">Records</span>
+        </button>
+      </div>
+
+      {/* Reference stays a corner glyph: it is a lookup mid-thought, not somewhere you go. */}
+      <div className="title-icon-row">
+        <button className="title-icon-button" onClick={() => setShowReference(true)} aria-label="Reference" title="Reference">
+          <HubGlyph name="reference" />
         </button>
       </div>
 
@@ -348,6 +377,7 @@ export function TitleScreen({
         <RecordsScreen profile={profile} onEraseAllData={onEraseAllData} onClose={() => setShowRecords(false)} />
       )}
       {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
+      {showShop && <StarShopScreen profile={profile} onBuy={onBuyOffer} onClose={() => setShowShop(false)} />}
     </div>
   );
 }

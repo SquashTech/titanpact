@@ -312,6 +312,10 @@ const HUB_PATHS = {
       <path d="M2.6 19h18.8v2.8H2.6Z" />
     </>
   ),
+  // A five-point star, the Evolution star's shape: the title's shop tile, where stars are spent.
+  star: (
+    <path d="M12 1.8l3.1 6.5 7.1 1-5.2 5 1.3 7.1L12 18l-6.3 3.4 1.3-7.1-5.2-5 7.1-1Z" />
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type HubGlyphName = keyof typeof HUB_PATHS;

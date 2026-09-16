@@ -41,6 +41,8 @@ export interface Profile {
    * A dev test run never records a start, so its record carries no duration.
    */
   runStartedAtPlaytimeMs: number | null;
+  /** Star Shop offer ids bought (run/starShop.ts), each at most once. Stars are never un-earned; this is what draws the balance down. */
+  purchases: string[];
   /** 0 until the first run is sealed. */
   firstPlayedAt: number;
   lastPlayedAt: number;
@@ -94,6 +96,7 @@ export function createProfile(): Profile {
     evolutionStars: {},
     runHistory: [],
     runStartedAtPlaytimeMs: null,
+    purchases: [],
     firstPlayedAt: 0,
     lastPlayedAt: 0,
     tutorialDone: false,
@@ -308,6 +311,9 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     evolutionStars,
     runHistory,
     runStartedAtPlaytimeMs: typeof value.runStartedAtPlaytimeMs === 'number' && Number.isFinite(value.runStartedAtPlaytimeMs) ? Math.max(0, Math.floor(value.runStartedAtPlaytimeMs)) : null,
+    // Deduplicated: an offer is held once. An id this build no longer sells is kept — it costs
+    // nothing against the balance (starShop.ts) and comes back if the offer does.
+    purchases: [...new Set(stringList(value.purchases))],
     firstPlayedAt: count(value.firstPlayedAt),
     lastPlayedAt: count(value.lastPlayedAt),
     // The field is ABSENT on every profile written before the tutorial existed, and inferring it
