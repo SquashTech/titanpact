@@ -20,14 +20,3 @@ export function EvolutionStar({ path, className }: { path: EvolutionPath; classN
     </span>
   );
 }
-
-/** A hero's three stars in a row, in the paths' authored order. */
-export function EvolutionStarRow({ paths, className }: { paths: readonly EvolutionPath[]; className?: string }) {
-  return (
-    <span className={`evo-star-row${className ? ` ${className}` : ''}`}>
-      {paths.map((path) => (
-        <EvolutionStar key={path.id} path={path} />
-      ))}
-    </span>
-  );
-}

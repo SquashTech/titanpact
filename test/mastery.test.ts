@@ -229,7 +229,7 @@ test('signature: a generated hero at ten holds it — in the last slot when its 
 });
 
 test('signature: Tidecaller grants Maelstrom at the Evolution — off Riptide\'s own pool, as Rime\'s Avalanche grants Snowball — and Lizard Rush is nobody\'s to grant', () => {
-  const path = progressionTable.evolutions.tidecaller[0].paths.find((p) => p.id === 'tidecaller-offensive')!;
+  const path = progressionTable.evolutions.tidecaller[0].paths.find((p) => p.id === 'tidecaller-tidecaller')!;
   assert.deepStrictEqual(path.unlocksMoveIds, ['maelstrom']);
   assert.ok(!(progressionTable.moveTiers.tidecaller ?? []).includes('maelstrom'), 'a grant that duplicates the pool pays in timing alone (test/roster.test.ts)');
   assert.ok((progressionTable.moveTiers.tidecaller ?? []).includes('tsunami'), 'the pool keeps its other Late moves');

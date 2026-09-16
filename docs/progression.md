@@ -886,14 +886,22 @@ none. Clearing twice down the same path is the same star — the set is the reco
 no count to inflate. `recordRunCompleted` takes the finishing roster as `{ heroId,
 evolutionPathId }` pairs (`currentEvolutionPathId`, `src/run/progression.ts`).
 
-Where a star shows: the Compendium's hero tabs are a **scrolling list** with the three stars at
-each row's end (lit / empty, in the paths' authored order — `EvolutionStarRow`,
-`src/view/shared/EvolutionStar.tsx`), the hero dossier's Evolution tab beside each path's name,
-and **the Evolution choice itself** — an earned star is printed on its path card and dossier so
+Where a star shows: the Compendium's hero tabs are a **scrolling list**, each row carrying the
+hero's three paths as cells — the path's name over its star, lit / empty, in authored order
+(`EvolutionStar`, `src/view/shared/EvolutionStar.tsx`) — the hero dossier's Evolution tab beside
+each path's name, and **the Evolution choice itself** — an earned star is printed on its path card and dossier so
 the player choosing sees which forms are still uncollected (only the earned mark, not three
 outlines: the choice should not read as a checklist). The profile reaches the run's screens
 through `ProfileProvider` (`src/view/shared/ProfileContext.tsx`), a snapshot re-read at the
 title, which is enough because stars only change at a run's end.
+
+**A path is a colour** (same day, per user direction, replacing the deleted offensive /
+defensive / utility tint): the type it grafts, or the type of the move it grants, or neutral
+bone for a path that does neither (`pathLeadType`, `src/run/progression.ts`;
+`src/view/shared/pathTint.ts` maps it to the two wash colours). The Evolution choice, the
+dossier card and the Compendium cell all wear it, and `test/moveTiers` pins that no hero's node
+has two paths on one tint — the neutral case is what makes that true. Path ids are
+`heroId-pathName` (`cinderKnight-explosive`), also pinned there.
 
 **Run History** (same day, per user direction): every run that ENDS — cleared or wiped — is
 written to `Profile.runHistory` as a `RunRecord` (outcome, when, how long on the playtime clock,

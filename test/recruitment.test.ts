@@ -293,7 +293,7 @@ test('recruitment: a contract hero arrives FINISHED where a hire arrives RAW —
     ...createRosterEntry('beaten', 'ironWarden', heroes.ironWarden.moveIds),
     xp: xpForLevel(16),
     scheduleTaken: scheduleEntriesBelow(heroes.ironWarden, 16),
-    chosenPathIds: ['ironWarden-defensive'],
+    chosenPathIds: ['ironWarden-bulwark'],
     unlockedMoveIds: [...heroes.ironWarden.moveIds, 'rendArmor'],
   };
   const claimed = claimContract(run, deriveContractOffer(beaten), 'claimed').roster.find(
@@ -304,7 +304,7 @@ test('recruitment: a contract hero arrives FINISHED where a hire arrives RAW —
   const hired = recruitFromGuildHall(run, offer, 'hired').roster.find((r) => r.rosterId === 'hired')!;
 
   // Axis 1 — Evolution. Chosen for you, or yours to spend a Crucible on.
-  assert.deepStrictEqual(claimed.chosenPathIds, ['ironWarden-defensive']);
+  assert.deepStrictEqual(claimed.chosenPathIds, ['ironWarden-bulwark']);
   assert.deepStrictEqual(hired.chosenPathIds, []);
 
   // Axis 2 — Schedule. Every entry below its level taken, or none: the hire is owed them all.

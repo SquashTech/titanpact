@@ -4,7 +4,8 @@ import { passives } from '../../data/passives';
 import { progressionTable } from '../../data/progression';
 import type { HeroDefinition, MoveTier, StatKey, TypeId } from '../../engine/content';
 import { gradesFor } from '../../run/growth';
-import type { EvolutionPath } from '../../run/progression';
+import { pathTypes, type EvolutionPath } from '../../run/progression';
+import { pathTint } from '../shared/pathTint';
 import { scheduleFor } from '../../run/progression';
 import { MASTERY_EVOLUTION, MASTERY_SIGNATURE } from '../../run/mastery';
 import type { LevelSchedule } from '../../engine/content';
@@ -46,10 +47,6 @@ function fmtGrant(amount: number): string {
   return amount > 0 ? `+${amount}` : `${amount}`;
 }
 
-/** The types a hero ends up with down a given path — a graft replaces the secondary, never the innate primary. */
-function pathTypes(hero: HeroDefinition, path: EvolutionPath): TypeId[] {
-  return path.typeGraft ? [hero.types[0], path.typeGraft] : [...hero.types];
-}
 
 /**
  * A list of moves as full-width cards, each already carrying its mana, power and effect line.
@@ -112,7 +109,7 @@ function EvolutionPathCard({
   const pathCaster = path.typeGraft ? { wisdom: caster.wisdom, types } : caster;
 
   return (
-    <div className="evo-path-card">
+    <div className="evo-path-card" style={{ '--plate-color': pathTint(hero, path).lead } as CSSProperties}>
       <div className="evo-path-head">
         <span className="evo-path-name">{path.name}</span>
         <EvolutionStar path={path} className="evo-path-star" />

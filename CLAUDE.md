@@ -380,8 +380,8 @@ don't silently override it.
   Options take the hero in different directions, are **permanent within a run**, and gate the
   movepool. **The offensive / defensive / utility label is GONE** (2026-09-16, per user
   direction): `EvolutionPath.kind` and its badges are deleted, and a path is known by its name
-  alone. The path ids still carry the old words (`cinderKnight-offensive`) because stars and
-  saves are keyed on them — they are ids, never shown.
+  alone, and **a path id is `heroId-pathName`** (`cinderKnight-explosive`, the name camel-cased;
+  `test/moveTiers` pins it). Stars recorded under the old `heroId-kind` ids were dropped.
 - **Starters vs. recruit-only:** every hero is flagged `starter: true/false`
   (`HeroDefinition.starter`, `src/data/heroes.ts`). Starters are offered in the
   start-of-run draft; `starter: false` heroes exist only in the game, obtained

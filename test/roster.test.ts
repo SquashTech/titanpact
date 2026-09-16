@@ -143,7 +143,7 @@ test('roster: an Evolution never hands over a move the hero could already be off
   // A grant that duplicates the base pool pays in timing alone. Cortex's Cog Bop is the one
   // documented exemption: it is authored OFF-TYPE coverage in the pool and part of the Mech
   // graft's line, and it has to be both (docs/authoring-moves.md, off-type coverage policy).
-  const EXEMPT = new Set(['mindweaver-offensive:cogBop']);
+  const EXEMPT = new Set(['mindweaver-construct:cogBop']);
   const found: string[] = [];
   for (const hero of Object.values(heroes)) {
     const known = new Set([...hero.moveIds, ...(progressionTable.moveTiers[hero.id] ?? [])]);

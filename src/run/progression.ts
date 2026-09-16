@@ -332,6 +332,25 @@ export function itemSlotsFor(hero: HeroDefinition, entry: RosterEntry): number {
   return BASE_ITEM_SLOTS;
 }
 
+/** The types a hero ends up with down a path — a graft replaces the secondary, never the innate primary. */
+export function pathTypes(hero: HeroDefinition, path: EvolutionPath): TypeId[] {
+  return path.typeGraft ? [hero.types[0], path.typeGraft] : [...hero.types];
+}
+
+/**
+ * The type a path is ABOUT, for its colour everywhere a path is drawn (2026-09-16, per user
+ * direction, replacing the offensive / defensive / utility tint): the type it grafts, or the
+ * type of the move it grants — and `null` for a path that does neither, a stat-and-passive path,
+ * which is drawn NEUTRAL. The neutral case is what keeps a hero's three paths three colours: with
+ * it, no hero's node has two paths on one tint (`test/moveTiers` pins that), and without it the
+ * untyped path fell back to the hero's own type and matched its sibling on four heroes.
+ */
+export function pathLeadType(hero: HeroDefinition, path: EvolutionPath, moves: Record<string, MoveDefinition>): TypeId | null {
+  const types = pathTypes(hero, path);
+  const granted = path.unlocksMoveIds.map((id) => moves[id]?.type).find((t): t is TypeId => !!t) ?? path.typeGraft ?? null;
+  return granted && types.includes(granted) ? granted : null;
+}
+
 /** The form a hero is in now: the last path taken, or null while unevolved. What a clear's star is keyed by (profile.ts). */
 export function currentEvolutionPathId(entry: RosterEntry): string | null {
   return entry.chosenPathIds[entry.chosenPathIds.length - 1] ?? null;

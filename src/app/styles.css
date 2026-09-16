@@ -9253,11 +9253,10 @@ textarea,
    the two resets a button element does not inherit (width, font). */
 .compendium-row {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 7px;
   width: 100%;
-  min-height: 60px;
-  padding: 6px 12px 6px 8px;
+  padding: 7px 8px 8px;
   font: inherit;
   color: var(--text);
   text-align: left;
@@ -9325,22 +9324,58 @@ textarea,
   justify-content: flex-start;
 }
 
-.compendium-row-stars {
-  flex: none;
-  font-size: 20px;
+/* The first line: sprite, name, types. */
+.compendium-row-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-right: 4px;
+}
+
+/* The three paths under it, each a cell: the name over the star, washed in the
+   path's own tint (--path-lead, shared/pathTint.ts) so the same path is the
+   same colour here, on its dossier card and on the Evolution choice — and so
+   the three read as three things rather than a row of identical slots. */
+.compendium-row-paths {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.compendium-path-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 5px 4px 4px;
+  border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in srgb, var(--path-lead) 45%, var(--border));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--path-lead) 22%, transparent), color-mix(in srgb, var(--path-lead) 6%, transparent)),
+    var(--well);
+}
+
+.compendium-path-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--path-lead) 70%, var(--text));
+}
+
+.compendium-path-star {
+  font-size: 17px;
 }
 
 /* --- Evolution stars (shared/EvolutionStar.tsx) --------------------------
    One mark for "cleared a run in this form", everywhere a path is named. Lit
    in the accent gold the run summary's star already uses; the empty one is an
-   outline in dim text, so a row of three reads as slots before it reads as
+   outline in dim text, so a slot reads as a slot before it reads as
    decoration. */
-.evo-star-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-}
-
 .evo-star {
   display: inline-block;
   line-height: 1;
@@ -9533,9 +9568,13 @@ textarea,
   margin-bottom: 4px;
 }
 
+/* The name in the path's own tint (--plate-color, set from shared/pathTint.ts): the same
+   colour the card's wash and the Compendium's cell carry, so the three cards are three
+   colours as well as three names. */
 .evo-path-name {
   font-size: 13px;
   font-weight: 700;
+  color: color-mix(in srgb, var(--plate-hue) 75%, var(--text));
 }
 
 .evo-path-desc {

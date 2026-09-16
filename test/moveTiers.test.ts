@@ -30,6 +30,7 @@ import {
   grantOfferedMove,
   isMoveTierOfferable,
   levelMovePool,
+  pathLeadType,
   movePoolFloor,
   pendingScheduleEntry,
   recordMoveOffer,
@@ -337,10 +338,31 @@ test('move tiers: every hero has an Evolution node — the precondition the sche
   assert.deepStrictEqual(missing, [], 'these heroes can never evolve');
 });
 
-test('move tiers: every Evolution node offers exactly three paths', () => {
+test('move tiers: every Evolution node offers exactly three paths, each id the hero and the path name', () => {
+  const camel = (name: string) => name.split(/\s+/).map((w, i) => (i === 0 ? w[0].toLowerCase() + w.slice(1) : w[0].toUpperCase() + w.slice(1))).join('');
+  const seen = new Set<string>();
   for (const [heroId, nodes] of Object.entries(progressionTable.evolutions)) {
     for (const node of nodes) {
       assert.strictEqual(node.paths.length, 3, heroId);
+      for (const path of node.paths) {
+        // The id is what a star is keyed on (profile.ts), so it has to say which path — not a slot.
+        assert.strictEqual(path.id, `${heroId}-${camel(path.name)}`, `${path.id} should be named for its path`);
+        assert.ok(!seen.has(path.id), `${path.id} is used twice`);
+        seen.add(path.id);
+      }
+    }
+  }
+});
+
+test('move tiers: a hero\'s three paths are three colours — no two share a lead type, counting neutral as one', () => {
+  // The tint is how the three are told apart on the Compendium, the dossier and the choice
+  // (shared/pathTint.ts); a path that grafts nothing and grants no typed move is neutral.
+  for (const [heroId, nodes] of Object.entries(progressionTable.evolutions)) {
+    const hero = heroesById[heroId];
+    if (!hero) continue;
+    for (const node of nodes) {
+      const leads = node.paths.map((path) => pathLeadType(hero, path, moves) ?? 'neutral');
+      assert.strictEqual(new Set(leads).size, node.paths.length, `${heroId}: ${leads.join(', ')}`);
     }
   }
 });

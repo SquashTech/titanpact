@@ -12,7 +12,8 @@ import { TypeBadge } from '../shared/TypeBadge';
 import { TypeWheel } from '../shared/TypeWheel';
 import { EquipmentIcon, ItemEffectChips, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import { ItemDetailOverlay } from '../shared/ItemDossier';
-import { EvolutionStarRow } from '../shared/EvolutionStar';
+import { EvolutionStar } from '../shared/EvolutionStar';
+import { pathTintStyle } from '../shared/pathTint';
 import { progressionTable } from '../../data/progression';
 import { HeroDossierOverlay } from './HeroDossierOverlay';
 
@@ -35,11 +36,12 @@ function evolutionPathsOf(hero: HeroDefinition) {
 }
 
 /**
- * Roster row: sprite, name, types, and the hero's three Evolution stars — one per path, lit when
- * a run has been cleared in that form (profile.ts `evolutionStars`). A row rather than a tile
- * (2026-09-16, per user direction) because the stars are the point of the screen now and three
- * of them do not fit over a 48px sprite. The whole hero is one tap away in HeroDossierOverlay,
- * where each path's card carries the same star.
+ * Roster row: sprite, name and types on the first line, and under them the hero's three
+ * Evolution paths as cells — the path's name over its star, lit when a run has been cleared in
+ * that form (profile.ts `evolutionStars`), each cell washed in the path's own tint
+ * (shared/pathTint.ts, the same colour the Evolution choice and the dossier card wear). A row
+ * rather than a tile (2026-09-16, per user direction) because the stars are the point of the
+ * screen now. The whole hero is one tap away in HeroDossierOverlay.
  */
 function CompendiumHeroRow({ hero, onOpen }: { hero: HeroDefinition; onOpen: () => void }) {
   const paths = evolutionPathsOf(hero);
@@ -51,22 +53,31 @@ function CompendiumHeroRow({ hero, onOpen }: { hero: HeroDefinition; onOpen: () 
       onClick={onOpen}
       aria-label={`${hero.name} — view details`}
     >
-      <span className="compendium-row-figure">
-        <span className="pick-ground" aria-hidden="true" />
-        <HeroPortrait heroId={hero.id} className="compendium-row-portrait" />
-      </span>
-      <span className="compendium-row-body">
-        <span className="compendium-row-name">{hero.name}</span>
-        <span className="pick-types compendium-row-types">
-          {hero.types.map((t) => (
-            <span key={t} className="pick-type-code" style={{ color: getTypeColor(t) }} title={t}>
-              <ElementGlyph type={t} />
-              {getTypeAbbr(t)}
-            </span>
-          ))}
+      <span className="compendium-row-head">
+        <span className="compendium-row-figure">
+          <span className="pick-ground" aria-hidden="true" />
+          <HeroPortrait heroId={hero.id} className="compendium-row-portrait" />
+        </span>
+        <span className="compendium-row-body">
+          <span className="compendium-row-name">{hero.name}</span>
+          <span className="pick-types compendium-row-types">
+            {hero.types.map((t) => (
+              <span key={t} className="pick-type-code" style={{ color: getTypeColor(t) }} title={t}>
+                <ElementGlyph type={t} />
+                {getTypeAbbr(t)}
+              </span>
+            ))}
+          </span>
         </span>
       </span>
-      <EvolutionStarRow paths={paths} className="compendium-row-stars" />
+      <span className="compendium-row-paths">
+        {paths.map((path) => (
+          <span key={path.id} className="compendium-path-cell" style={pathTintStyle(hero, path)}>
+            <span className="compendium-path-name">{path.name}</span>
+            <EvolutionStar path={path} className="compendium-path-star" />
+          </span>
+        ))}
+      </span>
     </button>
   );
 }

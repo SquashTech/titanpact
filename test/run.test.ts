@@ -287,11 +287,11 @@ test('progression: an Evolution opens at MASTERY_EVOLUTION pips and at no level;
   assert.ok(node, 'the entry opens it');
   assert.strictEqual(node!.paths.length, 3, 'CLAUDE.md: a choice of three options');
 
-  const next = chooseEvolutionPath(run, progressionTable, heroes, 'cinderKnight', 'cinderKnight-offensive');
+  const next = chooseEvolutionPath(run, progressionTable, heroes, 'cinderKnight', 'cinderKnight-explosive');
   // Explosive is a REFOCUS: it SPENDS the Attack a physical Cinder lived on to buy Intelligence.
   assert.strictEqual(next.roster[0].evolutionStatGrants.attack, -40);
   assert.strictEqual(next.roster[0].evolutionStatGrants.intelligence, 60);
-  assert.ok(next.roster[0].chosenPathIds.includes('cinderKnight-offensive'));
+  assert.ok(next.roster[0].chosenPathIds.includes('cinderKnight-explosive'));
 
   assert.strictEqual(next.roster[0].scheduleTaken, run.roster[0].scheduleTaken, 'no schedule entry is spent — the pips paid');
   // one-shot: no second node authored for cinderKnight, so nothing further is offered
@@ -326,7 +326,7 @@ test('progression: a graft path adds its learnableMoveIds to the level-up pool w
   const before = poolAtTop(run.roster[0]);
   assert.ok(!before.includes('soulRend'), 'Spirit moves must not be offerable before the graft');
 
-  const next = chooseEvolutionPath(run, progressionTable, heroes, 'crimson', 'crimson-defensive');
+  const next = chooseEvolutionPath(run, progressionTable, heroes, 'crimson', 'crimson-cinderveil');
   const after = poolAtTop(next.roster[0]);
 
   for (const id of ['drain', 'secondWind', 'soulRend', 'banish']) {
@@ -343,7 +343,7 @@ test('progression: an untaken path\'s learnableMoveIds stay out of the pool, and
   let run = seedRoster(['crimson']);
   run = atEvolutionRung(run, 'crimson');
 
-  const next = chooseEvolutionPath(run, progressionTable, heroes, 'crimson', 'crimson-utility');
+  const next = chooseEvolutionPath(run, progressionTable, heroes, 'crimson', 'crimson-emberweave');
   const atEvolutionLevel = levelMovePool(progressionTable, moves, heroes.crimson, next.roster[0]);
 
   assert.ok(atEvolutionLevel.includes('manaTap')); // Early — reachable the moment the graft lands
@@ -355,7 +355,7 @@ test('progression: a path that grants a Passive records it on the entry (Crimson
   let run = seedRoster(['crimson']);
   run = atEvolutionRung(run, 'crimson');
 
-  const next = chooseEvolutionPath(run, progressionTable, heroes, 'crimson', 'crimson-offensive');
+  const next = chooseEvolutionPath(run, progressionTable, heroes, 'crimson', 'crimson-pyroclasm');
   assert.deepStrictEqual(next.roster[0].evolutionPassiveGrants, ['firestarter']);
   assert.ok(!next.roster[0].evolutionTypeGraft); // the mono path stays mono
   assert.strictEqual(next.roster[0].evolutionStatGrants.defense, 10);
@@ -366,7 +366,7 @@ test('progression: Warhowl inverts Fang\'s attacking stat — a NEGATIVE Evoluti
   let run = seedRoster(['packAlpha']);
   run = atEvolutionRung(run, 'packAlpha');
 
-  const next = chooseEvolutionPath(run, progressionTable, heroes, 'packAlpha', 'packAlpha-utility');
+  const next = chooseEvolutionPath(run, progressionTable, heroes, 'packAlpha', 'packAlpha-warhowl');
   const grants = next.roster[0].evolutionStatGrants;
   assert.strictEqual(grants.attack, -30);
   assert.strictEqual(grants.intelligence, 60);
@@ -405,12 +405,12 @@ test('progression: choosing Stonehide at the move cap leaves the loadout untouch
   run = atEvolutionRung(run, 'packAlpha');
   assert.strictEqual(run.roster[0].unlockedMoveIds.length, 4);
 
-  const next = chooseEvolutionPath(run, progressionTable, heroes, 'packAlpha', 'packAlpha-defensive');
+  const next = chooseEvolutionPath(run, progressionTable, heroes, 'packAlpha', 'packAlpha-stonehide');
   assert.deepStrictEqual(next.roster[0].unlockedMoveIds, run.roster[0].unlockedMoveIds);
   assert.strictEqual(next.roster[0].evolutionTypeGraft, 'Stone');
 
   // The overflow the caller is about to offer is spent here, so declining it does not requeue the move.
-  const path = progressionTable.evolutions.packAlpha[0].paths.find((p) => p.id === 'packAlpha-defensive')!;
+  const path = progressionTable.evolutions.packAlpha[0].paths.find((p) => p.id === 'packAlpha-stonehide')!;
   for (const moveId of path.unlocksMoveIds) assert.ok(next.roster[0].offeredMoveIds.includes(moveId));
 });
 
@@ -420,7 +420,7 @@ test('progression: a type-graft path grants a second type without touching the i
   let run = seedRoster(['tidecaller']);
   run = atEvolutionRung(run, 'tidecaller');
 
-  const next = chooseEvolutionPath(run, progressionTable, heroes, 'tidecaller', 'tidecaller-defensive');
+  const next = chooseEvolutionPath(run, progressionTable, heroes, 'tidecaller', 'tidecaller-frostbound');
   assert.strictEqual(next.roster[0].evolutionTypeGraft, 'Frost');
   assert.deepStrictEqual(heroes.tidecaller.types, ['Water']); // innate type untouched
 
@@ -490,7 +490,7 @@ test('progression: a graft on an already-dual-typed hero TRADES the innate secon
 test('progression: a later type-graft path shifts (replaces) the secondary type rather than stacking a third', () => {
   let run = seedRoster(['tidecaller']);
   run = atEvolutionRung(run, 'tidecaller');
-  run = chooseEvolutionPath(run, progressionTable, heroes, 'tidecaller', 'tidecaller-defensive');
+  run = chooseEvolutionPath(run, progressionTable, heroes, 'tidecaller', 'tidecaller-frostbound');
   assert.strictEqual(run.roster[0].evolutionTypeGraft, 'Frost');
 
   // A synthetic second node (the future multi-node "Deep line" shape, docs/leveling-and-ranks.md).

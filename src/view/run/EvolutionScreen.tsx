@@ -2,7 +2,8 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { HeroDefinition, StatKey, TypeId } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
-import type { EvolutionNode, EvolutionPath } from '../../run/progression';
+import { pathTypes, type EvolutionNode, type EvolutionPath } from '../../run/progression';
+import { pathTintStyle } from '../shared/pathTint';
 import { passives } from '../../data/passives';
 import { PassiveGlyph, passiveColor, passiveTint } from '../shared/passiveIcons';
 import { PassiveDetailCard } from '../shared/PassiveDossier';
@@ -37,36 +38,9 @@ interface Props {
   onChoose: (pathId: string) => void;
 }
 
-/** The types a hero ends up with down a path — a graft replaces the secondary, never the innate primary. */
-function pathTypes(hero: HeroDefinition, path: EvolutionPath): TypeId[] {
-  return path.typeGraft ? [hero.types[0], path.typeGraft] : [...hero.types];
-}
-
 /** The type a graft COSTS — only a hero born dual has one to give up. */
 function tradedType(hero: HeroDefinition, path: EvolutionPath): TypeId | null {
   return path.typeGraft ? hero.types[1] ?? null : null;
-}
-
-/**
- * The two type colours a path's card is washed in (2026-09-07, per user direction): the choice
- * is a type choice, so the card should look like the hero it produces rather than like a
- * category. `lead` is what the path is ABOUT — the type of the move it grants, or the type it
- * grafts — and `trail` is the half of the resulting typing that comes along.
- *
- * A path that grants nothing typed leads on the hero's SECONDARY instead: on a dual hero it is
- * the half that path isn't already defined by, which is what keeps two same-typed siblings
- * (Cinder's Explosive and Ironclad) from washing up identical.
- */
-function pathPalette(hero: HeroDefinition, path: EvolutionPath): { lead: TypeId; trail: TypeId } {
-  const types = pathTypes(hero, path);
-  const granted = path.unlocksMoveIds.map((id) => moves[id]?.type).find(Boolean) ?? path.typeGraft ?? null;
-  const lead = granted && types.includes(granted) ? granted : types[types.length - 1] ?? types[0];
-  return { lead, trail: types.find((t) => t !== lead) ?? lead };
-}
-
-function paletteStyle(hero: HeroDefinition, path: EvolutionPath): CSSProperties {
-  const { lead, trail } = pathPalette(hero, path);
-  return { '--path-lead': getTypeColor(lead), '--path-trail': getTypeColor(trail) } as CSSProperties;
 }
 
 /** What `learnableMoveIds` buys, as a promise. The names themselves are for the dossier. */
@@ -242,7 +216,7 @@ function PathButton({ hero, path, onInspect }: { hero: HeroDefinition; path: Evo
   return (
     <button
       className={`evolution-path-button${starred ? ' is-starred' : ''}`}
-      style={paletteStyle(hero, path)}
+      style={pathTintStyle(hero, path)}
       data-sfx="ui.select"
       onClick={onInspect}
     >
@@ -376,7 +350,7 @@ function PathDossier({
 
   return (
     <div className="detail-overlay evolution-dossier-overlay" onClick={onClose}>
-      <div className="detail-panel evolution-dossier" style={paletteStyle(hero, path)} onClick={(e) => e.stopPropagation()}>
+      <div className="detail-panel evolution-dossier" style={pathTintStyle(hero, path)} onClick={(e) => e.stopPropagation()}>
         <div className="evolution-dossier-head">
           <span className="evolution-dossier-title">
             {path.name}
@@ -530,7 +504,7 @@ function EvolutionCinematic({ hero, path, onDone }: { hero: HeroDefinition; path
   // Portalled into overlayHost(), never body (overlayHost.ts): the stage rules pin a screen's
   // children to `position: relative`, which would flatten this into the bottom of the column.
   return createPortal(
-    <div className={`evolve-cinematic is-${beat}`} style={paletteStyle(hero, path)} onClick={onDone}>
+    <div className={`evolve-cinematic is-${beat}`} style={pathTintStyle(hero, path)} onClick={onDone}>
       <span className="evolve-cinematic-veil" aria-hidden="true" />
       <span className="evolve-cinematic-rays" aria-hidden="true" />
 

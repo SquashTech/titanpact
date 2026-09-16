@@ -622,7 +622,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'cinderKnight-offensive',
+            id: 'cinderKnight-explosive',
             heroId: 'cinderKnight',
             name: 'Explosive',
             description: 'Stops swinging the fire and starts setting it off — everything it lights, it lights again.',
@@ -631,7 +631,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['setAlight', 'scorch', 'backdraft', 'sparkBurst', 'conjuredSword'],
           },
           {
-            id: 'cinderKnight-defensive',
+            id: 'cinderKnight-ironclad',
             heroId: 'cinderKnight',
             name: 'Ironclad',
             description: 'Armour that answers back; whatever strikes it comes away alight.',
@@ -640,7 +640,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['cinderguard'],
           },
           {
-            id: 'cinderKnight-utility',
+            id: 'cinderKnight-thunderblaze',
             heroId: 'cinderKnight',
             name: 'Thunderblaze',
             description: 'Sheds the plate for the storm that was always chasing it — and the iron it keeps still sets the charge off.',
@@ -656,7 +656,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'crimson-offensive',
+            id: 'crimson-pyroclasm',
             heroId: 'crimson',
             name: 'Pyroclasm',
             description: 'The fire it starts no longer goes out on its own.',
@@ -665,7 +665,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['firestarter'],
           },
           {
-            id: 'crimson-defensive',
+            id: 'crimson-cinderveil',
             heroId: 'crimson',
             name: 'Cinderveil',
             description: 'Wreathed in protective embers; a caster that stays on the field.',
@@ -675,7 +675,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['drain', 'secondWind', 'soulRend', 'banish'],
           },
           {
-            id: 'crimson-utility',
+            id: 'crimson-emberweave',
             heroId: 'crimson',
             name: 'Emberweave',
             description: 'Flame fused to raw arcane current; casts, and keeps casting.',
@@ -691,7 +691,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'brimstone-offensive',
+            id: 'brimstone-cauldronborn',
             heroId: 'brimstone',
             name: 'Cauldronborn',
             description: 'The pot boils over; what it set alight, it sets off again three times as hard.',
@@ -700,7 +700,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['scorch', 'firestorm', 'inferno', 'eclipse'],
           },
           {
-            id: 'brimstone-defensive',
+            id: 'brimstone-ashguard',
             heroId: 'brimstone',
             name: 'Ashguard',
             description: 'Caked-on ash hardens into a shell, and the fire it started is what feeds it.',
@@ -709,7 +709,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['ashfeast'],
           },
           {
-            id: 'brimstone-utility',
+            id: 'brimstone-hexfume',
             heroId: 'brimstone',
             name: 'Hexfume',
             description: 'Lets the shadow go and keeps the smoke — which turns out to have been the poison all along.',
@@ -727,7 +727,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'tidecaller-offensive',
+            id: 'tidecaller-tidecaller',
             heroId: 'tidecaller',
             name: 'Tidecaller',
             description: 'Stays water all the way down, and hits with everything at once.',
@@ -740,7 +740,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['maelstrom'],
           },
           {
-            id: 'tidecaller-defensive',
+            id: 'tidecaller-frostbound',
             heroId: 'tidecaller',
             name: 'Frostbound',
             description: 'The water hardens; freezes the field and stands in it.',
@@ -750,7 +750,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['deepChill', 'permafrost', 'glaciate', 'frostWall'],
           },
           {
-            id: 'tidecaller-utility',
+            id: 'tidecaller-siren',
             heroId: 'tidecaller',
             name: 'Siren',
             description: 'Sings the water at them until they stop being able to tell it apart from their own thoughts.',
@@ -767,7 +767,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'pincer-offensive',
+            id: 'pincer-tideclaw',
             heroId: 'pincer',
             name: 'Tideclaw',
             description: 'Every wave it lands leaves the water still carrying the charge — and its iron is what sets that off.',
@@ -776,7 +776,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['staticTide'],
           },
           {
-            id: 'pincer-defensive',
+            id: 'pincer-ironshell',
             heroId: 'pincer',
             name: 'Ironshell',
             description: 'The carapace hardens past shell into plate.',
@@ -786,7 +786,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['fortify', 'reinforce', 'metallicBlade', 'juggernaut', 'swingingChain'],
           },
           {
-            id: 'pincer-utility',
+            id: 'pincer-squallshell',
             heroId: 'pincer',
             name: 'Squallshell',
             description: 'Drags the storm down into the shallows and holds it there.',
@@ -803,7 +803,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'glacialWarden-offensive',
+            id: 'glacialWarden-avalanche',
             heroId: 'glacialWarden',
             name: 'Avalanche',
             description: 'Stops waiting for the thaw. Everything it froze comes down at once, and the cold gets sharper for each one.',
@@ -812,7 +812,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['killingFrost'],
           },
           {
-            id: 'glacialWarden-defensive',
+            id: 'glacialWarden-glacier',
             heroId: 'glacialWarden',
             name: 'Glacier',
             description: 'Ice packed over bedrock; what it drops on them was a hillside a moment ago.',
@@ -822,7 +822,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['tremor', 'toughenUp', 'bastion', 'landslide'],
           },
           {
-            id: 'glacialWarden-utility',
+            id: 'glacialWarden-permafrost',
             heroId: 'glacialWarden',
             name: 'Permafrost',
             description: 'Lets the ice run again, and it comes back as weather.',
@@ -838,7 +838,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'rime-offensive',
+            id: 'rime-avalanche',
             heroId: 'rime',
             name: 'Avalanche',
             description: 'Starts small and does not stop; every throw lands heavier than the last.',
@@ -846,7 +846,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['snowball'],
           },
           {
-            id: 'rime-defensive',
+            id: 'rime-glacier',
             heroId: 'rime',
             name: 'Glacier',
             description: 'Ice packed to stone; the ground it holds freezes whatever is standing on it.',
@@ -857,7 +857,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['frozenStone'],
           },
           {
-            id: 'rime-utility',
+            id: 'rime-hydrofreeze',
             heroId: 'rime',
             name: 'Hydrofreeze',
             description: 'Lets the ice run again — casts on the water it came from.',
@@ -873,7 +873,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'cube-offensive',
+            id: 'cube-shatterframe',
             heroId: 'cube',
             name: 'Shatterframe',
             description: 'Every layer it packs on is another edge to swing.',
@@ -882,7 +882,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['coldForge'],
           },
           {
-            id: 'cube-defensive',
+            id: 'cube-permafrostCore',
             heroId: 'cube',
             name: 'Permafrost Core',
             description: 'The frozen shell sets inside a housing nothing gets through.',
@@ -892,7 +892,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['fortify', 'sharpen', 'rendArmor', 'juggernaut', 'onslaught'],
           },
           {
-            id: 'cube-utility',
+            id: 'cube-cryolattice',
             heroId: 'cube',
             name: 'Cryolattice',
             description: 'Grows down into the ground it is standing on, then brings all of it.',
@@ -909,7 +909,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'stormRanger-offensive',
+            id: 'stormRanger-windshear',
             heroId: 'stormRanger',
             name: 'Windshear',
             description: 'Never stops moving, and every hit that lands makes the next one sooner.',
@@ -918,7 +918,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['squallLine'],
           },
           {
-            id: 'stormRanger-defensive',
+            id: 'stormRanger-greenwood',
             heroId: 'stormRanger',
             name: 'Greenwood',
             description: 'Comes down out of the sky and fights from the treeline instead.',
@@ -928,7 +928,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['ivySpike', 'vineLash', 'leafSlice', 'thornWhip', 'branchSlam'],
           },
           {
-            id: 'stormRanger-utility',
+            id: 'stormRanger-whiteout',
             heroId: 'stormRanger',
             name: 'Whiteout',
             description: 'Takes the wind cold; nothing on the far side gets to move first again.',
@@ -944,7 +944,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'tempest-offensive',
+            id: 'tempest-lightningRod',
             heroId: 'tempest',
             name: 'Lightning Rod',
             description: 'Stops casting the storm and starts carrying it — metal, and everything that touches it.',
@@ -954,7 +954,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['heavyBlow', 'serratedSlice', 'rendArmor', 'onslaught', 'swingingChain'],
           },
           {
-            id: 'tempest-defensive',
+            id: 'tempest-ionosphere',
             heroId: 'tempest',
             name: 'Ionosphere',
             description: 'Climbs to where the charge is stored and never runs dry again.',
@@ -964,7 +964,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['infuse', 'magicCloak', 'overload', 'conduit', 'arcaneOverflow'],
           },
           {
-            id: 'tempest-utility',
+            id: 'tempest-thunderhead',
             heroId: 'tempest',
             name: 'Thunderhead',
             description: 'Gets there first, marks everything, and feeds on what it marks.',
@@ -979,7 +979,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'scallywag-offensive',
+            id: 'scallywag-corsair',
             heroId: 'scallywag',
             name: 'Corsair',
             description: 'No quarter, no guard, and no interest in the second exchange.',
@@ -987,7 +987,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['onslaught'],
           },
           {
-            id: 'scallywag-defensive',
+            id: 'scallywag-saltrig',
             heroId: 'scallywag',
             name: 'Saltrig',
             description: 'Scavenged plate and salvaged gear lashed over the coat; built for a boarding fight.',
@@ -997,7 +997,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['cogBop', 'overclock', 'juryRig', 'cogSlam', 'jackpot'],
           },
           {
-            id: 'scallywag-utility',
+            id: 'scallywag-seawise',
             heroId: 'scallywag',
             name: 'Seawise',
             description: 'Reads the water and the wind, and takes whatever it finds out there.',
@@ -1015,7 +1015,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'crag-offensive',
+            id: 'crag-stonebreaker',
             heroId: 'crag',
             name: 'Stonebreaker',
             description: 'Stops aiming. One swing now covers the whole far side.',
@@ -1023,7 +1023,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['titanicCrush'],
           },
           {
-            id: 'crag-defensive',
+            id: 'crag-mountainheart',
             heroId: 'crag',
             name: 'Mountainheart',
             description: 'Stone with iron running through it; an immovable mass that keeps coming.',
@@ -1033,7 +1033,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['ironFist', 'fortify', 'rendArmor', 'onslaught'],
           },
           {
-            id: 'crag-utility',
+            id: 'crag-rootwarden',
             heroId: 'crag',
             name: 'Rootwarden',
             description: 'Something took root in the rock, and now it mends faster than it breaks.',
@@ -1050,7 +1050,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'sentinel-offensive',
+            id: 'sentinel-talonguard',
             heroId: 'sentinel',
             name: 'Talonguard',
             description: 'Drops off the perch. All that weight, arriving at once.',
@@ -1058,7 +1058,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['bodyCrush'],
           },
           {
-            id: 'sentinel-defensive',
+            id: 'sentinel-cathedral',
             heroId: 'sentinel',
             name: 'Cathedral',
             description: 'Iron worked through the stone; a load-bearing wall of a hero.',
@@ -1068,7 +1068,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['sharpen', 'ironFist', 'reinforce', 'onslaught', 'swingingChain'],
           },
           {
-            id: 'sentinel-utility',
+            id: 'sentinel-gloomwatch',
             heroId: 'sentinel',
             name: 'Gloomwatch',
             description: 'Keeps the vigil after dark, and stops being visible while it does.',
@@ -1085,7 +1085,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'wildOracle-offensive',
+            id: 'wildOracle-druid',
             heroId: 'wildOracle',
             name: 'Druid',
             description: 'Stops asking the wild for anything and simply becomes it.',
@@ -1095,7 +1095,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['claw', 'toxicFangs', 'rampage', 'eviscerate', 'apexPredator'],
           },
           {
-            id: 'wildOracle-defensive',
+            id: 'wildOracle-lightsage',
             heroId: 'wildOracle',
             name: 'Lightsage',
             description: 'Tends the one standing next to her before anything else.',
@@ -1106,7 +1106,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['naturesPurification'],
           },
           {
-            id: 'wildOracle-utility',
+            id: 'wildOracle-apothecary',
             heroId: 'wildOracle',
             name: 'Apothecary',
             description: 'What she puts in them comes back through her.',
@@ -1121,7 +1121,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'mordax-offensive',
+            id: 'mordax-bloomfang',
             heroId: 'mordax',
             name: 'Bloomfang',
             description: 'Thorn and claw working as one thing; every dose it lands makes the next arrive sooner.',
@@ -1130,7 +1130,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['thornrot'],
           },
           {
-            id: 'mordax-defensive',
+            id: 'mordax-ironbark',
             heroId: 'mordax',
             name: 'Ironbark',
             description: 'Bark hardens past wood into something closer to the ground it grew out of.',
@@ -1140,7 +1140,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['toughenUp', 'rockToss', 'faultLine', 'rubbleRush', 'boulderSlam'],
           },
           {
-            id: 'mordax-utility',
+            id: 'mordax-wildheart',
             heroId: 'mordax',
             name: 'Wildheart',
             description: 'Lets the animal half win the argument.',
@@ -1156,7 +1156,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'hollowbark-offensive',
+            id: 'hollowbark-thornheart',
             heroId: 'hollowbark',
             name: 'Thornheart',
             description: 'What grows back comes back armed.',
@@ -1165,7 +1165,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['heartwood'],
           },
           {
-            id: 'hollowbark-defensive',
+            id: 'hollowbark-rootstone',
             heroId: 'hollowbark',
             name: 'Rootstone',
             description: 'Bark petrifies; the roots go down into rock and stay there.',
@@ -1175,7 +1175,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['toughenUp', 'bodyBlow', 'bastion', 'faultLine', 'bodyCrush'],
           },
           {
-            id: 'hollowbark-utility',
+            id: 'hollowbark-wraithwood',
             heroId: 'hollowbark',
             name: 'Wraithwood',
             description: 'The hollow trunk lets something else move in, and it does the talking now.',
@@ -1192,7 +1192,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'dawnwarden-offensive',
+            id: 'dawnwarden-sunflare',
             heroId: 'dawnwarden',
             name: 'Sunflare',
             description: 'Stops being the dawn and becomes noon.',
@@ -1202,7 +1202,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['ember', 'setAlight', 'spreadingBlaze', 'firestorm', 'inferno'],
           },
           {
-            id: 'dawnwarden-defensive',
+            id: 'dawnwarden-solstice',
             heroId: 'dawnwarden',
             name: 'Solstice',
             description: 'The longest night, held off by standing very still.',
@@ -1212,7 +1212,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['frostArmor', 'deepChill', 'permafrost', 'avalanche', 'absoluteZero'],
           },
           {
-            id: 'dawnwarden-utility',
+            id: 'dawnwarden-dawnherald',
             heroId: 'dawnwarden',
             name: 'Dawnherald',
             description: 'What she mends stays mended after she has gone.',
@@ -1227,7 +1227,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'aegis-offensive',
+            id: 'aegis-vanguard',
             heroId: 'aegis',
             name: 'Vanguard',
             description: 'Sets the shield down and picks up the other thing.',
@@ -1235,7 +1235,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['deityBlade'],
           },
           {
-            id: 'aegis-defensive',
+            id: 'aegis-warforged',
             heroId: 'aegis',
             name: 'Warforged',
             description: 'The shield-arm stops being flesh — and it was never only its own arm.',
@@ -1246,7 +1246,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['shieldbearer'],
           },
           {
-            id: 'aegis-utility',
+            id: 'aegis-verdantOath',
             heroId: 'aegis',
             name: 'Verdant Oath',
             description: 'The blessing puts down roots; what it mends keeps mending.',
@@ -1263,7 +1263,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'shadowMonk-offensive',
+            id: 'shadowMonk-nightreaver',
             heroId: 'shadowMonk',
             name: 'Nightreaver',
             description: 'Stops being in the room at all, and the room finds out late.',
@@ -1271,7 +1271,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['shadowForm'],
           },
           {
-            id: 'shadowMonk-defensive',
+            id: 'shadowMonk-stillmind',
             heroId: 'shadowMonk',
             name: 'Stillmind',
             description: 'Very little reaches it, and less of that stays.',
@@ -1281,7 +1281,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['drain', 'torment', 'unbound', 'vengeance', 'wailingFlight'],
           },
           {
-            id: 'shadowMonk-utility',
+            id: 'shadowMonk-nightveil',
             heroId: 'shadowMonk',
             name: 'Nightveil',
             description: 'Puts the knife down. It was never the frightening part.',
@@ -1297,7 +1297,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'marrow-offensive',
+            id: 'marrow-carrion',
             heroId: 'marrow',
             name: 'Carrion',
             description: 'Waits for the wound to finish its work, then arrives.',
@@ -1305,7 +1305,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['eclipse'],
           },
           {
-            id: 'marrow-defensive',
+            id: 'marrow-ossuary',
             heroId: 'marrow',
             name: 'Ossuary',
             description: 'Bone-deep endurance; outlasts everything it poisoned.',
@@ -1315,7 +1315,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['regrowth', 'toxicSpores', 'corrode', 'wildBloom', 'miasma'],
           },
           {
-            id: 'marrow-utility',
+            id: 'marrow-ashenwell',
             heroId: 'marrow',
             name: 'Ashenwell',
             description: 'The rot ends in a pyre, and the pyre does not go out.',
@@ -1331,7 +1331,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'nightshade-offensive',
+            id: 'nightshade-blackout',
             heroId: 'nightshade',
             name: 'Blackout',
             description: 'Comes in on both sides at once — the knife and the sky.',
@@ -1341,7 +1341,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['jolt', 'stormLash', 'shockSlice', 'thunderbolt', 'overcharge'],
           },
           {
-            id: 'nightshade-defensive',
+            id: 'nightshade-penumbra',
             heroId: 'nightshade',
             name: 'Penumbra',
             description: 'Never quite finishes arriving, and hits harder for it.',
@@ -1350,7 +1350,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['afterimage'],
           },
           {
-            id: 'nightshade-utility',
+            id: 'nightshade-hemlock',
             heroId: 'nightshade',
             name: 'Hemlock',
             description: 'Stops carrying the poison and becomes it.',
@@ -1367,7 +1367,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'runescribe-offensive',
+            id: 'runescribe-thaumaturge',
             heroId: 'runescribe',
             name: 'Thaumaturge',
             description: 'Stops rationing the source and simply opens it.',
@@ -1376,7 +1376,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['overspill'],
           },
           {
-            id: 'runescribe-defensive',
+            id: 'runescribe-machinist',
             heroId: 'runescribe',
             name: 'Machinist',
             description: 'Stops writing on paper and starts writing on something that can take a hit.',
@@ -1386,7 +1386,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['overclock', 'juryRig', 'malfunction', 'overdrive', 'perfectCreation'],
           },
           {
-            id: 'runescribe-utility',
+            id: 'runescribe-blackletter',
             heroId: 'runescribe',
             name: 'Blackletter',
             description: 'Read the one book it was told not to, and kept reading.',
@@ -1402,7 +1402,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'zenith-offensive',
+            id: 'zenith-apex',
             heroId: 'zenith',
             name: 'Apex',
             description: 'Stops metering the output. There is no upper figure left.',
@@ -1410,7 +1410,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['singularity'],
           },
           {
-            id: 'zenith-defensive',
+            id: 'zenith-halo',
             heroId: 'zenith',
             name: 'Halo',
             description: 'The orb opens into a standing ring of light.',
@@ -1420,7 +1420,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['bless', 'mend', 'purify', 'radiance', 'divineGrace'],
           },
           {
-            id: 'zenith-utility',
+            id: 'zenith-oracle',
             heroId: 'zenith',
             name: 'Oracle',
             description: 'Reads the whole field, then decides what order it happens in.',
@@ -1437,7 +1437,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'mindweaver-offensive',
+            id: 'mindweaver-construct',
             heroId: 'mindweaver',
             name: 'Construct',
             description: 'Stops reaching into other minds and builds itself something to hit with.',
@@ -1447,7 +1447,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['cogBop', 'whirlingBlades', 'overdrive', 'jackpot', 'perfectCreation'],
           },
           {
-            id: 'mindweaver-defensive',
+            id: 'mindweaver-blindspot',
             heroId: 'mindweaver',
             name: 'Blindspot',
             description: 'Sits in the gap where they forget to look.',
@@ -1457,7 +1457,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['weaken', 'umbraBolt', 'enfeeble', 'shadowForm', 'umbralWave'],
           },
           {
-            id: 'mindweaver-utility',
+            id: 'mindweaver-overmind',
             heroId: 'mindweaver',
             name: 'Overmind',
             description: 'Ties the two of them together, so whatever reaches one reaches both.',
@@ -1472,7 +1472,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'lucius-offensive',
+            id: 'lucius-voidcaller',
             heroId: 'lucius',
             name: 'Voidcaller',
             description: 'Opens the other door again — the one he was told to leave shut.',
@@ -1482,7 +1482,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['umbraBolt', 'umbralBeam', 'enfeeble', 'umbralWave', 'lieInWait'],
           },
           {
-            id: 'lucius-defensive',
+            id: 'lucius-sanguine',
             heroId: 'lucius',
             name: 'Sanguine',
             description: "Feeds on the enemy's open wounds — heals for every point of Bleed damage they take, from any source.",
@@ -1491,7 +1491,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['sanguine'],
           },
           {
-            id: 'lucius-utility',
+            id: 'lucius-cipher',
             heroId: 'lucius',
             name: 'Cipher',
             description: 'Stops spending and starts holding; the reserve never bottoms out.',
@@ -1507,7 +1507,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'trance-offensive',
+            id: 'trance-puppeteer',
             heroId: 'trance',
             name: 'Puppeteer',
             description: 'Stops suggesting and starts pulling — and every thread it cuts feeds the next.',
@@ -1516,7 +1516,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['puppetStrings'],
           },
           {
-            id: 'trance-defensive',
+            id: 'trance-somnambulist',
             heroId: 'trance',
             name: 'Somnambulist',
             description: 'Sleeps inside the current itself, where almost nothing reaches.',
@@ -1526,7 +1526,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['focus', 'infuse', 'study', 'empower', 'fontOfPower'],
           },
           {
-            id: 'trance-utility',
+            id: 'trance-ringmaster',
             heroId: 'trance',
             name: 'Ringmaster',
             description: 'Runs the whole show, and decides who is still in it.',
@@ -1543,7 +1543,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'revenant-offensive',
+            id: 'revenant-wraithblade',
             heroId: 'revenant',
             name: 'Wraithblade',
             description: 'Remembers having hands, and what it used them for.',
@@ -1553,7 +1553,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['claw', 'maul', 'rampage', 'phantomStrike', 'spookySlice'],
           },
           {
-            id: 'revenant-defensive',
+            id: 'revenant-undying',
             heroId: 'revenant',
             name: 'Undying',
             description: 'What it takes back, it shares.',
@@ -1562,7 +1562,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['communion'],
           },
           {
-            id: 'revenant-utility',
+            id: 'revenant-soulbinder',
             heroId: 'revenant',
             name: 'Soulbinder',
             description: 'Ties the two of them to each other and pulls.',
@@ -1578,7 +1578,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'sorrow-offensive',
+            id: 'sorrow-banshee',
             heroId: 'sorrow',
             name: 'Banshee',
             description: 'The wail sharpened to an edge, and thrown from somewhere nobody was looking.',
@@ -1588,7 +1588,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['weaken', 'umbraBolt', 'shadowSlice', 'umbralBeam', 'enfeeble'],
           },
           {
-            id: 'sorrow-defensive',
+            id: 'sorrow-mourner',
             heroId: 'sorrow',
             name: 'Mourner',
             description: 'Grief that will not be moved. Every blow lands on something already closing.',
@@ -1597,7 +1597,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['grief'],
           },
           {
-            id: 'sorrow-utility',
+            id: 'sorrow-dirge',
             heroId: 'sorrow',
             name: 'Dirge',
             description: 'Puts the blade down and sings instead — and it carries to both of them.',
@@ -1614,7 +1614,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'ironWarden-offensive',
+            id: 'ironWarden-sunderer',
             heroId: 'ironWarden',
             name: 'Sunderer',
             description: 'Stops holding the line and starts taking the wall apart.',
@@ -1624,7 +1624,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['cogBop', 'pistonPunch', 'whirlingBlades', 'jackpot', 'overdrive'],
           },
           {
-            id: 'ironWarden-defensive',
+            id: 'ironWarden-bulwark',
             heroId: 'ironWarden',
             name: 'Bulwark',
             description: 'The doubles anchor. Whatever they aimed at, it arrives here instead.',
@@ -1633,7 +1633,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['sentry'],
           },
           {
-            id: 'ironWarden-utility',
+            id: 'ironWarden-lodestar',
             heroId: 'ironWarden',
             name: 'Lodestar',
             description: 'Picks up the other half of the oath.',
@@ -1649,7 +1649,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'valor-offensive',
+            id: 'valor-galvanize',
             heroId: 'valor',
             name: 'Galvanize',
             description: 'Steel is a conductor, and nobody told the storm otherwise.',
@@ -1659,7 +1659,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['thunderclap', 'shockSlice', 'ionize', 'overcharge', 'stormSurge'],
           },
           {
-            id: 'valor-defensive',
+            id: 'valor-shieldwall',
             heroId: 'valor',
             name: 'Shieldwall',
             description: 'Every blow lands on armour that was not that thick a moment ago.',
@@ -1668,7 +1668,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['tempering'],
           },
           {
-            id: 'valor-utility',
+            id: 'valor-paladin',
             heroId: 'valor',
             name: 'Paladin',
             description: 'Picks up the other half of the oath.',
@@ -1684,7 +1684,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'gallant-offensive',
+            id: 'gallant-charger',
             heroId: 'gallant',
             name: 'Charger',
             description: 'The lance, and nothing behind it but the ground going past.',
@@ -1693,7 +1693,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['cavalryCharge'],
           },
           {
-            id: 'gallant-defensive',
+            id: 'gallant-oathbound',
             heroId: 'gallant',
             name: 'Oathbound',
             description: 'The knightly oath made literal — spoken over the pair of them.',
@@ -1703,7 +1703,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['bless', 'mend', 'purify', 'holySlice', 'divineGrace'],
           },
           {
-            id: 'gallant-utility',
+            id: 'gallant-destrier',
             heroId: 'gallant',
             name: 'Destrier',
             description: 'The horse stops being a mount.',
@@ -1720,7 +1720,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'forgewright-offensive',
+            id: 'forgewright-runaway',
             heroId: 'forgewright',
             name: 'Runaway',
             description: 'The governor comes off. Nobody puts it back.',
@@ -1729,7 +1729,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['combustion'],
           },
           {
-            id: 'forgewright-defensive',
+            id: 'forgewright-hydraulics',
             heroId: 'forgewright',
             name: 'Hydraulics',
             description: 'Runs cold, runs forever, and takes the hit for the pair.',
@@ -1739,7 +1739,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['refresh', 'aquaSlice', 'torrent', 'highTide', 'tsunami'],
           },
           {
-            id: 'forgewright-utility',
+            id: 'forgewright-furnace',
             heroId: 'forgewright',
             name: 'Furnace',
             description: 'Stops containing the fire and starts pointing it.',
@@ -1755,7 +1755,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'steamColossus-offensive',
+            id: 'steamColossus-redline',
             heroId: 'steamColossus',
             name: 'Redline',
             description: 'Every safety valve welded shut; it hits heavier the longer it is left running.',
@@ -1764,7 +1764,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['runawayPressure'],
           },
           {
-            id: 'steamColossus-defensive',
+            id: 'steamColossus-bulkhead',
             heroId: 'steamColossus',
             name: 'Bulkhead',
             description: 'Plated past the point of reason, and it brings the plating for two.',
@@ -1772,7 +1772,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['reinforce'],
           },
           {
-            id: 'steamColossus-utility',
+            id: 'steamColossus-overpressure',
             heroId: 'steamColossus',
             name: 'Overpressure',
             description: 'Stops driving the pistons and points the boiler instead — the iron was only ever the housing.',
@@ -1790,7 +1790,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'packAlpha-offensive',
+            id: 'packAlpha-bloodhunt',
             heroId: 'packAlpha',
             name: 'Bloodhunt',
             description: 'Something is bleeding, and it knows.',
@@ -1799,7 +1799,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['bloodthirsty'],
           },
           {
-            id: 'packAlpha-defensive',
+            id: 'packAlpha-stonehide',
             heroId: 'packAlpha',
             name: 'Stonehide',
             description: 'Hide like the ground it fights on; takes the hit and gives it back.',
@@ -1809,7 +1809,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['rockToss', 'bastion', 'rubbleRush', 'stoneheart'],
           },
           {
-            id: 'packAlpha-utility',
+            id: 'packAlpha-warhowl',
             heroId: 'packAlpha',
             name: 'Warhowl',
             description: 'Lets go of the body and leads from somewhere else.',
@@ -1825,7 +1825,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'widow-offensive',
+            id: 'widow-venomfang',
             heroId: 'widow',
             name: 'Venomfang',
             description: 'Every cut it opens is already carrying something.',
@@ -1834,7 +1834,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['widowsKiss'],
           },
           {
-            id: 'widow-defensive',
+            id: 'widow-carapace',
             heroId: 'widow',
             name: 'Carapace',
             description: 'Goes still inside the shell — and what comes back out is not smaller.',
@@ -1842,7 +1842,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['shadowForm'],
           },
           {
-            id: 'widow-utility',
+            id: 'widow-silkbinder',
             heroId: 'widow',
             name: 'Silkbinder',
             description: 'Stops hiding and starts gardening — the web is a thing that grows, and nothing crosses it at speed.',
@@ -1859,7 +1859,7 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'coil-offensive',
+            id: 'coil-basilisk',
             heroId: 'coil',
             name: 'Basilisk',
             description: 'The gaze stops being a suggestion, and whatever it lands on stops moving well.',
@@ -1868,7 +1868,7 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['constrict'],
           },
           {
-            id: 'coil-defensive',
+            id: 'coil-hooded',
             heroId: 'coil',
             name: 'Hooded',
             description: 'Spreads the hood, and it comes up stone — what the gaze does to them, it did to itself first.',
@@ -1878,7 +1878,7 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['tremor', 'rockfall', 'toughenUp', 'bastion', 'stoneheart'],
           },
           {
-            id: 'coil-utility',
+            id: 'coil-mesmer',
             heroId: 'coil',
             name: 'Mesmer',
             description: 'Holds the whole field in the coil, and decides what order it moves in.',
