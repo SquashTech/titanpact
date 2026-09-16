@@ -3460,6 +3460,24 @@ test run and the real finale draw the same picture. After the win,
 `ChampionScreen` performs the recruit fanfare's rite for the whole pact at once — the sleep card,
 each hero in the rings, then the roster in a row — before the summary.
 
+## Thirty-sixth pass — the stage reads like the fight (2026-09-16)
+
+The draft and the Recruit Contract stage (`shared/HeroStage.tsx`), per user direction: the
+starting kit was three chips in a row that each had to be tapped to learn what the move did, and
+the six-bar silhouette under the figure cost a full row of the screen for seven numbers. Now the
+figure stands on a **dais** with a **sheet** beside it — name, types, the veteran marks, and seven
+horizontal stat bars on the same `statFraction` reference, ruled off with the Stat Total — and
+under them the kit is **the fight's own move console**: `MoveButtonReplica` rows in the
+`.move-list` facets, domain light and hairlines included, so a candidate is read against the
+object the choice is about. Each row says its type, cost, power and effect line at rest; the tap
+is the dossier. The console is a boxed panel where the fight's bleeds to the edge, because
+`.draft-stage` is a scroll box and a negative margin inside one is a horizontal scroll range,
+not a bleed. The sheet's fills grow in a row at a time on mount and the console's rows arrive as
+they do on a turn, both keyed on the hero, so a rail tap redraws the reading as a sweep. Measured
+on the 394 × 780 canvas: the tightest case (an Act 5 contract — level pip, path and gear marks,
+four moves) fits with ~40px of slack and no scroll. The third pass's table above describes the
+silhouette and chips this replaced.
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.

@@ -3,17 +3,18 @@ import { moves } from '../../data/moves';
 import type { MoveDefinition, StatKey, StatLine, TypeId } from '../../engine/content';
 import type { HealCaster } from '../../engine/heal/healPipeline';
 import type { StatModifiers } from '../../engine/state';
-import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
+import { getTypeColorRgb } from '../combat/typeColors';
 import { MoveDetailOverlay } from '../combat/MoveDetailOverlay';
 import { HeroPortrait } from './HeroPortrait';
-import { ManaCost } from './ManaCost';
+import { MoveButtonReplica } from './MoveTile';
 import { TypeBadge } from './TypeBadge';
 import { STAT_COLORS, STAT_LABELS, computeStatTotal, statFraction } from './StatBars';
 import type { StatScale } from '../../run/statScale';
 
-// The hero stage shared by the draft and the Recruit Contract claim: one hero at 144px in a sigil,
-// a stat silhouette, the kit, and a rail of other candidates. The CSS family keeps its `.draft-*`
-// prefix on purpose — it names the idiom, not the screen.
+// The hero stage shared by the draft and the Recruit Contract claim: one hero at 144px in a sigil
+// with its stat sheet beside it (the dais), the kit as the fight's own move console under them, and
+// a rail of other candidates. The CSS family keeps its `.draft-*` prefix on purpose — it names the
+// idiom, not the screen.
 
 const DEFAULT_MOTES = 16;
 
@@ -89,35 +90,36 @@ export function StageFigure({
 }
 
 // Same set the Stat Total sums (StatBars TOTAL_STATS); MP Regen is flat across the roster.
-const SILHOUETTE_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed', 'manaPool'];
+const SHEET_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed', 'manaPool'];
+
+/** The figure and the sheet beside it, side by side. */
+export function StageDais({ children }: { children: ReactNode }) {
+  return <div className="draft-dais">{children}</div>;
+}
 
 /** Seven bars on StatBars' shared reference plus their total. `grants` is the flat delta the hero already carries (entryStats.ts); `scale` the run's reference, level 1's at the draft. */
-export function StageSilhouette({ baseStats, grants = {}, scale }: { baseStats: StatLine; grants?: StatModifiers; scale?: StatScale }) {
+export function StageSheet({ baseStats, grants = {}, scale }: { baseStats: StatLine; grants?: StatModifiers; scale?: StatScale }) {
   const effective = Object.fromEntries(
-    SILHOUETTE_STATS.map((stat) => [stat, baseStats[stat] + (grants[stat] ?? 0)])
+    SHEET_STATS.map((stat) => [stat, baseStats[stat] + (grants[stat] ?? 0)])
   ) as Record<StatKey, number>;
   return (
-    <div className="draft-silhouette">
-      {SILHOUETTE_STATS.map((stat) => {
+    <div className="draft-sheet">
+      {SHEET_STATS.map((stat) => {
         const granted = grants[stat] ?? 0;
         const value = effective[stat];
         return (
-          <div className="draft-stat" key={stat}>
-            <span className={`draft-stat-value${granted ? ' is-boosted' : ''}`}>{value}</span>
-            <div className="draft-stat-track">
-              <div
-                className="draft-stat-fill"
-                style={{ height: `${statFraction(stat, value, scale) * 100}%`, background: STAT_COLORS[stat] }}
-              />
-            </div>
-            <span className="draft-stat-label">{STAT_LABELS[stat]}</span>
+          <div className="draft-sheet-row" key={stat} style={{ '--stat': STAT_COLORS[stat] } as CSSProperties}>
+            <span className="draft-sheet-label">{STAT_LABELS[stat]}</span>
+            <span className="draft-sheet-track">
+              <span className="draft-sheet-fill" style={{ width: `${statFraction(stat, value, scale) * 100}%` }} />
+            </span>
+            <span className={`draft-sheet-value${granted ? ' is-boosted' : ''}`}>{value}</span>
           </div>
         );
       })}
-      <div className="draft-stat draft-stat-total" title="Stat Total — the seven bars beside it, summed">
-        <span className="draft-stat-value">{computeStatTotal(effective)}</span>
-        <div className="draft-stat-track draft-stat-track-empty" />
-        <span className="draft-stat-label">Stat Total</span>
+      <div className="draft-sheet-total" title="Stat Total — the seven bars above it, summed">
+        <span className="draft-sheet-label">Stat Total</span>
+        <span className="draft-sheet-value">{computeStatTotal(effective)}</span>
       </div>
     </div>
   );
@@ -133,25 +135,18 @@ export function StageTypes({ types }: { types: readonly TypeId[] }) {
   );
 }
 
-/** Boxed because they are actionable: tapping one pops its detail over the stage. */
-export function StageKit({ moveIds, onPick }: { moveIds: readonly string[]; onPick: (move: MoveDefinition) => void }) {
+/**
+ * The kit as the fight shows it: the same move rows the console deals, read without a board
+ * (MoveButtonReplica). A tap pops the dossier over the stage. `caster` is what a heal's
+ * figure and a Class move's type resolve against.
+ */
+export function StageKit({ moveIds, caster, onPick }: { moveIds: readonly string[]; caster?: HealCaster; onPick: (move: MoveDefinition) => void }) {
   return (
-    <div className="draft-kit">
+    <div className="move-list draft-console">
       {moveIds.map((moveId) => {
         const move = moves[moveId];
         if (!move) return null;
-        return (
-          <button
-            className="draft-kit-move"
-            key={moveId}
-            style={{ '--move-type': getTypeColor(move.type), '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}
-            onClick={() => onPick(move)}
-            aria-haspopup="dialog"
-          >
-            <ManaCost cost={move.manaCost} size="sm" className="draft-kit-crystal" />
-            {move.name}
-          </button>
-        );
+        return <MoveButtonReplica key={moveId} move={move} caster={caster} onClick={() => onPick(move)} />;
       })}
     </div>
   );

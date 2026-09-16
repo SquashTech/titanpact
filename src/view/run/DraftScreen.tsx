@@ -9,11 +9,12 @@ import { getTypeColorRgb } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import {
   StageCandidate,
+  StageDais,
   StageFigure,
   StageKit,
   StageMovePopup,
   StageRail,
-  StageSilhouette,
+  StageSheet,
   StageSky,
   StageTypes,
 } from '../shared/HeroStage';
@@ -37,6 +38,7 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
 
   const featured = rosterHeroes[featuredId];
   const featuredRgb = getTypeColorRgb(featured.types[0]);
+  const caster = { wisdom: featured.baseStats.wisdom, types: featured.types, stats: featured.baseStats };
   const featuredChosen = pickedIds.includes(featuredId);
   const pactFull = pickedIds.length >= STARTER_PICK_COUNT;
   // `toggle` picks the real sound, so the delegated listener stays silent — except when the button
@@ -102,23 +104,27 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
       </header>
 
       <div className="draft-stage">
-        {/* Keyed on the featured hero so switching remounts the figure and replays its arrival. */}
-        <StageFigure key={featuredId} heroId={featured.id} heroName={featured.name} onInspect={() => setInspecting(featured)}>
-          {bindFlare && (
-            <span
-              key={bindFlare.tick}
-              className={`draft-bind-flare${bindFlare.final ? ' is-final' : ''}`}
-              aria-hidden="true"
-            />
-          )}
-        </StageFigure>
+        <StageDais>
+          {/* Keyed on the featured hero so switching remounts the figure and replays its arrival. */}
+          <StageFigure key={featuredId} heroId={featured.id} heroName={featured.name} onInspect={() => setInspecting(featured)}>
+            {bindFlare && (
+              <span
+                key={bindFlare.tick}
+                className={`draft-bind-flare${bindFlare.final ? ' is-final' : ''}`}
+                aria-hidden="true"
+              />
+            )}
+          </StageFigure>
 
-        <div className="draft-ident" key={`${featuredId}-ident`}>
-          <h3 className="draft-name">{featured.name}</h3>
-          <StageTypes types={featured.types} />
-          <StageSilhouette baseStats={featured.baseStats} />
-          <StageKit moveIds={featured.moveIds} onPick={setPopupMove} />
-        </div>
+          <div className="draft-ident" key={`${featuredId}-ident`}>
+            <h3 className="draft-name">{featured.name}</h3>
+            <StageTypes types={featured.types} />
+            <StageSheet baseStats={featured.baseStats} />
+          </div>
+        </StageDais>
+
+        {/* Keyed too, so the rows arrive with the hero as the fight's console does with the turn. */}
+        <StageKit key={`${featuredId}-kit`} moveIds={featured.moveIds} caster={caster} onPick={setPopupMove} />
 
         <button
           className={`draft-choose${featuredChosen ? ' chosen' : ''}`}
@@ -152,11 +158,7 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
       </button>
 
       {popupMove && (
-        <StageMovePopup
-          move={popupMove}
-          caster={{ wisdom: featured.baseStats.wisdom, types: featured.types, stats: featured.baseStats }}
-          onClose={() => setPopupMove(null)}
-        />
+        <StageMovePopup move={popupMove} caster={caster} onClose={() => setPopupMove(null)} />
       )}
 
       {inspecting && (

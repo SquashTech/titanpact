@@ -11801,7 +11801,7 @@ textarea,
 .draft-figure {
   position: relative;
   flex: none;
-  width: 208px;
+  width: 176px;
   height: 172px;
   animation: draft-figure-rise 0.5s var(--ease-spring) both;
 }
@@ -11868,8 +11868,8 @@ textarea,
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 184px;
-  height: 184px;
+  width: 172px;
+  height: 172px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background: conic-gradient(
@@ -11977,25 +11977,39 @@ textarea,
   opacity: 1;
 }
 
-/* Stretched to the stage's full width rather than shrink-to-fit. Its
-   children still centre themselves; what changes is that the kit row and the
-   move readout get the whole stage to lay out in instead of inheriting a
-   width set by whichever child happened to be widest (the stat silhouette).
-   That extra ~38px is what lets three move chips share one line. */
-.draft-ident {
+/* The dais: the figure and its sheet side by side, the stage's full width.
+   Both were stacked down the centre before, and every reading of the hero
+   cost a full row of the screen — the kit chips under them had to be a
+   single line of abbreviations to fit at all. Side by side, the sheet gets
+   the height the figure already needed, and the width that frees below the
+   dais is what pays for the fight's own move console (.draft-console). */
+.draft-dais {
   align-self: stretch;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* The sheet column. Left-aligned against the figure rather than centred:
+   a name, a type line and seven ruled stat rows read as a dossier beside a
+   portrait, which is the object this half of the dais is. min-width: 0 so a
+   long name's wrap is what gives, never the dais's width. */
+.draft-ident {
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 5px;
   animation: title-tagline-fade 0.45s ease 0.1s both;
 }
 
 .draft-name {
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 800;
   letter-spacing: -0.01em;
-  line-height: 1;
+  line-height: 1.05;
   margin: 0;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
 }
@@ -12005,60 +12019,30 @@ textarea,
   gap: 5px;
 }
 
-/* The stat silhouette. Six vertical bars on StatBars' own shared ceilings
+/* The stat sheet. Seven horizontal bars on StatBars' own shared ceilings
    (statFraction) rather than local maxima, so the shape is comparable across
-   all four candidates — which is the actual decision being made here. Six,
-   not eight: Mana Pool / MP Regen are the separate tempo axis (CLAUDE.md),
-   and the full block is one tap away on the hero sheet. Chromeless — a stat
-   readout isn't actionable, so it gets no box. */
-.draft-silhouette {
-  display: flex;
-  align-items: flex-end;
-  gap: 6px;
-}
-
-.draft-stat {
+   every candidate — which is the actual decision being made here. Seven, not
+   eight: MP Regen is flat across the roster, and the full block is one tap
+   away on the hero sheet. Chromeless — a stat readout isn't actionable, so
+   it gets no box; the bars carry their own light instead. */
+.draft-sheet {
+  align-self: stretch;
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 3px;
-  width: 30px;
+  margin-top: 3px;
 }
 
-.draft-stat-value {
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1;
-}
-
-/* A veteran offered on a Recruit Contract arrives carrying the Evolution and
-   shrine grants they earned before you beat them (entryStats.ts), and the
-   silhouette shows the number that will actually fight. Tinting the ones that
-   are above base keeps the strip honest: this hero is not simply a better
-   authored spread than the one beside it, it is a hero who has already been
-   somewhere. */
-.draft-stat-value.is-boosted {
-  color: var(--buff);
-}
-
-.draft-stat-track {
+.draft-sheet-row {
   display: flex;
-  align-items: flex-end;
-  width: 8px;
-  height: 34px;
-  border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.07);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
-  overflow: hidden;
+  align-items: center;
+  gap: 6px;
+  color: var(--stat);
 }
 
-.draft-stat-fill {
-  width: 100%;
-  border-radius: var(--radius-pill);
-}
-
-.draft-stat-label {
+.draft-sheet-label {
+  flex: none;
+  width: 26px;
   font-size: 8px;
   font-weight: 800;
   letter-spacing: 0.05em;
@@ -12066,105 +12050,127 @@ textarea,
   line-height: 1;
 }
 
-/* The Stat Total is a total, not an eighth stat, so it gets a rule instead of
-   a bar and sits in the accent rather than a stat color. flex-end on the row
-   keeps its label on the same baseline as the seven it summarizes. Wider than
-   a stat column and nowrap: "Stat Total" spelled out does not fit the 30px a
-   three-letter stat code needs, and the label is worth the ~24px — "BST" was
-   jargon a new player had to be taught. */
-.draft-stat-total {
-  justify-content: center;
-  border-left: 1px solid rgba(255, 255, 255, 0.09);
-  margin-left: 2px;
-  padding-left: 8px;
-  width: auto;
+.draft-sheet-track {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
 }
 
-.draft-stat-total .draft-stat-label {
+/* The fill is a light, not a paint: a white-hot leading edge over the stat's
+   own colour, with the bloom in the stat colour — the same emitter idiom the
+   console's domain light uses, so the sheet and the console under it read as
+   one instrument. Grows in from the left on mount, staggered a row at a time
+   by the nth-child delays below, so a rail tap redraws the sheet as a sweep
+   rather than a swap. */
+.draft-sheet-fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, var(--stat), color-mix(in srgb, var(--stat) 55%, #ffffff));
+  box-shadow: 0 0 6px 0 color-mix(in srgb, var(--stat) 70%, transparent);
+  transform-origin: left center;
+  animation: draft-sheet-grow 0.4s var(--ease-out) backwards;
+}
+
+@keyframes draft-sheet-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.draft-sheet-row:nth-child(2) .draft-sheet-fill {
+  animation-delay: 0.03s;
+}
+.draft-sheet-row:nth-child(3) .draft-sheet-fill {
+  animation-delay: 0.06s;
+}
+.draft-sheet-row:nth-child(4) .draft-sheet-fill {
+  animation-delay: 0.09s;
+}
+.draft-sheet-row:nth-child(5) .draft-sheet-fill {
+  animation-delay: 0.12s;
+}
+.draft-sheet-row:nth-child(6) .draft-sheet-fill {
+  animation-delay: 0.15s;
+}
+.draft-sheet-row:nth-child(7) .draft-sheet-fill {
+  animation-delay: 0.18s;
+}
+
+.draft-sheet-value {
+  flex: none;
+  width: 26px;
+  text-align: right;
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  line-height: 1;
+}
+
+/* A veteran offered on a Recruit Contract arrives carrying the Evolution and
+   shrine grants they earned before you beat them (entryStats.ts), and the
+   sheet shows the number that will actually fight. Tinting the ones that are
+   above base keeps the strip honest: this hero is not simply a better
+   authored spread than the one beside it, it is a hero who has already been
+   somewhere. */
+.draft-sheet-value.is-boosted {
+  color: var(--buff);
+}
+
+/* The Stat Total is a total, not an eighth stat, so it gets a rule instead of
+   a bar and sits in the accent rather than a stat colour. */
+.draft-sheet-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 2px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.draft-sheet-total .draft-sheet-label {
+  width: auto;
   white-space: nowrap;
 }
 
-.draft-stat-total .draft-stat-value {
-  font-size: 15px;
+.draft-sheet-total .draft-sheet-value {
+  width: auto;
+  font-size: 14px;
   color: var(--accent);
 }
 
-.draft-stat-track-empty {
-  display: none;
+/* The kit as the fight's own move console (.move-list, styles above): the
+   same four facets, domain light and hairlines the player will be reading
+   every turn, so the choice is made against the object it is a choice about
+   — not against three chips that abbreviate it. The chips were a single
+   line of names with a cost gem, and every one of them had to be tapped to
+   learn what it did; a console row says the type, the cost, the power and
+   the effect line at rest, and the tap is the dossier.
+
+   Boxed, where the fight's console bleeds to the screen edge: .draft-stage
+   is a scroll box, so a negative margin here would become a horizontal
+   scroll range rather than a bleed. A panel is the honest version of the
+   same console — one surface with four facets cut into it, held in a hairline
+   ring. The rows keep their natural height rather than the fight's `1fr`
+   split, since the stage is a column and not a fixed-height tray. */
+.draft-console {
+  flex: none;
+  align-self: stretch;
+  grid-auto-rows: auto;
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: linear-gradient(165deg, var(--panel-alt), #171a22);
+  box-shadow: var(--hairline), var(--elev-1);
 }
-
-/* Starting kit — the move buttons with their boxes taken off, which is the
-   whole rule in one element. The crystal stays (mana cost is the primary
-   balance lever, CLAUDE.md "No accuracy stat", and a bare unitless number is
-   the exact fault the Field Effect badge was rebuilt for); the type becomes
-   the name's own color, the same "type is the material, not a tag on it"
-   move the move buttons made when .type-badge became .move-type-code. */
-/* Three chips, one row, for every hero in the roster — the widest starting
-   kit ("Venomous Bite / Mend Wounds / Second Wind") is what the chip metrics
-   below are sized against. Worth the tighter type: a kit that wraps to two
-   rows on some candidates and not others moves the figure between rail taps,
-   and the whole point of this screen is comparing four heroes to each other. */
-.draft-kit {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 5px;
-  max-width: 100%;
-}
-
-/* Boxed, because it's pressable now (see the markup's comment). The box is
-   the move's own type color at low alpha rather than the generic --border,
-   so the kit still reads as a set belonging to this hero rather than as
-   three neutral chips that happen to sit under it. */
-.draft-kit-move {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  /* Height, not width, is what makes this comfortable to hit — 30px is kept
-     even as the type shrinks to fit three names on one line. */
-  min-height: 30px;
-  padding: 4px 8px 4px 4px;
-  border: 1px solid rgba(var(--move-type-rgb), 0.4);
-  border-radius: var(--radius-pill);
-  background: linear-gradient(180deg, rgba(var(--move-type-rgb), 0.14), rgba(var(--move-type-rgb), 0.04));
-  font-size: 10px;
-  font-weight: 700;
-  white-space: nowrap;
-  color: var(--move-type);
-  cursor: pointer;
-  transition: border-color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out),
-    box-shadow var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out);
-}
-
-.draft-kit-move:hover {
-  border-color: rgba(var(--move-type-rgb), 0.75);
-}
-
-.draft-kit-move:active {
-  transform: translateY(1px);
-}
-
-/* The one whose text is in the panel below. Matched to .move-info-panel's
-   own gold edge rather than tinted further by type — the pairing between
-   "this chip" and "that readout" is the thing the highlight has to carry,
-   and it has to survive being read against fifteen different type colors. */
-.draft-kit-move.selected {
-  border-color: var(--accent);
-  background: linear-gradient(180deg, rgba(224, 166, 60, 0.2), rgba(224, 166, 60, 0.06));
-  box-shadow: 0 0 0 1px rgba(224, 166, 60, 0.3), 0 0 12px rgba(224, 166, 60, 0.2);
-}
-
-/* The draft kit chip's cost is the same <ManaCost size="sm"> gem the move
-   button uses — it used to be a hand-copied half-scale duplicate of the old
-   sphere's gradient recipe, which is exactly the drift the shared component
-   exists to stop. Nothing left to style here beyond the half-scale size the
-   component's own `sm` modifier already carries. */
-
-/* The move detail popup a tap on a kit chip opens is now the combat move
-   dossier itself (.move-detail-panel — see HeroStage's StageMovePopup), so
-   the stage-flavored frame that used to live here is gone with it. It was a
-   handsome box around a card that said less than the one the fight screen
-   shows, and the box was the smaller half of that trade. */
 
 /* --- The bind (DraftScreen, .draft-bind-flare) ---------------------------
    Binding a starter used to be silent and nearly still: the socket in the

@@ -17,11 +17,12 @@ import { healCasterForEntry } from '../shared/healCaster';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import {
   StageCandidate,
+  StageDais,
   StageFigure,
   StageKit,
   StageMovePopup,
   StageRail,
-  StageSilhouette,
+  StageSheet,
   StageSky,
   StageTypes,
 } from '../shared/HeroStage';
@@ -86,6 +87,7 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
   const worn = featured.equipment.map((id) => equipment[id]).filter((item) => item !== undefined);
   const evolutions = chosenEvolutionPaths(progressionTable, featured);
   const heroClass = chosenClass(classes, featured);
+  const caster = healCasterForEntry(hero, featured);
 
   function handleSign() {
     if (!canSign) return;
@@ -159,35 +161,38 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
           </span>
         )}
 
-        <StageFigure key={featured.rosterId} heroId={hero.id} heroName={hero.name} onInspect={() => setInspecting(true)}>
-          <span className="recruit-level" aria-label={`Level ${levelOf(featured)}`}>
-            Lv {levelOf(featured)}
-          </span>
-        </StageFigure>
+        <StageDais>
+          <StageFigure key={featured.rosterId} heroId={hero.id} heroName={hero.name} onInspect={() => setInspecting(true)}>
+            <span className="recruit-level" aria-label={`Level ${levelOf(featured)}`}>
+              Lv {levelOf(featured)}
+            </span>
+          </StageFigure>
 
-        <div className="draft-ident" key={`${featured.rosterId}-ident`}>
-          <h3 className="draft-name">{hero.name}</h3>
-          <StageTypes types={rosterEntryTypes(hero, featured)} />
+          <div className="draft-ident" key={`${featured.rosterId}-ident`}>
+            <h3 className="draft-name">{hero.name}</h3>
+            <StageTypes types={rosterEntryTypes(hero, featured)} />
 
-          {(evolutions.length > 0 || heroClass || worn.length > 0) && (
-            <div className="recruit-veteran">
-              {evolutions.map((path) => (
-                <span key={path.id} className="recruit-veteran-mark">
-                  ✦ {path.name}
-                </span>
-              ))}
-              {heroClass && <span className="recruit-veteran-mark">◆ {heroClass.name}</span>}
-              {worn.map((item) => (
-                <span key={item.id} className="recruit-veteran-mark" style={{ color: RARITY_COLOR_VARS[item.rarity] }}>
-                  ▣ {item.name}
-                </span>
-              ))}
-            </div>
-          )}
+            {(evolutions.length > 0 || heroClass || worn.length > 0) && (
+              <div className="recruit-veteran">
+                {evolutions.map((path) => (
+                  <span key={path.id} className="recruit-veteran-mark">
+                    ✦ {path.name}
+                  </span>
+                ))}
+                {heroClass && <span className="recruit-veteran-mark">◆ {heroClass.name}</span>}
+                {worn.map((item) => (
+                  <span key={item.id} className="recruit-veteran-mark" style={{ color: RARITY_COLOR_VARS[item.rarity] }}>
+                    ▣ {item.name}
+                  </span>
+                ))}
+              </div>
+            )}
 
-          <StageSilhouette baseStats={hero.baseStats} grants={grants} scale={statScaleFor(run)} />
-          <StageKit moveIds={featured.unlockedMoveIds} onPick={setPopupMove} />
-        </div>
+            <StageSheet baseStats={hero.baseStats} grants={grants} scale={statScaleFor(run)} />
+          </div>
+        </StageDais>
+
+        <StageKit key={`${featured.rosterId}-kit`} moveIds={featured.unlockedMoveIds} caster={caster} onPick={setPopupMove} />
 
         {/* `data-sfx="none"` only while it can sign — `contract.sign` is this press's sound. Left
             off when inert so the delegated listener's disabled buzz still fires (audio/uiSfx.ts). */}
@@ -241,7 +246,7 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
       )}
 
       {popupMove && (
-        <StageMovePopup move={popupMove} caster={healCasterForEntry(hero, featured)} onClose={() => setPopupMove(null)} />
+        <StageMovePopup move={popupMove} caster={caster} onClose={() => setPopupMove(null)} />
       )}
 
       {inspecting && (
