@@ -114,10 +114,14 @@ little):
 
 | | HP | Atk | Def | Int | Wis | Spd | Mana | MPR |
 |---|---|---|---|---|---|---|---|---|
-| Left Eye | 480 | 40 | 100 | 140 | 100 | 90 | 200 | 25 |
-| Right Eye | 560 | 40 | 120 | 110 | 120 | 80 | 200 | 25 |
-| Left Eye, wide | 600 | 40 | 110 | 170 | 110 | 100 | 240 | 30 |
-| Right Eye, wide | 700 | 40 | 140 | 130 | 140 | 90 | 240 | 30 |
+| Left Eye | 540 | 40 | 105 | 155 | 105 | 92 | 220 | 28 |
+| Right Eye | 630 | 40 | 125 | 125 | 125 | 82 | 220 | 28 |
+| Left Eye, wide | 680 | 40 | 115 | 190 | 115 | 102 | 260 | 32 |
+| Right Eye, wide | 790 | 40 | 145 | 150 | 145 | 92 | 260 | 32 |
+
+(The lines as shipped after the second tuning pass, §9; Regard 160, Glare 205. The first draft —
+480/560/600/700 HP, Int 140/110/170/130, Regard 150, Glare 190 — measured as a wall no roster
+ever failed.)
 
 Attack 40 on all four is deliberate: nothing they do is physical, and a dumped stat is what a
 specialist looks like. Speed 90/100 for the reason the Endbringer's is 95 — the fastest hero is
@@ -141,7 +145,7 @@ fixes on Valor."*
 the player's actions resolve — the telegraph is visible for the whole of the next command
 phase, which is the point.
 
-**Regard** — Ancient, magical, base power **150** (phase 2 **Glare**, 190), mana 60,
+**Regard** — Ancient, magical, base power **160** (phase 2 **Glare**, 205), mana 60,
 `target: singleEnemy`, **`requiresTargetStatus: 'Beheld'`** (the hard targeting gate already in
 `statusEngine.ts statusGatedTargets` — no legal target means the move cannot be declared) and
 **`detonatesStatus: 'Beheld'`** (the mark is consumed by the strike). A Regard is a hit for
@@ -253,9 +257,14 @@ that is *never* dodged is a number.
 - **The Eyes one-shot a dumped Wisdom.** Int 140 into a Wisdom of 40 is a 3.5× ratio on a neutral
   60-power Runic Blast with STAB — ~300 — before a Regard is ever fired. The existing formula
   doing what it does; the Herald has the same Intelligence. Noted for the balance pass.
-- **Measured (sim pass, 300 runs, the chart pilot, same seed as pass 9):** 59 rosters reached
-  the Eyes and **all 59 cleared them**, in **21.5 rounds** at **59.6% HP** left, against the
-  Herald's 11.0 rounds and 79.4% — the run's longest fight by half, never its loss. Full-clear
-  19.7% (was 19.9% before the node — the Eyes take nothing from a roster that beat the Herald).
-  Whether a true final boss should be a wall a made roster never fails is the designer's; the
-  levers are the four lines in §4 and Lidded's base.
+- **Measured, three passes (the chart pilot; `feedback-sim-results-are-directional`):**
+  - As first authored (300 runs): 59 reached the Eyes, **all 59 cleared**, 21.5 rounds, 59.6% HP
+    left — the run's longest fight and never its loss; full-clear 19.7%, unmoved by the node.
+  - Per user direction — *the run should be able to end there* — a first bump (HP 600/700/760/880,
+    Int 170/140/210/170, Regard 170, Glare 220; 400 runs): 91 reached, **24.2% cleared**, 8.4%
+    HP left; full-clear 5.5%. Too far.
+  - Halfway back, the lines in §4 (600 runs): 135 reached, **61.5% cleared** (83), 21.5 rounds,
+    **20.0% HP** left; full-clear **13.8%** (was 19.7). The Eyes now end roughly two runs in five
+    that reach them — the hardest single fight in the run, under the Act 4 Guardian's 70% and
+    over nothing. **Shipped.** The pilot never dodges a Beheld hero (it switches on matchup, and
+    Ancient is neutral), so a player who uses the telegraph does better than this figure.
