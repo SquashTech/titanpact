@@ -6,7 +6,7 @@ import * as assert from 'assert';
 import { test } from './harness';
 import { moves } from '../src/data/moves';
 import { statusApplicationsOf } from '../src/engine/content';
-import { enemies, CHAMPION_IDS, ELDER_BOUGH_ID, ENDBRINGER_ID, LAVA_BEAST_ID, KRAKEN_ID, SKELETON_KING_ID, YUGZULACH_ID, unsealedIdFor } from '../src/data/enemies';
+import { enemies, CHAMPION_IDS, ELDER_BOUGH_ID, ENDBRINGER_ID, DRAGON_ID, KRAKEN_ID, SKELETON_KING_ID, YUGZULACH_ID, unsealedIdFor } from '../src/data/enemies';
 import { guardianMarkup, isGuardianFigure } from '../src/view/shared/guardianFigures';
 import { getTypeColor } from '../src/view/combat/typeColors';
 import { locations } from '../src/data/locations';
@@ -51,7 +51,7 @@ test("guardians: every champion's mortal half sits inside its own Location's spa
     assert.ok(location.spawnTypes.includes(mortal), `${location.id}'s champion is ${mortal}, outside ${location.spawnTypes.join('/')}`);
   }
   // The Foundry's answer runs out at its Guardian: Water is 2x on every Fire spawn and 1x here.
-  assert.strictEqual(resolveTypeMult(typeChart, 'Water', enemies[LAVA_BEAST_ID].types), 1);
+  assert.strictEqual(resolveTypeMult(typeChart, 'Water', enemies[DRAGON_ID].types), 1);
 });
 
 test('guardians: Yugzulach and the Kraken carry their authored kits', () => {
@@ -75,8 +75,8 @@ test('guardians: the Elder Bough is one turn paying out three times, and Speed 3
   }
 });
 
-test('guardians: the Lava Beast lights its own ground and grinds on it, and never burns itself', () => {
-  const guardian = enemies[LAVA_BEAST_ID];
+test('guardians: the Dragon lights its own ground and grinds on it, and never burns itself', () => {
+  const guardian = enemies[DRAGON_ID];
   assert.deepStrictEqual([...guardian.moveIds], ['runicBlast', 'spreadingBlaze', 'immolate', 'firebrand']);
   assert.ok(guardian.moveIds.includes('spreadingBlaze'), 'the boss no longer lights the ground it burns on');
   // Volcanic Surge's self Burn did not decay on the boss's own Scorched Land — guarded, not assumed.

@@ -142,26 +142,30 @@ const GUARDIANS: Record<string, Draw> = {
       + seal(50, 78, 12, 5, 3.2);
   },
 
-  // The Lava Beast (Fire): a crust-plated quadruped, horned, a crest of flame down its spine and
-  // molten cracks that flare when it attacks and go dark when it is hit. One eye in the head,
-  // one sunk in a flank fissure. The seal is a collar between the plates of the neck.
-  lavaBeast: (p, po, ey, seal) => {
+  // The Dragon (Fire): a coiled wyrm with its wings thrown up and back past the frame, a neck
+  // rising to a horned head, a crest of flame down the spine and molten cracks that flare when it
+  // breathes and go dark when it is hit. One eye in the head, one on the near wing's membrane.
+  // The seal is a collar at the base of the neck.
+  dragon: (p, po, ey, seal) => {
     const hh = po === 'attack' ? 1.6 : po === 'hurt' ? 0.45 : 1;
     const crack = po === 'attack' ? p.ll : po === 'hurt' ? p.d : p.c;
-    const dip = po === 'attack' ? 6 : 0;
-    const crest = [[16, 48], [28, 38], [42, 32], [58, 30], [72, 32]].map(([x, y], i) => P(`${x - 6},${y + 6} ${x},${y - (12 + i * 2) * hh} ${x + 6},${y + 6}`, p.c) + P(`${x - 2.5},${y + 6} ${x},${y - (12 + i * 2) * hh * 0.55} ${x + 2.5},${y + 6}`, p.ll)).join('');
-    const head = G(
-      `translate(0 ${dip})`,
-      D('M82,40 C104,32 126,44 124,64 C122,76 102,80 88,72 Z', p.dd) + P('92,42 96,10 106,44', p.d) + P('108,46 128,22 120,52', p.d) + P('94,40 97,18 102,42', p.c, 'opacity=".3"')
-        + D('M98,68 L124,64 L122,74 L100,78 Z', crack) + L('M98,48 l10,8 M112,46 l6,10 M92,60 l6,6', crack, 2.2) + ey(108, 54, 5, po === 'hurt' ? 'narrow' : po === 'attack' ? 'wide' : 'stare')
-    );
-    return crest + P('10,80 8,88 26,88 26,80', p.dd) + P('34,80 34,88 50,88 50,80', p.dd) + P('60,80 60,88 76,88 76,80', p.dd) + P('84,78 86,88 100,88 98,78', p.dd)
-      + [12, 36, 62, 88].map((x) => R(x, 86, 12, 3, crack, 1.5, 'opacity=".8"')).join('')
-      + D('M8,74 C4,46 30,30 60,32 C84,32 100,44 98,66 L100,80 L12,80 Z', p.dd) + D('M18,62 L30,44 L52,38 L46,62 Z', p.d, 'opacity=".4"') + D('M62,40 L86,46 L92,66 L64,64 Z', p.d, 'opacity=".3"')
-      + L('M24,54 l8,10 l-4,10 M56,44 l8,12 l-6,10 M76,54 l8,12 M44,72 l10,6 M18,72 l6,6', crack, 2.4)
-      + head + (po === 'attack' ? P('124,60 144,56 140,70 126,70', p.c) + P('126,64 138,62 136,68', p.ll) : '')
-      + C(40, 56, 7, '#07050a', 'opacity=".55"') + ey(40, 56, 5.2)
-      + seal(86, 58 + dip / 2, 7, 11, 3.2, 12);
+    const flare = po === 'attack' ? 1.15 : po === 'hurt' ? 0.8 : 1;
+    const jaw = po === 'attack' ? 6 : 0;
+    const wing = (path: string, veins: string) => D(path, p.d) + L(veins, p.dd, 1.4, 'opacity=".6"');
+    const farWing = G(`translate(50 58) scale(${flare}) translate(-50 -58)`, wing('M50,58 C54,30 62,2 94,-14 C76,2 70,18 70,30 C64,40 56,50 50,58 Z', 'M52,54 C60,36 70,18 88,-8 M56,50 C64,36 68,28 70,30'));
+    const nearWing = G(`translate(40 62) scale(${flare}) translate(-40 -62)`, wing('M40,62 C32,32 18,6 -10,-8 C6,8 12,24 10,36 C22,34 32,46 40,62 Z', 'M38,58 C30,38 20,18 -4,-4 M36,56 C26,42 18,36 10,36'));
+    const crest = [[30, 62], [44, 58], [58, 56], [70, 46], [78, 34]].map(([x, y], i) => P(`${x - 5},${y + 4} ${x},${y - (9 + i) * hh} ${x + 5},${y + 4}`, p.c) + P(`${x - 2},${y + 4} ${x},${y - (9 + i) * hh * 0.55} ${x + 2},${y + 4}`, p.ll)).join('');
+    return L('M28,76 C8,80 -4,66 6,52', p.dd, 6) + L('M28,76 C8,80 -4,66 6,52', crack, 1.4, 'opacity=".7"') + P('2,54 8,40 14,54', p.d)
+      + farWing + crest
+      + P('54,80 58,88 72,88 66,78', p.dd) + P('26,80 22,88 36,88 36,80', p.dd) + L('M62,88 l3,3 M68,88 l3,3 M26,88 l-3,3 M32,88 l0,3', p.ll, 1.4)
+      + E(44, 72, 26, 13, p.dd) + D('M22,76 C30,86 60,86 68,76 C60,80 30,80 22,76 Z', crack, 'opacity=".55"') + L('M30,66 l6,6 l-4,6 M50,64 l6,8 l-6,4', crack, 2)
+      + L('M60,66 C74,60 82,44 86,30', p.dd, 12) + L('M66,60 l4,6 M76,46 l5,4', crack, 2)
+      + nearWing + C(18, 22, 6, '#07050a', 'opacity=".5"') + ey(18, 22, 4.2)
+      + D('M78,20 C90,10 114,14 120,26 C116,34 102,36 90,34 Z', p.dd) + P('86,18 90,-4 96,20', p.d) + P('96,18 110,0 106,22', p.d)
+      + D(`M92,34 L118,30 L114,${38 + jaw} L94,${40 + jaw} Z`, crack) + [96, 102, 108].map((x) => P(`${x - 2},34 ${x},${39 + jaw} ${x + 2},34`, p.ll)).join('')
+      + (po === 'attack' ? P('118,32 148,22 140,40 146,52 118,42', p.c) + P('120,36 138,30 136,44', p.ll, 'opacity=".8"') : '')
+      + ey(102, 26, 4.4)
+      + seal(70, 56, 7, 9, 3, 20);
   },
 
   // The Skeleton King (Spirit): a crowned skull on a spectral robe, a sceptre raised. One socket
@@ -206,48 +210,40 @@ function lens(x: number, y: number, hw: number, hh: number, tilt: number, state:
 }
 
 /**
- * The Endbringer: an armature of Ancient plate that runs off the top of the frame — the brow
- * TitanColossus keeps, over a torso between two pillar arms whose fists rest on the ground.
- * Five shackle stubs and one whole chain (see the header). It barely moves: an attack lifts a
- * fist and opens the eyes, a hit narrows them.
+ * The Endbringer: the Titan's HERALD, not the Titan. A gaunt hooded bearer with no legs under
+ * the hem, a standard taller than the frame in the leading hand and a horn in the trailing one.
+ * The pennant carries the Titan's eye — the title screen's lens (titanArt.tsx) — which is how
+ * the Titan looks out of its herald; the hood's own eye is small. The five broken seals are
+ * threaded on the pole under the pennant: what it came out through. An attack raises the horn and sounds it, and the
+ * eye on the banner opens wide; a hit sags the banner.
  */
 function endbringer(p: Pal, po: GuardianPose, uid: string, gradientId: string): string {
   const state: EyeState = po === 'hurt' ? 'narrow' : po === 'attack' ? 'wide' : 'stare';
-  const lift = po === 'attack' ? -20 : 0;
-  const seam = (d: string) => L(d, '#07050a', 1.6, 'opacity=".45"');
-  const fist = (x: number) => D(`M${x},88 L${x + 2},68 C${x + 4},58 ${x + 26},58 ${x + 28},68 L${x + 30},88 Z`, p.d) + seam(`M${x + 8},70 v14 M${x + 15},68 v16 M${x + 22},70 v14`);
-  // A link is an ellipse along the chain's run, every other one seen edge-on.
-  const chain = (x: number, y: number, dx: number, dy: number, n: number) => {
-    const a = (Math.atan2(dy, dx) * 180) / Math.PI;
-    return Array.from({ length: n }, (_, i) => {
-      const cx = x + dx * i, cy = y + dy * i;
-      const t = `rotate(${a + (i % 2 ? 90 : 0)} ${cx} ${cy})`;
-      return E(cx, cy, 3, 1.7, 'none', `stroke="#07050a" stroke-width="2.8" transform="${t}"`) + E(cx, cy, 3, 1.7, 'none', `stroke="${p.c}" stroke-width="1.3" transform="${t}"`);
-    }).join('');
-  };
-  // A broken seal: two-thirds of a ring, open at the top where it was struck.
+  const sag = po === 'hurt' ? 8 : 0;
+  const hornUp = po === 'attack' ? -76 : po === 'hurt' ? 12 : 0;
+  const eye = makeEye(uid, gradientId);
+  const veil = (path: string) => D(path, p.c) + D(path, p.d, 'opacity=".35"');
+  // A broken seal: two-thirds of a ring, open where it was struck.
   const shackle = (x: number, y: number) => {
-    const arc = `M${x - 4.5},${y - 2} A5,3.6 0 1 0 ${x + 4.5},${y - 2}`;
-    return L(arc, '#07050a', 3.4) + L(arc, p.l, 1.6);
+    const arc = `M${x - 4},${y - 2} A4.5,3.4 0 1 0 ${x + 4},${y - 2}`;
+    return L(arc, '#07050a', 3.2) + L(arc, p.ll, 1.6);
   };
-  return E(50, 89, 64, 3, p.dd, 'opacity=".5"')
-    // Arms: pillars, cut off the torso by a dark gap so they read as limbs and not as width.
-    + P('-6,74 2,36 28,40 22,74', p.d) + seam('M0,50 L24,54 M-2,64 L22,68') + P('78,74 72,40 98,36 106,74', p.d) + seam('M76,54 L100,50 M78,68 L102,64')
-    + fist(-10) + G(`translate(0 ${lift})`, fist(80) + shackle(96, 66))
-    + P('20,88 24,46 32,46 28,88', '#07050a', 'opacity=".55"') + P('72,88 68,46 76,46 80,88', '#07050a', 'opacity=".55"')
-    // The torso: plate over plate, narrowing to the waist.
-    + D('M24,88 L20,46 C20,38 80,38 80,46 L76,88 Z', p.c) + seam('M24,58 h52 M26,70 h48 M28,82 h44') + D('M38,52 L62,52 L60,80 L40,80 Z', p.d, 'opacity=".4"')
-    // Pauldrons over the shoulders, and the collar the head sits in.
-    + D('M-6,46 C-6,26 28,22 34,38 L32,50 L-2,52 Z', p.c) + seam('M0,42 L30,38') + D('M106,46 C106,26 72,22 66,38 L68,50 L102,52 Z', p.c) + seam('M100,42 L70,38')
-    + R(28, 30, 44, 16, '#07050a', 2, 'opacity=".7"')
-    // The eyes under the brow: the skull is drawn OVER them, so the lids are its edge.
-    + lens(32, 30, 14, 7, 7, state, uid, gradientId) + lens(68, 30, 14, 7, -7, state, uid, gradientId)
-    + D('M12,28 C12,-44 88,-44 88,28 C72,18 28,18 12,28 Z', p.dd) + D('M20,20 C20,-32 80,-32 80,20 C66,12 34,12 20,20 Z', p.d, 'opacity=".4"')
-    + D('M12,28 C28,18 72,18 88,28 L88,31 C72,22 28,22 12,31 Z', '#07050a', 'opacity=".6"')
-    // The five broken seals, and the one that held: its chain runs off the left edge.
-    + shackle(12, 40) + shackle(88, 40) + shackle(50, 46) + shackle(6, 64)
-    + E(-6, 70, 5.5, 4, 'none', `stroke="#07050a" stroke-width="3.8"`) + E(-6, 70, 5.5, 4, 'none', `stroke="${p.l}" stroke-width="2"`) + chain(-14, 70, -6, -1, 5)
-    + (po === 'attack' ? sparks(110, 46, p.ll, 4) : '');
+  const horn = G(`rotate(${hornUp} 36 54)`, L('M36,54 C24,60 12,56 6,44', p.dd, 5) + L('M36,54 C24,60 12,56 6,44', p.l, 1.4, 'opacity=".5"') + P('2,46 10,42 8,50', p.dd) + C(36, 54, 3, p.d));
+  const sound = po === 'attack' ? [10, 18, 26].map((r) => L(`M${40 - r},${8 - r * 0.4} a${r},${r} 0 0 0 0,${r * 0.8}`, p.ll, 1.4, 'opacity=".7"')).join('') : '';
+  return E(50, 89, 30, 3, p.dd, 'opacity=".5"')
+    // The hem, ragged, and the body rising off it: taller and thinner than anything else on the field.
+    + veil('M30,88 L34,62 C34,40 40,26 50,14 C60,26 66,40 66,62 L70,88 L64,82 L58,88 L52,82 L46,88 L40,82 Z')
+    + D('M42,30 C42,14 58,14 58,30 L56,44 L44,44 Z', '#07050a') + P('44,16 50,-6 56,16', p.d) + P('46,18 50,2 54,18', p.dd)
+    + eye(50, 34, 3, state === 'wide' ? 'open' : state)
+    // The horn in the trailing hand.
+    + L('M40,48 C36,50 34,52 36,54', p.d, 4) + horn + sound
+    // The standard: pole, crossbar, the pennant streaming back with the Titan's eye on it.
+    + L('M62,50 C70,50 78,52 82,52', p.d, 4) + C(82, 52, 3, p.dd)
+    + L('M84,88 L84,-56', p.dd, 3) + L('M84,88 L84,-56', p.l, 1, 'opacity=".4"') + P('80,-56 84,-68 88,-56', p.ll) + L('M60,-18 L84,-18', p.dd, 3)
+    + D(`M84,-18 L22,${-10 + sag} L28,${2 + sag} L14,${12 + sag} L24,${20 + sag} L84,26 Z`, p.d) + D(`M84,-14 L30,${-6 + sag} L36,${2 + sag} L24,${11 + sag} L32,${18 + sag} L84,22 Z`, p.c, 'opacity=".5"')
+    + lens(52, 4 + sag / 2, 15, 6.5, -4, state, uid, gradientId)
+    // The five broken seals, threaded on the pole under the pennant: what it came out through.
+    + [30, 35, 40, 45, 50].map((y, i) => shackle(84 + (i % 2 ? 1.5 : -1.5), y)).join('');
 }
 
 // ---------- assembly ----------

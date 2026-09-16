@@ -118,14 +118,14 @@ test('finale: the seals field in the order they were broken, and the Titan is la
     seal(1, 'goblinLord'),
     seal(5, 'skeletonKing'),
     seal(2, 'yugzulach'),
-    seal(4, 'lavaBeast'),
+    seal(4, 'dragon'),
   ];
   const { squad } = generateFinaleEncounter(seals, ENDBRINGER_ID, finaleEnemies, 1);
 
   assert.deepStrictEqual([...squad.activeIds], [unsealedIdFor('goblinLord'), unsealedIdFor('yugzulach')]);
   assert.deepStrictEqual(squad.benchIds, [
     unsealedIdFor('kraken'),
-    unsealedIdFor('lavaBeast'),
+    unsealedIdFor('dragon'),
     unsealedIdFor('skeletonKing'),
     ENDBRINGER_ID,
   ]);
@@ -134,14 +134,14 @@ test('finale: the seals field in the order they were broken, and the Titan is la
 test('finale: a champion arrives at the level and growth it was beaten at, not a re-roll', () => {
   const grants: Partial<Record<StatKey, number>> = { attack: 30, hp: 20 };
   const growth: Partial<Record<StatKey, number>> = { attack: 9, hp: 21, wisdom: 4 };
-  const { run } = generateFinaleEncounter([seal(4, 'lavaBeast', 7, grants, growth)], ENDBRINGER_ID, finaleEnemies, 1);
-  const entry = run.roster.find((r) => r.rosterId === unsealedIdFor('lavaBeast'));
+  const { run } = generateFinaleEncounter([seal(4, 'dragon', 7, grants, growth)], ENDBRINGER_ID, finaleEnemies, 1);
+  const entry = run.roster.find((r) => r.rosterId === unsealedIdFor('dragon'));
   assert.ok(entry);
   assert.strictEqual(levelOf(entry!), 7);
   assert.deepStrictEqual(entry!.evolutionStatGrants, grants);
   assert.deepStrictEqual(entry!.growthStatGrants, growth);
   // Which is what makes the fight escalate across itself: an Act 2 seal comes back at Act 2.
-  const { run: early } = generateFinaleEncounter([seal(2, 'lavaBeast', 3, {})], ENDBRINGER_ID, finaleEnemies, 1);
+  const { run: early } = generateFinaleEncounter([seal(2, 'dragon', 3, {})], ENDBRINGER_ID, finaleEnemies, 1);
   assert.strictEqual(levelOf(early.roster[0]), 3);
   assert.deepStrictEqual(early.roster[0].evolutionStatGrants, {});
 });

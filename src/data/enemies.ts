@@ -82,7 +82,8 @@ export const enemies: Record<string, HeroDefinition> = {
     growthGrades: CHAMPION_GRADES,
   },
 
-  // The Molten Foundry's Guardian reinforcement: it lights its own Scorched Land and then feeds
+  // The Molten Foundry's Guardian reinforcement (the Lava Beast until 2026-09-16, renamed with its
+  // figure — guardianFigures.ts draws a dragon). It lights its own Scorched Land and then feeds
   // a Burn stack that cannot fall off, 10 a cast on both heroes, while Immolate triples off the
   // stack it just built. Every move is cheap on a 150 pool, so it acts every round and never
   // Rests — a Guardian that grinds rather than one that lands one enormous turn.
@@ -95,9 +96,9 @@ export const enemies: Record<string, HeroDefinition> = {
   // Ancient is doing double duty: it is the champion silhouette the others share, and it is
   // why the Foundry is not solved by one type. Water is 2x on every Fire spawn and 1x on this,
   // so the answer that carried the act runs out at the Guardian.
-  lavaBeast: {
-    id: 'lavaBeast',
-    name: 'Lava Beast',
+  dragon: {
+    id: 'dragon',
+    name: 'Dragon',
     types: ['Fire', 'Ancient'],
     baseStats: { hp: 420, attack: 85, defense: 80, intelligence: 80, wisdom: 60, speed: 35, manaPool: 150, mpRegen: 20 },
     moveIds: ['runicBlast', 'spreadingBlaze', 'immolate', 'firebrand'],
@@ -112,7 +113,7 @@ export const enemies: Record<string, HeroDefinition> = {
   // turn kills it or hands it a 180-power swing. The stats that would have been HP are in
   // Attack and Intelligence instead.
   //
-  // It does not carry Last Rites, for the reason the Lava Beast does not carry Volcanic
+  // It does not carry Last Rites, for the reason the Dragon does not carry Volcanic
   // Surge: bp120 that drops the user to 1 HP is a self-destruct dressed as a finisher, and a
   // boss that ends itself makes turtling the answer. Vengeance is the opposite trade — it
   // punishes a sloppy finish instead of performing one.
@@ -140,11 +141,12 @@ export const enemies: Record<string, HeroDefinition> = {
     growthGrades: CHAMPION_GRADES,
   },
 
-  // --- The Threshold — the thing the six seals were holding (docs/lore.md) ---
+  // --- The Threshold — what walks out when the seals are broken (docs/lore.md) ---
   // The finale's last combatant, and the only mono-Ancient thing in the game. It enters LAST,
   // after five unsealed champions, so it is authored as the fight's ending rather than its
-  // whole — an enormous, slow, magical body: the Titan silhouette taken to the limit, a
-  // silhouette for something that cannot be killed and does not need to hurry.
+  // whole — an enormous, slow, magical body for something that does not need to hurry. It is
+  // the Titan's HERALD, not the Titan (2026-09-16, per user direction; the figure is a
+  // standard-bearer, guardianFigures.ts).
   //
   // 900 combat stats against the champions' 700 — a step, not a different number class.
   // Magical-leaning (135 Int / 100 Atk) because the whole Ancient slate is magical, and
@@ -173,7 +175,7 @@ export const GOBLIN_LORD_ID = 'goblinLord';
 export const YUGZULACH_ID = 'yugzulach';
 export const KRAKEN_ID = 'kraken';
 export const ELDER_BOUGH_ID = 'elderBough';
-export const LAVA_BEAST_ID = 'lavaBeast';
+export const DRAGON_ID = 'dragon';
 export const SKELETON_KING_ID = 'skeletonKing';
 
 /** The Threshold's, and the only mono-Ancient id in the game (docs/lore.md §7). */
@@ -185,7 +187,7 @@ export const CHAMPION_IDS: readonly string[] = [
   YUGZULACH_ID,
   KRAKEN_ID,
   ELDER_BOUGH_ID,
-  LAVA_BEAST_ID,
+  DRAGON_ID,
   SKELETON_KING_ID,
 ];
 

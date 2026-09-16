@@ -137,22 +137,27 @@ rules and past them:
   Ancient hue (the one type-coloured feature that is not the mortal type; a dark under-stroke so
   it reads on any body) with the lock's own eye at its centre, which is always `stare` and never
   blinks with the beast's. Where it is worn is the Guardian's identity: the Goblin Lord's, Kraken's
-  and Lava Beast's collars, Yugzulach's brand on the chest, the Elder Bough's grown into the trunk,
+  and Dragon's collars, Yugzulach's brand on the chest, the Elder Bough's grown into the trunk,
   the Skeleton King's crown (the crown's spikes stand on the ring and go with it).
 - **Unsealed is derived.** The finale's `unsealedIdFor` champion is the same drawing with the ring
   off and a scar where it sat — a dashed hairline and a dark socket — exactly as `enemies.ts
   unseal` derives the stats. There is no second figure, and the test pins that the unsealed
   markup carries none of the Ancient hue.
-- **The Endbringer is mono-Ancient, so its body is the seal's colour.** Its eyes are the title
-  screen's lenses (`titanArt.tsx`), pointed at both corners under a brow that is drawn OVER them,
-  not the spawn's slits. It wears no seal but the five it broke — open shackle arcs — and **one
-  whole ring whose chain runs off the left edge**: the sixth seal, the one that held (§5 of the
-  lore).
+- **The Endbringer is the Titan's HERALD, not the Titan** (per user direction, same day — the
+  first draft drew a colossus and was wrong in kind). Mono-Ancient, so its body is the seal's
+  colour: a gaunt hooded bearer with no legs under the hem, a standard taller than the frame in
+  the leading hand and a horn in the trailing one. **The Titan's eye rides the pennant** — the
+  title screen's lens (`titanArt.tsx`), which is how the Titan looks out of its herald; the hood's
+  own eye is small. The five broken seals are threaded on the pole under the banner: what it came
+  out through. An attack sounds the horn and the banner's eye opens; a hit sags the banner.
 - **Poses are the spawn's two layers**: the global lean/recoil, plus a per-Guardian accent (the
   club swings, the horns spread, the leading arm whips, the limb slams, the crest flares and the
   cracks go dark, the sceptre lifts; the Endbringer lifts one fist and its eyes open).
-- **The Leviathan is the Kraken** (id `kraken`, `KRAKEN_ID`): the figure is a kraken, so the
-  name says so. A save naming the old id is rejected by `save.ts` as an unknown champion.
+- **The Leviathan is the Kraken** (id `kraken`, `KRAKEN_ID`) and **the Lava Beast is the
+  Dragon** (id `dragon`, `DRAGON_ID`; a coiled wyrm, wings up past the frame, one eye on the
+  near wing): the figure is the thing, so the name says so — both per user direction, the two
+  old names being the least evocative of the six. A save naming an old id is rejected by
+  `save.ts` as an unknown champion. The Goblin Lord is the remaining candidate.
 
 ## 3. Locations partition the types
 
@@ -165,7 +170,7 @@ headline gap") stakes it has never had.
 | Location | Spawn types | Champion (mortal half) | What moved |
 |---|---|---|---|
 | Wild's Edge | **any** Early | Goblin Lord — Beast | Act 1 rolls from all fourteen |
-| Molten Foundry | Fire / Mech / Iron | Lava Beast — Fire | unchanged |
+| Molten Foundry | Fire / Mech / Iron | Dragon — Fire | unchanged |
 | Forbidden Forest | Nature / **Beast** / Light | Elder Bough — Nature | Stone out, Beast in (Beast had no home) |
 | Blighted Shrine | Shadow / Arcane / Mind | Yugzulach — Shadow | unchanged |
 | Storm Coast | Storm / Water / **Stone** | Kraken — Water | Iron out (it was the Raiders'; the location is the place now, not the people) |
@@ -183,7 +188,7 @@ unsealed forms, the Endbringer) are untouched. **A Guardian's escorts become two
 Location's types**; the champion still enters last from the bench. Note that every champion's
 mortal half sits *inside* its own triple, so the Location's answer is the Guardian's answer in
 all five cases — with the mob layer now exceptionless by design, the Guardian is the only place an
-exception can live, and today none does. Either the kit carries it (the Lava Beast burning
+exception can live, and today none does. Either the kit carries it (the Dragon burning
 itself) or one Guardian is moved off its triple on purpose. Open question, §10.
 
 ## 4. The map

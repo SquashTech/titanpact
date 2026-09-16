@@ -107,8 +107,8 @@ test('difficulty: an enemy carries the growth its level earned — the ONE stat 
 test('difficulty: the champion arrives CHAMPION_LEVEL_BONUS over its escorts, grown to that level', () => {
   const scaling = encounterScaling('boss', 4);
   const base = generateEncounter('boss', 8, heroes, { scaling });
-  const { run } = appendFinalEnemy(base, 'lavaBeast', enemies, 9, scaling);
-  const champion = run.roster.find((r) => r.rosterId === 'lavaBeast')!;
+  const { run } = appendFinalEnemy(base, 'dragon', enemies, 9, scaling);
+  const champion = run.roster.find((r) => r.rosterId === 'dragon')!;
   assert.strictEqual(levelOf(champion), championLevel(scaling.level));
   assert.strictEqual(levelOf(champion), scaling.level + CHAMPION_LEVEL_BONUS);
   assert.ok(growthTotal(champion.growthStatGrants) > 0, 'a champion is no longer a flat line');

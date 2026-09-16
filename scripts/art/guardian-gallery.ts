@@ -16,7 +16,7 @@ const WHERE: Record<string, string> = {
   yugzulach: 'a brand on the chest',
   kraken: 'the collar under the mantle',
   elderBough: 'grown into the trunk',
-  lavaBeast: 'the collar of the neck',
+  dragon: 'the collar at the base of the neck',
   skeletonKing: 'the crown',
 };
 
@@ -79,13 +79,13 @@ const html = `<!doctype html>
       <div><b>The seal is worn.</b> A collar, a brand, a crown — where it sits is the Guardian's identity.</div>
       <div><b>Unsealed is derived.</b> The same drawing, the ring off, a scar where it sat.</div>
       <div><b>Every Guardian breaks the frame.</b> The Endbringer breaks it on every edge.</div>
-      <div><b>The Endbringer is the seal's colour</b> and wears five broken; the sixth chain runs off the frame.</div>
+      <div><b>The Endbringer is the Titan's herald</b>, in the seal's colour: the Titan's eye rides its banner, and the five broken seals hang from the crossbar.</div>
     </div>
   </header>
   ${CHAMPION_IDS.map(line).join('')}
   <div class="line end" id="end">
-    <div class="rail"><div class="type"><span class="swatch" style="background:${getTypeColor('Ancient')}"></span>${enemies[ENDBRINGER_ID].name}</div><div class="excel">Ancient</div><div class="home">the Threshold</div></div>
-    <div class="tiers">${card(ENDBRINGER_ID, 'The Titan')}</div>
+    <div class="rail"><div class="type"><span class="swatch" style="background:${getTypeColor('Ancient')}"></span>${enemies[ENDBRINGER_ID].name}</div><div class="excel">Ancient</div><div class="home">the Threshold · the Titan's herald</div></div>
+    <div class="tiers">${card(ENDBRINGER_ID, 'The Herald')}</div>
   </div>
 </div>
 `;

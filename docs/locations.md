@@ -155,7 +155,7 @@ mechanism and the balance questions). **All six have one**, as of 2026-09-05: Wi
 **Goblin Lord** (600 stat total, Beast/Ancient, physical), the Blighted Shrine's
 **Yugzulach** (700, Shadow/Ancient, magical — the same silhouette one act later and down the
 other damage pipeline), the Storm Coast's **Kraken** (700, Water/Ancient), the Forbidden
-Forest's **Elder Bough** (700, Nature/Ancient), the Molten Foundry's **Lava Beast** (700,
+Forest's **Elder Bough** (700, Nature/Ancient), the Molten Foundry's **Dragon** (700,
 Fire/Ancient) and the Necropolis's **Skeleton King** (700, Spirit/Ancient). No location
 carries `null` any more.
 
@@ -168,7 +168,7 @@ Whether the champion sits inside its faction's type spine is a per-location call
 three readings are now in the game. Yugzulach, the Elder Bough and the Skeleton King **do**,
 so the answer that beat the basics still beats the boss — the readable version. The Kraken
 does **not**, because the Storm Coast's apex is a thing that lives in the water rather than a
-bigger Raider. The Lava Beast is the third: inside the spine, but its Ancient half is what
+bigger Raider. The Dragon is the third: inside the spine, but its Ancient half is what
 takes the faction's one answer away exactly when the player reaches for it (see the Vulcans
 note above).
 
@@ -548,7 +548,7 @@ enough that half of it clears whatever button the screen ends in.
 
   What the set suggests, and what a playtest should check: the spine is not the lever that
   matters. The **exception** is. A faction whose Guardian sits outside its own answer (the
-  Lava Beast) or whose leader sits outside its own tell (the Dread Raven) stays interesting
+  Dragon) or whose leader sits outside its own tell (the Dread Raven) stays interesting
   at every stat band, spine or no spine. Measure whether that holds before writing it down
   as house style.
 - **Where does the mob curve sit against the player curve?** The monsters track's baseline

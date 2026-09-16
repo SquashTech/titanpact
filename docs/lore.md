@@ -46,7 +46,7 @@ resisted: a seal is only ever a wall.
 Three things fall out of this at no cost:
 
 - **The Guardians are what the wardens decayed into.** The Goblin Lord, Yugzulach, the
-  Kraken, the Elder Bough, the Lava Beast and the Skeleton King are six wardens after an
+  Kraken, the Elder Bough, the Dragon and the Skeleton King are six wardens after an
   age of holding the seal — a garrison that no longer remembers what it is guarding, only
   that nobody gets past. They are not evil and they are not wrong. They are a garrison that
   outlived its briefing. **What stands around them is the leak.** The binding is failing
@@ -122,7 +122,7 @@ does not stay on the floor. It comes out attached to the thing it was holding.
 **They come back without their Ancient half.** The Ancient in them *was* the seal, and the
 player already took it. In the final battle the five Guardians field as their **base type
 alone**: the Goblin Lord as mono-Beast, the Kraken mono-Water, the Elder Bough
-mono-Nature, the Lava Beast mono-Fire, Yugzulach mono-Shadow, the Skeleton King
+mono-Nature, the Dragon mono-Fire, Yugzulach mono-Shadow, the Skeleton King
 mono-Spirit. Only the Endbringer keeps the wall.
 
 This is fiction and balance agreeing, which is why it is the shape that shipped:
@@ -149,6 +149,13 @@ accepted, not accidental — it puts a price on `locations.md`'s "when, not whet
 the price is paid at the only moment the whole run is on the table at once.
 
 ## 7. The Endbringer
+
+> **2026-09-16, per user direction: the Endbringer is the Titan's HERALD, not the Titan.**
+> What five broken seals let through is the thing that walks ahead of it — its figure is a
+> standard-bearer with the Titan's eye on the banner (`titanspawn-overhaul.md` §2 "Guardian
+> art"). The prose below still reads the Endbringer as the Titan itself, as §1 and §6 do; what
+> the finale's win then binds (the herald, or the Titan through it) is an OPEN question, flagged
+> here rather than rewritten.
 
 **Endbringer is not its name.** The Titan has no name. Endbringer is what the wardens
 called it, and the word outlived everyone who knew what it referred to.

@@ -3435,7 +3435,10 @@ with the ring off — fiction the player can see at 40px on the Pact Seal ring, 
 medallions are now the Guardians themselves (`PactSealScreen` draws through `HeroPortrait`; a
 figure breaking its socket a little is on-theme and left alone). On the battlefield a Guardian
 runs up behind the enemy nameplate — the frame it breaks is the hero cell, and the bars sit over
-it as they sit over anything tall. The spawn's no-flip rule holds.
+it as they sit over anything tall. The spawn's no-flip rule holds. Same day: the Lava Beast
+became the Dragon, and the Endbringer was redrawn from a colossus to the Titan's **Herald** — a
+standard-bearer whose banner carries the title screen's lens eye — because it is the herald, not
+the Titan (per user direction).
 
 ## Open / future improvements
 
