@@ -45,7 +45,7 @@ resisted: a seal is only ever a wall.
 
 Three things fall out of this at no cost:
 
-- **The Guardians are what the wardens decayed into.** The Goblin Lord, Yugzulach, the
+- **The Guardians are what the wardens decayed into.** The Manticore, Yugzulach, the
   Kraken, the Elder Bough, the Dragon and the Skeleton King are six wardens after an
   age of holding the seal — a garrison that no longer remembers what it is guarding, only
   that nobody gets past. They are not evil and they are not wrong. They are a garrison that
@@ -121,7 +121,7 @@ does not stay on the floor. It comes out attached to the thing it was holding.
 
 **They come back without their Ancient half.** The Ancient in them *was* the seal, and the
 player already took it. In the final battle the five Guardians field as their **base type
-alone**: the Goblin Lord as mono-Beast, the Kraken mono-Water, the Elder Bough
+alone**: the Manticore as mono-Beast, the Kraken mono-Water, the Elder Bough
 mono-Nature, the Dragon mono-Fire, Yugzulach mono-Shadow, the Skeleton King
 mono-Spirit. Only the Endbringer keeps the wall.
 

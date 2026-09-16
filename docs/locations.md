@@ -152,7 +152,7 @@ repeats a body rather than coming up short.
 One enemy id per location, held on the **bench** of that location's Guardian fight so it
 is the last combatant to reach the field (`run-loop.md` "The Guardian's champion" for the
 mechanism and the balance questions). **All six have one**, as of 2026-09-05: Wild's Edge's
-**Goblin Lord** (600 stat total, Beast/Ancient, physical), the Blighted Shrine's
+**Manticore** (600 stat total, Beast/Ancient, physical), the Blighted Shrine's
 **Yugzulach** (700, Shadow/Ancient, magical — the same silhouette one act later and down the
 other damage pipeline), the Storm Coast's **Kraken** (700, Water/Ancient), the Forbidden
 Forest's **Elder Bough** (700, Nature/Ancient), the Molten Foundry's **Dragon** (700,
@@ -183,12 +183,12 @@ spine is worth reaching for exactly when the faction's tell has trigger types to
 *of*; it would have bought the Cultists or the Vulcans nothing.
 
 A **location** property rather than a faction or boss-node one, and that placement is the
-decision worth recording. What comes out of the treeline at Wild's Edge is a Goblin Lord
+decision worth recording. What comes out of the treeline at Wild's Edge is a Manticore
 because Wild's Edge is where the Goblins are; the same node type in the Necropolis should
 produce something else entirely. Hanging it off the node would have made it a property of
 *how hard this fight is*, which is what `run-loop.md` §2's node kinds already say and what
 the act curve already scales. Hanging it off the *faction* would have handed the four
-placeholder Goblin locations a Goblin Lord they were never meant to field. This says *whose
+placeholder Goblin locations a Manticore they were never meant to field. This says *whose
 ground you are standing on* — the same thing `faction`, `factionId` and `affinity` say, and
 so it belongs beside them.
 
@@ -267,14 +267,14 @@ two fixture heroes with a bigger stat bonus. Locations are the reason to author
 six of them instead of one: each location's Guardian is its faction's apex. Blocked
 behind 5.2 in practice, since a Guardian without its faction reads as unrelated.
 
-**Three of six authored (2026-09-03).** The Kraken joins the Goblin Lord and
+**Three of six authored (2026-09-03).** The Kraken joins the Manticore and
 Yugzulach, and is the case that proves the field belongs on the Location rather than
 the faction: it is Water/Ancient where every Raider is Iron, because what comes out of
 the surf is not a member of the warband. One open dependency — its Ancient STAB is
-`archonBlast`, already the Goblin Lord's, because the Ancient slate is three
+`archonBlast`, already the Manticore's, because the Ancient slate is three
 placeholder moves long (`CLAUDE.md` "Repo map"). Revisit when Ancient is authored.
 
-**Partly answered, from an unexpected direction (2026-09-01).** The Goblin Lord is the
+**Partly answered, from an unexpected direction (2026-09-01).** The Manticore is the
 Goblins' apex, and he shipped without waiting on 5.2 — because
 `guardianFinalEnemyId` puts him *beside* the generated boss rather than in place of it.
 That is a cheaper shape than this section assumed: a champion is one enemy definition and

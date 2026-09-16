@@ -774,7 +774,7 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   `generateGoblinChiefEncounter`; the function was already generic, only its name was not)
   for `battle`. `guardianFinalEnemyId` deliberately stayed on the **Location** rather than
   moving into the faction: the four locations still pointing at the Goblin default were
-  never meant to inherit a Goblin Lord (`locations.md` §3).
+  never meant to inherit a Manticore (`locations.md` §3).
   The **Cultists** are the first faction authored for an act other than Act 1, and the
   first content to use `FactionRoster.baselineAct` — `actScaling` takes it as an override
   on the `monsters` track, so the roster *is* an Act 2 encounter as written and takes
@@ -811,14 +811,14 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   heroes, no bench" above, and it is deliberately not a general widening of it: every
   other location's field is `null`.
 
-  Wild's Edge's is the **Goblin Lord** (`enemies.ts`) — Beast/Ancient, 550 stat total,
+  Wild's Edge's is the **Manticore** (`enemies.ts`) — Beast/Ancient, 550 stat total,
   20 MP Regen, four moves across four types (Claw, Maul, Enfeeble, and the
   Ancient row authored for him, Archon Blast). **Attack 55 since 2026-09-15** (−10 into +20 HP,
   per user direction): with gear absorbed and Act 1 two levels lighter he was still the act's
   wall at 77% and killed two heroes a fight; measured 82% after, Act 1 58 → 62%. Attack is his
   one dial — a shift into Mana fed Archon Blast and read worse, and MP Regen barely moved him. He is enemy-pool content, so
   `isRecruitable` excludes him by pool membership exactly as it does every Goblin: a
-  beaten Goblin Lord produces no contract offer. He carries **no node-kind stat bonus** —
+  beaten Manticore produces no contract offer. He carries **no node-kind stat bonus** —
   the 550 is the authored number and the escorts' +20×3 is not applied to it — but he does
   take the **act curve**, which is the only thing that ever moves a champion (`ENEMY_LEVEL_BY_ACT`
   is inert for one; see §3).
@@ -877,7 +877,7 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
     Acts 2-5 barely moved on this change alone — a 400-stat basic is a hero-sized body.
 
   **The champion nerf that came with it (2026-09-06, per user direction).** The five
-  non-Goblin champions were **700 → 550**, the Goblin Lord's already-tuned figure, cut out of
+  non-Goblin champions were **700 → 550**, the Manticore's already-tuned figure, cut out of
   HP and the offensive stats with Speed left alone. The simulator had the Act 2 Guardian at
   **3-10%** against the same locations' Act 3 Guardian at **30-67%**, and human playtest agreed
   that Act 2 was where runs ended.
@@ -1122,7 +1122,7 @@ Order is not decoration: forced replacement pulls from the bench in order, so th
 **escalates across itself** and the Endbringer arrives only once the five in front of it
 are gone.
 
-**The five arrive unsealed.** They field as their base type alone — Goblin Lord mono-Beast,
+**The five arrive unsealed.** They field as their base type alone — Manticore mono-Beast,
 Yugzulach mono-Shadow, Kraken mono-Water, Elder Bough mono-Nature, Dragon mono-Fire,
 Skeleton King mono-Spirit — because the Ancient half *was* the seal and the player already
 took it (`lore.md` §6). This is balance and fiction agreeing: six X/Ancient bodies at ~700

@@ -30,9 +30,9 @@ import type { TutorialBeat, TutorialEncounter, TutorialFightCue, TutorialLocks, 
  * 25 Attack against 80 Intelligence, and a damage move that is magical. The split between the
  * two pipelines is invisible until the player holds one of each, and no draft can be relied on
  * to hand them one. She is then locked onto the field for the Guardian, because
- * the Goblin Lord is authored at 75 Defense against 60 Wisdom: her Rime Wind reads 42 on him
+ * the Manticore is authored at 75 Defense against 60 Wisdom: her Rime Wind reads 42 on it
  * where Valor's Iron Fist reads 20 and Fang's Claw reads 30 — and she is not even strong against
- * him, since the Ancient half halves her Frost right back. That one screen is the whole lesson,
+ * it, since the Ancient half halves her Frost right back. That one screen is the whole lesson,
  * and nothing had to be staged for it.
  */
 export const TUTORIAL_LOCKS: TutorialLocks = {
@@ -55,7 +55,7 @@ export const TUTORIAL_LOCKS: TutorialLocks = {
  *    pipelines stand side by side (`TUTORIAL_LOCKS` forces Flurry onto the roster).
  *  - `boss` — two Early spawn, because that is what a Guardian's escorts are everywhere else
  *    (run-loop.md "The Guardian's escorts"): the Cubling is a Beast for the caster to double
- *    into, the Rivetling is Iron so teeth do little to it. The Goblin Lord rides the bench as he
+ *    into, the Rivetling is Iron so teeth do little to it. The Manticore rides the bench as it
  *    always does (locations.ts `guardianFinalEnemyId`) and walks on after the first KO.
  *
  *    The spawn stand exactly where the Goblins stood (Beast/Shadow, Beast, Beast/Iron), so the
@@ -65,7 +65,7 @@ export const TUTORIAL_LOCKS: TutorialLocks = {
  *
  *    He is also the physical/magical proof, and it needed no staging: 75 Defense against 60
  *    Wisdom, so Flurry's Rime Wind reads 42 where Valor's Iron Fist reads 20 and Fang's Claw
- *    reads 30 — and she is not even strong against him, the seal halves her too. Two pipelines,
+ *    reads 30 — and she is not even strong against it, the seal halves her too. Two pipelines,
  *    one enemy, and the enemy is the one the whole act has been walking toward.
  */
 export const TUTORIAL_ENCOUNTERS: Partial<Record<MapNodeType, TutorialEncounter>> = {
@@ -260,9 +260,9 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'map:boss',
     topic: 'The Guardian',
     lines: [
-      'The Goblin Lord. He is no spawn. He is a Guardian, and he holds one of the five seals.',
-      'He is known as an Ancient. Nothing we own is strong against him, and nothing ever will be.',
-      'Two of his warband stand in front. Clear one of them and he comes out, so be sure that we are well-prepared.',
+      'The Manticore. It is no spawn. It is a Guardian, and it holds one of the five seals.',
+      'It is known as an Ancient. Nothing we own is strong against it, and nothing ever will be.',
+      'Two of its brood stand in front. Clear one of them and it comes out, so be sure that we are well-prepared.',
       'We are more than two now, so some of us must sit on the bench. Whoever sits there regenerates Mana every round, and you can bring them in whenever you like. Switching costs only a turn.',
       "Let's bring the caster to the field for this one. Their abilities may come in handy.",
     ],
@@ -359,13 +359,13 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
   {
     id: 'boss:ancient',
     node: 'boss',
-    when: { enemyOnField: 'goblinLord' },
+    when: { enemyOnField: 'manticore' },
     topic: 'Ancient',
     lines: [
-      'There he is.',
+      'There it is.',
       'Everything deals half against an Ancient. Type advantages alone will not win us this battle.',
       'Choose your moves carefully. Remember that you can hold down a move button to examine it before you commit.',
-      'You can also click on him to see what he specializes in. Strategize accordingly.',
+      'You can also click on it to see what it specializes in. Strategize accordingly.',
     ],
   },
   {

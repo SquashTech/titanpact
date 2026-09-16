@@ -126,8 +126,8 @@ archived under `art/archive/guardians/`. What the spawn are a miniature of, draw
 rules and past them:
 
 - **The body is the mortal type's three tones**, at a Late's scale or over it, and **every
-  Guardian breaks the hero frame** on at least one edge — the Kraken's mantle and the Goblin
-  Lord's club run up behind the enemy nameplate on purpose. The Endbringer breaks it on every
+  Guardian breaks the hero frame** on at least one edge — the Kraken's mantle and the Herald's
+  standard run up behind the enemy nameplate on purpose. The Endbringer breaks it on every
   edge. The viewBox is the spawn's: a Guardian is bigger because it is DRAWN bigger, never boxed
   bigger, so it stands on the same ground at the same scale.
 - **Two Titan eyes, wrong-placed as a Late's are** (a hump, a palm, a tentacle tip, the canopy, a
@@ -136,8 +136,8 @@ rules and past them:
   nature — the piece of the lock it carries — so it is drawn as a THING on the body: a ring in the
   Ancient hue (the one type-coloured feature that is not the mortal type; a dark under-stroke so
   it reads on any body) with the lock's own eye at its centre, which is always `stare` and never
-  blinks with the beast's. Where it is worn is the Guardian's identity: the Goblin Lord's, Kraken's
-  and Dragon's collars, Yugzulach's brand on the chest, the Elder Bough's grown into the trunk,
+  blinks with the beast's. Where it is worn is the Guardian's identity: the Manticore's collar in
+  the mane, the Kraken's and Dragon's collars, Yugzulach's brand on the chest, the Elder Bough's grown into the trunk,
   the Skeleton King's crown (the crown's spikes stand on the ring and go with it).
 - **Unsealed is derived.** The finale's `unsealedIdFor` champion is the same drawing with the ring
   off and a scar where it sat — a dashed hairline and a dark socket — exactly as `enemies.ts
@@ -151,13 +151,16 @@ rules and past them:
   own eye is small. The five broken seals are threaded on the pole under the banner: what it came
   out through. An attack sounds the horn and the banner's eye opens; a hit sags the banner.
 - **Poses are the spawn's two layers**: the global lean/recoil, plus a per-Guardian accent (the
-  club swings, the horns spread, the leading arm whips, the limb slams, the crest flares and the
+  scorpion tail strikes, the horns spread, the leading arm whips, the limb slams, the crest flares and the
   cracks go dark, the sceptre lifts; the Endbringer lifts one fist and its eyes open).
 - **The Leviathan is the Kraken** (id `kraken`, `KRAKEN_ID`) and **the Lava Beast is the
   Dragon** (id `dragon`, `DRAGON_ID`; a coiled wyrm, wings up past the frame, one eye on the
   near wing): the figure is the thing, so the name says so — both per user direction, the two
-  old names being the least evocative of the six. A save naming an old id is rejected by
-  `save.ts` as an unknown champion. The Goblin Lord is the remaining candidate.
+  old names being the least evocative of the six — and **the Goblin Lord is the Manticore** (id
+  `manticore`, `MANTICORE_ID`, the user's pick over a boar and a chimera): a lion under a mane of
+  spikes, a face too much like a person's, a scorpion tail that strikes forward, one eye in the
+  face and the other on the stinger; the tutorial calls it *it*. A save naming an old id is
+  rejected by `save.ts` as an unknown champion.
 
 ## 3. Locations partition the types
 
@@ -169,7 +172,7 @@ headline gap") stakes it has never had.
 
 | Location | Spawn types | Champion (mortal half) | What moved |
 |---|---|---|---|
-| Wild's Edge | **any** Early | Goblin Lord — Beast | Act 1 rolls from all fourteen |
+| Wild's Edge | **any** Early | Manticore — Beast | Act 1 rolls from all fourteen |
 | Molten Foundry | Fire / Mech / Iron | Dragon — Fire | unchanged |
 | Forbidden Forest | Nature / **Beast** / Light | Elder Bough — Nature | Stone out, Beast in (Beast had no home) |
 | Blighted Shrine | Shadow / Arcane / Mind | Yugzulach — Shadow | unchanged |

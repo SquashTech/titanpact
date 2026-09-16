@@ -4003,7 +4003,7 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'bothEnemies',
     description: 'An old curse that settles over both foes at once.',
   },
-  // Goblin Lord's magical half (src/data/enemies.ts). Untiered on purpose — see the header.
+  // Manticore's magical half (src/data/enemies.ts). Untiered on purpose — see the header.
   archonBlast: {
     id: 'archonBlast',
     name: 'Archon Blast',

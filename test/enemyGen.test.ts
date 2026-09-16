@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import { test } from './harness';
 import { generateEncounter, appendFinalEnemy } from '../src/run/enemyGen';
 import { heroes } from '../src/data/heroes';
-import { enemies, GOBLIN_LORD_ID } from '../src/data/enemies';
+import { enemies, MANTICORE_ID } from '../src/data/enemies';
 
 test('enemyGen: fight encounters field 4 heroes (2 active + 2 bench) with no stat bonus', () => {
   const { run, squad } = generateEncounter('fight', 1, heroes);
@@ -89,20 +89,20 @@ test('enemyGen: options.excludeHeroIds beats the location bias — the preferred
 
 test('enemyGen: appendFinalEnemy puts the champion on the bench, behind everyone already in the fight', () => {
   const boss = generateEncounter('boss', 7, heroes);
-  const { run, squad } = appendFinalEnemy(boss, GOBLIN_LORD_ID, enemies, 7);
+  const { run, squad } = appendFinalEnemy(boss, MANTICORE_ID, enemies, 7);
 
   assert.strictEqual(run.roster.length, 3);
   assert.deepStrictEqual(squad.activeIds, boss.squad.activeIds);
-  assert.deepStrictEqual(squad.benchIds, [GOBLIN_LORD_ID]);
+  assert.deepStrictEqual(squad.benchIds, [MANTICORE_ID]);
   // Last in bench order is what the AI's forced replacement reads (bench[0], once a slot opens).
-  assert.strictEqual(squad.benchIds[squad.benchIds.length - 1], GOBLIN_LORD_ID);
-  assert.strictEqual(run.roster[run.roster.length - 1].heroId, GOBLIN_LORD_ID);
+  assert.strictEqual(squad.benchIds[squad.benchIds.length - 1], MANTICORE_ID);
+  assert.strictEqual(run.roster[run.roster.length - 1].heroId, MANTICORE_ID);
 });
 
 test('enemyGen: the appended champion arrives with its authored kit and no node-kind bonus', () => {
-  const { run } = appendFinalEnemy(generateEncounter('boss', 3, heroes), GOBLIN_LORD_ID, enemies, 3);
-  const lord = run.roster.find((r) => r.heroId === GOBLIN_LORD_ID)!;
-  assert.deepStrictEqual(lord.unlockedMoveIds, [...enemies[GOBLIN_LORD_ID].moveIds]);
+  const { run } = appendFinalEnemy(generateEncounter('boss', 3, heroes), MANTICORE_ID, enemies, 3);
+  const lord = run.roster.find((r) => r.heroId === MANTICORE_ID)!;
+  assert.deepStrictEqual(lord.unlockedMoveIds, [...enemies[MANTICORE_ID].moveIds]);
   // Hand-authored content: the 600 stat total IS the number, no generated bonus on top.
   assert.deepStrictEqual(lord.evolutionStatGrants, {});
 });
@@ -116,6 +116,6 @@ test('enemyGen: appendFinalEnemy is a no-op on an unknown id rather than a crash
 
 test('enemyGen: the champion is not recruitable — he is enemy-pool content, so a Contract can never claim him', () => {
   const { isRecruitable } = require('../src/run/recruitment') as typeof import('../src/run/recruitment');
-  assert.ok(!isRecruitable(GOBLIN_LORD_ID, heroes));
-  assert.ok(!(GOBLIN_LORD_ID in heroes));
+  assert.ok(!isRecruitable(MANTICORE_ID, heroes));
+  assert.ok(!(MANTICORE_ID in heroes));
 });

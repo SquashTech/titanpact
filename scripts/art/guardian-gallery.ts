@@ -12,7 +12,7 @@ import { getTypeColor } from '../../src/view/combat/typeColors';
 const POSES: readonly GuardianPose[] = ['idle', 'attack', 'hurt'];
 
 const WHERE: Record<string, string> = {
-  goblinLord: 'the collar',
+  manticore: 'a collar in the mane',
   yugzulach: 'a brand on the chest',
   kraken: 'the collar under the mantle',
   elderBough: 'grown into the trunk',

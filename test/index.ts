@@ -45,7 +45,7 @@ import './runProgress.test';
 import './classes.test';
 import './classMoves.test';
 import './locations.test';
-import './goblinLord.test';
+import './manticore.test';
 import './entrances.test';
 import './guardians.test';
 import './mobLayer.test';

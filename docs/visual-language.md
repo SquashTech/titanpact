@@ -1626,7 +1626,7 @@ the clipped 25px title were both found this way. `npm run typecheck`,
 
 ## Thirteenth pass — a named enemy takes the field (2026-09-01)
 
-The ask, alongside the Goblin Lord content itself: *have some battlefield effect
+The ask, alongside the Manticore content itself: *have some battlefield effect
 play when he enters to denote that a powerful enemy has just entered play. Maybe
 even the music could slow by 20% or something to lower the pitch and give the
 battle an epic effect. That is experimental though and we may walk that back.*
@@ -1666,10 +1666,10 @@ A **dramatic entrance**: one flag, five answers.
   nothing reads as broken, where one that plainly cannot be pressed reads as
   withheld.
 - `buildBeats.ts` — a `SwitchedIn` for one of those ids gets its own sentence
-  ("Something comes out of the treeline" / **Goblin Lord** / "The ground goes
+  ("Something comes out of the treeline" / **Manticore** / "The ground goes
   quiet."), the `ko` headline red rather than the switch-in `buff` green, and a
   `dramaticEntrance: true` flag on the beat. The lead and the meta are authored
-  **per champion** rather than shared: the Goblin Lord's treeline is Wild's Edge,
+  **per champion** rather than shared: the Manticore's treeline is Wild's Edge,
   and reusing it under the Molten Foundry would read as a bug in the copy, not as
   a house line.
 - `styles.css` — a veil clipped to `.battlefield`: a red bloom on the enemy row,
@@ -3438,7 +3438,9 @@ runs up behind the enemy nameplate — the frame it breaks is the hero cell, and
 it as they sit over anything tall. The spawn's no-flip rule holds. Same day: the Lava Beast
 became the Dragon, and the Endbringer was redrawn from a colossus to the Titan's **Herald** — a
 standard-bearer whose banner carries the title screen's lens eye — because it is the herald, not
-the Titan (per user direction).
+the Titan (per user direction). And the Goblin Lord became the Manticore — the last of the
+three renamed because their old names were the least evocative — a lion under a mane of spikes
+with a scorpion tail that strikes forward and the second eye on the stinger.
 
 ## Open / future improvements
 

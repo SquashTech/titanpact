@@ -20,8 +20,9 @@ export const CHAMPION_GRADES: Record<GrowthStatKey, GrowthGrade> = {
 };
 
 export const enemies: Record<string, HeroDefinition> = {
-  // Wild's Edge's Guardian reinforcement: held on the enemy bench so the fight's first KO
-  // brings him in (enemyGen.ts `appendFinalEnemy`, locations.ts `guardianFinalEnemyId`).
+  // Wild's Edge's Guardian reinforcement (the Goblin Lord until 2026-09-16, renamed with its
+  // figure — guardianFigures.ts draws a manticore, per user direction): held on the enemy bench so
+  // the fight's first KO brings it in (enemyGen.ts `appendFinalEnemy`, locations.ts `guardianFinalEnemyId`).
   // Never drawn by any generator.
   // Redistributed 2026-09-02, per user direction: -15 Attack and -10 Intelligence into +25 HP,
   // total untouched. He walks on after a KO with the fight already going the player's way, so
@@ -31,9 +32,9 @@ export const enemies: Record<string, HeroDefinition> = {
   // heroes a fight; Attack is the term his whole kit swings with, and HP is what the trade buys
   // (Guardian 77 -> 82%, Act 1 58 -> 62%). A shift into Mana measured WORSE — the pool feeds
   // Archon Blast — and MP Regen barely moved it; Attack is the dial.
-  goblinLord: {
-    id: 'goblinLord',
-    name: 'Goblin Lord',
+  manticore: {
+    id: 'manticore',
+    name: 'Manticore',
     types: ['Beast', 'Ancient'],
     // 550, the figure the other five were brought down TO on 2026-09-06. What still makes this
     // the run's lightest Guardian is the escorts (Act 1 fields Early spawn at 200) and a Beast
@@ -45,7 +46,7 @@ export const enemies: Record<string, HeroDefinition> = {
     growthGrades: CHAMPION_GRADES,
   },
 
-  // The Blighted Shrine's Guardian reinforcement, and the Goblin Lord's opposite number: the
+  // The Blighted Shrine's Guardian reinforcement, and the Manticore's opposite number: the
   // same 550 total, a magical line where his is physical.
   //
   // EVERY champion is 550 as of 2026-09-06 (was 700 for these five). They are flat numbers meeting
@@ -129,7 +130,7 @@ export const enemies: Record<string, HeroDefinition> = {
 
   // The Storm Coast's Guardian reinforcement (the Leviathan until 2026-09-16, renamed with its
   // figure — guardianFigures.ts draws a kraken, so the name says so). 550, matching every other champion.
-  // Archon Blast is the Goblin Lord's move because the Ancient slate is three moves
+  // Archon Blast is the Manticore's move because the Ancient slate is three moves
   // long and unauthored (CLAUDE.md "Repo map"); it should be revisited when Ancient lands.
   kraken: {
     id: 'kraken',
@@ -171,7 +172,7 @@ export const enemies: Record<string, HeroDefinition> = {
 };
 
 /** Pointed at by `LocationDefinition.guardianFinalEnemyId`. */
-export const GOBLIN_LORD_ID = 'goblinLord';
+export const MANTICORE_ID = 'manticore';
 export const YUGZULACH_ID = 'yugzulach';
 export const KRAKEN_ID = 'kraken';
 export const ELDER_BOUGH_ID = 'elderBough';
@@ -183,7 +184,7 @@ export const ENDBRINGER_ID = 'endbringer';
 
 /** Every Guardian champion, in no particular order — a run breaks five of these six. */
 export const CHAMPION_IDS: readonly string[] = [
-  GOBLIN_LORD_ID,
+  MANTICORE_ID,
   YUGZULACH_ID,
   KRAKEN_ID,
   ELDER_BOUGH_ID,

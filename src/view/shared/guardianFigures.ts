@@ -64,26 +64,29 @@ function makeSeal(p: Pal, eye: Eye, sealed: boolean): Seal {
 // ---------- the six Guardians ----------
 // Each draw returns untransformed markup, facing right, ground y=88, as a spawn's does.
 const GUARDIANS: Record<string, Draw> = {
-  // The Goblin Lord (Beast): a hunched brute under a crude crown, ears like blades, a spiked
-  // club taller than he is. The second eye looks out of the hump on his back. The seal is a
-  // collar — the beast that was leashed.
-  goblinLord: (p, po, ey, seal) => {
-    const swing = po === 'attack' ? 100 : po === 'hurt' ? -10 : 4;
-    const jaw = po === 'attack' ? 5 : 0;
-    const club = G(
-      `rotate(${swing} 108 60)`,
-      P('103,62 113,62 120,-18 96,-18', p.dd) + [-12, -2, 8].map((dy) => P(`97,${-2 + dy} 88,${-6 + dy} 99,${-10 + dy}`, p.dd) + P(`119,${-2 + dy} 128,${-6 + dy} 117,${-10 + dy}`, p.dd)).join('') + L('M106,54 L109,-10', p.d, 1.8, 'opacity=".6"') + [0, 1, 2].map((i) => C(108, 38 - i * 16, 2, p.l)).join('')
-    );
-    return R(20, 84, 24, 6, p.dd, 2) + R(56, 84, 24, 6, p.dd, 2) + P('26,86 28,66 44,66 44,86', p.d) + P('58,86 58,66 74,66 74,86', p.d)
-      + D('M20,72 C10,44 30,22 56,22 C84,22 96,44 90,72 Z', p.c) + D('M36,72 C34,52 48,42 66,46 C80,50 84,62 82,72 Z', p.l, 'opacity=".3"') + L('M30,44 q8,-10 20,-12 M64,30 q10,2 16,10', p.d, 1.4, 'opacity=".5"')
-      + L('M28,52 C14,58 8,70 10,82', p.c, 8) + C(10, 84, 6, p.d)
-      + P('62,30 46,4 70,24', p.c) + P('64,30 54,12 68,26', p.d, 'opacity=".4"') + P('88,30 104,10 96,34', p.c) + P('90,30 100,16 96,32', p.d, 'opacity=".4"')
-      + C(80, 38, 15, p.c) + D('M66,34 L96,30 L94,40 L68,44 Z', p.d)
-      + D(`M70,46 L94,44 L90,${56 + jaw} L74,${56 + jaw} Z`, p.d) + P(`78,${54 + jaw} 80,42 84,${54 + jaw}`, p.ll) + P(`86,${54 + jaw} 88,42 92,${54 + jaw}`, p.ll)
-      + P('70,28 72,12 78,22 84,6 90,20 96,10 98,28', p.ll) + [74, 84, 94].map((x) => C(x, 24, 1.6, p.dd)).join('')
-      + L('M86,58 C96,60 104,60 108,60', p.c, 7) + club + C(108, 60, 5.5, p.d)
-      + ey(84, 42, 4.8) + ey(44, 38, 3.6)
-      + seal(66, 54, 11, 4.6, 3.2, -14);
+  // The Manticore (Beast): a lion's body under a mane of spikes, a face too much like a person's,
+  // a scorpion tail curled over the back that strikes forward on an attack. One eye in the face —
+  // the other side is a hollow — and the second on the stinger's bulb. The seal is a collar in
+  // the mane.
+  manticore: (p, po, ey, seal) => {
+    const tail = po === 'attack' ? 'M18,66 C-4,54 4,12 40,6 C70,2 94,12 100,32' : po === 'hurt' ? 'M18,66 C4,72 -8,60 -2,44' : 'M18,66 C0,60 -4,28 20,20 C36,14 48,22 46,36';
+    const bulb = po === 'attack' ? [100, 32] : po === 'hurt' ? [-2, 44] : [46, 36];
+    const sting = po === 'attack' ? P('104,34 118,44 100,40', p.dd) : po === 'hurt' ? P('-4,48 -6,60 2,48', p.dd) : P('50,38 60,50 46,42', p.dd);
+    const jaw = po === 'attack' ? 8 : 0;
+    const mane = Array.from({ length: 14 }, (_, i) => {
+      const ang = (Math.PI * (i / 13)) * 1.25 + Math.PI * 0.85;
+      const cx = 76, cy = 50, r1 = 18, r2 = 30 + (i % 2) * 4;
+      return P(`${cx + Math.cos(ang - 0.1) * r1},${cy + Math.sin(ang - 0.1) * r1} ${cx + Math.cos(ang) * r2},${cy + Math.sin(ang) * r2} ${cx + Math.cos(ang + 0.1) * r1},${cy + Math.sin(ang + 0.1) * r1}`, p.d);
+    }).join('');
+    return L(tail, p.d, 6) + L(tail, p.c, 2, 'opacity=".5"') + C(bulb[0], bulb[1], 7, p.d) + sting + ey(bulb[0], bulb[1], 3.4, po === 'hurt' ? 'narrow' : 'open')
+      + P('22,78 18,88 32,88 32,78', p.d) + P('36,78 36,88 46,88 46,78', p.d) + P('54,78 54,88 64,88 62,78', p.d) + P('66,76 68,88 80,88 78,76', p.d)
+      + L('M20,88 l-3,3 M26,88 l0,3 M70,88 l0,3 M76,88 l3,3', p.ll, 1.4)
+      + D('M20,80 C16,56 34,46 60,48 C76,50 84,60 80,78 Z', p.c) + D('M26,76 C26,60 40,54 58,56', p.l, 'opacity=".3"')
+      + mane + C(76, 50, 19, p.d) + C(76, 50, 14, p.c, 'opacity=".5"')
+      + E(88, 46, 11, 13, p.l) + D('M80,38 C84,32 94,32 98,38', p.d) + P('86,44 88,52 91,50', p.d, 'opacity=".5"')
+      + R(80, 54 + jaw / 2, 17, 5 + jaw, p.dd, 1.5) + L(`M83,${54 + jaw / 2} v3 M87,${54 + jaw / 2} v3 M91,${54 + jaw / 2} v3 M95,${54 + jaw / 2} v3`, p.ll, 1.2) + (po === 'attack' ? L('M83,64 v-3 M87,65 v-3 M91,65 v-3 M95,64 v-3 M85,60 v2 M89,60 v2 M93,60 v2', p.ll, 1.2) : '')
+      + C(83, 45, 3.6, '#07050a') + ey(92, 45, 3.8)
+      + seal(70, 66, 10, 5, 3, -18);
   },
 
   // Yugzulach (Shadow): a tall hooded dark with a fan of horns, four arms, no legs — it hangs.

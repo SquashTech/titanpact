@@ -1036,7 +1036,7 @@ export const sounds: Record<SfxId, SoundSpec> = {
 
   /**
    * Named-enemy entrance (view/shared/entrances.ts). The biggest sound in the table, licensed only because it fires at most ONCE a run
-   * (the Goblin Lord at Wild's Edge) — if a second thing ever plays it, it is too big. Every sweep falls where `field`'s rise: an arrival, not a state.
+   * (the Manticore at Wild's Edge) — if a second thing ever plays it, it is too big. Every sweep falls where `field`'s rise: an arrival, not a state.
    */
   'entrance.dread': {
     gain: 0.52,

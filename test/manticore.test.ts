@@ -1,10 +1,10 @@
-// The Goblin Lord (src/data/enemies.ts) and Archon Blast (src/data/moves.ts): the decided numbers a
+// The Manticore (src/data/enemies.ts) and Archon Blast (src/data/moves.ts): the decided numbers a
 // balance pass could move without noticing. Bench placement and non-recruitability: enemyGen.test.ts.
 
 import * as assert from 'assert';
 import { test } from './harness';
 import { moves } from '../src/data/moves';
-import { enemies, ENDBRINGER_ID, GOBLIN_LORD_ID } from '../src/data/enemies';
+import { enemies, ENDBRINGER_ID, MANTICORE_ID } from '../src/data/enemies';
 import { locations, ACT_ONE_LOCATION_ID } from '../src/data/locations';
 import { statusApplicationsOf, type StatKey } from '../src/engine/content';
 import { COMBAT_BUDGET_STATS, statBudgetTotal, grantBudgetTotal } from '../src/run/statBudget';
@@ -12,8 +12,8 @@ import { COMBAT_BUDGET_STATS, statBudgetTotal, grantBudgetTotal } from '../src/r
 /** The game's stat-total convention (docs/run-loop.md "Measured baseline") — six combat stats, not mana or MP Regen. */
 const COMBAT_STATS = COMBAT_BUDGET_STATS;
 
-test('goblinLord: the authored stat total is 550, on the same six stats the difficulty curve measures', () => {
-  const lord = enemies[GOBLIN_LORD_ID];
+test('manticore: the authored stat total is 550, on the same six stats the difficulty curve measures', () => {
+  const lord = enemies[MANTICORE_ID];
   const total = statBudgetTotal(lord.baseStats, COMBAT_STATS);
   // Was 600. Batch simulation put the Act 1 Guardian at a 4.6% player win rate — the run's
   // single choke point — so the champion came down 50 points, almost all of it off Attack.
@@ -25,18 +25,18 @@ test('goblinLord: the authored stat total is 550, on the same six stats the diff
   assert.strictEqual(lord.baseStats.attack, 55);
 });
 
-test('goblinLord: every stat is a multiple of 5 — the locked authoring rule, not a coincidence', () => {
-  const lord = enemies[GOBLIN_LORD_ID];
+test('manticore: every stat is a multiple of 5 — the locked authoring rule, not a coincidence', () => {
+  const lord = enemies[MANTICORE_ID];
   for (const [stat, value] of Object.entries(lord.baseStats)) {
     assert.strictEqual(value % 5, 0, `${stat} = ${value} is not a multiple of 5 (CLAUDE.md "Stat modifiers")`);
   }
 });
 
-test('goblinLord: 20 MP Regen is the ceiling, and it is what makes the kit castable', () => {
-  const lord = enemies[GOBLIN_LORD_ID];
+test('manticore: 20 MP Regen is the ceiling, and it is what makes the kit castable', () => {
+  const lord = enemies[MANTICORE_ID];
   assert.strictEqual(lord.baseStats.mpRegen, 20);
   for (const other of Object.values(enemies)) {
-    if (other.id === GOBLIN_LORD_ID) continue;
+    if (other.id === MANTICORE_ID) continue;
     // The Endbringer is the documented exception and the only one: it out-scales every
     // champion on every axis by design (docs/lore.md §7).
     if (other.id === ENDBRINGER_ID) continue;
@@ -49,8 +49,8 @@ test('goblinLord: 20 MP Regen is the ceiling, and it is what makes the kit casta
   assert.ok(lord.baseStats.manaPool >= Math.min(...costs) * 2, 'he cannot open with two moves');
 });
 
-test('goblinLord: the kit is four moves — the MOVE_CAP — spanning both damage pipelines', () => {
-  const lord = enemies[GOBLIN_LORD_ID];
+test('manticore: the kit is four moves — the MOVE_CAP — spanning both damage pipelines', () => {
+  const lord = enemies[MANTICORE_ID];
   // Claw sets Bleed (20%), Maul doubles into it — a setup the player can outpace, where the
   // Thrash/Momentum Swing kit it replaced simply killed a hero per round from turn one.
   assert.deepStrictEqual([...lord.moveIds], ['claw', 'maul', 'enfeeble', 'archonBlast']);
@@ -61,8 +61,8 @@ test('goblinLord: the kit is four moves — the MOVE_CAP — spanning both damag
   for (const type of lord.types) assert.ok(kitTypes.has(type), `nothing in the kit gets STAB off ${type}`);
 });
 
-test('goblinLord: every location fields a Guardian champion, and the finale bench ends on the Endbringer', () => {
-  assert.strictEqual(locations[ACT_ONE_LOCATION_ID].guardianFinalEnemyId, GOBLIN_LORD_ID);
+test('manticore: every location fields a Guardian champion, and the finale bench ends on the Endbringer', () => {
+  assert.strictEqual(locations[ACT_ONE_LOCATION_ID].guardianFinalEnemyId, MANTICORE_ID);
   const withChampions = Object.values(locations).filter((l) => l.guardianFinalEnemyId !== null);
   // The Threshold's "champion" is the Endbringer itself — the finale's bench ends on it.
   assert.deepStrictEqual(withChampions.map((l) => l.id), [

@@ -74,7 +74,7 @@ alone (`map:<type>`); a test pins that.
 
 ## 3. The type lesson the act is built around
 
-Act 1's Guardian is the **Goblin Lord, Beast/Ancient**. The types strong against Beast are
+Act 1's Guardian is the **Manticore, Beast/Ancient**. The types strong against Beast are
 **Frost, Storm and Mech** — and those are exactly the three types strong against **Iron**
 (Valor) and **Beast** (Fang).
 
@@ -129,7 +129,7 @@ hand them a caster, so the tutorial hands them one and does not ask.
 Intelligence**, and her only damage move is magical. She is also Frost, so she is still the
 Guardian answer §3 is built on — one recruit, two lessons.
 
-**The proof is the Goblin Lord himself, and it needed no staging.** He is authored at
+**The proof is the Manticore himself, and it needed no staging.** He is authored at
 **75 Defense against 60 Wisdom**, so the two pipelines already read differently on him. Through
 the real damage pipeline, on base kits:
 

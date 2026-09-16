@@ -365,7 +365,7 @@ test('tutorial: the forced recruit is a MAGICAL specialist that actually shows u
 
 test('tutorial: the forced caster out-damages both starters against the Guardian she is pinned to', () => {
   // The whole reason the recruit and the fielding lock exist. Nothing is staged for it: the
-  // Goblin Lord is authored at 75 Defense against 60 Wisdom, so the two pipelines read
+  // Manticore is authored at 75 Defense against 60 Wisdom, so the two pipelines read
   // differently on him, and the caster wins WITHOUT being strong against him — the seal halves
   // her too. Computed on base kits, because the player's Evolution is their own choice.
   const lord = enemies[locations.wildsEdge.guardianFinalEnemyId!];

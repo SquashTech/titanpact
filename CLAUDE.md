@@ -42,7 +42,7 @@ don't silently override it.
 > art"): the mortal type's tones, two wrong-placed eyes and a third in **the seal**, a worn ring in
 > the Ancient hue that the finale's unsealed figure loses; the Endbringer is the Titan's **Herald**
 > (a standard-bearer, the eye on the banner — never the Titan); the Leviathan is renamed
-> **Kraken** and the Lava Beast **Dragon**.
+> **Kraken**, the Lava Beast **Dragon** and the Goblin Lord **Manticore**.
 > **Phases 3–5 are IN too:** the fork is Elite-or-Skirmish with the enemy typing previewed on the
 > tile from a draw seeded off the map (`src/run/encounters.ts`), the Pact Clock takes the field
 > only, and the mortal companion joins after the first fight. **Phase 6 measured (sim pass 8) and

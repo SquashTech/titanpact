@@ -64,7 +64,7 @@ offset shapes a row of the map; the act term shapes the run — it was added aft
 (Skirmish 68%, Elite 64%) with Acts 3 and 5 near-clean. A level is a fine dial: ~4 points of act
 clear at Act 1's par, ~1 at Act 5's. Measured: Act 1 50 → 58%, Act 3 98 → 96, Act 5 90 → 88, the
 Act 1 Guardian unmoved at 77% (its escorts were already at the level floor — that fight is the
-champion's body: the Goblin Lord then traded 10 Attack for 20 HP, `data/enemies.ts`, and the
+champion's body: the Manticore then traded 10 Attack for 20 HP, `data/enemies.ts`, and the
 fight measured 82%, Act 1 62%).
 
 | Node | Offset | Act 1 (−2) | Act 2 | Act 3 (+2) | Act 4 | Act 5 (+2) |

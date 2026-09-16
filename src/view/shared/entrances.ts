@@ -4,7 +4,7 @@
 // Presentation data only; the engine never reads it. Kept scarce: the six Guardian champions and the
 // Endbringer, so a run sees exactly one an act and a routine bench pivot never spends it.
 
-import { ELDER_BOUGH_ID, ENDBRINGER_ID, GOBLIN_LORD_ID, DRAGON_ID, KRAKEN_ID, SKELETON_KING_ID, YUGZULACH_ID } from '../../data/enemies';
+import { ELDER_BOUGH_ID, ENDBRINGER_ID, MANTICORE_ID, DRAGON_ID, KRAKEN_ID, SKELETON_KING_ID, YUGZULACH_ID } from '../../data/enemies';
 
 /** Arrival copy for the reveal beat: the lead is the room noticing, the meta is what follows it. */
 export interface DramaticEntrance {
@@ -13,12 +13,12 @@ export interface DramaticEntrance {
 }
 
 /**
- * Per champion rather than one shared line: the Goblin Lord's treeline is Wild's Edge, and the same
+ * Per champion rather than one shared line: the Manticore's treeline is Wild's Edge, and the same
  * sentence under the Molten Foundry reads as a bug in the copy. Coverage is guarded by
  * `test/entrances.test.ts` — a champion authored without an entrance is a silent miss otherwise.
  */
 const DRAMATIC_ENTRANCES: Readonly<Record<string, DramaticEntrance>> = {
-  [GOBLIN_LORD_ID]: { lead: 'Something comes out of the treeline', meta: 'The ground goes quiet.' },
+  [MANTICORE_ID]: { lead: 'Something comes out of the treeline', meta: 'The ground goes quiet.' },
   [YUGZULACH_ID]: { lead: 'The altars answer', meta: 'The chanting stops all at once.' },
   [ELDER_BOUGH_ID]: { lead: 'The forest stands up', meta: 'Every path closes behind it.' },
   [DRAGON_ID]: { lead: 'Something climbs out of the furnace', meta: 'The heat turns to face you.' },

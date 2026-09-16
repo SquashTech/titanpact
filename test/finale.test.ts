@@ -115,14 +115,14 @@ test('unsealed: the finale pool holds the six unsealed forms and the Titan, and 
 test('finale: the seals field in the order they were broken, and the Titan is last', () => {
   const seals = [
     seal(3, 'kraken'),
-    seal(1, 'goblinLord'),
+    seal(1, 'manticore'),
     seal(5, 'skeletonKing'),
     seal(2, 'yugzulach'),
     seal(4, 'dragon'),
   ];
   const { squad } = generateFinaleEncounter(seals, ENDBRINGER_ID, finaleEnemies, 1);
 
-  assert.deepStrictEqual([...squad.activeIds], [unsealedIdFor('goblinLord'), unsealedIdFor('yugzulach')]);
+  assert.deepStrictEqual([...squad.activeIds], [unsealedIdFor('manticore'), unsealedIdFor('yugzulach')]);
   assert.deepStrictEqual(squad.benchIds, [
     unsealedIdFor('kraken'),
     unsealedIdFor('dragon'),
@@ -164,8 +164,8 @@ test('finale: a run that somehow broke nothing still meets the Titan alone rathe
 
 test('brokenSeals: a re-resolved Guardian node never records the same act twice', () => {
   let run = createRunState();
-  run = recordBrokenSeal(run, seal(1, 'goblinLord', 1));
-  run = recordBrokenSeal(run, seal(1, 'goblinLord', 99));
+  run = recordBrokenSeal(run, seal(1, 'manticore', 1));
+  run = recordBrokenSeal(run, seal(1, 'manticore', 99));
   assert.strictEqual(run.brokenSeals.length, 1);
   assert.strictEqual(run.brokenSeals[0].level, 1);
 });
