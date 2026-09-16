@@ -124,8 +124,10 @@ export function CrucibleScreen({ run, onRunChange, onContinue }: Props) {
   const back = run.roster.slice(0, run.roster.length - frontCount);
   const front = run.roster.slice(run.roster.length - frontCount);
 
+  // The pick is the decision and the fire is its seal, so the figure sounds as a card chosen
+  // (`ui.pick`, on the arm rather than the press — the same press starts the hold that only inspects).
   function arm(rosterId: string) {
-    playSfx('ui.select');
+    playSfx('ui.pick');
     setArmedRosterId(rosterId);
   }
 
@@ -415,6 +417,7 @@ function CrucibleFigure({ entry, pending, armed, dimmed, onArm, onPreview }: Fig
       aria-disabled={!pending}
       aria-pressed={armed}
       aria-label={`${hero.name}, level ${levelOf(entry)} — ${pending ? 'stand at the rim' : 'already tempered'}`}
+      data-sfx={pending ? 'none' : undefined}
       onKeyDown={(e) => {
         if ((e.key === 'Enter' || e.key === ' ') && pending) {
           e.preventDefault();

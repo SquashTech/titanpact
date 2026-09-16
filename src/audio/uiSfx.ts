@@ -11,11 +11,19 @@
 import { playSfx } from './sfx';
 import type { SfxId } from './sounds';
 
-// First match wins: title-cta, draft-cta and class-shrine-confirm-button also carry
-// `resolve-button`, so they must precede it.
+// First match wins: the closes and declines carry `resolve-button` / `moveoffer-button` too, and
+// title-cta, draft-cta and class-shrine-confirm-button carry `resolve-button`, so all of those
+// precede the class they share. The shared pick cards (HeroPickCard, EquipChoiceCard) are not here:
+// they play `ui.pick` on the activate itself, since their pointerdown may be the start of a hold.
 const CLASS_SFX: readonly (readonly [string, SfxId])[] = [
   ['log-close-button', 'ui.back'],
   ['detail-close-button', 'ui.back'],
+  ['sheet-close-button', 'ui.back'],
+  ['roster-close-button', 'ui.back'],
+  ['evolution-dossier-close', 'ui.back'],
+  ['detail-action-cancel', 'ui.back'],
+  ['guild-hall-service-cancel', 'ui.back'],
+  ['moveoffer-decline', 'ui.back'],
   ['exit-button', 'ui.back'],
   ['bottom-action-back', 'ui.back'],
   ['title-cta', 'ui.launch'],
@@ -26,7 +34,13 @@ const CLASS_SFX: readonly (readonly [string, SfxId])[] = [
   ['relic-shrine-claim-button', 'ui.confirm'],
   ['moveoffer-button', 'ui.confirm'],
   ['move-button', 'ui.move'],
-  ['map-node', 'ui.confirm'],
+  ['relic-pick', 'ui.pick'],
+  ['guild-hall-good', 'ui.trade'],
+  ['item-who-sell', 'ui.trade'],
+  ['tab-button', 'ui.tab'],
+  ['compendium-tab', 'ui.tab'],
+  ['reference-tab', 'ui.tab'],
+  ['sandbox-tab', 'ui.tab'],
 ];
 
 const CLICKABLE = 'button, [role="button"], a[href], summary, input[type="checkbox"], input[type="radio"]';

@@ -3,6 +3,8 @@
 // UI sounds stay quiet and short: they fire hundreds of times a run and anything with presence fatigues.
 // Quiet is not weightless. A press reads as firm because it has a BODY — a low-mid layer dropping in pitch
 // under the transient — not because it is loud or long. Tones with no body read as limp however loud they get.
+// Material is RESONANCE: a noise burst through a narrow band (Q 4-8) at a modal frequency is stone, bronze or a coin;
+// the same burst at Q 1 is static. Metal is inharmonic partials, detuned so they beat; leather and paper never ring.
 // Impacts are noise-led: the filtered noise burst is the weight; the oscillator under it only supplies pitch, which is what lets beatSfx.ts re-pitch one hit for chip vs heavy.
 
 import type { SoundSpec } from './synth';
@@ -19,6 +21,9 @@ export type SfxId =
   | 'ui.page'
   | 'ui.commit'
   | 'ui.launch'
+  | 'ui.tab'
+  | 'ui.pick'
+  | 'ui.trade'
   // Run
   | 'victory'
   | 'defeat'
@@ -80,41 +85,55 @@ export type SfxId =
   | 'entrance.dread';
 
 export const sounds: Record<SfxId, SoundSpec> = {
-  /** The default for every tappable surface: a struck wooden key, gone in 80ms. */
+  /**
+   * The default for every tappable surface: a fingertip on slate. Two narrow bands of noise at the tablet's modes are
+   * the whole material — the same burst at Q 1 is a click off a speaker, at Q 7 it is a stone being touched. A knuckle
+   * of low end under it, gone in 80ms.
+   */
   'ui.tap': {
-    gain: 0.38,
+    gain: 0.46,
     jitter: 0.045,
     voices: [
-      // Noise band-limited so it reads as a click ("tk"), not a hiss; wider than a pure tick so it carries.
-      { wave: 'noise', gain: 0.32, attack: 0.001, decay: 0.024, filter: { type: 'bandpass', freq: 2300, q: 0.9 } },
-      { wave: 'triangle', freq: 330, freqEnd: 170, gain: 0.44, attack: 0.001, decay: 0.07 },
-      // The body. A press with nothing under 200Hz is the whole "limp" problem — and triangle over sine
-      // so the weight survives a phone speaker that reproduces none of the fundamental.
-      { wave: 'triangle', freq: 128, freqEnd: 84, gain: 0.3, attack: 0.001, decay: 0.06 },
+      { wave: 'noise', gain: 1.6, attack: 0.001, decay: 0.03, filter: { type: 'bandpass', freq: 1450, q: 7 } },
+      { wave: 'noise', gain: 1.1, attack: 0.001, decay: 0.048, filter: { type: 'bandpass', freq: 620, q: 5 } },
+      // Wide grit at the very front so the modes read as struck, not as a tone.
+      { wave: 'noise', gain: 0.14, attack: 0.001, decay: 0.012, filter: { type: 'highpass', freq: 2600 } },
+      { wave: 'triangle', freq: 150, freqEnd: 86, gain: 0.3, attack: 0.001, decay: 0.058 },
     ],
   },
 
-  /** Committing (Resolve the round, claim, buy). Rises — but off a struck onset, not out of silence. */
+  /**
+   * Committing (Resolve the round, claim, buy): the CTA is drawn as a chamfered bronze plate, so this is that plate
+   * struck. Bronze is INHARMONIC — the partials sit at 1 : 2.63 : 4.4, nowhere near a chord, and each pair is detuned
+   * so it beats — which is what separates a bell from a beep. The body still lifts a fourth under it so it reads as yes.
+   */
   'ui.confirm': {
-    gain: 0.38,
+    gain: 0.5,
     jitter: 0.02,
     voices: [
-      { wave: 'noise', gain: 0.28, attack: 0.001, decay: 0.03, filter: { type: 'bandpass', freq: 2500, q: 1.1 } },
-      // The rise alone is a chirp; this is what it rises OFF.
-      { wave: 'triangle', freq: 138, freqEnd: 92, gain: 0.4, attack: 0.002, decay: 0.16 },
-      { wave: 'triangle', freq: 520, freqEnd: 790, detune: 6, gain: 0.44, attack: 0.004, decay: 0.13 },
-      { wave: 'sine', freq: 1040, freqEnd: 1580, gain: 0.14, attack: 0.004, decay: 0.1, delay: 0.01 },
+      { wave: 'noise', gain: 1.2, attack: 0.001, decay: 0.026, filter: { type: 'bandpass', freq: 2400, q: 6 } },
+      { wave: 'noise', gain: 0.16, attack: 0.001, decay: 0.012, filter: { type: 'highpass', freq: 3200 } },
+      { wave: 'triangle', freq: 130, freqEnd: 92, gain: 0.36, attack: 0.002, decay: 0.15 },
+      { wave: 'triangle', freq: 392, freqEnd: 523, gain: 0.3, attack: 0.004, decay: 0.14 },
+      // The plate's modes.
+      { wave: 'sine', freq: 1046, detune: 9, gain: 0.22, attack: 0.003, decay: 0.2, delay: 0.004 },
+      { wave: 'sine', freq: 2750, detune: 14, gain: 0.09, attack: 0.003, decay: 0.16, delay: 0.004 },
+      { wave: 'sine', freq: 4600, detune: 18, gain: 0.04, attack: 0.003, decay: 0.12, delay: 0.004 },
     ],
   },
 
-  /** Cancel — the inverse contour of confirm, on the same onset so both read as the same hand. */
+  /**
+   * Cancel — the sheet folding closed. The opposite MATERIAL to confirm rather than the opposite contour: leather over
+   * a soft edge, nothing rings, and the one tone in it is felted under a lowpass so it thuds instead of sounding.
+   */
   'ui.back': {
-    gain: 0.34,
+    gain: 0.44,
     jitter: 0.02,
     voices: [
-      { wave: 'noise', gain: 0.2, attack: 0.001, decay: 0.022, filter: { type: 'bandpass', freq: 1700, q: 1.2 } },
-      { wave: 'triangle', freq: 500, freqEnd: 300, gain: 0.44, attack: 0.003, decay: 0.11 },
-      { wave: 'triangle', freq: 124, freqEnd: 88, gain: 0.26, attack: 0.002, decay: 0.09 },
+      { wave: 'noise', gain: 0.4, attack: 0.004, decay: 0.07, filter: { type: 'lowpass', freq: 1500, freqEnd: 260, q: 1.2 } },
+      { wave: 'noise', gain: 0.9, attack: 0.001, decay: 0.02, filter: { type: 'bandpass', freq: 520, q: 4 } },
+      { wave: 'triangle', freq: 440, freqEnd: 300, gain: 0.3, attack: 0.004, decay: 0.09, filter: { type: 'lowpass', freq: 1100, q: 0.8 } },
+      { wave: 'triangle', freq: 132, freqEnd: 84, gain: 0.3, attack: 0.002, decay: 0.1 },
     ],
   },
 
@@ -214,6 +233,56 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'sine', freq: 441, gain: 0.2, attack: 0.006, decay: 0.85, delay: 0.1 },
       { wave: 'sine', freq: 882, detune: 16, gain: 0.09, attack: 0.01, decay: 0.8, delay: 0.11 },
       { wave: 'noise', gain: 0.2, attack: 0.16, decay: 0.55, filter: { type: 'bandpass', freq: 400, freqEnd: 4200, q: 0.8 } },
+    ],
+  },
+
+  /** A tab switched (TabStrip, the Compendium, the reference sheet): a page turned. Paper is a hush, not a strike, and the only transient is the leaf seating at the end. */
+  'ui.tab': {
+    gain: 0.62,
+    jitter: 0.04,
+    voices: [
+      { wave: 'noise', gain: 0.3, attack: 0.014, decay: 0.09, filter: { type: 'bandpass', freq: 4200, freqEnd: 1300, q: 0.7 } },
+      { wave: 'noise', gain: 1.2, attack: 0.001, decay: 0.022, delay: 0.07, filter: { type: 'bandpass', freq: 1700, q: 6 } },
+      { wave: 'triangle', freq: 140, freqEnd: 96, gain: 0.2, attack: 0.002, decay: 0.05, delay: 0.07 },
+    ],
+  },
+
+  /**
+   * A card chosen (a hero on a who-screen, a Banner, a drop): a stone tile set into its place on the ground. Two modes
+   * lower and wider than `ui.tap`'s — a slab, not a tablet — a grit tail as it settles, and more floor than any other
+   * press below `ui.commit`. Wholly noise-led: a tone here would make it a note, and a pick is a weight put down.
+   */
+  'ui.pick': {
+    gain: 0.44,
+    jitter: 0.03,
+    voices: [
+      { wave: 'noise', gain: 1.5, attack: 0.001, decay: 0.05, filter: { type: 'bandpass', freq: 880, q: 6 } },
+      { wave: 'noise', gain: 1.0, attack: 0.001, decay: 0.03, filter: { type: 'bandpass', freq: 2300, q: 5 } },
+      { wave: 'noise', gain: 0.3, attack: 0.001, decay: 0.06, filter: { type: 'lowpass', freq: 1600, freqEnd: 300, q: 1 } },
+      { wave: 'sine', freq: 108, freqEnd: 66, gain: 0.46, attack: 0.002, hold: 0.012, decay: 0.17 },
+      // The settle.
+      { wave: 'noise', gain: 0.2, attack: 0.012, decay: 0.09, delay: 0.035, filter: { type: 'lowpass', freq: 1100, freqEnd: 350, q: 1.1 } },
+    ],
+  },
+
+  /**
+   * Gold changing hands (a Guild Hall shelf buy, an item sold): two coins, then the purse. `gold.coin`'s metal twice at
+   * different pitches 55ms apart, landing on a leather thump — metal first, leather last, so it reads as coins going
+   * INTO something and not as the count-up.
+   */
+  'ui.trade': {
+    gain: 0.5,
+    jitter: 0.02,
+    voices: [
+      { wave: 'noise', gain: 1.4, attack: 0.001, decay: 0.04, filter: { type: 'bandpass', freq: 5200, q: 8 } },
+      { wave: 'triangle', freq: 1760, gain: 0.14, attack: 0.001, hold: 0.006, decay: 0.08 },
+      { wave: 'sine', freq: 2640, detune: 12, gain: 0.08, attack: 0.002, decay: 0.12, delay: 0.004 },
+      { wave: 'noise', gain: 1.4, attack: 0.001, decay: 0.04, delay: 0.055, filter: { type: 'bandpass', freq: 6100, q: 8 } },
+      { wave: 'triangle', freq: 2093, gain: 0.12, attack: 0.001, hold: 0.006, decay: 0.08, delay: 0.055 },
+      { wave: 'sine', freq: 3140, detune: 12, gain: 0.07, attack: 0.002, decay: 0.12, delay: 0.06 },
+      // The purse.
+      { wave: 'noise', gain: 0.36, attack: 0.003, decay: 0.1, delay: 0.1, filter: { type: 'lowpass', freq: 900, freqEnd: 220, q: 1 } },
+      { wave: 'sine', freq: 150, freqEnd: 92, gain: 0.4, attack: 0.003, decay: 0.17, delay: 0.1 },
     ],
   },
 
@@ -547,19 +616,23 @@ export const sounds: Record<SfxId, SoundSpec> = {
 
   /**
    * Setting off down one of them. The one sound on the map screen that is a COMMIT rather than a
-   * report, so it is the only one that rises the whole way: a struck onset, then a perfect fifth
-   * climbing in three octaves at once, over a body that lifts instead of settling. The plate ring
-   * on the tail is what says the choice is spent — every other UI press in the table closes.
+   * report, so it is the only one that rises the whole way: the medallion pressed into the ground
+   * — a stone knock, then a bronze ring off the medallion itself — under a perfect fifth climbing
+   * in two octaves at once. Every other UI press in the table closes; this one is spent open.
    */
   'map.select': {
-    gain: 0.42,
+    gain: 0.37,
     jitter: 0.015,
     voices: [
-      { wave: 'noise', gain: 0.3, attack: 0.001, decay: 0.034, filter: { type: 'bandpass', freq: 1900, q: 1 } },
-      { wave: 'triangle', freq: 110, freqEnd: 165, gain: 0.44, attack: 0.002, hold: 0.02, decay: 0.2 },
-      { wave: 'triangle', freq: 392, freqEnd: 587, detune: 7, gain: 0.4, attack: 0.003, decay: 0.18 },
-      { wave: 'sine', freq: 784, freqEnd: 1175, gain: 0.16, attack: 0.006, decay: 0.26, delay: 0.02 },
-      { wave: 'sine', freq: 1568, gain: 0.07, attack: 0.012, decay: 0.44, delay: 0.06 },
+      { wave: 'noise', gain: 1.5, attack: 0.001, decay: 0.045, filter: { type: 'bandpass', freq: 820, q: 6 } },
+      { wave: 'noise', gain: 0.28, attack: 0.001, decay: 0.05, filter: { type: 'lowpass', freq: 1800, freqEnd: 300, q: 1 } },
+      { wave: 'sine', freq: 96, freqEnd: 58, gain: 0.44, attack: 0.002, hold: 0.015, decay: 0.2 },
+      { wave: 'triangle', freq: 110, freqEnd: 165, gain: 0.3, attack: 0.002, hold: 0.02, decay: 0.2 },
+      { wave: 'triangle', freq: 392, freqEnd: 587, detune: 7, gain: 0.34, attack: 0.003, decay: 0.18 },
+      { wave: 'sine', freq: 784, freqEnd: 1175, gain: 0.14, attack: 0.006, decay: 0.26, delay: 0.02 },
+      // The medallion: bronze partials, inharmonic like `ui.confirm`'s, the ring the choice is spent on.
+      { wave: 'sine', freq: 1568, detune: 12, gain: 0.09, attack: 0.004, decay: 0.42, delay: 0.03 },
+      { wave: 'sine', freq: 4120, detune: 18, gain: 0.04, attack: 0.004, decay: 0.3, delay: 0.03 },
     ],
   },
 

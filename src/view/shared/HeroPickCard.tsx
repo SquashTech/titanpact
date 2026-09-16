@@ -7,6 +7,7 @@ import { ElementGlyph } from './elementIcons';
 import { HeroPortrait } from './HeroPortrait';
 import { useLongPress } from './MoveTile';
 import { levelOf } from '../../run/growth';
+import { playSfx } from '../../audio/sfx';
 
 // The shared "pick a hero" card: figure on type-tinted ground, one CTA line. Tap acts; HOLD opens
 // `onPreview`. Portrait is 48px in a 3-column grid, 96px in a 2-column one.
@@ -48,7 +49,9 @@ export function HeroPickCard({
   onPreview,
   ariaLabel,
 }: HeroPickCardProps) {
-  const longPress = useLongPress(onPreview, disabled ? undefined : onActivate);
+  // Sounded on the activate, not the press: the same pointerdown starts the hold that only inspects.
+  const activate = disabled || !onActivate ? undefined : () => { playSfx('ui.pick'); onActivate(); };
+  const longPress = useLongPress(onPreview, activate);
   return (
     <div
       className={['pick-card', disabled ? 'is-locked' : '', selected ? 'is-selected' : '', className ?? ''].filter(Boolean).join(' ')}
@@ -57,10 +60,11 @@ export function HeroPickCard({
       tabIndex={disabled ? -1 : 0}
       aria-disabled={disabled}
       aria-label={ariaLabel ?? `${hero.name}, level ${levelOf(entry)}`}
+      data-sfx={disabled ? undefined : 'none'}
       onKeyDown={(e) => {
         if ((e.key === 'Enter' || e.key === ' ') && !disabled) {
           e.preventDefault();
-          onActivate?.();
+          activate?.();
         }
       }}
       {...longPress}

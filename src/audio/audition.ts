@@ -10,6 +10,9 @@ initSfx();
 
 const UI_IDS: SfxId[] = [
   'ui.tap',
+  'ui.tab',
+  'ui.pick',
+  'ui.trade',
   'ui.confirm',
   'ui.commit',
   'ui.launch',
@@ -39,8 +42,11 @@ const UI_IDS: SfxId[] = [
 ];
 
 const NOTES: Partial<Record<SfxId, string>> = {
-  'ui.tap': 'default for every tappable control',
-  'ui.confirm': 'commit — lock in, claim, buy',
+  'ui.tap': 'default for every tappable control — slate',
+  'ui.tab': 'a tab switched — a page turned',
+  'ui.pick': 'a card chosen: a hero, a Banner, a drop — a stone tile set',
+  'ui.trade': 'gold changing hands on the shelf — coins, then the purse',
+  'ui.confirm': 'commit — lock in, claim — the bronze plate struck',
   'ui.commit': 'the big one — draft sealed, class taken, evolution chosen',
   'ui.launch': 'Start a Run — the biggest sound in the UI table',
   levelUp: 'a hero gains a level',
@@ -58,7 +64,7 @@ const NOTES: Partial<Record<SfxId, string>> = {
   'map.select': 'setting off down one of them',
   'map.boon': 'a path reaching a reward — a landmark is this at 0.75 pitch',
   'map.threat': 'a path reaching monsters — a Guardian is this at 0.66 pitch',
-  'ui.back': 'close, cancel, exit',
+  'ui.back': 'close, cancel, exit — leather, nothing rings',
   'ui.select': 'highlight without committing',
   'ui.move': 'a move taken off the combat grid',
   'ui.target': 'a target locked in combat',
@@ -161,6 +167,10 @@ function card(id: SfxId): HTMLElement {
 
   void renderSpec(sounds[id], 2).then((samples) => {
     if (!samples) return;
+    // Peak beside the note: UI presses sit around 0.10-0.17, impacts 0.36-0.42, nothing at 1.0.
+    let peak = 0;
+    for (let i = 0; i < samples.length; i++) if (Math.abs(samples[i]) > peak) peak = Math.abs(samples[i]);
+    meta.textContent = `${NOTES[id] ?? ''} · peak ${peak.toFixed(2)}`;
     // Redraw on resize: the grid's column width shifts as later cards land.
     const draw = () => drawWave(canvas, samples);
     requestAnimationFrame(draw);

@@ -78,7 +78,6 @@ export function ItemWhoScreen({ run, itemId, onRunChange, onDone }: Props) {
 
   function handleSell() {
     if (done) return;
-    playSfx('ui.select');
     onRunChange(sellItem(run, itemId, equipment));
     setOutcome({ kind: 'sold', gold: sellGold });
   }

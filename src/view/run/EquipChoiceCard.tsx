@@ -3,6 +3,7 @@ import type { EquipmentDefinition } from '../../run/equipment';
 import { EquipmentIcon, ItemEffectChips, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import { ItemDetailCard } from '../shared/ItemDossier';
 import { useLongPress } from '../shared/MoveTile';
+import { playSfx } from '../../audio/sfx';
 
 interface EquipChoiceCardProps {
   item: EquipmentDefinition;
@@ -15,11 +16,13 @@ interface EquipChoiceCardProps {
 }
 
 export function EquipChoiceCard({ item, picked, onPick, onInspect, revealDelayMs }: EquipChoiceCardProps) {
-  const longPress = useLongPress(onInspect, onPick);
+  // Sounded on the pick, not the press: the same pointerdown starts the hold that only inspects.
+  const longPress = useLongPress(onInspect, onPick ? () => { playSfx('ui.pick'); onPick(); } : undefined);
   return (
     <button
       type="button"
       className={`equip-cache-card equip-cache-reveal-in${picked ? ' picked' : ''}${onPick ? '' : ' is-static'}`}
+      data-sfx={onPick ? 'none' : undefined}
       style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity], animationDelay: `${revealDelayMs}ms` } as CSSProperties}
       {...longPress}
     >
