@@ -114,7 +114,7 @@ test('unsealed: the finale pool holds the six unsealed forms and the Titan, and 
 
 test('finale: the seals field in the order they were broken, and the Titan is last', () => {
   const seals = [
-    seal(3, 'leviathan'),
+    seal(3, 'kraken'),
     seal(1, 'goblinLord'),
     seal(5, 'skeletonKing'),
     seal(2, 'yugzulach'),
@@ -124,7 +124,7 @@ test('finale: the seals field in the order they were broken, and the Titan is la
 
   assert.deepStrictEqual([...squad.activeIds], [unsealedIdFor('goblinLord'), unsealedIdFor('yugzulach')]);
   assert.deepStrictEqual(squad.benchIds, [
-    unsealedIdFor('leviathan'),
+    unsealedIdFor('kraken'),
     unsealedIdFor('lavaBeast'),
     unsealedIdFor('skeletonKing'),
     ENDBRINGER_ID,

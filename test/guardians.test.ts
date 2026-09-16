@@ -6,7 +6,9 @@ import * as assert from 'assert';
 import { test } from './harness';
 import { moves } from '../src/data/moves';
 import { statusApplicationsOf } from '../src/engine/content';
-import { enemies, CHAMPION_IDS, ELDER_BOUGH_ID, LAVA_BEAST_ID, LEVIATHAN_ID, SKELETON_KING_ID, YUGZULACH_ID } from '../src/data/enemies';
+import { enemies, CHAMPION_IDS, ELDER_BOUGH_ID, ENDBRINGER_ID, LAVA_BEAST_ID, KRAKEN_ID, SKELETON_KING_ID, YUGZULACH_ID, unsealedIdFor } from '../src/data/enemies';
+import { guardianMarkup, isGuardianFigure } from '../src/view/shared/guardianFigures';
+import { getTypeColor } from '../src/view/combat/typeColors';
 import { locations } from '../src/data/locations';
 import { typeChart } from '../src/data/typechart';
 import { resolveTypeMult } from '../src/engine/damage/typeMult';
@@ -52,9 +54,9 @@ test("guardians: every champion's mortal half sits inside its own Location's spa
   assert.strictEqual(resolveTypeMult(typeChart, 'Water', enemies[LAVA_BEAST_ID].types), 1);
 });
 
-test('guardians: Yugzulach and the Leviathan carry their authored kits', () => {
+test('guardians: Yugzulach and the Kraken carry their authored kits', () => {
   assert.deepStrictEqual([...enemies[YUGZULACH_ID].moveIds], ['runicBlast', 'forgottenCurse', 'duskBlade', 'eclipse']);
-  assert.deepStrictEqual([...enemies[LEVIATHAN_ID].moveIds], ['aquaSlice', 'maelstrom', 'archonBlast', 'tsunami']);
+  assert.deepStrictEqual([...enemies[KRAKEN_ID].moveIds], ['aquaSlice', 'maelstrom', 'archonBlast', 'tsunami']);
 });
 
 test('guardians: the Elder Bough is one turn paying out three times, and Speed 30 is the price', () => {
@@ -104,4 +106,22 @@ test('guardians: the Skeleton King is the lowest-HP champion, and that IS the fi
       assert.notStrictEqual(app.target, 'self', `${moveId} puts ${app.statusId} back on the Guardian`);
     }
   }
+});
+
+test('guardians: every champion, its unsealed twin and the Endbringer have a figure, and the seal comes off with the Ancient half', () => {
+  const ancient = getTypeColor('Ancient');
+  for (const id of CHAMPION_IDS) {
+    for (const pose of ['idle', 'attack', 'hurt'] as const) {
+      const sealed = guardianMarkup(id, pose, 't');
+      const unsealed = guardianMarkup(unsealedIdFor(id), pose, 't');
+      assert.ok(sealed.length > 0 && unsealed.length > 0, `${id} has no ${pose} figure`);
+      assert.notStrictEqual(sealed, unsealed, `${id}'s unsealed figure still wears the seal`);
+      // The ring is the one Ancient-coloured thing on a Guardian, and the finale's body has none of it.
+      assert.ok(sealed.includes(ancient), `${id}'s seal is not drawn in the Ancient hue`);
+      assert.ok(!unsealed.includes(ancient), `${id} unsealed still carries the Ancient hue`);
+    }
+  }
+  assert.ok(guardianMarkup(ENDBRINGER_ID, 'idle', 't').includes(ancient), 'the Endbringer is not drawn in the Ancient hue');
+  assert.ok(isGuardianFigure(ENDBRINGER_ID) && isGuardianFigure(unsealedIdFor(KRAKEN_ID)));
+  assert.strictEqual(guardianMarkup('valor', 'idle', 't'), '', 'a hero is never drawn as a Guardian');
 });

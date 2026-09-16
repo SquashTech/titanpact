@@ -37,7 +37,10 @@ don't silently override it.
 > exist and render, the factions are deleted, `LocationDefinition.spawnTypes` is the mob layer's
 > hard filter, `fight`/`battle` and the Guardian's escorts draw spawn by act tier
 > (`SPAWN_TIER_BY_ACT`), and every spawn — escorts included — levels to its node
-> (`docs/enemy-levels.md`, 2026-09-15, which retired the monsters track).
+> (`docs/enemy-levels.md`, 2026-09-15, which retired the monsters track). **The Guardians and the
+> Endbringer are drawn in the same geometry** (2026-09-16, `guardianFigures.ts`, §2 "Guardian
+> art"): the mortal type's tones, two wrong-placed eyes and a third in **the seal**, a worn ring in
+> the Ancient hue that the finale's unsealed figure loses; the Leviathan is renamed **Kraken**.
 > **Phases 3–5 are IN too:** the fork is Elite-or-Skirmish with the enemy typing previewed on the
 > tile from a draw seeded off the map (`src/run/encounters.ts`), the Pact Clock takes the field
 > only, and the mortal companion joins after the first fight. **Phase 6 measured (sim pass 8) and

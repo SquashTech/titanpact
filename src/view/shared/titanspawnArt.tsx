@@ -1,9 +1,10 @@
 // The Titanspawn figures (docs/titanspawn-overhaul.md §2 "Art"): geometric SVG, one generator
-// per line, built from primitives in three tones of the type hue. Ported verbatim from the
-// approved gallery (docs/art/titanspawn-bestiary.html), whose rules this keeps: the Titan's eye
-// is the one thing on every body not type-coloured — one at Early, two from Mid, a Late's
-// wrong-placed and half-lidded; the element is a feature, then a tool, then the body; poses are
-// a global transform plus a per-line accent; everything faces right and the enemy row mirrors.
+// per line, built from the primitives in figurePrimitives.ts in three tones of the type hue.
+// Ported verbatim from the approved gallery (docs/art/titanspawn-bestiary.html), whose rules this
+// keeps: the Titan's eye is the one thing on every body not type-coloured — one at Early, two
+// from Mid, a Late's wrong-placed and half-lidded; the element is a feature, then a tool, then
+// the body; poses are a global transform plus a per-line accent; everything faces right and the
+// enemy row mirrors. The Guardians (guardianFigures.ts) draw with the same vocabulary.
 //
 // A pose is a STATE, exactly as a hero's PNG frame is (heroArt.ts) — HeroPortrait picks the
 // frame, the figure system's timing is untouched. Markup is built as a string, as the gallery
@@ -14,66 +15,11 @@ import { useMemo } from 'react';
 import type { TypeId } from '../../engine/content';
 import { spawnPosition, type SpawnTier } from '../../data/titanspawn';
 import { getTypeColor } from '../combat/typeColors';
+import { C, D, E, EYE_GRADIENT, G, L, P, R, makeEye, pal, sparks, ticks, type Eye, type EyeState, type FigurePose, type Pal } from './figurePrimitives';
 
-export type SpawnPose = 'idle' | 'attack' | 'hurt';
+export type SpawnPose = FigurePose;
 
-interface Pal {
-  c: string;
-  d: string;
-  dd: string;
-  l: string;
-  ll: string;
-}
-
-type EyeState = 'open' | 'narrow' | 'wide' | 'stare';
-type Eye = (x: number, y: number, r: number, state?: EyeState) => string;
 type Draw = (p: Pal, pose: SpawnPose, eye: Eye) => string;
-
-// ---------- palette ----------
-function hex(c: string): number[] {
-  const n = parseInt(c.slice(1), 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-}
-function mix(a: string, t: number, b: string): string {
-  const A = hex(a), B = hex(b);
-  return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join('');
-}
-function pal(c: string): Pal {
-  return { c, d: mix(c, 0.36, '#000000'), dd: mix(c, 0.6, '#07050a'), l: mix(c, 0.32, '#ffffff'), ll: mix(c, 0.62, '#ffffff') };
-}
-
-// ---------- primitives ----------
-const P = (pts: string, f: string, extra = '') => `<polygon points="${pts}" fill="${f}" ${extra}/>`;
-const C = (x: number, y: number, r: number, f: string, extra = '') => `<circle cx="${x}" cy="${y}" r="${r}" fill="${f}" ${extra}/>`;
-const E = (x: number, y: number, rx: number, ry: number, f: string, extra = '') => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${f}" ${extra}/>`;
-const R = (x: number, y: number, w: number, h: number, f: string, rx = 0, extra = '') => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${f}" ${extra}/>`;
-const D = (d: string, f: string, extra = '') => `<path d="${d}" fill="${f}" ${extra}/>`;
-const L = (d: string, s: string, w = 1.5, extra = '') => `<path d="${d}" fill="none" stroke="${s}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" ${extra}/>`;
-const G = (t: string, inner: string) => `<g transform="${t}">${inner}</g>`;
-
-/** The eye's fill: gold burning to the mythic red (TitanWakeScreen's). Defined once per figure. */
-const EYE_GRADIENT = (id: string) =>
-  `<defs><radialGradient id="${id}" cx="50%" cy="50%" r="55%"><stop offset="0" stop-color="#f6dc96"/><stop offset=".42" stop-color="#e9a24e"/><stop offset=".78" stop-color="#e0393f"/><stop offset="1" stop-color="#6e1a20"/></radialGradient></defs>`;
-
-/** The Titan's eye: vertical slit pupil, horizontal lids. `ids` keeps clip paths unique across every figure on a screen. */
-function makeEye(uid: string, gradientId: string): Eye {
-  let n = 0;
-  return (x, y, r, state = 'open') => {
-    const id = `${uid}c${n++}`;
-    const k = state === 'narrow' ? 0.3 : state === 'wide' ? 1.0 : state === 'stare' ? 0.52 : 0.72;
-    const rr = state === 'wide' ? r * 1.08 : r;
-    const halo = state === 'wide' ? C(x, y, rr * 1.9, '#e0393f', 'opacity=".28" class="halo"') : state === 'stare' ? C(x, y, rr * 1.7, '#e0393f', 'opacity=".14"') : '';
-    return `<defs><clipPath id="${id}"><ellipse cx="${x}" cy="${y}" rx="${rr}" ry="${rr * k}"/></clipPath></defs>${halo}
-  <g clip-path="url(#${id})">${C(x, y, rr, `url(#${gradientId})`)}${E(x, y, rr * 0.2, rr * 0.95, '#07050a')}</g>
-  ${E(x, y, rr, rr * k, 'none', `stroke="#07050a" stroke-width="${Math.max(0.6, r * 0.09)}" opacity=".55"`)}`;
-  };
-}
-// Impact ticks on the struck side.
-const ticks = (x: number, y: number) =>
-  [[-25, -18], [10, -30], [28, -8]].map(([a, b]) => L(`M${x + a * 0.55},${y + b * 0.55} L${x + a},${y + b}`, '#fff', 1.6, 'opacity=".85"')).join('');
-// Spark scatter for attacks.
-const sparks = (x: number, y: number, f: string, n = 4, s = 1) =>
-  Array.from({ length: n }, (_, i) => C(x + [10, 18, 24, 14, 28][i % 5] * s, y + [-12, -4, -18, 6, 2][i % 5] * s, 1.4, f)).join('');
 
 // ---------- lines ----------
 // Each draw returns untransformed markup, facing right, ground y=88. Indexed Early, Mid, Late.

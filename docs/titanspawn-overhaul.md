@@ -117,6 +117,43 @@ tones of the type hue from `typeColors.ts`, primitives only. The two styles are 
   frames (`heroArt.ts`); nothing here changes the figure system's timing model.
 - **Faces right.** Enemies mirror, as sprites do.
 
+**Guardian art** (2026-09-16, per user direction — *these enemies are pieces of the Titan that
+mutated, so keeping them visually consistent is key*). The six champions and the Endbringer are
+drawn in the same vocabulary (`src/view/shared/guardianFigures.ts`, the primitives shared through
+`figurePrimitives.ts`; review page `docs/art/guardian-bestiary.html`, written FROM the module by
+`scripts/art/guardian-gallery.ts` so it is always what ships) — the seven pixel sprites are
+archived under `art/archive/guardians/`. What the spawn are a miniature of, drawn to the same
+rules and past them:
+
+- **The body is the mortal type's three tones**, at a Late's scale or over it, and **every
+  Guardian breaks the hero frame** on at least one edge — the Kraken's mantle and the Goblin
+  Lord's club run up behind the enemy nameplate on purpose. The Endbringer breaks it on every
+  edge. The viewBox is the spawn's: a Guardian is bigger because it is DRAWN bigger, never boxed
+  bigger, so it stands on the same ground at the same scale.
+- **Two Titan eyes, wrong-placed as a Late's are** (a hump, a palm, a tentacle tip, the canopy, a
+  flank fissure, the ribcage), half-lidded at idle — **and a third in the seal.**
+- **The seal is worn.** `lore.md` §2 says the Ancient half is the champion's duty, not its
+  nature — the piece of the lock it carries — so it is drawn as a THING on the body: a ring in the
+  Ancient hue (the one type-coloured feature that is not the mortal type; a dark under-stroke so
+  it reads on any body) with the lock's own eye at its centre, which is always `stare` and never
+  blinks with the beast's. Where it is worn is the Guardian's identity: the Goblin Lord's, Kraken's
+  and Lava Beast's collars, Yugzulach's brand on the chest, the Elder Bough's grown into the trunk,
+  the Skeleton King's crown (the crown's spikes stand on the ring and go with it).
+- **Unsealed is derived.** The finale's `unsealedIdFor` champion is the same drawing with the ring
+  off and a scar where it sat — a dashed hairline and a dark socket — exactly as `enemies.ts
+  unseal` derives the stats. There is no second figure, and the test pins that the unsealed
+  markup carries none of the Ancient hue.
+- **The Endbringer is mono-Ancient, so its body is the seal's colour.** Its eyes are the title
+  screen's lenses (`titanArt.tsx`), pointed at both corners under a brow that is drawn OVER them,
+  not the spawn's slits. It wears no seal but the five it broke — open shackle arcs — and **one
+  whole ring whose chain runs off the left edge**: the sixth seal, the one that held (§5 of the
+  lore).
+- **Poses are the spawn's two layers**: the global lean/recoil, plus a per-Guardian accent (the
+  club swings, the horns spread, the leading arm whips, the limb slams, the crest flares and the
+  cracks go dark, the sceptre lifts; the Endbringer lifts one fist and its eyes open).
+- **The Leviathan is the Kraken** (id `kraken`, `KRAKEN_ID`): the figure is a kraken, so the
+  name says so. A save naming the old id is rejected by `save.ts` as an unknown champion.
+
 ## 3. Locations partition the types
 
 The mob layer is a **hard filter** on the Location's types; the hero-pool `affinity` stays a
@@ -131,7 +168,7 @@ headline gap") stakes it has never had.
 | Molten Foundry | Fire / Mech / Iron | Lava Beast — Fire | unchanged |
 | Forbidden Forest | Nature / **Beast** / Light | Elder Bough — Nature | Stone out, Beast in (Beast had no home) |
 | Blighted Shrine | Shadow / Arcane / Mind | Yugzulach — Shadow | unchanged |
-| Storm Coast | Storm / Water / **Stone** | Leviathan — Water | Iron out (it was the Raiders'; the location is the place now, not the people) |
+| Storm Coast | Storm / Water / **Stone** | Kraken — Water | Iron out (it was the Raiders'; the location is the place now, not the people) |
 | Necropolis | Spirit / Frost | Skeleton King — Spirit | **two types**, by decision — the partition stays pure and the Necropolis gets a narrower shape |
 | The Threshold | none | Endbringer — Ancient | no mob nodes |
 

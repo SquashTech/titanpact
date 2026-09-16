@@ -3,7 +3,7 @@ import { playSfx } from '../../audio/sfx';
 import { locations } from '../../data/locations';
 import { allCombatants } from '../../data/content';
 import { SEAL_ACTS, type BrokenSeal, type RunState } from '../../run/state';
-import { heroArt } from '../shared/heroArt';
+import { HeroPortrait } from '../shared/HeroPortrait';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { NodeHeader, NodeSky, NODE_TINT_GOLD } from '../shared/NodeStage';
 
@@ -107,7 +107,6 @@ export function PactSealScreen({ run, onContinue }: Props) {
           const isNew = seal !== undefined && index === newIndex;
           // The new socket holds its empty face through the wind-up: it is struck, not seated.
           const shown = seal !== undefined && (!isNew || phase !== 'charge');
-          const art = shown ? heroArt[seal.championId] : undefined;
           const style = {
             '--seal-angle': `${-90 + index * (360 / SEAL_ACTS)}deg`,
             '--type-rgb': socketTint(shown ? seal : undefined),
@@ -121,8 +120,8 @@ export function PactSealScreen({ run, onContinue }: Props) {
               className={`pact-seal-socket${shown ? ' filled' : ''}${isNew ? ' is-new' : ''}`}
               style={style}
             >
-              {art ? (
-                <img className="pact-seal-portrait" src={art} alt="" />
+              {shown ? (
+                <HeroPortrait heroId={seal.championId} className="pact-seal-portrait" />
               ) : (
                 <span className="pact-seal-mark">◇</span>
               )}

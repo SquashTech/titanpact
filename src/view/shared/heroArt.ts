@@ -34,16 +34,8 @@ import steamColossusArt from '../../../art/heroes/steamcolossus.png';
 import fangArt from '../../../art/heroes/starters/fang.png';
 import widowArt from '../../../art/heroes/Widow.png';
 import coilArt from '../../../art/heroes/coil.png';
-import goblinLordArt from '../../../art/enemies/goblinlord.png';
-import yugzulachArt from '../../../art/enemies/cultists/yugzulach.png';
-import elderBoughArt from '../../../art/enemies/fae/elderbough.png';
-import lavaBeastArt from '../../../art/enemies/vulcans/lavabeast.png';
-import skeletonKingArt from '../../../art/enemies/necropolis/skeletonking.png';
-import leviathanArt from '../../../art/enemies/raiders/leviathan.png';
-import endbringerArt from '../../../art/enemies/final boss/endbringer.png';
-import { CHAMPION_IDS, unsealedIdFor } from '../../data/enemies';
 
-/** Portraits keyed by hero id (heroes.ts order, then enemies.ts order). A missing entry renders text-only; a Titanspawn id never reaches this — HeroPortrait draws it. */
+/** Portraits keyed by hero id (heroes.ts order). A missing entry renders text-only; a Titanspawn or Guardian id never reaches this — HeroPortrait draws it. */
 export const heroArt: Partial<Record<string, string>> = {
   // --- Fire ---
   cinderKnight: cinderKnightArt,
@@ -95,23 +87,10 @@ export const heroArt: Partial<Record<string, string>> = {
   packAlpha: fangArt,
   widow: widowArt,
   coil: coilArt,
-  // --- The Guardians' champions (data/enemies.ts). The mob layer is generated, not painted: titanspawnArt.tsx ---
-  goblinLord: goblinLordArt,
-  yugzulach: yugzulachArt,
-  elderBough: elderBoughArt,
-  lavaBeast: lavaBeastArt,
-  skeletonKing: skeletonKingArt,
-  leviathan: leviathanArt,
-  // --- The Threshold ---
-  endbringer: endbringerArt,
 };
 
-// An unsealed champion is the same creature with the seal taken off it (docs/lore.md §6),
-// so it wears the same art. Appended rather than listed so a new champion cannot arrive at
-// the finale unpainted.
-for (const championId of CHAMPION_IDS) {
-  heroArt[unsealedIdFor(championId)] = heroArt[championId];
-}
+// The Guardians and the Endbringer are not here either: guardianFigures.ts draws them, sealed and
+// unsealed, from one figure each. Their retired sprites are under art/archive/guardians/.
 
 /** The frames a hero has beyond its idle one. Both optional and independent. */
 export interface HeroPoses {
@@ -125,14 +104,15 @@ export interface HeroPoses {
 const POSE_SUFFIX: Record<keyof HeroPoses, string> = { attack: 'attack', hurt: 'damaged' };
 
 /**
- * Every sprite in the figure directories, source path → URL. Scoped to those
- * two on purpose: `art/` also holds ~2,200 icons that nothing here wants, and
- * an eager glob over all of it would bundle every one — and `art/archive/` holds
- * the retired faction sprites, which must stay out of it or the orphan check below
- * throws on their pose frames. Nearly every file the glob finds is imported above
- * already, so it costs essentially nothing on top of what the page loads anyway.
+ * Every sprite in the hero directory, source path → URL. Scoped to it on
+ * purpose: `art/` also holds ~2,200 icons that nothing here wants, and an eager
+ * glob over all of it would bundle every one — and `art/archive/` holds the
+ * retired faction and Guardian sprites, which must stay out of it or the orphan
+ * check below throws on their pose frames. Nearly every file the glob finds is
+ * imported above already, so it costs essentially nothing on top of what the
+ * page loads anyway.
  */
-const spriteFiles = import.meta.glob<string>(['../../../art/heroes/**/*.png', '../../../art/enemies/**/*.png'], {
+const spriteFiles = import.meta.glob<string>('../../../art/heroes/**/*.png', {
   eager: true,
   query: '?url',
   import: 'default',

@@ -46,14 +46,17 @@ resisted: a seal is only ever a wall.
 Three things fall out of this at no cost:
 
 - **The Guardians are what the wardens decayed into.** The Goblin Lord, Yugzulach, the
-  Leviathan, the Elder Bough, the Lava Beast and the Skeleton King are six wardens after an
+  Kraken, the Elder Bough, the Lava Beast and the Skeleton King are six wardens after an
   age of holding the seal — a garrison that no longer remembers what it is guarding, only
   that nobody gets past. They are not evil and they are not wrong. They are a garrison that
   outlived its briefing. **What stands around them is the leak.** The binding is failing
   (§3), and what comes through a failing seal takes the colour of the land it comes through
   into: the **Titanspawn** (`docs/titanspawn-overhaul.md` §2), one line per mortal type,
   small where the seal still mostly holds and grown where it is almost gone. A spawn is not
-  a people. It is the Titan's weight, felt before the Titan.
+  a people. It is the Titan's weight, felt before the Titan. **And the seal is drawn**
+  (2026-09-16, `titanspawn-overhaul.md` §2 "Guardian art"): every Guardian is geometry in its
+  mortal type's colour, like its brood, and wears the Ancient half as a ring with the Titan's
+  eye in it; the finale's unsealed champion is the same figure with the ring gone.
 - **The run is a sacrilege, deliberately.** Every Guardian broken is a lock broken. The
   player is not clearing dungeons; they are dismantling the thing keeping the world
   shut, because it is coming apart anyway and an accident is worse than a decision.
@@ -118,7 +121,7 @@ does not stay on the floor. It comes out attached to the thing it was holding.
 
 **They come back without their Ancient half.** The Ancient in them *was* the seal, and the
 player already took it. In the final battle the five Guardians field as their **base type
-alone**: the Goblin Lord as mono-Beast, the Leviathan mono-Water, the Elder Bough
+alone**: the Goblin Lord as mono-Beast, the Kraken mono-Water, the Elder Bough
 mono-Nature, the Lava Beast mono-Fire, Yugzulach mono-Shadow, the Skeleton King
 mono-Spirit. Only the Endbringer keeps the wall.
 

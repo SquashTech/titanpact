@@ -154,7 +154,7 @@ is the last combatant to reach the field (`run-loop.md` "The Guardian's champion
 mechanism and the balance questions). **All six have one**, as of 2026-09-05: Wild's Edge's
 **Goblin Lord** (600 stat total, Beast/Ancient, physical), the Blighted Shrine's
 **Yugzulach** (700, Shadow/Ancient, magical — the same silhouette one act later and down the
-other damage pipeline), the Storm Coast's **Leviathan** (700, Water/Ancient), the Forbidden
+other damage pipeline), the Storm Coast's **Kraken** (700, Water/Ancient), the Forbidden
 Forest's **Elder Bough** (700, Nature/Ancient), the Molten Foundry's **Lava Beast** (700,
 Fire/Ancient) and the Necropolis's **Skeleton King** (700, Spirit/Ancient). No location
 carries `null` any more.
@@ -166,7 +166,7 @@ silhouette the fight is meant to have, and it is also the lever the Vulcans use 
 
 Whether the champion sits inside its faction's type spine is a per-location call, and all
 three readings are now in the game. Yugzulach, the Elder Bough and the Skeleton King **do**,
-so the answer that beat the basics still beats the boss — the readable version. The Leviathan
+so the answer that beat the basics still beats the boss — the readable version. The Kraken
 does **not**, because the Storm Coast's apex is a thing that lives in the water rather than a
 bigger Raider. The Lava Beast is the third: inside the spine, but its Ancient half is what
 takes the faction's one answer away exactly when the player reaches for it (see the Vulcans
@@ -267,7 +267,7 @@ two fixture heroes with a bigger stat bonus. Locations are the reason to author
 six of them instead of one: each location's Guardian is its faction's apex. Blocked
 behind 5.2 in practice, since a Guardian without its faction reads as unrelated.
 
-**Three of six authored (2026-09-03).** The Leviathan joins the Goblin Lord and
+**Three of six authored (2026-09-03).** The Kraken joins the Goblin Lord and
 Yugzulach, and is the case that proves the field belongs on the Location rather than
 the faction: it is Water/Ancient where every Raider is Iron, because what comes out of
 the surf is not a member of the warband. One open dependency — its Ancient STAB is

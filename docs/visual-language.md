@@ -3424,6 +3424,19 @@ readout, where it sits in every type's ½× row — the wall, found by running i
 it reads *None, None, None, Resists: everything*. The grid in `ReferenceOverlay` stays as the
 mid-fight cell check; this is the one to learn the chart from.
 
+## Thirty-fourth pass — the Guardians as figures (2026-09-16)
+
+The six champions and the Endbringer leave pixel art for the spawn's geometry
+(`src/view/shared/guardianFigures.ts`, mounted through `HeroPortrait` like a spawn; rules in
+`docs/titanspawn-overhaul.md` §2 "Guardian art"; review page `docs/art/guardian-bestiary.html`).
+The one presentation rule this adds is the SEAL: a Guardian wears its Ancient half as a ring in
+the Ancient hue with the Titan's eye in it, and the finale's unsealed champion is the same figure
+with the ring off — fiction the player can see at 40px on the Pact Seal ring, where the six
+medallions are now the Guardians themselves (`PactSealScreen` draws through `HeroPortrait`; a
+figure breaking its socket a little is on-theme and left alone). On the battlefield a Guardian
+runs up behind the enemy nameplate — the frame it breaks is the hero cell, and the bars sit over
+it as they sit over anything tall. The spawn's no-flip rule holds.
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.

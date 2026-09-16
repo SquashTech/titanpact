@@ -3,7 +3,7 @@
 // the presentation fields feed locationArt/ActIntroScreen.
 
 import type { TypeId } from '../engine/content';
-import { ELDER_BOUGH_ID, ENDBRINGER_ID, GOBLIN_LORD_ID, LAVA_BEAST_ID, LEVIATHAN_ID, SKELETON_KING_ID, YUGZULACH_ID } from './enemies';
+import { ELDER_BOUGH_ID, ENDBRINGER_ID, GOBLIN_LORD_ID, LAVA_BEAST_ID, KRAKEN_ID, SKELETON_KING_ID, YUGZULACH_ID } from './enemies';
 
 /** Particle-field motion (docs/locations.md §4). */
 export type AmbienceKind = 'fireflies' | 'embers' | 'snow' | 'rain' | 'spores' | 'sigils';
@@ -105,7 +105,7 @@ export const locations: Record<string, LocationDefinition> = {
     spawnTypes: ['Storm', 'Water', 'Stone'],
     affinity: ['Storm', 'Water', 'Stone'],
     exclusiveHeroIds: [],
-    guardianFinalEnemyId: LEVIATHAN_ID,
+    guardianFinalEnemyId: KRAKEN_ID,
     tintRgb: '74, 144, 217',
     ambience: 'rain',
   },

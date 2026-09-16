@@ -85,7 +85,7 @@ test('archonBlast: 55 base power for 50 mana, magical, and the +20 Wisdom lands 
   assert.strictEqual(move.kind, 'damage');
   // Was 75. Ancient is neutral into every hero and nothing resists it, so an Ancient STAB
   // move is worth more than its Base Power reads — it is priced under the catalog median
-  // for a single-target attack on purpose. Shared with the Leviathan and the Endbringer.
+  // for a single-target attack on purpose. Shared with the Kraken and the Endbringer.
   assert.strictEqual(move.basePower, 55);
   assert.strictEqual(move.manaCost, 50);
   assert.deepStrictEqual(move.statDeltas, [{ stat: 'wisdom', amount: 20 }]);

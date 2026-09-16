@@ -1,6 +1,8 @@
 import type { CSSProperties } from 'react';
 import { heroArt, heroPoses } from './heroArt';
 import { TitanspawnGlyph } from './titanspawnArt';
+import { GuardianGlyph } from './guardianArt';
+import { isGuardianFigure } from './guardianFigures';
 import { isTitanspawn } from '../../data/titanspawn';
 
 interface Props {
@@ -26,6 +28,7 @@ function hashSeed(key: string): number {
  * Renders nothing for heroes without art, so callers can place it unconditionally. A Titanspawn
  * (data/titanspawn.ts) has no sprite: its figure is generated (titanspawnArt.tsx) and takes the
  * same class, seed and pose, so every screen that shows a hero shows a spawn with no other change.
+ * The Guardians and the Endbringer (data/enemies.ts) are drawn the same way (guardianArt.tsx).
  */
 export function HeroPortrait({ heroId, className, seed, pose = 'idle' }: Props) {
   const h = hashSeed(seed ?? heroId);
@@ -34,6 +37,7 @@ export function HeroPortrait({ heroId, className, seed, pose = 'idle' }: Props) 
     '--idle-rate': (0.85 + ((h >>> 7) % 31) / 100).toFixed(2),
   } as CSSProperties;
   if (isTitanspawn(heroId)) return <TitanspawnGlyph heroId={heroId} className={className} pose={pose} style={idleStyle} />;
+  if (isGuardianFigure(heroId)) return <GuardianGlyph heroId={heroId} className={className} pose={pose} style={idleStyle} />;
   const src = (pose !== 'idle' ? heroPoses[heroId]?.[pose] : undefined) ?? heroArt[heroId];
   if (!src) return null;
   // draggable={false} as well as CSS `-webkit-user-drag: none` (WebKit-only): a drag ghost eats the long-press.

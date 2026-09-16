@@ -126,12 +126,13 @@ export const enemies: Record<string, HeroDefinition> = {
     growthGrades: CHAMPION_GRADES,
   },
 
-  // The Storm Coast's Guardian reinforcement. 550, matching every other champion.
+  // The Storm Coast's Guardian reinforcement (the Leviathan until 2026-09-16, renamed with its
+  // figure — guardianFigures.ts draws a kraken, so the name says so). 550, matching every other champion.
   // Archon Blast is the Goblin Lord's move because the Ancient slate is three moves
   // long and unauthored (CLAUDE.md "Repo map"); it should be revisited when Ancient lands.
-  leviathan: {
-    id: 'leviathan',
-    name: 'Leviathan',
+  kraken: {
+    id: 'kraken',
+    name: 'Kraken',
     types: ['Water', 'Ancient'],
     baseStats: { hp: 350, attack: 75, defense: 80, intelligence: 95, wisdom: 80, speed: 45, manaPool: 150, mpRegen: 20 },
     moveIds: ['aquaSlice', 'maelstrom', 'archonBlast', 'tsunami'],
@@ -170,7 +171,7 @@ export const enemies: Record<string, HeroDefinition> = {
 /** Pointed at by `LocationDefinition.guardianFinalEnemyId`. */
 export const GOBLIN_LORD_ID = 'goblinLord';
 export const YUGZULACH_ID = 'yugzulach';
-export const LEVIATHAN_ID = 'leviathan';
+export const KRAKEN_ID = 'kraken';
 export const ELDER_BOUGH_ID = 'elderBough';
 export const LAVA_BEAST_ID = 'lavaBeast';
 export const SKELETON_KING_ID = 'skeletonKing';
@@ -182,7 +183,7 @@ export const ENDBRINGER_ID = 'endbringer';
 export const CHAMPION_IDS: readonly string[] = [
   GOBLIN_LORD_ID,
   YUGZULACH_ID,
-  LEVIATHAN_ID,
+  KRAKEN_ID,
   ELDER_BOUGH_ID,
   LAVA_BEAST_ID,
   SKELETON_KING_ID,

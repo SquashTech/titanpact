@@ -1123,7 +1123,7 @@ Order is not decoration: forced replacement pulls from the bench in order, so th
 are gone.
 
 **The five arrive unsealed.** They field as their base type alone — Goblin Lord mono-Beast,
-Yugzulach mono-Shadow, Leviathan mono-Water, Elder Bough mono-Nature, Lava Beast mono-Fire,
+Yugzulach mono-Shadow, Kraken mono-Water, Elder Bough mono-Nature, Lava Beast mono-Fire,
 Skeleton King mono-Spirit — because the Ancient half *was* the seal and the player already
 took it (`lore.md` §6). This is balance and fiction agreeing: six X/Ancient bodies at ~700
 stat total, none takeable at super-effective damage, against the Pact Clock, is a finale
