@@ -29554,3 +29554,44 @@ textarea,
 .champion-continue {
   margin-top: 14px;
 }
+
+/* ── On the Titan (TitanBody.tsx, docs/titan-eyes.md) ─────────────────────
+   The Eyes' arena: the field is the Titan's hide, stretched to the battlefield
+   under every figure. The floor's perspective rays stay under it, dimmed, so the
+   platforms still sit on something; the Location's own scene is not drawn. */
+.titan-body {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.battlefield.on-the-titan .battlefield-floor {
+  opacity: 0.35;
+  z-index: 1;
+}
+
+/* The heartbeat: the one thing on the hide that moves. */
+@media (prefers-reduced-motion: no-preference) {
+  .titan-body-veins {
+    animation: titan-body-pulse 5.2s ease-in-out infinite;
+  }
+}
+
+@keyframes titan-body-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  12% {
+    opacity: 1;
+  }
+  24% {
+    opacity: 0.6;
+  }
+  34% {
+    opacity: 0.9;
+  }
+}

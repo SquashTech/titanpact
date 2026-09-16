@@ -85,6 +85,8 @@ import { SectionGlyph } from '../shared/sectionIcons';
 import { useAmbientLocation } from '../shared/LocationContext';
 import { LocationAmbience } from '../shared/LocationSky';
 import { LocationHorizon } from '../shared/locationArt';
+import { TitanBody } from './TitanBody';
+import { EYE_IDS } from '../../data/enemies';
 import type { LocationDefinition } from '../../data/locations';
 
 /** One enemy's live matchup for a move row, precomputed by FightScreen so MoveRow needs no combat state of its own. */
@@ -570,6 +572,8 @@ export function FightScreen({
 }: Props) {
   /** null outside an act (sandbox, quick battle): the arena keeps its placeless neutral scene. */
   const location = useAmbientLocation();
+  // The Titan's Eyes fight (docs/titan-eyes.md): the arena is the Titan's own hide, whatever the Location says.
+  const onTheTitan = aiRun.roster.some((entry) => EYE_IDS.includes(entry.heroId));
 
   const teamStatModifiers = relicTeamStatModifiers(playerRelicIds, relics);
   const teamPassiveGrants = relicTeamPassiveGrants(playerRelicIds, relics);
@@ -1198,7 +1202,7 @@ export function FightScreen({
       <div
         className={`battlefield${combat.activeFieldEffect ? ' field-effect-active' : ''}${
           resolving && beat?.dramaticEntrance ? ' dramatic-entrance' : ''
-        }`}
+        }${onTheTitan ? ' on-the-titan' : ''}`}
         /* The Location's lighting recipe keys off this; absent, styles.css's placeless arena stands. */
         data-location={location?.id}
         style={
@@ -1214,7 +1218,8 @@ export function FightScreen({
             An element rather than a ::before — .battlefield's two pseudo-elements
             are already spoken for by the Field Effect sweep. */}
         <div className="battlefield-floor" aria-hidden="true" />
-        {location && <ArenaLocation location={location} />}
+        {onTheTitan && <TitanBody />}
+        {location && !onTheTitan && <ArenaLocation location={location} />}
         {/* Keyed on beatSeq so the one-shot animation replays per reveal. */}
         {resolving && beat?.dramaticEntrance && <div key={beatSeq} className="dramatic-entrance-veil" aria-hidden="true" />}
 

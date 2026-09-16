@@ -240,7 +240,7 @@ that is *never* dodged is a number.
 |---|---|---|
 | 1 | Content: `titanEyes` (four `HeroDefinition`s, `data/enemies.ts`), Beheld, Gaze / Regard / Stare / Glare / Lidded, `gateYieldsToRedirect`, the AI's gate-open weight (`WEIGHT_GATE_OPEN`); `test/titanEyes.test.ts` | **Done** |
 | 2 | Structure: `Squad.reserveIds` → `Combatant.reserve` → `replacementCandidates` (the one replacement rule, every site reads it); the `titan` node on the finale corridor; `generateTitanEncounter`; the free mend; the sim's third node | **Done** |
-| 3 | Presentation: the Eyes as figures (`guardianFigures.ts titanEye` — the title's lens, half-lidded then wide); dramatic entrances for all four; Beheld's glyph (the map's Titan-eye lens, mythic red) and the blocked Regard's line; the map tile, dossier and node facts; `ChampionScreen` | **Done** |
+| 3 | Presentation: the Eyes as figures (`guardianFigures.ts titanEye` — the title's lens, half-lidded then wide); dramatic entrances for all four; Beheld's glyph (the map's Titan-eye lens, mythic red) and the blocked Regard's line; the map tile, dossier and node facts; `ChampionScreen`; **the arena as the Titan's hide** (`TitanBody.tsx`, per user direction — *the entire battlefield is the Titan's body*: plates seamed in arcs about a centre far below the frame, ember veins pulsing on a heartbeat, the brow a ridge across the top, drawn in place of the Location's scene whenever the enemy side holds an Eye) | **Done** |
 | 4 | Sim: the four reads in §6 (phase 2 reached / cleared, Regards landed vs dodged vs shielded, rounds a phase against the Clock); then the numbers | Open |
 
 ## 9. Build notes and the first measurement

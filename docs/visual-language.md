@@ -3445,6 +3445,20 @@ with a scorpion tail that strikes forward. The ring-struck-off
 drawing for the finale's unsealed champions was set aside the same day: the finale fields the
 same figure, and only the type comes off.
 
+## Thirty-fifth pass — the Titan's Eyes and the champion's hall (2026-09-16)
+
+The true final boss (`docs/titan-eyes.md`) as presentation: the two Eyes are the title screen's
+lens at boss scale (`guardianFigures.ts titanEye`), hanging over the platform with a red halo,
+half-lidded in phase 1 and wide in phase 2; Beheld wears the map's Titan-eye glyph in the mythic
+red so the telegraph is the one red chip on a hero's card; and **the arena is the Titan's body**
+(`TitanBody.tsx`, per user direction): there is no ground and no sky, the field is a stretch of
+hide whose plate seams are arcs about a centre 1180 units below a 400-unit frame — a cylinder seen
+from standing on it — with ember veins pulsing on a 5s heartbeat and the brow a dark ridge across
+the top that the Eyes open under. It replaces the Location's scene whenever the enemy roster holds
+an Eye, so the dev test run and the real finale draw the same picture. After the win,
+`ChampionScreen` performs the recruit fanfare's rite for the whole pact at once — the sleep card,
+each hero in the rings, then the roster in a row — before the summary.
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.
