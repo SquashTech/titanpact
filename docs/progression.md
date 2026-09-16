@@ -921,7 +921,7 @@ owed, and the catalog (`src/data/starShop.ts`) stays empty until an offer has a 
 What is built (same day): `Profile.purchases` (offer ids, each held once), the rules in
 `src/run/starShop.ts` — **balance = stars earned − cost of what is held**, a star never coming
 off a hero, so the Compendium keeps every star ever earned — `buyOffer` refusing a held offer or
-one past the balance, the **Star Shop** panel (`StarShopScreen.tsx`: the balance, the ledger,
+one past the balance, **The Constellation** panel (the star shop — named 2026-09-16, per user direction: the stars the Compendium charts, seen as one sky to draw on) (`StarShopScreen.tsx`: the balance, the ledger,
 the offers or the empty state) and its tile on the title with the balance as a badge. The name
-is a placeholder in one constant (`STAR_SHOP_NAME`). The pre-2026-09-16 `heroStars` (a run
+lives in one constant (`STAR_SHOP_NAME`). The pre-2026-09-16 `heroStars` (a run
 count per hero) is dropped on decode rather than migrated: a count names no path.

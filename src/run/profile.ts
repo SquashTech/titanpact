@@ -41,7 +41,7 @@ export interface Profile {
    * A dev test run never records a start, so its record carries no duration.
    */
   runStartedAtPlaytimeMs: number | null;
-  /** Star Shop offer ids bought (run/starShop.ts), each at most once. Stars are never un-earned; this is what draws the balance down. */
+  /** Constellation (star shop) offer ids bought (run/starShop.ts), each at most once. Stars are never un-earned; this is what draws the balance down. */
   purchases: string[];
   /** 0 until the first run is sealed. */
   firstPlayedAt: number;

@@ -3,8 +3,8 @@ import { totalStars, type Profile } from '../../run/profile';
 import { canBuy, isPurchased, starBalance, starsSpent, type StarShopOffer } from '../../run/starShop';
 import { HubGlyph } from '../shared/nodeIcons';
 
-/** The shop's name, in one place: the title tile, this panel's header. A placeholder until it is workshopped. */
-export const STAR_SHOP_NAME = 'Star Shop';
+/** The shop's name, in one place: the title tile, this panel's header. The Constellation — the stars the Compendium charts, seen as one sky to draw on. */
+export const STAR_SHOP_NAME = 'The Constellation';
 
 interface Props {
   profile: Profile;

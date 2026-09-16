@@ -8888,7 +8888,7 @@ textarea,
   color: var(--text-dim);
 }
 
-/* --- Star Shop (StarShopScreen.tsx) ----------------------------------------
+/* --- The Constellation, the star shop (StarShopScreen.tsx) ------------------
    Where stars are spent (run/starShop.ts). The balance leads as the thing
    itself — one big star, the count, the earned/spent ledger under it — and
    the offers follow as rows with one Buy each. Same chassis as the Compendium
@@ -19449,7 +19449,7 @@ textarea,
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 300px;
+  max-width: 336px;
   margin-top: 10px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -19503,9 +19503,12 @@ textarea,
 }
 
 .title-hub-label {
-  font-size: 10px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 9.5px;
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-dim);
   white-space: nowrap;

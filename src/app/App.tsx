@@ -531,7 +531,7 @@ export function App() {
     setSaveSlot({ save: null, staleReason: null });
   }
 
-  /** A Star Shop purchase (run/starShop.ts): written to storage, then the title re-reads it so the balance moves. */
+  /** A Constellation purchase (run/starShop.ts): written to storage, then the title re-reads it so the balance moves. */
   function handleBuyOffer(offer: StarShopOffer) {
     setProfile(updateProfile((current) => buyOffer(current, starShopCatalog, offer)));
   }

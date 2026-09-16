@@ -18,7 +18,7 @@ interface Props {
   /** Pulls a fresh profile before Records opens, so playtime is not as of screen entry. */
   onRefreshProfile: () => void;
   onEraseAllData: () => void;
-  /** Spends stars on a Star Shop offer (run/starShop.ts buyOffer) and re-reads the profile. */
+  /** Spends stars on a Constellation offer (run/starShop.ts buyOffer) and re-reads the profile. */
   onBuyOffer: (offer: StarShopOffer) => void;
   /** The parked run a Continue would resume, or null when there is none. */
   parkedRun: SaveSummary | null;
@@ -276,7 +276,8 @@ export function TitleScreen({
           <span className="title-hub-glyph" aria-hidden="true">
             <HubGlyph name="star" />
           </span>
-          <span className="title-hub-label">{STAR_SHOP_NAME}</span>
+          {/* Without its article: the tile is a place-name on a sign, the panel header the full name. */}
+          <span className="title-hub-label">{STAR_SHOP_NAME.replace(/^The /, '')}</span>
           <span className="title-hub-badge" title={`${starBalance(profile, starShopCatalog)} stars to spend`}>
             ★ {starBalance(profile, starShopCatalog)}
           </span>
