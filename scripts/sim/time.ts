@@ -92,7 +92,7 @@ export interface PaceProfile {
 }
 
 /** src/view/combat/autoPlay.ts AUTO_PLAY_STEP_MS — not imported, since that file touches localStorage. */
-const AUTO_STEP_S = 0.45;
+const AUTO_STEP_S = 0.5;
 const FAST_STEP_S = 0.12;
 const RENDER_OVERHEAD_S = 0.08;
 

@@ -8,7 +8,7 @@ const STORAGE_KEY = 'titanpact.autoplay';
 
 /** Pause between auto-advanced beats. `auto` is a reading pace; `fast` is for a player who already knows what a round says. */
 export const AUTO_PLAY_STEP_MS: Record<Exclude<AutoPlayMode, 'off'>, number> = {
-  auto: 450,
+  auto: 500,
   fast: 120,
 };
 
