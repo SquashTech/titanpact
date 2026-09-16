@@ -337,11 +337,10 @@ test('move tiers: every hero has an Evolution node — the precondition the sche
   assert.deepStrictEqual(missing, [], 'these heroes can never evolve');
 });
 
-test('move tiers: every Evolution node offers exactly three paths, differing in kind', () => {
+test('move tiers: every Evolution node offers exactly three paths', () => {
   for (const [heroId, nodes] of Object.entries(progressionTable.evolutions)) {
     for (const node of nodes) {
-      const kinds = node.paths.map((p) => p.kind).sort();
-      assert.deepStrictEqual(kinds, ['defensive', 'offensive', 'utility'], heroId);
+      assert.strictEqual(node.paths.length, 3, heroId);
     }
   }
 });

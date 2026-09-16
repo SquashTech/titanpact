@@ -624,7 +624,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'cinderKnight-offensive',
             heroId: 'cinderKnight',
-            kind: 'offensive',
             name: 'Explosive',
             description: 'Stops swinging the fire and starts setting it off — everything it lights, it lights again.',
             statGrants: { attack: -40, intelligence: 60, manaPool: 20 },
@@ -634,7 +633,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'cinderKnight-defensive',
             heroId: 'cinderKnight',
-            kind: 'defensive',
             name: 'Ironclad',
             description: 'Armour that answers back; whatever strikes it comes away alight.',
             statGrants: { hp: 60, defense: 10 },
@@ -644,7 +642,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'cinderKnight-utility',
             heroId: 'cinderKnight',
-            kind: 'utility',
             name: 'Thunderblaze',
             description: 'Sheds the plate for the storm that was always chasing it — and the iron it keeps still sets the charge off.',
             statGrants: { attack: 10, speed: 30 },
@@ -661,7 +658,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'crimson-offensive',
             heroId: 'crimson',
-            kind: 'offensive',
             name: 'Pyroclasm',
             description: 'The fire it starts no longer goes out on its own.',
             statGrants: { defense: 10, manaPool: 10 },
@@ -671,7 +667,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'crimson-defensive',
             heroId: 'crimson',
-            kind: 'defensive',
             name: 'Cinderveil',
             description: 'Wreathed in protective embers; a caster that stays on the field.',
             statGrants: { hp: 30, wisdom: 20 },
@@ -682,7 +677,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'crimson-utility',
             heroId: 'crimson',
-            kind: 'utility',
             name: 'Emberweave',
             description: 'Flame fused to raw arcane current; casts, and keeps casting.',
             statGrants: { intelligence: 20, mpRegen: 5 },
@@ -699,7 +693,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'brimstone-offensive',
             heroId: 'brimstone',
-            kind: 'offensive',
             name: 'Cauldronborn',
             description: 'The pot boils over; what it set alight, it sets off again three times as hard.',
             statGrants: { intelligence: 30, speed: 10 },
@@ -709,7 +702,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'brimstone-defensive',
             heroId: 'brimstone',
-            kind: 'defensive',
             name: 'Ashguard',
             description: 'Caked-on ash hardens into a shell, and the fire it started is what feeds it.',
             statGrants: { hp: 45, defense: 20 },
@@ -719,7 +711,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'brimstone-utility',
             heroId: 'brimstone',
-            kind: 'utility',
             name: 'Hexfume',
             description: 'Lets the shadow go and keeps the smoke — which turns out to have been the poison all along.',
             statGrants: { intelligence: 10, manaPool: 20 },
@@ -738,7 +729,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'tidecaller-offensive',
             heroId: 'tidecaller',
-            kind: 'offensive',
             name: 'Tidecaller',
             description: 'Stays water all the way down, and hits with everything at once.',
             statGrants: { attack: 10, intelligence: 10, speed: 10 },
@@ -752,7 +742,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'tidecaller-defensive',
             heroId: 'tidecaller',
-            kind: 'defensive',
             name: 'Frostbound',
             description: 'The water hardens; freezes the field and stands in it.',
             statGrants: { hp: 30, defense: 20 },
@@ -763,7 +752,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'tidecaller-utility',
             heroId: 'tidecaller',
-            kind: 'utility',
             name: 'Siren',
             description: 'Sings the water at them until they stop being able to tell it apart from their own thoughts.',
             statGrants: {},
@@ -781,7 +769,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'pincer-offensive',
             heroId: 'pincer',
-            kind: 'offensive',
             name: 'Tideclaw',
             description: 'Every wave it lands leaves the water still carrying the charge — and its iron is what sets that off.',
             statGrants: { attack: 20, speed: 10 },
@@ -791,7 +778,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'pincer-defensive',
             heroId: 'pincer',
-            kind: 'defensive',
             name: 'Ironshell',
             description: 'The carapace hardens past shell into plate.',
             statGrants: { hp: 60, defense: 20 },
@@ -802,7 +788,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'pincer-utility',
             heroId: 'pincer',
-            kind: 'utility',
             name: 'Squallshell',
             description: 'Drags the storm down into the shallows and holds it there.',
             statGrants: { attack: 10, speed: 20, mpRegen: 5 },
@@ -820,7 +805,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'glacialWarden-offensive',
             heroId: 'glacialWarden',
-            kind: 'offensive',
             name: 'Avalanche',
             description: 'Stops waiting for the thaw. Everything it froze comes down at once, and the cold gets sharper for each one.',
             statGrants: { intelligence: 20, speed: 10 },
@@ -830,7 +814,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'glacialWarden-defensive',
             heroId: 'glacialWarden',
-            kind: 'defensive',
             name: 'Glacier',
             description: 'Ice packed over bedrock; what it drops on them was a hillside a moment ago.',
             statGrants: { hp: 60, defense: 20 },
@@ -841,7 +824,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'glacialWarden-utility',
             heroId: 'glacialWarden',
-            kind: 'utility',
             name: 'Permafrost',
             description: 'Lets the ice run again, and it comes back as weather.',
             statGrants: { wisdom: 20, manaPool: 20, mpRegen: 5 },
@@ -858,7 +840,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'rime-offensive',
             heroId: 'rime',
-            kind: 'offensive',
             name: 'Avalanche',
             description: 'Starts small and does not stop; every throw lands heavier than the last.',
             statGrants: { attack: 30 },
@@ -867,7 +848,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'rime-defensive',
             heroId: 'rime',
-            kind: 'defensive',
             name: 'Glacier',
             description: 'Ice packed to stone; the ground it holds freezes whatever is standing on it.',
             statGrants: { hp: 15, defense: 20 },
@@ -879,7 +859,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'rime-utility',
             heroId: 'rime',
-            kind: 'utility',
             name: 'Hydrofreeze',
             description: 'Lets the ice run again — casts on the water it came from.',
             statGrants: { attack: 10, wisdom: 10, manaPool: 10 },
@@ -896,7 +875,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'cube-offensive',
             heroId: 'cube',
-            kind: 'offensive',
             name: 'Shatterframe',
             description: 'Every layer it packs on is another edge to swing.',
             statGrants: { attack: 20, speed: 10 },
@@ -906,7 +884,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'cube-defensive',
             heroId: 'cube',
-            kind: 'defensive',
             name: 'Permafrost Core',
             description: 'The frozen shell sets inside a housing nothing gets through.',
             statGrants: { hp: 60, defense: 20 },
@@ -917,7 +894,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'cube-utility',
             heroId: 'cube',
-            kind: 'utility',
             name: 'Cryolattice',
             description: 'Grows down into the ground it is standing on, then brings all of it.',
             statGrants: { hp: 30, defense: 20, wisdom: 10 },
@@ -935,7 +911,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'stormRanger-offensive',
             heroId: 'stormRanger',
-            kind: 'offensive',
             name: 'Windshear',
             description: 'Never stops moving, and every hit that lands makes the next one sooner.',
             statGrants: { attack: 20, speed: 10 },
@@ -945,7 +920,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'stormRanger-defensive',
             heroId: 'stormRanger',
-            kind: 'defensive',
             name: 'Greenwood',
             description: 'Comes down out of the sky and fights from the treeline instead.',
             statGrants: { hp: 60, defense: 10, wisdom: 10 },
@@ -956,7 +930,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'stormRanger-utility',
             heroId: 'stormRanger',
-            kind: 'utility',
             name: 'Whiteout',
             description: 'Takes the wind cold; nothing on the far side gets to move first again.',
             statGrants: { speed: 20, wisdom: 10, mpRegen: 5 },
@@ -973,7 +946,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'tempest-offensive',
             heroId: 'tempest',
-            kind: 'offensive',
             name: 'Lightning Rod',
             description: 'Stops casting the storm and starts carrying it — metal, and everything that touches it.',
             statGrants: { attack: 30, intelligence: -20, defense: 10, hp: 30 },
@@ -984,7 +956,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'tempest-defensive',
             heroId: 'tempest',
-            kind: 'defensive',
             name: 'Ionosphere',
             description: 'Climbs to where the charge is stored and never runs dry again.',
             statGrants: { intelligence: 10, manaPool: 20, mpRegen: 5 },
@@ -995,7 +966,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'tempest-utility',
             heroId: 'tempest',
-            kind: 'utility',
             name: 'Thunderhead',
             description: 'Gets there first, marks everything, and feeds on what it marks.',
             statGrants: { speed: 30 },
@@ -1011,7 +981,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'scallywag-offensive',
             heroId: 'scallywag',
-            kind: 'offensive',
             name: 'Corsair',
             description: 'No quarter, no guard, and no interest in the second exchange.',
             statGrants: { attack: 30, speed: 10 },
@@ -1020,7 +989,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'scallywag-defensive',
             heroId: 'scallywag',
-            kind: 'defensive',
             name: 'Saltrig',
             description: 'Scavenged plate and salvaged gear lashed over the coat; built for a boarding fight.',
             statGrants: { hp: 60, defense: 20 },
@@ -1031,7 +999,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'scallywag-utility',
             heroId: 'scallywag',
-            kind: 'utility',
             name: 'Seawise',
             description: 'Reads the water and the wind, and takes whatever it finds out there.',
             statGrants: { speed: 10, manaPool: 20 },
@@ -1050,7 +1017,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'crag-offensive',
             heroId: 'crag',
-            kind: 'offensive',
             name: 'Stonebreaker',
             description: 'Stops aiming. One swing now covers the whole far side.',
             statGrants: { attack: 30 },
@@ -1059,7 +1025,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'crag-defensive',
             heroId: 'crag',
-            kind: 'defensive',
             name: 'Mountainheart',
             description: 'Stone with iron running through it; an immovable mass that keeps coming.',
             statGrants: { hp: 30, defense: 10 },
@@ -1070,7 +1035,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'crag-utility',
             heroId: 'crag',
-            kind: 'utility',
             name: 'Rootwarden',
             description: 'Something took root in the rock, and now it mends faster than it breaks.',
             statGrants: { wisdom: 20, manaPool: 10 },
@@ -1088,7 +1052,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'sentinel-offensive',
             heroId: 'sentinel',
-            kind: 'offensive',
             name: 'Talonguard',
             description: 'Drops off the perch. All that weight, arriving at once.',
             statGrants: { attack: 20, defense: 20 },
@@ -1097,7 +1060,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'sentinel-defensive',
             heroId: 'sentinel',
-            kind: 'defensive',
             name: 'Cathedral',
             description: 'Iron worked through the stone; a load-bearing wall of a hero.',
             statGrants: { hp: 60, defense: 20 },
@@ -1108,7 +1070,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'sentinel-utility',
             heroId: 'sentinel',
-            kind: 'utility',
             name: 'Gloomwatch',
             description: 'Keeps the vigil after dark, and stops being visible while it does.',
             statGrants: { speed: 10, wisdom: 20, manaPool: 20 },
@@ -1126,7 +1087,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'wildOracle-offensive',
             heroId: 'wildOracle',
-            kind: 'offensive',
             name: 'Druid',
             description: 'Stops asking the wild for anything and simply becomes it.',
             statGrants: { attack: 40, intelligence: -20, speed: 10 },
@@ -1137,7 +1097,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'wildOracle-defensive',
             heroId: 'wildOracle',
-            kind: 'defensive',
             name: 'Lightsage',
             description: 'Tends the one standing next to her before anything else.',
             statGrants: { wisdom: 20, manaPool: 10 },
@@ -1149,7 +1108,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'wildOracle-utility',
             heroId: 'wildOracle',
-            kind: 'utility',
             name: 'Apothecary',
             description: 'What she puts in them comes back through her.',
             statGrants: { intelligence: 10, wisdom: 10 },
@@ -1165,7 +1123,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'mordax-offensive',
             heroId: 'mordax',
-            kind: 'offensive',
             name: 'Bloomfang',
             description: 'Thorn and claw working as one thing; every dose it lands makes the next arrive sooner.',
             statGrants: { attack: 20, speed: 10 },
@@ -1175,7 +1132,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'mordax-defensive',
             heroId: 'mordax',
-            kind: 'defensive',
             name: 'Ironbark',
             description: 'Bark hardens past wood into something closer to the ground it grew out of.',
             statGrants: { hp: 60, defense: 20 },
@@ -1186,7 +1142,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'mordax-utility',
             heroId: 'mordax',
-            kind: 'utility',
             name: 'Wildheart',
             description: 'Lets the animal half win the argument.',
             statGrants: { attack: 20, speed: 20 },
@@ -1203,7 +1158,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'hollowbark-offensive',
             heroId: 'hollowbark',
-            kind: 'offensive',
             name: 'Thornheart',
             description: 'What grows back comes back armed.',
             statGrants: { hp: 30, attack: 20 },
@@ -1213,7 +1167,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'hollowbark-defensive',
             heroId: 'hollowbark',
-            kind: 'defensive',
             name: 'Rootstone',
             description: 'Bark petrifies; the roots go down into rock and stay there.',
             statGrants: { hp: 60, defense: 20 },
@@ -1224,7 +1177,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'hollowbark-utility',
             heroId: 'hollowbark',
-            kind: 'utility',
             name: 'Wraithwood',
             description: 'The hollow trunk lets something else move in, and it does the talking now.',
             statGrants: { attack: -40, intelligence: 60, wisdom: 10 },
@@ -1242,7 +1194,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'dawnwarden-offensive',
             heroId: 'dawnwarden',
-            kind: 'offensive',
             name: 'Sunflare',
             description: 'Stops being the dawn and becomes noon.',
             statGrants: { intelligence: 40, wisdom: -20, speed: 10 },
@@ -1253,7 +1204,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'dawnwarden-defensive',
             heroId: 'dawnwarden',
-            kind: 'defensive',
             name: 'Solstice',
             description: 'The longest night, held off by standing very still.',
             statGrants: { defense: 20, hp: 30, wisdom: 10 },
@@ -1264,7 +1214,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'dawnwarden-utility',
             heroId: 'dawnwarden',
-            kind: 'utility',
             name: 'Dawnherald',
             description: 'What she mends stays mended after she has gone.',
             statGrants: { wisdom: 10, manaPool: 20 },
@@ -1280,7 +1229,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'aegis-offensive',
             heroId: 'aegis',
-            kind: 'offensive',
             name: 'Vanguard',
             description: 'Sets the shield down and picks up the other thing.',
             statGrants: { attack: 40, wisdom: -20, speed: 20 },
@@ -1289,7 +1237,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'aegis-defensive',
             heroId: 'aegis',
-            kind: 'defensive',
             name: 'Warforged',
             description: 'The shield-arm stops being flesh — and it was never only its own arm.',
             statGrants: { hp: 30, defense: 10 },
@@ -1301,7 +1248,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'aegis-utility',
             heroId: 'aegis',
-            kind: 'utility',
             name: 'Verdant Oath',
             description: 'The blessing puts down roots; what it mends keeps mending.',
             statGrants: { wisdom: 30, manaPool: 20 },
@@ -1319,7 +1265,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'shadowMonk-offensive',
             heroId: 'shadowMonk',
-            kind: 'offensive',
             name: 'Nightreaver',
             description: 'Stops being in the room at all, and the room finds out late.',
             statGrants: { attack: 30, speed: 10 },
@@ -1328,7 +1273,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'shadowMonk-defensive',
             heroId: 'shadowMonk',
-            kind: 'defensive',
             name: 'Stillmind',
             description: 'Very little reaches it, and less of that stays.',
             statGrants: { hp: 45, defense: 10, wisdom: 20 },
@@ -1339,7 +1283,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'shadowMonk-utility',
             heroId: 'shadowMonk',
-            kind: 'utility',
             name: 'Nightveil',
             description: 'Puts the knife down. It was never the frightening part.',
             statGrants: { attack: -40, intelligence: 60, speed: 10 },
@@ -1356,7 +1299,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'marrow-offensive',
             heroId: 'marrow',
-            kind: 'offensive',
             name: 'Carrion',
             description: 'Waits for the wound to finish its work, then arrives.',
             statGrants: { intelligence: 30, speed: 10 },
@@ -1365,7 +1307,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'marrow-defensive',
             heroId: 'marrow',
-            kind: 'defensive',
             name: 'Ossuary',
             description: 'Bone-deep endurance; outlasts everything it poisoned.',
             statGrants: { hp: 60, wisdom: 20 },
@@ -1376,7 +1317,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'marrow-utility',
             heroId: 'marrow',
-            kind: 'utility',
             name: 'Ashenwell',
             description: 'The rot ends in a pyre, and the pyre does not go out.',
             statGrants: { intelligence: 10, manaPool: 20, mpRegen: 5 },
@@ -1393,7 +1333,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'nightshade-offensive',
             heroId: 'nightshade',
-            kind: 'offensive',
             name: 'Blackout',
             description: 'Comes in on both sides at once — the knife and the sky.',
             statGrants: { intelligence: 20, attack: 10 },
@@ -1404,7 +1343,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'nightshade-defensive',
             heroId: 'nightshade',
-            kind: 'defensive',
             name: 'Penumbra',
             description: 'Never quite finishes arriving, and hits harder for it.',
             statGrants: { attack: 15, speed: 15 },
@@ -1414,7 +1352,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'nightshade-utility',
             heroId: 'nightshade',
-            kind: 'utility',
             name: 'Hemlock',
             description: 'Stops carrying the poison and becomes it.',
             statGrants: { attack: -30, intelligence: 40, wisdom: 20 },
@@ -1432,7 +1369,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'runescribe-offensive',
             heroId: 'runescribe',
-            kind: 'offensive',
             name: 'Thaumaturge',
             description: 'Stops rationing the source and simply opens it.',
             statGrants: { intelligence: 10, manaPool: 20 },
@@ -1442,7 +1378,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'runescribe-defensive',
             heroId: 'runescribe',
-            kind: 'defensive',
             name: 'Machinist',
             description: 'Stops writing on paper and starts writing on something that can take a hit.',
             statGrants: { hp: 60, defense: 10, wisdom: 10 },
@@ -1453,7 +1388,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'runescribe-utility',
             heroId: 'runescribe',
-            kind: 'utility',
             name: 'Blackletter',
             description: 'Read the one book it was told not to, and kept reading.',
             statGrants: { intelligence: 20, speed: 10 },
@@ -1470,7 +1404,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'zenith-offensive',
             heroId: 'zenith',
-            kind: 'offensive',
             name: 'Apex',
             description: 'Stops metering the output. There is no upper figure left.',
             statGrants: { intelligence: 30, manaPool: 20 },
@@ -1479,7 +1412,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'zenith-defensive',
             heroId: 'zenith',
-            kind: 'defensive',
             name: 'Halo',
             description: 'The orb opens into a standing ring of light.',
             statGrants: { hp: 30, wisdom: 30 },
@@ -1490,7 +1422,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'zenith-utility',
             heroId: 'zenith',
-            kind: 'utility',
             name: 'Oracle',
             description: 'Reads the whole field, then decides what order it happens in.',
             statGrants: { intelligence: 20, wisdom: 10, mpRegen: 5 },
@@ -1508,7 +1439,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'mindweaver-offensive',
             heroId: 'mindweaver',
-            kind: 'offensive',
             name: 'Construct',
             description: 'Stops reaching into other minds and builds itself something to hit with.',
             statGrants: { attack: 40, intelligence: -20, defense: 10 },
@@ -1519,7 +1449,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'mindweaver-defensive',
             heroId: 'mindweaver',
-            kind: 'defensive',
             name: 'Blindspot',
             description: 'Sits in the gap where they forget to look.',
             statGrants: { defense: 20, hp: 30, wisdom: 10 },
@@ -1530,7 +1459,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'mindweaver-utility',
             heroId: 'mindweaver',
-            kind: 'utility',
             name: 'Overmind',
             description: 'Ties the two of them together, so whatever reaches one reaches both.',
             statGrants: { intelligence: 10, manaPool: 20 },
@@ -1546,7 +1474,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'lucius-offensive',
             heroId: 'lucius',
-            kind: 'offensive',
             name: 'Voidcaller',
             description: 'Opens the other door again — the one he was told to leave shut.',
             statGrants: { intelligence: 30, speed: 10 },
@@ -1557,7 +1484,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'lucius-defensive',
             heroId: 'lucius',
-            kind: 'defensive',
             name: 'Sanguine',
             description: "Feeds on the enemy's open wounds — heals for every point of Bleed damage they take, from any source.",
             statGrants: { hp: 60, defense: 10, wisdom: 20 },
@@ -1567,7 +1493,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'lucius-utility',
             heroId: 'lucius',
-            kind: 'utility',
             name: 'Cipher',
             description: 'Stops spending and starts holding; the reserve never bottoms out.',
             statGrants: { intelligence: 10, manaPool: 40, mpRegen: 5 },
@@ -1584,7 +1509,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'trance-offensive',
             heroId: 'trance',
-            kind: 'offensive',
             name: 'Puppeteer',
             description: 'Stops suggesting and starts pulling — and every thread it cuts feeds the next.',
             statGrants: { intelligence: 20, speed: 10 },
@@ -1594,7 +1518,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'trance-defensive',
             heroId: 'trance',
-            kind: 'defensive',
             name: 'Somnambulist',
             description: 'Sleeps inside the current itself, where almost nothing reaches.',
             statGrants: { hp: 45, wisdom: 20, manaPool: 20 },
@@ -1605,7 +1528,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'trance-utility',
             heroId: 'trance',
-            kind: 'utility',
             name: 'Ringmaster',
             description: 'Runs the whole show, and decides who is still in it.',
             statGrants: { intelligence: 20, wisdom: 10, manaPool: 20 },
@@ -1623,7 +1545,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'revenant-offensive',
             heroId: 'revenant',
-            kind: 'offensive',
             name: 'Wraithblade',
             description: 'Remembers having hands, and what it used them for.',
             statGrants: { attack: 40, intelligence: -20, speed: 10 },
@@ -1634,7 +1555,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'revenant-defensive',
             heroId: 'revenant',
-            kind: 'defensive',
             name: 'Undying',
             description: 'What it takes back, it shares.',
             statGrants: { hp: 30, wisdom: 10 },
@@ -1644,7 +1564,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'revenant-utility',
             heroId: 'revenant',
-            kind: 'utility',
             name: 'Soulbinder',
             description: 'Ties the two of them to each other and pulls.',
             statGrants: { intelligence: 20, wisdom: 10 },
@@ -1661,7 +1580,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'sorrow-offensive',
             heroId: 'sorrow',
-            kind: 'offensive',
             name: 'Banshee',
             description: 'The wail sharpened to an edge, and thrown from somewhere nobody was looking.',
             statGrants: { attack: 30, speed: 10 },
@@ -1672,7 +1590,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'sorrow-defensive',
             heroId: 'sorrow',
-            kind: 'defensive',
             name: 'Mourner',
             description: 'Grief that will not be moved. Every blow lands on something already closing.',
             statGrants: { hp: 60, defense: 10 },
@@ -1682,7 +1599,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'sorrow-utility',
             heroId: 'sorrow',
-            kind: 'utility',
             name: 'Dirge',
             description: 'Puts the blade down and sings instead — and it carries to both of them.',
             statGrants: { attack: -40, intelligence: 60, wisdom: 10 },
@@ -1700,7 +1616,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'ironWarden-offensive',
             heroId: 'ironWarden',
-            kind: 'offensive',
             name: 'Sunderer',
             description: 'Stops holding the line and starts taking the wall apart.',
             statGrants: { attack: 30, speed: 10 },
@@ -1711,7 +1626,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'ironWarden-defensive',
             heroId: 'ironWarden',
-            kind: 'defensive',
             name: 'Bulwark',
             description: 'The doubles anchor. Whatever they aimed at, it arrives here instead.',
             statGrants: { hp: 60, defense: 10 },
@@ -1721,7 +1635,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'ironWarden-utility',
             heroId: 'ironWarden',
-            kind: 'utility',
             name: 'Lodestar',
             description: 'Picks up the other half of the oath.',
             statGrants: { wisdom: 30, manaPool: 20 },
@@ -1738,7 +1651,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'valor-offensive',
             heroId: 'valor',
-            kind: 'offensive',
             name: 'Galvanize',
             description: 'Steel is a conductor, and nobody told the storm otherwise.',
             statGrants: { attack: 20, speed: 10 },
@@ -1749,7 +1661,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'valor-defensive',
             heroId: 'valor',
-            kind: 'defensive',
             name: 'Shieldwall',
             description: 'Every blow lands on armour that was not that thick a moment ago.',
             statGrants: { hp: 30, defense: 10 },
@@ -1759,7 +1670,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'valor-utility',
             heroId: 'valor',
-            kind: 'utility',
             name: 'Paladin',
             description: 'Picks up the other half of the oath.',
             statGrants: { wisdom: 20, hp: 30 },
@@ -1776,7 +1686,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'gallant-offensive',
             heroId: 'gallant',
-            kind: 'offensive',
             name: 'Charger',
             description: 'The lance, and nothing behind it but the ground going past.',
             statGrants: { attack: 20, speed: 10 },
@@ -1786,7 +1695,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'gallant-defensive',
             heroId: 'gallant',
-            kind: 'defensive',
             name: 'Oathbound',
             description: 'The knightly oath made literal — spoken over the pair of them.',
             statGrants: { hp: 60, wisdom: 20 },
@@ -1797,7 +1705,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'gallant-utility',
             heroId: 'gallant',
-            kind: 'utility',
             name: 'Destrier',
             description: 'The horse stops being a mount.',
             statGrants: { attack: 20, speed: 20 },
@@ -1815,7 +1722,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'forgewright-offensive',
             heroId: 'forgewright',
-            kind: 'offensive',
             name: 'Runaway',
             description: 'The governor comes off. Nobody puts it back.',
             statGrants: { attack: 10, hp: 30 },
@@ -1825,7 +1731,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'forgewright-defensive',
             heroId: 'forgewright',
-            kind: 'defensive',
             name: 'Hydraulics',
             description: 'Runs cold, runs forever, and takes the hit for the pair.',
             statGrants: { defense: 20, hp: 30, wisdom: 10 },
@@ -1836,7 +1741,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'forgewright-utility',
             heroId: 'forgewright',
-            kind: 'utility',
             name: 'Furnace',
             description: 'Stops containing the fire and starts pointing it.',
             statGrants: { intelligence: 20, speed: 10 },
@@ -1853,7 +1757,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'steamColossus-offensive',
             heroId: 'steamColossus',
-            kind: 'offensive',
             name: 'Redline',
             description: 'Every safety valve welded shut; it hits heavier the longer it is left running.',
             statGrants: { attack: 20, speed: 10 },
@@ -1863,7 +1766,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'steamColossus-defensive',
             heroId: 'steamColossus',
-            kind: 'defensive',
             name: 'Bulkhead',
             description: 'Plated past the point of reason, and it brings the plating for two.',
             statGrants: { hp: 60, defense: 20 },
@@ -1872,7 +1774,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'steamColossus-utility',
             heroId: 'steamColossus',
-            kind: 'utility',
             name: 'Overpressure',
             description: 'Stops driving the pistons and points the boiler instead — the iron was only ever the housing.',
             statGrants: { attack: -40, intelligence: 50, manaPool: 20 },
@@ -1891,7 +1792,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'packAlpha-offensive',
             heroId: 'packAlpha',
-            kind: 'offensive',
             name: 'Bloodhunt',
             description: 'Something is bleeding, and it knows.',
             statGrants: { attack: 10, speed: 10 },
@@ -1901,7 +1801,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'packAlpha-defensive',
             heroId: 'packAlpha',
-            kind: 'defensive',
             name: 'Stonehide',
             description: 'Hide like the ground it fights on; takes the hit and gives it back.',
             statGrants: { hp: 30, defense: 10 },
@@ -1912,7 +1811,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'packAlpha-utility',
             heroId: 'packAlpha',
-            kind: 'utility',
             name: 'Warhowl',
             description: 'Lets go of the body and leads from somewhere else.',
             statGrants: { attack: -30, intelligence: 60, mpRegen: 5 },
@@ -1929,7 +1827,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'widow-offensive',
             heroId: 'widow',
-            kind: 'offensive',
             name: 'Venomfang',
             description: 'Every cut it opens is already carrying something.',
             statGrants: { attack: 20, speed: 10 },
@@ -1939,7 +1836,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'widow-defensive',
             heroId: 'widow',
-            kind: 'defensive',
             name: 'Carapace',
             description: 'Goes still inside the shell — and what comes back out is not smaller.',
             statGrants: { hp: 60, defense: 20 },
@@ -1948,7 +1844,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'widow-utility',
             heroId: 'widow',
-            kind: 'utility',
             name: 'Silkbinder',
             description: 'Stops hiding and starts gardening — the web is a thing that grows, and nothing crosses it at speed.',
             statGrants: { attack: 10, speed: 20 },
@@ -1966,7 +1861,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'coil-offensive',
             heroId: 'coil',
-            kind: 'offensive',
             name: 'Basilisk',
             description: 'The gaze stops being a suggestion, and whatever it lands on stops moving well.',
             statGrants: { intelligence: 20, speed: 10 },
@@ -1976,7 +1870,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'coil-defensive',
             heroId: 'coil',
-            kind: 'defensive',
             name: 'Hooded',
             description: 'Spreads the hood, and it comes up stone — what the gaze does to them, it did to itself first.',
             statGrants: { hp: 60, wisdom: 20 },
@@ -1987,7 +1880,6 @@ export const progressionTable: ProgressionTable = {
           {
             id: 'coil-utility',
             heroId: 'coil',
-            kind: 'utility',
             name: 'Mesmer',
             description: 'Holds the whole field in the coil, and decides what order it moves in.',
             statGrants: { wisdom: 10, manaPool: 40, mpRegen: 5 },

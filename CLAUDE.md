@@ -377,8 +377,11 @@ don't silently override it.
   identifiable name** (e.g. Cinder's Explosive / Ironclad / Thunderblaze).
   **All 36 heroes are on the five-clause Evolution framework** as of 2026-09-05 — no
   path is ever a bare stat line (`docs/leveling-and-ranks.md`).
-  Options differ *in kind* (defensive / offensive / utility), are **permanent within a
-  run**, and gate the movepool.
+  Options take the hero in different directions, are **permanent within a run**, and gate the
+  movepool. **The offensive / defensive / utility label is GONE** (2026-09-16, per user
+  direction): `EvolutionPath.kind` and its badges are deleted, and a path is known by its name
+  alone. The path ids still carry the old words (`cinderKnight-offensive`) because stars and
+  saves are keyed on them — they are ids, never shown.
 - **Starters vs. recruit-only:** every hero is flagged `starter: true/false`
   (`HeroDefinition.starter`, `src/data/heroes.ts`). Starters are offered in the
   start-of-run draft; `starter: false` heroes exist only in the game, obtained

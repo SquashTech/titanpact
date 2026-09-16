@@ -71,7 +71,7 @@ an opaque level curve.
   bigger numbers" — paths take the hero in genuinely different directions
   (different kits, roles, tools). Do not implement paths as tiered stat bumps.
 - **Every path carries a single identifiable name** (`leveling-and-ranks.md`) — e.g.
-  Cinder's Explosive / Ironclad / Thunderblaze — not just a `kind` label.
+  Cinder's Explosive / Ironclad / Thunderblaze. The old `kind` label is deleted (2026-09-16).
 - **The hero's innate type is immutable across all Evolution** (`types-and-heroes.md`).
 - **Mono is a valid terminal state** — a hero can be fully realized without ever
   branching into a second type. Don't gate "finished" on dual-typing.

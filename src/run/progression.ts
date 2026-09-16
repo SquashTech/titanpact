@@ -144,8 +144,6 @@ export function movePoolFloor(schedule: LevelSchedule = DEFAULT_SCHEDULE): MoveP
 export interface EvolutionPath {
   id: string;
   heroId: string;
-  /** Documentation of intent ("differ in kind"), not a mechanical multiplier. */
-  kind: 'defensive' | 'offensive' | 'utility';
   name: string;
   /** Shown on the Evolution choice screen. */
   description?: string;
@@ -160,7 +158,7 @@ export interface EvolutionPath {
 }
 
 export interface EvolutionNode {
-  /** Exactly three, differing in kind. Opens at MASTERY_EVOLUTION pips, the same for every hero. */
+  /** Exactly three. Opens at MASTERY_EVOLUTION pips, the same for every hero. */
   paths: EvolutionPath[];
 }
 

@@ -308,7 +308,7 @@ test('progression: an Evolution path with a non-multiple-of-5 stat grant is reje
       cinderKnight: [
         {
           paths: [
-            { id: 'bad', heroId: 'cinderKnight', kind: 'offensive' as const, name: 'Bad Path', statGrants: { attack: 7 }, unlocksMoveIds: [] },
+            { id: 'bad', heroId: 'cinderKnight', name: 'Bad Path', statGrants: { attack: 7 }, unlocksMoveIds: [] },
           ],
         },
       ],
@@ -452,7 +452,6 @@ test('progression: a graft on an already-dual-typed hero TRADES the innate secon
             {
               id: 'iw-graft',
               heroId: 'ironWarden',
-              kind: 'utility' as const,
               name: 'Retype',
               statGrants: {},
               unlocksMoveIds: [],
@@ -461,7 +460,6 @@ test('progression: a graft on an already-dual-typed hero TRADES the innate secon
             {
               id: 'iw-redundant',
               heroId: 'ironWarden',
-              kind: 'offensive' as const,
               name: 'Redundant',
               statGrants: {},
               unlocksMoveIds: [],
@@ -506,7 +504,6 @@ test('progression: a later type-graft path shifts (replaces) the secondary type 
             {
               id: 'tidecaller-shift',
               heroId: 'tidecaller',
-              kind: 'utility' as const,
               name: 'Shifted Graft',
               statGrants: {},
               unlocksMoveIds: [],

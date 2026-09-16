@@ -9526,30 +9526,11 @@ textarea,
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
-/* Same three colors .evolution-badge uses, so the card's edge and the badge
-   sitting on it never say different things. */
-.evo-path-card.evo-offensive {
-  --plate-color: var(--enemy);
-}
-
-.evo-path-card.evo-defensive {
-  --plate-color: var(--ally);
-}
-
-.evo-path-card.evo-utility {
-  border-left-color: var(--hp-high);
-}
-
 .evo-path-head {
   display: flex;
   align-items: center;
   gap: 6px;
   margin-bottom: 4px;
-}
-
-.evo-path-head .evolution-badge {
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
 }
 
 .evo-path-name {
@@ -10316,21 +10297,6 @@ textarea,
   background: var(--panel-alt);
   border: 1px solid var(--border);
   box-shadow: var(--hairline);
-}
-
-.evolution-badge.evolution-offensive {
-  border-color: var(--enemy);
-  color: var(--enemy);
-}
-
-.evolution-badge.evolution-defensive {
-  border-color: var(--ally);
-  color: var(--ally);
-}
-
-.evolution-badge.evolution-utility {
-  border-color: var(--hp-high);
-  color: var(--hp-high);
 }
 
 .evolution-badge.class-badge {
@@ -27714,59 +27680,6 @@ textarea,
 .move-tile,
 .level-up-row {
   border-top-color: color-mix(in srgb, var(--plate-hue) 58%, var(--border));
-}
-
-/* --- The growth key (StatBars) -------------------------------------------
-   The legend for the letter column on a hero sheet's Stats page. It replaced
-   three sentences of prose set in the middle of a character sheet, which taught
-   two of the seven grades by naming the ends of a scale the reader could not
-   see. A key teaches all seven at once and is data rather than documentation —
-   the same object a chart legend or a map key is — and it wears the exact tones
-   the column itself uses, so a letter on a bar and its entry here are visibly
-   the same mark. */
-.stat-growth-key {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 6px;
-  padding-top: 6px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.stat-growth-key-label {
-  flex: none;
-  margin-right: 2px;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  opacity: 0.75;
-}
-
-.stat-growth-key-cell {
-  flex: 1 1 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-  line-height: 1;
-}
-
-.stat-growth-key-grade {
-  font-size: 11px;
-  font-weight: 700;
-}
-
-/* No % sign on each: seven of them turn a key into a table, and the row reads
-   as percentages from the first cell on. */
-.stat-growth-key-pct {
-  font-size: 8px;
-  font-weight: 600;
-  color: var(--text-dim);
-  opacity: 0.6;
-  font-variant-numeric: tabular-nums;
 }
 
 /* The letter beside a stat bar. Was six inline style properties per row; the

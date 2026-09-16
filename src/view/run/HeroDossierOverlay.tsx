@@ -112,9 +112,8 @@ function EvolutionPathCard({
   const pathCaster = path.typeGraft ? { wisdom: caster.wisdom, types } : caster;
 
   return (
-    <div className={`evo-path-card evo-${path.kind}`}>
+    <div className="evo-path-card">
       <div className="evo-path-head">
-        <span className={`evolution-badge evolution-${path.kind}`}>{path.kind}</span>
         <span className="evo-path-name">{path.name}</span>
         <EvolutionStar path={path} className="evo-path-star" />
       </div>

@@ -428,10 +428,11 @@ An Evolution is **not** "pick how much to grow." The three paths take the hero i
 **genuinely different directions** — a different role, a different type identity, a
 different tool. Never author paths as tiered stat bumps of the same shape.
 
-**Every path must carry a single identifiable name** — a proper noun the player
+**Every path carries a single identifiable name** — a proper noun the player
 recognizes and remembers, the way Cinder's three paths might be named
-**Explosive**, **Ironclad**, and **Thunderblaze**. The name, not the `kind` label
-(`offensive` / `defensive` / `utility`), is what the player sees first and what the
+**Explosive**, **Ironclad**, and **Thunderblaze**. The name is all a path has: the
+`offensive` / `defensive` / `utility` label it used to carry was deleted on 2026-09-16 (per
+user direction — it read as a category the paths never fitted). The name is what the
 build gets called in conversation about the run.
 
 A path may grant any of:

@@ -150,7 +150,7 @@ function HeroConfigCard({
             <option value="">— none (mono) —</option>
             {evolutionNode.paths.map((path) => (
               <option key={path.id} value={path.id}>
-                {path.name} ({path.kind})
+                {path.name}
               </option>
             ))}
           </select>

@@ -121,7 +121,7 @@ const pathNames: Record<string, string> = {};
 for (const heroId of Object.keys(progressionTable.evolutions)) {
   for (const node of progressionTable.evolutions[heroId]) {
     for (const path of node.paths) {
-      pathNames[path.id] = `${heroes[heroId]?.name ?? heroId}: ${path.name} (${path.kind[0]})`;
+      pathNames[path.id] = `${heroes[heroId]?.name ?? heroId}: ${path.name}`;
     }
   }
 }

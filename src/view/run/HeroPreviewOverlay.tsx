@@ -217,7 +217,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
             {(evolved.length > 0 || heroClass) && (
               <div className="detail-evolution-row">
                 {evolved.map((path) => (
-                  <span key={path.id} className={`evolution-badge evolution-${path.kind}`}>
+                  <span key={path.id} className="evolution-badge">
                     {path.name}
                   </span>
                 ))}
