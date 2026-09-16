@@ -9,6 +9,7 @@ import { HeroPortrait } from './HeroPortrait';
 import { ManaCost } from './ManaCost';
 import { TypeBadge } from './TypeBadge';
 import { STAT_COLORS, STAT_LABELS, computeStatTotal, statFraction } from './StatBars';
+import type { StatScale } from '../../run/statScale';
 
 // The hero stage shared by the draft and the Recruit Contract claim: one hero at 144px in a sigil,
 // a stat silhouette, the kit, and a rail of other candidates. The CSS family keeps its `.draft-*`
@@ -90,8 +91,8 @@ export function StageFigure({
 // Same set the Stat Total sums (StatBars TOTAL_STATS); MP Regen is flat across the roster.
 const SILHOUETTE_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed', 'manaPool'];
 
-/** Seven bars on StatBars' shared ceilings plus their total. `grants` is the flat delta the hero already carries (entryStats.ts). */
-export function StageSilhouette({ baseStats, grants = {} }: { baseStats: StatLine; grants?: StatModifiers }) {
+/** Seven bars on StatBars' shared reference plus their total. `grants` is the flat delta the hero already carries (entryStats.ts); `scale` the run's reference, level 1's at the draft. */
+export function StageSilhouette({ baseStats, grants = {}, scale }: { baseStats: StatLine; grants?: StatModifiers; scale?: StatScale }) {
   const effective = Object.fromEntries(
     SILHOUETTE_STATS.map((stat) => [stat, baseStats[stat] + (grants[stat] ?? 0)])
   ) as Record<StatKey, number>;
@@ -106,7 +107,7 @@ export function StageSilhouette({ baseStats, grants = {} }: { baseStats: StatLin
             <div className="draft-stat-track">
               <div
                 className="draft-stat-fill"
-                style={{ height: `${statFraction(stat, value) * 100}%`, background: STAT_COLORS[stat] }}
+                style={{ height: `${statFraction(stat, value, scale) * 100}%`, background: STAT_COLORS[stat] }}
               />
             </div>
             <span className="draft-stat-label">{STAT_LABELS[stat]}</span>

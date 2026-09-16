@@ -15,6 +15,7 @@ import {
   masteryRoom,
 } from '../../run/mastery';
 import type { RosterEntry, RunState } from '../../run/state';
+import { statScaleFor } from '../../run/statScale';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { MasteryPips } from '../shared/MasteryPips';
 import { NodeHeader, NodeSky, NODE_TINT_PARCHMENT } from '../shared/NodeStage';
@@ -189,6 +190,7 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
           entry={previewEntry.entry}
           equipmentLookup={equipment}
           relicIds={run.relics}
+          scale={statScaleFor(run)}
           onClose={() => setPreviewEntry(null)}
         />
       )}

@@ -8,6 +8,7 @@ import { absorbItem, itemReceiptFor, sellItem, type ItemReceipt } from '../../ru
 import { sellValueFor } from '../../run/shop';
 import type { RosterEntry, RunState } from '../../run/state';
 import { levelOf } from '../../run/growth';
+import { statScaleFor } from '../../run/statScale';
 import { ItemBox, RARITY_COLOR_VARS, RARITY_LABELS, RARITY_RGB_VARS, slotBoxes } from '../shared/EquipmentBox';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
@@ -179,6 +180,7 @@ export function ItemWhoScreen({ run, itemId, onRunChange, onDone }: Props) {
           entry={previewEntry.entry}
           equipmentLookup={equipment}
           relicIds={run.relics}
+          scale={statScaleFor(run)}
           onClose={() => setPreviewEntry(null)}
         />
       )}

@@ -24,6 +24,7 @@ import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { MoveOfferOverlay } from './MoveOfferOverlay';
 import { RosterPeek } from './RosterPeek';
 import { levelOf } from '../../run/growth';
+import { statScaleFor } from '../../run/statScale';
 
 interface Props {
   run: RunState;
@@ -232,6 +233,7 @@ export function CrucibleScreen({ run, onRunChange, onContinue }: Props) {
           entry={previewing.entry}
           equipmentLookup={equipment}
           relicIds={run.relics}
+          scale={statScaleFor(run)}
           onClose={() => setPreviewing(null)}
         />
       )}

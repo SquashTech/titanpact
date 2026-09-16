@@ -6,6 +6,7 @@ import type { HeroDefinition } from '../../engine/content';
 import { levelOf } from '../../run/growth';
 import { MANA_WELL_AMOUNT, grantManaWell } from '../../run/runProgress';
 import type { RosterEntry, RunState } from '../../run/state';
+import { statScaleFor } from '../../run/statScale';
 import { entryStatTotals } from '../shared/entryStatTotals';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { NodeHeader, NodeSky, NODE_TINT_MANA } from '../shared/NodeStage';
@@ -96,6 +97,7 @@ export function ManaWellScreen({ run, onRunChange, onContinue }: Props) {
           entry={previewEntry.entry}
           equipmentLookup={equipment}
           relicIds={run.relics}
+          scale={statScaleFor(run)}
           onClose={() => setPreviewEntry(null)}
         />
       )}

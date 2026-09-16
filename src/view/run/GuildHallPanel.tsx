@@ -22,6 +22,7 @@ import {
   type GuildHallOffer,
 } from '../../run/recruitment';
 import type { GuildHallOffers } from '../../run/shop';
+import { statScaleFor } from '../../run/statScale';
 import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -309,6 +310,7 @@ export function GuildHallPanel({
                   entry={guildHallEntry(run, previewOffer, 'preview')}
                   equipmentLookup={equipment}
                   relicIds={run.relics}
+                  scale={statScaleFor(run)}
                   unowned
                   action={{
                     label:

@@ -11,6 +11,7 @@ import { MasteryPips } from '../shared/MasteryPips';
 import { WoundBar, entryHp } from '../shared/WoundBar';
 import type { StatModifiers } from '../../engine/state';
 import type { RosterEntry } from '../../run/state';
+import type { StatScale } from '../../run/statScale';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { equipmentStatModifiers } from '../../run/equipment';
 import { relicTeamStatModifiers } from '../../run/relics';
@@ -38,6 +39,8 @@ interface Props {
   equipmentLookup: Record<string, EquipmentDefinition>;
   /** The owning team's relics (RunState.relics). Omit for a hero not on this team — a scouted enemy, or the pre-run draft. */
   relicIds?: readonly string[];
+  /** The run's stat reference (run/statScale.ts) — the player's even for a scouted enemy, so both sides are read on one scale. Omit at the draft. */
+  scale?: StatScale;
   /**
    * A hero not on the roster yet (the Guild Hall shelf): hides the Gear page, which is always
    * empty. Everything else — relic grants included — is what the hero would arrive with.
@@ -131,7 +134,7 @@ function GrantSourceRow({ label, mods }: { label: string; mods: StatModifiers })
  * Stats come from entryStats.ts — the same function buildCombatState.ts uses for a Combatant's
  * baseline — so this sheet cannot drift from the fight.
  */
-export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = [], unowned = false, action, onClose }: Props) {
+export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = [], scale, unowned = false, action, onClose }: Props) {
   const heroClass = chosenClass(classes, entry);
   const teamStatModifiers = relicTeamStatModifiers(relicIds, relics);
   const teamPassiveGrants = relicTeamPassiveGrants(relicIds, relics);
@@ -234,7 +237,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
               {/* Matchups lead the page: which columns hurt this hero is the first thing asked of
                   a sheet, and behind eight stat bars it was below the fold. */}
               <TypeMatchups types={types} />
-              <StatBars baseStats={hero.baseStats} deltas={grants} grades={gradesFor(hero)} />
+              <StatBars baseStats={hero.baseStats} deltas={grants} grades={gradesFor(hero)} scale={scale} />
               <div className="grant-source-list">
                 {/* Shown for an unowned hero too, unlike the old from-relics strip: the bars
                     already carry the team grant, and a ledger that claims to account for the

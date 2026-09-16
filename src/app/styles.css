@@ -10690,6 +10690,35 @@ textarea,
   box-shadow: 0 0 4px var(--hp-low);
 }
 
+/* The par tick (run/statScale.ts): a typical hero at the reference level. Thin and bright with
+   a dark halo so it reads on the fill and on the empty well alike, and apart from the fatter,
+   dimmer floor tick beside it in a fight. */
+.stat-bar-par {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+.stat-par-key {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+  font-size: 9.5px;
+  color: var(--text-dim);
+}
+
+.stat-par-key-tick {
+  width: 1px;
+  height: 9px;
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+
 .stat-bar-from {
   color: var(--text-dim);
   font-weight: 500;

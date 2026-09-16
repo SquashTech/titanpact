@@ -16,6 +16,7 @@ import { PassiveGlyph, passiveColor, passiveKindLabel, passiveTint } from '../sh
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
 import { levelOf } from '../../run/growth';
+import { statScaleFor } from '../../run/statScale';
 
 interface Props {
   run: RunState;
@@ -192,6 +193,7 @@ export function BoonNodeScreen({ run, onRunChange, onContinue }: Props) {
           entry={previewEntry.entry}
           equipmentLookup={equipment}
           relicIds={run.relics}
+          scale={statScaleFor(run)}
           onClose={() => setPreviewEntry(null)}
         />
       )}

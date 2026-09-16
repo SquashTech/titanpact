@@ -32,6 +32,7 @@ import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
 import { levelOf } from '../../run/growth';
+import { statScaleFor } from '../../run/statScale';
 
 interface Props {
   /** Rolled at node-select time (App.tsx) — see src/run/events.ts. */
@@ -363,6 +364,7 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onC
           entry={previewEntry.entry}
           equipmentLookup={equipment}
           relicIds={run.relics}
+          scale={statScaleFor(run)}
           onClose={() => setPreviewEntry(null)}
         />
       )}

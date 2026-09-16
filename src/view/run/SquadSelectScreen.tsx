@@ -22,6 +22,7 @@ import { HubGlyph } from '../shared/nodeIcons';
 import { useAmbientLocation } from '../shared/LocationContext';
 import { matchupVerdict } from '../shared/matchupVerdict';
 import { levelOf } from '../../run/growth';
+import { statScaleFor } from '../../run/statScale';
 import { WoundBar, entryHp } from '../shared/WoundBar';
 
 interface Props {
@@ -459,6 +460,7 @@ export function SquadSelectScreen({
           entry={inspecting.entry}
           equipmentLookup={equipment}
           relicIds={inspecting.enemy ? [] : run.relics}
+          scale={statScaleFor(run)}
           onClose={() => setInspecting(null)}
         />
       )}

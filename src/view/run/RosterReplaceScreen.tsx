@@ -12,6 +12,7 @@ import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { levelOf } from '../../run/growth';
+import type { StatScale } from '../../run/statScale';
 
 export type { RosterReplaceCandidate };
 
@@ -22,6 +23,8 @@ interface Props {
   incomingEntry?: RosterEntry;
   /** The team's relics (RunState.relics), passed through to the hero sheets opened from here. */
   relicIds?: readonly string[];
+  /** The run's stat reference (run/statScale.ts), passed through with them. */
+  scale?: StatScale;
   /** Attempts the swap; false only if the offer was invalidated while this screen was open. */
   onConfirm: (terminatedRosterId: string) => boolean;
   onCancel: () => void;
@@ -64,7 +67,7 @@ function ReplaceHeroCard({ hero, entry, selected, onSelect, onPreview }: Replace
  * Rendered as an App Screen from the Guild Hall but as an in-place modal from RecruitScreen (a
  * remount there would lose which offers were already signed); this component doesn't care which.
  */
-export function RosterReplaceScreen({ roster, candidate, incomingEntry, relicIds = [], onConfirm, onCancel }: Props) {
+export function RosterReplaceScreen({ roster, candidate, incomingEntry, relicIds = [], scale, onConfirm, onCancel }: Props) {
   const [selectedRosterId, setSelectedRosterId] = useState<string | null>(null);
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
 
@@ -143,6 +146,7 @@ export function RosterReplaceScreen({ roster, candidate, incomingEntry, relicIds
           entry={previewEntry.entry}
           equipmentLookup={equipment}
           relicIds={relicIds}
+          scale={scale}
           onClose={() => setPreviewEntry(null)}
         />
       )}

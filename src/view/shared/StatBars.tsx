@@ -1,6 +1,7 @@
 import type { StatKey, StatLine } from '../../engine/content';
 import { STAT_ORDER } from '../../engine/content';
 import { GRADE_CHANCE, gradeMaxPoints, growthUnitFor, type GrowthGrade, type GrowthGrades } from '../../run/growth';
+import { BASE_STAT_SCALE, type StatScale } from '../../run/statScale';
 import { STAT_COLORS, StatGlyph } from './statIcons';
 
 // Re-exported so screens keep one import site for the stat-block vocabulary.
@@ -19,21 +20,13 @@ export const STAT_LABELS: Record<StatKey, string> = {
   mpRegen: 'MPR',
 };
 
-// Fixed reference ceilings, not per-hero maxes, so bar length is comparable across heroes.
-const STAT_SCALE_MAX: Record<StatKey, number> = {
-  hp: 340,
-  attack: 110,
-  defense: 120,
-  intelligence: 110,
-  wisdom: 100,
-  speed: 120,
-  manaPool: 120,
-  mpRegen: 16,
-};
-
-/** A stat's 0-1 fraction of its shared ceiling — every stat readout draws on this one scale. */
-export function statFraction(stat: StatKey, value: number): number {
-  return Math.min(1, Math.max(0, value) / STAT_SCALE_MAX[stat]);
+/**
+ * A stat's 0-1 fraction of the reference ceiling (run/statScale.ts) — every stat readout draws on
+ * this one scale, so bar length is comparable across heroes. The reference walks with the run's
+ * par; without one it is level 1's.
+ */
+export function statFraction(stat: StatKey, value: number, scale: StatScale = BASE_STAT_SCALE): number {
+  return Math.min(1, Math.max(0, value) / scale.ceiling[stat]);
 }
 
 function fmtDelta(n: number): string {
@@ -118,12 +111,19 @@ interface Props {
    * `ceilings` are effective values, not modifiers.
    */
   fight?: { deltas: Partial<Record<StatKey, number>>; floors: Partial<Record<StatKey, number>>; ceilings?: Partial<Record<StatKey, number>> };
+  /**
+   * The reference the bars are drawn against (run/statScale.ts): the run's, so a hero is read
+   * against the fights it is in and the roster beside it. Level 1's when omitted — the draft and
+   * the Compendium, where there is no run to be at par with.
+   */
+  scale?: StatScale;
 }
 
-export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {}, grades, fight }: Props) {
+export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {}, grades, fight, scale = BASE_STAT_SCALE }: Props) {
   const totals = STAT_ORDER.map((stat) => Math.max(0, totalOverrides[stat] ?? baseStats[stat] + (deltas[stat] ?? 0)));
-  const percents = STAT_ORDER.map((stat, i) => Math.min(100, (totals[i] / STAT_SCALE_MAX[stat]) * 100));
-  const bestPercent = Math.max(...percents);
+  const percents = STAT_ORDER.map((stat, i) => statFraction(stat, totals[i], scale) * 100);
+  // The spike the sheet highlights is one of the seven graded stats; MP Regen is flat on everyone.
+  const bestPercent = Math.max(...percents.filter((_, i) => TOTAL_STATS.includes(STAT_ORDER[i])));
   // Summed from the same effective numbers the bars draw, never from baseStats.
   const effective = Object.fromEntries(STAT_ORDER.map((stat, i) => [stat, totals[i]])) as Record<StatKey, number>;
   const statTotal = computeStatTotal(effective);
@@ -133,7 +133,7 @@ export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {}, 
     <div className="stat-bars">
       {STAT_ORDER.map((stat, i) => {
         const delta = deltas[stat] ?? 0;
-        const isBest = percents[i] === bestPercent && bestPercent > 0;
+        const isBest = TOTAL_STATS.includes(stat) && percents[i] === bestPercent && bestPercent > 0;
         const grade = grades?.[stat as keyof GrowthGrades];
         return (
           <div
@@ -146,18 +146,24 @@ export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {}, 
             </span>
             <div className="stat-bar-track">
               <div className="stat-bar-fill" style={{ width: `${percents[i]}%`, background: isBest ? 'var(--accent)' : STAT_COLORS[stat] }} />
+              {/* Par: where a typical hero at the reference level stands, so the fill reads as ahead of or behind the run. */}
+              <div
+                className="stat-bar-par"
+                style={{ left: `${statFraction(stat, scale.par[stat], scale) * 100}%` }}
+                title={`A typical hero at Lv ${scale.level} has ${scale.par[stat]} ${STAT_LABELS[stat]}`}
+              />
               {fight && fight.floors[stat] !== undefined && fight.floors[stat]! > 0 && (
                 // The floor a debuff can take this stat to (docs/stat-scaling.md §3) — where the bar stops shrinking.
                 <div
                   className={`stat-bar-floor${(fight.deltas[stat] ?? 0) < 0 && totals[i] <= fight.floors[stat]! ? ' is-held' : ''}`}
-                  style={{ left: `${Math.min(100, (fight.floors[stat]! / STAT_SCALE_MAX[stat]) * 100)}%` }}
+                  style={{ left: `${statFraction(stat, fight.floors[stat]!, scale) * 100}%` }}
                   title={`${STAT_LABELS[stat]} can't go lower than ${fight.floors[stat]}`}
                 />
               )}
-              {fight && fight.ceilings?.[stat] !== undefined && fight.ceilings[stat]! > 0 && fight.ceilings[stat]! <= STAT_SCALE_MAX[stat] && (
+              {fight && fight.ceilings?.[stat] !== undefined && fight.ceilings[stat]! > 0 && fight.ceilings[stat]! <= scale.ceiling[stat] && (
                 <div
                   className={`stat-bar-floor${(fight.deltas[stat] ?? 0) > 0 && totals[i] >= fight.ceilings[stat]! ? ' is-held' : ''}`}
-                  style={{ left: `${(fight.ceilings[stat]! / STAT_SCALE_MAX[stat]) * 100}%` }}
+                  style={{ left: `${statFraction(stat, fight.ceilings[stat]!, scale) * 100}%` }}
                   title={`${STAT_LABELS[stat]} can't go higher than ${fight.ceilings[stat]}`}
                 />
               )}
@@ -195,6 +201,10 @@ export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {}, 
           </div>
         );
       })}
+      <div className="stat-par-key" aria-label={`The tick on each bar: a typical hero at Lv ${scale.level}`}>
+        <span className="stat-par-key-tick" />
+        <span>typical hero at Lv {scale.level}</span>
+      </div>
       <div
         className="stat-total-row"
         title="Stat Total — HP + Attack + Defense + Intelligence + Wisdom + Speed + Mana Pool, as this hero currently stands (MP Regen excluded, flat across the roster)"

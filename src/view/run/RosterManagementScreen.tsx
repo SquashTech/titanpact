@@ -3,6 +3,7 @@ import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import type { HeroDefinition } from '../../engine/content';
 import type { RunState, RosterEntry } from '../../run/state';
+import { statScaleFor } from '../../run/statScale';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { ItemDetailOverlay } from '../shared/ItemDossier';
 import { HeroSlotCard, HeroSlotGrid } from '../shared/HeroSlotCard';
@@ -87,6 +88,7 @@ export function RosterManagementScreen({ run, onClose }: Props) {
           entry={inspecting.entry}
           equipmentLookup={equipment}
           relicIds={run.relics}
+          scale={statScaleFor(run)}
           onClose={() => setInspecting(null)}
         />
       )}

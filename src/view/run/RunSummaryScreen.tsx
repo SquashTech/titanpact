@@ -16,6 +16,7 @@ import { RelicIcon } from '../shared/EquipmentBox';
 import { stackedGrantSummary, stackedRelicName } from '../shared/relicStacks';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { levelOf } from '../../run/growth';
+import { statScaleFor } from '../../run/statScale';
 
 interface Props {
   outcome: 'win' | 'loss';
@@ -192,6 +193,7 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
           entry={inspecting.entry}
           equipmentLookup={equipment}
           relicIds={run.relics}
+          scale={statScaleFor(run)}
           onClose={() => setInspecting(null)}
         />
       )}

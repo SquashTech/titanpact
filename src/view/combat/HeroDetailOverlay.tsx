@@ -14,6 +14,7 @@ import {
   statModifierFloor,
 } from '../../engine/state';
 import type { RosterEntry } from '../../run/state';
+import type { StatScale } from '../../run/statScale';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { chosenEvolutionPaths, itemSlotsFor } from '../../run/progression';
 import { chosenClass } from '../../run/classes';
@@ -44,6 +45,8 @@ interface Props {
   /** null when the roster has no matching entry (guarded for safety). */
   rosterEntry: RosterEntry | null;
   equipmentLookup: Record<string, EquipmentDefinition>;
+  /** The player's stat reference (run/statScale.ts), either side — both sides read on one scale. */
+  scale?: StatScale;
   /** Field Effect plus the board a conditional passive reads (state.ts StatContext). */
   statCtx: StatContext;
   onClose: () => void;
@@ -74,7 +77,7 @@ function fmtStatus(statusId: string, magnitude: number | undefined, duration: nu
  * dimmed the way the console dims it — because the question asked here is "what can it cast next
  * round", not "what does it know".
  */
-export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLookup, statCtx, onClose }: Props) {
+export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLookup, statCtx, scale, onClose }: Props) {
   // Loadout grants plus in-fight changes — unlike CombatantCard's badges, which flag only the latter.
   const totalModifiers = Object.fromEntries(
     STAT_ORDER.map((stat) => [stat, (combatant.baselineStatModifiers[stat] ?? 0) + (combatant.statModifiers[stat] ?? 0)])
@@ -213,7 +216,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
 
               {/* Matchups lead, as on the run's sheet: which columns hurt this hero is the first thing asked. */}
               <TypeMatchups types={types} />
-              <StatBars baseStats={hero.baseStats} deltas={totalModifiers} totals={effectiveTotals} fight={fightReadout} />
+              <StatBars baseStats={hero.baseStats} deltas={totalModifiers} totals={effectiveTotals} fight={fightReadout} scale={scale} />
 
               {hasModifiers && (
                 <>

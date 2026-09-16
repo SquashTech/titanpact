@@ -30,6 +30,7 @@ import { RecruitFanfare } from './RecruitFanfare';
 import { RosterPeek } from './RosterPeek';
 import { RosterReplaceScreen } from './RosterReplaceScreen';
 import { levelOf } from '../../run/growth';
+import { statScaleFor } from '../../run/statScale';
 
 /** Past this many, the contract track collapses to a single seal and a count. */
 const MAX_CONTRACT_PIPS = 6;
@@ -184,7 +185,7 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
             </div>
           )}
 
-          <StageSilhouette baseStats={hero.baseStats} grants={grants} />
+          <StageSilhouette baseStats={hero.baseStats} grants={grants} scale={statScaleFor(run)} />
           <StageKit moveIds={featured.unlockedMoveIds} onPick={setPopupMove} />
         </div>
 
@@ -249,6 +250,7 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
           entry={featured}
           equipmentLookup={equipment}
           relicIds={run.relics}
+          scale={statScaleFor(run)}
           onClose={() => setInspecting(false)}
         />
       )}
@@ -267,6 +269,7 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
           roster={run.roster}
           candidate={{ source: 'contract', offer: deriveContractOffer(rosterReplaceEntry) }}
           relicIds={run.relics}
+          scale={statScaleFor(run)}
           onConfirm={(terminatedRosterId) => {
             const ok = onClaimReplace(rosterReplaceEntry, terminatedRosterId);
             if (ok) {

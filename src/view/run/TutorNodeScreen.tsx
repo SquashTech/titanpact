@@ -15,6 +15,7 @@ import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { MoveLearnedOverlay, MoveOfferOverlay } from './MoveOfferOverlay';
 import { RosterPeek } from './RosterPeek';
 import { levelOf } from '../../run/growth';
+import { statScaleFor } from '../../run/statScale';
 
 interface Props {
   run: RunState;
@@ -126,6 +127,7 @@ export function TutorNodeScreen({ run, onRunChange, onContinue }: Props) {
           entry={previewEntry.entry}
           equipmentLookup={equipment}
           relicIds={run.relics}
+          scale={statScaleFor(run)}
           onClose={() => setPreviewEntry(null)}
         />
       )}

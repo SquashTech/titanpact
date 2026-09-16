@@ -134,6 +134,7 @@ import { atEvolution, fullMovepool, pendingScheduleEntry } from '../run/progress
 import { progressionTable } from '../data/progression';
 import type { RunState, RosterEntry } from '../run/state';
 import type { Squad } from '../run/squad';
+import { statScaleFor } from '../run/statScale';
 
 type Screen =
   | { kind: 'title' }
@@ -1095,6 +1096,7 @@ export function App() {
             screen.candidate.source === 'guildHall' ? guildHallEntry(playerRun, screen.candidate.offer, 'preview') : undefined
           }
           relicIds={playerRun.relics}
+          scale={statScaleFor(playerRun)}
           onConfirm={(terminatedRosterId) => {
             const { candidate } = screen;
             try {

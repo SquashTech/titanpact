@@ -273,7 +273,16 @@ Details worth keeping:
   precedent for the arena.
 - **The stat silhouette shares StatBars' ceilings, deliberately.** `statFraction()`
   was extracted from `StatBars.tsx` rather than re-deriving maxima locally, so a bar
-  means the same length here as on the hero sheet. Six stats, not eight: Mana Pool
+  means the same length here as on the hero sheet. **The ceiling walks with the run's
+  par** (2026-09-16, `src/run/statScale.ts`): a fixed table authored against the 550
+  base line had every spiked stat pinned at full by the end of Act 2, so the bar said
+  nothing for the rest of the run. The reference is now derived — the pool's best
+  expected line at the roster's par level, a loadout margin over it, the team's Banner
+  grants added outright — and every track carries a **par tick** at where a typical
+  hero of the pool stands at that level, keyed under the bars, so the fill reads as
+  ahead of or behind the run rather than against an absolute nobody can see. At level 1
+  it is the old table, derived; the draft and the Compendium read that one. Both sides
+  of a fight are drawn on the player's scale. Six stats, not eight: Mana Pool
   and MP Regen are the separate tempo axis (CLAUDE.md), and the point of the strip is
   *cross-candidate comparison* — six bars is a silhouette, eight is a spec sheet.
 - **The kit is the move buttons with their boxes taken off.** Same mana crystal at

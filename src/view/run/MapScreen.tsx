@@ -15,7 +15,7 @@ import { MapRoute } from './MapRoute';
 import { BannerShelf } from './BannerShelf';
 import { NODE_COLORS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
 import { NodeDossierOverlay } from './NodeDossierOverlay';
-import { levelAfterEncounters, levelOf } from '../../run/growth';
+import { rosterPar } from '../../run/statScale';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
 import { locationForAct } from '../../run/locations';
@@ -158,10 +158,8 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
   if (!map) return null;
 
   const location = locationForAct(run.locationIds, run.actNumber);
-  // The roster's PAR, which under automatic levelling is everyone but a late joiner. Read off the
-  // roster rather than off the curve so it is right for a hero the curve does not describe — a
-  // contract recruit arriving at act level, or a fixture. Falls back to the curve for an empty one.
-  const rosterLevel = run.roster.reduce((best, entry) => Math.max(best, levelOf(entry)), levelAfterEncounters(run.encountersWon));
+  // The roster's PAR (run/statScale.ts): everyone but a late joiner under automatic levelling.
+  const rosterLevel = rosterPar(run);
 
   // The whole view: where the player stands, and what they may take from here.
   const choiceIds = reachableNodeIds(run);

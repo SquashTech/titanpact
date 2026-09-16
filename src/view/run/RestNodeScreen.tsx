@@ -6,6 +6,7 @@ import type { HeroDefinition } from '../../engine/content';
 import { levelOf } from '../../run/growth';
 import type { RosterEntry, RunState } from '../../run/state';
 import { anyWounded, mendRoster } from '../../run/wounds';
+import { statScaleFor } from '../../run/statScale';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { NodeHeader, NodeSky, NODE_TINT_VITAL } from '../shared/NodeStage';
 import { NodeGlyph } from '../shared/nodeIcons';
@@ -94,6 +95,7 @@ export function RestNodeScreen({ run, onRunChange, onContinue }: Props) {
           entry={previewEntry.entry}
           equipmentLookup={equipment}
           relicIds={run.relics}
+          scale={statScaleFor(run)}
           onClose={() => setPreviewEntry(null)}
         />
       )}

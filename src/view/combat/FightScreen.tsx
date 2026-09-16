@@ -57,6 +57,7 @@ import { pickAiAction, type AiContext } from '../../run/ai';
 import { relicTeamStatModifiers } from '../../run/relics';
 import { relicTeamPassiveGrants } from '../../run/passives';
 import { relicTeamStatusGrants } from '../../run/statusGrants';
+import { statScaleFor } from '../../run/statScale';
 import { CombatantCard, type FigureFx, type Popup } from './CombatantCard';
 import { HeroDetailOverlay } from './HeroDetailOverlay';
 import { SwitchInPanel, type SwitchOption } from './SwitchInPanel';
@@ -1884,6 +1885,7 @@ export function FightScreen({
               rosterEntry={rosterEntry}
               equipmentLookup={equipment}
               statCtx={statCtx}
+              scale={statScaleFor(playerRun)}
               onClose={() => setInspecting(null)}
             />
           );

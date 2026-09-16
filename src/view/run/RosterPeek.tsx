@@ -15,6 +15,7 @@ import { ResourceGlyph } from '../shared/RunGlyph';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterManagementScreen } from './RosterManagementScreen';
 import { levelOf } from '../../run/growth';
+import { statScaleFor } from '../../run/statScale';
 import { WoundBar, entryHp } from '../shared/WoundBar';
 
 interface Props {
@@ -117,6 +118,7 @@ export function RosterPeek({ run, className }: Props) {
           entry={inspecting.entry}
           equipmentLookup={equipment}
           relicIds={run.relics}
+          scale={statScaleFor(run)}
           onClose={() => setInspecting(null)}
         />
       )}
