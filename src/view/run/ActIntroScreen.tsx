@@ -5,6 +5,7 @@ import { SEAL_ACTS } from '../../run/state';
 import { LocationSky } from '../shared/LocationSky';
 import { NodeHeader } from '../shared/NodeStage';
 import { ElementGlyph } from '../shared/elementIcons';
+import { TypeWheel } from '../shared/TypeWheel';
 import { getTypeColor } from '../combat/typeColors';
 import { RosterPeek } from './RosterPeek';
 
@@ -38,6 +39,9 @@ export function ActIntroScreen({ run, location, onEnter }: Props) {
       <div className="node-spacer" />
 
       <div className="act-intro-body">
+        {/* The chart under the numeral with the location's domains lit — what walks here, drawn
+            on the same dial the title turns. Wild's Edge lights all of it. */}
+        <TypeWheel className="act-intro-wheel" size={340} focus={domains ?? undefined} />
         {!isFinale && (
           <div className="act-intro-numeral" aria-hidden="true">
             {ROMAN[run.actNumber - 1] ?? run.actNumber}

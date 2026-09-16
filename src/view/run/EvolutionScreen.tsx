@@ -14,6 +14,7 @@ import { TypeMatchups } from '../shared/TypeMatchups';
 import { ElementGlyph } from '../shared/elementIcons';
 import { getTypeColor } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { TypeWheel } from '../shared/TypeWheel';
 import { useLongPress } from '../shared/MoveTile';
 import { healCasterForEntry } from '../shared/healCaster';
 import { entryStatTotals } from '../shared/entryStatTotals';
@@ -144,6 +145,9 @@ export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
   );
 }
 
+/** The dial behind the stage, px: past the outer ring, and clear of the pips and the plate under it. */
+const EVOLVE_WHEEL = 300;
+
 /** Beat boundaries for the awakening, in ms from the screen landing. */
 const AWAKEN_BEATS = { crack: 1300, call: 2150, done: 5200 } as const;
 
@@ -192,6 +196,8 @@ function EvolutionAwakening({ hero, onDone }: { hero: HeroDefinition; onDone: ()
       <span className="evolve-cinematic-rays" aria-hidden="true" />
 
       <div className="evolve-cinematic-stage">
+        {/* The chart behind the hero, its own types lit: what it is, before it is asked what to become. */}
+        <TypeWheel className="evolve-wheel" size={EVOLVE_WHEEL} focus={hero.types} />
         <span className="evolve-ring is-outer" aria-hidden="true" />
         <span className="evolve-ring is-inner" aria-hidden="true" />
         <span className="evolve-column" aria-hidden="true" />
@@ -513,6 +519,10 @@ function EvolutionCinematic({ hero, path, onDone }: { hero: HeroDefinition; path
       <span className="evolve-cinematic-rays" aria-hidden="true" />
 
       <div className="evolve-cinematic-stage">
+        {/* The whole chart spins up through the charge and bleeds into the path's colour — the
+            hero becoming one thing — and comes back slow after the burst with its new typing lit.
+            Unfocused until the reveal so the charge starts from the full chart. */}
+        <TypeWheel className="evolve-wheel" size={EVOLVE_WHEEL} focus={beat === 'reveal' ? types : undefined} />
         <span className="evolve-ring is-outer" aria-hidden="true" />
         <span className="evolve-ring is-inner" aria-hidden="true" />
         <span className="evolve-column" aria-hidden="true" />

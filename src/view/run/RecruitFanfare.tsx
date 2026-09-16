@@ -5,6 +5,7 @@ import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
 import { getTypeColorRgb } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { TypeWheel } from '../shared/TypeWheel';
 import { TypeBadge } from '../shared/TypeBadge';
 import { overlayHost } from '../shared/overlayHost';
 import { prefersReducedMotion } from '../shared/reducedMotion';
@@ -71,6 +72,9 @@ export function RecruitFanfare({ heroId, source, types, onDone }: Props) {
       <span className="recruit-fanfare-rays" aria-hidden="true" />
 
       <div className="recruit-fanfare-stage">
+        {/* The chart spins up and LOCKS with the hero's innate type dead-top — the title's launch
+            lock, on the hero — its typing lit on the dial the oath then lands over. */}
+        <TypeWheel className="recruit-fanfare-wheel" size={280} focus={types ?? hero.types} topType={hero.types[0]} />
         <span className="recruit-fanfare-ring is-outer" aria-hidden="true" />
         <span className="recruit-fanfare-ring is-inner" aria-hidden="true" />
         <HeroPortrait heroId={hero.id} className="recruit-fanfare-figure" />

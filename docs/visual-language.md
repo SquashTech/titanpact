@@ -3351,6 +3351,54 @@ a hero, a Mid near one, and a Late past one — the tier is legible from the sil
 fight is entered, which is the overhaul's §4 "readable difficulty gauge". No per-side flip: this
 battlefield never flips a sprite, and the spawn must not be the one thing that turns.
 
+## Thirty-third pass — the type wheel, everywhere a seal turns (2026-09-16)
+
+The title seal's outer ring — the fourteen type glyphs round a hairline with a chord for every
+2× cell, in the attacker's colour and fading toward the defender — was built for one screen and
+is now the one dial every seal in the game turns: `src/view/shared/TypeWheel.tsx`, the title
+importing it unchanged. The dial itself does nothing; its host owns every motion, and it exposes
+three things to animate against.
+
+- **A tint web** — a second copy of every chord in ONE colour (`.is-tint`, stops in
+  `currentColor`, read off `--wheel-tint`), off at rest, plus a `--node-color` every glyph's
+  `color` is a keyframe away from. Fading the native web out and the tint web in while the glyphs
+  keyframe to the tint is the chart *collapsing into a hero*.
+- **Focus** — `focus={types}` marks each glyph and each chord `.is-lit` or `.is-dim` (a chord is
+  lit by its ATTACKER), so a dial reads what something *is*: the lit glyphs and the lines they
+  strike along, the rest dropped to a sixth.
+- **A lock** — `topType` sets `--wheel-rest`, the angle that puts that glyph at twelve, and
+  `type-wheel-lock` / `-lock-back` are the title's launch curve (two turns, nearly all of it in
+  the first frames) ending on it. Dial and nodes are always animated as a pair by the same angle;
+  the counter-spin is what keeps the glyphs upright, and a host that turns one without the other
+  gets leaning glyphs.
+
+Four seats, one per beat that already had rings in it:
+
+- **The Evolution** (`EvolutionScreen.tsx`, both halves). The awakening's stir turns the dial
+  slowly behind the hero with its OWN types lit. The crack, and the cinematic's charge, spin it up
+  on an accelerating curve to 900° while the whole chart bleeds into the path's lead colour —
+  every chord, every glyph — until it is one colour turning too fast to read, which is the hero
+  becoming one thing; the burst takes it, and the reveal brings it back slow with the NEW typing
+  lit. The dial sits 18px high so its lowest glyph clears the pip strip and the plate.
+- **The recruit fanfare.** The dial spins up and LOCKS with the hero's innate primary dead-top,
+  timed to the oath (`BEATS.swear`, 620ms — the title's own lock time), its typing lit; the oath
+  brightens it and nothing turns after, because a seal still moving has not closed.
+- **The act intro.** A faint dial under the numeral with the Location's domains lit — the
+  "Domains here" row, drawn on the chart so the player also sees what those domains strike.
+  Wild's Edge lights all fourteen, which is *every domain walks here* said in the picture.
+- **The title**, unchanged.
+
+One rule found by breaking it: **the shared block sets no `position`.** It had `relative`, the
+fanfare's `absolute` was written earlier in the file at the same specificity, and the dial
+quietly joined the stage's flex row and pushed the hero 45px right. Every host positions the
+dial; the shared rules size and draw it.
+
+Seats considered and left: the Crucible's tempered reveal (a Class wears the hero's type, so a
+focused dial would say it — but that screen is a reading screen, not a seal), the Pact Seal
+between acts (already a ring with five sockets; a second ring under it is a knot), the Companion's
+grown beat (a node screen, not a cinematic; the platform is its stage), and the Compendium as a
+tappable chart — the last being the one worth doing, as a reference rather than an ornament.
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.
