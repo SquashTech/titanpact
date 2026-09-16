@@ -3481,13 +3481,15 @@ silhouette and chips this replaced.
 **The Guild Hall's Heroes tab stands on the same stage** (same day, per user direction): the
 three 96px hire cards — portrait, name, type, price, each opening the tabbed sheet before it said
 anything — became the rail, the dais, the console and a gold "Recruit X — 50g" slab, inside the
-Hall's own scroll under the Recruits mark. The rail LEADS there, where the draft's follows the
-commit, because the other offers have to be in reach without scrolling; and it is
+Hall's own scroll under the Recruits mark. The order is rail, dais, slab, console — the rail
+LEADS and the slab comes BEFORE the console, where the draft's is dais, console, commit, rail —
+because both the other offers and the spend have to be in reach without scrolling; the rail is
 `align-self: stretch`, since a candidate's width is a quarter of the rail's and a rail
 shrink-wrapped by the centring column has no width to quarter. The sheet the `i` opens is
-read-only now — the slab is the spend, and the roster-full case is its label. Costs ~180px of
-scroll on the 780 canvas (the slab and the shelf below the fold); a phone's ~850 canvas shows the
-slab. The Hall was "tuned to fit a phone without scrolling" (2026-08-31); that tuning is spent.
+read-only now — the slab is the spend, and the roster-full case is its label. On the 780 canvas
+the slab sits above the fold with the console's first two rows under it, and the third row and
+the shelf scroll. The Hall was "tuned to fit a phone without scrolling" (2026-08-31); that tuning
+is spent.
 
 ## Open / future improvements
 

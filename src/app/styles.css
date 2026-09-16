@@ -13751,7 +13751,7 @@ textarea,
 }
 
 .guild-hall-stage .draft-choose {
-  margin-top: 4px;
+  margin: 2px 0;
 }
 
 /* Stretched, not centred: a candidate's width is a quarter of the rail's,

@@ -163,8 +163,9 @@ export function GuildHallPanel({
           {/* The hire on the draft's stage (shared/HeroStage.tsx): the dais, the fight's move
               console, the spend, and the other offers on the rail. What a hire is — raw, unevolved,
               one act behind — is read off the sheet itself: a level pip and no veteran marks. The
-              rail LEADS here, where the draft's follows the commit: this stage sits in the Hall's
-              scroll, and the other offers have to be in reach without scrolling to them. */}
+              rail LEADS here and the slab comes before the console, where the draft's order is dais,
+              console, commit, rail: this stage sits in the Hall's scroll, and both the other offers
+              and the spend have to be in reach without scrolling to them. */}
           {featuredOffer && featuredEntry && featuredHero ? (
             <div className="guild-hall-stage" style={{ '--pact-rgb': getTypeColorRgb(featuredHero.types[0]) } as CSSProperties}>
               {heroOffers.length > 1 && (
@@ -202,13 +203,9 @@ export function GuildHallPanel({
                 </div>
               </StageDais>
 
-              <StageKit
-                key={`${featuredOffer.id}-kit`}
-                moveIds={featuredEntry.unlockedMoveIds}
-                caster={healCasterForEntry(featuredHero, featuredEntry)}
-                onPick={setPopupMove}
-              />
-
+              {/* The slab sits under the dais, ahead of the console (per user direction): in the
+                  Hall's scroll the spend has to be above the fold, where the draft's order would
+                  put it under three rows of moves. */}
               {(() => {
                 const affordable = run.gold >= featuredOffer.cost;
                 return (
@@ -223,6 +220,13 @@ export function GuildHallPanel({
                   </button>
                 );
               })()}
+
+              <StageKit
+                key={`${featuredOffer.id}-kit`}
+                moveIds={featuredEntry.unlockedMoveIds}
+                caster={healCasterForEntry(featuredHero, featuredEntry)}
+                onPick={setPopupMove}
+              />
             </div>
           ) : (
             <p className="hint">No recruits on offer this visit.</p>
