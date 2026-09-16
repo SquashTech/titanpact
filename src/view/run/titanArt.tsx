@@ -15,8 +15,8 @@ const VIEW_H = 754;
 /** Both layers share it: `inset` alone mis-sizes a replaced element on iOS. */
 const FILL = { width: '100%', height: '100%' } as const;
 
-/** The eyes: where each sits, and the tilt that makes the pair read as looking at you. */
-const EYE_Y = 114;
+/** The eyes: where each sits, and the tilt that makes the pair read as looking at you. Lifted 22 (2026-09-16) with the brow, to clear the dial once the title's hub row pushed it up. */
+const EYE_Y = 92;
 const EYES = [
   { x: 94, tilt: 7 },
   { x: 272, tilt: -7 },
@@ -78,7 +78,7 @@ export function TitanColossus() {
             a brow that lifts at the middle is surprised, and this one is not. */}
         <path
           className="titan-mass"
-          d="M-10 -10 L376 -10 L376 62 C 320 62 240 74 183 94 C 126 74 46 62 -10 62 Z"
+          d="M-10 -32 L376 -32 L376 40 C 320 40 240 52 183 72 C 126 52 46 40 -10 40 Z"
         />
 
         {/* The same eye TitanWakeScreen opens on: a lens that tapers to points at both

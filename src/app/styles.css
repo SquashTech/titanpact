@@ -18070,7 +18070,7 @@ textarea,
      and a taller phone gives its extra height to the eyes rather than pushing the buttons
      into the dial. */
   justify-content: flex-end;
-  padding-bottom: 62px;
+  padding-bottom: 52px;
   gap: 6px;
   text-align: center;
   overflow: hidden;
@@ -18227,8 +18227,8 @@ textarea,
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 62% 30% at 50% 11%, rgba(var(--tier-mythic-rgb), 0.3), transparent 76%),
-    radial-gradient(ellipse 40% 15% at 50% 12%, rgba(240, 176, 96, 0.16), transparent 72%),
+    radial-gradient(ellipse 62% 30% at 50% 8%, rgba(var(--tier-mythic-rgb), 0.3), transparent 76%),
+    radial-gradient(ellipse 40% 15% at 50% 9%, rgba(240, 176, 96, 0.16), transparent 72%),
     radial-gradient(ellipse 100% 26% at 50% 94%, rgba(96, 190, 162, 0.36), transparent 74%);
   animation: title-backlight-swell 17s ease-in-out infinite;
 }
@@ -19450,7 +19450,7 @@ textarea,
   z-index: 2;
   width: 100%;
   max-width: 336px;
-  margin-top: 10px;
+  margin-top: 2px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
@@ -19463,8 +19463,8 @@ textarea,
   flex-direction: column;
   align-items: center;
   gap: 5px;
-  min-height: 62px;
-  padding: 9px 4px 8px;
+  min-height: 56px;
+  padding: 7px 4px 6px;
   border-radius: var(--radius-md);
   border: 1px solid rgba(224, 166, 60, 0.22);
   background:
