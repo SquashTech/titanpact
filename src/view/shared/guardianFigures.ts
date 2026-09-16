@@ -4,8 +4,8 @@
 //
 // - The body is the MORTAL type's three tones, at a Late's scale or over it: every Guardian
 //   breaks the hero frame on at least one edge.
-// - Two Titan eyes, wrong-placed as a Late's are (a stinger, a palm, a tentacle tip, the canopy,
-//   a wing, the ribcage), half-lidded at idle.
+// - ONE Titan eye, half-lidded at idle (per user direction, 2026-09-16: a Late's second,
+//   wrong-placed eye was tried on every Guardian and taken off).
 // - The finale's UNSEALED champion (enemies.ts `unseal`) is the same drawing: the type comes off
 //   the stats, not the body. A worn seal — a ring in the Ancient hue with a third eye in it, struck
 //   off for the finale — was built and removed the same day (2026-09-16, per user direction).
@@ -31,8 +31,8 @@ const INK = '#1a1822';
 // Each draw returns untransformed markup, facing right, ground y=88, as a spawn's does.
 const GUARDIANS: Record<string, Draw> = {
   // The Manticore (Beast): a lion's body under a mane of spikes, a face too much like a person's,
-  // a scorpion tail curled over the back that strikes forward on an attack. One eye in the face —
-  // the other side is a hollow — and the second on the stinger's bulb.
+  // a scorpion tail curled over the back that strikes forward on an attack. One eye in the face;
+  // the other side is a hollow.
   manticore: (p, po, ey) => {
     const tail = po === 'attack' ? 'M18,66 C-4,54 4,12 40,6 C70,2 94,12 100,32' : po === 'hurt' ? 'M18,66 C4,72 -8,60 -2,44' : 'M18,66 C0,60 -4,28 20,20 C36,14 48,22 46,36';
     const bulb = po === 'attack' ? [100, 32] : po === 'hurt' ? [-2, 44] : [46, 36];
@@ -43,7 +43,7 @@ const GUARDIANS: Record<string, Draw> = {
       const cx = 76, cy = 50, r1 = 18, r2 = 30 + (i % 2) * 4;
       return P(`${cx + Math.cos(ang - 0.1) * r1},${cy + Math.sin(ang - 0.1) * r1} ${cx + Math.cos(ang) * r2},${cy + Math.sin(ang) * r2} ${cx + Math.cos(ang + 0.1) * r1},${cy + Math.sin(ang + 0.1) * r1}`, p.d);
     }).join('');
-    return L(tail, p.d, 6) + L(tail, p.c, 2, 'opacity=".5"') + C(bulb[0], bulb[1], 7, p.d) + sting + ey(bulb[0], bulb[1], 3.4, po === 'hurt' ? 'narrow' : 'open')
+    return L(tail, p.d, 6) + L(tail, p.c, 2, 'opacity=".5"') + C(bulb[0], bulb[1], 7, p.d) + sting
       + P('22,78 18,88 32,88 32,78', p.d) + P('36,78 36,88 46,88 46,78', p.d) + P('54,78 54,88 64,88 62,78', p.d) + P('66,76 68,88 80,88 78,76', p.d)
       + L('M20,88 l-3,3 M26,88 l0,3 M70,88 l0,3 M76,88 l3,3', p.ll, 1.4)
       + D('M20,80 C16,56 34,46 60,48 C76,50 84,60 80,78 Z', p.c) + D('M26,76 C26,60 40,54 58,56', p.l, 'opacity=".3"')
@@ -54,7 +54,7 @@ const GUARDIANS: Record<string, Draw> = {
   },
 
   // Yugzulach (Shadow): a tall hooded dark with a fan of horns, four arms, no legs — it hangs.
-  // One eye in the hood, one in a lower palm.
+  // The eye is in the hood.
   yugzulach: (p, po, ey) => {
     const up = po === 'attack' ? -12 : po === 'hurt' ? 6 : 0;
     const spread = po === 'attack' ? 8 : po === 'hurt' ? -6 : 0;
@@ -68,15 +68,14 @@ const GUARDIANS: Record<string, Draw> = {
       + arm(`M38,44 C22,${40 + up} 8,${52 + up} 4,${68 + up}`) + arm('M40,54 C24,62 18,74 12,84') + arm(`M62,44 C78,${40 + up} 92,${52 + up} 96,${68 + up}`) + arm('M60,54 C76,62 82,74 88,84')
       + [[4, 68 + up, -1], [12, 84, -1], [96, 68 + up, 1], [88, 84, 1]].map(([x, y, m]) => L(`M${x},${y} l${4 * m},-5 M${x},${y} l${5 * m},0 M${x},${y} l${3 * m},5`, INK, 2.2)).join('')
       + (po === 'attack' ? sparks(100, 60, p.ll, 3) : '')
-      + ey(51, 24, 5.4, po === 'hurt' ? 'narrow' : po === 'attack' ? 'wide' : 'stare') + ey(88, 82, 3, po === 'hurt' ? 'narrow' : 'open');
+      + ey(51, 24, 5.4, po === 'hurt' ? 'narrow' : po === 'attack' ? 'wide' : 'stare');
   },
 
   // The Kraken (Water): a mantle rising past the frame over a ring of arms; the leading arm
-  // whips forward. One eye in the mantle, a small one on the tip of that arm.
+  // whips forward. The eye is in the mantle.
   kraken: (p, po, ey) => {
     const arm = (path: string) => L(path, p.c, 7) + L(path, p.l, 2.2, 'opacity=".45"');
     const lead = po === 'attack' ? 'M72,68 C96,54 118,44 122,62' : po === 'hurt' ? 'M72,68 C86,70 96,80 98,90' : 'M72,68 C92,66 110,72 114,86';
-    const tip = po === 'attack' ? [118, 58] : po === 'hurt' ? [96, 86] : [110, 82];
     const curl = po === 'hurt' ? 0.8 : 1;
     const ann = (x: number, y: number) => C(x, y, 1.6, p.ll, 'opacity=".8"');
     return arm(`M34,68 C${18 * curl},74 ${2 * curl},64 ${6 * curl},82 C8,92 24,92 24,84`) + arm('M42,70 C30,84 20,90 10,88') + arm(`M58,70 C64,84 78,92 ${92 * curl},88`) + arm(lead) + arm('M50,72 C50,82 46,90 40,90')
@@ -84,12 +83,12 @@ const GUARDIANS: Record<string, Draw> = {
       + D('M30,40 C14,20 22,-4 46,-16 L44,40 Z', p.d) + D('M78,40 C94,20 86,-4 62,-16 L64,40 Z', p.d)
       + D('M28,64 C22,26 36,-16 54,-30 C72,-16 86,26 80,64 Z', p.c) + D('M40,58 C36,30 44,4 54,-14 C60,4 66,30 62,58 Z', p.l, 'opacity=".3"') + [[46, 10], [60, 2], [50, -8], [64, 20], [42, 28]].map(([x, y]) => C(x, y, 2.4, p.ll, 'opacity=".45"')).join('')
       + D('M24,64 C32,76 76,76 84,64 Z', p.d)
-      + ey(64, 46, 7) + ey(tip[0], tip[1], 3, po === 'hurt' ? 'narrow' : 'open');
+      + ey(64, 46, 7);
   },
 
   // The Elder Bough (Nature): a trunk on root-legs with a hollow for a face, a canopy of leaf
-  // clusters off the top of the frame, and a limb that slams. One eye in the hollow, one in
-  // the canopy as a bloom.
+  // clusters off the top of the frame with a bloom in it, and a limb that slams. The eye is in
+  // the hollow.
   elderBough: (p, po, ey) => {
     const swing = po === 'attack' ? 38 : po === 'hurt' ? -18 : 0;
     const shed = po === 'hurt' ? [[24, 60], [78, 52], [90, 70]].map(([x, y]) => D(`M${x},${y} c6,-6 12,-2 10,4 c-6,4 -12,0 -10,-4 z`, p.c, 'opacity=".7"')).join('') : '';
@@ -102,12 +101,12 @@ const GUARDIANS: Record<string, Draw> = {
       + [0, 72, 144, 216, 288].map((a) => G(`rotate(${a} 92 -20)`, E(92, -26, 2.4, 4, p.ll))).join('')
       + limb + shed
       + D('M42,54 C42,42 58,42 58,54 L56,68 L44,68 Z', p.dd)
-      + ey(50, 58, 5.4) + ey(92, -20, 4.2);
+      + ey(50, 58, 5.4) + C(92, -20, 2.6, p.dd);
   },
 
   // The Dragon (Fire): a coiled wyrm with its wings thrown up and back past the frame, a neck
   // rising to a horned head, a crest of flame down the spine and molten cracks that flare when it
-  // breathes and go dark when it is hit. One eye in the head, one on the near wing's membrane.
+  // breathes and go dark when it is hit. The eye is in the head.
   dragon: (p, po, ey) => {
     const hh = po === 'attack' ? 1.6 : po === 'hurt' ? 0.45 : 1;
     const crack = po === 'attack' ? p.ll : po === 'hurt' ? p.d : p.c;
@@ -122,7 +121,7 @@ const GUARDIANS: Record<string, Draw> = {
       + P('54,80 58,88 72,88 66,78', p.dd) + P('26,80 22,88 36,88 36,80', p.dd) + L('M62,88 l3,3 M68,88 l3,3 M26,88 l-3,3 M32,88 l0,3', p.ll, 1.4)
       + E(44, 72, 26, 13, p.dd) + D('M22,76 C30,86 60,86 68,76 C60,80 30,80 22,76 Z', crack, 'opacity=".55"') + L('M30,66 l6,6 l-4,6 M50,64 l6,8 l-6,4', crack, 2)
       + L('M60,66 C74,60 82,44 86,30', p.dd, 12) + L('M66,60 l4,6 M76,46 l5,4', crack, 2)
-      + nearWing + C(18, 22, 6, '#07050a', 'opacity=".5"') + ey(18, 22, 4.2)
+      + nearWing
       + D('M78,20 C90,10 114,14 120,26 C116,34 102,36 90,34 Z', p.dd) + P('86,18 90,-4 96,20', p.d) + P('96,18 110,0 106,22', p.d)
       + D(`M92,34 L118,30 L114,${38 + jaw} L94,${40 + jaw} Z`, crack) + [96, 102, 108].map((x) => P(`${x - 2},34 ${x},${39 + jaw} ${x + 2},34`, p.ll)).join('')
       + (po === 'attack' ? P('118,32 148,22 140,40 146,52 118,42', p.c) + P('120,36 138,30 136,44', p.ll, 'opacity=".8"') : '')
@@ -130,7 +129,7 @@ const GUARDIANS: Record<string, Draw> = {
   },
 
   // The Skeleton King (Spirit): a crowned skull on a spectral robe, a sceptre raised. One socket
-  // holds an eye and the other is empty; the second eye is behind the ribs.
+  // holds the eye and the other is empty.
   skeletonKing: (p, po, ey) => {
     const jaw = po === 'attack' ? 5 : 0;
     const raise = po === 'attack' ? -18 : po === 'hurt' ? 14 : 0;
@@ -140,7 +139,7 @@ const GUARDIANS: Record<string, Draw> = {
       + D('M22,88 L28,44 C30,34 70,34 72,44 L78,88 L70,84 L62,90 L54,84 L46,90 L38,84 L30,90 Z', p.d, 'opacity=".7"')
       + D('M32,88 L32,50 C32,32 68,32 68,50 L68,88 L62,80 L56,88 L50,80 L44,88 L38,80 Z', p.c, 'opacity=".82"') + D('M40,86 L40,54 C40,44 60,44 60,54 L60,86 Z', p.d, 'opacity=".55"')
       + L('M36,52 L22,70', bone, 3) + C(21, 72, 3.2, bone) + L('M64,52 L84,44 L84,62', bone, 3) + sceptre + C(84, 60, 3.2, bone)
-      + ey(50, 60, 4, po === 'hurt' ? 'narrow' : 'open') + L('M40,50 q10,5 20,0 M39,56 q11,6 22,0 M40,62 q10,5 20,0 M41,68 q9,4 18,0 M50,46 v26', bone, 1.6)
+      + L('M40,50 q10,5 20,0 M39,56 q11,6 22,0 M40,62 q10,5 20,0 M41,68 q9,4 18,0 M50,46 v26', bone, 1.6)
       + D('M36,30 C36,4 64,4 64,30 L62,42 L38,42 Z', bone) + C(44, 26, 4.6, '#07050a') + C(56, 26, 4.6, '#07050a') + P('48,34 50,29 52,34', p.dd)
       + R(39, 42, 22, 6 + jaw, p.l, 1) + L(`M42,42 v${4 + jaw} M46,42 v${4 + jaw} M50,42 v${4 + jaw} M54,42 v${4 + jaw} M58,42 v${4 + jaw}`, p.dd, 1)
       + ey(44, 26, 3.4)
@@ -173,7 +172,7 @@ function lens(x: number, y: number, hw: number, hh: number, tilt: number, state:
  * The Endbringer: the Titan's HERALD, not the Titan. A gaunt hooded bearer with no legs under
  * the hem, a standard taller than the frame in the leading hand and a horn in the trailing one.
  * The pennant carries the Titan's eye — the title screen's lens (titanArt.tsx) — which is how
- * the Titan looks out of its herald; the hood's own eye is small. The five broken seals are
+ * the Titan looks out of its herald; the hood is empty. The five broken seals are
  * threaded on the pole under the pennant: what it came out through. An attack raises the horn and sounds it, and the
  * eye on the banner opens wide; a hit sags the banner.
  */
@@ -181,7 +180,6 @@ function endbringer(p: Pal, po: GuardianPose, uid: string, gradientId: string): 
   const state: EyeState = po === 'hurt' ? 'narrow' : po === 'attack' ? 'wide' : 'stare';
   const sag = po === 'hurt' ? 8 : 0;
   const hornUp = po === 'attack' ? -76 : po === 'hurt' ? 12 : 0;
-  const eye = makeEye(uid, gradientId);
   const veil = (path: string) => D(path, p.c) + D(path, p.d, 'opacity=".35"');
   // A broken seal: two-thirds of a ring, open where it was struck.
   const shackle = (x: number, y: number) => {
@@ -194,7 +192,6 @@ function endbringer(p: Pal, po: GuardianPose, uid: string, gradientId: string): 
     // The hem, ragged, and the body rising off it: taller and thinner than anything else on the field.
     + veil('M30,88 L34,62 C34,40 40,26 50,14 C60,26 66,40 66,62 L70,88 L64,82 L58,88 L52,82 L46,88 L40,82 Z')
     + D('M42,30 C42,14 58,14 58,30 L56,44 L44,44 Z', '#07050a') + P('44,16 50,-6 56,16', p.d) + P('46,18 50,2 54,18', p.dd)
-    + eye(50, 34, 3, state === 'wide' ? 'open' : state)
     // The horn in the trailing hand.
     + L('M40,48 C36,50 34,52 36,54', p.d, 4) + horn + sound
     // The standard: pole, crossbar, the pennant streaming back with the Titan's eye on it.

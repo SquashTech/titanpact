@@ -130,8 +130,9 @@ rules and past them:
   standard run up behind the enemy nameplate on purpose. The Endbringer breaks it on every
   edge. The viewBox is the spawn's: a Guardian is bigger because it is DRAWN bigger, never boxed
   bigger, so it stands on the same ground at the same scale.
-- **Two Titan eyes, wrong-placed as a Late's are** (a stinger, a palm, a tentacle tip, the canopy,
-  a wing, the ribcage), half-lidded at idle.
+- **One Titan eye**, half-lidded at idle (per user direction, same day). A Late's second,
+  wrong-placed eye was tried on every Guardian — a stinger, a palm, a tentacle tip, the canopy,
+  a wing, the ribcage — and taken off; the Herald's is on its banner and its hood is empty.
 - **No seal on the body** (per user direction, same day). The first draft wore the Ancient half as
   a ring in the Ancient hue with a third eye in it — a collar, a brand, a crown — and struck it off
   for the finale's unsealed champion. It did not look right and was removed whole: nothing on a

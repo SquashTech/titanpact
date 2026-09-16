@@ -63,10 +63,10 @@ const html = `<!doctype html>
     <div>
       <div class="eyebrow">Titanpact · the Guardians · 6 champions × 3 poses, and the Endbringer</div>
       <h1>Guardian Bestiary</h1>
-      <p>What the spawn are a miniature of. Six wardens grafted into the binding and decayed under it (<em>lore §2</em>): each is its mortal type's geometry at a Late's scale or past it, with the Titan's eyes set where they should not be.</p>
+      <p>What the spawn are a miniature of. Six wardens grafted into the binding and decayed under it (<em>lore §2</em>): each is its mortal type's geometry at a Late's scale or past it, with the Titan's eye in it.</p>
     </div>
     <div class="rules">
-      <div><b>Two eyes, wrong-placed.</b> A stinger, a palm, a tentacle tip, the canopy, a wing, the ribcage.</div>
+      <div><b>One eye.</b> The Titan's, half-lidded, the one thing on the body that is not type-coloured.</div>
       <div><b>Every Guardian breaks the frame.</b> The Endbringer breaks it on every edge.</div>
       <div><b>The Endbringer is the Titan's herald</b>, in Ancient's colour: the Titan's eye rides its banner, and the five broken seals are threaded on its pole.</div>
     </div>

@@ -59,7 +59,7 @@ Three things fall out of this at no cost:
   small where the seal still mostly holds and grown where it is almost gone. A spawn is not
   a people. It is the Titan's weight, felt before the Titan. **And a Guardian looks like its
   brood** (2026-09-16, `titanspawn-overhaul.md` §2 "Guardian art"): geometry in its mortal
-  type's colour, with the Titan's eyes set where they should not be.
+  type's colour, with the Titan's eye in it.
 - **The run is a sacrilege, deliberately.** Every Guardian broken is a lock broken. The
   player is not clearing dungeons; they are dismantling the thing keeping the world
   shut, because it is coming apart anyway and an accident is worse than a decision.

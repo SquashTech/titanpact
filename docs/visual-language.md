@@ -3433,14 +3433,15 @@ The Pact Seal ring's six medallions are now the Guardians themselves (`PactSealS
 through `HeroPortrait`; a figure breaking its socket a little is on-theme and left alone). A
 worn SEAL — the Ancient half as a ring in the Ancient hue with a third eye in it, struck off for
 the finale's unsealed champion — was built first and removed the same day per user direction:
-it did not look right, and the finale fields the same figure. On the battlefield a Guardian
+it did not look right, and the finale fields the same figure. The Late's second, wrong-placed
+eye went the same way: every Guardian carries one. On the battlefield a Guardian
 runs up behind the enemy nameplate — the frame it breaks is the hero cell, and the bars sit over
 it as they sit over anything tall. The spawn's no-flip rule holds. Same day: the Lava Beast
 became the Dragon, and the Endbringer was redrawn from a colossus to the Titan's **Herald** — a
 standard-bearer whose banner carries the title screen's lens eye — because it is the herald, not
 the Titan (per user direction). And the Goblin Lord became the Manticore — the last of the
 three renamed because their old names were the least evocative — a lion under a mane of spikes
-with a scorpion tail that strikes forward and the second eye on the stinger. The ring-struck-off
+with a scorpion tail that strikes forward. The ring-struck-off
 drawing for the finale's unsealed champions was set aside the same day: the finale fields the
 same figure, and only the type comes off.
 
