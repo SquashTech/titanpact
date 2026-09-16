@@ -11952,11 +11952,13 @@ textarea,
    The last bordered-circle `i` in the game (Squad Select's) went with the long
    press that replaced it; this one survives because the draft is the one screen
    where a hero has no roster entry to hold — the preview it opens synthesises a
-   throwaway level-1 one (DraftScreen.tsx). */
+   throwaway level-1 one (DraftScreen.tsx). Bottom-right of the figure, not
+   top-right: with the sheet beside the figure, the top corner sat 20px from
+   the hero's name and read as the name's. */
 .draft-info {
   position: absolute;
   z-index: 2;
-  top: 0;
+  bottom: 0;
   right: 0;
   width: 24px;
   height: 24px;
