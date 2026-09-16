@@ -13,9 +13,11 @@ interface EquipChoiceCardProps {
   onInspect?: () => void;
   /** Staggers this card's fade-in behind whatever revealed it. */
   revealDelayMs: number;
+  /** Spell the grants out beside their glyphs (the who-screen, where the piece has the face for it). */
+  labelled?: boolean;
 }
 
-export function EquipChoiceCard({ item, picked, onPick, onInspect, revealDelayMs }: EquipChoiceCardProps) {
+export function EquipChoiceCard({ item, picked, onPick, onInspect, revealDelayMs, labelled }: EquipChoiceCardProps) {
   // Sounded on the pick, not the press: the same pointerdown starts the hold that only inspects.
   const longPress = useLongPress(onInspect, onPick ? () => { playSfx('ui.pick'); onPick(); } : undefined);
   return (
@@ -35,7 +37,7 @@ export function EquipChoiceCard({ item, picked, onPick, onInspect, revealDelayMs
           <span className="equip-cache-card-rarity">{RARITY_LABELS[item.rarity]}</span>
         </div>
         <div className="equip-cache-card-stats">
-          <ItemEffectChips item={item} />
+          <ItemEffectChips item={item} labelled={labelled} />
         </div>
       </div>
     </button>

@@ -8,7 +8,7 @@ import { absorbItem, itemReceiptFor, sellItem, type ItemReceipt } from '../../ru
 import { sellValueFor } from '../../run/shop';
 import type { RosterEntry, RunState } from '../../run/state';
 import { levelOf } from '../../run/growth';
-import { EquipmentIcon, ItemBox, RARITY_COLOR_VARS, RARITY_LABELS, RARITY_RGB_VARS, slotBoxes } from '../shared/EquipmentBox';
+import { ItemBox, RARITY_COLOR_VARS, RARITY_LABELS, RARITY_RGB_VARS, slotBoxes } from '../shared/EquipmentBox';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
@@ -56,8 +56,12 @@ export function ItemWhoScreen({ run, itemId, onRunChange, onDone }: Props) {
 
   const done = outcome !== null;
   const sellGold = sellValueFor(item);
-  const assignedEntry = assignedTo ? run.roster.find((r) => r.rosterId === assignedTo) ?? null : null;
-  const assignedHero = assignedEntry ? rosterHeroes[assignedEntry.heroId] : null;
+  // The stage holds three rows of two-column cards OR a piece with three rows of grants, not both:
+  // past four heroes, or past three grants (a Crest, a Unique), the roster goes to three columns.
+  const grantCount =
+    Object.values(item.statGrants).filter(Boolean).length + (item.grantsStatusIds?.length ?? 0) + (item.grantsPassiveIds?.length ?? 0);
+  const columns = run.roster.length > 4 || grantCount > 3 ? 3 : 2;
+  const stacked = run.roster.length > columns;
   const mergeResult = outcome?.kind === 'merge' ? equipment[outcome.resultId] : null;
 
   function handleGive(rosterId: string) {
@@ -82,11 +86,12 @@ export function ItemWhoScreen({ run, itemId, onRunChange, onDone }: Props) {
     setOutcome({ kind: 'sold', gold: sellGold });
   }
 
-  function readout(): string {
-    if (outcome?.kind === 'sold') return `Sold for ${outcome.gold} gold.`;
-    if (outcome?.kind === 'merge' && assignedHero && mergeResult) return `${assignedHero.name}'s ${mergeResult.name} is ${RARITY_LABELS[mergeResult.rarity]} now.`;
-    if (outcome?.kind === 'take' && assignedHero) return `${assignedHero.name} carries the ${item.name} from here on.`;
-    return 'Choose who carries it — it stays with them for the run. A hero already holding one of these merges it up a tier. Hold a hero to review a sheet, hold the piece to read it.';
+  // The title is the whole header: no readout, so its height never changes under the roster.
+  function title(): string {
+    if (outcome?.kind === 'sold') return `Sold for ${outcome.gold} gold`;
+    if (outcome?.kind === 'merge') return 'Merged';
+    if (outcome?.kind === 'take') return 'Absorbed';
+    return 'New Gear';
   }
 
   function ctaFor(receipt: ItemReceipt | undefined, isAssigned: boolean) {
@@ -102,60 +107,57 @@ export function ItemWhoScreen({ run, itemId, onRunChange, onDone }: Props) {
 
       <RosterPeek run={run} />
 
-      <NodeHeader
-        compact
-        eyebrow={done ? (outcome.kind === 'sold' ? 'Sold' : outcome.kind === 'merge' ? 'Merged' : 'Absorbed') : 'New Gear'}
-        title={item.name}
-        glyph={<EquipmentIcon item={item} />}
-        readoutKey={outcome ? `${outcome.kind}:${assignedTo ?? ''}` : 'idle'}
-        readoutLive={done}
-        readout={readout()}
-      />
+      <NodeHeader compact title={title()} />
 
+      {/* The piece's name, tier and every grant spelled out: the header says only what kind of moment this is. */}
       <div className="item-who-piece">
-        <EquipChoiceCard item={item} revealDelayMs={0} onInspect={() => setInspecting(true)} />
+        <EquipChoiceCard item={item} revealDelayMs={0} labelled onInspect={() => setInspecting(true)} />
       </div>
 
-      <HeroPickGrid count={run.roster.length} fill>
-        {run.roster.map((entry) => {
-          const hero = rosterHeroes[entry.heroId];
-          const receipt = receipts.get(entry.rosterId);
-          const isAssigned = assignedTo === entry.rosterId;
-          const blocked = !receipt || receipt.kind === 'none';
-          const mergeIndex = receipt?.kind === 'merge' ? entry.equipment.indexOf(receipt.heldItemId) : -1;
-          return (
-            <HeroPickCard
-              key={entry.rosterId}
-              hero={hero}
-              entry={entry}
-              className={isAssigned ? 'is-blessed' : ''}
-              disabled={blocked || (done && !isAssigned)}
-              onActivate={() => handleGive(entry.rosterId)}
-              onPreview={() => setPreviewEntry({ hero, entry })}
-              ariaLabel={`${hero.name}, level ${levelOf(entry)} — ${ctaFor(receipt, isAssigned)}`}
-              detail={
-                <span className="equip-slot-row item-who-sockets">
-                  {slotBoxes(entry.equipment, itemSlotsFor(hero, entry)).map((heldId, index) => (
-                    <ItemBox
-                      key={index}
-                      item={heldId ? (equipment[heldId] ?? null) : null}
-                      className={index === mergeIndex && !done ? 'target' : undefined}
-                      style={
-                        index === mergeIndex && receipt?.kind === 'merge' && !done
-                          ? ({ '--rarity-color': RARITY_COLOR_VARS[receipt.resultRarity] } as CSSProperties)
-                          : undefined
-                      }
-                    />
-                  ))}
-                </span>
-              }
-              overlay={isAssigned ? <span className="blessing-flare" aria-hidden="true" /> : undefined}
-              ctaClassName={isAssigned ? 'is-done' : receipt?.kind === 'merge' ? 'is-accent is-merge' : blocked ? '' : 'is-accent'}
-              cta={ctaFor(receipt, isAssigned)}
-            />
-          );
-        })}
-      </HeroPickGrid>
+      {/* The wrapper is a size container: the cards read their portrait size off the height the
+          stage actually leaves them (styles.css), which varies with the phone and with the piece. */}
+      <div className="item-who-roster">
+        <HeroPickGrid count={run.roster.length} columns={columns} className={stacked ? 'is-stacked' : undefined} fill>
+          {run.roster.map((entry) => {
+            const hero = rosterHeroes[entry.heroId];
+            const receipt = receipts.get(entry.rosterId);
+            const isAssigned = assignedTo === entry.rosterId;
+            const blocked = !receipt || receipt.kind === 'none';
+            const mergeIndex = receipt?.kind === 'merge' ? entry.equipment.indexOf(receipt.heldItemId) : -1;
+            return (
+              <HeroPickCard
+                key={entry.rosterId}
+                hero={hero}
+                entry={entry}
+                className={isAssigned ? 'is-blessed' : ''}
+                disabled={blocked || (done && !isAssigned)}
+                onActivate={() => handleGive(entry.rosterId)}
+                onPreview={() => setPreviewEntry({ hero, entry })}
+                ariaLabel={`${hero.name}, level ${levelOf(entry)} — ${ctaFor(receipt, isAssigned)}`}
+                detail={
+                  <span className="equip-slot-row item-who-sockets">
+                    {slotBoxes(entry.equipment, itemSlotsFor(hero, entry)).map((heldId, index) => (
+                      <ItemBox
+                        key={index}
+                        item={heldId ? (equipment[heldId] ?? null) : null}
+                        className={index === mergeIndex && !done ? 'target' : undefined}
+                        style={
+                          index === mergeIndex && receipt?.kind === 'merge' && !done
+                            ? ({ '--rarity-color': RARITY_COLOR_VARS[receipt.resultRarity] } as CSSProperties)
+                            : undefined
+                        }
+                      />
+                    ))}
+                  </span>
+                }
+                overlay={isAssigned ? <span className="blessing-flare" aria-hidden="true" /> : undefined}
+                ctaClassName={isAssigned ? 'is-done' : receipt?.kind === 'merge' ? 'is-accent is-merge' : blocked ? '' : 'is-accent'}
+                cta={ctaFor(receipt, isAssigned)}
+              />
+            );
+          })}
+        </HeroPickGrid>
+      </div>
 
       {done ? (
         <button className="resolve-button" onClick={onDone}>

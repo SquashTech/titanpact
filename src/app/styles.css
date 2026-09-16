@@ -14128,42 +14128,50 @@ textarea,
    carrying its whole reason for being in type the eye had to hunt for. Here
    the grants are the subject: struck as pills, glyph and figure at the size a
    move tile prints its power, under a name that can be read across the room. */
-.stage-centered > .equip-cache-list .equip-cache-card {
+.stage-centered > .equip-cache-list .equip-cache-card,
+.item-who-piece .equip-cache-card {
   gap: 16px;
   padding: 14px 18px;
 }
 
-.stage-centered > .equip-cache-list .equip-cache-card-icon-badge {
+.stage-centered > .equip-cache-list .equip-cache-card-icon-badge,
+.item-who-piece .equip-cache-card-icon-badge {
   width: 64px;
   height: 64px;
   background: radial-gradient(circle, color-mix(in srgb, var(--rarity-color, var(--border)) 30%, transparent), transparent 74%);
 }
 
-.stage-centered > .equip-cache-list .equip-cache-card-icon {
+.stage-centered > .equip-cache-list .equip-cache-card-icon,
+.item-who-piece .equip-cache-card-icon {
   font-size: 40px;
 }
 
-.stage-centered > .equip-cache-list .equip-cache-card-body {
+.stage-centered > .equip-cache-list .equip-cache-card-body,
+.item-who-piece .equip-cache-card-body {
   gap: 6px;
 }
 
-.stage-centered > .equip-cache-list .equip-cache-card-name {
+.stage-centered > .equip-cache-list .equip-cache-card-name,
+.item-who-piece .equip-cache-card-name {
   font-size: 19px;
   letter-spacing: -0.01em;
   line-height: 1.1;
 }
 
-.stage-centered > .equip-cache-list .equip-cache-card-rarity {
+.stage-centered > .equip-cache-list .equip-cache-card-rarity,
+.item-who-piece .equip-cache-card-rarity {
   font-size: 11px;
   letter-spacing: 0.1em;
 }
 
-.stage-centered > .equip-cache-list .equip-cache-card-stats {
+.stage-centered > .equip-cache-list .equip-cache-card-stats,
+.item-who-piece .equip-cache-card-stats {
   gap: 6px;
   margin-top: 2px;
 }
 
-.stage-centered > .equip-cache-list .item-chip {
+.stage-centered > .equip-cache-list .item-chip,
+.item-who-piece .item-chip {
   gap: 5px;
   height: 30px;
   padding: 0 11px 0 8px;
@@ -14175,13 +14183,161 @@ textarea,
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-.stage-centered > .equip-cache-list .item-chip-glyph {
+.stage-centered > .equip-cache-list .item-chip-glyph,
+.item-who-piece .item-chip-glyph {
   width: 17px;
   height: 17px;
 }
 
-.stage-centered > .equip-cache-list .item-chip-mark {
+.stage-centered > .equip-cache-list .item-chip-mark,
+.item-who-piece .item-chip-mark {
   font-size: 15px;
+}
+
+/* --- The who-screen's piece (ItemWhoScreen.tsx) ---------------------------
+   The one item on the screen, so it gets the stage card's badge, name and tier
+   and its grants spelled out (ItemEffectChips `labelled`): a figure without
+   its stat's name is a mark to decode, and here the name is what the tap is
+   weighed against. The grants take the card's whole width under the name
+   rather than the column beside the badge — spelled out, a chip is ~100px,
+   and beside the badge a Crest's eight went one to a row and the card ate
+   the stage the roster needed. `display: contents` on the body is what lets
+   the stats row leave it. */
+.item-who-piece .equip-cache-card {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  grid-template-areas:
+    'badge name'
+    'badge meta'
+    'stats stats';
+  align-items: center;
+  column-gap: 14px;
+  row-gap: 0;
+  width: 100%;
+  padding: 12px 14px 13px;
+}
+
+.item-who-piece .equip-cache-card-body {
+  display: contents;
+}
+
+.item-who-piece .equip-cache-card-icon-badge {
+  grid-area: badge;
+  width: 56px;
+  height: 56px;
+}
+
+.item-who-piece .equip-cache-card-icon {
+  font-size: 36px;
+}
+
+.item-who-piece .equip-cache-card-name {
+  grid-area: name;
+  align-self: end;
+}
+
+.item-who-piece .equip-cache-card-meta {
+  grid-area: meta;
+  align-self: start;
+  margin-top: 4px;
+}
+
+.item-who-piece .equip-cache-card-stats {
+  grid-area: stats;
+  margin-top: 8px;
+  gap: 4px 5px;
+}
+
+.item-who-piece .item-chip {
+  gap: 4px;
+  height: 24px;
+  padding: 0 7px 0 5px;
+  font-size: 13px;
+}
+
+.item-who-piece .item-chip-glyph {
+  width: 15px;
+  height: 15px;
+}
+
+.item-who-piece .item-chip-mark {
+  font-size: 13px;
+}
+
+.item-chip-label {
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+/* --- The who-screen's roster ---------------------------------------------
+   The grid must never scroll here: a roster that scrolls under a piece is a
+   hero the player did not see. Three things decide its size and none of them
+   is fixed — the roster (2–6), the piece (one to three rows of grants) and
+   the phone (the canvas is 600–870px tall, uiScale.ts). The column count is
+   the screen's call (ItemWhoScreen.tsx: three past four heroes or three
+   grants); the PORTRAIT is the height's, read through a size container: the
+   96px figure while two rows of it fit, its 48px source once they do not.
+   The thresholds are the two-row heights of each card at 96px, measured. */
+.item-who-roster {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  container-type: size;
+}
+
+/* The card's real height with its socket row, so a grid that is still too
+   short overflows into a scroll rather than clipping the name and the CTA
+   (the `overflow: hidden` trap .pick-card's own min-height documents). */
+.item-who-screen .pick-cols-2 {
+  --pick-card-min: 232px;
+}
+
+.item-who-screen .pick-cols-2 .item-box {
+  --item-box-size: 44px;
+}
+
+/* Three columns keep the 96px figure — a 118px column seats it — and give up
+   the sockets and the CTA instead: three 48px boxes do not fit. */
+.item-who-screen .pick-cols-3 {
+  --pick-portrait: 96px;
+  --pick-name-size: 13px;
+  --pick-card-min: 216px;
+}
+
+.item-who-screen .pick-cols-3 .pick-cta {
+  font-size: 8px;
+  letter-spacing: 0.02em;
+}
+
+.item-who-screen .pick-cols-3 .item-box {
+  --item-box-size: 30px;
+}
+
+.item-who-screen .pick-cols-3 .item-who-sockets {
+  gap: 4px;
+}
+
+@container (max-height: 471px) {
+  .item-who-screen .pick-cols-2.is-stacked {
+    --pick-portrait: 48px;
+    --pick-card-min: 172px;
+  }
+}
+
+@container (max-height: 439px) {
+  .item-who-screen .pick-cols-3.is-stacked {
+    --pick-portrait: 48px;
+    --pick-name-size: 12px;
+    --pick-card-min: 152px;
+  }
+}
+
+/* Sell stands where Continue will: the secondary button is 18px shorter than
+   the resolve button that replaces it once the piece lands, and that
+   difference was the whole screen hopping up as the grid grew into it. */
+.item-who-screen > .item-who-sell {
+  min-height: 68px;
 }
 
 /* --- A cache opening (CacheReveal.tsx) ------------------------------------

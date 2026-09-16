@@ -3,6 +3,7 @@ import type { StatKey } from '../../engine/content';
 import type { EquipmentDefinition, EquipmentLoadout, EquipmentRarity } from '../../run/equipment';
 import { ENCHANTMENTS, RARITY_ORDER, parseEquipmentId } from '../../run/equipment';
 import { StatGlyph, STAT_LABELS } from './StatBars';
+import { STAT_FULL_LABELS } from './relicStacks';
 import { RelicGlyph } from './relicIcons';
 import { EquipmentFormGlyph } from './equipmentIcons';
 import { useLongPress } from './MoveTile';
@@ -201,9 +202,11 @@ function TierPips({ rarity }: { rarity: EquipmentRarity }) {
  * for an Elemental Force, a passive's own glyph. The card face for an item that is being CHOSEN
  * (a reward pick, the Guild Hall shelf) — those cards can't drop to a bare box, because picking
  * one of three by silhouette is not a choice, but they don't need "+50 Attack · Sunder" spelled
- * out either. The full sentence is still one tap away.
+ * out either. The full sentence is still one tap away. `labelled` spells each mark out beside
+ * its glyph — for the who-screen, where the piece is the one item on the screen and its face
+ * has the room.
  */
-export function ItemEffectChips({ item }: { item: EquipmentDefinition }) {
+export function ItemEffectChips({ item, labelled }: { item: EquipmentDefinition; labelled?: boolean }) {
   const stats = (Object.entries(item.statGrants) as [StatKey, number][]).filter(([, amount]) => amount);
   const forces = item.grantsStatusIds ?? [];
   const granted = item.grantsPassiveIds ?? [];
@@ -216,6 +219,7 @@ export function ItemEffectChips({ item }: { item: EquipmentDefinition }) {
         <span key={stat} className={`item-chip ${amount > 0 ? 'is-gain' : 'is-loss'}`} title={`${STAT_LABELS[stat]} ${fmtGrant(amount)}`}>
           <StatGlyph stat={stat} className="item-chip-glyph" tone="inherit" />
           {fmtGrant(amount)}
+          {labelled && <span className="item-chip-label">{STAT_FULL_LABELS[stat]}</span>}
         </span>
       ))}
       {forces.map(({ statusId, magnitude }) => {
@@ -230,6 +234,7 @@ export function ItemEffectChips({ item }: { item: EquipmentDefinition }) {
             title={`${def.name} +${magnitude}`}
           >
             {def.forceType ? <ElementGlyph type={def.forceType} className="item-chip-glyph" /> : null}+{magnitude}
+            {labelled && <span className="item-chip-label">{def.name}</span>}
           </span>
         );
       })}
@@ -245,6 +250,7 @@ export function ItemEffectChips({ item }: { item: EquipmentDefinition }) {
               +
             </span>
             <PassiveGlyph passiveId={passiveId} className="item-chip-glyph" />
+            {labelled && <span className="item-chip-label">{def.name}</span>}
           </span>
         );
       })}
