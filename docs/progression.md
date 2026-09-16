@@ -895,6 +895,15 @@ outlines: the choice should not read as a checklist). The profile reaches the ru
 through `ProfileProvider` (`src/view/shared/ProfileContext.tsx`), a snapshot re-read at the
 title, which is enough because stars only change at a run's end.
 
+**Run History** (same day, per user direction): every run that ENDS — cleared or wiped — is
+written to `Profile.runHistory` as a `RunRecord` (outcome, when, how long on the playtime clock,
+the act and Location it ended in, fights won, the roster by hero / level / form, the Banners,
+and the stars that clear put on the profile for the first time), newest first and capped at
+`RUN_HISTORY_CAP` = 50, oldest falling off. An abandoned run is not recorded, for the reason it
+is neither a clear nor a loss. `recordRunEnded` is the one verb — tallies, stars and history in
+a single write — and the Records panel's second tab (`RunHistory.tsx`) reads it: a row per run,
+folded to outcome / where / faces, opened on a tap to the roster and Banners.
+
 **The SPENDING half is undesigned.** Stars are to purchase "new things for runs" (per user
 direction, same day). Read against the locked paragraph above, that is only consistent if what
 they buy are **unlocks** — new heroes, items, relics entering the pool a run draws from — and

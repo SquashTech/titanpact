@@ -4,6 +4,7 @@ import { progressionTable } from '../../data/progression';
 import { formatPlaytime, starredHeroCount, totalStars, type Profile } from '../../run/profile';
 import { SEAL_ACTS } from '../../run/state';
 import { HubGlyph } from '../shared/nodeIcons';
+import { RunHistory } from './RunHistory';
 
 interface Props {
   profile: Profile;
@@ -43,6 +44,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 export function RecordsScreen({ profile, onEraseAllData, onClose }: Props) {
   // Two taps: this is the only control in the game that destroys something unrecoverable.
   const [confirmingErase, setConfirmingErase] = useState(false);
+  const [tab, setTab] = useState<'records' | 'history'>('records');
 
   const cleared = profile.runsCompleted;
   const played = profile.runsStarted;
@@ -58,56 +60,72 @@ export function RecordsScreen({ profile, onEraseAllData, onClose }: Props) {
           </button>
         </div>
 
-        <div className="screen-scroll">
-          <div className="ledger">
-            <Stat label="Playtime" value={formatPlaytime(profile.playtimeMs)} />
-            <Stat label="Runs started" value={String(played)} />
-            <Stat label="Runs cleared" value={String(cleared)} />
-            <Stat label="Runs lost" value={String(profile.runsFailed)} />
-            <Stat label="Clear rate" value={winRate} />
-            <Stat
-              label="Furthest act"
-              value={
-                profile.furthestAct > SEAL_ACTS
-                  ? 'Finale'
-                  : `${ACT_ROMAN[profile.furthestAct - 1] ?? profile.furthestAct} / ${SEAL_ACTS}`
-              }
-            />
-          </div>
-
-          <div className="records-section-title">Stars</div>
-          {/* Was a two-sentence paragraph explaining what a star is and where to see one. The
-              second half is a navigation instruction the Compendium answers by having them on it;
-              the first half is what a star MEANS, which is the only part a record needs. */}
-          <p className="records-note">One for every Evolution a run has been cleared in — three a hero.</p>
-          <div className="ledger">
-            <Stat label="Stars earned" value={`${totalStars(profile)} / ${STAR_COUNT}`} />
-            <Stat label="Heroes starred" value={`${starredHeroCount(profile)} / ${HERO_COUNT}`} />
-          </div>
-
-          <div className="records-section-title">Data</div>
-          <button
-            className={`options-item options-item-danger${confirmingErase ? ' armed' : ''}`}
-            onClick={() => {
-              if (!confirmingErase) {
-                setConfirmingErase(true);
-                return;
-              }
-              setConfirmingErase(false);
-              onEraseAllData();
-            }}
-          >
-            <span className="options-item-glyph" aria-hidden="true">
-              <HubGlyph name={confirmingErase ? 'warn' : 'discard'} />
-            </span>
-            {confirmingErase ? 'Tap again to erase everything' : 'Erase All Data'}
+        {/* The Compendium's segmented control: the lifetime figures, or every run that ended. */}
+        <div className="compendium-tabs">
+          <button className={`compendium-tab${tab === 'records' ? ' active' : ''}`} onClick={() => setTab('records')}>
+            Records
           </button>
-          <p className="records-note">
-            {confirmingErase
-              ? 'Records, stars and any parked run are deleted. This cannot be undone.'
-              : 'Clears these records, every star, and any parked run. Sound settings are kept.'}
-          </p>
+          <button className={`compendium-tab${tab === 'history' ? ' active' : ''}`} onClick={() => setTab('history')}>
+            Run History
+          </button>
         </div>
+
+        {tab === 'history' ? (
+          <div className="screen-scroll">
+            <RunHistory records={profile.runHistory} />
+          </div>
+        ) : (
+          <div className="screen-scroll">
+            <div className="ledger">
+              <Stat label="Playtime" value={formatPlaytime(profile.playtimeMs)} />
+              <Stat label="Runs started" value={String(played)} />
+              <Stat label="Runs cleared" value={String(cleared)} />
+              <Stat label="Runs lost" value={String(profile.runsFailed)} />
+              <Stat label="Clear rate" value={winRate} />
+              <Stat
+                label="Furthest act"
+                value={
+                  profile.furthestAct > SEAL_ACTS
+                    ? 'Finale'
+                    : `${ACT_ROMAN[profile.furthestAct - 1] ?? profile.furthestAct} / ${SEAL_ACTS}`
+                }
+              />
+            </div>
+  
+            <div className="records-section-title">Stars</div>
+            {/* Was a two-sentence paragraph explaining what a star is and where to see one. The
+                second half is a navigation instruction the Compendium answers by having them on it;
+                the first half is what a star MEANS, which is the only part a record needs. */}
+            <p className="records-note">One for every Evolution a run has been cleared in — three a hero.</p>
+            <div className="ledger">
+              <Stat label="Stars earned" value={`${totalStars(profile)} / ${STAR_COUNT}`} />
+              <Stat label="Heroes starred" value={`${starredHeroCount(profile)} / ${HERO_COUNT}`} />
+            </div>
+  
+            <div className="records-section-title">Data</div>
+            <button
+              className={`options-item options-item-danger${confirmingErase ? ' armed' : ''}`}
+              onClick={() => {
+                if (!confirmingErase) {
+                  setConfirmingErase(true);
+                  return;
+                }
+                setConfirmingErase(false);
+                onEraseAllData();
+              }}
+            >
+              <span className="options-item-glyph" aria-hidden="true">
+                <HubGlyph name={confirmingErase ? 'warn' : 'discard'} />
+              </span>
+              {confirmingErase ? 'Tap again to erase everything' : 'Erase All Data'}
+            </button>
+            <p className="records-note">
+              {confirmingErase
+                ? 'Records, stars and any parked run are deleted. This cannot be undone.'
+                : 'Clears these records, every star, the run history, and any parked run. Sound settings are kept.'}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

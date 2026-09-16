@@ -8911,6 +8911,177 @@ textarea,
   color: var(--text-dim);
 }
 
+/* --- Run History (RunHistory.tsx, on the Records panel) -------------------
+   Every run that ended, newest first. A row is folded to what the summary
+   screen led with — the outcome, where and when, the team's faces — and
+   opens on a tap to the roster by name, level and form. The outcome is
+   carried by a left band and a mark in the result screens' own two colours
+   (.result-win gold, .result-loss red), so a scan down the list reads the
+   record without reading a word. */
+.run-history {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 2px 10px;
+}
+
+.run-history-row {
+  --outcome-rgb: 224, 166, 60;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(var(--outcome-rgb), 0.22);
+  background:
+    linear-gradient(90deg, rgba(var(--outcome-rgb), 0.16), transparent 34%),
+    var(--surface-raised);
+  box-shadow: var(--hairline), var(--elev-1);
+  overflow: hidden;
+}
+
+.run-history-row.is-loss {
+  --outcome-rgb: 217, 83, 79;
+}
+
+.run-history-head {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px 8px 0;
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* The band, with the outcome's mark on it. */
+.run-history-mark {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  margin: -8px 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: rgb(var(--outcome-rgb));
+  background: rgba(var(--outcome-rgb), 0.14);
+  border-right: 1px solid rgba(var(--outcome-rgb), 0.3);
+}
+
+.run-history-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.run-history-title-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.run-history-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: rgb(var(--outcome-rgb));
+}
+
+.run-history-date {
+  flex: none;
+  font-size: 10px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.run-history-facts {
+  font-size: 10.5px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.run-history-faces {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.run-history-face {
+  position: relative;
+  flex: none;
+  width: 24px;
+  height: 24px;
+}
+
+.run-history-portrait {
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+}
+
+/* A star this run put on the profile, on the face that earned it. */
+.run-history-face-star {
+  position: absolute;
+  right: -3px;
+  top: -4px;
+  font-size: 9px;
+  line-height: 1;
+  color: var(--accent);
+  text-shadow: 0 0 4px rgba(224, 166, 60, 0.7), 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+.run-history-stars {
+  margin-left: auto;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(224, 166, 60, 0.45);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.run-history-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 10px 10px 40px;
+  border-top: 1px solid rgba(var(--outcome-rgb), 0.16);
+}
+
+.run-history-hero {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+  font-size: 11px;
+}
+
+.run-history-hero-name {
+  font-weight: 700;
+}
+
+.run-history-hero-meta {
+  color: var(--text-dim);
+}
+
+.run-history-hero-star {
+  color: var(--accent);
+}
+
+.run-history-banners {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
 /* Two across, three down (2026-09-07, per user direction): the roster reads as a squad at a
    glance rather than a list to scroll, and each card gets its full width back for a slot row
    underneath the hero. */

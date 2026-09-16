@@ -29,6 +29,18 @@ export interface Profile {
    * SET is the record and there is no count to inflate.
    */
   evolutionStars: Record<string, string[]>;
+  /**
+   * Every run that ENDED — cleared or wiped — newest first, at most RUN_HISTORY_CAP. An
+   * abandoned run is not here for the same reason it is neither a clear nor a loss: the player
+   * chose to stop, and a history of things that were stopped is not a history.
+   */
+  runHistory: RunRecord[];
+  /**
+   * `playtimeMs` as it stood when the current run's pact was sealed, so the run's own length
+   * can be read off the same clock at its end; null when no run has been started this profile.
+   * A dev test run never records a start, so its record carries no duration.
+   */
+  runStartedAtPlaytimeMs: number | null;
   /** 0 until the first run is sealed. */
   firstPlayedAt: number;
   lastPlayedAt: number;
@@ -40,6 +52,39 @@ export interface Profile {
   tutorialDone: boolean;
 }
 
+/** Oldest records fall off the end. Fifty is a season of play, and past that a list stops being read. */
+export const RUN_HISTORY_CAP = 50;
+
+/** A hero as it finished a run: which body, how far it grew, what form it took. */
+export interface RunRecordHero {
+  heroId: string;
+  level: number;
+  /** The last Evolution path taken, or null for a hero that finished unevolved. */
+  evolutionPathId: string | null;
+}
+
+/** One line of the run history: what a finished run came to, as the summary screen showed it. */
+export interface RunRecord {
+  outcome: 'win' | 'loss';
+  endedAt: number;
+  /** Foreground playtime between the pact and the end, or null for a run whose start was not recorded. */
+  durationMs: number | null;
+  /** The act it ended in, 1-indexed; past SEAL_ACTS is the finale. */
+  actReached: number;
+  /** That act's Location, or null on a run without an itinerary. */
+  locationId: string | null;
+  encountersWon: number;
+  /** The roster at the end, in roster order. */
+  roster: RunRecordHero[];
+  /** Banners held, duplicates stacking. */
+  relicIds: string[];
+  /** The Evolution path ids this run's clear starred for the first time — a loss stars nothing. */
+  starsEarned: string[];
+}
+
+/** What the app hands over at a run's end; the verb fills in the rest of the record. */
+export type RunEnd = Omit<RunRecord, 'endedAt' | 'durationMs' | 'starsEarned'>;
+
 export function createProfile(): Profile {
   return {
     version: PROFILE_VERSION,
@@ -49,6 +94,8 @@ export function createProfile(): Profile {
     runsFailed: 0,
     furthestAct: 1,
     evolutionStars: {},
+    runHistory: [],
+    runStartedAtPlaytimeMs: null,
     firstPlayedAt: 0,
     lastPlayedAt: 0,
     tutorialDone: false,
@@ -67,36 +114,52 @@ export function recordRunStarted(profile: Profile, now: number): Profile {
   return {
     ...profile,
     runsStarted: profile.runsStarted + 1,
+    runStartedAtPlaytimeMs: profile.playtimeMs,
     firstPlayedAt: profile.firstPlayedAt === 0 ? now : profile.firstPlayedAt,
     lastPlayedAt: now,
   };
 }
 
-/** What a hero on the finishing roster carries into the record: which form it cleared as, if any. */
-export interface FinishedHero {
-  heroId: string;
-  /** The last Evolution path taken, or null for a hero that finished unevolved. */
-  evolutionPathId: string | null;
-}
-
 /**
- * A star per EVOLVED hero on the roster at the moment the last Guardian fell, keyed by the path
- * it finished down. Roster-at-the-end rather than ever-recruited: the run was cleared by the team
- * that finished it, and a hero terminated in Act 2 did not clear anything. A star already held is
- * not doubled — clearing twice down the same path is the same star.
+ * A run ended, cleared or wiped: the tallies, the stars and the history, in one write so the
+ * three can never disagree about what happened.
+ *
+ * A clear stars every EVOLVED hero on the roster at the moment the last Guardian fell, keyed by
+ * the path it finished down. Roster-at-the-end rather than ever-recruited: the run was cleared by
+ * the team that finished it, and a hero terminated in Act 2 did not clear anything. A star already
+ * held is not doubled — clearing twice down the same path is the same star — and the record
+ * remembers only the stars that were NEW, which is what a history line has to say.
  */
-export function recordRunCompleted(profile: Profile, finished: readonly FinishedHero[], now: number): Profile {
+export function recordRunEnded(profile: Profile, end: RunEnd, now: number): Profile {
   const evolutionStars = { ...profile.evolutionStars };
-  for (const { heroId, evolutionPathId } of finished) {
-    if (!evolutionPathId) continue;
-    const held = evolutionStars[heroId] ?? [];
-    if (!held.includes(evolutionPathId)) evolutionStars[heroId] = [...held, evolutionPathId];
+  const starsEarned: string[] = [];
+  if (end.outcome === 'win') {
+    for (const { heroId, evolutionPathId } of end.roster) {
+      if (!evolutionPathId) continue;
+      const held = evolutionStars[heroId] ?? [];
+      if (held.includes(evolutionPathId)) continue;
+      evolutionStars[heroId] = [...held, evolutionPathId];
+      starsEarned.push(evolutionPathId);
+    }
   }
-  return { ...profile, runsCompleted: profile.runsCompleted + 1, evolutionStars, lastPlayedAt: now };
-}
-
-export function recordRunFailed(profile: Profile, now: number): Profile {
-  return { ...profile, runsFailed: profile.runsFailed + 1, lastPlayedAt: now };
+  const record: RunRecord = {
+    ...end,
+    roster: end.roster.map((hero) => ({ ...hero })),
+    relicIds: [...end.relicIds],
+    endedAt: now,
+    durationMs: profile.runStartedAtPlaytimeMs === null ? null : Math.max(0, profile.playtimeMs - profile.runStartedAtPlaytimeMs),
+    starsEarned,
+  };
+  return {
+    ...profile,
+    runsCompleted: profile.runsCompleted + (end.outcome === 'win' ? 1 : 0),
+    runsFailed: profile.runsFailed + (end.outcome === 'loss' ? 1 : 0),
+    evolutionStars,
+    runHistory: [record, ...profile.runHistory].slice(0, RUN_HISTORY_CAP),
+    // The run is over; a dev test run started without a pact must not inherit this one's clock.
+    runStartedAtPlaytimeMs: null,
+    lastPlayedAt: now,
+  };
 }
 
 /** One-way: a later normal run never un-teaches the tutorial. */
@@ -158,6 +221,48 @@ function count(value: unknown, fallback = 0): number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? Math.floor(value) : fallback;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** Non-empty strings only, in order; anything else in the list is skipped. */
+function stringList(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && item.length > 0) : [];
+}
+
+/**
+ * A record is kept if its outcome and act are readable — a line with no outcome says nothing.
+ * Its roster keeps every hero with an id: a companion's body is not in `knownHeroIds`, and a
+ * hero this build no longer ships is still what the run was played with (the view skips what
+ * it cannot draw). Path ids are checked against `knownPathIds` where given, as the stars are.
+ */
+function decodeRunRecord(raw: unknown, knownPathIds?: ReadonlySet<string>): RunRecord | null {
+  if (!isRecord(raw)) return null;
+  if (raw.outcome !== 'win' && raw.outcome !== 'loss') return null;
+  const actReached = count(raw.actReached);
+  if (actReached < 1) return null;
+  const knownPath = (id: unknown): string | null =>
+    typeof id === 'string' && id.length > 0 && (!knownPathIds || knownPathIds.has(id)) ? id : null;
+  const roster: RunRecordHero[] = [];
+  if (Array.isArray(raw.roster)) {
+    for (const hero of raw.roster) {
+      if (!isRecord(hero) || typeof hero.heroId !== 'string' || hero.heroId.length === 0) continue;
+      roster.push({ heroId: hero.heroId, level: Math.max(1, count(hero.level, 1)), evolutionPathId: knownPath(hero.evolutionPathId) });
+    }
+  }
+  return {
+    outcome: raw.outcome,
+    endedAt: count(raw.endedAt),
+    durationMs: typeof raw.durationMs === 'number' && Number.isFinite(raw.durationMs) && raw.durationMs >= 0 ? Math.floor(raw.durationMs) : null,
+    actReached,
+    locationId: typeof raw.locationId === 'string' && raw.locationId.length > 0 ? raw.locationId : null,
+    encountersWon: count(raw.encountersWon),
+    roster,
+    relicIds: stringList(raw.relicIds),
+    starsEarned: stringList(raw.starsEarned).filter((id) => knownPath(id) !== null),
+  };
+}
+
 /**
  * Never fails and never throws: an unreadable profile decodes to a fresh one, and a partly
  * readable one keeps every field that survived. `knownHeroIds` drops stars for heroes this
@@ -174,8 +279,8 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
   const value = raw as Record<string, unknown>;
 
   const evolutionStars: Record<string, string[]> = {};
-  if (typeof value.evolutionStars === 'object' && value.evolutionStars !== null && !Array.isArray(value.evolutionStars)) {
-    for (const [heroId, paths] of Object.entries(value.evolutionStars as Record<string, unknown>)) {
+  if (isRecord(value.evolutionStars)) {
+    for (const [heroId, paths] of Object.entries(value.evolutionStars)) {
       if (knownHeroIds && !knownHeroIds.has(heroId)) continue;
       if (!Array.isArray(paths)) continue;
       const kept: string[] = [];
@@ -188,6 +293,15 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     }
   }
 
+  const runHistory: RunRecord[] = [];
+  if (Array.isArray(value.runHistory)) {
+    for (const raw of value.runHistory) {
+      const record = decodeRunRecord(raw, knownPathIds);
+      if (record) runHistory.push(record);
+      if (runHistory.length >= RUN_HISTORY_CAP) break;
+    }
+  }
+
   return {
     version: PROFILE_VERSION,
     playtimeMs: count(value.playtimeMs),
@@ -196,6 +310,8 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     runsFailed: count(value.runsFailed),
     furthestAct: Math.max(1, count(value.furthestAct, 1)),
     evolutionStars,
+    runHistory,
+    runStartedAtPlaytimeMs: typeof value.runStartedAtPlaytimeMs === 'number' && Number.isFinite(value.runStartedAtPlaytimeMs) ? Math.max(0, Math.floor(value.runStartedAtPlaytimeMs)) : null,
     firstPlayedAt: count(value.firstPlayedAt),
     lastPlayedAt: count(value.lastPlayedAt),
     // The field is ABSENT on every profile written before the tutorial existed, and inferring it

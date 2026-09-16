@@ -8,12 +8,12 @@ import type { StatKey } from '../engine/content';
 import { saveSummary, type SavedRun } from '../run/save';
 import {
   recordActReached,
-  recordRunCompleted,
-  recordRunFailed,
+  recordRunEnded,
   recordRunStarted,
   recordTutorialDone,
   shouldPlayTutorial,
   type Profile,
+  type RunEnd,
 } from '../run/profile';
 import { FightScreen } from '../view/combat/FightScreen';
 import { TitleScreen } from '../view/run/TitleScreen';
@@ -510,11 +510,17 @@ export function App() {
     clearSave();
     setSaveSlot({ save: null, staleReason: null });
     const now = Date.now();
-    const finished = playerRun.roster.map((entry) => ({ heroId: entry.heroId, evolutionPathId: currentEvolutionPathId(entry) }));
+    const end: RunEnd = {
+      outcome: screen.kind === 'runComplete' ? 'win' : 'loss',
+      actReached: playerRun.actNumber,
+      // The finale has no Location of its own (locationForAct falls back to Act 1's); the history reads the act instead.
+      locationId: playerRun.actNumber <= SEAL_ACTS ? playerRun.locationIds[playerRun.actNumber - 1] ?? null : null,
+      encountersWon: playerRun.encountersWon,
+      roster: playerRun.roster.map((entry) => ({ heroId: entry.heroId, level: levelOf(entry), evolutionPathId: currentEvolutionPathId(entry) })),
+      relicIds: [...playerRun.relics],
+    };
     const before = readProfile();
-    const after = updateProfile((current) =>
-      screen.kind === 'runComplete' ? recordRunCompleted(current, finished, now) : recordRunFailed(current, now)
-    );
+    const after = updateProfile((current) => recordRunEnded(current, end, now));
     setRunOutcome({ before, after });
   }, [screen.kind]);
 
