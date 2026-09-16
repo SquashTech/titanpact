@@ -228,6 +228,9 @@ export const LEFT_EYE_WIDE_ID = 'leftEyeWide';
 export const RIGHT_EYE_WIDE_ID = 'rightEyeWide';
 /** Phase 1 then phase 2, in the order the encounter fields them. */
 export const EYE_IDS: readonly string[] = [LEFT_EYE_ID, RIGHT_EYE_ID, LEFT_EYE_WIDE_ID, RIGHT_EYE_WIDE_ID];
+export function isTitanEye(heroId: string): boolean {
+  return EYE_IDS.includes(heroId);
+}
 /** The wide pair: what phase 1's fall lets in. */
 export const WIDE_EYE_IDS: readonly string[] = [LEFT_EYE_WIDE_ID, RIGHT_EYE_WIDE_ID];
 

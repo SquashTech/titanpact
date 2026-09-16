@@ -86,7 +86,7 @@ import { useAmbientLocation } from '../shared/LocationContext';
 import { LocationAmbience } from '../shared/LocationSky';
 import { LocationHorizon } from '../shared/locationArt';
 import { TitanBody } from './TitanBody';
-import { ENDBRINGER_ID, EYE_IDS } from '../../data/enemies';
+import { ENDBRINGER_ID, EYE_IDS, isTitanEye } from '../../data/enemies';
 import type { LocationDefinition } from '../../data/locations';
 
 /** One enemy's live matchup for a move row, precomputed by FightScreen so MoveRow needs no combat state of its own. */
@@ -1160,6 +1160,27 @@ export function FightScreen({
           fx={figureFx[id]}
         />
       );
+    }
+    // A knocked-out Eye is not taken off the field: it stays in its slot, closed, until the wide
+    // pair replace it (docs/titan-eyes.md). Fallen and off the bench = it was active here.
+    if (side === AI_SIDE) {
+      const fallen = Object.values(combat.combatants).filter(
+        (c) => c.side === side && c.fainted && isTitanEye(c.heroId) && !combat.bench[side].includes(c.combatantId)
+      );
+      const emptySlots = ([0, 1] as const).filter((s) => combat.active[side][s] === null);
+      const eye = fallen[emptySlots.indexOf(slot)];
+      if (eye) {
+        return (
+          <CombatantCard
+            key={eye.combatantId}
+            hero={allCombatants[eye.heroId]}
+            combatant={eye}
+            level={levelFor(eye.combatantId)}
+            onInspect={() => setInspecting(eye.combatantId)}
+            statCtx={statCtx}
+          />
+        );
+      }
     }
     const bench = combat.bench[side];
     if (side === PLAYER_SIDE && bench.length > 0 && !resolving) {

@@ -29595,3 +29595,10 @@ textarea,
     opacity: 0.9;
   }
 }
+
+/* A knocked-out Eye stays on the field, shut (CombatantCard 'closed'): less faded than a
+   fallen hero, because it is still the thing the field is about. */
+.team-row .combatant-card.fainted.is-closed-eye {
+  opacity: 0.8;
+  filter: grayscale(0.15);
+}

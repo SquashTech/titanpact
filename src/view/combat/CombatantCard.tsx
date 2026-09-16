@@ -5,6 +5,7 @@ import { effectiveTypes, getCombatStatDelta, getMaxHp, getMaxMana, statModifierC
 import { fieldEffects } from '../../data/fieldEffects';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { isTitanEye } from '../../data/enemies';
 import { StatGlyph, STAT_ORDER, hpTier, ShieldFill, ShieldLabel } from '../shared/StatBars';
 import { shieldHeld } from '../../engine/status/shield';
 import { statuses } from '../../data/statuses';
@@ -177,7 +178,7 @@ function modTier(mod: number, s: number): number {
   return frac >= 2 ? 3 : frac >= 1 ? 2 : 1;
 }
 
-type Pose = 'idle' | 'attack' | 'hurt';
+type Pose = 'idle' | 'attack' | 'hurt' | 'closed';
 
 /**
  * The pose the figure just left, for as long as the flash covering that swap
@@ -242,7 +243,8 @@ export function CombatantCard({
   // Keyed on the popup, not on the class: the same figure taking the same kind of hit twice running must replay.
   const struck = useOneShot(hitClass ? popup!.key : null, HIT_REACT_MS);
   // Taking a hit wins over landing one, so a hero that swung and got answered reads as the one who came off worse.
-  const pose: Pose = hitClass ? 'hurt' : striking ? 'attack' : 'idle';
+  // A knocked-out Eye stays on the field with its lid shut (FightScreen keeps its card in the slot).
+  const pose: Pose = combatant.fainted && isTitanEye(hero.id) ? 'closed' : hitClass ? 'hurt' : striking ? 'attack' : 'idle';
   const released = usePoseRelease(pose);
   const maxHp = getMaxHp(hero, combatant);
   const maxMana = getMaxMana(hero, combatant);
@@ -259,6 +261,7 @@ export function CombatantCard({
   const classes = ['combatant-card'];
   if (compact) classes.push('compact');
   if (combatant.fainted) classes.push('fainted');
+  if (pose === 'closed') classes.push('is-closed-eye');
   if (targetable && !combatant.fainted) classes.push('targetable');
   if (selected) classes.push('selected');
   if (acting) classes.push('acting');
