@@ -142,7 +142,7 @@ export const enemies: Record<string, HeroDefinition> = {
     growthGrades: CHAMPION_GRADES,
   },
 
-  // --- The Threshold — what walks out when the seals are broken (docs/lore.md) ---
+  // --- The Threshold — the Titan's Herald, what walks out when five seals are broken (docs/lore.md §7) ---
   // The finale's last combatant, and the only mono-Ancient thing in the game. It enters LAST,
   // after five unsealed champions, so it is authored as the fight's ending rather than its
   // whole — an enormous, slow, magical body for something that does not need to hurry. It is

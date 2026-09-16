@@ -1128,7 +1128,7 @@ Skeleton King mono-Spirit — because the Ancient half *was* the seal and the pl
 took it (`lore.md` §6). This is balance and fiction agreeing: six X/Ancient bodies at ~700
 stat total, none takeable at super-effective damage, against the Pact Clock, is a finale
 that ends in a timeout — and `FightScreen` resolves a mutual wipe as a **player loss**. The
-Endbringer is the only true wall, which is what a Titan should be.
+Endbringer is the only true wall, which is what the Titan's Herald should be.
 
 Deriving the unsealed form from the authored champion (drop the Ancient type, keep
 everything else) rather than authoring six more enemies is the pure-data version and the

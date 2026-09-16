@@ -1,24 +1,15 @@
 // Writes docs/art/guardian-bestiary.html: every Guardian figure (src/view/shared/guardianFigures.ts)
-// in its three poses, sealed and unsealed, and the Endbringer. The
+// in its three poses, and the Endbringer. The
 // Titanspawn gallery carries its own generator script; this one is rendered FROM the game's module,
 // so the page is always what ships. `npm run build && node dist/scripts/art/guardian-gallery.js`.
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { CHAMPION_IDS, ENDBRINGER_ID, enemies, unsealedIdFor } from '../../src/data/enemies';
+import { CHAMPION_IDS, ENDBRINGER_ID, enemies } from '../../src/data/enemies';
 import { guardianMarkup, GUARDIAN_VIEW_BOX, type GuardianPose } from '../../src/view/shared/guardianFigures';
 import { getTypeColor } from '../../src/view/combat/typeColors';
 
 const POSES: readonly GuardianPose[] = ['idle', 'attack', 'hurt'];
-
-const WHERE: Record<string, string> = {
-  manticore: 'a collar in the mane',
-  yugzulach: 'a brand on the chest',
-  kraken: 'the collar under the mantle',
-  elderBough: 'grown into the trunk',
-  dragon: 'the collar at the base of the neck',
-  skeletonKing: 'the crown',
-};
 
 let n = 0;
 function svg(heroId: string, pose: GuardianPose): string {
@@ -33,8 +24,8 @@ function line(championId: string): string {
   const champion = enemies[championId];
   const [mortal] = champion.types;
   return `<div class="line" id="${championId}">
-    <div class="rail"><div class="type"><span class="swatch" style="background:${getTypeColor(mortal)}"></span>${champion.name}</div><div class="excel">${mortal} / Ancient</div><div class="home">seal: ${WHERE[championId]}</div></div>
-    <div class="tiers">${card(championId, 'Sealed')}${card(unsealedIdFor(championId), 'Unsealed — the finale')}</div>
+    <div class="rail"><div class="type"><span class="swatch" style="background:${getTypeColor(mortal)}"></span>${champion.name}</div><div class="excel">${mortal} / Ancient</div></div>
+    <div class="tiers">${card(championId, champion.name)}</div>
   </div>`;
 }
 
@@ -54,32 +45,30 @@ const html = `<!doctype html>
   .line { display: grid; grid-template-columns: 150px 1fr; border-top: 1px solid var(--line); padding: 18px 0 14px; } .line:last-child { border-bottom: 1px solid var(--line); }
   .rail { padding-right: 16px; } .rail .type { font-family: var(--mono); font-weight: 600; font-size: 13px; letter-spacing: 0.06em; display: flex; align-items: center; gap: 8px; }
   .rail .swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; } .rail .excel { font-size: 13px; color: var(--muted); margin-top: 6px; } .rail .home { font-family: var(--mono); font-size: 10.5px; color: var(--faint); margin-top: 10px; letter-spacing: 0.06em; }
-  .tiers { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .tiers { display: grid; grid-template-columns: 1fr; }
   .tier { background: var(--panel); border: 1px solid var(--line); padding: 10px 10px 8px; }
   .tier-head .name { font-family: var(--mono); font-weight: 500; font-size: 13px; }
-  .poses { display: grid; grid-template-columns: repeat(3, 1fr); padding-top: 40px; }
+  .poses { display: grid; grid-template-columns: repeat(3, 1fr); padding-top: 40px; max-width: 560px; }
   .pose { display: grid; justify-items: center; } .pose svg { width: 132px; height: 132px; display: block; overflow: visible; }
   .pose .cap { font-family: var(--mono); font-size: 10px; color: var(--faint); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 2px; }
   .end .poses { padding-top: 64px; } .end .pose svg { width: 160px; height: 160px; }
   /* #id in the URL shows the page from that Guardian down. */
   body:has(.line:target) header, .line:has(~ .line:target) { display: none; }
-  @media (max-width: 900px) { .line, .tiers { grid-template-columns: 1fr; } header { grid-template-columns: 1fr; } .rail { padding-bottom: 8px; } }
+  @media (max-width: 900px) { .line { grid-template-columns: 1fr; } header { grid-template-columns: 1fr; } .rail { padding-bottom: 8px; } }
   @media (prefers-reduced-motion: no-preference) { .pose svg .halo { animation: breathe 2.6s ease-in-out infinite; } }
   @keyframes breathe { 0%,100% { opacity: .22 } 50% { opacity: .38 } }
 </style>
 <div class="wrap">
   <header>
     <div>
-      <div class="eyebrow">Titanpact · the Guardians · 6 champions × sealed / unsealed × 3 poses, and the Endbringer</div>
+      <div class="eyebrow">Titanpact · the Guardians · 6 champions × 3 poses, and the Endbringer</div>
       <h1>Guardian Bestiary</h1>
-      <p>What the spawn are a miniature of. Six wardens grafted into the binding and decayed under it (<em>lore §2</em>): each is its mortal type's geometry at a Late's scale or past it, and wears the piece of the lock it carries — a ring in the Ancient hue with the lock's own eye in it. Break the seal and the finale fields the same figure with the ring gone.</p>
+      <p>What the spawn are a miniature of. Six wardens grafted into the binding and decayed under it (<em>lore §2</em>): each is its mortal type's geometry at a Late's scale or past it, with the Titan's eyes set where they should not be.</p>
     </div>
     <div class="rules">
-      <div><b>Two eyes, wrong-placed, and a third in the seal.</b> The seal's never blinks with the beast's.</div>
-      <div><b>The seal is worn.</b> A collar, a brand, a crown — where it sits is the Guardian's identity.</div>
-      <div><b>Unsealed is derived.</b> The same drawing, the ring off, a scar where it sat.</div>
+      <div><b>Two eyes, wrong-placed.</b> A stinger, a palm, a tentacle tip, the canopy, a wing, the ribcage.</div>
       <div><b>Every Guardian breaks the frame.</b> The Endbringer breaks it on every edge.</div>
-      <div><b>The Endbringer is the Titan's herald</b>, in the seal's colour: the Titan's eye rides its banner, and the five broken seals hang from the crossbar.</div>
+      <div><b>The Endbringer is the Titan's herald</b>, in Ancient's colour: the Titan's eye rides its banner, and the five broken seals are threaded on its pole.</div>
     </div>
   </header>
   ${CHAMPION_IDS.map(line).join('')}

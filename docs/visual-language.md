@@ -3429,18 +3429,20 @@ mid-fight cell check; this is the one to learn the chart from.
 The six champions and the Endbringer leave pixel art for the spawn's geometry
 (`src/view/shared/guardianFigures.ts`, mounted through `HeroPortrait` like a spawn; rules in
 `docs/titanspawn-overhaul.md` §2 "Guardian art"; review page `docs/art/guardian-bestiary.html`).
-The one presentation rule this adds is the SEAL: a Guardian wears its Ancient half as a ring in
-the Ancient hue with the Titan's eye in it, and the finale's unsealed champion is the same figure
-with the ring off — fiction the player can see at 40px on the Pact Seal ring, where the six
-medallions are now the Guardians themselves (`PactSealScreen` draws through `HeroPortrait`; a
-figure breaking its socket a little is on-theme and left alone). On the battlefield a Guardian
+The Pact Seal ring's six medallions are now the Guardians themselves (`PactSealScreen` draws
+through `HeroPortrait`; a figure breaking its socket a little is on-theme and left alone). A
+worn SEAL — the Ancient half as a ring in the Ancient hue with a third eye in it, struck off for
+the finale's unsealed champion — was built first and removed the same day per user direction:
+it did not look right, and the finale fields the same figure. On the battlefield a Guardian
 runs up behind the enemy nameplate — the frame it breaks is the hero cell, and the bars sit over
 it as they sit over anything tall. The spawn's no-flip rule holds. Same day: the Lava Beast
 became the Dragon, and the Endbringer was redrawn from a colossus to the Titan's **Herald** — a
 standard-bearer whose banner carries the title screen's lens eye — because it is the herald, not
 the Titan (per user direction). And the Goblin Lord became the Manticore — the last of the
 three renamed because their old names were the least evocative — a lion under a mane of spikes
-with a scorpion tail that strikes forward and the second eye on the stinger.
+with a scorpion tail that strikes forward and the second eye on the stinger. The ring-struck-off
+drawing for the finale's unsealed champions was set aside the same day: the finale fields the
+same figure, and only the type comes off.
 
 ## Open / future improvements
 

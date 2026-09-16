@@ -108,17 +108,16 @@ test('guardians: the Skeleton King is the lowest-HP champion, and that IS the fi
   }
 });
 
-test('guardians: every champion, its unsealed twin and the Endbringer have a figure, and the seal comes off with the Ancient half', () => {
+test('guardians: every champion and the Endbringer have a figure, a Guardian is drawn in its mortal hue alone, and the unsealed twin is the same figure', () => {
   const ancient = getTypeColor('Ancient');
   for (const id of CHAMPION_IDS) {
     for (const pose of ['idle', 'attack', 'hurt'] as const) {
-      const sealed = guardianMarkup(id, pose, 't');
-      const unsealed = guardianMarkup(unsealedIdFor(id), pose, 't');
-      assert.ok(sealed.length > 0 && unsealed.length > 0, `${id} has no ${pose} figure`);
-      assert.notStrictEqual(sealed, unsealed, `${id}'s unsealed figure still wears the seal`);
-      // The ring is the one Ancient-coloured thing on a Guardian, and the finale's body has none of it.
-      assert.ok(sealed.includes(ancient), `${id}'s seal is not drawn in the Ancient hue`);
-      assert.ok(!unsealed.includes(ancient), `${id} unsealed still carries the Ancient hue`);
+      const markup = guardianMarkup(id, pose, 't');
+      assert.ok(markup.length > 0, `${id} has no ${pose} figure`);
+      // The worn seal ring was removed 2026-09-16; nothing on a Guardian is Ancient-coloured.
+      assert.ok(!markup.includes(ancient), `${id} carries the Ancient hue`);
+      // The finale takes the type off the stats, never anything off the body.
+      assert.strictEqual(guardianMarkup(unsealedIdFor(id), pose, 't'), markup, `${id}'s unsealed twin is drawn differently`);
     }
   }
   assert.ok(guardianMarkup(ENDBRINGER_ID, 'idle', 't').includes(ancient), 'the Endbringer is not drawn in the Ancient hue');

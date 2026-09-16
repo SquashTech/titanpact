@@ -18,7 +18,11 @@ A **Titan** cannot be killed. It can only be **bound**, and only to something th
 already put it on the ground — binding is mutual, so the Titan gets a leash and the world
 gets a hand on the other end. The last binding is failing. A player's run is the journey
 to break what remains of it on purpose, so that the thing behind it comes out facing
-someone rather than facing nobody.
+someone rather than facing nobody. **What comes out is the Titan's Herald** (2026-09-16,
+per user direction): a Titan does not walk through a breach, it sends its hand and its
+voice ahead of it, and the Herald is both. Putting the Herald on the ground is putting the
+Titan on the ground in the only sense the Titan has — which is why a pact can be sealed
+with something that never takes the field.
 
 > *It is coming out either way. The only question is whether anything is holding the
 > other end.*
@@ -53,10 +57,9 @@ Three things fall out of this at no cost:
   (§3), and what comes through a failing seal takes the colour of the land it comes through
   into: the **Titanspawn** (`docs/titanspawn-overhaul.md` §2), one line per mortal type,
   small where the seal still mostly holds and grown where it is almost gone. A spawn is not
-  a people. It is the Titan's weight, felt before the Titan. **And the seal is drawn**
-  (2026-09-16, `titanspawn-overhaul.md` §2 "Guardian art"): every Guardian is geometry in its
-  mortal type's colour, like its brood, and wears the Ancient half as a ring with the Titan's
-  eye in it; the finale's unsealed champion is the same figure with the ring gone.
+  a people. It is the Titan's weight, felt before the Titan. **And a Guardian looks like its
+  brood** (2026-09-16, `titanspawn-overhaul.md` §2 "Guardian art"): geometry in its mortal
+  type's colour, with the Titan's eyes set where they should not be.
 - **The run is a sacrilege, deliberately.** Every Guardian broken is a lock broken. The
   player is not clearing dungeons; they are dismantling the thing keeping the world
   shut, because it is coming apart anyway and an accident is worse than a decision.
@@ -105,10 +108,12 @@ There are **six** locations. Act 1 is always Wild's Edge, and acts 2-5 draw four
 remaining five without replacement (`locations.md` §1). So **every run breaks exactly five
 seals, and exactly one stays shut.**
 
-- The five you broke are why the Endbringer walks.
-- **The sixth is why there is a world left at all.** One warden held. The binding failed
-  at five points out of six, and the difference between "the Titan is loose" and "the
-  Titan is loose *and nothing is holding it*" is the seal the player never reached.
+- The five you broke are why the Herald walks.
+- **The sixth is why it is only the Herald.** One warden held. The binding failed at five
+  points out of six, and a breach five-sixths open is wide enough for the Titan's hand and
+  not for the Titan — the seal the player never reached is the difference between "the
+  Herald is through" and "the Titan is loose *and nothing is holding it*". It is why there
+  is a world left at all.
 
 Which location that is changes every run, and the player is told which one it was. This is
 the natural anchor for `progression.md`'s light meta-progression: the sixth seal is the
@@ -123,7 +128,7 @@ does not stay on the floor. It comes out attached to the thing it was holding.
 player already took it. In the final battle the five Guardians field as their **base type
 alone**: the Manticore as mono-Beast, the Kraken mono-Water, the Elder Bough
 mono-Nature, the Dragon mono-Fire, Yugzulach mono-Shadow, the Skeleton King
-mono-Spirit. Only the Endbringer keeps the wall.
+mono-Spirit. Only the Endbringer — the Herald — keeps the wall.
 
 This is fiction and balance agreeing, which is why it is the shape that shipped:
 
@@ -133,7 +138,7 @@ This is fiction and balance agreeing, which is why it is the shape that shipped:
   super-effective damage, against a 30-round clock, is a finale that ends in a **timeout** —
   and `FightScreen` resolves a mutual wipe as a **player loss**. Stripping Ancient off the
   five makes the type coverage the run actually taught the player *work*, and leaves
-  exactly one true wall to grind: the Titan.
+  exactly one true wall to grind: the Herald.
 - **Cost:** zero new engine vocabulary. `enemies.ts` derives an unsealed champion from the
   authored one by dropping a type — see `run-loop.md` §6.
 
@@ -141,7 +146,7 @@ This is fiction and balance agreeing, which is why it is the shape that shipped:
 direction) — the exact `RosterEntry` snapshot taken at the act's boss win, level and act
 scaling included. Because seals are broken in act order and enter in that order, the
 final battle **escalates across itself**: the Act 1 champion first, the Act 5 champion
-last, then the Endbringer. The run is replayed in ascending order by the things it broke.
+last, then the Herald. The run is replayed in ascending order by the things it broke.
 
 The second-order consequence, named because it is real: this **rewards taking hard
 locations early**, since a champion beaten in Act 2 returns at Act 2 power. That pull is
@@ -150,30 +155,30 @@ the price is paid at the only moment the whole run is on the table at once.
 
 ## 7. The Endbringer
 
-> **2026-09-16, per user direction: the Endbringer is the Titan's HERALD, not the Titan.**
-> What five broken seals let through is the thing that walks ahead of it — its figure is a
-> standard-bearer with the Titan's eye on the banner (`titanspawn-overhaul.md` §2 "Guardian
-> art"). The prose below still reads the Endbringer as the Titan itself, as §1 and §6 do; what
-> the finale's win then binds (the herald, or the Titan through it) is an OPEN question, flagged
-> here rather than rewritten.
+**The Endbringer is the Titan's Herald, not the Titan** (2026-09-16, per user direction —
+it was written as the Titan itself until then, and the figure drawn for it was a colossus;
+both were wrong in kind). **Endbringer is not its name.** It is what the wardens called what
+came through the breach, and the word outlived everyone who knew what it referred to. The
+Titan has no name, and never takes the field.
 
-**Endbringer is not its name.** The Titan has no name. Endbringer is what the wardens
-called it, and the word outlived everyone who knew what it referred to.
+The Herald is the Titan's hand and its voice: it walks ahead of the thing it announces and
+carries the thing's eye on its banner (`titanspawn-overhaul.md` §2 "Guardian art" — the
+standard-bearer, the five broken seals threaded on its pole). It is mono-**Ancient**: it
+resists everything and is super-effective against nothing, the correct silhouette for the
+one piece of the Titan that stands where it can be struck. It is the last combatant to reach
+the field, and it reaches it because the five in front of it are gone.
 
-Mono-**Ancient**: it resists everything and is super-effective against nothing, which is
-the correct silhouette for something that cannot be killed and does not need to hurry. It
-is the last combatant to reach the field, and it reaches it because the five in front of
-it are gone.
+Winning is putting the Herald on the ground, and that *is* the pact. Binding is mutual and
+is offered to whoever has already put the Titan down — and the Herald is the only part of
+the Titan that can be put down, so breaking it is the proof the binding asks for. The run
+ends with a Titan on the player's leash, its Herald broken at the Threshold, and five holes
+in the world where the wardens used to be. The tutorial's "complete the Pact with the Titan"
+is the same sentence from the other side.
 
-Winning is **not** killing it. There is no killing it. Putting it on the ground *is* the
-pact — it is bound to whoever proved they could, and the run ends with a Titan on the
-player's leash and five holes in the world where the wardens used to be.
-
-> 🔒 **OPEN — flag before hardening.** Whether the win condition should be *survival*
-> rather than *reduction to 0 HP* is genuinely undecided. Survival is better fiction (you
-> cannot kill a Titan, so stop pretending the HP bar means that) and would be a new
-> win-condition primitive in the engine. Reduction is free and reads fine. **Reduction is
-> what ships**; the alternative is on record.
+This also closes what used to be open here: whether the win should be *survival* rather
+than *reduction to 0 HP*. A Titan cannot be reduced to 0 HP, which is why survival read as
+the better fiction — but a Herald can. Reduction is the win, and it is now the right one
+rather than the free one.
 
 ## 8. What the fiction constrains
 
@@ -188,7 +193,7 @@ than quietly broken:
    telling the reader to keep the attacker row empty. The fiction is now the second reason:
    a seal is not a weapon.
 3. **Nothing else in the game is mono-Ancient.** The Endbringer is the only one. An
-   ordinary hero or mob with the full wall would read as a second Titan.
+   ordinary hero or mob with the full wall would read as a second Herald.
 
 ## 9. Open, and deliberately so
 

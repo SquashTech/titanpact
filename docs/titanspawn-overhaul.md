@@ -130,19 +130,14 @@ rules and past them:
   standard run up behind the enemy nameplate on purpose. The Endbringer breaks it on every
   edge. The viewBox is the spawn's: a Guardian is bigger because it is DRAWN bigger, never boxed
   bigger, so it stands on the same ground at the same scale.
-- **Two Titan eyes, wrong-placed as a Late's are** (a hump, a palm, a tentacle tip, the canopy, a
-  flank fissure, the ribcage), half-lidded at idle — **and a third in the seal.**
-- **The seal is worn.** `lore.md` §2 says the Ancient half is the champion's duty, not its
-  nature — the piece of the lock it carries — so it is drawn as a THING on the body: a ring in the
-  Ancient hue (the one type-coloured feature that is not the mortal type; a dark under-stroke so
-  it reads on any body) with the lock's own eye at its centre, which is always `stare` and never
-  blinks with the beast's. Where it is worn is the Guardian's identity: the Manticore's collar in
-  the mane, the Kraken's and Dragon's collars, Yugzulach's brand on the chest, the Elder Bough's grown into the trunk,
-  the Skeleton King's crown (the crown's spikes stand on the ring and go with it).
-- **Unsealed is derived.** The finale's `unsealedIdFor` champion is the same drawing with the ring
-  off and a scar where it sat — a dashed hairline and a dark socket — exactly as `enemies.ts
-  unseal` derives the stats. There is no second figure, and the test pins that the unsealed
-  markup carries none of the Ancient hue.
+- **Two Titan eyes, wrong-placed as a Late's are** (a stinger, a palm, a tentacle tip, the canopy,
+  a wing, the ribcage), half-lidded at idle.
+- **No seal on the body** (per user direction, same day). The first draft wore the Ancient half as
+  a ring in the Ancient hue with a third eye in it — a collar, a brand, a crown — and struck it off
+  for the finale's unsealed champion. It did not look right and was removed whole: nothing on a
+  Guardian is Ancient-coloured (the test pins it), and the finale's `unsealedIdFor` champion is
+  the same drawing — `enemies.ts unseal` takes the type off the stats, never anything off the
+  body. The Skeleton King keeps his crown in his own bone tones.
 - **The Endbringer is the Titan's HERALD, not the Titan** (per user direction, same day — the
   first draft drew a colossus and was wrong in kind). Mono-Ancient, so its body is the seal's
   colour: a gaunt hooded bearer with no legs under the hem, a standard taller than the frame in

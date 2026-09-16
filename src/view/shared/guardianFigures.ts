@@ -3,19 +3,15 @@
 // "Guardian art" there). What the spawn are a miniature of, drawn to the same rules and past them:
 //
 // - The body is the MORTAL type's three tones, at a Late's scale or over it: every Guardian
-//   breaks the hero frame on at least one edge, the Endbringer on every edge.
-// - Two Titan eyes, wrong-placed as a Late's are (a hump, a palm, a tentacle tip, the canopy, a
-//   flank fissure, the ribcage), half-lidded at idle, and a THIRD in the seal.
-// - THE SEAL IS WORN. docs/lore.md §2: the Ancient half is not the champion's nature, it is the
-//   piece of the lock it carries — so it is drawn as a thing on the body, a ring in the Ancient
-//   hue (the one type-coloured thing on the figure that is not the mortal type) with the lock's
-//   own eye at its centre, which never blinks with the beast's. Where it is worn is the Guardian's
-//   identity: a collar, a brand, a crown. The UNSEALED champion (enemies.ts `unseal`, the finale)
-//   is the same drawing with the ring taken off it and a scar where it sat — derived, as the
-//   stats are, never a second figure.
-// - The Endbringer is mono-Ancient, so its body is the seal's colour; it wears no seal but the
-//   five it broke — shackle stubs — and one whole chain running off the frame: the sixth seal,
-//   which held (lore §5). Its eyes are the title screen's (titanArt.tsx): lenses, not slits.
+//   breaks the hero frame on at least one edge.
+// - Two Titan eyes, wrong-placed as a Late's are (a stinger, a palm, a tentacle tip, the canopy,
+//   a wing, the ribcage), half-lidded at idle.
+// - The finale's UNSEALED champion (enemies.ts `unseal`) is the same drawing: the type comes off
+//   the stats, not the body. A worn seal — a ring in the Ancient hue with a third eye in it, struck
+//   off for the finale — was built and removed the same day (2026-09-16, per user direction).
+// - The Endbringer is the Titan's HERALD, mono-Ancient and so drawn in Ancient's tones: a
+//   standard-bearer with the Titan's eye on the pennant (the title screen's lens, titanArt.tsx)
+//   and the five broken seals threaded on the pole.
 //
 // Pure — no React, no DOM — so scripts/art/guardian-gallery.ts can write the review page from it.
 
@@ -25,50 +21,19 @@ import { C, D, E, EYE_GRADIENT, G, L, P, R, makeEye, pal, sparks, ticks, type Ey
 
 export type GuardianPose = FigurePose;
 
-/** The seal's ring: one primitive every Guardian wears somewhere, or wears the scar of. */
-type Seal = (x: number, y: number, rx: number, ry: number, eyeR: number, tilt?: number) => string;
-type Draw = (p: Pal, pose: GuardianPose, eye: Eye, seal: Seal, sealed: boolean) => string;
+type Draw = (p: Pal, pose: GuardianPose, eye: Eye) => string;
 
 const ANCIENT = pal(getTypeColor('Ancient'));
 /** Near-black; the Shadow spawn's ink, so Yugzulach is the same dark as its brood. */
 const INK = '#1a1822';
-
-/**
- * The ring: dark under-stroke so it reads on a body of any hue, the Ancient hue over it, a paler
- * inner ring, eight lock-teeth, and the eye — always `stare`: the lock does not flinch when the
- * beast does. Unsealed, the same call draws the scar: a broken hairline where the ring sat and a
- * dark socket where its eye was.
- */
-function makeSeal(p: Pal, eye: Eye, sealed: boolean): Seal {
-  return (x, y, rx, ry, eyeR, tilt = 0) => {
-    if (!sealed) {
-      return G(`rotate(${tilt} ${x} ${y})`, E(x, y, rx, ry, 'none', `stroke="${p.ll}" stroke-width="1.2" stroke-dasharray="4 3" opacity=".4"`) + C(x, y, eyeR * 1.15, p.dd));
-    }
-    const teeth = Array.from({ length: 8 }, (_, i) => {
-      const a = (Math.PI * 2 * i) / 8;
-      const cx = x + Math.cos(a) * rx, cy = y + Math.sin(a) * ry;
-      return L(`M${cx},${cy} L${x + Math.cos(a) * rx * 1.28},${y + Math.sin(a) * ry * 1.28}`, ANCIENT.d, 1.6);
-    }).join('');
-    return G(
-      `rotate(${tilt} ${x} ${y})`,
-      E(x, y, rx, ry, 'none', `stroke="#07050a" stroke-width="5" opacity=".7"`)
-        + E(x, y, rx, ry, 'none', `stroke="${ANCIENT.c}" stroke-width="3"`)
-        + E(x, y, rx * 0.68, ry * 0.68, 'none', `stroke="${ANCIENT.ll}" stroke-width="1" opacity=".7"`)
-        + teeth
-        + C(x, y, eyeR * 1.4, '#07050a')
-        + eye(x, y, eyeR, 'stare')
-    );
-  };
-}
 
 // ---------- the six Guardians ----------
 // Each draw returns untransformed markup, facing right, ground y=88, as a spawn's does.
 const GUARDIANS: Record<string, Draw> = {
   // The Manticore (Beast): a lion's body under a mane of spikes, a face too much like a person's,
   // a scorpion tail curled over the back that strikes forward on an attack. One eye in the face —
-  // the other side is a hollow — and the second on the stinger's bulb. The seal is a collar in
-  // the mane.
-  manticore: (p, po, ey, seal) => {
+  // the other side is a hollow — and the second on the stinger's bulb.
+  manticore: (p, po, ey) => {
     const tail = po === 'attack' ? 'M18,66 C-4,54 4,12 40,6 C70,2 94,12 100,32' : po === 'hurt' ? 'M18,66 C4,72 -8,60 -2,44' : 'M18,66 C0,60 -4,28 20,20 C36,14 48,22 46,36';
     const bulb = po === 'attack' ? [100, 32] : po === 'hurt' ? [-2, 44] : [46, 36];
     const sting = po === 'attack' ? P('104,34 118,44 100,40', p.dd) : po === 'hurt' ? P('-4,48 -6,60 2,48', p.dd) : P('50,38 60,50 46,42', p.dd);
@@ -85,13 +50,12 @@ const GUARDIANS: Record<string, Draw> = {
       + mane + C(76, 50, 19, p.d) + C(76, 50, 14, p.c, 'opacity=".5"')
       + E(88, 46, 11, 13, p.l) + D('M80,38 C84,32 94,32 98,38', p.d) + P('86,44 88,52 91,50', p.d, 'opacity=".5"')
       + R(80, 54 + jaw / 2, 17, 5 + jaw, p.dd, 1.5) + L(`M83,${54 + jaw / 2} v3 M87,${54 + jaw / 2} v3 M91,${54 + jaw / 2} v3 M95,${54 + jaw / 2} v3`, p.ll, 1.2) + (po === 'attack' ? L('M83,64 v-3 M87,65 v-3 M91,65 v-3 M95,64 v-3 M85,60 v2 M89,60 v2 M93,60 v2', p.ll, 1.2) : '')
-      + C(83, 45, 3.6, '#07050a') + ey(92, 45, 3.8)
-      + seal(70, 66, 10, 5, 3, -18);
+      + C(83, 45, 3.6, '#07050a') + ey(92, 45, 3.8);
   },
 
   // Yugzulach (Shadow): a tall hooded dark with a fan of horns, four arms, no legs — it hangs.
-  // One eye in the hood, one in a lower palm. The seal is a brand on the chest.
-  yugzulach: (p, po, ey, seal) => {
+  // One eye in the hood, one in a lower palm.
+  yugzulach: (p, po, ey) => {
     const up = po === 'attack' ? -12 : po === 'hurt' ? 6 : 0;
     const spread = po === 'attack' ? 8 : po === 'hurt' ? -6 : 0;
     const veil = (path: string) => D(path, INK) + D(path, p.c, 'opacity=".42"');
@@ -104,14 +68,12 @@ const GUARDIANS: Record<string, Draw> = {
       + arm(`M38,44 C22,${40 + up} 8,${52 + up} 4,${68 + up}`) + arm('M40,54 C24,62 18,74 12,84') + arm(`M62,44 C78,${40 + up} 92,${52 + up} 96,${68 + up}`) + arm('M60,54 C76,62 82,74 88,84')
       + [[4, 68 + up, -1], [12, 84, -1], [96, 68 + up, 1], [88, 84, 1]].map(([x, y, m]) => L(`M${x},${y} l${4 * m},-5 M${x},${y} l${5 * m},0 M${x},${y} l${3 * m},5`, INK, 2.2)).join('')
       + (po === 'attack' ? sparks(100, 60, p.ll, 3) : '')
-      + ey(51, 24, 5.4, po === 'hurt' ? 'narrow' : po === 'attack' ? 'wide' : 'stare') + ey(88, 82, 3, po === 'hurt' ? 'narrow' : 'open')
-      + seal(50, 50, 9, 9, 3.4);
+      + ey(51, 24, 5.4, po === 'hurt' ? 'narrow' : po === 'attack' ? 'wide' : 'stare') + ey(88, 82, 3, po === 'hurt' ? 'narrow' : 'open');
   },
 
   // The Kraken (Water): a mantle rising past the frame over a ring of arms; the leading arm
-  // whips forward. One eye in the mantle, a small one on the tip of that arm. The seal is a
-  // collar where the mantle meets the arms.
-  kraken: (p, po, ey, seal) => {
+  // whips forward. One eye in the mantle, a small one on the tip of that arm.
+  kraken: (p, po, ey) => {
     const arm = (path: string) => L(path, p.c, 7) + L(path, p.l, 2.2, 'opacity=".45"');
     const lead = po === 'attack' ? 'M72,68 C96,54 118,44 122,62' : po === 'hurt' ? 'M72,68 C86,70 96,80 98,90' : 'M72,68 C92,66 110,72 114,86';
     const tip = po === 'attack' ? [118, 58] : po === 'hurt' ? [96, 86] : [110, 82];
@@ -122,14 +84,13 @@ const GUARDIANS: Record<string, Draw> = {
       + D('M30,40 C14,20 22,-4 46,-16 L44,40 Z', p.d) + D('M78,40 C94,20 86,-4 62,-16 L64,40 Z', p.d)
       + D('M28,64 C22,26 36,-16 54,-30 C72,-16 86,26 80,64 Z', p.c) + D('M40,58 C36,30 44,4 54,-14 C60,4 66,30 62,58 Z', p.l, 'opacity=".3"') + [[46, 10], [60, 2], [50, -8], [64, 20], [42, 28]].map(([x, y]) => C(x, y, 2.4, p.ll, 'opacity=".45"')).join('')
       + D('M24,64 C32,76 76,76 84,64 Z', p.d)
-      + ey(64, 46, 7) + ey(tip[0], tip[1], 3, po === 'hurt' ? 'narrow' : 'open')
-      + seal(54, 66, 25, 6, 3.6);
+      + ey(64, 46, 7) + ey(tip[0], tip[1], 3, po === 'hurt' ? 'narrow' : 'open');
   },
 
   // The Elder Bough (Nature): a trunk on root-legs with a hollow for a face, a canopy of leaf
   // clusters off the top of the frame, and a limb that slams. One eye in the hollow, one in
-  // the canopy as a bloom. The bark has grown around the seal.
-  elderBough: (p, po, ey, seal) => {
+  // the canopy as a bloom.
+  elderBough: (p, po, ey) => {
     const swing = po === 'attack' ? 38 : po === 'hurt' ? -18 : 0;
     const shed = po === 'hurt' ? [[24, 60], [78, 52], [90, 70]].map(([x, y]) => D(`M${x},${y} c6,-6 12,-2 10,4 c-6,4 -12,0 -10,-4 z`, p.c, 'opacity=".7"')).join('') : '';
     const cluster = (x: number, y: number, r: number) => C(x, y, r, p.d) + C(x - r * 0.25, y - r * 0.25, r * 0.7, p.c) + C(x - r * 0.4, y - r * 0.4, r * 0.32, p.l, 'opacity=".5"');
@@ -141,15 +102,13 @@ const GUARDIANS: Record<string, Draw> = {
       + [0, 72, 144, 216, 288].map((a) => G(`rotate(${a} 92 -20)`, E(92, -26, 2.4, 4, p.ll))).join('')
       + limb + shed
       + D('M42,54 C42,42 58,42 58,54 L56,68 L44,68 Z', p.dd)
-      + ey(50, 58, 5.4) + ey(92, -20, 4.2)
-      + seal(50, 78, 12, 5, 3.2);
+      + ey(50, 58, 5.4) + ey(92, -20, 4.2);
   },
 
   // The Dragon (Fire): a coiled wyrm with its wings thrown up and back past the frame, a neck
   // rising to a horned head, a crest of flame down the spine and molten cracks that flare when it
   // breathes and go dark when it is hit. One eye in the head, one on the near wing's membrane.
-  // The seal is a collar at the base of the neck.
-  dragon: (p, po, ey, seal) => {
+  dragon: (p, po, ey) => {
     const hh = po === 'attack' ? 1.6 : po === 'hurt' ? 0.45 : 1;
     const crack = po === 'attack' ? p.ll : po === 'hurt' ? p.d : p.c;
     const flare = po === 'attack' ? 1.15 : po === 'hurt' ? 0.8 : 1;
@@ -167,14 +126,12 @@ const GUARDIANS: Record<string, Draw> = {
       + D('M78,20 C90,10 114,14 120,26 C116,34 102,36 90,34 Z', p.dd) + P('86,18 90,-4 96,20', p.d) + P('96,18 110,0 106,22', p.d)
       + D(`M92,34 L118,30 L114,${38 + jaw} L94,${40 + jaw} Z`, crack) + [96, 102, 108].map((x) => P(`${x - 2},34 ${x},${39 + jaw} ${x + 2},34`, p.ll)).join('')
       + (po === 'attack' ? P('118,32 148,22 140,40 146,52 118,42', p.c) + P('120,36 138,30 136,44', p.ll, 'opacity=".8"') : '')
-      + ey(102, 26, 4.4)
-      + seal(70, 56, 7, 9, 3, 20);
+      + ey(102, 26, 4.4);
   },
 
   // The Skeleton King (Spirit): a crowned skull on a spectral robe, a sceptre raised. One socket
-  // holds an eye and the other is empty; the second eye is behind the ribs. The crown IS the
-  // seal — unsealed, it is a bare skull.
-  skeletonKing: (p, po, ey, seal, sealed) => {
+  // holds an eye and the other is empty; the second eye is behind the ribs.
+  skeletonKing: (p, po, ey) => {
     const jaw = po === 'attack' ? 5 : 0;
     const raise = po === 'attack' ? -18 : po === 'hurt' ? 14 : 0;
     const bone = p.ll;
@@ -187,12 +144,12 @@ const GUARDIANS: Record<string, Draw> = {
       + D('M36,30 C36,4 64,4 64,30 L62,42 L38,42 Z', bone) + C(44, 26, 4.6, '#07050a') + C(56, 26, 4.6, '#07050a') + P('48,34 50,29 52,34', p.dd)
       + R(39, 42, 22, 6 + jaw, p.l, 1) + L(`M42,42 v${4 + jaw} M46,42 v${4 + jaw} M50,42 v${4 + jaw} M54,42 v${4 + jaw} M58,42 v${4 + jaw}`, p.dd, 1)
       + ey(44, 26, 3.4)
-      + seal(50, 12, 13, 4.2, 3) + (sealed ? CROWN : '');
+      + crown(p);
   },
 };
 
-/** The crown's spikes stand on the seal's ring, so they go with it. */
-const CROWN = [40, 46, 54, 60].map((x, i) => P(`${x - 3},10 ${x},${i % 2 ? -8 : -2} ${x + 3},10`, ANCIENT.c) + P(`${x - 1},10 ${x},${i % 2 ? -4 : 0} ${x + 1},10`, ANCIENT.ll, 'opacity=".6"')).join('');
+/** The Skeleton King's crown: a band round the skull and four points, in his own bone tones. */
+const crown = (p: Pal) => E(50, 12, 13, 4.2, 'none', `stroke="${p.d}" stroke-width="3"`) + [40, 46, 54, 60].map((x, i) => P(`${x - 3},10 ${x},${i % 2 ? -8 : -2} ${x + 3},10`, p.d) + P(`${x - 1},10 ${x},${i % 2 ? -4 : 0} ${x + 1},10`, p.ll, 'opacity=".6"')).join('');
 
 // ---------- the Endbringer ----------
 
@@ -255,17 +212,16 @@ interface Figure {
   draw: Draw;
   /** The mortal type; the body's hue. */
   hue: string;
-  sealed: boolean;
 }
 
 function figureFor(heroId: string): Figure | undefined {
   const championId = CHAMPION_IDS.find((id) => id === heroId || unsealedIdFor(id) === heroId);
   if (!championId) return undefined;
   // The mortal half's colour is read off the definition, so a retyped champion recolours itself.
-  return { draw: GUARDIANS[championId], hue: getTypeColor(enemies[championId].types[0]), sealed: heroId === championId };
+  return { draw: GUARDIANS[championId], hue: getTypeColor(enemies[championId].types[0]) };
 }
 
-/** True for any id this module draws: a champion, its unsealed twin, or the Endbringer. */
+/** True for any id this module draws: a champion, its unsealed twin (the same figure), or the Endbringer. */
 export function isGuardianFigure(heroId: string): boolean {
   return heroId === ENDBRINGER_ID || figureFor(heroId) !== undefined;
 }
@@ -283,8 +239,7 @@ export function guardianMarkup(heroId: string, pose: GuardianPose, uid: string):
   const p = pal(figure.hue);
   const eye = makeEye(uid, gradientId);
   const ey: Eye = (x, y, r, st) => eye(x, y, r, st ?? (pose === 'hurt' ? 'narrow' : pose === 'attack' ? 'wide' : 'stare'));
-  const seal = makeSeal(p, eye, figure.sealed);
-  return `${EYE_GRADIENT(gradientId)}${G(t, figure.draw(p, pose, ey, seal, figure.sealed))}${hit}`;
+  return `${EYE_GRADIENT(gradientId)}${G(t, figure.draw(p, pose, ey))}${hit}`;
 }
 
 /**
