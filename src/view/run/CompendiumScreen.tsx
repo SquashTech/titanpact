@@ -1,13 +1,15 @@
 import { useState, type CSSProperties } from 'react';
 import { heroes } from '../../data/heroes';
-import { TYPES } from '../../data/typechart';
+import { TYPES, typeChart } from '../../data/typechart';
 import { equipment, EQUIPMENT_DROP_POOL, UNIQUE_EQUIPMENT } from '../../data/equipment';
-import type { HeroDefinition } from '../../engine/content';
+import type { HeroDefinition, TypeId } from '../../engine/content';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { RARITY_ORDER } from '../../run/equipment';
 import { getTypeAbbr, getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { TypeBadge } from '../shared/TypeBadge';
+import { TypeWheel } from '../shared/TypeWheel';
 import { EquipmentIcon, ItemEffectChips, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import { ItemDetailOverlay } from '../shared/ItemDossier';
 import { HeroDossierOverlay } from './HeroDossierOverlay';
@@ -94,7 +96,78 @@ function CompendiumEquipmentCard({ item, onInspect }: CompendiumEquipmentCardPro
   );
 }
 
-type CompendiumTab = 'starters' | 'recruitable' | 'equipment';
+type CompendiumTab = 'starters' | 'recruitable' | 'equipment' | 'types';
+
+/** The dial's box on the Types tab, px: the panel's width less its padding. */
+const CHART_WHEEL = 320;
+
+/** One row of the readout: every type on one side of a cell, or nothing. */
+function ReadoutRow({ label, types, onPick }: { label: string; types: readonly TypeId[]; onPick: (type: TypeId) => void }) {
+  return (
+    <div className="type-readout-row">
+      <span className="type-readout-label">{label}</span>
+      <span className="type-readout-types">
+        {types.length > 0 ? (
+          types.map((t) => (
+            <button key={t} type="button" className="type-readout-pick" data-sfx="ui.select" onClick={() => onPick(t)}>
+              <TypeBadge type={t} />
+            </button>
+          ))
+        ) : (
+          <span className="matchup-none">None</span>
+        )}
+      </span>
+    </div>
+  );
+}
+
+/**
+ * The type chart as the dial (shared/TypeWheel.tsx), tappable. Tap a glyph and the dial lights
+ * that type both ways — the chords it strikes along in its own colour, the chords that strike it
+ * in theirs — and the readout under it spells the cell out in both directions, every badge a way
+ * to the next type. Ancient has no seat on the dial (it strikes nothing for 2×), so it is reached
+ * through the readout, where it sits in every type's ½× row: the wall, found by running into it.
+ */
+function TypeChartTab() {
+  const [selected, setSelected] = useState<TypeId | null>(null);
+  const attacks = selected ? typeChart[selected] : null;
+  const strikes = attacks ? TYPES.filter((d) => attacks[d] > 1) : [];
+  const glances = attacks ? TYPES.filter((d) => attacks[d] < 1) : [];
+  const weakTo = selected ? TYPES.filter((a) => typeChart[a][selected] > 1) : [];
+  const resists = selected ? TYPES.filter((a) => typeChart[a][selected] < 1) : [];
+
+  return (
+    <div className="type-chart-tab">
+      <TypeWheel
+        className="type-chart-wheel"
+        size={CHART_WHEEL}
+        focus={selected ? [selected] : undefined}
+        focusIncoming
+        clearCentre={false}
+        ring
+        onPickType={(t) => setSelected(t === selected ? null : t)}
+      />
+      {selected ? (
+        <div className="type-readout" style={{ '--type-rgb': getTypeColorRgb(selected), '--type-color': getTypeColor(selected) } as CSSProperties}>
+          <div className="type-readout-head">
+            <span className="type-readout-glyph">
+              <ElementGlyph type={selected} />
+            </span>
+            <span className="type-readout-name">{selected}</span>
+          </div>
+          <div className="type-readout-side">Attacking</div>
+          <ReadoutRow label="Strikes 2×" types={strikes} onPick={setSelected} />
+          <ReadoutRow label="Only ½×" types={glances} onPick={setSelected} />
+          <div className="type-readout-side">Defending</div>
+          <ReadoutRow label="Weak to" types={weakTo} onPick={setSelected} />
+          <ReadoutRow label="Resists" types={resists} onPick={setSelected} />
+        </div>
+      ) : (
+        <p className="type-chart-hint">Tap a type to read its matchups. Every line is a 2× hit, running from the striker to the struck.</p>
+      )}
+    </div>
+  );
+}
 
 export function CompendiumScreen({ heroStars, onClose }: Props) {
   const [tab, setTab] = useState<CompendiumTab>('starters');
@@ -123,9 +196,14 @@ export function CompendiumScreen({ heroStars, onClose }: Props) {
           <button className={`compendium-tab${tab === 'equipment' ? ' active' : ''}`} onClick={() => setTab('equipment')}>
             Equipment
           </button>
+          <button className={`compendium-tab${tab === 'types' ? ' active' : ''}`} onClick={() => setTab('types')}>
+            Types
+          </button>
         </div>
         <div className="screen-scroll">
-          {tab === 'equipment' ? (
+          {tab === 'types' ? (
+            <TypeChartTab />
+          ) : tab === 'equipment' ? (
             <div className="equip-cache-list">
               {EQUIPMENT_LIST.map((item) => (
                 <CompendiumEquipmentCard key={item.id} item={item} onInspect={() => setInspectItemId(item.id)} />

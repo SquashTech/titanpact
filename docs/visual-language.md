@@ -3395,9 +3395,25 @@ dial; the shared rules size and draw it.
 
 Seats considered and left: the Crucible's tempered reveal (a Class wears the hero's type, so a
 focused dial would say it — but that screen is a reading screen, not a seal), the Pact Seal
-between acts (already a ring with five sockets; a second ring under it is a knot), the Companion's
-grown beat (a node screen, not a cinematic; the platform is its stage), and the Compendium as a
-tappable chart — the last being the one worth doing, as a reference rather than an ornament.
+between acts (already a ring with five sockets; a second ring under it is a knot), and the
+Companion's grown beat (a node screen, not a cinematic; the platform is its stage).
+
+### The Compendium's Types tab — the chart, tappable (same day)
+
+The fifth seat, and the one that is a reference rather than an ornament: a **Types** tab on the
+Compendium (`CompendiumScreen.tsx TypeChartTab`) holding the dial still, with `onPickType`
+making every glyph a button on a 22-unit hit circle. A tap lights the type BOTH ways —
+`focusIncoming` lights the chords into it as well as out of it, so the strikes leave in its own
+colour and what strikes it arrives in theirs — and a readout under the dial spells the cell out
+in four rows, Attacking (*Strikes 2×*, *Only ½×*) and Defending (*Weak to*, *Resists*), every
+badge a button to the next type. Two props the seals never needed: `clearCentre={false}`, since
+the centre-fade that keeps the wordmark and the hero off a knot was thinning lit chords through
+a middle with nothing in it, and `ring`, the hairline the chords end on, which the title draws
+itself with ticks. A dimmed glyph stays at half rather than a third here, because it is still a
+button. Ancient has no seat on the dial (it strikes nothing for 2×) and is reached through the
+readout, where it sits in every type's ½× row — the wall, found by running into it; selected,
+it reads *None, None, None, Resists: everything*. The grid in `ReferenceOverlay` stays as the
+mid-fight cell check; this is the one to learn the chart from.
 
 ## Open / future improvements
 

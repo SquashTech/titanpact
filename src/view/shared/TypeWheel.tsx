@@ -19,6 +19,7 @@ import { getTypeColor } from '../combat/typeColors';
 // exposes three things for a host to animate against: a `--wheel-tint` layer (a second web of
 // chords in one colour, `.is-tint`, off until the host fades it up), lit/dim classes off
 // `focus`, and `--wheel-rest`, the angle a lock lands on to put `topType` at twelve o'clock.
+// With `onPickType` the glyphs are buttons and the dial is the Compendium's chart.
 //
 // Geometry is in a fixed 366 box (RING is the title's outer ring's radius, 150) and scales
 // with `size`: the chords end ON the hairline, between its ticks; the glyphs sit just OUTSIDE
@@ -30,6 +31,8 @@ const RING = 150;
 const LABEL = 168;
 const NODE_R = 13;
 const GLYPH = 15;
+/** The tap target under a pickable glyph — a thumb's worth, well past the drawn circle. */
+const HIT_R = 22;
 
 export const WHEEL_TYPES: readonly TypeId[] = TYPES.filter((t) => t !== 'Ancient');
 
@@ -67,24 +70,45 @@ interface Props {
   size?: number;
   /** Types to light: their glyphs at full and the chords they strike along; the rest drop back. Unset lights everything. */
   focus?: readonly TypeId[];
+  /** Also light the chords INTO a focused type — what strikes it, in the strikers' own colours. A reference wants both directions; a seal wants one. */
+  focusIncoming?: boolean;
+  /** Makes every glyph a button. The dial is inert without it. */
+  onPickType?: (type: TypeId) => void;
+  /** Thin the web toward the middle (the default): for a dial with something at its centre. A bare chart keeps its chords whole. */
+  clearCentre?: boolean;
+  /** Draw the hairline the chords end on. The title draws its own, with ticks. */
+  ring?: boolean;
   /** The glyph a lock lands at twelve o'clock (`--wheel-rest`). */
   topType?: TypeId;
   className?: string;
   style?: CSSProperties;
 }
 
-export function TypeWheel({ size = WHEEL_SIZE, focus, topType, className, style }: Props) {
+export function TypeWheel({
+  size = WHEEL_SIZE,
+  focus,
+  focusIncoming,
+  topType,
+  onPickType,
+  clearCentre = true,
+  ring = false,
+  className,
+  style,
+}: Props) {
   // Two dials can share a screen (the act intro under a fanfare), and gradient ids are global.
   const uid = useId().replace(/:/g, '');
+  const webMask = clearCentre ? `url(#${uid}-centre-fade)` : undefined;
   const lit = focus ? new Set<TypeId>(focus) : null;
-  const litClass = (type: TypeId) => (lit ? (lit.has(type) ? ' is-lit' : ' is-dim') : '');
+  const litClass = (on: boolean) => (lit ? (on ? ' is-lit' : ' is-dim') : '');
+  const chordLit = (attacker: TypeId, defender: TypeId) =>
+    !!lit && (lit.has(attacker) || (!!focusIncoming && lit.has(defender)));
 
   return (
     // The wrapper is the fixed box the dial turns inside — a host's spin and lock land on the
     // dial and its nodes, and the wrapper is what positions it.
     <span
-      className={`type-wheel${className ? ` ${className}` : ''}`}
-      aria-hidden="true"
+      className={`type-wheel${onPickType ? ' is-pickable' : ''}${className ? ` ${className}` : ''}`}
+      aria-hidden={onPickType ? undefined : true}
       style={
         {
           '--wheel-size': `${size}px`,
@@ -137,11 +161,13 @@ export function TypeWheel({ size = WHEEL_SIZE, focus, topType, className, style 
           </mask>
         </defs>
 
-        <g className="type-wheel-chords is-native" mask={`url(#${uid}-centre-fade)`} fill="none" strokeLinecap="round">
+        {ring && <circle className="type-wheel-ring" cx={CENTRE} cy={CENTRE} r={RING} fill="none" />}
+
+        <g className="type-wheel-chords is-native" mask={webMask} fill="none" strokeLinecap="round">
           {CHORDS.map((c) => (
             <line
               key={c.id}
-              className={`type-wheel-chord${litClass(c.attacker)}`}
+              className={`type-wheel-chord${litClass(chordLit(c.attacker, c.defender))}`}
               x1={c.from.at[0]}
               y1={c.from.at[1]}
               x2={c.to.at[0]}
@@ -150,7 +176,7 @@ export function TypeWheel({ size = WHEEL_SIZE, focus, topType, className, style 
             />
           ))}
         </g>
-        <g className="type-wheel-chords is-tint" mask={`url(#${uid}-centre-fade)`} fill="none" strokeLinecap="round">
+        <g className="type-wheel-chords is-tint" mask={webMask} fill="none" strokeLinecap="round">
           {CHORDS.map((c) => (
             <line
               key={c.id}
@@ -170,7 +196,14 @@ export function TypeWheel({ size = WHEEL_SIZE, focus, topType, className, style 
                 dial turns under it. It has to be its own element: a CSS transform on the
                 positioning group would replace the translate. The colour is a variable rather
                 than `color` itself so a host's keyframe can carry it to the tint and back. */}
-            <g className={`type-wheel-node${litClass(n.type)}`} style={{ '--node-color': n.color } as CSSProperties}>
+            <g
+              className={`type-wheel-node${litClass(!!lit && lit.has(n.type))}`}
+              style={{ '--node-color': n.color } as CSSProperties}
+              role={onPickType ? 'button' : undefined}
+              aria-label={onPickType ? n.type : undefined}
+              onClick={onPickType ? () => onPickType(n.type) : undefined}
+            >
+              {onPickType && <circle className="type-wheel-hit" r={HIT_R} />}
               <circle r={NODE_R} />
               <svg x={-GLYPH / 2} y={-GLYPH / 2} width={GLYPH} height={GLYPH} viewBox="0 0 24 24" fill="currentColor">
                 {ELEMENT_PATHS[n.type]}

@@ -9106,6 +9106,124 @@ textarea,
   padding: 2px 2px 14px;
 }
 
+/* --- Compendium: the Types tab (CompendiumScreen.tsx TypeChartTab) ------
+   The chart as the title's dial (.type-wheel), held still and tappable. A
+   tap lights one type both ways — its strikes in its own colour, what
+   strikes it in theirs — and the readout under it spells the cell out, each
+   badge a way to the next type. The grid in ReferenceOverlay is the same
+   chart as a table; this is the one to learn it from, that is the one to
+   check a cell in mid-fight. */
+.type-chart-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0 14px;
+}
+
+.type-chart-wheel {
+  position: relative;
+  flex: none;
+}
+
+.type-chart-hint {
+  max-width: 300px;
+  margin: 2px 0 0;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.type-readout {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 12px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(var(--type-rgb), 0.35);
+  background: linear-gradient(180deg, rgba(var(--type-rgb), 0.14), rgba(var(--type-rgb), 0.04));
+  animation: evolve-veil-in 0.25s ease-out;
+}
+
+.type-readout-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.type-readout-glyph {
+  display: inline-flex;
+  width: 26px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--type-color);
+  background: rgba(6, 12, 18, 0.7);
+  box-shadow: 0 0 0 1px var(--type-color), 0 0 10px rgba(var(--type-rgb), 0.6);
+}
+
+.type-readout-glyph svg {
+  width: 15px;
+  height: 15px;
+}
+
+.type-readout-name {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--type-color);
+}
+
+.type-readout-side {
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.type-readout-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  min-height: 22px;
+}
+
+.type-readout-label {
+  flex: none;
+  width: 74px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 22px;
+  color: var(--text);
+  opacity: 0.85;
+}
+
+.type-readout-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* A badge as a button: the badge draws itself, the button only takes the tap. */
+.type-readout-pick {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  display: inline-flex;
+}
+
+.type-readout-pick:active {
+  filter: brightness(1.25);
+}
+
 /* .pick-card is authored as a div; as a <button> it needs the two resets a
    button element does not inherit. */
 .compendium-tile {
@@ -21667,6 +21785,38 @@ textarea,
 
 .type-wheel-node.is-lit svg {
   opacity: 1;
+}
+
+/* Pickable (`onPickType`): the glyphs are buttons, on a hit circle a thumb's
+   size rather than the drawn one. Nothing else on the dial takes a tap. */
+.type-wheel.is-pickable .type-wheel-node {
+  pointer-events: auto;
+  cursor: pointer;
+  transition: opacity 0.25s ease-out;
+}
+
+.type-wheel-ring {
+  stroke: rgba(224, 166, 60, 0.18);
+  stroke-width: 1;
+}
+
+/* A dimmed glyph is still a button here, so it stays legible as one. */
+.type-wheel.is-pickable .type-wheel-node.is-dim {
+  opacity: 0.5;
+}
+
+.type-wheel-node .type-wheel-hit {
+  fill: transparent;
+  stroke: none;
+  pointer-events: all;
+}
+
+.type-wheel.is-pickable .type-wheel-node:active circle:not(.type-wheel-hit) {
+  fill: color-mix(in srgb, currentColor 25%, rgba(6, 12, 18, 0.92));
+}
+
+.type-wheel.is-pickable .type-wheel-chord {
+  transition: opacity 0.25s ease-out;
 }
 
 /* The lock: two turns on the launch's curve — nearly all of it in the first
