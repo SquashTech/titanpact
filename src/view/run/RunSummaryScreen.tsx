@@ -99,7 +99,6 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
             value={reachedLabel(run.actNumber)}
           />
           <Stat label="Encounters won" value={String(run.encountersWon)} />
-          <Stat label="Gold" value={String(run.gold)} />
         </div>
 
         {run.roster.length > 0 && (
