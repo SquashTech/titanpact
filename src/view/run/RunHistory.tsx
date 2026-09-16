@@ -2,12 +2,9 @@ import { useState } from 'react';
 import { rosterHeroes } from '../../data/content';
 import { locations } from '../../data/locations';
 import { progressionTable } from '../../data/progression';
-import { relics } from '../../data/relics';
 import { formatPlaytime, type RunRecord, type RunRecordHero } from '../../run/profile';
 import { SEAL_ACTS } from '../../run/state';
-import { RelicIcon } from '../shared/EquipmentBox';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { stackedRelicName } from '../shared/relicStacks';
 
 const ACT_ROMAN = ['I', 'II', 'III', 'IV', 'V'];
 
@@ -36,8 +33,8 @@ function pathName(hero: RunRecordHero): string | null {
 
 /**
  * One finished run, folded to a line — the outcome, where and when, the team's faces — and
- * opened on a tap to the roster by name, level and form, with the Banners under it. The same
- * facts the summary screen showed the night it happened, kept.
+ * opened on a tap to the roster by name, level and form. The same facts the summary screen
+ * showed the night it happened, kept.
  */
 function RunHistoryRow({ record }: { record: RunRecord }) {
   const [open, setOpen] = useState(false);
@@ -48,10 +45,6 @@ function RunHistoryRow({ record }: { record: RunRecord }) {
     record.durationMs !== null ? formatPlaytime(record.durationMs) : null,
     `${record.encountersWon} ${record.encountersWon === 1 ? 'fight' : 'fights'} won`,
   ].filter((f): f is string => !!f);
-
-  const relicCounts = new Map<string, number>();
-  for (const id of record.relicIds) relicCounts.set(id, (relicCounts.get(id) ?? 0) + 1);
-  const banners = [...relicCounts].filter(([id]) => relics[id]);
 
   return (
     <div className={`run-history-row is-${record.outcome}${open ? ' is-open' : ''}`}>
@@ -106,16 +99,6 @@ function RunHistoryRow({ record }: { record: RunRecord }) {
               </div>
             );
           })}
-          {banners.length > 0 && (
-            <div className="run-history-banners">
-              {banners.map(([id, count]) => (
-                <span key={id} className="roster-peek-relic">
-                  <RelicIcon relicId={id} className="roster-peek-relic-icon" />
-                  {stackedRelicName(relics[id], count)}
-                </span>
-              ))}
-            </div>
-          )}
         </div>
       )}
     </div>

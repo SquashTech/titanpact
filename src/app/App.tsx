@@ -517,7 +517,6 @@ export function App() {
       locationId: playerRun.actNumber <= SEAL_ACTS ? playerRun.locationIds[playerRun.actNumber - 1] ?? null : null,
       encountersWon: playerRun.encountersWon,
       roster: playerRun.roster.map((entry) => ({ heroId: entry.heroId, level: levelOf(entry), evolutionPathId: currentEvolutionPathId(entry) })),
-      relicIds: [...playerRun.relics],
     };
     const before = readProfile();
     const after = updateProfile((current) => recordRunEnded(current, end, now));

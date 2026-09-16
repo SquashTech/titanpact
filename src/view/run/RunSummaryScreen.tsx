@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
-import { relics } from '../../data/relics';
 import { classes } from '../../data/classes';
 import { locations } from '../../data/locations';
 import { progressionTable } from '../../data/progression';
@@ -9,12 +8,9 @@ import { chosenClass } from '../../run/classes';
 import { locationForAct } from '../../run/locations';
 import { hasEvolutionStar, type Profile } from '../../run/profile';
 import { currentEvolutionPathId } from '../../run/progression';
-import type { RelicDefinition } from '../../run/relics';
 import type { HeroDefinition } from '../../engine/content';
 import { SEAL_ACTS, type RosterEntry, type RunState } from '../../run/state';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
-import { RelicIcon } from '../shared/EquipmentBox';
-import { stackedGrantSummary, stackedRelicName } from '../shared/relicStacks';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { levelOf } from '../../run/growth';
 import { statScaleFor } from '../../run/statScale';
@@ -74,13 +70,6 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
   const won = outcome === 'win';
   const place = run.locationIds.length > 0 ? locationForAct(run.locationIds, run.actNumber) : null;
 
-  /** Folded by id, the same way RosterPeek shows them: a stacked relic is one chip with its total. */
-  const relicCounts = new Map<string, number>();
-  for (const id of run.relics) relicCounts.set(id, (relicCounts.get(id) ?? 0) + 1);
-  const ownedRelics = [...relicCounts]
-    .map(([id, count]) => ({ relic: relics[id], count }))
-    .filter((r): r is { relic: RelicDefinition; count: number } => !!r.relic);
-
   // Diffed rather than passed in, so the screen cannot disagree with what was actually recorded:
   // a hero's star is NEW when the form it finished in is in the profile after and not before.
   const starsAwarded = run.roster.filter((entry) => {
@@ -111,26 +100,7 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
           />
           <Stat label="Encounters won" value={String(run.encountersWon)} />
           <Stat label="Gold" value={String(run.gold)} />
-          <Stat label="Relics" value={String(run.relics.length)} />
         </div>
-
-        {ownedRelics.length > 0 && (
-          <div className="run-summary-relics">
-            {ownedRelics.map(({ relic, count }) => {
-              const summary = count > 1 ? stackedGrantSummary(relic, count) : '';
-              return (
-                <span
-                  key={relic.id}
-                  className="roster-peek-relic"
-                  title={(summary && `Team-wide ${summary}.`) || relic.description || relic.name}
-                >
-                  <RelicIcon relicId={relic.id} className="roster-peek-relic-icon" />
-                  {stackedRelicName(relic, count)}
-                </span>
-              );
-            })}
-          </div>
-        )}
 
         {run.roster.length > 0 && (
           <>

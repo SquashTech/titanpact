@@ -30,11 +30,11 @@ function finished(heroId: string, kind: 'offensive' | 'defensive' | 'utility', l
 }
 
 function cleared(roster: RunRecordHero[]): RunEnd {
-  return { outcome: 'win', actReached: 6, locationId: null, encountersWon: 16, roster, relicIds: ['bannerOfTheBulwark'] };
+  return { outcome: 'win', actReached: 6, locationId: null, encountersWon: 16, roster };
 }
 
 function wiped(actReached: number, roster: RunRecordHero[]): RunEnd {
-  return { outcome: 'loss', actReached, locationId: 'wildsEdge', encountersWon: 4, roster, relicIds: [] };
+  return { outcome: 'loss', actReached, locationId: 'wildsEdge', encountersWon: 4, roster };
 }
 
 // --- Verbs ---
@@ -145,12 +145,9 @@ test('profile: the history is capped, and it is the oldest that falls off', () =
 
 test('profile: a record is written from a copy, so the run state it came from cannot change it', () => {
   const roster = [finished('rime', 'offensive')];
-  const relicIds = ['bannerOfTheBulwark'];
-  const profile = recordRunEnded(createProfile(), { ...cleared(roster), relicIds }, 1_000);
+  const profile = recordRunEnded(createProfile(), cleared(roster), 1_000);
   roster[0].level = 1;
-  relicIds.push('bannerOfTheWarcry');
   assert.strictEqual(profile.runHistory[0].roster[0].level, 30);
-  assert.deepStrictEqual(profile.runHistory[0].relicIds, ['bannerOfTheBulwark']);
 });
 
 test('profile: furthest act only ever climbs', () => {
@@ -248,7 +245,6 @@ test('profile: a history line with no outcome is dropped; a readable one keeps w
           endedAt: 'yesterday',
           durationMs: -4,
           roster: [{ heroId: 'rime', level: 'high', evolutionPathId: 'rime-aPathThatWasCut' }, { level: 4 }, { heroId: 'goblin', level: 2 }],
-          relicIds: ['bannerOfTheBulwark', 7],
           starsEarned: ['rime-offensive', 'rime-aPathThatWasCut'],
         },
       ],
@@ -265,7 +261,6 @@ test('profile: a history line with no outcome is dropped; a readable one keeps w
     // A companion's body is not a recruitable hero, and it still finished the run.
     { heroId: 'goblin', level: 2, evolutionPathId: null },
   ]);
-  assert.deepStrictEqual(record.relicIds, ['bannerOfTheBulwark']);
   assert.deepStrictEqual(record.starsEarned, ['rime-offensive']);
 });
 

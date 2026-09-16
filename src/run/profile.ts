@@ -76,8 +76,6 @@ export interface RunRecord {
   encountersWon: number;
   /** The roster at the end, in roster order. */
   roster: RunRecordHero[];
-  /** Banners held, duplicates stacking. */
-  relicIds: string[];
   /** The Evolution path ids this run's clear starred for the first time — a loss stars nothing. */
   starsEarned: string[];
 }
@@ -145,7 +143,6 @@ export function recordRunEnded(profile: Profile, end: RunEnd, now: number): Prof
   const record: RunRecord = {
     ...end,
     roster: end.roster.map((hero) => ({ ...hero })),
-    relicIds: [...end.relicIds],
     endedAt: now,
     durationMs: profile.runStartedAtPlaytimeMs === null ? null : Math.max(0, profile.playtimeMs - profile.runStartedAtPlaytimeMs),
     starsEarned,
@@ -258,7 +255,6 @@ function decodeRunRecord(raw: unknown, knownPathIds?: ReadonlySet<string>): RunR
     locationId: typeof raw.locationId === 'string' && raw.locationId.length > 0 ? raw.locationId : null,
     encountersWon: count(raw.encountersWon),
     roster,
-    relicIds: stringList(raw.relicIds),
     starsEarned: stringList(raw.starsEarned).filter((id) => knownPath(id) !== null),
   };
 }

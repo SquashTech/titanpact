@@ -8598,13 +8598,6 @@ textarea,
   font-size: 13px;
 }
 
-.run-summary-relics {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 5px;
-}
-
 .run-summary-section-title {
   padding-top: 4px;
   font-size: 9.5px;
@@ -9073,13 +9066,6 @@ textarea,
 
 .run-history-hero-star {
   color: var(--accent);
-}
-
-.run-history-banners {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 6px;
 }
 
 /* Two across, three down (2026-09-07, per user direction): the roster reads as a squad at a
