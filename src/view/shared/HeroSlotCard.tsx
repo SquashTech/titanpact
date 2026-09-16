@@ -8,6 +8,7 @@ import { getTypeColor } from '../combat/typeColors';
 import { HeroPortrait } from './HeroPortrait';
 import { TypeBadge } from './TypeBadge';
 import { ItemBox, slotBoxes } from './EquipmentBox';
+import { MasteryPips } from './MasteryPips';
 import { useLongPress } from './MoveTile';
 
 /**
@@ -116,6 +117,9 @@ export function HeroSlotCard({
           ))}
         </div>
       </div>
+
+      {/* Where the hero stands on its Mastery track (run/mastery.ts), read at a glance under the rig. */}
+      <MasteryPips mastery={entry.mastery} className="roster-mgmt-mastery" />
 
       {footer}
     </div>

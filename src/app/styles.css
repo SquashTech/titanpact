@@ -6756,9 +6756,17 @@ textarea,
    so it is carried by colour and the arrows, not by prose. */
 .move-eff-priority {
   display: inline-flex;
-  align-items: center;
+  /* Baseline, not center: the row aligns its chips on the baseline, and a centred chip's own
+     baseline is the glyph's bottom edge — which put the bracket a few px above the line. */
+  align-items: baseline;
   gap: 2px;
   opacity: 1;
+}
+
+/* Seated on the baseline the glyph would ride high; sink it to the depth the inline rule gives it. */
+.move-eff-priority .stat-glyph {
+  position: relative;
+  top: 0.22em;
 }
 
 .move-eff-priority.is-fast {
@@ -20335,6 +20343,12 @@ textarea,
 
 .pick-card.is-locked .mastery-pip.is-gain {
   box-shadow: inset 0 0 0 1.5px #6f7688;
+}
+
+/* On the squad card the row is a strip under the rig, the width of the sockets above it. */
+.roster-mgmt-mastery {
+  margin-top: 1px;
+  padding: 3px 0 2px;
 }
 
 /* On the sheet the row sits left under the type badges, at the badges' own width. */

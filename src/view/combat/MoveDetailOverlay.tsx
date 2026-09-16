@@ -733,7 +733,8 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
               }
             />
           )}
-          {move.typeFollowsUser && (
+          {/* Only while the type is unresolved: drawn at a hero's type (the Crucible, the fight), the badge already says it. */}
+          {move.typeFollowsUser && !attacker && !caster && (
             <EffectRow
               glyph={<ElementGlyph type={move.type} />}
               color={getTypeColor(move.type)}

@@ -132,9 +132,9 @@ export function CrucibleScreen({ run, onRunChange, onContinue }: Props) {
     setArmedRosterId(rosterId);
   }
 
+  // No sound of its own: a `resolve-button` already plays `ui.confirm` on the press (uiSfx.ts).
   function enter() {
     if (!armedEntry) return;
-    playSfx('ui.confirm');
     setChosenRosterId(armedEntry.rosterId);
   }
 
