@@ -23,6 +23,7 @@
   .end .poses { padding-top: 64px; } .end .pose svg { width: 160px; height: 160px; }
   /* #id in the URL shows the page from that Guardian down. */
   body:has(.line:target) header, .line:has(~ .line:target) { display: none; }
+  @media (max-width: 900px) { .line, .tiers { grid-template-columns: 1fr; } header { grid-template-columns: 1fr; } .rail { padding-bottom: 8px; } }
   @media (prefers-reduced-motion: no-preference) { .pose svg .halo { animation: breathe 2.6s ease-in-out infinite; } }
   @keyframes breathe { 0%,100% { opacity: .22 } 50% { opacity: .38 } }
 </style>
