@@ -33,6 +33,8 @@ interface Props {
   onStartCrucibleTestRun: () => void;
   /** TEMPORARY DEV/TEST — src/run/statusTestFight.ts. */
   onStartStatusTestFight: () => void;
+  /** TEMPORARY DEV/TEST — App.tsx createTitanEyesTestRun. Remove with its Dev-menu row. */
+  onStartTitanEyesTestRun: () => void;
 }
 
 const MOTE_COUNT = 26;
@@ -105,6 +107,7 @@ export function TitleScreen({
   onStartLevel4TestRun,
   onStartCrucibleTestRun,
   onStartStatusTestFight,
+  onStartTitanEyesTestRun,
 }: Props) {
   const [showCompendium, setShowCompendium] = useState(false);
   const [showRecords, setShowRecords] = useState(false);
@@ -299,6 +302,9 @@ export function TitleScreen({
             </button>
             <button className="title-dev-item" onClick={() => runDev(onStartCrucibleTestRun)}>
               🧪 Test: Crucible
+            </button>
+            <button className="title-dev-item" onClick={() => runDev(onStartTitanEyesTestRun)}>
+              👁️ Test: Titan's Eyes
             </button>
           </div>
         )}

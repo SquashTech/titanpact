@@ -50,7 +50,8 @@ import { absorbCompanions, companionCandidate, companionJoinDue, joinCompanion }
 import type { CombatState } from '../engine/state';
 import { koRosterIdsOf } from '../run/buildCombatState';
 import { WoundsError, buyMend, recordWounds, mendRoster } from '../run/wounds';
-import { enemies, finaleEnemies, ENDBRINGER_ID, titanEyes, EYE_IDS } from '../data/enemies';
+import { enemies, finaleEnemies, ENDBRINGER_ID, MANTICORE_ID, titanEyes, EYE_IDS } from '../data/enemies';
+import { relics } from '../data/relics';
 import { ActIntroScreen } from '../view/run/ActIntroScreen';
 import { PactSealScreen } from '../view/run/PactSealScreen';
 import { TitanWakeScreen } from '../view/run/TitanWakeScreen';
@@ -59,11 +60,12 @@ import {
   equipItem,
   pickWeightedEquipment,
   rarityWeightsFor,
+  BASE_ITEM_SLOTS,
   EQUIPMENT_DROP_CHANCE,
   LOOT_SOURCE,
   type EquipmentDefinition,
 } from '../run/equipment';
-import { createRunState, createRosterEntry, addRosterEntry, FINALE_ACT, ROSTER_CAP, TOTAL_ACTS } from '../run/state';
+import { createRunState, createRosterEntry, addRosterEntry, FINALE_ACT, ROSTER_CAP, SEAL_ACTS, TOTAL_ACTS } from '../run/state';
 import {
   deriveContractOffer,
   claimContract,
@@ -77,7 +79,7 @@ import {
   type RosterReplaceCandidate,
 } from '../run/recruitment';
 import { guildHallOffers } from '../data/recruitment';
-import { SCROLL_CACHE_COUNT, buyScroll, canBuyScroll } from '../run/mastery';
+import { MASTERY_CAP, SCROLL_CACHE_COUNT, buyScroll, canBuyScroll } from '../run/mastery';
 import { rollGuildHallOffers, type GuildHallOffers } from '../run/shop';
 import { ConsumableError, buyConsumable, grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse } from '../run/consumables';
 import { guildHallEntry } from '../run/guildRecruit';
@@ -107,8 +109,8 @@ import {
   type EncounterNodeType,
   type Encounter,
 } from '../run/enemyGen';
-import { encounterScaling } from '../run/difficulty';
-import { applyEncounterLevels, encounterXpKind, levelOf, xpForEncounter, xpForLevel, type HeroLevelUp } from '../run/growth';
+import { CHAMPION_LEVEL_BONUS, encounterScaling, enemyLevelFor } from '../run/difficulty';
+import { ENCOUNTERS_PER_ACT, MAX_LEVEL, applyEncounterLevels, encounterXpKind, levelOf, xpForEncounter, xpForLevel, type HeroLevelUp } from '../run/growth';
 import { generateItinerary, locationForAct } from '../run/locations';
 import { encounterKindOf, encounterSeedFor, nodeEncounter } from '../run/encounters';
 import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
@@ -127,6 +129,7 @@ import {
   anyoneCanReceive,
   sellItem,
   recordBrokenSeal,
+  grantRelicReward,
   GOLD_REWARD_RANGE,
   rollGoldRange,
 } from '../run/runProgress';
@@ -292,6 +295,47 @@ function createLevel4TestRun(): RunState {
     map: generateMap(randomSeed()),
     locationIds: generateItinerary(randomSeed()),
   };
+}
+
+/**
+ * TEMPORARY DEV/TEST — the Titan's Eyes, repeatedly (docs/titan-eyes.md): a finale-act run with
+ * six random heroes at the cap, each FINISHED the way a contract hero is (its Evolution walked,
+ * its signature in the kit — generateEncounter's own progression walk), wearing three items on
+ * Act 5's elite curve in three distinct families, under five Banners, the Vigil and the Herald
+ * already behind it so the only node open is the Eyes. Remove with its TitleScreen row.
+ */
+function createTitanEyesTestRun(): RunState {
+  const seed = randomSeed();
+  // Two draws, since an encounter is sized by its node kind and a squad is validated at four.
+  const scaling = { level: MAX_LEVEL, mastery: MASTERY_CAP };
+  const four = generateEncounter('fight', seed, heroes, { heroCount: 4, scaling, progression: progressionTable });
+  const two = generateEncounter('fight', seed + 1, heroes, { heroCount: 2, scaling, progression: progressionTable, excludeHeroIds: four.run.roster.map((r) => r.heroId) });
+  const weights = rarityWeightsFor(SEAL_ACTS, 'elite');
+  let run = createRunState(400);
+  for (const entry of [...four.run.roster, ...two.run.roster]) {
+    let loadout = entry.equipment;
+    const families = new Set<string>();
+    for (let tries = 0; families.size < BASE_ITEM_SLOTS && tries < 40; tries++) {
+      const item = rollEquipmentDrops(1, weights)[0];
+      const family = item.familyId ?? item.id;
+      if (!item || families.has(family)) continue;
+      families.add(family);
+      loadout = equipItem(loadout, item.id);
+    }
+    run = addRosterEntry(run, { ...entry, equipment: loadout });
+  }
+  const locationIds = generateItinerary(seed);
+  run = { ...run, actNumber: FINALE_ACT, map: generateMap(seed, FINALE_ACT), locationIds, encountersWon: SEAL_ACTS * ENCOUNTERS_PER_ACT };
+  const bannerIds = Object.keys(relics);
+  for (let act = 1; act <= SEAL_ACTS; act++) {
+    const location = locationForAct(locationIds, act);
+    const championId = location.guardianFinalEnemyId ?? MANTICORE_ID;
+    run = recordBrokenSeal(run, { actNumber: act, locationId: location.id, championId, level: enemyLevelFor('boss', act) + CHAMPION_LEVEL_BONUS, statGrants: {}, growthStatGrants: {} });
+    run = grantRelicReward(run, bannerIds[Math.floor(Math.random() * bannerIds.length)]);
+  }
+  // The corridor is Vigil → Herald → Eyes; stand past the first two so the Eyes are what is open.
+  for (const row of run.map!.rows.slice(0, 2)) run = advanceToNode(run, row[0]);
+  return run;
 }
 
 /** TEST FIXTURE — arms the scripted opener's Duskling with a Dagger so the equip-inspect UI has an item from turn one. */
@@ -871,6 +915,12 @@ export function App() {
     setScreen({ kind: 'crucible', next: { kind: 'map' } });
   }
 
+  /** TEMPORARY DEV/TEST — see createTitanEyesTestRun. */
+  function handleStartTitanEyesTestRun() {
+    setPlayerRun(createTitanEyesTestRun());
+    setScreen({ kind: 'map' });
+  }
+
   /** TEMPORARY DEV/TEST — see createLevel4TestRun. */
   function handleStartLevel4TestRun() {
     setPlayerRun(createLevel4TestRun());
@@ -960,6 +1010,7 @@ export function App() {
           onStartLevel4TestRun={handleStartLevel4TestRun}
           onStartCrucibleTestRun={handleStartCrucibleTestRun}
           onStartStatusTestFight={handleStatusTestFight}
+          onStartTitanEyesTestRun={handleStartTitanEyesTestRun}
         />
       )}
 
