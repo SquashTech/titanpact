@@ -8582,22 +8582,6 @@ textarea,
   color: var(--text-dim);
 }
 
-/* The run's four figures, on the same ledger the lifetime record keeps. Tighter
-   than Records' — this is one panel among several on a screen that also has to
-   show the team that finished. */
-.run-summary-stats.ledger {
-  gap: 0;
-  padding: 4px 6px 2px;
-}
-
-.run-summary-stats .ledger-line {
-  padding: 3px 2px;
-}
-
-.run-summary-stats .ledger-value {
-  font-size: 13px;
-}
-
 .run-summary-section-title {
   padding-top: 4px;
   font-size: 9.5px;

@@ -32,11 +32,6 @@ function actLabel(actNumber: number): string {
   return ACT_ROMAN[actNumber - 1] ?? String(actNumber);
 }
 
-/** How far a run got. The finale is past the fifth seal, not a sixth act, so it is named instead of counted. */
-function reachedLabel(actNumber: number): string {
-  return actNumber > SEAL_ACTS ? 'Finale' : `${actLabel(actNumber)} / ${SEAL_ACTS}`;
-}
-
 /** The name of the last Evolution taken — the one word that says what this hero became. */
 function evolutionName(entry: RosterEntry): string | null {
   const chosen = currentEvolutionPathId(entry);
@@ -48,21 +43,12 @@ function evolutionName(entry: RosterEntry): string | null {
   return null;
 }
 
-/** One line of what the run came to. Same ledger the Records screen keeps — see RecordsScreen. */
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="ledger-line">
-      <span className="ledger-label">{label}</span>
-      <span className="ledger-lead" aria-hidden="true" />
-      <span className="ledger-value">{value}</span>
-    </div>
-  );
-}
-
 /**
- * The end of a run, which used to be a heading and a button. Three things, in the order they
- * matter: what the run became (the roster that finished it, each hero still openable), how far
- * it got, and what it added to the profile — the last being the only reason to press start again.
+ * The end of a run, which used to be a heading and a button. What it came to, in the order it
+ * matters: how far it got (one sentence, the act and the place), what it became (the roster that
+ * finished it, each hero still openable), and what it added to the profile — the last being the
+ * only reason to press start again. No ledger: the figures it used to carry (gold, fights won,
+ * Banners) were the run's bookkeeping, not its story (2026-09-16, per user direction).
  */
 export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, onNewRun, onReturnToTitle }: Props) {
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
@@ -90,15 +76,8 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
             ? `All ${SEAL_ACTS} Guardians have fallen, the Herald with them, and the Titan's Eyes have closed.`
             : run.actNumber > SEAL_ACTS
               ? `Your squad fell at the last pact${place ? ` · ${place.name}` : ''}.`
-              : `Your squad fell in Act ${actLabel(run.actNumber)}${place ? ` · ${place.name}` : ''}.`}
+              : `Your squad fell in Act ${actLabel(run.actNumber)} of ${actLabel(SEAL_ACTS)}${place ? ` · ${place.name}` : ''}.`}
         </p>
-
-        <div className="ledger run-summary-stats">
-          <Stat
-            label="Act reached"
-            value={reachedLabel(run.actNumber)}
-          />
-        </div>
 
         {run.roster.length > 0 && (
           <>
