@@ -13,7 +13,8 @@
  * filenames — a given URL's bytes can never change.
  */
 
-const VERSION = 'v2';
+// v3: the app icon became the Titan's eye (scripts/generate-icons.mjs); the precached PNGs changed under the same names.
+const VERSION = 'v3';
 const SHELL_CACHE = `titanpact-shell-${VERSION}`;
 const ASSET_CACHE = `titanpact-assets-${VERSION}`;
 const OWNED = [SHELL_CACHE, ASSET_CACHE];

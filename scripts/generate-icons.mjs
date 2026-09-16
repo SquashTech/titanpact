@@ -1,6 +1,9 @@
-// Renders the PWA app icons from code so the mark stays in sync with the title screen's
-// palette (styles.css --accent, .title-logo gradient). Pure Node: shapes are evaluated in
-// normalized 0..1 space, supersampled, and encoded as 8-bit RGBA PNG by hand.
+// Renders the PWA app icons from code so the mark stays in sync with the game: the Titan's
+// eye (2026-09-16, per user direction — it was the T monogram), the lens the title screen,
+// TitanWakeScreen and every generated figure carry, lit pale gold at the centre and burning
+// out through the run's mythic red (figurePrimitives.ts EYE_GRADIENT), with a slit pupil and a
+// red halo on the --bg dark. Pure Node: shapes are evaluated in normalized 0..1 space,
+// supersampled, and encoded as 8-bit RGBA PNG by hand.
 //
 //   node scripts/generate-icons.mjs
 import { deflateSync } from 'node:zlib';
@@ -11,49 +14,59 @@ import { fileURLToPath } from 'node:url';
 const OUT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'icons');
 
 const BG = [0x0f, 0x11, 0x17]; // --bg
-const GLOW = [0xe0, 0xa6, 0x3c]; // --accent
-// The .title-logo linear-gradient, top to bottom.
-const GOLD_STOPS = [
-  [0.0, [0xff, 0xe7, 0xb0]],
-  [0.38, [0xf0, 0xbc, 0x5f]],
-  [0.62, [0xe0, 0xa6, 0x3c]],
-  [1.0, [0xa4, 0x70, 0x1f]],
+const GLOW = [0xe0, 0x39, 0x3f]; // --tier-mythic, the halo
+const PUPIL = [0x07, 0x05, 0x0a];
+// EYE_GRADIENT (figurePrimitives.ts), centre to rim.
+const EYE_STOPS = [
+  [0.0, [0xf6, 0xdc, 0x96]],
+  [0.42, [0xe9, 0xa2, 0x4e]],
+  [0.78, [0xe0, 0x39, 0x3f]],
+  [1.0, [0x6e, 0x1a, 0x20]],
 ];
+// The lens: half-width and half-height at the centre, in the 0..1 frame.
+const LENS_W = 0.4;
+const LENS_H = 0.19;
+const PUPIL_W = 0.042;
 
 const SS = 3; // supersample factor per axis
 
-function goldAt(t) {
+function eyeAt(t) {
   const u = Math.min(1, Math.max(0, t));
-  for (let i = 1; i < GOLD_STOPS.length; i++) {
-    const [p0, c0] = GOLD_STOPS[i - 1];
-    const [p1, c1] = GOLD_STOPS[i];
+  for (let i = 1; i < EYE_STOPS.length; i++) {
+    const [p0, c0] = EYE_STOPS[i - 1];
+    const [p1, c1] = EYE_STOPS[i];
     if (u <= p1) {
       const k = p1 === p0 ? 0 : (u - p0) / (p1 - p0);
       return [0, 1, 2].map((ch) => c0[ch] + (c1[ch] - c0[ch]) * k);
     }
   }
-  return GOLD_STOPS[GOLD_STOPS.length - 1][1];
+  return EYE_STOPS[EYE_STOPS.length - 1][1];
 }
 
 function mix(a, b, k) {
   return [0, 1, 2].map((ch) => a[ch] + (b[ch] - a[ch]) * k);
 }
 
-function inRoundedRect(x, y, x0, y0, x1, y1, r) {
-  if (x < x0 || x > x1 || y < y0 || y > y1) return false;
-  const cx = Math.min(Math.max(x, x0 + r), x1 - r);
-  const cy = Math.min(Math.max(y, y0 + r), y1 - r);
-  return (x - cx) ** 2 + (y - cy) ** 2 <= r * r;
+/**
+ * The lens, pointed at both corners: inside where |dy| is under a parabola that peaks at
+ * LENS_H in the middle and reaches 0 at ±LENS_W — the same shape titanArt.tsx's LENS draws with
+ * two quadratic curves. Returns the lens-relative radius (0 centre .. 1 rim) or -1 outside;
+ * `scale` shrinks it toward the centre for the maskable variant.
+ */
+function lensRadius(x, y, scale) {
+  const dx = (x - 0.5) / scale;
+  const dy = (y - 0.5) / scale;
+  const u = dx / LENS_W;
+  if (Math.abs(u) > 1) return -1;
+  const h = LENS_H * (1 - u * u);
+  if (Math.abs(dy) > h) return -1;
+  return Math.hypot(u, dy / LENS_H);
 }
 
-/** The T monogram; `scale` shrinks it toward the center for the maskable variant. */
-function inMark(x, y, scale) {
-  const px = 0.5 + (x - 0.5) / scale;
-  const py = 0.5 + (y - 0.5) / scale;
-  const r = 0.022;
-  const bar = inRoundedRect(px, py, 0.165, 0.205, 0.835, 0.355, r);
-  const stem = inRoundedRect(px, py, 0.418, 0.205, 0.582, 0.815, r);
-  return bar || stem;
+function inPupil(x, y, scale) {
+  const dx = (x - 0.5) / scale;
+  const dy = (y - 0.5) / scale;
+  return (dx / PUPIL_W) ** 2 + (dy / (LENS_H * 0.96)) ** 2 <= 1;
 }
 
 function render(size, { markScale = 1, glowScale = 1 } = {}) {
@@ -68,17 +81,13 @@ function render(size, { markScale = 1, glowScale = 1 } = {}) {
           const nx = (x + (sx + 0.5) / SS) / size;
           const ny = (y + (sy + 0.5) / SS) / size;
 
-          // Ember bloom behind the mark, brightest just above center (.title-core-glow).
-          const d = Math.hypot(nx - 0.5, ny - 0.44) / (0.58 * glowScale);
-          const bloom = Math.max(0, 1 - d) ** 2.2 * 0.3;
+          // The halo: the red bloom the eye's wide state carries, widest along the lens.
+          const d = Math.hypot((nx - 0.5) / 1.35, ny - 0.5) / (0.5 * glowScale * markScale);
+          const bloom = Math.max(0, 1 - d) ** 2 * 0.42;
           let c = mix(BG, GLOW, bloom);
 
-          if (inMark(nx, ny, markScale)) {
-            // Gradient spans the mark's own height, so it reads the same at every scale.
-            const top = 0.5 + (0.205 - 0.5) * markScale;
-            const bottom = 0.5 + (0.815 - 0.5) * markScale;
-            c = goldAt((ny - top) / (bottom - top));
-          }
+          const lr = lensRadius(nx, ny, markScale);
+          if (lr >= 0) c = inPupil(nx, ny, markScale) ? PUPIL : eyeAt(lr);
           r += c[0];
           g += c[1];
           b += c[2];
@@ -150,9 +159,9 @@ function encodePng(size, rgba) {
 const TARGETS = [
   ['icon-192.png', 192, {}],
   ['icon-512.png', 512, {}],
-  // Android crops maskable icons to a circle in the middle 80%: shrink the mark, widen the bloom.
-  ['icon-maskable-512.png', 512, { markScale: 0.62, glowScale: 1.5 }],
-  ['apple-touch-icon-180.png', 180, { markScale: 0.86 }],
+  // Android crops maskable icons to a circle in the middle 80%: shrink the eye, widen the bloom.
+  ['icon-maskable-512.png', 512, { markScale: 0.7, glowScale: 1.5 }],
+  ['apple-touch-icon-180.png', 180, { markScale: 0.92 }],
 ];
 
 mkdirSync(OUT_DIR, { recursive: true });
