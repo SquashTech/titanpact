@@ -3455,7 +3455,8 @@ red so the telegraph is the one red chip on a hero's card; and **the arena is th
 hide whose plate seams are arcs about a centre 1180 units below a 400-unit frame — a cylinder seen
 from standing on it — with ember veins pulsing on a 5s heartbeat and the brow a dark ridge across
 the top that the Eyes open under. It replaces the Location's scene whenever the enemy roster holds
-an Eye, so the dev test run and the real finale draw the same picture. After the win,
+an Eye or the Herald (per user direction — both Threshold fights stand on the Titan), so the dev
+test run and the real finale draw the same picture. After the win,
 `ChampionScreen` performs the recruit fanfare's rite for the whole pact at once — the sleep card,
 each hero in the rings, then the roster in a row — before the summary.
 

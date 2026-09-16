@@ -1,4 +1,4 @@
-// The Titan's Eyes fight (docs/titan-eyes.md): the arena IS the Titan. There is no ground and
+// The Threshold's fights — the Herald's and the Eyes' (docs/titan-eyes.md): the arena IS the Titan. There is no ground and
 // no sky — the whole field is a stretch of its hide, plates the size of countries seamed by
 // cracks the ember shows through, curving away on every side because the thing under the
 // heroes' feet is round at a scale the frame cannot hold. The brow is the one edge in the

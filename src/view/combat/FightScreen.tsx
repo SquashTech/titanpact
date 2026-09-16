@@ -86,7 +86,7 @@ import { useAmbientLocation } from '../shared/LocationContext';
 import { LocationAmbience } from '../shared/LocationSky';
 import { LocationHorizon } from '../shared/locationArt';
 import { TitanBody } from './TitanBody';
-import { EYE_IDS } from '../../data/enemies';
+import { ENDBRINGER_ID, EYE_IDS } from '../../data/enemies';
 import type { LocationDefinition } from '../../data/locations';
 
 /** One enemy's live matchup for a move row, precomputed by FightScreen so MoveRow needs no combat state of its own. */
@@ -572,8 +572,8 @@ export function FightScreen({
 }: Props) {
   /** null outside an act (sandbox, quick battle): the arena keeps its placeless neutral scene. */
   const location = useAmbientLocation();
-  // The Titan's Eyes fight (docs/titan-eyes.md): the arena is the Titan's own hide, whatever the Location says.
-  const onTheTitan = aiRun.roster.some((entry) => EYE_IDS.includes(entry.heroId));
+  // The Threshold's two fights (docs/titan-eyes.md): the Herald walks on the Titan's hide, the Eyes open in it — the arena is the Titan whatever the Location says.
+  const onTheTitan = aiRun.roster.some((entry) => entry.heroId === ENDBRINGER_ID || EYE_IDS.includes(entry.heroId));
 
   const teamStatModifiers = relicTeamStatModifiers(playerRelicIds, relics);
   const teamPassiveGrants = relicTeamPassiveGrants(playerRelicIds, relics);
