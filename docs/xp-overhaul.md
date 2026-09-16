@@ -465,6 +465,19 @@ family, the Pact Clock, the companion, potions, the map shape within an act.
   heroes cross offer levels at once is three prompts in one screen. The default schedule staggers
   offer levels 3 apart, and par moves ~1–2 a fight, so it should be rare — measure it in phase 3
   (`time.ts` tallies it) before adding any batching.
+  **Answered in play, 2026-09-16: it was not rare, it was the rule.** Staggering a hero's own
+  offers 3 apart does nothing for the roster when every hero's schedule has the same phase — par
+  is roster-wide, so an offer at 4 and one at 5 both fire on the opener (par 5), and the phase-4
+  pass put 33 of 36 heroes there and 30 on Act 2's Guardian (par 14): six move screens after one
+  fight. The fix is in the data, not in batching: every offer level is now the par a FIGHT
+  reaches (5 6 8 / 10 11 14 / 15 17 19 / 20 21 24 / 25 26 28 / 30) and the 36 schedules are
+  phased against each other so each fight's window holds 12–20 of them instead of 4–33. A random
+  six averages ~2 offers a report; five-or-more fell from 15% of reports to 3%; the floor is
+  36 offers over 16 fights ≈ 2.25. Act 1 is still the fullest window (3 a report for a full
+  roster, which in Act 1 is 2–4 heroes) because every hero's first offer sits inside it — the
+  "levels teach" beat has to land in the tutorial. Pinned in `test/moveTiers` ("staggered").
+  The companion is on `DEFAULT_SCHEDULE` (nine offers, 9 of the 16 fights) and adds one screen to
+  most reports on its own — that count is a separate dial.
 - **How many offers a hero?** Nine on the default is the ladder's open-ended top for everyone,
   and phase 3 measured it as 41 decisions a run — the clock the overhaul set out to cut. Phase 4
   authored 5–6 (Glyph 7), which halved the decisions and cost 3 points of clear and most of the

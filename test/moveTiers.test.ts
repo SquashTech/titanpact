@@ -41,7 +41,7 @@ import {
   takeScheduleEntry,
 } from '../src/run/progression';
 import { heroes as heroesById } from '../src/data/heroes';
-import { MAX_LEVEL, levelOf, levelUpEntry, xpForLevel } from '../src/run/growth';
+import { LEVEL_AFTER_ENCOUNTER, MAX_LEVEL, levelOf, levelUpEntry, xpForLevel } from '../src/run/growth';
 import { MASTERY_EVOLUTION } from '../src/run/mastery';
 import type { MoveTier, TypeId } from '../src/engine/content';
 
@@ -419,4 +419,26 @@ test('schedule: every hero authors its own — none on the default — with 4-7 
   }
   const heroCount = Object.keys(heroesById).length;
   assert.ok(offers / heroCount <= 6.5, `${(offers / heroCount).toFixed(1)} offers a hero on average — the ladder's nine was 41 decisions a run`);
+});
+
+test('schedule: offers are staggered across the roster — no fight at par fires more than three heroes in five', () => {
+  // Levels are roster-wide, so every hero whose offer falls in one fight's par window takes it on
+  // the same report. The first authored pass put 33 of 36 on the opener and 30 on Act 2's Guardian —
+  // six move screens in a row after one fight (2026-09-16, per user direction). Each fight's window
+  // is (par before, par after]. Act 1 sits at the bound's floor — every first offer is inside it, so its
+  // three fights carry a third of the roster each plus the second Early offers; elsewhere it is ~40%.
+  const par = LEVEL_AFTER_ENCOUNTER;
+  const fightOf = (level: number) => par.findIndex((p, f) => f > 0 && level > par[f - 1] && level <= p);
+  const perFight = Array<number>(par.length).fill(0);
+  const heroList = Object.values(heroesById);
+  for (const hero of heroList) {
+    const fights = hero.schedule!.offerLevels.map(fightOf);
+    assert.ok(fights.every((f) => f > 0), `${hero.id}: an offer level no fight at par reaches`);
+    assert.ok(fights[0] <= 3, `${hero.id}: its first offer waits past Act 1`);
+    for (let i = 1; i < fights.length; i++) assert.ok(fights[i] - fights[i - 1] <= 4, `${hero.id}: five fights without an offer`);
+    for (const f of new Set(fights)) perFight[f]++;
+  }
+  for (let f = 1; f < par.length; f++) {
+    assert.ok(perFight[f] <= heroList.length * 0.6, `fight ${f} (level ${par[f]}) fires ${perFight[f]} of ${heroList.length} heroes`);
+  }
 });
