@@ -23,10 +23,12 @@ export interface Profile {
   /** Furthest act reached in any run, 1-indexed. */
   furthestAct: number;
   /**
-   * heroId -> runs cleared with that hero on the final roster. A count, not a tier: the
-   * Compendium renders one star and the number, so there is no ceiling to design around.
+   * heroId -> the Evolution path ids that hero has cleared a run down. One star a path, three a
+   * hero, and a hero that finished a run unevolved earns nothing — the star is for the form, not
+   * the name. Stars are the meta-progression currency (spent on things designed later), so the
+   * SET is the record and there is no count to inflate.
    */
-  heroStars: Record<string, number>;
+  evolutionStars: Record<string, string[]>;
   /** 0 until the first run is sealed. */
   firstPlayedAt: number;
   lastPlayedAt: number;
@@ -46,7 +48,7 @@ export function createProfile(): Profile {
     runsCompleted: 0,
     runsFailed: 0,
     furthestAct: 1,
-    heroStars: {},
+    evolutionStars: {},
     firstPlayedAt: 0,
     lastPlayedAt: 0,
     tutorialDone: false,
@@ -70,16 +72,27 @@ export function recordRunStarted(profile: Profile, now: number): Profile {
   };
 }
 
+/** What a hero on the finishing roster carries into the record: which form it cleared as, if any. */
+export interface FinishedHero {
+  heroId: string;
+  /** The last Evolution path taken, or null for a hero that finished unevolved. */
+  evolutionPathId: string | null;
+}
+
 /**
- * A star per hero on the roster at the moment the last Guardian fell. Roster-at-the-end rather
- * than ever-recruited: the run was cleared by the team that finished it, and a hero terminated
- * in Act 2 did not clear anything. Duplicated hero ids on one roster cannot happen (recruitment
- * bars a second copy), but the tally is written as an increment so it would not matter.
+ * A star per EVOLVED hero on the roster at the moment the last Guardian fell, keyed by the path
+ * it finished down. Roster-at-the-end rather than ever-recruited: the run was cleared by the team
+ * that finished it, and a hero terminated in Act 2 did not clear anything. A star already held is
+ * not doubled — clearing twice down the same path is the same star.
  */
-export function recordRunCompleted(profile: Profile, finalHeroIds: readonly string[], now: number): Profile {
-  const heroStars = { ...profile.heroStars };
-  for (const heroId of finalHeroIds) heroStars[heroId] = (heroStars[heroId] ?? 0) + 1;
-  return { ...profile, runsCompleted: profile.runsCompleted + 1, heroStars, lastPlayedAt: now };
+export function recordRunCompleted(profile: Profile, finished: readonly FinishedHero[], now: number): Profile {
+  const evolutionStars = { ...profile.evolutionStars };
+  for (const { heroId, evolutionPathId } of finished) {
+    if (!evolutionPathId) continue;
+    const held = evolutionStars[heroId] ?? [];
+    if (!held.includes(evolutionPathId)) evolutionStars[heroId] = [...held, evolutionPathId];
+  }
+  return { ...profile, runsCompleted: profile.runsCompleted + 1, evolutionStars, lastPlayedAt: now };
 }
 
 export function recordRunFailed(profile: Profile, now: number): Profile {
@@ -115,14 +128,19 @@ export function recordActReached(profile: Profile, actNumber: number): Profile {
 
 // --- Reading ---
 
+export function hasEvolutionStar(profile: Profile, heroId: string, pathId: string): boolean {
+  return profile.evolutionStars[heroId]?.includes(pathId) ?? false;
+}
+
 export function totalStars(profile: Profile): number {
   let total = 0;
-  for (const count of Object.values(profile.heroStars)) total += count;
+  for (const paths of Object.values(profile.evolutionStars)) total += paths.length;
   return total;
 }
 
+/** Heroes holding at least one star. */
 export function starredHeroCount(profile: Profile): number {
-  return Object.values(profile.heroStars).filter((count) => count > 0).length;
+  return Object.values(profile.evolutionStars).filter((paths) => paths.length > 0).length;
 }
 
 /** "4h 12m", "12m", "under a minute" — coarse, because this is a keepsake figure, not a timer. */
@@ -143,19 +161,30 @@ function count(value: unknown, fallback = 0): number {
 /**
  * Never fails and never throws: an unreadable profile decodes to a fresh one, and a partly
  * readable one keeps every field that survived. `knownHeroIds` drops stars for heroes this
- * build no longer ships — omit it to keep every entry (the tests do, so a rename is visible).
+ * build no longer ships and `knownPathIds` stars for paths it no longer authors — omit them to
+ * keep every entry (the tests do, so a rename is visible).
+ *
+ * A pre-2026-09-16 file's `heroStars` (heroId -> a run count) is not carried over: a count names
+ * no path, so there is nothing to attach it to. Those stars are lost on purpose rather than
+ * guessed onto a path the player may never have taken.
  */
-export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>): Profile {
+export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, knownPathIds?: ReadonlySet<string>): Profile {
   const base = createProfile();
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return base;
   const value = raw as Record<string, unknown>;
 
-  const heroStars: Record<string, number> = {};
-  if (typeof value.heroStars === 'object' && value.heroStars !== null && !Array.isArray(value.heroStars)) {
-    for (const [heroId, stars] of Object.entries(value.heroStars as Record<string, unknown>)) {
+  const evolutionStars: Record<string, string[]> = {};
+  if (typeof value.evolutionStars === 'object' && value.evolutionStars !== null && !Array.isArray(value.evolutionStars)) {
+    for (const [heroId, paths] of Object.entries(value.evolutionStars as Record<string, unknown>)) {
       if (knownHeroIds && !knownHeroIds.has(heroId)) continue;
-      const tally = count(stars);
-      if (tally > 0) heroStars[heroId] = tally;
+      if (!Array.isArray(paths)) continue;
+      const kept: string[] = [];
+      for (const pathId of paths) {
+        if (typeof pathId !== 'string' || pathId.length === 0 || kept.includes(pathId)) continue;
+        if (knownPathIds && !knownPathIds.has(pathId)) continue;
+        kept.push(pathId);
+      }
+      if (kept.length > 0) evolutionStars[heroId] = kept;
     }
   }
 
@@ -166,7 +195,7 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>):
     runsCompleted: count(value.runsCompleted),
     runsFailed: count(value.runsFailed),
     furthestAct: Math.max(1, count(value.furthestAct, 1)),
-    heroStars,
+    evolutionStars,
     firstPlayedAt: count(value.firstPlayedAt),
     lastPlayedAt: count(value.lastPlayedAt),
     // The field is ABSENT on every profile written before the tutorial existed, and inferring it

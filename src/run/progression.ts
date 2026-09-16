@@ -334,6 +334,11 @@ export function itemSlotsFor(hero: HeroDefinition, entry: RosterEntry): number {
   return BASE_ITEM_SLOTS;
 }
 
+/** The form a hero is in now: the last path taken, or null while unevolved. What a clear's star is keyed by (profile.ts). */
+export function currentEvolutionPathId(entry: RosterEntry): string | null {
+  return entry.chosenPathIds[entry.chosenPathIds.length - 1] ?? null;
+}
+
 export function chosenEvolutionPaths(table: ProgressionTable, entry: RosterEntry): EvolutionPath[] {
   const allPaths = (table.evolutions[entry.heroId] ?? []).flatMap((node) => node.paths);
   return entry.chosenPathIds

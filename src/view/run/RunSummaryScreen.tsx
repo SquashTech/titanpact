@@ -7,7 +7,8 @@ import { locations } from '../../data/locations';
 import { progressionTable } from '../../data/progression';
 import { chosenClass } from '../../run/classes';
 import { locationForAct } from '../../run/locations';
-import type { Profile } from '../../run/profile';
+import { hasEvolutionStar, type Profile } from '../../run/profile';
+import { currentEvolutionPathId } from '../../run/progression';
 import type { RelicDefinition } from '../../run/relics';
 import type { HeroDefinition } from '../../engine/content';
 import { SEAL_ACTS, type RosterEntry, type RunState } from '../../run/state';
@@ -42,7 +43,7 @@ function reachedLabel(actNumber: number): string {
 
 /** The name of the last Evolution taken — the one word that says what this hero became. */
 function evolutionName(entry: RosterEntry): string | null {
-  const chosen = entry.chosenPathIds[entry.chosenPathIds.length - 1];
+  const chosen = currentEvolutionPathId(entry);
   if (!chosen) return null;
   for (const node of progressionTable.evolutions[entry.heroId] ?? []) {
     const path = node.paths.find((p) => p.id === chosen);
@@ -80,10 +81,12 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
     .map(([id, count]) => ({ relic: relics[id], count }))
     .filter((r): r is { relic: RelicDefinition; count: number } => !!r.relic);
 
-  // Diffed rather than passed in, so the screen cannot disagree with what was actually recorded.
-  const starsAwarded = run.roster.filter(
-    (entry) => (profileAfter.heroStars[entry.heroId] ?? 0) > (profileBefore.heroStars[entry.heroId] ?? 0)
-  );
+  // Diffed rather than passed in, so the screen cannot disagree with what was actually recorded:
+  // a hero's star is NEW when the form it finished in is in the profile after and not before.
+  const starsAwarded = run.roster.filter((entry) => {
+    const pathId = currentEvolutionPathId(entry);
+    return pathId !== null && hasEvolutionStar(profileAfter, entry.heroId, pathId) && !hasEvolutionStar(profileBefore, entry.heroId, pathId);
+  });
   const newFurthestAct = profileAfter.furthestAct > profileBefore.furthestAct;
   const hasRecords = starsAwarded.length > 0 || newFurthestAct;
 
@@ -167,7 +170,7 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
             <div className="run-summary-records">
               {starsAwarded.map((entry) => (
                 <span key={entry.rosterId} className="run-summary-record-chip is-star">
-                  ★ {rosterHeroes[entry.heroId].name}
+                  ★ {rosterHeroes[entry.heroId].name} · {evolutionName(entry)}
                 </span>
               ))}
               {newFurthestAct && (

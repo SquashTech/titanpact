@@ -9091,19 +9091,140 @@ textarea,
   margin-bottom: 8px;
 }
 
-/* --- Compendium: roster grid + hero dossier ------------------------------
-   The hero tabs are a roster of sprites, not a stack of stat blocks — the
-   whole hero (movepool, every Evolution path, what each one unlocks) lives
-   one tap away in HeroDossierOverlay. Tiles wear .pick-card's clothes so a
-   hero looks the same here as in the draft, minus the level mark and CTA
-   line, which need a RosterEntry this screen deliberately doesn't have.
+/* --- Compendium: hero list + hero dossier --------------------------------
+   The hero tabs are a scrolling LIST of rows (2026-09-16, per user direction;
+   they were a three-column grid of .pick-card tiles): sprite, name, types,
+   and the hero's three Evolution stars at the row's end. The stars are the
+   meta-progression record — one per path, lit when a run has been cleared in
+   that form — and three of them want a row's width, not a tile's corner. The
+   whole hero (movepool, every path, what each unlocks) is one tap away in
+   HeroDossierOverlay, where each path's card carries the same star.
    ------------------------------------------------------------------------ */
 
-.compendium-grid {
-  /* .pick-grid centres its rows for the fixed 4-6 card screens it was built
-     for; a scrolling 20-plus-hero roster has to start at the top instead. */
-  align-content: start;
+.compendium-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   padding: 2px 2px 14px;
+}
+
+/* One row: the same type-washed ground .pick-card stands on, laid across. As a <button> it needs
+   the two resets a button element does not inherit (width, font). */
+.compendium-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 60px;
+  padding: 6px 12px 6px 8px;
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(var(--type-rgb), 0.32);
+  background:
+    radial-gradient(ellipse 60% 140% at 0% 50%, rgba(var(--type-rgb), 0.22), transparent 70%),
+    var(--surface-raised);
+  box-shadow: var(--hairline), var(--elev-1);
+  cursor: pointer;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    border-color var(--dur-mid) var(--ease-out);
+}
+
+.compendium-row:hover {
+  border-color: rgba(var(--type-rgb), 0.7);
+}
+
+.compendium-row:active {
+  transform: scale(0.99);
+}
+
+/* The sprite on its ground mark, at 1x. `--pick-portrait` is what .pick-ground is sized off. */
+.compendium-row-figure {
+  --pick-portrait: 48px;
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  padding-bottom: 3px;
+}
+
+.compendium-row-portrait {
+  position: relative;
+  z-index: 1;
+  width: 48px;
+  height: 48px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.65));
+}
+
+.compendium-row-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.compendium-row-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+/* Qualified to outweigh .pick-types' own centring, which is declared later. */
+.compendium-row .compendium-row-types {
+  justify-content: flex-start;
+}
+
+.compendium-row-stars {
+  flex: none;
+  font-size: 20px;
+}
+
+/* --- Evolution stars (shared/EvolutionStar.tsx) --------------------------
+   One mark for "cleared a run in this form", everywhere a path is named. Lit
+   in the accent gold the run summary's star already uses; the empty one is an
+   outline in dim text, so a row of three reads as slots before it reads as
+   decoration. */
+.evo-star-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.evo-star {
+  display: inline-block;
+  line-height: 1;
+}
+
+.evo-star.is-earned {
+  color: var(--accent);
+  text-shadow: 0 0 6px rgba(224, 166, 60, 0.55);
+}
+
+.evo-star.is-empty {
+  color: var(--text-dim);
+  opacity: 0.55;
+}
+
+/* Beside the path's name on its dossier card and on the Evolution choice. */
+.evo-path-star {
+  margin-left: auto;
+  font-size: 15px;
+}
+
+.evolution-path-star {
+  flex: none;
+  font-size: 16px;
+  margin-left: 4px;
 }
 
 /* --- Compendium: the Types tab (CompendiumScreen.tsx TypeChartTab) ------
@@ -9222,38 +9343,6 @@ textarea,
 
 .type-readout-pick:active {
   filter: brightness(1.25);
-}
-
-/* .pick-card is authored as a div; as a <button> it needs the two resets a
-   button element does not inherit. */
-.compendium-tile {
-  width: 100%;
-  font: inherit;
-}
-
-/* Earned mark, top-right of the sprite (.pick-figure is the positioned parent).
-   Sits over the art rather than under the name so a scan of the grid reads
-   "which of these have I cleared with" without reading any words. */
-.compendium-star {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  display: flex;
-  align-items: center;
-  gap: 1px;
-  padding: 1px 4px;
-  border-radius: var(--radius-pill);
-  background: rgba(10, 14, 18, 0.78);
-  border: 1px solid rgba(224, 166, 60, 0.45);
-  color: var(--accent);
-  font-size: 10px;
-  line-height: 1.2;
-  text-shadow: 0 0 6px rgba(224, 166, 60, 0.5);
-}
-
-.compendium-star-count {
-  font-size: 9px;
-  font-weight: 700;
 }
 
 .dossier-badge {

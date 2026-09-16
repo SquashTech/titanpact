@@ -2,12 +2,16 @@
 // Rules live in src/run/profile.ts.
 
 import { heroes } from '../data/heroes';
+import { progressionTable } from '../data/progression';
 import { createProfile, decodeProfile, type Profile } from '../run/profile';
 import { clearSave } from './saveStorage';
 
 const PROFILE_KEY = 'titanpact.profile';
 
 const knownHeroIds: ReadonlySet<string> = new Set(Object.keys(heroes));
+const knownPathIds: ReadonlySet<string> = new Set(
+  Object.values(progressionTable.evolutions).flatMap((nodes) => nodes.flatMap((node) => node.paths.map((path) => path.id)))
+);
 
 export function readProfile(): Profile {
   let raw: string | null;
@@ -19,7 +23,7 @@ export function readProfile(): Profile {
   }
   if (!raw) return createProfile();
   try {
-    return decodeProfile(JSON.parse(raw), knownHeroIds);
+    return decodeProfile(JSON.parse(raw), knownHeroIds, knownPathIds);
   } catch {
     return createProfile();
   }

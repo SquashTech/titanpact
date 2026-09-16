@@ -12,11 +12,11 @@ import { TypeBadge } from '../shared/TypeBadge';
 import { TypeWheel } from '../shared/TypeWheel';
 import { EquipmentIcon, ItemEffectChips, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import { ItemDetailOverlay } from '../shared/ItemDossier';
+import { EvolutionStarRow } from '../shared/EvolutionStar';
+import { progressionTable } from '../../data/progression';
 import { HeroDossierOverlay } from './HeroDossierOverlay';
 
 interface Props {
-  /** heroId -> runs cleared with that hero (src/run/profile.ts). Empty is normal, not a missing prop. */
-  heroStars: Readonly<Record<string, number>>;
   onClose: () => void;
 }
 
@@ -29,39 +29,44 @@ const RECRUIT_HEROES = Object.values(heroes).filter((hero) => !hero.starter).sor
 // Rarity, then authoring order — items are uncategorised, so the tier is the only grouping left.
 const EQUIPMENT_LIST = [...EQUIPMENT_DROP_POOL, ...UNIQUE_EQUIPMENT].sort((a, b) => RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity));
 
+/** A hero's Evolution paths in authored order — exactly three, one star's worth each. */
+function evolutionPathsOf(hero: HeroDefinition) {
+  return (progressionTable.evolutions[hero.id] ?? []).flatMap((node) => node.paths);
+}
+
 /**
- * Roster tile: sprite, name, types, nothing else — the whole hero is one tap away in
- * HeroDossierOverlay. Wears `.pick-card`'s clothes (the shared "pick a hero" card) minus the
- * level mark and CTA line, which need a RosterEntry the compendium deliberately does not have.
+ * Roster row: sprite, name, types, and the hero's three Evolution stars — one per path, lit when
+ * a run has been cleared in that form (profile.ts `evolutionStars`). A row rather than a tile
+ * (2026-09-16, per user direction) because the stars are the point of the screen now and three
+ * of them do not fit over a 48px sprite. The whole hero is one tap away in HeroDossierOverlay,
+ * where each path's card carries the same star.
  */
-function CompendiumHeroTile({ hero, stars, onOpen }: { hero: HeroDefinition; stars: number; onOpen: () => void }) {
+function CompendiumHeroRow({ hero, onOpen }: { hero: HeroDefinition; onOpen: () => void }) {
+  const paths = evolutionPathsOf(hero);
   return (
     <button
       type="button"
-      className="pick-card compendium-tile"
+      className="compendium-row"
       style={{ '--type-rgb': getTypeColorRgb(hero.types[0]) } as CSSProperties}
       onClick={onOpen}
-      aria-label={stars > 0 ? `${hero.name} — view details, ${stars} cleared` : `${hero.name} — view details`}
+      aria-label={`${hero.name} — view details`}
     >
-      <div className="pick-figure">
+      <span className="compendium-row-figure">
         <span className="pick-ground" aria-hidden="true" />
-        <HeroPortrait heroId={hero.id} className="pick-portrait" />
-        {/* One star and a count rather than a row of them: the tally has no ceiling. */}
-        {stars > 0 && (
-          <span className="compendium-star" title={`${stars} ${stars === 1 ? 'run' : 'runs'} cleared`}>
-            ★{stars > 1 && <span className="compendium-star-count">{stars}</span>}
-          </span>
-        )}
-      </div>
-      <span className="pick-name">{hero.name}</span>
-      <span className="pick-types">
-        {hero.types.map((t) => (
-          <span key={t} className="pick-type-code" style={{ color: getTypeColor(t) }} title={t}>
-            <ElementGlyph type={t} />
-            {getTypeAbbr(t)}
-          </span>
-        ))}
+        <HeroPortrait heroId={hero.id} className="compendium-row-portrait" />
       </span>
+      <span className="compendium-row-body">
+        <span className="compendium-row-name">{hero.name}</span>
+        <span className="pick-types compendium-row-types">
+          {hero.types.map((t) => (
+            <span key={t} className="pick-type-code" style={{ color: getTypeColor(t) }} title={t}>
+              <ElementGlyph type={t} />
+              {getTypeAbbr(t)}
+            </span>
+          ))}
+        </span>
+      </span>
+      <EvolutionStarRow paths={paths} className="compendium-row-stars" />
     </button>
   );
 }
@@ -169,7 +174,7 @@ function TypeChartTab() {
   );
 }
 
-export function CompendiumScreen({ heroStars, onClose }: Props) {
+export function CompendiumScreen({ onClose }: Props) {
   const [tab, setTab] = useState<CompendiumTab>('starters');
   const [inspectItemId, setInspectItemId] = useState<string | null>(null);
   const [dossierHeroId, setDossierHeroId] = useState<string | null>(null);
@@ -210,13 +215,20 @@ export function CompendiumScreen({ heroStars, onClose }: Props) {
               ))}
             </div>
           ) : (
-            <div className="pick-grid pick-cols-3 compendium-grid">
+            <div className="compendium-list">
               {heroList.map((hero) => (
-                <CompendiumHeroTile key={hero.id} hero={hero} stars={heroStars[hero.id] ?? 0} onOpen={() => setDossierHeroId(hero.id)} />
+                <CompendiumHeroRow key={hero.id} hero={hero} onOpen={() => setDossierHeroId(hero.id)} />
               ))}
             </div>
           )}
         </div>
+
+        {/* Outside the scroll and pinned to the foot, as on the gear sheet (RosterManagementScreen):
+            the header ✕ stays where every overlay puts it, but on a phone it is the corner furthest
+            from the thumb. */}
+        <button className="resolve-button roster-close-button" onClick={onClose}>
+          Close
+        </button>
       </div>
 
       {dossierHero && <HeroDossierOverlay hero={dossierHero} onClose={() => setDossierHeroId(null)} />}

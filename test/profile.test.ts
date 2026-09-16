@@ -1,11 +1,13 @@
 import * as assert from 'assert';
 import { test } from './harness';
 import { heroes } from '../src/data/heroes';
+import { progressionTable } from '../src/data/progression';
 import {
   addPlaytime,
   createProfile,
   decodeProfile,
   formatPlaytime,
+  hasEvolutionStar,
   PROFILE_VERSION,
   recordActReached,
   recordRunCompleted,
@@ -16,6 +18,14 @@ import {
 } from '../src/run/profile';
 
 const knownHeroIds: ReadonlySet<string> = new Set(Object.keys(heroes));
+const knownPathIds: ReadonlySet<string> = new Set(
+  Object.values(progressionTable.evolutions).flatMap((nodes) => nodes.flatMap((node) => node.paths.map((path) => path.id)))
+);
+
+/** A hero on the finishing roster, evolved down its `${heroId}-${kind}` path. */
+function finished(heroId: string, kind: 'offensive' | 'defensive' | 'utility') {
+  return { heroId, evolutionPathId: `${heroId}-${kind}` };
+}
 
 // --- Verbs ---
 
@@ -24,7 +34,7 @@ test('profile: a fresh profile is empty but for act I, which is where every run 
   assert.strictEqual(profile.playtimeMs, 0);
   assert.strictEqual(profile.runsStarted, 0);
   assert.strictEqual(profile.furthestAct, 1);
-  assert.deepStrictEqual(profile.heroStars, {});
+  assert.deepStrictEqual(profile.evolutionStars, {});
 });
 
 test('profile: playtime accumulates and ignores a clock that went backwards', () => {
@@ -44,16 +54,30 @@ test('profile: the first run sealed sets firstPlayedAt, and later ones do not mo
   assert.strictEqual(profile.lastPlayedAt, 9_000);
 });
 
-test('profile: a clear stars every hero on the final roster', () => {
-  const profile = recordRunCompleted(createProfile(), ['cinderKnight', 'rime'], 1_000);
+test('profile: a clear stars every EVOLVED hero on the final roster, by the form it finished in', () => {
+  const profile = recordRunCompleted(
+    createProfile(),
+    [
+      { heroId: 'cinderKnight', evolutionPathId: 'cinderKnight-offensive' },
+      { heroId: 'rime', evolutionPathId: null },
+    ],
+    1_000
+  );
   assert.strictEqual(profile.runsCompleted, 1);
-  assert.deepStrictEqual(profile.heroStars, { cinderKnight: 1, rime: 1 });
+  assert.deepStrictEqual(profile.evolutionStars, { cinderKnight: ['cinderKnight-offensive'] }, 'an unevolved hero earns nothing');
+  assert.ok(hasEvolutionStar(profile, 'cinderKnight', 'cinderKnight-offensive'));
+  assert.ok(!hasEvolutionStar(profile, 'cinderKnight', 'cinderKnight-defensive'));
 });
 
-test('profile: stars stack across runs, and a hero left out of one clear does not gain', () => {
-  let profile = recordRunCompleted(createProfile(), ['cinderKnight', 'rime'], 1_000);
-  profile = recordRunCompleted(profile, ['cinderKnight', 'valor'], 2_000);
-  assert.deepStrictEqual(profile.heroStars, { cinderKnight: 2, rime: 1, valor: 1 });
+test('profile: stars collect across runs, one a path, and a repeat of the same form is the same star', () => {
+  let profile = recordRunCompleted(createProfile(), [finished('cinderKnight', 'offensive'), finished('rime', 'defensive')], 1_000);
+  profile = recordRunCompleted(profile, [finished('cinderKnight', 'defensive'), finished('valor', 'utility')], 2_000);
+  profile = recordRunCompleted(profile, [finished('cinderKnight', 'defensive')], 3_000);
+  assert.deepStrictEqual(profile.evolutionStars, {
+    cinderKnight: ['cinderKnight-offensive', 'cinderKnight-defensive'],
+    rime: ['rime-defensive'],
+    valor: ['valor-utility'],
+  });
   assert.strictEqual(totalStars(profile), 4);
   assert.strictEqual(starredHeroCount(profile), 3);
 });
@@ -62,7 +86,7 @@ test('profile: a loss counts as a loss and stars nobody', () => {
   const profile = recordRunFailed(createProfile(), 1_000);
   assert.strictEqual(profile.runsFailed, 1);
   assert.strictEqual(profile.runsCompleted, 0);
-  assert.deepStrictEqual(profile.heroStars, {});
+  assert.deepStrictEqual(profile.evolutionStars, {});
 });
 
 test('profile: furthest act only ever climbs', () => {
@@ -77,7 +101,7 @@ test('profile: furthest act only ever climbs', () => {
 test('profile: every verb returns a new profile and leaves the old one alone', () => {
   const before = createProfile();
   recordRunStarted(before, 1);
-  recordRunCompleted(before, ['rime'], 1);
+  recordRunCompleted(before, [finished('rime', 'offensive')], 1);
   addPlaytime(before, 1_000);
   assert.deepStrictEqual(before, createProfile());
 });
@@ -96,10 +120,10 @@ test('profile: playtime reads coarsely, and a first session is not "0m"', () => 
 
 test('profile: a full round trip is lossless', () => {
   let profile = recordRunStarted(createProfile(), 1_000);
-  profile = recordRunCompleted(profile, ['cinderKnight', 'rime'], 2_000);
+  profile = recordRunCompleted(profile, [finished('cinderKnight', 'offensive'), finished('rime', 'utility')], 2_000);
   profile = addPlaytime(profile, 90_000);
   profile = recordActReached(profile, 5);
-  assert.deepStrictEqual(decodeProfile(JSON.parse(JSON.stringify(profile)), knownHeroIds), profile);
+  assert.deepStrictEqual(decodeProfile(JSON.parse(JSON.stringify(profile)), knownHeroIds, knownPathIds), profile);
 });
 
 test('profile: junk decodes to a fresh profile instead of throwing', () => {
@@ -110,24 +134,48 @@ test('profile: junk decodes to a fresh profile instead of throwing', () => {
 
 test('profile: a partly broken file keeps every field that survived', () => {
   const decoded = decodeProfile(
-    { playtimeMs: 60_000, runsStarted: 'lots', runsCompleted: 3, furthestAct: -4, heroStars: 'gone' },
+    { playtimeMs: 60_000, runsStarted: 'lots', runsCompleted: 3, furthestAct: -4, evolutionStars: 'gone' },
     knownHeroIds
   );
   assert.strictEqual(decoded.playtimeMs, 60_000, 'a readable field beside a broken one is kept');
   assert.strictEqual(decoded.runsCompleted, 3);
   assert.strictEqual(decoded.runsStarted, 0, 'the unreadable field falls back, alone');
   assert.strictEqual(decoded.furthestAct, 1, 'an impossible act clamps to the floor');
-  assert.deepStrictEqual(decoded.heroStars, {});
+  assert.deepStrictEqual(decoded.evolutionStars, {});
   assert.strictEqual(decoded.version, PROFILE_VERSION);
 });
 
-test('profile: stars for a hero this build no longer ships are dropped, not taken as corruption', () => {
-  const decoded = decodeProfile({ runsCompleted: 2, heroStars: { rime: 2, aHeroThatWasCut: 5 } }, knownHeroIds);
-  assert.deepStrictEqual(decoded.heroStars, { rime: 2 });
+test('profile: stars for a hero or a path this build no longer ships are dropped, not taken as corruption', () => {
+  const decoded = decodeProfile(
+    {
+      runsCompleted: 2,
+      evolutionStars: { rime: ['rime-defensive', 'rime-aPathThatWasCut'], aHeroThatWasCut: ['aHeroThatWasCut-offensive'] },
+    },
+    knownHeroIds,
+    knownPathIds
+  );
+  assert.deepStrictEqual(decoded.evolutionStars, { rime: ['rime-defensive'] });
   assert.strictEqual(decoded.runsCompleted, 2, 'the rest of the profile survives the dropped entry');
 });
 
-test('profile: a zero or negative star tally is not stored as an entry', () => {
-  const decoded = decodeProfile({ heroStars: { rime: 0, valor: -3, cinderKnight: 2 } }, knownHeroIds);
-  assert.deepStrictEqual(decoded.heroStars, { cinderKnight: 2 });
+test('profile: a junk or repeated path is not stored, and a hero left with nothing has no entry', () => {
+  const decoded = decodeProfile(
+    { evolutionStars: { rime: [0, '', null], valor: 'valor-utility', cinderKnight: ['cinderKnight-offensive', 'cinderKnight-offensive'] } },
+    knownHeroIds
+  );
+  assert.deepStrictEqual(decoded.evolutionStars, { cinderKnight: ['cinderKnight-offensive'] });
+});
+
+test('profile: the pre-2026-09-16 run-count stars are not carried over — a count names no path', () => {
+  const decoded = decodeProfile({ runsCompleted: 3, heroStars: { rime: 2, cinderKnight: 1 } }, knownHeroIds);
+  assert.deepStrictEqual(decoded.evolutionStars, {});
+  assert.strictEqual(decoded.runsCompleted, 3);
+});
+
+test('profile: every path in the game is a star, and every hero has exactly three', () => {
+  for (const heroId of Object.keys(heroes)) {
+    const paths = (progressionTable.evolutions[heroId] ?? []).flatMap((node) => node.paths);
+    assert.strictEqual(paths.length, 3, `${heroId} should have three Evolution paths — three stars`);
+    for (const path of paths) assert.strictEqual(path.heroId, heroId, `${path.id} is filed under the wrong hero`);
+  }
 });

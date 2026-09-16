@@ -876,3 +876,28 @@ fresh attempt from an unlock pool that only grows.
 model in code yet — this section records the design decision the eventual
 implementation must honor, not a built system. Building it is real scope: a save
 file, an unlock-pool data shape, and the run-state initialization reading from it.
+
+### Evolution stars — the meta currency's EARNING half (2026-09-16, per user direction)
+
+The profile (`src/run/profile.ts`, `Profile.evolutionStars`) records **one star per hero per
+Evolution path**: a star is earned by clearing a run with that hero on the final roster **in
+that form**, so a hero has exactly three to collect and a hero that finishes unevolved earns
+none. Clearing twice down the same path is the same star — the set is the record, and there is
+no count to inflate. `recordRunCompleted` takes the finishing roster as `{ heroId,
+evolutionPathId }` pairs (`currentEvolutionPathId`, `src/run/progression.ts`).
+
+Where a star shows: the Compendium's hero tabs are a **scrolling list** with the three stars at
+each row's end (lit / empty, in the paths' authored order — `EvolutionStarRow`,
+`src/view/shared/EvolutionStar.tsx`), the hero dossier's Evolution tab beside each path's name,
+and **the Evolution choice itself** — an earned star is printed on its path card and dossier so
+the player choosing sees which forms are still uncollected (only the earned mark, not three
+outlines: the choice should not read as a checklist). The profile reaches the run's screens
+through `ProfileProvider` (`src/view/shared/ProfileContext.tsx`), a snapshot re-read at the
+title, which is enough because stars only change at a run's end.
+
+**The SPENDING half is undesigned.** Stars are to purchase "new things for runs" (per user
+direction, same day). Read against the locked paragraph above, that is only consistent if what
+they buy are **unlocks** — new heroes, items, relics entering the pool a run draws from — and
+not account-level power carried into a run. That is a design question to settle before the
+shop is built, not one this section resolves. The pre-2026-09-16 `heroStars` (a run count per
+hero) is dropped on decode rather than migrated: a count names no path.

@@ -18,6 +18,7 @@ import { TabStrip, type TabSpec } from '../shared/TabStrip';
 import { TypeBadge } from '../shared/TypeBadge';
 import { isTitanspawn } from '../../data/titanspawn';
 import { TypeMatchups } from '../shared/TypeMatchups';
+import { EvolutionStar } from '../shared/EvolutionStar';
 
 interface Props {
   hero: HeroDefinition;
@@ -115,6 +116,7 @@ function EvolutionPathCard({
       <div className="evo-path-head">
         <span className={`evolution-badge evolution-${path.kind}`}>{path.kind}</span>
         <span className="evo-path-name">{path.name}</span>
+        <EvolutionStar path={path} className="evo-path-star" />
       </div>
       {path.description && <div className="evo-path-desc">{path.description}</div>}
 

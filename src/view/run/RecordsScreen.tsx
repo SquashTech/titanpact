@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { heroes } from '../../data/heroes';
+import { progressionTable } from '../../data/progression';
 import { formatPlaytime, starredHeroCount, totalStars, type Profile } from '../../run/profile';
 import { SEAL_ACTS } from '../../run/state';
 import { HubGlyph } from '../shared/nodeIcons';
@@ -14,6 +15,8 @@ interface Props {
 const ACT_ROMAN = ['I', 'II', 'III', 'IV', 'V'];
 
 const HERO_COUNT = Object.keys(heroes).length;
+/** Every Evolution path in the game — the ceiling on stars. */
+const STAR_COUNT = Object.values(progressionTable.evolutions).reduce((n, nodes) => n + nodes.reduce((m, node) => m + node.paths.length, 0), 0);
 
 /**
  * One line of the record. It was a tile — a big accent numeral over a small caps label, in a
@@ -76,9 +79,9 @@ export function RecordsScreen({ profile, onEraseAllData, onClose }: Props) {
           {/* Was a two-sentence paragraph explaining what a star is and where to see one. The
               second half is a navigation instruction the Compendium answers by having them on it;
               the first half is what a star MEANS, which is the only part a record needs. */}
-          <p className="records-note">One for every run cleared with that hero on the final roster.</p>
+          <p className="records-note">One for every Evolution a run has been cleared in — three a hero.</p>
           <div className="ledger">
-            <Stat label="Stars earned" value={String(totalStars(profile))} />
+            <Stat label="Stars earned" value={`${totalStars(profile)} / ${STAR_COUNT}`} />
             <Stat label="Heroes starred" value={`${starredHeroCount(profile)} / ${HERO_COUNT}`} />
           </div>
 

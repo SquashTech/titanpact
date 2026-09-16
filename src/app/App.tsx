@@ -115,6 +115,7 @@ import { generateItinerary, locationForAct } from '../run/locations';
 import { encounterKindOf, encounterSeedFor, nodeEncounter } from '../run/encounters';
 import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
 import { LocationProvider } from '../view/shared/LocationContext';
+import { ProfileProvider } from '../view/shared/ProfileContext';
 import { NODE_TINT_MANA, NODE_TINT_VITAL } from '../view/shared/NodeStage';
 import { prefetchTrack, setTrack } from '../audio/music';
 import { playSfx } from '../audio/sfx';
@@ -135,7 +136,7 @@ import {
 } from '../run/runProgress';
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
 import { createStatusTestSides } from '../run/statusTestFight';
-import { atEvolution, fullMovepool, pendingScheduleEntry } from '../run/progression';
+import { atEvolution, currentEvolutionPathId, fullMovepool, pendingScheduleEntry } from '../run/progression';
 import { progressionTable } from '../data/progression';
 import type { RunState, RosterEntry } from '../run/state';
 import type { Squad } from '../run/squad';
@@ -441,9 +442,12 @@ export function App() {
     return { save: null, staleReason: result.reason };
   });
 
-  // Held only so the title and its Records screen can render it. Everything that WRITES the
-  // profile goes straight to storage (profileStorage.updateProfile) — playtime flushes on a
-  // timer, and putting that in React state would re-render the tree for a number nothing shows.
+  // Held so the title, its Records screen and the Compendium can render it, and so the Evolution
+  // screen can mark the paths already starred (ProfileProvider). Stars only change at a run's end
+  // and this is re-read on the way back to the title, so mid-run it is a snapshot, and current.
+  // Everything that WRITES the profile goes straight to storage (profileStorage.updateProfile) —
+  // playtime flushes on a timer, and putting that in React state would re-render the tree for a
+  // number nothing shows.
   const [profile, setProfile] = useState<Profile>(() => readProfile());
   // The cold launch's one tap (LaunchGate): false until it lands, then never again this session.
   const [launched, setLaunched] = useState(false);
@@ -506,10 +510,10 @@ export function App() {
     clearSave();
     setSaveSlot({ save: null, staleReason: null });
     const now = Date.now();
-    const finalHeroIds = playerRun.roster.map((entry) => entry.heroId);
+    const finished = playerRun.roster.map((entry) => ({ heroId: entry.heroId, evolutionPathId: currentEvolutionPathId(entry) }));
     const before = readProfile();
     const after = updateProfile((current) =>
-      screen.kind === 'runComplete' ? recordRunCompleted(current, finalHeroIds, now) : recordRunFailed(current, now)
+      screen.kind === 'runComplete' ? recordRunCompleted(current, finished, now) : recordRunFailed(current, now)
     );
     setRunOutcome({ before, after });
   }, [screen.kind]);
@@ -992,6 +996,7 @@ export function App() {
 
   return (
     <LocationProvider location={ambientLocation}>
+    <ProfileProvider profile={profile}>
     <div className="app-shell" ref={shellRef}>
       {screen.kind === 'title' && !launched && <LaunchGate onBegin={() => setLaunched(true)} />}
       {screen.kind === 'title' && launched && (
@@ -1301,6 +1306,7 @@ export function App() {
         );
       })()}
     </div>
+    </ProfileProvider>
     </LocationProvider>
   );
 }

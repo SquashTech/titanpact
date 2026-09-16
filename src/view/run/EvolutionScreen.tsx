@@ -25,6 +25,8 @@ import { playSfx } from '../../audio/sfx';
 import { RosterPeek } from './RosterPeek';
 import { MasteryPips } from '../shared/MasteryPips';
 import { MASTERY_EVOLUTION } from '../../run/mastery';
+import { EvolutionStar } from '../shared/EvolutionStar';
+import { useHasEvolutionStar } from '../shared/ProfileContext';
 
 interface Props {
   hero: HeroDefinition;
@@ -235,11 +237,21 @@ function PathButton({ hero, path, onInspect }: { hero: HeroDefinition; path: Evo
   const promise = poolPromise(path);
   const traded = tradedType(hero, path);
 
+  const starred = useHasEvolutionStar(hero.id, path.id);
+
   return (
-    <button className="evolution-path-button" style={paletteStyle(hero, path)} data-sfx="ui.select" onClick={onInspect}>
+    <button
+      className={`evolution-path-button${starred ? ' is-starred' : ''}`}
+      style={paletteStyle(hero, path)}
+      data-sfx="ui.select"
+      onClick={onInspect}
+    >
       <span className="evolution-path-sheen" aria-hidden="true" />
       <div className="evolution-path-head">
         <span className="evolution-path-name">{path.name}</span>
+        {/* Only the EARNED star is printed here: the choice is between three forms, and three
+            empty outlines would make it read as a checklist. The Compendium is where the gaps show. */}
+        {starred && <EvolutionStar path={path} className="evolution-path-star" />}
         <span className="evolution-path-chevron" aria-hidden="true">
           ›
         </span>
@@ -350,6 +362,7 @@ function PathDossier({
   onClose: () => void;
 }) {
   const [readingMoveId, setReadingMoveId] = useState<string | null>(null);
+  const starred = useHasEvolutionStar(hero.id, path.id);
   const types = pathTypes(hero, path);
   // Post-graft types, not the entry's current ones: the granted move is usually the graft's own type.
   const caster = { ...healCasterForEntry(hero, entry, run.relics), types };
@@ -365,7 +378,10 @@ function PathDossier({
     <div className="detail-overlay evolution-dossier-overlay" onClick={onClose}>
       <div className="detail-panel evolution-dossier" style={paletteStyle(hero, path)} onClick={(e) => e.stopPropagation()}>
         <div className="evolution-dossier-head">
-          <span className="evolution-dossier-title">{path.name}</span>
+          <span className="evolution-dossier-title">
+            {path.name}
+            {starred && <EvolutionStar path={path} className="evolution-path-star" />}
+          </span>
           <button className="evolution-dossier-close" onClick={onClose} aria-label="Close">
             ✕
           </button>

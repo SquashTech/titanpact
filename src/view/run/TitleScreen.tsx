@@ -343,7 +343,7 @@ export function TitleScreen({
       )}
 
       {showLocations && <LocationSelectOverlay onPick={onVisitLocation} onClose={() => setShowLocations(false)} />}
-      {showCompendium && <CompendiumScreen heroStars={profile.heroStars} onClose={() => setShowCompendium(false)} />}
+      {showCompendium && <CompendiumScreen onClose={() => setShowCompendium(false)} />}
       {showRecords && (
         <RecordsScreen profile={profile} onEraseAllData={onEraseAllData} onClose={() => setShowRecords(false)} />
       )}
