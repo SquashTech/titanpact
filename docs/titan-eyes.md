@@ -2,8 +2,9 @@
 
 > Module of the Titanpact `/docs` suite. Companion to `lore.md` (which owns why the Titan
 > cannot take the field and what the Herald is), `run-loop.md` §4/§6 (the finale as structure)
-> and `combat.md` (the Pact Clock). **PROPOSED 2026-09-16, per user direction — not yet
-> decided in its particulars and not built.** §7 lists what has to be decided before phase 1.
+> and `combat.md` (the Pact Clock). **DECIDED and BUILT, phases 1–3, 2026-09-16, per user
+> direction** — §7 carries the seven decisions, §9 what the build found and measured. Phase 4 (the
+> sim's four reads) is open.
 
 ---
 
@@ -214,27 +215,47 @@ give it the third node and read (a) how often phase 2 is reached, (b) how often 
 phase against the Clock. A Regard that is *always* dodged is a telegraph with no teeth; one
 that is *never* dodged is a number.
 
-## 7. What has to be decided
+## 7. Decided (2026-09-16, per user direction)
 
-1. **Names.** Left Eye / Right Eye (plain, the title screen's) or Sinister / Dexter (the
-   heraldic pair — the Titan's *device* against the Guardians' *seals*).
-2. **Wounds into the Eyes' fight.** Carried from the Herald (dial), a free mend (clean), or a
-   Rest seat between (the player's call each run).
-3. **Phase-2 escalation shape.** Stare marks both (proposed); Beheld survives a switch;
-   Glare gains priority. One of these, not all three.
-4. **Unblinking.** Build status immunity so an Eye cannot be Dazed, or let Daze stay an
-   answer. Immunity is new vocabulary; it is also the first passive in the game that says
-   *no* to a status, which other content (Iron, Mech) would want the day it exists.
-5. **Provoke versus the gate.** The gate wins (proposed) or the taunt wins.
-6. **The Clock.** Starts at the wide Eyes' entry (proposed), or runs from round 1.
-7. **The win beat.** What the run summary and the Pact Seal's closing say when the Eyes
-   close, and whether the sixth seal — *the reason there is a world left* — is named there.
+1. **Names: Left Eye / Right Eye.** The title screen's.
+2. **A free mend** between the Herald and the Eyes (`mendRoster` on the finale's win).
+3. **Phase 2 escalates the gaze: Stare marks both.** Beheld still breaks on a switch; Glare
+   has no priority. ("Go with your gut.")
+4. **No Unblinking — Daze stays an answer.** No status-immunity vocabulary was built.
+5. **Taunt wins.** A Provoke pull lands the Regard on the taunter although it is not Beheld
+   — `MoveDefinition.gateYieldsToRedirect`, set on Regard and Glare alone; every other gated
+   move keeps the locked order (gate after redirect, a pull onto an ungated hero fizzles).
+6. **The Clock is untouched** — round 30 from the fight's first round, as everywhere.
+7. **The win beat: the Titan goes back to sleep for another thousand years, and the heroes are
+   celebrated** — `ChampionScreen`, a Pokémon-style champion's hall: the sleep card, then each
+   hero presented in the recruit fanfare's rings, then the whole roster in a row; then the summary.
 
-## 8. Phases (proposed)
+## 8. Phases
 
-| # | What | Depends on |
+| # | What | Status |
 |---|---|---|
-| 1 | Content: four `HeroDefinition`s, Beheld, Gaze / Regard / Stare / Glare / Lidded, the AI's gate rule; `test/titanEyes.test.ts` | §7.1, §7.3, §7.5 |
-| 2 | Structure: `reserve` bench entries; the `titan` node on the finale map; `generateTitanEncounter`; the Clock's start as encounter data | §7.2, §7.6 |
-| 3 | Presentation: the two Eyes as figures (the title's lens, `guardianFigures.ts`, half-lidded then wide); the opening beat (both eyes open over the Threshold); the phase-2 beat (both close, then open wide); Beheld's glyph and voice; the win beat | §7.7 |
-| 4 | Sim: the third node in `scripts/sim`, the four reads in §6; then the numbers | 1–3 |
+| 1 | Content: `titanEyes` (four `HeroDefinition`s, `data/enemies.ts`), Beheld, Gaze / Regard / Stare / Glare / Lidded, `gateYieldsToRedirect`, the AI's gate-open weight (`WEIGHT_GATE_OPEN`); `test/titanEyes.test.ts` | **Done** |
+| 2 | Structure: `Squad.reserveIds` → `Combatant.reserve` → `replacementCandidates` (the one replacement rule, every site reads it); the `titan` node on the finale corridor; `generateTitanEncounter`; the free mend; the sim's third node | **Done** |
+| 3 | Presentation: the Eyes as figures (`guardianFigures.ts titanEye` — the title's lens, half-lidded then wide); dramatic entrances for all four; Beheld's glyph (the map's Titan-eye lens, mythic red) and the blocked Regard's line; the map tile, dossier and node facts; `ChampionScreen` | **Done** |
+| 4 | Sim: the four reads in §6 (phase 2 reached / cleared, Regards landed vs dodged vs shielded, rounds a phase against the Clock); then the numbers | Open |
+
+## 9. Build notes and the first measurement
+
+- **Reserves enter together.** The first draft let a reserve in only when the field was empty,
+  so the first wide Eye in closed the door on the second. The rule is now *a reserve enters
+  once nothing but reserves stands* — the pair walk on side by side, which was the beat.
+- **Beheld is not consumed by the strike.** Two Eyes may Regard one mark in a round; that is the
+  phase-2 trap and it was left in. Duration 2 ticking at round end = the Gaze's round and the
+  whole of the next.
+- **Lidded is strong as authored.** Shield 40 base scales off a Defense of 120–140 (×1.7–1.9)
+  and STAB, and stacks additively cast on cast: a Right Eye left alone reaches 300 of Shield.
+  The sim's pilot plays through it; a naive one does not. A dial, not a bug.
+- **The Eyes one-shot a dumped Wisdom.** Int 140 into a Wisdom of 40 is a 3.5× ratio on a neutral
+  60-power Runic Blast with STAB — ~300 — before a Regard is ever fired. The existing formula
+  doing what it does; the Herald has the same Intelligence. Noted for the balance pass.
+- **Measured (sim pass, 300 runs, the chart pilot, same seed as pass 9):** 59 rosters reached
+  the Eyes and **all 59 cleared them**, in **21.5 rounds** at **59.6% HP** left, against the
+  Herald's 11.0 rounds and 79.4% — the run's longest fight by half, never its loss. Full-clear
+  19.7% (was 19.9% before the node — the Eyes take nothing from a roster that beat the Herald).
+  Whether a true final boss should be a wall a made roster never fails is the designer's; the
+  levers are the four lines in §4 and Lidded's base.

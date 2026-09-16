@@ -27,7 +27,7 @@ import {
 import { fieldHealMultiplier, type HealCaster } from '../../engine/heal/healPipeline';
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { DEFAULT_PACT_CLOCK, PACT_WARNING_ROUNDS, pactFractionFor } from '../../engine/combat/pactClock';
-import { applyForcedReplacement } from '../../engine/combat/switching';
+import { applyForcedReplacement, replacementCandidates } from '../../engine/combat/switching';
 import { consumableRefusal, useConsumable, type ConsumableKind } from '../../engine/combat/consumables';
 import { CONSUMABLE_KINDS, CONSUMABLE_NAMES, type ConsumablePurse } from '../../run/consumables';
 import { FlaskPanel, type FlaskTarget } from './FlaskPanel';
@@ -676,7 +676,7 @@ export function FightScreen({
 
   const playerActiveAlive = aliveActiveIdsOn(combat, PLAYER_SIDE);
   const enemyActiveAlive = aliveActiveIdsOn(combat, AI_SIDE);
-  const playerBench = combat.bench[PLAYER_SIDE];
+  const playerBench = replacementCandidates(combat, PLAYER_SIDE);
   const playerLockedIn = isLockedIn(combat, PLAYER_SIDE);
 
   const winner: Side | null = sideDefeated(combat, PLAYER_SIDE) ? AI_SIDE : sideDefeated(combat, AI_SIDE) ? PLAYER_SIDE : null;
@@ -1005,8 +1005,9 @@ export function FightScreen({
 
     // The AI auto-replaces fainted slots from its bench right away (forced replacement ignores lock-in).
     for (const slot of [0, 1] as const) {
-      if (nextState.active[AI_SIDE][slot] === null && nextState.bench[AI_SIDE].length > 0) {
-        const inId = nextState.bench[AI_SIDE][0];
+      const candidates = replacementCandidates(nextState, AI_SIDE);
+      if (nextState.active[AI_SIDE][slot] === null && candidates.length > 0) {
+        const inId = candidates[0];
         const r = applyForcedReplacement(nextState, nextState.round, AI_SIDE, slot, inId, statuses);
         nextState = r.state;
         events.push(...r.events);

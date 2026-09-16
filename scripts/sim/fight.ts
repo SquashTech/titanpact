@@ -17,7 +17,7 @@ import type { StatKey } from '../../src/engine/content';
 import { STAT_CEILING_MULTIPLE } from '../../src/engine/state';
 import type { Action } from '../../src/engine/combat/actions';
 import { resolveRound } from '../../src/engine/combat/resolveRound';
-import { applyForcedReplacement } from '../../src/engine/combat/switching';
+import { applyForcedReplacement, replacementCandidates } from '../../src/engine/combat/switching';
 import { resolveBattleStartEntries, resolvePassiveReactions } from '../../src/engine/combat/passiveEngine';
 import { DEFAULT_PACT_CLOCK } from '../../src/engine/combat/pactClock';
 import { buildCombatState, rosterIdOfCombatant } from '../../src/run/buildCombatState';
@@ -177,8 +177,9 @@ function contextFor(roster: readonly RosterEntry[], state: CombatState): AiConte
 function fillOpenSlots(state: CombatState, side: Side, events: CombatEvent[]): CombatState {
   let working = state;
   for (const slot of [0, 1] as const) {
-    if (working.active[side][slot] !== null || working.bench[side].length === 0) continue;
-    const inId = working.bench[side][0];
+    const candidates = replacementCandidates(working, side);
+    if (working.active[side][slot] !== null || candidates.length === 0) continue;
+    const inId = candidates[0];
     const replaced = applyForcedReplacement(working, working.round, side, slot, inId, statuses);
     working = replaced.state;
     events.push(...replaced.events);

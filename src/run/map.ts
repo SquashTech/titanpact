@@ -26,9 +26,11 @@ export const MAP_NODE_TYPES = [
   'tutorReward',
   'scribeReward',
   'event',
-  // Act 6 only (docs/run-loop.md §4). `muster` is the Vigil, `finale` the Endbringer.
+  // Act 6 only (docs/run-loop.md §4). `muster` is the Vigil, `finale` the Endbringer, `titan`
+  // the Titan's Eyes (docs/titan-eyes.md §3).
   'muster',
   'finale',
+  'titan',
 ] as const;
 
 export type MapNodeType = (typeof MAP_NODE_TYPES)[number];
@@ -163,15 +165,17 @@ function nodeId(row: number, col: number): string {
 function finaleMap(seed: number): RunMap {
   const musterId = nodeId(0, 0);
   const finaleId = nodeId(1, 0);
+  const titanId = nodeId(2, 0);
   return {
     seed,
     nodes: {
       [musterId]: { id: musterId, type: 'muster', row: 0, col: 0, nextIds: [finaleId] },
-      [finaleId]: { id: finaleId, type: 'finale', row: 1, col: 0, nextIds: [] },
+      [finaleId]: { id: finaleId, type: 'finale', row: 1, col: 0, nextIds: [titanId] },
+      [titanId]: { id: titanId, type: 'titan', row: 2, col: 0, nextIds: [] },
     },
-    rows: [[musterId], [finaleId]],
+    rows: [[musterId], [finaleId], [titanId]],
     startNodeIds: [musterId],
-    bossNodeId: finaleId,
+    bossNodeId: titanId,
   };
 }
 

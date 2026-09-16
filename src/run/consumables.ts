@@ -39,6 +39,7 @@ export const CONSUMABLE_DROP_CHANCE: Record<EncounterNodeKind, number> = {
   elite: 0.2,
   boss: 0.25,
   finale: 0,
+  titan: 0,
 };
 
 export const CONSUMABLE_NAMES: Record<ConsumableKind, string> = {

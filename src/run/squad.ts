@@ -6,6 +6,12 @@ export interface Squad {
   /** Up to 2 active roster ids; null means that slot starts empty. */
   activeIds: [string | null, string | null];
   benchIds: string[];
+  /**
+   * Bench members that enter ONLY when the side's field is empty (docs/titan-eyes.md §6 — the
+   * wide Eyes, phase 2). Benched for every other purpose: they regenerate, they are out of the
+   * Clock's leak, they count toward the side's defeat. Player squads never carry any.
+   */
+  reserveIds?: string[];
 }
 
 export class SquadSelectionError extends Error {}

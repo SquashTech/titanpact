@@ -139,6 +139,16 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         ],
         odds: odds('boss'),
       };
+    case 'titan':
+      return {
+        kind: 'The Titan',
+        facts: [
+          { glyph: 'enemy', label: 'Enemies', value: 'Two Eyes', note: 'then two, wide' },
+          { glyph: 'enemy', label: 'Level', value: `Lv ${enemyLevelFor('titan', actNumber)}` },
+          { glyph: 'hero', label: 'Roster', value: '6 v 2' },
+        ],
+        odds: null,
+      };
     case 'finale':
       return {
         kind: 'The final battle',

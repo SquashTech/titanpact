@@ -357,6 +357,26 @@ export function generateFinaleEncounter(
   return { run, squad };
 }
 
+/**
+ * The true final boss (docs/titan-eyes.md §3, §6): the half-lidded pair on the field and the wide
+ * pair in RESERVE, so phase 2 begins only once both of phase 1 are down. Grown to `scaling.level`
+ * through their E grades — the level is a formality, the line is the number.
+ */
+export function generateTitanEncounter(eyeIds: readonly string[], eyePool: HeroLookup, seed: number, scaling: ActScaling = NO_SCALING): Encounter {
+  let run = createRunState(0);
+  const rng = createRng(seed);
+  const ids: string[] = [];
+  for (const id of eyeIds) {
+    const definition = eyePool[id];
+    if (!definition) continue;
+    const { entry } = growTo(createRosterEntry(id, id, definition.moveIds), definition, scaling.level, rng);
+    run = addRosterEntry(run, { ...entry, mastery: MASTERY_CAP });
+    ids.push(id);
+  }
+  const squad: Squad = { activeIds: [ids[0] ?? null, ids[1] ?? null], benchIds: [], reserveIds: ids.slice(2) };
+  return { run, squad };
+}
+
 export interface SpawnEncounterOptions {
   /** The Location's lines; null = every spawning type (`spawnPool`). */
   types: readonly TypeId[] | null;

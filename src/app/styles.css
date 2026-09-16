@@ -29377,3 +29377,180 @@ textarea,
   max-width: 180px;
   margin-top: 4px;
 }
+
+/* ── The champion's hall (ChampionScreen, docs/titan-eyes.md §7) ──────────
+   The run's last screen before the summary: the sleep card, then one hero at a
+   time in the recruit fanfare's rings, then everyone in a row. Reuses the
+   fanfare's keyframes on purpose — it is the same rite, performed for the whole
+   pact at once. --pact-rgb is set inline per hero. */
+.champion-screen {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  overflow: hidden;
+  padding: 24px 16px;
+  cursor: pointer;
+}
+
+.champion-veil {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 44%, color-mix(in srgb, rgb(var(--pact-rgb)) 14%, #0d0f16), #05060a 64%);
+  transition: background 0.5s ease;
+}
+
+.champion-screen.is-sleep .champion-veil {
+  background: radial-gradient(circle at 50% 30%, rgba(var(--tier-mythic-rgb), 0.16), #05060a 62%);
+}
+
+.champion-sleep,
+.champion-hall {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  animation: evolve-veil-in 0.6s ease-out backwards;
+}
+
+.champion-kicker {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(var(--pact-rgb), 0.9);
+}
+
+.champion-title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.05;
+  text-shadow: 0 0 26px rgba(var(--pact-rgb), 0.55);
+}
+
+.champion-line {
+  max-width: 300px;
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.champion-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 260px;
+  height: 260px;
+}
+
+.champion-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  opacity: 0;
+  animation: recruit-fanfare-seal 0.72s cubic-bezier(0.3, 0.85, 0.25, 1) both;
+  pointer-events: none;
+}
+
+.champion-ring.is-outer {
+  width: 240px;
+  height: 240px;
+  margin: -120px 0 0 -120px;
+  border: 2px solid rgba(var(--pact-rgb), 0.75);
+}
+
+.champion-ring.is-inner {
+  width: 180px;
+  height: 180px;
+  margin: -90px 0 0 -90px;
+  border: 2px dashed rgba(var(--pact-rgb), 0.6);
+  animation-delay: 0.14s;
+}
+
+.champion-figure {
+  position: relative;
+  width: 138px;
+  height: 138px;
+  image-rendering: pixelated;
+  animation: recruit-fanfare-rise 0.7s cubic-bezier(0.2, 1, 0.3, 1) both;
+}
+
+.champion-plate {
+  position: absolute;
+  top: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 300px;
+  text-align: center;
+  animation: evolve-veil-in 0.5s ease-out 0.35s backwards;
+}
+
+.champion-name {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.05;
+  text-shadow: 0 0 26px rgba(var(--pact-rgb), 0.7);
+}
+
+.champion-level {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.champion-types {
+  display: flex;
+  gap: 6px;
+}
+
+/* The stage's plate hangs below it, so the stage sits a little high to leave it room. */
+.champion-screen:not(.is-hall):not(.is-sleep) {
+  justify-content: flex-start;
+  padding-top: 120px;
+}
+
+.champion-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 6px;
+  max-width: 360px;
+  margin-top: 8px;
+}
+
+.champion-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 104px;
+  padding: 8px 4px 6px;
+  border-radius: 10px;
+  background: radial-gradient(ellipse at 50% 90%, rgba(var(--pact-rgb), 0.28), transparent 70%);
+}
+
+.champion-cell-figure {
+  width: 72px;
+  height: 72px;
+  image-rendering: pixelated;
+}
+
+.champion-cell-name {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.champion-continue {
+  margin-top: 14px;
+}

@@ -53,6 +53,8 @@ export interface Combatant {
   /** Populated once at fight build (src/run/passives.ts); only `firedThisFight` changes mid-fight. */
   passives: Record<PassiveId, PassiveInstance>;
   fainted: boolean;
+  /** A bench entry held back until the side's field is empty (switching.ts replacementCandidates). Set at fight build from Squad.reserveIds. */
+  reserve?: boolean;
 }
 
 /** The one global Field Effect (docs/field-effects.md). */

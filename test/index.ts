@@ -46,6 +46,7 @@ import './classes.test';
 import './classMoves.test';
 import './locations.test';
 import './manticore.test';
+import './titanEyes.test';
 import './entrances.test';
 import './guardians.test';
 import './mobLayer.test';

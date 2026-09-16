@@ -75,10 +75,11 @@ export function buildCombatState(
 
   for (const { side, squad, roster, teamStatModifiers, teamPassiveGrants, teamStatusGrants } of placements) {
     active[side] = squad.activeIds.map((id) => (id ? combatantIdFor(side, id) : null)) as [string | null, string | null];
-    bench[side] = squad.benchIds.map((id) => combatantIdFor(side, id));
+    const reserveIds = squad.reserveIds ?? [];
+    bench[side] = [...squad.benchIds, ...reserveIds].map((id) => combatantIdFor(side, id));
     const entriesById = new Map(roster.map((r) => [r.rosterId, r]));
 
-    for (const rosterId of [...squad.activeIds, ...squad.benchIds]) {
+    for (const rosterId of [...squad.activeIds, ...squad.benchIds, ...reserveIds]) {
       if (!rosterId) continue;
       const entry = entriesById.get(rosterId);
       if (!entry) throw new Error(`${rosterId} is not on the roster`);
@@ -92,7 +93,7 @@ export function buildCombatState(
         teamPassiveGrants ?? {},
         teamStatusGrants ?? {}
       );
-      combatants[combatant.combatantId] = combatant;
+      combatants[combatant.combatantId] = reserveIds.includes(rosterId) ? { ...combatant, reserve: true } : combatant;
     }
   }
 

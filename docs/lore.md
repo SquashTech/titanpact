@@ -168,12 +168,16 @@ resists everything and is super-effective against nothing, the correct silhouett
 one piece of the Titan that stands where it can be struck. It is the last combatant to reach
 the field, and it reaches it because the five in front of it are gone.
 
-Winning is putting the Herald on the ground, and that *is* the pact. Binding is mutual and
-is offered to whoever has already put the Titan down — and the Herald is the only part of
-the Titan that can be put down, so breaking it is the proof the binding asks for. The run
-ends with a Titan on the player's leash, its Herald broken at the Threshold, and five holes
-in the world where the wardens used to be. The tutorial's "complete the Pact with the Titan"
-is the same sentence from the other side.
+The Herald is the part of the Titan that *walks*. **The Eyes are the part that *looks***
+(`titan-eyes.md`, 2026-09-16): with the Herald down the Titan turns to see what did it, and
+its two Eyes open over the Threshold — the sixth seal holds the body where it is, and does not
+stop it looking. Both can be put down; nothing else of a Titan can. Winning is putting the Eyes
+out — making it look away — and that *is* the pact. Binding is mutual and is offered to whoever
+has already put the Titan down, and a Titan is on the ground when it has been made to look
+away. The run ends with a Titan on the player's leash, asleep again for a thousand years if the
+seals are kept, its Herald broken and its Eyes closed at the Threshold, and five holes in the
+world where the wardens used to be. The tutorial's "complete the Pact with the Titan" is the
+same sentence from the other side.
 
 This also closes what used to be open here: whether the win should be *survival* rather
 than *reduction to 0 HP*. A Titan cannot be reduced to 0 HP, which is why survival read as
@@ -192,8 +196,8 @@ than quietly broken:
 2. **Ancient stays a defensive-only type.** `typechart.ts` already carries a comment
    telling the reader to keep the attacker row empty. The fiction is now the second reason:
    a seal is not a weapon.
-3. **Nothing else in the game is mono-Ancient.** The Endbringer is the only one. An
-   ordinary hero or mob with the full wall would read as a second Herald.
+3. **Nothing that is not a piece of the Titan is mono-Ancient.** The Herald and the two Eyes
+   are; nothing else is. An ordinary hero or mob with the full wall would read as a third.
 
 ## 9. Open, and deliberately so
 

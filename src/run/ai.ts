@@ -24,6 +24,7 @@ import {
   statusMagnitude,
 } from '../engine/state';
 import { selectableTargets, statusGatedTargets } from '../engine/combat/statusEngine';
+import { replacementCandidates } from '../engine/combat/switching';
 import { resolveTypeMult, TYPE_MULT_FLOOR, type TypeChart } from '../engine/damage/typeMult';
 
 export interface AiContext {
@@ -46,6 +47,11 @@ const WEIGHT_SUPER = 6;
 const WEIGHT_NEUTRAL = 2;
 const WEIGHT_RESIST = 1;
 const WEIGHT_QUAD_RESIST = 0.5;
+// A status-gated move with its gate open outranks the move that opened it (the Titan's Regard
+// after its Gaze, docs/titan-eyes.md §5): the same ratio a super-effective pick has over a
+// neutral one, so it is usually the strike and not always — an Eye that always fires is as
+// readable as one that never does.
+const WEIGHT_GATE_OPEN = WEIGHT_SUPER / WEIGHT_NEUTRAL;
 
 function aliveActiveIdsOn(state: CombatState, side: Side): string[] {
   return state.active[side].filter((id): id is string => id !== null && !state.combatants[id]?.fainted);
@@ -233,13 +239,15 @@ function bestEffectiveness(state: CombatState, casterId: string, move: MoveDefin
 }
 
 function weightFor(state: CombatState, casterId: string, move: MoveDefinition, ctx: AiContext): number {
-  if (!isDamaging(move)) return WEIGHT_NEUTRAL;
+  // Only ever reached for a declarable move, so a gated one here has its gate open.
+  const gate = move.requiresTargetStatus ? WEIGHT_GATE_OPEN : 1;
+  if (!isDamaging(move)) return WEIGHT_NEUTRAL * gate;
   const mult = bestEffectiveness(state, casterId, move, ctx);
-  if (mult >= 4) return WEIGHT_QUAD_SUPER;
-  if (mult > 1) return WEIGHT_SUPER;
-  if (mult === 1) return WEIGHT_NEUTRAL;
-  if (mult <= TYPE_MULT_FLOOR) return WEIGHT_QUAD_RESIST;
-  return WEIGHT_RESIST;
+  if (mult >= 4) return WEIGHT_QUAD_SUPER * gate;
+  if (mult > 1) return WEIGHT_SUPER * gate;
+  if (mult === 1) return WEIGHT_NEUTRAL * gate;
+  if (mult <= TYPE_MULT_FLOOR) return WEIGHT_QUAD_RESIST * gate;
+  return WEIGHT_RESIST * gate;
 }
 
 function weightedPick<T>(items: readonly T[], weights: readonly number[], random: () => number): T {
@@ -357,9 +365,7 @@ export function pickAiAction(state: CombatState, combatantId: string, ctx: AiCon
   const move = moveOf(moveId);
 
   // A switchesUserOut move with no replacement resolves into an ActionBlocked; first benched hero standing.
-  const switchToCombatantId = move.switchesUserOut
-    ? (state.bench[combatant.side].find((bid) => !state.combatants[bid]?.fainted) ?? null)
-    : null;
+  const switchToCombatantId = move.switchesUserOut ? (replacementCandidates(state, combatant.side)[0] ?? null) : null;
 
   return {
     kind: 'move',

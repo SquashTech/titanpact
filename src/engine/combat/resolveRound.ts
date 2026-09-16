@@ -170,7 +170,9 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
     // Retargeting layers in fixed order: Provoke (pull toward, every kind) →
     // Haunt (spread, damage only).
+    const beforeRedirect = targetIds;
     targetIds = applyProvokeRedirect(working, action.combatantId, targetMode, targetIds, statuses);
+    const pulledByTaunt = targetIds.length !== beforeRedirect.length || targetIds.some((id, i) => id !== beforeRedirect[i]);
     if (move.kind === 'damage') {
       const spread = expandSpreadTargets(working, move.type, targetMode, targetIds, statuses);
       targetIds = spread.targetIds;
@@ -193,7 +195,8 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       (id) => working.combatants[id]?.side === actor.side || blockingStatusId(working, id, statuses) === null
     );
 
-    targetIds = statusGatedTargets(working, move, targetIds);
+    // A move whose gate yields to a taunt keeps the taunter it was pulled onto (content.ts).
+    if (!(move.gateYieldsToRedirect && pulledByTaunt)) targetIds = statusGatedTargets(working, move, targetIds);
     if (move.requiresTargetStatus && targetIds.length === 0) {
       events.push({ type: 'ActionBlocked', round, combatantId: action.combatantId, reason: 'targetStatusMissing' });
       continue;

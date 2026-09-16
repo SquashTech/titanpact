@@ -40,6 +40,7 @@ import { EventNodeScreen } from '../view/run/EventNodeScreen';
 import { runEvents } from '../data/events';
 import { rollRunEvent } from '../run/events';
 import { SandboxBattleScreen } from '../view/run/SandboxBattleScreen';
+import { ChampionScreen } from '../view/run/ChampionScreen';
 import { RunSummaryScreen } from '../view/run/RunSummaryScreen';
 import { heroes } from '../data/heroes';
 import { moves } from '../data/moves';
@@ -48,8 +49,8 @@ import { CompanionScreen, type CompanionBeat } from '../view/run/CompanionScreen
 import { absorbCompanions, companionCandidate, companionJoinDue, joinCompanion } from '../run/companion';
 import type { CombatState } from '../engine/state';
 import { koRosterIdsOf } from '../run/buildCombatState';
-import { WoundsError, buyMend, recordWounds } from '../run/wounds';
-import { enemies, finaleEnemies, ENDBRINGER_ID } from '../data/enemies';
+import { WoundsError, buyMend, recordWounds, mendRoster } from '../run/wounds';
+import { enemies, finaleEnemies, ENDBRINGER_ID, titanEyes, EYE_IDS } from '../data/enemies';
 import { ActIntroScreen } from '../view/run/ActIntroScreen';
 import { PactSealScreen } from '../view/run/PactSealScreen';
 import { TitanWakeScreen } from '../view/run/TitanWakeScreen';
@@ -102,6 +103,7 @@ import { generateStarterOptions } from '../run/draft';
 import {
   generateEncounter,
   generateFinaleEncounter,
+  generateTitanEncounter,
   type EncounterNodeType,
   type Encounter,
 } from '../run/enemyGen';
@@ -200,6 +202,8 @@ type Screen =
   /** Offers sampled once in handleFightResolved; only pushed when the player holds a contract. */
   /** `required`: the scripted run's forced contract — the screen has no way out but signing (docs/tutorial.md). */
   | { kind: 'recruit'; offers: RosterEntry[]; next: Screen; required?: boolean }
+  /** The Eyes have closed: the roster presented as the heroes of the land, then the summary. */
+  | { kind: 'champions' }
   | { kind: 'runComplete' }
   | { kind: 'runFailed' };
 
@@ -216,6 +220,7 @@ const PLACELESS_SCREENS: ReadonlySet<Screen['kind']> = new Set([
   'sandboxBattle',
   'sandboxFight',
   'statusTestFight',
+  'champions',
   'runComplete',
   'runFailed',
 ]);
@@ -305,7 +310,7 @@ function whoScreensBehind(screen: Screen): number {
 }
 
 /** Payouts key on the MAP node type: `skirmish` and `battle` both flatten to a `fight` encounter but sit in opposite reward lanes. */
-type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' | 'finale';
+type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' | 'finale' | 'titan';
 
 // The bands live in runProgress.ts (GOLD_REWARD_RANGE) so the map's node readout prints the roll it describes.
 function goldRewardFor(nodeType: EncounterMapNodeType): number {
@@ -526,6 +531,14 @@ export function App() {
       } else {
         setScreen({ kind: 'squadSelect', nodeId, nodeType: 'boss', encounter, squadSize: ROSTER_CAP });
       }
+    } else if (node.type === 'titan') {
+      // The Titan's Eyes (docs/titan-eyes.md): the half-lidded pair, the wide pair in reserve.
+      const encounter = generateTitanEncounter(EYE_IDS, titanEyes, encounterSeedFor(playerRun.map!, nodeId), encounterScaling('titan', FINALE_ACT));
+      if (playerRun.roster.length <= 2) {
+        handleSquadConfirmed(pickSquad(playerRun.roster, playerRun.roster.map((r) => r.rosterId), ROSTER_CAP), nodeId, 'boss', encounter);
+      } else {
+        setScreen({ kind: 'squadSelect', nodeId, nodeType: 'boss', encounter, squadSize: ROSTER_CAP });
+      }
     } else if (
       node.type === 'fight' ||
       node.type === 'skirmish' ||
@@ -638,6 +651,7 @@ export function App() {
     const mapNodeType = playerRun.map!.nodes[nodeId].type;
     const isGuardian = mapNodeType === 'boss';
     const isFinale = mapNodeType === 'finale';
+    const isTitan = mapNodeType === 'titan';
     // EVERY Guardian pays a Banner now that the finale act follows act 5 — the reason act 5's
     // used to pay none (nothing left to spend it on) is void (docs/run-loop.md §4).
     const banner = isGuardian;
@@ -666,8 +680,13 @@ export function App() {
     if (companionId) next = joinCompanion(next, companionId, rosterHeroes);
 
     let afterScreen: Screen;
-    if (isFinale) {
-      afterScreen = { kind: 'runComplete' };
+    if (isTitan) {
+      afterScreen = { kind: 'champions' };
+    } else if (isFinale) {
+      // The Herald is down and the Titan turns to look: the one free mend between the two
+      // finale fights (docs/titan-eyes.md §3, per user direction).
+      next = mendRoster(next);
+      afterScreen = { kind: 'map' };
     } else if (isGuardian) {
       // Recorded on the Guardian falling, not on the run starting: a tutorial the player wiped
       // in is offered again (docs/tutorial.md). The rest of the run is a normal run either way.
@@ -1194,6 +1213,8 @@ export function App() {
       {screen.kind === 'crucible' && (
         <CrucibleScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => setScreen(screen.next)} />
       )}
+
+      {screen.kind === 'champions' && <ChampionScreen run={playerRun} onContinue={() => setScreen({ kind: 'runComplete' })} />}
 
       {/* `runOutcome` is set in the layout effect above, so it is already there on the first paint. */}
       {(screen.kind === 'runComplete' || screen.kind === 'runFailed') && runOutcome && (

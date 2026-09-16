@@ -4020,6 +4020,79 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'Old authority spoken aloud — and the speaker steadies behind it (+20 Wisdom).',
   },
+  // --- The Titan's Eyes (docs/titan-eyes.md §5; enemies.ts). Untiered, in no pool. ---
+  // The telegraph. Priority so the mark is on the board before the player's actions resolve,
+  // and visible for the whole of the next command phase.
+  gaze: {
+    id: 'gaze',
+    name: 'Gaze',
+    type: 'Ancient',
+    category: 'magical',
+    kind: 'buff',
+    statusApplication: { statusId: 'Beheld', duration: 2, target: 'moveTarget' },
+    manaCost: 20,
+    priority: 1,
+    target: 'singleEnemy',
+    description: "The eye settles on one hero (Beheld for a round). What it looks at, it strikes next.",
+  },
+  // The strike. Only a Beheld hero can be aimed at; a Provoke pull lands on the taunter instead
+  // (gateYieldsToRedirect — content.ts). Ancient is neutral into everything, so the number is
+  // the whole of it.
+  regard: {
+    id: 'regard',
+    name: 'Regard',
+    type: 'Ancient',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 150,
+    requiresTargetStatus: 'Beheld',
+    gateYieldsToRedirect: true,
+    manaCost: 60,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'The full weight of the regard lands on a Beheld hero. A taunt can take it instead.',
+  },
+  // Phase 2's Gaze: both heroes marked at once, so the switch answer costs two switch-ins.
+  stare: {
+    id: 'stare',
+    name: 'Stare',
+    type: 'Ancient',
+    category: 'magical',
+    kind: 'buff',
+    statusApplication: { statusId: 'Beheld', duration: 2, target: 'moveTarget' },
+    manaCost: 30,
+    priority: 1,
+    target: 'bothEnemies',
+    description: 'The eye, wide, takes in both heroes (Beheld for a round). Nowhere to look but away.',
+  },
+  // Phase 2's Regard.
+  glare: {
+    id: 'glare',
+    name: 'Glare',
+    type: 'Ancient',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 190,
+    requiresTargetStatus: 'Beheld',
+    gateYieldsToRedirect: true,
+    manaCost: 70,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'The regard of a Titan that is paying attention, on a Beheld hero. A taunt can take it instead.',
+  },
+  // The Right Eye's turn spent holding: a Shield on both Eyes off its Defense (docs/shield.md).
+  lidded: {
+    id: 'lidded',
+    name: 'Lidded',
+    type: 'Ancient',
+    category: 'magical',
+    kind: 'buff',
+    statusApplication: { statusId: 'Shield', magnitude: 40, target: 'moveTarget' },
+    manaCost: 45,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'Both eyes half-close (Shield 40 on each, scaled off Defense).',
+  },
   // The Class moves (classes.ts): untiered, in no hero's pool — a Class is their only source.
   ...classMoves,
   // The signature moves (signatures.ts): untiered, in no pool — the tenth Mastery pip is their only source.

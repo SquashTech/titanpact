@@ -25,6 +25,7 @@ export const NODE_NAMES: Record<MapNodeType, string> = {
   event: 'Event',
   muster: 'The Vigil',
   finale: 'Endbringer',
+  titan: 'The Titan',
 };
 
 // Stat-reward colours match StatBars' STAT_COLORS. `battle` stays `--ally`,
@@ -58,8 +59,9 @@ export const NODE_COLORS: Record<MapNodeType, string> = {
   scribeReward: '#e0c27a',
   event: 'var(--tier-common)',
   muster: 'var(--accent)',
-  // The only node in a run that wears the mythic red, because there is only one of it.
+  // The two nodes in a run that wear the mythic red: the Herald, and what looks down after it.
   finale: 'var(--tier-mythic)',
+  titan: 'var(--tier-mythic)',
 };
 
 // How much weight a choice card carries — the Guardian is not a Boon.
@@ -84,4 +86,5 @@ export const NODE_TIERS: Record<MapNodeType, NodeTier> = {
   event: 'reward',
   muster: 'landmark',
   finale: 'ancient',
+  titan: 'ancient',
 };

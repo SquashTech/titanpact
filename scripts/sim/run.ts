@@ -13,7 +13,7 @@ import { relics, guardianBannerRelics } from '../../src/data/relics';
 import { classes } from '../../src/data/classes';
 import { runEvents } from '../../src/data/events';
 import { progressionTable } from '../../src/data/progression';
-import { enemies, finaleEnemies, ENDBRINGER_ID } from '../../src/data/enemies';
+import { enemies, finaleEnemies, ENDBRINGER_ID, titanEyes, EYE_IDS } from '../../src/data/enemies';
 import { encounterKindOf, encounterSeedFor, nodeEncounter } from '../../src/run/encounters';
 import { allCombatants } from '../../src/data/content';
 import { guildHallOffers, CONTRACT_PURCHASE_COST } from '../../src/data/recruitment';
@@ -25,7 +25,7 @@ import { generateStarterOptions, STARTER_PICK_COUNT } from '../../src/run/draft'
 import { generateItinerary, locationForAct } from '../../src/run/locations';
 import { encounterScaling } from '../../src/run/difficulty';
 import { encounterXpKind, grantEncounterLevels, levelOf, MAX_LEVEL } from '../../src/run/growth';
-import { generateFinaleEncounter, type Encounter, type EncounterNodeType } from '../../src/run/enemyGen';
+import { generateFinaleEncounter, type Encounter, type EncounterNodeType, generateTitanEncounter } from '../../src/run/enemyGen';
 import { pickSquad, requiredSquadSize, STANDARD_SQUAD_SIZE, type Squad } from '../../src/run/squad';
 import {
   absorbItem,
@@ -67,7 +67,7 @@ const EQUIPMENT_POOL = Object.values(equipment);
 const STARTER_IDS = Object.values(heroes).filter((h) => h.starter).map((h) => h.id);
 
 /** App.tsx `EncounterMapNodeType` — the reward lane keys off the MAP node, not the flattened encounter kind. */
-type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' | 'finale';
+type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' | 'finale' | 'titan';
 
 // EQUIPMENT_DROP_CHANCE and LOOT_SOURCE come from run/equipment.ts, so the sim rolls the odds the game ships.
 
@@ -307,10 +307,12 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
         record.deathNodeType = node.type;
         break;
       }
-      if (node.type === 'finale') {
+      if (node.type === 'titan') {
         record.won = true;
         break;
       }
+      // The Herald is down: the one free mend before the Eyes (docs/titan-eyes.md §3).
+      if (node.type === 'finale') run = mendRoster(run);
       run = advanceToNode(run, nodeId);
       run = { ...run, encountersWon: run.encountersWon + 1 };
       // A KO'd companion is gone from the run, before the levels roll (src/run/companion.ts).
@@ -404,7 +406,7 @@ function paySchedule(run: RunState, rng: Rng, record: RunRecord): RunState {
 }
 
 function isEncounterNode(type: MapNodeType): boolean {
-  return type === 'fight' || type === 'skirmish' || type === 'battle' || type === 'elite' || type === 'boss' || type === 'finale';
+  return type === 'fight' || type === 'skirmish' || type === 'battle' || type === 'elite' || type === 'boss' || type === 'finale' || type === 'titan';
 }
 
 interface EncounterOutcome {
@@ -434,7 +436,10 @@ function resolveEncounterNode(
   let squadSize = STANDARD_SQUAD_SIZE;
   let workingRun = run;
 
-  if (mapNodeType === 'finale') {
+  if (mapNodeType === 'titan') {
+    encounter = generateTitanEncounter(EYE_IDS, titanEyes, encounterSeedFor(run.map!, node.id), encounterScaling('titan', TOTAL_ACTS));
+    squadSize = ROSTER_CAP;
+  } else if (mapNodeType === 'finale') {
     encounter = generateFinaleEncounter(
       run.brokenSeals,
       location.guardianFinalEnemyId ?? ENDBRINGER_ID,
@@ -446,7 +451,7 @@ function resolveEncounterNode(
   } else {
     // The same deterministic draw the game makes (run/encounters.ts): seeded off the map, so the
     // sim's own rng is not consulted here and a map seed reproduces its fights.
-    const encounterKind = encounterKindOf(mapNodeType as Exclude<EncounterMapNodeType, 'finale'>);
+    const encounterKind = encounterKindOf(mapNodeType as Exclude<EncounterMapNodeType, 'finale' | 'titan'>);
     encounter = nodeEncounter(node, { run, location, heroes, allCombatants, enemies, progression: progressionTable });
     if (encounterKind === 'fight') workingRun = { ...workingRun, fightsStarted: workingRun.fightsStarted + 1 };
   }

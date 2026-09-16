@@ -187,6 +187,21 @@ export const statuses: Record<string, StatusDefinition> = {
     description:
       'Adds its magnitude as flat Base Power to the next attack this hero lands, whatever the move type, then is spent. No clock — it waits until it is cashed. Cleared by switching, so it cannot be banked on the bench.',
   },
+  // The Titan's gaze (docs/titan-eyes.md §5): the mark a Regard needs. Duration 2 ticking at the
+  // end of the round = the round the Gaze lands in and the whole of the next, so the telegraph is
+  // on the board through one full command phase. Not consumed by the strike — two Eyes may
+  // Regard one mark in a round, which is the trap the phase-2 Stare sets. Switching breaks it.
+  Beheld: {
+    id: 'Beheld',
+    name: 'Beheld',
+    shape: 'duration',
+    ticksAtEndOfRound: true,
+    decay: 'none',
+    stacking: 'none',
+    clearsOnSwitch: true,
+    pipeline: 'none',
+    description: "The Titan's eye is on this hero: a Regard is coming. Switching out breaks its gaze; a Shield takes the hit first.",
+  },
   Provoke: {
     id: 'Provoke',
     name: 'Provoke',

@@ -209,6 +209,7 @@ export function encounterXpForAct(actNumber: number): number {
 
 /** The kind a map node pays as. The finale is its own base figure, not a Guardian. */
 export function encounterXpKind(nodeType: MapNodeType): EncounterXpKind {
+  // The Titan's Eyes pay nothing anyone can spend — the run ends on them — so the kind is moot.
   return nodeType === 'boss' ? 'guardian' : nodeType === 'elite' ? 'elite' : 'standard';
 }
 

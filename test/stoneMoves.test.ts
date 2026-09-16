@@ -417,7 +417,9 @@ test('stone: no move is unreachable that was not already known to be', () => {
   const { enemies } = require('../src/data/enemies') as typeof import('../src/data/enemies');
 
   const reachable = new Set<string>();
-  for (const hero of Object.values({ ...heroes, ...enemies })) for (const id of hero.moveIds) reachable.add(id);
+  // The Titan's Eyes hold their five (Gaze, Regard, Stare, Glare, Lidded) and nothing else does (src/data/enemies.ts titanEyes).
+  const { titanEyes } = require('../src/data/enemies') as typeof import('../src/data/enemies');
+  for (const hero of Object.values({ ...heroes, ...enemies, ...titanEyes })) for (const id of hero.moveIds) reachable.add(id);
   for (const pool of Object.values(progressionTable.moveTiers)) for (const id of pool) reachable.add(id);
   // A class move is reached through its Class alone (src/data/classes.ts); a signature through its hero's tenth pip alone (src/data/signatures.ts).
   for (const id of Object.keys(classMoves)) reachable.add(id);

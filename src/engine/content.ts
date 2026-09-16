@@ -346,6 +346,13 @@ export interface MoveDefinition {
   };
   /** Any kind. HARD gate: only resolves against a target carrying this status (Glaciate). Enforced at declaration (view) and resolution (ActionBlocked 'targetStatusMissing' — turn lost, no mana). */
   requiresTargetStatus?: StatusId;
+  /**
+   * With `requiresTargetStatus`: a Provoke pull lands on the taunter even though it does not carry
+   * the status (the Titan's Regard, docs/titan-eyes.md §5 — "taunt wins", per user direction).
+   * Default (unset) is the locked order: the gate is applied after every redirect, so a pull onto
+   * an ungated hero fizzles.
+   */
+  gateYieldsToRedirect?: boolean;
   /** Any kind. One rider bare, or a list (Toxic Fangs); riders resolve in order, each with its own targets and chance. Always read via statusApplicationsOf. */
   statusApplication?: StatusApplication | readonly StatusApplication[];
   /** Any kind. Exactly one rider drawn uniformly per CAST (not per target), resolved after the unconditional ones. */

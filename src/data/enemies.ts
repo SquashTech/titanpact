@@ -171,6 +171,66 @@ export const enemies: Record<string, HeroDefinition> = {
   },
 };
 
+/**
+ * The true final boss (docs/titan-eyes.md): the Titan's two Eyes, keyed by `EYE_IDS` and held
+ * apart from `enemies` so nothing that draws from the champion pool can reach them. Mono-Ancient
+ * — the Titan's own pieces are the only things that are (lore.md §8). Phase 2 is the same pair
+ * WIDE: two more definitions, not a multiplier, so "more powerful" is authored per stat and per
+ * move. Attack 40 across all four is the dump stat — nothing they do is physical.
+ *
+ * The Left Eye hurts (Runic Blast, Enfeeble beside the gaze); the Right Eye holds (Forgotten
+ * Curse, Lidded). Speed 90/100: the fastest hero is 90, so the wide pair outrun everything but
+ * a priority bracket and the half-lidded pair do not quite. Every number is a first pass for
+ * the sim (titan-eyes.md §6).
+ */
+export const titanEyes: Record<string, HeroDefinition> = {
+  leftEye: {
+    id: 'leftEye',
+    name: 'Left Eye',
+    types: ['Ancient'],
+    baseStats: { hp: 480, attack: 40, defense: 100, intelligence: 140, wisdom: 100, speed: 90, manaPool: 200, mpRegen: 25 },
+    moveIds: ['gaze', 'regard', 'runicBlast', 'enfeeble'],
+    starter: false,
+    growthGrades: CHAMPION_GRADES,
+  },
+  rightEye: {
+    id: 'rightEye',
+    name: 'Right Eye',
+    types: ['Ancient'],
+    baseStats: { hp: 560, attack: 40, defense: 120, intelligence: 110, wisdom: 120, speed: 80, manaPool: 200, mpRegen: 25 },
+    moveIds: ['gaze', 'regard', 'forgottenCurse', 'lidded'],
+    starter: false,
+    growthGrades: CHAMPION_GRADES,
+  },
+  leftEyeWide: {
+    id: 'leftEyeWide',
+    name: 'Left Eye',
+    types: ['Ancient'],
+    baseStats: { hp: 600, attack: 40, defense: 110, intelligence: 170, wisdom: 110, speed: 100, manaPool: 240, mpRegen: 30 },
+    moveIds: ['stare', 'glare', 'runicBlast', 'enfeeble'],
+    starter: false,
+    growthGrades: CHAMPION_GRADES,
+  },
+  rightEyeWide: {
+    id: 'rightEyeWide',
+    name: 'Right Eye',
+    types: ['Ancient'],
+    baseStats: { hp: 700, attack: 40, defense: 140, intelligence: 130, wisdom: 140, speed: 90, manaPool: 240, mpRegen: 30 },
+    moveIds: ['stare', 'glare', 'forgottenCurse', 'lidded'],
+    starter: false,
+    growthGrades: CHAMPION_GRADES,
+  },
+};
+
+export const LEFT_EYE_ID = 'leftEye';
+export const RIGHT_EYE_ID = 'rightEye';
+export const LEFT_EYE_WIDE_ID = 'leftEyeWide';
+export const RIGHT_EYE_WIDE_ID = 'rightEyeWide';
+/** Phase 1 then phase 2, in the order the encounter fields them. */
+export const EYE_IDS: readonly string[] = [LEFT_EYE_ID, RIGHT_EYE_ID, LEFT_EYE_WIDE_ID, RIGHT_EYE_WIDE_ID];
+/** The wide pair: what phase 1's fall lets in. */
+export const WIDE_EYE_IDS: readonly string[] = [LEFT_EYE_WIDE_ID, RIGHT_EYE_WIDE_ID];
+
 /** Pointed at by `LocationDefinition.guardianFinalEnemyId`. */
 export const MANTICORE_ID = 'manticore';
 export const YUGZULACH_ID = 'yugzulach';

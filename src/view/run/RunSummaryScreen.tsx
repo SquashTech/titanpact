@@ -95,7 +95,7 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
         <h2>{won ? 'Run Cleared' : 'Run Failed'}</h2>
         <p className="run-summary-where">
           {won
-            ? `All ${SEAL_ACTS} Guardians have fallen, and the Endbringer with them.`
+            ? `All ${SEAL_ACTS} Guardians have fallen, the Herald with them, and the Titan's Eyes have closed.`
             : run.actNumber > SEAL_ACTS
               ? `Your squad fell at the last pact${place ? ` · ${place.name}` : ''}.`
               : `Your squad fell in Act ${actLabel(run.actNumber)}${place ? ` · ${place.name}` : ''}.`}

@@ -31,6 +31,22 @@ export function applyVoluntarySwitch(
   return performSwitch(state, round, side, outCombatantId, inCombatantId, statusDefs);
 }
 
+/**
+ * The bench members that may fill an open slot on this side right now: standing, and not a
+ * reserve while any NON-reserve active ally still stands. A reserve (Squad.reserveIds — the
+ * Titan's wide Eyes, docs/titan-eyes.md §6) waits for the field to empty of everything that is
+ * not a reserve, so a phase begins only when the phase before it has ended — and the reserves
+ * enter TOGETHER, since the first one in does not close the door on the second. Every
+ * replacement site reads this, the player's picker included.
+ */
+export function replacementCandidates(state: CombatState, side: Side): string[] {
+  const phaseOver = state.active[side].every((id) => id === null || state.combatants[id]?.fainted || state.combatants[id]?.reserve);
+  return state.bench[side].filter((id) => {
+    const c = state.combatants[id];
+    return c !== undefined && !c.fainted && (!c.reserve || phaseOver);
+  });
+}
+
 /** Forced replacement of a fainted active slot. Ignores lock-in by design. */
 export function applyForcedReplacement(
   state: CombatState,

@@ -13,7 +13,7 @@ import type { EnemyLoadout } from './enemyGen';
  * encounters but sit in opposite reward lanes, so the loot tables key on this rather than on the
  * flattened kind (equipment.ts EQUIPMENT_DROP_CHANCE, LOOT_SOURCE).
  */
-export type EncounterNodeKind = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' | 'finale';
+export type EncounterNodeKind = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' | 'finale' | 'titan';
 
 /** Encounters the player has won on reaching a node of this kind inside its act: the opener, the fork, the Guardian. */
 export const ENCOUNTERS_BEFORE_NODE: Record<EncounterNodeKind, number> = {
@@ -23,6 +23,7 @@ export const ENCOUNTERS_BEFORE_NODE: Record<EncounterNodeKind, number> = {
   elite: 1,
   boss: 2,
   finale: 0,
+  titan: 1,
 };
 
 /**
@@ -39,6 +40,8 @@ export const ENEMY_LEVEL_OFFSET: Record<EncounterNodeKind, number> = {
   elite: 1,
   boss: -3,
   finale: 2,
+  // The Eyes' level buys them little (CHAMPION_GRADES); the number is in the line (docs/titan-eyes.md §4).
+  titan: 4,
 };
 
 export const CHAMPION_LEVEL_BONUS = 2;

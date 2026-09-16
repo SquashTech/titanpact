@@ -713,7 +713,12 @@ export function buildBeats(
 
       case 'ActionBlocked': {
         const targetName = name(e.combatantId);
-        const text = e.reason === 'dazed' ? `${targetName} is Dazed and can't move!` : `${targetName}'s target is already down!`;
+        const text =
+          e.reason === 'dazed'
+            ? `${targetName} is Dazed and can't move!`
+            : e.reason === 'targetStatusMissing'
+              ? `${targetName} has nothing to aim at!`
+              : `${targetName}'s target is already down!`;
         push([e], text, [], { bannerFocusKind: 'debuff' });
         i++;
         break;
