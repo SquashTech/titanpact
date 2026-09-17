@@ -1045,7 +1045,7 @@ export const progressionTable: ProgressionTable = {
             name: 'Forked',
             description: 'One hand crackling, the other closing — the bolt that forks hits twice as hard on the second branch.',
             // The mixed path (docs/combat.md "Either Hand"): stays 70/70 and makes alternating pay.
-            statGrants: { attack: 10, intelligence: 10 },
+            statGrants: { attack: 20, intelligence: 20 },
             unlocksMoveIds: ['skyfall'],
             grantsPassiveIds: ['eitherHand'],
           },
@@ -1644,7 +1644,7 @@ export const progressionTable: ProgressionTable = {
             name: 'Embodied',
             description: 'Stops thinking about the blow and throws it — then thinks the next one.',
             // The mixed path (docs/combat.md "Either Hand"): Psychokinesis is the physical hand Mind never had.
-            statGrants: { attack: 20, intelligence: 10 },
+            statGrants: { attack: 20, intelligence: 20 },
             unlocksMoveIds: ['psychokinesis'],
             grantsPassiveIds: ['eitherHand'],
           },

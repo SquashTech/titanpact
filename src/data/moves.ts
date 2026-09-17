@@ -2852,7 +2852,9 @@ export const moves: Record<string, MoveDefinition> = {
     description: 'Feeds on what the foe is thinking (heals 40% of what it deals).',
   },
 
-  // Embodied's grant (Cortex): Mind's one physical hit — the slate has no other. In no pool.
+  // Embodied's grant (Cortex): Mind's one physical hit — the slate has no other. In no pool. The
+  // rider is the slate's own verb (Psyshock's Wisdom shred) made certain, and it points at the OTHER
+  // hand: the body's blow opens the mind for the magical one Either Hand pays +30% on next turn.
   psychokinesis: {
     id: 'psychokinesis',
     name: 'Psychokinesis',
@@ -2860,11 +2862,12 @@ export const moves: Record<string, MoveDefinition> = {
     type: 'Mind',
     category: 'physical',
     kind: 'damage',
-    basePower: 90,
-    manaCost: 60,
+    basePower: 100,
+    statDeltas: [{ stat: 'wisdom', amount: -20 }],
+    manaCost: 65,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Lifts the foe with the mind and puts them down with the body.',
+    description: 'Lifts the foe with the mind and puts them down with the body — and what lands that hard leaves the mind open (−20 Wisdom).',
   },
 
   // --- Spirit ---

@@ -539,7 +539,7 @@ identity.
 > path can out-pay both grafts, the clause was measuring the wrong thing.
 >
 > **Thunderhead is gone (2026-09-17)**: it measured +0.28 against Lightning Rod's +1.06 and
-> was reworked into **Forked** — +10/+10, Either Hand, Skyfall — the mixed attacker's path
+> was reworked into **Forked** — +20/+20, Either Hand, Skyfall — the mixed attacker's path
 > (`docs/combat.md` "Either Hand"); Cortex's Overmind became **Embodied** the same way.
 >
 > **3. A GRAFT path pays three ways** — more stats, the new type, and a line of

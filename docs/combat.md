@@ -1121,8 +1121,11 @@ hands every other turn — a specialist holding it gets nothing. It replaced Thu
 (Feedback Loop) and Overmind (Entanglement), both deleted.
 
 Measured on the day (4000 focus runs, the one-ply pilot alternating only when the bonus wins
-the turn): Forked +0.45 against Thunderhead's +0.28, Embodied −0.19 against Overmind's −0.79;
-Lightning Rod (+1.06) and Construct (+0.46) — the specialist conversions — still lead. A floor:
+the turn): at +10/+10 Forked +0.45 against Thunderhead's +0.28 and Embodied −0.19 against
+Overmind's −0.79, the specialist conversions leading. **Raised to +20/+20 per user direction**,
+and Psychokinesis given the slate's verb (100 BP, −20 Wisdom on the target — the body's blow
+opens the mind for the magical hand that follows; 65 mana): Forked **+0.83 against Lightning
+Rod's +0.85**, Embodied −0.15 against Construct's +0.39 (inside one standard error). A floor:
 the pilot never sets a hand up.
 
 ## Renew's stacked payoffs (LOCKED — 2026-08-30 designer sign-off)
