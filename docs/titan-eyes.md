@@ -118,7 +118,7 @@ Both hold **Gaze** and **Regard** (§5); the rest of each kit is a role:
 | | Left Eye | Right Eye |
 |---|---|---|
 | Role | The one that hurts | The one that holds |
-| Beside the gaze | **Runic Blast**, **Enfeeble** (the Endbringer's softener: −Atk/−Int on both) | **Forgotten Curse**, **Lidded** (new: Shield on both Eyes, off Defense — an Eye closing halfway) |
+| Beside the gaze | **Archon Blast**, **Erode** (−20 Def / −20 Wis on both — the softening before the Regard; Runic Blast and Enfeeble until 2026-09-17, `authoring-moves.md` §10 "Ancient") | **Forgotten Curse**, **Lidded** (new: Shield on both Eyes, off Defense — an Eye closing halfway) |
 | Reads as | the striker | the wall that makes the striker safe |
 
 Ancient's attacker row is empty on the chart (`typechart.ts`; `lore.md` §2 — *a seal is not a

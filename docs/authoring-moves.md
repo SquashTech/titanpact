@@ -2121,21 +2121,21 @@ authored on the day the Herald got its kit, from three constraints the docs alre
 — every Ancient hit resolves at 1× (`typechart.ts`, *a seal is not a weapon*), no hero is
 ever Ancient (`types-and-heroes.md`, so there is no pool and no offer to gate), and the
 Herald's own note that *a Titan does not need to hit harder, it makes everything else
-softer*. Eleven moves plus the Eyes' five, all magical, all tiered now (`test/moveTiers`
+softer*. Eleven moves plus the Eyes' five, all tiered now (`test/moveTiers`
 has every type in `TIERED_TYPES`; the tier is descriptive, since nothing offers an Ancient
 move — but the mana conventions read off it). Zero engine extensions: every row was a Shield
 rider, a stat delta, a Daze, a drain or a self-heal the vocabulary already had.
 
 | Move | Tier | Shape | Holder |
 |---|---|---|---|
-| Runic Blast | Early | 50 BP single, 20 | Skeleton King, the Eyes |
+| Runic Blast | Early | 50 BP single, 20 | Skeleton King |
 | Warding Sigil | Early | Shield 30 on self, 25 | Elder Bough |
-| Forgotten Curse | Mid | 40 BP spread, −10 Wis both, 35 | Yugzulach, the Eyes |
-| Archon Blast | Mid | 55 BP single, +20 Wis self, 40 | Manticore, Kraken |
-| Weight of Ages | Mid | 50 BP spread, −15 Speed both, 50 | Dragon |
-| Transfix | Mid | 40 BP single + Daze, 40 | the Herald |
-| Long Drink | Mid | 60 BP single, drains half, 45 | Yugzulach |
-| Erode | Mid | −20 Def / −20 Wis both foes, 45 | the Herald |
+| Forgotten Curse | Mid | 40 BP spread, −10 Wis both, 35 | Yugzulach, the Right Eyes |
+| Archon Blast | Mid | 55 BP single, +20 Wis self, 40 | Manticore, Kraken, the Left Eyes |
+| Weight of Ages | Mid | **physical** 50 BP spread, −15 Speed both, 50 | Dragon |
+| Transfix | Mid | **physical** 40 BP single + Daze, 40 | the Herald |
+| Long Drink | Mid | **physical** 60 BP single, drains half, 45 | Yugzulach |
+| Erode | Mid | −20 Def / −20 Wis both foes, 45 | the Herald, the Left Eyes |
 | Raise the Standard | Late | +20 Atk / +20 Int both allies, 50 | the Herald |
 | Oblivion | Late | 120 BP single, 70 | the Herald |
 | Abide | Late | heals the user, 60 power, 45 | Elder Bough |
@@ -2161,10 +2161,16 @@ Bodies sit 10–20 under the hero slates' at each tier because Ancient STAB is n
   after): Blighted Shrine act 2 89 → 84%, Forbidden Forest 92 → 98, Molten Foundry 94 → 93;
   Necropolis 78 → 84 is Runic Blast's re-price (60 BP / 14 → 50 / 20) alone.
 
-Open, for the designer: whether the Eyes should trade their filler slots (Runic Blast,
-Forgotten Curse, Enfeeble) for slate moves — they were tuned as they stand, so they were not
-touched; and whether Abide belongs on a Guardian at all, given the Elder Bough measures as the
-softest Act 2 wall either way.
+**Same day, per user direction:** three of the hits went **physical** — Weight of Ages, Long
+Drink, Transfix (the seal's weight, its grasp, its point) — because an all-magical enemy type
+makes Defense worthless in every Guardian fight and the finale, and a Guardian's line is built
+for both hands; the Eyes, at 40 Attack, hold none. And the Eyes traded their filler slots:
+Runic Blast → Archon Blast and Enfeeble → Erode on both Left Eyes (the Right Eyes keep
+Forgotten Curse and Lidded). Measured: the Eyes 63.5 → 60.7% cleared by the chart pilot's
+arrivals (the 61.5% they were tuned to), the Herald 90%, Guardians within noise.
+
+Open, for the designer: whether Abide belongs on a Guardian at all, given the Elder Bough
+measures as the softest Act 2 wall either way.
 
 
 ---
