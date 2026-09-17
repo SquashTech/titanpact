@@ -2179,40 +2179,67 @@ textarea,
     inset 0 -1px 0 rgba(240, 190, 150, 0.14);
 }
 
-.bottom-action-bag:not(:disabled) .bottom-action-glyph {
-  color: rgba(240, 190, 150, 0.92);
-}
-
 .bottom-action-bag:hover:not(:disabled) {
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(214, 150, 110, 0.78),
     inset 0 -1px 0 rgba(240, 190, 150, 0.24), inset 0 0 22px -6px rgba(214, 150, 110, 0.5);
 }
 
-.bottom-action-bag-glyph {
-  display: block;
-  width: 16px;
-  height: 16px;
+/* The key's glyph is the Bag panel's chip coin (OrderCoin.tsx) in the key's own tan, the flask
+   struck on it and the count hung off its lower edge the way an order mark hangs its bracket.
+   Off, the coin goes with the key — the base :disabled rule dims the glyph, and the count hides. */
+.bottom-action-bag-coin {
+  --coin-rgb: 240, 190, 150;
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: rgba(240, 190, 150, 0.92);
 }
 
-.bottom-action-count {
+.bottom-action-bag:not(:disabled) .bottom-action-bag-coin .order-coin-crown {
+  fill: rgba(240, 190, 150, 0.42);
+}
+
+.bottom-action-bag:hover:not(:disabled) .bottom-action-bag-coin .order-coin {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 7px rgba(240, 190, 150, 0.75));
+}
+
+.bottom-action-bag:disabled .bottom-action-bag-coin {
+  --coin-rgb: 120, 128, 142;
+  color: #6b7384;
+  filter: saturate(0.3);
+}
+
+.bottom-action-bag-glyph {
+  position: relative;
+  display: block;
+  width: 14px;
+  height: 14px;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.7));
+}
+
+.bottom-action-bag-count {
   position: absolute;
-  top: 4px;
-  right: 5px;
-  min-width: 15px;
-  height: 15px;
-  padding: 0 4px;
-  border: 1px solid rgba(240, 190, 150, 0.6);
+  bottom: -6px;
+  right: -7px;
+  min-width: 14px;
+  height: 13px;
+  padding: 0 3px;
   border-radius: var(--radius-pill);
-  background: rgba(4, 5, 8, 0.9);
-  font-size: 9px;
-  font-weight: 700;
+  background: #151a24;
+  box-shadow: 0 0 0 1px rgba(var(--coin-rgb), 0.7), 0 0 0 2.2px #0a0d13;
+  font-size: 8px;
+  font-weight: 800;
   line-height: 13px;
   text-align: center;
   font-variant-numeric: tabular-nums;
-  color: rgba(240, 190, 150, 0.95);
+  color: inherit;
 }
 
-.bottom-action-bag:disabled .bottom-action-count {
+.bottom-action-bag:disabled .bottom-action-bag-count {
   display: none;
 }
 

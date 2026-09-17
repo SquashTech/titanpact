@@ -32,6 +32,7 @@ import { consumableRefusal, useConsumable, type ConsumableKind } from '../../eng
 import { CONSUMABLE_KINDS, CONSUMABLE_NAMES, type ConsumablePurse } from '../../run/consumables';
 import { BagPanel, type BagTarget } from './BagPanel';
 import { orderMarksFor, type OrderMark, type OrderSource } from './orderMarks';
+import { OrderCoin } from './OrderCoin';
 import { previewOrder } from '../../engine/combat/priority';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { playSfx } from '../../audio/sfx';
@@ -1776,16 +1777,15 @@ export function FightScreen({
                 className="bottom-action bottom-action-primary bottom-action-bag"
                 disabled={!(actingId !== null && CONSUMABLE_KINDS.some((kind) => flaskPurse[kind] > 0))}
                 onClick={() => setBagOpen(true)}
+                aria-label={`Bag — ${bagCount} held`}
               >
-                <span className="bottom-action-glyph" aria-hidden="true">
+                {/* The flask on a coin (OrderCoin.tsx), the count hung off it — the Bag panel's chips, at the key's size. */}
+                <span className="bottom-action-glyph bottom-action-bag-coin" aria-hidden="true">
+                  <OrderCoin />
                   <ResourceGlyph kind="hpPotion" tone="inherit" className="bottom-action-bag-glyph" />
+                  {bagCount > 0 && <span className="bottom-action-bag-count">{bagCount}</span>}
                 </span>
                 Bag
-                {bagCount > 0 && (
-                  <span className="bottom-action-count" aria-label={`${bagCount} held`}>
-                    {bagCount}
-                  </span>
-                )}
               </button>
             </>
           )}
