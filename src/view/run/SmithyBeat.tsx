@@ -95,8 +95,14 @@ export function SmithyBeat({ work, onDone }: { work: SmithyWork; onDone: () => v
     ...(enchantType ? { '--type-rgb': getTypeColorRgb(enchantType) } : null),
   } as CSSProperties;
 
+  // `is-strike-N` re-runs the screen shake on every hit: three keyframe names, since a class swap
+  // to the same animation would not restart it.
   return createPortal(
-    <div className={`smithy-beat is-${work.kind}${done ? ' is-done' : ''}`} style={style} onClick={onDone}>
+    <div
+      className={`smithy-beat is-${work.kind}${done ? ' is-done' : ''}${strikes > 0 && !reduced ? ` is-strike-${strikes}` : ''}`}
+      style={style}
+      onClick={onDone}
+    >
       <div className="smithy-beat-stage">
         {work.kind === 'anvil' ? (
           <>

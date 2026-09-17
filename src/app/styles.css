@@ -30901,13 +30901,13 @@ textarea,
 
 @keyframes smithy-anvil-rung {
   0% {
-    transform: translate(-50%, 3px);
+    transform: translate(-50%, 5px);
   }
   40% {
-    transform: translate(calc(-50% - 2px), -1px);
+    transform: translate(calc(-50% - 3px), -2px);
   }
   70% {
-    transform: translate(calc(-50% + 1px), 1px);
+    transform: translate(calc(-50% + 2px), 1px);
   }
   100% {
     transform: translateX(-50%);
@@ -30937,10 +30937,89 @@ textarea,
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 18px color-mix(in srgb, var(--rarity-color) 80%, transparent));
 }
 
+/* The screen shake, one keyframe set a strike so a class swap restarts it, each harder than the
+   last: the third is the one that takes the tier. A white wash over everything on the same frame
+   is the hit's weight; the sparks and the piece's jolt are its detail. */
+.smithy-beat.is-strike-1 {
+  animation: smithy-shake-1 0.34s var(--ease-out);
+}
+
+.smithy-beat.is-strike-2 {
+  animation: smithy-shake-2 0.38s var(--ease-out);
+}
+
+.smithy-beat.is-strike-3 {
+  animation: smithy-shake-3 0.46s var(--ease-out);
+}
+
+.smithy-beat::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.smithy-beat.is-strike-1::after {
+  animation: smithy-wash-1 0.22s var(--ease-out);
+}
+
+.smithy-beat.is-strike-2::after {
+  animation: smithy-wash-2 0.24s var(--ease-out);
+}
+
+.smithy-beat.is-strike-3::after {
+  animation: smithy-wash-3 0.3s var(--ease-out);
+}
+
+@keyframes smithy-shake-1 {
+  0% { transform: translate(0, 6px); }
+  25% { transform: translate(-4px, -3px); }
+  50% { transform: translate(3px, 2px); }
+  75% { transform: translate(-1px, -1px); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes smithy-shake-2 {
+  0% { transform: translate(0, 8px); }
+  22% { transform: translate(-6px, -4px); }
+  45% { transform: translate(5px, 3px); }
+  70% { transform: translate(-2px, -2px); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes smithy-shake-3 {
+  0% { transform: translate(0, 12px); }
+  18% { transform: translate(-9px, -6px); }
+  38% { transform: translate(7px, 5px); }
+  58% { transform: translate(-4px, -3px); }
+  78% { transform: translate(2px, 1px); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes smithy-wash-1 {
+  0% { opacity: 0.22; }
+  100% { opacity: 0; }
+}
+
+@keyframes smithy-wash-2 {
+  0% { opacity: 0.3; }
+  100% { opacity: 0; }
+}
+
+@keyframes smithy-wash-3 {
+  0% { opacity: 0.55; }
+  100% { opacity: 0; }
+}
+
 @keyframes smithy-piece-jolt {
   0% {
-    transform: translateX(-50%) scale(1.06, 0.86);
-    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.7)) brightness(2.2);
+    transform: translateX(-50%) scale(1.16, 0.78);
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.7)) brightness(2.6);
+  }
+  30% {
+    transform: translateX(-50%) scale(0.96, 1.06);
   }
   100% {
     transform: translateX(-50%) scale(1);
@@ -31413,5 +31492,9 @@ textarea,
 
   .smithy-beat-caption {
     transition: none;
+  }
+
+  .smithy-beat::after {
+    display: none;
   }
 }

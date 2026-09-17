@@ -3547,7 +3547,10 @@ anvil's face over the forge's heat, and the hammer — pivoted at the foot of it
 the right of the piece — swings three times on a 1.4s timeline (`STRIKE_AT` 420 / 800 / 1180ms,
 the CSS keyframes at 30 / 57 / 84% of it, fast down and slow up per keyframe), each strike
 re-keying the piece for a jolt, a spark fan off the face, a flash and an anvil shudder, with
-`anvil.strike` a semitone-ish higher each time; the third strike swaps the piece for the tier it
+`anvil.strike` a semitone-ish higher each time — and **the whole screen shakes on every hit**
+(2026-09-17, per user direction), `is-strike-N` on the beat's root running one of three keyframe
+sets so a class swap restarts it, each harder than the last (6 / 8 / 12px off the first frame)
+under a white wash of 22 / 30 / 55% that is the hit's weight where the sparks are its detail; the third strike swaps the piece for the tier it
 reached with a wider flash, two rings and `anvil.ring`, the hammer lifts to rest, and the caption
 rises: *FORGED UP · Blazing Sword · EPIC* and the labelled chips. **The Enchanter:** the piece
 hovers inside a rune circle in the element's colour (two rings turning against each other, ticks
