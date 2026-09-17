@@ -570,7 +570,9 @@ off its centre; the Menu key they had crowded out moved to the sky's top-right c
 while a round plays.
 
 **The resolve order is shown** (`TurnOrderRibbon`, 2026-09-17, per user direction): a plaque
-on the field's bottom edge, under the ally status bands, reading left to right — the Speed
+along the very top of the screen, over the enemy status bands (it began under the ally bands and
+moved up the same day, per user direction; the Pact warning took the band it left), reading left
+to right — the Speed
 glyph, then the four active portraits in the order the round would resolve, a chevron for
 "then" and `=` for a tie the RNG breaks, an ally's ring solid and an enemy's dotted. It is
 `previewOrder` (`engine/combat/priority.ts`): the same keys `orderActions` sorts on, no RNG

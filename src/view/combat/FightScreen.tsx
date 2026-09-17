@@ -1404,7 +1404,7 @@ export function FightScreen({
           </button>
         )}
 
-        {/* The resolve order, on the field's bottom edge under the ally band: the preview while
+        {/* The resolve order, along the top of the screen over the enemy band: the preview while
             commanding, the engine's settled order walked beat by beat while the round plays. */}
         {!winner &&
           (resolving ? (

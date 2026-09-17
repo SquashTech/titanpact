@@ -2216,19 +2216,20 @@ textarea,
   display: none;
 }
 
-/* The resolve order (2026-09-17, per user direction), read left to right in the band under
-   the ally status row — the 28px the battlefield already reserves for a wrapped status
-   line, so it costs the field nothing. The console's rim rides 6px up into that band, so
-   the plaque sits over the rim (z-index above .action-area's 5) rather than under it. The
-   Speed glyph leads it, since Speed is what it sorts on until a bracket says otherwise; a
-   chevron between sockets is "then", an equals sign is a tie the RNG breaks. 24px
-   portraits: the one clean downscale of the 48px sprite. */
+/* The resolve order (2026-09-17, per user direction), read left to right along the very top
+   of the screen — the 28px band over the enemy status row that the battlefield already
+   reserves for a wrapped status line, so it costs the field nothing (it stood in the matching
+   band under the ally row first, and moved up the same day; the Pact warning took the band it
+   left). The Speed glyph leads it, since Speed is what it sorts on until a bracket says
+   otherwise; a chevron between sockets is "then", an equals sign is a tie the RNG breaks.
+   24px portraits: the one clean downscale of the 48px sprite. */
 .turn-order {
   position: absolute;
-  bottom: 1px;
+  /* 5px, not 1: the bracket pip overhangs the socket by 5 and the screen edge would clip it. */
+  top: 5px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 6;
+  z-index: 4;
   display: flex;
   align-items: center;
   gap: 2px;
@@ -2373,7 +2374,7 @@ textarea,
 /* The declared bracket — "+1", "−1", the switch's arrows, Rest's moon, or "?" for a roll. */
 .turn-order-pip {
   position: absolute;
-  top: -6px;
+  top: -5px;
   right: -7px;
   min-width: 13px;
   height: 13px;
@@ -24843,10 +24844,11 @@ textarea,
    stated in rounds, easy to ignore if the player is winning. Due: red, pulsing,
    and reporting a percentage that goes up every round. The player should learn
    the rule once, from watching it, and never need it explained again. */
+/* Under the ally status row, clear of the console's rim — the top band is the order ribbon's. */
 .pact-warning {
   position: absolute;
   z-index: 4;
-  top: 2px;
+  bottom: 8px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
