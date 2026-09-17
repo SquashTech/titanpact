@@ -81,8 +81,9 @@ const GUARDIANS: Record<string, Draw> = {
     const lead = po === 'attack' ? 'M72,68 C96,54 118,44 122,62' : po === 'hurt' ? 'M72,68 C86,70 96,80 98,90' : 'M72,68 C92,66 110,72 114,86';
     const curl = po === 'hurt' ? 0.8 : 1;
     const ann = (x: number, y: number) => C(x, y, 1.6, p.ll, 'opacity=".8"');
-    return arm(`M34,68 C${20 * curl},70 ${6 * curl},78 ${-2 * curl},92`) + arm(`M42,70 C${30 * curl},80 ${16 * curl},86 ${2 * curl},82`) + arm(`M58,70 C64,84 78,92 ${92 * curl},88`) + arm(lead) + arm('M50,72 C50,82 46,90 40,90')
-      + ann(10, 84) + ann(6, 78) + ann(24, 76) + ann(80, 90) + ann(90, 80) + ann(102, 76)
+    // The two trailing arms fan: the one rooted further left reaches out flat, the next drops under it, so they never cross.
+    return arm(`M34,68 C${22 * curl},66 ${8 * curl},66 ${-2 * curl},72`) + arm(`M42,70 C${32 * curl},80 ${18 * curl},90 ${6 * curl},94`) + arm(`M58,70 C64,84 78,92 ${92 * curl},88`) + arm(lead) + arm('M50,72 C50,82 46,90 40,90')
+      + ann(8, 70) + ann(18, 66) + ann(14, 88) + ann(80, 90) + ann(90, 80) + ann(102, 76)
       + D('M30,40 C14,20 22,-4 46,-16 L44,40 Z', p.d) + D('M78,40 C94,20 86,-4 62,-16 L64,40 Z', p.d)
       + D('M28,64 C22,26 36,-16 54,-30 C72,-16 86,26 80,64 Z', p.c) + D('M40,58 C36,30 44,4 54,-14 C60,4 66,30 62,58 Z', p.l, 'opacity=".3"') + [[46, 10], [60, 2], [50, -8], [64, 20], [42, 28]].map(([x, y]) => C(x, y, 2.4, p.ll, 'opacity=".45"')).join('')
       + D('M24,64 C32,76 76,76 84,64 Z', p.d)
