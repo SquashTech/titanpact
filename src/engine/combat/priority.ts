@@ -118,3 +118,51 @@ export function orderActions(
 
   return { ordered: withKeys.map((w) => w.action), nextRngState: cursor };
 }
+
+export interface OrderPreviewEntry {
+  combatantId: string;
+  /** The bracket the entry is placed in — `null` for a move whose bracket is rolled at resolution. */
+  priority: number | null;
+  speed: number;
+  /** Same bracket and same Speed as the entry before it: the RNG decides between them. */
+  tiedWithPrevious: boolean;
+}
+
+/**
+ * The order the field would resolve in if every undeclared combatant swung a priority-0 move —
+ * the view's readout while the player is still commanding. Sorts on the same keys as
+ * orderActions and spins no RNG: a collision is flagged rather than shuffled, and a random
+ * bracket sits at 0 with its priority left null. Declared actions (the player's so far) carry
+ * their real bracket, so a switch, a Rest or a priority move moves its hero in the readout.
+ */
+export function previewOrder(
+  state: CombatState,
+  heroes: HeroLookup,
+  combatantIds: readonly string[],
+  declared: readonly Action[],
+  moves: Record<string, MoveDefinition>,
+  fieldEffects: Record<string, FieldEffectDefinition> = {},
+  passives: Record<string, PassiveDefinition> = {}
+): OrderPreviewEntry[] {
+  const activeFieldEffectId = state.activeFieldEffect?.fieldEffectId;
+  const activeFieldEffectDef = activeFieldEffectId ? fieldEffects[activeFieldEffectId] : undefined;
+  const speedDirection = activeFieldEffectDef?.reversesSpeedOrder ? 1 : -1;
+  const statCtx = { active: state.activeFieldEffect, defs: fieldEffects, board: { state, passives } };
+  const byId = new Map(declared.map((a) => [a.combatantId, a]));
+
+  const keyed = combatantIds.map((combatantId) => {
+    const combatant = state.combatants[combatantId];
+    const action = byId.get(combatantId);
+    const random = action?.kind === 'move' && (moves[action.moveId]?.randomPriority?.length ?? 0) > 0;
+    return {
+      combatantId,
+      priority: random ? null : action ? actionPriority(state, action, moves, activeFieldEffectDef) : 0,
+      speed: getEffectiveStat(heroes[combatant.heroId], combatant, 'speed', statCtx),
+    };
+  });
+  keyed.sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0) || (a.speed - b.speed) * speedDirection);
+  return keyed.map((entry, i) => ({
+    ...entry,
+    tiedWithPrevious: i > 0 && (keyed[i - 1].priority ?? 0) === (entry.priority ?? 0) && keyed[i - 1].speed === entry.speed,
+  }));
+}

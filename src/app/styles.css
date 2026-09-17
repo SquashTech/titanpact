@@ -2130,93 +2130,197 @@ textarea,
     inset 0 -1px 0 rgba(214, 228, 250, 0.28), inset 0 0 24px -7px rgba(190, 208, 238, 0.7);
 }
 
-/* The two potions, in the field's bottom corners (2026-09-13, per user direction — one Flask key
-   in the bottom row had crowded it): HP on the left, MP on the right, each in its gauge's colour,
-   the count as a pip on the rim. Round, like nothing in the console, because they sit on the
-   field and not in it — a thing you reach for, not a command. Dark with nothing left to drink. */
-.field-flask {
-  --flask-rgb: 255, 138, 138;
+/* Menu, in the sky's far corner (2026-09-17, per user direction — it was the console's
+   fourth key, and the potions stood in the field's bottom corners, each pushing its ally's
+   status band off centre): round, like nothing in the console, because it sits on the
+   field and not in it. A pause key's place. */
+.field-menu {
   position: absolute;
-  bottom: 9px;
+  top: 3px;
+  right: 8px;
   z-index: 4;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+  width: 26px;
+  height: 26px;
   padding: 0;
-  border: 1px solid rgba(var(--flask-rgb), 0.5);
+  border: 1px solid rgba(224, 166, 60, 0.28);
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 38%, rgba(var(--flask-rgb), 0.24), rgba(6, 8, 12, 0.72) 72%);
-  color: rgb(var(--flask-rgb));
-  box-shadow: inset 0 0 12px -4px rgba(var(--flask-rgb), 0.7), 0 0 16px -6px rgba(var(--flask-rgb), 0.8),
-    0 2px 6px rgba(0, 0, 0, 0.5);
+  background: radial-gradient(circle at 50% 40%, rgba(224, 166, 60, 0.12), rgba(6, 8, 12, 0.7) 74%);
+  color: rgba(224, 166, 60, 0.7);
+  font-size: 13px;
+  line-height: 1;
+  box-shadow: inset 0 0 8px -3px rgba(224, 166, 60, 0.5), 0 2px 5px rgba(0, 0, 0, 0.5);
   cursor: pointer;
-  transition: transform var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out);
+  transition: color var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 
-.field-flask.is-hpPotion {
-  left: 12px;
+.field-menu:hover {
+  color: rgba(255, 217, 140, 0.95);
+  box-shadow: inset 0 0 10px -2px rgba(224, 166, 60, 0.7), 0 0 14px -5px rgba(224, 166, 60, 0.8), 0 2px 6px rgba(0, 0, 0, 0.5);
 }
 
-/* The flasks stand in the ally status band's corners, and a band of four chips
-   centred on the card reached under them — the chip was covered and its hold
-   unreachable. The band keeps clear of its own outer corner instead: the left
-   card's row is inset on the left, the right card's on the right, by the
-   flask's footprint (12px in from the edge, 38px wide, 4px of air). Four
-   chips still fit on one line; a fifth wraps as it did. */
-.team-row.ally .combatant-card:first-child .status-badge-row {
-  padding-left: 42px;
+.field-menu:active {
+  transform: scale(0.94);
 }
 
-.team-row.ally .combatant-card:last-child .status-badge-row {
-  padding-right: 42px;
+/* Bag: the console's fourth key. Opens a panel, like Switch, so it takes Switch's shape and
+   a warm rim of its own — neither ally blue nor Rest's cold one — and carries what it holds
+   as a count on the rim. Dark with nothing left to drink. */
+.bottom-action-bag {
+  flex: 1.35 1 0;
+  position: relative;
 }
 
-.field-flask.is-mpPotion {
-  --flask-rgb: 143, 180, 255;
-  right: 12px;
+.bottom-action-bag:not(:disabled) {
+  background: linear-gradient(180deg, rgba(214, 150, 110, 0.13), rgba(214, 150, 110, 0.02));
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(214, 150, 110, 0.36),
+    inset 0 -1px 0 rgba(240, 190, 150, 0.14);
 }
 
-.field-flask:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: inset 0 0 14px -3px rgba(var(--flask-rgb), 0.9), 0 0 22px -4px rgba(var(--flask-rgb), 0.9),
-    0 3px 8px rgba(0, 0, 0, 0.5);
+.bottom-action-bag:not(:disabled) .bottom-action-glyph {
+  color: rgba(240, 190, 150, 0.92);
 }
 
-.field-flask:active:not(:disabled) {
-  transform: scale(0.95);
+.bottom-action-bag:hover:not(:disabled) {
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(214, 150, 110, 0.78),
+    inset 0 -1px 0 rgba(240, 190, 150, 0.24), inset 0 0 22px -6px rgba(214, 150, 110, 0.5);
 }
 
-.field-flask:disabled {
-  opacity: 0.38;
-  filter: saturate(0.35);
-  cursor: default;
-}
-
-.field-flask-glyph {
-  width: 21px;
-  height: 21px;
+.bottom-action-bag-glyph {
   display: block;
-  filter: drop-shadow(0 0 4px rgba(var(--flask-rgb), 0.7));
+  width: 16px;
+  height: 16px;
 }
 
-.field-flask-count {
+.bottom-action-count {
   position: absolute;
-  top: -5px;
-  right: -5px;
-  min-width: 17px;
-  height: 17px;
+  top: 4px;
+  right: 5px;
+  min-width: 15px;
+  height: 15px;
   padding: 0 4px;
-  border: 1px solid rgba(var(--flask-rgb), 0.7);
+  border: 1px solid rgba(240, 190, 150, 0.6);
   border-radius: var(--radius-pill);
-  background: rgba(4, 5, 8, 0.92);
-  font-size: 10px;
+  background: rgba(4, 5, 8, 0.9);
+  font-size: 9px;
   font-weight: 700;
-  line-height: 15px;
+  line-height: 13px;
   text-align: center;
   font-variant-numeric: tabular-nums;
-  color: rgb(var(--flask-rgb));
+  color: rgba(240, 190, 150, 0.95);
+}
+
+.bottom-action-bag:disabled .bottom-action-count {
+  display: none;
+}
+
+/* The resolve order (2026-09-17, per user direction), read left to right in the band under
+   the ally status row — the 28px the battlefield already reserves for a wrapped status
+   line, so it costs the field nothing. The console's rim rides 6px up into that band, so
+   the plaque sits over the rim (z-index above .action-area's 5) rather than under it. The
+   Speed glyph leads it, since Speed is what it sorts on until a bracket says otherwise; a
+   chevron between sockets is "then", an equals sign is a tie the RNG breaks. 24px
+   portraits: the one clean downscale of the 48px sprite. */
+.turn-order {
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 26px;
+  padding: 0 6px 0 6px;
+  border: 1px solid rgba(160, 178, 214, 0.18);
+  border-radius: var(--radius-pill);
+  background: rgba(6, 8, 12, 0.62);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+.turn-order-lead {
+  width: 10px;
+  height: 10px;
+  margin-right: 3px;
+  color: #e8d16a;
+  opacity: 0.85;
+}
+
+.turn-order-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.turn-order-sep {
+  width: 9px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  color: rgba(160, 178, 214, 0.5);
+}
+
+.turn-order-sep.is-tie {
+  color: #e8d16a;
+}
+
+.turn-order-socket {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  background: rgba(10, 13, 18, 0.8);
+  box-shadow: inset 0 0 0 1px rgba(var(--socket-rgb), 0.55);
+}
+
+/* The enemy side is told by the ring alone: a solid ring on an ally, a dotted one on an enemy. */
+.turn-order-socket.is-enemy {
+  box-shadow: none;
+  outline: 1px dotted rgba(var(--socket-rgb), 0.7);
+  outline-offset: -1px;
+}
+
+/* A tie is said by the "=" between them; the sockets themselves only take the gold. */
+.turn-order-socket.is-tied {
+  box-shadow: inset 0 0 0 1px rgba(232, 209, 106, 0.7);
+}
+
+.turn-order-socket.is-enemy.is-tied {
+  outline-color: rgba(232, 209, 106, 0.8);
+}
+
+/* Clipped on the image, not the socket, so the bracket pip can sit past the corner. */
+.turn-order-portrait {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  image-rendering: pixelated;
+}
+
+/* The declared bracket — "+1", "−1", the switch's arrows, Rest's moon, or "?" for a roll. */
+.turn-order-pip {
+  position: absolute;
+  top: -6px;
+  right: -7px;
+  min-width: 13px;
+  height: 13px;
+  padding: 0 3px;
+  border-radius: var(--radius-pill);
+  background: #20252f;
+  box-shadow: 0 0 0 1.5px #12151c;
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 13px;
+  text-align: center;
+  color: #ffd98c;
+  font-variant-numeric: tabular-nums;
 }
 
 /* The MP Potion row under the out-of-mana Rest row: the same row shape as a move, lit in
@@ -2239,8 +2343,8 @@ textarea,
   color: #8fb4ff;
 }
 
-/* A corner flask's picker: SwitchInPanel's shell, titled by the potion that opened it — the
-   effect in one line, then the heroes. */
+/* The Bag: SwitchInPanel's shell, the kinds as a chip row under the title, then the effect in
+   one line and the heroes. The panel is lit in the chosen kind's gauge colour. */
 .flask-panel {
   --flask-rgb: 255, 138, 138;
 }
@@ -2253,6 +2357,54 @@ textarea,
   display: inline-flex;
   align-items: center;
   gap: 7px;
+}
+
+.bag-kinds {
+  display: flex;
+  gap: 6px;
+  margin: 0 12px;
+}
+
+.bag-kind {
+  --flask-rgb: 255, 138, 138;
+  flex: 1 1 0;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+  color: var(--text-dim);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out);
+}
+
+.bag-kind.is-mpPotion {
+  --flask-rgb: 143, 180, 255;
+}
+
+.bag-kind.selected {
+  color: var(--text);
+  border-color: rgba(var(--flask-rgb), 0.6);
+  background: linear-gradient(180deg, rgba(var(--flask-rgb), 0.16), rgba(var(--flask-rgb), 0.04));
+  box-shadow: inset 0 0 14px -6px rgba(var(--flask-rgb), 0.6);
+}
+
+/* Nothing left of it: still a tab, so the "none left" note can be read, but plainly spent. */
+.bag-kind.empty {
+  opacity: 0.55;
+}
+
+.bag-kind-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .flask-kind-glyph {
@@ -2280,39 +2432,6 @@ textarea,
 
 .flask-blurb strong {
   color: var(--text);
-}
-
-/* Menu: consulted, not played. Narrow, and the glyph stacks over a caption so
-   it keeps its label at that width instead of degrading to a bare icon. It
-   inherits the whole utility width Log and Ref used to split with it, which is
-   what makes a single narrow key still comfortably hittable. */
-.bottom-action-utility {
-  flex-direction: column;
-  gap: 3px;
-  font-size: 15px;
-  /* The row's one tie back to the fight above it. Menu has no state to report
-     — it is never disabled and never colored by what it does — so its rim is
-     free to carry the commander's own light instead, the same --console-rgb
-     the console face and the seam under the arena are lit with. The key
-     recolours with the acting hero, which is what stops the row reading as a
-     separate strip of chrome bolted under the console. */
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(var(--console-rgb, 224, 166, 60), 0.2),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
-  transition: color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out),
-    box-shadow var(--dur-slow, 420ms) var(--ease-out), transform var(--dur-fast) var(--ease-out);
-}
-
-.bottom-action-utility:hover:not(:disabled) {
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(var(--console-rgb, 224, 166, 60), 0.6),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.07), inset 0 0 20px -6px rgba(var(--console-rgb, 224, 166, 60), 0.5);
-}
-
-/* Tinted, not saturated. At full strength the commander's light turned this
-   into a solid orange glyph under a Fire hero, which reads as a warning rather
-   than as a menu — the rim is where the light belongs, and the glyph only
-   needs enough of it to belong to the same key. */
-.bottom-action-utility .bottom-action-glyph {
-  color: rgba(var(--console-rgb, 224, 166, 60), 0.5);
 }
 
 /* Target selection. The row is one full-width Back and nothing else — see
@@ -2369,14 +2488,6 @@ textarea,
 
 .bottom-action-auto.engaged .bottom-action-glyph {
   color: #ffd98c;
-}
-
-.bottom-action-label {
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  line-height: 1;
 }
 
 .team-row {

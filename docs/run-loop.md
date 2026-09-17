@@ -559,11 +559,25 @@ weights were just re-fitted, and a 1-of-3 seat spent on a potion is a seat not s
 **What a fight drank comes off the purse at resolve**, not on the sip, so a fight quit and
 replayed refunds it whole — the same reason gold is granted at resolve. On the map the flask
 shows on the header purse as two counts; it is a purse, not an inbox, so the footer never flags
-it. In a fight the two potions sit in the **field's bottom corners** — HP left, MP right, each
-with its count on the rim (`.field-flask`) — and pressing one opens a picker for WHO drinks
-it, headed by the effect in one line (`FlaskPanel`). They began as one Flask key in the
-console's bottom row, which the fifth key had crowded (2026-09-13, per user direction); the
-corners are the field's, not the console's, which is also why they leave while a round plays.
+it. In a fight the potions live in the **Bag**, the console's fourth key — Back, Switch, Rest,
+Bag — carrying what it holds as a count on its rim, dark with nothing left (2026-09-17, per user
+direction). Pressing it opens one panel (`BagPanel`): the kinds as a chip row, opening on the
+first with stock, the chosen kind's effect in one line, then WHO drinks it. A new consumable is
+one more chip. The history: one Flask key in the bottom row (2026-09-13), then two round flasks
+in the field's bottom corners, which sat in the ally status bands and pushed each hero's chips
+off its centre; the Menu key they had crowded out moved to the sky's top-right corner
+(`.field-menu`), a pause key's place, and the row had its seat back. Both leave the field
+while a round plays.
+
+**The resolve order is shown** (`TurnOrderRibbon`, 2026-09-17, per user direction): a plaque
+on the field's bottom edge, under the ally status bands, reading left to right — the Speed
+glyph, then the four active portraits in the order the round would resolve, a chevron for
+"then" and `=` for a tie the RNG breaks, an ally's ring solid and an enemy's dotted. It is
+`previewOrder` (`engine/combat/priority.ts`): the same keys `orderActions` sorts on, no RNG
+spun. The player's declared actions carry their real bracket — a priority move, a switch (`⇄`)
+or a Rest (`☾`) moves its portrait and wears the bracket as a pip; a rolled bracket shows
+`?` at 0 — and the enemy's are unknown until the round plays, so they sit at bracket 0, which
+is why the ribbon leaves the field with the console.
 
 **Open, deliberately:** the hold cap, the price and the drop odds are all playtest numbers; and
 whether a potion should be drinkable during a forced-replacement beat after a KO — the moment a

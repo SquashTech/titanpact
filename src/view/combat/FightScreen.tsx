@@ -30,7 +30,9 @@ import { DEFAULT_PACT_CLOCK, PACT_WARNING_ROUNDS, pactFractionFor } from '../../
 import { applyForcedReplacement, replacementCandidates } from '../../engine/combat/switching';
 import { consumableRefusal, useConsumable, type ConsumableKind } from '../../engine/combat/consumables';
 import { CONSUMABLE_KINDS, CONSUMABLE_NAMES, type ConsumablePurse } from '../../run/consumables';
-import { FlaskPanel, type FlaskTarget } from './FlaskPanel';
+import { BagPanel, type BagTarget } from './BagPanel';
+import { TurnOrderRibbon, type RibbonEntry } from './TurnOrderRibbon';
+import { previewOrder } from '../../engine/combat/priority';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { playSfx } from '../../audio/sfx';
 import { resolveBattleStartEntries, resolvePassiveReactions } from '../../engine/combat/passiveEngine';
@@ -619,8 +621,8 @@ export function FightScreen({
   const [logOpen, setLogOpen] = useState(false);
   const [referenceOpen, setReferenceOpen] = useState(false);
   const [switchOpen, setSwitchOpen] = useState(false);
-  /** The potion whose picker is open — one of the two corner flasks on the field — or none. */
-  const [flaskKind, setFlaskKind] = useState<ConsumableKind | null>(null);
+  /** The Bag — every consumable held, and who drinks it — open off the bottom row's key. */
+  const [bagOpen, setBagOpen] = useState(false);
   /** Potions drunk this fight. The run's purse is only debited at resolve, so a replayed fight refunds them. */
   const [usedConsumables, setUsedConsumables] = useState<ConsumablePurse>({ hpPotion: 0, mpPotion: 0 });
   const [menuOpen, setMenuOpen] = useState(false);
@@ -771,7 +773,7 @@ export function FightScreen({
     combat.combatants[actingId].currentMana <
       getMaxMana(allCombatants[combat.combatants[actingId].heroId], combat.combatants[actingId]);
 
-  // What is left in the flask this fight. Shown on the field's corners at all times, drinkable while commanding.
+  // What is left in the Bag this fight, drinkable while commanding.
   const flaskPurse: ConsumablePurse = {
     hpPotion: playerRun.consumables.hpPotion - usedConsumables.hpPotion,
     mpPotion: playerRun.consumables.mpPotion - usedConsumables.mpPotion,
@@ -779,6 +781,28 @@ export function FightScreen({
   const maxHpOf = (id: string) => getMaxHp(allCombatants[combat.combatants[id].heroId], combat.combatants[id]);
   const maxManaOf = (id: string) => getMaxMana(allCombatants[combat.combatants[id].heroId], combat.combatants[id]);
   const flaskRefusal = (id: string, kind: ConsumableKind) => consumableRefusal(combat, id, kind, maxHpOf, maxManaOf);
+  const bagCount = CONSUMABLE_KINDS.reduce((n, kind) => n + flaskPurse[kind], 0);
+
+  // The round's resolve order as it stands: the player's declared actions at their real bracket,
+  // everyone else at 0 (engine/combat/priority.ts previewOrder). Re-derived every render, so a
+  // priority move or a Speed change moves its hero the moment it is committed.
+  const orderPreview: RibbonEntry[] = (() => {
+    const declared: Action[] = playerActiveAlive.flatMap((id): Action[] => {
+      const p = pending[id];
+      if (!isPendingComplete(p)) return [];
+      if (p!.kind === 'switch') return [{ kind: 'switch', combatantId: id, benchedCombatantId: p!.benchedCombatantId! }];
+      if (p!.kind === 'rest') return [{ kind: 'rest', combatantId: id }];
+      return [{ kind: 'move', combatantId: id, moveId: p!.moveId!, declaredTarget: p!.declaredTarget }];
+    });
+    return previewOrder(combat, allCombatants, [...enemyActiveAlive, ...playerActiveAlive], declared, moves, fieldEffects, passives).map(
+      (entry) => ({
+        ...entry,
+        hero: allCombatants[combat.combatants[entry.combatantId].heroId],
+        combatant: combat.combatants[entry.combatantId],
+        ally: combat.combatants[entry.combatantId].side === PLAYER_SIDE,
+      })
+    );
+  })();
 
   // The console is lit in the commanding hero's domain color, from under that hero's side of the
   // field; gold and centred while a round resolves (nobody is commanding).
@@ -942,7 +966,7 @@ export function FightScreen({
       },
     }));
     setUsedConsumables((prev) => ({ ...prev, [kind]: prev[kind] + 1 }));
-    setFlaskKind(null);
+    setBagOpen(false);
     // A hero that had committed Rest has lost its reason for it: the console goes back and re-asks.
     if (pending[combatantId]?.kind === 'rest') {
       const next = { ...pending };
@@ -1316,26 +1340,26 @@ export function FightScreen({
           {renderActiveSlot(PLAYER_SIDE, 1)}
         </div>
 
-        {/* The two potions, in the field's bottom corners over the console (2026-09-13, per user
-            direction — they were one Flask key in the bottom row, which had grown crowded): HP on
-            the left, MP on the right, each opening its own picker. Dark with nothing left to drink,
-            never removed; off the field while the round plays out, since nothing can be drunk then. */}
-        {!resolving && !winner &&
-          CONSUMABLE_KINDS.map((kind) => (
-            <button
-              key={kind}
-              type="button"
-              className={`field-flask is-${kind}`}
-              disabled={!(actingId !== null && flaskPurse[kind] > 0)}
-              onClick={() => setFlaskKind(kind)}
-              aria-label={`${CONSUMABLE_NAMES[kind]} — ${flaskPurse[kind]} left`}
-            >
-              <ResourceGlyph kind={kind} tone="inherit" className="field-flask-glyph" />
-              <span className="field-flask-count" aria-hidden="true">
-                {flaskPurse[kind]}
-              </span>
-            </button>
-          ))}
+        {/* Menu, in the sky's far corner (2026-09-17, per user direction): consulted, not played, so
+            it left the console's bottom row to the Bag and stands where a pause key stands. Off the
+            field while the round plays out, as the key was — the beats would run on under it. */}
+        {!resolving && !winner && (
+          <button
+            type="button"
+            className="field-menu"
+            onClick={() => {
+              setConfirmingQuit(false);
+              setMenuOpen(true);
+            }}
+            aria-label="Menu"
+          >
+            <span aria-hidden="true">☰</span>
+          </button>
+        )}
+
+        {/* The resolve order, on the field's bottom edge under the ally band: off while the round
+            plays out, since the enemy's declared moves are what the preview does not know. */}
+        {!resolving && !winner && <TurnOrderRibbon entries={orderPreview} />}
       </div>
 
       <div className="action-area" style={consoleStyle}>
@@ -1705,17 +1729,21 @@ export function FightScreen({
                 </span>
                 Rest
               </button>
+              {/* Opens a panel, like Switch — the row's two panel keys flank its one irreversible one. Dark with nothing left to drink. */}
               <button
-                className="bottom-action bottom-action-utility"
-                onClick={() => {
-                  setConfirmingQuit(false);
-                  setMenuOpen(true);
-                }}
+                className="bottom-action bottom-action-primary bottom-action-bag"
+                disabled={!(actingId !== null && CONSUMABLE_KINDS.some((kind) => flaskPurse[kind] > 0))}
+                onClick={() => setBagOpen(true)}
               >
                 <span className="bottom-action-glyph" aria-hidden="true">
-                  ☰
+                  <ResourceGlyph kind="hpPotion" tone="inherit" className="bottom-action-bag-glyph" />
                 </span>
-                <span className="bottom-action-label">Menu</span>
+                Bag
+                {bagCount > 0 && (
+                  <span className="bottom-action-count" aria-label={`${bagCount} held`}>
+                    {bagCount}
+                  </span>
+                )}
               </button>
             </>
           )}
@@ -1867,13 +1895,12 @@ export function FightScreen({
           );
         })()}
 
-      {flaskKind && actingId && (
-        <FlaskPanel
-          kind={flaskKind}
-          held={flaskPurse[flaskKind]}
+      {bagOpen && actingId && (
+        <BagPanel
+          purse={flaskPurse}
           actingId={actingId}
           targets={playerActiveAlive.map(
-            (id): FlaskTarget => ({
+            (id): BagTarget => ({
               combatantId: id,
               hero: allCombatants[combat.combatants[id].heroId],
               combatant: combat.combatants[id],
@@ -1881,7 +1908,7 @@ export function FightScreen({
             })
           )}
           onDrink={handleDrinkPotion}
-          onClose={() => setFlaskKind(null)}
+          onClose={() => setBagOpen(false)}
         />
       )}
 

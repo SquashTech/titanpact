@@ -16,7 +16,7 @@ import { setFieldEffect, tickFieldEffect, FIELD_EFFECT_DURATION_ROUNDS } from '.
 import { applyManaRegen } from '../src/engine/combat/manaRegen';
 import { tickEndOfRound, applyStatus } from '../src/engine/combat/statusEngine';
 import { resolveBattleStartEntries } from '../src/engine/combat/passiveEngine';
-import { orderActions } from '../src/engine/combat/priority';
+import { orderActions, previewOrder } from '../src/engine/combat/priority';
 import { resolveStatRatio } from '../src/engine/damage/damagePipeline';
 import { getEffectiveStat, getMaxHp } from '../src/engine/state';
 import type { CombatState } from '../src/engine/state';
@@ -411,3 +411,52 @@ test('fieldEffects: a Herald\'s re-entry re-sets a LAPSED field but never refres
   const reset = resolveBattleStartEntries(lapsed, 3, heroes, statuses, passives, fieldEffects);
   assert.strictEqual(reset.state.activeFieldEffect?.roundsRemaining, FIELD_EFFECT_DURATION_ROUNDS);
 });
+
+// --- previewOrder: the command-phase readout of the same sort, with no RNG spun ---
+
+test('previewOrder: undeclared combatants sit at bracket 0 in Speed order; a declared bracket, switch or Rest moves its hero', () => {
+  const state = twoVTwoFixture(430);
+  // tidecaller 66 > wildOracle 65 > cinderKnight 55 > ironWarden 30 at bracket 0.
+  const ids = ['a1', 'a2', 'b1', 'b2'];
+  const base = orderPreviewIds(state, ids, []);
+  assert.deepStrictEqual(base, ['a2', 'b2', 'a1', 'b1']);
+
+  const withPriority = previewOrder(state, heroes, ids, [{ kind: 'move', combatantId: 'b1', moveId: 'swiftBlow', declaredTarget: 'a2' }], moves, fieldEffects);
+  assert.deepStrictEqual(withPriority.map((e) => e.combatantId), ['b1', 'a2', 'b2', 'a1']);
+  assert.strictEqual(withPriority[0].priority, 1);
+
+  const withSwitchAndRest = previewOrder(
+    state,
+    heroes,
+    ids,
+    [
+      { kind: 'rest', combatantId: 'b2' },
+      { kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' },
+    ],
+    moves,
+    fieldEffects
+  );
+  assert.deepStrictEqual(withSwitchAndRest.map((e) => e.combatantId), ['a1', 'a2', 'b1', 'b2']);
+});
+
+test('previewOrder: an exact bracket + Speed collision is flagged, never shuffled, and a rolled bracket reads as unknown at 0', () => {
+  const state = twoVTwoFixture(431);
+  // Lift ironWarden (30) to wildOracle's 65: the two collide at bracket 0.
+  const tied: CombatState = {
+    ...state,
+    combatants: { ...state.combatants, b1: { ...state.combatants.b1, statModifiers: { ...state.combatants.b1.statModifiers, speed: 35 } } },
+  };
+  const ids = ['a1', 'a2', 'b1', 'b2'];
+  const entries = previewOrder(tied, heroes, ids, [], moves, fieldEffects);
+  assert.deepStrictEqual(entries.map((e) => e.combatantId), ['a2', 'b1', 'b2', 'a1']); // input order kept inside the tie
+  assert.deepStrictEqual(entries.map((e) => e.tiedWithPrevious), [false, false, true, false]);
+
+  const rolled = previewOrder(tied, heroes, ids, [{ kind: 'move', combatantId: 'a1', moveId: 'cogBop', declaredTarget: 'b1' }], moves, fieldEffects);
+  const a1 = rolled.find((e) => e.combatantId === 'a1')!;
+  assert.strictEqual(a1.priority, null);
+  assert.strictEqual(rolled.indexOf(a1), 3); // placed as a 0 until the reel spins
+});
+
+function orderPreviewIds(state: CombatState, ids: readonly string[], declared: readonly Action[]): string[] {
+  return previewOrder(state, heroes, ids, declared, moves, fieldEffects).map((e) => e.combatantId);
+}
