@@ -2,6 +2,7 @@
 // `Aggregate` back; nothing keeps per-run records for a 10k-run batch.
 
 import { addTimeCounts, emptyTimeCounts, PACE_PROFILES, type TimeCounts } from './time';
+import type { MoveTally } from './fight';
 
 /**
  * A randomized-offer experiment. Every reward screen this simulator drives
@@ -46,6 +47,21 @@ export interface HeroAgg {
   finalLevelSum: number;
   /** Runs where the hero was on the roster and the run was completed. */
   runsWon: number;
+}
+
+/** One move over the batch: its fight ledger summed, plus how many fights it was cast in at all. */
+export interface MoveAgg extends MoveTally {
+  fights: number;
+}
+
+/** The signature at ten pips (docs/mastery.md §5), by hero. */
+export interface SignatureAgg {
+  /** (hero, run) pairs where the tenth pip landed. */
+  reached: number;
+  /** Of those, the kit took the move (room, or it beat the worst held). */
+  taken: number;
+  /** Reached, in runs that went on to complete. */
+  reachedWon: number;
 }
 
 export interface EnemyAgg {
@@ -129,6 +145,18 @@ export interface Aggregate {
   castsByManaBand: Record<string, number>;
   /** Player-side move casts by move id, all runs. */
   castsByMove: Record<string, number>;
+  /** Per-move ledgers by the caster's side, all runs; `movesByAct` is the player side keyed `act:moveId`. */
+  moves: Record<string, MoveAgg>;
+  enemyMoves: Record<string, MoveAgg>;
+  movesByAct: Record<string, MoveAgg>;
+  /** Signatures by hero, and the count of tenth pips landed per run, histogram (index = signatures that run). */
+  signatures: Record<string, SignatureAgg>;
+  signaturesPerRun: number[];
+  /** Rolled move offers by move id (schedule, Mentor, Tutor, signature): on the table, and taken. */
+  moveOffers: Record<string, { offered: number; taken: number }>;
+  signaturesPerRunWon: number[];
+  /** Evolutions taken, histogram by the encounter count they landed at — when in the run a hero turns. */
+  evolutionAtEncounter: number[];
   /** Field Effects: sets by side and rounds ended with one up, keyed by field id plus 'all' (fight.ts); fightRounds is the denominator. */
   fieldSets: Record<string, number>;
   enemyFieldSets: Record<string, number>;
@@ -217,6 +245,14 @@ export function emptyAggregate(): Aggregate {
     castsByTier: {},
     castsByManaBand: {},
     castsByMove: {},
+    moves: {},
+    enemyMoves: {},
+    movesByAct: {},
+    signatures: {},
+    signaturesPerRun: [],
+    moveOffers: {},
+    signaturesPerRunWon: [],
+    evolutionAtEncounter: [],
     fieldSets: {},
     enemyFieldSets: {},
     fieldRounds: {},
@@ -278,6 +314,14 @@ export function emptyHero(): HeroAgg {
   };
 }
 
+export function emptyMoveAgg(): MoveAgg {
+  return { casts: 0, damage: 0, healing: 0, kos: 0, manaSpent: 0, fights: 0 };
+}
+
+export function emptySignature(): SignatureAgg {
+  return { reached: 0, taken: 0, reachedWon: 0 };
+}
+
 export function emptyEnemy(): EnemyAgg {
   return { fights: 0, playerLosses: 0, roundsActive: 0, damageDealt: 0, damageTaken: 0, kos: 0, deaths: 0 };
 }
@@ -319,6 +363,14 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   for (let i = 0; i < from.runMinutesWon.length; i++) mergeArray(into.runMinutesWon[i], from.runMinutesWon[i]);
   for (let i = 0; i < from.runMinutesLost.length; i++) mergeArray(into.runMinutesLost[i], from.runMinutesLost[i]);
   for (const id of Object.keys(from.castsByMove)) into.castsByMove[id] = (into.castsByMove[id] ?? 0) + from.castsByMove[id];
+  mergeCounts(into.moves, from.moves, emptyMoveAgg);
+  mergeCounts(into.enemyMoves, from.enemyMoves, emptyMoveAgg);
+  mergeCounts(into.movesByAct, from.movesByAct, emptyMoveAgg);
+  mergeCounts(into.signatures, from.signatures, emptySignature);
+  mergeCounts(into.moveOffers, from.moveOffers, () => ({ offered: 0, taken: 0 }));
+  mergeArray(into.signaturesPerRun, from.signaturesPerRun);
+  mergeArray(into.signaturesPerRunWon, from.signaturesPerRunWon);
+  mergeArray(into.evolutionAtEncounter, from.evolutionAtEncounter);
   for (const id of Object.keys(from.fieldSets)) into.fieldSets[id] = (into.fieldSets[id] ?? 0) + from.fieldSets[id];
   for (const id of Object.keys(from.enemyFieldSets)) into.enemyFieldSets[id] = (into.enemyFieldSets[id] ?? 0) + from.enemyFieldSets[id];
   for (const id of Object.keys(from.fieldRounds)) into.fieldRounds[id] = (into.fieldRounds[id] ?? 0) + from.fieldRounds[id];

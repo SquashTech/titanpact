@@ -274,6 +274,14 @@ export interface SchedulePayout {
   /** Offers that simply landed: room in the kit, so the screen was a receipt. */
   receipts: number;
   evolutions: PourEvolution[];
+  /** Signatures owed at the tenth pip, and whether the take-if-it-beats-the-worst rule took one. */
+  signatures: { heroId: string; taken: boolean }[];
+  /** Every move rolled onto the table, and whether the kit took it. */
+  moveOffers: { moveId: string; taken: boolean }[];
+}
+
+export function emptyPayout(): SchedulePayout {
+  return { offers: 0, receipts: 0, evolutions: [], signatures: [], moveOffers: [] };
 }
 
 /**
@@ -282,7 +290,7 @@ export interface SchedulePayout {
  * table is what is under test, and its granted move's overflow resolved. Called wherever a pip
  * lands and from the level-up report as the catch-all a hire arriving past the pip needs.
  */
-export function payMastery(run: RunState, rng: () => number, payout: SchedulePayout = { offers: 0, receipts: 0, evolutions: [] }): RunState {
+export function payMastery(run: RunState, rng: () => number, payout: SchedulePayout = emptyPayout()): RunState {
   let next = run;
   for (const { rosterId } of run.roster) {
     const entry = next.roster.find((r) => r.rosterId === rosterId);
@@ -301,10 +309,14 @@ export function payMastery(run: RunState, rng: () => number, payout: SchedulePay
       if (entry.unlockedMoveIds.length < MOVE_CAP) {
         payout.receipts++;
         next = grantOfferedMove(next, rosterId, signature);
+        payout.signatures.push({ heroId: entry.heroId, taken: true });
+        payout.moveOffers.push({ moveId: signature, taken: true });
       } else {
         payout.offers++;
         const replaceId = replacementTarget(entry, signature);
         if (replaceId) next = grantOfferedMove(next, rosterId, signature, replaceId);
+        payout.signatures.push({ heroId: entry.heroId, taken: replaceId !== null });
+        payout.moveOffers.push({ moveId: signature, taken: replaceId !== null });
       }
       continue;
     }
@@ -363,7 +375,7 @@ export function scribeTargets(roster: readonly RosterEntry[], policy: LevelPolic
  * its level has opened. The move is taken when it beats the worst one held (or there is room),
  * declined otherwise — either way the entry is taken, which is the rule the screen enforces too.
  */
-export function takeSchedule(run: RunState, rng: () => number, payout: SchedulePayout = { offers: 0, receipts: 0, evolutions: [] }): RunState {
+export function takeSchedule(run: RunState, rng: () => number, payout: SchedulePayout = emptyPayout()): RunState {
   let next = payMastery(run, rng, payout);
   for (const { rosterId } of run.roster) {
     const entry = next.roster.find((r) => r.rosterId === rosterId);
@@ -380,10 +392,12 @@ export function takeSchedule(run: RunState, rng: () => number, payout: ScheduleP
     if (entry.unlockedMoveIds.length < MOVE_CAP) {
       payout.receipts++;
       next = grantOfferedMove(next, rosterId, moveId);
+      payout.moveOffers.push({ moveId, taken: true });
     } else {
       payout.offers++;
       const replaceId = replacementTarget(entry, moveId);
       if (replaceId) next = grantOfferedMove(next, rosterId, moveId, replaceId);
+      payout.moveOffers.push({ moveId, taken: replaceId !== null });
     }
   }
   return next;

@@ -10,7 +10,9 @@ import { fieldEffects } from '../../src/data/fieldEffects';
 import { classes } from '../../src/data/classes';
 import { locations } from '../../src/data/locations';
 import { progressionTable } from '../../src/data/progression';
-import { DEFAULT_SCHEDULE } from '../../src/run/progression';
+import { moves } from '../../src/data/moves';
+import { DEFAULT_SCHEDULE, fullMovepool } from '../../src/run/progression';
+import type { MoveAgg } from './types';
 import { TOTAL_ACTS } from '../../src/run/state';
 import type { Aggregate, ChoiceAgg, HeroAgg } from './types';
 import { addTimeCounts, emptyTimeCounts, PACE_PROFILES, SCREEN_SECONDS, secondsFor, type ScreenKind } from './time';
@@ -125,6 +127,53 @@ for (const heroId of Object.keys(progressionTable.evolutions)) {
     }
   }
 }
+
+/**
+ * Which player heroes can ever hold a move, and by what route: the level pool, an Evolution path's
+ * grant or graft line, a Class, or the signature slot. A move with no route is enemy-only content
+ * (a spawn kit, a Guardian's) and is reported under the enemy side alone.
+ */
+type MoveRoute = 'pool' | 'evolution' | 'class' | 'signature';
+const moveRoutes: Record<string, { route: MoveRoute; heroIds: Set<string> }> = {};
+function addRoute(moveId: string, route: MoveRoute, heroId: string): void {
+  const slot = (moveRoutes[moveId] ??= { route, heroIds: new Set() });
+  slot.heroIds.add(heroId);
+}
+for (const heroId of Object.keys(heroes)) {
+  const hero = heroes[heroId];
+  for (const id of fullMovepool(progressionTable, hero)) addRoute(id, 'pool', heroId);
+  for (const node of progressionTable.evolutions[heroId] ?? []) {
+    for (const path of node.paths) {
+      for (const id of [...path.unlocksMoveIds, ...(path.learnableMoveIds ?? [])]) addRoute(id, 'evolution', heroId);
+    }
+  }
+  if (hero.signatureMoveId) addRoute(hero.signatureMoveId, 'signature', heroId);
+}
+for (const cls of Object.values(classes)) {
+  if (cls.grantsMoveId) addRoute(cls.grantsMoveId, 'class', '*');
+}
+
+/** The bucket a move is reported under: its authored tier, or the route that makes it tierless. */
+function moveBucket(id: string): string {
+  const route = moveRoutes[id]?.route;
+  if (route === 'signature' || route === 'class') return route;
+  return moves[id]?.tier ?? (route ? 'untiered' : 'enemy-only');
+}
+
+function moveRow(id: string, m: MoveAgg, playerTurns: number, offers?: { offered: number; taken: number }): string {
+  const move = moves[id];
+  const perCast = (v: number) => (m.casts > 0 ? num(v / m.casts, 0) : '-');
+  const heroCount = moveRoutes[id]?.heroIds.size ?? 0;
+  const offerCell = offers ? `${offers.offered}/${offers.taken}` : '';
+  return (
+    `  ${pad(move?.name ?? id, 22)}${pad(move?.type ?? '', 8)}${pad(move?.category?.slice(0, 4) ?? '', 5)}${padStart(String(move?.manaCost ?? 0), 5)}` +
+    `${padStart(heroCount ? String(heroCount) : '-', 6)}${padStart(offerCell, 11)}${padStart(String(m.casts), 8)}${padStart(num(playerTurns > 0 ? (m.casts * 1000) / playerTurns : 0, 1), 8)}` +
+    `${padStart(perCast(m.damage), 9)}${padStart(perCast(m.healing), 9)}${padStart(m.casts > 0 ? num((100 * m.kos) / m.casts, 1) : '-', 8)}` +
+    `${padStart(m.manaSpent > 0 ? num(m.damage / m.manaSpent, 2) : '-', 9)}`
+  );
+}
+
+const MOVE_HEADER = `  ${pad('move', 22)}${pad('type', 8)}${pad('cat', 5)}${padStart('mana', 5)}${padStart('heroes', 6)}${padStart('offer/take', 11)}${padStart('casts', 8)}${padStart('/1k turn', 8)}${padStart('dmg/cast', 9)}${padStart('heal/cst', 9)}${padStart('KO/100', 8)}${padStart('dmg/mana', 9)}`;
 
 export function formatReport(
   agg: Aggregate,
@@ -387,6 +436,137 @@ export function formatReport(
   out.push('  Only paths that reached the minimum sample; a hero that rarely survives to level 5');
   out.push('  will not appear at all, which is itself worth noticing.');
   out.push(liftTable('', agg.evolutionChoices, (id) => pathNames[id] ?? id, 15));
+
+  // --- Evolution timing ---
+  // encountersWonAtChoice = fights won before the Evolution landed; three fights an act, so fight k
+  // sits in act ceil(k/3) through act 5 and the finale after — a turn logged at k is after fight k.
+  out.push('  when Evolutions land, by the act of the fight they followed (all runs):');
+  {
+    const byAct: number[] = [0, 0, 0, 0, 0, 0, 0];
+    let total = 0;
+    let weighted = 0;
+    for (let k = 0; k < agg.evolutionAtEncounter.length; k++) {
+      const n = agg.evolutionAtEncounter[k] ?? 0;
+      if (!n) continue;
+      total += n;
+      weighted += n * k;
+      byAct[Math.min(6, Math.max(1, Math.ceil(k / 3)))] += n;
+    }
+    out.push(`  ${pad('', 12)}${[1, 2, 3, 4, 5, 6].map((a) => padStart(`act ${a}`, 9)).join('')}${padStart('mean fight', 12)}`);
+    out.push(`  ${pad('evolutions', 12)}${[1, 2, 3, 4, 5, 6].map((a) => padStart(pct(byAct[a], total), 9)).join('')}${padStart(total > 0 ? num(weighted / total, 1) : '-', 12)}`);
+  }
+
+  // --- Moves ---
+  out.push(heading('8b. MOVES — player side'));
+  out.push('  Every move the player side cast, by its bucket (authored tier; a signature or Class move is');
+  out.push('  tierless). heroes = roster heroes that can ever hold it; /1k turn = casts per 1000 player');
+  out.push('  turns; dmg/cast counts what hit the far side, Shield-absorbed included, recoil and self-cost');
+  out.push('  excluded; KO/100 = knockouts the move\'s last hit landed per 100 casts; dmg/mana is damage per');
+  out.push('  mana actually paid. Casts are pilot choices — a low count on a support move is the one-ply');
+  out.push('  scorer as much as the card (see the credit floor in pilot.ts), so read damage moves as');
+  out.push('  measured and utility moves as UNDER-measured. offer/take = rolled onto the table (schedule,');
+  out.push('  Mentor, Tutor, signature) / taken by the kit — a move never offered is a pool-size question, a');
+  out.push('  move offered and declined is the replace-at-cap scorer\'s call, a move held and never cast is the pilot\'s.');
+  for (const bucket of ['early', 'mid', 'late', 'signature', 'class', 'untiered']) {
+    const ids = Object.keys(agg.moves).filter((id) => moveBucket(id) === bucket).sort((a, b) => agg.moves[b].casts - agg.moves[a].casts);
+    if (ids.length === 0) continue;
+    const casts = ids.reduce((s, id) => s + agg.moves[id].casts, 0);
+    const damage = ids.reduce((s, id) => s + agg.moves[id].damage, 0);
+    out.push(`\n  ${bucket.toUpperCase()} — ${ids.length} moves cast, ${casts} casts, mean ${casts > 0 ? num(damage / casts, 0) : '-'} dmg/cast`);
+    out.push(MOVE_HEADER);
+    for (const id of ids) out.push(moveRow(id, agg.moves[id], agg.playerTurns, agg.moveOffers[id]));
+  }
+  {
+    const never = Object.keys(moves)
+      .filter((id) => moveRoutes[id] && !(id in agg.moves))
+      .sort((a, b) => moveBucket(a).localeCompare(moveBucket(b)) || a.localeCompare(b));
+    out.push(`\n  reachable by a roster hero but never cast by the player side (${never.length}); offered/taken says why:`);
+    for (const id of never) {
+      const route = moveRoutes[id];
+      const o = agg.moveOffers[id];
+      const why = !o ? 'never offered' : o.taken === 0 ? `offered ${o.offered}, always declined` : `taken ${o.taken}/${o.offered}, never cast`;
+      const who = route.route === 'class' ? 'Class' : [...route.heroIds].map((h) => heroes[h]?.name ?? h).slice(0, 4).join(', ') + (route.heroIds.size > 4 ? ', …' : '');
+      out.push(`    ${pad(moves[id].name, 22)}${pad(moveBucket(id), 11)}${pad(moves[id].type, 8)}${padStart(String(moves[id].manaCost), 5)}   ${pad(why, 30)}${who}`);
+    }
+  }
+  out.push('\n  by type, player side (casts and mean damage per cast across every move of the type):');
+  {
+    const byType: Record<string, { casts: number; damage: number; healing: number; kos: number }> = {};
+    for (const id of Object.keys(agg.moves)) {
+      const type = moves[id]?.type ?? '?';
+      const t = (byType[type] ??= { casts: 0, damage: 0, healing: 0, kos: 0 });
+      t.casts += agg.moves[id].casts;
+      t.damage += agg.moves[id].damage;
+      t.healing += agg.moves[id].healing;
+      t.kos += agg.moves[id].kos;
+    }
+    out.push(`  ${pad('type', 12)}${padStart('casts', 8)}${padStart('share', 8)}${padStart('dmg/cast', 10)}${padStart('heal/cast', 10)}${padStart('KO/100', 8)}`);
+    const totalCastsByType = Object.values(byType).reduce((s, t) => s + t.casts, 0);
+    for (const type of Object.keys(byType).sort((a, b) => byType[b].casts - byType[a].casts)) {
+      const t = byType[type];
+      out.push(`  ${pad(type, 12)}${padStart(String(t.casts), 8)}${padStart(pct(t.casts, totalCastsByType), 8)}${padStart(num(t.damage / t.casts, 0), 10)}${padStart(num(t.healing / t.casts, 0), 10)}${padStart(num((100 * t.kos) / t.casts, 1), 8)}`);
+    }
+  }
+  out.push('\n  casts per FIGHT by bucket and act — is the expensive half of the catalog reached where it is priced to be?');
+  {
+    out.push(`  ${pad('', 12)}${[1, 2, 3, 4, 5, 6].map((a) => padStart(`act ${a}`, 9)).join('')}`);
+    const perAct = (bucket: string) => [1, 2, 3, 4, 5, 6].map((act) => {
+      let casts = 0;
+      for (const key of Object.keys(agg.movesByAct)) {
+        const [a, id] = [key.slice(0, key.indexOf(':')), key.slice(key.indexOf(':') + 1)];
+        if (Number(a) === act && moveBucket(id) === bucket) casts += agg.movesByAct[key].casts;
+      }
+      const turns = agg.fightsByAct[act] ?? 0;
+      return padStart(turns > 0 ? num(casts / turns, 1) : '-', 9);
+    }).join('');
+    for (const bucket of ['early', 'mid', 'late', 'signature', 'class']) out.push(`  ${pad(`${bucket} /fight`, 12)}${perAct(bucket)}`);
+  }
+
+  out.push(heading('8c. MOVES — enemy side'));
+  out.push('  The same ledger for what was cast AT the player. KO/100 here is player heroes dropped.');
+  {
+    const ids = Object.keys(agg.enemyMoves).sort((a, b) => agg.enemyMoves[b].kos - agg.enemyMoves[a].kos).slice(0, 40);
+    out.push('  top 40 by knockouts landed:');
+    out.push(MOVE_HEADER);
+    for (const id of ids) out.push(moveRow(id, agg.enemyMoves[id], 0));
+  }
+
+  // --- Signatures ---
+  out.push(heading('8d. SIGNATURES (docs/mastery.md §5)'));
+  {
+    let reachedRuns = 0;
+    let reachedSum = 0;
+    let reachedWonSum = 0;
+    for (let k = 0; k < agg.signaturesPerRun.length; k++) {
+      const n = agg.signaturesPerRun[k] ?? 0;
+      reachedSum += n * k;
+      if (k > 0) reachedRuns += n;
+    }
+    for (let k = 0; k < agg.signaturesPerRunWon.length; k++) reachedWonSum += (agg.signaturesPerRunWon[k] ?? 0) * k;
+    out.push(`  tenth pips landed: ${num(reachedSum / R, 2)} per run, ${agg.wins > 0 ? num(reachedWonSum / agg.wins, 2) : '-'} per completed run; ${pct(reachedRuns, R)} of runs saw at least one`);
+    out.push(`  per completed run: ${[0, 1, 2, 3, 4, 5, 6].map((k) => `${k}:${pct(agg.signaturesPerRunWon[k] ?? 0, agg.wins)}`).join('  ')}`);
+    out.push('  by hero: reached = (hero, run) pairs at ten pips; taken = the kit had room or the move beat');
+    out.push('  the worst held; then the signature\'s own fight ledger against the mean of every Late-tier cast.');
+    const lateIds = Object.keys(agg.moves).filter((id) => moveBucket(id) === 'late');
+    const lateCasts = lateIds.reduce((s, id) => s + agg.moves[id].casts, 0);
+    const lateDamage = lateIds.reduce((s, id) => s + agg.moves[id].damage, 0);
+    const lateKos = lateIds.reduce((s, id) => s + agg.moves[id].kos, 0);
+    out.push(`  ${pad('hero', 14)}${pad('signature', 20)}${padStart('reached', 8)}${padStart('taken%', 8)}${padStart('casts', 7)}${padStart('dmg/cast', 9)}${padStart('heal/cst', 9)}${padStart('KO/100', 8)}${padStart('vs late', 9)}`);
+    out.push(`  ${pad('(all Late casts)', 34)}${padStart('', 8)}${padStart('', 8)}${padStart(String(lateCasts), 7)}${padStart(lateCasts > 0 ? num(lateDamage / lateCasts, 0) : '-', 9)}${padStart('', 9)}${padStart(lateCasts > 0 ? num((100 * lateKos) / lateCasts, 1) : '-', 8)}`);
+    const rows = Object.keys(heroes)
+      .filter((heroId) => heroes[heroId].signatureMoveId)
+      .map((heroId) => ({ heroId, sig: heroes[heroId].signatureMoveId as string, s: agg.signatures[heroId], m: agg.moves[heroes[heroId].signatureMoveId as string] }))
+      .sort((a, b) => (b.m?.damage ?? 0) / Math.max(1, b.m?.casts ?? 0) - (a.m?.damage ?? 0) / Math.max(1, a.m?.casts ?? 0));
+    for (const row of rows) {
+      const m = row.m;
+      const perCast = m && m.casts > 0 ? m.damage / m.casts : 0;
+      const vs = lateCasts > 0 && m && m.casts > 0 ? num(perCast / (lateDamage / lateCasts), 2) : '-';
+      out.push(
+        `  ${pad(heroes[row.heroId].name, 14)}${pad(moves[row.sig]?.name ?? row.sig, 20)}${padStart(String(row.s?.reached ?? 0), 8)}${padStart(row.s ? pct(row.s.taken, row.s.reached) : '-', 8)}` +
+        `${padStart(String(m?.casts ?? 0), 7)}${padStart(m && m.casts > 0 ? num(perCast, 0) : '-', 9)}${padStart(m && m.casts > 0 ? num(m.healing / m.casts, 0) : '-', 9)}${padStart(m && m.casts > 0 ? num((100 * m.kos) / m.casts, 1) : '-', 8)}${padStart(vs, 9)}`
+      );
+    }
+  }
 
   // --- Loot and pacing ---
   out.push(heading('9. LOOT AND PACING'));

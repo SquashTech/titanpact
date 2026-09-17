@@ -56,6 +56,19 @@ export function emptyShieldTally(): ShieldTally {
   return { casts: 0, granted: 0, absorbed: 0, broken: 0, capped: 0, enemyCasts: 0, enemyGranted: 0, enemyAbsorbed: 0, enemyBroken: 0, enemyCapped: 0, takenPhysical: 0, takenMagical: 0 };
 }
 
+/** One move's fight ledger, keyed by move id on the CASTER's side: casts, what its hits and heals moved, the KOs its last hit landed, and the mana it was paid. */
+export interface MoveTally {
+  casts: number;
+  damage: number;
+  healing: number;
+  kos: number;
+  manaSpent: number;
+}
+
+export function emptyMoveTally(): MoveTally {
+  return { casts: 0, damage: 0, healing: 0, kos: 0, manaSpent: 0 };
+}
+
 const PLAYER_SIDE: Side = 'A';
 const AI_SIDE: Side = 'B';
 
@@ -102,6 +115,9 @@ export interface FightOutcome {
   castsByManaBand: Record<string, number>;
   /** Player-side casts by move id. */
   castsByMove: Record<string, number>;
+  /** Per-move ledgers by the caster's side. */
+  moves: Record<string, MoveTally>;
+  enemyMoves: Record<string, MoveTally>;
   /** Field Effects (docs/field-effects.md "Heralds"): sets by the player side, sets by the enemy side, and rounds the field ended still up, each keyed by field id and summed under 'all'. */
   fieldSets: Record<string, number>;
   enemyFieldSets: Record<string, number>;
@@ -203,8 +219,16 @@ function recordEvents(
   casts?: { byTier: Record<string, number>; byManaBand: Record<string, number>; byMove: Record<string, number> },
   deltas?: { count: number; authored: number; landed: number; enemyCount: number; enemyAuthored: number; enemyLanded: number; held: number; enemyHeld: number },
   shield?: { tally: ShieldTally; held: Record<string, number> },
-  field?: { sets: Record<string, number>; enemySets: Record<string, number>; rounds: Record<string, number> }
+  field?: { sets: Record<string, number>; enemySets: Record<string, number>; rounds: Record<string, number> },
+  moveTallies?: { player: Record<string, MoveTally>; enemy: Record<string, MoveTally> }
 ): void {
+  const tallyFor = (combatantId: string, moveId: string): MoveTally | undefined => {
+    if (!moveTallies || !moves[moveId]) return undefined;
+    const side = telemetry[combatantId]?.side;
+    if (!side) return undefined;
+    const bucket = side === PLAYER_SIDE ? moveTallies.player : moveTallies.enemy;
+    return (bucket[moveId] ??= emptyMoveTally());
+  };
   // A StatChanged names its holder, not its caster; the caster is the side of the last MoveUsed.
   let casterSide: Side | undefined;
   // A FieldEffectSet names no side either: it follows the MoveUsed that carried it, or the SwitchedIn a Herald fired on.
@@ -234,6 +258,13 @@ function recordEvents(
         deltas.enemyCount += 1;
         deltas.enemyAuthored += Math.abs(event.authored);
         deltas.enemyLanded += Math.abs(event.delta);
+      }
+    }
+    if (event.type === 'MoveUsed') {
+      const tally = tallyFor(event.combatantId, event.moveId);
+      if (tally) {
+        tally.casts += 1;
+        tally.manaSpent += event.manaSpent;
       }
     }
     if (event.type === 'MoveUsed' && casts && telemetry[event.combatantId]?.side === PLAYER_SIDE) {
@@ -285,11 +316,18 @@ function recordEvents(
         const target = telemetry[event.targetCombatantId];
         if (source) source.damageDealt += event.amount;
         if (target) target.damageTaken += event.amount;
+        // A self-cost or recoil is the move's price, not its output; an absorbed hit still counts as output.
+        if (!event.recoil && !event.selfCost && source && target && source.side !== target.side) {
+          const tally = tallyFor(event.sourceCombatantId, event.moveId);
+          if (tally) tally.damage += event.amount + (event.absorbed ?? 0);
+        }
         break;
       }
       case 'Healed': {
         const source = telemetry[event.sourceCombatantId];
         if (source) source.healingDone += event.amount;
+        const tally = tallyFor(event.sourceCombatantId, event.moveId);
+        if (tally) tally.healing += event.amount;
         break;
       }
       case 'Fainted': {
@@ -308,13 +346,27 @@ function recordEvents(
  * the same round's stream. Statuses and the Pact Clock kill without a
  * DamageDealt, so those deaths are simply uncredited.
  */
-function creditKos(events: readonly CombatEvent[], telemetry: Record<string, CombatantTelemetry>): void {
+function creditKos(
+  events: readonly CombatEvent[],
+  telemetry: Record<string, CombatantTelemetry>,
+  moveTallies?: { player: Record<string, MoveTally>; enemy: Record<string, MoveTally> }
+): void {
   const lastHitter: Record<string, string> = {};
+  const lastMove: Record<string, string> = {};
   for (const event of events) {
-    if (event.type === 'DamageDealt') lastHitter[event.targetCombatantId] = event.sourceCombatantId;
-    else if (event.type === 'Fainted') {
+    if (event.type === 'DamageDealt') {
+      lastHitter[event.targetCombatantId] = event.sourceCombatantId;
+      lastMove[event.targetCombatantId] = event.moveId;
+    } else if (event.type === 'Fainted') {
       const killer = telemetry[lastHitter[event.combatantId] ?? ''];
-      if (killer && killer.side !== telemetry[event.combatantId]?.side) killer.kos += 1;
+      if (killer && killer.side !== telemetry[event.combatantId]?.side) {
+        killer.kos += 1;
+        const moveId = lastMove[event.combatantId] ?? '';
+        if (moveTallies && moves[moveId]) {
+          const bucket = killer.side === PLAYER_SIDE ? moveTallies.player : moveTallies.enemy;
+          (bucket[moveId] ??= emptyMoveTally()).kos += 1;
+        }
+      }
     }
   }
 }
@@ -425,6 +477,7 @@ export function simulateFight(input: FightInput): FightOutcome {
   const casts = { byTier: {} as Record<string, number>, byManaBand: {} as Record<string, number>, byMove: {} as Record<string, number> };
   const deltas = { count: 0, authored: 0, landed: 0, enemyCount: 0, enemyAuthored: 0, enemyLanded: 0, held: 0, enemyHeld: 0 };
   const shield = { tally: emptyShieldTally(), held: {} as Record<string, number> };
+  const moveTallies = { player: {} as Record<string, MoveTally>, enemy: {} as Record<string, MoveTally> };
   let peakModifierFrac = 0;
   let wouldHaveCapped = false;
   let floored = false;
@@ -467,9 +520,9 @@ export function simulateFight(input: FightInput): FightOutcome {
     state = fillOpenSlots(state, AI_SIDE, replacementEvents);
     roundEvents.push(...replacementEvents);
 
-    recordEvents(roundEvents, telemetry, casts, deltas, shield, field);
+    recordEvents(roundEvents, telemetry, casts, deltas, shield, field, moveTallies);
     beats += countBeats(roundEvents);
-    creditKos(roundEvents, telemetry);
+    creditKos(roundEvents, telemetry, moveTallies);
 
     // The ceiling question (docs/stat-scaling.md §10) is asked of stats a hero USES: the offensive
     // stat it does not swing with is skipped, since a flat +25 on a caster's 25 Attack is past +S
@@ -517,6 +570,8 @@ export function simulateFight(input: FightInput): FightOutcome {
     castsByTier: casts.byTier,
     castsByManaBand: casts.byManaBand,
     castsByMove: casts.byMove,
+    moves: moveTallies.player,
+    enemyMoves: moveTallies.enemy,
     fieldSets: field.sets,
     enemyFieldSets: field.enemySets,
     fieldRounds: field.rounds,

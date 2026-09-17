@@ -9,9 +9,26 @@ import {
   emptyEnemy,
   emptyFightKind,
   emptyHero,
+  emptyMoveAgg,
+  emptySignature,
   type Aggregate,
   type ChoiceAgg,
+  type MoveAgg,
 } from './types';
+import type { MoveTally } from './fight';
+
+function foldMoves(into: Record<string, MoveAgg>, from: Record<string, MoveTally>, prefix = ''): void {
+  for (const id of Object.keys(from)) {
+    const t = from[id];
+    const m = (into[prefix + id] ??= emptyMoveAgg());
+    m.fights += 1;
+    m.casts += t.casts;
+    m.damage += t.damage;
+    m.healing += t.healing;
+    m.kos += t.kos;
+    m.manaSpent += t.manaSpent;
+  }
+}
 
 function choiceBucket(agg: Aggregate, bucket: string): Record<string, ChoiceAgg> {
   switch (bucket) {
@@ -66,6 +83,22 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
   }
   agg.merges += record.merges;
   agg.mergeOffers += record.mergeOffers;
+  let signaturesThisRun = 0;
+  for (const heroId of Object.keys(record.signatures)) {
+    const s = record.signatures[heroId];
+    const slot = (agg.signatures[heroId] ??= emptySignature());
+    slot.reached += s.reached;
+    slot.taken += s.taken;
+    if (record.won) slot.reachedWon += s.reached;
+    signaturesThisRun += s.reached;
+  }
+  agg.signaturesPerRun[signaturesThisRun] = (agg.signaturesPerRun[signaturesThisRun] ?? 0) + 1;
+  for (const moveId of Object.keys(record.moveOffers)) {
+    const slot = (agg.moveOffers[moveId] ??= { offered: 0, taken: 0 });
+    slot.offered += record.moveOffers[moveId].offered;
+    slot.taken += record.moveOffers[moveId].taken;
+  }
+  if (record.won) agg.signaturesPerRunWon[signaturesThisRun] = (agg.signaturesPerRunWon[signaturesThisRun] ?? 0) + 1;
   if (record.won) {
     agg.mergesWon += record.merges;
     agg.mergeOffersWon += record.mergeOffers;
@@ -120,6 +153,9 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
     }
     for (const band of Object.keys(fight.castsByManaBand)) agg.castsByManaBand[band] = (agg.castsByManaBand[band] ?? 0) + fight.castsByManaBand[band];
     for (const id of Object.keys(fight.castsByMove)) agg.castsByMove[id] = (agg.castsByMove[id] ?? 0) + fight.castsByMove[id];
+    foldMoves(agg.moves, fight.moves);
+    foldMoves(agg.enemyMoves, fight.enemyMoves);
+    foldMoves(agg.movesByAct, fight.moves, `${fight.act}:`);
     agg.playerRests += fight.playerRests;
     agg.playerSwitches += fight.playerSwitches;
     if (fight.lockedIn) agg.lockInFights += 1;
@@ -182,6 +218,9 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
   for (const choice of record.choices) {
     const bucket = choiceBucket(agg, choice.bucket);
     const progress = record.encountersWon - choice.encountersWonAtChoice;
+    if (choice.bucket === 'evolution') {
+      agg.evolutionAtEncounter[choice.encountersWonAtChoice] = (agg.evolutionAtEncounter[choice.encountersWonAtChoice] ?? 0) + 1;
+    }
     const picked = new Set(choice.picked);
     for (const option of choice.offered) {
       const slot = (bucket[option] ??= emptyChoice());

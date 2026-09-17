@@ -69,7 +69,7 @@ import { passives } from '../../src/data/passives';
 import { getMaxHp } from '../../src/engine/state';
 import { createCombatant } from '../../src/engine/state';
 
-import { simulateFight, PLAYER_SIDE, type PilotKind, type ShieldTally } from './fight';
+import { simulateFight, PLAYER_SIDE, type PilotKind, type ShieldTally, type MoveTally } from './fight';
 import * as policy from './policy';
 import type { PourEvolution } from './policy';
 import { makeRng, pick, randomSeed, sample, withRandom, type Rng } from './rng';
@@ -120,6 +120,8 @@ export interface FightRecord {
   castsByTier: Record<string, number>;
   castsByManaBand: Record<string, number>;
   castsByMove: Record<string, number>;
+  moves: Record<string, MoveTally>;
+  enemyMoves: Record<string, MoveTally>;
   fieldSets: Record<string, number>;
   enemyFieldSets: Record<string, number>;
   fieldRounds: Record<string, number>;
@@ -167,6 +169,10 @@ export interface RunRecord {
   equipped: string[];
   /** Mastery pips landed this run, by source (run/mastery.ts). */
   pipsBySource: Record<string, number>;
+  /** Signatures owed at the tenth pip this run, by hero: times reached and times the kit took it. */
+  signatures: Record<string, { reached: number; taken: number }>;
+  /** Every rolled move offer (schedule, Mentor, Tutor, signature) by move id: times on the table, times the kit took it. */
+  moveOffers: Record<string, { offered: number; taken: number }>;
   /** The gold ledger, keyed `act:earned:<fight|purse|sell>`, `act:spent:<mend|hire|scroll|anvil|enchant|contract>`, and `act:hall` (the purse on entering the Guild Hall, with `act:hallVisits` counting it). */
   goldFlow: Record<string, number>;
   /** Heroes joining after the draft: `contract` (claimed or bought), `hire` (Guild Hall). */
@@ -277,6 +283,8 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     choices: [],
     equipped: [],
     pipsBySource: {},
+    signatures: {},
+    moveOffers: {},
     recruitsBySource: {},
     itemsBySource: {},
     merges: 0,
@@ -417,15 +425,32 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
  * cost.
  */
 function paySchedule(run: RunState, rng: Rng, record: RunRecord): RunState {
-  const payout: policy.SchedulePayout = { offers: 0, receipts: 0, evolutions: [] };
+  const payout = policy.emptyPayout();
   const next = policy.takeSchedule(run, rng, payout);
-  for (const e of payout.evolutions) {
-    record.choices.push({ bucket: 'evolution', offered: e.offered, picked: [e.picked], encountersWonAtChoice: next.encountersWon });
-  }
+  recordPayout(record, payout, next.encountersWon);
   tally(record, run.actNumber, 'evolution', payout.evolutions.length);
   tally(record, run.actNumber, 'offer', payout.offers);
   tally(record, run.actNumber, 'moveLearned', payout.receipts);
   return next;
+}
+
+/** The Evolutions a payout took are logged as the choices they are, and its signatures under the hero they were owed to. */
+function recordPayout(record: RunRecord, payout: policy.SchedulePayout, encountersWon: number): void {
+  for (const e of payout.evolutions) {
+    record.choices.push({ bucket: 'evolution', offered: e.offered, picked: [e.picked], encountersWonAtChoice: encountersWon });
+  }
+  for (const s of payout.signatures) {
+    const slot = (record.signatures[s.heroId] ??= { reached: 0, taken: 0 });
+    slot.reached += 1;
+    if (s.taken) slot.taken += 1;
+  }
+  for (const o of payout.moveOffers) recordMoveOfferMade(record, o.moveId, o.taken);
+}
+
+function recordMoveOfferMade(record: RunRecord, moveId: string, taken: boolean): void {
+  const slot = (record.moveOffers[moveId] ??= { offered: 0, taken: 0 });
+  slot.offered += 1;
+  if (taken) slot.taken += 1;
 }
 
 function isEncounterNode(type: MapNodeType): boolean {
@@ -536,6 +561,8 @@ function resolveEncounterNode(
     castsByTier: fight.castsByTier,
     castsByManaBand: fight.castsByManaBand,
     castsByMove: fight.castsByMove,
+    moves: fight.moves,
+    enemyMoves: fight.enemyMoves,
     fieldSets: fight.fieldSets,
     enemyFieldSets: fight.enemyFieldSets,
     fieldRounds: fight.fieldRounds,
@@ -621,11 +648,9 @@ function tryRecruitContracts(run: RunState, defeatedRoster: readonly RosterEntry
  */
 function landPips(run: RunState, rosterId: string, pips: number, source: string, rng: Rng, record: RunRecord): RunState {
   record.pipsBySource[source] = (record.pipsBySource[source] ?? 0) + pips;
-  const payout: policy.SchedulePayout = { offers: 0, receipts: 0, evolutions: [] };
+  const payout = policy.emptyPayout();
   const next = policy.payMastery(grantMastery(run, rosterId, pips), rng, payout);
-  for (const e of payout.evolutions) {
-    record.choices.push({ bucket: 'evolution', offered: e.offered, picked: [e.picked], encountersWonAtChoice: next.encountersWon });
-  }
+  recordPayout(record, payout, next.encountersWon);
   tally(record, run.actNumber, 'evolution', payout.evolutions.length);
   return next;
 }
@@ -692,9 +717,9 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
     }
     // The Mentor (acts 1-3): one Mid move ROLLED for the hero whose Mid pool is worth most.
     case 'mentorReward':
-      return resolveMentor(run, rng);
+      return resolveMentor(run, rng, record);
     case 'tutorReward':
-      return resolveTutor(run, rng);
+      return resolveTutor(run, rng, record);
     case 'event':
       return resolveEvent(run, locationId, rng, record);
     case 'shop':
@@ -711,11 +736,11 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
  * the roll. Taken when it beats the worst move held (or there is room), declined otherwise; the
  * offer burns either way, as a Scroll's does.
  */
-function resolveMentor(run: RunState, rng: Rng): RunState {
-  return resolveTierRoll(run, rng, mentorMovePool);
+function resolveMentor(run: RunState, rng: Rng, record: RunRecord): RunState {
+  return resolveTierRoll(run, rng, mentorMovePool, record);
 }
 
-function resolveTierRoll(run: RunState, rng: Rng, poolOf: typeof mentorMovePool): RunState {
+function resolveTierRoll(run: RunState, rng: Rng, poolOf: typeof mentorMovePool, record: RunRecord): RunState {
   let best: { entry: RosterEntry; value: number } | null = null;
   for (const entry of run.roster) {
     const pool = poolOf(progressionTable, moves, entry);
@@ -727,8 +752,12 @@ function resolveTierRoll(run: RunState, rng: Rng, poolOf: typeof mentorMovePool)
   const pool = poolOf(progressionTable, moves, best.entry);
   const moveId = pick(rng, pool);
   const next = recordMoveOffer(run, best.entry.rosterId, [moveId]);
-  if (best.entry.unlockedMoveIds.length < MOVE_CAP) return grantOfferedMove(next, best.entry.rosterId, moveId);
+  if (best.entry.unlockedMoveIds.length < MOVE_CAP) {
+    recordMoveOfferMade(record, moveId, true);
+    return grantOfferedMove(next, best.entry.rosterId, moveId);
+  }
   const replaceId = policy.replacementTarget(best.entry, moveId);
+  recordMoveOfferMade(record, moveId, replaceId !== null);
   return replaceId ? grantOfferedMove(next, best.entry.rosterId, moveId, replaceId) : next;
 }
 
@@ -736,8 +765,8 @@ function resolveTierRoll(run: RunState, rng: Rng, poolOf: typeof mentorMovePool)
  * The Tutor: the Mentor's beat at Late (src/run/tutor.ts) — the hero whose Late pool is worth
  * most on average takes the roll, and the move is taken when it beats the worst one held.
  */
-function resolveTutor(run: RunState, rng: Rng): RunState {
-  return resolveTierRoll(run, rng, tutorMovePool);
+function resolveTutor(run: RunState, rng: Rng, record: RunRecord): RunState {
+  return resolveTierRoll(run, rng, tutorMovePool, record);
 }
 
 /**
