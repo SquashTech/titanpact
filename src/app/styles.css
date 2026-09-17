@@ -24935,7 +24935,7 @@ textarea,
   text-align: center;
   color: var(--text);
   pointer-events: none;
-  animation: field-note-say 2.6s var(--ease-out) both;
+  animation: field-note-say 3.4s var(--ease-out) both;
 }
 
 @keyframes field-note-say {

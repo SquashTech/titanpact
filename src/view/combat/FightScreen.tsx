@@ -824,15 +824,12 @@ export function FightScreen({
     });
   })();
 
-  /** The tapped coin, in words: "Cinder moves 2nd in turn order" and the one clause its number cannot carry. */
+  /** A tapped coin, in words: the whole round's order first to last, and the tapped hero's bracket if it has one. */
   function sayOrder(combatantId: string) {
-    const mark = orderMarks[combatantId];
-    if (!mark) return;
-    const name = allCombatants[combat.combatants[combatantId].heroId].name;
-    const tiedWith = Object.entries(orderMarks)
-      .filter(([id, m]) => id !== combatantId && m.tied && m.rank === mark.rank)
-      .map(([id]) => allCombatants[combat.combatants[id].heroId].name);
-    setFieldNote({ key: popupSeq.current++, text: describeOrder(name, mark, tiedWith) });
+    if (!orderMarks[combatantId]) return;
+    const nameOf = (id: string) => allCombatants[combat.combatants[id].heroId].name;
+    const ordered = orderPreview.entries.map((e) => ({ combatantId: e.combatantId, name: nameOf(e.combatantId), mark: orderMarks[e.combatantId] }));
+    setFieldNote({ key: popupSeq.current++, text: describeOrder(ordered, combatantId) });
   }
 
   // Worn on each active card (CombatantCard `order`): the preview while commanding, the settled

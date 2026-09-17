@@ -610,10 +610,13 @@ a cut goes past. **A number needs telling** (same day, per user direction — a 
 read "3" as anything from a level to a stack): the tutorial's opener cue names the coin in the
 line that already teaches Speed, and **a coin is tappable while commanding** — the tap is the
 coin's own, never the card's — and the game says the place in words over the field for a
-moment (`describeOrder`, `.field-note`): *Cinder moves 2nd in turn order*, with the one
-clause the number cannot carry — a tie is a coin flip, a bracket cut ahead or held back, a
-switch goes first, a Rest last. The ribbon of portraits read the sequence more directly and is
-the trade the shoulder coin makes for the screen space; the tap is what gives that back.
+moment (`describeOrder`, `.field-note`): **the whole round first to last** — *Cinder, then
+Pixie, then Riptide, then Rime* — a tie said as *Squall or Riptide (a coin flip)*, and after it
+the one clause the tapped hero's number cannot carry, when there is one: a bracket that cut
+ahead or held back, a switch going first, a Rest last, a roll still to come. The ribbon of
+portraits read the sequence more directly and is the trade the shoulder coin makes for the
+screen space; the tap is what gives that sequence back, in words (it first said only the tapped
+hero's place, and was widened to the whole order the same day, per user direction).
 
 **Open, deliberately:** the hold cap, the price and the drop odds are all playtest numbers; and
 whether a potion should be drinkable during a forced-replacement beat after a KO — the moment a
