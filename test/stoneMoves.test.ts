@@ -486,7 +486,7 @@ test('stone: Bastion shields both allies off crag\'s Defense with Stone STAB, an
 test('stone: Rampart is the biggest pool on the table — Late, both allies, 65 base, and it stacks onto a Bastion', () => {
   assert.strictEqual(moves.rampart.tier, 'late');
   assert.strictEqual(moves.rampart.target, 'bothAllies');
-  assert.strictEqual(moves.rampart.manaCost, 55);
+  assert.strictEqual(moves.rampart.manaCost, 65);
   const state = withDeepPools(stoneFixture(961));
   const rampart = { statusId: 'Shield', magnitude: 65, target: 'moveTarget' as const };
   const bastion = { statusId: 'Shield', magnitude: 45, target: 'moveTarget' as const };

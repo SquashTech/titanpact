@@ -136,6 +136,9 @@ fight is. Every faucet a pool has today, and what each is:
 On top of those, **Late-tier mana was re-priced ×0.75** the same day (`docs/authoring-moves.md`),
 which is the other half of the same fix. Together: Late casts went from 4.5% of the run to 14%,
 and from 11% of Act 4's casts to 21%, 18% of Act 5's to 33%, 23% of the finale's to 40%.
+**Pushed part-way back on 2026-09-17** (`docs/authoring-moves.md`): Late +10, spread damage +20
+at Late and +15 at Mid — mana had stopped reading as a cost, and a spread hit at a single hit's
+price was the top of every damage-per-mana table. Late is still cast 1.6 times a fight in Act 5.
 
 | **The Mana Well** (`manaWellReward`) | one chosen hero, a reward-row seat at weight 20 | **+30 max Mana** (`MANA_WELL_AMOUNT`), stacks | the one bare-number screen — pick who |
 

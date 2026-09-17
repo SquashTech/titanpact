@@ -70,7 +70,10 @@ don't silently override it.
 > each band offers its own tier (Mid expires at Late as Early does at Mid), **Late-tier mana is
 > re-priced ×0.75** (floor 45; the 100+ whole-pool casts keep their price) so a Late move is
 > castable twice a fight, and `ACT_STEP_CURVE`'s last two steps came down to pay for the
-> symmetric half of that. Measured: full-clear 57%, Late casts 19 / 29 / 36% of Acts 4 / 5 /
+> symmetric half of that. **Pushed part-way back 2026-09-17** (per user direction, sim pass 9):
+> Late +10, spread damage +20 at Late / +15 at Mid — a single Late is 55+, a spread Late 65+ —
+> because a spread hit at a single hit's price topped every damage-per-mana table
+> (`docs/authoring-moves.md`). Late is still cast 1.6 times a fight in Act 5. Measured: full-clear 57%, Late casts 19 / 29 / 36% of Acts 4 / 5 /
 > finale (was 11 / 18 / 23), the Act 1 wall at 76% untouched by every non-design lever (§8).
 > Phase 5 (four acts) stays deferred.
 

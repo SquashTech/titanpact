@@ -1154,6 +1154,15 @@ three level-ups paying out nothing the player can press. Three rules:
   5, floor 45); the 100+ whole-pool casts kept their price. **The Late convention is 45+ now,
   not 70+**, and a new slate's Late column should be priced so a hero at the Late band can cast
   it twice in a six-round fight.
+  **Pushed part-way back, 2026-09-17** (per user direction — mana had stopped being a cost, and
+  with no spread reduction a spread hit was two hits for one price): every Late move under 100
+  +10, every spread damage move a further +10 at Late and +15 at Mid. **The conventions now: a
+  single-target Late is 55+, a spread Late 65+, a spread Mid 60+**; signatures stay 45–60 (most
+  55), the whole-pool casts at 100+. Measured on 2000 runs: Late 2.2 → 1.6 casts a fight in Act 5
+  (still twice a fight), spread and single Late now inside 5.6–8.0 and 4.7–6.9 damage a mana where
+  spread had been 10–12, and full clear 57 → 62% — the enemy pays the same prices and the shipped
+  AI does not manage mana, so its Late kits thin faster than a pilot's. That five points is a
+  known side effect, not a target.
 - **Enemies are the real version of that check.** Enemies get no relics, no equipment
   and no Evolution, so an enemy's pool genuinely is fixed for the whole game. An enemy
   that cannot afford its own kit is a live finding — bump its mana rather than

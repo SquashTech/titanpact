@@ -387,7 +387,7 @@ test('water: Seawall is the Late single-ally pool, and it cleanses what the ally
   const expected = scaleStatusMagnitude(70, statuses.Shield, app, moves.seawall, heroes.tidecaller, state.combatants.a1);
   const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'seawall', declaredTarget: 'a2' }], config);
   assert.strictEqual(moves.seawall.tier, 'late');
-  assert.strictEqual(moves.seawall.manaCost, 50);
+  assert.strictEqual(moves.seawall.manaCost, 60);
   assert.strictEqual(statusMagnitude(next.combatants.a2, 'Shield'), expected);
   assert.strictEqual(hasStatus(next.combatants.a2, 'Burn'), false, 'the Burn is washed off');
   assert.ok(hasStatus(next.combatants.a2, 'Renew'), 'and the Renew, positive, is kept');
