@@ -3488,6 +3488,13 @@ IN the tab first — rail, dais, slab, console, the shelf pushed 180px below the
 user called it a mess; a stage is a screen's subject, and a shop has five other things to sell.
 The potions and the party heal moved from the Smithy's shelf to the Heroes' in the same pass, so
 the Smithy is the Anvil and Enchanter alone, and the mend's label is **Full Party Heal**.
+The overlay is its own component, `HeroStageOverlay` (dais, console, veteran marks, a note and
+an action slab in the footer, the tabbed sheet off the `i`), and **the roster-replace gate opens
+it too** (same day, per user direction) off a held roster card, where the tabbed sheet used to
+open: its slab MARKS the hero ("Terminate X", or "Spare X" when already marked) and closes, and
+the gate's own two-button row stays the one commit. The console's dossier renders inline there
+rather than through the portalled `StageMovePopup`, because the gate sits at z-index 30 and a
+dossier portalled to the shell at 25 painted under it.
 
 ## Open / future improvements
 

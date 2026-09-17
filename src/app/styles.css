@@ -13815,11 +13815,13 @@ textarea,
   color: var(--text-dim);
 }
 
-/* The hire on the draft's stage (shared/HeroStage.tsx, .draft-* above), as
-   the overlay a card opens: the hero sheet's own panel holding the dais and
-   the console, the spend and Close in the sheet footer under it. Content-
-   sized, unlike the tabbed sheet — there is no strip to hold in place. */
-.guild-hire-panel {
+/* A hero on the draft's stage (shared/HeroStage.tsx, .draft-* above) as an
+   overlay (HeroStageOverlay): the hero sheet's own panel holding the dais and
+   the console, the action and Close in the sheet footer under it. The Guild
+   Hall opens it off a hire card, the roster-replace gate off a held roster
+   card. Content-sized, unlike the tabbed sheet — there is no strip to hold
+   in place. */
+.stage-overlay-panel {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -13828,10 +13830,10 @@ textarea,
   overflow-y: auto;
 }
 
-/* The spend under it keeps the sheet slab's size and gets its hue back: a
+/* The action under it keeps the sheet slab's size and gets its hue back: a
    Close has the room's light switched off (.sheet-close-button above), a
-   purchase does not. Gold, not the hero's type — it is the Hall's gold. */
-.resolve-button.sheet-close-button.guild-hire-buy {
+   purchase or a mark does not. Gold, not the hero's type. */
+.resolve-button.sheet-close-button.stage-overlay-action {
   --cta-rgb: 224, 166, 60;
 }
 

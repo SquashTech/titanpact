@@ -23,18 +23,12 @@ import {
 } from '../../run/recruitment';
 import type { GuildHallOffers } from '../../run/shop';
 import { statScaleFor } from '../../run/statScale';
-import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
+import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { entryPassiveCounts, entryStatModifiers } from '../../run/entryStats';
-import { passives } from '../../data/passives';
-import { levelOf } from '../../run/growth';
-import type { MoveDefinition } from '../../engine/content';
-import { healCasterForEntry } from '../shared/healCaster';
-import { StageDais, StageFigure, StageKit, StageMovePopup, StageSheet, StageTypes } from '../shared/HeroStage';
+import { HeroStageOverlay } from './HeroStageOverlay';
 import { overlayHost } from '../shared/overlayHost';
 import type { TabSpec } from '../shared/TabStrip';
-import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RecruitFanfare } from './RecruitFanfare';
 
 export type GuildHallTab = 'heroes' | 'smithy';
@@ -125,9 +119,6 @@ export function GuildHallPanel({
   freeRecruits = false,
 }: Props) {
   const [previewOfferId, setPreviewOfferId] = useState<string | null>(null);
-  /** The tabbed sheet over the stage, off the figure's info button. */
-  const [inspecting, setInspecting] = useState(false);
-  const [popupMove, setPopupMove] = useState<MoveDefinition | null>(null);
   const [confirmingContract, setConfirmingContract] = useState(false);
   /** The hero the joining cinematic is running for. The roster-full path fires it from App instead. */
   const [fanfareHeroId, setFanfareHeroId] = useState<string | null>(null);
@@ -143,7 +134,7 @@ export function GuildHallPanel({
   const canBuyScrollNow = canBuyScroll(run, scrollsBought);
 
   // Derived from state rather than pushed from each setter, so a later modal can't forget to report.
-  const overlayOpen = !!previewOffer || !!popupMove || confirmingContract || !!fanfareHeroId;
+  const overlayOpen = !!previewOffer || confirmingContract || !!fanfareHeroId;
   useEffect(() => {
     onOverlayChange?.(overlayOpen);
   }, [overlayOpen, onOverlayChange]);
@@ -310,83 +301,39 @@ export function GuildHallPanel({
           its own stacking context, and a modal rendered in there paints UNDER the corner buttons. */}
       {createPortal(
         <>
-          {/* The hire on the draft's stage (shared/HeroStage.tsx), as an overlay off its card
-              (2026-09-16, per user direction — it stood in the tab itself for an afternoon and
-              crowded the shelf out): the dais, the fight's move console, and the spend in the
-              footer. What a hire is — raw, unevolved, one act behind — is read off the sheet
-              itself: a level pip and no veteran marks. */}
+          {/* The hire on the draft's stage (HeroStageOverlay), off its card (2026-09-16, per user
+              direction — it stood in the tab itself for an afternoon and crowded the shelf out).
+              What a hire is — raw, unevolved, one act behind — is read off the sheet itself: a
+              level pip and no veteran marks. */}
           {previewOffer &&
             previewEntry &&
             (() => {
               const hero = heroes[previewOffer.heroId];
               const affordable = run.gold >= previewOffer.cost;
-              const caster = healCasterForEntry(hero, previewEntry);
-              const close = () => setPreviewOfferId(null);
               return (
-                <div className="detail-overlay is-sheet" onClick={close}>
-                  <div
-                    className="detail-panel is-hero-sheet guild-hire-panel"
-                    style={{ '--hero-color': getTypeColor(hero.types[0]), '--pact-rgb': getTypeColorRgb(hero.types[0]) } as CSSProperties}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <StageDais>
-                      <StageFigure heroId={hero.id} heroName={hero.name} onInspect={() => setInspecting(true)}>
-                        <span className="recruit-level" aria-label={`Level ${levelOf(previewEntry)}`}>
-                          Lv {levelOf(previewEntry)}
-                        </span>
-                      </StageFigure>
-                      <div className="draft-ident">
-                        <h3 className="draft-name">{hero.name}</h3>
-                        <StageTypes types={hero.types} />
-                        <StageSheet
-                          baseStats={hero.baseStats}
-                          grants={entryStatModifiers(previewEntry, equipment, passives, entryPassiveCounts(previewEntry, equipment))}
-                          scale={statScaleFor(run)}
-                        />
-                      </div>
-                    </StageDais>
-                    <StageKit moveIds={previewEntry.unlockedMoveIds} caster={caster} onPick={setPopupMove} />
-                  </div>
-
-                  <div className="sheet-footer" onClick={(e) => e.stopPropagation()}>
-                    {!affordable ? (
-                      <div className="detail-action-note">
-                        Not enough gold — {previewOffer.cost}g needed, you have {run.gold}g.
-                      </div>
-                    ) : rosterFull ? (
-                      <div className="detail-action-note">
-                        Roster is full ({ROSTER_CAP}/{ROSTER_CAP}) — you'll choose a hero to terminate next.
-                      </div>
-                    ) : null}
-                    <button
-                      className="resolve-button sheet-close-button guild-hire-buy"
-                      disabled={!affordable}
-                      onClick={() => {
-                        handleRecruit(previewOffer);
-                        close();
-                      }}
-                    >
-                      {previewOffer.cost === 0 ? `Muster ${hero.name}` : `Recruit ${hero.name} — ${previewOffer.cost}g`}
-                    </button>
-                    <button className="secondary-button" onClick={close}>
-                      Close
-                    </button>
-                  </div>
-
-                  {inspecting && (
-                    <HeroPreviewOverlay
-                      hero={hero}
-                      entry={previewEntry}
-                      equipmentLookup={equipment}
-                      relicIds={run.relics}
-                      scale={statScaleFor(run)}
-                      unowned
-                      onClose={() => setInspecting(false)}
-                    />
-                  )}
-
-                  {popupMove && <StageMovePopup move={popupMove} caster={caster} onClose={() => setPopupMove(null)} />}
-                </div>
+                <HeroStageOverlay
+                  hero={hero}
+                  entry={previewEntry}
+                  relicIds={run.relics}
+                  scale={statScaleFor(run)}
+                  unowned
+                  note={
+                    !affordable
+                      ? `Not enough gold — ${previewOffer.cost}g needed, you have ${run.gold}g.`
+                      : rosterFull
+                        ? `Roster is full (${ROSTER_CAP}/${ROSTER_CAP}) — you'll choose a hero to terminate next.`
+                        : undefined
+                  }
+                  action={{
+                    label: previewOffer.cost === 0 ? `Muster ${hero.name}` : `Recruit ${hero.name} — ${previewOffer.cost}g`,
+                    disabled: !affordable,
+                    onConfirm: () => {
+                      handleRecruit(previewOffer);
+                      setPreviewOfferId(null);
+                    },
+                  }}
+                  onClose={() => setPreviewOfferId(null)}
+                />
               );
             })()}
 

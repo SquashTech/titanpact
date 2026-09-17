@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { rosterHeroes } from '../../data/content';
-import { equipment } from '../../data/equipment';
 import type { HeroDefinition } from '../../engine/content';
 import type { RosterEntry } from '../../run/state';
 import { createRosterEntry } from '../../run/state';
@@ -10,7 +9,8 @@ import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
-import { HeroPreviewOverlay } from './HeroPreviewOverlay';
+import { HeroStageOverlay } from './HeroStageOverlay';
+import { swallowGhostClick } from '../shared/MoveTile';
 import { levelOf } from '../../run/growth';
 import type { StatScale } from '../../run/statScale';
 
@@ -103,7 +103,7 @@ export function RosterReplaceScreen({ roster, candidate, incomingEntry, relicIds
                 ))}
               </span>
               <span className="roster-replace-note">
-                Pick who {hero.name} replaces — hold one to review its sheet. Whatever that hero wears goes with them.
+                Pick who {hero.name} replaces — hold one to look them over. Whatever that hero wears goes with them.
                 Permanent.
               </span>
             </>
@@ -124,7 +124,12 @@ export function RosterReplaceScreen({ roster, candidate, incomingEntry, relicIds
                 entry={entry}
                 selected={selectedRosterId === entry.rosterId}
                 onSelect={() => setSelectedRosterId((prev) => (prev === entry.rosterId ? null : entry.rosterId))}
-                onPreview={() => setPreviewEntry({ hero: rosterHero, entry })}
+                // swallowGhostClick: the hold's release lands on the overlay that just opened, and
+                // the synthesized click would reach this screen's backdrop and read as Cancel.
+                onPreview={() => {
+                  swallowGhostClick();
+                  setPreviewEntry({ hero: rosterHero, entry });
+                }}
               />
             );
           })}
@@ -140,16 +145,30 @@ export function RosterReplaceScreen({ roster, candidate, incomingEntry, relicIds
         </div>
       </div>
 
-      {previewEntry && (
-        <HeroPreviewOverlay
-          hero={previewEntry.hero}
-          entry={previewEntry.entry}
-          equipmentLookup={equipment}
-          relicIds={relicIds}
-          scale={scale}
-          onClose={() => setPreviewEntry(null)}
-        />
-      )}
+      {/* The held hero on the stage (HeroStageOverlay), its slab the same mark the card's CTA
+          makes — select, never terminate, so the two-button row below stays the one commit. */}
+      {previewEntry &&
+        (() => {
+          const marked = selectedRosterId === previewEntry.entry.rosterId;
+          const { hero: heldHero, entry } = previewEntry;
+          return (
+            <HeroStageOverlay
+              hero={heldHero}
+              entry={entry}
+              relicIds={relicIds}
+              scale={scale}
+              note={marked ? `${heldHero.name} is marked — ${hero.name} takes this seat.` : undefined}
+              action={{
+                label: marked ? `Spare ${heldHero.name}` : `Terminate ${heldHero.name}`,
+                onConfirm: () => {
+                  setSelectedRosterId(marked ? null : entry.rosterId);
+                  setPreviewEntry(null);
+                },
+              }}
+              onClose={() => setPreviewEntry(null)}
+            />
+          );
+        })()}
     </div>
   );
 }
