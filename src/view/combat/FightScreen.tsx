@@ -31,7 +31,7 @@ import { applyForcedReplacement, replacementCandidates } from '../../engine/comb
 import { consumableRefusal, useConsumable, type ConsumableKind } from '../../engine/combat/consumables';
 import { CONSUMABLE_KINDS, CONSUMABLE_NAMES, type ConsumablePurse } from '../../run/consumables';
 import { BagPanel, type BagTarget } from './BagPanel';
-import { TurnOrderRibbon, type RibbonEntry } from './TurnOrderRibbon';
+import { orderMarksFor, type OrderMark, type OrderSource } from './orderMarks';
 import { previewOrder } from '../../engine/combat/priority';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { playSfx } from '../../audio/sfx';
@@ -645,7 +645,7 @@ export function FightScreen({
   const [resolving, setResolving] = useState(true);
   const [beat, setBeat] = useState<Beat | null>(null);
   /**
-   * The round being played back, for the order ribbon: the resolve order the engine settled
+   * The round being played back, for the order marks: the resolve order the engine settled
    * (RoundOrdered), the combatants whose turn has begun so far in beat order, and whether the
    * round's actions are all behind us. Null outside a round's playback — the intro, and the command phase.
    */
@@ -792,7 +792,7 @@ export function FightScreen({
   // The round's resolve order as it stands: the player's declared actions at their real bracket,
   // everyone else at 0 (engine/combat/priority.ts previewOrder). Re-derived every render, so a
   // priority move or a Speed change moves its hero the moment it is committed.
-  const orderPreview: { entries: RibbonEntry[]; reversedSpeed: boolean } = (() => {
+  const orderPreview: { entries: OrderSource[]; reversedSpeed: boolean } = (() => {
     const declared: Action[] = playerActiveAlive.flatMap((id): Action[] => {
       const p = pending[id];
       if (!isPendingComplete(p)) return [];
@@ -800,32 +800,19 @@ export function FightScreen({
       if (p!.kind === 'rest') return [{ kind: 'rest', combatantId: id }];
       return [{ kind: 'move', combatantId: id, moveId: p!.moveId!, declaredTarget: p!.declaredTarget }];
     });
-    const preview = previewOrder(combat, allCombatants, [...enemyActiveAlive, ...playerActiveAlive], declared, moves, fieldEffects, passives);
-    return {
-      reversedSpeed: preview.reversedSpeed,
-      entries: preview.entries.map((entry) => ({
-        ...entry,
-        hero: allCombatants[combat.combatants[entry.combatantId].heroId],
-        combatant: combat.combatants[entry.combatantId],
-        ally: combat.combatants[entry.combatantId].side === PLAYER_SIDE,
-      })),
-    };
+    return previewOrder(combat, allCombatants, [...enemyActiveAlive, ...playerActiveAlive], declared, moves, fieldEffects, passives);
   })();
 
-  // The same ribbon during playback, off the engine's settled order: the last combatant whose
+  // The same marks during playback, off the engine's settled order: the last combatant whose
   // turn has begun is the current one, everything before it is done, and the round's end retires them all.
-  const playbackEntries: RibbonEntry[] = (() => {
+  const playbackEntries: OrderSource[] = (() => {
     if (!playbackOrder) return [];
     const { order, begun, ended } = playbackOrder;
     const currentIndex = ended ? order.length : begun.length > 0 ? order.findIndex((o) => o.combatantId === begun[begun.length - 1]) : -1;
     return order.map((entry, i) => {
-      const combatant = combat.combatants[entry.combatantId];
       const prev = order[i - 1];
       return {
         combatantId: entry.combatantId,
-        hero: allCombatants[combatant.heroId],
-        combatant,
-        ally: combatant.side === PLAYER_SIDE,
         priority: entry.priority,
         speed: entry.speed,
         tiedWithPrevious: prev !== undefined && prev.priority === entry.priority && prev.speed === entry.speed,
@@ -833,6 +820,16 @@ export function FightScreen({
       };
     });
   })();
+
+  // Worn on each active card (CombatantCard `order`): the preview while commanding, the settled
+  // order walked beat by beat while the round plays; nothing during the intro or once it is won.
+  const orderMarks: Record<string, OrderMark> = winner
+    ? {}
+    : resolving
+      ? playbackOrder
+        ? orderMarksFor(playbackEntries, playbackOrder.reversedSpeed)
+        : {}
+      : orderMarksFor(orderPreview.entries, orderPreview.reversedSpeed);
 
   // The console is lit in the commanding hero's domain color, from under that hero's side of the
   // field; gold and centred while a round resolves (nobody is commanding).
@@ -1139,7 +1136,7 @@ export function FightScreen({
     let next = displayState.current!;
     for (const event of revealed.events) next = applyEventToState(next, event);
     displayState.current = next;
-    // Walk the ribbon: a turn begins on TurnStarted, on a Daze block (no TurnStarted precedes it)
+    // Walk the order: a turn begins on TurnStarted, on a Daze block (no TurnStarted precedes it)
     // and on a voluntary switch (the outgoing hero is the actor). A skipped action — its owner
     // fainted first, or a switch lock-in refused — emits nothing and is passed over when the next begins.
     setPlaybackOrder((prev) => {
@@ -1246,6 +1243,7 @@ export function FightScreen({
           statCtx={statCtx}
           striking={beat?.strikeCombatantId === id}
           fx={figureFx[id]}
+          order={orderMarks[id] ?? null}
         />
       );
     }
@@ -1404,14 +1402,6 @@ export function FightScreen({
           </button>
         )}
 
-        {/* The resolve order, along the top of the screen over the enemy band: the preview while
-            commanding, the engine's settled order walked beat by beat while the round plays. */}
-        {!winner &&
-          (resolving ? (
-            <TurnOrderRibbon entries={playbackEntries} reversedSpeed={playbackOrder?.reversedSpeed ?? false} />
-          ) : (
-            <TurnOrderRibbon entries={orderPreview.entries} reversedSpeed={orderPreview.reversedSpeed} />
-          ))}
       </div>
 
       <div className="action-area" style={consoleStyle}>

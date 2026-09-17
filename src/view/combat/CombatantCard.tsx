@@ -14,6 +14,7 @@ import { useLongPress } from '../shared/MoveTile';
 import { StatusDetailOverlay } from './StatusDetailOverlay';
 import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { TypeFx } from './TypeFx';
+import { bracketPip, type OrderMark } from './orderMarks';
 
 export interface Popup {
   key: number;
@@ -129,6 +130,8 @@ interface Props {
   statCtx?: StatContext;
   /** The roster entry's level (run/growth.ts levelOf), on the nameplate for both sides so the gap reads at a glance. */
   level?: number;
+  /** This combatant's place in the round's resolve order (orderMarks.ts), worn at the figure's other shoulder. */
+  order?: OrderMark | null;
 }
 
 /** Icon + bare number (magnitude, falling back to duration). A ~500ms hold opens StatusDetailOverlay; a tap only stops propagation. */
@@ -237,6 +240,7 @@ export function CombatantCard({
   striking,
   fx,
   level,
+  order,
 }: Props) {
   const [inspectingStatus, setInspectingStatus] = useState<string | null>(null);
   const hitClass = popup ? POPUP_HIT_CLASS[popup.className] : undefined;
@@ -303,6 +307,23 @@ export function CombatantCard({
         </div>
       )}
       {combatant.fainted && <span className="fainted-tag">KO</span>}
+      {/* The resolve order, at the shoulder the type chips leave free — the KO tag takes it when the figure falls. */}
+      {order && !combatant.fainted && !compact && (
+        <span
+          className={[
+            'order-mark',
+            order.tied ? 'is-tie' : '',
+            order.effect ? `is-${order.effect}` : '',
+            order.phase ? `is-${order.phase}` : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          aria-label={`Acts ${order.rank}${['st', 'nd', 'rd'][order.rank - 1] ?? 'th'}${order.tied ? ', tied' : ''}`}
+        >
+          <span className="order-mark-rank">{order.rank}</span>
+          {bracketPip(order.priority) !== null && <span className="order-mark-pip">{bracketPip(order.priority)}</span>}
+        </span>
+      )}
       {popup && (
         <div key={popup.key} className={`dmg-popup ${popup.className}`}>
           {popup.glyph && <StatusGlyph statusId={popup.glyph} className="dmg-popup-glyph" />}

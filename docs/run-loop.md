@@ -569,27 +569,28 @@ off its centre; the Menu key they had crowded out moved to the sky's top-right c
 (`.field-menu`), a pause key's place, and the row had its seat back. Both leave the field
 while a round plays.
 
-**The resolve order is shown** (`TurnOrderRibbon`, 2026-09-17, per user direction): a plaque
-along the very top of the screen, over the enemy status bands (it began under the ally bands and
-moved up the same day, per user direction; the Pact warning took the band it left), reading left
-to right — the Speed
-glyph, then the four active portraits in the order the round would resolve, a chevron for
-"then" and `=` for a tie the RNG breaks, an ally's ring solid and an enemy's dotted. It is
-`previewOrder` (`engine/combat/priority.ts`): the same keys `orderActions` sorts on, no RNG
-spun. The player's declared actions carry their real bracket — a priority move, a switch (`⇄`)
-or a Rest (`☾`) moves its portrait and wears the bracket as a pip; a rolled bracket shows
-`?` at 0 — and the enemy's are unknown until the round plays, so they sit at bracket 0.
-**During playback the ribbon is the real order** (same day): `resolveRound` emits
-`RoundOrdered` — every action's settled bracket and Speed, right after `RoundStarted` — and the
-ribbon walks it beat by beat: the last combatant whose turn began (`TurnStarted`, a Daze block,
-a voluntary switch) stands forward in its type light, the ones before it fall back, a fainted one
-is greyed, and the round's end retires them all. **A bracket that changed the order is lit**
-(`bracketEffect`, `engine/combat/priority.ts`): a cut ahead of someone Speed would have sent
-first takes a gold ring and a doubled chevron `»` in front of it, a hold behind someone it would
-have sent later a cold one; a +1 on the hero Speed already favoured, which moved nothing, is a
-pip and no more. "Favoured" is read on the field's own axis — `previewOrder` and `RoundOrdered`
-both carry `reversedSpeed`, so under Stasis Bubble the slower hero is the one a cut goes past.
-Both readouts are the one component (`TurnOrderRibbon`).
+**The resolve order is shown ON the figures** (`orderMarks.ts`, `CombatantCard` `order`,
+2026-09-17, per user direction): a numbered coin at the shoulder the type chips leave free —
+the way Into the Breach numbers the Vek — reading 1 to 4 across the four active cards. It was
+first a ribbon of portraits under the ally status bands, then along the very top of the screen,
+and both read as a plaque bolted onto a scene; a number on the thing it is about costs no band.
+**Two "1"s IS a tie**: tied entries share the first of their ranks and the coin goes gold, since
+the RNG decides and the mark says so rather than picking one. The order is `previewOrder`
+(`engine/combat/priority.ts`): the same keys `orderActions` sorts on, no RNG spun. The
+player's declared actions carry their real bracket — a priority move, a switch (`⇄`) or a Rest
+(`☾`) moves its number and hangs the bracket as a pip off the coin; a rolled bracket shows `?`
+at 0 — and the enemy's are unknown until the round plays, so they sit at bracket 0.
+**During playback the marks are the real order** (same day): `resolveRound` emits
+`RoundOrdered` — every action's settled bracket and Speed, right after `RoundStarted` — and
+the marks walk it beat by beat: the last combatant whose turn began (`TurnStarted`, a Daze
+block, a voluntary switch) stands forward in its own type light, the ones before it fall back,
+and the round's end retires them all; a KO'd figure's coin gives way to the KO tag. **A bracket
+that changed the order is lit** (`bracketEffect`, `engine/combat/priority.ts`): a cut ahead of
+someone Speed would have sent first takes a gold coin, lifted; a hold behind someone it would
+have sent later a cold one, sunk; a +1 on the hero Speed already favoured, which moved nothing,
+is a pip and no more. "Favoured" is read on the field's own axis — `previewOrder` and
+`RoundOrdered` both carry `reversedSpeed`, so under Stasis Bubble the slower hero is the one
+a cut goes past.
 
 **Open, deliberately:** the hold cap, the price and the drop odds are all playtest numbers; and
 whether a potion should be drinkable during a forced-replacement beat after a KO — the moment a

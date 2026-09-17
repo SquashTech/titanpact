@@ -2216,178 +2216,89 @@ textarea,
   display: none;
 }
 
-/* The resolve order (2026-09-17, per user direction), read left to right along the very top
-   of the screen — the 28px band over the enemy status row that the battlefield already
-   reserves for a wrapped status line, so it costs the field nothing (it stood in the matching
-   band under the ally row first, and moved up the same day; the Pact warning took the band it
-   left). The Speed glyph leads it, since Speed is what it sorts on until a bracket says
-   otherwise; a chevron between sockets is "then", an equals sign is a tie the RNG breaks.
-   24px portraits: the one clean downscale of the 48px sprite. */
-.turn-order {
+/* The resolve order (2026-09-17, per user direction), worn on the figure: a numbered coin at
+   the shoulder the type chips leave free, the way Into the Breach numbers the Vek. It began as
+   a ribbon of portraits — under the ally row, then along the top of the screen — and both read
+   as a plaque bolted onto a scene; a number on the thing it is about costs no band at all. Two
+   "1"s IS a tie (orderMarks.ts ranks them alike), the ring going gold-dashed for it. A bracket
+   hangs its pip off the coin, and where it actually moved the entry (priority.ts bracketEffect)
+   the coin is lit for it: gold and lifted for a cut, cold and sunk for a hold. During playback
+   the coin walks the beats — done falls back, current stands forward in the figure's own type
+   light. Mirrors .combatant-types on the enemy side, measured off the stage. */
+.order-mark {
   position: absolute;
-  /* 5px, not 1: the bracket pip overhangs the socket by 5 and the screen edge would clip it. */
-  top: 5px;
-  left: 50%;
-  transform: translateX(-50%);
   z-index: 4;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  height: 26px;
-  padding: 0 6px 0 6px;
-  border: 1px solid rgba(160, 178, 214, 0.18);
-  border-radius: var(--radius-pill);
-  background: rgba(6, 8, 12, 0.62);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
-  pointer-events: none;
-}
-
-.turn-order-lead {
-  width: 10px;
-  height: 10px;
-  margin-right: 3px;
-  color: #e8d16a;
-  opacity: 0.85;
-}
-
-.turn-order-step {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.turn-order-sep {
-  width: 9px;
-  text-align: center;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1;
-  color: rgba(160, 178, 214, 0.5);
-}
-
-.turn-order-sep.is-tie {
-  color: #e8d16a;
-}
-
-/* The chevron ahead of a cut doubles and takes the cut's gold: "in front of". */
-.turn-order-sep.is-cut {
-  color: rgba(255, 217, 140, 0.95);
-}
-
-.turn-order-socket {
-  position: relative;
+  top: 3px;
+  right: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: var(--radius-sm);
-  background: rgba(10, 13, 18, 0.8);
-  box-shadow: inset 0 0 0 1px rgba(var(--socket-rgb), 0.55);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 38%, rgba(30, 36, 48, 0.95), rgba(8, 10, 14, 0.95) 76%);
+  box-shadow: inset 0 0 0 1px rgba(160, 178, 214, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 1px 3px rgba(0, 0, 0, 0.55);
+  color: rgba(214, 222, 236, 0.9);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
   transition: transform var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out),
-    box-shadow var(--dur-mid) var(--ease-out), filter var(--dur-mid) var(--ease-out);
+    box-shadow var(--dur-mid) var(--ease-out), color var(--dur-mid) var(--ease-out);
 }
 
-/* The enemy side is told by the ring alone: a solid ring on an ally, a dotted one on an enemy. */
-.turn-order-socket.is-enemy {
-  box-shadow: none;
-  outline: 1px dotted rgba(var(--socket-rgb), 0.7);
-  outline-offset: -1px;
+.team-row.enemy .order-mark {
+  top: calc(100% - var(--figure-stage-h) + 3px);
 }
 
-/* A tie is said by the "=" between them; the sockets themselves only take the gold. */
-.turn-order-socket.is-tied {
-  box-shadow: inset 0 0 0 1px rgba(232, 209, 106, 0.7);
+.order-mark.is-tie {
+  box-shadow: inset 0 0 0 1px rgba(232, 209, 106, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 1px 3px rgba(0, 0, 0, 0.55);
+  color: #e8d16a;
 }
 
-.turn-order-socket.is-enemy.is-tied {
-  outline-color: rgba(232, 209, 106, 0.8);
-}
-
-/* A bracket that MOVED the entry (TurnOrderRibbon bracketEffect): a cut ahead of someone faster
-   is lit gold from within and lifted a hair, a hold behind someone slower sinks in a cold rim.
-   A pip alone says "this has a bracket"; the light says "and it changed the order". */
-.turn-order-socket.is-cut {
-  box-shadow: inset 0 0 0 1px rgba(255, 217, 140, 0.9), 0 0 9px -1px rgba(255, 200, 90, 0.75);
+.order-mark.is-cut {
+  color: #ffd98c;
+  box-shadow: inset 0 0 0 1px rgba(255, 217, 140, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 9px -1px rgba(255, 200, 90, 0.8),
+    0 1px 3px rgba(0, 0, 0, 0.55);
   transform: translateY(-1px);
 }
 
-.turn-order-socket.is-enemy.is-cut {
-  outline-color: rgba(255, 217, 140, 0.95);
-  box-shadow: 0 0 9px -1px rgba(255, 200, 90, 0.75);
-}
-
-.turn-order-socket.is-cut .turn-order-pip {
-  color: #ffd98c;
-  box-shadow: 0 0 0 1.5px rgba(255, 200, 90, 0.7);
-}
-
-.turn-order-socket.is-held {
-  box-shadow: inset 0 0 0 1px rgba(150, 172, 214, 0.55);
+.order-mark.is-held {
+  color: rgba(196, 212, 240, 0.85);
+  box-shadow: inset 0 0 0 1px rgba(150, 172, 214, 0.6), inset 0 2px 3px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.55);
   transform: translateY(1px);
 }
 
-.turn-order-socket.is-enemy.is-held {
-  outline-color: rgba(150, 172, 214, 0.65);
-}
-
-.turn-order-socket.is-held .turn-order-pip {
-  color: rgba(196, 212, 240, 0.95);
-}
-
-/* Playback (TurnOrderRibbon `phase`): the ribbon walks with the beats. A done entry falls back,
-   the current one stands forward in its own type light, the rest wait. A fainted entry is
-   greyed whatever its phase — it will not act, or already did. */
-.turn-order-socket.is-done {
-  opacity: 0.4;
-  filter: saturate(0.5);
-}
-
-.turn-order-step.is-done .turn-order-sep {
-  opacity: 0.4;
-}
-
-.turn-order-socket.is-current {
-  transform: scale(1.18) translateY(-1px);
-  box-shadow: inset 0 0 0 1px rgba(var(--socket-rgb), 0.95), 0 0 12px -1px rgba(var(--socket-rgb), 0.85), 0 0 0 2px rgba(6, 8, 12, 0.9);
-  z-index: 1;
-}
-
-.turn-order-socket.is-enemy.is-current {
-  outline-style: solid;
-  outline-color: rgba(var(--socket-rgb), 0.95);
-}
-
-.turn-order-socket.is-fainted {
-  opacity: 0.35;
-  filter: grayscale(1);
-}
-
-/* Clipped on the image, not the socket, so the bracket pip can sit past the corner. */
-.turn-order-portrait {
-  width: 24px;
-  height: 24px;
-  border-radius: var(--radius-sm);
-  image-rendering: pixelated;
-}
-
-/* The declared bracket — "+1", "−1", the switch's arrows, Rest's moon, or "?" for a roll. */
-.turn-order-pip {
+/* The bracket, hung off the coin's lower edge so the number stays the thing read first. */
+.order-mark-pip {
   position: absolute;
-  top: -5px;
-  right: -7px;
-  min-width: 13px;
-  height: 13px;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 14px;
+  height: 12px;
   padding: 0 3px;
   border-radius: var(--radius-pill);
   background: #20252f;
   box-shadow: 0 0 0 1.5px #12151c;
   font-size: 8px;
   font-weight: 800;
-  line-height: 13px;
+  line-height: 12px;
   text-align: center;
-  color: #ffd98c;
-  font-variant-numeric: tabular-nums;
+  color: inherit;
+  white-space: nowrap;
+}
+
+.order-mark.is-done {
+  opacity: 0.35;
+}
+
+.order-mark.is-current {
+  transform: scale(1.25);
+  color: #fff;
+  box-shadow: inset 0 0 0 1px rgba(var(--type-rgb), 0.95), inset 0 0 8px -2px rgba(var(--type-rgb), 0.7), 0 0 12px -1px rgba(var(--type-rgb), 0.85),
+    0 1px 3px rgba(0, 0, 0, 0.55);
 }
 
 /* The MP Potion row under the out-of-mana Rest row: the same row shape as a move, lit in
@@ -24844,11 +24755,10 @@ textarea,
    stated in rounds, easy to ignore if the player is winning. Due: red, pulsing,
    and reporting a percentage that goes up every round. The player should learn
    the rule once, from watching it, and never need it explained again. */
-/* Under the ally status row, clear of the console's rim — the top band is the order ribbon's. */
 .pact-warning {
   position: absolute;
   z-index: 4;
-  bottom: 8px;
+  top: 2px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
