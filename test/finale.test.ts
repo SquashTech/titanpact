@@ -16,6 +16,8 @@ import { FINALE_LOCATION_ID, ITINERARY_POOL_IDS, locations } from '../src/data/l
 import { typeChart } from '../src/data/typechart';
 import { resolveTypeMult } from '../src/engine/damage/typeMult';
 import { generateFinaleEncounter } from '../src/run/enemyGen';
+import { titanspawn } from '../src/data/titanspawn';
+import { MASTERY_CAP } from '../src/run/mastery';
 import { generateItinerary, unbrokenSealLocationId } from '../src/run/locations';
 import { generateMap } from '../src/run/map';
 import { recordBrokenSeal } from '../src/run/runProgress';
@@ -43,8 +45,8 @@ function statTotal(id: string): number {
   return statBudgetTotal(enemies[id].baseStats, COMBAT_STATS);
 }
 
-function seal(actNumber: number, championId: string, level = 1, statGrants: Partial<Record<StatKey, number>> = {}, growthStatGrants: Partial<Record<StatKey, number>> = {}): BrokenSeal {
-  return { actNumber, locationId: 'wildsEdge', championId, level, statGrants, growthStatGrants };
+function seal(actNumber: number, championId: string, level = 1, statGrants: Partial<Record<StatKey, number>> = {}, growthStatGrants: Partial<Record<StatKey, number>> = {}, locationId = 'wildsEdge'): BrokenSeal {
+  return { actNumber, locationId, championId, level, statGrants, growthStatGrants };
 }
 
 // --- The Endbringer ---
@@ -112,7 +114,28 @@ test('unsealed: the finale pool holds the six unsealed forms and the Titan, and 
 
 // --- The encounter ---
 
-test('finale: the seals field in the order they were broken, and the Titan is last', () => {
+test('finale: the Herald leads, and behind it one Late spawn per broken seal from that seal\u2019s Location, in seal order', () => {
+  const seals = [seal(3, 'kraken', 1, {}, {}, 'stormCoast'), seal(1, 'manticore', 1, {}, {}, 'wildsEdge'), seal(2, 'yugzulach', 1, {}, {}, 'necropolis')];
+  const escorts = { spawnTypesFor: (locationId: string) => locations[locationId]?.spawnTypes ?? null, heraldLeads: true };
+  const { run, squad } = generateFinaleEncounter(seals, ENDBRINGER_ID, finaleEnemies, 1, { level: 30, mastery: 10 }, escorts);
+
+  assert.strictEqual(squad.activeIds[0], ENDBRINGER_ID, 'the Herald is on the field from the first round');
+  const spawnIds = [squad.activeIds[1]!, ...squad.benchIds];
+  assert.strictEqual(spawnIds.length, 3, 'one body per seal');
+  const tierOf = (rosterId: string) => run.roster.find((r) => r.rosterId === rosterId)!;
+  for (const [i, rosterId] of spawnIds.entries()) {
+    const entry = tierOf(rosterId);
+    const definition = titanspawn[entry.heroId];
+    assert.ok(definition && definition.tier === 'late', rosterId + ' is not a Late spawn');
+    assert.strictEqual(entry.mastery, MASTERY_CAP, rosterId + ' arrives short of every pip');
+    const sealLocation = [seals[1], seals[2], seals[0]][i].locationId;
+    const allowed = locations[sealLocation].spawnTypes;
+    if (allowed) assert.ok(allowed.includes(definition.types[0]), rosterId + ' is not of ' + sealLocation);
+  }
+  assert.ok(!spawnIds.some((id) => id.startsWith('unsealed') || id in finaleEnemies), 'no unsealed Guardian walks');
+});
+
+test('finale: without escorts the generator still fields the seals in the order they were broken, and the Titan last', () => {
   const seals = [
     seal(3, 'kraken'),
     seal(1, 'manticore'),

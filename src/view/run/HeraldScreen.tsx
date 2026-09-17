@@ -24,8 +24,8 @@ type HeraldPhase = 'far' | 'walk' | 'here';
  * The Threshold's first fight, announced (docs/lore.md §7): the Herald is the Titan's hand
  * and its voice, and it walks ahead of the thing it announces. It is drawn once on the
  * Titan's own hide — the arena the fight is about to be on — at the size the fight cannot
- * afford it, coming out of the distance toward the player. The five unsealed wardens walk
- * ahead of it in the fight itself; this beat is the one thing that comes last.
+ * afford it, coming out of the distance toward the player. In the fight it stands at the
+ * front, and what the five lands turned walks behind it; this beat is the thing that comes first.
  */
 export function HeraldScreen({ onContinue }: Props) {
   const [phase, setPhase] = useState<HeraldPhase>('far');
@@ -67,8 +67,8 @@ export function HeraldScreen({ onContinue }: Props) {
         <div className="herald-eyebrow">The Titan's Herald</div>
         <h2 className="herald-title">{herald?.name ?? 'Endbringer'}</h2>
         <p className="herald-line">
-          The Titan's hand and its voice. The eye on its banner is not its own. The five wardens walk ahead of
-          it, unsealed — it comes last.
+          The Titan's hand and its voice. The eye on its banner is not its own. It walks at the front, and
+          what the five lands turned walks behind it.
         </p>
         <button
           type="button"

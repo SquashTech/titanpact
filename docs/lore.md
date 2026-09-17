@@ -165,8 +165,10 @@ The Herald is the Titan's hand and its voice: it walks ahead of the thing it ann
 carries the thing's eye on its banner (`titanspawn-overhaul.md` §2 "Guardian art" — the
 standard-bearer, the five broken seals threaded on its pole). It is mono-**Ancient**: it
 resists everything and is super-effective against nothing, the correct silhouette for the
-one piece of the Titan that stands where it can be struck. It is the last combatant to reach
-the field, and it reaches it because the five in front of it are gone.
+one piece of the Titan that stands where it can be struck. It stands at the front of its fight
+from the first round, and what walks behind it is what the five lands turned — one Late
+Titanspawn a seal (2026-09-17; until then the five wardens returned unsealed ahead of it and it
+came last).
 
 The Herald is the part of the Titan that *walks*. **The Eyes are the part that *looks***
 (`titan-eyes.md`, 2026-09-16): with the Herald down the Titan turns to see what did it, and

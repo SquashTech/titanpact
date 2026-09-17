@@ -39,7 +39,8 @@ it is. It does not stop it looking.
 So the finale is three beats, and the third is the one the title screen has been showing all
 along:
 
-1. The five broken seals return unsealed, and **the Herald** walks (the existing finale fight).
+1. **The Herald** walks, at the front of what the five lands turned — one Late Titanspawn per
+   broken seal (the finale fight; it fielded the five unsealed Guardians until 2026-09-17).
 2. The Herald falls, and the Titan **turns to look**. Its two Eyes open on the Threshold — the
    `TitanWakeScreen` beat played at the scale of the sky, both eyes this time.
 3. **The Eyes close.** Putting them out is the last thing the binding asks: *you put it on the
@@ -65,8 +66,8 @@ three cinematic beats, all presentation, none of them a decision):**
 - **The Herald walks** (`HeraldScreen`), between the squad's confirm and the finale fight: the
   Endbringer on the Titan's hide (`TitanBody`, the arena the fight is about to be on) growing out
   of the distance at the size the fight cannot afford it, with `entrance.dread` as it comes, then a
-  caption and a button into the fight. The five unsealed wardens walk ahead of it in the fight
-  itself; the beat is the thing that comes last.
+  caption and a button into the fight. In the fight it stands at the front with the seals' Late
+  spawn behind it; the beat is the thing that comes first.
 - **The Titan is bound** (`TitanBoundScreen`), the moment the Eyes close, AHEAD of the level
   report and everything the fight pays (`FightScreen`'s `cinematicWin` skips the result overlay on
   that one win, so the collapse lands on the KO rather than on a spoils panel). Two halves: the

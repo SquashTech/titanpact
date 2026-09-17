@@ -27,7 +27,7 @@ function actLabel(actNumber: number): string {
 export function ActIntroScreen({ run, location, onEnter }: Props) {
   // What spawns here — the counter-pick the player is choosing against (docs/titanspawn-overhaul.md §3).
   const domains = locationDomains(location);
-  // The finale is not a sixth act but what the five unsealed, so it takes neither the
+  // The finale is not a sixth act but what the five seals unsealed, so it takes neither the
   // numeral nor a denominator (docs/run-loop.md §4).
   const isFinale = run.actNumber > SEAL_ACTS;
 

@@ -602,7 +602,9 @@ what's still unimplemented:
   rows back quietly closing an encounter is a rule held in the head rather than seen. The
   lead-on markers came off that row with it, being derived. **5 acts of that shape,
   then a finale act** (2026-09-05, `docs/lore.md` + `run-loop.md` §4; **the finale corridor is
-  Vigil → the Herald → the Titan's Eyes since 2026-09-16, `docs/titan-eyes.md`** — two
+  Vigil → the Herald → the Titan's Eyes since 2026-09-16, `docs/titan-eyes.md`** — the Herald
+  leading one Late Titanspawn per broken seal since 2026-09-17, the unsealed Guardians retired
+  from the field (`run-loop.md` "The final battle") — two
   mono-Ancient Eyes whose Gaze marks a hero Beheld and whose Regard can only be aimed at one,
   the wide pair entering from a `reserve` bench once both are down, a free mend between the two
   fights, and a champion's hall after; **framed by three cinematic beats since 2026-09-17** —

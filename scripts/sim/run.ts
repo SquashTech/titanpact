@@ -490,10 +490,12 @@ function resolveEncounterNode(
     encounter = generateTitanEncounter(EYE_IDS, titanEyes, encounterSeedFor(run.map!, node.id), encounterScaling('titan', TOTAL_ACTS));
     squadSize = ROSTER_CAP;
   } else if (mapNodeType === 'finale') {
-    // SIM_FINALE=spawn | spawnLead: the Herald's company as Late Titanspawn (enemyGen.ts FinaleEscortOptions), an A/B.
-    const finaleEscorts = process.env.SIM_FINALE
-      ? { spawnTypesFor: (locationId: string) => locations[locationId]?.spawnTypes ?? null, heraldLeads: process.env.SIM_FINALE === 'spawnLead' }
-      : undefined;
+    // The shipped finale (App.tsx): the Herald leading Late spawn. SIM_FINALE=guardians replays the
+    // unsealed-Guardian shape it replaced, SIM_FINALE=spawnLast the spawn with the Herald entering last.
+    const finaleEscorts =
+      process.env.SIM_FINALE === 'guardians'
+        ? undefined
+        : { spawnTypesFor: (locationId: string) => locations[locationId]?.spawnTypes ?? null, heraldLeads: process.env.SIM_FINALE !== 'spawnLast' };
     encounter = generateFinaleEncounter(
       run.brokenSeals,
       location.guardianFinalEnemyId ?? ENDBRINGER_ID,

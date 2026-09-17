@@ -1133,19 +1133,30 @@ bench its dead weight, and this one drags all six onto the field. It is the sing
 where breadth is priced in gameplay rather than in `levelUpCost`, and it lands where that
 reads as drama instead of punishment.
 
-**The enemy is the five you broke, then the thing they were holding shut.**
+**The enemy is the Herald, and behind it what the five lands turned** (2026-09-17, per user
+direction — `generateFinaleEncounter` with `FinaleEscortOptions`, `App.tsx`):
 
 | Bench position | Who |
 |---|---|
-| active, active | The Act 1 and Act 2 champions |
-| bench 0-2 | The Act 3, 4 and 5 champions, in that order |
-| bench 3 | **Endbringer** — mono-Ancient, the last combatant to reach the field |
+| active | **The Herald** — mono-Ancient, on the field from the first round |
+| active | The Act 1 seal's Late Titanspawn |
+| bench 0-3 | The Act 2, 3, 4 and 5 seals' Late spawn, in seal order |
 
-Order is not decoration: forced replacement pulls from the bench in order, so the fight
-**escalates across itself** and the Endbringer arrives only once the five in front of it
-are gone.
+One Late spawn per broken seal, drawn from that seal's Location lines (Wild's Edge draws from
+every line), at the finale's level and every Mastery pip — the fully-turned mortals of each land,
+which is what a Titanspawn is (`titanspawn-overhaul.md`). The Herald leads because it is the
+standard-bearer, and because a boss on the field from round one with its company behind it is a
+fight where a boss entering last behind five sacks was a queue. Measured before the flip: the
+unsealed Guardians hit for 10–30 a round and the Herald fight was 100% won with 90% HP left; with
+the spawn it is 99% for the skilled pilot and **100 → 88%, 42% HP left** for the chart pilot. The
+Herald's own damage is still 60–70 a round because its kit is Ancient filler (Runic Blast 60 BP at
+14 mana) — the Ancient slate is the lever left.
 
-**The five arrive unsealed.** They field as their base type alone — Manticore mono-Beast,
+> **Superseded, kept for the derivation it left behind.** The finale fielded the five unsealed
+> Guardians ahead of the Herald from 2026-09-05 to 2026-09-17; `finaleEnemies` still carries the
+> unsealed forms and `generateFinaleEncounter` without escorts still builds that shape.
+
+**The five arrived unsealed** (the shape above replaced). They field as their base type alone — Manticore mono-Beast,
 Yugzulach mono-Shadow, Kraken mono-Water, Elder Bough mono-Nature, Dragon mono-Fire,
 Skeleton King mono-Spirit — because the Ancient half *was* the seal and the player already
 took it (`lore.md` §6). This is balance and fiction agreeing: six X/Ancient bodies at ~700

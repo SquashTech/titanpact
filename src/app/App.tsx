@@ -589,14 +589,15 @@ export function App() {
     const node = playerRun.map!.nodes[nodeId];
     const location = locationForAct(playerRun.locationIds, playerRun.actNumber);
     if (node.type === 'finale') {
-      // Nothing is rolled here: the five broken seals in the order they were broken, at the
-      // power they were beaten at, then the Endbringer (docs/lore.md §6).
+      // The Herald at the front, and behind it what the five lands turned: one Late spawn per
+      // broken seal, drawn from that seal's Location, every pip (docs/run-loop.md "The finale").
       const encounter = generateFinaleEncounter(
         playerRun.brokenSeals,
         location.guardianFinalEnemyId ?? ENDBRINGER_ID,
         finaleEnemies,
         encounterSeedFor(playerRun.map!, nodeId),
-        encounterScaling('finale', FINALE_ACT)
+        encounterScaling('finale', FINALE_ACT),
+        { spawnTypesFor: (locationId) => locations[locationId]?.spawnTypes ?? null, heraldLeads: true }
       );
       if (playerRun.roster.length <= 2) {
         handleSquadConfirmed(pickSquad(playerRun.roster, playerRun.roster.map((r) => r.rosterId), ROSTER_CAP), nodeId, 'boss', encounter);
