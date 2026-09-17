@@ -37,6 +37,7 @@ import {
   grantRelicReward,
   anvilQuote,
   anvilUpgrade,
+  enchantItem,
   reachableNodeIds,
   recordBrokenSeal,
   goldRangeFor,
@@ -47,12 +48,23 @@ import {
 import { MOVE_CAP, recordMoveOffer, grantOfferedMove, grantMove } from '../../src/run/progression';
 import { claimContract, claimContractReplacing, deriveContractOffer, isRecruitable, pickContractOffers, recruitFromGuildHall, recruitFromGuildHallReplacing, freshRosterId, buyContract } from '../../src/run/recruitment';
 import { guildHallEntry } from '../../src/run/guildRecruit';
-import { rollGuildHallOffers, sellValueFor } from '../../src/run/shop';
+import { ENCHANT_PRICE_BY_RARITY, rollGuildHallOffers, sellValueFor } from '../../src/run/shop';
 import { mentorMovePool, tutorMovePool } from '../../src/run/tutor';
 import { grantClass, rollClassOffers } from '../../src/run/classes';
 import { boonMoveCount, pickBoonOffers } from '../../src/run/boons';
 import { applyStatShift, grantEventPassive, rollRunEvent, rollEventMove, statShiftAllowed } from '../../src/run/events';
-import { pickWeightedEquipment, rarityWeightsFor, EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, type EquipmentDefinition } from '../../src/run/equipment';
+import {
+  pickWeightedEquipment,
+  rarityWeightsFor,
+  EQUIPMENT_DROP_CHANCE,
+  LOOT_SOURCE,
+  ENCHANTMENT_IDS,
+  ENCHANTMENTS,
+  equipmentIdFor,
+  parseEquipmentId,
+  type EnchantmentId,
+  type EquipmentDefinition,
+} from '../../src/run/equipment';
 import { passives } from '../../src/data/passives';
 import { getMaxHp } from '../../src/engine/state';
 import { createCombatant } from '../../src/engine/state';
@@ -155,7 +167,7 @@ export interface RunRecord {
   equipped: string[];
   /** Mastery pips landed this run, by source (run/mastery.ts). */
   pipsBySource: Record<string, number>;
-  /** The gold ledger, keyed `act:earned:<fight|purse|sell>`, `act:spent:<mend|hire|scroll|anvil|contract>`, and `act:hall` (the purse on entering the Guild Hall, with `act:hallVisits` counting it). */
+  /** The gold ledger, keyed `act:earned:<fight|purse|sell>`, `act:spent:<mend|hire|scroll|anvil|enchant|contract>`, and `act:hall` (the purse on entering the Guild Hall, with `act:hallVisits` counting it). */
   goldFlow: Record<string, number>;
   /** Heroes joining after the draft: `contract` (claimed or bought), `hire` (Guild Hall). */
   recruitsBySource: Record<string, number>;
@@ -730,9 +742,7 @@ function resolveTutor(run: RunState, rng: Rng): RunState {
 
 /**
  * The Guild Hall's Anvil: one lift a visit, the most valuable item on the strongest hero that can
- * afford it. The Enchanter is left alone — picking an element is a team-composition read this
- * policy has no model of, and buying one at random would price the service below what a player
- * gets from it.
+ * afford it.
  */
 function resolveAnvil(run: RunState): RunState {
   let next = run;
@@ -754,6 +764,33 @@ function resolveAnvil(run: RunState): RunState {
     }
   }
   return next;
+}
+
+/**
+ * The Guild Hall's Enchanter (2026-09-17): one binding a visit. An Elemental Force pays its
+ * magnitude only to a hero that casts the type, so the only element ever bought for a piece is its
+ * holder's innate primary — the one read a player makes without a team model — and the piece bound
+ * is the one where that gains most (`itemValueFor` after minus before, so a piece already bound to
+ * its holder's type is never re-bought). Left alone until the gold ledger showed the pilot walking
+ * out of Acts 4–5 with 70g it had no verb for.
+ */
+function resolveEnchanter(run: RunState): RunState {
+  let best: { rosterId: string; index: number; enchantId: EnchantmentId; gain: number } | null = null;
+  for (const entry of policy.byPower(run.roster)) {
+    const primary = heroes[entry.heroId]?.types[0];
+    const enchantId = ENCHANTMENT_IDS.find((id) => ENCHANTMENTS[id] === primary);
+    if (!enchantId) continue;
+    for (let index = 0; index < entry.equipment.length; index++) {
+      const item = equipment[entry.equipment[index]];
+      if (!item || item.enchantId === enchantId || ENCHANT_PRICE_BY_RARITY[item.rarity] > run.gold) continue;
+      const parsed = parseEquipmentId(item.id);
+      const target = equipment[equipmentIdFor(parsed.base, parsed.rarity, enchantId)];
+      if (!target) continue;
+      const gain = policy.itemValueFor(entry, target) - policy.itemValueFor(entry, item);
+      if (gain > 0 && (!best || gain > best.gain)) best = { rosterId: entry.rosterId, index, enchantId, gain };
+    }
+  }
+  return best ? enchantItem(run, { rosterId: best.rosterId, index: best.index }, best.enchantId, equipment) : run;
 }
 
 function resolveEvent(run: RunState, locationId: string, rng: Rng, record: RunRecord): RunState {
@@ -842,6 +879,7 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
   }
 
   spend('anvil', () => resolveAnvil(next));
+  spend('enchant', () => resolveEnchanter(next));
 
   // Spare gold at the last shop before a Guardian buys a contract rather than rusting.
   if (next.gold >= CONTRACT_PURCHASE_COST && next.roster.length < ROSTER_CAP) {

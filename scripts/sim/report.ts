@@ -420,7 +420,7 @@ export function formatReport(
   out.push('');
   out.push('  gold per run that entered the act — earned by source, the purse on entering the Guild Hall, spent by sink:');
   const earnedKeys = ['fight', 'purse', 'sell'];
-  const spentKeys = ['mend', 'hire', 'scroll', 'anvil', 'contract'];
+  const spentKeys = ['mend', 'hire', 'scroll', 'anvil', 'enchant', 'contract'];
   out.push(`  ${pad('act', 6)}${earnedKeys.map((k) => padStart(k, 8)).join('')}${padStart('earned', 9)}${padStart('at hall', 10)}   ${spentKeys.map((k) => padStart(k, 9)).join('')}${padStart('spent', 8)}`);
   for (let act = 1; act <= TOTAL_ACTS; act++) {
     const entered = agg.actEntered[act] || 1;

@@ -303,9 +303,12 @@ the same seed, all of it at the finale. The steps size an act's income at about 
 at the act's window tier plus one shelf item. **The Guardian then took the fat band** (same day,
 per user direction): earned 63 / 106 / 161 / 187 / 249 by act, the Hall entered with 119 / 162 /
 245 / 332 in Acts 2–5, full-clear unmoved (13.1%) and 72g unspent at the end against 32 — the
-sim's pilot lifts but never enchants, so a player who does has ~120g an act more to put somewhere
-than it did. If Act 4–5 read as rich in play, the Guardian's band and the last two steps of the
-scale are the two dials. First-pass, a playtest figure; the prices stand.
+sim's pilot lifted but never enchanted. **The pilot then learned the Enchanter** (same day,
+`resolveEnchanter`: one binding a visit, always the holder's innate primary type, on the piece
+where that gains most): enchant spend 31 / 45 / 74g in Acts 3–5, unspent at the end back to 31g,
+full-clear 13.1 → 15.8% on the same seed, the finale 65 → 72% — a Force on the act's window
+tier is worth a fight at the Eyes. If Act 4–5 read as rich in play, the Guardian's band and the
+last two steps of the scale are the two dials. First-pass, a playtest figure; the prices stand.
 
 | Node | Lane | Gold (Act 1) | Equipment drop |
 |---|---|---|---|
