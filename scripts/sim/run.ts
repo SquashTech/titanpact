@@ -217,7 +217,7 @@ function resolveCrucible(run: RunState, rng: Rng, choices: ChoiceEvent[]): RunSt
   if (!target || offered.length === 0) return run;
   const picked = pick(rng, offered);
   choices.push({ bucket: 'class', offered: offered.map((c) => c.id), picked: [picked.id], encountersWonAtChoice: run.encountersWon });
-  const replaceId = picked.grantsMoveId ? policy.replacementTarget(target, picked.grantsMoveId) : undefined;
+  const replaceId = picked.grantsMoveId ? policy.replacementTarget(target, picked.grantsMoveId, run.roster) : undefined;
   return grantClass(run, classes, target.rosterId, picked.id, replaceId ?? undefined);
 }
 
@@ -756,7 +756,7 @@ function resolveTierRoll(run: RunState, rng: Rng, poolOf: typeof mentorMovePool,
     recordMoveOfferMade(record, moveId, true);
     return grantOfferedMove(next, best.entry.rosterId, moveId);
   }
-  const replaceId = policy.replacementTarget(best.entry, moveId);
+  const replaceId = policy.replacementTarget(best.entry, moveId, run.roster);
   recordMoveOfferMade(record, moveId, replaceId !== null);
   return replaceId ? grantOfferedMove(next, best.entry.rosterId, moveId, replaceId) : next;
 }
@@ -835,7 +835,7 @@ function resolveEvent(run: RunState, locationId: string, rng: Rng, record: RunRe
     if (entry.unlockedMoveIds.includes(moveId)) return run;
     // An event's gift never spends a level-up offer (grantMove).
     if (entry.unlockedMoveIds.length < MOVE_CAP) return grantMove(run, target.rosterId, moveId);
-    const replaceId = policy.replacementTarget(entry, moveId);
+    const replaceId = policy.replacementTarget(entry, moveId, run.roster);
     return replaceId ? grantMove(run, target.rosterId, moveId, replaceId) : run;
   }
 

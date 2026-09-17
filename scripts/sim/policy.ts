@@ -37,6 +37,16 @@ import { mergeStatMods } from '../../src/run/statMods';
 import type { Rng } from './rng';
 import { levelOf } from '../../src/run/growth';
 import { woundedHp } from '../../src/run/wounds';
+import { heroes as recruitPool } from '../../src/data/heroes';
+import { allCombatants } from '../../src/data/content';
+import { typeChart } from '../../src/data/typechart';
+import { buildCombatState } from '../../src/run/buildCombatState';
+import { combatantIdFor, rosterIdOfCombatant } from '../../src/run/combatantIds';
+import { generateEncounter } from '../../src/run/enemyGen';
+import { pickSquad } from '../../src/run/squad';
+import { getMaxHp, type CombatState } from '../../src/engine/state';
+import type { AiContext } from '../../src/run/ai';
+import { slotWorth } from './pilot';
 
 /**
  * How Scrolls are aimed (docs/mastery.md §2, §8 phase 5's rotate / carry pair). `focus`
@@ -194,20 +204,78 @@ export function moveValue(moveId: string): number {
   return power + heal * 1.2 + utility - (move.manaCost ?? 0) * 0.4;
 }
 
+/** Reference boards a slot is weighed on: this many, each against a different pair of foes drawn at the hero's level. */
+const SLOT_BOARDS = 3;
+
+/** Every body on a reference board stands at this share of its HP, so a heal or a Shield has a hole to price against. */
+const SLOT_BOARD_HP = 0.65;
+
 /**
- * At MOVE_CAP: the currently-held move worth replacing, or null to decline the offer.
- *
- * A swap must leave the hero able to CAST something. `moveValue` prices a move on power minus a
- * fraction of its cost, so a greedy climb happily trades every cheap move away for a big one and
- * strands the hero on Rest for the rest of the run — measured, Brimstone reached level 10 holding
- * four moves priced 75-80 against a 65 pool and won 0 of 350 fights. No player does that, so the
- * simulated one does not either: the last affordable move is never the one given up, and an
- * unaffordable offer is declined unless something affordable survives it.
+ * A kit's worth per move, read off the pilot's own scorer (pilot.ts slotWorth) on reference boards:
+ * the hero and its strongest roster-mate against two hero-pool foes drawn at the hero's level,
+ * everyone at SLOT_BOARD_HP, averaged over SLOT_BOARDS draws so no single type matchup decides a
+ * slot. `moveValue` before it priced a stat buff at a flat 15 and a priority strike at its BasePower,
+ * so every Late utility card lost to the worst held attack and was never measured (pass 9).
  */
-export function replacementTarget(entry: RosterEntry, incomingMoveId: string): string | null {
+function kitWorth(entry: RosterEntry, roster: readonly RosterEntry[], candidates: readonly string[]): Record<string, number> {
+  const ally = byPower(roster.filter((r) => r.rosterId !== entry.rosterId && heroes[r.heroId]))[0];
+  const side = [entry, ...(ally ? [ally] : [])].map((r) => ({ ...r, wounds: 0 }));
+  const level = Math.max(1, levelOf(entry));
+  const worth: Record<string, number> = {};
+  for (const id of candidates) worth[id] = 0;
+  for (let i = 0; i < SLOT_BOARDS; i++) {
+    const foes = generateEncounter('fight', 7919 * (i + 1) + level, recruitPool, {
+      heroCount: 2,
+      excludeHeroIds: side.map((r) => r.heroId),
+      scaling: { level, mastery: entry.mastery },
+    });
+    const state = buildCombatState(
+      i + 1,
+      allCombatants,
+      equipment,
+      [
+        { side: 'A', squad: pickSquad(side, side.map((r) => r.rosterId)), roster: side },
+        { side: 'B', squad: foes.squad, roster: foes.run.roster },
+      ],
+      passives
+    );
+    for (const combatant of Object.values(state.combatants)) {
+      combatant.currentHp = Math.round(getMaxHp(allCombatants[combatant.heroId], combatant) * SLOT_BOARD_HP);
+    }
+    const casterId = combatantIdFor('A', entry.rosterId);
+    const kits = new Map<string, readonly string[]>();
+    kits.set(entry.rosterId, candidates);
+    for (const r of [...side.slice(1), ...foes.run.roster]) kits.set(r.rosterId, r.unlockedMoveIds.length > 0 ? r.unlockedMoveIds : allCombatants[r.heroId].moveIds);
+    const ctx: AiContext = {
+      heroes: allCombatants,
+      moves,
+      statuses,
+      typeChart,
+      moveIdsFor: (combatantId) => kits.get(rosterIdOfCombatant(combatantId)) ?? allCombatants[state.combatants[combatantId].heroId].moveIds,
+    };
+    for (const id of candidates) worth[id] += slotWorth(state, casterId, id, candidates, ctx) / SLOT_BOARDS;
+  }
+  return worth;
+}
+
+/**
+ * At MOVE_CAP: the currently-held move worth replacing, or null to decline the offer. The kit
+ * plus the offer is priced by `kitWorth`, and the offer takes the seat of the worst held move it
+ * beats.
+ *
+ * A swap must leave the hero able to CAST something: a greedy climb would happily trade every
+ * cheap move away for a big one and strand the hero on Rest for the rest of the run — measured,
+ * Brimstone reached level 10 holding four moves priced 75-80 against a 65 pool and won 0 of 350
+ * fights. No player does that, so the simulated one does not either: the last affordable move is
+ * never the one given up, and an unaffordable offer is declined unless something affordable
+ * survives it.
+ */
+export function replacementTarget(entry: RosterEntry, incomingMoveId: string, roster: readonly RosterEntry[] = []): string | null {
   const pool = effectiveStats(entry).manaPool;
   const affordable = (id: string) => (moves[id]?.manaCost ?? 0) <= pool;
-  const incoming = moveValue(incomingMoveId);
+  if (!moves[incomingMoveId] || entry.unlockedMoveIds.includes(incomingMoveId)) return null;
+  const worth = kitWorth(entry, roster, [...entry.unlockedMoveIds, incomingMoveId]);
+  const incoming = worth[incomingMoveId];
 
   let worstId: string | null = null;
   let worst = Infinity;
@@ -215,7 +283,7 @@ export function replacementTarget(entry: RosterEntry, incomingMoveId: string): s
     // Keep the last castable move, whatever it scores.
     const keepsOneCastable = affordable(incomingMoveId) || entry.unlockedMoveIds.some((other) => other !== id && affordable(other));
     if (!keepsOneCastable) continue;
-    const value = moveValue(id);
+    const value = worth[id];
     if (value < worst) {
       worst = value;
       worstId = id;
@@ -313,7 +381,7 @@ export function payMastery(run: RunState, rng: () => number, payout: SchedulePay
         payout.moveOffers.push({ moveId: signature, taken: true });
       } else {
         payout.offers++;
-        const replaceId = replacementTarget(entry, signature);
+        const replaceId = replacementTarget(entry, signature, next.roster);
         if (replaceId) next = grantOfferedMove(next, rosterId, signature, replaceId);
         payout.signatures.push({ heroId: entry.heroId, taken: replaceId !== null });
         payout.moveOffers.push({ moveId: signature, taken: replaceId !== null });
@@ -326,7 +394,7 @@ export function payMastery(run: RunState, rng: () => number, payout: SchedulePay
       next = chooseEvolutionPath(next, progressionTable, heroes, rosterId, path.id);
       payout.evolutions.push({ rosterId, offered: node.paths.map((p) => p.id), picked: path.id });
       for (const moveId of refused) {
-        const replaceId = replacementTarget(next.roster.find((r) => r.rosterId === rosterId)!, moveId);
+        const replaceId = replacementTarget(next.roster.find((r) => r.rosterId === rosterId)!, moveId, next.roster);
         if (replaceId) next = grantOfferedMove(next, rosterId, moveId, replaceId);
       }
     } catch {
@@ -395,7 +463,7 @@ export function takeSchedule(run: RunState, rng: () => number, payout: ScheduleP
       payout.moveOffers.push({ moveId, taken: true });
     } else {
       payout.offers++;
-      const replaceId = replacementTarget(entry, moveId);
+      const replaceId = replacementTarget(entry, moveId, next.roster);
       if (replaceId) next = grantOfferedMove(next, rosterId, moveId, replaceId);
       payout.moveOffers.push({ moveId, taken: replaceId !== null });
     }

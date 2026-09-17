@@ -71,6 +71,15 @@ const MEAN_VARIANCE = (VARIANCE_MIN + VARIANCE_MAX) / 2;
  */
 const HORIZON = 3;
 
+/**
+ * A stat delta pays out over fewer rounds than a KO does. Measured over 2000-run batches once
+ * the slot scorer let the kit hold buffs (2026-09-17): full clear 47.5% at HORIZON, 53.9 at 2,
+ * 57.4 at 1, 56.0 at 0.5, 53.5 at 0 — a one-ply pilot that prices a buff at more than one round
+ * of its effect casts buffs it never collects on, and one that prices it at nothing leaves
+ * Rally and Weaken in the kit uncast.
+ */
+const DELTA_HORIZON = 1;
+
 /** The catalog's Shield, read once (docs/shield.md). */
 const shieldStatusId = shieldStatusDef(statuses)?.id ?? '';
 
@@ -82,6 +91,15 @@ const SWITCH_DISCOUNT = 0.6;
 
 /** Share of the best available value-per-mana that each point of mana is charged. Small: it breaks ties toward the cheap line without ever talking a lethal out of firing. */
 const MANA_OPPORTUNITY = 0.25;
+
+/**
+ * A caster standing inside a foe's one-hit range, with that foe due to act first, is priced as
+ * losing its whole turn this often — the foe has two targets to pick from. A move that resolves
+ * before the foe (priority, or Speed) keeps its full value, which is where priority is worth
+ * anything to a one-ply pilot; the other place is a lethal that lands before the target's turn,
+ * which denies that turn on top of the body.
+ */
+const LETHAL_RISK = 0.5;
 
 /** Per-point HP-equivalents for the stats that do not convert through a threat figure. */
 const FLAT_STAT_VALUE: Partial<Record<StatKey, number>> = { hp: 1, speed: 1.5, manaPool: 0.3, mpRegen: 3 };
@@ -236,6 +254,40 @@ function threatOf(state: CombatState, ctx: AiContext, combatantId: string, cache
   }
   cache.set(combatantId, best);
   return best;
+}
+
+/** The hardest hit `attackerId` could land on `targetId` this round, over the moves it can pay for. */
+function bestHitOn(state: CombatState, ctx: AiContext, attackerId: string, targetId: string, cache: Map<string, number>): number {
+  const key = `${attackerId}>${targetId}`;
+  const cached = cache.get(key);
+  if (cached !== undefined) return cached;
+  const attacker = state.combatants[attackerId];
+  let best = 0;
+  if (attacker && !attacker.fainted) {
+    for (const moveId of ctx.moveIdsFor(attackerId)) {
+      const move = moves[moveId];
+      if (!move || !isDamaging(move)) continue;
+      if (attacker.currentMana < resolveManaCost(state, attackerId, move, allCombatants)) continue;
+      best = Math.max(best, expectedHit(state, attackerId, move, targetId));
+    }
+  }
+  cache.set(key, best);
+  return best;
+}
+
+function speedOf(state: CombatState, id: string): number {
+  const combatant = state.combatants[id];
+  return getEffectiveStat(allCombatants[combatant.heroId], combatant, 'speed');
+}
+
+/**
+ * Whether `move` resolves before `otherId` acts this round: the priority bracket first, Speed
+ * inside it. The far side is read at bracket 0 — a one-ply pilot never sees its declaration.
+ */
+function actsBefore(state: CombatState, casterId: string, move: MoveDefinition, otherId: string): boolean {
+  const priority = move.priority ?? 0;
+  if (priority !== 0) return priority > 0;
+  return speedOf(state, casterId) > speedOf(state, otherId);
 }
 
 // --- Status valuation, both signs, in HP ---
@@ -401,7 +453,7 @@ function statDeltaValue(
     case 'intelligence': {
       // Damage is linear in the offensive stat, so a delta is a proportional change to this hero's output.
       const foesHp = aliveActiveIdsOn(state, otherSide(receiver.side)).reduce((sum, id) => sum + Math.max(0, state.combatants[id].currentHp), 0);
-      return bound(threatOf(state, ctx, receiverId, cache) * (amount / current) * HORIZON, foesHp);
+      return bound(threatOf(state, ctx, receiverId, cache) * (amount / current) * DELTA_HORIZON, foesHp);
     }
     case 'defense':
     case 'wisdom': {
@@ -414,7 +466,7 @@ function statDeltaValue(
       );
       const after = Math.max(1, current + amount);
       const cut = (after - current) / after;
-      return bound(incoming * cut * HORIZON, receiver.currentHp);
+      return bound(incoming * cut * DELTA_HORIZON, receiver.currentHp);
     }
     default:
       return (FLAT_STAT_VALUE[stat] ?? 0.3) * amount;
@@ -463,7 +515,8 @@ function scoreCast(
     const landed = Math.min(raw - absorbed, target.currentHp);
     damageDealt += landed * share;
     score += (landed + absorbed) * share;
-    if (raw - absorbed >= target.currentHp) score += threatOf(state, ctx, id, cache) * HORIZON * share;
+    // A KO buys the body's future output, and one round more when it lands before the target's turn.
+    if (raw - absorbed >= target.currentHp) score += threatOf(state, ctx, id, cache) * (HORIZON + (actsBefore(state, casterId, move, id) ? 1 : 0)) * share;
   }
 
   if (move.drainPercent != null && damageDealt > 0) {
@@ -573,7 +626,54 @@ function scoreCast(
   }
 
   if (!priced) score += bestAttack * UNKNOWN_PAYLOAD_CREDIT;
+
+  // --- Acting second inside a foe's one-hit range: the whole cast is at risk unless it resolves first ---
+  if (score > 0) {
+    const exposed = aliveActiveIdsOn(state, otherSide(casterSide)).some(
+      (foeId) => !actsBefore(state, casterId, move, foeId) && bestHitOn(state, ctx, foeId, casterId, cache) >= caster.currentHp
+    );
+    if (exposed) score *= 1 - LETHAL_RISK;
+  }
   return score;
+}
+
+/**
+ * What one move is worth to `casterId` on this board, for a slot decision rather than a turn: the
+ * best declaration it has, scored as a turn would be, less the pilot's mana opportunity charge
+ * against the best line among `against` (the kit the slot is being weighed inside). Off the same
+ * scorer the fights run on, so a stat buff, a Shield or a priority strike is priced the way the
+ * pilot will actually play it — which is what the replace-at-cap rule needs to know.
+ */
+export function slotWorth(state: CombatState, casterId: string, moveId: string, against: readonly string[], ctx: AiContext): number {
+  const cache = new Map<string, number>();
+  const caster = state.combatants[casterId];
+  const foes = aliveActiveIdsOn(state, otherSide(caster.side));
+  let bestAttack = 0;
+  for (const id of against) {
+    const move = moves[id];
+    if (!move || !isDamaging(move)) continue;
+    for (const foeId of foes) bestAttack = Math.max(bestAttack, expectedHit(state, casterId, move, foeId));
+  }
+  const gross = (id: string): number => {
+    const move = moves[id];
+    if (!move) return 0;
+    const declaredMode = declarationTargetMode(state, move);
+    if (declaredMode) {
+      let best = 0;
+      for (const targetId of candidateTargets(state, casterId, move, ctx, declaredMode)) {
+        best = Math.max(best, scoreCast(state, casterId, move, ctx, targetId, cache, bestAttack));
+      }
+      return best;
+    }
+    return scoreCast(state, casterId, move, ctx, null, cache, bestAttack);
+  };
+  let bestPerMana = 0;
+  for (const id of against) {
+    const cost = resolveManaCost(state, casterId, moves[id], allCombatants);
+    const g = gross(id);
+    if (cost > 0 && g > 0) bestPerMana = Math.max(bestPerMana, g / cost);
+  }
+  return gross(moveId) - resolveManaCost(state, casterId, moves[moveId], allCombatants) * bestPerMana * MANA_OPPORTUNITY;
 }
 
 /** HP the cast charges its own caster, both authored forms. */
