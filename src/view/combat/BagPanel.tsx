@@ -9,6 +9,7 @@ import { TypeBadge } from '../shared/TypeBadge';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { hpTier } from '../shared/StatBars';
 import { getTypeColorRgb } from './typeColors';
+import { OrderCoin } from './OrderCoin';
 
 /** One active hero, already resolved by the caller, with why each potion is refused for it (null = drinkable). */
 export interface BagTarget {
@@ -80,8 +81,10 @@ export function BagPanel({ purse, targets, actingId, onDrink, onClose }: Props) 
               className={`bag-kind is-${k}${k === kind ? ' selected' : ''}${purse[k] === 0 ? ' empty' : ''}`}
               onClick={() => setKind(k)}
             >
-              <span className="flask-kind-glyph">
-                <ResourceGlyph kind={k} tone="inherit" />
+              {/* The potion struck on a coin (OrderCoin.tsx), in its gauge's colour — the same die the order marks are. */}
+              <span className="bag-kind-coin">
+                <OrderCoin />
+                <ResourceGlyph kind={k} tone="inherit" className="bag-kind-coin-glyph" />
               </span>
               <span className="bag-kind-name">{CONSUMABLE_NAMES[k]}</span>
               <span className="flask-kind-count">×{purse[k]}</span>

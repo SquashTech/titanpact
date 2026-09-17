@@ -2453,21 +2453,43 @@ textarea,
   opacity: 0.55;
 }
 
-.bag-kind-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.flask-kind-glyph {
-  display: inline-flex;
-  width: 16px;
-  height: 16px;
+/* The potion's coin: the order mark's die (.order-coin, tinted off --coin-rgb) with the flask
+   struck on it instead of a numeral. Unselected it is a plain token; the chosen one's crown
+   brightens and it takes the glow, the way the actor's coin does on the field. */
+.bag-kind-coin {
+  --coin-rgb: var(--flask-rgb);
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
   color: rgb(var(--flask-rgb));
 }
 
-.flask-kind-glyph > svg {
-  width: 100%;
-  height: 100%;
+.bag-kind-coin-glyph {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.7));
+}
+
+.bag-kind.selected .bag-kind-coin .order-coin {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 7px rgba(var(--flask-rgb), 0.8));
+}
+
+.bag-kind.selected .bag-kind-coin .order-coin-crown {
+  fill: rgba(var(--flask-rgb), 0.5);
+}
+
+.bag-kind.empty .bag-kind-coin {
+  filter: saturate(0.3);
+}
+
+.bag-kind-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .flask-kind-count {
