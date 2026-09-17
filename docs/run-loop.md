@@ -560,17 +560,33 @@ weights were just re-fitted, and a 1-of-3 seat spent on a potion is a seat not s
 replayed refunds it whole — the same reason gold is granted at resolve. On the map the flask
 shows on the header purse as two counts; it is a purse, not an inbox, so the footer never flags
 it. In a fight the potions live in the **Bag**, the console's fourth key — Back, Switch, Rest,
-Bag — carrying what it holds as a count on its rim, dark with nothing left (2026-09-17, per user
-direction). Pressing it opens one panel (`BagPanel`): the kinds as a chip row, opening on the
-first with stock, the chosen kind's effect in one line, then WHO drinks it. A new consumable is
-one more chip. The history: one Flask key in the bottom row (2026-09-13), then two round flasks
-in the field's bottom corners, which sat in the ally status bands and pushed each hero's chips
-off its centre; the Menu key they had crowded out moved to the sky's top-right corner
-(`.field-menu`), a pause key's place, and the row had its seat back. Both leave the field
-while a round plays.
+Bag, **all four one width** (2026-09-17, per user direction; they were weighted 1.75 / 1.35
+while Menu shared the row as narrower reference material, and with Menu gone the weights were
+just unevenness) — the flask struck on a coin in the key's own tan with the count hung off its
+rim, dark with nothing left. Pressing it opens one panel (`BagPanel`): the kinds as a chip row,
+each kind's flask on a coin in its gauge colour, opening on the first with stock, the chosen
+kind's effect in one line, then WHO drinks it. A new consumable is one more chip. **The panel
+holds still across a kind switch**: every hero row always carries its readout line, reserved
+at the flag's height (`.flask-readout`), so "Full HP" on one row becoming "Full Mana" on
+another never resizes the panel under the thumb. The history: one Flask key in the bottom row
+(2026-09-13), then two round flasks in the field's bottom corners, which sat in the ally status
+bands and pushed each hero's chips off its centre; the Menu key they had crowded out moved to
+the sky's top-right corner (`.field-menu`), a pause key's place, and the row had its seat back.
+Both leave the field while a round plays. The Guild Hall shelf's two potion goods wear the
+same coin.
+
+**The coin** (`src/view/shared/Coin.tsx`, 2026-09-17, per user direction): one struck token in
+the mana gem's manufacture — a dark halo that seats it on whatever it sits over, a face, a
+top-lit crown, a milled inner ring at the rim, and a spark from the top left — drawn under
+whatever the caller strikes on it: the order mark's numeral, a potion's flask. It began as a
+flat disc for the order marks, which read as unfinished beside the gem and the type chips. The
+tint is one CSS variable (`--coin-rgb`), so every state on every surface — a tie, a cut, a
+hold, the current actor, a chosen kind, a spent one — is a recolour of the same die rather than
+a different object. The four surfaces: the order marks on the figures, the Bag key, the Bag
+panel's kind chips and the Guild Hall shelf's potions.
 
 **The resolve order is shown ON the figures** (`orderMarks.ts`, `CombatantCard` `order`,
-2026-09-17, per user direction): a numbered coin at the shoulder the type chips leave free —
+2026-09-17, per user direction): a numbered coin (the coin above) at the shoulder the type chips leave free —
 the way Into the Breach numbers the Vek — reading 1 to 4 across the four active cards. It was
 first a ribbon of portraits under the ally status bands, then along the very top of the screen,
 and both read as a plaque bolted onto a scene; a number on the thing it is about costs no band.
