@@ -32,7 +32,7 @@ import { consumableRefusal, useConsumable, type ConsumableKind } from '../../eng
 import { CONSUMABLE_KINDS, CONSUMABLE_NAMES, type ConsumablePurse } from '../../run/consumables';
 import { BagPanel, type BagTarget } from './BagPanel';
 import { orderMarksFor, type OrderMark, type OrderSource } from './orderMarks';
-import { OrderCoin } from './OrderCoin';
+import { Coin } from '../shared/Coin';
 import { previewOrder } from '../../engine/combat/priority';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { playSfx } from '../../audio/sfx';
@@ -1779,9 +1779,9 @@ export function FightScreen({
                 onClick={() => setBagOpen(true)}
                 aria-label={`Bag — ${bagCount} held`}
               >
-                {/* The flask on a coin (OrderCoin.tsx), the count hung off it — the Bag panel's chips, at the key's size. */}
+                {/* The flask on a coin (shared/Coin.tsx), the count hung off it — the Bag panel's chips, at the key's size. */}
                 <span className="bottom-action-glyph bottom-action-bag-coin" aria-hidden="true">
-                  <OrderCoin />
+                  <Coin />
                   <ResourceGlyph kind="hpPotion" tone="inherit" className="bottom-action-bag-glyph" />
                   {bagCount > 0 && <span className="bottom-action-bag-count">{bagCount}</span>}
                 </span>

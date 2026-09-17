@@ -9,7 +9,7 @@ import { TypeBadge } from '../shared/TypeBadge';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { hpTier } from '../shared/StatBars';
 import { getTypeColorRgb } from './typeColors';
-import { OrderCoin } from './OrderCoin';
+import { Coin } from '../shared/Coin';
 
 /** One active hero, already resolved by the caller, with why each potion is refused for it (null = drinkable). */
 export interface BagTarget {
@@ -81,9 +81,9 @@ export function BagPanel({ purse, targets, actingId, onDrink, onClose }: Props) 
               className={`bag-kind is-${k}${k === kind ? ' selected' : ''}${purse[k] === 0 ? ' empty' : ''}`}
               onClick={() => setKind(k)}
             >
-              {/* The potion struck on a coin (OrderCoin.tsx), in its gauge's colour — the same die the order marks are. */}
+              {/* The potion struck on a coin (shared/Coin.tsx), in its gauge's colour — the same die the order marks are. */}
               <span className="bag-kind-coin">
-                <OrderCoin />
+                <Coin />
                 <ResourceGlyph kind={k} tone="inherit" className="bag-kind-coin-glyph" />
               </span>
               <span className="bag-kind-name">{CONSUMABLE_NAMES[k]}</span>
@@ -125,11 +125,8 @@ export function BagPanel({ purse, targets, actingId, onDrink, onClose }: Props) 
                   </span>
                   <Gauge kind="hp" value={combatant.currentHp} max={getMaxHp(hero, combatant)} />
                   <Gauge kind="mana" value={combatant.currentMana} max={getMaxMana(hero, combatant)} />
-                  {blocked && (
-                    <span className="switch-option-readout">
-                      <span className="switch-flag">{why}</span>
-                    </span>
-                  )}
+                  {/* Always rendered: a row that only appears when blocked resized the panel on every tab change. */}
+                  <span className="switch-option-readout flask-readout">{blocked && <span className="switch-flag">{why}</span>}</span>
                 </span>
               </button>
             );

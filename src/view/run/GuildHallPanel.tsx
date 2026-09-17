@@ -5,6 +5,7 @@ import { equipment } from '../../data/equipment';
 import { ItemServicesSection } from './ItemServicesSection';
 import { guildHallOffers, CONTRACT_PURCHASE_COST } from '../../data/recruitment';
 import { ResourceGlyph } from '../shared/RunGlyph';
+import { Coin } from '../shared/Coin';
 import { SectionGlyph } from '../shared/sectionIcons';
 import type { HeroDefinition } from '../../engine/content';
 import type { RunState } from '../../run/state';
@@ -249,8 +250,10 @@ export function GuildHallPanel({
                   disabled={!canBuyConsumable(run, kind)}
                   onClick={() => onBuyConsumable(kind)}
                 >
-                  <span className="guild-hall-good-glyph">
-                    <ResourceGlyph kind={kind} tone="inherit" />
+                  {/* The flask on a coin (shared/Coin.tsx), as the Bag wears it in a fight. */}
+                  <span className="guild-hall-good-glyph guild-hall-good-coin">
+                    <Coin />
+                    <ResourceGlyph kind={kind} tone="inherit" className="guild-hall-good-coin-glyph" />
                   </span>
                   <span className="guild-hall-good-name">{CONSUMABLE_NAMES[kind]}</span>
                   {atCap ? (

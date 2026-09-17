@@ -2023,13 +2023,12 @@ textarea,
   transition: color var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out);
 }
 
-/* Back, Switch and Rest: the keys pressed mid-decision. Roughly double width,
-   a label at body size next to the glyph rather than under it, and a lit face
-   — they are the row's foreground, and Menu is reference material that happens
-   to live in the same strip. They earn that width with a lit key face rather
-   than by being the only raised objects in the row. */
+/* Back, Switch, Rest and Bag: the keys pressed mid-decision, one width each
+   (2026-09-17, per user direction — they were weighted while Menu shared the
+   row as narrower reference material). A label at body size next to the glyph
+   rather than under it, and a lit face. */
 .bottom-action-primary {
-  flex: 1.75 1 0;
+  flex: 1 1 0;
   gap: 7px;
   font-size: 14px;
   letter-spacing: 0.01em;
@@ -2102,10 +2101,6 @@ textarea,
    fourth hue. Mana blue is deliberately NOT used: --mana and --ally are the
    same value, and a second key in that blue would cost Switch the only thing
    its colour is for. Cut in after Switch on purpose — see FightScreen. */
-.bottom-action-rest {
-  flex: 1.35 1 0;
-}
-
 .bottom-action-rest:not(:disabled) {
   background: linear-gradient(180deg, rgba(150, 172, 214, 0.12), rgba(150, 172, 214, 0.02));
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(150, 172, 214, 0.34),
@@ -2169,7 +2164,6 @@ textarea,
    a warm rim of its own — neither ally blue nor Rest's cold one — and carries what it holds
    as a count on the rim. Dark with nothing left to drink. */
 .bottom-action-bag {
-  flex: 1.35 1 0;
   position: relative;
 }
 
@@ -2184,7 +2178,7 @@ textarea,
     inset 0 -1px 0 rgba(240, 190, 150, 0.24), inset 0 0 22px -6px rgba(214, 150, 110, 0.5);
 }
 
-/* The key's glyph is the Bag panel's chip coin (OrderCoin.tsx) in the key's own tan, the flask
+/* The key's glyph is the Bag panel's chip coin (shared/Coin.tsx) in the key's own tan, the flask
    struck on it and the count hung off its lower edge the way an order mark hangs its bracket.
    Off, the coin goes with the key — the base :disabled rule dims the glyph, and the count hides. */
 .bottom-action-bag-coin {
@@ -2199,11 +2193,11 @@ textarea,
   color: rgba(240, 190, 150, 0.92);
 }
 
-.bottom-action-bag:not(:disabled) .bottom-action-bag-coin .order-coin-crown {
+.bottom-action-bag:not(:disabled) .bottom-action-bag-coin .coin-crown {
   fill: rgba(240, 190, 150, 0.42);
 }
 
-.bottom-action-bag:hover:not(:disabled) .bottom-action-bag-coin .order-coin {
+.bottom-action-bag:hover:not(:disabled) .bottom-action-bag-coin .coin {
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 7px rgba(240, 190, 150, 0.75));
 }
 
@@ -2277,10 +2271,10 @@ textarea,
   top: calc(100% - var(--figure-stage-h) + 3px);
 }
 
-/* The metal (OrderCoin.tsx). Under the numeral, like .mana-gem-cut: the shape is geometry and
+/* The metal (shared/Coin.tsx). Under the numeral, like .mana-gem-cut: the shape is geometry and
    the digit sits at the coin's optical centre. Two drop-shadows — a tight dark one that seats
    it on the art, and a wide tinted one that is the only saturated colour on a neutral coin. */
-.order-coin {
+.coin {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -2290,35 +2284,35 @@ textarea,
   transition: filter var(--dur-mid) var(--ease-out);
 }
 
-.order-coin-halo {
+.coin-halo {
   fill: none;
   stroke: #0a0d13;
   stroke-width: 2.4;
 }
 
-.order-coin-face {
+.coin-face {
   fill: #151a24;
 }
 
 /* Top-lit: the crown a step of the tint, the face below it in shadow. */
-.order-coin-crown {
+.coin-crown {
   fill: rgba(var(--coin-rgb), 0.32);
 }
 
-.order-coin-mill {
+.coin-mill {
   fill: none;
   stroke: rgba(var(--coin-rgb), 0.24);
   stroke-width: 0.8;
   stroke-dasharray: 0.9 1.2;
 }
 
-.order-coin-rim {
+.coin-rim {
   fill: none;
   stroke: rgba(var(--coin-rgb), 0.85);
   stroke-width: 1.1;
 }
 
-.order-coin-spark {
+.coin-spark {
   fill: none;
   stroke: #f2f6ff;
   stroke-width: 1.3;
@@ -2344,11 +2338,11 @@ textarea,
   transform: translateY(-1px);
 }
 
-.order-mark.is-cut .order-coin {
+.order-mark.is-cut .coin {
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 7px rgba(255, 200, 90, 0.8));
 }
 
-.order-mark.is-cut .order-coin-crown {
+.order-mark.is-cut .coin-crown {
   fill: rgba(255, 200, 90, 0.5);
 }
 
@@ -2358,7 +2352,7 @@ textarea,
   transform: translateY(1px);
 }
 
-.order-mark.is-held .order-coin-crown {
+.order-mark.is-held .coin-crown {
   fill: rgba(140, 162, 204, 0.16);
 }
 
@@ -2393,11 +2387,11 @@ textarea,
   transform: scale(1.25);
 }
 
-.order-mark.is-current .order-coin {
+.order-mark.is-current .coin {
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 8px rgba(var(--type-rgb), 0.9));
 }
 
-.order-mark.is-current .order-coin-crown {
+.order-mark.is-current .coin-crown {
   fill: rgba(var(--type-rgb), 0.55);
 }
 
@@ -2480,7 +2474,7 @@ textarea,
   opacity: 0.55;
 }
 
-/* The potion's coin: the order mark's die (.order-coin, tinted off --coin-rgb) with the flask
+/* The potion's coin: the order mark's die (.coin, tinted off --coin-rgb) with the flask
    struck on it instead of a numeral. Unselected it is a plain token; the chosen one's crown
    brightens and it takes the glow, the way the actor's coin does on the field. */
 .bag-kind-coin {
@@ -2502,11 +2496,11 @@ textarea,
   filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.7));
 }
 
-.bag-kind.selected .bag-kind-coin .order-coin {
+.bag-kind.selected .bag-kind-coin .coin {
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 7px rgba(var(--flask-rgb), 0.8));
 }
 
-.bag-kind.selected .bag-kind-coin .order-coin-crown {
+.bag-kind.selected .bag-kind-coin .coin-crown {
   fill: rgba(var(--flask-rgb), 0.5);
 }
 
@@ -2522,6 +2516,12 @@ textarea,
 .flask-kind-count {
   font-variant-numeric: tabular-nums;
   color: rgb(var(--flask-rgb));
+}
+
+/* Reserved at the flag's height whether or not one is showing, so switching kinds — which
+   turns "Full HP" on one row into "Full MP" on another — never moves the panel. */
+.flask-readout {
+  min-height: 16px;
 }
 
 .flask-blurb {
@@ -14210,10 +14210,29 @@ textarea,
 
 .guild-hall-good.is-hpPotion {
   --plate-color: #ff8a8a;
+  --coin-rgb: 255, 138, 138;
 }
 
 .guild-hall-good.is-mpPotion {
   --plate-color: #8fb4ff;
+  --coin-rgb: 143, 180, 255;
+}
+
+/* The potions' glyph is the coin the Bag wears in a fight, the flask struck on it; the good's
+   own disabled fade is what dims it. */
+.guild-hall-good-coin {
+  position: relative;
+}
+
+.guild-hall-good-coin .coin-crown {
+  fill: rgba(var(--coin-rgb), 0.45);
+}
+
+.guild-hall-good-glyph > .guild-hall-good-coin-glyph {
+  position: relative;
+  width: 15px;
+  height: 15px;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.7));
 }
 
 .guild-hall-good-held.is-hpPotion {
