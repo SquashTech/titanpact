@@ -15,6 +15,7 @@ import { StatusDetailOverlay } from './StatusDetailOverlay';
 import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { TypeFx } from './TypeFx';
 import { bracketPip, type OrderMark } from './orderMarks';
+import { OrderCoin } from './OrderCoin';
 
 export interface Popup {
   key: number;
@@ -320,6 +321,7 @@ export function CombatantCard({
             .join(' ')}
           aria-label={`Acts ${order.rank}${['st', 'nd', 'rd'][order.rank - 1] ?? 'th'}${order.tied ? ', tied' : ''}`}
         >
+          <OrderCoin />
           <span className="order-mark-rank">{order.rank}</span>
           {bracketPip(order.priority) !== null && <span className="order-mark-pip">{bracketPip(order.priority)}</span>}
         </span>
