@@ -24,6 +24,7 @@ function foldMoves(into: Record<string, MoveAgg>, from: Record<string, MoveTally
     m.fights += 1;
     m.casts += t.casts;
     m.damage += t.damage;
+    m.dot += t.dot;
     m.healing += t.healing;
     m.kos += t.kos;
     m.manaSpent += t.manaSpent;
@@ -156,6 +157,7 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
     foldMoves(agg.moves, fight.moves);
     foldMoves(agg.enemyMoves, fight.enemyMoves);
     foldMoves(agg.movesByAct, fight.moves, `${fight.act}:`);
+    foldMoves(agg.movesByHero, fight.movesByHero);
     agg.playerRests += fight.playerRests;
     agg.playerSwitches += fight.playerSwitches;
     if (fight.lockedIn) agg.lockInFights += 1;

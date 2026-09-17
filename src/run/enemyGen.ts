@@ -321,31 +321,63 @@ export function appendFinalEnemy(
  * The champions field UNSEALED (`unsealedIdFor`): the Ancient half was the seal, and the
  * player already took it (docs/lore.md §6).
  */
+/**
+ * The Herald's company, when it is the seals' mortals rather than their Guardians: one Late spawn
+ * per broken seal, drawn from that seal's Location lines, at the finale's level and every pip.
+ * `heraldLeads` puts the Herald on the field from the first round beside the first of them;
+ * otherwise it enters last from the bench, as a Guardian does.
+ */
+export interface FinaleEscortOptions {
+  spawnTypesFor: (locationId: string) => readonly TypeId[] | null;
+  heraldLeads?: boolean;
+}
+
 export function generateFinaleEncounter(
   brokenSeals: readonly BrokenSeal[],
   endbringerId: string,
   enemyPool: HeroLookup,
   seed: number,
-  endbringerScaling: ActScaling = NO_SCALING
+  endbringerScaling: ActScaling = NO_SCALING,
+  escorts?: FinaleEscortOptions
 ): Encounter {
   const ordered = [...brokenSeals].sort((a, b) => a.actNumber - b.actNumber);
 
   let run = createRunState(0);
   const orderedIds: string[] = [];
-  for (const seal of ordered) {
-    const unsealedId = unsealedIdFor(seal.championId);
-    const definition = enemyPool[unsealedId];
-    if (!definition || run.roster.some((r) => r.rosterId === unsealedId)) continue;
-    const entry = createRosterEntry(unsealedId, unsealedId, definition.moveIds);
-    run = addRosterEntry(run, { ...entry, xp: xpForLevel(seal.level), mastery: MASTERY_CAP, evolutionStatGrants: seal.statGrants, growthStatGrants: seal.growthStatGrants });
-    orderedIds.push(unsealedId);
+  let rng = createRng(seed);
+  if (escorts) {
+    const seen = new Map<string, number>();
+    for (const seal of ordered) {
+      const pool = spawnPool(escorts.spawnTypesFor(seal.locationId), 'late');
+      const { picked, nextState } = drawSpawn(rng, pool, 1);
+      rng = nextState;
+      const heroId = picked[0];
+      if (!heroId) continue;
+      const n = (seen.get(heroId) ?? 0) + 1;
+      seen.set(heroId, n);
+      const rosterId = n === 1 ? heroId : `${heroId}-${n}`;
+      const { entry, nextState: afterGrowth } = growTo(createRosterEntry(rosterId, heroId, pool[heroId].moveIds), pool[heroId], endbringerScaling.level, rng);
+      rng = afterGrowth;
+      run = addRosterEntry(run, { ...entry, mastery: MASTERY_CAP });
+      orderedIds.push(rosterId);
+    }
+  } else {
+    for (const seal of ordered) {
+      const unsealedId = unsealedIdFor(seal.championId);
+      const definition = enemyPool[unsealedId];
+      if (!definition || run.roster.some((r) => r.rosterId === unsealedId)) continue;
+      const entry = createRosterEntry(unsealedId, unsealedId, definition.moveIds);
+      run = addRosterEntry(run, { ...entry, xp: xpForLevel(seal.level), mastery: MASTERY_CAP, evolutionStatGrants: seal.statGrants, growthStatGrants: seal.growthStatGrants });
+      orderedIds.push(unsealedId);
+    }
   }
 
   const endbringer = enemyPool[endbringerId];
   if (endbringer) {
-    const { entry } = growTo(createRosterEntry(endbringerId, endbringerId, endbringer.moveIds), endbringer, endbringerScaling.level, createRng(seed));
+    const { entry } = growTo(createRosterEntry(endbringerId, endbringerId, endbringer.moveIds), endbringer, endbringerScaling.level, rng);
     run = addRosterEntry(run, { ...entry, mastery: MASTERY_CAP });
-    orderedIds.push(endbringerId);
+    if (escorts?.heraldLeads) orderedIds.unshift(endbringerId);
+    else orderedIds.push(endbringerId);
   }
 
   // Built by hand rather than through pickSquad: bench ORDER is the design here, and

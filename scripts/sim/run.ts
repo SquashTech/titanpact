@@ -23,6 +23,7 @@ import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry
 import { generateMap, type MapNode, type MapNodeType } from '../../src/run/map';
 import { generateStarterOptions, STARTER_PICK_COUNT } from '../../src/run/draft';
 import { generateItinerary, locationForAct } from '../../src/run/locations';
+import { locations } from '../../src/data/locations';
 import { encounterScaling } from '../../src/run/difficulty';
 import { encounterXpKind, grantEncounterLevels, levelOf, MAX_LEVEL } from '../../src/run/growth';
 import { generateFinaleEncounter, type Encounter, type EncounterNodeType, generateTitanEncounter } from '../../src/run/enemyGen';
@@ -122,6 +123,7 @@ export interface FightRecord {
   castsByMove: Record<string, number>;
   moves: Record<string, MoveTally>;
   enemyMoves: Record<string, MoveTally>;
+  movesByHero: Record<string, MoveTally>;
   fieldSets: Record<string, number>;
   enemyFieldSets: Record<string, number>;
   fieldRounds: Record<string, number>;
@@ -488,12 +490,17 @@ function resolveEncounterNode(
     encounter = generateTitanEncounter(EYE_IDS, titanEyes, encounterSeedFor(run.map!, node.id), encounterScaling('titan', TOTAL_ACTS));
     squadSize = ROSTER_CAP;
   } else if (mapNodeType === 'finale') {
+    // SIM_FINALE=spawn | spawnLead: the Herald's company as Late Titanspawn (enemyGen.ts FinaleEscortOptions), an A/B.
+    const finaleEscorts = process.env.SIM_FINALE
+      ? { spawnTypesFor: (locationId: string) => locations[locationId]?.spawnTypes ?? null, heraldLeads: process.env.SIM_FINALE === 'spawnLead' }
+      : undefined;
     encounter = generateFinaleEncounter(
       run.brokenSeals,
       location.guardianFinalEnemyId ?? ENDBRINGER_ID,
       finaleEnemies,
       encounterSeedFor(run.map!, node.id),
-      encounterScaling('finale', TOTAL_ACTS)
+      encounterScaling('finale', TOTAL_ACTS),
+      finaleEscorts
     );
     squadSize = ROSTER_CAP;
   } else {
@@ -563,6 +570,7 @@ function resolveEncounterNode(
     castsByMove: fight.castsByMove,
     moves: fight.moves,
     enemyMoves: fight.enemyMoves,
+    movesByHero: fight.movesByHero,
     fieldSets: fight.fieldSets,
     enemyFieldSets: fight.enemyFieldSets,
     fieldRounds: fight.fieldRounds,

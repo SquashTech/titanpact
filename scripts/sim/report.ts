@@ -168,12 +168,12 @@ function moveRow(id: string, m: MoveAgg, playerTurns: number, offers?: { offered
   return (
     `  ${pad(move?.name ?? id, 22)}${pad(move?.type ?? '', 8)}${pad(move?.category?.slice(0, 4) ?? '', 5)}${padStart(String(move?.manaCost ?? 0), 5)}` +
     `${padStart(heroCount ? String(heroCount) : '-', 6)}${padStart(offerCell, 11)}${padStart(String(m.casts), 8)}${padStart(num(playerTurns > 0 ? (m.casts * 1000) / playerTurns : 0, 1), 8)}` +
-    `${padStart(perCast(m.damage), 9)}${padStart(perCast(m.healing), 9)}${padStart(m.casts > 0 ? num((100 * m.kos) / m.casts, 1) : '-', 8)}` +
+    `${padStart(perCast(m.damage), 9)}${padStart(m.dot > 0 ? pct(m.dot, m.damage).trim() : '', 6)}${padStart(perCast(m.healing), 9)}${padStart(m.casts > 0 ? num((100 * m.kos) / m.casts, 1) : '-', 8)}` +
     `${padStart(m.manaSpent > 0 ? num(m.damage / m.manaSpent, 2) : '-', 9)}`
   );
 }
 
-const MOVE_HEADER = `  ${pad('move', 22)}${pad('type', 8)}${pad('cat', 5)}${padStart('mana', 5)}${padStart('heroes', 6)}${padStart('offer/take', 11)}${padStart('casts', 8)}${padStart('/1k turn', 8)}${padStart('dmg/cast', 9)}${padStart('heal/cst', 9)}${padStart('KO/100', 8)}${padStart('dmg/mana', 9)}`;
+const MOVE_HEADER = `  ${pad('move', 22)}${pad('type', 8)}${pad('cat', 5)}${padStart('mana', 5)}${padStart('heroes', 6)}${padStart('offer/take', 11)}${padStart('casts', 8)}${padStart('/1k turn', 8)}${padStart('dmg/cast', 9)}${padStart('dot', 6)}${padStart('heal/cst', 9)}${padStart('KO/100', 8)}${padStart('dmg/mana', 9)}`;
 
 export function formatReport(
   agg: Aggregate,
@@ -461,7 +461,8 @@ export function formatReport(
   out.push('  Every move the player side cast, by its bucket (authored tier; a signature or Class move is');
   out.push('  tierless). heroes = roster heroes that can ever hold it; /1k turn = casts per 1000 player');
   out.push('  turns; dmg/cast counts what hit the far side, Shield-absorbed included, recoil and self-cost');
-  out.push('  excluded; KO/100 = knockouts the move\'s last hit landed per 100 casts; dmg/mana is damage per');
+  out.push('  excluded, the move\'s own DoT ticks credited to it (dot = their share); KO/100 = knockouts the');
+  out.push('  move\'s last hit or tick landed per 100 casts; dmg/mana is damage per');
   out.push('  mana actually paid. Casts are pilot choices — a low count on a support move is the one-ply');
   out.push('  scorer as much as the card (see the credit floor in pilot.ts), so read damage moves as');
   out.push('  measured and utility moves as UNDER-measured. offer/take = rolled onto the table (schedule,');

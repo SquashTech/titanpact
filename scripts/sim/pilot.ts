@@ -397,8 +397,14 @@ function riderValue(
     case 'basePower':
       // Elemental Force / Ambush: flat BasePower on the holder's casts, priced off the pipeline.
       return basePowerGrantValue(state, ctx, holderId, def, magnitude);
-    case 'timer':
-      return magnitude;
+    case 'timer': {
+      // Poison: X% of the holder's max HP, once, when a timer the holder must stay active through
+      // runs out (statusEngine detonateTimer). Priced at that burst, held to what is left, and
+      // discounted for the rounds it has to survive — a three-round fuse fires in about half of
+      // the sim's five-round fights. It was priced at the bare magnitude before (10 HP for 10%).
+      const burst = (magnitude / 100) * getMaxHp(allCombatants[holder.heroId], holder);
+      return Math.min(burst, holder.currentHp) * Math.max(0.3, 1 - 0.15 * duration);
+    }
     default:
       return 0;
   }

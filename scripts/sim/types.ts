@@ -149,6 +149,8 @@ export interface Aggregate {
   moves: Record<string, MoveAgg>;
   enemyMoves: Record<string, MoveAgg>;
   movesByAct: Record<string, MoveAgg>;
+  /** The player side's ledger keyed `heroId:moveId` — what each hero actually does with its kit. */
+  movesByHero: Record<string, MoveAgg>;
   /** Signatures by hero, and the count of tenth pips landed per run, histogram (index = signatures that run). */
   signatures: Record<string, SignatureAgg>;
   signaturesPerRun: number[];
@@ -248,6 +250,7 @@ export function emptyAggregate(): Aggregate {
     moves: {},
     enemyMoves: {},
     movesByAct: {},
+    movesByHero: {},
     signatures: {},
     signaturesPerRun: [],
     moveOffers: {},
@@ -315,7 +318,7 @@ export function emptyHero(): HeroAgg {
 }
 
 export function emptyMoveAgg(): MoveAgg {
-  return { casts: 0, damage: 0, healing: 0, kos: 0, manaSpent: 0, fights: 0 };
+  return { casts: 0, damage: 0, dot: 0, healing: 0, kos: 0, manaSpent: 0, fights: 0 };
 }
 
 export function emptySignature(): SignatureAgg {
@@ -366,6 +369,7 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   mergeCounts(into.moves, from.moves, emptyMoveAgg);
   mergeCounts(into.enemyMoves, from.enemyMoves, emptyMoveAgg);
   mergeCounts(into.movesByAct, from.movesByAct, emptyMoveAgg);
+  mergeCounts(into.movesByHero, from.movesByHero, emptyMoveAgg);
   mergeCounts(into.signatures, from.signatures, emptySignature);
   mergeCounts(into.moveOffers, from.moveOffers, () => ({ offered: 0, taken: 0 }));
   mergeArray(into.signaturesPerRun, from.signaturesPerRun);

@@ -75,11 +75,11 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     category: 'physical',
     kind: 'damage',
     basePower: 75,
-    statusApplication: { statusId: 'Renew', magnitude: 25, target: 'bothAllies' },
+    statusApplication: { statusId: 'Renew', magnitude: 35, target: 'bothAllies' },
     manaCost: 45,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A charge that drags the whole tide behind it (grants both allies Renew 25).',
+    description: 'A charge that drags the whole tide behind it (grants both allies Renew 35).',
   },
   // Pincer: the slow crab. Closes, and does not open.
   vise: {
