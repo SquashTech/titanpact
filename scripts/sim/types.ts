@@ -160,6 +160,8 @@ export interface Aggregate {
   /** Mastery pips landed, by source (scribe / shelf; the Cache from phase 2), all runs and won runs. */
   pipsBySource: Record<string, number>;
   pipsBySourceWon: Record<string, number>;
+  /** The gold ledger summed over runs (run.ts RunRecord.goldFlow). */
+  goldFlow: Record<string, number>;
   /** Heroes who joined the roster after the draft, by route. */
   recruitsBySource: Record<string, number>;
   /** Items obtained, keyed `act:source` (run.ts RunRecord.itemsBySource), all runs and won runs. */
@@ -240,6 +242,7 @@ export function emptyAggregate(): Aggregate {
     peakModifierFracSumByAct: [],
     pipsBySource: {},
     pipsBySourceWon: {},
+    goldFlow: {},
     recruitsBySource: {},
     itemsBySource: {},
     itemsBySourceWon: {},
@@ -352,6 +355,7 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   for (const key of Object.keys(from.castsByManaBand)) into.castsByManaBand[key] = (into.castsByManaBand[key] ?? 0) + from.castsByManaBand[key];
   for (const key of Object.keys(from.pipsBySource)) into.pipsBySource[key] = (into.pipsBySource[key] ?? 0) + from.pipsBySource[key];
   for (const key of Object.keys(from.pipsBySourceWon)) into.pipsBySourceWon[key] = (into.pipsBySourceWon[key] ?? 0) + from.pipsBySourceWon[key];
+  for (const key of Object.keys(from.goldFlow)) into.goldFlow[key] = (into.goldFlow[key] ?? 0) + from.goldFlow[key];
   for (const key of Object.keys(from.recruitsBySource)) into.recruitsBySource[key] = (into.recruitsBySource[key] ?? 0) + from.recruitsBySource[key];
   for (const key of Object.keys(from.itemsBySource)) into.itemsBySource[key] = (into.itemsBySource[key] ?? 0) + from.itemsBySource[key];
   for (const key of Object.keys(from.itemsBySourceWon)) into.itemsBySourceWon[key] = (into.itemsBySourceWon[key] ?? 0) + from.itemsBySourceWon[key];

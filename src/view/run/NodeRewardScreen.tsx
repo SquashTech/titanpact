@@ -4,7 +4,7 @@ import { equipment, rollEquipmentDrops } from '../../data/equipment';
 import type { RunState } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { rarityWeightsFor } from '../../run/equipment';
-import { grantCurrencyReward, PURSE_GOLD_RANGE, rollGoldRange } from '../../run/runProgress';
+import { grantCurrencyReward, purseRangeFor, rollGoldRange } from '../../run/runProgress';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { SectionGlyph } from '../shared/sectionIcons';
 import { NodeHeader, NodeSky, NODE_TINT_GOLD } from '../shared/NodeStage';
@@ -159,7 +159,7 @@ const INSTANT_KIND: Partial<Record<RewardNodeType, HoardKind>> = {
  * direction). The Scroll nodes are not here: which hero takes a pip IS a decision (ScrollNodeScreen).
  */
 export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onClaimEquipment }: Props) {
-  const [currencyAmount] = useState(() => rollGoldRange(PURSE_GOLD_RANGE));
+  const [currencyAmount] = useState(() => rollGoldRange(purseRangeFor(run.actNumber)));
   const [equipmentChoices] = useState<EquipmentDefinition[]>(() =>
     nodeType === 'equipmentReward'
       ? rollEquipmentDrops(3, rarityWeightsFor(run.actNumber, 'standard'))

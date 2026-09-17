@@ -266,7 +266,7 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `boss` | **2026-09-15: escorts and champion take the node's level (`docs/enemy-levels.md`) — the tracks below are history.** **2026-09-13: the two escorts are Titanspawn of the Location's `spawnTypes` at the act's tier, on the monsters track; the champion alone keeps the skirmish track.** Before that: `FightScreen` vs. **2 of the Location faction's basics** (no bench — a real no-cycling fight), each with a flat +20 bonus to 3 random growth stats. Hero-pool escorts until 2026-09-06 — see "The Guardian's escorts" below. Winning grants 1 Recruit Contract, the Guardian's Banner in acts 1-4, and ends the act (§3). **2026-09-01 exception:** a location may hold a **faction champion** on the boss's bench — see "The Guardian's champion" below. |
 | `shop` | `ShopNodeScreen` — the existing `GuildHallPanel`, given an exit for the first time. Overhauled 2026-08-18: offers 2-3 curated hero recruits (50g each, `GUILD_HALL_RECRUIT_COST`) rather than the full catalog, plus a rarity-priced equipment shelf, rolled once per visit (`src/run/shop.ts` `rollGuildHallOffers`). Second pass 2026-08-31: relics are no longer sold anywhere, the shelf is 4 wide and readable on its face, sold stock greys out, and Recruit Contracts confirm before buying (`docs/progression.md` "Second pass"). |
 | `equipmentReward` ("Item") | `NodeRewardScreen` — pick 1 of 3 items, rarity-weighted (`equipment.ts` `pickWeightedEquipment`); claiming bags it and lights the Roster badge — see "The bag notification" in `docs/progression.md`. Items are uncategorised as of 2026-09-06, so the three on offer are simply the three rolled (`docs/progression.md` "Uncategorised slots"). |
-| `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30). **2026-09-08, per user direction:** it pays out on arrival and the screen counts the PURSE up to its new total, coin by coin, over a Claim button that was never a decision — the drop size is a chip beside a number the player can act on, rather than a number they cannot. The two Scroll nodes share that beat. |
+| `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30 at Act 1, ×`ACT_GOLD_SCALE` after — see "The two reward lanes"). **2026-09-08, per user direction:** it pays out on arrival and the screen counts the PURSE up to its new total, coin by coin, over a Claim button that was never a decision — the drop size is a chip beside a number the player can act on, rather than a number they cannot. The two Scroll nodes share that beat. |
 | `scrollReward` ("Scroll Cache") | `ScrollNodeScreen` — **`SCROLL_CACHE_COUNT` = 3 Mastery pips**, one tap each, in any split (`src/run/mastery.ts`, `docs/mastery.md` §3, 2026-09-14). Five pips is a hero's Evolution and the fifth raises it right there; the Scribe seeds two heroes an act, this is where the player prioritises. Weight 46 — the seat the Scroll Cache held before Ichor, taken back when Ichor retired (Mastery phase 2). See "Mastery Scrolls" below. |
 | `forgeReward` ("The Forge") | `ForgeScreen` — pick one roster hero to gain **+1 item slot** for the rest of the run (`runProgress.ts` `grantItemSlot`, stored on `RosterEntry.bonusItemSlots`, capped at `MAX_ITEM_SLOTS` = 3). **2026-09-06**, replacing the three slot-specific cache nodes (`weaponReward`/`armorReward`/`accessoryReward`), which lost their meaning when items stopped having categories — most of their frequency went to `equipmentReward`, whose weight went 20 → 40. The scarcest thing on the reward row (weight 8) on purpose: it is permanent, it compounds with every drop after it, and it is the only reward here a hero can be at the cap for — a roster entirely at 3 slots makes the node a dead draw, which is what makes spending it a choice — and at the 2026-09-07 cap of 3 that arrives materially sooner. |
 | `manaWellReward` ("Mana Well") | `ManaWellScreen` — pick one roster hero to gain **+`MANA_WELL_AMOUNT` = 30 max Mana** for the rest of the run (`runProgress.ts` `grantManaWell`, onto `bonusStatGrants`; stacks; never refused). **2026-09-13, per user direction** — the one bare-number screen the constitution allows. See "The Mana Well" below. |
@@ -290,7 +290,19 @@ you want." The per-win payout tables in `App.tsx` (`goldRewardFor`, `EQUIPMENT_D
 all keyed on `EncounterMapNodeType` — the **map** node type, since `skirmish` and `battle` are
 indistinguishable once collapsed to `EncounterNodeType`) make the two lanes pay differently:
 
-| Node | Lane | Gold | Equipment drop |
+**Gold carries the act since 2026-09-17, per user direction** (`ACT_GOLD_SCALE` = ×1 / 1.5 / 2 /
+2.5 / 3 by act, `goldRangeFor` / `purseRangeFor`, rounded to 5s; the table below is Act 1's).
+Gold had no act term where XP has had one since 2026-09-13, so a fight paid 15–25 in Act 5 as in
+Act 1 while the Smithy's prices climb 25 → 130 a lift — and the fat band below belonged to
+`battle`, which left the map when the fork became Elite-or-Skirmish, so the loot-and-gold lane
+had quietly lost its gold half. Measured (sim, 1500 runs, skilled pilot): ~45g earned an act,
+flat, the Guild Hall entered with 53–66g in Acts 2–5 and the Anvil paid 0.2–7.7g an act; with the
+term 41 / 71 / 92 / 123 / 156 earned, the Hall entered with 82 / 104 / 142 / 181, the Scrolls
+selling out from Act 3 AND the Anvil paid 32 / 52 / 79g in Acts 3–5, full-clear 11.5 → 13.3% on
+the same seed, all of it at the finale. The steps size an act's income at about one Smithy job
+at the act's window tier plus one shelf item. First-pass, a playtest figure; the prices stand.
+
+| Node | Lane | Gold (Act 1) | Equipment drop |
 |---|---|---|---|
 | `fight` (row 0 opener) | Monsters | 15-25 | **always**, act's standard curve |
 | `battle` (row 4) | Monsters | **30-45** | **always**, act's standard curve |

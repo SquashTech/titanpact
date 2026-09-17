@@ -39,8 +39,8 @@ import {
   anvilUpgrade,
   reachableNodeIds,
   recordBrokenSeal,
-  GOLD_REWARD_RANGE,
-  PURSE_GOLD_RANGE,
+  goldRangeFor,
+  purseRangeFor,
   rollGoldRange,
   grantManaWell,
 } from '../../src/run/runProgress';
@@ -71,8 +71,8 @@ type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' |
 
 // EQUIPMENT_DROP_CHANCE and LOOT_SOURCE come from run/equipment.ts, so the sim rolls the odds the game ships.
 
-function goldRewardFor(nodeType: EncounterMapNodeType, rng: Rng): number {
-  return rollGoldRange(GOLD_REWARD_RANGE[nodeType], rng);
+function goldRewardFor(nodeType: EncounterMapNodeType, actNumber: number, rng: Rng): number {
+  return rollGoldRange(goldRangeFor(nodeType, actNumber), rng);
 }
 
 /** NodeRewardScreen's flat XP cache. */
@@ -155,6 +155,8 @@ export interface RunRecord {
   equipped: string[];
   /** Mastery pips landed this run, by source (run/mastery.ts). */
   pipsBySource: Record<string, number>;
+  /** The gold ledger, keyed `act:earned:<fight|purse|sell>`, `act:spent:<mend|hire|scroll|anvil|contract>`, and `act:hall` (the purse on entering the Guild Hall, with `act:hallVisits` counting it). */
+  goldFlow: Record<string, number>;
   /** Heroes joining after the draft: `contract` (claimed or bought), `hire` (Guild Hall). */
   recruitsBySource: Record<string, number>;
   /** Items obtained, keyed `act:source` — `drop` (a fight), `node` (Equipment Cache), `event` (a loot pile), `contract` (worn in by a claimed hero). */
@@ -172,6 +174,11 @@ export interface RunRecord {
 function tally(record: RunRecord, act: number, kind: ScreenKind, n = 1): void {
   const screens = record.timeByAct[act].screens;
   screens[kind] = (screens[kind] ?? 0) + n;
+}
+
+function ledger(record: RunRecord, act: number, key: string, amount: number): void {
+  const k = `${act}:${key}`;
+  record.goldFlow[k] = (record.goldFlow[k] ?? 0) + amount;
 }
 
 function entryOf(run: RunState, rosterId: string): RosterEntry {
@@ -207,7 +214,10 @@ function resolveDrop(run: RunState, itemId: string, record: RunRecord, actNumber
   record.itemsBySource[`${actNumber}:${source}`] = (record.itemsBySource[`${actNumber}:${source}`] ?? 0) + 1;
   const target = policy.bestReceiver(run.roster, item);
   if (run.roster.some((entry) => itemReceiptFor(entry, item, rosterHeroes[entry.heroId], equipment).kind === 'merge')) record.mergeOffers += 1;
-  if (!target || target.gain <= 0) return grantCurrencyReward(run, sellValueFor(item));
+  if (!target || target.gain <= 0) {
+    ledger(record, actNumber, 'earned:sell', sellValueFor(item));
+    return grantCurrencyReward(run, sellValueFor(item));
+  }
   if (target.receipt.kind === 'merge') record.merges += 1;
   record.equipped.push(`${actNumber}:${target.receipt.kind === 'merge' ? target.receipt.resultRarity : item.rarity}`);
   return absorbItem(run, target.rosterId, itemId, equipment, rosterHeroes);
@@ -247,6 +257,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     companionLostAt: null,
     encountersWon: 0,
     goldEnd: 0,
+    goldFlow: {},
     rosterLevelEnd: 0,
     heroLevels: {},
     rosterEvolvedEnd: 0,
@@ -548,7 +559,9 @@ function resolveEncounterNode(
     .map((t) => t.rosterId);
   if (!fight.won) return { run: workingRun, won: false, defeatedRoster: encounter.run.roster, drop: null, encounter, koRosterIds };
 
-  workingRun = grantCurrencyReward(workingRun, goldRewardFor(kindKey, rng));
+  const goldWon = goldRewardFor(kindKey, workingRun.actNumber, rng);
+  ledger(record, workingRun.actNumber, 'earned:fight', goldWon);
+  workingRun = grantCurrencyReward(workingRun, goldWon);
   // HP carries to the next node (src/run/wounds.ts); the act's end is what makes the roster whole.
   workingRun = recordWounds(workingRun, fight.final, PLAYER_SIDE, rosterHeroes);
   return { run: workingRun, won: true, defeatedRoster: encounter.run.roster, drop, encounter, koRosterIds };
@@ -629,8 +642,11 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       return resolveScribe(run, rng, record, options);
     case 'scrollReward':
       return resolveScrollCache(run, rng, record, options);
-    case 'currencyReward':
-      return grantCurrencyReward(run, rollGoldRange(PURSE_GOLD_RANGE, rng));
+    case 'currencyReward': {
+      const purse = rollGoldRange(purseRangeFor(run.actNumber), rng);
+      ledger(record, run.actNumber, 'earned:purse', purse);
+      return grantCurrencyReward(run, purse);
+    }
     case 'restReward':
       return mendRoster(run);
     case 'manaWellReward': {
@@ -788,9 +804,17 @@ function resolveEvent(run: RunState, locationId: string, rng: Rng, record: RunRe
 function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord, options: RunOptions): RunState {
   let next = run;
   const offers = rollGuildHallOffers(next, guildHallOffers, muster);
+  const act = run.actNumber;
+  ledger(record, act, 'hall', run.gold);
+  ledger(record, act, 'hallVisits', 1);
+  const spend = (key: string, fn: () => RunState) => {
+    const before = next.gold;
+    next = fn();
+    ledger(record, act, `spent:${key}`, before - next.gold);
+  };
 
   // The mend first, when the roster is hurt enough for it to be worth a hire's price.
-  if (canBuyMend(next) && policy.rosterHpFraction(next.roster) < 0.6) next = buyMend(next);
+  if (canBuyMend(next) && policy.rosterHpFraction(next.roster) < 0.6) spend('mend', () => buyMend(next));
 
   for (const offerId of offers.heroOfferIds) {
     const offer = guildHallOffers.find((o) => o.id === offerId);
@@ -798,14 +822,14 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
     const rosterId = freshRosterId(next, offer.heroId);
     if (next.roster.length < ROSTER_CAP) {
       record.recruitsBySource.hire = (record.recruitsBySource.hire ?? 0) + 1;
-      next = recruitFromGuildHall(next, offer, rosterId);
+      spend('hire', () => recruitFromGuildHall(next, offer, rosterId));
       continue;
     }
     // A hire arrives raw and one act behind (guildHallEntry), so it replaces only a hero it outscores as-is.
     const weakest = policy.byPower(next.roster)[next.roster.length - 1];
     if (policy.powerScore(weakest) < policy.powerScore(guildHallEntry(next, offer, rosterId))) {
       record.recruitsBySource.hireReplacing = (record.recruitsBySource.hireReplacing ?? 0) + 1;
-      next = recruitFromGuildHallReplacing(next, offer, rosterId, weakest.rosterId);
+      spend('hire', () => recruitFromGuildHallReplacing(next, offer, rosterId, weakest.rosterId));
     }
   }
 
@@ -814,14 +838,14 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
   for (let bought = 0; canBuyScroll(next, bought); bought++) {
     const target = policy.scrollTarget(next.roster, options.levelPolicy);
     if (!target) break;
-    next = landPips(buyScroll(next, bought), target.rosterId, 1, 'shelf', rng, record);
+    spend('scroll', () => landPips(buyScroll(next, bought), target.rosterId, 1, 'shelf', rng, record));
   }
 
-  next = resolveAnvil(next);
+  spend('anvil', () => resolveAnvil(next));
 
   // Spare gold at the last shop before a Guardian buys a contract rather than rusting.
   if (next.gold >= CONTRACT_PURCHASE_COST && next.roster.length < ROSTER_CAP) {
-    next = buyContract(next, CONTRACT_PURCHASE_COST);
+    spend('contract', () => buyContract(next, CONTRACT_PURCHASE_COST));
   }
   return next;
 }

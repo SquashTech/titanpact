@@ -5,7 +5,7 @@
 import type { MapNodeType } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
 import { EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, RARITY_ORDER, rarityWeightsFor } from '../../run/equipment';
-import { GOLD_REWARD_RANGE, PURSE_GOLD_RANGE } from '../../run/runProgress';
+import { goldRangeFor, purseRangeFor } from '../../run/runProgress';
 import { MASTERY_EVOLUTION, SCRIBE_PICKS, SCRIBE_PIPS_EACH, SCROLL_CACHE_COUNT, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT } from '../../run/mastery';
 import { ENCOUNTER_XP_MULTIPLIER, encounterXpForAct, encounterXpKind } from '../../run/growth';
 import { MANA_WELL_AMOUNT } from '../../run/runProgress';
@@ -71,7 +71,7 @@ function priceBand(table: Record<EquipmentRarity, number>): string {
 
 /** The lanes every fight is compared on, in one order, so Elite and Skirmish read as two columns of one table. */
 function encounterFacts(type: EncounterNodeKind, actNumber: number): NodeFact[] {
-  const gold = GOLD_REWARD_RANGE[type];
+  const gold = goldRangeFor(type, actNumber);
   const drop = EQUIPMENT_DROP_CHANCE[type];
   const xpKind = encounterXpKind(type);
   const xp = Math.round(encounterXpForAct(actNumber) * ENCOUNTER_XP_MULTIPLIER[xpKind]);
@@ -192,7 +192,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
     case 'restReward':
       return { kind: 'Reward · Recovery', facts: [{ glyph: 'hp', label: 'Mend', value: 'whole roster', note: 'HP carries between fights' }], odds: null };
     case 'currencyReward':
-      return { kind: 'Reward · Purse', facts: [{ glyph: 'gold', label: 'Gold', value: range(PURSE_GOLD_RANGE) }], odds: null };
+      return { kind: 'Reward · Purse', facts: [{ glyph: 'gold', label: 'Gold', value: range(purseRangeFor(actNumber)) }], odds: null };
     case 'passiveReward':
       return {
         kind: 'Reward · Build',

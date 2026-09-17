@@ -133,7 +133,7 @@ import {
   sellItem,
   recordBrokenSeal,
   grantRelicReward,
-  GOLD_REWARD_RANGE,
+  goldRangeFor,
   rollGoldRange,
 } from '../run/runProgress';
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
@@ -359,9 +359,9 @@ function whoScreensBehind(screen: Screen): number {
 /** Payouts key on the MAP node type: `skirmish` and `battle` both flatten to a `fight` encounter but sit in opposite reward lanes. */
 type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' | 'finale' | 'titan';
 
-// The bands live in runProgress.ts (GOLD_REWARD_RANGE) so the map's node readout prints the roll it describes.
-function goldRewardFor(nodeType: EncounterMapNodeType): number {
-  return rollGoldRange(GOLD_REWARD_RANGE[nodeType]);
+// The bands live in runProgress.ts (goldRangeFor) so the map's node readout prints the roll it describes.
+function goldRewardFor(nodeType: EncounterMapNodeType, actNumber: number): number {
+  return rollGoldRange(goldRangeFor(nodeType, actNumber));
 }
 
 function equipmentDropFor(nodeType: EncounterMapNodeType, actNumber: number): EquipmentDefinition | null {
@@ -679,7 +679,7 @@ export function App() {
       nodeType,
       squad,
       encounter,
-      goldReward: payout?.gold ?? goldRewardFor(mapNodeType),
+      goldReward: payout?.gold ?? goldRewardFor(mapNodeType, playerRun.actNumber),
       // Read off the win this fight WILL be: the act's base is a function of encounters won and
       // the kind is the tile's, so the figure is known before the fight rather than rolled after it.
       xpGained: xpForEncounter(playerRun.encountersWon + 1, encounterXpKind(mapNodeType)),

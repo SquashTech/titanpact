@@ -36,11 +36,11 @@ export function advanceToNode(run: RunState, nodeId: string): RunState {
 }
 
 /**
- * Inclusive gold band a won encounter pays, by map node type. Two lanes: Monsters (`fight`,
- * `battle`) is the loot-and-gold lane, Skirmish (`skirmish`, `elite`) the Scroll lane on a thin
- * band; the row-0 opener stays thin because it already ships a drop. The Guardian pays in the
- * Banner, not coin, and the finale ends the run. One table, so the map's node readout and the
- * roll it describes cannot drift.
+ * Inclusive gold band a won encounter pays, by map node type, AT ACT 1 — `goldRangeFor` carries
+ * the act (ACT_GOLD_SCALE). Two lanes: Monsters (`fight`, `battle`) is the loot-and-gold lane,
+ * Skirmish (`skirmish`, `elite`) the Scroll lane on a thin band; the row-0 opener stays thin
+ * because it already ships a drop. The Guardian pays in the Banner, not coin, and the finale ends
+ * the run. One table, so the map's node readout and the roll it describes cannot drift.
  */
 export const GOLD_REWARD_RANGE: Record<EncounterNodeKind, readonly [number, number]> = {
   fight: [15, 25],
@@ -52,8 +52,38 @@ export const GOLD_REWARD_RANGE: Record<EncounterNodeKind, readonly [number, numb
   titan: [0, 0],
 };
 
-/** What the `currencyReward` purse pays, inclusive. */
+/** What the `currencyReward` purse pays, inclusive, at Act 1; `purseRangeFor` carries the act. */
 export const PURSE_GOLD_RANGE: readonly [number, number] = [15, 30];
+
+/**
+ * The act's term on every gold band (2026-09-17, per user direction). Index is the act, 0 unused,
+ * 6 the finale. Gold had no act term where XP has had one since 2026-09-13 (ENCOUNTER_XP_BY_ACT):
+ * a fight paid 15–25 in Act 5 exactly as in Act 1, while the Smithy's prices climb 25 → 130 a
+ * lift and 20 → 120 an enchant and the hire, the Scroll and the mend stand where they stood.
+ * Measured (sim, 1500 runs): ~45g earned an act, flat, the Guild Hall entered with 53–66g in
+ * Acts 2–5 — two Scrolls or a mend — and the Anvil paid 0.2–7.7g an act because nothing was
+ * ever left for it. The steps are sized so an act's income is about one Smithy job at the act's
+ * window tier plus one shelf item: 47 / 76 / 93 / 122 / 140 expected, ~480 a full clear against
+ * ~240. First-pass; the prices stand and the walls are what to watch.
+ */
+export const ACT_GOLD_SCALE: readonly number[] = [1, 1, 1.5, 2, 2.5, 3, 3];
+
+/** A band scaled to the act and rounded to 5s, so the map's readout prints round figures. */
+function scaleGoldRange([min, max]: readonly [number, number], actNumber: number): readonly [number, number] {
+  const scale = ACT_GOLD_SCALE[Math.min(Math.max(actNumber, 1), ACT_GOLD_SCALE.length - 1)];
+  const round5 = (n: number) => Math.round(n / 5) * 5;
+  return [round5(min * scale), round5(max * scale)];
+}
+
+/** What a won encounter of this kind pays in this act, inclusive. */
+export function goldRangeFor(nodeType: EncounterNodeKind, actNumber: number): readonly [number, number] {
+  return scaleGoldRange(GOLD_REWARD_RANGE[nodeType], actNumber);
+}
+
+/** What the purse pays in this act, inclusive. */
+export function purseRangeFor(actNumber: number): readonly [number, number] {
+  return scaleGoldRange(PURSE_GOLD_RANGE, actNumber);
+}
 
 export function rollGoldRange([min, max]: readonly [number, number], random: () => number = Math.random): number {
   return min + Math.floor(random() * (max - min + 1));
