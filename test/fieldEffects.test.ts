@@ -16,7 +16,7 @@ import { setFieldEffect, tickFieldEffect, FIELD_EFFECT_DURATION_ROUNDS } from '.
 import { applyManaRegen } from '../src/engine/combat/manaRegen';
 import { tickEndOfRound, applyStatus } from '../src/engine/combat/statusEngine';
 import { resolveBattleStartEntries } from '../src/engine/combat/passiveEngine';
-import { orderActions, previewOrder } from '../src/engine/combat/priority';
+import { orderActions, previewOrder, bracketEffect } from '../src/engine/combat/priority';
 import { resolveStatRatio } from '../src/engine/damage/damagePipeline';
 import { getEffectiveStat, getMaxHp } from '../src/engine/state';
 import type { CombatState } from '../src/engine/state';
@@ -421,11 +421,11 @@ test('previewOrder: undeclared combatants sit at bracket 0 in Speed order; a dec
   const base = orderPreviewIds(state, ids, []);
   assert.deepStrictEqual(base, ['a2', 'b2', 'a1', 'b1']);
 
-  const withPriority = previewOrder(state, heroes, ids, [{ kind: 'move', combatantId: 'b1', moveId: 'swiftBlow', declaredTarget: 'a2' }], moves, fieldEffects);
+  const { entries: withPriority } = previewOrder(state, heroes, ids, [{ kind: 'move', combatantId: 'b1', moveId: 'swiftBlow', declaredTarget: 'a2' }], moves, fieldEffects);
   assert.deepStrictEqual(withPriority.map((e) => e.combatantId), ['b1', 'a2', 'b2', 'a1']);
   assert.strictEqual(withPriority[0].priority, 1);
 
-  const withSwitchAndRest = previewOrder(
+  const { entries: withSwitchAndRest } = previewOrder(
     state,
     heroes,
     ids,
@@ -447,18 +447,18 @@ test('previewOrder: an exact bracket + Speed collision is flagged, never shuffle
     combatants: { ...state.combatants, b1: { ...state.combatants.b1, statModifiers: { ...state.combatants.b1.statModifiers, speed: 35 } } },
   };
   const ids = ['a1', 'a2', 'b1', 'b2'];
-  const entries = previewOrder(tied, heroes, ids, [], moves, fieldEffects);
+  const { entries } = previewOrder(tied, heroes, ids, [], moves, fieldEffects);
   assert.deepStrictEqual(entries.map((e) => e.combatantId), ['a2', 'b1', 'b2', 'a1']); // input order kept inside the tie
   assert.deepStrictEqual(entries.map((e) => e.tiedWithPrevious), [false, false, true, false]);
 
-  const rolled = previewOrder(tied, heroes, ids, [{ kind: 'move', combatantId: 'a1', moveId: 'cogBop', declaredTarget: 'b1' }], moves, fieldEffects);
+  const { entries: rolled } = previewOrder(tied, heroes, ids, [{ kind: 'move', combatantId: 'a1', moveId: 'cogBop', declaredTarget: 'b1' }], moves, fieldEffects);
   const a1 = rolled.find((e) => e.combatantId === 'a1')!;
   assert.strictEqual(a1.priority, null);
   assert.strictEqual(rolled.indexOf(a1), 3); // placed as a 0 until the reel spins
 });
 
 function orderPreviewIds(state: CombatState, ids: readonly string[], declared: readonly Action[]): string[] {
-  return previewOrder(state, heroes, ids, declared, moves, fieldEffects).map((e) => e.combatantId);
+  return previewOrder(state, heroes, ids, declared, moves, fieldEffects).entries.map((e) => e.combatantId);
 }
 
 test('resolveRound: RoundOrdered names the settled order — brackets rolled, a switch and a Rest at their own — before anything resolves', () => {
@@ -475,7 +475,36 @@ test('resolveRound: RoundOrdered names the settled order — brackets rolled, a 
   assert.strictEqual(events.indexOf(ordered), 1); // right after RoundStarted
   assert.deepStrictEqual(ordered.order.map((o) => o.combatantId), ['b1', 'b2', 'a1', 'a2']);
   assert.deepStrictEqual(ordered.order.map((o) => o.priority), [1, 0, 0, Number.NEGATIVE_INFINITY]);
+  assert.strictEqual(ordered.reversedSpeed, false);
   // The turns then begin in that order.
   const turns = events.flatMap((e) => (e.type === 'TurnStarted' ? [e.combatantId] : []));
   assert.deepStrictEqual(turns, ['b1', 'b2', 'a1', 'a2']);
+});
+
+test('previewOrder + bracketEffect: under Stasis Bubble the slower is the favoured one, and a cut reads against that', () => {
+  const state = twoVTwoFixture(433);
+  const stasis: CombatState = { ...state, activeFieldEffect: { fieldEffectId: 'stasisBubble', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
+  const ids = ['a1', 'a2', 'b1', 'b2'];
+  // Speeds: ironWarden 30 < cinderKnight 55 < wildOracle 65 < tidecaller 66, so reversed is b1, a1, b2, a2.
+  const plain = previewOrder(stasis, heroes, ids, [], moves, fieldEffects);
+  assert.strictEqual(plain.reversedSpeed, true);
+  assert.deepStrictEqual(plain.entries.map((e) => e.combatantId), ['b1', 'a1', 'b2', 'a2']);
+
+  // tidecaller's +1 cuts ahead of everyone the field favoured over it — a cut, read on the reversed axis.
+  const { entries, reversedSpeed } = previewOrder(stasis, heroes, ids, [{ kind: 'move', combatantId: 'a2', moveId: 'swiftBlow', declaredTarget: 'b1' }], moves, fieldEffects);
+  assert.deepStrictEqual(entries.map((e) => e.combatantId), ['a2', 'b1', 'a1', 'b2']);
+  assert.strictEqual(bracketEffect(entries, 0, reversedSpeed), 'cut');
+  // The same bracket on the hero the field already sent first moves nothing.
+  const first = previewOrder(stasis, heroes, ids, [{ kind: 'move', combatantId: 'b1', moveId: 'swiftBlow', declaredTarget: 'a2' }], moves, fieldEffects);
+  assert.strictEqual(bracketEffect(first.entries, 0, first.reversedSpeed), null);
+  // Read on the wrong axis, b1's bracket would have looked like a cut past three faster heroes.
+  assert.strictEqual(bracketEffect(first.entries, 0, false), 'cut');
+
+  // Without the field, a2 (66) is already first: its +1 is a pip and no effect.
+  const normal = previewOrder(state, heroes, ids, [{ kind: 'move', combatantId: 'a2', moveId: 'swiftBlow', declaredTarget: 'b1' }], moves, fieldEffects);
+  assert.strictEqual(bracketEffect(normal.entries, 0, normal.reversedSpeed), null);
+  // A Rest under the field is held behind the three the field would have sent after it.
+  const rested = previewOrder(stasis, heroes, ids, [{ kind: 'rest', combatantId: 'b1' }], moves, fieldEffects);
+  assert.strictEqual(rested.entries[3].combatantId, 'b1');
+  assert.strictEqual(bracketEffect(rested.entries, 3, rested.reversedSpeed), 'held');
 });

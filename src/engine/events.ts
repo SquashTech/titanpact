@@ -25,6 +25,8 @@ export interface RoundOrderEntry {
 export interface RoundOrderedEvent extends BaseEvent {
   type: 'RoundOrdered';
   order: RoundOrderEntry[];
+  /** Sorted under Stasis Bubble: within a bracket the slower combatant went first. */
+  reversedSpeed: boolean;
 }
 
 export interface TurnStartedEvent extends BaseEvent {

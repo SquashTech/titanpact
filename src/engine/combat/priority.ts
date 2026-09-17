@@ -67,7 +67,7 @@ export function orderActions(
   fieldEffects: Record<string, FieldEffectDefinition> = {},
   /** Conditional passives can grant Speed; turn order must read the same number the card shows. */
   passives: Record<string, PassiveDefinition> = {}
-): { ordered: Action[]; keys: OrderedAction[]; nextRngState: RngState } {
+): { ordered: Action[]; keys: OrderedAction[]; reversedSpeed: boolean; nextRngState: RngState } {
   const activeFieldEffectId = state.activeFieldEffect?.fieldEffectId;
   const activeFieldEffectDef = activeFieldEffectId ? fieldEffects[activeFieldEffectId] : undefined;
   const speedDirection = activeFieldEffectDef?.reversesSpeedOrder ? 1 : -1;
@@ -116,7 +116,32 @@ export function orderActions(
     i = j;
   }
 
-  return { ordered: withKeys.map((w) => w.action), keys: withKeys, nextRngState: cursor };
+  return { ordered: withKeys.map((w) => w.action), keys: withKeys, reversedSpeed: speedDirection === 1, nextRngState: cursor };
+}
+
+/**
+ * Whether a bracket put entry `i` somewhere Speed alone would not have: a cut ahead of someone
+ * Speed would have sent first, or a hold behind someone it would have sent later. Read against the
+ * order's own entries, so a +1 on the hero Speed already favoured — which changes nothing — is not
+ * an effect. Under Stasis Bubble (`reversedSpeed`) the favoured one is the slower, so the
+ * comparison flips with it. A rolled bracket (null) sits at 0.
+ */
+export function bracketEffect(
+  entries: readonly { priority: number | null; speed: number }[],
+  i: number,
+  reversedSpeed: boolean
+): 'cut' | 'held' | null {
+  const p = entries[i].priority ?? 0;
+  if (p === 0) return null;
+  const outpaces = (a: { speed: number }, b: { speed: number }) => (reversedSpeed ? a.speed < b.speed : a.speed > b.speed);
+  if (p > 0) return entries.slice(i + 1).some((e) => outpaces(e, entries[i])) ? 'cut' : null;
+  return entries.slice(0, i).some((e) => outpaces(entries[i], e)) ? 'held' : null;
+}
+
+export interface OrderPreview {
+  entries: OrderPreviewEntry[];
+  /** Stasis Bubble: the slower combatant resolves first within a bracket. */
+  reversedSpeed: boolean;
 }
 
 export interface OrderPreviewEntry {
@@ -143,7 +168,7 @@ export function previewOrder(
   moves: Record<string, MoveDefinition>,
   fieldEffects: Record<string, FieldEffectDefinition> = {},
   passives: Record<string, PassiveDefinition> = {}
-): OrderPreviewEntry[] {
+): OrderPreview {
   const activeFieldEffectId = state.activeFieldEffect?.fieldEffectId;
   const activeFieldEffectDef = activeFieldEffectId ? fieldEffects[activeFieldEffectId] : undefined;
   const speedDirection = activeFieldEffectDef?.reversesSpeedOrder ? 1 : -1;
@@ -161,8 +186,11 @@ export function previewOrder(
     };
   });
   keyed.sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0) || (a.speed - b.speed) * speedDirection);
-  return keyed.map((entry, i) => ({
-    ...entry,
-    tiedWithPrevious: i > 0 && (keyed[i - 1].priority ?? 0) === (entry.priority ?? 0) && keyed[i - 1].speed === entry.speed,
-  }));
+  return {
+    entries: keyed.map((entry, i) => ({
+      ...entry,
+      tiedWithPrevious: i > 0 && (keyed[i - 1].priority ?? 0) === (entry.priority ?? 0) && keyed[i - 1].speed === entry.speed,
+    })),
+    reversedSpeed: speedDirection === 1,
+  };
 }

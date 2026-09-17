@@ -2,7 +2,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { HeroDefinition } from '../../engine/content';
 import type { Combatant } from '../../engine/state';
 import { effectiveTypes } from '../../engine/state';
-import { REST_PRIORITY_BRACKET, SWITCH_PRIORITY_BRACKET } from '../../engine/combat/priority';
+import { REST_PRIORITY_BRACKET, SWITCH_PRIORITY_BRACKET, bracketEffect } from '../../engine/combat/priority';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { StatGlyph } from '../shared/statIcons';
 import { getTypeColorRgb } from './typeColors';
@@ -32,28 +32,15 @@ function bracketPip(priority: number | null): ReactNode {
 }
 
 /**
- * Whether a bracket put this entry somewhere Speed alone would not have: a cut ahead of a faster
- * combatant, or a hold behind a slower one. Read against the ribbon's own entries, so a +1 on the
- * fastest hero — which changes nothing — is a pip and no more.
- */
-function bracketEffect(entries: readonly RibbonEntry[], i: number): 'cut' | 'held' | null {
-  const p = entries[i].priority ?? 0;
-  if (p === 0) return null;
-  if (p > 0) return entries.slice(i + 1).some((e) => e.speed > entries[i].speed) ? 'cut' : null;
-  return entries.slice(0, i).some((e) => e.speed < entries[i].speed) ? 'held' : null;
-}
-
-/**
  * The order this round resolves in, read left to right — the Speed stat's own glyph leads it,
  * since Speed is what it sorts on until a bracket says otherwise. A tie is the two portraits joined
  * by "=" instead of a chevron: the RNG decides, and the ribbon says so rather than picking one. A
- * non-zero bracket wears its pip on the portrait, and where it actually moved the entry — past a
- * faster combatant, or behind a slower one — the socket is lit for it and the chevron ahead of a
- * cut doubles. While commanding the enemy sits at bracket 0, since what it declared is not known
+ * non-zero bracket wears its pip on the portrait, and where it actually moved the entry
+ * (priority.ts bracketEffect) the socket is lit for it and the chevron ahead of a cut doubles. While commanding the enemy sits at bracket 0, since what it declared is not known
  * until the round plays; during playback every bracket is the real one, and `phase` walks the
  * ribbon along with the beats — done entries fall back, the current one stands forward.
  */
-export function TurnOrderRibbon({ entries }: { entries: readonly RibbonEntry[] }) {
+export function TurnOrderRibbon({ entries, reversedSpeed = false }: { entries: readonly RibbonEntry[]; reversedSpeed?: boolean }) {
   if (entries.length < 2) return null;
   const summary = entries.map((e) => e.hero.name).join(', ');
   return (
@@ -61,7 +48,7 @@ export function TurnOrderRibbon({ entries }: { entries: readonly RibbonEntry[] }
       <StatGlyph stat="speed" tone="inherit" className="turn-order-lead" />
       {entries.map((entry, i) => {
         const pip = bracketPip(entry.priority);
-        const effect = bracketEffect(entries, i);
+        const effect = bracketEffect(entries, i, reversedSpeed);
         const types = effectiveTypes(entry.hero, entry.combatant);
         const socketClass = [
           'turn-order-socket',

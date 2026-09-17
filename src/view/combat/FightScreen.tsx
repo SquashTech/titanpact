@@ -649,7 +649,7 @@ export function FightScreen({
    * (RoundOrdered), the combatants whose turn has begun so far in beat order, and whether the
    * round's actions are all behind us. Null outside a round's playback — the intro, and the command phase.
    */
-  const [playbackOrder, setPlaybackOrder] = useState<{ order: RoundOrderEntry[]; begun: string[]; ended: boolean } | null>(null);
+  const [playbackOrder, setPlaybackOrder] = useState<{ order: RoundOrderEntry[]; reversedSpeed: boolean; begun: string[]; ended: boolean } | null>(null);
   /** Only a React key: consecutive beats can carry identical text, and the headline must remount to replay its arrival. */
   const [beatSeq, setBeatSeq] = useState(0);
   const [popups, setPopups] = useState<Record<string, Popup>>({});
@@ -792,7 +792,7 @@ export function FightScreen({
   // The round's resolve order as it stands: the player's declared actions at their real bracket,
   // everyone else at 0 (engine/combat/priority.ts previewOrder). Re-derived every render, so a
   // priority move or a Speed change moves its hero the moment it is committed.
-  const orderPreview: RibbonEntry[] = (() => {
+  const orderPreview: { entries: RibbonEntry[]; reversedSpeed: boolean } = (() => {
     const declared: Action[] = playerActiveAlive.flatMap((id): Action[] => {
       const p = pending[id];
       if (!isPendingComplete(p)) return [];
@@ -800,14 +800,16 @@ export function FightScreen({
       if (p!.kind === 'rest') return [{ kind: 'rest', combatantId: id }];
       return [{ kind: 'move', combatantId: id, moveId: p!.moveId!, declaredTarget: p!.declaredTarget }];
     });
-    return previewOrder(combat, allCombatants, [...enemyActiveAlive, ...playerActiveAlive], declared, moves, fieldEffects, passives).map(
-      (entry) => ({
+    const preview = previewOrder(combat, allCombatants, [...enemyActiveAlive, ...playerActiveAlive], declared, moves, fieldEffects, passives);
+    return {
+      reversedSpeed: preview.reversedSpeed,
+      entries: preview.entries.map((entry) => ({
         ...entry,
         hero: allCombatants[combat.combatants[entry.combatantId].heroId],
         combatant: combat.combatants[entry.combatantId],
         ally: combat.combatants[entry.combatantId].side === PLAYER_SIDE,
-      })
-    );
+      })),
+    };
   })();
 
   // The same ribbon during playback, off the engine's settled order: the last combatant whose
@@ -1143,7 +1145,7 @@ export function FightScreen({
     setPlaybackOrder((prev) => {
       let cur = prev;
       for (const e of revealed.events) {
-        if (e.type === 'RoundOrdered') cur = { order: e.order, begun: [], ended: false };
+        if (e.type === 'RoundOrdered') cur = { order: e.order, reversedSpeed: e.reversedSpeed, begun: [], ended: false };
         else if (!cur || cur.ended) continue;
         else if (e.type === 'TurnStarted' || e.type === 'ActionBlocked') cur = { ...cur, begun: [...cur.begun, e.combatantId] };
         else if (e.type === 'SwitchedIn' && e.outCombatantId && cur.order.some((o) => o.combatantId === e.outCombatantId && o.kind === 'switch'))
@@ -1404,7 +1406,12 @@ export function FightScreen({
 
         {/* The resolve order, on the field's bottom edge under the ally band: the preview while
             commanding, the engine's settled order walked beat by beat while the round plays. */}
-        {!winner && <TurnOrderRibbon entries={resolving ? playbackEntries : orderPreview} />}
+        {!winner &&
+          (resolving ? (
+            <TurnOrderRibbon entries={playbackEntries} reversedSpeed={playbackOrder?.reversedSpeed ?? false} />
+          ) : (
+            <TurnOrderRibbon entries={orderPreview.entries} reversedSpeed={orderPreview.reversedSpeed} />
+          ))}
       </div>
 
       <div className="action-area" style={consoleStyle}>

@@ -582,9 +582,12 @@ or a Rest (`☾`) moves its portrait and wears the bracket as a pip; a rolled br
 ribbon walks it beat by beat: the last combatant whose turn began (`TurnStarted`, a Daze block,
 a voluntary switch) stands forward in its type light, the ones before it fall back, a fainted one
 is greyed, and the round's end retires them all. **A bracket that changed the order is lit**
-(`bracketEffect`): a cut ahead of someone faster takes a gold ring and a doubled chevron `»`
-in front of it, a hold behind someone slower a cold one; a +1 on the fastest hero, which moved
-nothing, is a pip and no more. Both readouts are the one component (`TurnOrderRibbon`).
+(`bracketEffect`, `engine/combat/priority.ts`): a cut ahead of someone Speed would have sent
+first takes a gold ring and a doubled chevron `»` in front of it, a hold behind someone it would
+have sent later a cold one; a +1 on the hero Speed already favoured, which moved nothing, is a
+pip and no more. "Favoured" is read on the field's own axis — `previewOrder` and `RoundOrdered`
+both carry `reversedSpeed`, so under Stasis Bubble the slower hero is the one a cut goes past.
+Both readouts are the one component (`TurnOrderRibbon`).
 
 **Open, deliberately:** the hold cap, the price and the drop odds are all playtest numbers; and
 whether a potion should be drinkable during a forced-replacement beat after a KO — the moment a
