@@ -4025,7 +4025,10 @@ export const moves: Record<string, MoveDefinition> = {
   // resolves at 1x into everything (typechart.ts — a seal is not a weapon), so an Ancient STAB
   // move is worth more than its Base Power reads and the bodies are authored 10-20 under the
   // hero slates' at each tier. The slate's verb is not hitting harder: it is making everything
-  // else softer, slower and shorter — and, for the Herald, standing its company up.
+  // else softer, slower and shorter — and, for the Herald, standing its company up. Three of the
+  // hits are PHYSICAL (Weight of Ages, Long Drink, Transfix — the seal's weight, its grasp, its
+  // point): an all-magical enemy type would make Defense worthless in every Guardian fight and
+  // the finale, and a Guardian's line is built for both hands. The Eyes, at 40 Attack, hold none.
   runicBlast: {
     id: 'runicBlast',
     name: 'Runic Blast',
@@ -4087,7 +4090,7 @@ export const moves: Record<string, MoveDefinition> = {
     name: 'Weight of Ages',
     tier: 'mid',
     type: 'Ancient',
-    category: 'magical',
+    category: 'physical',
     kind: 'damage',
     basePower: 50,
     statDeltas: [{ stat: 'speed', amount: -15 }],
@@ -4103,21 +4106,21 @@ export const moves: Record<string, MoveDefinition> = {
     name: 'Transfix',
     tier: 'mid',
     type: 'Ancient',
-    category: 'magical',
+    category: 'physical',
     kind: 'damage',
     basePower: 40,
     statusApplication: { statusId: 'Daze', target: 'moveTarget' },
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Held in a regard older than fear — the target flinches if it has not yet moved (Daze).',
+    description: "Pinned on the standard's point — the target flinches if it has not yet moved (Daze).",
   },
   longDrink: {
     id: 'longDrink',
     name: 'Long Drink',
     tier: 'mid',
     type: 'Ancient',
-    category: 'magical',
+    category: 'physical',
     kind: 'damage',
     basePower: 60,
     drainPercent: 0.5,

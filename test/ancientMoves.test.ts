@@ -53,13 +53,15 @@ function fight(seed: number, a: { id: string; heroId: string }[], b: { id: strin
 const heraldFixture = (seed: number) =>
   fight(seed, [{ id: 'a1', heroId: 'valor' }, { id: 'a2', heroId: 'dawnwarden' }], [{ id: 'b1', heroId: ENDBRINGER_ID }, { id: 'b2', heroId: 'armillary' }]);
 
-test('ancient: the slate is eleven moves plus the Eyes’ five, every one tiered, magical, and Ancient-typed', () => {
+test('ancient: the slate is eleven moves plus the Eyes’ five, every one tiered and Ancient-typed, three of the hits physical', () => {
   assert.strictEqual(slate().length, 11);
   assert.strictEqual(ancient().length, 16);
-  for (const m of ancient()) {
-    assert.ok(m.tier, `${m.id} carries no tier`);
-    assert.strictEqual(m.category, 'magical', `${m.id} is not magical — the whole slate is`);
-  }
+  for (const m of ancient()) assert.ok(m.tier, `${m.id} carries no tier`);
+  // An all-magical enemy type would make Defense worthless in every Guardian fight and the finale.
+  const physical = ancient().filter((m) => m.category === 'physical').map((m) => m.id).sort();
+  assert.deepStrictEqual(physical, ['longDrink', 'transfix', 'weightOfAges']);
+  // The Eyes look; they hold no physical move at 40 Attack.
+  for (const id of EYE_MOVES) assert.strictEqual(moves[id].category, 'magical');
 });
 
 test('ancient: nothing on the slate is in any hero’s kit or pool, an Evolution grant, or a Class — the seal is enemy-only', () => {
@@ -124,7 +126,8 @@ test('ancient: Erode drops both heroes’ walls, scaled off the Herald’s Intel
   }
 });
 
-test('ancient: Transfix from the Herald lands first and the target loses its turn — Daze is cleared by the end of the round', () => {
+test('ancient: Transfix is physical, lands first from the Herald, and the target loses its turn — Daze is cleared by the end of the round', () => {
+  assert.strictEqual(moves.transfix.category, 'physical');
   const state = heraldFixture(3);
   const before = state.combatants.b2.currentHp;
   const { state: next, events } = resolveRound(

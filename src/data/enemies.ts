@@ -150,7 +150,8 @@ export const enemies: Record<string, HeroDefinition> = {
   // standard-bearer, guardianFigures.ts).
   //
   // 900 combat stats against the champions' 700 — a step, not a different number class.
-  // Magical-leaning (135 Int / 100 Atk) because the whole Ancient slate is magical, and
+  // Magical-leaning (135 Int / 100 Atk) with one physical hand — Transfix is the standard's
+  // point, so a Defense hero is not a bystander in the finale — and
   // Speed 95 for one reason: the fastest authored hero is 90, so nothing outruns it, but
   // it is still a Speed number rather than an exemption and every priority bracket still
   // beats it.
@@ -189,7 +190,7 @@ export const titanEyes: Record<string, HeroDefinition> = {
     name: 'Left Eye',
     types: ['Ancient'],
     baseStats: { hp: 540, attack: 40, defense: 105, intelligence: 155, wisdom: 105, speed: 92, manaPool: 220, mpRegen: 28 },
-    moveIds: ['gaze', 'regard', 'runicBlast', 'enfeeble'],
+    moveIds: ['gaze', 'regard', 'archonBlast', 'erode'],
     starter: false,
     growthGrades: CHAMPION_GRADES,
   },
@@ -207,7 +208,7 @@ export const titanEyes: Record<string, HeroDefinition> = {
     name: 'Left Eye',
     types: ['Ancient'],
     baseStats: { hp: 680, attack: 40, defense: 115, intelligence: 190, wisdom: 115, speed: 102, manaPool: 260, mpRegen: 32 },
-    moveIds: ['stare', 'glare', 'runicBlast', 'enfeeble'],
+    moveIds: ['stare', 'glare', 'archonBlast', 'erode'],
     starter: false,
     growthGrades: CHAMPION_GRADES,
   },
