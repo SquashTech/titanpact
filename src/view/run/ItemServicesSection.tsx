@@ -1,155 +1,216 @@
-import { useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
+import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
+import { levelOf } from '../../run/growth';
+import { itemSlotsFor, rosterEntryTypes } from '../../run/progression';
+import { anvilQuote, type ItemRef } from '../../run/runProgress';
 import type { RunState } from '../../run/state';
-import type { EnchantmentId } from '../../run/equipment';
-import { ENCHANTMENTS, ENCHANTMENT_IDS, enchantLabel } from '../../run/equipment';
-import { anvilQuote, anvilUpgrade, enchantItem, RunProgressError, type ItemRef } from '../../run/runProgress';
-import { ENCHANT_PRICE_BY_RARITY } from '../../run/shop';
-import { EquipmentFormGlyph } from '../shared/equipmentIcons';
+import { getTypeAbbr, getTypeColor, getTypeColorRgb } from '../combat/typeColors';
+import { ElementGlyph } from '../shared/elementIcons';
+import { enchantTypeOf, ItemPiece, RARITY_COLOR_VARS, RARITY_LABELS, slotBoxes } from '../shared/EquipmentBox';
+import { HeroPortrait } from '../shared/HeroPortrait';
 import { HubGlyph } from '../shared/nodeIcons';
-import { StatGlyph } from '../shared/statIcons';
-import { TypeBadge } from '../shared/TypeBadge';
+import { SmithyBeat, type SmithyWork } from './SmithyBeat';
+import { SmithyWorkSheet } from './SmithyWorkSheet';
+import { AnvilFigure } from './smithyArt';
 
 interface Props {
   run: RunState;
   onRunChange: (next: RunState) => void;
 }
 
-interface OwnedItem {
-  key: string;
-  ref: ItemRef;
-  itemId: string;
-  /** The hero carrying it — the player picks the item, not the socket. */
-  holder: string;
+/** Which socket is on the bench, keyed the way the roster addresses it. */
+function refKey(ref: ItemRef): string {
+  return `${ref.rosterId}:${ref.index}`;
 }
 
-/** Everything the player owns is on a hero (docs/gear-absorption.md), and both services work on it there. */
-function ownedItems(run: RunState): OwnedItem[] {
-  const out: OwnedItem[] = [];
-  for (const entry of run.roster) {
-    entry.equipment.forEach((itemId, index) => {
-      out.push({
-        key: `hero:${entry.rosterId}:${index}`,
-        ref: { rosterId: entry.rosterId, index },
-        itemId,
-        holder: rosterHeroes[entry.heroId]?.name ?? entry.heroId,
-      });
-    });
-  }
-  return out;
-}
+/** Embers off the forge, laid out once so the header does not re-scatter on every render. */
+const EMBERS = Array.from({ length: 9 }, (_, i) => {
+  const seed = i * 137.51;
+  return { x: 18 + ((seed * 0.37) % 64), delay: (seed * 0.9) % 3200, dur: 2600 + ((seed * 0.5) % 1800), size: 2 + ((seed * 0.11) % 2) };
+});
 
 /**
- * The Anvil and the Enchanter (docs/equipment.md §5), the Guild Hall's smithy since the Blacksmith
- * folded back into it (docs/gear-absorption.md §6). Both are services rather than one-shot
- * rewards: repeatable and unbounded so long as the player can pay, over the gear the roster
- * already wears — the only gear there is. Merging is the free route up a tier; the Anvil is the
- * paid one for a piece with no duplicate coming.
+ * The Guild Hall's smithy (docs/equipment.md §5; docs/gear-absorption.md §6), rebuilt as a room
+ * rather than a list (2026-09-16, per user direction). Every piece the player owns is on a hero,
+ * so the tab is the roster: each hero's bench, the hero on it, and its three sockets — the same
+ * sockets the who-screen fills. A tap on a piece opens its work sheet (SmithyWorkSheet); the
+ * Anvil and the Enchanter both happen there, and what they make is played out on the piece
+ * (SmithyBeat) before the bench shows it. The list it replaces put eighteen identical rows under
+ * two price buttons each, and read as an invoice.
  */
 export function ItemServicesSection({ run, onRunChange }: Props) {
-  const [enchanting, setEnchanting] = useState<OwnedItem | null>(null);
-  const owned = ownedItems(run);
+  const [working, setWorking] = useState<ItemRef | null>(null);
+  /** The beat playing over the work just paid for, and the socket it lands in. */
+  const [beat, setBeat] = useState<{ work: SmithyWork; key: string } | null>(null);
+  /** The socket the last piece of work landed in, lit for a moment once the beat clears. */
+  const [fresh, setFresh] = useState<string | null>(null);
 
-  function apply(fn: () => RunState) {
-    try {
-      onRunChange(fn());
-    } catch (err) {
-      if (!(err instanceof RunProgressError)) throw err;
-    }
-  }
+  useEffect(() => {
+    if (!fresh) return;
+    const timer = window.setTimeout(() => setFresh(null), 2400);
+    return () => window.clearTimeout(timer);
+  }, [fresh]);
 
-  if (owned.length === 0) {
-    return (
-      <div className="guild-hall-section">
-        <div className="guild-hall-section-head">
-          <span className="guild-hall-section-title">
-            <HubGlyph name="anvil" /> Anvil &amp; Enchanter
-          </span>
-        </div>
-        <p className="hint">Nobody is wearing anything yet.</p>
-      </div>
-    );
-  }
+  const total = run.roster.reduce((n, entry) => n + entry.equipment.length, 0);
+  const liftable = run.roster.reduce(
+    (n, entry) => n + entry.equipment.filter((itemId) => anvilQuote(run, itemId, equipment) !== null).length,
+    0
+  );
 
-  if (enchanting) {
-    const item = equipment[enchanting.itemId];
-    const cost = item ? ENCHANT_PRICE_BY_RARITY[item.rarity] : 0;
-    return (
-      <div className="guild-hall-section">
-        <div className="guild-hall-section-head">
-          <span className="guild-hall-section-title">
-            <StatGlyph stat="intelligence" tone="inherit" /> Enchant {item?.name}
-          </span>
-          <span className="guild-hall-section-hint">{cost}g — one enchantment per item</span>
-        </div>
-        <div className="enchant-grid">
-          {ENCHANTMENT_IDS.map((enchantId) => {
-            const held = item?.enchantId === enchantId;
-            return (
-              <button
-                key={enchantId}
-                className={`enchant-option${held ? ' is-held' : ''}`}
-                disabled={held || run.gold < cost}
-                onClick={() => {
-                  const target = enchanting;
-                  setEnchanting(null);
-                  apply(() => enchantItem(run, target.ref, enchantId, equipment));
-                }}
-              >
-                <span className="enchant-option-name">{enchantLabel(enchantId)}</span>
-                <TypeBadge type={ENCHANTMENTS[enchantId]} />
-              </button>
-            );
-          })}
-        </div>
-        <button className="guild-hall-service-cancel" onClick={() => setEnchanting(null)}>
-          Back
-        </button>
-      </div>
-    );
-  }
+  const workingEntry = working ? run.roster.find((r) => r.rosterId === working.rosterId) : null;
+  const workingHero = workingEntry ? rosterHeroes[workingEntry.heroId] : null;
+  const workingItem = working && workingEntry ? equipment[workingEntry.equipment[working.index] ?? ''] : null;
 
   return (
-    <div className="guild-hall-section">
+    <div className="smithy">
+      {/* The forge itself, as the counter's sign: the anvil lit from below, embers rising off it.
+          The tally under it is the whole of what the tab has to say before a bench is opened. */}
+      <div className="smithy-forge" aria-hidden="true">
+        <span className="smithy-forge-glow" />
+        <span className="smithy-forge-embers">
+          {EMBERS.map((e, i) => (
+            <i
+              key={i}
+              style={
+                {
+                  left: `${e.x}%`,
+                  width: `${e.size}px`,
+                  height: `${e.size}px`,
+                  animationDelay: `${e.delay}ms`,
+                  animationDuration: `${e.dur}ms`,
+                } as CSSProperties
+              }
+            />
+          ))}
+        </span>
+        <AnvilFigure className="smithy-forge-anvil" />
+      </div>
       <div className="guild-hall-section-head">
         <span className="guild-hall-section-title">
-            <HubGlyph name="anvil" /> Anvil &amp; Enchanter
-          </span>
-        <span className="guild-hall-section-hint">Upgrade a tier, or bind an element</span>
+          <HubGlyph name="anvil" /> Anvil &amp; Enchanter
+        </span>
+        <span className="guild-hall-section-hint">
+          {total === 0
+            ? 'Nobody is wearing anything yet.'
+            : `${total} ${total === 1 ? 'piece' : 'pieces'} on the roster · ${liftable} can be lifted · tap one to work it`}
+        </span>
       </div>
-      <div className="item-service-list">
-        {owned.map((owned) => {
-          const item = equipment[owned.itemId];
-          if (!item) return null;
-          const quote = anvilQuote(run, owned.itemId, equipment);
-          const enchantCost = ENCHANT_PRICE_BY_RARITY[item.rarity];
+
+      <div className="smithy-benches">
+        {run.roster.map((entry) => {
+          const hero = rosterHeroes[entry.heroId];
+          if (!hero) return null;
+          const capacity = itemSlotsFor(hero, entry);
+          const boxes = slotBoxes(entry.equipment, capacity);
+          const bare = entry.equipment.length === 0;
           return (
-            <div key={owned.key} className={`item-service-row tier-${item.rarity}`}>
-              <EquipmentFormGlyph item={item} className="item-service-glyph" />
-              <span className="item-service-body">
-                <span className="item-service-name">{item.name}</span>
-                <span className="item-service-holder">{owned.holder}</span>
-              </span>
-              <button
-                className="item-service-button"
-                disabled={!quote || run.gold < quote.cost}
-                title={quote ? `Upgrade to ${equipment[quote.targetId]?.name}` : 'Nothing above this'}
-                onClick={() => quote && apply(() => anvilUpgrade(run, owned.ref, equipment))}
-              >
-                <HubGlyph name="anvil" /> {quote ? `${quote.cost}g` : '—'}
-              </button>
-              <button
-                className="item-service-button"
-                disabled={run.gold < enchantCost}
-                onClick={() => setEnchanting(owned)}
-              >
-                <StatGlyph stat="intelligence" tone="inherit" /> {enchantCost}g
-              </button>
-            </div>
+            <section
+              key={entry.rosterId}
+              className={`smithy-bench${bare ? ' is-bare' : ''}`}
+              style={{ '--hero-color': getTypeColor(hero.types[0]), '--type-rgb': getTypeColorRgb(hero.types[0]) } as CSSProperties}
+            >
+              <div className="smithy-bench-hero">
+                <span className="smithy-bench-figure">
+                  <span className="smithy-bench-ground" aria-hidden="true" />
+                  <HeroPortrait heroId={hero.id} className="smithy-bench-portrait" />
+                </span>
+                <span className="smithy-bench-ident">
+                  <span className="smithy-bench-name">{hero.name}</span>
+                  <span className="smithy-bench-meta">
+                    <span className="smithy-bench-level">Lv {levelOf(entry)}</span>
+                    {rosterEntryTypes(hero, entry).map((t) => (
+                      <span key={t} className="smithy-bench-type" style={{ color: getTypeColor(t) }} title={t}>
+                        <ElementGlyph type={t} />
+                        {getTypeAbbr(t)}
+                      </span>
+                    ))}
+                  </span>
+                </span>
+              </div>
+
+              <div className="smithy-sockets">
+                {boxes.map((itemId, index) => {
+                  const item = itemId ? (equipment[itemId] ?? null) : null;
+                  const ref: ItemRef = { rosterId: entry.rosterId, index };
+                  const key = refKey(ref);
+                  if (!item) {
+                    return (
+                      <span key={index} className="smithy-socket is-empty" aria-label="Empty socket">
+                        <span className="smithy-socket-box">
+                          <ItemPiece item={null} />
+                        </span>
+                        <span className="smithy-socket-name">Open</span>
+                      </span>
+                    );
+                  }
+                  const quote = anvilQuote(run, item.id, equipment);
+                  const enchantType = enchantTypeOf(item);
+                  return (
+                    <button
+                      key={index}
+                      type="button"
+                      className={`smithy-socket${fresh === key ? ' is-fresh' : ''}`}
+                      style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}
+                      data-sfx="ui.select"
+                      title={`${item.name} — ${RARITY_LABELS[item.rarity]}`}
+                      onClick={() => setWorking(ref)}
+                    >
+                      <span className="smithy-socket-box">
+                        <ItemPiece item={item} />
+                        {quote && (
+                          <span
+                            className="smithy-socket-lift"
+                            style={{ '--lift-color': RARITY_COLOR_VARS[quote.targetRarity] } as CSSProperties}
+                            aria-label={`Can be lifted to ${RARITY_LABELS[quote.targetRarity]}`}
+                          >
+                            <HubGlyph name="anvil" />
+                          </span>
+                        )}
+                      </span>
+                      <span className="smithy-socket-name">{item.name}</span>
+                      <span className="smithy-socket-tier">
+                        {RARITY_LABELS[item.rarity]}
+                        {enchantType && <ElementGlyph type={enchantType} className="smithy-socket-bound" />}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
           );
         })}
       </div>
+
+      {working && workingEntry && workingHero && workingItem && (
+        <SmithyWorkSheet
+          run={run}
+          hero={workingHero}
+          entry={workingEntry}
+          itemRef={working}
+          item={workingItem}
+          onCommit={(next, work) => {
+            onRunChange(next);
+            setWorking(null);
+            setBeat({ work, key: refKey(working) });
+          }}
+          onClose={() => {
+            playSfx('ui.back');
+            setWorking(null);
+          }}
+        />
+      )}
+
+      {beat && (
+        <SmithyBeat
+          work={beat.work}
+          onDone={() => {
+            setFresh(beat.key);
+            setBeat(null);
+          }}
+        />
+      )}
     </div>
   );
 }

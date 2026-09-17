@@ -36,6 +36,9 @@ export type SfxId =
   | 'blessing'
   | 'class.learn'
   | 'cache.open'
+  | 'anvil.strike'
+  | 'anvil.ring'
+  | 'enchant.bind'
   | 'gold.coin'
   | 'gold.purse'
   | 'xp.orb'
@@ -460,6 +463,51 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'triangle', freq: 262, gain: 0.22, attack: 0.01, decay: 0.55, delay: 0.13 },
       { wave: 'sine', freq: 1047, gain: 0.16, attack: 0.008, decay: 0.6, delay: 0.13 },
       { wave: 'sine', freq: 1319, detune: 9, gain: 0.13, attack: 0.01, decay: 0.7, delay: 0.19 },
+    ],
+  },
+
+  /**
+   * The Smithy's hammer on hot metal (SmithyBeat): a hard, narrow clank — a Q-8 noise burst at the
+   * anvil's own mode and three inharmonic partials, detuned so they beat — with a thump under it for
+   * the weight of the swing. The beat plays it three times with a rising `pitch`.
+   */
+  'anvil.strike': {
+    gain: 0.5,
+    jitter: 0.015,
+    voices: [
+      { wave: 'noise', gain: 0.4, attack: 0.001, decay: 0.07, filter: { type: 'bandpass', freq: 2900, q: 7 } },
+      { wave: 'noise', gain: 0.22, attack: 0.001, decay: 0.16, filter: { type: 'lowpass', freq: 900, freqEnd: 160, q: 1.1 } },
+      { wave: 'sine', freq: 95, freqEnd: 58, gain: 0.34, attack: 0.002, decay: 0.2 },
+      { wave: 'sine', freq: 1244, gain: 0.16, attack: 0.001, decay: 0.24, delay: 0.004 },
+      { wave: 'sine', freq: 2093, detune: 14, gain: 0.12, attack: 0.001, decay: 0.18, delay: 0.004 },
+      { wave: 'sine', freq: 3322, detune: -9, gain: 0.07, attack: 0.001, decay: 0.12, delay: 0.004 },
+    ],
+  },
+
+  /** The last strike's ring: the piece taking its new tier. `anvil.strike`'s partials left to sing, and a bright shimmer opening over them. */
+  'anvil.ring': {
+    gain: 0.46,
+    jitter: 0.01,
+    voices: [
+      { wave: 'noise', gain: 0.3, attack: 0.001, decay: 0.08, filter: { type: 'bandpass', freq: 3200, q: 6 } },
+      { wave: 'sine', freq: 1244, gain: 0.22, attack: 0.002, decay: 1.1 },
+      { wave: 'sine', freq: 2093, detune: 11, gain: 0.16, attack: 0.002, decay: 0.9, delay: 0.01 },
+      { wave: 'sine', freq: 2637, detune: -7, gain: 0.1, attack: 0.004, decay: 1.3, delay: 0.02 },
+      { wave: 'noise', gain: 0.12, attack: 0.12, decay: 0.7, delay: 0.08, filter: { type: 'bandpass', freq: 1200, freqEnd: 7000, q: 0.9 } },
+      { wave: 'sine', freq: 3136, gain: 0.08, attack: 0.05, decay: 1.2, delay: 0.16 },
+    ],
+  },
+
+  /** The Enchanter's circle drawing in (SmithyBeat): a filtered saw rising an octave and a half under three chimes climbing the same way. The element's own `cast.*` is what lands on the piece after it. */
+  'enchant.bind': {
+    gain: 0.4,
+    jitter: 0.02,
+    voices: [
+      { wave: 'sawtooth', freq: 196, freqEnd: 587, gain: 0.14, attack: 0.05, hold: 0.5, decay: 0.4, filter: { type: 'lowpass', freq: 700, freqEnd: 3200, q: 2.4 } },
+      { wave: 'noise', gain: 0.1, attack: 0.2, decay: 0.7, filter: { type: 'bandpass', freq: 1800, freqEnd: 6500, q: 1.2 } },
+      { wave: 'sine', freq: 784, gain: 0.12, attack: 0.01, decay: 0.4, delay: 0.3 },
+      { wave: 'sine', freq: 1175, detune: 8, gain: 0.12, attack: 0.01, decay: 0.45, delay: 0.55 },
+      { wave: 'sine', freq: 1568, detune: -6, gain: 0.12, attack: 0.01, decay: 0.6, delay: 0.8 },
     ],
   },
 

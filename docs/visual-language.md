@@ -3496,6 +3496,70 @@ the gate's own two-button row stays the one commit. The console's dossier render
 rather than through the portalled `StageMovePopup`, because the gate sits at z-index 30 and a
 dossier portalled to the shell at 25 painted under it.
 
+## Thirty-seventh pass — the Smithy as a room (2026-09-16)
+
+The Guild Hall's Smithy tab was a list: every owned piece as a row — glyph, name, holder's name
+— with the Anvil's price and the Enchanter's price as two small buttons on the right, and the
+Enchanter's fourteen elements as a grid of grey rectangles that replaced the list while open.
+The run's dearest purchases, and the tier changing under the finger was the whole of what they
+showed. The user called it underwhelming and asked for oomph: an anvil-and-hammer beat for an
+upgrade, one for an enchantment, buttons and screens that are pronounced, and the tab organised
+by hero with the sprites saying who wears what. Four files: `ItemServicesSection` (the tab),
+`SmithyWorkSheet` (the piece), `SmithyBeat` (what it became) and `smithyArt` (the anvil, the
+hammer, the Enchanter's circle), and three sounds (`anvil.strike`, `anvil.ring`,
+`enchant.bind`).
+
+**The tab is the roster.** A forge sits under the section mark — the anvil lit from below, nine
+embers rising off it, ambient like the hall's lanterns — and under it a **bench per hero**: the
+sprite on its type-coloured ground with the name, level pill and type codes, and its three
+sockets on the right. The sockets are the who-screen's (`.item-box` geometry, `ItemPiece` in it),
+so a piece looks here exactly as it did when it was given; each carries its name and tier under
+it, the enchant's element glyph beside the tier, and a small anvil badge in the colour of the
+tier the Anvil would lift it to, so "which of these can still be lifted" is read off the tab
+without opening anything. An empty socket is a drawn hole labelled *Open*, since who-has-what
+includes what room is left; a hero wearing nothing keeps its bench, dimmed. Six benches at
+~110px each scroll under the tab strip, which was the user's stated tolerance ("up to 18
+pieces"). The hint line carries the tally: *12 pieces on the roster · 12 can be lifted · tap one
+to work it*.
+
+**A tap opens the work sheet.** The hero sheet's panel shape (`.detail-overlay.is-sheet`, a
+sheet footer with *Leave the bench*), the piece as its subject: the holder in the corner on a
+plate, the piece at 68px under a rarity wash, its name, tier and `-bound` element, and its
+labelled chips. Then two **slabs**, each the shape of a shop counter: **The Anvil** prints the
+lift as two tier pills and an arrow (*Rare ➜ Epic*) over the target's LABELLED chips — the
+strike buys something the player has read, not a colour change — and one big commit button,
+**STRIKE · 45**, coloured in the tier it reaches; when the Anvil will not take the piece the
+slab says why in a sentence (*Epic is not forged until Act 3*, *A Unique has no ladder to
+climb*, *Nothing stands above Mythic*) and the button reads *Cannot lift*. **The Enchanter**
+lays the fourteen elements out as type-coloured tiles, the glyph over the adjective, the one
+already bound marked *Bound* and disabled; a tile is a selection (it lifts and its glyph pulses),
+and the commit under the grid reads **BIND RIMED · 35** in the picked type's colour, or *Pick an
+element* greyed until one is. A short purse turns the price pill red on either button. The
+sheet's body scrolls under its head, and the two slabs are `flex: none` — their `overflow:
+hidden` (for the corner glow) would otherwise let flex shrink them and clip the grid, which it
+did on the first capture.
+
+**The beat** (`SmithyBeat`, the merge burst's shape: full-screen, nearly opaque, self-clearing, a
+tap skips it, the change already landed before it plays). **The Anvil:** the piece sits on the
+anvil's face over the forge's heat, and the hammer — pivoted at the foot of its haft, up and to
+the right of the piece — swings three times on a 1.4s timeline (`STRIKE_AT` 420 / 800 / 1180ms,
+the CSS keyframes at 30 / 57 / 84% of it, fast down and slow up per keyframe), each strike
+re-keying the piece for a jolt, a spark fan off the face, a flash and an anvil shudder, with
+`anvil.strike` a semitone-ish higher each time; the third strike swaps the piece for the tier it
+reached with a wider flash, two rings and `anvil.ring`, the hammer lifts to rest, and the caption
+rises: *FORGED UP · Blazing Sword · EPIC* and the labelled chips. **The Enchanter:** the piece
+hovers inside a rune circle in the element's colour (two rings turning against each other, ticks
+and a hexagram), the element's own glyph breathing faintly behind, sixteen motes spiralling in
+from the ring's edge under `enchant.bind`; at 1050ms the circle locks, the piece is re-keyed
+with the enchant glyph on it, the flash and rings go out with the element's own `cast.*`, and
+the caption reads *BOUND · Thundering Staff · EPIC · STORM*. When the beat clears the socket it
+landed in is lit for a moment on the bench (`is-fresh`), so the eye lands where the money went.
+The beat's timeline runs off a ref to `onDone`, because the bench re-rendering mid-beat (its own
+highlight timer) handed the effect a new callback and restarted the hammer on the first capture.
+
+Reduced motion drops the hammer, the sparks, the motes, the embers and every ring, and holds
+the result and its caption for 900ms.
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.
