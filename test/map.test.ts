@@ -43,6 +43,7 @@ const REWARD_TYPES = new Set([
   'manaWellReward',
   'restReward',
   'forgeReward',
+  'leyLineReward',
   'event',
 ]);
 

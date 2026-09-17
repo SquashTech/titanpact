@@ -29,6 +29,8 @@ import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScr
 import { ItemWhoScreen } from '../view/run/ItemWhoScreen';
 import { ScrollNodeScreen, type ScrollPlan } from '../view/run/ScrollNodeScreen';
 import { ManaWellScreen } from '../view/run/ManaWellScreen';
+import { ForgeNodeScreen } from '../view/run/ForgeNodeScreen';
+import { LeyLineScreen } from '../view/run/LeyLineScreen';
 import { RestNodeScreen } from '../view/run/RestNodeScreen';
 import { GuardianBannerScreen } from '../view/run/GuardianBannerScreen';
 import { LevelUpScreen } from '../view/run/LevelUpScreen';
@@ -189,6 +191,8 @@ type Screen =
   | { kind: 'itemWho'; itemId: string; next: Screen }
   /** The Mana Well: +MANA_WELL_AMOUNT max Mana to one hero. */
   | { kind: 'manaWell'; nodeId: string }
+  | { kind: 'forge'; nodeId: string }
+  | { kind: 'leyLine'; nodeId: string }
   | { kind: 'rest'; nodeId: string }
   /**
    * Mastery Scrolls to whoever the player taps (run/mastery.ts, docs/mastery.md): the Scribe's
@@ -658,6 +662,10 @@ export function App() {
       });
     } else if (node.type === 'manaWellReward') {
       setScreen({ kind: 'manaWell', nodeId });
+    } else if (node.type === 'forgeReward') {
+      setScreen({ kind: 'forge', nodeId });
+    } else if (node.type === 'leyLineReward') {
+      setScreen({ kind: 'leyLine', nodeId });
     } else if (node.type === 'restReward') {
       setScreen({ kind: 'rest', nodeId });
     } else if (node.type === 'scribeReward') {
@@ -1260,6 +1268,14 @@ export function App() {
 
       {screen.kind === 'manaWell' && (
         <ManaWellScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+      )}
+
+      {screen.kind === 'forge' && (
+        <ForgeNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+      )}
+
+      {screen.kind === 'leyLine' && (
+        <LeyLineScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
       {screen.kind === 'rest' && (

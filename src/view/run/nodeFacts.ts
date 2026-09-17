@@ -8,7 +8,7 @@ import { EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, RARITY_ORDER, rarityWeightsFor } fr
 import { goldRangeFor, purseRangeFor } from '../../run/runProgress';
 import { MASTERY_EVOLUTION, SCRIBE_PICKS, SCRIBE_PIPS_EACH, SCROLL_CACHE_COUNT, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT } from '../../run/mastery';
 import { ENCOUNTER_XP_MULTIPLIER, encounterXpForAct, encounterXpKind } from '../../run/growth';
-import { MANA_WELL_AMOUNT } from '../../run/runProgress';
+import { LEY_LINE_FORCE, MANA_WELL_AMOUNT } from '../../run/runProgress';
 import { BOON_OFFER_COUNT } from '../../run/boons';
 import { OPENER_ESCORT_COUNT, championLevel, enemyLevelFor, guildHallLevel, spawnLeaderTierFor, type EncounterNodeKind } from '../../run/difficulty';
 import { ACT_ONE_OPENER_COUNT } from '../../run/spawn';
@@ -189,6 +189,10 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
       return { kind: 'Reward · Growth', facts: [{ glyph: 'scroll', label: 'Mastery', value: `+${SCROLL_CACHE_COUNT}`, note: `divided as you like — ${MASTERY_EVOLUTION} Evolves` }], odds: null };
     case 'manaWellReward':
       return { kind: 'Reward · Growth', facts: [{ glyph: 'mana', label: 'Max Mana', value: `+${MANA_WELL_AMOUNT}`, note: 'to 1 hero, permanent' }], odds: null };
+    case 'forgeReward':
+      return { kind: 'Reward · Gear', facts: [{ glyph: 'anvil', label: 'Lift', value: '1 piece', note: 'a tier up, free — the act still caps it' }], odds: null };
+    case 'leyLineReward':
+      return { kind: 'Reward · Build', facts: [{ glyph: 'enchant', label: 'Force', value: `+${LEY_LINE_FORCE}`, note: 'to 1 hero, its own element, permanent' }], odds: null };
     case 'restReward':
       return { kind: 'Reward · Recovery', facts: [{ glyph: 'hp', label: 'Mend', value: 'whole roster', note: 'HP carries between fights' }], odds: null };
     case 'currencyReward':

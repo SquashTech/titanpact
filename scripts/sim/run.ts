@@ -45,6 +45,8 @@ import {
   purseRangeFor,
   rollGoldRange,
   grantManaWell,
+  forgeLift,
+  grantLeyLine,
 } from '../../src/run/runProgress';
 import { MOVE_CAP, recordMoveOffer, grantOfferedMove, grantMove } from '../../src/run/progression';
 import { claimContract, claimContractReplacing, deriveContractOffer, isRecruitable, pickContractOffers, recruitFromGuildHall, recruitFromGuildHallReplacing, freshRosterId, buyContract } from '../../src/run/recruitment';
@@ -701,6 +703,15 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       const target = policy.statBoostTarget(run.roster, 'manaPool');
       return target ? grantManaWell(run, target.rosterId) : run;
     }
+    case 'forgeReward':
+      // The Anvil's pick with no price on it: the most valuable liftable piece on the strongest hero.
+      return resolveForge(run);
+    case 'leyLineReward': {
+      // Force pays only on the hero's own type's hits, so it goes to the strongest hero — the one
+      // most fielded — which is what a player does with a typed grant it cannot mis-aim.
+      const target = policy.passiveTarget(run.roster);
+      return target ? grantLeyLine(run, target.rosterId, rosterHeroes) : run;
+    }
     case 'equipmentReward': {
       // Three offered; the policy takes the one worth most to somebody. Equipment is a
       // power question, not a design experiment — the rarity curve is what's under test.
@@ -803,6 +814,24 @@ function resolveAnvil(run: RunState): RunState {
     }
   }
   return next;
+}
+
+/** The Forge node: the Anvil's pick, free — the most valuable liftable piece on the strongest hero. */
+function resolveForge(run: RunState): RunState {
+  for (const entry of policy.byPower(run.roster)) {
+    let bestIndex = -1;
+    let bestValue = -Infinity;
+    entry.equipment.forEach((itemId, index) => {
+      if (!anvilQuote(run, itemId, equipment)) return;
+      const value = policy.itemValueFor(entry, equipment[itemId] ?? null);
+      if (value > bestValue) {
+        bestValue = value;
+        bestIndex = index;
+      }
+    });
+    if (bestIndex >= 0) return forgeLift(run, { rosterId: entry.rosterId, index: bestIndex }, equipment);
+  }
+  return run;
 }
 
 /**

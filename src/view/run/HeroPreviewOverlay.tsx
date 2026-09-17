@@ -32,6 +32,7 @@ import { getTypeColor } from '../combat/typeColors';
 import { PassiveReadout } from '../shared/passiveIcons';
 import { PassiveDetailCard } from '../shared/PassiveDossier';
 import { HubGlyph } from '../shared/nodeIcons';
+import { StatusGlyph } from '../shared/statusIcons';
 
 interface Props {
   hero: HeroDefinition;
@@ -117,6 +118,24 @@ function GrantSourceRow({ label, mods }: { label: string; mods: StatModifiers })
         {grants.map(([stat, amount]) => (
           <span key={stat} className={`grant-source-chip ${amount > 0 ? 'stat-buff' : 'stat-debuff'}`}>
             <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} {amount > 0 ? `+${amount}` : amount}
+          </span>
+        ))}
+      </span>
+    </div>
+  );
+}
+
+/** The Ley Line's line of the ledger: Force is not a stat, so it wears the Force chip's glyph rather than a stat's. */
+function ForceSourceRow({ label, grants }: { label: string; grants: RosterEntry['bonusStatusGrants'] }) {
+  const held = Object.entries(grants).filter(([, amount]) => (amount ?? 0) > 0) as [string, number][];
+  if (held.length === 0) return null;
+  return (
+    <div className="grant-source-row">
+      <span className="grant-source-label">{label}</span>
+      <span className="grant-source-chips">
+        {held.map(([statusId, amount]) => (
+          <span key={statusId} className="grant-source-chip stat-buff">
+            <StatusGlyph statusId={statusId} className="grant-source-force" /> {statusId.slice(0, -'Force'.length)} Force +{amount}
           </span>
         ))}
       </span>
@@ -246,6 +265,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
                 <GrantSourceRow label="Items" mods={equipmentStatModifiers(entry.equipment, equipmentLookup)} />
                 <GrantSourceRow label="Evolution" mods={entry.evolutionStatGrants} />
                 <GrantSourceRow label="Boons" mods={entry.bonusStatGrants} />
+                <ForceSourceRow label="Ley Line" grants={entry.bonusStatusGrants} />
                 <GrantSourceRow label="Growth" mods={entry.growthStatGrants} />
                 {/* Hero-scoped passives only — relic-granted ones are already inside the Relics
                     line, and every grant has to appear exactly once for the ledger to add up. */}

@@ -19,6 +19,8 @@ export const MAP_NODE_TYPES = [
   'equipmentReward',
   'scrollReward',
   'manaWellReward',
+  'forgeReward',
+  'leyLineReward',
   'restReward',
   'passiveReward',
   'currencyReward',
@@ -124,6 +126,14 @@ export const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // so it is usually somewhere in an act and never in every row; the walk floor and the Guild
   // Hall's mend are the other two answers to a wound, and this is the one that costs power.
   ['restReward', 30],
+  // The Forge and the Ley Line (2026-09-17, per user direction): the Smithy's two verbs, the
+  // Anvil's and the Enchanter's, each given a free seat on the map — one lift of one worn piece,
+  // one hero drawing LEY_LINE_FORCE of its own element's Force for the run. Weighted level with
+  // each other and under the Cache: neither is the axis you plan around. Nine types into nine
+  // seats an act is what makes a reward row a draw again; seven into nine showed every type every
+  // act (docs/run-loop.md "The Forge and the Ley Line").
+  ['forgeReward', 25],
+  ['leyLineReward', 25],
 ];
 
 /** Weighted sample WITHOUT replacement — a reward row never repeats a type. REWARD_WEIGHTS is wider than any row, so `count` is always satisfiable. */

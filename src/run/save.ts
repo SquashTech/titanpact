@@ -11,7 +11,7 @@
 // player has no way to see that it happened. A refused save says so once and costs
 // one run; a silently broken one poisons every fight after it.
 
-import type { PassiveId, StatKey, TypeId } from '../engine/content';
+import type { PassiveId, StatKey, StatusId, TypeId } from '../engine/content';
 import { STAT_ORDER } from '../engine/content';
 import type { EquipmentLoadout } from './equipment';
 import { MAX_ITEM_SLOTS } from './equipment';
@@ -65,8 +65,10 @@ import { MASTERY_CAP } from './mastery';
  * and `scrollReward` sits where the first was, so a v15 map may hold node types this build lacks.
  * v18 (2026-09-15): gear absorption (docs/gear-absorption.md) — the bag is gone (`stash`,
  * `unseenItemIds`), entries lost `bonusItemSlots`, and a v17 map may hold `forgeReward`.
+ * v19 (2026-09-17): the Forge and the Ley Line (docs/run-loop.md) — an entry stores
+ * `bonusStatusGrants`, and a map may hold `forgeReward` and `leyLineReward`.
  */
-export const SAVE_VERSION = 18;
+export const SAVE_VERSION = 19;
 
 /**
  * Where a restored run resumes. Both are settled points: every reward is banked, the
@@ -218,6 +220,20 @@ function decodeStatGrants(value: unknown, label: string): Partial<Record<StatKey
   return out;
 }
 
+/** Hero-carried status magnitudes: today only Elemental Force, one `${type}Force` a type (statuses.ts). */
+function decodeStatusGrants(value: unknown, index: SaveContentIndex, label: string): Record<StatusId, number> {
+  if (value === undefined || value === null) return {};
+  if (!isObject(value)) reject(`${label} is not a status map`);
+  const out: Record<StatusId, number> = {};
+  for (const [key, amount] of Object.entries(value)) {
+    const type = key.endsWith('Force') ? key.slice(0, -'Force'.length) : null;
+    if (type === null || !index.typeIds.has(type as TypeId)) reject(`${label} names unknown status "${key}"`);
+    if (!isInt(amount, 0)) reject(`${label}.${key} is not a magnitude`);
+    out[key] = amount;
+  }
+  return out;
+}
+
 /** The held-item list. Length is checked against the hard cap, not the hero's own capacity — a hero can legitimately be over its count after a build lowered `itemSlots`, and the UI shows the overflow rather than deleting it. */
 function decodeLoadout(value: unknown, index: SaveContentIndex, label: string): EquipmentLoadout {
   if (!isStringArray(value)) reject(`${label} is not a list of item ids`);
@@ -273,6 +289,7 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
     evolutionPassiveGrants: requireIds(value.evolutionPassiveGrants, index.passiveIds, `${label}.evolutionPassiveGrants`),
     bonusPassiveGrants: requireIds(value.bonusPassiveGrants, index.passiveIds, `${label}.bonusPassiveGrants`),
     bonusStatGrants: decodeStatGrants(value.bonusStatGrants, `${label}.bonusStatGrants`),
+    bonusStatusGrants: decodeStatusGrants(value.bonusStatusGrants, index, `${label}.bonusStatusGrants`),
     growthStatGrants: decodeStatGrants(value.growthStatGrants, `${label}.growthStatGrants`),
     scheduleTaken: value.scheduleTaken,
     mastery: value.mastery,

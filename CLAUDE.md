@@ -465,6 +465,16 @@ don't silently override it.
   the numbers the rule was written against: it is the stat a whole tier of moves is priced in, so
   +30 Mana is a Late cast a fight, visibly, where +10 Attack never was. It is an exception for
   mana alone; a Vitality shrine does not get to ride on it (`docs/run-loop.md` "The Mana Well").
+  **A second named exception, 2026-09-17, per user direction: the Ley Line** (`leyLineReward`,
+  `grantLeyLine`, `LEY_LINE_FORCE` = 10) — pick a hero for +10 Elemental Force at its innate
+  primary, for the run, held on `RosterEntry.bonusStatusGrants` and summed with its gear's at
+  fight build. Allowed because Force is not a stat: a typed BasePower term paid per hit, per
+  target, only on the hero's own element, so it is read on every hit rather than on a sheet.
+  Its sibling **the Forge** (`forgeReward`, `forgeLift`) is the Smithy's Anvil free, once — one
+  worn piece a tier up, on the paid Anvil's own quote, so the act window still caps it — and
+  needs no exception. Together they are the Smithy's two verbs given map seats (25 each), which
+  took the Scroll Cache from 59% of reward rows to 48% without its weight flowing into Equipment
+  (`docs/run-loop.md` "The Forge and the Ley Line"). Neither extends to a third.
   Gems were deleted whole on 2026-09-10
   (Growth Overhaul phase 1), and with them the `gemReward` Gem Cache and the two stat shrines
   (`hpBoostReward` Vitality, `manaBoostReward` Mana Well) — the reward pool's 40 freed weight

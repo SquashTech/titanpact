@@ -1,7 +1,7 @@
 // Run-tier state (docs/architecture.md "State shapes (three tiers)"). Combat
 // state is built FROM this (buildCombatState.ts) and never writes back.
 
-import type { PassiveId, StatKey, TypeId } from '../engine/content';
+import type { PassiveId, StatKey, StatusId, TypeId } from '../engine/content';
 import type { EquipmentLoadout } from './equipment';
 import { createEmptyLoadout } from './equipment';
 import type { RunMap } from './map';
@@ -47,6 +47,12 @@ export interface RosterEntry {
   bonusPassiveGrants: readonly PassiveId[];
   /** Permanent grants from map-node rewards and event stat shifts. */
   bonusStatGrants: Partial<Record<StatKey, number>>;
+  /**
+   * Magnitude-shape statuses the hero itself carries into every fight — the Ley Line's Elemental
+   * Force (runProgress.ts grantLeyLine), summed with its gear's at build (statusGrants.ts). Kept
+   * apart from the gear so the sheet can say which is which.
+   */
+  bonusStatusGrants: Record<StatusId, number>;
   /** Everything this hero's levels have rolled up (run/growth.ts). Automatic; never a decision. */
   growthStatGrants: Partial<Record<StatKey, number>>;
   /**
@@ -177,6 +183,7 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     evolutionPassiveGrants: [],
     bonusPassiveGrants: [],
     bonusStatGrants: {},
+    bonusStatusGrants: {},
     growthStatGrants: {},
     scheduleTaken: 0,
     mastery: 0,

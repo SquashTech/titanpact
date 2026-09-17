@@ -47,7 +47,7 @@ function placeEntry(
   const passiveCounts = entryPassiveCounts(entry, equipmentLookup, teamPassiveGrants);
   const passives = toPassiveInstances(passiveCounts);
   const baselineStatModifiers = entryStatModifiers(entry, equipmentLookup, passiveDefs, passiveCounts, teamStatModifiers);
-  const baselineStatusMagnitudes = mergeStatusGrants(equipmentStatusGrants(entry.equipment, equipmentLookup), teamStatusGrants);
+  const baselineStatusMagnitudes = mergeStatusGrants(equipmentStatusGrants(entry.equipment, equipmentLookup), entry.bonusStatusGrants, teamStatusGrants);
   const statuses = toStatusInstances(baselineStatusMagnitudes);
   const grantedTypes = entry.evolutionTypeGraft ? [entry.evolutionTypeGraft] : [];
   const withMods = {

@@ -268,7 +268,8 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `equipmentReward` ("Item") | `NodeRewardScreen` — pick 1 of 3 items, rarity-weighted (`equipment.ts` `pickWeightedEquipment`); claiming bags it and lights the Roster badge — see "The bag notification" in `docs/progression.md`. Items are uncategorised as of 2026-09-06, so the three on offer are simply the three rolled (`docs/progression.md` "Uncategorised slots"). |
 | `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30 at Act 1, ×`ACT_GOLD_SCALE` after — see "The two reward lanes"). **2026-09-08, per user direction:** it pays out on arrival and the screen counts the PURSE up to its new total, coin by coin, over a Claim button that was never a decision — the drop size is a chip beside a number the player can act on, rather than a number they cannot. The two Scroll nodes share that beat. |
 | `scrollReward` ("Scroll Cache") | `ScrollNodeScreen` — **`SCROLL_CACHE_COUNT` = 3 Mastery pips**, one tap each, in any split (`src/run/mastery.ts`, `docs/mastery.md` §3, 2026-09-14). Five pips is a hero's Evolution and the fifth raises it right there; the Scribe seeds two heroes an act, this is where the player prioritises. Weight 46 — the seat the Scroll Cache held before Ichor, taken back when Ichor retired (Mastery phase 2). See "Mastery Scrolls" below. |
-| `forgeReward` ("The Forge") | `ForgeScreen` — pick one roster hero to gain **+1 item slot** for the rest of the run (`runProgress.ts` `grantItemSlot`, stored on `RosterEntry.bonusItemSlots`, capped at `MAX_ITEM_SLOTS` = 3). **2026-09-06**, replacing the three slot-specific cache nodes (`weaponReward`/`armorReward`/`accessoryReward`), which lost their meaning when items stopped having categories — most of their frequency went to `equipmentReward`, whose weight went 20 → 40. The scarcest thing on the reward row (weight 8) on purpose: it is permanent, it compounds with every drop after it, and it is the only reward here a hero can be at the cap for — a roster entirely at 3 slots makes the node a dead draw, which is what makes spending it a choice — and at the 2026-09-07 cap of 3 that arrives materially sooner. |
+| `forgeReward` ("Forge") | `ForgeNodeScreen` — **2026-09-17, per user direction: the Smithy's Anvil, free, once** — the roster as benches (`SmithyBenches`, the Guild Hall's own room), tap one worn piece and it comes off the anvil a tier up (`forgeLift`, the same quote the paid Anvil reads: a Unique, a Mythic and a tier the act has not reached are refused, so the act window caps it), played out on `SmithyBeat`. Weight 25. See "The Forge and the Ley Line" below. It was, 2026-09-06 to 2026-09-15, a **+1 item slot** to one hero (`grantItemSlot`, `bonusItemSlots`, weight 8 → 38), deleted with per-hero slots (`docs/gear-absorption.md` §4); the name and the id are re-used, the verb is new. |
+| `leyLineReward` ("Ley Line") | `LeyLineScreen` — **2026-09-17, per user direction:** pick a hero, and it draws **`LEY_LINE_FORCE` = 10 of Elemental Force at its innate primary type** for the rest of the run (`grantLeyLine`, onto `RosterEntry.bonusStatusGrants`, summed with its gear's Force at fight build). The Enchanter's binding, free, and on the hero rather than a piece. Weight 25. See "The Forge and the Ley Line" below. |
 | `manaWellReward` ("Mana Well") | `ManaWellScreen` — pick one roster hero to gain **+`MANA_WELL_AMOUNT` = 30 max Mana** for the rest of the run (`runProgress.ts` `grantManaWell`, onto `bonusStatGrants`; stacks; never refused). **2026-09-13, per user direction** — the one bare-number screen the constitution allows. See "The Mana Well" below. |
 | `passiveReward` ("Boon") | `BoonNodeScreen` — pick 1 of 3 passives, then the hero it settles on (`grantEventPassive`, stored on `RosterEntry.bonusPassiveGrants`). See "Boons" below. |
 | `mentorReward` ("Mentor's Hall") | `MentorNodeScreen` — "the Mentor can teach any hero a powerful move": pick a hero, and ONE Mid-tier move is rolled from that hero's own pool, un-rank-gated (`mentorMovePool`, `src/run/tutor.ts`). A Scroll pour with the band fixed at Mid that ticks nothing; the rolled offer is spent by being made. Who is the only decision, on purpose — it is one of a new player's first nodes (2026-09-11, `growth-overhaul.md` §11; it was briefly a curated Early-Mid pick, and before that a stat-pair Class). **Not in `REWARD_WEIGHTS`** — the only way to meet one is the forced row in acts 1-3 (§1). |
@@ -464,6 +465,43 @@ Measured on the greedy pilot (1000 runs, two seeds): a node lift of −0.15 (Ich
 4 points of full-clear at weight 20 — the seats it takes from items and Forges, which a pilot
 that does not plan its Late casts values higher than pool depth. A player who wants the Late
 band will not price it that way; watch it in playtest rather than the sim.
+
+### The Forge and the Ley Line
+
+**2026-09-17, per user direction.** Two reward-row nodes, one idea: the Smithy's two verbs — the
+Anvil's lift and the Enchanter's binding — each given a free seat on the map. The map had seven
+reward types filling nine seats an act, so every act showed nearly every node (the Cache in 59%
+of rows, in all three rows one act in five) and a reward row barely read as a draw; nine types
+into nine seats is what makes it one again, and adding seats is how the Cache came down without
+its freed weight flowing into Equipment (`REWARD_WEIGHTS`: Forge 25, Ley Line 25; the Cache is
+in 48% of rows now, in all three 11% of acts, absent 14%).
+
+**The Forge** (`forgeReward`, `ForgeNodeScreen`, `forgeLift`): the roster as benches — the Guild
+Hall's Smithy room, drawn once in `SmithyBenches` — and a tap on a worn piece IS the lift, since
+there is no price to read first; `SmithyBeat` plays the three strikes over it. The quote is the
+paid Anvil's (`anvilQuote`): a Unique has no ladder, nothing stands above Mythic, and the act's
+rarity window still caps the target, so what the Smithy would refuse the Forge refuses too, and a
+locked socket says so by sitting dim. A roster with nothing to lift walks on. Worth a lift the
+Smithy charges 25–130g for by tier, which is the one thing to watch: a free lift an act eats about
+one paid one (the ledger had the Anvil at 32 / 52 / 79g in Acts 3–5), and gold already pools.
+
+**The Ley Line** (`leyLineReward`, `LeyLineScreen`, `grantLeyLine`, `LEY_LINE_FORCE` = 10): the
+Mana Well's pick-a-hero screen, and the hero draws Force at its **innate primary** — the
+Enchanter's own rule, so who is the only decision — held on `RosterEntry.bonusStatusGrants` and
+summed with its gear's Force at fight build (`buildCombatState.ts`), so an enchant of the type, a
+second Ley Line and this all land on one figure. Force is a flat add to a move's BasePower before
+the multiplier chain (`resolveElementalForceBonus`), **per hit, per target**: +10 on an Early
+move's 40 is +25% on every hit of the type, twice on a spread and twice on a two-hit move, which
+is what it is for. Sized as a Rare enchant (`ENCHANT_FORCE_BY_RARITY.rare`), and flat on purpose —
+a Late move's 90+ BasePower outgrows it, so a Force-stacked spread attacker is self-limiting. The
+sheet lists it on its own ledger line (`ForceSourceRow`, "Ley Line").
+
+**On the bare-number rule.** The Ley Line is a number with a screen, and the constitution's one
+exception is the Mana Well's. The case for a second: Force is not a stat — it is a typed
+damage-pipeline term that pays only on the hero's own element's hits, so what the screen buys is
+read on every hit of that type rather than on a sheet. It stands beside the Mana Well as the
+second named exception, on that argument, and the Forge beside it needs none (an item is already
+a thing a screen hands over). Neither extends to a third.
 
 ### Mastery Scrolls — the Scribe, the Cache, and the shelf
 

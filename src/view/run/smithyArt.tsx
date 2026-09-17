@@ -98,3 +98,35 @@ export function RuneRing({ className, style }: { className?: string; style?: CSS
     </svg>
   );
 }
+
+/** Embers off the forge, laid out once so the sign does not re-scatter on every render. */
+const EMBERS = Array.from({ length: 9 }, (_, i) => {
+  const seed = i * 137.51;
+  return { x: 18 + ((seed * 0.37) % 64), delay: (seed * 0.9) % 3200, dur: 2600 + ((seed * 0.5) % 1800), size: 2 + ((seed * 0.11) % 2) };
+});
+
+/** The forge as a sign: the anvil lit from below, embers rising off it. The Smithy tab's and the Forge node's. */
+export function ForgeSign({ className }: { className?: string }) {
+  return (
+    <div className={`smithy-forge${className ? ` ${className}` : ''}`} aria-hidden="true">
+      <span className="smithy-forge-glow" />
+      <span className="smithy-forge-embers">
+        {EMBERS.map((e, i) => (
+          <i
+            key={i}
+            style={
+              {
+                left: `${e.x}%`,
+                width: `${e.size}px`,
+                height: `${e.size}px`,
+                animationDelay: `${e.delay}ms`,
+                animationDuration: `${e.dur}ms`,
+              } as CSSProperties
+            }
+          />
+        ))}
+      </span>
+      <AnvilFigure className="smithy-forge-anvil" />
+    </div>
+  );
+}

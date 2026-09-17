@@ -20,6 +20,10 @@ import {
   grantRelicReward,
   grantManaWell,
   MANA_WELL_AMOUNT,
+  forgeLift,
+  grantLeyLine,
+  LEY_LINE_FORCE,
+  leyLineStatusId,
   sellItem,
   RunProgressError,
 } from '../src/run/runProgress';
@@ -179,6 +183,21 @@ test("runProgress: a Mana Well grant deepens one hero's pool by MANA_WELL_AMOUNT
   assert.throws(() => grantManaWell(run, 'nobody'), RunProgressError);
 });
 
+test("runProgress: a Ley Line grants one hero LEY_LINE_FORCE of its innate primary's Force, stacks, and refuses only a stranger", () => {
+  // The Enchanter's binding, free and on the hero (docs/run-loop.md "The Forge and the Ley Line"):
+  // a Rare enchant's figure, so a hero-bound Force is never worth more than a piece's.
+  assert.strictEqual(LEY_LINE_FORCE, 10);
+  let run = seedRoster(['cinderKnight', 'crimson']);
+  const statusId = leyLineStatusId(heroes.cinderKnight);
+  assert.strictEqual(statusId, `${heroes.cinderKnight.types[0]}Force`, "the hero's innate primary, never a graft");
+  run = grantLeyLine(run, 'cinderKnight', heroes);
+  assert.strictEqual(run.roster[0].bonusStatusGrants[statusId], LEY_LINE_FORCE);
+  assert.deepStrictEqual(run.roster[1].bonusStatusGrants, {}, 'one hero, not the team');
+  run = grantLeyLine(run, 'cinderKnight', heroes);
+  assert.strictEqual(run.roster[0].bonusStatusGrants[statusId], LEY_LINE_FORCE * 2, 'a second line stacks');
+  assert.throws(() => grantLeyLine(run, 'nobody', heroes), RunProgressError);
+});
+
 // --- The Anvil and the Enchanter (docs/equipment.md §5) ---
 
 /** A run in `actNumber` with `gold`, its one hero wearing `worn`. Act matters: the window caps the Anvil. */
@@ -204,6 +223,17 @@ test('runProgress: the Anvil is refused without the gold, above Mythic, on a Uni
   assert.strictEqual(anvilQuote(shopRun(999, []), 'spear.mythic', equipment), null, 'nothing above Mythic');
   assert.strictEqual(anvilQuote(shopRun(999, []), 'worldbreaker', equipment), null, 'a Unique has no ladder');
   assert.throws(() => anvilUpgrade(shopRun(999, []), SOCKET_0, equipment), RunProgressError);
+});
+
+test('runProgress: the Forge is the Anvil for free — the same lift, the same refusals, no gold moved', () => {
+  const run = shopRun(0, ['spear.rare.blazing']);
+  const next = forgeLift(run, SOCKET_0, equipment);
+  assert.deepStrictEqual(next.roster[0].equipment, ['spear.epic.blazing'], 'a tier up, family and enchant kept');
+  assert.strictEqual(next.gold, 0, 'nothing spent');
+  assert.throws(() => forgeLift(shopRun(0, ['spear.mythic']), SOCKET_0, equipment), RunProgressError, 'nothing above Mythic');
+  assert.throws(() => forgeLift(shopRun(0, ['worldbreaker']), SOCKET_0, equipment), RunProgressError, 'a Unique has no ladder');
+  assert.throws(() => forgeLift(shopRun(0, ['spear.epic'], 1), SOCKET_0, equipment), RunProgressError, 'the act window caps the Forge as it caps the Anvil');
+  assert.throws(() => forgeLift(shopRun(0, []), SOCKET_0, equipment), RunProgressError, 'an empty socket');
 });
 
 test("runProgress: the act window caps the Anvil, not just drops", () => {

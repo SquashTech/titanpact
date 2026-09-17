@@ -28,6 +28,7 @@ export type ScreenKind =
   | 'equipmentReward'
   | 'passiveReward'
   | 'forgeReward'
+  | 'leyLineReward'
   | 'mentorReward'
   | 'tutorReward'
   | 'scribeReward'
@@ -69,7 +70,10 @@ export const SCREEN_SECONDS: Record<ScreenKind, number> = {
   restReward: 6,
   equipmentReward: 25,
   passiveReward: 20,
+  // One tap on a bench of pieces, the beat over it: the Smithy's Anvil without the price to read.
   forgeReward: 10,
+  // A pick-a-hero screen, the Mana Well's price.
+  leyLineReward: 10,
   mentorReward: 15,
   tutorReward: 30,
   // Two taps on a pick-a-hero screen, no comparison asked: the Forge's price, less.

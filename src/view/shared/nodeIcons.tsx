@@ -71,6 +71,14 @@ const OPEN_BOOK = (
   </>
 );
 
+// Anvil on its stump: the Forge tile and the Guild Hall's Anvil service wear one glyph.
+const ANVIL = (
+  <>
+    <path d="M2 6.6h9.6c1.6 2.6 4 4.2 7.2 4.8l3.2-3.4v4.4c0 2.4-1.6 4-4.4 4.6H8.2C4.8 16.4 2.6 14 2 10.6Z" />
+    <path d="M9.4 18h6.2l2.2 4H7.2Z" />
+  </>
+);
+
 // Exported so the run HUD can wear the exact glyph of the node that pays it out (RunGlyph.tsx).
 export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
   fight: TITAN_EYE,
@@ -120,6 +128,15 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
   ),
   // The Mana stat's own drop: a stat reward reuses the exact glyph of what it grants.
   manaWellReward: STAT_PATHS.manaPool,
+  // The Smithy's anvil, back on a tile (it was the Forge node's before item slots went): one free lift.
+  forgeReward: ANVIL,
+  // A ley line: a single bolt of power rising through the ground, the Force chip's arrow said large.
+  leyLineReward: (
+    <>
+      <path d="M13.6 1.6 5.2 13.2h5.2L9.2 22.4l9.6-12.6h-5.4Z" />
+      <path d="M2.4 20.2h19.2v2.4H2.4Z" opacity="0.55" />
+    </>
+  ),
   // A campfire: one flame over two crossed logs. The Rest is the place, not the stat it refills.
   restReward: (
     <>
@@ -298,13 +315,8 @@ const HUB_PATHS = {
   // The Elite's crown on its own, for the badge over a tile whose face is its enemy typing.
   crown: <g transform="translate(12 12) scale(1.4) translate(-12 -4.9)">{CROWN}</g>,
   // A hero's Class. A fluted column — the discipline they were taught in, not a thing they carry.
-  // Anvil on its stump — the Guild Hall's Anvil service. It was the Forge node's tile.
-  anvil: (
-    <>
-      <path d="M2 6.6h9.6c1.6 2.6 4 4.2 7.2 4.8l3.2-3.4v4.4c0 2.4-1.6 4-4.4 4.6H8.2C4.8 16.4 2.6 14 2 10.6Z" />
-      <path d="M9.4 18h6.2l2.2 4H7.2Z" />
-    </>
-  ),
+  // The Guild Hall's Anvil service, the Forge tile's own glyph.
+  anvil: ANVIL,
   hall: (
     <>
       <path d="M3.4 2.2h17.2v3.2H3.4Z" />

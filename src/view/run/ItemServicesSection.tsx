@@ -1,41 +1,26 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useState } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
-import { levelOf } from '../../run/growth';
-import { itemSlotsFor, rosterEntryTypes } from '../../run/progression';
 import { anvilQuote, type ItemRef } from '../../run/runProgress';
 import type { RunState } from '../../run/state';
-import { getTypeAbbr, getTypeColor, getTypeColorRgb } from '../combat/typeColors';
-import { ElementGlyph } from '../shared/elementIcons';
-import { enchantTypeOf, ItemPiece, RARITY_COLOR_VARS, RARITY_LABELS, slotBoxes } from '../shared/EquipmentBox';
-import { HeroPortrait } from '../shared/HeroPortrait';
+import { RARITY_LABELS } from '../shared/EquipmentBox';
 import { HubGlyph } from '../shared/nodeIcons';
 import { SmithyBeat, type SmithyWork } from './SmithyBeat';
+import { refKey, SmithyBenches } from './SmithyBenches';
 import { SmithyWorkSheet } from './SmithyWorkSheet';
-import { AnvilFigure } from './smithyArt';
+import { ForgeSign } from './smithyArt';
 
 interface Props {
   run: RunState;
   onRunChange: (next: RunState) => void;
 }
 
-/** Which socket is on the bench, keyed the way the roster addresses it. */
-function refKey(ref: ItemRef): string {
-  return `${ref.rosterId}:${ref.index}`;
-}
-
-/** Embers off the forge, laid out once so the header does not re-scatter on every render. */
-const EMBERS = Array.from({ length: 9 }, (_, i) => {
-  const seed = i * 137.51;
-  return { x: 18 + ((seed * 0.37) % 64), delay: (seed * 0.9) % 3200, dur: 2600 + ((seed * 0.5) % 1800), size: 2 + ((seed * 0.11) % 2) };
-});
-
 /**
  * The Guild Hall's smithy (docs/equipment.md §5; docs/gear-absorption.md §6), rebuilt as a room
  * rather than a list (2026-09-16, per user direction). Every piece the player owns is on a hero,
  * so the tab is the roster: each hero's bench, the hero on it, and its three sockets — the same
- * sockets the who-screen fills. A tap on a piece opens its work sheet (SmithyWorkSheet); the
+ * sockets the who-screen fills (SmithyBenches, shared with the Forge node). A tap on a piece opens its work sheet (SmithyWorkSheet); the
  * Anvil and the Enchanter both happen there, and what they make is played out on the piece
  * (SmithyBeat) before the bench shows it. The list it replaces put eighteen identical rows under
  * two price buttons each, and read as an invoice.
@@ -67,28 +52,9 @@ export function ItemServicesSection({ run, onRunChange }: Props) {
 
   return (
     <div className="smithy">
-      {/* The forge itself, as the counter's sign: the anvil lit from below, embers rising off it.
-          The tally under it is the whole of what the tab has to say before a bench is opened. */}
-      <div className="smithy-forge" aria-hidden="true">
-        <span className="smithy-forge-glow" />
-        <span className="smithy-forge-embers">
-          {EMBERS.map((e, i) => (
-            <i
-              key={i}
-              style={
-                {
-                  left: `${e.x}%`,
-                  width: `${e.size}px`,
-                  height: `${e.size}px`,
-                  animationDelay: `${e.delay}ms`,
-                  animationDuration: `${e.dur}ms`,
-                } as CSSProperties
-              }
-            />
-          ))}
-        </span>
-        <AnvilFigure className="smithy-forge-anvil" />
-      </div>
+      {/* The forge itself, as the counter's sign. The tally under it is the whole of what the
+          tab has to say before a bench is opened. */}
+      <ForgeSign />
       <div className="guild-hall-section-head">
         <span className="guild-hall-section-title">
           <HubGlyph name="anvil" /> Anvil &amp; Enchanter
@@ -100,90 +66,15 @@ export function ItemServicesSection({ run, onRunChange }: Props) {
         </span>
       </div>
 
-      <div className="smithy-benches">
-        {run.roster.map((entry) => {
-          const hero = rosterHeroes[entry.heroId];
-          if (!hero) return null;
-          const capacity = itemSlotsFor(hero, entry);
-          const boxes = slotBoxes(entry.equipment, capacity);
-          const bare = entry.equipment.length === 0;
-          return (
-            <section
-              key={entry.rosterId}
-              className={`smithy-bench${bare ? ' is-bare' : ''}`}
-              style={{ '--hero-color': getTypeColor(hero.types[0]), '--type-rgb': getTypeColorRgb(hero.types[0]) } as CSSProperties}
-            >
-              <div className="smithy-bench-hero">
-                <span className="smithy-bench-figure">
-                  <span className="smithy-bench-ground" aria-hidden="true" />
-                  <HeroPortrait heroId={hero.id} className="smithy-bench-portrait" />
-                </span>
-                <span className="smithy-bench-ident">
-                  <span className="smithy-bench-name">{hero.name}</span>
-                  <span className="smithy-bench-meta">
-                    <span className="smithy-bench-level">Lv {levelOf(entry)}</span>
-                    {rosterEntryTypes(hero, entry).map((t) => (
-                      <span key={t} className="smithy-bench-type" style={{ color: getTypeColor(t) }} title={t}>
-                        <ElementGlyph type={t} />
-                        {getTypeAbbr(t)}
-                      </span>
-                    ))}
-                  </span>
-                </span>
-              </div>
-
-              <div className="smithy-sockets">
-                {boxes.map((itemId, index) => {
-                  const item = itemId ? (equipment[itemId] ?? null) : null;
-                  const ref: ItemRef = { rosterId: entry.rosterId, index };
-                  const key = refKey(ref);
-                  if (!item) {
-                    return (
-                      <span key={index} className="smithy-socket is-empty" aria-label="Empty socket">
-                        <span className="smithy-socket-box">
-                          <ItemPiece item={null} />
-                        </span>
-                        <span className="smithy-socket-name">Open</span>
-                      </span>
-                    );
-                  }
-                  const quote = affordableLift(item.id);
-                  const enchantType = enchantTypeOf(item);
-                  return (
-                    <button
-                      key={index}
-                      type="button"
-                      className={`smithy-socket${fresh === key ? ' is-fresh' : ''}`}
-                      style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}
-                      data-sfx="ui.select"
-                      title={`${item.name} — ${RARITY_LABELS[item.rarity]}`}
-                      onClick={() => setWorking(ref)}
-                    >
-                      <span className="smithy-socket-box">
-                        <ItemPiece item={item} />
-                        {quote && (
-                          <span
-                            className="smithy-socket-lift"
-                            style={{ '--lift-color': RARITY_COLOR_VARS[quote.targetRarity] } as CSSProperties}
-                            aria-label={`Can be lifted to ${RARITY_LABELS[quote.targetRarity]} for ${quote.cost} gold`}
-                          >
-                            <HubGlyph name="anvil" />
-                          </span>
-                        )}
-                      </span>
-                      <span className="smithy-socket-name">{item.name}</span>
-                      <span className="smithy-socket-tier">
-                        {RARITY_LABELS[item.rarity]}
-                        {enchantType && <ElementGlyph type={enchantType} className="smithy-socket-bound" />}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          );
-        })}
-      </div>
+      <SmithyBenches
+        run={run}
+        liftFor={(item) => {
+          const quote = affordableLift(item.id);
+          return quote ? { targetRarity: quote.targetRarity, label: `Can be lifted to ${RARITY_LABELS[quote.targetRarity]} for ${quote.cost} gold` } : null;
+        }}
+        onPick={(ref) => setWorking(ref)}
+        fresh={fresh}
+      />
 
       {working && workingEntry && workingHero && workingItem && (
         <SmithyWorkSheet

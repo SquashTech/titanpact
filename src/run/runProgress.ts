@@ -1,7 +1,7 @@
 // Map-node progression (docs/run-loop.md): moving across a RunMap and
 // resolving what each node type grants. Pure RunState transforms.
 
-import type { HeroDefinition, StatKey } from '../engine/content';
+import type { HeroDefinition, StatKey, StatusId } from '../engine/content';
 import type { BrokenSeal, RunState, RosterEntry } from './state';
 import type { EncounterNodeKind } from './difficulty';
 import type { EnchantmentId, EquipmentDefinition, EquipmentRarity } from './equipment';
@@ -148,6 +148,33 @@ export function grantManaWell(run: RunState, rosterId: string): RunState {
   return { ...run, roster: run.roster.map((r) => (r.rosterId === rosterId ? nextEntry : r)) };
 }
 
+/**
+ * The Ley Line (docs/run-loop.md "The Forge and the Ley Line", 2026-09-17, per user direction):
+ * one hero draws LEY_LINE_FORCE of Elemental Force at its innate primary type, for the run — the
+ * Enchanter's binding, free, and on the hero rather than a piece, so it sums with any enchant of
+ * the type. A Rare enchant's figure: +20-25% on every hit of the type at Early BasePower, and
+ * flat, so Late moves outgrow it. Never refused — Force has no cap.
+ */
+export const LEY_LINE_FORCE = 10;
+
+/** The status id the Ley Line grants a hero: its innate primary's Force. */
+export function leyLineStatusId(hero: HeroDefinition): StatusId {
+  return `${hero.types[0]}Force`;
+}
+
+export function grantLeyLine(run: RunState, rosterId: string, heroes: Record<string, HeroDefinition>): RunState {
+  const entry = run.roster.find((r) => r.rosterId === rosterId);
+  if (!entry) throw new RunProgressError(`${rosterId} is not on the roster`);
+  const hero = heroes[entry.heroId];
+  if (!hero) throw new RunProgressError(`Unknown hero ${entry.heroId}`);
+  const statusId = leyLineStatusId(hero);
+  const nextEntry: RosterEntry = {
+    ...entry,
+    bonusStatusGrants: { ...entry.bonusStatusGrants, [statusId]: (entry.bonusStatusGrants[statusId] ?? 0) + LEY_LINE_FORCE },
+  };
+  return { ...run, roster: run.roster.map((r) => (r.rosterId === rosterId ? nextEntry : r)) };
+}
+
 // --- Absorption (docs/gear-absorption.md) ---
 
 /** What handing an item to a hero would do — what the who-screen's card reads. */
@@ -283,6 +310,19 @@ export function anvilUpgrade(
   if (!quote) throw new RunProgressError(`${itemId} cannot be upgraded here`);
   if (!equipmentLookup[quote.targetId]) throw new RunProgressError(`Unknown equipment ${quote.targetId}`);
   return writeItemRef(spend(run, quote.cost, 'That upgrade'), ref, quote.targetId);
+}
+
+/**
+ * The Forge node (docs/run-loop.md "The Forge and the Ley Line"): the Anvil's lift, free, once.
+ * The same quote — a Unique has no ladder, Mythic no step above it, and the act's window still
+ * caps the target — so what the Smithy would refuse, the Forge refuses too.
+ */
+export function forgeLift(run: RunState, ref: ItemRef, equipmentLookup: Record<string, EquipmentDefinition>): RunState {
+  const itemId = readItemRef(run, ref);
+  const quote = anvilQuote(run, itemId, equipmentLookup);
+  if (!quote) throw new RunProgressError(`${itemId} cannot be lifted here`);
+  if (!equipmentLookup[quote.targetId]) throw new RunProgressError(`Unknown equipment ${quote.targetId}`);
+  return writeItemRef(run, ref, quote.targetId);
 }
 
 /** Binds an element to one owned item, overwriting any enchant already on it. One enchant per item, always. */

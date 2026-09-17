@@ -32536,6 +32536,55 @@ textarea,
 
 /* The beat is decoration over a change that has already landed; a reduced-motion reader gets
    the result and the readout, and none of the swing. */
+/* =========================================================================
+   The Forge and the Ley Line (ForgeNodeScreen, LeyLineScreen) — 2026-09-17, per user direction.
+   The Smithy's two verbs on the map for free. The Forge IS the Smithy room (SmithyBenches,
+   ForgeSign) under a node header; the Ley Line is the Mana Well's pick-a-hero screen with the
+   Force chip on the card.
+   ========================================================================= */
+
+/* The room scrolls under the header, as the Guild Hall's does; the sign sits at its head. */
+.forge-node-screen .screen-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 10px;
+}
+
+/* A piece the Forge will not take today — locked, not hidden, so the bench still reads whole. */
+.smithy-socket.is-locked {
+  opacity: 0.42;
+  cursor: default;
+}
+
+.smithy-socket.is-locked:active {
+  transform: none;
+}
+
+/* The card's line: the Force chip in the hero's element, then the figure it would hold. */
+.ley-line-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: rgb(var(--force-rgb));
+}
+
+.pick-card.is-locked .ley-line-cta {
+  color: var(--text-dim);
+}
+
+.ley-line-cta-glyph {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+}
+
+/* The ledger's Force chip, a size under the stat glyph beside it. */
+.grant-source-force {
+  width: 12px;
+  height: 12px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .smithy-forge-embers,
   .smithy-beat-hammer,
