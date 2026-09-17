@@ -54,22 +54,24 @@ const GUARDIANS: Record<string, Draw> = {
       + C(83, 45, 3.6, '#07050a') + ey(92, 45, 3.8);
   },
 
-  // Yugzulach (Shadow): a tall hooded dark with a fan of horns, four arms, no legs — it hangs.
-  // The eye is in the hood.
+  // Yugzulach (Shadow): a priest of the seal — a bell of robe under a flared cowl that spreads like
+  // a hood, a crown of horns that curve in toward each other, and four arms raised in office. The
+  // eye is in the cowl. Deliberately not the Nocturne's shape (a stilt-limbed dark with straight
+  // spikes): this one is wide where that one is tall, and curved where it is sharp.
   yugzulach: (p, po, ey) => {
-    const up = po === 'attack' ? -12 : po === 'hurt' ? 6 : 0;
-    const spread = po === 'attack' ? 8 : po === 'hurt' ? -6 : 0;
-    const veil = (path: string) => D(path, INK) + D(path, p.c, 'opacity=".42"');
-    const arm = (path: string) => L(path, INK, 5.5) + L(path, p.c, 1.8, 'opacity=".35"');
-    const horns = [[42, 10, 18 - spread, -20], [47, 6, 34 - spread, -34], [53, 6, 66 + spread, -34], [58, 10, 82 + spread, -20], [40, 16, 4 - spread, 2], [60, 16, 96 + spread, 2]]
-      .map(([x, y, tx, ty]) => P(`${x - 3},${y} ${tx},${ty} ${x + 6},${y + 5}`, INK) + P(`${x - 1},${y + 1} ${tx},${ty} ${x + 3},${y + 3}`, p.c, 'opacity=".4"')).join('');
-    return horns
-      + veil('M24,88 L28,58 C28,30 40,10 50,-2 C60,10 72,30 72,58 L76,88 L68,80 L62,88 L56,80 L50,88 L44,80 L38,88 L32,80 Z')
-      + D('M42,20 C42,6 58,6 58,20 L57,36 L43,36 Z', '#07050a')
-      + arm(`M38,44 C22,${40 + up} 8,${52 + up} 4,${68 + up}`) + arm('M40,54 C24,62 18,74 12,84') + arm(`M62,44 C78,${40 + up} 92,${52 + up} 96,${68 + up}`) + arm('M60,54 C76,62 82,74 88,84')
-      + [[4, 68 + up, -1], [12, 84, -1], [96, 68 + up, 1], [88, 84, 1]].map(([x, y, m]) => L(`M${x},${y} l${4 * m},-5 M${x},${y} l${5 * m},0 M${x},${y} l${3 * m},5`, INK, 2.2)).join('')
-      + (po === 'attack' ? sparks(100, 60, p.ll, 3) : '')
-      + ey(51, 24, 5.4, po === 'hurt' ? 'narrow' : po === 'attack' ? 'wide' : 'stare');
+    const up = po === 'attack' ? -10 : po === 'hurt' ? 8 : 0;
+    const flare = po === 'attack' ? 1.12 : po === 'hurt' ? 0.9 : 1;
+    const veil = (path: string) => D(path, INK) + D(path, p.c, 'opacity=".5"');
+    const arm = (path: string) => L(path, INK, 5.5) + L(path, p.c, 1.8, 'opacity=".4"');
+    const horn = (m: number) => G(`scale(${m} 1) translate(${m < 0 ? -100 : 0} 0)`, D('M52,6 C72,2 86,-12 80,-38 C90,-14 80,6 62,14 Z', INK) + D('M56,8 C70,2 80,-10 78,-30 C82,-12 74,4 62,12 Z', p.c, 'opacity=".4"'));
+    return G(`translate(50 88) scale(${flare} 1) translate(-50 -88)`, veil('M18,88 L26,54 C26,34 40,18 50,2 C60,18 74,34 74,54 L82,88 L74,82 L66,88 L58,82 L50,88 L42,82 L34,88 L26,82 Z'))
+      + horn(1) + horn(-1) + P('47,6 50,-14 53,6', INK)
+      + G(`translate(50 46) scale(${flare} 1) translate(-50 -46)`, D('M10,48 C22,26 78,26 90,48 L80,56 C68,40 32,40 20,56 Z', p.c) + D('M14,48 C24,32 76,32 86,48', p.l, 'opacity=".35"'))
+      + D('M40,22 C40,6 60,6 60,22 L58,40 L42,40 Z', '#07050a')
+      + arm(`M32,46 C18,${34 + up} 8,${18 + up} 10,${2 + up}`) + arm(`M68,46 C82,${34 + up} 92,${18 + up} 90,${2 + up}`) + arm('M36,58 C22,66 14,76 12,86') + arm('M64,58 C78,66 86,76 88,86')
+      + [[10, 2 + up, -1], [90, 2 + up, 1], [12, 86, -1], [88, 86, 1]].map(([x, y, m]) => L(`M${x},${y} l${4 * m},-5 M${x},${y} l${5 * m},0 M${x},${y} l${3 * m},5`, INK, 2.2)).join('')
+      + (po === 'attack' ? sparks(96, 10 + up, p.ll, 3) : '')
+      + ey(50, 28, 5.4, po === 'hurt' ? 'narrow' : po === 'attack' ? 'wide' : 'stare');
   },
 
   // The Kraken (Water): a mantle rising past the frame over a ring of arms; the leading arm
@@ -79,8 +81,8 @@ const GUARDIANS: Record<string, Draw> = {
     const lead = po === 'attack' ? 'M72,68 C96,54 118,44 122,62' : po === 'hurt' ? 'M72,68 C86,70 96,80 98,90' : 'M72,68 C92,66 110,72 114,86';
     const curl = po === 'hurt' ? 0.8 : 1;
     const ann = (x: number, y: number) => C(x, y, 1.6, p.ll, 'opacity=".8"');
-    return arm(`M34,68 C${18 * curl},74 ${2 * curl},64 ${6 * curl},82 C8,92 24,92 24,84`) + arm('M42,70 C30,84 20,90 10,88') + arm(`M58,70 C64,84 78,92 ${92 * curl},88`) + arm(lead) + arm('M50,72 C50,82 46,90 40,90')
-      + ann(12, 80) + ann(8, 86) + ann(28, 86) + ann(80, 90) + ann(90, 80) + ann(102, 76)
+    return arm(`M34,68 C${20 * curl},70 ${6 * curl},78 ${-2 * curl},92`) + arm(`M42,70 C${30 * curl},80 ${16 * curl},86 ${2 * curl},82`) + arm(`M58,70 C64,84 78,92 ${92 * curl},88`) + arm(lead) + arm('M50,72 C50,82 46,90 40,90')
+      + ann(10, 84) + ann(6, 78) + ann(24, 76) + ann(80, 90) + ann(90, 80) + ann(102, 76)
       + D('M30,40 C14,20 22,-4 46,-16 L44,40 Z', p.d) + D('M78,40 C94,20 86,-4 62,-16 L64,40 Z', p.d)
       + D('M28,64 C22,26 36,-16 54,-30 C72,-16 86,26 80,64 Z', p.c) + D('M40,58 C36,30 44,4 54,-14 C60,4 66,30 62,58 Z', p.l, 'opacity=".3"') + [[46, 10], [60, 2], [50, -8], [64, 20], [42, 28]].map(([x, y]) => C(x, y, 2.4, p.ll, 'opacity=".45"')).join('')
       + D('M24,64 C32,76 76,76 84,64 Z', p.d)
