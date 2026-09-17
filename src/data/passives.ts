@@ -463,22 +463,17 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 20 },
     },
   },
-  entanglement: {
-    id: 'entanglement',
-    name: 'Entanglement',
-    description: "Whenever an enemy's Wisdom drops, that enemy is Haunted.",
-    // Frozen Stone inverted: eventFieldNegative is what makes this "drops" and not "changes", so
-    // a Wisdom BUFF on a foe never marks them. Cortex's slate is a Wisdom shredder end to end
-    // (Psi Bolt, Enervate, Psyshock, Disorient, Psionic Wave), so the debuffs it was already
-    // casting now plant Haunt for free — and Wisdom is the magical defStat, so the same point
-    // both softens the target and marks it.
-    // ATTRIBUTION: StatChanged carries no source, so this reads "an enemy's Wisdom dropped",
-    // not "I dropped it" — a Mind PARTNER's debuff arms it too. Deliberate, docs/combat.md.
-    reactive: {
-      hook: 'StatChanged',
-      condition: { relativeTo: 'enemy', eventFieldEquals: { stat: 'wisdom' }, eventFieldNegative: 'delta' },
-      effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Haunt' },
-    },
+  eitherHand: {
+    id: 'eitherHand',
+    name: 'Either Hand',
+    description: 'A blow of the other kind than the last one this hero landed strikes 30% harder.',
+    // The mixed attacker's verb (Tempest's Forked, Cortex's Embodied). A 70/70 line picking the
+    // weaker defence averages a stat ratio of 1.43 against a 100-point specialist's 1.77 — only
+    // 30% of enemy lines have the Def/Wis gap that would pay for the second stat — so mixing is
+    // dominated by construction until alternating itself pays: 1.43 x 1.3 lands level with the
+    // specialist, and only for a kit that can actually swing both hands every other turn.
+    // Never on a first hit, never on a repeat (passiveEngine alternatesCategory).
+    damageModifier: { alternatesCategory: true, amount: 0.3 },
   },
   restorativeToxin: {
     id: 'restorativeToxin',
@@ -509,20 +504,6 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
       effect: { kind: 'cleanse', target: 'ally' },
-    },
-  },
-  feedbackLoop: {
-    id: 'feedbackLoop',
-    name: 'Feedback Loop',
-    description: 'Whenever this hero applies Conduct, it gains +10 Intelligence.',
-    // Firestarter's shape (source-role StatusApplied) pointed at the mark Tempest already
-    // builds its slate around, so planting is also ramping. NOT oncePerFight: the ramp IS the
-    // path, and Ionize plants on both foes for two firings. Conduct is stacking 'none', so a
-    // re-plant on an already-marked target does not re-fire; the ramp costs fresh targets.
-    reactive: {
-      hook: 'StatusApplied',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Conduct' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 10 },
     },
   },
   bloodthirsty: {

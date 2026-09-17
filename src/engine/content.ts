@@ -195,6 +195,8 @@ export type PassiveEffect =
 /** Damage-pipeline modifier from the attacker's own passives, evaluated per hit against { moveType }. */
 export interface PassiveDamageModifier {
   eventFieldEquals?: Partial<Record<string, string>>;
+  /** Fires only when the move's category differs from the attacker's last landed hit's (Combatant.lastHitCategory) — never on a first hit. The mixed attacker's verb: alternate, or it is nothing. */
+  alternatesCategory?: true;
   /** damagePipeline.ts DamageModifier units — 0.2 == +20%. */
   amount: number;
 }

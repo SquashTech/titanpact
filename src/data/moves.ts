@@ -1129,6 +1129,21 @@ export const moves: Record<string, MoveDefinition> = {
     description: 'Arcs across both foes, and finds twice the current in anyone carrying a charge (×2 on a Conduct mark).',
   },
 
+  // Forked's grant (Tempest): the physical hand of a mixed slate whose Late column is mostly magical. In no pool.
+  skyfall: {
+    id: 'skyfall',
+    name: 'Skyfall',
+    tier: 'late',
+    type: 'Storm',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 90,
+    manaCost: 60,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Comes down with the whole sky behind it.',
+  },
+
   // --- Stone ---
   rockToss: {
     id: 'rockToss',
@@ -2835,6 +2850,21 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'singleEnemy',
     description: 'Feeds on what the foe is thinking (heals 40% of what it deals).',
+  },
+
+  // Embodied's grant (Cortex): Mind's one physical hit — the slate has no other. In no pool.
+  psychokinesis: {
+    id: 'psychokinesis',
+    name: 'Psychokinesis',
+    tier: 'late',
+    type: 'Mind',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 90,
+    manaCost: 60,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Lifts the foe with the mind and puts them down with the body.',
   },
 
   // --- Spirit ---

@@ -489,7 +489,7 @@ test('passives: toPassiveInstances converts counts to PassiveInstance records an
   assert.deepStrictEqual(instances, { sanguine: { passiveId: 'sanguine', stacks: 2 } });
 });
 
-// --- Feedback Loop (Tempest / Thunderhead) ---
+// --- Either Hand (Tempest / Forked, Cortex / Embodied) ---
 
 function stormFixture(seed: number) {
   return createFightState(
@@ -505,42 +505,44 @@ function stormFixture(seed: number) {
   );
 }
 
-const ionizeByOwner: Action = { kind: 'move', combatantId: 'a1', moveId: 'ionize' };
+const thunderclapAt = (target: string): Action => ({ kind: 'move', combatantId: 'a1', moveId: 'thunderclap', declaredTarget: target } as Action);
+const joltAt = (target: string): Action => ({ kind: 'move', combatantId: 'a1', moveId: 'jolt', declaredTarget: target } as Action);
+const modifiersOn = (events: readonly any[], moveId: string) => events.filter((e) => e.type === 'DamageDealt' && e.moveId === moveId).map((e) => e.modifiers as { source: string }[]);
 
-test('passives: Feedback Loop ramps the holder once per Conduct it plants — Ionize marks both foes for +20', () => {
-  const state = withPassive(stormFixture(350), 'a1', 'feedbackLoop');
-  const { state: next, events } = resolveRound(state, [ionizeByOwner], config);
+test('passives: Either Hand pays nothing on a first hit — there is no last hit to alternate from', () => {
+  const state = withPassive(stormFixture(350), 'a1', 'eitherHand');
+  const { state: next, events } = resolveRound(state, [thunderclapAt('b1')], config);
 
-  assert.ok(hasStatus(next.combatants.b1, 'Conduct') && hasStatus(next.combatants.b2, 'Conduct'));
-  assert.strictEqual(next.combatants.a1.statModifiers.intelligence, 20, 'one firing per application');
-  assert.strictEqual(events.filter((e) => e.type === 'PassiveTriggered' && e.passiveId === 'feedbackLoop').length, 2);
+  assert.strictEqual(next.combatants.a1.lastHitCategory, 'physical', 'the landed hit is remembered');
+  for (const mods of modifiersOn(events, 'thunderclap')) assert.ok(!mods.some((m) => m.source === 'eitherHand'));
 });
 
-test('passives: Feedback Loop does not re-ramp on an already-Conducting target — Conduct stacks none, so no event fires', () => {
-  const marked = withStatus(withStatus(withPassive(stormFixture(351), 'a1', 'feedbackLoop'), 'b1', 'Conduct', {}), 'b2', 'Conduct', {});
-  const { state: next } = resolveRound(marked, [ionizeByOwner], config);
+test('passives: Either Hand fires on the other category — a Jolt after a Thunderclap is +30%, and the Thunderclap after that is too', () => {
+  const state = withPassive(stormFixture(351), 'a1', 'eitherHand');
+  const first = resolveRound(state, [thunderclapAt('b1')], config);
+  const second = resolveRound(first.state, [joltAt('b1')], config);
+  const third = resolveRound(second.state, [thunderclapAt('b1')], config);
 
-  assert.strictEqual(next.combatants.a1.statModifiers.intelligence ?? 0, 0, 'the ramp is priced in fresh marks');
+  assert.ok(modifiersOn(second.events, 'jolt').every((mods) => mods.some((m) => m.source === 'eitherHand')), 'magical after physical');
+  assert.strictEqual(second.state.combatants.a1.lastHitCategory, 'magical');
+  assert.ok(modifiersOn(third.events, 'thunderclap').every((mods) => mods.some((m) => m.source === 'eitherHand')), 'physical after magical');
 });
 
-test('passives: Feedback Loop is attribution, not proximity — an ally planting Conduct does not ramp the holder', () => {
-  const state = withPassive(stormFixture(352), 'a1', 'feedbackLoop'); // a1 holds it, a2 does the marking
-  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a2', moveId: 'ionize' } as Action], config);
+test('passives: Either Hand pays nothing on a repeat — two Thunderclaps in a row is a specialist, not a mixed attacker', () => {
+  const state = withPassive(stormFixture(352), 'a1', 'eitherHand');
+  const first = resolveRound(state, [thunderclapAt('b1')], config);
+  const second = resolveRound(first.state, [thunderclapAt('b1')], config);
 
-  assert.ok(hasStatus(next.combatants.b1, 'Conduct'), 'the mark still lands');
-  assert.strictEqual(next.combatants.a1.statModifiers.intelligence ?? 0, 0);
-  assert.strictEqual(next.combatants.a2.statModifiers.intelligence ?? 0, 0, 'and the planter does not ramp either');
+  for (const mods of modifiersOn(second.events, 'thunderclap')) assert.ok(!mods.some((m) => m.source === 'eitherHand'));
 });
 
-test('passives: Feedback Loop reads the STATUS — a Bleed the holder inflicts pays nothing', () => {
-  const state = withPassive(stormFixture(353), 'a1', 'feedbackLoop');
-  const { state: next } = resolveRound(
-    state,
-    [{ kind: 'move', combatantId: 'a1', moveId: 'serratedSlice', declaredTarget: 'b1' } as Action],
-    config
-  );
+test('passives: Either Hand is read per attacker — the partner landing the other category arms nothing', () => {
+  const state = withPassive(stormFixture(353), 'a1', 'eitherHand');
+  const first = resolveRound(state, [{ kind: 'move', combatantId: 'a2', moveId: 'jolt', declaredTarget: 'b1' } as Action], config);
+  const second = resolveRound(first.state, [thunderclapAt('b1')], config);
 
-  assert.strictEqual(next.combatants.a1.statModifiers.intelligence ?? 0, 0);
+  assert.strictEqual(first.state.combatants.a1.lastHitCategory, undefined);
+  for (const mods of modifiersOn(second.events, 'thunderclap')) assert.ok(!mods.some((m) => m.source === 'eitherHand'));
 });
 
 // --- Restorative Toxin and Nature's Purification (Sylva / Apothecary, Lightsage) ---
@@ -628,84 +630,6 @@ test("passives: Nature's Purification spares a positive status — the partner k
 
   assert.ok(!hasStatus(next.combatants.a2, 'Poison'));
   assert.ok(hasStatus(next.combatants.a2, 'Renew'), 'Cleanse spares `positive`, so it never strips its own side up');
-});
-
-// --- Entanglement (Cortex / Overmind) ---
-
-function cortexFixture(seed: number) {
-  return createFightState(
-    seed,
-    [
-      { combatantId: 'a1', heroId: 'mindweaver', side: 'A' },
-      { combatantId: 'a2', heroId: 'tidecaller', side: 'A' },
-    ],
-    [
-      { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
-      { combatantId: 'b2', heroId: 'wildOracle', side: 'B' },
-    ]
-  );
-}
-
-test('passives: Entanglement Haunts the enemy whose Wisdom just dropped — Enervate marks without any damage', () => {
-  const state = withPassive(cortexFixture(370), 'a1', 'entanglement');
-  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'enervate', declaredTarget: 'b1' } as Action], config);
-
-  assert.ok(hasStatus(next.combatants.b1, 'Haunt'), 'the -30 Wisdom planted the mark');
-  assert.ok(!hasStatus(next.combatants.b2, 'Haunt'), 'and only on the one it hit');
-});
-
-test('passives: Entanglement reads the SIGN — an enemy whose Wisdom RISES is not marked', () => {
-  const state = withPassive(cortexFixture(371), 'a1', 'entanglement');
-  // The enemy side buffs its own Wisdom: a stat change on an enemy, but not a drop.
-  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'b2', moveId: 'mentalFortress' } as Action], config);
-
-  assert.ok(next.combatants.b1.statModifiers.wisdom! > 0, 'the buff landed');
-  assert.ok(!hasStatus(next.combatants.b1, 'Haunt') && !hasStatus(next.combatants.b2, 'Haunt'));
-});
-
-test('passives: Entanglement reads the STAT — Lull drops Intelligence and marks nobody', () => {
-  const state = withPassive(cortexFixture(372), 'a1', 'entanglement');
-  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'lull', declaredTarget: 'b1' } as Action], config);
-
-  // Read off the move rather than pinned: this test is about Entanglement reading the STAT, and the
-  // size of Lull's drop is a balance figure that has nothing to do with what is being asserted.
-  const lullDrop = landedDelta(state, 'a1', moves.lull, 'intelligence', moves.lull.statDeltas!.find((d) => d.stat === 'intelligence')!.amount, 'b1');
-  assert.strictEqual(next.combatants.b1.statModifiers.intelligence, lullDrop, 'the debuff landed');
-  assert.ok(!hasStatus(next.combatants.b1, 'Haunt'));
-});
-
-test("passives: Entanglement is relative to the ENEMY side — the owner's own Wisdom dropping marks nothing", () => {
-  const state = withPassive(cortexFixture(373), 'a1', 'entanglement');
-  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'b2', moveId: 'enervate', declaredTarget: 'a1' }], config);
-
-  assert.ok(next.combatants.a1.statModifiers.wisdom! < 0, 'Cortex took the Wisdom hit');
-  assert.ok(!hasStatus(next.combatants.a1, 'Haunt'));
-});
-
-test('passives: Entanglement is what the path is FOR — Disorient marks both, then one Psi Bolt hits both', () => {
-  const state = withPassive(cortexFixture(374), 'a1', 'entanglement');
-  const marked = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'disorient' } as Action], config).state;
-  assert.ok(hasStatus(marked.combatants.b1, 'Haunt') && hasStatus(marked.combatants.b2, 'Haunt'), 'one spread debuff, two marks');
-
-  const { events } = resolveRound(marked, [{ kind: 'move', combatantId: 'a1', moveId: 'psiBolt', declaredTarget: 'b1' } as Action], config);
-  const hits = events.filter((e) => e.type === 'DamageDealt') as any[];
-  assert.deepStrictEqual(hits.map((h) => h.targetCombatantId).sort(), ['b1', 'b2'], 'aimed at one, lands on both');
-  assert.strictEqual(hits.find((h) => h.targetCombatantId === 'b2').viaStatusId, 'Haunt');
-});
-
-test('passives: Entanglement does not double a move that ALREADY spreads — only singleEnemy expands', () => {
-  // Disorient 50 + Psionic Wave 60 is past Cortex's 75 pool, so this one needs the mana to cast both.
-  const base = cortexFixture(375);
-  const state = withPassive(
-    { ...base, combatants: Object.fromEntries(Object.entries(base.combatants).map(([id, c]) => [id, { ...c, currentMana: 999 }])) } as CombatState,
-    'a1',
-    'entanglement'
-  );
-  const marked = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'disorient' } as Action], config).state;
-  const { events } = resolveRound(marked, [{ kind: 'move', combatantId: 'a1', moveId: 'psionicWave' } as Action], config);
-
-  const hits = events.filter((e) => e.type === 'DamageDealt') as any[];
-  assert.strictEqual(hits.length, 2, 'two foes, two hits — not four');
 });
 
 // --- Afterimage (Nightshade / Penumbra) ---

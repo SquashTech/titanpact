@@ -67,13 +67,13 @@ function outspeeds(state: CombatState, combatantId: string): CombatState {
 
 // --- The pool itself ---
 
-test('storm: the authored pool is exactly the fifteen designed moves plus the four 2026-09-15 additions, all Storm-typed', () => {
+test('storm: the authored pool is exactly the fifteen designed moves plus the four 2026-09-15 additions and Forked’s Skyfall, all Storm-typed', () => {
   const storm = Object.values(moves).filter((m) => m.type === 'Storm' && !signatureMoves[m.id]);
   assert.deepStrictEqual(
     storm.map((m) => m.id).sort(),
     [
       'chainLightning', 'charge', 'electricBurst', 'ionCascade', 'ionicZap', 'ionize', 'jolt', 'overcharge', 'rideTheLightning', 'risingStatic',
-      'shockSlice', 'staticCharge', 'stormLash', 'stormSurge', 'stunningBolt', 'tailwind', 'thunderbolt', 'thunderclap', 'zap',
+      'shockSlice', 'skyfall', 'staticCharge', 'stormLash', 'stormSurge', 'stunningBolt', 'tailwind', 'thunderbolt', 'thunderclap', 'zap',
     ]
   );
 });
@@ -103,7 +103,7 @@ test('storm: every damage move in the slate carries Conduct detonation for free 
   const detonators = statuses.Conduct.triggerTypes ?? [];
   assert.ok(detonators.includes('Storm'));
   const damage = Object.values(moves).filter((m) => m.type === 'Storm' && !signatureMoves[m.id] && m.kind === 'damage');
-  assert.strictEqual(damage.length, 13);
+  assert.strictEqual(damage.length, 14);
   assert.strictEqual(damage.some((m) => firstStatusApplication(m)?.statusId === 'Conduct' && m.id === 'thunderbolt'), true);
 });
 

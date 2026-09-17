@@ -462,6 +462,15 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           }
         }
 
+        // What this move landed is the category the NEXT one is read against (Either Hand): written
+        // after the loop, so a spread's second target is priced off the same last hit as its first.
+        if (hitsResolved > 0 && working.combatants[action.combatantId]) {
+          working = {
+            ...working,
+            combatants: { ...working.combatants, [action.combatantId]: { ...working.combatants[action.combatantId], lastHitCategory: move.category } },
+          };
+        }
+
         // Ambush (consumedOnDamage): spent AFTER the loop, so a spread reads it on every
         // target and still pays once. Retribution never runs the formula, so it reads no
         // BasePower and owes nothing.

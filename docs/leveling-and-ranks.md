@@ -538,6 +538,10 @@ identity.
 > and that 65 to 95 is worth being the loudest thing on the node. Watch it: if a mono
 > path can out-pay both grafts, the clause was measuring the wrong thing.
 >
+> **Thunderhead is gone (2026-09-17)**: it measured +0.28 against Lightning Rod's +1.06 and
+> was reworked into **Forked** — +10/+10, Either Hand, Skyfall — the mixed attacker's path
+> (`docs/combat.md` "Either Hand"); Cortex's Overmind became **Embodied** the same way.
+>
 > **3. A GRAFT path pays three ways** — more stats, the new type, and a line of
 > that type's moves via `learnableMoveIds` (below). Three payoffs against the
 > mono path's two, because the graft is also giving up the passive. STAB on the

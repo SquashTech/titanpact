@@ -1099,6 +1099,32 @@ modifier, or an Elemental Force grant should be able to shift a rolled range
 the low end of Jackpot" is a different kind of effect from anything the
 loadout layer does today.
 
+## A damage bonus that reads the LAST HIT — Either Hand (2026-09-17, per user direction)
+
+The mixed attacker was measured dominated (sim pass 9): a 70/70 line that always picks the
+weaker defence averages a stat ratio of **1.43** across the enemy roster, a 100-point specialist
+**1.77–1.85** without picking, because only 30% of enemy lines carry the Def/Wis gap (≥ 1.43)
+that would pay for the second stat. No stat shuffle closes that under the locked formula and
+the 550 budget — a point in the second offensive stat contributes to no hit the first is
+swinging. So the second stat has to buy a VERB.
+
+`Combatant.lastHitCategory` is the category of the last damaging move the combatant LANDED —
+written in `resolveRound` after the move's hits (so a spread's two targets read the same last
+hit), unset until the first, kept across a switch like a stat modifier, gone at the next fight.
+A passive's `damageModifier.alternatesCategory` fires only when the move's category differs from
+it: never on a first hit, never on a repeat. **Either Hand** is +30% on that condition, and it
+lives on exactly two Evolution paths — Tempest's **Forked** (with Skyfall, Storm's physical Late)
+and Cortex's **Embodied** (with Psychokinesis, Mind's only physical hit) — because a mixed line
+with one dead hand has nothing to alternate. Both grants are in no pool. Alternating every turn
+lands 1.43 × 1.3 ≈ 1.86, level with the specialist, and only for a kit that can swing both
+hands every other turn — a specialist holding it gets nothing. It replaced Thunderhead
+(Feedback Loop) and Overmind (Entanglement), both deleted.
+
+Measured on the day (4000 focus runs, the one-ply pilot alternating only when the bonus wins
+the turn): Forked +0.45 against Thunderhead's +0.28, Embodied −0.19 against Overmind's −0.79;
+Lightning Rod (+1.06) and Construct (+0.46) — the specialist conversions — still lead. A floor:
+the pilot never sets a hand up.
+
 ## Renew's stacked payoffs (LOCKED — 2026-08-30 designer sign-off)
 
 Renew is currently read **three separate ways**, and as of the Nature slate all

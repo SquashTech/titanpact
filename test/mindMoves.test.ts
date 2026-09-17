@@ -235,7 +235,7 @@ test('mind: every single-target Mind damage move carries the Haunt spread for fr
   const singleTargetMindDamage = Object.values(moves).filter(
     (m) => m.type === 'Mind' && !signatureMoves[m.id] && m.kind === 'damage' && m.target === 'singleEnemy'
   );
-  assert.strictEqual(singleTargetMindDamage.length, 8);
+  assert.strictEqual(singleTargetMindDamage.length, 9);
   const haunters = Object.values(moves).filter(
     (m) => m.type === 'Mind' && !signatureMoves[m.id] && firstStatusApplication(m)?.statusId === 'Haunt'
   );
@@ -277,9 +277,9 @@ test('mind: each Mind hero attacks with a stat it is actually good at', () => {
   }
 });
 
-test('mind: the authored slate is 16 moves plus the three 2026-09-15 additions, and every authored stat delta is still a multiple of 5', () => {
+test('mind: the authored slate is 16 moves plus the three 2026-09-15 additions and Embodied’s Psychokinesis, and every authored stat delta is still a multiple of 5', () => {
   const mind = Object.values(moves).filter((m) => m.type === 'Mind' && !signatureMoves[m.id]);
-  assert.strictEqual(mind.length, 19);
+  assert.strictEqual(mind.length, 20);
   for (const m of mind) {
     for (const d of m.statDeltas ?? []) {
       assert.strictEqual(Math.abs(d.amount) % 5, 0, `${m.id} authors a non-multiple-of-5 delta`);

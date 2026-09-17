@@ -55,6 +55,8 @@ export interface Combatant {
   fainted: boolean;
   /** A bench entry held back until the side's field is empty (switching.ts replacementCandidates). Set at fight build from Squad.reserveIds. */
   reserve?: boolean;
+  /** The category of the last damaging move this combatant LANDED (resolveRound, after the move's hits; a Retribution counts). Unset until the first. Read by a passive's `alternatesCategory`; persists across a switch like a stat modifier. */
+  lastHitCategory?: DamageCategory;
 }
 
 /** The one global Field Effect (docs/field-effects.md). */

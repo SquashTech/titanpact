@@ -371,6 +371,7 @@ export function collectPassiveDamageModifiers(
   for (const instance of Object.values(attacker.passives)) {
     const def = passiveDefs[instance.passiveId]?.damageModifier;
     if (!def || !matchesFields(def.eventFieldEquals, context)) continue;
+    if (def.alternatesCategory && (attacker.lastHitCategory === undefined || attacker.lastHitCategory === move.category)) continue;
     for (let i = 0; i < instance.stacks; i++) {
       modifiers.push({ source: instance.passiveId, amount: def.amount });
     }
