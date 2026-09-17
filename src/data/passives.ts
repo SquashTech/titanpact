@@ -783,6 +783,69 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'speed', amount: -10 },
     },
   },
+  // --- The third-of-each-type six (2026-09-17) ---
+  aftershock: {
+    id: 'aftershock',
+    name: 'Aftershock',
+    description: 'Whenever this hero lands a magical attack, its target loses 10 Defense.',
+    // Constrict's shape aimed at Defense: the mixed line's two halves feed each other, since
+    // Stone's magical column is all spread — one Rockfall softens both foes for the staff.
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'magical' } },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'defense', amount: -10 },
+    },
+  },
+  pixieDust: {
+    id: 'pixieDust',
+    name: 'Pixie Dust',
+    description: 'When this hero enters the battlefield, its partner gains 30 mana, past their pool.',
+    // Overspill pointed at the partner. A support that pivots in is paying a turn to arrive, and
+    // the arrival itself is the pour — the bench-cycling engine, read from the other seat.
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'manaGrant', target: 'ally', amount: { kind: 'flat', value: 30 } },
+    },
+  },
+  rampant: {
+    id: 'rampant',
+    name: 'Rampant',
+    description: 'Whenever this hero takes damage, it gains 10 Attack.',
+    // Tempering's trigger paying the offensive stat, on the body least interested in defending.
+    // Every hit it eats is a bigger bite back; the Pact Clock is what brackets it.
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10 },
+    },
+  },
+  omen: {
+    id: 'omen',
+    name: 'Omen',
+    description: 'When this hero enters the battlefield, both active enemies are Haunted.',
+    // Torment for free on every arrival, both foes at once. Sentry's shape carrying Spirit's
+    // mark instead of Provoke: the tank does not need the hits aimed at it, it needs every hit
+    // its partner lands to count twice.
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Haunt' },
+    },
+  },
+  sunblind: {
+    id: 'sunblind',
+    name: 'Sunblind',
+    description: 'Whenever this hero Dazes a foe, that foe loses 20 Wisdom.',
+    // Widow's Kiss on the Daze rider: a flash that lands before the foe acts costs them the
+    // turn, and now the follow-up burns through them too. Only pays on a hero fast enough to
+    // land the Daze first, which is the whole line.
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Daze' } },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', amount: -20 },
+    },
+  },
 };
 
 export const passives: Record<string, PassiveDefinition> = {

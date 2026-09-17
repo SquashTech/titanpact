@@ -236,7 +236,9 @@ don't silently override it.
   new type's line (`docs/leveling-and-ranks.md` "The RETYPE").
 
 ### Heroes & progression
-- Heroes are **named, authored, fixed specialists** (~53 concepts). Not procedurally generated.
+- Heroes are **named, authored, fixed specialists** — **42, three a type (one starter, two
+  recruit-only) for the fourteen draftable types, complete as of 2026-09-17** per user direction,
+  replacing the ~53-concept target. Not procedurally generated.
 - **Mono typing is a valid terminal state**, not a larval stage. Precedent: Pokémon
   Normal/Water/Bug. A numerically common mono type is not a design flaw.
 - **Levels are AUTOMATIC and ROSTER-WIDE** (2026-09-10, `src/run/growth.ts`). Every roster hero

@@ -124,7 +124,7 @@ function forkPartner(map: RunMap, node: MapNode): MapNode | null {
   return partnerId ? map.nodes[partnerId] : null;
 }
 
-/** Bounded: the pool is 36 heroes over 15 types, so two identical type sets in a row are rare and eight tries is generous. */
+/** Bounded: the pool is 42 heroes over 14 types, so two identical type sets in a row are rare and eight tries is generous. */
 const FORK_REROLLS = 8;
 
 /**

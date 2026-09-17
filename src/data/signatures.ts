@@ -95,6 +95,20 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'Closes on them and does not open — whatever was quick about them was in the part it has (-20 Speed).',
   },
+  // Leviathan: the whole deep comes up behind the strike, and stays up.
+  deepsurge: {
+    id: 'deepsurge',
+    name: 'Deepsurge',
+    type: 'Water',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 85,
+    statusApplication: { statusId: 'WaterForce', magnitude: 25, target: 'self' },
+    manaCost: 55,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'The whole deep comes up behind the strike, and it does not go back down (Water Force 25 to self).',
+  },
 
   // --- Frost ---
   // Flurry: cold that does not wait to be let in.
@@ -215,6 +229,21 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     target: 'bothAllies',
     description: 'Spreads its wings over the pair and draws every eye to itself (+30 Defense to both allies; Provoke this round).',
   },
+  // Slate: throws the ground up under both of them, and what comes down is in reach of the staff.
+  upheaval: {
+    id: 'upheaval',
+    name: 'Upheaval',
+    type: 'Stone',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 65,
+    statDeltas: [{ stat: 'attack', amount: 20 }],
+    statDeltaTarget: 'self',
+    manaCost: 60,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'Throws the ground up under both of them, and what comes down is in reach of the staff (+20 Attack to self).',
+  },
 
   // --- Nature ---
   // Sylva: everything on the far side rots, everything on this side grows.
@@ -296,6 +325,20 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'Strikes with the shield-arm, and the shield comes up for both (+20 Defense to both allies).',
   },
+  // Empyrean: comes down out of the noon sky, and the ground where it lands is holy.
+  sundive: {
+    id: 'sundive',
+    name: 'Sundive',
+    type: 'Light',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 80,
+    fieldEffectApplication: 'sanctuary',
+    manaCost: 55,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Comes down out of the noon sky, and the ground where it lands is holy (sets Sanctuary).',
+  },
 
   // --- Shadow ---
   // Vesper: lands first and is already gone into the next.
@@ -370,6 +413,22 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'singleEnemy',
     description: 'Every cast raises the ceiling for the one after it (+20 Intelligence to self).',
+  },
+  // Pixie: the whole side, faster and fuller, and the air singing. The support signature — the
+  // one buff in the set — priced 60 for its second rider, as Roost Guard's shape is.
+  fairyRing: {
+    id: 'fairyRing',
+    name: 'Fairy Ring',
+    type: 'Arcane',
+    category: 'magical',
+    kind: 'buff',
+    manaGrant: 50,
+    statDeltas: [{ stat: 'speed', amount: 20 }],
+    fieldEffectApplication: 'surgingMagic',
+    manaCost: 60,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'Draws the ring, and everyone inside it is quicker and fuller than they were (50 mana and +20 Speed to both allies; sets Surging Magic).',
   },
 
   // --- Mind ---
@@ -451,6 +510,23 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     target: 'bothEnemies',
     description: 'A wail with an edge on it, and it takes the fight out of both of them (-20 Attack to both).',
   },
+  // Dread: spreads its wings, and everything aimed at the pair finds feathers. The Shield reads
+  // the caster's Defense (docs/shield.md), which is the one stat this line spiked.
+  nevermore: {
+    id: 'nevermore',
+    name: 'Nevermore',
+    type: 'Spirit',
+    category: 'magical',
+    kind: 'buff',
+    statusApplication: [
+      { statusId: 'Provoke', duration: 1, target: 'self' },
+      { statusId: 'Shield', magnitude: 60, target: 'self' },
+    ],
+    manaCost: 55,
+    priority: 1,
+    target: 'self',
+    description: 'Spreads its wings, and everything aimed at the pair finds feathers (Provoke this round; Shield 60 on self).',
+  },
 
   // --- Iron ---
   // Warden: holds the line, and hits from it.
@@ -528,6 +604,20 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'singleEnemy',
     description: 'Vents the whole boiler through the fist; some of it stays in the housing (Burn 40 to the target, Burn 30 to self).',
+  },
+  // Rex: bites down and keeps what it takes. Mech's first drain; the boiler runs on it.
+  devour: {
+    id: 'devour',
+    name: 'Devour',
+    type: 'Mech',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 90,
+    drainPercent: 0.5,
+    manaCost: 55,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Bites down and keeps what it takes; the boiler runs on it (heals 50% of damage dealt).',
   },
 
   // --- Beast ---

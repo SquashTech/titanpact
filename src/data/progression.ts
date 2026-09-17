@@ -1,5 +1,5 @@
-// Level-up move pools and Evolution nodes for the fixture roster (not the
-// authored 53-hero content). A pool entry that is also in the hero's starting
+// Level-up move pools and Evolution nodes for the roster, all 42 heroes (three a type, 2026-09-17).
+// A pool entry that is also in the hero's starting
 // kit is dead weight: levelUpMovePool filters unlocked moves out, so it can
 // never be offered. Every Evolution node offers three paths differing in kind
 // and keeps at least one path that leaves the typing alone. The graft owns the SECONDARY SLOT, so a
@@ -111,6 +111,13 @@ export const progressionTable: ProgressionTable = {
       'titanicCrush',
       'undercurrent',
       'cleansingRain',
+    ],
+    // Water's whole magical column, minus Tsunami (Tidebreaker's grant). Deep Chill and Jolt
+    // telegraph the two grafts; Tsunami is what the mono path pays with.
+    leviathan: [
+      'splash', 'refresh', 'deepChill', 'jolt', 'magicBolt', 'psiBolt',
+      'torrent', 'engulf', 'deluge', 'crest', 'shockBubble', 'oasis', 'cleansingRain',
+      'maelstrom', 'highTide', 'seawall', 'thunderbolt',
     ],
     // --- Frost ---
     glacialWarden: [
@@ -260,6 +267,13 @@ export const progressionTable: ProgressionTable = {
       'hallow',
       'sunlance',
     ],
+    // Both of Stone's columns, since the line swings both. Ember, Singe and Magic Bolt telegraph
+    // the grafts; Titanic Crush is Quakebringer's grant, so it is not here.
+    slate: [
+      'rockToss', 'mudBall', 'gravelSpray', 'ember', 'singe', 'magicBolt',
+      'faultLine', 'rockfall', 'rubbleRush', 'spireClaw', 'bodyBlow', 'retribution',
+      'landslide', 'boulderSlam', 'stoneheart', 'bodyCrush',
+    ],
     // --- Nature ---
     wildOracle: [
       'vineLash',
@@ -348,6 +362,13 @@ export const progressionTable: ProgressionTable = {
       'hallow',
     ],
     aegis: ['holySlice', 'blind', 'purify', 'bless', 'vigil', 'exalt', 'consecrate', 'benediction', 'divineGrace', 'reinforce', 'pistonPunch', 'vineLash', 'toughenUp', 'rockToss', 'radiantBeam', 'radiance', 'smite', 'solarFlare', 'judgment', 'hallow', 'sunlance', 'bodyguard'],
+    // Light's magical attacks and the Daze riders, minus Solar Flare (Sunborne's grant). Jolt and
+    // Stunning Bolt telegraph Storm, Wisp telegraphs Spirit; Thunderbolt is the Late off-type.
+    empyrean: [
+      'bless', 'purify', 'vigil', 'jolt', 'wisp', 'magicBolt',
+      'radiantBeam', 'smite', 'blindingFlash', 'radiance', 'benediction', 'stunningBolt',
+      'judgment', 'exalt', 'divineGrace', 'thunderbolt',
+    ],
     // --- Shadow ---
     shadowMonk: ['backstab', 'weaken', 'cutthroat', 'shadowSlice', 'rend', 'duskBlade', 'thousandCuts', 'claw', 'shadowstrike', 'phantomStrike', 'ironFist', 'thunderclap', 'enfeeble', 'rampage', 'eviscerate', 'swingingChain', 'hamstring', 'smokeBomb', 'bloodTrail'],
     marrow: ['lieInWait', 'umbralBeam', 'umbralWave', 'poltergeist', 'enfeeble', 'drain', 'torment', 'soulRend', 'wisp', 'jolt', 'siphon', 'deepChill', 'flicker', 'electricBurst', 'lastRites', 'ionicZap', 'maelstrom', 'grimHarvest', 'stunningBolt', 'seance'],
@@ -380,6 +401,13 @@ export const progressionTable: ProgressionTable = {
       'infuse','conduit', 'fontOfPower', 'arcaneOverflow', 'magicBolt', 'cataclysm', 'focus', 'arcPulse', 'magicCloak', 'glimmer', 'psiBolt', 'manaFont', 'splash', 'arcaneBlast', 'overload', 'study', 'wickedFear',
       'resonantBolt',
       'twinCast',
+    ],
+    // The support half of Arcane plus the two nukes a partner will want poured into. Bless, Lull
+    // and Wisp are the off-type support colours; Stasis telegraphs the Mind graft alongside Lull.
+    pixie: [
+      'magicBolt', 'focus', 'barrier', 'manaTap', 'bless', 'lull', 'wisp',
+      'empower', 'arcPulse', 'study', 'magicCloak', 'overload', 'stasis',
+      'conduit', 'arcaneOverflow', 'fontOfPower', 'twinCast', 'cataclysm',
     ],
     // --- Mind ---
     // Psyshock and Psionic Wave are the mid/late damage the pool had none of, and both shred
@@ -476,6 +504,13 @@ export const progressionTable: ProgressionTable = {
       'seance',
     ],
     sorrow: ['lieInWait', 'backstab', 'fadeStrike', 'spookySlice', 'cutthroat', 'rend', 'soulOffering', 'wailingFlight', 'duskBlade', 'thousandCuts', 'iceShard', 'undertow', 'frostArmor', 'coldSnap', 'aquaSlice', 'ascendant', 'soulfire', 'hamstring'],
+    // The magical line and the HP-priced cards a 230-HP body can afford. Provoke and Bodyguard are
+    // the tank's off-type verbs; Fortify and Lie in Wait telegraph the grafts.
+    dread: [
+      'wisp', 'drain', 'soulfire', 'provoke', 'fortify', 'lieInWait',
+      'soulRend', 'poltergeist', 'soulOffering', 'vengeance', 'flicker', 'bodyguard',
+      'banish', 'seance', 'lastRites', 'ascendant',
+    ],
     // --- Iron ---
     ironWarden: ['ironFist', 'pinDown', 'ironSkin', 'rendArmor', 'livingWall', 'juggernaut', 'rockToss', 'bodyBlow', 'reinforce', 'bastion', 'holyStrike', 'claw', 'metallicBlade', 'heavyBlow', 'momentumSwing', 'onslaught', 'swingingChain', 'stoneheart', 'shieldBash', 'bodyguard'],
     valor: [
@@ -543,6 +578,13 @@ export const progressionTable: ProgressionTable = {
       'shockCoil',
       'salvo',
       'shieldBash',
+    ],
+    // Mech's physical column and the Iron heavies a 110-Attack body wants. Pounce telegraphs the
+    // Beast graft, Rock Toss the Stone one; Gore is Primal's grant, so it is not here.
+    rex: [
+      'pistonPunch', 'cogBop', 'pounce', 'rockToss', 'heavyBlow', 'ironFist',
+      'whirlingBlades', 'cogSlam', 'shockCoil', 'juryRig', 'patchUp', 'momentumSwing',
+      'jackpot', 'salvo', 'overdrive', 'onslaught',
     ],
     // --- Beast ---
     packAlpha: [
@@ -794,6 +836,40 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['stormLash'],
             typeGraft: 'Storm',
             learnableMoveIds: ['thunderclap', 'shockSlice', 'tailwind', 'overcharge', 'ionize'],
+          },
+        ],
+      },
+    ],
+    leviathan: [
+      {
+        paths: [
+          {
+            id: 'leviathan-tidebreaker',
+            heroId: 'leviathan',
+            name: 'Tidebreaker',
+            description: 'Stops being a thing in the sea and becomes the sea arriving.',
+            statGrants: { intelligence: 30, speed: 10 },
+            unlocksMoveIds: ['tsunami'],
+          },
+          {
+            id: 'leviathan-deepfrost',
+            heroId: 'leviathan',
+            name: 'Deepfrost',
+            description: 'Goes down to where the water stops moving, and brings that back up with it.',
+            statGrants: { hp: 30, wisdom: 20 },
+            unlocksMoveIds: ['glaciate'],
+            typeGraft: 'Frost',
+            learnableMoveIds: ['snowBlast', 'rimeWind', 'frigidAir', 'avalanche', 'absoluteZero'],
+          },
+          {
+            id: 'leviathan-stormwyrm',
+            heroId: 'leviathan',
+            name: 'Stormwyrm',
+            description: 'Surfaces under the weather and does not let it leave without it.',
+            statGrants: { intelligence: 20, speed: 10 },
+            unlocksMoveIds: ['chainLightning'],
+            typeGraft: 'Storm',
+            learnableMoveIds: ['zap', 'charge', 'electricBurst', 'ionicZap', 'ionCascade'],
           },
         ],
       },
@@ -1080,6 +1156,41 @@ export const progressionTable: ProgressionTable = {
         ],
       },
     ],
+    slate: [
+      {
+        paths: [
+          {
+            id: 'slate-quakebringer',
+            heroId: 'slate',
+            name: 'Quakebringer',
+            description: 'The quake softens them, and the staff finishes whatever the quake left standing.',
+            statGrants: { attack: 20, intelligence: 20 },
+            unlocksMoveIds: ['titanicCrush'],
+            grantsPassiveIds: ['aftershock'],
+          },
+          {
+            id: 'slate-magma',
+            heroId: 'slate',
+            name: 'Magma',
+            description: 'Finds out what the rock was before it cooled.',
+            statGrants: { intelligence: 20, attack: 10 },
+            unlocksMoveIds: ['scorch'],
+            typeGraft: 'Fire',
+            learnableMoveIds: ['setAlight', 'moltenLash', 'immolate', 'inferno', 'firestorm'],
+          },
+          {
+            id: 'slate-runestone',
+            heroId: 'slate',
+            name: 'Runestone',
+            description: 'Cuts the letters into the stone, and the stone starts answering to them.',
+            statGrants: { intelligence: 30, manaPool: 20 },
+            unlocksMoveIds: ['overload'],
+            typeGraft: 'Arcane',
+            learnableMoveIds: ['manaTap', 'resonantBolt', 'arcaneBlast', 'study', 'cataclysm'],
+          },
+        ],
+      },
+    ],
     // --- Nature ---
     wildOracle: [
       {
@@ -1258,6 +1369,41 @@ export const progressionTable: ProgressionTable = {
         ],
       },
     ],
+    empyrean: [
+      {
+        paths: [
+          {
+            id: 'empyrean-sunborne',
+            heroId: 'empyrean',
+            name: 'Sunborne',
+            description: 'Climbs until there is nothing between it and the light, and comes down carrying it.',
+            statGrants: { intelligence: 20, speed: 10 },
+            unlocksMoveIds: ['solarFlare'],
+            grantsPassiveIds: ['sunblind'],
+          },
+          {
+            id: 'empyrean-stormwing',
+            heroId: 'empyrean',
+            name: 'Stormwing',
+            description: 'Rides the front of the weather in, and arrives with it.',
+            statGrants: { speed: 20, intelligence: 10 },
+            unlocksMoveIds: ['electricBurst'],
+            typeGraft: 'Storm',
+            learnableMoveIds: ['zap', 'charge', 'chainLightning', 'ionicZap', 'ionCascade'],
+          },
+          {
+            id: 'empyrean-seraph',
+            heroId: 'empyrean',
+            name: 'Seraph',
+            description: 'Stops being a creature the light shines on and becomes something it shines out of.',
+            statGrants: { wisdom: 20, manaPool: 20 },
+            unlocksMoveIds: ['flicker'],
+            typeGraft: 'Spirit',
+            learnableMoveIds: ['drain', 'soulfire', 'poltergeist', 'seance', 'banish'],
+          },
+        ],
+      },
+    ],
     // --- Shadow ---
     shadowMonk: [
       {
@@ -1428,6 +1574,41 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['stasis'],
             typeGraft: 'Mind',
             learnableMoveIds: ['enervate', 'psyshock', 'disorient', 'psionicWave', 'brainFlay'],
+          },
+        ],
+      },
+    ],
+    pixie: [
+      {
+        paths: [
+          {
+            id: 'pixie-stardust',
+            heroId: 'pixie',
+            name: 'Stardust',
+            description: 'Whoever it lands beside finds their pool fuller than they left it.',
+            statGrants: { hp: 30, wisdom: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            grantsPassiveIds: ['pixieDust'],
+          },
+          {
+            id: 'pixie-glamour',
+            heroId: 'pixie',
+            name: 'Glamour',
+            description: 'Stops shaping the mana and starts shaping what they think they are looking at.',
+            statGrants: { wisdom: 20, speed: 10 },
+            unlocksMoveIds: ['disorient'],
+            typeGraft: 'Mind',
+            learnableMoveIds: ['brainWard', 'enervate', 'wickedFear', 'mentalFortress', 'breakWill'],
+          },
+          {
+            id: 'pixie-wisplight',
+            heroId: 'pixie',
+            name: 'Wisplight',
+            description: 'The light was never the point; it was what the light was leading.',
+            statGrants: { intelligence: 20, manaPool: 20 },
+            unlocksMoveIds: ['soulOffering'],
+            typeGraft: 'Spirit',
+            learnableMoveIds: ['torment', 'drain', 'soulfire', 'flicker', 'ascendant'],
           },
         ],
       },
@@ -1609,6 +1790,41 @@ export const progressionTable: ProgressionTable = {
         ],
       },
     ],
+    dread: [
+      {
+        paths: [
+          {
+            id: 'dread-omen',
+            heroId: 'dread',
+            name: 'Omen',
+            description: 'Lands, and both of them are already bound to each other before it has folded its wings.',
+            statGrants: { hp: 30, defense: 20 },
+            unlocksMoveIds: [],
+            grantsPassiveIds: ['omen'],
+          },
+          {
+            id: 'dread-ironfeather',
+            heroId: 'dread',
+            name: 'Ironfeather',
+            description: 'Every feather a blade, every blade a shield, and it has a great many feathers.',
+            statGrants: { defense: 20, hp: 30 },
+            unlocksMoveIds: ['reinforce'],
+            typeGraft: 'Iron',
+            learnableMoveIds: ['ironSkin', 'pinDown', 'shieldBash', 'parry', 'juggernaut'],
+          },
+          {
+            id: 'dread-gallows',
+            heroId: 'dread',
+            name: 'Gallows',
+            description: 'Stops waiting for the fight to end and starts feeding during it.',
+            statGrants: { intelligence: 20, speed: 10 },
+            unlocksMoveIds: ['umbralBeam'],
+            typeGraft: 'Shadow',
+            learnableMoveIds: ['umbraBolt', 'weaken', 'enfeeble', 'umbralWave', 'grimHarvest'],
+          },
+        ],
+      },
+    ],
     // --- Iron ---
     ironWarden: [
       {
@@ -1781,6 +1997,41 @@ export const progressionTable: ProgressionTable = {
             typeGraft: 'Fire',
             learnableMoveIds: ['backfire', 'overheat', 'malfunction', 'scorch', 'inferno'],
             grantsPassiveIds: ['superheat'],
+          },
+        ],
+      },
+    ],
+    rex: [
+      {
+        paths: [
+          {
+            id: 'rex-tyrant',
+            heroId: 'rex',
+            name: 'Tyrant',
+            description: 'Hitting it was the mistake. It runs on that.',
+            statGrants: { attack: 20, hp: 30 },
+            unlocksMoveIds: [],
+            grantsPassiveIds: ['rampant'],
+          },
+          {
+            id: 'rex-primal',
+            heroId: 'rex',
+            name: 'Primal',
+            description: 'Whatever they built it to be, something older woke up in the chassis.',
+            statGrants: { attack: 20, speed: 20 },
+            unlocksMoveIds: ['gore'],
+            typeGraft: 'Beast',
+            learnableMoveIds: ['claw', 'lacerate', 'maul', 'rampage', 'eviscerate', 'rendingLeap'],
+          },
+          {
+            id: 'rex-fossil',
+            heroId: 'rex',
+            name: 'Fossil',
+            description: 'Stone where the plating was; it has been under the ground before and did not mind.',
+            statGrants: { hp: 60, defense: 20 },
+            unlocksMoveIds: ['faultLine'],
+            typeGraft: 'Stone',
+            learnableMoveIds: ['mudBall', 'rubbleRush', 'spireClaw', 'boulderSlam', 'stoneheart'],
           },
         ],
       },

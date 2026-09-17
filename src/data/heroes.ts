@@ -115,6 +115,19 @@ export const heroes: Record<string, HeroDefinition> = {
     schedule: { offerLevels: [5, 8, 11, 17, 24, 26], midLevel: 10, lateLevel: 19 },
     signatureMoveId: 'vise',
   },
+  leviathan: {
+    id: 'leviathan',
+    name: 'Leviathan',
+    types: ['Water'],
+    // The roster's top Intelligence: Water's slate is magical sixteen deep and nobody was swinging
+    // it at full weight — Riptide hedged, Pincer is the physical wall. Everything else is thin.
+    baseStats: { hp: 190, attack: 30, defense: 40, intelligence: 100, wisdom: 45, speed: 75, manaPool: 70, mpRegen: 10 },
+    moveIds: ['siphon', 'undercurrent', 'tideGuard'],
+    starter: false,
+    growthGrades: { hp: 'B', attack: 'F', defense: 'B', intelligence: 'S', wisdom: 'C', speed: 'A', manaPool: 'S' },
+    schedule: { offerLevels: [4, 8, 12, 16, 21, 26], midLevel: 10, lateLevel: 19 },
+    signatureMoveId: 'deepsurge',
+  },
 
   // --- Frost ---
   glacialWarden: {
@@ -212,6 +225,20 @@ export const heroes: Record<string, HeroDefinition> = {
     schedule: { offerLevels: [6, 11, 15, 20, 24, 26], midLevel: 12, lateLevel: 22 },
     signatureMoveId: 'roostGuard',
   },
+  slate: {
+    id: 'slate',
+    name: 'Slate',
+    types: ['Stone'],
+    // Stone's magical column (Tremor, Rockfall, Landslide) is all spread and had no caster to
+    // swing it. An 80/80 mixed line: the quake softens both, the staff finishes one. Bulk is what
+    // it costs — the first Stone hero under 240 HP.
+    baseStats: { hp: 190, attack: 80, defense: 55, intelligence: 80, wisdom: 35, speed: 50, manaPool: 60, mpRegen: 10 },
+    moveIds: ['tremor', 'toughenUp', 'focus'],
+    starter: false,
+    growthGrades: { hp: 'C', attack: 'A', defense: 'C', intelligence: 'A', wisdom: 'D', speed: 'B', manaPool: 'S' },
+    schedule: { offerLevels: [7, 9, 14, 18, 23, 28], midLevel: 10, lateLevel: 20 },
+    signatureMoveId: 'upheaval',
+  },
 
   // --- Nature ---
   wildOracle: {
@@ -270,6 +297,20 @@ export const heroes: Record<string, HeroDefinition> = {
     growthGrades: { hp: 'A', attack: 'D', defense: 'A', intelligence: 'B', wisdom: 'A', speed: 'C', manaPool: 'B' },
     schedule: { offerLevels: [6, 11, 15, 20, 24, 28], midLevel: 12, lateLevel: 21 },
     signatureMoveId: 'bulwarkStrike',
+  },
+  empyrean: {
+    id: 'empyrean',
+    name: 'Empyrean',
+    types: ['Light'],
+    // Light had two supports and no attacker. Speed 100 is the point: Daze is a flinch cleared at
+    // the round's end, so a Daze rider only costs the foe a turn when it lands FIRST — the slate's
+    // three Daze attacks were riders on heroes too slow to cash them.
+    baseStats: { hp: 180, attack: 30, defense: 40, intelligence: 90, wisdom: 55, speed: 100, manaPool: 55, mpRegen: 10 },
+    moveIds: ['glimmer', 'blind', 'hallow'],
+    starter: false,
+    growthGrades: { hp: 'C', attack: 'F', defense: 'C', intelligence: 'S', wisdom: 'B', speed: 'S', manaPool: 'S' },
+    schedule: { offerLevels: [5, 8, 11, 17, 20, 26], midLevel: 10, lateLevel: 19 },
+    signatureMoveId: 'sundive',
   },
 
   // --- Shadow ---
@@ -330,6 +371,20 @@ export const heroes: Record<string, HeroDefinition> = {
     schedule: { offerLevels: [6, 10, 14, 19, 24, 26], midLevel: 12, lateLevel: 22 },
     signatureMoveId: 'culmination',
   },
+  pixie: {
+    id: 'pixie',
+    name: 'Pixie',
+    types: ['Arcane'],
+    // The support Arcane: Wisdom is what a buff scales off (docs/stat-scaling.md), so 85 makes
+    // every grant land bigger, and Speed 90 lands it before the partner swings. The kit is the
+    // Surging Magic loop end to end — the setter, the reader and the pour.
+    baseStats: { hp: 180, attack: 20, defense: 45, intelligence: 60, wisdom: 85, speed: 90, manaPool: 70, mpRegen: 10 },
+    moveIds: ['resonantBolt', 'infuse', 'manaFont'],
+    starter: false,
+    growthGrades: { hp: 'B', attack: 'F', defense: 'B', intelligence: 'C', wisdom: 'S', speed: 'A', manaPool: 'S' },
+    schedule: { offerLevels: [6, 9, 13, 17, 22, 27], midLevel: 11, lateLevel: 20 },
+    signatureMoveId: 'fairyRing',
+  },
 
   // --- Mind ---
   mindweaver: {
@@ -389,6 +444,20 @@ export const heroes: Record<string, HeroDefinition> = {
     schedule: { offerLevels: [5, 8, 11, 15, 21, 25], midLevel: 10, lateLevel: 19 },
     signatureMoveId: 'dirgeOfAsh',
   },
+  dread: {
+    id: 'dread',
+    name: 'Dread',
+    types: ['Spirit'],
+    // The Spirit body that can PAY the slate's prices: Revenant and Sorrow are both 180 HP, and
+    // Soul Offering, Spite and Vengeance all read the caster's own HP. Fifty points of bulk over
+    // either, on a line that hits harder the lower it has been taken.
+    baseStats: { hp: 230, attack: 40, defense: 80, intelligence: 50, wisdom: 65, speed: 30, manaPool: 55, mpRegen: 10 },
+    moveIds: ['spite', 'torment', 'secondWind'],
+    starter: false,
+    growthGrades: { hp: 'A', attack: 'E', defense: 'S', intelligence: 'C', wisdom: 'A', speed: 'C', manaPool: 'A' },
+    schedule: { offerLevels: [6, 10, 15, 19, 24, 28], midLevel: 12, lateLevel: 21 },
+    signatureMoveId: 'nevermore',
+  },
 
   // --- Iron ---
   ironWarden: {
@@ -447,6 +516,20 @@ export const heroes: Record<string, HeroDefinition> = {
     growthGrades: { hp: 'S', attack: 'A', defense: 'S', intelligence: 'F', wisdom: 'S', speed: 'C', manaPool: 'D' },
     schedule: { offerLevels: [6, 10, 14, 17, 24, 26], midLevel: 13, lateLevel: 22 },
     signatureMoveId: 'boilerBlow',
+  },
+  rex: {
+    id: 'rex',
+    name: 'Rex',
+    types: ['Mech'],
+    // The roster's top Attack, and unlike Bellows it gets there before the round is over: 110 at
+    // Speed 70 against 105 at 5. It pays in every other column, and Speed grows S so the gap
+    // between it and the things it eats only widens.
+    baseStats: { hp: 210, attack: 110, defense: 55, intelligence: 15, wisdom: 35, speed: 70, manaPool: 55, mpRegen: 10 },
+    moveIds: ['steamVent', 'overclock', 'kickstart'],
+    starter: false,
+    growthGrades: { hp: 'B', attack: 'A', defense: 'B', intelligence: 'F', wisdom: 'B', speed: 'S', manaPool: 'A' },
+    schedule: { offerLevels: [3, 7, 11, 15, 20, 25], midLevel: 9, lateLevel: 18 },
+    signatureMoveId: 'devour',
   },
 
   // --- Beast ---

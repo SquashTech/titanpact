@@ -193,20 +193,27 @@ A hero is in exactly one pool, never both, and never neither. This split is
 independent of type coverage — a type can have both a starter and a recruit-only
 hero (Iron currently does: Valor starts, Warden is recruit-only), and recruit-only
 status says nothing about a hero's power level, just where you first meet them.
-The **one-starter-per-type** shape below is a consequence of the current fixture
-roster, not a rule — but it is load-bearing enough that new heroes have been added
-as recruit-only to preserve it (Widow and Coil, Beast, 2026-08-30). If a type ever
-wants two draftable heroes, that should be a decision taken on purpose.
+The **one-starter-per-type** shape is a RULE since 2026-09-17, per user direction: the base
+roster is **three heroes a type — one starter, two recruit-only — for the fourteen draftable
+types, 42 heroes**, and the roster is COMPLETE at that count (Ancient is near-undraftable per
+"Ancient is special" above, so it holds none). It was a consequence of the fixture roster until
+then, load-bearing enough that new heroes were added as recruit-only to preserve it (Widow and
+Coil, Beast, 2026-08-30). If a type ever wants two draftable heroes, that should be a decision
+taken on purpose.
 
-**Current fixture state (2026-08-17):** 14 starters give **one starter per type**
-(every type except Ancient, which is intentionally near-undraftable per "Ancient is
-special" above) — Cinder (Fire), Tidecaller (Water), Flurry (Frost),
-Squall (Storm), Crag (Stone), Sylva (Nature), Solace (Light), Vesper
-(Shadow), Glyph (Arcane), Cortex (Mind), Revenant (Spirit), Valor
-(Iron), Clockwork (Mech), Pack Alpha (Beast). Warden is the roster's first
-recruit-only hero — kept in the game, pulled out of the draft so Iron's starter slot
-is Valor instead. Expect the recruit-only list to grow as more of the authored
-53-hero roster is added; this is the seed of that split, not the finished shape of it.
+**Current state (2026-09-17):** 14 starters, one per type — Crimson (Fire), Riptide (Water),
+Rime (Frost), Tempest (Storm), Crag (Stone), Sylva (Nature), Solace (Light), Nightshade
+(Shadow), Glyph (Arcane), Cortex (Mind), Revenant (Spirit), Valor (Iron), Clockwork (Mech),
+Fang (Beast) — and 28 recruit-only, two per type. The last six landed together on 2026-09-17,
+each authored against the hole the type's existing pair left: **Leviathan** (Water, the
+slate's magical column at full weight — Int 100), **Slate** (Stone, an 80/80 mixed line that
+swings the magical spread column nobody held), **Empyrean** (Light, the type's first attacker,
+at Speed 100 so its Daze riders land first), **Pixie** (Arcane, the Wisdom-85 support whose
+buffs land bigger by the stat-scaling rule), **Dread** (Spirit, the 230-HP body that can pay
+the slate's HP-priced cards) and **Rex** (Mech, Attack 110 at Speed 70, the Beast graft on its
+node). Every hero is on the same five-clause Evolution framework, grade budget, schedule
+stagger and signature slot as the thirty-six before it; `test/roster.test.ts` and
+`test/moveTiers.test.ts` pin all of it.
 
 ---
 
