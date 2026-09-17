@@ -78,7 +78,7 @@ test('manticore: every location fields a Guardian champion, and the finale bench
   for (const location of withChampions) assert.ok(location.guardianFinalEnemyId! in enemies);
 });
 
-test('archonBlast: 55 base power for 50 mana, magical, and the +20 Wisdom lands on the CASTER', () => {
+test('archonBlast: 55 base power for 40 mana, magical, and the +20 Wisdom lands on the CASTER', () => {
   const move = moves.archonBlast;
   assert.strictEqual(move.type, 'Ancient');
   assert.strictEqual(move.category, 'magical');
@@ -87,15 +87,15 @@ test('archonBlast: 55 base power for 50 mana, magical, and the +20 Wisdom lands 
   // move is worth more than its Base Power reads — it is priced under the catalog median
   // for a single-target attack on purpose. Shared with the Kraken and the Endbringer.
   assert.strictEqual(move.basePower, 55);
-  assert.strictEqual(move.manaCost, 50);
+  assert.strictEqual(move.manaCost, 40);
   assert.deepStrictEqual(move.statDeltas, [{ stat: 'wisdom', amount: 20 }]);
   // Without statDeltaTarget the deltas follow the move's targets and hand the ENEMY the Wisdom.
   assert.strictEqual(move.statDeltaTarget, 'self');
 });
 
-test('archonBlast: stays untiered, because Ancient is still the one type with no authored slate', () => {
-  assert.strictEqual(moves.archonBlast.tier, undefined);
+test('archonBlast: Mid on the Ancient slate, and every Ancient move carries a tier now (test/ancientMoves)', () => {
+  assert.strictEqual(moves.archonBlast.tier, 'mid');
   for (const move of Object.values(moves)) {
-    if (move.type === 'Ancient') assert.strictEqual(move.tier, undefined, `${move.id} carries a tier`);
+    if (move.type === 'Ancient') assert.ok(move.tier, `${move.id} carries no tier`);
   }
 });

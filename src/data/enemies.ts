@@ -59,7 +59,7 @@ export const enemies: Record<string, HeroDefinition> = {
     name: 'Yugzulach',
     types: ['Shadow', 'Ancient'],
     baseStats: { hp: 330, attack: 70, defense: 85, intelligence: 85, wisdom: 75, speed: 70, manaPool: 140, mpRegen: 20 },
-    moveIds: ['runicBlast', 'forgottenCurse', 'duskBlade', 'eclipse'],
+    moveIds: ['longDrink', 'forgottenCurse', 'duskBlade', 'eclipse'],
     starter: false,
     growthGrades: CHAMPION_GRADES,
   },
@@ -78,7 +78,7 @@ export const enemies: Record<string, HeroDefinition> = {
     name: 'Elder Bough',
     types: ['Nature', 'Ancient'],
     baseStats: { hp: 410, attack: 85, defense: 90, intelligence: 75, wisdom: 65, speed: 30, manaPool: 150, mpRegen: 20 },
-    moveIds: ['runicBlast', 'overgrowth', 'branchSlam', 'forceOfNature'],
+    moveIds: ['wardingSigil', 'abide', 'branchSlam', 'forceOfNature'],
     starter: false,
     growthGrades: CHAMPION_GRADES,
   },
@@ -102,7 +102,7 @@ export const enemies: Record<string, HeroDefinition> = {
     name: 'Dragon',
     types: ['Fire', 'Ancient'],
     baseStats: { hp: 420, attack: 85, defense: 80, intelligence: 80, wisdom: 60, speed: 35, manaPool: 150, mpRegen: 20 },
-    moveIds: ['runicBlast', 'spreadingBlaze', 'immolate', 'firebrand'],
+    moveIds: ['weightOfAges', 'spreadingBlaze', 'immolate', 'firebrand'],
     starter: false,
     growthGrades: CHAMPION_GRADES,
   },
@@ -155,17 +155,17 @@ export const enemies: Record<string, HeroDefinition> = {
   // it is still a Speed number rather than an exemption and every priority bracket still
   // beats it.
   //
-  // The kit is PROVISIONAL. Ancient is the one type slate still unauthored
-  // (CLAUDE.md "Repo map", docs/authoring-moves.md), so this is the three existing Ancient
-  // moves plus Enfeeble — which is the shape the real kit should keep: a Titan does not
-  // need to hit harder, it makes everything else softer. Revisit when Ancient lands, and
-  // watch Enfeeble specifically — stat mods have no ceiling, and two casts is -60/-60.
+  // The kit (Ancient slate, 2026-09-17): a Titan does not need to hit harder, it makes
+  // everything else softer — Erode on both heroes, Transfix taking a turn off one every round
+  // it cares to (Speed 95 lands the Daze first), Oblivion the one hit, and Raise the Standard
+  // for the company behind it, since it leads Late spawn now (docs/run-loop.md "The final
+  // battle"). Enfeeble came off: the slate has its own softening verb.
   endbringer: {
     id: 'endbringer',
     name: 'Endbringer',
     types: ['Ancient'],
     baseStats: { hp: 680, attack: 100, defense: 115, intelligence: 135, wisdom: 115, speed: 95, manaPool: 200, mpRegen: 25 },
-    moveIds: ['runicBlast', 'forgottenCurse', 'archonBlast', 'enfeeble'],
+    moveIds: ['raiseTheStandard', 'erode', 'transfix', 'oblivion'],
     starter: false,
     growthGrades: CHAMPION_GRADES,
   },

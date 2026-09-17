@@ -45,8 +45,9 @@ import { LEVEL_AFTER_ENCOUNTER, MAX_LEVEL, levelOf, levelUpEntry, xpForLevel } f
 import { MASTERY_EVOLUTION } from '../src/run/mastery';
 import type { MoveTier, TypeId } from '../src/engine/content';
 
-/** Every authored slate; Ancient is the only type still untiered (no authored slate yet). */
+/** Every authored slate — all fifteen since the Ancient slate landed (2026-09-17). */
 const TIERED_TYPES: readonly TypeId[] = [
+  'Ancient',
   'Fire',
   'Water',
   'Frost',
@@ -107,9 +108,10 @@ test('move tiers: each band offers its own tier — Early expires when Mid opens
     'the band you are in is the band you learn from'
   );
 
-  assert.strictEqual(moves.runicBlast.tier, undefined);
-  assert.ok(isMoveTierOfferable(moves.runicBlast, 1));
-  assert.ok(isMoveTierOfferable(moves.runicBlast, MAX_BAND_RANK), 'and an untiered move never expires either');
+  // A Class move is the untiered case now that every slate carries a tier (classes.ts).
+  assert.strictEqual(moves.feint.tier, undefined);
+  assert.ok(isMoveTierOfferable(moves.feint, 1));
+  assert.ok(isMoveTierOfferable(moves.feint, MAX_BAND_RANK), 'and an untiered move never expires either');
   assert.ok(isMoveTierOfferable(undefined, 1), 'a missing move must not gate — it is a content bug, not a lock');
 
   assert.deepStrictEqual(MOVE_TIER_RANK, { early: 1, mid: 2, late: 3 });

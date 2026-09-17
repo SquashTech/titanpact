@@ -55,13 +55,13 @@ test("guardians: every champion's mortal half sits inside its own Location's spa
 });
 
 test('guardians: Yugzulach and the Kraken carry their authored kits', () => {
-  assert.deepStrictEqual([...enemies[YUGZULACH_ID].moveIds], ['runicBlast', 'forgottenCurse', 'duskBlade', 'eclipse']);
+  assert.deepStrictEqual([...enemies[YUGZULACH_ID].moveIds], ['longDrink', 'forgottenCurse', 'duskBlade', 'eclipse']);
   assert.deepStrictEqual([...enemies[KRAKEN_ID].moveIds], ['aquaSlice', 'maelstrom', 'archonBlast', 'tsunami']);
 });
 
 test('guardians: the Elder Bough is one turn paying out three times, and Speed 30 is the price', () => {
   const guardian = enemies[ELDER_BOUGH_ID];
-  assert.deepStrictEqual([...guardian.moveIds], ['runicBlast', 'overgrowth', 'branchSlam', 'forceOfNature']);
+  assert.deepStrictEqual([...guardian.moveIds], ['wardingSigil', 'abide', 'branchSlam', 'forceOfNature']);
   // Overgrowth is the three-payout turn: Renew on itself, Attack under Verdant Earth, and the
   // switch that doubles Branch Slam's 80 base power.
   const selfPlant = statusApplicationsOf(moves.overgrowth).find((app) => app.statusId === 'Renew')!.magnitude!;
@@ -77,7 +77,7 @@ test('guardians: the Elder Bough is one turn paying out three times, and Speed 3
 
 test('guardians: the Dragon lights its own ground and grinds on it, and never burns itself', () => {
   const guardian = enemies[DRAGON_ID];
-  assert.deepStrictEqual([...guardian.moveIds], ['runicBlast', 'spreadingBlaze', 'immolate', 'firebrand']);
+  assert.deepStrictEqual([...guardian.moveIds], ['weightOfAges', 'spreadingBlaze', 'immolate', 'firebrand']);
   assert.ok(guardian.moveIds.includes('spreadingBlaze'), 'the boss no longer lights the ground it burns on');
   // Volcanic Surge's self Burn did not decay on the boss's own Scorched Land — guarded, not assumed.
   for (const moveId of guardian.moveIds) {

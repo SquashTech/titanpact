@@ -332,7 +332,8 @@ test('mech: the slate is fifteen rows with the authored shape, plus the four 202
   const heals = mechMoves.filter((m) => m.kind === 'heal');
   assert.strictEqual(heals.length, 3);
   assert.strictEqual(moves.salvage.target, 'self');
-  assert.strictEqual(Object.values(moves).filter((m) => m.kind === 'heal' && m.target === 'self').length, 1);
+  // Salvage, and the Ancient slate's Abide (2026-09-17) — the seal's own self-mend.
+  assert.strictEqual(Object.values(moves).filter((m) => m.kind === 'heal' && m.target === 'self').length, 2);
 
   for (const move of mechMoves) {
     if (move.priority !== 0) assert.fail(`${move.id} authors a fixed nonzero bracket`);

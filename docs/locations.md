@@ -273,6 +273,9 @@ the faction: it is Water/Ancient where every Raider is Iron, because what comes 
 the surf is not a member of the warband. One open dependency — its Ancient STAB is
 `archonBlast`, already the Manticore's, because the Ancient slate is three
 placeholder moves long (`CLAUDE.md` "Repo map"). Revisit when Ancient is authored.
+**Authored 2026-09-17** (`authoring-moves.md` §10 "Ancient"): the Kraken and the Manticore keep
+Archon Blast; Yugzulach took Long Drink, the Dragon Weight of Ages, the Elder Bough Warding
+Sigil and Abide; the Skeleton King was left alone.
 
 **Partly answered, from an unexpected direction (2026-09-01).** The Manticore is the
 Goblins' apex, and he shipped without waiting on 5.2 — because

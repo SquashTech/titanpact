@@ -1,11 +1,11 @@
-// Move catalog. Every type but Ancient is designer-authored (docs/authoring-moves.md);
-// Ancient is still fixture filler. A move whose whole payload is its riders is
+// Move catalog. Every type is authored (docs/authoring-moves.md) — fourteen from a designer's table,
+// Ancient (2026-09-17) as the enemy's own vocabulary. A move whose whole payload is its riders is
 // kind 'buff' whatever it does to the enemy — the UI derives the Debuff label
 // from the payload (MoveTile isDebuff).
 //
 // `tier` is the designer table's Early/Mid/Late column: it gates level-up offers
 // (src/run/progression.ts bandRank) and nothing in combat reads it.
-// Omitted reads as Early; Ancient is deliberately untiered (test/moveTiers.test.ts).
+// Omitted reads as Early; every slate carries a tier, Class and signature moves none (test/moveTiers.test.ts).
 //
 // LATE-TIER MANA WAS RE-PRICED x0.75 on 2026-09-13 (XP Overhaul phase 6, per user direction:
 // "a lot more than 4.5% of casts should be lategame moves"), rounded to 5 with a floor of 45; the
@@ -4019,53 +4019,179 @@ export const moves: Record<string, MoveDefinition> = {
     description: 'Closes the distance before the foe can act and tears on the way down (+1 priority; Bleed).',
   },
 
-  // --- Ancient ---
+  // --- Ancient (docs/authoring-moves.md §10 "Ancient", 2026-09-17) ---
+  // The seal's vocabulary, enemy-only: the six Guardians carry one or two of these as the half of
+  // them that is the binding, the Herald four, the Eyes their own five below. Every Ancient hit
+  // resolves at 1x into everything (typechart.ts — a seal is not a weapon), so an Ancient STAB
+  // move is worth more than its Base Power reads and the bodies are authored 10-20 under the
+  // hero slates' at each tier. The slate's verb is not hitting harder: it is making everything
+  // else softer, slower and shorter — and, for the Herald, standing its company up.
   runicBlast: {
     id: 'runicBlast',
     name: 'Runic Blast',
+    tier: 'early',
     type: 'Ancient',
     category: 'magical',
     kind: 'damage',
-    basePower: 60,
-    manaCost: 14,
+    basePower: 50,
+    manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A detonation of half-forgotten runic power.',
+    description: "Old runes, still burning — the seal's plainest word.",
+  },
+  wardingSigil: {
+    id: 'wardingSigil',
+    name: 'Warding Sigil',
+    tier: 'early',
+    type: 'Ancient',
+    category: 'magical',
+    kind: 'buff',
+    statusApplication: { statusId: 'Shield', magnitude: 30, target: 'self' },
+    manaCost: 25,
+    priority: 0,
+    target: 'self',
+    description: 'A seal is a wall before it is anything else (Shield 30, scaled off Defense).',
   },
   forgottenCurse: {
     id: 'forgottenCurse',
     name: 'Forgotten Curse',
+    tier: 'mid',
     type: 'Ancient',
     category: 'magical',
     kind: 'damage',
     basePower: 40,
-    manaCost: 17,
+    statDeltas: [{ stat: 'wisdom', amount: -10 }],
+    manaCost: 35,
     priority: 0,
     target: 'bothEnemies',
-    description: 'An old curse that settles over both foes at once.',
+    description: 'An old curse that settles over both foes at once and stays in the mind (−10 Wisdom).',
   },
-  // Manticore's magical half (src/data/enemies.ts). Untiered on purpose — see the header.
+  // Manticore's and the Kraken's magical half (src/data/enemies.ts).
   archonBlast: {
     id: 'archonBlast',
     name: 'Archon Blast',
+    tier: 'mid',
     type: 'Ancient',
     category: 'magical',
     kind: 'damage',
-    // Ancient is neutral into every hero and nothing resists it, so an Ancient STAB move
-    // is worth more than its Base Power reads. 55, not 75, for that reason alone.
     basePower: 55,
     statDeltas: [{ stat: 'wisdom', amount: 20 }],
     statDeltaTarget: 'self',
-    manaCost: 50,
+    manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
     description: 'Old authority spoken aloud — and the speaker steadies behind it (+20 Wisdom).',
   },
-  // --- The Titan's Eyes (docs/titan-eyes.md §5; enemies.ts). Untiered, in no pool. ---
+  weightOfAges: {
+    id: 'weightOfAges',
+    name: 'Weight of Ages',
+    tier: 'mid',
+    type: 'Ancient',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 50,
+    statDeltas: [{ stat: 'speed', amount: -15 }],
+    manaCost: 50,
+    priority: 0,
+    target: 'bothEnemies',
+    description: "The Titan's weight, felt before the Titan: both foes, and both slower for it (−15 Speed).",
+  },
+  // A flinch that lands only if it resolves first — the Herald's Speed 95 makes it a certainty,
+  // a slow Guardian's makes it a gamble. Daze is cleared at end of round (docs/conditions.md).
+  transfix: {
+    id: 'transfix',
+    name: 'Transfix',
+    tier: 'mid',
+    type: 'Ancient',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 40,
+    statusApplication: { statusId: 'Daze', target: 'moveTarget' },
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Held in a regard older than fear — the target flinches if it has not yet moved (Daze).',
+  },
+  longDrink: {
+    id: 'longDrink',
+    name: 'Long Drink',
+    tier: 'mid',
+    type: 'Ancient',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 60,
+    drainPercent: 0.5,
+    manaCost: 45,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Takes years off the target and puts them on itself (drains half of the damage).',
+  },
+  // Enfeeble's sibling on the other axis: Enfeeble empties the offence, Erode the walls.
+  erode: {
+    id: 'erode',
+    name: 'Erode',
+    tier: 'mid',
+    type: 'Ancient',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [
+      { stat: 'defense', amount: -20 },
+      { stat: 'wisdom', amount: -20 },
+    ],
+    manaCost: 45,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'What an age does to a wall, done in a breath (−15 Defense and −15 Wisdom to both foes).',
+  },
+  // The standard-bearer's verb: the Herald's company stands taller under the banner.
+  raiseTheStandard: {
+    id: 'raiseTheStandard',
+    name: 'Raise the Standard',
+    tier: 'late',
+    type: 'Ancient',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [
+      { stat: 'attack', amount: 20 },
+      { stat: 'intelligence', amount: 20 },
+    ],
+    manaCost: 50,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'The banner goes up, and what stands under it stands taller (+20 Attack and +20 Intelligence to both allies).',
+  },
+  oblivion: {
+    id: 'oblivion',
+    name: 'Oblivion',
+    tier: 'late',
+    type: 'Ancient',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 120,
+    manaCost: 70,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'What it names is forgotten.',
+  },
+  abide: {
+    id: 'abide',
+    name: 'Abide',
+    tier: 'late',
+    type: 'Ancient',
+    category: 'magical',
+    kind: 'heal',
+    healPower: 60,
+    manaCost: 45,
+    priority: 0,
+    target: 'self',
+    description: 'A seal does not tire (heals the user).',
+  },
+  // --- The Titan's Eyes (docs/titan-eyes.md §5; enemies.ts). In no pool. ---
   // The telegraph. Priority so the mark is on the board before the player's actions resolve,
   // and visible for the whole of the next command phase.
   gaze: {
     id: 'gaze',
+    tier: 'early',
     name: 'Gaze',
     type: 'Ancient',
     category: 'magical',
@@ -4081,6 +4207,7 @@ export const moves: Record<string, MoveDefinition> = {
   // the whole of it.
   regard: {
     id: 'regard',
+    tier: 'late',
     name: 'Regard',
     type: 'Ancient',
     category: 'magical',
@@ -4096,6 +4223,7 @@ export const moves: Record<string, MoveDefinition> = {
   // Phase 2's Gaze: both heroes marked at once, so the switch answer costs two switch-ins.
   stare: {
     id: 'stare',
+    tier: 'mid',
     name: 'Stare',
     type: 'Ancient',
     category: 'magical',
@@ -4109,6 +4237,7 @@ export const moves: Record<string, MoveDefinition> = {
   // Phase 2's Regard.
   glare: {
     id: 'glare',
+    tier: 'late',
     name: 'Glare',
     type: 'Ancient',
     category: 'magical',
@@ -4124,6 +4253,7 @@ export const moves: Record<string, MoveDefinition> = {
   // The Right Eye's turn spent holding: a Shield on both Eyes off its Defense (docs/shield.md).
   lidded: {
     id: 'lidded',
+    tier: 'mid',
     name: 'Lidded',
     type: 'Ancient',
     category: 'magical',

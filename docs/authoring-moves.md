@@ -10,8 +10,10 @@ appropriately."
 Fire was the first (2026-08-29), Water the second, Frost the third, Storm
 the fourth, Stone the fifth, Nature the sixth, Light the seventh, Shadow the
 eighth, Arcane the ninth, Mind the tenth, Spirit the eleventh, Iron the
-twelfth, Beast the thirteenth and Mech the fourteenth (all 2026-08-30). One
-type remains — Ancient. This file is what those fourteen cost to learn, written
+twelfth, Beast the thirteenth and Mech the fourteenth (all 2026-08-30), and
+**Ancient the fifteenth and last (2026-09-17, §10 "Ancient")** — the one slate with no
+designer's table, no hero and no pool, authored as the enemy's own vocabulary.
+This file is what those fourteen cost to learn, written
 down so the next one is an afternoon instead of a day. Water took about a third of
 Fire's time and Frost about the same as Water, and every hour of the saving came from
 §0 step 1 — naming the engine extensions before writing any content. Frost needed two
@@ -2113,6 +2115,56 @@ extensions with an obvious shape — they are questions with two or three
 defensible answers each, and picking one silently would have meant rebuilding
 the targeting model or the switch path after the fact. Two questions cost one
 round trip and saved the slate.
+
+**Ancient (2026-09-17), the fifteenth and last.** No designer's table: the slate was
+authored on the day the Herald got its kit, from three constraints the docs already lock
+— every Ancient hit resolves at 1× (`typechart.ts`, *a seal is not a weapon*), no hero is
+ever Ancient (`types-and-heroes.md`, so there is no pool and no offer to gate), and the
+Herald's own note that *a Titan does not need to hit harder, it makes everything else
+softer*. Eleven moves plus the Eyes' five, all magical, all tiered now (`test/moveTiers`
+has every type in `TIERED_TYPES`; the tier is descriptive, since nothing offers an Ancient
+move — but the mana conventions read off it). Zero engine extensions: every row was a Shield
+rider, a stat delta, a Daze, a drain or a self-heal the vocabulary already had.
+
+| Move | Tier | Shape | Holder |
+|---|---|---|---|
+| Runic Blast | Early | 50 BP single, 20 | Skeleton King, the Eyes |
+| Warding Sigil | Early | Shield 30 on self, 25 | Elder Bough |
+| Forgotten Curse | Mid | 40 BP spread, −10 Wis both, 35 | Yugzulach, the Eyes |
+| Archon Blast | Mid | 55 BP single, +20 Wis self, 40 | Manticore, Kraken |
+| Weight of Ages | Mid | 50 BP spread, −15 Speed both, 50 | Dragon |
+| Transfix | Mid | 40 BP single + Daze, 40 | the Herald |
+| Long Drink | Mid | 60 BP single, drains half, 45 | Yugzulach |
+| Erode | Mid | −20 Def / −20 Wis both foes, 45 | the Herald |
+| Raise the Standard | Late | +20 Atk / +20 Int both allies, 50 | the Herald |
+| Oblivion | Late | 120 BP single, 70 | the Herald |
+| Abide | Late | heals the user, 60 power, 45 | Elder Bough |
+
+Bodies sit 10–20 under the hero slates' at each tier because Ancient STAB is never resisted
+(Archon Blast's old note, kept). The three findings:
+
+- **The Herald's threat is its company, not its hand.** Erode and Raise the Standard do no
+  damage, so the Herald's own output is 55–65 a round and the fight's difficulty lives in
+  what the Late spawn beside it do under +20/+20 into −20/−20. Measured: with the filler
+  kit the chart pilot cleared the Herald 88% and left with 42% HP; with the slate at
+  Oblivion 100 it cleared **93%** (the softening is slow to pay); at Oblivion 120 and Erode
+  −20/−20, **90% and 46% HP** — the shipped numbers. The skilled pilot is 99% throughout.
+  Oblivion's BP is the one dial that moves the fight; Erode's figures move the escorts.
+- **Transfix is a certainty on the Herald and a gamble on a Guardian.** Daze is a flinch
+  cleared at end of round, so it takes a turn only if it resolves first; the Herald's Speed
+  95 outruns every hero, no Guardian does. Authored for the Herald; nothing else holds it.
+- **Four orphans were placed, not left.** `test/stoneMoves` pins the unreachable set exactly
+  and would have accepted them; instead Yugzulach took Long Drink, the Dragon Weight of Ages
+  and the Elder Bough both of the wall's verbs (Warding Sigil, Abide) in place of Runic Blast
+  and Overgrowth. The Skeleton King and the Eyes were left alone — the King is a held balance
+  question and the Eyes are tuned. Measured on the Guardians (4000 skilled runs, before →
+  after): Blighted Shrine act 2 89 → 84%, Forbidden Forest 92 → 98, Molten Foundry 94 → 93;
+  Necropolis 78 → 84 is Runic Blast's re-price (60 BP / 14 → 50 / 20) alone.
+
+Open, for the designer: whether the Eyes should trade their filler slots (Runic Blast,
+Forgotten Curse, Enfeeble) for slate moves — they were tuned as they stand, so they were not
+touched; and whether Abide belongs on a Guardian at all, given the Elder Bough measures as the
+softest Act 2 wall either way.
 
 
 ---
