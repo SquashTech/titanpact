@@ -54,10 +54,12 @@ export function ItemServicesSection({ run, onRunChange }: Props) {
   }, [fresh]);
 
   const total = run.roster.reduce((n, entry) => n + entry.equipment.length, 0);
-  const liftable = run.roster.reduce(
-    (n, entry) => n + entry.equipment.filter((itemId) => anvilQuote(run, itemId, equipment) !== null).length,
-    0
-  );
+  /** A lift the purse covers right now. The badge and the tally read the same test (2026-09-17, per user direction — a badge on a lift the player cannot pay for is a badge on every piece by Act 3). */
+  const affordableLift = (itemId: string) => {
+    const quote = anvilQuote(run, itemId, equipment);
+    return quote && run.gold >= quote.cost ? quote : null;
+  };
+  const liftable = run.roster.reduce((n, entry) => n + entry.equipment.filter((itemId) => affordableLift(itemId) !== null).length, 0);
 
   const workingEntry = working ? run.roster.find((r) => r.rosterId === working.rosterId) : null;
   const workingHero = workingEntry ? rosterHeroes[workingEntry.heroId] : null;
@@ -94,7 +96,7 @@ export function ItemServicesSection({ run, onRunChange }: Props) {
         <span className="guild-hall-section-hint">
           {total === 0
             ? 'Nobody is wearing anything yet.'
-            : `${total} ${total === 1 ? 'piece' : 'pieces'} on the roster · ${liftable} can be lifted · tap one to work it`}
+            : `${total} ${total === 1 ? 'piece' : 'pieces'} on the roster · ${liftable} you can lift · tap one to work it`}
         </span>
       </div>
 
@@ -145,7 +147,7 @@ export function ItemServicesSection({ run, onRunChange }: Props) {
                       </span>
                     );
                   }
-                  const quote = anvilQuote(run, item.id, equipment);
+                  const quote = affordableLift(item.id);
                   const enchantType = enchantTypeOf(item);
                   return (
                     <button
@@ -163,7 +165,7 @@ export function ItemServicesSection({ run, onRunChange }: Props) {
                           <span
                             className="smithy-socket-lift"
                             style={{ '--lift-color': RARITY_COLOR_VARS[quote.targetRarity] } as CSSProperties}
-                            aria-label={`Can be lifted to ${RARITY_LABELS[quote.targetRarity]}`}
+                            aria-label={`Can be lifted to ${RARITY_LABELS[quote.targetRarity]} for ${quote.cost} gold`}
                           >
                             <HubGlyph name="anvil" />
                           </span>

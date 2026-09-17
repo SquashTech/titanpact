@@ -3515,8 +3515,10 @@ sprite on its type-coloured ground with the name, level pill and type codes, and
 sockets on the right. The sockets are the who-screen's (`.item-box` geometry, `ItemPiece` in it),
 so a piece looks here exactly as it did when it was given; each carries its name and tier under
 it, the enchant's element glyph beside the tier, and a small anvil badge in the colour of the
-tier the Anvil would lift it to, so "which of these can still be lifted" is read off the tab
-without opening anything. An empty socket is a drawn hole labelled *Open*, since who-has-what
+tier the Anvil would lift it to — **only when the purse covers the lift** (2026-09-17, per user
+direction: on the act window alone it sat on every piece by Act 3 and said nothing), so "which
+of these can I lift right now" is read off the tab without opening anything, and the hint's
+tally counts the same set. An empty socket is a drawn hole labelled *Open*, since who-has-what
 includes what room is left; a hero wearing nothing keeps its bench, dimmed. Six benches at
 ~110px each scroll under the tab strip, which was the user's stated tolerance ("up to 18
 pieces"). The hint line carries the tally: *12 pieces on the roster · 12 can be lifted · tap one
