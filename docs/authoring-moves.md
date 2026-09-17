@@ -597,7 +597,9 @@ discount. Two sides, and a move authors **exactly one**:
 - `{ requiresAllEnemiesStatus: 'Conduct', manaCost: 0 }` (Storm's Overcharge) —
   every active enemy carries it.
 - `{ requiresAnyEnemyStatus: 'Conduct', manaCost: 0 }` (Iron's Metallic Blade) —
-  at least one does, whether or not it is the foe being hit.
+  at least one does, whether or not it is the foe being hit. Mech's Whirling Blades
+  (2026-09-17) reads the same side at **30 of 60** — half, not free, because Iron owns
+  free and Mech's spread then detonates every mark it touches.
 - `{ requiresPartnerType: 'Beast', manaCost: 50 }` (Beast's Pack Leader) — the
   caster's ACTIVE PARTNER is of a named type. The only side that reads the
   caster's own row rather than the enemy's, and the only one whose condition a
@@ -2203,6 +2205,13 @@ brief was *combine ideas or statuses that already exist* plus the Field Effect f
 - **Plain rows** the slates lacked: a Mind drain (Mind Leech), a Nature drain (Leech), a Mech
   Conduct planter (Shock Coil — the type detonated it and never planted it), an Arcane
   two-hit (Twin Cast), Late spreads for Storm, Mech and Beast (Ion Cascade, Salvo, Rending Leap).
+  **2026-09-17:** Mech got the loop the other two detonators have — an Early planter (Spark
+  Plug, 30 BP / 20 mana, guaranteed Conduct) on Clockwork's and Rex's starting kits, and a
+  reader (Whirling Blades at half price beside a mark — the slate's worst-measured physical
+  row, 0.9 casts per 1000 turns at 4.56 dmg/mana). Measured on the chart pilot: full-clear
+  13.6 → 14.6% on the same seed (noise), Spark Plug 9.0 casts / 1k turns, Whirling Blades
+  0.9 → 1.2; the discount rarely fires under a one-ply pilot because any Mech hit consumes the
+  mark it would read, so the card's value is the plant-then-spread line a player can plan.
 
 **The slate identities held, and the tests said which.** Every `test/*Moves.test.ts` pins a
 shape beyond a count, and three drafts broke one: a Beast intimidate (the slate never debuffs —

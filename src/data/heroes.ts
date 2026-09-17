@@ -500,7 +500,8 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Clockwork',
     types: ['Mech'],
     baseStats: { hp: 230, attack: 60, defense: 70, intelligence: 45, wisdom: 40, speed: 55, manaPool: 50, mpRegen: 10 },
-    moveIds: ['pistonPunch', 'overclock', 'kickstart'],
+    // Spark Plug plants the mark and Piston Punch cashes it — the Conduct loop from the draft.
+    moveIds: ['pistonPunch', 'sparkPlug', 'kickstart'],
     starter: true,
     growthGrades: { hp: 'B', attack: 'S', defense: 'A', intelligence: 'A', wisdom: 'C', speed: 'B', manaPool: 'E' },
     schedule: { offerLevels: [5, 8, 11, 19, 21, 25], midLevel: 10, lateLevel: 20 },
@@ -525,7 +526,8 @@ export const heroes: Record<string, HeroDefinition> = {
     // Speed 70 against 105 at 5. It pays in every other column, and Speed grows S so the gap
     // between it and the things it eats only widens.
     baseStats: { hp: 210, attack: 110, defense: 55, intelligence: 15, wisdom: 35, speed: 70, manaPool: 55, mpRegen: 10 },
-    moveIds: ['steamVent', 'overclock', 'kickstart'],
+    // Spark Plug then Steam Vent: the spread cashes the mark and hits the partner beside it.
+    moveIds: ['steamVent', 'sparkPlug', 'overclock'],
     starter: false,
     growthGrades: { hp: 'B', attack: 'A', defense: 'B', intelligence: 'F', wisdom: 'B', speed: 'S', manaPool: 'A' },
     schedule: { offerLevels: [3, 7, 11, 15, 20, 25], midLevel: 9, lateLevel: 18 },

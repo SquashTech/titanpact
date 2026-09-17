@@ -319,13 +319,16 @@ test('mech: the slate cashes the Conduct it plants and plants a Haunt it cannot 
 
   const mechMoves = Object.values(moves).filter((m) => m.type === 'Mech' && !signatureMoves[m.id]);
   const allRiders = mechMoves.flatMap((m) => [...statusApplicationsOf(m), ...(m.randomStatusApplication ?? [])]);
-  assert.strictEqual(allRiders.filter((a) => a.statusId === 'Conduct').length, 3, 'Conduct planters');
+  assert.strictEqual(allRiders.filter((a) => a.statusId === 'Conduct').length, 4, 'Conduct planters');
+  // Its own read of the mark, beside Storm's four and Iron's one: Whirling Blades at half price.
+  assert.deepStrictEqual(moves.whirlingBlades.conditionalManaCost, { requiresAnyEnemyStatus: 'Conduct', manaCost: 30 });
+  assert.strictEqual(moves.sparkPlug.tier, 'early', 'the guaranteed planter is reachable from the draft');
   assert.strictEqual(allRiders.filter((a) => a.statusId === 'Haunt').length, 1, 'Haunt planters');
 });
 
-test('mech: the slate is fifteen rows with the authored shape, plus the four 2026-09-15 additions', () => {
+test('mech: the slate is fifteen rows with the authored shape, plus the four 2026-09-15 additions and Spark Plug', () => {
   const mechMoves = Object.values(moves).filter((m) => m.type === 'Mech' && !signatureMoves[m.id]);
-  assert.strictEqual(mechMoves.length, 19, 'the authored slate is fifteen rows, plus four');
+  assert.strictEqual(mechMoves.length, 20, 'the authored slate is fifteen rows, plus four, plus the Early planter');
 
   // Four magical rows against a roster whose best Intelligence is 45 — pinned so it cannot silently grow.
   assert.strictEqual(mechMoves.filter((m) => m.category === 'magical' && m.kind === 'damage').length, 4);

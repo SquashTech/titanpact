@@ -3528,10 +3528,13 @@ export const moves: Record<string, MoveDefinition> = {
     category: 'physical',
     kind: 'damage',
     basePower: 45,
+    // Mech's read of the mark it plants: half price while any foe carries a charge, and the
+    // spread then detonates every mark it touches. Half, not free — Metallic Blade already owns free.
+    conditionalManaCost: { requiresAnyEnemyStatus: 'Conduct', manaCost: 30 },
     manaCost: 60,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Spin up the cutting heads and walk forward.',
+    description: 'Spin up the cutting heads and walk forward. Runs on a charged foe for half the mana.',
   },
   overheat: {
     id: 'overheat',
@@ -3715,6 +3718,21 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'singleEnemy',
     description: 'A coil that leaves a charge in the foe for the next machine blow to find (plants Conduct).',
+  },
+  sparkPlug: {
+    id: 'sparkPlug',
+    name: 'Spark Plug',
+    tier: 'early',
+    type: 'Mech',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 30,
+    // The Early planter, so a Mech kit can carry the mark and the blow that cashes it from the draft.
+    statusApplication: { statusId: 'Conduct', target: 'moveTarget' },
+    manaCost: 20,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Seats a plug in the foe and leaves it live (plants Conduct).',
   },
   salvo: {
     id: 'salvo',

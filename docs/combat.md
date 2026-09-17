@@ -474,7 +474,7 @@ exactly one:
 | Side | Reads | Content |
 |---|---|---|
 | `requiresAllEnemiesStatus` | every active enemy carries it | Storm's Overcharge, "costs 0 mana if both enemies have Conduct" |
-| `requiresAnyEnemyStatus` | at least one does | Iron's Metallic Blade, "costs 0 mana if an enemy has Conduct" |
+| `requiresAnyEnemyStatus` | at least one does | Iron's Metallic Blade, "costs 0 mana if an enemy has Conduct"; Mech's Whirling Blades, "costs 30 (of 60) if an enemy has Conduct" |
 | `requiresPartnerType` | the caster's ACTIVE PARTNER is of a named type | Beast's Pack Leader, "costs 50 mana if partner is a Beast" |
 
 The second authored cost that varies with state, and the first that varies with

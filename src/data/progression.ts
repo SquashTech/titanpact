@@ -556,7 +556,7 @@ export const progressionTable: ProgressionTable = {
       'parry',
     ],
     // --- Mech ---
-    forgewright: ['backfire', 'overheat', 'malfunction', 'meltdown', 'salvage', 'juryRig', 'cogBop', 'reinforce', 'undertow', 'singe', 'ironFist', 'rockToss', 'cogSlam', 'jackpot', 'overdrive', 'perfectCreation', 'steamVent', 'patchUp', 'shockCoil', 'salvo'],
+    forgewright: ['backfire', 'overheat', 'malfunction', 'meltdown', 'salvage', 'juryRig', 'cogBop', 'overclock', 'reinforce', 'undertow', 'singe', 'ironFist', 'rockToss', 'cogSlam', 'whirlingBlades', 'jackpot', 'overdrive', 'perfectCreation', 'steamVent', 'patchUp', 'shockCoil', 'salvo'],
     steamColossus: [
       'swiftBlow',
       'pistonPunch',
@@ -575,6 +575,7 @@ export const progressionTable: ProgressionTable = {
       'rendArmor',
       'salvage',
       'steamVent',
+      'sparkPlug',
       'shockCoil',
       'salvo',
       'shieldBash',
@@ -583,7 +584,7 @@ export const progressionTable: ProgressionTable = {
     // Beast graft, Rock Toss the Stone one; Gore is Primal's grant, so it is not here.
     rex: [
       'pistonPunch', 'cogBop', 'pounce', 'rockToss', 'heavyBlow', 'ironFist',
-      'whirlingBlades', 'cogSlam', 'shockCoil', 'juryRig', 'patchUp', 'momentumSwing',
+      'whirlingBlades', 'cogSlam', 'shockCoil', 'juryRig', 'patchUp', 'momentumSwing', 'kickstart',
       'jackpot', 'salvo', 'overdrive', 'onslaught',
     ],
     // --- Beast ---
