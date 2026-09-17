@@ -26129,6 +26129,792 @@ textarea,
   }
 }
 
+/* --- The Titan rises (TitanRiseScreen) ---------------------------------------
+   The fifth seal has broken. The title screen's own figure — the brow and the
+   two eyes (titanArt.tsx) over a skull that runs off the bottom — climbs into
+   the frame from below, behind the title's ridge and the four pactbearers that
+   give it its scale, and the ground goes harder the higher it comes. The eyes
+   are SHUT the whole way and crack to a slit only once it has stopped: it is
+   turning to look for the breach, not coming through it (docs/lore.md §7).
+   Full-bleed and inert, as the cold open is; a tap anywhere skips. */
+.titan-rise {
+  position: absolute;
+  inset: calc(var(--shell-pad) * -1);
+  z-index: 40;
+  overflow: hidden;
+  background: #040407;
+}
+
+.titan-rise-shake {
+  position: absolute;
+  inset: 0;
+}
+
+.titan-rise.is-stir .titan-rise-shake {
+  animation: titan-rumble-low 0.42s linear infinite;
+}
+
+/* The climb: the mid rumble the whole way, and a heavier one joining under it
+   past the halfway mark — a positive delay on an infinite animation is a start
+   time, which is what makes the shake escalate without a second wrapper. */
+.titan-rise.is-rise .titan-rise-shake {
+  animation:
+    titan-rumble-mid 0.26s linear infinite,
+    titan-rumble-heavy 0.15s linear 1.7s infinite;
+}
+
+.titan-rise.is-settle .titan-rise-shake {
+  animation: titan-rumble-hit 1.75s cubic-bezier(0.2, 0, 0.3, 1) both;
+}
+
+@keyframes titan-rumble-heavy {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  25% {
+    transform: translate3d(-4px, 3px, 0);
+  }
+  50% {
+    transform: translate3d(3.5px, -4px, 0);
+  }
+  75% {
+    transform: translate3d(-2.5px, -3.5px, 0);
+  }
+}
+
+/* The light is BELOW: the breach the head comes up out of, and its glow on the
+   fog above, which is what the crown rises into. Both swell through the stir
+   and the climb, so the silhouette has something to be cut from at every
+   height. */
+.titan-rise-ember {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background:
+    radial-gradient(ellipse 96% 48% at 50% 104%, rgba(var(--tier-mythic-rgb), 0.62), rgba(240, 176, 96, 0.14) 44%, transparent 74%),
+    radial-gradient(ellipse 60% 18% at 50% 100%, rgba(255, 220, 170, 0.28), transparent 70%),
+    radial-gradient(ellipse 80% 36% at 50% 10%, rgba(var(--tier-mythic-rgb), 0.3), rgba(240, 176, 96, 0.06) 50%, transparent 76%);
+  transition: opacity 1.4s ease-in;
+}
+
+.titan-rise.is-rise .titan-rise-ember,
+.titan-rise.is-settle .titan-rise-ember,
+.titan-rise.is-fade .titan-rise-ember {
+  opacity: 1;
+}
+
+/* The head, as one thing that moves: the title's SVG (brow + eyes) over the
+   skull below it. Parked under the frame, climbs to sit with the eyes just
+   above centre, and lands with one overshoot. */
+.titan-rise-head {
+  position: absolute;
+  inset: 0;
+  transform: translateY(108%);
+}
+
+.titan-rise.is-rise .titan-rise-head {
+  animation: titan-rise-climb 3.4s cubic-bezier(0.32, 0, 0.12, 1) both;
+}
+
+.titan-rise.is-settle .titan-rise-head {
+  animation: titan-rise-land 0.7s ease-out both;
+}
+
+.titan-rise.is-fade .titan-rise-head {
+  transform: translateY(36%);
+}
+
+@keyframes titan-rise-climb {
+  from {
+    transform: translateY(108%);
+  }
+  to {
+    transform: translateY(36%);
+  }
+}
+
+@keyframes titan-rise-land {
+  0% {
+    transform: translateY(36%);
+  }
+  30% {
+    transform: translateY(37.6%);
+  }
+  100% {
+    transform: translateY(36%);
+  }
+}
+
+/* The rest of the head: a dome the brow overlays, in the mass's own near-black,
+   its crown well above the brow and its base off the bottom of the frame. It
+   is what turns a floating brow into a thing rising. Only ever seen where it
+   cuts the ember. */
+.titan-rise-skull {
+  position: absolute;
+  left: -14%;
+  right: -14%;
+  top: -30%;
+  height: 170%;
+  border-radius: 50% 50% 0 0 / 26% 26% 0 0;
+  background: #02050a;
+}
+
+/* The brow and the halos draw past the SVG box: the title covers the screen with
+   it, but here the box is mid-frame and a clipped halo is a hard line. */
+.titan-rise .title-titan,
+.titan-bound .title-titan {
+  overflow: visible;
+}
+
+/* Shut. The title's lid is a scaleY on the lens group; held at a hairline here,
+   with the halo down to almost nothing and the burn off — nothing behind the
+   lids is awake yet. The gaze keeps wandering under them, which is the point. */
+.titan-rise .titan-eye-open {
+  animation: none;
+  transform: scaleY(0.04);
+}
+
+.titan-rise .title-titan .titan-eye-halo {
+  animation: none;
+  opacity: 0.1;
+  transition: opacity 0.9s ease-out 0.7s;
+}
+
+.titan-rise .title-titan .titan-eyes {
+  animation: none;
+  opacity: 0.85;
+}
+
+.titan-rise.is-settle .titan-eye-open,
+.titan-rise.is-fade .titan-eye-open {
+  animation: titan-rise-slit 0.9s cubic-bezier(0.3, 0, 0.4, 1) 0.7s both;
+}
+
+.titan-rise.is-settle .title-titan .titan-eye-halo,
+.titan-rise.is-fade .title-titan .titan-eye-halo {
+  opacity: 0.55;
+}
+
+@keyframes titan-rise-slit {
+  from {
+    transform: scaleY(0.04);
+  }
+  to {
+    transform: scaleY(0.3);
+  }
+}
+
+/* What the beat says, once it has stopped. Top of the frame, clear of the brow. */
+.titan-rise-caption {
+  position: absolute;
+  top: calc(var(--shell-pad) + 34px);
+  left: calc(var(--shell-pad) + 20px);
+  right: calc(var(--shell-pad) + 20px);
+  z-index: 2;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.titan-rise.is-settle .titan-rise-caption,
+.titan-rise.is-fade .titan-rise-caption {
+  animation: evolve-veil-in 0.8s ease-out 1s both;
+}
+
+.titan-rise-eyebrow,
+.herald-eyebrow,
+.titan-bound-eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(var(--tier-mythic-rgb), 0.9);
+}
+
+.titan-rise-title,
+.herald-title,
+.titan-bound-title {
+  margin: 6px 0 0;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.05;
+  color: #f3ead8;
+  text-shadow: 0 0 26px rgba(var(--tier-mythic-rgb), 0.55);
+}
+
+.titan-rise-line,
+.herald-line,
+.titan-bound-line {
+  margin: 10px auto 0;
+  max-width: 300px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: rgba(236, 226, 208, 0.78);
+}
+
+.titan-rise.is-fade .titan-wake-blackout {
+  animation: titan-blackout 0.6s ease-in both;
+}
+
+/* --- The Herald walks (HeraldScreen) -----------------------------------------
+   Before the Threshold's first fight: the Endbringer (guardianFigures.ts) on the
+   Titan's own hide (TitanBody), the arena the fight is about to be on, coming
+   out of the distance at the size the fight cannot afford it. It has no legs to
+   step with, so it does not step — it grows, and the ground shakes for the
+   thing behind it, not for it. */
+.herald-screen {
+  position: absolute;
+  inset: calc(var(--shell-pad) * -1);
+  z-index: 40;
+  overflow: hidden;
+  background: #07050a;
+}
+
+.herald-shake {
+  position: absolute;
+  inset: 0;
+}
+
+.herald-screen.is-far .herald-shake {
+  animation: titan-rumble-low 0.42s linear infinite;
+}
+
+.herald-screen.is-walk .herald-shake {
+  animation: titan-rumble-mid 0.26s linear infinite;
+}
+
+.herald-screen.is-here .herald-shake {
+  animation: titan-rumble-hit 1.75s cubic-bezier(0.2, 0, 0.3, 1) both;
+}
+
+/* Dark at the top, where the hide curves away into distance; a band of it low
+   as well, so the caption sits on something. */
+.herald-haze {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(to bottom, rgba(7, 5, 10, 0.96) 0%, rgba(7, 5, 10, 0.6) 34%, rgba(7, 5, 10, 0.08) 58%, rgba(7, 5, 10, 0.2) 78%, rgba(7, 5, 10, 0.86) 100%);
+}
+
+/* The ember behind it, coming up as it comes: the Titan's regard through its herald. */
+.herald-ember {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  background: radial-gradient(ellipse 60% 40% at 50% 44%, rgba(var(--tier-mythic-rgb), 0.34), rgba(var(--tier-mythic-rgb), 0.08) 45%, transparent 70%);
+  transition: opacity 2.8s ease-in;
+}
+
+.herald-screen.is-walk .herald-ember,
+.herald-screen.is-here .herald-ember {
+  opacity: 1;
+}
+
+.herald-screen.is-here .herald-ember {
+  animation: titan-halo-open 1.75s ease-out both;
+}
+
+/* The figure's box: far and faint, then the approach. The svg breaks the box
+   (overflow visible) — the banner is meant to. */
+.herald-figure-slot {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 44%;
+  width: 250px;
+  height: 250px;
+  transform: translate(-50%, -64%) scale(0.12);
+  opacity: 0.22;
+}
+
+.herald-screen.is-walk .herald-figure-slot {
+  animation: herald-approach 3.2s cubic-bezier(0.55, 0, 0.2, 1) both;
+}
+
+.herald-screen.is-here .herald-figure-slot {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+}
+
+@keyframes herald-approach {
+  0% {
+    transform: translate(-50%, -64%) scale(0.12);
+    opacity: 0.22;
+  }
+  18% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+.herald-figure {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 18px rgba(var(--tier-mythic-rgb), 0.42)) drop-shadow(0 12px 22px rgba(0, 0, 0, 0.8));
+  animation: herald-hover 4.2s ease-in-out infinite;
+}
+
+/* Nothing under it touches the ground; it hangs, and drifts as a hung thing does. */
+@keyframes herald-hover {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.herald-shadow {
+  position: absolute;
+  left: 50%;
+  bottom: -5%;
+  width: 72%;
+  height: 12%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.72), transparent 70%);
+}
+
+.herald-caption {
+  position: absolute;
+  z-index: 3;
+  left: calc(var(--shell-pad) + 20px);
+  right: calc(var(--shell-pad) + 20px);
+  bottom: calc(var(--shell-pad) + 28px);
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.herald-screen.is-here .herald-caption {
+  animation: herald-caption-in 0.7s ease-out 0.4s both;
+  pointer-events: auto;
+}
+
+@keyframes herald-caption-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.herald-continue,
+.titan-bound-continue {
+  margin-top: 18px;
+}
+
+/* --- The Titan bound (TitanBoundScreen) --------------------------------------
+   The Eyes have closed. Two beats: the head that rose (above) in its throes —
+   eyes wide, the frame shaking harder than anything else in the game — going
+   out and going down out of the frame, one jolt as it lands; then, out of the
+   black, the title screen's seal turning in, its five sigils re-lit one at a
+   time, and the rings locking. The title's own seal (SealArt.tsx), so every
+   rule it has applies; what is overridden here is the sigils' start state and
+   the seal's z-index, which the title keeps under its wordmark. */
+.titan-bound {
+  position: absolute;
+  inset: calc(var(--shell-pad) * -1);
+  z-index: 40;
+  overflow: hidden;
+  background: #040407;
+}
+
+.titan-bound-shake {
+  position: absolute;
+  inset: 0;
+}
+
+.titan-bound.is-throes .titan-bound-shake {
+  animation: titan-rumble-heavy 0.14s linear infinite;
+}
+
+.titan-bound.is-fall .titan-bound-shake {
+  animation: titan-bound-fallquake 1.5s linear both;
+}
+
+/* Mid rumble while it drops, the big jolt when it lands (1.1s — the drop's end
+   below), and still by the end. */
+@keyframes titan-bound-fallquake {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  10% {
+    transform: translate3d(-1.6px, 1.2px, 0);
+  }
+  25% {
+    transform: translate3d(1.4px, -1.5px, 0);
+  }
+  40% {
+    transform: translate3d(-1.1px, -1.3px, 0);
+  }
+  55% {
+    transform: translate3d(1.2px, 1px, 0);
+  }
+  70% {
+    transform: translate3d(-1px, 1.2px, 0);
+  }
+  73% {
+    transform: translate3d(7px, -9px, 0);
+  }
+  77% {
+    transform: translate3d(-8px, 6px, 0);
+  }
+  82% {
+    transform: translate3d(5px, 6px, 0);
+  }
+  88% {
+    transform: translate3d(-3px, -3px, 0);
+  }
+  94% {
+    transform: translate3d(1.5px, 1.5px, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* The ember at full and guttering, then out with the eyes. */
+.titan-bound-ember {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 84% 40% at 50% 8%, rgba(var(--tier-mythic-rgb), 0.5), rgba(var(--tier-mythic-rgb), 0.1) 48%, transparent 74%),
+    radial-gradient(ellipse 96% 48% at 50% 104%, rgba(var(--tier-mythic-rgb), 0.5), transparent 70%);
+  animation: titan-eye-burn 0.9s ease-in-out infinite;
+}
+
+.titan-bound.is-fall .titan-bound-ember {
+  animation: titan-bound-ember-out 1.2s ease-in both;
+}
+
+@keyframes titan-bound-ember-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* The head where the rise left it, then down the way it came — faster, and
+   with nothing gentle about the curve. */
+.titan-bound-head {
+  position: absolute;
+  inset: 0;
+  transform: translateY(36%);
+}
+
+.titan-bound.is-fall .titan-bound-head {
+  animation: titan-bound-drop 0.9s cubic-bezier(0.5, 0, 0.85, 0.45) 0.2s both;
+}
+
+@keyframes titan-bound-drop {
+  from {
+    transform: translateY(36%);
+  }
+  to {
+    transform: translateY(128%);
+  }
+}
+
+/* Wide — the title's lens at its widest and past it — the halo blown out and
+   the pupil darting: it is looking at everything and finding nothing. */
+.titan-bound .titan-eye-open {
+  animation: titan-bound-glare 0.46s ease-in-out infinite alternate;
+}
+
+.titan-bound .title-titan .titan-eye-halo {
+  animation: titan-bound-halo 0.3s ease-in-out infinite alternate;
+}
+
+.titan-bound .titan-eye-gaze {
+  animation: titan-bound-dart 0.9s steps(1, end) infinite;
+}
+
+.titan-bound .title-titan .titan-eyes {
+  animation: none;
+  opacity: 1;
+}
+
+@keyframes titan-bound-glare {
+  from {
+    transform: scaleY(1.5);
+  }
+  to {
+    transform: scaleY(1.75);
+  }
+}
+
+@keyframes titan-bound-halo {
+  from {
+    opacity: 0.9;
+    transform: scale(1.3);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.5);
+  }
+}
+
+@keyframes titan-bound-dart {
+  0% {
+    transform: translateX(-16px);
+  }
+  22% {
+    transform: translateX(12px);
+  }
+  41% {
+    transform: translateX(-5px);
+  }
+  63% {
+    transform: translateX(18px);
+  }
+  84% {
+    transform: translateX(-11px);
+  }
+}
+
+/* The lids slam. The gaze stops where it is. */
+.titan-bound.is-fall .titan-eye-open {
+  animation: titan-bound-shut 0.3s cubic-bezier(0.6, 0, 1, 1) both;
+}
+
+.titan-bound.is-fall .title-titan .titan-eye-halo {
+  animation: titan-bound-halo-out 0.4s ease-in both;
+}
+
+.titan-bound.is-fall .titan-eye-gaze {
+  animation: none;
+}
+
+@keyframes titan-bound-shut {
+  from {
+    transform: scaleY(1.6);
+  }
+  to {
+    transform: scaleY(0.02);
+  }
+}
+
+@keyframes titan-bound-halo-out {
+  from {
+    opacity: 0.9;
+    transform: scale(1.3);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+/* The landing: a burst of the ember's own light off the bottom of the frame,
+   gone as fast as it came. */
+.titan-bound-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  opacity: 0;
+  background: radial-gradient(ellipse 100% 60% at 50% 100%, rgba(255, 214, 160, 0.75), rgba(var(--tier-mythic-rgb), 0.4) 40%, transparent 72%);
+  pointer-events: none;
+}
+
+.titan-bound.is-fall .titan-bound-flash {
+  animation: titan-bound-impact 0.55s ease-out 1.1s both;
+}
+
+@keyframes titan-bound-impact {
+  0% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* The sealing. */
+.titan-bound-sealing {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  padding: 0 calc(var(--shell-pad) + 20px);
+}
+
+.titan-bound-seal {
+  position: relative;
+  width: 340px;
+  height: 340px;
+  flex: none;
+  opacity: 0;
+}
+
+.titan-bound.is-seal .titan-bound-seal {
+  animation: titan-bound-seal-in 1.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.titan-bound.is-lock .titan-bound-seal,
+.titan-bound.is-bound .titan-bound-seal {
+  opacity: 1;
+}
+
+/* Turning in from far too big and far too fast to a stop: a mechanism coming
+   down over the thing, not a picture fading up. */
+@keyframes titan-bound-seal-in {
+  from {
+    opacity: 0;
+    transform: scale(2.8) rotate(-160deg);
+  }
+  35% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.titan-bound-seal .title-seal {
+  z-index: 0;
+}
+
+.titan-bound-seal .type-wheel {
+  opacity: 0.9;
+}
+
+/* Out until re-lit. The dead sigil's own look (title-seal-sigil.is-broken),
+   without the gutter: nothing is coming back on its own here. */
+.titan-bound .title-seal-sigil:not(.is-lit) {
+  background: rgba(146, 182, 196, 0.22);
+  box-shadow: none;
+}
+
+.titan-bound .title-seal-sigil.is-lit {
+  animation: titan-bound-sigil-light 0.5s cubic-bezier(0.1, 0.9, 0.2, 1) both;
+}
+
+@keyframes titan-bound-sigil-light {
+  0% {
+    transform: rotate(var(--a)) translateY(-112px) scale(3);
+    background: #fff3d2;
+    box-shadow: 0 0 28px 8px rgba(240, 196, 108, 0.9);
+  }
+  100% {
+    transform: rotate(var(--a)) translateY(-112px) scale(1);
+    background: rgba(240, 196, 108, 0.85);
+    box-shadow: 0 0 10px rgba(224, 166, 60, 0.5);
+  }
+}
+
+/* The lock: the title's launch spin-up, reused — outer and dial forward, mid
+   ring and wardens back, the inner ring swelling — and a core of the pact's
+   gold coming up under it and settling to a glow. */
+.titan-bound.is-lock .title-seal-ring.is-outer {
+  animation: title-seal-lock-ring 620ms cubic-bezier(0.05, 0.9, 0.15, 1) both;
+}
+
+.titan-bound.is-lock .title-seal-ring.is-mid {
+  animation: title-seal-lock-ring-back 620ms cubic-bezier(0.05, 0.9, 0.15, 1) both;
+}
+
+.titan-bound.is-lock .title-seal-sigils {
+  animation: title-seal-lock-back 620ms cubic-bezier(0.05, 0.9, 0.15, 1) both;
+}
+
+.titan-bound.is-lock .type-wheel-dial {
+  animation: title-seal-lock 620ms cubic-bezier(0.05, 0.9, 0.15, 1) both;
+}
+
+.titan-bound.is-lock .type-wheel-node {
+  animation: title-seal-lock-back 620ms cubic-bezier(0.05, 0.9, 0.15, 1) both;
+}
+
+.titan-bound.is-lock .title-seal-ring.is-inner {
+  animation: title-seal-lock-inner 620ms cubic-bezier(0.05, 0.9, 0.15, 1) both;
+}
+
+.titan-bound-seal-core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 168px;
+  height: 168px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0.6);
+  opacity: 0;
+  background: radial-gradient(circle, rgba(255, 236, 190, 0.7), rgba(224, 166, 60, 0.28) 45%, transparent 72%);
+  pointer-events: none;
+}
+
+.titan-bound.is-lock .titan-bound-seal-core,
+.titan-bound.is-bound .titan-bound-seal-core {
+  animation: titan-bound-core 1.1s ease-out both;
+}
+
+.titan-bound.is-bound .titan-bound-seal-core {
+  animation: titan-bound-core-rest 6s ease-in-out infinite;
+}
+
+@keyframes titan-bound-core {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  25% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
+  100% {
+    opacity: 0.45;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes titan-bound-core-rest {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.62;
+    transform: translate(-50%, -50%) scale(1.04);
+  }
+}
+
+.titan-bound-caption {
+  position: relative;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.titan-bound.is-bound .titan-bound-caption {
+  animation: herald-caption-in 0.7s ease-out both;
+  pointer-events: auto;
+}
+
+.titan-bound-eyebrow {
+  color: rgba(240, 196, 108, 0.9);
+}
+
+.titan-bound-title {
+  text-shadow: 0 0 26px rgba(224, 166, 60, 0.5);
+}
+
 
 /* --- Guild Hall: the Anvil and the Enchanter (docs/equipment.md §5) ------
    Both are repeatable shop services, so this is a WORKING list of everything
@@ -29841,7 +30627,7 @@ textarea,
 }
 
 /* ── The champion's hall (ChampionScreen, docs/titan-eyes.md §7) ──────────
-   The run's last screen before the summary: the sleep card, then one hero at a
+   The run's last screen before the summary: one hero at a
    time in the recruit fanfare's rings, then everyone in a row. Reuses the
    fanfare's keyframes on purpose — it is the same rite, performed for the whole
    pact at once. --pact-rgb is set inline per hero. */
@@ -29865,11 +30651,6 @@ textarea,
   transition: background 0.5s ease;
 }
 
-.champion-screen.is-sleep .champion-veil {
-  background: radial-gradient(circle at 50% 30%, rgba(var(--tier-mythic-rgb), 0.16), #05060a 62%);
-}
-
-.champion-sleep,
 .champion-hall {
   position: relative;
   display: flex;
@@ -29977,7 +30758,7 @@ textarea,
 }
 
 /* The stage's plate hangs below it, so the stage sits a little high to leave it room. */
-.champion-screen:not(.is-hall):not(.is-sleep) {
+.champion-screen:not(.is-hall) {
   justify-content: flex-start;
   padding-top: 120px;
 }

@@ -54,6 +54,9 @@ import { enemies, finaleEnemies, ENDBRINGER_ID, MANTICORE_ID, titanEyes, EYE_IDS
 import { relics } from '../data/relics';
 import { ActIntroScreen } from '../view/run/ActIntroScreen';
 import { PactSealScreen } from '../view/run/PactSealScreen';
+import { TitanRiseScreen } from '../view/run/TitanRiseScreen';
+import { HeraldScreen } from '../view/run/HeraldScreen';
+import { TitanBoundScreen } from '../view/run/TitanBoundScreen';
 import { TitanWakeScreen } from '../view/run/TitanWakeScreen';
 import { equipment, EQUIPMENT_DROP_POOL, rollEquipmentDrops } from '../data/equipment';
 import {
@@ -149,9 +152,15 @@ type Screen =
   | { kind: 'draft'; optionIds: string[] }
   /** The act-boundary beat: five sockets, one per Guardian (docs/run-loop.md §4). */
   | { kind: 'pactSeal' }
+  /** The fifth seal has broken and the Titan stands up: between the seal and the Threshold's arrival. */
+  | { kind: 'titanRise' }
   /** Per-act arrival beat; reads its location off the run's itinerary. */
   | { kind: 'titanWake' }
   | { kind: 'actIntro' }
+  /** The Herald announced before its fight; `next` is the fight. */
+  | { kind: 'herald'; next: Screen }
+  /** The Eyes have closed: the collapse and the re-binding, ahead of everything the fight pays. */
+  | { kind: 'titanBound'; next: Screen }
   | { kind: 'map' }
   | { kind: 'squadSelect'; nodeId: string; nodeType: EncounterNodeType; encounter: Encounter; squadSize: number }
   | {
@@ -222,6 +231,9 @@ const PLACELESS_SCREENS: ReadonlySet<Screen['kind']> = new Set([
   'titanWake',
   // Between two acts, and the property of neither.
   'pactSeal',
+  'titanRise',
+  // After the last fight: the Threshold's track drops and the binding plays in silence.
+  'titanBound',
   'quickBattle',
   'sandboxBattle',
   'sandboxFight',
@@ -673,7 +685,7 @@ export function App() {
     // The scripted act pays fixed figures instead of rolling: the tutorial has to arrive at its
     // Guardian with a specific amount of power, not a distribution of it (docs/tutorial.md).
     const payout = tutorialPayoutFor(TUTORIAL_PAYOUTS, playerRun, mapNodeType);
-    setScreen({
+    const fight: Screen = {
       kind: 'fight',
       nodeId,
       nodeType,
@@ -685,7 +697,9 @@ export function App() {
       xpGained: xpForEncounter(playerRun.encountersWon + 1, encounterXpKind(mapNodeType)),
       equipmentReward,
       consumableReward: rollConsumableDrop(mapNodeType),
-    });
+    };
+    // The Herald is announced between the squad and the fight, once the squad is settled.
+    setScreen(mapNodeType === 'finale' ? { kind: 'herald', next: fight } : fight);
   }
 
   function handleFightResolved(
@@ -821,12 +835,13 @@ export function App() {
       ? { kind: 'levelUp', report: levelled.report, next: afterLevels }
       : afterLevels;
     // And the companion's loss ahead of even that — the one thing the fight took (§5).
-    setScreen(
-      absorption.absorbed.reduce<Screen>(
-        (rest, gone) => ({ kind: 'companion', beat: { kind: 'lost', heroId: gone.heroId }, next: rest }),
-        afterLoss
-      )
+    const chain = absorption.absorbed.reduce<Screen>(
+      (rest, gone) => ({ kind: 'companion', beat: { kind: 'lost', heroId: gone.heroId }, next: rest }),
+      afterLoss
     );
+    // The Eyes closing is the fight's own last beat, so the collapse and the binding go ahead of
+    // even the level report: nothing the fight pays is worth seeing before the Titan is down.
+    setScreen(isTitan ? { kind: 'titanBound', next: chain } : chain);
   }
 
   function handleNodeContinue(nodeId: string) {
@@ -1072,9 +1087,21 @@ export function App() {
 
       {screen.kind === 'draft' && <DraftScreen optionIds={screen.optionIds} onConfirm={handleDraftConfirm} />}
 
-      {screen.kind === 'pactSeal' && <PactSealScreen run={playerRun} onContinue={enterAct} />}
+      {screen.kind === 'pactSeal' && (
+        <PactSealScreen
+          run={playerRun}
+          // The fifth socket's "Walk to the Threshold" walks into the Titan standing up first.
+          onContinue={playerRun.brokenSeals.length >= SEAL_ACTS ? () => setScreen({ kind: 'titanRise' }) : enterAct}
+        />
+      )}
+
+      {screen.kind === 'titanRise' && <TitanRiseScreen onDone={enterAct} />}
 
       {screen.kind === 'titanWake' && <TitanWakeScreen onDone={enterAct} />}
+
+      {screen.kind === 'herald' && <HeraldScreen onContinue={() => setScreen(screen.next)} />}
+
+      {screen.kind === 'titanBound' && <TitanBoundScreen onContinue={() => setScreen(screen.next)} />}
 
       {screen.kind === 'actIntro' && (
         <ActIntroScreen
@@ -1132,6 +1159,7 @@ export function App() {
           onSaveAndQuit={() => setScreen({ kind: 'title' })}
           onAbandonRun={handleAbandonRun}
           tutorialNodeType={isTutorialAct(playerRun) ? playerRun.map!.nodes[screen.nodeId].type : undefined}
+          cinematicWin={playerRun.map!.nodes[screen.nodeId].type === 'titan'}
         />
       )}
 

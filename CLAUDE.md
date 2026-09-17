@@ -600,7 +600,9 @@ what's still unimplemented:
   Vigil → the Herald → the Titan's Eyes since 2026-09-16, `docs/titan-eyes.md`** — two
   mono-Ancient Eyes whose Gaze marks a hero Beheld and whose Regard can only be aimed at one,
   the wide pair entering from a `reserve` bench once both are down, a free mend between the two
-  fights, and a champion's hall after), are
+  fights, and a champion's hall after; **framed by three cinematic beats since 2026-09-17** —
+  the Titan rising on the fifth seal's break, the Herald announced before its fight, and the
+  collapse and re-binding under the title's seal when the Eyes close, `titan-eyes.md` §2), are
   chained per run (`RunState.actNumber`, `TOTAL_ACTS`), each with a fresh map generated
   once the previous act's Guardian falls; 1 Recruit Contract is granted at the end of
   every act (replacing the removed `contractReward` map-node type — Recruit Contracts

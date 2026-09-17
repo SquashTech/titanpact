@@ -7,7 +7,7 @@ import { STAR_SHOP_NAME, StarShopScreen } from './StarShopScreen';
 import { starShopCatalog } from '../../data/starShop';
 import { starBalance, type StarShopOffer } from '../../run/starShop';
 import { TitanColossus, TitanRidge } from './titanArt';
-import { TypeWheel } from '../shared/TypeWheel';
+import { SealArt } from '../shared/SealArt';
 import { HubGlyph } from '../shared/nodeIcons';
 import type { SaveSummary } from '../../run/save';
 import type { Profile } from '../../run/profile';
@@ -61,12 +61,10 @@ const MOTES = Array.from({ length: MOTE_COUNT }, (_, i) => {
   };
 });
 
-// The five seals, in the order PactSealScreen shows them (docs/lore.md §5). The fourth is
-// the one that has gone out: the binding is failing at the moment the player picks it up,
-// which is the entire premise, and it is cheaper to say once in a dead sigil than in copy.
-// 0deg is straight UP, not along the x-axis — the CSS places a sigil with
-// `rotate(a) translateY(-r)`, so the angle is measured off the vertical.
-const SEAL_SIGILS = [0, 1, 2, 3, 4].map((i) => ({ angle: i * 72, broken: i === 3 }));
+// The fourth sigil is the one that has gone out (SealArt.tsx): the binding is failing at the
+// moment the player picks it up, which is the entire premise, and it is cheaper to say once in
+// a dead sigil than in copy.
+const BROKEN_SIGIL = 3;
 
 /**
  * The one press this screen is built around. The bezel and the specular sweep are separate
@@ -195,21 +193,7 @@ export function TitleScreen({
             the screen, so they track the wordmark's actual position instead of drifting
             into empty space whenever the stack below it changes. */}
         <div className="title-mark">
-          <span className="title-seal" aria-hidden="true">
-            <span className="title-seal-ring is-outer" />
-            <span className="title-seal-ring is-mid" />
-            <span className="title-seal-ring is-inner" />
-            <TypeWheel />
-            <span className="title-seal-sigils">
-              {SEAL_SIGILS.map((s) => (
-                <span
-                  key={s.angle}
-                  className={`title-seal-sigil${s.broken ? ' is-broken' : ''}`}
-                  style={{ '--a': `${s.angle}deg` } as CSSProperties}
-                />
-              ))}
-            </span>
-          </span>
+          <SealArt brokenIndex={BROKEN_SIGIL} />
           <span className="title-ray-burst" aria-hidden="true" />
           <span className="title-core-glow" aria-hidden="true" />
           <div className="title-logo">

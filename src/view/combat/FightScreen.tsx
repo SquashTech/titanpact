@@ -552,6 +552,12 @@ interface Props {
    * Cue progress is deliberately screen-local — a fight is atomic, and a reload replays it.
    */
   tutorialNodeType?: MapNodeType;
+  /**
+   * The Eyes' fight (docs/titan-eyes.md): a win hands off the moment playback ends, with no result
+   * overlay — the collapse is the fight's last beat, and a spoils panel between the KO and it is a
+   * receipt read over a body. A loss still gets its overlay.
+   */
+  cinematicWin?: boolean;
 }
 
 export function FightScreen({
@@ -569,6 +575,7 @@ export function FightScreen({
   onAbandonRun,
   onExitToTitle,
   tutorialNodeType,
+  cinematicWin = false,
 }: Props) {
   /** null outside an act (sandbox, quick battle): the arena keeps its placeless neutral scene. */
   const location = useAmbientLocation();
@@ -684,6 +691,16 @@ export function FightScreen({
   const playerLockedIn = isLockedIn(combat, PLAYER_SIDE);
 
   const winner: Side | null = sideDefeated(combat, PLAYER_SIDE) ? AI_SIDE : sideDefeated(combat, AI_SIDE) ? PLAYER_SIDE : null;
+  // A cinematic win skips the result overlay: the hand-off IS the overlay's continue, fired once
+  // the last beat has played (`resolving` false) so the KO lands on screen before the cut.
+  const skipResult = cinematicWin && winner === PLAYER_SIDE && !resolving;
+  const handoff = useRef(onResolved);
+  handoff.current = onResolved;
+  useEffect(() => {
+    if (!skipResult) return;
+    const t = window.setTimeout(() => handoff.current('win', combat, usedConsumables), 650);
+    return () => window.clearTimeout(t);
+  }, [skipResult]);
   // A KO'd companion is gone from the run (run/companion.ts absorbCompanions): it is still on the
   // roster this side of onResolved, but the result fills no bar for it — the fight took it.
   const playerKoIds = winner ? koRosterIdsOf(combat, PLAYER_SIDE) : [];
@@ -1918,7 +1935,7 @@ export function FightScreen({
           );
         })()}
 
-      {winner && !resolving && (
+      {winner && !resolving && !skipResult && (
         <FightResultOverlay
           outcome={winner === PLAYER_SIDE ? 'win' : 'loss'}
           /* resolveRound advances the counter past the round it just played. */

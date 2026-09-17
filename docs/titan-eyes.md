@@ -51,6 +51,32 @@ the eye carries in every figure in the game (`figurePrimitives.ts makeEye` — `
 with the red bloom). Half-lidded first, because the Titan is not yet paying attention; wide after
 both are put out, because now it is.
 
+**The corridor is framed at both ends and in the middle (2026-09-17, per user direction —
+three cinematic beats, all presentation, none of them a decision):**
+
+- **The Titan rises** (`TitanRiseScreen`), between the fifth socket's strike (`PactSealScreen`)
+  and the Threshold's arrival card. The title screen's own figure — the brow, the two eyes
+  (`titanArt.tsx`) over a skull that runs off the bottom, and the title's ridge with the four
+  pactbearers on it for scale — climbs into the frame from below under a rumble that escalates
+  with its height; it lands with one jolt and the lids crack to a slit. The eyes stay shut on the
+  way up: a breach five-sixths open is wide enough to look through, not to walk through
+  (`lore.md` §7), and the Eyes open on the Herald's fall, not here. Tap-anywhere skips, as the
+  cold open does; `titan.stir` under it, `seal.shatter` on the landing, `titan.gaze` on the slit.
+- **The Herald walks** (`HeraldScreen`), between the squad's confirm and the finale fight: the
+  Endbringer on the Titan's hide (`TitanBody`, the arena the fight is about to be on) growing out
+  of the distance at the size the fight cannot afford it, with `entrance.dread` as it comes, then a
+  caption and a button into the fight. The five unsealed wardens walk ahead of it in the fight
+  itself; the beat is the thing that comes last.
+- **The Titan is bound** (`TitanBoundScreen`), the moment the Eyes close, AHEAD of the level
+  report and everything the fight pays (`FightScreen`'s `cinematicWin` skips the result overlay on
+  that one win, so the collapse lands on the KO rather than on a spoils panel). Two halves: the
+  head from the rise, eyes wide and the frame shaking harder than anything else in the game, goes
+  out and goes down the way it came, one jolt as it lands; then, out of the black, **the title
+  screen's own seal** (`SealArt.tsx`, the markup the title and this beat share) turns in over the
+  black, its five sigils re-light one warden at a time (`seal.strike` each), and the rings lock
+  (the launch's own spin-up, `pact.bind`). *The Titan is bound* is this screen's line; the
+  champion's hall lost its sleep card to it and now opens on the first hero.
+
 Two lore lines move, and should be edited when this is built rather than left to drift:
 
 - §7 "the Herald is the only part of the Titan that can be put down" → the Herald is the part
@@ -231,7 +257,8 @@ that is *never* dodged is a number.
    move keeps the locked order (gate after redirect, a pull onto an ungated hero fizzles).
 6. **The Clock is untouched** — round 30 from the fight's first round, as everywhere.
 7. **The win beat: the Titan goes back to sleep for another thousand years, and the heroes are
-   celebrated** — `ChampionScreen`, a Pokémon-style champion's hall: the sleep card, then each
+   celebrated** — `TitanBoundScreen` (the collapse and the re-binding, 2026-09-17, §2) then
+   `ChampionScreen`, a Pokémon-style champion's hall: each
    hero presented in the recruit fanfare's rings, then the whole roster in a row; then the summary.
 
 ## 8. Phases
