@@ -297,8 +297,8 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
       'Pick one of my moves, then do the same for Fang.',
       'The blue gem shows the MP cost to cast the move. At the end of each round, everyone recovers a little bit of MP.',
       'Resting is always an option, and it fully recovers your MP. Sometimes, Rest is the only available choice.',
-      'Speed decides the order that we strike. Fang is quicker than anyone else on the field, so act accordingly.',
-      'At any time, you can tap on a hero or an enemy to view their capabilities.',
+      'Speed decides the order that we strike. The coin at each fighter\'s shoulder is their place in it — Fang is quicker than anyone else on the field, so act accordingly.',
+      'At any time, you can tap on a hero or an enemy to view their capabilities, or tap a coin to hear who moves when.',
     ],
   },
   {

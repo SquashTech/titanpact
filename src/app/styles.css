@@ -2376,6 +2376,24 @@ textarea,
   white-space: nowrap;
 }
 
+/* Tappable while commanding: the coin takes the tap itself (CombatantCard stops it reaching the
+   card) and the game says the place in words. The hit area is grown past the 24px coin without
+   moving it — a pseudo-element, since the coin's own box is what the stage positions. */
+.order-mark.is-tappable {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.order-mark.is-tappable::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+}
+
+.order-mark.is-tappable:active {
+  transform: scale(0.94);
+}
+
 .order-mark.is-done {
   opacity: 0.35;
 }
@@ -24896,6 +24914,46 @@ textarea,
    stated in rounds, easy to ignore if the player is winning. Due: red, pulsing,
    and reporting a percentage that goes up every round. The player should learn
    the rule once, from watching it, and never need it explained again. */
+/* A tapped coin's line (FightScreen fieldNote): the Pact warning's plaque, in the console's
+   neutral rather than its alarm colours, condensing in and fading out on its own clock so a
+   tap costs nothing to dismiss. Under the enemy status band, since the top band is the
+   warning's when it is due. */
+.field-note {
+  position: absolute;
+  z-index: 5;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 92%;
+  padding: 3px 10px;
+  border: 1px solid rgba(160, 178, 214, 0.28);
+  border-radius: 9px;
+  background: rgba(8, 10, 16, 0.9);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--text);
+  pointer-events: none;
+  animation: field-note-say 2.6s var(--ease-out) both;
+}
+
+@keyframes field-note-say {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-4px);
+  }
+  10%,
+  80% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
 .pact-warning {
   position: absolute;
   z-index: 4;

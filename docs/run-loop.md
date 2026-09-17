@@ -606,7 +606,14 @@ someone Speed would have sent first takes a gold coin, lifted; a hold behind som
 have sent later a cold one, sunk; a +1 on the hero Speed already favoured, which moved nothing,
 is a pip and no more. "Favoured" is read on the field's own axis — `previewOrder` and
 `RoundOrdered` both carry `reversedSpeed`, so under Stasis Bubble the slower hero is the one
-a cut goes past.
+a cut goes past. **A number needs telling** (same day, per user direction — a new player would
+read "3" as anything from a level to a stack): the tutorial's opener cue names the coin in the
+line that already teaches Speed, and **a coin is tappable while commanding** — the tap is the
+coin's own, never the card's — and the game says the place in words over the field for a
+moment (`describeOrder`, `.field-note`): *Cinder moves 2nd in turn order*, with the one
+clause the number cannot carry — a tie is a coin flip, a bracket cut ahead or held back, a
+switch goes first, a Rest last. The ribbon of portraits read the sequence more directly and is
+the trade the shoulder coin makes for the screen space; the tap is what gives that back.
 
 **Open, deliberately:** the hold cap, the price and the drop odds are all playtest numbers; and
 whether a potion should be drinkable during a forced-replacement beat after a KO — the moment a

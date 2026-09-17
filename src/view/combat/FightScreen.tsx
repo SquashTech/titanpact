@@ -31,7 +31,7 @@ import { applyForcedReplacement, replacementCandidates } from '../../engine/comb
 import { consumableRefusal, useConsumable, type ConsumableKind } from '../../engine/combat/consumables';
 import { CONSUMABLE_KINDS, CONSUMABLE_NAMES, type ConsumablePurse } from '../../run/consumables';
 import { BagPanel, type BagTarget } from './BagPanel';
-import { orderMarksFor, type OrderMark, type OrderSource } from './orderMarks';
+import { describeOrder, orderMarksFor, type OrderMark, type OrderSource } from './orderMarks';
 import { Coin } from '../shared/Coin';
 import { previewOrder } from '../../engine/combat/priority';
 import { ResourceGlyph } from '../shared/RunGlyph';
@@ -622,6 +622,8 @@ export function FightScreen({
   const [logOpen, setLogOpen] = useState(false);
   const [referenceOpen, setReferenceOpen] = useState(false);
   const [switchOpen, setSwitchOpen] = useState(false);
+  /** A line the game says over the field for a moment — a tapped order coin's place in words. Keyed so a second tap replays it. */
+  const [fieldNote, setFieldNote] = useState<{ key: number; text: string } | null>(null);
   /** The Bag — every consumable held, and who drinks it — open off the bottom row's key. */
   const [bagOpen, setBagOpen] = useState(false);
   /** Potions drunk this fight. The run's purse is only debited at resolve, so a replayed fight refunds them. */
@@ -821,6 +823,17 @@ export function FightScreen({
       };
     });
   })();
+
+  /** The tapped coin, in words: "Cinder moves 2nd in turn order" and the one clause its number cannot carry. */
+  function sayOrder(combatantId: string) {
+    const mark = orderMarks[combatantId];
+    if (!mark) return;
+    const name = allCombatants[combat.combatants[combatantId].heroId].name;
+    const tiedWith = Object.entries(orderMarks)
+      .filter(([id, m]) => id !== combatantId && m.tied && m.rank === mark.rank)
+      .map(([id]) => allCombatants[combat.combatants[id].heroId].name);
+    setFieldNote({ key: popupSeq.current++, text: describeOrder(name, mark, tiedWith) });
+  }
 
   // Worn on each active card (CombatantCard `order`): the preview while commanding, the settled
   // order walked beat by beat while the round plays; nothing during the intro or once it is won.
@@ -1245,6 +1258,7 @@ export function FightScreen({
           striking={beat?.strikeCombatantId === id}
           fx={figureFx[id]}
           order={orderMarks[id] ?? null}
+          onInspectOrder={resolving ? undefined : () => sayOrder(id)}
         />
       );
     }
@@ -1330,6 +1344,13 @@ export function FightScreen({
         {location && !onTheTitan && <ArenaLocation location={location} />}
         {/* Keyed on beatSeq so the one-shot animation replays per reveal. */}
         {resolving && beat?.dramaticEntrance && <div key={beatSeq} className="dramatic-entrance-veil" aria-hidden="true" />}
+
+        {/* What a tapped coin says, for a moment, in the band the Pact warning takes when it is due. */}
+        {fieldNote && !resolving && (
+          <div key={fieldNote.key} className="field-note" role="status" onAnimationEnd={() => setFieldNote(null)}>
+            {fieldNote.text}
+          </div>
+        )}
 
         {/* Pact Clock face: driven off combat.round, not events, so it is right on first render. */}
         {combat.round >= DEFAULT_PACT_CLOCK.startRound - PACT_WARNING_ROUNDS && (

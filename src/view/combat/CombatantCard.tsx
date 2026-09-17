@@ -133,6 +133,8 @@ interface Props {
   level?: number;
   /** This combatant's place in the round's resolve order (orderMarks.ts), worn at the figure's other shoulder. */
   order?: OrderMark | null;
+  /** Tapping the coin — the game says the place in words (FightScreen's field note). Absent, the coin is inert. */
+  onInspectOrder?: () => void;
 }
 
 /** Icon + bare number (magnitude, falling back to duration). A ~500ms hold opens StatusDetailOverlay; a tap only stops propagation. */
@@ -242,6 +244,7 @@ export function CombatantCard({
   fx,
   level,
   order,
+  onInspectOrder,
 }: Props) {
   const [inspectingStatus, setInspectingStatus] = useState<string | null>(null);
   const hitClass = popup ? POPUP_HIT_CLASS[popup.className] : undefined;
@@ -316,10 +319,21 @@ export function CombatantCard({
             order.tied ? 'is-tie' : '',
             order.effect ? `is-${order.effect}` : '',
             order.phase ? `is-${order.phase}` : '',
+            onInspectOrder ? 'is-tappable' : '',
           ]
             .filter(Boolean)
             .join(' ')}
+          role={onInspectOrder ? 'button' : undefined}
           aria-label={`Acts ${order.rank}${['st', 'nd', 'rd'][order.rank - 1] ?? 'th'}${order.tied ? ', tied' : ''}`}
+          onClick={
+            onInspectOrder
+              ? (e) => {
+                  // The coin's tap is its own: it must not target the card or open the sheet.
+                  e.stopPropagation();
+                  onInspectOrder();
+                }
+              : undefined
+          }
         >
           <Coin />
           <span className="order-mark-rank">{order.rank}</span>

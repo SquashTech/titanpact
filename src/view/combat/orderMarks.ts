@@ -38,6 +38,24 @@ export function orderMarksFor(entries: readonly OrderSource[], reversedSpeed: bo
   return marks;
 }
 
+const ORDINAL = ['1st', '2nd', '3rd', '4th'];
+
+/**
+ * What the game says when a coin is tapped: the hero's place in the order, and the one thing
+ * about it that a number cannot carry — a tie is a coin flip, a bracket cut in or held back, a
+ * switch goes first and a Rest last.
+ */
+export function describeOrder(heroName: string, mark: OrderMark, tiedWith: readonly string[]): string {
+  const place = `${heroName} moves ${ORDINAL[mark.rank - 1] ?? `${mark.rank}th`} in turn order`;
+  if (mark.tied && tiedWith.length > 0) return `${place} — tied with ${tiedWith.join(' and ')}, so it is a coin flip.`;
+  if (mark.priority === SWITCH_PRIORITY_BRACKET) return `${place} — switching out always goes first.`;
+  if (mark.priority === REST_PRIORITY_BRACKET) return `${place} — resting always goes last.`;
+  if (mark.priority === null) return `${place} — its priority is rolled when the round plays.`;
+  if (mark.effect === 'cut') return `${place} — its priority move cuts ahead of faster fighters.`;
+  if (mark.effect === 'held') return `${place} — its move's low priority holds it behind slower fighters.`;
+  return `${place}.`;
+}
+
 /** What a non-zero bracket is shown as on the mark: the sign and size, or the verb that has no number. */
 export function bracketPip(priority: number | null): string | null {
   if (priority === null) return '?';
