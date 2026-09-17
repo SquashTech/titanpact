@@ -280,6 +280,7 @@ export function buildBeats(
 
     switch (e.type) {
       case 'RoundStarted':
+      case 'RoundOrdered':
       case 'TurnStarted':
       case 'RoundEnded':
         carry.push(e);

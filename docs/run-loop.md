@@ -576,8 +576,15 @@ glyph, then the four active portraits in the order the round would resolve, a ch
 `previewOrder` (`engine/combat/priority.ts`): the same keys `orderActions` sorts on, no RNG
 spun. The player's declared actions carry their real bracket — a priority move, a switch (`⇄`)
 or a Rest (`☾`) moves its portrait and wears the bracket as a pip; a rolled bracket shows
-`?` at 0 — and the enemy's are unknown until the round plays, so they sit at bracket 0, which
-is why the ribbon leaves the field with the console.
+`?` at 0 — and the enemy's are unknown until the round plays, so they sit at bracket 0.
+**During playback the ribbon is the real order** (same day): `resolveRound` emits
+`RoundOrdered` — every action's settled bracket and Speed, right after `RoundStarted` — and the
+ribbon walks it beat by beat: the last combatant whose turn began (`TurnStarted`, a Daze block,
+a voluntary switch) stands forward in its type light, the ones before it fall back, a fainted one
+is greyed, and the round's end retires them all. **A bracket that changed the order is lit**
+(`bracketEffect`): a cut ahead of someone faster takes a gold ring and a doubled chevron `»`
+in front of it, a hold behind someone slower a cold one; a +1 on the fastest hero, which moved
+nothing, is a pip and no more. Both readouts are the one component (`TurnOrderRibbon`).
 
 **Open, deliberately:** the hold cap, the price and the drop odds are all playtest numbers; and
 whether a potion should be drinkable during a forced-replacement beat after a KO — the moment a

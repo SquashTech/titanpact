@@ -39,7 +39,7 @@ import { resolveBattleStartEntries, resolvePassiveReactions } from '../../engine
 import { selectableTargets, statusGatedTargets } from '../../engine/combat/statusEngine';
 import { FIELD_EFFECT_DURATION_ROUNDS } from '../../engine/combat/fieldEffectEngine';
 import type { Action } from '../../engine/combat/actions';
-import type { CombatEvent } from '../../engine/events';
+import type { CombatEvent, RoundOrderEntry } from '../../engine/events';
 import type { MoveDefinition, StatKey, TargetMode } from '../../engine/content';
 import { resolveTypeMult, TYPE_MULT_FLOOR } from '../../engine/damage/typeMult';
 import { resolveElementalForceBonus } from '../../engine/damage/damagePipeline';
@@ -644,6 +644,12 @@ export function FightScreen({
   // queue. Initialising it false would paint one frame of a live action console first.
   const [resolving, setResolving] = useState(true);
   const [beat, setBeat] = useState<Beat | null>(null);
+  /**
+   * The round being played back, for the order ribbon: the resolve order the engine settled
+   * (RoundOrdered), the combatants whose turn has begun so far in beat order, and whether the
+   * round's actions are all behind us. Null outside a round's playback — the intro, and the command phase.
+   */
+  const [playbackOrder, setPlaybackOrder] = useState<{ order: RoundOrderEntry[]; begun: string[]; ended: boolean } | null>(null);
   /** Only a React key: consecutive beats can carry identical text, and the headline must remount to replay its arrival. */
   const [beatSeq, setBeatSeq] = useState(0);
   const [popups, setPopups] = useState<Record<string, Popup>>({});
@@ -802,6 +808,28 @@ export function FightScreen({
         ally: combat.combatants[entry.combatantId].side === PLAYER_SIDE,
       })
     );
+  })();
+
+  // The same ribbon during playback, off the engine's settled order: the last combatant whose
+  // turn has begun is the current one, everything before it is done, and the round's end retires them all.
+  const playbackEntries: RibbonEntry[] = (() => {
+    if (!playbackOrder) return [];
+    const { order, begun, ended } = playbackOrder;
+    const currentIndex = ended ? order.length : begun.length > 0 ? order.findIndex((o) => o.combatantId === begun[begun.length - 1]) : -1;
+    return order.map((entry, i) => {
+      const combatant = combat.combatants[entry.combatantId];
+      const prev = order[i - 1];
+      return {
+        combatantId: entry.combatantId,
+        hero: allCombatants[combatant.heroId],
+        combatant,
+        ally: combatant.side === PLAYER_SIDE,
+        priority: entry.priority,
+        speed: entry.speed,
+        tiedWithPrevious: prev !== undefined && prev.priority === entry.priority && prev.speed === entry.speed,
+        phase: i < currentIndex ? 'done' : i === currentIndex ? 'current' : 'pending',
+      };
+    });
   })();
 
   // The console is lit in the commanding hero's domain color, from under that hero's side of the
@@ -1073,6 +1101,7 @@ export function FightScreen({
     displayState.current = startState;
     finalState.current = nextFinalState;
     beatQueue.current = beats;
+    setPlaybackOrder(null);
     setResolving(true);
     // A latched Auto key survives the round that engaged it, so every later round opens already
     // playing. The engagement beat is the exception: Auto is for the fight, not the VS card, which
@@ -1095,6 +1124,7 @@ export function FightScreen({
       setPopups({});
       setFigureFx({});
       setBeat(null);
+      setPlaybackOrder(null);
       setResolving(false);
       setPending({});
       setSelecting(null);
@@ -1107,6 +1137,21 @@ export function FightScreen({
     let next = displayState.current!;
     for (const event of revealed.events) next = applyEventToState(next, event);
     displayState.current = next;
+    // Walk the ribbon: a turn begins on TurnStarted, on a Daze block (no TurnStarted precedes it)
+    // and on a voluntary switch (the outgoing hero is the actor). A skipped action — its owner
+    // fainted first, or a switch lock-in refused — emits nothing and is passed over when the next begins.
+    setPlaybackOrder((prev) => {
+      let cur = prev;
+      for (const e of revealed.events) {
+        if (e.type === 'RoundOrdered') cur = { order: e.order, begun: [], ended: false };
+        else if (!cur || cur.ended) continue;
+        else if (e.type === 'TurnStarted' || e.type === 'ActionBlocked') cur = { ...cur, begun: [...cur.begun, e.combatantId] };
+        else if (e.type === 'SwitchedIn' && e.outCombatantId && cur.order.some((o) => o.combatantId === e.outCombatantId && o.kind === 'switch'))
+          cur = { ...cur, begun: [...cur.begun, e.outCombatantId] };
+        else if (e.type === 'RoundEnded') cur = { ...cur, ended: true };
+      }
+      return cur;
+    });
 
     setCombat(next);
     appendLog(formatEvents(revealed.events, allCombatants, next.combatants, moves));
@@ -1357,9 +1402,9 @@ export function FightScreen({
           </button>
         )}
 
-        {/* The resolve order, on the field's bottom edge under the ally band: off while the round
-            plays out, since the enemy's declared moves are what the preview does not know. */}
-        {!resolving && !winner && <TurnOrderRibbon entries={orderPreview} />}
+        {/* The resolve order, on the field's bottom edge under the ally band: the preview while
+            commanding, the engine's settled order walked beat by beat while the round plays. */}
+        {!winner && <TurnOrderRibbon entries={resolving ? playbackEntries : orderPreview} />}
       </div>
 
       <div className="action-area" style={consoleStyle}>

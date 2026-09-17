@@ -460,3 +460,22 @@ test('previewOrder: an exact bracket + Speed collision is flagged, never shuffle
 function orderPreviewIds(state: CombatState, ids: readonly string[], declared: readonly Action[]): string[] {
   return previewOrder(state, heroes, ids, declared, moves, fieldEffects).map((e) => e.combatantId);
 }
+
+test('resolveRound: RoundOrdered names the settled order — brackets rolled, a switch and a Rest at their own — before anything resolves', () => {
+  const state = twoVTwoFixture(432);
+  const actions: Action[] = [
+    { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' },
+    { kind: 'rest', combatantId: 'a2' },
+    { kind: 'move', combatantId: 'b1', moveId: 'swiftBlow', declaredTarget: 'a2' },
+    { kind: 'move', combatantId: 'b2', moveId: 'vineLash', declaredTarget: 'a1' },
+  ];
+  const { events } = resolveRound(state, actions, config);
+  const ordered = events.find((e) => e.type === 'RoundOrdered');
+  assert.ok(ordered && ordered.type === 'RoundOrdered');
+  assert.strictEqual(events.indexOf(ordered), 1); // right after RoundStarted
+  assert.deepStrictEqual(ordered.order.map((o) => o.combatantId), ['b1', 'b2', 'a1', 'a2']);
+  assert.deepStrictEqual(ordered.order.map((o) => o.priority), [1, 0, 0, Number.NEGATIVE_INFINITY]);
+  // The turns then begin in that order.
+  const turns = events.flatMap((e) => (e.type === 'TurnStarted' ? [e.combatantId] : []));
+  assert.deepStrictEqual(turns, ['b1', 'b2', 'a1', 'a2']);
+});

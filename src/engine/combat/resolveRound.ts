@@ -82,8 +82,15 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
   const maxHpOf = (id: string) => getMaxHp(heroes[working.combatants[id].heroId], working.combatants[id]);
   const maxManaOf = (id: string) => getMaxMana(heroes[working.combatants[id].heroId], working.combatants[id]);
 
-  const { ordered, nextRngState } = orderActions(working, heroes, actions, moves, working.rngState, fieldEffects, passives);
+  const { ordered, keys, nextRngState } = orderActions(working, heroes, actions, moves, working.rngState, fieldEffects, passives);
   working = { ...working, rngState: nextRngState };
+  if (keys.length > 0) {
+    events.push({
+      type: 'RoundOrdered',
+      round,
+      order: keys.map((k) => ({ combatantId: k.action.combatantId, kind: k.action.kind, priority: k.priority, speed: k.speed })),
+    });
+  }
 
   for (const action of ordered) {
     const actor = working.combatants[action.combatantId];

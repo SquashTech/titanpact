@@ -12,6 +12,21 @@ export interface RoundStartedEvent extends BaseEvent {
   type: 'RoundStarted';
 }
 
+/** One declared action in the order the round resolves it; a switch or a Rest carries its own bracket (priority.ts). */
+export interface RoundOrderEntry {
+  combatantId: string;
+  kind: 'move' | 'switch' | 'rest';
+  /** The bracket sorted on — a random bracket already rolled, a switch +Infinity, a Rest -Infinity. */
+  priority: number;
+  speed: number;
+}
+
+/** The whole round's resolve order, settled before anything resolves — the view's readout of who acts when. */
+export interface RoundOrderedEvent extends BaseEvent {
+  type: 'RoundOrdered';
+  order: RoundOrderEntry[];
+}
+
 export interface TurnStartedEvent extends BaseEvent {
   type: 'TurnStarted';
   combatantId: string;
@@ -288,6 +303,7 @@ export interface RoundEndedEvent extends BaseEvent {
 
 export type CombatEvent =
   | RoundStartedEvent
+  | RoundOrderedEvent
   | TurnStartedEvent
   | MoveDeclaredEvent
   | MoveUsedEvent

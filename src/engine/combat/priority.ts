@@ -67,7 +67,7 @@ export function orderActions(
   fieldEffects: Record<string, FieldEffectDefinition> = {},
   /** Conditional passives can grant Speed; turn order must read the same number the card shows. */
   passives: Record<string, PassiveDefinition> = {}
-): { ordered: Action[]; nextRngState: RngState } {
+): { ordered: Action[]; keys: OrderedAction[]; nextRngState: RngState } {
   const activeFieldEffectId = state.activeFieldEffect?.fieldEffectId;
   const activeFieldEffectDef = activeFieldEffectId ? fieldEffects[activeFieldEffectId] : undefined;
   const speedDirection = activeFieldEffectDef?.reversesSpeedOrder ? 1 : -1;
@@ -116,7 +116,7 @@ export function orderActions(
     i = j;
   }
 
-  return { ordered: withKeys.map((w) => w.action), nextRngState: cursor };
+  return { ordered: withKeys.map((w) => w.action), keys: withKeys, nextRngState: cursor };
 }
 
 export interface OrderPreviewEntry {

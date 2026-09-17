@@ -2268,6 +2268,11 @@ textarea,
   color: #e8d16a;
 }
 
+/* The chevron ahead of a cut doubles and takes the cut's gold: "in front of". */
+.turn-order-sep.is-cut {
+  color: rgba(255, 217, 140, 0.95);
+}
+
 .turn-order-socket {
   position: relative;
   display: flex;
@@ -2278,6 +2283,8 @@ textarea,
   border-radius: var(--radius-sm);
   background: rgba(10, 13, 18, 0.8);
   box-shadow: inset 0 0 0 1px rgba(var(--socket-rgb), 0.55);
+  transition: transform var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out),
+    box-shadow var(--dur-mid) var(--ease-out), filter var(--dur-mid) var(--ease-out);
 }
 
 /* The enemy side is told by the ring alone: a solid ring on an ally, a dotted one on an enemy. */
@@ -2294,6 +2301,65 @@ textarea,
 
 .turn-order-socket.is-enemy.is-tied {
   outline-color: rgba(232, 209, 106, 0.8);
+}
+
+/* A bracket that MOVED the entry (TurnOrderRibbon bracketEffect): a cut ahead of someone faster
+   is lit gold from within and lifted a hair, a hold behind someone slower sinks in a cold rim.
+   A pip alone says "this has a bracket"; the light says "and it changed the order". */
+.turn-order-socket.is-cut {
+  box-shadow: inset 0 0 0 1px rgba(255, 217, 140, 0.9), 0 0 9px -1px rgba(255, 200, 90, 0.75);
+  transform: translateY(-1px);
+}
+
+.turn-order-socket.is-enemy.is-cut {
+  outline-color: rgba(255, 217, 140, 0.95);
+  box-shadow: 0 0 9px -1px rgba(255, 200, 90, 0.75);
+}
+
+.turn-order-socket.is-cut .turn-order-pip {
+  color: #ffd98c;
+  box-shadow: 0 0 0 1.5px rgba(255, 200, 90, 0.7);
+}
+
+.turn-order-socket.is-held {
+  box-shadow: inset 0 0 0 1px rgba(150, 172, 214, 0.55);
+  transform: translateY(1px);
+}
+
+.turn-order-socket.is-enemy.is-held {
+  outline-color: rgba(150, 172, 214, 0.65);
+}
+
+.turn-order-socket.is-held .turn-order-pip {
+  color: rgba(196, 212, 240, 0.95);
+}
+
+/* Playback (TurnOrderRibbon `phase`): the ribbon walks with the beats. A done entry falls back,
+   the current one stands forward in its own type light, the rest wait. A fainted entry is
+   greyed whatever its phase — it will not act, or already did. */
+.turn-order-socket.is-done {
+  opacity: 0.4;
+  filter: saturate(0.5);
+}
+
+.turn-order-step.is-done .turn-order-sep {
+  opacity: 0.4;
+}
+
+.turn-order-socket.is-current {
+  transform: scale(1.18) translateY(-1px);
+  box-shadow: inset 0 0 0 1px rgba(var(--socket-rgb), 0.95), 0 0 12px -1px rgba(var(--socket-rgb), 0.85), 0 0 0 2px rgba(6, 8, 12, 0.9);
+  z-index: 1;
+}
+
+.turn-order-socket.is-enemy.is-current {
+  outline-style: solid;
+  outline-color: rgba(var(--socket-rgb), 0.95);
+}
+
+.turn-order-socket.is-fainted {
+  opacity: 0.35;
+  filter: grayscale(1);
 }
 
 /* Clipped on the image, not the socket, so the bracket pip can sit past the corner. */
