@@ -6,6 +6,7 @@ import { ItemServicesSection } from './ItemServicesSection';
 import { guildHallOffers, CONTRACT_PURCHASE_COST } from '../../data/recruitment';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { SectionGlyph } from '../shared/sectionIcons';
+import type { HeroDefinition } from '../../engine/content';
 import type { RunState } from '../../run/state';
 import { ROSTER_CAP, RosterFullError } from '../../run/state';
 import { guildHallEntry } from '../../run/guildRecruit';
@@ -14,21 +15,6 @@ import { SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT, canBuyScroll } from '../..
 import { CONSUMABLE_HOLD_CAP, CONSUMABLE_KINDS, CONSUMABLE_NAMES, CONSUMABLE_PRICE, canBuyConsumable, type ConsumableKind } from '../../run/consumables';
 import { MEND_PRICE, anyWounded, canBuyMend } from '../../run/wounds';
 import { StatGlyph } from '../shared/StatBars';
-import { entryPassiveCounts, entryStatModifiers } from '../../run/entryStats';
-import { passives } from '../../data/passives';
-import { levelOf } from '../../run/growth';
-import type { MoveDefinition } from '../../engine/content';
-import { healCasterForEntry } from '../shared/healCaster';
-import {
-  StageCandidate,
-  StageDais,
-  StageFigure,
-  StageKit,
-  StageMovePopup,
-  StageRail,
-  StageSheet,
-  StageTypes,
-} from '../shared/HeroStage';
 import {
   recruitFromGuildHall,
   buyContract,
@@ -37,7 +23,15 @@ import {
 } from '../../run/recruitment';
 import type { GuildHallOffers } from '../../run/shop';
 import { statScaleFor } from '../../run/statScale';
-import { getTypeColorRgb } from '../combat/typeColors';
+import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
+import { TypeBadge } from '../shared/TypeBadge';
+import { HeroPortrait } from '../shared/HeroPortrait';
+import { entryPassiveCounts, entryStatModifiers } from '../../run/entryStats';
+import { passives } from '../../data/passives';
+import { levelOf } from '../../run/growth';
+import type { MoveDefinition } from '../../engine/content';
+import { healCasterForEntry } from '../shared/healCaster';
+import { StageDais, StageFigure, StageKit, StageMovePopup, StageSheet, StageTypes } from '../shared/HeroStage';
 import { overlayHost } from '../shared/overlayHost';
 import type { TabSpec } from '../shared/TabStrip';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
@@ -54,7 +48,7 @@ export function guildHeroOffers(run: RunState, offers: GuildHallOffers, freeRecr
     .map((offer) => (freeRecruits ? { ...offer, cost: 0 } : offer));
 }
 
-/** The two counters (2026-09-10, per user direction): people on one, the smithy — gear services, potions, the mend — on the other. */
+/** The two counters (2026-09-10, per user direction): people, potions and the party heal on one, the smithy's gear services on the other (2026-09-16: the potions and the heal moved over, per user direction). */
 export function guildHallTabs(run: RunState, offers: GuildHallOffers, freeRecruits: boolean): readonly TabSpec<GuildHallTab>[] {
   return [
     { id: 'heroes', label: 'Heroes', glyph: 'heroes', count: guildHeroOffers(run, offers, freeRecruits).length },
@@ -85,6 +79,36 @@ interface Props {
   freeRecruits?: boolean;
 }
 
+interface HeroCardProps {
+  hero: HeroDefinition;
+  offer: GuildHallOffer;
+  /** The act's hire level (difficulty.ts guildHallLevel) — on the card because a hire arrives one act behind, and that is what 50g is priced against. */
+  level: number;
+  affordable: boolean;
+  onInspect: () => void;
+}
+
+// A tap puts the hire on the stage; the stage is where gold is spent. Unaffordable offers still open.
+function GuildHallHeroCard({ hero, offer, level, affordable, onInspect }: HeroCardProps) {
+  return (
+    <button
+      className={`guild-hall-hero-card${affordable ? '' : ' unaffordable'}`}
+      style={{ '--plate-color': getTypeColor(hero.types[0]) } as CSSProperties}
+      onClick={onInspect}
+    >
+      <span className="guild-hall-hero-level">Lv{level}</span>
+      <HeroPortrait heroId={hero.id} className="guild-hall-hero-portrait" />
+      <div className="guild-hall-hero-name">{hero.name}</div>
+      <div className="roster-card-types">
+        {hero.types.map((t) => (
+          <TypeBadge key={t} type={t} />
+        ))}
+      </div>
+      <div className="guild-hall-hero-cost">{offer.cost === 0 ? 'Free' : `${offer.cost}g`}</div>
+    </button>
+  );
+}
+
 // Guild Hall (docs/progression.md "The raise-vs-recruit axis"). One rule for
 // every purchase: a tap opens the thing, and the thing asks.
 export function GuildHallPanel({
@@ -100,8 +124,8 @@ export function GuildHallPanel({
   tab,
   freeRecruits = false,
 }: Props) {
-  /** The hire on the dais. Falls back to the first offer once the featured one has been bought off the shelf. */
-  const [featuredOfferId, setFeaturedOfferId] = useState<string | null>(null);
+  const [previewOfferId, setPreviewOfferId] = useState<string | null>(null);
+  /** The tabbed sheet over the stage, off the figure's info button. */
   const [inspecting, setInspecting] = useState(false);
   const [popupMove, setPopupMove] = useState<MoveDefinition | null>(null);
   const [confirmingContract, setConfirmingContract] = useState(false);
@@ -111,11 +135,9 @@ export function GuildHallPanel({
   const heroOffers = guildHeroOffers(run, offers, freeRecruits);
 
   const rosterFull = run.roster.length >= ROSTER_CAP;
-  const featuredOffer = heroOffers.find((o) => o.id === featuredOfferId) ?? heroOffers[0];
+  const previewOffer = previewOfferId ? heroOffers.find((o) => o.id === previewOfferId) : undefined;
   // The hire as it would arrive — its levels rolled (guildRecruit.ts), its kit authored, nothing evolved.
-  const featuredEntry = featuredOffer ? guildHallEntry(run, featuredOffer, 'preview') : null;
-  const featuredHero = featuredOffer ? heroes[featuredOffer.heroId] : null;
-  const previewOffer = inspecting ? featuredOffer : undefined;
+  const previewEntry = previewOffer ? guildHallEntry(run, previewOffer, 'preview') : null;
   const canBuyContract = run.gold >= CONTRACT_PURCHASE_COST;
   const scrollsSoldOut = scrollsBought >= SCROLL_PURCHASE_LIMIT;
   const canBuyScrollNow = canBuyScroll(run, scrollsBought);
@@ -153,80 +175,28 @@ export function GuildHallPanel({
       {tab === 'heroes' && (
         <div className="guild-hall-section">
           {/* The mark and nothing under it (2026-09-11, per user direction): what a hire is — raw,
-              unevolved — and what a full roster asks are both said on the hero's own sheet, at the
+              unevolved — and what a full roster asks are both said on the hero's own stage, at the
               moment the gold is about to be spent. */}
           <div className="guild-hall-section-head">
             <span className="guild-hall-section-title">
               <SectionGlyph name="heroes" /> Recruits
             </span>
           </div>
-          {/* The hire on the draft's stage (shared/HeroStage.tsx): the dais, the fight's move
-              console, the spend, and the other offers on the rail. What a hire is — raw, unevolved,
-              one act behind — is read off the sheet itself: a level pip and no veteran marks. The
-              rail LEADS here and the slab comes before the console, where the draft's order is dais,
-              console, commit, rail: this stage sits in the Hall's scroll, and both the other offers
-              and the spend have to be in reach without scrolling to them. */}
-          {featuredOffer && featuredEntry && featuredHero ? (
-            <div className="guild-hall-stage" style={{ '--pact-rgb': getTypeColorRgb(featuredHero.types[0]) } as CSSProperties}>
-              {heroOffers.length > 1 && (
-                <StageRail>
-                  {heroOffers.map((offer) => {
-                    const railHero = heroes[offer.heroId];
-                    return (
-                      <StageCandidate
-                        key={offer.id}
-                        heroId={railHero.id}
-                        heroName={railHero.name}
-                        primaryType={railHero.types[0]}
-                        featured={offer.id === featuredOffer.id}
-                        onSelect={() => setFeaturedOfferId(offer.id)}
-                      />
-                    );
-                  })}
-                </StageRail>
-              )}
-
-              <StageDais>
-                <StageFigure key={featuredOffer.id} heroId={featuredHero.id} heroName={featuredHero.name} onInspect={() => setInspecting(true)}>
-                  <span className="recruit-level" aria-label={`Level ${levelOf(featuredEntry)}`}>
-                    Lv {levelOf(featuredEntry)}
-                  </span>
-                </StageFigure>
-                <div className="draft-ident" key={`${featuredOffer.id}-ident`}>
-                  <h3 className="draft-name">{featuredHero.name}</h3>
-                  <StageTypes types={featuredHero.types} />
-                  <StageSheet
-                    baseStats={featuredHero.baseStats}
-                    grants={entryStatModifiers(featuredEntry, equipment, passives, entryPassiveCounts(featuredEntry, equipment))}
-                    scale={statScaleFor(run)}
-                  />
-                </div>
-              </StageDais>
-
-              {/* The slab sits under the dais, ahead of the console (per user direction): in the
-                  Hall's scroll the spend has to be above the fold, where the draft's order would
-                  put it under three rows of moves. */}
-              {(() => {
-                const affordable = run.gold >= featuredOffer.cost;
+          {heroOffers.length > 0 ? (
+            <div className="guild-hall-hero-grid">
+              {heroOffers.map((offer) => {
+                const hero = heroes[offer.heroId];
                 return (
-                  <button className="draft-choose recruit-sign" disabled={!affordable} onClick={() => handleRecruit(featuredOffer)}>
-                    {!affordable
-                      ? `Need ${featuredOffer.cost}g — you have ${run.gold}g`
-                      : featuredOffer.cost === 0
-                        ? `Muster ${featuredHero.name}`
-                        : rosterFull
-                          ? `Replace a hero for ${featuredHero.name} — ${featuredOffer.cost}g`
-                          : `Recruit ${featuredHero.name} — ${featuredOffer.cost}g`}
-                  </button>
+                  <GuildHallHeroCard
+                    key={offer.id}
+                    hero={hero}
+                    offer={offer}
+                    level={guildHallLevel(run.actNumber)}
+                    affordable={run.gold >= offer.cost}
+                    onInspect={() => setPreviewOfferId(offer.id)}
+                  />
                 );
-              })()}
-
-              <StageKit
-                key={`${featuredOffer.id}-kit`}
-                moveIds={featuredEntry.unlockedMoveIds}
-                caster={healCasterForEntry(featuredHero, featuredEntry)}
-                onPick={setPopupMove}
-              />
+              })}
             </div>
           ) : (
             <p className="hint">No recruits on offer this visit.</p>
@@ -276,16 +246,8 @@ export function GuildHallPanel({
                 </span>
               )}
             </button>
-          </div>
-        </div>
-      )}
-
-      {tab === 'smithy' && (
-        <div className="guild-hall-section">
-          <ItemServicesSection run={run} onRunChange={onRunChange} />
-          {/* The potions, on the smithy's counter: consumed rather than worn, but bought the same way.
-              No per-visit limit — the flask's own cap (CONSUMABLE_HOLD_CAP) is the shelf's. */}
-          <div className="guild-hall-shelf">
+            {/* The potions (2026-09-16, per user direction, off the Smithy's counter): consumed rather
+                than worn. No per-visit limit — the flask's own cap (CONSUMABLE_HOLD_CAP) is the shelf's. */}
             {CONSUMABLE_KINDS.map((kind) => {
               const held = run.consumables[kind];
               const atCap = held >= CONSUMABLE_HOLD_CAP;
@@ -321,7 +283,7 @@ export function GuildHallPanel({
               <span className="guild-hall-good-glyph">
                 <StatGlyph stat="hp" tone="inherit" />
               </span>
-              <span className="guild-hall-good-name">Mend the company</span>
+              <span className="guild-hall-good-name">Full Party Heal</span>
               {anyWounded(run) ? (
                 <span className="guild-hall-good-price">
                   <ResourceGlyph kind="gold" /> {MEND_PRICE}
@@ -334,30 +296,99 @@ export function GuildHallPanel({
         </div>
       )}
 
-      {fanfareHeroId && (
-        <RecruitFanfare heroId={fanfareHeroId} source="guild" onDone={() => setFanfareHeroId(null)} />
+      {tab === 'smithy' && (
+        <div className="guild-hall-section">
+          <ItemServicesSection run={run} onRunChange={onRunChange} />
+        </div>
       )}
 
-      {/* Portals itself (MoveDetailOverlay), so it needs no place in the block below. */}
-      {popupMove && featuredHero && featuredEntry && (
-        <StageMovePopup move={popupMove} caster={healCasterForEntry(featuredHero, featuredEntry)} onClose={() => setPopupMove(null)} />
+      {fanfareHeroId && (
+        <RecruitFanfare heroId={fanfareHeroId} source="guild" onDone={() => setFanfareHeroId(null)} />
       )}
 
       {/* Portalled: this panel lives inside the node screen's .screen-scroll, which is lifted to
           its own stacking context, and a modal rendered in there paints UNDER the corner buttons. */}
       {createPortal(
         <>
-          {previewOffer && featuredEntry && (
-            <HeroPreviewOverlay
-              hero={heroes[previewOffer.heroId]}
-              entry={featuredEntry}
-              equipmentLookup={equipment}
-              relicIds={run.relics}
-              scale={statScaleFor(run)}
-              unowned
-              onClose={() => setInspecting(false)}
-            />
-          )}
+          {/* The hire on the draft's stage (shared/HeroStage.tsx), as an overlay off its card
+              (2026-09-16, per user direction — it stood in the tab itself for an afternoon and
+              crowded the shelf out): the dais, the fight's move console, and the spend in the
+              footer. What a hire is — raw, unevolved, one act behind — is read off the sheet
+              itself: a level pip and no veteran marks. */}
+          {previewOffer &&
+            previewEntry &&
+            (() => {
+              const hero = heroes[previewOffer.heroId];
+              const affordable = run.gold >= previewOffer.cost;
+              const caster = healCasterForEntry(hero, previewEntry);
+              const close = () => setPreviewOfferId(null);
+              return (
+                <div className="detail-overlay is-sheet" onClick={close}>
+                  <div
+                    className="detail-panel is-hero-sheet guild-hire-panel"
+                    style={{ '--hero-color': getTypeColor(hero.types[0]), '--pact-rgb': getTypeColorRgb(hero.types[0]) } as CSSProperties}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <StageDais>
+                      <StageFigure heroId={hero.id} heroName={hero.name} onInspect={() => setInspecting(true)}>
+                        <span className="recruit-level" aria-label={`Level ${levelOf(previewEntry)}`}>
+                          Lv {levelOf(previewEntry)}
+                        </span>
+                      </StageFigure>
+                      <div className="draft-ident">
+                        <h3 className="draft-name">{hero.name}</h3>
+                        <StageTypes types={hero.types} />
+                        <StageSheet
+                          baseStats={hero.baseStats}
+                          grants={entryStatModifiers(previewEntry, equipment, passives, entryPassiveCounts(previewEntry, equipment))}
+                          scale={statScaleFor(run)}
+                        />
+                      </div>
+                    </StageDais>
+                    <StageKit moveIds={previewEntry.unlockedMoveIds} caster={caster} onPick={setPopupMove} />
+                  </div>
+
+                  <div className="sheet-footer" onClick={(e) => e.stopPropagation()}>
+                    {!affordable ? (
+                      <div className="detail-action-note">
+                        Not enough gold — {previewOffer.cost}g needed, you have {run.gold}g.
+                      </div>
+                    ) : rosterFull ? (
+                      <div className="detail-action-note">
+                        Roster is full ({ROSTER_CAP}/{ROSTER_CAP}) — you'll choose a hero to terminate next.
+                      </div>
+                    ) : null}
+                    <button
+                      className="resolve-button sheet-close-button guild-hire-buy"
+                      disabled={!affordable}
+                      onClick={() => {
+                        handleRecruit(previewOffer);
+                        close();
+                      }}
+                    >
+                      {previewOffer.cost === 0 ? `Muster ${hero.name}` : `Recruit ${hero.name} — ${previewOffer.cost}g`}
+                    </button>
+                    <button className="secondary-button" onClick={close}>
+                      Close
+                    </button>
+                  </div>
+
+                  {inspecting && (
+                    <HeroPreviewOverlay
+                      hero={hero}
+                      entry={previewEntry}
+                      equipmentLookup={equipment}
+                      relicIds={run.relics}
+                      scale={statScaleFor(run)}
+                      unowned
+                      onClose={() => setInspecting(false)}
+                    />
+                  )}
+
+                  {popupMove && <StageMovePopup move={popupMove} caster={caster} onClose={() => setPopupMove(null)} />}
+                </div>
+              );
+            })()}
 
           {/* The one purchase with nothing to open first, so it gets its own confirm. */}
           {confirmingContract && (

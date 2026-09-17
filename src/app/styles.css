@@ -13471,8 +13471,8 @@ textarea,
 /* --- Guild Hall panel -----------------------------------------------------
    Overhauled (2026-08-18, per user direction): a real multi-good shop —
    2-3 curated hero recruits plus a small equipment shelf — rather than a flat
-   grid of every recruitable hero. The recruits stand on the draft's stage
-   (.guild-hall-stage, 2026-09-16) and the goods share .guild-hall-good, so
+   grid of every recruitable hero. Each section reuses an established card
+   family (guild-hall-hero-card is new; equipment reuses .equip-cache-card) so
    the shop reads as one consistent surface with the rest of the run loop
    rather than a bolted-on screen.
 
@@ -13743,30 +13743,96 @@ textarea,
   max-width: 42ch;
 }
 
-/* The hire on the draft's stage (shared/HeroStage.tsx, .draft-* above): the
-   dais, the console, the spend and the rail, in the Hall's own scroll rather
-   than a screen of their own — so the column centres its children and adds
-   nothing of the draft's auto-margin centring, which needs a fixed height to
-   divide. The sky stays the Hall's hearth; only the figure carries the
-   hire's colour, through --pact-rgb set on this element. Replaces a grid of
-   three 96px cards that each opened a sheet before saying anything. */
-.guild-hall-stage {
+.guild-hall-hero-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+.guild-hall-hero-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding-top: 2px;
+  gap: 4px;
+  border-radius: var(--radius-md);
+  padding: 10px 8px 8px;
+  text-align: center;
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: var(--hairline), var(--elev-1);
+  transition: transform var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), border-color var(--dur-mid) var(--ease-out);
 }
 
-.guild-hall-stage .draft-choose {
-  margin: 2px 0;
+.guild-hall-hero-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  box-shadow: var(--hairline-strong), var(--elev-2);
 }
 
-/* Stretched, not centred: a candidate's width is a quarter of the rail's,
-   and a rail shrink-wrapped by the centring column has no width to quarter. */
-.guild-hall-stage .draft-rail {
-  align-self: stretch;
-  margin-bottom: 4px;
+.guild-hall-hero-card:active {
+  transform: translateY(0);
+}
+
+.guild-hall-hero-card.unaffordable {
+  opacity: 0.5;
+}
+
+.guild-hall-hero-portrait {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  /* A ring + inner shadow frames the portrait instead of letting a circular
+     crop float free on the card. Costs no layout space (both are shadows). */
+  box-shadow: 0 0 0 1px var(--border), inset 0 0 0 1px rgba(0, 0, 0, 0.4);
+}
+
+.guild-hall-hero-name {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.guild-hall-hero-cost {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--accent);
+  margin-top: 2px;
+}
+
+.guild-hall-hero-card.unaffordable .guild-hall-hero-cost {
+  color: var(--enemy);
+}
+
+/* Corner badge, not a row: the level is half of what the gold buys, and the
+   Hall is tuned to fit a phone without scrolling. */
+.guild-hall-hero-level {
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
+/* The hire on the draft's stage (shared/HeroStage.tsx, .draft-* above), as
+   the overlay a card opens: the hero sheet's own panel holding the dais and
+   the console, the spend and Close in the sheet footer under it. Content-
+   sized, unlike the tabbed sheet — there is no strip to hold in place. */
+.guild-hire-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 10px 10px;
+  overflow-y: auto;
+}
+
+/* The spend under it keeps the sheet slab's size and gets its hue back: a
+   Close has the room's light switched off (.sheet-close-button above), a
+   purchase does not. Gold, not the hero's type — it is the Hall's gold. */
+.resolve-button.sheet-close-button.guild-hire-buy {
+  --cta-rgb: 224, 166, 60;
 }
 
 /* Both of these are written as `.equip-cache-* .guild-hall-*` (0,2,0) rather
@@ -27886,6 +27952,7 @@ textarea,
 .squad-slot,
 .enemy-scout-chip,
 .relic-card,
+.guild-hall-hero-card,
 .guild-hall-good,
 .equip-cache-card,
 .equip-target-card,
@@ -27920,6 +27987,7 @@ textarea,
 .squad-slot,
 .enemy-scout-chip,
 .relic-card,
+.guild-hall-hero-card,
 .guild-hall-good,
 .equip-cache-card,
 .equip-target-card,
