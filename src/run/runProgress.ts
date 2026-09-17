@@ -39,15 +39,17 @@ export function advanceToNode(run: RunState, nodeId: string): RunState {
  * Inclusive gold band a won encounter pays, by map node type, AT ACT 1 — `goldRangeFor` carries
  * the act (ACT_GOLD_SCALE). Two lanes: Monsters (`fight`, `battle`) is the loot-and-gold lane,
  * Skirmish (`skirmish`, `elite`) the Scroll lane on a thin band; the row-0 opener stays thin
- * because it already ships a drop. The Guardian pays in the Banner, not coin, and the finale ends
- * the run. One table, so the map's node readout and the roll it describes cannot drift.
+ * because it already ships a drop. The Guardian carries the fat band `battle` took off the map
+ * with it (2026-09-17, per user direction — it paid nothing but the Banner until then), so the
+ * act's hardest fight is also its richest, banked for the next act's Hall; the finale ends the
+ * run. One table, so the map's node readout and the roll it describes cannot drift.
  */
 export const GOLD_REWARD_RANGE: Record<EncounterNodeKind, readonly [number, number]> = {
   fight: [15, 25],
   skirmish: [15, 25],
   battle: [30, 45],
   elite: [15, 25],
-  boss: [0, 0],
+  boss: [30, 45],
   finale: [0, 0],
   titan: [0, 0],
 };

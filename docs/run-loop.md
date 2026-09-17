@@ -300,7 +300,12 @@ flat, the Guild Hall entered with 53–66g in Acts 2–5 and the Anvil paid 0.2�
 term 41 / 71 / 92 / 123 / 156 earned, the Hall entered with 82 / 104 / 142 / 181, the Scrolls
 selling out from Act 3 AND the Anvil paid 32 / 52 / 79g in Acts 3–5, full-clear 11.5 → 13.3% on
 the same seed, all of it at the finale. The steps size an act's income at about one Smithy job
-at the act's window tier plus one shelf item. First-pass, a playtest figure; the prices stand.
+at the act's window tier plus one shelf item. **The Guardian then took the fat band** (same day,
+per user direction): earned 63 / 106 / 161 / 187 / 249 by act, the Hall entered with 119 / 162 /
+245 / 332 in Acts 2–5, full-clear unmoved (13.1%) and 72g unspent at the end against 32 — the
+sim's pilot lifts but never enchants, so a player who does has ~120g an act more to put somewhere
+than it did. If Act 4–5 read as rich in play, the Guardian's band and the last two steps of the
+scale are the two dials. First-pass, a playtest figure; the prices stand.
 
 | Node | Lane | Gold (Act 1) | Equipment drop |
 |---|---|---|---|
@@ -308,7 +313,7 @@ at the act's window tier plus one shelf item. First-pass, a playtest figure; the
 | `battle` (row 4) | Monsters | **30-45** | **always**, act's standard curve |
 | `skirmish` (row 2) | Skirmish | 15-25 | 25%, act's standard curve |
 | `elite` (row 4) | Skirmish | 15-25 | 55%, **one tier ahead** (`rarityWeightsFor(act, 'elite')`) |
-| `boss` | Guardian | 0 | 70%, one tier ahead |
+| `boss` | Guardian | **30-45** (2026-09-17; was 0 — the fat band `battle` took off the map, so the act's hardest fight is its richest, banked for the next act's Hall) | 70%, one tier ahead |
 
 **The XP column is gone (2026-09-10, Growth Overhaul phase 3).** Levels are automatic and
 roster-wide, so no encounter pays a currency for them. XP is an authored figure by ACT, read off
