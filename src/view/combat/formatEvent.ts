@@ -244,14 +244,7 @@ export function formatEvents(
         });
         break;
       }
-      case 'Mended': {
-        lines.push({
-          key,
-          text: e.revived ? `${name(e.combatantId)} stands again at ${e.newHp} HP` : `${name(e.combatantId)} is held up to ${e.newHp} HP`,
-          className: 'log-heal',
-        });
-        break;
-      }
+
       case 'FieldEffectDrained': {
         const fx = fieldEffects[e.fieldEffectId];
         lines.push({

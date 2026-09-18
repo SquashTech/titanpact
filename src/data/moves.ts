@@ -4155,9 +4155,11 @@ export const moves: Record<string, MoveDefinition> = {
     type: 'Ancient',
     category: 'magical',
     kind: 'buff',
+    // −15, as the text always said: −20 for the whole Herald phase measured as the finale's
+    // margin (docs/titan-eyes.md §10.3).
     statDeltas: [
-      { stat: 'defense', amount: -20 },
-      { stat: 'wisdom', amount: -20 },
+      { stat: 'defense', amount: -15 },
+      { stat: 'wisdom', amount: -15 },
     ],
     manaCost: 45,
     priority: 0,
@@ -4181,6 +4183,8 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'bothAllies',
     description: 'The banner goes up, and what stands under it stands taller (+20 Attack and +20 Intelligence to both allies).',
   },
+  // 90, down from 120 (docs/titan-eyes.md §10.3): the Herald is the front of a fight the Eyes
+  // finish, and at 120 off Int 135 it took a hero a round through a phase nothing mends after.
   oblivion: {
     id: 'oblivion',
     name: 'Oblivion',
@@ -4188,7 +4192,7 @@ export const moves: Record<string, MoveDefinition> = {
     type: 'Ancient',
     category: 'magical',
     kind: 'damage',
-    basePower: 120,
+    basePower: 90,
     manaCost: 70,
     priority: 0,
     target: 'singleEnemy',
@@ -4241,36 +4245,7 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'The full weight of the regard lands on a Beheld hero. A taunt can take it instead.',
   },
-  // Phase 2's Gaze: both heroes marked at once, so the switch answer costs two switch-ins.
-  stare: {
-    id: 'stare',
-    tier: 'mid',
-    name: 'Stare',
-    type: 'Ancient',
-    category: 'magical',
-    kind: 'buff',
-    statusApplication: { statusId: 'Beheld', duration: 2, target: 'moveTarget' },
-    manaCost: 30,
-    priority: 1,
-    target: 'bothEnemies',
-    description: 'The eye, wide, takes in both heroes (Beheld for a round). Nowhere to look but away.',
-  },
-  // Phase 2's Regard.
-  glare: {
-    id: 'glare',
-    tier: 'late',
-    name: 'Glare',
-    type: 'Ancient',
-    category: 'magical',
-    kind: 'damage',
-    basePower: 205,
-    requiresTargetStatus: 'Beheld',
-    gateYieldsToRedirect: true,
-    manaCost: 70,
-    priority: 0,
-    target: 'singleEnemy',
-    description: 'The regard of a Titan that is paying attention, on a Beheld hero. A taunt can take it instead.',
-  },
+
   // The Right Eye's turn spent holding: a Shield on both Eyes off its Defense (docs/shield.md).
   lidded: {
     id: 'lidded',

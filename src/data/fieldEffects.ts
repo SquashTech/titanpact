@@ -4,8 +4,8 @@
 
 import type { FieldEffectDefinition } from '../engine/content';
 
-/** Withering Gaze's tenth a round: five rounds unanswered is half a hero. The dial the sim reads first. */
-export const WITHERING_GAZE_FRACTION = 0.1;
+/** Withering Gaze's share a round: five rounds unanswered is a quarter of a hero. The dial the sim reads first — a tenth measured as the Eyes phase's whole margin (docs/titan-eyes.md §10.3). */
+export const WITHERING_GAZE_FRACTION = 0.05;
 
 export const fieldEffects: Record<string, FieldEffectDefinition> = {
   surgingMagic: {
@@ -50,7 +50,7 @@ export const fieldEffects: Record<string, FieldEffectDefinition> = {
   witheringGaze: {
     id: 'witheringGaze',
     name: 'Withering Gaze',
-    description: 'Everyone on the field but the Titan’s own pieces loses a tenth of their max HP at the end of each round.',
+    description: `Everyone on the field but the Titan’s own pieces loses ${Math.round(WITHERING_GAZE_FRACTION * 100)}% of their max HP at the end of each round.`,
     flavorType: 'Ancient',
     drainsPercentMaxHp: { fraction: WITHERING_GAZE_FRACTION, exemptTypes: ['Ancient'] },
   },

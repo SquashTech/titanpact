@@ -838,9 +838,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
 export const HERALDS_STANDARD_ID = 'heraldsStandard';
 export const WITHERING_GAZE_FALLS_ID = 'witheringGazeFalls';
 export const WITHERING_GAZE_RETURNS_ID = 'witheringGazeReturns';
-export const HELD_UP_ID = 'heldUp';
-/** What a held-up body stands with, as a share of max HP: the finale's one difficulty dial after the Eyes' lines (docs/titan-eyes.md §10). */
-export const HELD_UP_HP_FRACTION = 0.5;
+
 /** Every third round: the Gaze lasts five, so a player's field is overwritten inside it (never refreshed — re-setting the active field is a no-op). */
 export const WITHERING_GAZE_CADENCE = 3;
 
@@ -861,20 +859,7 @@ const titanPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'setFieldEffect', fieldEffectId: 'witheringGaze' },
     },
   },
-  // The Titan wants to watch (docs/titan-eyes.md §3, §10 — "the Titan's regard holds you up"): as an
-  // Eye opens, the far side is held up, the fallen included. Measured: without it the merged fight
-  // is cleared 2% of the time it is reached against the two-fight corridor's 58% — knockouts carrying
-  // through three phases, not HP, were the wall — with it at full HP 53%, at half 40%. Half shipped.
-  [HELD_UP_ID]: {
-    id: HELD_UP_ID,
-    name: 'Held Up',
-    description: 'When this Eye opens on the battlefield, no foe is left down: the fallen stand, everyone has at least half their health, and Mana is full. The Titan wants to watch.',
-    reactive: {
-      hook: 'SwitchedIn',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'mendSide', side: 'enemy', hpFraction: HELD_UP_HP_FRACTION },
-    },
-  },
+
   [WITHERING_GAZE_RETURNS_ID]: {
     id: WITHERING_GAZE_RETURNS_ID,
     name: 'The Gaze Returns',

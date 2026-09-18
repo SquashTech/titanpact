@@ -8,7 +8,7 @@
 
 import type { GrowthStatKey, HeroDefinition } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
-import { HELD_UP_ID, HERALDS_STANDARD_ID, WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID } from './passives';
+import { HERALDS_STANDARD_ID, WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID } from './passives';
 import type { GrowthGrade } from '../run/growth';
 
 /**
@@ -178,24 +178,25 @@ export const enemies: Record<string, HeroDefinition> = {
 /**
  * The true final boss (docs/titan-eyes.md): the Titan's two Eyes, keyed by `EYE_IDS` and held
  * apart from `enemies` so nothing that draws from the champion pool can reach them. Mono-Ancient
- * — the Titan's own pieces are the only things that are (lore.md §8). Phase 2 is the same pair
- * WIDE: two more definitions, not a multiplier, so "more powerful" is authored per stat and per
- * move. Attack 40 across all four is the dump stat — nothing they do is physical.
+ * — the Titan's own pieces are the only things that are (lore.md §8). One pair, one phase, behind
+ * the Herald in the same fight (§10; the wide pair of phase 2 came out on 2026-09-18 with the
+ * revive that made a third phase survivable). Attack 40 on both is the dump stat — nothing they do
+ * is physical.
  *
- * The Left Eye hurts (Runic Blast, Enfeeble beside the gaze); the Right Eye holds (Forgotten
- * Curse, Lidded). Speed 90/100: the fastest hero is 90, so the wide pair outrun everything but
- * a priority bracket and the half-lidded pair do not quite. Every number is a first pass for
- * the sim (titan-eyes.md §6).
+ * The Left Eye hurts (Archon Blast, Erode beside the gaze); the Right Eye holds (Forgotten Curse,
+ * Lidded). Speed 92/82: the fastest hero is 90. The lines are §4's with HP ×1.5 and Int −20 (§10):
+ * a roster arrives at the Eyes worn from the Herald, so the pair last longer and hit a little
+ * softer. Every number is a first pass for the sim.
  */
-/** Every Eye holds the far side up as it opens, sets Withering Gaze, and sets it again every third round (docs/titan-eyes.md §10). */
-const TITAN_EYE_PASSIVES: readonly string[] = [HELD_UP_ID, WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID];
+/** Every Eye sets Withering Gaze as it opens and again every third round (docs/titan-eyes.md §10). */
+const TITAN_EYE_PASSIVES: readonly string[] = [WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID];
 
 export const titanEyes: Record<string, HeroDefinition> = {
   leftEye: {
     id: 'leftEye',
     name: 'Left Eye',
     types: ['Ancient'],
-    baseStats: { hp: 540, attack: 40, defense: 105, intelligence: 155, wisdom: 105, speed: 92, manaPool: 220, mpRegen: 28 },
+    baseStats: { hp: 810, attack: 40, defense: 105, intelligence: 135, wisdom: 105, speed: 92, manaPool: 220, mpRegen: 28 },
     moveIds: ['gaze', 'regard', 'archonBlast', 'erode'],
     passiveIds: TITAN_EYE_PASSIVES,
     starter: false,
@@ -205,28 +206,8 @@ export const titanEyes: Record<string, HeroDefinition> = {
     id: 'rightEye',
     name: 'Right Eye',
     types: ['Ancient'],
-    baseStats: { hp: 630, attack: 40, defense: 125, intelligence: 125, wisdom: 125, speed: 82, manaPool: 220, mpRegen: 28 },
+    baseStats: { hp: 945, attack: 40, defense: 125, intelligence: 105, wisdom: 125, speed: 82, manaPool: 220, mpRegen: 28 },
     moveIds: ['gaze', 'regard', 'forgottenCurse', 'lidded'],
-    passiveIds: TITAN_EYE_PASSIVES,
-    starter: false,
-    growthGrades: CHAMPION_GRADES,
-  },
-  leftEyeWide: {
-    id: 'leftEyeWide',
-    name: 'Left Eye',
-    types: ['Ancient'],
-    baseStats: { hp: 680, attack: 40, defense: 115, intelligence: 190, wisdom: 115, speed: 102, manaPool: 260, mpRegen: 32 },
-    moveIds: ['stare', 'glare', 'archonBlast', 'erode'],
-    passiveIds: TITAN_EYE_PASSIVES,
-    starter: false,
-    growthGrades: CHAMPION_GRADES,
-  },
-  rightEyeWide: {
-    id: 'rightEyeWide',
-    name: 'Right Eye',
-    types: ['Ancient'],
-    baseStats: { hp: 790, attack: 40, defense: 145, intelligence: 150, wisdom: 145, speed: 92, manaPool: 260, mpRegen: 32 },
-    moveIds: ['stare', 'glare', 'forgottenCurse', 'lidded'],
     passiveIds: TITAN_EYE_PASSIVES,
     starter: false,
     growthGrades: CHAMPION_GRADES,
@@ -235,20 +216,13 @@ export const titanEyes: Record<string, HeroDefinition> = {
 
 export const LEFT_EYE_ID = 'leftEye';
 export const RIGHT_EYE_ID = 'rightEye';
-export const LEFT_EYE_WIDE_ID = 'leftEyeWide';
-export const RIGHT_EYE_WIDE_ID = 'rightEyeWide';
-/** Phase 1 then phase 2, in the order the encounter fields them. */
-export const EYE_IDS: readonly string[] = [LEFT_EYE_ID, RIGHT_EYE_ID, LEFT_EYE_WIDE_ID, RIGHT_EYE_WIDE_ID];
-/** The same, a phase a pair — what the finale's generator takes (enemyGen.ts FinaleEyesOptions). */
-export const EYE_PHASES: readonly (readonly string[])[] = [
-  [LEFT_EYE_ID, RIGHT_EYE_ID],
-  [LEFT_EYE_WIDE_ID, RIGHT_EYE_WIDE_ID],
-];
+/** In the order the encounter fields them. */
+export const EYE_IDS: readonly string[] = [LEFT_EYE_ID, RIGHT_EYE_ID];
+/** A phase a pair — what the finale's generator takes (enemyGen.ts FinaleEyesOptions); one phase since §10. */
+export const EYE_PHASES: readonly (readonly string[])[] = [[LEFT_EYE_ID, RIGHT_EYE_ID]];
 export function isTitanEye(heroId: string): boolean {
   return EYE_IDS.includes(heroId);
 }
-/** The wide pair: what phase 1's fall lets in. */
-export const WIDE_EYE_IDS: readonly string[] = [LEFT_EYE_WIDE_ID, RIGHT_EYE_WIDE_ID];
 
 /** Pointed at by `LocationDefinition.guardianFinalEnemyId`. */
 export const MANTICORE_ID = 'manticore';

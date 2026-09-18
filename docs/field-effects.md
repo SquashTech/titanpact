@@ -333,9 +333,10 @@ every Boon. Directional, as always; the read that matters is the user's next run
 **Withering Gaze** is the sixth field and the one exception to the three-route rule: set by the
 Eyes' own innate passives (on entry, and again every third round on the new `RoundEnded` hook)
 and by nothing a hero can hold — no Herald, no rider, no reader. `drainsPercentMaxHp` is new
-vocabulary: every active combatant not of an exempt type loses a tenth of its max HP at each
-round's end, on the Pact Clock's terms, before the field's own countdown. The player's answer is
-any field of their own, which the no-refresh rule prices at one to three rounds.
+vocabulary: every active combatant not of an exempt type loses 5% of its max HP at each round's
+end (a tenth measured as the Eyes phase's whole margin), on the Pact Clock's terms, before the
+field's own countdown. The player's answer is any field of their own, which the no-refresh rule
+prices at one to three rounds.
 
 ### Still deferred
 

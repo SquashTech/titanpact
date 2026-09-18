@@ -22,7 +22,7 @@ import { resolveTypeMult } from '../src/engine/damage/typeMult';
 
 const config = { typeChart, heroes: allCombatants, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
-const EYE_MOVES = new Set(['gaze', 'regard', 'stare', 'glare', 'lidded']);
+const EYE_MOVES = new Set(['gaze', 'regard', 'lidded']);
 const ancient = () => Object.values(moves).filter((m) => m.type === 'Ancient');
 const slate = () => ancient().filter((m) => !EYE_MOVES.has(m.id));
 
@@ -53,9 +53,9 @@ function fight(seed: number, a: { id: string; heroId: string }[], b: { id: strin
 const heraldFixture = (seed: number) =>
   fight(seed, [{ id: 'a1', heroId: 'valor' }, { id: 'a2', heroId: 'dawnwarden' }], [{ id: 'b1', heroId: ENDBRINGER_ID }, { id: 'b2', heroId: 'armillary' }]);
 
-test('ancient: the slate is eleven moves plus the Eyes’ five, every one tiered and Ancient-typed, three of the hits physical', () => {
+test('ancient: the slate is eleven moves plus the Eyes’ three, every one tiered and Ancient-typed, three of the hits physical', () => {
   assert.strictEqual(slate().length, 11);
-  assert.strictEqual(ancient().length, 16);
+  assert.strictEqual(ancient().length, 14);
   for (const m of ancient()) assert.ok(m.tier, `${m.id} carries no tier`);
   // An all-magical enemy type would make Defense worthless in every Guardian fight and the finale.
   const physical = ancient().filter((m) => m.category === 'physical').map((m) => m.id).sort();
@@ -89,7 +89,8 @@ test('ancient: the bodies sit under the hero slates’ at each tier, because Anc
   assert.strictEqual(moves.runicBlast.manaCost, 20);
   assert.strictEqual(moves.archonBlast.basePower, 55);
   assert.strictEqual(moves.archonBlast.manaCost, 40);
-  assert.strictEqual(moves.oblivion.basePower, 120);
+  // 90 since the finale became one fight (docs/titan-eyes.md §10.3) — still the slate's one big hit.
+  assert.strictEqual(moves.oblivion.basePower, 90);
   assert.strictEqual(moves.oblivion.manaCost, 70);
   // Every damaging body on the slate is a spread at 50 or under, or a single at 60 or under, save the Late hit.
   for (const m of slate()) {

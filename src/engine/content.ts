@@ -193,15 +193,7 @@ export type PassiveEffect =
   /** UNCAPPED, like a move's `manaGrant` — overflow past the pool is the point (docs/mana.md). */
   | { kind: 'manaGrant'; target: PassiveEffectTarget; amount: PassiveAmount }
   /** Global — no `target`. */
-  | { kind: 'setFieldEffect'; fieldEffectId: FieldEffectId }
-  /**
-   * The map's mend inside a fight (the Eyes' Held Up, docs/titan-eyes.md §10): every combatant on
-   * that side, the FALLEN included, stands with at least `hpFraction` of max HP (1 = whole; a body
-   * above it keeps what it has) and full Mana, and the side's knockouts are forgotten for lock-in.
-   * Fight modifiers and statuses stay — what the phase before did to a stat is still done. One
-   * Mended event per body it changed.
-   */
-  | { kind: 'mendSide'; side: 'own' | 'enemy'; hpFraction: number };
+  | { kind: 'setFieldEffect'; fieldEffectId: FieldEffectId };
 
 /** Damage-pipeline modifier from the attacker's own passives, evaluated per hit against { moveType }. */
 export interface PassiveDamageModifier {

@@ -778,28 +778,6 @@ export function buildBeats(
         break;
       }
 
-      // Held Up: the far side made whole in one beat, the ones that stand back up named on the bar.
-      case 'Mended': {
-        const applied: CombatEvent[] = [];
-        const popups: BeatPopup[] = [];
-        const stood: string[] = [];
-        while (events[i]?.type === 'Mended') {
-          const m = events[i++];
-          if (m.type !== 'Mended') break;
-          applied.push(m);
-          if (m.newHp > m.previousHp) popups.push({ combatantId: m.combatantId, text: `+${m.newHp - m.previousHp}`, className: 'popup-heal' });
-          if (m.revived) stood.push(name(m.combatantId));
-        }
-        push(applied, stood.length > 0 ? `The Titan holds you up — ${stood.join(', ')} ${stood.length === 1 ? 'stands' : 'stand'} again!` : 'The Titan holds you up!', popups, {
-          bannerLead: 'The Titan wants to watch',
-          bannerFocus: stood.length > 0 ? `${stood.join(', ')} ${stood.length === 1 ? 'stands' : 'stand'} again` : 'Nobody is left down',
-          bannerFocusKind: 'heal',
-          bannerMeta: 'Mana is full and nobody is below half. What the fight did to your stats stays done.',
-          bannerMetaClass: 'banner-meta-rules',
-        });
-        break;
-      }
-
       // The field's drain (Withering Gaze): the Clock's shape, one beat for the board, KOs split off.
       case 'FieldEffectDrained': {
         i++;

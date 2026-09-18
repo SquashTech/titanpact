@@ -291,16 +291,6 @@ export interface FieldEffectExpiredEvent extends BaseEvent {
   fieldEffectId: FieldEffectId;
 }
 
-/** A side mended whole mid-fight (PassiveEffect mendSide): one per body it changed; `revived` when the body was down. HP and Mana land on the state directly — no HpChanged, no Healed. */
-export interface MendedEvent extends BaseEvent {
-  type: 'Mended';
-  combatantId: string;
-  sourceCombatantId: string;
-  previousHp: number;
-  newHp: number;
-  maxHp: number;
-  revived: boolean;
-}
 
 /** The active Field Effect draining the field (FieldEffectDefinition.drainsPercentMaxHp) — one beat for the whole board, before the HpChanged/Fainted stream it causes, on the Pact Clock's terms. */
 export interface FieldEffectDrainedEvent extends BaseEvent {
@@ -352,6 +342,5 @@ export type CombatEvent =
   | FieldEffectTickedEvent
   | FieldEffectExpiredEvent
   | FieldEffectDrainedEvent
-  | MendedEvent
   | PactTickedEvent
   | RoundEndedEvent;

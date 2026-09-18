@@ -111,40 +111,6 @@ function resolveAmount(amount: PassiveAmount, context: TriggerContext): number {
   return Math.round(base * (amount.multiplier ?? 1));
 }
 
-/**
- * The map's mend, in a fight (PassiveEffect mendSide): every body on the side stands with at
- * least `hpFraction` of its max HP and full Mana, the fallen back onto the bench in roster order,
- * the side's KO count reset so lock-in reads the phase and not the fight. Never LOWERS anything —
- * a body above the line and a Mana overflow are kept.
- */
-function mendSide(state: CombatState, round: number, heroes: HeroLookup, ownerId: string, which: 'own' | 'enemy', hpFraction: number): { state: CombatState; events: CombatEvent[] } {
-  const ownerSide = state.combatants[ownerId]?.side;
-  if (!ownerSide) return { state, events: [] };
-  const side: Side = which === 'own' ? ownerSide : ownerSide === 'A' ? 'B' : 'A';
-  const combatants = { ...state.combatants };
-  const bench = [...state.bench[side]];
-  const events: CombatEvent[] = [];
-  for (const id of Object.keys(combatants)) {
-    const c = combatants[id];
-    if (c.side !== side) continue;
-    const hero = heroes[c.heroId];
-    const maxHp = getMaxHp(hero, c);
-    const maxMana = getMaxMana(hero, c);
-    const revived = c.fainted;
-    const newHp = Math.max(c.currentHp, Math.min(maxHp, Math.ceil(maxHp * hpFraction)));
-    const mended = { ...c, fainted: false, currentHp: newHp, currentMana: Math.max(c.currentMana, maxMana) };
-    if (!revived && newHp === c.currentHp && c.currentMana >= maxMana) continue;
-    combatants[id] = mended;
-    if (revived) bench.push(id);
-    events.push({ type: 'Mended', round, combatantId: id, sourceCombatantId: ownerId, previousHp: c.currentHp, newHp, maxHp, revived });
-  }
-  if (events.length === 0) return { state, events };
-  return {
-    state: { ...state, combatants, bench: { ...state.bench, [side]: bench }, koCount: { ...state.koCount, [side]: 0 } },
-    events,
-  };
-}
-
 /** An authored number passes through; a PassiveAmount is read off the triggering event. */
 function resolveMagnitude(magnitude: number | PassiveAmount | undefined, context: TriggerContext): number | undefined {
   if (magnitude === undefined || typeof magnitude === 'number') return magnitude;
@@ -168,7 +134,7 @@ function resolveEffect(
     if (!fieldEffectDefs[effect.fieldEffectId]) return { state, events: [] };
     return setFieldEffect(state, round, effect.fieldEffectId);
   }
-  if (effect.kind === 'mendSide') return mendSide(state, round, heroes, ownerId, effect.side, effect.hpFraction);
+
 
   // A group target resolves once per member in slot order, threading state through.
   const aimed = resolveTargetIdsRolled(state, ownerId, subjectId, eventTargetId, effect.target);
@@ -241,7 +207,7 @@ function resolveEffectOn(
   ownerId: string,
   targetId: string,
   target: Combatant,
-  effect: Exclude<PassiveEffect, { kind: 'setFieldEffect' } | { kind: 'mendSide' }>,
+  effect: Exclude<PassiveEffect, { kind: 'setFieldEffect' }>,
   context: TriggerContext
 ): { state: CombatState; events: CombatEvent[] } {
   switch (effect.kind) {

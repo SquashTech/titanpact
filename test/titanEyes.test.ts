@@ -1,5 +1,5 @@
 // The Titan's Eyes (docs/titan-eyes.md, src/data/enemies.ts titanEyes): the gaze telegraph, the
-// taunt that takes a Regard, the reserve phases that hold each pair until the phase before it is
+// taunt that takes a Regard, the reserve phases that hold a pair until the phase before it is
 // down, the AI that fires once it has looked, and — since §10 — the one finale fight they sit
 // behind: the Herald's ward, the Withering Gaze and the Clock that counts from the phase.
 
@@ -11,8 +11,8 @@ import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
 import { fieldEffects } from '../src/data/fieldEffects';
-import { ENDBRINGER_ID, EYE_IDS, EYE_PHASES, LEFT_EYE_ID, LEFT_EYE_WIDE_ID, RIGHT_EYE_ID, RIGHT_EYE_WIDE_ID, WIDE_EYE_IDS, finaleEnemies, titanEyes, enemies } from '../src/data/enemies';
-import { HELD_UP_HP_FRACTION, HELD_UP_ID, HERALDS_STANDARD_ID, WITHERING_GAZE_CADENCE, WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID, boonPassives } from '../src/data/passives';
+import { ENDBRINGER_ID, EYE_IDS, EYE_PHASES, LEFT_EYE_ID, RIGHT_EYE_ID, finaleEnemies, titanEyes, enemies } from '../src/data/enemies';
+import { HERALDS_STANDARD_ID, WITHERING_GAZE_CADENCE, WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID, boonPassives } from '../src/data/passives';
 import { WITHERING_GAZE_FRACTION } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import { applyStatus, selectableTargets } from '../src/engine/combat/statusEngine';
@@ -68,6 +68,7 @@ function fight(seed: number, a: Placed[], b: Placed[]): CombatState {
   };
 }
 
+/** The Eyes on the field, a second pair of bodies held in a later phase — the engine's phase rule is generic, so a fixture may stage one however it likes. */
 const eyesFixture = (seed: number) =>
   fight(
     seed,
@@ -79,12 +80,12 @@ const eyesFixture = (seed: number) =>
     [
       { id: 'b1', heroId: LEFT_EYE_ID, side: 'B' },
       { id: 'b2', heroId: RIGHT_EYE_ID, side: 'B' },
-      { id: 'b3', heroId: LEFT_EYE_WIDE_ID, side: 'B', phase: 1 },
-      { id: 'b4', heroId: RIGHT_EYE_WIDE_ID, side: 'B', phase: 1 },
+      { id: 'b3', heroId: 'pyroclast', side: 'B', phase: 1 },
+      { id: 'b4', heroId: 'breakwater', side: 'B', phase: 1 },
     ]
   );
 
-/** The merged finale's shape (docs/titan-eyes.md §10): the Herald and two spawn, then the Eyes a phase a pair. */
+/** The merged finale's shape (docs/titan-eyes.md §10): the Herald and two spawn, then the Eyes — plus a third phase of spawn to prove the rule past two. */
 const heraldFixture = (seed: number) =>
   fight(
     seed,
@@ -99,8 +100,8 @@ const heraldFixture = (seed: number) =>
       { id: 's2', heroId: 'breakwater', side: 'B' },
       { id: 'e1', heroId: LEFT_EYE_ID, side: 'B', phase: 1 },
       { id: 'e2', heroId: RIGHT_EYE_ID, side: 'B', phase: 1 },
-      { id: 'w1', heroId: LEFT_EYE_WIDE_ID, side: 'B', phase: 2 },
-      { id: 'w2', heroId: RIGHT_EYE_WIDE_ID, side: 'B', phase: 2 },
+      { id: 'w1', heroId: 'pyroclast', side: 'B', phase: 2 },
+      { id: 'w2', heroId: 'breakwater', side: 'B', phase: 2 },
     ]
   );
 
@@ -113,8 +114,8 @@ const down = (s: CombatState, id: string): CombatState => ({
 
 const aiCtx = { heroes: allCombatants, moves, statuses, typeChart, moveIdsFor: (id: string) => allCombatants[eyesFixture(1).combatants[id]?.heroId ?? id]?.moveIds ?? [] };
 
-test('titanEyes: four mono-Ancient definitions, held apart from the champion pool, the wide pair stronger on every combat stat', () => {
-  assert.deepStrictEqual([...EYE_IDS], [LEFT_EYE_ID, RIGHT_EYE_ID, LEFT_EYE_WIDE_ID, RIGHT_EYE_WIDE_ID]);
+test('titanEyes: two mono-Ancient definitions, held apart from the champion pool, one phase', () => {
+  assert.deepStrictEqual([...EYE_IDS], [LEFT_EYE_ID, RIGHT_EYE_ID]);
   for (const id of EYE_IDS) {
     const eye = titanEyes[id];
     assert.deepStrictEqual([...eye.types], ['Ancient'], `${id} is not mono-Ancient`);
@@ -124,11 +125,10 @@ test('titanEyes: four mono-Ancient definitions, held apart from the champion poo
     assert.strictEqual(eye.baseStats.attack, 40, 'Attack is the dump stat');
   }
   const total = (id: string) => statBudgetTotal(titanEyes[id].baseStats, COMBAT_BUDGET_STATS);
-  assert.ok(total(LEFT_EYE_WIDE_ID) > total(LEFT_EYE_ID) && total(RIGHT_EYE_WIDE_ID) > total(RIGHT_EYE_ID));
-  // The pair share the gaze and differ beside it: phase 1 Gaze/Regard, phase 2 Stare/Glare.
-  for (const id of [LEFT_EYE_ID, RIGHT_EYE_ID]) assert.ok(titanEyes[id].moveIds.includes('gaze') && titanEyes[id].moveIds.includes('regard'), id);
-  for (const id of WIDE_EYE_IDS) assert.ok(titanEyes[id].moveIds.includes('stare') && titanEyes[id].moveIds.includes('glare'), id);
-  assert.deepStrictEqual(EYE_PHASES.flat(), [...EYE_IDS], 'the phases are the ids, a pair each');
+  assert.ok(total(RIGHT_EYE_ID) > total(LEFT_EYE_ID), 'the one that holds carries the bigger body');
+  // The pair share the gaze and differ beside it.
+  for (const id of EYE_IDS) assert.ok(titanEyes[id].moveIds.includes('gaze') && titanEyes[id].moveIds.includes('regard'), id);
+  assert.deepStrictEqual(EYE_PHASES, [[LEFT_EYE_ID, RIGHT_EYE_ID]], 'one phase, the pair');
 });
 
 test('titanEyes: Gaze goes first and marks one hero Beheld through the whole of the next round', () => {
@@ -174,7 +174,7 @@ test('titanEyes: a taunt takes the Regard — the pull lands on the taunter alth
   const hit = after.events.find((e) => e.type === 'DamageDealt') as any;
   assert.ok(hit, 'the Regard landed');
   assert.strictEqual(hit.targetCombatantId, 'a2', 'on the taunter');
-  assert.ok(moves.regard.gateYieldsToRedirect && moves.glare.gateYieldsToRedirect);
+  assert.ok(moves.regard.gateYieldsToRedirect);
 });
 
 test('titanEyes: a Regard on a Beheld hero lands as a hit, and the AI prefers it to gazing again', () => {
@@ -195,7 +195,7 @@ test('titanEyes: a Regard on a Beheld hero lands as a hit, and the AI prefers it
   assert.ok(regards > trials * 0.45 && regards < trials * 0.8, `the AI Regarded ${regards}/${trials} times`);
 });
 
-test('titanEyes: a reserve waits for the field to empty — the first faint brings nobody in, the second brings the wide pair', () => {
+test('titanEyes: a reserve waits for the field to empty — the first faint brings nobody in, the second brings the next phase', () => {
   const state = eyesFixture(16);
   assert.deepStrictEqual(replacementCandidates(state, 'B'), [], 'nothing may enter while both Eyes stand');
   const oneDown = down(state, 'b1');
@@ -210,7 +210,7 @@ test('titanEyes: a reserve waits for the field to empty — the first faint brin
   assert.deepStrictEqual(replacementCandidates(state, 'A'), ['a3']);
 });
 
-test('titanEyes: three phases — the spawn replace freely, the half-lidded pair wait on the company, the wide pair wait on them', () => {
+test('titanEyes: phases — the spawn replace freely, the Eyes wait on the company, a later phase waits on them', () => {
   let state = heraldFixture(17);
   assert.deepStrictEqual(replacementCandidates(state, 'B'), ['s2'], 'phase 0 replaces from its own bench, never from an Eye');
   state = down(state, 's1');
@@ -221,39 +221,39 @@ test('titanEyes: three phases — the spawn replace freely, the half-lidded pair
   assert.deepStrictEqual(replacementCandidates(state, 'B'), ['e1', 'e2'], 'phase 1 and only phase 1');
   state = applyForcedReplacement(state, 4, 'B', 0, 'e1', statuses).state;
   assert.strictEqual(state.phaseStartedRound, 4, 'the first body of a later phase starts the phase');
-  assert.deepStrictEqual(replacementCandidates(state, 'B'), ['e2'], 'its partner, not the wide pair');
+  assert.deepStrictEqual(replacementCandidates(state, 'B'), ['e2'], 'its partner, not the phase after');
   state = applyForcedReplacement(state, 4, 'B', 1, 'e2', statuses).state;
   assert.strictEqual(state.phaseStartedRound, 4, 'the second body of the same phase does not restart it');
   state = down(down(state, 'e1'), 'e2');
   assert.deepStrictEqual(replacementCandidates(state, 'B'), ['w1', 'w2']);
   state = applyForcedReplacement(state, 9, 'B', 0, 'w1', statuses).state;
   assert.strictEqual(state.phaseStartedRound, 9);
-  // The Clock reads from the phase: round 9 is the wide pair's round 1.
+  // The Clock reads from the phase: round 9 is the third phase's round 1.
   assert.strictEqual(pactRoundOf(state, 9), 1);
   assert.strictEqual(pactRoundOf(state, 9 + DEFAULT_PACT_CLOCK.startRound - 1), DEFAULT_PACT_CLOCK.startRound);
   assert.strictEqual(pactRoundOf(eyesFixture(1), 12), 12, 'an unphased fight counts from round 1');
 });
 
-test('titanEyes: the finale encounter fields the Herald and its spawn, then the Eyes a phase a pair, and buildCombatState numbers the phases', () => {
+test('titanEyes: the finale encounter fields the Herald and its spawn, then the Eyes as a phase, and buildCombatState numbers it', () => {
   const seals = [1, 2, 3].map((act) => ({ actNumber: act, locationId: 'wildsEdge', championId: 'manticore', level: 20, statGrants: {}, growthStatGrants: {} }));
   const escorts = { spawnTypesFor: (locationId: string) => locations[locationId]?.spawnTypes ?? null, heraldLeads: true };
   const encounter = generateFinaleEncounter(seals, ENDBRINGER_ID, finaleEnemies, 7, { level: 30, mastery: 10 }, escorts, { phases: EYE_PHASES, pool: titanEyes });
   assert.strictEqual(encounter.squad.activeIds[0], ENDBRINGER_ID);
   assert.strictEqual(encounter.squad.benchIds.length, 2, 'the spawn behind the one beside the Herald');
-  assert.deepStrictEqual(encounter.squad.reserves, [[LEFT_EYE_ID, RIGHT_EYE_ID], [...WIDE_EYE_IDS]]);
-  assert.strictEqual(encounter.run.roster.length, 1 + 3 + 4, 'ten bodies, one fight');
+  assert.deepStrictEqual(encounter.squad.reserves, [[LEFT_EYE_ID, RIGHT_EYE_ID]]);
+  assert.strictEqual(encounter.run.roster.length, 1 + 3 + 2, 'six bodies, one fight');
   const state = buildCombatState(1, allCombatants, equipment, [{ side: 'B', squad: encounter.squad, roster: encounter.run.roster }], passives);
-  assert.strictEqual(state.bench.B.length, 2 + 4);
+  assert.strictEqual(state.bench.B.length, 2 + 2);
   const phase = (rosterId: string) => state.combatants[`B:${rosterId}`]?.reservePhase ?? state.combatants[Object.keys(state.combatants).find((k) => k.endsWith(rosterId))!].reservePhase;
   assert.strictEqual(phase(LEFT_EYE_ID), 1);
-  assert.strictEqual(phase(RIGHT_EYE_WIDE_ID), 2);
+  assert.strictEqual(phase(RIGHT_EYE_ID), 1);
   assert.strictEqual(phase(ENDBRINGER_ID), undefined);
   // The innate passives are held at fight build, and only the Titan's pieces hold any.
   const held = (rosterId: string) => Object.keys(state.combatants[Object.keys(state.combatants).find((k) => k.endsWith(rosterId))!].passives);
   assert.deepStrictEqual(held(ENDBRINGER_ID), [HERALDS_STANDARD_ID]);
-  assert.deepStrictEqual(held(LEFT_EYE_ID), [HELD_UP_ID, WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID]);
+  assert.deepStrictEqual(held(LEFT_EYE_ID), [WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID]);
   assert.deepStrictEqual(held(encounter.squad.benchIds[0]), []);
-  for (const id of [HERALDS_STANDARD_ID, HELD_UP_ID, WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID]) assert.ok(!(id in boonPassives), `${id} is in the Boon pool`);
+  for (const id of [HERALDS_STANDARD_ID, WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID]) assert.ok(!(id in boonPassives), `${id} is in the Boon pool`);
   assert.strictEqual(cinematicEntranceFor(LEFT_EYE_ID), 'titanRise', 'the first Eye in brings the scene');
   assert.strictEqual(cinematicEntranceFor(RIGHT_EYE_ID), null);
 });
@@ -365,46 +365,6 @@ test('gaze: returns every third round over a field of the player’s own, and ne
   assert.strictEqual(r9.state.activeFieldEffect, null);
 });
 
-test('held up: as an Eye opens the far side is held up — the fallen stand at the line, nobody below it, Mana refills, lock-in forgets, modifiers stay, the Eyes untouched', () => {
-  let state = down(down(down(heraldFixture(41), 's1'), 's2'), 'h');
-  // The Herald phase left its mark: a1 down, a2 eroded and hurt, a3 low on mana and above the line, the side locked in.
-  const a1Max = getMaxHp(allCombatants.valor, state.combatants.a1);
-  const a3Max = getMaxHp(allCombatants.tempest, state.combatants.a3);
-  state = {
-    ...state,
-    combatants: {
-      ...state.combatants,
-      a1: { ...state.combatants.a1, fainted: true, currentHp: 0 },
-      a2: { ...state.combatants.a2, currentHp: 40, statModifiers: { defense: -30 } },
-      a3: { ...state.combatants.a3, currentMana: 5, currentHp: a3Max - 1 },
-      e1: { ...state.combatants.e1, currentHp: 100 },
-    },
-    active: { ...state.active, A: [null, 'a2'] },
-    bench: { ...state.bench, A: ['a3'] },
-    koCount: { ...state.koCount, A: 3 },
-  };
-  const entered = applyForcedReplacement(state, 6, 'B', 0, 'e1', statuses);
-  const opened = resolvePassiveReactions(entered.state, 6, entered.events, allCombatants, statuses, passives, fieldEffects);
-  const s = opened.state;
-  assert.strictEqual(s.combatants.a1.fainted, false, 'the fallen stand');
-  assert.strictEqual(s.combatants.a1.currentHp, Math.ceil(a1Max * HELD_UP_HP_FRACTION), 'at the line');
-  assert.ok(s.bench.A.includes('a1'), 'back onto the bench');
-  assert.strictEqual(s.combatants.a2.currentHp, Math.ceil(getMaxHp(allCombatants.crag, s.combatants.a2) * HELD_UP_HP_FRACTION), 'the hurt are raised to the line');
-  assert.deepStrictEqual(s.combatants.a2.statModifiers, { defense: -30 }, 'what the phase did to a stat stays done');
-  assert.strictEqual(s.combatants.a3.currentHp, a3Max - 1, 'a body above the line keeps what it has');
-  assert.strictEqual(s.combatants.a3.currentMana, getMaxMana(allCombatants.tempest, s.combatants.a3), 'Mana refills');
-  assert.strictEqual(s.koCount.A, 0, 'lock-in reads the phase');
-  assert.strictEqual(s.combatants.e1.currentHp, 100, 'its own side is not mended');
-  const mended = opened.events.filter((e) => e.type === 'Mended');
-  assert.strictEqual(mended.length, 3, 'one per body it changed');
-  assert.ok(mended.some((e) => e.type === 'Mended' && e.combatantId === 'a1' && e.revived));
-  assert.ok(opened.events.some((e) => e.type === 'PassiveTriggered' && e.passiveId === HELD_UP_ID));
-  // A second Eye opening onto a whole side is a no-op, not a second beat.
-  const second = applyForcedReplacement(s, 6, 'B', 1, 'e2', statuses);
-  const again = resolvePassiveReactions(second.state, 6, second.events, allCombatants, statuses, passives, fieldEffects);
-  assert.ok(!again.events.some((e) => e.type === 'Mended'));
-});
-
 test('gaze: the passive facts read as a cadence, and the round hook fires only for the active owner on the cadence', () => {
   assert.strictEqual(passives[WITHERING_GAZE_RETURNS_ID].reactive?.hook, 'RoundEnded');
   assert.strictEqual(passives[WITHERING_GAZE_RETURNS_ID].reactive?.condition.everyNRounds, WITHERING_GAZE_CADENCE);
@@ -412,11 +372,10 @@ test('gaze: the passive facts read as a cadence, and the round hook fires only f
   assert.strictEqual(passives[HERALDS_STANDARD_ID].wardedWhileCompanyStands, true);
 });
 
-test('titanEyes: every Eye has a figure, and the wide pair are drawn wide', () => {
+test('titanEyes: every Eye has a figure, and the pair tilt opposite ways', () => {
   for (const id of EYE_IDS) {
     assert.ok(isGuardianFigure(id));
     assert.ok(guardianMarkup(id, 'idle', 't').length > 0, `${id} has no figure`);
   }
-  assert.notStrictEqual(guardianMarkup(LEFT_EYE_ID, 'idle', 't'), guardianMarkup(LEFT_EYE_WIDE_ID, 'idle', 't'));
   assert.notStrictEqual(guardianMarkup(LEFT_EYE_ID, 'idle', 't'), guardianMarkup(RIGHT_EYE_ID, 'idle', 't'), 'the pair tilt opposite ways');
 });

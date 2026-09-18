@@ -633,12 +633,13 @@ what's still unimplemented:
   Vigil → ONE fight since 2026-09-18, `docs/titan-eyes.md` §10** — the Herald leading one Late
   Titanspawn per broken seal, **warded while any of its company stands** (`wardedWhileCompanyStands`,
   bench included, so it falls last), then two mono-Ancient Eyes whose Gaze marks a hero Beheld
-  and whose Regard can only be aimed at one, then the wide pair — each pair a `reserves` PHASE
-  that enters once the phase before it is down, the Pact Clock counting from the phase; the Eyes
-  set **Withering Gaze** (a tenth of max HP a round off every non-Ancient active, re-set every
-  third round, answered only by a field of the player's own) and **hold the roster up** as each
-  phase opens (the fallen stand at half, Mana full — measured: without it the merged fight is a
-  2% fight; `HELD_UP_HP_FRACTION` is the dial); and a champion's hall after; **framed by three
+  and whose Regard can only be aimed at one — a `reserves` PHASE that enters once the Herald's
+  is down, the Pact Clock counting from the phase, the phase-2 wide pair cut and **nothing given
+  back at the boundary** (a mid-fight revive was tried and dropped the same day — knockouts
+  carrying across phases were the wall, so the Herald's Oblivion 120 → 90 and Erode −15, the
+  Eyes' HP ×1.5 and Int −20 pay for it instead); the Eyes set **Withering Gaze** (5% of max HP a
+  round off every non-Ancient active, re-set every third round, answered only by a field of the
+  player's own; `WITHERING_GAZE_FRACTION` is the dial); and a champion's hall after; **framed by three
   cinematic beats** — the Herald announced before the fight, the Titan rising OVER the fight as
   the Herald falls, and the collapse and re-binding under the title's seal when the Eyes close), are
   chained per run (`RunState.actNumber`, `TOTAL_ACTS`), each with a fresh map generated

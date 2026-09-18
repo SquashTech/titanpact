@@ -208,12 +208,7 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
         color: field?.flavorType ? 'element' : undefined,
       };
     }
-    case 'mendSide':
-      return {
-        label: 'Then',
-        text: `${effect.side === 'own' ? 'Its whole side' : 'The whole far side'} is held up — the fallen stand, ${effect.hpFraction >= 1 ? 'health' : `at least ${Math.round(effect.hpFraction * 100)}% health`} and Mana full`,
-        glyph: { kind: 'stat', stat: 'hp' },
-      };
+
   }
 }
 

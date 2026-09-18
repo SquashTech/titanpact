@@ -94,11 +94,6 @@ export function countBeats(events: readonly CombatEvent[]): number {
         }
         break;
 
-      case 'Mended':
-        beats += 1;
-        i++;
-        while (events[i]?.type === 'Mended') i++;
-        break;
 
       case 'PactTicked':
       case 'FieldEffectDrained':
