@@ -4,6 +4,7 @@ import { progressionTable } from '../../data/progression';
 import { formatPlaytime, starredHeroCount, totalStars, type Profile } from '../../run/profile';
 import { SEAL_ACTS } from '../../run/state';
 import { HubGlyph } from '../shared/nodeIcons';
+import { TabStrip, type TabSpec } from '../shared/TabStrip';
 import { RunHistory } from './RunHistory';
 
 interface Props {
@@ -14,6 +15,13 @@ interface Props {
 }
 
 const ACT_ROMAN = ['I', 'II', 'III', 'IV', 'V'];
+
+type RecordsTab = 'records' | 'history';
+
+const TABS: readonly TabSpec<RecordsTab>[] = [
+  { id: 'records', label: 'Records', glyph: 'records' },
+  { id: 'history', label: 'Run History', glyph: 'history' },
+];
 
 const HERO_COUNT = Object.keys(heroes).length;
 /** Every Evolution path in the game — the ceiling on stars. */
@@ -39,93 +47,93 @@ function Stat({ label, value }: { label: string; value: string }) {
 /**
  * Lifetime figures, read once when this opens (profileStorage is not React state). Stars
  * themselves live on the Compendium tiles — this screen only counts them, so the two are
- * not two places to keep the same list.
+ * not two places to keep the same list. The Compendium's sheet (CompendiumScreen), page for
+ * page: title bar, well, the strip at the foot, one Close under the panel.
  */
 export function RecordsScreen({ profile, onEraseAllData, onClose }: Props) {
   // Two taps: this is the only control in the game that destroys something unrecoverable.
   const [confirmingErase, setConfirmingErase] = useState(false);
-  const [tab, setTab] = useState<'records' | 'history'>('records');
+  const [tab, setTab] = useState<RecordsTab>('records');
 
   const cleared = profile.runsCompleted;
   const played = profile.runsStarted;
   const winRate = played > 0 ? `${Math.round((cleared / played) * 100)}%` : '—';
 
   return (
-    <div className="log-overlay" onClick={onClose}>
-      <div className="log-panel records-panel" onClick={(e) => e.stopPropagation()}>
-        <div className="log-panel-header">
-          <span>Records</span>
-          <button className="log-close-button" onClick={onClose}>
-            ✕
-          </button>
+    <div className="detail-overlay is-sheet" onClick={onClose}>
+      <div className="detail-panel is-tabbed is-hero-sheet compendium-sheet" onClick={(e) => e.stopPropagation()}>
+        <div className="detail-header is-hero compendium-head">
+          <span className="detail-portrait-plate compendium-head-plate" aria-hidden="true">
+            <HubGlyph name="trophy" className="compendium-head-glyph" />
+          </span>
+          <span className="detail-name compendium-head-title">Records</span>
         </div>
 
-        {/* The Compendium's segmented control: the lifetime figures, or every run that ended. */}
-        <div className="compendium-tabs">
-          <button className={`compendium-tab${tab === 'records' ? ' active' : ''}`} onClick={() => setTab('records')}>
-            Records
-          </button>
-          <button className={`compendium-tab${tab === 'history' ? ' active' : ''}`} onClick={() => setTab('history')}>
-            Run History
-          </button>
-        </div>
-
-        {tab === 'history' ? (
-          <div className="screen-scroll">
+        {/* Keyed on the page so a switch scrolls the well back to its top. */}
+        <div key={tab} className="detail-tab-body compendium-body" role="tabpanel">
+          {tab === 'history' ? (
             <RunHistory records={profile.runHistory} />
-          </div>
-        ) : (
-          <div className="screen-scroll">
-            <div className="ledger">
-              <Stat label="Playtime" value={formatPlaytime(profile.playtimeMs)} />
-              <Stat label="Runs started" value={String(played)} />
-              <Stat label="Runs cleared" value={String(cleared)} />
-              <Stat label="Runs lost" value={String(profile.runsFailed)} />
-              <Stat label="Clear rate" value={winRate} />
-              <Stat
-                label="Furthest act"
-                value={
-                  profile.furthestAct > SEAL_ACTS
-                    ? 'Finale'
-                    : `${ACT_ROMAN[profile.furthestAct - 1] ?? profile.furthestAct} / ${SEAL_ACTS}`
-                }
-              />
-            </div>
-  
-            <div className="records-section-title">Stars</div>
-            {/* Was a two-sentence paragraph explaining what a star is and where to see one. The
-                second half is a navigation instruction the Compendium answers by having them on it;
-                the first half is what a star MEANS, which is the only part a record needs. */}
-            <p className="records-note">One for every Evolution a run has been cleared in — three a hero.</p>
-            <div className="ledger">
-              <Stat label="Stars earned" value={`${totalStars(profile)} / ${STAR_COUNT}`} />
-              <Stat label="Heroes starred" value={`${starredHeroCount(profile)} / ${HERO_COUNT}`} />
-            </div>
-  
-            <div className="records-section-title">Data</div>
-            <button
-              className={`options-item options-item-danger${confirmingErase ? ' armed' : ''}`}
-              onClick={() => {
-                if (!confirmingErase) {
-                  setConfirmingErase(true);
-                  return;
-                }
-                setConfirmingErase(false);
-                onEraseAllData();
-              }}
-            >
-              <span className="options-item-glyph" aria-hidden="true">
-                <HubGlyph name={confirmingErase ? 'warn' : 'discard'} />
-              </span>
-              {confirmingErase ? 'Tap again to erase everything' : 'Erase All Data'}
-            </button>
-            <p className="records-note">
-              {confirmingErase
-                ? 'Records, stars and any parked run are deleted. This cannot be undone.'
-                : 'Clears these records, every star, the run history, and any parked run. Sound settings are kept.'}
-            </p>
-          </div>
-        )}
+          ) : (
+            <>
+              <div className="ledger">
+                <Stat label="Playtime" value={formatPlaytime(profile.playtimeMs)} />
+                <Stat label="Runs started" value={String(played)} />
+                <Stat label="Runs cleared" value={String(cleared)} />
+                <Stat label="Runs lost" value={String(profile.runsFailed)} />
+                <Stat label="Clear rate" value={winRate} />
+                <Stat
+                  label="Furthest act"
+                  value={
+                    profile.furthestAct > SEAL_ACTS
+                      ? 'Finale'
+                      : `${ACT_ROMAN[profile.furthestAct - 1] ?? profile.furthestAct} / ${SEAL_ACTS}`
+                  }
+                />
+              </div>
+
+              <div className="tab-subhead">Stars</div>
+              {/* Was a two-sentence paragraph explaining what a star is and where to see one. The
+                  second half is a navigation instruction the Compendium answers by having them on it;
+                  the first half is what a star MEANS, which is the only part a record needs. */}
+              <p className="records-note">One for every Evolution a run has been cleared in — three a hero.</p>
+              <div className="ledger">
+                <Stat label="Stars earned" value={`${totalStars(profile)} / ${STAR_COUNT}`} />
+                <Stat label="Heroes starred" value={`${starredHeroCount(profile)} / ${HERO_COUNT}`} />
+              </div>
+
+              <div className="tab-subhead">Data</div>
+              <button
+                className={`options-item options-item-danger${confirmingErase ? ' armed' : ''}`}
+                onClick={() => {
+                  if (!confirmingErase) {
+                    setConfirmingErase(true);
+                    return;
+                  }
+                  setConfirmingErase(false);
+                  onEraseAllData();
+                }}
+              >
+                <span className="options-item-glyph" aria-hidden="true">
+                  <HubGlyph name={confirmingErase ? 'warn' : 'discard'} />
+                </span>
+                {confirmingErase ? 'Tap again to erase everything' : 'Erase All Data'}
+              </button>
+              <p className="records-note">
+                {confirmingErase
+                  ? 'Records, stars and any parked run are deleted. This cannot be undone.'
+                  : 'Clears these records, every star, the run history, and any parked run. Sound settings are kept.'}
+              </p>
+            </>
+          )}
+        </div>
+
+        <TabStrip tabs={TABS} active={tab} onSelect={setTab} />
+      </div>
+
+      <div className="sheet-footer" onClick={(e) => e.stopPropagation()}>
+        <button className="resolve-button sheet-close-button" onClick={onClose}>
+          Close
+        </button>
       </div>
     </div>
   );

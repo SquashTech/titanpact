@@ -9108,14 +9108,6 @@ textarea,
   padding: 10px 10px 0;
 }
 
-/* --- Records (RecordsScreen.tsx) ---------------------------------------- */
-
-.records-panel {
-  max-height: 86%;
-  border-radius: 12px;
-  gap: 6px;
-}
-
 /* --- The ledger (RecordsScreen, RunSummaryScreen) -------------------------
  *
  * What a run came to, and what every run before it came to. Both used to be a
@@ -9134,7 +9126,7 @@ textarea,
   display: flex;
   flex-direction: column;
   gap: 1px;
-  padding: 2px 2px 6px;
+  padding: 2px 0 6px;
 }
 
 .ledger-line {
@@ -9178,20 +9170,6 @@ textarea,
 
 /* The same centred chapter mark the shop screens use, so a break in a list is
    one object across the game rather than two. */
-.records-section-title {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 10px 2px 5px;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
 .run-summary-section-title {
   display: flex;
   align-items: center;
@@ -9200,8 +9178,6 @@ textarea,
   width: 100%;
 }
 
-.records-section-title::before,
-.records-section-title::after,
 .run-summary-section-title::before,
 .run-summary-section-title::after {
   content: '';
@@ -9211,7 +9187,6 @@ textarea,
   background: linear-gradient(90deg, transparent, rgba(224, 166, 60, 0.34));
 }
 
-.records-section-title::after,
 .run-summary-section-title::after {
   transform: scaleX(-1);
 }
@@ -9703,11 +9678,13 @@ textarea,
   background: var(--surface-raised);
 }
 
-/* --- Compendium (CompendiumScreen.tsx) -----------------------------------
+/* --- Compendium (CompendiumScreen.tsx), Records (RecordsScreen.tsx) --------
    The hero dossier's sheet (.is-hero-sheet: title bar, page well, the strip
    as the bottom band, Close under the panel), cut in the accent gold since no
-   hero owns it (2026-09-18, per user direction — it was a .roster-panel with
-   a segmented control across the top and a second Close at the foot). The
+   hero owns it (2026-09-18, per user direction — both were the gear sheet's
+   panel with a segmented control across the top and a second Close at the
+   foot). Records reuses the chassis classes as they are; the rest of this
+   block is the Compendium's own. The
    hero pages are a scrolling LIST of rows (2026-09-16): sprite, name, types,
    and the hero's three Evolution stars at the row's end. The stars are the
    meta-progression record — one per path, lit when a run has been cleared in

@@ -3586,6 +3586,12 @@ plate, name, effect chips) in place of the reward screen's cache card, which is 
 three drops as a moment and read as forty half-empty boxes stacked. The Types page's dial came
 down 320 → 300 to sit inside the well with room. The hero rows are untouched.
 
+**Records** (`RecordsScreen.tsx`) took the same sheet the same day, on the same classes: the
+trophy on the plate (moved into `SECTION_PATHS.records`, so the hub tile and the page wear one
+drawing), the ledger and the Erase control in the well, `tab-subhead`s in place of the centred
+chapter marks (`.records-section-title` retired; the run summary keeps its own), and a two-tab
+strip — Records under the trophy, Run History under a new hourglass (`SECTION_PATHS.history`).
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.

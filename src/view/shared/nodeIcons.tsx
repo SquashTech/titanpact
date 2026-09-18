@@ -270,19 +270,8 @@ const HUB_PATHS = {
       </g>
     </>
   ),
-  // Records. The handles are open stroke rather than fill: at 16px a filled handle closes up
-  // against the bowl and the whole thing becomes a goblet.
-  trophy: (
-    <>
-      <path d="M6.4 2.2h11.2v6.2a5.6 5.6 0 0 1-11.2 0Z" />
-      <g fill="none" stroke="currentColor" strokeWidth="2.1">
-        <path d="M6.4 4.4H3.7v1.9a3.3 3.3 0 0 0 3.3 3.3" />
-        <path d="M17.6 4.4h2.7v1.9a3.3 3.3 0 0 1-3.3 3.3" />
-      </g>
-      <path d="M10.8 14h2.4v3.8h-2.4Z" />
-      <path d="M6.8 18.2h10.4v3.6H6.8Z" />
-    </>
-  ),
+  // Records, drawn once in sectionIcons: the title hub's tile and the Records sheet's page.
+  trophy: SECTION_PATHS.records,
   // A slot a hero has not unlocked. Shackle in open stroke, body filled, keyway cut out.
   lock: (
     <>
