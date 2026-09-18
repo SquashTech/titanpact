@@ -15,7 +15,7 @@ import {
   ROSTER_CAP,
 } from '../src/run/state';
 import { equipItem } from '../src/run/equipment';
-import { pickSquad, SquadSelectionError } from '../src/run/squad';
+import { pickSquad, SquadSelectionError, STANDARD_SQUAD_SIZE } from '../src/run/squad';
 import { buildCombatState } from '../src/run/buildCombatState';
 import { getEffectiveStat } from '../src/engine/state';
 import { MAX_XP, levelOf, xpForLevel } from '../src/run/growth';
@@ -143,13 +143,19 @@ test('run: reorderRoster tolerates a stale or partial list — unknown ids are d
   );
 });
 
-// --- Squad selection (bring-6-pick-4) ---
+// --- Squad selection (the whole roster fields; the pick is lead order) ---
 
-test('squad: picking 4 of 6 splits into 2 active + 2 bench, in pick order', () => {
+test('squad: a full roster splits into 2 active + 4 bench, in pick order', () => {
   const run = seedRoster(['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'shadowMonk']);
-  const squad = pickSquad(run.roster, ['stormRanger', 'shadowMonk', 'cinderKnight', 'tidecaller']);
+  const squad = pickSquad(run.roster, ['stormRanger', 'shadowMonk', 'cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle']);
   assert.deepStrictEqual(squad.activeIds, ['stormRanger', 'shadowMonk']);
-  assert.deepStrictEqual(squad.benchIds, ['cinderKnight', 'tidecaller']);
+  assert.deepStrictEqual(squad.benchIds, ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle']);
+});
+
+test('squad: STANDARD_SQUAD_SIZE is the roster cap — no fight benches a hero by omission (2026-09-17)', () => {
+  assert.strictEqual(STANDARD_SQUAD_SIZE, ROSTER_CAP);
+  const run = seedRoster(['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'shadowMonk']);
+  assert.throws(() => pickSquad(run.roster, ['stormRanger', 'shadowMonk', 'cinderKnight', 'tidecaller']), SquadSelectionError);
 });
 
 test('squad: below 4 recruited heroes, the whole roster must be picked (early-run roster) and leaves an empty active slot below 2 picks', () => {
@@ -172,10 +178,10 @@ test('squad: a partial pick is rejected at every roster size below the cap — a
   assert.strictEqual(fullSquad.benchIds.length, 2);
 });
 
-test('squad: 0 picks, 5 picks (roster of 5, above the 4-cap), duplicates, and unknown ids are all rejected', () => {
+test('squad: 0 picks, a short pick (roster of 5), duplicates, and unknown ids are all rejected', () => {
   const run = seedRoster(['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger']);
   assert.throws(() => pickSquad(run.roster, []), SquadSelectionError);
-  assert.throws(() => pickSquad(run.roster, run.roster.map((r) => r.rosterId)), SquadSelectionError); // 5 picks
+  assert.throws(() => pickSquad(run.roster, run.roster.slice(0, 4).map((r) => r.rosterId)), SquadSelectionError); // 4 of 5
   assert.throws(() => pickSquad(run.roster, ['cinderKnight', 'cinderKnight']), SquadSelectionError);
   assert.throws(() => pickSquad(run.roster, ['nonexistent']), SquadSelectionError);
 });

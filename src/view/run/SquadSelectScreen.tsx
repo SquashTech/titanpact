@@ -6,7 +6,7 @@ import type { HeroDefinition, TypeId } from '../../engine/content';
 import type { RunState, RosterEntry } from '../../run/state';
 import { reorderRoster } from '../../run/state';
 import type { Squad } from '../../run/squad';
-import { pickSquad, requiredSquadSize, STANDARD_SQUAD_SIZE } from '../../run/squad';
+import { pickSquad } from '../../run/squad';
 import { rosterEntryTypes } from '../../run/progression';
 import type { Encounter } from '../../run/enemyGen';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
@@ -31,8 +31,6 @@ interface Props {
   encounter: Encounter;
   onRunChange: (next: RunState) => void;
   onConfirm: (squad: Squad) => void;
-  /** 4 everywhere but the finale, which fields the whole roster (docs/run-loop.md 4). */
-  squadSize?: number;
   /**
    * The scripted first run (docs/tutorial.md): roster ids pinned to an ACTIVE slot. They seed
    * slots 0-1 and no swap can move them out of the active row — owning the hero that teaches a
@@ -42,19 +40,16 @@ interface Props {
 }
 
 /**
- * 2-wide/3-tall grid: active, bench, reserve. Always 6 cells (the roster cap); cells past the
- * roster render empty. Each row is a BAND with its own header (2026-09-11, per user direction),
- * because a left-hand column of three small words did not separate the rows.
+ * 2-wide grid in two BANDS, active over bench — always 6 cells (the roster cap), cells past the
+ * roster render empty. Each band has its own header (2026-09-11, per user direction), because a
+ * left-hand column of small words did not separate the rows. The third band, Reserve, went with
+ * bring-6-pick-4 (2026-09-17): every fight fields the whole roster, so this is a lead-order screen.
  */
 const SLOT_COUNT = 6;
-function slotRows(squadSize: number): readonly { key: string; label: string; indices: readonly [number, number] }[] {
-  return [
-    { key: 'active', label: 'Active', indices: [0, 1] },
-    { key: 'bench', label: 'Bench', indices: [2, 3] },
-    // The finale fields six, so the third row stops being a sideboard and becomes bench.
-    { key: squadSize > 4 ? 'bench' : 'reserve', label: squadSize > 4 ? 'Bench' : 'Reserve', indices: [4, 5] },
-  ];
-}
+const SLOT_ROWS: readonly { key: string; label: string; indices: readonly number[] }[] = [
+  { key: 'active', label: 'Active', indices: [0, 1] },
+  { key: 'bench', label: 'Bench', indices: [2, 3, 4, 5] },
+];
 
 const DRAG_KEY = 'text/titanpact-squad-slot';
 
@@ -89,7 +84,7 @@ interface SquadSlotProps {
 }
 
 /**
- * One cell of the bring-6-pick-4 grid.
+ * One cell of the squad grid.
  *
  * Extracted from the grid's `.map()` for one reason: it holds a `useLongPress`, and a hook cannot
  * live inside a loop body. Holding is what this screen was missing — every other card in the game
@@ -207,15 +202,8 @@ function MatchupRow({ heroTypes, enemies }: { heroTypes: readonly TypeId[]; enem
   );
 }
 
-/** Bring-6-pick-4 squad selection before every fight node (docs/combat.md "Bring-6-pick-4 sideboard"). Drag, or tap then the move-here key, swaps two cells; a tap alone picks a hero up. */
-export function SquadSelectScreen({
-  run,
-  encounter,
-  onRunChange,
-  onConfirm,
-  squadSize = STANDARD_SQUAD_SIZE,
-  lockedActiveRosterIds = [],
-}: Props) {
+/** Lead order before every fight node — the whole roster fields (docs/combat.md "The fielded roster"). Drag, or tap then the move-here key, swaps two cells; a tap alone picks a hero up. */
+export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm, lockedActiveRosterIds = [] }: Props) {
   const locked = new Set(lockedActiveRosterIds.filter((id) => run.roster.some((r) => r.rosterId === id)));
   const [slots, setSlots] = useState<(string | null)[]>(() => {
     // Locked rosterHeroes first, so they land in the two active slots before anyone else is placed.
@@ -231,7 +219,6 @@ export function SquadSelectScreen({
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry; enemy: boolean } | null>(null);
   const [showReference, setShowReference] = useState(false);
   const [showRoster, setShowRoster] = useState(false);
-  const required = requiredSquadSize(run.roster.length, squadSize);
   const location = useAmbientLocation();
   const rosterById = new Map(run.roster.map((r) => [r.rosterId, r]));
 
@@ -242,10 +229,10 @@ export function SquadSelectScreen({
   const heldTypes = heldEntry ? rosterEntryTypes(rosterHeroes[heldEntry.heroId], heldEntry) : null;
 
   const activeIds = [slots[0], slots[1]] as const;
-  const benchIds = slots.slice(2, squadSize).filter((id): id is string => id !== null);
+  const benchIds = slots.slice(2).filter((id): id is string => id !== null);
   const pickedIds = activeIds.filter((id): id is string => id !== null).concat(benchIds);
   const lockedHeld = [...locked].every((id) => slots[0] === id || slots[1] === id);
-  const canStart = activeIds[0] !== null && activeIds[1] !== null && pickedIds.length === required && lockedHeld;
+  const canStart = activeIds[0] !== null && activeIds[1] !== null && lockedHeld;
 
   function isLockedSlot(index: number): boolean {
     const id = slots[index];
@@ -284,10 +271,10 @@ export function SquadSelectScreen({
     setSelectedSlot(null);
   }
 
-  // Writes the arrangement back to the roster so it seeds the next fight's grid (and pickSquad
-  // on sub-4 rosters). Nulls are dropped so the grid repacks from index 0 next time.
+  // Writes the arrangement back to the roster so it seeds the next fight's grid. Nulls are dropped so
+  // the grid repacks from index 0 next time.
   function handleConfirm() {
-    const squad = pickSquad(run.roster, pickedIds, squadSize);
+    const squad = pickSquad(run.roster, pickedIds);
     onRunChange(reorderRoster(run, slots.filter((id): id is string => id !== null)));
     onConfirm(squad);
   }
@@ -363,14 +350,9 @@ export function SquadSelectScreen({
           </div>
 
           <section className="squad-section squad-section-player">
-            <h2 className="squad-section-title">
-              Your squad
-              <span className="squad-section-count" aria-label={`${pickedIds.length} of ${required} fielded`}>
-                {pickedIds.length}/{required}
-              </span>
-            </h2>
+            <h2 className="squad-section-title">Your squad</h2>
             <div className="squad-grid">
-              {slotRows(squadSize).map((row, rowIndex) => (
+              {SLOT_ROWS.map((row, rowIndex) => (
                 <div key={rowIndex} className={`squad-band squad-band-${row.key}`}>
                   <div className="squad-band-head">
                     <span className="squad-band-label">{row.label}</span>

@@ -201,7 +201,8 @@ draw spawn; the rows between draw the hero pool.
 - **The fork** (row 4) becomes **Elite-or-Skirmish** — both hero pool, both recruitable — and
   each option **previews the enemy typing on its tile**. The Elite keeps its risk/reward axis
   (harder, rarity one tier ahead, `rarityWeightsFor`); the preview adds the tactical one, and it
-  is what makes bring-6-pick-4 a map-level decision. **The generator guarantees the two options
+  is what made bring-6-pick-4 a map-level decision (the pick is gone since 2026-09-17; the preview
+  now tells the player whose typing they lead with — `combat.md` "The fielded roster"). **The generator guarantees the two options
   differ in at least one type**, or the choice is empty. The Skirmish row (row 2) previews too,
   for consistency. The preview lives *on the tile* — since 2026-09-13 (per user direction) it IS
   the tile, the disc cut into one wedge per type in place of the helm (`ElementPie.tsx`); it

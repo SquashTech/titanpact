@@ -127,7 +127,7 @@ import { NODE_TINT_MANA, NODE_TINT_VITAL } from '../view/shared/NodeStage';
 import { prefetchTrack, setTrack } from '../audio/music';
 import { playSfx } from '../audio/sfx';
 import { hasTrack } from '../audio/tracks';
-import { pickSquad, STANDARD_SQUAD_SIZE } from '../run/squad';
+import { pickSquad } from '../run/squad';
 import {
   reachableNodeIds,
   advanceToNode,
@@ -164,7 +164,7 @@ type Screen =
   /** The Eyes have closed: the collapse and the re-binding, ahead of everything the fight pays. */
   | { kind: 'titanBound'; next: Screen }
   | { kind: 'map' }
-  | { kind: 'squadSelect'; nodeId: string; nodeType: EncounterNodeType; encounter: Encounter; squadSize: number }
+  | { kind: 'squadSelect'; nodeId: string; nodeType: EncounterNodeType; encounter: Encounter }
   | {
       kind: 'fight';
       nodeId: string;
@@ -604,17 +604,17 @@ export function App() {
         { spawnTypesFor: (locationId) => locations[locationId]?.spawnTypes ?? null, heraldLeads: true }
       );
       if (playerRun.roster.length <= 2) {
-        handleSquadConfirmed(pickSquad(playerRun.roster, playerRun.roster.map((r) => r.rosterId), ROSTER_CAP), nodeId, 'boss', encounter);
+        handleSquadConfirmed(pickSquad(playerRun.roster, playerRun.roster.map((r) => r.rosterId)), nodeId, 'boss', encounter);
       } else {
-        setScreen({ kind: 'squadSelect', nodeId, nodeType: 'boss', encounter, squadSize: ROSTER_CAP });
+        setScreen({ kind: 'squadSelect', nodeId, nodeType: 'boss', encounter });
       }
     } else if (node.type === 'titan') {
       // The Titan's Eyes (docs/titan-eyes.md): the half-lidded pair, the wide pair in reserve.
       const encounter = generateTitanEncounter(EYE_IDS, titanEyes, encounterSeedFor(playerRun.map!, nodeId), encounterScaling('titan', FINALE_ACT));
       if (playerRun.roster.length <= 2) {
-        handleSquadConfirmed(pickSquad(playerRun.roster, playerRun.roster.map((r) => r.rosterId), ROSTER_CAP), nodeId, 'boss', encounter);
+        handleSquadConfirmed(pickSquad(playerRun.roster, playerRun.roster.map((r) => r.rosterId)), nodeId, 'boss', encounter);
       } else {
-        setScreen({ kind: 'squadSelect', nodeId, nodeType: 'boss', encounter, squadSize: ROSTER_CAP });
+        setScreen({ kind: 'squadSelect', nodeId, nodeType: 'boss', encounter });
       }
     } else if (
       node.type === 'fight' ||
@@ -651,7 +651,7 @@ export function App() {
         const squad = pickSquad(playerRun.roster, playerRun.roster.map((r) => r.rosterId));
         handleSquadConfirmed(squad, nodeId, encounterKind, encounter);
       } else {
-        setScreen({ kind: 'squadSelect', nodeId, nodeType: encounterKind, encounter, squadSize: STANDARD_SQUAD_SIZE });
+        setScreen({ kind: 'squadSelect', nodeId, nodeType: encounterKind, encounter });
       }
     } else if (node.type === 'shop' || node.type === 'muster') {
       setScreen({
@@ -1134,7 +1134,6 @@ export function App() {
         <SquadSelectScreen
           run={playerRun}
           encounter={screen.encounter}
-          squadSize={screen.squadSize}
           onRunChange={setPlayerRun}
           onConfirm={(squad) => handleSquadConfirmed(squad, screen.nodeId, screen.nodeType, screen.encounter)}
           lockedActiveRosterIds={tutorialLockedActiveRosterIds(TUTORIAL_LOCKS, playerRun, playerRun.map!.nodes[screen.nodeId].type)}

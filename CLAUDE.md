@@ -414,7 +414,16 @@ don't silently override it.
   the Elite's a step over) against a hire's 2/9/15/20/25, so an Elite's contract outranks a hire
   and a Skirmish's never trails one. `test/recruitment.test.ts` carries the assertion that
   catches it inverting again.
-- **Roster hard cap = 6**, doubling as the bring-6-pick-4 battle sideboard. Gaining a hero
+- **Roster hard cap = 6, and EVERY fight fields the whole roster** (2026-09-17, per user
+  direction, FOR PLAYTEST — `STANDARD_SQUAD_SIZE` = `ROSTER_CAP`, `src/run/squad.ts`; it was
+  bring-6-pick-4). The pre-fight screen is **lead order**, not a pick: against a fully scouted
+  AI party the pick was a chart lookup with a hidden answer key, and roster-wide levelling had
+  already made rotation free. Lock-in derives from the side's size (`lockInThreshold`, half,
+  floor 2), so six locks at **3**. Named costs, all open for playtest: the companion can no
+  longer be benched out of a fight it would die in; Wounds lose the sideboard faucet (Rest, the
+  mend and a contract carry it); the finale's squad size is no longer special. 6v4 is a player
+  buff to be measured and absorbed by `ACT_LEVEL_ADJUST`, not by a bigger enemy party
+  (`docs/combat.md` "The fielded roster"). Gaining a hero
   requires **terminating** an existing one. Equipment strips on termination; no gold refund.
   **One exception, the companion** (2026-09-13, Titanspawn overhaul §5, `src/run/companion.ts`):
   after the run's first fight one of the Early spawn it beat joins — it cannot be declined —
@@ -511,7 +520,8 @@ don't silently override it.
   (`docs/mana.md` "Overflow"). Every reader of `currentMana` must handle `> maxMana`.
 - **Bench heroes regen mana** — this is the resource-cycling engine that makes switching
   productive.
-- **Lock-in rule:** voluntary switching is disabled once a side has **2+ heroes KO'd** (forced
+- **Lock-in rule:** voluntary switching is disabled once **half a side is KO'd** — `ceil(size/2)`,
+  floor 2 (`lockInThreshold`): 3 of the six a full roster fields, 2 of anything smaller (forced
   replacement of a downed hero still happens). This flips a fight from a cycling game into a
   grind — an intentional phase transition.
 - **Rest** is a required choice when a hero does not have enough mana for any of their abilities.

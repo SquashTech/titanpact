@@ -1,6 +1,6 @@
-// Bring-6-pick-4 squad selection: validates the pick and shapes it for buildCombatState.ts.
+// Squad selection: validates the fielded roster and its lead order for buildCombatState.ts.
 
-import type { RosterEntry } from './state';
+import { ROSTER_CAP, type RosterEntry } from './state';
 
 export interface Squad {
   /** Up to 2 active roster ids; null means that slot starts empty. */
@@ -16,8 +16,13 @@ export interface Squad {
 
 export class SquadSelectionError extends Error {}
 
-/** Bring-6-pick-4 everywhere except the finale, which fields the whole roster (docs/run-loop.md §4). */
-export const STANDARD_SQUAD_SIZE = 4;
+/**
+ * Every fight fields the whole roster (2026-09-17, per user direction, FOR PLAYTEST — docs/combat.md
+ * "The fielded roster"). It was bring-6-pick-4: against a fully scouted AI party the pick was a chart
+ * lookup, not a decision, and roster-wide levelling had already made rotation free. Lock-in derives
+ * from the side's size (engine/state.ts lockInThreshold), so six locks at 3 with nothing else touched.
+ */
+export const STANDARD_SQUAD_SIZE = ROSTER_CAP;
 
 /** Exactly `maxSize` once the roster reaches it, the whole roster below that — a hero can never be benched by omission. */
 export function requiredSquadSize(rosterSize: number, maxSize: number = STANDARD_SQUAD_SIZE): number {

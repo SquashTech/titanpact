@@ -170,9 +170,10 @@ status currently sits in the stat pipeline at all — see `architecture.md` and
 ## The roster model
 
 - **Hard cap of 6 heroes** on a team.
-- Doubles is played as **bring-6-pick-4**: you build up to 6, and each fight fields 4
-  (2 active + 2 benched). This sideboard structure is the strategic layer above
-  individual fights.
+- **Every fight fields the whole roster** (2026-09-17, per user direction, for playtest):
+  you build up to 6, and all of them come — 2 active, the rest benched, the pre-fight
+  screen a lead-order screen. It was bring-6-pick-4; `combat.md` "The fielded roster"
+  carries why the pick came out and what it costs.
 - Switching/bench/lock-in mechanics are in `combat.md`; how heroes are acquired and
   developed is in `progression.md`.
 

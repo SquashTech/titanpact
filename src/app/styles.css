@@ -11842,18 +11842,6 @@ textarea,
   transform: scaleX(-1);
 }
 
-/* How many are fielded, as a figure beside the mark rather than a bracket in it. */
-.squad-section-count {
-  padding: 1px 8px;
-  border-radius: var(--radius-pill);
-  background: rgba(var(--side-rgb), 0.14);
-  border: 1px solid rgba(var(--side-rgb), 0.4);
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  font-variant-numeric: tabular-nums;
-  text-shadow: none;
-}
-
 /* The VS, struck between two hairlines the way the fight's opening beat draws it. */
 .squad-vs-divider {
   display: flex;
@@ -13349,23 +13337,6 @@ textarea,
     radial-gradient(ellipse 90% 70% at 50% -20%, rgba(var(--band-rgb), 0.22), transparent 70%),
     linear-gradient(180deg, rgba(var(--band-rgb), 0.1), rgba(var(--band-rgb), 0.03));
   box-shadow: 0 0 22px -8px rgba(var(--band-rgb), 0.55), inset 0 1px 0 rgba(var(--band-rgb), 0.3);
-}
-
-.squad-band-reserve {
-  border-style: dashed;
-  background: none;
-}
-
-.squad-band-reserve .squad-slot.filled {
-  opacity: 0.68;
-  filter: saturate(0.55);
-}
-
-.squad-band-reserve .squad-slot.filled.selected,
-.squad-band-reserve .squad-slot.filled.drop-target,
-.squad-band-reserve .squad-slot.filled.drag-over {
-  opacity: 1;
-  filter: none;
 }
 
 .squad-band-head {

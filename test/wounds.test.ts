@@ -33,7 +33,7 @@ function seedRoster(ids: string[], gold = 0): RunState {
 function fightState(run: RunState, fielded: string[]) {
   const ai = seedRoster(['ironWarden']);
   return buildCombatState(1, heroes, equipment, [
-    // Bring-6-pick-4 fields the whole roster below four; the size is passed so a bench can be left out.
+    // Every fight fields the whole roster; the size is passed so the fixture can leave a hero out.
     { side: 'A', squad: pickSquad(run.roster, fielded, fielded.length), roster: run.roster },
     { side: 'B', squad: pickSquad(ai.roster, ['ironWarden']), roster: ai.roster },
   ]);

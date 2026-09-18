@@ -261,7 +261,7 @@ test('vigil: a plain Guild Hall still offers 2-3, so the fill is the Vigil doing
 
 // --- The 6v6 windows ---
 
-test('finale: the whole roster fields, where every other fight is bring-6-pick-4', () => {
+test('finale: the whole roster fields, as it does at every other fight', () => {
   assert.strictEqual(requiredSquadSize(6), STANDARD_SQUAD_SIZE);
   assert.strictEqual(requiredSquadSize(6, ROSTER_CAP), ROSTER_CAP);
   // Below the cap it is still "everyone", never a hero benched by omission.

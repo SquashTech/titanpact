@@ -1066,8 +1066,11 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   the enemy curve is untouched for the first playtest. The second aim is churn: the
   contract hero standing there after the Elite is at full HP, and "would you like a
   healthy hero" is a different offer from "would you like a hero".
-  **The faucets, every one priced:** the **sideboard** (bring-6-pick-4 fields a fresh
-  hero over a wounded one — a heal that costs power, on every fight, with no node), the
+  **The faucets, every one priced:** the **sideboard** (bring-6-pick-4 fielded a fresh
+  hero over a wounded one — a heal that costs power, on every fight, with no node; **gone
+  since 2026-09-17**, when every fight began fielding the whole roster — `combat.md` "The
+  fielded roster" — so the three below carry it and the lead order is where a wounded hero
+  is hidden), the
   **Rest** (`restReward`, weight 30 in `REWARD_WEIGHTS`: the whole roster whole, in the
   seat a reward row would have given to gear, Scrolls or a Boon — the Slay the Spire
   rest-vs-upgrade choice, inside the row the map already has), the **Guild Hall's mend**
@@ -1098,11 +1101,14 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   lands on one, so the number is what an unmanaged roster loses — the curve re-fit, if
   the feel plays, comes off per-fight enemy stats, not off the floor.
 - **Squad selection happens before every fight/elite/boss node, not once per run.**
-  Discovered during implementation: CLAUDE.md frames the bring-6-pick-4 sideboard as
+  Discovered during implementation: CLAUDE.md framed the bring-6-pick-4 sideboard as
   VGC-style team preview, which is inherently per-battle, not a once-per-run
   commitment. `GuildHallPanel` was pulled out of `SquadSelectScreen` accordingly — it
   now lives exclusively behind `shop` map nodes, so Guild Hall access stays a map
-  choice rather than being freely available before every fight.
+  choice rather than being freely available before every fight. **Since 2026-09-17 the
+  screen is lead order, not a pick** — every fight fields the whole roster (`combat.md`
+  "The fielded roster") — and it is still per-fight, since who opens against THIS party
+  is the decision that survived.
 - **A run ends on loss, not a retry-in-place.** The old single-demo-fight "Rematch"
   button is gone. Losing a fight/elite/boss node ends the run (a "Run Failed" screen);
   winning the boss node ends it as a "Run Complete" screen. Both offer "Start New Run"
@@ -1220,12 +1226,13 @@ fixed to Wild's Edge. It has no faction and no affinity: it is where the binding
 the spread rule, priority brackets and the whole damage pipeline are untouched. That is
 what makes this affordable.
 
-**The player fields the entire roster.** No bring-6-pick-4 sideboard; `requiredSquadSize`
-returns 6 and squad select becomes a *lead-order* screen rather than a *pick* screen. This
-does systemic work the rest of the run cannot: every other fight lets a hyperfocus build
-bench its dead weight, and this one drags all six onto the field. It is the single place
-where breadth is priced in gameplay rather than in `levelUpCost`, and it lands where that
-reads as drama instead of punishment.
+**The player fields the entire roster** — as at every other fight since 2026-09-17
+(`combat.md` "The fielded roster"). When this was written the finale was the one 6v6 in a
+bring-6-pick-4 run, and the paragraph argued it did "systemic work the rest of the run
+cannot": a hyperfocus build could bench its dead weight everywhere else, and this fight
+dragged all six on. Roster-wide levelling took the dead weight away and the whole-roster
+flip took the exception; what the finale keeps is the six-a-side ENEMY bench below, which
+is still the only one in the run.
 
 **The enemy is the Herald, and behind it what the five lands turned** (2026-09-17, per user
 direction — `generateFinaleEncounter` with `FinaleEscortOptions`, `App.tsx`):

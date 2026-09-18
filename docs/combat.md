@@ -11,8 +11,54 @@
   doubles-only game — there is no singles mode to support and no design should
   assume one.
 - **Piloted.** The player declares actions every turn. No auto-battle.
-- **Bring-6-pick-4 sideboard.** A team is up to 6 heroes; a fight is fought with 4
-  (2 active + 2 benched). Roster rules live in `types-and-heroes.md`.
+- **The fielded roster.** A team is up to 6 heroes, and **every fight fields all of them**
+  (2 active + up to 4 benched). Roster rules live in `types-and-heroes.md`; the reasoning is
+  under "The fielded roster" below.
+
+### The fielded roster (2026-09-17, per user direction, FOR PLAYTEST)
+
+It was **bring-6-pick-4**: `STANDARD_SQUAD_SIZE` = 4, the pre-fight screen a pick with a
+Reserve band, and `docs/run-loop.md` §4 made the finale the one 6v6 exception. Nine hours of
+play read the pick as a chore, and the reasons it was there had thinned:
+
+- **In VGC team preview is a mind-game** — you know the chart and the opponent's six, not
+  their four, and there is a human to bluff. Here the enemy party is fully scouted and the
+  AI does not bluff, so the pick was a lookup against a chart the player has not memorised:
+  tap every hero, read its arrows, arrange. Under the repo's own rule that is a bare number
+  given a screen.
+- **"Your sideboard rots"** was the runaway roster-wide levelling was built to remove. It
+  did; a benched hero is at parity, so there was nothing left for the pick to price.
+- **The finale already fielded six** and its lead-order screen already worked. The
+  paragraph that made that the "single place breadth is priced in gameplay" was written
+  against hyperfocus levelling, which is gone.
+
+What the flip is: `STANDARD_SQUAD_SIZE` = `ROSTER_CAP`, the Reserve band deleted, the
+screen a **lead-order** screen — who opens, who sits — with every hero's matchups against
+every scouted enemy drawn at once (`MatchupRow`), so the read the pick used to gate is a
+glance. The board is still 2v2; six-a-side is a bench change, as the finale's was.
+
+What it changes, all named for playtest rather than decided:
+
+- **Lock-in.** Already derived: `lockInThreshold` is half the side, floor 2, so six locks
+  at **3**. The fraction is what the rule was, the count moved.
+- **The companion.** It could be benched out of a fight it would die in; now it is always in
+  the party and can be forced in on a KO. Either that is what a mortal stake should be, or
+  its death rate climbs past where it is a fun bet — watch it.
+- **Wounds.** The sideboard was one of four healing faucets ("a fresh hero over a wounded
+  one"). It is gone; the Rest seat, the Guild Hall mend and a contract arriving whole carry it.
+- **The finale** is no longer special in squad size. Its identity is the Eyes, not the six.
+- **6v4 is a player buff.** The enemy party stays at 4 (2 + champion at a Guardian): more
+  enemy bodies is more rounds, and the run is at 77 minutes Reader. Absorb it through
+  `ACT_LEVEL_ADJUST`, the per-act dial the enemy-level work already uses — after play.
+
+**Measured (2026-09-17, 600 runs, seed 7, paired on the constant alone):** full-clear
+**58.3 → 80.7%** under the skilled pilot, 10.3 → 25.5% under chart; act clears (skilled)
+88/83/99/87/96/97 → 91/95/100/98/99/97, so the lift is Acts 2 and 4 — the escort-tier
+walls — where a four-deep bench absorbs a bad lead. Run length unmoved (76.5 → 76.9 min
+Reader, a completed run). **The companion is lost in 40 → 56% of chart runs** (36 → 39%
+skilled): the shelter cost above is real and its size depends on the pilot. Every figure is
+the sim's; the call on which act term takes the buff, and whether the companion's exposure is
+its stake or its bug, is the playtest's.
 
 ---
 
@@ -1572,8 +1618,9 @@ engine contract for anything status-shaped, not just flat stat mods.
 - **Benched heroes regenerate** (HP, and per `mana.md`, possibly mana), which makes
   switching a *productive* action, not a purely defensive one. Renew ticks at round
   boundaries (per the proposed turn/round model above).
-- **Lock-in rule (LOCKED):** once a side has **2 or more KOs**, switching is
-  **disabled** for that side. This is self-regulating design: early fights are a
+- **Lock-in rule (LOCKED):** once **half a side** is KO'd — `ceil(size/2)`, floor 2
+  (`lockInThreshold`, `src/engine/state.ts`): 3 of the six a full roster fields, 2 of any
+  smaller side — switching is **disabled** for that side. This is self-regulating design: early fights are a
   cycling game (switch, regen, reposition); once attrition sets in, the fight
   transitions into a committed late-game slugfest. Do not add extra switch
   restrictions on top of this — the single rule is the mechanic.
