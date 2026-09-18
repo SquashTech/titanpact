@@ -1341,6 +1341,10 @@ export function FightScreen({
         {location && !onTheTitan && <ArenaLocation location={location} />}
         {/* Keyed on beatSeq so the one-shot animation replays per reveal. */}
         {resolving && beat?.dramaticEntrance && <div key={beatSeq} className="dramatic-entrance-veil" aria-hidden="true" />}
+        {/* The field turning (styles.css .field-effect-surge): the one-shot wash on the beat that sets it, replayed per set since an override is a new field. */}
+        {resolving && beat?.events.some((e) => e.type === 'FieldEffectSet') && (
+          <div key={`field-${beatSeq}`} className="field-effect-surge" aria-hidden="true" />
+        )}
 
         {/* What a tapped coin says, for a moment, in the band the Pact warning takes when it is due. */}
         {fieldNote && !resolving && (

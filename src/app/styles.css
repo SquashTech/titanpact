@@ -1011,27 +1011,72 @@ textarea,
   }
 }
 
-/* Ambient battlefield treatment while a Field Effect is active — a pulsing
-   border/glow plus a diagonal shimmer sweep, so the charged-up state reads
-   across the whole battlefield rather than living only in the small divider
-   badge. Tinted via --field-effect-rgb, an "r, g, b" triplet FightScreen.tsx
-   sets inline per the active effect's flavorType (typeColors.ts
-   getTypeColorRgb) — falls back to Magical Surge's Arcane purple
-   (195, 86, 208) if the var is ever unset, so a missing/unknown flavorType
-   degrades gracefully instead of rendering colorless. `overflow: hidden` is
-   scoped to this class (rather than living on the base .battlefield) so it
-   only clips while the shimmer sweep actually needs containing. Both
-   pseudo-elements sit at z-index: -1 inside .battlefield's own stacking
-   context (position: relative), which paints them behind the in-flow
-   team-row cards — same trick as .battlefield-divider's badge, just for
-   depth instead of position — so HP/MP legibility never suffers. */
-/* The arena has no border to pulse any more, so the charged-up state moves
-   to the two scene elements that survived the box removal: the ambient glow
-   (::before) and the horizon, which takes on the effect's color and breathes
-   with it. Reads as the *sky* changing rather than a frame lighting up,
-   which is the right register now that this is a place and not a panel. */
-.battlefield.field-effect-active {
-  overflow: hidden;
+/* Ambient battlefield treatment while a Field Effect is active — the scene
+   itself taking the effect's colour, so the charged-up state reads across the
+   whole arena rather than living only in the divider plaque. Tinted via
+   --field-effect-rgb, an "r, g, b" triplet FightScreen.tsx sets inline per the
+   active effect's flavorType (typeColors.ts getTypeColorRgb) — falls back to
+   Magical Surge's Arcane purple (195, 86, 208) if the var is ever unset, so a
+   missing/unknown flavorType degrades gracefully instead of rendering
+   colorless.
+
+   Three layers, all behind the figures:
+     the horizon (.battlefield-divider's two pseudos) takes the colour and
+       breathes with it — the sky changing, not a frame lighting up, which is
+       the right register now that this is a place and not a panel;
+     a bloom (::before) spreading out from the horizon, the light source the
+       scene already has;
+     a sweep (::after) crossing behind the Location's skyline, so the treeline
+       is lit from behind and the field reads as weather rather than a tint.
+
+   `isolation: isolate` on .battlefield is what makes any of this visible:
+   without it the arena opens no stacking context, so the two z-index: -1
+   pseudos paint UNDER the arena's own opaque background — which is exactly how
+   the glow and the sweep went missing when the Location recipes arrived (they
+   replaced a translucent panel with a full scene). With it they sit between
+   the background and the z-index: 0 floor and Location, and .team-row's
+   z-index: 1 still lands the figures on top. The console (z-index: 5) is a
+   sibling and unaffected.
+
+   Both pseudos exist whether or not a field is up, at opacity 0, so that the
+   expiry beat's "fades from the battlefield" is a fade: the class coming off
+   ends the pulse and the transition carries the light out over --dur-slow. */
+.battlefield {
+  isolation: isolate;
+}
+
+.battlefield::before,
+.battlefield::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+
+.battlefield::before {
+  inset: 0;
+  background: radial-gradient(ellipse 120% 52% at 50% 50%, rgba(var(--field-effect-rgb, 195, 86, 208), 0.36), transparent 70%);
+}
+
+.battlefield::after {
+  top: -20%;
+  left: -60%;
+  width: 40%;
+  height: 140%;
+  background: linear-gradient(100deg, transparent, rgba(var(--field-effect-rgb, 195, 86, 208), 0.28), transparent);
+  transform: rotate(12deg);
+}
+
+.battlefield.field-effect-active::before {
+  opacity: 1;
+  animation: field-effect-glow-pulse 2.6s ease-in-out infinite;
+}
+
+.battlefield.field-effect-active::after {
+  opacity: 1;
+  animation: field-effect-shimmer-sweep 4s ease-in-out infinite;
 }
 
 .battlefield.field-effect-active .battlefield-divider::before {
@@ -1060,35 +1105,10 @@ textarea,
   }
 }
 
-.battlefield.field-effect-active::before,
-.battlefield.field-effect-active::after {
-  content: '';
-  position: absolute;
-  pointer-events: none;
-  z-index: -1;
-}
-
-.battlefield.field-effect-active::before {
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(ellipse 130% 90% at 50% 50%, rgba(var(--field-effect-rgb, 195, 86, 208), 0.22), transparent 68%);
-  animation: field-effect-glow-pulse 2.6s ease-in-out infinite;
-}
-
-.battlefield.field-effect-active::after {
-  top: -20%;
-  left: -60%;
-  width: 40%;
-  height: 140%;
-  background: linear-gradient(100deg, transparent, rgba(var(--field-effect-rgb, 195, 86, 208), 0.3), transparent);
-  transform: rotate(12deg);
-  animation: field-effect-shimmer-sweep 4s ease-in-out infinite;
-}
-
 @keyframes field-effect-glow-pulse {
   0%,
   100% {
-    opacity: 0.55;
+    opacity: 0.65;
   }
   50% {
     opacity: 1;
@@ -1103,6 +1123,68 @@ textarea,
   65%,
   100% {
     left: 140%;
+  }
+}
+
+/* The field TURNING — the one-shot half, on the FieldEffectSet beat (buildBeats)
+   and keyed on beatSeq so an override replays it. The light breaks out of the
+   horizon and washes the whole arena in the effect's colour, then settles into
+   the ambient treatment above; the plaque arrives under it. Over the figures
+   (z-index 2, above .team-row's 1), because a wash that stops at the cards
+   reads as a backdrop changing rather than something happening TO the field —
+   and brief and thin enough (peak 0.36, gone in 1.1s) that no HP bar is ever
+   unreadable through it. Never takes a tap. */
+.field-effect-surge {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(ellipse 140% 60% at 50% 50%, rgba(var(--field-effect-rgb, 195, 86, 208), 0.36), transparent 72%);
+  transform-origin: 50% 50%;
+  animation: field-effect-surge 1.1s cubic-bezier(0.15, 0.7, 0.25, 1) forwards;
+}
+
+/* The line itself flaring: a band on the horizon that opens up and out. */
+.field-effect-surge::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  margin-top: -1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9) 30%, rgba(255, 255, 255, 0.9) 70%, transparent);
+  box-shadow: 0 0 18px 4px rgba(var(--field-effect-rgb, 195, 86, 208), 0.9);
+  animation: field-effect-surge-line 0.9s cubic-bezier(0.1, 0.7, 0.25, 1) forwards;
+}
+
+@keyframes field-effect-surge {
+  0% {
+    opacity: 1;
+    transform: scaleY(0.04);
+  }
+  45% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes field-effect-surge-line {
+  0% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  30% {
+    opacity: 1;
+    transform: scaleY(14);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleY(30);
   }
 }
 
@@ -1789,9 +1871,9 @@ textarea,
   display: flex;
   flex-direction: column;
   gap: 8px;
-  /* Above .team-row's z-index: 1 (which competes at the root level, since
-     .battlefield sets no z-index and so opens no stacking context) and
-     below .advance-overlay's 15, which must still take taps over all this. */
+  /* Above .battlefield (isolated, so its .team-row z-index: 1 never competes
+     out here) and below .advance-overlay's 15, which must still take taps
+     over all this. */
   position: relative;
   z-index: 5;
   margin-left: calc(var(--shell-pad) * -1);
