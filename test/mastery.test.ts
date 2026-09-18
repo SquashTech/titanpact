@@ -135,7 +135,9 @@ test('mastery: the Scroll Cache sits in the reward pool at the seat Ichor held, 
   const types = MAP_NODE_TYPES as readonly string[];
   assert.ok(!types.includes('ichorReward') && !types.includes('ichorDropReward'), 'Ichor retired (docs/mastery.md §4)');
   const cache = REWARD_WEIGHTS.find(([type]) => type === 'scrollReward');
-  assert.ok(cache && cache[1] === 46, 'the Scroll Cache took back its own weight from Ichor');
+  // 46 (Ichor's seat, taken back) until 2026-09-17, then 20 per user direction: two Caches an act
+  // was 47% of acts, and with the Scribe's 2 one Cache is an Evolution (docs/run-loop.md).
+  assert.ok(cache && cache[1] === 20, 'the Scroll Cache sits at 20');
   assert.ok(!REWARD_WEIGHTS.some(([type]) => (type as string).startsWith('ichor')), 'and the Drop seat is not re-pointed');
   assert.ok(TUTORIAL_ROW_TYPES.includes('scrollReward'), 'the corridor shows both Scroll grammars');
   // Three pips, any split: three on one hero from two lands the fifth.
