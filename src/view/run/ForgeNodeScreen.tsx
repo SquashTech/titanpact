@@ -59,7 +59,7 @@ export function ForgeNodeScreen({ run, onRunChange, onContinue }: Props) {
     ? `${lifted.after.name} comes off the anvil ${RARITY_LABELS[lifted.after.rarity]} — a tier up, free.`
     : liftable === 0
       ? 'Nothing the roster wears can be lifted here. Walk on.'
-      : `Choose one worn piece to lift a tier, free. ${liftable} ${liftable === 1 ? 'piece' : 'pieces'} the anvil will take.`;
+      : 'Choose one worn piece to lift a tier, free.';
 
   return (
     <div className="node-screen forge-node-screen" style={{ '--node-rgb': NODE_TINT_HEARTH } as CSSProperties}>
