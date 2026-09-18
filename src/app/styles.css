@@ -3054,6 +3054,16 @@ textarea,
   padding-right: 8px;
 }
 
+/* The Herald's ward (engine/combat/ward.ts): a passive, not a status, so it wears the row's
+   shape in the Titan's own red rather than a status colour. */
+.status-badge-ward {
+  color: rgb(var(--tier-mythic-rgb));
+  background: rgba(var(--tier-mythic-rgb), 0.16);
+  border-color: rgba(var(--tier-mythic-rgb), 0.55);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 /* Rim ticks flanking the figure's feet, where they read as markings on the
    ground rather than badges pinned to a card corner. Anchored from the
    platform's own line rather than the top: a hero can carry enough
@@ -26713,22 +26723,24 @@ textarea,
   opacity: 0.85;
 }
 
+/* The lids open all the way at the top — the Eyes are the next thing on the field — and the
+   halo comes up with them. It was a slit while the rise played at the fifth seal. */
 .titan-rise.is-settle .titan-eye-open,
 .titan-rise.is-fade .titan-eye-open {
-  animation: titan-rise-slit 0.9s cubic-bezier(0.3, 0, 0.4, 1) 0.7s both;
+  animation: titan-rise-open 0.9s cubic-bezier(0.3, 0, 0.4, 1) 0.7s both;
 }
 
 .titan-rise.is-settle .title-titan .titan-eye-halo,
 .titan-rise.is-fade .title-titan .titan-eye-halo {
-  opacity: 0.55;
+  opacity: 0.9;
 }
 
-@keyframes titan-rise-slit {
+@keyframes titan-rise-open {
   from {
     transform: scaleY(0.04);
   }
   to {
-    transform: scaleY(0.3);
+    transform: scaleY(1);
   }
 }
 

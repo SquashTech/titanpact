@@ -4,6 +4,9 @@
 
 import type { FieldEffectDefinition } from '../engine/content';
 
+/** Withering Gaze's tenth a round: five rounds unanswered is half a hero. The dial the sim reads first. */
+export const WITHERING_GAZE_FRACTION = 0.1;
+
 export const fieldEffects: Record<string, FieldEffectDefinition> = {
   surgingMagic: {
     id: 'surgingMagic',
@@ -40,5 +43,15 @@ export const fieldEffects: Record<string, FieldEffectDefinition> = {
     description: 'Heroes have bonus Attack and Intelligence equal to their current Renew value.',
     flavorType: 'Nature',
     statBonusEqualToStatusMagnitude: { statusId: 'Renew', stats: ['attack', 'intelligence'] },
+  },
+  // The Titan's (docs/titan-eyes.md §10): set by the Eyes, never by a hero — no Herald, no rider,
+  // no reader, so it is the one field with a single route. The fraction is the phase's clock and the
+  // first-pass dial; the exemption is what makes it the Titan's rather than everyone's.
+  witheringGaze: {
+    id: 'witheringGaze',
+    name: 'Withering Gaze',
+    description: 'Everyone on the field but the Titan’s own pieces loses a tenth of their max HP at the end of each round.',
+    flavorType: 'Ancient',
+    drainsPercentMaxHp: { fraction: WITHERING_GAZE_FRACTION, exemptTypes: ['Ancient'] },
   },
 };

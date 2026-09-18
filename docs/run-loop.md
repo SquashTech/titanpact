@@ -1311,7 +1311,11 @@ that ends in a timeout — and `FightScreen` resolves a mutual wipe as a **playe
 Endbringer is the only true wall, which is what the Titan's Herald should be. **Since 2026-09-16
 the corridor has a third node after it, `titan` — the Titan's Eyes, the true final boss
 (`docs/titan-eyes.md`): two mono-Ancient Eyes with a gaze that telegraphs a Regard, the wide pair
-in reserve for phase 2, a free mend between the two fights, and the champion's hall after.**
+in reserve for phase 2, a free mend between the two fights, and the champion's hall after.
+Since 2026-09-18 (`titan-eyes.md` §10) it is ONE fight: the Herald and its spawn, then the Eyes a
+phase a pair behind them on the same field — the Herald warded while its company stands, the
+Titan rising over the fight as the Herald falls, the Eyes setting Withering Gaze and holding the
+roster up as each phase opens, and the `titan` node deleted.**
 
 Deriving the unsealed form from the authored champion (drop the Ancient type, keep
 everything else) rather than authoring six more enemies is the pure-data version and the

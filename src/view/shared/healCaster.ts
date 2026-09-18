@@ -18,7 +18,7 @@ import { relics } from '../../data/relics';
 export function healCasterForEntry(hero: HeroDefinition, entry: RosterEntry, relicIds: readonly string[] = []): HealCaster {
   const teamStatModifiers = relicTeamStatModifiers(relicIds, relics);
   const teamPassiveGrants = relicTeamPassiveGrants(relicIds, relics);
-  const passiveCounts = entryPassiveCounts(entry, equipment, teamPassiveGrants);
+  const passiveCounts = entryPassiveCounts(entry, equipment, teamPassiveGrants, hero.passiveIds);
   const grants = entryStatModifiers(entry, equipment, passives, passiveCounts, teamStatModifiers);
   const stats = Object.fromEntries(
     STAT_ORDER.map((stat) => [stat, hero.baseStats[stat] + (grants[stat] ?? 0)])

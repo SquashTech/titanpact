@@ -8,11 +8,12 @@ export interface Squad {
   activeIds: [string | null, string | null];
   benchIds: string[];
   /**
-   * Bench members that enter ONLY when the side's field is empty (docs/titan-eyes.md §6 — the
-   * wide Eyes, phase 2). Benched for every other purpose: they regenerate, they are out of the
-   * Clock's leak, they count toward the side's defeat. Player squads never carry any.
+   * Later PHASES of the fight, in order: each inner list enters only once nothing of an earlier
+   * phase stands (docs/titan-eyes.md §6, §10 — the half-lidded Eyes, then the wide pair). Benched
+   * for every other purpose: they regenerate, they are out of the Clock's leak, they count toward
+   * the side's defeat. Player squads never carry any.
    */
-  reserveIds?: string[];
+  reserves?: readonly (readonly string[])[];
 }
 
 export class SquadSelectionError extends Error {}

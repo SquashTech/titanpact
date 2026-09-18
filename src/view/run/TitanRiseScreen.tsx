@@ -11,9 +11,9 @@ interface Props {
 const STIR_MS = 900;
 /** The head climbing in from under the frame, the rumble climbing with it (ms). */
 const RISE_MS = 3400;
-/** It stops. One jolt as the weight lands, and the lids part to a slit (ms). */
+/** It stops. One jolt as the weight lands, and the lids open (ms). */
 const SETTLE_MS = 2600;
-/** Down to black, so the Threshold cuts in from nothing (ms). */
+/** Down to black, so the field cuts back in from nothing (ms). */
 const FADE_MS = 600;
 
 const RISE_AT = STIR_MS;
@@ -24,12 +24,14 @@ const DONE_AT = FADE_AT + FADE_MS;
 type RisePhase = 'stir' | 'rise' | 'settle' | 'fade';
 
 /**
- * The fifth seal has broken (PactSealScreen), and the far end of the leash stands up. The
- * title screen's own figure — the brow, the two eyes, and the ridge with the four pactbearers
- * on it for scale — climbs into the frame from below, which is the title's picture becoming
- * true. The eyes stay shut and crack only to a slit at the top: a Titan does not come through
- * a breach five-sixths open (docs/lore.md §7), it turns to look for it, and the Eyes open on
- * the Herald's fall (docs/titan-eyes.md §2), not here.
+ * The Herald has fallen, mid-fight, and the far end of the leash stands up (docs/titan-eyes.md
+ * §10 — played over the field by FightScreen on the first Eye's arrival, before its reveal beat).
+ * The title screen's own figure — the brow, the two eyes, and the ridge with the four pactbearers
+ * on it for scale — climbs into the frame from below, which is the title's picture becoming true.
+ * The eyes stay shut on the way up and OPEN at the top: a Titan does not come through a breach
+ * five-sixths open (docs/lore.md §7), it looks through it, and what it looks with is the next
+ * thing on the field. Until 2026-09-18 this played at the fifth seal with the lids cracked to a
+ * slit; the rise moved to the fall it answers.
  */
 export function TitanRiseScreen({ onDone }: Props) {
   const [phase, setPhase] = useState<RisePhase>('stir');
@@ -97,9 +99,9 @@ export function TitanRiseScreen({ onDone }: Props) {
       </div>
 
       <div className="titan-rise-caption">
-        <div className="titan-rise-eyebrow">Nothing is holding the other end</div>
-        <h2 className="titan-rise-title">The Titan stirs</h2>
-        <p className="titan-rise-line">Five wardens are down. It has felt the breach, and it is turning to look for it.</p>
+        <div className="titan-rise-eyebrow">The Herald has fallen</div>
+        <h2 className="titan-rise-title">The Titan rises</h2>
+        <p className="titan-rise-line">Nothing is holding the other end. It has found the breach, and it is looking at you.</p>
       </div>
 
       <div className="titan-wake-blackout" aria-hidden="true" />

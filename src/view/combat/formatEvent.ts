@@ -211,7 +211,7 @@ export function formatEvents(
       case 'MoveGuarded':
         lines.push({
           key,
-          text: `${name(e.combatantId)}'s ${e.statusId} turns away ${moves[e.moveId]?.name ?? e.moveId}`,
+          text: `${name(e.combatantId)}'s ${e.statusId ?? passives[e.passiveId ?? '']?.name ?? 'ward'} turns away ${moves[e.moveId]?.name ?? e.moveId}`,
           className: 'log-heal',
         });
         break;
@@ -240,6 +240,23 @@ export function formatEvents(
         lines.push({
           key,
           text: `The pact comes due — every combatant loses ${Math.round(e.fraction * 100)}% of their max HP`,
+          className: 'log-field-effect',
+        });
+        break;
+      }
+      case 'Mended': {
+        lines.push({
+          key,
+          text: e.revived ? `${name(e.combatantId)} stands again at ${e.newHp} HP` : `${name(e.combatantId)} is held up to ${e.newHp} HP`,
+          className: 'log-heal',
+        });
+        break;
+      }
+      case 'FieldEffectDrained': {
+        const fx = fieldEffects[e.fieldEffectId];
+        lines.push({
+          key,
+          text: `${fx?.name ?? e.fieldEffectId} presses — everyone under it loses ${Math.round(e.fraction * 100)}% of their max HP`,
           className: 'log-field-effect',
         });
         break;

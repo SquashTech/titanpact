@@ -389,7 +389,6 @@ export const EQUIPMENT_DROP_CHANCE: Record<EncounterNodeKind, number> = {
   elite: 1,
   boss: 1,
   finale: 0,
-  titan: 0,
 };
 
 /** Elite and Guardian roll one loot tier ahead (lootTierFor). */
@@ -400,7 +399,6 @@ export const LOOT_SOURCE: Record<EncounterNodeKind, LootSource> = {
   elite: 'elite',
   boss: 'elite',
   finale: 'elite',
-  titan: 'elite',
 };
 
 /** The tier row intersected with the act's hard window. Every roll site in the game goes through this — one curve, not four. */

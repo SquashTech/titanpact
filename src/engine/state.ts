@@ -53,8 +53,12 @@ export interface Combatant {
   /** Populated once at fight build (src/run/passives.ts); only `firedThisFight` changes mid-fight. */
   passives: Record<PassiveId, PassiveInstance>;
   fainted: boolean;
-  /** A bench entry held back until the side's field is empty (switching.ts replacementCandidates). Set at fight build from Squad.reserveIds. */
-  reserve?: boolean;
+  /**
+   * A bench entry held back for a later PHASE of the fight (switching.ts replacementCandidates):
+   * it enters only once nothing of an earlier phase stands. Unset = the opening company, phase 0.
+   * Set at fight build from Squad.reserves — the Titan's Eyes, docs/titan-eyes.md §6, §10.
+   */
+  reservePhase?: number;
   /** The category of the last damaging move this combatant LANDED (resolveRound, after the move's hits; a Retribution counts). Unset until the first. Read by a passive's `alternatesCategory`; persists across a switch like a stat modifier. */
   lastHitCategory?: DamageCategory;
 }
@@ -77,6 +81,17 @@ export interface CombatState {
   koCount: Record<Side, number>;
   /** null when no Field Effect is active. */
   activeFieldEffect: ActiveFieldEffect | null;
+  /**
+   * The round the fight's current phase began (switching.ts performSwitch, set when a reserve of
+   * a later phase enters). The Pact Clock counts from here, not from round 1 — each phase of a
+   * phased fight is bracketed on its own (docs/titan-eyes.md §10). Unset = round 1.
+   */
+  phaseStartedRound?: number;
+}
+
+/** The fight phase a combatant belongs to: 0 for the opening company, Squad.reserves' index + 1 after. */
+export function phaseOf(combatant: Combatant | undefined): number {
+  return combatant?.reservePhase ?? 0;
 }
 
 /**

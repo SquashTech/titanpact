@@ -25,12 +25,27 @@ const DRAMATIC_ENTRANCES: Readonly<Record<string, DramaticEntrance>> = {
   [KRAKEN_ID]: { lead: 'The shallows go out', meta: 'Whatever took the water is still coming.' },
   [SKELETON_KING_ID]: { lead: 'The city gets to its feet', meta: 'Its citizens are watching.' },
   [ENDBRINGER_ID]: { lead: 'The last seal gives', meta: 'It was never in a hurry.' },
-  // The Titan's Eyes (docs/titan-eyes.md §2): the pair open on the Threshold, then open wide.
-  [LEFT_EYE_ID]: { lead: 'The Titan turns to look', meta: 'One eye opens over the Threshold.' },
+  // The Titan's Eyes (docs/titan-eyes.md §2, §10): the pair open as the Herald falls, then open wide.
+  [LEFT_EYE_ID]: { lead: 'The Titan looks down', meta: 'One eye fixes on the field.' },
   [RIGHT_EYE_ID]: { lead: 'The other eye opens', meta: 'It has seen you now.' },
   [LEFT_EYE_WIDE_ID]: { lead: 'The Titan opens its eyes', meta: 'It is paying attention.' },
   [RIGHT_EYE_WIDE_ID]: { lead: 'Both of them, wide', meta: 'Nowhere to look but away.' },
 };
+
+/**
+ * The one arrival that stops the fight for a scene (docs/titan-eyes.md §10): the Titan rising as
+ * the Herald falls, played over the field before the first Eye's own reveal beat. Keyed on the Left
+ * Eye alone — it is the first body of its phase to enter, and the Right Eye's reveal follows it.
+ */
+export type CinematicEntrance = 'titanRise';
+
+const CINEMATIC_ENTRANCES: Readonly<Record<string, CinematicEntrance>> = {
+  [LEFT_EYE_ID]: 'titanRise',
+};
+
+export function cinematicEntranceFor(heroId: string | undefined): CinematicEntrance | null {
+  return heroId === undefined ? null : CINEMATIC_ENTRANCES[heroId] ?? null;
+}
 
 export function hasDramaticEntrance(heroId: string | undefined): boolean {
   return heroId !== undefined && heroId in DRAMATIC_ENTRANCES;

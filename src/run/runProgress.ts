@@ -51,7 +51,6 @@ export const GOLD_REWARD_RANGE: Record<EncounterNodeKind, readonly [number, numb
   elite: [15, 25],
   boss: [30, 45],
   finale: [0, 0],
-  titan: [0, 0],
 };
 
 /** What the `currencyReward` purse pays, inclusive, at Act 1; `purseRangeFor` carries the act. */

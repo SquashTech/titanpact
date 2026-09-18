@@ -22,7 +22,7 @@ export function entryStatTotals(
 ): StatLine {
   const teamStatModifiers = relicTeamStatModifiers(relicIds, relics);
   const teamPassiveGrants = relicTeamPassiveGrants(relicIds, relics);
-  const passiveCounts = entryPassiveCounts(entry, equipment, teamPassiveGrants);
+  const passiveCounts = entryPassiveCounts(entry, equipment, teamPassiveGrants, hero.passiveIds);
   const grants = entryStatModifiers(entry, equipment, passives, passiveCounts, teamStatModifiers);
 
   const out = { ...hero.baseStats };

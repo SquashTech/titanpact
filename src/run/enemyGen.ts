@@ -332,13 +332,31 @@ export interface FinaleEscortOptions {
   heraldLeads?: boolean;
 }
 
+/**
+ * The Titan's Eyes behind the Herald (docs/titan-eyes.md §10): `ids` is phase after phase, two an
+ * inner list — the half-lidded pair, then the wide pair — each entering only once everything before
+ * it is down (Squad.reserves). Grown to the finale's level through their E grades: the level is a
+ * formality, the line is the number.
+ */
+export interface FinaleEyesOptions {
+  phases: readonly (readonly string[])[];
+  pool: HeroLookup;
+}
+
+/** The roster cap is the player's rule (state.ts addRosterEntry); the finale's side is sized by its phases — ten bodies, one fight. */
+function addFinaleEntry(run: RunState, entry: RosterEntry): RunState {
+  if (run.roster.some((r) => r.rosterId === entry.rosterId)) throw new Error(`rosterId ${entry.rosterId} already exists on the roster`);
+  return { ...run, roster: [...run.roster, entry] };
+}
+
 export function generateFinaleEncounter(
   brokenSeals: readonly BrokenSeal[],
   endbringerId: string,
   enemyPool: HeroLookup,
   seed: number,
   endbringerScaling: ActScaling = NO_SCALING,
-  escorts?: FinaleEscortOptions
+  escorts?: FinaleEscortOptions,
+  eyes?: FinaleEyesOptions
 ): Encounter {
   const ordered = [...brokenSeals].sort((a, b) => a.actNumber - b.actNumber);
 
@@ -358,7 +376,7 @@ export function generateFinaleEncounter(
       const rosterId = n === 1 ? heroId : `${heroId}-${n}`;
       const { entry, nextState: afterGrowth } = growTo(createRosterEntry(rosterId, heroId, pool[heroId].moveIds), pool[heroId], endbringerScaling.level, rng);
       rng = afterGrowth;
-      run = addRosterEntry(run, { ...entry, mastery: MASTERY_CAP });
+      run = addFinaleEntry(run, { ...entry, mastery: MASTERY_CAP });
       orderedIds.push(rosterId);
     }
   } else {
@@ -367,17 +385,33 @@ export function generateFinaleEncounter(
       const definition = enemyPool[unsealedId];
       if (!definition || run.roster.some((r) => r.rosterId === unsealedId)) continue;
       const entry = createRosterEntry(unsealedId, unsealedId, definition.moveIds);
-      run = addRosterEntry(run, { ...entry, xp: xpForLevel(seal.level), mastery: MASTERY_CAP, evolutionStatGrants: seal.statGrants, growthStatGrants: seal.growthStatGrants });
+      run = addFinaleEntry(run, { ...entry, xp: xpForLevel(seal.level), mastery: MASTERY_CAP, evolutionStatGrants: seal.statGrants, growthStatGrants: seal.growthStatGrants });
       orderedIds.push(unsealedId);
     }
   }
 
   const endbringer = enemyPool[endbringerId];
   if (endbringer) {
-    const { entry } = growTo(createRosterEntry(endbringerId, endbringerId, endbringer.moveIds), endbringer, endbringerScaling.level, rng);
-    run = addRosterEntry(run, { ...entry, mastery: MASTERY_CAP });
+    const { entry, nextState } = growTo(createRosterEntry(endbringerId, endbringerId, endbringer.moveIds), endbringer, endbringerScaling.level, rng);
+    rng = nextState;
+    run = addFinaleEntry(run, { ...entry, mastery: MASTERY_CAP });
     if (escorts?.heraldLeads) orderedIds.unshift(endbringerId);
     else orderedIds.push(endbringerId);
+  }
+
+  // The Eyes, a phase a pair, behind everything the Herald walks with.
+  const reserves: string[][] = [];
+  for (const phase of eyes?.phases ?? []) {
+    const ids: string[] = [];
+    for (const id of phase) {
+      const definition = eyes!.pool[id];
+      if (!definition || run.roster.some((r) => r.rosterId === id)) continue;
+      const { entry, nextState } = growTo(createRosterEntry(id, id, definition.moveIds), definition, endbringerScaling.level, rng);
+      rng = nextState;
+      run = addFinaleEntry(run, { ...entry, mastery: MASTERY_CAP });
+      ids.push(id);
+    }
+    if (ids.length > 0) reserves.push(ids);
   }
 
   // Built by hand rather than through pickSquad: bench ORDER is the design here, and
@@ -385,27 +419,8 @@ export function generateFinaleEncounter(
   const squad: Squad = {
     activeIds: [orderedIds[0] ?? null, orderedIds[1] ?? null],
     benchIds: orderedIds.slice(2),
+    ...(reserves.length > 0 ? { reserves } : {}),
   };
-  return { run, squad };
-}
-
-/**
- * The true final boss (docs/titan-eyes.md §3, §6): the half-lidded pair on the field and the wide
- * pair in RESERVE, so phase 2 begins only once both of phase 1 are down. Grown to `scaling.level`
- * through their E grades — the level is a formality, the line is the number.
- */
-export function generateTitanEncounter(eyeIds: readonly string[], eyePool: HeroLookup, seed: number, scaling: ActScaling = NO_SCALING): Encounter {
-  let run = createRunState(0);
-  const rng = createRng(seed);
-  const ids: string[] = [];
-  for (const id of eyeIds) {
-    const definition = eyePool[id];
-    if (!definition) continue;
-    const { entry } = growTo(createRosterEntry(id, id, definition.moveIds), definition, scaling.level, rng);
-    run = addRosterEntry(run, { ...entry, mastery: MASTERY_CAP });
-    ids.push(id);
-  }
-  const squad: Squad = { activeIds: [ids[0] ?? null, ids[1] ?? null], benchIds: [], reserveIds: ids.slice(2) };
   return { run, squad };
 }
 

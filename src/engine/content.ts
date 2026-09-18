@@ -144,7 +144,8 @@ export type PassiveId = string;
  * StatChanged carries no source, so it is target-role only, and it is fed from a move's own
  * stat deltas — a stat change a PASSIVE caused does not chain into another passive.
  */
-export type PassiveHook = 'DamageDealt' | 'Healed' | 'StatusApplied' | 'StatusTicked' | 'SwitchedIn' | 'StatChanged';
+/** 'RoundEnded' fires once a round for every active owner, the owner its own subject (relativeTo 'self'); pair it with everyNRounds for a cadence. The last thing in the round, after the Clock. */
+export type PassiveHook = 'DamageDealt' | 'Healed' | 'StatusApplied' | 'StatusTicked' | 'SwitchedIn' | 'StatChanged' | 'RoundEnded';
 
 /** 'ally' = the owner's partner, not the owner. */
 export type PassiveRelation = 'self' | 'ally' | 'enemy';
@@ -160,6 +161,8 @@ export interface PassiveTriggerCondition {
   eventFieldPositive?: string;
   /** Its mirror: the named numeric event field must be < 0, i.e. "dropped" (Entanglement reads StatChanged.delta). */
   eventFieldNegative?: string;
+  /** Fires only on rounds divisible by N, read off the event's `round` (the Eyes' Withering Gaze returning every third round). */
+  everyNRounds?: number;
 }
 
 /** matchTriggerAmount reads the triggering event's `field` (default 'amount'): Sanguine takes a tick's amount, Restorative Toxin a StatusApplied's magnitude. */
@@ -190,7 +193,15 @@ export type PassiveEffect =
   /** UNCAPPED, like a move's `manaGrant` — overflow past the pool is the point (docs/mana.md). */
   | { kind: 'manaGrant'; target: PassiveEffectTarget; amount: PassiveAmount }
   /** Global — no `target`. */
-  | { kind: 'setFieldEffect'; fieldEffectId: FieldEffectId };
+  | { kind: 'setFieldEffect'; fieldEffectId: FieldEffectId }
+  /**
+   * The map's mend inside a fight (the Eyes' Held Up, docs/titan-eyes.md §10): every combatant on
+   * that side, the FALLEN included, stands with at least `hpFraction` of max HP (1 = whole; a body
+   * above it keeps what it has) and full Mana, and the side's knockouts are forgotten for lock-in.
+   * Fight modifiers and statuses stay — what the phase before did to a stat is still done. One
+   * Mended event per body it changed.
+   */
+  | { kind: 'mendSide'; side: 'own' | 'enemy'; hpFraction: number };
 
 /** Damage-pipeline modifier from the attacker's own passives, evaluated per hit against { moveType }. */
 export interface PassiveDamageModifier {
@@ -221,6 +232,14 @@ export interface PassiveDefinition {
   statGrants?: Partial<Record<StatKey, number>>;
   /** Conditional counterpart of `statGrants` (Bloodthirsty). */
   conditionalStatGrants?: PassiveConditionalStatGrants;
+  /**
+   * The Herald's guard (docs/titan-eyes.md §10): while any standing ally of the owner's phase or
+   * earlier is on its side — field or bench; a later phase's reserves do not count — every move
+   * the far side aims at the owner turns away exactly as Barrier's does (MoveGuarded), and every
+   * non-positive status from the far side is refused. Read live off the board (passiveEngine.ts
+   * wardOn), never a status. The Pact Clock and a self-cost go through, being neither.
+   */
+  wardedWhileCompanyStands?: true;
 }
 
 /** Every stat grant must be a valid flat grant, and the passive must do something. */
@@ -229,7 +248,8 @@ export function isValidPassiveDefinition(passive: PassiveDefinition): boolean {
     passive.reactive !== undefined ||
     passive.damageModifier !== undefined ||
     passive.statGrants !== undefined ||
-    passive.conditionalStatGrants !== undefined;
+    passive.conditionalStatGrants !== undefined ||
+    passive.wardedWhileCompanyStands !== undefined;
   if (!hasEffect) return false;
   const ok = (amount: number | undefined) => amount === undefined || isValidFlatStatGrant(amount);
   return Object.values(passive.statGrants ?? {}).every(ok) && Object.values(passive.conditionalStatGrants?.statGrants ?? {}).every(ok);
@@ -258,6 +278,13 @@ export interface FieldEffectDefinition {
   healMultiplier?: number;
   /** Each stat in `stats` gains the combatant's OWN current magnitude of `statusId` (Verdant Earth / Renew). Stat pipeline — state.ts getEffectiveStat. */
   statBonusEqualToStatusMagnitude?: { statusId: StatusId; stats: readonly StatKey[] };
+  /**
+   * Withering Gaze (docs/titan-eyes.md §10): every ACTIVE combatant not of an exempt type loses this
+   * share of max HP at the end of each round — direct loss on the Pact Clock's terms (no Defense,
+   * no Shield, no reaction pass, the bench out of it), before the field's own countdown ticks.
+   * fieldEffectEngine.ts tickFieldEffectDrain.
+   */
+  drainsPercentMaxHp?: { fraction: number; exemptTypes?: readonly TypeId[] };
 }
 
 /** 'reduceToHp' can charge nothing (caster already at or below); 'percentMaxHp' always charges the same toll. */
@@ -466,6 +493,12 @@ export interface HeroDefinition {
    * without one reaches ten and is simply mastered.
    */
   signatureMoveId?: string;
+  /**
+   * Passives held from birth, in no pool and never granted (run/entryStats.ts folds them in beside
+   * every other source). Today only the Titan's pieces carry any (data/enemies.ts, docs/titan-eyes.md
+   * §10); a hero's identity still lives in its Evolution and its Class, not here.
+   */
+  passiveIds?: readonly PassiveId[];
 }
 
 /**

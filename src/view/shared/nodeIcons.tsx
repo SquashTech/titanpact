@@ -186,8 +186,6 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
       d="M12 2.2a9.8 9.8 0 1 1 0 19.6 9.8 9.8 0 0 1 0-19.6Zm0 3.6a6.2 6.2 0 1 0 0 12.4 6.2 6.2 0 0 0 0-12.4ZM14.6 1.2 8.2 11.4h3.4L9.4 22.8l6.4-11.2h-3.4Z"
     />
   ),
-  // The Titan's own eye — the fight tiles wear it for what leaks from it; this is the thing itself.
-  titan: TITAN_EYE,
 };
 
 // The map's own controls: the footer's one Roster button, plus Reference and Menu in the header corners.

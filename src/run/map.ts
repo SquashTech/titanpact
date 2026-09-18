@@ -28,11 +28,10 @@ export const MAP_NODE_TYPES = [
   'tutorReward',
   'scribeReward',
   'event',
-  // Act 6 only (docs/run-loop.md §4). `muster` is the Vigil, `finale` the Endbringer, `titan`
-  // the Titan's Eyes (docs/titan-eyes.md §3).
+  // Act 6 only (docs/run-loop.md §4). `muster` is the Vigil, `finale` the Herald and, behind it
+  // in the same fight, the Titan's Eyes (docs/titan-eyes.md §10).
   'muster',
   'finale',
-  'titan',
 ] as const;
 
 export type MapNodeType = (typeof MAP_NODE_TYPES)[number];
@@ -172,23 +171,22 @@ function nodeId(row: number, col: number): string {
 }
 
 /**
- * Act 6 is a corridor, not a map (docs/run-loop.md §4): the Vigil, then the Endbringer.
- * No branch and no RNG — the seed is kept only so a RunMap stays reproducible from it.
+ * Act 6 is a corridor, not a map (docs/run-loop.md §4): the Vigil, then the one fight — the
+ * Herald, and the Titan's Eyes once it falls (docs/titan-eyes.md §10). No branch and no RNG —
+ * the seed is kept only so a RunMap stays reproducible from it.
  */
 function finaleMap(seed: number): RunMap {
   const musterId = nodeId(0, 0);
   const finaleId = nodeId(1, 0);
-  const titanId = nodeId(2, 0);
   return {
     seed,
     nodes: {
       [musterId]: { id: musterId, type: 'muster', row: 0, col: 0, nextIds: [finaleId] },
-      [finaleId]: { id: finaleId, type: 'finale', row: 1, col: 0, nextIds: [titanId] },
-      [titanId]: { id: titanId, type: 'titan', row: 2, col: 0, nextIds: [] },
+      [finaleId]: { id: finaleId, type: 'finale', row: 1, col: 0, nextIds: [] },
     },
-    rows: [[musterId], [finaleId], [titanId]],
+    rows: [[musterId], [finaleId]],
     startNodeIds: [musterId],
-    bossNodeId: titanId,
+    bossNodeId: finaleId,
   };
 }
 

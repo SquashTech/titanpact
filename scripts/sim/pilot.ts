@@ -152,7 +152,7 @@ function targetPool(state: CombatState, casterId: string, mode: TargetMode, side
 function candidateTargets(state: CombatState, casterId: string, move: MoveDefinition, ctx: AiContext, mode: TargetMode): string[] {
   const side = state.combatants[casterId].side;
   const pool = targetPool(state, casterId, mode, side);
-  return selectableTargets(state, mode, statusGatedTargets(state, move, pool), ctx.statuses);
+  return selectableTargets(state, mode, statusGatedTargets(state, move, pool), ctx.statuses, passives);
 }
 
 /**

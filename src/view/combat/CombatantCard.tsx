@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import type { HeroDefinition, StatKey } from '../../engine/content';
+import type { HeroDefinition, PassiveId, StatKey } from '../../engine/content';
 import type { Combatant, StatContext, StatusInstance } from '../../engine/state';
 import { effectiveTypes, getCombatStatDelta, getMaxHp, getMaxMana, statModifierCeiling, statModifierFloor } from '../../engine/state';
 import { fieldEffects } from '../../data/fieldEffects';
@@ -9,6 +9,7 @@ import { isTitanEye } from '../../data/enemies';
 import { StatGlyph, STAT_ORDER, hpTier, ShieldFill, ShieldLabel } from '../shared/StatBars';
 import { shieldHeld } from '../../engine/status/shield';
 import { statuses } from '../../data/statuses';
+import { passives } from '../../data/passives';
 import { StatusGlyph, statusColor, statusTint, PoisonPips } from '../shared/statusIcons';
 import { useLongPress } from '../shared/MoveTile';
 import { StatusDetailOverlay } from './StatusDetailOverlay';
@@ -135,6 +136,8 @@ interface Props {
   order?: OrderMark | null;
   /** Tapping the coin — the game says the place in words (FightScreen's field note). Absent, the coin is inert. */
   onInspectOrder?: () => void;
+  /** The passive warding this combatant right now (engine/combat/ward.ts wardOn) — worn as a badge beside its statuses, since it is not one. */
+  warded?: PassiveId | null;
 }
 
 /** Icon + bare number (magnitude, falling back to duration). A ~500ms hold opens StatusDetailOverlay; a tap only stops propagation. */
@@ -245,6 +248,7 @@ export function CombatantCard({
   level,
   order,
   onInspectOrder,
+  warded,
 }: Props) {
   const [inspectingStatus, setInspectingStatus] = useState<string | null>(null);
   const hitClass = popup ? POPUP_HIT_CLASS[popup.className] : undefined;
@@ -404,6 +408,11 @@ export function CombatantCard({
       {/* Always rendered (outside compact) so a status landing mid-fight doesn't grow the card. */}
       {!compact && (
         <div className="status-badge-row">
+          {warded && (
+            <span className="status-badge status-badge-ward" title={`${passives[warded]?.name ?? 'Warded'} — nothing the far side aims at it lands`}>
+              Warded
+            </span>
+          )}
           {Object.values(combatant.statuses).flatMap((s) => {
             // A duration-shape status can sit at 0 until the next start-of-round tick removes it.
             if (s.duration !== undefined && s.duration <= 0) return [];

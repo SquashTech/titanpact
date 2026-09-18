@@ -2,11 +2,12 @@
 // generically; the catalog's one remaining literal-id check is Freeze's Speed
 // hook in state.ts.
 
-import type { FieldEffectDefinition, MoveDefinition, StatusDefinition, StatusId, StatusRemovalReason, TargetMode, TypeId } from '../content';
+import type { FieldEffectDefinition, MoveDefinition, PassiveDefinition, PassiveId, StatusDefinition, StatusId, StatusRemovalReason, TargetMode, TypeId } from '../content';
 import type { CombatState, Combatant, StatusInstance } from '../state';
 import { hasStatus } from '../state';
 import type { CombatEvent } from '../events';
 import { applyHpDelta } from './faintHandling';
+import { wardOn, wardRefusesStatus } from './ward';
 import { nextInt } from '../rng/seededRng';
 
 type StatusResult = { state: CombatState; events: CombatEvent[] };
@@ -143,7 +144,9 @@ export function resolveShieldBrokenRiders(
   holderId: string,
   strikerId: string,
   statusDefs: Record<string, StatusDefinition>,
-  maxHpOf: (combatantId: string) => number
+  maxHpOf: (combatantId: string) => number,
+  /** Omitted (tests) = no ward can refuse the rider. */
+  passiveDefs: Record<PassiveId, PassiveDefinition> = {}
 ): StatusResult {
   let working = state;
   const events: CombatEvent[] = [];
@@ -158,6 +161,8 @@ export function resolveShieldBrokenRiders(
     events.push(...consumed.events);
     const riderDef = statusDefs[rider.statusId];
     if (!riderDef) continue;
+    // A warded striker (the Herald) refuses the rider; the Shell is still spent.
+    if (wardRefusesStatus(working, strikerId, holderId, riderDef, passiveDefs)) continue;
     const applied = applyStatus(working, round, strikerId, riderDef, {
       magnitude: rider.magnitude,
       duration: rider.duration,
@@ -480,7 +485,9 @@ export function selectableTargets(
   targetMode: TargetMode,
   candidateIds: readonly string[],
   /** Omitted narrows nothing. */
-  statusDefs?: Record<string, StatusDefinition>
+  statusDefs?: Record<string, StatusDefinition>,
+  /** Omitted = no ward is read; with it, a warded foe is left off a single-target picker while anyone else is on it. */
+  passiveDefs?: Record<PassiveId, PassiveDefinition>
 ): string[] {
   if (statusDefs && targetMode === 'singleEnemy') {
     const taunts = tauntStatusIds(statusDefs);
@@ -489,6 +496,12 @@ export function selectableTargets(
       return !!combatant && !combatant.fainted && holdsAny(combatant, taunts);
     });
     if (taunter) return [taunter];
+  }
+  // A ward is permanent for as long as it holds, so unlike a Barrier it is never a guess worth
+  // offering: the picker skips it. Only ever narrows — a pool that is all warded is left alone.
+  if (passiveDefs && targetMode === 'singleEnemy') {
+    const open = candidateIds.filter((id) => wardOn(state, id, passiveDefs) === null);
+    if (open.length > 0) return open;
   }
 
   return [...candidateIds];

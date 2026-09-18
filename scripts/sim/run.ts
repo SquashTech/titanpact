@@ -14,7 +14,7 @@ import { relics, guardianBannerRelics } from '../../src/data/relics';
 import { classes } from '../../src/data/classes';
 import { runEvents } from '../../src/data/events';
 import { progressionTable } from '../../src/data/progression';
-import { enemies, finaleEnemies, ENDBRINGER_ID, titanEyes, EYE_IDS } from '../../src/data/enemies';
+import { enemies, finaleEnemies, ENDBRINGER_ID, titanEyes, EYE_PHASES } from '../../src/data/enemies';
 import { encounterKindOf, encounterSeedFor, nodeEncounter } from '../../src/run/encounters';
 import { allCombatants } from '../../src/data/content';
 import { guildHallOffers, CONTRACT_PURCHASE_COST } from '../../src/data/recruitment';
@@ -27,7 +27,7 @@ import { generateItinerary, locationForAct } from '../../src/run/locations';
 import { locations } from '../../src/data/locations';
 import { encounterScaling } from '../../src/run/difficulty';
 import { encounterXpKind, grantEncounterLevels, levelOf, MAX_LEVEL } from '../../src/run/growth';
-import { generateFinaleEncounter, type Encounter, type EncounterNodeType, generateTitanEncounter } from '../../src/run/enemyGen';
+import { generateFinaleEncounter, type Encounter, type EncounterNodeType } from '../../src/run/enemyGen';
 import { pickSquad, requiredSquadSize, STANDARD_SQUAD_SIZE, type Squad } from '../../src/run/squad';
 import {
   absorbItem,
@@ -84,7 +84,7 @@ const EQUIPMENT_POOL = Object.values(equipment);
 const STARTER_IDS = Object.values(heroes).filter((h) => h.starter).map((h) => h.id);
 
 /** App.tsx `EncounterMapNodeType` — the reward lane keys off the MAP node, not the flattened encounter kind. */
-type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' | 'finale' | 'titan';
+type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' | 'finale';
 
 // EQUIPMENT_DROP_CHANCE and LOOT_SOURCE come from run/equipment.ts, so the sim rolls the odds the game ships.
 
@@ -358,12 +358,10 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
         record.deathNodeType = node.type;
         break;
       }
-      if (node.type === 'titan') {
+      if (node.type === 'finale') {
         record.won = true;
         break;
       }
-      // The Herald is down: the one free mend before the Eyes (docs/titan-eyes.md §3).
-      if (node.type === 'finale') run = mendRoster(run);
       run = advanceToNode(run, nodeId);
       run = { ...run, encountersWon: run.encountersWon + 1 };
       // A KO'd companion is gone from the run, before the levels roll (src/run/companion.ts).
@@ -474,7 +472,7 @@ function recordMoveOfferMade(record: RunRecord, moveId: string, taken: boolean):
 }
 
 function isEncounterNode(type: MapNodeType): boolean {
-  return type === 'fight' || type === 'skirmish' || type === 'battle' || type === 'elite' || type === 'boss' || type === 'finale' || type === 'titan';
+  return type === 'fight' || type === 'skirmish' || type === 'battle' || type === 'elite' || type === 'boss' || type === 'finale';
 }
 
 interface EncounterOutcome {
@@ -504,12 +502,10 @@ function resolveEncounterNode(
   let squadSize = STANDARD_SQUAD_SIZE;
   let workingRun = run;
 
-  if (mapNodeType === 'titan') {
-    encounter = generateTitanEncounter(EYE_IDS, titanEyes, encounterSeedFor(run.map!, node.id), encounterScaling('titan', TOTAL_ACTS));
-    squadSize = ROSTER_CAP;
-  } else if (mapNodeType === 'finale') {
-    // The shipped finale (App.tsx): the Herald leading Late spawn. SIM_FINALE=guardians replays the
-    // unsealed-Guardian shape it replaced, SIM_FINALE=spawnLast the spawn with the Herald entering last.
+  if (mapNodeType === 'finale') {
+    // The shipped finale (App.tsx): the Herald leading Late spawn, the Eyes a phase a pair behind
+    // them (docs/titan-eyes.md §10). SIM_FINALE=guardians replays the unsealed-Guardian shape it
+    // replaced, SIM_FINALE=spawnLast the spawn with the Herald entering last.
     const finaleEscorts =
       process.env.SIM_FINALE === 'guardians'
         ? undefined
@@ -520,13 +516,14 @@ function resolveEncounterNode(
       finaleEnemies,
       encounterSeedFor(run.map!, node.id),
       encounterScaling('finale', TOTAL_ACTS),
-      finaleEscorts
+      finaleEscorts,
+      { phases: EYE_PHASES, pool: titanEyes }
     );
     squadSize = ROSTER_CAP;
   } else {
     // The same deterministic draw the game makes (run/encounters.ts): seeded off the map, so the
     // sim's own rng is not consulted here and a map seed reproduces its fights.
-    const encounterKind = encounterKindOf(mapNodeType as Exclude<EncounterMapNodeType, 'finale' | 'titan'>);
+    const encounterKind = encounterKindOf(mapNodeType as Exclude<EncounterMapNodeType, 'finale'>);
     encounter = nodeEncounter(node, { run, location, heroes, allCombatants, enemies, progression: progressionTable });
     if (encounterKind === 'fight') workingRun = { ...workingRun, fightsStarted: workingRun.fightsStarted + 1 };
   }

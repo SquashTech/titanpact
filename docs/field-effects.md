@@ -328,6 +328,15 @@ Static Charge / Soulfire then cast 49–135 times and Lie in Wait 49 → 431, fu
 across two seeds a wash (55.0 → 53.8, 52.8 → 55.2). The Heralds are still drawn at random like
 every Boon. Directional, as always; the read that matters is the user's next run.
 
+### The Titan's field (2026-09-18, `docs/titan-eyes.md` §10)
+
+**Withering Gaze** is the sixth field and the one exception to the three-route rule: set by the
+Eyes' own innate passives (on entry, and again every third round on the new `RoundEnded` hook)
+and by nothing a hero can hold — no Herald, no rider, no reader. `drainsPercentMaxHp` is new
+vocabulary: every active combatant not of an exempt type loses a tenth of its max HP at each
+round's end, on the Pact Clock's terms, before the field's own countdown. The player's answer is
+any field of their own, which the no-refresh rule prices at one to three rounds.
+
 ### Still deferred
 
 - **The type-restricted damage term** (Pokémon terrain: "+X% Fire moves") — asked and declined

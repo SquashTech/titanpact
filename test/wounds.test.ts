@@ -177,7 +177,6 @@ test('wounds: the Revive is a purse kind that starts at none and drops rarer tha
   assert.strictEqual(STARTING_CONSUMABLES.revive, 0);
   assert.ok(REVIVE_DROP_CHANCE.elite > REVIVE_DROP_CHANCE.skirmish);
   assert.strictEqual(REVIVE_DROP_CHANCE.finale, 0);
-  assert.strictEqual(REVIVE_DROP_CHANCE.titan, 0);
   // The potion roll misses (0.99), the Revive's own roll hits (0.0).
   const draws = [0.99, 0.0];
   assert.strictEqual(rollConsumableDrop('elite', () => draws.shift()!), 'revive');

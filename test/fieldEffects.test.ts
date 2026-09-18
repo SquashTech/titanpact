@@ -378,6 +378,8 @@ test('fieldEffects: Sanctuary\'s heal term does not reach a Renew tick — a HoT
 
 test('fieldEffects: every field has a Herald that sets it on entry, and a Herald on the opening lead sets it before round 1', () => {
   for (const [fieldEffectId, def] of Object.entries(fieldEffects)) {
+    // The Titan's own field (docs/titan-eyes.md §10) is set by the Eyes and by nothing a hero can hold.
+    if (def.drainsPercentMaxHp) continue;
     const heraldId = fieldHeraldPassiveFor[def.flavorType as keyof typeof fieldHeraldPassiveFor];
     assert.ok(heraldId, `${fieldEffectId} has no Herald`);
     const herald = passives[heraldId!];

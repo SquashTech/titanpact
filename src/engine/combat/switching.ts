@@ -2,7 +2,7 @@
 // 2+ KOs disables voluntary switching; forced replacement still happens.
 
 import type { CombatState, Side } from '../state';
-import { isLockedIn } from '../state';
+import { isLockedIn, phaseOf } from '../state';
 import type { CombatEvent, BenchRegenTickedEvent } from '../events';
 import type { StatusDefinition } from '../content';
 import { clearOnSwitch } from './statusEngine';
@@ -32,19 +32,33 @@ export function applyVoluntarySwitch(
 }
 
 /**
- * The bench members that may fill an open slot on this side right now: standing, and not a
- * reserve while any NON-reserve active ally still stands. A reserve (Squad.reserveIds — the
- * Titan's wide Eyes, docs/titan-eyes.md §6) waits for the field to empty of everything that is
- * not a reserve, so a phase begins only when the phase before it has ended — and the reserves
- * enter TOGETHER, since the first one in does not close the door on the second. Every
+ * The bench members that may fill an open slot on this side right now: standing, and of a phase
+ * no later than anything still on the field. A reserve (Squad.reserves — the Titan's Eyes,
+ * docs/titan-eyes.md §6, §10) waits for the field to empty of every earlier phase, so a phase
+ * begins only when the phase before it has ended — and a phase's reserves enter TOGETHER, since
+ * the first one in is of their own phase and does not close the door on the second. Every
  * replacement site reads this, the player's picker included.
  */
 export function replacementCandidates(state: CombatState, side: Side): string[] {
-  const phaseOver = state.active[side].every((id) => id === null || state.combatants[id]?.fainted || state.combatants[id]?.reserve);
-  return state.bench[side].filter((id) => {
+  const fieldPhase = Math.min(
+    ...state.active[side].map((id) => (id === null || state.combatants[id]?.fainted ? Infinity : phaseOf(state.combatants[id])))
+  );
+  const standing = state.bench[side].filter((id) => {
     const c = state.combatants[id];
-    return c !== undefined && !c.fainted && (!c.reserve || phaseOver);
+    return c !== undefined && !c.fainted && phaseOf(c) <= fieldPhase;
   });
+  // An empty field opens to the NEXT phase alone, never to every phase at once.
+  const nextPhase = Math.min(...standing.map((id) => phaseOf(state.combatants[id])));
+  return standing.filter((id) => phaseOf(state.combatants[id]) === nextPhase);
+}
+
+/** The latest phase with a body on either field. */
+export function currentPhase(state: CombatState): number {
+  let phase = 0;
+  for (const side of ['A', 'B'] as const) {
+    for (const id of state.active[side]) if (id !== null) phase = Math.max(phase, phaseOf(state.combatants[id]));
+  }
+  return phase;
 }
 
 /** Forced replacement of a fainted active slot. Ignores lock-in by design. */
@@ -86,6 +100,9 @@ function performSwitch(
     active: { ...state.active, [side]: nextActive },
     bench: { ...state.bench, [side]: nextBench },
   };
+  // A later phase's first body on the field begins the phase: the Pact Clock counts from here.
+  const incomingPhase = phaseOf(state.combatants[inCombatantId]);
+  if (incomingPhase > currentPhase(state)) nextState = { ...nextState, phaseStartedRound: round };
 
   const events: CombatEvent[] = [{ type: 'SwitchedIn', round, side, slot, outCombatantId, inCombatantId }];
 

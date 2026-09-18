@@ -76,6 +76,7 @@ interface PassiveRow {
  * out — so the passives a player chose lead the page.
  */
 function passiveRows(
+  hero: HeroDefinition,
   entry: RosterEntry,
   equipmentLookup: Record<string, EquipmentDefinition>,
   teamPassiveGrants: Record<PassiveId, number>
@@ -89,6 +90,7 @@ function passiveRows(
     rows.set(passiveId, row);
   };
 
+  for (const id of hero.passiveIds ?? []) add(id, 'Innate');
   if (entry.classId) add(entry.classId, 'Class');
   for (const id of entry.evolutionPassiveGrants) add(id, 'Evolution');
   for (const id of entry.bonusPassiveGrants) add(id, 'Boon');
@@ -157,7 +159,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
   const heroClass = chosenClass(classes, entry);
   const teamStatModifiers = relicTeamStatModifiers(relicIds, relics);
   const teamPassiveGrants = relicTeamPassiveGrants(relicIds, relics);
-  const passiveCounts = entryPassiveCounts(entry, equipmentLookup, teamPassiveGrants);
+  const passiveCounts = entryPassiveCounts(entry, equipmentLookup, teamPassiveGrants, hero.passiveIds);
   const grants = entryStatModifiers(entry, equipmentLookup, passives, passiveCounts, teamStatModifiers);
   const evolved = chosenEvolutionPaths(progressionTable, entry);
   const types = rosterEntryTypes(hero, entry);
@@ -166,7 +168,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
   const healCaster = { wisdom: previewStats.wisdom, types, stats: previewStats };
 
   const heldItems = entry.equipment.flatMap((id) => (equipmentLookup[id] ? [equipmentLookup[id]] : []));
-  const rows = passiveRows(entry, equipmentLookup, teamPassiveGrants);
+  const rows = passiveRows(hero, entry, equipmentLookup, teamPassiveGrants);
   const capacity = itemSlotsFor(hero, entry);
 
   const [tab, setTab] = useState<TabId>('stats');

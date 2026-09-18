@@ -630,14 +630,17 @@ what's still unimplemented:
   rows back quietly closing an encounter is a rule held in the head rather than seen. The
   lead-on markers came off that row with it, being derived. **5 acts of that shape,
   then a finale act** (2026-09-05, `docs/lore.md` + `run-loop.md` §4; **the finale corridor is
-  Vigil → the Herald → the Titan's Eyes since 2026-09-16, `docs/titan-eyes.md`** — the Herald
-  leading one Late Titanspawn per broken seal since 2026-09-17, the unsealed Guardians retired
-  from the field (`run-loop.md` "The final battle") — two
-  mono-Ancient Eyes whose Gaze marks a hero Beheld and whose Regard can only be aimed at one,
-  the wide pair entering from a `reserve` bench once both are down, a free mend between the two
-  fights, and a champion's hall after; **framed by three cinematic beats since 2026-09-17** —
-  the Titan rising on the fifth seal's break, the Herald announced before its fight, and the
-  collapse and re-binding under the title's seal when the Eyes close, `titan-eyes.md` §2), are
+  Vigil → ONE fight since 2026-09-18, `docs/titan-eyes.md` §10** — the Herald leading one Late
+  Titanspawn per broken seal, **warded while any of its company stands** (`wardedWhileCompanyStands`,
+  bench included, so it falls last), then two mono-Ancient Eyes whose Gaze marks a hero Beheld
+  and whose Regard can only be aimed at one, then the wide pair — each pair a `reserves` PHASE
+  that enters once the phase before it is down, the Pact Clock counting from the phase; the Eyes
+  set **Withering Gaze** (a tenth of max HP a round off every non-Ancient active, re-set every
+  third round, answered only by a field of the player's own) and **hold the roster up** as each
+  phase opens (the fallen stand at half, Mana full — measured: without it the merged fight is a
+  2% fight; `HELD_UP_HP_FRACTION` is the dial); and a champion's hall after; **framed by three
+  cinematic beats** — the Herald announced before the fight, the Titan rising OVER the fight as
+  the Herald falls, and the collapse and re-binding under the title's seal when the Eyes close), are
   chained per run (`RunState.actNumber`, `TOTAL_ACTS`), each with a fresh map generated
   once the previous act's Guardian falls; 1 Recruit Contract is granted at the end of
   every act (replacing the removed `contractReward` map-node type — Recruit Contracts

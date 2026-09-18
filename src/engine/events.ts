@@ -177,14 +177,15 @@ export interface PassiveTriggeredEvent extends BaseEvent {
   passiveId: PassiveId;
 }
 
-/** One target turned a move away (StatusDefinition.blocksIncomingMoves). The move still resolves against anyone else it reached. */
+/** One target turned a move away — by a status (StatusDefinition.blocksIncomingMoves) or a ward (PassiveDefinition.wardedWhileCompanyStands); exactly one of the two is set. The move still resolves against anyone else it reached. */
 export interface MoveGuardedEvent extends BaseEvent {
   type: 'MoveGuarded';
   /** The protected combatant. */
   combatantId: string;
   sourceCombatantId: string;
   moveId: string;
-  statusId: StatusId;
+  statusId?: StatusId;
+  passiveId?: PassiveId;
 }
 
 export interface ActionBlockedEvent extends BaseEvent {
@@ -290,6 +291,25 @@ export interface FieldEffectExpiredEvent extends BaseEvent {
   fieldEffectId: FieldEffectId;
 }
 
+/** A side mended whole mid-fight (PassiveEffect mendSide): one per body it changed; `revived` when the body was down. HP and Mana land on the state directly — no HpChanged, no Healed. */
+export interface MendedEvent extends BaseEvent {
+  type: 'Mended';
+  combatantId: string;
+  sourceCombatantId: string;
+  previousHp: number;
+  newHp: number;
+  maxHp: number;
+  revived: boolean;
+}
+
+/** The active Field Effect draining the field (FieldEffectDefinition.drainsPercentMaxHp) — one beat for the whole board, before the HpChanged/Fainted stream it causes, on the Pact Clock's terms. */
+export interface FieldEffectDrainedEvent extends BaseEvent {
+  type: 'FieldEffectDrained';
+  fieldEffectId: FieldEffectId;
+  /** Fraction of max HP every non-exempt active combatant loses on this tick. */
+  fraction: number;
+}
+
 /** The Pact Clock coming due (pactClock.ts) — one beat for the whole board, before the HpChanged/Fainted stream it causes. */
 export interface PactTickedEvent extends BaseEvent {
   type: 'PactTicked';
@@ -331,5 +351,7 @@ export type CombatEvent =
   | FieldEffectSetEvent
   | FieldEffectTickedEvent
   | FieldEffectExpiredEvent
+  | FieldEffectDrainedEvent
+  | MendedEvent
   | PactTickedEvent
   | RoundEndedEvent;

@@ -10,18 +10,22 @@ import { equipmentStatModifiers } from './equipment';
 import { equipmentPassiveGrants, mergePassiveGrants, passiveStatModifiers } from './passives';
 import { mergeStatMods } from './statMods';
 
-/** id -> stack count across equipment, Evolution, events, Class and team relics. */
+/** id -> stack count across equipment, Evolution, events, Class, team relics and the definition's own (HeroDefinition.passiveIds). */
 export function entryPassiveCounts(
   entry: RosterEntry,
   equipmentLookup: Record<string, EquipmentDefinition>,
-  teamPassiveGrants: Record<PassiveId, number> = {}
+  teamPassiveGrants: Record<PassiveId, number> = {},
+  innatePassiveIds: readonly PassiveId[] = []
 ): Record<PassiveId, number> {
+  const innateGrants: Record<PassiveId, number> = {};
+  for (const id of innatePassiveIds) innateGrants[id] = (innateGrants[id] ?? 0) + 1;
   const evolutionGrants: Record<PassiveId, number> = {};
   for (const id of entry.evolutionPassiveGrants) evolutionGrants[id] = (evolutionGrants[id] ?? 0) + 1;
   const eventGrants: Record<PassiveId, number> = {};
   for (const id of entry.bonusPassiveGrants) eventGrants[id] = (eventGrants[id] ?? 0) + 1;
   const classGrants: Record<PassiveId, number> = entry.classPassiveId ? { [entry.classPassiveId]: 1 } : {};
   return mergePassiveGrants(
+    innateGrants,
     equipmentPassiveGrants(entry.equipment, equipmentLookup),
     evolutionGrants,
     eventGrants,

@@ -52,11 +52,10 @@ import { absorbCompanions, companionCandidate, companionJoinDue, joinCompanion }
 import type { CombatState } from '../engine/state';
 import { koRosterIdsOf } from '../run/buildCombatState';
 import { WoundsError, anyDown, buyMend, recordWounds, mendRoster, standingRoster } from '../run/wounds';
-import { enemies, finaleEnemies, ENDBRINGER_ID, MANTICORE_ID, titanEyes, EYE_IDS } from '../data/enemies';
+import { enemies, finaleEnemies, ENDBRINGER_ID, MANTICORE_ID, titanEyes, EYE_PHASES } from '../data/enemies';
 import { relics } from '../data/relics';
 import { ActIntroScreen } from '../view/run/ActIntroScreen';
 import { PactSealScreen } from '../view/run/PactSealScreen';
-import { TitanRiseScreen } from '../view/run/TitanRiseScreen';
 import { HeraldScreen } from '../view/run/HeraldScreen';
 import { TitanBoundScreen } from '../view/run/TitanBoundScreen';
 import { TitanWakeScreen } from '../view/run/TitanWakeScreen';
@@ -110,7 +109,7 @@ import { generateStarterOptions } from '../run/draft';
 import {
   generateEncounter,
   generateFinaleEncounter,
-  generateTitanEncounter,
+
   type EncounterNodeType,
   type Encounter,
 } from '../run/enemyGen';
@@ -154,8 +153,7 @@ type Screen =
   | { kind: 'draft'; optionIds: string[] }
   /** The act-boundary beat: five sockets, one per Guardian (docs/run-loop.md §4). */
   | { kind: 'pactSeal' }
-  /** The fifth seal has broken and the Titan stands up: between the seal and the Threshold's arrival. */
-  | { kind: 'titanRise' }
+
   /** Per-act arrival beat; reads its location off the run's itinerary. */
   | { kind: 'titanWake' }
   | { kind: 'actIntro' }
@@ -235,7 +233,7 @@ const PLACELESS_SCREENS: ReadonlySet<Screen['kind']> = new Set([
   'titanWake',
   // Between two acts, and the property of neither.
   'pactSeal',
-  'titanRise',
+
   // After the last fight: the Threshold's track drops and the binding plays in silence.
   'titanBound',
   'quickBattle',
@@ -317,11 +315,11 @@ function createLevel4TestRun(): RunState {
 }
 
 /**
- * TEMPORARY DEV/TEST — the Titan's Eyes, repeatedly (docs/titan-eyes.md): a finale-act run with
+ * TEMPORARY DEV/TEST — the final battle, repeatedly (docs/titan-eyes.md §10): a finale-act run with
  * six random heroes at the cap, each FINISHED the way a contract hero is (its Evolution walked,
  * its signature in the kit — generateEncounter's own progression walk), wearing three items on
- * Act 5's elite curve in three distinct families, under five Banners, the Vigil and the Herald
- * already behind it so the only node open is the Eyes. Remove with its TitleScreen row.
+ * Act 5's elite curve in three distinct families, under five Banners, the Vigil already behind it
+ * so the only node open is the Herald and the Eyes behind it. Remove with its TitleScreen row.
  */
 function createTitanEyesTestRun(): RunState {
   const seed = randomSeed();
@@ -352,8 +350,8 @@ function createTitanEyesTestRun(): RunState {
     run = recordBrokenSeal(run, { actNumber: act, locationId: location.id, championId, level: enemyLevelFor('boss', act) + CHAMPION_LEVEL_BONUS, statGrants: {}, growthStatGrants: {} });
     run = grantRelicReward(run, bannerIds[Math.floor(Math.random() * bannerIds.length)]);
   }
-  // The corridor is Vigil → Herald → Eyes; stand past the first two so the Eyes are what is open.
-  for (const row of run.map!.rows.slice(0, 2)) run = advanceToNode(run, row[0]);
+  // The corridor is Vigil → the final battle; stand past the Vigil so the fight is what is open.
+  for (const row of run.map!.rows.slice(0, 1)) run = advanceToNode(run, row[0]);
   return run;
 }
 
@@ -373,7 +371,7 @@ function whoScreensBehind(screen: Screen): number {
 }
 
 /** Payouts key on the MAP node type: `skirmish` and `battle` both flatten to a `fight` encounter but sit in opposite reward lanes. */
-type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' | 'finale' | 'titan';
+type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' | 'finale';
 
 // The bands live in runProgress.ts (goldRangeFor) so the map's node readout prints the roll it describes.
 function goldRewardFor(nodeType: EncounterMapNodeType, actNumber: number): number {
@@ -601,24 +599,18 @@ export function App() {
     const node = playerRun.map!.nodes[nodeId];
     const location = locationForAct(playerRun.locationIds, playerRun.actNumber);
     if (node.type === 'finale') {
-      // The Herald at the front, and behind it what the five lands turned: one Late spawn per
-      // broken seal, drawn from that seal's Location, every pip (docs/run-loop.md "The finale").
+      // The Herald at the front, behind it what the five lands turned — one Late spawn per broken
+      // seal, drawn from that seal's Location, every pip (docs/run-loop.md "The finale") — and
+      // behind THAT, the Titan's Eyes, a phase a pair (docs/titan-eyes.md §10): one fight.
       const encounter = generateFinaleEncounter(
         playerRun.brokenSeals,
         location.guardianFinalEnemyId ?? ENDBRINGER_ID,
         finaleEnemies,
         encounterSeedFor(playerRun.map!, nodeId),
         encounterScaling('finale', FINALE_ACT),
-        { spawnTypesFor: (locationId) => locations[locationId]?.spawnTypes ?? null, heraldLeads: true }
+        { spawnTypesFor: (locationId) => locations[locationId]?.spawnTypes ?? null, heraldLeads: true },
+        { phases: EYE_PHASES, pool: titanEyes }
       );
-      if (skipSquadSelect(playerRun)) {
-        handleSquadConfirmed(pickSquad(playerRun.roster, standingRoster(playerRun.roster).map((r) => r.rosterId)), nodeId, 'boss', encounter);
-      } else {
-        setScreen({ kind: 'squadSelect', nodeId, nodeType: 'boss', encounter });
-      }
-    } else if (node.type === 'titan') {
-      // The Titan's Eyes (docs/titan-eyes.md): the half-lidded pair, the wide pair in reserve.
-      const encounter = generateTitanEncounter(EYE_IDS, titanEyes, encounterSeedFor(playerRun.map!, nodeId), encounterScaling('titan', FINALE_ACT));
       if (skipSquadSelect(playerRun)) {
         handleSquadConfirmed(pickSquad(playerRun.roster, standingRoster(playerRun.roster).map((r) => r.rosterId)), nodeId, 'boss', encounter);
       } else {
@@ -741,7 +733,6 @@ export function App() {
     const mapNodeType = playerRun.map!.nodes[nodeId].type;
     const isGuardian = mapNodeType === 'boss';
     const isFinale = mapNodeType === 'finale';
-    const isTitan = mapNodeType === 'titan';
     // EVERY Guardian pays a Banner now that the finale act follows act 5 — the reason act 5's
     // used to pay none (nothing left to spend it on) is void (docs/run-loop.md §4).
     const banner = isGuardian;
@@ -770,13 +761,8 @@ export function App() {
     if (companionId) next = joinCompanion(next, companionId, rosterHeroes);
 
     let afterScreen: Screen;
-    if (isTitan) {
+    if (isFinale) {
       afterScreen = { kind: 'champions' };
-    } else if (isFinale) {
-      // The Herald is down and the Titan turns to look: the one free mend between the two
-      // finale fights (docs/titan-eyes.md §3, per user direction).
-      next = mendRoster(next);
-      afterScreen = { kind: 'map' };
     } else if (isGuardian) {
       // Recorded on the Guardian falling, not on the run starting: a tutorial the player wiped
       // in is offered again (docs/tutorial.md). The rest of the run is a normal run either way.
@@ -857,7 +843,7 @@ export function App() {
     );
     // The Eyes closing is the fight's own last beat, so the collapse and the binding go ahead of
     // even the level report: nothing the fight pays is worth seeing before the Titan is down.
-    setScreen(isTitan ? { kind: 'titanBound', next: chain } : chain);
+    setScreen(isFinale ? { kind: 'titanBound', next: chain } : chain);
   }
 
   function handleNodeContinue(nodeId: string) {
@@ -1104,14 +1090,8 @@ export function App() {
       {screen.kind === 'draft' && <DraftScreen optionIds={screen.optionIds} onConfirm={handleDraftConfirm} />}
 
       {screen.kind === 'pactSeal' && (
-        <PactSealScreen
-          run={playerRun}
-          // The fifth socket's "Walk to the Threshold" walks into the Titan standing up first.
-          onContinue={playerRun.brokenSeals.length >= SEAL_ACTS ? () => setScreen({ kind: 'titanRise' }) : enterAct}
-        />
+        <PactSealScreen run={playerRun} onContinue={enterAct} />
       )}
-
-      {screen.kind === 'titanRise' && <TitanRiseScreen onDone={enterAct} />}
 
       {screen.kind === 'titanWake' && <TitanWakeScreen onDone={enterAct} />}
 
@@ -1174,7 +1154,7 @@ export function App() {
           onSaveAndQuit={() => setScreen({ kind: 'title' })}
           onAbandonRun={handleAbandonRun}
           tutorialNodeType={isTutorialAct(playerRun) ? playerRun.map!.nodes[screen.nodeId].type : undefined}
-          cinematicWin={playerRun.map!.nodes[screen.nodeId].type === 'titan'}
+          cinematicWin={playerRun.map!.nodes[screen.nodeId].type === 'finale'}
         />
       )}
 

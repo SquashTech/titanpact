@@ -17,7 +17,7 @@ import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
 import { getTypeColor } from './typeColors';
-import { dramaticEntranceFor } from '../shared/entrances';
+import { cinematicEntranceFor, dramaticEntranceFor, type CinematicEntrance } from '../shared/entrances';
 import { moveKindGlyph } from '../shared/MoveTile';
 import type { MoveKindGlyphKind } from '../shared/statIcons';
 
@@ -95,6 +95,8 @@ export interface BeatFlavor {
   bannerMetaClass?: string;
   /** A dramatic entrance (entrances.ts): FightScreen veils and shakes, beatSfx plays the horn, music drops rate. One flag so a future entrance opts in by id alone. */
   dramaticEntrance?: true;
+  /** A scene played over the field before the arrival it announces (entrances.ts cinematicEntranceFor): FightScreen holds playback until it is done. Carries no events. */
+  cinematic?: CinematicEntrance;
   /** The fight's opening beat (openingBeats.ts). Carries no events, so beatSfx has to be told what it is. */
   engagement?: true;
   /**
@@ -490,7 +492,12 @@ export function buildBeats(
 
       case 'SwitchedIn': {
         const inName = name(e.inCombatantId);
-        const entrance = dramaticEntranceFor(combatants[e.inCombatantId]?.heroId);
+        const arriving = combatants[e.inCombatantId]?.heroId;
+        // The scene first, on its own beat with nothing applied, so the field is still the Herald's
+        // fall when the Titan rises over it; the Eye's reveal beat is the one that puts it on the board.
+        const cinematic = cinematicEntranceFor(arriving);
+        if (cinematic) push([], 'The Titan rises', [], { cinematic, bannerFocusKind: 'ko' });
+        const entrance = dramaticEntranceFor(arriving);
         if (entrance) {
           push([e], `${inName} takes the field!`, [], {
             bannerLead: entrance.lead,
@@ -768,6 +775,60 @@ export function buildBeats(
           bannerAccent: fx?.flavorType ? getTypeColor(fx.flavorType) : undefined,
         });
         i++;
+        break;
+      }
+
+      // Held Up: the far side made whole in one beat, the ones that stand back up named on the bar.
+      case 'Mended': {
+        const applied: CombatEvent[] = [];
+        const popups: BeatPopup[] = [];
+        const stood: string[] = [];
+        while (events[i]?.type === 'Mended') {
+          const m = events[i++];
+          if (m.type !== 'Mended') break;
+          applied.push(m);
+          if (m.newHp > m.previousHp) popups.push({ combatantId: m.combatantId, text: `+${m.newHp - m.previousHp}`, className: 'popup-heal' });
+          if (m.revived) stood.push(name(m.combatantId));
+        }
+        push(applied, stood.length > 0 ? `The Titan holds you up — ${stood.join(', ')} ${stood.length === 1 ? 'stands' : 'stand'} again!` : 'The Titan holds you up!', popups, {
+          bannerLead: 'The Titan wants to watch',
+          bannerFocus: stood.length > 0 ? `${stood.join(', ')} ${stood.length === 1 ? 'stands' : 'stand'} again` : 'Nobody is left down',
+          bannerFocusKind: 'heal',
+          bannerMeta: 'Mana is full and nobody is below half. What the fight did to your stats stays done.',
+          bannerMetaClass: 'banner-meta-rules',
+        });
+        break;
+      }
+
+      // The field's drain (Withering Gaze): the Clock's shape, one beat for the board, KOs split off.
+      case 'FieldEffectDrained': {
+        i++;
+        const applied: CombatEvent[] = [e];
+        const popups: BeatPopup[] = [];
+        const faints: FaintedEvent[] = [];
+        while (events[i]?.type === 'HpChanged' || events[i]?.type === 'Fainted') {
+          const next = events[i++];
+          if (next.type === 'HpChanged') {
+            applied.push(next);
+            const lost = next.previousHp - next.newHp;
+            if (lost > 0) popups.push({ combatantId: next.combatantId, text: `-${lost}`, className: 'popup-damage' });
+          } else if (next.type === 'Fainted') {
+            faints.push(next);
+          }
+        }
+        const fx = fieldEffects[e.fieldEffectId];
+        const label = fx?.name ?? e.fieldEffectId;
+        const pct = Math.round(e.fraction * 100);
+        push(applied, `${label} presses — everyone under it loses ${pct}% of their health!`, popups, {
+          bannerLead: `${label} presses`,
+          bannerFocus: `-${pct}% HP`,
+          bannerFocusKind: 'damage',
+          bannerAccent: fx?.flavorType ? getTypeColor(fx.flavorType) : undefined,
+          bannerMeta: 'A field of your own would turn it aside.',
+        });
+        for (const faint of faints) {
+          push([faint], `${name(faint.combatantId)} is knocked out!`, [], { bannerFocusKind: 'ko' });
+        }
         break;
       }
 

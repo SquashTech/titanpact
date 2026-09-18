@@ -8,6 +8,7 @@
 
 import type { GrowthStatKey, HeroDefinition } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
+import { HELD_UP_ID, HERALDS_STANDARD_ID, WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID } from './passives';
 import type { GrowthGrade } from '../run/growth';
 
 /**
@@ -160,13 +161,15 @@ export const enemies: Record<string, HeroDefinition> = {
   // everything else softer — Erode on both heroes, Transfix taking a turn off one every round
   // it cares to (Speed 95 lands the Daze first), Oblivion the one hit, and Raise the Standard
   // for the company behind it, since it leads Late spawn now (docs/run-loop.md "The final
-  // battle"). Enfeeble came off: the slate has its own softening verb.
+  // battle"). Enfeeble came off: the slate has its own softening verb. The Standard itself is
+  // the ward (docs/titan-eyes.md §10): untouchable while any of the company stands.
   endbringer: {
     id: 'endbringer',
     name: 'Endbringer',
     types: ['Ancient'],
     baseStats: { hp: 680, attack: 100, defense: 115, intelligence: 135, wisdom: 115, speed: 95, manaPool: 200, mpRegen: 25 },
     moveIds: ['raiseTheStandard', 'erode', 'transfix', 'oblivion'],
+    passiveIds: [HERALDS_STANDARD_ID],
     starter: false,
     growthGrades: CHAMPION_GRADES,
   },
@@ -184,6 +187,9 @@ export const enemies: Record<string, HeroDefinition> = {
  * a priority bracket and the half-lidded pair do not quite. Every number is a first pass for
  * the sim (titan-eyes.md §6).
  */
+/** Every Eye holds the far side up as it opens, sets Withering Gaze, and sets it again every third round (docs/titan-eyes.md §10). */
+const TITAN_EYE_PASSIVES: readonly string[] = [HELD_UP_ID, WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID];
+
 export const titanEyes: Record<string, HeroDefinition> = {
   leftEye: {
     id: 'leftEye',
@@ -191,6 +197,7 @@ export const titanEyes: Record<string, HeroDefinition> = {
     types: ['Ancient'],
     baseStats: { hp: 540, attack: 40, defense: 105, intelligence: 155, wisdom: 105, speed: 92, manaPool: 220, mpRegen: 28 },
     moveIds: ['gaze', 'regard', 'archonBlast', 'erode'],
+    passiveIds: TITAN_EYE_PASSIVES,
     starter: false,
     growthGrades: CHAMPION_GRADES,
   },
@@ -200,6 +207,7 @@ export const titanEyes: Record<string, HeroDefinition> = {
     types: ['Ancient'],
     baseStats: { hp: 630, attack: 40, defense: 125, intelligence: 125, wisdom: 125, speed: 82, manaPool: 220, mpRegen: 28 },
     moveIds: ['gaze', 'regard', 'forgottenCurse', 'lidded'],
+    passiveIds: TITAN_EYE_PASSIVES,
     starter: false,
     growthGrades: CHAMPION_GRADES,
   },
@@ -209,6 +217,7 @@ export const titanEyes: Record<string, HeroDefinition> = {
     types: ['Ancient'],
     baseStats: { hp: 680, attack: 40, defense: 115, intelligence: 190, wisdom: 115, speed: 102, manaPool: 260, mpRegen: 32 },
     moveIds: ['stare', 'glare', 'archonBlast', 'erode'],
+    passiveIds: TITAN_EYE_PASSIVES,
     starter: false,
     growthGrades: CHAMPION_GRADES,
   },
@@ -218,6 +227,7 @@ export const titanEyes: Record<string, HeroDefinition> = {
     types: ['Ancient'],
     baseStats: { hp: 790, attack: 40, defense: 145, intelligence: 150, wisdom: 145, speed: 92, manaPool: 260, mpRegen: 32 },
     moveIds: ['stare', 'glare', 'forgottenCurse', 'lidded'],
+    passiveIds: TITAN_EYE_PASSIVES,
     starter: false,
     growthGrades: CHAMPION_GRADES,
   },
@@ -229,6 +239,11 @@ export const LEFT_EYE_WIDE_ID = 'leftEyeWide';
 export const RIGHT_EYE_WIDE_ID = 'rightEyeWide';
 /** Phase 1 then phase 2, in the order the encounter fields them. */
 export const EYE_IDS: readonly string[] = [LEFT_EYE_ID, RIGHT_EYE_ID, LEFT_EYE_WIDE_ID, RIGHT_EYE_WIDE_ID];
+/** The same, a phase a pair — what the finale's generator takes (enemyGen.ts FinaleEyesOptions). */
+export const EYE_PHASES: readonly (readonly string[])[] = [
+  [LEFT_EYE_ID, RIGHT_EYE_ID],
+  [LEFT_EYE_WIDE_ID, RIGHT_EYE_WIDE_ID],
+];
 export function isTitanEye(heroId: string): boolean {
   return EYE_IDS.includes(heroId);
 }

@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
 import { statusApplicationsOf, STAT_ORDER } from '../../engine/content';
 import { allCombatants } from '../../data/content';
 import { moves } from '../../data/moves';
@@ -26,7 +27,7 @@ import {
 } from '../../engine/state';
 import { fieldHealMultiplier, type HealCaster } from '../../engine/heal/healPipeline';
 import { resolveRound } from '../../engine/combat/resolveRound';
-import { DEFAULT_PACT_CLOCK, PACT_WARNING_ROUNDS, pactFractionFor } from '../../engine/combat/pactClock';
+import { DEFAULT_PACT_CLOCK, PACT_WARNING_ROUNDS, pactFractionFor, pactRoundOf } from '../../engine/combat/pactClock';
 import { applyForcedReplacement, replacementCandidates } from '../../engine/combat/switching';
 import { consumableRefusal, useConsumable, type PotionKind } from '../../engine/combat/consumables';
 import { CONSUMABLE_NAMES, POTION_KINDS, type ConsumableKind, type ConsumablePurse } from '../../run/consumables';
@@ -38,6 +39,7 @@ import { ResourceGlyph } from '../shared/RunGlyph';
 import { playSfx } from '../../audio/sfx';
 import { resolveBattleStartEntries, resolvePassiveReactions } from '../../engine/combat/passiveEngine';
 import { selectableTargets, statusGatedTargets } from '../../engine/combat/statusEngine';
+import { wardOn } from '../../engine/combat/ward';
 import { FIELD_EFFECT_DURATION_ROUNDS } from '../../engine/combat/fieldEffectEngine';
 import type { Action } from '../../engine/combat/actions';
 import type { CombatEvent, RoundOrderEntry } from '../../engine/events';
@@ -49,6 +51,8 @@ import type { MapNodeType } from '../../run/map';
 import { matchTutorialCue, type TutorialFightContext } from '../../run/tutorial';
 import { TUTORIAL_FIGHT_CUES } from '../../data/tutorial';
 import { TutorialOverlay } from '../run/TutorialOverlay';
+import { TitanRiseScreen } from '../run/TitanRiseScreen';
+import { overlayHost } from '../shared/overlayHost';
 import type { Squad } from '../../run/squad';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { buildCombatState, koRosterIdsOf } from '../../run/buildCombatState';
@@ -700,6 +704,7 @@ export function FightScreen({
   const enemyActiveAlive = aliveActiveIdsOn(combat, AI_SIDE);
   const playerBench = replacementCandidates(combat, PLAYER_SIDE);
   const playerLockedIn = isLockedIn(combat, PLAYER_SIDE);
+  const pactRound = pactRoundOf(combat, combat.round);
 
   const winner: Side | null = sideDefeated(combat, PLAYER_SIDE) ? AI_SIDE : sideDefeated(combat, AI_SIDE) ? PLAYER_SIDE : null;
   // A cinematic win skips the result overlay: the hand-off IS the overlay's continue, fired once
@@ -739,6 +744,8 @@ export function FightScreen({
   const canAct = !resolving && openReplacementSlots.length === 0 && playerActiveAlive.length > 0;
   /** The VS card is up: it takes a tap and nothing else — no hold, no latched key. */
   const awaitingEngagementTap = resolving && beat?.engagement === true;
+  /** A scene is playing over the field (buildBeats `cinematic`): playback waits on its own done, and its own tap skips it. */
+  const awaitingCinematic = resolving && beat?.cinematic !== undefined;
   const stepIndex = canAct ? Math.min(actionStep, playerActiveAlive.length - 1) : 0;
   const actingId: string | null = canAct ? playerActiveAlive[stepIndex] : null;
 
@@ -859,7 +866,7 @@ export function FightScreen({
 
   // Gate first, Provoke second, matching resolveRound's order.
   function visibleTargets(move: MoveDefinition, mode: TargetMode, ids: string[]): string[] {
-    return selectableTargets(combat, mode, statusGatedTargets(combat, move, ids), statuses);
+    return selectableTargets(combat, mode, statusGatedTargets(combat, move, ids), statuses, passives);
   }
 
   /**
@@ -1169,6 +1176,8 @@ export function FightScreen({
     playBeatSfx(revealed);
     // EXPERIMENTAL: a dramatic entrance drags the music down for the rest of the fight. Delete this line to drop it.
     if (revealed.dramaticEntrance) setMusicRate(DREAD_MUSIC_RATE);
+    // A scene holds the queue however the keys are set; its done resumes exactly as the VS card's tap does.
+    if (revealed.cinematic) stopAutoAdvance();
     setBeat(revealed);
     setBeatSeq((n) => n + 1);
     setPopups(
@@ -1219,7 +1228,7 @@ export function FightScreen({
     setAutoMode(next);
     writeAutoPlayMode(next);
     stopAutoAdvance();
-    if (next !== 'off' && resolving && !awaitingEngagementTap) startAutoPlay(next);
+    if (next !== 'off' && resolving && !awaitingEngagementTap && !awaitingCinematic) startAutoPlay(next);
   }
 
   function handleAdvancePointerDown() {
@@ -1257,6 +1266,7 @@ export function FightScreen({
           fx={figureFx[id]}
           order={orderMarks[id] ?? null}
           onInspectOrder={resolving ? undefined : () => sayOrder(id)}
+          warded={wardOn(combat, id, passives)}
         />
       );
     }
@@ -1304,10 +1314,11 @@ export function FightScreen({
           tap must not step an extra beat and a pointerup must not kill the timer.
           The VS card is tap-only whatever the keys say: no hold, and a latched key
           only takes over once it has been dismissed. */}
+      {awaitingCinematic && createPortal(<TitanRiseScreen onDone={resumeAfterEngagement} />, overlayHost())}
       {awaitingEngagementTap ? (
         <div className="advance-overlay" onClick={resumeAfterEngagement} />
       ) : (
-        resolving && (
+        resolving && !awaitingCinematic && (
           <div
             className="advance-overlay"
             onClick={autoMode === 'off' ? handleAdvanceClick : undefined}
@@ -1354,18 +1365,18 @@ export function FightScreen({
           </div>
         )}
 
-        {/* Pact Clock face: driven off combat.round, not events, so it is right on first render. */}
-        {combat.round >= DEFAULT_PACT_CLOCK.startRound - PACT_WARNING_ROUNDS && (
+        {/* Pact Clock face: driven off combat.round (phase-relative, as the engine reads it), not events, so it is right on first render. */}
+        {pactRound >= DEFAULT_PACT_CLOCK.startRound - PACT_WARNING_ROUNDS && (
           <div
-            className={`pact-warning${combat.round >= DEFAULT_PACT_CLOCK.startRound ? ' is-due' : ''}`}
+            className={`pact-warning${pactRound >= DEFAULT_PACT_CLOCK.startRound ? ' is-due' : ''}`}
             role="status"
           >
             <span className="pact-warning-mark" aria-hidden="true" />
             <span className="pact-warning-text">
-              {combat.round >= DEFAULT_PACT_CLOCK.startRound
-                ? `The pact is due — ${Math.round(pactFractionFor(combat.round, DEFAULT_PACT_CLOCK) * 100)}% HP from everyone on the field this round`
-                : `The pact comes due in ${DEFAULT_PACT_CLOCK.startRound - combat.round} ${
-                    DEFAULT_PACT_CLOCK.startRound - combat.round === 1 ? 'round' : 'rounds'
+              {pactRound >= DEFAULT_PACT_CLOCK.startRound
+                ? `The pact is due — ${Math.round(pactFractionFor(pactRound, DEFAULT_PACT_CLOCK) * 100)}% HP from everyone on the field this round`
+                : `The pact comes due in ${DEFAULT_PACT_CLOCK.startRound - pactRound} ${
+                    DEFAULT_PACT_CLOCK.startRound - pactRound === 1 ? 'round' : 'rounds'
                   }`}
             </span>
           </div>

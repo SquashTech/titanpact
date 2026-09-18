@@ -215,14 +215,14 @@ test('finale: the Threshold is a real location the draw can never produce', () =
 
 // --- The map ---
 
-test("finale: act 6 is a corridor — the Vigil, then the Herald, then the Titan's Eyes, no branch", () => {
+test('finale: act 6 is a corridor — the Vigil, then the one fight the Herald and the Eyes share, no branch', () => {
   const map = generateMap(1234, FINALE_ACT);
   assert.deepStrictEqual(
     map.rows.map((row) => row.map((id) => map.nodes[id].type)),
-    [['muster'], ['finale'], ['titan']]
+    [['muster'], ['finale']]
   );
   assert.strictEqual(map.nodes[map.startNodeIds[0]].nextIds.length, 1);
-  assert.strictEqual(map.nodes[map.bossNodeId].type, 'titan');
+  assert.strictEqual(map.nodes[map.bossNodeId].type, 'finale');
   // Seedless in effect: the corridor is the same map whatever the run rolled.
   assert.deepStrictEqual(generateMap(9, FINALE_ACT).nodes, generateMap(1234, FINALE_ACT).nodes);
 });

@@ -8,7 +8,7 @@
 // happens outside resolution, and drawing from `state.rngState` here would
 // shift the AI's choices with every damage roll that preceded them.
 
-import { statusApplicationsOf, type HeroDefinition, type MoveDefinition, type StatusApplication, type StatusDefinition, type TargetMode } from '../engine/content';
+import { statusApplicationsOf, type HeroDefinition, type MoveDefinition, type PassiveDefinition, type PassiveId, type StatusApplication, type StatusDefinition, type TargetMode } from '../engine/content';
 import type { Action } from '../engine/combat/actions';
 import type { CombatState, Side } from '../engine/state';
 import {
@@ -37,6 +37,8 @@ export interface AiContext {
   moveIdsFor: (combatantId: string) => readonly string[];
   /** Defaults to Math.random. */
   random?: () => number;
+  /** Omitted = no ward is read at targeting (statusEngine.ts selectableTargets). */
+  passives?: Record<PassiveId, PassiveDefinition>;
 }
 
 // The "sharpness" dial: a super-effective option is 3x as likely as neutral,
@@ -87,7 +89,7 @@ function targetPool(state: CombatState, casterId: string, mode: TargetMode, side
 function candidateTargets(state: CombatState, casterId: string, move: MoveDefinition, ctx: AiContext, mode: TargetMode): string[] {
   const side = state.combatants[casterId].side;
   const pool = targetPool(state, casterId, mode, side);
-  return selectableTargets(state, mode, statusGatedTargets(state, move, pool), ctx.statuses);
+  return selectableTargets(state, mode, statusGatedTargets(state, move, pool), ctx.statuses, ctx.passives);
 }
 
 /** A status-gated SPREAD move with nobody marked resolves into an ActionBlocked and eats the turn. */

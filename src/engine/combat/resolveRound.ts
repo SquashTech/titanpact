@@ -2,7 +2,7 @@
 // docs/conditions.md status timing). Declare-then-resolve: actions resolve in
 // priority/speed order, then the round-boundary ticks run in a fixed order.
 
-import type { FieldEffectDefinition, MoveDefinition, PassiveDefinition, StatDelta, StatKey, StatusDefinition } from '../content';
+import type { FieldEffectDefinition, MoveDefinition, PassiveDefinition, PassiveId, StatDelta, StatKey, StatusDefinition, StatusId } from '../content';
 import { statusApplicationsOf } from '../content';
 import type { CombatState, HeroLookup } from '../state';
 import { activePartnerTypes, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveCastBasePower, resolveTargetMode, effectiveTypes, hasStatus, moveForHero, applyStatModifierDelta } from '../state';
@@ -12,7 +12,7 @@ import { orderActions } from './priority';
 import { resolveTargets, resolveTargetsRolled, rollRiderTarget, slotOfActiveCombatant, TargetNoLongerValidError } from './targeting';
 import { applyVoluntarySwitch, applyBenchHpRegen, SwitchBlockedError } from './switching';
 import { applyManaRegen } from './manaRegen';
-import { setFieldEffect, tickFieldEffect } from './fieldEffectEngine';
+import { setFieldEffect, tickFieldEffect, tickFieldEffectDrain } from './fieldEffectEngine';
 import {
   resolveStatRatio,
   rollDamage,
@@ -40,6 +40,7 @@ import {
   resolveShieldBrokenRiders,
 } from './statusEngine';
 import { collectPassiveDamageModifiers, resolvePassiveReactions } from './passiveEngine';
+import { wardOn } from './ward';
 import { nextFloat, nextInt } from '../rng/seededRng';
 import { DEFAULT_PACT_CLOCK, tickPactClock, type PactClockConfig } from './pactClock';
 
@@ -192,16 +193,19 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     // against it — the same ordering reason the status gate below is applied last. Only the opposing
     // side is stopped: a partner heals through it, which is what keeps a guard defensive rather than
     // isolating. A move whose every target guarded still spends its mana and simply reaches nobody.
-    for (const targetId of targetIds) {
-      if (working.combatants[targetId]?.side === actor.side) continue;
+    // A ward (the Herald's, read live off the board) guards on exactly the same terms as a status.
+    const guardOn = (targetId: string): { statusId?: StatusId; passiveId?: PassiveId } | null => {
+      if (working.combatants[targetId]?.side === actor.side) return null;
       const statusId = blockingStatusId(working, targetId, statuses);
-      if (statusId) {
-        events.push({ type: 'MoveGuarded', round, combatantId: targetId, sourceCombatantId: action.combatantId, moveId: move.id, statusId });
-      }
+      if (statusId) return { statusId };
+      const passiveId = wardOn(working, targetId, passives);
+      return passiveId ? { passiveId } : null;
+    };
+    for (const targetId of targetIds) {
+      const guard = guardOn(targetId);
+      if (guard) events.push({ type: 'MoveGuarded', round, combatantId: targetId, sourceCombatantId: action.combatantId, moveId: move.id, ...guard });
     }
-    targetIds = targetIds.filter(
-      (id) => working.combatants[id]?.side === actor.side || blockingStatusId(working, id, statuses) === null
-    );
+    targetIds = targetIds.filter((id) => guardOn(id) === null);
 
     // A move whose gate yields to a taunt keeps the taunter it was pulled onto (content.ts).
     if (!(move.gateYieldsToRedirect && pulledByTaunt)) targetIds = statusGatedTargets(working, move, targetIds);
@@ -389,7 +393,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
             // Ice Shell: the hit that breaks the Shield pays the striker (onShieldBroken), once.
             if (hpResult.shieldBroken) {
-              const broken = resolveShieldBrokenRiders(working, round, targetId, action.combatantId, statuses, maxHpOf);
+              const broken = resolveShieldBrokenRiders(working, round, targetId, action.combatantId, statuses, maxHpOf, passives);
               working = broken.state;
               events.push(...broken.events);
             }
@@ -883,6 +887,11 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
   working = tickReactions.state;
   events.push(...tickReactions.events);
 
+  // A draining field presses on the Clock's terms — no reaction pass — then the field counts down.
+  const drain = tickFieldEffectDrain(working, round, fieldEffects, heroes, maxHpOf);
+  working = drain.state;
+  events.push(...drain.events);
+
   const fieldEffectTick = tickFieldEffect(working, round);
   working = fieldEffectTick.state;
   events.push(...fieldEffectTick.events);
@@ -892,7 +901,12 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
   working = pact.state;
   events.push(...pact.events);
 
-  events.push({ type: 'RoundEnded', round });
+  // The round's end is itself a hook (the Eyes' Withering Gaze returning): the one pass after the Clock.
+  const ended: CombatEvent = { type: 'RoundEnded', round };
+  events.push(ended);
+  const roundEndReactions = resolvePassiveReactions(working, round, [ended], heroes, statuses, passives, fieldEffects);
+  working = roundEndReactions.state;
+  events.push(...roundEndReactions.events);
 
   return { state: { ...working, round: working.round + 1 }, events };
 }

@@ -829,6 +829,64 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   },
 };
 
+// --- The Titan's pieces (HeroDefinition.passiveIds, docs/titan-eyes.md §10) ---
+//
+// Innate to the Herald and the Eyes, in no pool: a piece of the Titan is the only thing that ever
+// holds one. The Standard is the finale's shape — the company must fall before the Herald can be
+// touched — and the Gaze is the Eyes' clock, set as they open and returning every third round so a
+// field of the player's own buys one to three rounds and never the phase.
+export const HERALDS_STANDARD_ID = 'heraldsStandard';
+export const WITHERING_GAZE_FALLS_ID = 'witheringGazeFalls';
+export const WITHERING_GAZE_RETURNS_ID = 'witheringGazeReturns';
+export const HELD_UP_ID = 'heldUp';
+/** What a held-up body stands with, as a share of max HP: the finale's one difficulty dial after the Eyes' lines (docs/titan-eyes.md §10). */
+export const HELD_UP_HP_FRACTION = 0.5;
+/** Every third round: the Gaze lasts five, so a player's field is overwritten inside it (never refreshed — re-setting the active field is a no-op). */
+export const WITHERING_GAZE_CADENCE = 3;
+
+const titanPassives: Record<string, PassiveDefinition> = {
+  [HERALDS_STANDARD_ID]: {
+    id: HERALDS_STANDARD_ID,
+    name: "Herald's Standard",
+    description: 'While any of its company still stands, every move aimed at the Herald turns away and no affliction can touch it.',
+    wardedWhileCompanyStands: true,
+  },
+  [WITHERING_GAZE_FALLS_ID]: {
+    id: WITHERING_GAZE_FALLS_ID,
+    name: 'The Gaze Falls',
+    description: 'When this Eye opens on the battlefield, set Withering Gaze.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'setFieldEffect', fieldEffectId: 'witheringGaze' },
+    },
+  },
+  // The Titan wants to watch (docs/titan-eyes.md §3, §10 — "the Titan's regard holds you up"): as an
+  // Eye opens, the far side is held up, the fallen included. Measured: without it the merged fight
+  // is cleared 2% of the time it is reached against the two-fight corridor's 58% — knockouts carrying
+  // through three phases, not HP, were the wall — with it at full HP 53%, at half 40%. Half shipped.
+  [HELD_UP_ID]: {
+    id: HELD_UP_ID,
+    name: 'Held Up',
+    description: 'When this Eye opens on the battlefield, no foe is left down: the fallen stand, everyone has at least half their health, and Mana is full. The Titan wants to watch.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'mendSide', side: 'enemy', hpFraction: HELD_UP_HP_FRACTION },
+    },
+  },
+  [WITHERING_GAZE_RETURNS_ID]: {
+    id: WITHERING_GAZE_RETURNS_ID,
+    name: 'The Gaze Returns',
+    description: `Every ${WITHERING_GAZE_CADENCE === 3 ? 'third' : `${WITHERING_GAZE_CADENCE}th`} round, set Withering Gaze again.`,
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self', everyNRounds: WITHERING_GAZE_CADENCE },
+      effect: { kind: 'setFieldEffect', fieldEffectId: 'witheringGaze' },
+    },
+  },
+};
+
 export const passives: Record<string, PassiveDefinition> = {
   ...fixturePassives,
   ...equipmentPassives,
@@ -837,6 +895,7 @@ export const passives: Record<string, PassiveDefinition> = {
   ...fieldHeraldPassives,
   ...evolutionPassives,
   ...classPassives,
+  ...titanPassives,
 };
 
 /**

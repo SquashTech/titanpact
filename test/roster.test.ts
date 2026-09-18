@@ -7,6 +7,7 @@
 import * as assert from 'assert';
 import { test } from './harness';
 import { heroes } from '../src/data/heroes';
+import { allCombatants } from '../src/data/content';
 import { moves } from '../src/data/moves';
 import { passives } from '../src/data/passives';
 import { statuses } from '../src/data/statuses';
@@ -203,6 +204,9 @@ test('roster: every passive in the catalog has a granter — a passive nobody gr
   for (const event of Object.values(runEvents)) {
     if (event.outcome.kind === 'grantPassive') granted.add(event.outcome.passiveId);
   }
+  // Innate to a definition (HeroDefinition.passiveIds): the Titan's pieces, and nothing recruitable.
+  for (const definition of Object.values(allCombatants)) for (const id of definition.passiveIds ?? []) granted.add(id);
+  for (const hero of Object.values(heroes)) assert.strictEqual(hero.passiveIds, undefined, `${hero.id} holds an innate passive — that is an Evolution's or a Class's job`);
 
   // Static Tide was RESERVED for a year and then used (Pincer). A new orphan should be a decision.
   const orphans = Object.keys(passives).filter((id) => !granted.has(id)).sort();

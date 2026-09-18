@@ -89,6 +89,10 @@ function fmt(amount: number): string {
   return amount > 0 ? `+${amount}` : `${amount}`;
 }
 
+function ordinalWord(n: number): string {
+  return n === 2 ? 'second' : n === 3 ? 'third' : n === 4 ? 'fourth' : n === 5 ? 'fifth' : `${n}th`;
+}
+
 /** "When" — the event the hook matches, in the subject's own terms. */
 function triggerFact(def: NonNullable<PassiveDefinition['reactive']>): PassiveFact {
   const { hook, condition } = def;
@@ -131,6 +135,12 @@ function triggerFact(def: NonNullable<PassiveDefinition['reactive']>): PassiveFa
       };
     case 'SwitchedIn':
       return { label: 'When', text: `${who} enters the battlefield`, glyph: { kind: 'move', move: 'buff' } };
+    case 'RoundEnded':
+      return {
+        label: 'When',
+        text: condition.everyNRounds ? `Every ${ordinalWord(condition.everyNRounds)} round ends` : 'A round ends',
+        glyph: { kind: 'move', move: 'buff' },
+      };
     case 'StatChanged': {
       const change = condition.eventFieldPositive ? 'rises' : condition.eventFieldNegative ? 'drops' : 'changes';
       return {
@@ -198,6 +208,12 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
         color: field?.flavorType ? 'element' : undefined,
       };
     }
+    case 'mendSide':
+      return {
+        label: 'Then',
+        text: `${effect.side === 'own' ? 'Its whole side' : 'The whole far side'} is held up — the fallen stand, ${effect.hpFraction >= 1 ? 'health' : `at least ${Math.round(effect.hpFraction * 100)}% health`} and Mana full`,
+        glyph: { kind: 'stat', stat: 'hp' },
+      };
   }
 }
 
@@ -226,6 +242,10 @@ export function passiveFacts(def: PassiveDefinition): PassiveFact[] {
       glyph: { kind: 'status', statusId },
       color: 'status',
     });
+  }
+  if (def.wardedWhileCompanyStands) {
+    rows.push({ label: 'While', text: 'Any ally of its company still stands, on the field or behind it', glyph: { kind: 'move', move: 'buff' } });
+    rows.push({ label: 'Then', text: 'Every move the far side aims at it turns away, and no affliction touches it', glyph: { kind: 'move', move: 'debuff' } });
   }
   return rows;
 }

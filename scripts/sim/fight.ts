@@ -249,6 +249,8 @@ function recordEvents(
   for (const event of events) {
     if (event.type === 'MoveUsed') casterSide = fieldSetterSide = telemetry[event.combatantId]?.side;
     if (event.type === 'SwitchedIn') fieldSetterSide = event.side;
+    // ...or the passive that fired it off a round's end (the Eyes' Withering Gaze returning).
+    if (event.type === 'PassiveTriggered') fieldSetterSide = telemetry[event.combatantId]?.side;
     if (field && event.type === 'FieldEffectSet') {
       const bucket = fieldSetterSide === AI_SIDE ? field.enemySets : field.sets;
       bucket[event.fieldEffectId] = (bucket[event.fieldEffectId] ?? 0) + 1;

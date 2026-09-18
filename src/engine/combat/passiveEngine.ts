@@ -12,6 +12,7 @@ import { nextInt } from '../rng/seededRng';
 import { applyHpDelta } from './faintHandling';
 import { applyStatus, cleanseStatuses } from './statusEngine';
 import { setFieldEffect } from './fieldEffectEngine';
+import { wardRefusesStatus } from './ward';
 
 /** A CombatEvent (or a synthetic pre-roll context) read generically by field name. */
 type TriggerContext = Record<string, unknown>;
@@ -60,8 +61,16 @@ export function matchesTrigger(
     relationHolds(condition.relativeTo, ownerId, ownerSide, subjectId, subjectSide) &&
     matchesFields(condition.eventFieldEquals, context) &&
     matchesPositiveField(condition.eventFieldPositive, context) &&
-    matchesNegativeField(condition.eventFieldNegative, context)
+    matchesNegativeField(condition.eventFieldNegative, context) &&
+    matchesCadence(condition.everyNRounds, context)
   );
+}
+
+/** An unreadable round is a no-fire, on the same terms as the field matchers. */
+function matchesCadence(everyNRounds: number | undefined, context: TriggerContext): boolean {
+  if (everyNRounds === undefined) return true;
+  const round = context.round;
+  return typeof round === 'number' && round % everyNRounds === 0;
 }
 
 // Who an event is "about": 'target' is the defender/arriver perspective, 'source' the
@@ -102,6 +111,40 @@ function resolveAmount(amount: PassiveAmount, context: TriggerContext): number {
   return Math.round(base * (amount.multiplier ?? 1));
 }
 
+/**
+ * The map's mend, in a fight (PassiveEffect mendSide): every body on the side stands with at
+ * least `hpFraction` of its max HP and full Mana, the fallen back onto the bench in roster order,
+ * the side's KO count reset so lock-in reads the phase and not the fight. Never LOWERS anything —
+ * a body above the line and a Mana overflow are kept.
+ */
+function mendSide(state: CombatState, round: number, heroes: HeroLookup, ownerId: string, which: 'own' | 'enemy', hpFraction: number): { state: CombatState; events: CombatEvent[] } {
+  const ownerSide = state.combatants[ownerId]?.side;
+  if (!ownerSide) return { state, events: [] };
+  const side: Side = which === 'own' ? ownerSide : ownerSide === 'A' ? 'B' : 'A';
+  const combatants = { ...state.combatants };
+  const bench = [...state.bench[side]];
+  const events: CombatEvent[] = [];
+  for (const id of Object.keys(combatants)) {
+    const c = combatants[id];
+    if (c.side !== side) continue;
+    const hero = heroes[c.heroId];
+    const maxHp = getMaxHp(hero, c);
+    const maxMana = getMaxMana(hero, c);
+    const revived = c.fainted;
+    const newHp = Math.max(c.currentHp, Math.min(maxHp, Math.ceil(maxHp * hpFraction)));
+    const mended = { ...c, fainted: false, currentHp: newHp, currentMana: Math.max(c.currentMana, maxMana) };
+    if (!revived && newHp === c.currentHp && c.currentMana >= maxMana) continue;
+    combatants[id] = mended;
+    if (revived) bench.push(id);
+    events.push({ type: 'Mended', round, combatantId: id, sourceCombatantId: ownerId, previousHp: c.currentHp, newHp, maxHp, revived });
+  }
+  if (events.length === 0) return { state, events };
+  return {
+    state: { ...state, combatants, bench: { ...state.bench, [side]: bench }, koCount: { ...state.koCount, [side]: 0 } },
+    events,
+  };
+}
+
 /** An authored number passes through; a PassiveAmount is read off the triggering event. */
 function resolveMagnitude(magnitude: number | PassiveAmount | undefined, context: TriggerContext): number | undefined {
   if (magnitude === undefined || typeof magnitude === 'number') return magnitude;
@@ -114,6 +157,7 @@ function resolveEffect(
   heroes: HeroLookup,
   statusDefs: Record<string, StatusDefinition>,
   fieldEffectDefs: Record<string, FieldEffectDefinition>,
+  passiveDefs: Record<PassiveId, PassiveDefinition>,
   ownerId: string,
   subjectId: string | undefined,
   eventTargetId: string | undefined,
@@ -124,6 +168,7 @@ function resolveEffect(
     if (!fieldEffectDefs[effect.fieldEffectId]) return { state, events: [] };
     return setFieldEffect(state, round, effect.fieldEffectId);
   }
+  if (effect.kind === 'mendSide') return mendSide(state, round, heroes, ownerId, effect.side, effect.hpFraction);
 
   // A group target resolves once per member in slot order, threading state through.
   const aimed = resolveTargetIdsRolled(state, ownerId, subjectId, eventTargetId, effect.target);
@@ -132,7 +177,7 @@ function resolveEffect(
   for (const targetId of aimed.targetIds) {
     const target = working.combatants[targetId];
     if (!target || target.fainted) continue;
-    const resolved = resolveEffectOn(working, round, heroes, statusDefs, ownerId, targetId, target, effect, context);
+    const resolved = resolveEffectOn(working, round, heroes, statusDefs, passiveDefs, ownerId, targetId, target, effect, context);
     working = resolved.state;
     produced.push(...resolved.events);
   }
@@ -192,10 +237,11 @@ function resolveEffectOn(
   round: number,
   heroes: HeroLookup,
   statusDefs: Record<string, StatusDefinition>,
+  passiveDefs: Record<PassiveId, PassiveDefinition>,
   ownerId: string,
   targetId: string,
   target: Combatant,
-  effect: Exclude<PassiveEffect, { kind: 'setFieldEffect' }>,
+  effect: Exclude<PassiveEffect, { kind: 'setFieldEffect' } | { kind: 'mendSide' }>,
   context: TriggerContext
 ): { state: CombatState; events: CombatEvent[] } {
   switch (effect.kind) {
@@ -210,6 +256,8 @@ function resolveEffectOn(
     case 'applyStatus': {
       const def = statusDefs[effect.statusId];
       if (!def) return { state, events: [] };
+      // A warded target refuses it (the Herald struck through an Ice Shell, a Thorns-shaped reaction).
+      if (wardRefusesStatus(state, targetId, ownerId, def, passiveDefs)) return { state, events: [] };
       // The passive's OWNER is the actor, so a source-role passive can see it.
       return applyStatus(state, round, targetId, def, {
         magnitude: resolveMagnitude(effect.magnitude, context),
@@ -311,7 +359,8 @@ export function resolvePassiveReactions(
       for (const instance of Object.values(owner.passives)) {
         const reactive = passiveDefs[instance.passiveId]?.reactive;
         if (!reactive || reactive.hook !== event.type) continue;
-        const subjectId = subjectOf(event, reactive.condition.subjectRole ?? 'target');
+        // A round's end is about nobody, so each active owner is its own subject: 'self' fires, nothing else does.
+        const subjectId = event.type === 'RoundEnded' ? ownerId : subjectOf(event, reactive.condition.subjectRole ?? 'target');
         // Kept apart from `subjectId`: a source-role condition ("I dealt this") still needs the defender.
         const eventTargetId = subjectOf(event, 'target');
         const subjectSide = subjectId ? working.combatants[subjectId]?.side : undefined;
@@ -323,7 +372,7 @@ export function resolvePassiveReactions(
         }
 
         for (let i = 0; i < (reactive.oncePerFight ? 1 : instance.stacks); i++) {
-          const resolved = resolveEffect(working, round, heroes, statusDefs, fieldEffectDefs, ownerId, subjectId, eventTargetId, reactive.effect, context);
+          const resolved = resolveEffect(working, round, heroes, statusDefs, fieldEffectDefs, passiveDefs, ownerId, subjectId, eventTargetId, reactive.effect, context);
           working = resolved.state;
           // A no-op (a heal at full HP, a target already fainted) is not a trigger: nothing to log.
           if (resolved.events.length === 0) continue;

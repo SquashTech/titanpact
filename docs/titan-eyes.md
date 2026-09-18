@@ -4,7 +4,10 @@
 > cannot take the field and what the Herald is), `run-loop.md` §4/§6 (the finale as structure)
 > and `combat.md` (the Pact Clock). **DECIDED and BUILT, phases 1–3, 2026-09-16, per user
 > direction** — §7 carries the seven decisions, §9 what the build found and measured. Phase 4 (the
-> sim's four reads) is open.
+> sim's four reads) is open. **§10 (2026-09-18, per user direction) supersedes §3 and §7.2: the
+> Herald and the Eyes are ONE fight in three phases, the Herald is warded while its company
+> stands, the Eyes set a field of the Titan's own, and the Titan rises mid-fight.** Where a line
+> above disagrees with §10, §10 is the rule in force.
 
 ---
 
@@ -296,3 +299,102 @@ that is *never* dodged is a number.
     that reach them — the hardest single fight in the run, under the Act 4 Guardian's 70% and
     over nothing. **Shipped.** The pilot never dodges a Beheld hero (it switches on matchup, and
     Ancient is neutral), so a player who uses the telegraph does better than this figure.
+
+## 10. One fight: the Herald, then the Eyes (2026-09-18, per user direction)
+
+### 10.1 The ask
+
+> *Combine the Herald fight and the battle vs the Eyes into one long fight, with a cinematic
+> where the Herald dies and the Titan rises up to attack the player. The Herald has a permanent
+> Protect while a Titanspawn is next to him — once the 5th is knocked out they can go all-in.
+> The Eyes fight starts with a field effect unique to the fight; for at least one turn the player
+> should be in notable danger if they don't wipe it off with their own; the Titan re-applies it
+> every ~3 turns. And crank the difficulty a bit.*
+
+### 10.2 What was decided
+
+1. **One fight, three phases.** `finaleMap` is `muster → finale`; the `titan` node is deleted.
+   The enemy side is ten bodies: the Herald and the five seals' Late spawn (phase 0), the
+   half-lidded Eyes (phase 1), the wide pair (phase 2). `Squad.reserves` is an ordered list of
+   phases; `Combatant.reservePhase` numbers them; `replacementCandidates` lets a body in only when
+   nothing of an earlier phase stands, and only the NEXT phase when the field is empty
+   (`switching.ts`). The pair still walk on together. The free mend between the two fights is
+   gone with the second fight; Wounds, mana and — most of all — knockouts carry across the phases.
+2. **The Herald's Standard.** `PassiveDefinition.wardedWhileCompanyStands`
+   (`engine/combat/ward.ts wardOn`): while any standing ally of the owner's phase or earlier is on
+   its side — field or bench; the Eyes waiting behind are a later phase and do not count — every
+   move the far side aims at it turns away on Barrier's own terms (`MoveGuarded`, now carrying a
+   `passiveId`), and any non-positive status from the far side is refused (a reaction passive, an
+   Ice Shell's rider). **Bench included, not only the active partner** (per user direction):
+   replacement happens after the round, so an active-only ward left the Herald bare for the back
+   half of any round its escort died in, and let it die before the fifth spawn — which broke the
+   beat the ask names. A single-target picker skips a warded foe (`selectableTargets`); a spread
+   lands on the spawn alone. The Pact Clock and a self-cost go through, being neither a move nor
+   an affliction. Read live off the board, never a status kept in step with it.
+3. **The cinematic is the Left Eye's arrival.** `entrances.ts cinematicEntranceFor` → a
+   `cinematic` beat (`buildBeats`) that `FightScreen` plays as `TitanRiseScreen` over the field
+   through `overlayHost()`, holding playback however the Auto keys are set, its own tap skipping
+   it; then the Eye's ordinary reveal beat. The rise moved off the fifth seal (`PactSealScreen`
+   walks straight into the act now) and the lids open all the way at the top — the Eyes are the
+   next thing on the field. The fall it answers is the Herald's, which the ward guarantees is the
+   last of its phase.
+4. **Withering Gaze** (`fieldEffects.witheringGaze`, `FieldEffectDefinition.drainsPercentMaxHp`):
+   every active combatant not of an exempt type — `['Ancient']`, the Titan's own pieces — loses
+   `WITHERING_GAZE_FRACTION` = 10% of max HP at the end of each round, on the Pact Clock's terms
+   (direct, no Shield, no reaction pass, the bench out of it), before the field's own countdown.
+   Set by two innate Eye passives (`HeroDefinition.passiveIds`, the first thing to hold any): **The
+   Gaze Falls** on `SwitchedIn`, and **The Gaze Returns** on the new `RoundEnded` hook with
+   `everyNRounds` = 3. Re-setting the active field is a no-op that never refreshes, so the Gaze
+   lapses after five and returns on the next third round; a field of the player's own is
+   overwritten one to three rounds later. It is the one field with no Herald, no rider and no
+   reader — the Titan's, never a hero's. *Why this over the alternatives:* an MP Regen ×0 field or a
+   heal-suppression field is dangerous only to some builds and only over several rounds; a Beheld
+   that survives a switch removes the fight's one clean counterplay. A tenth of max on both actives
+   is felt at the first tick and lethal over a phase, and it composes with the Regard instead of
+   duplicating it.
+5. **The Pact Clock counts from the phase** (`CombatState.phaseStartedRound`, set by
+   `performSwitch` when a later phase's first body enters; `pactRoundOf`). A ~40-round fight
+   under a clock that starts at 30 is a mutual wipe — which reads as a loss — so each phase is
+   bracketed on its own, which is what §6 reached for. The view's warning reads the same round.
+6. **Held Up** — the boundary gift, and the finale's one dial after the Eyes' lines. Measured
+   first (§10.3): with nothing given back at a phase boundary the merged fight is cleared **2.4%**
+   of the time it is reached, against the two-fight corridor's 57.6% on the same seed. Full HP at
+   both boundaries: 8.6%. Plus mana: 11%. Standing the fallen back up — what the between-fight
+   mend was really doing — 43–47%. Knockouts carrying through three phases were the wall, not HP,
+   and no number on the Eyes fixes a roster short two bodies against the wide pair. So each Eye
+   holds a third innate passive, **Held Up** (`PassiveEffect mendSide`, `HELD_UP_HP_FRACTION` =
+   0.5): as it opens, every foe is held up — the fallen stand at half, nobody is below half, Mana is
+   full, the side's knockouts are forgotten for lock-in. Fight modifiers and statuses stay: what
+   the Herald's Erode did is still done (measured: clearing them does not move the number). The
+   Titan wants to watch; it will not let you fall before it has looked. *Held up, not healed* —
+   half is the fiction and the crank both.
+
+### 10.3 Measured (600 runs, seed 1, chart pilot; `scripts/sim`)
+
+| Shape | Herald phase | finale cleared | full-clear |
+|---|---|---|---|
+| Two fights, the free mend between (pre-§10, same seed) | 92.4% | **57.6%** | 20.2% |
+| One fight, ward + Gaze, nothing at the boundary | 77.1% | 2.4% | 0.8% |
+| … + full HP at each Eye phase | 77.1% | 8.6% | 3.0% |
+| … + full HP and Mana | 77.1% | 11.0% | 3.8% |
+| … + the fallen stand (Held Up at full) | 77.1% | 53.3% | 18.7% |
+| **… Held Up at half (shipped)** | 77.1% | **40.0%** | 14.0% |
+| Gaze at 5% instead of 10%, nothing at the boundary | 77.1% | 3.8% | 1.3% |
+
+The ward is the Herald phase's 92 → 77: the whole phase is played under Erode and Transfix
+instead of the Herald being focused down early. The Eyes' phases with Held Up at full clear
+about as often as the old Eyes fight did (61% conditional, was 62%); the Gaze is absorbed inside
+that. Under the greedy pilot the finale is 83% (was ~90%). Every number here is directional
+(`feedback-sim-results-are-directional`); the two dials are `HELD_UP_HP_FRACTION` and
+`WITHERING_GAZE_FRACTION`, and the Eyes' lines after them.
+
+### 10.4 Named consequences
+
+- A KO'd **companion** that Held Up stands back up is not lost: the run reads the fight's END
+  state. Accepted — it stood up.
+- The Herald's **Erode** now softens the roster for the Eyes as well; the phases are one fight
+  in every sense the engine has. Stat modifiers persist by the locked rule.
+- `lockInThreshold` derives from the side's size: ten enemy bodies lock the enemy at 5, which the
+  AI never reads (it only pivots); the player's six still lock at 3 — reset by Held Up.
+- `HeroDefinition.passiveIds` is innate and in no pool; `test/roster` pins that no recruitable
+  hero carries one — a hero's identity still lives in its Evolution and its Class.

@@ -44,7 +44,7 @@ function placeEntry(
 ): Combatant {
   const hero = heroes[entry.heroId];
   // Both halves come from entryStats.ts, shared with the hero sheet — never recompute inline.
-  const passiveCounts = entryPassiveCounts(entry, equipmentLookup, teamPassiveGrants);
+  const passiveCounts = entryPassiveCounts(entry, equipmentLookup, teamPassiveGrants, hero.passiveIds);
   const passives = toPassiveInstances(passiveCounts);
   const baselineStatModifiers = entryStatModifiers(entry, equipmentLookup, passiveDefs, passiveCounts, teamStatModifiers);
   const baselineStatusMagnitudes = mergeStatusGrants(equipmentStatusGrants(entry.equipment, equipmentLookup), entry.bonusStatusGrants, teamStatusGrants);
@@ -75,7 +75,9 @@ export function buildCombatState(
 
   for (const { side, squad, roster, teamStatModifiers, teamPassiveGrants, teamStatusGrants } of placements) {
     active[side] = squad.activeIds.map((id) => (id ? combatantIdFor(side, id) : null)) as [string | null, string | null];
-    const reserveIds = squad.reserveIds ?? [];
+    const phaseOf = new Map<string, number>();
+    (squad.reserves ?? []).forEach((phase, i) => phase.forEach((id) => phaseOf.set(id, i + 1)));
+    const reserveIds = [...phaseOf.keys()];
     bench[side] = [...squad.benchIds, ...reserveIds].map((id) => combatantIdFor(side, id));
     const entriesById = new Map(roster.map((r) => [r.rosterId, r]));
 
@@ -93,7 +95,8 @@ export function buildCombatState(
         teamPassiveGrants ?? {},
         teamStatusGrants ?? {}
       );
-      combatants[combatant.combatantId] = reserveIds.includes(rosterId) ? { ...combatant, reserve: true } : combatant;
+      const reservePhase = phaseOf.get(rosterId);
+      combatants[combatant.combatantId] = reservePhase !== undefined ? { ...combatant, reservePhase } : combatant;
     }
   }
 

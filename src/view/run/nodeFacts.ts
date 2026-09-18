@@ -142,23 +142,13 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         ],
         odds: odds('boss'),
       };
-    case 'titan':
-      return {
-        kind: 'The Titan',
-        facts: [
-          { glyph: 'enemy', label: 'Enemies', value: 'Two Eyes', note: 'then two, wide' },
-          { glyph: 'enemy', label: 'Level', value: `Lv ${enemyLevelFor('titan', actNumber)}` },
-          { glyph: 'hero', label: 'Roster', value: '6 v 2' },
-        ],
-        odds: null,
-      };
     case 'finale':
       return {
         kind: 'The final battle',
         facts: [
-          { glyph: 'enemy', label: 'Enemies', value: `${SEAL_ACTS} Guardians`, note: 'as you beat them' },
-          { glyph: 'enemy', label: 'Endbringer', value: `Lv ${enemyLevelFor('finale', actNumber)}` },
-          { glyph: 'hero', label: 'Roster', value: '6 v 6' },
+          { glyph: 'enemy', label: 'The Herald', value: `Lv ${enemyLevelFor('finale', actNumber)}`, note: `${SEAL_ACTS} Titanspawn with it` },
+          { glyph: 'enemy', label: 'Then', value: 'The Titan’s Eyes', note: 'twice over' },
+          { glyph: 'hero', label: 'Roster', value: '6 v 10' },
         ],
         odds: null,
       };

@@ -33,6 +33,16 @@ export function pactFractionFor(round: number, config: PactClockConfig): number 
 }
 
 /**
+ * The round the Clock reads: counted from the fight's current PHASE, not its first round
+ * (CombatState.phaseStartedRound — a reserve phase entering restarts the count), so each phase
+ * of a phased fight is bracketed on its own and a three-phase finale is not three fights under
+ * one clock (docs/titan-eyes.md §10). Every other fight has one phase, and this is `round`.
+ */
+export function pactRoundOf(state: Pick<CombatState, 'phaseStartedRound'>, round: number): number {
+  return round - (state.phaseStartedRound ?? 1) + 1;
+}
+
+/**
  * One PactTicked for the field, then the ordinary HpChanged/Fainted stream via
  * applyHpDelta. Not followed by a passive-reaction pass: the terminator is not a
  * trigger source. A simultaneous double wipe reads as a player loss (FightScreen
@@ -46,11 +56,12 @@ export function tickPactClock(
   config: PactClockConfig,
   maxHpOf: (combatantId: string) => number
 ): { state: CombatState; events: CombatEvent[] } {
-  const fraction = pactFractionFor(round, config);
+  const pactRound = pactRoundOf(state, round);
+  const fraction = pactFractionFor(pactRound, config);
   if (fraction <= 0) return { state, events: [] };
 
   const events: CombatEvent[] = [
-    { type: 'PactTicked', round, step: round - config.startRound, fraction },
+    { type: 'PactTicked', round, step: pactRound - config.startRound, fraction },
   ];
   let working = state;
 
