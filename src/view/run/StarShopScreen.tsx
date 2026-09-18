@@ -16,7 +16,8 @@ interface Props {
 /**
  * Where stars are spent (run/starShop.ts). The balance leads — earned, spent, left — then the
  * catalog, each offer a row with its price and one Buy. The catalog is empty for now
- * (data/starShop.ts says why), so what ships is the ledger and the room it will fill.
+ * (data/starShop.ts says why), so what ships is the ledger and the room it will fill. The
+ * Compendium's sheet (CompendiumScreen) without a strip: one page, so nothing to switch.
  */
 export function StarShopScreen({ profile, onBuy, onClose }: Props) {
   const earned = totalStars(profile);
@@ -24,16 +25,16 @@ export function StarShopScreen({ profile, onBuy, onClose }: Props) {
   const balance = starBalance(profile, starShopCatalog);
 
   return (
-    <div className="log-overlay roster-mgmt-overlay" onClick={onClose}>
-      <div className="log-panel roster-panel star-shop-panel" onClick={(e) => e.stopPropagation()}>
-        <div className="log-panel-header">
-          <span>{STAR_SHOP_NAME}</span>
-          <button className="log-close-button" onClick={onClose}>
-            ✕
-          </button>
+    <div className="detail-overlay is-sheet" onClick={onClose}>
+      <div className="detail-panel is-tabbed is-hero-sheet compendium-sheet" onClick={(e) => e.stopPropagation()}>
+        <div className="detail-header is-hero compendium-head">
+          <span className="detail-portrait-plate compendium-head-plate" aria-hidden="true">
+            <HubGlyph name="star" className="compendium-head-glyph" />
+          </span>
+          <span className="detail-name compendium-head-title">{STAR_SHOP_NAME}</span>
         </div>
 
-        <div className="screen-scroll">
+        <div className="detail-tab-body compendium-body">
           {/* The balance as the thing itself: one big star and the count, the ledger under it. */}
           <div className="star-shop-balance">
             <span className="star-shop-balance-star" aria-hidden="true">
@@ -82,8 +83,10 @@ export function StarShopScreen({ profile, onBuy, onClose }: Props) {
             </div>
           )}
         </div>
+      </div>
 
-        <button className="resolve-button roster-close-button" onClick={onClose}>
+      <div className="sheet-footer" onClick={(e) => e.stopPropagation()}>
+        <button className="resolve-button sheet-close-button" onClick={onClose}>
           Close
         </button>
       </div>

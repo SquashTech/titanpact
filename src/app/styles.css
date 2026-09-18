@@ -9201,14 +9201,14 @@ textarea,
 /* --- The Constellation, the star shop (StarShopScreen.tsx) ------------------
    Where stars are spent (run/starShop.ts). The balance leads as the thing
    itself — one big star, the count, the earned/spent ledger under it — and
-   the offers follow as rows with one Buy each. Same chassis as the Compendium
-   (.roster-panel), same bottom Close. */
+   the offers follow as rows with one Buy each. Same sheet as the Compendium
+   (.compendium-sheet), one page and no strip, same Close under the panel. */
 .star-shop-balance {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 14px 8px 10px;
+  padding: 12px 8px 8px;
 }
 
 .star-shop-balance-star {
@@ -9258,11 +9258,13 @@ textarea,
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  margin: 6px 2px 14px;
+  margin: 6px 0 0;
   padding: 18px 14px;
   border-radius: var(--radius-md);
   border: 1px dashed rgba(224, 166, 60, 0.3);
-  background: var(--well);
+  /* A card on the well's floor, not a second well cut into it. */
+  background: var(--surface-raised);
+  box-shadow: var(--hairline), var(--elev-1);
   text-align: center;
 }
 
@@ -9282,7 +9284,6 @@ textarea,
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 2px 2px 12px;
 }
 
 .star-shop-offer {

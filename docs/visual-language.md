@@ -3591,6 +3591,10 @@ trophy on the plate (moved into `SECTION_PATHS.records`, so the hub tile and the
 drawing), the ledger and the Erase control in the well, `tab-subhead`s in place of the centred
 chapter marks (`.records-section-title` retired; the run summary keeps its own), and a two-tab
 strip — Records under the trophy, Run History under a new hourglass (`SECTION_PATHS.history`).
+**The Constellation** (`StarShopScreen.tsx`) followed: the star on the plate, the balance and
+the catalog in the well, no strip since it is one page, and the empty-catalog card re-cut as a
+raised card on the well's floor rather than a second well. All three title-hub screens are now
+one sheet, standing the same height with the Close in the same place.
 
 ## Open / future improvements
 
