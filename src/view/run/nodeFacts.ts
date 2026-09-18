@@ -146,9 +146,9 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
       return {
         kind: 'The final battle',
         facts: [
+          // The Eyes behind the Herald are not on the tile (docs/titan-eyes.md §10.4): the dossier says what is scouted.
           { glyph: 'enemy', label: 'The Herald', value: `Lv ${enemyLevelFor('finale', actNumber)}`, note: `${SEAL_ACTS} Titanspawn with it` },
-          { glyph: 'enemy', label: 'Then', value: 'The Titan’s Eyes', note: 'twice over' },
-          { glyph: 'hero', label: 'Roster', value: '6 v 10' },
+          { glyph: 'hero', label: 'Roster', value: `6 v ${SEAL_ACTS + 1}` },
         ],
         odds: null,
       };

@@ -15,6 +15,7 @@ import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { hasDramaticEntrance } from '../shared/entrances';
+import { useProfile } from '../shared/ProfileContext';
 import { useLongPress } from '../shared/MoveTile';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { NodeSky, NODE_TINT_GOLD } from '../shared/NodeStage';
@@ -243,8 +244,16 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm, lock
     return Array.from({ length: SLOT_COUNT }, (_, i) => ids[i] ?? null);
   });
   // Scrambled once into state: `encounter.run.roster` is generated active-first, and a fixed
-  // order (or a per-drag reshuffle) would tell the player which enemies open the fight.
-  const [scoutOrder] = useState(() => shuffled(encounter.run.roster));
+  // order (or a per-drag reshuffle) would tell the player which enemies open the fight. A later
+  // PHASE (Squad.reserves — the Titan's Eyes behind the Herald, docs/titan-eyes.md §10) is not
+  // scouted until the profile has cleared a run: the first time through, what walks on when the
+  // Herald falls is the surprise (per user direction).
+  const profile = useProfile();
+  const [scoutOrder] = useState(() => {
+    const reserved = new Set((encounter.squad.reserves ?? []).flat());
+    const seen = profile.runsCompleted > 0;
+    return shuffled(encounter.run.roster.filter((entry) => seen || !reserved.has(entry.rosterId)));
+  });
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [dragOverSlot, setDragOverSlot] = useState<number | null>(null);
   /** `enemy`: a scouted-opponent sheet gets no relic grants folded in. */
