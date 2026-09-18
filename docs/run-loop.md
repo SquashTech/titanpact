@@ -474,7 +474,8 @@ reward types filling nine seats an act, so every act showed nearly every node (t
 of rows, in all three rows one act in five) and a reward row barely read as a draw; nine types
 into nine seats is what makes it one again, and adding seats is how the Cache came down without
 its freed weight flowing into Equipment (`REWARD_WEIGHTS`: Forge 25, Ley Line 25; the Cache is
-in 48% of rows now, in all three 11% of acts, absent 14%).
+in 48% of rows at that point, in all three 11% of acts, absent 14% — and then its weight came
+down to 20 the same day, see "Mastery Scrolls" below).
 
 **The Forge** (`forgeReward`, `ForgeNodeScreen`, `forgeLift`): the roster as benches — the Guild
 Hall's Smithy room, drawn once in `SmithyBenches` — and a tap on a worn piece IS the lift, since
@@ -511,8 +512,10 @@ Scroll is one pip, landed the instant it is paid on `ScrollNodeScreen`, and a pi
 milestones does nothing but count. Three faucets, every one on the map and none in a fight — *fights
 pay XP, the map pays Scrolls*: the **Scribe** (`scribeReward`, a forced row every act 1–5: pick two
 heroes, `SCRIBE_PIPS_EACH` = 2 each — it cannot be concentrated, and that is what seeds the roster),
-the **Scroll Cache** (`scrollReward`, weight 46 in the reward pool: `SCROLL_CACHE_COUNT` = 3 in any
-split — where the player prioritises), and the Guild Hall shelf (`SCROLL_PURCHASE_COST` = 25g,
+the **Scroll Cache** (`scrollReward`, weight 20 in the reward pool since 2026-09-17 — it was 46,
+under which an act held two or more Caches 47% of the time and, with the Scribe's 2, an Act 1
+Evolution was the default; at 20 two-a-act is one act in six and an act still holds one 60% of
+the time: `SCROLL_CACHE_COUNT` = 3 in any split — where the player prioritises), and the Guild Hall shelf (`SCROLL_PURCHASE_COST` = 25g,
 `SCROLL_PURCHASE_LIMIT` = 2 a visit, the tap charges the gold and opens the who screen). The fifth
 pip raises the Evolution screen over the node that paid it (`masteryFlow.ts`), and the tenth the
 hero's **signature move** (`HeroDefinition.signatureMoveId`, `src/data/signatures.ts` — one

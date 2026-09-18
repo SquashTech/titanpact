@@ -107,8 +107,11 @@ export const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // phase 2). Weighted level with equipment: they are the run's two growth axes, one per hero's
   // form and one per hero's kit, and neither should be the one you plan around. The supply is the
   // only balance number and phase 5 sets it; the Drop's seat (14) retired with Ichor and was not
-  // re-pointed.
-  ['scrollReward', 46],
+  // re-pointed. 46 → 20 on 2026-09-17 (per user direction): at 46 an act held two or more Caches
+  // 47% of the time, and with the Scribe's 2 a single Cache is an Evolution, so early Evolutions
+  // were the default; at 20 it is one act in six, all three rows one in fifty, and an act still
+  // holds one more often than not (60%).
+  ['scrollReward', 20],
   // The Boon: the part of the deleted relic pool that was actually worth having, handed to ONE
   // hero instead of all four. It is the only reward row node that changes how a hero plays
   // rather than how big its numbers are.
@@ -129,7 +132,7 @@ export const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // The Forge and the Ley Line (2026-09-17, per user direction): the Smithy's two verbs, the
   // Anvil's and the Enchanter's, each given a free seat on the map — one lift of one worn piece,
   // one hero drawing LEY_LINE_FORCE of its own element's Force for the run. Weighted level with
-  // each other and under the Cache: neither is the axis you plan around. Nine types into nine
+  // each other, under Rest and over the Cache: neither is the axis you plan around. Nine types into nine
   // seats an act is what makes a reward row a draw again; seven into nine showed every type every
   // act (docs/run-loop.md "The Forge and the Ley Line").
   ['forgeReward', 25],

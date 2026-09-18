@@ -474,7 +474,10 @@ don't silently override it.
   worn piece a tier up, on the paid Anvil's own quote, so the act window still caps it — and
   needs no exception. Together they are the Smithy's two verbs given map seats (25 each), which
   took the Scroll Cache from 59% of reward rows to 48% without its weight flowing into Equipment
-  (`docs/run-loop.md` "The Forge and the Ley Line"). Neither extends to a third.
+  (`docs/run-loop.md` "The Forge and the Ley Line"); **the Cache's weight then came down 46 → 20**
+  (same day, per user direction — two Caches an act was 47% of acts and, with the Scribe's 2, an
+  Act 1 Evolution the default; at 20 it is one act in six, and an act holds one 60% of the time).
+  Neither extends to a third.
   Gems were deleted whole on 2026-09-10
   (Growth Overhaul phase 1), and with them the `gemReward` Gem Cache and the two stat shrines
   (`hpBoostReward` Vitality, `manaBoostReward` Mana Well) — the reward pool's 40 freed weight
