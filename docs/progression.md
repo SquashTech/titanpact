@@ -913,7 +913,7 @@ a single write — and the Records panel's second tab (`RunHistory.tsx`) reads i
 folded to outcome / where / faces, opened on a tap to the roster. Banners are on neither the
 summary nor the history (per user direction, same day): what a run came to is its team.
 
-**The SPENDING half: the shop is PLUMBED, its catalog is EMPTY.** Stars are to purchase "new
+**The SPENDING half: the shop is PLUMBED, its catalog is EMPTY.** **Its plan is `docs/constellation.md` (2026-09-17): Starter Packs, the catalog, star tiers.** Stars are to purchase "new
 things for runs" (per user direction, same day). Read against the locked paragraph above, that
 is only consistent if what they buy are **unlocks** — new heroes, items, relics entering the pool
 a run draws from — and not account-level power carried into a run; that is the design still
