@@ -13113,6 +13113,7 @@ textarea,
 }
 
 .enemy-scout-verdict-small {
+  flex: none;
   width: 13px;
   height: 13px;
   margin: 0;
@@ -13124,6 +13125,22 @@ textarea,
   width: 9px;
   height: 9px;
   animation: none;
+}
+
+/* The finale scouts six: the row has to clear the move-here key on the cell's right
+   edge, which six 13px discs do not. */
+.squad-slot-matchups-dense {
+  gap: 2px;
+}
+
+.squad-slot-matchups-dense .enemy-scout-verdict-small {
+  width: 10px;
+  height: 10px;
+}
+
+.squad-slot-matchups-dense .enemy-scout-verdict-small > svg {
+  width: 7px;
+  height: 7px;
 }
 
 .enemy-scout-verdict-small.is-up {

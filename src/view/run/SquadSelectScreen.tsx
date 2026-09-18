@@ -194,7 +194,10 @@ function MatchupRow({ heroTypes, enemies }: { heroTypes: readonly TypeId[]; enem
   const up = verdicts.filter((v) => v === 'up').length;
   const down = verdicts.filter((v) => v === 'down').length;
   return (
-    <div className="squad-slot-matchups" aria-label={`${up} good ${up === 1 ? 'matchup' : 'matchups'}, ${down} bad`}>
+    <div
+      className={`squad-slot-matchups${enemies.length > 4 ? ' squad-slot-matchups-dense' : ''}`}
+      aria-label={`${up} good ${up === 1 ? 'matchup' : 'matchups'}, ${down} bad`}
+    >
       {verdicts.map((verdict, i) => (
         <MatchupArrow key={enemies[i].rosterId} verdict={verdict} small />
       ))}
