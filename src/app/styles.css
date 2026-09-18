@@ -14395,6 +14395,12 @@ textarea,
   --coin-rgb: 143, 180, 255;
 }
 
+/* The Revive in the resource's own gold (shared/RunGlyph.tsx RESOURCE_COLORS), as the Bag wears it. */
+.guild-hall-good.is-revive {
+  --plate-color: #ffb454;
+  --coin-rgb: 255, 180, 84;
+}
+
 /* The potions' glyph is the coin the Bag wears in a fight, the flask struck on it; the good's
    own disabled fade is what dims it. */
 .guild-hall-good-coin {
@@ -14420,6 +14426,11 @@ textarea,
 .guild-hall-good-held.is-mpPotion {
   border-color: color-mix(in srgb, #8fb4ff 55%, var(--border));
   color: #8fb4ff;
+}
+
+.guild-hall-good-held.is-revive {
+  border-color: color-mix(in srgb, #ffb454 55%, var(--border));
+  color: #ffb454;
 }
 
 /* One good, and not stretched across the row: a plate that fills the width is

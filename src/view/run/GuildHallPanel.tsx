@@ -1,6 +1,7 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { heroes } from '../../data/heroes';
+import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import { ItemServicesSection } from './ItemServicesSection';
 import { guildHallOffers, CONTRACT_PURCHASE_COST } from '../../data/recruitment';
@@ -13,8 +14,9 @@ import { ROSTER_CAP, RosterFullError } from '../../run/state';
 import { guildHallEntry } from '../../run/guildRecruit';
 import { guildHallLevel } from '../../run/difficulty';
 import { SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT, canBuyScroll } from '../../run/mastery';
-import { CONSUMABLE_HOLD_CAP, CONSUMABLE_NAMES, CONSUMABLE_PRICE, POTION_KINDS, canBuyConsumable, type PotionKind } from '../../run/consumables';
-import { MEND_PRICE, anyWounded, canBuyMend } from '../../run/wounds';
+import { CONSUMABLE_HOLD_CAP, CONSUMABLE_KINDS, CONSUMABLE_NAMES, REVIVE_PURCHASE_LIMIT, canBuyConsumable, consumablePrice, type ConsumableKind } from '../../run/consumables';
+import { anyWounded, canBuyMend, mendPrice } from '../../run/wounds';
+import { entryHp } from '../shared/WoundBar';
 import { StatGlyph } from '../shared/StatBars';
 import {
   recruitFromGuildHall,
@@ -59,12 +61,14 @@ interface Props {
   tab: GuildHallTab;
   /** Mastery Scrolls bought this visit, carried the same way (run/mastery.ts SCROLL_PURCHASE_LIMIT). */
   scrollsBought: number;
+  /** Revives bought this visit (run/consumables.ts REVIVE_PURCHASE_LIMIT). */
+  revivesBought: number;
   onRunChange: (next: RunState) => void;
   /** Hands off to App.tsx, which charges the gold and opens the who screen for the pip. */
   onBuyScroll: () => void;
   /** Hands off to App.tsx, which charges the gold and fills the flask (run/consumables.ts). */
-  onBuyConsumable: (kind: PotionKind) => void;
-  /** The whole roster made whole for MEND_PRICE (run/wounds.ts). */
+  onBuyConsumable: (kind: ConsumableKind) => void;
+  /** The whole roster made whole for what is missing (run/wounds.ts mendPrice). */
   onBuyMend: () => void;
   /** Recruiting at a full roster hands off to App.tsx's RosterReplaceScreen gate. */
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
@@ -110,6 +114,7 @@ export function GuildHallPanel({
   run,
   offers,
   scrollsBought,
+  revivesBought,
   onRunChange,
   onBuyScroll,
   onBuyConsumable,
@@ -125,6 +130,8 @@ export function GuildHallPanel({
   const [fanfareHeroId, setFanfareHeroId] = useState<string | null>(null);
 
   const heroOffers = guildHeroOffers(run, offers, freeRecruits);
+  /** What the mend costs right now: gold for what is missing (run/wounds.ts mendPrice), read off the same max HP the wound bars draw. */
+  const mendCost = mendPrice(run, (entry) => entryHp(rosterHeroes[entry.heroId], entry, run.relics).maxHp);
 
   const rosterFull = run.roster.length >= ROSTER_CAP;
   const previewOffer = previewOfferId ? heroOffers.find((o) => o.id === previewOfferId) : undefined;
@@ -240,15 +247,16 @@ export function GuildHallPanel({
             </button>
             {/* The potions (2026-09-16, per user direction, off the Smithy's counter): consumed rather
                 than worn. No per-visit limit — the flask's own cap (CONSUMABLE_HOLD_CAP) is the shelf's.
-                The Revive is not sold: a KO that 20g undoes is not a KO (run/consumables.ts). */}
-            {POTION_KINDS.map((kind) => {
+                The Revive (2026-09-18) is sold steep and one a visit (run/consumables.ts REVIVE_PRICE). */}
+            {CONSUMABLE_KINDS.map((kind) => {
               const held = run.consumables[kind];
               const atCap = held >= CONSUMABLE_HOLD_CAP;
+              const visitDone = kind === 'revive' && revivesBought >= REVIVE_PURCHASE_LIMIT;
               return (
                 <button
                   key={kind}
-                  className={`guild-hall-good is-${kind}${atCap ? ' sold-out' : ''}`}
-                  disabled={!canBuyConsumable(run, kind)}
+                  className={`guild-hall-good is-${kind}${atCap || visitDone ? ' sold-out' : ''}`}
+                  disabled={!canBuyConsumable(run, kind, revivesBought)}
                   onClick={() => onBuyConsumable(kind)}
                 >
                   {/* The flask on a coin (shared/Coin.tsx), as the Bag wears it in a fight. */}
@@ -258,10 +266,12 @@ export function GuildHallPanel({
                   </span>
                   <span className="guild-hall-good-name">{CONSUMABLE_NAMES[kind]}</span>
                   {atCap ? (
-                    <span className="guild-hall-good-price is-soldout">Flask full</span>
+                    <span className="guild-hall-good-price is-soldout">{kind === 'revive' ? 'Holding three' : 'Flask full'}</span>
+                  ) : visitDone ? (
+                    <span className="guild-hall-good-price is-soldout">One a visit</span>
                   ) : (
                     <span className="guild-hall-good-price">
-                      <ResourceGlyph kind="gold" /> {CONSUMABLE_PRICE}
+                      <ResourceGlyph kind="gold" /> {consumablePrice(kind)}
                     </span>
                   )}
                   {held > 0 && (
@@ -275,14 +285,14 @@ export function GuildHallPanel({
             {/* The mend (run/wounds.ts): the one good here that is for everyone at once, so it takes
                 the whole shelf, and since 2026-09-17 it stands the downed up too. Dark while nobody is
                 hurt — a heal with nothing to heal is not for sale. */}
-            <button className={`guild-hall-good is-mend${anyWounded(run) ? '' : ' sold-out'}`} disabled={!canBuyMend(run)} onClick={onBuyMend}>
+            <button className={`guild-hall-good is-mend${anyWounded(run) ? '' : ' sold-out'}`} disabled={!canBuyMend(run, mendCost)} onClick={onBuyMend}>
               <span className="guild-hall-good-glyph">
                 <StatGlyph stat="hp" tone="inherit" />
               </span>
               <span className="guild-hall-good-name">Full Party Heal</span>
               {anyWounded(run) ? (
                 <span className="guild-hall-good-price">
-                  <ResourceGlyph kind="gold" /> {MEND_PRICE}
+                  <ResourceGlyph kind="gold" /> {mendCost}
                 </span>
               ) : (
                 <span className="guild-hall-good-price is-soldout">Nobody hurt</span>

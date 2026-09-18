@@ -1,7 +1,7 @@
 import { useState, type CSSProperties } from 'react';
 import type { RunState } from '../../run/state';
 import type { GuildHallOffers } from '../../run/shop';
-import type { PotionKind } from '../../run/consumables';
+import type { ConsumableKind } from '../../run/consumables';
 import type { GuildHallOffer } from '../../run/recruitment';
 import { GuildHallPanel, guildHallTabs, type GuildHallTab } from './GuildHallPanel';
 import { GuildSign } from './guildHallArt';
@@ -14,9 +14,10 @@ interface Props {
   offers: GuildHallOffers;
   /** Mastery Scrolls bought this visit, carried on the `shop` Screen (App.tsx) because a purchase unmounts this screen through the who screen. */
   scrollsBought: number;
+  revivesBought: number;
   onRunChange: (next: RunState) => void;
   onBuyScroll: () => void;
-  onBuyConsumable: (kind: PotionKind) => void;
+  onBuyConsumable: (kind: ConsumableKind) => void;
   onBuyMend: () => void;
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
   onContinue: () => void;
@@ -35,6 +36,7 @@ export function ShopNodeScreen({
   run,
   offers,
   scrollsBought,
+  revivesBought,
   onRunChange,
   onBuyScroll,
   onBuyConsumable,
@@ -59,6 +61,7 @@ export function ShopNodeScreen({
           run={run}
           offers={offers}
           scrollsBought={scrollsBought}
+          revivesBought={revivesBought}
           onRunChange={onRunChange}
           onBuyScroll={onBuyScroll}
           onBuyConsumable={onBuyConsumable}

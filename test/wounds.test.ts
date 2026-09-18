@@ -13,7 +13,10 @@ import { advanceToNextAct } from '../src/run/runProgress';
 import { pickSquad, SquadSelectionError } from '../src/run/squad';
 import { addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
 import {
-  MEND_PRICE,
+  MEND_PRICE_FLOOR,
+  MEND_PRICE_PER_HERO,
+  mendPrice,
+  rosterMissing,
   REVIVE_FRACTION,
   WoundsError,
   anyDown,
@@ -143,19 +146,31 @@ test('wounds: the act boundary is the free mend and stands the downed up; the Re
   assert.ok(advanceToNextAct(hurt, 7).roster.every((e) => e.wounds === 0 && !e.down));
   assert.ok(mendRoster(hurt).roster.every((e) => e.wounds === 0 && !e.down));
 
-  assert.ok(canBuyMend(hurt));
-  const mended = buyMend(hurt);
-  assert.strictEqual(mended.gold, 100 - MEND_PRICE);
+  // Priced by what is missing: Cinder 40 of 200, Tide down (a whole hero) = 1.2 heroes' worth.
+  const maxHpOf = () => 200;
+  assert.strictEqual(rosterMissing(hurt, maxHpOf), 1.2);
+  const cost = mendPrice(hurt, maxHpOf);
+  assert.strictEqual(cost, Math.round((MEND_PRICE_PER_HERO * 1.2) / 5) * 5);
+  assert.ok(canBuyMend(hurt, cost));
+  const mended = buyMend(hurt, cost);
+  assert.strictEqual(mended.gold, 100 - cost);
   assert.ok(!anyWounded(mended));
   assert.ok(!anyDown(mended));
-  assert.ok(!canBuyMend(mended), 'nothing to mend is not for sale');
-  assert.throws(() => buyMend(mended), WoundsError);
-  assert.ok(!canBuyMend({ ...hurt, gold: MEND_PRICE - 1 }));
-  assert.throws(() => buyMend({ ...hurt, gold: MEND_PRICE - 1 }), WoundsError);
+  assert.ok(!canBuyMend(mended, cost), 'nothing to mend is not for sale');
+  assert.throws(() => buyMend(mended, cost), WoundsError);
+  assert.ok(!canBuyMend({ ...hurt, gold: cost - 1 }, cost));
+  assert.throws(() => buyMend({ ...hurt, gold: cost - 1 }, cost), WoundsError);
 
-  // A roster that is only down, not otherwise hurt, is still for sale.
+  // A roster that is only down, not otherwise hurt, is still for sale, at a whole hero's price.
   const onlyDown = withDown(run, 'tidecaller');
-  assert.ok(canBuyMend(onlyDown));
+  assert.strictEqual(mendPrice(onlyDown, maxHpOf), MEND_PRICE_PER_HERO);
+  assert.ok(canBuyMend(onlyDown, MEND_PRICE_PER_HERO));
+  // A scratch costs the floor, never nothing; six heroes at half cost about what the old flat 40 did.
+  const scratch = { ...run, roster: run.roster.map((e, i) => (i === 0 ? { ...e, wounds: 10 } : e)) };
+  assert.strictEqual(mendPrice(scratch, maxHpOf), MEND_PRICE_FLOOR);
+  const six = seedRoster(['cinderKnight', 'tidecaller', 'ironWarden', 'valor', 'crag', 'tempest'], 100);
+  const halved = { ...six, roster: six.roster.map((e) => ({ ...e, wounds: 100 })) };
+  assert.strictEqual(mendPrice(halved, maxHpOf), MEND_PRICE_PER_HERO * 3);
 });
 
 test('wounds: a Revive stands ONE downed hero up at half, off the purse, and only a downed one', () => {

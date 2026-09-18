@@ -6,8 +6,8 @@ import type { StatKey } from '../../src/engine/content';
 import { heroes } from '../../src/data/heroes';
 import { rosterHeroes } from '../../src/data/content';
 import { absorbCompanions, companionCandidate, companionJoinDue, joinCompanion } from '../../src/run/companion';
-import { anyDown, canBuyMend, buyMend, mendRoster, recordWounds, reviveHero, standingRoster } from '../../src/run/wounds';
-import { canUseRevive, grantConsumable, rollConsumableDrop, spendRevive } from '../../src/run/consumables';
+import { anyDown, canBuyMend, buyMend, mendPrice, mendRoster, recordWounds, reviveHero, standingRoster } from '../../src/run/wounds';
+import { buyConsumable, canBuyConsumable, canUseRevive, grantConsumable, rollConsumableDrop, spendRevive } from '../../src/run/consumables';
 import { moves } from '../../src/data/moves';
 import { equipment } from '../../src/data/equipment';
 import { relics, guardianBannerRelics } from '../../src/data/relics';
@@ -950,10 +950,12 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
     ledger(record, act, `spent:${key}`, before - next.gold);
   };
 
-  // The mend first, when the roster is hurt enough for it to be worth a hire's price.
-  if (canBuyMend(next) && policy.rosterHpFraction(next.roster) < 0.6) {
+  // The mend first, when the roster is hurt enough for it to be worth its price — which now
+  // rises with the hurt (run/wounds.ts mendPrice), so the pilot's threshold is the same read.
+  const mendCost = mendPrice(next, (entry) => policy.effectiveStats(entry).hp);
+  if (canBuyMend(next, mendCost) && policy.rosterHpFraction(next.roster) < 0.6) {
     if (anyDown(next)) record.knockouts.mendsWhileDown += 1;
-    spend('mend', () => buyMend(next));
+    spend('mend', () => buyMend(next, mendCost));
   }
 
   for (const offerId of offers.heroOfferIds) {
@@ -971,6 +973,12 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
       record.recruitsBySource.hireReplacing = (record.recruitsBySource.hireReplacing ?? 0) + 1;
       spend('hire', () => recruitFromGuildHallReplacing(next, offer, rosterId, weakest.rosterId));
     }
+  }
+
+  // At the Vigil, one Revive for the final battle before anything else on the counter
+  // (run/consumables.ts REVIVE_PRICE) — a player who saves for it buys it first, not last.
+  if (muster && next.consumables.revive === 0 && canBuyConsumable(next, 'revive', 0)) {
+    spend('revive', () => buyConsumable(next, 'revive', 0));
   }
 
   // The shelf's Mastery Scrolls (SCROLL_PURCHASE_LIMIT a visit), bought while somebody can still

@@ -33,7 +33,7 @@ export const STARTING_CONSUMABLES: ConsumablePurse = { hpPotion: 1, mpPotion: 1,
  */
 export const CONSUMABLE_HOLD_CAP = 3;
 
-/** Flat Guild Hall price, per potion. A pure gold sink: nothing here ever pays gold back. */
+/** Flat Guild Hall price, per potion. A pure gold sink: nothing here ever pays gold back. The Revive's own is REVIVE_PRICE. */
 export const CONSUMABLE_PRICE = 20;
 
 /**
@@ -102,11 +102,29 @@ export function spendConsumables(run: RunState, used: Readonly<Partial<Consumabl
   return { ...run, consumables: purse };
 }
 
-export function canBuyConsumable(run: RunState, kind: PotionKind, cost = CONSUMABLE_PRICE): boolean {
+/**
+ * The Revive on the shelf (2026-09-18, per user direction), steep and one a visit: twice the
+ * mend at its old flat price, most of an act-1 purse, a third of act 5's — where the choice to
+ * carry one into the final battle actually lives. Below the mend and it would be bought instead
+ * of mending; the 09-17 "never sold" stood against a CHEAP one, and this is not that.
+ */
+export const REVIVE_PRICE = 80;
+export const REVIVE_PURCHASE_LIMIT = 1;
+
+export function consumablePrice(kind: ConsumableKind): number {
+  return kind === 'revive' ? REVIVE_PRICE : CONSUMABLE_PRICE;
+}
+
+/** `boughtThisVisit` is the Revive's per-visit count (the shop screen carries it, as it does the Scrolls'); the potions have no visit limit. */
+export function canBuyConsumable(run: RunState, kind: ConsumableKind, boughtThisVisit = 0, cost = consumablePrice(kind)): boolean {
+  if (kind === 'revive' && boughtThisVisit >= REVIVE_PURCHASE_LIMIT) return false;
   return run.consumables[kind] < CONSUMABLE_HOLD_CAP && run.gold >= cost;
 }
 
-export function buyConsumable(run: RunState, kind: PotionKind, cost = CONSUMABLE_PRICE): RunState {
+export function buyConsumable(run: RunState, kind: ConsumableKind, boughtThisVisit = 0, cost = consumablePrice(kind)): RunState {
+  if (kind === 'revive' && boughtThisVisit >= REVIVE_PURCHASE_LIMIT) {
+    throw new ConsumableError(`The shelf sells ${REVIVE_PURCHASE_LIMIT} Revive a visit`);
+  }
   if (run.consumables[kind] >= CONSUMABLE_HOLD_CAP) {
     throw new ConsumableError(`Already holding ${CONSUMABLE_HOLD_CAP} ${CONSUMABLE_NAMES[kind]}s`);
   }

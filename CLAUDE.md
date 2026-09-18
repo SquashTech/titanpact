@@ -557,7 +557,10 @@ don't silently override it.
   and **in a fight since 2026-09-18** (per user direction), from the Bag on the potions' terms,
   the fallen hero standing onto the bench at half (`useConsumable` 'revive') — the saved-for-the-
   finale layer of safety in a fight nothing mends inside;
-  **never sold** — a KO that 20g undoes is not a KO — and never started with; its one faucet is
+  **sold steep, one a visit** (`REVIVE_PRICE` = 80, `REVIVE_PURCHASE_LIMIT` = 1, 2026-09-18 per
+  user direction — the 09-17 "never sold" stood against a CHEAP one: a KO that 20g undoes is not
+  a KO, one that 80g undoes and travels is a trade against the Anvil; measured, a pilot that buys
+  one first at the Vigil takes the finale 52 → 57%) and never started with; its other faucet is
   its own rarer drop roll (`REVIVE_DROP_CHANCE`), taken only when the potion roll missed, so a
   fight drops one thing at most. `docs/run-loop.md` "Consumables".
 
@@ -687,7 +690,10 @@ what's still unimplemented:
   missing HP onto `RosterEntry.wounds`, and **a knockout PERSISTS** (2026-09-17, per user
   direction — the counterweight to every fight fielding the whole roster): a KO'd hero is
   `RosterEntry.down`, is not fielded (`standingRoster`, `pickSquad`), and stands up only at
-  the **Rest** seat, the Guild Hall's **mend** (40g, whole roster, the downed included), a
+  the **Rest** seat, the Guild Hall's **mend** (whole roster, the downed included, **priced by
+  what is missing** since 2026-09-18 per user direction — `mendPrice`, `MEND_PRICE_PER_HERO` = 15
+  a hero's worth of missing HP, a downed hero a whole one, floor 5, so six at half is 45 where
+  the flat price was 40 and a scratch costs a scratch), a
   **Revive** (a rare drop, spent on the squad screen, half HP), or the act's end — the one free
   mend, everyone whole. The 25% walk floor this replaces was the guard against the 2026-08-16
   reversal, where raw persistence bricked a KO'd hero for the run with no way back; the four

@@ -626,14 +626,18 @@ command-phase action on a FALLEN hero, who stands onto the bench at half and is 
 against lock-in (`useConsumable` 'revive', `engine/combat/consumables.ts`). It was kept off the
 field at first because a Pokémon Revive on the bench is a fourth body for no turn; the merged
 finale (`titan-eyes.md` §10) — one fight, two phases, nothing mended between — is exactly the
-fight that wants one saved for it, and the item's scarcity is what prices it: never sold, never
-started with, one drop roll. Measured: the finale 41.9 → 48.6% with the sim's leftovers, ~63%
-with one in hand. **Never sold and never started with**: a KO that 20g undoes
-is not a KO, and the Rest seat and the mend are the faucets a player can plan around. Its one
-faucet is its own drop roll (`REVIVE_DROP_CHANCE`: 6% a fight, 8% a Skirmish, 15% an Elite, 20%
-a Guardian, none from the finale), taken only when the potion roll missed so a fight drops one
-thing at most and the victory ledger keeps one row for it. Same hold cap. The glyph is a
-feather — the one resource in the purse that is not drunk.
+fight that wants one saved for it, and the item's price is what prices it. Measured: the finale
+41.9 → 48.6% with the sim's leftovers, ~63% with one in hand. **Sold steep, one a visit**
+(`REVIVE_PRICE` = 80, `REVIVE_PURCHASE_LIMIT` = 1 — 2026-09-18, per user direction; it was
+never sold from 09-17, an argument against a CHEAP one: a KO that 20g undoes is not a KO, and the
+Rest seat and the mend are the faucets a player can plan around. At twice the old mend, most of
+an act-1 purse and a third of act 5's, a shelf Revive is a trade against the Anvil, and the one
+place it matters is the Vigil, where the pilot buying it first takes the finale 52 → 57% and
+spends 50g a run on it). **Never started with.** Its other faucet is its own drop roll
+(`REVIVE_DROP_CHANCE`: 6% a fight, 8% a Skirmish, 15% an Elite, 20% a Guardian, none from the
+finale), taken only when the potion roll missed so a fight drops one thing at most and the
+victory ledger keeps one row for it. Same hold cap. The glyph is a feather — the one resource in
+the purse that is not drunk.
 
 **The coin** (`src/view/shared/Coin.tsx`, 2026-09-17, per user direction): one struck token in
 the mana gem's manufacture — a dark halo that seats it on whatever it sits over, a face, a
@@ -1125,7 +1129,11 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   **Rest** (`restReward`, weight 30 in `REWARD_WEIGHTS`: the whole roster whole, in the
   seat a reward row would have given to gear, Scrolls or a Boon — the Slay the Spire
   rest-vs-upgrade choice, inside the row the map already has), the **Guild Hall's mend**
-  (`MEND_PRICE` = 40, the whole roster, dark while nobody is hurt), and a **contract**
+  (the whole roster, dark while nobody is hurt, and **priced by what is missing** since
+  2026-09-18 per user direction: `mendPrice` = `MEND_PRICE_PER_HERO` 15 × the roster's missing
+  HP in heroes' worth, a downed hero a whole one, struck in fives, floor 5 — six at half is 45
+  where the flat 40 was, a scratch costs a scratch, and the sim's mend spend moved from a flat
+  ~13 an act to 4 in act 1 and 16–17 in acts 3–5, which is the price following the hurt), and a **contract**
   hero, who arrives whole. Potions are NOT drinkable on the map (per user direction):
   they are a free action in a fight with the outcome shown before declaring, so drinking
   at a fight's start is strictly better than drinking on the map and the map version is

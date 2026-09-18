@@ -51,7 +51,8 @@ import { CompanionScreen, type CompanionBeat } from '../view/run/CompanionScreen
 import { absorbCompanions, companionCandidate, companionJoinDue, joinCompanion } from '../run/companion';
 import type { CombatState } from '../engine/state';
 import { koRosterIdsOf } from '../run/buildCombatState';
-import { WoundsError, anyDown, buyMend, recordWounds, mendRoster, standingRoster } from '../run/wounds';
+import { WoundsError, anyDown, buyMend, mendPrice, recordWounds, mendRoster, standingRoster } from '../run/wounds';
+import { entryHp } from '../view/shared/WoundBar';
 import { enemies, finaleEnemies, ENDBRINGER_ID, MANTICORE_ID, titanEyes, EYE_PHASES } from '../data/enemies';
 import { relics } from '../data/relics';
 import { ActIntroScreen } from '../view/run/ActIntroScreen';
@@ -182,7 +183,7 @@ type Screen =
   /** TEMPORARY DEV/TEST — src/run/statusTestFight.ts. Own kind so leaving returns to the title. */
   | { kind: 'statusTestFight'; player: Encounter; ai: Encounter }
   /** `offers` lives on the screen, not in the shop component: a purchase re-renders the shop and component-local state would reroll / forget. */
-  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; scrollsBought: number }
+  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; scrollsBought: number; revivesBought: number }
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType }
   /** The Forge: +1 item slot to one hero. */
   /** An item has arrived and asks who carries it (docs/gear-absorption.md §2). `next` is where the run goes once it is absorbed or sold. */
@@ -658,6 +659,7 @@ export function App() {
         nodeId,
         offers: rollGuildHallOffers(playerRun, guildHallOffers, node.type === 'muster'),
         scrollsBought: 0,
+        revivesBought: 0,
       });
     } else if (node.type === 'manaWellReward') {
       setScreen({ kind: 'manaWell', nodeId });
@@ -851,24 +853,26 @@ export function App() {
     setScreen({ kind: 'map' });
   }
 
-  /** One bundle off the Guild Hall shelf; the visit's count rides the shop screen, as sold-out gear does. */
-  function handleBuyGuildConsumable(kind: PotionKind) {
+  /** One off the Guild Hall shelf; the Revive's visit count rides the shop screen, as the Scrolls' does. */
+  function handleBuyGuildConsumable(kind: ConsumableKind) {
+    if (screen.kind !== 'shop') return;
     let next: RunState;
     try {
-      next = buyConsumable(playerRun, kind);
+      next = buyConsumable(playerRun, kind, screen.revivesBought);
     } catch (err) {
       if (!(err instanceof ConsumableError)) throw err;
       return;
     }
     playSfx('gold.coin');
     setPlayerRun(next);
+    if (kind === 'revive') setScreen({ ...screen, revivesBought: screen.revivesBought + 1 });
   }
 
-  /** The Guild Hall's mend (run/wounds.ts): the whole roster whole, for gold. */
+  /** The Guild Hall's mend (run/wounds.ts): the whole roster whole, for what is missing. */
   function handleBuyGuildMend() {
     let next: RunState;
     try {
-      next = buyMend(playerRun);
+      next = buyMend(playerRun, mendPrice(playerRun, (entry) => entryHp(rosterHeroes[entry.heroId], entry, playerRun.relics).maxHp));
     } catch (err) {
       if (!(err instanceof WoundsError)) throw err;
       return;
@@ -1178,6 +1182,7 @@ export function App() {
           run={playerRun}
           offers={screen.offers}
           scrollsBought={screen.scrollsBought}
+          revivesBought={screen.revivesBought}
           onRunChange={setPlayerRun}
           onBuyScroll={handleBuyGuildScroll}
           onBuyConsumable={handleBuyGuildConsumable}
