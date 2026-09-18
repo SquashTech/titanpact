@@ -57,6 +57,14 @@ export const SECTION_PATHS = {
       <path d="M9.2 13c4.2 0 6.8 2.6 6.8 6.2v2H2.4v-2c0-3.6 2.6-6.2 6.8-6.2Z" />
     </>
   ),
+  // Great-helm — the map's recruitable-encounter tile and the Compendium's Recruitable page wear
+  // one glyph. The eye slit is two pieces so a nose bridge keeps the dome attached.
+  recruit: (
+    <path
+      fillRule="evenodd"
+      d="M12 2.4c-4.9 0-8 3.4-8 8.4v4.4c0 3.4 1.2 6.2 2.6 6.2h10.8c1.4 0 2.6-2.8 2.6-6.2v-4.4c0-5-3.1-8.4-8-8.4ZM6 10.6h4.6V14H6Zm7.4 0H18V14h-4.6Z"
+    />
+  ),
   // Chest.
   equipment: (
     <>

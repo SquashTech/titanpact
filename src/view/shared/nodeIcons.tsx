@@ -53,13 +53,8 @@ const TITAN_EYE = (
 // The Elite's crown, drawn where it sits on the helm below; HUB_PATHS.crown centres it.
 const CROWN = <path d="M4.6 2.2 8 5.6l4-3.4 4 3.4 3.4-3.4-1 5.4H5.6Z" />;
 
-// Great-helm; the eye slit is two pieces so a nose bridge keeps the dome attached.
-const HELM = (
-  <path
-    fillRule="evenodd"
-    d="M12 2.4c-4.9 0-8 3.4-8 8.4v4.4c0 3.4 1.2 6.2 2.6 6.2h10.8c1.4 0 2.6-2.8 2.6-6.2v-4.4c0-5-3.1-8.4-8-8.4ZM6 10.6h4.6V14H6Zm7.4 0H18V14h-4.6Z"
-  />
-);
+// Great-helm, drawn once in sectionIcons: the recruitable tile and the Compendium's Recruitable page.
+const HELM = SECTION_PATHS.recruit;
 
 // The Mastery Scroll (the Scribe, the Cache, the shelf) — drawn once, in sectionIcons.
 const SCROLL = SECTION_PATHS.mastery;

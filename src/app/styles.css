@@ -8524,7 +8524,6 @@ textarea,
    ========================================================================== */
 
 .reference-tabs,
-.compendium-tabs,
 .sandbox-tabs {
   display: flex;
   gap: 2px;
@@ -8537,7 +8536,6 @@ textarea,
 }
 
 .reference-tab,
-.compendium-tab,
 .sandbox-tab {
   flex: 1 1 0;
   min-width: 0;
@@ -8556,7 +8554,6 @@ textarea,
 }
 
 .reference-tab:hover,
-.compendium-tab:hover,
 .sandbox-tab:hover {
   color: var(--text);
 }
@@ -8567,7 +8564,6 @@ textarea,
    label to dark-on-gold, breaking the light-text-on-dark rhythm every other
    surface in the app follows. */
 .reference-tab-active,
-.compendium-tab.active,
 .sandbox-tab.active {
   background: var(--surface-raised);
   color: var(--accent);
@@ -9707,15 +9703,12 @@ textarea,
   background: var(--surface-raised);
 }
 
-/* Look lives in the shared segmented-control block above; this is only the
-   Compendium's own spacing against the list below it. */
-.compendium-tabs {
-  margin-bottom: 8px;
-}
-
-/* --- Compendium: hero list + hero dossier --------------------------------
-   The hero tabs are a scrolling LIST of rows (2026-09-16, per user direction;
-   they were a three-column grid of .pick-card tiles): sprite, name, types,
+/* --- Compendium (CompendiumScreen.tsx) -----------------------------------
+   The hero dossier's sheet (.is-hero-sheet: title bar, page well, the strip
+   as the bottom band, Close under the panel), cut in the accent gold since no
+   hero owns it (2026-09-18, per user direction — it was a .roster-panel with
+   a segmented control across the top and a second Close at the foot). The
+   hero pages are a scrolling LIST of rows (2026-09-16): sprite, name, types,
    and the hero's three Evolution stars at the row's end. The stars are the
    meta-progression record — one per path, lit when a run has been cleared in
    that form — and three of them want a row's width, not a tile's corner. The
@@ -9723,11 +9716,36 @@ textarea,
    HeroDossierOverlay, where each path's card carries the same star.
    ------------------------------------------------------------------------ */
 
+/* The title bar: the codex on a plate where the dossier seats its portrait, and the book's name.
+   No hero colour is set, so the bar's rule, the plate and the active tab all fall back to gold.
+   Both selectors are qualified to outweigh the sheet's own header and plate rules, declared later. */
+.compendium-sheet .detail-header.compendium-head {
+  align-items: center;
+  gap: 11px;
+  padding: 8px 12px;
+}
+
+.compendium-sheet .detail-portrait-plate {
+  width: 36px;
+  height: 36px;
+  color: var(--accent);
+}
+
+.compendium-head-glyph {
+  width: 20px;
+  height: 20px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+}
+
+.is-hero-sheet .compendium-head-title {
+  letter-spacing: 0.01em;
+}
+
+/* The page well holds the list edge to edge; the well's own padding is the list's margin. */
 .compendium-list {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 2px 2px 14px;
 }
 
 /* One row: the same type-washed ground .pick-card stands on, laid across. As a <button> it needs
@@ -9850,6 +9868,99 @@ textarea,
 
 .compendium-path-star {
   font-size: 17px;
+}
+
+/* --- Compendium: the equipment shelves -----------------------------------
+   One shelf per rarity under a subhead in that rarity's colour, and each item
+   a ROW at the hero rows' scale — glyph on a tinted plate, name, effect chips —
+   rather than the reward screen's 14px-padded cache card, which is sized to
+   present three drops as a moment and read as three half-empty boxes when
+   stacked forty deep. */
+.tab-subhead.compendium-shelf-head {
+  color: var(--rarity-color, var(--text-dim));
+}
+
+.tab-subhead.compendium-shelf-head::after {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--rarity-color, var(--border)) 45%, transparent), transparent);
+}
+
+.compendium-shelf {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 6px;
+}
+
+.compendium-item-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 10px 6px 6px;
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--rarity-color, var(--border)) 32%, var(--border));
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--rarity-color, transparent) 10%, transparent), transparent 55%),
+    var(--surface-raised);
+  box-shadow: var(--hairline), var(--elev-1);
+  cursor: pointer;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    border-color var(--dur-mid) var(--ease-out);
+}
+
+.compendium-item-row:hover {
+  border-color: color-mix(in srgb, var(--rarity-color, var(--border)) 70%, var(--border));
+}
+
+.compendium-item-row:active {
+  transform: scale(0.99);
+}
+
+/* The glyph's plate, cut like the dossier's portrait plate and tinted by the tier. */
+.compendium-item-plate {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.45), color-mix(in srgb, var(--rarity-color, transparent) 20%, rgba(0, 0, 0, 0.2)));
+  border: 1px solid color-mix(in srgb, var(--rarity-color, var(--border)) 35%, #2b3140);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.6);
+  color: var(--rarity-color, var(--text));
+}
+
+.compendium-item-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.compendium-item-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.compendium-item-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.compendium-item-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
 }
 
 /* --- Evolution stars (shared/EvolutionStar.tsx) --------------------------

@@ -3565,6 +3565,27 @@ highlight timer) handed the effect a new callback and restarted the hammer on th
 Reduced motion drops the hammer, the sparks, the motes, the embers and every ring, and holds
 the result and its caption for 900ms.
 
+## Thirty-eighth pass — the Compendium as a sheet (2026-09-18)
+
+The Compendium (`CompendiumScreen.tsx`) was a `.roster-panel` — the gear sheet's chassis —
+with a segmented control across the top, a 13px title jammed into its corner with no bar, and a
+full-width Close at the foot doubling the header's ✕; the panel was content-sized, so it stood a
+different height on every tab. Per user direction it is now **the hero dossier's own sheet**
+(`.detail-panel.is-tabbed.is-hero-sheet`, styled "Compendium" in styles.css): the title bar
+with the codex on the plate where the dossier seats its portrait, the page WELL, `TabStrip` as
+the bottom band — glyph over label, in the thumb's arc — and the one Close under the panel. No
+`--hero-color` is set, so the bar's rule, the plate and the active tab all fall back to the
+accent gold. Full height, so the strip sits in the same place on every page; the well is keyed on
+the page so a switch starts at the top. The dossier that opens from a row is the same sheet in
+the hero's colour, so the tap reads as the book turning to that page rather than a second design
+over the first. The four glyphs are `heroes` (Starters), the map's recruitable helm — moved into
+`SECTION_PATHS.recruit` so the tile and the tab wear one drawing — the `equipment` chest and the
+`matchups` shield. The Equipment page became shelves: one `.tab-subhead` per rarity in its own
+colour, and each item a row at the hero rows' scale (`.compendium-item-row`: glyph on a tinted
+plate, name, effect chips) in place of the reward screen's cache card, which is sized to present
+three drops as a moment and read as forty half-empty boxes stacked. The Types page's dial came
+down 320 → 300 to sit inside the well with room. The hero rows are untouched.
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.

@@ -3,11 +3,13 @@ import { heroes } from '../../data/heroes';
 import { TYPES, typeChart } from '../../data/typechart';
 import { equipment, EQUIPMENT_DROP_POOL, UNIQUE_EQUIPMENT } from '../../data/equipment';
 import type { HeroDefinition, TypeId } from '../../engine/content';
-import type { EquipmentDefinition } from '../../run/equipment';
+import type { EquipmentDefinition, EquipmentRarity } from '../../run/equipment';
 import { RARITY_ORDER } from '../../run/equipment';
 import { getTypeAbbr, getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { HubGlyph } from '../shared/nodeIcons';
+import { TabStrip, type TabSpec } from '../shared/TabStrip';
 import { TypeBadge } from '../shared/TypeBadge';
 import { TypeWheel } from '../shared/TypeWheel';
 import { EquipmentIcon, ItemEffectChips, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
@@ -27,8 +29,12 @@ function byPrimaryType(a: HeroDefinition, b: HeroDefinition): number {
 }
 const STARTER_HEROES = Object.values(heroes).filter((hero) => hero.starter).sort(byPrimaryType);
 const RECRUIT_HEROES = Object.values(heroes).filter((hero) => !hero.starter).sort(byPrimaryType);
-// Rarity, then authoring order — items are uncategorised, so the tier is the only grouping left.
-const EQUIPMENT_LIST = [...EQUIPMENT_DROP_POOL, ...UNIQUE_EQUIPMENT].sort((a, b) => RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity));
+// Rarity, then authoring order — items are uncategorised, so the tier is the only grouping left,
+// and the page is laid out as one shelf per tier.
+const EQUIPMENT_SHELVES = RARITY_ORDER.map((rarity) => ({
+  rarity,
+  items: [...EQUIPMENT_DROP_POOL, ...UNIQUE_EQUIPMENT].filter((item) => item.rarity === rarity),
+})).filter((shelf) => shelf.items.length > 0);
 
 /** A hero's Evolution paths in authored order — exactly three, one star's worth each. */
 function evolutionPathsOf(hero: HeroDefinition) {
@@ -82,40 +88,59 @@ function CompendiumHeroRow({ hero, onOpen }: { hero: HeroDefinition; onOpen: () 
   );
 }
 
-interface CompendiumEquipmentCardProps {
-  item: EquipmentDefinition;
-  onInspect: () => void;
-}
-
-/** Read-only EquipChoiceCard: tap opens the detail popup, no select-then-claim. */
-function CompendiumEquipmentCard({ item, onInspect }: CompendiumEquipmentCardProps) {
+/**
+ * One item on its shelf: the glyph on a rarity-tinted plate, the name, and the effect chips —
+ * the rarity is the shelf's heading, so the row does not repeat it. Read-only: tap opens the
+ * detail popup, no select-then-claim.
+ */
+function CompendiumItemRow({ item, onInspect }: { item: EquipmentDefinition; onInspect: () => void }) {
   return (
     <button
       type="button"
-      className="equip-cache-card"
+      className="compendium-item-row"
       style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}
       onClick={onInspect}
+      aria-label={`${item.name} — view details`}
     >
-      <div className="equip-cache-card-icon-badge">
-        <EquipmentIcon item={item} className="equip-cache-card-icon" />
-      </div>
-      <div className="equip-cache-card-body">
-        <div className="equip-cache-card-name">{item.name}</div>
-        <div className="equip-cache-card-meta">
-          <span className="equip-cache-card-rarity">{RARITY_LABELS[item.rarity]}</span>
-        </div>
-        <div className="equip-cache-card-stats">
+      <span className="compendium-item-plate">
+        <EquipmentIcon item={item} className="compendium-item-icon" />
+      </span>
+      <span className="compendium-item-body">
+        <span className="compendium-item-name">{item.name}</span>
+        <span className="compendium-item-chips">
           <ItemEffectChips item={item} />
-        </div>
-      </div>
+        </span>
+      </span>
     </button>
+  );
+}
+
+function EquipmentShelf({ rarity, items, onInspect }: { rarity: EquipmentRarity; items: EquipmentDefinition[]; onInspect: (id: string) => void }) {
+  return (
+    <>
+      <div className="tab-subhead compendium-shelf-head" style={{ '--rarity-color': RARITY_COLOR_VARS[rarity] } as CSSProperties}>
+        {RARITY_LABELS[rarity]}
+      </div>
+      <div className="compendium-shelf">
+        {items.map((item) => (
+          <CompendiumItemRow key={item.id} item={item} onInspect={() => onInspect(item.id)} />
+        ))}
+      </div>
+    </>
   );
 }
 
 type CompendiumTab = 'starters' | 'recruitable' | 'equipment' | 'types';
 
-/** The dial's box on the Types tab, px: the panel's width less its padding. */
-const CHART_WHEEL = 320;
+const TABS: readonly TabSpec<CompendiumTab>[] = [
+  { id: 'starters', label: 'Starters', glyph: 'heroes' },
+  { id: 'recruitable', label: 'Recruitable', glyph: 'recruit' },
+  { id: 'equipment', label: 'Equipment', glyph: 'equipment' },
+  { id: 'types', label: 'Types', glyph: 'matchups' },
+];
+
+/** The dial's box on the Types page, px: the page well's inner width on the narrowest phone. */
+const CHART_WHEEL = 300;
 
 /** One row of the readout: every type on one side of a cell, or nothing. */
 function ReadoutRow({ label, types, onPick }: { label: string; types: readonly TypeId[]; onPick: (type: TypeId) => void }) {
@@ -185,6 +210,13 @@ function TypeChartTab() {
   );
 }
 
+/**
+ * The same sheet as the hero dossier it opens (HeroDossierOverlay — title bar, page well, the
+ * strip as the bottom band, Close under the panel), cut in the accent gold rather than a hero's
+ * colour: the book and the page it opens to should not be two designs, and on a phone held
+ * one-handed the page switch belongs in the thumb's arc, not at the top edge. The panel is full
+ * height so the strip sits in the same place on every page.
+ */
 export function CompendiumScreen({ onClose }: Props) {
   const [tab, setTab] = useState<CompendiumTab>('starters');
   const [inspectItemId, setInspectItemId] = useState<string | null>(null);
@@ -194,37 +226,21 @@ export function CompendiumScreen({ onClose }: Props) {
   const dossierHero = dossierHeroId ? heroes[dossierHeroId] : null;
 
   return (
-    <div className="log-overlay roster-mgmt-overlay" onClick={onClose}>
-      <div className="log-panel roster-panel" onClick={(e) => e.stopPropagation()}>
-        <div className="log-panel-header">
-          <span>Compendium</span>
-          <button className="log-close-button" onClick={onClose}>
-            ✕
-          </button>
+    <div className="detail-overlay is-sheet compendium-overlay" onClick={onClose}>
+      <div className="detail-panel is-tabbed is-hero-sheet compendium-sheet" onClick={(e) => e.stopPropagation()}>
+        <div className="detail-header is-hero compendium-head">
+          <span className="detail-portrait-plate compendium-head-plate" aria-hidden="true">
+            <HubGlyph name="codex" className="compendium-head-glyph" />
+          </span>
+          <span className="detail-name compendium-head-title">Compendium</span>
         </div>
-        <div className="compendium-tabs">
-          <button className={`compendium-tab${tab === 'starters' ? ' active' : ''}`} onClick={() => setTab('starters')}>
-            Starters
-          </button>
-          <button className={`compendium-tab${tab === 'recruitable' ? ' active' : ''}`} onClick={() => setTab('recruitable')}>
-            Recruitable
-          </button>
-          <button className={`compendium-tab${tab === 'equipment' ? ' active' : ''}`} onClick={() => setTab('equipment')}>
-            Equipment
-          </button>
-          <button className={`compendium-tab${tab === 'types' ? ' active' : ''}`} onClick={() => setTab('types')}>
-            Types
-          </button>
-        </div>
-        <div className="screen-scroll">
+
+        {/* Keyed on the page so a switch scrolls the well back to its top. */}
+        <div key={tab} className="detail-tab-body compendium-body" role="tabpanel">
           {tab === 'types' ? (
             <TypeChartTab />
           ) : tab === 'equipment' ? (
-            <div className="equip-cache-list">
-              {EQUIPMENT_LIST.map((item) => (
-                <CompendiumEquipmentCard key={item.id} item={item} onInspect={() => setInspectItemId(item.id)} />
-              ))}
-            </div>
+            EQUIPMENT_SHELVES.map((shelf) => <EquipmentShelf key={shelf.rarity} rarity={shelf.rarity} items={shelf.items} onInspect={setInspectItemId} />)
           ) : (
             <div className="compendium-list">
               {heroList.map((hero) => (
@@ -234,10 +250,11 @@ export function CompendiumScreen({ onClose }: Props) {
           )}
         </div>
 
-        {/* Outside the scroll and pinned to the foot, as on the gear sheet (RosterManagementScreen):
-            the header ✕ stays where every overlay puts it, but on a phone it is the corner furthest
-            from the thumb. */}
-        <button className="resolve-button roster-close-button" onClick={onClose}>
+        <TabStrip tabs={TABS} active={tab} onSelect={setTab} />
+      </div>
+
+      <div className="sheet-footer" onClick={(e) => e.stopPropagation()}>
+        <button className="resolve-button sheet-close-button" onClick={onClose}>
           Close
         </button>
       </div>
