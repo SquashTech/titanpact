@@ -13113,6 +13113,39 @@ textarea,
   }
 }
 
+/* Every hero cell wears its verdicts against all the scouted enemies, one
+   small disc each in the chips' order, so the whole grid is read without a
+   tap. A neutral verdict still holds its disc, faintly, so the discs line up
+   under the enemies and a cell with two arrows reads as two of four, not two. */
+.squad-slot-matchups {
+  grid-column: 2;
+  display: flex;
+  gap: 3px;
+  margin-top: 3px;
+}
+
+.enemy-scout-verdict-small {
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  box-shadow: none;
+}
+
+.enemy-scout-verdict-small > svg {
+  width: 9px;
+  height: 9px;
+  animation: none;
+}
+
+.enemy-scout-verdict-small.is-up {
+  background: color-mix(in srgb, var(--hp-high) 26%, transparent);
+}
+
+.enemy-scout-verdict-small.is-down {
+  background: color-mix(in srgb, var(--hp-low) 26%, transparent);
+}
+
 .enemy-scout-name {
   max-width: 100%;
   overflow: hidden;

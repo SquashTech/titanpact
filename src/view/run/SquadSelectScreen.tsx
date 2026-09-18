@@ -2,7 +2,7 @@ import { useState, type CSSProperties, type DragEvent, type ReactNode } from 're
 import { rosterHeroes } from '../../data/content';
 import { allCombatants } from '../../data/content';
 import { equipment } from '../../data/equipment';
-import type { HeroDefinition } from '../../engine/content';
+import type { HeroDefinition, TypeId } from '../../engine/content';
 import type { RunState, RosterEntry } from '../../run/state';
 import { reorderRoster } from '../../run/state';
 import type { Squad } from '../../run/squad';
@@ -169,13 +169,17 @@ function SquadSlot({
 }
 
 /**
- * The arrow under a scouted enemy while one of the player's rosterHeroes is held: up for a matchup the
- * hero comes out ahead in, down for one it comes out behind in, and an empty slot otherwise — the
- * slot is always drawn so the chips never change height when a hero is picked up or put down.
+ * One hero against one scouted enemy: up for a matchup the hero comes out ahead in, down for one it
+ * comes out behind in, and an empty slot otherwise — the slot is always drawn so nothing changes
+ * height when a verdict comes or goes. Under an enemy chip while a hero is held, and in every hero
+ * cell's row (`small`).
  */
-function MatchupArrow({ verdict }: { verdict: 'up' | 'down' | null }) {
+function MatchupArrow({ verdict, small = false }: { verdict: 'up' | 'down' | null; small?: boolean }) {
   return (
-    <span className={`enemy-scout-verdict${verdict ? ` is-${verdict}` : ''}`} aria-label={verdict === 'up' ? 'Good matchup' : verdict === 'down' ? 'Bad matchup' : undefined}>
+    <span
+      className={`enemy-scout-verdict${verdict ? ` is-${verdict}` : ''}${small ? ' enemy-scout-verdict-small' : ''}`}
+      aria-label={verdict === 'up' ? 'Good matchup' : verdict === 'down' ? 'Bad matchup' : undefined}
+    >
       {verdict && (
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
           {verdict === 'up' ? <path d="M12 4 21 14h-6v6H9v-6H3Z" /> : <path d="M12 20 3 10h6V4h6v6h6Z" />}
@@ -185,7 +189,25 @@ function MatchupArrow({ verdict }: { verdict: 'up' | 'down' | null }) {
   );
 }
 
-/** Bring-6-pick-4 squad selection before every fight node (docs/combat.md "Bring-6-pick-4 sideboard"). Drag, or tap then the move-here key, swaps two cells; a tap alone reads matchups. */
+/**
+ * Every scouted enemy's verdict against one hero, in the chips' order, so the whole grid is read at
+ * a glance (2026-09-17, per user direction). It used to take a tap per hero: the arrows landed under
+ * the enemies only while that hero was held, and reading six heroes was six taps and a memory.
+ */
+function MatchupRow({ heroTypes, enemies }: { heroTypes: readonly TypeId[]; enemies: readonly RosterEntry[] }) {
+  const verdicts = enemies.map((enemy) => matchupVerdict(heroTypes, rosterEntryTypes(allCombatants[enemy.heroId], enemy)));
+  const up = verdicts.filter((v) => v === 'up').length;
+  const down = verdicts.filter((v) => v === 'down').length;
+  return (
+    <div className="squad-slot-matchups" aria-label={`${up} good ${up === 1 ? 'matchup' : 'matchups'}, ${down} bad`}>
+      {verdicts.map((verdict, i) => (
+        <MatchupArrow key={enemies[i].rosterId} verdict={verdict} small />
+      ))}
+    </div>
+  );
+}
+
+/** Bring-6-pick-4 squad selection before every fight node (docs/combat.md "Bring-6-pick-4 sideboard"). Drag, or tap then the move-here key, swaps two cells; a tap alone picks a hero up. */
 export function SquadSelectScreen({
   run,
   encounter,
@@ -213,9 +235,9 @@ export function SquadSelectScreen({
   const location = useAmbientLocation();
   const rosterById = new Map(run.roster.map((r) => [r.rosterId, r]));
 
-  // The hero the player has picked up: its arrows land under the scouted enemies while it is held
-  // (matchupVerdict), so "who does this one want to see across the field" is answered by the same
-  // tap that starts a swap. Post-Evolution types, since that is the typing that fights.
+  // The hero the player has picked up: its arrows land under the scouted enemies while it is held,
+  // echoing the row its own cell already wears (MatchupRow) against the faces across the field.
+  // Post-Evolution types, since that is the typing that fights.
   const heldEntry = selectedSlot !== null && slots[selectedSlot] ? rosterById.get(slots[selectedSlot]!) : undefined;
   const heldTypes = heldEntry ? rosterEntryTypes(rosterHeroes[heldEntry.heroId], heldEntry) : null;
 
@@ -415,6 +437,7 @@ export function SquadSelectScreen({
                                   <TypeBadge key={t} type={t} />
                                 ))}
                               </div>
+                              <MatchupRow heroTypes={rosterEntryTypes(hero, entry)} enemies={scoutOrder} />
                               {/* Where the act has left this hero (run/wounds.ts) — the read the pick is made on. */}
                               <WoundBar {...entryHp(hero, entry, run.relics)} figure />
                             </>
