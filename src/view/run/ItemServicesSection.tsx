@@ -38,13 +38,11 @@ export function ItemServicesSection({ run, onRunChange }: Props) {
     return () => window.clearTimeout(timer);
   }, [fresh]);
 
-  const total = run.roster.reduce((n, entry) => n + entry.equipment.length, 0);
-  /** A lift the purse covers right now. The badge and the tally read the same test (2026-09-17, per user direction — a badge on a lift the player cannot pay for is a badge on every piece by Act 3). */
+  /** A lift the purse covers right now — the badge reads this, not the bare quote (2026-09-17, per user direction — a badge on a lift the player cannot pay for is a badge on every piece by Act 3). */
   const affordableLift = (itemId: string) => {
     const quote = anvilQuote(run, itemId, equipment);
     return quote && run.gold >= quote.cost ? quote : null;
   };
-  const liftable = run.roster.reduce((n, entry) => n + entry.equipment.filter((itemId) => affordableLift(itemId) !== null).length, 0);
 
   const workingEntry = working ? run.roster.find((r) => r.rosterId === working.rosterId) : null;
   const workingHero = workingEntry ? rosterHeroes[workingEntry.heroId] : null;
@@ -52,17 +50,11 @@ export function ItemServicesSection({ run, onRunChange }: Props) {
 
   return (
     <div className="smithy">
-      {/* The forge itself, as the counter's sign. The tally under it is the whole of what the
-          tab has to say before a bench is opened. */}
+      {/* The forge itself, as the counter's sign. No tally under the title: the benches say it. */}
       <ForgeSign />
       <div className="guild-hall-section-head">
         <span className="guild-hall-section-title">
           <HubGlyph name="anvil" /> Anvil &amp; Enchanter
-        </span>
-        <span className="guild-hall-section-hint">
-          {total === 0
-            ? 'Nobody is wearing anything yet.'
-            : `${total} ${total === 1 ? 'piece' : 'pieces'} on the roster · ${liftable} you can lift · tap one to work it`}
         </span>
       </div>
 
