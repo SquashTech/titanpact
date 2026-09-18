@@ -98,6 +98,36 @@ test('consumables: refused for a full, benched or fainted hero, and the refusal 
   assert.strictEqual(consumableRefusal(hurt, 'a1', 'hpPotion', maxHpOf(hurt), maxManaOf(hurt)), null);
 });
 
+test('consumables: a Revive in a fight stands a fallen hero onto the bench at half, eases lock-in, and is refused for anyone standing', () => {
+  const state = fixture();
+  // a1 fell on the field: off both lists, the slot open, the side's KO counted.
+  const down: CombatState = {
+    ...state,
+    combatants: { ...state.combatants, a1: { ...state.combatants.a1, currentHp: 0, fainted: true, statModifiers: { attack: -10 } } },
+    active: { ...state.active, A: [null, state.active.A[1]] },
+    koCount: { ...state.koCount, A: 1 },
+  };
+  assert.strictEqual(consumableRefusal(down, 'a1', 'revive', maxHpOf(down), maxManaOf(down)), null);
+  assert.strictEqual(consumableRefusal(down, 'a2', 'revive', maxHpOf(down), maxManaOf(down)), 'Standing');
+  assert.strictEqual(consumableRefusal(down, 'a3', 'revive', maxHpOf(down), maxManaOf(down)), 'Standing', 'the bench is standing too');
+  assert.throws(() => useConsumable(down, 2, 'a2', 'revive', maxHpOf(down), maxManaOf(down)), ConsumableUseError);
+
+  const { state: up, events } = useConsumable(down, 2, 'a1', 'revive', maxHpOf(down), maxManaOf(down));
+  const max = fixtureMaxHp('cinderKnight');
+  assert.strictEqual(up.combatants.a1.fainted, false);
+  assert.strictEqual(up.combatants.a1.currentHp, Math.round(max * CONSUMABLE_RESTORE_FRACTION), 'half, flat');
+  assert.deepStrictEqual(up.bench.A, ['a3', 'a1'], 'onto the bench, at the back');
+  assert.deepStrictEqual(up.active.A, [null, 'a2'], 'the open slot is the replacement panel’s to fill, not the Revive’s');
+  assert.strictEqual(up.koCount.A, 0, 'no longer down, so no longer counted against lock-in');
+  assert.deepStrictEqual(up.combatants.a1.statModifiers, { attack: -10 }, 'a KO cleared nothing, and neither does standing up');
+  const used = events[0] as ConsumableUsedEvent;
+  assert.strictEqual(used.type, 'ConsumableUsed');
+  assert.strictEqual(used.kind, 'revive');
+  assert.strictEqual(used.amount, up.combatants.a1.currentHp);
+  assert.ok(events.some((e) => e.type === 'HpChanged' && e.combatantId === 'a1'), 'the restore is an ordinary HpChanged');
+  assert.ok(!events.some((e) => e.type === 'Fainted'));
+});
+
 // --- The run half ---
 
 test('consumables: a run opens with one of each, the purse caps per kind, and an over-cap grant is lost', () => {

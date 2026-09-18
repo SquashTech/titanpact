@@ -409,3 +409,6 @@ Oblivion and Erode, and the Eyes' lines.
   hero carries one — a hero's identity still lives in its Evolution and its Class.
 - "Defeat them twice" (§1, §7.3) is reversed: the Eyes are met once, wide. The Stare that marked
   both heroes went with the phase; the single mark and its switch answer are the whole telegraph.
+- **The Revive is usable in a fight** (per user direction, the same day — `run-loop.md`
+  "Consumables"): the layer of safety a player can bring, by saving one. The sim's pilot spends
+  what it has left at the finale: 41.9 → 48.6%; one in hand read ~63%.

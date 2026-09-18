@@ -1,8 +1,9 @@
 // Consumables (docs/run-loop.md "Consumables"): the run's two potions and the Revive. A TEAM
 // purse, not a per-hero bag — held beside gold and the Scrolls. A potion is drunk in a fight on
 // whichever active hero needs it (the engine half is engine/combat/consumables.ts); the Revive is
-// spent on the map, on the squad screen, on a hero a fight left down (run/wounds.ts). This is what
-// the run holds, pays and drops.
+// spent on a hero that is down — in a fight, from the Bag (the same engine half), or on the map,
+// on the squad screen, on a hero a fight left down (run/wounds.ts). This is what the run holds,
+// pays and drops.
 
 import type { PotionKind } from '../engine/combat/consumables';
 import type { EncounterNodeKind } from './difficulty';
@@ -10,7 +11,7 @@ import type { RunState } from './state';
 
 export type { PotionKind };
 
-/** Every kind the purse holds. `revive` is never drunk in a fight and never sold. */
+/** Every kind the purse holds. `revive` is never sold; since 2026-09-18 it is used in a fight as well as on the squad screen. */
 export type ConsumableKind = PotionKind | 'revive';
 
 export class ConsumableError extends Error {}
@@ -67,6 +68,13 @@ export const REVIVE_DROP_CHANCE: Record<EncounterNodeKind, number> = {
 export const CONSUMABLE_NAMES: Record<ConsumableKind, string> = {
   hpPotion: 'HP Potion',
   mpPotion: 'MP Potion',
+  revive: 'Revive',
+};
+
+/** The Bag's chip row at three across: the coin says which flask it is, so the word is the short one. */
+export const CONSUMABLE_SHORT_NAMES: Record<ConsumableKind, string> = {
+  hpPotion: 'HP',
+  mpPotion: 'MP',
   revive: 'Revive',
 };
 

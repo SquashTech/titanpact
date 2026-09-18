@@ -2525,6 +2525,11 @@ textarea,
   --flask-rgb: 143, 180, 255;
 }
 
+/* The Revive in the resource's own gold (shared/RunGlyph.tsx RESOURCE_COLORS). */
+.flask-panel.is-revive {
+  --flask-rgb: 255, 180, 84;
+}
+
 .flask-panel-title {
   display: inline-flex;
   align-items: center;
@@ -2539,7 +2544,8 @@ textarea,
 
 .bag-kind {
   --flask-rgb: 255, 138, 138;
-  flex: 1 1 0;
+  /* Sized to the word, then sharing the rest: three across, the Revive's chip takes what its name needs. */
+  flex: 1 1 auto;
   min-width: 0;
   display: inline-flex;
   align-items: center;
@@ -2560,6 +2566,10 @@ textarea,
 
 .bag-kind.is-mpPotion {
   --flask-rgb: 143, 180, 255;
+}
+
+.bag-kind.is-revive {
+  --flask-rgb: 255, 180, 84;
 }
 
 .bag-kind.selected {

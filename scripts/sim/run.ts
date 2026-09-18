@@ -547,7 +547,14 @@ function resolveEncounterNode(
     rng,
     playerSwitching: options.playerSwitching,
     pilot: options.pilot,
+    // Saved for the final battle: the pilot spends a Revive in a fight only there, where nothing
+    // mends inside (docs/titan-eyes.md §10); everywhere else the map's spendRevives has first call.
+    revives: mapNodeType === 'finale' ? workingRun.consumables.revive : 0,
   });
+  for (let i = 0; i < fight.revivesUsed; i++) {
+    workingRun = spendRevive(workingRun);
+    record.knockouts.revivesSpent += 1;
+  }
 
   const playerHeroes: FightRecord['playerHeroes'] = {};
   const enemyHeroes: FightRecord['enemyHeroes'] = {};

@@ -552,8 +552,11 @@ don't silently override it.
   drop or purchase is lost; faucets are the Guild Hall shelf (flat 20 gold, a pure sink) and a
   low-odds drop off a won encounter — deliberately no reward-node type. What a fight drank comes
   off the purse at resolve, so a replayed fight refunds it. **The Revive** (2026-09-17, per user
-  direction) is the third kind and different in every way that matters: spent on the **map**, on
-  the squad screen, on a hero a fight left down (`reviveHero`, half HP), never in a fight;
+  direction) is the third kind and different in every way that matters: spent on a hero that is
+  DOWN — on the **map**, on the squad screen, on a hero a fight left down (`reviveHero`, half HP),
+  and **in a fight since 2026-09-18** (per user direction), from the Bag on the potions' terms,
+  the fallen hero standing onto the bench at half (`useConsumable` 'revive') — the saved-for-the-
+  finale layer of safety in a fight nothing mends inside;
   **never sold** — a KO that 20g undoes is not a KO — and never started with; its one faucet is
   its own rarer drop roll (`REVIVE_DROP_CHANCE`), taken only when the potion roll missed, so a
   fight drops one thing at most. `docs/run-loop.md` "Consumables".

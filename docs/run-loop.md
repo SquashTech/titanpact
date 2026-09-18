@@ -585,8 +585,8 @@ key it is irreversible — Back cannot un-drink.
 - **Player-only.** Enemies never drink. A no-turn-cost restore on an AI would be a stat bump
   wearing a hat; if an Ascension ever wants it, it is a dial with its own AI line, not a default.
 - **Active, alive, command phase.** The bench regenerates on its own; a KO'd hero is a different
-  item's business — the Revive's, below, and it is not drunk in a fight (`PotionKind` is the
-  in-fight set, `ConsumableKind` the purse's).
+  item's business — the Revive's, below, which since 2026-09-18 is the Bag's third chip
+  (`FightConsumableKind` is the in-fight set, `ConsumableKind` the purse's — the same three).
 
 **Scarcity is the whole price, so scarcity is capped.** The mana invariant — *investment pays out
 later than the point at which a weak team dies* — is bent on purpose by one MP potion and broken
@@ -620,9 +620,15 @@ same coin.
 **The Revive** (2026-09-17, per user direction, with knockouts persisting — "Wounds" below). One
 downed hero stood up at **half HP** (`REVIVE_FRACTION`, the potions' figure), spent on the
 **squad screen** — the downed cell wears the key while one is held, and that screen is forced
-before every fight, so the moment a KO would bite is the moment the Revive is offered. Never in
-a fight: a hero the fight KO'd is the next fight's problem, and a Pokémon Revive on the bench
-would be a fourth body for no turn. **Never sold and never started with**: a KO that 20g undoes
+before every fight, so the moment a KO would bite is the moment the Revive is offered — **and,
+since 2026-09-18 (per user direction), in a fight**, from the Bag, on the potions' terms: a free
+command-phase action on a FALLEN hero, who stands onto the bench at half and is one fewer KO
+against lock-in (`useConsumable` 'revive', `engine/combat/consumables.ts`). It was kept off the
+field at first because a Pokémon Revive on the bench is a fourth body for no turn; the merged
+finale (`titan-eyes.md` §10) — one fight, two phases, nothing mended between — is exactly the
+fight that wants one saved for it, and the item's scarcity is what prices it: never sold, never
+started with, one drop roll. Measured: the finale 41.9 → 48.6% with the sim's leftovers, ~63%
+with one in hand. **Never sold and never started with**: a KO that 20g undoes
 is not a KO, and the Rest seat and the mend are the faucets a player can plan around. Its one
 faucet is its own drop roll (`REVIVE_DROP_CHANCE`: 6% a fight, 8% a Skirmish, 15% an Elite, 20%
 a Guardian, none from the finale), taken only when the potion roll missed so a fight drops one

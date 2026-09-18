@@ -204,8 +204,11 @@ export function formatEvents(
       case 'ConsumableUsed':
         lines.push({
           key,
-          text: `${name(e.combatantId)} drinks an ${e.kind === 'hpPotion' ? 'HP' : 'MP'} Potion, restoring ${e.amount} ${e.kind === 'hpPotion' ? 'HP' : 'Mana'}`,
-          className: e.kind === 'hpPotion' ? 'log-heal' : 'log-mana',
+          text:
+            e.kind === 'revive'
+              ? `${name(e.combatantId)} stands again with ${e.amount} HP — a Revive`
+              : `${name(e.combatantId)} drinks an ${e.kind === 'hpPotion' ? 'HP' : 'MP'} Potion, restoring ${e.amount} ${e.kind === 'hpPotion' ? 'HP' : 'Mana'}`,
+          className: e.kind === 'mpPotion' ? 'log-mana' : 'log-heal',
         });
         break;
       case 'MoveGuarded':

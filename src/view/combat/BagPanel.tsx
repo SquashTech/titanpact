@@ -2,8 +2,8 @@ import { useState, type CSSProperties } from 'react';
 import type { HeroDefinition } from '../../engine/content';
 import type { Combatant } from '../../engine/state';
 import { effectiveTypes, getMaxHp, getMaxMana } from '../../engine/state';
-import type { PotionKind } from '../../engine/combat/consumables';
-import { CONSUMABLE_BLURBS, CONSUMABLE_NAMES, POTION_KINDS } from '../../run/consumables';
+import type { FightConsumableKind } from '../../engine/combat/consumables';
+import { CONSUMABLE_BLURBS, CONSUMABLE_KINDS, CONSUMABLE_NAMES, CONSUMABLE_SHORT_NAMES } from '../../run/consumables';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
 import { ResourceGlyph } from '../shared/RunGlyph';
@@ -11,21 +11,24 @@ import { hpTier } from '../shared/StatBars';
 import { getTypeColorRgb } from './typeColors';
 import { Coin } from '../shared/Coin';
 
-/** One active hero, already resolved by the caller, with why each potion is refused for it (null = drinkable). */
+/** One hero, already resolved by the caller, with why each kind is refused for it (null = usable). */
 export interface BagTarget {
   combatantId: string;
   hero: HeroDefinition;
   combatant: Combatant;
-  refusal: Record<PotionKind, string | null>;
+  refusal: Record<FightConsumableKind, string | null>;
 }
 
 interface Props {
-  /** What is left to drink this fight, by kind. */
-  purse: Record<PotionKind, number>;
+  /** What is left to use this fight, by kind. */
+  purse: Record<FightConsumableKind, number>;
+  /** The active heroes — the potions' rows. */
   targets: readonly BagTarget[];
+  /** The fallen — the Revive's rows. */
+  fallen: readonly BagTarget[];
   /** The hero the console is on — the row the panel opens pre-lit. */
   actingId: string | null;
-  onDrink: (combatantId: string, kind: PotionKind) => void;
+  onDrink: (combatantId: string, kind: FightConsumableKind) => void;
   onClose: () => void;
 }
 
@@ -48,15 +51,16 @@ function Gauge({ kind, value, max }: { kind: 'hp' | 'mana'; value: number; max: 
 }
 
 /**
- * The Bag: every consumable held, and which active hero drinks it. The kinds are a chip row
- * across the top — a new consumable is one more chip, nothing else — with the panel opening on
- * the first kind that still has stock; the heroes below are the only other choice. Drinking is
- * IMMEDIATE and has no Back — the row says so once, in the note, the way Switch's does.
- * Presentation-only; the engine call is FightScreen's.
+ * The Bag: every consumable held, and which hero it is used on. The kinds are a chip row across
+ * the top — a new consumable is one more chip, nothing else — with the panel opening on the first
+ * kind that still has stock; the heroes below are the only other choice: the active pair for a
+ * potion, the fallen for the Revive. Using is IMMEDIATE and has no Back — the row says so once, in
+ * the note, the way Switch's does. Presentation-only; the engine call is FightScreen's.
  */
-export function BagPanel({ purse, targets, actingId, onDrink, onClose }: Props) {
-  const [kind, setKind] = useState<PotionKind>(() => POTION_KINDS.find((k) => purse[k] > 0) ?? POTION_KINDS[0]);
+export function BagPanel({ purse, targets, fallen, actingId, onDrink, onClose }: Props) {
+  const [kind, setKind] = useState<FightConsumableKind>(() => CONSUMABLE_KINDS.find((k) => purse[k] > 0) ?? CONSUMABLE_KINDS[0]);
   const held = purse[kind];
+  const rows = kind === 'revive' ? fallen : targets;
   return (
     <div className="log-overlay" onClick={onClose}>
       <div className={`log-panel switch-panel flask-panel is-${kind}`} onClick={(e) => e.stopPropagation()}>
@@ -67,7 +71,7 @@ export function BagPanel({ purse, targets, actingId, onDrink, onClose }: Props) 
           </button>
         </div>
         <div className="bag-kinds" role="tablist">
-          {POTION_KINDS.map((k) => (
+          {CONSUMABLE_KINDS.map((k) => (
             <button
               key={k}
               type="button"
@@ -81,7 +85,7 @@ export function BagPanel({ purse, targets, actingId, onDrink, onClose }: Props) 
                 <Coin />
                 <ResourceGlyph kind={k} tone="inherit" className="bag-kind-coin-glyph" />
               </span>
-              <span className="bag-kind-name">{CONSUMABLE_NAMES[k]}</span>
+              <span className="bag-kind-name">{CONSUMABLE_SHORT_NAMES[k]}</span>
               <span className="flask-kind-count">×{purse[k]}</span>
             </button>
           ))}
@@ -91,7 +95,8 @@ export function BagPanel({ purse, targets, actingId, onDrink, onClose }: Props) 
         </p>
 
         <div className="switch-options">
-          {targets.map(({ combatantId, hero, combatant, refusal }) => {
+          {rows.length === 0 && <p className="switch-note">Nobody is down.</p>}
+          {rows.map(({ combatantId, hero, combatant, refusal }) => {
             const types = effectiveTypes(hero, combatant);
             const why = held === 0 ? `No ${CONSUMABLE_NAMES[kind]} left` : refusal[kind];
             const blocked = why !== null;
@@ -128,7 +133,7 @@ export function BagPanel({ purse, targets, actingId, onDrink, onClose }: Props) 
           })}
         </div>
 
-        <p className="switch-note">Drinks at once — there is no taking it back.</p>
+        <p className="switch-note">{kind === 'revive' ? 'Stands at once, onto the bench — there is no taking it back.' : 'Drinks at once — there is no taking it back.'}</p>
       </div>
     </div>
   );

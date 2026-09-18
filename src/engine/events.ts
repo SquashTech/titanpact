@@ -227,13 +227,14 @@ export interface RestedEvent extends BaseEvent {
 }
 
 /**
- * A potion drunk during the command phase (combat/consumables.ts). Followed by the HpChanged or
- * ManaChanged carrying the restore. Never a passive trigger source.
+ * A consumable used during the command phase (combat/consumables.ts): a potion drunk, or a
+ * Revive that stood a fallen hero onto the bench. Followed by the HpChanged or ManaChanged
+ * carrying the restore. Never a passive trigger source.
  */
 export interface ConsumableUsedEvent extends BaseEvent {
   type: 'ConsumableUsed';
   combatantId: string;
-  kind: 'hpPotion' | 'mpPotion';
+  kind: 'hpPotion' | 'mpPotion' | 'revive';
   /** What actually landed, after the cap. */
   amount: number;
 }

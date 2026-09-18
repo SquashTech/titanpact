@@ -29,8 +29,8 @@ import { fieldHealMultiplier, type HealCaster } from '../../engine/heal/healPipe
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { DEFAULT_PACT_CLOCK, PACT_WARNING_ROUNDS, pactFractionFor, pactRoundOf } from '../../engine/combat/pactClock';
 import { applyForcedReplacement, replacementCandidates } from '../../engine/combat/switching';
-import { consumableRefusal, useConsumable, type PotionKind } from '../../engine/combat/consumables';
-import { CONSUMABLE_NAMES, POTION_KINDS, type ConsumableKind, type ConsumablePurse } from '../../run/consumables';
+import { consumableRefusal, useConsumable, type FightConsumableKind } from '../../engine/combat/consumables';
+import { CONSUMABLE_KINDS, CONSUMABLE_NAMES, type ConsumableKind, type ConsumablePurse } from '../../run/consumables';
 import { BagPanel, type BagTarget } from './BagPanel';
 import { describeOrder, orderMarksFor, type OrderMark, type OrderSource } from './orderMarks';
 import { Coin } from '../shared/Coin';
@@ -789,16 +789,21 @@ export function FightScreen({
     combat.combatants[actingId].currentMana <
       getMaxMana(allCombatants[combat.combatants[actingId].heroId], combat.combatants[actingId]);
 
-  // What is left in the Bag this fight, drinkable while commanding. A Revive is not: it is spent
-  // on the squad screen, on a hero a fight left down (run/wounds.ts), never on the field.
-  const flaskPurse: Record<PotionKind, number> = {
+  // What is left in the Bag this fight, usable while commanding: the potions on an active hero,
+  // the Revive on a fallen one (engine/combat/consumables.ts).
+  const flaskPurse: Record<FightConsumableKind, number> = {
     hpPotion: playerRun.consumables.hpPotion - usedConsumables.hpPotion,
     mpPotion: playerRun.consumables.mpPotion - usedConsumables.mpPotion,
+    revive: playerRun.consumables.revive - usedConsumables.revive,
   };
   const maxHpOf = (id: string) => getMaxHp(allCombatants[combat.combatants[id].heroId], combat.combatants[id]);
   const maxManaOf = (id: string) => getMaxMana(allCombatants[combat.combatants[id].heroId], combat.combatants[id]);
-  const flaskRefusal = (id: string, kind: PotionKind) => consumableRefusal(combat, id, kind, maxHpOf, maxManaOf);
-  const bagCount = POTION_KINDS.reduce((n, kind) => n + flaskPurse[kind], 0);
+  const flaskRefusal = (id: string, kind: FightConsumableKind) => consumableRefusal(combat, id, kind, maxHpOf, maxManaOf);
+  const bagCount = CONSUMABLE_KINDS.reduce((n, kind) => n + flaskPurse[kind], 0);
+  /** The player's fallen, in roster order — the Revive's targets. Fainted and on neither list: a KO takes a hero off both. */
+  const playerFallen = Object.values(combat.combatants)
+    .filter((c) => c.side === PLAYER_SIDE && c.fainted)
+    .map((c) => c.combatantId);
 
   // The round's resolve order as it stands: the player's declared actions at their real bracket,
   // everyone else at 0 (engine/combat/priority.ts previewOrder). Re-derived every render, so a
@@ -991,24 +996,25 @@ export function FightScreen({
   }
 
   /**
-   * A potion is a FREE action applied to the board on the spot (engine/combat/consumables.ts) —
-   * not declared into the round, so the grid re-derives at once: the out-of-mana Rest row turns
-   * back into moves because the Mana is simply there now. Irreversible, like the Rest key.
+   * A consumable is a FREE action applied to the board on the spot (engine/combat/consumables.ts)
+   * — not declared into the round, so the grid re-derives at once: the out-of-mana Rest row turns
+   * back into moves because the Mana is simply there now, and a Revive's hero is on the bench for
+   * the Switch key and the replacement panel. Irreversible, like the Rest key.
    */
-  function handleDrinkPotion(combatantId: string, kind: PotionKind) {
+  function handleDrinkPotion(combatantId: string, kind: FightConsumableKind) {
     if (flaskPurse[kind] <= 0 || flaskRefusal(combatantId, kind) !== null) return;
     const result = useConsumable(combat, combat.round, combatantId, kind, maxHpOf, maxManaOf);
     const used = result.events[0];
     const amount = used.type === 'ConsumableUsed' ? used.amount : 0;
     setCombat(result.state);
     appendLog(formatEvents(result.events, allCombatants, result.state.combatants, moves));
-    playSfx(kind === 'hpPotion' ? 'heal' : 'mana');
+    playSfx(kind === 'mpPotion' ? 'mana' : 'heal');
     setPopups((prev) => ({
       ...prev,
       [combatantId]: {
         key: popupSeq.current++,
-        text: kind === 'hpPotion' ? `+${amount}` : `+${amount} MP`,
-        className: kind === 'hpPotion' ? 'popup-heal' : 'popup-mana',
+        text: kind === 'mpPotion' ? `+${amount} MP` : `+${amount}`,
+        className: kind === 'mpPotion' ? 'popup-mana' : 'popup-heal',
       },
     }));
     setUsedConsumables((prev) => ({ ...prev, [kind]: prev[kind] + 1 }));
@@ -1809,7 +1815,7 @@ export function FightScreen({
               {/* Opens a panel, like Switch — the row's two panel keys flank its one irreversible one. Dark with nothing left to drink. */}
               <button
                 className="bottom-action bottom-action-primary bottom-action-bag"
-                disabled={!(actingId !== null && POTION_KINDS.some((kind) => flaskPurse[kind] > 0))}
+                disabled={!(actingId !== null && bagCount > 0)}
                 onClick={() => setBagOpen(true)}
                 aria-label={`Bag — ${bagCount} held`}
               >
@@ -1980,7 +1986,15 @@ export function FightScreen({
               combatantId: id,
               hero: allCombatants[combat.combatants[id].heroId],
               combatant: combat.combatants[id],
-              refusal: { hpPotion: flaskRefusal(id, 'hpPotion'), mpPotion: flaskRefusal(id, 'mpPotion') },
+              refusal: { hpPotion: flaskRefusal(id, 'hpPotion'), mpPotion: flaskRefusal(id, 'mpPotion'), revive: flaskRefusal(id, 'revive') },
+            })
+          )}
+          fallen={playerFallen.map(
+            (id): BagTarget => ({
+              combatantId: id,
+              hero: allCombatants[combat.combatants[id].heroId],
+              combatant: combat.combatants[id],
+              refusal: { hpPotion: flaskRefusal(id, 'hpPotion'), mpPotion: flaskRefusal(id, 'mpPotion'), revive: flaskRefusal(id, 'revive') },
             })
           )}
           onDrink={handleDrinkPotion}
