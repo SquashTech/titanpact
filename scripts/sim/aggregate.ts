@@ -7,6 +7,7 @@ import type { RunRecord } from './run';
 import {
   emptyChoice,
   emptyEnemy,
+  addKnockoutCounts,
   emptyFightKind,
   emptyHero,
   emptyMoveAgg,
@@ -84,6 +85,7 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
   }
   agg.merges += record.merges;
   agg.mergeOffers += record.mergeOffers;
+  addKnockoutCounts(agg.knockouts, record.knockouts);
   let signaturesThisRun = 0;
   for (const heroId of Object.keys(record.signatures)) {
     const s = record.signatures[heroId];

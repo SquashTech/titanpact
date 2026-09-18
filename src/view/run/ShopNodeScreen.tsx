@@ -1,7 +1,7 @@
 import { useState, type CSSProperties } from 'react';
 import type { RunState } from '../../run/state';
 import type { GuildHallOffers } from '../../run/shop';
-import type { ConsumableKind } from '../../run/consumables';
+import type { PotionKind } from '../../run/consumables';
 import type { GuildHallOffer } from '../../run/recruitment';
 import { GuildHallPanel, guildHallTabs, type GuildHallTab } from './GuildHallPanel';
 import { GuildSign } from './guildHallArt';
@@ -16,7 +16,7 @@ interface Props {
   scrollsBought: number;
   onRunChange: (next: RunState) => void;
   onBuyScroll: () => void;
-  onBuyConsumable: (kind: ConsumableKind) => void;
+  onBuyConsumable: (kind: PotionKind) => void;
   onBuyMend: () => void;
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
   onContinue: () => void;

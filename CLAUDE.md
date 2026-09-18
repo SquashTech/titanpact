@@ -541,8 +541,8 @@ don't silently override it.
   measurement — see `docs/combat.md`.
 
 ### Consumables
-- **Two potions, a team purse, a FREE action** (2026-09-13, `src/run/consumables.ts`,
-  `src/engine/combat/consumables.ts`). HP Potion and MP Potion each restore **half of max**,
+- **Two potions and a Revive, a team purse; the potions a FREE action** (2026-09-13,
+  `src/run/consumables.ts`, `src/engine/combat/consumables.ts`). HP Potion and MP Potion each restore **half of max**,
   flat — outside the heal formula, no variance, no STAB. Drunk during the command phase on any
   **active** hero and applied to state on the spot, NOT declared into the round: the player sees
   the outcome before declaring, which is the point (an out-of-mana Rest row turns back into
@@ -551,7 +551,12 @@ don't silently override it.
   Irreversible once drunk. Every run opens with one of each; **hold cap 3 a kind**, an over-cap
   drop or purchase is lost; faucets are the Guild Hall shelf (flat 20 gold, a pure sink) and a
   low-odds drop off a won encounter — deliberately no reward-node type. What a fight drank comes
-  off the purse at resolve, so a replayed fight refunds it. `docs/run-loop.md` "Consumables".
+  off the purse at resolve, so a replayed fight refunds it. **The Revive** (2026-09-17, per user
+  direction) is the third kind and different in every way that matters: spent on the **map**, on
+  the squad screen, on a hero a fight left down (`reviveHero`, half HP), never in a fight;
+  **never sold** — a KO that 20g undoes is not a KO — and never started with; its one faucet is
+  its own rarer drop roll (`REVIVE_DROP_CHANCE`), taken only when the potion roll missed, so a
+  fight drops one thing at most. `docs/run-loop.md` "Consumables".
 
 ### Architecture
 - **All acquirable content — heroes, moves, abilities, relics, equipment — is pure data**
@@ -672,13 +677,16 @@ what's still unimplemented:
   figure; only the shape is decided. **HP persists across an act's
   nodes — Wounds — and mana does not** (2026-09-15, per user direction, FOR PLAYTEST;
   `src/run/wounds.ts`, `docs/run-loop.md` "Wounds"). A fight writes the fielded heroes'
-  missing HP onto `RosterEntry.wounds`, the act's end is the one free mend, and **every hero
-  enters the next node with at least `WALK_FLOOR` = 25% of its max, KO'd or not** — a floor on
-  everyone, not a revive rule, which is what separates this from the 2026-08-16 reversal
-  (raw persistence bricked a KO'd hero for the run). The paid faucets: the sideboard, the
-  **Rest** seat in the reward pool, the Guild Hall's **mend** (40g, whole roster), and a
-  contract hero arriving whole. Potions stay in-fight only. Mana still opens full every
-  fight; the enemy curve is untouched until it has been played. Relics are **stat-only**, by
+  missing HP onto `RosterEntry.wounds`, and **a knockout PERSISTS** (2026-09-17, per user
+  direction — the counterweight to every fight fielding the whole roster): a KO'd hero is
+  `RosterEntry.down`, is not fielded (`standingRoster`, `pickSquad`), and stands up only at
+  the **Rest** seat, the Guild Hall's **mend** (40g, whole roster, the downed included), a
+  **Revive** (a rare drop, spent on the squad screen, half HP), or the act's end — the one free
+  mend, everyone whole. The 25% walk floor this replaces was the guard against the 2026-08-16
+  reversal, where raw persistence bricked a KO'd hero for the run with no way back; the four
+  faucets are now the way back, and a KO is meant to cost the rest of the act. `down` is a flag,
+  not `wounds >= max`, so a growth roll cannot stand a hero up. Potions stay in-fight only.
+  Mana still opens full every fight; the enemy curve is untouched until it has been played. Relics are **stat-only**, by
   design rather than by deferral (see the relic-catalog invariant above).
 - The first run on an account (2026-09-05 sign-off): **scripted through Act 1**, narrated by
   **Valor**, with Valor + Fang forced as the pact and the act's map narrowed to **one node

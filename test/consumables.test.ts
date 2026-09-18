@@ -125,7 +125,7 @@ test('consumables: the shelf sells at the flat price, refuses at the cap and ref
 test('consumables: a fight’s use comes off the purse at resolve, and cannot spend more than was held', () => {
   const run = createRunState();
   const spent = spendConsumables(run, { hpPotion: 1 });
-  assert.deepStrictEqual(spent.consumables, { hpPotion: 0, mpPotion: 1 });
+  assert.deepStrictEqual(spent.consumables, { hpPotion: 0, mpPotion: 1, revive: 0 });
   assert.throws(() => spendConsumables(run, { mpPotion: 2 }));
 });
 

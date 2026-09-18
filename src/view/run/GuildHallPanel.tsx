@@ -13,7 +13,7 @@ import { ROSTER_CAP, RosterFullError } from '../../run/state';
 import { guildHallEntry } from '../../run/guildRecruit';
 import { guildHallLevel } from '../../run/difficulty';
 import { SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT, canBuyScroll } from '../../run/mastery';
-import { CONSUMABLE_HOLD_CAP, CONSUMABLE_KINDS, CONSUMABLE_NAMES, CONSUMABLE_PRICE, canBuyConsumable, type ConsumableKind } from '../../run/consumables';
+import { CONSUMABLE_HOLD_CAP, CONSUMABLE_NAMES, CONSUMABLE_PRICE, POTION_KINDS, canBuyConsumable, type PotionKind } from '../../run/consumables';
 import { MEND_PRICE, anyWounded, canBuyMend } from '../../run/wounds';
 import { StatGlyph } from '../shared/StatBars';
 import {
@@ -63,7 +63,7 @@ interface Props {
   /** Hands off to App.tsx, which charges the gold and opens the who screen for the pip. */
   onBuyScroll: () => void;
   /** Hands off to App.tsx, which charges the gold and fills the flask (run/consumables.ts). */
-  onBuyConsumable: (kind: ConsumableKind) => void;
+  onBuyConsumable: (kind: PotionKind) => void;
   /** The whole roster made whole for MEND_PRICE (run/wounds.ts). */
   onBuyMend: () => void;
   /** Recruiting at a full roster hands off to App.tsx's RosterReplaceScreen gate. */
@@ -239,8 +239,9 @@ export function GuildHallPanel({
               )}
             </button>
             {/* The potions (2026-09-16, per user direction, off the Smithy's counter): consumed rather
-                than worn. No per-visit limit — the flask's own cap (CONSUMABLE_HOLD_CAP) is the shelf's. */}
-            {CONSUMABLE_KINDS.map((kind) => {
+                than worn. No per-visit limit — the flask's own cap (CONSUMABLE_HOLD_CAP) is the shelf's.
+                The Revive is not sold: a KO that 20g undoes is not a KO (run/consumables.ts). */}
+            {POTION_KINDS.map((kind) => {
               const held = run.consumables[kind];
               const atCap = held >= CONSUMABLE_HOLD_CAP;
               return (
@@ -272,7 +273,8 @@ export function GuildHallPanel({
               );
             })}
             {/* The mend (run/wounds.ts): the one good here that is for everyone at once, so it takes
-                the whole shelf. Dark while nobody is hurt — a heal with nothing to heal is not for sale. */}
+                the whole shelf, and since 2026-09-17 it stands the downed up too. Dark while nobody is
+                hurt — a heal with nothing to heal is not for sale. */}
             <button className={`guild-hall-good is-mend${anyWounded(run) ? '' : ' sold-out'}`} disabled={!canBuyMend(run)} onClick={onBuyMend}>
               <span className="guild-hall-good-glyph">
                 <StatGlyph stat="hp" tone="inherit" />

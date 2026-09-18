@@ -8,7 +8,7 @@ import type { CombatState } from '../state';
 import type { CombatEvent } from '../events';
 import { applyHpDelta } from './faintHandling';
 
-export type ConsumableKind = 'hpPotion' | 'mpPotion';
+export type PotionKind = 'hpPotion' | 'mpPotion';
 
 /** Half of the stat's max, both kinds. Flat: a potion is a run resource, not a heal move. */
 export const CONSUMABLE_RESTORE_FRACTION = 0.5;
@@ -19,7 +19,7 @@ export class ConsumableUseError extends Error {}
 export function consumableRefusal(
   state: CombatState,
   combatantId: string,
-  kind: ConsumableKind,
+  kind: PotionKind,
   maxHpOf: (combatantId: string) => number,
   maxManaOf: (combatantId: string) => number
 ): string | null {
@@ -43,7 +43,7 @@ export function useConsumable(
   state: CombatState,
   round: number,
   combatantId: string,
-  kind: ConsumableKind,
+  kind: PotionKind,
   maxHpOf: (combatantId: string) => number,
   maxManaOf: (combatantId: string) => number
 ): { state: CombatState; events: CombatEvent[] } {

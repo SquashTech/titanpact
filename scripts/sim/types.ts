@@ -94,6 +94,34 @@ export interface FightKindAgg {
 /** A per-run minute histogram, one per pace profile (time.ts PACE_PROFILES order); index = whole minutes. */
 export type MinuteHistograms = number[][];
 
+/** Summed over runs (run.ts RunRecord.knockouts). */
+export interface KnockoutCounts {
+  /** Fights entered with at least one roster hero down. */
+  shortHanded: number;
+  /** Heroes down on entering a fight, summed. */
+  downEntering: number;
+  /** Heroes KO'd inside a fight the player WON — the KOs that persist — and the same by the node kind they fell at. */
+  koInWins: number;
+  koInWinsByKind: Record<string, number>;
+  revivesFound: number;
+  revivesSpent: number;
+  /** Rest seats taken and Guild Hall mends bought while somebody was down. */
+  restsWhileDown: number;
+  mendsWhileDown: number;
+}
+
+export function emptyKnockoutCounts(): KnockoutCounts {
+  return { shortHanded: 0, downEntering: 0, koInWins: 0, koInWinsByKind: {}, revivesFound: 0, revivesSpent: 0, restsWhileDown: 0, mendsWhileDown: 0 };
+}
+
+export function addKnockoutCounts(into: KnockoutCounts, from: KnockoutCounts): void {
+  for (const key of Object.keys(from) as (keyof KnockoutCounts)[]) {
+    if (key === 'koInWinsByKind') continue;
+    into[key] += from[key];
+  }
+  for (const kind of Object.keys(from.koInWinsByKind)) into.koInWinsByKind[kind] = (into.koInWinsByKind[kind] ?? 0) + from.koInWinsByKind[kind];
+}
+
 export interface Aggregate {
   runs: number;
   wins: number;
@@ -202,6 +230,8 @@ export interface Aggregate {
   mergesWon: number;
   mergeOffers: number;
   mergeOffersWon: number;
+  /** Persisting knockouts (src/run/wounds.ts): what the rule cost and what paid it back. */
+  knockouts: KnockoutCounts;
   /** What runs cost in taps and screens (time.ts), [act], summed over runs that ENTERED the act. */
   timeByAct: TimeCounts[];
   /** The same, over completed runs only — a full clear's shape, undiluted by Act 1 deaths. */
@@ -289,6 +319,7 @@ export function emptyAggregate(): Aggregate {
     mergesWon: 0,
     mergeOffers: 0,
     mergeOffersWon: 0,
+    knockouts: emptyKnockoutCounts(),
     timeByAct: Array.from({ length: 7 }, emptyTimeCounts),
     timeByActWon: Array.from({ length: 7 }, emptyTimeCounts),
     runMinutesWon: PACE_PROFILES.map(() => []),
@@ -419,6 +450,7 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   into.mergesWon += from.mergesWon;
   into.mergeOffers += from.mergeOffers;
   into.mergeOffersWon += from.mergeOffersWon;
+  addKnockoutCounts(into.knockouts, from.knockouts);
   for (const key of Object.keys(from.deathByNodeType)) {
     into.deathByNodeType[key] = (into.deathByNodeType[key] ?? 0) + from.deathByNodeType[key];
   }

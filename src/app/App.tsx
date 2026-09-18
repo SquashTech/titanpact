@@ -51,7 +51,7 @@ import { CompanionScreen, type CompanionBeat } from '../view/run/CompanionScreen
 import { absorbCompanions, companionCandidate, companionJoinDue, joinCompanion } from '../run/companion';
 import type { CombatState } from '../engine/state';
 import { koRosterIdsOf } from '../run/buildCombatState';
-import { WoundsError, buyMend, recordWounds, mendRoster } from '../run/wounds';
+import { WoundsError, anyDown, buyMend, recordWounds, mendRoster, standingRoster } from '../run/wounds';
 import { enemies, finaleEnemies, ENDBRINGER_ID, MANTICORE_ID, titanEyes, EYE_IDS } from '../data/enemies';
 import { relics } from '../data/relics';
 import { ActIntroScreen } from '../view/run/ActIntroScreen';
@@ -86,7 +86,7 @@ import {
 import { guildHallOffers } from '../data/recruitment';
 import { MASTERY_CAP, SCROLL_CACHE_COUNT, buyScroll, canBuyScroll } from '../run/mastery';
 import { rollGuildHallOffers, type GuildHallOffers } from '../run/shop';
-import { ConsumableError, buyConsumable, grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse } from '../run/consumables';
+import { ConsumableError, buyConsumable, grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse, type PotionKind } from '../run/consumables';
 import { guildHallEntry } from '../run/guildRecruit';
 import { anyClassAvailable } from '../run/classes';
 import { generateMap, type MapNodeType } from '../run/map';
@@ -436,6 +436,14 @@ function tutorialBeatKeyFor(screen: Screen, run: RunState): TutorialBeatKey | nu
   }
 }
 
+/**
+ * With 2 or fewer heroes there is no lead order to decide, so the squad screen is skipped — unless
+ * one of them is down, since that screen is where a Revive is spent (run/wounds.ts).
+ */
+function skipSquadSelect(run: RunState): boolean {
+  return run.roster.length <= 2 && !anyDown(run);
+}
+
 export function App() {
   const [playerRun, setPlayerRun] = useState<RunState>(() => createRunState(40));
   const [screen, setScreen] = useState<Screen>({ kind: 'title' });
@@ -603,16 +611,16 @@ export function App() {
         encounterScaling('finale', FINALE_ACT),
         { spawnTypesFor: (locationId) => locations[locationId]?.spawnTypes ?? null, heraldLeads: true }
       );
-      if (playerRun.roster.length <= 2) {
-        handleSquadConfirmed(pickSquad(playerRun.roster, playerRun.roster.map((r) => r.rosterId)), nodeId, 'boss', encounter);
+      if (skipSquadSelect(playerRun)) {
+        handleSquadConfirmed(pickSquad(playerRun.roster, standingRoster(playerRun.roster).map((r) => r.rosterId)), nodeId, 'boss', encounter);
       } else {
         setScreen({ kind: 'squadSelect', nodeId, nodeType: 'boss', encounter });
       }
     } else if (node.type === 'titan') {
       // The Titan's Eyes (docs/titan-eyes.md): the half-lidded pair, the wide pair in reserve.
       const encounter = generateTitanEncounter(EYE_IDS, titanEyes, encounterSeedFor(playerRun.map!, nodeId), encounterScaling('titan', FINALE_ACT));
-      if (playerRun.roster.length <= 2) {
-        handleSquadConfirmed(pickSquad(playerRun.roster, playerRun.roster.map((r) => r.rosterId)), nodeId, 'boss', encounter);
+      if (skipSquadSelect(playerRun)) {
+        handleSquadConfirmed(pickSquad(playerRun.roster, standingRoster(playerRun.roster).map((r) => r.rosterId)), nodeId, 'boss', encounter);
       } else {
         setScreen({ kind: 'squadSelect', nodeId, nodeType: 'boss', encounter });
       }
@@ -646,9 +654,8 @@ export function App() {
       if (encounterKind === 'fight') {
         setPlayerRun((run) => ({ ...run, fightsStarted: run.fightsStarted + 1 }));
       }
-      // With 2 or fewer heroes there is no bench/active split to decide; skip squad select.
-      if (playerRun.roster.length <= 2) {
-        const squad = pickSquad(playerRun.roster, playerRun.roster.map((r) => r.rosterId));
+      if (skipSquadSelect(playerRun)) {
+        const squad = pickSquad(playerRun.roster, standingRoster(playerRun.roster).map((r) => r.rosterId));
         handleSquadConfirmed(squad, nodeId, encounterKind, encounter);
       } else {
         setScreen({ kind: 'squadSelect', nodeId, nodeType: encounterKind, encounter });
@@ -859,7 +866,7 @@ export function App() {
   }
 
   /** One bundle off the Guild Hall shelf; the visit's count rides the shop screen, as sold-out gear does. */
-  function handleBuyGuildConsumable(kind: ConsumableKind) {
+  function handleBuyGuildConsumable(kind: PotionKind) {
     let next: RunState;
     try {
       next = buyConsumable(playerRun, kind);

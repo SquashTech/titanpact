@@ -1,13 +1,13 @@
 import type { HeroDefinition } from '../../engine/content';
 import type { RosterEntry } from '../../run/state';
-import { woundedHp } from '../../run/wounds';
+import { standingHp } from '../../run/wounds';
 import { entryStatTotals } from './entryStatTotals';
 import { hpTier } from './StatBars';
 
-/** Where a roster hero's HP stands going into its next fight (run/wounds.ts), off the same totals the sheet prints. */
+/** Where a roster hero's HP stands going into its next fight (run/wounds.ts), off the same totals the sheet prints — 0 while it is down. */
 export function entryHp(hero: HeroDefinition, entry: RosterEntry, relicIds: readonly string[]): { hp: number; maxHp: number } {
   const maxHp = entryStatTotals(hero, entry, relicIds).hp;
-  return { hp: woundedHp(maxHp, entry.wounds), maxHp };
+  return { hp: standingHp(maxHp, entry), maxHp };
 }
 
 interface WoundBarProps {

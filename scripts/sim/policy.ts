@@ -36,7 +36,7 @@ import { progressionTable } from '../../src/data/progression';
 import { mergeStatMods } from '../../src/run/statMods';
 import type { Rng } from './rng';
 import { levelOf } from '../../src/run/growth';
-import { woundedHp } from '../../src/run/wounds';
+import { standingHp, standingRoster } from '../../src/run/wounds';
 import { heroes as recruitPool } from '../../src/data/heroes';
 import { allCombatants } from '../../src/data/content';
 import { typeChart } from '../../src/data/typechart';
@@ -219,7 +219,7 @@ const SLOT_BOARD_HP = 0.65;
  */
 function kitWorth(entry: RosterEntry, roster: readonly RosterEntry[], candidates: readonly string[]): Record<string, number> {
   const ally = byPower(roster.filter((r) => r.rosterId !== entry.rosterId && heroes[r.heroId]))[0];
-  const side = [entry, ...(ally ? [ally] : [])].map((r) => ({ ...r, wounds: 0 }));
+  const side = [entry, ...(ally ? [ally] : [])].map((r) => ({ ...r, wounds: 0, down: false }));
   const level = Math.max(1, levelOf(entry));
   const worth: Record<string, number> = {};
   for (const id of candidates) worth[id] = 0;
@@ -299,10 +299,10 @@ export function byPower(roster: readonly RosterEntry[]): RosterEntry[] {
   return [...roster].sort((a, b) => powerScore(b) - powerScore(a));
 }
 
-/** Where a hero's HP stands going into a fight, as a share of its max (src/run/wounds.ts). */
+/** Where a hero's HP stands going into a fight, as a share of its max (src/run/wounds.ts) — 0 while down. */
 export function hpFraction(entry: RosterEntry): number {
   const maxHp = effectiveStats(entry).hp;
-  return woundedHp(maxHp, entry.wounds) / maxHp;
+  return standingHp(maxHp, entry) / maxHp;
 }
 
 /** The roster's HP over its max, summed — the read the shop's mend and the Rest are priced on. */
@@ -311,18 +311,18 @@ export function rosterHpFraction(roster: readonly RosterEntry[]): number {
   let max = 0;
   for (const entry of roster) {
     const maxHp = effectiveStats(entry).hp;
-    hp += woundedHp(maxHp, entry.wounds);
+    hp += standingHp(maxHp, entry);
     max += maxHp;
   }
   return max > 0 ? hp / max : 1;
 }
 
 /**
- * The four (or fewer) heroes the policy fields, strongest first — a wounded hero counting for
- * less, so the sideboard does the rotating the wounds are there to ask for.
+ * The heroes the policy fields — every STANDING one (src/run/wounds.ts), strongest first so the
+ * lead pair is the best two, a wounded hero counting for less.
  */
 export function fieldedSquadIds(roster: readonly RosterEntry[], size: number): string[] {
-  return [...roster]
+  return standingRoster(roster)
     .sort((a, b) => powerScore(b) * (0.4 + 0.6 * hpFraction(b)) - powerScore(a) * (0.4 + 0.6 * hpFraction(a)))
     .slice(0, size)
     .map((r) => r.rosterId);

@@ -28,8 +28,8 @@ import { fieldHealMultiplier, type HealCaster } from '../../engine/heal/healPipe
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { DEFAULT_PACT_CLOCK, PACT_WARNING_ROUNDS, pactFractionFor } from '../../engine/combat/pactClock';
 import { applyForcedReplacement, replacementCandidates } from '../../engine/combat/switching';
-import { consumableRefusal, useConsumable, type ConsumableKind } from '../../engine/combat/consumables';
-import { CONSUMABLE_KINDS, CONSUMABLE_NAMES, type ConsumablePurse } from '../../run/consumables';
+import { consumableRefusal, useConsumable, type PotionKind } from '../../engine/combat/consumables';
+import { CONSUMABLE_NAMES, POTION_KINDS, type ConsumableKind, type ConsumablePurse } from '../../run/consumables';
 import { BagPanel, type BagTarget } from './BagPanel';
 import { describeOrder, orderMarksFor, type OrderMark, type OrderSource } from './orderMarks';
 import { Coin } from '../shared/Coin';
@@ -627,7 +627,7 @@ export function FightScreen({
   /** The Bag — every consumable held, and who drinks it — open off the bottom row's key. */
   const [bagOpen, setBagOpen] = useState(false);
   /** Potions drunk this fight. The run's purse is only debited at resolve, so a replayed fight refunds them. */
-  const [usedConsumables, setUsedConsumables] = useState<ConsumablePurse>({ hpPotion: 0, mpPotion: 0 });
+  const [usedConsumables, setUsedConsumables] = useState<ConsumablePurse>({ hpPotion: 0, mpPotion: 0, revive: 0 });
   const [menuOpen, setMenuOpen] = useState(false);
   /** Quit is armed by a first tap and fires on the second; reset whenever the menu opens. */
   const [confirmingQuit, setConfirmingQuit] = useState(false);
@@ -782,15 +782,16 @@ export function FightScreen({
     combat.combatants[actingId].currentMana <
       getMaxMana(allCombatants[combat.combatants[actingId].heroId], combat.combatants[actingId]);
 
-  // What is left in the Bag this fight, drinkable while commanding.
-  const flaskPurse: ConsumablePurse = {
+  // What is left in the Bag this fight, drinkable while commanding. A Revive is not: it is spent
+  // on the squad screen, on a hero a fight left down (run/wounds.ts), never on the field.
+  const flaskPurse: Record<PotionKind, number> = {
     hpPotion: playerRun.consumables.hpPotion - usedConsumables.hpPotion,
     mpPotion: playerRun.consumables.mpPotion - usedConsumables.mpPotion,
   };
   const maxHpOf = (id: string) => getMaxHp(allCombatants[combat.combatants[id].heroId], combat.combatants[id]);
   const maxManaOf = (id: string) => getMaxMana(allCombatants[combat.combatants[id].heroId], combat.combatants[id]);
-  const flaskRefusal = (id: string, kind: ConsumableKind) => consumableRefusal(combat, id, kind, maxHpOf, maxManaOf);
-  const bagCount = CONSUMABLE_KINDS.reduce((n, kind) => n + flaskPurse[kind], 0);
+  const flaskRefusal = (id: string, kind: PotionKind) => consumableRefusal(combat, id, kind, maxHpOf, maxManaOf);
+  const bagCount = POTION_KINDS.reduce((n, kind) => n + flaskPurse[kind], 0);
 
   // The round's resolve order as it stands: the player's declared actions at their real bracket,
   // everyone else at 0 (engine/combat/priority.ts previewOrder). Re-derived every render, so a
@@ -987,7 +988,7 @@ export function FightScreen({
    * not declared into the round, so the grid re-derives at once: the out-of-mana Rest row turns
    * back into moves because the Mana is simply there now. Irreversible, like the Rest key.
    */
-  function handleDrinkPotion(combatantId: string, kind: ConsumableKind) {
+  function handleDrinkPotion(combatantId: string, kind: PotionKind) {
     if (flaskPurse[kind] <= 0 || flaskRefusal(combatantId, kind) !== null) return;
     const result = useConsumable(combat, combat.round, combatantId, kind, maxHpOf, maxManaOf);
     const used = result.events[0];
@@ -1797,7 +1798,7 @@ export function FightScreen({
               {/* Opens a panel, like Switch — the row's two panel keys flank its one irreversible one. Dark with nothing left to drink. */}
               <button
                 className="bottom-action bottom-action-primary bottom-action-bag"
-                disabled={!(actingId !== null && CONSUMABLE_KINDS.some((kind) => flaskPurse[kind] > 0))}
+                disabled={!(actingId !== null && POTION_KINDS.some((kind) => flaskPurse[kind] > 0))}
                 onClick={() => setBagOpen(true)}
                 aria-label={`Bag — ${bagCount} held`}
               >

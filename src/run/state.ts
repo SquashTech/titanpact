@@ -81,9 +81,16 @@ export interface RosterEntry {
   mortal: boolean;
   /**
    * HP missing going into the next node (run/wounds.ts): a fight writes it, the act's end clears
-   * it, and buildCombatState places the hero that far down. Never past the walk floor.
+   * it, and buildCombatState places the hero that far down.
    */
   wounds: number;
+  /**
+   * Knocked out and still down (run/wounds.ts, 2026-09-17): a fight that KO'd the hero wrote it,
+   * and until a Rest, the Guild Hall's mend, a Revive or the act's end clears it the hero is not
+   * fielded. Its own flag rather than `wounds >= max`, so a max that rises mid-act (a growth
+   * roll) cannot quietly stand a downed hero back up.
+   */
+  down: boolean;
 }
 
 /**
@@ -192,6 +199,7 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     classPassiveId: null,
     mortal: false,
     wounds: 0,
+    down: false,
   };
 }
 

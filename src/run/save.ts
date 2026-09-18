@@ -269,6 +269,8 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
   // Absent on a file written before wounds persisted; whole is the honest default.
   const wounds = value.wounds ?? 0;
   if (!isInt(wounds, 0)) reject(`${label}.wounds is not an HP count`);
+  // Absent on a file written before knockouts persisted; standing is the honest default.
+  const down = value.down === true;
 
   const graft = value.evolutionTypeGraft ?? null;
   if (graft !== null) {
@@ -299,6 +301,7 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
     // Absent on a file written before the companion; a hero that never was one is not one.
     mortal: value.mortal === true,
     wounds,
+    down,
   };
 }
 
@@ -372,7 +375,8 @@ function decodeConsumables(value: unknown): ConsumablePurse {
   if (!isObject(value)) reject('run.consumables is not an object');
   const purse = {} as ConsumablePurse;
   for (const kind of CONSUMABLE_KINDS) {
-    const held = value[kind];
+    // Absent on a file written before the Revive; none held is the honest default.
+    const held = value[kind] ?? 0;
     if (!isInt(held, 0, CONSUMABLE_HOLD_CAP)) reject(`run.consumables.${kind} is not a count in 0-${CONSUMABLE_HOLD_CAP}`);
     purse[kind] = held;
   }

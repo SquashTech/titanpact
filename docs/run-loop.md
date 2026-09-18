@@ -555,12 +555,13 @@ encounters; the same batch after the excision reads 33.0% and 10.70. The roster 
 much lighter and nothing has been handed back yet — automatic per-level stat growth (phase 3) is
 the replacement, and re-fitting the curve is phase 6. Do not read the drop as a regression.
 
-### Consumables — the two flasks (2026-09-13, per user direction)
+### Consumables — the two flasks and the Revive (2026-09-13, per user direction)
 
 Two potions, held as a TEAM purse beside gold and the Scrolls (`RunState.consumables`,
 `src/run/consumables.ts`) and drunk in a fight on any active hero. **HP Potion** restores half of
 max HP; **MP Potion** restores half of max Mana. Every run opens with one of each — the early
-lever against an awkward first matchup, before a hero has a kit that answers it.
+lever against an awkward first matchup, before a hero has a kit that answers it. The third kind,
+the **Revive**, is the map's and is described at the end of this section.
 
 **A potion is a FREE action, not a declared one.** `actions.ts` forbids an action seeing another's
 outcome inside a round; a potion's whole point is that the player sees its outcome before
@@ -584,8 +585,8 @@ key it is irreversible — Back cannot un-drink.
 - **Player-only.** Enemies never drink. A no-turn-cost restore on an AI would be a stat bump
   wearing a hat; if an Ascension ever wants it, it is a dial with its own AI line, not a default.
 - **Active, alive, command phase.** The bench regenerates on its own; a KO'd hero is a different
-  item's business (a Revive is a different conversation, and `ConsumableKind` leaves the door
-  open).
+  item's business — the Revive's, below, and it is not drunk in a fight (`PotionKind` is the
+  in-fight set, `ConsumableKind` the purse's).
 
 **Scarcity is the whole price, so scarcity is capped.** The mana invariant — *investment pays out
 later than the point at which a weak team dies* — is bent on purpose by one MP potion and broken
@@ -615,6 +616,18 @@ bands and pushed each hero's chips off its centre; the Menu key they had crowded
 the sky's top-right corner (`.field-menu`), a pause key's place, and the row had its seat back.
 Both leave the field while a round plays. The Guild Hall shelf's two potion goods wear the
 same coin.
+
+**The Revive** (2026-09-17, per user direction, with knockouts persisting — "Wounds" below). One
+downed hero stood up at **half HP** (`REVIVE_FRACTION`, the potions' figure), spent on the
+**squad screen** — the downed cell wears the key while one is held, and that screen is forced
+before every fight, so the moment a KO would bite is the moment the Revive is offered. Never in
+a fight: a hero the fight KO'd is the next fight's problem, and a Pokémon Revive on the bench
+would be a fourth body for no turn. **Never sold and never started with**: a KO that 20g undoes
+is not a KO, and the Rest seat and the mend are the faucets a player can plan around. Its one
+faucet is its own drop roll (`REVIVE_DROP_CHANCE`: 6% a fight, 8% a Skirmish, 15% an Elite, 20%
+a Guardian, none from the finale), taken only when the potion roll missed so a fight drops one
+thing at most and the victory ledger keeps one row for it. Same hold cap. The glyph is a
+feather — the one resource in the purse that is not drunk.
 
 **The coin** (`src/view/shared/Coin.tsx`, 2026-09-17, per user direction): one struck token in
 the mana gem's manufacture — a dark halo that seats it on whatever it sits over, a face, a
@@ -1051,13 +1064,33 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   dead turn rather than a decision, and Overflow would otherwise carry uncapped across
   fights. It is a second dial for a second experiment (the walk regenerating N rounds of
   MP Regen), not part of this one.
-  **The walk floor is what makes this not the 2026-08-16 reversal again.** That pass
-  persisted raw HP and a KO'd hero stayed at 0 into the next fight — a dead roster slot
-  with no way back. Now every hero enters the next node with at least `WALK_FLOOR` (25%)
-  of its max, KO'd or not: a floor on EVERYONE rather than a revive rule, so dying is
-  never a better outcome than surviving at 8%. The floor is applied when the wound is
-  written (`woundsFrom`) and again when it is read (`woundedHp`), the second covering a
-  max that fell.
+  **A knockout persists (2026-09-17, per user direction).** A hero the fight KO'd is
+  `RosterEntry.down`: on the roster, off the field (`standingRoster`; `pickSquad` refuses
+  it), greyed on the squad screen with DOWN in place of its matchup row, and stood up only
+  by the **Rest** seat, the Guild Hall's **mend**, a **Revive** ("Consumables" above) or the
+  act's end. It is the counterweight to every fight fielding the whole roster
+  (`combat.md` "The fielded roster"): six bodies a fight is a large buff, and a KO that
+  costs the rest of the act is what prices it. The flag is its own field rather than
+  `wounds >= max` so a growth roll mid-act cannot quietly stand a hero up. One hero left
+  standing fields alone into an empty second slot; a won fight always leaves at least one,
+  since a double wipe is the enemy's win. The scripted first run's pins skip a downed hero
+  — the lesson waits for it to stand up.
+  **This replaces the 25% walk floor** (2026-09-15 → 2026-09-17). The floor was written
+  against the 2026-08-16 reversal, where raw persistence left a KO'd hero at 0 with no way
+  back for the run; a floor on everyone made dying never better than surviving low. With
+  four faucets to stand a hero up and the act's end a hard reset, the way back exists and
+  the floor was only softening the consequence the fielded roster needs.
+  **Measured (2026-09-17, 600 runs, seed 7, against the whole-roster flip alone):** full-clear
+  80.7 → 77.8% skilled, 25.5 → 28.2% chart — inside noise. The report's new
+  `knockouts persisting` line says why: 9 KOs a run in won fights, but **47% fall at the
+  Guardian, 13% at the Eyes and 13% at the Herald** — every one of them followed by a mend
+  (the act's end, the run's end, the finale's free mend) — so only the ~27% at the opener,
+  the Skirmish and the Elite can persist, and of those the pilot stands about half back up
+  (Revives 0.5, a Rest 0.3, a mend 0.4 a run). **Only 6% of fights are entered
+  short-handed.** With three fights an act and the Guardian last, a KO can cost the fork
+  fight or the Guardian and nothing else; the fight where heroes actually die is the one the
+  rule cannot reach. That is a structural fact about the act shape, not a dial — the dials
+  are the Revive's odds and whether the act's end revives. Both are the designer's.
   **Why:** with full heals every fight had to be a wall, because a fight that is not a
   wall is free — and the act was three coin flips and a boss. Under wounds a fight can be
   individually winnable and still cost something, and the act's threat becomes the

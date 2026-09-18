@@ -2,8 +2,8 @@ import { useState, type CSSProperties } from 'react';
 import type { HeroDefinition } from '../../engine/content';
 import type { Combatant } from '../../engine/state';
 import { effectiveTypes, getMaxHp, getMaxMana } from '../../engine/state';
-import type { ConsumableKind } from '../../engine/combat/consumables';
-import { CONSUMABLE_KINDS, CONSUMABLE_NAMES, type ConsumablePurse } from '../../run/consumables';
+import type { PotionKind } from '../../engine/combat/consumables';
+import { CONSUMABLE_BLURBS, CONSUMABLE_NAMES, POTION_KINDS } from '../../run/consumables';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
 import { ResourceGlyph } from '../shared/RunGlyph';
@@ -16,23 +16,18 @@ export interface BagTarget {
   combatantId: string;
   hero: HeroDefinition;
   combatant: Combatant;
-  refusal: Record<ConsumableKind, string | null>;
+  refusal: Record<PotionKind, string | null>;
 }
 
 interface Props {
   /** What is left to drink this fight, by kind. */
-  purse: ConsumablePurse;
+  purse: Record<PotionKind, number>;
   targets: readonly BagTarget[];
   /** The hero the console is on — the row the panel opens pre-lit. */
   actingId: string | null;
-  onDrink: (combatantId: string, kind: ConsumableKind) => void;
+  onDrink: (combatantId: string, kind: PotionKind) => void;
   onClose: () => void;
 }
-
-const BLURB: Record<ConsumableKind, string> = {
-  hpPotion: 'Restores half of max HP',
-  mpPotion: 'Restores half of max Mana',
-};
 
 function Gauge({ kind, value, max }: { kind: 'hp' | 'mana'; value: number; max: number }) {
   const fraction = max > 0 ? value / max : 0;
@@ -60,7 +55,7 @@ function Gauge({ kind, value, max }: { kind: 'hp' | 'mana'; value: number; max: 
  * Presentation-only; the engine call is FightScreen's.
  */
 export function BagPanel({ purse, targets, actingId, onDrink, onClose }: Props) {
-  const [kind, setKind] = useState<ConsumableKind>(() => CONSUMABLE_KINDS.find((k) => purse[k] > 0) ?? CONSUMABLE_KINDS[0]);
+  const [kind, setKind] = useState<PotionKind>(() => POTION_KINDS.find((k) => purse[k] > 0) ?? POTION_KINDS[0]);
   const held = purse[kind];
   return (
     <div className="log-overlay" onClick={onClose}>
@@ -72,7 +67,7 @@ export function BagPanel({ purse, targets, actingId, onDrink, onClose }: Props) 
           </button>
         </div>
         <div className="bag-kinds" role="tablist">
-          {CONSUMABLE_KINDS.map((k) => (
+          {POTION_KINDS.map((k) => (
             <button
               key={k}
               type="button"
@@ -92,7 +87,7 @@ export function BagPanel({ purse, targets, actingId, onDrink, onClose }: Props) 
           ))}
         </div>
         <p className="flask-blurb">
-          {BLURB[kind]}. <strong>No turn spent.</strong>
+          {CONSUMABLE_BLURBS[kind]}. <strong>No turn spent.</strong>
         </p>
 
         <div className="switch-options">

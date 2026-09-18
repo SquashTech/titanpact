@@ -6,7 +6,8 @@ import type { StatKey } from '../../src/engine/content';
 import { heroes } from '../../src/data/heroes';
 import { rosterHeroes } from '../../src/data/content';
 import { absorbCompanions, companionCandidate, companionJoinDue, joinCompanion } from '../../src/run/companion';
-import { canBuyMend, buyMend, mendRoster, recordWounds } from '../../src/run/wounds';
+import { anyDown, canBuyMend, buyMend, mendRoster, recordWounds, reviveHero, standingRoster } from '../../src/run/wounds';
+import { canUseRevive, grantConsumable, rollConsumableDrop, spendRevive } from '../../src/run/consumables';
 import { moves } from '../../src/data/moves';
 import { equipment } from '../../src/data/equipment';
 import { relics, guardianBannerRelics } from '../../src/data/relics';
@@ -77,6 +78,7 @@ import * as policy from './policy';
 import type { PourEvolution } from './policy';
 import { makeRng, pick, randomSeed, sample, withRandom, type Rng } from './rng';
 import { emptyTimeCounts, type ScreenKind, type TimeCounts } from './time';
+import { emptyKnockoutCounts, type KnockoutCounts } from './types';
 
 const EQUIPMENT_POOL = Object.values(equipment);
 const STARTER_IDS = Object.values(heroes).filter((h) => h.starter).map((h) => h.id);
@@ -186,6 +188,8 @@ export interface RunRecord {
   /** Drops that merged into a held piece rather than taking a socket, and drops that COULD have (somebody held the family). */
   merges: number;
   mergeOffers: number;
+  /** Persisting knockouts (src/run/wounds.ts): fights entered short-handed, KOs that persisted, and what stood them up. */
+  knockouts: KnockoutCounts;
   /** What the run cost in taps and screens, [act]; index 0 unused (time.ts prices it). */
   timeByAct: TimeCounts[];
 }
@@ -246,8 +250,19 @@ function resolveDrop(run: RunState, itemId: string, record: RunRecord, actNumber
 }
 
 function rosterSquad(run: RunState, size: number): Squad {
-  const required = requiredSquadSize(run.roster.length, size);
+  const required = requiredSquadSize(standingRoster(run.roster).length, size);
   return pickSquad(run.roster, policy.fieldedSquadIds(run.roster, required), size);
+}
+
+/** A held Revive goes on the strongest hero the act has left down, before the fight it would miss. */
+function spendRevives(run: RunState, record: RunRecord): RunState {
+  let next = run;
+  while (anyDown(next) && canUseRevive(next)) {
+    const target = policy.byPower(next.roster.filter((entry) => entry.down))[0];
+    next = spendRevive(reviveHero(next, target.rosterId, policy.effectiveStats(target).hp));
+    record.knockouts.revivesSpent += 1;
+  }
+  return next;
 }
 
 // --- The run ---
@@ -293,6 +308,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     itemsBySource: {},
     merges: 0,
     mergeOffers: 0,
+    knockouts: emptyKnockoutCounts(),
     timeByAct: Array.from({ length: TOTAL_ACTS + 1 }, emptyTimeCounts),
   };
 
@@ -519,6 +535,10 @@ function resolveEncounterNode(
     ? pickWeightedEquipment(EQUIPMENT_POOL, 1, rarityWeightsFor(workingRun.actNumber, LOOT_SOURCE[kindKey]))[0] ?? null
     : null;
 
+  workingRun = spendRevives(workingRun, record);
+  const downEntering = workingRun.roster.filter((entry) => entry.down).length;
+  if (downEntering > 0) record.knockouts.shortHanded += 1;
+  record.knockouts.downEntering += downEntering;
   const playerSquad = rosterSquad(workingRun, squadSize);
   const fight = simulateFight({
     seed: randomSeed(rng),
@@ -615,6 +635,13 @@ function resolveEncounterNode(
   workingRun = grantCurrencyReward(workingRun, goldWon);
   // HP carries to the next node (src/run/wounds.ts); the act's end is what makes the roster whole.
   workingRun = recordWounds(workingRun, fight.final, PLAYER_SIDE, rosterHeroes);
+  record.knockouts.koInWins += koRosterIds.length;
+  record.knockouts.koInWinsByKind[kindKey] = (record.knockouts.koInWinsByKind[kindKey] ?? 0) + koRosterIds.length;
+  // The consumable drop (src/run/consumables.ts). Potions are never drunk here — the pilot has no
+  // Bag — but a Revive IS spent (spendRevives), since a persisting knockout is what it prices.
+  const consumableDrop = rollConsumableDrop(kindKey, rng);
+  if (consumableDrop) workingRun = grantConsumable(workingRun, consumableDrop);
+  if (consumableDrop === 'revive') record.knockouts.revivesFound += 1;
   return { run: workingRun, won: true, defeatedRoster: encounter.run.roster, drop, encounter, koRosterIds };
 }
 
@@ -697,6 +724,7 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       return grantCurrencyReward(run, purse);
     }
     case 'restReward':
+      if (anyDown(run)) record.knockouts.restsWhileDown += 1;
       return mendRoster(run);
     case 'manaWellReward': {
       // The hero the pool is worth most to (policy.statBoostTarget) — the one screen that asks who.
@@ -919,7 +947,10 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
   };
 
   // The mend first, when the roster is hurt enough for it to be worth a hire's price.
-  if (canBuyMend(next) && policy.rosterHpFraction(next.roster) < 0.6) spend('mend', () => buyMend(next));
+  if (canBuyMend(next) && policy.rosterHpFraction(next.roster) < 0.6) {
+    if (anyDown(next)) record.knockouts.mendsWhileDown += 1;
+    spend('mend', () => buyMend(next));
+  }
 
   for (const offerId of offers.heroOfferIds) {
     const offer = guildHallOffers.find((o) => o.id === offerId);

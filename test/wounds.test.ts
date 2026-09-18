@@ -1,5 +1,6 @@
-// Wounds (src/run/wounds.ts, docs/run-loop.md "Wounds"): HP carries across an act's nodes, the
-// walk floor keeps a wound from being a brick, and the act's end is the one free mend.
+// Wounds (src/run/wounds.ts, docs/run-loop.md "Wounds"): HP carries across an act's nodes, a
+// knockout persists until a Rest, the mend, a Revive or the act's end, and the act's end is the
+// one free mend.
 
 import * as assert from 'assert';
 import { test } from './harness';
@@ -9,20 +10,34 @@ import { getMaxHp } from '../src/engine/state';
 import { buildCombatState } from '../src/run/buildCombatState';
 import { REWARD_WEIGHTS, MAP_NODE_TYPES } from '../src/run/map';
 import { advanceToNextAct } from '../src/run/runProgress';
-import { pickSquad } from '../src/run/squad';
+import { pickSquad, SquadSelectionError } from '../src/run/squad';
 import { addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
 import {
   MEND_PRICE,
-  WALK_FLOOR,
+  REVIVE_FRACTION,
   WoundsError,
+  anyDown,
   anyWounded,
   buyMend,
   canBuyMend,
   mendRoster,
   recordWounds,
+  reviveHero,
+  standingHp,
+  standingRoster,
   woundedHp,
   woundsFrom,
 } from '../src/run/wounds';
+import {
+  CONSUMABLE_KINDS,
+  ConsumableError,
+  REVIVE_DROP_CHANCE,
+  STARTING_CONSUMABLES,
+  canUseRevive,
+  grantConsumable,
+  rollConsumableDrop,
+  spendRevive,
+} from '../src/run/consumables';
 
 function seedRoster(ids: string[], gold = 0): RunState {
   let run = createRunState(gold);
@@ -33,37 +48,43 @@ function seedRoster(ids: string[], gold = 0): RunState {
 function fightState(run: RunState, fielded: string[]) {
   const ai = seedRoster(['ironWarden']);
   return buildCombatState(1, heroes, equipment, [
-    // Every fight fields the whole roster; the size is passed so the fixture can leave a hero out.
+    // Every fight fields the whole standing roster; the size is passed so the fixture can leave a hero out.
     { side: 'A', squad: pickSquad(run.roster, fielded, fielded.length), roster: run.roster },
     { side: 'B', squad: pickSquad(ai.roster, ['ironWarden']), roster: ai.roster },
   ]);
 }
 
-test('wounds: a hero stands at max less its wounds, never under the walk floor', () => {
+function withDown(run: RunState, rosterId: string): RunState {
+  return { ...run, roster: run.roster.map((e) => (e.rosterId === rosterId ? { ...e, wounds: 999, down: true } : e)) };
+}
+
+test('wounds: a hero stands at max less its wounds, and at nothing while down', () => {
   assert.strictEqual(woundedHp(200, 0), 200);
   assert.strictEqual(woundedHp(200, 60), 140);
-  assert.strictEqual(woundedHp(200, 150), Math.ceil(200 * WALK_FLOOR));
-  assert.strictEqual(woundedHp(200, 400), Math.ceil(200 * WALK_FLOOR), 'a KO floors, it does not brick');
+  assert.strictEqual(woundedHp(200, 400), 0);
+  const entry = createRosterEntry('x', 'cinderKnight', []);
+  assert.strictEqual(standingHp(200, { ...entry, wounds: 60 }), 140);
+  assert.strictEqual(standingHp(200, { ...entry, wounds: 0, down: true }), 0, 'down reads 0 whatever the wound count says');
 });
 
-test('wounds: what a fight leaves is already floored, so surviving low is never worse than dying', () => {
-  const floor = Math.ceil(200 * WALK_FLOOR);
-  assert.strictEqual(woundsFrom(200, 0), 200 - floor);
-  assert.strictEqual(woundsFrom(200, 10), 200 - floor, 'a hero alive under the floor walks out at the floor');
+test('wounds: what a fight leaves is the HP missing, clamped to the max', () => {
+  assert.strictEqual(woundsFrom(200, 0), 200);
+  assert.strictEqual(woundsFrom(200, 10), 190);
   assert.strictEqual(woundsFrom(200, 120), 80);
   assert.strictEqual(woundsFrom(200, 260), 0, 'over max (a fight buff) reads as whole');
 });
 
-test('wounds: a fresh entry is whole, and a whole roster places at full HP', () => {
+test('wounds: a fresh entry is whole and standing, and a whole roster places at full HP', () => {
   const run = seedRoster(['cinderKnight', 'tidecaller']);
   assert.strictEqual(run.roster[0].wounds, 0);
+  assert.strictEqual(run.roster[0].down, false);
   assert.ok(!anyWounded(run));
   const state = fightState(run, ['cinderKnight', 'tidecaller']);
   const c = state.combatants['A:cinderKnight'];
   assert.strictEqual(c.currentHp, getMaxHp(heroes.cinderKnight, c));
 });
 
-test('wounds: recordWounds reads the fielded side back, un-fielded heroes untouched, the fight\'s own buffs not carried', () => {
+test('wounds: recordWounds reads the fielded side back — a KO is down, un-fielded heroes untouched, the fight\'s own buffs not carried', () => {
   const run = seedRoster(['cinderKnight', 'tidecaller', 'ironWarden']);
   const state = fightState(run, ['cinderKnight', 'tidecaller']);
   const max = getMaxHp(heroes.cinderKnight, state.combatants['A:cinderKnight']);
@@ -80,40 +101,88 @@ test('wounds: recordWounds reads the fielded side back, un-fielded heroes untouc
   const next = recordWounds(run, hurt, 'A', heroes);
   const [cinder, tide, warden] = next.roster;
   assert.strictEqual(cinder.wounds, max - Math.floor(max / 2));
-  const tideMax = getMaxHp(heroes.tidecaller, state.combatants['A:tidecaller']);
-  assert.strictEqual(tide.wounds, tideMax - Math.ceil(tideMax * WALK_FLOOR), 'a KO leaves the hero at the floor');
+  assert.strictEqual(cinder.down, false);
+  assert.strictEqual(tide.down, true, 'a KO persists');
   assert.strictEqual(warden.wounds, 0, 'not fielded, not touched');
   assert.strictEqual(run.roster[0].wounds, 0, 'pure');
 
-  // The next fight places them where the wounds left them.
-  const again = fightState(next, ['cinderKnight', 'tidecaller']);
+  // The next fight places Cinder where the wound left it and does not field Tidecaller at all.
+  assert.deepStrictEqual(standingRoster(next.roster).map((e) => e.rosterId), ['cinderKnight', 'ironWarden']);
+  assert.throws(() => pickSquad(next.roster, ['cinderKnight', 'tidecaller', 'ironWarden']), SquadSelectionError);
+  const squad = pickSquad(next.roster, ['cinderKnight', 'ironWarden']);
+  assert.deepStrictEqual(squad.activeIds, ['cinderKnight', 'ironWarden']);
+  const again = fightState(next, ['cinderKnight', 'ironWarden']);
   assert.strictEqual(again.combatants['A:cinderKnight'].currentHp, Math.floor(max / 2));
-  assert.strictEqual(again.combatants['A:tidecaller'].currentHp, Math.ceil(tideMax * WALK_FLOOR));
+  assert.strictEqual(again.combatants['A:tidecaller'], undefined);
 });
 
-test('wounds: a max that rises mid-act carries the current up with it', () => {
+test('wounds: one hero left standing fields alone, into an empty second slot', () => {
+  const run = withDown(withDown(seedRoster(['cinderKnight', 'tidecaller', 'ironWarden']), 'tidecaller'), 'ironWarden');
+  const squad = pickSquad(run.roster, ['cinderKnight']);
+  assert.deepStrictEqual(squad.activeIds, ['cinderKnight', null]);
+  assert.deepStrictEqual(squad.benchIds, []);
+});
+
+test('wounds: a max that rises mid-act carries the current up with it, and never stands a downed hero up', () => {
   const run = seedRoster(['cinderKnight']);
   const grown = { ...run, roster: [{ ...run.roster[0], wounds: 50, growthStatGrants: { hp: 30 } }] };
   const state = fightState(grown, ['cinderKnight']);
   const c = state.combatants['A:cinderKnight'];
   assert.strictEqual(c.currentHp, getMaxHp(heroes.cinderKnight, c) - 50);
+
+  const downAndGrown = { ...run, roster: [{ ...run.roster[0], wounds: 10, down: true, growthStatGrants: { hp: 300 } }] };
+  assert.ok(anyDown(downAndGrown));
+  assert.strictEqual(standingRoster(downAndGrown.roster).length, 0, 'down is a flag, not a wound count');
 });
 
-test('wounds: the act boundary is the free mend; the Rest and the shelf are the paid ones', () => {
+test('wounds: the act boundary is the free mend and stands the downed up; the Rest and the shelf are the paid ones', () => {
   const run = seedRoster(['cinderKnight', 'tidecaller'], 100);
-  const hurt = { ...run, roster: run.roster.map((e) => ({ ...e, wounds: 40 })) };
+  const hurt = withDown({ ...run, roster: run.roster.map((e) => ({ ...e, wounds: 40 })) }, 'tidecaller');
   assert.ok(anyWounded(hurt));
-  assert.ok(advanceToNextAct(hurt, 7).roster.every((e) => e.wounds === 0));
-  assert.ok(mendRoster(hurt).roster.every((e) => e.wounds === 0));
+  assert.ok(anyDown(hurt));
+  assert.ok(advanceToNextAct(hurt, 7).roster.every((e) => e.wounds === 0 && !e.down));
+  assert.ok(mendRoster(hurt).roster.every((e) => e.wounds === 0 && !e.down));
 
   assert.ok(canBuyMend(hurt));
   const mended = buyMend(hurt);
   assert.strictEqual(mended.gold, 100 - MEND_PRICE);
   assert.ok(!anyWounded(mended));
+  assert.ok(!anyDown(mended));
   assert.ok(!canBuyMend(mended), 'nothing to mend is not for sale');
   assert.throws(() => buyMend(mended), WoundsError);
   assert.ok(!canBuyMend({ ...hurt, gold: MEND_PRICE - 1 }));
   assert.throws(() => buyMend({ ...hurt, gold: MEND_PRICE - 1 }), WoundsError);
+
+  // A roster that is only down, not otherwise hurt, is still for sale.
+  const onlyDown = withDown(run, 'tidecaller');
+  assert.ok(canBuyMend(onlyDown));
+});
+
+test('wounds: a Revive stands ONE downed hero up at half, off the purse, and only a downed one', () => {
+  const run = grantConsumable(withDown(seedRoster(['cinderKnight', 'tidecaller']), 'tidecaller'), 'revive');
+  assert.ok(canUseRevive(run));
+  const revived = spendRevive(reviveHero(run, 'tidecaller', 200));
+  const tide = revived.roster[1];
+  assert.strictEqual(tide.down, false);
+  assert.strictEqual(standingHp(200, tide), Math.round(200 * REVIVE_FRACTION));
+  assert.strictEqual(revived.consumables.revive, 0);
+  assert.ok(!canUseRevive(revived));
+  assert.throws(() => spendRevive(revived), ConsumableError);
+  assert.throws(() => reviveHero(run, 'cinderKnight', 200), WoundsError, 'standing heroes are not revived');
+  assert.throws(() => reviveHero(run, 'nobody', 200), WoundsError);
+});
+
+test('wounds: the Revive is a purse kind that starts at none and drops rarer than a potion, never at the finale', () => {
+  assert.ok(CONSUMABLE_KINDS.includes('revive'));
+  assert.strictEqual(STARTING_CONSUMABLES.revive, 0);
+  assert.ok(REVIVE_DROP_CHANCE.elite > REVIVE_DROP_CHANCE.skirmish);
+  assert.strictEqual(REVIVE_DROP_CHANCE.finale, 0);
+  assert.strictEqual(REVIVE_DROP_CHANCE.titan, 0);
+  // The potion roll misses (0.99), the Revive's own roll hits (0.0).
+  const draws = [0.99, 0.0];
+  assert.strictEqual(rollConsumableDrop('elite', () => draws.shift()!), 'revive');
+  const miss = [0.99, 0.99];
+  assert.strictEqual(rollConsumableDrop('elite', () => miss.shift()!), null);
 });
 
 test('wounds: the Rest sits in the reward pool as a node type', () => {

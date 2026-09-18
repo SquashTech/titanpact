@@ -59,6 +59,15 @@ const RESOURCE_PATHS = {
   // two gauges. A round-bottomed flask with a stoppered neck: the bulb is what survives 12px.
   hpPotion: FLASK_PATH,
   mpPotion: FLASK_PATH,
+  // The Revive (run/wounds.ts): a phoenix feather — a plume on a quill's stem, the one resource
+  // here that is not drunk. Curved so it is not the contract's straight quill.
+  revive: (
+    <>
+      <path d="M4.5 20.5C5 13 9.5 6.5 20.5 3.5 19.5 13.5 13.5 19 4.5 20.5Z" opacity="0.4" />
+      <path d="M5.6 19.4c1.4-6 5.4-11 13.4-14.4C17.6 12 13 17 5.6 19.4Z" />
+      <path d="M4.2 21.2 3 19.9 14.2 8.6l1 1.1Z" />
+    </>
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type ResourceKind = keyof typeof RESOURCE_PATHS;
@@ -74,6 +83,8 @@ export const RESOURCE_COLORS: Record<ResourceKind, string> = {
   // The gauges' own colours, so a potion reads as the bar it refills.
   hpPotion: '#ff8a8a',
   mpPotion: '#8fb4ff',
+  // Warm gold-orange, the phoenix's, apart from the gauges' two.
+  revive: '#ffb454',
 };
 
 /** The one place a run resource is drawn. `aria-hidden`: it always sits beside its own count or label. */

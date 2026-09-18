@@ -43,6 +43,7 @@ function sampleRun(): RunState {
     bonusStatGrants: { attack: 10, speed: 5 },
     growthStatGrants: { hp: 10 },
     wounds: 37,
+    down: true,
   };
   return {
     ...run,

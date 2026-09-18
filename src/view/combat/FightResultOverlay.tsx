@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNod
 import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
 import type { EquipmentDefinition } from '../../run/equipment';
-import { CONSUMABLE_NAMES, type ConsumableKind } from '../../run/consumables';
+import { CONSUMABLE_BLURBS, CONSUMABLE_NAMES, type ConsumableKind } from '../../run/consumables';
 import { MAX_LEVEL, MAX_XP, levelForXp, levelOf, xpForLevel, xpProgress } from '../../run/growth';
 import { WoundBar } from '../shared/WoundBar';
 import type { RosterEntry } from '../../run/state';
@@ -372,7 +372,7 @@ function PotionRow({ kind }: { kind: ConsumableKind }) {
       </span>
       <span className="fight-result-row-text">
         <span className="fight-result-row-label">{CONSUMABLE_NAMES[kind]}</span>
-        <span className="fight-result-row-sub">{kind === 'hpPotion' ? 'Restores half of max HP' : 'Restores half of max Mana'}</span>
+        <span className="fight-result-row-sub">{CONSUMABLE_BLURBS[kind]}</span>
       </span>
       <span className="fight-result-row-value">+1</span>
     </div>

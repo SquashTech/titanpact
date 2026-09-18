@@ -205,6 +205,19 @@ export function formatReport(
   out.push(`  encounters won per run     ${num(agg.encountersWonSum / R, 2)}`);
   out.push(`  mean roster level at end   ${num(agg.rosterLevelEndSum / R, 2)}`);
   out.push(`  gold unspent at end        ${num(agg.goldEndSum / R, 1)}`);
+  {
+    const k = agg.knockouts;
+    const fights = agg.encountersWonSum + (agg.runs - agg.wins);
+    out.push(
+      `  knockouts persisting       ${num(k.koInWins / R, 2)} /run in won fights; ${pct(k.shortHanded, Math.max(1, fights))} of fights entered short-handed ` +
+        `(${num(k.downEntering / Math.max(1, k.shortHanded), 2)} down when so); Revives found ${num(k.revivesFound / R, 2)}, spent ${num(k.revivesSpent / R, 2)}; ` +
+        `stood up by a Rest ${num(k.restsWhileDown / R, 2)}, a mend ${num(k.mendsWhileDown / R, 2)} /run`
+    );
+    const byKind = Object.entries(k.koInWinsByKind).sort((a, b) => b[1] - a[1]);
+    if (byKind.length > 0) {
+      out.push(`    those KOs fell at: ${byKind.map(([kind, n]) => `${kind} ${pct(n, Math.max(1, k.koInWins))}`).join(', ')} — an act's last fight is mended at its end, so only the rest persist`);
+    }
+  }
   out.push(
     `  companion                  joined ${pct(agg.companionJoined, R)}, lost ${pct(agg.companionLost, Math.max(1, agg.companionJoined))} of those` +
       (agg.companionLost > 0 ? ` (mean encounter ${num(agg.companionLostAtSum / agg.companionLost, 1)})` : '')

@@ -46,10 +46,15 @@ What it changes, all named for playtest rather than decided:
   its death rate climbs past where it is a fun bet — watch it.
 - **Wounds.** The sideboard was one of four healing faucets ("a fresh hero over a wounded
   one"). It is gone; the Rest seat, the Guild Hall mend and a contract arriving whole carry it.
+  **And Wounds are the counterweight** (same day, per user direction): the 25% walk floor is
+  deleted and **a knockout persists through the act** — a KO'd hero is `down`, not fielded, and
+  stands up only at a Rest, the mend, a Revive (a rare drop, spent on the squad screen) or the
+  act's end (`run-loop.md` "Wounds"). Six bodies a fight, and a KO costs the rest of the act.
 - **The finale** is no longer special in squad size. Its identity is the Eyes, not the six.
 - **6v4 is a player buff.** The enemy party stays at 4 (2 + champion at a Guardian): more
-  enemy bodies is more rounds, and the run is at 77 minutes Reader. Absorb it through
-  `ACT_LEVEL_ADJUST`, the per-act dial the enemy-level work already uses — after play.
+  enemy bodies is more rounds, and the run is at 77 minutes Reader. Persisting knockouts are
+  the designed counterweight; `ACT_LEVEL_ADJUST` is the dial for whatever they leave — after
+  play.
 
 **Measured (2026-09-17, 600 runs, seed 7, paired on the constant alone):** full-clear
 **58.3 → 80.7%** under the skilled pilot, 10.3 → 25.5% under chart; act clears (skilled)

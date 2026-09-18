@@ -13535,6 +13535,42 @@ textarea,
   right: 12px;
 }
 
+/* A hero a fight left down (run/wounds.ts): on the roster, off the field. Greyed
+   like the old Reserve band was, since "not going" is the same read; the one
+   thing it can wear is the Revive key, in the phoenix's gold rather than the
+   swap key's, so the two keys never read as one verb. */
+.squad-slot.filled.is-down {
+  opacity: 0.62;
+  filter: saturate(0.4);
+  cursor: default;
+}
+
+.squad-slot.filled.is-down:has(.squad-slot-revive) {
+  opacity: 0.85;
+  padding-right: 30px;
+}
+
+.squad-slot-down-label {
+  grid-column: 2;
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hp-low);
+}
+
+.squad-slot-revive {
+  border-color: rgba(255, 214, 140, 0.8);
+  background: radial-gradient(circle at 50% 35%, #ffe0a0, #ffb454 70%);
+  color: #3a2406;
+}
+
+.squad-slot-revive > svg {
+  width: 18px;
+  height: 18px;
+}
+
 /* --- A hero joining the pact (RecruitFanfare.tsx) -------------------------
    Both ways in used to resolve silently — the contract stamped a mark in the
    corner and a Guild Hall hire simply closed its sheet — which is a strange

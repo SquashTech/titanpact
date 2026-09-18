@@ -1,6 +1,7 @@
 // Squad selection: validates the fielded roster and its lead order for buildCombatState.ts.
 
 import { ROSTER_CAP, type RosterEntry } from './state';
+import { standingRoster } from './wounds';
 
 export interface Squad {
   /** Up to 2 active roster ids; null means that slot starts empty. */
@@ -24,18 +25,22 @@ export class SquadSelectionError extends Error {}
  */
 export const STANDARD_SQUAD_SIZE = ROSTER_CAP;
 
-/** Exactly `maxSize` once the roster reaches it, the whole roster below that — a hero can never be benched by omission. */
-export function requiredSquadSize(rosterSize: number, maxSize: number = STANDARD_SQUAD_SIZE): number {
-  return Math.min(maxSize, rosterSize);
+/** Exactly `maxSize` once the standing roster reaches it, all of it below that — a hero can never be benched by omission. */
+export function requiredSquadSize(standingSize: number, maxSize: number = STANDARD_SQUAD_SIZE): number {
+  return Math.min(maxSize, standingSize);
 }
 
-/** The first two picks become the active pair; the rest start benched. */
+/**
+ * The first two picks become the active pair; the rest start benched. The pick is every STANDING
+ * hero (run/wounds.ts): a hero a fight left down stays on the roster and off the field.
+ */
 export function pickSquad(
   roster: readonly RosterEntry[],
   pickedRosterIds: readonly string[],
   maxSize: number = STANDARD_SQUAD_SIZE
 ): Squad {
-  const required = requiredSquadSize(roster.length, maxSize);
+  const standing = standingRoster(roster);
+  const required = requiredSquadSize(standing.length, maxSize);
   if (pickedRosterIds.length !== required) {
     throw new SquadSelectionError(`Pick exactly ${required} heroes for this fight, got ${pickedRosterIds.length}`);
   }
@@ -43,8 +48,10 @@ export function pickSquad(
     throw new SquadSelectionError('Squad selection contains a duplicate rosterId');
   }
   const rosterIds = new Set(roster.map((r) => r.rosterId));
+  const standingIds = new Set(standing.map((r) => r.rosterId));
   for (const id of pickedRosterIds) {
     if (!rosterIds.has(id)) throw new SquadSelectionError(`${id} is not on the roster`);
+    if (!standingIds.has(id)) throw new SquadSelectionError(`${id} is down`);
   }
 
   const [a, b, ...bench] = pickedRosterIds;
