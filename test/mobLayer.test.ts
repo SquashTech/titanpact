@@ -10,14 +10,15 @@ import { heroes } from '../src/data/heroes';
 import { equipment } from '../src/data/equipment';
 import {
   encounterScaling,
-  OPENER_ESCORT_COUNT,
+  OPENER_ESCORT_TIERS_BY_ACT,
   OPENER_GEAR_FROM_ACT,
   SPAWN_TIER_BY_ACT,
+  openerEscortTiersFor,
   spawnLeaderTierFor,
   spawnTierFor,
 } from '../src/run/difficulty';
 import { generateEncounter, generateSpawnEncounter } from '../src/run/enemyGen';
-import { ACT_ONE_OPENER_COUNT, guardianEscortPool, mobEncounter } from '../src/run/spawn';
+import { guardianEscortPool, mobEncounter } from '../src/run/spawn';
 import { actAllowsRarity, parseEquipmentId } from '../src/run/equipment';
 import { isRecruitable } from '../src/run/recruitment';
 
@@ -63,9 +64,10 @@ test('mobLayer: spawnPool is the Location\'s lines at one tier, and every id in 
 });
 
 test('mobLayer: Act 1\'s opener is two bare Earlies from every line', () => {
+  assert.deepStrictEqual(openerEscortTiersFor(1), ['early', 'early']);
   for (const seed of [1, 2, 3, 4, 5]) {
     const { run, squad } = mobEncounter('fight', locations.wildsEdge, 1, seed, encounterScaling('fight', 1));
-    assert.strictEqual(run.roster.length, ACT_ONE_OPENER_COUNT);
+    assert.strictEqual(run.roster.length, 2);
     assert.strictEqual(squad.benchIds.length, 0);
     for (const entry of run.roster) {
       assert.strictEqual(spawnPosition(entry.heroId)?.tier, 'early');
@@ -75,18 +77,19 @@ test('mobLayer: Act 1\'s opener is two bare Earlies from every line', () => {
   }
 });
 
-test('mobLayer: from Act 2 the opener is a Mid among Earlies, and the Earlies each carry an item on the act\'s rarity curve', () => {
+test('mobLayer: from Act 2 the opener is a leader over the act\'s escorts, in the table\'s order, each escort carrying an item on the act\'s rarity curve', () => {
   for (const act of [2, 3, 4, 5]) {
     const location = locations.blightedShrine;
+    const tiers = openerEscortTiersFor(act);
     const { run, squad } = mobEncounter('fight', location, act, 40 + act, encounterScaling('fight', act));
-    assert.strictEqual(run.roster.length, 1 + OPENER_ESCORT_COUNT);
+    assert.strictEqual(run.roster.length, 1 + tiers.length);
     assert.strictEqual(squad.activeIds[0], run.roster[0].rosterId, 'the leader is first on the field');
     const [leader, ...escorts] = run.roster;
     assert.strictEqual(spawnPosition(leader.heroId)?.tier, spawnLeaderTierFor(act));
     assert.deepStrictEqual(leader.equipment, [], 'the leader is the upgrade already');
-    for (const escort of escorts) {
+    for (const [i, escort] of escorts.entries()) {
       const position = spawnPosition(escort.heroId)!;
-      assert.strictEqual(position.tier, 'early');
+      assert.strictEqual(position.tier, tiers[i], `Act ${act} escort ${i} is a ${position.tier}, the table says ${tiers[i]}`);
       assert.ok(location.spawnTypes!.includes(position.line.type), `${escort.heroId} is not a Shrine line`);
       assert.strictEqual(escort.equipment.length, act >= OPENER_GEAR_FROM_ACT ? 1 : 0);
       const item = equipment[escort.equipment[0]];
@@ -97,15 +100,28 @@ test('mobLayer: from Act 2 the opener is a Mid among Earlies, and the Earlies ea
   }
 });
 
+test('mobLayer: the opener phases its Earlies out act by act — never more than the act before, none from Act 4 — and never outranks its leader', () => {
+  const earlies = (act: number) => openerEscortTiersFor(act).filter((t) => t === 'early').length;
+  for (let act = 2; act <= 5; act++) {
+    assert.ok(earlies(act) <= earlies(act - 1), `Act ${act} fields more Earlies than Act ${act - 1}`);
+    assert.strictEqual(openerEscortTiersFor(act).length, 3, 'three escorts from Act 2');
+    const rank = { early: 0, mid: 1, late: 2 };
+    for (const tier of openerEscortTiersFor(act)) assert.ok(rank[tier] <= rank[spawnLeaderTierFor(act)], `Act ${act}: an escort outranks the leader`);
+  }
+  assert.strictEqual(earlies(4), 0);
+  assert.strictEqual(earlies(5), 0);
+  assert.strictEqual(OPENER_ESCORT_TIERS_BY_ACT.length, 6, 'index = act, acts 1-5');
+});
+
 test('mobLayer: the battle node fields the leader shape in every act, Act 1 included', () => {
   const { run } = mobEncounter('battle', locations.wildsEdge, 1, 9, encounterScaling('battle', 1));
-  assert.strictEqual(run.roster.length, 1 + OPENER_ESCORT_COUNT);
+  assert.strictEqual(run.roster.length, 1 + openerEscortTiersFor(1).length);
   assert.strictEqual(spawnPosition(run.roster[0].heroId)?.tier, 'mid');
   for (const escort of run.roster.slice(1)) assert.deepStrictEqual(escort.equipment, [], 'Act 1 escorts are bare');
 });
 
 test('mobLayer: a two-line Location repeats a body rather than coming up short, with unique roster ids', () => {
-  const { run } = generateSpawnEncounter(3, { types: locations.necropolis.spawnTypes, escortTier: 'early', escortCount: 3 });
+  const { run } = generateSpawnEncounter(3, { types: locations.necropolis.spawnTypes, escortTiers: ['early', 'early', 'early'] });
   assert.strictEqual(run.roster.length, 3);
   const heroIds = run.roster.map((r) => r.heroId);
   assert.strictEqual(new Set(heroIds).size, 2);
@@ -114,7 +130,7 @@ test('mobLayer: a two-line Location repeats a body rather than coming up short, 
 });
 
 test('mobLayer: the spawn generator is deterministic per seed, gear included', () => {
-  const opts = { types: locations.stormCoast.spawnTypes, leaderTier: 'mid' as const, escortTier: 'early' as const, escortCount: 3, escortLoadout: { gear: { common: 1, rare: 1, epic: 0, legendary: 0, mythic: 0 } } };
+  const opts = { types: locations.stormCoast.spawnTypes, leaderTier: 'mid' as const, escortTiers: ['early', 'early', 'early'] as const, escortLoadout: { gear: { common: 1, rare: 1, epic: 0, legendary: 0, mythic: 0 } } };
   const a = generateSpawnEncounter(77, opts);
   const b = generateSpawnEncounter(77, opts);
   assert.deepStrictEqual(a.run.roster, b.run.roster);

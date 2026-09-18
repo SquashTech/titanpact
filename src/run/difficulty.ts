@@ -169,8 +169,27 @@ export function spawnLeaderTierFor(actNumber: number): SpawnTier {
   return tier === 'early' ? 'mid' : tier;
 }
 
-/** Act 1's opener is two bare Earlies — the on-ramp. From Act 2 the opener is a leader plus this many Earlies. */
-export const OPENER_ESCORT_COUNT = 3;
+/**
+ * The opener's escorts by act, in field order (2026-09-17, per user direction — it was three
+ * Earlies in every act, and an Early is a knockout for any hero, so the opener cost the act
+ * nothing: 86–97% HP left, one fight in three that could never set up a short-handed fork).
+ * Earlies are phased out escort by escort — 2 / 2 / 1 / 0 / 0 — so the silhouette, which is the
+ * difficulty gauge, says the act got harder. Act 1 stays two bare Earlies: the on-ramp, and the
+ * companion is drawn from them. Index = act; acts past the table hold at its last entry.
+ */
+export const OPENER_ESCORT_TIERS_BY_ACT: readonly (readonly SpawnTier[])[] = [
+  [],
+  ['early', 'early'],
+  ['mid', 'early', 'early'],
+  ['mid', 'mid', 'early'],
+  ['mid', 'mid', 'mid'],
+  ['late', 'mid', 'mid'],
+];
+
+export function openerEscortTiersFor(actNumber: number): readonly SpawnTier[] {
+  const act = clampAct(actNumber);
+  return OPENER_ESCORT_TIERS_BY_ACT[Math.min(act, OPENER_ESCORT_TIERS_BY_ACT.length - 1)];
+}
 
 /**
  * The act from which the opener's Earlies carry an item each (§10, decided 2026-09-13): the

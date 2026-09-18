@@ -974,10 +974,22 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   Location's `spawnTypes` and the act's tier (`docs/titanspawn-overhaul.md` §2-§4;
   `src/data/titanspawn.ts`, `src/run/spawn.ts`, `SPAWN_TIER_BY_ACT` in `difficulty.ts`).
   The composition: Act 1's opener is two bare Earlies from every line; from Act 2 the opener
-  is a leader at the act's tier (floored at Mid) over three Earlies that each carry one item
-  rolled on the act's drop curve — the Earlies stay Earlies all run and equipment is what
-  scales them, per user direction; `battle` is that shape in every act until phase 3; the
-  Guardian's escorts are two spawn at the act's tier. **The escorts ride the monsters track
+  is a leader at the act's tier (floored at Mid) over three escorts that each carry one item
+  rolled on the act's drop curve; `battle` is that shape in every act; the Guardian's escorts
+  are two spawn at the act's tier. **The escorts' tiers rise with the act** (2026-09-17, per
+  user direction, `OPENER_ESCORT_TIERS_BY_ACT`): Mid/Early/Early in Act 2, Mid/Mid/Early in 3,
+  Mid/Mid/Mid in 4, Late/Mid/Mid in 5 — the Earlies phased out escort by escort, 2/2/1/0/0.
+  They had been three Earlies all run, equipment the only thing scaling them, and an Early is a
+  knockout for any hero: the opener won 100% in 1–4 rounds and left the roster at 86–97%, so
+  under persisting knockouts ("Wounds") it was the one fight an act that could never set up a
+  short-handed fork. Act 1 keeps its two bare Earlies — the on-ramp, and the companion is drawn
+  from them. **Measured (600 runs, seed 7, on the persisting-KO build):** opener HP-left after
+  86–92% → 73–79% skilled and 76–88% → 58–71% chart, the opener still won 98–100% / 94–98%;
+  fights entered short-handed 5.7 → 10.7% skilled, 7.5 → 13.1% chart; KOs falling at the
+  opener 7.5 → 21% of all persisting KOs; the fork's Elite and Skirmish now entered ~7 points
+  of HP lower and won 2–4 points less; full-clear 77.8 → 73.7% skilled, 28.2 → 20.3% chart, the
+  cost landing in **Act 2** (94 → 90% skilled, 79 → 70% chart), where a Mid leader over a Mid
+  and two Earlies at par −3 is the first real opener. Act 2 is the dial to watch in play. **The escorts ride the monsters track
   now**, reversing the 2026-09-06 "the pool moves; the scaling does not" below: a Late is
   600 base, authored against the monsters curve, and on the skirmish track it made the Act 4-5
   Guardians 25-43% fights (40-run sim). On the monsters track they measure 71-100% and are the

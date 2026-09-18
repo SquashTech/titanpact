@@ -7,16 +7,14 @@ import type { HeroLookup } from '../engine/state';
 import type { LocationDefinition } from '../data/locations';
 import { spawnPool } from '../data/titanspawn';
 import { generateSpawnEncounter, type Encounter } from './enemyGen';
-import { OPENER_ESCORT_COUNT, OPENER_GEAR_FROM_ACT, spawnLeaderTierFor, spawnTierFor, type ActScaling } from './difficulty';
+import { OPENER_GEAR_FROM_ACT, openerEscortTiersFor, spawnLeaderTierFor, spawnTierFor, type ActScaling } from './difficulty';
 import { rarityWeightsFor } from './equipment';
 
-/** Act 1's row 0: two bare Earlies from every line — "very weak and pretty much an automatic win". */
-export const ACT_ONE_OPENER_COUNT = 2;
-
 /**
- * A `fight` (the forced opener) or `battle` node's encounter. Act 1's opener is the on-ramp; from
- * Act 2 the opener is a leader at the act's tier over Earlies that carry an item each, and the
- * `battle` node is that shape in every act until phase 3 takes it off the fork.
+ * A `fight` (the forced opener) or `battle` node's encounter. Act 1's opener is two bare Earlies
+ * — the on-ramp, "very weak and pretty much an automatic win"; from Act 2 the opener is a leader
+ * at the act's tier over the act's escorts (difficulty.ts OPENER_ESCORT_TIERS_BY_ACT), each
+ * carrying an item. The `battle` node is the leader shape in every act.
  */
 export function mobEncounter(
   nodeType: 'fight' | 'battle',
@@ -26,13 +24,12 @@ export function mobEncounter(
   scaling: ActScaling
 ): Encounter {
   if (nodeType === 'fight' && actNumber <= 1) {
-    return generateSpawnEncounter(seed, { types: location.spawnTypes, escortTier: 'early', escortCount: ACT_ONE_OPENER_COUNT, scaling });
+    return generateSpawnEncounter(seed, { types: location.spawnTypes, escortTiers: openerEscortTiersFor(1), scaling });
   }
   return generateSpawnEncounter(seed, {
     types: location.spawnTypes,
     leaderTier: spawnLeaderTierFor(actNumber),
-    escortTier: 'early',
-    escortCount: OPENER_ESCORT_COUNT,
+    escortTiers: openerEscortTiersFor(actNumber),
     escortLoadout: actNumber >= OPENER_GEAR_FROM_ACT ? { gear: rarityWeightsFor(actNumber, 'standard') } : undefined,
     scaling,
   });

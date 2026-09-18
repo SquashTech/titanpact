@@ -480,7 +480,8 @@ the point of it.
 - ~~**Equipment on a dead companion**~~ **DECIDED 2026-09-13: strip to bag**, as termination
   does. The unit is the price, the item is not.
 - ~~**The opener's shape from Act 2**~~ **DECIDED 2026-09-13: a Mid among Earlies, and the
-  Earlies carry equipment** — `battle`'s leader-plus-basics shape survives with a Mid of the
+  Earlies carry equipment** (**revised 2026-09-17**: the escorts' tiers rise with the act,
+  `OPENER_ESCORT_TIERS_BY_ACT` — `run-loop.md` "Titanspawn") — `battle`'s leader-plus-basics shape survives with a Mid of the
   Location's types leading Earlies, and the Earlies are scaled up by holding gear rather than by a
   second stat dial. Phase 2 repurposes `generateLeaderEncounter` and decides how the gear is
   rolled (rarity by act, as drops are, is the obvious read).

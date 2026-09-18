@@ -10,8 +10,7 @@ import { MASTERY_EVOLUTION, SCRIBE_PICKS, SCRIBE_PIPS_EACH, SCROLL_CACHE_COUNT, 
 import { ENCOUNTER_XP_MULTIPLIER, encounterXpForAct, encounterXpKind } from '../../run/growth';
 import { LEY_LINE_FORCE, MANA_WELL_AMOUNT } from '../../run/runProgress';
 import { BOON_OFFER_COUNT } from '../../run/boons';
-import { OPENER_ESCORT_COUNT, championLevel, enemyLevelFor, guildHallLevel, spawnLeaderTierFor, type EncounterNodeKind } from '../../run/difficulty';
-import { ACT_ONE_OPENER_COUNT } from '../../run/spawn';
+import { championLevel, enemyLevelFor, guildHallLevel, openerEscortTiersFor, spawnLeaderTierFor, type EncounterNodeKind } from '../../run/difficulty';
 import type { SpawnTier } from '../../data/titanspawn';
 import { ROSTER_CAP, SEAL_ACTS } from '../../run/state';
 import { ANVIL_PRICE_BY_TARGET, ENCHANT_PRICE_BY_RARITY } from '../../run/shop';
@@ -97,10 +96,14 @@ function encounterFacts(type: EncounterNodeKind, actNumber: number): NodeFact[] 
 
 const SPAWN_TIER_NAMES: Record<SpawnTier, string> = { early: 'Early', mid: 'Mid', late: 'Late' };
 
-/** What a Titanspawn tile fields, read off the opener's shape (run/spawn.ts mobEncounter): two bare Earlies in Act 1, a leader over Earlies after. */
+/** What a Titanspawn tile fields, read off the opener's shape (run/spawn.ts mobEncounter): two bare Earlies in Act 1, a leader over the act's escorts after. */
 function spawnLine(actNumber: number): { value: string; note: string } {
-  if (actNumber <= 1) return { value: `${ACT_ONE_OPENER_COUNT} Titanspawn`, note: `both ${SPAWN_TIER_NAMES.early}` };
-  return { value: `${OPENER_ESCORT_COUNT + 1} Titanspawn`, note: `a ${SPAWN_TIER_NAMES[spawnLeaderTierFor(actNumber)]} over ${SPAWN_TIER_NAMES.early}s` };
+  const escorts = openerEscortTiersFor(actNumber);
+  if (actNumber <= 1) return { value: `${escorts.length} Titanspawn`, note: `both ${SPAWN_TIER_NAMES.early}` };
+  return {
+    value: `${escorts.length + 1} Titanspawn`,
+    note: `a ${SPAWN_TIER_NAMES[spawnLeaderTierFor(actNumber)]} over ${escorts.map((tier) => SPAWN_TIER_NAMES[tier]).join(', ')}`,
+  };
 }
 
 export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {

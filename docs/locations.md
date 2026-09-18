@@ -142,9 +142,11 @@ made flesh, and the Guardian is where the chart lies.**
 
 The composition by act lives in `src/run/spawn.ts` and is pinned by `test/mobLayer.test.ts`:
 Act 1's opener is two bare Earlies from every line; from Act 2 the opener is a leader at the
-act's tier (`SPAWN_TIER_BY_ACT`, floored at Mid) over three Earlies that each carry an item
-rolled on the act's drop curve; the `battle` node is that shape in every act until phase 3
-retires it; the Guardian's escorts are two spawn at the act's tier. A two-line Location
+act's tier (`SPAWN_TIER_BY_ACT`, floored at Mid) over three escorts whose tiers are the act's
+(`OPENER_ESCORT_TIERS_BY_ACT`, 2026-09-17: Mid/Early/Early, Mid/Mid/Early, Mid/Mid/Mid,
+Late/Mid/Mid — the Earlies phased out escort by escort; `run-loop.md` "Titanspawn" has the
+measurement), each carrying an item rolled on the act's drop curve; the `battle` node is that
+shape in every act; the Guardian's escorts are two spawn at the act's tier. A two-line Location
 repeats a body rather than coming up short.
 
 ### `guardianFinalEnemyId` — the champion

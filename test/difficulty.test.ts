@@ -162,7 +162,7 @@ test('difficulty: an unscaled encounter is byte-for-byte the authored content at
 
 test('difficulty: a spawn levels off its line\'s grades, and has no progression to cash a level in for', () => {
   const act5 = encounterScaling('fight', 5);
-  const { run } = generateSpawnEncounter(11, { types: null, leaderTier: 'mid', escortTier: 'early', escortCount: 3, scaling: act5 });
+  const { run } = generateSpawnEncounter(11, { types: null, leaderTier: 'mid', escortTiers: ['early', 'early', 'early'], scaling: act5 });
   for (const entry of run.roster) {
     assert.strictEqual(levelOf(entry), act5.level);
     assert.ok(growthTotal(entry.growthStatGrants) > 0, 'a spawn rolls growth like anyone');

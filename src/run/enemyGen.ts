@@ -414,8 +414,8 @@ export interface SpawnEncounterOptions {
   types: readonly TypeId[] | null;
   /** The body that leads, first on the field; omitted = no leader (Act 1's opener). */
   leaderTier?: SpawnTier;
-  escortTier: SpawnTier;
-  escortCount: number;
+  /** One tier per escort, in field order (difficulty.ts OPENER_ESCORT_TIERS_BY_ACT). */
+  escortTiers: readonly SpawnTier[];
   /** What each escort arrives holding; omitted = bare escorts. */
   escortLoadout?: EnemyLoadout;
   /** Omitted = NO_SCALING. */
@@ -447,16 +447,24 @@ function drawSpawn(rng: RngState, pool: HeroLookup, count: number): { picked: st
  * as a drop is, seeded with the rest of the encounter.
  */
 export function generateSpawnEncounter(seed: number, options: SpawnEncounterOptions): Encounter {
-  const { types, leaderTier, escortTier, escortCount, escortLoadout, scaling = NO_SCALING } = options;
+  const { types, leaderTier, escortTiers, escortLoadout, scaling = NO_SCALING } = options;
   let rng = createRng(seed);
 
   const leaderPool = leaderTier ? spawnPool(types, leaderTier) : {};
-  const escortPool = spawnPool(types, escortTier);
   const { picked: leaderIds, nextState: afterLeader } = drawSpawn(rng, leaderPool, leaderTier ? 1 : 0);
   rng = afterLeader;
-  const { picked: escortIds, nextState: afterEscorts } = drawSpawn(rng, escortPool, escortCount);
-  rng = afterEscorts;
-  const pool: HeroLookup = { ...leaderPool, ...escortPool };
+  // Each tier's escorts are one draw from that tier's pool (so a repeated body is the pool running
+  // dry, never a re-roll), then dealt back into the authored field order.
+  const pool: HeroLookup = { ...leaderPool };
+  const drawnByTier = new Map<SpawnTier, string[]>();
+  for (const tier of new Set(escortTiers)) {
+    const tierPool = spawnPool(types, tier);
+    Object.assign(pool, tierPool);
+    const { picked, nextState } = drawSpawn(rng, tierPool, escortTiers.filter((t) => t === tier).length);
+    rng = nextState;
+    drawnByTier.set(tier, picked);
+  }
+  const escortIds = escortTiers.map((tier) => drawnByTier.get(tier)!.shift()!);
 
   let run = createRunState(0);
   const rosterIds: string[] = [];
