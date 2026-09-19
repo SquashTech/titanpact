@@ -18,6 +18,8 @@ import { GRADE_BUDGET, GROWTH_STATS, gradeBudgetOf, gradeExpectedPoints, gradesF
 import { HERO_STAT_TOTAL, heroStatTotal } from '../src/run/statBudget';
 import { itemSlotsFor } from '../src/run/progression';
 import { createRosterEntry } from '../src/run/state';
+import { heroPool } from '../src/run/recruitment';
+import { TYPES } from '../src/data/typechart';
 
 /** HP + Mana + the five battle stats at face value. MP Regen is a flat 10 outside the total. */
 test('roster: every seven-stat line sums to 550, and MP Regen is flat 10 outside it', () => {
@@ -252,4 +254,21 @@ test('roster: every hero starts on the same one item slot, whatever its Speed', 
   // The Forge still walks anyone to the cap, and never past it.
   const forged = { ...entry, bonusItemSlots: MAX_ITEM_SLOTS + 5 };
   assert.strictEqual(itemSlotsFor(heroes.valor, forged), MAX_ITEM_SLOTS);
+});
+
+test('roster: the BASE roster is three a type — one starter, two recruit-only — for the fourteen draftable types, and a bundle hero is outside it', () => {
+  // The count CLAUDE.md pins is the base game's (docs/constellation.md §9): heroPool with nothing
+  // bought. A hero with `unlock` sits beside it, never in it, and never in the draft.
+  const base = Object.values(heroPool(heroes));
+  assert.strictEqual(base.length, 42);
+  for (const type of TYPES) {
+    if (type === 'Ancient') continue;
+    const ofType = base.filter((hero) => hero.types[0] === type);
+    assert.strictEqual(ofType.length, 3, `${type} holds ${ofType.length} base heroes, not 3`);
+    assert.strictEqual(ofType.filter((hero) => hero.starter).length, 1, `${type} has ${ofType.filter((h) => h.starter).length} starters, not 1`);
+  }
+  assert.strictEqual(base.filter((hero) => hero.types[0] === 'Ancient').length, 0, 'Ancient is near-undraftable and holds no hero');
+  for (const hero of Object.values(heroes)) {
+    if (hero.unlock) assert.strictEqual(hero.starter, false, `${hero.id} is a bundle hero and a starter`);
+  }
 });

@@ -231,8 +231,14 @@ direction): re-authored **mono-Iron** (kit Swift Blow / Pin Down / Sharpen; Cors
 **Stormrunner** the Storm graft back to the type he was born to, Seawise the Water graft; Broadside
 Iron) and sold in the Constellation's first Hero Bundle, the **Free Company** — a hero with
 `HeroDefinition.unlock` is outside the three-a-type count and in a run's pools only while the
-offer is held (`docs/constellation.md` §11 phase 6). **Storm holds two** (Squall, Tempest) until the
-user's new Storm hero lands; the base count is 41 until then.
+offer is held (`docs/constellation.md` §11 phase 6). **Roc** took Storm's third seat the same
+day (id `stormRoc`, since the Thunder Aerie's Guardian holds `roc`): the storm eagle, the slate's
+magical column swung at full weight — Int 95 / Speed 100 on 175 HP, kit Zap / Charge / Static
+Charge (strike first, charge up), Arcane / Light / Frost as the pool's colours; Stormeye (Charged
+Air: +20 Int / +20 Spd while a foe holds Conduct — Bloodthirsty on the mark Roc plants), Rimewing
+(Frost graft: Deep Chill and the Freeze column), Sunward (Light graft: Radiant Beam and Light's
+damage column); Stoop the signature (65, +1 priority, Conduct). The base is 42 again, and
+`test/roster` now pins three a type over `heroPool(heroes)`.
 One consequence to watch: Fire's physical column is four moves past Cinder's kit, so his Early
 band is entirely Iron off-type and his in-type pool is Molten Lash, Firebrand, Blazing Retreat
 and Volcanic Surge — a physical Fire Early or two would give the mono hero a band of its own.

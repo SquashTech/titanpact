@@ -676,6 +676,28 @@ test('passives: Bloodmeal pays Renew 20 on the Bleed Vex applies, and nothing on
   assert.strictEqual(fed.state.combatants.a1.statuses.Renew?.magnitude, 10, 'Renew 20 landed and paid half');
 });
 
+
+test("passives: Charged Air is Bloodthirsty on Conduct — OFF on a clean board, ON while a foe holds Roc's mark", () => {
+  const base = createFightState(
+    367,
+    [
+      { combatantId: 'a1', heroId: 'stormRoc', side: 'A' },
+      { combatantId: 'a2', heroId: 'cinderKnight', side: 'A' },
+    ],
+    [
+      { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
+      { combatantId: 'b2', heroId: 'mordax', side: 'B' },
+    ]
+  );
+  const held = withPassive(base, 'a1', 'chargedAir');
+  const hero = heroes.stormRoc;
+  assert.strictEqual(getEffectiveStat(hero, held.combatants.a1, 'intelligence', boardOf(held)), hero.baseStats.intelligence);
+
+  const marked = withStatus(held, 'b2', 'Conduct', {});
+  assert.strictEqual(getEffectiveStat(hero, marked.combatants.a1, 'intelligence', boardOf(marked)), hero.baseStats.intelligence + 20);
+  assert.strictEqual(getEffectiveStat(hero, marked.combatants.a1, 'speed', boardOf(marked)), hero.baseStats.speed + 20);
+});
+
 // --- Afterimage (Nightshade / Penumbra) ---
 
 // Nightshade benched behind a pair, so arriving is a real switch. Deep mana on both sides; the

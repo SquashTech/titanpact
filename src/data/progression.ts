@@ -201,6 +201,26 @@ export const progressionTable: ProgressionTable = {
       'stunningBolt',
       'ionCascade',
     ],
+    // Roc: the magical column entire, with Arcane, Light and Frost as the off-type — a caster's
+    // colours, none of it on Rimewing's or Sunward's line.
+    stormRoc: [
+      'jolt',
+      'risingStatic',
+      'magicBolt',
+      'blind',
+      'focus',
+      'snowBlast',
+      'ionize',
+      'stunningBolt',
+      'electricBurst',
+      'chainLightning',
+      'arcPulse',
+      'blindingSnow',
+      'ionicZap',
+      'thunderbolt',
+      'ionCascade',
+      'twinCast',
+    ],
     // --- Stone ---
     crag: [
       'faultLine',
@@ -1115,6 +1135,41 @@ export const progressionTable: ProgressionTable = {
             statGrants: { attack: 20, intelligence: 20 },
             unlocksMoveIds: ['skyfall'],
             grantsPassiveIds: ['eitherHand'],
+          },
+        ],
+      },
+    ],
+    stormRoc: [
+      {
+        paths: [
+          {
+            id: 'stormRoc-stormeye',
+            heroId: 'stormRoc',
+            name: 'Stormeye',
+            description: 'Rides the charge it put in the air, and is faster for every one of them still holding it.',
+            statGrants: { intelligence: 20, speed: 10 },
+            unlocksMoveIds: [],
+            grantsPassiveIds: ['chargedAir'],
+          },
+          {
+            id: 'stormRoc-rimewing',
+            heroId: 'stormRoc',
+            name: 'Rimewing',
+            description: 'Goes up where the storm is cold, and brings that down instead.',
+            statGrants: { wisdom: 20, manaPool: 10 },
+            unlocksMoveIds: ['deepChill'],
+            typeGraft: 'Frost',
+            learnableMoveIds: ['rimeWind', 'quickFreeze', 'permafrost', 'glaciate', 'avalanche', 'absoluteZero'],
+          },
+          {
+            id: 'stormRoc-sunward',
+            heroId: 'stormRoc',
+            name: 'Sunward',
+            description: 'Climbs past the weather altogether; what comes down is light.',
+            statGrants: { hp: 30, intelligence: 10 },
+            unlocksMoveIds: ['radiantBeam'],
+            typeGraft: 'Light',
+            learnableMoveIds: ['glimmer', 'bless', 'smite', 'blindingFlash', 'solarFlare', 'judgment'],
           },
         ],
       },

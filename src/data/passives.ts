@@ -840,6 +840,18 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 20 },
     },
   },
+  chargedAir: {
+    id: 'chargedAir',
+    name: 'Charged Air',
+    description: 'This hero has +20 Intelligence and +20 Speed while an enemy is Conducting.',
+    // Bloodthirsty's shape on Conduct: Roc plants the mark (Jolt, Ionize, Stunning Bolt,
+    // Thunderbolt, Stoop) and is a bigger, faster caster for as long as it holds. A live grant,
+    // so it switches off when the marked foe is detonated, switches out or faints.
+    conditionalStatGrants: {
+      requiresEnemyStatus: 'Conduct',
+      statGrants: { intelligence: 20, speed: 20 },
+    },
+  },
   // --- The Free Company (docs/constellation.md §11 phase 6) ---
   nanites: {
     id: 'nanites',

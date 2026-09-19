@@ -183,6 +183,20 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     target: 'bothEnemies',
     description: 'One bolt that splits — and the charge stays in both of them (marks both with Conduct).',
   },
+  // Roc: the hunting dive — down out of the sky before they have looked up.
+  stoop: {
+    id: 'stoop',
+    name: 'Stoop',
+    type: 'Storm',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 65,
+    statusApplication: { statusId: 'Conduct', target: 'moveTarget' },
+    manaCost: 60,
+    priority: 1,
+    target: 'singleEnemy',
+    description: 'Comes down out of the sky before they have looked up, and the charge stays in them (priority +1; marks with Conduct).',
+  },
 
   // --- Stone ---
   // Crag: the ground goes out from under both of them.

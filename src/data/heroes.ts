@@ -190,6 +190,20 @@ export const heroes: Record<string, HeroDefinition> = {
     schedule: { offerLevels: [5, 8, 14, 17, 24, 28], midLevel: 10, lateLevel: 20 },
     signatureMoveId: 'twinbolt',
   },
+  // Storm's third since 2026-09-19 (Scallywag's old seat): the storm eagle, the slate's magical
+  // column swung at full weight — Squall is the physical half, Tempest hedges. `stormRoc` because
+  // the Thunder Aerie's Guardian holds the id `roc` (enemies.ts).
+  stormRoc: {
+    id: 'stormRoc',
+    name: 'Roc',
+    types: ['Storm'],
+    baseStats: { hp: 175, attack: 30, defense: 40, intelligence: 95, wisdom: 50, speed: 100, manaPool: 60, mpRegen: 10 },
+    moveIds: ['zap', 'charge', 'staticCharge'],
+    starter: false,
+    growthGrades: { hp: 'B', attack: 'F', defense: 'C', intelligence: 'S', wisdom: 'B', speed: 'S', manaPool: 'A' },
+    schedule: { offerLevels: [5, 8, 14, 17, 20, 26], midLevel: 9, lateLevel: 18 },
+    signatureMoveId: 'stoop',
+  },
   // --- Stone ---
   crag: {
     id: 'crag',
