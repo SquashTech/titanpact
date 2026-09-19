@@ -9550,6 +9550,108 @@ button.star-shop-bundle-face {
   filter: drop-shadow(0 0 5px currentColor);
 }
 
+/* The balance: star and count side by side, the label and ledger under them. */
+.star-shop-balance-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* A shelf row's price is a label; the Purchase is on the offer's own screen. */
+.star-shop-offer-cost {
+  flex: none;
+  min-width: 56px;
+  padding: 7px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(224, 166, 60, 0.35);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.star-shop-offer-cost.is-held {
+  border-color: var(--border);
+  color: var(--text-dim);
+}
+
+.star-shop-offer.is-openable {
+  cursor: pointer;
+}
+
+/* A pack's line-up wraps and centres, so the last row's two sit in the middle. */
+.star-shop-pack .star-shop-bundle-faces {
+  justify-content: center;
+}
+
+/* The one Purchase, above Close on an offer's screen; Close steps back to secondary under it. */
+.resolve-button.sheet-close-button.is-secondary {
+  min-height: 44px;
+  padding: 10px 14px;
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+/* A Hero Bundle's screen (BundlePeekOverlay): one box a hero, tinted by its type. */
+.bundle-peek-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+}
+
+.bundle-peek-head {
+  justify-content: center;
+}
+
+.bundle-peek-boxes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.bundle-peek-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 6px 8px;
+  font: inherit;
+  color: var(--text);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(var(--type-rgb), 0.32);
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(var(--type-rgb), 0.22), transparent 70%),
+    var(--surface-raised);
+  box-shadow: var(--hairline), var(--elev-1);
+  cursor: pointer;
+}
+
+.bundle-peek-figure {
+  position: relative;
+  width: 64px;
+  height: 64px;
+}
+
+.bundle-peek-portrait {
+  position: relative;
+  z-index: 1;
+  width: 64px;
+  height: 64px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.65));
+}
+
+.bundle-peek-name {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.bundle-peek-types {
+  justify-content: center;
+}
+
 /* --- Run History (RunHistory.tsx, on the Records panel) -------------------
    Every run that ended, newest first. A row is folded to what the summary
    screen led with — the outcome, where and when, the team's faces — and

@@ -6,9 +6,12 @@ import { LocationHorizon } from '../shared/locationArt';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { ElementGlyph } from '../shared/elementIcons';
 import { getTypeColor } from '../combat/typeColors';
+import { PurchaseButton, type OfferPurchase } from './StarShopScreen';
 
 interface Props {
   locationId: string;
+  /** The offer this place is, when it is being looked at from the shelf; the Purchase lives here and nowhere else. */
+  purchase?: OfferPurchase;
   onClose: () => void;
 }
 
@@ -18,10 +21,10 @@ const PEEK_MOTE_DENSITY = 0.7;
 /**
  * A place, looked at before it is paid for (StarShopScreen): the choice screen's card at full
  * size — horizon, weather, the warden on the skyline — and under it the three things a row
- * cannot say: the omen the place speaks on arrival, its domains by name, and who keeps it. No
- * verb on it; the Buy stays on the shelf behind.
+ * cannot say: the omen the place speaks on arrival, its domains by name, and who keeps it — and
+ * the one Purchase button the place has, above Close.
  */
-export function LocationPeekOverlay({ locationId, onClose }: Props) {
+export function LocationPeekOverlay({ locationId, purchase, onClose }: Props) {
   const location = locations[locationId];
   if (!location) return null;
   const domains = locationDomains(location);
@@ -91,7 +94,8 @@ export function LocationPeekOverlay({ locationId, onClose }: Props) {
       </div>
 
       <div className="sheet-footer" onClick={(e) => e.stopPropagation()}>
-        <button className="resolve-button sheet-close-button" onClick={onClose}>
+        {purchase && <PurchaseButton purchase={purchase} />}
+        <button className={`resolve-button sheet-close-button${purchase ? ' is-secondary' : ''}`} onClick={onClose}>
           Close
         </button>
       </div>

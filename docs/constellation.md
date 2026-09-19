@@ -437,3 +437,9 @@ None built. Where each lands when it is:
      hero's face — in a pack, held or locked, or a bundle — opens its dossier
      (`HeroDossierOverlay`), and a Location's row opens the place (`LocationPeekOverlay`: the
      choice card at full size, its omen, its domains by name, who keeps it).
+   - **Revised the same day, per user direction:** pack zero is **Classic**; no row on any shelf
+     carries a description; the balance reads star-and-count side by side. **A shelf row never
+     spends a star**: the cost on it is a label, and tapping a bundle or a Location row opens the
+     offer's own screen — a bundle's is one box a hero (`BundlePeekOverlay`), each a tap into the
+     dossier; a place's is the peek — and that screen carries the ONE Purchase button, above Close.
+     A pack's faces still open the dossier from the shelf, since a pack has no screen to open.

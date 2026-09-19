@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { STAR_SHOP_OFFERS, starShopCatalog } from '../../data/starShop';
 import { STARTER_PACKS } from '../../data/starterPacks';
 import { locationDomains, locations } from '../../data/locations';
@@ -14,6 +14,7 @@ import { TabStrip, type TabSpec } from '../shared/TabStrip';
 import { getTypeColor } from '../combat/typeColors';
 import { HeroDossierOverlay } from './HeroDossierOverlay';
 import { LocationPeekOverlay } from './LocationPeekOverlay';
+import { BundlePeekOverlay } from './BundlePeekOverlay';
 
 /** The shop's name, in one place: the title tile, this panel's header. The Constellation — the stars the Compendium charts, seen as one sky to draw on. */
 export const STAR_SHOP_NAME = 'The Constellation';
@@ -36,14 +37,22 @@ interface Props {
   onClose: () => void;
 }
 
+/** What an offer's own screen needs to say and do about buying it. */
+export interface OfferPurchase {
+  offer: StarShopOffer;
+  held: boolean;
+  affordable: boolean;
+  onBuy: () => void;
+}
+
 /**
  * Where stars are spent (run/starShop.ts) and the draft is dressed (run/starterPacks.ts). The
- * balance leads — earned, spent, left — then the shelf the strip has open. Starter Packs are a
- * radio: pack zero and every pack held, one equipped; a pack not yet held says what opens it.
- * Bundles and Locations are offers with a price and one Buy. Everything on a shelf can be looked
- * at before it is paid for: a hero's face opens its dossier, a place's row opens the place —
- * what a star buys should be read, not guessed. The Compendium's sheet (CompendiumScreen),
- * tabs at the foot.
+ * balance leads — the star and the count — then the shelf the strip has open. Starter Packs are
+ * a radio: pack zero and every pack held, one equipped; a pack not yet held says what opens it.
+ * Bundles and Locations are rows that OPEN: a bundle's row is a line-up and a place's row is a
+ * scene, and tapping either brings up its own screen, where the heroes can be examined and the
+ * place looked around — and where the one Purchase button is. Nothing on a shelf row spends a
+ * star; the cost on it is a label. The Compendium's sheet (CompendiumScreen), tabs at the foot.
  */
 export function StarShopScreen({ profile, onBuy, onEquipPack, onClose }: Props) {
   const earned = totalStars(profile);
@@ -51,13 +60,20 @@ export function StarShopScreen({ profile, onBuy, onEquipPack, onClose }: Props) 
   const balance = starBalance(profile, starShopCatalog);
   const [shelf, setShelf] = useState<ShelfId>('starterPack');
   const [dossierHeroId, setDossierHeroId] = useState<string | null>(null);
-  const [peekLocationId, setPeekLocationId] = useState<string | null>(null);
+  const [openOfferId, setOpenOfferId] = useState<string | null>(null);
 
   const tabs = SHELVES.map((s) => ({ ...s, count: s.id === 'starterPack' ? STARTER_PACKS.length : STAR_SHOP_OFFERS.filter((o) => o.grant.kind === s.id).length }));
   const open = SHELVES.find((s) => s.id === shelf)!;
   const offers = STAR_SHOP_OFFERS.filter((o) => o.grant.kind === shelf);
   const equipped = equippedPack(profile, STARTER_PACKS);
   const dossierHero = dossierHeroId ? heroes[dossierHeroId] : null;
+  const openOffer = openOfferId ? starShopCatalog[openOfferId] : null;
+  const purchaseOf = (offer: StarShopOffer): OfferPurchase => ({
+    offer,
+    held: isPurchased(profile, offer.id),
+    affordable: canBuy(profile, starShopCatalog, offer),
+    onBuy: () => onBuy(offer),
+  });
 
   return (
     <div className="detail-overlay is-sheet" onClick={onClose}>
@@ -71,12 +87,14 @@ export function StarShopScreen({ profile, onBuy, onEquipPack, onClose }: Props) 
 
         {/* Keyed on the shelf so a switch scrolls the well back to its top. */}
         <div key={shelf} className="detail-tab-body compendium-body" role="tabpanel">
-          {/* The balance as the thing itself: one big star and the count, the ledger under it. */}
+          {/* The balance as the thing itself: the star and the count side by side, the ledger under them. */}
           <div className="star-shop-balance">
-            <span className="star-shop-balance-star" aria-hidden="true">
-              <HubGlyph name="star" />
+            <span className="star-shop-balance-head">
+              <span className="star-shop-balance-star" aria-hidden="true">
+                <HubGlyph name="star" />
+              </span>
+              <span className="star-shop-balance-count">{balance}</span>
             </span>
-            <span className="star-shop-balance-count">{balance}</span>
             <span className="star-shop-balance-label">{balance === 1 ? 'star' : 'stars'} to spend</span>
             <span className="star-shop-balance-ledger">
               {earned} earned · {spent} spent
@@ -105,36 +123,18 @@ export function StarShopScreen({ profile, onBuy, onEquipPack, onClose }: Props) 
             <div className="star-shop-offers">
               {offers.map((offer) => {
                 const held = isPurchased(profile, offer.id);
-                const affordable = canBuy(profile, starShopCatalog, offer);
-                const buy = (
-                  <button
-                    type="button"
-                    className="star-shop-offer-buy"
-                    data-sfx={held ? 'none' : 'ui.commit'}
-                    disabled={held || !affordable}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onBuy(offer);
-                    }}
-                    aria-label={held ? `${offer.name}: owned` : `Buy ${offer.name} for ${offer.cost} ${offer.cost === 1 ? 'star' : 'stars'}`}
-                  >
-                    {held ? 'Owned' : `★ ${offer.cost}`}
-                  </button>
-                );
                 if (offer.grant.kind === 'location') {
-                  const { locationId } = offer.grant;
-                  return <LocationOffer key={offer.id} offer={offer} locationId={locationId} held={held} buy={buy} onPeek={() => setPeekLocationId(locationId)} />;
+                  return <LocationRow key={offer.id} offer={offer} locationId={offer.grant.locationId} held={held} onOpen={() => setOpenOfferId(offer.id)} />;
                 }
                 if (offer.grant.kind === 'heroBundle') {
-                  return <BundleOffer key={offer.id} offer={offer} heroIds={offer.grant.heroIds} held={held} buy={buy} onPeekHero={setDossierHeroId} />;
+                  return <BundleRow key={offer.id} offer={offer} heroIds={offer.grant.heroIds} held={held} onOpen={() => setOpenOfferId(offer.id)} />;
                 }
                 return (
                   <div key={offer.id} className={`star-shop-offer${held ? ' is-held' : ''}`}>
                     <div className="star-shop-offer-body">
                       <span className="star-shop-offer-name">{offer.name}</span>
-                      <span className="star-shop-offer-desc">{offer.description}</span>
                     </div>
-                    {buy}
+                    <CostBadge offer={offer} held={held} />
                   </div>
                 );
               })}
@@ -157,9 +157,36 @@ export function StarShopScreen({ profile, onBuy, onEquipPack, onClose }: Props) 
         </button>
       </div>
 
+      {openOffer?.grant.kind === 'location' && (
+        <LocationPeekOverlay locationId={openOffer.grant.locationId} purchase={purchaseOf(openOffer)} onClose={() => setOpenOfferId(null)} />
+      )}
+      {openOffer?.grant.kind === 'heroBundle' && (
+        <BundlePeekOverlay heroIds={openOffer.grant.heroIds} purchase={purchaseOf(openOffer)} onPeekHero={setDossierHeroId} onClose={() => setOpenOfferId(null)} />
+      )}
       {dossierHero && <HeroDossierOverlay hero={dossierHero} onClose={() => setDossierHeroId(null)} />}
-      {peekLocationId && <LocationPeekOverlay locationId={peekLocationId} onClose={() => setPeekLocationId(null)} />}
     </div>
+  );
+}
+
+/** The price as a label, never a button: the Purchase is on the offer's own screen. */
+export function CostBadge({ offer, held }: { offer: StarShopOffer; held: boolean }) {
+  return <span className={`star-shop-offer-cost${held ? ' is-held' : ''}`}>{held ? 'Owned' : `★ ${offer.cost}`}</span>;
+}
+
+/** The one Purchase: on an offer's own screen, above Close. Disabled says why in its label. */
+export function PurchaseButton({ purchase }: { purchase: OfferPurchase }) {
+  const { offer, held, affordable, onBuy } = purchase;
+  return (
+    <button
+      type="button"
+      className="resolve-button sheet-close-button star-shop-purchase"
+      data-sfx={held || !affordable ? 'none' : 'ui.commit'}
+      disabled={held || !affordable}
+      onClick={onBuy}
+      aria-label={held ? `${offer.name}: owned` : affordable ? `Purchase ${offer.name} for ${offer.cost} ${offer.cost === 1 ? 'star' : 'stars'}` : `${offer.name} costs ${offer.cost} stars — not enough`}
+    >
+      {held ? 'Owned' : `Purchase · ★ ${offer.cost}`}
+    </button>
   );
 }
 
@@ -194,9 +221,9 @@ function FaceRow({ heroIds, onPeekHero }: { heroIds: readonly string[]; onPeekHe
 }
 
 /**
- * A Starter Pack's row: the heroes it drafts from, and one of three states on the right —
- * Equipped, Equip, or what opens it. A locked pack still shows its faces: the point of the shelf
- * is to see what a clear is for.
+ * A Starter Pack's row: its name, the heroes it drafts from, and one of three states on the
+ * right — Equipped, Equip, or Locked with what opens it under the faces. A locked pack still
+ * shows its faces: the point of the shelf is to see what a clear is for.
  */
 function PackRow({ pack, held, equipped, onEquip, onPeekHero }: { pack: StarterPack; held: boolean; equipped: boolean; onEquip: () => void; onPeekHero: (heroId: string) => void }) {
   const lock = pack.unlock?.kind === 'clear' ? 'Opens with your first cleared run' : pack.unlock ? 'Not yet held' : null;
@@ -204,7 +231,6 @@ function PackRow({ pack, held, equipped, onEquip, onPeekHero }: { pack: StarterP
     <div className={`star-shop-offer star-shop-pack${equipped ? ' is-equipped' : ''}${held ? '' : ' is-locked'}`}>
       <div className="star-shop-offer-body">
         <span className="star-shop-offer-name">{pack.name}</span>
-        <span className="star-shop-offer-desc">{pack.description}</span>
         <FaceRow heroIds={pack.heroIds} onPeekHero={onPeekHero} />
         {!held && lock && <span className="star-shop-pack-lock">{lock}</span>}
       </div>
@@ -223,32 +249,39 @@ function PackRow({ pack, held, equipped, onEquip, onPeekHero }: { pack: StarterP
   );
 }
 
-/**
- * A Location's offer is drawn as the place: its tint on the row, its horizon behind the text,
- * its domains lit — the same three things the choice screen's card reads. What is sold is a
- * scene, so the row is one, and tapping it opens the scene full size.
- */
-function LocationOffer({ offer, locationId, held, buy, onPeek }: { offer: StarShopOffer; locationId: string; held: boolean; buy: ReactNode; onPeek: () => void }) {
+/** A row that opens its offer's screen: a button in all but tag, since it holds inline glyphs and a badge. */
+function OpenRow({ className, style, label, onOpen, children }: { className: string; style?: CSSProperties; label: string; onOpen: () => void; children: React.ReactNode }) {
+  return (
+    <div
+      className={`star-shop-offer is-openable ${className}`}
+      style={style}
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
+      aria-label={label}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** A Location's row is the place — tint, horizon, domains — and opens the place. */
+function LocationRow({ offer, locationId, held, onOpen }: { offer: StarShopOffer; locationId: string; held: boolean; onOpen: () => void }) {
   const location = locations[locationId];
   const domains = location ? locationDomains(location) : null;
   return (
-    <div
-      className={`star-shop-offer star-shop-place is-peekable${held ? ' is-held' : ''}`}
-      style={{ '--node-rgb': location?.tintRgb } as CSSProperties}
-      role="button"
-      tabIndex={0}
-      onClick={onPeek}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') onPeek();
-      }}
-      aria-label={`${offer.name} — look around`}
-    >
+    <OpenRow className={`star-shop-place${held ? ' is-held' : ''}`} style={{ '--node-rgb': location?.tintRgb } as CSSProperties} label={`${offer.name} — look around`} onOpen={onOpen}>
       <span className="star-shop-place-scene" aria-hidden="true">
         <LocationHorizon locationId={locationId} />
       </span>
       <div className="star-shop-offer-body">
         <span className="star-shop-offer-name">{offer.name}</span>
-        <span className="star-shop-offer-desc">{offer.description}</span>
         {domains && (
           <span className="star-shop-place-domains">
             {domains.map((type) => (
@@ -259,21 +292,33 @@ function LocationOffer({ offer, locationId, held, buy, onPeek }: { offer: StarSh
           </span>
         )}
       </div>
-      {buy}
-    </div>
+      <CostBadge offer={offer} held={held} />
+    </OpenRow>
   );
 }
 
-/** A bundle's offer is drawn as the heroes: a line-up, each face a tap into its dossier. What is sold is people, so the row is who. */
-function BundleOffer({ offer, heroIds, held, buy, onPeekHero }: { offer: StarShopOffer; heroIds: readonly string[]; held: boolean; buy: ReactNode; onPeekHero: (heroId: string) => void }) {
+/** A bundle's row is the heroes — a line-up — and opens the bundle. The faces open nothing here; the bundle's own screen is where they are examined. */
+function BundleRow({ offer, heroIds, held, onOpen }: { offer: StarShopOffer; heroIds: readonly string[]; held: boolean; onOpen: () => void }) {
   return (
-    <div className={`star-shop-offer star-shop-bundle${held ? ' is-held' : ''}`}>
+    <OpenRow className={`star-shop-bundle${held ? ' is-held' : ''}`} label={`${offer.name} — see the heroes`} onOpen={onOpen}>
       <div className="star-shop-offer-body">
         <span className="star-shop-offer-name">{offer.name}</span>
-        <span className="star-shop-offer-desc">{offer.description}</span>
-        <FaceRow heroIds={heroIds} onPeekHero={onPeekHero} />
+        <span className="star-shop-bundle-faces" aria-hidden="true">
+          {heroIds.map((heroId) => {
+            const hero = heroes[heroId];
+            if (!hero) return null;
+            return (
+              <span key={heroId} className="star-shop-bundle-face" style={{ color: getTypeColor(hero.types[0]) }}>
+                <HeroPortrait heroId={heroId} className="star-shop-bundle-portrait" />
+                <span className="star-shop-bundle-face-type">
+                  <ElementGlyph type={hero.types[0]} />
+                </span>
+              </span>
+            );
+          })}
+        </span>
       </div>
-      {buy}
-    </div>
+      <CostBadge offer={offer} held={held} />
+    </OpenRow>
   );
 }

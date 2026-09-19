@@ -24,8 +24,6 @@ export type PackUnlock = { kind: 'clear' } | { kind: 'offer'; offerId: string };
 export interface StarterPack {
   id: string;
   name: string;
-  /** One line on the shelf row. */
-  description: string;
   /** ≥ PACK_MIN_HEROES. Any types, any overlap. The draft's pool while this pack is equipped. */
   heroIds: readonly string[];
   /** `base` is pack zero; `recut` is drawn from the base roster; `theme` brings heroes outside it. */

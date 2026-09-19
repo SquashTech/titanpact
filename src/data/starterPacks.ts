@@ -12,8 +12,7 @@ import { heroes } from './heroes';
 export const STARTER_PACKS: readonly StarterPack[] = [
   {
     id: BASE_PACK_ID,
-    name: 'The Fourteen',
-    description: 'The starters the game opens on — one hero a type.',
+    name: 'Classic',
     heroIds: Object.values(heroes)
       .filter((hero) => hero.starter)
       .map((hero) => hero.id),
@@ -22,7 +21,6 @@ export const STARTER_PACKS: readonly StarterPack[] = [
   {
     id: 'secondString',
     name: 'Second String',
-    description: 'The bench, drafted first: fourteen recruit-only heroes, one a type, none of whom the base draft ever shows.',
     heroIds: ['cinderKnight', 'pincer', 'glacialWarden', 'stormRanger', 'slate', 'mordax', 'empyrean', 'marrow', 'pixie', 'sorrow', 'trance', 'gallant', 'rex', 'ursa'],
     kind: 'recut',
     unlock: { kind: 'clear' },
