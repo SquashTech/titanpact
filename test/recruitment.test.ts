@@ -53,7 +53,7 @@ test('recruitment: Guild Hall recruit rejects insufficient gold', () => {
 });
 
 test('recruitment: Guild Hall recruit still enforces the roster cap', () => {
-  const allSix = ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'shadowMonk'];
+  const allSix = ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'nightshade'];
   assert.strictEqual(allSix.length, ROSTER_CAP);
   const run = seedRoster(allSix, 1000);
   const offer = guildHallOffers.find((o) => o.heroId === 'ironWarden')!;
@@ -174,7 +174,7 @@ test('recruitment: claiming a contract is free in gold and adds the offer, gear 
 });
 
 test('recruitment: claiming a contract still enforces the roster cap', () => {
-  const allSix = ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'shadowMonk'];
+  const allSix = ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'nightshade'];
   const run = seedRoster(allSix, 0);
   const offer = deriveContractOffer(run.roster[0]);
   assert.throws(() => claimContract(run, offer, 'extra'));
@@ -198,7 +198,7 @@ test('recruitment: buyContract spends gold and grants a Recruit Contract; insuff
 // --- Roster-full replacement (RosterReplaceScreen) ---
 
 test('recruitment: recruitFromGuildHallReplacing swaps the terminated hero for a fresh recruit, whose gear goes with it', () => {
-  const allSix = ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'shadowMonk'];
+  const allSix = ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'nightshade'];
   let run = seedRoster(allSix, 1000);
   run = {
     ...run,
@@ -220,7 +220,7 @@ test('recruitment: recruitFromGuildHallReplacing swaps the terminated hero for a
 });
 
 test('recruitment: recruitFromGuildHallReplacing rejects insufficient gold and an unknown terminated rosterId', () => {
-  const allSix = ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'shadowMonk'];
+  const allSix = ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'nightshade'];
   const run = seedRoster(allSix, 0);
   const incomingOffer = guildHallOffers.find((o) => !allSix.includes(o.heroId))!;
   assert.throws(() => recruitFromGuildHallReplacing(run, incomingOffer, incomingOffer.heroId, 'tidecaller'), RecruitmentError);
@@ -230,16 +230,16 @@ test('recruitment: recruitFromGuildHallReplacing rejects insufficient gold and a
 });
 
 test('recruitment: claimContractReplacing swaps the terminated hero for the claimed veteran, which keeps its own gear and not the terminated hero\'s', () => {
-  const allSix = ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'shadowMonk'];
+  const allSix = ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'nightshade'];
   let run = seedRoster(allSix, 0);
   run = {
     ...run,
     roster: run.roster.map((r) => (r.rosterId === 'ironWarden' ? { ...r, equipment: equipItem(r.equipment, equipment['sword.common'].id) } : r)),
   };
-  const defeated = { ...run.roster.find((r) => r.rosterId === 'cinderKnight')!, heroId: 'shadowMonk', xp: xpForLevel(5), equipment: ['spear.rare'] };
-  const offer = deriveContractOffer(defeated); // shadowMonk is already on this roster, but rosterId is derived fresh below
-  const rosterId = freshRosterId(run, 'shadowMonk');
-  assert.strictEqual(rosterId, 'shadowMonk-2'); // shadowMonk already occupies its own rosterId
+  const defeated = { ...run.roster.find((r) => r.rosterId === 'cinderKnight')!, heroId: 'nightshade', xp: xpForLevel(5), equipment: ['spear.rare'] };
+  const offer = deriveContractOffer(defeated); // nightshade is already on this roster, but rosterId is derived fresh below
+  const rosterId = freshRosterId(run, 'nightshade');
+  assert.strictEqual(rosterId, 'nightshade-2'); // nightshade already occupies its own rosterId
 
   const next = claimContractReplacing(run, offer, rosterId, 'ironWarden');
   assert.strictEqual(next.recruitContracts, run.recruitContracts - 1);
@@ -247,14 +247,14 @@ test('recruitment: claimContractReplacing swaps the terminated hero for the clai
   assert.ok(!next.roster.some((r) => r.rosterId === 'ironWarden'), 'ironWarden is gone');
   const entry = next.roster.find((r) => r.rosterId === rosterId);
   assert.ok(entry);
-  assert.strictEqual(entry!.heroId, 'shadowMonk');
+  assert.strictEqual(entry!.heroId, 'nightshade');
   assert.strictEqual(levelOf(entry!), 5); // veteran progress carried over
   assert.deepStrictEqual(entry!.equipment, ['spear.rare'], 'its own gear, absorbed as it wore it');
   assert.ok(!next.roster.some((r) => r.equipment.includes('sword.common')), 'the terminated hero\'s gear went with it');
 });
 
 test('recruitment: claimContractReplacing rejects no contracts available and an unknown terminated rosterId', () => {
-  const allSix = ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'shadowMonk'];
+  const allSix = ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'nightshade'];
   const run = seedRoster(allSix, 0);
   const offer = deriveContractOffer(run.roster[0]);
   assert.throws(() => claimContractReplacing({ ...run, recruitContracts: 0 }, offer, 'new', 'ironWarden'), RecruitmentError);

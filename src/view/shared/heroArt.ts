@@ -19,7 +19,6 @@ import hollowbarkArt from '../../../art/heroes/Hollowbark.png';
 import sunPriestArt from '../../../art/heroes/starters/solace.png';
 import aegisArt from '../../../art/heroes/aegis.png';
 import empyreanArt from '../../../art/heroes/empyrean.png';
-import shadowMonkArt from '../../../art/heroes/vesper.png';
 import marrowArt from '../../../art/heroes/marrow.png';
 import luciusArt from '../../../art/heroes/lucius.png';
 import nightshadeArt from '../../../art/heroes/starters/nightshade.png';
@@ -72,7 +71,6 @@ export const heroArt: Partial<Record<string, string>> = {
   aegis: aegisArt,
   empyrean: empyreanArt,
   // --- Shadow ---
-  shadowMonk: shadowMonkArt,
   marrow: marrowArt,
   lucius: luciusArt,
   nightshade: nightshadeArt,

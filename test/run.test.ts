@@ -69,7 +69,7 @@ function seedRoster(heroIds: string[]) {
 // --- Roster cap / termination ---
 
 test('run: roster accepts up to the 6-hero cap, then throws', () => {
-  const allSix = ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'shadowMonk'];
+  const allSix = ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'nightshade'];
   assert.strictEqual(allSix.length, ROSTER_CAP);
   const run = seedRoster(allSix);
   assert.strictEqual(run.roster.length, ROSTER_CAP);
@@ -146,16 +146,16 @@ test('run: reorderRoster tolerates a stale or partial list — unknown ids are d
 // --- Squad selection (the whole roster fields; the pick is lead order) ---
 
 test('squad: a full roster splits into 2 active + 4 bench, in pick order', () => {
-  const run = seedRoster(['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'shadowMonk']);
-  const squad = pickSquad(run.roster, ['stormRanger', 'shadowMonk', 'cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle']);
-  assert.deepStrictEqual(squad.activeIds, ['stormRanger', 'shadowMonk']);
+  const run = seedRoster(['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'nightshade']);
+  const squad = pickSquad(run.roster, ['stormRanger', 'nightshade', 'cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle']);
+  assert.deepStrictEqual(squad.activeIds, ['stormRanger', 'nightshade']);
   assert.deepStrictEqual(squad.benchIds, ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle']);
 });
 
 test('squad: STANDARD_SQUAD_SIZE is the roster cap — no fight benches a hero by omission (2026-09-17)', () => {
   assert.strictEqual(STANDARD_SQUAD_SIZE, ROSTER_CAP);
-  const run = seedRoster(['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'shadowMonk']);
-  assert.throws(() => pickSquad(run.roster, ['stormRanger', 'shadowMonk', 'cinderKnight', 'tidecaller']), SquadSelectionError);
+  const run = seedRoster(['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'nightshade']);
+  assert.throws(() => pickSquad(run.roster, ['stormRanger', 'nightshade', 'cinderKnight', 'tidecaller']), SquadSelectionError);
 });
 
 test('squad: below 4 recruited heroes, the whole roster must be picked (early-run roster) and leaves an empty active slot below 2 picks', () => {
@@ -238,12 +238,12 @@ test('progression: levelMovePool + grantOfferedMove resolve a level\'s move offe
     'heavyBlow',
     'ironFist',
     'openingStrike',
-    'holyStrike',
     'pinDown',
     'swiftBlow',
+    'holyStrike',
   ]);
-  assert.deepStrictEqual(poolAtMid(entry), ['moltenLash', 'firebrand', 'momentumSwing', 'serratedSlice', 'rendArmor', 'metallicBlade', 'blazingRetreat', 'parry']);
-  assert.deepStrictEqual(poolAtTop(entry), ['volcanicSurge', 'onslaught', 'swingingChain', 'juggernaut']);
+  assert.deepStrictEqual(poolAtMid(entry), ['moltenLash', 'firebrand', 'blazingRetreat', 'momentumSwing', 'serratedSlice', 'rendArmor', 'metallicBlade']);
+  assert.deepStrictEqual(poolAtTop(entry), ['volcanicSurge', 'onslaught', 'swingingChain']);
 
   const withMove = grantOfferedMove(run, 'cinderKnight', 'firebrand');
   assert.ok(withMove.roster[0].unlockedMoveIds.includes('firebrand'));

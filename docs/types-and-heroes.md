@@ -212,7 +212,18 @@ swings the magical spread column nobody held), **Empyrean** (Light, the type's f
 at Speed 100 so its Daze riders land first), **Pixie** (Arcane, the Wisdom-85 support whose
 buffs land bigger by the stat-scaling rule), **Dread** (Spirit, the 230-HP body that can pay
 the slate's HP-priced cards) and **Rex** (Mech, Attack 110 at Speed 70, the Beast graft on its
-node). Every hero is on the same five-clause Evolution framework, grade budget, schedule
+node). **2026-09-19, per user direction:** Vesper is deleted, **Widow** goes Beast/Shadow →
+**mono-Shadow** and takes its Shadow seat (kit Backstab / Lie in Wait / Prowl; Widowbite is
+Shadow), and **Cinder** goes Fire/Iron → **mono-Fire**. Each keeps the type it lost as an
+Evolution graft — Widow's Carapace is the Beast body (Apex Predator granted, the mauler's column
+as its line), Cinder's Ironclad is the plate (Shield Bash granted, Iron's guard column as its
+line, Cinderguard kept) — so the old dual build is one of the three paths rather than the
+starting state, and Thunderblaze and Silkbinder are now plain grafts on a mono hero. The count
+is **41** and Beast holds two (Fang, Coil) until the mono-Beast hero the user has in hand lands.
+One consequence to watch: Fire's physical column is four moves past Cinder's kit, so his Early
+band is entirely Iron off-type and his in-type pool is Molten Lash, Firebrand, Blazing Retreat
+and Volcanic Surge — a physical Fire Early or two would give the mono hero a band of its own.
+Every hero is on the same five-clause Evolution framework, grade budget, schedule
 stagger and signature slot as the thirty-six before it; `test/roster.test.ts` and
 `test/moveTiers.test.ts` pin all of it.
 

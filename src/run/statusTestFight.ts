@@ -68,7 +68,7 @@ function testSide(heroIds: readonly [string, string, string, string]): SandboxSi
 
 // Four distinct primary types per side so the type-tinted UI is visibly varied.
 const PLAYER_HERO_IDS = ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle'] as const;
-const AI_HERO_IDS = ['crimson', 'stormRanger', 'shadowMonk', 'rime'] as const;
+const AI_HERO_IDS = ['crimson', 'stormRanger', 'nightshade', 'rime'] as const;
 
 export function createStatusTestSides(): { a: SandboxSideConfig; b: SandboxSideConfig } {
   return { a: testSide(PLAYER_HERO_IDS), b: testSide(AI_HERO_IDS) };

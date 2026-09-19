@@ -65,10 +65,10 @@ test('scaling: a debuff reads the OFFENSIVE stat the move swings with — Weaken
   const weaken = cast(fixture(2), 'a1', 'weaken', 'b1');
   assert.strictEqual(weaken.state.combatants.b1.statModifiers.defense, -26);
   assert.strictEqual(weaken.state.combatants.b1.statModifiers.wisdom, -25);
-  // Cinder Knight, Attack 85, Iron STAB: 20 × 1.35 × 1.25 = 33.75 → 34; the Speed 10 → 17, held at −15 on Iron Warden's Speed 30.
+  // Cinder Knight, Attack 85, off-type for Iron (mono-Fire since 2026-09-19): 20 × 1.35 = 27; the Speed 10 → 14, inside the −15 floor on Iron Warden's Speed 30 (the Wisdom line above is where the floor binds).
   const pin = cast(fixture(2), 'a2', 'pinDown', 'b1');
-  assert.strictEqual(pin.state.combatants.b1.statModifiers.defense, -34);
-  assert.strictEqual(pin.state.combatants.b1.statModifiers.speed, -15);
+  assert.strictEqual(pin.state.combatants.b1.statModifiers.defense, -27);
+  assert.strictEqual(pin.state.combatants.b1.statModifiers.speed, -14);
 });
 
 test('scaling: the SIGN classes each delta — Landslide\'s ally buff reads Wisdom while its hit reads Attack', () => {

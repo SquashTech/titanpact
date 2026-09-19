@@ -484,14 +484,17 @@ identity.
 > innate pairing a starting state rather than an identity; none is what the pass was fixing.
 > And a retype path must carry the new type's line — `unlocksMoveIds` plus at least four
 > `learnableMoveIds` — because clause 5's problem (a hero left holding a loadout that no
-> longer reads what it now is) is the same problem a lost STAB creates. The five:
+> longer reads what it now is) is the same problem a lost STAB creates. The five as authored
+> (**three since 2026-09-19**: Cinder went mono-Fire and Widow mono-Shadow, per user direction,
+> so Thunderblaze and Silkbinder are now plain grafts, and the type each hero was born with is
+> its third path instead — Ironclad grafts Iron, Carapace grafts Beast):
 >
 > | Hero | Path | Trade | What it buys |
 > | --- | --- | --- | --- |
-> | Cinder | Thunderblaze | Iron → **Storm** | The name always wanted it. The Iron it *keeps* still detonates Conduct — `Conduct.triggerTypes` is Storm, Iron and Mech, and detonation never asked for STAB. |
+> | ~~Cinder~~ | Thunderblaze | ~~Iron →~~ **Storm** | The name always wanted it. Storm detonates Conduct itself, so nothing was lost with the Iron. |
 > | Brimstone | Hexfume | Shadow → **Nature** | The smoke was always the poison. Its Hexfume passive (arrival Poisons both foes) and Nature's Poison line are the same idea twice. |
 > | Bellows | Overpressure | Iron → **Fire** | It is a boiler. Mech is the PRIMARY, so the self-burning Mech column stays learnable alongside the Fire one — which is what keeps Superheat fuelled. |
-> | Widow | Silkbinder | Shadow → **Nature** | The trapper rather than the assassin. Nature has a physical column, which a 20-Intelligence spider needs. |
+> | ~~Widow~~ | Silkbinder | ~~Shadow →~~ **Nature** | The trapper rather than the assassin. Nature has a physical column, which a 20-Intelligence spider needs. |
 > | Coil | Hooded | Mind → **Stone** | A basilisk's gaze. The riskiest of the five: Coil's pool is almost all Mind, so this spends nearly every STAB it has. Stone's magical column is exactly three moves, which is just enough to refill a loadout — watch it in playtest. |
 >
 > Lucius is the counter-example that still stands. He was retyped **mono-Mind** in the same

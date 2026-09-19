@@ -56,7 +56,7 @@ test('class moves: every class move follows its user\'s type, and no authored sl
 
 test('class moves: moveForHero re-types a typeFollowsUser move to the hero\'s PRIMARY, and leaves every other move alone', () => {
   const feint = moves.feint;
-  assert.strictEqual(moveForHero(feint, heroes.cinderKnight).type, 'Fire', 'the primary, never the innate secondary');
+  assert.strictEqual(moveForHero(feint, heroes.brimstone).type, 'Fire', 'the primary, never the innate secondary');
   assert.strictEqual(moveForHero(feint, heroes.tidecaller).type, 'Water');
   assert.strictEqual(moveForHero(feint, heroes.ironWarden), feint, 'identity when the type already matches');
   assert.strictEqual(moveForHero(moves.ember, heroes.tidecaller), moves.ember, 'an ordinary move is untouched');

@@ -233,7 +233,7 @@ entire point — a heal is a fact about the caster, not about the move:
 
 | Caster | Move | Wis | STAB | Heal |
 |---|---|---|---|---|
-| Cinder (Fire/Iron) | Restore Vigor 40 | 40 | — | 36 |
+| Cinder (Fire) | Restore Vigor 40 | 40 | — | 36 |
 | Sylva (Nature) | Mend Wounds 45 | 60 | — | 50 |
 | Revenant (Spirit) | Mend Wounds 45 | 46 | ✓ | 54 |
 | Solace (Light) | Restore Vigor 40 | 70 | ✓ | 60 |

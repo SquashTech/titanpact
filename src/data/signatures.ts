@@ -341,19 +341,22 @@ export const signatureMoves: Record<string, MoveDefinition> = {
   },
 
   // --- Shadow ---
-  // Vesper: lands first and is already gone into the next.
-  duskStep: {
-    id: 'duskStep',
-    name: 'Dusk Step',
+  // Widow: one bite, two things in it.
+  widowbite: {
+    id: 'widowbite',
+    name: 'Widowbite',
     type: 'Shadow',
     category: 'physical',
     kind: 'damage',
-    basePower: 70,
-    statusApplication: { statusId: 'Ambush', magnitude: 30, target: 'self' },
-    manaCost: 55,
-    priority: 1,
+    basePower: 75,
+    statusApplication: [
+      { statusId: 'Bleed', target: 'moveTarget' },
+      { statusId: 'Poison', magnitude: 15, duration: 3, target: 'moveTarget' },
+    ],
+    manaCost: 60,
+    priority: 0,
     target: 'singleEnemy',
-    description: 'Lands before they have turned round, and is already setting up the next one (priority +1; Ambush 30 on self).',
+    description: 'One bite, two things in it (Bleed; Poison 15%).',
   },
   // Marrow: takes the marrow out of them and keeps it.
   deathdrink: {
@@ -635,23 +638,6 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'singleEnemy',
     description: 'Bites, and the pack comes in behind it (+15 Speed to both allies).',
-  },
-  // Widow: one bite, two things in it.
-  widowbite: {
-    id: 'widowbite',
-    name: 'Widowbite',
-    type: 'Beast',
-    category: 'physical',
-    kind: 'damage',
-    basePower: 75,
-    statusApplication: [
-      { statusId: 'Bleed', target: 'moveTarget' },
-      { statusId: 'Poison', magnitude: 15, duration: 3, target: 'moveTarget' },
-    ],
-    manaCost: 60,
-    priority: 0,
-    target: 'singleEnemy',
-    description: 'One bite, two things in it (Bleed; Poison 15%).',
   },
   // Coil: tightens until nothing about them works right.
   stranglehold: {

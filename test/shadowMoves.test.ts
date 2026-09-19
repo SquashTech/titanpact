@@ -248,7 +248,6 @@ test('shadow: every Ambush grant in the game is self-targeted and carries a magn
   const grants = Object.values(moves).filter((m) => firstStatusApplication(m)?.statusId === 'Ambush');
   assert.deepStrictEqual(grants.map((m) => m.id).sort(), [
     'cutthroat',
-    'duskStep',
     'enervate',
     'fortify',
     'lieInWait',

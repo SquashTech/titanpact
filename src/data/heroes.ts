@@ -57,7 +57,7 @@ export const heroes: Record<string, HeroDefinition> = {
   cinderKnight: {
     id: 'cinderKnight',
     name: 'Cinder',
-    types: ['Fire', 'Iron'],
+    types: ['Fire'],
     baseStats: { hp: 220, attack: 85, defense: 75, intelligence: 25, wisdom: 40, speed: 55, manaPool: 50, mpRegen: 10 },
     moveIds: ['singe', 'sharpen', 'kindle'],
     starter: false,
@@ -314,16 +314,16 @@ export const heroes: Record<string, HeroDefinition> = {
   },
 
   // --- Shadow ---
-  shadowMonk: {
-    id: 'shadowMonk',
-    name: 'Vesper',
+  widow: {
+    id: 'widow',
+    name: 'Widow',
     types: ['Shadow'],
-    baseStats: { hp: 200, attack: 95, defense: 55, intelligence: 30, wisdom: 45, speed: 75, manaPool: 50, mpRegen: 10 },
-    moveIds: ['fadeStrike', 'lieInWait', 'secondWind'],
+    baseStats: { hp: 190, attack: 100, defense: 45, intelligence: 20, wisdom: 45, speed: 100, manaPool: 50, mpRegen: 10 },
+    moveIds: ['backstab', 'lieInWait', 'prowl'],
     starter: false,
-    growthGrades: { hp: 'B', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'A', speed: 'A', manaPool: 'B' },
-    schedule: { offerLevels: [5, 8, 14, 19, 21, 26], midLevel: 10, lateLevel: 20 },
-    signatureMoveId: 'duskStep',
+    growthGrades: { hp: 'S', attack: 'B', defense: 'A', intelligence: 'D', wisdom: 'A', speed: 'B', manaPool: 'D' },
+    schedule: { offerLevels: [5, 6, 10, 14, 19, 25], midLevel: 10, lateLevel: 19 },
+    signatureMoveId: 'widowbite',
   },
   marrow: {
     id: 'marrow',
@@ -545,17 +545,6 @@ export const heroes: Record<string, HeroDefinition> = {
     growthGrades: { hp: 'A', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'B', speed: 'A', manaPool: 'B' },
     schedule: { offerLevels: [5, 8, 11, 17, 20, 25], midLevel: 9, lateLevel: 18 },
     signatureMoveId: 'packCall',
-  },
-  widow: {
-    id: 'widow',
-    name: 'Widow',
-    types: ['Beast', 'Shadow'],
-    baseStats: { hp: 190, attack: 100, defense: 45, intelligence: 20, wisdom: 45, speed: 100, manaPool: 50, mpRegen: 10 },
-    moveIds: ['venomBite', 'lieInWait', 'prowl'],
-    starter: false,
-    growthGrades: { hp: 'S', attack: 'B', defense: 'A', intelligence: 'D', wisdom: 'A', speed: 'B', manaPool: 'D' },
-    schedule: { offerLevels: [5, 6, 10, 14, 19, 25], midLevel: 10, lateLevel: 19 },
-    signatureMoveId: 'widowbite',
   },
   coil: {
     id: 'coil',
