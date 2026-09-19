@@ -375,7 +375,7 @@ export const progressionTable: ProgressionTable = {
     // Leap. Carapace's line is the mauler's half of the slate, so none of it sits here.
     widow: [
       'hamstring',
-      'fadeStrike',
+      'backstab',
       'phantomStrike',
       'venomBite',
       'pounce',
@@ -1428,7 +1428,7 @@ export const progressionTable: ProgressionTable = {
             statGrants: { hp: 60, defense: 20 },
             unlocksMoveIds: ['apexPredator'],
             typeGraft: 'Beast',
-            learnableMoveIds: ['claw', 'maul', 'packHunt', 'gore', 'bloodTrail', 'eviscerate'],
+            learnableMoveIds: ['claw', 'prowl', 'maul', 'packHunt', 'gore', 'bloodTrail', 'eviscerate'],
           },
           {
             id: 'widow-silkbinder',

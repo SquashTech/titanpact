@@ -319,7 +319,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Widow',
     types: ['Shadow'],
     baseStats: { hp: 190, attack: 100, defense: 45, intelligence: 20, wisdom: 45, speed: 100, manaPool: 50, mpRegen: 10 },
-    moveIds: ['backstab', 'lieInWait', 'prowl'],
+    moveIds: ['fadeStrike', 'lieInWait', 'weaken'],
     starter: false,
     growthGrades: { hp: 'S', attack: 'B', defense: 'A', intelligence: 'D', wisdom: 'A', speed: 'B', manaPool: 'D' },
     schedule: { offerLevels: [5, 6, 10, 14, 19, 25], midLevel: 10, lateLevel: 19 },

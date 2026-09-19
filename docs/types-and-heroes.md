@@ -213,8 +213,8 @@ at Speed 100 so its Daze riders land first), **Pixie** (Arcane, the Wisdom-85 su
 buffs land bigger by the stat-scaling rule), **Dread** (Spirit, the 230-HP body that can pay
 the slate's HP-priced cards) and **Rex** (Mech, Attack 110 at Speed 70, the Beast graft on its
 node). **2026-09-19, per user direction:** Vesper is deleted, **Widow** goes Beast/Shadow →
-**mono-Shadow** and takes its Shadow seat (kit Backstab / Lie in Wait / Prowl; Widowbite is
-Shadow), and **Cinder** goes Fire/Iron → **mono-Fire** (kit Singe / Set Alight / Kindle — Sharpen,
+**mono-Shadow** and takes its Shadow seat (kit Fade Strike / Lie in Wait / Weaken — Prowl, Beast and a second
+Ambush, went to Carapace, and Backstab to the pool so the kit is not Nightshade's; Widowbite is Shadow), and **Cinder** goes Fire/Iron → **mono-Fire** (kit Singe / Set Alight / Kindle — Sharpen,
 Iron and a second Attack buff, left). Each keeps the type it lost as an
 Evolution graft — Widow's Carapace is the Beast body (Apex Predator granted, the mauler's column
 as its line), Cinder's Ironclad is the plate (Shield Bash granted, Iron's guard column as its
