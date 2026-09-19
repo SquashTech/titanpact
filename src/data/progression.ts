@@ -670,7 +670,7 @@ export const progressionTable: ProgressionTable = {
             description: 'Stops swinging the fire and starts setting it off — everything it lights, it lights again.',
             statGrants: { attack: -40, intelligence: 60, manaPool: 20 },
             unlocksMoveIds: ['immolate'],
-            learnableMoveIds: ['setAlight', 'scorch', 'backdraft', 'sparkBurst', 'inferno'],
+            learnableMoveIds: ['sparkFlash', 'scorch', 'backdraft', 'sparkBurst', 'inferno'],
           },
           {
             id: 'cinderKnight-ironclad',

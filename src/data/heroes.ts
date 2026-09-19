@@ -59,7 +59,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Cinder',
     types: ['Fire'],
     baseStats: { hp: 220, attack: 85, defense: 75, intelligence: 25, wisdom: 40, speed: 55, manaPool: 50, mpRegen: 10 },
-    moveIds: ['singe', 'sharpen', 'kindle'],
+    moveIds: ['singe', 'setAlight', 'kindle'],
     starter: false,
     growthGrades: { hp: 'S', attack: 'A', defense: 'A', intelligence: 'F', wisdom: 'B', speed: 'B', manaPool: 'B' },
     schedule: { offerLevels: [6, 10, 17, 20, 24, 26], midLevel: 11, lateLevel: 21 },

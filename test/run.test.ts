@@ -251,8 +251,8 @@ test('progression: levelMovePool + grantOfferedMove resolve a level\'s move offe
   assert.strictEqual(withMove.roster[0].unlockedMoveIds.length, 4); // starting 3 + this grant hits MOVE_CAP
 
   // Already at MOVE_CAP: further offers require replacing an unlocked move.
-  const swapped = grantOfferedMove(withMove, 'cinderKnight', 'heavyBlow', 'sharpen');
-  assert.ok(!swapped.roster[0].unlockedMoveIds.includes('sharpen'));
+  const swapped = grantOfferedMove(withMove, 'cinderKnight', 'heavyBlow', 'kindle');
+  assert.ok(!swapped.roster[0].unlockedMoveIds.includes('kindle'));
   assert.ok(swapped.roster[0].unlockedMoveIds.includes('heavyBlow'));
   assert.throws(() => grantOfferedMove(withMove, 'cinderKnight', 'heavyBlow', 'notUnlocked'), ProgressionError);
 });

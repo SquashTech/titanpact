@@ -214,7 +214,8 @@ buffs land bigger by the stat-scaling rule), **Dread** (Spirit, the 230-HP body 
 the slate's HP-priced cards) and **Rex** (Mech, Attack 110 at Speed 70, the Beast graft on its
 node). **2026-09-19, per user direction:** Vesper is deleted, **Widow** goes Beast/Shadow →
 **mono-Shadow** and takes its Shadow seat (kit Backstab / Lie in Wait / Prowl; Widowbite is
-Shadow), and **Cinder** goes Fire/Iron → **mono-Fire**. Each keeps the type it lost as an
+Shadow), and **Cinder** goes Fire/Iron → **mono-Fire** (kit Singe / Set Alight / Kindle — Sharpen,
+Iron and a second Attack buff, left). Each keeps the type it lost as an
 Evolution graft — Widow's Carapace is the Beast body (Apex Predator granted, the mauler's column
 as its line), Cinder's Ironclad is the plate (Shield Bash granted, Iron's guard column as its
 line, Cinderguard kept) — so the old dual build is one of the three paths rather than the
