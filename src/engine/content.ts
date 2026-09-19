@@ -470,6 +470,12 @@ export interface HeroDefinition {
   /** Offered in the start-of-run draft; false = recruit-only (Guild Hall / Recruit Contract). Single source of truth for the split. */
   starter: boolean;
   /**
+   * The Constellation offer that puts this hero in a run's pools (docs/constellation.md §4): a
+   * bundle hero is recruit-only and outside the base roster, drawn beside it once the offer is
+   * held (run/recruitment.ts `heroPool`). The base roster carries none. Never a starter.
+   */
+  unlock?: string;
+  /**
    * How each stat grows per level (run/growth.ts). Optional: absent reads as all-B, which is
    * exactly the grade budget — so a hero with no authored line is fairly costed, not free.
    */

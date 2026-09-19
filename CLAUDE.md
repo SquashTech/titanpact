@@ -245,7 +245,14 @@ don't silently override it.
   user direction): Vesper is deleted, Widow moved Beast/Shadow → mono-Shadow into its seat, and
   Cinder Fire/Iron → mono-Fire, each with the type it lost bought back by an Evolution graft
   (Carapace, Ironclad); **Ursa** (mono-Beast, the slow bear — Attack 115 at Speed 20) took the
-  Beast seat the same day, so the roster is 42 again.
+  Beast seat the same day. **The three-a-type count is the BASE roster's** (`docs/constellation.md`
+  §4, §9): a hero with `HeroDefinition.unlock` is outside it, in a run's pools only while that
+  Constellation offer is held (`heroPool`, `src/run/recruitment.ts` — the fork's contracts, the
+  Guild Hall and the enemy party read it the way the itinerary reads `locationPool`), recruit-only
+  and never in the draft. **Scallywag is the first** (same day, per user direction): Storm → mono-
+  Iron, the Stormrunner graft his way back, in the **Free Company** bundle (8 stars) with two seats
+  waiting on the heroes whose art sits in `art/heroes/unlocks`; **Storm holds two** (Squall,
+  Tempest) until the user's new Storm hero lands, so the base is 41 until then.
 - **Mono typing is a valid terminal state**, not a larval stage. Precedent: Pokémon
   Normal/Water/Bug. A numerically common mono type is not a design flaw.
 - **Levels are AUTOMATIC and ROSTER-WIDE** (2026-09-10, `src/run/growth.ts`). Every roster hero

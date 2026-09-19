@@ -18,8 +18,12 @@ import { EvolutionStar } from '../shared/EvolutionStar';
 import { pathTintStyle } from '../shared/pathTint';
 import { progressionTable } from '../../data/progression';
 import { HeroDossierOverlay } from './HeroDossierOverlay';
+import { STAR_SHOP_OFFERS } from '../../data/starShop';
+import type { Profile } from '../../run/profile';
+import { isPurchased, type StarShopOffer } from '../../run/starShop';
 
 interface Props {
+  profile: Profile;
   onClose: () => void;
 }
 
@@ -28,7 +32,16 @@ function byPrimaryType(a: HeroDefinition, b: HeroDefinition): number {
   return TYPES.indexOf(a.types[0] as (typeof TYPES)[number]) - TYPES.indexOf(b.types[0] as (typeof TYPES)[number]);
 }
 const STARTER_HEROES = Object.values(heroes).filter((hero) => hero.starter).sort(byPrimaryType);
-const RECRUIT_HEROES = Object.values(heroes).filter((hero) => !hero.starter).sort(byPrimaryType);
+// The base roster's recruit-only two-thirds; a bundle hero (`unlock`) is listed under its bundle, once held.
+const RECRUIT_HEROES = Object.values(heroes).filter((hero) => !hero.starter && !hero.unlock).sort(byPrimaryType);
+/** The Constellation's hero bundles the profile holds, each with the heroes it opened (docs/constellation.md §4). */
+function heldBundles(profile: Profile): { offer: StarShopOffer; heroes: HeroDefinition[] }[] {
+  return STAR_SHOP_OFFERS.flatMap((offer) =>
+    offer.grant.kind === 'heroBundle' && isPurchased(profile, offer.id)
+      ? [{ offer, heroes: offer.grant.heroIds.map((id) => heroes[id]).filter((h): h is HeroDefinition => !!h).sort(byPrimaryType) }]
+      : []
+  );
+}
 // Rarity, then authoring order — items are uncategorised, so the tier is the only grouping left,
 // and the page is laid out as one shelf per tier.
 const EQUIPMENT_SHELVES = RARITY_ORDER.map((rarity) => ({
@@ -217,7 +230,7 @@ function TypeChartTab() {
  * one-handed the page switch belongs in the thumb's arc, not at the top edge. The panel is full
  * height so the strip sits in the same place on every page.
  */
-export function CompendiumScreen({ onClose }: Props) {
+export function CompendiumScreen({ profile, onClose }: Props) {
   const [tab, setTab] = useState<CompendiumTab>('starters');
   const [inspectItemId, setInspectItemId] = useState<string | null>(null);
   const [dossierHeroId, setDossierHeroId] = useState<string | null>(null);
@@ -246,6 +259,16 @@ export function CompendiumScreen({ onClose }: Props) {
               {heroList.map((hero) => (
                 <CompendiumHeroRow key={hero.id} hero={hero} onOpen={() => setDossierHeroId(hero.id)} />
               ))}
+              {/* A held bundle is a shelf of its own under the recruits: bought heroes are recruit-only, and the bundle is what they have in common. */}
+              {tab === 'recruitable' &&
+                heldBundles(profile).map(({ offer, heroes: bundled }) => (
+                  <div key={offer.id} className="compendium-bundle">
+                    <div className="tab-subhead compendium-shelf-head">{offer.name}</div>
+                    {bundled.map((hero) => (
+                      <CompendiumHeroRow key={hero.id} hero={hero} onOpen={() => setDossierHeroId(hero.id)} />
+                    ))}
+                  </div>
+                ))}
             </div>
           )}
         </div>

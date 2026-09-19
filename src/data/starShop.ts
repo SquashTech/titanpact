@@ -2,10 +2,11 @@ import type { StarShopCatalog, StarShopOffer } from '../run/starShop';
 
 /**
  * What stars buy (docs/constellation.md). The rule: a purchase widens what a run can draw from
- * and never carries power into one. Three shelves — Starter Packs, Hero Bundles, Locations — and
- * the first stocked one is Locations: four places (data/locations.ts `unlock`), each a seal
- * drawn beside the base five once held. The pack and bundle shelves are the design still
- * owed (§3), and stand empty until an offer has a grant to make.
+ * and never carries power into one. Three shelves — Starter Packs, Hero Bundles, Locations. Two
+ * are stocked: four Locations (data/locations.ts `unlock`), each a seal drawn beside the base
+ * five once held, and the first Hero Bundle (heroes.ts `unlock`), heroes outside the base
+ * three-a-type that join the recruit pool once held. The pack shelf is the design still owed
+ * (§3) and stands empty until an offer has a grant to make.
  */
 export const STAR_SHOP_OFFERS: readonly StarShopOffer[] = [
   {
@@ -35,6 +36,15 @@ export const STAR_SHOP_OFFERS: readonly StarShopOffer[] = [
     description: 'Ice that took the ships. Frost, Water and Stone leak here, and the Wendigo keeps it.',
     cost: 6,
     grant: { kind: 'location', locationId: 'frozenReach' },
+  },
+  // Priced at three a hero (§7), for the three seats the bundle will hold; Scallywag fills the
+  // first, and the other two (art/heroes/unlocks) are authored next.
+  {
+    id: 'bundle.freeCompany',
+    name: 'Free Company',
+    description: 'Blades for hire, sworn to no seal. They take contracts and Guild Hall coin like anyone, and never stand in the draft.',
+    cost: 8,
+    grant: { kind: 'heroBundle', heroIds: ['scallywag'] },
   },
 ];
 

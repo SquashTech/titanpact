@@ -183,21 +183,6 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     target: 'bothEnemies',
     description: 'One bolt that splits — and the charge stays in both of them (marks both with Conduct).',
   },
-  // Scallywag: no quarter, no guard.
-  broadside: {
-    id: 'broadside',
-    name: 'Broadside',
-    type: 'Storm',
-    category: 'physical',
-    kind: 'damage',
-    basePower: 95,
-    statDeltas: [{ stat: 'defense', amount: -20 }],
-    statDeltaTarget: 'self',
-    manaCost: 55,
-    priority: 0,
-    target: 'singleEnemy',
-    description: 'Everything it has, all at once, and nothing held back to hide behind (-20 Defense to self).',
-  },
 
   // --- Stone ---
   // Crag: the ground goes out from under both of them.
@@ -574,6 +559,21 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     priority: 1,
     target: 'singleEnemy',
     description: 'The lance, and nothing behind it but the ground going past (priority +1; 25% recoil).',
+  },
+  // Scallywag: no quarter, no guard.
+  broadside: {
+    id: 'broadside',
+    name: 'Broadside',
+    type: 'Iron',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 95,
+    statDeltas: [{ stat: 'defense', amount: -20 }],
+    statDeltaTarget: 'self',
+    manaCost: 55,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Everything it has, all at once, and nothing held back to hide behind (-20 Defense to self).',
   },
 
   // --- Mech ---

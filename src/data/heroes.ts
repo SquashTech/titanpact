@@ -190,18 +190,6 @@ export const heroes: Record<string, HeroDefinition> = {
     schedule: { offerLevels: [5, 8, 14, 17, 24, 28], midLevel: 10, lateLevel: 20 },
     signatureMoveId: 'twinbolt',
   },
-  scallywag: {
-    id: 'scallywag',
-    name: 'Scallywag',
-    types: ['Storm'],
-    baseStats: { hp: 210, attack: 95, defense: 50, intelligence: 25, wisdom: 40, speed: 80, manaPool: 50, mpRegen: 10 },
-    moveIds: ['thunderclap', 'swiftBlow', 'rally'],
-    starter: false,
-    growthGrades: { hp: 'B', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'A', speed: 'A', manaPool: 'B' },
-    schedule: { offerLevels: [5, 8, 14, 17, 20, 26], midLevel: 9, lateLevel: 18 },
-    signatureMoveId: 'broadside',
-  },
-
   // --- Stone ---
   crag: {
     id: 'crag',
@@ -492,6 +480,20 @@ export const heroes: Record<string, HeroDefinition> = {
     growthGrades: { hp: 'B', attack: 'B', defense: 'A', intelligence: 'D', wisdom: 'A', speed: 'A', manaPool: 'C' },
     schedule: { offerLevels: [5, 6, 10, 14, 19, 25], midLevel: 9, lateLevel: 18 },
     signatureMoveId: 'fullTilt',
+  },
+  // The first bundle hero (docs/constellation.md §4): outside the base three-a-type, in a run's
+  // pools only while the Free Company is held. Storm-born; the Stormrunner path is the way back.
+  scallywag: {
+    id: 'scallywag',
+    name: 'Scallywag',
+    types: ['Iron'],
+    baseStats: { hp: 210, attack: 95, defense: 50, intelligence: 25, wisdom: 40, speed: 80, manaPool: 50, mpRegen: 10 },
+    moveIds: ['swiftBlow', 'pinDown', 'sharpen'],
+    starter: false,
+    unlock: 'bundle.freeCompany',
+    growthGrades: { hp: 'B', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'A', speed: 'A', manaPool: 'B' },
+    schedule: { offerLevels: [5, 8, 14, 17, 20, 26], midLevel: 9, lateLevel: 18 },
+    signatureMoveId: 'broadside',
   },
 
   // --- Mech ---

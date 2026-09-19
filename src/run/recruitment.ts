@@ -22,6 +22,16 @@ export function isRecruitable(heroId: string, recruitablePool: Record<string, un
   return heroId in recruitablePool;
 }
 
+/**
+ * The heroes a run draws from — the fork's contract draw, the Guild Hall, the hero-pool enemy
+ * party: the base roster, plus every bundle hero whose Constellation offer is held
+ * (`HeroDefinition.unlock`, docs/constellation.md §4). Read once where the pool is read, the way
+ * `locationPool` is (run/locations.ts); the sim and the tests pass nothing and get the base game.
+ */
+export function heroPool<T extends { unlock?: string }>(all: Record<string, T>, purchases: readonly string[] = []): Record<string, T> {
+  return Object.fromEntries(Object.entries(all).filter(([, hero]) => !hero.unlock || purchases.includes(hero.unlock)));
+}
+
 export interface GuildHallOffer {
   id: string;
   heroId: string;

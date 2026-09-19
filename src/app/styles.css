@@ -9405,6 +9405,43 @@ textarea,
   opacity: 0.92;
 }
 
+/* A Hero Bundle's row is a line-up: each face with its primary type's glyph tucked under it. */
+.star-shop-bundle-faces {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.star-shop-bundle-face {
+  position: relative;
+  width: 40px;
+  height: 40px;
+}
+
+.star-shop-bundle-portrait {
+  width: 40px;
+  height: 40px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.65));
+}
+
+.star-shop-bundle-face-type {
+  position: absolute;
+  right: -4px;
+  bottom: -2px;
+  display: inline-flex;
+}
+
+.star-shop-bundle-face-type .element-glyph {
+  width: 14px;
+  height: 14px;
+  filter: drop-shadow(0 0 5px currentColor);
+}
+
+.compendium-bundle {
+  display: contents;
+}
+
 /* --- Run History (RunHistory.tsx, on the Records panel) -------------------
    Every run that ended, newest first. A row is folded to what the summary
    screen led with — the outcome, where and when, the team's faces — and

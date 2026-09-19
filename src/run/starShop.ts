@@ -11,11 +11,12 @@ import { totalStars, type Profile } from './profile';
 
 /**
  * What a purchase unlocks (docs/constellation.md §4, §8): a discriminant a pool edge reads once.
- * A Location joins the itinerary draw (run/locations.ts `locationPool`). Starter Packs and hero
- * bundles are the shelf's other two kinds and have no grant yet — their offers are the design
- * still owed, and the tabs stand empty until it lands.
+ * A Location joins the itinerary draw (run/locations.ts `locationPool`); a hero bundle's heroes
+ * join the recruit pool (run/recruitment.ts `heroPool`, off each hero's own `unlock`, which a
+ * test holds to the bundle's list). Starter Packs are the shelf's third kind and have no grant
+ * yet — their offers are the design still owed, and the tab stands empty until it lands.
  */
-export type StarShopGrant = { kind: 'location'; locationId: string } | { kind: 'starterPack' } | { kind: 'heroBundle' };
+export type StarShopGrant = { kind: 'location'; locationId: string } | { kind: 'starterPack' } | { kind: 'heroBundle'; heroIds: readonly string[] };
 
 export interface StarShopOffer {
   id: string;

@@ -3,7 +3,7 @@
 // the numbers are only worth reading while the two stay in step.
 
 import type { StatKey } from '../../src/engine/content';
-import { heroes } from '../../src/data/heroes';
+import { heroes as allHeroes } from '../../src/data/heroes';
 import { rosterHeroes } from '../../src/data/content';
 import { absorbCompanions, companionCandidate, companionJoinDue, joinCompanion } from '../../src/run/companion';
 import { anyDown, canBuyMend, buyMend, mendPrice, mendRoster, recordWounds, reviveHero, standingRoster } from '../../src/run/wounds';
@@ -50,7 +50,10 @@ import {
   grantLeyLine,
 } from '../../src/run/runProgress';
 import { MOVE_CAP, recordMoveOffer, grantOfferedMove, grantMove } from '../../src/run/progression';
-import { claimContract, claimContractReplacing, deriveContractOffer, isRecruitable, pickContractOffers, recruitFromGuildHall, recruitFromGuildHallReplacing, freshRosterId, buyContract } from '../../src/run/recruitment';
+import { claimContract, claimContractReplacing, deriveContractOffer, heroPool, isRecruitable, pickContractOffers, recruitFromGuildHall, recruitFromGuildHallReplacing, freshRosterId, buyContract } from '../../src/run/recruitment';
+
+// The base game's pool: no bundle held (run/recruitment.ts heroPool).
+const heroes = heroPool(allHeroes);
 import { guildHallEntry } from '../../src/run/guildRecruit';
 import { ENCHANT_PRICE_BY_RARITY, rollGuildHallOffers, sellValueFor } from '../../src/run/shop';
 import { mentorMovePool, tutorMovePool } from '../../src/run/tutor';

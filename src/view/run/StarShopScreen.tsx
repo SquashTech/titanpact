@@ -8,6 +8,8 @@ import { ElementGlyph } from '../shared/elementIcons';
 import { LocationHorizon } from '../shared/locationArt';
 import { TabStrip, type TabSpec } from '../shared/TabStrip';
 import { getTypeColor } from '../combat/typeColors';
+import { heroes } from '../../data/heroes';
+import { HeroPortrait } from '../shared/HeroPortrait';
 
 /** The shop's name, in one place: the title tile, this panel's header. The Constellation — the stars the Compendium charts, seen as one sky to draw on. */
 export const STAR_SHOP_NAME = 'The Constellation';
@@ -94,6 +96,8 @@ export function StarShopScreen({ profile, onBuy, onClose }: Props) {
                 );
                 return offer.grant.kind === 'location' ? (
                   <LocationOffer key={offer.id} offer={offer} locationId={offer.grant.locationId} held={held} buy={buy} />
+                ) : offer.grant.kind === 'heroBundle' ? (
+                  <BundleOffer key={offer.id} offer={offer} heroIds={offer.grant.heroIds} held={held} buy={buy} />
                 ) : (
                   <div key={offer.id} className={`star-shop-offer${held ? ' is-held' : ''}`}>
                     <div className="star-shop-offer-body">
@@ -150,6 +154,37 @@ function LocationOffer({ offer, locationId, held, buy }: { offer: StarShopOffer;
             ))}
           </span>
         )}
+      </div>
+      {buy}
+    </div>
+  );
+}
+
+/**
+ * A bundle's offer is drawn as the heroes: each face with its primary type under it, so the row
+ * says who is being bought the way the Compendium's list does. What is sold is people, so the
+ * row is a line-up.
+ */
+function BundleOffer({ offer, heroIds, held, buy }: { offer: StarShopOffer; heroIds: readonly string[]; held: boolean; buy: ReactNode }) {
+  return (
+    <div className={`star-shop-offer star-shop-bundle${held ? ' is-held' : ''}`}>
+      <div className="star-shop-offer-body">
+        <span className="star-shop-offer-name">{offer.name}</span>
+        <span className="star-shop-offer-desc">{offer.description}</span>
+        <span className="star-shop-bundle-faces">
+          {heroIds.map((heroId) => {
+            const hero = heroes[heroId];
+            if (!hero) return null;
+            return (
+              <span key={heroId} className="star-shop-bundle-face" style={{ color: getTypeColor(hero.types[0]) }} title={`${hero.name} — ${hero.types.join(' / ')}`}>
+                <HeroPortrait heroId={heroId} className="star-shop-bundle-portrait" />
+                <span className="star-shop-bundle-face-type">
+                  <ElementGlyph type={hero.types[0]} />
+                </span>
+              </span>
+            );
+          })}
+        </span>
       </div>
       {buy}
     </div>

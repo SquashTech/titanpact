@@ -4,6 +4,9 @@ import { createProfile, decodeProfile, recordRunEnded } from '../src/run/profile
 import { STAR_SHOP_OFFERS, starShopCatalog } from '../src/data/starShop';
 import { locations } from '../src/data/locations';
 import { locationPool, unvisitedLocationIds } from '../src/run/locations';
+import { heroes } from '../src/data/heroes';
+import { guildHallOffers, guildHallOffersFor } from '../src/data/recruitment';
+import { heroPool, isRecruitable } from '../src/run/recruitment';
 import { buyOffer, canBuy, isPurchased, starBalance, starsSpent, StarShopError, type StarShopCatalog, type StarShopGrant } from '../src/run/starShop';
 
 const pack: StarShopGrant = { kind: 'starterPack' };
@@ -71,10 +74,24 @@ test('star shop: the shipped catalog is consistent with itself', () => {
     assert.strictEqual(starShopCatalog[offer.id], offer);
     // A Location offer names a real place, and that place names the offer back: the pool gate reads the pair.
     if (offer.grant.kind === 'location') assert.strictEqual(locations[offer.grant.locationId]?.unlock, offer.id, `${offer.id} and its Location disagree`);
+    // A bundle names real heroes, each of which names the bundle back, and none of them stands in the draft.
+    if (offer.grant.kind === 'heroBundle') {
+      assert.ok(offer.grant.heroIds.length > 0, `${offer.id} is an empty bundle`);
+      for (const heroId of offer.grant.heroIds) {
+        assert.strictEqual(heroes[heroId]?.unlock, offer.id, `${offer.id} and ${heroId} disagree`);
+        assert.strictEqual(heroes[heroId].starter, false, `${heroId} is a bundle hero and a starter`);
+      }
+    }
   }
   // Every Location that has to be bought is on the shelf.
   for (const location of Object.values(locations)) {
     if (location.unlock) assert.ok(starShopCatalog[location.unlock], `${location.id} is locked behind an offer that is not for sale`);
+  }
+  // Every hero that has to be bought is on the shelf, in the bundle it names.
+  for (const hero of Object.values(heroes)) {
+    if (!hero.unlock) continue;
+    const offer = starShopCatalog[hero.unlock];
+    assert.ok(offer?.grant.kind === 'heroBundle' && offer.grant.heroIds.includes(hero.id), `${hero.id} is locked behind an offer that does not list it`);
   }
 });
 
@@ -90,4 +107,18 @@ test('star shop: a bought Location joins the pool the road draws from, and only 
   assert.strictEqual(all.length, Object.keys(locations).length - 1, 'a held offer opens its place and nothing else');
   for (const id of base) assert.ok(all.includes(id));
   assert.ok(unvisitedLocationIds(['wildsEdge', 'holySanctum'], held).every((id) => id !== 'holySanctum'), 'a bought place is still visited once');
+});
+
+test('star shop: a bought bundle puts its heroes in the recruit pool, and only then', () => {
+  const base = heroPool(heroes);
+  assert.ok(!('scallywag' in base), 'Scallywag is in the base pool');
+  assert.ok(!isRecruitable('scallywag', base), 'a fight cannot hand over a contract for him');
+  assert.ok(!guildHallOffers.some((o) => o.heroId === 'scallywag'), 'the base Guild Hall shelf sells him');
+  for (const hero of Object.values(base)) assert.strictEqual(hero.unlock, undefined, `${hero.id} is in the base pool with an unlock`);
+
+  const held = heroPool(heroes, ['bundle.freeCompany']);
+  assert.ok('scallywag' in held);
+  assert.strictEqual(Object.keys(held).length, Object.keys(base).length + 1, 'a purchase adds its heroes, never replaces one');
+  assert.ok(isRecruitable('scallywag', held));
+  assert.ok(guildHallOffersFor(held).some((o) => o.heroId === 'scallywag'), 'the Guild Hall shelf sells him once the bundle is held');
 });

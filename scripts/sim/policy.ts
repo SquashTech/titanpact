@@ -37,7 +37,11 @@ import { mergeStatMods } from '../../src/run/statMods';
 import type { Rng } from './rng';
 import { levelOf } from '../../src/run/growth';
 import { standingHp, standingRoster } from '../../src/run/wounds';
-import { heroes as recruitPool } from '../../src/data/heroes';
+import { heroes as allHeroes } from '../../src/data/heroes';
+import { heroPool } from '../../src/run/recruitment';
+
+// The base game's pool: no bundle held (run/recruitment.ts heroPool).
+const recruitPool = heroPool(allHeroes);
 import { allCombatants } from '../../src/data/content';
 import { typeChart } from '../../src/data/typechart';
 import { buildCombatState } from '../../src/run/buildCombatState';

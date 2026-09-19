@@ -226,7 +226,13 @@ telegraphs, since Stoneheart is what a hero that draws the hits wants at Late �
 Grizzly (Thick Hide: Shield 20 on every hit taken, the tank loop Provoke feeds), Polar (Frost
 graft, Icicle Thrust and the physical Frost column) and Timberback (Nature graft, Branch Slam
 with Regrowth and Wild Bloom to arm its Renew clause). Overbear is its signature: 105, recoil
-25%. The count is 42 again.
+25%. The count was 42 again — and then **Scallywag left the base roster the same day** (per user
+direction): re-authored **mono-Iron** (kit Swift Blow / Pin Down / Sharpen; Corsair with Plunder,
+**Stormrunner** the Storm graft back to the type he was born to, Seawise the Water graft; Broadside
+Iron) and sold in the Constellation's first Hero Bundle, the **Free Company** — a hero with
+`HeroDefinition.unlock` is outside the three-a-type count and in a run's pools only while the
+offer is held (`docs/constellation.md` §11 phase 6). **Storm holds two** (Squall, Tempest) until the
+user's new Storm hero lands; the base count is 41 until then.
 One consequence to watch: Fire's physical column is four moves past Cinder's kit, so his Early
 band is entirely Iron off-type and his in-type pool is Molten Lash, Firebrand, Blazing Retreat
 and Volcanic Surge — a physical Fire Early or two would give the mono hero a band of its own.

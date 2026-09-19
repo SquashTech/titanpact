@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { initUiScale } from './uiScale';
 import { useReloadOnNewBuild } from './useReloadOnNewBuild';
 import { clearSave, readSave, writeSave } from './saveStorage';
@@ -77,13 +77,14 @@ import {
   claimContractReplacing,
   recruitFromGuildHallReplacing,
   freshRosterId,
+  heroPool,
   isRecruitable,
   pickContractOffers,
   RecruitmentError,
   type GuildHallOffer,
   type RosterReplaceCandidate,
 } from '../run/recruitment';
-import { guildHallOffers } from '../data/recruitment';
+import { guildHallOffersFor } from '../data/recruitment';
 import { MASTERY_CAP, SCROLL_CACHE_COUNT, buyScroll, canBuyScroll } from '../run/mastery';
 import { rollGuildHallOffers, type GuildHallOffers } from '../run/shop';
 import { ConsumableError, buyConsumable, grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse, type PotionKind } from '../run/consumables';
@@ -479,6 +480,10 @@ export function App() {
   // playtime flushes on a timer, and putting that in React state would re-render the tree for a
   // number nothing shows.
   const [profile, setProfile] = useState<Profile>(() => readProfile());
+  // The heroes a run draws from: the base roster plus every bundle the Constellation has sold
+  // (run/recruitment.ts heroPool) — the fork's contracts, the Guild Hall and the enemy party all
+  // read this one table, the way the itinerary reads locationPool.
+  const recruitPool = useMemo(() => heroPool(heroes, profile.purchases), [profile.purchases]);
   // The cold launch's one tap (LaunchGate): false until it lands, then never again this session.
   const [launched, setLaunched] = useState(false);
 
@@ -579,7 +584,7 @@ export function App() {
   }
 
   function handleClaimContract(defeated: RosterEntry): boolean {
-    if (!isRecruitable(defeated.heroId, heroes)) return false;
+    if (!isRecruitable(defeated.heroId, recruitPool)) return false;
     if (playerRun.roster.length >= ROSTER_CAP) return false;
     if (playerRun.recruitContracts <= 0) return false;
     const offer = deriveContractOffer(defeated);
@@ -589,7 +594,7 @@ export function App() {
   }
 
   function handleClaimContractReplace(defeated: RosterEntry, terminatedRosterId: string): boolean {
-    if (!isRecruitable(defeated.heroId, heroes)) return false;
+    if (!isRecruitable(defeated.heroId, recruitPool)) return false;
     if (playerRun.recruitContracts <= 0) return false;
     const offer = deriveContractOffer(defeated);
     const rosterId = freshRosterId(playerRun, defeated.heroId);
@@ -639,7 +644,7 @@ export function App() {
       let encounter = nodeEncounter(node, {
         run: playerRun,
         location,
-        heroes,
+        heroes: recruitPool,
         allCombatants,
         enemies,
         progression: progressionTable,
@@ -662,7 +667,7 @@ export function App() {
       setScreen({
         kind: 'shop',
         nodeId,
-        offers: rollGuildHallOffers(playerRun, guildHallOffers, node.type === 'muster'),
+        offers: rollGuildHallOffers(playerRun, guildHallOffersFor(recruitPool), node.type === 'muster'),
         scrollsBought: 0,
         revivesBought: 0,
       });
@@ -818,7 +823,7 @@ export function App() {
     // Gate order is deliberate: banner, then recruit, then the Crucible — so a hero recruited
     // this beat already stands under the Banner, and can walk into the Crucible itself.
     // `next`, not `playerRun`: a boss node has just granted the contract that is spendable here.
-    const recruitable = defeatedRoster.filter((entry) => isRecruitable(entry.heroId, heroes));
+    const recruitable = defeatedRoster.filter((entry) => isRecruitable(entry.heroId, recruitPool));
     // The scripted act names its one contract and refuses to let it be walked past; a non-null
     // answer is both the offer list and the reason the screen has no leave button.
     const forcedOffers = tutorialContractOffers(TUTORIAL_LOCKS, next, recruitable);

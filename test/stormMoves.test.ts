@@ -307,7 +307,7 @@ test('storm: every move id a hero or level-up pool points at actually exists', (
 
 test('storm: no Storm hero starts with a move it cannot pay for, or has a starter listed in its own pool', () => {
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
-  for (const heroId of ['stormRanger', 'tempest', 'scallywag']) {
+  for (const heroId of ['stormRanger', 'tempest']) {
     const hero = heroes[heroId];
     const cheapest = Math.min(...hero.moveIds.map((id) => moves[id].manaCost));
     assert.ok(cheapest <= hero.baseStats.manaPool, `${heroId} cannot afford its own cheapest starting move`);
@@ -319,7 +319,7 @@ test('storm: no Storm hero starts with a move it cannot pay for, or has a starte
 });
 
 test('storm: every Storm hero attacks off its better stat — the "no trap pick" north star, at the kit level', () => {
-  for (const heroId of ['stormRanger', 'tempest', 'scallywag']) {
+  for (const heroId of ['stormRanger', 'tempest']) {
     const hero = heroes[heroId];
     const { attack, intelligence } = hero.baseStats;
     const attacks = hero.moveIds.map((id) => moves[id]).filter((m) => m.kind === 'damage');

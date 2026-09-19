@@ -378,3 +378,30 @@ None built. Where each lands when it is:
    - Brass Works was proposed and dropped as redundant with the Foundry; Crystal Hollow, Iron
      Bastion and Witchwood Fen are the un-built rest of that list. All four bought Locations
      are 6 stars; none has a track yet.
+
+6. **The first Hero Bundle — BUILT 2026-09-19, per user direction: the Free Company**, §4's
+   "heroes, singly" as a shelf of a few at once. What landed:
+   - `HeroDefinition.unlock` names the offer that puts a hero in a run's pools, exactly as
+     `LocationDefinition.unlock` does a place; the base roster carries none. A bundle hero is
+     `starter: false` by test — it is recruit-only, never in the draft — and the base game's
+     three-a-type count is the count of heroes WITHOUT an `unlock` (§9).
+   - `heroPool(heroes, purchases)` (`src/run/recruitment.ts`) is the one filter, read once
+     in App (`recruitPool`) and handed to the three edges: the hero-pool encounter draw (so a
+     bundle hero fights at the fork and can be claimed on a contract), `isRecruitable` at the
+     claim, and the Guild Hall shelf (`guildHallOffersFor(pool)`; `guildHallOffers` is the
+     base shelf). The sim and the tests pass nothing and get the base game. `rosterHeroes` and
+     the save's hero index hold every authored hero whatever is bought, so a run carrying a
+     bundle hero decodes on any profile.
+   - The grant is `{ kind: 'heroBundle', heroIds }`; a test holds each hero's `unlock` and the
+     bundle's list to each other, so neither can name the other wrongly. The Constellation
+     draws a bundle as a line-up (faces, primary type under each); the Compendium's
+     recruitable page grows a shelf per bundle held.
+   - **Scallywag** is the first, moved OUT of the base roster (Storm holds two until the new
+     Storm hero lands) and re-authored **mono-Iron**: kit Swift Blow / Pin Down / Sharpen, the
+     cutlass column with Shadow and Stone off-type; Corsair (mono, Plunder), **Stormrunner**
+     (Storm graft — the type he was born to, Storm Lash and the physical Storm column),
+     Seawise (Water graft); Broadside is Iron. Saltrig (Mech) retired with the Storm typing.
+   - **8 stars** — three a hero for the three seats the bundle will hold; the two others'
+     art sits in `art/heroes/unlocks` waiting on their pass. §3.4's question (do a bundle's
+     heroes join the recruit pool?) is answered YES for bundles by construction — that is what
+     a bundle IS — and still open for packs.
