@@ -535,6 +535,21 @@ export const heroes: Record<string, HeroDefinition> = {
     schedule: { offerLevels: [3, 7, 11, 15, 20, 25], midLevel: 9, lateLevel: 18 },
     signatureMoveId: 'devour',
   },
+  // Free Company (docs/constellation.md §11 phase 6): the medic drone. The roster's Wisdom-85 body
+  // on Mech's repair column, which nobody in the base three holds as a healer; Spark Plug is the
+  // one attack — the mark is its job, not the hit.
+  patch: {
+    id: 'patch',
+    name: 'Patch',
+    types: ['Mech'],
+    baseStats: { hp: 190, attack: 20, defense: 65, intelligence: 55, wisdom: 85, speed: 60, manaPool: 75, mpRegen: 10 },
+    moveIds: ['sparkPlug', 'kickstart', 'overclock'],
+    starter: false,
+    unlock: 'bundle.freeCompany',
+    growthGrades: { hp: 'B', attack: 'F', defense: 'A', intelligence: 'C', wisdom: 'S', speed: 'B', manaPool: 'S' },
+    schedule: { offerLevels: [5, 8, 14, 19, 24, 28], midLevel: 10, lateLevel: 20 },
+    signatureMoveId: 'overhaul',
+  },
 
   // --- Beast ---
   packAlpha: {
@@ -571,5 +586,19 @@ export const heroes: Record<string, HeroDefinition> = {
     growthGrades: { hp: 'S', attack: 'E', defense: 'A', intelligence: 'A', wisdom: 'A', speed: 'D', manaPool: 'B' },
     schedule: { offerLevels: [6, 10, 14, 19, 25, 28], midLevel: 12, lateLevel: 22 },
     signatureMoveId: 'stranglehold',
+  },
+  // Free Company: the vampire bat. The roster's top Speed on its thinnest body, Beast-born — the
+  // Bleed column is what it feeds on, and the Shadow turn is a path, not the start.
+  vex: {
+    id: 'vex',
+    name: 'Vex',
+    types: ['Beast'],
+    baseStats: { hp: 170, attack: 90, defense: 35, intelligence: 30, wisdom: 45, speed: 110, manaPool: 70, mpRegen: 10 },
+    moveIds: ['claw', 'howl', 'lieInWait'],
+    starter: false,
+    unlock: 'bundle.freeCompany',
+    growthGrades: { hp: 'B', attack: 'S', defense: 'C', intelligence: 'F', wisdom: 'B', speed: 'S', manaPool: 'A' },
+    schedule: { offerLevels: [5, 8, 11, 17, 21, 26], midLevel: 9, lateLevel: 19 },
+    signatureMoveId: 'exsanguinate',
   },
 };

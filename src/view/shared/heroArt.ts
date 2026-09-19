@@ -10,6 +10,8 @@ import cubeArt from '../../../art/heroes/cube.png';
 import stormRangerArt from '../../../art/heroes/stormranger.png';
 import tempestArt from '../../../art/heroes/starters/Tempest.png';
 import scallywagArt from '../../../art/heroes/unlocks/scallywag.png';
+import patchArt from '../../../art/heroes/unlocks/patch.png';
+import vexArt from '../../../art/heroes/unlocks/vex.png';
 import cragArt from '../../../art/heroes/starters/Crag.png';
 import sentinelArt from '../../../art/heroes/sentinel.png';
 import slateArt from '../../../art/heroes/slate.png';
@@ -94,11 +96,13 @@ export const heroArt: Partial<Record<string, string>> = {
   forgewright: clockworkArt,
   steamColossus: steamColossusArt,
   rex: rexArt,
+  patch: patchArt,
   // --- Beast ---
   packAlpha: fangArt,
   ursa: ursaArt,
   widow: widowArt,
   coil: coilArt,
+  vex: vexArt,
 };
 
 // The Guardians and the Endbringer are not here either: guardianFigures.ts draws them, sealed and

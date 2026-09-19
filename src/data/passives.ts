@@ -840,6 +840,31 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 20 },
     },
   },
+  // --- The Free Company (docs/constellation.md §11 phase 6) ---
+  nanites: {
+    id: 'nanites',
+    name: 'Nanites',
+    description: 'When this hero enters the battlefield, its partner gains Renew 30.',
+    // The partner-on-arrival shape (Arcane Reservoir's mana, Bodyguard's Defense) paying a HoT:
+    // the medic starts work on whoever it walks in beside, and a pivot out and back re-seeds it.
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew', magnitude: 30 },
+    },
+  },
+  bloodmeal: {
+    id: 'bloodmeal',
+    name: 'Bloodmeal',
+    description: 'Whenever this hero applies Bleed, it gains Renew 20.',
+    // Restorative Toxin's trigger on Bleed, flat since Bleed carries no magnitude: the bat feeds
+    // on what it opens, and a 170-HP body that keeps cutting keeps standing.
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Bleed' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew', magnitude: 20 },
+    },
+  },
 };
 
 // --- The Titan's pieces (HeroDefinition.passiveIds, docs/titan-eyes.md §10) ---

@@ -37,14 +37,13 @@ export const STAR_SHOP_OFFERS: readonly StarShopOffer[] = [
     cost: 6,
     grant: { kind: 'location', locationId: 'frozenReach' },
   },
-  // Priced at three a hero (§7), for the three seats the bundle will hold; Scallywag fills the
-  // first, and the other two (art/heroes/unlocks) are authored next.
+  // Priced at three a hero (§7), rounded down for the set.
   {
     id: 'bundle.freeCompany',
     name: 'Free Company',
     description: 'Blades for hire, sworn to no seal. They take contracts and Guild Hall coin like anyone, and never stand in the draft.',
     cost: 8,
-    grant: { kind: 'heroBundle', heroIds: ['scallywag'] },
+    grant: { kind: 'heroBundle', heroIds: ['scallywag', 'patch', 'vex'] },
   },
 ];
 

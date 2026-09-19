@@ -401,7 +401,17 @@ None built. Where each lands when it is:
      cutlass column with Shadow and Stone off-type; Corsair (mono, Plunder), **Stormrunner**
      (Storm graft — the type he was born to, Storm Lash and the physical Storm column),
      Seawise (Water graft); Broadside is Iron. Saltrig (Mech) retired with the Storm typing.
-   - **8 stars** — three a hero for the three seats the bundle will hold; the two others'
-     art sits in `art/heroes/unlocks` waiting on their pass. §3.4's question (do a bundle's
+   - **Patch and Vex filled the other two seats the same day** (per user direction). Patch is
+     the support/healing Mech: Wisdom 85 on a 190-HP drone, kit Spark Plug / Kickstart /
+     Overclock (the mark is the attack's job), the repair column in the pool with Light, Water
+     and Arcane support as its colours; Triage (Nanites — the partner gains Renew 30 on
+     arrival), Beacon (Light graft: Consecrate and the Light heal column), Coolant (Water
+     graft: Oasis and Water's); Overhaul the signature (heal 75, +20 Def). Vex is the vampire
+     bat, Beast to start per user direction: Speed 110 on a 170-HP body, kit Claw / Howl /
+     Lie in Wait, the Bleed column in the pool; Nightfeeder (Bloodmeal — Renew 20 on every
+     Bleed it applies), Vampyr (Shadow graft: Shadowstrike and the knife column — the turn is
+     a path, not the start), Wraithwing (Spirit graft: Spooky Slice and the physical Spirit
+     column); Exsanguinate the signature (70, Bleed, drain 50%).
+   - **8 stars** — three a hero, rounded down for the set. §3.4's question (do a bundle's
      heroes join the recruit pool?) is answered YES for bundles by construction — that is what
      a bundle IS — and still open for packs.

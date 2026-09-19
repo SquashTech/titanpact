@@ -250,9 +250,10 @@ don't silently override it.
   Constellation offer is held (`heroPool`, `src/run/recruitment.ts` — the fork's contracts, the
   Guild Hall and the enemy party read it the way the itinerary reads `locationPool`), recruit-only
   and never in the draft. **Scallywag is the first** (same day, per user direction): Storm → mono-
-  Iron, the Stormrunner graft his way back, in the **Free Company** bundle (8 stars) with two seats
-  waiting on the heroes whose art sits in `art/heroes/unlocks`; **Storm holds two** (Squall,
-  Tempest) until the user's new Storm hero lands, so the base is 41 until then.
+  Iron, the Stormrunner graft his way back, in the **Free Company** bundle (8 stars) beside
+  **Patch** (Mech, the Wisdom-85 medic drone on the repair column) and **Vex** (Beast, the
+  Speed-110 vampire bat that feeds on Bleed, its Shadow turn a graft); **Storm holds two**
+  (Squall, Tempest) until the user's new Storm hero lands, so the base is 41 until then.
 - **Mono typing is a valid terminal state**, not a larval stage. Precedent: Pokémon
   Normal/Water/Bug. A numerically common mono type is not a design flaw.
 - **Levels are AUTOMATIC and ROSTER-WIDE** (2026-09-10, `src/run/growth.ts`). Every roster hero

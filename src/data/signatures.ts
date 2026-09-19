@@ -622,6 +622,20 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'Bites down and keeps what it takes; the boiler runs on it (heals 50% of damage dealt).',
   },
+  // Patch: strips it down and builds it back.
+  overhaul: {
+    id: 'overhaul',
+    name: 'Overhaul',
+    type: 'Mech',
+    category: 'magical',
+    kind: 'heal',
+    healPower: 75,
+    statDeltas: [{ stat: 'defense', amount: 20 }],
+    manaCost: 55,
+    priority: 0,
+    target: 'singleAlly',
+    description: 'Strips them down and builds them back: heals 75, and the plate goes on thicker (+20 Defense).',
+  },
 
   // --- Beast ---
   // Fang: bites, and the pack comes in behind it.
@@ -669,5 +683,20 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'singleEnemy',
     description: 'Tightens until nothing about them works right (-20 Speed and -20 Defense).',
+  },
+  // Vex: opens them and drinks what comes out.
+  exsanguinate: {
+    id: 'exsanguinate',
+    name: 'Exsanguinate',
+    type: 'Beast',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 70,
+    drainPercent: 0.5,
+    statusApplication: { statusId: 'Bleed', target: 'moveTarget' },
+    manaCost: 60,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Opens them and drinks what comes out (Bleed; heals 50% of the damage dealt).',
   },
 };

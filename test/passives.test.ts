@@ -632,6 +632,50 @@ test("passives: Nature's Purification spares a positive status — the partner k
   assert.ok(hasStatus(next.combatants.a2, 'Renew'), 'Cleanse spares `positive`, so it never strips its own side up');
 });
 
+
+// --- The Free Company (docs/constellation.md §11 phase 6) ---
+
+test('passives: Nanites start the partner on Renew 30 the round Patch arrives — the owner gets nothing', () => {
+  const base = createFightState(
+    365,
+    [
+      { combatantId: 'a1', heroId: 'cinderKnight', side: 'A' },
+      { combatantId: 'a2', heroId: 'mordax', side: 'A' },
+      { combatantId: 'a3', heroId: 'patch', side: 'A' },
+    ],
+    [
+      { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
+      { combatantId: 'b2', heroId: 'tidecaller', side: 'B' },
+    ]
+  );
+  const { state: next } = resolveRound(withPassive(base, 'a3', 'nanites'), [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' } as Action], config);
+  // Landed at 30 and ticked once by the round's end (Renew halves as it pays), so 15 is what is left.
+  assert.strictEqual(next.combatants.a2.statuses.Renew?.magnitude, 15, 'the partner is on Renew');
+  assert.ok(!hasStatus(next.combatants.a3, 'Renew'), "the owner is not — 'ally' aims sideways");
+});
+
+test('passives: Bloodmeal pays Renew 20 on the Bleed Vex applies, and nothing on a hit that misses the rider', () => {
+  const state = withPassive(
+    createFightState(
+      366,
+      [
+        { combatantId: 'a1', heroId: 'vex', side: 'A' },
+        { combatantId: 'a2', heroId: 'cinderKnight', side: 'A' },
+      ],
+      [
+        { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
+        { combatantId: 'b2', heroId: 'mordax', side: 'B' },
+      ]
+    ),
+    'a1',
+    'bloodmeal'
+  );
+  // Dusk Blade's Bleed is guaranteed, so the feed is too; read after the round's tick, as Restorative Toxin is.
+  const fed = resolveRound({ ...state, combatants: { ...state.combatants, a1: { ...state.combatants.a1, currentMana: 999, currentHp: 50 } } } as CombatState, [{ kind: 'move', combatantId: 'a1', moveId: 'duskBlade', declaredTarget: 'b1' } as Action], config);
+  assert.ok(hasStatus(fed.state.combatants.b1, 'Bleed'));
+  assert.strictEqual(fed.state.combatants.a1.statuses.Renew?.magnitude, 10, 'Renew 20 landed and paid half');
+});
+
 // --- Afterimage (Nightshade / Penumbra) ---
 
 // Nightshade benched behind a pair, so arriving is a real switch. Deep mana on both sides; the

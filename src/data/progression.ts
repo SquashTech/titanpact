@@ -610,6 +610,26 @@ export const progressionTable: ProgressionTable = {
       'whirlingBlades', 'cogSlam', 'shockCoil', 'juryRig', 'patchUp', 'momentumSwing', 'kickstart',
       'jackpot', 'salvo', 'overdrive', 'onslaught',
     ],
+    // Patch: the repair column, with Light, Water and Arcane support as the off-type — a medic's
+    // colours. Beacon's and Coolant's lines are the heal columns proper, so they are not here.
+    patch: [
+      'backfire',
+      'purify',
+      'mend',
+      'refresh',
+      'infuse',
+      'manaFont',
+      'patchUp',
+      'salvage',
+      'juryRig',
+      'malfunction',
+      'empower',
+      'radiantBeam',
+      'overdrive',
+      'perfectCreation',
+      'conduit',
+      'exalt',
+    ],
     // --- Beast ---
     packAlpha: [
       'prowl',
@@ -676,6 +696,27 @@ export const progressionTable: ProgressionTable = {
       'rootbind',
       'mindLeech',
       'leech',
+    ],
+    // Vex: Beast's Bleed column, with the Shadow it will turn into as the off-type — Fade Strike,
+    // Backstab and Cutthroat, none of them on Vampyr's line.
+    vex: [
+      'venomBite',
+      'pounce',
+      'prowl',
+      'rally',
+      'fadeStrike',
+      'backstab',
+      'lacerate',
+      'bloodTrail',
+      'maul',
+      'toxicFangs',
+      'gore',
+      'cutthroat',
+      'packHunt',
+      'rendingLeap',
+      'eviscerate',
+      'apexPredator',
+      'packLeader',
     ],
     // The companion's bodies (run/companion.ts): a spawn's pool is its type's whole slate, so
     // the schedule gates it by band like anyone's. No Evolution node — its Mastery pips are its
@@ -2066,6 +2107,41 @@ export const progressionTable: ProgressionTable = {
         ],
       },
     ],
+    patch: [
+      {
+        paths: [
+          {
+            id: 'patch-triage',
+            heroId: 'patch',
+            name: 'Triage',
+            description: 'Gets to whoever is worst first, and has already started before it arrives.',
+            statGrants: { wisdom: 20, manaPool: 20 },
+            unlocksMoveIds: [],
+            grantsPassiveIds: ['nanites'],
+          },
+          {
+            id: 'patch-beacon',
+            heroId: 'patch',
+            name: 'Beacon',
+            description: 'Somebody wired a prayer into it, and the ground it stands on answers.',
+            statGrants: { intelligence: 20, wisdom: 10 },
+            unlocksMoveIds: ['consecrate'],
+            typeGraft: 'Light',
+            learnableMoveIds: ['bless', 'vigil', 'hallow', 'benediction', 'radiance', 'divineGrace'],
+          },
+          {
+            id: 'patch-coolant',
+            heroId: 'patch',
+            name: 'Coolant',
+            description: 'Runs cold, and everything it touches runs a little longer for it.',
+            statGrants: { hp: 30, defense: 20 },
+            unlocksMoveIds: ['oasis'],
+            typeGraft: 'Water',
+            learnableMoveIds: ['tideGuard', 'undercurrent', 'washAway', 'cleansingRain', 'seawall', 'highTide'],
+          },
+        ],
+      },
+    ],
     // --- Beast ---
     packAlpha: [
       {
@@ -2166,6 +2242,41 @@ export const progressionTable: ProgressionTable = {
             description: 'Holds the whole field in the coil, and decides what order it moves in.',
             statGrants: { wisdom: 10, manaPool: 40, mpRegen: 5 },
             unlocksMoveIds: ['stasis'],
+          },
+        ],
+      },
+    ],
+    vex: [
+      {
+        paths: [
+          {
+            id: 'vex-nightfeeder',
+            heroId: 'vex',
+            name: 'Nightfeeder',
+            description: 'Every cut it opens is a meal, and it is never full.',
+            statGrants: { attack: 20, speed: 10 },
+            unlocksMoveIds: [],
+            grantsPassiveIds: ['bloodmeal'],
+          },
+          {
+            id: 'vex-vampyr',
+            heroId: 'vex',
+            name: 'Vampyr',
+            description: 'Stops being an animal about it. The dark was always the point.',
+            statGrants: { attack: 10, speed: 20 },
+            unlocksMoveIds: ['shadowstrike'],
+            typeGraft: 'Shadow',
+            learnableMoveIds: ['hamstring', 'rend', 'shadowSlice', 'smokeBomb', 'duskBlade', 'thousandCuts'],
+          },
+          {
+            id: 'vex-wraithwing',
+            heroId: 'vex',
+            name: 'Wraithwing',
+            description: 'Died once, apparently. Did not slow down.',
+            statGrants: { hp: 30, wisdom: 20 },
+            unlocksMoveIds: ['spookySlice'],
+            typeGraft: 'Spirit',
+            learnableMoveIds: ['phantomStrike', 'secondWind', 'unbound', 'torment', 'vengeance', 'wailingFlight'],
           },
         ],
       },

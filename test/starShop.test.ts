@@ -116,9 +116,10 @@ test('star shop: a bought bundle puts its heroes in the recruit pool, and only t
   assert.ok(!guildHallOffers.some((o) => o.heroId === 'scallywag'), 'the base Guild Hall shelf sells him');
   for (const hero of Object.values(base)) assert.strictEqual(hero.unlock, undefined, `${hero.id} is in the base pool with an unlock`);
 
+  const bundle = starShopCatalog['bundle.freeCompany'].grant as { kind: 'heroBundle'; heroIds: readonly string[] };
   const held = heroPool(heroes, ['bundle.freeCompany']);
-  assert.ok('scallywag' in held);
-  assert.strictEqual(Object.keys(held).length, Object.keys(base).length + 1, 'a purchase adds its heroes, never replaces one');
+  for (const id of bundle.heroIds) assert.ok(id in held, `${id} is held and not in the pool`);
+  assert.strictEqual(Object.keys(held).length, Object.keys(base).length + bundle.heroIds.length, 'a purchase adds its heroes, never replaces one');
   assert.ok(isRecruitable('scallywag', held));
   assert.ok(guildHallOffersFor(held).some((o) => o.heroId === 'scallywag'), 'the Guild Hall shelf sells him once the bundle is held');
 });
