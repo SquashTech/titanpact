@@ -437,7 +437,7 @@ test('status: a DoT aimed at SELF is a cost — it lands at exactly the authored
 
 test('status: a HoT aimed at SELF is a benefit, so it still scales', () => {
   // The self exemption is about SIGN, not about the target: Second Wind is the mirror of
-  // Volcanic Surge and must go through the formula (45 x Revenant's 0.96 x 1.25 Spirit = 54).
+  // Volcanic Surge and must go through the formula (50 x Revenant's 0.96 x 1.25 Spirit = 60).
   const state = deepMana(
     createFightState(
       703,
@@ -448,7 +448,7 @@ test('status: a HoT aimed at SELF is a benefit, so it still scales', () => {
   const { events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'secondWind' }] as Action[], config);
   const applied = events.find((e) => e.type === 'StatusApplied' && e.statusId === 'Renew');
   assert.ok(applied && applied.type === 'StatusApplied');
-  assert.strictEqual(applied.type === 'StatusApplied' ? applied.magnitude : null, 54);
+  assert.strictEqual(applied.type === 'StatusApplied' ? applied.magnitude : null, 60);
 });
 
 test('status: the formula is gated on the pipeline — a timer status is scaled by nothing', () => {

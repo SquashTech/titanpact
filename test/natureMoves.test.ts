@@ -245,10 +245,12 @@ test('nature: no Nature move applies, gates on, or detonates a status the catalo
   }
 });
 
-test('nature: every Nature move resolves in bracket 0 — the slate authors no priority column', () => {
+test("nature: Ivy Spike is the slate's one bracket play — every other Nature move resolves in bracket 0", () => {
+  // The slate authored no priority column until the 2026-09-19 pass gave Ivy Spike +1: a low thorn
+  // that lands its −10 Attack BEFORE the swing it is meant to soften. A second row is a decision.
   for (const move of Object.values(moves)) {
     if (move.type !== 'Nature' || signatureMoves[move.id]) continue;
-    assert.strictEqual(move.priority, 0, `${move.id} has an unexpected priority bracket`);
+    assert.strictEqual(move.priority, move.id === 'ivySpike' ? 1 : 0, `${move.id} has an unexpected priority bracket`);
   }
 });
 

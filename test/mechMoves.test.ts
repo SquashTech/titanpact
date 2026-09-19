@@ -273,7 +273,7 @@ test('mech: Meltdown burns only the CASTER, and hits both enemies', () => {
   const { state: after } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'meltdown' }], config);
   assert.ok(after.combatants.b1.currentHp < state.combatants.b1.currentHp);
   assert.ok(after.combatants.b2.currentHp < state.combatants.b2.currentHp);
-  assert.strictEqual(after.combatants.a1.statuses.Burn?.magnitude, 30, 'caster not Burned the flat 60 it costs');
+  assert.strictEqual(after.combatants.a1.statuses.Burn?.magnitude, 25, 'caster not Burned the flat 50 it costs');
   assert.strictEqual(after.combatants.b1.statuses.Burn, undefined, 'Meltdown burned its targets');
 });
 

@@ -219,13 +219,13 @@ test("fire: Molten Lash deals damage, applies Burn, and drops the target's Defen
   const { state: next, events } = resolveRound(state, actions, config);
 
   assert.ok(events.some((e) => e.type === 'DamageDealt'));
-  // Cinder Knight (Fire/Iron, Attack 85) on a PHYSICAL move: Burn 15 x 1.35 x 1.25 STAB = 25, halved.
+  // Cinder Knight (Fire, Attack 85) on a PHYSICAL move: Burn 15 x 1.35 x 1.25 STAB = 25, halved.
   assert.strictEqual(next.combatants.b1.statuses.Burn?.magnitude, 12);
-  // The −10 is a base a PHYSICAL move scales off Attack: −10 × 1.35 × 1.25 STAB = −17 (docs/stat-scaling.md §2).
-  const drop = landedDelta(state, 'a2', moves.moltenLash, 'defense', -10, 'b1');
-  assert.strictEqual(drop, -17);
+  // The −20 is a base a PHYSICAL move scales off Attack: −20 × 1.35 × 1.25 STAB = −34 (docs/stat-scaling.md §2).
+  const drop = landedDelta(state, 'a2', moves.moltenLash, 'defense', -20, 'b1');
+  assert.strictEqual(drop, -34);
   assert.strictEqual(next.combatants.b1.statModifiers.defense, drop);
-  assert.ok(events.some((e) => e.type === 'StatChanged' && (e as any).stat === 'defense' && (e as any).delta === drop && (e as any).authored === -10));
+  assert.ok(events.some((e) => e.type === 'StatChanged' && (e as any).stat === 'defense' && (e as any).delta === drop && (e as any).authored === -20));
 });
 
 test('fire: the Defense drop lands AFTER the hit that delivered it, so it only pays off next round', () => {
@@ -238,7 +238,7 @@ test('fire: the Defense drop lands AFTER the hit that delivered it, so it only p
 
   const second = resolveRound(first.state, once, config);
   const secondHit = second.events.find((e: any) => e.type === 'DamageDealt') as any;
-  assert.strictEqual(secondHit.defStat, heroes.ironWarden.baseStats.defense + landedDelta(state, 'a2', moves.moltenLash, 'defense', -10, 'b1'));
+  assert.strictEqual(secondHit.defStat, heroes.ironWarden.baseStats.defense + landedDelta(state, 'a2', moves.moltenLash, 'defense', -20, 'b1'));
 });
 
 // --- Spread + field effect + self-inflicted riders ---

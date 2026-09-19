@@ -204,7 +204,7 @@ test("shield: a move's own HP cost goes straight to HP under a full Shield", () 
   const state = withStatus(fixture(8), 'a1', 'Shield', { magnitude: 1000 });
   const maxHp = fixtureMaxHp('cinderKnight');
   const { state: next, events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'soulOffering', declaredTarget: 'a2' }, rest('a2'), rest('b1'), rest('b2')], config);
-  assert.strictEqual(next.combatants.a1.currentHp, maxHp - Math.round(maxHp * 0.25));
+  assert.strictEqual(next.combatants.a1.currentHp, maxHp - Math.round(maxHp * 0.2));
   assert.strictEqual(shieldHeld(next.combatants.a1, statuses), 1000);
   const cost = events.find((e) => e.type === 'DamageDealt' && e.selfCost);
   assert.ok(cost && cost.type === 'DamageDealt' && cost.absorbed === undefined);

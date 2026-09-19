@@ -60,11 +60,11 @@ test('scaling: a buff reads the caster\'s WISDOM — Kindle off Cinder Knight (W
 });
 
 test('scaling: a debuff reads the OFFENSIVE stat the move swings with — Weaken (magical) off Int, Pin Down (physical) off Attack', () => {
-  // Crimson, Int 80, off-type for Shadow: 20 × 1.3 = 26 each — and Iron Warden's Wisdom is 50,
-  // so the second lands at the floor, −25 (§3, the debuff half of the ceiling).
+  // Crimson, Int 80, off-type for Shadow: 20 × 1.3 = 26 each, on Attack and Defense since the
+  // 2026-09-19 pass; neither reaches Iron Warden's floor (the floor tests below use Enervate).
   const weaken = cast(fixture(2), 'a1', 'weaken', 'b1');
+  assert.strictEqual(weaken.state.combatants.b1.statModifiers.attack, -26);
   assert.strictEqual(weaken.state.combatants.b1.statModifiers.defense, -26);
-  assert.strictEqual(weaken.state.combatants.b1.statModifiers.wisdom, -25);
   // Cinder Knight, Attack 85, off-type for Iron (mono-Fire since 2026-09-19): 20 × 1.35 = 27; the Speed 10 → 14, inside the −15 floor on Iron Warden's Speed 30 (the Wisdom line above is where the floor binds).
   const pin = cast(fixture(2), 'a2', 'pinDown', 'b1');
   assert.strictEqual(pin.state.combatants.b1.statModifiers.defense, -27);
@@ -108,9 +108,9 @@ test('scaling: a DERIVED delta passes through unscaled and carries no authored b
 test('scaling: StatChanged carries the authored base beside what landed', () => {
   const { events } = cast(fixture(6), 'a2', 'moltenLash', 'b1');
   const [drop] = statChanged(events);
-  assert.strictEqual(drop.authored, -10);
-  assert.strictEqual(drop.delta, -17);
-  assert.strictEqual(drop.newValue, -17);
+  assert.strictEqual(drop.authored, -20);
+  assert.strictEqual(drop.delta, -34);
+  assert.strictEqual(drop.newValue, -34);
 });
 
 test('scaling: the caster\'s stat is SNAPSHOTTED at cast — a Wisdom self-buff makes the next buff bigger, never the one that raised it', () => {
@@ -140,16 +140,16 @@ test('scaling: the card-only side read — self, ally and bothAllies deltas are 
 // --- The floor: a debuff can at most halve a stat (§3, phase 2 — the debuff half) ---
 
 test('floor: a stat\'s fight modifier never goes under −½(base + loadout), and the drop that hits it lands short and says so', () => {
-  // Iron Warden's Wisdom 50: floor −25. Weaken lands −26 → −25 capped; a second Weaken lands 0, capped, and still emits.
+  // Iron Warden's Wisdom 50: floor −25. Enervate (−30, off-type for Mind: 30 × 1.3 = 39) lands −25 capped; a second lands 0, capped, and still emits.
   const state = fixture(20);
-  const once = cast(state, 'a1', 'weaken', 'b1');
+  const once = cast(state, 'a1', 'enervate', 'b1');
   const first = statChanged(once.events).find((e) => e.stat === 'wisdom');
   assert.strictEqual(first.delta, -25);
-  assert.strictEqual(first.authored, -20);
+  assert.strictEqual(first.authored, -30);
   assert.strictEqual(first.capped, true);
   assert.strictEqual(statModifierFloor(heroes.ironWarden, state.combatants.b1, 'wisdom'), -25);
 
-  const twice = cast(once.state, 'a1', 'weaken', 'b1');
+  const twice = cast(once.state, 'a1', 'enervate', 'b1');
   const second = statChanged(twice.events).find((e) => e.stat === 'wisdom');
   assert.strictEqual(second.delta, 0, 'a drop at the floor lands nothing');
   assert.strictEqual(second.capped, true);
@@ -161,9 +161,9 @@ test('floor: loadout raises it — the same drop on a hero wearing +50 Wisdom la
   const state = fixture(21);
   const b1 = state.combatants.b1;
   const geared = { ...state, combatants: { ...state.combatants, b1: { ...b1, baselineStatModifiers: { ...b1.baselineStatModifiers, wisdom: 50 } } } } as CombatState;
-  const { events } = cast(geared, 'a1', 'weaken', 'b1');
+  const { events } = cast(geared, 'a1', 'enervate', 'b1');
   const drop = statChanged(events).find((e) => e.stat === 'wisdom');
-  assert.strictEqual(drop.delta, -26);
+  assert.strictEqual(drop.delta, -39);
   assert.strictEqual(drop.capped, undefined);
 });
 

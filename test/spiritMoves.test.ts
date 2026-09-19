@@ -153,10 +153,10 @@ test('spirit: Soul Offering pays the ally FIRST and bills the caster after', () 
 
   assert.strictEqual(next.combatants.a2.statModifiers.intelligence, landedDelta(state, 'a1', moves.soulOffering, 'intelligence', 40, 'a2'));
   assert.strictEqual(next.combatants.a2.statModifiers.attack, landedDelta(state, 'a1', moves.soulOffering, 'attack', 40, 'a2'));
-  assert.strictEqual(hpOf(next, 'a1'), before - Math.round(maxHp * 0.25));
+  assert.strictEqual(hpOf(next, 'a1'), before - Math.round(maxHp * 0.2));
   const bill = events.find((e) => e.type === 'DamageDealt' && e.selfCost);
   assert.ok(bill && bill.type === 'DamageDealt');
-  assert.deepStrictEqual(bill.selfCost, { mode: 'percentMaxHp', amount: 0.25 });
+  assert.deepStrictEqual(bill.selfCost, { mode: 'percentMaxHp', amount: 0.2 });
   assert.strictEqual(bill.sourceCombatantId, 'a1');
   assert.strictEqual(bill.targetCombatantId, 'a1');
 });

@@ -154,7 +154,7 @@ test('heal: no variance — the same heal on two different seeds lands on the sa
 // --- Renew: the snapshot ---
 
 test('heal: a HoT snapshots the caster Wisdom and STAB at application time', () => {
-  // Second Wind grants Renew 45 (Spirit). Read off the end-of-round tick: Renew halves the moment it
+  // Second Wind grants Renew 50 (Spirit). Read off the end-of-round tick: Renew halves the moment it
   // ticks, so the stored magnitude is already half the snapshot by the time the round returns.
   const firstTick = (heroId: string) => {
     const { events } = resolveRound(
@@ -166,8 +166,8 @@ test('heal: a HoT snapshots the caster Wisdom and STAB at application time', () 
     return tick && tick.type === 'StatusTicked' ? tick.amount : null;
   };
 
-  assert.strictEqual(firstTick('revenant'), 54); // 45 x 0.96 x 1.25
-  assert.strictEqual(firstTick('wildOracle'), 50); // 45 x 1.10, no STAB
+  assert.strictEqual(firstTick('revenant'), 60); // 50 x 0.96 x 1.25
+  assert.strictEqual(firstTick('wildOracle'), 55); // 50 x 1.10, no STAB
 });
 
 test('heal: the snapshot is gated on the pipeline — a TIMER rider is scaled by nothing at all', () => {

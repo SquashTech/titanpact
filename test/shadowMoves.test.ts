@@ -169,8 +169,8 @@ test('shadow: Lie in Wait loads the next attack with 45 Base Power, whatever tha
     config
   );
   const hit = events.find((e) => e.type === 'DamageDealt') as { basePower: number; elementalForceBonus: number };
-  assert.strictEqual(hit.basePower, 30);
-  assert.strictEqual(hit.elementalForceBonus, 45, 'a 30 Base Power poke lands at 75 — the flat bonus favours the cheap move');
+  assert.strictEqual(hit.basePower, 35);
+  assert.strictEqual(hit.elementalForceBonus, 45, 'a 35 Base Power poke lands at 80 — the flat bonus favours the cheap move');
   assert.ok(!hasStatus(after.combatants.a1, 'Ambush'), 'and is spent');
 });
 
@@ -212,8 +212,8 @@ test('shadow: an Ambush is counted on EVERY hit and still spent once — the pay
   const hits = events.filter((e) => e.type === 'DamageDealt') as unknown as { basePower: number; elementalForceBonus: number }[];
   assert.strictEqual(hits.length, 3);
   for (const hit of hits) {
-    assert.strictEqual(hit.basePower, 20);
-    assert.strictEqual(hit.elementalForceBonus, 45, '20 + 45 on each hit — 195 Base Power, not 65');
+    assert.strictEqual(hit.basePower, 25);
+    assert.strictEqual(hit.elementalForceBonus, 45, '25 + 45 on each hit — 210 Base Power, not 70');
   }
   assert.ok(!hasStatus(after.combatants.a1, 'Ambush'));
   assert.strictEqual(events.filter((e) => e.type === 'StatusRemoved' && e.statusId === 'Ambush').length, 1);
@@ -336,7 +336,7 @@ test('shadow: Dusk Blade is the only guaranteed Bleed, and Bleed is the type fla
   const bleeders = Object.values(moves).filter((m) => m.type === 'Shadow' && !signatureMoves[m.id] && firstStatusApplication(m)?.statusId === 'Bleed');
   assert.deepStrictEqual(bleeders.map((m) => m.id).sort(), ['backstab', 'duskBlade', 'shadowSlice']);
   assert.strictEqual(firstStatusApplication(moves.duskBlade)!.chance, undefined);
-  assert.strictEqual(firstStatusApplication(moves.backstab)!.chance, 0.3);
+  assert.strictEqual(firstStatusApplication(moves.backstab)!.chance, 0.5);
   assert.strictEqual(firstStatusApplication(moves.shadowSlice)!.chance, 0.3);
   assert.strictEqual(statuses.Bleed.decay, 'none');
   assert.strictEqual(statuses.Bleed.clearsOnSwitch, false);
