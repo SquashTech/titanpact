@@ -24869,20 +24869,6 @@ textarea,
   }
 }
 
-.act-intro-faction {
-  margin: 0;
-  font-size: 13px;
-  color: var(--text-dim);
-  letter-spacing: 0.02em;
-}
-
-.act-intro-faction strong {
-  color: rgb(var(--node-rgb));
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
 .act-intro-domains {
   display: flex;
   flex-direction: column;
@@ -25209,13 +25195,6 @@ textarea,
   text-shadow:
     0 1px 0 rgba(0, 0, 0, 0.5),
     0 0 18px rgba(var(--node-rgb), 0.45);
-}
-
-.location-choice-flavor {
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--text-dim);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
 }
 
 /* The domains over the silhouette, where the glyphs' own glow reads best. The

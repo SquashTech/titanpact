@@ -250,8 +250,9 @@ words.
 The screen itself is **placeless** (`PLACELESS_SCREENS`), like the Pact Seal: gold sky,
 gold header, until a card is picked — then the screen's `--node-rgb` takes that place's
 tint, so the sky, the title bloom and the button all turn its colour, the warden comes
-forward, the other place steps back into the dark, and the readout swaps the prompt for the
-place's `omen`. The choice is felt before the button is pressed. Pick-then-confirm, the
+forward, the other place steps back into the dark. No line under the name on either card
+(2026-09-19, per user direction): the scene is the description, and the omen waits for the
+map's first node. The choice is felt before the button is pressed. Pick-then-confirm, the
 Banner's idiom: the button names the pick (*Set out for the Necropolis*), and the arrival
 screen's *Enter* is the next beat. Both candidates' tracks are prefetched while the player
 weighs them, since a run cannot know its next place any earlier.
@@ -393,10 +394,10 @@ own — it was a small italic caption at the foot of the well first, which read 
 over a scene rather than as part of one. It is the only text on the map that is neither a control
 nor a readout, and the only one that gets to be big.
 
-It is deliberately about the **spawn**, not the place: `flavor` already answers *where
-you are* on the arrival screen a moment earlier, so a second line about the terrain would
-be the same beat twice. This answers *what leaks here*, and it answers it standing in
-front of the fight that proves it. Gated on the node kind rather than on being row 0, so
+It is the **only line a Location speaks** (2026-09-19, per user direction: the `flavor`
+line the arrival screen and the choice screen carried under the name is deleted — the
+visuals do the talking, and the same beat twice was the beat weakened). It answers *what
+leaks here*, and it answers it standing in front of the fight that proves it. Gated on the node kind rather than on being row 0, so
 act 6's Vigil never gets a line naming enemies that are not there.
 
 #### The name

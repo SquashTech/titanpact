@@ -56,9 +56,7 @@ export function LocationChoiceScreen({ run, candidateIds, onChoose }: Props) {
         compact
         eyebrow={`Act ${ROMAN[run.actNumber - 1] ?? run.actNumber} of ${ROMAN[SEAL_ACTS - 1]}`}
         title="Choose a seal"
-        readoutKey={picked?.id ?? 'offer'}
-        readoutLive={!!picked}
-        readout={picked ? picked.omen : `${candidateIds.length === 2 ? 'Two' : candidateIds.length} wardens are within reach. The road runs to one.`}
+        readout={`${candidateIds.length === 2 ? 'Two' : candidateIds.length} wardens are within reach. The road runs to one.`}
       />
 
       <div className="location-choice-options">
@@ -117,9 +115,9 @@ function LocationChoiceCard({ location, picked, dimmed, revealDelayMs, onPick }:
         <LocationHorizon locationId={location.id} />
       </span>
 
+      {/* The name alone: the scene under it is the description. */}
       <span className="location-choice-body">
         <span className="location-choice-name">{location.name}</span>
-        <span className="location-choice-flavor">{location.flavor}</span>
       </span>
 
       <span className="location-choice-domains">

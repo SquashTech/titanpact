@@ -51,12 +51,11 @@ export function ActIntroScreen({ run, location, onEnter }: Props) {
         <NodeHeader
           eyebrow={isFinale ? `All ${SEAL_ACTS} seals broken` : `${actLabel(run.actNumber)} of ${ROMAN[SEAL_ACTS - 1]}`}
           title={location.name}
-          readout={location.flavor}
         />
 
+        {/* No line under the name: the sky, the horizon and the weather say where you are, and
+            the omen waits for the map's first node (docs/locations.md "The omen"). */}
         <div className="act-intro-dossier">
-          <p className="act-intro-faction">{location.omen}</p>
-
           <div className="act-intro-domains">
             {domains ? (
               <>

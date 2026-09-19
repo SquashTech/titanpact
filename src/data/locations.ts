@@ -12,12 +12,10 @@ export interface LocationDefinition {
   id: string;
   /** The act's title card. */
   name: string;
-  /** One line, spoken on arrival. */
-  flavor: string;
   /**
    * What is already here, said once — on the map screen at the act's first Monsters node, which
-   * is the only row with nothing behind it (MapRoute's omen). Present tense, and about the SPAWN
-   * rather than the place: `flavor` already answers where you are, this answers what leaks here.
+   * is the only row with nothing behind it (MapRoute's omen) — and nowhere else: the arrival and
+   * choice screens let the scene speak.
    */
   omen: string;
   /**
@@ -48,8 +46,7 @@ export const locations: Record<string, LocationDefinition> = {
   wildsEdge: {
     id: 'wildsEdge',
     name: "Wild's Edge",
-    flavor: 'The last tilled field behind you, the treeline ahead. Everything lives out here.',
-    omen: 'The leak runs thin out here. Everything that comes through is small.',
+    omen: "It's a long road to the Titan. Our journey begins here.",
     spawnTypes: null,
     affinity: null,
     exclusiveHeroIds: [],
@@ -61,8 +58,7 @@ export const locations: Record<string, LocationDefinition> = {
   blightedShrine: {
     id: 'blightedShrine',
     name: 'Blighted Shrine',
-    flavor: 'Someone still tends these altars. That is the worrying part.',
-    omen: 'Shadow, Arcane and Mind leak through these altars, and something has been feeding them.',
+    omen: 'An impenetrable darkness fills these halls.',
     spawnTypes: ['Shadow', 'Arcane', 'Mind'],
     affinity: ['Shadow', 'Arcane', 'Mind'],
     exclusiveHeroIds: [],
@@ -74,8 +70,7 @@ export const locations: Record<string, LocationDefinition> = {
   forbiddenForest: {
     id: 'forbiddenForest',
     name: 'Forbidden Forest',
-    flavor: 'The path closes behind you. It was never a path.',
-    omen: 'Nature, Beast and Light leak into this wood, and the wood has grown around them.',
+    omen: 'It feels like the trees themselves are watching you within.',
     spawnTypes: ['Nature', 'Beast', 'Light'],
     affinity: ['Nature', 'Beast', 'Light'],
     exclusiveHeroIds: [],
@@ -87,8 +82,7 @@ export const locations: Record<string, LocationDefinition> = {
   moltenFoundry: {
     id: 'moltenFoundry',
     name: 'Molten Foundry',
-    flavor: 'Nobody has fed these furnaces in an age. They are still running.',
-    omen: 'Fire, Mech and Iron leak through the furnaces. They never stopped working.',
+    omen: 'These furnaces were abandoned long ago, but they never stopped working.',
     spawnTypes: ['Fire', 'Mech', 'Iron'],
     affinity: ['Fire', 'Mech', 'Iron'],
     exclusiveHeroIds: [],
@@ -100,8 +94,7 @@ export const locations: Record<string, LocationDefinition> = {
   stormCoast: {
     id: 'stormCoast',
     name: 'Storm Coast',
-    flavor: 'Longships in the shallows, and the weather is on their side.',
-    omen: 'Storm, Water and Stone leak onto this shore, and the weather agrees with them.',
+    omen: 'The rain never stops falling along these shores.',
     spawnTypes: ['Storm', 'Water', 'Stone'],
     affinity: ['Storm', 'Water', 'Stone'],
     exclusiveHeroIds: [],
@@ -117,8 +110,7 @@ export const locations: Record<string, LocationDefinition> = {
   necropolis: {
     id: 'necropolis',
     name: 'Necropolis',
-    flavor: 'A city that kept its citizens. None of them left.',
-    omen: 'Spirit and Frost leak through this city, and the city keeps them well.',
+    omen: 'The dead inhabit this city, and they wish for you to join them.',
     spawnTypes: ['Spirit', 'Frost'],
     affinity: ['Spirit', 'Frost', 'Shadow'],
     exclusiveHeroIds: [],
@@ -135,7 +127,6 @@ export const locations: Record<string, LocationDefinition> = {
   theThreshold: {
     id: 'theThreshold',
     name: 'The Threshold',
-    flavor: 'Six wardens stood here once. You are the reason five of them do not.',
     omen: 'Nothing leaks here. One thing waits.',
     spawnTypes: [],
     affinity: ['Ancient'],
