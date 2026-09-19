@@ -37,6 +37,7 @@ import clockworkArt from '../../../art/heroes/starters/clockwork.png';
 import steamColossusArt from '../../../art/heroes/steamcolossus.png';
 import rexArt from '../../../art/heroes/rex.png';
 import fangArt from '../../../art/heroes/starters/fang.png';
+import ursaArt from '../../../art/heroes/ursa.png';
 import widowArt from '../../../art/heroes/Widow.png';
 import coilArt from '../../../art/heroes/coil.png';
 
@@ -95,6 +96,7 @@ export const heroArt: Partial<Record<string, string>> = {
   rex: rexArt,
   // --- Beast ---
   packAlpha: fangArt,
+  ursa: ursaArt,
   widow: widowArt,
   coil: coilArt,
 };

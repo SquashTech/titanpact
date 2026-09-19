@@ -1,4 +1,4 @@
-// Level-up move pools and Evolution nodes for the roster, three a type (2026-09-17; Beast at two since 2026-09-19).
+// Level-up move pools and Evolution nodes for the roster, all 42 heroes (three a type, 2026-09-17).
 // A pool entry that is also in the hero's starting
 // kit is dead weight: levelUpMovePool filters unlocked moves out, so it can
 // never be offered. Every Evolution node offers three paths differing in kind
@@ -630,6 +630,28 @@ export const progressionTable: ProgressionTable = {
       'gore',
       'bloodTrail',
       'rendingLeap',
+    ],
+    // Ursa: the heavy half of the slate — Gore, Rampage, Thrash, Eviscerate — with Stone's guard
+    // column as the off-type (Provoke in the kit telegraphs it; Stoneheart is the payoff).
+    ursa: [
+      'rally',
+      'howl',
+      'pounce',
+      'venomBite',
+      'rockToss',
+      'heavyBlow',
+      'gore',
+      'rampage',
+      'maul',
+      'lacerate',
+      'thrash',
+      'bloodTrail',
+      'spireClaw',
+      'eviscerate',
+      'apexPredator',
+      'rendingLeap',
+      'packLeader',
+      'stoneheart',
     ],
     coil: [
       'animalSpirit',
@@ -2074,6 +2096,41 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['poltergeist'],
             typeGraft: 'Spirit',
             learnableMoveIds: ['wisp', 'drain', 'soulRend', 'ascendant', 'animalSpirit'],
+          },
+        ],
+      },
+    ],
+    ursa: [
+      {
+        paths: [
+          {
+            id: 'ursa-grizzly',
+            heroId: 'ursa',
+            name: 'Grizzly',
+            description: 'Stops noticing what hits it. That was never going to be the interesting part.',
+            statGrants: { hp: 30, attack: 20 },
+            unlocksMoveIds: [],
+            grantsPassiveIds: ['thickHide'],
+          },
+          {
+            id: 'ursa-polar',
+            heroId: 'ursa',
+            name: 'Polar',
+            description: 'Goes north and comes back white — what it hits stops moving, and it never did move fast.',
+            statGrants: { defense: 20, wisdom: 10 },
+            unlocksMoveIds: ['icicleThrust'],
+            typeGraft: 'Frost',
+            learnableMoveIds: ['iceShard', 'frostArmor', 'coldSnap', 'iceShell', 'iceShatter', 'snowball'],
+          },
+          {
+            id: 'ursa-timberback',
+            heroId: 'ursa',
+            name: 'Timberback',
+            description: 'Finds the honey. Everything after that hits harder for being well fed.',
+            statGrants: { hp: 45, wisdom: 15 },
+            unlocksMoveIds: ['branchSlam'],
+            typeGraft: 'Nature',
+            learnableMoveIds: ['vineLash', 'regrowth', 'leafSlice', 'wildBloom', 'verdantLash', 'overgrowth'],
           },
         ],
       },

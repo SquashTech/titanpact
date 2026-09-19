@@ -827,6 +827,19 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', amount: -20 },
     },
   },
+  thickHide: {
+    id: 'thickHide',
+    name: 'Thick Hide',
+    description: 'Whenever this hero takes damage, it gains Shield 20.',
+    // Grief's trigger paying a Shield pool instead of a HoT: flat, since a passive has no move to
+    // scale off, additive up to max HP, and taken only by the next hit — on a hero whose kit
+    // draws the hits (Provoke), each one it eats is the next one it half-eats.
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 20 },
+    },
+  },
 };
 
 // --- The Titan's pieces (HeroDefinition.passiveIds, docs/titan-eyes.md §10) ---

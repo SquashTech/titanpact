@@ -219,8 +219,14 @@ Iron and a second Attack buff, left). Each keeps the type it lost as an
 Evolution graft — Widow's Carapace is the Beast body (Apex Predator granted, the mauler's column
 as its line), Cinder's Ironclad is the plate (Shield Bash granted, Iron's guard column as its
 line, Cinderguard kept) — so the old dual build is one of the three paths rather than the
-starting state, and Thunderblaze and Silkbinder are now plain grafts on a mono hero. The count
-is **41** and Beast holds two (Fang, Coil) until the mono-Beast hero the user has in hand lands.
+starting state, and Thunderblaze and Silkbinder are now plain grafts on a mono hero. **Ursa** took
+the Beast seat the same day: the roster's top Attack (115) on its second-slowest body (Speed 20,
+only Bellows is slower), HP 235 / Def 70, kit Claw / Prowl / Provoke — the Stone off-type the pool
+telegraphs, since Stoneheart is what a hero that draws the hits wants at Late — and a node of
+Grizzly (Thick Hide: Shield 20 on every hit taken, the tank loop Provoke feeds), Polar (Frost
+graft, Icicle Thrust and the physical Frost column) and Timberback (Nature graft, Branch Slam
+with Regrowth and Wild Bloom to arm its Renew clause). Overbear is its signature: 105, recoil
+25%. The count is 42 again.
 One consequence to watch: Fire's physical column is four moves past Cinder's kit, so his Early
 band is entirely Iron off-type and his in-type pool is Molten Lash, Firebrand, Blazing Retreat
 and Volcanic Surge — a physical Fire Early or two would give the mono hero a band of its own.

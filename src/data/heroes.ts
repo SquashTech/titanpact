@@ -546,6 +546,19 @@ export const heroes: Record<string, HeroDefinition> = {
     schedule: { offerLevels: [5, 8, 11, 17, 20, 25], midLevel: 9, lateLevel: 18 },
     signatureMoveId: 'packCall',
   },
+  ursa: {
+    id: 'ursa',
+    name: 'Ursa',
+    types: ['Beast'],
+    // The roster's top Attack on its second-slowest body: a bear. Provoke is the Stone off-type
+    // the kit telegraphs — it draws the hit Thick Hide and Stoneheart both want.
+    baseStats: { hp: 235, attack: 115, defense: 70, intelligence: 15, wisdom: 45, speed: 20, manaPool: 50, mpRegen: 10 },
+    moveIds: ['claw', 'prowl', 'provoke'],
+    starter: false,
+    growthGrades: { hp: 'S', attack: 'S', defense: 'A', intelligence: 'F', wisdom: 'A', speed: 'E', manaPool: 'A' },
+    schedule: { offerLevels: [6, 8, 11, 15, 21, 26], midLevel: 11, lateLevel: 21 },
+    signatureMoveId: 'overbear',
+  },
   coil: {
     id: 'coil',
     name: 'Coil',

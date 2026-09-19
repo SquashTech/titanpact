@@ -639,6 +639,20 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'Bites, and the pack comes in behind it (+15 Speed to both allies).',
   },
+  // Ursa: the whole weight of it, once.
+  overbear: {
+    id: 'overbear',
+    name: 'Overbear',
+    type: 'Beast',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 105,
+    recoilPercent: 0.25,
+    manaCost: 60,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Puts the whole weight of it into one blow, and some of that weight comes back (recoil 25%).',
+  },
   // Coil: tightens until nothing about them works right.
   stranglehold: {
     id: 'stranglehold',

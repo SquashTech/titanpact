@@ -13,7 +13,7 @@ import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import type { Action } from '../src/engine/combat/actions';
 import { matchesTrigger, collectPassiveDamageModifiers } from '../src/engine/combat/passiveEngine';
-import { getEffectiveStat, hasStatus } from '../src/engine/state';
+import { getEffectiveStat, hasStatus, statusMagnitude } from '../src/engine/state';
 import { resolveMultiplierTerm } from '../src/engine/damage/damagePipeline';
 import type { CombatState, PassiveInstance } from '../src/engine/state';
 import { equipmentPassiveGrants, relicTeamPassiveGrants, mergePassiveGrants, toPassiveInstances } from '../src/run/passives';
@@ -854,6 +854,27 @@ test('passives: Tempering is the RECEIVER role — Valor dealing damage hardens 
   const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'ironFist', declaredTarget: 'b1' } as Action], config);
 
   assert.strictEqual(next.combatants.a1.statModifiers.defense ?? 0, 0);
+});
+
+
+test('passives: Thick Hide shields Ursa every time it is hit, and the pool is flat — no Defense, no STAB', () => {
+  // Grief's trigger paying a Shield: the first Heavy Blow lands on HP and leaves 20 behind it, the
+  // second is taken from those 20 first and re-arms them. A passive has no move to scale off, so
+  // 20 is 20 whatever Ursa's Defense is (docs/shield.md §3.1).
+  const base = pairFixture(608, 'ursa', 'crag');
+  const state = withPassive(
+    { ...base, combatants: Object.fromEntries(Object.entries(base.combatants).map(([id, c]) => [id, { ...c, currentHp: fixtureMaxHp(c.heroId) }])) } as CombatState,
+    'a1',
+    'thickHide'
+  );
+  const swing: Action = { kind: 'move', combatantId: 'b1', moveId: 'heavyBlow', declaredTarget: 'a1' };
+  const once = resolveRound(state, [swing], config);
+  assert.strictEqual(statusMagnitude(once.state.combatants.a1, 'Shield'), 20);
+
+  const twice = resolveRound(once.state, [swing], config);
+  const hit = twice.events.find((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'a1') as { amount: number; absorbed?: number };
+  assert.strictEqual(hit.absorbed, 20, 'the second blow is taken from the hide first');
+  assert.strictEqual(statusMagnitude(twice.state.combatants.a1, 'Shield'), 20, 'and the hide is back for the third');
 });
 
 test('passives: Combustion turns Clockwork\'s own Meltdown backfire into Attack', () => {

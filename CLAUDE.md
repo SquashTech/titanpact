@@ -244,7 +244,8 @@ don't silently override it.
   replacing the ~53-concept target. Not procedurally generated. **41 as of 2026-09-19** (per
   user direction): Vesper is deleted, Widow moved Beast/Shadow → mono-Shadow into its seat, and
   Cinder Fire/Iron → mono-Fire, each with the type it lost bought back by an Evolution graft
-  (Carapace, Ironclad); Beast holds two until the mono-Beast hero the user has in hand lands.
+  (Carapace, Ironclad); **Ursa** (mono-Beast, the slow bear — Attack 115 at Speed 20) took the
+  Beast seat the same day, so the roster is 42 again.
 - **Mono typing is a valid terminal state**, not a larval stage. Precedent: Pokémon
   Normal/Water/Bug. A numerically common mono type is not a design flaw.
 - **Levels are AUTOMATIC and ROSTER-WIDE** (2026-09-10, `src/run/growth.ts`). Every roster hero
