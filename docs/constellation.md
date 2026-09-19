@@ -358,3 +358,23 @@ None built. Where each lands when it is:
      `starterPack`, `heroBundle`) and the Constellation has one tab per kind. Only the
      Locations shelf is stocked; the other two stand empty with a line saying what they are.
    - Priced at 6 stars (§7's "5–6"). Unmeasured.
+
+   **Three more the same day, per user direction**, chosen so each warden covers a type no
+   base Guardian does (Mind, Storm, Frost), each two shared types and one from elsewhere so
+   none reads as a base Location with different weather:
+   - **Dreaming Spires** — Mind / Arcane / Spirit; the **Sphinx** (Distort sets Stasis Field,
+     Hindsight lands ×2 under it at −1 priority, Psychokinesis the physical hand, Disorient
+     the spread debuff; Speed 35). Ambience `drift` (rings that hang and wander), a horizon
+     of towers off plumb with blocks hanging in the air.
+   - **Thunder Aerie** — Storm / Arcane / Beast; the **Roc** (Storm Lash and Ionize mark with
+     Conduct, Ion Cascade ×2 across the marked pair, Skyfall the dive; Speed 90 — the fastest
+     champion, 320 HP so the Skeleton King keeps the floor). Ambience `lightning` (bolts that
+     stand still, dark 88% of the cycle, and light the sky when they fire), a peak past the
+     top of the frame.
+   - **Frozen Reach** — Frost / Water / Stone; the **Wendigo** (Deep Chill and Permafrost
+     Freeze, Cold Snap ×2 spending the mark, Absolute Zero only on a Frozen hero — Freeze
+     halves Speed and a switch clears it, so the bench is the answer). Ambience `blizzard`
+     (snow driven sideways on one wind), ice shelves with a ship frozen in.
+   - Brass Works was proposed and dropped as redundant with the Foundry; Crystal Hollow, Iron
+     Bastion and Witchwood Fen are the un-built rest of that list. All four bought Locations
+     are 6 stars; none has a track yet.

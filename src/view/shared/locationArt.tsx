@@ -121,6 +121,52 @@ const HOLY_SANCTUM = (
   </>
 );
 
+// Towers that lean on nothing: every spire is off plumb by a different angle, two blocks hang in
+// the air with no ground under them, and a stair climbs to where a tower is not. The right-hand
+// spire runs past the top edge (a point, never the width).
+const DREAMING_SPIRES = (
+  <>
+    <path d="M36 92 L26 30 L46 26 L62 92 Z" />
+    <path d="M110 92 L124 38 L138 40 L134 92 Z" />
+    <path d="M150 92 L158 8 L172 10 L180 92 Z" />
+    <path d="M330 92 L346 -10 L356 -8 L354 92 Z" />
+    <path d="M78 46 L112 40 L114 50 L80 56 Z" opacity="0.85" />
+    <path d="M252 30 L286 34 L284 44 L250 40 Z" opacity="0.85" />
+    <path d="M196 92 L196 70 L212 70 L212 62 L228 62 L228 54 L244 54 L244 46 L260 46 L260 92 Z" />
+    <path d="M270 92 L278 58 L296 58 L304 92 Z" />
+    <path d="M382 92 L386 52 L398 52 L402 92 Z" />
+    <path d="M-10 84 Q 60 78 130 84 T 270 84 T 410 82 L410 110 L-10 110 Z" />
+  </>
+);
+
+// A range with one peak higher than the frame, a spire on it and a rod above that; a shoulder of
+// cloud below the ridge, a watch-tower on the near side.
+const THUNDER_AERIE = (
+  <>
+    <path d="M-10 92 L-10 78 L40 66 L86 72 L128 48 L160 30 L192 8 L200 -6 L208 8 L236 32 L272 54 L310 62 L352 52 L410 74 L410 92 Z" />
+    <path d="M196 20 L200 -22 L204 20 Z" />
+    <path d="M-10 84 Q 50 74 110 84 T 240 84 T 410 82 L410 110 L-10 110 Z" opacity="0.7" />
+    <path d="M300 92 L300 64 L306 64 L306 56 L310 50 L314 56 L314 64 L320 64 L320 92 Z" />
+    <path d="M60 92 L64 62 L70 62 L74 92 Z" opacity="0.8" />
+  </>
+);
+
+// Ice: two shelves with a broken edge between them, a ship frozen into the reach with its mast
+// standing, a berg on the far side.
+const FROZEN_REACH = (
+  <>
+    <path d="M-10 92 L-10 62 L30 62 L36 52 L92 52 L100 62 L140 62 L146 72 L-10 72 Z" />
+    <path d="M-10 92 L-10 70 L150 70 L150 92 Z" />
+    <path d="M272 92 L272 58 L300 58 L306 48 L360 48 L368 58 L410 58 L410 92 Z" />
+    <path d="M300 92 L318 16 L342 92 Z" />
+    <rect x="212" y="26" width="3" height="56" />
+    <path d="M215 30 L242 46 L215 54 Z" opacity="0.7" />
+    <path d="M178 80 Q 213 92 248 80 L242 90 L184 90 Z" />
+    <path d="M150 92 L156 86 L200 84 L226 86 L272 84 L272 92 Z" opacity="0.85" />
+    <rect x="-10" y="88" width="420" height="22" />
+  </>
+);
+
 export const LOCATION_HORIZONS: Record<string, ReactNode> = {
   wildsEdge: WILDS_EDGE,
   forbiddenForest: FORBIDDEN_FOREST,
@@ -129,6 +175,9 @@ export const LOCATION_HORIZONS: Record<string, ReactNode> = {
   necropolis: NECROPOLIS,
   blightedShrine: BLIGHTED_SHRINE,
   holySanctum: HOLY_SANCTUM,
+  dreamingSpires: DREAMING_SPIRES,
+  thunderAerie: THUNDER_AERIE,
+  frozenReach: FROZEN_REACH,
 };
 
 /** Renders nothing for an unknown id: a missing horizon should look like plain sky, not the wrong place. */

@@ -30,6 +30,12 @@ const AMBIENCE: Record<AmbienceKind, AmbienceSpec> = {
   sigils: { count: 18, animation: 'loc-fall-pulse', size: [3, 3], duration: [9, 6], drift: [-18, 36] },
   // Candle-light rising slow and swelling as it goes: fewer, bigger, and each one breathes.
   radiance: { count: 14, animation: 'loc-rise-swell', size: [3, 4], duration: [11, 7], drift: [-24, 48] },
+  // Thought hanging in the air: rings that never fall, wandering slowly at whatever height they woke at.
+  drift: { count: 12, animation: 'loc-hang-wander', size: [4, 5], duration: [18, 10], drift: [-60, 120] },
+  // Bolts, not motes: a few, standing still, dark almost all of the time and lit for a frame. `drift` is the bolt's HEIGHT here.
+  lightning: { count: 7, animation: 'loc-flash', size: [3, 1.5], duration: [5, 7], drift: [-120, 240], stretch: 22 },
+  // Snow driven sideways: fast, thin, and every flake on the same wind.
+  blizzard: { count: 40, animation: 'loc-drive', size: [1.5, 1.5], duration: [1.3, 1.1], drift: [-300, 120], stretch: 5 },
 };
 
 function useField(kind: AmbienceKind, density: number) {

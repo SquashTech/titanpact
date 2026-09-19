@@ -3,10 +3,10 @@
 // the presentation fields feed locationArt/ActIntroScreen.
 
 import type { TypeId } from '../engine/content';
-import { ELDER_BOUGH_ID, ENDBRINGER_ID, MANTICORE_ID, DRAGON_ID, KRAKEN_ID, SERAPH_ID, SKELETON_KING_ID, YUGZULACH_ID } from './enemies';
+import { ELDER_BOUGH_ID, ENDBRINGER_ID, MANTICORE_ID, DRAGON_ID, KRAKEN_ID, ROC_ID, SERAPH_ID, SKELETON_KING_ID, SPHINX_ID, WENDIGO_ID, YUGZULACH_ID } from './enemies';
 
 /** Particle-field motion (docs/locations.md §4). */
-export type AmbienceKind = 'fireflies' | 'embers' | 'snow' | 'rain' | 'spores' | 'sigils' | 'radiance';
+export type AmbienceKind = 'fireflies' | 'embers' | 'snow' | 'rain' | 'spores' | 'sigils' | 'radiance' | 'drift' | 'lightning' | 'blizzard';
 
 export interface LocationDefinition {
   id: string;
@@ -156,6 +156,48 @@ export const locations: Record<string, LocationDefinition> = {
     tintRgb: '246, 226, 160',
     ambience: 'radiance',
     unlock: 'location.holySanctum',
+  },
+
+  // Three more bought Locations (2026-09-19, per user direction), each whose warden covers a type
+  // no base Guardian does — Mind, Storm, Frost. Two shared types and one from elsewhere apiece, so
+  // none reads as a base Location with different weather.
+  dreamingSpires: {
+    id: 'dreamingSpires',
+    name: 'Dreaming Spires',
+    omen: 'The towers here were built by someone asleep, and they are still dreaming them.',
+    spawnTypes: ['Mind', 'Arcane', 'Spirit'],
+    affinity: ['Mind', 'Arcane', 'Spirit'],
+    exclusiveHeroIds: [],
+    guardianFinalEnemyId: SPHINX_ID,
+    tintRgb: '224, 110, 170',
+    ambience: 'drift',
+    unlock: 'location.dreamingSpires',
+  },
+
+  thunderAerie: {
+    id: 'thunderAerie',
+    name: 'Thunder Aerie',
+    omen: 'The storm does not pass over this peak. It lives here.',
+    spawnTypes: ['Storm', 'Arcane', 'Beast'],
+    affinity: ['Storm', 'Arcane', 'Beast'],
+    exclusiveHeroIds: [],
+    guardianFinalEnemyId: ROC_ID,
+    tintRgb: '180, 140, 245',
+    ambience: 'lightning',
+    unlock: 'location.thunderAerie',
+  },
+
+  frozenReach: {
+    id: 'frozenReach',
+    name: 'Frozen Reach',
+    omen: 'The ships here never made it back. Neither did the ice.',
+    spawnTypes: ['Frost', 'Water', 'Stone'],
+    affinity: ['Frost', 'Water', 'Stone'],
+    exclusiveHeroIds: [],
+    guardianFinalEnemyId: WENDIGO_ID,
+    tintRgb: '150, 214, 224',
+    ambience: 'blizzard',
+    unlock: 'location.frozenReach',
   },
 };
 

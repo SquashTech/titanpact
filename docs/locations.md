@@ -260,9 +260,12 @@ weighs them, since a run cannot know its next place any earlier.
 One card is no choice: `enterAct` takes a lone candidate silently and the arrival screen
 says where. It only happens on a dev run that opened somewhere other than Wild's Edge.
 
-### A bought Location — the Holy Sanctum (2026-09-19)
+### Bought Locations — the Holy Sanctum, Dreaming Spires, Thunder Aerie, Frozen Reach (2026-09-19)
 
-The first place the Constellation sells (`docs/constellation.md` §11 phase 5, built ahead of
+The Sanctum is the first place the Constellation sells; the other three followed the same
+day on the same seam, each with a warden of a type no base Guardian covers (Mind, Storm,
+Frost) and three new ambience kinds (`drift`, `lightning`, `blizzard`; `docs/constellation.md`
+§11 phase 5 has each one's kit and look). What follows is the seam itself. (`docs/constellation.md` §11 phase 5, built ahead of
 the rest per user direction). `LocationDefinition.unlock` names its offer, and it is in a
 run's pool only while that offer is held: `locationPool(profile.purchases)` in
 `src/run/locations.ts`, read once where the act's offer is drawn. It is drawn **beside** the

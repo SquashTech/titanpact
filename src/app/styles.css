@@ -24623,8 +24623,18 @@ textarea,
 
 .location-motes[data-ambience="snow"] .location-mote,
 .location-motes[data-ambience="rain"] .location-mote,
-.location-motes[data-ambience="sigils"] .location-mote {
+.location-motes[data-ambience="sigils"] .location-mote,
+.location-motes[data-ambience="blizzard"] .location-mote {
   top: -6%;
+}
+
+/* The two kinds that neither rise nor fall start where they stand. */
+.location-motes[data-ambience="drift"] .location-mote {
+  bottom: 20%;
+}
+
+.location-motes[data-ambience="lightning"] .location-mote {
+  top: 36%;
 }
 
 /* Embers are the one kind that should look hot rather than tinted. */
@@ -24661,6 +24671,31 @@ textarea,
   box-shadow: 0 0 10px 3px rgba(var(--node-rgb), 0.24);
 }
 
+/* A ring, not a dot: a thought with nothing in it. */
+.location-motes[data-ambience="drift"] .location-mote {
+  background: none;
+  border: 1px solid rgba(var(--node-rgb), 0.85);
+  box-shadow: 0 0 8px 1px rgba(var(--node-rgb), 0.35), inset 0 0 4px rgba(var(--node-rgb), 0.35);
+}
+
+/* A bolt: a tall slanted streak, white-hot at the top and gone by the foot,
+   inside a glow wide enough to light the sky around it — the glow IS the
+   flash; the streak is what it came down. Height is the particle's
+   `stretch`; its place up the sky is --drift, since a bolt does not travel. */
+.location-motes[data-ambience="lightning"] .location-mote {
+  border-radius: 2px;
+  background: linear-gradient(180deg, #ffffff, #ffffff 20%, rgba(var(--node-rgb), 0.95) 55%, transparent);
+  box-shadow: 0 0 18px 4px rgba(255, 255, 255, 0.45), 0 0 90px 40px rgba(var(--node-rgb), 0.3);
+  transform: translateY(var(--drift)) rotate(-9deg);
+}
+
+/* A driven flake: a short streak leaning into the wind, matte like snow. */
+.location-motes[data-ambience="blizzard"] .location-mote {
+  border-radius: var(--radius-pill);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(var(--node-rgb), 0.5));
+  box-shadow: none;
+}
+
 /* Candle-light: a white core in a wide soft halo, the brightest mote there is,
    and the only kind that swells as it rises (loc-rise-swell). */
 .location-motes[data-ambience="radiance"] .location-mote {
@@ -24674,6 +24709,72 @@ textarea,
    particles are actually falling through — which is why the existing
    `title-ember-rise` animates `bottom` too. `transform` is left free for
    drift, scale and rotation. */
+
+/* Hangs: a slow rise of a third of the sky over the whole cycle, wandering
+   out and back, so nothing ever arrives or leaves — it was always there. */
+@keyframes loc-hang-wander {
+  0% {
+    bottom: 20%;
+    transform: translateX(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateX(var(--drift));
+    opacity: 0.95;
+  }
+  85% {
+    opacity: 0.7;
+  }
+  100% {
+    bottom: 56%;
+    transform: translateX(calc(var(--drift) * 0.3));
+    opacity: 0;
+  }
+}
+
+/* Dark for almost the whole cycle, then lit for a frame and a flicker after
+   it. The bolt never moves; --drift set its height once (see the mote rule). */
+@keyframes loc-flash {
+  0%, 88% {
+    opacity: 0;
+  }
+  89% {
+    opacity: 1;
+  }
+  91% {
+    opacity: 0.15;
+  }
+  93% {
+    opacity: 0.9;
+  }
+  97%, 100% {
+    opacity: 0;
+  }
+}
+
+/* Driven: top to bottom fast and a long way sideways, every flake leaning
+   the same way, so the field reads as one wind rather than falling snow. */
+@keyframes loc-drive {
+  0% {
+    top: -6%;
+    transform: translateX(0) rotate(38deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.85;
+  }
+  90% {
+    opacity: 0.7;
+  }
+  100% {
+    top: 106%;
+    transform: translateX(var(--drift)) rotate(38deg);
+    opacity: 0;
+  }
+}
 
 /* Rises slowly and BREATHES: scale swells and eases twice on the way up,
    so the field reads as candle-light rather than embers. */

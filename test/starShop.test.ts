@@ -85,5 +85,9 @@ test('star shop: a bought Location joins the pool the road draws from, and only 
   const held = locationPool(['location.holySanctum']);
   assert.ok(held.includes('holySanctum'));
   assert.strictEqual(held.length, base.length + 1, 'a purchase adds a place, never replaces one');
+  // Every bought place at once: the road still offers two, and the base five are still in it.
+  const all = locationPool(Object.values(locations).flatMap((l) => (l.unlock ? [l.unlock] : [])));
+  assert.strictEqual(all.length, Object.keys(locations).length - 1, 'a held offer opens its place and nothing else');
+  for (const id of base) assert.ok(all.includes(id));
   assert.ok(unvisitedLocationIds(['wildsEdge', 'holySanctum'], held).every((id) => id !== 'holySanctum'), 'a bought place is still visited once');
 });

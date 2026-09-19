@@ -1,4 +1,4 @@
-// Non-recruitable AUTHORED enemies: the seven Guardian champions and the Endbringer. Same shape as
+// Non-recruitable AUTHORED enemies: the ten Guardian champions and the Endbringer. Same shape as
 // HeroDefinition but a separate pool from heroes.ts, which is what lets isRecruitable exclude it —
 // a KO'd champion never produces a Recruit Contract offer.
 //
@@ -160,6 +160,51 @@ export const enemies: Record<string, HeroDefinition> = {
     growthGrades: CHAMPION_GRADES,
   },
 
+  // The Dreaming Spires' Guardian (2026-09-19). The riddle: Distort bends the moment (−20 Int on
+  // one hero, and sets Stasis Field), and Hindsight then lands at ×2 under it — late, at −1
+  // priority, which Speed 35 makes no worse. Psychokinesis is the lion's body, a 100-power
+  // physical hand, and Disorient scrambles both heroes at once. The slowest champion but the
+  // Elder Bough, and like it, it sets up in the open and dares you to break the field first.
+  sphinx: {
+    id: 'sphinx',
+    name: 'Sphinx',
+    types: ['Mind', 'Ancient'],
+    baseStats: { hp: 360, attack: 70, defense: 80, intelligence: 95, wisdom: 90, speed: 35, manaPool: 150, mpRegen: 20 },
+    moveIds: ['distort', 'hindsight', 'psychokinesis', 'disorient'],
+    starter: false,
+    growthGrades: CHAMPION_GRADES,
+  },
+
+  // The Thunder Aerie's Guardian (2026-09-19). The fastest champion — 90, the fastest authored
+  // hero's number, so a Speed hero still ties it and every priority bracket beats it. The kit is
+  // the Conduct engine: Storm Lash marks one hero, Ionize marks both, and Ion Cascade arcs across
+  // the pair at ×2 on anything marked; Skyfall is the dive, 90 physical off 90 Attack. Glass
+  // for a Guardian (320 HP, 65 Def — the King keeps the floor) — it is meant to be caught, not outlasted.
+  roc: {
+    id: 'roc',
+    name: 'Roc',
+    types: ['Storm', 'Ancient'],
+    baseStats: { hp: 320, attack: 90, defense: 65, intelligence: 85, wisdom: 60, speed: 90, manaPool: 150, mpRegen: 20 },
+    moveIds: ['stormLash', 'ionize', 'ionCascade', 'skyfall'],
+    starter: false,
+    growthGrades: CHAMPION_GRADES,
+  },
+
+  // The Frozen Reach's Guardian (2026-09-19). The Freeze engine at boss scale: Deep Chill freezes
+  // one hero for 25, Permafrost both for 45, and then Cold Snap (physical, ×2 on a Frozen hero,
+  // spending the mark) and Absolute Zero (120, only on a Frozen hero) are the two payoffs on
+  // the two pipelines. Freeze halves Speed and a switch clears it — so the answer is the bench,
+  // and the fight is whether you can afford the pivots. The heaviest body of the bought four.
+  wendigo: {
+    id: 'wendigo',
+    name: 'Wendigo',
+    types: ['Frost', 'Ancient'],
+    baseStats: { hp: 400, attack: 85, defense: 85, intelligence: 80, wisdom: 60, speed: 40, manaPool: 150, mpRegen: 20 },
+    moveIds: ['deepChill', 'coldSnap', 'absoluteZero', 'permafrost'],
+    starter: false,
+    growthGrades: CHAMPION_GRADES,
+  },
+
   // --- The Threshold — the Titan's Herald, what walks out when five seals are broken (docs/lore.md §7) ---
   // The finale's last combatant, and the only mono-Ancient thing in the game. It enters LAST,
   // after five unsealed champions, so it is authored as the fight's ending rather than its
@@ -249,11 +294,14 @@ export const ELDER_BOUGH_ID = 'elderBough';
 export const DRAGON_ID = 'dragon';
 export const SKELETON_KING_ID = 'skeletonKing';
 export const SERAPH_ID = 'seraph';
+export const SPHINX_ID = 'sphinx';
+export const ROC_ID = 'roc';
+export const WENDIGO_ID = 'wendigo';
 
 /** The Threshold's, and the only mono-Ancient id in the game (docs/lore.md §7). */
 export const ENDBRINGER_ID = 'endbringer';
 
-/** Every Guardian champion, in no particular order — a run breaks five of them; the Seraph only stands in a run that bought its Sanctum. */
+/** Every Guardian champion, in no particular order — a run breaks five of them; the last four stand only in a run that bought their Location. */
 export const CHAMPION_IDS: readonly string[] = [
   MANTICORE_ID,
   YUGZULACH_ID,
@@ -262,6 +310,9 @@ export const CHAMPION_IDS: readonly string[] = [
   DRAGON_ID,
   SKELETON_KING_ID,
   SERAPH_ID,
+  SPHINX_ID,
+  ROC_ID,
+  WENDIGO_ID,
 ];
 
 export function unsealedIdFor(championId: string): string {

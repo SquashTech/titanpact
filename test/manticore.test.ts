@@ -74,6 +74,9 @@ test('manticore: every location fields a Guardian champion, and the finale bench
     'necropolis',
     'theThreshold',
     'holySanctum',
+    'dreamingSpires',
+    'thunderAerie',
+    'frozenReach',
   ]);
   // appendFinalEnemy no-ops on an unknown id, so a dangling id silently skips the entrance.
   for (const location of withChampions) assert.ok(location.guardianFinalEnemyId! in enemies);

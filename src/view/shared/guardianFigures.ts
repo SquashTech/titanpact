@@ -187,6 +187,85 @@ const GUARDIANS: Record<string, Draw> = {
       + burst + C(50, 54, 9, p.ll) + C(50, 54, 7, p.l, 'opacity=".6"')
       + ey(50, 54, 5);
   },
+
+  // The Sphinx (Mind): a lion recumbent — haunches at the left edge, two forelegs stretched out
+  // past the right — under a striped nemes whose crown rises off the top of the frame and whose
+  // lappets fall to the shoulders either side of the face. The face is a smooth mask with the one
+  // eye set in it. The near foreleg lifts and comes down on an attack; a hit rocks the head back.
+  sphinx: (p, po, ey) => {
+    const paw = po === 'attack' ? -16 : po === 'hurt' ? 3 : 0;
+    const rock = po === 'hurt' ? -9 : po === 'attack' ? 3 : 0;
+    const lappet = (x: number, m: number) => [22, 30, 38, 46].map((y) => L(`M${x},${y} l${7 * m},0`, p.c, 2.6, 'opacity=".6"')).join('');
+    return E(54, 89, 44, 3, p.dd, 'opacity=".45"')
+      // Tail over the haunch, the haunch, the hind paw.
+      + L('M10,66 C-4,62 -8,40 8,34', p.d, 4) + C(8, 34, 4.2, p.d)
+      + E(20, 68, 18, 18, p.d) + P('2,88 6,78 26,78 28,88', p.d) + L('M8,88 l-2,3 M14,88 l0,3 M20,88 l2,3', p.ll, 1.2)
+      // The body, long and low, the chest rising under the head.
+      + D('M10,86 C6,58 26,46 56,46 C76,46 84,50 84,58 L86,86 Z', p.c) + D('M18,84 C18,64 34,54 56,54', p.l, 'opacity=".28"')
+      + D('M62,86 L64,52 L100,52 L100,70 C100,80 92,86 84,86 Z', p.c) + D('M82,60 C90,60 96,64 96,72', p.l, 'opacity=".25"')
+      // Two forelegs stretched along the ground: the far one flat, the near one on its shoulder pivot.
+      + P('64,88 66,76 100,76 106,88', p.d) + L('M96,88 l2,3 M102,88 l2,3', p.ll, 1.2)
+      + G(`rotate(${paw} 72 74)`, P('70,88 72,72 106,72 114,88', p.c) + L('M102,88 l2,3 M108,88 l2,3 M96,88 l0,3', p.ll, 1.3) + (po === 'attack' ? sparks(110, 84, p.ll, 3) : ''))
+      // The nemes: crown block off the top of the frame, lappets to the shoulders, a brow band.
+      + G(`rotate(${rock} 82 52)`,
+        D('M62,54 L66,12 C66,-6 98,-6 98,12 L102,54 L92,54 L90,20 L74,20 L72,54 Z', p.d)
+        + lappet(63, 1) + lappet(101, -1)
+        + D('M70,20 L72,4 C74,-4 90,-4 92,4 L94,20 Z', p.dd, 'opacity=".55"')
+        + R(68, 12, 28, 4, p.c, 1) + L('M70,12 h24', p.ll, 1, 'opacity=".6"')
+        // The mask: a face with nothing on it but the eye.
+        + D('M72,20 L92,20 L92,40 C92,50 72,50 72,40 Z', p.l) + E(82, 26, 7, 4, p.ll, 'opacity=".45"')
+        + ey(82, 32, 5.2, po === 'hurt' ? 'narrow' : po === 'attack' ? 'wide' : 'stare'));
+  },
+
+  // The Roc (Storm): a bird whose wings pass both edges of the frame, lightning threaded through
+  // the pinions, talons on the ground and a hooked beak turned right. The wings throw up and a
+  // bolt leaves the beak on an attack; a hit drops them.
+  roc: (p, po, ey) => {
+    const lift = po === 'attack' ? -20 : po === 'hurt' ? 16 : 0;
+    const wing = (m: number) => G(`scale(${m} 1) translate(${m < 0 ? -100 : 0} 0)`,
+      D(`M50,46 C62,${22 + lift} 92,${-8 + lift} 134,${-4 + lift} C114,${10 + lift} 102,26 98,42 C86,56 66,60 50,58 Z`, p.c)
+      + L(`M58,52 C74,${36 + lift} 100,${16 + lift} 126,${0 + lift}`, p.d, 1.4, 'opacity=".7"') + L(`M62,56 C80,${44 + lift} 100,${30 + lift} 112,${22 + lift}`, p.d, 1.2, 'opacity=".5"')
+      + L(`M74,${38 + lift} l6,-4 l-3,8 l7,-5 M100,${18 + lift} l5,-3 l-2,7 l6,-4`, p.ll, 1.6, 'opacity=".9"'));
+    const bolt = po === 'attack' ? L('M86,42 l8,10 l-6,3 l10,12 l-5,2 l8,10', p.ll, 2.2) + sparks(96, 70, p.ll, 3) : '';
+    return E(50, 89, 24, 3, p.dd, 'opacity=".5"')
+      + P('40,70 50,98 60,70', p.d) + P('44,70 50,90 56,70', p.c, 'opacity=".5"')
+      + wing(1) + wing(-1)
+      + E(50, 58, 17, 22, p.c) + E(48, 62, 8, 13, p.l, 'opacity=".3"')
+      + L('M42,78 L34,88 M46,80 L44,88 M54,80 L56,88 M58,78 L66,88', p.dd, 3) + L('M34,88 l-4,2 M44,88 l-2,3 M56,88 l2,3 M66,88 l4,2', p.dd, 2.2)
+      + C(60, 36, 12, p.c) + D('M70,32 C86,30 92,40 84,46 L70,44 Z', p.ll) + L('M72,40 L84,42', p.dd, 1)
+      + P('52,26 55,6 60,26', p.d) + P('58,26 62,4 66,26', p.d) + P('64,28 70,10 72,28', p.d)
+      + bolt
+      + ey(63, 34, 4.4);
+  },
+
+  // The Wendigo (Frost): gaunt and far too tall — antlers branching off the top of the frame, a
+  // stag's skull, a ribcage, arms that hang past the knees and end in claws. It rears and the
+  // claws come up on an attack; a hit folds it forward.
+  wendigo: (p, po, ey) => {
+    const reach = po === 'attack' ? -48 : po === 'hurt' ? 10 : 0;
+    const fold = po === 'hurt' ? 8 : 0;
+    const antler = (m: number) => G(`scale(${m} 1) translate(${m < 0 ? -100 : 0} 0)`,
+      L('M46,2 C38,-8 30,-22 36,-40 M40,-12 L30,-22 M37,-26 L26,-30 M36,-34 L40,-46', p.d, 3) + L('M46,2 C38,-8 30,-22 36,-40', p.l, 1, 'opacity=".4"'));
+    const arm = (m: number) => G(`scale(${m} 1) translate(${m < 0 ? -100 : 0} 0)`,
+      L(`M40,${34 + fold} C26,${44 + reach / 2} 12,${58 + reach} 10,${80 + reach}`, p.c, 4.5)
+      + L(`M10,${80 + reach} l-5,8 M10,${80 + reach} l0,9 M10,${80 + reach} l5,8`, p.ll, 1.8));
+    return E(50, 89, 16, 2.5, p.dd, 'opacity=".5"')
+      // Legs, backward-kneed, on hooves.
+      + L('M44,60 L36,72 L44,88', p.d, 5) + L('M56,60 L64,72 L56,88', p.d, 5) + P('40,88 48,88 45,93', p.dd) + P('52,88 60,88 55,93', p.dd)
+      // The torso, a ribcage showing through.
+      + G(`translate(0 ${fold})`,
+        D('M38,62 C36,42 42,26 50,24 C58,26 64,42 62,62 Z', p.c)
+        + L('M42,40 q8,3 16,0 M41,46 q9,4 18,0 M42,52 q8,3 16,0 M50,36 v20', p.dd, 1.4, 'opacity=".7"')
+        + E(50, 30, 9, 5, p.l, 'opacity=".3"'))
+      + arm(1) + arm(-1)
+      // Neck and the stag's skull, the muzzle down.
+      + L(`M50,${26 + fold} L50,${12 + fold}`, p.c, 5)
+      + G(`translate(0 ${fold})`,
+        D('M40,14 C40,-2 60,-2 60,14 L58,22 L42,22 Z', p.ll) + P('44,20 50,34 56,20', p.ll) + L('M47,26 h6 M48,30 h4', p.d, 1)
+        + C(56, 10, 3.4, '#07050a')
+        + antler(1) + antler(-1) + P('47,4 50,-10 53,4', p.d)
+        + ey(44, 10, 3.8, po === 'attack' ? 'wide' : po === 'hurt' ? 'narrow' : 'stare'));
+  },
 };
 
 /** The Skeleton King's crown: a band round the skull and four points, in his own bone tones. */
