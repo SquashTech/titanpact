@@ -17,7 +17,7 @@ import { progressionTable } from '../../src/data/progression';
 import { enemies, finaleEnemies, ENDBRINGER_ID, titanEyes, EYE_PHASES } from '../../src/data/enemies';
 import { encounterKindOf, encounterSeedFor, nodeEncounter } from '../../src/run/encounters';
 import { allCombatants } from '../../src/data/content';
-import { guildHallOffers, CONTRACT_PURCHASE_COST } from '../../src/data/recruitment';
+import { guildHallOffersFor, CONTRACT_PURCHASE_COST } from '../../src/data/recruitment';
 import { SCRIBE_PIPS_EACH, SCROLL_CACHE_COUNT, buyScroll, canBuyScroll, grantMastery } from '../../src/run/mastery';
 
 import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry, ROSTER_CAP, TOTAL_ACTS, type RunState, type RosterEntry } from '../../src/run/state';
@@ -52,8 +52,11 @@ import {
 import { MOVE_CAP, recordMoveOffer, grantOfferedMove, grantMove } from '../../src/run/progression';
 import { claimContract, claimContractReplacing, deriveContractOffer, heroPool, isRecruitable, pickContractOffers, recruitFromGuildHall, recruitFromGuildHallReplacing, freshRosterId, buyContract } from '../../src/run/recruitment';
 
-// The base game's pool: no bundle held (run/recruitment.ts heroPool).
-const heroes = heroPool(allHeroes);
+// The run's pool (run/recruitment.ts heroPool): the base game, plus whatever SIM_PURCHASES names —
+// a comma-separated list of Constellation offer ids, so a batch can hold a bundle.
+export const SIM_PURCHASES: readonly string[] = (process.env.SIM_PURCHASES ?? '').split(',').filter(Boolean);
+const heroes = heroPool(allHeroes, SIM_PURCHASES);
+const guildHallOffers = guildHallOffersFor(heroes);
 import { guildHallEntry } from '../../src/run/guildRecruit';
 import { ENCHANT_PRICE_BY_RARITY, rollGuildHallOffers, sellValueFor } from '../../src/run/shop';
 import { mentorMovePool, tutorMovePool } from '../../src/run/tutor';

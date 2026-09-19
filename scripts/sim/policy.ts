@@ -40,8 +40,8 @@ import { standingHp, standingRoster } from '../../src/run/wounds';
 import { heroes as allHeroes } from '../../src/data/heroes';
 import { heroPool } from '../../src/run/recruitment';
 
-// The base game's pool: no bundle held (run/recruitment.ts heroPool).
-const recruitPool = heroPool(allHeroes);
+// The same pool run.ts fields (SIM_PURCHASES).
+const recruitPool = heroPool(allHeroes, (process.env.SIM_PURCHASES ?? '').split(',').filter(Boolean));
 import { allCombatants } from '../../src/data/content';
 import { typeChart } from '../../src/data/typechart';
 import { buildCombatState } from '../../src/run/buildCombatState';

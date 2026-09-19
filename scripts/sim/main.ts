@@ -2,6 +2,7 @@
 // merges the shards and prints the report.
 //
 //   node dist/scripts/sim/main.js --runs 2000 --policy spread --out sim-report.txt
+//   SIM_PURCHASES=bundle.freeCompany ...   holds a Constellation offer for the batch (run.ts)
 
 import { fork } from 'child_process';
 import { cpus } from 'os';
