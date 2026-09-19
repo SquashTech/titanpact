@@ -116,10 +116,11 @@ import {
 } from '../run/enemyGen';
 import { CHAMPION_LEVEL_BONUS, encounterScaling, enemyLevelFor } from '../run/difficulty';
 import { ENCOUNTERS_PER_ACT, MAX_LEVEL, applyEncounterLevels, encounterXpKind, levelOf, xpForEncounter, xpForLevel, type HeroLevelUp } from '../run/growth';
-import { generateItinerary, locationForAct } from '../run/locations';
+import { chooseLocation, drawLocationCandidates, generateItinerary, locationChoiceDue, locationForAct } from '../run/locations';
 import { encounterKindOf, encounterSeedFor, nodeEncounter } from '../run/encounters';
 import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
 import { LocationProvider } from '../view/shared/LocationContext';
+import { LocationChoiceScreen } from '../view/run/LocationChoiceScreen';
 import { ProfileProvider } from '../view/shared/ProfileContext';
 import { starShopCatalog } from '../data/starShop';
 import { buyOffer, type StarShopOffer } from '../run/starShop';
@@ -154,6 +155,8 @@ type Screen =
   | { kind: 'draft'; optionIds: string[] }
   /** The act-boundary beat: five sockets, one per Guardian (docs/run-loop.md §4). */
   | { kind: 'pactSeal' }
+  /** Acts 2-5 open on a 1-of-2 (docs/locations.md §1): the offer is drawn once, when the seal is behind the player. */
+  | { kind: 'locationChoice'; candidateIds: string[] }
 
   /** Per-act arrival beat; reads its location off the run's itinerary. */
   | { kind: 'titanWake' }
@@ -234,6 +237,8 @@ const PLACELESS_SCREENS: ReadonlySet<Screen['kind']> = new Set([
   'titanWake',
   // Between two acts, and the property of neither.
   'pactSeal',
+  // Each place on offer lights its own card; the sky behind them belongs to none of them.
+  'locationChoice',
 
   // After the last fight: the Threshold's track drops and the binding plays in silence.
   'titanBound',
@@ -260,15 +265,15 @@ function addHeroes(run: RunState, heroIds: readonly string[], level?: number): R
 }
 
 /**
- * A fresh run from the drafted pair; map and itinerary drawn once for the whole run. A tutorial
- * run differs only in Act 1's map — its itinerary is drawn normally (Act 1 is always Wild's Edge
- * anyway) and `advanceToNextAct` generates Act 2 the ordinary way.
+ * A fresh run from the drafted pair, standing at Wild's Edge; every act after opens on the
+ * location choice (`enterAct`). A tutorial run differs only in Act 1's map, and
+ * `advanceToNextAct` generates Act 2 the ordinary way.
  */
 function createStartingRun(heroIds: readonly string[], tutorial: boolean, seenBeatIds: readonly string[]): RunState {
   return {
     ...addHeroes(createRunState(40), heroIds),
     map: tutorial ? generateTutorialMap(randomSeed()) : generateMap(randomSeed()),
-    locationIds: generateItinerary(randomSeed()),
+    locationIds: [ACT_ONE_LOCATION_ID],
     tutorial,
     // Carried across the draft: the intro beat plays on the draft screen, before this run exists.
     tutorialSeenBeatIds: [...seenBeatIds],
@@ -276,16 +281,16 @@ function createStartingRun(heroIds: readonly string[], tutorial: boolean, seenBe
 }
 
 /**
- * "Visit Location": a normal run whose Act 1 is the chosen place (breaking generateItinerary's
- * Wild's-Edge-first rule on purpose) with a random full roster at level 1.
+ * "Visit Location": a normal run whose Act 1 is the chosen place (breaking the Wild's-Edge-first
+ * rule on purpose) with a random full roster at level 1. Wild's Edge is then on offer like any
+ * other unvisited place, so the run still has a real choice every act.
  */
 function createLocationVisitRun(locationId: string): RunState {
   const heroIds = shuffled(Object.keys(heroes)).slice(0, ROSTER_CAP);
-  const rest = shuffled(Object.keys(locations).filter((id) => id !== locationId));
   return {
     ...addHeroes(createRunState(40), heroIds),
     map: generateMap(randomSeed()),
-    locationIds: [locationId, ...rest].slice(0, TOTAL_ACTS),
+    locationIds: [locationId],
   };
 }
 
@@ -982,8 +987,26 @@ export function App() {
   }
 
   /** The arrival screen — and the moment the act's music is allowed to start (see `trackId`). */
+  /**
+   * The seal is behind the player; the next act opens on where to go, then on arriving there.
+   * The offer is drawn here, once — a run never knows its next place before this beat. One
+   * candidate is no choice, so it is taken silently and the arrival screen says where.
+   */
   function enterAct() {
     setActBreak(false);
+    if (locationChoiceDue(playerRun)) {
+      const candidateIds = drawLocationCandidates(playerRun.locationIds, randomSeed());
+      if (candidateIds.length > 1) {
+        setScreen({ kind: 'locationChoice', candidateIds });
+        return;
+      }
+      if (candidateIds.length === 1) setPlayerRun(chooseLocation(playerRun, candidateIds[0]));
+    }
+    setScreen({ kind: 'actIntro' });
+  }
+
+  function handleLocationChosen(locationId: string) {
+    setPlayerRun(chooseLocation(playerRun, locationId));
     setScreen({ kind: 'actIntro' });
   }
 
@@ -1019,13 +1042,15 @@ export function App() {
     setTrack(trackId);
   }, [trackId]);
 
-  // The itinerary is drawn once at run start, so the track after this one is known rather than
-  // guessed; from the title the next thing needed is Act 1's, always the same place. Warmed so
-  // an act break doesn't sit in silence through a multi-megabyte download.
-  const nextLocationId = screen.kind === 'title' ? ACT_ONE_LOCATION_ID : playerRun.locationIds[playerRun.actNumber] ?? null;
+  // A run never knows its next place before the choice, so the tracks warmed are the offer's:
+  // both candidates while the player weighs them, so the one picked doesn't arrive in silence
+  // through a multi-megabyte download. From the title the next thing needed is Act 1's, always
+  // the same place.
+  const nextLocationIds = screen.kind === 'title' ? [ACT_ONE_LOCATION_ID] : screen.kind === 'locationChoice' ? screen.candidateIds : [];
+  const nextLocationKey = nextLocationIds.join(',');
   useEffect(() => {
-    if (hasTrack(nextLocationId)) prefetchTrack(nextLocationId);
-  }, [nextLocationId]);
+    for (const id of nextLocationKey.split(',')) if (hasTrack(id)) prefetchTrack(id);
+  }, [nextLocationKey]);
 
   return (
     <LocationProvider location={ambientLocation}>
@@ -1098,6 +1123,10 @@ export function App() {
       )}
 
       {screen.kind === 'titanWake' && <TitanWakeScreen onDone={enterAct} />}
+
+      {screen.kind === 'locationChoice' && (
+        <LocationChoiceScreen run={playerRun} candidateIds={screen.candidateIds} onChoose={handleLocationChosen} />
+      )}
 
       {screen.kind === 'herald' && <HeraldScreen onContinue={() => setScreen(screen.next)} />}
 

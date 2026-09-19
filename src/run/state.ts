@@ -142,7 +142,11 @@ export interface RunState {
   encountersWon: number;
   /** 1-indexed. */
   actNumber: number;
-  /** One location id per act, index 0 = Act 1. Empty on throwaway RunStates; locationForAct falls back. */
+  /**
+   * Where the run has been and where it stands, index 0 = Act 1 — a history, appended by the
+   * act's location choice (run/locations.ts), never a plan. Empty on throwaway RunStates;
+   * locationForAct falls back.
+   */
   locationIds: readonly string[];
   /** Appended on each Guardian win, in act order — the Pact Seal's filled sockets and the finale's enemy side. */
   brokenSeals: readonly BrokenSeal[];

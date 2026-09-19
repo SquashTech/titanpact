@@ -1399,13 +1399,10 @@ Endbringer already out is exactly what it is for.
   §6): Act 1 measures 79% cleared against 85 under the old curve, Act 5 92 against 82. The
   Skirmish's offset and the hire's +1 are the Act 1 levers; gear from Act 3, a second item for
   the Guardian, or passives through the loadout seam are Act 5's.
-- **Per-location choice.** Acts now happen in named Locations with their own
-  faction, type affinity and arrival screen (`locations.md`, 2026-08-28), but the
-  itinerary is currently drawn *for* the player. The decided design — **each act
-  offers 2 named locations and the player picks one** — is not built yet, and the
-  five non-Act-1 factions all have their own enemy content as of 2026-09-05 (Cultists,
-  Raiders, Fae, Vulcans, Undead), so no location falls back to Goblins any more. The
-  1-of-2 location choice is tracked in `locations.md` §5, not here.
+- **Per-location choice — built 2026-09-19.** Acts happen in named Locations with their
+  own spawn, type affinity and arrival screen (`locations.md`), and every seal act after
+  the first opens on the decided **1-of-2** (`LocationChoiceScreen`, between the Pact Seal
+  and the arrival screen; `locations.md` §1, §4). Nothing outstanding here.
 - **Visual path rendering.** `MapScreen` renders nodes grouped by row with
   reachable/visited/current/locked states, but does not draw connecting lines between
   them — a cosmetic gap, same "lowest priority, purely cosmetic" bucket as the

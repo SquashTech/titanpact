@@ -2,7 +2,8 @@
 // resolving what each node type grants. Pure RunState transforms.
 
 import type { HeroDefinition, StatKey, StatusId } from '../engine/content';
-import type { BrokenSeal, RunState, RosterEntry } from './state';
+import { SEAL_ACTS, type BrokenSeal, type RunState, type RosterEntry } from './state';
+import { FINALE_LOCATION_ID } from '../data/locations';
 import type { EncounterNodeKind } from './difficulty';
 import type { EnchantmentId, EquipmentDefinition, EquipmentRarity } from './equipment';
 import { actAllowsRarity, equipItem, equipmentIdFor, holdsItem, mergeIntoHeld, nextRarity, parseEquipmentId } from './equipment';
@@ -115,12 +116,17 @@ export function recordBrokenSeal(run: RunState, seal: BrokenSeal): RunState {
  * TOTAL_ACTS check.
  */
 export function advanceToNextAct(run: RunState, seed: number): RunState {
+  const actNumber = run.actNumber + 1;
+  // The Threshold is where five broken seals lead, not a place to pick, so it seats itself;
+  // a seal act seats nothing and opens on the location choice instead (run/locations.ts).
+  const locationIds = actNumber > SEAL_ACTS && run.locationIds.length < actNumber ? [...run.locationIds, FINALE_LOCATION_ID] : run.locationIds;
   return {
     ...mendRoster(run),
-    map: generateMap(seed, run.actNumber + 1),
+    map: generateMap(seed, actNumber),
     currentNodeId: null,
     visitedNodeIds: [],
-    actNumber: run.actNumber + 1,
+    actNumber,
+    locationIds,
   };
 }
 

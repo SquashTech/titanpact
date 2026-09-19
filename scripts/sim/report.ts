@@ -409,6 +409,12 @@ export function formatReport(
   out.push(liftTable('', agg.nodeChoices, (id) => id, 30));
   out.push('');
 
+  out.push('  LOCATION LIFT — acts 2-5 each offer two places and the walk takes one at random, so');
+  out.push('  this is which PLACE costs a run against the other it could have gone to. The offer is');
+  out.push('  what is left unvisited, so every place is offered about as often.');
+  out.push(liftTable('', agg.locationChoices, (id) => locations[id]?.name ?? id, 30));
+  out.push('');
+
   // --- Enemies ---
   out.push(heading('5. ENEMIES'));
   out.push(`  ${pad('enemy', 22)}${padStart('fights', 8)}${padStart('lose%', 8)}${padStart('DPR', 8)}${padStart('TPR', 8)}${padStart('KO/f', 7)}${padStart('die%', 7)}`);

@@ -1,10 +1,86 @@
 import * as assert from 'assert';
 import { test } from './harness';
-import { generateItinerary, locationForAct, affinityHeroIds, locationBias } from '../src/run/locations';
+import {
+  LOCATION_CHOICE_COUNT,
+  LocationChoiceError,
+  chooseLocation,
+  drawLocationCandidates,
+  generateItinerary,
+  locationChoiceDue,
+  locationForAct,
+  affinityHeroIds,
+  locationBias,
+  unbrokenSealLocationId,
+  unvisitedLocationIds,
+} from '../src/run/locations';
 import { ACT_ONE_LOCATION_ID, FINALE_LOCATION_ID, ITINERARY_POOL_IDS, locations } from '../src/data/locations';
 import { generateEncounter } from '../src/run/enemyGen';
+import { advanceToNextAct } from '../src/run/runProgress';
 import { heroes } from '../src/data/heroes';
-import { SEAL_ACTS, TOTAL_ACTS } from '../src/run/state';
+import { createRunState, SEAL_ACTS, TOTAL_ACTS, type RunState } from '../src/run/state';
+
+// --- The choice (docs/locations.md §1) ---
+
+function runAtActOne(): RunState {
+  return { ...createRunState(), locationIds: [ACT_ONE_LOCATION_ID] };
+}
+
+test('locations: the choice is due on every seal act after the first, and never on the finale', () => {
+  let run = runAtActOne();
+  assert.ok(!locationChoiceDue(run), 'Act 1 is fixed');
+  for (let act = 2; act <= SEAL_ACTS; act++) {
+    run = advanceToNextAct(run, act);
+    assert.ok(locationChoiceDue(run), `act ${act} should open on a choice`);
+    run = chooseLocation(run, drawLocationCandidates(run.locationIds, act)[0]);
+    assert.ok(!locationChoiceDue(run), `act ${act} is seated once picked`);
+  }
+  run = advanceToNextAct(run, 99);
+  assert.ok(!locationChoiceDue(run), 'the Threshold is not a choice');
+  assert.strictEqual(locationForAct(run.locationIds, TOTAL_ACTS).id, FINALE_LOCATION_ID);
+});
+
+test('locations: an act offers two of what is left, and the last seal act still has two', () => {
+  for (let seed = 1; seed <= 40; seed++) {
+    let run = runAtActOne();
+    for (let act = 2; act <= SEAL_ACTS; act++) {
+      run = advanceToNextAct(run, seed * 100 + act);
+      const offered = drawLocationCandidates(run.locationIds, seed * 100 + act);
+      assert.strictEqual(offered.length, LOCATION_CHOICE_COUNT, `seed ${seed} act ${act} offered ${offered.length}`);
+      assert.notStrictEqual(offered[0], offered[1]);
+      for (const id of offered) {
+        assert.ok(!run.locationIds.includes(id), `seed ${seed} act ${act} re-offered ${id}`);
+        assert.notStrictEqual(id, FINALE_LOCATION_ID);
+      }
+      run = chooseLocation(run, offered[seed % 2]);
+    }
+    // Exactly one seal location goes unvisited: the sixth seal (docs/lore.md §5).
+    assert.strictEqual(unvisitedLocationIds(run.locationIds).length, 1, `seed ${seed}`);
+    assert.strictEqual(unbrokenSealLocationId(run.locationIds), unvisitedLocationIds(run.locationIds)[0]);
+  }
+});
+
+test('locations: the offer is a pure function of the seed', () => {
+  assert.deepStrictEqual(drawLocationCandidates([ACT_ONE_LOCATION_ID], 7), drawLocationCandidates([ACT_ONE_LOCATION_ID], 7));
+});
+
+test('locations: a pick outside the offer, a repeat, or a pick when none is due is refused', () => {
+  let run = advanceToNextAct(runAtActOne(), 1);
+  assert.throws(() => chooseLocation(run, ACT_ONE_LOCATION_ID), LocationChoiceError);
+  assert.throws(() => chooseLocation(run, FINALE_LOCATION_ID), LocationChoiceError);
+  run = chooseLocation(run, 'necropolis');
+  assert.throws(() => chooseLocation(run, 'stormCoast'), LocationChoiceError);
+  assert.deepStrictEqual(run.locationIds, [ACT_ONE_LOCATION_ID, 'necropolis']);
+});
+
+test("locations: a Visit run standing anywhere still has Wild's Edge on offer later", () => {
+  // The dev route's Act 1 is the chosen place; the rule is only "never twice".
+  const offer = unvisitedLocationIds(['necropolis']);
+  assert.ok(offer.includes(ACT_ONE_LOCATION_ID));
+  assert.ok(!offer.includes('necropolis'));
+  assert.ok(!offer.includes(FINALE_LOCATION_ID));
+});
+
+// --- A whole itinerary at once (fixtures and dev routes) ---
 
 test('locations: Act 1 is always Wild\'s Edge, whatever the seed', () => {
   for (let seed = 1; seed <= 40; seed++) {

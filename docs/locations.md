@@ -51,10 +51,18 @@ It also puts the location decision on the same footing as everything else in the
 map is fully visible and priceable from the start of an act; a random location would be
 the only major strategic axis decided by luck the player cannot see coming.
 
-> **Implemented so far:** the itinerary (Act 1 fixed, acts 2-5 drawn without replacement)
-> and the per-act arrival screen. The **1-of-2 choice UI is not built yet** — the
-> itinerary is currently drawn *for* the player rather than chosen *by* them. Scoped in
-> §5.1.
+> **Built in full (2026-09-19):** `RunState.locationIds` is a **history** — where the run
+> has been and where it stands, never a plan — and every seal act after the first opens on
+> the **location choice** (`LocationChoiceScreen`, §4 "The location choice"), between the
+> Pact Seal and the arrival screen. `drawLocationCandidates` draws
+> `LOCATION_CHOICE_COUNT` = 2 of what is unvisited (`unvisitedLocationIds`: every seal
+> location the run has not stood in — so a "Visit Location" dev run that opens elsewhere has
+> Wild's Edge on offer later), `chooseLocation` seats the pick, and `advanceToNextAct`
+> seats the Threshold itself, since it is where the seals lead rather than a place to pick.
+> The offer is drawn flat off what is left and never weighted: sequencing is the decision.
+> `generateItinerary` survives for fixtures and the dev routes that stand a run past the
+> choices it would have made. The sim takes the offer at random and reports a **location
+> lift** table (which PLACE is the wall, matched against the one it could have gone to).
 
 ## 2. Weighting, not filtering
 
@@ -226,31 +234,49 @@ location supplies three things the sky reads:
 No art assets are involved. Everything is vector + CSS, so a location costs a paragraph of
 data and a path, not a commissioned background.
 
+### The location choice
+
+`src/view/run/LocationChoiceScreen.tsx` — the 1-of-2 that opens every seal act after the
+first (§1), shown after the Pact Seal and before the arrival screen. Two places, stacked
+(a horizon band is wide and a phone is not), each card a scene built from the same three
+things the arrival screen reads — its `tintRgb` on the card's own wash, its `ambience`
+at half density, its horizon band in front — plus one thing the arrival screen keeps back:
+**the warden on the skyline**. `guardianFinalEnemyId` is drawn through `HeroPortrait`
+(so it is the same generated figure the fight will show) standing behind the horizon band,
+dim and desaturated, its feet hidden by the silhouette so it reads as some way off. The
+domains sit over the band, where the glyphs' own glow reads best; Wild's Edge gets the
+words.
+
+The screen itself is **placeless** (`PLACELESS_SCREENS`), like the Pact Seal: gold sky,
+gold header, until a card is picked — then the screen's `--node-rgb` takes that place's
+tint, so the sky, the title bloom and the button all turn its colour, the warden comes
+forward, the other place steps back into the dark, and the readout swaps the prompt for the
+place's `omen`. The choice is felt before the button is pressed. Pick-then-confirm, the
+Banner's idiom: the button names the pick (*Set out for the Necropolis*), and the arrival
+screen's *Enter* is the next beat. Both candidates' tracks are prefetched while the player
+weighs them, since a run cannot know its next place any earlier.
+
+One card is no choice: `enterAct` takes a lone candidate silently and the arrival screen
+says where. It only happens on a dev run that opened somewhere other than Wild's Edge.
+
 ## 5. What is not built yet
 
 Everything below is a known gap, not an oversight. Roughly in the order that
 would make the system worth the ceremony it already has.
 
-### 5.1 The 1-of-2 location choice — the headline gap
+### 5.1 The 1-of-2 location choice — built (2026-09-19)
 
-§1 decided that **each act offers 2 named locations and the player picks one**.
-That is the whole reason this system beats a random roll, and it is the one part
-not written. Today `generateItinerary` draws all five up front and the player is
-simply told where they are.
+§1 decided that **each act offers 2 named locations and the player picks one**, and it
+is now what the run does (§1's note, §4 "The location choice"). Built exactly as scoped
+here: a `locationChoice` Screen before `actIntro`, `locationIds` a history, the draw
+moved from "draw all" to "draw 2 from what is left", `locationForAct` untouched.
 
-What it needs, and no more than this:
-
-- A `Screen` variant (`{ kind: 'locationChoice' }`) shown *before* `actIntro` on
-  every act after the first.
-- `RunState.locationIds` stops being a pre-drawn itinerary and becomes a
-  **history** of what has been visited, so the candidate draw excludes it. The
-  without-replacement bookkeeping already lives in `src/run/locations.ts`; it
-  moves from "draw all" to "draw 2 from what is left".
-- `locationForAct` keeps working unchanged — it already reads a list by index.
-
-Until it lands, acts 2-5 are effectively random-without-replacement, which is
-explicitly **not** the decided design. Do not read the current behaviour as a
-decision.
+What it leaves open, for the Constellation's purchased locations: the offer draws from
+**every** seal location the run has not stood in, so a bought seventh place simply joins
+the pool — but then two seals hold at the end of a run rather than one, and `lore.md` §5's
+"the sixth is why there is a world left" needs to become "the ones you never reached".
+The arithmetic that made the last act's choice real (five in the pool, four picks) also
+loosens: with seven, Act 5 offers 2 of 3. Neither is a problem; both are decisions.
 
 ### 5.2 The mob layer — built, then replaced
 
