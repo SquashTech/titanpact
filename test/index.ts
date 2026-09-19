@@ -60,6 +60,7 @@ import './save.test';
 import './wounds.test';
 import './profile.test';
 import './starShop.test';
+import './starterPacks.test';
 import './tutorial.test';
 import { run } from './harness';
 

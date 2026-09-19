@@ -415,3 +415,25 @@ None built. Where each lands when it is:
    - **8 stars** — three a hero, rounded down for the set. §3.4's question (do a bundle's
      heroes join the recruit pool?) is answered YES for bundles by construction — that is what
      a bundle IS — and still open for packs.
+
+7. **Phase 1 — BUILT 2026-09-19, per user direction, as the shake-up rather than the Foundry:**
+   `StarterPack` (`src/run/starterPacks.ts`, packs in `src/data/starterPacks.ts`), pack zero
+   **The Fourteen** derived from `HeroDefinition.starter`, `Profile.equippedPackId` (`'base'` by
+   default, decoded from an old file as such, and `equippedPack` falls back to pack zero when
+   the id names a pack not held or not shipped), the draft reading the equipped pack's
+   `heroIds` in `beginRun`, and the Constellation's first shelf as the radio — Equipped / Equip /
+   Locked with what opens it. The sim drafts from `SIM_PACK`.
+   - **A pack is not necessarily bought.** `PackUnlock` is `{ kind: 'clear' }` or
+     `{ kind: 'offer', offerId }`; the first pack costs no stars and opens on the profile's first
+     cleared run. **The Second String** (recut): the base roster's recruit-only heroes stood in
+     the draft, one a type — Cinder, Pincer, Flurry, Squall, Slate, Mordrax, Empyrean, Marrow,
+     Pixie, Sorrow, Trance, Gallant, Rex, Ursa. A player who has seen the fourteen through once
+     is handed fourteen others to open on. The name is a placeholder the designer may change.
+   - **§3.4 for a recut is moot:** its heroes are recruit-only already, so the twelve not
+     drafted are at the fork and the Guild Hall exactly as they always were, and the base
+     starters stay out of the run's pools as they always did. The question stays open for a
+     theme pack.
+   - **Everything on a shelf can be looked at before it is paid for** (per user direction): a
+     hero's face — in a pack, held or locked, or a bundle — opens its dossier
+     (`HeroDossierOverlay`), and a Location's row opens the place (`LocationPeekOverlay`: the
+     choice card at full size, its omen, its domains by name, who keeps it).

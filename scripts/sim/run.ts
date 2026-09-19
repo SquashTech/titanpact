@@ -4,6 +4,7 @@
 
 import type { StatKey } from '../../src/engine/content';
 import { heroes as allHeroes } from '../../src/data/heroes';
+import { starterPackById } from '../../src/data/starterPacks';
 import { rosterHeroes } from '../../src/data/content';
 import { absorbCompanions, companionCandidate, companionJoinDue, joinCompanion } from '../../src/run/companion';
 import { anyDown, canBuyMend, buyMend, mendPrice, mendRoster, recordWounds, reviveHero, standingRoster } from '../../src/run/wounds';
@@ -87,7 +88,8 @@ import { emptyTimeCounts, type ScreenKind, type TimeCounts } from './time';
 import { emptyKnockoutCounts, type KnockoutCounts } from './types';
 
 const EQUIPMENT_POOL = Object.values(equipment);
-const STARTER_IDS = Object.values(heroes).filter((h) => h.starter).map((h) => h.id);
+// The draft's pool: pack zero, or the Starter Pack SIM_PACK names (data/starterPacks.ts).
+const STARTER_IDS: readonly string[] = (process.env.SIM_PACK && starterPackById[process.env.SIM_PACK]?.heroIds) || Object.values(heroes).filter((h) => h.starter).map((h) => h.id);
 
 /** App.tsx `EncounterMapNodeType` — the reward lane keys off the MAP node, not the flattened encounter kind. */
 type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' | 'finale';

@@ -9442,6 +9442,114 @@ textarea,
   display: contents;
 }
 
+/* Faces are buttons now — a tap opens the dossier — and a pack's line-up wraps. */
+.star-shop-bundle-faces {
+  flex-wrap: wrap;
+}
+
+button.star-shop-bundle-face {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* A Starter Pack row: Equipped is lit, a locked one is dim but its faces still read. */
+.star-shop-pack.is-equipped {
+  border-color: rgba(224, 166, 60, 0.7);
+  box-shadow: var(--hairline), var(--elev-1), 0 0 0 1px rgba(224, 166, 60, 0.35) inset;
+}
+
+.star-shop-pack.is-locked .star-shop-bundle-faces {
+  opacity: 0.55;
+  filter: saturate(0.6);
+}
+
+.star-shop-pack-lock {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.star-shop-place.is-peekable {
+  cursor: pointer;
+}
+
+/* The Location peek (LocationPeekOverlay): the choice card at full size, facts under it. */
+.location-peek-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  border-top: 2px solid rgb(var(--node-rgb));
+}
+
+.location-peek-panel .location-peek-card {
+  flex: none;
+  height: 240px;
+  min-height: 240px;
+  cursor: default;
+}
+
+.location-peek-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 4px 4px;
+}
+
+.location-peek-omen {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+  font-style: italic;
+}
+
+.location-peek-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.location-peek-fact {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.location-peek-fact-label {
+  flex: none;
+  min-width: 68px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.location-peek-fact-value {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.location-peek-domain {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+}
+
+.location-peek-domain .element-glyph {
+  width: 14px;
+  height: 14px;
+  filter: drop-shadow(0 0 5px currentColor);
+}
+
 /* --- Run History (RunHistory.tsx, on the Records panel) -------------------
    Every run that ended, newest first. A row is folded to what the summary
    screen led with — the outcome, where and when, the team's faces — and

@@ -43,6 +43,8 @@ export interface Profile {
   runStartedAtPlaytimeMs: number | null;
   /** Constellation (star shop) offer ids bought (run/starShop.ts), each at most once. Stars are never un-earned; this is what draws the balance down. */
   purchases: string[];
+  /** The Starter Pack the next run drafts from (run/starterPacks.ts). 'base' by default; a pack not held falls back to it on read. */
+  equippedPackId: string;
   /** 0 until the first run is sealed. */
   firstPlayedAt: number;
   lastPlayedAt: number;
@@ -97,6 +99,7 @@ export function createProfile(): Profile {
     runHistory: [],
     runStartedAtPlaytimeMs: null,
     purchases: [],
+    equippedPackId: 'base',
     firstPlayedAt: 0,
     lastPlayedAt: 0,
     tutorialDone: false,
@@ -314,6 +317,8 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     // Deduplicated: an offer is held once. An id this build no longer sells is kept — it costs
     // nothing against the balance (starShop.ts) and comes back if the offer does.
     purchases: [...new Set(stringList(value.purchases))],
+    // 'base' on every file written before packs existed; an unknown id is harmless (equippedPack falls back).
+    equippedPackId: typeof value.equippedPackId === 'string' && value.equippedPackId ? value.equippedPackId : 'base',
     firstPlayedAt: count(value.firstPlayedAt),
     lastPlayedAt: count(value.lastPlayedAt),
     // The field is ABSENT on every profile written before the tutorial existed, and inferring it

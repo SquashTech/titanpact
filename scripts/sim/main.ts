@@ -3,6 +3,7 @@
 //
 //   node dist/scripts/sim/main.js --runs 2000 --policy spread --out sim-report.txt
 //   SIM_PURCHASES=bundle.freeCompany ...   holds a Constellation offer for the batch (run.ts)
+//   SIM_PACK=secondString ...              drafts from that Starter Pack instead of pack zero
 
 import { fork } from 'child_process';
 import { cpus } from 'os';

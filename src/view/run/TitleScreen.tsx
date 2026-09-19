@@ -20,6 +20,8 @@ interface Props {
   onEraseAllData: () => void;
   /** Spends stars on a Constellation offer (run/starShop.ts buyOffer) and re-reads the profile. */
   onBuyOffer: (offer: StarShopOffer) => void;
+  /** Equips a held Starter Pack for the next run (run/starterPacks.ts equipPack) and re-reads the profile. */
+  onEquipPack: (packId: string) => void;
   /** The parked run a Continue would resume, or null when there is none. */
   parkedRun: SaveSummary | null;
   /** Set when a stored run was refused on load — shown once so a vanished Continue is explained, not just missing. */
@@ -100,6 +102,7 @@ export function TitleScreen({
   onRefreshProfile,
   onEraseAllData,
   onBuyOffer,
+  onEquipPack,
   parkedRun,
   staleSaveReason,
   onContinueRun,
@@ -362,7 +365,7 @@ export function TitleScreen({
         <RecordsScreen profile={profile} onEraseAllData={onEraseAllData} onClose={() => setShowRecords(false)} />
       )}
       {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
-      {showShop && <StarShopScreen profile={profile} onBuy={onBuyOffer} onClose={() => setShowShop(false)} />}
+      {showShop && <StarShopScreen profile={profile} onBuy={onBuyOffer} onEquipPack={onEquipPack} onClose={() => setShowShop(false)} />}
     </div>
   );
 }

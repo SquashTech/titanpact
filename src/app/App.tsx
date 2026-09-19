@@ -108,6 +108,8 @@ import {
 import { TUTORIAL_ENCOUNTERS, TUTORIAL_LOCKS, TUTORIAL_PAYOUTS, TUTORIAL_SCRIPT } from '../data/tutorial';
 import { TutorialOverlay } from '../view/run/TutorialOverlay';
 import { generateStarterOptions } from '../run/draft';
+import { equipPack, equippedPack } from '../run/starterPacks';
+import { STARTER_PACKS } from '../data/starterPacks';
 import {
   generateEncounter,
   generateFinaleEncounter,
@@ -569,6 +571,11 @@ export function App() {
     setProfile(updateProfile((current) => buyOffer(current, starShopCatalog, offer)));
   }
 
+  /** Free and reversible (docs/constellation.md §3.3): the title dresses, the Constellation sells. */
+  function handleEquipPack(packId: string) {
+    setProfile(updateProfile((current) => equipPack(current, STARTER_PACKS, packId)));
+  }
+
   /** Abandon: the parked run is discarded, not just left behind. */
   function handleAbandonRun() {
     clearSave();
@@ -934,9 +941,8 @@ export function App() {
   }
 
   function beginRun(tutorial: boolean) {
-    const starterHeroIds = Object.values(heroes)
-      .filter((hero) => hero.starter)
-      .map((hero) => hero.id);
+    // The equipped Starter Pack's list (run/starterPacks.ts): pack zero is the fourteen starters.
+    const starterHeroIds = equippedPack(profile, STARTER_PACKS).heroIds;
     // The scripted run draws no candidates: Valor and Fang are the pact, and the draft screen
     // is where Valor says so. The run itself is only built on confirm, so the flag has to be
     // parked on `playerRun` here for the intro beat to know it is a tutorial.
@@ -1070,6 +1076,7 @@ export function App() {
           onRefreshProfile={() => setProfile(readProfile())}
           onEraseAllData={handleEraseAllData}
           onBuyOffer={handleBuyOffer}
+          onEquipPack={handleEquipPack}
           parkedRun={saveSlot.save ? saveSummary(saveSlot.save) : null}
           staleSaveReason={saveSlot.staleReason}
           onContinueRun={handleContinueRun}

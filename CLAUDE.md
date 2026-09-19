@@ -254,7 +254,12 @@ don't silently override it.
   **Patch** (Mech, the Wisdom-85 medic drone on the repair column) and **Vex** (Beast, the
   Speed-110 vampire bat that feeds on Bleed, its Shadow turn a graft). **Skyshear** took Storm's third seat the same day: the slate's
   magical column at Int 95 / Speed 100. The base is 42 again and `test/roster` pins three a
-  type, one starter, over `heroPool(heroes)` with nothing bought.
+  type, one starter, over `heroPool(heroes)` with nothing bought. **Starter Packs are BUILT**
+  (same day, `docs/constellation.md` §11 phase 7): the draft reads `Profile.equippedPackId`
+  (`src/run/starterPacks.ts`), pack zero is the fourteen starters, and **the Second String** —
+  the base roster's recruit-only heroes, one a type — costs no stars and opens on the first
+  cleared run; the Constellation's first shelf is the equip toggle, and every hero and place
+  on any shelf can be examined before it is paid for.
 - **Mono typing is a valid terminal state**, not a larval stage. Precedent: Pokémon
   Normal/Water/Bug. A numerically common mono type is not a design flaw.
 - **Levels are AUTOMATIC and ROSTER-WIDE** (2026-09-10, `src/run/growth.ts`). Every roster hero
