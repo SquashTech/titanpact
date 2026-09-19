@@ -677,11 +677,11 @@ test('passives: Bloodmeal pays Renew 20 on the Bleed Vex applies, and nothing on
 });
 
 
-test("passives: Charged Air is Bloodthirsty on Conduct — OFF on a clean board, ON while a foe holds Roc's mark", () => {
+test("passives: Charged Air is Bloodthirsty on Conduct — OFF on a clean board, ON while a foe holds Skyshear's mark", () => {
   const base = createFightState(
     367,
     [
-      { combatantId: 'a1', heroId: 'stormRoc', side: 'A' },
+      { combatantId: 'a1', heroId: 'skyshear', side: 'A' },
       { combatantId: 'a2', heroId: 'cinderKnight', side: 'A' },
     ],
     [
@@ -690,7 +690,7 @@ test("passives: Charged Air is Bloodthirsty on Conduct — OFF on a clean board,
     ]
   );
   const held = withPassive(base, 'a1', 'chargedAir');
-  const hero = heroes.stormRoc;
+  const hero = heroes.skyshear;
   assert.strictEqual(getEffectiveStat(hero, held.combatants.a1, 'intelligence', boardOf(held)), hero.baseStats.intelligence);
 
   const marked = withStatus(held, 'b2', 'Conduct', {});

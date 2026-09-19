@@ -191,11 +191,10 @@ export const heroes: Record<string, HeroDefinition> = {
     signatureMoveId: 'twinbolt',
   },
   // Storm's third since 2026-09-19 (Scallywag's old seat): the storm eagle, the slate's magical
-  // column swung at full weight — Squall is the physical half, Tempest hedges. `stormRoc` because
-  // the Thunder Aerie's Guardian holds the id `roc` (enemies.ts).
-  stormRoc: {
-    id: 'stormRoc',
-    name: 'Roc',
+  // column swung at full weight — Squall is the physical half, Tempest hedges.
+  skyshear: {
+    id: 'skyshear',
+    name: 'Skyshear',
     types: ['Storm'],
     baseStats: { hp: 175, attack: 30, defense: 40, intelligence: 95, wisdom: 50, speed: 100, manaPool: 60, mpRegen: 10 },
     moveIds: ['zap', 'charge', 'staticCharge'],

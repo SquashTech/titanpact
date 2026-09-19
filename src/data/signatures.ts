@@ -183,7 +183,7 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     target: 'bothEnemies',
     description: 'One bolt that splits — and the charge stays in both of them (marks both with Conduct).',
   },
-  // Roc: the hunting dive — down out of the sky before they have looked up.
+  // Skyshear: the hunting dive — down out of the sky before they have looked up.
   stoop: {
     id: 'stoop',
     name: 'Stoop',

@@ -201,9 +201,9 @@ export const progressionTable: ProgressionTable = {
       'stunningBolt',
       'ionCascade',
     ],
-    // Roc: the magical column entire, with Arcane, Light and Frost as the off-type — a caster's
+    // Skyshear: the magical column entire, with Arcane, Light and Frost as the off-type — a caster's
     // colours, none of it on Rimewing's or Sunward's line.
-    stormRoc: [
+    skyshear: [
       'jolt',
       'risingStatic',
       'magicBolt',
@@ -1139,12 +1139,12 @@ export const progressionTable: ProgressionTable = {
         ],
       },
     ],
-    stormRoc: [
+    skyshear: [
       {
         paths: [
           {
-            id: 'stormRoc-stormeye',
-            heroId: 'stormRoc',
+            id: 'skyshear-stormeye',
+            heroId: 'skyshear',
             name: 'Stormeye',
             description: 'Rides the charge it put in the air, and is faster for every one of them still holding it.',
             statGrants: { intelligence: 20, speed: 10 },
@@ -1152,8 +1152,8 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['chargedAir'],
           },
           {
-            id: 'stormRoc-rimewing',
-            heroId: 'stormRoc',
+            id: 'skyshear-rimewing',
+            heroId: 'skyshear',
             name: 'Rimewing',
             description: 'Goes up where the storm is cold, and brings that down instead.',
             statGrants: { wisdom: 20, manaPool: 10 },
@@ -1162,8 +1162,8 @@ export const progressionTable: ProgressionTable = {
             learnableMoveIds: ['rimeWind', 'quickFreeze', 'permafrost', 'glaciate', 'avalanche', 'absoluteZero'],
           },
           {
-            id: 'stormRoc-sunward',
-            heroId: 'stormRoc',
+            id: 'skyshear-sunward',
+            heroId: 'skyshear',
             name: 'Sunward',
             description: 'Climbs past the weather altogether; what comes down is light.',
             statGrants: { hp: 30, intelligence: 10 },

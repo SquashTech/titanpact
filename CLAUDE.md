@@ -252,8 +252,7 @@ don't silently override it.
   and never in the draft. **Scallywag is the first** (same day, per user direction): Storm → mono-
   Iron, the Stormrunner graft his way back, in the **Free Company** bundle (8 stars) beside
   **Patch** (Mech, the Wisdom-85 medic drone on the repair column) and **Vex** (Beast, the
-  Speed-110 vampire bat that feeds on Bleed, its Shadow turn a graft). **Roc** (`stormRoc` — the
-  Thunder Aerie's Guardian holds `roc`) took Storm's third seat the same day: the slate's
+  Speed-110 vampire bat that feeds on Bleed, its Shadow turn a graft). **Skyshear** took Storm's third seat the same day: the slate's
   magical column at Int 95 / Speed 100. The base is 42 again and `test/roster` pins three a
   type, one starter, over `heroPool(heroes)` with nothing bought.
 - **Mono typing is a valid terminal state**, not a larval stage. Precedent: Pokémon

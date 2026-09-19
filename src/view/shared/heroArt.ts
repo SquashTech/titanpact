@@ -8,7 +8,7 @@ import flurryArt from '../../../art/heroes/flurry.png';
 import rimeArt from '../../../art/heroes/starters/rime.png';
 import cubeArt from '../../../art/heroes/cube.png';
 import stormRangerArt from '../../../art/heroes/stormranger.png';
-import stormRocArt from '../../../art/heroes/roc.png';
+import skyshearArt from '../../../art/heroes/skyshear.png';
 import tempestArt from '../../../art/heroes/starters/Tempest.png';
 import scallywagArt from '../../../art/heroes/unlocks/scallywag.png';
 import patchArt from '../../../art/heroes/unlocks/patch.png';
@@ -60,7 +60,7 @@ export const heroArt: Partial<Record<string, string>> = {
   cube: cubeArt,
   // --- Storm ---
   stormRanger: stormRangerArt,
-  stormRoc: stormRocArt,
+  skyshear: skyshearArt,
   tempest: tempestArt,
   scallywag: scallywagArt,
   // --- Stone ---
