@@ -149,6 +149,44 @@ const GUARDIANS: Record<string, Draw> = {
       + ey(44, 26, 3.4)
       + crown(p);
   },
+
+  // The Seraph (Light): a hovering bell of robe under a blank face of light — no hollow, no
+  // features, nothing to read — with a burning wheel behind the head and three pairs of wings:
+  // the upper pair past the top of the frame, the middle pair past both sides, the lower pair
+  // folded under. The eye is in the chest, at the centre of a sunburst: the Titan looks out of
+  // its heart, not its face. Both hands are raised in benediction. An attack throws the wings
+  // and the wheel's rays open; a hit drops the wings and the wheel dims. It never touches the
+  // ground — the hem hangs over a pool of its own light.
+  seraph: (p, po, ey) => {
+    const wy = po === 'attack' ? -14 : po === 'hurt' ? 12 : 0;
+    const hands = po === 'attack' ? -12 : po === 'hurt' ? 10 : 0;
+    // A stroke at part opacity over the dark goes khaki, so the wheel dims by TONE: cream lit, the body's yellow when struck.
+    const lit = po === 'hurt' ? p.c : p.ll;
+    const rayLen = po === 'attack' ? 12 : po === 'hurt' ? 3 : 6;
+    const wing = (path: string, vein: string, fill: string) => (m: number) =>
+      G(`scale(${m} 1) translate(${m < 0 ? -100 : 0} 0)`, D(path, fill) + L(vein, p.ll, 1.2, 'opacity=".5"'));
+    const upper = wing(`M50,38 C58,20 74,${-8 + wy} 96,${-34 + wy} C84,${-6 + wy} 76,16 68,42 Z`, `M52,36 C60,18 72,${-2 + wy} 90,${-26 + wy}`, p.c);
+    const middle = wing(`M50,46 C66,${40 + wy / 2} 96,${34 + wy} 120,${38 + wy} C102,${50 + wy / 2} 78,58 60,58 Z`, `M54,46 C70,${42 + wy / 2} 94,${38 + wy} 112,${39 + wy}`, p.c);
+    const lower = wing(`M50,54 C60,64 72,78 78,${92 + wy / 2} C66,84 56,74 48,64 Z`, `M52,56 C60,66 68,76 74,${86 + wy / 2}`, p.d);
+    const rays = [0, 45, 90, 135, 180, 225, 270, 315].map((a) => G(`rotate(${a} 50 22)`, L(`M50,-8 L50,${-10 - rayLen}`, lit, 1.8))).join('');
+    const spokes = [0, 45, 90, 135, 180, 225, 270, 315].map((a) => G(`rotate(${a + 22.5} 50 22)`, L('M50,5 L50,-1', lit, 1.4))).join('');
+    const burst = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((a) => G(`rotate(${a} 50 54)`, P('48,43 50,38 52,43', p.ll, 'opacity=".85"'))).join('');
+    const hand = (m: number) => G(`scale(${m} 1) translate(${m < 0 ? -100 : 0} 0)`, L(`M40,50 C30,46 22,${36 + hands} 24,${24 + hands}`, p.c, 4) + C(24, 24 + hands, 3.6, p.ll) + (po === 'attack' ? sparks(26, 14 + hands, p.ll, 3) : ''));
+    return E(50, 89, 22, 3, p.l, 'opacity=".4"') + E(50, 89, 10, 1.6, p.ll, 'opacity=".5"')
+      // The wheel behind the head: two rings and the rays through them.
+      + C(50, 22, 28, 'none', `stroke="${p.l}" stroke-width="1.4"`) + C(50, 22, 23, 'none', `stroke="${lit}" stroke-width="3.5"`) + C(50, 22, 17, 'none', `stroke="${p.l}" stroke-width="1.6"`) + spokes + rays
+      + upper(1) + upper(-1) + lower(1) + lower(-1)
+      // The robe: a bell that hangs, its hem ragged like the Herald's but in light.
+      + D('M34,84 L38,48 C38,38 62,38 62,48 L66,84 L60,78 L54,84 L48,78 L42,84 L38,78 Z', p.c) + D('M44,82 L46,54 C46,48 54,48 54,54 L56,82 Z', p.d, 'opacity=".45"')
+      + middle(1) + middle(-1)
+      + E(50, 42, 17, 8, p.c) + E(50, 40, 12, 4, p.l, 'opacity=".35"')
+      + hand(1) + hand(-1)
+      // A face with nothing on it.
+      + D('M40,30 C40,10 60,10 60,30 L58,38 L42,38 Z', p.d) + E(50, 26, 7.5, 10.5, p.ll)
+      // The sunburst on the chest, and the eye in it.
+      + burst + C(50, 54, 9, p.ll) + C(50, 54, 7, p.l, 'opacity=".6"')
+      + ey(50, 54, 5);
+  },
 };
 
 /** The Skeleton King's crown: a band round the skull and four points, in his own bone tones. */

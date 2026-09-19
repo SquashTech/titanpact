@@ -115,7 +115,11 @@ seals, and exactly one stays shut.**
   Herald is through" and "the Titan is loose *and nothing is holding it*". It is why there
   is a world left at all.
 
-Which location that is changes every run, and the player is told which one it was. This is
+Which location that is changes every run, and the player is told which one it was.
+(With a Location bought at the Constellation — the Holy Sanctum, 2026-09-19 — a run that
+stood in it leaves TWO of the base six shut; "the sixth" above is then "the ones you never
+reached", and `unbrokenSealLocationIds` is plural for it. The fiction has not been
+re-written for that yet.) This is
 the natural anchor for `progression.md`'s light meta-progression: the sixth seal is the
 thread between runs, and the reason the world survives to be run again.
 

@@ -10,7 +10,7 @@ import {
   locationForAct,
   affinityHeroIds,
   locationBias,
-  unbrokenSealLocationId,
+  unbrokenSealLocationIds,
   unvisitedLocationIds,
 } from '../src/run/locations';
 import { ACT_ONE_LOCATION_ID, FINALE_LOCATION_ID, ITINERARY_POOL_IDS, locations } from '../src/data/locations';
@@ -55,7 +55,7 @@ test('locations: an act offers two of what is left, and the last seal act still 
     }
     // Exactly one seal location goes unvisited: the sixth seal (docs/lore.md §5).
     assert.strictEqual(unvisitedLocationIds(run.locationIds).length, 1, `seed ${seed}`);
-    assert.strictEqual(unbrokenSealLocationId(run.locationIds), unvisitedLocationIds(run.locationIds)[0]);
+    assert.deepStrictEqual(unbrokenSealLocationIds(run.locationIds), unvisitedLocationIds(run.locationIds));
   }
 });
 

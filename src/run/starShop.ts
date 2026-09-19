@@ -9,6 +9,14 @@
 
 import { totalStars, type Profile } from './profile';
 
+/**
+ * What a purchase unlocks (docs/constellation.md §4, §8): a discriminant a pool edge reads once.
+ * A Location joins the itinerary draw (run/locations.ts `locationPool`). Starter Packs and hero
+ * bundles are the shelf's other two kinds and have no grant yet — their offers are the design
+ * still owed, and the tabs stand empty until it lands.
+ */
+export type StarShopGrant = { kind: 'location'; locationId: string } | { kind: 'starterPack' } | { kind: 'heroBundle' };
+
 export interface StarShopOffer {
   id: string;
   name: string;
@@ -16,6 +24,7 @@ export interface StarShopOffer {
   description: string;
   /** In stars. */
   cost: number;
+  grant: StarShopGrant;
 }
 
 export type StarShopCatalog = Record<string, StarShopOffer>;

@@ -334,4 +334,27 @@ None built. Where each lands when it is:
    filter on the profile.
 4. **The first theme pack** — the Slashers, eight heroes through the full hero pass, with
    whatever §3.4 became.
-5. **An alternate Location** — the first one with its own Guardian and track.
+5. **An alternate Location** — the first one with its own Guardian and track. **BUILT
+   2026-09-19, per user direction, ahead of phases 1–4: the Holy Sanctum.** What landed, and
+   where it diverged from §4's "same `spawnTypes` as an existing slate":
+   - `LocationDefinition.unlock` names the offer that puts a place in the pool; the base six
+     carry none. `ITINERARY_POOL_IDS` is the base pool (no `unlock`), and a run's real pool is
+     `locationPool(profile.purchases)` (`src/run/locations.ts`), read once in `enterAct` — the
+     draw and the pick both take it. The sim and the tests pass nothing and get the base game.
+   - **It is drawn BESIDE the base five, never instead of one**, so its spawn types overlap
+     (Light / Spirit / Mind — three base Locations' lines). The partition test still holds
+     because it runs over the base pool. Two base seals then hold at the end of a run that
+     stood in the Sanctum (`unbrokenSealLocationIds`, plural now); `lore.md` §5's "the sixth"
+     is "the ones you never reached" and has not been re-written.
+   - The Guardian is the **Seraph** (Light / Ancient, `enemies.ts`): the Light reader pattern
+     at boss scale — Hallow sets Sanctuary, Smite and Sunlance land ×2 on it, Blinding Flash
+     is the spread Daze. Drawn in the Guardian grammar (`guardianFigures.ts`): a blank face
+     of light, a burning wheel, three pairs of wings, the eye in the chest. Entrance line
+     authored. It clears every champion invariant in `test/guardians`.
+   - The ambience is a seventh kind, `radiance` (candle-light that rises and swells), and the
+     horizon a basilica. **No track yet** — `hasTrack('holySanctum')` is false, so the act
+     plays in silence until `music/holy sanctum.flac` exists and `audio/tracks.ts` names it.
+   - The shop grew its shape: `StarShopOffer.grant` (§8's discriminant — `location`,
+     `starterPack`, `heroBundle`) and the Constellation has one tab per kind. Only the
+     Locations shelf is stocked; the other two stand empty with a line saying what they are.
+   - Priced at 6 stars (§7's "5–6"). Unmeasured.

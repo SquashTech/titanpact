@@ -28,6 +28,8 @@ const AMBIENCE: Record<AmbienceKind, AmbienceSpec> = {
   rain: { count: 34, animation: 'loc-fall-streak', size: [1, 1], duration: [0.9, 0.7], drift: [-40, 20], stretch: 12 },
   spores: { count: 14, animation: 'loc-drift-up', size: [3, 4], duration: [12, 7], drift: [-48, 96] },
   sigils: { count: 18, animation: 'loc-fall-pulse', size: [3, 3], duration: [9, 6], drift: [-18, 36] },
+  // Candle-light rising slow and swelling as it goes: fewer, bigger, and each one breathes.
+  radiance: { count: 14, animation: 'loc-rise-swell', size: [3, 4], duration: [11, 7], drift: [-24, 48] },
 };
 
 function useField(kind: AmbienceKind, density: number) {

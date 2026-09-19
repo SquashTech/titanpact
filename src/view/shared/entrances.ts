@@ -4,7 +4,7 @@
 // Presentation data only; the engine never reads it. Kept scarce: the six Guardian champions and the
 // Endbringer, so a run sees exactly one an act and a routine bench pivot never spends it.
 
-import { ELDER_BOUGH_ID, ENDBRINGER_ID, MANTICORE_ID, DRAGON_ID, KRAKEN_ID, SKELETON_KING_ID, YUGZULACH_ID, LEFT_EYE_ID, RIGHT_EYE_ID } from '../../data/enemies';
+import { ELDER_BOUGH_ID, ENDBRINGER_ID, MANTICORE_ID, DRAGON_ID, KRAKEN_ID, SERAPH_ID, SKELETON_KING_ID, YUGZULACH_ID, LEFT_EYE_ID, RIGHT_EYE_ID } from '../../data/enemies';
 
 /** Arrival copy for the reveal beat: the lead is the room noticing, the meta is what follows it. */
 export interface DramaticEntrance {
@@ -24,6 +24,7 @@ const DRAMATIC_ENTRANCES: Readonly<Record<string, DramaticEntrance>> = {
   [DRAGON_ID]: { lead: 'Something climbs out of the furnace', meta: 'The heat turns to face you.' },
   [KRAKEN_ID]: { lead: 'The shallows go out', meta: 'Whatever took the water is still coming.' },
   [SKELETON_KING_ID]: { lead: 'The city gets to its feet', meta: 'Its citizens are watching.' },
+  [SERAPH_ID]: { lead: 'The light comes down', meta: 'Nothing in the sanctum casts a shadow now.' },
   [ENDBRINGER_ID]: { lead: 'The last seal gives', meta: 'It was never in a hurry.' },
   // The Titan's Eyes (docs/titan-eyes.md §2, §10): the pair open, wide, as the Herald falls.
   [LEFT_EYE_ID]: { lead: 'The Titan looks down', meta: 'One eye fixes on the field.' },

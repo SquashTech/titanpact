@@ -116,7 +116,7 @@ import {
 } from '../run/enemyGen';
 import { CHAMPION_LEVEL_BONUS, encounterScaling, enemyLevelFor } from '../run/difficulty';
 import { ENCOUNTERS_PER_ACT, MAX_LEVEL, applyEncounterLevels, encounterXpKind, levelOf, xpForEncounter, xpForLevel, type HeroLevelUp } from '../run/growth';
-import { chooseLocation, drawLocationCandidates, generateItinerary, locationChoiceDue, locationForAct } from '../run/locations';
+import { chooseLocation, drawLocationCandidates, generateItinerary, locationChoiceDue, locationForAct, locationPool } from '../run/locations';
 import { encounterKindOf, encounterSeedFor, nodeEncounter } from '../run/encounters';
 import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
 import { LocationProvider } from '../view/shared/LocationContext';
@@ -995,18 +995,20 @@ export function App() {
   function enterAct() {
     setActBreak(false);
     if (locationChoiceDue(playerRun)) {
-      const candidateIds = drawLocationCandidates(playerRun.locationIds, randomSeed());
+      // The pool is the profile's: a Location bought at the Constellation is drawn beside the base five.
+      const pool = locationPool(profile.purchases);
+      const candidateIds = drawLocationCandidates(playerRun.locationIds, randomSeed(), pool);
       if (candidateIds.length > 1) {
         setScreen({ kind: 'locationChoice', candidateIds });
         return;
       }
-      if (candidateIds.length === 1) setPlayerRun(chooseLocation(playerRun, candidateIds[0]));
+      if (candidateIds.length === 1) setPlayerRun(chooseLocation(playerRun, candidateIds[0], pool));
     }
     setScreen({ kind: 'actIntro' });
   }
 
   function handleLocationChosen(locationId: string) {
-    setPlayerRun(chooseLocation(playerRun, locationId));
+    setPlayerRun(chooseLocation(playerRun, locationId, locationPool(profile.purchases)));
     setScreen({ kind: 'actIntro' });
   }
 

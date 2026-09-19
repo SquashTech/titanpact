@@ -104,6 +104,26 @@ export const SECTION_PATHS = {
   mastery: (
     <path d="M2 5.8a3.4 3.4 0 0 1 3.4-3.4h12.4a3.6 3.6 0 0 1 3.6 3.6v1.2h-4v9.6h2.2a2.4 2.4 0 0 1 0 4.8H2Zm3.4-1.8a1.8 1.8 0 1 0 0 3.6 1.8 1.8 0 0 0 0-3.6Zm14.2 13.9a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6ZM11.2 8.2v2.2h4.6V8.2Zm0 4v2.2h3.2v-2.2Z" />
   ),
+  // A sealed pack: a box with its lid lifted a crack — the Constellation's Starter Packs page.
+  packs: (
+    <>
+      <path d="M3 9.4 12 5.2l9 4.2v1.6l-9 4.2-9-4.2Z" />
+      <path d="M3.4 12.8 11 16.4v5.2L3.4 18Z" />
+      <path d="M20.6 12.8 13 16.4v5.2l7.6-3.6Z" />
+    </>
+  ),
+  // A place on the horizon: a dome between two towers, the Locations page.
+  places: (
+    <>
+      <path d="M2.4 21v-8.6h3.4V21Z" />
+      <path d="M18.2 21v-8.6h3.4V21Z" />
+      <path d="M4.1 9.2 3 12.4h5.8L7.7 9.2Z" />
+      <path d="M16.3 9.2l-1.1 3.2H21l-1.1-3.2Z" />
+      <path d="M7 21v-8a5 5 0 0 1 10 0v8Z" />
+      <path d="M11.2 2.6h1.6v5.2h-1.6Z" />
+      <path d="M9.6 4.4h4.8V6H9.6Z" />
+    </>
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type SectionGlyphName = keyof typeof SECTION_PATHS;

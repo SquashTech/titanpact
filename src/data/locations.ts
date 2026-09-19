@@ -3,10 +3,10 @@
 // the presentation fields feed locationArt/ActIntroScreen.
 
 import type { TypeId } from '../engine/content';
-import { ELDER_BOUGH_ID, ENDBRINGER_ID, MANTICORE_ID, DRAGON_ID, KRAKEN_ID, SKELETON_KING_ID, YUGZULACH_ID } from './enemies';
+import { ELDER_BOUGH_ID, ENDBRINGER_ID, MANTICORE_ID, DRAGON_ID, KRAKEN_ID, SERAPH_ID, SKELETON_KING_ID, YUGZULACH_ID } from './enemies';
 
 /** Particle-field motion (docs/locations.md §4). */
-export type AmbienceKind = 'fireflies' | 'embers' | 'snow' | 'rain' | 'spores' | 'sigils';
+export type AmbienceKind = 'fireflies' | 'embers' | 'snow' | 'rain' | 'spores' | 'sigils' | 'radiance';
 
 export interface LocationDefinition {
   id: string;
@@ -34,6 +34,12 @@ export interface LocationDefinition {
   /** rgb triple driving `--node-rgb` on the arrival screen. */
   tintRgb: string;
   ambience: AmbienceKind;
+  /**
+   * The Constellation offer that puts this place in a run's pool (data/starShop.ts); absent on
+   * the base six. A bought Location is drawn beside the base five (run/locations.ts
+   * `locationPool`) — it never replaces one, so its spawn types may overlap theirs.
+   */
+  unlock?: string;
 }
 
 /** Act 1 is always this one (docs/locations.md §1). */
@@ -135,11 +141,30 @@ export const locations: Record<string, LocationDefinition> = {
     tintRgb: '222, 196, 132',
     ambience: 'sigils',
   },
+
+  // The first bought Location (docs/constellation.md §4, 2026-09-19): in the pool only while its
+  // offer is held. Light, Spirit and Mind overlap three base Locations by design — it is drawn
+  // BESIDE them, never instead — and its warden is the Seraph, the one Light-bodied seal.
+  holySanctum: {
+    id: 'holySanctum',
+    name: 'Holy Sanctum',
+    omen: 'Every candle in this place is lit, and nobody lit them.',
+    spawnTypes: ['Light', 'Spirit', 'Mind'],
+    affinity: ['Light', 'Spirit', 'Mind'],
+    exclusiveHeroIds: [],
+    guardianFinalEnemyId: SERAPH_ID,
+    tintRgb: '246, 226, 160',
+    ambience: 'radiance',
+    unlock: 'location.holySanctum',
+  },
 };
 
-/** The pool acts 2-5 draw from, without replacement. Neither fixed act is in it. */
+/**
+ * The BASE pool acts 2-5 draw from, without replacement: neither fixed act, and nothing that has
+ * to be bought (`unlock`). A run's actual pool is `locationPool` (run/locations.ts).
+ */
 export const ITINERARY_POOL_IDS: readonly string[] = Object.keys(locations).filter(
-  (id) => id !== ACT_ONE_LOCATION_ID && id !== FINALE_LOCATION_ID
+  (id) => id !== ACT_ONE_LOCATION_ID && id !== FINALE_LOCATION_ID && !locations[id].unlock
 );
 
 /**

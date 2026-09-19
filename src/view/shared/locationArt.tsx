@@ -98,6 +98,29 @@ const BLIGHTED_SHRINE = (
   </>
 );
 
+// A basilica: the dome and its lantern spire between two bell towers, a colonnade running off
+// both edges under an entablature, and a pair of obelisks on the near side. Every arch is a
+// solid — the band is filled shapes only — so the colonnade reads as columns against the glow.
+const HOLY_SANCTUM = (
+  <>
+    <path d="M-10 92 L-10 62 L118 62 L118 92 Z" opacity="0.55" />
+    <path d="M282 92 L282 62 L410 62 L410 92 Z" opacity="0.55" />
+    <path d="M-10 58 L118 58 L118 64 L-10 64 Z" />
+    <path d="M282 58 L410 58 L410 64 L282 64 Z" />
+    <path d="M4 92 L4 64 L12 64 L12 92 Z M28 92 L28 64 L36 64 L36 92 Z M52 92 L52 64 L60 64 L60 92 Z M76 92 L76 64 L84 64 L84 92 Z M100 92 L100 64 L108 64 L108 92 Z" />
+    <path d="M292 92 L292 64 L300 64 L300 92 Z M316 92 L316 64 L324 64 L324 92 Z M340 92 L340 64 L348 64 L348 92 Z M364 92 L364 64 L372 64 L372 92 Z M388 92 L388 64 L396 64 L396 92 Z" />
+    <path d="M118 92 L118 40 L124 40 L124 30 L128 22 L132 30 L132 40 L138 40 L138 92 Z" />
+    <path d="M262 92 L262 40 L268 40 L268 30 L272 22 L276 30 L276 40 L282 40 L282 92 Z" />
+    <path d="M138 92 L138 56 L262 56 L262 92 Z" />
+    <path d="M148 56 Q200 14 252 56 Z" />
+    <path d="M194 22 L194 12 L198 12 L200 -4 L202 12 L206 12 L206 22 Z" />
+    <path d="M186 24 L214 24 L214 30 L186 30 Z" />
+    <path d="M60 58 L64 34 L68 58 Z" opacity="0.85" />
+    <path d="M332 58 L336 34 L340 58 Z" opacity="0.85" />
+    <rect x="-10" y="88" width="420" height="22" />
+  </>
+);
+
 export const LOCATION_HORIZONS: Record<string, ReactNode> = {
   wildsEdge: WILDS_EDGE,
   forbiddenForest: FORBIDDEN_FOREST,
@@ -105,6 +128,7 @@ export const LOCATION_HORIZONS: Record<string, ReactNode> = {
   stormCoast: STORM_COAST,
   necropolis: NECROPOLIS,
   blightedShrine: BLIGHTED_SHRINE,
+  holySanctum: HOLY_SANCTUM,
 };
 
 /** Renders nothing for an unknown id: a missing horizon should look like plain sky, not the wrong place. */

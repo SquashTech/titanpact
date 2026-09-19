@@ -260,6 +260,16 @@ weighs them, since a run cannot know its next place any earlier.
 One card is no choice: `enterAct` takes a lone candidate silently and the arrival screen
 says where. It only happens on a dev run that opened somewhere other than Wild's Edge.
 
+### A bought Location — the Holy Sanctum (2026-09-19)
+
+The first place the Constellation sells (`docs/constellation.md` §11 phase 5, built ahead of
+the rest per user direction). `LocationDefinition.unlock` names its offer, and it is in a
+run's pool only while that offer is held: `locationPool(profile.purchases)` in
+`src/run/locations.ts`, read once where the act's offer is drawn. It is drawn **beside** the
+base five, so its spawn types overlap theirs (Light, Spirit, Mind) — the partition in §3 is a
+rule for the base pool, which `ITINERARY_POOL_IDS` still is. Its warden is the Seraph, its
+weather the seventh ambience kind (`radiance`), its horizon a basilica; its track is owed.
+
 ## 5. What is not built yet
 
 Everything below is a known gap, not an oversight. Roughly in the order that

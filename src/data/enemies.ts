@@ -1,4 +1,4 @@
-// Non-recruitable AUTHORED enemies: the six Guardian champions and the Endbringer. Same shape as
+// Non-recruitable AUTHORED enemies: the seven Guardian champions and the Endbringer. Same shape as
 // HeroDefinition but a separate pool from heroes.ts, which is what lets isRecruitable exclude it —
 // a KO'd champion never produces a Recruit Contract offer.
 //
@@ -143,6 +143,23 @@ export const enemies: Record<string, HeroDefinition> = {
     growthGrades: CHAMPION_GRADES,
   },
 
+  // The Holy Sanctum's Guardian reinforcement (2026-09-19) — the first bought Location's, so it
+  // is met only by a run that paid for it. The Light reader pattern at boss scale: Hallow sets
+  // Sanctuary and mends it, and then Smite and Sunlance each land at ×2 on hallowed ground —
+  // Sanctuary is a global field, so the player's own Light hero is lifted by it too, and the
+  // counterplay is a field of the player's own over it (docs/field-effects.md). Blinding Flash
+  // is the pressure: a spread that Dazes. Cheap casts on a 150 pool, so it never Rests; the
+  // 60 Attack is Sunlance's hand, a real physical line rather than a token one.
+  seraph: {
+    id: 'seraph',
+    name: 'Seraph',
+    types: ['Light', 'Ancient'],
+    baseStats: { hp: 340, attack: 60, defense: 80, intelligence: 95, wisdom: 90, speed: 55, manaPool: 150, mpRegen: 20 },
+    moveIds: ['hallow', 'smite', 'sunlance', 'blindingFlash'],
+    starter: false,
+    growthGrades: CHAMPION_GRADES,
+  },
+
   // --- The Threshold — the Titan's Herald, what walks out when five seals are broken (docs/lore.md §7) ---
   // The finale's last combatant, and the only mono-Ancient thing in the game. It enters LAST,
   // after five unsealed champions, so it is authored as the fight's ending rather than its
@@ -231,11 +248,12 @@ export const KRAKEN_ID = 'kraken';
 export const ELDER_BOUGH_ID = 'elderBough';
 export const DRAGON_ID = 'dragon';
 export const SKELETON_KING_ID = 'skeletonKing';
+export const SERAPH_ID = 'seraph';
 
 /** The Threshold's, and the only mono-Ancient id in the game (docs/lore.md §7). */
 export const ENDBRINGER_ID = 'endbringer';
 
-/** Every Guardian champion, in no particular order — a run breaks five of these six. */
+/** Every Guardian champion, in no particular order — a run breaks five of them; the Seraph only stands in a run that bought its Sanctum. */
 export const CHAMPION_IDS: readonly string[] = [
   MANTICORE_ID,
   YUGZULACH_ID,
@@ -243,6 +261,7 @@ export const CHAMPION_IDS: readonly string[] = [
   ELDER_BOUGH_ID,
   DRAGON_ID,
   SKELETON_KING_ID,
+  SERAPH_ID,
 ];
 
 export function unsealedIdFor(championId: string): string {

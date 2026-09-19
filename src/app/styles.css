@@ -9341,6 +9341,70 @@ textarea,
   cursor: default;
 }
 
+/* A Location's offer is the place: the row takes the location's --node-rgb,
+   its horizon runs behind the text (the title picker's treatment, an eighth
+   the arrival screen's size), and its domains are lit under the description.
+   The tint replaces the shelf's gold on this one row, so what is for sale
+   reads as somewhere rather than as a line item. */
+.star-shop-place {
+  position: relative;
+  overflow: hidden;
+  padding: 12px 10px 12px 12px;
+  border-color: rgba(var(--node-rgb), 0.4);
+  background:
+    linear-gradient(180deg, rgba(var(--node-rgb), 0.14), rgba(var(--node-rgb), 0.03) 60%),
+    var(--surface-raised);
+}
+
+.star-shop-place-scene {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.star-shop-place-scene .location-horizon {
+  height: 58%;
+  color: rgba(6, 7, 11, 0.85);
+  opacity: 0.55;
+  filter: drop-shadow(0 -1px 0 rgba(var(--node-rgb), 0.35));
+  animation: none;
+}
+
+.star-shop-place .star-shop-offer-body,
+.star-shop-place .star-shop-offer-buy {
+  position: relative;
+}
+
+.star-shop-place .star-shop-offer-name {
+  font-size: 15px;
+  text-shadow: 0 0 12px rgba(var(--node-rgb), 0.45);
+}
+
+.star-shop-place .star-shop-offer-buy {
+  border-color: rgba(var(--node-rgb), 0.7);
+  background: rgba(var(--node-rgb), 0.14);
+  color: rgb(var(--node-rgb));
+}
+
+.star-shop-place .star-shop-offer-buy:disabled {
+  border-color: var(--border);
+  background: none;
+  color: var(--text-dim);
+}
+
+.star-shop-place-domains {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.star-shop-place-domain .element-glyph {
+  width: 16px;
+  height: 16px;
+  filter: drop-shadow(0 0 6px currentColor);
+  opacity: 0.92;
+}
+
 /* --- Run History (RunHistory.tsx, on the Records panel) -------------------
    Every run that ended, newest first. A row is folded to what the summary
    screen led with — the outcome, where and when, the team's faces — and
@@ -24552,7 +24616,8 @@ textarea,
    describe motion. */
 .location-motes[data-ambience="fireflies"] .location-mote,
 .location-motes[data-ambience="embers"] .location-mote,
-.location-motes[data-ambience="spores"] .location-mote {
+.location-motes[data-ambience="spores"] .location-mote,
+.location-motes[data-ambience="radiance"] .location-mote {
   bottom: -6%;
 }
 
@@ -24596,12 +24661,49 @@ textarea,
   box-shadow: 0 0 10px 3px rgba(var(--node-rgb), 0.24);
 }
 
+/* Candle-light: a white core in a wide soft halo, the brightest mote there is,
+   and the only kind that swells as it rises (loc-rise-swell). */
+.location-motes[data-ambience="radiance"] .location-mote {
+  background: radial-gradient(circle, #ffffff 0%, #fff6d8 30%, rgba(var(--node-rgb), 0.7) 55%, transparent 74%);
+  box-shadow: 0 0 14px 4px rgba(var(--node-rgb), 0.38);
+}
+
 /* Travel is animated on `bottom`/`top` as a PERCENTAGE OF THE SKY, not as vh
    in a transform. The app shell is a transform-scaled design canvas
    (src/app/uiScale.ts), so viewport units do not agree with the container the
    particles are actually falling through — which is why the existing
    `title-ember-rise` animates `bottom` too. `transform` is left free for
    drift, scale and rotation. */
+
+/* Rises slowly and BREATHES: scale swells and eases twice on the way up,
+   so the field reads as candle-light rather than embers. */
+@keyframes loc-rise-swell {
+  0% {
+    bottom: -6%;
+    transform: translateX(0) scale(0.5);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.9;
+  }
+  35% {
+    transform: translateX(calc(var(--drift) * 0.4)) scale(1.35);
+    opacity: 1;
+  }
+  55% {
+    transform: translateX(calc(var(--drift) * 0.7)) scale(0.85);
+    opacity: 0.7;
+  }
+  75% {
+    transform: translateX(var(--drift)) scale(1.2);
+    opacity: 0.95;
+  }
+  100% {
+    bottom: 104%;
+    transform: translateX(var(--drift)) scale(0.6);
+    opacity: 0;
+  }
+}
 
 /* Wanders across on a switchback rather than a straight drift, and blinks —
    the only ambience that should read as alive rather than as weather. */

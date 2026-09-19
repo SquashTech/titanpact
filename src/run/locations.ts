@@ -20,9 +20,21 @@ export function locationChoiceDue(run: RunState): boolean {
   return run.actNumber <= SEAL_ACTS && run.locationIds.length < run.actNumber;
 }
 
-/** Every seal location not yet visited — a location is never visited twice in one run. */
-export function unvisitedLocationIds(visited: readonly string[]): string[] {
-  return Object.keys(locations).filter((id) => id !== FINALE_LOCATION_ID && !visited.includes(id));
+/**
+ * The seal locations a run may stand in: every base one, plus each bought one whose Constellation
+ * offer is held (`LocationDefinition.unlock`, data/starShop.ts). Read once, where the pool is
+ * read — the sim and the tests pass nothing and get the base game.
+ */
+export function locationPool(purchases: readonly string[] = []): string[] {
+  return Object.keys(locations).filter((id) => {
+    const { unlock } = locations[id];
+    return id !== FINALE_LOCATION_ID && (!unlock || purchases.includes(unlock));
+  });
+}
+
+/** Every seal location in the pool not yet visited — a location is never visited twice in one run. */
+export function unvisitedLocationIds(visited: readonly string[], pool: readonly string[] = locationPool()): string[] {
+  return pool.filter((id) => !visited.includes(id));
 }
 
 /**
@@ -30,9 +42,9 @@ export function unvisitedLocationIds(visited: readonly string[]): string[] {
  * fewer remain. Sequencing is the decision (the Necropolis now, while the Fire coverage holds),
  * so the offer is drawn flat off what is left and never weighted.
  */
-export function drawLocationCandidates(visited: readonly string[], seed: number): string[] {
+export function drawLocationCandidates(visited: readonly string[], seed: number, pool: readonly string[] = locationPool()): string[] {
   let rng: RngState = createRng(seed);
-  const remaining = unvisitedLocationIds(visited);
+  const remaining = unvisitedLocationIds(visited, pool);
   const drawn: string[] = [];
   while (drawn.length < LOCATION_CHOICE_COUNT && remaining.length > 0) {
     const { value, nextState } = nextFloat(rng);
@@ -44,10 +56,10 @@ export function drawLocationCandidates(visited: readonly string[], seed: number)
 
 export class LocationChoiceError extends Error {}
 
-/** Seats the pick as the current act's place. Refuses a place already visited, and any pick when none is due. */
-export function chooseLocation(run: RunState, locationId: string): RunState {
+/** Seats the pick as the current act's place. Refuses a place already visited or outside the pool, and any pick when none is due. */
+export function chooseLocation(run: RunState, locationId: string, pool: readonly string[] = locationPool()): RunState {
   if (!locationChoiceDue(run)) throw new LocationChoiceError('no location choice is due');
-  if (!unvisitedLocationIds(run.locationIds).includes(locationId)) throw new LocationChoiceError(`${locationId} is not open to this run`);
+  if (!unvisitedLocationIds(run.locationIds, pool).includes(locationId)) throw new LocationChoiceError(`${locationId} is not open to this run`);
   return { ...run, locationIds: [...run.locationIds, locationId] };
 }
 
@@ -76,9 +88,12 @@ export function generateItinerary(seed: number): string[] {
   return itinerary;
 }
 
-/** The one location a run never visits — the seal that held (docs/lore.md §5). */
-export function unbrokenSealLocationId(itinerary: readonly string[]): string | null {
-  return ITINERARY_POOL_IDS.find((id) => !itinerary.includes(id)) ?? null;
+/**
+ * The base seal locations a run never visited — the seals that held (docs/lore.md §5). Exactly
+ * one in the base game; a run that stood in a bought Location leaves two of the base six shut.
+ */
+export function unbrokenSealLocationIds(itinerary: readonly string[]): string[] {
+  return ITINERARY_POOL_IDS.filter((id) => !itinerary.includes(id));
 }
 
 /** Falls back to Act 1's location: throwaway RunStates have no itinerary. */

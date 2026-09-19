@@ -18,7 +18,7 @@ import { resolveTypeMult } from '../src/engine/damage/typeMult';
 import { generateFinaleEncounter } from '../src/run/enemyGen';
 import { titanspawn } from '../src/data/titanspawn';
 import { MASTERY_CAP } from '../src/run/mastery';
-import { generateItinerary, unbrokenSealLocationId } from '../src/run/locations';
+import { generateItinerary, unbrokenSealLocationIds } from '../src/run/locations';
 import { generateMap } from '../src/run/map';
 import { recordBrokenSeal } from '../src/run/runProgress';
 import { rollGuildHallOffers } from '../src/run/shop';
@@ -202,8 +202,9 @@ test('finale: an itinerary is six long, ends at the Threshold, and leaves exactl
     assert.strictEqual(itinerary[FINALE_ACT - 1], FINALE_LOCATION_ID);
     const visitedPool = ITINERARY_POOL_IDS.filter((id) => itinerary.includes(id));
     assert.strictEqual(visitedPool.length, SEAL_ACTS - 1, `seed ${seed}`);
-    const unbroken = unbrokenSealLocationId(itinerary);
-    assert.ok(unbroken && !itinerary.includes(unbroken), `seed ${seed} has no sixth seal`);
+    const unbroken = unbrokenSealLocationIds(itinerary);
+    assert.strictEqual(unbroken.length, 1, `seed ${seed} has no sixth seal`);
+    assert.ok(!itinerary.includes(unbroken[0]));
   }
 });
 

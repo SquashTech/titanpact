@@ -2,13 +2,17 @@ import * as assert from 'assert';
 import { test } from './harness';
 import { createProfile, decodeProfile, recordRunEnded } from '../src/run/profile';
 import { STAR_SHOP_OFFERS, starShopCatalog } from '../src/data/starShop';
-import { buyOffer, canBuy, isPurchased, starBalance, starsSpent, StarShopError, type StarShopCatalog } from '../src/run/starShop';
+import { locations } from '../src/data/locations';
+import { locationPool, unvisitedLocationIds } from '../src/run/locations';
+import { buyOffer, canBuy, isPurchased, starBalance, starsSpent, StarShopError, type StarShopCatalog, type StarShopGrant } from '../src/run/starShop';
 
-/** A three-offer catalog for the rules; the shipped one is empty until the design lands. */
+const pack: StarShopGrant = { kind: 'starterPack' };
+
+/** A three-offer catalog for the rules, apart from the shipped one. */
 const catalog: StarShopCatalog = {
-  lantern: { id: 'lantern', name: 'Lantern', description: 'A thing.', cost: 1 },
-  banner: { id: 'banner', name: 'Banner', description: 'Another.', cost: 3 },
-  crown: { id: 'crown', name: 'Crown', description: 'A dear one.', cost: 10 },
+  lantern: { id: 'lantern', name: 'Lantern', description: 'A thing.', cost: 1, grant: pack },
+  banner: { id: 'banner', name: 'Banner', description: 'Another.', cost: 3, grant: pack },
+  crown: { id: 'crown', name: 'Crown', description: 'A dear one.', cost: 10, grant: pack },
 };
 
 function withStars(count: number) {
@@ -65,5 +69,21 @@ test('star shop: the shipped catalog is consistent with itself', () => {
     ids.add(offer.id);
     assert.ok(Number.isInteger(offer.cost) && offer.cost > 0, `${offer.id} must cost a whole number of stars`);
     assert.strictEqual(starShopCatalog[offer.id], offer);
+    // A Location offer names a real place, and that place names the offer back: the pool gate reads the pair.
+    if (offer.grant.kind === 'location') assert.strictEqual(locations[offer.grant.locationId]?.unlock, offer.id, `${offer.id} and its Location disagree`);
   }
+  // Every Location that has to be bought is on the shelf.
+  for (const location of Object.values(locations)) {
+    if (location.unlock) assert.ok(starShopCatalog[location.unlock], `${location.id} is locked behind an offer that is not for sale`);
+  }
+});
+
+test('star shop: a bought Location joins the pool the road draws from, and only then', () => {
+  const base = locationPool();
+  assert.ok(!base.includes('holySanctum'), 'the Sanctum is in the base pool');
+  assert.ok(!unvisitedLocationIds(['wildsEdge']).includes('holySanctum'));
+  const held = locationPool(['location.holySanctum']);
+  assert.ok(held.includes('holySanctum'));
+  assert.strictEqual(held.length, base.length + 1, 'a purchase adds a place, never replaces one');
+  assert.ok(unvisitedLocationIds(['wildsEdge', 'holySanctum'], held).every((id) => id !== 'holySanctum'), 'a bought place is still visited once');
 });
