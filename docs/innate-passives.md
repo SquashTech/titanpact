@@ -1,10 +1,14 @@
 # innate-passives.md — Innate passives, the Titan's Mark, and the Burden
 
-> **STATUS: DRAFT 2026-09-20 — a brainstorm made into a proposal, nothing decided and nothing
-> built.** The shape in §1–§6 is what the designer asked for (an inherent passive on every hero, an
-> identical type-specific one on every Titanspawn, drawback passives paid for in stats, the Slaking
-> model); the numbers, the first-pass table in §7 and the phase order in §9 are this document's.
-> Until a phase in §9 lands, every rule in CLAUDE.md that §10 names is still the rule in force.
+> **STATUS: DECIDED AND BUILT 2026-09-20 (per user direction, same day as the draft — "I am
+> willing to test it regardless").** Phases 1–7 are IN: the slot and the forty-five, the Mark on
+> every spawn, Lingering and Ironbound as engine verbs, the Burden on Bellows, the reading
+> surfaces, and the measurement (§8). **One departure from the draft, measured:** a Guardian
+> carries NO Mark — a Marked champion in a 14-round fight was the whole of a twelve-point Act 1
+> loss, and a bare one put it back exactly; the seal is what keeps the Titan's Mark off it. The
+> designer flagged Lingering as likely over the band and chose to test it; it measured mid-pack.
+> Every number is a first pass; `TITANS_MARK_FORCE`, `BURDEN_SURPLUS` and the outlier
+> magnitudes are the designer's to move.
 
 ---
 
@@ -121,9 +125,12 @@ identical in shape across the roster of forty-two spawn:
 - **On the enemy side, a spawn fights like the Titan's; a hero-pool enemy fights like a hero.**
   That asymmetry is the reading: a Skirmish against spawn is a fight against a clock, a Skirmish
   against a hero party is a fight against a kit.
-- **The Guardians carry their type's Mark.** A champion is the Titan's mortal type made large;
-  the Mark is what says so on the body. The Herald keeps its Standard and the Eyes their Gaze;
-  Ancient has no Mark, because the Titan does not mark itself.
+- **The Guardians carry NO Mark** (reversed from the draft, measured — §8). The draft put one on
+  every champion as the Titan's mortal type made large; a Marked Manticore in a fourteen-round
+  fight went 91.7 → 75.9% and took Act 1 from 67.8 to 55.8%, and a bare champion with Marked
+  escorts put both back to the baseline exactly. The reading that survives: **the seal keeps the
+  Titan's Mark off the Guardian** — its escorts climb, it does not. The Herald keeps its Standard
+  and the Eyes their Gaze; Ancient has no Mark, because the Titan does not mark itself.
 - **The companion carries the Mark.** It is a `TitanspawnDefinition`, so it inherits one, and the
   proposal is to *leave it there*: the mortal companion is the Titan's creature fighting for you,
   and a Force that climbs each round it stands is a reason to lead with it and a reason it dies.
@@ -300,7 +307,34 @@ Things the table is *for*, beyond filling seats:
 
 ---
 
-## 8. What the run feels like
+## 8. Measured
+
+Sim, 3000 runs, chart pilot, seed 7, against the pre-innate tree on the same seed (the doc
+commit, `75aebc0`). Four batches:
+
+| | full-clear | Act 1 | Act 1 Guardian | Act 2 | finale |
+|---|---|---|---|---|---|
+| base (pre-innate) | 20.8% | 67.8% | 91.7% (15.6 rounds) | 70.6% | 52.8% |
+| Mark 5, Guardians marked | 18.2% | 55.8% | 75.9% | 67.4% | 62.9% |
+| Mark 3, Guardians marked | 20.3% | 61.6% | 83.2% | 69.6% | 58.6% |
+| **Mark 5, Guardians bare — SHIPPED** | **22.5%** | **68.3%** | 93.1% | 67.3% | 62.6% |
+
+- **The Guardian's Mark was the whole Act 1 delta.** The Skirmish and the Elite — innate against
+  innate — did not move (73.3 → 72.8%, 75.8 → 76.4%); the three-round `fight` nodes barely
+  accrue a Mark (99.1 → 98.4%); the fourteen-round Act 1 Guardian took the twelve points alone.
+  Halving the magnitude recovered half; taking it off the champion recovered all of it.
+- **The innates are a ~+2 point player buff, all of it in the finale** (52.8 → 62.6%): the
+  Herald and the Eyes carry no innate against a roster that now does. Acts 2–5 each gave up one
+  to three points to the spawn's Mark and the Act 2 Guardians (Necropolis 95 → 91, Storm Coast
+  96 → 88) are the ones to watch — the two whose escorts stand longest.
+- **Per hero, every roster win rate moved inside ±2.6 points** (n ≈ 300–600, SE ≈ 1.3). Revenant
+  +2.0 win / −5.4 die% — the largest death-rate drop on the table, as Lingering should, and not an
+  outlier. Bellows −0.6 win / +4.9 die% / +8.6 DPR, drafted 28% more often (396 → 508): the Burden
+  prices at about the 60 under this pilot. Nothing on the trap or the runaway shape.
+- **Not measured:** the Mark on the companion (the pilot fields it as a hero; its 48.7% loss rate
+  is unchanged), and `replacesInnate` (no path uses it yet).
+
+## 8b. What the run feels like
 
 The draft has a second line to read. Two Fire cards side by side are *the one whose Burns feed its
 Attack* and *the one whose enemies' Burns feed its Intelligence*, before either has a stat bar
@@ -319,13 +353,13 @@ draft and the Constellation, and then it is simply true.
 
 | Phase | What lands | Status |
 |---|---|---|
-| **1. The slot** | `innatePassiveOf`; `test/roster` pins one innate a hero, not `statGrants`-only, in no pool; `boons.ts` excludes innate ids; the `passiveIds` comment rewritten. `EvolutionPath.replacesInnate`, honoured at the Evolution grant. Nothing authored yet — every hero fails the test until phase 3, so 1 and 3 ship together. | draft |
-| **2. The Mark** | `TITANS_MARK_FORCE` = 5; fourteen generated passives (`markOfTheTitan(type)`), attached in `titanspawn.ts`'s `line()` so no spawn authors it; the Guardians' champion definitions carry their type's; the companion carries it (§11 q1); the chip and dossier show the name. | draft |
-| **3. The forty-five** | §7's table into `src/data/heroes.ts` and `passives.ts` (a new `innatePassives` section for the new cards); the two `vocab` rows land as their verbs do — Lingering with phase 5, Bellows's Ironbound with phase 4. Until then those two hold a placeholder innate from the shared vocabulary, named as such in the file. | draft |
-| **4. The Burden** | `PassiveDefinition.burden: true`; `BURDEN_SURPLUS` = 60 and the stat-total test's exemption; `cannotSwitchOut` and `holdsNoItems` as the first two verbs; Bellows converted (280 / 120 / 105 / 15 / 35 / 5 / 50), its sheet row printing `610 · Burden`. | draft |
-| **5. Vocabulary** | The endure-once verb (Lingering); a defender-side damage modifier (Thin-Skinned, and generally useful); `damageSelf` (Bloodprice); `refusesAllyHeals` (Hollow). Each is a new Burden or innate shape, none is required for phases 1–4. | draft |
-| **6. Reading surfaces** | The draft card, the Constellation examine, the hero sheet row, the nameplate long-press, the Burden tint. | draft |
-| **7. Measure** | Sim, 3000 runs, both pilots, same seed as the last shipped baseline. Watch: full-clear and the act-clear curve (Act 1 first); the Mark's tempo — fight length against spawn, KO rate by round; Bellows's win rate fielded vs benched; the per-innate over/under (winrate of runs holding each hero, against the pre-innate baseline). Then the designer moves `TITANS_MARK_FORCE`, `BURDEN_SURPLUS` and the outlier magnitudes — never a stat line. | draft |
+| **1. The slot** | `innatePassiveOf` / `titansMarkOf` (`src/run/innate.ts`); `test/roster` pins one innate a hero, not `statGrants`-only, never its own type's Boon, no Mark on a hero; the new `innatePassives` section is outside `boonPassives`, a reused equipment card stays in it. `replacesInnate` NOT built — no path asked for it (§11 q5). | **IN** |
+| **2. The Mark** | `TITANS_MARK_FORCE` = 5; fourteen generated (`titansMarkFor`, `isTitansMark`), attached in `titanspawn.ts`'s definition builder; **no Guardian carries one** (§3, §8); the companion carries it; the chip and dossier show it. | **IN** |
+| **3. The forty-five** | §7's table in `src/data/heroes.ts` and `passives.ts`; no placeholders — the two verbs landed in the same commit. | **IN** |
+| **4. The Burden** | `PassiveDefinition.burden`; `BURDEN_SURPLUS` = 60, `heroStatTotalFor`, the roster test pins exactly `['steamColossus']`; `cannotSwitchOut` read through `canSwitchOut` at every voluntary-switch site (engine, fight screen, both sim pilots); Bellows at 280 / 120 / 105 / 15 / 35 / 5 / 50, the sheet printing `610 · Burden`. `holdsNoItems` NOT built — no hero asked for it. | **IN** |
+| **5. Vocabulary** | `enduresOnce` (Lingering): `Combatant.enduresLeft` counted at fight build, spent in `applyHpDelta` on any lethal loss, an `Endured` event voiced in the log. The other three shapes wait on a hero that wants them. | **IN** (endure) |
+| **6. Reading surfaces** | `StageInnate` (glyph, name, the whole sentence) between the dais and the kit on the draft, the Recruit claim and the Guild Hall / replace stage, tapping to the dossier; the Compendium and Constellation dossier lead the Stats tab with it; the pre-fight scout chip names it under the typing (a spawn's reads *Mark*); the hero sheet's Passives tab lists it as *Innate*; the nameplate long-press shows it with the rest. | **IN** |
+| **7. Measure** | §8. | **IN** |
 
 ---
 
@@ -339,7 +373,7 @@ Until the phase named lands, the rule below is still the rule in force.
 | Boons: *"Evolution passives and Classes are excluded: both are somebody's identity already"* | Innate passives join the exclusion. | 1 |
 | *"Every hero's seven stats sum to exactly 550"* | Held — except a Burden hero, at `550 + BURDEN_SURPLUS`, flagged and printed. | 4 |
 | *"A specialist is signalled by spiking one stat … never by coming in under the total"* | A Burden comes in OVER the total; the flaw is the signal. Still never under. | 4 |
-| Titanspawn kits are *"from the type slates"* and a spawn's definition carries nothing but its line | Every spawn, the Guardians and the companion carry the Mark. | 2 |
+| Titanspawn kits are *"from the type slates"* and a spawn's definition carries nothing but its line | Every spawn and the companion carry the Mark; a Guardian does not. | 2 |
 | Lock-in and *"voluntary switching is disabled once half a side is KO'd"* | Unchanged in rule; Ironbound is a per-hero lock the rule sits beside. | 4 |
 | *"A Class is a VERB, never a number"* | Extended to innates: the same test, one more source. | 1 |
 | *"Nothing team-wide grants a passive"* | Untouched. An innate is hero-scoped. | — |
@@ -372,9 +406,10 @@ Until the phase named lands, the rule below is still the rule in force.
    the rework first so the innates are authored to it?
 8. **Whether Titanspawn *also* get a per-line passive** beyond the Mark, once the roster's are in
    and the Mark is measured. Not proposed; named so it is not assumed.
-9. **The Guardians' Mark against the Act 1 Guardian at 82%.** A champion with a climbing Force is
-   the one place the Mark stacks with a body that is already the wall. If Act 1 moves, this is the
-   first suspect, and the answer may be that a champion's Mark starts at round 3.
+9. ~~The Guardians' Mark against the Act 1 Guardian.~~ **Answered by measurement (§8):** it was
+   the whole loss, and the champion carries no Mark. A delayed start (round 3) was the draft's
+   fallback and was not tried; it is still available if the escorts' Mark ever wants a body to
+   stack with.
 
 ### Watch in playtest
 

@@ -298,15 +298,15 @@ test('roster: every hero holds exactly ONE innate — a verb, never a bare stat 
     // equipment card (Impale, Sunder) stays in the Boon pool as the equipment card it is, and stacks.
     assert.ok(!Object.values(typeDamagePassiveFor).includes(passive.id), `${hero.id}'s innate ${passive.id} is its own type's +20% Boon (§11 q6: never)`);
   }
-  // A Burden is one of them, priced elsewhere; the Mark is on every spawn and every champion, sealed or not.
+  // A Burden is one of them, priced elsewhere; the Mark is on every spawn and on NO Guardian — the
+  // seal keeps it off, and a Marked champion measured as the whole Act 1 loss (docs/innate-passives.md §8).
   assert.ok(Object.values(heroes).some((hero) => (hero.passiveIds ?? []).some(isBurden)));
   for (const spawn of Object.values(titanspawn)) {
     assert.deepStrictEqual(spawn.passiveIds, [titansMarkFor[spawn.types[0] as keyof typeof titansMarkFor]], `${spawn.id} does not carry its type's Mark`);
   }
   for (const id of CHAMPION_IDS) {
-    const mark = titansMarkFor[enemies[id].types[0] as keyof typeof titansMarkFor] as string;
-    assert.ok(enemies[id].passiveIds?.includes(mark), `${id} does not carry its type's Mark`);
-    assert.ok(Object.values(unsealedChampions).some((c) => c.passiveIds?.includes(mark)), `${id} unsealed lost its Mark`);
+    assert.ok(!(enemies[id].passiveIds ?? []).some(isTitansMark), `${id} carries the Titan's Mark`);
+    assert.ok(!Object.values(unsealedChampions).some((c) => (c.passiveIds ?? []).some(isTitansMark)), `${id} unsealed carries the Mark`);
   }
   assert.strictEqual(titansMarkFor.Ancient, undefined, 'the Titan does not mark itself');
 });

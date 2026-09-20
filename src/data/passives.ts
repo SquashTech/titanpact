@@ -1232,6 +1232,9 @@ export function isBurden(passiveId: string): boolean {
 // miniature, and the reason a Skirmish against spawn is a fight to end rather than to cycle.
 // Active only (RoundEnded fires for owners on the field), the Pact Clock's shape since the bench
 // came off it. Generated like the type Boons; Ancient has none, the Titan does not mark itself.
+// The spawn alone carry it, never a Guardian: measured (docs/innate-passives.md §8), a Marked
+// champion in a 14-round fight took the Act 1 Guardian 92 -> 76% and the act 68 -> 56%, and
+// leaving the champion bare put both back exactly — the seal is what keeps the Mark off it.
 export const TITANS_MARK_FORCE = 5;
 
 const MARK_TYPES: readonly TitanpactType[] = TYPES.filter((type) => type !== 'Ancient');
@@ -1255,7 +1258,7 @@ const titansMarkPassives: Record<string, PassiveDefinition> = Object.fromEntries
   })
 );
 
-/** Type -> its Mark. A Titanspawn line and a Guardian's champion carry the one for their type (titanspawn.ts, enemies.ts). */
+/** Type -> its Mark. A Titanspawn line carries the one for its type (titanspawn.ts); a Guardian does not — its seal keeps it off (enemies.ts). */
 export const titansMarkFor: Partial<Record<TitanpactType, string>> = Object.fromEntries(MARK_TYPES.map((type) => [type, `markOf${type}`]));
 
 /** Whether a passive is a Mark — the scouted chip and the nameplate read it as the Titan's, not the creature's. */

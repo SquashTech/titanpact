@@ -70,7 +70,7 @@ test("mark: a Force stack that climbs by TITANS_MARK_FORCE each round the holder
   assert.strictEqual(statusMagnitude(state.combatants.b3, 'FireForce'), 0, 'a benched holder is out of it, as it is out of the Clock');
 });
 
-test('mark: every spawn and Guardian carries exactly its own type, read by titansMarkOf, and it is not an innate', () => {
+test('mark: every spawn carries exactly its own type, read by titansMarkOf, and it is not an innate', () => {
   for (const spawn of Object.values(titanspawn)) {
     assert.strictEqual(titansMarkOf(spawn)?.id, titansMarkFor[spawn.types[0] as keyof typeof titansMarkFor]);
     assert.strictEqual(innatePassiveOf(spawn), null, `${spawn.id} has an innate beside its Mark`);

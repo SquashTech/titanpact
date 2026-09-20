@@ -147,6 +147,24 @@ don't silently override it.
 > 23.1 → 22.5% on the same seed (noise), absorbed 3–5% of hits by act and 13% in the finale, the
 > cap binding on 2% of casts, Bastion cast 43 → 2559 times — dead as Defense, live as a Shield.**
 
+> **A seventh is BUILT IN FULL: `docs/innate-passives.md`** (2026-09-20, per user direction,
+> drafted and built the same day). **Every hero holds ONE innate passive** on
+> `HeroDefinition.passiveIds` (`innatePassiveOf`, `src/run/innate.ts`) — a verb never a bare
+> number, uniform and unpriced, in no pool (a reused equipment card stays in the Boon pool as the
+> card it is, and stacks), read whole on the draft card, the stage, the dossier and the scouted
+> chip. 45 authored: 31 new cards, 12 catalog reuses, two engine verbs — **Lingering**
+> (`enduresOnce`: the first KO each fight refused at 1 HP, any source, an `Endured` event) and
+> **Ironbound** (`cannotSwitchOut`, read through `canSwitchOut` at every voluntary-switch site).
+> **Every Titanspawn carries its type's Mark** (`titansMarkFor`): +`TITANS_MARK_FORCE` = 5 of its
+> own Force at each round end it stands on the field, the Pact Clock's shape — **and no Guardian
+> does** (measured: a Marked champion was the whole of a twelve-point Act 1 loss; the seal keeps it
+> off). **The Burden** is the one priced exception: a cost-innate whose hero comes in
+> `BURDEN_SURPLUS` = 60 OVER the 550, in base, permanent, printed `610 · Burden` — Bellows alone,
+> `test/roster` pins the list. Measured (3000 runs, chart pilot, same seed): full-clear 20.8 →
+> 22.5%, Act 1 67.8 → 68.3, the finale 52.8 → 62.6 (the Herald and the Eyes hold no innate), every
+> hero inside ±2.6 points; Revenant −5.4 die%, Bellows +4.9 die% / +8.6 DPR. Its §10 lists the
+> invariants it reverses.
+
 ---
 
 ## Locked invariants — do not violate without an explicit decision
@@ -182,7 +200,10 @@ don't silently override it.
 - **Stat line:** HP, Attack/Defense, Intelligence/Wisdom, Speed, Mana, MP Regen.
 - **Every hero's seven stats sum to exactly 550** — HP/Attack/Defense/Intelligence/
   Wisdom/Speed/Mana at FACE VALUE, HP counted at 1:1 (2026-09-09, replacing the 450
-  budget that priced HP at half); **MP Regen sits outside it at a flat 10**. The rule is
+  budget that priced HP at half); **MP Regen sits outside it at a flat 10**. **One named
+  exception, the Burden** (2026-09-20, `docs/innate-passives.md` §4): a hero whose innate is a
+  COST comes in `BURDEN_SURPLUS` = 60 OVER, never under — printed on the sheet, pinned by test,
+  Bellows alone. The rule is
   the number the hero sheet's Stat Total row already prints, so a line being on budget is
   checkable by the player and not only by the repo (`heroStatTotal`,
   `src/run/statBudget.ts`; `test/roster.test.ts`; `docs/types-and-heroes.md`). A
@@ -484,7 +505,8 @@ don't silently override it.
   pick a hero, via `grantEventPassive`; it stacks. The pool is every equipment/event passive plus
   **one type-locked +20% damage passive per type** (Ancient excluded), and a type one is offered
   **only when a roster hero fields that type** — the filter is what keeps it from ever being a
-  dead card. Evolution passives and Classes are excluded: both are somebody's identity already.
+  dead card. Evolution passives, Classes and the new innate cards are excluded: all three are
+  somebody's identity already (an innate that IS an equipment card stays, as that card).
   `src/run/boons.ts`, `docs/run-loop.md` "Boons".
 - **There is no per-hero stat-investment currency** — with ONE authored exception since
   2026-09-13, per user direction: **the Mana Well** node (`manaWellReward`, `ManaWellScreen`,
@@ -541,7 +563,8 @@ don't silently override it.
 - **Lock-in rule:** voluntary switching is disabled once **half a side is KO'd** — `ceil(size/2)`,
   floor 2 (`lockInThreshold`): 3 of the six a full roster fields, 2 of anything smaller (forced
   replacement of a downed hero still happens). This flips a fight from a cycling game into a
-  grind — an intentional phase transition.
+  grind — an intentional phase transition. **The one per-hero lock beside it is Ironbound**
+  (2026-09-20, the Burden): both are read through `canSwitchOut`, never separately.
 - **Rest** is a required choice when a hero does not have enough mana for any of their abilities.
   Recovers all mana, but skips the turn.
 - **Mana tuning invariant:** *mana investment must pay out later than the point at which a weak
