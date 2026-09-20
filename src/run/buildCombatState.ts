@@ -14,7 +14,7 @@ import type { RosterEntry } from './state';
 import type { Squad } from './squad';
 import type { EquipmentDefinition } from './equipment';
 import { entryPassiveCounts, entryStatModifiers } from './entryStats';
-import { toPassiveInstances } from './passives';
+import { enduranceOf, switchLockOf, toPassiveInstances } from './passives';
 import { equipmentStatusGrants, mergeStatusGrants, toStatusInstances } from './statusGrants';
 
 export interface SquadPlacement {
@@ -57,6 +57,8 @@ function placeEntry(
     baselineStatusMagnitudes,
     passives,
     statuses,
+    enduresLeft: enduranceOf(passiveCounts, passiveDefs),
+    switchLocked: switchLockOf(passiveCounts, passiveDefs),
   };
   return { ...withMods, currentHp: woundedHp(getMaxHp(hero, withMods), entry.wounds), currentMana: getMaxMana(hero, withMods) };
 }

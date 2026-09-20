@@ -45,6 +45,19 @@ export function toPassiveInstances(counts: Record<PassiveId, number>): Record<Pa
   return out;
 }
 
+/** Knockouts the held passives refuse (PassiveDefinition.enduresOnce), one a stack; undefined when none. */
+export function enduranceOf(counts: Record<PassiveId, number>, passiveDefs: Record<PassiveId, PassiveDefinition>): number | undefined {
+  let total = 0;
+  for (const [passiveId, stacks] of Object.entries(counts)) if (passiveDefs[passiveId]?.enduresOnce) total += stacks;
+  return total > 0 ? total : undefined;
+}
+
+/** Whether any held passive is Ironbound (PassiveDefinition.cannotSwitchOut); undefined when none. */
+export function switchLockOf(counts: Record<PassiveId, number>, passiveDefs: Record<PassiveId, PassiveDefinition>): true | undefined {
+  for (const [passiveId, stacks] of Object.entries(counts)) if (stacks > 0 && passiveDefs[passiveId]?.cannotSwitchOut) return true;
+  return undefined;
+}
+
 /** Sums every held passive's statGrants, N stacks N times. */
 export function passiveStatModifiers(counts: Record<PassiveId, number>, passiveDefs: Record<PassiveId, PassiveDefinition>): StatModifiers {
   const grants: StatModifiers[] = [];

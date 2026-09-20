@@ -232,6 +232,24 @@ export interface PassiveDefinition {
    * wardOn), never a status. The Pact Clock and a self-cost go through, being neither.
    */
   wardedWhileCompanyStands?: true;
+  /**
+   * Lingering (docs/innate-passives.md §7): the first time the holder would be knocked out each
+   * fight, it stands at 1 HP instead. Any loss — a hit, a DoT, the Pact Clock — since it is not a
+   * trigger but a floor. Counted onto Combatant.enduresLeft at fight build, one a stack.
+   */
+  enduresOnce?: true;
+  /**
+   * Ironbound (docs/innate-passives.md §4): the holder never switches out voluntarily — a pivot
+   * move degrades to its buff, the Switch key is dead for it — while a forced replacement of a
+   * downed hero still happens. Read onto Combatant.switchLocked at fight build.
+   */
+  cannotSwitchOut?: true;
+  /**
+   * A Burden (docs/innate-passives.md §4): this passive is a COST, and the hero born with it comes
+   * in BURDEN_SURPLUS over the 550 (run/statBudget.ts). Presentation tints it as a price; the
+   * roster test reads it for the one budget exemption.
+   */
+  burden?: true;
 }
 
 /** Every stat grant must be a valid flat grant, and the passive must do something. */
@@ -241,7 +259,9 @@ export function isValidPassiveDefinition(passive: PassiveDefinition): boolean {
     passive.damageModifier !== undefined ||
     passive.statGrants !== undefined ||
     passive.conditionalStatGrants !== undefined ||
-    passive.wardedWhileCompanyStands !== undefined;
+    passive.wardedWhileCompanyStands !== undefined ||
+    passive.enduresOnce !== undefined ||
+    passive.cannotSwitchOut !== undefined;
   if (!hasEffect) return false;
   const ok = (amount: number | undefined) => amount === undefined || isValidFlatStatGrant(amount);
   return Object.values(passive.statGrants ?? {}).every(ok) && Object.values(passive.conditionalStatGrants?.statGrants ?? {}).every(ok);
@@ -493,8 +513,9 @@ export interface HeroDefinition {
   signatureMoveId?: string;
   /**
    * Passives held from birth, in no pool and never granted (run/entryStats.ts folds them in beside
-   * every other source). Today only the Titan's pieces carry any (data/enemies.ts, docs/titan-eyes.md
-   * §10); a hero's identity still lives in its Evolution and its Class, not here.
+   * every other source). Every roster hero holds exactly ONE — its innate, docs/innate-passives.md,
+   * read by `innatePassiveOf` — a Titanspawn and a Guardian its type's Mark, and the Titan's pieces
+   * their several (data/enemies.ts, docs/titan-eyes.md §10).
    */
   passiveIds?: readonly PassiveId[];
 }

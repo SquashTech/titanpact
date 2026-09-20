@@ -879,6 +879,390 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   },
 };
 
+// --- Innate (HeroDefinition.passiveIds, docs/innate-passives.md) ---
+//
+// One a hero, held from birth, live from the first fight on either side of the field. A verb
+// never a number: a card here is a reaction, an entry grant or a rider, never `statGrants`
+// alone (test/roster pins it). In no pool — an innate that is ALSO an equipment card (Impale on
+// Mordrax, Sunder on Gallant) reaches the Boon pool as the equipment card it is, and stacks.
+// The band is deliberately narrow: an entry grant, a 5-point reaction, a rider on a typed hit,
+// a trickle. Sibling pairs across a type (Fault Line / Aftershock, Live Wire / Static Field) and
+// innate → Evolution chains (Impale → Thornrot, Attunement → Pixie Dust) are what the seats are for.
+const innatePassives: Record<string, PassiveDefinition> = {
+  kindling: {
+    id: 'kindling',
+    name: 'Kindling',
+    description: 'Whenever this hero afflicts Burn, it gains 5 Attack.',
+    // Fires on Fire's self-Burn too — the cost pays a little back, which is the brawler's reading.
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Burn' } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 5 },
+    },
+  },
+  stoke: {
+    id: 'stoke',
+    name: 'Stoke',
+    description: 'Whenever an enemy takes Burn damage, this hero gains 5 Intelligence.',
+    reactive: {
+      hook: 'StatusTicked',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Burn', kind: 'damage' } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 5 },
+    },
+  },
+  sulphur: {
+    id: 'sulphur',
+    name: 'Sulphur',
+    description: 'When this hero enters the battlefield, both active enemies gain Burn 5.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 5 },
+    },
+  },
+  drag: {
+    id: 'drag',
+    name: 'Drag',
+    description: 'Whenever this hero lands a Water attack, its target loses 5 Speed.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'speed', amount: -5 },
+    },
+  },
+  carapace: {
+    id: 'carapace',
+    name: 'Carapace',
+    description: 'When this hero enters the battlefield, it gains Shield 30.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 30 },
+    },
+  },
+  glaciate: {
+    id: 'glaciate',
+    name: 'Glaciate',
+    description: 'Whenever this hero takes damage, both active enemies lose 5 Speed.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'speed', amount: -5 },
+    },
+  },
+  coldSnap: {
+    id: 'coldSnap',
+    name: 'Cold Snap',
+    description: 'Whenever this hero Freezes an enemy, it gains 10 Attack.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Freeze' } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10 },
+    },
+  },
+  absoluteZero: {
+    id: 'absoluteZero',
+    name: 'Absolute Zero',
+    description: "Whenever this hero's Defense rises, both active enemies lose 5 Speed.",
+    reactive: {
+      hook: 'StatChanged',
+      condition: { relativeTo: 'self', eventFieldEquals: { stat: 'defense' }, eventFieldPositive: 'delta' },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'speed', amount: -5 },
+    },
+  },
+  tailwind: {
+    id: 'tailwind',
+    name: 'Tailwind',
+    description: 'When this hero enters the battlefield, its partner gains 10 Speed.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'ally', stat: 'speed', amount: 10 },
+    },
+  },
+  liveWire: {
+    id: 'liveWire',
+    name: 'Live Wire',
+    description: 'Whenever this hero lands a Storm attack, its target is Conducting.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Storm' } },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Conduct' },
+    },
+  },
+  staticField: {
+    id: 'staticField',
+    name: 'Static Field',
+    description: 'Whenever an enemy becomes Conducting, this hero gains 10 Intelligence.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Conduct' } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 10 },
+    },
+  },
+  stoneWall: {
+    id: 'stoneWall',
+    name: 'Stone Wall',
+    description: 'When this hero enters the battlefield, its partner gains Shield 20.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Shield', magnitude: 20 },
+    },
+  },
+  faultLine: {
+    id: 'faultLine',
+    name: 'Fault Line',
+    description: 'Whenever this hero lands a physical attack, its target loses 5 Wisdom.',
+    // Aftershock's mirror (magical → Defense), so Slate's Quakebringer holds both halves.
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'physical' } },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', amount: -5 },
+    },
+  },
+  verdure: {
+    id: 'verdure',
+    name: 'Verdure',
+    description: 'Whenever this hero heals an ally, that ally gains Renew 10.',
+    reactive: {
+      hook: 'Healed',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Renew', magnitude: 10 },
+    },
+  },
+  grace: {
+    id: 'grace',
+    name: 'Grace',
+    description: 'Whenever this hero heals an ally, it gains 10 Mana, past its pool.',
+    reactive: {
+      hook: 'Healed',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 10 } },
+    },
+  },
+  consecrate: {
+    id: 'consecrate',
+    name: 'Consecrate',
+    description: 'Whenever this hero is healed, it gains 5 Defense and 5 Wisdom.',
+    reactive: {
+      hook: 'Healed',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'self', stat: ['defense', 'wisdom'], amount: 5 },
+    },
+  },
+  halo: {
+    id: 'halo',
+    name: 'Halo',
+    description: "At the end of each round, this hero's partner is healed 10.",
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'heal', target: 'ally', amount: { kind: 'flat', value: 10 } },
+    },
+  },
+  lacerate: {
+    id: 'lacerate',
+    name: 'Lacerate',
+    description: 'Whenever this hero lands a physical attack, its target Bleeds.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'physical' } },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Bleed' },
+    },
+  },
+  necrosis: {
+    id: 'necrosis',
+    name: 'Necrosis',
+    description: 'Whenever an enemy takes Poison damage, this hero heals for the same amount.',
+    reactive: {
+      hook: 'StatusTicked',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Poison', kind: 'damage' } },
+      effect: { kind: 'heal', target: 'self', amount: { kind: 'matchTriggerAmount' } },
+    },
+  },
+  shadowmeld: {
+    id: 'shadowmeld',
+    name: 'Shadowmeld',
+    description: 'When this hero enters the battlefield, it gains Ambush 10.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 10 },
+    },
+  },
+  neuroplastic: {
+    id: 'neuroplastic',
+    name: 'Neuroplastic',
+    description: 'Whenever this hero takes damage, it gains 5 Attack and 5 Intelligence.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], amount: 5 },
+    },
+  },
+  intrusion: {
+    id: 'intrusion',
+    name: 'Intrusion',
+    description: 'Whenever this hero lands a Mind attack, its target loses 5 Intelligence.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Mind' } },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'intelligence', amount: -5 },
+    },
+  },
+  lullaby: {
+    id: 'lullaby',
+    name: 'Lullaby',
+    description: 'At the end of each round, both active enemies lose 5 Speed.',
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'speed', amount: -5 },
+    },
+  },
+  wail: {
+    id: 'wail',
+    name: 'Wail',
+    description: 'Whenever this hero lands a Spirit attack, its target is Haunted.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Spirit' } },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Haunt' },
+    },
+  },
+  foreboding: {
+    id: 'foreboding',
+    name: 'Foreboding',
+    description: 'Whenever an enemy is Haunted, this hero gains 5 Defense and 5 Wisdom.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Haunt' } },
+      effect: { kind: 'statDelta', target: 'self', stat: ['defense', 'wisdom'], amount: 5 },
+    },
+  },
+  rivet: {
+    id: 'rivet',
+    name: 'Rivet',
+    description: 'Whenever this hero takes damage, its partner gains 5 Defense.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'ally', stat: 'defense', amount: 5 },
+    },
+  },
+  boiler: {
+    id: 'boiler',
+    name: 'Boiler',
+    description: 'Whenever this hero is Burned, it gains 10 Mana, past its pool.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Burn' } },
+      effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 10 } },
+    },
+  },
+  steamPressure: {
+    id: 'steamPressure',
+    name: 'Steam Pressure',
+    description: 'Whenever this hero is Burned, it gains 10 Speed.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Burn' } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'speed', amount: 10 },
+    },
+  },
+  fieldRepair: {
+    id: 'fieldRepair',
+    name: 'Field Repair',
+    description: 'Whenever this hero heals an ally, that ally is Cleansed of one affliction.',
+    reactive: {
+      hook: 'Healed',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'cleanse', target: 'triggerTarget', count: 1 },
+    },
+  },
+  packHunter: {
+    id: 'packHunter',
+    name: 'Pack Hunter',
+    description: "Whenever this hero's partner lands an attack, this hero gains 5 Attack.",
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'ally', subjectRole: 'source' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 5 },
+    },
+  },
+  serpentsEye: {
+    id: 'serpentsEye',
+    name: "Serpent's Eye",
+    description: 'When this hero enters the battlefield, both active enemies lose 10 Intelligence.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'intelligence', amount: -10 },
+    },
+  },
+  lingering: {
+    id: 'lingering',
+    name: 'Lingering',
+    description: 'The first time this hero would be knocked out each fight, it survives at 1 HP.',
+    // The one innate the designer flagged as likely over the band, kept on purpose to be tested.
+    enduresOnce: true,
+  },
+  // The Burden (docs/innate-passives.md §4): a cost, and the hero born with it comes in
+  // BURDEN_SURPLUS over the 550. Bellows is the first and, for now, the only one.
+  ironbound: {
+    id: 'ironbound',
+    name: 'Ironbound',
+    description: 'This hero never switches out on its own. It is far bigger than its peers for it.',
+    cannotSwitchOut: true,
+    burden: true,
+  },
+};
+
+/** Whether a passive is a Burden — a cost the hero was born with, priced in its stat line. */
+export function isBurden(passiveId: string): boolean {
+  return passives[passiveId]?.burden === true;
+}
+
+// --- The Titan's Mark (every Titanspawn, docs/innate-passives.md §3) ---
+//
+// One a type, identical in shape: at each round end the spawn stands on the field it gains
+// TITANS_MARK_FORCE of its own type's Force. The Force statuses are additive, never decay and
+// survive a switch, so the stack climbs for as long as the creature stands — the Titan's clock in
+// miniature, and the reason a Skirmish against spawn is a fight to end rather than to cycle.
+// Active only (RoundEnded fires for owners on the field), the Pact Clock's shape since the bench
+// came off it. Generated like the type Boons; Ancient has none, the Titan does not mark itself.
+export const TITANS_MARK_FORCE = 5;
+
+const MARK_TYPES: readonly TitanpactType[] = TYPES.filter((type) => type !== 'Ancient');
+
+const titansMarkPassives: Record<string, PassiveDefinition> = Object.fromEntries(
+  MARK_TYPES.map((type) => {
+    const id = `markOf${type}`;
+    return [
+      id,
+      {
+        id,
+        name: `Mark of the Titan (${type})`,
+        description: `At the end of each round this creature stands on the field, it gains ${type} Force ${TITANS_MARK_FORCE}.`,
+        reactive: {
+          hook: 'RoundEnded',
+          condition: { relativeTo: 'self' },
+          effect: { kind: 'applyStatus', target: 'self', statusId: `${type}Force`, magnitude: TITANS_MARK_FORCE },
+        },
+      } satisfies PassiveDefinition,
+    ];
+  })
+);
+
+/** Type -> its Mark. A Titanspawn line and a Guardian's champion carry the one for their type (titanspawn.ts, enemies.ts). */
+export const titansMarkFor: Partial<Record<TitanpactType, string>> = Object.fromEntries(MARK_TYPES.map((type) => [type, `markOf${type}`]));
+
+/** Whether a passive is a Mark — the scouted chip and the nameplate read it as the Titan's, not the creature's. */
+export function isTitansMark(passiveId: string): boolean {
+  return passiveId in titansMarkPassives;
+}
+
 // --- The Titan's pieces (HeroDefinition.passiveIds, docs/titan-eyes.md §10) ---
 //
 // Innate to the Herald and the Eyes, in no pool: a piece of the Titan is the only thing that ever
@@ -930,6 +1314,8 @@ export const passives: Record<string, PassiveDefinition> = {
   ...fieldHeraldPassives,
   ...evolutionPassives,
   ...classPassives,
+  ...innatePassives,
+  ...titansMarkPassives,
   ...titanPassives,
 };
 

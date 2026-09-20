@@ -15,19 +15,24 @@ import { progressionTable } from '../src/data/progression';
 import { BASE_ITEM_SLOTS, MAX_ITEM_SLOTS, statGrantCost } from '../src/run/equipment';
 import type { GrowthStatKey, StatKey } from '../src/engine/content';
 import { GRADE_BUDGET, GROWTH_STATS, gradeBudgetOf, gradeExpectedPoints, gradesFor } from '../src/run/growth';
-import { HERO_STAT_TOTAL, heroStatTotal } from '../src/run/statBudget';
+import { BURDEN_SURPLUS, HERO_STAT_TOTAL, heroStatTotal, heroStatTotalFor } from '../src/run/statBudget';
 import { itemSlotsFor } from '../src/run/progression';
 import { createRosterEntry } from '../src/run/state';
 import { heroPool } from '../src/run/recruitment';
 import { TYPES } from '../src/data/typechart';
 
 /** HP + Mana + the five battle stats at face value. MP Regen is a flat 10 outside the total. */
-test('roster: every seven-stat line sums to 550, and MP Regen is flat 10 outside it', () => {
+test('roster: every seven-stat line sums to 550 — a Burden hero to 550 + the surplus — and MP Regen is flat 10 outside it', () => {
+  const { isBurden } = require('../src/data/passives') as typeof import('../src/data/passives');
   const offBudget = Object.values(heroes)
-    .map((hero) => ({ id: hero.id, total: heroStatTotal(hero.baseStats) }))
-    .filter((row) => row.total !== HERO_STAT_TOTAL)
-    .map((row) => `${row.id}=${row.total}`);
-  assert.deepStrictEqual(offBudget, [], 'these lines do not sum to 550');
+    .map((hero) => ({ id: hero.id, total: heroStatTotal(hero.baseStats), owed: heroStatTotalFor(hero, isBurden) }))
+    .filter((row) => row.total !== row.owed)
+    .map((row) => `${row.id}=${row.total} (owes ${row.owed})`);
+  assert.deepStrictEqual(offBudget, [], 'these lines do not sum to what they owe');
+  // The exemption is a printed, fixed figure, and exactly the Burden heroes use it.
+  const burdened = Object.values(heroes).filter((hero) => (hero.passiveIds ?? []).some(isBurden)).map((hero) => hero.id);
+  assert.deepStrictEqual(burdened, ['steamColossus'], 'the Burden roster is a decision, one hero at a time');
+  assert.strictEqual(heroStatTotalFor(heroes.steamColossus, isBurden), HERO_STAT_TOTAL + BURDEN_SURPLUS);
 
   const offRegen = Object.values(heroes).filter((hero) => hero.baseStats.mpRegen !== 10).map((hero) => hero.id);
   assert.deepStrictEqual(offRegen, [], 'MP Regen is not a stat-total axis — every hero carries 10');
@@ -206,9 +211,8 @@ test('roster: every passive in the catalog has a granter — a passive nobody gr
   for (const event of Object.values(runEvents)) {
     if (event.outcome.kind === 'grantPassive') granted.add(event.outcome.passiveId);
   }
-  // Innate to a definition (HeroDefinition.passiveIds): the Titan's pieces, and nothing recruitable.
+  // Innate to a definition (HeroDefinition.passiveIds): every hero's one, the spawn's Marks, the Titan's pieces.
   for (const definition of Object.values(allCombatants)) for (const id of definition.passiveIds ?? []) granted.add(id);
-  for (const hero of Object.values(heroes)) assert.strictEqual(hero.passiveIds, undefined, `${hero.id} holds an innate passive — that is an Evolution's or a Class's job`);
 
   // Static Tide was RESERVED for a year and then used (Pincer). A new orphan should be a decision.
   const orphans = Object.keys(passives).filter((id) => !granted.has(id)).sort();
@@ -271,4 +275,38 @@ test('roster: the BASE roster is three a type — one starter, two recruit-only 
   for (const hero of Object.values(heroes)) {
     if (hero.unlock) assert.strictEqual(hero.starter, false, `${hero.id} is a bundle hero and a starter`);
   }
+});
+
+test('roster: every hero holds exactly ONE innate — a verb, never a bare stat line, in no pool — and every spawn and Guardian its type Mark', () => {
+  // docs/innate-passives.md §1-3. The innate is what two heroes of one type do differently before
+  // either has evolved; a statGrants-only card would be a 560 total through the side door.
+  const { titansMarkFor, typeDamagePassiveFor, isTitansMark, isBurden } = require('../src/data/passives') as typeof import('../src/data/passives');
+  const { titanspawn } = require('../src/data/titanspawn') as typeof import('../src/data/titanspawn');
+  const { enemies, CHAMPION_IDS, unsealedChampions } = require('../src/data/enemies') as typeof import('../src/data/enemies');
+  const { innatePassiveOf } = require('../src/run/innate') as typeof import('../src/run/innate');
+
+  for (const hero of Object.values(heroes)) {
+    const ids = hero.passiveIds ?? [];
+    assert.strictEqual(ids.length, 1, `${hero.id} holds ${ids.length} innate passives, not one`);
+    const passive = passives[ids[0]];
+    assert.ok(passive, `${hero.id}'s innate ${ids[0]} does not exist`);
+    assert.strictEqual(innatePassiveOf(hero)?.id, passive.id);
+    const bareNumber = passive.statGrants !== undefined && !passive.reactive && !passive.damageModifier && !passive.conditionalStatGrants;
+    assert.ok(!bareNumber, `${hero.id}'s innate ${passive.id} is a bare stat grant`);
+    assert.ok(!isTitansMark(passive.id), `${hero.id} carries the Titan's Mark — that is a spawn's`);
+    // A NEW innate card is in no pool (innatePassives is not folded into boonPassives). A reused
+    // equipment card (Impale, Sunder) stays in the Boon pool as the equipment card it is, and stacks.
+    assert.ok(!Object.values(typeDamagePassiveFor).includes(passive.id), `${hero.id}'s innate ${passive.id} is its own type's +20% Boon (§11 q6: never)`);
+  }
+  // A Burden is one of them, priced elsewhere; the Mark is on every spawn and every champion, sealed or not.
+  assert.ok(Object.values(heroes).some((hero) => (hero.passiveIds ?? []).some(isBurden)));
+  for (const spawn of Object.values(titanspawn)) {
+    assert.deepStrictEqual(spawn.passiveIds, [titansMarkFor[spawn.types[0] as keyof typeof titansMarkFor]], `${spawn.id} does not carry its type's Mark`);
+  }
+  for (const id of CHAMPION_IDS) {
+    const mark = titansMarkFor[enemies[id].types[0] as keyof typeof titansMarkFor] as string;
+    assert.ok(enemies[id].passiveIds?.includes(mark), `${id} does not carry its type's Mark`);
+    assert.ok(Object.values(unsealedChampions).some((c) => c.passiveIds?.includes(mark)), `${id} unsealed lost its Mark`);
+  }
+  assert.strictEqual(titansMarkFor.Ancient, undefined, 'the Titan does not mark itself');
 });

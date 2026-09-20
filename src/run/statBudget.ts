@@ -18,6 +18,20 @@ export const HP_BUDGET_VALUE = 0.5;
 /** What every authored hero's seven stats sum to, at face value. */
 export const HERO_STAT_TOTAL = 550;
 
+/**
+ * The one exemption (docs/innate-passives.md §4): a hero born with a Burden — an innate that is a
+ * COST — comes in this much OVER the total, in base and never in grades, and the sheet prints it.
+ * One fixed figure for every Burden rather than a price per drawback, on the Banner's precedent:
+ * the drawbacks are authored to be worth about this and then measured, and the line never moves.
+ */
+export const BURDEN_SURPLUS = 60;
+
+/** What a hero's line must sum to: the total, plus the surplus if its innate is a Burden. */
+export function heroStatTotalFor(hero: { passiveIds?: readonly string[] }, isBurden: (passiveId: string) => boolean): number {
+  const burdened = (hero.passiveIds ?? []).some(isBurden);
+  return HERO_STAT_TOTAL + (burdened ? BURDEN_SURPLUS : 0);
+}
+
 /** The hero budget: HP + Mana + the five battle stats. MP Regen is a flat 10 outside it. */
 export const HERO_BUDGET_STATS: readonly StatKey[] = [
   'hp',

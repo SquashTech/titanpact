@@ -23,7 +23,7 @@ import { resolveBattleStartEntries, resolvePassiveReactions } from '../../src/en
 import { DEFAULT_PACT_CLOCK } from '../../src/engine/combat/pactClock';
 import { buildCombatState, rosterIdOfCombatant } from '../../src/run/buildCombatState';
 import { pickAiAction, type AiContext } from '../../src/run/ai';
-import { hasAffordableMoveInFight, isLockedIn } from '../../src/engine/state';
+import { canSwitchOut, hasAffordableMoveInFight, isLockedIn } from '../../src/engine/state';
 import { relicTeamStatModifiers } from '../../src/run/relics';
 import { relicTeamPassiveGrants } from '../../src/run/passives';
 import { relicTeamStatusGrants } from '../../src/run/statusGrants';
@@ -428,6 +428,7 @@ function manaCycleSwitches(state: CombatState, side: Side, ctx: AiContext, actin
   if (isLockedIn(state, side)) return out;
   const claimed = new Set<string>();
   for (const id of actingIds) {
+    if (!canSwitchOut(state, id)) continue;
     if (hasAffordableMoveInFight(state, id, ctx.moveIdsFor(id), moves, allCombatants)) continue;
     const replacement = state.bench[side].find(
       (benchId) =>

@@ -52,6 +52,10 @@ export interface Combatant {
   damageTakenSinceLastTurn: number;
   /** Populated once at fight build (src/run/passives.ts); only `firedThisFight` changes mid-fight. */
   passives: Record<PassiveId, PassiveInstance>;
+  /** How many more knockouts this combatant shrugs off at 1 HP (PassiveDefinition.enduresOnce), set at fight build and spent in applyHpDelta. */
+  enduresLeft?: number;
+  /** Never switches out voluntarily (PassiveDefinition.cannotSwitchOut), set at fight build. Read through canSwitchOut. */
+  switchLocked?: boolean;
   fainted: boolean;
   /**
    * A bench entry held back for a later PHASE of the fight (switching.ts replacementCandidates):
@@ -106,9 +110,16 @@ export function lockInThreshold(state: CombatState, side: Side): number {
   return Math.max(2, Math.ceil(size / 2));
 }
 
-/** The single switch restriction — do not layer more on it. */
+/** The side-wide switch restriction. The one per-hero one is the Ironbound Burden; both are read through canSwitchOut. */
 export function isLockedIn(state: CombatState, side: Side): boolean {
   return state.koCount[side] >= lockInThreshold(state, side);
+}
+
+/** Whether this combatant may leave the field on its own — not locked in, and not Ironbound (docs/innate-passives.md §4). Every voluntary-switch site reads this. */
+export function canSwitchOut(state: CombatState, combatantId: string): boolean {
+  const combatant = state.combatants[combatantId];
+  if (!combatant) return false;
+  return !isLockedIn(state, combatant.side) && !combatant.switchLocked;
 }
 
 /** Pure mana check against the caller's authoritative move list; drives the Rest fallback. */

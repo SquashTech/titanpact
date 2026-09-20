@@ -202,6 +202,12 @@ export interface FaintedEvent extends BaseEvent {
   koCount: number;
 }
 
+/** A knockout refused (Combatant.enduresLeft — Lingering, docs/innate-passives.md §7): the HpChanged before it left the holder at 1. */
+export interface EnduredEvent extends BaseEvent {
+  type: 'Endured';
+  combatantId: string;
+}
+
 export interface SwitchedInEvent extends BaseEvent {
   type: 'SwitchedIn';
   side: Side;
@@ -332,6 +338,7 @@ export type CombatEvent =
   | ActionBlockedEvent
   | MoveGuardedEvent
   | FaintedEvent
+  | EnduredEvent
   | SwitchedInEvent
   | BenchRegenTickedEvent
   | RestedEvent

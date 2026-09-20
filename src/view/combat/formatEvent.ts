@@ -131,6 +131,9 @@ export function formatEvents(
       case 'Fainted':
         lines.push({ key, text: `${name(e.combatantId)} fainted!`, className: 'log-faint' });
         break;
+      case 'Endured':
+        lines.push({ key, text: `${name(e.combatantId)} lingers at 1 HP!`, className: 'log-heal' });
+        break;
       case 'BenchRegenTicked':
         lines.push({ key, text: `${name(e.combatantId)} regens ${e.hpRegen} HP on the bench`, className: 'log-mana' });
         break;

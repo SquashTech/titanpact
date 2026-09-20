@@ -13,6 +13,7 @@ import type { CombatState, Side } from '../../engine/state';
 import {
   activePartnerTypes,
   isLockedIn,
+  canSwitchOut,
   effectiveTypes,
   hasStatus,
   hasAffordableMoveInFight,
@@ -931,7 +932,7 @@ export function FightScreen({
 
   /** Whether a switchesUserOut move has anyone to pivot to. The move stays pressable either way — it degrades to its buff, as the engine resolves it. */
   function canPivot(): boolean {
-    return playerBench.length > 0 && !isLockedIn(combat, PLAYER_SIDE);
+    return playerBench.length > 0 && actingId !== null && canSwitchOut(combat, actingId);
   }
 
   /**
@@ -1787,7 +1788,7 @@ export function FightScreen({
             <>
               <button
                 className="bottom-action bottom-action-primary bottom-action-switch"
-                disabled={!(actingId !== null && playerBench.length > 0 && !playerLockedIn)}
+                disabled={!(actingId !== null && playerBench.length > 0 && canSwitchOut(combat, actingId))}
                 onClick={() => setSwitchOpen(true)}
               >
                 {/* ⇄, not an emoji: an emoji cannot take the key's own color. */}

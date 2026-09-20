@@ -153,6 +153,7 @@ const ACTION_EVENTS: ReadonlySet<CombatEvent['type']> = new Set([
   'HpChanged',
   'Healed',
   'Fainted',
+  'Endured',
   'StatChanged',
   'StatusApplied',
   'StatusRemoved',

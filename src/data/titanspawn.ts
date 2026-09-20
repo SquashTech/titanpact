@@ -14,6 +14,7 @@
 import type { GrowthStatKey, HeroDefinition, MoveTier, StatLine, TypeId } from '../engine/content';
 import type { GrowthGrade } from '../run/growth';
 import { moves } from './moves';
+import { titansMarkFor } from './passives';
 
 export type SpawnTier = MoveTier;
 
@@ -162,6 +163,8 @@ export const titanspawn: Record<string, TitanspawnDefinition> = Object.fromEntri
         moveIds: line.moveIds[tier],
         starter: false,
         growthGrades: line.growthGrades,
+        // Every spawn carries its type's Mark (docs/innate-passives.md §3) — derived from the line, never authored per tier.
+        passiveIds: [titansMarkFor[line.type as keyof typeof titansMarkFor] as string],
       };
       return [id, definition];
     })

@@ -28,6 +28,7 @@ import {
   getMaxHp,
   hasAffordableMoveInFight,
   isLockedIn,
+  canSwitchOut,
   resolveCastBasePower,
   resolveManaCost,
   resolveTargetMode,
@@ -856,7 +857,7 @@ export function pilotActions(state: CombatState, side: Side, ctx: AiContext, opt
       if (!best || option.score > best.score) best = option;
     }
 
-    if (canSwitch) {
+    if (canSwitch && canSwitchOut(state, casterId)) {
       const stay = Math.max(0, best?.gross ?? 0);
       const outgoingReach = reachOf(state, ctx, casterId);
       let bestBench: { id: string; reach: number } | null = null;

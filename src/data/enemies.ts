@@ -8,7 +8,7 @@
 
 import type { GrowthStatKey, HeroDefinition } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
-import { HERALDS_STANDARD_ID, WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID } from './passives';
+import { HERALDS_STANDARD_ID, WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID, titansMarkFor } from './passives';
 import type { GrowthGrade } from '../run/growth';
 
 /**
@@ -314,6 +314,16 @@ export const CHAMPION_IDS: readonly string[] = [
   ROC_ID,
   WENDIGO_ID,
 ];
+
+// A champion is the Titan's mortal type made large, and carries that type's Mark like every spawn
+// (docs/innate-passives.md §3) — derived off its primary here so ten entries cannot drift. The
+// unsealed version inherits it; the Herald and the Eyes are Ancient and carry their own instead.
+for (const id of CHAMPION_IDS) {
+  const champion = enemies[id];
+  const mark = titansMarkFor[champion.types[0] as keyof typeof titansMarkFor];
+  if (!mark) throw new Error(`${id} has no Mark for its primary type`);
+  enemies[id] = { ...champion, passiveIds: [...(champion.passiveIds ?? []), mark] };
+}
 
 export function unsealedIdFor(championId: string): string {
   return `${championId}Unsealed`;

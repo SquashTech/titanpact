@@ -2,7 +2,7 @@
 // 2+ KOs disables voluntary switching; forced replacement still happens.
 
 import type { CombatState, Side } from '../state';
-import { isLockedIn, phaseOf } from '../state';
+import { canSwitchOut, isLockedIn, phaseOf } from '../state';
 import type { CombatEvent, BenchRegenTickedEvent } from '../events';
 import type { StatusDefinition } from '../content';
 import { clearOnSwitch } from './statusEngine';
@@ -27,6 +27,9 @@ export function applyVoluntarySwitch(
   const side = state.combatants[outCombatantId].side;
   if (isLockedIn(state, side)) {
     throw new SwitchBlockedError(`Side ${side} is locked in (2+ KOs) — voluntary switching is disabled`);
+  }
+  if (!canSwitchOut(state, outCombatantId)) {
+    throw new SwitchBlockedError(`${outCombatantId} is Ironbound — it never switches out on its own`);
   }
   return performSwitch(state, round, side, outCombatantId, inCombatantId, statusDefs);
 }

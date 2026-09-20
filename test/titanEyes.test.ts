@@ -248,11 +248,13 @@ test('titanEyes: the finale encounter fields the Herald and its spawn, then the 
   assert.strictEqual(phase(LEFT_EYE_ID), 1);
   assert.strictEqual(phase(RIGHT_EYE_ID), 1);
   assert.strictEqual(phase(ENDBRINGER_ID), undefined);
-  // The innate passives are held at fight build, and only the Titan's pieces hold any.
+  // The innate passives are held at fight build: the Titan's pieces theirs, a spawn its type's Mark (docs/innate-passives.md §3).
   const held = (rosterId: string) => Object.keys(state.combatants[Object.keys(state.combatants).find((k) => k.endsWith(rosterId))!].passives);
   assert.deepStrictEqual(held(ENDBRINGER_ID), [HERALDS_STANDARD_ID]);
   assert.deepStrictEqual(held(LEFT_EYE_ID), [WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID]);
-  assert.deepStrictEqual(held(encounter.squad.benchIds[0]), []);
+  const spawnHeld = held(encounter.squad.benchIds[0]);
+  assert.strictEqual(spawnHeld.length, 1);
+  assert.ok(spawnHeld[0].startsWith('markOf'), `a finale spawn carries its Mark, not ${spawnHeld[0]}`);
   for (const id of [HERALDS_STANDARD_ID, WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID]) assert.ok(!(id in boonPassives), `${id} is in the Boon pool`);
   assert.strictEqual(cinematicEntranceFor(LEFT_EYE_ID), 'titanRise', 'the first Eye in brings the scene');
   assert.strictEqual(cinematicEntranceFor(RIGHT_EYE_ID), null);

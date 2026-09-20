@@ -54,8 +54,17 @@ export function applyHpDelta(
 
   const previousHp = target.currentHp;
   const raw = previousHp + delta;
-  const newHp = delta < 0 ? Math.max(0, raw) : Math.min(maxHp, raw);
-  const fainted = delta < 0 && newHp <= 0;
+  let newHp = delta < 0 ? Math.max(0, raw) : Math.min(maxHp, raw);
+  let fainted = delta < 0 && newHp <= 0;
+  // Lingering (PassiveDefinition.enduresOnce): a KO is refused and the hero stands at 1. A floor,
+  // not a trigger — every loss source reads it, the Pact Clock included.
+  let enduresLeft = target.enduresLeft;
+  const endured = fainted && (enduresLeft ?? 0) > 0;
+  if (endured) {
+    newHp = 1;
+    fainted = false;
+    enduresLeft = (enduresLeft as number) - 1;
+  }
 
   // damageTakenSinceLastTurn accumulates here (every HP loss passes through), counting
   // HP ACTUALLY removed. Healing never decrements it, and a Shield's absorb never adds.
@@ -64,9 +73,10 @@ export function applyHpDelta(
   const current = working.combatants[targetId];
   working = {
     ...working,
-    combatants: { ...working.combatants, [targetId]: { ...current, currentHp: newHp, fainted, damageTakenSinceLastTurn: damageTaken } },
+    combatants: { ...working.combatants, [targetId]: { ...current, currentHp: newHp, fainted, damageTakenSinceLastTurn: damageTaken, enduresLeft } },
   };
   events.push({ type: 'HpChanged', round, combatantId: targetId, previousHp, newHp, maxHp });
+  if (endured) events.push({ type: 'Endured', round, combatantId: targetId });
 
   if (fainted) {
     const side = target.side;

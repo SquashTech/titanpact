@@ -62,6 +62,7 @@ import './profile.test';
 import './starShop.test';
 import './starterPacks.test';
 import './tutorial.test';
+import './innate.test';
 import { run } from './harness';
 
 run();
