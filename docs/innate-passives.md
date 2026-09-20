@@ -197,7 +197,7 @@ identity, and two Burden brutes on the same shelf is one too many.
 
 ---
 
-## 5. The Evolution, and the path that trades the innate
+## 5. The Evolution builds on the innate — never replaces it
 
 Additive by default: the Evolution passive lands beside the innate, and several rows in §7 are
 written so the innate *feeds* the path — Mordrax's Impale (every hit Poisons) into Bloomfang's
@@ -206,15 +206,12 @@ entry) under Stardust's Pixie Dust (+30); Nightshade's Shadowmeld (Ambush 10 on 
 Penumbra's Afterimage (Ambush 20). That is the stacking the designer named: the Evolution is still
 where the kit turns a corner, and the innate is the run-up.
 
-**One path per hero may REPLACE the innate** — `EvolutionPath.replacesInnate: PassiveId`, the
-passive it grants taking the slot rather than a second one. The precedent is the graft: *the graft
-owns the secondary slot, it does not append*, and exactly one path per dual hero offers the retype.
-A path that trades the innate is the hidden-ability / Mega reading of an Evolution — the hero
-becomes something else, and the price is what it was. Not every hero needs one; the rule is *at
-most* one, and it is best on a path whose new type or new stat makes the born verb wrong
-(Cinder's Thunderblaze does not want Kindling; Skyshear's Sunward does not want Static Field).
-
-A Burden is never the passive a path replaces (§4).
+**No path ever replaces the innate** (2026-09-20, per user direction). The draft proposed a
+`replacesInnate` on at most one path per hero, on the graft's precedent; the designer declined
+it. The innate is what the hero *is*, on both sides of the field and for the whole run — an
+Evolution adds to it and may make it wrong for the new shape (Cinder's Thunderblaze does not want
+Kindling), and that mismatch is the path's price, read on the card the way a retype's lost STAB
+is. `EvolutionPath` carries no such field and none should be added.
 
 ---
 
@@ -332,7 +329,7 @@ commit, `75aebc0`). Four batches:
   outlier. Bellows −0.6 win / +4.9 die% / +8.6 DPR, drafted 28% more often (396 → 508): the Burden
   prices at about the 60 under this pilot. Nothing on the trap or the runaway shape.
 - **Not measured:** the Mark on the companion (the pilot fields it as a hero; its 48.7% loss rate
-  is unchanged), and `replacesInnate` (no path uses it yet).
+  is unchanged).
 
 ## 8b. What the run feels like
 
@@ -353,7 +350,7 @@ draft and the Constellation, and then it is simply true.
 
 | Phase | What lands | Status |
 |---|---|---|
-| **1. The slot** | `innatePassiveOf` / `titansMarkOf` (`src/run/innate.ts`); `test/roster` pins one innate a hero, not `statGrants`-only, never its own type's Boon, no Mark on a hero; the new `innatePassives` section is outside `boonPassives`, a reused equipment card stays in it. `replacesInnate` NOT built — no path asked for it (§11 q5). | **IN** |
+| **1. The slot** | `innatePassiveOf` / `titansMarkOf` (`src/run/innate.ts`); `test/roster` pins one innate a hero, not `statGrants`-only, never its own type's Boon, no Mark on a hero; the new `innatePassives` section is outside `boonPassives`, a reused equipment card stays in it. | **IN** |
 | **2. The Mark** | `TITANS_MARK_FORCE` = 5; fourteen generated (`titansMarkFor`, `isTitansMark`), attached in `titanspawn.ts`'s definition builder; **no Guardian carries one** (§3, §8); the companion carries it; the chip and dossier show it. | **IN** |
 | **3. The forty-five** | §7's table in `src/data/heroes.ts` and `passives.ts`; no placeholders — the two verbs landed in the same commit. | **IN** |
 | **4. The Burden** | `PassiveDefinition.burden`; `BURDEN_SURPLUS` = 60, `heroStatTotalFor`, the roster test pins exactly `['steamColossus']`; `cannotSwitchOut` read through `canSwitchOut` at every voluntary-switch site (engine, fight screen, both sim pilots); Bellows at 280 / 120 / 105 / 15 / 35 / 5 / 50, the sheet printing `610 · Burden`. `holdsNoItems` NOT built — no hero asked for it. | **IN** |
@@ -394,10 +391,8 @@ Until the phase named lands, the rule below is still the rule in force.
    a different creature and may deserve its own name later rather than the same one.
 4. **How many Burdens, and whether any existing hero converts.** Proposed: Bellows only, and the
    rest on new seats. Ursa is the tempting second and is argued against above.
-5. **`replacesInnate` on at most one path — or any path.** Proposed at most one, on the graft's
-   precedent. The counter-argument is that it is a knob the Evolution author should have freely;
-   the argument for the limit is that *the innate is what the hero is* and a hero that can be
-   talked out of it three ways was never anything.
+5. ~~`replacesInnate` on at most one path — or any path.~~ **Declined by the designer
+   (2026-09-20): no path replaces the innate, ever.** §5.
 6. **Whether a hero's innate may be its own type's +20% Boon** (Emberheart on a Fire hero). §7
    never does it; it would make that Boon a dead card for that hero and the filter cannot see it.
    Proposed: never.
