@@ -24,6 +24,7 @@ import type { Action } from '../src/engine/combat/actions';
 import { buildCombatState } from '../src/run/buildCombatState';
 import { createRosterEntry } from '../src/run/state';
 import { innatePassiveOf, titansMarkOf } from '../src/run/innate';
+import { collectPassiveDamageModifiers } from '../src/engine/combat/passiveEngine';
 import { titanspawn } from '../src/data/titanspawn';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
@@ -131,9 +132,12 @@ test('ironbound: a declared switch is a no-op and a pivot degrades to its buff, 
 
 // --- The fight build ---
 
-test('build: a roster hero arrives with its innate held, Lingering counted and Ironbound locked; a Titanspawn with its Mark', () => {
+test('build: a roster hero arrives with its innate held, an endure counted and Ironbound locked; a Titanspawn with its Mark', () => {
+  // No catalog card endures any more (Lingering was Revenant's until 2026-09-20); the verb stays, so a
+  // test-local definition stands in for it on Revenant's entry through bonusPassiveGrants.
+  const endure = { id: 'testEndure', name: 'Endure', description: 'test', enduresOnce: true as const };
   const roster = [
-    createRosterEntry('r1', 'revenant', heroes.revenant.moveIds),
+    { ...createRosterEntry('r1', 'revenant', heroes.revenant.moveIds), bonusPassiveGrants: [endure.id] },
     createRosterEntry('r2', 'steamColossus', heroes.steamColossus.moveIds),
     createRosterEntry('r3', 'valor', heroes.valor.moveIds),
     createRosterEntry('r4', 'emberling', titanspawn.emberling.moveIds),
@@ -143,10 +147,10 @@ test('build: a roster hero arrives with its innate held, Lingering counted and I
     allCombatants,
     equipment,
     [{ side: 'A', squad: { activeIds: ['r1', 'r2'], benchIds: ['r3', 'r4'] }, roster }],
-    passives
+    { ...passives, [endure.id]: endure }
   );
   const byRoster = (rosterId: string) => state.combatants[Object.keys(state.combatants).find((k) => k.endsWith(rosterId))!];
-  assert.ok('lingering' in byRoster('r1').passives);
+  assert.ok('ghostlight' in byRoster('r1').passives);
   assert.strictEqual(byRoster('r1').enduresLeft, 1);
   assert.strictEqual(byRoster('r1').switchLocked, undefined);
   assert.ok('ironbound' in byRoster('r2').passives);
@@ -180,4 +184,107 @@ test('verdurous: every Renew Sylva grants rolls Poison 5 onto a random enemy —
   for (const e of poisons) assert.ok(e.type === 'StatusApplied' && ['b1', 'b2'].includes(e.combatantId), 'onto an enemy');
   const total = statusMagnitude(r.state.combatants.b1, 'Poison') + statusMagnitude(r.state.combatants.b2, 'Poison');
   assert.strictEqual(total, 10, 'two Poison 5s, wherever they landed');
+});
+
+// --- The 2026-09-20 pass: five verbs the second wave of innates needed ---
+
+function twoVTwo(seed: number, a1: string, a2: string, b1: string, b2: string): CombatState {
+  return createFightState(
+    seed,
+    [
+      { combatantId: 'a1', heroId: a1, side: 'A' },
+      { combatantId: 'a2', heroId: a2, side: 'A' },
+    ],
+    [
+      { combatantId: 'b1', heroId: b1, side: 'B' },
+      { combatantId: 'b2', heroId: b2, side: 'B' },
+    ]
+  );
+}
+
+const withStatus = (state: CombatState, id: string, statusId: string, magnitude?: number): CombatState =>
+  withField(state, id, { statuses: { ...state.combatants[id].statuses, [statusId]: { statusId, ...(magnitude !== undefined ? { magnitude } : {}) } } });
+
+test('live wire: a StatusDetonated hook — Tempest cashing a Conduct with a Storm hit gains Shield 20; a partner cashing it does not', () => {
+  let state = withPassive(twoVTwo(11, 'tempest', 'stormRanger', 'ironWarden', 'crag'), 'a1', 'liveWire');
+  state = withStatus(state, 'b1', 'Conduct');
+  const r = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'jolt', declaredTarget: 'b1' }, ...restAll(state).filter((a) => a.combatantId !== 'a1')], config);
+  const det = r.events.find((e) => e.type === 'StatusDetonated');
+  assert.ok(det && det.type === 'StatusDetonated' && det.sourceCombatantId === 'a1', 'the detonation names its striker');
+  assert.strictEqual(statusMagnitude(r.state.combatants.a1, 'Shield'), 20);
+
+  let other = withPassive(twoVTwo(12, 'tempest', 'stormRanger', 'ironWarden', 'crag'), 'a1', 'liveWire');
+  other = withStatus(other, 'b1', 'Conduct');
+  const r2 = resolveRound(other, [{ kind: 'move', combatantId: 'a2', moveId: 'thunderclap', declaredTarget: 'b1' }, ...restAll(other).filter((a) => a.combatantId !== 'a2')], config);
+  assert.ok(r2.events.some((e) => e.type === 'StatusDetonated'), 'the partner did cash it');
+  assert.strictEqual(statusMagnitude(r2.state.combatants.a1, 'Shield'), 0, 'source-role: not on a partner’s strike');
+});
+
+test('arcane repose: a Rested hook — the Shield equals the Mana the Rest restored, and a full pool grants nothing', () => {
+  let state = withPassive(twoVTwo(13, 'runescribe', 'valor', 'ironWarden', 'crag'), 'a1', 'arcaneRepose');
+  state = withField(state, 'a1', { currentMana: state.combatants.a1.currentMana - 45 });
+  const r = resolveRound(state, restAll(state), config);
+  const rested = r.events.find((e) => e.type === 'Rested' && e.combatantId === 'a1');
+  assert.ok(rested && rested.type === 'Rested' && rested.manaRestored === 45);
+  assert.strictEqual(statusMagnitude(r.state.combatants.a1, 'Shield'), 45);
+
+  const full = withPassive(twoVTwo(14, 'runescribe', 'valor', 'ironWarden', 'crag'), 'a1', 'arcaneRepose');
+  const r2 = resolveRound(full, restAll(full), config);
+  assert.strictEqual(statusMagnitude(r2.state.combatants.a1, 'Shield'), 0, 'nothing restored, no Shield');
+  assert.ok(!r2.events.some((e) => e.type === 'StatusApplied' && e.combatantId === 'a1'), 'and no empty status beat');
+});
+
+test('neuroplastic: a statDelta read off the event — Cortex gains exactly the Wisdom an enemy lost, and nothing when it rose', () => {
+  const state = withPassive(twoVTwo(15, 'mindweaver', 'trance', 'ironWarden', 'crag'), 'a1', 'neuroplastic');
+  const before = state.combatants.a1.statModifiers.wisdom ?? 0;
+  const r = resolveRound(state, [{ kind: 'move', combatantId: 'a2', moveId: 'enervate', declaredTarget: 'b1' }, ...restAll(state).filter((a) => a.combatantId !== 'a2')], config);
+  const drop = r.events.find((e) => e.type === 'StatChanged' && e.combatantId === 'b1' && e.stat === 'wisdom');
+  assert.ok(drop && drop.type === 'StatChanged' && drop.delta < 0, 'Enervate lowered its Wisdom');
+  const gained = (r.state.combatants.a1.statModifiers.wisdom ?? 0) - before;
+  assert.strictEqual(gained, -(drop as { delta: number }).delta, 'that much, as landed');
+});
+
+test('boiler: chance and scaledBy — at chance 1 every Mech hit Burns, the magnitude scaled by the owner’s Intelligence and no STAB; at chance 0 never', () => {
+  const always = { ...passives, boiler: { ...passives.boiler, reactive: { ...passives.boiler.reactive!, chance: 1 } } };
+  const never = { ...passives, boiler: { ...passives.boiler, reactive: { ...passives.boiler.reactive!, chance: 0 } } };
+  const base = withPassive(twoVTwo(16, 'forgewright', 'valor', 'ironWarden', 'crag'), 'a1', 'boiler');
+  const cast: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'pistonPunch', declaredTarget: 'b1' }, ...restAll(base).filter((a) => a.combatantId !== 'a1')];
+  const hit = resolveRound(base, cast, { ...config, passives: always });
+  const burn = hit.events.find((e) => e.type === 'StatusApplied' && e.statusId === 'Burn' && e.combatantId === 'b1');
+  assert.ok(burn && burn.type === 'StatusApplied', 'Burned');
+  // Clockwork is Intelligence 45: StatMult = 1 + (45 - 50) / 100 = 0.95 → 10 × 0.95 = 9.5 → 10 (rounded), and below 50 it can only shrink.
+  const expected = Math.round(10 * (1 + (heroes.forgewright.baseStats.intelligence - 50) / 100));
+  assert.strictEqual(burn.magnitude, expected);
+  const miss = resolveRound(base, cast, { ...config, passives: never });
+  assert.ok(!miss.events.some((e) => e.type === 'StatusApplied' && e.statusId === 'Burn'), 'chance 0 never fires');
+  assert.ok(passives.boiler.reactive?.chance === 0.3, 'the shipped odds');
+});
+
+test('lethal bite: a damage modifier gated on the target — doubles against Bleed AND Poison, nothing against one, and unfired with no target', () => {
+  const state = withPassive(twoVTwo(17, 'widow', 'valor', 'ironWarden', 'crag'), 'a1', 'lethalBite');
+  const attacker = state.combatants.a1;
+  const move = moves.fadeStrike;
+  const bare = collectPassiveDamageModifiers(attacker, move, passives, state.combatants.b1);
+  assert.deepStrictEqual(bare, []);
+  const bleeding = withStatus(state, 'b1', 'Bleed').combatants.b1;
+  assert.deepStrictEqual(collectPassiveDamageModifiers(attacker, move, passives, bleeding), [], 'one of the two is not enough');
+  const both = withStatus(withStatus(state, 'b1', 'Bleed'), 'b1', 'Poison', 5).combatants.b1;
+  assert.deepStrictEqual(collectPassiveDamageModifiers(attacker, move, passives, both), [{ source: 'lethalBite', amount: 1 }]);
+  assert.deepStrictEqual(collectPassiveDamageModifiers(attacker, move, passives), [], 'a forecast with no target reports it unfired');
+});
+
+test('hunger and ghostlight: out of the box — Lucius drains a fifth of a Mind hit, Revenant gains Spirit Force 10 the moment Torment Haunts', () => {
+  const l = withPassive(twoVTwo(18, 'lucius', 'valor', 'ironWarden', 'crag'), 'a1', 'hunger');
+  const wounded = withField(l, 'a1', { currentHp: 50 });
+  const r = resolveRound(wounded, [{ kind: 'move', combatantId: 'a1', moveId: 'psiBolt', declaredTarget: 'b1' }, ...restAll(wounded).filter((a) => a.combatantId !== 'a1')], config);
+  const dealt = r.events.find((e) => e.type === 'DamageDealt' && e.sourceCombatantId === 'a1');
+  // A passive's heal lands as an HpChanged (as Sanguine's does), never a Healed — so it feeds no Healed hook.
+  const healed = r.events.find((e) => e.type === 'HpChanged' && e.combatantId === 'a1' && e.newHp > e.previousHp);
+  assert.ok(dealt && dealt.type === 'DamageDealt' && healed && healed.type === 'HpChanged');
+  assert.strictEqual(healed.newHp - healed.previousHp, Math.round(dealt.amount * 0.2));
+
+  const v = withPassive(twoVTwo(19, 'revenant', 'valor', 'ironWarden', 'crag'), 'a1', 'ghostlight');
+  const r2 = resolveRound(v, [{ kind: 'move', combatantId: 'a1', moveId: 'torment', declaredTarget: 'b1' }, ...restAll(v).filter((a) => a.combatantId !== 'a1')], config);
+  assert.ok(r2.events.some((e) => e.type === 'StatusApplied' && e.statusId === 'Haunt' && e.combatantId === 'b1'));
+  assert.strictEqual(statusMagnitude(r2.state.combatants.a1, 'SpiritForce'), 10);
 });

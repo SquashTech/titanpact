@@ -329,7 +329,8 @@ export function detonateTriggeredStatuses(
   targetId: string,
   moveType: TypeId,
   maxHp: number,
-  statusDefs: Record<string, StatusDefinition>
+  statusDefs: Record<string, StatusDefinition>,
+  sourceCombatantId?: string
 ): { state: CombatState; bonusDamage: number; events: CombatEvent[] } {
   let working = state;
   const events: CombatEvent[] = [];
@@ -344,7 +345,7 @@ export function detonateTriggeredStatuses(
     const bonus = Math.ceil(maxHp * (def.detonateBonusPercentMaxHp ?? 0));
     bonusDamage += bonus;
     // Own event so the view presents the detonation as a separate beat.
-    events.push({ type: 'StatusDetonated', round, combatantId: targetId, statusId: def.id, amount: bonus });
+    events.push({ type: 'StatusDetonated', round, combatantId: targetId, sourceCombatantId, statusId: def.id, amount: bonus });
     const rm = removeStatus(working, round, targetId, def.id, 'consumed');
     working = rm.state;
     events.push(...rm.events);
@@ -364,7 +365,8 @@ export function detonateStatusNow(
   combatantId: string,
   statusId: StatusId,
   statusDefs: Record<string, StatusDefinition>,
-  maxHp: number
+  maxHp: number,
+  sourceCombatantId?: string
 ): { state: CombatState; amount: number; events: CombatEvent[] } {
   const def = statusDefs[statusId];
   const combatant = state.combatants[combatantId];
@@ -374,7 +376,7 @@ export function detonateStatusNow(
   if (!instance) return { state, amount: 0, events: [] };
 
   const amount = Math.ceil((maxHp * (instance.magnitude ?? 0)) / 100);
-  const events: CombatEvent[] = [{ type: 'StatusDetonated', round, combatantId, statusId, amount }];
+  const events: CombatEvent[] = [{ type: 'StatusDetonated', round, combatantId, sourceCombatantId, statusId, amount }];
 
   let working = state;
   const rm = removeStatus(working, round, combatantId, statusId, 'consumed');

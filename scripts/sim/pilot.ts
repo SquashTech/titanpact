@@ -193,7 +193,7 @@ function expectedHit(state: CombatState, casterId: string, move: MoveDefinition,
   const defenderHero = allCombatants[target.heroId];
   const ctxField = fieldCtx(state);
   const ratio = resolveStatRatio(move.category, attackerHero, attacker, defenderHero, target, ctxField, move.offStatOverride);
-  const modifiers = collectPassiveDamageModifiers(attacker, move, passives);
+  const modifiers = collectPassiveDamageModifiers(attacker, move, passives, target);
   const forceBonus = resolveElementalForceBonus(attacker, move.type, statuses);
   const attackerHp = { currentHp: attacker.currentHp, maxHp: getMaxHp(attackerHero, attacker) };
   const basePowerMultiplier = resolveConditionalPowerMultiplier(

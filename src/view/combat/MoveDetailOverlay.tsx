@@ -97,7 +97,7 @@ function forecastAgainst(move: MoveDefinition, ctx: MoveDossierContext, defender
 
   const fieldEffectCtx = { active: ctx.combat.activeFieldEffect, defs: fieldEffects, board: { state: ctx.combat, passives } };
   const ratio = resolveStatRatio(move.category, attackerHero, attacker, defenderHero, defender, fieldEffectCtx, move.offStatOverride);
-  const modifiers: DamageModifier[] = collectPassiveDamageModifiers(attacker, move, passives);
+  const modifiers: DamageModifier[] = collectPassiveDamageModifiers(attacker, move, passives, defender);
   const forceBonus = resolveElementalForceBonus(attacker, move.type, statuses);
   const maxHp = getMaxHp(defenderHero, defender);
   // Read against THIS defender, so a conditional move forecasts per enemy.

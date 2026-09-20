@@ -150,6 +150,15 @@ function triggerFact(def: NonNullable<PassiveDefinition['reactive']>): PassiveFa
         glyph: stat ? { kind: 'stat', stat } : { kind: 'move', move: 'buff' },
       };
     }
+    case 'StatusDetonated':
+      return {
+        label: 'When',
+        text: source ? `${who} sets off ${statusName(statusId)}` : `${whose} ${statusName(statusId)} is set off`,
+        glyph: statusId ? { kind: 'status', statusId } : { kind: 'move', move: 'debuff' },
+        color: statusId ? 'status' : undefined,
+      };
+    case 'Rested':
+      return { label: 'When', text: `${who} Rests`, glyph: { kind: 'stat', stat: 'manaPool' } };
   }
 }
 
@@ -168,20 +177,22 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
           ? ''
           : typeof effect.magnitude === 'number'
             ? ` ${effect.magnitude}`
-            : ` at ${amountWord(effect.magnitude, '').replace('the same amount', 'the same magnitude')}`;
+            : ` at ${amountWord(effect.magnitude, '').replace('the same amount', hook === 'Rested' ? 'the Mana restored' : 'the same magnitude')}`;
       const duration = effect.duration ? `, ${effect.duration} ${effect.duration === 1 ? 'round' : 'rounds'}` : '';
+      const scaled = effect.scaledBy ? `, scaled by ${STAT_FULL_LABELS[effect.scaledBy]}` : '';
       return {
         label: 'Then',
-        text: `${statusName(effect.statusId)}${magnitude} on ${targetWord(effect.target, condition, hook)}${duration}`,
+        text: `${statusName(effect.statusId)}${magnitude} on ${targetWord(effect.target, condition, hook)}${duration}${scaled}`,
         glyph: { kind: 'status', statusId: effect.statusId },
         color: 'status',
       };
     }
     case 'statDelta': {
       const stats: readonly StatKey[] = Array.isArray(effect.stat) ? (effect.stat as readonly StatKey[]) : [effect.stat as StatKey];
+      const amount = typeof effect.amount === 'number' ? fmt(effect.amount) : `${amountWord(effect.amount, '').replace('the same amount', 'as much')}`;
       return {
         label: 'Then',
-        text: `${fmt(effect.amount)} ${stats.map((s) => STAT_FULL_LABELS[s]).join(' & ')} to ${targetWord(effect.target, condition, hook)}`,
+        text: `${amount} ${stats.map((s) => STAT_FULL_LABELS[s]).join(' & ')} to ${targetWord(effect.target, condition, hook)}`,
         glyph: { kind: 'stat', stat: stats[0] },
       };
     }
@@ -218,6 +229,7 @@ export function passiveFacts(def: PassiveDefinition): PassiveFact[] {
   const rows: PassiveFact[] = [];
   if (def.reactive) {
     rows.push(triggerFact(def.reactive));
+    if (def.reactive.chance !== undefined) rows.push({ label: 'Odds', text: `${Math.round(def.reactive.chance * 100)}% of the time`, glyph: { kind: 'move', move: 'debuff' } });
     rows.push(effectFact(def.reactive.effect, def.reactive.condition, def.reactive.hook));
     if (def.reactive.oncePerFight) rows.push({ label: 'Limit', text: 'Once per fight', glyph: { kind: 'move', move: 'debuff' } });
   }
@@ -229,6 +241,10 @@ export function passiveFacts(def: PassiveDefinition): PassiveFact[] {
       glyph: type ? { kind: 'element', type } : { kind: 'move', move: 'physical' },
       color: type ? 'element' : undefined,
     });
+    const needs = def.damageModifier.requiresTargetStatuses;
+    if (needs && needs.length > 0) {
+      rows.push({ label: 'While', text: `The target has ${needs.map(statusName).join(' and ')}`, glyph: { kind: 'status', statusId: needs[0] }, color: 'status' });
+    }
   }
   if (def.conditionalStatGrants) {
     const statusId = def.conditionalStatGrants.requiresEnemyStatus;

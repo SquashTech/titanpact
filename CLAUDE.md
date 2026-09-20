@@ -163,7 +163,12 @@ don't silently override it.
 > `test/roster` pins the list. Measured (3000 runs, chart pilot, same seed): full-clear 20.8 →
 > 22.5%, Act 1 67.8 → 68.3, the finale 52.8 → 62.6 (the Herald and the Eyes hold no innate), every
 > hero inside ±2.6 points; Revenant −5.4 die%, Bellows +4.9 die% / +8.6 DPR. Its §10 lists the
-> invariants it reverses.
+> invariants it reverses. **Second wave, same day, per user direction:** nine innates re-authored
+> so every one fires off the starting kit (Tempest holds Rising Static, Revenant Torment); five
+> verbs added for them — `StatusDetonated` and `Rested` hooks, an event-read `statDelta`, a
+> reactive `chance`, a `damageModifier.requiresTargetStatuses` — and **one passive magnitude
+> that scales**: Boiler's Burn, `scaledBy: 'intelligence'` (StatMult, no STAB), the sole exception
+> to "passive-applied magnitudes are flat". Lingering is off the roster; the endure verb stays.
 
 ---
 
@@ -194,7 +199,10 @@ don't silently override it.
   so a split slate like Fire has no trap-pick half. **A `dot` aimed at `self` is a COST and
   is never scaled** (Fire's and Mech's self-Burn, whose price must stay knowable before the
   button is pressed); a `hot` on self is a benefit and scales. Passive-applied magnitudes
-  are flat — a passive has no move to take STAB from. It exists because `HP_SCALE` is
+  are flat — a passive has no move to take STAB from — **with one named exception** (2026-09-20,
+  per user direction): a passive's `applyStatus` may carry `scaledBy`, the StatMult off the
+  OWNER's stat and still no STAB; Boiler's Burn is the only holder, and a second is a
+  conversation (`docs/innate-passives.md` §10). It exists because `HP_SCALE` is
   neutral for what repeats and not for what decays: `decay: 'halve'` caps a Burn's lifetime
   output at ≈2× its magnitude however long the fight runs. `docs/combat.md`.
 - **Stat line:** HP, Attack/Defense, Intelligence/Wisdom, Speed, Mana, MP Regen.

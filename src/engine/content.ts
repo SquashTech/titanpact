@@ -145,7 +145,8 @@ export type PassiveId = string;
  * stat deltas — a stat change a PASSIVE caused does not chain into another passive.
  */
 /** 'RoundEnded' fires once a round for every active owner, the owner its own subject (relativeTo 'self'); pair it with everyNRounds for a cadence. The last thing in the round, after the Clock. */
-export type PassiveHook = 'DamageDealt' | 'Healed' | 'StatusApplied' | 'StatusTicked' | 'SwitchedIn' | 'StatChanged' | 'RoundEnded';
+/** 'StatusDetonated' is a mark cashed in (Conduct burst by a hit; source = the striker); 'Rested' the Rest action, its `manaRestored` readable by matchTriggerAmount. */
+export type PassiveHook = 'DamageDealt' | 'Healed' | 'StatusApplied' | 'StatusTicked' | 'StatusDetonated' | 'SwitchedIn' | 'StatChanged' | 'RoundEnded' | 'Rested';
 
 /** 'ally' = the owner's partner, not the owner. */
 export type PassiveRelation = 'self' | 'ally' | 'enemy';
@@ -184,10 +185,15 @@ export type PassiveEffectTarget = 'self' | 'ally' | 'triggerSubject' | 'triggerT
 /** The reactive effect primitives. */
 export type PassiveEffect =
   | { kind: 'heal'; target: PassiveEffectTarget; amount: PassiveAmount }
-  /** `magnitude` may read off the triggering event rather than being authored flat. */
-  | { kind: 'applyStatus'; target: PassiveEffectTarget; statusId: StatusId; magnitude?: number | PassiveAmount; duration?: number }
-  /** One stat, or several sharing an amount (Afterglow's Attack and Intelligence) — one StatChanged each. */
-  | { kind: 'statDelta'; target: PassiveEffectTarget; stat: StatKey | readonly StatKey[]; amount: number }
+  /**
+   * `magnitude` may read off the triggering event rather than being authored flat. `scaledBy`
+   * multiplies it by the OWNER's stat on the status-magnitude formula's StatMult (no STAB — a
+   * passive has no move to take it from): Boiler's Burn off Clockwork's Intelligence, the one
+   * authored exception to "passive-applied magnitudes are flat" (docs/innate-passives.md §7).
+   */
+  | { kind: 'applyStatus'; target: PassiveEffectTarget; statusId: StatusId; magnitude?: number | PassiveAmount; duration?: number; scaledBy?: StatKey }
+  /** One stat, or several sharing an amount (Afterglow's Attack and Intelligence) — one StatChanged each. A PassiveAmount reads the event (Neuroplastic: the Wisdom an enemy just lost). */
+  | { kind: 'statDelta'; target: PassiveEffectTarget; stat: StatKey | readonly StatKey[]; amount: number | PassiveAmount }
   /** Strips non-`positive` statuses, same rules as a move's `cleanses`; `count` omitted = all. */
   | { kind: 'cleanse'; target: PassiveEffectTarget; count?: number }
   /** UNCAPPED, like a move's `manaGrant` — overflow past the pool is the point (docs/mana.md). */
@@ -200,6 +206,8 @@ export interface PassiveDamageModifier {
   eventFieldEquals?: Partial<Record<string, string>>;
   /** Fires only when the move's category differs from the attacker's last landed hit's (Combatant.lastHitCategory) — never on a first hit. The mixed attacker's verb: alternate, or it is nothing. */
   alternatesCategory?: true;
+  /** Fires only when the defender holds EVERY one of these (Lethal Bite: Bleed and Poison). Read per hit against the live target; a forecast with no target reports it unfired. */
+  requiresTargetStatuses?: readonly StatusId[];
   /** damagePipeline.ts DamageModifier units — 0.2 == +20%. */
   amount: number;
 }
@@ -217,8 +225,8 @@ export interface PassiveDefinition {
   name: string;
   /** Player-facing, required. */
   description: string;
-  /** `oncePerFight` caps the whole reaction at one firing per combat regardless of stacks (state.ts PassiveInstance.firedThisFight). */
-  reactive?: { hook: PassiveHook; condition: PassiveTriggerCondition; effect: PassiveEffect; oncePerFight?: boolean };
+  /** `oncePerFight` caps the whole reaction at one firing per combat regardless of stacks (state.ts PassiveInstance.firedThisFight). `chance` (0–1) rolls the seeded rng per matched event, per stack; absent = always. */
+  reactive?: { hook: PassiveHook; condition: PassiveTriggerCondition; effect: PassiveEffect; oncePerFight?: boolean; chance?: number };
   damageModifier?: PassiveDamageModifier;
   /** Always-on flat grants, applied at fight build like Equipment/Relic statGrants (src/run/passives.ts); not read by passiveEngine. Classes are this alone. */
   statGrants?: Partial<Record<StatKey, number>>;

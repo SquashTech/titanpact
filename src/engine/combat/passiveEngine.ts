@@ -4,11 +4,13 @@
 // (synchronous, evaluated before a hit is rolled).
 
 import type { HeroLookup, CombatState, Combatant, Side } from '../state';
-import { getMaxHp, getMaxMana, applyStatModifierDelta } from '../state';
+import { getMaxHp, getMaxMana, applyStatModifierDelta, getEffectiveStat } from '../state';
 import type { FieldEffectDefinition, PassiveDefinition, PassiveId, PassiveEffect, PassiveEffectTarget, PassiveTriggerCondition, PassiveAmount, StatKey, StatusDefinition, MoveDefinition } from '../content';
 import type { CombatEvent } from '../events';
 import type { DamageModifier } from '../damage/damagePipeline';
-import { nextInt } from '../rng/seededRng';
+import { nextFloat, nextInt } from '../rng/seededRng';
+import { magnitudeMultFromStat } from '../heal/healPipeline';
+import { hasStatus } from '../state';
 import { applyHpDelta } from './faintHandling';
 import { applyStatus, cleanseStatuses } from './statusEngine';
 import { setFieldEffect } from './fieldEffectEngine';
@@ -84,6 +86,8 @@ function subjectOf(event: CombatEvent, role: 'target' | 'source'): string | unde
         return event.sourceCombatantId;
       case 'Healed':
         return event.sourceCombatantId;
+      case 'StatusDetonated':
+        return event.sourceCombatantId;
       default:
         return undefined;
     }
@@ -91,7 +95,9 @@ function subjectOf(event: CombatEvent, role: 'target' | 'source'): string | unde
   switch (event.type) {
     case 'StatusTicked':
     case 'StatusApplied':
+    case 'StatusDetonated':
     case 'StatChanged':
+    case 'Rested':
       return event.combatantId;
     case 'DamageDealt':
       return event.targetCombatantId;
@@ -224,9 +230,16 @@ function resolveEffectOn(
       if (!def) return { state, events: [] };
       // A warded target refuses it (the Herald struck through an Ice Shell, a Thorns-shaped reaction).
       if (wardRefusesStatus(state, targetId, ownerId, def, passiveDefs)) return { state, events: [] };
+      let magnitude = resolveMagnitude(effect.magnitude, context);
+      // An event-read magnitude of nothing (a Rest that restored 0) is no status at all.
+      if (typeof effect.magnitude === 'object' && (magnitude ?? 0) <= 0) return { state, events: [] };
+      if (effect.scaledBy !== undefined && magnitude !== undefined) {
+        const owner = state.combatants[ownerId];
+        if (owner) magnitude = Math.round(magnitude * magnitudeMultFromStat(getEffectiveStat(heroes[owner.heroId], owner, effect.scaledBy)));
+      }
       // The passive's OWNER is the actor, so a source-role passive can see it.
       return applyStatus(state, round, targetId, def, {
-        magnitude: resolveMagnitude(effect.magnitude, context),
+        magnitude,
         duration: effect.duration,
         sourceCombatantId: ownerId,
         holderMaxHp: getMaxHp(heroes[target.heroId], target),
@@ -266,11 +279,13 @@ function resolveEffectOn(
       // One stat or several; each lands separately and reports its own StatChanged, so a
       // stat-reactive passive (Entanglement) sees them one at a time exactly as a move's would.
       const stats: readonly StatKey[] = Array.isArray(effect.stat) ? (effect.stat as readonly StatKey[]) : [effect.stat as StatKey];
+      const amount = typeof effect.amount === 'number' ? effect.amount : resolveAmount(effect.amount, context);
+      if (amount === 0) return { state, events: [] };
       let modifiers = target.statModifiers;
       const changes: CombatEvent[] = [];
       for (const stat of stats) {
         // Flat (no move to scale off), but held at the same floor as a move's drop.
-        const { newValue, landed, capped } = applyStatModifierDelta(heroes[target.heroId], { ...target, statModifiers: modifiers }, stat, effect.amount);
+        const { newValue, landed, capped } = applyStatModifierDelta(heroes[target.heroId], { ...target, statModifiers: modifiers }, stat, amount);
         modifiers = { ...modifiers, [stat]: newValue };
         changes.push({ type: 'StatChanged', round, combatantId: targetId, stat, delta: landed, ...(capped ? { capped: true } : {}), newValue });
       }
@@ -338,6 +353,11 @@ export function resolvePassiveReactions(
         }
 
         for (let i = 0; i < (reactive.oncePerFight ? 1 : instance.stacks); i++) {
+          if (reactive.chance !== undefined) {
+            const roll = nextFloat(working.rngState);
+            working = { ...working, rngState: roll.nextState };
+            if (roll.value >= reactive.chance) continue;
+          }
           const resolved = resolveEffect(working, round, heroes, statusDefs, fieldEffectDefs, passiveDefs, ownerId, subjectId, eventTargetId, reactive.effect, context);
           working = resolved.state;
           // A no-op (a heal at full HP, a target already fainted) is not a trigger: nothing to log.
@@ -378,7 +398,9 @@ export function resolveBattleStartEntries(
 export function collectPassiveDamageModifiers(
   attacker: Combatant,
   move: MoveDefinition,
-  passiveDefs: Record<PassiveId, PassiveDefinition>
+  passiveDefs: Record<PassiveId, PassiveDefinition>,
+  /** The defender of this hit, for a modifier gated on what it holds; a forecast with none reports such a modifier unfired. */
+  target?: Combatant
 ): DamageModifier[] {
   const modifiers: DamageModifier[] = [];
   const context: TriggerContext = { moveType: move.type };
@@ -387,6 +409,7 @@ export function collectPassiveDamageModifiers(
     const def = passiveDefs[instance.passiveId]?.damageModifier;
     if (!def || !matchesFields(def.eventFieldEquals, context)) continue;
     if (def.alternatesCategory && (attacker.lastHitCategory === undefined || attacker.lastHitCategory === move.category)) continue;
+    if (def.requiresTargetStatuses && !(target && def.requiresTargetStatuses.every((id) => hasStatus(target, id)))) continue;
     for (let i = 0; i < instance.stacks; i++) {
       modifiers.push({ source: instance.passiveId, amount: def.amount });
     }

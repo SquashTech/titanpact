@@ -45,11 +45,11 @@ const equipmentPassives: Record<string, PassiveDefinition> = {
   vengefulEmblem: {
     id: 'vengefulEmblem',
     name: 'Vengeful Emblem',
-    description: 'Whenever this hero takes damage, gain +5 Attack.',
+    description: 'Whenever this hero takes damage, gain +10 Attack.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 5 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10 },
     },
   },
 
@@ -903,11 +903,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   stoke: {
     id: 'stoke',
     name: 'Stoke',
-    description: 'Whenever an enemy takes Burn damage, this hero gains 5 Intelligence.',
+    description: 'Whenever an enemy takes Burn damage, this hero gains 10 Intelligence.',
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Burn', kind: 'damage' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 5 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 10 },
     },
   },
   sulphur: {
@@ -983,11 +983,12 @@ const innatePassives: Record<string, PassiveDefinition> = {
   liveWire: {
     id: 'liveWire',
     name: 'Live Wire',
-    description: 'Whenever this hero lands a Storm attack, its target is Conducting.',
+    description: 'Whenever this hero sets off Conduct, it gains Shield 20.',
+    // Rising Static plants the mark and Jolt cashes it: the starting kit fires this on its own.
     reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Storm' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Conduct' },
+      hook: 'StatusDetonated',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Conduct' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 20 },
     },
   },
   staticField: {
@@ -1013,12 +1014,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   faultLine: {
     id: 'faultLine',
     name: 'Fault Line',
-    description: 'Whenever this hero lands a physical attack, its target loses 5 Wisdom.',
-    // Aftershock's mirror (magical → Defense), so Slate's Quakebringer holds both halves.
+    description: 'Whenever this hero lands a Stone attack, it gains Shield 10.',
     reactive: {
       hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'physical' } },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', amount: -5 },
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Stone' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 10 },
     },
   },
   verdurous: {
@@ -1064,15 +1064,13 @@ const innatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'heal', target: 'ally', amount: { kind: 'flat', value: 10 } },
     },
   },
-  lacerate: {
-    id: 'lacerate',
-    name: 'Lacerate',
-    description: 'Whenever this hero lands a physical attack, its target Bleeds.',
-    reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'physical' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Bleed' },
-    },
+  lethalBite: {
+    id: 'lethalBite',
+    name: 'Lethal Bite',
+    description: 'Deals double damage to an enemy that is both Bleeding and Poisoned.',
+    // Read per hit against the live target (collectPassiveDamageModifiers); Venomfang's Widow's
+    // Kiss (Bleed applied → Poison) is the path that sets the table for it.
+    damageModifier: { requiresTargetStatuses: ['Bleed', 'Poison'], amount: 1.0 },
   },
   necrosis: {
     id: 'necrosis',
@@ -1097,21 +1095,23 @@ const innatePassives: Record<string, PassiveDefinition> = {
   neuroplastic: {
     id: 'neuroplastic',
     name: 'Neuroplastic',
-    description: 'Whenever this hero takes damage, it gains 5 Attack and 5 Intelligence.',
+    description: "Whenever an enemy's Wisdom is lowered, this hero gains that much Wisdom.",
+    // The drop is read off the StatChanged that landed (negative delta → the same figure, positive).
     reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], amount: 5 },
+      hook: 'StatChanged',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { stat: 'wisdom' }, eventFieldNegative: 'delta' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'wisdom', amount: { kind: 'matchTriggerAmount', field: 'delta', multiplier: -1 } },
     },
   },
-  intrusion: {
-    id: 'intrusion',
-    name: 'Intrusion',
-    description: 'Whenever this hero lands a Mind attack, its target loses 5 Intelligence.',
+  hunger: {
+    id: 'hunger',
+    name: 'Hunger',
+    description: 'Whenever this hero lands a Mind attack, it heals for 20% of the damage dealt.',
+    // The vampire's verb, a drain — and Sanguine (its Evolution) feeds off the Bleeds it goes on to open.
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Mind' } },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'intelligence', amount: -5 },
+      effect: { kind: 'heal', target: 'self', amount: { kind: 'matchTriggerAmount', multiplier: 0.2 } },
     },
   },
   lullaby: {
@@ -1157,11 +1157,14 @@ const innatePassives: Record<string, PassiveDefinition> = {
   boiler: {
     id: 'boiler',
     name: 'Boiler',
-    description: 'Whenever this hero is Burned, it gains 10 Mana, past its pool.',
+    description: 'Mech attacks from this hero have a 30% chance to Burn 10, scaled by its Intelligence.',
+    // The one passive magnitude that scales (scaledBy: the status-magnitude StatMult, no STAB),
+    // per user direction 2026-09-20 — a bare 10 off a Mech brawler is a Burn nobody feels.
     reactive: {
-      hook: 'StatusApplied',
-      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Burn' } },
-      effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 10 } },
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Mech' } },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', magnitude: 10, scaledBy: 'intelligence' },
+      chance: 0.3,
     },
   },
   steamPressure: {
@@ -1204,12 +1207,27 @@ const innatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'intelligence', amount: -10 },
     },
   },
-  lingering: {
-    id: 'lingering',
-    name: 'Lingering',
-    description: 'The first time this hero would be knocked out each fight, it survives at 1 HP.',
-    // The one innate the designer flagged as likely over the band, kept on purpose to be tested.
-    enduresOnce: true,
+  ghostlight: {
+    id: 'ghostlight',
+    name: 'Ghostlight',
+    description: 'Whenever an enemy is Haunted, this hero gains Spirit Force 10.',
+    // Torment in the starting kit Haunts on its own; Wail (Sorrow) and Omen (Dread) feed it too.
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Haunt' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'SpiritForce', magnitude: 10 },
+    },
+  },
+  arcaneRepose: {
+    id: 'arcaneRepose',
+    name: 'Arcane Repose',
+    description: 'Whenever this hero Rests, it gains Shield equal to the Mana it recovered.',
+    // A Rest that recovers nothing (a full or overflowing pool) grants nothing.
+    reactive: {
+      hook: 'Rested',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: { kind: 'matchTriggerAmount', field: 'manaRestored' } },
+    },
   },
   // The Burden (docs/innate-passives.md §4): a cost, and the hero born with it comes in
   // BURDEN_SURPLUS over the 550. Bellows is the first and, for now, the only one.

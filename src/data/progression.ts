@@ -183,7 +183,6 @@ export const progressionTable: ProgressionTable = {
     tempest: [
       'thunderclap',
       'zap',
-      'risingStatic',
       'stormLash',
       'ionize',
       'electricBurst',
@@ -503,7 +502,7 @@ export const progressionTable: ProgressionTable = {
     ],
     // --- Spirit ---
     revenant: [
-      'torment',
+      'secondWind',
       'drain',
       'spite',
       'soulRend',

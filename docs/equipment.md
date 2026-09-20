@@ -63,7 +63,7 @@ Every Awakening is **flat** — one magnitude, the same at Epic, Legendary and M
 |---|---|---|---|---|---|
 | 1 | Sword | Attack | Sunder * | target -10 Defense | landing a hit |
 | 2 | Dagger | Attack + Speed | Bloodthirst * | heal 15% of damage dealt | landing a hit |
-| 3 | Greataxe | Attack + HP | Vengeful Emblem * | +5 Attack | taking a hit |
+| 3 | Greataxe | Attack + HP | Vengeful Emblem * | +10 Attack | taking a hit |
 | 4 | Spear | Attack + Defense | *Impale* | Poison 5 | landing a hit |
 | 5 | Bow | Attack + Wisdom | *Marksman* | **unset** — bonus damage % | always |
 | 6 | Staff | Intelligence | *Overchannel* | 10 Mana, past the pool | landing a hit |

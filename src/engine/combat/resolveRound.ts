@@ -130,8 +130,13 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         combatants: { ...working.combatants, [action.combatantId]: { ...actor, currentMana: restedMana } },
       };
       working = resetDamageTaken(working, action.combatantId);
-      events.push({ type: 'Rested', round, combatantId: action.combatantId });
+      const rested: CombatEvent = { type: 'Rested', round, combatantId: action.combatantId, manaRestored: restedMana - previousMana };
+      events.push(rested);
       events.push({ type: 'ManaChanged', round, combatantId: action.combatantId, previousMana, newMana: restedMana, maxMana });
+      // A Rest is a hook of its own (Mana Ward's Shield off what it restored); the reaction reads only the Rested slice.
+      const restReactions = resolvePassiveReactions(working, round, [rested], heroes, statuses, passives, fieldEffects);
+      working = restReactions.state;
+      events.push(...restReactions.events);
       continue;
     }
 
@@ -306,7 +311,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             // offStatOverride changes WHICH stat is read — pipeline 1, not a multiplier.
             const ratio = resolveStatRatio(move.category, attackerHero, attackerNow, defenderHero, target, fieldEffectCtx, move.offStatOverride);
 
-            const modifiers: DamageModifier[] = collectPassiveDamageModifiers(attackerNow, move, passives);
+            const modifiers: DamageModifier[] = collectPassiveDamageModifiers(attackerNow, move, passives, target);
             const elementalForceBonus = resolveElementalForceBonus(attackerNow, move.type, statuses);
             // maxHp read here, BEFORE applyHpDelta, so an execute never doubles against HP this hit removes.
             const basePowerMultiplier = resolveConditionalPowerMultiplier(
@@ -446,7 +451,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             events.push(...damageReactions.events);
 
             // Conduct detonation: its own beat after the base hit, never folded into DamageDealt.
-            const triggered = detonateTriggeredStatuses(working, round, targetId, move.type, maxHp, statuses);
+            const triggered = detonateTriggeredStatuses(working, round, targetId, move.type, maxHp, statuses, action.combatantId);
             working = triggered.state;
 
             if (triggered.bonusDamage > 0) {
@@ -470,6 +475,12 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
               }
             } else {
               events.push(...triggered.events);
+            }
+            // A mark cashed in is a hook of its own (Live Wire): the reaction reads the detonation beats alone.
+            if (triggered.events.length > 0) {
+              const detonationReactions = resolvePassiveReactions(working, round, triggered.events, heroes, statuses, passives, fieldEffects);
+              working = detonationReactions.state;
+              events.push(...detonationReactions.events);
             }
           }
         }
@@ -785,10 +796,14 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           targetId,
           move.detonatesStatus,
           statuses,
-          getMaxHp(heroes[target.heroId], target)
+          getMaxHp(heroes[target.heroId], target),
+          action.combatantId
         );
         working = blast.state;
         events.push(...blast.events);
+        const blastReactions = resolvePassiveReactions(working, round, blast.events, heroes, statuses, passives, fieldEffects);
+        working = blastReactions.state;
+        events.push(...blastReactions.events);
       }
     }
 

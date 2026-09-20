@@ -164,6 +164,8 @@ export interface StatusRemovedEvent extends BaseEvent {
 export interface StatusDetonatedEvent extends BaseEvent {
   type: 'StatusDetonated';
   combatantId: string;
+  /** The striker whose hit cashed the mark in; absent on a detonation nobody struck. A source-role passive reads it. */
+  sourceCombatantId?: string;
   statusId: StatusId;
   amount: number;
   /** What the target's Shield took of the burst — a detonation rides the hit (docs/shield.md §3.2). */
@@ -230,6 +232,8 @@ export interface BenchRegenTickedEvent extends BaseEvent {
 export interface RestedEvent extends BaseEvent {
   type: 'Rested';
   combatantId: string;
+  /** Mana the Rest actually restored — 0 when the pool was already full or in overflow. What Mana Ward's Shield reads. */
+  manaRestored: number;
 }
 
 /**

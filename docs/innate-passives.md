@@ -242,7 +242,7 @@ in the last column so the two can be read as a pair. Every magnitude is a first 
 | Hero | Type | Innate | Effect | Status | Evolution passive |
 |---|---|---|---|---|---|
 | Cinder | Fire | **Kindling** | Whenever this hero afflicts Burn, it gains 5 Attack. | new | Cinderguard (Ironclad) |
-| Crimson | Fire | **Stoke** | Whenever an enemy takes Burn damage, this hero gains 5 Intelligence. | new | Firestarter (Pyroclasm) |
+| Crimson | Fire | **Stoke** | Whenever an enemy takes Burn damage, this hero gains 10 Intelligence. | new | Firestarter (Pyroclasm) |
 | Brimstone | Fire/Shadow | **Sulphur** | When this hero enters the battlefield, both active enemies gain Burn 5. | new | Ashfeast / Hexfume |
 | Riptide | Water | **Drag** | Whenever this hero lands a Water attack, its target loses 5 Speed. | new | Enthrall (Siren) |
 | Pincer | Water | **Carapace** | When this hero enters the battlefield, it gains Shield 30. | new | Static Tide (Tideclaw) |
@@ -251,34 +251,34 @@ in the last column so the two can be read as a pair. Every magnitude is a first 
 | Rime | Frost | **Cold Snap** | Whenever this hero Freezes an enemy, it gains 10 Attack. | new | Frozen Stone (Glacier) |
 | Cube | Frost | **Absolute Zero** | Whenever this hero's Defense rises, both active enemies lose 5 Speed. | new | Cold Forge (Shatterframe) |
 | Squall | Storm | **Tailwind** | When this hero enters the battlefield, its partner gains 10 Speed. | new | Squall Line (Windshear) |
-| Tempest | Storm | **Live Wire** | Whenever this hero lands a Storm attack, its target is Conducting. | new | Either Hand (Forked) |
+| Tempest | Storm | **Live Wire** | Whenever this hero sets off Conduct, it gains Shield 20. Rising Static (a starter since 2026-09-20, in Rally's seat) plants the mark, Jolt cashes it. | new · `StatusDetonated` hook | Either Hand (Forked) |
 | Skyshear | Storm | **Static Field** | Whenever an enemy becomes Conducting, this hero gains 10 Intelligence. | new | Charged Air (Stormeye) |
-| Crag | Stone | **Vengeful Emblem** | Whenever this hero takes damage, it gains 5 Attack. | existing | Unstoppable Growth (Rootwarden) |
+| Crag | Stone | **Vengeful Emblem** | Whenever this hero takes damage, it gains 10 Attack (5 → 10 on 2026-09-20; the Greataxe's awakening moved with it). | existing | Unstoppable Growth (Rootwarden) |
 | Sentinel | Stone | **Stone Wall** | When this hero enters the battlefield, its partner gains Shield 20. | new | — |
-| Slate | Stone | **Fault Line** | Whenever this hero lands a physical attack, its target loses 5 Wisdom. | new | Aftershock (Quakebringer) — the magical mirror |
+| Slate | Stone | **Fault Line** | Whenever this hero lands a Stone attack, it gains Shield 10. | new | Aftershock (Quakebringer) |
 | Sylva | Nature | **Verdurous** | Whenever this hero grants Renew, a random enemy suffers Poison 5 — per grant, so Regrowth on both allies rolls twice. | new | Nature's Purification / Restorative Toxin |
 | Mordrax | Nature | **Impale** | Whenever this hero lands an attack, its target suffers Poison 5. | existing | Thornrot (Bloomfang) — fed by the innate |
 | Hollowbark | Nature | **Barbs** | Whenever this hero takes damage, enemies suffer Poison 3. | existing | Heartwood (Thornheart) |
 | Solace | Light | **Grace** | Whenever this hero heals an ally, it gains 10 Mana, past its pool. | new | Afterglow (Dawnherald) |
 | Aegis | Light | **Consecrate** | Whenever this hero is healed, it gains 5 Defense and 5 Wisdom. | new | Shieldbearer (Warforged) |
 | Empyrean | Light | **Halo** | At the end of each round, this hero's partner is healed 10. | new | Sunblind (Sunborne) |
-| Widow | Shadow | **Lacerate** | Whenever this hero lands a physical attack, its target Bleeds 5. | new | Widow's Kiss / Snare — fed by the innate |
+| Widow | Shadow | **Lethal Bite** | Deals double damage to an enemy that is both Bleeding and Poisoned. Nothing in the starting kit sets the table; Venomfang's Widow's Kiss does. | new · `requiresTargetStatuses` | Widow's Kiss / Snare — feeds the innate |
 | Marrow | Shadow | **Necrosis** | Whenever an enemy takes Poison damage, this hero heals for the same amount. | new | — |
 | Nightshade | Shadow | **Shadowmeld** | When this hero enters the battlefield, it gains Ambush 10. | new | Afterimage (Penumbra) — stacks to 30 |
-| Glyph | Arcane | **Mana Ward** | Whenever this hero takes damage, it gains Mana equal to 15% of it, past its pool. | existing | Overspill (Thaumaturge) |
+| Glyph | Arcane | **Arcane Repose** | Whenever this hero Rests, it gains Shield equal to the Mana it recovered; a full pool grants nothing. | new · `Rested` hook | Overspill (Thaumaturge) |
 | Zenith | Arcane | **Arcane Reservoir** | When this hero enters the battlefield, it gains 30 Mana, past its pool. | existing | — |
 | Pixie | Arcane | **Attunement** | When this hero enters the battlefield, its partner gains 20 Mana, past its pool. | existing | Pixie Dust (Stardust) — stacks |
-| Cortex | Mind | **Neuroplastic** | Whenever this hero takes damage, it gains 5 Attack and 5 Intelligence. | new | Either Hand (Embodied) |
-| Lucius | Mind | **Intrusion** | Whenever this hero lands a Mind attack, its target loses 5 Intelligence. | new | Sanguine |
+| Cortex | Mind | **Neuroplastic** | Whenever an enemy's Wisdom is lowered, this hero gains that much Wisdom. | new · event-read `statDelta` | Either Hand (Embodied) |
+| Lucius | Mind | **Hunger** | Whenever this hero lands a Mind attack, it heals for 20% of the damage dealt. | new | Sanguine — the other half of the vampire |
 | Trance | Mind | **Lullaby** | At the end of each round, both active enemies lose 5 Speed. | new | Puppet Strings (Puppeteer) |
-| Revenant | Spirit | **Lingering** | The first time this hero would be knocked out each fight, it survives at 1 HP. | vocab | Communion (Undying) |
+| Revenant | Spirit | **Ghostlight** | Whenever an enemy is Haunted, this hero gains Spirit Force 10. Torment (a starter since 2026-09-20, in Second Wind's seat) Haunts on its own. Lingering (the endure verb) was its innate for a day; the verb stays in the engine, unheld. | new | Communion (Undying) |
 | Sorrow | Spirit | **Wail** | Whenever this hero lands a Spirit attack, its target is Haunted. | new | Grief (Mourner) |
 | Dread | Spirit | **Foreboding** | Whenever an enemy is Haunted, this hero gains 5 Defense and 5 Wisdom. | new | Omen — fed by the innate |
 | Warden | Iron | **Rivet** | Whenever this hero takes damage, its partner gains 5 Defense. | new | Sentry (Bulwark) |
 | Valor | Iron | **Rallying Standard** | When this hero enters the battlefield, its partner gains 10 Attack and 10 Intelligence. | existing | Tempering (Shieldwall) |
 | Gallant | Iron | **Sunder** | Whenever this hero lands an attack, its target loses 10 Defense. | existing | Cavalry Charge (Charger) |
 | Scallywag | Iron (unlock) | **Quickening** | When this hero enters the battlefield, it gains 10 Speed. | existing | Plunder (Corsair) |
-| Clockwork | Mech | **Boiler** | Whenever this hero is Burned, it gains 10 Mana, past its pool. | new | Combustion (Runaway) |
+| Clockwork | Mech | **Boiler** | Mech attacks have a 30% chance to Burn 10, scaled by its Intelligence — the ONE passive magnitude that scales (§10). | new · `chance`, `scaledBy` | Combustion (Runaway) |
 | Bellows | Mech/Iron | **Ironbound** *(Burden)* | Cannot switch out voluntarily. Stat Total 610. | vocab | Runaway Pressure / Superheat |
 | Rex | Mech | **Steam Pressure** | Whenever this hero is Burned, it gains 10 Speed. | new | Rampant (Tyrant) |
 | Patch | Mech (unlock) | **Field Repair** | Whenever this hero heals an ally, that ally is Cleansed of one affliction. | new | Nanites (Triage) |
@@ -373,6 +373,7 @@ Until the phase named lands, the rule below is still the rule in force.
 | Titanspawn kits are *"from the type slates"* and a spawn's definition carries nothing but its line | Every spawn and the companion carry the Mark; a Guardian does not. | 2 |
 | Lock-in and *"voluntary switching is disabled once half a side is KO'd"* | Unchanged in rule; Ironbound is a per-hero lock the rule sits beside. | 4 |
 | *"A Class is a VERB, never a number"* | Extended to innates: the same test, one more source. | 1 |
+| *"Passive-applied magnitudes are flat — a passive has no move to take STAB from"* | One exception, per user direction 2026-09-20: Boiler's Burn carries `scaledBy: 'intelligence'` — the status-magnitude StatMult off the OWNER's stat, still no STAB. A second should be a conversation. | second wave |
 | *"Nothing team-wide grants a passive"* | Untouched. An innate is hero-scoped. | — |
 | *"A bare number never gets a screen"* | Untouched. Nothing here has a screen. | — |
 
