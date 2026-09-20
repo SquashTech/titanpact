@@ -1,6 +1,8 @@
 import { useMemo, type CSSProperties, type ReactNode } from 'react';
 import { moves } from '../../data/moves';
-import type { MoveDefinition, StatKey, StatLine, TypeId } from '../../engine/content';
+import { isBurden } from '../../data/passives';
+import type { HeroDefinition, MoveDefinition, PassiveDefinition, StatKey, StatLine, TypeId } from '../../engine/content';
+import { innatePassiveOf, titansMarkOf } from '../../run/innate';
 import type { HealCaster } from '../../engine/heal/healPipeline';
 import type { StatModifiers } from '../../engine/state';
 import { getTypeColorRgb } from '../combat/typeColors';
@@ -9,6 +11,7 @@ import { HeroPortrait } from './HeroPortrait';
 import { MoveButtonReplica } from './MoveTile';
 import { TypeBadge } from './TypeBadge';
 import { STAT_COLORS, STAT_LABELS, computeStatTotal, statFraction } from './StatBars';
+import { PassiveGlyph, passiveColor, passiveTint } from './passiveIcons';
 import type { StatScale } from '../../run/statScale';
 
 // The hero stage shared by the draft and the Recruit Contract claim: one hero at 144px in a sigil
@@ -97,8 +100,8 @@ export function StageDais({ children }: { children: ReactNode }) {
   return <div className="draft-dais">{children}</div>;
 }
 
-/** Seven bars on StatBars' shared reference plus their total. `grants` is the flat delta the hero already carries (entryStats.ts); `scale` the run's reference, level 1's at the draft. */
-export function StageSheet({ baseStats, grants = {}, scale }: { baseStats: StatLine; grants?: StatModifiers; scale?: StatScale }) {
+/** Seven bars on StatBars' shared reference plus their total. `grants` is the flat delta the hero already carries (entryStats.ts); `scale` the run's reference, level 1's at the draft. `burden` prints the surplus the total carries (docs/innate-passives.md §4). */
+export function StageSheet({ baseStats, grants = {}, scale, burden = false }: { baseStats: StatLine; grants?: StatModifiers; scale?: StatScale; burden?: boolean }) {
   const effective = Object.fromEntries(
     SHEET_STATS.map((stat) => [stat, baseStats[stat] + (grants[stat] ?? 0)])
   ) as Record<StatKey, number>;
@@ -117,11 +120,54 @@ export function StageSheet({ baseStats, grants = {}, scale }: { baseStats: StatL
           </div>
         );
       })}
-      <div className="draft-sheet-total" title="Stat Total — the seven bars above it, summed">
+      <div className="draft-sheet-total" title={burden ? "Stat Total — over the roster's 550, the price of its Burden" : 'Stat Total — the seven bars above it, summed'}>
         <span className="draft-sheet-label">Stat Total</span>
-        <span className="draft-sheet-value">{computeStatTotal(effective)}</span>
+        <span className={`draft-sheet-value${burden ? ' is-burden' : ''}`}>
+          {computeStatTotal(effective)}
+          {burden && <span className="draft-sheet-burden"> · Burden</span>}
+        </span>
       </div>
     </div>
+  );
+}
+
+/** Whether the hero's line carries the Burden surplus — the sheet's total says so beside the number. */
+export function heroHasBurden(hero: Pick<HeroDefinition, 'passiveIds'>): boolean {
+  return (hero.passiveIds ?? []).some(isBurden);
+}
+
+/**
+ * The innate passive (docs/innate-passives.md §6), read in full on the stage — glyph, name and
+ * its one sentence — because it is the line a draft is decided on, and a line behind a tap is not
+ * read. The tap opens the dossier. A Titanspawn shows its Mark in the same seat, named as the
+ * Titan's. Nothing renders for a definition that holds neither.
+ */
+export function StageInnate({ hero, onOpen }: { hero: Pick<HeroDefinition, 'passiveIds'>; onOpen?: (passive: PassiveDefinition) => void }) {
+  const innate = innatePassiveOf(hero);
+  const mark = innate ? null : titansMarkOf(hero);
+  const passive = innate ?? mark;
+  if (!passive) return null;
+  const burden = isBurden(passive.id);
+  const kind = mark ? "Titan's Mark" : burden ? 'Burden' : 'Innate';
+  return (
+    <button
+      type="button"
+      className={`draft-innate${burden ? ' is-burden' : ''}${mark ? ' is-mark' : ''}`}
+      style={{ '--passive-color': passiveColor(passive.id), '--passive-tint': passiveTint(passive.id, 0.14) } as CSSProperties}
+      onClick={onOpen ? () => onOpen(passive) : undefined}
+      disabled={!onOpen}
+    >
+      <span className="draft-innate-icon">
+        <PassiveGlyph passiveId={passive.id} />
+      </span>
+      <span className="draft-innate-body">
+        <span className="draft-innate-head">
+          <span className="draft-innate-kind">{kind}</span>
+          <span className="draft-innate-name">{passive.name}</span>
+        </span>
+        <span className="draft-innate-desc">{passive.description}</span>
+      </span>
+    </button>
   );
 }
 

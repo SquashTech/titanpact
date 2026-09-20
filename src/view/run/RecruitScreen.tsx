@@ -5,7 +5,7 @@ import { RARITY_COLOR_VARS } from '../shared/EquipmentBox';
 import { passives } from '../../data/passives';
 import { classes } from '../../data/classes';
 import { progressionTable } from '../../data/progression';
-import type { MoveDefinition } from '../../engine/content';
+import type { MoveDefinition, PassiveDefinition } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
 import { ROSTER_CAP } from '../../run/state';
 import { entryPassiveCounts, entryStatModifiers } from '../../run/entryStats';
@@ -15,16 +15,19 @@ import { deriveContractOffer } from '../../run/recruitment';
 import { getTypeColorRgb } from '../combat/typeColors';
 import { healCasterForEntry } from '../shared/healCaster';
 import { ResourceGlyph } from '../shared/RunGlyph';
+import { PassiveDetailOverlay } from '../shared/PassiveDossier';
 import {
   StageCandidate,
   StageDais,
   StageFigure,
+  StageInnate,
   StageKit,
   StageMovePopup,
   StageRail,
   StageSheet,
   StageSky,
   StageTypes,
+  heroHasBurden,
 } from '../shared/HeroStage';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RecruitFanfare } from './RecruitFanfare';
@@ -63,6 +66,7 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
   const [featuredRosterId, setFeaturedRosterId] = useState<string>(offers[0].rosterId);
   const [claimedRosterIds, setClaimedRosterIds] = useState<string[]>([]);
   const [popupMove, setPopupMove] = useState<MoveDefinition | null>(null);
+  const [popupPassive, setPopupPassive] = useState<PassiveDefinition | null>(null);
   const [inspecting, setInspecting] = useState(false);
   /** Opens RosterReplaceScreen over this screen rather than as an App Screen, so leaving and returning can't lose which offers are signed. */
   const [rosterReplaceEntry, setRosterReplaceEntry] = useState<RosterEntry | null>(null);
@@ -188,9 +192,11 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
               </div>
             )}
 
-            <StageSheet baseStats={hero.baseStats} grants={grants} scale={statScaleFor(run)} />
+            <StageSheet baseStats={hero.baseStats} grants={grants} scale={statScaleFor(run)} burden={heroHasBurden(hero)} />
           </div>
         </StageDais>
+
+        <StageInnate key={`${featured.rosterId}-innate`} hero={hero} onOpen={setPopupPassive} />
 
         <StageKit key={`${featured.rosterId}-kit`} moveIds={featured.unlockedMoveIds} caster={caster} onPick={setPopupMove} />
 
@@ -248,6 +254,7 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
       {popupMove && (
         <StageMovePopup move={popupMove} caster={caster} onClose={() => setPopupMove(null)} />
       )}
+      <PassiveDetailOverlay passive={popupPassive} onClose={() => setPopupPassive(null)} />
 
       {inspecting && (
         <HeroPreviewOverlay

@@ -3,7 +3,7 @@ import { classes } from '../../data/classes';
 import { equipment } from '../../data/equipment';
 import { passives } from '../../data/passives';
 import { progressionTable } from '../../data/progression';
-import type { HeroDefinition, MoveDefinition } from '../../engine/content';
+import type { HeroDefinition, MoveDefinition, PassiveDefinition } from '../../engine/content';
 import { chosenClass } from '../../run/classes';
 import { entryPassiveCounts, entryStatModifiers } from '../../run/entryStats';
 import { levelOf } from '../../run/growth';
@@ -14,7 +14,8 @@ import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { RARITY_COLOR_VARS } from '../shared/EquipmentBox';
 import { healCasterForEntry } from '../shared/healCaster';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
-import { StageDais, StageFigure, StageKit, StageSheet, StageTypes } from '../shared/HeroStage';
+import { StageDais, StageFigure, StageInnate, StageKit, StageSheet, StageTypes, heroHasBurden } from '../shared/HeroStage';
+import { PassiveDetailCard } from '../shared/PassiveDossier';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 
 interface Props {
@@ -41,6 +42,7 @@ interface Props {
 export function HeroStageOverlay({ hero, entry, relicIds, scale, unowned = false, note, action, onClose }: Props) {
   const [inspecting, setInspecting] = useState(false);
   const [popupMove, setPopupMove] = useState<MoveDefinition | null>(null);
+  const [popupPassive, setPopupPassive] = useState<PassiveDefinition | null>(null);
 
   const types = rosterEntryTypes(hero, entry);
   const grants = entryStatModifiers(entry, equipment, passives, entryPassiveCounts(entry, equipment));
@@ -80,9 +82,10 @@ export function HeroStageOverlay({ hero, entry, relicIds, scale, unowned = false
                 ))}
               </div>
             )}
-            <StageSheet baseStats={hero.baseStats} grants={grants} scale={scale} />
+            <StageSheet baseStats={hero.baseStats} grants={grants} scale={scale} burden={heroHasBurden(hero)} />
           </div>
         </StageDais>
+        <StageInnate hero={hero} onOpen={setPopupPassive} />
         <StageKit moveIds={entry.unlockedMoveIds} caster={caster} onPick={setPopupMove} />
       </div>
 
@@ -123,6 +126,20 @@ export function HeroStageOverlay({ hero, entry, relicIds, scale, unowned = false
         >
           <div className="log-panel move-popup-panel">
             <MoveDetailCard move={popupMove} caster={caster} />
+            <div className="move-popup-hint">Tap anywhere to close</div>
+          </div>
+        </div>
+      )}
+      {popupPassive && (
+        <div
+          className="log-overlay"
+          onClick={(e) => {
+            e.stopPropagation();
+            setPopupPassive(null);
+          }}
+        >
+          <div className="log-panel move-popup-panel">
+            <PassiveDetailCard passive={popupPassive} />
             <div className="move-popup-hint">Tap anywhere to close</div>
           </div>
         </div>

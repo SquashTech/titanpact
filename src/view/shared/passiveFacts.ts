@@ -17,6 +17,7 @@ import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
 import type { MoveKindGlyphKind } from './statIcons';
 import { STAT_FULL_LABELS } from './relicStacks';
+import { BURDEN_SURPLUS, HERO_STAT_TOTAL } from '../../run/statBudget';
 
 /** The mark at the head of a row — resolved to a glyph by the view. */
 export type PassiveFactGlyph =
@@ -241,6 +242,18 @@ export function passiveFacts(def: PassiveDefinition): PassiveFact[] {
   if (def.wardedWhileCompanyStands) {
     rows.push({ label: 'While', text: 'Any ally of its company still stands, on the field or behind it', glyph: { kind: 'move', move: 'buff' } });
     rows.push({ label: 'Then', text: 'Every move the far side aims at it turns away, and no affliction touches it', glyph: { kind: 'move', move: 'debuff' } });
+  }
+  if (def.enduresOnce) {
+    rows.push({ label: 'When', text: 'It would be knocked out — by anything, the Pact Clock included', glyph: { kind: 'stat', stat: 'hp' } });
+    rows.push({ label: 'Then', text: 'It stands at 1 HP instead', glyph: { kind: 'move', move: 'heal' } });
+    rows.push({ label: 'Limit', text: 'Once per fight', glyph: { kind: 'move', move: 'debuff' } });
+  }
+  if (def.cannotSwitchOut) {
+    rows.push({ label: 'Rule', text: 'It never switches out on its own; a pivot move keeps its buff and stays', glyph: { kind: 'move', move: 'debuff' } });
+    rows.push({ label: 'KO', text: 'When it falls, another takes its place as usual', glyph: { kind: 'move', move: 'buff' } });
+  }
+  if (def.burden) {
+    rows.push({ label: 'Price', text: `A Burden — its stat line is ${BURDEN_SURPLUS} over the roster's ${HERO_STAT_TOTAL} for carrying it`, glyph: { kind: 'stat', stat: 'attack' } });
   }
   return rows;
 }

@@ -1,22 +1,25 @@
 import { useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
-import type { HeroDefinition, MoveDefinition } from '../../engine/content';
+import type { HeroDefinition, MoveDefinition, PassiveDefinition } from '../../engine/content';
 import { createRosterEntry } from '../../run/state';
 import { STARTER_PICK_COUNT } from '../../run/draft';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { getTypeColorRgb } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { PassiveDetailOverlay } from '../shared/PassiveDossier';
 import {
   StageCandidate,
   StageDais,
   StageFigure,
+  StageInnate,
   StageKit,
   StageMovePopup,
   StageRail,
   StageSheet,
   StageSky,
   StageTypes,
+  heroHasBurden,
 } from '../shared/HeroStage';
 
 interface Props {
@@ -33,6 +36,7 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
   const [pickedIds, setPickedIds] = useState<string[]>([]);
   const [inspecting, setInspecting] = useState<HeroDefinition | null>(null);
   const [popupMove, setPopupMove] = useState<MoveDefinition | null>(null);
+  const [popupPassive, setPopupPassive] = useState<PassiveDefinition | null>(null);
   /** Keyed by a rising counter so remounting replays the mount-once flare; `final` marks the pact-completing bind. */
   const [bindFlare, setBindFlare] = useState<{ tick: number; final: boolean } | null>(null);
 
@@ -119,9 +123,12 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
           <div className="draft-ident" key={`${featuredId}-ident`}>
             <h3 className="draft-name">{featured.name}</h3>
             <StageTypes types={featured.types} />
-            <StageSheet baseStats={featured.baseStats} />
+            <StageSheet baseStats={featured.baseStats} burden={heroHasBurden(featured)} />
           </div>
         </StageDais>
+
+        {/* The innate ahead of the kit: the one line the pick turns on, read whole (docs/innate-passives.md §6). */}
+        <StageInnate key={`${featuredId}-innate`} hero={featured} onOpen={setPopupPassive} />
 
         {/* Keyed too, so the rows arrive with the hero as the fight's console does with the turn. */}
         <StageKit key={`${featuredId}-kit`} moveIds={featured.moveIds} caster={caster} onPick={setPopupMove} />
@@ -160,6 +167,7 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
       {popupMove && (
         <StageMovePopup move={popupMove} caster={caster} onClose={() => setPopupMove(null)} />
       )}
+      <PassiveDetailOverlay passive={popupPassive} onClose={() => setPopupPassive(null)} />
 
       {inspecting && (
         <HeroPreviewOverlay

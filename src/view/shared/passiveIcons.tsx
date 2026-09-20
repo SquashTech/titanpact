@@ -23,6 +23,14 @@ const CLASS_CHEVRONS = (
   </g>
 );
 
+/** A chain link — Ironbound, the Burden that never leaves the field. */
+const CHAIN_LINK = (
+  <g fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2.5" y="8" width="10" height="8" rx="4" />
+    <rect x="11.5" y="8" width="10" height="8" rx="4" />
+  </g>
+);
+
 /** Three sparkles, largest first — "scoured clean". One alone is the Intelligence spark. */
 const CLEANSE_SPARKLE = (
   <>
@@ -60,7 +68,8 @@ function statArt(stat: StatKey | readonly StatKey[] | undefined): PassiveArt | u
 function reactiveArt(effect: PassiveEffect): PassiveArt | undefined {
   switch (effect.kind) {
     case 'applyStatus':
-      return statusArt(effect.statusId);
+      // An Elemental Force (the Titan's Mark) wears its element: the Force statuses have no glyph of their own.
+      return elementArt(statuses[effect.statusId]?.forceType) ?? statusArt(effect.statusId);
     case 'heal':
       return statArt('hp');
     case 'statDelta':
@@ -93,6 +102,9 @@ function dominantStat(grants: Partial<Record<StatKey, number>>): StatKey | undef
  */
 function passiveArt(def: PassiveDefinition | undefined): PassiveArt {
   const derived =
+    // The two verb-only shapes (docs/innate-passives.md): Lingering is drawn as the HP it keeps, Ironbound as a chain.
+    (def?.enduresOnce && statArt('hp')) ||
+    (def?.cannotSwitchOut && { path: CHAIN_LINK, color: STAT_COLORS.defense }) ||
     (def?.damageModifier && elementArt(def.damageModifier.eventFieldEquals?.moveType)) ||
     statusArt(def?.conditionalStatGrants?.requiresEnemyStatus) ||
     (def?.reactive && reactiveArt(def.reactive.effect)) ||
@@ -126,6 +138,8 @@ export function passiveTint(passiveId: string, alpha: number): string {
 
 /** How the passive reaches the board — the Passive counterpart of statusIcons' pipelineLabel. */
 export function passiveKindLabel(def: PassiveDefinition): string {
+  if (def.burden) return 'Burden';
+  if (def.enduresOnce) return 'Once per fight';
   if (def.reactive) return def.reactive.oncePerFight ? 'Reactive · once per fight' : 'Reactive';
   if (def.damageModifier) return 'Damage pipeline';
   if (def.conditionalStatGrants) return 'Conditional';

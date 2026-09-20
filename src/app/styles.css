@@ -12876,6 +12876,108 @@ button.star-shop-bundle-face {
   color: var(--accent);
 }
 
+.draft-sheet-value.is-burden {
+  color: var(--hp-mid);
+}
+
+.draft-sheet-burden {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* The innate passive (docs/innate-passives.md §6): a full-width strip between the dais and the
+   kit, read whole — glyph, name and its one sentence — because it is the line a draft is decided
+   on, and a line behind a tap is not read. Plated in the passive's own colour like every other
+   passive card. The Burden wears the wound colour: it is a price, and the sheet's total says so
+   beside the number. A Titanspawn's Mark sits in the same seat, named as the Titan's. */
+.draft-innate {
+  --plate-base: linear-gradient(165deg, var(--panel-alt), #171a22);
+  --plate-color: var(--passive-color);
+  flex: none;
+  align-self: stretch;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 7px 9px;
+  border-radius: var(--radius-md);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--hairline), var(--elev-1);
+  animation: title-tagline-fade 0.45s ease 0.14s both;
+}
+
+.draft-innate:disabled {
+  cursor: default;
+}
+
+.draft-innate.is-burden {
+  --plate-color: var(--hp-low);
+  --passive-color: var(--hp-low);
+  --passive-tint: rgba(217, 83, 79, 0.16);
+}
+
+.draft-innate-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  border-radius: var(--radius-sm);
+  color: var(--passive-color);
+  background: var(--passive-tint);
+}
+
+.draft-innate-icon .status-glyph {
+  width: 17px;
+  height: 17px;
+}
+
+.draft-innate-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.draft-innate-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.draft-innate-kind {
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.draft-innate.is-burden .draft-innate-kind,
+.draft-innate.is-mark .draft-innate-kind {
+  color: var(--passive-color);
+}
+
+.draft-innate-name {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--passive-color);
+}
+
+.draft-innate-desc {
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--text);
+  opacity: 0.92;
+}
+
 /* The kit as the fight's own move console (.move-list, styles above): the
    same four facets, domain light and hairlines the player will be reading
    every turn, so the choice is made against the object it is a choice about
@@ -13652,6 +13754,37 @@ button.star-shop-bundle-face {
   flex-direction: column;
   align-items: center;
   gap: 2px;
+}
+
+/* The scouted innate (docs/innate-passives.md §6): glyph and name in the passive's colour under
+   the typing, the width of the chip. A spawn's reads "Mark" — one word is what a chip holds, and
+   after the first fight it is the whole sentence. */
+.enemy-scout-innate {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 100%;
+  padding: 1px 5px 1px 3px;
+  border-radius: 999px;
+  color: var(--passive-color);
+  background: var(--passive-tint);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+}
+
+.enemy-scout-innate .status-glyph {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+}
+
+.enemy-scout-innate-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .roster-grid {
@@ -29922,6 +30055,7 @@ button.star-shop-bundle-face {
 .evo-path-card,
 .item-readout,
 .passive-readout,
+.draft-innate,
 .roster-card,
 .squad-slot,
 .enemy-scout-chip,
@@ -29957,6 +30091,7 @@ button.star-shop-bundle-face {
 .evo-path-card,
 .item-readout,
 .passive-readout,
+.draft-innate,
 .roster-card,
 .squad-slot,
 .enemy-scout-chip,

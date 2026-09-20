@@ -13,6 +13,8 @@ import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterManagementScreen } from './RosterManagementScreen';
 import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
+import { PassiveGlyph, passiveColor, passiveTint } from '../shared/passiveIcons';
+import { innatePassiveOf, titansMarkOf } from '../../run/innate';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { hasDramaticEntrance } from '../shared/entrances';
 import { useProfile } from '../shared/ProfileContext';
@@ -187,6 +189,28 @@ function SquadSlot({
         </button>
       )}
     </div>
+  );
+}
+
+/**
+ * What the scouted enemy was born with (docs/innate-passives.md §6): its innate's glyph and name,
+ * or the Titan's Mark on a spawn. The name is the read — a Skirmish against spawn is a fight
+ * against a clock — and the tap on the chip opens the sheet that says the rest.
+ */
+function ScoutedPassive({ hero }: { hero: HeroDefinition }) {
+  const innate = innatePassiveOf(hero);
+  const mark = innate ? null : titansMarkOf(hero);
+  const passive = innate ?? mark;
+  if (!passive) return null;
+  return (
+    <span
+      className={`enemy-scout-innate${mark ? ' is-mark' : ''}`}
+      style={{ '--passive-color': passiveColor(passive.id), '--passive-tint': passiveTint(passive.id, 0.16) } as CSSProperties}
+      title={`${passive.name} — ${passive.description}`}
+    >
+      <PassiveGlyph passiveId={passive.id} />
+      <span className="enemy-scout-innate-name">{mark ? 'Mark' : passive.name}</span>
+    </span>
   );
 }
 
@@ -397,6 +421,7 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm, lock
                         <TypeBadge key={t} type={t} />
                       ))}
                     </div>
+                    <ScoutedPassive hero={hero} />
                     <MatchupArrow verdict={heldTypes ? matchupVerdict(heldTypes, types) : null} />
                   </button>
                 );
