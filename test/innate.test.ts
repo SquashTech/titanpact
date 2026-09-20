@@ -155,3 +155,29 @@ test('build: a roster hero arrives with its innate held, Lingering counted and I
   assert.ok('rallyingStandard' in byRoster('r3').passives);
   assert.ok((titansMarkFor.Fire as string) in byRoster('r4').passives, 'a spawn fields its Mark on either side');
 });
+
+// --- Out of the box: an innate a starting kit can fire ---
+
+test('verdurous: every Renew Sylva grants rolls Poison 5 onto a random enemy — Regrowth on both allies is two rolls', () => {
+  const state = withPassive(
+    createFightState(
+      5,
+      [
+        { combatantId: 'a1', heroId: 'wildOracle', side: 'A' },
+        { combatantId: 'a2', heroId: 'valor', side: 'A' },
+      ],
+      [
+        { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
+        { combatantId: 'b2', heroId: 'crag', side: 'B' },
+      ]
+    ),
+    'a1',
+    'verdurous'
+  );
+  const r = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'regrowth', declaredTarget: 'a1' }, ...restAll(state).filter((a) => a.combatantId !== 'a1')], config);
+  const poisons = r.events.filter((e) => e.type === 'StatusApplied' && e.statusId === 'Poison');
+  assert.strictEqual(poisons.length, 2, 'one roll a grant, two grants');
+  for (const e of poisons) assert.ok(e.type === 'StatusApplied' && ['b1', 'b2'].includes(e.combatantId), 'onto an enemy');
+  const total = statusMagnitude(r.state.combatants.b1, 'Poison') + statusMagnitude(r.state.combatants.b2, 'Poison');
+  assert.strictEqual(total, 10, 'two Poison 5s, wherever they landed');
+});

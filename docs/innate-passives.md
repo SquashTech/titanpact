@@ -256,7 +256,7 @@ in the last column so the two can be read as a pair. Every magnitude is a first 
 | Crag | Stone | **Vengeful Emblem** | Whenever this hero takes damage, it gains 5 Attack. | existing | Unstoppable Growth (Rootwarden) |
 | Sentinel | Stone | **Stone Wall** | When this hero enters the battlefield, its partner gains Shield 20. | new | — |
 | Slate | Stone | **Fault Line** | Whenever this hero lands a physical attack, its target loses 5 Wisdom. | new | Aftershock (Quakebringer) — the magical mirror |
-| Sylva | Nature | **Verdure** | Whenever this hero heals an ally, that ally gains Renew 10. | new | Nature's Purification / Restorative Toxin |
+| Sylva | Nature | **Verdurous** | Whenever this hero grants Renew, a random enemy suffers Poison 5 — per grant, so Regrowth on both allies rolls twice. | new | Nature's Purification / Restorative Toxin |
 | Mordrax | Nature | **Impale** | Whenever this hero lands an attack, its target suffers Poison 5. | existing | Thornrot (Bloomfang) — fed by the innate |
 | Hollowbark | Nature | **Barbs** | Whenever this hero takes damage, enemies suffer Poison 3. | existing | Heartwood (Thornheart) |
 | Solace | Light | **Grace** | Whenever this hero heals an ally, it gains 10 Mana, past its pool. | new | Afterglow (Dawnherald) |

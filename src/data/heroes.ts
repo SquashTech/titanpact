@@ -267,7 +267,7 @@ export const heroes: Record<string, HeroDefinition> = {
     growthGrades: { hp: 'B', attack: 'D', defense: 'C', intelligence: 'A', wisdom: 'A', speed: 'B', manaPool: 'A' },
     schedule: { offerLevels: [5, 8, 15, 19, 24, 28], midLevel: 10, lateLevel: 20 },
     signatureMoveId: 'blightbloom',
-    passiveIds: ['verdure'],
+    passiveIds: ['verdurous'],
   },
   mordax: {
     id: 'mordax',

@@ -1021,14 +1021,17 @@ const innatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', amount: -5 },
     },
   },
-  verdure: {
-    id: 'verdure',
-    name: 'Verdure',
-    description: 'Whenever this hero heals an ally, that ally gains Renew 10.',
+  verdurous: {
+    id: 'verdurous',
+    name: 'Verdurous',
+    description: 'Whenever this hero grants Renew, a random enemy suffers Poison 5.',
+    // Per GRANT, not per cast (2026-09-20, per user direction): Regrowth on both allies is two
+    // StatusApplied events and so two rolls, which may land on one enemy and stack. It replaced
+    // Verdure ("whenever this hero heals an ally"), which no move in Sylva's starting kit could fire.
     reactive: {
-      hook: 'Healed',
-      condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Renew', magnitude: 10 },
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Renew' } },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Poison', magnitude: 5, duration: 3 },
     },
   },
   grace: {
