@@ -16,6 +16,7 @@ import {
 } from '../../run/mastery';
 import type { RosterEntry, RunState } from '../../run/state';
 import { statScaleFor } from '../../run/statScale';
+import { isCompanion } from '../../run/companion';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { MasteryPips } from '../shared/MasteryPips';
 import { NodeHeader, NodeSky, NODE_TINT_PARCHMENT } from '../shared/NodeStage';
@@ -135,7 +136,7 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
           // The fifth pip is a hero's Evolution and the companion's first step; the tenth is a
           // hero's signature (when one is authored) and the companion's second step.
           const evolves = crossesMastery(entry, pipsPerTap, MASTERY_EVOLUTION);
-          const masters = crossesMastery(entry, pipsPerTap, MASTERY_CAP) && (entry.mortal || !!hero.signatureMoveId);
+          const masters = crossesMastery(entry, pipsPerTap, MASTERY_CAP) && (isCompanion(entry) || !!hero.signatureMoveId);
           // The count is what the hero HOLDS — the pips draw the gain in the node's colour, and
           // printing the post-tap total here read as if the hero already had it.
           const held = `${entry.mastery}/${MASTERY_CAP}`;
@@ -144,7 +145,7 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
             : picked
               ? `${held} ✓`
               : evolves || masters
-                ? `${held} · ${entry.mortal ? 'Grows!' : evolves ? 'Evolves!' : 'Signature!'}`
+                ? `${held} · ${isCompanion(entry) ? 'Grows!' : evolves ? 'Evolves!' : 'Signature!'}`
                 : `${held} · +${room}`;
           return (
             <HeroPickCard

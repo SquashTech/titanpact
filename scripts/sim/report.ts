@@ -177,14 +177,14 @@ const MOVE_HEADER = `  ${pad('move', 22)}${pad('type', 8)}${pad('cat', 5)}${padS
 
 export function formatReport(
   agg: Aggregate,
-  meta: { runs: number; levelPolicy: string; seed: number; xpMult: number; switching: boolean; pilot: string; wallMs: number }
+  meta: { runs: number; levelPolicy: string; seed: number; xpMult: number; switching: boolean; pilot: string; ascension: number; wallMs: number }
 ): string {
   const out: string[] = [];
   const R = agg.runs || 1;
 
   out.push('TITANPACT — BATCH RUN SIMULATION');
   out.push(
-    `runs=${agg.runs}  pilot=${meta.pilot}  levelPolicy=${meta.levelPolicy}  xpMult=${meta.xpMult}  playerSwitching=${meta.switching ? 'on' : 'off'}` +
+    `runs=${agg.runs}  pilot=${meta.pilot}  ascension=${meta.ascension}  levelPolicy=${meta.levelPolicy}  xpMult=${meta.xpMult}  playerSwitching=${meta.switching ? 'on' : 'off'}` +
       `  baseSeed=${meta.seed}  wall=${(meta.wallMs / 1000).toFixed(1)}s  cpu=${(agg.elapsedMs / 1000).toFixed(0)}s`
   );
   if (meta.pilot === 'greedy') {
@@ -213,6 +213,12 @@ export function formatReport(
         `(${num(k.downEntering / Math.max(1, k.shortHanded), 2)} down when so); Revives found ${num(k.revivesFound / R, 2)}, spent ${num(k.revivesSpent / R, 2)}; ` +
         `stood up by a Rest ${num(k.restsWhileDown / R, 2)}, a mend ${num(k.mendsWhileDown / R, 2)} /run`
     );
+    if (meta.ascension >= 1) {
+      out.push(
+        `  PERMADEATH (A${meta.ascension})       fallen ${num(k.fallen / R, 2)} /run at the Fallen beat: ${num(k.fallenRevived / R, 2)} kept by a Revive, ${num(k.fallenLost / R, 2)} let go; ` +
+          `roster at the end ${num(agg.rosterSizeEndSum / R, 2)}; runs ended with nobody standing ${agg.deathByNodeType.exhausted ?? 0}`
+      );
+    }
     const byKind = Object.entries(k.koInWinsByKind).sort((a, b) => b[1] - a[1]);
     if (byKind.length > 0) {
       out.push(`    those KOs fell at: ${byKind.map(([kind, n]) => `${kind} ${pct(n, Math.max(1, k.koInWins))}`).join(', ')} — an act's last fight is mended at its end, so only the rest persist`);

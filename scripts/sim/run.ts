@@ -6,7 +6,7 @@ import type { StatKey } from '../../src/engine/content';
 import { heroes as allHeroes } from '../../src/data/heroes';
 import { starterPackById } from '../../src/data/starterPacks';
 import { rosterHeroes } from '../../src/data/content';
-import { absorbCompanions, companionCandidate, companionJoinDue, joinCompanion } from '../../src/run/companion';
+import { absorbCompanions, companionCandidate, companionJoinDue, isCompanion, joinCompanion } from '../../src/run/companion';
 import { anyDown, canBuyMend, buyMend, mendPrice, mendRoster, recordWounds, reviveHero, standingRoster } from '../../src/run/wounds';
 import { buyConsumable, canBuyConsumable, canUseRevive, grantConsumable, rollConsumableDrop, spendRevive } from '../../src/run/consumables';
 import { moves } from '../../src/data/moves';
@@ -174,6 +174,7 @@ export interface RunRecord {
   companionLostAt: number | null;
   goldEnd: number;
   rosterLevelEnd: number;
+  rosterSizeEnd: number;
   /** heroId -> best level reached this run, for every hero that was ever on the roster. */
   heroLevels: Record<string, number>;
   /** Share of the roster that had evolved when the run ended — the §11 target is 1.0. */
@@ -284,6 +285,33 @@ export interface RunOptions extends policy.PolicyOptions {
   playerSwitching: boolean;
   /** Who pilots the player side in every fight (fight.ts PilotKind). */
   pilot: PilotKind;
+  /** The Ascension rung (docs/ascension.md): 0 is Base; 1 and up is Permadeath, the Revive the one way back. */
+  ascension: number;
+}
+
+const permadeath = (options: RunOptions): boolean => options.ascension >= 1;
+
+/**
+ * The Fallen beat (docs/ascension.md §3), in the companion's absorption slot: every hero the won
+ * fight knocked out is kept by a Revive while the stock lasts — the strongest first, which is the
+ * pilot's read of the choice — or is gone from the run with its gear. The companion's row has no
+ * button: a Revive never saves it, at any rung (§2), and absorbCompanions takes it as at Base.
+ */
+function resolveFallen(run: RunState, koRosterIds: readonly string[], record: RunRecord): RunState {
+  let next = run;
+  const fallen = policy.byPower(next.roster.filter((entry) => koRosterIds.includes(entry.rosterId) && !isCompanion(entry)));
+  record.knockouts.fallen += fallen.length;
+  for (const entry of fallen) {
+    if (canUseRevive(next)) {
+      next = spendRevive(reviveHero(next, entry.rosterId, policy.effectiveStats(entry).hp));
+      record.knockouts.revivesSpent += 1;
+      record.knockouts.fallenRevived += 1;
+    } else {
+      next = { ...next, roster: next.roster.filter((r) => r !== entry) };
+      record.knockouts.fallenLost += 1;
+    }
+  }
+  return next;
 }
 
 export function simulateRun(options: RunOptions): RunRecord {
@@ -305,6 +333,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     goldEnd: 0,
     goldFlow: {},
     rosterLevelEnd: 0,
+    rosterSizeEnd: 0,
     heroLevels: {},
     rosterEvolvedEnd: 0,
     fights: [],
@@ -377,6 +406,14 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
       const absorbed = absorbCompanions(run, outcome.koRosterIds);
       if (absorbed.absorbed.length > 0) record.companionLostAt ??= run.encountersWon;
       run = absorbed.run;
+      // Under Permadeath every other KO is the same beat, with a Revive as its one way back.
+      if (permadeath(options)) run = resolveFallen(run, outcome.koRosterIds, record);
+      if (run.roster.length === 0) {
+        alive = false;
+        record.deathAct = run.actNumber;
+        record.deathNodeType = 'exhausted';
+        break;
+      }
       // Automatic and roster-wide, benched heroes included (src/run/growth.ts); the report pays
       // the schedule (docs/xp-overhaul.md §4).
       run = grantEncounterLevels(run, rosterHeroes, rng, encounterXpKind(node.type));
@@ -444,6 +481,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
   }
 
   record.goldEnd = run.gold;
+  record.rosterSizeEnd = run.roster.length;
   record.rosterEvolvedEnd =
     run.roster.length > 0 ? run.roster.filter((r) => r.chosenPathIds.length > 0).length / run.roster.length : 0;
   record.rosterLevelEnd =
@@ -976,6 +1014,14 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
     spend('mend', () => buyMend(next, mendCost));
   }
 
+  // Under Permadeath the Revive is the price of the rule (docs/ascension.md §1): one a visit,
+  // bought before a hire whenever the stock is below two — insurance ahead of a body.
+  let revivesBought = 0;
+  if (permadeath(options) && next.consumables.revive < 2 && canBuyConsumable(next, 'revive', revivesBought)) {
+    spend('revive', () => buyConsumable(next, 'revive', revivesBought));
+    revivesBought += 1;
+  }
+
   for (const offerId of offers.heroOfferIds) {
     const offer = guildHallOffers.find((o) => o.id === offerId);
     if (!offer || next.gold < offer.cost) continue;
@@ -995,8 +1041,8 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
 
   // At the Vigil, one Revive for the final battle before anything else on the counter
   // (run/consumables.ts REVIVE_PRICE) — a player who saves for it buys it first, not last.
-  if (muster && next.consumables.revive === 0 && canBuyConsumable(next, 'revive', 0)) {
-    spend('revive', () => buyConsumable(next, 'revive', 0));
+  if (muster && next.consumables.revive === 0 && canBuyConsumable(next, 'revive', revivesBought)) {
+    spend('revive', () => buyConsumable(next, 'revive', revivesBought));
   }
 
   // The shelf's Mastery Scrolls (SCROLL_PURCHASE_LIMIT a visit), bought while somebody can still

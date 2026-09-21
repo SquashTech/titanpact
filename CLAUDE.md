@@ -180,6 +180,10 @@ don't silently override it.
 > the ladder is where it gets its demand. Decided beside it, every rung: a Compendium bestiary
 > for the spawn, a `companion:<type>` star for clearing with the companion alive at the Eyes'
 > close, and the companion exempt from Withering Gaze. Its §10 lists what each rung reverses.
+> **Phase 0 is IN (same day):** `isCompanion` splits the identity from the `mortal` rule, and the
+> sim takes `--ascension`; measured (§9b, 3000 runs, skilled pilot) full-clear 73.7 → 31.2%, Act 2
+> the wall (91 → 66), contracts claimed 1.74 → 2.57 a run and the swap route 2.27 → 0.39, the Revive
+> crowding the Smithy out through Act 3 — the Revive supply is the binding number.
 
 ---
 

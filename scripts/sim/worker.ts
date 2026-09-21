@@ -14,6 +14,7 @@ export interface WorkerJob {
   xpMult: number;
   playerSwitching: boolean;
   pilot: PilotKind;
+  ascension: number;
 }
 
 export function runShard(job: WorkerJob): Aggregate {
@@ -29,6 +30,7 @@ export function runShard(job: WorkerJob): Aggregate {
           xpMult: job.xpMult,
           playerSwitching: job.playerSwitching,
           pilot: job.pilot,
+          ascension: job.ascension,
         })
       );
     } catch (err) {

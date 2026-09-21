@@ -17,6 +17,7 @@ import { rosterEntryTypes } from './progression';
 import { encounterScaling, encounterHeroCountOverride, enemyLoadoutFor } from './difficulty';
 import { appendFinalEnemy, generateEncounter, type Encounter, type EncounterNodeType } from './enemyGen';
 import { locationBias } from './locations';
+import { isCompanion } from './companion';
 import { guardianEscortPool, mobEncounter } from './spawn';
 import type { TutorialEncounter } from './tutorial';
 
@@ -79,7 +80,7 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
   // Act 1 caps the enemy count at the roster — the IMMORTAL roster (2026-09-13, per user
   // direction, titanspawn-overhaul.md "Phase 6 findings"): the companion is half a hero and must
   // not invite a whole enemy, so the Act 1 Skirmish is 3v2 with it on the bench.
-  const immortalRoster = run.roster.filter((entry) => !entry.mortal).length;
+  const immortalRoster = run.roster.filter((entry) => !isCompanion(entry)).length;
   const heroCountOverride =
     type === 'fight' || isSecondFight ? 2 : encounterHeroCountOverride(type, run.actNumber, immortalRoster, standardCount);
   const heroCount = heroCountOverride ?? standardCount;

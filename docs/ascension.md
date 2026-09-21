@@ -1,6 +1,6 @@
 # ascension.md — The Ascension ladder: Permadeath, then rules
 
-> **STATUS: A1 DECIDED 2026-09-21 (per user direction), NOT BUILT. A2–A5 PROPOSED, not decided.**
+> **STATUS: A1 DECIDED 2026-09-21 (per user direction); PHASE 0 IN AND MEASURED (§9b), the rest NOT BUILT. A2–A5 PROPOSED, not decided.**
 > Ascension 1 is Permadeath from the first fight, the Revive consumable the one way back, offered
 > at the end of the fight that took the hero — and **a Revive cannot save the companion** at any
 > rung. The three companion additions in §7 are decided the same day. Every rung above A1
@@ -260,7 +260,7 @@ excludes a companion's body (`profile.ts:238`). Three additions, all rungs inclu
 
 | Phase | What lands | Notes |
 |---|---|---|
-| 0 | **Split the rule from the identity, and measure A1.** `companionOf`, the Scribe's *Grows!* label and the Act 1 count cap read `companionHeroId`; `mortal` is left meaning only what it says. Then `RunOptions.ascension` in `scripts/sim`, every entry mortal, the chart pilot, the report's `recruitsBySource` / `spent:revive` / end-of-run reasons | Nothing player-facing. The measurement is what §4 and §6 read, and it is the cheapest thing in this document. |
+| 0 | **DONE 2026-09-21.** **Split the rule from the identity, and measure A1.** `companionOf`, the Scribe's *Grows!* label and the Act 1 count cap read `companionHeroId`; `mortal` is left meaning only what it says. Then `RunOptions.ascension` in `scripts/sim`, every entry mortal, the chart pilot, the report's `recruitsBySource` / `spent:revive` / end-of-run reasons | Nothing player-facing. The measurement is what §4 and §6 read, and it is the cheapest thing in this document. |
 | 1 | **A1.** `RunState.ascension`, the run-start rung picker, every entry mortal at A1, the Fallen beat (§3) in the post-fight chain, the map-side Revive hidden on A1 | The companion's row unbuttoned. `test/companion` grows a permadeath case; the tutorial ignores the rung. |
 | 2 | **The companion** (§7): the bestiary tab, `knownSpawnIds`, the `companion:<type>` star read at the Eyes' close, the Gaze exemption on spawn bodies | All rungs including Base. |
 | 3 | **Stars and colours** (§8): `Profile.ascension`, the unlock, the colour mapping, the storage change | The first rung a star can record. |
@@ -272,6 +272,60 @@ excludes a companion's body (`profile.ts:238`). Three additions, all rungs inclu
 Phases 4–7 are each a rung and each a measurement; none is decided until it is built and read.
 
 ---
+
+## 9b. Phase 0 — measured (2026-09-21)
+
+The rule/identity split is in (`isCompanion`, `src/run/companion.ts`), and the sim takes
+`--ascension N`: at 1 every KO on a won fight is the Fallen beat (§3, `resolveFallen` in
+`scripts/sim/run.ts` — a Revive on the strongest fallen first while the stock lasts, the rest gone),
+the companion's KO is absorbed as at Base, and the pilot buys one Revive a Guild Hall visit ahead of
+a hire whenever it holds fewer than two. Nothing else moved: same Revive price and limit, same
+drop odds, same recruitment supply. 3000 runs, seed 1, both pilots, against the same seed at Base.
+
+| | Base, skilled | **A1, skilled** | Base, chart | **A1, chart** |
+|---|---|---|---|---|
+| full-clear | 73.7% | **31.2%** | 22.3% | **1.1%** |
+| Act 1 / 2 / 3 / 4 / 5 / finale cleared | 93 / 91 / 100 / 95 / 98 / 94 | **89 / 66 / 86 / 83 / 92 / 81** | 67 / 70 / 94 / 89 / 94 / 62 | **52 / 27 / 67 / 61 / 70 / 28** |
+| KOs in won fights, a run | 9.33 (all mended back) | 6.28 | 8.08 | 2.68 |
+| the Fallen: kept / let go, a run | — | **2.66 / 2.37** | — | 0.82 / 1.34 |
+| roster at the end | 6 | **4.04** | 6 | — |
+| Revives found / spent, a run | 1.29 / 1.52 | 0.88 / **3.17** | 0.72 / 0.88 | 0.33 / 0.87 |
+| recruits: contract / contract-replacing / hire | 1.74 / 2.27 / 1.35 | **2.57 / 0.39 / 1.43** | 1.19 / 1.10 / 1.07 | 1.11 / 0.03 / 0.56 |
+| Act 1 gold: earned → on Revives / on hires | 79 → 0 / 53 | 78 → **47 / 18** | 64 → 0 / 39 | 59 → 36 / 14 |
+| runs ended with nobody standing | — | 0 | — | 0 |
+
+What it says, in the order §4 and §6 asked:
+
+- **The rule bites, and Act 2 is where.** Under the skilled pilot Act 2's clear falls 91 → 66 while
+  Act 1 holds at 89 and Act 3 recovers to 86. Act 1 is survivable on the starting purse; Act 2 is
+  fought with the holes Act 1's Guardian left, on an Act 1 income that a single Revive takes 60% of.
+  Nothing else on the ladder should touch Act 2 until this has been played.
+- **The Guardian is where heroes fall, and Base was hiding it.** 45% of persisting KOs fall at the
+  boss at both rungs; at Base the act's end mends them for free, so the Guardian's real cost was
+  never paid. Under A1 the Guardian fight is where Revives are spent. That is a shape the designer
+  should see before deciding A2 makes the same fight harder.
+- **Recruitment is live.** Contracts claimed below the cap 1.74 → 2.57 a run, and the swap route
+  (`contractReplacing`, the byPower trade nobody makes in play) 2.27 → 0.39: under attrition a
+  contract fills a hole instead of replacing a hero. Hires hold at 1.4 a run but move later — Act 1's
+  hire spend falls 53 → 18 gold because the Revive is bought first, and Acts 3–5's rises. **The shelf's
+  blank contract still sells nothing** (≈1 gold an act at both rungs): the fork's free contract
+  covers the demand, which is §6's first row. The 20g shelf line is redundant on the evidence.
+- **The Revive supply is the binding number, not the drop.** 3.17 spent a run against 0.88 found:
+  the pilot buys ~0.7 a visit and would buy more — it holds under two at most visits. The Fallen beat
+  is a real choice (2.66 kept against 2.37 let go: roughly half the fallen walk). §4's second reading
+  is also in: the Anvil at Act 3 falls 58 → 5.5 gold and the Enchanter 26 → 3.5 — **the Revive crowds
+  the Smithy out entirely through Act 3**, so A4's price rise would be a rung with no purchases left to
+  price. That is the coupling §1 named, measured.
+- **No run ends with nobody standing.** A lost fight ends it first, every time; the §2 rule on a
+  roster below two never came up and needs no forced end.
+- **The chart pilot's 1.1% is the floor, not the forecast.** The designer clears every Base run; the
+  skilled pilot's 31% is the nearer read, and a human who plays around the Guardian's KOs will sit
+  above it. The comparison that transfers is the shape: Act 2, the Guardian, the Revive.
+
+Nothing is re-tuned off this pass. The candidates, for the designer, in the order the numbers
+point: the Revive's Act 1 price against Act 1 income (a rung whose insurance costs 60% of the purse
+is a rung about gold, which A1 is not meant to be); the shelf's blank contract line, which sells
+nothing at either rung; and the Act 2 wall as the thing to play before A2 exists.
 
 ## 10. Locked invariants this overturns
 

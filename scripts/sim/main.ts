@@ -23,6 +23,8 @@ interface Args {
   xpMult: number;
   switching: boolean;
   pilot: PilotKind;
+  /** The Ascension rung (docs/ascension.md): 0 is Base, 1 turns Permadeath on. */
+  ascension: number;
   out: string | null;
   json: string | null;
 }
@@ -36,6 +38,7 @@ function parseArgs(argv: readonly string[]): Args {
     xpMult: 1,
     switching: true,
     pilot: 'greedy',
+    ascension: 0,
     out: null,
     json: null,
   };
@@ -62,6 +65,9 @@ function parseArgs(argv: readonly string[]): Args {
         break;
       case '--pilot':
         args.pilot = value === 'chart' ? 'chart' : 'greedy';
+        break;
+      case '--ascension':
+        args.ascension = Math.max(0, Number(value) || 0);
         break;
       case '--out':
         args.out = value;
@@ -94,7 +100,7 @@ async function main(): Promise<void> {
   const total = emptyAggregate();
 
   if (args.workers === 1) {
-    mergeAggregate(total, runShard({ firstSeed: args.seed, runs: args.runs, levelPolicy: args.policy, xpMult: args.xpMult, playerSwitching: args.switching, pilot: args.pilot }));
+    mergeAggregate(total, runShard({ firstSeed: args.seed, runs: args.runs, levelPolicy: args.policy, xpMult: args.xpMult, playerSwitching: args.switching, pilot: args.pilot, ascension: args.ascension }));
   } else {
     // Contiguous seed blocks, so any single run stays reproducible by seed alone.
     const perWorker = Math.ceil(args.runs / args.workers);
@@ -102,7 +108,7 @@ async function main(): Promise<void> {
     for (let i = 0; i < args.workers; i++) {
       const first = args.seed + i * perWorker;
       const runs = Math.min(perWorker, args.seed + args.runs - first);
-      if (runs > 0) jobs.push({ firstSeed: first, runs, levelPolicy: args.policy, xpMult: args.xpMult, playerSwitching: args.switching, pilot: args.pilot });
+      if (runs > 0) jobs.push({ firstSeed: first, runs, levelPolicy: args.policy, xpMult: args.xpMult, playerSwitching: args.switching, pilot: args.pilot, ascension: args.ascension });
     }
     process.stderr.write(`simulating ${args.runs} runs across ${jobs.length} workers...\n`);
     const results = await Promise.all(jobs.map(shard));
@@ -116,6 +122,7 @@ async function main(): Promise<void> {
     xpMult: args.xpMult,
     switching: args.switching,
     pilot: args.pilot,
+    ascension: args.ascension,
     wallMs: Date.now() - started,
   });
   process.stdout.write(report);

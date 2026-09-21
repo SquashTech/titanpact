@@ -108,10 +108,14 @@ export interface KnockoutCounts {
   /** Rest seats taken and Guild Hall mends bought while somebody was down. */
   restsWhileDown: number;
   mendsWhileDown: number;
+  /** Permadeath (docs/ascension.md §3): heroes at the Fallen beat, and how many a Revive kept or the run let go. */
+  fallen: number;
+  fallenRevived: number;
+  fallenLost: number;
 }
 
 export function emptyKnockoutCounts(): KnockoutCounts {
-  return { shortHanded: 0, downEntering: 0, koInWins: 0, koInWinsByKind: {}, revivesFound: 0, revivesSpent: 0, restsWhileDown: 0, mendsWhileDown: 0 };
+  return { shortHanded: 0, downEntering: 0, koInWins: 0, koInWinsByKind: {}, revivesFound: 0, revivesSpent: 0, restsWhileDown: 0, mendsWhileDown: 0, fallen: 0, fallenRevived: 0, fallenLost: 0 };
 }
 
 export function addKnockoutCounts(into: KnockoutCounts, from: KnockoutCounts): void {
@@ -135,6 +139,8 @@ export interface Aggregate {
   /** Encounters won, summed over all runs. */
   encountersWonSum: number;
   goldEndSum: number;
+  /** Roster size when the run ended, summed — under permadeath the count is the story. */
+  rosterSizeEndSum: number;
   /** The companion (src/run/companion.ts): runs it joined, runs a knockout took it, and the encounter count it was lost at, summed. */
   companionJoined: number;
   companionLost: number;
@@ -255,6 +261,7 @@ export function emptyAggregate(): Aggregate {
     deathByNodeType: {},
     encountersWonSum: 0,
     goldEndSum: 0,
+    rosterSizeEndSum: 0,
     companionJoined: 0,
     companionLost: 0,
     companionLostAtSum: 0,
@@ -388,6 +395,7 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   into.wins += from.wins;
   into.encountersWonSum += from.encountersWonSum;
   into.goldEndSum += from.goldEndSum;
+  into.rosterSizeEndSum += from.rosterSizeEndSum;
   into.companionJoined += from.companionJoined;
   into.companionLost += from.companionLost;
   into.companionLostAtSum += from.companionLostAtSum;

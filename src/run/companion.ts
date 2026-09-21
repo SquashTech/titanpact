@@ -15,8 +15,18 @@ import { MASTERY_EVOLUTION, MASTERY_SIGNATURE } from './mastery';
 import { ROSTER_CAP, addRosterEntry, createRosterEntry, type RosterEntry, type RunState } from './state';
 import { freshRosterId } from './recruitment';
 
+/**
+ * The companion by IDENTITY — a spawn body, which is on a roster only as the companion (the draft
+ * is starters, the Guild Hall pool is `heroes`, a contract needs `isRecruitable`). `mortal` is the
+ * RULE it lives under, and the two must never be read for each other: Ascension 1 makes every hero
+ * mortal (docs/ascension.md §2) without making any of them the companion.
+ */
+export function isCompanion(entry: Pick<RosterEntry, 'heroId'>): boolean {
+  return spawnPosition(entry.heroId) !== undefined;
+}
+
 export function companionOf(run: RunState): RosterEntry | null {
-  return run.roster.find((entry) => entry.mortal) ?? null;
+  return run.roster.find(isCompanion) ?? null;
 }
 
 /** True once, on the run's first fight: a `fight` node, nothing joined yet, and no companion ever taken. */
@@ -71,10 +81,9 @@ const STEP_PIPS: Record<string, number> = { early: MASTERY_EVOLUTION, mid: MASTE
 /**
  * The body the entry's Mastery has earned it, when it is standing in the one below: DERIVED off
  * the pips and the body it is in, so nothing is owed and nothing is taken — a Mid at ten pips is
- * a Late the moment anyone asks. Null for a hero, an immortal, or a body with nowhere to step.
+ * a Late the moment anyone asks. Null for a hero, or a body with nowhere to step.
  */
 export function companionTierStep(entry: RosterEntry): string | null {
-  if (!entry.mortal) return null;
   const position = spawnPosition(entry.heroId);
   if (!position) return null;
   const pip = STEP_PIPS[position.tier];
