@@ -170,6 +170,17 @@ don't silently override it.
 > that scales**: Boiler's Burn, `scaledBy: 'intelligence'` (StatMult, no STAB), the sole exception
 > to "passive-applied magnitudes are flat". Lingering is off the roster; the endure verb stays.
 
+> **An eighth is DECIDED, NOT BUILT: `docs/ascension.md`** (2026-09-21, per user direction).
+> **Ascension 1 is Permadeath**: every roster entry `mortal` (the companion's rule for everyone),
+> a KO on a won fight gone with its gear unless a **Revive** — the ONE way back — is spent on it at
+> the fight's end on a **Fallen** beat before the level report; **a Revive never saves the
+> companion**, at any rung. A2–A5 are PROPOSED, each a RULE never a bare enemy stat multiplier
+> (Guardians Marked and warded, authored warbands, Banners halved + Smithy ×1.5 on the one economy
+> rung, Gaze at a tenth + two-phase Guardians + an AI tier). Recruitment stays as it is at Base —
+> the ladder is where it gets its demand. Decided beside it, every rung: a Compendium bestiary
+> for the spawn, a `companion:<type>` star for clearing with the companion alive at the Eyes'
+> close, and the companion exempt from Withering Gaze. Its §10 lists what each rung reverses.
+
 ---
 
 ## Locked invariants — do not violate without an explicit decision
