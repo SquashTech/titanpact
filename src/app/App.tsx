@@ -842,11 +842,12 @@ export function App() {
         : afterCrucible;
     const afterBanner: Screen = banner ? { kind: 'guardianBanner', next: afterRecruit } : afterRecruit;
 
-    // The join beat sits right after the level report: the fight's consequence, then who it brought.
-    const afterJoin: Screen = companionId ? { kind: 'companion', beat: { kind: 'join', heroId: companionId }, next: afterBanner } : afterBanner;
     // The drop asks who carries it right behind the levels — the fight's own consequence, ahead of
     // the Banner and everything under it (docs/gear-absorption.md §2).
-    const afterLevels: Screen = dropId ? { kind: 'itemWho', itemId: dropId, next: afterJoin } : afterJoin;
+    const afterDrop: Screen = dropId ? { kind: 'itemWho', itemId: dropId, next: afterBanner } : afterBanner;
+    // The join beat sits between the level report and the drop: the run state already holds the
+    // newcomer, so it must be met before the who-screen can offer it the item.
+    const afterLevels: Screen = companionId ? { kind: 'companion', beat: { kind: 'join', heroId: companionId }, next: afterDrop } : afterDrop;
     // Levels go FIRST, ahead of the Banner and everything under it: they are what this fight did,
     // and the rest of the chain is what the ACT pays. Skipped when nobody levelled and nobody is
     // owed a schedule entry — a fight the XP left part-way to the next level (the fight result
