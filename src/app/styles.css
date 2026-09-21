@@ -17035,7 +17035,58 @@ button.star-shop-bundle-face {
 
 .boon-shrine-card.picked {
   border-color: var(--boon-color);
-  box-shadow: 0 0 0 1px var(--boon-color), 0 4px 18px rgba(139, 127, 224, 0.3);
+  box-shadow: 0 0 0 1px var(--boon-color), 0 6px 24px color-mix(in srgb, var(--boon-color) 35%, transparent);
+  background: linear-gradient(165deg, color-mix(in srgb, var(--boon-color) 16%, transparent), var(--panel) 70%);
+}
+
+/* The picked Boon is the one being read, so it grows past the stage cap and
+   unfolds its rule — the dossier's When / Then rows, in its colour — while its
+   description steps up from fine print to the card's own voice. The other two
+   step back, as the unpicked standards do on the Banner screen. */
+.stage-centered > .relic-shrine-list > .boon-shrine-card.picked {
+  flex: 0 0 auto;
+  max-height: none;
+}
+
+.boon-shrine-card.picked .relic-card-desc {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.boon-card-rule {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  animation: equip-cache-fade-up 0.3s ease-out backwards;
+}
+
+.boon-card-rule .passive-detail-facts {
+  padding-top: 8px;
+  border-top-color: color-mix(in srgb, var(--boon-color) 40%, transparent);
+}
+
+.boon-card-rule .passive-detail-fact {
+  padding: 5px 0;
+}
+
+.boon-card-rule .passive-detail-fact-text {
+  font-size: 14px;
+}
+
+.relic-shrine-list:has(.picked) .boon-shrine-card:not(.picked) {
+  opacity: 0.5;
+}
+
+/* Phase 2: the Boon's whole dossier over the roster it is choosing from. */
+.boon-who-rule {
+  flex: 0 0 auto;
+  margin: 4px 0 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in srgb, var(--passive-color) 45%, transparent);
+  background: linear-gradient(165deg, color-mix(in srgb, var(--passive-color) 14%, transparent), var(--panel) 70%);
+  animation: equip-cache-fade-up 0.3s ease-out backwards;
 }
 
 /* A hero already carrying this Boon: an invitation, not a block — a second copy
@@ -31461,7 +31512,8 @@ button.star-shop-bundle-face {
    the battlefield will wear when it lands. */
 .passive-detail-fact {
   display: grid;
-  grid-template-columns: 19px 44px 1fr;
+  /* The register column fits WHEN / THEN / LIMIT at 44px and lets DAMAGE stretch it. */
+  grid-template-columns: 19px minmax(44px, auto) 1fr;
   align-items: start;
   column-gap: 9px;
   padding: 6px 0;

@@ -29,6 +29,26 @@ function factColor(fact: PassiveFact): string | undefined {
   return undefined;
 }
 
+/** The rule as rows — When / Then / Limit / Damage / While. Nothing when the passive yields no facts. */
+export function PassiveFactRows({ passive }: { passive: PassiveDefinition }) {
+  const facts = passiveFacts(passive);
+  if (facts.length === 0) return null;
+  return (
+    <div className="passive-detail-facts">
+      {facts.map((fact, i) => {
+        const rowColor = factColor(fact);
+        return (
+          <div key={i} className="passive-detail-fact" style={rowColor ? ({ '--fact-color': rowColor } as CSSProperties) : undefined}>
+            <span className="passive-detail-fact-glyph">{factGlyph(fact)}</span>
+            <span className="passive-detail-fact-label">{fact.label}</span>
+            <span className="passive-detail-fact-text">{fact.text}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 /**
  * The passive dossier: what a tap on any passive chip opens — the hero sheets, a Class's passive,
  * an Evolution path's. Same three facets as the move dossier: who it is (tinted disc, name in its
@@ -41,7 +61,6 @@ function factColor(fact: PassiveFact): string | undefined {
 export function PassiveDetailCard({ passive }: { passive: PassiveDefinition }) {
   const color = passiveColor(passive.id);
   const grants = passiveStatGrants(passive);
-  const facts = passiveFacts(passive);
   return (
     <div className="passive-detail-card" style={{ '--passive-color': color, '--passive-tint': passiveTint(passive.id, 0.16) } as CSSProperties}>
       <div className="move-detail-head">
@@ -69,20 +88,7 @@ export function PassiveDetailCard({ passive }: { passive: PassiveDefinition }) {
         ))}
       </div>
 
-      {facts.length > 0 && (
-        <div className="passive-detail-facts">
-          {facts.map((fact, i) => {
-            const rowColor = factColor(fact);
-            return (
-              <div key={i} className="passive-detail-fact" style={rowColor ? ({ '--fact-color': rowColor } as CSSProperties) : undefined}>
-                <span className="passive-detail-fact-glyph">{factGlyph(fact)}</span>
-                <span className="passive-detail-fact-label">{fact.label}</span>
-                <span className="passive-detail-fact-text">{fact.text}</span>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      <PassiveFactRows passive={passive} />
 
       <div className="passive-detail-desc">{passive.description}</div>
     </div>

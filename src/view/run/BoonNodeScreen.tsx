@@ -13,6 +13,7 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { NodeHeader, NodeSky, NODE_TINT_ARCANE } from '../shared/NodeStage';
 import { PassiveGlyph, passiveColor, passiveKindLabel, passiveTint } from '../shared/passiveIcons';
+import { PassiveDetailCard, PassiveFactRows } from '../shared/PassiveDossier';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
 import { levelOf } from '../../run/growth';
@@ -30,7 +31,8 @@ function BoonChoiceCard({ passiveId, picked, onPick }: { passiveId: string; pick
   return (
     <button
       className={`relic-card relic-shrine-card boon-shrine-card${picked ? ' picked' : ''}`}
-      style={{ '--boon-color': color } as CSSProperties}
+      style={{ '--boon-color': color, '--passive-color': color } as CSSProperties}
+      aria-pressed={picked}
       onClick={onPick}
     >
       <span className="relic-shrine-card-icon-badge boon-card-badge" style={{ color, background: passiveTint(passiveId, 0.18) }}>
@@ -40,6 +42,12 @@ function BoonChoiceCard({ passiveId, picked, onPick }: { passiveId: string; pick
         <span className="relic-card-name">{passive.name}</span>
         <span className="relic-card-desc">{passive.description}</span>
         <span className="boon-card-kind">{passiveKindLabel(passive)}</span>
+        {/* The rule unfolds under the picked card — the same rows its dossier prints, in its colour. */}
+        {picked && (
+          <span className="boon-card-rule">
+            <PassiveFactRows passive={passive} />
+          </span>
+        )}
       </span>
     </button>
   );
@@ -103,12 +111,11 @@ export function BoonNodeScreen({ run, onRunChange, onContinue }: Props) {
       {!assignedTo && (
         <NodeHeader
           compact
-          eyebrow={confirmed ? 'Choose a Vessel' : 'A Power Stirs'}
-          title={confirmed ? confirmed.name : 'The Shrine'}
-          glyph={confirmed ? <PassiveGlyph passiveId={confirmed.id} /> : undefined}
+          eyebrow={confirmed ? 'Boon Chosen' : 'A Power Stirs'}
+          title={confirmed ? 'Choose a Vessel' : 'The Shrine'}
           readout={
             confirmed
-              ? `${confirmed.description} Hold a hero to review its sheet.`
+              ? 'It stays with them for the rest of the run. Hold a hero to review its sheet.'
               : 'Tap a boon to select it, then choose who it settles on. It stays with them for the rest of the run.'
           }
         />
@@ -127,24 +134,30 @@ export function BoonNodeScreen({ run, onRunChange, onContinue }: Props) {
           </div>
         </div>
       ) : !assignedTo ? (
-        <HeroPickGrid count={run.roster.length} fill>
-          {run.roster.map((entry) => {
-            const hero = rosterHeroes[entry.heroId];
-            return (
-              <HeroPickCard
-                key={entry.rosterId}
-                hero={hero}
-                entry={entry}
-                onActivate={() => handleAssign(entry.rosterId)}
-                onPreview={() => setPreviewEntry({ hero, entry })}
-                ariaLabel={`${hero.name}, level ${levelOf(entry)} — grant this boon`}
-                ctaClassName="is-accent"
-                cta="Grant"
-                detail={boonDetail(entry)}
-              />
-            );
-          })}
-        </HeroPickGrid>
+        <>
+          {/* The whole dossier over the roster — the rule it is asking a hero to carry, not a sentence in the header. */}
+          <div className="boon-who-rule" style={{ '--passive-color': passiveColor(confirmed.id) } as CSSProperties}>
+            <PassiveDetailCard passive={confirmed} />
+          </div>
+          <HeroPickGrid count={run.roster.length} fill columns={run.roster.length > 4 ? 3 : 2}>
+            {run.roster.map((entry) => {
+              const hero = rosterHeroes[entry.heroId];
+              return (
+                <HeroPickCard
+                  key={entry.rosterId}
+                  hero={hero}
+                  entry={entry}
+                  onActivate={() => handleAssign(entry.rosterId)}
+                  onPreview={() => setPreviewEntry({ hero, entry })}
+                  ariaLabel={`${hero.name}, level ${levelOf(entry)} — grant this boon`}
+                  ctaClassName="is-accent"
+                  cta="Grant"
+                  detail={boonDetail(entry)}
+                />
+              );
+            })}
+          </HeroPickGrid>
+        </>
       ) : (
         <div className="screen-scroll">
           {assignedHero && confirmed && (
