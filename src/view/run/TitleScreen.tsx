@@ -9,6 +9,7 @@ import { starBalance, type StarShopOffer } from '../../run/starShop';
 import { TitanColossus, TitanRidge } from './titanArt';
 import { SealArt } from '../shared/SealArt';
 import { HubGlyph } from '../shared/nodeIcons';
+import { AudioSettings } from '../shared/AudioSettings';
 import type { SaveSummary } from '../../run/save';
 import type { Profile } from '../../run/profile';
 
@@ -120,6 +121,7 @@ export function TitleScreen({
   const [showRecords, setShowRecords] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [showReference, setShowReference] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
   const [showLocations, setShowLocations] = useState(false);
   const [showDev, setShowDev] = useState(false);
   const [launching, setLaunching] = useState(false);
@@ -283,10 +285,13 @@ export function TitleScreen({
         </button>
       </div>
 
-      {/* Reference stays a corner glyph: it is a lookup mid-thought, not somewhere you go. */}
+      {/* Reference and Options stay corner glyphs: a lookup mid-thought and a dial, not somewhere you go. */}
       <div className="title-icon-row">
         <button className="title-icon-button" onClick={() => setShowReference(true)} aria-label="Reference" title="Reference">
           <HubGlyph name="reference" />
+        </button>
+        <button className="title-icon-button" onClick={() => setShowOptions(true)} aria-label="Options" title="Options">
+          <HubGlyph name="menu" />
         </button>
       </div>
 
@@ -365,6 +370,28 @@ export function TitleScreen({
         <RecordsScreen profile={profile} onEraseAllData={onEraseAllData} onClose={() => setShowRecords(false)} />
       )}
       {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
+      {/* Same markup as the map's and FightScreen's Options panel, without the run rows. */}
+      {showOptions && (
+        <div className="log-overlay" onClick={() => setShowOptions(false)}>
+          <div className="log-panel options-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="log-panel-header">
+              <span>Options</span>
+              <button className="log-close-button" onClick={() => setShowOptions(false)}>
+                ✕
+              </button>
+            </div>
+            <div className="options-list">
+              <AudioSettings />
+              <button className="options-item" onClick={() => setShowOptions(false)}>
+                <span className="options-item-glyph" aria-hidden="true">
+                  ▶
+                </span>
+                Back
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {showShop && <StarShopScreen profile={profile} onBuy={onBuyOffer} onEquipPack={onEquipPack} onClose={() => setShowShop(false)} />}
     </div>
   );
