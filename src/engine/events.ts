@@ -56,6 +56,8 @@ export interface DamageDealtEvent extends BaseEvent {
   sourceCombatantId: string;
   targetCombatantId: string;
   moveId: string;
+  /** This hit knocked the target out. A passive's `finishingBlow` reads it. */
+  finishing?: true;
   /** What HP lost. */
   amount: number;
   /** What the target's Shield took first (docs/shield.md §3.3); absent when no Shield was held. A fully absorbed hit is amount 0. */

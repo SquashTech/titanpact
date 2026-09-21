@@ -164,10 +164,18 @@ export interface PassiveTriggerCondition {
   eventFieldNegative?: string;
   /** Fires only on rounds divisible by N, read off the event's `round` (the Eyes' Withering Gaze returning every third round). */
   everyNRounds?: number;
+  /** DamageDealt only: the hit knocked its target out (DamageDealtEvent.finishing). Rex's and Ursa's finishing blows. */
+  finishingBlow?: true;
+  /** The event's target-role combatant holds this status when the reaction is read (after the hit has landed). Sorrow's Lament: a Haunted enemy struck. */
+  eventTargetHasStatus?: StatusId;
 }
 
 /** matchTriggerAmount reads the triggering event's `field` (default 'amount'): Sanguine takes a tick's amount, Restorative Toxin a StatusApplied's magnitude. */
-export type PassiveAmount = { kind: 'flat'; value: number } | { kind: 'matchTriggerAmount'; field?: string; multiplier?: number };
+export type PassiveAmount =
+  | { kind: 'flat'; value: number }
+  | { kind: 'matchTriggerAmount'; field?: string; multiplier?: number }
+  /** A share of the EFFECT TARGET's max HP (Feast: heal half of Ursa's own). Resolved where the target is known. */
+  | { kind: 'percentMaxHp'; value: number };
 
 /**
  * 'triggerSubject' follows the condition's `subjectRole`; 'triggerTarget' is the event's
@@ -192,8 +200,20 @@ export type PassiveEffect =
    * authored exception to "passive-applied magnitudes are flat" (docs/innate-passives.md §7).
    */
   | { kind: 'applyStatus'; target: PassiveEffectTarget; statusId: StatusId; magnitude?: number | PassiveAmount; duration?: number; scaledBy?: StatKey }
-  /** One stat, or several sharing an amount (Afterglow's Attack and Intelligence) — one StatChanged each. A PassiveAmount reads the event (Neuroplastic: the Wisdom an enemy just lost). */
-  | { kind: 'statDelta'; target: PassiveEffectTarget; stat: StatKey | readonly StatKey[]; amount: number | PassiveAmount }
+  /**
+   * One stat, or several sharing an amount (Afterglow's Attack and Intelligence) — one StatChanged
+   * each. A PassiveAmount reads the event (Neuroplastic: the Wisdom an enemy just lost).
+   * `permanent` lands it this fight AND banks it on Combatant.permanentStatGains, which a won
+   * fight writes onto RosterEntry.bonusStatGrants (run/runProgress.ts recordPermanentStatGains) —
+   * Rex's Tyrant's Due, the one innate that outlives the fight. Self only.
+   */
+  | { kind: 'statDelta'; target: PassiveEffectTarget; stat: StatKey | readonly StatKey[]; amount: number | PassiveAmount; permanent?: true }
+  /**
+   * Direct HP loss — a share of each target's max HP, never a hit (no Shield, no Defense, no
+   * chart; applyHpDelta 'direct'), the Pact Clock's shape. `onlyWithStatus` narrows a group
+   * target to the members holding it: Dread's Nightmare on Haunted enemies alone.
+   */
+  | { kind: 'damage'; target: PassiveEffectTarget; percentMaxHp: number; onlyWithStatus?: StatusId }
   /** Strips non-`positive` statuses, same rules as a move's `cleanses`; `count` omitted = all. */
   | { kind: 'cleanse'; target: PassiveEffectTarget; count?: number }
   /** UNCAPPED, like a move's `manaGrant` — overflow past the pool is the point (docs/mana.md). */

@@ -22,7 +22,9 @@ import { canSwitchOut, statusMagnitude } from '../src/engine/state';
 import type { CombatState, PassiveInstance } from '../src/engine/state';
 import type { Action } from '../src/engine/combat/actions';
 import { buildCombatState } from '../src/run/buildCombatState';
-import { createRosterEntry } from '../src/run/state';
+import { createRosterEntry, createRunState } from '../src/run/state';
+import { recordPermanentStatGains } from '../src/run/runProgress';
+import { combatantIdFor } from '../src/run/combatantIds';
 import { innatePassiveOf, titansMarkOf } from '../src/run/innate';
 import { collectPassiveDamageModifiers } from '../src/engine/combat/passiveEngine';
 import { titanspawn } from '../src/data/titanspawn';
@@ -287,4 +289,77 @@ test('hunger and ghostlight: out of the box — Lucius drains a fifth of a Mind 
   const r2 = resolveRound(v, [{ kind: 'move', combatantId: 'a1', moveId: 'torment', declaredTarget: 'b1' }, ...restAll(v).filter((a) => a.combatantId !== 'a1')], config);
   assert.ok(r2.events.some((e) => e.type === 'StatusApplied' && e.statusId === 'Haunt' && e.combatantId === 'b1'));
   assert.strictEqual(statusMagnitude(r2.state.combatants.a1, 'SpiritForce'), 10);
+});
+
+// --- The third wave: finishing blows, a run-permanent gain, a target-status read, percent-of-max damage ---
+
+test("tyrant's due: a finishing blow banks +10 Attack for the run, once a fight, and a won fight writes it onto the roster", () => {
+  let state = withPassive(twoVTwo(21, 'rex', 'valor', 'ironWarden', 'crag'), 'a1', 'tyrantsDue');
+  state = withField(state, 'b1', { currentHp: 1 });
+  state = withField(state, 'b2', { currentHp: 1 });
+  const kill = (s: CombatState, target: string) =>
+    resolveRound(s, [{ kind: 'move', combatantId: 'a1', moveId: 'steamVent', declaredTarget: target }, ...restAll(s).filter((a) => a.combatantId !== 'a1')], config);
+  const r1 = kill(state, 'b1');
+  const hit = r1.events.find((e) => e.type === 'DamageDealt' && e.sourceCombatantId === 'a1');
+  assert.ok(hit && hit.type === 'DamageDealt' && hit.finishing === true, 'the hit is flagged as the finishing blow');
+  assert.strictEqual(r1.state.combatants.a1.statModifiers.attack, 10, 'landed this fight');
+  assert.deepStrictEqual(r1.state.combatants.a1.permanentStatGains, { attack: 10 }, 'and banked');
+  // A second kill the same fight: nothing more.
+  const r2 = kill(r1.state, 'b2');
+  assert.strictEqual(r2.state.combatants.a1.statModifiers.attack, 10);
+  assert.deepStrictEqual(r2.state.combatants.a1.permanentStatGains, { attack: 10 });
+  // A hit that does not finish never fires it.
+  const fresh = withPassive(twoVTwo(22, 'rex', 'valor', 'ironWarden', 'crag'), 'a1', 'tyrantsDue');
+  const r3 = kill(fresh, 'b1');
+  assert.strictEqual(r3.state.combatants.a1.statModifiers.attack, undefined);
+
+  // The write-back: the roster keeps it as a bonus grant, beside the Mana Well's.
+  const run = { ...createRunState(0, 0), roster: [createRosterEntry('r1', 'rex', heroes.rex.moveIds), createRosterEntry('r9', 'valor', heroes.valor.moveIds)] };
+  const banked = { ...r2.state, combatants: { ...r2.state.combatants, [combatantIdFor('A', 'r1')]: { ...r2.state.combatants.a1, combatantId: combatantIdFor('A', 'r1') } } };
+  const next = recordPermanentStatGains(run, banked, 'A');
+  assert.strictEqual(next.roster[0].bonusStatGrants.attack, 10);
+  assert.deepStrictEqual(next.roster[1].bonusStatGrants, {}, 'nobody else');
+  assert.strictEqual(recordPermanentStatGains(run, r3.state, 'A'), run, 'nothing banked, nothing written');
+});
+
+test('feast: a finishing blow heals Ursa half its max HP; a hit that leaves the target standing heals nothing', () => {
+  let state = withPassive(twoVTwo(23, 'ursa', 'valor', 'ironWarden', 'crag'), 'a1', 'feast');
+  state = withField(state, 'a1', { currentHp: 10 });
+  state = withField(state, 'b1', { currentHp: 1 });
+  const maxHp = fixtureMaxHp('ursa');
+  const cast = (s: CombatState) => resolveRound(s, [{ kind: 'move', combatantId: 'a1', moveId: 'claw', declaredTarget: 'b1' }, ...restAll(s).filter((a) => a.combatantId !== 'a1')], config);
+  const r = cast(state);
+  assert.strictEqual(r.state.combatants.a1.currentHp, 10 + Math.round(maxHp * 0.5));
+  const standing = withField(withPassive(twoVTwo(24, 'ursa', 'valor', 'ironWarden', 'crag'), 'a1', 'feast'), 'a1', { currentHp: 10 });
+  assert.strictEqual(cast(standing).state.combatants.a1.currentHp, 10);
+});
+
+test('lament: a hit on a Haunted enemy heals Sorrow for its amount, and nothing on an unhaunted one', () => {
+  const base = withField(withPassive(twoVTwo(25, 'sorrow', 'valor', 'ironWarden', 'crag'), 'a1', 'lament'), 'a1', { currentHp: 20 });
+  const strike = (s: CombatState) =>
+    resolveRound(s, [{ kind: 'move', combatantId: 'a1', moveId: 'phantomStrike', declaredTarget: 'b1' }, ...restAll(s).filter((a) => a.combatantId !== 'a1')], config);
+  // Torment (a buff-kind move) sets the table out of the box; the next Phantom Strike drains.
+  const r = strike(withStatus(base, 'b1', 'Haunt'));
+  const dealt = r.events.find((e) => e.type === 'DamageDealt' && e.sourceCombatantId === 'a1');
+  assert.ok(dealt && dealt.type === 'DamageDealt');
+  assert.strictEqual(r.state.combatants.a1.currentHp, 20 + dealt.amount);
+  assert.strictEqual(strike(base).state.combatants.a1.currentHp, 20, 'not Haunted: nothing');
+});
+
+test('nightmare: at round end every Haunted active enemy loses a tenth of its max HP, direct — past a Shield, never an unhaunted one', () => {
+  let state = withPassive(twoVTwo(26, 'dread', 'valor', 'ironWarden', 'crag'), 'a1', 'nightmare');
+  state = withStatus(state, 'b1', 'Haunt');
+  state = withStatus(state, 'b1', 'Shield', 100);
+  const b1Max = fixtureMaxHp('ironWarden');
+  const r = resolveRound(state, restAll(state), config);
+  assert.strictEqual(r.state.combatants.b1.currentHp, b1Max - Math.round(b1Max * 0.1), 'a tenth, straight through');
+  assert.strictEqual(statusMagnitude(r.state.combatants.b1, 'Shield'), 100, 'the Shield took none of it');
+  assert.strictEqual(r.state.combatants.b2.currentHp, fixtureMaxHp('crag'), 'not Haunted, untouched');
+});
+
+test('rivet: at each round end the partner gains 5 Defense, and alone on the field nobody does', () => {
+  const state = withPassive(twoVTwo(27, 'ironWarden', 'valor', 'crag', 'rime'), 'a1', 'rivet');
+  const r = resolveRound(state, restAll(state), config);
+  assert.strictEqual(r.state.combatants.a2.statModifiers.defense, 5);
+  assert.strictEqual(r.state.combatants.a1.statModifiers.defense, undefined);
 });

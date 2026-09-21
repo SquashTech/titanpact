@@ -64,7 +64,8 @@ export function matchesTrigger(
     matchesFields(condition.eventFieldEquals, context) &&
     matchesPositiveField(condition.eventFieldPositive, context) &&
     matchesNegativeField(condition.eventFieldNegative, context) &&
-    matchesCadence(condition.everyNRounds, context)
+    matchesCadence(condition.everyNRounds, context) &&
+    (condition.finishingBlow === undefined || context.finishing === true)
   );
 }
 
@@ -110,8 +111,10 @@ function subjectOf(event: CombatEvent, role: 'target' | 'source'): string | unde
   }
 }
 
-function resolveAmount(amount: PassiveAmount, context: TriggerContext): number {
+/** `targetMaxHp` is the effect target's, for a percentMaxHp amount; a caller without a target reads it as 0. */
+function resolveAmount(amount: PassiveAmount, context: TriggerContext, targetMaxHp = 0): number {
   if (amount.kind === 'flat') return amount.value;
+  if (amount.kind === 'percentMaxHp') return Math.round(targetMaxHp * amount.value);
   const raw = context[amount.field ?? 'amount'];
   const base = typeof raw === 'number' ? raw : 0;
   return Math.round(base * (amount.multiplier ?? 1));
@@ -149,6 +152,7 @@ function resolveEffect(
   for (const targetId of aimed.targetIds) {
     const target = working.combatants[targetId];
     if (!target || target.fainted) continue;
+    if (effect.kind === 'damage' && effect.onlyWithStatus !== undefined && !hasStatus(target, effect.onlyWithStatus)) continue;
     const resolved = resolveEffectOn(working, round, heroes, statusDefs, passiveDefs, ownerId, targetId, target, effect, context);
     working = resolved.state;
     produced.push(...resolved.events);
@@ -217,10 +221,17 @@ function resolveEffectOn(
   context: TriggerContext
 ): { state: CombatState; events: CombatEvent[] } {
   switch (effect.kind) {
-    case 'heal': {
-      const amount = resolveAmount(effect.amount, context);
-      if (amount <= 0) return { state, events: [] };
+    case 'damage': {
       const maxHp = getMaxHp(heroes[target.heroId], target);
+      const amount = Math.round(maxHp * effect.percentMaxHp);
+      if (amount <= 0) return { state, events: [] };
+      // Direct, like the Clock: no Shield, no reaction of its own beyond what applyHpDelta emits.
+      return applyHpDelta(state, round, targetId, -amount, maxHp, { source: 'direct' });
+    }
+    case 'heal': {
+      const maxHp = getMaxHp(heroes[target.heroId], target);
+      const amount = resolveAmount(effect.amount, context, maxHp);
+      if (amount <= 0) return { state, events: [] };
       // Nothing to restore is a no-op, not a "+0 HP" beat.
       if (target.currentHp >= maxHp) return { state, events: [] };
       return applyHpDelta(state, round, targetId, amount, maxHp);
@@ -289,9 +300,16 @@ function resolveEffectOn(
         modifiers = { ...modifiers, [stat]: newValue };
         changes.push({ type: 'StatChanged', round, combatantId: targetId, stat, delta: landed, ...(capped ? { capped: true } : {}), newValue });
       }
+      // A permanent gain is banked as AUTHORED, not as landed: the roster grant is not subject to the fight's band.
+      const banked = effect.permanent
+        ? Object.fromEntries(stats.map((stat) => [stat, (target.permanentStatGains?.[stat] ?? 0) + amount]))
+        : undefined;
       const nextState: CombatState = {
         ...state,
-        combatants: { ...state.combatants, [targetId]: { ...target, statModifiers: modifiers } },
+        combatants: {
+          ...state.combatants,
+          [targetId]: { ...target, statModifiers: modifiers, ...(banked ? { permanentStatGains: { ...target.permanentStatGains, ...banked } } : {}) },
+        },
       };
       return { state: nextState, events: changes };
     }
@@ -346,6 +364,10 @@ export function resolvePassiveReactions(
         const eventTargetId = subjectOf(event, 'target');
         const subjectSide = subjectId ? working.combatants[subjectId]?.side : undefined;
         if (!matchesTrigger(reactive.condition, context, ownerId, owner.side, subjectId, subjectSide)) continue;
+        if (reactive.condition.eventTargetHasStatus !== undefined) {
+          const struck = eventTargetId ? working.combatants[eventTargetId] : undefined;
+          if (!struck || !hasStatus(struck, reactive.condition.eventTargetHasStatus)) continue;
+        }
         // Checked AFTER the match and marked BEFORE the effect resolves, so a re-entrant reaction cannot fire itself twice.
         if (reactive.oncePerFight) {
           if (working.combatants[ownerId]?.passives[instance.passiveId]?.firedThisFight) continue;

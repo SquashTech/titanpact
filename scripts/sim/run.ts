@@ -49,6 +49,7 @@ import {
   grantManaWell,
   forgeLift,
   grantLeyLine,
+  recordPermanentStatGains,
 } from '../../src/run/runProgress';
 import { MOVE_CAP, recordMoveOffer, grantOfferedMove, grantMove } from '../../src/run/progression';
 import { claimContract, claimContractReplacing, deriveContractOffer, heroPool, isRecruitable, pickContractOffers, recruitFromGuildHall, recruitFromGuildHallReplacing, freshRosterId, buyContract } from '../../src/run/recruitment';
@@ -655,7 +656,7 @@ function resolveEncounterNode(
   ledger(record, workingRun.actNumber, 'earned:fight', goldWon);
   workingRun = grantCurrencyReward(workingRun, goldWon);
   // HP carries to the next node (src/run/wounds.ts); the act's end is what makes the roster whole.
-  workingRun = recordWounds(workingRun, fight.final, PLAYER_SIDE, rosterHeroes);
+  workingRun = recordPermanentStatGains(recordWounds(workingRun, fight.final, PLAYER_SIDE, rosterHeroes), fight.final, PLAYER_SIDE);
   record.knockouts.koInWins += koRosterIds.length;
   record.knockouts.koInWinsByKind[kindKey] = (record.knockouts.koInWinsByKind[kindKey] ?? 0) + koRosterIds.length;
   // The consumable drop (src/run/consumables.ts). Potions are never drunk here — the pilot has no

@@ -373,9 +373,9 @@ export const progressionTable: ProgressionTable = {
     // Leap. Carapace's line is the mauler's half of the slate, so none of it sits here.
     widow: [
       'hamstring',
-      'backstab',
+      'fadeStrike',
       'phantomStrike',
-      'venomBite',
+      'weaken',
       'pounce',
       'howl',
       'cutthroat',

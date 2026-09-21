@@ -1124,32 +1124,34 @@ const innatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'speed', amount: -5 },
     },
   },
-  wail: {
-    id: 'wail',
-    name: 'Wail',
-    description: 'Whenever this hero lands a Spirit attack, its target is Haunted.',
+  lament: {
+    id: 'lament',
+    name: 'Lament',
+    description: 'Whenever this hero damages a Haunted enemy, it heals for that amount.',
+    // Read after the hit lands. Torment (a buff-kind move) sets the Haunt out of the box; the strikes after it drain.
     reactive: {
       hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Spirit' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Haunt' },
+      condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Haunt' },
+      effect: { kind: 'heal', target: 'self', amount: { kind: 'matchTriggerAmount' } },
     },
   },
-  foreboding: {
-    id: 'foreboding',
-    name: 'Foreboding',
-    description: 'Whenever an enemy is Haunted, this hero gains 5 Defense and 5 Wisdom.',
+  nightmare: {
+    id: 'nightmare',
+    name: 'Nightmare',
+    description: 'At the end of each round, every Haunted enemy loses 10% of its max HP.',
+    // Direct loss on the Clock's terms — no Shield, no chart — and only while Dread stands on the field.
     reactive: {
-      hook: 'StatusApplied',
-      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Haunt' } },
-      effect: { kind: 'statDelta', target: 'self', stat: ['defense', 'wisdom'], amount: 5 },
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'damage', target: 'activeEnemies', percentMaxHp: 0.1, onlyWithStatus: 'Haunt' },
     },
   },
   rivet: {
     id: 'rivet',
     name: 'Rivet',
-    description: 'Whenever this hero takes damage, its partner gains 5 Defense.',
+    description: "At the end of each round, this hero's partner gains 5 Defense.",
     reactive: {
-      hook: 'DamageDealt',
+      hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
       effect: { kind: 'statDelta', target: 'ally', stat: 'defense', amount: 5 },
     },
@@ -1167,14 +1169,27 @@ const innatePassives: Record<string, PassiveDefinition> = {
       chance: 0.3,
     },
   },
-  steamPressure: {
-    id: 'steamPressure',
-    name: 'Steam Pressure',
-    description: 'Whenever this hero is Burned, it gains 10 Speed.',
+  tyrantsDue: {
+    id: 'tyrantsDue',
+    name: "Tyrant's Due",
+    description: 'Once per fight, when this hero lands a finishing blow, it gains 10 Attack for the rest of the run.',
+    // The one innate that outlives the fight: banked on Combatant.permanentStatGains and written onto
+    // the roster by recordPermanentStatGains. Capped at one a fight, so a run of kills is +10 a fight.
     reactive: {
-      hook: 'StatusApplied',
-      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Burn' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'speed', amount: 10 },
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10, permanent: true },
+      oncePerFight: true,
+    },
+  },
+  feast: {
+    id: 'feast',
+    name: 'Feast',
+    description: 'Whenever this hero lands a finishing blow, it heals half its max HP.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
+      effect: { kind: 'heal', target: 'self', amount: { kind: 'percentMaxHp', value: 0.5 } },
     },
   },
   fieldRepair: {
@@ -1234,7 +1249,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   ironbound: {
     id: 'ironbound',
     name: 'Ironbound',
-    description: 'This hero never switches out on its own. It is far bigger than its peers for it.',
+    description: 'This hero cannot switch.',
     cannotSwitchOut: true,
     burden: true,
   },

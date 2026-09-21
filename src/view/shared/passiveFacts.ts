@@ -81,6 +81,7 @@ function targetWord(target: PassiveEffectTarget, condition: PassiveTriggerCondit
 /** A flat amount with its unit, or a share of the triggering event's own figure. */
 function amountWord(amount: PassiveAmount, unit: string): string {
   if (amount.kind === 'flat') return `${amount.value} ${unit}`.trim();
+  if (amount.kind === 'percentMaxHp') return `${Math.round(amount.value * 100)}% of max ${unit || 'HP'}`.trim();
   const share = amount.multiplier ?? 1;
   if (share === 1) return 'the same amount';
   return share > 1 ? `${share}× that amount` : `${Math.round(share * 100)}% of it`;
@@ -192,7 +193,7 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
       const amount = typeof effect.amount === 'number' ? fmt(effect.amount) : `${amountWord(effect.amount, '').replace('the same amount', 'as much')}`;
       return {
         label: 'Then',
-        text: `${amount} ${stats.map((s) => STAT_FULL_LABELS[s]).join(' & ')} to ${targetWord(effect.target, condition, hook)}`,
+        text: `${amount} ${stats.map((s) => STAT_FULL_LABELS[s]).join(' & ')} to ${targetWord(effect.target, condition, hook)}${effect.permanent ? ', kept for the whole run' : ''}`,
         glyph: { kind: 'stat', stat: stats[0] },
       };
     }
@@ -210,6 +211,13 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
             ? `+${effect.amount.value} Mana to ${targetWord(effect.target, condition, hook)}, past the pool`
             : `Mana equal to ${amountWord(effect.amount, '')} to ${targetWord(effect.target, condition, hook)}, past the pool`,
         glyph: { kind: 'stat', stat: 'manaPool' },
+      };
+    case 'damage':
+      return {
+        label: 'Then',
+        text: `${Math.round(effect.percentMaxHp * 100)}% of max HP off ${targetWord(effect.target, condition, hook)}${effect.onlyWithStatus ? ` that are ${statusName(effect.onlyWithStatus)}` : ''} — direct, past any Shield`,
+        glyph: effect.onlyWithStatus ? { kind: 'status', statusId: effect.onlyWithStatus } : { kind: 'stat', stat: 'hp' },
+        color: effect.onlyWithStatus ? 'status' : undefined,
       };
     case 'setFieldEffect': {
       const field = fieldEffects[effect.fieldEffectId];
@@ -231,6 +239,8 @@ export function passiveFacts(def: PassiveDefinition): PassiveFact[] {
     rows.push(triggerFact(def.reactive));
     if (def.reactive.chance !== undefined) rows.push({ label: 'Odds', text: `${Math.round(def.reactive.chance * 100)}% of the time`, glyph: { kind: 'move', move: 'debuff' } });
     rows.push(effectFact(def.reactive.effect, def.reactive.condition, def.reactive.hook));
+    if (def.reactive.condition.finishingBlow) rows.push({ label: 'Only', text: 'A hit that knocks its target out', glyph: { kind: 'stat', stat: 'attack' } });
+    if (def.reactive.condition.eventTargetHasStatus) rows.push({ label: 'While', text: `The one struck is ${statusName(def.reactive.condition.eventTargetHasStatus)}`, glyph: { kind: 'status', statusId: def.reactive.condition.eventTargetHasStatus }, color: 'status' });
     if (def.reactive.oncePerFight) rows.push({ label: 'Limit', text: 'Once per fight', glyph: { kind: 'move', move: 'debuff' } });
   }
   if (def.damageModifier) {

@@ -144,6 +144,7 @@ import {
   grantRelicReward,
   goldRangeFor,
   rollGoldRange,
+  recordPermanentStatGains,
 } from '../run/runProgress';
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
 import { createStatusTestSides } from '../run/statusTestFight';
@@ -759,7 +760,7 @@ export function App() {
     let next = grantCurrencyReward(spendConsumables(playerRun, consumablesUsed), goldReward);
     next = advanceToNode(next, nodeId);
     // HP carries to the next node; the act's end is what makes the roster whole (run/wounds.ts).
-    if (finalState) next = recordWounds(next, finalState, 'A', rosterHeroes);
+    if (finalState) next = recordPermanentStatGains(recordWounds(next, finalState, 'A', rosterHeroes), finalState, 'A');
     // Onto the purse, clamped at the cap — a full flask spills the drop rather than banking it.
     if (consumableReward) next = grantConsumable(next, consumableReward);
     // Every node kind, unlike `fightsStarted` — this one is the run summary's tally, and since

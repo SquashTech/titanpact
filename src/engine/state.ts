@@ -56,6 +56,8 @@ export interface Combatant {
   enduresLeft?: number;
   /** Never switches out voluntarily (PassiveDefinition.cannotSwitchOut), set at fight build. Read through canSwitchOut. */
   switchLocked?: boolean;
+  /** Stat gains a `permanent` passive statDelta banked this fight, for the roster to keep (run/runProgress.ts recordPermanentStatGains). */
+  permanentStatGains?: Partial<Record<StatKey, number>>;
   fainted: boolean;
   /**
    * A bench entry held back for a later PHASE of the fight (switching.ts replacementCandidates):

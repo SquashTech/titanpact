@@ -341,7 +341,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Widow',
     types: ['Shadow'],
     baseStats: { hp: 190, attack: 100, defense: 45, intelligence: 20, wisdom: 45, speed: 100, manaPool: 50, mpRegen: 10 },
-    moveIds: ['fadeStrike', 'lieInWait', 'weaken'],
+    moveIds: ['backstab', 'venomBite', 'lieInWait'],
     starter: false,
     growthGrades: { hp: 'S', attack: 'B', defense: 'A', intelligence: 'D', wisdom: 'A', speed: 'B', manaPool: 'D' },
     schedule: { offerLevels: [5, 6, 10, 14, 19, 25], midLevel: 10, lateLevel: 19 },
@@ -475,7 +475,7 @@ export const heroes: Record<string, HeroDefinition> = {
     growthGrades: { hp: 'C', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'A', speed: 'S', manaPool: 'B' },
     schedule: { offerLevels: [5, 8, 11, 15, 21, 25], midLevel: 10, lateLevel: 19 },
     signatureMoveId: 'dirgeOfAsh',
-    passiveIds: ['wail'],
+    passiveIds: ['lament'],
   },
   dread: {
     id: 'dread',
@@ -490,7 +490,7 @@ export const heroes: Record<string, HeroDefinition> = {
     growthGrades: { hp: 'A', attack: 'E', defense: 'S', intelligence: 'C', wisdom: 'A', speed: 'C', manaPool: 'A' },
     schedule: { offerLevels: [6, 10, 15, 19, 24, 28], midLevel: 12, lateLevel: 21 },
     signatureMoveId: 'nevermore',
-    passiveIds: ['foreboding'],
+    passiveIds: ['nightmare'],
   },
 
   // --- Iron ---
@@ -587,7 +587,7 @@ export const heroes: Record<string, HeroDefinition> = {
     growthGrades: { hp: 'B', attack: 'A', defense: 'B', intelligence: 'F', wisdom: 'B', speed: 'S', manaPool: 'A' },
     schedule: { offerLevels: [3, 7, 11, 15, 20, 25], midLevel: 9, lateLevel: 18 },
     signatureMoveId: 'devour',
-    passiveIds: ['steamPressure'],
+    passiveIds: ['tyrantsDue'],
   },
   // Free Company (docs/constellation.md §11 phase 6): the medic drone. The roster's Wisdom-85 body
   // on Mech's repair column, which nobody in the base three holds as a healer; Spark Plug is the
@@ -631,7 +631,7 @@ export const heroes: Record<string, HeroDefinition> = {
     growthGrades: { hp: 'S', attack: 'S', defense: 'A', intelligence: 'F', wisdom: 'A', speed: 'E', manaPool: 'A' },
     schedule: { offerLevels: [6, 8, 11, 15, 21, 26], midLevel: 11, lateLevel: 21 },
     signatureMoveId: 'overbear',
-    passiveIds: ['secondSkin'],
+    passiveIds: ['feast'],
   },
   coil: {
     id: 'coil',

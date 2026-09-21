@@ -12,6 +12,8 @@ import { itemSlotsFor } from './progression';
 import { ANVIL_PRICE_BY_TARGET, ENCHANT_PRICE_BY_RARITY, sellValueFor } from './shop';
 import { mergeStatMods } from './statMods';
 import { mendRoster } from './wounds';
+import { rosterIdOfCombatant } from './combatantIds';
+import type { CombatState, Side } from '../engine/state';
 
 export class RunProgressError extends Error {}
 
@@ -142,6 +144,32 @@ export function grantRelicReward(run: RunState, relicId: string): RunState {
  * authored stat grant is. Never refused — there is no cap on a pool.
  */
 export const MANA_WELL_AMOUNT = 30;
+
+/**
+ * What a `permanent` passive statDelta banked this fight (Combatant.permanentStatGains — Rex's
+ * Tyrant's Due), written onto the roster's bonusStatGrants beside the Mana Well's. Called where
+ * wounds are recorded, on the same side, after a fight that was not replayed.
+ */
+export function recordPermanentStatGains(run: RunState, state: CombatState, side: Side): RunState {
+  const gains = new Map<string, Partial<Record<StatKey, number>>>();
+  for (const combatant of Object.values(state.combatants)) {
+    if (combatant.side !== side || !combatant.permanentStatGains) continue;
+    gains.set(rosterIdOfCombatant(combatant.combatantId), combatant.permanentStatGains);
+  }
+  if (gains.size === 0) return run;
+  return {
+    ...run,
+    roster: run.roster.map((entry) => {
+      const gain = gains.get(entry.rosterId);
+      if (!gain) return entry;
+      const bonusStatGrants = { ...entry.bonusStatGrants };
+      for (const [stat, amount] of Object.entries(gain)) {
+        bonusStatGrants[stat as StatKey] = (bonusStatGrants[stat as StatKey] ?? 0) + (amount ?? 0);
+      }
+      return { ...entry, bonusStatGrants };
+    }),
+  };
+}
 
 export function grantManaWell(run: RunState, rosterId: string): RunState {
   const entry = run.roster.find((r) => r.rosterId === rosterId);

@@ -80,6 +80,8 @@ function reactiveArt(effect: PassiveEffect): PassiveArt | undefined {
       return { path: CLEANSE_SPARKLE, color: STAT_COLORS.wisdom };
     case 'setFieldEffect':
       return elementArt(fieldEffects[effect.fieldEffectId]?.flavorType);
+    case 'damage':
+      return effect.onlyWithStatus ? statusArt(effect.onlyWithStatus) : statArt('hp');
   }
 }
 

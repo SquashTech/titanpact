@@ -364,6 +364,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
               sourceCombatantId: action.combatantId,
             });
             const amount = rolledAmount - hpResult.absorbed;
+            const finishing = hpResult.events.some((e) => e.type === 'Fainted' && e.combatantId === targetId);
 
             const [offKey, defKey] = statKeysForMove(move);
             const damageDealtEvent: CombatEvent = {
@@ -372,6 +373,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
               sourceCombatantId: action.combatantId,
               targetCombatantId: targetId,
               moveId: move.id,
+              ...(finishing ? { finishing: true } : {}),
               amount,
               ...(hpResult.absorbed > 0 ? { absorbed: hpResult.absorbed } : {}),
               category: move.category,

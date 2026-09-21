@@ -262,7 +262,7 @@ in the last column so the two can be read as a pair. Every magnitude is a first 
 | Solace | Light | **Grace** | Whenever this hero heals an ally, it gains 10 Mana, past its pool. | new | Afterglow (Dawnherald) |
 | Aegis | Light | **Consecrate** | Whenever this hero is healed, it gains 5 Defense and 5 Wisdom. | new | Shieldbearer (Warforged) |
 | Empyrean | Light | **Halo** | At the end of each round, this hero's partner is healed 10. | new | Sunblind (Sunborne) |
-| Widow | Shadow | **Lethal Bite** | Deals double damage to an enemy that is both Bleeding and Poisoned. Nothing in the starting kit sets the table; Venomfang's Widow's Kiss does. | new · `requiresTargetStatuses` | Widow's Kiss / Snare — feeds the innate |
+| Widow | Shadow | **Lethal Bite** | Deals double damage to an enemy that is both Bleeding and Poisoned. The kit sets the table since 2026-09-20: Backstab (50% Bleed) and Venom Bite (Poison 10) beside Lie in Wait. | new · `requiresTargetStatuses` | Widow's Kiss / Snare — feeds the innate |
 | Marrow | Shadow | **Necrosis** | Whenever an enemy takes Poison damage, this hero heals for the same amount. | new | — |
 | Nightshade | Shadow | **Shadowmeld** | When this hero enters the battlefield, it gains Ambush 10. | new | Afterimage (Penumbra) — stacks to 30 |
 | Glyph | Arcane | **Arcane Repose** | Whenever this hero Rests, it gains Shield equal to the Mana it recovered; a full pool grants nothing. | new · `Rested` hook | Overspill (Thaumaturge) |
@@ -272,18 +272,18 @@ in the last column so the two can be read as a pair. Every magnitude is a first 
 | Lucius | Mind | **Hunger** | Whenever this hero lands a Mind attack, it heals for 20% of the damage dealt. | new | Sanguine — the other half of the vampire |
 | Trance | Mind | **Lullaby** | At the end of each round, both active enemies lose 5 Speed. | new | Puppet Strings (Puppeteer) |
 | Revenant | Spirit | **Ghostlight** | Whenever an enemy is Haunted, this hero gains Spirit Force 10. Torment (a starter since 2026-09-20, in Second Wind's seat) Haunts on its own. Lingering (the endure verb) was its innate for a day; the verb stays in the engine, unheld. | new | Communion (Undying) |
-| Sorrow | Spirit | **Wail** | Whenever this hero lands a Spirit attack, its target is Haunted. | new | Grief (Mourner) |
-| Dread | Spirit | **Foreboding** | Whenever an enemy is Haunted, this hero gains 5 Defense and 5 Wisdom. | new | Omen — fed by the innate |
-| Warden | Iron | **Rivet** | Whenever this hero takes damage, its partner gains 5 Defense. | new | Sentry (Bulwark) |
+| Sorrow | Spirit | **Lament** | Whenever this hero damages a Haunted enemy, it heals for that amount. Torment (in the kit) sets the Haunt. | new · `eventTargetHasStatus` | Grief (Mourner) |
+| Dread | Spirit | **Nightmare** | At the end of each round, every Haunted enemy loses 10% of its max HP — direct, past any Shield. | new · `damage` effect | Omen — feeds the innate |
+| Warden | Iron | **Rivet** | At the end of each round, its partner gains 5 Defense. | new | Sentry (Bulwark) |
 | Valor | Iron | **Rallying Standard** | When this hero enters the battlefield, its partner gains 10 Attack and 10 Intelligence. | existing | Tempering (Shieldwall) |
 | Gallant | Iron | **Sunder** | Whenever this hero lands an attack, its target loses 10 Defense. | existing | Cavalry Charge (Charger) |
 | Scallywag | Iron (unlock) | **Quickening** | When this hero enters the battlefield, it gains 10 Speed. | existing | Plunder (Corsair) |
 | Clockwork | Mech | **Boiler** | Mech attacks have a 30% chance to Burn 10, scaled by its Intelligence — the ONE passive magnitude that scales (§10). | new · `chance`, `scaledBy` | Combustion (Runaway) |
 | Bellows | Mech/Iron | **Ironbound** *(Burden)* | Cannot switch out voluntarily. Stat Total 610. | vocab | Runaway Pressure / Superheat |
-| Rex | Mech | **Steam Pressure** | Whenever this hero is Burned, it gains 10 Speed. | new | Rampant (Tyrant) |
+| Rex | Mech | **Tyrant's Due** | Once a fight, a finishing blow grants 10 Attack for the rest of the RUN — banked on `Combatant.permanentStatGains`, written onto `RosterEntry.bonusStatGrants` by a won fight (`recordPermanentStatGains`). The one innate that outlives the fight; no screen, so the bare-number rule stands. | new · `finishingBlow`, `permanent` | Rampant (Tyrant) |
 | Patch | Mech (unlock) | **Field Repair** | Whenever this hero heals an ally, that ally is Cleansed of one affliction. | new | Nanites (Triage) |
 | Fang | Beast | **Pack Hunter** | Whenever this hero's partner lands an attack, this hero gains 5 Attack. | new | Bloodthirsty (Bloodhunt) |
-| Ursa | Beast | **Second Skin** | Whenever this hero takes damage, it gains 5 Defense and 5 Wisdom. | existing | Thick Hide (Grizzly) |
+| Ursa | Beast | **Feast** | A finishing blow heals half its max HP. | new · `percentMaxHp` amount | Thick Hide (Grizzly) |
 | Coil | Beast/Mind | **Serpent's Eye** | When this hero enters the battlefield, both active enemies lose 10 Intelligence. | new | Constrict (Basilisk) |
 | Vex | Beast (unlock) | **Sanguine** | Whenever an enemy takes Bleed damage, this hero heals for the same amount. | existing | Bloodmeal (Nightfeeder) |
 
