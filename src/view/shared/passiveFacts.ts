@@ -180,7 +180,7 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
             ? ` ${effect.magnitude}`
             : ` at ${amountWord(effect.magnitude, '').replace('the same amount', hook === 'Rested' ? 'the Mana restored' : 'the same magnitude')}`;
       const duration = effect.duration ? `, ${effect.duration} ${effect.duration === 1 ? 'round' : 'rounds'}` : '';
-      const scaled = effect.scaledBy ? `, scaled by ${STAT_FULL_LABELS[effect.scaledBy]}` : '';
+      const scaled = (effect.scaledBy ? `, scaled by ${STAT_FULL_LABELS[effect.scaledBy]}` : '') + (effect.maxMagnitude !== undefined ? `, up to ${effect.maxMagnitude}` : '');
       return {
         label: 'Then',
         text: `${statusName(effect.statusId)}${magnitude} on ${targetWord(effect.target, condition, hook)}${duration}${scaled}`,
@@ -215,9 +215,11 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
     case 'damage':
       return {
         label: 'Then',
-        text: `${Math.round(effect.percentMaxHp * 100)}% of max HP off ${targetWord(effect.target, condition, hook)}${effect.onlyWithStatus ? ` that are ${statusName(effect.onlyWithStatus)}` : ''} — direct, past any Shield`,
-        glyph: effect.onlyWithStatus ? { kind: 'status', statusId: effect.onlyWithStatus } : { kind: 'stat', stat: 'hp' },
-        color: effect.onlyWithStatus ? 'status' : undefined,
+        text: effect.perHeldStatus
+          ? `${Math.round(effect.percentMaxHp * 100)}% of max HP off ${targetWord(effect.target, condition, hook)} per ${statusName(effect.perHeldStatus)} held, all of them spent — direct, past any Shield`
+          : `${Math.round(effect.percentMaxHp * 100)}% of max HP off ${targetWord(effect.target, condition, hook)}${effect.onlyWithStatus ? ` that are ${statusName(effect.onlyWithStatus)}` : ''} — direct, past any Shield`,
+        glyph: effect.onlyWithStatus ? { kind: 'status', statusId: effect.onlyWithStatus } : effect.perHeldStatus ? { kind: 'status', statusId: effect.perHeldStatus } : { kind: 'stat', stat: 'hp' },
+        color: effect.onlyWithStatus || effect.perHeldStatus ? 'status' : undefined,
       };
     case 'setFieldEffect': {
       const field = fieldEffects[effect.fieldEffectId];
@@ -237,6 +239,7 @@ export function passiveFacts(def: PassiveDefinition): PassiveFact[] {
   const rows: PassiveFact[] = [];
   if (def.reactive) {
     rows.push(triggerFact(def.reactive));
+    if (def.reactive.whileBenched) rows.push({ label: 'Only', text: 'While this hero is on the bench', glyph: { kind: 'move', move: 'buff' } });
     if (def.reactive.chance !== undefined) rows.push({ label: 'Odds', text: `${Math.round(def.reactive.chance * 100)}% of the time`, glyph: { kind: 'move', move: 'debuff' } });
     rows.push(effectFact(def.reactive.effect, def.reactive.condition, def.reactive.hook));
     if (def.reactive.condition.finishingBlow) rows.push({ label: 'Only', text: 'A hit that knocks its target out', glyph: { kind: 'stat', stat: 'attack' } });

@@ -98,6 +98,14 @@ export const STATUS_PATHS: Record<string, ReactNode> = {
       d="M12 1.8c4.5 0 7.9 3.4 7.9 8v11c0 1.1-1.2 1.7-2 1l-2-1.8-2.1 1.9a1.3 1.3 0 0 1-1.7 0L10 20l-2 1.8c-.8.7-2 .1-2-1v-11c0-4.6 3.5-8 8-8ZM9.2 9.4a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm5.6 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z"
     />
   ),
+  // A round shot with a lit fuse: the magazine, not the gun.
+  Cannonball: (
+    <>
+      <circle cx="11" cy="14" r="7.2" />
+      <path d="M15.6 6.2c1.2-1.8 2.8-2.6 4.6-2.4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+      <circle cx="20.6" cy="3.6" r="1.6" />
+    </>
+  ),
   // Double chevron — the Force family's up-arrow said twice, for a hit that is loaded but unspent.
   Ambush: (
     <g fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
@@ -160,6 +168,7 @@ const STATUS_COLOR: Record<string, string> = {
   Poison: '#8bc34a',
   Haunt: '#7a5fc4',
   Ambush: '#a8577a',
+  Cannonball: '#8f8a80',
   Beheld: '#e0393f',
 };
 

@@ -172,6 +172,20 @@ export const statuses: Record<string, StatusDefinition> = {
     pipeline: 'target',
     description: "While active, a Spirit or Mind attack aimed at this hero's partner also strikes this hero. Cleared by switching.",
   },
+  // Broadside's magazine (docs/innate-passives.md §7, Scallywag): one loaded a round on the bench, all
+  // fired on the way in. A counter and nothing else — no tick, no decay, spent by the firing.
+  Cannonball: {
+    id: 'Cannonball',
+    name: 'Cannonball',
+    shape: 'magnitude',
+    ticksAtEndOfRound: false,
+    decay: 'none',
+    stacking: 'additive',
+    clearsOnSwitch: false,
+    positive: true,
+    pipeline: 'none',
+    description: 'A cannonball loaded on the bench. Every one fires as this hero enters the battlefield.',
+  },
   Ambush: {
     id: 'Ambush',
     name: 'Ambush',

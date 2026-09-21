@@ -543,7 +543,7 @@ export const heroes: Record<string, HeroDefinition> = {
     growthGrades: { hp: 'B', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'A', speed: 'A', manaPool: 'B' },
     schedule: { offerLevels: [5, 8, 14, 17, 20, 26], midLevel: 9, lateLevel: 18 },
     signatureMoveId: 'broadside',
-    passiveIds: ['quickening'],
+    passiveIds: ['broadside', 'broadsideFire'],
   },
 
   // --- Mech ---

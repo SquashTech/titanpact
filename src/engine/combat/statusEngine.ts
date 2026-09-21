@@ -23,7 +23,7 @@ function setStatus(state: CombatState, combatantId: string, statusId: StatusId, 
   };
 }
 
-function removeStatus(state: CombatState, round: number, combatantId: string, statusId: StatusId, reason: StatusRemovalReason): StatusResult {
+export function removeStatus(state: CombatState, round: number, combatantId: string, statusId: StatusId, reason: StatusRemovalReason): StatusResult {
   const combatant = state.combatants[combatantId];
   if (!combatant?.statuses[statusId]) return { state, events: [] };
   const nextStatuses = { ...combatant.statuses };

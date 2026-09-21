@@ -11,7 +11,7 @@ import { allCombatants } from '../src/data/content';
 import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
-import { passives, TITANS_MARK_FORCE, titansMarkFor } from '../src/data/passives';
+import { passives, BROADSIDE_MAGAZINE, BROADSIDE_SHOT, TITANS_MARK_FORCE, titansMarkFor } from '../src/data/passives';
 import { fieldEffects } from '../src/data/fieldEffects';
 import { equipment } from '../src/data/equipment';
 import { resolveRound } from '../src/engine/combat/resolveRound';
@@ -362,4 +362,31 @@ test('rivet: at each round end the partner gains 5 Defense, and alone on the fie
   const r = resolveRound(state, restAll(state), config);
   assert.strictEqual(r.state.combatants.a2.statModifiers.defense, 5);
   assert.strictEqual(r.state.combatants.a1.statModifiers.defense, undefined);
+});
+
+// --- Broadside: the one bench-side reaction ---
+
+test('broadside: a cannonball loads each round on the bench (never on the field, capped at the magazine), and every one fires on the way in, direct, then the magazine is empty', () => {
+  const holder = (s: CombatState) => withPassive(withPassive(s, 'a3', 'broadside'), 'a3', 'broadsideFire');
+  let state = holder(fixture(31));
+  assert.strictEqual(state.bench.A[0], 'a3', 'benched from the start');
+  for (let i = 0; i < BROADSIDE_MAGAZINE + 2; i++) state = resolveRound(state, restAll(state), config).state;
+  assert.strictEqual(statusMagnitude(state.combatants.a3, 'Cannonball'), BROADSIDE_MAGAZINE, 'one a round, and no more than the magazine');
+  // On the field it loads nothing.
+  let fielded = holder(fixture(32));
+  fielded = { ...fielded, active: { ...fielded.active, A: ['a3', 'a2'] }, bench: { ...fielded.bench, A: ['a1'] } };
+  fielded = resolveRound(fielded, restAll(fielded), config).state;
+  assert.strictEqual(statusMagnitude(fielded.combatants.a3, 'Cannonball'), 0);
+  // The firing: a switch brings a3 in with a full magazine.
+  const b1Max = fixtureMaxHp(state.combatants.b1.heroId);
+  const b2Max = fixtureMaxHp(state.combatants.b2.heroId);
+  const r = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }, ...restAll(state).filter((a) => a.combatantId !== 'a1')], config);
+  assert.strictEqual(r.state.combatants.b1.currentHp, b1Max - Math.round(b1Max * BROADSIDE_SHOT * BROADSIDE_MAGAZINE));
+  assert.strictEqual(r.state.combatants.b2.currentHp, b2Max - Math.round(b2Max * BROADSIDE_SHOT * BROADSIDE_MAGAZINE));
+  assert.strictEqual(statusMagnitude(r.state.combatants.a3, 'Cannonball'), 0, 'spent');
+  assert.ok(r.events.some((e) => e.type === 'StatusRemoved' && e.combatantId === 'a3' && e.statusId === 'Cannonball'));
+  // Entering with nothing loaded fires nothing — the opening lead included.
+  const empty = holder(fixture(33));
+  const r2 = resolveRound(empty, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }, ...restAll(empty).filter((a) => a.combatantId !== 'a1')], config);
+  assert.strictEqual(r2.state.combatants.b1.currentHp, fixtureMaxHp(empty.combatants.b1.heroId));
 });

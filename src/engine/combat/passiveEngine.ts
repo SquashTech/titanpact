@@ -12,7 +12,7 @@ import { nextFloat, nextInt } from '../rng/seededRng';
 import { magnitudeMultFromStat } from '../heal/healPipeline';
 import { hasStatus } from '../state';
 import { applyHpDelta } from './faintHandling';
-import { applyStatus, cleanseStatuses } from './statusEngine';
+import { applyStatus, cleanseStatuses, removeStatus } from './statusEngine';
 import { setFieldEffect } from './fieldEffectEngine';
 import { wardRefusesStatus } from './ward';
 
@@ -157,6 +157,12 @@ function resolveEffect(
     working = resolved.state;
     produced.push(...resolved.events);
   }
+  // A broadside is spent by firing, whoever it reached — the magazine empties even into an empty field.
+  if (effect.kind === 'damage' && effect.perHeldStatus !== undefined && hasStatus(working.combatants[ownerId], effect.perHeldStatus)) {
+    const spent = removeStatus(working, round, ownerId, effect.perHeldStatus, 'consumed');
+    working = spent.state;
+    produced.push(...spent.events);
+  }
   return { state: working, events: produced };
 }
 
@@ -223,7 +229,9 @@ function resolveEffectOn(
   switch (effect.kind) {
     case 'damage': {
       const maxHp = getMaxHp(heroes[target.heroId], target);
-      const amount = Math.round(maxHp * effect.percentMaxHp);
+      const owner = state.combatants[ownerId];
+      const loaded = effect.perHeldStatus ? (owner?.statuses[effect.perHeldStatus]?.magnitude ?? 0) : 1;
+      const amount = Math.round(maxHp * effect.percentMaxHp * loaded);
       if (amount <= 0) return { state, events: [] };
       // Direct, like the Clock: no Shield, no reaction of its own beyond what applyHpDelta emits.
       return applyHpDelta(state, round, targetId, -amount, maxHp, { source: 'direct' });
@@ -244,6 +252,12 @@ function resolveEffectOn(
       let magnitude = resolveMagnitude(effect.magnitude, context);
       // An event-read magnitude of nothing (a Rest that restored 0) is no status at all.
       if (typeof effect.magnitude === 'object' && (magnitude ?? 0) <= 0) return { state, events: [] };
+      // A capped counter (Broadside's magazine): what would pass the cap is not loaded.
+      if (effect.maxMagnitude !== undefined && magnitude !== undefined) {
+        const held = target.statuses[effect.statusId]?.magnitude ?? 0;
+        magnitude = Math.max(0, Math.min(magnitude, effect.maxMagnitude - held));
+        if (magnitude <= 0) return { state, events: [] };
+      }
       if (effect.scaledBy !== undefined && magnitude !== undefined) {
         const owner = state.combatants[ownerId];
         if (owner) magnitude = Math.round(magnitude * magnitudeMultFromStat(getEffectiveStat(heroes[owner.heroId], owner, effect.scaledBy)));
@@ -352,12 +366,14 @@ export function resolvePassiveReactions(
     for (const ownerId of Object.keys(working.combatants)) {
       const owner = working.combatants[ownerId];
       if (!owner || owner.fainted) continue;
-      // A passive reacts only from the field: a benched Bloodthirst holder does not drink its side's hits.
-      if (!working.active[owner.side].includes(ownerId)) continue;
+      // A passive reacts only from the field: a benched Bloodthirst holder does not drink its side's
+      // hits. A `whileBenched` reaction is the one inversion — it fires only from the bench.
+      const onField = working.active[owner.side].includes(ownerId);
 
       for (const instance of Object.values(owner.passives)) {
         const reactive = passiveDefs[instance.passiveId]?.reactive;
         if (!reactive || reactive.hook !== event.type) continue;
+        if (reactive.whileBenched ? onField : !onField) continue;
         // A round's end is about nobody, so each active owner is its own subject: 'self' fires, nothing else does.
         const subjectId = event.type === 'RoundEnded' ? ownerId : subjectOf(event, reactive.condition.subjectRole ?? 'target');
         // Kept apart from `subjectId`: a source-role condition ("I dealt this") still needs the defender.

@@ -199,7 +199,7 @@ export type PassiveEffect =
    * passive has no move to take it from): Boiler's Burn off Clockwork's Intelligence, the one
    * authored exception to "passive-applied magnitudes are flat" (docs/innate-passives.md §7).
    */
-  | { kind: 'applyStatus'; target: PassiveEffectTarget; statusId: StatusId; magnitude?: number | PassiveAmount; duration?: number; scaledBy?: StatKey }
+  | { kind: 'applyStatus'; target: PassiveEffectTarget; statusId: StatusId; magnitude?: number | PassiveAmount; duration?: number; scaledBy?: StatKey; maxMagnitude?: number }
   /**
    * One stat, or several sharing an amount (Afterglow's Attack and Intelligence) — one StatChanged
    * each. A PassiveAmount reads the event (Neuroplastic: the Wisdom an enemy just lost).
@@ -213,7 +213,14 @@ export type PassiveEffect =
    * chart; applyHpDelta 'direct'), the Pact Clock's shape. `onlyWithStatus` narrows a group
    * target to the members holding it: Dread's Nightmare on Haunted enemies alone.
    */
-  | { kind: 'damage'; target: PassiveEffectTarget; percentMaxHp: number; onlyWithStatus?: StatusId }
+  | {
+      kind: 'damage';
+      target: PassiveEffectTarget;
+      percentMaxHp: number;
+      onlyWithStatus?: StatusId;
+      /** Broadside: the share is PER point of this status the OWNER holds, and the status is spent by the firing. Nothing held, nothing fired. */
+      perHeldStatus?: StatusId;
+    }
   /** Strips non-`positive` statuses, same rules as a move's `cleanses`; `count` omitted = all. */
   | { kind: 'cleanse'; target: PassiveEffectTarget; count?: number }
   /** UNCAPPED, like a move's `manaGrant` — overflow past the pool is the point (docs/mana.md). */
@@ -245,8 +252,8 @@ export interface PassiveDefinition {
   name: string;
   /** Player-facing, required. */
   description: string;
-  /** `oncePerFight` caps the whole reaction at one firing per combat regardless of stacks (state.ts PassiveInstance.firedThisFight). `chance` (0–1) rolls the seeded rng per matched event, per stack; absent = always. */
-  reactive?: { hook: PassiveHook; condition: PassiveTriggerCondition; effect: PassiveEffect; oncePerFight?: boolean; chance?: number };
+  /** `oncePerFight` caps the whole reaction at one firing per combat regardless of stacks (state.ts PassiveInstance.firedThisFight). `chance` (0–1) rolls the seeded rng per matched event, per stack; absent = always. `whileBenched` inverts the field rule: this reaction fires only while its owner is standing on the BENCH (Broadside loading a cannonball a round), where every other passive is silent. */
+  reactive?: { hook: PassiveHook; condition: PassiveTriggerCondition; effect: PassiveEffect; oncePerFight?: boolean; chance?: number; whileBenched?: true };
   damageModifier?: PassiveDamageModifier;
   /** Always-on flat grants, applied at fight build like Equipment/Relic statGrants (src/run/passives.ts); not read by passiveEngine. Classes are this alone. */
   statGrants?: Partial<Record<StatKey, number>>;

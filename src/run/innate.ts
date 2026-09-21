@@ -6,7 +6,7 @@
 import type { HeroDefinition, PassiveDefinition } from '../engine/content';
 import { isTitansMark, passives } from '../data/passives';
 
-/** The hero's innate, or null for a definition that holds none (a Titan's piece, a fixture). */
+/** The hero's innate, or null for a definition that holds none (a Titan's piece, a fixture). A two-card innate (Broadside's load and its firing) is read by its first. */
 export function innatePassiveOf(hero: Pick<HeroDefinition, 'passiveIds'>): PassiveDefinition | null {
   for (const id of hero.passiveIds ?? []) {
     if (!isTitansMark(id) && passives[id]) return passives[id];

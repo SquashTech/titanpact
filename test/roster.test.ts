@@ -287,7 +287,10 @@ test('roster: every hero holds exactly ONE innate — a verb, never a bare stat 
 
   for (const hero of Object.values(heroes)) {
     const ids = hero.passiveIds ?? [];
-    assert.strictEqual(ids.length, 1, `${hero.id} holds ${ids.length} innate passives, not one`);
+    // ONE innate — a card that needs a second reaction (Broadside's load and its firing) is two ids
+    // under one name, and the name is what the player reads.
+    const names = new Set(ids.map((id) => passives[id]?.name));
+    assert.strictEqual(names.size, 1, `${hero.id} holds ${names.size} innate passives, not one`);
     const passive = passives[ids[0]];
     assert.ok(passive, `${hero.id}'s innate ${ids[0]} does not exist`);
     assert.strictEqual(innatePassiveOf(hero)?.id, passive.id);

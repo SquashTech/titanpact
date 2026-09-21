@@ -888,6 +888,10 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
 // The band is deliberately narrow: an entry grant, a 5-point reaction, a rider on a typed hit,
 // a trickle. Sibling pairs across a type (Fault Line / Aftershock, Live Wire / Static Field) and
 // innate → Evolution chains (Impale → Thornrot, Attunement → Pixie Dust) are what the seats are for.
+/** Broadside's magazine: cannonballs Scallywag can hold; and what one deals, as a share of each enemy's max HP. */
+export const BROADSIDE_MAGAZINE = 4;
+export const BROADSIDE_SHOT = 0.05;
+
 const innatePassives: Record<string, PassiveDefinition> = {
   kindling: {
     id: 'kindling',
@@ -1190,6 +1194,29 @@ const innatePassives: Record<string, PassiveDefinition> = {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
       effect: { kind: 'heal', target: 'self', amount: { kind: 'percentMaxHp', value: 0.5 } },
+    },
+  },
+  broadside: {
+    id: 'broadside',
+    name: 'Broadside',
+    description: 'On the bench, this hero loads a cannonball each round (up to 4). On entering the battlefield, it fires them all: each deals 5% of max HP to both enemies.',
+    // Two reactions in one card would be two cards; the load is this one, the firing is broadsideFire,
+    // and Scallywag holds both. The Cannonball status is the magazine (data/statuses.ts).
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Cannonball', magnitude: 1, maxMagnitude: BROADSIDE_MAGAZINE },
+      whileBenched: true,
+    },
+  },
+  broadsideFire: {
+    id: 'broadsideFire',
+    name: 'Broadside',
+    description: 'Fires every loaded cannonball on the way in: 5% of max HP to both enemies per ball, direct.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'damage', target: 'activeEnemies', percentMaxHp: BROADSIDE_SHOT, perHeldStatus: 'Cannonball' },
     },
   },
   fieldRepair: {
