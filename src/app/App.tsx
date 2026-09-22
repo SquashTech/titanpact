@@ -49,6 +49,8 @@ import { moves } from '../data/moves';
 import { allCombatants, rosterHeroes } from '../data/content';
 import { CompanionScreen, type CompanionBeat } from '../view/run/CompanionScreen';
 import { absorbCompanions, companionCandidate, companionJoinDue, joinCompanion } from '../run/companion';
+import { fallenAfterFight, isPermadeath, openAscension } from '../run/ascension';
+import { FallenScreen } from '../view/run/FallenScreen';
 import type { CombatState } from '../engine/state';
 import { koRosterIdsOf } from '../run/buildCombatState';
 import { WoundsError, anyDown, buyMend, mendPrice, recordWounds, mendRoster, standingRoster } from '../run/wounds';
@@ -157,6 +159,8 @@ import { statScaleFor } from '../run/statScale';
 type Screen =
   | { kind: 'title' }
   | { kind: 'draft'; optionIds: string[] }
+  /** Permadeath's post-fight beat (docs/ascension.md §3): the KO'd heroes, still on the roster until Continue, and the companion the same fight took. */
+  | { kind: 'fallen'; rosterIds: string[]; companion: RosterEntry | null; next: Screen }
   /** The act-boundary beat: five sockets, one per Guardian (docs/run-loop.md §4). */
   | { kind: 'pactSeal' }
   /** Acts 2-5 open on a 1-of-2 (docs/locations.md §1): the offer is drawn once, when the seal is behind the player. */
@@ -273,9 +277,9 @@ function addHeroes(run: RunState, heroIds: readonly string[], level?: number): R
  * location choice (`enterAct`). A tutorial run differs only in Act 1's map, and
  * `advanceToNextAct` generates Act 2 the ordinary way.
  */
-function createStartingRun(heroIds: readonly string[], tutorial: boolean, seenBeatIds: readonly string[]): RunState {
+function createStartingRun(heroIds: readonly string[], tutorial: boolean, seenBeatIds: readonly string[], ascension: number): RunState {
   return {
-    ...addHeroes(createRunState(40), heroIds),
+    ...addHeroes(createRunState(40, 1, ascension), heroIds),
     map: tutorial ? generateTutorialMap(randomSeed()) : generateMap(randomSeed()),
     locationIds: [ACT_ONE_LOCATION_ID],
     tutorial,
@@ -554,6 +558,7 @@ export function App() {
       // The finale has no Location of its own (locationForAct falls back to Act 1's); the history reads the act instead.
       locationId: playerRun.actNumber <= SEAL_ACTS ? playerRun.locationIds[playerRun.actNumber - 1] ?? null : null,
       encountersWon: playerRun.encountersWon,
+      ascension: playerRun.ascension,
       roster: playerRun.roster.map((entry) => ({ heroId: entry.heroId, level: levelOf(entry), evolutionPathId: currentEvolutionPathId(entry) })),
     };
     const before = readProfile();
@@ -857,11 +862,18 @@ export function App() {
     const afterLoss: Screen = levelled.report.some((hero) => hero.toLevel > hero.fromLevel) || owed
       ? { kind: 'levelUp', report: levelled.report, next: afterLevels }
       : afterLevels;
-    // And the companion's loss ahead of even that — the one thing the fight took (§5).
-    const chain = absorption.absorbed.reduce<Screen>(
-      (rest, gone) => ({ kind: 'companion', beat: { kind: 'lost', heroId: gone.heroId }, next: rest }),
-      afterLoss
-    );
+    // And the companion's loss ahead of even that — the one thing the fight took (§5). Under
+    // Permadeath the Fallen beat is that screen for everyone the fight knocked out (docs/ascension.md
+    // §3): the KO'd stay on the roster, `down`, until it lets them go, so the level report that
+    // follows reads the roster to know who is still there.
+    const fallen = fallenAfterFight(next, koRosterIds);
+    const chain: Screen =
+      isPermadeath(next) && (fallen.length > 0 || absorption.absorbed.length > 0)
+        ? { kind: 'fallen', rosterIds: fallen.map((entry) => entry.rosterId), companion: absorption.absorbed[0] ?? null, next: afterLoss }
+        : absorption.absorbed.reduce<Screen>(
+            (rest, gone) => ({ kind: 'companion', beat: { kind: 'lost', heroId: gone.heroId }, next: rest }),
+            afterLoss
+          );
     // The Eyes closing is the fight's own last beat, so the collapse and the binding go ahead of
     // even the level report: nothing the fight pays is worth seeing before the Titan is down.
     setScreen(isFinale ? { kind: 'titanBound', next: chain } : chain);
@@ -938,23 +950,24 @@ export function App() {
     beginRun(true);
   }
 
-  function handleStartNewRun() {
-    beginRun(shouldPlayTutorial(profile));
+  function handleStartNewRun(ascension: number) {
+    beginRun(shouldPlayTutorial(profile), ascension);
   }
 
-  function beginRun(tutorial: boolean) {
+  /** The rung rides `playerRun` across the draft as `tutorial` does; the scripted run is always Base. */
+  function beginRun(tutorial: boolean, ascension = 0) {
     // The equipped Starter Pack's list (run/starterPacks.ts): pack zero is the fourteen starters.
     const starterHeroIds = equippedPack(profile, STARTER_PACKS).heroIds;
     // The scripted run draws no candidates: Valor and Fang are the pact, and the draft screen
     // is where Valor says so. The run itself is only built on confirm, so the flag has to be
     // parked on `playerRun` here for the intro beat to know it is a tutorial.
     const optionIds = tutorial ? [...TUTORIAL_STARTER_IDS] : generateStarterOptions(randomSeed(), starterHeroIds);
-    setPlayerRun((run) => ({ ...run, tutorial, tutorialSeenBeatIds: [] }));
+    setPlayerRun((run) => ({ ...run, tutorial, tutorialSeenBeatIds: [], ascension: tutorial ? 0 : ascension }));
     setScreen({ kind: 'draft', optionIds });
   }
 
   function handleDraftConfirm(chosenIds: string[]) {
-    setPlayerRun((run) => createStartingRun(chosenIds, run.tutorial, run.tutorialSeenBeatIds));
+    setPlayerRun((run) => createStartingRun(chosenIds, run.tutorial, run.tutorialSeenBeatIds, run.ascension));
     // The cold open goes here and not on the title's press for the same reason the run itself
     // is built here: binding is mutual (docs/lore.md §1), so the thing on the far end of the
     // leash notices when the pact is sealed, not when a menu is browsed.
@@ -1083,6 +1096,7 @@ export function App() {
           staleSaveReason={saveSlot.staleReason}
           onContinueRun={handleContinueRun}
           onStartRun={handleStartNewRun}
+          openAscension={openAscension(profile)}
           onReplayTutorial={handleReplayTutorial}
           onQuickBattle={handleQuickBattle}
           onOpenSandbox={handleOpenSandbox}
@@ -1351,7 +1365,16 @@ export function App() {
         })()}
 
       {screen.kind === 'levelUp' && (
-        <LevelUpScreen run={playerRun} onRunChange={setPlayerRun} report={screen.report} onContinue={() => setScreen(screen.next)} />
+        <LevelUpScreen
+          run={playerRun}
+          onRunChange={setPlayerRun}
+          report={screen.report.filter((hero) => playerRun.roster.some((entry) => entry.rosterId === hero.rosterId))}
+          onContinue={() => setScreen(screen.next)}
+        />
+      )}
+
+      {screen.kind === 'fallen' && (
+        <FallenScreen run={playerRun} rosterIds={screen.rosterIds} companion={screen.companion} onRunChange={setPlayerRun} onContinue={() => setScreen(screen.next)} />
       )}
 
       {screen.kind === 'companion' && <CompanionScreen run={playerRun} beat={screen.beat} onContinue={() => setScreen(screen.next)} />}
@@ -1373,7 +1396,7 @@ export function App() {
           run={playerRun}
           profileBefore={runOutcome.before}
           profileAfter={runOutcome.after}
-          onNewRun={handleStartNewRun}
+          onNewRun={() => handleStartNewRun(playerRun.ascension)}
           onReturnToTitle={() => setScreen({ kind: 'title' })}
         />
       )}

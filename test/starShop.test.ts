@@ -26,7 +26,7 @@ function withStars(count: number) {
     const heroId = `hero${Math.floor(i / 3)}`;
     profile = recordRunEnded(
       profile,
-      { outcome: 'win', actReached: 6, locationId: null, encountersWon: 1, roster: [{ heroId, level: 30, evolutionPathId: `${heroId}-${kinds[i % 3]}` }] },
+      { outcome: 'win', actReached: 6, locationId: null, encountersWon: 1, ascension: 0, roster: [{ heroId, level: 30, evolutionPathId: `${heroId}-${kinds[i % 3]}` }] },
       i
     );
   }

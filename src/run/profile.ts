@@ -22,6 +22,8 @@ export interface Profile {
   runsFailed: number;
   /** Furthest act reached in any run, 1-indexed. */
   furthestAct: number;
+  /** The highest Ascension rung a run has been cleared on (run/ascension.ts); 0 until a run above Base is cleared. */
+  ascensionCleared: number;
   /**
    * heroId -> the Evolution path ids that hero has cleared a run down. One star a path, three a
    * hero, and a hero that finished a run unevolved earns nothing — the star is for the form, not
@@ -78,6 +80,8 @@ export interface RunRecord {
   /** That act's Location, or null on a run without an itinerary. */
   locationId: string | null;
   encountersWon: number;
+  /** The rung it was played on (run/ascension.ts); 0 on every record written before the ladder. */
+  ascension: number;
   /** The roster at the end, in roster order. */
   roster: RunRecordHero[];
   /** The Evolution path ids this run's clear starred for the first time — a loss stars nothing. */
@@ -95,6 +99,7 @@ export function createProfile(): Profile {
     runsCompleted: 0,
     runsFailed: 0,
     furthestAct: 1,
+    ascensionCleared: 0,
     evolutionStars: {},
     runHistory: [],
     runStartedAtPlaytimeMs: null,
@@ -157,6 +162,7 @@ export function recordRunEnded(profile: Profile, end: RunEnd, now: number): Prof
     ...profile,
     runsCompleted: profile.runsCompleted + (end.outcome === 'win' ? 1 : 0),
     runsFailed: profile.runsFailed + (end.outcome === 'loss' ? 1 : 0),
+    ascensionCleared: end.outcome === 'win' ? Math.max(profile.ascensionCleared, end.ascension) : profile.ascensionCleared,
     evolutionStars,
     runHistory: [record, ...profile.runHistory].slice(0, RUN_HISTORY_CAP),
     // The run is over; a dev test run started without a pact must not inherit this one's clock.
@@ -260,6 +266,7 @@ function decodeRunRecord(raw: unknown, knownPathIds?: ReadonlySet<string>): RunR
     actReached,
     locationId: typeof raw.locationId === 'string' && raw.locationId.length > 0 ? raw.locationId : null,
     encountersWon: count(raw.encountersWon),
+    ascension: count(raw.ascension),
     roster,
     starsEarned: stringList(raw.starsEarned).filter((id) => knownPath(id) !== null),
   };
@@ -311,6 +318,7 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     runsCompleted: count(value.runsCompleted),
     runsFailed: count(value.runsFailed),
     furthestAct: Math.max(1, count(value.furthestAct, 1)),
+    ascensionCleared: count(value.ascensionCleared),
     evolutionStars,
     runHistory,
     runStartedAtPlaytimeMs: typeof value.runStartedAtPlaytimeMs === 'number' && Number.isFinite(value.runStartedAtPlaytimeMs) ? Math.max(0, Math.floor(value.runStartedAtPlaytimeMs)) : null,

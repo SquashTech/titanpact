@@ -209,6 +209,12 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
           <span className="map-act-label">Lv</span>
           <span className="map-act-count">{rosterLevel}</span>
         </span>
+        {run.ascension > 0 && (
+          <span className="map-level map-ascension" aria-label={`Ascension ${run.ascension}`} title="Permadeath: a knocked-out hero is gone unless a Revive is spent on it when the fight ends.">
+            <span className="map-act-label">Asc</span>
+            <span className="map-act-count">{run.ascension}</span>
+          </span>
+        )}
         <div className="map-purse">
           <ResourceStat kind="gold" label="Gold" value={run.gold} />
           <ResourceStat kind="contract" label="Recruit Contracts" value={run.recruitContracts} />

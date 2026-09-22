@@ -30,11 +30,11 @@ function finished(heroId: string, path: string, level = 30): RunRecordHero {
 }
 
 function cleared(roster: RunRecordHero[]): RunEnd {
-  return { outcome: 'win', actReached: 6, locationId: null, encountersWon: 16, roster };
+  return { outcome: 'win', actReached: 6, locationId: null, encountersWon: 16, ascension: 0, roster };
 }
 
 function wiped(actReached: number, roster: RunRecordHero[]): RunEnd {
-  return { outcome: 'loss', actReached, locationId: 'wildsEdge', encountersWon: 4, roster };
+  return { outcome: 'loss', actReached, locationId: 'wildsEdge', encountersWon: 4, ascension: 0, roster };
 }
 
 // --- Verbs ---

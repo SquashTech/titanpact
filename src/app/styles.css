@@ -20302,6 +20302,26 @@ button.star-shop-bundle-face {
   color: var(--text-dim);
 }
 
+/* The rung picker's rows (docs/ascension.md §8): the rung's name over the one rule it adds. */
+.title-rung {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 10px 16px;
+}
+
+.title-rung-name {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.title-rung-rule {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+
 .title-stale-note {
   width: 100%;
   padding: 9px 12px;

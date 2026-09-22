@@ -9,6 +9,7 @@ import { starBalance, type StarShopOffer } from '../../run/starShop';
 import { TitanColossus, TitanRidge } from './titanArt';
 import { SealArt } from '../shared/SealArt';
 import { HubGlyph } from '../shared/nodeIcons';
+import { ASCENSION_RUNGS } from '../../run/ascension';
 import { AudioSettings } from '../shared/AudioSettings';
 import type { SaveSummary } from '../../run/save';
 import type { Profile } from '../../run/profile';
@@ -28,7 +29,10 @@ interface Props {
   /** Set when a stored run was refused on load — shown once so a vanished Continue is explained, not just missing. */
   staleSaveReason: string | null;
   onContinueRun: () => void;
-  onStartRun: () => void;
+  /** Start a run on the given Ascension rung (run/ascension.ts); 0 is Base. */
+  onStartRun: (ascension: number) => void;
+  /** The highest rung the profile may start on; 0 until a run has been cleared. */
+  openAscension: number;
   /** Replays the scripted first run whatever the profile says (docs/tutorial.md). */
   onReplayTutorial: () => void;
   onQuickBattle: () => void;
@@ -108,6 +112,7 @@ export function TitleScreen({
   staleSaveReason,
   onContinueRun,
   onStartRun,
+  openAscension,
   onReplayTutorial,
   onQuickBattle,
   onOpenSandbox,
@@ -126,6 +131,7 @@ export function TitleScreen({
   const [showDev, setShowDev] = useState(false);
   const [launching, setLaunching] = useState(false);
   const [confirmingNewRun, setConfirmingNewRun] = useState(false);
+  const [pickingRung, setPickingRung] = useState(false);
   const [staleNoteDismissed, setStaleNoteDismissed] = useState(false);
 
   // The sound already plays from the delegated pointerdown listener (audio/uiSfx.ts).
@@ -141,7 +147,16 @@ export function TitleScreen({
       setConfirmingNewRun(true);
       return;
     }
-    launch(onStartRun);
+    startFresh();
+  }
+
+  /** Nothing to ask until a rung is open; then the rung is the one question between the press and the draft. */
+  function startFresh() {
+    if (openAscension > 0) {
+      setPickingRung(true);
+      return;
+    }
+    launch(() => onStartRun(0));
   }
 
   /** Every Dev row leaves the title, so none of them needs the menu left standing. */
@@ -349,7 +364,7 @@ export function TitleScreen({
               className="options-item options-item-danger"
               onClick={() => {
                 setConfirmingNewRun(false);
-                launch(onStartRun);
+                startFresh();
               }}
             >
               <span className="options-item-glyph" aria-hidden="true">
@@ -360,6 +375,28 @@ export function TitleScreen({
             <button className="options-item" onClick={() => setConfirmingNewRun(false)}>
               Keep the run
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* The rung (docs/ascension.md §8): every rung up to the open one, each with the one rule it adds. */}
+      {pickingRung && (
+        <div className="log-overlay" onClick={() => setPickingRung(false)}>
+          <div className="log-panel title-confirm-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="title-confirm-title">How hard?</div>
+            {ASCENSION_RUNGS.filter((r) => r.rung <= openAscension).map((r) => (
+              <button
+                key={r.rung}
+                className={`options-item title-rung${r.rung > 0 ? ' options-item-danger' : ''}`}
+                onClick={() => {
+                  setPickingRung(false);
+                  launch(() => onStartRun(r.rung));
+                }}
+              >
+                <span className="title-rung-name">{r.name}</span>
+                <span className="title-rung-rule">{r.rule}</span>
+              </button>
+            ))}
           </div>
         </div>
       )}

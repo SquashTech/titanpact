@@ -6,7 +6,8 @@ import type { StatKey } from '../../src/engine/content';
 import { heroes as allHeroes } from '../../src/data/heroes';
 import { starterPackById } from '../../src/data/starterPacks';
 import { rosterHeroes } from '../../src/data/content';
-import { absorbCompanions, companionCandidate, companionJoinDue, isCompanion, joinCompanion } from '../../src/run/companion';
+import { absorbCompanions, companionCandidate, companionJoinDue, joinCompanion } from '../../src/run/companion';
+import { fallenAfterFight, isPermadeath, releaseFallen } from '../../src/run/ascension';
 import { anyDown, canBuyMend, buyMend, mendPrice, mendRoster, recordWounds, reviveHero, standingRoster } from '../../src/run/wounds';
 import { buyConsumable, canBuyConsumable, canUseRevive, grantConsumable, rollConsumableDrop, spendRevive } from '../../src/run/consumables';
 import { moves } from '../../src/data/moves';
@@ -289,29 +290,27 @@ export interface RunOptions extends policy.PolicyOptions {
   ascension: number;
 }
 
-const permadeath = (options: RunOptions): boolean => options.ascension >= 1;
-
 /**
- * The Fallen beat (docs/ascension.md §3), in the companion's absorption slot: every hero the won
- * fight knocked out is kept by a Revive while the stock lasts — the strongest first, which is the
- * pilot's read of the choice — or is gone from the run with its gear. The companion's row has no
- * button: a Revive never saves it, at any rung (§2), and absorbCompanions takes it as at Base.
+ * The Fallen beat (docs/ascension.md §3, run/ascension.ts), in the companion's absorption slot:
+ * every hero the won fight knocked out is kept by a Revive while the stock lasts — the strongest
+ * first, which is the pilot's read of the choice — or let go with its gear.
  */
 function resolveFallen(run: RunState, koRosterIds: readonly string[], record: RunRecord): RunState {
   let next = run;
-  const fallen = policy.byPower(next.roster.filter((entry) => koRosterIds.includes(entry.rosterId) && !isCompanion(entry)));
+  const fallen = policy.byPower(fallenAfterFight(next, koRosterIds));
   record.knockouts.fallen += fallen.length;
+  const letGo: string[] = [];
   for (const entry of fallen) {
     if (canUseRevive(next)) {
       next = spendRevive(reviveHero(next, entry.rosterId, policy.effectiveStats(entry).hp));
       record.knockouts.revivesSpent += 1;
       record.knockouts.fallenRevived += 1;
     } else {
-      next = { ...next, roster: next.roster.filter((r) => r !== entry) };
+      letGo.push(entry.rosterId);
       record.knockouts.fallenLost += 1;
     }
   }
-  return next;
+  return releaseFallen(next, letGo);
 }
 
 export function simulateRun(options: RunOptions): RunRecord {
@@ -356,7 +355,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
   record.choices.push({ bucket: 'draft', offered: draftOptions, picked: drafted, encountersWonAtChoice: 0 });
   tally(record, 1, 'draft');
 
-  let run: RunState = createRunState(40);
+  let run: RunState = createRunState(40, 1, options.ascension);
   for (const heroId of drafted) {
     run = addRosterEntry(run, createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
   }
@@ -407,7 +406,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
       if (absorbed.absorbed.length > 0) record.companionLostAt ??= run.encountersWon;
       run = absorbed.run;
       // Under Permadeath every other KO is the same beat, with a Revive as its one way back.
-      if (permadeath(options)) run = resolveFallen(run, outcome.koRosterIds, record);
+      run = resolveFallen(run, outcome.koRosterIds, record);
       if (run.roster.length === 0) {
         alive = false;
         record.deathAct = run.actNumber;
@@ -1017,7 +1016,7 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
   // Under Permadeath the Revive is the price of the rule (docs/ascension.md §1): one a visit,
   // bought before a hire whenever the stock is below two — insurance ahead of a body.
   let revivesBought = 0;
-  if (permadeath(options) && next.consumables.revive < 2 && canBuyConsumable(next, 'revive', revivesBought)) {
+  if (isPermadeath(next) && next.consumables.revive < 2 && canBuyConsumable(next, 'revive', revivesBought)) {
     spend('revive', () => buyConsumable(next, 'revive', revivesBought));
     revivesBought += 1;
   }

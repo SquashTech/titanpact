@@ -158,9 +158,11 @@ export interface RunState {
   tutorial: boolean;
   /** Tutorial beats already played, so neither a re-render nor a reload repeats one. */
   tutorialSeenBeatIds: readonly string[];
+  /** The Ascension rung this run plays under (run/ascension.ts): 0 is Base, 1 is Permadeath. Chosen at run start, never changed. */
+  ascension: number;
 }
 
-export function createRunState(gold = 0, recruitContracts = 1): RunState {
+export function createRunState(gold = 0, recruitContracts = 1, ascension = 0): RunState {
   return {
     roster: [],
     gold,
@@ -178,6 +180,7 @@ export function createRunState(gold = 0, recruitContracts = 1): RunState {
     brokenSeals: [],
     tutorial: false,
     tutorialSeenBeatIds: [],
+    ascension,
   };
 }
 

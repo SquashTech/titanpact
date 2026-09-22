@@ -11,7 +11,7 @@ import { createProfile, decodeProfile, recordRunEnded } from '../src/run/profile
 import { generateStarterOptions, STARTER_OPTION_COUNT } from '../src/run/draft';
 import { BASE_PACK_ID, PACK_MIN_HEROES, PackError, equipPack, equippedPack, packHeld } from '../src/run/starterPacks';
 
-const cleared = recordRunEnded(createProfile(), { outcome: 'win', actReached: 6, locationId: null, encountersWon: 1, roster: [] }, 1);
+const cleared = recordRunEnded(createProfile(), { outcome: 'win', actReached: 6, locationId: null, encountersWon: 1, ascension: 0, roster: [] }, 1);
 
 test('starter packs: pack zero is the fourteen starters, derived, and every pack is legal', () => {
   const base = starterPackById[BASE_PACK_ID];

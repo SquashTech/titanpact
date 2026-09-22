@@ -1,6 +1,6 @@
 # ascension.md — The Ascension ladder: Permadeath, then rules
 
-> **STATUS: A1 DECIDED 2026-09-21 (per user direction); PHASE 0 IN AND MEASURED (§9b), the rest NOT BUILT. A2–A5 PROPOSED, not decided.**
+> **STATUS: A1 DECIDED 2026-09-21 (per user direction); PHASES 0–1 ARE IN — A1 is PLAYABLE (`src/run/ascension.ts`, the title's rung picker, the Fallen beat), phase 0 measured in §9b. Phases 2–3 (the companion's bestiary, star and Gaze exemption; the star colours) NOT BUILT. A2–A5 PROPOSED, not decided.**
 > Ascension 1 is Permadeath from the first fight, the Revive consumable the one way back, offered
 > at the end of the fight that took the hero — and **a Revive cannot save the companion** at any
 > rung. The three companion additions in §7 are decided the same day. Every rung above A1
@@ -261,7 +261,7 @@ excludes a companion's body (`profile.ts:238`). Three additions, all rungs inclu
 | Phase | What lands | Notes |
 |---|---|---|
 | 0 | **DONE 2026-09-21.** **Split the rule from the identity, and measure A1.** `companionOf`, the Scribe's *Grows!* label and the Act 1 count cap read `companionHeroId`; `mortal` is left meaning only what it says. Then `RunOptions.ascension` in `scripts/sim`, every entry mortal, the chart pilot, the report's `recruitsBySource` / `spent:revive` / end-of-run reasons | Nothing player-facing. The measurement is what §4 and §6 read, and it is the cheapest thing in this document. |
-| 1 | **A1.** `RunState.ascension`, the run-start rung picker, every entry mortal at A1, the Fallen beat (§3) in the post-fight chain, the map-side Revive hidden on A1 | The companion's row unbuttoned. `test/companion` grows a permadeath case; the tutorial ignores the rung. |
+| 1 | **DONE 2026-09-21.** **A1.** `RunState.ascension` (saved; an older file loads as Base), `Profile.ascensionCleared` and `RunRecord.ascension`, the title's rung sheet (*How hard?* — every rung up to `openAscension`, a Base clear opening A1; the summary's *New Run* keeps the rung), `isPermadeath` / `isMortal` / `fallenAfterFight` / `releaseFallen` in `src/run/ascension.ts`, the Fallen beat (`FallenScreen`) first in the post-fight chain with the KO'd left `down` on the roster until Continue so the level report reads the roster for who is still there, the map header's `Asc N` chip | The companion's row unbuttoned, its KO absorbed as at Base. The map-side Revive needed no hiding: nobody is ever `down` on the map at A1. The sim's `resolveFallen` reads the same verbs. `test/ascension.test.ts`. The tutorial forces rung 0. |
 | 2 | **The companion** (§7): the bestiary tab, `knownSpawnIds`, the `companion:<type>` star read at the Eyes' close, the Gaze exemption on spawn bodies | All rungs including Base. |
 | 3 | **Stars and colours** (§8): `Profile.ascension`, the unlock, the colour mapping, the storage change | The first rung a star can record. |
 | 4 | **A2** — the Mark and the ward on every Guardian | Measured against phase 0's A1 baseline. |

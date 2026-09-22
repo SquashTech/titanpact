@@ -420,6 +420,9 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
   // Beat ids are validated only as strings: the script is presentation, so a line renamed
   // between builds should cost one repeated speech, never the whole run.
   if (!isStringArray(value.tutorialSeenBeatIds)) reject('run.tutorialSeenBeatIds is not a list of ids');
+  // Absent on a file written before the ladder existed; such a run was Base.
+  const ascension = value.ascension === undefined ? 0 : value.ascension;
+  if (!isInt(ascension, 0)) reject('run.ascension is not a rung');
 
   return {
     roster,
@@ -439,6 +442,7 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
     brokenSeals: decodeBrokenSeals(value.brokenSeals, index),
     tutorial: value.tutorial,
     tutorialSeenBeatIds: [...value.tutorialSeenBeatIds],
+    ascension,
   };
 }
 
