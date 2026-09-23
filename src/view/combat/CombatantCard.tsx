@@ -30,7 +30,7 @@ export interface Popup {
 export interface FigureFx {
   key: number;
   type: string;
-  kind: 'element' | 'buff';
+  kind: 'element' | 'buff' | 'cannonball';
 }
 
 // ── Figure animation ────────────────────────────────────────────────────

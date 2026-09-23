@@ -120,13 +120,14 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
 
       <RosterPeek run={run} />
 
+      {/* No eyebrow and no idle flavor line (2026-09-23, per user direction): with an innate strip
+          and four moves on the stage the header was pushing the hero rail below the fold. */}
       <header className="draft-header">
-        <div className="draft-eyebrow">Spoils of Victory</div>
         <h2 className="draft-title">
           <span className="draft-title-glow" aria-hidden="true">
-            Recruit Contract
+            Recruit a Hero
           </span>
-          Recruit Contract
+          Recruit a Hero
         </h2>
 
         {/* Contracts owned as seal pips; the leftmost dims while a signable hero is on stage. */}
@@ -150,11 +151,12 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
           </span>
         </div>
 
-        <p className={`draft-flavor${signed ? ' is-live' : ''}`} key={signed ?? 'idle'}>
-          {signed
-            ? `${signed} signed on. ${contracts > 0 ? `${contracts} Contract${contracts === 1 ? '' : 's'} left.` : 'No Contracts left.'}`
-            : 'A beaten champion will fight for you — for the price of one Contract.'}
-        </p>
+        {/* Only once something has been signed: this line reports, it no longer describes. */}
+        {signed && (
+          <p className="draft-flavor is-live" key={signed}>
+            {`${signed} signed on. ${contracts > 0 ? `${contracts} Contract${contracts === 1 ? '' : 's'} left.` : 'No Contracts left.'}`}
+          </p>
+        )}
       </header>
 
       <div className="draft-stage">

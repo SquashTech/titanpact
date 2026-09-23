@@ -113,6 +113,11 @@ export function playBeatSfx(beat: Beat): void {
     case 'StatusDetonated':
       playSfx('detonate');
       break;
+    // A passive whose payload is damage (Broadside's volley, Dread's Nightmare): the same burst
+    // a detonation gets, pitched down — it is a blow nobody declared.
+    case 'PassiveTriggered':
+      if (beat.popups.some((p) => p.className === 'popup-damage')) playSfx('detonate', { pitch: 0.7 });
+      break;
     case 'Healed':
       playSfx('heal');
       break;

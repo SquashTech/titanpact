@@ -4814,6 +4814,52 @@ textarea,
   100% { transform: rotate(var(--a)) translateX(46px) scale(0.3); opacity: 0; }
 }
 
+/* CANNONBALL — Broadside's volley (Scallywag, docs/innate-passives.md §7). Three iron shot
+   arc in from off the near edge, each landing a beat after the last, and the impact ring goes
+   off under the third. Not a type effect: it is drawn in iron whatever the hero, because the
+   picture IS the passive. --fx is the owner's type colour, used only for the muzzle glow. */
+.type-fx-cannonball::before {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 3px solid #cfd4dc;
+  box-shadow: 0 0 10px var(--fx-a);
+  animation: fx-cannon-ring 420ms ease-out both;
+  animation-delay: 520ms;
+}
+
+.type-fx-cannonball::after {
+  display: none;
+}
+
+.type-fx-cannonball i {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  /* Lit from the upper left like every other round object on the field. The long shadow to the
+     left is the trail: at this size a bare dot crossing a dark field is easy to miss. */
+  background: radial-gradient(circle at 34% 30%, #b6bcc6, #33383f 60%, #16191e);
+  box-shadow:
+    -14px 3px 10px -4px rgba(var(--fx-rgb), 0.55),
+    -26px 6px 14px -6px rgba(var(--fx-rgb), 0.25),
+    0 0 7px rgba(0, 0, 0, 0.7);
+  animation: fx-cannon-fly 440ms cubic-bezier(0.3, 0, 0.9, 0.5) both;
+  animation-delay: calc(var(--i) * 150ms);
+}
+
+/* In low and fast from the left, rising slightly as it comes — a flat trajectory, not a lob. */
+@keyframes fx-cannon-fly {
+  0% { transform: translate(-96px, 26px) scale(0.55); opacity: 0; }
+  14% { opacity: 1; }
+  88% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(6px, -2px) scale(1.25); opacity: 0; }
+}
+
+@keyframes fx-cannon-ring {
+  0% { transform: scale(0.25); opacity: 0.95; }
+  100% { transform: scale(3.2); opacity: 0; }
+}
+
 /* FIRE — tongues of flame climbing the figure from the ground, each one
    flickering as it rises; a warm bloom at the base is what lights the sprite. */
 .type-fx-fire::before {

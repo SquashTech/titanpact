@@ -8,6 +8,7 @@ import type {
   MoveUsedEvent,
   StatChangedEvent,
   StatusAppliedEvent,
+  StatusRemovedEvent,
 } from '../../engine/events';
 import type { CombatState, Side } from '../../engine/state';
 import { moveForHero } from '../../engine/state';
@@ -128,8 +129,21 @@ function castLabel(move: MoveDefinition): string {
 export interface BeatFx {
   combatantId: string;
   type: string;
-  kind: 'element' | 'buff';
+  /**
+   * 'element' is the move's type manifesting on a foe and 'buff' the universal grant; 'cannonball'
+   * is Broadside's volley (PASSIVE_FX), a passive whose payload is a picture of its own rather
+   * than of its type.
+   */
+  kind: 'element' | 'buff' | 'cannonball';
 }
+
+/**
+ * A passive whose payload wants its own animation rather than its owner's element. Keyed by
+ * passive id, the same way classIcons.tsx keys a Class's glyph — presentation, authored per card.
+ */
+const PASSIVE_FX: Record<string, BeatFx['kind']> = {
+  broadsideFire: 'cannonball',
+};
 
 export interface Beat extends BeatFlavor {
   /** Events to apply, in order, when this beat is revealed. */
@@ -243,6 +257,8 @@ export function buildBeats(
   playerSide: Side
 ): Beat[] {
   const name = (id: string) => heroes[combatants[id]?.heroId]?.name ?? id;
+  /** A combatant's primary type — what a passive's own effect is tinted in, having no move to read. */
+  const ownerType = (id: string) => heroes[combatants[id]?.heroId]?.types[0] ?? 'Iron';
   const beats: Beat[] = [];
   // Events with no beat of their own ride along on the next beat that has one.
   let carry: CombatEvent[] = [];
@@ -482,6 +498,37 @@ export function buildBeats(
               bannerLead: `${label} · ${who}`,
               bannerFocus: deltaSummary(groups[0].changes),
               bannerFocusKind: changes.every((c) => c.delta < 0) ? 'debuff' : 'buff',
+            }
+          );
+        } else if (effectKind === 'damage' && events[i]?.type === 'HpChanged') {
+          // EVERY consecutive HpChanged, each with the Fainted that may trail it: a group-target
+          // effect (Broadside's volley, Dread's Nightmare) is one blow with several landings.
+          const hits: HpChangedEvent[] = [];
+          while (events[i]?.type === 'HpChanged') {
+            const hp = events[i++] as HpChangedEvent;
+            hits.push(hp);
+            applied.push(hp);
+            if (events[i]?.type === 'Fainted') applied.push(events[i++]);
+          }
+          // The status the payload spent (Broadside's magazine), so the chip clears on the same beat.
+          while (events[i]?.type === 'StatusRemoved' && (events[i] as StatusRemovedEvent).combatantId === e.combatantId) {
+            applied.push(events[i++]);
+          }
+          const struck = hits.map((hp) => ({ hp, amount: hp.previousHp - hp.newHp })).filter((h) => h.amount > 0);
+          const who = joinNames(struck.map((h) => name(h.hp.combatantId)));
+          const total = struck.reduce((sum, h) => sum + h.amount, 0);
+          const fxKind = PASSIVE_FX[e.passiveId];
+          push(
+            applied,
+            `${label} tears into ${who} for ${total} damage!`,
+            struck.map((h) => ({ combatantId: h.hp.combatantId, text: `-${h.amount}`, className: 'popup-damage' })),
+            {
+              bannerLead: `${label} · ${ownerName}`,
+              bannerFocus: `-${total}`,
+              bannerFocusKind: 'damage',
+              ...(fxKind
+                ? { fx: struck.map((h) => ({ combatantId: h.hp.combatantId, type: ownerType(e.combatantId), kind: fxKind })) }
+                : {}),
             }
           );
         } else {
