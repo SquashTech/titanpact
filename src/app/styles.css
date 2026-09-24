@@ -13767,19 +13767,6 @@ button.star-shop-bundle-face {
   align-items: flex-start;
 }
 
-.enemy-scout-grid-dense .enemy-scout-verdict {
-  grid-column: 3;
-  grid-row: 2;
-  width: 18px;
-  height: 18px;
-  margin: 0;
-}
-
-.enemy-scout-grid-dense .enemy-scout-verdict > svg {
-  width: 12px;
-  height: 12px;
-}
-
 /* The same plate every hero card in the run wears (the shared plate rule
    below), washed in the enemy's own type, with the name under the figure —
    a scouted enemy is read here, not only counted. */
@@ -14148,6 +14135,12 @@ button.star-shop-bundle-face {
   text-shadow: 0 0 10px rgba(var(--band-rgb), 0.55);
 }
 
+/* The whole interaction, said once where it happens: tap the two that open. */
+.squad-band-hint {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
 .squad-grid-row-cells {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -14181,12 +14174,6 @@ button.star-shop-bundle-face {
   column-gap: 8px;
   align-items: center;
   align-content: center;
-}
-
-/* The move-here key sits on the row's right edge, so a cell that wears one
-   keeps its text clear of it. */
-.squad-slot.filled.drop-target {
-  padding-right: 30px;
 }
 
 .squad-slot.filled .roster-card-portrait {
@@ -14252,24 +14239,15 @@ button.star-shop-bundle-face {
   color: var(--text-dim);
 }
 
-.squad-slot.selected {
-  border-color: var(--accent);
-  background: var(--selected-fill);
-}
-
-.squad-slot.drop-target {
-  border-color: var(--accent);
-}
-
 .squad-slot.drag-over {
   border-color: var(--accent);
   background: var(--selected-fill);
 }
 
-/* The move-here key (SquadSelectScreen SquadSlot): on every cell the held hero
-   can land in, since a tap on the cell itself only picks its hero up. In the
-   accent, raised off the cell's corner, so the one control that commits a
-   move is the one that looks like a button. */
+/* The Revive key (SquadSelectScreen SquadSlot): on a downed hero's cell while a
+   Revive is held, raised off the cell's corner so the one control that spends
+   something is the one that looks like a button. It was the move-here key's
+   shape until a tap alone picked the leads (2026-09-24). */
 .squad-slot-swap {
   position: absolute;
   top: 50%;
@@ -14301,16 +14279,9 @@ button.star-shop-bundle-face {
   transform: scale(0.92);
 }
 
-/* The empty cell is the one place a plain tap still lands the hero, so its key
-   sits inside the recess rather than on a corner it does not draw. */
-.squad-slot.empty .squad-slot-swap {
-  right: 12px;
-}
-
 /* A hero a fight left down (run/wounds.ts): on the roster, off the field. Greyed
    like the old Reserve band was, since "not going" is the same read; the one
-   thing it can wear is the Revive key, in the phoenix's gold rather than the
-   swap key's, so the two keys never read as one verb. */
+   thing it can wear is the Revive key, in the phoenix's gold. */
 .squad-slot.filled.is-down {
   opacity: 0.62;
   filter: saturate(0.4);

@@ -56,7 +56,7 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
   squad: tip(
     'squad',
     'Lead Order',
-    'Your whole roster fights. Set the order: the first two start on the field, the rest wait on the bench.'
+    'Your whole roster fights. Tap the two heroes you want to start on the field; the rest wait on the bench.'
   ),
   levelUp: tip(
     'levelUp',

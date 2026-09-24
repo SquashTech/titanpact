@@ -65,19 +65,13 @@ function shuffled<T>(items: readonly T[]): T[] {
 interface SquadSlotProps {
   hero?: HeroDefinition;
   entry?: RosterEntry;
-  selected: boolean;
-  dropTarget: boolean;
   dragOver: boolean;
   /** A fight left this hero down (run/wounds.ts): not fielded, not picked up, not swapped. */
   down: boolean;
-  /** Another hero is held and may land here: the cell wears its move-here key. */
-  swapTarget: boolean;
   /** A Revive is held and this hero is down: the cell wears the key that spends it. */
   onRevive?: () => void;
-  /** Tap: pick this hero up (or put it down); on an empty cell, land the held hero here. */
+  /** Tap: a benched hero steps into the lead; a lead is kept for the next tap's pair. */
   onActivate: () => void;
-  /** The move-here key: swap the held hero into this cell. */
-  onSwapHere: () => void;
   /** Hold: open the hero's sheet. Absent on an empty cell, which has nothing to review. */
   onInspect?: () => void;
   onDragStart: (e: DragEvent) => void;
@@ -99,22 +93,18 @@ interface SquadSlotProps {
  * once the pointer travels 12px, which any drag does long before `dragstart`, and it swallows the
  * click that a completed hold would otherwise deliver to the tap handler.
  *
- * A tap SELECTS (2026-09-14, per user direction); it never swaps. Tap-then-tap used to trade the two
- * cells, so reading a second hero's matchups moved the first one — the swap is its own key now,
- * drawn on every cell the held hero can land in, and the key alone commits a move. The key stops
- * its pointer events at itself so the cell's own tap under it does not fire and re-select.
+ * A tap PICKS A LEAD (2026-09-24, per user direction): the player taps the two heroes that open
+ * the fight and that is the whole interaction. It replaced tap-to-select plus a move-here key on
+ * every landing cell (2026-09-14), which was three taps and a hunt for the key per change — and
+ * the matchup read that made selecting worth a tap already sits on every cell (MatchupRow).
  */
 function SquadSlot({
   hero,
   entry,
-  selected,
-  dropTarget,
   dragOver,
   down,
-  swapTarget,
   onRevive,
   onActivate,
-  onSwapHere,
   onInspect,
   onDragStart,
   onDragOver,
@@ -125,15 +115,13 @@ function SquadSlot({
   const press = useLongPress(onInspect, onActivate);
   return (
     <div
-      className={`squad-slot${hero ? ' filled' : ' empty'}${selected ? ' selected' : ''}${dropTarget ? ' drop-target' : ''}${
-        dragOver ? ' drag-over' : ''
-      }${down ? ' is-down' : ''}`}
+      className={`squad-slot${hero ? ' filled' : ' empty'}${dragOver ? ' drag-over' : ''}${down ? ' is-down' : ''}`}
       style={hero ? ({ '--plate-color': getTypeColor(hero.types[0]) } as CSSProperties) : undefined}
       role="button"
       tabIndex={0}
       draggable={!!hero && !down}
       aria-label={
-        hero && entry ? `${hero.name}, level ${levelOf(entry)} — ${down ? 'down, hold to review' : 'tap to pick up, hold to review'}` : 'Empty slot'
+        hero && entry ? `${hero.name}, level ${levelOf(entry)} — ${down ? 'down, hold to review' : 'tap to lead, hold to review'}` : 'Empty slot'
       }
       // The cell had `role="button"` and a tab stop and answered neither key. Enter and Space now
       // do what a tap does; the sheet is keyboard-reachable through the roster button in the corner.
@@ -150,21 +138,6 @@ function SquadSlot({
       {...press}
     >
       {children}
-      {swapTarget && (
-        <button
-          type="button"
-          className="squad-slot-swap"
-          aria-label={hero ? `Swap with ${hero.name}` : 'Move here'}
-          onPointerDown={(e) => e.stopPropagation()}
-          onPointerUp={(e) => e.stopPropagation()}
-          onClick={(e) => {
-            e.stopPropagation();
-            onSwapHere();
-          }}
-        >
-          <HubGlyph name="swap" />
-        </button>
-      )}
       {onRevive && (
         <button
           type="button"
@@ -209,13 +182,12 @@ function ScoutedPassive({ hero }: { hero: HeroDefinition }) {
 /**
  * One hero against one scouted enemy: up for a matchup the hero comes out ahead in, down for one it
  * comes out behind in, and an empty slot otherwise — the slot is always drawn so nothing changes
- * height when a verdict comes or goes. Under an enemy chip while a hero is held, and in every hero
- * cell's row (`small`).
+ * height when a verdict comes or goes. In every hero cell's row.
  */
-function MatchupArrow({ verdict, small = false }: { verdict: 'up' | 'down' | null; small?: boolean }) {
+function MatchupArrow({ verdict }: { verdict: 'up' | 'down' | null }) {
   return (
     <span
-      className={`enemy-scout-verdict${verdict ? ` is-${verdict}` : ''}${small ? ' enemy-scout-verdict-small' : ''}`}
+      className={`enemy-scout-verdict enemy-scout-verdict-small${verdict ? ` is-${verdict}` : ''}`}
       aria-label={verdict === 'up' ? 'Good matchup' : verdict === 'down' ? 'Bad matchup' : undefined}
     >
       {verdict && (
@@ -242,13 +214,13 @@ function MatchupRow({ heroTypes, enemies }: { heroTypes: readonly TypeId[]; enem
       aria-label={`${up} good ${up === 1 ? 'matchup' : 'matchups'}, ${down} bad`}
     >
       {verdicts.map((verdict, i) => (
-        <MatchupArrow key={enemies[i].rosterId} verdict={verdict} small />
+        <MatchupArrow key={enemies[i].rosterId} verdict={verdict} />
       ))}
     </div>
   );
 }
 
-/** Lead order before every fight node — the whole roster fields (docs/combat.md "The fielded roster"). Drag, or tap then the move-here key, swaps two cells; a tap alone picks a hero up. */
+/** Lead order before every fight node — the whole roster fields (docs/combat.md "The fielded roster"). Tap the two heroes that open; drag still swaps any two cells. */
 export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Props) {
   const [slots, setSlots] = useState<(string | null)[]>(() => {
     // The downed last, so the ones who can fight hold the field.
@@ -267,7 +239,9 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
     const seen = profile.runsCompleted > 0;
     return shuffled(encounter.run.roster.filter((entry) => seen || !reserved.has(entry.rosterId)));
   });
-  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+  // The active cell the next benched tap takes: the lead tapped LONGER ago, so the last two heroes
+  // tapped are always the pair — tap the two you want and they open, whatever stood there before.
+  const [staleLead, setStaleLead] = useState<0 | 1>(0);
   const [dragOverSlot, setDragOverSlot] = useState<number | null>(null);
   /** `enemy`: a scouted-opponent sheet gets no relic grants folded in. */
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry; enemy: boolean } | null>(null);
@@ -275,12 +249,6 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
   const [showRoster, setShowRoster] = useState(false);
   const location = useAmbientLocation();
   const rosterById = new Map(run.roster.map((r) => [r.rosterId, r]));
-
-  // The hero the player has picked up: its arrows land under the scouted enemies while it is held,
-  // echoing the row its own cell already wears (MatchupRow) against the faces across the field.
-  // Post-Evolution types, since that is the typing that fights.
-  const heldEntry = selectedSlot !== null && slots[selectedSlot] ? rosterById.get(slots[selectedSlot]!) : undefined;
-  const heldTypes = heldEntry ? rosterEntryTypes(rosterHeroes[heldEntry.heroId], heldEntry) : null;
 
   function isDownSlot(index: number): boolean {
     const id = slots[index];
@@ -319,21 +287,23 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
     });
   }
 
-  // A tap picks a hero up or puts it down; tapping a second hero picks THAT one up. Only an empty
-  // cell lands the held hero on a tap, since it has nothing of its own to pick up.
+  // A benched hero steps into the lead, trading cells with the lead it displaces: a vacant lead
+  // cell (empty, or holding a downed hero) first, else the stale one. Tapping a lead keeps it —
+  // it becomes the fresh half of the pair, so the NEXT benched tap takes the other cell.
   function handleSlotClick(index: number) {
-    if (slots[index] === null) {
-      if (selectedSlot !== null) handleSwapHere(index);
+    if (slots[index] === null || isDownSlot(index)) return;
+    if (index < 2) {
+      setStaleLead(index === 0 ? 1 : 0);
       return;
     }
-    if (isDownSlot(index)) return;
-    setSelectedSlot(selectedSlot === index ? null : index);
-  }
-
-  function handleSwapHere(index: number) {
-    if (selectedSlot === null) return;
-    swapSlots(selectedSlot, index);
-    setSelectedSlot(null);
+    const vacant = ([0, 1] as const).find((i) => standingAt(i) === null);
+    const target = vacant ?? staleLead;
+    setSlots((prev) => {
+      const next = [...prev];
+      [next[target], next[index]] = [next[index], next[target]];
+      return next;
+    });
+    setStaleLead(target === 0 ? 1 : 0);
   }
 
   // Writes the arrangement back to the roster so it seeds the next fight's grid. Nulls are dropped so
@@ -380,7 +350,6 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
                           <TypeBadge key={t} type={t} />
                         ))}
                       </div>
-                      <MatchupArrow verdict={heldTypes ? matchupVerdict(heldTypes, types) : null} />
                     </div>
                   );
                 }
@@ -403,7 +372,6 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
                       ))}
                     </div>
                     <ScoutedPassive hero={hero} />
-                    <MatchupArrow verdict={heldTypes ? matchupVerdict(heldTypes, types) : null} />
                   </button>
                 );
               })}
@@ -422,14 +390,13 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
                 <div key={rowIndex} className={`squad-band squad-band-${row.key}`}>
                   <div className="squad-band-head">
                     <span className="squad-band-label">{row.label}</span>
+                    {row.key === 'active' && standingCount > 2 && <span className="squad-band-hint">Tap two to lead</span>}
                   </div>
                   <div className="squad-grid-row-cells">
                     {row.indices.map((index) => {
                       const rosterId = slots[index];
                       const entry = rosterId ? rosterById.get(rosterId) : undefined;
                       const hero = entry ? rosterHeroes[entry.heroId] : undefined;
-                      const isSelected = selectedSlot === index;
-                      const isDropTarget = selectedSlot !== null && canSwap(selectedSlot, index);
                       const isDragOver = dragOverSlot === index;
                       const isDown = isDownSlot(index);
                       return (
@@ -437,14 +404,10 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
                           key={index}
                           hero={hero}
                           entry={entry}
-                          selected={isSelected}
-                          dropTarget={isDropTarget}
                           dragOver={isDragOver}
                           down={isDown}
-                          swapTarget={isDropTarget}
                           onRevive={isDown && rosterId && canUseRevive(run) ? () => handleRevive(rosterId) : undefined}
                           onActivate={() => handleSlotClick(index)}
-                          onSwapHere={() => handleSwapHere(index)}
                           onInspect={hero && entry ? () => setInspecting({ hero, entry, enemy: false }) : undefined}
                           onDragStart={(e: DragEvent) => {
                             if (!hero) return;
@@ -464,7 +427,6 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
                             const raw = e.dataTransfer.getData(DRAG_KEY);
                             if (!raw) return;
                             swapSlots(Number(raw), index);
-                            setSelectedSlot(null);
                           }}
                         >
                           {hero && entry ? (
