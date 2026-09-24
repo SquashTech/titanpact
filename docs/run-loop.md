@@ -649,22 +649,26 @@ the Bag panel's kind chips and the Guild Hall shelf's potions.
 **The resolve order is a track on the horizon** (`OrderTrack.tsx`, `orderMarks.ts`, 2026-09-24,
 per user direction): the four active fighters as half-size sprites — 24px, exactly half the 48px
 source — first to last, left to right, centred where "VS" stood, which steps aside while the
-track is up. No box and no fill: each sprite stands on a short tick in its side's zone tint (the
-enemy red, the ally blue), so which side acts when reads without a name. Its history is three
+track is up. A gold rail runs through it and fades into the horizon line at both ends; each
+fighter sits in a small glass portrait rimmed in its side's colour (the enemy red, the ally
+blue), so which side acts when reads without a name; and a gold chevron on the rail between each
+pair says it is a sequence before any face is read. The middle of the field is the track's
+alone: the type chips hang at the OUTER shoulder of each figure, the right-hand column mirrored
+so its chips sit against the screen's right edge. Its history is three
 tries: a ribbon of portraits under the ally status bands, then along the very top of the screen
 (both read as a plaque bolted onto a scene); then a numbered coin on each figure's shoulder
 (2026-09-17), later struck gold / silver / bronze / iron by place — which asked the eye to find
 four numbers in four corners and sort them, and did not work in play. The horizon is the one band
 both rows face, so a line of faces there is read in a single pass without a plaque. **A tie** is a
-gold `=` between the two it joins: tied entries share a rank, the RNG decides, and the track says
+gold `=` where the chevron would be: tied entries share a rank, the RNG decides, and the track says
 so rather than picking one. The order is `previewOrder` (`engine/combat/priority.ts`): the same
 keys `orderActions` sorts on, no RNG spun. The player's declared actions carry their real
 bracket — a priority move, a switch (`⇄`) or a Rest (`☾`) moves its sprite and hangs the bracket
-as a pip over it; a rolled bracket shows `?` at 0 — and the enemy's are unknown until the round
+as a pip off its frame; a rolled bracket shows `?` at 0 — and the enemy's are unknown until the round
 plays, so they sit at bracket 0. **During playback the track is the real order**: `resolveRound`
 emits `RoundOrdered` — every action's settled bracket and Speed, right after `RoundStarted` — and
 the track walks it beat by beat: the last combatant whose turn began (`TurnStarted`, a Daze
-block, a voluntary switch) steps forward, lit in its side's colour, the ones before it fall back,
+block, a voluntary switch) steps forward, its rim lit in its side's colour, the ones before it fall back,
 and the round's end retires them all. **A bracket that changed the order moves its sprite**
 (`bracketEffect`): a cut ahead of someone Speed would have sent first is lifted, its pip lit gold;
 a hold behind someone it would have sent later is sunk; a +1 on the hero Speed already favoured,

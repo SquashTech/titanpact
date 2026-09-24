@@ -2400,19 +2400,20 @@ textarea,
 }
 
 /* The resolve order, laid on the horizon (OrderTrack.tsx, 2026-09-24, per user direction): the
-   four fighters as half-size sprites, first to last, left to right. It replaced a numbered coin
-   on each figure (2026-09-17), which asked the eye to find four numbers in four corners and sort
-   them; and before that a ribbon of portraits under the ally row and then along the top of the
-   screen, both of which read as a plaque bolted onto a scene. This one has no box and no fill: it
-   stands ON the horizon the way the skyline does, each sprite on a short tick in its own zone's
-   tint (the enemy's red, the ally's blue — the two washes at the arena's edges), so which side
-   acts when is read without reading a name.
+   four fighters first to last, left to right. It replaced a numbered coin on each figure, which
+   asked the eye to find four numbers in four corners and sort them; and before that a ribbon of
+   portraits under the ally row and then along the top of the screen, both of which read as a
+   plaque bolted onto a scene. This one is threaded ON the horizon: a gold rail runs through it
+   and fades into the horizon line at both ends, each fighter sits in a small glass portrait
+   rimmed in its side's colour (the enemy's red, the ally's blue — the two washes at the arena's
+   edges), and a chevron on the rail between each pair says it is a sequence before any face is
+   read. The sprite is 24px, exactly half the 48px source, the one downscale that keeps every
+   source pixel the same size.
 
-   24px is exactly half the 48px source, the one downscale that keeps every source pixel the same
-   size. A tie is a gold "=" between the two it joins — the RNG decides, and the track says so
-   rather than picking one. A bracket hangs its pip over the sprite; where it actually moved the
-   entry (priority.ts bracketEffect) the sprite is lifted for a cut and sunk for a hold. During
-   playback the track walks the beats: done falls back, the actor of the beat steps forward. */
+   A tie takes a gold "=" where the chevron would be. A bracket hangs its pip off the frame;
+   where it actually moved the entry (priority.ts bracketEffect) the frame is lifted for a cut
+   and sunk for a hold. During playback the track walks the beats: done dims, the actor of the
+   beat steps forward and its rim lights. */
 .order-track {
   position: absolute;
   left: 50%;
@@ -2420,71 +2421,121 @@ textarea,
   z-index: 2;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 3px;
+  padding: 0 14px;
   transform: translate(-50%, -50%);
   pointer-events: none;
   animation: order-track-arrive var(--dur-mid) var(--ease-out) both;
 }
 
+/* A pool of shade under the track, so it reads over any Location's horizon glow. */
+.order-track::before {
+  content: '';
+  position: absolute;
+  inset: -10px -6px;
+  z-index: -1;
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(5, 7, 11, 0.7), rgba(5, 7, 11, 0.35) 55%, transparent 100%);
+}
+
+/* The rail, fading into the horizon at both ends. */
+.order-track::after {
+  content: '';
+  position: absolute;
+  left: -18px;
+  right: -18px;
+  top: 50%;
+  z-index: -1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(232, 196, 120, 0.5) 18%,
+    rgba(232, 196, 120, 0.5) 82%,
+    transparent
+  );
+}
+
 @keyframes order-track-arrive {
   from {
     opacity: 0;
+    transform: translate(-50%, -50%) scale(0.94);
   }
   to {
     opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
   }
 }
 
 .order-track-step {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 3px;
+}
+
+.order-track-arrow {
+  width: 6px;
+  height: 10px;
+  flex: none;
+  fill: none;
+  stroke: rgba(240, 206, 132, 0.9);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 3px rgba(232, 180, 90, 0.55)) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.8));
+}
+
+.order-track-tie {
+  width: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  color: #f0ce84;
+  text-shadow: 0 0 4px rgba(232, 180, 90, 0.6), 0 1px 1px rgba(0, 0, 0, 0.8);
 }
 
 .order-track-slot {
   --side-rgb: 74, 144, 217;
   position: relative;
   display: block;
-  width: 24px;
-  height: 24px;
-  transition: transform var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out);
+  transition: transform var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out),
+    filter var(--dur-mid) var(--ease-out);
 }
 
 .order-track-slot.is-enemy {
   --side-rgb: 217, 83, 79;
 }
 
-/* The tick the sprite stands on: its side, in its side's light. */
-.order-track-slot::after {
-  content: '';
-  position: absolute;
-  left: 4px;
-  right: 4px;
-  bottom: -2px;
-  height: 2px;
-  border-radius: 1px;
-  background: rgba(var(--side-rgb), 0.9);
-  box-shadow: 0 0 5px rgba(var(--side-rgb), 0.7);
+/* Glass, lit from above in the side's colour, rimmed in it, and seated with a dark drop. */
+.order-track-frame {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid rgba(var(--side-rgb), 0.8);
+  background: radial-gradient(circle at 50% 30%, rgba(var(--side-rgb), 0.38), rgba(13, 16, 24, 0.96) 74%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -5px 8px rgba(0, 0, 0, 0.4),
+    0 2px 5px rgba(0, 0, 0, 0.65),
+    0 0 8px -2px rgba(var(--side-rgb), 0.7);
+  transition: box-shadow var(--dur-mid) var(--ease-out), border-color var(--dur-mid) var(--ease-out);
 }
 
 .order-track-sprite {
   display: block;
+  flex: none;
   width: 24px;
   height: 24px;
+  margin-bottom: 1px;
   image-rendering: pixelated;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.85));
-  transition: filter var(--dur-mid) var(--ease-out);
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.7));
 }
 
-.order-track-tie {
-  font-size: 11px;
-  font-weight: 800;
-  line-height: 1;
-  color: #e8c860;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-}
-
-/* The bracket, hung off the sprite's top corner so the face stays the thing read first. */
+/* The bracket, hung off the frame's top corner so the face stays the thing read first. */
 .order-track-pip {
   position: absolute;
   top: -6px;
@@ -2521,19 +2572,25 @@ textarea,
 }
 
 .order-track-slot.is-done {
-  opacity: 0.35;
+  opacity: 0.4;
+  filter: saturate(0.4);
 }
 
 .order-track-slot.is-current {
-  transform: scale(1.3);
+  transform: scale(1.2);
 }
 
-.order-track-slot.is-current .order-track-sprite {
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 4px rgba(var(--side-rgb), 0.95));
+.order-track-slot.is-current .order-track-frame {
+  border-color: rgb(var(--side-rgb));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -5px 8px rgba(0, 0, 0, 0.3),
+    0 2px 5px rgba(0, 0, 0, 0.65),
+    0 0 12px 1px rgba(var(--side-rgb), 0.9);
 }
 
-/* Tappable while commanding: the game says the order in words. The hit area grows past the 24px
-   sprite without moving it. */
+/* Tappable while commanding: the game says the order in words. The hit area grows past the
+   frame without moving it. */
 .order-track-slot.is-tappable {
   pointer-events: auto;
   cursor: pointer;
@@ -3327,42 +3384,31 @@ textarea,
   width: 100%;
 }
 
-/* Type chips at the plate (2026-09-24, per user direction). They hung at the
-   sprite's top shoulder on both sides, which on the near side is the horizon
-   — the one band the order track, the far side's stat mods and the near
-   side's chips were all crowding. Now each side's chips sit against its own
-   nameplate, away from the middle: the near side's on the left, stacked
-   upward from the platform line just above the name and bars; the far side's
-   on the right, stacked downward from just under its MP bar (the stage's top
-   edge, the card being mirrored). The near side's left stat mods climb above
-   the chips (`--type-count`, set inline by CombatantCard) so the two never
-   share a corner, and the far side's KO tag takes the left shoulder the chips
-   vacated. Measured off the stage rather than the card so they travel with
-   the figure whichever way round it is. */
-.team-row.ally .combatant-types {
-  top: auto;
-  left: 0;
-  bottom: calc(
-    var(--figure-plate-pad) + var(--figure-name-h) + var(--figure-name-gap) + var(--figure-bar-h) * 2 +
-      var(--figure-bar-gap) + var(--figure-status-gap) + var(--figure-status-h) + 2px
-  );
-}
-
-.team-row.ally .stat-mod-corner-left {
-  bottom: calc(
-    var(--figure-plate-pad) + var(--figure-name-h) + var(--figure-name-gap) + var(--figure-bar-h) * 2 +
-      var(--figure-bar-gap) + var(--figure-status-gap) + var(--figure-status-h) + 2px + var(--type-count, 1) * 25px
-  );
-}
-
+/* Type chips hang at the sprite's shoulder and the KO tag at its other
+   shoulder, and on the far side the sprite is at the bottom of the card.
+   Both measured off the stage rather than the card so they travel with the
+   figure whichever way round it is. */
 .team-row.enemy .combatant-types {
   top: calc(100% - var(--figure-stage-h) + 3px);
-  left: auto;
-  right: 0;
 }
 
 .team-row.enemy .fainted-tag {
   top: calc(100% - var(--figure-stage-h) + 6px);
+}
+
+/* The right-hand column is mirrored (2026-09-24, per user direction): its type
+   chips hang at the OUTER shoulder, against the screen's right edge, and its
+   KO tag takes the inner one. With the left column's chips already at the
+   left edge, nothing of either pair's identity sits in the middle of the
+   field, which is the order track's (.order-track). Every slot renders an
+   element (FightScreen renderActiveSlot), so the second child IS the right
+   column. */
+.team-row > .combatant-card:nth-child(2) .combatant-types {
+  left: auto;
+  right: 4px;
+}
+
+.team-row > .combatant-card:nth-child(2) .fainted-tag {
   right: auto;
   left: 8px;
 }

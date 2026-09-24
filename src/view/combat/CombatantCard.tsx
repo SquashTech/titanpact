@@ -279,12 +279,7 @@ export function CombatantCard({
   // effectiveTypes, not hero.types — a type-graft Evolution should retint the card too.
   const types = effectiveTypes(hero, combatant);
   const primaryType = types[0];
-  // `--type-count` lets the battlefield stack the near side's stat mods clear of its type chips (styles.css "Type chips at the plate").
-  const typeStyle = {
-    '--type-color': getTypeColor(primaryType),
-    '--type-rgb': getTypeColorRgb(primaryType),
-    '--type-count': types.length,
-  } as CSSProperties;
+  const typeStyle = { '--type-color': getTypeColor(primaryType), '--type-rgb': getTypeColorRgb(primaryType) } as CSSProperties;
 
   // Targeting always wins; otherwise tapping the figure opens its detail sheet.
   const canTarget = Boolean(targetable && !combatant.fainted);
