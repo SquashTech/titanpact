@@ -114,7 +114,8 @@ Contract, the reroll and the party mend) and **Smithy** (unchanged). It opens on
 Tavern's one lever on WHO shows up: a fresh shelf of the same size for `TAVERN_REROLL_BASE_COST` =
 10g, `TAVERN_REROLL_STEP` = +10 each time a visit (`rerollGuildHallOffers`, `src/run/shop.ts`),
 never a roster hero and never a face just turned away while the pool can spare one. It moves the
-odds on a bundle hero with gold rather than guaranteeing one; the figures are untuned and the sim
+odds on a bundle hero with gold rather than guaranteeing one, and is not offered at the Vigil,
+whose hires are free; the figures are untuned and the sim
 never rerolls. The same day the panel stopped dropping bundle hires: it resolved offer ids
 against the base-game list, so a bundle hero the roll picked never reached the shelf.
 

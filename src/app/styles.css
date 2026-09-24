@@ -32093,6 +32093,11 @@ button.star-shop-bundle-face {
   --plate-color: var(--hp-high);
 }
 
+/* A good left alone on its row (the Vigil's Contract, with no reroll beside it) takes the row. */
+.guild-hall-good.is-wide {
+  grid-column: 1 / -1;
+}
+
 /* The Tavern's reroll, lit in the hearth's own amber: it buys the room's next faces. */
 .guild-hall-good.is-reroll {
   --plate-color: rgb(var(--node-rgb));

@@ -915,7 +915,8 @@ export function App() {
 
   /** The Tavern's reroll (run/shop.ts): a fresh shelf of hires, dearer each time a visit. */
   function handleRerollTavern() {
-    if (screen.kind !== 'shop') return;
+    // The Vigil musters free hires, and does not reroll them.
+    if (screen.kind !== 'shop' || playerRun.map?.nodes[screen.nodeId]?.type === 'muster') return;
     let rolled: ReturnType<typeof rerollGuildHallOffers>;
     try {
       rolled = rerollGuildHallOffers(playerRun, guildHallOffersFor(recruitPool), screen.offers, screen.rerolls);

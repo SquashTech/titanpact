@@ -215,7 +215,7 @@ export function GuildHallPanel({
               name, gray sentence, price hard right — which is a shopping-cart line item, and it
               is what made the whole panel read as an invoice rather than as a counter. */}
           <div className="guild-hall-shelf">
-            <button className="guild-hall-good is-contract" disabled={!canBuyContract} onClick={() => setConfirmingContract(true)}>
+            <button className={`guild-hall-good is-contract${freeRecruits ? ' is-wide' : ''}`} disabled={!canBuyContract} onClick={() => setConfirmingContract(true)}>
               <span className="guild-hall-good-glyph">
                 <ResourceGlyph kind="contract" tone="inherit" />
               </span>
@@ -231,8 +231,10 @@ export function GuildHallPanel({
             </button>
 
             {/* The reroll (run/shop.ts): a fresh shelf of faces, dearer each time this visit. Dark
-                with nobody left to show — a pool the roster has emptied has nothing to reroll into. */}
-            <button className="guild-hall-good is-reroll" disabled={run.gold < rerollCost || offers.heroOfferIds.length === 0} onClick={onReroll}>
+                with nobody left to show — a pool the roster has emptied has nothing to reroll into.
+                Not at the Vigil (2026-09-24, per user direction): its hires are free, and gold
+                should not shop the whole pool for the finale. */}
+            {!freeRecruits && <button className="guild-hall-good is-reroll" disabled={run.gold < rerollCost || offers.heroOfferIds.length === 0} onClick={onReroll}>
               <span className="guild-hall-good-glyph">
                 <SectionGlyph name="reroll" />
               </span>
@@ -240,7 +242,7 @@ export function GuildHallPanel({
               <span className="guild-hall-good-price">
                 <ResourceGlyph kind="gold" /> {rerollCost}
               </span>
-            </button>
+            </button>}
 
             {/* The mend (run/wounds.ts), a night at the Tavern (2026-09-24, per user direction): the
                 one good here that is for everyone at once, so it takes the whole shelf, and since
