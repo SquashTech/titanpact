@@ -14079,72 +14079,21 @@ button.star-shop-bundle-face {
   color: var(--text-dim);
 }
 
-/* Player squad grid (SquadSelectScreen) — a fixed 2-wide/3-tall grid (the
-   roster hard cap) instead of a pick-order list: row 1 fields the fight,
-   row 2 is bench, row 3 sits out. Drag one cell onto another to swap
-   contents, or tap-then-tap on touch (mirrors RosterManagementScreen's
-   equip-slot select/target pattern below). */
+/* Player squad grid (SquadSelectScreen) — ONE fixed 2-wide/3-tall grid (the
+   roster hard cap), no Active or Bench zones (2026-09-24, per user direction):
+   the player taps the two heroes who open and every other one benches. The
+   cells never move; a picked cell lights up in the old Active band's blue. */
 .squad-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* One band per row of the rack. Each carries its own head — the label and
-   what the row means for the fight — and its own weight: the active pair is
-   the lit one, the bench is plain, the reserve is dimmed and its cells are
-   drained, so "these two open, these two rotate in, these two sit out" is
-   read from the shape of the screen before a word of it is. */
-.squad-band {
-  --band-rgb: 150, 160, 180;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px 8px 8px;
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(var(--band-rgb), 0.16);
-  background: linear-gradient(180deg, rgba(var(--band-rgb), 0.07), rgba(var(--band-rgb), 0.02));
-}
-
-.squad-band-active {
-  --band-rgb: 74, 144, 217;
-  border-color: rgba(var(--band-rgb), 0.45);
-  background:
-    radial-gradient(ellipse 90% 70% at 50% -20%, rgba(var(--band-rgb), 0.22), transparent 70%),
-    linear-gradient(180deg, rgba(var(--band-rgb), 0.1), rgba(var(--band-rgb), 0.03));
-  box-shadow: 0 0 22px -8px rgba(var(--band-rgb), 0.55), inset 0 1px 0 rgba(var(--band-rgb), 0.3);
-}
-
-.squad-band-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 0 2px;
-}
-
-.squad-band-label {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgb(var(--band-rgb));
-}
-
-.squad-band-active .squad-band-label {
-  text-shadow: 0 0 10px rgba(var(--band-rgb), 0.55);
-}
-
-/* The whole interaction, said once where it happens: tap the two that open. */
-.squad-band-hint {
-  font-size: 10px;
-  color: var(--text-dim);
-}
-
-.squad-grid-row-cells {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
+}
+
+/* The whole interaction, said once where it happens, with the count. */
+.squad-pick-hint {
+  margin: -2px 2px 6px;
+  font-size: 11px;
+  color: var(--text-dim);
 }
 
 .squad-slot {
@@ -14239,9 +14188,37 @@ button.star-shop-bundle-face {
   color: var(--text-dim);
 }
 
-.squad-slot.drag-over {
-  border-color: var(--accent);
-  background: var(--selected-fill);
+.squad-slot.filled.is-picked {
+  --pick-rgb: 74, 144, 217;
+  border-color: rgba(var(--pick-rgb), 0.9);
+  background:
+    radial-gradient(ellipse 90% 80% at 50% -20%, rgba(var(--pick-rgb), 0.3), transparent 70%),
+    linear-gradient(180deg, rgba(var(--pick-rgb), 0.16), rgba(var(--pick-rgb), 0.05));
+  box-shadow: var(--hairline), 0 0 0 1px rgba(var(--pick-rgb), 0.85), 0 0 18px -4px rgba(var(--pick-rgb), 0.75);
+}
+
+/* The pick's mark: a check on the cell's corner, so a picked hero reads as
+   chosen even at a glance past the glow. */
+.squad-slot-pick {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgb(74, 144, 217);
+  color: #fff;
+  box-shadow: 0 0 8px -1px rgba(74, 144, 217, 0.9);
+  animation: enemy-scout-verdict-in 0.22s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.squad-slot-pick > svg {
+  width: 13px;
+  height: 13px;
 }
 
 /* The Revive key (SquadSelectScreen SquadSlot): on a downed hero's cell while a

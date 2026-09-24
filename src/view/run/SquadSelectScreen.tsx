@@ -1,10 +1,9 @@
-import { useState, type CSSProperties, type DragEvent, type ReactNode } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import { rosterHeroes } from '../../data/content';
 import { allCombatants } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import type { HeroDefinition, TypeId } from '../../engine/content';
 import type { RunState, RosterEntry } from '../../run/state';
-import { reorderRoster } from '../../run/state';
 import type { Squad } from '../../run/squad';
 import { pickSquad } from '../../run/squad';
 import { rosterEntryTypes } from '../../run/progression';
@@ -40,18 +39,13 @@ interface Props {
 }
 
 /**
- * 2-wide grid in two BANDS, active over bench — always 6 cells (the roster cap), cells past the
- * roster render empty. Each band has its own header (2026-09-11, per user direction), because a
- * left-hand column of small words did not separate the rows. The third band, Reserve, went with
- * bring-6-pick-4 (2026-09-17): every fight fields the whole roster, so this is a lead-order screen.
+ * ONE 2-wide grid of the roster — always 6 cells (the roster cap), cells past the roster render
+ * empty. There are no Active and Bench zones any more (2026-09-24, per user direction): the player
+ * taps the two heroes who open the fight and confirms, and everyone else waits on the bench. The
+ * cells never move, so the grid reads the same fight to fight.
  */
 const SLOT_COUNT = 6;
-const SLOT_ROWS: readonly { key: string; label: string; indices: readonly number[] }[] = [
-  { key: 'active', label: 'Active', indices: [0, 1] },
-  { key: 'bench', label: 'Bench', indices: [2, 3, 4, 5] },
-];
-
-const DRAG_KEY = 'text/titanpact-squad-slot';
+const LEAD_COUNT = 2;
 
 function shuffled<T>(items: readonly T[]): T[] {
   const out = [...items];
@@ -65,19 +59,16 @@ function shuffled<T>(items: readonly T[]): T[] {
 interface SquadSlotProps {
   hero?: HeroDefinition;
   entry?: RosterEntry;
-  dragOver: boolean;
+  /** One of the two picked to open the fight. */
+  picked: boolean;
   /** A fight left this hero down (run/wounds.ts): not fielded, not picked up, not swapped. */
   down: boolean;
   /** A Revive is held and this hero is down: the cell wears the key that spends it. */
   onRevive?: () => void;
-  /** Tap: a benched hero steps into the lead; a lead is kept for the next tap's pair. */
+  /** Tap: pick this hero to lead, or un-pick it. */
   onActivate: () => void;
   /** Hold: open the hero's sheet. Absent on an empty cell, which has nothing to review. */
   onInspect?: () => void;
-  onDragStart: (e: DragEvent) => void;
-  onDragOver: (e: DragEvent) => void;
-  onDragLeave: () => void;
-  onDrop: (e: DragEvent) => void;
 }
 
 /**
@@ -89,39 +80,34 @@ interface SquadSlotProps {
  * why that `i` survived the twenty-seventh pass: it was not a redundant second route to the sheet
  * here, it was the only one.
  *
- * The hold has to share the cell with a tap AND an HTML5 drag, and does: the hook cancels its timer
- * once the pointer travels 12px, which any drag does long before `dragstart`, and it swallows the
- * click that a completed hold would otherwise deliver to the tap handler.
+ * The hook swallows the click that a completed hold would otherwise deliver to the tap handler.
  *
  * A tap PICKS A LEAD (2026-09-24, per user direction): the player taps the two heroes that open
- * the fight and that is the whole interaction. It replaced tap-to-select plus a move-here key on
- * every landing cell (2026-09-14), which was three taps and a hunt for the key per change — and
- * the matchup read that made selecting worth a tap already sits on every cell (MatchupRow).
+ * the fight, then Start Fight. It replaced Active/Bench bands with tap-to-select plus a move-here
+ * key on every landing cell, and the drag that went with them.
  */
 function SquadSlot({
   hero,
   entry,
-  dragOver,
+  picked,
   down,
   onRevive,
   onActivate,
   onInspect,
-  onDragStart,
-  onDragOver,
-  onDragLeave,
-  onDrop,
   children,
 }: SquadSlotProps & { children: ReactNode }) {
   const press = useLongPress(onInspect, onActivate);
   return (
     <div
-      className={`squad-slot${hero ? ' filled' : ' empty'}${dragOver ? ' drag-over' : ''}${down ? ' is-down' : ''}`}
+      className={`squad-slot${hero ? ' filled' : ' empty'}${picked ? ' is-picked' : ''}${down ? ' is-down' : ''}`}
       style={hero ? ({ '--plate-color': getTypeColor(hero.types[0]) } as CSSProperties) : undefined}
       role="button"
       tabIndex={0}
-      draggable={!!hero && !down}
+      aria-pressed={hero && !down ? picked : undefined}
       aria-label={
-        hero && entry ? `${hero.name}, level ${levelOf(entry)} — ${down ? 'down, hold to review' : 'tap to lead, hold to review'}` : 'Empty slot'
+        hero && entry
+          ? `${hero.name}, level ${levelOf(entry)} — ${down ? 'down, hold to review' : `${picked ? 'leading, tap to un-pick' : 'tap to lead'}, hold to review`}`
+          : 'Empty slot'
       }
       // The cell had `role="button"` and a tab stop and answered neither key. Enter and Space now
       // do what a tap does; the sheet is keyboard-reachable through the roster button in the corner.
@@ -131,13 +117,16 @@ function SquadSlot({
           onActivate();
         }
       }}
-      onDragStart={onDragStart}
-      onDragOver={onDragOver}
-      onDragLeave={onDragLeave}
-      onDrop={onDrop}
       {...press}
     >
       {children}
+      {picked && (
+        <span className="squad-slot-pick" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor" focusable="false">
+            <path d="M9.4 16.6 4.8 12l-1.9 1.9 6.5 6.5L21.1 8.7l-1.9-1.9Z" />
+          </svg>
+        </span>
+      )}
       {onRevive && (
         <button
           type="button"
@@ -220,10 +209,10 @@ function MatchupRow({ heroTypes, enemies }: { heroTypes: readonly TypeId[]; enem
   );
 }
 
-/** Lead order before every fight node — the whole roster fields (docs/combat.md "The fielded roster"). Tap the two heroes that open; drag still swaps any two cells. */
+/** Lead pick before every fight node — the whole roster fields (docs/combat.md "The fielded roster"). Tap the two heroes that open, then Start Fight. */
 export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Props) {
-  const [slots, setSlots] = useState<(string | null)[]>(() => {
-    // The downed last, so the ones who can fight hold the field.
+  const [slots] = useState<(string | null)[]>(() => {
+    // The downed last, so the ones who can fight read first.
     const rank = (id: string) => (run.roster.find((r) => r.rosterId === id)!.down ? 1 : 0);
     const ids = run.roster.map((r) => r.rosterId).sort((a, b) => rank(a) - rank(b));
     return Array.from({ length: SLOT_COUNT }, (_, i) => ids[i] ?? null);
@@ -239,10 +228,12 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
     const seen = profile.runsCompleted > 0;
     return shuffled(encounter.run.roster.filter((entry) => seen || !reserved.has(entry.rosterId)));
   });
-  // The active cell the next benched tap takes: the lead tapped LONGER ago, so the last two heroes
-  // tapped are always the pair — tap the two you want and they open, whatever stood there before.
-  const [staleLead, setStaleLead] = useState<0 | 1>(0);
-  const [dragOverSlot, setDragOverSlot] = useState<number | null>(null);
+  // The two who open, in tap order. Nothing is picked for the player unless there is no choice to
+  // make — two or fewer standing — so every fight's opening pair is one the player chose.
+  const [picks, setPicks] = useState<string[]>(() => {
+    const standing = standingRoster(run.roster).map((r) => r.rosterId);
+    return standing.length <= LEAD_COUNT ? standing : [];
+  });
   /** `enemy`: a scouted-opponent sheet gets no relic grants folded in. */
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry; enemy: boolean } | null>(null);
   const [showReference, setShowReference] = useState(false);
@@ -257,18 +248,10 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
 
   // The fielded are the STANDING (run/wounds.ts): a downed hero keeps its cell and is not picked.
   const standingCount = standingRoster(run.roster).length;
-  const standingAt = (index: number) => (slots[index] !== null && !isDownSlot(index) ? slots[index] : null);
-  const activeIds = [standingAt(0), standingAt(1)] as const;
-  const benchIds = slots.slice(2).filter((id): id is string => id !== null && !rosterById.get(id)!.down);
-  const pickedIds = activeIds.filter((id): id is string => id !== null).concat(benchIds);
-  // Two leads, or the one hero left standing on its own.
-  const canStart = activeIds[0] !== null && (activeIds[1] !== null || standingCount < 2);
-
-  /** A downed hero does not move. */
-  function canSwap(a: number, b: number): boolean {
-    if (a === b) return false;
-    return !isDownSlot(a) && !isDownSlot(b);
-  }
+  const leadsNeeded = Math.min(LEAD_COUNT, standingCount);
+  const benchIds = slots.filter((id): id is string => id !== null && !rosterById.get(id)!.down && !picks.includes(id));
+  const pickedIds = picks.concat(benchIds);
+  const canStart = leadsNeeded > 0 && picks.length === leadsNeeded;
 
   /** One Revive off the purse, one hero up at half (run/wounds.ts reviveHero). It stands up in the cell it held. */
   function handleRevive(rosterId: string) {
@@ -278,40 +261,19 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
     onRunChange(spendRevive(reviveHero(run, rosterId, maxHp)));
   }
 
-  function swapSlots(a: number, b: number) {
-    if (!canSwap(a, b)) return;
-    setSlots((prev) => {
-      const next = [...prev];
-      [next[a], next[b]] = [next[b], next[a]];
-      return next;
-    });
-  }
-
-  // A benched hero steps into the lead, trading cells with the lead it displaces: a vacant lead
-  // cell (empty, or holding a downed hero) first, else the stale one. Tapping a lead keeps it —
-  // it becomes the fresh half of the pair, so the NEXT benched tap takes the other cell.
+  // A tap picks a hero or un-picks it. A third pick replaces the EARLIER of the two, so the last two
+  // heroes tapped are always the pair and the player never has to un-pick first.
   function handleSlotClick(index: number) {
-    if (slots[index] === null || isDownSlot(index)) return;
-    if (index < 2) {
-      setStaleLead(index === 0 ? 1 : 0);
-      return;
-    }
-    const vacant = ([0, 1] as const).find((i) => standingAt(i) === null);
-    const target = vacant ?? staleLead;
-    setSlots((prev) => {
-      const next = [...prev];
-      [next[target], next[index]] = [next[index], next[target]];
-      return next;
+    const id = slots[index];
+    if (id === null || isDownSlot(index)) return;
+    setPicks((prev) => {
+      if (prev.includes(id)) return prev.filter((p) => p !== id);
+      return [...prev, id].slice(-LEAD_COUNT);
     });
-    setStaleLead(target === 0 ? 1 : 0);
   }
 
-  // Writes the arrangement back to the roster so it seeds the next fight's grid. Nulls are dropped so
-  // the grid repacks from index 0 next time.
   function handleConfirm() {
-    const squad = pickSquad(run.roster, pickedIds);
-    onRunChange(reorderRoster(run, slots.filter((id): id is string => id !== null)));
-    onConfirm(squad);
+    onConfirm(pickSquad(run.roster, pickedIds));
   }
 
   return (
@@ -385,78 +347,51 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
 
           <section className="squad-section squad-section-player">
             <h2 className="squad-section-title">Your squad</h2>
+            <div className="squad-pick-hint" aria-live="polite">
+              {standingCount > LEAD_COUNT ? `Pick two to lead · ${picks.length}/${LEAD_COUNT}` : 'Everyone standing leads'}
+            </div>
             <div className="squad-grid">
-              {SLOT_ROWS.map((row, rowIndex) => (
-                <div key={rowIndex} className={`squad-band squad-band-${row.key}`}>
-                  <div className="squad-band-head">
-                    <span className="squad-band-label">{row.label}</span>
-                    {row.key === 'active' && standingCount > 2 && <span className="squad-band-hint">Tap two to lead</span>}
-                  </div>
-                  <div className="squad-grid-row-cells">
-                    {row.indices.map((index) => {
-                      const rosterId = slots[index];
-                      const entry = rosterId ? rosterById.get(rosterId) : undefined;
-                      const hero = entry ? rosterHeroes[entry.heroId] : undefined;
-                      const isDragOver = dragOverSlot === index;
-                      const isDown = isDownSlot(index);
-                      return (
-                        <SquadSlot
-                          key={index}
-                          hero={hero}
-                          entry={entry}
-                          dragOver={isDragOver}
-                          down={isDown}
-                          onRevive={isDown && rosterId && canUseRevive(run) ? () => handleRevive(rosterId) : undefined}
-                          onActivate={() => handleSlotClick(index)}
-                          onInspect={hero && entry ? () => setInspecting({ hero, entry, enemy: false }) : undefined}
-                          onDragStart={(e: DragEvent) => {
-                            if (!hero) return;
-                            e.dataTransfer.setData(DRAG_KEY, String(index));
-                            e.dataTransfer.effectAllowed = 'move';
-                          }}
-                          onDragOver={(e: DragEvent) => {
-                            if (e.dataTransfer.types.includes(DRAG_KEY)) {
-                              e.preventDefault();
-                              setDragOverSlot(index);
-                            }
-                          }}
-                          onDragLeave={() => setDragOverSlot((s) => (s === index ? null : s))}
-                          onDrop={(e: DragEvent) => {
-                            e.preventDefault();
-                            setDragOverSlot(null);
-                            const raw = e.dataTransfer.getData(DRAG_KEY);
-                            if (!raw) return;
-                            swapSlots(Number(raw), index);
-                          }}
-                        >
-                          {hero && entry ? (
-                            <>
-                              <HeroPortrait heroId={hero.id} className="roster-card-portrait" />
-                              {/* On the figure's corner as the pick cards wear it, not on the name line: a row
-                                  cell's line holds a ten-letter name OR a level, not both. */}
-                              <span className="pick-level squad-slot-level" aria-hidden="true">
-                                {levelOf(entry)}
-                              </span>
-                              <div className="roster-card-name">{hero.name}</div>
-                              <div className="roster-card-types">
-                                {rosterEntryTypes(hero, entry).map((t) => (
-                                  <TypeBadge key={t} type={t} />
-                                ))}
-                              </div>
-                              {/* A downed hero has no matchups to read: it is not going. */}
-                              {entry.down ? <div className="squad-slot-down-label">Down</div> : <MatchupRow heroTypes={rosterEntryTypes(hero, entry)} enemies={scoutOrder} />}
-                              {/* Where the act has left this hero (run/wounds.ts) — the read the pick is made on. */}
-                              <WoundBar {...entryHp(hero, entry, run.relics)} figure />
-                            </>
-                          ) : (
-                            <div className="squad-slot-empty-label">Empty</div>
-                          )}
-                        </SquadSlot>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
+              {Array.from({ length: SLOT_COUNT }, (_, index) => {
+                const rosterId = slots[index];
+                const entry = rosterId ? rosterById.get(rosterId) : undefined;
+                const hero = entry ? rosterHeroes[entry.heroId] : undefined;
+                const isDown = isDownSlot(index);
+                return (
+                  <SquadSlot
+                    key={index}
+                    hero={hero}
+                    entry={entry}
+                    picked={rosterId !== null && picks.includes(rosterId)}
+                    down={isDown}
+                    onRevive={isDown && rosterId && canUseRevive(run) ? () => handleRevive(rosterId) : undefined}
+                    onActivate={() => handleSlotClick(index)}
+                    onInspect={hero && entry ? () => setInspecting({ hero, entry, enemy: false }) : undefined}
+                  >
+                    {hero && entry ? (
+                      <>
+                        <HeroPortrait heroId={hero.id} className="roster-card-portrait" />
+                        {/* On the figure's corner as the pick cards wear it, not on the name line: a row
+                            cell's line holds a ten-letter name OR a level, not both. */}
+                        <span className="pick-level squad-slot-level" aria-hidden="true">
+                          {levelOf(entry)}
+                        </span>
+                        <div className="roster-card-name">{hero.name}</div>
+                        <div className="roster-card-types">
+                          {rosterEntryTypes(hero, entry).map((t) => (
+                            <TypeBadge key={t} type={t} />
+                          ))}
+                        </div>
+                        {/* A downed hero has no matchups to read: it is not going. */}
+                        {entry.down ? <div className="squad-slot-down-label">Down</div> : <MatchupRow heroTypes={rosterEntryTypes(hero, entry)} enemies={scoutOrder} />}
+                        {/* Where the act has left this hero (run/wounds.ts) — the read the pick is made on. */}
+                        <WoundBar {...entryHp(hero, entry, run.relics)} figure />
+                      </>
+                    ) : (
+                      <div className="squad-slot-empty-label">Empty</div>
+                    )}
+                  </SquadSlot>
+                );
+              })}
             </div>
           </section>
         </div>
