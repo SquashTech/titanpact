@@ -31,9 +31,9 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
   draft: tip('draft', 'Starting Heroes', 'Pick two heroes to start the run. More join along the way.'),
   run: tip(
     'run',
-    'The Run',
-    'A run is five acts and a finale. Each act ends with a Guardian — beat it to break one of the five seals.',
-    'If every hero on your side is knocked out, the run is over.'
+    'The Journey',
+    "Venture forth to defeat five Guardians of the Titan's Seal.",
+    'If all your heroes fall, the journey is over.'
   ),
   map: tip(
     'map',
@@ -83,11 +83,6 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
     'Heroes knocked out in that fight are lost, along with their items — unless you spend a Revive on them now.'
   ),
   equipmentReward: tip('equipmentReward', 'Equipment', 'Choose one of three items. Hold an item to read it in full.'),
-  mentor: tip(
-    'mentor',
-    'Mentor',
-    "Choose a hero. It learns a random Mid-tier move from its own move list. If its moves are full, replace one or pass."
-  ),
   tutor: tip(
     'tutor',
     'Tutor',
@@ -95,7 +90,6 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
   ),
   boon: tip('boon', 'Boon', 'Choose one of three passives and give it to a hero. It keeps it for the rest of the run.'),
   manaWell: tip('manaWell', 'Mana Well', 'Choose a hero to gain +30 max Mana for the rest of the run.'),
-  forge: tip('forge', 'Forge', 'Choose an item one of your heroes holds. It goes up one rarity tier, free.'),
   leyLine: tip(
     'leyLine',
     'Ley Line',

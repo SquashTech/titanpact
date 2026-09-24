@@ -48,7 +48,8 @@ import {
   purseRangeFor,
   rollGoldRange,
   grantManaWell,
-  forgeLift,
+  forgeItem,
+  forgeTarget,
   grantLeyLine,
   recordPermanentStatGains,
 } from '../../src/run/runProgress';
@@ -903,22 +904,28 @@ function resolveAnvil(run: RunState): RunState {
   return next;
 }
 
-/** The Forge node: the Anvil's pick, free — the most valuable liftable piece on the strongest hero. */
+/**
+ * The Forge node (2026-09-24): the lift and the binding, free. The piece is the one where the work
+ * gains most (`itemValueFor` after minus before), bound to its holder's innate primary — the
+ * Enchanter pilot's own read — or, for a hero whose primary has no enchant, left as it is bound.
+ */
 function resolveForge(run: RunState): RunState {
+  let best: { rosterId: string; index: number; enchantId: EnchantmentId; gain: number } | null = null;
   for (const entry of policy.byPower(run.roster)) {
-    let bestIndex = -1;
-    let bestValue = -Infinity;
-    entry.equipment.forEach((itemId, index) => {
-      if (!anvilQuote(run, itemId, equipment)) return;
-      const value = policy.itemValueFor(entry, equipment[itemId] ?? null);
-      if (value > bestValue) {
-        bestValue = value;
-        bestIndex = index;
-      }
-    });
-    if (bestIndex >= 0) return forgeLift(run, { rosterId: entry.rosterId, index: bestIndex }, equipment);
+    const primary = heroes[entry.heroId]?.types[0];
+    for (let index = 0; index < entry.equipment.length; index++) {
+      const itemId = entry.equipment[index];
+      const item = equipment[itemId];
+      if (!item) continue;
+      const enchantId = ENCHANTMENT_IDS.find((id) => ENCHANTMENTS[id] === primary) ?? parseEquipmentId(itemId).enchantId;
+      if (!enchantId) continue;
+      const targetId = forgeTarget(run, itemId, enchantId, equipment);
+      if (!targetId) continue;
+      const gain = policy.itemValueFor(entry, equipment[targetId] ?? null) - policy.itemValueFor(entry, item);
+      if (!best || gain > best.gain) best = { rosterId: entry.rosterId, index, enchantId, gain };
+    }
   }
-  return run;
+  return best ? forgeItem(run, { rosterId: best.rosterId, index: best.index }, best.enchantId, equipment) : run;
 }
 
 /**

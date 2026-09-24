@@ -21233,6 +21233,14 @@ button.star-shop-bundle-face {
   animation: title-tagline-fade 0.35s ease both;
 }
 
+/* The Mentor's one line is the whole explanation of the node (it carries no tip), so it is
+   set as the screen's pitch rather than as a dim instruction. */
+.mentor-node-screen .node-readout {
+  margin-top: 10px;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+}
+
 .node-readout.is-live {
   color: var(--text);
   font-weight: 700;
@@ -27236,7 +27244,42 @@ button.star-shop-bundle-face {
   }
 }
 
+/* A tip about one thing on screen: the scrim moves onto the spotlight's
+   shadow, so everything but that thing dims harder than a plain tip's. */
+.tip-overlay.has-spotlight {
+  background: none;
+}
+
+.tip-spotlight {
+  position: absolute;
+  pointer-events: none;
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 0 0 2px var(--accent),
+    0 0 18px 4px rgba(224, 166, 60, 0.45),
+    0 0 0 9999px rgba(8, 9, 13, 0.72);
+  animation: tip-spotlight-pulse 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes tip-spotlight-pulse {
+  to {
+    box-shadow:
+      0 0 0 2px var(--accent),
+      0 0 26px 8px rgba(224, 166, 60, 0.6),
+      0 0 0 9999px rgba(8, 9, 13, 0.72);
+  }
+}
+
+/* A tip over a screen whose subject is its middle (the act's arrival): the
+   card sits low, clear of it, above the screen's own button. */
+.tip-overlay.is-low {
+  align-items: flex-end;
+  padding-bottom: 96px;
+}
+
 .tip-box {
+  /* Positioned so it paints over a spotlight's shadow. */
+  position: relative;
   width: 100%;
   max-width: 400px;
   display: flex;
@@ -27391,6 +27434,7 @@ button.star-shop-bundle-face {
 
 @media (prefers-reduced-motion: reduce) {
   .tip-overlay,
+  .tip-spotlight,
   .tip-box,
   .tip-page,
   .lore-line,
@@ -33816,6 +33860,251 @@ button.star-shop-bundle-face {
   }
 }
 
+/* -- The Forge: both verbs as one beat --
+   Two layers over one stage. The anvil's is the Anvil beat verbatim until the piece rises; then
+   it drops away and the Enchanter's circle takes the stage, the piece arriving from the anvil's
+   face. The binding is the fourth hit — the heaviest shake and wash of the beat — and it lands
+   with rays, both colours' rings (the tier's and the element's) and a shard burst. */
+.smithy-beat-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.smithy-beat-layer.is-anvil.is-leaving {
+  animation: smithy-forge-anvil-away 0.5s var(--ease-out) forwards;
+}
+
+.smithy-beat-layer.is-anvil.is-leaving .smithy-beat-piece {
+  visibility: hidden;
+}
+
+@keyframes smithy-forge-anvil-away {
+  to {
+    opacity: 0;
+    transform: translateY(34px) scale(0.92);
+  }
+}
+
+.smithy-beat-layer.is-enchant {
+  animation: smithy-beat-fade 0.3s var(--ease-out);
+}
+
+/* The anvil's face sits ~46px above the circle's centre: the piece starts there, still white-hot
+   in its new tier's colour, and settles into the hover. */
+.is-forge .smithy-beat-piece.is-rising {
+  animation:
+    smithy-forge-rise 0.7s var(--ease-out),
+    smithy-piece-hover 1.1s ease-in-out 0.7s infinite alternate;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 14px color-mix(in srgb, var(--rarity-color) 75%, transparent));
+}
+
+@keyframes smithy-forge-rise {
+  0% {
+    transform: translateY(-46px) scale(0.84);
+    filter: drop-shadow(0 0 22px var(--rarity-color)) brightness(2.2);
+  }
+  55% {
+    transform: translateY(-58px) scale(1.08);
+  }
+  100% {
+    transform: translateY(-3px) scale(1);
+  }
+}
+
+.is-forge .smithy-beat-piece.is-bound {
+  --item-box-size: 84px;
+  width: 80px;
+  height: 80px;
+  animation: smithy-forge-bound 0.9s var(--ease-out) forwards;
+  filter:
+    drop-shadow(0 4px 8px rgba(0, 0, 0, 0.7))
+    drop-shadow(0 0 16px var(--rarity-color))
+    drop-shadow(0 0 26px var(--beat-color));
+}
+
+@keyframes smithy-forge-bound {
+  0% {
+    transform: scale(0.7);
+    filter: drop-shadow(0 0 30px #fff) brightness(4);
+  }
+  35% {
+    transform: scale(1.35);
+    filter: drop-shadow(0 0 24px var(--beat-color)) brightness(1.8);
+  }
+  60% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+    filter:
+      drop-shadow(0 4px 8px rgba(0, 0, 0, 0.7))
+      drop-shadow(0 0 16px var(--rarity-color))
+      drop-shadow(0 0 26px var(--beat-color))
+      brightness(1);
+  }
+}
+
+/* The rarity's ring beside the element's: the two things the Forge did, in their own colours. */
+.smithy-beat-ring.is-tier {
+  border-color: var(--rarity-color);
+}
+
+.smithy-beat-ring.is-wide {
+  border-width: 3px;
+  animation: smithy-ring-wide 1.1s var(--ease-out) 0.05s forwards;
+}
+
+@keyframes smithy-ring-wide {
+  0% {
+    opacity: 1;
+    transform: scale(0.5);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(6.5);
+  }
+}
+
+.is-forge .smithy-beat-flash.is-forge-final {
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  margin-top: -9px;
+  background: radial-gradient(circle, #fff 40%, var(--beat-color));
+  animation: smithy-flash-forge 0.6s var(--ease-out) forwards;
+}
+
+@keyframes smithy-flash-forge {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(22);
+  }
+}
+
+/* Light breaking out of the circle, turning slowly as it fades to a halo behind the piece. */
+.smithy-beat-rays {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 420px;
+  height: 420px;
+  margin: -210px 0 0 -210px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--beat-color) 55%, transparent) 0deg 5deg,
+    transparent 5deg 18deg,
+    color-mix(in srgb, var(--rarity-color) 45%, transparent) 18deg 21deg,
+    transparent 21deg 30deg
+  );
+  mask-image: radial-gradient(circle, #000 12%, transparent 68%);
+  -webkit-mask-image: radial-gradient(circle, #000 12%, transparent 68%);
+  animation:
+    smithy-rays-in 0.9s var(--ease-out) forwards,
+    smithy-rays-turn 14s linear infinite;
+}
+
+@keyframes smithy-rays-in {
+  0% {
+    opacity: 0;
+    scale: 0.3;
+  }
+  30% {
+    opacity: 1;
+    scale: 1.1;
+  }
+  100% {
+    opacity: 0.45;
+    scale: 1;
+  }
+}
+
+@keyframes smithy-rays-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.smithy-beat-shards {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+}
+
+.smithy-beat-shards i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 2px;
+  opacity: 0;
+  animation: smithy-shard 0.85s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+.smithy-beat-shards i.is-type {
+  background: color-mix(in srgb, var(--beat-color) 60%, #ffffff);
+  box-shadow: 0 0 8px 1px var(--beat-color);
+}
+
+.smithy-beat-shards i.is-rarity {
+  background: color-mix(in srgb, var(--rarity-color) 60%, #ffffff);
+  box-shadow: 0 0 8px 1px var(--rarity-color);
+}
+
+@keyframes smithy-shard {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--shard-angle)) translateY(-8px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--shard-angle)) translateY(calc(var(--shard-distance) * -1)) scale(0.4);
+  }
+}
+
+/* The binding: the fourth and heaviest hit. */
+.smithy-beat.is-strike-4 {
+  animation: smithy-shake-4 0.6s var(--ease-out);
+}
+
+.smithy-beat.is-strike-4::after {
+  background: color-mix(in srgb, var(--beat-color) 30%, #ffffff);
+  animation: smithy-wash-4 0.45s var(--ease-out);
+}
+
+@keyframes smithy-shake-4 {
+  0% { transform: translate(0, 14px) scale(1.03); }
+  14% { transform: translate(-11px, -8px) scale(1.02); }
+  30% { transform: translate(9px, 6px); }
+  48% { transform: translate(-6px, -4px); }
+  66% { transform: translate(3px, 2px); }
+  84% { transform: translate(-1px, -1px); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes smithy-wash-4 {
+  0% { opacity: 0.75; }
+  100% { opacity: 0; }
+}
+
+/* The Forge's caption: a touch bigger, and the tier's two names in their own colours. */
+.is-forge .smithy-beat-name {
+  font-size: 22px;
+}
+
+.is-forge .smithy-beat-verb {
+  color: color-mix(in srgb, var(--beat-color) 55%, #ffffff);
+  letter-spacing: 0.3em;
+}
+
 /* -- The caption -- */
 .smithy-beat-caption {
   display: flex;
@@ -33923,7 +34212,9 @@ button.star-shop-bundle-face {
   .smithy-beat-sparks,
   .smithy-beat-flash,
   .smithy-beat-ring,
-  .smithy-beat-motes {
+  .smithy-beat-motes,
+  .smithy-beat-rays,
+  .smithy-beat-shards {
     display: none;
   }
 
@@ -33934,6 +34225,7 @@ button.star-shop-bundle-face {
   .smithy-rune-inner,
   .smithy-beat-aura,
   .smithy-beat-sigil,
+  .smithy-beat-layer,
   .smithy-socket.is-fresh .smithy-socket-box,
   .smithy-element.is-picked .smithy-element-glyph,
   .detail-panel.smithy-work {

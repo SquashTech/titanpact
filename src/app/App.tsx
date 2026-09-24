@@ -405,11 +405,14 @@ function screenTipIds(screen: Screen, run: RunState): readonly ScreenTipId[] {
     case 'actIntro':
       return ['run'];
     case 'map': {
-      // A map after a fight is where HP carrying over is first visible; the fork, the first time
-      // an Elite or Skirmish is one step away.
-      const ids: ScreenTipId[] = ['map'];
+      // The map tip waits for the first real choice: the act's opener is the only node on offer,
+      // so "choose where to go next" would name a choice that is not there. A map after a fight is
+      // where HP carrying over is first visible; the fork, the first time an Elite or Skirmish is
+      // one step away.
+      const reachable = reachableNodeIds(run);
+      const ids: ScreenTipId[] = reachable.length > 1 ? ['map'] : [];
       if (anyWounded(run)) ids.push('wounds');
-      const ahead = reachableNodeIds(run).map((id) => run.map?.nodes[id]?.type);
+      const ahead = reachable.map((id) => run.map?.nodes[id]?.type);
       if (ahead.includes('elite') || ahead.includes('skirmish')) ids.push('fork');
       return ids;
     }
@@ -426,7 +429,7 @@ function screenTipIds(screen: Screen, run: RunState): readonly ScreenTipId[] {
     case 'reward':
       return screen.nodeType === 'equipmentReward' ? ['equipmentReward'] : [];
     case 'mentorNode':
-      return ['mentor'];
+      return []; // the screen's own line says it (2026-09-24, per user direction)
     case 'tutorNode':
       return ['tutor'];
     case 'boonNode':
@@ -434,7 +437,7 @@ function screenTipIds(screen: Screen, run: RunState): readonly ScreenTipId[] {
     case 'manaWell':
       return ['manaWell'];
     case 'forge':
-      return ['forge'];
+      return []; // the screen's own line says it (2026-09-24, per user direction)
     case 'leyLine':
       return ['leyLine'];
     case 'rest':

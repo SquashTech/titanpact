@@ -53,9 +53,9 @@ first meeting with two things shows the second on its next visit.
 
 | Id | Fires on |
 | --- | --- |
-| `draft` | the draft |
-| `run` | the act's arrival screen |
-| `map` | the map |
+| `draft` | the draft (spotlights the starter rail, `TIP_STAGING` in TipOverlay) |
+| `run` | the act's arrival screen ("The Journey", the card sat low so the place stays in view) |
+| `map` | the map, once there is a choice to make — not at an act's opener, the only node on offer |
 | `wounds` | the map, once any hero is hurt (HP carries across an act; Mana does not) |
 | `fork` | the map, once an Elite or Skirmish is one step away |
 | `squad` | lead order (skipped while the roster is two) |
@@ -64,7 +64,7 @@ first meeting with two things shows the second on its next visit.
 | `companion` | the companion's join beat |
 | `fallen` | Permadeath's Fallen beat (Ascension 1) |
 | `equipmentReward` | the equipment cache |
-| `mentor`, `tutor`, `boon`, `manaWell`, `forge`, `leyLine`, `rest`, `event` | that node's screen |
+| `tutor`, `boon`, `manaWell`, `leyLine`, `rest`, `event` | that node's screen (the Mentor and the Forge carry none — each screen's own line says it) |
 | `scribe`, `scrollCache` | the Scribe's and the Cache's scroll screens (a bought Scroll gets none — the Guild Hall's tip named it) |
 | `shop` | the Guild Hall |
 | `recruit` | the Recruit Contract claim (roster cap, termination) |
