@@ -4,7 +4,7 @@ import { heroes } from '../../data/heroes';
 import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import { ItemServicesSection } from './ItemServicesSection';
-import { guildHallOffers, CONTRACT_PURCHASE_COST } from '../../data/recruitment';
+import { guildHallOffersFor, CONTRACT_PURCHASE_COST } from '../../data/recruitment';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { Coin } from '../shared/Coin';
 import { SectionGlyph } from '../shared/sectionIcons';
@@ -24,7 +24,7 @@ import {
   RecruitmentError,
   type GuildHallOffer,
 } from '../../run/recruitment';
-import type { GuildHallOffers } from '../../run/shop';
+import { tavernRerollCost, type GuildHallOffers } from '../../run/shop';
 import { statScaleFor } from '../../run/statScale';
 import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
@@ -34,21 +34,25 @@ import { overlayHost } from '../shared/overlayHost';
 import type { TabSpec } from '../shared/TabStrip';
 import { RecruitFanfare } from './RecruitFanfare';
 
-export type GuildHallTab = 'heroes' | 'smithy';
+export type GuildHallTab = 'shop' | 'tavern' | 'smithy';
+
+/** Every hire the game holds, bundles included: the roll already read the run's pool, so the lookup must not read it again. */
+const allGuildHallOffers = guildHallOffersFor(heroes);
 
 /** The hero shelf as the panel shows it: heroes already on the roster are off it, and the Vigil's are free. */
 export function guildHeroOffers(run: RunState, offers: GuildHallOffers, freeRecruits: boolean): GuildHallOffer[] {
   return offers.heroOfferIds
-    .map((id) => guildHallOffers.find((o) => o.id === id))
+    .map((id) => allGuildHallOffers.find((o) => o.id === id))
     .filter((o): o is GuildHallOffer => !!o && !run.roster.some((r) => r.heroId === o.heroId))
     // Every downstream read goes through the offer's own cost, so zeroing it here is the whole discount.
     .map((offer) => (freeRecruits ? { ...offer, cost: 0 } : offer));
 }
 
-/** The two counters (2026-09-10, per user direction): people, potions and the party heal on one, the smithy's gear services on the other (2026-09-16: the potions and the heal moved over, per user direction). */
+/** The three counters (2026-09-24, per user direction): goods at the Shop, people at the Tavern, worn gear at the Smithy. */
 export function guildHallTabs(run: RunState, offers: GuildHallOffers, freeRecruits: boolean): readonly TabSpec<GuildHallTab>[] {
   return [
-    { id: 'heroes', label: 'Heroes', glyph: 'heroes', count: guildHeroOffers(run, offers, freeRecruits).length },
+    { id: 'shop', label: 'Shop', glyph: 'shop' },
+    { id: 'tavern', label: 'Tavern', glyph: 'heroes', count: guildHeroOffers(run, offers, freeRecruits).length },
     { id: 'smithy', label: 'Smithy', glyph: 'equipment', count: run.roster.reduce((n, entry) => n + entry.equipment.length, 0) },
   ];
 }
@@ -63,9 +67,13 @@ interface Props {
   scrollsBought: number;
   /** Revives bought this visit (run/consumables.ts REVIVE_PURCHASE_LIMIT). */
   revivesBought: number;
+  /** Tavern rerolls this visit; the next one costs tavernRerollCost(rerolls). */
+  rerolls: number;
   onRunChange: (next: RunState) => void;
   /** Hands off to App.tsx, which charges the gold and opens the who screen for the pip. */
   onBuyScroll: () => void;
+  /** Hands off to App.tsx, which charges the gold and swaps the shelf on the screen (run/shop.ts rerollGuildHallOffers). */
+  onReroll: () => void;
   /** Hands off to App.tsx, which charges the gold and fills the flask (run/consumables.ts). */
   onBuyConsumable: (kind: ConsumableKind) => void;
   /** The whole roster made whole for what is missing (run/wounds.ts mendPrice). */
@@ -115,8 +123,10 @@ export function GuildHallPanel({
   offers,
   scrollsBought,
   revivesBought,
+  rerolls,
   onRunChange,
   onBuyScroll,
+  onReroll,
   onBuyConsumable,
   onBuyMend,
   onRequestRosterReplace,
@@ -140,6 +150,7 @@ export function GuildHallPanel({
   const canBuyContract = run.gold >= CONTRACT_PURCHASE_COST;
   const scrollsSoldOut = scrollsBought >= SCROLL_PURCHASE_LIMIT;
   const canBuyScrollNow = canBuyScroll(run, scrollsBought);
+  const rerollCost = tavernRerollCost(rerolls);
 
   // Derived from state rather than pushed from each setter, so a later modal can't forget to report.
   const overlayOpen = !!previewOffer || confirmingContract || !!fanfareHeroId;
@@ -171,7 +182,7 @@ export function GuildHallPanel({
 
   return (
     <div className="guild-hall">
-      {tab === 'heroes' && (
+      {tab === 'tavern' && (
         <div className="guild-hall-section">
           {/* The mark and nothing under it (2026-09-11, per user direction): what a hire is — raw,
               unevolved — and what a full roster asks are both said on the hero's own stage, at the
@@ -219,6 +230,24 @@ export function GuildHallPanel({
               )}
             </button>
 
+            {/* The reroll (run/shop.ts): a fresh shelf of faces, dearer each time this visit. Dark
+                with nobody left to show — a pool the roster has emptied has nothing to reroll into. */}
+            <button className="guild-hall-good is-reroll" disabled={run.gold < rerollCost || offers.heroOfferIds.length === 0} onClick={onReroll}>
+              <span className="guild-hall-good-glyph">
+                <SectionGlyph name="reroll" />
+              </span>
+              <span className="guild-hall-good-name">Reroll Recruits</span>
+              <span className="guild-hall-good-price">
+                <ResourceGlyph kind="gold" /> {rerollCost}
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {tab === 'shop' && (
+        <div className="guild-hall-section">
+          <div className="guild-hall-shelf">
             {/* The Mastery Scroll (docs/mastery.md §3): one pip. No confirm, unlike the Contract — the
                 tap opens the who screen, and that is the decision. The shelf holds
                 SCROLL_PURCHASE_LIMIT a visit, and the corner count is how many are already landed. */}

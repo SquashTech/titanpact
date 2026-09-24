@@ -88,7 +88,7 @@ import {
 } from '../run/recruitment';
 import { guildHallOffersFor } from '../data/recruitment';
 import { MASTERY_CAP, SCROLL_CACHE_COUNT, buyScroll, canBuyScroll } from '../run/mastery';
-import { rollGuildHallOffers, type GuildHallOffers } from '../run/shop';
+import { TavernRerollError, rerollGuildHallOffers, rollGuildHallOffers, type GuildHallOffers } from '../run/shop';
 import { ConsumableError, buyConsumable, grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse, type PotionKind } from '../run/consumables';
 import { guildHallEntry } from '../run/guildRecruit';
 import { anyClassAvailable } from '../run/classes';
@@ -194,7 +194,7 @@ type Screen =
   /** TEMPORARY DEV/TEST — src/run/statusTestFight.ts. Own kind so leaving returns to the title. */
   | { kind: 'statusTestFight'; player: Encounter; ai: Encounter }
   /** `offers` lives on the screen, not in the shop component: a purchase re-renders the shop and component-local state would reroll / forget. */
-  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; scrollsBought: number; revivesBought: number }
+  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; scrollsBought: number; revivesBought: number; rerolls: number }
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType }
   /** The Forge: +1 item slot to one hero. */
   /** An item has arrived and asks who carries it (docs/gear-absorption.md §2). `next` is where the run goes once it is absorbed or sold. */
@@ -683,6 +683,7 @@ export function App() {
         offers: rollGuildHallOffers(playerRun, guildHallOffersFor(recruitPool), node.type === 'muster'),
         scrollsBought: 0,
         revivesBought: 0,
+        rerolls: 0,
       });
     } else if (node.type === 'manaWellReward') {
       setScreen({ kind: 'manaWell', nodeId });
@@ -910,6 +911,21 @@ export function App() {
     }
     playSfx('blessing');
     setPlayerRun(next);
+  }
+
+  /** The Tavern's reroll (run/shop.ts): a fresh shelf of hires, dearer each time a visit. */
+  function handleRerollTavern() {
+    if (screen.kind !== 'shop') return;
+    let rolled: ReturnType<typeof rerollGuildHallOffers>;
+    try {
+      rolled = rerollGuildHallOffers(playerRun, guildHallOffersFor(recruitPool), screen.offers, screen.rerolls);
+    } catch (err) {
+      if (!(err instanceof TavernRerollError)) throw err;
+      return;
+    }
+    playSfx('gold.coin');
+    setPlayerRun(rolled.run);
+    setScreen({ ...screen, offers: rolled.offers, rerolls: screen.rerolls + 1 });
   }
 
   /** The shelf's Mastery Scroll: the gold is charged on the tap, and the who screen lands the pip. */
@@ -1242,8 +1258,10 @@ export function App() {
           offers={screen.offers}
           scrollsBought={screen.scrollsBought}
           revivesBought={screen.revivesBought}
+          rerolls={screen.rerolls}
           onRunChange={setPlayerRun}
           onBuyScroll={handleBuyGuildScroll}
+          onReroll={handleRerollTavern}
           onBuyConsumable={handleBuyGuildConsumable}
           onBuyMend={handleBuyGuildMend}
           onRequestRosterReplace={handleRequestRosterReplace}

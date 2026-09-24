@@ -32093,6 +32093,17 @@ button.star-shop-bundle-face {
   --plate-color: var(--hp-high);
 }
 
+/* The Tavern's reroll, lit in the hearth's own amber: it buys the room's next faces. */
+.guild-hall-good.is-reroll {
+  --plate-color: rgb(var(--node-rgb));
+}
+
+/* The glyph slot sizes a ResourceGlyph; a SectionGlyph there takes the same box. */
+.guild-hall-good-glyph > .section-glyph {
+  width: 22px;
+  height: 22px;
+}
+
 /* The party wears the footer button (2026-09-15, wounds): the glyph and its label become a
    cap on the left, and the six chips take the rest of the slab. A wounded roster is read
    from the map, not from a tap. */

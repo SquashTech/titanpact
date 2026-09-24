@@ -15,8 +15,11 @@ interface Props {
   /** Mastery Scrolls bought this visit, carried on the `shop` Screen (App.tsx) because a purchase unmounts this screen through the who screen. */
   scrollsBought: number;
   revivesBought: number;
+  /** Tavern rerolls this visit (run/shop.ts tavernRerollCost). */
+  rerolls: number;
   onRunChange: (next: RunState) => void;
   onBuyScroll: () => void;
+  onReroll: () => void;
   onBuyConsumable: (kind: ConsumableKind) => void;
   onBuyMend: () => void;
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
@@ -37,8 +40,10 @@ export function ShopNodeScreen({
   offers,
   scrollsBought,
   revivesBought,
+  rerolls,
   onRunChange,
   onBuyScroll,
+  onReroll,
   onBuyConsumable,
   onBuyMend,
   onRequestRosterReplace,
@@ -46,7 +51,7 @@ export function ShopNodeScreen({
   muster = false,
 }: Props) {
   const [overlayOpen, setOverlayOpen] = useState(false);
-  const [tab, setTab] = useState<GuildHallTab>('heroes');
+  const [tab, setTab] = useState<GuildHallTab>('tavern');
   return (
     <div className="node-screen shop-node-screen" style={{ '--node-rgb': NODE_TINT_HEARTH } as CSSProperties}>
       <NodeSky />
@@ -62,8 +67,10 @@ export function ShopNodeScreen({
           offers={offers}
           scrollsBought={scrollsBought}
           revivesBought={revivesBought}
+          rerolls={rerolls}
           onRunChange={onRunChange}
           onBuyScroll={onBuyScroll}
+          onReroll={onReroll}
           onBuyConsumable={onBuyConsumable}
           onBuyMend={onBuyMend}
           onRequestRosterReplace={onRequestRosterReplace}
@@ -73,7 +80,7 @@ export function ShopNodeScreen({
         />
       </div>
 
-      {/* At the foot, over Continue (2026-09-11, per user direction): the two counters are the
+      {/* At the foot, over Continue (2026-09-11, per user direction): the counters are the
           control the thumb comes back to, and the foot is where the thumb already is. */}
       <TabStrip className="guild-hall-tabs" tabs={guildHallTabs(run, offers, muster)} active={tab} onSelect={setTab} />
       {!overlayOpen && (

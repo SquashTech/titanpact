@@ -4,7 +4,7 @@ import { heroes } from '../src/data/heroes';
 import { equipment } from '../src/data/equipment';
 import { guildHallOffers } from '../src/data/recruitment';
 import { createRunState, createRosterEntry, addRosterEntry } from '../src/run/state';
-import { rollGuildHallOffers, ANVIL_PRICE_BY_TARGET, EQUIPMENT_PRICE_BY_RARITY, EQUIPMENT_SELL_SHARE, sellValueFor } from '../src/run/shop';
+import { rollGuildHallOffers, rerollGuildHallOffers, tavernRerollCost, TavernRerollError, ANVIL_PRICE_BY_TARGET, EQUIPMENT_PRICE_BY_RARITY, EQUIPMENT_SELL_SHARE, sellValueFor } from '../src/run/shop';
 import { RARITY_ORDER } from '../src/run/equipment';
 
 function seedRoster(heroIds: string[], gold = 0) {
@@ -44,6 +44,38 @@ test('shop: rollGuildHallOffers never offers duplicate heroes', () => {
   const run = seedRoster([]);
   const offers = rollGuildHallOffers(run, guildHallOffers);
   assert.strictEqual(new Set(offers.heroOfferIds).size, offers.heroOfferIds.length);
+});
+
+// --- The Tavern's reroll ---
+
+test('shop: a Tavern reroll charges its price and each one a visit costs more', () => {
+  const run = seedRoster([], 100);
+  const offers = rollGuildHallOffers(run, guildHallOffers);
+  const first = rerollGuildHallOffers(run, guildHallOffers, offers, 0);
+  assert.strictEqual(first.run.gold, 100 - tavernRerollCost(0));
+  assert.ok(tavernRerollCost(1) > tavernRerollCost(0));
+  assert.throws(() => rerollGuildHallOffers(seedRoster([], tavernRerollCost(0) - 1), guildHallOffers, offers, 0), TavernRerollError);
+});
+
+test('shop: a Tavern reroll keeps the shelf size and shows new faces, never a roster hero', () => {
+  const run = seedRoster(['ironWarden'], 1000);
+  for (let i = 0; i < 20; i++) {
+    const offers = rollGuildHallOffers(run, guildHallOffers);
+    const next = rerollGuildHallOffers(run, guildHallOffers, offers, 0).offers;
+    assert.strictEqual(next.heroOfferIds.length, offers.heroOfferIds.length);
+    assert.strictEqual(new Set(next.heroOfferIds).size, next.heroOfferIds.length);
+    assert.ok(next.heroOfferIds.every((id) => !offers.heroOfferIds.includes(id)), 'a deep pool rerolls into new faces');
+    assert.ok(!next.heroOfferIds.some((id) => guildHallOffers.find((o) => o.id === id)?.heroId === 'ironWarden'));
+  }
+});
+
+test('shop: a Tavern reroll over a thin pool tops up from the faces just shown', () => {
+  const pool = guildHallOffers.slice(0, 3);
+  const run = seedRoster([], 1000);
+  const offers = { heroOfferIds: pool.slice(0, 2).map((o) => o.id) };
+  const next = rerollGuildHallOffers(run, pool, offers, 0).offers;
+  assert.strictEqual(next.heroOfferIds.length, 2);
+  assert.ok(next.heroOfferIds.includes(pool[2].id));
 });
 
 // --- No gold printer (docs/equipment.md §5) ---
