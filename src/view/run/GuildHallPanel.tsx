@@ -211,7 +211,7 @@ export function GuildHallPanel({
           ) : (
             <p className="hint">No recruits on offer this visit.</p>
           )}
-          {/* Two goods on a shelf, side by side. They used to be two full-width rows — glyph,
+          {/* Goods on a shelf, side by side. The Contract and Scroll used to be two full-width rows — glyph,
               name, gray sentence, price hard right — which is a shopping-cart line item, and it
               is what made the whole panel read as an invoice rather than as a counter. */}
           <div className="guild-hall-shelf">
@@ -240,6 +240,24 @@ export function GuildHallPanel({
               <span className="guild-hall-good-price">
                 <ResourceGlyph kind="gold" /> {rerollCost}
               </span>
+            </button>
+
+            {/* The mend (run/wounds.ts), a night at the Tavern (2026-09-24, per user direction): the
+                one good here that is for everyone at once, so it takes the whole shelf, and since
+                2026-09-17 it stands the downed up too. Dark while nobody is hurt — a heal with
+                nothing to heal is not for sale. */}
+            <button className={`guild-hall-good is-mend${anyWounded(run) ? '' : ' sold-out'}`} disabled={!canBuyMend(run, mendCost)} onClick={onBuyMend}>
+              <span className="guild-hall-good-glyph">
+                <StatGlyph stat="hp" tone="inherit" />
+              </span>
+              <span className="guild-hall-good-name">Full Party Heal</span>
+              {anyWounded(run) ? (
+                <span className="guild-hall-good-price">
+                  <ResourceGlyph kind="gold" /> {mendCost}
+                </span>
+              ) : (
+                <span className="guild-hall-good-price is-soldout">Nobody hurt</span>
+              )}
             </button>
           </div>
         </div>
@@ -311,22 +329,6 @@ export function GuildHallPanel({
                 </button>
               );
             })}
-            {/* The mend (run/wounds.ts): the one good here that is for everyone at once, so it takes
-                the whole shelf, and since 2026-09-17 it stands the downed up too. Dark while nobody is
-                hurt — a heal with nothing to heal is not for sale. */}
-            <button className={`guild-hall-good is-mend${anyWounded(run) ? '' : ' sold-out'}`} disabled={!canBuyMend(run, mendCost)} onClick={onBuyMend}>
-              <span className="guild-hall-good-glyph">
-                <StatGlyph stat="hp" tone="inherit" />
-              </span>
-              <span className="guild-hall-good-name">Full Party Heal</span>
-              {anyWounded(run) ? (
-                <span className="guild-hall-good-price">
-                  <ResourceGlyph kind="gold" /> {mendCost}
-                </span>
-              ) : (
-                <span className="guild-hall-good-price is-soldout">Nobody hurt</span>
-              )}
-            </button>
           </div>
         </div>
       )}

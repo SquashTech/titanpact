@@ -109,8 +109,8 @@ shape no longer varies by act: 8 rows in all five (`SPLICED_ROW`, `LAST_MENTOR_A
 `FORGE_ACT`, `src/run/map.ts`). A single-node row is one no path can bypass.
 
 **The Guild Hall's three counters (2026-09-24, per user direction):** **Shop** (the Mastery
-Scroll, the two potions, the Revive and the party mend), **Tavern** (the hire shelf, the Recruit
-Contract and the reroll) and **Smithy** (unchanged). It opens on the Tavern. **The reroll** is the
+Scroll, the two potions and the Revive), **Tavern** (the hire shelf, the Recruit
+Contract, the reroll and the party mend) and **Smithy** (unchanged). It opens on the Tavern. **The reroll** is the
 Tavern's one lever on WHO shows up: a fresh shelf of the same size for `TAVERN_REROLL_BASE_COST` =
 10g, `TAVERN_REROLL_STEP` = +10 each time a visit (`rerollGuildHallOffers`, `src/run/shop.ts`),
 never a roster hero and never a face just turned away while the pool can spare one. It moves the
