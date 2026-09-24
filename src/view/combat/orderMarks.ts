@@ -1,6 +1,6 @@
 import { bracketEffect, REST_PRIORITY_BRACKET, SWITCH_PRIORITY_BRACKET } from '../../engine/combat/priority';
 
-/** One combatant's place in the round's resolve order, worn on its card (CombatantCard `order`). */
+/** One combatant's place in the round's resolve order, laid on the horizon's track (OrderTrack). */
 export interface OrderMark {
   /** 1-based; tied entries share the first of their ranks, so two "1"s IS the tie. */
   rank: number;
@@ -49,7 +49,7 @@ function bracketClause(heroName: string, mark: OrderMark): string | null {
 }
 
 /**
- * What the game says when a coin is tapped: the whole round's order, first to last — the
+ * What the game says when a sprite on the order track is tapped: the whole round's order, first to last — the
  * sequence the ribbon of portraits used to show, in words — with a tie said as the coin flip it
  * is, then the one thing about the tapped hero that its number cannot carry, when there is one.
  * `ordered` is the order as the marks were built from, first to last.
@@ -67,7 +67,7 @@ export function describeOrder(ordered: readonly { combatantId: string; name: str
   return clause ? `${sequence} ${clause}` : sequence;
 }
 
-/** What a non-zero bracket is shown as on the mark: the sign and size, or the verb that has no number. */
+/** What a non-zero bracket is shown as over the track's sprite: the sign and size, or the verb that has no number. */
 export function bracketPip(priority: number | null): string | null {
   if (priority === null) return '?';
   if (priority === SWITCH_PRIORITY_BRACKET) return '⇄';

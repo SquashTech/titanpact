@@ -33,8 +33,8 @@ interface Props {
   onStartRun: (ascension: number) => void;
   /** The highest rung the profile may start on; 0 until a run has been cleared. */
   openAscension: number;
-  /** Replays the scripted first run whatever the profile says (docs/tutorial.md). */
-  onReplayTutorial: () => void;
+  /** Forgets every first-time tip seen, and the lore card, so each shows again (docs/tutorial.md). */
+  onResetTips: () => void;
   onQuickBattle: () => void;
   onOpenSandbox: () => void;
   /** Opens the chosen Location directly with a random party — App.tsx createLocationVisitRun. */
@@ -113,7 +113,7 @@ export function TitleScreen({
   onContinueRun,
   onStartRun,
   openAscension,
-  onReplayTutorial,
+  onResetTips,
   onQuickBattle,
   onOpenSandbox,
   onVisitLocation,
@@ -328,8 +328,8 @@ export function TitleScreen({
             <button className="title-dev-item" onClick={() => runDev(() => setShowLocations(true))}>
               Visit Location
             </button>
-            <button className="title-dev-item" onClick={() => runDev(onReplayTutorial)}>
-              Replay Tutorial
+            <button className="title-dev-item" onClick={() => runDev(onResetTips)}>
+              Reset Tips
             </button>
             <button className="title-dev-item" onClick={() => runDev(onStartLevel4TestRun)}>
               🧪 Test: Lv4 Squad

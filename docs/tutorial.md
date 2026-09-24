@@ -1,246 +1,146 @@
-# tutorial.md — The Scripted First Run
+# tutorial.md — First-Time Tips
 
-> Module of the Titanpact `/docs` suite. Companion to `run-loop.md` (whose §1 act shape this
-> narrows for exactly one act), `lore.md` (whose premise the intro speaks aloud) and
-> `leveling-and-ranks.md` (whose curve the payout table is tuned against).
+> Module of the Titanpact `/docs` suite. Companion to `lore.md` (whose premise the lore card
+> states in four lines) and `run-loop.md` (whose every beat is a tip's occasion).
 >
-> Signed off 2026-09-05, per user direction. The tutorial is **content plus one flag**, not a
-> mode: a tutorial run is a normal run with Act 1 pinned, and nothing survives the first
-> Guardian except the profile bit saying it happened.
-
-> ## ⚠ TURNED OFF (2026-09-10)
->
-> Per user direction — *"it needs a lot of work and I want to look at it later"*. A fresh profile
-> now starts an **ordinary** run; everything below still describes what is built, and none of it was
-> removed.
->
-> The switch is `TUTORIAL_ENABLED` in `src/run/profile.ts`, read by `shouldPlayTutorial` — which has
-> exactly one caller (`handleStartNewRun`). Flip it to `true` to put the scripted run back. It lives
-> in `profile.ts` rather than at the call site so there is one thing to flip rather than a condition
-> to reconstruct.
->
-> **Still reachable while it is off**: the Dev menu's *Replay Tutorial* calls `beginRun(true)`
-> directly and never consulted the gate, so the whole scripted act can still be played and worked
-> on. `Profile.tutorialDone`, the curated Act 1 map, the beat machinery and every test in
-> `test/tutorial.test.ts` are untouched and still pass.
-
----
+> Decided 2026-09-24, per user direction, **replacing the scripted first run** of 2026-09-05
+> (Valor-narrated, Valor + Fang forced, a one-node-per-row Act 1 with curated fights, pinned
+> payouts and three locks — turned off 2026-09-10 and now deleted whole).
 
 ## 1. What it is
 
-The first run on an account is **scripted through Act 1**, presented as **Valor talking to the
-player**. Valor and Fang are forced as the starting pact — partners already a year into walking
-toward Wild's Edge — and the act's map is narrowed to **one node per row** so Valor can walk the
-player through every stop and no lesson is lost to routing.
+There is **no tutorial run**. A player's first run is an ordinary run — the draft rolls, the map
+branches, the fights are drawn, the payouts roll — exactly as every later run is.
 
-From the Act 1 Guardian onward the run is an ordinary run: the map branches, the payouts roll,
-and nobody narrates.
+What a first run adds is information, not structure:
 
-**Trigger.** `Profile.tutorialDone`, set when the Act 1 Guardian falls — not when the run
-starts. A tutorial the player wiped in is therefore offered again, which is the whole reason it
-is not just `runsStarted === 0`. A pre-tutorial profile with a cleared run decodes as done, so a
-veteran is never handed one. The Title screen's Dev menu carries **Replay Tutorial**, which
-bypasses the profile without rewriting it.
+- **The lore card** — four lines, one a tap, ahead of the first draft on an account.
+- **First-time tips** — the first time the player meets a mechanic (a screen, a node, a
+  situation inside a fight), a short card says what it is and what to do with it. **Once per
+  account**, never again.
 
-**Losing.** A wipe ends the run like any other. There is no retry: the tutorial's job is to
-teach what the game is, and "losing is free" is the one thing that would be a lie by Act 2.
+**Voice.** Tips are plain game-UI text — *video-gamey information*, brief and to the point. Nobody
+is speaking: no portrait, no name, no "we", no in-world framing (`test/tips.test.ts` fails on
+"we / us / our" in a tip). One or two sentences a page, at most three pages, 180 characters a
+page. The lore card is the one place the game speaks as a legend.
 
-## 2. The corridor
+## 2. The lore card
 
-`TUTORIAL_ROW_TYPES` (`src/run/tutorial.ts`) is the standard nine-row act shape from
-`run-loop.md` §1 with **every choice row narrowed to a single node** — the Elite-or-Skirmish
-fork to its Skirmish. The 1-of-3 choices *inside* a reward node are untouched — the choosing is
-the lesson; the routing is not. Three fights, the same three every act has since 2026-09-14; the
-warband `battle` that stood between the Forge and the third reward row went with the fourth fight,
-and its bench lesson moved onto the Guardian. The Scribe row joined the same day, where every act
-has it (`docs/mastery.md`).
+```
+A Titan cannot be killed.
+It can only be put to sleep for 1,000 years.
+Our time is up.
+We must seal the pact.
+```
 
-| Row | Node | What Valor teaches |
-| --- | --- | --- |
-| 0 | Monsters | doubles, targeting, Speed, Mana, Rest, reading a resist |
-| — | *post-fight gates* | XP as a pot · the bag badge, on the map that follows |
-| 1 | Equipment | comparing three pieces; rarity as a budget |
-| 2 | Mentor | Classes: permanent, one per hero, four on the road |
-| 3 | Forge | the item slot as the scarce thing |
-| 4 | Scribe | Mastery: two pips each to two of the three; five Evolves, ten masters a signature |
-| 5 | Skirmish | type advantage both ways, **physical vs magical**, the forced Recruit Contract |
-| — | *post-fight gate* | **a move offer** on the level-up report (Valor's first offer is level 3, reached on the opener; the Skirmish reaches 6) |
-| 6 | Scroll Cache | three pips in any split — concentrate and Valor can turn before the Guardian, or spread |
-| 7 | Guild Hall | gold: a hero, gear, a contract, or a Scroll |
-| 8 | Guardian | the escort shape, the bench, switching, flying the caster, the Ancient wall, **reading the number not the colour**, the Pact Clock |
+`LoreScreen` (`src/view/run/LoreScreen.tsx`), full-bleed on the cold open's black, serif, the last
+line in the seal's gold. It sits between the title's *Start a Run* and the draft, because its last
+line is the draft's verb — the draft's button reads *Seal the Pact*. Shown once an account
+(`LORE_TIP_ID` in `Profile.seenTipIds`); the cold open (`TitanWakeScreen`) still plays after every
+draft.
 
-Every node type appears **exactly once**, which is what lets a beat be addressed by node type
-alone (`map:<type>`); a test pins that.
+## 3. The tips
 
-## 3. The type lesson the act is built around
+Content is `src/data/tips.ts`; mechanism is `src/run/tips.ts`; the card is
+`src/view/run/TipOverlay.tsx` (centred, dims without blurring so the thing named stays readable,
+swallows input until dismissed).
 
-Act 1's Guardian is the **Manticore, Beast/Ancient**. The types strong against Beast are
-**Frost, Storm and Mech** — and those are exactly the three types strong against **Iron**
-(Valor) and **Beast** (Fang).
+### Screen tips
 
-So the Skirmish fields two **Frost** heroes. The same move reads two ways on one screen (double
-into Fang, half into Valor), and the pair the player is being hurt by is the pair a Recruit
-Contract can claim — because it is what the thing at the end of the valley fears. *What beats
-you is what beats what is ahead* is the whole act in one sentence, and the player is made to
-feel it before they are told it.
+App.tsx maps the current screen to candidate ids (`screenTipIds`), in priority order, and shows
+the first the profile has not seen (`firstUnseenTip`). One card at a time; a screen that is the
+first meeting with two things shows the second on its next visit.
 
-**The Guardian is shaped like every other Guardian.** It fields two of Wild's Edge's own
-**Early Titanspawn** with the Lord on the bench, because that is what a `boss` node is
-everywhere (`run-loop.md` "The Guardian's escorts"). The tutorial only names *which* two, so
-Valor can be specific: the **Cubling** is a Beast for the caster to double into, the
-**Rivetling** is Iron so claws barely mark it. Killing one brings the Lord out, which is where
-the Ancient wall gets explained with the wall in front of them. (Until 2026-09-13 these were the
-Goblin Grunt and Warrior — the spawn stand on the same two types, so the chart the act is built
-on did not move; `docs/titanspawn-overhaul.md`.)
+| Id | Fires on |
+| --- | --- |
+| `draft` | the draft (spotlights the starter rail, `TIP_STAGING` in TipOverlay) |
+| `run` | the act's arrival screen ("The Journey", the card sat low so the place stays in view) |
+| `map` | the map, once there is a choice to make — not at an act's opener, the only node on offer |
+| `wounds` | the map, once any hero is hurt (HP carries across an act; Mana does not) |
+| `fork` | the map, once an Elite or Skirmish is one step away |
+| `squad` | lead order (skipped while the roster is two) |
+| `levelUp` | the level-up report |
+| `item` | the item who-screen (sockets, merge, sell) |
+| `companion` | the companion's join beat |
+| `fallen` | Permadeath's Fallen beat (Ascension 1) |
+| `equipmentReward` | the equipment cache |
+| `tutor`, `boon`, `manaWell`, `leyLine`, `rest`, `event` | that node's screen (the Mentor and the Forge carry none — each screen's own line says it) |
+| `scribe`, `scrollCache` | the Scribe's and the Cache's scroll screens (a bought Scroll gets none — the Guild Hall's tip named it) |
+| `shop` | the Guild Hall |
+| `recruit` | the Recruit Contract claim (roster cap, termination) |
+| `banner`, `crucible` | the Guardian's two beats |
+| `seal` | the Pact Seal between acts |
+| `locationChoice` | the act-2+ location pick |
 
-An earlier pass scripted hero escorts — Stone for Valor, Nature for Fang — to stage a
-super-effective read for each starter. That is gone: nothing in the scripted opener is weak to
-both Iron and Beast, and a tutorial must not teach a fight the rest of the run never presents.
-The lesson it was staging turned out not to need staging (§5).
+None fires over a fight (FightScreen owns those) or over a cinematic (the cold open, the Herald,
+the Titan's fall), and none over a recruit's fanfare.
 
-Two tests pin what is left: the Skirmish pair must threaten a starter *and* not be resisted by
-the Guardian, and every scripted Guardian escort must be in the Location faction's `basicIds`.
+### Fight tips
 
-## 4. What the act refuses to let you skip
+Checked at the top of every command phase — never between two orders — against a
+`FightTipContext` FightScreen derives from live state. List order is priority order.
 
-A lesson the player is allowed to decline is a lesson some players never see, so Act 1 removes
-the option rather than advising against it (2026-09-06, per user direction). Three locks, all in
-`TUTORIAL_LOCKS`, each lifting the moment its lesson lands, none surviving Act 1.
+| Id | When |
+| --- | --- |
+| `fight.basics` | the first command phase of the first fight: orders, Mana, reading fighters, turn order, holding a move |
+| `fight.types` | round 2+: the multiplier on a move, STAB, physical vs magical (with the move-kind glyphs inline) |
+| `fight.rest` | a player hero can afford nothing |
+| `fight.guardian` | a Guardian fight: the champion waits on the bench |
+| `fight.ancient` | an Ancient on the field |
+| `fight.bench` | round 2+ with someone benched: bench Mana, switching, lock-in |
+| `fight.bag` | round 3+: potions are a free action |
+| `fight.knockout` | the first player KO: it persists until a Rest, the mend, a Revive, or the act's end |
+| `fight.lockIn` | the player side is locked in |
+| `fight.field` | a Field Effect is up |
+| `fight.pactClock` | the Pact Clock's warning starts |
 
-| Lock | What it closes | Lifts when |
-| --- | --- | --- |
-| `recruitHeroId` | The Skirmish contract is one offer, and the screen has no leave button | It is signed |
-| `fieldHeroId` / `fieldAtNodes` | Flurry is pinned to an ACTIVE slot at the Guardian | Act 1 ends |
+Fights outside a run (Quick Battle, the sandbox) show none: they pass no `tips` prop.
 
-**The Evolution needs no lock, and since 2026-09-10 no schedule either.** `EvolutionScreen` has
-no decline, and levels are automatic and roster-wide — so the whole roster crosses
-its schedule entries whatever the player does (Valor evolves at 10, inside Act 2). The
-`focusHeroId` lock that used to funnel a pool to guarantee that went with the pool. A test still
-asserts *which node* the fork lands on, so retuning the level curve fails loudly rather than
-quietly moving the beat.
+## 4. State
 
-## 5. Physical vs magical, and why the caster is not optional
+`Profile.seenTipIds` — account-wide, not per run, so a tip read in a run that was wiped is not
+read again in the next one. Written straight to storage on dismissal (`recordTipSeen`). An id this
+build no longer ships is kept, harmlessly. A profile from before the tips decodes with none seen;
+its old `tutorialDone` is dropped.
 
-The damage formula has two pipelines — Attack against Defense, Intelligence against Wisdom —
-and the split is **invisible until the player owns one of each**. A draft cannot be relied on to
-hand them a caster, so the tutorial hands them one and does not ask.
+The **Dev menu's Reset Tips** (`resetTips`) clears the list, lore card included, so everything
+shows again on its next occasion.
 
-**Flurry** is the roster's least ambiguous magical specialist: **25 Attack against 80
-Intelligence**, and her only damage move is magical. She is also Frost, so she is still the
-Guardian answer §3 is built on — one recruit, two lessons.
+`RunState` carries nothing. The scripted run's `tutorial` and `tutorialSeenBeatIds` are gone; a
+save still holding them decodes (the fields are ignored), so no `SAVE_VERSION` bump.
 
-**The proof is the Manticore himself, and it needed no staging.** He is authored at
-**75 Defense against 60 Wisdom**, so the two pipelines already read differently on him. Through
-the real damage pipeline, on base kits:
+## 5. Adding a tip
 
-| | Move | Pipeline | Damage |
-| --- | --- | --- | --- |
-| Valor | Iron Fist | physical, 60/75, ×0.5 | **20** |
-| Fang | Claw | physical, 90/75, ×0.5 | **30** |
-| Flurry | Rime Wind | magical, 80/60, ×1.0 | **42** |
+1. Write it in `src/data/tips.ts` — a screen tip under `SCREEN_TIPS`, a fight tip in
+   `FIGHT_TIPS` at the priority it deserves.
+2. A screen tip's id goes in `SCREEN_TIP_IDS` (`src/run/tips.ts`) and in `screenTipIds`
+   (App.tsx); the test fails if content and list disagree. A fight tip needing a new signal adds
+   a field to `FightTipCondition` and `FightTipContext` and derives it in FightScreen.
+3. Check the rule it states against the code — a tip that is wrong is worse than none.
 
-The caster wins **without being strong against him** — Frost doubles into Beast and the Ancient
-half halves it straight back, so her type multiplier is a flat 1. She is ahead purely on the
-stat ratio. That is the cleanest possible statement of the lesson: *type advantage is one term
-in the sum, not the sum.*
+## 6. What was deleted, and why
 
-So the cues stopped naming a staged wall. `boss:escorts` sets up the warband, and `boss:ancient`
-fires when the Lord walks on and tells the player to hold each move over him and read the number
-rather than the colour. Neither line names which of our heroes is holding it, because Flurry
-holds one active slot and the player picks the other — Fang may be on the bench.
+The scripted run taught through staging: forced starters, a curated corridor, curated
+encounters propped up with flat stat grants so a fight would survive its own dialogue, pinned
+gold so Valor's shopping advice held, a forced Recruit (Flurry, the physical/magical lesson) and a
+forced field slot. Every one of those drifted each time a system moved underneath it (the Forge,
+the Scribe, the third reward row, the Titanspawn rewrite) and the script was off from 2026-09-10
+because of it. Tips key on **mechanics**, not on a staged act, so a system that moves changes one
+card's text rather than a corridor.
 
-A test recomputes the table above through `calcDamage` and fails if the caster ever stops
-out-damaging both starters against the champion. It runs on base kits, because Valor's Evolution
-is the player's choice and Storm Lash would otherwise beat her.
+Gone: `src/run/tutorial.ts`, `src/data/tutorial.ts`, `TutorialOverlay`, `test/tutorial.test.ts`,
+`Profile.tutorialDone`, the two `RunState` fields, the RecruitScreen's `required` offer, the
+SquadSelectScreen's pinned heroes, the encounter builder's `scripted` roster. Kept, as generic
+test levers: `generateEncounter`'s `forcedHeroIds` and `statGrants`.
 
-## 6. Payouts
+## 7. Open questions
 
-**The scripted act does not touch XP at all.** It takes the same experience a normal act pays,
-because a tutorial that pays better would make erasing your profile the strongest opening move in
-the run. It briefly paid double (26 against 13) before this was measured.
-
-| Node | XP | Tutorial gold | Normal gold (mean) |
-| --- | --- | --- | --- |
-| Monsters (opener) | — | 20 | 20 |
-| Skirmish | — | 20 | 20 |
-| Guardian | — | 0 | 0 |
-| **Total** | — | **40** | **40** |
-
-(XP is no longer a per-node figure — a won fight pays the whole roster `ENCOUNTER_XP_BY_ACT`;
-the warband row and its 37 gold went with the fourth fight, 2026-09-14.)
-
-Reaching the Evolution before the Guardian is what an override used to buy, and it is bought
-properly now: the row-0 opener pays **3 rather than 2** across the whole game
-(`BASE_TRAINING_POINTS`, `run-loop.md` §2), so every act on every route can afford an all-in on
-one hero. Act 1 pays 10 before its Guardian against a 10-point cost.
-
-**The focus lock (§4) is what makes 10 enough rather than lucky.** Every point goes to Valor, so
-the schedule is exact: level 3 after the opener, 4 after the Skirmish, **5 after the warband** —
-the Level Up screen immediately before the Guild Hall and the Guardian. Two tests hold it: a floor
-(*a normal act*, on either route, must afford the fork before its own Guardian) and a ceiling
-(neither the tutorial's effective XP nor its gold may exceed a normal act's).
-
-**Gold is pinned, and only to its own average** — `goldRewardFor` rolls 15-25 for a fight or
-Skirmish. Not for power, but for determinism: Valor tells the player what to spend at the
-Guild Hall, so what they are holding when they arrive cannot be a coin flip.
-
-Everything else is already the normal roll — the equipment drop table, the act-end Recruit
-Contract.
-
-## 7. How the script is wired
-
-Content is `src/data/tutorial.ts` — dialogue, encounters, payouts, mid-fight cues. Mechanism is
-`src/run/tutorial.ts`, which imports none of it (the same arrangement `events.ts` uses). This is
-the file a designer edits; nothing else has to change to add, cut or rewrite a line.
-
-**Out-of-fight beats** are addressed by a flat key namespace: `map:<nodeType>`,
-`reward:<nodeType>`, or one of `TUTORIAL_SCREEN_BEAT_KEYS`. `App.tsx` resolves the current
-screen to a key; `tutorialBeat` answers with a beat or nothing. Progress lives in
-`RunState.tutorialSeenBeatIds`, so a beat survives a reload and never repeats. Two tests close
-the drift: every key App can raise has a beat, and every beat names a key something raises — a
-beat addressed to a moment nothing produces would otherwise just silently never play.
-
-**Any line can print an icon.** `[physical]`, `[magical]`, `[heal]`, `[buff]` and `[debuff]`
-in a line render the same badge the move buttons wear (`MoveKindGlyph`, the same
-`category-physical` / `category-magical` colours), so the mark in the sentence is the mark the
-player is being sent to look for. `parseTutorialText` splits a line into text and icon runs, and
-the token names are opaque strings in the run tier — the view maps them onto glyphs, so the
-dialogue can show a badge without `src/run` importing `src/view`. A misspelt token renders as
-literal prose rather than vanishing, and a test fails on one.
-
-**Mid-fight cues** are `TutorialFightCue`s, matched at the top of every command phase against a
-small live context (round, out-of-mana, locked in, lowest HP fraction, who is on the enemy
-field), and never once a fight is decided. Order in the array is priority order. `node` may name
-several fights, for a lesson that turns on a condition rather than a moment — Rest cannot be
-promised to any one fight. Cue progress is **FightScreen-local**, not run state: a fight is
-atomic and a reload replays it.
-
-**A scripted fight has to survive its own dialogue.** An Early spawn is authored as fodder (as the Goblins it replaced were), and
-the opener was ending in round 1 — Iron Fist reads `40 x (60 Atk / 25 Def) x 1.25` = ~120 into a
-100 HP Grunt — which took every round-2 lesson with it, and (before the guard above) left a cue
-landing on top of the victory panel. `TutorialEncounter.statGrants` is the lever: the opener
-carries **+25 HP and +35 Defense**, most of it Defense because the *ratio* was what ended the
-fight, not the HP. That takes Valor from 2.4x down to ~1.0x and the fight from one round to
-three or four. A test recomputes it through the real damage pipeline at maximum variance and
-fails if any starter can one-shot an opener enemy.
-
-**Gating.** The scripted *mechanics* (map, encounters, payouts) check `isTutorialAct` — the flag
-**and** Act 1 — so Act 2 onward carries no extra branch. The *dialogue* checks the flag alone,
-so a lesson Act 1 never reached (an Evolution nobody could afford) still lands the first time it
-applies. Every id is one-shot, so nothing repeats either way.
-
-## 8. Open questions
-
-- **No skip.** The dialogue cannot be dismissed wholesale; the Title's Replay entry is the only
-  control over it. If playtesting says the second read is a wall, a Skip that keeps the curated
-  map and drops the lines is a small addition to `TutorialOverlay`.
-- **Act 1's Guardian is unmodified**, escorts included — the script names two of the faction's
-  basics rather than inventing any, so the fight is the one every other act presents. Measured
-  over 20k simulated runs the Wild's Edge Guardian sits at 75.5% (`run-loop.md`), which is a
-  comfortable place for a tutorial to end. Whether the arriving power level clears him reliably
-  for a first-time player is still a playtest question, and the two tables in §6 are the knobs.
-- **Three locks may be two too many.** The forced recruit and the pinned slot both survive into
-  fights the player might reasonably want to arrange themselves, and a second-time player will
-  feel every one of them. `TUTORIAL_LOCKS` is one object; dropping a lock is deleting a field.
-- **Fang barely speaks.** Four lines in the whole run. Whether the partnership reads as a
-  partnership on that budget is a writing question, not a systems one.
+- **A first run is the real Act 1.** The curated act guaranteed a survivable opener; now a new
+  player meets the same Act 1 wall a veteran does (measured 58–68% cleared under the sim's
+  pilots). Whether that needs a first-run softening is for playtest.
+- **Clusters.** The first won fight can raise three cards in a row (level report, item,
+  then the map's wounds). Each is short; if it reads as a wall, the lower-priority one can wait
+  for the next occasion.
+- **An opt-out.** There is no player-facing "turn tips off" setting yet — only the Dev reset.
+- **Veterans** on an existing profile see every tip once. Deliberate for playtest; a veteran
+  heuristic (skip on a profile with a clear) is a one-line change in `decodeProfile` if wanted.

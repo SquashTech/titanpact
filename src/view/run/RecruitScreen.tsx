@@ -48,12 +48,6 @@ interface Props {
   /** Roster-full variant, wired to the in-place RosterReplaceScreen below. */
   onClaimReplace: (defeated: RosterEntry, terminatedRosterId: string) => boolean;
   onDone: () => void;
-  /**
-   * The scripted first run (docs/tutorial.md): the offer cannot be walked past. The leave button
-   * is withheld until something is signed — a lesson the player can decline is one some players
-   * never see, and this one is the physical/magical split.
-   */
-  required?: boolean;
 }
 
 /**
@@ -62,7 +56,7 @@ interface Props {
  * gear it fought in (deriveContractOffer, docs/gear-absorption.md §7) — so the piece it wears is
  * a veteran mark beside its path and Class, and the silhouette counts it.
  */
-export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, required = false }: Props) {
+export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone }: Props) {
   const [featuredRosterId, setFeaturedRosterId] = useState<string>(offers[0].rosterId);
   const [claimedRosterIds, setClaimedRosterIds] = useState<string[]>([]);
   const [popupMove, setPopupMove] = useState<MoveDefinition | null>(null);
@@ -240,18 +234,13 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
       )}
 
       {/* Quiet while a signature is still possible; `is-only-option` restores the gold slab once
-          this is the only live control on the screen. A required offer has no leave at all until
-          it is signed — a disabled button would read as a bug rather than as a decision taken. */}
-      {required && claimedRosterIds.length === 0 ? (
-        <p className="recruit-required-note">This one is not optional.</p>
-      ) : (
-        <button
-          className={`resolve-button recruit-leave${nothingLeftToSign ? ' is-only-option' : ''}`}
-          onClick={onDone}
-        >
-          {nothingLeftToSign ? 'Continue' : claimedRosterIds.length > 0 ? 'Done Recruiting' : 'Leave Them'}
-        </button>
-      )}
+          this is the only live control on the screen. */}
+      <button
+        className={`resolve-button recruit-leave${nothingLeftToSign ? ' is-only-option' : ''}`}
+        onClick={onDone}
+      >
+        {nothingLeftToSign ? 'Continue' : claimedRosterIds.length > 0 ? 'Done Recruiting' : 'Leave Them'}
+      </button>
 
       {popupMove && (
         <StageMovePopup move={popupMove} caster={caster} onClose={() => setPopupMove(null)} />

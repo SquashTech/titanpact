@@ -25,8 +25,6 @@ import { getTypeColor } from '../combat/typeColors';
 import { LocationAmbience } from '../shared/LocationSky';
 import { AudioSettings } from '../shared/AudioSettings';
 import { nodeEncounter, scoutedTypes } from '../../run/encounters';
-import { tutorialEncounterFor } from '../../run/tutorial';
-import { TUTORIAL_ENCOUNTERS } from '../../data/tutorial';
 import { heroes } from '../../data/heroes';
 import { enemies } from '../../data/enemies';
 import { allCombatants } from '../../data/content';
@@ -44,8 +42,7 @@ function scoutChoices(run: RunState, choiceIds: readonly string[]): Record<strin
   for (const id of choiceIds) {
     const node = map.nodes[id];
     if (!node || (node.type !== 'skirmish' && node.type !== 'elite')) continue;
-    const scripted = tutorialEncounterFor(TUTORIAL_ENCOUNTERS, run, node.type);
-    const encounter = nodeEncounter(node, { run, location, heroes, allCombatants, enemies, progression: progressionTable, scripted });
+    const encounter = nodeEncounter(node, { run, location, heroes, allCombatants, enemies, progression: progressionTable });
     scouted[id] = scoutedTypes(encounter, allCombatants);
   }
   return scouted;

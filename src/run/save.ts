@@ -67,6 +67,9 @@ import { MASTERY_CAP } from './mastery';
  * `unseenItemIds`), entries lost `bonusItemSlots`, and a v17 map may hold `forgeReward`.
  * v19 (2026-09-17): the Forge and the Ley Line (docs/run-loop.md) — an entry stores
  * `bonusStatusGrants`, and a map may hold `forgeReward` and `leyLineReward`.
+ * (2026-09-24, no bump): the scripted first run is gone, and with it `tutorial` and
+ * `tutorialSeenBeatIds`. A file still carrying them decodes — the two fields are ignored — so
+ * removing them costs nobody a run.
  */
 export const SAVE_VERSION = 19;
 
@@ -416,10 +419,6 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
   if (!isStringArray(value.visitedNodeIds)) reject('run.visitedNodeIds is not a list of ids');
   for (const id of value.visitedNodeIds) if (!map.nodes[id]) reject(`run.visitedNodeIds names missing node "${id}"`);
 
-  if (typeof value.tutorial !== 'boolean') reject('run.tutorial is not a flag');
-  // Beat ids are validated only as strings: the script is presentation, so a line renamed
-  // between builds should cost one repeated speech, never the whole run.
-  if (!isStringArray(value.tutorialSeenBeatIds)) reject('run.tutorialSeenBeatIds is not a list of ids');
   // Absent on a file written before the ladder existed; such a run was Base.
   const ascension = value.ascension === undefined ? 0 : value.ascension;
   if (!isInt(ascension, 0)) reject('run.ascension is not a rung');
@@ -440,8 +439,6 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
     actNumber: value.actNumber,
     locationIds: requireIds(value.locationIds, index.locationIds, 'run.locationIds'),
     brokenSeals: decodeBrokenSeals(value.brokenSeals, index),
-    tutorial: value.tutorial,
-    tutorialSeenBeatIds: [...value.tutorialSeenBeatIds],
     ascension,
   };
 }

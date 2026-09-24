@@ -20,7 +20,8 @@ import {
   grantRelicReward,
   grantManaWell,
   MANA_WELL_AMOUNT,
-  forgeLift,
+  forgeItem,
+  forgeable,
   grantLeyLine,
   LEY_LINE_FORCE,
   leyLineStatusId,
@@ -225,15 +226,29 @@ test('runProgress: the Anvil is refused without the gold, above Mythic, on a Uni
   assert.throws(() => anvilUpgrade(shopRun(999, []), SOCKET_0, equipment), RunProgressError);
 });
 
-test('runProgress: the Forge is the Anvil for free — the same lift, the same refusals, no gold moved', () => {
-  const run = shopRun(0, ['spear.rare.blazing']);
-  const next = forgeLift(run, SOCKET_0, equipment);
-  assert.deepStrictEqual(next.roster[0].equipment, ['spear.epic.blazing'], 'a tier up, family and enchant kept');
+test('runProgress: the Forge lifts a tier AND binds the picked element, free', () => {
+  const run = shopRun(0, ['spear.rare']);
+  const next = forgeItem(run, SOCKET_0, 'blazing', equipment);
+  assert.deepStrictEqual(next.roster[0].equipment, ['spear.epic.blazing'], 'a tier up and bound, family kept');
   assert.strictEqual(next.gold, 0, 'nothing spent');
-  assert.throws(() => forgeLift(shopRun(0, ['spear.mythic']), SOCKET_0, equipment), RunProgressError, 'nothing above Mythic');
-  assert.throws(() => forgeLift(shopRun(0, ['worldbreaker']), SOCKET_0, equipment), RunProgressError, 'a Unique has no ladder');
-  assert.throws(() => forgeLift(shopRun(0, ['spear.epic'], 1), SOCKET_0, equipment), RunProgressError, 'the act window caps the Forge as it caps the Anvil');
-  assert.throws(() => forgeLift(shopRun(0, []), SOCKET_0, equipment), RunProgressError, 'an empty socket');
+  assert.deepStrictEqual(
+    forgeItem(shopRun(0, ['spear.rare.blazing']), SOCKET_0, 'tidal', equipment).roster[0].equipment,
+    ['spear.epic.tidal'],
+    'a rebinding overwrites, as the Enchanter does'
+  );
+  assert.deepStrictEqual(
+    forgeItem(shopRun(0, ['spear.rare.blazing']), SOCKET_0, 'blazing', equipment).roster[0].equipment,
+    ['spear.epic.blazing'],
+    'the held element again is still a lift'
+  );
+});
+
+test('runProgress: the Forge binds what the Anvil would refuse, and refuses only work that changes nothing', () => {
+  assert.deepStrictEqual(forgeItem(shopRun(0, ['spear.mythic']), SOCKET_0, 'blazing', equipment).roster[0].equipment, ['spear.mythic.blazing'], 'nothing above Mythic — bound only');
+  assert.deepStrictEqual(forgeItem(shopRun(0, ['spear.epic'], 1), SOCKET_0, 'blazing', equipment).roster[0].equipment, ['spear.epic.blazing'], 'the act window caps the lift, not the binding');
+  assert.throws(() => forgeItem(shopRun(0, ['spear.mythic.blazing']), SOCKET_0, 'blazing', equipment), RunProgressError, 'no lift and the same element: nothing to do');
+  assert.throws(() => forgeItem(shopRun(0, []), SOCKET_0, 'blazing', equipment), RunProgressError, 'an empty socket');
+  assert.ok(forgeable(shopRun(0, ['spear.mythic.blazing']), 'spear.mythic.blazing', equipment), 'another element is still work');
 });
 
 test("runProgress: the act window caps the Anvil, not just drops", () => {

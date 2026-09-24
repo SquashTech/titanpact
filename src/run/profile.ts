@@ -51,11 +51,11 @@ export interface Profile {
   firstPlayedAt: number;
   lastPlayedAt: number;
   /**
-   * The scripted first run has been finished (docs/tutorial.md) — set when its Act 1 Guardian
-   * falls, not when the run is started. So a tutorial the player wiped in is offered again,
-   * which is the whole reason this is not just `runsStarted === 0`.
+   * First-time tips already shown (run/tips.ts, docs/tutorial.md), and the lore card as
+   * `LORE_TIP_ID`. Account-wide rather than per run: a tip read in a run that was wiped is not
+   * read again in the next one. Ids are kept whether or not this build still ships them.
    */
-  tutorialDone: boolean;
+  seenTipIds: string[];
 }
 
 /** Oldest records fall off the end. Fifty is a season of play, and past that a list stops being read. */
@@ -107,7 +107,7 @@ export function createProfile(): Profile {
     equippedPackId: 'base',
     firstPlayedAt: 0,
     lastPlayedAt: 0,
-    tutorialDone: false,
+    seenTipIds: [],
   };
 }
 
@@ -171,25 +171,14 @@ export function recordRunEnded(profile: Profile, end: RunEnd, now: number): Prof
   };
 }
 
-/** One-way: a later normal run never un-teaches the tutorial. */
-export function recordTutorialDone(profile: Profile): Profile {
-  return profile.tutorialDone ? profile : { ...profile, tutorialDone: true };
+/** Idempotent: a tip dismissed twice (a double-fired handler) records once. */
+export function recordTipSeen(profile: Profile, id: string): Profile {
+  return profile.seenTipIds.includes(id) ? profile : { ...profile, seenTipIds: [...profile.seenTipIds, id] };
 }
 
-/**
- * DISABLED (2026-09-10, per user direction: "it needs a lot of work and I want to look at it
- * later"). Flip to `true` to put the scripted first run back in front of a fresh profile.
- *
- * A flag rather than a deletion, and it sits HERE rather than at the call site so there is exactly
- * one thing to flip: the script, the curated Act 1 map, the beat machinery and `Profile.tutorialDone`
- * are all untouched and all still work. The Dev menu's "Replay Tutorial" calls `beginRun(true)`
- * directly and never consulted this gate, so the tutorial stays reachable for the work it needs.
- */
-const TUTORIAL_ENABLED = false;
-
-/** Whether a fresh run should be the scripted one (docs/tutorial.md). */
-export function shouldPlayTutorial(profile: Profile): boolean {
-  return TUTORIAL_ENABLED && !profile.tutorialDone;
+/** Every tip, and the lore card, shows again on its next occasion (the title's Dev menu). */
+export function resetTips(profile: Profile): Profile {
+  return profile.seenTipIds.length === 0 ? profile : { ...profile, seenTipIds: [] };
 }
 
 /** Monotonic: reaching Act 2 after a run that reached Act 4 does not walk the record back. */
@@ -329,9 +318,8 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     equippedPackId: typeof value.equippedPackId === 'string' && value.equippedPackId ? value.equippedPackId : 'base',
     firstPlayedAt: count(value.firstPlayedAt),
     lastPlayedAt: count(value.lastPlayedAt),
-    // The field is ABSENT on every profile written before the tutorial existed, and inferring it
-    // only in that case is what keeps a round trip lossless. A veteran's file — one recording a
-    // cleared run — is read as having done the tutorial rather than being handed one.
-    tutorialDone: typeof value.tutorialDone === 'boolean' ? value.tutorialDone : count(value.runsCompleted) > 0,
+    // Absent on every profile written before the tips; such a player sees each one once. A
+    // pre-tips `tutorialDone` is dropped — the scripted run it recorded no longer exists.
+    seenTipIds: [...new Set(stringList(value.seenTipIds))],
   };
 }

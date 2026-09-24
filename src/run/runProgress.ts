@@ -6,7 +6,7 @@ import { SEAL_ACTS, type BrokenSeal, type RunState, type RosterEntry } from './s
 import { FINALE_LOCATION_ID } from '../data/locations';
 import type { EncounterNodeKind } from './difficulty';
 import type { EnchantmentId, EquipmentDefinition, EquipmentRarity } from './equipment';
-import { actAllowsRarity, equipItem, equipmentIdFor, holdsItem, mergeIntoHeld, nextRarity, parseEquipmentId } from './equipment';
+import { actAllowsRarity, ENCHANTMENT_IDS, equipItem, equipmentIdFor, holdsItem, mergeIntoHeld, nextRarity, parseEquipmentId } from './equipment';
 import { generateMap } from './map';
 import { itemSlotsFor } from './progression';
 import { ANVIL_PRICE_BY_TARGET, ENCHANT_PRICE_BY_RARITY, sellValueFor } from './shop';
@@ -346,16 +346,43 @@ export function anvilUpgrade(
 }
 
 /**
- * The Forge node (docs/run-loop.md "The Forge and the Ley Line"): the Anvil's lift, free, once.
- * The same quote — a Unique has no ladder, Mythic no step above it, and the act's window still
- * caps the target — so what the Smithy would refuse, the Forge refuses too.
+ * The Forge node (docs/run-loop.md "The Forge and the Ley Line"; 2026-09-24, per user direction:
+ * "Upgrade and Enchant an item"): one worn piece, free, lifted a tier AND bound to the element the
+ * player picks, in one piece of work. The lift reads the paid Anvil's quote — a Unique has no
+ * ladder, nothing stands above Mythic, and the act's window still caps the target — and a piece
+ * the Anvil would refuse is still bound, so the node is only dead for a roster that wears nothing.
+ * Returns the piece it would make, or null when the work would change nothing.
  */
-export function forgeLift(run: RunState, ref: ItemRef, equipmentLookup: Record<string, EquipmentDefinition>): RunState {
-  const itemId = readItemRef(run, ref);
+export function forgeTarget(
+  run: RunState,
+  itemId: string,
+  enchantId: EnchantmentId,
+  equipmentLookup: Record<string, EquipmentDefinition>
+): string | null {
+  if (!equipmentLookup[itemId]) return null;
+  const parsed = parseEquipmentId(itemId);
   const quote = anvilQuote(run, itemId, equipmentLookup);
-  if (!quote) throw new RunProgressError(`${itemId} cannot be lifted here`);
-  if (!equipmentLookup[quote.targetId]) throw new RunProgressError(`Unknown equipment ${quote.targetId}`);
-  return writeItemRef(run, ref, quote.targetId);
+  const targetId = equipmentIdFor(parsed.base, quote ? quote.targetRarity : parsed.rarity, enchantId);
+  if (targetId === itemId || !equipmentLookup[targetId]) return null;
+  return targetId;
+}
+
+/** True when the Forge has some work to do on this piece — a lift, or at least one element to bind. */
+export function forgeable(run: RunState, itemId: string, equipmentLookup: Record<string, EquipmentDefinition>): boolean {
+  return ENCHANTMENT_IDS.some((enchantId) => forgeTarget(run, itemId, enchantId, equipmentLookup) !== null);
+}
+
+/** The Forge's work: the lift (where the Anvil would give one) and the binding, free, once. */
+export function forgeItem(
+  run: RunState,
+  ref: ItemRef,
+  enchantId: EnchantmentId,
+  equipmentLookup: Record<string, EquipmentDefinition>
+): RunState {
+  const itemId = readItemRef(run, ref);
+  const targetId = forgeTarget(run, itemId, enchantId, equipmentLookup);
+  if (!targetId) throw new RunProgressError(`${itemId} cannot be forged with ${enchantId}`);
+  return writeItemRef(run, ref, targetId);
 }
 
 /** Binds an element to one owned item, overwriting any enchant already on it. One enchant per item, always. */

@@ -34,7 +34,6 @@ import { mentorMovePool, tutorMovePool } from '../src/run/tutor';
 import { companionOf, companionTierStep, joinCompanion } from '../src/run/companion';
 import { addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
 import { generateMap, MAP_NODE_TYPES, REWARD_WEIGHTS } from '../src/run/map';
-import { TUTORIAL_ROW_TYPES } from '../src/run/tutorial';
 import { xpForLevel } from '../src/run/growth';
 import { decodeSave, encodeSave, buildContentIndex } from '../src/run/save';
 import { equipment } from '../src/data/equipment';
@@ -139,7 +138,6 @@ test('mastery: the Scroll Cache sits in the reward pool at the seat Ichor held, 
   // was 47% of acts, and with the Scribe's 2 one Cache is an Evolution (docs/run-loop.md).
   assert.ok(cache && cache[1] === 20, 'the Scroll Cache sits at 20');
   assert.ok(!REWARD_WEIGHTS.some(([type]) => (type as string).startsWith('ichor')), 'and the Drop seat is not re-pointed');
-  assert.ok(TUTORIAL_ROW_TYPES.includes('scrollReward'), 'the corridor shows both Scroll grammars');
   // Three pips, any split: three on one hero from two lands the fifth.
   let run = seed(['cinderKnight', 'crimson']);
   run = grantMastery(run, 'cinderKnight', 2);
@@ -148,7 +146,7 @@ test('mastery: the Scroll Cache sits in the reward pool at the seat Ichor held, 
   assert.ok(availableEvolution(progressionTable, run.roster[0]));
 });
 
-test('mastery: the Scribe is a forced row every act, never in the reward pool, and the tutorial corridor carries it', () => {
+test('mastery: the Scribe is a forced row every act, never in the reward pool', () => {
   assert.ok(MAP_NODE_TYPES.includes('scribeReward'));
   assert.ok(!REWARD_WEIGHTS.some(([type]) => type === 'scribeReward'), 'absent from REWARD_WEIGHTS');
   for (const act of [1, 2, 3, 4, 5]) {
@@ -159,7 +157,6 @@ test('mastery: the Scribe is a forced row every act, never in the reward pool, a
     assert.deepStrictEqual(fork, ['elite', 'skirmish'], `act ${act}: the Scribe sits right above the fork`);
   }
   assert.strictEqual(Object.values(generateMap(7, 6).nodes).filter((n) => n.type === 'scribeReward').length, 0, 'the finale has no Scribe');
-  assert.ok(TUTORIAL_ROW_TYPES.includes('scribeReward'));
 });
 
 test('mastery: pips round-trip through a save', () => {

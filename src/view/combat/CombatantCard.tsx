@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import type { HeroDefinition, PassiveId, StatKey } from '../../engine/content';
 import type { Combatant, StatContext, StatusInstance } from '../../engine/state';
 import { effectiveTypes, getCombatStatDelta, getMaxHp, getMaxMana, statModifierCeiling, statModifierFloor } from '../../engine/state';
@@ -15,8 +15,6 @@ import { useLongPress } from '../shared/MoveTile';
 import { StatusDetailOverlay } from './StatusDetailOverlay';
 import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { TypeFx } from './TypeFx';
-import { bracketPip, type OrderMark } from './orderMarks';
-import { Coin } from '../shared/Coin';
 
 export interface Popup {
   key: number;
@@ -133,10 +131,6 @@ interface Props {
   statCtx?: StatContext;
   /** The roster entry's level (run/growth.ts levelOf), on the nameplate for both sides so the gap reads at a glance. */
   level?: number;
-  /** This combatant's place in the round's resolve order (orderMarks.ts), worn at the figure's other shoulder. */
-  order?: OrderMark | null;
-  /** Tapping the coin — the game says the place in words (FightScreen's field note). Absent, the coin is inert. */
-  onInspectOrder?: () => void;
   /** The passive warding this combatant right now (engine/combat/ward.ts wardOn) — worn as a badge beside its statuses, since it is not one. */
   warded?: PassiveId | null;
 }
@@ -247,8 +241,6 @@ export function CombatantCard({
   striking,
   fx,
   level,
-  order,
-  onInspectOrder,
   warded,
 }: Props) {
   const [inspectingStatus, setInspectingStatus] = useState<string | null>(null);
@@ -270,6 +262,54 @@ export function CombatantCard({
   const modSplit = Math.ceil(activeMods.length / 2);
   const leftMods = activeMods.slice(0, modSplit);
   const rightMods = activeMods.slice(modSplit);
+
+  const statusChips = [
+    ...(warded
+      ? [
+          <span key="ward" className="status-badge status-badge-ward" title={`${passives[warded]?.name ?? 'Warded'} — nothing the far side aims at it lands`}>
+            Warded
+          </span>,
+        ]
+      : []),
+    ...Object.values(combatant.statuses).flatMap((s) => {
+      // A duration-shape status can sit at 0 until the next start-of-round tick removes it.
+      if (s.duration !== undefined && s.duration <= 0) return [];
+      // Net out the loadout portion of a magnitude grant (baselineStatusMagnitudes) — that is not a combat indicator.
+      if (s.magnitude === undefined) {
+        return [<StatusChip key={s.statusId} instance={s} onInspect={() => setInspectingStatus(s.statusId)} />];
+      }
+      const shown = s.magnitude - (combatant.baselineStatusMagnitudes[s.statusId] ?? 0);
+      if (shown <= 0) return [];
+      return [<StatusChip key={s.statusId} instance={{ ...s, magnitude: shown }} onInspect={() => setInspectingStatus(s.statusId)} />];
+    }),
+  ];
+
+  // On the battlefield the status strip is held to ONE line and scaled down to the card's width
+  // when it is crowded (styles.css .status-badge-fit): a wrapped second row grew outward, into the
+  // order track at the top of the arena and the Field Effect plaque at its foot. Measured off
+  // layout size, which a transform does not change, so the scale never feeds back into itself.
+  // Elsewhere (the bench, the pickers) the strip is `display: contents` and the row wraps as it did.
+  const statusRowRef = useRef<HTMLDivElement>(null);
+  const statusFitRef = useRef<HTMLDivElement>(null);
+  const [statusFit, setStatusFit] = useState(1);
+  const hasStatusChips = statusChips.length > 0;
+  useLayoutEffect(() => {
+    const row = statusRowRef.current;
+    const fit = statusFitRef.current;
+    if (!row || !fit || getComputedStyle(fit).display === 'contents') {
+      setStatusFit(1);
+      return;
+    }
+    const measure = () => {
+      const natural = fit.offsetWidth;
+      setStatusFit(natural > 0 ? Math.min(1, row.clientWidth / natural) : 1);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(row);
+    observer.observe(fit);
+    return () => observer.disconnect();
+  }, [hasStatusChips]);
 
   const classes = ['combatant-card'];
   if (compact) classes.push('compact');
@@ -316,35 +356,6 @@ export function CombatantCard({
         </div>
       )}
       {combatant.fainted && <span className="fainted-tag">KO</span>}
-      {/* The resolve order, at the shoulder the type chips leave free — the KO tag takes it when the figure falls. */}
-      {order && !combatant.fainted && !compact && (
-        <span
-          className={[
-            'order-mark',
-            order.tied ? 'is-tie' : '',
-            order.effect ? `is-${order.effect}` : '',
-            order.phase ? `is-${order.phase}` : '',
-            onInspectOrder ? 'is-tappable' : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-          role={onInspectOrder ? 'button' : undefined}
-          aria-label={`Acts ${order.rank}${['st', 'nd', 'rd'][order.rank - 1] ?? 'th'}${order.tied ? ', tied' : ''}`}
-          onClick={
-            onInspectOrder
-              ? (e) => {
-                  // The coin's tap is its own: it must not target the card or open the sheet.
-                  e.stopPropagation();
-                  onInspectOrder();
-                }
-              : undefined
-          }
-        >
-          <Coin />
-          <span className="order-mark-rank">{order.rank}</span>
-          {bracketPip(order.priority) !== null && <span className="order-mark-pip">{bracketPip(order.priority)}</span>}
-        </span>
-      )}
       {popup && (
         <div key={popup.key} className={`dmg-popup ${popup.className}`}>
           {popup.glyph && <StatusGlyph statusId={popup.glyph} className="dmg-popup-glyph" />}
@@ -408,23 +419,12 @@ export function CombatantCard({
       </div>
       {/* Always rendered (outside compact) so a status landing mid-fight doesn't grow the card. */}
       {!compact && (
-        <div className="status-badge-row">
-          {warded && (
-            <span className="status-badge status-badge-ward" title={`${passives[warded]?.name ?? 'Warded'} — nothing the far side aims at it lands`}>
-              Warded
-            </span>
+        <div className="status-badge-row" ref={statusRowRef}>
+          {statusChips.length > 0 && (
+            <div className="status-badge-fit" ref={statusFitRef} style={{ '--status-fit': statusFit } as CSSProperties}>
+              {statusChips}
+            </div>
           )}
-          {Object.values(combatant.statuses).flatMap((s) => {
-            // A duration-shape status can sit at 0 until the next start-of-round tick removes it.
-            if (s.duration !== undefined && s.duration <= 0) return [];
-            // Net out the loadout portion of a magnitude grant (baselineStatusMagnitudes) — that is not a combat indicator.
-            if (s.magnitude === undefined) {
-              return [<StatusChip key={s.statusId} instance={s} onInspect={() => setInspectingStatus(s.statusId)} />];
-            }
-            const shown = s.magnitude - (combatant.baselineStatusMagnitudes[s.statusId] ?? 0);
-            if (shown <= 0) return [];
-            return [<StatusChip key={s.statusId} instance={{ ...s, magnitude: shown }} onInspect={() => setInspectingStatus(s.statusId)} />];
-          })}
         </div>
       )}
       {inspectingStatus && combatant.statuses[inspectingStatus] && (

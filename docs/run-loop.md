@@ -80,9 +80,7 @@ in play, since Act 5 now runs two reward rows back-to-back either side of its Tu
 act's XP is re-sized ×1.25 so par still lands the decided act ends
 (`ENCOUNTER_XP_BY_ACT`, `ENCOUNTERS_PER_ACT` = 3). Measured on the same 600-run seed and
 pilot: **Reader 92 → 77 min, Auto 63 → 53, Fast 37 → 32**; full-clear 23 → 26%, Act 1 clear
-51 → 65% (the wall softened by exactly the fight it lost), Acts 4-5 Guardians unchanged. The
-tutorial's corridor lost its warband `battle` with it, and its bench lesson moved onto the
-Guardian.
+51 → 65% (the wall softened by exactly the fight it lost), Acts 4-5 Guardians unchanged.
 
 **The fork is Elite-or-Skirmish since 2026-09-13** (Titanspawn overhaul phase 3; it was
 Elite-or-Battle). Both options draw the recruitable pool and both pay a contract, so claim
@@ -93,7 +91,7 @@ is honest by construction: every encounter node draws from a seed derived from t
 and the node's id (`src/run/encounters.ts`, the one place App.tsx, the sim and the map's
 preview all build an encounter), so the tile and the tap are the same draw, and the fork's
 Skirmish is re-rolled against its Elite until the two differ in at least one type. `battle`
-survives as a node type only for the tutorial's curated corridor.
+survives as a node type only for a save that still holds one.
 
 **The spliced seat: Mentor (acts 1-3), Forge (act 4), Tutor (act 5).** Row 2 is a forced
 single-node row in every act. In acts 1-3 it is the Mentor (`mentorReward`): pick a hero, and
@@ -279,7 +277,7 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `equipmentReward` ("Item") | `NodeRewardScreen` — pick 1 of 3 items, rarity-weighted (`equipment.ts` `pickWeightedEquipment`); claiming bags it and lights the Roster badge — see "The bag notification" in `docs/progression.md`. Items are uncategorised as of 2026-09-06, so the three on offer are simply the three rolled (`docs/progression.md` "Uncategorised slots"). |
 | `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30 at Act 1, ×`ACT_GOLD_SCALE` after — see "The two reward lanes"). **2026-09-08, per user direction:** it pays out on arrival and the screen counts the PURSE up to its new total, coin by coin, over a Claim button that was never a decision — the drop size is a chip beside a number the player can act on, rather than a number they cannot. The two Scroll nodes share that beat. |
 | `scrollReward` ("Scroll Cache") | `ScrollNodeScreen` — **`SCROLL_CACHE_COUNT` = 3 Mastery pips**, one tap each, in any split (`src/run/mastery.ts`, `docs/mastery.md` §3, 2026-09-14). Five pips is a hero's Evolution and the fifth raises it right there; the Scribe seeds two heroes an act, this is where the player prioritises. Weight 46 — the seat the Scroll Cache held before Ichor, taken back when Ichor retired (Mastery phase 2). See "Mastery Scrolls" below. |
-| `forgeReward` ("Forge") | `ForgeNodeScreen` — **2026-09-17, per user direction: the Smithy's Anvil, free, once** — the roster as benches (`SmithyBenches`, the Guild Hall's own room), tap one worn piece and it comes off the anvil a tier up (`forgeLift`, the same quote the paid Anvil reads: a Unique, a Mythic and a tier the act has not reached are refused, so the act window caps it), played out on `SmithyBeat`. Weight 25. See "The Forge and the Ley Line" below. It was, 2026-09-06 to 2026-09-15, a **+1 item slot** to one hero (`grantItemSlot`, `bonusItemSlots`, weight 8 → 38), deleted with per-hero slots (`docs/gear-absorption.md` §4); the name and the id are re-used, the verb is new. |
+| `forgeReward` ("Forge") | `ForgeNodeScreen` — **2026-09-17, per user direction: the Smithy's Anvil, free, once** — the roster as benches (`SmithyBenches`, the Guild Hall's own room), tap one worn piece, pick an element, and it comes off the anvil a tier up AND bound (`forgeItem`; **2026-09-24, per user direction, "Upgrade and Enchant an item"** — the lift alone read as a trap pick). The lift is the paid Anvil's quote (a Unique, a Mythic and a tier the act has not reached get no lift, so the act window caps it); such a piece is still bound. Played out on `SmithyBeat`'s `forge` beat — the three strikes, then the circle, the binding the heaviest hit. Weight 25. See "The Forge and the Ley Line" below. It was, 2026-09-06 to 2026-09-15, a **+1 item slot** to one hero (`grantItemSlot`, `bonusItemSlots`, weight 8 → 38), deleted with per-hero slots (`docs/gear-absorption.md` §4); the name and the id are re-used, the verb is new. |
 | `leyLineReward` ("Ley Line") | `LeyLineScreen` — **2026-09-17, per user direction:** pick a hero, and it draws **`LEY_LINE_FORCE` = 10 of Elemental Force at its innate primary type** for the rest of the run (`grantLeyLine`, onto `RosterEntry.bonusStatusGrants`, summed with its gear's Force at fight build). The Enchanter's binding, free, and on the hero rather than a piece. Weight 25. See "The Forge and the Ley Line" below. |
 | `manaWellReward` ("Mana Well") | `ManaWellScreen` — pick one roster hero to gain **+`MANA_WELL_AMOUNT` = 30 max Mana** for the rest of the run (`runProgress.ts` `grantManaWell`, onto `bonusStatGrants`; stacks; never refused). **2026-09-13, per user direction** — the one bare-number screen the constitution allows. See "The Mana Well" below. |
 | `passiveReward` ("Boon") | `BoonNodeScreen` — pick 1 of 3 passives, then the hero it settles on (`grantEventPassive`, stored on `RosterEntry.bonusPassiveGrants`). See "Boons" below. |
@@ -488,9 +486,13 @@ its freed weight flowing into Equipment (`REWARD_WEIGHTS`: Forge 25, Ley Line 25
 in 48% of rows at that point, in all three 11% of acts, absent 14% — and then its weight came
 down to 20 the same day, see "Mastery Scrolls" below).
 
-**The Forge** (`forgeReward`, `ForgeNodeScreen`, `forgeLift`): the roster as benches — the Guild
-Hall's Smithy room, drawn once in `SmithyBenches` — and a tap on a worn piece IS the lift, since
-there is no price to read first; `SmithyBeat` plays the three strikes over it. The quote is the
+**The Forge** (`forgeReward`, `ForgeNodeScreen`, `forgeItem`): the roster as benches — the Guild
+Hall's Smithy room, drawn once in `SmithyBenches` — and a tap on a worn piece opens its bench: the
+lift it takes and the fourteen elements, the holder's own picked to start. **Since 2026-09-24 (per
+user direction) the Forge does both of the Smithy's verbs** — a tier up AND the binding, free —
+because the lift alone read as a trap pick; a piece the Anvil would refuse is still bound, so the
+node is dead only for a roster that wears nothing. `SmithyBeat`'s `forge` beat plays the three
+strikes, the piece rising into the Enchanter's circle, and the binding as the beat's heaviest hit. The quote is the
 paid Anvil's (`anvilQuote`): a Unique has no ladder, nothing stands above Mythic, and the act's
 rarity window still caps the target, so what the Smithy would refuse the Forge refuses too, and a
 locked socket says so by sitting dim. A roster with nothing to lift walks on. Worth a lift the
@@ -653,45 +655,51 @@ the purse that is not drunk.
 **The coin** (`src/view/shared/Coin.tsx`, 2026-09-17, per user direction): one struck token in
 the mana gem's manufacture — a dark halo that seats it on whatever it sits over, a face, a
 top-lit crown, a milled inner ring at the rim, and a spark from the top left — drawn under
-whatever the caller strikes on it: the order mark's numeral, a potion's flask. It began as a
-flat disc for the order marks, which read as unfinished beside the gem and the type chips. The
-tint is one CSS variable (`--coin-rgb`), so every state on every surface — a tie, a cut, a
-hold, the current actor, a chosen kind, a spent one — is a recolour of the same die rather than
-a different object. The four surfaces: the order marks on the figures, the Bag key, the Bag
-panel's kind chips and the Guild Hall shelf's potions.
+whatever the caller strikes on it, a potion's flask. It began as a flat disc for the order marks
+(below, since retired), which read as unfinished beside the gem and the type chips. The tint is
+one CSS variable (`--coin-rgb`), so every state on every surface — a chosen kind, a spent one —
+is a recolour of the same die rather than a different object. The three surfaces: the Bag key,
+the Bag panel's kind chips and the Guild Hall shelf's potions.
 
-**The resolve order is shown ON the figures** (`orderMarks.ts`, `CombatantCard` `order`,
-2026-09-17, per user direction): a numbered coin (the coin above) at the shoulder the type chips leave free —
-the way Into the Breach numbers the Vek — reading 1 to 4 across the four active cards. It was
-first a ribbon of portraits under the ally status bands, then along the very top of the screen,
-and both read as a plaque bolted onto a scene; a number on the thing it is about costs no band.
-**Two "1"s IS a tie**: tied entries share the first of their ranks and the coin goes gold, since
-the RNG decides and the mark says so rather than picking one. The order is `previewOrder`
-(`engine/combat/priority.ts`): the same keys `orderActions` sorts on, no RNG spun. The
-player's declared actions carry their real bracket — a priority move, a switch (`⇄`) or a Rest
-(`☾`) moves its number and hangs the bracket as a pip off the coin; a rolled bracket shows `?`
-at 0 — and the enemy's are unknown until the round plays, so they sit at bracket 0.
-**During playback the marks are the real order** (same day): `resolveRound` emits
-`RoundOrdered` — every action's settled bracket and Speed, right after `RoundStarted` — and
-the marks walk it beat by beat: the last combatant whose turn began (`TurnStarted`, a Daze
-block, a voluntary switch) stands forward in its own type light, the ones before it fall back,
-and the round's end retires them all; a KO'd figure's coin gives way to the KO tag. **A bracket
-that changed the order is lit** (`bracketEffect`, `engine/combat/priority.ts`): a cut ahead of
-someone Speed would have sent first takes a gold coin, lifted; a hold behind someone it would
-have sent later a cold one, sunk; a +1 on the hero Speed already favoured, which moved nothing,
-is a pip and no more. "Favoured" is read on the field's own axis — `previewOrder` and
-`RoundOrdered` both carry `reversedSpeed`, so under Stasis Bubble the slower hero is the one
-a cut goes past. **A number needs telling** (same day, per user direction — a new player would
-read "3" as anything from a level to a stack): the tutorial's opener cue names the coin in the
-line that already teaches Speed, and **a coin is tappable while commanding** — the tap is the
-coin's own, never the card's — and the game says the place in words over the field for a
-moment (`describeOrder`, `.field-note`): **the whole round first to last** — *Cinder, then
-Pixie, then Riptide, then Rime* — a tie said as *Squall or Riptide (a coin flip)*, and after it
-the one clause the tapped hero's number cannot carry, when there is one: a bracket that cut
-ahead or held back, a switch going first, a Rest last, a roll still to come. The ribbon of
-portraits read the sequence more directly and is the trade the shoulder coin makes for the
-screen space; the tap is what gives that sequence back, in words (it first said only the tapped
-hero's place, and was widened to the whole order the same day, per user direction).
+**The resolve order is a track on the horizon** (`OrderTrack.tsx`, `orderMarks.ts`, 2026-09-24,
+per user direction): the four active fighters as half-size sprites — 24px, exactly half the 48px
+source — first to last, left to right, across the top of the arena, in the padding above the
+far side's status strip (it sat on the horizon for a day, where the middle of the field was the
+busiest strip on the screen). A status strip never wraps into it: on the battlefield a crowded
+strip stays one line and shrinks to its card's width (`.status-badge-fit`, `CombatantCard`). The
+Pact warning and the order's spoken words moved down to the horizon, over "VS". A gold rail runs through it and fades into the horizon line at both ends; each
+fighter sits in a small glass portrait rimmed in its side's colour (the enemy red, the ally
+blue), so which side acts when reads without a name; and a gold chevron on the rail between each
+pair says it is a sequence before any face is read. The middle of the field is the teams'
+alone: the type chips hang at the OUTER shoulder of each figure, the right-hand column mirrored
+so its chips sit against the screen's right edge. Its history is three
+tries: a ribbon of portraits under the ally status bands, then along the very top of the screen
+(both read as a plaque bolted onto a scene); then a numbered coin on each figure's shoulder
+(2026-09-17), later struck gold / silver / bronze / iron by place — which asked the eye to find
+four numbers in four corners and sort them, and did not work in play. The horizon is the one band
+both rows face, so a line of faces there is read in a single pass without a plaque. **A tie** is a
+gold `=` where the chevron would be: tied entries share a rank, the RNG decides, and the track says
+so rather than picking one. The order is `previewOrder` (`engine/combat/priority.ts`): the same
+keys `orderActions` sorts on, no RNG spun. The player's declared actions carry their real
+bracket — a priority move, a switch (`⇄`) or a Rest (`☾`) moves its sprite and hangs the bracket
+as a pip off its frame; a rolled bracket shows `?` at 0 — and the enemy's are unknown until the round
+plays, so they sit at bracket 0. **During playback the track is the real order**: `resolveRound`
+emits `RoundOrdered` — every action's settled bracket and Speed, right after `RoundStarted` — and
+the track walks it beat by beat: the last combatant whose turn began (`TurnStarted`, a Daze
+block, a voluntary switch) steps forward, its rim lit in its side's colour, the ones before it fall back,
+and the round's end retires them all. **A bracket that changed the order moves its sprite**
+(`bracketEffect`): a cut ahead of someone Speed would have sent first is lifted, its pip lit gold;
+a hold behind someone it would have sent later is sunk; a +1 on the hero Speed already favoured,
+which moved nothing, is a pip and no more. "Favoured" is read on the field's own axis —
+`previewOrder` and `RoundOrdered` both carry `reversedSpeed`, so under Stasis Bubble the slower
+hero is the one a cut goes past. The first fight's tip names the track (`fight.basics`,
+`docs/tutorial.md`), and **a sprite is tappable while commanding**: the game says the order in
+words over the field for a moment (`describeOrder`, `.field-note`) — the whole round first to
+last, *Cinder, then Pixie, then Riptide, then Rime*, a tie said as *Squall or Riptide (a coin
+flip)*, and after it the one clause the tapped hero's place cannot carry, when there is one: a
+bracket that cut ahead or held back, a switch going first, a Rest last, a roll still to come.
+**The Field Effect plaque moved to the foot of the arena** to give the track the horizon's centre
+(`.battlefield > .field-effect-badge`).
 
 **Open, deliberately:** the hold cap, the price and the drop odds are all playtest numbers; and
 whether a potion should be drinkable during a forced-replacement beat after a KO — the moment a

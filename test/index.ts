@@ -62,7 +62,7 @@ import './wounds.test';
 import './profile.test';
 import './starShop.test';
 import './starterPacks.test';
-import './tutorial.test';
+import './tips.test';
 import './innate.test';
 import { run } from './harness';
 

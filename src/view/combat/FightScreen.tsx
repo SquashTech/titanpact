@@ -34,6 +34,7 @@ import { consumableRefusal, useConsumable, type FightConsumableKind } from '../.
 import { CONSUMABLE_KINDS, CONSUMABLE_NAMES, type ConsumableKind, type ConsumablePurse } from '../../run/consumables';
 import { BagPanel, type BagTarget } from './BagPanel';
 import { describeOrder, orderMarksFor, type OrderMark, type OrderSource } from './orderMarks';
+import { OrderTrack, type OrderTrackEntry } from './OrderTrack';
 import { Coin } from '../shared/Coin';
 import { previewOrder } from '../../engine/combat/priority';
 import { ResourceGlyph } from '../shared/RunGlyph';
@@ -49,9 +50,9 @@ import { resolveTypeMult, TYPE_MULT_FLOOR } from '../../engine/damage/typeMult';
 import { resolveElementalForceBonus } from '../../engine/damage/damagePipeline';
 import type { RunState, RosterEntry } from '../../run/state';
 import type { MapNodeType } from '../../run/map';
-import { matchTutorialCue, type TutorialFightContext } from '../../run/tutorial';
-import { TUTORIAL_FIGHT_CUES } from '../../data/tutorial';
-import { TutorialOverlay } from '../run/TutorialOverlay';
+import { matchFightTip, type FightTipContext } from '../../run/tips';
+import { FIGHT_TIPS } from '../../data/tips';
+import { TipOverlay } from '../run/TipOverlay';
 import { TitanRiseScreen } from '../run/TitanRiseScreen';
 import { overlayHost } from '../shared/overlayHost';
 import type { Squad } from '../../run/squad';
@@ -555,11 +556,10 @@ interface Props {
   /** Plain one-tap exit for fights outside a run (Quick Battle). A caller passes this or the run pair, never both. */
   onExitToTitle?: () => void;
   /**
-   * The scripted first run (docs/tutorial.md): which curated fight this is, by its map node
-   * type. Omitted everywhere else, which is what keeps every normal fight free of the check.
-   * Cue progress is deliberately screen-local — a fight is atomic, and a reload replays it.
+   * First-time tips (docs/tutorial.md): the run's fights pass the node they stand on and the
+   * profile's seen list. Omitted outside a run (Quick Battle, the sandbox), which shows none.
    */
-  tutorialNodeType?: MapNodeType;
+  tips?: { nodeType: MapNodeType; seenIds: readonly string[]; onSeen: (id: string) => void };
   /**
    * The Eyes' fight (docs/titan-eyes.md): a win hands off the moment playback ends, with no result
    * overlay — the collapse is the fight's last beat, and a spoils panel between the KO and it is a
@@ -582,7 +582,7 @@ export function FightScreen({
   onSaveAndQuit,
   onAbandonRun,
   onExitToTitle,
-  tutorialNodeType,
+  tips,
   cinematicWin = false,
 }: Props) {
   /** null outside an act (sandbox, quick battle): the arena keeps its placeless neutral scene. */
@@ -665,8 +665,6 @@ export function FightScreen({
   const [figureFx, setFigureFx] = useState<Record<string, FigureFx>>({});
   /** The move dossier, opened by holding a move row. Carries the holder: every number on the card is relative to the commanding hero. */
   const [movePopup, setMovePopup] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
-  /** Tutorial cues already spoken in THIS fight. Screen-local: a fight is atomic and a reload replays it. */
-  const [cuesSeen, setCuesSeen] = useState<ReadonlySet<string>>(() => new Set());
   const popupSeq = useRef(0);
   const beatQueue = useRef<Beat[]>([]);
   const displayState = useRef<CombatState | null>(null);
@@ -754,29 +752,32 @@ export function FightScreen({
   const showingTargetPanel = selecting !== null && selecting.combatantId === actingId;
 
   /**
-   * The scripted run's mid-fight coaching (docs/tutorial.md). Evaluated only at the TOP of a
-   * command phase — nothing declared yet — so a lesson never lands between two orders the
-   * player is halfway through giving.
+   * The first-time tip for this moment of the fight, if any (docs/tutorial.md). Evaluated only at
+   * the TOP of a command phase — nothing declared yet — so a tip never lands between two orders
+   * the player is halfway through giving.
    */
-  const tutorialCue = (() => {
+  const fightTip = (() => {
     // `winner` first: a wiped enemy side leaves the player with living heroes, so `canAct` goes
-    // true again the moment playback ends and a cue would land on top of the victory panel.
+    // true again the moment playback ends and a tip would land on top of the victory panel.
     if (winner !== null) return null;
-    if (!tutorialNodeType || !canAct || actionStep !== 0 || Object.keys(pending).length > 0) return null;
-    const hpFractions = playerActiveAlive.map((id) => {
-      const combatant = combat.combatants[id];
-      return combatant.currentHp / getMaxHp(allCombatants[combatant.heroId], combatant);
-    });
-    const ctx: TutorialFightContext = {
+    if (!tips || !canAct || actionStep !== 0 || Object.keys(pending).length > 0) return null;
+    const ctx: FightTipContext = {
       round: combat.round,
+      nodeType: tips.nodeType,
       anyOutOfMana: playerActiveAlive.some(
         (id) => !hasAffordableMoveInFight(combat, id, entryFor(playerRun.roster, id).unlockedMoveIds, moves, allCombatants)
       ),
       lockedIn: playerLockedIn,
-      lowestPlayerHpFraction: hpFractions.length > 0 ? Math.min(...hpFractions) : 1,
-      enemyHeroIds: enemyActiveAlive.map((id) => combat.combatants[id].heroId),
+      benchSize: playerBench.length,
+      playerKnockouts: combat.koCount[PLAYER_SIDE],
+      enemyTypesOnField: enemyActiveAlive.flatMap((id) => {
+        const combatant = combat.combatants[id];
+        return [...(allCombatants[combatant.heroId]?.types ?? []), ...combatant.grantedTypes];
+      }),
+      fieldEffectActive: combat.activeFieldEffect != null,
+      pactClockNear: pactRound >= DEFAULT_PACT_CLOCK.startRound - PACT_WARNING_ROUNDS,
     };
-    return matchTutorialCue(TUTORIAL_FIGHT_CUES, tutorialNodeType, ctx, cuesSeen);
+    return matchFightTip(FIGHT_TIPS, ctx, tips.seenIds);
   })();
 
   /**
@@ -838,7 +839,7 @@ export function FightScreen({
     });
   })();
 
-  /** A tapped coin, in words: the whole round's order first to last, and the tapped hero's bracket if it has one. */
+  /** A tapped sprite on the order track, in words: the whole round's order first to last, and the tapped hero's bracket if it has one. */
   function sayOrder(combatantId: string) {
     if (!orderMarks[combatantId]) return;
     const nameOf = (id: string) => allCombatants[combat.combatants[id].heroId].name;
@@ -846,8 +847,9 @@ export function FightScreen({
     setFieldNote({ key: popupSeq.current++, text: describeOrder(ordered, combatantId) });
   }
 
-  // Worn on each active card (CombatantCard `order`): the preview while commanding, the settled
-  // order walked beat by beat while the round plays; nothing during the intro or once it is won.
+  // Laid on the horizon (OrderTrack): the preview while commanding, the settled order walked
+  // beat by beat while the round plays; nothing during the intro or once it is won.
+  const orderSources: OrderSource[] = winner ? [] : resolving ? (playbackOrder ? playbackEntries : []) : orderPreview.entries;
   const orderMarks: Record<string, OrderMark> = winner
     ? {}
     : resolving
@@ -855,6 +857,11 @@ export function FightScreen({
         ? orderMarksFor(playbackEntries, playbackOrder.reversedSpeed)
         : {}
       : orderMarksFor(orderPreview.entries, orderPreview.reversedSpeed);
+  const orderTrack: OrderTrackEntry[] = orderSources.flatMap((source) => {
+    const c = combat.combatants[source.combatantId];
+    const mark = orderMarks[source.combatantId];
+    return c && mark ? [{ combatantId: c.combatantId, heroId: c.heroId, side: c.side === PLAYER_SIDE ? 'ally' : 'enemy', mark }] : [];
+  });
 
   // The console is lit in the commanding hero's domain color, from under that hero's side of the
   // field; gold and centred while a round resolves (nobody is commanding).
@@ -1271,8 +1278,6 @@ export function FightScreen({
           statCtx={statCtx}
           striking={beat?.strikeCombatantId === id}
           fx={figureFx[id]}
-          order={orderMarks[id] ?? null}
-          onInspectOrder={resolving ? undefined : () => sayOrder(id)}
           warded={wardOn(combat, id, passives)}
         />
       );
@@ -1356,6 +1361,8 @@ export function FightScreen({
             An element rather than a ::before — .battlefield's two pseudo-elements
             are already spoken for by the Field Effect sweep. */}
         <div className="battlefield-floor" aria-hidden="true" />
+        {/* The near half lit as ground, so the allies stand on something (styles.css .battlefield-ground). */}
+        {!onTheTitan && <div className="battlefield-ground" aria-hidden="true" />}
         {onTheTitan && <TitanBody />}
         {location && !onTheTitan && <ArenaLocation location={location} />}
         {/* Keyed on beatSeq so the one-shot animation replays per reveal. */}
@@ -1365,7 +1372,10 @@ export function FightScreen({
           <div key={`field-${beatSeq}`} className="field-effect-surge" aria-hidden="true" />
         )}
 
-        {/* What a tapped coin says, for a moment, in the band the Pact warning takes when it is due. */}
+        {/* The round's order, across the top of the arena (OrderTrack; styles.css .order-track). */}
+        <OrderTrack entries={orderTrack} onInspect={resolving ? undefined : sayOrder} />
+
+        {/* What a tapped sprite says, for a moment, on the horizon — the band the Pact warning takes when it is due. */}
         {fieldNote && !resolving && (
           <div key={fieldNote.key} className="field-note" role="status" onAnimationEnd={() => setFieldNote(null)}>
             {fieldNote.text}
@@ -1396,27 +1406,6 @@ export function FightScreen({
 
         <div className="battlefield-divider">
           <span className="battlefield-vs">VS</span>
-          {combat.activeFieldEffect && (
-            /* Keyed by effect id so an override remounts and replays the arrival. No glyph: the plaque must fit a 13px horizon band. */
-            <span
-              key={combat.activeFieldEffect.fieldEffectId}
-              className="field-effect-badge"
-              title={`${fieldEffects[combat.activeFieldEffect.fieldEffectId]?.description ?? ''} — tap for details`}
-              {...fieldEffectPress}
-            >
-              <span className="field-effect-name">
-                {fieldEffects[combat.activeFieldEffect.fieldEffectId]?.name ?? combat.activeFieldEffect.fieldEffectId}
-              </span>
-              <span className="field-effect-pips" aria-label={`${combat.activeFieldEffect.roundsRemaining} rounds remaining`}>
-                {Array.from({ length: FIELD_EFFECT_DURATION_ROUNDS }, (_, i) => (
-                  <span
-                    key={i}
-                    className={`field-effect-pip${i < combat.activeFieldEffect!.roundsRemaining ? '' : ' spent'}`}
-                  />
-                ))}
-              </span>
-            </span>
-          )}
         </div>
         {inspectingFieldEffect && combat.activeFieldEffect && (
           <FieldEffectDetailOverlay active={combat.activeFieldEffect} onClose={() => setInspectingFieldEffect(false)} />
@@ -1426,6 +1415,29 @@ export function FightScreen({
           {renderActiveSlot(PLAYER_SIDE, 0)}
           {renderActiveSlot(PLAYER_SIDE, 1)}
         </div>
+
+        {/* The field, at the foot of the arena (2026-09-24): the horizon carries the Pact warning and the order's words. */}
+        {combat.activeFieldEffect && (
+          /* Keyed by effect id so an override remounts and replays the arrival. No glyph: the plaque keeps the horizon's small type register. */
+          <span
+            key={combat.activeFieldEffect.fieldEffectId}
+            className="field-effect-badge"
+            title={`${fieldEffects[combat.activeFieldEffect.fieldEffectId]?.description ?? ''} — tap for details`}
+            {...fieldEffectPress}
+          >
+            <span className="field-effect-name">
+              {fieldEffects[combat.activeFieldEffect.fieldEffectId]?.name ?? combat.activeFieldEffect.fieldEffectId}
+            </span>
+            <span className="field-effect-pips" aria-label={`${combat.activeFieldEffect.roundsRemaining} rounds remaining`}>
+              {Array.from({ length: FIELD_EFFECT_DURATION_ROUNDS }, (_, i) => (
+                <span
+                  key={i}
+                  className={`field-effect-pip${i < combat.activeFieldEffect!.roundsRemaining ? '' : ' spent'}`}
+                />
+              ))}
+            </span>
+          </span>
+        )}
 
         {/* Menu, in the sky's far corner (2026-09-17, per user direction): consulted, not played, so
             it left the console's bottom row to the Bag and stands where a pause key stands. Off the
@@ -2070,13 +2082,7 @@ export function FightScreen({
         />
       )}
 
-      {tutorialCue && (
-        <TutorialOverlay
-          key={tutorialCue.id}
-          beat={tutorialCue}
-          onDone={() => setCuesSeen((seen) => new Set(seen).add(tutorialCue.id))}
-        />
-      )}
+      {fightTip && tips && <TipOverlay key={fightTip.id} tip={fightTip} onDone={() => tips.onSeen(fightTip.id)} />}
     </>
   );
 }
