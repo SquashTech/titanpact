@@ -31,9 +31,9 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
   draft: tip('draft', 'Starting Heroes', 'Pick two heroes to start the run. More join along the way.'),
   run: tip(
     'run',
-    'The Run',
-    'A run is five acts and a finale. Each act ends with a Guardian — beat it to break one of the five seals.',
-    'If every hero on your side is knocked out, the run is over.'
+    'The Journey',
+    "Venture forth to defeat five Guardians of the Titan's Seal.",
+    'If all your heroes fall, the journey is over.'
   ),
   map: tip(
     'map',

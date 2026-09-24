@@ -82,7 +82,6 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
           </span>
           Forge Your Pact
         </h2>
-        <p className="draft-flavor">Two will carry a fraction of its power. Choose them.</p>
         <div className="draft-sockets" aria-label={`${pickedIds.length} of ${STARTER_PICK_COUNT} allies chosen`}>
           {Array.from({ length: STARTER_PICK_COUNT }, (_, i) => {
             const id = pickedIds[i];

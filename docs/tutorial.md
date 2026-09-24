@@ -53,9 +53,9 @@ first meeting with two things shows the second on its next visit.
 
 | Id | Fires on |
 | --- | --- |
-| `draft` | the draft |
-| `run` | the act's arrival screen |
-| `map` | the map |
+| `draft` | the draft (spotlights the starter rail, `TIP_STAGING` in TipOverlay) |
+| `run` | the act's arrival screen ("The Journey", the card sat low so the place stays in view) |
+| `map` | the map, once there is a choice to make — not at an act's opener, the only node on offer |
 | `wounds` | the map, once any hero is hurt (HP carries across an act; Mana does not) |
 | `fork` | the map, once an Elite or Skirmish is one step away |
 | `squad` | lead order (skipped while the roster is two) |

@@ -27062,7 +27062,42 @@ button.star-shop-bundle-face {
   }
 }
 
+/* A tip about one thing on screen: the scrim moves onto the spotlight's
+   shadow, so everything but that thing dims harder than a plain tip's. */
+.tip-overlay.has-spotlight {
+  background: none;
+}
+
+.tip-spotlight {
+  position: absolute;
+  pointer-events: none;
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 0 0 2px var(--accent),
+    0 0 18px 4px rgba(224, 166, 60, 0.45),
+    0 0 0 9999px rgba(8, 9, 13, 0.72);
+  animation: tip-spotlight-pulse 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes tip-spotlight-pulse {
+  to {
+    box-shadow:
+      0 0 0 2px var(--accent),
+      0 0 26px 8px rgba(224, 166, 60, 0.6),
+      0 0 0 9999px rgba(8, 9, 13, 0.72);
+  }
+}
+
+/* A tip over a screen whose subject is its middle (the act's arrival): the
+   card sits low, clear of it, above the screen's own button. */
+.tip-overlay.is-low {
+  align-items: flex-end;
+  padding-bottom: 96px;
+}
+
 .tip-box {
+  /* Positioned so it paints over a spotlight's shadow. */
+  position: relative;
   width: 100%;
   max-width: 400px;
   display: flex;
@@ -27217,6 +27252,7 @@ button.star-shop-bundle-face {
 
 @media (prefers-reduced-motion: reduce) {
   .tip-overlay,
+  .tip-spotlight,
   .tip-box,
   .tip-page,
   .lore-line,
