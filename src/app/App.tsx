@@ -10,8 +10,8 @@ import {
   recordActReached,
   recordRunEnded,
   recordRunStarted,
-  recordTutorialDone,
-  shouldPlayTutorial,
+  recordTipSeen,
+  resetTips,
   type Profile,
   type RunEnd,
 } from '../run/profile';
@@ -53,7 +53,7 @@ import { fallenAfterFight, isPermadeath, openAscension } from '../run/ascension'
 import { FallenScreen } from '../view/run/FallenScreen';
 import type { CombatState } from '../engine/state';
 import { koRosterIdsOf } from '../run/buildCombatState';
-import { WoundsError, anyDown, buyMend, mendPrice, recordWounds, mendRoster, standingRoster } from '../run/wounds';
+import { WoundsError, anyDown, anyWounded, buyMend, mendPrice, recordWounds, mendRoster, standingRoster } from '../run/wounds';
 import { entryHp } from '../view/shared/WoundBar';
 import { enemies, finaleEnemies, ENDBRINGER_ID, MANTICORE_ID, titanEyes, EYE_PHASES } from '../data/enemies';
 import { relics } from '../data/relics';
@@ -93,22 +93,10 @@ import { ConsumableError, buyConsumable, grantConsumable, rollConsumableDrop, sp
 import { guildHallEntry } from '../run/guildRecruit';
 import { anyClassAvailable } from '../run/classes';
 import { generateMap, type MapNodeType } from '../run/map';
-import {
-  generateTutorialMap,
-  isTutorialAct,
-  mapBeatKey,
-  markTutorialBeatSeen,
-  rewardBeatKey,
-  tutorialBeat,
-  tutorialContractOffers,
-  tutorialEncounterFor,
-  tutorialLockedActiveRosterIds,
-  tutorialPayoutFor,
-  TUTORIAL_STARTER_IDS,
-  type TutorialBeatKey,
-} from '../run/tutorial';
-import { TUTORIAL_ENCOUNTERS, TUTORIAL_LOCKS, TUTORIAL_PAYOUTS, TUTORIAL_SCRIPT } from '../data/tutorial';
-import { TutorialOverlay } from '../view/run/TutorialOverlay';
+import { firstUnseenTip, LORE_TIP_ID, type ScreenTipId } from '../run/tips';
+import { LORE_LINES, SCREEN_TIPS } from '../data/tips';
+import { TipOverlay } from '../view/run/TipOverlay';
+import { LoreScreen } from '../view/run/LoreScreen';
 import { generateStarterOptions } from '../run/draft';
 import { equipPack, equippedPack } from '../run/starterPacks';
 import { STARTER_PACKS } from '../data/starterPacks';
@@ -158,6 +146,8 @@ import { statScaleFor } from '../run/statScale';
 
 type Screen =
   | { kind: 'title' }
+  /** The lore card, ahead of the first draft on an account (docs/tutorial.md). */
+  | { kind: 'lore'; next: Screen }
   | { kind: 'draft'; optionIds: string[] }
   /** Permadeath's post-fight beat (docs/ascension.md §3): the KO'd heroes, still on the roster until Continue, and the companion the same fight took. */
   | { kind: 'fallen'; rosterIds: string[]; companion: RosterEntry | null; next: Screen }
@@ -229,8 +219,7 @@ type Screen =
   /** Roster-full replacement, Guild Hall path only; the contract path resolves in RecruitScreen. */
   | { kind: 'rosterReplace'; candidate: RosterReplaceCandidate; next: Screen }
   /** Offers sampled once in handleFightResolved; only pushed when the player holds a contract. */
-  /** `required`: the scripted run's forced contract — the screen has no way out but signing (docs/tutorial.md). */
-  | { kind: 'recruit'; offers: RosterEntry[]; next: Screen; required?: boolean }
+  | { kind: 'recruit'; offers: RosterEntry[]; next: Screen }
   /** The Eyes have closed: the roster presented as the heroes of the land, then the summary. */
   | { kind: 'champions' }
   | { kind: 'runComplete' }
@@ -239,6 +228,7 @@ type Screen =
 /** Screens outside an act get no ambient Location (LocationContext). Listed as the exceptions so new node screens inherit the place by default. */
 const PLACELESS_SCREENS: ReadonlySet<Screen['kind']> = new Set([
   'title',
+  'lore',
   'draft',
   // Placeless is the point: it drops the title's track and leaves the cold open in silence,
   // and Act I's music then starts where it always does, on the arrival screen.
@@ -274,17 +264,14 @@ function addHeroes(run: RunState, heroIds: readonly string[], level?: number): R
 
 /**
  * A fresh run from the drafted pair, standing at Wild's Edge; every act after opens on the
- * location choice (`enterAct`). A tutorial run differs only in Act 1's map, and
- * `advanceToNextAct` generates Act 2 the ordinary way.
+ * location choice (`enterAct`). A first run on an account is this run too — there is no tutorial
+ * run, only first-time tips over an ordinary one (docs/tutorial.md).
  */
-function createStartingRun(heroIds: readonly string[], tutorial: boolean, seenBeatIds: readonly string[], ascension: number): RunState {
+function createStartingRun(heroIds: readonly string[], ascension: number): RunState {
   return {
     ...addHeroes(createRunState(40, 1, ascension), heroIds),
-    map: tutorial ? generateTutorialMap(randomSeed()) : generateMap(randomSeed()),
+    map: generateMap(randomSeed()),
     locationIds: [ACT_ONE_LOCATION_ID],
-    tutorial,
-    // Carried across the draft: the intro beat plays on the draft screen, before this run exists.
-    tutorialSeenBeatIds: [...seenBeatIds],
   };
 }
 
@@ -369,7 +356,7 @@ function createTitanEyesTestRun(): RunState {
   return run;
 }
 
-/** TEST FIXTURE — arms the scripted opener's Duskling with a Dagger so the equip-inspect UI has an item from turn one. */
+/** TEST FIXTURE — arms a Duskling in the run's opener with a Dagger so the equip-inspect UI has an item from turn one. */
 function equipTestDagger(encounter: Encounter): Encounter {
   const roster = encounter.run.roster.map((entry) =>
     entry.heroId === 'duskling' ? { ...entry, equipment: equipItem(entry.equipment, equipment['dagger.common'].id) } : entry
@@ -402,49 +389,76 @@ function equipmentDropFor(nodeType: EncounterMapNodeType, actNumber: number): Eq
 
 
 /**
- * Which of Valor's beats the current screen is the moment for (docs/tutorial.md). Returns a key
- * whether or not the script has a beat for it; `tutorialBeat` resolves that and the seen-list.
+ * The first-time tips the current screen is the first meeting with, in priority order
+ * (docs/tutorial.md); `firstUnseenTip` picks the first one the profile has not seen. Every id is
+ * one-shot account-wide, so nothing repeats — and a tip whose moment a run never reached simply
+ * waits for the run that does.
  *
- * `fight` is deliberately absent — mid-fight cues are FightScreen's, and a beat here would stack
- * a second dialogue box on top of one of them. Gated on `run.tutorial` rather than the act, so a
- * lesson Act 1 never reached (an Evolution nobody could afford) still lands the first time it
- * applies; every id is one-shot, so nothing repeats.
+ * `fight` is deliberately absent — mid-fight tips are FightScreen's, and one here would stack a
+ * second card on top of one of them. So are the cinematic beats (the cold open, the Herald, the
+ * Titan's fall), which explain themselves.
  */
-function tutorialBeatKeyFor(screen: Screen, run: RunState): TutorialBeatKey | null {
+function screenTipIds(screen: Screen, run: RunState): readonly ScreenTipId[] {
   switch (screen.kind) {
     case 'draft':
-      return 'intro';
+      return ['draft'];
     case 'actIntro':
-      return run.actNumber === 1 ? 'arrival' : null;
-    case 'itemWho':
-      return 'equip';
+      return ['run'];
     case 'map': {
-      // The scripted act is a corridor, so "the node ahead" is a single node. A branching act
-      // has nothing to name and returns null rather than picking one arbitrarily.
-      const ahead = reachableNodeIds(run);
-      const node = ahead.length === 1 ? run.map?.nodes[ahead[0]] : undefined;
-      return node ? mapBeatKey(node.type) : null;
+      // A map after a fight is where HP carrying over is first visible; the fork, the first time
+      // an Elite or Skirmish is one step away.
+      const ids: ScreenTipId[] = ['map'];
+      if (anyWounded(run)) ids.push('wounds');
+      const ahead = reachableNodeIds(run).map((id) => run.map?.nodes[id]?.type);
+      if (ahead.includes('elite') || ahead.includes('skirmish')) ids.push('fork');
+      return ids;
     }
+    case 'squadSelect':
+      return ['squad'];
     case 'levelUp':
-      return 'levelUp';
-    case 'crucible':
-      return 'crucible';
+      return ['levelUp'];
+    case 'itemWho':
+      return ['item'];
+    case 'companion':
+      return screen.beat.kind === 'join' ? ['companion'] : [];
+    case 'fallen':
+      return ['fallen'];
     case 'reward':
-      return rewardBeatKey(screen.nodeType);
+      return screen.nodeType === 'equipmentReward' ? ['equipmentReward'] : [];
     case 'mentorNode':
-      return 'mentorNode';
+      return ['mentor'];
+    case 'tutorNode':
+      return ['tutor'];
+    case 'boonNode':
+      return ['boon'];
+    case 'manaWell':
+      return ['manaWell'];
+    case 'forge':
+      return ['forge'];
+    case 'leyLine':
+      return ['leyLine'];
+    case 'rest':
+      return ['rest'];
+    case 'event':
+      return ['event'];
     case 'scrolls':
-      return screen.plan.kind === 'scribe' ? 'scribeNode' : null;
-    case 'recruit':
-      return 'recruit';
+      // A bought Scroll is the Guild Hall's, whose own tip has already named it.
+      if (screen.bought) return [];
+      return [screen.plan.kind === 'scribe' ? 'scribe' : 'scrollCache'];
     case 'shop':
-      return 'shop';
-    // The act has already ticked over to 2 by the time this screen shows, which is exactly the
-    // beat the outro wants: the seal is filled and the scripted stretch is behind the player.
+      return ['shop'];
+    case 'recruit':
+      return ['recruit'];
+    case 'guardianBanner':
+      return ['banner'];
+    case 'crucible':
+      return ['crucible'];
     case 'pactSeal':
-      return 'outro';
+      return ['seal'];
+    case 'locationChoice':
+      return ['locationChoice'];
     default:
-      return null;
+      return [];
   }
 }
 
@@ -651,9 +665,6 @@ export function App() {
       // deterministic draw the map's tile previewed (run/encounters.ts).
       const isMobFight = node.type === 'fight' || node.type === 'battle';
       const encounterKind = encounterKindOf(node.type);
-      // The scripted first act names its own enemies (docs/tutorial.md), so the fight is the one
-      // Valor has just talked the player through. Null in every normal run and every later act.
-      const scripted = tutorialEncounterFor(TUTORIAL_ENCOUNTERS, playerRun, node.type);
       let encounter = nodeEncounter(node, {
         run: playerRun,
         location,
@@ -661,7 +672,6 @@ export function App() {
         allCombatants,
         enemies,
         progression: progressionTable,
-        scripted,
       });
       const isFirstFight = encounterKind === 'fight' && playerRun.fightsStarted === 0;
       if (isMobFight && isFirstFight) {
@@ -715,16 +725,13 @@ export function App() {
   function handleSquadConfirmed(squad: Squad, nodeId: string, nodeType: EncounterNodeType, encounter: Encounter) {
     const mapNodeType = playerRun.map!.nodes[nodeId].type as EncounterMapNodeType;
     const equipmentReward = equipmentDropFor(mapNodeType, playerRun.actNumber);
-    // The scripted act pays fixed figures instead of rolling: the tutorial has to arrive at its
-    // Guardian with a specific amount of power, not a distribution of it (docs/tutorial.md).
-    const payout = tutorialPayoutFor(TUTORIAL_PAYOUTS, playerRun, mapNodeType);
     const fight: Screen = {
       kind: 'fight',
       nodeId,
       nodeType,
       squad,
       encounter,
-      goldReward: payout?.gold ?? goldRewardFor(mapNodeType, playerRun.actNumber),
+      goldReward: goldRewardFor(mapNodeType, playerRun.actNumber),
       // Read off the win this fight WILL be: the act's base is a function of encounters won and
       // the kind is the tile's, so the figure is known before the fight rather than rolled after it.
       xpGained: xpForEncounter(playerRun.encountersWon + 1, encounterXpKind(mapNodeType)),
@@ -789,9 +796,6 @@ export function App() {
     if (isFinale) {
       afterScreen = { kind: 'champions' };
     } else if (isGuardian) {
-      // Recorded on the Guardian falling, not on the run starting: a tutorial the player wiped
-      // in is offered again (docs/tutorial.md). The rest of the run is a normal run either way.
-      if (isTutorialAct(playerRun)) updateProfile(recordTutorialDone);
       next = grantContractReward(next, 1);
       // The seal, snapshotted at the power it was beaten at, so the finale can field it
       // again (docs/lore.md §6). The champion rides the Guardian's bench, so it is in the
@@ -837,14 +841,8 @@ export function App() {
     // this beat already stands under the Banner, and can walk into the Crucible itself.
     // `next`, not `playerRun`: a boss node has just granted the contract that is spendable here.
     const recruitable = defeatedRoster.filter((entry) => isRecruitable(entry.heroId, recruitPool));
-    // The scripted act names its one contract and refuses to let it be walked past; a non-null
-    // answer is both the offer list and the reason the screen has no leave button.
-    const forcedOffers = tutorialContractOffers(TUTORIAL_LOCKS, next, recruitable);
-    const contractOffers = next.recruitContracts > 0 ? (forcedOffers ?? pickContractOffers(recruitable)) : [];
-    const afterRecruit: Screen =
-      contractOffers.length > 0
-        ? { kind: 'recruit', offers: contractOffers, next: afterCrucible, required: forcedOffers !== null }
-        : afterCrucible;
+    const contractOffers = next.recruitContracts > 0 ? pickContractOffers(recruitable) : [];
+    const afterRecruit: Screen = contractOffers.length > 0 ? { kind: 'recruit', offers: contractOffers, next: afterCrucible } : afterCrucible;
     const afterBanner: Screen = banner ? { kind: 'guardianBanner', next: afterRecruit } : afterRecruit;
 
     // The drop asks who carries it right behind the levels — the fight's own consequence, ahead of
@@ -945,29 +943,29 @@ export function App() {
     return asking.reduceRight<Screen>((rest, id) => ({ kind: 'itemWho', itemId: id, next: rest }), next);
   }
 
-  /** The title's replay entry (docs/tutorial.md); the profile is bypassed, not rewritten. */
-  function handleReplayTutorial() {
-    beginRun(true);
+  /** The title's Dev entry: every tip, and the lore card, shows again on its next occasion. */
+  function handleResetTips() {
+    setProfile(updateProfile(resetTips));
   }
 
+  /** A tip or the lore card dismissed: account-wide, so it is written straight to storage. */
+  function markTipSeen(id: string) {
+    setProfile(updateProfile((current) => recordTipSeen(current, id)));
+  }
+
+  /** The rung rides `playerRun` across the draft; the run itself is only built on confirm. */
   function handleStartNewRun(ascension: number) {
-    beginRun(shouldPlayTutorial(profile), ascension);
-  }
-
-  /** The rung rides `playerRun` across the draft as `tutorial` does; the scripted run is always Base. */
-  function beginRun(tutorial: boolean, ascension = 0) {
     // The equipped Starter Pack's list (run/starterPacks.ts): pack zero is the fourteen starters.
     const starterHeroIds = equippedPack(profile, STARTER_PACKS).heroIds;
-    // The scripted run draws no candidates: Valor and Fang are the pact, and the draft screen
-    // is where Valor says so. The run itself is only built on confirm, so the flag has to be
-    // parked on `playerRun` here for the intro beat to know it is a tutorial.
-    const optionIds = tutorial ? [...TUTORIAL_STARTER_IDS] : generateStarterOptions(randomSeed(), starterHeroIds);
-    setPlayerRun((run) => ({ ...run, tutorial, tutorialSeenBeatIds: [], ascension: tutorial ? 0 : ascension }));
-    setScreen({ kind: 'draft', optionIds });
+    const optionIds = generateStarterOptions(randomSeed(), starterHeroIds);
+    setPlayerRun((run) => ({ ...run, ascension }));
+    const draft: Screen = { kind: 'draft', optionIds };
+    // The lore card once an account, ahead of the first draft — its last line is the draft's verb.
+    setScreen(profile.seenTipIds.includes(LORE_TIP_ID) ? draft : { kind: 'lore', next: draft });
   }
 
   function handleDraftConfirm(chosenIds: string[]) {
-    setPlayerRun((run) => createStartingRun(chosenIds, run.tutorial, run.tutorialSeenBeatIds, run.ascension));
+    setPlayerRun((run) => createStartingRun(chosenIds, run.ascension));
     // The cold open goes here and not on the title's press for the same reason the run itself
     // is built here: binding is mutual (docs/lore.md §1), so the thing on the far end of the
     // leash notices when the pact is sealed, not when a menu is browsed.
@@ -1097,7 +1095,7 @@ export function App() {
           onContinueRun={handleContinueRun}
           onStartRun={handleStartNewRun}
           openAscension={openAscension(profile)}
-          onReplayTutorial={handleReplayTutorial}
+          onResetTips={handleResetTips}
           onQuickBattle={handleQuickBattle}
           onOpenSandbox={handleOpenSandbox}
           onVisitLocation={handleVisitLocation}
@@ -1146,6 +1144,16 @@ export function App() {
         />
       )}
 
+      {screen.kind === 'lore' && (
+        <LoreScreen
+          lines={LORE_LINES}
+          onDone={() => {
+            markTipSeen(LORE_TIP_ID);
+            setScreen(screen.next);
+          }}
+        />
+      )}
+
       {screen.kind === 'draft' && <DraftScreen optionIds={screen.optionIds} onConfirm={handleDraftConfirm} />}
 
       {screen.kind === 'pactSeal' && (
@@ -1186,7 +1194,6 @@ export function App() {
           encounter={screen.encounter}
           onRunChange={setPlayerRun}
           onConfirm={(squad) => handleSquadConfirmed(squad, screen.nodeId, screen.nodeType, screen.encounter)}
-          lockedActiveRosterIds={tutorialLockedActiveRosterIds(TUTORIAL_LOCKS, playerRun, playerRun.map!.nodes[screen.nodeId].type)}
         />
       )}
 
@@ -1216,7 +1223,7 @@ export function App() {
           }
           onSaveAndQuit={() => setScreen({ kind: 'title' })}
           onAbandonRun={handleAbandonRun}
-          tutorialNodeType={isTutorialAct(playerRun) ? playerRun.map!.nodes[screen.nodeId].type : undefined}
+          tips={{ nodeType: playerRun.map!.nodes[screen.nodeId].type, seenIds: profile.seenTipIds, onSeen: markTipSeen }}
           cinematicWin={playerRun.map!.nodes[screen.nodeId].type === 'finale'}
         />
       )}
@@ -1259,7 +1266,6 @@ export function App() {
           onClaim={handleClaimContract}
           onClaimReplace={handleClaimContractReplace}
           onDone={() => setScreen(screen.next)}
-          required={screen.required}
         />
       )}
 
@@ -1409,18 +1415,14 @@ export function App() {
         />
       )}
 
-      {/* Valor, over whatever screen she is explaining. Last in the tree so it paints above
-          everything; FightScreen mounts its own for the mid-fight cues. */}
+      {/* The first-time tip for whatever screen is up. Last in the tree so it paints above
+          everything; FightScreen mounts its own for the mid-fight tips. Held back while a recruit's
+          fanfare plays, so the two never stack. */}
       {(() => {
-        const beat = tutorialBeat(TUTORIAL_SCRIPT, playerRun, tutorialBeatKeyFor(screen, playerRun));
-        if (!beat) return null;
-        return (
-          <TutorialOverlay
-            key={beat.id}
-            beat={beat}
-            onDone={() => setPlayerRun((run) => markTutorialBeatSeen(run, beat.id))}
-          />
-        );
+        if (recruitFanfare) return null;
+        const tip = firstUnseenTip(SCREEN_TIPS, screenTipIds(screen, playerRun), profile.seenTipIds);
+        if (!tip) return null;
+        return <TipOverlay key={tip.id} tip={tip} onDone={() => markTipSeen(tip.id)} />;
       })()}
     </div>
     </ProfileProvider>

@@ -14036,7 +14036,7 @@ button.star-shop-bundle-face {
   margin-top: 2px;
 }
 
-/* At the figure's feet, not its head: the tutorial's lock pin holds the top-left. */
+/* At the figure's feet, not its head. */
 .squad-slot-level {
   left: 5px;
   top: auto;
@@ -27036,169 +27036,92 @@ button.star-shop-bundle-face {
   opacity: 0.55;
 }
 
-/* --- The scripted first run (docs/tutorial.md) -------------------------------
-   Valor talking the player through Act 1. Docked at the bottom rather than
-   centred, and the scrim dims WITHOUT the blur every modal panel uses: she is
-   naming things that are on screen behind her, so the screen has to stay
-   readable. It still swallows input — a line explaining a button must land
-   before the button is pressable. */
+/* --- First-time tips (docs/tutorial.md) -----------------------------------
+   Plain game text, once, the first time a mechanic appears. Centred where the
+   eye already rests; the scrim dims WITHOUT the blur the modal panels use, since
+   the thing a tip names is on screen behind it. It still swallows input — a line
+   explaining a button must land before the button is pressable. Nobody is
+   speaking: no portrait, no name, one neutral accent. */
 
-.tutorial-overlay {
+.tip-overlay {
   position: fixed;
   inset: 0;
   display: flex;
-  /* Centred, not floor-docked (2026-09-06, per user direction): the middle of the
-     screen is where the eye already rests, so a line lands there without being
-     looked for. */
   align-items: center;
   justify-content: center;
-  padding: 12px;
+  padding: 16px;
   /* Above the fight console and every node screen, below nothing. */
   z-index: 60;
-  /* Flat, where a bottom-docked box wanted a bottom-heavy gradient. A centred box
-     sits across the middle of the ramp, so a gradient would light its top half and
-     its bottom half differently and the panel would read as tilted. Still no blur:
-     she is naming things that are on screen behind her. */
   background: rgba(8, 9, 13, 0.55);
-  animation: tutorial-scrim-in 220ms ease-out both;
+  animation: tip-scrim-in 220ms ease-out both;
 }
 
-@keyframes tutorial-scrim-in {
+@keyframes tip-scrim-in {
   from {
     opacity: 0;
   }
 }
 
-.tutorial-box {
+.tip-box {
   width: 100%;
-  max-width: 460px;
-  display: grid;
-  /* Portrait column is fixed so the text block never reflows between a Valor
-     line and a Fang line. */
-  grid-template-columns: 76px 1fr;
-  gap: 10px;
-  padding: 10px 12px 10px 10px;
-  background: var(--surface-raised, var(--panel));
-  border: 1px solid rgba(var(--speaker-rgb), 0.5);
-  border-radius: var(--radius-lg);
-  /* The speaker's domain colour as a rim light, not a fill: the box has to
-     stay a UI surface, and two heroes swapping lines should read as a change
-     of light rather than a change of panel. */
-  /* The domain glow is symmetric now the box floats: `0 -2px` threw its light
-     upward, which reads as a panel resting on the floor. */
-  box-shadow:
-    0 0 0 1px rgba(8, 9, 13, 0.6),
-    0 0 30px rgba(var(--speaker-rgb), 0.2),
-    0 14px 34px rgba(0, 0, 0, 0.55);
-  animation: tutorial-box-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@keyframes tutorial-box-in {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-}
-
-.tutorial-portrait {
-  position: relative;
-  align-self: end;
-  width: 76px;
-  height: 76px;
-  border-radius: var(--radius-md);
-  background: radial-gradient(circle at 50% 70%, rgba(var(--speaker-rgb), 0.28), transparent 72%);
-  overflow: hidden;
-}
-
-.tutorial-portrait-art {
-  /* An absolutely positioned replaced element needs BOTH sizes stated: `inset`
-     alone sizes it correctly in Chrome and wrongly on iOS. */
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: bottom center;
-  image-rendering: pixelated;
-  animation: tutorial-portrait-in 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@keyframes tutorial-portrait-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px) scale(0.94);
-  }
-}
-
-.tutorial-body {
+  max-width: 400px;
   display: flex;
   flex-direction: column;
-  min-width: 0;
-  gap: 6px;
-}
-
-.tutorial-name-row {
-  display: flex;
-  align-items: baseline;
   gap: 8px;
-  min-width: 0;
+  padding: 12px 14px 10px;
+  background: var(--surface-raised, var(--panel));
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--accent);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 0 0 1px rgba(8, 9, 13, 0.6),
+    0 14px 34px rgba(0, 0, 0, 0.55);
+  animation: tip-box-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.tutorial-name {
-  font-size: 13px;
+@keyframes tip-box-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+.tip-title {
+  font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgb(var(--speaker-rgb));
+  color: var(--accent);
 }
 
-.tutorial-topic {
-  flex: 1;
-  min-width: 0;
-  text-align: right;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.tutorial-line {
+.tip-page {
   margin: 0;
-  /* A fixed floor rather than a fixed height: three lines is the common case,
-     and letting the box jump between one-liners and long ones is what makes a
-     dialogue box read as cheap. */
-  min-height: 3.6em;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.42;
   color: var(--text);
-  animation: tutorial-line-in 180ms ease-out both;
+  animation: tip-page-in 180ms ease-out both;
 }
 
-@keyframes tutorial-line-in {
+@keyframes tip-page-in {
   from {
     opacity: 0;
     transform: translateY(3px);
   }
 }
 
-.tutorial-foot {
+.tip-foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
 
-.tutorial-pips {
+.tip-pips {
   display: flex;
   gap: 4px;
 }
 
-.tutorial-pip {
+.tip-pip {
   width: 5px;
   height: 5px;
   border-radius: 50%;
@@ -27206,105 +27129,100 @@ button.star-shop-bundle-face {
   transition: background 140ms ease, transform 140ms ease;
 }
 
-.tutorial-pip.is-done {
-  background: rgba(var(--speaker-rgb), 0.45);
+.tip-pip.is-done {
+  background: rgba(224, 166, 60, 0.45);
 }
 
-.tutorial-pip.is-current {
-  background: rgb(var(--speaker-rgb));
+.tip-pip.is-current {
+  background: var(--accent);
   transform: scale(1.35);
 }
 
-.tutorial-advance {
+.tip-advance {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-dim);
-  animation: tutorial-advance-pulse 2s ease-in-out infinite;
 }
 
-@keyframes tutorial-advance-pulse {
-  50% {
-    opacity: 0.45;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .tutorial-overlay,
-  .tutorial-box,
-  .tutorial-portrait-art,
-  .tutorial-line,
-  .tutorial-advance {
-    animation: none;
-  }
-}
-
-/* --- Scripted-run locks (docs/tutorial.md §6) --------------------------------
-   Three places Act 1 removes a choice rather than advising against it. All three
-   read as DELIBERATE rather than broken: a pinned thing wears a lock and keeps
-   its colour, where a merely-unaffordable thing goes grey. */
-
-/* Squad select: a hero the scripted act insists on fielding. Gold rather than
-   the slot's own type colour — the pin is the act talking, not the hero. */
-.squad-slot.is-pinned {
-  border-color: var(--accent);
-  box-shadow: inset 0 0 0 1px rgba(224, 166, 60, 0.35);
-}
-
-.squad-slot-pin {
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  z-index: 2;
-  font-size: 10px;
-  line-height: 1;
-  opacity: 0.85;
-  filter: grayscale(1) brightness(1.6);
-}
-
-/* Level Up: a card the focus lock has closed. `.pick-card.is-locked` already carries
-   the dim (--card-opacity), so this only drains the colour — the pool is fine, the
-   answer is "not this one, not yet", and that should not read as "cannot afford". */
-.growth-card.is-locked-out {
-  filter: saturate(0.35);
-}
-
-/* Sits where the XP price would be, because it replaces it: a locked card is not
-   priced, it is closed. */
-.growth-card.is-locked-out .growth-locked-mark {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  z-index: 1;
-  font-size: 12px;
-  line-height: 1;
-  filter: grayscale(1) brightness(1.8);
-}
-
-/* Recruit: stands where the leave button would be, so the screen does not simply
-   lose a control the player has already learned to look for. */
-.recruit-required-note {
-  margin: 0;
-  padding: 12px 0 4px;
-  text-align: center;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
-/* An inline `[physical]` token in Valor's dialogue (docs/tutorial.md). Wears the
-   same badge classes as the move grid on purpose — the mark in the sentence has
-   to be the mark on the button she is sending the player to look at. Only the
+/* An inline `[physical]` token. Wears the move grid's own badge classes on
+   purpose — the mark in the sentence is the mark on the button. Only the
    metrics differ: this one sits in running prose rather than a tile. */
-.tutorial-inline-icon {
+.tip-inline-icon {
   /* Nudged up off the baseline; a bordered box aligned to text sits low. */
   vertical-align: -2px;
   margin: 0 1px;
   font-size: 11px;
   padding: 0 3px;
+}
+
+/* --- The lore card (docs/tutorial.md) --------------------------------------
+   Four lines ahead of the first draft, one a tap, on the cold open's black.
+   Serif for the same reason the act numerals are: it is the one place the game
+   speaks as a legend rather than as a menu. */
+
+.lore-screen {
+  position: absolute;
+  inset: calc(var(--shell-pad) * -1);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  background: #040407;
+  cursor: pointer;
+}
+
+.lore-line {
+  margin: 0;
+  max-width: 320px;
+  text-align: center;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 22px;
+  line-height: 1.4;
+  color: #e8e2d4;
+  animation: lore-line-in 900ms ease-out both;
+}
+
+/* The last line is the call to act, so it takes the seal's gold. */
+.lore-line.is-last {
+  color: var(--accent);
+}
+
+@keyframes lore-line-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.lore-advance {
+  position: absolute;
+  bottom: 40px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(232, 226, 212, 0.4);
+  animation: lore-advance-in 600ms ease-out 1200ms both;
+}
+
+@keyframes lore-advance-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tip-overlay,
+  .tip-box,
+  .tip-page,
+  .lore-line,
+  .lore-advance {
+    animation: none;
+  }
 }
 
 /* --- The cold open (docs/lore.md §1, TitanWakeScreen) -----------------------

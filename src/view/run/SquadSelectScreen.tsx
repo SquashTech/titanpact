@@ -37,12 +37,6 @@ interface Props {
   encounter: Encounter;
   onRunChange: (next: RunState) => void;
   onConfirm: (squad: Squad) => void;
-  /**
-   * The scripted first run (docs/tutorial.md): roster ids pinned to an ACTIVE slot. They seed
-   * slots 0-1 and no swap can move them out of the active row — owning the hero that teaches a
-   * lesson is not the same as flying them. Empty everywhere else.
-   */
-  lockedActiveRosterIds?: readonly string[];
 }
 
 /**
@@ -74,7 +68,6 @@ interface SquadSlotProps {
   selected: boolean;
   dropTarget: boolean;
   dragOver: boolean;
-  locked: boolean;
   /** A fight left this hero down (run/wounds.ts): not fielded, not picked up, not swapped. */
   down: boolean;
   /** Another hero is held and may land here: the cell wears its move-here key. */
@@ -117,7 +110,6 @@ function SquadSlot({
   selected,
   dropTarget,
   dragOver,
-  locked,
   down,
   swapTarget,
   onRevive,
@@ -135,7 +127,7 @@ function SquadSlot({
     <div
       className={`squad-slot${hero ? ' filled' : ' empty'}${selected ? ' selected' : ''}${dropTarget ? ' drop-target' : ''}${
         dragOver ? ' drag-over' : ''
-      }${locked ? ' is-pinned' : ''}${down ? ' is-down' : ''}`}
+      }${down ? ' is-down' : ''}`}
       style={hero ? ({ '--plate-color': getTypeColor(hero.types[0]) } as CSSProperties) : undefined}
       role="button"
       tabIndex={0}
@@ -257,13 +249,10 @@ function MatchupRow({ heroTypes, enemies }: { heroTypes: readonly TypeId[]; enem
 }
 
 /** Lead order before every fight node — the whole roster fields (docs/combat.md "The fielded roster"). Drag, or tap then the move-here key, swaps two cells; a tap alone picks a hero up. */
-export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm, lockedActiveRosterIds = [] }: Props) {
-  // A pinned hero that a fight left down is not pinned: the lesson waits for it to stand up.
-  const locked = new Set(lockedActiveRosterIds.filter((id) => run.roster.some((r) => r.rosterId === id && !r.down)));
+export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Props) {
   const [slots, setSlots] = useState<(string | null)[]>(() => {
-    // Locked rosterHeroes first, so they land in the two active slots before anyone else is placed;
-    // the downed last, so the ones who can fight hold the field.
-    const rank = (id: string) => (run.roster.find((r) => r.rosterId === id)!.down ? 1 : locked.has(id) ? -1 : 0);
+    // The downed last, so the ones who can fight hold the field.
+    const rank = (id: string) => (run.roster.find((r) => r.rosterId === id)!.down ? 1 : 0);
     const ids = run.roster.map((r) => r.rosterId).sort((a, b) => rank(a) - rank(b));
     return Array.from({ length: SLOT_COUNT }, (_, i) => ids[i] ?? null);
   });
@@ -304,21 +293,13 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm, lock
   const activeIds = [standingAt(0), standingAt(1)] as const;
   const benchIds = slots.slice(2).filter((id): id is string => id !== null && !rosterById.get(id)!.down);
   const pickedIds = activeIds.filter((id): id is string => id !== null).concat(benchIds);
-  const lockedHeld = [...locked].every((id) => slots[0] === id || slots[1] === id);
   // Two leads, or the one hero left standing on its own.
-  const canStart = activeIds[0] !== null && (activeIds[1] !== null || standingCount < 2) && lockedHeld;
+  const canStart = activeIds[0] !== null && (activeIds[1] !== null || standingCount < 2);
 
-  function isLockedSlot(index: number): boolean {
-    const id = slots[index];
-    return id !== null && locked.has(id);
-  }
-
-  /** A pinned hero may be reordered WITHIN the active row — lead order is still the player's — but never out of it. A downed hero does not move. */
+  /** A downed hero does not move. */
   function canSwap(a: number, b: number): boolean {
     if (a === b) return false;
-    if (isDownSlot(a) || isDownSlot(b)) return false;
-    const wouldEvict = (from: number, to: number) => isLockedSlot(from) && to > 1;
-    return !wouldEvict(a, b) && !wouldEvict(b, a);
+    return !isDownSlot(a) && !isDownSlot(b);
   }
 
   /** One Revive off the purse, one hero up at half (run/wounds.ts reviveHero). It stands up in the cell it held. */
@@ -450,7 +431,6 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm, lock
                       const isSelected = selectedSlot === index;
                       const isDropTarget = selectedSlot !== null && canSwap(selectedSlot, index);
                       const isDragOver = dragOverSlot === index;
-                      const isLocked = isLockedSlot(index);
                       const isDown = isDownSlot(index);
                       return (
                         <SquadSlot
@@ -460,7 +440,6 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm, lock
                           selected={isSelected}
                           dropTarget={isDropTarget}
                           dragOver={isDragOver}
-                          locked={isLocked}
                           down={isDown}
                           swapTarget={isDropTarget}
                           onRevive={isDown && rosterId && canUseRevive(run) ? () => handleRevive(rosterId) : undefined}
@@ -490,11 +469,6 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm, lock
                         >
                           {hero && entry ? (
                             <>
-                              {isLocked && (
-                                <span className="squad-slot-pin" aria-label={`${hero.name} must start this fight`} title="Locked into the fight">
-                                  <HubGlyph name="lock" />
-                                </span>
-                              )}
                               <HeroPortrait heroId={hero.id} className="roster-card-portrait" />
                               {/* On the figure's corner as the pick cards wear it, not on the name line: a row
                                   cell's line holds a ten-letter name OR a level, not both. */}

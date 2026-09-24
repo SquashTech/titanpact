@@ -49,9 +49,9 @@ import { resolveTypeMult, TYPE_MULT_FLOOR } from '../../engine/damage/typeMult';
 import { resolveElementalForceBonus } from '../../engine/damage/damagePipeline';
 import type { RunState, RosterEntry } from '../../run/state';
 import type { MapNodeType } from '../../run/map';
-import { matchTutorialCue, type TutorialFightContext } from '../../run/tutorial';
-import { TUTORIAL_FIGHT_CUES } from '../../data/tutorial';
-import { TutorialOverlay } from '../run/TutorialOverlay';
+import { matchFightTip, type FightTipContext } from '../../run/tips';
+import { FIGHT_TIPS } from '../../data/tips';
+import { TipOverlay } from '../run/TipOverlay';
 import { TitanRiseScreen } from '../run/TitanRiseScreen';
 import { overlayHost } from '../shared/overlayHost';
 import type { Squad } from '../../run/squad';
@@ -555,11 +555,10 @@ interface Props {
   /** Plain one-tap exit for fights outside a run (Quick Battle). A caller passes this or the run pair, never both. */
   onExitToTitle?: () => void;
   /**
-   * The scripted first run (docs/tutorial.md): which curated fight this is, by its map node
-   * type. Omitted everywhere else, which is what keeps every normal fight free of the check.
-   * Cue progress is deliberately screen-local — a fight is atomic, and a reload replays it.
+   * First-time tips (docs/tutorial.md): the run's fights pass the node they stand on and the
+   * profile's seen list. Omitted outside a run (Quick Battle, the sandbox), which shows none.
    */
-  tutorialNodeType?: MapNodeType;
+  tips?: { nodeType: MapNodeType; seenIds: readonly string[]; onSeen: (id: string) => void };
   /**
    * The Eyes' fight (docs/titan-eyes.md): a win hands off the moment playback ends, with no result
    * overlay — the collapse is the fight's last beat, and a spoils panel between the KO and it is a
@@ -582,7 +581,7 @@ export function FightScreen({
   onSaveAndQuit,
   onAbandonRun,
   onExitToTitle,
-  tutorialNodeType,
+  tips,
   cinematicWin = false,
 }: Props) {
   /** null outside an act (sandbox, quick battle): the arena keeps its placeless neutral scene. */
@@ -665,8 +664,6 @@ export function FightScreen({
   const [figureFx, setFigureFx] = useState<Record<string, FigureFx>>({});
   /** The move dossier, opened by holding a move row. Carries the holder: every number on the card is relative to the commanding hero. */
   const [movePopup, setMovePopup] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
-  /** Tutorial cues already spoken in THIS fight. Screen-local: a fight is atomic and a reload replays it. */
-  const [cuesSeen, setCuesSeen] = useState<ReadonlySet<string>>(() => new Set());
   const popupSeq = useRef(0);
   const beatQueue = useRef<Beat[]>([]);
   const displayState = useRef<CombatState | null>(null);
@@ -754,29 +751,32 @@ export function FightScreen({
   const showingTargetPanel = selecting !== null && selecting.combatantId === actingId;
 
   /**
-   * The scripted run's mid-fight coaching (docs/tutorial.md). Evaluated only at the TOP of a
-   * command phase — nothing declared yet — so a lesson never lands between two orders the
-   * player is halfway through giving.
+   * The first-time tip for this moment of the fight, if any (docs/tutorial.md). Evaluated only at
+   * the TOP of a command phase — nothing declared yet — so a tip never lands between two orders
+   * the player is halfway through giving.
    */
-  const tutorialCue = (() => {
+  const fightTip = (() => {
     // `winner` first: a wiped enemy side leaves the player with living heroes, so `canAct` goes
-    // true again the moment playback ends and a cue would land on top of the victory panel.
+    // true again the moment playback ends and a tip would land on top of the victory panel.
     if (winner !== null) return null;
-    if (!tutorialNodeType || !canAct || actionStep !== 0 || Object.keys(pending).length > 0) return null;
-    const hpFractions = playerActiveAlive.map((id) => {
-      const combatant = combat.combatants[id];
-      return combatant.currentHp / getMaxHp(allCombatants[combatant.heroId], combatant);
-    });
-    const ctx: TutorialFightContext = {
+    if (!tips || !canAct || actionStep !== 0 || Object.keys(pending).length > 0) return null;
+    const ctx: FightTipContext = {
       round: combat.round,
+      nodeType: tips.nodeType,
       anyOutOfMana: playerActiveAlive.some(
         (id) => !hasAffordableMoveInFight(combat, id, entryFor(playerRun.roster, id).unlockedMoveIds, moves, allCombatants)
       ),
       lockedIn: playerLockedIn,
-      lowestPlayerHpFraction: hpFractions.length > 0 ? Math.min(...hpFractions) : 1,
-      enemyHeroIds: enemyActiveAlive.map((id) => combat.combatants[id].heroId),
+      benchSize: playerBench.length,
+      playerKnockouts: combat.koCount[PLAYER_SIDE],
+      enemyTypesOnField: enemyActiveAlive.flatMap((id) => {
+        const combatant = combat.combatants[id];
+        return [...(allCombatants[combatant.heroId]?.types ?? []), ...combatant.grantedTypes];
+      }),
+      fieldEffectActive: combat.activeFieldEffect != null,
+      pactClockNear: pactRound >= DEFAULT_PACT_CLOCK.startRound - PACT_WARNING_ROUNDS,
     };
-    return matchTutorialCue(TUTORIAL_FIGHT_CUES, tutorialNodeType, ctx, cuesSeen);
+    return matchFightTip(FIGHT_TIPS, ctx, tips.seenIds);
   })();
 
   /**
@@ -2070,13 +2070,7 @@ export function FightScreen({
         />
       )}
 
-      {tutorialCue && (
-        <TutorialOverlay
-          key={tutorialCue.id}
-          beat={tutorialCue}
-          onDone={() => setCuesSeen((seen) => new Set(seen).add(tutorialCue.id))}
-        />
-      )}
+      {fightTip && tips && <TipOverlay key={fightTip.id} tip={fightTip} onDone={() => tips.onSeen(fightTip.id)} />}
     </>
   );
 }

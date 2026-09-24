@@ -106,7 +106,7 @@ export interface BrokenSeal {
   /** The sealed (Ancient-second) id. The finale fields `unsealedIdFor` it. */
   championId: string;
   level: number;
-  /** The champion's flat grants (the tutorial's, if any) and what its level rolled — the power it was beaten at. */
+  /** The champion's flat grants, if any, and what its level rolled — the power it was beaten at. */
   statGrants: Partial<Record<StatKey, number>>;
   growthStatGrants: Partial<Record<StatKey, number>>;
 }
@@ -150,14 +150,6 @@ export interface RunState {
   locationIds: readonly string[];
   /** Appended on each Guardian win, in act order — the Pact Seal's filled sockets and the finale's enemy side. */
   brokenSeals: readonly BrokenSeal[];
-  /**
-   * The scripted first run (docs/tutorial.md). Pins the drafted pair, Act 1's map and Act 1's
-   * encounters and payouts; acts 2-6 are an ordinary run, so everything keyed on it also checks
-   * the act (`isTutorialAct`).
-   */
-  tutorial: boolean;
-  /** Tutorial beats already played, so neither a re-render nor a reload repeats one. */
-  tutorialSeenBeatIds: readonly string[];
   /** The Ascension rung this run plays under (run/ascension.ts): 0 is Base, 1 is Permadeath. Chosen at run start, never changed. */
   ascension: number;
 }
@@ -178,8 +170,6 @@ export function createRunState(gold = 0, recruitContracts = 1, ascension = 0): R
     actNumber: 1,
     locationIds: [],
     brokenSeals: [],
-    tutorial: false,
-    tutorialSeenBeatIds: [],
     ascension,
   };
 }

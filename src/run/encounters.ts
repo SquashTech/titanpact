@@ -19,7 +19,6 @@ import { appendFinalEnemy, generateEncounter, type Encounter, type EncounterNode
 import { locationBias } from './locations';
 import { isCompanion } from './companion';
 import { guardianEscortPool, mobEncounter } from './spawn';
-import type { TutorialEncounter } from './tutorial';
 
 export type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss';
 
@@ -44,13 +43,11 @@ export interface EncounterContext {
   location: LocationDefinition;
   /** The recruitable pool — `heroes`. */
   heroes: HeroLookup;
-  /** Every combatant, for a scripted roster that names its own — `allCombatants`. */
+  /** Every combatant, for reading a drawn squad's types — `allCombatants`. */
   allCombatants: HeroLookup;
   /** The authored enemies, for the Guardian's champion. */
   enemies: HeroLookup;
   progression: ProgressionTable;
-  /** The scripted first act's forced roster for this node, or null (run/tutorial.ts). */
-  scripted?: TutorialEncounter | null;
 }
 
 /** `skirmish` and `battle` are mechanically plain `fight` encounters. */
@@ -63,15 +60,14 @@ export function encounterKindOf(type: EncounterMapNodeType): EncounterNodeType {
  * can compare two draws before committing to one.
  */
 function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: EncounterContext, seed: number): Encounter {
-  const { run, location, heroes, allCombatants, enemies, progression, scripted } = ctx;
+  const { run, location, heroes, enemies, progression } = ctx;
   const encounterKind = encounterKindOf(type);
   // The run's 2nd plain encounter is a deliberately lighter 2v2.
   const isSecondFight = encounterKind === 'fight' && run.fightsStarted === 1;
   const scaling = encounterScaling(type, run.actNumber);
   const loadout = enemyLoadoutFor(type, run.actNumber);
-  // A scripted roster names its own combatants, so it draws from the WHOLE table
-  // (docs/tutorial.md); a Guardian's escorts are the act's tier of the Location's spawn.
-  const pool = scripted ? allCombatants : type === 'boss' ? guardianEscortPool(location, run.actNumber) : heroes;
+  // A Guardian's escorts are the act's tier of the Location's spawn.
+  const pool = type === 'boss' ? guardianEscortPool(location, run.actNumber) : heroes;
   // A hero already on the roster is barred from the recruitable draw, so two copies can never
   // reach one roster via a contract claim (mirrors rollGuildHallOffers). Passed unconditionally:
   // enemy and hero ids never collide (test/recruitment.test.ts), so it is inert on a mob pool.
@@ -87,15 +83,13 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
   // Location affinity bias applies to the recruitable pool only (docs/locations.md §2).
   const bias = pool === heroes ? locationBias(location, heroes, heroCount) : undefined;
   let encounter = generateEncounter(encounterKind, seed, pool, {
-    forcedHeroIds: scripted?.heroIds,
-    statGrants: scripted?.statGrants,
     heroCount: heroCountOverride,
     bias,
     excludeHeroIds,
     scaling,
     loadout,
     // A spawn has no progression data; only the hero pool cashes a level in.
-    progression: pool === heroes || scripted ? progression : undefined,
+    progression: pool === heroes ? progression : undefined,
   });
   // The Location's held-back champion arrives benched, so the first enemy KO brings him in.
   const finalEnemyId = type === 'boss' ? location.guardianFinalEnemyId : null;
@@ -137,11 +131,11 @@ export function nodeEncounter(node: MapNode, ctx: EncounterContext): Encounter {
   const type = node.type;
   if (!isEncounterNodeType(type)) throw new Error(`${node.id} is a ${type} node, which fields no encounter`);
   const map = ctx.run.map!;
-  const { location, run, scripted } = ctx;
-  if ((type === 'fight' || type === 'battle') && !scripted) {
+  const { location, run } = ctx;
+  if (type === 'fight' || type === 'battle') {
     return mobEncounter(type, location, run.actNumber, encounterSeedFor(map, node.id), encounterScaling(type, run.actNumber));
   }
-  const partner = scripted ? null : forkPartner(map, node);
+  const partner = forkPartner(map, node);
   if (!partner) return heroPoolEncounter(node, type, ctx, encounterSeedFor(map, node.id));
 
   const eliteTypes = new Set(scoutedTypes(heroPoolEncounter(partner, 'elite', ctx, encounterSeedFor(map, partner.id)), ctx.allCombatants));

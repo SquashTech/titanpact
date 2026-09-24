@@ -158,10 +158,8 @@ are recruit-only heroes stood in the draft — so the proposal changes the wordi
 
 ### 3.6 The tutorial
 
-The scripted first run forces Valor and Fang and ignores the equipped pack. A pack cannot be
-bought before the first clear in any case (no stars), but a wiped tutorial is offered again and
-the profile might hold a pack by then — the script wins, the pack stays equipped for the run
-after.
+There is no scripted first run since 2026-09-24 (`docs/tutorial.md`): a first run drafts from the
+equipped pack like any other, and first-time tips are the only thing it adds.
 
 ### 3.7 Worked examples
 

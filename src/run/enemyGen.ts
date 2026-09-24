@@ -124,10 +124,9 @@ function applyLoadout(entry: RosterEntry, hero: HeroLookup[string], loadout: Ene
 
 export interface EncounterOptions {
   /**
-   * Names the enemy roster outright instead of drawing one — the scripted first act
-   * (src/data/tutorial.ts). Sets the encounter size too, so `heroCount` is not also needed.
-   * Ids in `excludeHeroIds` are dropped and the gap refilled from the pool, so a scripted
-   * escort the player has since recruited can never be fielded against them.
+   * Names the enemy roster outright instead of drawing one (a test's fixed opponent). Sets the
+   * encounter size too, so `heroCount` is not also needed. Ids in `excludeHeroIds` are dropped
+   * and the gap refilled from the pool, so a forced id the player holds is never fielded.
    */
   forcedHeroIds?: readonly string[];
   /** Overrides the node kind's default roster size (the run's 2nd-fight 2v2 breather, the row-0 opener). */
@@ -139,8 +138,7 @@ export interface EncounterOptions {
   /** Hard filter both pick stages obey — the player's roster, so a beaten enemy can never be a duplicate contract. */
   excludeHeroIds?: readonly string[];
   /**
-   * A flat grant merged onto every enemy in this encounter, on top of its level — the scripted
-   * first act's lever for making a fight last (src/data/tutorial.ts).
+   * A flat grant merged onto every enemy in this encounter, on top of its level.
    */
   statGrants?: Partial<Record<StatKey, number>>;
   /** Omitted = NO_SCALING. */
@@ -238,19 +236,19 @@ export function generateEncounter(
   } = options;
   let rng = createRng(seed);
   const excluded = new Set(excludeHeroIds ?? []);
-  const scripted = forcedHeroIds?.filter((id) => id in heroPool && !excluded.has(id)) ?? [];
+  const forced = forcedHeroIds?.filter((id) => id in heroPool && !excluded.has(id)) ?? [];
   const heroCount = forcedHeroIds?.length ?? heroCountOverride ?? (nodeType === 'boss' ? 2 : 4);
 
-  // A scripted roster short of its authored size (an id the player recruited) tops up from the
-  // pool, so the fight is never smaller than the one the script was written against.
+  // A forced roster short of its size (an id the player holds) tops up from the pool, so the
+  // fight is never smaller than the one asked for.
   const { picked: drawn, nextState: afterPick } = biasedPick(
     rng,
     heroPool,
-    heroCount - scripted.length,
+    heroCount - forced.length,
     bias,
-    new Set([...excluded, ...scripted])
+    new Set([...excluded, ...forced])
   );
-  const heroIds = [...scripted, ...drawn];
+  const heroIds = [...forced, ...drawn];
   rng = afterPick;
 
   let run = createRunState(0);

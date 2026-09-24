@@ -80,9 +80,7 @@ in play, since Act 5 now runs two reward rows back-to-back either side of its Tu
 act's XP is re-sized ×1.25 so par still lands the decided act ends
 (`ENCOUNTER_XP_BY_ACT`, `ENCOUNTERS_PER_ACT` = 3). Measured on the same 600-run seed and
 pilot: **Reader 92 → 77 min, Auto 63 → 53, Fast 37 → 32**; full-clear 23 → 26%, Act 1 clear
-51 → 65% (the wall softened by exactly the fight it lost), Acts 4-5 Guardians unchanged. The
-tutorial's corridor lost its warband `battle` with it, and its bench lesson moved onto the
-Guardian.
+51 → 65% (the wall softened by exactly the fight it lost), Acts 4-5 Guardians unchanged.
 
 **The fork is Elite-or-Skirmish since 2026-09-13** (Titanspawn overhaul phase 3; it was
 Elite-or-Battle). Both options draw the recruitable pool and both pay a contract, so claim
@@ -93,7 +91,7 @@ is honest by construction: every encounter node draws from a seed derived from t
 and the node's id (`src/run/encounters.ts`, the one place App.tsx, the sim and the map's
 preview all build an encounter), so the tile and the tap are the same draw, and the fork's
 Skirmish is re-rolled against its Elite until the two differ in at least one type. `battle`
-survives as a node type only for the tutorial's curated corridor.
+survives as a node type only for a save that still holds one.
 
 **The spliced seat: Mentor (acts 1-3), Forge (act 4), Tutor (act 5).** Row 2 is a forced
 single-node row in every act. In acts 1-3 it is the Mentor (`mentorReward`): pick a hero, and
@@ -671,8 +669,8 @@ have sent later a cold one, sunk; a +1 on the hero Speed already favoured, which
 is a pip and no more. "Favoured" is read on the field's own axis — `previewOrder` and
 `RoundOrdered` both carry `reversedSpeed`, so under Stasis Bubble the slower hero is the one
 a cut goes past. **A number needs telling** (same day, per user direction — a new player would
-read "3" as anything from a level to a stack): the tutorial's opener cue names the coin in the
-line that already teaches Speed, and **a coin is tappable while commanding** — the tap is the
+read "3" as anything from a level to a stack): the first fight's tip names the number beside a
+fighter as the turn order (`fight.basics`, `docs/tutorial.md`), and **a coin is tappable while commanding** — the tap is the
 coin's own, never the card's — and the game says the place in words over the field for a
 moment (`describeOrder`, `.field-note`): **the whole round first to last** — *Cinder, then
 Pixie, then Riptide, then Rime* — a tie said as *Squall or Riptide (a coin flip)*, and after it

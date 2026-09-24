@@ -111,8 +111,7 @@ don't silently override it.
 > nobody can receive is gold on the spot. The bag, its marks and the footer label, the swap
 > sheet, the Blacksmith node, the Guild Hall's item shelf and its Sell are DELETED; the funnel is
 > a forced Guild Hall every act with the Anvil and Enchanter on its **Smithy** tab; the spliced
-> row is the Tutor in acts 4 AND 5 (the in-row act-4 seat retired with the Forge); the tutorial
-> corridor's third row is the Boon. Its §9 lists the invariants below it reverses. Measured
+> row is the Tutor in acts 4 AND 5 (the in-row act-4 seat retired with the Forge). Its §9 lists the invariants below it reverses. Measured
 > (sim, 3000 runs): full-clear 12.0 → 18.8% on the same seed — three sockets are a player buff
 > — 17.2 items a completed run, a merge OFFERED 4.7 times a run and TAKEN 0.6 by a pilot that
 > widens while a socket is free (§8). **Phase 3 is IN (same day): a contract arrives ARMED** —
@@ -768,11 +767,13 @@ what's still unimplemented:
   not `wounds >= max`, so a growth roll cannot stand a hero up. Potions stay in-fight only.
   Mana still opens full every fight; the enemy curve is untouched until it has been played. Relics are **stat-only**, by
   design rather than by deferral (see the relic-catalog invariant above).
-- The first run on an account (2026-09-05 sign-off): **scripted through Act 1**, narrated by
-  **Valor**, with Valor + Fang forced as the pact and the act's map narrowed to **one node
-  per row**. Every line and every curated encounter is content (`src/data/tutorial.ts`);
-  mechanism is `src/run/tutorial.ts`. Gated on `Profile.tutorialDone`, set when Act 1's
-  Guardian falls — so a wiped tutorial is offered again. Act 2 onward is an ordinary run
+- The first run on an account (2026-09-24, per user direction, replacing the scripted
+  Valor-narrated Act 1 of 2026-09-05, deleted whole): **an ordinary run, nothing staged** —
+  no forced pact, no curated map or fights. It adds information only: a **lore card** (four
+  lines, one a tap, ahead of the first draft) and **first-time tips** — the first time a
+  mechanic appears, a brief, out-of-universe card says what it is, **once per account**
+  (`Profile.seenTipIds`). Tips are video-game information, never a hero speaking and never
+  "we". Content `src/data/tips.ts`, mechanism `src/run/tips.ts`, reset from the Dev menu
   (`docs/tutorial.md`).
 - Field Effects (2026-08-21 sign-off): resolves the former "weather subsystem" open
   question — Field Effects **is** that subsystem, generalized. A single global
