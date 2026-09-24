@@ -26,11 +26,12 @@ function setStatus(state: CombatState, combatantId: string, statusId: StatusId, 
 export function removeStatus(state: CombatState, round: number, combatantId: string, statusId: StatusId, reason: StatusRemovalReason): StatusResult {
   const combatant = state.combatants[combatantId];
   if (!combatant?.statuses[statusId]) return { state, events: [] };
+  const held = combatant.statuses[statusId].magnitude;
   const nextStatuses = { ...combatant.statuses };
   delete nextStatuses[statusId];
   return {
     state: { ...state, combatants: { ...state.combatants, [combatantId]: { ...combatant, statuses: nextStatuses } } },
-    events: [{ type: 'StatusRemoved', round, combatantId, statusId, reason }],
+    events: [{ type: 'StatusRemoved', round, combatantId, statusId, reason, ...(held === undefined ? {} : { magnitude: held }) }],
   };
 }
 

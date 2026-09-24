@@ -384,7 +384,10 @@ test('broadside: a cannonball loads each round on the bench (never on the field,
   assert.strictEqual(r.state.combatants.b1.currentHp, b1Max - Math.round(b1Max * BROADSIDE_SHOT * BROADSIDE_MAGAZINE));
   assert.strictEqual(r.state.combatants.b2.currentHp, b2Max - Math.round(b2Max * BROADSIDE_SHOT * BROADSIDE_MAGAZINE));
   assert.strictEqual(statusMagnitude(r.state.combatants.a3, 'Cannonball'), 0, 'spent');
-  assert.ok(r.events.some((e) => e.type === 'StatusRemoved' && e.combatantId === 'a3' && e.statusId === 'Cannonball'));
+  // The removal carries what it held: the view draws exactly that many balls (view/combat/TypeFx.tsx).
+  const emptied = r.events.find((e) => e.type === 'StatusRemoved' && e.combatantId === 'a3' && e.statusId === 'Cannonball');
+  assert.ok(emptied && emptied.type === 'StatusRemoved');
+  assert.strictEqual(emptied.magnitude, BROADSIDE_MAGAZINE, 'the magazine it spent, for the volley to be drawn at');
   // Entering with nothing loaded fires nothing — the opening lead included.
   const empty = holder(fixture(33));
   const r2 = resolveRound(empty, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }, ...restAll(empty).filter((a) => a.combatantId !== 'a1')], config);

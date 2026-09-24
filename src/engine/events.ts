@@ -158,6 +158,8 @@ export interface StatusRemovedEvent extends BaseEvent {
   combatantId: string;
   statusId: StatusId;
   reason: StatusRemovalReason;
+  /** What the status held when it went — the magazine a broadside spent, so the view can draw that many. Absent on a shapeless status. */
+  magnitude?: number;
   /** 'broken' only: the striker whose hit emptied the Shield. */
   sourceCombatantId?: string;
 }

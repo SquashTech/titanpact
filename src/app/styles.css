@@ -4825,7 +4825,8 @@ textarea,
   border: 3px solid #cfd4dc;
   box-shadow: 0 0 10px var(--fx-a);
   animation: fx-cannon-ring 420ms ease-out both;
-  animation-delay: 520ms;
+  /* Waits for the last shot: its flight starts at (n-1) x the stagger and lands 440ms later. */
+  animation-delay: calc((var(--n) - 1) * 150ms + 330ms);
 }
 
 .type-fx-cannonball::after {

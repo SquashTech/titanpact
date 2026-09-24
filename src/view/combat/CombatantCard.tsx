@@ -31,6 +31,7 @@ export interface FigureFx {
   key: number;
   type: string;
   kind: 'element' | 'buff' | 'cannonball';
+  count?: number;
 }
 
 // ── Figure animation ────────────────────────────────────────────────────
@@ -358,7 +359,7 @@ export function CombatantCard({
           className="combatant-portrait"
           pose={pose}
         />
-        {fx && <TypeFx key={fx.key} type={fx.type} kind={fx.kind} />}
+        {fx && <TypeFx key={fx.key} type={fx.type} kind={fx.kind} count={fx.count} />}
       </div>
       {/* Always rendered so the row reserves its height whether or not this card has a badge. */}
       <div className="eff-badge-row">

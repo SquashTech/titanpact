@@ -129,6 +129,8 @@ function castLabel(move: MoveDefinition): string {
 export interface BeatFx {
   combatantId: string;
   type: string;
+  /** How many of the effect to draw — a broadside draws the balls it actually fired. Absent = the shape's own default. */
+  count?: number;
   /**
    * 'element' is the move's type manifesting on a foe and 'buff' the universal grant; 'cannonball'
    * is Broadside's volley (PASSIVE_FX), a passive whose payload is a picture of its own rather
@@ -510,9 +512,13 @@ export function buildBeats(
             applied.push(hp);
             if (events[i]?.type === 'Fainted') applied.push(events[i++]);
           }
-          // The status the payload spent (Broadside's magazine), so the chip clears on the same beat.
+          // The status the payload spent (Broadside's magazine), so the chip clears on the same
+          // beat — and what it held, which is how many balls the volley draws.
+          let spent: number | undefined;
           while (events[i]?.type === 'StatusRemoved' && (events[i] as StatusRemovedEvent).combatantId === e.combatantId) {
-            applied.push(events[i++]);
+            const removed = events[i++] as StatusRemovedEvent;
+            applied.push(removed);
+            spent = removed.magnitude ?? spent;
           }
           const struck = hits.map((hp) => ({ hp, amount: hp.previousHp - hp.newHp })).filter((h) => h.amount > 0);
           const who = joinNames(struck.map((h) => name(h.hp.combatantId)));
@@ -527,7 +533,14 @@ export function buildBeats(
               bannerFocus: `-${total}`,
               bannerFocusKind: 'damage',
               ...(fxKind
-                ? { fx: struck.map((h) => ({ combatantId: h.hp.combatantId, type: ownerType(e.combatantId), kind: fxKind })) }
+                ? {
+                    fx: struck.map((h) => ({
+                      combatantId: h.hp.combatantId,
+                      type: ownerType(e.combatantId),
+                      kind: fxKind,
+                      ...(spent === undefined ? {} : { count: spent }),
+                    })),
+                  }
                 : {}),
             }
           );
