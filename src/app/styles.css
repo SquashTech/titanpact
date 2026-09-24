@@ -29228,6 +29228,279 @@ button.star-shop-bundle-face {
   color: #c9a2ff;
 }
 
+/* --- A signature move, and a mastered innate (MoveOfferOverlay SignatureBox, MasteredInnateOverlay) ---
+   The one move a hero is taught that is nobody else's, and the tenth pip's upgrade: the same panel
+   a level's offer wears, dressed as the event it is. Everything keys off two custom properties the
+   component sets from the hero's innate type — --sig-color and --sig-rgb — so Cinder's crest burns
+   and Riptide's runs blue. A crest bursts in over the name (a flash, rays wheeling behind a
+   star-flanked title), the move card sits in a frame whose rim is a turning conic sheen, and motes
+   drift up off it. Under reduced motion the global collapse lands every end state: the crest
+   shown, the flash gone, the rim still. */
+
+.moveoffer-overlay.is-signature {
+  background: radial-gradient(ellipse at 50% 18%, rgba(var(--sig-rgb), 0.28), rgba(6, 8, 12, 0.86) 62%);
+}
+
+.moveoffer-panel.is-signature {
+  border-color: rgba(var(--sig-rgb), 0.7);
+  box-shadow:
+    0 0 0 1px rgba(var(--sig-rgb), 0.35),
+    0 0 36px rgba(var(--sig-rgb), 0.35),
+    0 18px 40px rgba(0, 0, 0, 0.55);
+  animation: signature-panel-in 0.55s cubic-bezier(0.2, 1.3, 0.4, 1) both;
+}
+
+.moveoffer-panel.is-signature .offer-hero-eyebrow {
+  color: var(--sig-color);
+  text-shadow: 0 0 10px rgba(var(--sig-rgb), 0.6);
+}
+
+@keyframes signature-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.signature-crest {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 34px;
+  margin: 2px 0 -2px;
+  pointer-events: none;
+}
+
+.signature-crest-flash {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 320px;
+  height: 180px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 255, 255, 0.65), rgba(var(--sig-rgb), 0.5) 30%, transparent 68%);
+  animation: signature-flash 0.9s ease-out forwards;
+}
+
+@keyframes signature-flash {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.8);
+  }
+}
+
+.signature-crest-rays {
+  position: absolute;
+  top: calc(50% - 110px);
+  left: calc(50% - 110px);
+  width: 220px;
+  height: 220px;
+  background: repeating-conic-gradient(from 0deg, rgba(var(--sig-rgb), 0.28) 0deg 8deg, transparent 8deg 22deg);
+  -webkit-mask: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.5) 22%, transparent 50%);
+  mask: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.5) 22%, transparent 50%);
+  animation: level-up-rays-in 0.9s ease-out both, level-up-rays-spin 18s linear infinite;
+}
+
+.signature-crest-title {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--sig-rgb), 0.85);
+  background: linear-gradient(180deg, rgba(var(--sig-rgb), 0.55), rgba(var(--sig-rgb), 0.18));
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px rgba(var(--sig-rgb), 0.95), 0 1px 0 rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 18px rgba(var(--sig-rgb), 0.55);
+  animation: signature-title-in 0.6s cubic-bezier(0.2, 1.5, 0.4, 1) 0.12s both;
+}
+
+@keyframes signature-title-in {
+  from {
+    opacity: 0;
+    transform: scale(1.6);
+    letter-spacing: 0.5em;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.signature-crest-star {
+  color: #fff6d8;
+  font-size: 11px;
+  animation: signature-star-twinkle 1.6s ease-in-out infinite;
+}
+
+.signature-crest-star:last-child {
+  animation-delay: 0.8s;
+}
+
+@keyframes signature-star-twinkle {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.85) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2) rotate(45deg);
+  }
+}
+
+/* The frame: a 2px rim that is a conic gradient turning behind the card, so the edge reads as
+   light running round it. The card inside keeps .offer-move-highlight's own surface. */
+.signature-frame {
+  position: relative;
+  width: 100%;
+  padding: 2px;
+  border-radius: calc(var(--radius-lg) + 2px);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.signature-frame-sheen {
+  position: absolute;
+  inset: -60%;
+  z-index: -1;
+  background: conic-gradient(from 0deg, rgba(var(--sig-rgb), 0.15), var(--sig-color), #fff6d8, var(--sig-color), rgba(var(--sig-rgb), 0.15) 60%, rgba(var(--sig-rgb), 0.15));
+  animation: signature-sheen-spin 3.2s linear infinite;
+}
+
+@keyframes signature-sheen-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+.offer-move-highlight.is-signature {
+  border-color: transparent;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(var(--sig-rgb), 0.2), transparent 70%),
+    var(--surface-raised);
+  animation: signature-card-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes signature-card-glow {
+  0%,
+  100% {
+    box-shadow: inset 0 0 12px rgba(var(--sig-rgb), 0.2);
+  }
+  50% {
+    box-shadow: inset 0 0 26px rgba(var(--sig-rgb), 0.45);
+  }
+}
+
+/* Motes: six sparks drifting up off the frame, each on its own offset (--mote). */
+.signature-mote {
+  position: absolute;
+  bottom: 6px;
+  left: calc(10% + var(--mote) * 15%);
+  z-index: 2;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #fff6d8;
+  box-shadow: 0 0 6px 2px rgba(var(--sig-rgb), 0.9);
+  opacity: 0;
+  pointer-events: none;
+  animation: signature-mote-rise 2.6s ease-out infinite;
+  animation-delay: calc(var(--mote) * 0.43s);
+}
+
+@keyframes signature-mote-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.6);
+  }
+  15% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-120px) scale(1.1);
+  }
+}
+
+.moveoffer-panel.is-signature .moveoffer-confirm {
+  border-color: rgba(var(--sig-rgb), 0.9);
+  box-shadow: 0 0 16px rgba(var(--sig-rgb), 0.45);
+}
+
+/* The mastered innate: the born card drawn small and struck through above the new one. */
+.mastered-from {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md, 8px);
+  background: var(--well);
+  opacity: 0.72;
+  text-align: left;
+}
+
+.mastered-from-glyph {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--text-dim);
+}
+
+.mastered-from-glyph > svg {
+  width: 100%;
+  height: 100%;
+}
+
+.mastered-from-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.mastered-from-name {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-dim);
+  text-decoration: line-through;
+  text-decoration-color: rgba(var(--sig-rgb), 0.8);
+}
+
+.mastered-from-desc {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.mastered-arrow {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sig-color);
+  animation: signature-title-in 0.5s ease-out 0.35s both;
+}
+
 /* The Guild Hall's Scroll row wears the vector mark, where the Contract row wears an emoji. */
 /* --- Level-up report (LevelUpScreen) ------------------------------------- *
 
@@ -29627,6 +29900,27 @@ button.star-shop-bundle-face {
   animation:
     level-up-delta-pop 0.4s cubic-bezier(0.2, 1.5, 0.4, 1) 0.5s both,
     level-up-owed-pulse 1.8s ease-in-out 0.9s infinite;
+}
+
+/* A signature owed (docs/mastery.md §5): the one tag on the report that is a hero's own move, in
+   the signature box's gold with a sheen running across it. */
+.level-up-owed.is-signature {
+  border-color: rgba(255, 214, 120, 0.9);
+  background: linear-gradient(100deg, rgba(224, 166, 60, 0.35) 30%, rgba(255, 246, 216, 0.75) 50%, rgba(224, 166, 60, 0.35) 70%) 0 0 / 250% 100%;
+  color: #fff6d8;
+  text-shadow: 0 0 6px rgba(224, 166, 60, 0.9);
+  animation:
+    level-up-delta-pop 0.4s cubic-bezier(0.2, 1.5, 0.4, 1) 0.5s both,
+    level-up-owed-sheen 2.2s linear 0.9s infinite;
+}
+
+@keyframes level-up-owed-sheen {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -150% 0;
+  }
 }
 
 @keyframes level-up-owed-pulse {

@@ -100,6 +100,14 @@ don't silently override it.
 > the tenth pip and spent by being made, replace-or-decline at `MOVE_CAP`, in no pool by test;
 > Lizard Rush is Riptide's, and Tidecaller grants Maelstrom (off Riptide's pool) in its place.
 > **Phase 4 is IN** — all 36 heroes carry a signature (`src/data/signatures.ts`); the numbers are a first pass, the weaker ones waiting on a buff/debuff rework. **Phase 5 is IN:** `2N−2` per user direction; the Scribe's 2 + 2, the Cache's 46 and the shelf's 25g / 2 stand, with the supply dials measured in §8 — 35 pips a completed run, full-clear 54% against the pre-Mastery 62%, the gap being the roster-wide Evolutions the level schedule paid for free; the Scribe at 3 + 3 recovers half of it. That figure is the designer's to move.
+> **Revised 2026-09-24 (per user direction, `docs/mastery.md` §5, §5b): the signature LEFT the
+> tenth pip.** It is a guaranteed learn off the level-up report at the hero's own
+> `schedule.signatureLevel` — 13–15 / 17–19 / 21–23 by how hard the move hits, never on an offer
+> level, dressed louder than an offer (`SignatureBox`) — and enemies hold it from that level. The
+> tenth pip now **masters the innate**: `HeroDefinition.masteredPassiveIds` REPLACES `passiveIds`
+> on that hero (`innatePassiveIdsFor`, `src/run/innate.ts`), an authored upgrade of the same verb
+> with every figure at least doubled or its reach widened — 45 cards, in no pool, a Burden still a
+> Burden.
 
 > **A fifth overhaul is BUILT, phases 1–2: `docs/gear-absorption.md`** (2026-09-15, per user
 > direction). **Gear is absorbed**: every item raises a who-screen the moment it arrives

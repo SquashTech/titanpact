@@ -3,11 +3,11 @@ import { rosterHeroes as heroes } from '../../data/content';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
 import type { RunState } from '../../run/state';
-import { MOVE_CAP, grantOfferedMove, levelMovePool, pendingScheduleEntry, recordMoveOffer, takeScheduleEntry } from '../../run/progression';
+import { MOVE_CAP, grantOfferedMove, levelMovePool, pendingScheduleEntry, pendingSignature, recordMoveOffer, takeScheduleEntry } from '../../run/progression';
 import { playSfx } from '../../audio/sfx';
 import { useMasteryFlow, type MasteryFlow } from './masteryFlow';
 
-export type { Evolving, Grown, Overflow, SignatureOffer } from './masteryFlow';
+export type { Evolving, Grown, Mastered, Overflow } from './masteryFlow';
 
 /**
  * What a schedule entry has raised. Below the cap the move is already LEARNED and the box only
@@ -20,22 +20,37 @@ export interface ScheduleOffer {
 }
 
 /**
+ * The signature a level has reached (docs/mastery.md §5): the hero's own move, guaranteed. Below
+ * the cap it is already LEARNED and the box celebrates it; at the cap it is still a question.
+ */
+export interface SignatureOffer {
+  rosterId: string;
+  moveId: string;
+  learned: boolean;
+}
+
+/**
  * What the level-up report is paying out, one hero at a time (docs/xp-overhaul.md §4): a hero
  * whose level has reached a schedule entry takes it here — an offer rolled from the band the
- * level opened. The report carries exactly one decision kind and must not gain a second. What
+ * level opened, or the hero's signature at its `signatureLevel` — the same decision kind, a move
+ * offer, only never rolled. The report carries exactly one decision kind and must not gain a second. What
  * Mastery owes a hero (masteryFlow.ts) is raised on the Scroll node that paid the pip; the
  * report raises it only as the catch-all — a hire that arrived past the pip unevolved.
  */
 export interface LevelUpFlow extends MasteryFlow {
   offer: ScheduleOffer | null;
+  signature: SignatureOffer | null;
   /** Pay the next owed entry among `rosterIds`, in that order. False when nobody is owed anything. */
   next: (rosterIds: readonly string[]) => boolean;
   resolveOffer: (replaceMoveId: string | null, learn: boolean) => void;
   closeOffer: () => void;
+  resolveSignature: (replaceMoveId: string | null, learn: boolean) => void;
+  closeSignature: () => void;
 }
 
 export function useLevelUpFlow(run: RunState, onRunChange: (next: RunState) => void): LevelUpFlow {
   const [offer, setOffer] = useState<ScheduleOffer | null>(null);
+  const [signature, setSignature] = useState<SignatureOffer | null>(null);
   const mastery = useMasteryFlow(run, onRunChange);
 
   /**
@@ -63,11 +78,28 @@ export function useLevelUpFlow(run: RunState, onRunChange: (next: RunState) => v
     return true;
   }
 
+  /** The signature, taught: spent by being made, as any offer is; below the cap it simply lands. */
+  function raiseSignature(rosterId: string, moveId: string) {
+    const current = run.roster.find((r) => r.rosterId === rosterId)!;
+    let next = recordMoveOffer(run, rosterId, [moveId]);
+    const learned = current.unlockedMoveIds.length < MOVE_CAP;
+    if (learned) next = grantOfferedMove(next, rosterId, moveId);
+    onRunChange(next);
+    // No sound here: SignatureBox plays its own fanfare as it mounts.
+    setSignature({ rosterId, moveId, learned });
+  }
+
   function next(rosterIds: readonly string[]): boolean {
     for (const rosterId of rosterIds) {
       const entry = run.roster.find((r) => r.rosterId === rosterId);
       if (!entry) continue;
       if (mastery.raise(rosterId)) return true;
+      // The signature before the schedule's roll: it is the level's headline when both land.
+      const signatureId = pendingSignature(heroes[entry.heroId], entry);
+      if (signatureId) {
+        raiseSignature(rosterId, signatureId);
+        return true;
+      }
       const owed = pendingScheduleEntry(heroes[entry.heroId], entry);
       if (!owed) continue;
       // A dry band took the entry; the run has changed under us either way, so let the caller re-enter.
@@ -83,12 +115,21 @@ export function useLevelUpFlow(run: RunState, onRunChange: (next: RunState) => v
     setOffer(null);
   }
 
+  function resolveSignature(replaceMoveId: string | null, learn: boolean) {
+    if (!signature) return;
+    if (learn) onRunChange(grantOfferedMove(run, signature.rosterId, signature.moveId, replaceMoveId ?? undefined));
+    setSignature(null);
+  }
+
   return {
     ...mastery,
     offer,
-    busy: !!offer || mastery.busy,
+    signature,
+    busy: !!offer || !!signature || mastery.busy,
     next,
     resolveOffer,
     closeOffer: () => setOffer(null),
+    resolveSignature,
+    closeSignature: () => setSignature(null),
   };
 }

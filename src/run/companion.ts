@@ -2,8 +2,8 @@
 // fodder. One of the two Early spawn the player beats in the run's first fight asks to join, and
 // it does — there is no declining (per user direction). It takes a roster slot, levels roster-wide,
 // takes its schedule's offers, holds items and restores between nodes like anyone; the Mastery
-// pip that opens a hero's Evolution is a TIER-STEP for it (Early → Mid), and the pip that offers
-// the signature a second one (Mid → Late), in place of a branch (docs/mastery.md §2); and the only
+// pip that opens a hero's Evolution is a TIER-STEP for it (Early → Mid), and the pip that masters
+// a hero's innate a second one (Mid → Late), in place of a branch (docs/mastery.md §2); and the only
 // new rule is `RosterEntry.mortal` — a knockout removes it from the run, its pips and its gear
 // with it (docs/gear-absorption.md §7).
 
@@ -11,7 +11,7 @@ import type { HeroLookup } from '../engine/state';
 import type { Encounter } from './enemyGen';
 import { SPAWN_TIERS, spawnId, spawnPosition } from '../data/titanspawn';
 import { levelOf, levelUpEntry } from './growth';
-import { MASTERY_EVOLUTION, MASTERY_SIGNATURE } from './mastery';
+import { MASTERY_EVOLUTION, MASTERY_INNATE } from './mastery';
 import { ROSTER_CAP, addRosterEntry, createRosterEntry, type RosterEntry, type RunState } from './state';
 import { freshRosterId } from './recruitment';
 
@@ -75,8 +75,8 @@ export function absorbCompanions(run: RunState, koRosterIds: readonly string[]):
   return { run: { ...run, roster: run.roster.filter((entry) => !absorbed.includes(entry)) }, absorbed };
 }
 
-/** The pip each body steps up at: an Early to Mid where a hero would evolve, a Mid to Late where a hero would take its signature. */
-const STEP_PIPS: Record<string, number> = { early: MASTERY_EVOLUTION, mid: MASTERY_SIGNATURE };
+/** The pip each body steps up at: an Early to Mid where a hero would evolve, a Mid to Late where a hero would master its innate. */
+const STEP_PIPS: Record<string, number> = { early: MASTERY_EVOLUTION, mid: MASTERY_INNATE };
 
 /**
  * The body the entry's Mastery has earned it, when it is standing in the one below: DERIVED off

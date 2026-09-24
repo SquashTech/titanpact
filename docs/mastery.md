@@ -1,4 +1,4 @@
-# mastery.md — Mastery: pips, the Scribe, and the signature
+# mastery.md — Mastery: pips, the Scribe, and the mastered innate
 
 > **STATUS: DECIDED 2026-09-14 (per user direction, after a same-day draft on "fights survived"
 > was playtested on paper and rejected — §0); ALL FIVE PHASES OF §8 ARE IN.** `CLAUDE.md` and `xp-overhaul.md`
@@ -6,6 +6,12 @@
 > of sign-offs each phase spends — **check its Status column before assuming anything here is
 > live.** Every number below is a first pass unless it says otherwise; the design is the shape,
 > and phase 5 is where the numbers get set.
+>
+> **REVISED 2026-09-24 (per user direction, §8 phase 6): the tenth pip no longer teaches the
+> signature move — it MASTERS THE INNATE.** The signature is a guaranteed learn off the level-up
+> schedule at the hero's own `signatureLevel` (§5), set by how hard the move hits; the tenth pip
+> replaces the hero's innate passive with an authored, sizable upgrade of the same verb (§5b).
+> Wherever a line below says "ten is its signature", read §5 and §5b.
 
 ---
 
@@ -42,9 +48,9 @@ before the next big fight.
 
 ## 1. The rule this reduces to
 
-> **Every hero has ten pips. Five is its Evolution; ten is its signature move. A Mastery Scroll
-> is one pip, assigned the moment it is paid, to whoever the player says. Scrolls come from the
-> map, never from a fight.**
+> **Every hero has ten pips. Five is its Evolution; ten masters its innate passive. A Mastery
+> Scroll is one pip, assigned the moment it is paid, to whoever the player says. Scrolls come from
+> the map, never from a fight.** (Ten was the signature move until 2026-09-24 — §5.)
 
 No per-hero threshold to author, no price curve, no purse, no KO cost. The player's control is
 *who*, on a screen that asks only that. Uniform 5 / 10 is a deliberate simplification: the
@@ -164,34 +170,139 @@ so it can be vetoed without touching the rest.
 
 ---
 
-## 5. The signature move
+## 5. The signature move — a level's guaranteed learn
 
-At **ten pips** a hero is offered its **signature move** — `HeroDefinition.signatureMoveId`, one
-authored move per hero, the move that says what the hero *is* in one button. Riptide's **Lizard
-Rush** is the template: 75 BP Water physical, Renew 25 to both allies, 45 mana — a solid hit plus
-the thing the hero does. A verb, not a nuke; the damage formula is locked and the identity is in
-the rider.
+> **Revised 2026-09-24, per user direction.** The signature was the tenth pip's until this date.
+> Measured, most heroes never reached ten (35 pips a completed run across six heroes — about three
+> signatures a run on the middle path, and those in Act 5), so the move that says what a hero *is*
+> was, for most of the roster, a line on a sheet. It is on the **level-up schedule** now, where
+> every hero reaches it.
+
+Every hero has ONE **signature move** — `HeroDefinition.signatureMoveId`, the move that says what
+the hero *is* in one button. Riptide's **Lizard Rush** is the template: 75 BP Water physical, Renew
+35 to both allies, 45 mana — a solid hit plus the thing the hero does. A verb, not a nuke; the
+damage formula is locked and the identity is in the rider.
+
+**When: `schedule.signatureLevel`, guaranteed.** At that level the level-up report teaches it —
+not rolled, in no band, the same move every run. It is not a schedule ENTRY (`scheduleTaken` never
+counts it); it is a move offer spent by being made (`offeredMoveIds`), so below `MOVE_CAP` it
+simply lands and at the cap it is replace-or-decline, declined for the run like any offer
+(`pendingSignature`, `src/run/progression.ts`). A raw Guild hire that arrives past its level takes
+it on its next report; a contract hero and an enemy past it hold it already
+(`rollLevelProgression` puts it in the kit ahead of the offers, in the last slot if the kit is
+full).
+
+**The level is set by the move's power**, in three windows (`src/data/heroes.ts`):
+
+| Window | Act (at par) | What sits there | Heroes |
+|---|---|---|---|
+| **13–15** | Act 2's Guardian into Act 3 | a rider-led hit, a buff, a cheap or a debuff-first move | Riptide 13, Rime 13, Sentinel 13, Dread 13, Valor 13 · Brimstone 14, Crag 14, Aegis 14, Trance 14, Warden 14, Fang 14 · Pincer 15, Lucius 15, Patch 15, Coil 15 |
+| **17–19** | Act 3 | a Late-sized hit with one real rider | Slate 17, Sylva 17, Widow 17, Sorrow 17, Clockwork 17 · Cinder 18, Cube 18, Squall 18, Mordrax 18, Empyrean 18, Glyph 18, Zenith 18, Revenant 18, Vex 18 · Skyshear 19, Cortex 19 |
+| **21–23** | Act 4 | 95+ Base Power, a lockout, double-on-a-status, a whole-side heal or a pool refill | Tempest 21, Marrow 21, Pixie 21, Scallywag 21, Bellows 21 · Crimson 22, Leviathan 22, Hollowbark 22, Solace 22, Nightshade 22, Gallant 22, Rex 22 · Flurry 23, Ursa 23 |
+
+Never on one of the hero's own offer levels, so the report pays it as a beat of its own, ahead of
+that level's roll when both land. `test/mastery.test.ts` pins the windows, the stagger, and that
+the heaviest (the recoil nukes, the 100-power fists) sit in the last window.
+
+**The screen.** The same box a level's offer ends in, dressed as the event it is (`SignatureBox`,
+`MoveOfferOverlay.tsx`): a crest that bursts in over the hero's name — *✦ Signature Move ✦* —
+the card in a frame whose rim is a turning sheen in the hero's own type colour, motes rising off
+it, and a fanfare in the element's voice. It is learned once a run, so it is the one move screen
+allowed to be loud. The Dossier's Moves tab lists it under *Signature — Lv N*.
 
 **Exclusivity, the Class-move rule's sibling.** A signature is in no type pool, no Mentor or Tutor
 pool, no graft's `learnableMoveIds`, and no path's `unlocksMoveIds` — untiered the way a Class
 move is. Authored at the hero's innate primary type, so STAB is guaranteed without
-`typeFollowsUser`. Lizard Rush failed this three ways until phase 3 — the Water pool, two grafts'
-`learnableMoveIds`, Tidecaller's clause-5 grant — and was pulled from all three
-(`src/data/signatures.ts` is the catalog, folded into `moves`). **Tidecaller grants Maelstrom
-instead** (2026-09-14, per user direction): a Late Water spread at the Evolution, an act before
-the band opens, and taken OFF Riptide's own pool so the grant is not timing alone — the same shape
-as Rime's Avalanche granting Snowball. So every Riptide reaches Lizard Rush at ten, and Tidecaller
-still carries something no graft can.
+`typeFollowsUser`. **Tidecaller grants Maelstrom** (2026-09-14, per user direction): a Late Water
+spread at the Evolution, taken OFF Riptide's own pool so the grant is not timing alone.
 
-**Inside the cap.** `MOVE_CAP` is 4 and stays 4: the tenth pip's offer is replace-or-decline on
-the who-screen, like a Class move at the rim. A fifth slot is a bigger power spike and breaks the
-four-button read. "Decline your signature" is a sad screen and a real decision.
+**Inside the cap.** `MOVE_CAP` is 4 and stays 4. "Decline your signature" is a sad screen and a
+real decision. **Priced Late** (the ×0.75 re-price applies; floor 45). Not for the companion — a
+spawn line has none.
 
-**Priced Late** (the ×0.75 re-price applies; floor 45). Not for the companion — a spawn line ends
-at Late. Enemies hold one only at 10: the finale's hero-pool enemy, and a contract claimed there.
+**What it costs the enemy side.** An enemy is levelled to its node, so a hero-pool enemy holds its
+signature from the same window a roster hero does — the lighter ones from Act 3, the heaviest
+from Act 4 — where it used to hold one only in the finale. That is symmetric by design and is in
+the §8 phase 6 measurement.
 
-**35 to author** (Riptide's exists), on the Lizard Rush template. A slate's worth, and the most
-identity a move can carry.
+---
+
+## 5b. The mastered innate — the tenth pip
+
+At **ten pips** the hero's innate passive (`docs/innate-passives.md`) is **MASTERED**: replaced by
+an authored upgrade of the same verb, a sizable step louder — the power fantasy of the thing the
+hero relies on, turned all the way up. `HeroDefinition.masteredPassiveIds` holds it;
+`innatePassiveIdsFor(hero, entry)` (`src/run/innate.ts`) is the one read, and every fight build and
+hero sheet goes through it, so the swap is total: the born card is gone, not stacked under.
+
+**The authoring rule** (pinned in `test/mastery.test.ts`): the same trigger, a new name, in no
+pool, and **every flat figure at least doubled** — or the reach widened (one enemy → both, self →
+the pair), a cap taken off (Apex Tyrant keeps Tyrant's Due's 10 and loses once-a-fight), or a roll
+made certain (Boiling Point). Where one reaction cannot carry the upgrade it is two cards,
+Broadside's shape, read as one innate by its first. A Burden stays a Burden: Iron Mountain still
+cannot switch, and now grows for staying.
+
+| Hero | Innate | Mastered |
+|---|---|---|
+| Cinder | Kindling (+5 Atk on Burn) | **Forgeheart** — +10 Atk and +10 Def on Burn |
+| Crimson | Stoke (+10 Int on a Burn tick) | **Wildfire** — +20 Int and 10 Mana past the pool on a Burn tick |
+| Brimstone | Sulphur (entry: Burn 5 on both) | **Hellmouth** — entry: Burn 20 on both |
+| Riptide | Drag (Water hit: −5 Spe) | **Rip Current** — Water hit: −15 Spe |
+| Pincer | Carapace (entry: Shield 30) | **Exoskeleton** — entry: Shield 75 |
+| Leviathan | Overchannel (+10 Mana a hit) | **Abyssal Well** — +25 Mana a hit |
+| Flurry | Glaciate (hit taken: −5 Spe both) | **Deep Winter** — hit taken: −15 Spe both |
+| Rime | Cold Snap (+10 Atk on Freeze) | **Shatterpoint** — +25 Atk on Freeze |
+| Cube | Absolute Zero (Def up: −5 Spe both) | **Zero Kelvin** — Def up: −15 Spe both |
+| Squall | Tailwind (entry: partner +10 Spe) | **Jetstream** — entry: partner +25 Spe |
+| Tempest | Live Wire (Conduct set off: Shield 20) | **Thunderhead** — Shield 50 |
+| Skyshear | Static Field (+10 Int per Conduct) | **Supercell** — +25 Int per Conduct |
+| Crag | Vengeful Emblem (hit taken: +10 Atk) | **Bedrock Wrath** — hit taken: +25 Atk |
+| Sentinel | Stone Wall (entry: partner Shield 20) | **Fortress** — entry: partner Shield 60 |
+| Slate | Fault Line (Stone hit: Shield 10) | **Tectonic** — Stone hit: Shield 30 |
+| Sylva | Verdurous (Renew: Poison 5 on one enemy) | **Rampant Bloom** — Renew: Poison 10 on both |
+| Mordrax | Impale (hit: Poison 5) | **Skewer** — hit: Poison 12 |
+| Hollowbark | Barbs (hit taken: Poison 3 both) | **Thornmail** — hit taken: Poison 8 both |
+| Solace | Grace (heal: +10 Mana) | **Beatitude** — heal: +25 Mana |
+| Aegis | Consecrate (healed: +5 Def/Wis) | **Sanctified** — healed: +15 Def/Wis |
+| Empyrean | Halo (round end: partner +10 HP) | **Corona** — round end: partner +30 HP |
+| Widow | Lethal Bite (×2 on Bleed AND Poison) | **Black Widow** — ×1.5 on Bleed, ×1.5 on Poison, ×2.25 on both |
+| Marrow | Necrosis (Poison tick: heal it) | **Lich's Draught** — heal twice it |
+| Nightshade | Shadowmeld (entry: Ambush 10) | **Umbral Veil** — entry: Ambush 30 |
+| Glyph | Arcane Repose (Rest: Shield = mana) | **Arcane Bastion** — Shield = 2× mana |
+| Zenith | Arcane Reservoir (entry: +30 Mana) | **Starwell** — entry: +75 Mana |
+| Pixie | Attunement (entry: partner +20 Mana) | **Fey Communion** — partner +50 Mana |
+| Cortex | Neuroplastic (enemy Wis lost → gain it) | **Mindthief** — gain it as Wis AND Int |
+| Lucius | Hunger (Mind hit: heal 20%) | **Insatiable** — heal 50% |
+| Trance | Lullaby (round end: −5 Spe both) | **Deep Slumber** — −15 Spe both |
+| Revenant | Ghostlight (Haunt: Spirit Force 10) | **Wraithfire** — Spirit Force 25 |
+| Sorrow | Lament (hit a Haunted: heal it) | **Keening** — heal it, and the partner half |
+| Dread | Nightmare (Haunted lose 10%) | **Night Terror** — Haunted lose 20% |
+| Warden | Rivet (round end: partner +5 Def) | **Riveted Line** — partner +15 Def |
+| Valor | Rallying Standard (entry: partner +10 Atk/Int) | **Clarion Call** — partner +25 Atk/Int |
+| Gallant | Sunder (hit: −10 Def) | **Shatterlance** — hit: −25 Def |
+| Scallywag | Broadside (1 ball a round, 4 max) | **Grand Broadside** — 2 a round, 6 max |
+| Clockwork | Boiler (Mech hit: 30% Burn 10, scaled) | **Boiling Point** — always Burn 20, scaled |
+| Bellows | Ironbound (cannot switch) — Burden | **Iron Mountain** — cannot switch; +10 Atk/Def a round |
+| Rex | Tyrant's Due (once a fight, kill: +10 Atk for the run) | **Apex Tyrant** — every kill |
+| Patch | Field Repair (heal: cleanse 1) | **Refit** — heal: cleanse all, Shield 30 |
+| Fang | Pack Hunter (partner hits: +5 Atk) | **Alpha's Call** — partner hits: both +10 Atk |
+| Ursa | Feast (kill: heal 50%) | **Glut** — kill: heal to full, +20 Atk |
+| Coil | Serpent's Eye (entry: −10 Int both) | **Petrifying Stare** — entry: −20 Int and −20 Atk both |
+| Vex | Sanguine (Bleed tick: heal it) | **Hemophage** — heal 1.5×, +10 Atk |
+
+Boiling Point is Boiler's own card mastered, so it keeps `scaledBy` — the same holder, not a
+second exception to the flat-passive rule (CLAUDE.md). Every figure is a first pass.
+
+**The screen.** The Scroll that lands the tenth pip raises a reveal on the node that paid it
+(`MasteredInnateOverlay`, raised by `masteryFlow.ts`): the born card small and struck through,
+*becomes*, and the mastered card in the signature's frame under an *✦ Innate Mastered ✦* crest.
+Nothing to decide — the upgrade is held from the pip. The who-screen's card says *Masters!*
+before the tap; the hero sheet, the stage and the scouted chip read *Innate · Mastered* after.
+
+**The enemy side.** `masteryForAct(6)` is 10, so every hero-pool enemy in the finale fields its
+mastered innate, where it used to carry its signature. Before the finale no enemy is at ten.
+
+**The companion** keeps its tier-step at ten; a spawn has no innate to master (it holds a Mark).
 
 ---
 
@@ -203,11 +314,13 @@ counters. Or the Cache is passed for the item, and Valor turns in Act 2. The pla
 
 Act 3: a contract hero arrived at 5, already turned. The Scribe's two picks are the two unevolved
 heroes the player fields most; the Cache, when it shows, goes to the one the Guardian's type says.
-The carry is at 7 and nobody has a signature yet.
+The carry is at 7 and nobody has mastered an innate yet; the lighter signatures are landing off
+the level-up report on their own.
 
 Act 5: three heroes are at 8–9. The Scribe cannot finish more than two of them; the Cache and the
 shelf decide the third, and the gold it costs is a recruit not bought. Whoever reaches 10 carries
-its signature into the finale.
+its innate, mastered, into the finale — Rex banking every kill, Sentinel's partner walking in
+behind a 60-point Shield.
 
 Every one of those beats is two or three taps on a screen that shows the pips lighting up, and
 the only decision that ever pops over it is the one worth having.
@@ -244,6 +357,7 @@ Sequenced so the tree is playable at every boundary. `SAVE_VERSION` bumps at eac
 | 3 | **The signature slot.** `signatureMoveId`; the tenth pip's replace-or-decline on the who-screen; the exclusivity test (no pool, no Tutor, no graft list, no path grant); Lizard Rush promoted and pulled from its three pools; the Tidecaller decision (§10); enemies at 10 hold it. | Riptide reaches Lizard Rush at 10 and nowhere else; the test catches a signature in any pool. | **DONE 2026-09-14.** `HeroDefinition.signatureMoveId`, `src/data/signatures.ts` (untiered, folded into `moves`), `pendingSignature` (`src/run/mastery.ts`: owed at ten, spent by being made); `masteryFlow.ts` raises it as `SignatureBox` — a receipt below the cap, replace-or-decline at it — on the Scroll node and, as the catch-all, the report; `rollLevelProgression` puts it in a generated hero's kit ahead of the offers, in the last slot if the kit is full; the Dossier's Moves tab lists it under *Signature — Mastery 10*. Tidecaller grants Maelstrom, off the pool (§5). The sim's `payMastery` takes it on the offer rule. |
 | 4 | **Author 35 signatures.** Parallelisable from 3; ships hero by hero (an unauthored hero's tenth pip pays nothing, which is what today pays). | Every hero has one, on the template — a hit or a verb at the hero's primary, Late-priced, never a bare nuke. | **DONE 2026-09-14** (drafted, reviewed per user direction the same day: seven renamed, the numbers left as first-pass — the weaker ones wait on a buff/debuff rework, not on this table). All 36 point at a signature (`src/data/signatures.ts`): a hit sized like the type's Late moves plus the hero's own verb — the thing its paths keep circling — no two alike. Two written to the tests' pinned decisions rather than the first draft: Roost Guard grants Defense only (Wisdom off-Mind is a decision the Iron test guards), and Crag's is *Groundsplit* (the slate already had a Fault Line). Every per-type slate test now filters the catalog out, since a signature is a hero's, not a type's. |
 | 5 | **Re-fit.** Cache weight, shelf price, the Scribe's 2 + 2, `masteryForAct`, against the sim with a Scroll policy on the pilot (concentrate on the fielded; evolve first, then signatures; the Scribe to the two most-fielded unevolved) and `time.ts` pricing the two screens; then the Act 1 wall re-read. | ~3 signatures a run on the middle path, every hero evolved on the Scribe alone; the clock reported against the 77 / 53 / 32 baseline. Win-rate targets are a playtest question. | **DONE 2026-09-14** (per user direction: `masteryForAct` = `2N − 2`; the Scribe's 2 + 2, the Cache's 46 and the shelf's 25g / 2 left where they were, with the dial table below for the designer). Measured below. |
+| 6 | **The signature leaves the pips; the innate is mastered** (2026-09-24, per user direction). | Every hero learns its signature off the level-up report at its own `signatureLevel`; ten pips replace the innate with its authored upgrade. | **DONE 2026-09-24.** `LevelSchedule.signatureLevel` on all 45 (§5's table), `pendingSignature` moved to `src/run/progression.ts` and read off level — by the report (`levelUpFlow.ts`, ahead of the level's roll), `rollLevelProgression` and the sim's `payMastery`; `SignatureBox` dressed as the event (crest, type-coloured frame, fanfare) and a gold *✦ Signature!* tag on the report row. `HeroDefinition.masteredPassiveIds` on all 45 (§5b's table, `masteredInnatePassives` in `src/data/passives.ts`), `innatePassiveIdsFor` read by the fight build and every sheet, `MasteredInnateOverlay` raised by the Scroll that lands the tenth pip. **Measured** (1000 runs, greedy pilot, seed 1, same seeds both sides): under the `spread` Scroll policy the signature went from **1.1% of runs** reaching one (0.02 a completed run) to **six a completed run**, and full-clear **75.4 → 80.9%** — Acts 1–3 identical to the run, **Act 4 95.6 → 98.4, the finale 94.6 → 98.1**, so enemies holding signatures from their level does not offset the player's. Under `focus` (the pilot that reaches ten pips, 1.8 a run) **80.3 → 83.8%**, the same two acts. A player buff of 3–6 points, all of it Act 4 on; the dials are the three windows (a window up an act) and `ACT_LEVEL_ADJUST`'s Act 4 / 5 terms — the designer's to move. |
 
 **What each phase measures.** Phase 1: Evolutions per run and their *timing* — the greedy pilot
 with the simplest policy (Scribe to the two most-fielded, shelf never) is the floor a real player
@@ -308,6 +422,9 @@ Each is a sign-off. In force until the phase that replaces it lands.
 | Moves come from ONE faucet, the schedule (the Mentor and Tutor named as the exceptions) | A **third** named exception: the signature, at ten pips, one per hero | 3 |
 | A Class move is in no level-up pool and no Tutor pool | A sibling rule: a signature is in no pool, no Tutor, no graft list, no path grant | 3 |
 | Lizard Rush is a Late Water move Tidecaller grants | **Riptide's signature**, off every pool; Tidecaller's clause 5 is §10's question | 3 |
+| The signature is the tenth pip's, one per hero (phase 3 of this doc) | **A level's guaranteed learn** at `schedule.signatureLevel` (13–15 / 17–19 / 21–23 by the move's power) — still one per hero, still in no pool; the moves' one faucet gains no new exception, since the schedule IS the faucet | 6 |
+| The tenth pip pays a move | **The tenth pip masters the innate**: `masteredPassiveIds` replaces `passiveIds` on that hero — a second passive authored per hero, in no pool, never granted anywhere else | 6 |
+| A generated hero holds its signature only at ten pips (the finale) | Holds it from its `signatureLevel` — hero-pool enemies carry signatures from Act 3; the finale's carry their mastered innates | 6 |
 
 **Held, and worth saying so:** *a bare number never gets a screen, and a screen never buys a bare
 number.* A pip is not a stat; it is progress toward a named thing, and the screen that collects

@@ -2,7 +2,8 @@ import { useMemo, type CSSProperties, type ReactNode } from 'react';
 import { moves } from '../../data/moves';
 import { isBurden } from '../../data/passives';
 import type { HeroDefinition, MoveDefinition, PassiveDefinition, StatKey, StatLine, TypeId } from '../../engine/content';
-import { innatePassiveOf, titansMarkOf } from '../../run/innate';
+import { currentInnateOf, titansMarkOf } from '../../run/innate';
+import type { RosterEntry } from '../../run/state';
 import type { HealCaster } from '../../engine/heal/healPipeline';
 import type { StatModifiers } from '../../engine/state';
 import { getTypeColorRgb } from '../combat/typeColors';
@@ -142,13 +143,23 @@ export function heroHasBurden(hero: Pick<HeroDefinition, 'passiveIds'>): boolean
  * read. The tap opens the dossier. A Titanspawn shows its Mark in the same seat, named as the
  * Titan's. Nothing renders for a definition that holds neither.
  */
-export function StageInnate({ hero, onOpen }: { hero: Pick<HeroDefinition, 'passiveIds'>; onOpen?: (passive: PassiveDefinition) => void }) {
-  const innate = innatePassiveOf(hero);
+export function StageInnate({
+  hero,
+  entry,
+  onOpen,
+}: {
+  hero: Pick<HeroDefinition, 'passiveIds' | 'masteredPassiveIds'>;
+  /** A roster hero's own entry: at ten Mastery the innate shown is the mastered one. */
+  entry?: Pick<RosterEntry, 'mastery'>;
+  onOpen?: (passive: PassiveDefinition) => void;
+}) {
+  const innate = currentInnateOf(hero, entry);
+  const mastered = !!entry && innate !== null && innate.id !== currentInnateOf(hero, undefined)?.id;
   const mark = innate ? null : titansMarkOf(hero);
   const passive = innate ?? mark;
   if (!passive) return null;
   const burden = isBurden(passive.id);
-  const kind = mark ? "Titan's Mark" : burden ? 'Burden' : 'Innate';
+  const kind = mark ? "Titan's Mark" : burden ? (mastered ? 'Burden · Mastered' : 'Burden') : mastered ? 'Innate · Mastered' : 'Innate';
   return (
     <button
       type="button"

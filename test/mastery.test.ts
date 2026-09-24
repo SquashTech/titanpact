@@ -1,5 +1,7 @@
 // Mastery (src/run/mastery.ts, docs/mastery.md): ten pips a hero, five the Evolution, ten the
-// signature; a pip is one Scroll, landed the moment it is paid; the map pays them, never a fight.
+// innate MASTERED; a pip is one Scroll, landed the moment it is paid; the map pays them, never a
+// fight. The signature move is a level's guaranteed learn (docs/mastery.md §5) and is pinned here
+// beside it, since the two traded places.
 
 import * as assert from 'assert';
 import { test } from './harness';
@@ -9,7 +11,7 @@ import { progressionTable } from '../src/data/progression';
 import {
   MASTERY_CAP,
   MASTERY_EVOLUTION,
-  MASTERY_SIGNATURE,
+  MASTERY_INNATE,
   MasteryError,
   SCRIBE_PICKS,
   SCRIBE_PIPS_EACH,
@@ -24,10 +26,14 @@ import {
   grantMastery,
   guildHallMastery,
   masteryForAct,
+  isInnateMastered,
   masteryRoom,
-  pendingSignature,
 } from '../src/run/mastery';
-import { MOVE_CAP, atEvolution, availableEvolution, chooseEvolutionPath, grantOfferedMove, pendingScheduleEntry, recordMoveOffer, scheduleEntries, scheduleFor } from '../src/run/progression';
+import { MOVE_CAP, atEvolution, availableEvolution, chooseEvolutionPath, grantOfferedMove, pendingScheduleEntry, pendingSignature, recordMoveOffer, scheduleEntries, scheduleFor, signatureLevelFor } from '../src/run/progression';
+import { currentInnateOf, innatePassiveIdsFor, innatePassiveOf, masteredInnateOf } from '../src/run/innate';
+import { boonPassives, isBurden } from '../src/data/passives';
+import { entryPassiveCounts } from '../src/run/entryStats';
+import type { PassiveDefinition } from '../src/engine/content';
 import { signatureMoves } from '../src/data/signatures';
 import { generateEncounter } from '../src/run/enemyGen';
 import { mentorMovePool, tutorMovePool } from '../src/run/tutor';
@@ -51,9 +57,9 @@ function seed(ids: readonly string[], gold = 0): RunState {
   return run;
 }
 
-test('mastery: the two milestones are uniform — five the Evolution, ten the signature and the cap', () => {
+test('mastery: the two milestones are uniform — five the Evolution, ten the innate mastered and the cap', () => {
   assert.strictEqual(MASTERY_EVOLUTION, 5);
-  assert.strictEqual(MASTERY_SIGNATURE, 10);
+  assert.strictEqual(MASTERY_INNATE, 10);
   assert.strictEqual(MASTERY_CAP, 10);
   assert.deepStrictEqual([SCRIBE_PICKS, SCRIBE_PIPS_EACH], [2, 2], 'the Scribe: two heroes, two pips each');
 });
@@ -201,13 +207,39 @@ test('signature: every authored signature exists, wears its hero\'s primary type
   assert.strictEqual(new Set(ids).size, ids.length);
 });
 
-test('signature: the tenth pip owes it once — below the cap it lands, at the cap it is replace-or-decline, and made is spent', () => {
+test('signature: a guaranteed learn at the hero\'s own signatureLevel — in one of three windows by power, never on an offer level, every window populated', () => {
+  // docs/mastery.md §5: 13-15 the lighter signatures, 17-19 the standard, 21-23 the heaviest.
+  const windows = [
+    [13, 15],
+    [17, 19],
+    [21, 23],
+  ] as const;
+  const filled = windows.map(() => 0);
+  for (const hero of Object.values(heroes)) {
+    assert.ok(hero.signatureMoveId, `${hero.id} has no signature`);
+    const level = signatureLevelFor(hero);
+    assert.ok(level !== null, `${hero.id} has a signature and no signatureLevel`);
+    const w = windows.findIndex(([lo, hi]) => level! >= lo && level! <= hi);
+    assert.ok(w >= 0, `${hero.id}: signatureLevel ${level} is outside the three windows`);
+    filled[w]++;
+    assert.ok(!scheduleFor(hero).offerLevels.includes(level!), `${hero.id}: signatureLevel ${level} shares a level with an offer`);
+  }
+  for (const [i, count] of filled.entries()) assert.ok(count >= 8, `window ${windows[i].join('-')} holds only ${count} heroes`);
+  // A heavier hit is never taught earlier than a lighter one of the same shape: the two recoil
+  // nukes and the two 100-power fists sit in the last window, the 45-mana Lizard Rush in the first.
+  for (const id of ['ursa', 'gallant', 'steamColossus', 'hollowbark']) assert.ok(signatureLevelFor(heroes[id])! >= 21, `${id}'s signature is one of the heaviest`);
+  assert.ok(signatureLevelFor(heroes.tidecaller)! <= 15);
+});
+
+test('signature: owed at its level and not before — below the cap it lands, at the cap it is replace-or-decline, and made is spent', () => {
   const hero = heroes.tidecaller;
+  const at = signatureLevelFor(hero)!;
   let run = seed(['tidecaller']);
-  assert.strictEqual(pendingSignature(hero, { ...run.roster[0], mastery: MASTERY_SIGNATURE - 1 }), null, 'nine pips owe nothing');
-  run = grantMastery(run, 'tidecaller', MASTERY_SIGNATURE);
+  assert.strictEqual(pendingSignature(hero, { ...run.roster[0], xp: xpForLevel(at - 1) }), null, 'a level short owes nothing');
+  run = { ...run, roster: [{ ...run.roster[0], xp: xpForLevel(at) }] };
   assert.strictEqual(pendingSignature(hero, run.roster[0]), 'lizardRush');
-  assert.strictEqual(pendingSignature(rosterHeroes.cubling, { ...run.roster[0], heroId: 'cubling' }), null, 'a hero with none authored — a spawn — is simply mastered');
+  assert.strictEqual(pendingSignature(hero, { ...run.roster[0], xp: 0, mastery: MASTERY_CAP }), null, 'Mastery no longer teaches it');
+  assert.strictEqual(pendingSignature(rosterHeroes.cubling, { ...run.roster[0], heroId: 'cubling' }), null, 'a definition with none — a spawn — owes nothing');
   // Below the cap: granted, and the offer is spent.
   const landed = grantOfferedMove(run, 'tidecaller', 'lizardRush');
   assert.ok(landed.roster[0].unlockedMoveIds.includes('lizardRush'));
@@ -216,15 +248,115 @@ test('signature: the tenth pip owes it once — below the cap it lands, at the c
   const declined = recordMoveOffer(run, 'tidecaller', ['lizardRush']);
   assert.ok(!declined.roster[0].unlockedMoveIds.includes('lizardRush'));
   assert.strictEqual(pendingSignature(hero, declined.roster[0]), null, 'declined is not owed either');
+  // It is not a schedule entry: taking it moves nothing on the schedule walk.
+  assert.strictEqual(landed.roster[0].scheduleTaken, run.roster[0].scheduleTaken);
 });
 
-test('signature: a generated hero at ten holds it — in the last slot when its kit is full — and one below ten does not', () => {
-  const at = (mastery: number) => generateEncounter('elite', 5, heroes, { forcedHeroIds: ['tidecaller'], scaling: { level: 25, mastery }, progression: progressionTable }).run.roster.find((r) => r.heroId === 'tidecaller')!;
-  const mastered = at(MASTERY_SIGNATURE);
-  assert.ok(mastered.unlockedMoveIds.includes('lizardRush'), `a Riptide at ten fights with Lizard Rush: ${mastered.unlockedMoveIds}`);
-  assert.ok(mastered.unlockedMoveIds.length <= MOVE_CAP);
-  assert.ok(mastered.chosenPathIds.length === 1, 'and is evolved');
-  assert.ok(!at(MASTERY_SIGNATURE - 1).unlockedMoveIds.includes('lizardRush'));
+test('signature: a generated hero at its signatureLevel holds it — in the last slot when its kit is full — and one a level below does not, whatever its pips', () => {
+  const sig = signatureLevelFor(heroes.tidecaller)!;
+  const at = (level: number, mastery: number) =>
+    generateEncounter('elite', 5, heroes, { forcedHeroIds: ['tidecaller'], scaling: { level, mastery }, progression: progressionTable }).run.roster.find((r) => r.heroId === 'tidecaller')!;
+  const taught = at(sig, 0);
+  assert.ok(taught.unlockedMoveIds.includes('lizardRush'), `a Riptide at ${sig} fights with Lizard Rush: ${taught.unlockedMoveIds}`);
+  assert.ok(taught.unlockedMoveIds.length <= MOVE_CAP);
+  assert.ok(at(25, MASTERY_CAP).unlockedMoveIds.includes('lizardRush'));
+  assert.ok(!at(sig - 1, MASTERY_CAP).unlockedMoveIds.includes('lizardRush'), 'ten pips no longer teach it');
+});
+
+// --- The mastered innate (docs/mastery.md §5b) ---
+
+/** The one flat figure a card's reaction carries, for the size comparison: a stat delta, a status magnitude, a mana grant, a heal. */
+function flatFigure(passive: PassiveDefinition): number | null {
+  const effect = passive.reactive?.effect;
+  if (!effect) return null;
+  if (effect.kind === 'statDelta' || effect.kind === 'applyStatus') {
+    const value = effect.kind === 'statDelta' ? effect.amount : effect.magnitude;
+    return typeof value === 'number' ? Math.abs(value) : null;
+  }
+  if ((effect.kind === 'manaGrant' || effect.kind === 'heal') && effect.amount.kind === 'flat') return effect.amount.value;
+  return null;
+}
+
+test('mastered innate: every hero authors one — new cards, named apart from the innate, in no pool, on the innate\'s own trigger', () => {
+  for (const hero of Object.values(heroes)) {
+    const innate = innatePassiveOf(hero)!;
+    const mastered = masteredInnateOf(hero);
+    assert.ok(mastered, `${hero.id} has no mastered innate`);
+    for (const id of hero.masteredPassiveIds!) {
+      assert.ok(passives[id], `${hero.id}: ${id} does not exist`);
+      assert.ok(!boonPassives[id], `${hero.id}: ${id} is in the Boon pool`);
+    }
+    assert.notStrictEqual(mastered!.id, innate.id, `${hero.id}: the mastered card is the innate itself`);
+    assert.notStrictEqual(mastered!.name, innate.name, `${hero.id}: the mastered card wears the innate's name`);
+    // The same verb, louder: it fires off the same hook. A verb-only innate (Ironbound) keeps its
+    // verb and may gain the reaction it never had — Iron Mountain grows for staying.
+    if (innate.reactive) assert.strictEqual(mastered!.reactive?.hook, innate.reactive.hook, `${hero.id}: ${mastered!.id} reacts to a different hook than ${innate.id}`);
+    if (innate.cannotSwitchOut) assert.strictEqual(mastered!.cannotSwitchOut, true, `${hero.id}: ${mastered!.id} dropped the verb it was born with`);
+    assert.strictEqual(!!mastered!.damageModifier, !!innate.damageModifier, `${hero.id}: ${mastered!.id} changed shape`);
+    // A Burden stays a Burden — its price is in the 610.
+    assert.strictEqual(hero.masteredPassiveIds!.some(isBurden), (hero.passiveIds ?? []).some(isBurden), `${hero.id}: the Burden came or went`);
+  }
+  // One per hero: no two heroes master into the same card.
+  const firsts = Object.values(heroes).map((h) => masteredInnateOf(h)!.id);
+  assert.strictEqual(new Set(firsts).size, firsts.length);
+});
+
+test('mastered innate: a SIZABLE buff — every flat figure at least doubled, or the reach widened and the cap or the roll taken off', () => {
+  // Apex Tyrant keeps Tyrant's Due's 10 and loses its once-a-fight cap instead (every kill banks).
+  const exempt = new Set(['apexTyrant']);
+  let compared = 0;
+  for (const hero of Object.values(heroes)) {
+    const innate = innatePassiveOf(hero)!;
+    const mastered = masteredInnateOf(hero)!;
+    if (exempt.has(mastered.id)) {
+      assert.ok(innate.reactive?.oncePerFight && !mastered.reactive?.oncePerFight, `${mastered.id} was exempt for losing a cap it no longer loses`);
+      continue;
+    }
+    const before = flatFigure(innate);
+    const after = flatFigure(mastered);
+    if (before === null || after === null) continue;
+    compared++;
+    assert.ok(after >= 2 * before, `${hero.id}: ${innate.id} ${before} -> ${mastered.id} ${after} is not a sizable step`);
+  }
+  assert.ok(compared >= 30, `only ${compared} innates compared`);
+  // The shapes the figure does not read: a chance becomes always, a share is doubled or more.
+  assert.ok((passives.boiler.reactive!.chance ?? 1) < 1 && passives.boilingPoint.reactive!.chance === undefined);
+  assert.ok(passives.nightTerror.reactive!.effect.kind === 'damage' && passives.nightTerror.reactive!.effect.percentMaxHp >= 2 * (passives.nightmare.reactive!.effect as { percentMaxHp: number }).percentMaxHp);
+});
+
+test('mastered innate: the tenth pip REPLACES the innate in the fight build — never stacks — and a pip short keeps the born card', () => {
+  const hero = heroes.cinderKnight;
+  const entry = createRosterEntry('c', hero.id, hero.moveIds);
+  assert.ok(!isInnateMastered({ ...entry, mastery: MASTERY_CAP - 1 }));
+  const born = entryPassiveCounts({ ...entry, mastery: MASTERY_CAP - 1 }, equipment, {}, innatePassiveIdsFor(hero, { mastery: MASTERY_CAP - 1 }));
+  assert.strictEqual(born.kindling, 1);
+  assert.strictEqual(born.forgeheart, undefined);
+  const mastered = entryPassiveCounts({ ...entry, mastery: MASTERY_CAP }, equipment, {}, innatePassiveIdsFor(hero, { mastery: MASTERY_CAP }));
+  assert.strictEqual(mastered.forgeheart, 1);
+  assert.strictEqual(mastered.kindling, undefined, 'the born card is gone, not stacked under');
+  assert.strictEqual(currentInnateOf(hero, { mastery: MASTERY_CAP })?.id, 'forgeheart');
+  assert.strictEqual(currentInnateOf(hero, undefined)?.id, 'kindling', 'a definition read without an entry is the born card');
+  // A two-card upgrade arrives whole; Scallywag's keeps Broadside's firing card.
+  assert.deepStrictEqual([...innatePassiveIdsFor(heroes.scallywag, { mastery: MASTERY_CAP })!], ['grandBroadside', 'broadsideFire']);
+  // A definition with none (a spawn) keeps its Mark at ten.
+  assert.deepStrictEqual(innatePassiveIdsFor(rosterHeroes.cubling, { mastery: MASTERY_CAP }), rosterHeroes.cubling.passiveIds);
+});
+
+test('mastered innate: the fight build fields the mastered cards at ten on either side, keeps a Burden locked, and a pip short fields the born card', () => {
+  const { buildCombatState } = require('../src/run/buildCombatState') as typeof import('../src/run/buildCombatState');
+  const { allCombatants } = require('../src/data/content') as typeof import('../src/data/content');
+  const roster = [
+    { ...createRosterEntry('r1', 'steamColossus', heroes.steamColossus.moveIds), mastery: MASTERY_CAP },
+    { ...createRosterEntry('r2', 'sorrow', heroes.sorrow.moveIds), mastery: MASTERY_CAP },
+    { ...createRosterEntry('r3', 'valor', heroes.valor.moveIds), mastery: MASTERY_CAP - 1 },
+  ];
+  const state = buildCombatState(1, allCombatants, equipment, [{ side: 'B', squad: { activeIds: ['r1', 'r2'], benchIds: ['r3'] }, roster }], passives);
+  const byRoster = (rosterId: string) => state.combatants[Object.keys(state.combatants).find((k) => k.endsWith(rosterId))!];
+  assert.ok('ironMountain' in byRoster('r1').passives && !('ironbound' in byRoster('r1').passives));
+  assert.strictEqual(byRoster('r1').switchLocked, true, 'the mastered Burden still cannot switch');
+  assert.ok('keening' in byRoster('r2').passives && 'keeningShare' in byRoster('r2').passives && !('lament' in byRoster('r2').passives));
+  assert.ok('rallyingStandard' in byRoster('r3').passives && !('clarionCall' in byRoster('r3').passives));
+  assert.strictEqual(masteryForAct(6), MASTERY_CAP, 'every hero-pool enemy in the finale fields its mastered innate');
 });
 
 test('signature: Tidecaller grants Maelstrom at the Evolution — off Riptide\'s own pool, as Rime\'s Avalanche grants Snowball — and Lizard Rush is nobody\'s to grant', () => {

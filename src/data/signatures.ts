@@ -1,12 +1,13 @@
-// The signature moves (docs/mastery.md §5): one authored move per hero, held only at ten Mastery
-// pips — the move that says what the hero IS in one button. Riptide's Lizard Rush is the template:
+// The signature moves (docs/mastery.md §5): one authored move per hero, a GUARANTEED learn at the
+// hero's own `schedule.signatureLevel` (2026-09-24, per user direction — it was the tenth Mastery
+// pip's, which most heroes never reached) — the move that says what the hero IS in one button. Riptide's Lizard Rush is the template:
 // a solid hit plus the thing the hero does, never a bare nuke. Authored at the hero's innate
 // primary type, so STAB is guaranteed without `typeFollowsUser`, and priced Late (45+, most 55;
 // a second target or a second rider pays 60).
 //
 // The exclusivity rule, the Class-move rule's sibling (test/mastery.test.ts): a signature is in no
 // type pool, no Mentor or Tutor pool, no graft's learnableMoveIds and no path's unlocksMoveIds —
-// and carries no `tier`, since a tier gates offers and nothing ever offers one. `signatureMoves`
+// and carries no `tier`, since a tier gates rolled offers and a signature is never rolled. `signatureMoves`
 // fold into data/moves.ts; `HeroDefinition.signatureMoveId` is the pointer.
 //
 // DRAFT (2026-09-14, Mastery phase 4): every entry but Lizard Rush is a first pass for review.
@@ -66,8 +67,8 @@ export const signatureMoves: Record<string, MoveDefinition> = {
 
   // --- Water ---
   // Riptide. It was Tidecaller's clause-5 grant and a Water pool move until 2026-09-14 (Mastery
-  // phase 3, per user direction); Tidecaller grants Maelstrom now, and every Riptide reaches this
-  // at ten.
+  // phase 3, per user direction); Tidecaller grants Maelstrom now, and every Riptide learns this
+  // at its signatureLevel.
   lizardRush: {
     id: 'lizardRush',
     name: 'Lizard Rush',

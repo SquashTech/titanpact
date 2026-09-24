@@ -263,6 +263,36 @@ export function scheduleRemaining(hero: HeroDefinition | undefined, entry: Roste
   return entry.scheduleTaken < scheduleEntries(scheduleFor(hero)).length;
 }
 
+// --- The signature: a level's guaranteed learn (docs/mastery.md §5) ---
+//
+// Every hero has ONE authored move nobody else can learn (data/signatures.ts), and since
+// 2026-09-24 (per user direction) it arrives on the level-up report at the hero's own
+// `schedule.signatureLevel` — guaranteed, never rolled, in no band — where it used to sit behind
+// the tenth Mastery pip and most heroes never saw it. The level is set by how hard the move hits:
+// the lighter signatures teach at 13-15 (Act 2's Guardian into Act 3), the standard ones at 17-19
+// (Act 3), the heaviest at 21-23 (Act 4). It is not a schedule ENTRY — `scheduleTaken` never
+// counts it — but a move offer spent by being made (`offeredMoveIds`), so a hero that declines it
+// at MOVE_CAP has declined it for the run, as with any offer.
+
+/** The level this hero's signature teaches at, or null for a hero with none (a Titanspawn). */
+export function signatureLevelFor(hero: HeroDefinition | undefined): number | null {
+  if (!hero?.signatureMoveId) return null;
+  return scheduleFor(hero).signatureLevel ?? null;
+}
+
+/**
+ * The signature this hero is owed: its authored move, once its level has reached
+ * `signatureLevel` and the offer has not yet been made. Below MOVE_CAP it simply lands; at it,
+ * replace-or-decline. `level` defaults to the entry's own — a generated hero passes the level it
+ * is being built to.
+ */
+export function pendingSignature(hero: HeroDefinition | undefined, entry: RosterEntry, level: number = levelOf(entry)): string | null {
+  const at = signatureLevelFor(hero);
+  const moveId = hero?.signatureMoveId;
+  if (!moveId || at === null || level < at) return null;
+  return entry.unlockedMoveIds.includes(moveId) || entry.offeredMoveIds.includes(moveId) ? null : moveId;
+}
+
 /** A fixture helper: the entry stood at its Evolution — Mastery raised to the pip that opens it. What the sandbox and the tests use to evolve a hero without walking it there. */
 export function atEvolution(entry: RosterEntry): RosterEntry {
   return { ...entry, mastery: Math.max(entry.mastery, MASTERY_EVOLUTION) };

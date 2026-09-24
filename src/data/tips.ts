@@ -101,12 +101,12 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
     'scribe',
     'Mastery Scrolls',
     'Choose two heroes. Each gets 2 Mastery Scrolls.',
-    'At 5 Scrolls a hero Evolves into a new form. At 10 it learns its signature move.'
+    'At 5 Scrolls a hero Evolves into a new form. At 10 its innate passive is Mastered: a much stronger version of it.'
   ),
   scrollCache: tip(
     'scrollCache',
     'Scroll Cache',
-    'Split 3 Mastery Scrolls between your heroes however you like. At 5 a hero Evolves; at 10 it learns its signature move.'
+    'Split 3 Mastery Scrolls between your heroes however you like. At 5 a hero Evolves; at 10 its innate passive is Mastered.'
   ),
   shop: tip(
     'shop',

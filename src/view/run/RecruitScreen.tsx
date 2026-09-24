@@ -192,7 +192,7 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone }: 
           </div>
         </StageDais>
 
-        <StageInnate key={`${featured.rosterId}-innate`} hero={hero} onOpen={setPopupPassive} />
+        <StageInnate key={`${featured.rosterId}-innate`} hero={hero} entry={featured} onOpen={setPopupPassive} />
 
         <StageKit key={`${featured.rosterId}-kit`} moveIds={featured.unlockedMoveIds} caster={caster} onPick={setPopupMove} />
 

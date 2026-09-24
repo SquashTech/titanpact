@@ -213,6 +213,8 @@ test('roster: every passive in the catalog has a granter — a passive nobody gr
   }
   // Innate to a definition (HeroDefinition.passiveIds): every hero's one, the spawn's Marks, the Titan's pieces.
   for (const definition of Object.values(allCombatants)) for (const id of definition.passiveIds ?? []) granted.add(id);
+  // The tenth Mastery pip's upgrade (HeroDefinition.masteredPassiveIds, docs/mastery.md §5b).
+  for (const definition of Object.values(allCombatants)) for (const id of definition.masteredPassiveIds ?? []) granted.add(id);
 
   // Static Tide was RESERVED for a year and then used (Pincer). A new orphan should be a decision.
   const orphans = Object.keys(passives).filter((id) => !granted.has(id)).sort();
