@@ -848,11 +848,10 @@ textarea,
 
 /* "VS" chip between the enemy and ally rows — purely decorative, gives the
    battlefield a center of gravity instead of two rows floating in a stack.
-   `position: relative` anchors .field-effect-badge below (positioned
-   absolutely) — the badge overlays this row rather than sitting inline next
-   to "VS", so it can appear/disappear without ever nudging "VS" off-center
-   or growing this row's height and shoving the battlefield (and everything
-   below it) down. */
+   `position: relative` anchors .order-track below (positioned absolutely),
+   which overlays this row rather than sitting inline next to "VS", so it can
+   appear and disappear without nudging "VS" off-centre or growing this row's
+   height and shoving the battlefield (and everything below it) down. */
 .battlefield-divider {
   position: relative;
   flex-shrink: 0;
@@ -940,15 +939,18 @@ textarea,
  * behind it. Centred rather than corner-pinned because a Field Effect is
  * global — it belongs to the whole field, and symmetry is how that reads.
  *
- * Still absolutely positioned (see .battlefield-divider above): out of flow
- * means mounting/unmounting can never change the divider row's height and so
- * can never shove the battlefield around. Tap OR hold opens the detail card
- * (FightScreen's fieldEffectPress). */
-.battlefield-divider .field-effect-badge {
+ * MOVED TO THE FOOT OF THE ARENA (2026-09-24, per user direction): the
+ * horizon's centre is the order track's now (.order-track), and a plaque
+ * beside four sprites on one 20px band would have crowded both. Still centred
+ * — the field is still global — in the bottom padding the arena keeps for a
+ * wrapped ally status row, which it shares only when one wraps. Out of flow,
+ * so mounting it can never shove the battlefield around. Tap OR hold opens the
+ * detail card (FightScreen's fieldEffectPress). */
+.battlefield > .field-effect-badge {
   position: absolute;
   left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  bottom: 8px;
+  transform: translate(-50%, 0);
   z-index: 2;
   display: flex;
   align-items: center;
@@ -1013,17 +1015,17 @@ textarea,
   box-shadow: none;
 }
 
-/* "VS" means "nothing in particular is happening on this field". Once a Field
-   Effect is up, that is no longer true and the plaque takes the centre, so
-   the decorative mark steps out of the way instead of being overlapped by it. */
-.battlefield.field-effect-active .battlefield-vs {
+/* "VS" holds the horizon's centre only while there is no order to show — the
+   intro and the fight's end. Once the track is up it steps out of the way
+   instead of being overlapped by it. */
+.battlefield-divider.has-order .battlefield-vs {
   opacity: 0;
 }
 
 @keyframes field-effect-plaque-arrive {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.82);
+    transform: translate(-50%, 0) scale(0.82);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.12),
       0 0 0 0 rgba(var(--field-effect-rgb, 195, 86, 208), 0.6);
@@ -1036,7 +1038,7 @@ textarea,
   }
   100% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    transform: translate(-50%, 0) scale(1);
   }
 }
 
@@ -2348,51 +2350,9 @@ textarea,
   display: none;
 }
 
-/* The resolve order (2026-09-17, per user direction), worn on the figure: a numbered coin at
-   the shoulder the type chips leave free, the way Into the Breach numbers the Vek. It began as
-   a ribbon of portraits — under the ally row, then along the top of the screen — and both read
-   as a plaque bolted onto a scene; a number on the thing it is about costs no band at all.
-   ┄
-   THE PLACE IS STRUCK IN A METAL (2026-09-24, per user direction): gold, silver, bronze, iron
-   for 1st to 4th, so the colour is read before the digit and, after a few fights, instead of
-   it. Metals because the podium already taught every player that order, and because the type
-   chips beside the coin already spend the whole hue wheel — a place struck in a hue would be
-   one more type chip. Brightness falls with the place, so the order survives without colour.
-   The metal is the coin's one colour claim: nothing below may recolour it. Two "1"s IS a tie
-   (orderMarks.ts ranks them alike), and a tied coin is split, its right half struck in the next
-   place's metal — both places the flip decides between. A bracket hangs its pip off the coin,
-   and where it actually moved the entry (priority.ts bracketEffect) the coin moves for it:
-   lifted and brighter for a cut, sunk and dimmer for a hold. During playback the coin walks
-   the beats — done falls back, current steps forward — in its own metal throughout.
-   Mirrors .combatant-types on the enemy side, measured off the stage. */
-.order-mark {
-  --coin-rgb: 168, 184, 214;
-  position: absolute;
-  z-index: 4;
-  top: 3px;
-  right: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  color: #e6ecf7;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  pointer-events: none;
-  transition: transform var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out),
-    filter var(--dur-mid) var(--ease-out), color var(--dur-mid) var(--ease-out);
-}
-
-.team-row.enemy .order-mark {
-  top: calc(100% - var(--figure-stage-h) + 3px);
-}
-
-/* The metal (shared/Coin.tsx). Under the numeral, like .mana-gem-cut: the shape is geometry and
-   the digit sits at the coin's optical centre. Two drop-shadows — a tight dark one that seats
-   it on the art, and a wide tinted one that is the only saturated colour on a neutral coin. */
+/* The coin (shared/Coin.tsx): the Bag key, the Bag panel's kind chips, the Guild Hall shelf.
+   Two drop-shadows — a tight dark one that seats it on the art, and a wide tinted one that is the
+   only saturated colour on a neutral coin. */
 .coin {
   position: absolute;
   inset: 0;
@@ -2439,129 +2399,154 @@ textarea,
   opacity: 0.7;
 }
 
-.order-mark-rank {
-  position: relative;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
-}
+/* The resolve order, laid on the horizon (OrderTrack.tsx, 2026-09-24, per user direction): the
+   four fighters as half-size sprites, first to last, left to right. It replaced a numbered coin
+   on each figure (2026-09-17), which asked the eye to find four numbers in four corners and sort
+   them; and before that a ribbon of portraits under the ally row and then along the top of the
+   screen, both of which read as a plaque bolted onto a scene. This one has no box and no fill: it
+   stands ON the horizon the way the skyline does, each sprite on a short tick in its own zone's
+   tint (the enemy's red, the ally's blue — the two washes at the arena's edges), so which side
+   acts when is read without reading a name.
 
-/* The four metals. `--coin-split-rgb` is the next place's, read only by a tie's split half. */
-.order-mark.is-rank-1 {
-  --coin-rgb: 245, 196, 80;
-  --coin-split-rgb: 206, 216, 232;
-  color: #fff0c4;
-}
-
-.order-mark.is-rank-2 {
-  --coin-rgb: 206, 216, 232;
-  --coin-split-rgb: 212, 132, 76;
-  color: #f4f7fc;
-}
-
-.order-mark.is-rank-3 {
-  --coin-rgb: 212, 132, 76;
-  --coin-split-rgb: 104, 114, 134;
-  color: #fbdcc4;
-}
-
-.order-mark.is-rank-4 {
-  --coin-rgb: 104, 114, 134;
-  --coin-split-rgb: 104, 114, 134;
-  color: #c3cad8;
-}
-
-/* Struck heavier than the neutral die the Bag's coins use: at 24px the metal has to carry
-   across the field, so it takes the face as well as the rim. */
-.order-mark .coin-face {
-  fill: color-mix(in srgb, rgb(var(--coin-rgb)) 20%, #151a24);
-}
-
-.order-mark .coin-crown {
-  fill: rgba(var(--coin-rgb), 0.5);
-}
-
-.order-mark .coin-rim {
-  stroke: rgb(var(--coin-rgb));
-  stroke-width: 1.6;
-}
-
-.coin-split {
-  fill: rgba(var(--coin-split-rgb, var(--coin-rgb)), 0.4);
-}
-
-.coin-split-rim {
-  fill: none;
-  stroke: rgb(var(--coin-split-rgb, var(--coin-rgb)));
-  stroke-width: 1.6;
-}
-
-/* A bracket that cut ahead: lifted and lit from within; one held back: sunk and dimmed. Both
-   in the coin's own metal — the pip under it says which bracket did it. */
-.order-mark.is-cut {
-  transform: translateY(-1px);
-}
-
-.order-mark.is-cut .coin {
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 7px rgba(var(--coin-rgb), 0.8));
-}
-
-.order-mark.is-held {
-  transform: translateY(1px);
-}
-
-.order-mark.is-held .coin {
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55)) brightness(0.8);
-}
-
-/* The bracket, hung off the coin's lower edge so the number stays the thing read first. */
-.order-mark-pip {
+   24px is exactly half the 48px source, the one downscale that keeps every source pixel the same
+   size. A tie is a gold "=" between the two it joins — the RNG decides, and the track says so
+   rather than picking one. A bracket hangs its pip over the sprite; where it actually moved the
+   entry (priority.ts bracketEffect) the sprite is lifted for a cut and sunk for a hold. During
+   playback the track walks the beats: done falls back, the actor of the beat steps forward. */
+.order-track {
   position: absolute;
-  bottom: -6px;
   left: 50%;
-  transform: translateX(-50%);
-  min-width: 14px;
-  height: 12px;
-  padding: 0 3px;
+  top: 50%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: order-track-arrive var(--dur-mid) var(--ease-out) both;
+}
+
+@keyframes order-track-arrive {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.order-track-step {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.order-track-slot {
+  --side-rgb: 74, 144, 217;
+  position: relative;
+  display: block;
+  width: 24px;
+  height: 24px;
+  transition: transform var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out);
+}
+
+.order-track-slot.is-enemy {
+  --side-rgb: 217, 83, 79;
+}
+
+/* The tick the sprite stands on: its side, in its side's light. */
+.order-track-slot::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: -2px;
+  height: 2px;
+  border-radius: 1px;
+  background: rgba(var(--side-rgb), 0.9);
+  box-shadow: 0 0 5px rgba(var(--side-rgb), 0.7);
+}
+
+.order-track-sprite {
+  display: block;
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.85));
+  transition: filter var(--dur-mid) var(--ease-out);
+}
+
+.order-track-tie {
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  color: #e8c860;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* The bracket, hung off the sprite's top corner so the face stays the thing read first. */
+.order-track-pip {
+  position: absolute;
+  top: -6px;
+  right: -7px;
+  min-width: 12px;
+  height: 11px;
+  padding: 0 2px;
   border-radius: var(--radius-pill);
   background: #151a24;
-  box-shadow: 0 0 0 1px rgba(var(--coin-rgb), 0.7), 0 0 0 2.2px #0a0d13;
-  font-size: 8px;
+  box-shadow: 0 0 0 1px rgba(168, 184, 214, 0.6), 0 0 0 2px #0a0d13;
+  font-size: 7px;
   font-weight: 800;
-  line-height: 12px;
+  line-height: 11px;
   text-align: center;
-  color: inherit;
+  color: #e6ecf7;
   white-space: nowrap;
 }
 
-/* Tappable while commanding: the coin takes the tap itself (CombatantCard stops it reaching the
-   card) and the game says the place in words. The hit area is grown past the 24px coin without
-   moving it — a pseudo-element, since the coin's own box is what the stage positions. */
-.order-mark.is-tappable {
+.order-track-slot.is-cut {
+  transform: translateY(-2px);
+}
+
+.order-track-slot.is-cut .order-track-pip {
+  color: #ffe2a0;
+  box-shadow: 0 0 0 1px rgba(255, 200, 90, 0.8), 0 0 0 2px #0a0d13, 0 0 6px rgba(255, 200, 90, 0.6);
+}
+
+.order-track-slot.is-held {
+  transform: translateY(2px);
+}
+
+.order-track-slot.is-held .order-track-pip {
+  color: rgba(196, 212, 240, 0.8);
+}
+
+.order-track-slot.is-done {
+  opacity: 0.35;
+}
+
+.order-track-slot.is-current {
+  transform: scale(1.3);
+}
+
+.order-track-slot.is-current .order-track-sprite {
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 4px rgba(var(--side-rgb), 0.95));
+}
+
+/* Tappable while commanding: the game says the order in words. The hit area grows past the 24px
+   sprite without moving it. */
+.order-track-slot.is-tappable {
   pointer-events: auto;
   cursor: pointer;
 }
 
-.order-mark.is-tappable::after {
+.order-track-slot.is-tappable::before {
   content: '';
   position: absolute;
-  inset: -8px;
+  inset: -6px -3px;
 }
 
-.order-mark.is-tappable:active {
-  transform: scale(0.94);
-}
-
-.order-mark.is-done {
-  opacity: 0.35;
-}
-
-/* The actor of the beat steps forward, lit in its own metal — the type light it used to take
-   would have been the one moment the place's colour was not on the coin. */
-.order-mark.is-current {
-  transform: scale(1.25);
-}
-
-.order-mark.is-current .coin {
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 8px rgba(var(--coin-rgb), 0.9));
+.order-track-slot.is-tappable:active {
+  transform: scale(0.92);
 }
 
 /* The MP Potion row under the out-of-mana Rest row: the same row shape as a move, lit in

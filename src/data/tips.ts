@@ -154,7 +154,7 @@ export const FIGHT_TIPS: readonly FightTip[] = [
     pages: [
       'Each round, choose a move and a target for both heroes on the field. Then the round plays out, fastest first.',
       'Moves cost Mana. Everyone regains a little each round.',
-      'Tap a fighter to read it, or the number beside it to see the turn order. Hold a move to read it before you choose.',
+      'Tap a fighter to read it. The small figures across the middle show the turn order, left to right. Hold a move to read it before you choose.',
     ],
   },
   {

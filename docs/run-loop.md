@@ -640,51 +640,44 @@ the purse that is not drunk.
 **The coin** (`src/view/shared/Coin.tsx`, 2026-09-17, per user direction): one struck token in
 the mana gem's manufacture — a dark halo that seats it on whatever it sits over, a face, a
 top-lit crown, a milled inner ring at the rim, and a spark from the top left — drawn under
-whatever the caller strikes on it: the order mark's numeral, a potion's flask. It began as a
-flat disc for the order marks, which read as unfinished beside the gem and the type chips. The
-tint is one CSS variable (`--coin-rgb`), so every state on every surface — a place, a chosen
-kind, a spent one — is a recolour of the same die rather than a different object; `split`
-strikes its right half in a second (`--coin-split-rgb`), the order mark's tie. The four surfaces: the order marks on the figures, the Bag key, the Bag
-panel's kind chips and the Guild Hall shelf's potions.
+whatever the caller strikes on it, a potion's flask. It began as a flat disc for the order marks
+(below, since retired), which read as unfinished beside the gem and the type chips. The tint is
+one CSS variable (`--coin-rgb`), so every state on every surface — a chosen kind, a spent one —
+is a recolour of the same die rather than a different object. The three surfaces: the Bag key,
+the Bag panel's kind chips and the Guild Hall shelf's potions.
 
-**The resolve order is shown ON the figures** (`orderMarks.ts`, `CombatantCard` `order`,
-2026-09-17, per user direction): a numbered coin (the coin above) at the shoulder the type chips leave free —
-the way Into the Breach numbers the Vek — reading 1 to 4 across the four active cards. It was
-first a ribbon of portraits under the ally status bands, then along the very top of the screen,
-and both read as a plaque bolted onto a scene; a number on the thing it is about costs no band.
-**The place is struck in a metal** (2026-09-24, per user direction): gold, silver, bronze and
-iron for 1st to 4th, so the colour is read before the digit and, after a few fights, instead of
-it. Metals because the podium already taught every player that order and because the type chips
-beside the coin already spend the whole hue wheel; brightness falls with the place, so the order
-survives without colour. The metal is the coin's one colour claim — no state below recolours it.
-**Two "1"s IS a tie**: tied entries share the first of their ranks and a tied coin is **split**,
-its right half struck in the next place's metal, since the RNG decides between the two places
-and the mark says so rather than picking one (`Coin`'s `split`). The order is `previewOrder`
-(`engine/combat/priority.ts`): the same keys `orderActions` sorts on, no RNG spun. The
-player's declared actions carry their real bracket — a priority move, a switch (`⇄`) or a Rest
-(`☾`) moves its number and hangs the bracket as a pip off the coin; a rolled bracket shows `?`
-at 0 — and the enemy's are unknown until the round plays, so they sit at bracket 0.
-**During playback the marks are the real order** (same day): `resolveRound` emits
-`RoundOrdered` — every action's settled bracket and Speed, right after `RoundStarted` — and
-the marks walk it beat by beat: the last combatant whose turn began (`TurnStarted`, a Daze
-block, a voluntary switch) stands forward, lit in its own metal, the ones before it fall back,
-and the round's end retires them all; a KO'd figure's coin gives way to the KO tag. **A bracket
-that changed the order is lit** (`bracketEffect`, `engine/combat/priority.ts`): a cut ahead of
-someone Speed would have sent first is lifted and lit brighter; a hold behind someone it would
-have sent later sunk and dimmed — both in the coin's own metal, the pip saying which bracket; a +1 on the hero Speed already favoured, which moved nothing,
-is a pip and no more. "Favoured" is read on the field's own axis — `previewOrder` and
-`RoundOrdered` both carry `reversedSpeed`, so under Stasis Bubble the slower hero is the one
-a cut goes past. **A number needs telling** (same day, per user direction — a new player would
-read "3" as anything from a level to a stack): the first fight's tip names the number beside a
-fighter as the turn order (`fight.basics`, `docs/tutorial.md`), and **a coin is tappable while commanding** — the tap is the
-coin's own, never the card's — and the game says the place in words over the field for a
-moment (`describeOrder`, `.field-note`): **the whole round first to last** — *Cinder, then
-Pixie, then Riptide, then Rime* — a tie said as *Squall or Riptide (a coin flip)*, and after it
-the one clause the tapped hero's number cannot carry, when there is one: a bracket that cut
-ahead or held back, a switch going first, a Rest last, a roll still to come. The ribbon of
-portraits read the sequence more directly and is the trade the shoulder coin makes for the
-screen space; the tap is what gives that sequence back, in words (it first said only the tapped
-hero's place, and was widened to the whole order the same day, per user direction).
+**The resolve order is a track on the horizon** (`OrderTrack.tsx`, `orderMarks.ts`, 2026-09-24,
+per user direction): the four active fighters as half-size sprites — 24px, exactly half the 48px
+source — first to last, left to right, centred where "VS" stood, which steps aside while the
+track is up. No box and no fill: each sprite stands on a short tick in its side's zone tint (the
+enemy red, the ally blue), so which side acts when reads without a name. Its history is three
+tries: a ribbon of portraits under the ally status bands, then along the very top of the screen
+(both read as a plaque bolted onto a scene); then a numbered coin on each figure's shoulder
+(2026-09-17), later struck gold / silver / bronze / iron by place — which asked the eye to find
+four numbers in four corners and sort them, and did not work in play. The horizon is the one band
+both rows face, so a line of faces there is read in a single pass without a plaque. **A tie** is a
+gold `=` between the two it joins: tied entries share a rank, the RNG decides, and the track says
+so rather than picking one. The order is `previewOrder` (`engine/combat/priority.ts`): the same
+keys `orderActions` sorts on, no RNG spun. The player's declared actions carry their real
+bracket — a priority move, a switch (`⇄`) or a Rest (`☾`) moves its sprite and hangs the bracket
+as a pip over it; a rolled bracket shows `?` at 0 — and the enemy's are unknown until the round
+plays, so they sit at bracket 0. **During playback the track is the real order**: `resolveRound`
+emits `RoundOrdered` — every action's settled bracket and Speed, right after `RoundStarted` — and
+the track walks it beat by beat: the last combatant whose turn began (`TurnStarted`, a Daze
+block, a voluntary switch) steps forward, lit in its side's colour, the ones before it fall back,
+and the round's end retires them all. **A bracket that changed the order moves its sprite**
+(`bracketEffect`): a cut ahead of someone Speed would have sent first is lifted, its pip lit gold;
+a hold behind someone it would have sent later is sunk; a +1 on the hero Speed already favoured,
+which moved nothing, is a pip and no more. "Favoured" is read on the field's own axis —
+`previewOrder` and `RoundOrdered` both carry `reversedSpeed`, so under Stasis Bubble the slower
+hero is the one a cut goes past. The first fight's tip names the track (`fight.basics`,
+`docs/tutorial.md`), and **a sprite is tappable while commanding**: the game says the order in
+words over the field for a moment (`describeOrder`, `.field-note`) — the whole round first to
+last, *Cinder, then Pixie, then Riptide, then Rime*, a tie said as *Squall or Riptide (a coin
+flip)*, and after it the one clause the tapped hero's place cannot carry, when there is one: a
+bracket that cut ahead or held back, a switch going first, a Rest last, a roll still to come.
+**The Field Effect plaque moved to the foot of the arena** to give the track the horizon's centre
+(`.battlefield > .field-effect-badge`).
 
 **Open, deliberately:** the hold cap, the price and the drop odds are all playtest numbers; and
 whether a potion should be drinkable during a forced-replacement beat after a KO — the moment a

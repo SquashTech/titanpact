@@ -34,6 +34,7 @@ import { consumableRefusal, useConsumable, type FightConsumableKind } from '../.
 import { CONSUMABLE_KINDS, CONSUMABLE_NAMES, type ConsumableKind, type ConsumablePurse } from '../../run/consumables';
 import { BagPanel, type BagTarget } from './BagPanel';
 import { describeOrder, orderMarksFor, type OrderMark, type OrderSource } from './orderMarks';
+import { OrderTrack, type OrderTrackEntry } from './OrderTrack';
 import { Coin } from '../shared/Coin';
 import { previewOrder } from '../../engine/combat/priority';
 import { ResourceGlyph } from '../shared/RunGlyph';
@@ -838,7 +839,7 @@ export function FightScreen({
     });
   })();
 
-  /** A tapped coin, in words: the whole round's order first to last, and the tapped hero's bracket if it has one. */
+  /** A tapped sprite on the order track, in words: the whole round's order first to last, and the tapped hero's bracket if it has one. */
   function sayOrder(combatantId: string) {
     if (!orderMarks[combatantId]) return;
     const nameOf = (id: string) => allCombatants[combat.combatants[id].heroId].name;
@@ -846,8 +847,9 @@ export function FightScreen({
     setFieldNote({ key: popupSeq.current++, text: describeOrder(ordered, combatantId) });
   }
 
-  // Worn on each active card (CombatantCard `order`): the preview while commanding, the settled
-  // order walked beat by beat while the round plays; nothing during the intro or once it is won.
+  // Laid on the horizon (OrderTrack): the preview while commanding, the settled order walked
+  // beat by beat while the round plays; nothing during the intro or once it is won.
+  const orderSources: OrderSource[] = winner ? [] : resolving ? (playbackOrder ? playbackEntries : []) : orderPreview.entries;
   const orderMarks: Record<string, OrderMark> = winner
     ? {}
     : resolving
@@ -855,6 +857,11 @@ export function FightScreen({
         ? orderMarksFor(playbackEntries, playbackOrder.reversedSpeed)
         : {}
       : orderMarksFor(orderPreview.entries, orderPreview.reversedSpeed);
+  const orderTrack: OrderTrackEntry[] = orderSources.flatMap((source) => {
+    const c = combat.combatants[source.combatantId];
+    const mark = orderMarks[source.combatantId];
+    return c && mark ? [{ combatantId: c.combatantId, heroId: c.heroId, side: c.side === PLAYER_SIDE ? 'ally' : 'enemy', mark }] : [];
+  });
 
   // The console is lit in the commanding hero's domain color, from under that hero's side of the
   // field; gold and centred while a round resolves (nobody is commanding).
@@ -1271,8 +1278,6 @@ export function FightScreen({
           statCtx={statCtx}
           striking={beat?.strikeCombatantId === id}
           fx={figureFx[id]}
-          order={orderMarks[id] ?? null}
-          onInspectOrder={resolving ? undefined : () => sayOrder(id)}
           warded={wardOn(combat, id, passives)}
         />
       );
@@ -1396,29 +1401,9 @@ export function FightScreen({
           {renderActiveSlot(AI_SIDE, 1)}
         </div>
 
-        <div className="battlefield-divider">
+        <div className={`battlefield-divider${orderTrack.length > 0 ? ' has-order' : ''}`}>
           <span className="battlefield-vs">VS</span>
-          {combat.activeFieldEffect && (
-            /* Keyed by effect id so an override remounts and replays the arrival. No glyph: the plaque must fit a 13px horizon band. */
-            <span
-              key={combat.activeFieldEffect.fieldEffectId}
-              className="field-effect-badge"
-              title={`${fieldEffects[combat.activeFieldEffect.fieldEffectId]?.description ?? ''} — tap for details`}
-              {...fieldEffectPress}
-            >
-              <span className="field-effect-name">
-                {fieldEffects[combat.activeFieldEffect.fieldEffectId]?.name ?? combat.activeFieldEffect.fieldEffectId}
-              </span>
-              <span className="field-effect-pips" aria-label={`${combat.activeFieldEffect.roundsRemaining} rounds remaining`}>
-                {Array.from({ length: FIELD_EFFECT_DURATION_ROUNDS }, (_, i) => (
-                  <span
-                    key={i}
-                    className={`field-effect-pip${i < combat.activeFieldEffect!.roundsRemaining ? '' : ' spent'}`}
-                  />
-                ))}
-              </span>
-            </span>
-          )}
+          <OrderTrack entries={orderTrack} onInspect={resolving ? undefined : sayOrder} />
         </div>
         {inspectingFieldEffect && combat.activeFieldEffect && (
           <FieldEffectDetailOverlay active={combat.activeFieldEffect} onClose={() => setInspectingFieldEffect(false)} />
@@ -1428,6 +1413,29 @@ export function FightScreen({
           {renderActiveSlot(PLAYER_SIDE, 0)}
           {renderActiveSlot(PLAYER_SIDE, 1)}
         </div>
+
+        {/* The field, at the foot of the arena (2026-09-24): the horizon's centre is the order track's now. */}
+        {combat.activeFieldEffect && (
+          /* Keyed by effect id so an override remounts and replays the arrival. No glyph: the plaque keeps the horizon's small type register. */
+          <span
+            key={combat.activeFieldEffect.fieldEffectId}
+            className="field-effect-badge"
+            title={`${fieldEffects[combat.activeFieldEffect.fieldEffectId]?.description ?? ''} — tap for details`}
+            {...fieldEffectPress}
+          >
+            <span className="field-effect-name">
+              {fieldEffects[combat.activeFieldEffect.fieldEffectId]?.name ?? combat.activeFieldEffect.fieldEffectId}
+            </span>
+            <span className="field-effect-pips" aria-label={`${combat.activeFieldEffect.roundsRemaining} rounds remaining`}>
+              {Array.from({ length: FIELD_EFFECT_DURATION_ROUNDS }, (_, i) => (
+                <span
+                  key={i}
+                  className={`field-effect-pip${i < combat.activeFieldEffect!.roundsRemaining ? '' : ' spent'}`}
+                />
+              ))}
+            </span>
+          </span>
+        )}
 
         {/* Menu, in the sky's far corner (2026-09-17, per user direction): consulted, not played, so
             it left the console's bottom row to the Bag and stands where a pause key stands. Off the
