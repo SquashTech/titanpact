@@ -39,20 +39,19 @@ export type GuildHallTab = 'shop' | 'tavern' | 'smithy';
 /** Every hire the game holds, bundles included: the roll already read the run's pool, so the lookup must not read it again. */
 const allGuildHallOffers = guildHallOffersFor(heroes);
 
-/** The hero shelf as the panel shows it: heroes already on the roster are off it, and the Vigil's are free. */
-export function guildHeroOffers(run: RunState, offers: GuildHallOffers, freeRecruits: boolean): GuildHallOffer[] {
+/** The hero shelf as the panel shows it: heroes already on the roster are off it. */
+export function guildHeroOffers(run: RunState, offers: GuildHallOffers): GuildHallOffer[] {
   return offers.heroOfferIds
     .map((id) => allGuildHallOffers.find((o) => o.id === id))
-    .filter((o): o is GuildHallOffer => !!o && !run.roster.some((r) => r.heroId === o.heroId))
-    // Every downstream read goes through the offer's own cost, so zeroing it here is the whole discount.
-    .map((offer) => (freeRecruits ? { ...offer, cost: 0 } : offer));
+    .filter((o): o is GuildHallOffer => !!o && !run.roster.some((r) => r.heroId === o.heroId));
 }
 
 /** The three counters (2026-09-24, per user direction): goods at the Shop, people at the Tavern, worn gear at the Smithy. */
-export function guildHallTabs(run: RunState, offers: GuildHallOffers, freeRecruits: boolean): readonly TabSpec<GuildHallTab>[] {
+export function guildHallTabs(run: RunState, offers: GuildHallOffers, vigil: boolean): readonly TabSpec<GuildHallTab>[] {
   return [
     { id: 'shop', label: 'Shop', glyph: 'shop' },
-    { id: 'tavern', label: 'Tavern', glyph: 'heroes', count: guildHeroOffers(run, offers, freeRecruits).length },
+    // The Vigil's Tavern holds the mend alone, and a count of nobody would grey the tab it is on.
+    { id: 'tavern', label: 'Tavern', glyph: 'heroes', count: vigil ? undefined : guildHeroOffers(run, offers).length },
     { id: 'smithy', label: 'Smithy', glyph: 'equipment', count: run.roster.reduce((n, entry) => n + entry.equipment.length, 0) },
   ];
 }
@@ -82,8 +81,8 @@ interface Props {
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
   /** Fires when this panel opens/closes a modal, so the host can pull its own bottom CTA. */
   onOverlayChange?: (open: boolean) => void;
-  /** The Vigil musters rather than sells: a 6v4 finale is a bug the player cannot see coming. */
-  freeRecruits?: boolean;
+  /** Act 6's Vigil (2026-09-24, per user direction): no hires, no Contract, no reroll — the finale is fought by the roster the run kept. */
+  vigil?: boolean;
 }
 
 interface HeroCardProps {
@@ -111,7 +110,7 @@ function GuildHallHeroCard({ hero, offer, level, affordable, onInspect }: HeroCa
           <TypeBadge key={t} type={t} />
         ))}
       </div>
-      <div className="guild-hall-hero-cost">{offer.cost === 0 ? 'Free' : `${offer.cost}g`}</div>
+      <div className="guild-hall-hero-cost">{offer.cost}g</div>
     </button>
   );
 }
@@ -132,14 +131,14 @@ export function GuildHallPanel({
   onRequestRosterReplace,
   onOverlayChange,
   tab,
-  freeRecruits = false,
+  vigil = false,
 }: Props) {
   const [previewOfferId, setPreviewOfferId] = useState<string | null>(null);
   const [confirmingContract, setConfirmingContract] = useState(false);
   /** The hero the joining cinematic is running for. The roster-full path fires it from App instead. */
   const [fanfareHeroId, setFanfareHeroId] = useState<string | null>(null);
 
-  const heroOffers = guildHeroOffers(run, offers, freeRecruits);
+  const heroOffers = guildHeroOffers(run, offers);
   /** What the mend costs right now: gold for what is missing (run/wounds.ts mendPrice), read off the same max HP the wound bars draw. */
   const mendCost = mendPrice(run, (entry) => entryHp(rosterHeroes[entry.heroId], entry, run.relics).maxHp);
 
@@ -184,65 +183,71 @@ export function GuildHallPanel({
     <div className="guild-hall">
       {tab === 'tavern' && (
         <div className="guild-hall-section">
-          {/* The mark and nothing under it (2026-09-11, per user direction): what a hire is — raw,
-              unevolved — and what a full roster asks are both said on the hero's own stage, at the
-              moment the gold is about to be spent. */}
-          <div className="guild-hall-section-head">
-            <span className="guild-hall-section-title">
-              <SectionGlyph name="heroes" /> Recruits
-            </span>
-          </div>
-          {heroOffers.length > 0 ? (
-            <div className="guild-hall-hero-grid">
-              {heroOffers.map((offer) => {
-                const hero = heroes[offer.heroId];
-                return (
-                  <GuildHallHeroCard
-                    key={offer.id}
-                    hero={hero}
-                    offer={offer}
-                    level={guildHallLevel(run.actNumber)}
-                    affordable={run.gold >= offer.cost}
-                    onInspect={() => setPreviewOfferId(offer.id)}
-                  />
-                );
-              })}
-            </div>
-          ) : (
-            <p className="hint">No recruits on offer this visit.</p>
+          {!vigil && (
+            <>
+              {/* The mark and nothing under it (2026-09-11, per user direction): what a hire is — raw,
+                  unevolved — and what a full roster asks are both said on the hero's own stage, at the
+                  moment the gold is about to be spent. */}
+              <div className="guild-hall-section-head">
+                <span className="guild-hall-section-title">
+                  <SectionGlyph name="heroes" /> Recruits
+                </span>
+              </div>
+              {heroOffers.length > 0 ? (
+                <div className="guild-hall-hero-grid">
+                  {heroOffers.map((offer) => {
+                    const hero = heroes[offer.heroId];
+                    return (
+                      <GuildHallHeroCard
+                        key={offer.id}
+                        hero={hero}
+                        offer={offer}
+                        level={guildHallLevel(run.actNumber)}
+                        affordable={run.gold >= offer.cost}
+                        onInspect={() => setPreviewOfferId(offer.id)}
+                      />
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="hint">No recruits on offer this visit.</p>
+              )}
+            </>
           )}
           {/* Goods on a shelf, side by side. The Contract and Scroll used to be two full-width rows — glyph,
               name, gray sentence, price hard right — which is a shopping-cart line item, and it
               is what made the whole panel read as an invoice rather than as a counter. */}
           <div className="guild-hall-shelf">
-            <button className={`guild-hall-good is-contract${freeRecruits ? ' is-wide' : ''}`} disabled={!canBuyContract} onClick={() => setConfirmingContract(true)}>
-              <span className="guild-hall-good-glyph">
-                <ResourceGlyph kind="contract" tone="inherit" />
-              </span>
-              <span className="guild-hall-good-name">Recruit Contract</span>
-              <span className="guild-hall-good-price">
-                <ResourceGlyph kind="gold" /> {CONTRACT_PURCHASE_COST}
-              </span>
-              {run.recruitContracts > 0 && (
-                <span className="guild-hall-good-held" aria-label={`${run.recruitContracts} held`}>
-                  {run.recruitContracts}
-                </span>
-              )}
-            </button>
+            {!vigil && (
+              <>
+                <button className="guild-hall-good is-contract" disabled={!canBuyContract} onClick={() => setConfirmingContract(true)}>
+                  <span className="guild-hall-good-glyph">
+                    <ResourceGlyph kind="contract" tone="inherit" />
+                  </span>
+                  <span className="guild-hall-good-name">Recruit Contract</span>
+                  <span className="guild-hall-good-price">
+                    <ResourceGlyph kind="gold" /> {CONTRACT_PURCHASE_COST}
+                  </span>
+                  {run.recruitContracts > 0 && (
+                    <span className="guild-hall-good-held" aria-label={`${run.recruitContracts} held`}>
+                      {run.recruitContracts}
+                    </span>
+                  )}
+                </button>
 
-            {/* The reroll (run/shop.ts): a fresh shelf of faces, dearer each time this visit. Dark
-                with nobody left to show — a pool the roster has emptied has nothing to reroll into.
-                Not at the Vigil (2026-09-24, per user direction): its hires are free, and gold
-                should not shop the whole pool for the finale. */}
-            {!freeRecruits && <button className="guild-hall-good is-reroll" disabled={run.gold < rerollCost || offers.heroOfferIds.length === 0} onClick={onReroll}>
-              <span className="guild-hall-good-glyph">
-                <SectionGlyph name="reroll" />
-              </span>
-              <span className="guild-hall-good-name">Reroll Recruits</span>
-              <span className="guild-hall-good-price">
-                <ResourceGlyph kind="gold" /> {rerollCost}
-              </span>
-            </button>}
+                {/* The reroll (run/shop.ts): a fresh shelf of faces, dearer each time this visit. Dark
+                    with nobody left to show — a pool the roster has emptied has nothing to reroll into. */}
+                <button className="guild-hall-good is-reroll" disabled={run.gold < rerollCost || offers.heroOfferIds.length === 0} onClick={onReroll}>
+                  <span className="guild-hall-good-glyph">
+                    <SectionGlyph name="reroll" />
+                  </span>
+                  <span className="guild-hall-good-name">Reroll Recruits</span>
+                  <span className="guild-hall-good-price">
+                    <ResourceGlyph kind="gold" /> {rerollCost}
+                  </span>
+                </button>
+              </>
+            )}
 
             {/* The mend (run/wounds.ts), a night at the Tavern (2026-09-24, per user direction): the
                 one good here that is for everyone at once, so it takes the whole shelf, and since
@@ -373,7 +378,7 @@ export function GuildHallPanel({
                         : undefined
                   }
                   action={{
-                    label: previewOffer.cost === 0 ? `Muster ${hero.name}` : `Recruit ${hero.name} — ${previewOffer.cost}g`,
+                    label: `Recruit ${hero.name} — ${previewOffer.cost}g`,
                     disabled: !affordable,
                     onConfirm: () => {
                       handleRecruit(previewOffer);

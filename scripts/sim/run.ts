@@ -1056,7 +1056,7 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
   spend('enchant', () => resolveEnchanter(next));
 
   // Spare gold at the last shop before a Guardian buys a contract rather than rusting.
-  if (next.gold >= CONTRACT_PURCHASE_COST && next.roster.length < ROSTER_CAP) {
+  if (!muster && next.gold >= CONTRACT_PURCHASE_COST && next.roster.length < ROSTER_CAP) {
     spend('contract', () => buyContract(next, CONTRACT_PURCHASE_COST));
   }
   return next;

@@ -3,7 +3,7 @@
 // on the Screen — a component-local roll would reroll on re-render of the shop. Nothing here
 // sells an item: gear is found and absorbed (docs/gear-absorption.md §6).
 
-import { ROSTER_CAP, type RunState } from './state';
+import type { RunState } from './state';
 import type { EquipmentDefinition, EquipmentRarity } from './equipment';
 import type { GuildHallOffer } from './recruitment';
 
@@ -74,14 +74,13 @@ function sample<T>(pool: readonly T[], count: number): T[] {
 export function rollGuildHallOffers(
   run: RunState,
   heroPool: readonly GuildHallOffer[],
-  /** Act 6's Vigil: enough recruits to fill the roster plus one. */
+  /** Act 6's Vigil recruits nobody: the finale is fought by the roster the run kept. */
   muster = false
 ): GuildHallOffers {
+  if (muster) return { heroOfferIds: [] };
   const rosterHeroIds = new Set(run.roster.map((r) => r.heroId));
   const availableHeroes = heroPool.filter((o) => !rosterHeroIds.has(o.heroId));
-  // Fill the gap and leave one spare, so the Vigil still poses a choice rather than a queue.
-  const heroCount = muster ? Math.max(2, ROSTER_CAP - run.roster.length + 1) : Math.random() < 0.5 ? 2 : 3;
-  return { heroOfferIds: sample(availableHeroes, heroCount).map((o) => o.id) };
+  return { heroOfferIds: sample(availableHeroes, Math.random() < 0.5 ? 2 : 3).map((o) => o.id) };
 }
 
 /** The Tavern's first reroll a visit; each one after costs `TAVERN_REROLL_STEP` more. Untuned. */

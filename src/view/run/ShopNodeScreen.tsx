@@ -24,7 +24,7 @@ interface Props {
   onBuyMend: () => void;
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
   onContinue: () => void;
-  /** Act 6's Vigil: the last node of the run, and the one that musters rather than sells. */
+  /** Act 6's Vigil: the last node of the run, where nobody is hired — only goods, the mend and the Smithy. */
   muster?: boolean;
 }
 
@@ -51,7 +51,7 @@ export function ShopNodeScreen({
   muster = false,
 }: Props) {
   const [overlayOpen, setOverlayOpen] = useState(false);
-  const [tab, setTab] = useState<GuildHallTab>('tavern');
+  const [tab, setTab] = useState<GuildHallTab>(muster ? 'shop' : 'tavern');
   return (
     <div className="node-screen shop-node-screen" style={{ '--node-rgb': NODE_TINT_HEARTH } as CSSProperties}>
       <NodeSky />
@@ -76,7 +76,7 @@ export function ShopNodeScreen({
           onRequestRosterReplace={onRequestRosterReplace}
           onOverlayChange={setOverlayOpen}
           tab={tab}
-          freeRecruits={muster}
+          vigil={muster}
         />
       </div>
 

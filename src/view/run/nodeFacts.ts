@@ -148,7 +148,8 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         facts: [
           // The Eyes behind the Herald are not on the tile (docs/titan-eyes.md §10.4): the dossier says what is scouted.
           { glyph: 'enemy', label: 'The Herald', value: `Lv ${enemyLevelFor('finale', actNumber)}`, note: `${SEAL_ACTS} Titanspawn with it` },
-          { glyph: 'hero', label: 'Roster', value: `6 v ${SEAL_ACTS + 1}` },
+          // Whoever arrives: the Vigil recruits nobody (2026-09-24), so the side is the roster the run kept.
+          { glyph: 'hero', label: 'Roster', value: `up to ${ROSTER_CAP} v ${SEAL_ACTS + 1}` },
         ],
         odds: null,
       };
@@ -168,7 +169,9 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
       return {
         kind: 'Landmark · The last stop',
         facts: [
-          { glyph: 'hero', label: 'Recruits', value: `to ${ROSTER_CAP}`, note: 'free' },
+          { glyph: 'scroll', label: 'Mastery Scroll', value: `${SCROLL_PURCHASE_COST}g`, note: `up to ${SCROLL_PURCHASE_LIMIT}` },
+          { glyph: 'anvil', label: 'Anvil', value: priceBand(ANVIL_PRICE_BY_TARGET), note: '+1 tier' },
+          { glyph: 'enchant', label: 'Enchanter', value: priceBand(ENCHANT_PRICE_BY_RARITY), note: 'one element' },
         ],
         odds: null,
       };
