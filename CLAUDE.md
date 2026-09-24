@@ -544,9 +544,10 @@ don't silently override it.
   primary, for the run, held on `RosterEntry.bonusStatusGrants` and summed with its gear's at
   fight build. Allowed because Force is not a stat: a typed BasePower term paid per hit, per
   target, only on the hero's own element, so it is read on every hit rather than on a sheet.
-  Its sibling **the Forge** (`forgeReward`, `forgeLift`) is the Smithy's Anvil free, once — one
-  worn piece a tier up, on the paid Anvil's own quote, so the act window still caps it — and
-  needs no exception. Together they are the Smithy's two verbs given map seats (25 each), which
+  Its sibling **the Forge** (`forgeReward`, `forgeItem`) is the Smithy's Anvil AND Enchanter free,
+  once (2026-09-24, per user direction — the lift alone read as a trap pick) — one worn piece a
+  tier up on the paid Anvil's own quote, so the act window still caps it, and bound to an element
+  the player picks — and needs no exception. Together they are the Smithy's two verbs given map seats (25 each), which
   took the Scroll Cache from 59% of reward rows to 48% without its weight flowing into Equipment
   (`docs/run-loop.md` "The Forge and the Ley Line"); **the Cache's weight then came down 46 → 20**
   (same day, per user direction — two Caches an act was 47% of acts and, with the Scribe's 2, an

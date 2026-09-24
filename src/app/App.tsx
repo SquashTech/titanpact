@@ -429,7 +429,7 @@ function screenTipIds(screen: Screen, run: RunState): readonly ScreenTipId[] {
     case 'reward':
       return screen.nodeType === 'equipmentReward' ? ['equipmentReward'] : [];
     case 'mentorNode':
-      return ['mentor'];
+      return []; // the screen's own line says it (2026-09-24, per user direction)
     case 'tutorNode':
       return ['tutor'];
     case 'boonNode':
@@ -437,7 +437,7 @@ function screenTipIds(screen: Screen, run: RunState): readonly ScreenTipId[] {
     case 'manaWell':
       return ['manaWell'];
     case 'forge':
-      return ['forge'];
+      return []; // the screen's own line says it (2026-09-24, per user direction)
     case 'leyLine':
       return ['leyLine'];
     case 'rest':

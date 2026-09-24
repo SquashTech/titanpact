@@ -64,7 +64,7 @@ first meeting with two things shows the second on its next visit.
 | `companion` | the companion's join beat |
 | `fallen` | Permadeath's Fallen beat (Ascension 1) |
 | `equipmentReward` | the equipment cache |
-| `mentor`, `tutor`, `boon`, `manaWell`, `forge`, `leyLine`, `rest`, `event` | that node's screen |
+| `tutor`, `boon`, `manaWell`, `leyLine`, `rest`, `event` | that node's screen (the Mentor and the Forge carry none — each screen's own line says it) |
 | `scribe`, `scrollCache` | the Scribe's and the Cache's scroll screens (a bought Scroll gets none — the Guild Hall's tip named it) |
 | `shop` | the Guild Hall |
 | `recruit` | the Recruit Contract claim (roster cap, termination) |

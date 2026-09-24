@@ -77,9 +77,10 @@ export function MentorNodeScreen({ run, onRunChange, onContinue }: Props) {
         art={<img src={mentorArt} className="class-shrine-mentor" alt="" draggable={false} />}
         eyebrow="The Mentor Awaits"
         title="Mentor's Hall"
+        readoutLive={anyTeachable}
         readout={
           anyTeachable
-            ? 'The Mentor can teach any hero a powerful move. Choose who — hold a card to review its sheet.'
+            ? 'The Mentor can teach any hero a powerful move.'
             : 'There is nothing left here the Mentor can teach.'
         }
       />
