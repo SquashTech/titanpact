@@ -321,6 +321,7 @@ export function CombatantCard({
         <span
           className={[
             'order-mark',
+            `is-rank-${Math.min(order.rank, 4)}`,
             order.tied ? 'is-tie' : '',
             order.effect ? `is-${order.effect}` : '',
             order.phase ? `is-${order.phase}` : '',
@@ -340,7 +341,7 @@ export function CombatantCard({
               : undefined
           }
         >
-          <Coin />
+          <Coin split={order.tied} />
           <span className="order-mark-rank">{order.rank}</span>
           {bracketPip(order.priority) !== null && <span className="order-mark-pip">{bracketPip(order.priority)}</span>}
         </span>
