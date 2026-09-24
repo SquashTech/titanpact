@@ -3327,16 +3327,44 @@ textarea,
   width: 100%;
 }
 
-/* Type chips hang at the sprite's shoulder and the KO tag at its other
-   shoulder, and on the far side the sprite is at the bottom of the card.
-   Both measured off the stage rather than the card so they travel with the
-   figure whichever way round it is. */
+/* Type chips at the plate (2026-09-24, per user direction). They hung at the
+   sprite's top shoulder on both sides, which on the near side is the horizon
+   — the one band the order track, the far side's stat mods and the near
+   side's chips were all crowding. Now each side's chips sit against its own
+   nameplate, away from the middle: the near side's on the left, stacked
+   upward from the platform line just above the name and bars; the far side's
+   on the right, stacked downward from just under its MP bar (the stage's top
+   edge, the card being mirrored). The near side's left stat mods climb above
+   the chips (`--type-count`, set inline by CombatantCard) so the two never
+   share a corner, and the far side's KO tag takes the left shoulder the chips
+   vacated. Measured off the stage rather than the card so they travel with
+   the figure whichever way round it is. */
+.team-row.ally .combatant-types {
+  top: auto;
+  left: 0;
+  bottom: calc(
+    var(--figure-plate-pad) + var(--figure-name-h) + var(--figure-name-gap) + var(--figure-bar-h) * 2 +
+      var(--figure-bar-gap) + var(--figure-status-gap) + var(--figure-status-h) + 2px
+  );
+}
+
+.team-row.ally .stat-mod-corner-left {
+  bottom: calc(
+    var(--figure-plate-pad) + var(--figure-name-h) + var(--figure-name-gap) + var(--figure-bar-h) * 2 +
+      var(--figure-bar-gap) + var(--figure-status-gap) + var(--figure-status-h) + 2px + var(--type-count, 1) * 25px
+  );
+}
+
 .team-row.enemy .combatant-types {
   top: calc(100% - var(--figure-stage-h) + 3px);
+  left: auto;
+  right: 0;
 }
 
 .team-row.enemy .fainted-tag {
   top: calc(100% - var(--figure-stage-h) + 6px);
+  right: auto;
+  left: 8px;
 }
 
 /* Same correction for the floating number — off the chest of the figure that
