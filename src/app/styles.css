@@ -654,6 +654,29 @@ textarea,
   opacity: 0.34;
 }
 
+/* The near half is GROUND (2026-09-24, per user direction). The enemies
+   always stood — their feet land on the far horizon's lit band — and the
+   allies never did, because nothing below the horizon said "floor": the dark
+   field there reads as more sky. So the horizon's light carries on down toward
+   the viewer, strongest at the line and fading by the allies' feet, with a
+   wide pool where the ally row stands. In the Location's own tint, and the
+   neutral scene's blue-grey where there is none; the six recipes are untouched
+   and this lies over all of them. Not drawn on the Titan's back, whose body is
+   its own ground. */
+.battlefield-ground {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  bottom: 0;
+  z-index: 0;
+  pointer-events: none;
+  --ground-rgb: var(--node-rgb, 140, 160, 200);
+  background:
+    radial-gradient(ellipse 72% 34% at 50% 46%, rgba(var(--ground-rgb), 0.12), transparent 72%),
+    linear-gradient(180deg, rgba(var(--ground-rgb), 0.16) 0%, rgba(var(--ground-rgb), 0.07) 30%, transparent 62%);
+}
+
 /* --- The place is on both sides of the line ------------------------------
  * The skyline above is the FAR one, behind the enemy row, and for a while it
  * was the only one — which put every scrap of a Location's terrain in the half
@@ -693,10 +716,16 @@ textarea,
   left: -66%;
   bottom: 0;
   width: 208%;
-  height: 46%;
+  /* A LIP, not a wall (2026-09-24, per user direction). At 46% this band's
+     ridgeline stood behind the heroes' bodies, so the scene said "sky" at
+     their feet: a skyline has sky above it, and the allies stood in it, which
+     is exactly what made them float while the enemies — feet on the far
+     horizon — stood. At 16% the band lies under the nameplates as foreground
+     and the space the heroes stand in is .battlefield-ground's floor. */
+  height: 16%;
   transform: scaleX(-1);
   color: rgba(4, 6, 10, 0.95);
-  opacity: 0.62;
+  opacity: 0.85;
   filter: drop-shadow(0 -1px 0 rgba(var(--node-rgb), 0.26));
   /* Fades UPWARD, the opposite of the far band's. That band had to dissolve
      its own ground slab downward into the horizon glow; this one meets the
@@ -2322,12 +2351,20 @@ textarea,
 /* The resolve order (2026-09-17, per user direction), worn on the figure: a numbered coin at
    the shoulder the type chips leave free, the way Into the Breach numbers the Vek. It began as
    a ribbon of portraits — under the ally row, then along the top of the screen — and both read
-   as a plaque bolted onto a scene; a number on the thing it is about costs no band at all. Two
-   "1"s IS a tie (orderMarks.ts ranks them alike), the ring going gold-dashed for it. A bracket
-   hangs its pip off the coin, and where it actually moved the entry (priority.ts bracketEffect)
-   the coin is lit for it: gold and lifted for a cut, cold and sunk for a hold. During playback
-   the coin walks the beats — done falls back, current stands forward in the figure's own type
-   light. Mirrors .combatant-types on the enemy side, measured off the stage. */
+   as a plaque bolted onto a scene; a number on the thing it is about costs no band at all.
+   ┄
+   THE PLACE IS STRUCK IN A METAL (2026-09-24, per user direction): gold, silver, bronze, iron
+   for 1st to 4th, so the colour is read before the digit and, after a few fights, instead of
+   it. Metals because the podium already taught every player that order, and because the type
+   chips beside the coin already spend the whole hue wheel — a place struck in a hue would be
+   one more type chip. Brightness falls with the place, so the order survives without colour.
+   The metal is the coin's one colour claim: nothing below may recolour it. Two "1"s IS a tie
+   (orderMarks.ts ranks them alike), and a tied coin is split, its right half struck in the next
+   place's metal — both places the flip decides between. A bracket hangs its pip off the coin,
+   and where it actually moved the entry (priority.ts bracketEffect) the coin moves for it:
+   lifted and brighter for a cut, sunk and dimmer for a hold. During playback the coin walks
+   the beats — done falls back, current steps forward — in its own metal throughout.
+   Mirrors .combatant-types on the enemy side, measured off the stage. */
 .order-mark {
   --coin-rgb: 168, 184, 214;
   position: absolute;
@@ -2407,35 +2444,72 @@ textarea,
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
 }
 
-/* A tie is struck in gold: the RNG decides, and the two coins say so alike. */
-.order-mark.is-tie {
-  --coin-rgb: 232, 200, 96;
-  color: #ffe9a8;
+/* The four metals. `--coin-split-rgb` is the next place's, read only by a tie's split half. */
+.order-mark.is-rank-1 {
+  --coin-rgb: 245, 196, 80;
+  --coin-split-rgb: 206, 216, 232;
+  color: #fff0c4;
 }
 
-/* A bracket that cut ahead: gold, lit from within and lifted; one held back: cold and sunk. */
+.order-mark.is-rank-2 {
+  --coin-rgb: 206, 216, 232;
+  --coin-split-rgb: 212, 132, 76;
+  color: #f4f7fc;
+}
+
+.order-mark.is-rank-3 {
+  --coin-rgb: 212, 132, 76;
+  --coin-split-rgb: 104, 114, 134;
+  color: #fbdcc4;
+}
+
+.order-mark.is-rank-4 {
+  --coin-rgb: 104, 114, 134;
+  --coin-split-rgb: 104, 114, 134;
+  color: #c3cad8;
+}
+
+/* Struck heavier than the neutral die the Bag's coins use: at 24px the metal has to carry
+   across the field, so it takes the face as well as the rim. */
+.order-mark .coin-face {
+  fill: color-mix(in srgb, rgb(var(--coin-rgb)) 20%, #151a24);
+}
+
+.order-mark .coin-crown {
+  fill: rgba(var(--coin-rgb), 0.5);
+}
+
+.order-mark .coin-rim {
+  stroke: rgb(var(--coin-rgb));
+  stroke-width: 1.6;
+}
+
+.coin-split {
+  fill: rgba(var(--coin-split-rgb, var(--coin-rgb)), 0.4);
+}
+
+.coin-split-rim {
+  fill: none;
+  stroke: rgb(var(--coin-split-rgb, var(--coin-rgb)));
+  stroke-width: 1.6;
+}
+
+/* A bracket that cut ahead: lifted and lit from within; one held back: sunk and dimmed. Both
+   in the coin's own metal — the pip under it says which bracket did it. */
 .order-mark.is-cut {
-  --coin-rgb: 255, 200, 90;
-  color: #fff1cc;
   transform: translateY(-1px);
 }
 
 .order-mark.is-cut .coin {
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 7px rgba(255, 200, 90, 0.8));
-}
-
-.order-mark.is-cut .coin-crown {
-  fill: rgba(255, 200, 90, 0.5);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 7px rgba(var(--coin-rgb), 0.8));
 }
 
 .order-mark.is-held {
-  --coin-rgb: 140, 162, 204;
-  color: rgba(196, 212, 240, 0.85);
   transform: translateY(1px);
 }
 
-.order-mark.is-held .coin-crown {
-  fill: rgba(140, 162, 204, 0.16);
+.order-mark.is-held .coin {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55)) brightness(0.8);
 }
 
 /* The bracket, hung off the coin's lower edge so the number stays the thing read first. */
@@ -2480,19 +2554,14 @@ textarea,
   opacity: 0.35;
 }
 
-/* The actor of the beat: the coin takes the figure's own type light and steps forward. */
+/* The actor of the beat steps forward, lit in its own metal — the type light it used to take
+   would have been the one moment the place's colour was not on the coin. */
 .order-mark.is-current {
-  --coin-rgb: var(--type-rgb);
-  color: #fff;
   transform: scale(1.25);
 }
 
 .order-mark.is-current .coin {
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 8px rgba(var(--type-rgb), 0.9));
-}
-
-.order-mark.is-current .coin-crown {
-  fill: rgba(var(--type-rgb), 0.55);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 8px rgba(var(--coin-rgb), 0.9));
 }
 
 /* The MP Potion row under the out-of-mana Rest row: the same row shape as a move, lit in
@@ -2809,6 +2878,23 @@ textarea,
    at a clean 2x and the *platform* carries the distance instead — enemy
    ground reads smaller, dimmer, and tighter; ally ground wider and brighter,
    nearer the viewer. */
+/* The contact shadow, inside the type ring. The ring alone is a coloured glow,
+   and a glow under a figure is what levitating looks like — which is how the
+   allies read for as long as the ring was all they had. A dark core where the
+   feet meet the ground is what plants them. Its own pseudo-element so the
+   .acting and .fainted rules, which restate the ring's background, never have
+   to restate the shadow with it. */
+.team-row .combatant-platform::before {
+  content: '';
+  position: absolute;
+  left: 22%;
+  right: 22%;
+  top: 24%;
+  bottom: 18%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.34) 58%, transparent 100%);
+}
+
 .team-row.enemy .combatant-platform {
   width: 74px;
   height: 19px;

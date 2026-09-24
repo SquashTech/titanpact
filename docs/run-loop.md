@@ -642,9 +642,9 @@ the mana gem's manufacture — a dark halo that seats it on whatever it sits ove
 top-lit crown, a milled inner ring at the rim, and a spark from the top left — drawn under
 whatever the caller strikes on it: the order mark's numeral, a potion's flask. It began as a
 flat disc for the order marks, which read as unfinished beside the gem and the type chips. The
-tint is one CSS variable (`--coin-rgb`), so every state on every surface — a tie, a cut, a
-hold, the current actor, a chosen kind, a spent one — is a recolour of the same die rather than
-a different object. The four surfaces: the order marks on the figures, the Bag key, the Bag
+tint is one CSS variable (`--coin-rgb`), so every state on every surface — a place, a chosen
+kind, a spent one — is a recolour of the same die rather than a different object; `split`
+strikes its right half in a second (`--coin-split-rgb`), the order mark's tie. The four surfaces: the order marks on the figures, the Bag key, the Bag
 panel's kind chips and the Guild Hall shelf's potions.
 
 **The resolve order is shown ON the figures** (`orderMarks.ts`, `CombatantCard` `order`,
@@ -652,8 +652,14 @@ panel's kind chips and the Guild Hall shelf's potions.
 the way Into the Breach numbers the Vek — reading 1 to 4 across the four active cards. It was
 first a ribbon of portraits under the ally status bands, then along the very top of the screen,
 and both read as a plaque bolted onto a scene; a number on the thing it is about costs no band.
-**Two "1"s IS a tie**: tied entries share the first of their ranks and the coin goes gold, since
-the RNG decides and the mark says so rather than picking one. The order is `previewOrder`
+**The place is struck in a metal** (2026-09-24, per user direction): gold, silver, bronze and
+iron for 1st to 4th, so the colour is read before the digit and, after a few fights, instead of
+it. Metals because the podium already taught every player that order and because the type chips
+beside the coin already spend the whole hue wheel; brightness falls with the place, so the order
+survives without colour. The metal is the coin's one colour claim — no state below recolours it.
+**Two "1"s IS a tie**: tied entries share the first of their ranks and a tied coin is **split**,
+its right half struck in the next place's metal, since the RNG decides between the two places
+and the mark says so rather than picking one (`Coin`'s `split`). The order is `previewOrder`
 (`engine/combat/priority.ts`): the same keys `orderActions` sorts on, no RNG spun. The
 player's declared actions carry their real bracket — a priority move, a switch (`⇄`) or a Rest
 (`☾`) moves its number and hangs the bracket as a pip off the coin; a rolled bracket shows `?`
@@ -661,11 +667,11 @@ at 0 — and the enemy's are unknown until the round plays, so they sit at brack
 **During playback the marks are the real order** (same day): `resolveRound` emits
 `RoundOrdered` — every action's settled bracket and Speed, right after `RoundStarted` — and
 the marks walk it beat by beat: the last combatant whose turn began (`TurnStarted`, a Daze
-block, a voluntary switch) stands forward in its own type light, the ones before it fall back,
+block, a voluntary switch) stands forward, lit in its own metal, the ones before it fall back,
 and the round's end retires them all; a KO'd figure's coin gives way to the KO tag. **A bracket
 that changed the order is lit** (`bracketEffect`, `engine/combat/priority.ts`): a cut ahead of
-someone Speed would have sent first takes a gold coin, lifted; a hold behind someone it would
-have sent later a cold one, sunk; a +1 on the hero Speed already favoured, which moved nothing,
+someone Speed would have sent first is lifted and lit brighter; a hold behind someone it would
+have sent later sunk and dimmed — both in the coin's own metal, the pip saying which bracket; a +1 on the hero Speed already favoured, which moved nothing,
 is a pip and no more. "Favoured" is read on the field's own axis — `previewOrder` and
 `RoundOrdered` both carry `reversedSpeed`, so under Stasis Bubble the slower hero is the one
 a cut goes past. **A number needs telling** (same day, per user direction — a new player would

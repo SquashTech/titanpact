@@ -2190,6 +2190,21 @@ Three details, each found by looking:
 - **No blur on it.** The far band carries half a pixel as depth-of-field; repeating that here
   would put the near terrain in the same focal plane as the thing it is meant to be nearer than.
 
+**THE ALLIES STAND ON GROUND** (2026-09-24, per user direction). The enemies always stood and the
+allies always floated, and the scene said why: the enemies' feet land on the far horizon's lit
+band, while the near band, at 46% of the arena, put its ridgeline *behind the allies' bodies* — a
+skyline has sky above it, so the allies stood in sky, over a coloured type glow, which is what
+levitating looks like. Three changes, all CSS, all Locations and the placeless scene alike:
+
+- **The near half is floor** (`.battlefield-ground`): the horizon's light carries on down toward
+  the viewer in the Location's tint (blue-grey where there is none), strongest at the line, with a
+  wide pool where the ally row stands. Not drawn on the Titan's back, whose body is its own ground.
+- **The near band is a lip, not a wall**: 16% of the arena, under the nameplates, so it is
+  foreground and nothing of it stands behind a hero.
+- **A contact shadow inside the type ring** (`.combatant-platform::before`): a dark core where the
+  feet meet the ground, on its own pseudo-element so `.acting` and `.fainted` keep restating only
+  the ring.
+
 The perspective fan **replaces** the tactical grid rather than layering over it. Seven pairs of
 `repeating-linear-gradient` — the placeless stack plus all six recipes, weighted per location so
 that the foundry had a plated deck and the forest nearly none — came out in this pass. Axis-aligned

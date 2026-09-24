@@ -1356,6 +1356,8 @@ export function FightScreen({
             An element rather than a ::before — .battlefield's two pseudo-elements
             are already spoken for by the Field Effect sweep. */}
         <div className="battlefield-floor" aria-hidden="true" />
+        {/* The near half lit as ground, so the allies stand on something (styles.css .battlefield-ground). */}
+        {!onTheTitan && <div className="battlefield-ground" aria-hidden="true" />}
         {onTheTitan && <TitanBody />}
         {location && !onTheTitan && <ArenaLocation location={location} />}
         {/* Keyed on beatSeq so the one-shot animation replays per reveal. */}
