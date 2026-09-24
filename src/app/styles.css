@@ -29121,7 +29121,10 @@ button.star-shop-bundle-face {
 
 .moveoffer-panel {
   position: relative;
-  width: min(420px, 92vw);
+  /* The overlay's own box, not the device's: `92vw` read the REAL viewport, which on a phone is
+     the canvas's width before the shell's transform — close, but a 32px margin of sky either side
+     that the dossier and the candidate names could have used. */
+  width: min(420px, 100%);
   /* The whole height, and a tight top: at the cap the dossier, four candidates and the button
      pair sit right on the fold, and the Learn/Decline pair is the one thing here that must not
      need a scroll. `.reward-panel` gives 24px above the head; this is the one place that air
@@ -29133,7 +29136,7 @@ button.star-shop-bundle-face {
 }
 
 .moveoffer-overlay {
-  padding: 10px 16px;
+  padding: 10px 8px;
 }
 
 /* The offer's cards are terse — a card with three riders was pushing the Learn/Decline pair
@@ -29174,6 +29177,172 @@ button.star-shop-bundle-face {
   text-transform: uppercase;
   text-align: center;
   color: #c9a2ff;
+}
+
+/* Fit steps (2026-09-24, per user direction). A typical offer left 90px of sky at the 700px
+   reference canvas and far more on a taller phone, while the one with the longest dossier
+   (Perfect Creation, six riders) was already on the fold — so no single set of sizes is both
+   bigger and scroll-free. MoveOfferOverlay tries `data-fit="2"`, then 1, then 0 against the
+   panel's own scrollHeight before paint and keeps the largest that fits; 0 is the sizes above,
+   unchanged, and scrolls exactly when it did before. Scoped to the overlay's own panel, so
+   EventNodeScreen's inline offer, which wears the same classes, and the hold popup and Reference
+   sheet stacked over the panel are untouched. */
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .offer-hero-portrait {
+  width: 56px;
+  height: 56px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .offer-hero-head h3 {
+  font-size: 18px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .offer-hero-eyebrow,
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .offer-swap-arrow,
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-label {
+  font-size: 11px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .offer-move-highlight {
+  padding: 12px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-name {
+  font-size: 21px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-line {
+  font-size: 12px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-stat {
+  font-size: 13px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-stat strong {
+  font-size: 19px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-unit {
+  font-size: 11px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-effect-text {
+  font-size: 15px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-list .move-button {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-name {
+  font-size: 15px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-power strong {
+  font-size: 17px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-type-code .element-glyph {
+  width: 18px;
+  height: 18px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-row-effect {
+  font-size: 11.5px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .moveoffer-button {
+  min-height: 74px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .moveoffer-icon {
+  font-size: 24px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .moveoffer-label {
+  font-size: 15px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .moveoffer-sub {
+  font-size: 11.5px;
+}
+
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .offer-hero-portrait {
+  width: 64px;
+  height: 64px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .offer-hero-head h3 {
+  font-size: 20px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .offer-hero-eyebrow,
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .offer-swap-arrow,
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-label {
+  font-size: 12px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .offer-move-highlight {
+  padding: 14px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-disc {
+  width: 58px;
+  height: 58px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-disc svg {
+  width: 35px;
+  height: 35px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-name {
+  font-size: 23px;
+}
+/* Held at step 1's 12px: at 13 "Fire · Physical · Single Enemy" wraps beside the disc and the
+   line it costs is more than the point it buys. */
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-line {
+  font-size: 12px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-stat {
+  font-size: 14px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-stat svg {
+  width: 17px;
+  height: 17px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-stat strong {
+  font-size: 21px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-unit {
+  font-size: 12px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-effect-text {
+  font-size: 16px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-effect-glyph,
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-effect-glyph svg {
+  width: 21px;
+  height: 21px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-list .move-button {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-row-top .mana-gem {
+  width: 28px;
+  height: 28px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-row-top .mana-gem-value {
+  font-size: 13px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-name {
+  font-size: 16px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-power strong {
+  font-size: 18px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-type-code .element-glyph {
+  width: 19px;
+  height: 19px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-kind-badge .move-kind-glyph {
+  width: 17px;
+  height: 17px;
+}
+/* The effect line starts under the name: the 28px gem plus the row's 6px gap. */
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-row-effect {
+  padding-left: 34px;
+  font-size: 12.5px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .moveoffer-button {
+  min-height: 80px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .moveoffer-icon {
+  font-size: 26px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .moveoffer-label {
+  font-size: 16px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .moveoffer-sub {
+  font-size: 12.5px;
 }
 
 /* The Guild Hall's Scroll row wears the vector mark, where the Contract row wears an emoji. */
