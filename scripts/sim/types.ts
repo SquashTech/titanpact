@@ -141,6 +141,8 @@ export interface Aggregate {
   goldEndSum: number;
   /** Roster size when the run ended, summed — under permadeath the count is the story. */
   rosterSizeEndSum: number;
+  /** Finales entered / won, keyed by heroes standing on entry. */
+  finaleBySize: Record<number, { entered: number; won: number }>;
   /** The companion (src/run/companion.ts): runs it joined, runs a knockout took it, and the encounter count it was lost at, summed. */
   companionJoined: number;
   companionLost: number;
@@ -262,6 +264,7 @@ export function emptyAggregate(): Aggregate {
     encountersWonSum: 0,
     goldEndSum: 0,
     rosterSizeEndSum: 0,
+    finaleBySize: {},
     companionJoined: 0,
     companionLost: 0,
     companionLostAtSum: 0,
@@ -396,6 +399,12 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   into.encountersWonSum += from.encountersWonSum;
   into.goldEndSum += from.goldEndSum;
   into.rosterSizeEndSum += from.rosterSizeEndSum;
+  for (const key of Object.keys(from.finaleBySize)) {
+    const n = Number(key);
+    const slot = (into.finaleBySize[n] ??= { entered: 0, won: 0 });
+    slot.entered += from.finaleBySize[n].entered;
+    slot.won += from.finaleBySize[n].won;
+  }
   into.companionJoined += from.companionJoined;
   into.companionLost += from.companionLost;
   into.companionLostAtSum += from.companionLostAtSum;

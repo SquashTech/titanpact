@@ -236,6 +236,13 @@ export function formatReport(
     );
   }
   out.push('');
+  {
+    const sizes = Object.keys(agg.finaleBySize).map(Number).sort((a, b) => b - a);
+    if (sizes.length > 0) {
+      out.push(`  finale by heroes standing on entry: ${sizes.map((n) => `${n}: ${agg.finaleBySize[n].entered} (${pct(agg.finaleBySize[n].won, agg.finaleBySize[n].entered)} won)`).join(', ')}`);
+      out.push('');
+    }
+  }
   out.push('  runs ended at node type:');
   for (const [type, count] of Object.entries(agg.deathByNodeType).sort((a, b) => b[1] - a[1])) {
     out.push(`    ${pad(type, 12)}${padStart(String(count), 7)}${padStart(pct(count, agg.runs - agg.wins), 8)}`);

@@ -176,6 +176,8 @@ export interface RunRecord {
   goldEnd: number;
   rosterLevelEnd: number;
   rosterSizeEnd: number;
+  /** Heroes standing when the finale was entered (null = never reached it). The Vigil recruits nobody, so this is the side the run kept. */
+  finaleRoster: number | null;
   /** heroId -> best level reached this run, for every hero that was ever on the roster. */
   heroLevels: Record<string, number>;
   /** Share of the roster that had evolved when the run ended — the §11 target is 1.0. */
@@ -333,6 +335,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     goldFlow: {},
     rosterLevelEnd: 0,
     rosterSizeEnd: 0,
+    finaleRoster: null,
     heroLevels: {},
     rosterEvolvedEnd: 0,
     fights: [],
@@ -387,6 +390,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     if (isEncounterNode(node.type)) {
       // The Guardian's drop lands after the act has advanced; it belongs to the act it was fought in.
       const foughtAct = run.actNumber;
+      if (node.type === 'finale') record.finaleRoster = standingRoster(run.roster).length;
       const outcome = resolveEncounterNode(run, node, location.id, rng, options, record);
       run = outcome.run;
       if (!outcome.won) {

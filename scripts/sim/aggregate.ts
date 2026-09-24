@@ -57,6 +57,11 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
   agg.encountersWonSum += record.encountersWon;
   agg.goldEndSum += record.goldEnd;
   agg.rosterSizeEndSum += record.rosterSizeEnd;
+  if (record.finaleRoster !== null) {
+    const slot = (agg.finaleBySize[record.finaleRoster] ??= { entered: 0, won: 0 });
+    slot.entered += 1;
+    if (record.won) slot.won += 1;
+  }
   if (record.companionHeroId) agg.companionJoined += 1;
   if (record.companionLostAt !== null) {
     agg.companionLost += 1;

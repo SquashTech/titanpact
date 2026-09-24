@@ -1285,6 +1285,14 @@ anyway.
      on the reading that a 6v4 finale was "a bug the player cannot see coming"; the tension
      that leaves is that the rule is learned when Act 6 opens, after the last hire, and
      under Permadeath (A1) every KO carried to the end is now a body the finale lacks.
+     *Measured* (3000 runs, seed 1, skilled pilot, against the commit before): full-clear
+     Base 73.7 → 74.0%, A1 31.2 → 31.3% — noise at both rungs. At Base every run already
+     reached the finale six strong off contracts, so the Vigil never recruited. At A1 the
+     finale entered six strong fell 944 → 857 runs and the finale's clear held (80.7 → 81.1%):
+     the gold a Vigil hire took went to the Revive and the Smithy instead, and the short
+     sides won more (five standing 58 → 65%). The finale by heroes standing on entry, A1:
+     six 91%, five 65%, four 49%, three 16%, two 0%. The sim priced a Vigil hire at 50g
+     rather than free, so the old rule's help is understated.
   2. **Spends the gold.** Gold is otherwise dead currency the moment Act 5's Guardian
      falls. The Vigil's equipment shelf is the run's last, at one rarity tier ahead.
   3. **Spends banked Training Points**, since `levelUpDeferred` lets a pool ride.
