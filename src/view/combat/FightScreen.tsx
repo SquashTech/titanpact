@@ -1372,7 +1372,10 @@ export function FightScreen({
           <div key={`field-${beatSeq}`} className="field-effect-surge" aria-hidden="true" />
         )}
 
-        {/* What a tapped coin says, for a moment, in the band the Pact warning takes when it is due. */}
+        {/* The round's order, across the top of the arena (OrderTrack; styles.css .order-track). */}
+        <OrderTrack entries={orderTrack} onInspect={resolving ? undefined : sayOrder} />
+
+        {/* What a tapped sprite says, for a moment, on the horizon — the band the Pact warning takes when it is due. */}
         {fieldNote && !resolving && (
           <div key={fieldNote.key} className="field-note" role="status" onAnimationEnd={() => setFieldNote(null)}>
             {fieldNote.text}
@@ -1401,9 +1404,8 @@ export function FightScreen({
           {renderActiveSlot(AI_SIDE, 1)}
         </div>
 
-        <div className={`battlefield-divider${orderTrack.length > 0 ? ' has-order' : ''}`}>
+        <div className="battlefield-divider">
           <span className="battlefield-vs">VS</span>
-          <OrderTrack entries={orderTrack} onInspect={resolving ? undefined : sayOrder} />
         </div>
         {inspectingFieldEffect && combat.activeFieldEffect && (
           <FieldEffectDetailOverlay active={combat.activeFieldEffect} onClose={() => setInspectingFieldEffect(false)} />
@@ -1414,7 +1416,7 @@ export function FightScreen({
           {renderActiveSlot(PLAYER_SIDE, 1)}
         </div>
 
-        {/* The field, at the foot of the arena (2026-09-24): the horizon's centre is the order track's now. */}
+        {/* The field, at the foot of the arena (2026-09-24): the horizon carries the Pact warning and the order's words. */}
         {combat.activeFieldEffect && (
           /* Keyed by effect id so an override remounts and replays the arrival. No glyph: the plaque keeps the horizon's small type register. */
           <span

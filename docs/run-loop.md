@@ -648,11 +648,14 @@ the Bag panel's kind chips and the Guild Hall shelf's potions.
 
 **The resolve order is a track on the horizon** (`OrderTrack.tsx`, `orderMarks.ts`, 2026-09-24,
 per user direction): the four active fighters as half-size sprites — 24px, exactly half the 48px
-source — first to last, left to right, centred where "VS" stood, which steps aside while the
-track is up. A gold rail runs through it and fades into the horizon line at both ends; each
+source — first to last, left to right, across the top of the arena, in the padding above the
+far side's status strip (it sat on the horizon for a day, where the middle of the field was the
+busiest strip on the screen). A status strip never wraps into it: on the battlefield a crowded
+strip stays one line and shrinks to its card's width (`.status-badge-fit`, `CombatantCard`). The
+Pact warning and the order's spoken words moved down to the horizon, over "VS". A gold rail runs through it and fades into the horizon line at both ends; each
 fighter sits in a small glass portrait rimmed in its side's colour (the enemy red, the ally
 blue), so which side acts when reads without a name; and a gold chevron on the rail between each
-pair says it is a sequence before any face is read. The middle of the field is the track's
+pair says it is a sequence before any face is read. The middle of the field is the teams'
 alone: the type chips hang at the OUTER shoulder of each figure, the right-hand column mirrored
 so its chips sit against the screen's right edge. Its history is three
 tries: a ribbon of portraits under the ally status bands, then along the very top of the screen
