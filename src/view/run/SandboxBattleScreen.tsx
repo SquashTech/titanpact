@@ -325,7 +325,8 @@ export function SandboxBattleScreen({ sideA, sideB, onChangeSideA, onChangeSideB
             const hero = heroes[config.heroId];
             if (!hero) return null;
             const evolutionNode = progressionTable.evolutions[hero.id]?.[0] ?? null;
-            const movePool = [...new Set([...hero.moveIds, ...(progressionTable.moveTiers[hero.id] ?? [])])];
+            // The signature too, so a tenth-pip move can be tried without a run to earn it.
+            const movePool = [...new Set([...hero.moveIds, ...(progressionTable.moveTiers[hero.id] ?? []), ...(hero.signatureMoveId ? [hero.signatureMoveId] : [])])];
             return (
               <HeroConfigCard
                 key={config.rosterId}

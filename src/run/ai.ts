@@ -16,6 +16,7 @@ import {
   effectiveTypes,
   getMaxHp,
   hasAffordableMoveInFight,
+  isMoveUsable,
   hasStatus,
   moveForHero,
   resolveManaCost,
@@ -349,7 +350,7 @@ export function pickAiAction(state: CombatState, combatantId: string, ctx: AiCon
     return { kind: 'rest', combatantId };
   }
 
-  const affordable = moveIds.filter((id) => combatant.currentMana >= resolveManaCost(state, combatantId, moveOf(id), ctx.heroes));
+  const affordable = moveIds.filter((id) => isMoveUsable(state, combatantId, moveOf(id)) && combatant.currentMana >= resolveManaCost(state, combatantId, moveOf(id), ctx.heroes));
   // The one HARD filter in the cascade — every narrowing below it falls back, this one cannot.
   const declarable = affordable.filter((id) => isDeclarable(state, combatantId, moveOf(id), ctx));
   if (declarable.length === 0) return { kind: 'rest', combatantId };

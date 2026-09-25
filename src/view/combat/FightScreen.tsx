@@ -17,6 +17,7 @@ import {
   effectiveTypes,
   hasStatus,
   hasAffordableMoveInFight,
+  isMoveUsable,
   resolveManaCost,
   resolveCastBasePower,
   declarationTargetMode,
@@ -1703,7 +1704,7 @@ export function FightScreen({
                       <MoveRow
                         key={moveId}
                         move={move}
-                        affordable={combatant.currentMana >= cost}
+                        affordable={combatant.currentMana >= cost && isMoveUsable(combat, id, move)}
                         gateUnmet={!hasLegalTarget(move, id)}
                         cost={cost}
                         selected={isSelected}

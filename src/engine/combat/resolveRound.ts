@@ -5,7 +5,7 @@
 import type { FieldEffectDefinition, MoveDefinition, PassiveDefinition, PassiveId, StatDelta, StatKey, StatusDefinition, StatusId } from '../content';
 import { statusApplicationsOf } from '../content';
 import type { CombatState, HeroLookup } from '../state';
-import { activePartnerTypes, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveCastBasePower, resolveTargetMode, effectiveTypes, hasStatus, moveForHero, applyStatModifierDelta } from '../state';
+import { activePartnerTypes, isMoveUsable, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveCastBasePower, resolveTargetMode, effectiveTypes, hasStatus, moveForHero, applyStatModifierDelta } from '../state';
 import type { CombatEvent } from '../events';
 import type { Action } from './actions';
 import { orderActions } from './priority';
@@ -151,6 +151,12 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
     events.push({ type: 'TurnStarted', round, combatantId: action.combatantId });
 
+    // A once-a-fight move already cast, or a first-turn move past its turn: the view must prevent it, so this is the backstop.
+    if (!isMoveUsable(working, action.combatantId, move)) {
+      events.push({ type: 'ActionBlocked', round, combatantId: action.combatantId, reason: 'moveUnavailable' });
+      continue;
+    }
+
     // Live cost and live target mode, read off `working` so a faster action this round already counts.
     const manaCost = resolveManaCost(working, action.combatantId, move, heroes);
     if (actor.currentMana < manaCost) continue; // engine-level legality guard; view must already prevent this
@@ -242,6 +248,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           currentMana: newMana,
           moveManaDiscounts: nextDiscounts,
           moveBasePowerBonuses: nextBasePowerBonuses,
+          ...(move.oncePerFight ? { spentMoveIds: [...(actor.spentMoveIds ?? []), move.id] } : {}),
           damageTakenSinceLastTurn: 0,
         },
       },

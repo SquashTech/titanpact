@@ -423,13 +423,22 @@ None built. Where each lands when it is:
      Stone, Charizard's Rock weakness on purpose), Cinderscale (Stone graft: Spire Claw, and
      Magma Hide — Shield 40 on a Rest); **Wyrmfire** the signature, the only physical Fire move
      that takes both foes (80, Burn 20, 70 mana), which a Slumber Ambush lands on each of.
-     **Nautilus** (Water, the octopus controller — innate Ink on switching out, signature Ink
-     Blast: +2 priority Daze on both foes, the entering round only, once a fight, the whole pool
-     as its price, then a retreat) and **Tixwick** (Nature, the slow mantis that strikes first —
-     innate Poised, signature Guillotine) are decided and wait on three engine verbs: a
-     `SwitchedOut` hook, a +1-priority status, and a move's once-a-fight / entering-round gate
-     with a whole-pool cost. Their portraits are wired already, because heroArt's orphan check
-     throws on a pose frame no hero claims.
+     **Nautilus** fills the second seat (same day): the octopus controller, Wisdom 75 and
+     Intelligence 75 on Speed 40, kit Splash / Ink Cloud (a new Early Water debuff, −15 Attack and
+     −15 Intelligence on both) / Lull. Innate **Ink** — on switching out, both active enemies lose
+     10 Attack and 10 Intelligence — on a new `SwitchedOut` hook (the SwitchedIn that sent the
+     owner out, fired from the bench it reached; never on a knockout). Signature **Ink Blast**:
+     +2 priority, Daze on both foes, then a retreat that fires Ink — gated three ways because a
+     double flinch is a free turn: `firstTurnOnly` (Combatant.firstActionRound, round 1 for a
+     lead), `oncePerFight` (Combatant.spentMoveIds), and `manaCostAll` (every drop held, 45 the
+     floor), all read through `isMoveUsable` / `resolveManaCost` by the engine, the AI and the
+     fight screen. A hold (the target cannot switch) was designed first and dropped: the enemy AI
+     never switches, so it could not matter. Deepgrip (mono: a Water hit makes every move the
+     target holds cost 5 more Mana for the fight, up to 20 — the `manaSurcharge` effect, a
+     `ManaSurcharged` event), Inkmind (Mind graft, Disorient), Mimic (Shadow graft, Enfeeble).
+     **Tixwick** (Nature, the slow mantis that strikes first — innate Poised, signature
+     Guillotine) waits on a +1-priority status. Its portrait is wired already, because heroArt's
+     orphan check throws on a pose frame no hero claims.
 
 7. **Phase 1 — BUILT 2026-09-19, per user direction, as the shake-up rather than the Foundry:**
    `StarterPack` (`src/run/starterPacks.ts`, packs in `src/data/starterPacks.ts`), pack zero

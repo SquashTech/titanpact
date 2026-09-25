@@ -139,6 +139,26 @@ export const progressionTable: ProgressionTable = {
       'torrent', 'engulf', 'deluge', 'crest', 'shockBubble', 'oasis', 'cleansingRain',
       'maelstrom', 'highTide', 'seawall', 'thunderbolt',
     ],
+    // Nautilus: Water's support and control half, with one Mind and one Shadow Early move to
+    // telegraph Inkmind and Mimic.
+    nautilus: [
+      'siphon',
+      'refresh',
+      'tideGuard',
+      'undercurrent',
+      'psiBolt',
+      'weaken',
+      'torrent',
+      'engulf',
+      'deluge',
+      'washAway',
+      'shockBubble',
+      'cleansingRain',
+      'tsunami',
+      'maelstrom',
+      'highTide',
+      'seawall',
+    ],
     // --- Frost ---
     glacialWarden: [
       'snowBlast',
@@ -1012,6 +1032,41 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['chainLightning'],
             typeGraft: 'Storm',
             learnableMoveIds: ['zap', 'charge', 'electricBurst', 'ionicZap', 'ionCascade'],
+          },
+        ],
+      },
+    ],
+    nautilus: [
+      {
+        paths: [
+          {
+            id: 'nautilus-deepgrip',
+            heroId: 'nautilus',
+            name: 'Deepgrip',
+            description: 'Takes hold and does not let go; everything the prey does after that, it does dragging an arm.',
+            statGrants: { hp: 45, defense: 10 },
+            unlocksMoveIds: [],
+            grantsPassiveIds: ['deepgrip'],
+          },
+          {
+            id: 'nautilus-inkmind',
+            heroId: 'nautilus',
+            name: 'Inkmind',
+            description: 'Was always the cleverest thing in the water. Stops hiding it.',
+            statGrants: { intelligence: 20, manaPool: 20 },
+            unlocksMoveIds: ['disorient'],
+            typeGraft: 'Mind',
+            learnableMoveIds: ['brainWard', 'psyshock', 'mindLeech', 'hindsight', 'psionicWave', 'breakWill'],
+          },
+          {
+            id: 'nautilus-mimic',
+            heroId: 'nautilus',
+            name: 'Mimic',
+            description: 'Wears whatever shape frightens the thing looking at it, and none of them is its own.',
+            statGrants: { intelligence: 10, speed: 20 },
+            unlocksMoveIds: ['enfeeble'],
+            typeGraft: 'Shadow',
+            learnableMoveIds: ['umbraBolt', 'umbralBeam', 'eclipse', 'umbralWave'],
           },
         ],
       },

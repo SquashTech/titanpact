@@ -124,6 +124,26 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'The whole deep comes up behind the strike, and it does not go back down (Water Force 25 to self).',
   },
+  // Nautilus: the whole ink sac at once, then gone behind it. Both foes flinch; the retreat fires
+  // Ink on the way out. Gated three ways because a double flinch is a free turn: the round it comes
+  // in, once a fight, and every drop of Mana it holds.
+  inkBlast: {
+    id: 'inkBlast',
+    name: 'Ink Blast',
+    type: 'Water',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [],
+    statusApplication: { statusId: 'Daze', target: 'moveTarget' },
+    manaCost: 45,
+    manaCostAll: true,
+    oncePerFight: true,
+    firstTurnOnly: true,
+    switchesUserOut: true,
+    priority: 2,
+    target: 'bothEnemies',
+    description: 'Empties the whole ink sac and is gone behind it: both foes flinch (Daze on both, then switch out). First turn out only, once a fight, spends all Mana.',
+  },
 
   // --- Frost ---
   // Flurry: cold that does not wait to be let in.

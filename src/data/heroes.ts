@@ -149,6 +149,21 @@ export const heroes: Record<string, HeroDefinition> = {
     signatureMoveId: 'deepsurge',
     passiveIds: ['overchannel'],
   },
+  // From the Tall Grass: the octopus. Water's control hand on a Wisdom-and-Intelligence body — it
+  // clouds the water and slips out through it (Ink), and its opener Dazes the whole enemy line.
+  nautilus: {
+    id: 'nautilus',
+    name: 'Nautilus',
+    types: ['Water'],
+    baseStats: { hp: 210, attack: 30, defense: 60, intelligence: 75, wisdom: 75, speed: 40, manaPool: 60, mpRegen: 10 },
+    moveIds: ['splash', 'inkCloud', 'lull'],
+    starter: false,
+    unlock: 'bundle.tallGrass',
+    growthGrades: { hp: 'A', attack: 'F', defense: 'A', intelligence: 'A', wisdom: 'S', speed: 'C', manaPool: 'B' },
+    schedule: { offerLevels: [6, 10, 14, 19, 21, 25], midLevel: 11, lateLevel: 20 },
+    signatureMoveId: 'inkBlast',
+    passiveIds: ['ink'],
+  },
 
   // --- Frost ---
   glacialWarden: {

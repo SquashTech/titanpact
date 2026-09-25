@@ -4,7 +4,7 @@ import { classes } from '../../data/classes';
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { Combatant, StatContext } from '../../engine/state';
 import {
-  effectiveManaCost,
+  combatantManaCost,
   effectiveTypes,
   getEffectiveStat,
   getMaxHp,
@@ -269,7 +269,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
               {moveIds.map((id) => {
                 // Priced as the fight prices it: the ledger applied, and dim where the pool can't pay.
                 const move = moveForHero(moves[id], hero);
-                const cost = effectiveManaCost(move, combatant.moveManaDiscounts);
+                const cost = combatantManaCost(move, combatant);
                 return (
                   <MoveButtonReplica
                     key={id}
@@ -330,7 +330,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
               // Priced by the fight here too, so the dossier agrees with the row that opened it.
               moves[popup.id] ? (
                 <MoveDetailCard
-                  move={{ ...moveForHero(moves[popup.id], hero), manaCost: effectiveManaCost(moves[popup.id], combatant.moveManaDiscounts) }}
+                  move={{ ...moveForHero(moves[popup.id], hero), manaCost: combatantManaCost(moves[popup.id], combatant) }}
                   caster={healCaster}
                 />
               ) : null

@@ -327,6 +327,13 @@ function resolveEffectOn(
       };
       return { state: nextState, events: changes };
     }
+    case 'manaSurcharge': {
+      const held = target.manaSurcharge ?? 0;
+      const total = Math.min(effect.max, held + effect.amount);
+      if (total === held) return { state, events: [] };
+      const nextState: CombatState = { ...state, combatants: { ...state.combatants, [targetId]: { ...target, manaSurcharge: total } } };
+      return { state: nextState, events: [{ type: 'ManaSurcharged', round, combatantId: targetId, delta: total - held, total }] };
+    }
   }
 }
 
@@ -372,10 +379,18 @@ export function resolvePassiveReactions(
 
       for (const instance of Object.values(owner.passives)) {
         const reactive = passiveDefs[instance.passiveId]?.reactive;
-        if (!reactive || reactive.hook !== event.type) continue;
-        if (reactive.whileBenched ? onField : !onField) continue;
+        if (!reactive) continue;
+        // SwitchedOut is the SwitchedIn that sent the owner out, read from the bench it has just reached.
+        const switchedOut = reactive.hook === 'SwitchedOut';
+        if ((switchedOut ? 'SwitchedIn' : reactive.hook) !== event.type) continue;
+        if (reactive.whileBenched || switchedOut ? onField : !onField) continue;
         // A round's end is about nobody, so each active owner is its own subject: 'self' fires, nothing else does.
-        const subjectId = event.type === 'RoundEnded' ? ownerId : subjectOf(event, reactive.condition.subjectRole ?? 'target');
+        const subjectId =
+          event.type === 'RoundEnded'
+            ? ownerId
+            : switchedOut && event.type === 'SwitchedIn'
+              ? event.outCombatantId ?? undefined
+              : subjectOf(event, reactive.condition.subjectRole ?? 'target');
         // Kept apart from `subjectId`: a source-role condition ("I dealt this") still needs the defender.
         const eventTargetId = subjectOf(event, 'target');
         const subjectSide = subjectId ? working.combatants[subjectId]?.side : undefined;

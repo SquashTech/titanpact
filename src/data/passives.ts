@@ -889,6 +889,18 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'heal', target: 'self', amount: { kind: 'matchTriggerAmount', field: 'manaRestored' } },
     },
   },
+  deepgrip: {
+    id: 'deepgrip',
+    name: 'Deepgrip',
+    description: "Whenever this hero lands a Water attack, every move its target holds costs 5 more Mana for the rest of the fight, up to 20.",
+    // Holds on where a hold cannot matter — the enemy never switches — so the grip is priced in the
+    // lever every move already answers to. Capped so a long fight tightens it without a lockout.
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
+      effect: { kind: 'manaSurcharge', target: 'triggerTarget', amount: 5, max: 20 },
+    },
+  },
   magmaHide: {
     id: 'magmaHide',
     name: 'Magma Hide',
@@ -965,6 +977,16 @@ const innatePassives: Record<string, PassiveDefinition> = {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
       effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'speed', amount: -5 },
+    },
+  },
+  ink: {
+    id: 'ink',
+    name: 'Ink',
+    description: 'When this hero switches out, both active enemies lose 10 Attack and 10 Intelligence.',
+    reactive: {
+      hook: 'SwitchedOut',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: ['attack', 'intelligence'], amount: -10 },
     },
   },
   carapace: {
