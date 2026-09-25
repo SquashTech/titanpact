@@ -110,6 +110,14 @@ export interface BeatFlavor {
    */
   strikeCombatantId?: string;
   /**
+   * A switch, in two beats (2026-09-25, per user direction — Pokémon's recall and send-out,
+   * without the ball): `recallCombatantId` is the hero leaving, drawn back into its platform on a
+   * beat of its own before the swap is applied; `summonCombatantId` is the one arriving, rising out
+   * of the same ground on the beat that applies it (styles.css .recalling / .summoning).
+   */
+  recallCombatantId?: string;
+  summonCombatantId?: string;
+  /**
    * A move's payload LANDING on a figure this beat (TypeFx.tsx), and the cast
    * sound beatSfx layers under it. Stamped on the beat where the target takes it
    * — the damage, the heal, the stat change — never on the declaration, so the
@@ -581,10 +589,21 @@ export function buildBeats(
           i++;
           break;
         }
+        // The leaving hero gets a beat of its own, before the swap is applied, so it is still on the
+        // field to be drawn back. A replacement for a fallen hero has nobody to recall.
+        if (e.outCombatantId) {
+          push([], `${name(e.outCombatantId)} falls back`, [], {
+            bannerLead: 'Switching out',
+            bannerFocus: name(e.outCombatantId),
+            bannerFocusKind: 'buff',
+            recallCombatantId: e.outCombatantId,
+          });
+        }
         push([e], `${inName} switches in!`, [], {
           bannerLead: 'Switching in',
           bannerFocus: inName,
           bannerFocusKind: 'buff',
+          summonCombatantId: e.inCombatantId,
         });
         i++;
         break;
@@ -669,7 +688,7 @@ export function buildBeats(
           push(
             [e],
             capped ? `${targetName}'s Shield can't go any higher (${e.magnitude})` : `${targetName} gains Shield ${e.magnitude}`,
-            [{ combatantId: e.combatantId, text: capped ? "Can't go any higher" : `Shield ${e.magnitude}`, className: capped ? 'popup-ceiling' : 'popup-shield', glyph: 'Shield' }],
+            [{ combatantId: e.combatantId, text: capped ? "Can't go any higher" : `Shield ${e.magnitude}`, className: capped ? 'popup-ceiling' : 'popup-shield-gain', glyph: 'Shield' }],
             {
               bannerLead: capped ? `${targetName}'s Shield` : `${targetName} gains`,
               bannerFocus: capped ? "can't go any higher" : `Shield ${e.magnitude}`,

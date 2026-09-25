@@ -360,6 +360,9 @@ const AI_SIDE: Side = 'B';
  */
 const ARENA_MOTE_DENSITY = 0.45;
 
+/** How long a send-out plays (styles.css .summoning) — how long a replacement made outside a round holds its class. */
+const SUMMON_MS = 700;
+
 /**
  * The act's place, standing behind the fight (docs/locations.md §5.5). Memoised because the
  * arena re-renders on every beat and the particle field has nothing to say about any of them.
@@ -639,6 +642,8 @@ export function FightScreen({
   const [confirmingQuit, setConfirmingQuit] = useState(false);
   /** Bench hero tapped but not yet confirmed in the forced-replacement panel. Reset after each confirm (a double KO opens two in sequence). */
   const [replacementPick, setReplacementPick] = useState<string | null>(null);
+  /** A forced replacement resolves outside a round, so it has no beat to carry its send-out; this holds the arrival for one animation. */
+  const [summonedId, setSummonedId] = useState<string | null>(null);
   const [pending, setPending] = useState<Record<string, PendingAction>>({});
   const [selecting, setSelecting] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
   /** Second stage of a switchesUserOut declaration: target chosen, now picking who comes in. Commits a move, not a switch. */
@@ -1044,6 +1049,8 @@ export function FightScreen({
     setCombat(entry.state);
     appendLog(formatEvents([...result.events, ...entry.events], allCombatants, entry.state.combatants, moves));
     setReplacementPick(null);
+    setSummonedId(benchedCombatantId);
+    window.setTimeout(() => setSummonedId((cur) => (cur === benchedCombatantId ? null : cur)), SUMMON_MS);
   }
 
   // formatEvents keys by round+index within its own call, which collides across calls in one round; re-key against the running length.
@@ -1278,6 +1285,8 @@ export function FightScreen({
           popup={popups[id]}
           statCtx={statCtx}
           striking={beat?.strikeCombatantId === id}
+          recalling={resolving && beat?.recallCombatantId === id}
+          summoning={(resolving && beat?.summonCombatantId === id) || summonedId === id}
           fx={figureFx[id]}
           warded={wardOn(combat, id, passives)}
         />

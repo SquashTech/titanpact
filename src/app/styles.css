@@ -4790,6 +4790,140 @@ textarea,
   }
 }
 
+/* THE SWITCH, IN TWO BEATS (2026-09-25, per user direction): Pokémon's recall and send-out,
+   without the ball. buildBeats gives a switch a beat for the hero leaving and a beat for the
+   hero arriving, and both happen at the platform — the ground each figure already stands on is
+   where it goes back into and comes up out of.
+
+   Recall (.recalling): the figure burns white in its own type's light and collapses DOWN into
+   its platform while a column of that light rises off the ground and fades; the nameplate dims
+   with it, since the hero it names is leaving. Held at its end (`forwards`) for the rest of the
+   beat, so the slot reads as emptied until the swap lands.
+
+   Send-out (.summoning): the platform flares as a ring, the same column of light stands up, and
+   the figure grows out of the ground white-hot, overshoots and settles, the colour coming back
+   into it last — the moment Pokémon's creature resolves out of the flash. */
+.team-row .combatant-stage::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  bottom: 6px;
+  width: 38px;
+  height: 118px;
+  border-radius: 19px 19px 8px 8px;
+  background: linear-gradient(
+    to top,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(var(--type-rgb, 200, 210, 230), 0.75) 22%,
+    rgba(var(--type-rgb, 200, 210, 230), 0.25) 65%,
+    transparent 100%
+  );
+  filter: blur(1.5px);
+  mix-blend-mode: screen;
+  opacity: 0;
+  transform: translateX(-50%) scaleY(0);
+  transform-origin: center bottom;
+  pointer-events: none;
+}
+
+.team-row .combatant-card.recalling .combatant-portrait {
+  animation: hero-recall 460ms cubic-bezier(0.5, 0, 0.9, 0.4) forwards;
+}
+
+.team-row .combatant-card.recalling .combatant-stage::after {
+  animation: switch-beam 560ms ease-out forwards;
+}
+
+.team-row .combatant-card.recalling .combatant-plate,
+.team-row .combatant-card.recalling .status-badge-row {
+  opacity: 0.3;
+  transition: opacity 360ms ease-out;
+}
+
+@keyframes hero-recall {
+  0% {
+    transform: scale(1, 1);
+    filter: var(--figure-shadow);
+    opacity: 1;
+  }
+  30% {
+    transform: scale(1.06, 1.04);
+    filter: brightness(4) saturate(0) drop-shadow(0 0 8px rgba(var(--type-rgb), 0.95));
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.18, 0);
+    filter: brightness(4) saturate(0) drop-shadow(0 0 8px rgba(var(--type-rgb), 0.95));
+    opacity: 0;
+  }
+}
+
+.team-row .combatant-card.summoning .combatant-portrait {
+  animation: hero-summon 620ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+.team-row .combatant-card.summoning .combatant-stage::after {
+  animation: switch-beam 620ms ease-out both;
+}
+
+.team-row .combatant-card.summoning .combatant-platform {
+  animation: switch-ring 620ms ease-out both;
+}
+
+@keyframes hero-summon {
+  0%,
+  12% {
+    transform: scale(0.2, 0);
+    filter: brightness(4) saturate(0) drop-shadow(0 0 8px rgba(var(--type-rgb), 0.95));
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.08, 1.06);
+    filter: brightness(3) saturate(0.2) drop-shadow(0 0 8px rgba(var(--type-rgb), 0.9));
+    opacity: 1;
+  }
+  75% {
+    transform: scale(0.98, 1.01);
+    filter: var(--figure-shadow) brightness(1.4);
+  }
+  100% {
+    transform: scale(1, 1);
+    filter: var(--figure-shadow);
+    opacity: 1;
+  }
+}
+
+@keyframes switch-beam {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scaleY(0.1);
+  }
+  25% {
+    opacity: 1;
+    transform: translateX(-50%) scaleY(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) scaleY(1.1) scaleX(0.4);
+  }
+}
+
+@keyframes switch-ring {
+  0% {
+    filter: brightness(1);
+    transform: translateX(-50%) scale(0.4);
+  }
+  30% {
+    filter: brightness(2.6);
+    transform: translateX(-50%) scale(1.25);
+  }
+  100% {
+    filter: brightness(1);
+    transform: translateX(-50%) scale(1);
+  }
+}
+
 .team-row .combatant-card.hit-struck .combatant-portrait {
   animation: hero-hit-struck 320ms ease-out;
 }
@@ -5939,6 +6073,29 @@ textarea,
   color: var(--shield);
   font-size: 15px;
   text-shadow: 0 0 6px rgba(216, 221, 230, 0.55), 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+/* A Shield GAINED (buildBeats.ts StatusApplied): the same tone as a hit it took, but the card only
+   shimmers — it is a grant, and the hurt frame and recoil are for hits (CombatantCard
+   POPUP_FLASH_CLASS, 2026-09-25). */
+.dmg-popup.popup-shield-gain {
+  color: var(--shield);
+  font-size: 15px;
+  text-shadow: 0 0 6px rgba(216, 221, 230, 0.55), 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.combatant-card.shield-gain-hit .combatant-portrait {
+  animation: shield-gain-shimmer 520ms ease-out;
+}
+
+@keyframes shield-gain-shimmer {
+  0%,
+  100% {
+    filter: var(--figure-shadow);
+  }
+  35% {
+    filter: var(--figure-shadow) drop-shadow(0 0 6px rgba(216, 221, 230, 0.9)) brightness(1.15);
+  }
 }
 
 .dmg-popup.popup-shield-broken {
