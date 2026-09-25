@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { rosterHeroes } from '../../data/content';
 import { moves } from '../../data/moves';
@@ -13,6 +13,37 @@ import { HubGlyph } from '../shared/nodeIcons';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { healCasterForEntry } from '../shared/healCaster';
 import { overlayHost } from '../shared/overlayHost';
+
+/** The largest `data-fit` step styles.css authors for this overlay. */
+const MAX_FIT_STEP = 2;
+
+/**
+ * Sizes the offer to the screen it lands on: tries each `data-fit` step from the largest down and
+ * keeps the first under which the panel does not scroll (styles.css, "Fit steps"). Written to the
+ * DOM rather than to state, so every try is measured and discarded inside one layout pass and the
+ * player never sees a size that did not fit. `deps` are whatever changes the panel's content height.
+ */
+function useFitStep(overlayRef: RefObject<HTMLDivElement | null>, deps: readonly unknown[]) {
+  useLayoutEffect(() => {
+    const overlay = overlayRef.current;
+    const panel = overlay?.querySelector<HTMLElement>('.moveoffer-panel');
+    if (!overlay || !panel) return;
+    const fit = () => {
+      for (let step = MAX_FIT_STEP; step >= 0; step--) {
+        overlay.dataset.fit = String(step);
+        if (step === 0 || panel.scrollHeight <= panel.clientHeight) break;
+      }
+    };
+    fit();
+    // The overlay's box is the canvas's, so this fires on a resize or a rotation and never on a step change.
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(fit);
+    observer?.observe(overlay);
+    // A web font landing after the first pass can change a line's height.
+    document.fonts?.ready.then(fit).catch(() => {});
+    return () => observer?.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+}
 
 interface Props {
   run: RunState;
@@ -36,6 +67,9 @@ export function MoveOfferOverlay({ run, entry, moveId, eyebrow, onResolve }: Pro
   const [selectedReplaceId, setSelectedReplaceId] = useState<string | null>(null);
   const [popupMoveId, setPopupMoveId] = useState<string | null>(null);
   const [referenceOpen, setReferenceOpen] = useState(false);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  // The Learn button's line changes with the pick, and a longer one can wrap.
+  useFitStep(overlayRef, [moveId, entry, selectedReplaceId]);
 
   const hero = rosterHeroes[entry.heroId];
   const caster = healCasterForEntry(hero, entry, run.relics);
@@ -48,7 +82,7 @@ export function MoveOfferOverlay({ run, entry, moveId, eyebrow, onResolve }: Pro
   }
 
   return createPortal(
-    <div className="log-overlay moveoffer-overlay">
+    <div className="log-overlay moveoffer-overlay" ref={overlayRef}>
       <div className="reward-panel moveoffer-panel">
         {/* The cards below are terse — the rule under each payload is in here instead. */}
         <button
@@ -144,8 +178,10 @@ interface LearnedProps {
 export function MoveLearnedOverlay({ run, entry, moveId, eyebrow, onClose }: LearnedProps) {
   const hero = rosterHeroes[entry.heroId];
   const caster = healCasterForEntry(hero, entry, run.relics);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  useFitStep(overlayRef, [moveId, entry]);
   return createPortal(
-    <div className="log-overlay moveoffer-overlay">
+    <div className="log-overlay moveoffer-overlay" ref={overlayRef}>
       <div className="reward-panel moveoffer-panel is-learned">
         <div className="offer-hero-head">
           <HeroPortrait heroId={hero.id} className="offer-hero-portrait" />

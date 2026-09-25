@@ -17,7 +17,7 @@ import {
 } from '../run/profile';
 import { FightScreen } from '../view/combat/FightScreen';
 import { TitleScreen } from '../view/run/TitleScreen';
-import { LaunchGate } from '../view/run/LaunchGate';
+import { LaunchScreen } from '../view/run/LaunchScreen';
 import { DraftScreen } from '../view/run/DraftScreen';
 import { SquadSelectScreen } from '../view/run/SquadSelectScreen';
 import { MapScreen } from '../view/run/MapScreen';
@@ -508,8 +508,10 @@ export function App() {
   // (run/recruitment.ts heroPool) — the fork's contracts, the Guild Hall and the enemy party all
   // read this one table, the way the itinerary reads locationPool.
   const recruitPool = useMemo(() => heroPool(heroes, profile.purchases), [profile.purchases]);
-  // The cold launch's one tap (LaunchGate): false until it lands, then never again this session.
+  // The cold launch's loading screen (LaunchScreen): `launched` mounts the title under it for its
+  // fade, `launchDone` takes it down. Neither goes back to false this session.
   const [launched, setLaunched] = useState(false);
+  const [launchDone, setLaunchDone] = useState(false);
 
   /** The profile either side of the finished run, so the summary can show what the run added. */
   const [runOutcome, setRunOutcome] = useState<{ before: Profile; after: Profile } | null>(null);
@@ -1102,7 +1104,6 @@ export function App() {
     <LocationProvider location={ambientLocation}>
     <ProfileProvider profile={profile}>
     <div className="app-shell" ref={shellRef}>
-      {screen.kind === 'title' && !launched && <LaunchGate onBegin={() => setLaunched(true)} />}
       {screen.kind === 'title' && launched && (
         <TitleScreen
           profile={profile}
@@ -1446,6 +1447,8 @@ export function App() {
         if (!tip) return null;
         return <TipOverlay key={tip.id} tip={tip} onDone={() => markTipSeen(tip.id)} />;
       })()}
+      {/* Last, so it sits over the title (and any tip) while it fades off them. */}
+      {!launchDone && <LaunchScreen onReveal={() => setLaunched(true)} onDone={() => setLaunchDone(true)} />}
     </div>
     </ProfileProvider>
     </LocationProvider>
