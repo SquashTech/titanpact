@@ -90,6 +90,21 @@ export const heroes: Record<string, HeroDefinition> = {
     signatureMoveId: 'hearthfire',
     passiveIds: ['sulphur'],
   },
+  // From the Tall Grass (docs/constellation.md §4): the fire dragon. Fire's physical column swung
+  // hard on a thin pool — it runs dry, sleeps, and wakes with the breath held (Slumber).
+  drake: {
+    id: 'drake',
+    name: 'Drake',
+    types: ['Fire'],
+    baseStats: { hp: 210, attack: 105, defense: 60, intelligence: 20, wisdom: 45, speed: 60, manaPool: 50, mpRegen: 10 },
+    moveIds: ['singe', 'kindle', 'stokeTheFlames'],
+    starter: false,
+    unlock: 'bundle.tallGrass',
+    growthGrades: { hp: 'A', attack: 'S', defense: 'A', intelligence: 'F', wisdom: 'A', speed: 'B', manaPool: 'C' },
+    schedule: { offerLevels: [6, 10, 15, 19, 21, 25], midLevel: 11, lateLevel: 21 },
+    signatureMoveId: 'wyrmfire',
+    passiveIds: ['slumber'],
+  },
 
   // --- Water ---
   tidecaller: {

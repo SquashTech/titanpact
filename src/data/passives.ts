@@ -877,6 +877,28 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew', magnitude: 20 },
     },
   },
+  // --- From the Tall Grass ---
+  hoard: {
+    id: 'hoard',
+    name: 'Hoard',
+    description: 'Whenever this hero Rests, it heals for the Mana it recovered.',
+    // A flat heal off the Rest's own number, outside the heal formula: a Rest that recovers nothing heals nothing.
+    reactive: {
+      hook: 'Rested',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'heal', target: 'self', amount: { kind: 'matchTriggerAmount', field: 'manaRestored' } },
+    },
+  },
+  magmaHide: {
+    id: 'magmaHide',
+    name: 'Magma Hide',
+    description: 'Whenever this hero Rests, it gains Shield 40.',
+    reactive: {
+      hook: 'Rested',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 40 },
+    },
+  },
 };
 
 // --- Innate (HeroDefinition.passiveIds, docs/innate-passives.md) ---
@@ -912,6 +934,17 @@ const innatePassives: Record<string, PassiveDefinition> = {
       hook: 'StatusTicked',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Burn', kind: 'damage' } },
       effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 10 },
+    },
+  },
+  slumber: {
+    id: 'slumber',
+    name: 'Slumber',
+    description: 'Whenever this hero Rests, it gains Ambush 45.',
+    // Drake's pool runs dry every few turns, so the Rest the rules force is the breath it draws.
+    reactive: {
+      hook: 'Rested',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 45 },
     },
   },
   sulphur: {

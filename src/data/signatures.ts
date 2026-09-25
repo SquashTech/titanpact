@@ -63,6 +63,21 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'Sets them alight and sits by it (Burn 40; heals 50% of the damage dealt).',
   },
+  // Drake: the breath it woke up holding. The only physical Fire move that takes both foes, so an
+  // Ambush from Slumber lands on each of them.
+  wyrmfire: {
+    id: 'wyrmfire',
+    name: 'Wyrmfire',
+    type: 'Fire',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 80,
+    statusApplication: { statusId: 'Burn', magnitude: 20, target: 'moveTarget' },
+    manaCost: 70,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'The breath it woke up holding, across the whole opposing side (Burn 20 on both).',
+  },
 
   // --- Water ---
   // Riptide. It was Tidecaller's clause-5 grant and a Water pool move until 2026-09-14 (Mastery

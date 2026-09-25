@@ -1,9 +1,11 @@
 import cinderKnightArt from '../../../art/heroes/cinder.png';
 import crimsonArt from '../../../art/heroes/starters/crimson.png';
 import brimstoneArt from '../../../art/heroes/brimstone.png';
+import drakeArt from '../../../art/heroes/unlocks/drake.png';
 import tidecallerArt from '../../../art/heroes/starters/riptide.png';
 import pincerArt from '../../../art/heroes/pincer.png';
 import leviathanArt from '../../../art/heroes/leviathan.png';
+import nautilusArt from '../../../art/heroes/unlocks/nautilus.png';
 import flurryArt from '../../../art/heroes/flurry.png';
 import rimeArt from '../../../art/heroes/starters/rime.png';
 import cubeArt from '../../../art/heroes/cube.png';
@@ -19,6 +21,7 @@ import slateArt from '../../../art/heroes/slate.png';
 import wildOracleArt from '../../../art/heroes/starters/sylva.png';
 import mordaxArt from '../../../art/heroes/mordax.png';
 import hollowbarkArt from '../../../art/heroes/Hollowbark.png';
+import tixwickArt from '../../../art/heroes/unlocks/tixwick.png';
 import sunPriestArt from '../../../art/heroes/starters/solace.png';
 import aegisArt from '../../../art/heroes/aegis.png';
 import empyreanArt from '../../../art/heroes/empyrean.png';
@@ -50,10 +53,12 @@ export const heroArt: Partial<Record<string, string>> = {
   cinderKnight: cinderKnightArt,
   crimson: crimsonArt,
   brimstone: brimstoneArt,
+  drake: drakeArt,
   // --- Water ---
   tidecaller: tidecallerArt,
   pincer: pincerArt,
   leviathan: leviathanArt,
+  nautilus: nautilusArt,
   // --- Frost ---
   glacialWarden: flurryArt,
   rime: rimeArt,
@@ -71,6 +76,7 @@ export const heroArt: Partial<Record<string, string>> = {
   wildOracle: wildOracleArt,
   mordax: mordaxArt,
   hollowbark: hollowbarkArt,
+  tixwick: tixwickArt,
   // --- Light ---
   dawnwarden: sunPriestArt,
   aegis: aegisArt,
