@@ -63,6 +63,21 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'Sets them alight and sits by it (Burn 40; heals 50% of the damage dealt).',
   },
+  // Drake: the breath it woke up holding. The only physical Fire move that takes both foes, so an
+  // Ambush from Slumber lands on each of them.
+  wyrmfire: {
+    id: 'wyrmfire',
+    name: 'Wyrmfire',
+    type: 'Fire',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 80,
+    statusApplication: { statusId: 'Burn', magnitude: 20, target: 'moveTarget' },
+    manaCost: 70,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'The breath it woke up holding, across the whole opposing side (Burn 20 on both).',
+  },
 
   // --- Water ---
   // Riptide. It was Tidecaller's clause-5 grant and a Water pool move until 2026-09-14 (Mastery
@@ -108,6 +123,26 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'singleEnemy',
     description: 'The whole deep comes up behind the strike, and it does not go back down (Water Force 25 to self).',
+  },
+  // Nautilus: the whole ink sac at once, then gone behind it. Both foes flinch; the retreat fires
+  // Ink on the way out. Gated three ways because a double flinch is a free turn: the round it comes
+  // in, once a fight, and every drop of Mana it holds.
+  inkBlast: {
+    id: 'inkBlast',
+    name: 'Ink Blast',
+    type: 'Water',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [],
+    statusApplication: { statusId: 'Daze', target: 'moveTarget' },
+    manaCost: 45,
+    manaCostAll: true,
+    oncePerFight: true,
+    firstTurnOnly: true,
+    switchesUserOut: true,
+    priority: 2,
+    target: 'bothEnemies',
+    description: 'Empties the whole ink sac and is gone behind it: both foes flinch (Daze on both, then switch out). First turn out only, once a fight, spends all Mana.',
   },
 
   // --- Frost ---
@@ -291,6 +326,21 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     priority: -1,
     target: 'singleEnemy',
     description: 'The whole trunk, coming down last and landing hardest (priority -1).',
+  },
+  // Tixwick: the strike the stance was for — first, and twice as hard on what is already failing.
+  guillotine: {
+    id: 'guillotine',
+    name: 'Guillotine',
+    type: 'Nature',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 60,
+    statusApplication: { statusId: 'Bleed', target: 'moveTarget' },
+    conditionalPower: { requiresTargetHpBelow: 0.5, multiplier: 2 },
+    manaCost: 55,
+    priority: 1,
+    target: 'singleEnemy',
+    description: 'Drops before the foe can move, and takes twice as much from one already failing (+1 priority; Bleed; ×2 below half HP).',
   },
 
   // --- Light ---

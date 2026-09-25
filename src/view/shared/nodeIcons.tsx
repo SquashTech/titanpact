@@ -210,14 +210,6 @@ const HUB_PATHS = {
       <path d="M4.6 16.4h14.8l2.6 5.8H2Z" />
     </>
   ),
-  // Two arrows passing: the battle preview's move-here key (SquadSelectScreen), the same ⇄ the
-  // fight's Switch key wears.
-  swap: (
-    <>
-      <path d="M14.4 2.6 21.2 8l-6.8 5.4V10H3.6V6h10.8Z" />
-      <path d="M9.6 21.4 2.8 16l6.8-5.4V14h10.8v4H9.6Z" />
-    </>
-  ),
   // Same hamburger as FightScreen's `☰` Menu key.
   menu: (
     <>

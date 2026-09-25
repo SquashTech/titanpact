@@ -75,6 +75,7 @@ function reactiveArt(effect: PassiveEffect): PassiveArt | undefined {
     case 'statDelta':
       return statArt(effect.stat);
     case 'manaGrant':
+    case 'manaSurcharge':
       return statArt('manaPool');
     case 'cleanse':
       return { path: CLEANSE_SPARKLE, color: STAT_COLORS.wisdom };

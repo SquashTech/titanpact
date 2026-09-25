@@ -5,7 +5,7 @@
 import type { FieldEffectDefinition, MoveDefinition, PassiveDefinition, PassiveId, StatDelta, StatKey, StatusDefinition, StatusId } from '../content';
 import { statusApplicationsOf } from '../content';
 import type { CombatState, HeroLookup } from '../state';
-import { activePartnerTypes, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveCastBasePower, resolveTargetMode, effectiveTypes, hasStatus, moveForHero, applyStatModifierDelta } from '../state';
+import { activePartnerTypes, isMoveUsable, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveCastBasePower, resolveTargetMode, effectiveTypes, hasStatus, moveForHero, applyStatModifierDelta } from '../state';
 import type { CombatEvent } from '../events';
 import type { Action } from './actions';
 import { orderActions } from './priority';
@@ -83,7 +83,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
   const maxHpOf = (id: string) => getMaxHp(heroes[working.combatants[id].heroId], working.combatants[id]);
   const maxManaOf = (id: string) => getMaxMana(heroes[working.combatants[id].heroId], working.combatants[id]);
 
-  const { ordered, keys, reversedSpeed, nextRngState } = orderActions(working, heroes, actions, moves, working.rngState, fieldEffects, passives);
+  const { ordered, keys, reversedSpeed, nextRngState } = orderActions(working, heroes, actions, moves, working.rngState, fieldEffects, passives, statuses);
   working = { ...working, rngState: nextRngState };
   if (keys.length > 0) {
     events.push({
@@ -150,6 +150,12 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     }
 
     events.push({ type: 'TurnStarted', round, combatantId: action.combatantId });
+
+    // A once-a-fight move already cast, or a first-turn move past its turn: the view must prevent it, so this is the backstop.
+    if (!isMoveUsable(working, action.combatantId, move)) {
+      events.push({ type: 'ActionBlocked', round, combatantId: action.combatantId, reason: 'moveUnavailable' });
+      continue;
+    }
 
     // Live cost and live target mode, read off `working` so a faster action this round already counts.
     const manaCost = resolveManaCost(working, action.combatantId, move, heroes);
@@ -242,18 +248,21 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           currentMana: newMana,
           moveManaDiscounts: nextDiscounts,
           moveBasePowerBonuses: nextBasePowerBonuses,
+          ...(move.oncePerFight ? { spentMoveIds: [...(actor.spentMoveIds ?? []), move.id] } : {}),
           damageTakenSinceLastTurn: 0,
         },
       },
     };
-    events.push({
+    const moveUsed: CombatEvent = {
       type: 'MoveUsed',
       round,
       combatantId: action.combatantId,
       moveId: move.id,
       manaSpent: manaCost,
       ...(manaCost !== move.manaCost ? { manaDiscount: move.manaCost - manaCost } : {}),
-    });
+      damaging: move.kind === 'damage',
+    };
+    events.push(moveUsed);
     events.push({
       type: 'ManaChanged',
       round,
@@ -858,6 +867,13 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           events.push(...costResult.events);
         }
       }
+    }
+
+    // The cast, read as a whole once its payload has landed and before any pivot (Poised).
+    if (working.combatants[action.combatantId] && !working.combatants[action.combatantId].fainted) {
+      const castReactions = resolvePassiveReactions(working, round, [moveUsed], heroes, statuses, passives, fieldEffects);
+      working = castReactions.state;
+      events.push(...castReactions.events);
     }
 
     // The pivot runs dead last and through applyVoluntarySwitch so lock-in applies.

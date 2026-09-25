@@ -17,6 +17,7 @@ import {
   effectiveTypes,
   hasStatus,
   hasAffordableMoveInFight,
+  isMoveUsable,
   resolveManaCost,
   resolveCastBasePower,
   declarationTargetMode,
@@ -818,7 +819,7 @@ export function FightScreen({
       if (p!.kind === 'rest') return [{ kind: 'rest', combatantId: id }];
       return [{ kind: 'move', combatantId: id, moveId: p!.moveId!, declaredTarget: p!.declaredTarget }];
     });
-    return previewOrder(combat, allCombatants, [...enemyActiveAlive, ...playerActiveAlive], declared, moves, fieldEffects, passives);
+    return previewOrder(combat, allCombatants, [...enemyActiveAlive, ...playerActiveAlive], declared, moves, fieldEffects, passives, statuses);
   })();
 
   // The same marks during playback, off the engine's settled order: the last combatant whose
@@ -1703,7 +1704,7 @@ export function FightScreen({
                       <MoveRow
                         key={moveId}
                         move={move}
-                        affordable={combatant.currentMana >= cost}
+                        affordable={combatant.currentMana >= cost && isMoveUsable(combat, id, move)}
                         gateUnmet={!hasLegalTarget(move, id)}
                         cost={cost}
                         selected={isSelected}

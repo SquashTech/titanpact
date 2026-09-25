@@ -87,6 +87,26 @@ export const progressionTable: ProgressionTable = {
       'ionCascade',
       'grimHarvest',
     ],
+    // Drake: Fire's physical column past its kit, then the dragon's body — Beast claws, Iron weight,
+    // and one Storm and two Stone Early moves to telegraph Wyvern and Cinderscale.
+    drake: [
+      'claw',
+      'thunderclap',
+      'rockToss',
+      'gravelSpray',
+      'heavyBlow',
+      'rally',
+      'firebrand',
+      'moltenLash',
+      'blazingRetreat',
+      'gore',
+      'momentumSwing',
+      'rendArmor',
+      'volcanicSurge',
+      'swingingChain',
+      'onslaught',
+      'rendingLeap',
+    ],
     // --- Water ---
     tidecaller: ['siphon', 'torrent', 'engulf', 'crest', 'deluge', 'oasis', 'tsunami', 'highTide', 'seawall', 'undertow', 'iceShard', 'psiBolt', 'glimmer', 'jolt', 'aquaSlice', 'shockBubble', 'waveShred', 'undercurrent', 'cleansingRain'],
     // Shock Bubble plants Conduct and the Iron column detonates it — the mark and the payoff are
@@ -118,6 +138,26 @@ export const progressionTable: ProgressionTable = {
       'splash', 'refresh', 'deepChill', 'jolt', 'magicBolt', 'psiBolt',
       'torrent', 'engulf', 'deluge', 'crest', 'shockBubble', 'oasis', 'cleansingRain',
       'maelstrom', 'highTide', 'seawall', 'thunderbolt',
+    ],
+    // Nautilus: Water's support and control half, with one Mind and one Shadow Early move to
+    // telegraph Inkmind and Mimic.
+    nautilus: [
+      'siphon',
+      'refresh',
+      'tideGuard',
+      'undercurrent',
+      'psiBolt',
+      'weaken',
+      'torrent',
+      'engulf',
+      'deluge',
+      'washAway',
+      'shockBubble',
+      'cleansingRain',
+      'tsunami',
+      'maelstrom',
+      'highTide',
+      'seawall',
     ],
     // --- Frost ---
     glacialWarden: [
@@ -336,6 +376,27 @@ export const progressionTable: ProgressionTable = {
       'wailingFlight',
       'sow',
       'verdantLash',
+    ],
+    // Tixwick: Nature's blades, then the Bleed column the mantis cuts for — Shadow knives, Beast
+    // claws, and Lacerate as the reliable opener Maul and Eviscerate need.
+    tixwick: [
+      'vineLash',
+      'claw',
+      'hamstring',
+      'fadeStrike',
+      'backstab',
+      'sharpen',
+      'thornWhip',
+      'leafSlice',
+      'lacerate',
+      'maul',
+      'shadowSlice',
+      'rend',
+      'cutthroat',
+      'duskBlade',
+      'eviscerate',
+      'thousandCuts',
+      'rendingLeap',
     ],
     // --- Light ---
     dawnwarden: [
@@ -850,6 +911,42 @@ export const progressionTable: ProgressionTable = {
         ],
       },
     ],
+    drake: [
+      {
+        paths: [
+          {
+            id: 'drake-hoardwyrm',
+            heroId: 'drake',
+            name: 'Hoardwyrm',
+            description: 'Grows old on the gold it sleeps on, and wakes from every sleep a little more whole.',
+            statGrants: { hp: 60, defense: 10 },
+            unlocksMoveIds: [],
+            grantsPassiveIds: ['hoard'],
+          },
+          {
+            id: 'drake-wyvern',
+            heroId: 'drake',
+            name: 'Wyvern',
+            description: 'Takes to the sky and finds the storm up there waiting for it.',
+            statGrants: { attack: 10, speed: 20 },
+            unlocksMoveIds: ['shockSlice'],
+            typeGraft: 'Storm',
+            learnableMoveIds: ['stormLash', 'rideTheLightning', 'tailwind', 'skyfall', 'overcharge'],
+          },
+          {
+            id: 'drake-cinderscale',
+            heroId: 'drake',
+            name: 'Cinderscale',
+            description: 'Sleeps in the magma long enough that the scales set like stone.',
+            statGrants: { hp: 30, defense: 20 },
+            unlocksMoveIds: ['spireClaw'],
+            typeGraft: 'Stone',
+            learnableMoveIds: ['toughenUp', 'bodyBlow', 'rubbleRush', 'bastion', 'titanicCrush', 'boulderSlam'],
+            grantsPassiveIds: ['magmaHide'],
+          },
+        ],
+      },
+    ],
     // --- Water ---
     tidecaller: [
       {
@@ -956,6 +1053,41 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['chainLightning'],
             typeGraft: 'Storm',
             learnableMoveIds: ['zap', 'charge', 'electricBurst', 'ionicZap', 'ionCascade'],
+          },
+        ],
+      },
+    ],
+    nautilus: [
+      {
+        paths: [
+          {
+            id: 'nautilus-deepgrip',
+            heroId: 'nautilus',
+            name: 'Deepgrip',
+            description: 'Takes hold and does not let go; everything the prey does after that, it does dragging an arm.',
+            statGrants: { hp: 45, defense: 10 },
+            unlocksMoveIds: [],
+            grantsPassiveIds: ['deepgrip'],
+          },
+          {
+            id: 'nautilus-inkmind',
+            heroId: 'nautilus',
+            name: 'Inkmind',
+            description: 'Was always the cleverest thing in the water. Stops hiding it.',
+            statGrants: { intelligence: 20, manaPool: 20 },
+            unlocksMoveIds: ['disorient'],
+            typeGraft: 'Mind',
+            learnableMoveIds: ['brainWard', 'psyshock', 'mindLeech', 'hindsight', 'psionicWave', 'breakWill'],
+          },
+          {
+            id: 'nautilus-mimic',
+            heroId: 'nautilus',
+            name: 'Mimic',
+            description: 'Wears whatever shape frightens the thing looking at it, and none of them is its own.',
+            statGrants: { intelligence: 10, speed: 20 },
+            unlocksMoveIds: ['enfeeble'],
+            typeGraft: 'Shadow',
+            learnableMoveIds: ['umbraBolt', 'umbralBeam', 'eclipse', 'umbralWave'],
           },
         ],
       },
@@ -1381,6 +1513,41 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['poltergeist'],
             typeGraft: 'Spirit',
             learnableMoveIds: ['drain', 'torment', 'spite', 'soulRend', 'banish'],
+          },
+        ],
+      },
+    ],
+    tixwick: [
+      {
+        paths: [
+          {
+            id: 'tixwick-reaper',
+            heroId: 'tixwick',
+            name: 'Reaper',
+            description: 'The forearms harden into blades, and the blades into steel.',
+            statGrants: { attack: 10, defense: 20 },
+            unlocksMoveIds: ['serratedSlice'],
+            typeGraft: 'Iron',
+            learnableMoveIds: ['swiftBlow', 'heavyBlow', 'momentumSwing', 'rendArmor', 'onslaught', 'swingingChain'],
+          },
+          {
+            id: 'tixwick-orchid',
+            heroId: 'tixwick',
+            name: 'Orchid',
+            description: 'Looks like a flower. The thing that comes to the flower does not leave.',
+            statGrants: { hp: 30, wisdom: 20 },
+            unlocksMoveIds: ['provoke'],
+            grantsPassiveIds: ['lure'],
+          },
+          {
+            id: 'tixwick-ghostMantis',
+            heroId: 'tixwick',
+            name: 'Ghost Mantis',
+            description: 'A dead leaf on a dead branch, until it moves.',
+            statGrants: { attack: 10, speed: 20 },
+            unlocksMoveIds: ['phantomStrike'],
+            typeGraft: 'Spirit',
+            learnableMoveIds: ['spookySlice', 'wailingFlight', 'secondWind', 'soulfire'],
           },
         ],
       },

@@ -106,6 +106,17 @@ arriving just after it. Since the seat exists in every act and the Skirmish row 
 shape no longer varies by act: 8 rows in all five (`SPLICED_ROW`, `LAST_MENTOR_ACT`,
 `FORGE_ACT`, `src/run/map.ts`). A single-node row is one no path can bypass.
 
+**The Guild Hall's three counters (2026-09-24, per user direction):** **Shop** (the Mastery
+Scroll, the two potions and the Revive), **Tavern** (the hire shelf, the Recruit
+Contract, the reroll and the party mend) and **Smithy** (unchanged). It opens on the Tavern. **The reroll** is the
+Tavern's one lever on WHO shows up: a fresh shelf of the same size for `TAVERN_REROLL_BASE_COST` =
+10g, `TAVERN_REROLL_STEP` = +10 each time a visit (`rerollGuildHallOffers`, `src/run/shop.ts`),
+never a roster hero and never a face just turned away while the pool can spare one. It moves the
+odds on a bundle hero with gold rather than guaranteeing one, and is not offered at the Vigil,
+which recruits nobody (§4); the figures are untuned and the sim
+never rerolls. The same day the panel stopped dropping bundle hires: it resolved offer ids
+against the base-game list, so a bundle hero the roll picked never reached the shelf.
+
 **The Blacksmith (act 3 on) — DELETED 2026-09-15 (`docs/gear-absorption.md` §6): the funnel is one
 forced Guild Hall every act, its Smithy tab holding the Anvil and Enchanter over worn gear; the
 shelf sells no gear and nothing is sold. The Smithy is laid out by hero since 2026-09-16 — a bench
@@ -1273,11 +1284,23 @@ anyway.
 `TOTAL_ACTS` becomes **6**. Act 6 is not another act of the §1 shape; it is two nodes:
 
 - **Row 0: a single `muster` node — the Vigil.** A Guild Hall variant, and the run's last
-  node of any kind. Three jobs, in descending order of how load-bearing they are:
-  1. **Fills the roster to `ROSTER_CAP`.** The finale is 6v6 and a roster can legitimately
-     be *under* 6 — the draft grants 2 (`STARTER_PICK_COUNT`) and the cap is a ceiling,
-     not a floor. Recruits taken here to reach 6 are **free**; a 6v4 finale is not a
-     difficulty setting, it is a bug the player cannot see coming.
+  node of any kind.
+  1. **It recruits NOBODY** (2026-09-24, per user direction, reversing the free fill below):
+     no hires, no Contract, no reroll — its Tavern holds the mend alone and it opens on the
+     Shop. The finale is fought by the roster the run kept, so arriving short is the run's
+     own result, not a gap the last node papers over. The tile says "up to 6" for the
+     player's side. *Reversed:* the Vigil used to fill the roster to `ROSTER_CAP` for free,
+     on the reading that a 6v4 finale was "a bug the player cannot see coming"; the tension
+     that leaves is that the rule is learned when Act 6 opens, after the last hire, and
+     under Permadeath (A1) every KO carried to the end is now a body the finale lacks.
+     *Measured* (3000 runs, seed 1, skilled pilot, against the commit before): full-clear
+     Base 73.7 → 74.0%, A1 31.2 → 31.3% — noise at both rungs. At Base every run already
+     reached the finale six strong off contracts, so the Vigil never recruited. At A1 the
+     finale entered six strong fell 944 → 857 runs and the finale's clear held (80.7 → 81.1%):
+     the gold a Vigil hire took went to the Revive and the Smithy instead, and the short
+     sides won more (five standing 58 → 65%). The finale by heroes standing on entry, A1:
+     six 91%, five 65%, four 49%, three 16%, two 0%. The sim priced a Vigil hire at 50g
+     rather than free, so the old rule's help is understated.
   2. **Spends the gold.** Gold is otherwise dead currency the moment Act 5's Guardian
      falls. The Vigil's equipment shelf is the run's last, at one rarity tier ahead.
   3. **Spends banked Training Points**, since `levelUpDeferred` lets a pool ride.

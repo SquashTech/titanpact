@@ -17,7 +17,7 @@ import {
 } from '../run/profile';
 import { FightScreen } from '../view/combat/FightScreen';
 import { TitleScreen } from '../view/run/TitleScreen';
-import { LaunchGate } from '../view/run/LaunchGate';
+import { LaunchScreen } from '../view/run/LaunchScreen';
 import { DraftScreen } from '../view/run/DraftScreen';
 import { SquadSelectScreen } from '../view/run/SquadSelectScreen';
 import { MapScreen } from '../view/run/MapScreen';
@@ -88,7 +88,7 @@ import {
 } from '../run/recruitment';
 import { guildHallOffersFor } from '../data/recruitment';
 import { MASTERY_CAP, SCROLL_CACHE_COUNT, buyScroll, canBuyScroll } from '../run/mastery';
-import { rollGuildHallOffers, type GuildHallOffers } from '../run/shop';
+import { TavernRerollError, rerollGuildHallOffers, rollGuildHallOffers, type GuildHallOffers } from '../run/shop';
 import { ConsumableError, buyConsumable, grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse, type PotionKind } from '../run/consumables';
 import { guildHallEntry } from '../run/guildRecruit';
 import { anyClassAvailable } from '../run/classes';
@@ -184,7 +184,7 @@ type Screen =
   /** TEMPORARY DEV/TEST — src/run/statusTestFight.ts. Own kind so leaving returns to the title. */
   | { kind: 'statusTestFight'; player: Encounter; ai: Encounter }
   /** `offers` lives on the screen, not in the shop component: a purchase re-renders the shop and component-local state would reroll / forget. */
-  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; scrollsBought: number; revivesBought: number }
+  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; scrollsBought: number; revivesBought: number; rerolls: number }
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType }
   /** The Forge: +1 item slot to one hero. */
   /** An item has arrived and asks who carries it (docs/gear-absorption.md §2). `next` is where the run goes once it is absorbed or sold. */
@@ -508,8 +508,10 @@ export function App() {
   // (run/recruitment.ts heroPool) — the fork's contracts, the Guild Hall and the enemy party all
   // read this one table, the way the itinerary reads locationPool.
   const recruitPool = useMemo(() => heroPool(heroes, profile.purchases), [profile.purchases]);
-  // The cold launch's one tap (LaunchGate): false until it lands, then never again this session.
+  // The cold launch's loading screen (LaunchScreen): `launched` mounts the title under it for its
+  // fade, `launchDone` takes it down. Neither goes back to false this session.
   const [launched, setLaunched] = useState(false);
+  const [launchDone, setLaunchDone] = useState(false);
 
   /** The profile either side of the finished run, so the summary can show what the run added. */
   const [runOutcome, setRunOutcome] = useState<{ before: Profile; after: Profile } | null>(null);
@@ -696,6 +698,7 @@ export function App() {
         offers: rollGuildHallOffers(playerRun, guildHallOffersFor(recruitPool), node.type === 'muster'),
         scrollsBought: 0,
         revivesBought: 0,
+        rerolls: 0,
       });
     } else if (node.type === 'manaWellReward') {
       setScreen({ kind: 'manaWell', nodeId });
@@ -913,6 +916,22 @@ export function App() {
     setPlayerRun(next);
   }
 
+  /** The Tavern's reroll (run/shop.ts): a fresh shelf of hires, dearer each time a visit. */
+  function handleRerollTavern() {
+    // The Vigil has no hires to reroll.
+    if (screen.kind !== 'shop' || playerRun.map?.nodes[screen.nodeId]?.type === 'muster') return;
+    let rolled: ReturnType<typeof rerollGuildHallOffers>;
+    try {
+      rolled = rerollGuildHallOffers(playerRun, guildHallOffersFor(recruitPool), screen.offers, screen.rerolls);
+    } catch (err) {
+      if (!(err instanceof TavernRerollError)) throw err;
+      return;
+    }
+    playSfx('gold.coin');
+    setPlayerRun(rolled.run);
+    setScreen({ ...screen, offers: rolled.offers, rerolls: screen.rerolls + 1 });
+  }
+
   /** The shelf's Mastery Scroll: the gold is charged on the tap, and the who screen lands the pip. */
   function handleBuyGuildScroll() {
     if (screen.kind !== 'shop' || !canBuyScroll(playerRun, screen.scrollsBought)) return;
@@ -1085,7 +1104,6 @@ export function App() {
     <LocationProvider location={ambientLocation}>
     <ProfileProvider profile={profile}>
     <div className="app-shell" ref={shellRef}>
-      {screen.kind === 'title' && !launched && <LaunchGate onBegin={() => setLaunched(true)} />}
       {screen.kind === 'title' && launched && (
         <TitleScreen
           profile={profile}
@@ -1252,8 +1270,10 @@ export function App() {
           offers={screen.offers}
           scrollsBought={screen.scrollsBought}
           revivesBought={screen.revivesBought}
+          rerolls={screen.rerolls}
           onRunChange={setPlayerRun}
           onBuyScroll={handleBuyGuildScroll}
+          onReroll={handleRerollTavern}
           onBuyConsumable={handleBuyGuildConsumable}
           onBuyMend={handleBuyGuildMend}
           onRequestRosterReplace={handleRequestRosterReplace}
@@ -1427,6 +1447,8 @@ export function App() {
         if (!tip) return null;
         return <TipOverlay key={tip.id} tip={tip} onDone={() => markTipSeen(tip.id)} />;
       })()}
+      {/* Last, so it sits over the title (and any tip) while it fades off them. */}
+      {!launchDone && <LaunchScreen onReveal={() => setLaunched(true)} onDone={() => setLaunchDone(true)} />}
     </div>
     </ProfileProvider>
     </LocationProvider>

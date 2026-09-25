@@ -98,10 +98,13 @@ function performSwitch(
   const nextBench = bench.filter((id) => id !== inCombatantId);
   if (outCombatantId) nextBench.push(outCombatantId);
 
+  const incoming = state.combatants[inCombatantId];
   let nextState: CombatState = {
     ...state,
     active: { ...state.active, [side]: nextActive },
     bench: { ...state.bench, [side]: nextBench },
+    // It arrived this round, so its first action is the next one (a firstTurnOnly move's window).
+    combatants: { ...state.combatants, [inCombatantId]: { ...incoming, firstActionRound: round + 1 } },
   };
   // A later phase's first body on the field begins the phase: the Pact Clock counts from here.
   const incomingPhase = phaseOf(state.combatants[inCombatantId]);

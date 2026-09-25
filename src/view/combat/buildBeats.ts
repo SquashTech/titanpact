@@ -5,6 +5,7 @@ import type {
   FaintedEvent,
   CombatEvent,
   HpChangedEvent,
+  ManaSurchargedEvent,
   MoveUsedEvent,
   StatChangedEvent,
   StatusAppliedEvent,
@@ -502,6 +503,15 @@ export function buildBeats(
               bannerFocusKind: changes.every((c) => c.delta < 0) ? 'debuff' : 'buff',
             }
           );
+        } else if (effectKind === 'manaSurcharge' && events[i]?.type === 'ManaSurcharged') {
+          const taxed = events[i++] as ManaSurchargedEvent;
+          applied.push(taxed);
+          push(
+            applied,
+            `${label} grips ${name(taxed.combatantId)}: every move costs ${taxed.total} more Mana!`,
+            [{ combatantId: taxed.combatantId, text: `+${taxed.delta} MP`, className: 'popup-debuff' }],
+            { bannerLead: `${label} · ${name(taxed.combatantId)}`, bannerFocus: `+${taxed.total} MP a move`, bannerFocusKind: 'debuff' }
+          );
         } else if (effectKind === 'damage' && events[i]?.type === 'HpChanged') {
           // EVERY consecutive HpChanged, each with the Fainted that may trail it: a group-target
           // effect (Broadside's volley, Dread's Nightmare) is one blow with several landings.
@@ -787,7 +797,9 @@ export function buildBeats(
             ? `${targetName} is Dazed and can't move!`
             : e.reason === 'targetStatusMissing'
               ? `${targetName} has nothing to aim at!`
-              : `${targetName}'s target is already down!`;
+              : e.reason === 'moveUnavailable'
+                ? `${targetName} can't use that move now!`
+                : `${targetName}'s target is already down!`;
         push([e], text, [], { bannerFocusKind: 'debuff' });
         i++;
         break;

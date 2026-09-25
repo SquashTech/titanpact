@@ -413,6 +413,40 @@ None built. Where each lands when it is:
    - **8 stars** — three a hero, rounded down for the set. §3.4's question (do a bundle's
      heroes join the recruit pool?) is answered YES for bundles by construction — that is what
      a bundle IS — and still open for packs.
+   - **From the Tall Grass** (2026-09-24, per user direction) is the second bundle, 8 stars, the
+     starter triangle — Fire, Water, Nature — as a Pokémon nod. **Drake** fills the first seat:
+     the fire dragon, Fire's physical column swung hard (Attack 105) on a thin pool (Mana 50,
+     grade C), kit Singe / Kindle / Stoke the Flames. Innate **Slumber** — a Rest grants
+     Ambush 45 — so the pool running dry IS the breath drawn; its Rest is the rhythm, and an MP
+     Potion trades the Ambush away. Hoardwyrm (mono, Hoard — a Rest heals the Mana recovered),
+     Wyvern (Storm graft: Shock Slice and the physical Storm column; Fire/Storm is 4× weak to
+     Stone, Charizard's Rock weakness on purpose), Cinderscale (Stone graft: Spire Claw, and
+     Magma Hide — Shield 40 on a Rest); **Wyrmfire** the signature, the only physical Fire move
+     that takes both foes (80, Burn 20, 70 mana), which a Slumber Ambush lands on each of.
+     **Nautilus** fills the second seat (same day): the octopus controller, Wisdom 75 and
+     Intelligence 75 on Speed 40, kit Splash / Ink Cloud (a new Early Water debuff, −15 Attack and
+     −15 Intelligence on both) / Lull. Innate **Ink** — on switching out, both active enemies lose
+     10 Attack and 10 Intelligence — on a new `SwitchedOut` hook (the SwitchedIn that sent the
+     owner out, fired from the bench it reached; never on a knockout). Signature **Ink Blast**:
+     +2 priority, Daze on both foes, then a retreat that fires Ink — gated three ways because a
+     double flinch is a free turn: `firstTurnOnly` (Combatant.firstActionRound, round 1 for a
+     lead), `oncePerFight` (Combatant.spentMoveIds), and `manaCostAll` (every drop held, 45 the
+     floor), all read through `isMoveUsable` / `resolveManaCost` by the engine, the AI and the
+     fight screen. A hold (the target cannot switch) was designed first and dropped: the enemy AI
+     never switches, so it could not matter. Deepgrip (mono: a Water hit makes every move the
+     target holds cost 5 more Mana for the fight, up to 20 — the `manaSurcharge` effect, a
+     `ManaSurcharged` event), Inkmind (Mind graft, Disorient), Mimic (Shadow graft, Enfeeble).
+     **Tixwick** fills the third seat (2026-09-25): the mantis, Attack 105 on Speed 45 — slow,
+     and first anyway. Kit Ivy Spike (already +1) / Lie in Wait / Pin Down. Innate **Poised** —
+     a move that deals no damage leaves it Poised, and its next attack goes a bracket early — on
+     a new `MoveUsed` hook (the cast, read after its payload and before any pivot;
+     `MoveUsed.damaging` is what the condition reads) and a new **Poised** status carrying
+     `StatusDefinition.priorityBonus` = 1 on damage moves, spent by Ambush's `consumedOnDamage`;
+     `priority.ts` reads it for the real order and the fight screen's preview alike. Signature
+     **Guillotine** (60, +1 priority, Bleed, ×2 below half HP; +2 when Poised). The pool is the
+     Bleed column the mantis cuts for, Lacerate its reliable opener. Reaper (Iron graft,
+     Serrated Slice — Scyther into Scizor), Orchid (mono: Provoke, and **Lure** — struck, it is
+     Poised; a counter-striker), Ghost Mantis (Spirit graft, Phantom Strike). The bundle is full.
 
 7. **Phase 1 — BUILT 2026-09-19, per user direction, as the shake-up rather than the Foundry:**
    `StarterPack` (`src/run/starterPacks.ts`, packs in `src/data/starterPacks.ts`), pack zero

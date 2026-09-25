@@ -49,6 +49,8 @@ export interface MoveUsedEvent extends BaseEvent {
   manaSpent: number;
   /** Authored cost minus what was paid: positive for a discount, NEGATIVE for a manaCostGainOnUse surcharge. Absent (not 0) otherwise. */
   manaDiscount?: number;
+  /** A damage-kind move (MoveDefinition.kind === 'damage'); a MoveUsed passive reads it. */
+  damaging: boolean;
 }
 
 export interface DamageDealtEvent extends BaseEvent {
@@ -197,8 +199,8 @@ export interface MoveGuardedEvent extends BaseEvent {
 export interface ActionBlockedEvent extends BaseEvent {
   type: 'ActionBlocked';
   combatantId: string;
-  /** 'noValidTarget': declared target no longer legal. 'targetStatusMissing': requiresTargetStatus unmet. 'switchBlocked': switchesUserOut pivot refused by lock-in or an empty bench — payload still landed, mana spent. */
-  reason: 'dazed' | 'noValidTarget' | 'targetStatusMissing' | 'switchBlocked';
+  /** 'noValidTarget': declared target no longer legal. 'targetStatusMissing': requiresTargetStatus unmet. 'switchBlocked': switchesUserOut pivot refused by lock-in or an empty bench — payload still landed, mana spent. 'moveUnavailable': a oncePerFight or firstTurnOnly gate unmet (state.ts isMoveUsable) — no mana spent. */
+  reason: 'dazed' | 'noValidTarget' | 'targetStatusMissing' | 'switchBlocked' | 'moveUnavailable';
 }
 
 export interface FaintedEvent extends BaseEvent {
@@ -212,6 +214,14 @@ export interface FaintedEvent extends BaseEvent {
 export interface EnduredEvent extends BaseEvent {
   type: 'Endured';
   combatantId: string;
+}
+
+/** A manaSurcharge passive effect raised every price for this combatant (Deepgrip). `delta` is what landed under the cap, `total` the surcharge now held. */
+export interface ManaSurchargedEvent extends BaseEvent {
+  type: 'ManaSurcharged';
+  combatantId: string;
+  delta: number;
+  total: number;
 }
 
 export interface SwitchedInEvent extends BaseEvent {
@@ -348,6 +358,7 @@ export type CombatEvent =
   | FaintedEvent
   | EnduredEvent
   | SwitchedInEvent
+  | ManaSurchargedEvent
   | BenchRegenTickedEvent
   | RestedEvent
   | ConsumableUsedEvent

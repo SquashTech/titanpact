@@ -238,21 +238,17 @@ test('finale: the seal acts still get the branching map — act 6 is the only co
 
 // --- The Vigil ---
 
-test('vigil: it offers enough recruits to fill the roster, plus one so it stays a choice', () => {
-  for (const rosterSize of [2, 3, 4, 5]) {
+test('vigil: it recruits nobody — the finale is fought by the roster the run kept', () => {
+  for (const rosterSize of [2, 4, 6]) {
     let run = { ...createRunState(), actNumber: FINALE_ACT };
     for (let i = 0; i < rosterSize; i++) {
       run = addRosterEntry(run, createRosterEntry(`r${i}`, 'cinderKnight', []));
     }
-    const offers = rollGuildHallOffers(run, guildHallOffers, true);
-    assert.ok(
-      offers.heroOfferIds.length >= ROSTER_CAP - rosterSize,
-      `roster ${rosterSize} cannot be filled from ${offers.heroOfferIds.length} offers`
-    );
+    assert.deepStrictEqual(rollGuildHallOffers(run, guildHallOffers, true).heroOfferIds, []);
   }
 });
 
-test('vigil: a plain Guild Hall still offers 2-3, so the fill is the Vigil doing it', () => {
+test('vigil: a plain Guild Hall still offers 2-3', () => {
   const run = { ...createRunState(), actNumber: 3 };
   for (let i = 0; i < 20; i++) {
     const offers = rollGuildHallOffers(run, guildHallOffers);

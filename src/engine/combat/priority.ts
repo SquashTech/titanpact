@@ -4,7 +4,7 @@
 import type { Action } from './actions';
 import type { CombatState, HeroLookup } from '../state';
 import { getEffectiveStat, hasStatus } from '../state';
-import type { FieldEffectDefinition, MoveDefinition, PassiveDefinition } from '../content';
+import type { FieldEffectDefinition, MoveDefinition, PassiveDefinition, StatusDefinition } from '../content';
 import { nextInt, type RngState } from '../rng/seededRng';
 
 /** Provisional convention: switches resolve before any move, regardless of speed. Not stated in docs — flag if it needs review. */
@@ -23,7 +23,8 @@ function actionPriority(
   action: Action,
   moves: Record<string, MoveDefinition>,
   activeFieldEffectDef: FieldEffectDefinition | undefined,
-  rolledBracket?: number
+  rolledBracket?: number,
+  statusDefs: Record<string, StatusDefinition> = {}
 ): number {
   if (action.kind === 'switch') return SWITCH_PRIORITY_BRACKET;
   if (action.kind === 'rest') return REST_PRIORITY_BRACKET;
@@ -33,7 +34,13 @@ function actionPriority(
   const declared = action.declaredTarget ? state.combatants[action.declaredTarget] : undefined;
   const conditionalBonus =
     conditional && declared && !declared.fainted && hasStatus(declared, conditional.requiresTargetStatus) ? conditional.bonus : 0;
-  return (rolledBracket ?? move.priority) + healBonus + conditionalBonus;
+  // A held status that lifts the holder's strikes (Poised): damage moves only, read off the pre-resolution board.
+  const actor = state.combatants[action.combatantId];
+  const statusBonus =
+    move.kind === 'damage' && actor
+      ? Object.keys(actor.statuses).reduce((sum, id) => sum + (statusDefs[id]?.priorityBonus ?? 0), 0)
+      : 0;
+  return (rolledBracket ?? move.priority) + healBonus + conditionalBonus + statusBonus;
 }
 
 /** The bracket `action` will resolve in — the same number orderActions sorts on, for the view's live priority readout. */
@@ -41,9 +48,10 @@ export function effectivePriority(
   state: CombatState,
   action: Action,
   moves: Record<string, MoveDefinition>,
-  activeFieldEffectDef?: FieldEffectDefinition
+  activeFieldEffectDef?: FieldEffectDefinition,
+  statusDefs: Record<string, StatusDefinition> = {}
 ): number {
-  return actionPriority(state, action, moves, activeFieldEffectDef);
+  return actionPriority(state, action, moves, activeFieldEffectDef, undefined, statusDefs);
 }
 
 export interface OrderedAction {
@@ -66,7 +74,9 @@ export function orderActions(
   rngState: RngState,
   fieldEffects: Record<string, FieldEffectDefinition> = {},
   /** Conditional passives can grant Speed; turn order must read the same number the card shows. */
-  passives: Record<string, PassiveDefinition> = {}
+  passives: Record<string, PassiveDefinition> = {},
+  /** A held status can lift a bracket (StatusDefinition.priorityBonus). */
+  statusDefs: Record<string, StatusDefinition> = {}
 ): { ordered: Action[]; keys: OrderedAction[]; reversedSpeed: boolean; nextRngState: RngState } {
   const activeFieldEffectId = state.activeFieldEffect?.fieldEffectId;
   const activeFieldEffectDef = activeFieldEffectId ? fieldEffects[activeFieldEffectId] : undefined;
@@ -89,7 +99,7 @@ export function orderActions(
     const hero = heroes[combatant.heroId];
     return {
       action,
-      priority: actionPriority(state, action, moves, activeFieldEffectDef, rolledBrackets.get(action)),
+      priority: actionPriority(state, action, moves, activeFieldEffectDef, rolledBrackets.get(action), statusDefs),
       speed: getEffectiveStat(hero, combatant, 'speed', statCtx),
     };
   });
@@ -167,7 +177,8 @@ export function previewOrder(
   declared: readonly Action[],
   moves: Record<string, MoveDefinition>,
   fieldEffects: Record<string, FieldEffectDefinition> = {},
-  passives: Record<string, PassiveDefinition> = {}
+  passives: Record<string, PassiveDefinition> = {},
+  statusDefs: Record<string, StatusDefinition> = {}
 ): OrderPreview {
   const activeFieldEffectId = state.activeFieldEffect?.fieldEffectId;
   const activeFieldEffectDef = activeFieldEffectId ? fieldEffects[activeFieldEffectId] : undefined;
@@ -181,7 +192,7 @@ export function previewOrder(
     const random = action?.kind === 'move' && (moves[action.moveId]?.randomPriority?.length ?? 0) > 0;
     return {
       combatantId,
-      priority: random ? null : action ? actionPriority(state, action, moves, activeFieldEffectDef) : 0,
+      priority: random ? null : action ? actionPriority(state, action, moves, activeFieldEffectDef, undefined, statusDefs) : 0,
       speed: getEffectiveStat(heroes[combatant.heroId], combatant, 'speed', statCtx),
     };
   });

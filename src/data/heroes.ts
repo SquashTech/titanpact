@@ -90,6 +90,21 @@ export const heroes: Record<string, HeroDefinition> = {
     signatureMoveId: 'hearthfire',
     passiveIds: ['sulphur'],
   },
+  // From the Tall Grass (docs/constellation.md §4): the fire dragon. Fire's physical column swung
+  // hard on a thin pool — it runs dry, sleeps, and wakes with the breath held (Slumber).
+  drake: {
+    id: 'drake',
+    name: 'Drake',
+    types: ['Fire'],
+    baseStats: { hp: 210, attack: 105, defense: 60, intelligence: 20, wisdom: 45, speed: 60, manaPool: 50, mpRegen: 10 },
+    moveIds: ['singe', 'kindle', 'stokeTheFlames'],
+    starter: false,
+    unlock: 'bundle.tallGrass',
+    growthGrades: { hp: 'A', attack: 'S', defense: 'A', intelligence: 'F', wisdom: 'A', speed: 'B', manaPool: 'C' },
+    schedule: { offerLevels: [6, 10, 15, 19, 21, 25], midLevel: 11, lateLevel: 21 },
+    signatureMoveId: 'wyrmfire',
+    passiveIds: ['slumber'],
+  },
 
   // --- Water ---
   tidecaller: {
@@ -133,6 +148,21 @@ export const heroes: Record<string, HeroDefinition> = {
     schedule: { offerLevels: [4, 8, 12, 16, 21, 26], midLevel: 10, lateLevel: 19 },
     signatureMoveId: 'deepsurge',
     passiveIds: ['overchannel'],
+  },
+  // From the Tall Grass: the octopus. Water's control hand on a Wisdom-and-Intelligence body — it
+  // clouds the water and slips out through it (Ink), and its opener Dazes the whole enemy line.
+  nautilus: {
+    id: 'nautilus',
+    name: 'Nautilus',
+    types: ['Water'],
+    baseStats: { hp: 210, attack: 30, defense: 60, intelligence: 75, wisdom: 75, speed: 40, manaPool: 60, mpRegen: 10 },
+    moveIds: ['splash', 'inkCloud', 'lull'],
+    starter: false,
+    unlock: 'bundle.tallGrass',
+    growthGrades: { hp: 'A', attack: 'F', defense: 'A', intelligence: 'A', wisdom: 'S', speed: 'C', manaPool: 'B' },
+    schedule: { offerLevels: [6, 10, 14, 19, 21, 25], midLevel: 11, lateLevel: 20 },
+    signatureMoveId: 'inkBlast',
+    passiveIds: ['ink'],
   },
 
   // --- Frost ---
@@ -292,6 +322,21 @@ export const heroes: Record<string, HeroDefinition> = {
     schedule: { offerLevels: [6, 10, 15, 19, 21, 28], midLevel: 11, lateLevel: 21 },
     signatureMoveId: 'deadfall',
     passiveIds: ['barbs'],
+  },
+  // From the Tall Grass: the mantis. The roster's top Attack short of the bears, on Speed 45 —
+  // slow, and first anyway: every move that deals no damage leaves it Poised to strike early.
+  tixwick: {
+    id: 'tixwick',
+    name: 'Tixwick',
+    types: ['Nature'],
+    baseStats: { hp: 200, attack: 105, defense: 50, intelligence: 20, wisdom: 50, speed: 45, manaPool: 80, mpRegen: 10 },
+    moveIds: ['ivySpike', 'lieInWait', 'pinDown'],
+    starter: false,
+    unlock: 'bundle.tallGrass',
+    growthGrades: { hp: 'A', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'A', speed: 'D', manaPool: 'S' },
+    schedule: { offerLevels: [6, 10, 15, 19, 21, 25], midLevel: 11, lateLevel: 20 },
+    signatureMoveId: 'guillotine',
+    passiveIds: ['poised'],
   },
 
   // --- Light ---

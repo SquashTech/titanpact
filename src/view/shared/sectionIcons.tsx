@@ -104,6 +104,24 @@ export const SECTION_PATHS = {
   mastery: (
     <path d="M2 5.8a3.4 3.4 0 0 1 3.4-3.4h12.4a3.6 3.6 0 0 1 3.6 3.6v1.2h-4v9.6h2.2a2.4 2.4 0 0 1 0 4.8H2Zm3.4-1.8a1.8 1.8 0 1 0 0 3.6 1.8 1.8 0 0 0 0-3.6Zm14.2 13.9a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6ZM11.2 8.2v2.2h4.6V8.2Zm0 4v2.2h3.2v-2.2Z" />
   ),
+  // A coin purse, drawn shut — the Guild Hall's Shop counter.
+  shop: (
+    <>
+      <path d="M7.6 2.4h8.8l-2.4 3.8h-4Z" />
+      <path d="M9.2 7.6h5.6c3.7 2.1 6.1 5.5 6.1 8.7 0 3.4-2.9 5.3-8.9 5.3s-8.9-1.9-8.9-5.3c0-3.2 2.4-6.6 6.1-8.7Z" />
+    </>
+  ),
+  // Two arrows chasing each other round — the Tavern's reroll.
+  reroll: (
+    <>
+      <g fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+        <path d="M19.2 10A7.6 7.6 0 0 0 6.4 7" />
+        <path d="M4.8 14a7.6 7.6 0 0 0 12.8 3" />
+      </g>
+      <path d="M2.4 4.2 3.2 11 9.2 8.2Z" />
+      <path d="M21.6 19.8 20.8 13 14.8 15.8Z" />
+    </>
+  ),
   // A sealed pack: a box with its lid lifted a crack — the Constellation's Starter Packs page.
   packs: (
     <>

@@ -58,7 +58,7 @@ first meeting with two things shows the second on its next visit.
 | `map` | the map, once there is a choice to make — not at an act's opener, the only node on offer |
 | `wounds` | the map, once any hero is hurt (HP carries across an act; Mana does not) |
 | `fork` | the map, once an Elite or Skirmish is one step away |
-| `squad` | lead order (skipped while the roster is two) |
+| `squad` | lead pick — tap two heroes (skipped while the roster is two) |
 | `levelUp` | the level-up report |
 | `item` | the item who-screen (sockets, merge, sell) |
 | `companion` | the companion's join beat |
