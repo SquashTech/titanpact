@@ -2402,10 +2402,11 @@ textarea,
    read. The sprite is 24px, exactly half the 48px source, the one downscale that keeps every
    source pixel the same size.
 
-   A tie takes a gold "=" where the chevron would be. A bracket hangs its pip off the frame;
-   where it actually moved the entry (priority.ts bracketEffect) the frame is lifted for a cut
-   and sunk for a hold. During playback the track walks the beats: done dims, the actor of the
-   beat steps forward and its rim lights.
+   A tie takes a gold "=" where the chevron would be, and a bracket is a tag on the rail before
+   the frame it moved. NOTHING rises above the frames (2026-09-25): the track sits against the
+   arena's top edge, and a pip hung over a frame, a frame lifted for a cut or scaled up for its
+   turn were all clipped there on a phone. During playback the track walks the beats: done dims,
+   and the actor of the beat lights — its rim full, its glow wide — without changing size.
 
    It sat on the horizon for a day, and the middle of the field was the busiest strip on the
    screen; up here, in the arena's top padding above the far side's status strip, it has the band
@@ -2415,7 +2416,7 @@ textarea,
 .order-track {
   position: absolute;
   left: 50%;
-  top: 14px;
+  top: 16px;
   z-index: 2;
   display: flex;
   align-items: center;
@@ -2533,49 +2534,37 @@ textarea,
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.7));
 }
 
-/* The bracket, hung off the frame's top corner so the face stays the thing read first. */
+/* The bracket, a tag ON the rail just before the frame it moved (2026-09-25): hung over the
+   frame's corner it rose past the arena's top edge and was clipped on a phone. Lit gold where the
+   bracket cut ahead of a faster fighter, cold where it held one back (priority.ts bracketEffect). */
 .order-track-pip {
-  position: absolute;
-  top: -6px;
-  right: -7px;
-  min-width: 12px;
-  height: 11px;
-  padding: 0 2px;
+  flex: none;
+  min-width: 14px;
+  height: 13px;
+  padding: 0 3px;
   border-radius: var(--radius-pill);
   background: #151a24;
-  box-shadow: 0 0 0 1px rgba(168, 184, 214, 0.6), 0 0 0 2px #0a0d13;
-  font-size: 7px;
+  box-shadow: 0 0 0 1px rgba(168, 184, 214, 0.6), 0 1px 2px rgba(0, 0, 0, 0.7);
+  font-size: 8px;
   font-weight: 800;
-  line-height: 11px;
+  line-height: 13px;
   text-align: center;
   color: #e6ecf7;
   white-space: nowrap;
 }
 
-.order-track-slot.is-cut {
-  transform: translateY(-2px);
-}
-
-.order-track-slot.is-cut .order-track-pip {
+.order-track-pip.is-cut {
   color: #ffe2a0;
-  box-shadow: 0 0 0 1px rgba(255, 200, 90, 0.8), 0 0 0 2px #0a0d13, 0 0 6px rgba(255, 200, 90, 0.6);
+  box-shadow: 0 0 0 1px rgba(255, 200, 90, 0.85), 0 0 6px rgba(255, 200, 90, 0.6);
 }
 
-.order-track-slot.is-held {
-  transform: translateY(2px);
-}
-
-.order-track-slot.is-held .order-track-pip {
+.order-track-pip.is-held {
   color: rgba(196, 212, 240, 0.8);
 }
 
 .order-track-slot.is-done {
   opacity: 0.4;
   filter: saturate(0.4);
-}
-
-.order-track-slot.is-current {
-  transform: scale(1.2);
 }
 
 .order-track-slot.is-current .order-track-frame {
