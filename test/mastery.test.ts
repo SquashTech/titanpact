@@ -208,11 +208,11 @@ test('signature: every authored signature exists, wears its hero\'s primary type
 });
 
 test('signature: a guaranteed learn at the hero\'s own signatureLevel — in one of three windows by power, never on an offer level, every window populated', () => {
-  // docs/mastery.md §5: 13-15 the lighter signatures, 17-19 the standard, 21-23 the heaviest.
+  // docs/mastery.md §5: 14-16 the lighter signatures, 18-20 the standard, 22-24 the heaviest.
   const windows = [
-    [13, 15],
-    [17, 19],
-    [21, 23],
+    [14, 16],
+    [18, 20],
+    [22, 24],
   ] as const;
   const filled = windows.map(() => 0);
   for (const hero of Object.values(heroes)) {
@@ -227,8 +227,8 @@ test('signature: a guaranteed learn at the hero\'s own signatureLevel — in one
   for (const [i, count] of filled.entries()) assert.ok(count >= 8, `window ${windows[i].join('-')} holds only ${count} heroes`);
   // A heavier hit is never taught earlier than a lighter one of the same shape: the two recoil
   // nukes and the two 100-power fists sit in the last window, the 45-mana Lizard Rush in the first.
-  for (const id of ['ursa', 'gallant', 'steamColossus', 'hollowbark']) assert.ok(signatureLevelFor(heroes[id])! >= 21, `${id}'s signature is one of the heaviest`);
-  assert.ok(signatureLevelFor(heroes.tidecaller)! <= 15);
+  for (const id of ['ursa', 'gallant', 'steamColossus', 'hollowbark']) assert.ok(signatureLevelFor(heroes[id])! >= 22, `${id}'s signature is one of the heaviest`);
+  assert.ok(signatureLevelFor(heroes.tidecaller)! <= 16);
 });
 
 test('signature: owed at its level and not before — below the cap it lands, at the cap it is replace-or-decline, and made is spent', () => {

@@ -269,8 +269,8 @@ export function scheduleRemaining(hero: HeroDefinition | undefined, entry: Roste
 // 2026-09-24 (per user direction) it arrives on the level-up report at the hero's own
 // `schedule.signatureLevel` — guaranteed, never rolled, in no band — where it used to sit behind
 // the tenth Mastery pip and most heroes never saw it. The level is set by how hard the move hits:
-// the lighter signatures teach at 13-15 (Act 2's Guardian into Act 3), the standard ones at 17-19
-// (Act 3), the heaviest at 21-23 (Act 4). It is not a schedule ENTRY — `scheduleTaken` never
+// the lighter signatures teach at 14-16 (Act 2's Guardian into Act 3), the standard ones at 18-20
+// (late Act 3), the heaviest at 22-24 (Act 4). Moved a level later on 2026-09-25, per user direction. It is not a schedule ENTRY — `scheduleTaken` never
 // counts it — but a move offer spent by being made (`offeredMoveIds`), so a hero that declines it
 // at MOVE_CAP has declined it for the run, as with any offer.
 
