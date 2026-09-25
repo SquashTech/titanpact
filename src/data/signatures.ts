@@ -327,6 +327,21 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'The whole trunk, coming down last and landing hardest (priority -1).',
   },
+  // Tixwick: the strike the stance was for — first, and twice as hard on what is already failing.
+  guillotine: {
+    id: 'guillotine',
+    name: 'Guillotine',
+    type: 'Nature',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 60,
+    statusApplication: { statusId: 'Bleed', target: 'moveTarget' },
+    conditionalPower: { requiresTargetHpBelow: 0.5, multiplier: 2 },
+    manaCost: 55,
+    priority: 1,
+    target: 'singleEnemy',
+    description: 'Drops before the foe can move, and takes twice as much from one already failing (+1 priority; Bleed; ×2 below half HP).',
+  },
 
   // --- Light ---
   // Solace: morning for the whole side.

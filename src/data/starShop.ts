@@ -45,13 +45,13 @@ export const STAR_SHOP_OFFERS: readonly StarShopOffer[] = [
     cost: 8,
     grant: { kind: 'heroBundle', heroIds: ['scallywag', 'patch', 'vex'] },
   },
-  // Priced as the Free Company, for the three seats it will hold; Tixwick's is the one still open.
+  // Priced as the Free Company: three a hero, rounded down for the set.
   {
     id: 'bundle.tallGrass',
     name: 'From the Tall Grass',
     description: 'Fire, water and green, come up out of the long grass at the road\'s edge. They take contracts and Guild Hall coin like anyone, and never stand in the draft.',
     cost: 8,
-    grant: { kind: 'heroBundle', heroIds: ['drake', 'nautilus'] },
+    grant: { kind: 'heroBundle', heroIds: ['drake', 'nautilus', 'tixwick'] },
   },
 ];
 

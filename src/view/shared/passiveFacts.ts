@@ -162,6 +162,12 @@ function triggerFact(def: NonNullable<PassiveDefinition['reactive']>): PassiveFa
       };
     case 'Rested':
       return { label: 'When', text: `${who} Rests`, glyph: { kind: 'stat', stat: 'manaPool' } };
+    case 'MoveUsed':
+      return {
+        label: 'When',
+        text: fields.damaging === 'false' ? `${who} uses a move that deals no damage` : fields.damaging === 'true' ? `${who} attacks` : `${who} uses a move`,
+        glyph: { kind: 'move', move: fields.damaging === 'true' ? 'physical' : 'buff' },
+      };
   }
 }
 

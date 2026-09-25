@@ -99,6 +99,8 @@ export interface StatusDefinition {
   forceAllTypes?: boolean;
   /** Ambush: spent once the damage move that read it has resolved all of its hits, so a spread pays on every target and still costs one. */
   consumedOnDamage?: boolean;
+  /** Raises the holder's DAMAGE moves by this many priority brackets while held (Poised; priority.ts actionPriority). Paired with consumedOnDamage, it is one early strike. */
+  priorityBonus?: number;
   /**
    * Ice Shell (docs/shield.md §3.5): held beside a Shield, this status lands its rider on the
    * striker whose hit BREAKS the holder's Shield, then is consumed. Never fires on any other
@@ -147,7 +149,8 @@ export type PassiveId = string;
 /** 'RoundEnded' fires once a round for every active owner, the owner its own subject (relativeTo 'self'); pair it with everyNRounds for a cadence. The last thing in the round, after the Clock. */
 /** 'StatusDetonated' is a mark cashed in (Conduct burst by a hit; source = the striker); 'Rested' the Rest action, its `manaRestored` readable by matchTriggerAmount. */
 /** 'SwitchedOut' reads a SwitchedIn whose OUTGOING combatant is the subject, and fires from the bench the owner has just reached (Ink) — never on a knockout's replacement, since a fainted owner reacts to nothing. */
-export type PassiveHook = 'DamageDealt' | 'Healed' | 'StatusApplied' | 'StatusTicked' | 'StatusDetonated' | 'SwitchedIn' | 'SwitchedOut' | 'StatChanged' | 'RoundEnded' | 'Rested';
+/** 'MoveUsed' is a cast paid for, read after its payload and before any pivot; its subject is the caster, and `damaging` ('true' / 'false') is what eventFieldEquals reads (Poised). */
+export type PassiveHook = 'DamageDealt' | 'Healed' | 'StatusApplied' | 'StatusTicked' | 'StatusDetonated' | 'SwitchedIn' | 'SwitchedOut' | 'StatChanged' | 'RoundEnded' | 'Rested' | 'MoveUsed';
 
 /** 'ally' = the owner's partner, not the owner. */
 export type PassiveRelation = 'self' | 'ally' | 'enemy';

@@ -106,6 +106,13 @@ export const STATUS_PATHS: Record<string, ReactNode> = {
       <circle cx="20.6" cy="3.6" r="1.6" />
     </>
   ),
+  // Fast-forward: a strike that goes before its turn.
+  Poised: (
+    <>
+      <path d="M2.4 4.6v14.8L11.6 12Z" />
+      <path d="M12 4.6v14.8L21.2 12Z" />
+    </>
+  ),
   // Double chevron — the Force family's up-arrow said twice, for a hit that is loaded but unspent.
   Ambush: (
     <g fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
@@ -168,6 +175,7 @@ const STATUS_COLOR: Record<string, string> = {
   Poison: '#8bc34a',
   Haunt: '#7a5fc4',
   Ambush: '#a8577a',
+  Poised: '#b6d35a',
   Cannonball: '#8f8a80',
   Beheld: '#e0393f',
 };

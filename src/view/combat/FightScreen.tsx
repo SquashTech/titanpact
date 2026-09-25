@@ -819,7 +819,7 @@ export function FightScreen({
       if (p!.kind === 'rest') return [{ kind: 'rest', combatantId: id }];
       return [{ kind: 'move', combatantId: id, moveId: p!.moveId!, declaredTarget: p!.declaredTarget }];
     });
-    return previewOrder(combat, allCombatants, [...enemyActiveAlive, ...playerActiveAlive], declared, moves, fieldEffects, passives);
+    return previewOrder(combat, allCombatants, [...enemyActiveAlive, ...playerActiveAlive], declared, moves, fieldEffects, passives, statuses);
   })();
 
   // The same marks during playback, off the engine's settled order: the last combatant whose

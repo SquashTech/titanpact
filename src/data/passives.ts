@@ -901,6 +901,17 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'manaSurcharge', target: 'triggerTarget', amount: 5, max: 20 },
     },
   },
+  lure: {
+    id: 'lure',
+    name: 'Lure',
+    description: 'Whenever this hero takes damage, its next attack goes at +1 priority.',
+    // The orchid mantis: it is struck because it looks like a flower, and answers before the striker moves again.
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Poised' },
+    },
+  },
   magmaHide: {
     id: 'magmaHide',
     name: 'Magma Hide',
@@ -957,6 +968,16 @@ const innatePassives: Record<string, PassiveDefinition> = {
       hook: 'Rested',
       condition: { relativeTo: 'self' },
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 45 },
+    },
+  },
+  poised: {
+    id: 'poised',
+    name: 'Poised',
+    description: 'Whenever this hero uses a move that deals no damage, its next attack goes at +1 priority.',
+    reactive: {
+      hook: 'MoveUsed',
+      condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Poised' },
     },
   },
   sulphur: {

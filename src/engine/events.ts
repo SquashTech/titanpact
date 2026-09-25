@@ -49,6 +49,8 @@ export interface MoveUsedEvent extends BaseEvent {
   manaSpent: number;
   /** Authored cost minus what was paid: positive for a discount, NEGATIVE for a manaCostGainOnUse surcharge. Absent (not 0) otherwise. */
   manaDiscount?: number;
+  /** A damage-kind move (MoveDefinition.kind === 'damage'); a MoveUsed passive reads it. */
+  damaging: boolean;
 }
 
 export interface DamageDealtEvent extends BaseEvent {

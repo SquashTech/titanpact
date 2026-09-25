@@ -436,9 +436,17 @@ None built. Where each lands when it is:
      never switches, so it could not matter. Deepgrip (mono: a Water hit makes every move the
      target holds cost 5 more Mana for the fight, up to 20 — the `manaSurcharge` effect, a
      `ManaSurcharged` event), Inkmind (Mind graft, Disorient), Mimic (Shadow graft, Enfeeble).
-     **Tixwick** (Nature, the slow mantis that strikes first — innate Poised, signature
-     Guillotine) waits on a +1-priority status. Its portrait is wired already, because heroArt's
-     orphan check throws on a pose frame no hero claims.
+     **Tixwick** fills the third seat (2026-09-25): the mantis, Attack 105 on Speed 45 — slow,
+     and first anyway. Kit Ivy Spike (already +1) / Lie in Wait / Pin Down. Innate **Poised** —
+     a move that deals no damage leaves it Poised, and its next attack goes a bracket early — on
+     a new `MoveUsed` hook (the cast, read after its payload and before any pivot;
+     `MoveUsed.damaging` is what the condition reads) and a new **Poised** status carrying
+     `StatusDefinition.priorityBonus` = 1 on damage moves, spent by Ambush's `consumedOnDamage`;
+     `priority.ts` reads it for the real order and the fight screen's preview alike. Signature
+     **Guillotine** (60, +1 priority, Bleed, ×2 below half HP; +2 when Poised). The pool is the
+     Bleed column the mantis cuts for, Lacerate its reliable opener. Reaper (Iron graft,
+     Serrated Slice — Scyther into Scizor), Orchid (mono: Provoke, and **Lure** — struck, it is
+     Poised; a counter-striker), Ghost Mantis (Spirit graft, Phantom Strike). The bundle is full.
 
 7. **Phase 1 — BUILT 2026-09-19, per user direction, as the shake-up rather than the Foundry:**
    `StarterPack` (`src/run/starterPacks.ts`, packs in `src/data/starterPacks.ts`), pack zero

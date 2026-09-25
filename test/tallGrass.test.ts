@@ -122,3 +122,64 @@ test('tall grass: Deepgrip taxes every move of a foe it strikes with Water, 5 a 
   assert.ok(!hasStatus(working.combatants.b2, 'Daze'), 'and only the one struck');
   assert.strictEqual(working.combatants.b2.manaSurcharge ?? 0, 0);
 });
+
+// --- Tixwick: the MoveUsed hook and a priority-lifting status (Poised) ---
+
+/** Tixwick (Speed 45) beside Cinder against two faster foes. */
+function mantisFixture(seed: number, passiveId = 'poised'): CombatState {
+  const state = createFightState(
+    seed,
+    [
+      { combatantId: 'a1', heroId: 'tixwick', side: 'A' },
+      { combatantId: 'a2', heroId: 'cinderKnight', side: 'A' },
+    ],
+    [
+      { combatantId: 'b1', heroId: 'stormRanger', side: 'B' },
+      { combatantId: 'b2', heroId: 'packAlpha', side: 'B' },
+    ]
+  );
+  return patch(withPassive(state, 'a1', passiveId), 'a1', { currentMana: 999 });
+}
+
+const turnOrder = (events: readonly { type: string; combatantId?: string }[]) =>
+  events.filter((e) => e.type === 'TurnStarted').map((e) => e.combatantId);
+
+test('tall grass: a move that deals no damage leaves Tixwick Poised; an attack does not', () => {
+  const set = resolveRound(mantisFixture(410), [{ kind: 'move', combatantId: 'a1', moveId: 'lieInWait' } as Action], config);
+  assert.ok(hasStatus(set.state.combatants.a1, 'Poised'), 'Lie in Wait deals no damage');
+
+  const struck = resolveRound(mantisFixture(411), [{ kind: 'move', combatantId: 'a1', moveId: 'ivySpike', declaredTarget: 'b1' } as Action], config);
+  assert.ok(!hasStatus(struck.state.combatants.a1, 'Poised'), 'Ivy Spike is an attack');
+});
+
+test("tall grass: Poised lifts Tixwick's next attack a bracket past faster foes, then is spent", () => {
+  const poised = resolveRound(mantisFixture(412), [{ kind: 'move', combatantId: 'a1', moveId: 'pinDown', declaredTarget: 'b1' } as Action], config).state;
+  // Vine Lash, bracket 0 — Ivy Spike is already +1 and would cut ahead either way.
+  const actions = [
+    { kind: 'move', combatantId: 'a1', moveId: 'vineLash', declaredTarget: 'b1' } as Action,
+    swing('b1', 'stormRanger', 'a2'),
+    swing('b2', 'packAlpha', 'a2'),
+  ];
+  const { state: next, events } = resolveRound({ ...poised, round: 2 }, actions, config);
+  assert.strictEqual(turnOrder(events)[0], 'a1', 'the slowest body strikes first');
+  assert.ok(!hasStatus(next.combatants.a1, 'Poised'), 'and the stance is spent');
+
+  const unpoised = resolveRound(mantisFixture(413), actions, config);
+  assert.notStrictEqual(turnOrder(unpoised.events)[0], 'a1', 'without it, Speed 45 goes behind them');
+});
+
+test('tall grass: Poised lifts only an attack — a second stance move neither rises nor spends it', () => {
+  const poised = resolveRound(mantisFixture(414), [{ kind: 'move', combatantId: 'a1', moveId: 'lieInWait' } as Action], config).state;
+  const { state: next, events } = resolveRound(
+    { ...poised, round: 2 },
+    [{ kind: 'move', combatantId: 'a1', moveId: 'pinDown', declaredTarget: 'b1' } as Action, swing('b1', 'stormRanger', 'a2')],
+    config
+  );
+  assert.strictEqual(turnOrder(events)[0], 'b1', 'a debuff is not lifted');
+  assert.ok(hasStatus(next.combatants.a1, 'Poised'), 'and not spent');
+});
+
+test('tall grass: Lure leaves Tixwick Poised whenever it is struck', () => {
+  const { state: next } = resolveRound(mantisFixture(415, 'lure'), [swing('b1', 'stormRanger', 'a1')], config);
+  assert.ok(hasStatus(next.combatants.a1, 'Poised'));
+});
