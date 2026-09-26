@@ -1,6 +1,6 @@
 # ascension.md — The Ascension ladder: Permadeath, then rules
 
-> **STATUS: A1 DECIDED 2026-09-21 (per user direction); PHASES 0–1 ARE IN — A1 is PLAYABLE (`src/run/ascension.ts`, the title's rung picker, the Fallen beat), phase 0 measured in §9b. Phases 2–3 (the companion's bestiary, star and Gaze exemption; the star colours) NOT BUILT. A2–A5 PROPOSED, not decided.**
+> **STATUS: A1 DECIDED 2026-09-21 (per user direction); PHASES 0–1 ARE IN — A1 is PLAYABLE (`src/run/ascension.ts`, the title's rung picker, the Fallen beat), phase 0 measured in §9b. Phase 2 is IN (2026-09-26) as §7a records it — the bestiary page, the companion star and the awakening; phase 3 (the star colours) NOT BUILT. A2–A5 PROPOSED, not decided.**
 > Ascension 1 is Permadeath from the first fight, the Revive consumable the one way back, offered
 > at the end of the fight that took the hero — and **a Revive cannot save the companion** at any
 > rung. The three companion additions in §7 are decided the same day. Every rung above A1
@@ -240,6 +240,32 @@ excludes a companion's body (`profile.ts:238`). Three additions, all rungs inclu
    the companion's type would have marched. It only fires when that type is among the five
    drawn, so it reads as luck unless the draw is forced. Start with the Gaze and measure.
 
+## 7a. As built (2026-09-26, per user direction)
+
+The three additions landed in a shape that moved from the text above in three places:
+
+- **The bestiary reveals a line on its STAR, not on met/held.** The Compendium's *Spawn* page lists
+  the fourteen lines in chart order; a line is a silhouette with *???* until a run has been cleared
+  with its companion alive, then its Late body, its three names and a lit star. No `knownSpawnIds`.
+  The star is `Profile.companionStars` (types), `companion:<type>` in `RunRecord.starsEarned`, and
+  counts in `totalStars` — it is Constellation currency like a path star.
+- **The companion AWAKENS at the finale** (new, per user direction). Brought to the finale, it gets
+  a beat of its own between the Herald and the fight (`CompanionAwakensScreen`): *Its true
+  potential* — Ancient takes its secondary slot (`awakenCompanion`, the graft slot a spawn line
+  never otherwise uses, so nothing is traded). The line is recorded in `Profile.ascendedSpawnTypes`
+  on the spot, win or lose, and **every later companion of that line joins already Ancient**
+  (`joinCompanion(…, ascended)`), from Act 1, on every rung. The Compendium shows Ancient beside a
+  woken line's type.
+- **The Gaze exemption comes free with it.** Withering Gaze already exempts Ancient, and a companion
+  in the finale is always Ancient now, so no spawn-body clause was added.
+
+**The tension to watch in playtest:** Ancient is the chart's wall — every attacking row reads
+`Ancient: 0.5` (`typechart.ts`). A woken line's companion takes half damage from every typed hit
+**from its first fight on every run after**, far more than the finale-only Gaze exemption §7.3
+decided. It stays mortal and arrives Early and raw, so the half is measured against a small body.
+If it reads as the run's best piece by Act 2, the lever is where the graft applies (finale only,
+or from the Late step), not whether the line wakes.
+
 ---
 
 ## 8. Stars, colours, and how a rung opens
@@ -262,7 +288,7 @@ excludes a companion's body (`profile.ts:238`). Three additions, all rungs inclu
 |---|---|---|
 | 0 | **DONE 2026-09-21.** **Split the rule from the identity, and measure A1.** `companionOf`, the Scribe's *Grows!* label and the Act 1 count cap read `companionHeroId`; `mortal` is left meaning only what it says. Then `RunOptions.ascension` in `scripts/sim`, every entry mortal, the chart pilot, the report's `recruitsBySource` / `spent:revive` / end-of-run reasons | Nothing player-facing. The measurement is what §4 and §6 read, and it is the cheapest thing in this document. |
 | 1 | **DONE 2026-09-21.** **A1.** `RunState.ascension` (saved; an older file loads as Base), `Profile.ascensionCleared` and `RunRecord.ascension`, the title's rung sheet (*How hard?* — every rung up to `openAscension`, a Base clear opening A1; the summary's *New Run* keeps the rung), `isPermadeath` / `isMortal` / `fallenAfterFight` / `releaseFallen` in `src/run/ascension.ts`, the Fallen beat (`FallenScreen`) first in the post-fight chain with the KO'd left `down` on the roster until Continue so the level report reads the roster for who is still there, the map header's `Asc N` chip | The companion's row unbuttoned, its KO absorbed as at Base. The map-side Revive needed no hiding: nobody is ever `down` on the map at A1. The sim's `resolveFallen` reads the same verbs. `test/ascension.test.ts`. The tutorial forces rung 0. |
-| 2 | **The companion** (§7): the bestiary tab, `knownSpawnIds`, the `companion:<type>` star read at the Eyes' close, the Gaze exemption on spawn bodies | All rungs including Base. |
+| 2 | **DONE 2026-09-26** (§7a). **The companion** (§7): the bestiary page, the `companion:<type>` star read at the Eyes' close, the awakening at the finale and the woken line on later runs | All rungs including Base. `test/companion`, `test/profile`. |
 | 3 | **Stars and colours** (§8): `Profile.ascension`, the unlock, the colour mapping, the storage change | The first rung a star can record. |
 | 4 | **A2** — the Mark and the ward on every Guardian | Measured against phase 0's A1 baseline. |
 | 5 | **A3** — warbands as content, enemy gear from Act 1 | The content phase; one or two warbands a type pair, pooled beside the typing draw. |

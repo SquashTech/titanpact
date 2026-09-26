@@ -7,8 +7,11 @@ import { usePlaytime } from './usePlaytime';
 import type { StatKey } from '../engine/content';
 import { saveSummary, type SavedRun } from '../run/save';
 import {
+  companionTypeOf,
+  isSpawnAscended,
   recordActReached,
   recordRunEnded,
+  recordSpawnAscended,
   recordRunStarted,
   recordTipSeen,
   resetTips,
@@ -48,7 +51,7 @@ import { heroes } from '../data/heroes';
 import { moves } from '../data/moves';
 import { allCombatants, rosterHeroes } from '../data/content';
 import { CompanionScreen, type CompanionBeat } from '../view/run/CompanionScreen';
-import { absorbCompanions, companionCandidate, companionJoinDue, joinCompanion } from '../run/companion';
+import { absorbCompanions, awakenCompanion, companionCandidate, companionJoinDue, companionToAwaken, joinCompanion } from '../run/companion';
 import { fallenAfterFight, isPermadeath, openAscension } from '../run/ascension';
 import { FallenScreen } from '../view/run/FallenScreen';
 import type { CombatState } from '../engine/state';
@@ -60,6 +63,7 @@ import { relics } from '../data/relics';
 import { ActIntroScreen } from '../view/run/ActIntroScreen';
 import { PactSealScreen } from '../view/run/PactSealScreen';
 import { HeraldScreen } from '../view/run/HeraldScreen';
+import { CompanionAwakensScreen } from '../view/run/CompanionAwakensScreen';
 import { TitanBoundScreen } from '../view/run/TitanBoundScreen';
 import { TitanWakeScreen } from '../view/run/TitanWakeScreen';
 import { equipment, EQUIPMENT_DROP_POOL, rollEquipmentDrops } from '../data/equipment';
@@ -161,6 +165,8 @@ type Screen =
   | { kind: 'actIntro' }
   /** The Herald announced before its fight; `next` is the fight. */
   | { kind: 'herald'; next: Screen }
+  /** The companion, brought to the finale, wakes to Ancient; `next` is the fight. */
+  | { kind: 'companionAwakens'; heroId: string; next: Screen }
   /** The Eyes have closed: the collapse and the re-binding, ahead of everything the fight pays. */
   | { kind: 'titanBound'; next: Screen }
   | { kind: 'map' }
@@ -737,8 +743,17 @@ export function App() {
       equipmentReward,
       consumableReward: rollConsumableDrop(mapNodeType),
     };
-    // The Herald is announced between the squad and the fight, once the squad is settled.
-    setScreen(mapNodeType === 'finale' ? { kind: 'herald', next: fight } : fight);
+    // The Herald is announced between the squad and the fight, once the squad is settled — and a
+    // companion brought this far answers it: it wakes to Ancient for the fight, and its line joins
+    // Ancient on every run after (profile.ts `ascendedSpawnTypes`).
+    const waking = mapNodeType === 'finale' ? companionToAwaken(playerRun) : null;
+    if (waking) {
+      setPlayerRun((run) => awakenCompanion(run));
+      const type = companionTypeOf(waking.heroId);
+      if (type) setProfile(updateProfile((current) => recordSpawnAscended(current, type)));
+    }
+    const afterHerald: Screen = waking ? { kind: 'companionAwakens', heroId: waking.heroId, next: fight } : fight;
+    setScreen(mapNodeType === 'finale' ? { kind: 'herald', next: afterHerald } : fight);
   }
 
   function handleFightResolved(
@@ -789,7 +804,7 @@ export function App() {
     // The run's first fight is won: one of the Earlies it beat asks to come along, and it does.
     // Joined after the levels roll so the report is the fight's and the newcomer arrives at par.
     const companionId = companionJoinDue(playerRun, mapNodeType) ? companionCandidate(encounter) : null;
-    if (companionId) next = joinCompanion(next, companionId, rosterHeroes);
+    if (companionId) next = joinCompanion(next, companionId, rosterHeroes, Math.random, isSpawnAscended(readProfile(), companionTypeOf(companionId) ?? ''));
 
     let afterScreen: Screen;
     if (isFinale) {
@@ -1181,6 +1196,8 @@ export function App() {
       )}
 
       {screen.kind === 'herald' && <HeraldScreen onContinue={() => setScreen(screen.next)} />}
+
+      {screen.kind === 'companionAwakens' && <CompanionAwakensScreen heroId={screen.heroId} onContinue={() => setScreen(screen.next)} />}
 
       {screen.kind === 'titanBound' && <TitanBoundScreen onContinue={() => setScreen(screen.next)} />}
 

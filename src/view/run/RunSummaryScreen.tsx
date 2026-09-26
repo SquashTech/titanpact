@@ -6,7 +6,7 @@ import { locations } from '../../data/locations';
 import { progressionTable } from '../../data/progression';
 import { chosenClass } from '../../run/classes';
 import { locationForAct } from '../../run/locations';
-import { hasEvolutionStar, type Profile } from '../../run/profile';
+import { companionTypeOf, hasCompanionStar, hasEvolutionStar, type Profile } from '../../run/profile';
 import { currentEvolutionPathId } from '../../run/progression';
 import type { HeroDefinition } from '../../engine/content';
 import { SEAL_ACTS, type RosterEntry, type RunState } from '../../run/state';
@@ -59,6 +59,8 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
   // Diffed rather than passed in, so the screen cannot disagree with what was actually recorded:
   // a hero's star is NEW when the form it finished in is in the profile after and not before.
   const starsAwarded = run.roster.filter((entry) => {
+    const type = companionTypeOf(entry.heroId);
+    if (type) return hasCompanionStar(profileAfter, type) && !hasCompanionStar(profileBefore, type);
     const pathId = currentEvolutionPathId(entry);
     return pathId !== null && hasEvolutionStar(profileAfter, entry.heroId, pathId) && !hasEvolutionStar(profileBefore, entry.heroId, pathId);
   });
@@ -117,7 +119,7 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
             <div className="run-summary-records">
               {starsAwarded.map((entry) => (
                 <span key={entry.rosterId} className="run-summary-record-chip is-star">
-                  ★ {rosterHeroes[entry.heroId].name} · {evolutionName(entry)}
+                  ★ {rosterHeroes[entry.heroId].name} · {companionTypeOf(entry.heroId) ? 'Companion' : evolutionName(entry)}
                 </span>
               ))}
               {newFurthestAct && (

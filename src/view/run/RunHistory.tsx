@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { rosterHeroes } from '../../data/content';
 import { locations } from '../../data/locations';
 import { progressionTable } from '../../data/progression';
-import { formatPlaytime, type RunRecord, type RunRecordHero } from '../../run/profile';
+import { companionStarId, companionTypeOf, formatPlaytime, type RunRecord, type RunRecordHero } from '../../run/profile';
 import { SEAL_ACTS } from '../../run/state';
 import { HeroPortrait } from '../shared/HeroPortrait';
 
@@ -20,6 +20,12 @@ function formatRunDate(ms: number): string {
   const date = new Date(ms);
   const sameYear = date.getFullYear() === new Date().getFullYear();
   return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', ...(sameYear ? {} : { year: 'numeric' }) });
+}
+
+/** The star this hero could have earned on the run: its form's, or its line's for a companion. */
+function starIdOf(hero: RunRecordHero): string | null {
+  const type = companionTypeOf(hero.heroId);
+  return type ? companionStarId(type) : hero.evolutionPathId;
 }
 
 function pathName(hero: RunRecordHero): string | null {
@@ -63,7 +69,7 @@ function RunHistoryRow({ record }: { record: RunRecord }) {
               rosterHeroes[hero.heroId] ? (
                 <span key={`${hero.heroId}-${i}`} className="run-history-face" title={rosterHeroes[hero.heroId].name}>
                   <HeroPortrait heroId={hero.heroId} className="run-history-portrait" />
-                  {hero.evolutionPathId && record.starsEarned.includes(hero.evolutionPathId) && (
+                  {record.starsEarned.includes(starIdOf(hero) ?? '') && (
                     <span className="run-history-face-star" aria-hidden="true">
                       ★
                     </span>
@@ -86,7 +92,7 @@ function RunHistoryRow({ record }: { record: RunRecord }) {
             const def = rosterHeroes[hero.heroId];
             if (!def) return null;
             const form = pathName(hero);
-            const newStar = !!hero.evolutionPathId && record.starsEarned.includes(hero.evolutionPathId);
+            const newStar = record.starsEarned.includes(starIdOf(hero) ?? '');
             return (
               <div key={`${hero.heroId}-${i}`} className="run-history-hero">
                 <HeroPortrait heroId={hero.heroId} className="run-history-portrait" />

@@ -4,14 +4,18 @@ import { heroes } from '../src/data/heroes';
 import { progressionTable } from '../src/data/progression';
 import {
   addPlaytime,
+  companionStarId,
   createProfile,
   decodeProfile,
   formatPlaytime,
+  hasCompanionStar,
   hasEvolutionStar,
+  isSpawnAscended,
   PROFILE_VERSION,
   recordActReached,
   recordRunEnded,
   recordRunStarted,
+  recordSpawnAscended,
   RUN_HISTORY_CAP,
   starredHeroCount,
   totalStars,
@@ -277,4 +281,30 @@ test('profile: every path in the game is a star, and every hero has exactly thre
     assert.strictEqual(paths.length, 3, `${heroId} should have three Evolution paths — three stars`);
     for (const path of paths) assert.strictEqual(path.heroId, heroId, `${path.id} is filed under the wrong hero`);
   }
+});
+
+test('profile: a clear with the companion on the final roster stars its line, once, and a loss or a lost companion stars nothing', () => {
+  let profile = recordRunEnded(createProfile(), wiped(6, [{ heroId: 'behemoth', level: 30, evolutionPathId: null }]), 1_000);
+  assert.deepStrictEqual(profile.companionStars, [], 'a loss');
+  profile = recordRunEnded(profile, cleared([finished('cinderKnight', 'explosive')]), 2_000);
+  assert.deepStrictEqual(profile.companionStars, [], 'the companion fell before the Eyes closed');
+  profile = recordRunEnded(profile, cleared([{ heroId: 'ravager', level: 30, evolutionPathId: null }]), 3_000);
+  assert.ok(hasCompanionStar(profile, 'Beast'), 'alive is the condition, not the Late body');
+  assert.deepStrictEqual(profile.runHistory[0].starsEarned, [companionStarId('Beast')]);
+  assert.strictEqual(totalStars(profile), 2);
+  profile = recordRunEnded(profile, cleared([{ heroId: 'behemoth', level: 30, evolutionPathId: null }]), 4_000);
+  assert.deepStrictEqual(profile.companionStars, ['Beast'], 'the same line twice is the same star');
+  assert.deepStrictEqual(profile.runHistory[0].starsEarned, []);
+  const decoded = decodeProfile(JSON.parse(JSON.stringify(profile)), knownHeroIds, knownPathIds);
+  assert.deepStrictEqual(decoded.companionStars, ['Beast']);
+  assert.deepStrictEqual(decoded.runHistory[1].starsEarned, [companionStarId('Beast')], 'a companion star survives the path filter');
+});
+
+test('profile: a line woken in the finale stays woken, idempotently, and survives a round trip', () => {
+  let profile = recordSpawnAscended(createProfile(), 'Fire');
+  profile = recordSpawnAscended(profile, 'Fire');
+  assert.deepStrictEqual(profile.ascendedSpawnTypes, ['Fire']);
+  assert.ok(isSpawnAscended(profile, 'Fire') && !isSpawnAscended(profile, 'Water'));
+  assert.deepStrictEqual(decodeProfile(JSON.parse(JSON.stringify(profile))).ascendedSpawnTypes, ['Fire']);
+  assert.deepStrictEqual(decodeProfile({ runsStarted: 3 }).ascendedSpawnTypes, [], 'absent on an older file');
 });

@@ -12,7 +12,10 @@ import { spawnPosition, spawnSlate, titanspawn } from '../src/data/titanspawn';
 import { locations } from '../src/data/locations';
 import { generateMap } from '../src/run/map';
 import {
+  ANCIENT,
   absorbCompanions,
+  awakenCompanion,
+  companionToAwaken,
   applyCompanionTierStep,
   companionCandidate,
   companionJoinDue,
@@ -22,7 +25,7 @@ import {
 } from '../src/run/companion';
 import { mobEncounter } from '../src/run/spawn';
 import { encounterScaling } from '../src/run/difficulty';
-import { DEFAULT_SCHEDULE, entryBandRank, levelMovePool, scheduleEntries, scheduleFor } from '../src/run/progression';
+import { DEFAULT_SCHEDULE, entryBandRank, levelMovePool, rosterEntryTypes, scheduleEntries, scheduleFor } from '../src/run/progression';
 import { MASTERY_CAP, MASTERY_EVOLUTION } from '../src/run/mastery';
 import { ROSTER_CAP, addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
 import { equipItem } from '../src/run/equipment';
@@ -159,4 +162,20 @@ test('companion: it does not count toward Act 1\'s enemy-count cap — the Skirm
   // A real third hero does raise it.
   run = addRosterEntry(run, createRosterEntry('crimson', 'crimson', heroes.crimson.moveIds));
   assert.strictEqual(nodeEncounter(skirmish, { ...ctx, run }).run.roster.length, 3);
+});
+
+test('companion: brought to the finale it wakes to Ancient in its secondary slot, once, and a woken line joins woken', () => {
+  const run = joinCompanion(starterRun(), 'cubling', rosterHeroes);
+  assert.strictEqual(companionToAwaken(run)?.heroId, 'cubling');
+  const woken = awakenCompanion(run);
+  const companion = companionOf(woken)!;
+  assert.deepStrictEqual(rosterEntryTypes(rosterHeroes.cubling, companion), ['Beast', ANCIENT]);
+  assert.strictEqual(companionToAwaken(woken), null, 'nothing left to wake');
+  assert.strictEqual(awakenCompanion(woken), woken);
+  const stepped = applyCompanionTierStep({ ...woken, roster: woken.roster.map((r) => (r === companion ? { ...r, mastery: MASTERY_EVOLUTION } : r)) }, companion.rosterId);
+  assert.strictEqual(companionOf(stepped)!.evolutionTypeGraft, ANCIENT, 'a tier-step carries it');
+  assert.strictEqual(companionToAwaken(starterRun()), null, 'no companion, no beat');
+  const joined = companionOf(joinCompanion(starterRun(), 'cubling', rosterHeroes, Math.random, true))!;
+  assert.strictEqual(joined.evolutionTypeGraft, ANCIENT);
+  assert.strictEqual(companionOf(joinCompanion(starterRun(), 'cubling', rosterHeroes))!.evolutionTypeGraft, null);
 });

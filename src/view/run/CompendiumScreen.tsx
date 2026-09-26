@@ -19,7 +19,9 @@ import { pathTintStyle } from '../shared/pathTint';
 import { progressionTable } from '../../data/progression';
 import { HeroDossierOverlay } from './HeroDossierOverlay';
 import { STAR_SHOP_OFFERS } from '../../data/starShop';
-import type { Profile } from '../../run/profile';
+import { hasCompanionStar, isSpawnAscended, type Profile } from '../../run/profile';
+import { ANCIENT } from '../../run/companion';
+import { SPAWN_TIERS, spawnId, titanspawnLines, type SpawnTier, type TitanspawnLine } from '../../data/titanspawn';
 import { isPurchased, type StarShopOffer } from '../../run/starShop';
 
 interface Props {
@@ -101,6 +103,59 @@ function CompendiumHeroRow({ hero, onOpen }: { hero: HeroDefinition; onOpen: () 
   );
 }
 
+const TIER_LABELS: Record<SpawnTier, string> = { early: 'Early', mid: 'Mid', late: 'Late' };
+
+/**
+ * One Titanspawn line on the bestiary page: hidden until a run has been cleared with its companion
+ * alive (profile.ts `companionStars`), then drawn in its Late body with its star lit and its three
+ * bodies named under it — and Ancient beside its type once one of the line has woken in the finale.
+ */
+function CompendiumSpawnRow({ line, profile }: { line: TitanspawnLine; profile: Profile }) {
+  const known = hasCompanionStar(profile, line.type);
+  const types: TypeId[] = known && isSpawnAscended(profile, line.type) ? [line.type, ANCIENT] : [line.type];
+  const lead = getTypeColor(line.type);
+  return (
+    <div
+      className={`compendium-row compendium-spawn-row${known ? '' : ' is-unknown'}`}
+      style={{ '--type-rgb': getTypeColorRgb(line.type) } as CSSProperties}
+      aria-label={known ? `${line.names.late}: star earned` : `An unknown ${line.type} Titanspawn`}
+    >
+      <span className="compendium-row-head">
+        <span className="compendium-row-figure">
+          <span className="pick-ground" aria-hidden="true" />
+          <HeroPortrait heroId={spawnId(line, 'late')} className="compendium-row-portrait compendium-spawn-portrait" />
+        </span>
+        <span className="compendium-row-body">
+          <span className="compendium-row-name">{known ? line.names.late : '???'}</span>
+          <span className="pick-types compendium-row-types">
+            {types.map((t) => (
+              <span key={t} className="pick-type-code" style={{ color: getTypeColor(t) }} title={t}>
+                <ElementGlyph type={t} />
+                {getTypeAbbr(t)}
+              </span>
+            ))}
+          </span>
+        </span>
+        <span
+          className={`evo-star compendium-spawn-star ${known ? 'is-earned' : 'is-empty'}`}
+          title={known ? 'Star earned' : 'Clear a run with this Titanspawn at your side to earn'}
+          aria-hidden="true"
+        >
+          {known ? '★' : '☆'}
+        </span>
+      </span>
+      <span className="compendium-row-paths">
+        {SPAWN_TIERS.map((tier) => (
+          <span key={tier} className="compendium-path-cell" style={{ '--path-lead': lead } as CSSProperties}>
+            <span className="compendium-path-name">{known ? line.names[tier] : '???'}</span>
+            <span className="compendium-spawn-tier">{TIER_LABELS[tier]}</span>
+          </span>
+        ))}
+      </span>
+    </div>
+  );
+}
+
 /**
  * One item on its shelf: the glyph on a rarity-tinted plate, the name, and the effect chips —
  * the rarity is the shelf's heading, so the row does not repeat it. Read-only: tap opens the
@@ -143,11 +198,12 @@ function EquipmentShelf({ rarity, items, onInspect }: { rarity: EquipmentRarity;
   );
 }
 
-type CompendiumTab = 'starters' | 'recruitable' | 'equipment' | 'types';
+type CompendiumTab = 'starters' | 'recruitable' | 'spawn' | 'equipment' | 'types';
 
 const TABS: readonly TabSpec<CompendiumTab>[] = [
   { id: 'starters', label: 'Starters', glyph: 'heroes' },
   { id: 'recruitable', label: 'Recruitable', glyph: 'recruit' },
+  { id: 'spawn', label: 'Spawn', glyph: 'spawn' },
   { id: 'equipment', label: 'Equipment', glyph: 'equipment' },
   { id: 'types', label: 'Types', glyph: 'matchups' },
 ];
@@ -252,6 +308,12 @@ export function CompendiumScreen({ profile, onClose }: Props) {
         <div key={tab} className="detail-tab-body compendium-body" role="tabpanel">
           {tab === 'types' ? (
             <TypeChartTab />
+          ) : tab === 'spawn' ? (
+            <div className="compendium-list">
+              {titanspawnLines.map((line) => (
+                <CompendiumSpawnRow key={line.type} line={line} profile={profile} />
+              ))}
+            </div>
           ) : tab === 'equipment' ? (
             EQUIPMENT_SHELVES.map((shelf) => <EquipmentShelf key={shelf.rarity} rarity={shelf.rarity} items={shelf.items} onInspect={setInspectItemId} />)
           ) : (

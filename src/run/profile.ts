@@ -8,6 +8,8 @@
 // ships are dropped rather than taken as proof the file is bad. A profile is a record of what
 // the player did, not state the engine runs on, so a partially-read one is still true.
 
+import { spawnPosition } from '../data/titanspawn';
+
 export const PROFILE_VERSION = 1;
 
 export interface Profile {
@@ -31,6 +33,17 @@ export interface Profile {
    * SET is the record and there is no count to inflate.
    */
   evolutionStars: Record<string, string[]>;
+  /**
+   * The Titanspawn lines (by type) a run has been cleared with the companion still on the roster —
+   * one star a type, fourteen to collect, on the Compendium's Titanspawn page (docs/ascension.md §7).
+   * Alive is the condition, not the body it reached.
+   */
+  companionStars: string[];
+  /**
+   * The Titanspawn lines (by type) whose companion reached the finale and woke to Ancient. Every
+   * later companion of that line joins with Ancient in its secondary slot (run/companion.ts).
+   */
+  ascendedSpawnTypes: string[];
   /**
    * Every run that ENDED — cleared or wiped — newest first, at most RUN_HISTORY_CAP. An
    * abandoned run is not here for the same reason it is neither a clear nor a loss: the player
@@ -84,7 +97,7 @@ export interface RunRecord {
   ascension: number;
   /** The roster at the end, in roster order. */
   roster: RunRecordHero[];
-  /** The Evolution path ids this run's clear starred for the first time — a loss stars nothing. */
+  /** The Evolution path ids — and `companion:<type>` — this run's clear starred for the first time; a loss stars nothing. */
   starsEarned: string[];
 }
 
@@ -101,6 +114,8 @@ export function createProfile(): Profile {
     furthestAct: 1,
     ascensionCleared: 0,
     evolutionStars: {},
+    companionStars: [],
+    ascendedSpawnTypes: [],
     runHistory: [],
     runStartedAtPlaytimeMs: null,
     purchases: [],
@@ -141,9 +156,16 @@ export function recordRunStarted(profile: Profile, now: number): Profile {
  */
 export function recordRunEnded(profile: Profile, end: RunEnd, now: number): Profile {
   const evolutionStars = { ...profile.evolutionStars };
+  const companionStars = [...profile.companionStars];
   const starsEarned: string[] = [];
   if (end.outcome === 'win') {
     for (const { heroId, evolutionPathId } of end.roster) {
+      // The roster at the Eyes' close: a companion KO'd in the finale is already off it.
+      const type = companionTypeOf(heroId);
+      if (type && !companionStars.includes(type)) {
+        companionStars.push(type);
+        starsEarned.push(companionStarId(type));
+      }
       if (!evolutionPathId) continue;
       const held = evolutionStars[heroId] ?? [];
       if (held.includes(evolutionPathId)) continue;
@@ -164,6 +186,7 @@ export function recordRunEnded(profile: Profile, end: RunEnd, now: number): Prof
     runsFailed: profile.runsFailed + (end.outcome === 'loss' ? 1 : 0),
     ascensionCleared: end.outcome === 'win' ? Math.max(profile.ascensionCleared, end.ascension) : profile.ascensionCleared,
     evolutionStars,
+    companionStars,
     runHistory: [record, ...profile.runHistory].slice(0, RUN_HISTORY_CAP),
     // The run is over; a dev test run started without a pact must not inherit this one's clock.
     runStartedAtPlaytimeMs: null,
@@ -181,6 +204,11 @@ export function resetTips(profile: Profile): Profile {
   return profile.seenTipIds.length === 0 ? profile : { ...profile, seenTipIds: [] };
 }
 
+/** The companion reached the finale and woke: its line joins with Ancient on every later run. Idempotent. */
+export function recordSpawnAscended(profile: Profile, type: string): Profile {
+  return profile.ascendedSpawnTypes.includes(type) ? profile : { ...profile, ascendedSpawnTypes: [...profile.ascendedSpawnTypes, type] };
+}
+
 /** Monotonic: reaching Act 2 after a run that reached Act 4 does not walk the record back. */
 export function recordActReached(profile: Profile, actNumber: number): Profile {
   if (!Number.isInteger(actNumber) || actNumber <= profile.furthestAct) return profile;
@@ -193,8 +221,26 @@ export function hasEvolutionStar(profile: Profile, heroId: string, pathId: strin
   return profile.evolutionStars[heroId]?.includes(pathId) ?? false;
 }
 
+/** The Titanspawn line a body belongs to, or null for a hero. */
+export function companionTypeOf(heroId: string): string | null {
+  return spawnPosition(heroId)?.line.type ?? null;
+}
+
+/** A companion star as `RunRecord.starsEarned` names it, beside the path ids. */
+export function companionStarId(type: string): string {
+  return `companion:${type}`;
+}
+
+export function hasCompanionStar(profile: Profile, type: string): boolean {
+  return profile.companionStars.includes(type);
+}
+
+export function isSpawnAscended(profile: Profile, type: string): boolean {
+  return profile.ascendedSpawnTypes.includes(type);
+}
+
 export function totalStars(profile: Profile): number {
-  let total = 0;
+  let total = profile.companionStars.length;
   for (const paths of Object.values(profile.evolutionStars)) total += paths.length;
   return total;
 }
@@ -257,7 +303,7 @@ function decodeRunRecord(raw: unknown, knownPathIds?: ReadonlySet<string>): RunR
     encountersWon: count(raw.encountersWon),
     ascension: count(raw.ascension),
     roster,
-    starsEarned: stringList(raw.starsEarned).filter((id) => knownPath(id) !== null),
+    starsEarned: stringList(raw.starsEarned).filter((id) => id.startsWith('companion:') || knownPath(id) !== null),
   };
 }
 
@@ -309,6 +355,9 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     furthestAct: Math.max(1, count(value.furthestAct, 1)),
     ascensionCleared: count(value.ascensionCleared),
     evolutionStars,
+    // Absent on every file written before the bestiary; such a player starts both empty.
+    companionStars: [...new Set(stringList(value.companionStars))],
+    ascendedSpawnTypes: [...new Set(stringList(value.ascendedSpawnTypes))],
     runHistory,
     runStartedAtPlaytimeMs: typeof value.runStartedAtPlaytimeMs === 'number' && Number.isFinite(value.runStartedAtPlaytimeMs) ? Math.max(0, Math.floor(value.runStartedAtPlaytimeMs)) : null,
     // Deduplicated: an offer is held once. An id this build no longer sells is kept — it costs
