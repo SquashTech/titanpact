@@ -38,6 +38,7 @@ export function TabStrip<Id extends string>({
             key={tab.id}
             type="button"
             role="tab"
+            data-tab={tab.id}
             aria-selected={isActive}
             className={`tab-button${isActive ? ' is-active' : ''}${tab.count === 0 ? ' is-empty' : ''}`}
             onClick={(e) => {

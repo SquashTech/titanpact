@@ -156,6 +156,7 @@ function ChoiceMedallion({
   return (
     <div
       className={`map-choice tier-${NODE_TIERS[node.type]}`}
+      data-node-type={node.type}
       style={{ '--land-delay': `${landDelayMs}ms`, '--node-color': NODE_COLORS[node.type] } as CSSProperties}
     >
       <span className="map-choice-ahead" aria-hidden="true">

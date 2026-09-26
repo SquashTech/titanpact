@@ -21,6 +21,10 @@ export interface TipStaging {
   placement?: 'low';
 }
 
+// Shared screen parts: the map's nodes ahead, and the hero cards every pick-a-hero screen uses.
+const MAP_CHOICES = '.map-choice';
+const PICK_CARDS = '.pick-card';
+
 // The fight screen's own anatomy, named once so the table below reads as prose.
 const ALLY_CARDS = '.team-row.ally .combatant-card';
 const ENEMY_CARDS = '.team-row.enemy .combatant-card';
@@ -43,6 +47,25 @@ export const TIP_STAGING: Readonly<Record<string, TipStaging>> = {
   draft: { pages: [['.draft-rail']] },
   // The act's arrival is the place itself — keep the card off it.
   run: { placement: 'low' },
+  map: { pages: [[MAP_CHOICES], ['.map-rail'], [MAP_CHOICES]] },
+  wounds: { pages: [['.map-party-chip .wound-bar']] },
+  fork: { pages: [['.map-choice[data-node-type="elite"]']] },
+  squad: { pages: [['.squad-section-player', '.squad-footer .resolve-button']] },
+  levelUp: { pages: [['.level-up-xp'], ['.level-up-gains'], ['.level-up-owed']] },
+  item: { pages: [[PICK_CARDS], ['.item-who-sockets'], ['.item-who-sell']] },
+  fallen: { pages: [[PICK_CARDS]] },
+  equipmentReward: { pages: [['.equip-cache-list']] },
+  boon: { pages: [['.relic-shrine-list']] },
+  manaWell: { pages: [[PICK_CARDS]] },
+  rest: { pages: [['.rest-screen .wound-bar']] },
+  scribe: { pages: [[PICK_CARDS], ['.scroll-screen .mastery-pips']] },
+  shop: {
+    pages: [['.tab-button[data-tab="shop"]', '.guild-hall-good'], ['.tab-button[data-tab="tavern"]'], ['.tab-button[data-tab="smithy"]']],
+  },
+  recruit: { pages: [['.recruit-sign', '.recruit-contracts'], null] },
+  banner: { pages: [['.relic-pick-row']] },
+  crucible: { pages: [['.crucible-class-list']] },
+  locationChoice: { pages: [['.location-choice-domains', '.location-choice-domains-all']] },
 
   // --- Fights ---
   'fight.basics': {

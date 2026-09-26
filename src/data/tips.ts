@@ -28,7 +28,7 @@ function tip(id: string, title: string, ...pages: string[]): Tip {
 }
 
 export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
-  draft: tip('draft', 'Starting Heroes', 'Pick two heroes to start the run. More join along the way.'),
+  draft: tip('draft', 'Starting Heroes', 'Pick two heroes from the row at the bottom to start the run. More join along the way.'),
   run: tip(
     'run',
     'The Journey',
@@ -38,13 +38,14 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
   map: tip(
     'map',
     'The Map',
-    'Choose where to go next. Every path has the same number of fights and ends at the Guardian.',
+    'Tap one of the nodes ahead to go there.',
+    'The track across the top is the whole act. Every path has the same number of fights, and every one ends at the Guardian.',
     'Hold a node to see what it is.'
   ),
   wounds: tip(
     'wounds',
     'Wounds',
-    'HP carries over from fight to fight within an act. Mana refills at the start of every fight.',
+    'HP carries over from fight to fight within an act: the bar under each hero at the bottom is what it has left. Mana refills at the start of every fight.',
     'A knocked-out hero sits out until healed: at a Rest, the Guild Hall, with a Revive, or when the act ends.'
   ),
   fork: tip('fork', 'Elite or Skirmish', 'The Elite is a level higher, always drops an item, and pays more XP.'),
@@ -56,14 +57,15 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
   levelUp: tip(
     'levelUp',
     'Level Up',
-    'Every won fight gives XP to the whole roster, benched heroes included.',
-    "Each level rolls every stat against the hero's growth grades. Some levels also offer a new move — take it or skip it; it won't be offered again."
+    "Every won fight gives XP to the whole roster, benched heroes included. The bar on each hero's row fills toward its next level.",
+    "Each level rolls every stat against the hero's growth grades. The cells on each row show what every stat gained this time.",
+    "Some levels also offer a new move — take it or skip it; it won't be offered again."
   ),
   item: tip(
     'item',
     'Items',
     "Choose which hero gets this item. Once given, it can't be moved.",
-    'Each hero holds three. Giving a hero a second item of the same kind merges them into a stronger one.',
+    "Each hero holds three: the sockets on its card. Giving a hero a second item of the same kind merges them into a stronger one.",
     'Or sell it for gold if nobody wants it.'
   ),
   fallen: tip(
@@ -71,8 +73,8 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
     'Permadeath',
     'Heroes knocked out in that fight are lost, along with their items — unless you spend a Revive on them now.'
   ),
-  equipmentReward: tip('equipmentReward', 'Equipment', 'Choose one of three items. Hold an item to read it in full.'),
-  boon: tip('boon', 'Boon', 'Choose one of three passives and give it to a hero. It keeps it for the rest of the run.'),
+  equipmentReward: tip('equipmentReward', 'Equipment', 'Choose one of these three items. Hold an item to read it in full.'),
+  boon: tip('boon', 'Boon', 'Choose one of these three passives, then the hero to give it to. It keeps it for the rest of the run.'),
   manaWell: tip('manaWell', 'Mana Well', 'Choose a hero to gain +30 max Mana for the rest of the run.'),
   rest: tip('rest', 'Rest', 'Every hero is fully healed, and knocked-out heroes get back up.'),
   event: tip('event', 'Event', 'Something unusual. Read what it offers before you choose.'),
@@ -80,13 +82,14 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
     'scribe',
     'Mastery Scrolls',
     'Choose two heroes. Each gets 2 Mastery Scrolls.',
-    'At 5 Scrolls a hero Evolves into a new form. At 10 its innate passive is Mastered: a much stronger version of it.'
+    'The pips on each card are its Scrolls. At 5 a hero Evolves into a new form. At 10 its innate passive is Mastered: a much stronger version of it.'
   ),
   shop: tip(
     'shop',
     'Guild Hall',
-    'Spend gold on new heroes, Recruit Contracts, Mastery Scrolls, potions and Revives. Mend heals your whole roster.',
-    'The Smithy tab upgrades and enchants the items your heroes hold.'
+    'The Shop sells Recruit Contracts, Mastery Scrolls, potions and Revives for gold. Mend heals your whole roster.',
+    'The Tavern hires new heroes.',
+    'The Smithy upgrades and enchants the items your heroes hold.'
   ),
   recruit: tip(
     'recruit',
@@ -103,7 +106,7 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
   locationChoice: tip(
     'locationChoice',
     'Next Act',
-    'Choose where the next act takes place. Each place is home to different types of Titanspawn.'
+    'Choose where the next act takes place. The icons on each place are the types of Titanspawn that live there.'
   ),
 };
 

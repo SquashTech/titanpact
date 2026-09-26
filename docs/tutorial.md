@@ -96,7 +96,9 @@ Ancient tip is the Guardian's, and lock-in is the Switching tip's last page.
 
 ### Staging
 
-Every tip that names something on screen points at it (`src/view/run/tipStaging.ts`, per page):
+Every tip that names something on screen points at it, screen tips and fight tips alike
+(`src/view/run/tipStaging.ts`, per page; the map's tiles carry `data-node-type` and the Guild
+Hall's tabs `data-tab` so a page can name one of them):
 the named elements are cut out of a darker scrim and ringed, and the card moves to whichever band
 — middle, top, bottom — hides least of them. A selector that matches nothing lights nothing and
 the card sits in the middle. So a page names ONE specific thing ("the number beside each enemy's
