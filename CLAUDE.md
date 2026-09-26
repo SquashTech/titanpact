@@ -191,6 +191,17 @@ don't silently override it.
 > Ancient takes its secondary slot, and every later companion of that line joins Ancient
 > (`Profile.ascendedSpawnTypes`). Ancient resists every type, so that is the thing to watch.
 
+> **A ninth is DECIDED, NOT BUILT: `docs/collection.md`** (2026-09-26, per user direction).
+> **The player builds the run's pools, not the designer**: a **Deck** of 14 starter slots (one a
+> type, the draft's pool) + 28 recruit slots (two a type), all 42 feeding the run; the base 42
+> owned free, and the default deck IS the `starter` flag's split. **A recruitable fight fields at
+> least two deck heroes; the rest may be strangers** off the whole catalog, never offered a
+> contract. Starter Packs become deck presets, pack zero goes back to *The Fourteen*, and
+> **Classic** names the base run mode. Stars turn renewable — a clear bonus by rung, an entry fee
+> on an Ascension attempt, heroes past the base bought singly, in bundles, or by a no-duplicate
+> **Summoning** — every number open. Build-around heroes that bend a deck rule are PROPOSED (§6a).
+> Its §8 lists what it reverses; the `starter`-flag invariant below stands until phase 1 lands.
+
 ---
 
 ## Locked invariants — do not violate without an explicit decision
