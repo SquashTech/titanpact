@@ -19,16 +19,27 @@ export interface AscensionRung {
   name: string;
   /** The one rule this rung adds, in the player's voice. */
   rule: string;
+  /** Stars spent when the pact is sealed, win or lose (docs/collection.md §5). */
+  entryFee: number;
+  /** Stars a clear pays on top of its hero stars, every clear. */
+  clearBonus: number;
 }
 
 export const ASCENSION_RUNGS: readonly AscensionRung[] = [
-  { rung: 0, name: 'Classic', rule: 'A knocked-out hero stands back up: at a Rest, a mend, a Revive, or the act’s end.' },
+  { rung: 0, name: 'Classic', rule: 'A knocked-out hero stands back up: at a Rest, a mend, a Revive, or the act’s end.', entryFee: 0, clearBonus: 1 },
   {
     rung: 1,
     name: 'Ascension 1',
     rule: 'Permadeath. A hero knocked out is gone from the run with everything it carried, unless a Revive is spent on it when the fight ends. Nothing saves the companion.',
+    entryFee: 1,
+    clearBonus: 6,
   },
 ];
+
+/** The rung's row; an unknown rung reads as Classic, which costs nothing and pays the least. */
+export function rungOf(rung: number): AscensionRung {
+  return ASCENSION_RUNGS.find((r) => r.rung === rung) ?? ASCENSION_RUNGS[0];
+}
 
 export function isPermadeath(run: Pick<RunState, 'ascension'>): boolean {
   return run.ascension >= PERMADEATH_FROM_ASCENSION;

@@ -8,6 +8,7 @@
 // held. So a star is never taken off a hero; it is the count that is drawn down.
 
 import { totalStars, type Profile } from './profile';
+import { rungOf } from './ascension';
 
 /**
  * What a purchase unlocks (docs/constellation.md §4, §8): a discriminant a pool edge reads once.
@@ -30,15 +31,21 @@ export interface StarShopOffer {
 
 export type StarShopCatalog = Record<string, StarShopOffer>;
 
+/** Every star the profile has been paid: hero and companion stars, and clear bonuses. */
+export function starsEarned(profile: Profile): number {
+  return totalStars(profile) + profile.bonusStars;
+}
+
+/** Purchases and entry fees. */
 export function starsSpent(profile: Profile, catalog: StarShopCatalog): number {
-  let spent = 0;
+  let spent = profile.feesPaid;
   for (const id of profile.purchases) spent += catalog[id]?.cost ?? 0;
   return spent;
 }
 
 /** Earned minus spent. A purchase whose offer this build no longer ships costs nothing. */
 export function starBalance(profile: Profile, catalog: StarShopCatalog): number {
-  return totalStars(profile) - starsSpent(profile, catalog);
+  return starsEarned(profile) - starsSpent(profile, catalog);
 }
 
 export function isPurchased(profile: Profile, offerId: string): boolean {
@@ -47,6 +54,11 @@ export function isPurchased(profile: Profile, offerId: string): boolean {
 
 export function canBuy(profile: Profile, catalog: StarShopCatalog, offer: StarShopOffer): boolean {
   return !isPurchased(profile, offer.id) && starBalance(profile, catalog) >= offer.cost;
+}
+
+/** Whether the balance covers a rung's entry fee (run/ascension.ts). Classic always does. */
+export function canEnterRung(profile: Profile, catalog: StarShopCatalog, rung: number): boolean {
+  return starBalance(profile, catalog) >= rungOf(rung).entryFee;
 }
 
 export class StarShopError extends Error {}

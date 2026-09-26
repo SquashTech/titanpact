@@ -20810,6 +20810,35 @@ button.star-shop-bundle-face {
   padding: 10px 16px;
 }
 
+.title-rung:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.title-rung-head {
+  display: flex;
+  align-self: stretch;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.title-rung-stakes {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.title-rung-fee {
+  color: var(--text-dim);
+}
+
+.title-rung-bonus {
+  color: rgb(224, 166, 60);
+}
+
 .title-rung-name {
   font-size: 14px;
   font-weight: 700;

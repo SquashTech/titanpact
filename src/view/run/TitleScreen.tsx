@@ -7,7 +7,7 @@ import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { RecordsScreen } from './RecordsScreen';
 import { STAR_SHOP_NAME, StarShopScreen } from './StarShopScreen';
 import { starShopCatalog } from '../../data/starShop';
-import { starBalance, type StarShopOffer } from '../../run/starShop';
+import { canEnterRung, starBalance, type StarShopOffer } from '../../run/starShop';
 import { TitanColossus, TitanRidge } from './titanArt';
 import { SealArt } from '../shared/SealArt';
 import { HubGlyph } from '../shared/nodeIcons';
@@ -31,7 +31,7 @@ interface Props {
   /** Set when a stored run was refused on load — shown once so a vanished Continue is explained, not just missing. */
   staleSaveReason: string | null;
   onContinueRun: () => void;
-  /** Start a run on the given Ascension rung (run/ascension.ts); 0 is Base. */
+  /** Start a run on the given Ascension rung (run/ascension.ts); 0 is Classic. */
   onStartRun: (ascension: number) => void;
   /** The highest rung the profile may start on; 0 until a run has been cleared. */
   openAscension: number;
@@ -397,12 +397,20 @@ export function TitleScreen({
               <button
                 key={r.rung}
                 className={`options-item title-rung${r.rung > 0 ? ' options-item-danger' : ''}`}
+                disabled={!canEnterRung(profile, starShopCatalog, r.rung)}
                 onClick={() => {
                   setPickingRung(false);
                   launch(() => onStartRun(r.rung));
                 }}
               >
-                <span className="title-rung-name">{r.name}</span>
+                <span className="title-rung-head">
+                  <span className="title-rung-name">{r.name}</span>
+                  {/* The stakes (docs/collection.md §5): what sealing costs, what a clear pays. */}
+                  <span className="title-rung-stakes">
+                    {r.entryFee > 0 && <span className="title-rung-fee">Costs ★ {r.entryFee}</span>}
+                    <span className="title-rung-bonus">Clear +★ {r.clearBonus}</span>
+                  </span>
+                </span>
                 <span className="title-rung-rule">{r.rule}</span>
               </button>
             ))}

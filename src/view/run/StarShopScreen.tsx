@@ -2,8 +2,8 @@ import { useState, type CSSProperties } from 'react';
 import { STAR_SHOP_OFFERS, starShopCatalog } from '../../data/starShop';
 import { locationDomains, locations } from '../../data/locations';
 import { heroes } from '../../data/heroes';
-import { totalStars, type Profile } from '../../run/profile';
-import { canBuy, isPurchased, starBalance, starsSpent, type StarShopGrant, type StarShopOffer } from '../../run/starShop';
+import type { Profile } from '../../run/profile';
+import { canBuy, isPurchased, starBalance, starsEarned, starsSpent, type StarShopGrant, type StarShopOffer } from '../../run/starShop';
 import { HubGlyph } from '../shared/nodeIcons';
 import { ElementGlyph } from '../shared/elementIcons';
 import { LocationHorizon } from '../shared/locationArt';
@@ -49,7 +49,7 @@ export interface OfferPurchase {
  * star; the cost on it is a label. The Compendium's sheet (CompendiumScreen), tabs at the foot.
  */
 export function StarShopScreen({ profile, onBuy, onClose }: Props) {
-  const earned = totalStars(profile);
+  const earned = starsEarned(profile);
   const spent = starsSpent(profile, starShopCatalog);
   const balance = starBalance(profile, starShopCatalog);
   const [shelf, setShelf] = useState<ShelfId>('heroBundle');
@@ -122,7 +122,7 @@ export function StarShopScreen({ profile, onBuy, onClose }: Props) {
           )}
 
           <p className="records-note star-shop-note">
-            {'A star is earned by clearing a run with a hero in one of its Evolutions — three a hero, one a form. Spending one never takes it off the hero: the Compendium keeps every star you have ever earned.'}
+            {'A star is earned by clearing a run with a hero in one of its Evolutions — three a hero, one a form — and every clear pays a bonus on top, more on a harder rung. Spending one never takes it off the hero: the Compendium keeps every star you have ever earned.'}
           </p>
         </div>
 

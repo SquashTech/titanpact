@@ -11,6 +11,7 @@
 import { spawnPosition } from '../data/titanspawn';
 import { heroes } from '../data/heroes';
 import { starterPackById } from '../data/starterPacks';
+import { rungOf } from './ascension';
 
 export const PROFILE_VERSION = 1;
 
@@ -58,6 +59,10 @@ export interface Profile {
    * A dev test run never records a start, so its record carries no duration.
    */
   runStartedAtPlaytimeMs: number | null;
+  /** Lifetime stars paid by clear bonuses (run/ascension.ts `clearBonus`), beside the hero and companion stars. */
+  bonusStars: number;
+  /** Lifetime stars paid as Ascension entry fees — spent, never refunded. */
+  feesPaid: number;
   /** Constellation (star shop) offer ids bought (run/starShop.ts), each at most once. Stars are never un-earned; this is what draws the balance down. */
   purchases: string[];
   /**
@@ -105,10 +110,12 @@ export interface RunRecord {
   roster: RunRecordHero[];
   /** The Evolution path ids — and `companion:<type>` — this run's clear starred for the first time; a loss stars nothing. */
   starsEarned: string[];
+  /** The rung's clear bonus this run paid; 0 on a loss and on every record written before the stakes. */
+  clearBonus: number;
 }
 
 /** What the app hands over at a run's end; the verb fills in the rest of the record. */
-export type RunEnd = Omit<RunRecord, 'endedAt' | 'durationMs' | 'starsEarned'>;
+export type RunEnd = Omit<RunRecord, 'endedAt' | 'durationMs' | 'starsEarned' | 'clearBonus'>;
 
 export function createProfile(): Profile {
   return {
@@ -124,6 +131,8 @@ export function createProfile(): Profile {
     ascendedSpawnTypes: [],
     runHistory: [],
     runStartedAtPlaytimeMs: null,
+    bonusStars: 0,
+    feesPaid: 0,
     purchases: [],
     deck: {},
     firstPlayedAt: 0,
@@ -140,9 +149,16 @@ export function addPlaytime(profile: Profile, ms: number): Profile {
   return { ...profile, playtimeMs: profile.playtimeMs + Math.round(ms) };
 }
 
-export function recordRunStarted(profile: Profile, now: number): Profile {
+/**
+ * The pact sealed. The rung's entry fee is spent here and nowhere else, so quitting mid-run is not
+ * a free attempt; a rung the balance cannot cover is refused, and the title never offers one.
+ */
+export function recordRunStarted(profile: Profile, now: number, ascension = 0, balance = Infinity): Profile {
+  const fee = rungOf(ascension).entryFee;
+  if (fee > balance) throw new Error(`${rungOf(ascension).name} costs ${fee}, balance is ${balance}`);
   return {
     ...profile,
+    feesPaid: profile.feesPaid + fee,
     runsStarted: profile.runsStarted + 1,
     runStartedAtPlaytimeMs: profile.playtimeMs,
     firstPlayedAt: profile.firstPlayedAt === 0 ? now : profile.firstPlayedAt,
@@ -185,6 +201,7 @@ export function recordRunEnded(profile: Profile, end: RunEnd, now: number): Prof
     endedAt: now,
     durationMs: profile.runStartedAtPlaytimeMs === null ? null : Math.max(0, profile.playtimeMs - profile.runStartedAtPlaytimeMs),
     starsEarned,
+    clearBonus: end.outcome === 'win' ? rungOf(end.ascension).clearBonus : 0,
   };
   return {
     ...profile,
@@ -193,6 +210,7 @@ export function recordRunEnded(profile: Profile, end: RunEnd, now: number): Prof
     ascensionCleared: end.outcome === 'win' ? Math.max(profile.ascensionCleared, end.ascension) : profile.ascensionCleared,
     evolutionStars,
     companionStars,
+    bonusStars: profile.bonusStars + record.clearBonus,
     runHistory: [record, ...profile.runHistory].slice(0, RUN_HISTORY_CAP),
     // The run is over; a dev test run started without a pact must not inherit this one's clock.
     runStartedAtPlaytimeMs: null,
@@ -330,6 +348,7 @@ function decodeRunRecord(raw: unknown, knownPathIds?: ReadonlySet<string>): RunR
     ascension: count(raw.ascension),
     roster,
     starsEarned: stringList(raw.starsEarned).filter((id) => id.startsWith('companion:') || knownPath(id) !== null),
+    clearBonus: count(raw.clearBonus),
   };
 }
 
@@ -388,6 +407,9 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     runStartedAtPlaytimeMs: typeof value.runStartedAtPlaytimeMs === 'number' && Number.isFinite(value.runStartedAtPlaytimeMs) ? Math.max(0, Math.floor(value.runStartedAtPlaytimeMs)) : null,
     // Deduplicated: an offer is held once. An id this build no longer sells is kept — it costs
     // nothing against the balance (starShop.ts) and comes back if the offer does.
+    // Absent on every file written before the stakes; such a player has earned and paid none.
+    bonusStars: count(value.bonusStars),
+    feesPaid: count(value.feesPaid),
     purchases: [...new Set(stringList(value.purchases))],
     deck: decodeDeck(value),
     firstPlayedAt: count(value.firstPlayedAt),

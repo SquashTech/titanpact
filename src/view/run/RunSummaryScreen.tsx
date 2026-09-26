@@ -13,6 +13,7 @@ import { SEAL_ACTS, type RosterEntry, type RunState } from '../../run/state';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { levelOf } from '../../run/growth';
+import { rungOf } from '../../run/ascension';
 import { statScaleFor } from '../../run/statScale';
 
 interface Props {
@@ -23,6 +24,8 @@ interface Props {
   profileBefore: Profile;
   profileAfter: Profile;
   onNewRun: () => void;
+  /** Whether the balance covers this rung's entry fee again; Classic always does. */
+  canAffordRung: boolean;
   onReturnToTitle: () => void;
 }
 
@@ -50,7 +53,7 @@ function evolutionName(entry: RosterEntry): string | null {
  * only reason to press start again. No ledger: the figures it used to carry (gold, fights won,
  * Banners) were the run's bookkeeping, not its story (2026-09-16, per user direction).
  */
-export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, onNewRun, onReturnToTitle }: Props) {
+export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, onNewRun, canAffordRung, onReturnToTitle }: Props) {
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
 
   const won = outcome === 'win';
@@ -65,7 +68,10 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
     return pathId !== null && hasEvolutionStar(profileAfter, entry.heroId, pathId) && !hasEvolutionStar(profileBefore, entry.heroId, pathId);
   });
   const newFurthestAct = profileAfter.furthestAct > profileBefore.furthestAct;
-  const hasRecords = starsAwarded.length > 0 || newFurthestAct;
+  // The rung's clear bonus, read off the ledger rather than the table, for the same reason.
+  const clearBonus = profileAfter.bonusStars - profileBefore.bonusStars;
+  const rung = rungOf(run.ascension);
+  const hasRecords = starsAwarded.length > 0 || newFurthestAct || clearBonus > 0;
 
   return (
     <div className={`result-overlay ${won ? 'result-win' : 'result-loss'}`}>
@@ -122,6 +128,11 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
                   ★ {rosterHeroes[entry.heroId].name} · {companionTypeOf(entry.heroId) ? 'Companion' : evolutionName(entry)}
                 </span>
               ))}
+              {clearBonus > 0 && (
+                <span className="run-summary-record-chip is-star">
+                  ★ +{clearBonus} · {rung.name} clear
+                </span>
+              )}
               {newFurthestAct && (
                 <span className="run-summary-record-chip">
                   Furthest act — {profileAfter.furthestAct > SEAL_ACTS ? 'Finale' : actLabel(profileAfter.furthestAct)}
@@ -134,7 +145,9 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
         {/* Stacked, not the shared row: two full sentences side by side on a phone are two cramped targets.
             `.result-buttons button:last-child` still makes the second one read as secondary. */}
         <div className="result-buttons run-summary-buttons">
-          <button onClick={onNewRun}>Start a New Run</button>
+          <button onClick={onNewRun} disabled={!canAffordRung}>
+            {!canAffordRung ? `${rung.name} needs ★ ${rung.entryFee}` : rung.entryFee > 0 ? `Start a New Run · ★ ${rung.entryFee}` : 'Start a New Run'}
+          </button>
           <button onClick={onReturnToTitle}>Return to Title</button>
         </div>
       </div>

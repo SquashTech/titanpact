@@ -1,13 +1,14 @@
 import * as assert from 'assert';
 import { test } from './harness';
-import { createProfile, decodeProfile, recordRunEnded } from '../src/run/profile';
+import { createProfile, decodeProfile, recordRunEnded, recordRunStarted } from '../src/run/profile';
+import { MAX_ASCENSION, rungOf } from '../src/run/ascension';
 import { STAR_SHOP_OFFERS, starShopCatalog } from '../src/data/starShop';
 import { locations } from '../src/data/locations';
 import { locationPool, unvisitedLocationIds } from '../src/run/locations';
 import { heroes } from '../src/data/heroes';
 import { guildHallOffers, guildHallOffersFor } from '../src/data/recruitment';
 import { heroPool, isRecruitable } from '../src/run/recruitment';
-import { buyOffer, canBuy, isPurchased, starBalance, starsSpent, StarShopError, type StarShopCatalog, type StarShopGrant } from '../src/run/starShop';
+import { buyOffer, canBuy, canEnterRung, isPurchased, starBalance, starsSpent, StarShopError, type StarShopCatalog, type StarShopGrant } from '../src/run/starShop';
 
 const pack: StarShopGrant = { kind: 'starterPack' };
 
@@ -30,7 +31,8 @@ function withStars(count: number) {
       i
     );
   }
-  return profile;
+  // Hero stars only: the clear bonus each of those clears paid is the stakes test's business.
+  return { ...profile, bonusStars: 0 };
 }
 
 test('star shop: the balance is stars earned minus stars spent, and a star is never un-earned', () => {
@@ -122,4 +124,41 @@ test('star shop: a bought bundle puts its heroes in the recruit pool, and only t
   assert.strictEqual(Object.keys(held).length, Object.keys(base).length + bundle.heroIds.length, 'a purchase adds its heroes, never replaces one');
   assert.ok(isRecruitable('scallywag', held));
   assert.ok(guildHallOffersFor(held).some((o) => o.heroId === 'scallywag'), 'the Guild Hall shelf sells him once the bundle is held');
+});
+
+test('star shop: the stakes — a clear pays its rung bonus every time, an entry fee is spent at the seal win or lose', () => {
+  const end = (ascension: number, outcome: 'win' | 'loss') => ({ outcome, actReached: 6, locationId: null, encountersWon: 1, ascension, roster: [] });
+  let profile = recordRunEnded(createProfile(), end(0, 'win'), 1);
+  profile = recordRunEnded(profile, end(0, 'win'), 2);
+  assert.strictEqual(profile.bonusStars, 2 * rungOf(0).clearBonus, 'Classic pays on every clear');
+  assert.strictEqual(profile.runHistory[0].clearBonus, rungOf(0).clearBonus);
+  assert.strictEqual(recordRunEnded(profile, end(1, 'loss'), 3).bonusStars, profile.bonusStars, 'a loss pays nothing');
+
+  const balance = starBalance(profile, catalog);
+  assert.ok(canEnterRung(profile, catalog, 1));
+  const sealed = recordRunStarted(profile, 4, 1, balance);
+  assert.strictEqual(starBalance(sealed, catalog), balance - rungOf(1).entryFee);
+  assert.strictEqual(starsSpent(sealed, catalog), rungOf(1).entryFee);
+  const won = recordRunEnded(sealed, end(1, 'win'), 5);
+  assert.strictEqual(starBalance(won, catalog), balance - rungOf(1).entryFee + rungOf(1).clearBonus, 'a win pays the bonus; the fee is not refunded');
+
+  const broke = createProfile();
+  assert.ok(!canEnterRung(broke, catalog, 1) && canEnterRung(broke, catalog, 0), 'Classic is never out of reach');
+  assert.throws(() => recordRunStarted(broke, 6, 1, starBalance(broke, catalog)));
+  assert.strictEqual(recordRunStarted(broke, 6, 0, 0).feesPaid, 0);
+});
+
+test('star shop: every rung past Classic pays more a run than the one below it, at the measured win rates', () => {
+  // docs/ascension.md §9b, skilled pilot: Classic 73.7%, A1 31.2%. Directional (docs/collection.md §5).
+  const winRate: Record<number, number> = { 0: 0.737, 1: 0.312 };
+  const expected = (rung: number) => winRate[rung] * rungOf(rung).clearBonus - rungOf(rung).entryFee;
+  assert.ok(rungOf(0).entryFee === 0 && rungOf(0).clearBonus > 0, 'Classic is free and always pays, so no balance is ever stuck');
+  for (let rung = 1; rung <= MAX_ASCENSION; rung++) assert.ok(expected(rung) > expected(rung - 1), `rung ${rung} pays ${expected(rung).toFixed(2)} against ${expected(rung - 1).toFixed(2)}`);
+});
+
+test('star shop: a profile written before the stakes reads as none earned and none paid', () => {
+  const old = decodeProfile({ runHistory: [{ outcome: 'win', actReached: 6, roster: [] }] });
+  assert.strictEqual(old.bonusStars, 0);
+  assert.strictEqual(old.feesPaid, 0);
+  assert.strictEqual(old.runHistory[0].clearBonus, 0);
 });

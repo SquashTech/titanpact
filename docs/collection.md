@@ -1,6 +1,6 @@
 # collection.md — The Collection: a deck of heroes, and the stars that grow it
 
-> **STATUS: DIRECTION DECIDED 2026-09-26 (per user direction), NUMBERS OPEN. PHASE 1 (THE DECK) IS IN, same day — §10.**
+> **STATUS: DIRECTION DECIDED 2026-09-26 (per user direction), NUMBERS OPEN. PHASES 1 (THE DECK) AND 2 (THE STAKES) ARE IN, same day — §10.**
 > The designer stops assigning heroes to the draft or the recruit pool; the player does, on a
 > **Deck** built from the heroes the account owns. The base 42 are owned from the first launch
 > and the default deck IS today's split, so a new account plays today's game. Stars become a
@@ -114,23 +114,31 @@ before owning it.
 **Stars stop being finite.** A cleared run pays a **clear bonus** on top of its hero stars, and
 the bonus is repeatable.
 
-| | Entry fee | Clear bonus |
-|---|---|---|
-| **Classic** | — | first-pass: 3 |
-| **A1** Permadeath | first-pass: 1 | first-pass: 5 |
-| A2–A5 | rises by rung | rises by rung |
+| | Entry fee | Clear bonus | Expected a run* |
+|---|---|---|---|
+| **Classic** | — | **1**, every clear | +0.74 |
+| **A1** Permadeath | **1**, always spent | **6**, every clear | +0.87 |
+| A2–A5 | rises by rung | rises by rung | must beat the rung below |
 
-The figures are the designer's spitball, and **known to be wrong in one direction**: at measured
+\* Win rate × bonus − fee, at the skilled pilot's measured 73.7% / 31.2% (`ascension.md` §9b).
+First-pass figures (`ASCENSION_RUNGS`, `src/run/ascension.ts`); `test/starShop` pins only the
+shape — Classic free and paying, each rung ahead of the one below.
+
+**Decided 2026-09-26, per user direction:** Classic pays a **small bonus on every clear**, so a
+player at zero can always win their way back to an A1 fee — no balance is ever stuck — and the
+**fee is always spent**, a win refunding nothing. The designer's first spitball (3 / 5) is below,
+with why it was moved.
+
+The spitball was **wrong in one direction**: at measured
 win rates, Classic pays ≈ 0.74 × 3 = **+2.2 a run** and A1 ≈ 0.31 × 5 − 1 = **+0.6**, so once the
 hero stars run out Classic is the best farm and Ascension is never worth attempting. The shape
 the numbers must satisfy:
 
 - **A rung's expected payout must beat the rung below it.** Each rung roughly halves the win
   rate, so the bonus must grow faster than that.
-- **Classic is not a farm.** Candidate: the Classic bonus pays on the first clear only (or once
-  a day / week).
-- **The fee is the stake, the bonus is the pay.** Candidate: a win refunds the fee, so only a
-  loss costs.
+- **Classic is not a farm.** Held by keeping its bonus small rather than paying it once (the
+  first-clear-only candidate was declined — it could strand a player below the A1 fee).
+- **The fee is a price, not a stake.** The refund-on-a-win candidate was declined.
 
 The fee is **spent at run start and saved with it**, so quitting mid-run is not a free attempt.
 **Classic never costs**, so a player at zero stars is never locked out of the game, only out of
@@ -241,8 +249,15 @@ In **constellation.md**:
    starter, read it, or trade in an owned hero the row has no room for; the two presets above. The
    Constellation lost its Starter Packs shelf; rung 0 is named **Classic**. The Second String's
    first-clear gate went with the equip toggle — any deck is buildable by hand from launch.
-2. **The stakes** — the clear bonus, the entry fee, the spent ledger; the numbers measured with
-   the skilled pilot per rung, then set by the designer after play.
+2. **The stakes — BUILT 2026-09-26.** `AscensionRung.entryFee` / `clearBonus` (`rungOf`); the
+   profile's ledger, `bonusStars` and `feesPaid`, beside the hero stars (`starsEarned` /
+   `starsSpent` / `starBalance` in `starShop.ts`, the balance no longer fully derived);
+   `recordRunStarted` spends the fee at the seal and refuses a rung the balance cannot cover;
+   `recordRunEnded` pays the bonus on a win into `RunRecord.clearBonus`. The rung picker prints
+   each rung's cost and pay and greys one out of reach (`canEnterRung`); the run summary shows the
+   bonus as a Records chip, and its Start a New Run names the fee — or, out of reach, says what
+   the rung needs, since that button skips the picker. The Constellation's ledger counts both.
+   Unmeasured beyond the arithmetic above; the numbers are the designer's after play.
 3. **Single purchases and the Summoning** — needs heroes past the base 42 worth buying; the two
    bundles are the first.
 4. **Constellation re-price** against §5.

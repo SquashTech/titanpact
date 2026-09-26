@@ -119,7 +119,7 @@ import { LocationProvider } from '../view/shared/LocationContext';
 import { LocationChoiceScreen } from '../view/run/LocationChoiceScreen';
 import { ProfileProvider } from '../view/shared/ProfileContext';
 import { starShopCatalog } from '../data/starShop';
-import { buyOffer, type StarShopOffer } from '../run/starShop';
+import { buyOffer, canEnterRung, starBalance, type StarShopOffer } from '../run/starShop';
 import { NODE_TINT_MANA, NODE_TINT_VITAL } from '../view/shared/NodeStage';
 import { prefetchTrack, setTrack } from '../audio/music';
 import { playSfx } from '../audio/sfx';
@@ -1006,7 +1006,9 @@ export function App() {
     setScreen({ kind: 'titanWake' });
     // Sealing the pact is the start, not pressing the title button: a draft backed out of
     // is not a run. An abandoned run still counts here — it was played.
-    updateProfile((current) => recordRunStarted(current, Date.now()));
+    // The rung's entry fee is spent here, with the seal (docs/collection.md §5).
+    const rung = playerRun.ascension;
+    updateProfile((current) => recordRunStarted(current, Date.now(), rung, starBalance(current, starShopCatalog)));
   }
 
   /** TEMPORARY DEV/TEST — the Crucible sits behind a Guardian, which is three fights away. */
@@ -1440,6 +1442,7 @@ export function App() {
           profileBefore={runOutcome.before}
           profileAfter={runOutcome.after}
           onNewRun={() => handleStartNewRun(playerRun.ascension)}
+          canAffordRung={canEnterRung(runOutcome.after, starShopCatalog, playerRun.ascension)}
           onReturnToTitle={() => setScreen({ kind: 'title' })}
         />
       )}

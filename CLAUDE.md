@@ -210,7 +210,9 @@ don't silently override it.
 > **Summoning** — every number open. Build-around heroes that bend a deck rule are PROPOSED (§6a).
 > **Phase 1 is IN** (same day): `src/run/deck.ts`, `Profile.deck`, `RunState.deck` (snapshotted at the
 > seal), the split enemy draw, the title's **Collection**; so the `starter` flag below is now the
-> DEFAULT deck, not an assignment. Its §8 lists the rest it reverses.
+> DEFAULT deck, not an assignment. **Phase 2, the stakes, is IN** (same day, per user direction):
+> Classic pays +1 star every clear, A1 costs 1 at the seal (always spent) and pays 6 — first-pass,
+> `ASCENSION_RUNGS`. Its §8 lists the rest it reverses.
 
 ---
 
