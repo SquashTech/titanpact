@@ -102,8 +102,7 @@ import { LORE_LINES, SCREEN_TIPS } from '../data/tips';
 import { TipOverlay } from '../view/run/TipOverlay';
 import { LoreScreen } from '../view/run/LoreScreen';
 import { generateStarterOptions } from '../run/draft';
-import { equipPack, equippedPack } from '../run/starterPacks';
-import { STARTER_PACKS } from '../data/starterPacks';
+import { deckHeroIds, deckStarters, encounterPools, profileDeck, type Deck } from '../run/deck';
 import {
   generateEncounter,
   generateFinaleEncounter,
@@ -510,10 +509,13 @@ export function App() {
   // playtime flushes on a timer, and putting that in React state would re-render the tree for a
   // number nothing shows.
   const [profile, setProfile] = useState<Profile>(() => readProfile());
-  // The heroes a run draws from: the base roster plus every bundle the Constellation has sold
-  // (run/recruitment.ts heroPool) — the fork's contracts, the Guild Hall and the enemy party all
-  // read this one table, the way the itinerary reads locationPool.
-  const recruitPool = useMemo(() => heroPool(heroes, profile.purchases), [profile.purchases]);
+  // The heroes a run draws from: its deck (run/deck.ts), fixed when the pact was sealed — the
+  // fork's contracts, the Guild Hall and the enemy party all read this one table — and the
+  // strangers a recruitable party may field past it. A run saved before decks reads every owned
+  // hero (run/recruitment.ts heroPool) and fields no strangers.
+  const ownedPool = useMemo(() => heroPool(heroes, profile.purchases), [profile.purchases]);
+  const runPools = useMemo(() => encounterPools(playerRun, heroes, ownedPool), [playerRun.deck, ownedPool]);
+  const recruitPool = runPools.heroes;
   // The cold launch's loading screen (LaunchScreen): `launched` mounts the title under it for its
   // fade, `launchDone` takes it down. Neither goes back to false this session.
   const [launched, setLaunched] = useState(false);
@@ -602,9 +604,9 @@ export function App() {
     setProfile(updateProfile((current) => buyOffer(current, starShopCatalog, offer)));
   }
 
-  /** Free and reversible (docs/constellation.md §3.3): the title dresses, the Constellation sells. */
-  function handleEquipPack(packId: string) {
-    setProfile(updateProfile((current) => equipPack(current, STARTER_PACKS, packId)));
+  /** The Collection's edit (docs/collection.md §2): the next run drafts from it and is sealed with it. */
+  function handleChangeDeck(deck: Deck) {
+    setProfile(updateProfile((current) => ({ ...current, deck: { ...deck } as Record<string, string[]> })));
   }
 
   /** Abandon: the parked run is discarded, not just left behind. */
@@ -680,6 +682,7 @@ export function App() {
         run: playerRun,
         location,
         heroes: recruitPool,
+        strangers: runPools.strangers,
         allCombatants,
         enemies,
         progression: progressionTable,
@@ -992,8 +995,8 @@ export function App() {
 
   /** The rung rides `playerRun` across the draft; the run itself is only built on confirm. */
   function handleStartNewRun(ascension: number) {
-    // The equipped Starter Pack's list (run/starterPacks.ts): pack zero is the fourteen starters.
-    const starterHeroIds = equippedPack(profile, STARTER_PACKS).heroIds;
+    // The deck's starter slots (run/deck.ts): by default the fourteen flagged starters.
+    const starterHeroIds = deckStarters(profileDeck(profile, heroes));
     const optionIds = generateStarterOptions(randomSeed(), starterHeroIds);
     setPlayerRun((run) => ({ ...run, ascension }));
     const draft: Screen = { kind: 'draft', optionIds };
@@ -1002,7 +1005,8 @@ export function App() {
   }
 
   function handleDraftConfirm(chosenIds: string[]) {
-    setPlayerRun((run) => createStartingRun(chosenIds, run.ascension));
+    // The deck is snapshotted onto the run, so an edit between sessions never moves a run's pools.
+    setPlayerRun((run) => ({ ...createStartingRun(chosenIds, run.ascension), deck: deckHeroIds(profileDeck(profile, heroes)) }));
     // The cold open goes here and not on the title's press for the same reason the run itself
     // is built here: binding is mutual (docs/lore.md §1), so the thing on the far end of the
     // leash notices when the pact is sealed, not when a menu is browsed.
@@ -1125,7 +1129,7 @@ export function App() {
           onRefreshProfile={() => setProfile(readProfile())}
           onEraseAllData={handleEraseAllData}
           onBuyOffer={handleBuyOffer}
-          onEquipPack={handleEquipPack}
+          onChangeDeck={handleChangeDeck}
           parkedRun={saveSlot.save ? saveSummary(saveSlot.save) : null}
           staleSaveReason={saveSlot.staleReason}
           onContinueRun={handleContinueRun}

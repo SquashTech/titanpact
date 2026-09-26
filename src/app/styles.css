@@ -21087,8 +21087,8 @@ button.star-shop-bundle-face {
 }
 
 /* --- The hub (TitleScreen .title-hub) ------------------------------------
-   The three places between runs — Compendium, the shop, Records — as a row of
-   labelled tiles under the one real action (2026-09-16, per user direction;
+   The four places between runs — Compendium, Collection, the shop, Records — as
+   a row of labelled tiles under the one real action (2026-09-16, per user direction;
    they were 36px circles in the corner beside Reference). Quieter than the
    pact button: dark plates with a gold hairline that only lights on hover, the
    glyph over the word. The shop tile carries the star balance as a badge, so
@@ -21097,11 +21097,11 @@ button.star-shop-bundle-face {
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 336px;
+  max-width: 352px;
   margin-top: 2px;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
   animation: title-icon-row-fade 0.7s ease 0.7s both;
 }
 
@@ -21154,9 +21154,9 @@ button.star-shop-bundle-face {
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 9.5px;
+  font-size: 8.5px;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--text-dim);
   white-space: nowrap;
@@ -34896,4 +34896,146 @@ button.star-shop-bundle-face {
   .smithy-beat::after {
     display: none;
   }
+}
+
+/* --- The Collection (CollectionScreen) -------------------------------------
+   The deck: a row a type, three hero cards a row, the starter first. The cards
+   stand on the compendium row's type-washed ground; the selected one lights
+   its edge and opens the row's action strip under it. */
+.collection-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.collection-presets {
+  display: flex;
+  gap: 6px;
+}
+
+.collection-preset {
+  flex: 1;
+  padding: 7px 6px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--text);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(224, 166, 60, 0.35);
+  background: var(--surface-raised);
+  cursor: pointer;
+}
+
+.collection-preset.is-loaded {
+  color: var(--text-dim);
+  border-color: rgba(224, 166, 60, 0.15);
+  cursor: default;
+}
+
+.collection-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 7px 7px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(var(--type-rgb), 0.28);
+  background:
+    radial-gradient(ellipse 60% 140% at 0% 50%, rgba(var(--type-rgb), 0.16), transparent 70%),
+    var(--surface-raised);
+}
+
+.collection-row-head {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.collection-row-head svg {
+  width: 14px;
+  height: 14px;
+}
+
+.collection-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.collection-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  padding: 5px 4px 6px;
+  font: inherit;
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(var(--type-rgb), 0.22);
+  background: rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+  transition: border-color var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+
+.collection-card.is-starter {
+  border-color: rgba(224, 166, 60, 0.55);
+}
+
+.collection-card.is-selected {
+  border-color: rgba(var(--type-rgb), 0.95);
+  box-shadow: 0 0 0 1px rgba(var(--type-rgb), 0.6);
+}
+
+.collection-card:active {
+  transform: scale(0.97);
+}
+
+.collection-card-slot {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.collection-card.is-starter .collection-card-slot {
+  color: rgb(224, 166, 60);
+}
+
+.collection-card-portrait {
+  width: 44px;
+  height: 44px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.65));
+}
+
+.collection-card-name {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.collection-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.collection-action {
+  padding: 5px 9px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(var(--type-rgb), 0.5);
+  background: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+.collection-action.is-swap {
+  border-style: dashed;
 }

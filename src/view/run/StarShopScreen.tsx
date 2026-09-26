@@ -1,11 +1,9 @@
 import { useState, type CSSProperties } from 'react';
 import { STAR_SHOP_OFFERS, starShopCatalog } from '../../data/starShop';
-import { STARTER_PACKS } from '../../data/starterPacks';
 import { locationDomains, locations } from '../../data/locations';
 import { heroes } from '../../data/heroes';
 import { totalStars, type Profile } from '../../run/profile';
 import { canBuy, isPurchased, starBalance, starsSpent, type StarShopGrant, type StarShopOffer } from '../../run/starShop';
-import { equippedPack, packHeld, type StarterPack } from '../../run/starterPacks';
 import { HubGlyph } from '../shared/nodeIcons';
 import { ElementGlyph } from '../shared/elementIcons';
 import { LocationHorizon } from '../shared/locationArt';
@@ -23,7 +21,6 @@ type ShelfId = StarShopGrant['kind'];
 
 /** One page per kind of grant. Counts come off the catalog, so an empty shelf greys on the strip. */
 const SHELVES: readonly (TabSpec<ShelfId> & { empty: string })[] = [
-  { id: 'starterPack', label: 'Starter Packs', glyph: 'packs', empty: 'A pack is a fresh set of heroes to draft from — eight or more, equipped here for the next run.' },
   { id: 'heroBundle', label: 'Hero Bundles', glyph: 'heroes', empty: 'A bundle is a few heroes into the recruit pool — a fourth for a type, or a themed handful. None are written yet.' },
   { id: 'location', label: 'Locations', glyph: 'places', empty: 'A place the road can offer beside the base five: its own weather, its own spawn, its own warden.' },
 ];
@@ -32,8 +29,6 @@ interface Props {
   profile: Profile;
   /** Spends stars on the offer and hands back the profile to render. */
   onBuy: (offer: StarShopOffer) => void;
-  /** Equips a held Starter Pack for the next run — free, reversible. */
-  onEquipPack: (packId: string) => void;
   onClose: () => void;
 }
 
@@ -46,26 +41,24 @@ export interface OfferPurchase {
 }
 
 /**
- * Where stars are spent (run/starShop.ts) and the draft is dressed (run/starterPacks.ts). The
- * balance leads — the star and the count — then the shelf the strip has open. Starter Packs are
- * a radio: pack zero and every pack held, one equipped; a pack not yet held says what opens it.
+ * Where stars are spent (run/starShop.ts); the deck is dressed in the Collection. The
+ * balance leads — the star and the count — then the shelf the strip has open.
  * Bundles and Locations are rows that OPEN: a bundle's row is a line-up and a place's row is a
  * scene, and tapping either brings up its own screen, where the heroes can be examined and the
  * place looked around — and where the one Purchase button is. Nothing on a shelf row spends a
  * star; the cost on it is a label. The Compendium's sheet (CompendiumScreen), tabs at the foot.
  */
-export function StarShopScreen({ profile, onBuy, onEquipPack, onClose }: Props) {
+export function StarShopScreen({ profile, onBuy, onClose }: Props) {
   const earned = totalStars(profile);
   const spent = starsSpent(profile, starShopCatalog);
   const balance = starBalance(profile, starShopCatalog);
-  const [shelf, setShelf] = useState<ShelfId>('starterPack');
+  const [shelf, setShelf] = useState<ShelfId>('heroBundle');
   const [dossierHeroId, setDossierHeroId] = useState<string | null>(null);
   const [openOfferId, setOpenOfferId] = useState<string | null>(null);
 
-  const tabs = SHELVES.map((s) => ({ ...s, count: s.id === 'starterPack' ? STARTER_PACKS.length : STAR_SHOP_OFFERS.filter((o) => o.grant.kind === s.id).length }));
+  const tabs = SHELVES.map((s) => ({ ...s, count: STAR_SHOP_OFFERS.filter((o) => o.grant.kind === s.id).length }));
   const open = SHELVES.find((s) => s.id === shelf)!;
   const offers = STAR_SHOP_OFFERS.filter((o) => o.grant.kind === shelf);
-  const equipped = equippedPack(profile, STARTER_PACKS);
   const dossierHero = dossierHeroId ? heroes[dossierHeroId] : null;
   const openOffer = openOfferId ? starShopCatalog[openOfferId] : null;
   const purchaseOf = (offer: StarShopOffer): OfferPurchase => ({
@@ -101,20 +94,7 @@ export function StarShopScreen({ profile, onBuy, onEquipPack, onClose }: Props) 
             </span>
           </div>
 
-          {shelf === 'starterPack' ? (
-            <div className="star-shop-offers">
-              {STARTER_PACKS.map((pack) => (
-                <PackRow
-                  key={pack.id}
-                  pack={pack}
-                  held={packHeld(profile, pack)}
-                  equipped={pack.id === equipped.id}
-                  onEquip={() => onEquipPack(pack.id)}
-                  onPeekHero={setDossierHeroId}
-                />
-              ))}
-            </div>
-          ) : offers.length === 0 ? (
+          {offers.length === 0 ? (
             <div className="star-shop-empty">
               <span className="star-shop-empty-title">Nothing on this shelf yet</span>
               <span className="star-shop-empty-note">{open.empty}</span>
@@ -142,9 +122,7 @@ export function StarShopScreen({ profile, onBuy, onEquipPack, onClose }: Props) 
           )}
 
           <p className="records-note star-shop-note">
-            {shelf === 'starterPack'
-              ? 'The equipped pack is what the next run drafts from — four of it shown, two taken. Equipping costs nothing and can be changed before any run.'
-              : 'A star is earned by clearing a run with a hero in one of its Evolutions — three a hero, one a form. Spending one never takes it off the hero: the Compendium keeps every star you have ever earned.'}
+            {'A star is earned by clearing a run with a hero in one of its Evolutions — three a hero, one a form. Spending one never takes it off the hero: the Compendium keeps every star you have ever earned.'}
           </p>
         </div>
 
@@ -217,35 +195,6 @@ function FaceRow({ heroIds, onPeekHero }: { heroIds: readonly string[]; onPeekHe
         );
       })}
     </span>
-  );
-}
-
-/**
- * A Starter Pack's row: its name, the heroes it drafts from, and one of three states on the
- * right — Equipped, Equip, or Locked with what opens it under the faces. A locked pack still
- * shows its faces: the point of the shelf is to see what a clear is for.
- */
-function PackRow({ pack, held, equipped, onEquip, onPeekHero }: { pack: StarterPack; held: boolean; equipped: boolean; onEquip: () => void; onPeekHero: (heroId: string) => void }) {
-  const lock = pack.unlock?.kind === 'clear' ? 'Opens with your first cleared run' : pack.unlock ? 'Not yet held' : null;
-  return (
-    <div className={`star-shop-offer star-shop-pack${equipped ? ' is-equipped' : ''}${held ? '' : ' is-locked'}`}>
-      <div className="star-shop-offer-body">
-        <span className="star-shop-offer-name">{pack.name}</span>
-        <FaceRow heroIds={pack.heroIds} onPeekHero={onPeekHero} />
-        {!held && lock && <span className="star-shop-pack-lock">{lock}</span>}
-      </div>
-      <button
-        type="button"
-        className="star-shop-offer-buy"
-        data-sfx={equipped || !held ? 'none' : 'ui.commit'}
-        disabled={equipped || !held}
-        onClick={onEquip}
-        aria-pressed={equipped}
-        aria-label={equipped ? `${pack.name}: equipped` : held ? `Equip ${pack.name}` : `${pack.name}: ${lock ?? 'locked'}`}
-      >
-        {equipped ? 'Equipped' : held ? 'Equip' : 'Locked'}
-      </button>
-    </div>
   );
 }
 

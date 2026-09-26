@@ -152,6 +152,8 @@ export interface RunState {
   brokenSeals: readonly BrokenSeal[];
   /** The Ascension rung this run plays under (run/ascension.ts): 0 is Base, 1 is Permadeath. Chosen at run start, never changed. */
   ascension: number;
+  /** The deck the run was sealed with (run/deck.ts), fixed for the run: its recruitable pool. Null on a run saved before decks, which reads the owned roster whole. */
+  deck: readonly string[] | null;
 }
 
 export function createRunState(gold = 0, recruitContracts = 1, ascension = 0): RunState {
@@ -171,6 +173,7 @@ export function createRunState(gold = 0, recruitContracts = 1, ascension = 0): R
     locationIds: [],
     brokenSeals: [],
     ascension,
+    deck: null,
   };
 }
 

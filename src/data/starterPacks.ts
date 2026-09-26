@@ -3,16 +3,15 @@ import { BASE_PACK_ID } from '../run/starterPacks';
 import { heroes } from './heroes';
 
 /**
- * The packs the draft can open on (docs/constellation.md §3, mechanism in run/starterPacks.ts).
- * Pack zero is the fourteen starters, derived from `HeroDefinition.starter` so the two can never
- * drift. The Second String is the first shake-up: the base roster's recruit-only heroes stood in
- * the draft, one a type, opened by the first cleared run and never sold — a player who has seen
- * the fourteen through once is handed fourteen others to open on.
+ * The deck presets (docs/collection.md §2, shape in run/starterPacks.ts). The Fourteen is the
+ * flagged starters, derived from `HeroDefinition.starter` so the two can never drift — loading it
+ * puts the default deck's starters back. The Second String stands the base roster's recruit-only
+ * heroes in the draft instead, one a type.
  */
 export const STARTER_PACKS: readonly StarterPack[] = [
   {
     id: BASE_PACK_ID,
-    name: 'Classic',
+    name: 'The Fourteen',
     heroIds: Object.values(heroes)
       .filter((hero) => hero.starter)
       .map((hero) => hero.id),
@@ -23,7 +22,6 @@ export const STARTER_PACKS: readonly StarterPack[] = [
     name: 'Second String',
     heroIds: ['cinderKnight', 'pincer', 'glacialWarden', 'stormRanger', 'slate', 'mordax', 'empyrean', 'marrow', 'pixie', 'sorrow', 'trance', 'gallant', 'rex', 'ursa'],
     kind: 'recut',
-    unlock: { kind: 'clear' },
   },
 ];
 

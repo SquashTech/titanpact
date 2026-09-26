@@ -147,6 +147,36 @@ export interface EncounterOptions {
   loadout?: EnemyLoadout;
   /** Needed only to cash `scaling.level` and `scaling.mastery` in for move unlocks and the Evolution; the monster pool has none by design. */
   progression?: ProgressionTable;
+  /**
+   * Heroes outside the pool that may fill a party past its first `deckFloor` (docs/collection.md
+   * §3). Omitted or empty = the whole party from the pool, drawn exactly as before.
+   */
+  strangers?: HeroLookup;
+  /** How many of the party the pool must supply before a stranger may be drawn. */
+  deckFloor?: number;
+}
+
+/**
+ * The party: `deckFloor` from the pool first, so a recruitable fight always offers a contract,
+ * then the rest from pool and strangers together, the whole shuffled so the order a party stands
+ * in says nothing about who can be claimed. With no strangers it is the plain biased pick.
+ */
+function drawParty(
+  rng: RngState,
+  heroPool: HeroLookup,
+  heroCount: number,
+  bias: PoolBias | undefined,
+  excluded: ReadonlySet<string>,
+  strangers: HeroLookup | undefined,
+  deckFloor: number
+): { picked: string[]; nextState: RngState } {
+  const hasStrangers = !!strangers && Object.keys(strangers).some((id) => !(id in heroPool) && !excluded.has(id));
+  if (!hasStrangers || heroCount <= deckFloor) return biasedPick(rng, heroPool, heroCount, bias, excluded);
+  const first = biasedPick(rng, heroPool, deckFloor, bias, excluded);
+  const onTheme = bias ? first.picked.filter((id) => bias.preferredIds.includes(id)).length : 0;
+  const restBias = bias ? { ...bias, slots: bias.slots - onTheme } : undefined;
+  const rest = biasedPick(first.nextState, { ...strangers, ...heroPool }, heroCount - first.picked.length, restBias, new Set([...excluded, ...first.picked]));
+  return shuffledPick(rest.nextState, [...first.picked, ...rest.picked], heroCount);
 }
 
 /**
@@ -220,9 +250,12 @@ export function rollLevelProgression(
 export function generateEncounter(
   nodeType: EncounterNodeType,
   seed: number,
-  heroPool: HeroLookup,
+  pool: HeroLookup,
   options: EncounterOptions = {}
 ): Encounter {
+  const { strangers, deckFloor = 0 } = options;
+  // Every definition read below goes through the merged table; the draw alone tells the two apart.
+  const heroPool = strangers ? { ...strangers, ...pool } : pool;
   const {
     forcedHeroIds,
     heroCount: heroCountOverride,
@@ -236,17 +269,19 @@ export function generateEncounter(
   } = options;
   let rng = createRng(seed);
   const excluded = new Set(excludeHeroIds ?? []);
-  const forced = forcedHeroIds?.filter((id) => id in heroPool && !excluded.has(id)) ?? [];
+  const forced = forcedHeroIds?.filter((id) => id in pool && !excluded.has(id)) ?? [];
   const heroCount = forcedHeroIds?.length ?? heroCountOverride ?? (nodeType === 'boss' ? 2 : 4);
 
   // A forced roster short of its size (an id the player holds) tops up from the pool, so the
   // fight is never smaller than the one asked for.
-  const { picked: drawn, nextState: afterPick } = biasedPick(
+  const { picked: drawn, nextState: afterPick } = drawParty(
     rng,
-    heroPool,
+    pool,
     heroCount - forced.length,
     bias,
-    new Set([...excluded, ...forced])
+    new Set([...excluded, ...forced]),
+    strangers,
+    Math.max(0, deckFloor - forced.length)
   );
   const heroIds = [...forced, ...drawn];
   rng = afterPick;

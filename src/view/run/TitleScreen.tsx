@@ -1,5 +1,7 @@
 import { useState, type CSSProperties } from 'react';
 import { CompendiumScreen } from './CompendiumScreen';
+import { CollectionScreen } from './CollectionScreen';
+import type { Deck } from '../../run/deck';
 import { LocationSelectOverlay } from './LocationSelectOverlay';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { RecordsScreen } from './RecordsScreen';
@@ -22,8 +24,8 @@ interface Props {
   onEraseAllData: () => void;
   /** Spends stars on a Constellation offer (run/starShop.ts buyOffer) and re-reads the profile. */
   onBuyOffer: (offer: StarShopOffer) => void;
-  /** Equips a held Starter Pack for the next run (run/starterPacks.ts equipPack) and re-reads the profile. */
-  onEquipPack: (packId: string) => void;
+  /** Writes the edited deck to the profile (run/deck.ts) and re-reads it. */
+  onChangeDeck: (deck: Deck) => void;
   /** The parked run a Continue would resume, or null when there is none. */
   parkedRun: SaveSummary | null;
   /** Set when a stored run was refused on load — shown once so a vanished Continue is explained, not just missing. */
@@ -107,7 +109,7 @@ export function TitleScreen({
   onRefreshProfile,
   onEraseAllData,
   onBuyOffer,
-  onEquipPack,
+  onChangeDeck,
   parkedRun,
   staleSaveReason,
   onContinueRun,
@@ -125,6 +127,7 @@ export function TitleScreen({
   const [showCompendium, setShowCompendium] = useState(false);
   const [showRecords, setShowRecords] = useState(false);
   const [showShop, setShowShop] = useState(false);
+  const [showCollection, setShowCollection] = useState(false);
   const [showReference, setShowReference] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [showLocations, setShowLocations] = useState(false);
@@ -270,6 +273,12 @@ export function TitleScreen({
           </span>
           <span className="title-hub-label">Compendium</span>
         </button>
+        <button className="title-hub-tile" onClick={() => setShowCollection(true)}>
+          <span className="title-hub-glyph" aria-hidden="true">
+            <HubGlyph name="roster" />
+          </span>
+          <span className="title-hub-label">Collection</span>
+        </button>
         <button
           className="title-hub-tile is-shop"
           onClick={() => {
@@ -402,6 +411,7 @@ export function TitleScreen({
       )}
 
       {showLocations && <LocationSelectOverlay onPick={onVisitLocation} onClose={() => setShowLocations(false)} />}
+      {showCollection && <CollectionScreen profile={profile} onChangeDeck={onChangeDeck} onClose={() => setShowCollection(false)} />}
       {showCompendium && <CompendiumScreen profile={profile} onClose={() => setShowCompendium(false)} />}
       {showRecords && (
         <RecordsScreen profile={profile} onEraseAllData={onEraseAllData} onClose={() => setShowRecords(false)} />
@@ -429,7 +439,7 @@ export function TitleScreen({
           </div>
         </div>
       )}
-      {showShop && <StarShopScreen profile={profile} onBuy={onBuyOffer} onEquipPack={onEquipPack} onClose={() => setShowShop(false)} />}
+      {showShop && <StarShopScreen profile={profile} onBuy={onBuyOffer} onClose={() => setShowShop(false)} />}
     </div>
   );
 }

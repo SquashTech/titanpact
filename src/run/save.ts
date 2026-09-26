@@ -422,6 +422,10 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
   // Absent on a file written before the ladder existed; such a run was Base.
   const ascension = value.ascension === undefined ? 0 : value.ascension;
   if (!isInt(ascension, 0)) reject('run.ascension is not a rung');
+  // Absent on a file written before decks; such a run reads the owned roster whole. A hero this
+  // build no longer ships just leaves the pool.
+  if (value.deck !== undefined && value.deck !== null && !isStringArray(value.deck)) reject('run.deck is not a list of ids');
+  const deck = isStringArray(value.deck) ? value.deck.filter((id) => index.heroIds.has(id)) : null;
 
   return {
     roster,
@@ -440,6 +444,7 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
     locationIds: requireIds(value.locationIds, index.locationIds, 'run.locationIds'),
     brokenSeals: decodeBrokenSeals(value.brokenSeals, index),
     ascension,
+    deck,
   };
 }
 

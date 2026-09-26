@@ -1,6 +1,6 @@
 # collection.md — The Collection: a deck of heroes, and the stars that grow it
 
-> **STATUS: DIRECTION DECIDED 2026-09-26 (per user direction), NUMBERS OPEN, NOTHING BUILT.**
+> **STATUS: DIRECTION DECIDED 2026-09-26 (per user direction), NUMBERS OPEN. PHASE 1 (THE DECK) IS IN, same day — §10.**
 > The designer stops assigning heroes to the draft or the recruit pool; the player does, on a
 > **Deck** built from the heroes the account owns. The base 42 are owned from the first launch
 > and the default deck IS today's split, so a new account plays today's game. Stars become a
@@ -228,8 +228,19 @@ In **constellation.md**:
 
 ## 10. Phases
 
-1. **The Deck** — `Profile.deck`, the default, `heroPool` reading it, the draft reading its
-   starters, the Collection screen. Packs become presets. Nothing new to buy; the base 42.
+1. **The Deck — BUILT 2026-09-26.** `src/run/deck.ts` (the rows, the default, `normalizeDeck` making
+   any stored value legal against what is owned, presets, `encounterPools`); `Profile.deck`, stored
+   loose and made legal on read (`profileDeck`), a pre-deck file's equipped pack migrating into its
+   starter slots; `RunState.deck`, the deck snapshotted when the pact is sealed, so an edit between
+   sessions never moves a run's pools (null on an older save, which reads every owned hero and
+   fields no strangers); the draft rolling from the starter slots; the enemy draw split in
+   `enemyGen.ts drawParty` — the deck floor first, the rest from deck and strangers together, the
+   party shuffled so its order says nothing — with the map's preview reading the same pools as the
+   fight. The claim side needed nothing: `isRecruitable` against the deck refuses a stranger. The
+   **Collection** tile on the title (`CollectionScreen`): a row a type, tap a hero to make it the
+   starter, read it, or trade in an owned hero the row has no room for; the two presets above. The
+   Constellation lost its Starter Packs shelf; rung 0 is named **Classic**. The Second String's
+   first-clear gate went with the equip toggle — any deck is buildable by hand from launch.
 2. **The stakes** — the clear bonus, the entry fee, the spent ledger; the numbers measured with
    the skilled pilot per rung, then set by the designer after play.
 3. **Single purchases and the Summoning** — needs heroes past the base 42 worth buying; the two

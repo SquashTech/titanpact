@@ -26,6 +26,9 @@ import { LocationAmbience } from '../shared/LocationSky';
 import { AudioSettings } from '../shared/AudioSettings';
 import { nodeEncounter, scoutedTypes } from '../../run/encounters';
 import { heroes } from '../../data/heroes';
+import { encounterPools } from '../../run/deck';
+import { heroPool } from '../../run/recruitment';
+import { useProfile } from '../shared/ProfileContext';
 import { enemies } from '../../data/enemies';
 import { allCombatants } from '../../data/content';
 import type { TypeId } from '../../engine/content';
@@ -35,14 +38,16 @@ import type { TypeId } from '../../engine/content';
  * each one fields, from the same deterministic draw the tap will start (run/encounters.ts).
  * Only the hero-pool nodes — the mob layer's tier already says what a Monsters tile is.
  */
-function scoutChoices(run: RunState, choiceIds: readonly string[]): Record<string, TypeId[]> {
+function scoutChoices(run: RunState, choiceIds: readonly string[], purchases: readonly string[]): Record<string, TypeId[]> {
   const map = run.map!;
   const location = locationForAct(run.locationIds, run.actNumber);
   const scouted: Record<string, TypeId[]> = {};
+  // The same pools App.tsx hands the fight, or the tile would preview a different party.
+  const pools = encounterPools(run, heroes, heroPool(heroes, purchases));
   for (const id of choiceIds) {
     const node = map.nodes[id];
     if (!node || (node.type !== 'skirmish' && node.type !== 'elite')) continue;
-    const encounter = nodeEncounter(node, { run, location, heroes, allCombatants, enemies, progression: progressionTable });
+    const encounter = nodeEncounter(node, { run, location, heroes: pools.heroes, strangers: pools.strangers, allCombatants, enemies, progression: progressionTable });
     scouted[id] = scoutedTypes(encounter, allCombatants);
   }
   return scouted;
@@ -151,6 +156,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
   // Two taps to abandon: quitting is reversible now, but abandoning deletes the save.
   const [confirmingQuit, setConfirmingQuit] = useState(false);
   const [previewNode, setPreviewNode] = useState<MapNode | null>(null);
+  const { purchases } = useProfile();
   const map = run.map;
   if (!map) return null;
 
@@ -160,7 +166,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
 
   // The whole view: where the player stands, and what they may take from here.
   const choiceIds = reachableNodeIds(run);
-  const scouted = scoutChoices(run, choiceIds);
+  const scouted = scoutChoices(run, choiceIds, purchases);
   const currentRow = run.currentNodeId != null ? map.nodes[run.currentNodeId]?.row ?? 0 : -1;
   const originNode = run.currentNodeId != null ? map.nodes[run.currentNodeId] ?? null : null;
 

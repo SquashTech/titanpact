@@ -19,6 +19,7 @@ import { appendFinalEnemy, generateEncounter, type Encounter, type EncounterNode
 import { locationBias } from './locations';
 import { isCompanion } from './companion';
 import { guardianEscortPool, mobEncounter } from './spawn';
+import { DECK_HEROES_PER_FIGHT } from './deck';
 
 export type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss';
 
@@ -41,8 +42,10 @@ export function encounterSeedFor(map: RunMap, nodeId: string, salt = 0): number 
 export interface EncounterContext {
   run: RunState;
   location: LocationDefinition;
-  /** The recruitable pool — `heroes`. */
+  /** The recruitable pool — the run's deck (run/deck.ts `encounterPools`). */
   heroes: HeroLookup;
+  /** Heroes that may fill a recruitable party past its deck floor, never offered a contract (docs/collection.md §3). */
+  strangers?: HeroLookup;
   /** Every combatant, for reading a drawn squad's types — `allCombatants`. */
   allCombatants: HeroLookup;
   /** The authored enemies, for the Guardian's champion. */
@@ -60,7 +63,7 @@ export function encounterKindOf(type: EncounterMapNodeType): EncounterNodeType {
  * can compare two draws before committing to one.
  */
 function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: EncounterContext, seed: number): Encounter {
-  const { run, location, heroes, enemies, progression } = ctx;
+  const { run, location, heroes, strangers, enemies, progression } = ctx;
   const encounterKind = encounterKindOf(type);
   // The run's 2nd plain encounter is a deliberately lighter 2v2.
   const isSecondFight = encounterKind === 'fight' && run.fightsStarted === 1;
@@ -90,6 +93,8 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
     loadout,
     // A spawn has no progression data; only the hero pool cashes a level in.
     progression: pool === heroes ? progression : undefined,
+    strangers: pool === heroes ? strangers : undefined,
+    deckFloor: DECK_HEROES_PER_FIGHT,
   });
   // The Location's held-back champion arrives benched, so the first enemy KO brings him in.
   const finalEnemyId = type === 'boss' ? location.guardianFinalEnemyId : null;

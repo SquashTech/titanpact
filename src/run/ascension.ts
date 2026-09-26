@@ -22,7 +22,7 @@ export interface AscensionRung {
 }
 
 export const ASCENSION_RUNGS: readonly AscensionRung[] = [
-  { rung: 0, name: 'Base', rule: 'A knocked-out hero stands back up: at a Rest, a mend, a Revive, or the act’s end.' },
+  { rung: 0, name: 'Classic', rule: 'A knocked-out hero stands back up: at a Rest, a mend, a Revive, or the act’s end.' },
   {
     rung: 1,
     name: 'Ascension 1',

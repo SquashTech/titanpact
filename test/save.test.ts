@@ -177,3 +177,17 @@ test('save: decode rebuilds the run, so a smuggled extra field never reaches it'
   assert.ok(!('somethingElse' in result.save.run));
   assert.ok(!('somethingElse' in result.save.run.roster[0]));
 });
+
+test('save: the run keeps the deck it was sealed with, an old file reads as none, and a hero gone from the build leaves it', () => {
+  const sealed = { ...sampleRun(), deck: ['valor', 'rime', 'cinderKnight'] };
+  const kept = roundTrip(sealed);
+  assert.ok(kept.ok);
+  assert.deepStrictEqual(kept.ok && kept.save.run.deck, ['valor', 'rime', 'cinderKnight']);
+  const old = JSON.parse(JSON.stringify(encodeSave(sampleRun(), 'map')));
+  delete old.run.deck;
+  const read = decodeSave(old, index);
+  assert.ok(read.ok && read.save.run.deck === null);
+  old.run.deck = ['valor', 'noSuchHero'];
+  const pruned = decodeSave(old, index);
+  assert.deepStrictEqual(pruned.ok && pruned.save.run.deck, ['valor']);
+});

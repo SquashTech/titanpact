@@ -9,6 +9,8 @@
 // the player did, not state the engine runs on, so a partially-read one is still true.
 
 import { spawnPosition } from '../data/titanspawn';
+import { heroes } from '../data/heroes';
+import { starterPackById } from '../data/starterPacks';
 
 export const PROFILE_VERSION = 1;
 
@@ -58,8 +60,12 @@ export interface Profile {
   runStartedAtPlaytimeMs: number | null;
   /** Constellation (star shop) offer ids bought (run/starShop.ts), each at most once. Stars are never un-earned; this is what draws the balance down. */
   purchases: string[];
-  /** The Starter Pack the next run drafts from (run/starterPacks.ts). 'base' by default; a pack not held falls back to it on read. */
-  equippedPackId: string;
+  /**
+   * The deck as stored (run/deck.ts): type → hero ids, starter first. Kept loose and made legal on
+   * read by `profileDeck`, so a hero leaving the catalog or a bundle not held can never strand it.
+   * Empty is the default deck.
+   */
+  deck: Record<string, string[]>;
   /** 0 until the first run is sealed. */
   firstPlayedAt: number;
   lastPlayedAt: number;
@@ -119,7 +125,7 @@ export function createProfile(): Profile {
     runHistory: [],
     runStartedAtPlaytimeMs: null,
     purchases: [],
-    equippedPackId: 'base',
+    deck: {},
     firstPlayedAt: 0,
     lastPlayedAt: 0,
     seenTipIds: [],
@@ -270,6 +276,26 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /** Non-empty strings only, in order; anything else in the list is skipped. */
+/**
+ * A file written before decks carries the Starter Pack it had equipped instead; that pack's heroes
+ * stand in their rows' starter slots, and `profileDeck` fills the rest.
+ */
+function decodeDeck(value: Record<string, unknown>): Record<string, string[]> {
+  if (isRecord(value.deck)) {
+    const deck: Record<string, string[]> = {};
+    for (const [type, row] of Object.entries(value.deck)) deck[type] = [...new Set(stringList(row))];
+    return deck;
+  }
+  const pack = typeof value.equippedPackId === 'string' ? starterPackById[value.equippedPackId] : undefined;
+  if (!pack) return {};
+  const deck: Record<string, string[]> = {};
+  for (const id of pack.heroIds) {
+    const hero = heroes[id];
+    if (hero) deck[hero.types[0]] = [id];
+  }
+  return deck;
+}
+
 function stringList(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && item.length > 0) : [];
 }
@@ -363,8 +389,7 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     // Deduplicated: an offer is held once. An id this build no longer sells is kept — it costs
     // nothing against the balance (starShop.ts) and comes back if the offer does.
     purchases: [...new Set(stringList(value.purchases))],
-    // 'base' on every file written before packs existed; an unknown id is harmless (equippedPack falls back).
-    equippedPackId: typeof value.equippedPackId === 'string' && value.equippedPackId ? value.equippedPackId : 'base',
+    deck: decodeDeck(value),
     firstPlayedAt: count(value.firstPlayedAt),
     lastPlayedAt: count(value.lastPlayedAt),
     // Absent on every profile written before the tips; such a player sees each one once. A
