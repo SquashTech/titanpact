@@ -58,11 +58,6 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
     'Pick Your Leads',
     'Tap two heroes to lead the fight. The rest wait on the bench.'
   ),
-  levelUp: tip(
-    'levelUp',
-    'Level Up',
-    'Every won fight gives XP to the whole roster, benched heroes included.'
-  ),
   item: tip(
     'item',
     'Items',
@@ -75,11 +70,6 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
     'Permadeath',
     'Spend a Revive to keep any fallen heroes. Otherwise, they are gone forever.'
   ),
-  equipmentReward: tip('equipmentReward', 'Equipment', 'Choose one of these three items. Hold an item to read it in full.'),
-  boon: tip('boon', 'Boon', 'Choose one of these three passives, then the hero to give it to. It keeps it for the rest of the run.'),
-  manaWell: tip('manaWell', 'Mana Well', 'Choose a hero to gain +30 max Mana for the rest of the run.'),
-  rest: tip('rest', 'Rest', 'Every hero is fully healed, and knocked-out heroes get back up.'),
-  event: tip('event', 'Event', 'Something unusual. Read what it offers before you choose.'),
   scribe: tip(
     'scribe',
     'Mastery Scrolls',
@@ -186,12 +176,6 @@ export const FIGHT_TIPS: readonly FightTip[] = [
     title: 'Bag',
     when: { minRound: 3 },
     pages: ["The Bag holds your potions. Drinking one doesn't use a turn."],
-  },
-  {
-    id: 'fight.knockout',
-    title: 'Knocked Out',
-    when: { playerKnockedOut: true },
-    pages: ['A knocked-out hero stays down after the fight, until a Rest, the Guild Hall, a Revive, or the end of the act.'],
   },
   {
     id: 'fight.field',

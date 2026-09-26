@@ -773,7 +773,6 @@ export function FightScreen({
         (id) => !hasAffordableMoveInFight(combat, id, entryFor(playerRun.roster, id).unlockedMoveIds, moves, allCombatants)
       ),
       benchSize: playerBench.length,
-      playerKnockouts: combat.koCount[PLAYER_SIDE],
       enemyTypesOnField: enemyActiveAlive.flatMap((id) => {
         const combatant = combat.combatants[id];
         return [...(allCombatants[combatant.heroId]?.types ?? []), ...combatant.grantedTypes];

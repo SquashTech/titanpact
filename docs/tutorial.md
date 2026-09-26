@@ -59,11 +59,8 @@ first meeting with two things shows the second on its next visit.
 | `wounds` | the map, once any hero is hurt (HP carries across an act; Mana does not) |
 | `fork` | the map, once an Elite or Skirmish is one step away |
 | `squad` | lead pick — tap two heroes (skipped while the roster is two) |
-| `levelUp` | the level-up report |
 | `item` | the item who-screen (sockets, merge, sell) |
 | `fallen` | Permadeath's Fallen beat (Ascension 1) |
-| `equipmentReward` | the equipment cache |
-| `boon`, `manaWell`, `rest`, `event` | that node's screen (the Mentor, Tutor, Forge and Ley Line carry none — each screen's own line says it; nor does the companion's join beat) |
 | `scribe` | the Scribe's scroll screen (the Cache and a bought Scroll get none — the Scribe's and the Guild Hall's tips named them) |
 | `shop` | the Guild Hall |
 | `recruit` | the Recruit Contract claim (roster cap, termination) |
@@ -72,6 +69,10 @@ first meeting with two things shows the second on its next visit.
 
 None fires over a fight (FightScreen owns those) or over a cinematic (the cold open, the Herald,
 the Titan's fall), and none over a recruit's fanfare.
+
+None fires on the level-up report, the equipment cache, a Boon, the Mana Well, a Rest, an Event,
+the Mentor, the Tutor, the Forge, the Ley Line or the companion's join beat (2026-09-24–27, per
+user direction): each screen says what it is, and levelling is a thing players already know.
 
 ### Fight tips
 
@@ -88,7 +89,6 @@ Checked at the top of every command phase — never between two orders — again
 | `fight.ancient` | an Ancient on the field (every Guardian): it resists everything, what breaks even, Ancient moves are never resisted |
 | `fight.pactClock` | "One Last Thing", the first Guardian fight: the Pact Clock from round 30, and that only a stall loses |
 | `fight.bag` | round 3+: potions are a free action |
-| `fight.knockout` | the first player KO: it persists until a Rest, the mend, a Revive, or the act's end |
 | `fight.field` | a Field Effect is up |
 
 The Guardian's own tip and the Locked In tip are gone (2026-09-26, per user direction): the

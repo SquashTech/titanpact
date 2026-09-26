@@ -75,14 +75,8 @@ export const SCREEN_TIP_IDS = [
   'wounds',
   'fork',
   'squad',
-  'levelUp',
   'item',
   'fallen',
-  'equipmentReward',
-  'boon',
-  'manaWell',
-  'rest',
-  'event',
   'scribe',
   'shop',
   'recruit',
@@ -126,8 +120,6 @@ export interface FightTipCondition {
   outOfMana?: boolean;
   /** The player has someone on the bench. */
   benchHeld?: boolean;
-  /** At least one player hero has been knocked out this fight. */
-  playerKnockedOut?: boolean;
   /** An enemy of this type is standing on the field. */
   enemyTypeOnField?: TypeId;
   /** A Field Effect is up. */
@@ -144,7 +136,6 @@ export interface FightTipContext {
   nodeType: MapNodeType;
   anyOutOfMana: boolean;
   benchSize: number;
-  playerKnockouts: number;
   enemyTypesOnField: readonly TypeId[];
   fieldEffectActive: boolean;
 }
@@ -154,7 +145,6 @@ function fightTipMatches(when: FightTipCondition, ctx: FightTipContext): boolean
   if (when.nodeTypes !== undefined && !when.nodeTypes.includes(ctx.nodeType)) return false;
   if (when.outOfMana !== undefined && ctx.anyOutOfMana !== when.outOfMana) return false;
   if (when.benchHeld !== undefined && ctx.benchSize > 0 !== when.benchHeld) return false;
-  if (when.playerKnockedOut !== undefined && ctx.playerKnockouts > 0 !== when.playerKnockedOut) return false;
   if (when.enemyTypeOnField !== undefined && !ctx.enemyTypesOnField.includes(when.enemyTypeOnField)) return false;
   if (when.fieldEffectActive !== undefined && ctx.fieldEffectActive !== when.fieldEffectActive) return false;
   return true;

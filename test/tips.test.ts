@@ -22,7 +22,6 @@ function ctx(overrides: Partial<FightTipContext> = {}): FightTipContext {
     nodeType: 'fight',
     anyOutOfMana: false,
     benchSize: 0,
-    playerKnockouts: 0,
     enemyTypesOnField: [],
     fieldEffectActive: false,
     ...overrides,
@@ -100,13 +99,12 @@ test('tips: each fight tip waits for its own moment', () => {
     'fight.skirmish',
     'the Skirmish card first; switching waits a round'
   );
-  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ playerKnockouts: 1 }), past)?.id, 'fight.knockout');
   assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ fieldEffectActive: true }), past)?.id, 'fight.field');
 });
 
 test('tips: a seen fight tip never shows again', () => {
   const seen = FIGHT_TIPS.map((tip) => tip.id);
-  const everything = ctx({ round: 40, nodeType: 'boss', anyOutOfMana: true, benchSize: 3, playerKnockouts: 3, enemyTypesOnField: ['Ancient'], fieldEffectActive: true });
+  const everything = ctx({ round: 40, nodeType: 'boss', anyOutOfMana: true, benchSize: 3, enemyTypesOnField: ['Ancient'], fieldEffectActive: true });
   assert.strictEqual(matchFightTip(FIGHT_TIPS, everything, seen), null);
 });
 

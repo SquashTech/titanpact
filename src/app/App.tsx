@@ -423,26 +423,14 @@ function screenTipIds(screen: Screen, run: RunState): readonly ScreenTipId[] {
     }
     case 'squadSelect':
       return ['squad'];
-    case 'levelUp':
-      return ['levelUp'];
     case 'itemWho':
       return ['item'];
     case 'fallen':
       return ['fallen'];
-    case 'reward':
-      return screen.nodeType === 'equipmentReward' ? ['equipmentReward'] : [];
     case 'mentorNode':
       return []; // the screen's own line says it (2026-09-24, per user direction)
-    case 'boonNode':
-      return ['boon'];
-    case 'manaWell':
-      return ['manaWell'];
     case 'forge':
       return []; // the screen's own line says it (2026-09-24, per user direction)
-    case 'rest':
-      return ['rest'];
-    case 'event':
-      return ['event'];
     case 'scrolls':
       // A bought Scroll is the Guild Hall's, whose own tip has already named it.
       if (screen.bought) return [];

@@ -51,13 +51,8 @@ export const TIP_STAGING: Readonly<Record<string, TipStaging>> = {
   wounds: { pages: [['.map-party-chip .wound-bar']] },
   fork: { pages: [['.map-choice[data-node-type="elite"]']] },
   squad: { pages: [['.squad-section-player', '.squad-footer .resolve-button']] },
-  levelUp: { pages: [['.level-up-xp'], ['.level-up-gains'], ['.level-up-owed']] },
   item: { pages: [[PICK_CARDS], ['.item-who-sockets'], ['.item-who-sell']] },
   fallen: { pages: [[PICK_CARDS]] },
-  equipmentReward: { pages: [['.equip-cache-list']] },
-  boon: { pages: [['.relic-shrine-list']] },
-  manaWell: { pages: [[PICK_CARDS]] },
-  rest: { pages: [['.rest-screen .wound-bar']] },
   scribe: { pages: [[PICK_CARDS], ['.scroll-screen .mastery-pips']] },
   shop: {
     pages: [['.tab-button[data-tab="shop"]', '.guild-hall-good'], ['.tab-button[data-tab="tavern"]'], ['.tab-button[data-tab="smithy"]']],
@@ -77,7 +72,6 @@ export const TIP_STAGING: Readonly<Record<string, TipStaging>> = {
   'fight.rest': { pages: [REST] },
   'fight.ancient': { pages: [[ANCIENT_ENEMY], [MOVE_MATCHUPS], [ANCIENT_ENEMY]] },
   'fight.bag': { pages: [[BAG]] },
-  'fight.knockout': { pages: [[`${ALLY_CARDS}.fainted`]] },
   'fight.field': { pages: [['.field-effect-badge']] },
 };
 
