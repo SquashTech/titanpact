@@ -39,6 +39,8 @@ interface Props {
   openAscension: number;
   /** Forgets every first-time tip seen, and the lore card, so each shows again (docs/tutorial.md). */
   onResetTips: () => void;
+  /** TEMPORARY DEV/TEST — App.tsx handleGrantDevStars: +50 stars to test the Constellation and the stakes. */
+  onGrantDevStars: () => void;
   onQuickBattle: () => void;
   onOpenSandbox: () => void;
   /** Opens the chosen Location directly with a random party — App.tsx createLocationVisitRun. */
@@ -119,6 +121,7 @@ export function TitleScreen({
   onStartRun,
   openAscension,
   onResetTips,
+  onGrantDevStars,
   onQuickBattle,
   onOpenSandbox,
   onVisitLocation,
@@ -339,6 +342,9 @@ export function TitleScreen({
             </button>
             <button className="title-dev-item" onClick={() => runDev(() => setShowLocations(true))}>
               Visit Location
+            </button>
+            <button className="title-dev-item" onClick={() => runDev(onGrantDevStars)}>
+              ⭐ +50 Stars
             </button>
             <button className="title-dev-item" onClick={() => runDev(onResetTips)}>
               Reset Tips

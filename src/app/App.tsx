@@ -598,6 +598,11 @@ export function App() {
     return drawn;
   }
 
+  /** TEMPORARY DEV/TEST — 50 stars on the bonus ledger, so the Constellation and the rung fees can be tried without clearing runs. */
+  function handleGrantDevStars() {
+    setProfile(updateProfile((current) => ({ ...current, bonusStars: current.bonusStars + 50 })));
+  }
+
   /** The Collection's edit (docs/collection.md §2): the next run drafts from it and is sealed with it. */
   function handleChangeDeck(deck: Deck) {
     setProfile(updateProfile((current) => ({ ...current, deck: { ...deck } as Record<string, string[]> })));
@@ -1133,6 +1138,7 @@ export function App() {
           onStartRun={handleStartNewRun}
           openAscension={openAscension(profile)}
           onResetTips={handleResetTips}
+          onGrantDevStars={handleGrantDevStars}
           onQuickBattle={handleQuickBattle}
           onOpenSandbox={handleOpenSandbox}
           onVisitLocation={handleVisitLocation}

@@ -28,7 +28,7 @@ function tip(id: string, title: string, ...pages: string[]): Tip {
 }
 
 export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
-  draft: tip('draft', 'Starting Heroes', 'Pick two heroes from the row at the bottom to start the run. More join along the way.'),
+  draft: tip('draft', 'Starting Heroes', 'Pick two heroes from the bottom row to start the run. More join along the way.'),
   run: tip(
     'run',
     'The Journey',
@@ -38,15 +38,14 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
   map: tip(
     'map',
     'The Map',
-    'Tap one of the nodes ahead to go there.',
-    'The track across the top is the whole act. Every path has the same number of fights, and every one ends at the Guardian.',
-    'Hold a node to see what it is.'
+    'Tap one of the options ahead. Hold a node to see what happens there.',
+    'The track across the top shows the way to the Guardian.'
   ),
   wounds: tip(
     'wounds',
     'Wounds',
     'HP carries over from fight to fight within an act. Mana refills between fights.',
-    'A knocked-out hero cannot battle. They can rise again at a Rest site, healing at the Guild Hall, using a Revive, or by making it to the next Act.'
+    'A knocked-out hero cannot battle. They can rise again by healing at a Rest site or Guild Hall, using a Revive, or by making it to the next Act.'
   ),
   fork: tip(
     'fork',
