@@ -70,6 +70,7 @@ export function CollectionScreen({ profile, onChangeDeck, onClose }: Props) {
             const row = deck[type];
             const reserve = reserveOfType(deck, heroes, profile.purchases, type);
             const picked = selected && row.includes(selected) ? selected : null;
+            const pickedReserve = selected && reserve.includes(selected) ? selected : null;
             return (
               <section key={type} className="collection-row" style={{ '--type-rgb': getTypeColorRgb(type) } as CSSProperties}>
                 <div className="collection-row-head" style={{ color: getTypeColor(type) }}>
@@ -90,6 +91,40 @@ export function CollectionScreen({ profile, onChangeDeck, onClose }: Props) {
                     </button>
                   ))}
                 </div>
+                {/* Owned heroes the row has no room for: out of every run until swapped in. */}
+                {reserve.length > 0 && (
+                  <div className="collection-reserve">
+                    <span className="collection-reserve-label">Reserve</span>
+                    {reserve.map((heroId) => (
+                      <button
+                        key={heroId}
+                        type="button"
+                        className={`collection-card is-reserve${pickedReserve === heroId ? ' is-selected' : ''}`}
+                        onClick={() => setSelected(pickedReserve === heroId ? null : heroId)}
+                      >
+                        <HeroPortrait heroId={heroId} className="collection-card-portrait" />
+                        <span className="collection-card-name">{heroes[heroId]?.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {pickedReserve && (
+                  <div className="collection-actions">
+                    <button type="button" className="collection-action" onClick={() => setDossierHeroId(pickedReserve)}>
+                      Details
+                    </button>
+                    {row.map((outId) => (
+                      <button
+                        key={outId}
+                        type="button"
+                        className="collection-action is-swap"
+                        onClick={() => change(swapIntoDeck(deck, heroes, profile.purchases, pickedReserve, outId))}
+                      >
+                        Swap for {heroes[outId].name}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {picked && (
                   <div className="collection-actions">
                     {row[0] !== picked && (

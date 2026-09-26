@@ -35391,3 +35391,90 @@ button.star-shop-bundle-face {
 .collection-action.is-swap {
   border-style: dashed;
 }
+
+/* --- The Summoning and single heroes (StarShopScreen) ----------------------
+   The draw sits over the Heroes shelf as a button-row in the offer's own
+   dress, a star in a gold ring where a bundle has faces. */
+.star-shop-summon {
+  width: 100%;
+  margin-bottom: 8px;
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  border-color: rgba(224, 166, 60, 0.5);
+  cursor: pointer;
+}
+
+.star-shop-summon:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.star-shop-summon-glyph {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(224, 166, 60, 0.55);
+  color: var(--accent);
+}
+
+.star-shop-summon-glyph svg {
+  width: 20px;
+  height: 20px;
+}
+
+.star-shop-summon-note,
+.star-shop-hero-type {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.star-shop-hero-type {
+  font-weight: 700;
+}
+
+.star-shop-reveal-note {
+  margin-top: 10px;
+  text-align: center;
+}
+
+/* The Collection's reserve: owned heroes a row has no room for, smaller and
+   dashed, under the three that are decked. */
+.collection-reserve {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.collection-reserve-label {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.collection-card.is-reserve {
+  flex-direction: row;
+  gap: 5px;
+  padding: 3px 8px 3px 4px;
+  border-style: dashed;
+}
+
+.collection-card.is-reserve .collection-card-portrait {
+  width: 28px;
+  height: 28px;
+}
+
+.star-shop-hero .star-shop-offer-body {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.star-shop-reveal .bundle-peek-boxes {
+  grid-template-columns: minmax(0, 140px);
+  justify-content: center;
+}
