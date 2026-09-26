@@ -44,32 +44,29 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
   wounds: tip(
     'wounds',
     'Wounds',
-    'HP carries over from fight to fight within an act. Mana refills at the start of every fight.',
-    'A knocked-out hero sits out until healed: at a Rest, the Guild Hall, with a Revive, or when the act ends.'
+    'HP carries over from fight to fight within an act. Mana refills between fights.',
+    'A knocked-out hero cannot battle. They can rise again at a Rest site, healing at the Guild Hall, using a Revive, or by making it to the next Act.'
   ),
   fork: tip(
     'fork',
     'Elite or Skirmish',
-    'Both fights are against other heroes you can recruit afterwards. The tile shows the types they field.',
-    'The Elite is a level higher, always drops an item, and pays more XP.'
+    'The Elite on the left is a level higher, always drops an item, and pays more XP.'
   ),
   squad: tip(
     'squad',
-    'Pick Your Leads',
-    'Your whole roster fights. Tap the two heroes you want to start on the field, then Start Fight; the rest wait on the bench.'
+    'Tap two heroes to pick Your Leads. The rest wait on the bench.'
   ),
   levelUp: tip(
     'levelUp',
     'Level Up',
-    'Every won fight gives XP to the whole roster, benched heroes included.',
-    "Each level rolls every stat against the hero's growth grades. Some levels also offer a new move — take it or skip it; it won't be offered again."
+    'Every won fight gives XP to the whole roster, benched heroes included.'
   ),
   item: tip(
     'item',
     'Items',
-    "Choose which hero gets this item. Once given, it can't be moved.",
+    "Choose which hero gets this item. They will keep it for the whole journey.",
     'Each hero holds three. Giving a hero a second item of the same kind merges them into a stronger one.',
-    'Or sell it for gold if nobody wants it.'
+    'You can sell it for gold if nobody wants it.'
   ),
   companion: tip(
     'companion',
@@ -80,7 +77,7 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
   fallen: tip(
     'fallen',
     'Permadeath',
-    'Heroes knocked out in that fight are lost, along with their items — unless you spend a Revive on them now.'
+    'Spend a Revive to keep any fallen heroes. Otherwise, they are gone forever.'
   ),
   equipmentReward: tip('equipmentReward', 'Equipment', 'Choose one of three items. Hold an item to read it in full.'),
   tutor: tip(
@@ -101,7 +98,7 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
     'scribe',
     'Mastery Scrolls',
     'Choose two heroes. Each gets 2 Mastery Scrolls.',
-    'At 5 Scrolls a hero Evolves into a new form. At 10 it learns its signature move.'
+    'At 5 Scrolls, a hero Evolves into a new form. At 10, their innate powers will grow.'
   ),
   scrollCache: tip(
     'scrollCache',
@@ -118,13 +115,13 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
     'recruit',
     'Recruit Contract',
     'Spend a contract to add a defeated enemy to your roster. It joins at its level, with its moves and its item.',
-    'Your roster holds six. Past that, someone has to leave — and their items leave with them.'
+    'Your roster holds six. Past that, you must choose a hero to leave the party.'
   ),
   banner: tip('banner', 'Banner', 'Choose one Banner. It boosts your whole team for the rest of the run. Banners stack.'),
   crucible: tip(
     'crucible',
     'Crucible',
-    'Choose one hero to take a Class: a new move or passive. One per hero, and it is permanent.'
+    'Classes teach heroes powerful new abilities or moves within their type. Each hero can learn only one.'
   ),
   seal: tip(
     'seal',
@@ -135,7 +132,7 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
   locationChoice: tip(
     'locationChoice',
     'Next Act',
-    'Choose where the next act takes place. Each place is home to different types of Titanspawn.'
+    'Choose where the next act takes place. Each place is home to different types of Titanspawn and Heroes.'
   ),
 };
 
@@ -146,9 +143,9 @@ export const FIGHT_TIPS: readonly FightTip[] = [
     title: 'Combat',
     when: {},
     pages: [
-      'Each round, choose a move and a target for both heroes on the field. Then the round plays out, fastest first.',
-      'Moves cost Mana. Everyone regains a little each round.',
-      'Tap a fighter to read it. The small figures across the top show the turn order, left to right. Hold a move to read it before you choose.',
+      'Each round, choose a move and a target for both heroes on the field. Then the round plays out in Speed order.',
+      'Moves cost Mana. Everyone regains some each round. Heroes can choose to Rest to recover all Mana. Sometimes, Rest will be the only option.',
+      'Tap a fighter or hold down on a move to read more information about them.',
     ],
   },
   {
@@ -156,7 +153,7 @@ export const FIGHT_TIPS: readonly FightTip[] = [
     title: 'Types',
     when: { minRound: 2 },
     pages: [
-      "The number on a move is how well it hits the target's type: above 1 is strong, below 1 is resisted. A move matching its user's own type deals 25% more.",
+      "The number on a move is how well it hits the target's type: above 1 is strong, below 1 is resisted.",
       '[physical] Physical moves use Attack against Defense. [magical] Magical moves use Intelligence against Wisdom.',
     ],
   },
