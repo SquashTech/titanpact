@@ -553,11 +553,17 @@ export interface HeroDefinition {
    */
   schedule?: LevelSchedule;
   /**
-   * The move this hero holds at MASTERY_SIGNATURE pips and nowhere else (run/mastery.ts,
-   * data/signatures.ts, docs/mastery.md §5). Optional until every hero's is authored; a hero
-   * without one reaches ten and is simply mastered.
+   * The move that is this hero's and nobody else's (data/signatures.ts, docs/mastery.md §5): a
+   * GUARANTEED learn at `schedule.signatureLevel` (2026-09-24, per user direction — it was the
+   * tenth Mastery pip's), never rolled and in no pool. A hero without one simply has none.
    */
   signatureMoveId?: string;
+  /**
+   * The innate, MASTERED (docs/mastery.md §5b): what `passiveIds` becomes at the tenth Mastery pip
+   * — a sizable buff to the same verb, replacing the born card rather than stacking beside it
+   * (run/innate.ts `innatePassiveIdsFor`). In no pool and never granted anywhere else.
+   */
+  masteredPassiveIds?: readonly PassiveId[];
   /**
    * Passives held from birth, in no pool and never granted (run/entryStats.ts folds them in beside
    * every other source). Every roster hero holds exactly ONE — its innate, docs/innate-passives.md,
@@ -569,11 +575,15 @@ export interface HeroDefinition {
 
 /**
  * The levels that teach. `offerLevels` each roll one move from the band the level has opened;
- * `midLevel` opens Mid (and expires Early), `lateLevel` opens Late. The Evolution is not on it:
- * it sits behind Mastery pips (run/mastery.ts, docs/mastery.md), not a level.
+ * `midLevel` opens Mid (and expires Early), `lateLevel` opens Late. `signatureLevel` is the one
+ * level that rolls nothing: it teaches the hero's signature, guaranteed, set by how hard the move
+ * hits (docs/mastery.md §5). The Evolution is not on it: it sits behind Mastery pips
+ * (run/mastery.ts, docs/mastery.md), not a level.
  */
 export interface LevelSchedule {
   offerLevels: readonly number[];
   midLevel: number;
   lateLevel: number;
+  /** Omitted for a definition with no signature — the Titanspawn's default schedule. */
+  signatureLevel?: number;
 }

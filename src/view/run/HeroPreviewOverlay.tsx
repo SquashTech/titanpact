@@ -19,6 +19,7 @@ import { relicTeamPassiveGrants, passiveStatModifiers } from '../../run/passives
 import { entryPassiveCounts, entryStatModifiers, relicStatContribution } from '../../run/entryStats';
 import { chosenEvolutionPaths, itemSlotsFor, rosterEntryTypes } from '../../run/progression';
 import { chosenClass } from '../../run/classes';
+import { innatePassiveIdsFor } from '../../run/innate';
 import { StatBars, StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { TabStrip, type TabSpec } from '../shared/TabStrip';
 import { MoveButtonReplica, swallowGhostClick, useLongPress } from '../shared/MoveTile';
@@ -90,7 +91,8 @@ function passiveRows(
     rows.set(passiveId, row);
   };
 
-  for (const id of hero.passiveIds ?? []) add(id, 'Innate');
+  const mastered = innatePassiveIdsFor(hero, entry) !== hero.passiveIds;
+  for (const id of innatePassiveIdsFor(hero, entry) ?? []) add(id, mastered ? 'Innate · Mastered' : 'Innate');
   if (entry.classId) add(entry.classId, 'Class');
   for (const id of entry.evolutionPassiveGrants) add(id, 'Evolution');
   for (const id of entry.bonusPassiveGrants) add(id, 'Boon');
@@ -159,7 +161,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
   const heroClass = chosenClass(classes, entry);
   const teamStatModifiers = relicTeamStatModifiers(relicIds, relics);
   const teamPassiveGrants = relicTeamPassiveGrants(relicIds, relics);
-  const passiveCounts = entryPassiveCounts(entry, equipmentLookup, teamPassiveGrants, hero.passiveIds);
+  const passiveCounts = entryPassiveCounts(entry, equipmentLookup, teamPassiveGrants, innatePassiveIdsFor(hero, entry));
   const grants = entryStatModifiers(entry, equipmentLookup, passives, passiveCounts, teamStatModifiers);
   const evolved = chosenEvolutionPaths(progressionTable, entry);
   const types = rosterEntryTypes(hero, entry);

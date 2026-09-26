@@ -708,7 +708,6 @@ export function FightScreen({
   const playerActiveAlive = aliveActiveIdsOn(combat, PLAYER_SIDE);
   const enemyActiveAlive = aliveActiveIdsOn(combat, AI_SIDE);
   const playerBench = replacementCandidates(combat, PLAYER_SIDE);
-  const playerLockedIn = isLockedIn(combat, PLAYER_SIDE);
   const pactRound = pactRoundOf(combat, combat.round);
 
   const winner: Side | null = sideDefeated(combat, PLAYER_SIDE) ? AI_SIDE : sideDefeated(combat, AI_SIDE) ? PLAYER_SIDE : null;
@@ -773,7 +772,6 @@ export function FightScreen({
       anyOutOfMana: playerActiveAlive.some(
         (id) => !hasAffordableMoveInFight(combat, id, entryFor(playerRun.roster, id).unlockedMoveIds, moves, allCombatants)
       ),
-      lockedIn: playerLockedIn,
       benchSize: playerBench.length,
       playerKnockouts: combat.koCount[PLAYER_SIDE],
       enemyTypesOnField: enemyActiveAlive.flatMap((id) => {
@@ -781,7 +779,6 @@ export function FightScreen({
         return [...(allCombatants[combatant.heroId]?.types ?? []), ...combatant.grantedTypes];
       }),
       fieldEffectActive: combat.activeFieldEffect != null,
-      pactClockNear: pactRound >= DEFAULT_PACT_CLOCK.startRound - PACT_WARNING_ROUNDS,
     };
     return matchFightTip(FIGHT_TIPS, ctx, tips.seenIds);
   })();

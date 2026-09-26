@@ -9,7 +9,7 @@ import { createRng, nextFloat, type RngState } from '../engine/rng/seededRng';
 import type { BrokenSeal, RunState, RosterEntry } from './state';
 import { createRunState, createRosterEntry, addRosterEntry } from './state';
 import { levelUpEntry, xpForLevel } from './growth';
-import { MASTERY_CAP, pendingSignature } from './mastery';
+import { MASTERY_CAP } from './mastery';
 import { unsealedIdFor } from '../data/enemies';
 import { spawnPool, type SpawnTier } from '../data/titanspawn';
 import { rollFittingGear } from '../data/equipment';
@@ -19,6 +19,7 @@ import {
   availableEvolution,
   chooseEvolutionPath,
   levelMovePool,
+  pendingSignature,
   rosterEntryTypes,
   scheduleEntries,
   scheduleFor,
@@ -183,8 +184,8 @@ function drawParty(
  * Walks the hero's schedule (progression.ts scheduleEntries) up to its level, exactly as a roster
  * hero would have: the Evolution first, when the entry's Mastery has reached the pip that opens
  * it (a path taken unweighted, so the offers that follow can draw on a graft's line), then the
- * signature at ten — into the kit ahead of the offers, in the last slot if the kit is full, since
- * a hero at ten holds it by definition — then each offer rolls one move from the band open at
+ * signature once `level` has reached its `signatureLevel` — into the kit ahead of the offers, in
+ * the last slot if the kit is full, since a hero past that level holds it by definition — then each offer rolls one move from the band open at
  * that level and learns it if there is room (an enemy never swaps). The same schedule and the same pips a roster hero reads, so a contract hero is the
  * enemy you beat, finished (docs/xp-overhaul.md §4, docs/mastery.md §4).
  */
@@ -211,7 +212,7 @@ export function rollLevelProgression(
       // Illegal path for this hero (content bug) — field the enemy un-evolved rather than crash.
     }
   }
-  const signature = pendingSignature(hero, next.roster.find((r) => r.rosterId === rosterId)!);
+  const signature = pendingSignature(hero, next.roster.find((r) => r.rosterId === rosterId)!, level);
   if (signature) {
     next = {
       ...next,

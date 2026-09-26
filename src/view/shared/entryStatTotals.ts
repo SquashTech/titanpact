@@ -7,6 +7,7 @@ import type { RosterEntry } from '../../run/state';
 import { entryStatModifiers, entryPassiveCounts } from '../../run/entryStats';
 import { relicTeamStatModifiers } from '../../run/relics';
 import { relicTeamPassiveGrants } from '../../run/passives';
+import { innatePassiveIdsFor } from '../../run/innate';
 import { equipment } from '../../data/equipment';
 import { passives } from '../../data/passives';
 import { relics } from '../../data/relics';
@@ -22,7 +23,7 @@ export function entryStatTotals(
 ): StatLine {
   const teamStatModifiers = relicTeamStatModifiers(relicIds, relics);
   const teamPassiveGrants = relicTeamPassiveGrants(relicIds, relics);
-  const passiveCounts = entryPassiveCounts(entry, equipment, teamPassiveGrants, hero.passiveIds);
+  const passiveCounts = entryPassiveCounts(entry, equipment, teamPassiveGrants, innatePassiveIdsFor(hero, entry));
   const grants = entryStatModifiers(entry, equipment, passives, passiveCounts, teamStatModifiers);
 
   const out = { ...hero.baseStats };

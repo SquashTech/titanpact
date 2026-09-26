@@ -77,22 +77,17 @@ export const SCREEN_TIP_IDS = [
   'squad',
   'levelUp',
   'item',
-  'companion',
   'fallen',
   'equipmentReward',
-  'tutor',
   'boon',
   'manaWell',
-  'leyLine',
   'rest',
   'event',
   'scribe',
-  'scrollCache',
   'shop',
   'recruit',
   'banner',
   'crucible',
-  'seal',
   'locationChoice',
 ] as const;
 
@@ -129,8 +124,6 @@ export interface FightTipCondition {
   nodeTypes?: readonly MapNodeType[];
   /** A player active hero can pay for no move at all — the moment Rest exists for. */
   outOfMana?: boolean;
-  /** The player side has lost voluntary switching. */
-  lockedIn?: boolean;
   /** The player has someone on the bench. */
   benchHeld?: boolean;
   /** At least one player hero has been knocked out this fight. */
@@ -139,8 +132,6 @@ export interface FightTipCondition {
   enemyTypeOnField?: TypeId;
   /** A Field Effect is up. */
   fieldEffectActive?: boolean;
-  /** The Pact Clock's warning has started, or the clock itself. */
-  pactClockNear?: boolean;
 }
 
 export interface FightTip extends Tip {
@@ -152,24 +143,20 @@ export interface FightTipContext {
   round: number;
   nodeType: MapNodeType;
   anyOutOfMana: boolean;
-  lockedIn: boolean;
   benchSize: number;
   playerKnockouts: number;
   enemyTypesOnField: readonly TypeId[];
   fieldEffectActive: boolean;
-  pactClockNear: boolean;
 }
 
 function fightTipMatches(when: FightTipCondition, ctx: FightTipContext): boolean {
   if (when.minRound !== undefined && ctx.round < when.minRound) return false;
   if (when.nodeTypes !== undefined && !when.nodeTypes.includes(ctx.nodeType)) return false;
   if (when.outOfMana !== undefined && ctx.anyOutOfMana !== when.outOfMana) return false;
-  if (when.lockedIn !== undefined && ctx.lockedIn !== when.lockedIn) return false;
   if (when.benchHeld !== undefined && ctx.benchSize > 0 !== when.benchHeld) return false;
   if (when.playerKnockedOut !== undefined && ctx.playerKnockouts > 0 !== when.playerKnockedOut) return false;
   if (when.enemyTypeOnField !== undefined && !ctx.enemyTypesOnField.includes(when.enemyTypeOnField)) return false;
   if (when.fieldEffectActive !== undefined && ctx.fieldEffectActive !== when.fieldEffectActive) return false;
-  if (when.pactClockNear !== undefined && ctx.pactClockNear !== when.pactClockNear) return false;
   return true;
 }
 

@@ -40,6 +40,16 @@
 // the signature move instead. Rules pinned in test/moveTiers.test.ts: sorted, Mid before Late, an
 // offer from every band.
 //
+// `signatureLevel` (2026-09-24, per user direction) is the level the hero's signature move is a
+// GUARANTEED learn at, set by how hard the move hits (docs/mastery.md §5) in three windows:
+//   14-16  the lighter ones — a rider-led hit, a buff, a cheap move (Lizard Rush, Roost Guard,
+//          Icefall, Oathstrike, Nevermore): Act 2's Guardian into Act 3;
+//   18-20  the standard Late-sized hit with one real rider (Hammerbrand, Rootrend, Erasure): late Act 3;
+//   22-24  the heaviest — 95+ Base Power, a lockout, a double-on-a-status, a whole-side heal or
+//          a pool refill (Overbear, Hoarfrost, Flashover, Daybreak, Fairy Ring): Act 4.
+// Never on one of the hero's own offer levels, so a report pays it as a beat of its own
+// (test/mastery.test.ts pins the windows and the stagger).
+//
 // Offer levels are STAGGERED ACROSS THE ROSTER (2026-09-16, per user direction). Levels are
 // roster-wide, so every hero whose offer sits in the same fight's par window fires on the same
 // report — and the first pass put 33 of 36 heroes on the opener and 30 on Act 2's Guardian, which
@@ -62,9 +72,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['singe', 'setAlight', 'kindle'],
     starter: false,
     growthGrades: { hp: 'S', attack: 'A', defense: 'A', intelligence: 'F', wisdom: 'B', speed: 'B', manaPool: 'B' },
-    schedule: { offerLevels: [6, 10, 17, 20, 24, 26], midLevel: 11, lateLevel: 21 },
+    schedule: { offerLevels: [6, 10, 17, 20, 24, 26], midLevel: 11, lateLevel: 21, signatureLevel: 19 },
     signatureMoveId: 'hammerbrand',
     passiveIds: ['kindling'],
+    masteredPassiveIds: ['forgeheart'],
   },
   crimson: {
     id: 'crimson',
@@ -74,9 +85,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['ember', 'weaken', 'infuse'],
     starter: true,
     growthGrades: { hp: 'B', attack: 'F', defense: 'B', intelligence: 'S', wisdom: 'A', speed: 'B', manaPool: 'A' },
-    schedule: { offerLevels: [6, 10, 17, 20, 25, 28], midLevel: 11, lateLevel: 21 },
+    schedule: { offerLevels: [6, 10, 17, 20, 25, 28], midLevel: 11, lateLevel: 21, signatureLevel: 23 },
     signatureMoveId: 'flashover',
     passiveIds: ['stoke'],
+    masteredPassiveIds: ['wildfire', 'wildfireMana'],
   },
   brimstone: {
     id: 'brimstone',
@@ -86,9 +98,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['ember', 'umbraBolt', 'weaken'],
     starter: false,
     growthGrades: { hp: 'S', attack: 'E', defense: 'A', intelligence: 'D', wisdom: 'A', speed: 'B', manaPool: 'A' },
-    schedule: { offerLevels: [5, 8, 11, 15, 20, 25], midLevel: 10, lateLevel: 20 },
+    schedule: { offerLevels: [5, 8, 11, 15, 20, 25], midLevel: 10, lateLevel: 20, signatureLevel: 16 },
     signatureMoveId: 'hearthfire',
     passiveIds: ['sulphur'],
+    masteredPassiveIds: ['hellmouth'],
   },
   // From the Tall Grass (docs/constellation.md §4): the fire dragon. Fire's physical column swung
   // hard on a thin pool — it runs dry, sleeps, and wakes with the breath held (Slumber).
@@ -101,9 +114,10 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     unlock: 'bundle.tallGrass',
     growthGrades: { hp: 'A', attack: 'S', defense: 'A', intelligence: 'F', wisdom: 'A', speed: 'B', manaPool: 'C' },
-    schedule: { offerLevels: [6, 10, 15, 19, 21, 25], midLevel: 11, lateLevel: 21 },
+    schedule: { offerLevels: [6, 10, 15, 19, 21, 25], midLevel: 11, lateLevel: 21, signatureLevel: 22 },
     signatureMoveId: 'wyrmfire',
     passiveIds: ['slumber'],
+    masteredPassiveIds: ['dragonsDream'],
   },
 
   // --- Water ---
@@ -119,9 +133,10 @@ export const heroes: Record<string, HeroDefinition> = {
     // ceiling was its pool, and 65 base is already comfortable. Attack stays C and Intelligence
     // stays B — those are the two the reshape exists to lift off the floor.
     growthGrades: { hp: 'A', attack: 'C', defense: 'B', intelligence: 'B', wisdom: 'C', speed: 'A', manaPool: 'B' },
-    schedule: { offerLevels: [5, 8, 11, 17, 20, 26], midLevel: 10, lateLevel: 19 },
+    schedule: { offerLevels: [5, 8, 11, 17, 20, 26], midLevel: 10, lateLevel: 19, signatureLevel: 14 },
     signatureMoveId: 'lizardRush',
     passiveIds: ['drag'],
+    masteredPassiveIds: ['ripCurrent'],
   },
   pincer: {
     id: 'pincer',
@@ -131,9 +146,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['undertow', 'tideGuard', 'openingStrike'],
     starter: false,
     growthGrades: { hp: 'A', attack: 'S', defense: 'A', intelligence: 'F', wisdom: 'B', speed: 'B', manaPool: 'B' },
-    schedule: { offerLevels: [5, 8, 11, 17, 24, 26], midLevel: 10, lateLevel: 19 },
+    schedule: { offerLevels: [5, 8, 11, 17, 24, 26], midLevel: 10, lateLevel: 19, signatureLevel: 16 },
     signatureMoveId: 'vise',
     passiveIds: ['carapace'],
+    masteredPassiveIds: ['exoskeleton'],
   },
   leviathan: {
     id: 'leviathan',
@@ -145,9 +161,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['siphon', 'undercurrent', 'tideGuard'],
     starter: false,
     growthGrades: { hp: 'B', attack: 'F', defense: 'B', intelligence: 'S', wisdom: 'C', speed: 'A', manaPool: 'S' },
-    schedule: { offerLevels: [4, 8, 12, 16, 21, 26], midLevel: 10, lateLevel: 19 },
+    schedule: { offerLevels: [4, 8, 12, 16, 21, 26], midLevel: 10, lateLevel: 19, signatureLevel: 23 },
     signatureMoveId: 'deepsurge',
     passiveIds: ['overchannel'],
+    masteredPassiveIds: ['abyssalWell'],
   },
   // From the Tall Grass: the octopus. Water's control hand on a Wisdom-and-Intelligence body — it
   // clouds the water and slips out through it (Ink), and its opener Dazes the whole enemy line.
@@ -160,9 +177,10 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     unlock: 'bundle.tallGrass',
     growthGrades: { hp: 'A', attack: 'F', defense: 'A', intelligence: 'A', wisdom: 'S', speed: 'C', manaPool: 'B' },
-    schedule: { offerLevels: [6, 10, 14, 19, 21, 25], midLevel: 11, lateLevel: 20 },
+    schedule: { offerLevels: [6, 10, 14, 19, 21, 25], midLevel: 11, lateLevel: 20, signatureLevel: 15 },
     signatureMoveId: 'inkBlast',
     passiveIds: ['ink'],
+    masteredPassiveIds: ['abyssalInk'],
   },
 
   // --- Frost ---
@@ -174,9 +192,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['rimeWind', 'frostArmor', 'deepChill'],
     starter: false,
     growthGrades: { hp: 'A', attack: 'F', defense: 'B', intelligence: 'S', wisdom: 'A', speed: 'B', manaPool: 'B' },
-    schedule: { offerLevels: [6, 10, 14, 17, 24, 26], midLevel: 11, lateLevel: 21 },
+    schedule: { offerLevels: [6, 10, 14, 17, 24, 26], midLevel: 11, lateLevel: 21, signatureLevel: 23 },
     signatureMoveId: 'hoarfrost',
     passiveIds: ['glaciate'],
+    masteredPassiveIds: ['deepWinter'],
   },
   rime: {
     id: 'rime',
@@ -189,9 +208,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['iceShard', 'deepChill', 'secondWind'],
     starter: true,
     growthGrades: { hp: 'B', attack: 'B', defense: 'A', intelligence: 'D', wisdom: 'B', speed: 'A', manaPool: 'B' },
-    schedule: { offerLevels: [5, 8, 14, 17, 21, 28], midLevel: 9, lateLevel: 18 },
+    schedule: { offerLevels: [5, 8, 14, 17, 21, 28], midLevel: 9, lateLevel: 18, signatureLevel: 15 },
     signatureMoveId: 'icefall',
     passiveIds: ['coldSnap'],
+    masteredPassiveIds: ['shatterpoint'],
   },
   cube: {
     id: 'cube',
@@ -201,9 +221,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['iceShard', 'frostArmor', 'pinDown'],
     starter: false,
     growthGrades: { hp: 'A', attack: 'S', defense: 'A', intelligence: 'F', wisdom: 'S', speed: 'C', manaPool: 'C' },
-    schedule: { offerLevels: [6, 11, 15, 21, 25, 28], midLevel: 13, lateLevel: 22 },
+    schedule: { offerLevels: [6, 11, 15, 21, 25, 28], midLevel: 13, lateLevel: 22, signatureLevel: 19 },
     signatureMoveId: 'coldMass',
     passiveIds: ['absoluteZero'],
+    masteredPassiveIds: ['zeroKelvin'],
   },
 
   // --- Storm ---
@@ -215,9 +236,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['thunderclap', 'risingStatic', 'rally'],
     starter: false,
     growthGrades: { hp: 'B', attack: 'A', defense: 'A', intelligence: 'D', wisdom: 'B', speed: 'B', manaPool: 'B' },
-    schedule: { offerLevels: [5, 8, 15, 19, 21, 25], midLevel: 10, lateLevel: 20 },
+    schedule: { offerLevels: [5, 8, 15, 19, 21, 25], midLevel: 10, lateLevel: 20, signatureLevel: 20 },
     signatureMoveId: 'galeVolley',
     passiveIds: ['tailwind'],
+    masteredPassiveIds: ['jetstream'],
   },
   tempest: {
     id: 'tempest',
@@ -227,9 +249,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['jolt', 'charge', 'risingStatic'],
     starter: true,
     growthGrades: { hp: 'B', attack: 'S', defense: 'C', intelligence: 'S', wisdom: 'C', speed: 'C', manaPool: 'C' },
-    schedule: { offerLevels: [5, 8, 14, 17, 24, 28], midLevel: 10, lateLevel: 20 },
+    schedule: { offerLevels: [5, 8, 14, 17, 24, 28], midLevel: 10, lateLevel: 20, signatureLevel: 22 },
     signatureMoveId: 'twinbolt',
     passiveIds: ['liveWire'],
+    masteredPassiveIds: ['thunderhead'],
   },
   // Storm's third since 2026-09-19 (Scallywag's old seat): the storm eagle, the slate's magical
   // column swung at full weight — Squall is the physical half, Tempest hedges.
@@ -241,9 +264,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['zap', 'charge', 'staticCharge'],
     starter: false,
     growthGrades: { hp: 'B', attack: 'F', defense: 'C', intelligence: 'S', wisdom: 'B', speed: 'S', manaPool: 'A' },
-    schedule: { offerLevels: [5, 8, 14, 17, 20, 26], midLevel: 9, lateLevel: 18 },
+    schedule: { offerLevels: [5, 8, 14, 17, 20, 26], midLevel: 9, lateLevel: 18, signatureLevel: 19 },
     signatureMoveId: 'stoop',
     passiveIds: ['staticField'],
+    masteredPassiveIds: ['supercell'],
   },
   // --- Stone ---
   crag: {
@@ -254,9 +278,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['rockToss', 'toughenUp', 'secondWind'],
     starter: true,
     growthGrades: { hp: 'A', attack: 'S', defense: 'A', intelligence: 'E', wisdom: 'A', speed: 'B', manaPool: 'D' },
-    schedule: { offerLevels: [5, 8, 11, 15, 21, 28], midLevel: 9, lateLevel: 18 },
+    schedule: { offerLevels: [5, 8, 11, 15, 21, 28], midLevel: 9, lateLevel: 18, signatureLevel: 16 },
     signatureMoveId: 'groundsplit',
     passiveIds: ['vengefulEmblem'],
+    masteredPassiveIds: ['bedrockWrath'],
   },
   sentinel: {
     id: 'sentinel',
@@ -266,9 +291,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['mudBall', 'provoke', 'fortify'],
     starter: false,
     growthGrades: { hp: 'S', attack: 'B', defense: 'A', intelligence: 'F', wisdom: 'S', speed: 'C', manaPool: 'B' },
-    schedule: { offerLevels: [6, 11, 15, 20, 24, 26], midLevel: 12, lateLevel: 22 },
+    schedule: { offerLevels: [6, 11, 15, 20, 24, 26], midLevel: 12, lateLevel: 22, signatureLevel: 14 },
     signatureMoveId: 'roostGuard',
     passiveIds: ['stoneWall'],
+    masteredPassiveIds: ['fortress'],
   },
   slate: {
     id: 'slate',
@@ -281,9 +307,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['tremor', 'toughenUp', 'focus'],
     starter: false,
     growthGrades: { hp: 'C', attack: 'A', defense: 'C', intelligence: 'A', wisdom: 'D', speed: 'B', manaPool: 'S' },
-    schedule: { offerLevels: [7, 9, 14, 18, 23, 28], midLevel: 10, lateLevel: 20 },
+    schedule: { offerLevels: [7, 9, 14, 18, 23, 28], midLevel: 10, lateLevel: 20, signatureLevel: 19 },
     signatureMoveId: 'upheaval',
     passiveIds: ['faultLine'],
+    masteredPassiveIds: ['tectonic'],
   },
 
   // --- Nature ---
@@ -295,9 +322,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['seedShot', 'regrowth', 'toxicSpores'],
     starter: true,
     growthGrades: { hp: 'B', attack: 'D', defense: 'C', intelligence: 'A', wisdom: 'A', speed: 'B', manaPool: 'A' },
-    schedule: { offerLevels: [5, 8, 15, 19, 24, 28], midLevel: 10, lateLevel: 20 },
+    schedule: { offerLevels: [5, 8, 15, 19, 24, 28], midLevel: 10, lateLevel: 20, signatureLevel: 18 },
     signatureMoveId: 'blightbloom',
     passiveIds: ['verdurous'],
+    masteredPassiveIds: ['rampantBloom'],
   },
   mordax: {
     id: 'mordax',
@@ -307,9 +335,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['vineLash', 'regrowth', 'rally'],
     starter: false,
     growthGrades: { hp: 'S', attack: 'S', defense: 'A', intelligence: 'F', wisdom: 'B', speed: 'B', manaPool: 'C' },
-    schedule: { offerLevels: [5, 8, 14, 17, 20, 26], midLevel: 10, lateLevel: 19 },
+    schedule: { offerLevels: [5, 8, 14, 17, 20, 26], midLevel: 10, lateLevel: 19, signatureLevel: 19 },
     signatureMoveId: 'rootrend',
     passiveIds: ['impale'],
+    masteredPassiveIds: ['skewer'],
   },
   hollowbark: {
     id: 'hollowbark',
@@ -319,9 +348,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['ivySpike', 'fortify', 'secondWind'],
     starter: false,
     growthGrades: { hp: 'S', attack: 'A', defense: 'A', intelligence: 'E', wisdom: 'A', speed: 'B', manaPool: 'D' },
-    schedule: { offerLevels: [6, 10, 15, 19, 21, 28], midLevel: 11, lateLevel: 21 },
+    schedule: { offerLevels: [6, 10, 15, 19, 21, 28], midLevel: 11, lateLevel: 21, signatureLevel: 23 },
     signatureMoveId: 'deadfall',
     passiveIds: ['barbs'],
+    masteredPassiveIds: ['thornmail'],
   },
   // From the Tall Grass: the mantis. The roster's top Attack short of the bears, on Speed 45 —
   // slow, and first anyway: every move that deals no damage leaves it Poised to strike early.
@@ -334,9 +364,10 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     unlock: 'bundle.tallGrass',
     growthGrades: { hp: 'A', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'A', speed: 'D', manaPool: 'S' },
-    schedule: { offerLevels: [6, 10, 15, 19, 21, 25], midLevel: 11, lateLevel: 20 },
+    schedule: { offerLevels: [6, 10, 15, 19, 21, 25], midLevel: 11, lateLevel: 20, signatureLevel: 18 },
     signatureMoveId: 'guillotine',
     passiveIds: ['poised'],
+    masteredPassiveIds: ['deathtrap', 'deathtrapEdge'],
   },
 
   // --- Light ---
@@ -348,9 +379,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['glimmer', 'mend', 'purify'],
     starter: true,
     growthGrades: { hp: 'B', attack: 'F', defense: 'B', intelligence: 'B', wisdom: 'S', speed: 'B', manaPool: 'S' },
-    schedule: { offerLevels: [6, 10, 15, 19, 21, 26], midLevel: 11, lateLevel: 21 },
+    schedule: { offerLevels: [6, 10, 15, 19, 21, 26], midLevel: 11, lateLevel: 21, signatureLevel: 23 },
     signatureMoveId: 'daybreak',
     passiveIds: ['grace'],
+    masteredPassiveIds: ['beatitude'],
   },
   aegis: {
     id: 'aegis',
@@ -360,9 +392,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['holyStrike', 'mend', 'secondWind'],
     starter: false,
     growthGrades: { hp: 'A', attack: 'D', defense: 'A', intelligence: 'B', wisdom: 'A', speed: 'C', manaPool: 'B' },
-    schedule: { offerLevels: [6, 11, 15, 20, 24, 28], midLevel: 12, lateLevel: 21 },
+    schedule: { offerLevels: [6, 11, 15, 20, 24, 28], midLevel: 12, lateLevel: 21, signatureLevel: 16 },
     signatureMoveId: 'bulwarkStrike',
     passiveIds: ['consecrate'],
+    masteredPassiveIds: ['sanctified'],
   },
   empyrean: {
     id: 'empyrean',
@@ -375,9 +408,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['glimmer', 'blind', 'hallow'],
     starter: false,
     growthGrades: { hp: 'C', attack: 'F', defense: 'C', intelligence: 'S', wisdom: 'B', speed: 'S', manaPool: 'S' },
-    schedule: { offerLevels: [5, 8, 11, 17, 20, 26], midLevel: 10, lateLevel: 19 },
+    schedule: { offerLevels: [5, 8, 11, 17, 20, 26], midLevel: 10, lateLevel: 19, signatureLevel: 19 },
     signatureMoveId: 'sundive',
     passiveIds: ['halo'],
+    masteredPassiveIds: ['corona'],
   },
 
   // --- Shadow ---
@@ -389,9 +423,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['backstab', 'venomBite', 'lieInWait'],
     starter: false,
     growthGrades: { hp: 'S', attack: 'B', defense: 'A', intelligence: 'D', wisdom: 'A', speed: 'B', manaPool: 'D' },
-    schedule: { offerLevels: [5, 6, 10, 14, 19, 25], midLevel: 10, lateLevel: 19 },
+    schedule: { offerLevels: [5, 6, 10, 14, 19, 25], midLevel: 10, lateLevel: 19, signatureLevel: 18 },
     signatureMoveId: 'widowbite',
     passiveIds: ['lethalBite'],
+    masteredPassiveIds: ['blackWidowBleed', 'blackWidowPoison'],
   },
   marrow: {
     id: 'marrow',
@@ -401,9 +436,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['umbraBolt', 'weaken', 'purify'],
     starter: false,
     growthGrades: { hp: 'D', attack: 'F', defense: 'C', intelligence: 'S', wisdom: 'A', speed: 'S', manaPool: 'S' },
-    schedule: { offerLevels: [6, 10, 14, 20, 24, 28], midLevel: 12, lateLevel: 22 },
+    schedule: { offerLevels: [6, 10, 14, 20, 24, 28], midLevel: 12, lateLevel: 22, signatureLevel: 22 },
     signatureMoveId: 'deathdrink',
     passiveIds: ['necrosis'],
+    masteredPassiveIds: ['lichsDraught'],
   },
   nightshade: {
     id: 'nightshade',
@@ -413,9 +449,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['backstab', 'lieInWait', 'weaken'],
     starter: true,
     growthGrades: { hp: 'B', attack: 'S', defense: 'B', intelligence: 'C', wisdom: 'C', speed: 'A', manaPool: 'C' },
-    schedule: { offerLevels: [5, 8, 11, 15, 20, 26], midLevel: 9, lateLevel: 17 },
+    schedule: { offerLevels: [5, 8, 11, 15, 20, 26], midLevel: 9, lateLevel: 17, signatureLevel: 23 },
     signatureMoveId: 'nightfall',
     passiveIds: ['shadowmeld'],
+    masteredPassiveIds: ['umbralVeil'],
   },
 
   // --- Arcane ---
@@ -427,9 +464,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['magicBolt', 'focus', 'barrier'],
     starter: true,
     growthGrades: { hp: 'S', attack: 'E', defense: 'A', intelligence: 'B', wisdom: 'A', speed: 'D', manaPool: 'A' },
-    schedule: { offerLevels: [5, 8, 11, 17, 20, 24, 28], midLevel: 10, lateLevel: 21 },
+    schedule: { offerLevels: [5, 8, 11, 17, 20, 24, 28], midLevel: 10, lateLevel: 21, signatureLevel: 19 },
     signatureMoveId: 'erasure',
     passiveIds: ['arcaneRepose'],
+    masteredPassiveIds: ['arcaneBastion'],
   },
   zenith: {
     id: 'zenith',
@@ -439,9 +477,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['manaTap', 'barrier', 'empower'],
     starter: false,
     growthGrades: { hp: 'B', attack: 'F', defense: 'C', intelligence: 'S', wisdom: 'A', speed: 'B', manaPool: 'S' },
-    schedule: { offerLevels: [6, 10, 14, 19, 24, 26], midLevel: 12, lateLevel: 22 },
+    schedule: { offerLevels: [6, 10, 14, 19, 24, 26], midLevel: 12, lateLevel: 22, signatureLevel: 20 },
     signatureMoveId: 'culmination',
     passiveIds: ['arcaneReservoir'],
+    masteredPassiveIds: ['starwell'],
   },
   pixie: {
     id: 'pixie',
@@ -454,9 +493,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['resonantBolt', 'infuse', 'manaFont'],
     starter: false,
     growthGrades: { hp: 'B', attack: 'F', defense: 'B', intelligence: 'C', wisdom: 'S', speed: 'A', manaPool: 'S' },
-    schedule: { offerLevels: [6, 9, 13, 17, 22, 27], midLevel: 11, lateLevel: 20 },
+    schedule: { offerLevels: [6, 9, 13, 17, 22, 27], midLevel: 11, lateLevel: 20, signatureLevel: 23 },
     signatureMoveId: 'fairyRing',
     passiveIds: ['attunement'],
+    masteredPassiveIds: ['feyCommunion'],
   },
 
   // --- Mind ---
@@ -468,9 +508,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['psiBolt', 'barrier', 'dopamine'],
     starter: true,
     growthGrades: { hp: 'B', attack: 'A', defense: 'D', intelligence: 'A', wisdom: 'C', speed: 'A', manaPool: 'B' },
-    schedule: { offerLevels: [5, 8, 14, 17, 21, 26], midLevel: 9, lateLevel: 18 },
+    schedule: { offerLevels: [5, 8, 14, 17, 21, 26], midLevel: 9, lateLevel: 18, signatureLevel: 20 },
     signatureMoveId: 'mindlink',
     passiveIds: ['neuroplastic'],
+    masteredPassiveIds: ['mindthief'],
   },
   lucius: {
     id: 'lucius',
@@ -480,9 +521,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['psiBolt', 'wickedFear', 'mentalFortress'],
     starter: false,
     growthGrades: { hp: 'B', attack: 'F', defense: 'B', intelligence: 'S', wisdom: 'A', speed: 'B', manaPool: 'A' },
-    schedule: { offerLevels: [6, 10, 14, 19, 21, 25], midLevel: 11, lateLevel: 21 },
+    schedule: { offerLevels: [6, 10, 14, 19, 21, 25], midLevel: 11, lateLevel: 21, signatureLevel: 16 },
     signatureMoveId: 'hollowing',
     passiveIds: ['hunger'],
+    masteredPassiveIds: ['insatiable'],
   },
   trance: {
     id: 'trance',
@@ -492,9 +534,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['psiBolt', 'enervate', 'lull'],
     starter: false,
     growthGrades: { hp: 'B', attack: 'E', defense: 'B', intelligence: 'A', wisdom: 'S', speed: 'C', manaPool: 'A' },
-    schedule: { offerLevels: [6, 10, 15, 19, 24, 28], midLevel: 12, lateLevel: 22 },
+    schedule: { offerLevels: [6, 10, 15, 19, 24, 28], midLevel: 12, lateLevel: 22, signatureLevel: 16 },
     signatureMoveId: 'sandman',
     passiveIds: ['lullaby'],
+    masteredPassiveIds: ['deepSlumber'],
   },
 
   // --- Spirit ---
@@ -506,9 +549,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['wisp', 'torment', 'unbound'],
     starter: true,
     growthGrades: { hp: 'B', attack: 'F', defense: 'A', intelligence: 'S', wisdom: 'B', speed: 'B', manaPool: 'A' },
-    schedule: { offerLevels: [6, 10, 17, 20, 24, 28], midLevel: 11, lateLevel: 21 },
+    schedule: { offerLevels: [6, 10, 17, 20, 24, 28], midLevel: 11, lateLevel: 21, signatureLevel: 19 },
     signatureMoveId: 'soulTithe',
     passiveIds: ['ghostlight'],
+    masteredPassiveIds: ['wraithfire'],
   },
   sorrow: {
     id: 'sorrow',
@@ -518,9 +562,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['phantomStrike', 'torment', 'secondWind'],
     starter: false,
     growthGrades: { hp: 'C', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'A', speed: 'S', manaPool: 'B' },
-    schedule: { offerLevels: [5, 8, 11, 15, 21, 25], midLevel: 10, lateLevel: 19 },
+    schedule: { offerLevels: [5, 8, 11, 15, 21, 25], midLevel: 10, lateLevel: 19, signatureLevel: 18 },
     signatureMoveId: 'dirgeOfAsh',
     passiveIds: ['lament'],
+    masteredPassiveIds: ['keening', 'keeningShare'],
   },
   dread: {
     id: 'dread',
@@ -533,9 +578,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['spite', 'torment', 'secondWind'],
     starter: false,
     growthGrades: { hp: 'A', attack: 'E', defense: 'S', intelligence: 'C', wisdom: 'A', speed: 'C', manaPool: 'A' },
-    schedule: { offerLevels: [6, 10, 15, 19, 24, 28], midLevel: 12, lateLevel: 21 },
+    schedule: { offerLevels: [6, 10, 15, 19, 24, 28], midLevel: 12, lateLevel: 21, signatureLevel: 14 },
     signatureMoveId: 'nevermore',
     passiveIds: ['nightmare'],
+    masteredPassiveIds: ['nightTerror'],
   },
 
   // --- Iron ---
@@ -547,9 +593,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['swiftBlow', 'openingStrike', 'fortify'],
     starter: false,
     growthGrades: { hp: 'A', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'A', speed: 'B', manaPool: 'B' },
-    schedule: { offerLevels: [6, 11, 15, 19, 21, 25], midLevel: 12, lateLevel: 21 },
+    schedule: { offerLevels: [6, 11, 15, 19, 21, 25], midLevel: 12, lateLevel: 21, signatureLevel: 16 },
     signatureMoveId: 'wallStrike',
     passiveIds: ['rivet'],
+    masteredPassiveIds: ['rivetedLine'],
   },
   valor: {
     id: 'valor',
@@ -559,9 +606,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['ironFist', 'sharpen', 'provoke'],
     starter: true,
     growthGrades: { hp: 'A', attack: 'A', defense: 'B', intelligence: 'C', wisdom: 'B', speed: 'B', manaPool: 'C' },
-    schedule: { offerLevels: [5, 8, 11, 15, 21, 25], midLevel: 9, lateLevel: 17 },
+    schedule: { offerLevels: [5, 8, 11, 15, 21, 25], midLevel: 9, lateLevel: 17, signatureLevel: 14 },
     signatureMoveId: 'oathstrike',
     passiveIds: ['rallyingStandard'],
+    masteredPassiveIds: ['clarionCall'],
   },
   gallant: {
     id: 'gallant',
@@ -571,9 +619,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['heavyBlow', 'openingStrike', 'rally'],
     starter: false,
     growthGrades: { hp: 'B', attack: 'B', defense: 'A', intelligence: 'D', wisdom: 'A', speed: 'A', manaPool: 'C' },
-    schedule: { offerLevels: [5, 6, 10, 14, 19, 25], midLevel: 9, lateLevel: 18 },
+    schedule: { offerLevels: [5, 6, 10, 14, 19, 25], midLevel: 9, lateLevel: 18, signatureLevel: 23 },
     signatureMoveId: 'fullTilt',
     passiveIds: ['sunder'],
+    masteredPassiveIds: ['shatterlance'],
   },
   // The first bundle hero (docs/constellation.md §4): outside the base three-a-type, in a run's
   // pools only while the Free Company is held. Storm-born; the Stormrunner path is the way back.
@@ -586,9 +635,10 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     unlock: 'bundle.freeCompany',
     growthGrades: { hp: 'B', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'A', speed: 'A', manaPool: 'B' },
-    schedule: { offerLevels: [5, 8, 14, 17, 20, 26], midLevel: 9, lateLevel: 18 },
+    schedule: { offerLevels: [5, 8, 14, 17, 20, 26], midLevel: 9, lateLevel: 18, signatureLevel: 22 },
     signatureMoveId: 'broadside',
     passiveIds: ['broadside', 'broadsideFire'],
+    masteredPassiveIds: ['grandBroadside', 'broadsideFire'],
   },
 
   // --- Mech ---
@@ -601,9 +651,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['pistonPunch', 'sparkPlug', 'kickstart'],
     starter: true,
     growthGrades: { hp: 'B', attack: 'S', defense: 'A', intelligence: 'A', wisdom: 'C', speed: 'B', manaPool: 'E' },
-    schedule: { offerLevels: [5, 8, 11, 19, 21, 25], midLevel: 10, lateLevel: 20 },
+    schedule: { offerLevels: [5, 8, 11, 19, 21, 25], midLevel: 10, lateLevel: 20, signatureLevel: 18 },
     signatureMoveId: 'overwind',
     passiveIds: ['boiler'],
+    masteredPassiveIds: ['boilingPoint'],
   },
   steamColossus: {
     id: 'steamColossus',
@@ -614,9 +665,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['cogBop', 'ironFist', 'sharpen'],
     starter: false,
     growthGrades: { hp: 'S', attack: 'A', defense: 'S', intelligence: 'F', wisdom: 'S', speed: 'C', manaPool: 'D' },
-    schedule: { offerLevels: [6, 10, 14, 17, 24, 26], midLevel: 13, lateLevel: 22 },
+    schedule: { offerLevels: [6, 10, 14, 17, 24, 26], midLevel: 13, lateLevel: 22, signatureLevel: 22 },
     signatureMoveId: 'boilerBlow',
     passiveIds: ['ironbound'],
+    masteredPassiveIds: ['ironMountain'],
   },
   rex: {
     id: 'rex',
@@ -630,9 +682,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['steamVent', 'sparkPlug', 'overclock'],
     starter: false,
     growthGrades: { hp: 'B', attack: 'A', defense: 'B', intelligence: 'F', wisdom: 'B', speed: 'S', manaPool: 'A' },
-    schedule: { offerLevels: [3, 7, 11, 15, 20, 25], midLevel: 9, lateLevel: 18 },
+    schedule: { offerLevels: [3, 7, 11, 15, 20, 25], midLevel: 9, lateLevel: 18, signatureLevel: 23 },
     signatureMoveId: 'devour',
     passiveIds: ['tyrantsDue'],
+    masteredPassiveIds: ['apexTyrant'],
   },
   // Free Company (docs/constellation.md §11 phase 6): the medic drone. The roster's Wisdom-85 body
   // on Mech's repair column, which nobody in the base three holds as a healer; Spark Plug is the
@@ -646,9 +699,10 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     unlock: 'bundle.freeCompany',
     growthGrades: { hp: 'B', attack: 'F', defense: 'A', intelligence: 'C', wisdom: 'S', speed: 'B', manaPool: 'S' },
-    schedule: { offerLevels: [5, 8, 14, 19, 24, 28], midLevel: 10, lateLevel: 20 },
+    schedule: { offerLevels: [5, 8, 14, 19, 24, 28], midLevel: 10, lateLevel: 20, signatureLevel: 16 },
     signatureMoveId: 'overhaul',
     passiveIds: ['fieldRepair'],
+    masteredPassiveIds: ['refit', 'refitPlate'],
   },
 
   // --- Beast ---
@@ -660,9 +714,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['claw', 'venomBite', 'rally'],
     starter: true,
     growthGrades: { hp: 'A', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'B', speed: 'A', manaPool: 'B' },
-    schedule: { offerLevels: [5, 8, 11, 17, 20, 25], midLevel: 9, lateLevel: 18 },
+    schedule: { offerLevels: [5, 8, 11, 17, 20, 25], midLevel: 9, lateLevel: 18, signatureLevel: 15 },
     signatureMoveId: 'packCall',
     passiveIds: ['packHunter'],
+    masteredPassiveIds: ['alphasCall', 'alphasCallFollow'],
   },
   ursa: {
     id: 'ursa',
@@ -674,9 +729,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['claw', 'prowl', 'provoke'],
     starter: false,
     growthGrades: { hp: 'S', attack: 'S', defense: 'A', intelligence: 'F', wisdom: 'A', speed: 'E', manaPool: 'A' },
-    schedule: { offerLevels: [6, 8, 11, 15, 21, 26], midLevel: 11, lateLevel: 21 },
+    schedule: { offerLevels: [6, 8, 11, 15, 21, 26], midLevel: 11, lateLevel: 21, signatureLevel: 24 },
     signatureMoveId: 'overbear',
     passiveIds: ['feast'],
+    masteredPassiveIds: ['glut', 'glutRage'],
   },
   coil: {
     id: 'coil',
@@ -686,9 +742,10 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['psiBolt', 'lull', 'rally'],
     starter: false,
     growthGrades: { hp: 'S', attack: 'E', defense: 'A', intelligence: 'A', wisdom: 'A', speed: 'D', manaPool: 'B' },
-    schedule: { offerLevels: [6, 10, 14, 19, 25, 28], midLevel: 12, lateLevel: 22 },
+    schedule: { offerLevels: [6, 10, 14, 19, 25, 28], midLevel: 12, lateLevel: 22, signatureLevel: 16 },
     signatureMoveId: 'stranglehold',
     passiveIds: ['serpentsEye'],
+    masteredPassiveIds: ['petrifyingStare'],
   },
   // Free Company: the vampire bat. The roster's top Speed on its thinnest body, Beast-born — the
   // Bleed column is what it feeds on, and the Shadow turn is a path, not the start.
@@ -701,8 +758,9 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
     unlock: 'bundle.freeCompany',
     growthGrades: { hp: 'B', attack: 'S', defense: 'C', intelligence: 'F', wisdom: 'B', speed: 'S', manaPool: 'A' },
-    schedule: { offerLevels: [5, 8, 11, 17, 21, 26], midLevel: 9, lateLevel: 19 },
+    schedule: { offerLevels: [5, 8, 11, 17, 21, 26], midLevel: 9, lateLevel: 19, signatureLevel: 19 },
     signatureMoveId: 'exsanguinate',
     passiveIds: ['sanguine'],
+    masteredPassiveIds: ['hemophage', 'hemophageFrenzy'],
   },
 };

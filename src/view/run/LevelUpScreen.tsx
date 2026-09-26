@@ -5,9 +5,8 @@ import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
 import type { StatKey } from '../../engine/content';
 import { GROWTH_STATS, MAX_LEVEL, growthUnitFor, levelOf, xpProgress, xpToNextLevel, type HeroLevelUp } from '../../run/growth';
-import { availableEvolution, entryBandRank, levelMovePool, pendingScheduleEntry, scheduleFor } from '../../run/progression';
+import { availableEvolution, entryBandRank, levelMovePool, pendingScheduleEntry, pendingSignature, scheduleFor } from '../../run/progression';
 import { companionTierStep } from '../../run/companion';
-import { pendingSignature } from '../../run/mastery';
 import type { RosterEntry, RunState } from '../../run/state';
 import { getTypeColor } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -61,7 +60,8 @@ function isBigRoll(points: number, levels: number): boolean {
  *
  * Since the XP Overhaul's phase 3 (docs/xp-overhaul.md §4) the report is also where a level PAYS:
  * every hero whose level has reached a schedule entry takes it here, in roster order — a move
- * offer over the report, or the Evolution as a screen of its own. It is the one decision kind the
+ * offer over the report, the hero's signature at its own level (dressed louder, the same box),
+ * or the Evolution as a screen of its own. It is the one decision kind the
  * report carries, and it was a screen of its own before; it must not gain a second.
  *
  * The payoffs wait for Continue (2026-09-13, per user direction): they used to fire the moment
@@ -207,6 +207,9 @@ function OfferBox({ run, entry, offer, onResolve, onClose }: OfferBoxProps) {
   );
 }
 
+/** The tag a row wears when its level has reached the hero's signature — drawn in the signature's own gold. */
+const SIGNATURE_TAG = '✦ Signature!';
+
 /**
  * What a hero's row is still owed — its pips' catch-all first (a hire that arrived past the pip
  * unevolved), then its schedule — as the tag the row wears. Read off the LIVE run, so a tag comes
@@ -220,7 +223,7 @@ function owedLabel(run: RunState, rosterId: string): string | null {
   const node = availableEvolution(progressionTable, entry);
   if (node && node.paths.length > 0) return 'Evolution!';
   const hero = rosterHeroes[entry.heroId];
-  if (pendingSignature(hero, entry)) return 'Signature!';
+  if (pendingSignature(hero, entry)) return SIGNATURE_TAG;
   if (!pendingScheduleEntry(hero, entry)) return null;
   return levelMovePool(progressionTable, moves, hero, entry).length > 0 ? 'New Move!' : null;
 }
@@ -267,7 +270,7 @@ function LevelUpRow({ hero, shown, owed }: RowProps) {
       <div className="level-up-body">
         <div className="level-up-ident">
           <span className="level-up-name">{definition.name}</span>
-          {owed && shown && <span className="level-up-owed">{owed}</span>}
+          {owed && shown && <span className={`level-up-owed${owed === SIGNATURE_TAG ? ' is-signature' : ''}`}>{owed}</span>}
           <span className="level-up-level">
             {capped ? (
               <span className="level-up-max">Max</span>

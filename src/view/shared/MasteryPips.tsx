@@ -1,4 +1,4 @@
-import { MASTERY_CAP, MASTERY_EVOLUTION, MASTERY_SIGNATURE } from '../../run/mastery';
+import { MASTERY_CAP, MASTERY_EVOLUTION, MASTERY_INNATE } from '../../run/mastery';
 
 interface Props {
   mastery: number;
@@ -9,7 +9,7 @@ interface Props {
 
 /**
  * A hero's ten Mastery pips (run/mastery.ts), the two milestones ringed: the fifth is the
- * Evolution, the tenth the signature. The one place the count is drawn, so the sheet, the
+ * Evolution, the tenth the innate mastered. The one place the count is drawn, so the sheet, the
  * who-screen and the report all read the same row.
  */
 export function MasteryPips({ mastery, gain = 0, className }: Props) {
@@ -18,7 +18,7 @@ export function MasteryPips({ mastery, gain = 0, className }: Props) {
     <span className={`mastery-pips${className ? ` ${className}` : ''}`} aria-label={`Mastery ${mastery} of ${MASTERY_CAP}`}>
       {Array.from({ length: MASTERY_CAP }, (_, i) => {
         const pip = i + 1;
-        const milestone = pip === MASTERY_EVOLUTION || pip === MASTERY_SIGNATURE;
+        const milestone = pip === MASTERY_EVOLUTION || pip === MASTERY_INNATE;
         const state = pip <= mastery ? 'is-held' : pip <= lit ? 'is-gain' : '';
         return <i key={pip} className={['mastery-pip', milestone ? 'is-milestone' : '', state].filter(Boolean).join(' ')} />;
       })}

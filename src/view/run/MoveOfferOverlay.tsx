@@ -1,10 +1,11 @@
-import { useLayoutEffect, useRef, useState, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { rosterHeroes } from '../../data/content';
 import { moves } from '../../data/moves';
 import type { RosterEntry, RunState } from '../../run/state';
 import { MOVE_CAP } from '../../run/progression';
-import { MASTERY_SIGNATURE } from '../../run/mastery';
+import { levelOf } from '../../run/growth';
+import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { playSfx } from '../../audio/sfx';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -53,6 +54,8 @@ interface Props {
   eyebrow: string;
   /** `null` declines. The move is already burned from the pool either way; the caller owns that. */
   onResolve: (replaceMoveId: string | null, learn: boolean) => void;
+  /** The hero's own signature (docs/mastery.md §5): the same question, dressed as the event it is. */
+  signature?: boolean;
 }
 
 /**
@@ -63,7 +66,7 @@ interface Props {
  * handles the at-cap half. This is the shape a Mastery Scroll needs (docs/growth-overhaul.md §4),
  * and it wears the same `.reward-panel` / `.moveoffer-*` classes so the two read as one screen.
  */
-export function MoveOfferOverlay({ run, entry, moveId, eyebrow, onResolve }: Props) {
+export function MoveOfferOverlay({ run, entry, moveId, eyebrow, onResolve, signature = false }: Props) {
   const [selectedReplaceId, setSelectedReplaceId] = useState<string | null>(null);
   const [popupMoveId, setPopupMoveId] = useState<string | null>(null);
   const [referenceOpen, setReferenceOpen] = useState(false);
@@ -82,8 +85,9 @@ export function MoveOfferOverlay({ run, entry, moveId, eyebrow, onResolve }: Pro
   }
 
   return createPortal(
-    <div className="log-overlay moveoffer-overlay" ref={overlayRef}>
-      <div className="reward-panel moveoffer-panel">
+    <div className={`log-overlay moveoffer-overlay${signature ? ' is-signature' : ''}`} style={signature ? signatureStyle(hero.types[0]) : undefined} ref={overlayRef}>
+      <div className={`reward-panel moveoffer-panel${signature ? ' is-signature' : ''}`}>
+        {signature && <SignatureCrest />}
         {/* The cards below are terse — the rule under each payload is in here instead. */}
         <button
           type="button"
@@ -100,9 +104,9 @@ export function MoveOfferOverlay({ run, entry, moveId, eyebrow, onResolve }: Pro
         </div>
         <p className="offer-hero-eyebrow">{eyebrow}</p>
 
-        <div className="offer-move-highlight">
+        <SignatureFrame on={signature}>
           <MoveDetailCard move={moves[moveId]} label="New move offered" caster={caster} terse />
-        </div>
+        </SignatureFrame>
 
         {atCap && (
           <>
@@ -167,6 +171,7 @@ interface LearnedProps {
   moveId: string;
   eyebrow: string;
   onClose: () => void;
+  signature?: boolean;
 }
 
 /**
@@ -175,23 +180,24 @@ interface LearnedProps {
  * one card and one button. The same panel the offer wears, so a pour below the cap and a pour at
  * it read as the same beat with a question added, not as two screens.
  */
-export function MoveLearnedOverlay({ run, entry, moveId, eyebrow, onClose }: LearnedProps) {
+export function MoveLearnedOverlay({ run, entry, moveId, eyebrow, onClose, signature = false }: LearnedProps) {
   const hero = rosterHeroes[entry.heroId];
   const caster = healCasterForEntry(hero, entry, run.relics);
   const overlayRef = useRef<HTMLDivElement>(null);
   useFitStep(overlayRef, [moveId, entry]);
   return createPortal(
-    <div className="log-overlay moveoffer-overlay" ref={overlayRef}>
-      <div className="reward-panel moveoffer-panel is-learned">
+    <div className={`log-overlay moveoffer-overlay${signature ? ' is-signature' : ''}`} style={signature ? signatureStyle(hero.types[0]) : undefined} ref={overlayRef}>
+      <div className={`reward-panel moveoffer-panel is-learned${signature ? ' is-signature' : ''}`}>
+        {signature && <SignatureCrest />}
         <div className="offer-hero-head">
           <HeroPortrait heroId={hero.id} className="offer-hero-portrait" />
           <h3>{hero.name}</h3>
         </div>
         <p className="offer-hero-eyebrow">{eyebrow}</p>
 
-        <div className="offer-move-highlight">
+        <SignatureFrame on={signature}>
           <MoveDetailCard move={moves[moveId]} label="Move learned" caster={caster} terse />
-        </div>
+        </SignatureFrame>
 
         <div className="reward-panel-actions moveoffer-actions">
           <button className="moveoffer-button moveoffer-confirm" onClick={onClose}>
@@ -217,15 +223,57 @@ interface SignatureBoxProps {
 }
 
 /**
- * The box the tenth Mastery pip's signature ends in (docs/mastery.md §5; masteryFlow.ts): a
- * receipt below the cap, the replace question at it — the same two boxes a level's offer uses,
- * under the one line that says what this is.
+ * The box a hero's signature ends in (docs/mastery.md §5; levelUpFlow.ts): a receipt below the
+ * cap, the replace question at it — the same two boxes a level's offer uses, dressed for the one
+ * move that is this hero's and nobody else's: a crest that bursts in over the hero's name, the
+ * card framed in the hero's own type colour, a fanfare in its element's voice. A signature is
+ * learned once a run, so it gets the one screen here allowed to be loud.
  */
 export function SignatureBox({ run, entry, offer, onResolve, onClose }: SignatureBoxProps) {
-  const eyebrow = `Mastery ${MASTERY_SIGNATURE} — ${rosterHeroes[entry.heroId].name}'s signature`;
+  const hero = rosterHeroes[entry.heroId];
+  const eyebrow = `Level ${levelOf(entry)} — ${hero.name}'s own move`;
+  useEffect(() => {
+    playSfx('class.learn');
+    playSfx(`cast.${hero.types[0]}` as Parameters<typeof playSfx>[0], { delay: 0.25 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return offer.learned ? (
-    <MoveLearnedOverlay run={run} entry={entry} moveId={offer.moveId} eyebrow={eyebrow} onClose={onClose} />
+    <MoveLearnedOverlay run={run} entry={entry} moveId={offer.moveId} eyebrow={eyebrow} onClose={onClose} signature />
   ) : (
-    <MoveOfferOverlay run={run} entry={entry} moveId={offer.moveId} eyebrow={eyebrow} onResolve={onResolve} />
+    <MoveOfferOverlay run={run} entry={entry} moveId={offer.moveId} eyebrow={eyebrow} onResolve={onResolve} signature />
+  );
+}
+
+/** The hero's type colour, handed to every signature layer as one pair of custom properties. */
+function signatureStyle(type: string): CSSProperties {
+  return { '--sig-color': getTypeColor(type), '--sig-rgb': getTypeColorRgb(type) } as CSSProperties;
+}
+
+/** The crest that bursts in above a signature: a flash, wheeling rays, a star-flanked title. Decorative — the eyebrow and the card label say the same in text. */
+function SignatureCrest() {
+  return (
+    <div className="signature-crest" aria-hidden="true">
+      <span className="signature-crest-flash" />
+      <span className="signature-crest-rays" />
+      <span className="signature-crest-title">
+        <span className="signature-crest-star">✦</span>
+        Signature Move
+        <span className="signature-crest-star">✦</span>
+      </span>
+    </div>
+  );
+}
+
+/** The move card's panel — for a signature, inside a shimmering type-coloured frame with motes rising off it. */
+function SignatureFrame({ on, children }: { on: boolean; children: ReactNode }) {
+  if (!on) return <div className="offer-move-highlight">{children}</div>;
+  return (
+    <div className="signature-frame">
+      <span className="signature-frame-sheen" aria-hidden="true" />
+      {Array.from({ length: 6 }, (_, i) => (
+        <span key={i} className="signature-mote" style={{ '--mote': i } as CSSProperties} aria-hidden="true" />
+      ))}
+      <div className="offer-move-highlight is-signature">{children}</div>
+    </div>
   );
 }

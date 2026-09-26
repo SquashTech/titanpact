@@ -4281,6 +4281,6 @@ export const moves: Record<string, MoveDefinition> = {
   },
   // The Class moves (classes.ts): untiered, in no hero's pool — a Class is their only source.
   ...classMoves,
-  // The signature moves (signatures.ts): untiered, in no pool — the tenth Mastery pip is their only source.
+  // The signature moves (signatures.ts): untiered, in no pool — the hero's own signatureLevel is their only source.
   ...signatureMoves,
 };

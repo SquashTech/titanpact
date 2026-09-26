@@ -19,7 +19,7 @@ import { statuses } from '../../src/data/statuses';
 import type { EquipmentDefinition } from '../../src/run/equipment';
 import { itemReceiptFor, type ItemReceipt } from '../../src/run/runProgress';
 import type { RosterEntry, RunState } from '../../src/run/state';
-import { MASTERY_EVOLUTION, SCRIBE_PICKS, canTakeMastery, pendingSignature } from '../../src/run/mastery';
+import { MASTERY_EVOLUTION, SCRIBE_PICKS, canTakeMastery } from '../../src/run/mastery';
 import {
   MOVE_CAP,
   applyEvolutionMoves,
@@ -31,6 +31,7 @@ import {
   recordMoveOffer,
   rosterEntryTypes,
   takeScheduleEntry,
+  pendingSignature,
 } from '../../src/run/progression';
 import { progressionTable } from '../../src/data/progression';
 import { mergeStatMods } from '../../src/run/statMods';
@@ -346,7 +347,7 @@ export interface SchedulePayout {
   /** Offers that simply landed: room in the kit, so the screen was a receipt. */
   receipts: number;
   evolutions: PourEvolution[];
-  /** Signatures owed at the tenth pip, and whether the take-if-it-beats-the-worst rule took one. */
+  /** Signatures owed at their level, and whether the take-if-it-beats-the-worst rule took one. */
   signatures: { heroId: string; taken: boolean }[];
   /** Every move rolled onto the table, and whether the kit took it. */
   moveOffers: { moveId: string; taken: boolean }[];
@@ -373,7 +374,7 @@ export function payMastery(run: RunState, rng: () => number, payout: SchedulePay
     }
     const node = availableEvolution(progressionTable, entry);
     if (!node || node.paths.length === 0) {
-      // The signature at ten (docs/mastery.md §5): the same take-if-it-beats-the-worst rule an
+      // The signature at its level (docs/mastery.md §5): the same take-if-it-beats-the-worst rule an
       // offer gets, and spent by being made either way.
       const signature = pendingSignature(heroes[entry.heroId], entry);
       if (!signature) continue;

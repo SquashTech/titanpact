@@ -576,9 +576,9 @@ export function formatReport(
       if (k > 0) reachedRuns += n;
     }
     for (let k = 0; k < agg.signaturesPerRunWon.length; k++) reachedWonSum += (agg.signaturesPerRunWon[k] ?? 0) * k;
-    out.push(`  tenth pips landed: ${num(reachedSum / R, 2)} per run, ${agg.wins > 0 ? num(reachedWonSum / agg.wins, 2) : '-'} per completed run; ${pct(reachedRuns, R)} of runs saw at least one`);
-    out.push(`  per completed run: ${[0, 1, 2, 3, 4, 5, 6].map((k) => `${k}:${pct(agg.signaturesPerRunWon[k] ?? 0, agg.wins)}`).join('  ')}`);
-    out.push('  by hero: reached = (hero, run) pairs at ten pips; taken = the kit had room or the move beat');
+    out.push(`  signatures reached: ${num(reachedSum / R, 2)} per run, ${agg.wins > 0 ? num(reachedWonSum / agg.wins, 2) : '-'} per completed run; ${pct(reachedRuns, R)} of runs saw at least one`);
+    out.push(`  per completed run: ${[0, 1, 2, 3, 4, 5, 6, 7, 8].map((k) => `${k}:${pct(agg.signaturesPerRunWon[k] ?? 0, agg.wins)}`).join('  ')}`);
+    out.push('  by hero: reached = (hero, run) pairs at the signatureLevel; taken = the kit had room or the move beat');
     out.push('  the worst held; then the signature\'s own fight ledger against the mean of every Late-tier cast.');
     const lateIds = Object.keys(agg.moves).filter((id) => moveBucket(id) === 'late');
     const lateCasts = lateIds.reduce((s, id) => s + agg.moves[id].casts, 0);

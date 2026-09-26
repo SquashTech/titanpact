@@ -9,6 +9,12 @@
 > designer flagged Lingering as likely over the band and chose to test it; it measured mid-pack.
 > Every number is a first pass; `TITANS_MARK_FORCE`, `BURDEN_SURPLUS` and the outlier
 > magnitudes are the designer's to move.
+>
+> **Every innate has a MASTERED form since 2026-09-24** (per user direction, `docs/mastery.md`
+> §5b): the tenth Mastery pip replaces the born card with an authored upgrade of the same verb —
+> `HeroDefinition.masteredPassiveIds`, read through `innatePassiveIdsFor` — with every figure at
+> least doubled or its reach widened. The table of forty-five is there; everything below still
+> describes the born card.
 
 ---
 
