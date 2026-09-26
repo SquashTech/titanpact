@@ -13,7 +13,7 @@ import { RosterManagementScreen } from './RosterManagementScreen';
 import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { PassiveGlyph, passiveColor, passiveTint } from '../shared/passiveIcons';
-import { innatePassiveOf, titansMarkOf } from '../../run/innate';
+import { currentInnateOf, titansMarkOf } from '../../run/innate';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { hasDramaticEntrance } from '../shared/entrances';
 import { useProfile } from '../shared/ProfileContext';
@@ -151,8 +151,8 @@ function SquadSlot({
  * or the Titan's Mark on a spawn. The name is the read — a Skirmish against spawn is a fight
  * against a clock — and the tap on the chip opens the sheet that says the rest.
  */
-function ScoutedPassive({ hero }: { hero: HeroDefinition }) {
-  const innate = innatePassiveOf(hero);
+function ScoutedPassive({ hero, entry }: { hero: HeroDefinition; entry: RosterEntry }) {
+  const innate = currentInnateOf(hero, entry);
   const mark = innate ? null : titansMarkOf(hero);
   const passive = innate ?? mark;
   if (!passive) return null;
@@ -333,7 +333,7 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
                         <TypeBadge key={t} type={t} />
                       ))}
                     </div>
-                    <ScoutedPassive hero={hero} />
+                    <ScoutedPassive hero={hero} entry={entry} />
                   </button>
                 );
               })}

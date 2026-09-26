@@ -85,7 +85,7 @@ export function HeroStageOverlay({ hero, entry, relicIds, scale, unowned = false
             <StageSheet baseStats={hero.baseStats} grants={grants} scale={scale} burden={heroHasBurden(hero)} />
           </div>
         </StageDais>
-        <StageInnate hero={hero} onOpen={setPopupPassive} />
+        <StageInnate hero={hero} entry={entry} onOpen={setPopupPassive} />
         <StageKit moveIds={entry.unlockedMoveIds} caster={caster} onPick={setPopupMove} />
       </div>
 

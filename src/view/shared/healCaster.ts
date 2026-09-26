@@ -10,6 +10,7 @@ import { entryStatModifiers, entryPassiveCounts } from '../../run/entryStats';
 import { relicTeamStatModifiers } from '../../run/relics';
 import { relicTeamPassiveGrants } from '../../run/passives';
 import { rosterEntryTypes } from '../../run/progression';
+import { innatePassiveIdsFor } from '../../run/innate';
 import { equipment } from '../../data/equipment';
 import { passives } from '../../data/passives';
 import { relics } from '../../data/relics';
@@ -18,7 +19,7 @@ import { relics } from '../../data/relics';
 export function healCasterForEntry(hero: HeroDefinition, entry: RosterEntry, relicIds: readonly string[] = []): HealCaster {
   const teamStatModifiers = relicTeamStatModifiers(relicIds, relics);
   const teamPassiveGrants = relicTeamPassiveGrants(relicIds, relics);
-  const passiveCounts = entryPassiveCounts(entry, equipment, teamPassiveGrants, hero.passiveIds);
+  const passiveCounts = entryPassiveCounts(entry, equipment, teamPassiveGrants, innatePassiveIdsFor(hero, entry));
   const grants = entryStatModifiers(entry, equipment, passives, passiveCounts, teamStatModifiers);
   const stats = Object.fromEntries(
     STAT_ORDER.map((stat) => [stat, hero.baseStats[stat] + (grants[stat] ?? 0)])

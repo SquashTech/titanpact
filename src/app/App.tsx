@@ -428,24 +428,18 @@ function screenTipIds(screen: Screen, run: RunState): readonly ScreenTipId[] {
       return ['levelUp'];
     case 'itemWho':
       return ['item'];
-    case 'companion':
-      return screen.beat.kind === 'join' ? ['companion'] : [];
     case 'fallen':
       return ['fallen'];
     case 'reward':
       return screen.nodeType === 'equipmentReward' ? ['equipmentReward'] : [];
     case 'mentorNode':
       return []; // the screen's own line says it (2026-09-24, per user direction)
-    case 'tutorNode':
-      return ['tutor'];
     case 'boonNode':
       return ['boon'];
     case 'manaWell':
       return ['manaWell'];
     case 'forge':
       return []; // the screen's own line says it (2026-09-24, per user direction)
-    case 'leyLine':
-      return ['leyLine'];
     case 'rest':
       return ['rest'];
     case 'event':
@@ -453,7 +447,8 @@ function screenTipIds(screen: Screen, run: RunState): readonly ScreenTipId[] {
     case 'scrolls':
       // A bought Scroll is the Guild Hall's, whose own tip has already named it.
       if (screen.bought) return [];
-      return [screen.plan.kind === 'scribe' ? 'scribe' : 'scrollCache'];
+      // The Cache carries none: the Scribe's tip has already said how Scrolls work.
+      return screen.plan.kind === 'scribe' ? ['scribe'] : [];
     case 'shop':
       return ['shop'];
     case 'recruit':
@@ -462,8 +457,6 @@ function screenTipIds(screen: Screen, run: RunState): readonly ScreenTipId[] {
       return ['banner'];
     case 'crucible':
       return ['crucible'];
-    case 'pactSeal':
-      return ['seal'];
     case 'locationChoice':
       return ['locationChoice'];
     default:

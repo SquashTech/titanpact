@@ -189,7 +189,7 @@ export interface Aggregate {
   movesByAct: Record<string, MoveAgg>;
   /** The player side's ledger keyed `heroId:moveId` — what each hero actually does with its kit. */
   movesByHero: Record<string, MoveAgg>;
-  /** Signatures by hero, and the count of tenth pips landed per run, histogram (index = signatures that run). */
+  /** Signatures by hero, and the count reached per run, histogram (index = signatures that run). */
   signatures: Record<string, SignatureAgg>;
   signaturesPerRun: number[];
   /** Rolled move offers by move id (schedule, Mentor, Tutor, signature): on the table, and taken. */
@@ -389,7 +389,8 @@ function mergeCounts<T>(into: Record<string, T>, from: Record<string, T>, blank:
 }
 
 function mergeArray(into: number[], from: readonly number[]): void {
-  for (let i = 0; i < from.length; i++) into[i] = (into[i] ?? 0) + from[i];
+  // `?? 0` on both sides: a histogram with leading holes (no run at 0..4 signatures) must not add undefined.
+  for (let i = 0; i < from.length; i++) into[i] = (into[i] ?? 0) + (from[i] ?? 0);
 }
 
 /** Field-wise sum; every leaf in Aggregate is additive by construction. */

@@ -24,7 +24,8 @@ import { ResourceGlyph } from '../shared/RunGlyph';
 import { CompanionScreen } from './CompanionScreen';
 import { EvolutionScreen } from './EvolutionScreen';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
-import { MoveOfferOverlay, SignatureBox } from './MoveOfferOverlay';
+import { MoveOfferOverlay } from './MoveOfferOverlay';
+import { MasteredInnateOverlay } from './MasteredInnateOverlay';
 import { RosterPeek } from './RosterPeek';
 import { useMasteryFlow } from './masteryFlow';
 
@@ -85,7 +86,7 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
     setRemaining((n) => n - 1);
     if (plan.kind === 'scribe') setPickedIds((ids) => [...ids, entry.rosterId]);
     // What the pip opened is raised over the LANDED run, not the one this render closed over.
-    flow.raise(entry.rosterId, next);
+    flow.raise(entry.rosterId, next, entry.mastery);
   }
 
   const grownEntry = flow.grown ? (run.roster.find((r) => r.rosterId === flow.grown!.rosterId) ?? null) : null;
@@ -107,15 +108,15 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
   }
 
   const overflowEntry = flow.overflow ? (run.roster.find((r) => r.rosterId === flow.overflow!.rosterId) ?? null) : null;
-  const signatureEntry = flow.signature ? (run.roster.find((r) => r.rosterId === flow.signature!.rosterId) ?? null) : null;
+  const masteredEntry = flow.mastered ? (run.roster.find((r) => r.rosterId === flow.mastered!.rosterId) ?? null) : null;
 
   const title = 'Mastery Scrolls';
   const eyebrow = plan.kind === 'scribe' ? 'The Scribe' : bought ? 'Off the shelf' : 'Scroll Cache';
   const readout = !anyEligible
     ? `Every hero is already at ${MASTERY_CAP} Mastery — there is nobody left to teach.`
     : plan.kind === 'scribe'
-      ? `${SCRIBE_PIPS_EACH} Mastery each for ${remaining === 1 ? 'one more' : `${remaining}`} of you. ${MASTERY_EVOLUTION} Evolves a hero; ${MASTERY_CAP} masters a signature. Hold to review a sheet.`
-      : `${remaining} ${remaining === 1 ? 'Scroll' : 'Scrolls'} left — one Mastery each, to whoever you tap. ${MASTERY_EVOLUTION} Evolves a hero; ${MASTERY_CAP} masters a signature.`;
+      ? `${SCRIBE_PIPS_EACH} Mastery each for ${remaining === 1 ? 'one more' : `${remaining}`} of you. ${MASTERY_EVOLUTION} Evolves a hero; ${MASTERY_CAP} masters its innate. Hold to review a sheet.`
+      : `${remaining} ${remaining === 1 ? 'Scroll' : 'Scrolls'} left — one Mastery each, to whoever you tap. ${MASTERY_EVOLUTION} Evolves a hero; ${MASTERY_CAP} masters its innate.`;
 
   return (
     <div className="node-screen shrine-screen scroll-screen" style={{ '--node-rgb': NODE_TINT_PARCHMENT } as CSSProperties}>
@@ -134,9 +135,9 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
           const open = !finished && canTakeMastery(entry) && !picked;
           const room = masteryRoom(entry, pipsPerTap);
           // The fifth pip is a hero's Evolution and the companion's first step; the tenth is a
-          // hero's signature (when one is authored) and the companion's second step.
+          // hero's innate mastered (when an upgrade is authored) and the companion's second step.
           const evolves = crossesMastery(entry, pipsPerTap, MASTERY_EVOLUTION);
-          const masters = crossesMastery(entry, pipsPerTap, MASTERY_CAP) && (isCompanion(entry) || !!hero.signatureMoveId);
+          const masters = crossesMastery(entry, pipsPerTap, MASTERY_CAP) && (isCompanion(entry) || !!hero.masteredPassiveIds?.length);
           // The count is what the hero HOLDS — the pips draw the gain in the node's colour, and
           // printing the post-tap total here read as if the hero already had it.
           const held = `${entry.mastery}/${MASTERY_CAP}`;
@@ -145,7 +146,7 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
             : picked
               ? `${held} ✓`
               : evolves || masters
-                ? `${held} · ${isCompanion(entry) ? 'Grows!' : evolves ? 'Evolves!' : 'Signature!'}`
+                ? `${held} · ${isCompanion(entry) ? 'Grows!' : evolves ? 'Evolves!' : 'Masters!'}`
                 : `${held} · +${room}`;
           return (
             <HeroPickCard
@@ -171,9 +172,7 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
         </button>
       )}
 
-      {flow.signature && signatureEntry && (
-        <SignatureBox run={run} entry={signatureEntry} offer={flow.signature} onResolve={flow.resolveSignature} onClose={flow.closeSignature} />
-      )}
+      {flow.mastered && masteredEntry && <MasteredInnateOverlay entry={masteredEntry} onClose={flow.closeMastered} />}
 
       {flow.overflow && overflowEntry && (
         <MoveOfferOverlay

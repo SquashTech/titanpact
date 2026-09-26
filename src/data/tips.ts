@@ -47,12 +47,7 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
     'HP carries over from fight to fight within an act. Mana refills at the start of every fight.',
     'A knocked-out hero sits out until healed: at a Rest, the Guild Hall, with a Revive, or when the act ends.'
   ),
-  fork: tip(
-    'fork',
-    'Elite or Skirmish',
-    'Both fights are against other heroes you can recruit afterwards. The tile shows the types they field.',
-    'The Elite is a level higher, always drops an item, and pays more XP.'
-  ),
+  fork: tip('fork', 'Elite or Skirmish', 'The Elite is a level higher, always drops an item, and pays more XP.'),
   squad: tip(
     'squad',
     'Pick Your Leads',
@@ -71,42 +66,21 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
     'Each hero holds three. Giving a hero a second item of the same kind merges them into a stronger one.',
     'Or sell it for gold if nobody wants it.'
   ),
-  companion: tip(
-    'companion',
-    'Companion',
-    'A Titanspawn you beat has joined you. It fights and levels like any hero.',
-    "If it's knocked out, it's gone for the rest of the run."
-  ),
   fallen: tip(
     'fallen',
     'Permadeath',
     'Heroes knocked out in that fight are lost, along with their items — unless you spend a Revive on them now.'
   ),
   equipmentReward: tip('equipmentReward', 'Equipment', 'Choose one of three items. Hold an item to read it in full.'),
-  tutor: tip(
-    'tutor',
-    'Tutor',
-    "Choose a hero. It learns a random Late-tier move from its own move list. If its moves are full, replace one or pass."
-  ),
   boon: tip('boon', 'Boon', 'Choose one of three passives and give it to a hero. It keeps it for the rest of the run.'),
   manaWell: tip('manaWell', 'Mana Well', 'Choose a hero to gain +30 max Mana for the rest of the run.'),
-  leyLine: tip(
-    'leyLine',
-    'Ley Line',
-    "Choose a hero to gain +10 Elemental Force for the rest of the run. Its moves of its own primary type hit harder."
-  ),
   rest: tip('rest', 'Rest', 'Every hero is fully healed, and knocked-out heroes get back up.'),
   event: tip('event', 'Event', 'Something unusual. Read what it offers before you choose.'),
   scribe: tip(
     'scribe',
     'Mastery Scrolls',
     'Choose two heroes. Each gets 2 Mastery Scrolls.',
-    'At 5 Scrolls a hero Evolves into a new form. At 10 it learns its signature move.'
-  ),
-  scrollCache: tip(
-    'scrollCache',
-    'Scroll Cache',
-    'Split 3 Mastery Scrolls between your heroes however you like. At 5 a hero Evolves; at 10 it learns its signature move.'
+    'At 5 Scrolls a hero Evolves into a new form. At 10 its innate passive is Mastered: a much stronger version of it.'
   ),
   shop: tip(
     'shop',
@@ -126,12 +100,6 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
     'Crucible',
     'Choose one hero to take a Class: a new move or passive. One per hero, and it is permanent.'
   ),
-  seal: tip(
-    'seal',
-    'Seal Broken',
-    'One seal down. Break all five, then face the finale.',
-    'Your heroes are fully healed between acts.'
-  ),
   locationChoice: tip(
     'locationChoice',
     'Next Act',
@@ -139,16 +107,38 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
   ),
 };
 
-/** Checked at the top of every command phase; the first unseen one whose conditions all hold is shown. */
+/**
+ * Checked at the top of every command phase; the first unseen one whose conditions all hold is
+ * shown. Each page names ONE thing on screen, and TipOverlay lights it (src/view/run/tipStaging.ts
+ * says which) — so a page says "the number beside each enemy's name", never "the number".
+ */
 export const FIGHT_TIPS: readonly FightTip[] = [
   {
     id: 'fight.basics',
     title: 'Combat',
     when: {},
     pages: [
-      'Each round, choose a move and a target for both heroes on the field. Then the round plays out, fastest first.',
-      'Moves cost Mana. Everyone regains a little each round.',
-      'Tap a fighter to read it. The small figures across the top show the turn order, left to right. Hold a move to read it before you choose.',
+      'Each round, choose a move for each of your two heroes on the field, then its target. The round plays out in the order the small figures across the top show, left to right.',
+      "The number in the gem at the left of each move is its Mana cost. A hero's MP bar is what it has to spend, and it refills a little every round.",
+      'Tap a fighter to read it. Hold a move to read it before you choose.',
+    ],
+  },
+  {
+    id: 'fight.skirmish',
+    title: 'Skirmish',
+    when: { nodeTypes: ['skirmish', 'elite'] },
+    pages: [
+      'Skirmishes are fights against other heroes attempting to stop the Titan. If you win, you can use a Contract to recruit one to your party.',
+    ],
+  },
+  {
+    id: 'fight.switching',
+    title: 'Switching',
+    when: { benchHeld: true },
+    pages: [
+      "Switch swaps a hero on the field for one waiting on your bench. The swap happens before anyone moves, and uses that hero's turn.",
+      "Switch out a hero that is hurt, out of Mana, or weak to the enemy's types. Benched heroes regain Mana every round, so it comes back ready.",
+      "Once half your side has been knocked out, you can't switch anymore.",
     ],
   },
   {
@@ -156,7 +146,8 @@ export const FIGHT_TIPS: readonly FightTip[] = [
     title: 'Types',
     when: { minRound: 2 },
     pages: [
-      "The number on a move is how well it hits the target's type: above 1 is strong, below 1 is resisted. A move matching its user's own type deals 25% more.",
+      "The number beside each enemy's name on a move is how hard it hits that enemy's type: above 1× is strong, below 1× is resisted.",
+      "The icon before a move's name is its type. A move that shares a type with the hero using it deals 25% more.",
       '[physical] Physical moves use Attack against Defense. [magical] Magical moves use Intelligence against Wisdom.',
     ],
   },
@@ -167,31 +158,29 @@ export const FIGHT_TIPS: readonly FightTip[] = [
     pages: ["Out of Mana. Rest skips the hero's turn but refills all of its Mana."],
   },
   {
-    id: 'fight.guardian',
-    title: 'Guardian',
-    when: { nodeTypes: ['boss'] },
-    pages: ['The Guardian waits on the bench. It steps in as soon as one of its escorts falls.'],
-  },
-  {
     id: 'fight.ancient',
     title: 'Ancient',
     when: { enemyTypeOnField: 'Ancient' },
-    pages: ['Ancient resists every type: damage against it is halved. A move strong against its other type only breaks even.'],
+    pages: [
+      'Every Guardian is Ancient. Ancient resists every type: every hit on it is halved.',
+      "A move strong against its other type only breaks even (1×); anything else hits it for half. The number beside its name on each move shows which.",
+      'Ancient moves are resisted by nothing: every hit lands at full strength on every type.',
+    ],
   },
   {
-    id: 'fight.bench',
-    title: 'Bench',
-    when: { benchHeld: true, minRound: 2 },
+    id: 'fight.pactClock',
+    title: 'One Last Thing',
+    when: { nodeTypes: ['boss'] },
     pages: [
-      'Benched heroes regain Mana every round. Switching a hero out uses its turn.',
-      "Once half your side has been knocked out, you can't switch anymore.",
+      'Fights cannot last forever. From round 30 the Pact Clock strikes: everyone on the field loses a growing share of max HP every round.',
+      'The side that is ahead still wins. Only a stall loses — so press the Guardian, and end it.',
     ],
   },
   {
     id: 'fight.bag',
     title: 'Bag',
     when: { minRound: 3 },
-    pages: ["The Bag holds your potions. Drinking one doesn't cost a turn."],
+    pages: ["The Bag holds your potions. Drinking one doesn't use a turn."],
   },
   {
     id: 'fight.knockout',
@@ -200,21 +189,9 @@ export const FIGHT_TIPS: readonly FightTip[] = [
     pages: ['A knocked-out hero stays down after the fight, until a Rest, the Guild Hall, a Revive, or the end of the act.'],
   },
   {
-    id: 'fight.lockIn',
-    title: 'Locked In',
-    when: { lockedIn: true },
-    pages: ["Half your side is down. You can no longer switch — only replace a fallen hero."],
-  },
-  {
     id: 'fight.field',
     title: 'Field Effect',
     when: { fieldEffectActive: true },
-    pages: ['A Field Effect changes the rules for everyone for 5 rounds. Tap it to read it.'],
-  },
-  {
-    id: 'fight.pactClock',
-    title: 'Pact Clock',
-    when: { pactClockNear: true },
-    pages: ['This fight is running long. From round 30, everyone on the field loses a growing share of max HP each round. End it.'],
+    pages: ['A Field Effect is up. It changes the rules for everyone until its pips run out; tap it to read it.'],
   },
 ];

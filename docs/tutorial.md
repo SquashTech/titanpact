@@ -61,15 +61,13 @@ first meeting with two things shows the second on its next visit.
 | `squad` | lead pick — tap two heroes (skipped while the roster is two) |
 | `levelUp` | the level-up report |
 | `item` | the item who-screen (sockets, merge, sell) |
-| `companion` | the companion's join beat |
 | `fallen` | Permadeath's Fallen beat (Ascension 1) |
 | `equipmentReward` | the equipment cache |
-| `tutor`, `boon`, `manaWell`, `leyLine`, `rest`, `event` | that node's screen (the Mentor and the Forge carry none — each screen's own line says it) |
-| `scribe`, `scrollCache` | the Scribe's and the Cache's scroll screens (a bought Scroll gets none — the Guild Hall's tip named it) |
+| `boon`, `manaWell`, `rest`, `event` | that node's screen (the Mentor, Tutor, Forge and Ley Line carry none — each screen's own line says it; nor does the companion's join beat) |
+| `scribe` | the Scribe's scroll screen (the Cache and a bought Scroll get none — the Scribe's and the Guild Hall's tips named them) |
 | `shop` | the Guild Hall |
 | `recruit` | the Recruit Contract claim (roster cap, termination) |
 | `banner`, `crucible` | the Guardian's two beats |
-| `seal` | the Pact Seal between acts |
 | `locationChoice` | the act-2+ location pick |
 
 None fires over a fight (FightScreen owns those) or over a cinematic (the cold open, the Herald,
@@ -82,17 +80,27 @@ Checked at the top of every command phase — never between two orders — again
 
 | Id | When |
 | --- | --- |
-| `fight.basics` | the first command phase of the first fight: orders, Mana, reading fighters, turn order, holding a move |
-| `fight.types` | round 2+: the multiplier on a move, STAB, physical vs magical (with the move-kind glyphs inline) |
+| `fight.basics` | the first command phase of the first fight: orders and turn order, the Mana gem on each move and the MP bar, reading fighters and moves |
+| `fight.skirmish` | the first Skirmish or Elite: other heroes, and a Contract recruits one after a win |
+| `fight.switching` | the first fight with a bench: what Switch does and when to use it, bench Mana, lock-in |
+| `fight.types` | round 2+: the multiplier beside each enemy's name, the type icon and STAB, physical vs magical (with the move-kind glyphs inline) |
 | `fight.rest` | a player hero can afford nothing |
-| `fight.guardian` | a Guardian fight: the champion waits on the bench |
-| `fight.ancient` | an Ancient on the field |
-| `fight.bench` | round 2+ with someone benched: bench Mana, switching, lock-in |
+| `fight.ancient` | an Ancient on the field (every Guardian): it resists everything, what breaks even, Ancient moves are never resisted |
+| `fight.pactClock` | "One Last Thing", the first Guardian fight: the Pact Clock from round 30, and that only a stall loses |
 | `fight.bag` | round 3+: potions are a free action |
 | `fight.knockout` | the first player KO: it persists until a Rest, the mend, a Revive, or the act's end |
-| `fight.lockIn` | the player side is locked in |
 | `fight.field` | a Field Effect is up |
-| `fight.pactClock` | the Pact Clock's warning starts |
+
+The Guardian's own tip and the Locked In tip are gone (2026-09-26, per user direction): the
+Ancient tip is the Guardian's, and lock-in is the Switching tip's last page.
+
+### Staging
+
+Every tip that names something on screen points at it (`src/view/run/tipStaging.ts`, per page):
+the named elements are cut out of a darker scrim and ringed, and the card moves to whichever band
+— middle, top, bottom — hides least of them. A selector that matches nothing lights nothing and
+the card sits in the middle. So a page names ONE specific thing ("the number beside each enemy's
+name", "the gem at the left of each move"), never a vague one ("the number on a move").
 
 Fights outside a run (Quick Battle, the sandbox) show none: they pass no `tips` prop.
 

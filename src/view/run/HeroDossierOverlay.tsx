@@ -6,8 +6,8 @@ import type { HeroDefinition, MoveTier, StatKey, TypeId } from '../../engine/con
 import { gradesFor } from '../../run/growth';
 import { pathTypes, type EvolutionPath } from '../../run/progression';
 import { pathTint } from '../shared/pathTint';
-import { scheduleFor } from '../../run/progression';
-import { MASTERY_EVOLUTION, MASTERY_SIGNATURE } from '../../run/mastery';
+import { scheduleFor, signatureLevelFor } from '../../run/progression';
+import { MASTERY_EVOLUTION, MASTERY_INNATE } from '../../run/mastery';
 import type { LevelSchedule } from '../../engine/content';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -18,7 +18,7 @@ import { StatBars, StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { TabStrip, type TabSpec } from '../shared/TabStrip';
 import { TypeBadge } from '../shared/TypeBadge';
 import { isTitanspawn } from '../../data/titanspawn';
-import { innatePassiveOf, titansMarkOf } from '../../run/innate';
+import { innatePassiveOf, masteredInnateOf, titansMarkOf } from '../../run/innate';
 import { TypeMatchups } from '../shared/TypeMatchups';
 import { EvolutionStar } from '../shared/EvolutionStar';
 
@@ -178,6 +178,7 @@ export function HeroDossierOverlay({ hero, onClose }: Props) {
   const byTier = TIER_ORDER.map((tier) => ({ tier, moveIds: pool.filter((id) => tierOf(id) === tier) }));
   const nodes = progressionTable.evolutions[hero.id] ?? [];
   const innate = innatePassiveOf(hero);
+  const mastered = masteredInnateOf(hero);
   const mark = innate ? null : titansMarkOf(hero);
   // Base stats, so every move card reads the hero as authored (a graft path's STAB is shown on its own card).
   const caster = { wisdom: hero.baseStats.wisdom, types: hero.types, stats: hero.baseStats };
@@ -232,6 +233,7 @@ export function HeroDossierOverlay({ hero, onClose }: Props) {
                   the bars: it is what the hero DOES before it has evolved (docs/innate-passives.md §6). */}
               <TypeMatchups types={hero.types} />
               {innate && <PassiveReadout passive={innate} source="Innate" />}
+              {mastered && <PassiveReadout passive={mastered} source={`Mastery ${MASTERY_INNATE}`} />}
               {mark && <PassiveReadout passive={mark} source="Titan's Mark" />}
               <StatBars baseStats={hero.baseStats} grades={gradesFor(hero)} />
             </>
@@ -255,7 +257,7 @@ export function HeroDossierOverlay({ hero, onClose }: Props) {
               {hero.signatureMoveId && (
                 <>
                   {/* The one move no pool ever offers: the line a player reads before drafting. */}
-                  <div className="tab-subhead">Signature — Mastery {MASTERY_SIGNATURE}</div>
+                  <div className="tab-subhead">Signature — Lv {signatureLevelFor(hero) ?? '—'}</div>
                   <MoveList moveIds={[hero.signatureMoveId]} caster={caster} onInspect={setPopupMoveId} />
                 </>
               )}

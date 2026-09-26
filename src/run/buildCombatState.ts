@@ -14,6 +14,7 @@ import type { RosterEntry } from './state';
 import type { Squad } from './squad';
 import type { EquipmentDefinition } from './equipment';
 import { entryPassiveCounts, entryStatModifiers } from './entryStats';
+import { innatePassiveIdsFor } from './innate';
 import { enduranceOf, switchLockOf, toPassiveInstances } from './passives';
 import { equipmentStatusGrants, mergeStatusGrants, toStatusInstances } from './statusGrants';
 
@@ -44,7 +45,7 @@ function placeEntry(
 ): Combatant {
   const hero = heroes[entry.heroId];
   // Both halves come from entryStats.ts, shared with the hero sheet — never recompute inline.
-  const passiveCounts = entryPassiveCounts(entry, equipmentLookup, teamPassiveGrants, hero.passiveIds);
+  const passiveCounts = entryPassiveCounts(entry, equipmentLookup, teamPassiveGrants, innatePassiveIdsFor(hero, entry));
   const passives = toPassiveInstances(passiveCounts);
   const baselineStatModifiers = entryStatModifiers(entry, equipmentLookup, passiveDefs, passiveCounts, teamStatModifiers);
   const baselineStatusMagnitudes = mergeStatusGrants(equipmentStatusGrants(entry.equipment, equipmentLookup), entry.bonusStatusGrants, teamStatusGrants);

@@ -1,9 +1,10 @@
-import { useLayoutEffect, useState } from 'react';
+import { useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { playSfx } from '../../audio/sfx';
 import { parseTipText, type Tip, type TipIconToken } from '../../run/tips';
 import { MoveKindGlyph } from '../shared/statIcons';
 import { canvasPoint, overlayHost } from '../shared/overlayHost';
+import { pageSpotlight, TIP_STAGING } from './tipStaging';
 
 /**
  * Which badge class an inline token wears — the move grid's own (`MoveKindBadge`), so the mark in
@@ -34,24 +35,6 @@ function TipText({ text }: { text: string }) {
   );
 }
 
-/**
- * How a tip sits over its screen, by tip id — presentation, so it lives here rather than in the
- * content. `spotlight` is a selector for the thing the tip is about: it stays lit and outlined
- * while the rest of the screen dims harder, so the card points at it rather than only naming it.
- * `placement: 'low'` drops the card toward the bottom, for a screen whose subject is its middle.
- */
-interface TipStaging {
-  spotlight?: string;
-  placement?: 'low';
-}
-
-const TIP_STAGING: Readonly<Record<string, TipStaging>> = {
-  // The four starters along the bottom are the whole of the draft's first verb.
-  draft: { spotlight: '.draft-rail' },
-  // The act's arrival is the place itself — keep the card off it.
-  run: { placement: 'low' },
-};
-
 interface Hole {
   left: number;
   top: number;
@@ -59,25 +42,78 @@ interface Hole {
   height: number;
 }
 
-/** The spotlit element's box in canvas px (the overlay lives inside the scaled shell), padded. */
-function useSpotlight(selector: string | undefined): Hole | null {
-  const [hole, setHole] = useState<Hole | null>(null);
-  useLayoutEffect(() => {
-    if (!selector) return;
-    function measure() {
-      const el = document.querySelector(selector!);
-      if (!el) return setHole(null);
+/** Past this, a selector is lighting a crowd, not a thing — the first few say it as well. */
+const MAX_HOLES = 16;
+const HOLE_PAD = 5;
+
+/** Every element the page names, as padded boxes in canvas px (the overlay lives inside the scaled shell). */
+function measureHoles(selectors: readonly string[]): Hole[] {
+  const holes: Hole[] = [];
+  for (const selector of selectors) {
+    for (const el of Array.from(document.querySelectorAll(selector))) {
+      if (holes.length >= MAX_HOLES) return holes;
       const rect = el.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) continue;
       const a = canvasPoint(rect.left, rect.top);
       const b = canvasPoint(rect.right, rect.bottom);
-      const pad = 6;
-      setHole({ left: a.x - pad, top: a.y - pad, width: b.x - a.x + pad * 2, height: b.y - a.y + pad * 2 });
+      holes.push({ left: a.x - HOLE_PAD, top: a.y - HOLE_PAD, width: b.x - a.x + HOLE_PAD * 2, height: b.y - a.y + HOLE_PAD * 2 });
     }
+  }
+  return holes;
+}
+
+/**
+ * Re-measured on every page, and again a frame later and on resize: a fight's move rows and
+ * nameplates settle a beat after the tip mounts, and a spotlight a few px off reads as a bug.
+ */
+function useHoles(selectors: readonly string[] | null): Hole[] {
+  const [holes, setHoles] = useState<Hole[]>([]);
+  const key = selectors ? selectors.join('|') : '';
+  useLayoutEffect(() => {
+    if (!selectors) {
+      setHoles([]);
+      return;
+    }
+    const measure = () => setHoles(measureHoles(selectors));
     measure();
+    const frame = requestAnimationFrame(measure);
+    const late = window.setTimeout(measure, 250);
     window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
-  }, [selector]);
-  return hole;
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(late);
+      window.removeEventListener('resize', measure);
+    };
+    // Keyed on the joined selectors, so a fresh array literal with the same contents is no change.
+  }, [key]);
+  return holes;
+}
+
+type Placement = 'top' | 'center' | 'bottom';
+
+/** Roughly the card's height, for choosing where it covers least; the choice only needs to be about right. */
+const BOX_ESTIMATE = 140;
+const EDGE = 16;
+
+/** The band that hides least of what the page lit — the middle first, when it is clear or nothing is lit. */
+function choosePlacement(holes: readonly Hole[], height: number): Placement {
+  if (holes.length === 0 || height <= 0) return 'center';
+  const bands: Record<Placement, [number, number]> = {
+    center: [height / 2 - BOX_ESTIMATE / 2, height / 2 + BOX_ESTIMATE / 2],
+    top: [EDGE, EDGE + BOX_ESTIMATE],
+    bottom: [height - EDGE - BOX_ESTIMATE, height - EDGE],
+  };
+  let best: Placement = 'center';
+  let bestCover = Infinity;
+  for (const placement of ['center', 'top', 'bottom'] as const) {
+    const [y0, y1] = bands[placement];
+    const cover = holes.reduce((sum, h) => sum + Math.max(0, Math.min(y1, h.top + h.height) - Math.max(y0, h.top)) * h.width, 0);
+    if (cover < bestCover) {
+      best = placement;
+      bestCover = cover;
+    }
+  }
+  return best;
 }
 
 interface Props {
@@ -96,13 +132,19 @@ interface Props {
  */
 export function TipOverlay({ tip, onDone }: Props) {
   const [step, setStep] = useState(0);
-  const staging = TIP_STAGING[tip.id] ?? {};
-  const hole = useSpotlight(staging.spotlight);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const maskId = `tip-mask-${useId().replace(/:/g, '')}`;
+  const staging = TIP_STAGING[tip.id];
 
   // Clamped rather than trusted: taps land faster than React commits. `onDone` is idempotent at
   // every caller, so the extra taps at the end are harmless once the page itself is pinned.
   const index = Math.min(step, tip.pages.length - 1);
   const last = index >= tip.pages.length - 1;
+
+  const holes = useHoles(pageSpotlight(staging, index));
+  const lit = holes.length > 0;
+  const placement: Placement | 'low' =
+    staging?.placement === 'low' ? 'low' : choosePlacement(holes, overlayRef.current?.clientHeight ?? 0);
 
   function advance() {
     if (last) {
@@ -116,12 +158,29 @@ export function TipOverlay({ tip, onDone }: Props) {
 
   return createPortal(
     <div
-      className={`tip-overlay${hole ? ' has-spotlight' : ''}${staging.placement === 'low' ? ' is-low' : ''}`}
+      ref={overlayRef}
+      className={`tip-overlay${lit ? ' has-spotlight' : ''} is-${placement}`}
       onClick={advance}
       role="dialog"
       aria-live="polite"
     >
-      {hole && <div className="tip-spotlight" style={{ left: hole.left, top: hole.top, width: hole.width, height: hole.height }} />}
+      {/* One scrim with a hole cut for each thing the page names, then a ring on each hole. */}
+      {lit && (
+        <svg className="tip-scrim" aria-hidden="true">
+          <defs>
+            <mask id={maskId}>
+              <rect x="0" y="0" width="100%" height="100%" fill="white" />
+              {holes.map((h, i) => (
+                <rect key={i} x={h.left} y={h.top} width={h.width} height={h.height} rx="9" fill="black" />
+              ))}
+            </mask>
+          </defs>
+          <rect x="0" y="0" width="100%" height="100%" className="tip-scrim-fill" mask={`url(#${maskId})`} />
+        </svg>
+      )}
+      {holes.map((h, i) => (
+        <div key={`${index}-${i}`} className="tip-spotlight" style={{ left: h.left, top: h.top, width: h.width, height: h.height }} />
+      ))}
       <div className="tip-box">
         <div className="tip-title">{tip.title}</div>
 
