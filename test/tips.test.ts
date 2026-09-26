@@ -93,6 +93,8 @@ test('tips: each fight tip waits for its own moment', () => {
   const past = ['fight.basics', 'fight.types', 'fight.bag'];
   assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ round: 4, anyOutOfMana: true }), past)?.id, 'fight.rest');
   assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ nodeType: 'boss' }), past)?.id, 'fight.guardian');
+  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ nodeType: 'skirmish' }), seenBasics)?.id, 'fight.skirmish');
+  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ nodeType: 'elite' }), seenBasics)?.id, 'fight.skirmish');
   assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ enemyTypesOnField: ['Beast', 'Ancient'] }), past)?.id, 'fight.ancient');
   assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ benchSize: 1 }), past), null, 'the bench waits for round 2');
   assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ round: 2, benchSize: 1 }), past)?.id, 'fight.bench');

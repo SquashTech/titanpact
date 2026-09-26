@@ -71,30 +71,14 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
     'Each hero holds three. Giving a hero a second item of the same kind merges them into a stronger one.',
     'Or sell it for gold if nobody wants it.'
   ),
-  companion: tip(
-    'companion',
-    'Companion',
-    'A Titanspawn you beat has joined you. It fights and levels like any hero.',
-    "If it's knocked out, it's gone for the rest of the run."
-  ),
   fallen: tip(
     'fallen',
     'Permadeath',
     'Heroes knocked out in that fight are lost, along with their items — unless you spend a Revive on them now.'
   ),
   equipmentReward: tip('equipmentReward', 'Equipment', 'Choose one of three items. Hold an item to read it in full.'),
-  tutor: tip(
-    'tutor',
-    'Tutor',
-    "Choose a hero. It learns a random Late-tier move from its own move list. If its moves are full, replace one or pass."
-  ),
   boon: tip('boon', 'Boon', 'Choose one of three passives and give it to a hero. It keeps it for the rest of the run.'),
   manaWell: tip('manaWell', 'Mana Well', 'Choose a hero to gain +30 max Mana for the rest of the run.'),
-  leyLine: tip(
-    'leyLine',
-    'Ley Line',
-    "Choose a hero to gain +10 Elemental Force for the rest of the run. Its moves of its own primary type hit harder."
-  ),
   rest: tip('rest', 'Rest', 'Every hero is fully healed, and knocked-out heroes get back up.'),
   event: tip('event', 'Event', 'Something unusual. Read what it offers before you choose.'),
   scribe: tip(
@@ -102,11 +86,6 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
     'Mastery Scrolls',
     'Choose two heroes. Each gets 2 Mastery Scrolls.',
     'At 5 Scrolls a hero Evolves into a new form. At 10 its innate passive is Mastered: a much stronger version of it.'
-  ),
-  scrollCache: tip(
-    'scrollCache',
-    'Scroll Cache',
-    'Split 3 Mastery Scrolls between your heroes however you like. At 5 a hero Evolves; at 10 its innate passive is Mastered.'
   ),
   shop: tip(
     'shop',
@@ -126,12 +105,6 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
     'Crucible',
     'Choose one hero to take a Class: a new move or passive. One per hero, and it is permanent.'
   ),
-  seal: tip(
-    'seal',
-    'Seal Broken',
-    'One seal down. Break all five, then face the finale.',
-    'Your heroes are fully healed between acts.'
-  ),
   locationChoice: tip(
     'locationChoice',
     'Next Act',
@@ -149,6 +122,14 @@ export const FIGHT_TIPS: readonly FightTip[] = [
       'Each round, choose a move and a target for both heroes on the field. Then the round plays out, fastest first.',
       'Moves cost Mana. Everyone regains a little each round.',
       'Tap a fighter to read it. The small figures across the top show the turn order, left to right. Hold a move to read it before you choose.',
+    ],
+  },
+  {
+    id: 'fight.skirmish',
+    title: 'Skirmish',
+    when: { nodeTypes: ['skirmish', 'elite'] },
+    pages: [
+      'Skirmishes are fights against other heroes attempting to stop the Titan. If you win, you can use a Contract to recruit one to your party.',
     ],
   },
   {

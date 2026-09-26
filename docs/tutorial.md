@@ -61,15 +61,13 @@ first meeting with two things shows the second on its next visit.
 | `squad` | lead pick — tap two heroes (skipped while the roster is two) |
 | `levelUp` | the level-up report |
 | `item` | the item who-screen (sockets, merge, sell) |
-| `companion` | the companion's join beat |
 | `fallen` | Permadeath's Fallen beat (Ascension 1) |
 | `equipmentReward` | the equipment cache |
-| `tutor`, `boon`, `manaWell`, `leyLine`, `rest`, `event` | that node's screen (the Mentor and the Forge carry none — each screen's own line says it) |
-| `scribe`, `scrollCache` | the Scribe's and the Cache's scroll screens (a bought Scroll gets none — the Guild Hall's tip named it) |
+| `boon`, `manaWell`, `rest`, `event` | that node's screen (the Mentor, Tutor, Forge and Ley Line carry none — each screen's own line says it; nor does the companion's join beat) |
+| `scribe` | the Scribe's scroll screen (the Cache and a bought Scroll get none — the Scribe's and the Guild Hall's tips named them) |
 | `shop` | the Guild Hall |
 | `recruit` | the Recruit Contract claim (roster cap, termination) |
 | `banner`, `crucible` | the Guardian's two beats |
-| `seal` | the Pact Seal between acts |
 | `locationChoice` | the act-2+ location pick |
 
 None fires over a fight (FightScreen owns those) or over a cinematic (the cold open, the Herald,
@@ -83,6 +81,7 @@ Checked at the top of every command phase — never between two orders — again
 | Id | When |
 | --- | --- |
 | `fight.basics` | the first command phase of the first fight: orders, Mana, reading fighters, turn order, holding a move |
+| `fight.skirmish` | the first Skirmish or Elite: other heroes, and a Contract recruits one after a win |
 | `fight.types` | round 2+: the multiplier on a move, STAB, physical vs magical (with the move-kind glyphs inline) |
 | `fight.rest` | a player hero can afford nothing |
 | `fight.guardian` | a Guardian fight: the champion waits on the bench |
