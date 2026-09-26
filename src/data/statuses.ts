@@ -186,6 +186,22 @@ export const statuses: Record<string, StatusDefinition> = {
     pipeline: 'none',
     description: 'A cannonball loaded on the bench. Every one fires as this hero enters the battlefield.',
   },
+  // Tixwick's stance (the Poised innate): the next strike goes a bracket early, then it is spent —
+  // Ambush's consumption, carrying priority where Ambush carries power.
+  Poised: {
+    id: 'Poised',
+    name: 'Poised',
+    shape: 'boolean',
+    ticksAtEndOfRound: false,
+    decay: 'none',
+    stacking: 'none',
+    clearsOnSwitch: true,
+    positive: true,
+    consumedOnDamage: true,
+    priorityBonus: 1,
+    pipeline: 'none',
+    description: 'The next attack this hero makes goes at +1 priority, then it is spent. No clock — it waits until it is used. Cleared by switching.',
+  },
   Ambush: {
     id: 'Ambush',
     name: 'Ambush',

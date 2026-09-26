@@ -1115,3 +1115,48 @@ test('passives: Sentry Provokes Warden on arrival, and the redirect covers the r
   assert.ok(hit && hit.type === 'DamageDealt');
   assert.strictEqual(hit.targetCombatantId, 'a3', 'the swing aimed at the partner arrived on Warden');
 });
+
+// --- From the Tall Grass ---
+
+function drakeFixture(seed: number, passiveId: string): CombatState {
+  const state = withPassive(
+    createFightState(
+      seed,
+      [
+        { combatantId: 'a1', heroId: 'drake', side: 'A' },
+        { combatantId: 'a2', heroId: 'mordax', side: 'A' },
+      ],
+      [
+        { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
+        { combatantId: 'b2', heroId: 'tidecaller', side: 'B' },
+      ]
+    ),
+    'a1',
+    passiveId
+  );
+  return { ...state, combatants: { ...state.combatants, a1: { ...state.combatants.a1, currentMana: 0, currentHp: 60 } } } as CombatState;
+}
+
+test('passives: Slumber banks Ambush 45 on the Rest, and a spread spends it on both foes at once', () => {
+  const { state: rested } = resolveRound(drakeFixture(367, 'slumber'), [{ kind: 'rest', combatantId: 'a1' }], config);
+  assert.strictEqual(statusMagnitude(rested.combatants.a1, 'Ambush'), 45);
+
+  const { state: breathed, events } = resolveRound(
+    { ...rested, combatants: { ...rested.combatants, a1: { ...rested.combatants.a1, currentMana: 999 } } } as CombatState,
+    [{ kind: 'move', combatantId: 'a1', moveId: 'wyrmfire' } as Action],
+    config
+  );
+  const struck = events.filter((e) => e.type === 'DamageDealt' && e.sourceCombatantId === 'a1').map((e) => (e.type === 'DamageDealt' ? e.targetCombatantId : ''));
+  assert.deepStrictEqual(struck.sort(), ['b1', 'b2'], 'the breath takes both foes');
+  assert.ok(!hasStatus(breathed.combatants.a1, 'Ambush'), 'and the Ambush is spent');
+});
+
+test('passives: Hoard heals exactly the Mana the Rest recovered', () => {
+  const { events } = resolveRound(drakeFixture(368, 'hoard'), [{ kind: 'rest', combatantId: 'a1' }], config);
+  const rested = events.find((e) => e.type === 'Rested');
+  // A passive heal lands as a bare HpChanged, outside the heal formula — no Healed beat.
+  const healed = events.find((e) => e.type === 'HpChanged' && e.combatantId === 'a1');
+  assert.ok(rested && rested.type === 'Rested' && rested.manaRestored > 0);
+  assert.ok(healed && healed.type === 'HpChanged');
+  assert.strictEqual(healed.newHp - healed.previousHp, rested.manaRestored);
+});

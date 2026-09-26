@@ -106,6 +106,9 @@ const POPUP_FLASH_CLASS: Record<string, string> = {
   'popup-renew': 'renew-hit',
   'popup-haunt': 'haunt-hit',
   'popup-passive-heal': 'passive-heal-hit',
+  // Gaining a Shield is a grant, not a hit (2026-09-25): a shimmer, never the hurt frame or the recoil.
+  // 'popup-shield' — a hit a Shield soaked — stays in POPUP_HIT_CLASS above.
+  'popup-shield-gain': 'shield-gain-hit',
 };
 
 interface Props {
@@ -131,6 +134,10 @@ interface Props {
   statCtx?: StatContext;
   /** The roster entry's level (run/growth.ts levelOf), on the nameplate for both sides so the gap reads at a glance. */
   level?: number;
+  /** Switching out: drawn back into its platform on the beat before the swap (buildBeats recallCombatantId). */
+  recalling?: boolean;
+  /** Switching in: rising out of its platform on the beat that puts it on the field (buildBeats summonCombatantId). */
+  summoning?: boolean;
   /** The passive warding this combatant right now (engine/combat/ward.ts wardOn) — worn as a badge beside its statuses, since it is not one. */
   warded?: PassiveId | null;
 }
@@ -241,6 +248,8 @@ export function CombatantCard({
   striking,
   fx,
   level,
+  recalling,
+  summoning,
   warded,
 }: Props) {
   const [inspectingStatus, setInspectingStatus] = useState<string | null>(null);
@@ -321,6 +330,8 @@ export function CombatantCard({
   if (effBadge) classes.push(effBadge.className);
   if (popup && POPUP_FLASH_CLASS[popup.className]) classes.push(POPUP_FLASH_CLASS[popup.className]);
   if (striking) classes.push('striking');
+  if (recalling) classes.push('recalling');
+  if (summoning) classes.push('summoning');
   if (struck && hitClass) classes.push(hitClass);
   if (released) classes.push('releasing', `releasing-${released}`);
 

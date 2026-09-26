@@ -196,9 +196,9 @@ full).
 
 | Window | Act (at par) | What sits there | Heroes |
 |---|---|---|---|
-| **14–16** | Act 2's Guardian into Act 3 | a rider-led hit, a buff, a cheap or a debuff-first move | Riptide 14, Sentinel 14, Dread 14, Valor 14 · Rime 15, Fang 15 · Brimstone 16, Pincer 16, Crag 16, Aegis 16, Lucius 16, Trance 16, Warden 16, Patch 16, Coil 16 |
-| **18–20** | late Act 3 | a Late-sized hit with one real rider | Sylva 18, Widow 18, Sorrow 18, Clockwork 18 · Cinder 19, Cube 19, Skyshear 19, Slate 19, Mordrax 19, Empyrean 19, Glyph 19, Revenant 19, Vex 19 · Squall 20, Zenith 20, Cortex 20 |
-| **22–24** | Act 4 | 95+ Base Power, a lockout, double-on-a-status, a whole-side heal or a pool refill | Tempest 22, Marrow 22, Scallywag 22, Bellows 22 · Crimson 23, Leviathan 23, Flurry 23, Hollowbark 23, Solace 23, Nightshade 23, Pixie 23, Gallant 23, Rex 23 · Ursa 24 |
+| **14–16** | Act 2's Guardian into Act 3 | a rider-led hit, a buff, a cheap or a debuff-first move | Riptide 14, Sentinel 14, Dread 14, Valor 14 · Rime 15, Fang 15 · Brimstone 16, Pincer 16, Crag 16, Aegis 16, Lucius 16, Trance 16, Warden 16, Patch 16, Coil 16 · Nautilus 15 |
+| **18–20** | late Act 3 | a Late-sized hit with one real rider | Sylva 18, Widow 18, Sorrow 18, Clockwork 18 · Cinder 19, Cube 19, Skyshear 19, Slate 19, Mordrax 19, Empyrean 19, Glyph 19, Revenant 19, Vex 19 · Squall 20, Zenith 20, Cortex 20 · Tixwick 18 |
+| **22–24** | Act 4 | 95+ Base Power, a lockout, double-on-a-status, a whole-side heal or a pool refill | Tempest 22, Marrow 22, Scallywag 22, Bellows 22 · Crimson 23, Leviathan 23, Flurry 23, Hollowbark 23, Solace 23, Nightshade 23, Pixie 23, Gallant 23, Rex 23 · Ursa 24 · Drake 22 |
 
 Never on one of the hero's own offer levels, so the report pays it as a beat of its own, ahead of
 that level's roll when both land. `test/mastery.test.ts` pins the windows, the stagger, and that
@@ -230,7 +230,7 @@ the §8 phase 6 measurement.
 ## 5b. The mastered innate — the tenth pip
 
 At **ten pips** the hero's innate passive (`docs/innate-passives.md`) is **MASTERED**: replaced by
-an authored upgrade of the same verb, a sizable step louder — the power fantasy of the thing the
+an authored upgrade of the same verb (48 with From the Tall Grass's three), a sizable step louder — the power fantasy of the thing the
 hero relies on, turned all the way up. `HeroDefinition.masteredPassiveIds` holds it;
 `innatePassiveIdsFor(hero, entry)` (`src/run/innate.ts`) is the one read, and every fight build and
 hero sheet goes through it, so the swap is total: the born card is gone, not stacked under.
@@ -289,6 +289,9 @@ cannot switch, and now grows for staying.
 | Ursa | Feast (kill: heal 50%) | **Glut** — kill: heal to full, +20 Atk |
 | Coil | Serpent's Eye (entry: −10 Int both) | **Petrifying Stare** — entry: −20 Int and −20 Atk both |
 | Vex | Sanguine (Bleed tick: heal it) | **Hemophage** — heal 1.5×, +10 Atk |
+| Drake | Slumber (Rest: Ambush 45) | **Dragon's Dream** — Rest: Ambush 90 |
+| Nautilus | Ink (switch out: −10 Atk/Int both) | **Abyssal Ink** — −25 Atk/Int both |
+| Tixwick | Poised (a non-damaging move: next attack +1 priority) | **Deathtrap** — +1 priority and Ambush 30 |
 
 Boiling Point is Boiler's own card mastered, so it keeps `scaledBy` — the same holder, not a
 second exception to the flat-passive rule (CLAUDE.md). Every figure is a first pass.

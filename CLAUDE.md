@@ -106,7 +106,7 @@ don't silently override it.
 > level, dressed louder than an offer (`SignatureBox`) — and enemies hold it from that level. The
 > tenth pip now **masters the innate**: `HeroDefinition.masteredPassiveIds` REPLACES `passiveIds`
 > on that hero (`innatePassiveIdsFor`, `src/run/innate.ts`), an authored upgrade of the same verb
-> with every figure at least doubled or its reach widened — 45 cards, in no pool, a Burden still a
+> with every figure at least doubled or its reach widened — one per hero, From the Tall Grass included, in no pool, a Burden still a
 > Burden.
 
 > **A fifth overhaul is BUILT, phases 1–2: `docs/gear-absorption.md`** (2026-09-15, per user

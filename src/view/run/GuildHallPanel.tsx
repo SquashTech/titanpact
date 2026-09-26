@@ -271,7 +271,7 @@ export function GuildHallPanel({
       )}
 
       {tab === 'shop' && (
-        <div className="guild-hall-section">
+        <div className="guild-hall-section is-shop">
           <div className="guild-hall-shelf">
             {/* The Mastery Scroll (docs/mastery.md §3): one pip. No confirm, unlike the Contract — the
                 tap opens the who screen, and that is the decision. The shelf holds
@@ -341,7 +341,7 @@ export function GuildHallPanel({
       )}
 
       {tab === 'smithy' && (
-        <div className="guild-hall-section">
+        <div className="guild-hall-section is-smithy">
           <ItemServicesSection run={run} onRunChange={onRunChange} />
         </div>
       )}

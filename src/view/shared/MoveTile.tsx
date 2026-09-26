@@ -427,6 +427,9 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
 
   // After the buff it delivers, because that is the resolution order.
   if (move.switchesUserOut) parts.push('Then switch out');
+  if (move.manaCostAll) parts.push('Spends all Mana');
+  if (move.firstTurnOnly) parts.push('First turn out only');
+  if (move.oncePerFight) parts.push('Once a fight');
 
   if (move.fieldEffectApplication) {
     parts.push(`Field: ${fieldEffects[move.fieldEffectApplication]?.name ?? move.fieldEffectApplication}`);

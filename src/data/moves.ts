@@ -354,6 +354,22 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleAlly',
     description: 'Sets an ally mending on their own again (grants Renew 30).',
   },
+  inkCloud: {
+    id: 'inkCloud',
+    name: 'Ink Cloud',
+    tier: 'early',
+    type: 'Water',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [
+      { stat: 'attack', amount: -15 },
+      { stat: 'intelligence', amount: -15 },
+    ],
+    manaCost: 25,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'Clouds the water so neither foe can see what to hit (−15 Attack, −15 Intelligence on both).',
+  },
   undertow: {
     id: 'undertow',
     name: 'Undertow',

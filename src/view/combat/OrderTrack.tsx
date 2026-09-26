@@ -17,13 +17,15 @@ interface Props {
 }
 
 /**
- * The round's resolve order, laid on the horizon (2026-09-24, per user direction): the four
- * fighters first to last, left to right, each framed in a small portrait of its side's colour
+ * The round's resolve order, across the top of the arena (2026-09-24, per user direction): the
+ * four fighters first to last, left to right, each framed in a small portrait of its side's colour
  * (the enemy's red, the ally's blue) and joined by chevrons, so the track says it is a SEQUENCE
  * before a single face is read. It replaced a numbered coin on each figure, which asked the eye
  * to find four numbers in four corners and sort them. A tie takes a gold "=" where the chevron
- * would be — the RNG decides, and the track says so rather than picking one — and a bracket hangs
- * its pip off the frame it moved.
+ * would be — the RNG decides, and the track says so rather than picking one — and a bracket sits ON
+ * the rail as a small tag just before the frame it moved. Nothing on the
+ * track rises above its frames: it sits against the arena's top edge, and a pip hung over a frame
+ * or a frame scaled up for its turn was clipped there on a phone (2026-09-25).
  */
 export function OrderTrack({ entries, onInspect }: Props) {
   if (entries.length === 0) return null;
@@ -45,6 +47,7 @@ export function OrderTrack({ entries, onInspect }: Props) {
                   <path d="M1 1l4 4-4 4" />
                 </svg>
               ))}
+            {pip !== null && <span className={`order-track-pip${mark.effect ? ` is-${mark.effect}` : ''}`}>{pip}</span>}
             <span
               className={[
                 'order-track-slot',
@@ -62,7 +65,6 @@ export function OrderTrack({ entries, onInspect }: Props) {
               <span className="order-track-frame">
                 <HeroPortrait heroId={entry.heroId} seed={entry.combatantId} className="order-track-sprite" />
               </span>
-              {pip !== null && <span className="order-track-pip">{pip}</span>}
             </span>
           </span>
         );

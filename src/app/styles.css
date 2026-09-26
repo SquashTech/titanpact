@@ -2402,10 +2402,11 @@ textarea,
    read. The sprite is 24px, exactly half the 48px source, the one downscale that keeps every
    source pixel the same size.
 
-   A tie takes a gold "=" where the chevron would be. A bracket hangs its pip off the frame;
-   where it actually moved the entry (priority.ts bracketEffect) the frame is lifted for a cut
-   and sunk for a hold. During playback the track walks the beats: done dims, the actor of the
-   beat steps forward and its rim lights.
+   A tie takes a gold "=" where the chevron would be, and a bracket is a tag on the rail before
+   the frame it moved. NOTHING rises above the frames (2026-09-25): the track sits against the
+   arena's top edge, and a pip hung over a frame, a frame lifted for a cut or scaled up for its
+   turn were all clipped there on a phone. During playback the track walks the beats: done dims,
+   and the actor of the beat lights — its rim full, its glow wide — without changing size.
 
    It sat on the horizon for a day, and the middle of the field was the busiest strip on the
    screen; up here, in the arena's top padding above the far side's status strip, it has the band
@@ -2415,7 +2416,7 @@ textarea,
 .order-track {
   position: absolute;
   left: 50%;
-  top: 14px;
+  top: 16px;
   z-index: 2;
   display: flex;
   align-items: center;
@@ -2533,49 +2534,37 @@ textarea,
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.7));
 }
 
-/* The bracket, hung off the frame's top corner so the face stays the thing read first. */
+/* The bracket, a tag ON the rail just before the frame it moved (2026-09-25): hung over the
+   frame's corner it rose past the arena's top edge and was clipped on a phone. Lit gold where the
+   bracket cut ahead of a faster fighter, cold where it held one back (priority.ts bracketEffect). */
 .order-track-pip {
-  position: absolute;
-  top: -6px;
-  right: -7px;
-  min-width: 12px;
-  height: 11px;
-  padding: 0 2px;
+  flex: none;
+  min-width: 14px;
+  height: 13px;
+  padding: 0 3px;
   border-radius: var(--radius-pill);
   background: #151a24;
-  box-shadow: 0 0 0 1px rgba(168, 184, 214, 0.6), 0 0 0 2px #0a0d13;
-  font-size: 7px;
+  box-shadow: 0 0 0 1px rgba(168, 184, 214, 0.6), 0 1px 2px rgba(0, 0, 0, 0.7);
+  font-size: 8px;
   font-weight: 800;
-  line-height: 11px;
+  line-height: 13px;
   text-align: center;
   color: #e6ecf7;
   white-space: nowrap;
 }
 
-.order-track-slot.is-cut {
-  transform: translateY(-2px);
-}
-
-.order-track-slot.is-cut .order-track-pip {
+.order-track-pip.is-cut {
   color: #ffe2a0;
-  box-shadow: 0 0 0 1px rgba(255, 200, 90, 0.8), 0 0 0 2px #0a0d13, 0 0 6px rgba(255, 200, 90, 0.6);
+  box-shadow: 0 0 0 1px rgba(255, 200, 90, 0.85), 0 0 6px rgba(255, 200, 90, 0.6);
 }
 
-.order-track-slot.is-held {
-  transform: translateY(2px);
-}
-
-.order-track-slot.is-held .order-track-pip {
+.order-track-pip.is-held {
   color: rgba(196, 212, 240, 0.8);
 }
 
 .order-track-slot.is-done {
   opacity: 0.4;
   filter: saturate(0.4);
-}
-
-.order-track-slot.is-current {
-  transform: scale(1.2);
 }
 
 .order-track-slot.is-current .order-track-frame {
@@ -4801,6 +4790,140 @@ textarea,
   }
 }
 
+/* THE SWITCH, IN TWO BEATS (2026-09-25, per user direction): Pokémon's recall and send-out,
+   without the ball. buildBeats gives a switch a beat for the hero leaving and a beat for the
+   hero arriving, and both happen at the platform — the ground each figure already stands on is
+   where it goes back into and comes up out of.
+
+   Recall (.recalling): the figure burns white in its own type's light and collapses DOWN into
+   its platform while a column of that light rises off the ground and fades; the nameplate dims
+   with it, since the hero it names is leaving. Held at its end (`forwards`) for the rest of the
+   beat, so the slot reads as emptied until the swap lands.
+
+   Send-out (.summoning): the platform flares as a ring, the same column of light stands up, and
+   the figure grows out of the ground white-hot, overshoots and settles, the colour coming back
+   into it last — the moment Pokémon's creature resolves out of the flash. */
+.team-row .combatant-stage::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  bottom: 6px;
+  width: 38px;
+  height: 118px;
+  border-radius: 19px 19px 8px 8px;
+  background: linear-gradient(
+    to top,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(var(--type-rgb, 200, 210, 230), 0.75) 22%,
+    rgba(var(--type-rgb, 200, 210, 230), 0.25) 65%,
+    transparent 100%
+  );
+  filter: blur(1.5px);
+  mix-blend-mode: screen;
+  opacity: 0;
+  transform: translateX(-50%) scaleY(0);
+  transform-origin: center bottom;
+  pointer-events: none;
+}
+
+.team-row .combatant-card.recalling .combatant-portrait {
+  animation: hero-recall 460ms cubic-bezier(0.5, 0, 0.9, 0.4) forwards;
+}
+
+.team-row .combatant-card.recalling .combatant-stage::after {
+  animation: switch-beam 560ms ease-out forwards;
+}
+
+.team-row .combatant-card.recalling .combatant-plate,
+.team-row .combatant-card.recalling .status-badge-row {
+  opacity: 0.3;
+  transition: opacity 360ms ease-out;
+}
+
+@keyframes hero-recall {
+  0% {
+    transform: scale(1, 1);
+    filter: var(--figure-shadow);
+    opacity: 1;
+  }
+  30% {
+    transform: scale(1.06, 1.04);
+    filter: brightness(4) saturate(0) drop-shadow(0 0 8px rgba(var(--type-rgb), 0.95));
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.18, 0);
+    filter: brightness(4) saturate(0) drop-shadow(0 0 8px rgba(var(--type-rgb), 0.95));
+    opacity: 0;
+  }
+}
+
+.team-row .combatant-card.summoning .combatant-portrait {
+  animation: hero-summon 620ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+.team-row .combatant-card.summoning .combatant-stage::after {
+  animation: switch-beam 620ms ease-out both;
+}
+
+.team-row .combatant-card.summoning .combatant-platform {
+  animation: switch-ring 620ms ease-out both;
+}
+
+@keyframes hero-summon {
+  0%,
+  12% {
+    transform: scale(0.2, 0);
+    filter: brightness(4) saturate(0) drop-shadow(0 0 8px rgba(var(--type-rgb), 0.95));
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.08, 1.06);
+    filter: brightness(3) saturate(0.2) drop-shadow(0 0 8px rgba(var(--type-rgb), 0.9));
+    opacity: 1;
+  }
+  75% {
+    transform: scale(0.98, 1.01);
+    filter: var(--figure-shadow) brightness(1.4);
+  }
+  100% {
+    transform: scale(1, 1);
+    filter: var(--figure-shadow);
+    opacity: 1;
+  }
+}
+
+@keyframes switch-beam {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scaleY(0.1);
+  }
+  25% {
+    opacity: 1;
+    transform: translateX(-50%) scaleY(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) scaleY(1.1) scaleX(0.4);
+  }
+}
+
+@keyframes switch-ring {
+  0% {
+    filter: brightness(1);
+    transform: translateX(-50%) scale(0.4);
+  }
+  30% {
+    filter: brightness(2.6);
+    transform: translateX(-50%) scale(1.25);
+  }
+  100% {
+    filter: brightness(1);
+    transform: translateX(-50%) scale(1);
+  }
+}
+
 .team-row .combatant-card.hit-struck .combatant-portrait {
   animation: hero-hit-struck 320ms ease-out;
 }
@@ -5950,6 +6073,29 @@ textarea,
   color: var(--shield);
   font-size: 15px;
   text-shadow: 0 0 6px rgba(216, 221, 230, 0.55), 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+/* A Shield GAINED (buildBeats.ts StatusApplied): the same tone as a hit it took, but the card only
+   shimmers — it is a grant, and the hurt frame and recoil are for hits (CombatantCard
+   POPUP_FLASH_CLASS, 2026-09-25). */
+.dmg-popup.popup-shield-gain {
+  color: var(--shield);
+  font-size: 15px;
+  text-shadow: 0 0 6px rgba(216, 221, 230, 0.55), 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.combatant-card.shield-gain-hit .combatant-portrait {
+  animation: shield-gain-shimmer 520ms ease-out;
+}
+
+@keyframes shield-gain-shimmer {
+  0%,
+  100% {
+    filter: var(--figure-shadow);
+  }
+  35% {
+    filter: var(--figure-shadow) drop-shadow(0 0 6px rgba(216, 221, 230, 0.9)) brightness(1.15);
+  }
 }
 
 .dmg-popup.popup-shield-broken {
@@ -13767,19 +13913,6 @@ button.star-shop-bundle-face {
   align-items: flex-start;
 }
 
-.enemy-scout-grid-dense .enemy-scout-verdict {
-  grid-column: 3;
-  grid-row: 2;
-  width: 18px;
-  height: 18px;
-  margin: 0;
-}
-
-.enemy-scout-grid-dense .enemy-scout-verdict > svg {
-  width: 12px;
-  height: 12px;
-}
-
 /* The same plate every hero card in the run wears (the shared plate rule
    below), washed in the enemy's own type, with the name under the figure —
    a scouted enemy is read here, not only counted. */
@@ -14092,66 +14225,21 @@ button.star-shop-bundle-face {
   color: var(--text-dim);
 }
 
-/* Player squad grid (SquadSelectScreen) — a fixed 2-wide/3-tall grid (the
-   roster hard cap) instead of a pick-order list: row 1 fields the fight,
-   row 2 is bench, row 3 sits out. Drag one cell onto another to swap
-   contents, or tap-then-tap on touch (mirrors RosterManagementScreen's
-   equip-slot select/target pattern below). */
+/* Player squad grid (SquadSelectScreen) — ONE fixed 2-wide/3-tall grid (the
+   roster hard cap), no Active or Bench zones (2026-09-24, per user direction):
+   the player taps the two heroes who open and every other one benches. The
+   cells never move; a picked cell lights up in the old Active band's blue. */
 .squad-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* One band per row of the rack. Each carries its own head — the label and
-   what the row means for the fight — and its own weight: the active pair is
-   the lit one, the bench is plain, the reserve is dimmed and its cells are
-   drained, so "these two open, these two rotate in, these two sit out" is
-   read from the shape of the screen before a word of it is. */
-.squad-band {
-  --band-rgb: 150, 160, 180;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px 8px 8px;
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(var(--band-rgb), 0.16);
-  background: linear-gradient(180deg, rgba(var(--band-rgb), 0.07), rgba(var(--band-rgb), 0.02));
-}
-
-.squad-band-active {
-  --band-rgb: 74, 144, 217;
-  border-color: rgba(var(--band-rgb), 0.45);
-  background:
-    radial-gradient(ellipse 90% 70% at 50% -20%, rgba(var(--band-rgb), 0.22), transparent 70%),
-    linear-gradient(180deg, rgba(var(--band-rgb), 0.1), rgba(var(--band-rgb), 0.03));
-  box-shadow: 0 0 22px -8px rgba(var(--band-rgb), 0.55), inset 0 1px 0 rgba(var(--band-rgb), 0.3);
-}
-
-.squad-band-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 0 2px;
-}
-
-.squad-band-label {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgb(var(--band-rgb));
-}
-
-.squad-band-active .squad-band-label {
-  text-shadow: 0 0 10px rgba(var(--band-rgb), 0.55);
-}
-
-.squad-grid-row-cells {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
+}
+
+/* The whole interaction, said once where it happens, with the count. */
+.squad-pick-hint {
+  margin: -2px 2px 6px;
+  font-size: 11px;
+  color: var(--text-dim);
 }
 
 .squad-slot {
@@ -14181,12 +14269,6 @@ button.star-shop-bundle-face {
   column-gap: 8px;
   align-items: center;
   align-content: center;
-}
-
-/* The move-here key sits on the row's right edge, so a cell that wears one
-   keeps its text clear of it. */
-.squad-slot.filled.drop-target {
-  padding-right: 30px;
 }
 
 .squad-slot.filled .roster-card-portrait {
@@ -14252,24 +14334,43 @@ button.star-shop-bundle-face {
   color: var(--text-dim);
 }
 
-.squad-slot.selected {
-  border-color: var(--accent);
-  background: var(--selected-fill);
+.squad-slot.filled.is-picked {
+  --pick-rgb: 74, 144, 217;
+  border-color: rgba(var(--pick-rgb), 0.9);
+  background:
+    radial-gradient(ellipse 90% 80% at 50% -20%, rgba(var(--pick-rgb), 0.3), transparent 70%),
+    linear-gradient(180deg, rgba(var(--pick-rgb), 0.16), rgba(var(--pick-rgb), 0.05));
+  box-shadow: var(--hairline), 0 0 0 1px rgba(var(--pick-rgb), 0.85), 0 0 18px -4px rgba(var(--pick-rgb), 0.75);
 }
 
-.squad-slot.drop-target {
-  border-color: var(--accent);
+/* The pick's mark: a check on the cell's corner, so a picked hero reads as
+   chosen even at a glance past the glow. */
+.squad-slot-pick {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgb(74, 144, 217);
+  color: #fff;
+  box-shadow: 0 0 8px -1px rgba(74, 144, 217, 0.9);
+  animation: enemy-scout-verdict-in 0.22s cubic-bezier(0.2, 1.4, 0.4, 1) both;
 }
 
-.squad-slot.drag-over {
-  border-color: var(--accent);
-  background: var(--selected-fill);
+.squad-slot-pick > svg {
+  width: 13px;
+  height: 13px;
 }
 
-/* The move-here key (SquadSelectScreen SquadSlot): on every cell the held hero
-   can land in, since a tap on the cell itself only picks its hero up. In the
-   accent, raised off the cell's corner, so the one control that commits a
-   move is the one that looks like a button. */
+/* The Revive key (SquadSelectScreen SquadSlot): on a downed hero's cell while a
+   Revive is held, raised off the cell's corner so the one control that spends
+   something is the one that looks like a button. It was the move-here key's
+   shape until a tap alone picked the leads (2026-09-24). */
 .squad-slot-swap {
   position: absolute;
   top: 50%;
@@ -14301,16 +14402,9 @@ button.star-shop-bundle-face {
   transform: scale(0.92);
 }
 
-/* The empty cell is the one place a plain tap still lands the hero, so its key
-   sits inside the recess rather than on a corner it does not draw. */
-.squad-slot.empty .squad-slot-swap {
-  right: 12px;
-}
-
 /* A hero a fight left down (run/wounds.ts): on the roster, off the field. Greyed
    like the old Reserve band was, since "not going" is the same read; the one
-   thing it can wear is the Revive key, in the phoenix's gold rather than the
-   swap key's, so the two keys never read as one verb. */
+   thing it can wear is the Revive key, in the phoenix's gold. */
 .squad-slot.filled.is-down {
   opacity: 0.62;
   filter: saturate(0.4);
@@ -14634,6 +14728,12 @@ button.star-shop-bundle-face {
   gap: 14px;
 }
 
+
+/* The goods clear the hall's sign (2026-09-25, per user direction): flush under the header, the
+   top row's held badges sat on the sign's lower edge and read as overlapping it. */
+.guild-hall-section.is-shop {
+  padding-top: 12px;
+}
 
 /* Clearance for the bottom-docked Continue button. `.screen-scroll` ends
    flush with that button, so at the very bottom of the scroll the last
@@ -19229,98 +19329,198 @@ button.star-shop-bundle-face {
   }
 }
 
-/* --- Launch gate (LaunchGate.tsx) ------------------------------------------ */
+/* --- Launch screen (LaunchScreen.tsx) --------------------------------------- */
 
-/* The screen before the title: one tap, in the dark, so the title can open with its score. It
-   is the same ground the title sits on and a fraction of its light — a threshold, not a second
-   title screen. The whole thing is the button. */
-.launch-gate {
-  position: relative;
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
-  padding: 0;
-  border: none;
-  border-radius: 14px;
+/* The cold launch's loading screen (2026-09-25, per user direction, replacing the Tap to begin
+   gate): the title's own picture assembling itself — the Titan climbing into the frame where the
+   title holds it, the pact seal spinning up in the middle — then fading off the title, which is
+   mounted underneath for the fade. Full-bleed over the shell, above every overlay. */
+.launch-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 80;
   overflow: hidden;
   isolation: isolate;
-  color: var(--accent);
   cursor: pointer;
   background:
-    radial-gradient(ellipse 90% 60% at 50% -12%, rgba(96, 84, 150, 0.22), transparent 70%),
     radial-gradient(ellipse 120% 46% at 50% 104%, rgba(86, 168, 148, 0.12), transparent 72%),
     linear-gradient(180deg, #0a0c12, #090d10 52%, #060809);
-  animation: launch-gate-in 0.5s ease-out both;
+  animation: launch-in 0.4s ease-out both;
 }
 
-@keyframes launch-gate-in {
+.launch-screen.is-reveal {
+  pointer-events: none;
+  animation: launch-out 0.7s ease-in both;
+}
+
+@keyframes launch-in {
   from {
     opacity: 0;
   }
+}
+
+@keyframes launch-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* The title's light behind the eyes, brightening as the head climbs through it. */
+.launch-backlight {
+  position: absolute;
+  inset: calc(var(--shell-pad) * -1);
+  background:
+    radial-gradient(ellipse 62% 30% at 50% 8%, rgba(var(--tier-mythic-rgb), 0.3), transparent 76%),
+    radial-gradient(ellipse 40% 15% at 50% 9%, rgba(240, 176, 96, 0.16), transparent 72%),
+    radial-gradient(ellipse 100% 26% at 50% 94%, rgba(96, 190, 162, 0.3), transparent 74%);
+  opacity: 0;
+  animation: launch-light-up 2.4s ease-in 0.2s both;
+}
+
+@keyframes launch-light-up {
   to {
     opacity: 1;
   }
 }
 
-.launch-gate-vignette {
+/* The head: the title's brow-and-eyes SVG, in the title's own box (inside the shell padding) so it
+   stops exactly where the title will hold it. Parked under the frame, climbs with a slow ease. */
+.launch-titan {
   position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse 70% 55% at 50% 48%, transparent 40%, rgba(0, 0, 0, 0.7));
-  pointer-events: none;
+  inset: var(--shell-pad);
+  z-index: 0;
+  transform: translateY(62%);
+  animation: launch-titan-climb 2.6s cubic-bezier(0.3, 0, 0.15, 1) both;
+  /* Feathered at the top, so the layer's leading edge is never a line across the dark. */
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 14%);
+  mask-image: linear-gradient(180deg, transparent, #000 14%);
 }
 
-/* A seal that has not yet been struck: two rings and an ember, breathing at the title's own
-   slow rate, so the tap reads as waking something rather than dismissing a dialog. */
-.launch-gate-seal {
-  position: relative;
-  width: 96px;
-  height: 96px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.launch-screen .title-titan {
+  overflow: visible;
 }
 
-.launch-gate-ring {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 1px solid rgba(224, 166, 60, 0.45);
-  box-shadow: 0 0 18px -6px rgba(224, 166, 60, 0.6);
-}
-
-.launch-gate-ring.is-outer {
-  animation: launch-gate-ring-spin 24s linear infinite;
-  border-style: dashed;
-}
-
-.launch-gate-ring.is-inner {
-  inset: 16px;
-  animation: launch-gate-ring-spin 16s linear infinite reverse;
-}
-
-@keyframes launch-gate-ring-spin {
+@keyframes launch-titan-climb {
+  from {
+    transform: translateY(62%);
+  }
   to {
-    transform: rotate(360deg);
+    transform: translateY(0);
   }
 }
 
-.launch-gate-core {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #fff3d0, #e0a63c 45%, rgba(224, 166, 60, 0) 72%);
-  animation: launch-gate-breathe 3.6s ease-in-out infinite;
+/* Shut on the way up (TitanRiseScreen's hairline lid), open once it has arrived. */
+.launch-screen .titan-eye-open {
+  animation: none;
+  transform: scaleY(0.04);
 }
 
-@keyframes launch-gate-breathe {
+.launch-screen .title-titan .titan-eye-halo {
+  animation: none;
+  opacity: 0.1;
+  transition: opacity 0.8s ease-out;
+}
+
+.launch-screen.is-wake .titan-eye-open,
+.launch-screen.is-reveal .titan-eye-open {
+  animation: titan-rise-open 0.7s cubic-bezier(0.3, 0, 0.4, 1) both;
+}
+
+.launch-screen.is-wake .title-titan .titan-eye-halo,
+.launch-screen.is-reveal .title-titan .titan-eye-halo {
+  opacity: 0.9;
+}
+
+.launch-screen .title-ridge {
+  z-index: 1;
+}
+
+.launch-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: radial-gradient(ellipse 80% 60% at 50% 50%, transparent 45%, rgba(0, 0, 0, 0.6));
+  pointer-events: none;
+}
+
+/* The seal: SealArt is a zero-size anchor at its box's centre, so this is just where the centre
+   goes. Every ring spins at a loader's pace here — the title's run 150–220s a turn — and the whole
+   seal turns in from small as it starts. */
+.launch-mark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  width: 0;
+  height: 0;
+  animation: launch-seal-in 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.launch-mark .title-seal {
+  z-index: 0;
+}
+
+@keyframes launch-seal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.55) rotate(-90deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.launch-mark .title-seal-ring.is-outer {
+  animation: title-seal-spin 6s linear infinite;
+}
+
+.launch-mark .title-seal-ring.is-mid {
+  animation: title-seal-spin-back 4s linear infinite;
+}
+
+.launch-mark .title-seal-ring.is-inner {
+  animation: title-seal-breathe 1.8s ease-in-out infinite;
+}
+
+.launch-mark .title-seal-sigils {
+  animation: title-sigils-spin 4s linear infinite;
+}
+
+.launch-mark .type-wheel {
+  opacity: 0.85;
+}
+
+.launch-mark .type-wheel-dial {
+  animation: type-wheel-spin 6s linear infinite;
+}
+
+.launch-mark .type-wheel-node {
+  animation: type-wheel-unspin 6s linear infinite;
+}
+
+/* An ember at the hub, breathing, and flaring as the eyes open. */
+.launch-core {
+  position: absolute;
+  left: -20px;
+  top: -20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff3d0, #e0a63c 40%, rgba(224, 166, 60, 0) 72%);
+  animation: launch-core-breathe 1.8s ease-in-out infinite;
+}
+
+.launch-screen.is-wake .launch-core,
+.launch-screen.is-reveal .launch-core {
+  animation: launch-core-flare 0.8s cubic-bezier(0.1, 0.9, 0.2, 1) both;
+}
+
+@keyframes launch-core-breathe {
   0%,
   100% {
     opacity: 0.55;
-    transform: scale(0.9);
+    transform: scale(0.85);
   }
   50% {
     opacity: 1;
@@ -19328,9 +19528,38 @@ button.star-shop-bundle-face {
   }
 }
 
-/* The title's wordmark treatment at a third of its size: the same metal, not yet lit. */
-.launch-gate-wordmark {
-  position: relative;
+@keyframes launch-core-flare {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(3.2);
+  }
+  100% {
+    opacity: 0.8;
+    transform: scale(1.4);
+  }
+}
+
+/* The name and a quiet "Loading" under the seal, clear of the ridge. */
+.launch-foot {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(50% + 196px);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+  animation: launch-in 0.8s ease-out 0.5s both;
+}
+
+/* The title's wordmark treatment at a third of its size: the same metal. */
+.launch-wordmark {
   font-size: 15px;
   font-weight: 900;
   letter-spacing: 0.34em;
@@ -19342,37 +19571,44 @@ button.star-shop-bundle-face {
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.85));
 }
 
-.launch-gate-prompt {
-  position: relative;
-  font-size: 11px;
+.launch-loading {
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.26em;
   text-transform: uppercase;
   color: var(--text-dim);
-  animation: launch-gate-prompt 2.4s ease-in-out infinite;
+  animation: launch-loading-pulse 1.6s ease-in-out infinite;
 }
 
-@keyframes launch-gate-prompt {
+@keyframes launch-loading-pulse {
   0%,
   100% {
-    opacity: 0.45;
+    opacity: 0.4;
   }
   50% {
     opacity: 1;
   }
 }
 
-.launch-gate:active .launch-gate-core {
-  animation: none;
-  transform: scale(1.4);
-  opacity: 1;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .launch-gate-ring,
-  .launch-gate-core,
-  .launch-gate-prompt {
+  .launch-titan,
+  .launch-mark,
+  .launch-backlight,
+  .launch-core,
+  .launch-loading,
+  .launch-mark .title-seal-ring,
+  .launch-mark .title-seal-sigils,
+  .launch-mark .type-wheel-dial,
+  .launch-mark .type-wheel-node {
     animation: none;
+  }
+
+  .launch-titan {
+    transform: none;
+  }
+
+  .launch-backlight {
+    opacity: 1;
   }
 }
 
@@ -20139,6 +20375,14 @@ button.star-shop-bundle-face {
 @keyframes title-seal-spin {
   to {
     transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+/* The wardens ride the mid ring, backwards at its period. The sigils' box is a zero-size point,
+   so no translate to carry. Named from the start and never defined until 2026-09-25. */
+@keyframes title-sigils-spin {
+  to {
+    transform: rotate(-360deg);
   }
 }
 
@@ -24387,7 +24631,7 @@ button.star-shop-bundle-face {
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--text-dim);
-  animation: launch-gate-prompt 2.4s ease-in-out 0.8s infinite;
+  animation: launch-loading-pulse 2.4s ease-in-out 0.8s infinite;
 }
 
 /* --- Sandbox Battle (team-builder tool — App.tsx 'sandboxBattle'/'sandboxFight',
@@ -29173,7 +29417,10 @@ button.star-shop-bundle-face {
 
 .moveoffer-panel {
   position: relative;
-  width: min(420px, 92vw);
+  /* The overlay's own box, not the device's: `92vw` read the REAL viewport, which on a phone is
+     the canvas's width before the shell's transform — close, but a 32px margin of sky either side
+     that the dossier and the candidate names could have used. */
+  width: min(420px, 100%);
   /* The whole height, and a tight top: at the cap the dossier, four candidates and the button
      pair sit right on the fold, and the Learn/Decline pair is the one thing here that must not
      need a scroll. `.reward-panel` gives 24px above the head; this is the one place that air
@@ -29185,7 +29432,7 @@ button.star-shop-bundle-face {
 }
 
 .moveoffer-overlay {
-  padding: 10px 16px;
+  padding: 10px 8px;
 }
 
 /* The offer's cards are terse — a card with three riders was pushing the Learn/Decline pair
@@ -29499,6 +29746,172 @@ button.star-shop-bundle-face {
   text-transform: uppercase;
   color: var(--sig-color);
   animation: signature-title-in 0.5s ease-out 0.35s both;
+}
+
+/* Fit steps (2026-09-24, per user direction). A typical offer left 90px of sky at the 700px
+   reference canvas and far more on a taller phone, while the one with the longest dossier
+   (Perfect Creation, six riders) was already on the fold — so no single set of sizes is both
+   bigger and scroll-free. MoveOfferOverlay tries `data-fit="2"`, then 1, then 0 against the
+   panel's own scrollHeight before paint and keeps the largest that fits; 0 is the sizes above,
+   unchanged, and scrolls exactly when it did before. Scoped to the overlay's own panel, so
+   EventNodeScreen's inline offer, which wears the same classes, and the hold popup and Reference
+   sheet stacked over the panel are untouched. */
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .offer-hero-portrait {
+  width: 56px;
+  height: 56px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .offer-hero-head h3 {
+  font-size: 18px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .offer-hero-eyebrow,
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .offer-swap-arrow,
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-label {
+  font-size: 11px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .offer-move-highlight {
+  padding: 12px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-name {
+  font-size: 21px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-line {
+  font-size: 12px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-stat {
+  font-size: 13px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-stat strong {
+  font-size: 19px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-unit {
+  font-size: 11px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-effect-text {
+  font-size: 15px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-list .move-button {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-name {
+  font-size: 15px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-power strong {
+  font-size: 17px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-type-code .element-glyph {
+  width: 18px;
+  height: 18px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-row-effect {
+  font-size: 11.5px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .moveoffer-button {
+  min-height: 74px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .moveoffer-icon {
+  font-size: 24px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .moveoffer-label {
+  font-size: 15px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .moveoffer-sub {
+  font-size: 11.5px;
+}
+
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .offer-hero-portrait {
+  width: 64px;
+  height: 64px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .offer-hero-head h3 {
+  font-size: 20px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .offer-hero-eyebrow,
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .offer-swap-arrow,
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-label {
+  font-size: 12px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .offer-move-highlight {
+  padding: 14px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-disc {
+  width: 58px;
+  height: 58px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-disc svg {
+  width: 35px;
+  height: 35px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-name {
+  font-size: 23px;
+}
+/* Held at step 1's 12px: at 13 "Fire · Physical · Single Enemy" wraps beside the disc and the
+   line it costs is more than the point it buys. */
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-line {
+  font-size: 12px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-stat {
+  font-size: 14px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-stat svg {
+  width: 17px;
+  height: 17px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-stat strong {
+  font-size: 21px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-unit {
+  font-size: 12px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-effect-text {
+  font-size: 16px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-effect-glyph,
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-effect-glyph svg {
+  width: 21px;
+  height: 21px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-list .move-button {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-row-top .mana-gem {
+  width: 28px;
+  height: 28px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-row-top .mana-gem-value {
+  font-size: 13px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-name {
+  font-size: 16px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-power strong {
+  font-size: 18px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-type-code .element-glyph {
+  width: 19px;
+  height: 19px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-kind-badge .move-kind-glyph {
+  width: 17px;
+  height: 17px;
+}
+/* The effect line starts under the name: the 28px gem plus the row's 6px gap. */
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-row-effect {
+  padding-left: 34px;
+  font-size: 12.5px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .moveoffer-button {
+  min-height: 80px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .moveoffer-icon {
+  font-size: 26px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .moveoffer-label {
+  font-size: 16px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .moveoffer-sub {
+  font-size: 12.5px;
 }
 
 /* The Guild Hall's Scroll row wears the vector mark, where the Contract row wears an emoji. */
@@ -32899,6 +33312,33 @@ button.star-shop-bundle-face {
 
 .smithy-forge-embers i:nth-child(even) {
   --drift: -1;
+}
+
+/* The Guild Hall's Smithy tab, fitted to one screen (2026-09-25, per user direction): the hall's
+   sign comes off on this tab (ShopNodeScreen) and the forge stands in for it, and the benches
+   tighten so a full roster of six fits over the counters on a phone without a scroll. The Forge
+   node keeps the roomier benches — it has no tab strip under it. */
+.shop-node-screen.is-smithy .smithy {
+  gap: 4px;
+}
+
+.shop-node-screen.is-smithy .smithy-forge {
+  height: 62px;
+  margin: 0 0 -8px;
+}
+
+.shop-node-screen.is-smithy .smithy-benches {
+  gap: 5px;
+}
+
+.shop-node-screen.is-smithy .smithy-bench {
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+.shop-node-screen.is-smithy .smithy-socket {
+  padding: 1px 0 0;
+  gap: 2px;
 }
 
 /* --- The benches ------------------------------------------------------------

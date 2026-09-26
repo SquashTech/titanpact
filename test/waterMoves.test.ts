@@ -63,24 +63,24 @@ function afflict(state: CombatState, combatantId: string, statusId: string, magn
 
 // --- The pool itself ---
 
-test('water: the authored slate is the fifteen designed moves, Riptide\'s Evolution move, its signature, the two Shield cards and the two 2026-09-15 additions, all Water-typed', () => {
+test('water: the authored slate is the fifteen designed moves, Riptide\'s Evolution move, its signature, the two Shield cards, the two 2026-09-15 additions and Nautilus\'s Ink Cloud, all Water-typed', () => {
   const water = Object.values(moves).filter((m) => m.type === 'Water' && !signatureMoves[m.id]);
   assert.deepStrictEqual(
     water.map((m) => m.id).sort(),
     [
-      'aquaSlice', 'cleansingRain', 'crest', 'deluge', 'engulf', 'highTide', 'maelstrom', 'oasis', 'refresh',
+      'aquaSlice', 'cleansingRain', 'crest', 'deluge', 'engulf', 'highTide', 'inkCloud', 'maelstrom', 'oasis', 'refresh',
       'seawall', 'shockBubble', 'siphon', 'splash', 'tideGuard', 'torrent', 'tsunami', 'undercurrent', 'undertow', 'washAway',
       'waveShred',
     ]
   );
 });
 
-test('water: every "Spread" move in the design table targets both enemies, and no other Water move does', () => {
+test('water: every "Spread" move in the design table targets both enemies, Ink Cloud\'s debuff with them, and no other Water move does', () => {
   const spread = Object.values(moves)
     .filter((m) => m.type === 'Water' && !signatureMoves[m.id] && m.target === 'bothEnemies')
     .map((m) => m.id)
     .sort();
-  assert.deepStrictEqual(spread, ['deluge', 'maelstrom']);
+  assert.deepStrictEqual(spread, ['deluge', 'inkCloud', 'maelstrom']);
 });
 
 test('water: no Water move applies a status the catalog does not define', () => {

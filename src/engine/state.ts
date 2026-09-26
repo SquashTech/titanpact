@@ -46,6 +46,12 @@ export interface Combatant {
   statuses: Record<StatusId, StatusInstance>;
   /** Accumulated manaDiscountOnUse (positive) and manaCostGainOnUse (negative) per move id; grows only within a fight. Read via effectiveManaCost. */
   moveManaDiscounts: Partial<Record<string, number>>;
+  /** Every move's price raised by this much for the rest of the fight (a manaSurcharge passive effect — Deepgrip). Read by resolveManaCost. */
+  manaSurcharge?: number;
+  /** `oncePerFight` moves already cast this fight. Read by isMoveUsable. */
+  spentMoveIds?: readonly string[];
+  /** The round this combatant first acts after arriving (switching.ts performSwitch sets round + 1); unset for a lead, whose first round is 1. Read by isMoveUsable for `firstTurnOnly`. */
+  firstActionRound?: number;
   /** Accumulated basePowerGainOnUse per move id; grows only within a fight. Read via effectiveBasePower. */
   moveBasePowerBonuses: Partial<Record<string, number>>;
   /** HP lost since this combatant last COMMITTED an action (paid move, Rest, completed switch); a Dazed or fizzled turn keeps banking. Incremented in applyHpDelta. Feeds retributionPercent. */
@@ -151,6 +157,12 @@ export function moveForPrimaryType(move: MoveDefinition, primary: TypeId | undef
   return move.typeFollowsUser && primary !== undefined && move.type !== primary ? { ...move, type: primary } : move;
 }
 
+/** A combatant's price for a move off its own row alone — the ledger, any surcharge, a whole-pool cast — for a surface without the board; resolveManaCost adds the board-read conditional price. */
+export function combatantManaCost(move: MoveDefinition, combatant: Combatant): number {
+  const priced = effectiveManaCost(move, combatant.moveManaDiscounts) + (combatant.manaSurcharge ?? 0);
+  return move.manaCostAll ? Math.max(priced, combatant.currentMana) : priced;
+}
+
 /** Authored cost less accumulated discount, floored at 0. The single source of a move's price on fight-free surfaces — never read `move.manaCost` directly for display. */
 export function effectiveManaCost(move: MoveDefinition, discounts?: Partial<Record<string, number>>): number {
   return Math.max(0, move.manaCost - (discounts?.[move.id] ?? 0));
@@ -187,12 +199,25 @@ export function resolveCastBasePower(
   return move.basePowerGainOnUse ? effectiveBasePower(move, bonuses) : undefined;
 }
 
-/** effectiveManaCost plus conditionalManaCost (the lower wins) — the price EVERY live-fight surface must read. Enemy-side forms read ACTIVE unfainted enemies; an empty enemy side satisfies neither. */
+/** effectiveManaCost plus conditionalManaCost (the lower wins), plus any manaSurcharge, and the whole pool for a `manaCostAll` move — the price EVERY live-fight surface must read. Enemy-side forms read ACTIVE unfainted enemies; an empty enemy side satisfies neither. */
 export function resolveManaCost(
   state: CombatState,
   combatantId: string,
   move: MoveDefinition,
   /** Needed only by the requiresPartnerType side; omit and that side never fires. */
+  heroes?: Record<string, HeroDefinition>
+): number {
+  const combatant = state.combatants[combatantId];
+  const surcharge = combatant?.manaSurcharge ?? 0;
+  const priced = resolveConditionalManaCost(state, combatantId, move, heroes) + surcharge;
+  // A whole-pool cast takes everything held, never less than its floor.
+  return move.manaCostAll ? Math.max(priced, combatant?.currentMana ?? 0) : priced;
+}
+
+function resolveConditionalManaCost(
+  state: CombatState,
+  combatantId: string,
+  move: MoveDefinition,
   heroes?: Record<string, HeroDefinition>
 ): number {
   const combatant = state.combatants[combatantId];
@@ -288,7 +313,16 @@ export function hasAffordableMoveInFight(
   heroes?: Record<string, HeroDefinition>
 ): boolean {
   const currentMana = state.combatants[combatantId]?.currentMana ?? 0;
-  return moveIds.some((id) => currentMana >= resolveManaCost(state, combatantId, moves[id], heroes));
+  return moveIds.some((id) => isMoveUsable(state, combatantId, moves[id]) && currentMana >= resolveManaCost(state, combatantId, moves[id], heroes));
+}
+
+/** The gates a move carries beyond its price: `oncePerFight` not yet spent, `firstTurnOnly` on the combatant's first round out. Engine, AI and view all read this. */
+export function isMoveUsable(state: CombatState, combatantId: string, move: MoveDefinition): boolean {
+  const combatant = state.combatants[combatantId];
+  if (!combatant) return false;
+  if (move.oncePerFight && combatant.spentMoveIds?.includes(move.id)) return false;
+  if (move.firstTurnOnly && (combatant.firstActionRound ?? 1) !== state.round) return false;
+  return true;
 }
 
 /** Effective types of the caster's ACTIVE partner, or null when the slot is empty or fainted — the one reader of every requiresPartnerType condition. Bench never counts; grafts do. */

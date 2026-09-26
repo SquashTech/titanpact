@@ -877,6 +877,51 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew', magnitude: 20 },
     },
   },
+  // --- From the Tall Grass ---
+  hoard: {
+    id: 'hoard',
+    name: 'Hoard',
+    description: 'Whenever this hero Rests, it heals for the Mana it recovered.',
+    // A flat heal off the Rest's own number, outside the heal formula: a Rest that recovers nothing heals nothing.
+    reactive: {
+      hook: 'Rested',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'heal', target: 'self', amount: { kind: 'matchTriggerAmount', field: 'manaRestored' } },
+    },
+  },
+  deepgrip: {
+    id: 'deepgrip',
+    name: 'Deepgrip',
+    description: "Whenever this hero lands a Water attack, every move its target holds costs 5 more Mana for the rest of the fight, up to 20.",
+    // Holds on where a hold cannot matter — the enemy never switches — so the grip is priced in the
+    // lever every move already answers to. Capped so a long fight tightens it without a lockout.
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
+      effect: { kind: 'manaSurcharge', target: 'triggerTarget', amount: 5, max: 20 },
+    },
+  },
+  lure: {
+    id: 'lure',
+    name: 'Lure',
+    description: 'Whenever this hero takes damage, its next attack goes at +1 priority.',
+    // The orchid mantis: it is struck because it looks like a flower, and answers before the striker moves again.
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Poised' },
+    },
+  },
+  magmaHide: {
+    id: 'magmaHide',
+    name: 'Magma Hide',
+    description: 'Whenever this hero Rests, it gains Shield 40.',
+    reactive: {
+      hook: 'Rested',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 40 },
+    },
+  },
 };
 
 // --- Innate (HeroDefinition.passiveIds, docs/innate-passives.md) ---
@@ -916,6 +961,27 @@ const innatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 10 },
     },
   },
+  slumber: {
+    id: 'slumber',
+    name: 'Slumber',
+    description: 'Whenever this hero Rests, it gains Ambush 45.',
+    // Drake's pool runs dry every few turns, so the Rest the rules force is the breath it draws.
+    reactive: {
+      hook: 'Rested',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 45 },
+    },
+  },
+  poised: {
+    id: 'poised',
+    name: 'Poised',
+    description: 'Whenever this hero uses a move that deals no damage, its next attack goes at +1 priority.',
+    reactive: {
+      hook: 'MoveUsed',
+      condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Poised' },
+    },
+  },
   sulphur: {
     id: 'sulphur',
     name: 'Sulphur',
@@ -934,6 +1000,16 @@ const innatePassives: Record<string, PassiveDefinition> = {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
       effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'speed', amount: -5 },
+    },
+  },
+  ink: {
+    id: 'ink',
+    name: 'Ink',
+    description: 'When this hero switches out, both active enemies lose 10 Attack and 10 Intelligence.',
+    reactive: {
+      hook: 'SwitchedOut',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: ['attack', 'intelligence'], amount: -10 },
     },
   },
   carapace: {
@@ -1850,6 +1926,50 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       hook: 'StatusTicked',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Bleed', kind: 'damage' } },
       effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10 },
+    },
+  },
+  // --- From the Tall Grass (2026-09-26) ---
+  dragonsDream: {
+    id: 'dragonsDream',
+    name: "Dragon's Dream",
+    description: 'Whenever this hero Rests, it gains Ambush 90.',
+    // Slumber's 45, doubled: the Rest the rules force becomes the wind-up for the biggest swing in the run.
+    reactive: {
+      hook: 'Rested',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 90 },
+    },
+  },
+  abyssalInk: {
+    id: 'abyssalInk',
+    name: 'Abyssal Ink',
+    description: 'When this hero switches out, both active enemies lose 25 Attack and 25 Intelligence.',
+    reactive: {
+      hook: 'SwitchedOut',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: ['attack', 'intelligence'], amount: -25 },
+    },
+  },
+  // Poised carries no figure to double, so the mastered stance pays twice: the strike still goes a
+  // bracket early, and it lands with Ambush behind it. Two cards on the one trigger, read as one.
+  deathtrap: {
+    id: 'deathtrap',
+    name: 'Deathtrap',
+    description: 'Whenever this hero uses a move that deals no damage, its next attack goes at +1 priority and gains Ambush 30.',
+    reactive: {
+      hook: 'MoveUsed',
+      condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Poised' },
+    },
+  },
+  deathtrapEdge: {
+    id: 'deathtrapEdge',
+    name: 'Deathtrap',
+    description: 'Whenever this hero uses a move that deals no damage, it gains Ambush 30.',
+    reactive: {
+      hook: 'MoveUsed',
+      condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 30 },
     },
   },
 };

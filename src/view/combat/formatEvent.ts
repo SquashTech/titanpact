@@ -227,7 +227,9 @@ export function formatEvents(
             ? 'dazed'
             : e.reason === 'targetStatusMissing'
               ? 'left without a marked target'
-              : 'out of valid targets';
+              : e.reason === 'moveUnavailable'
+                ? 'past the moment for that move'
+                : 'out of valid targets';
         lines.push({ key, text: `${name(e.combatantId)} is ${reasonText} and can't act`, className: 'log-faint' });
         break;
       }
@@ -260,6 +262,9 @@ export function formatEvents(
         });
         break;
       }
+      case 'ManaSurcharged':
+        lines.push({ key, text: `${name(e.combatantId)}'s moves now cost ${e.total} more Mana`, className: 'log-faint' });
+        break;
       case 'FieldEffectExpired': {
         const fx = fieldEffects[e.fieldEffectId];
         lines.push({ key, text: `${fx?.name ?? e.fieldEffectId} fades from the battlefield`, className: 'log-field-effect' });

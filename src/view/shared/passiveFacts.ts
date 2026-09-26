@@ -137,6 +137,8 @@ function triggerFact(def: NonNullable<PassiveDefinition['reactive']>): PassiveFa
       };
     case 'SwitchedIn':
       return { label: 'When', text: `${who} enters the battlefield`, glyph: { kind: 'move', move: 'buff' } };
+    case 'SwitchedOut':
+      return { label: 'When', text: `${who} switches out`, glyph: { kind: 'move', move: 'debuff' } };
     case 'RoundEnded':
       return {
         label: 'When',
@@ -160,6 +162,12 @@ function triggerFact(def: NonNullable<PassiveDefinition['reactive']>): PassiveFa
       };
     case 'Rested':
       return { label: 'When', text: `${who} Rests`, glyph: { kind: 'stat', stat: 'manaPool' } };
+    case 'MoveUsed':
+      return {
+        label: 'When',
+        text: fields.damaging === 'false' ? `${who} uses a move that deals no damage` : fields.damaging === 'true' ? `${who} attacks` : `${who} uses a move`,
+        glyph: { kind: 'move', move: fields.damaging === 'true' ? 'physical' : 'buff' },
+      };
   }
 }
 
@@ -210,6 +218,12 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
           effect.amount.kind === 'flat'
             ? `+${effect.amount.value} Mana to ${targetWord(effect.target, condition, hook)}, past the pool`
             : `Mana equal to ${amountWord(effect.amount, '')} to ${targetWord(effect.target, condition, hook)}, past the pool`,
+        glyph: { kind: 'stat', stat: 'manaPool' },
+      };
+    case 'manaSurcharge':
+      return {
+        label: 'Then',
+        text: `Every move costs ${targetWord(effect.target, condition, hook)} ${effect.amount} more Mana for the fight, up to ${effect.max}`,
         glyph: { kind: 'stat', stat: 'manaPool' },
       };
     case 'damage':
