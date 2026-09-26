@@ -1,6 +1,6 @@
 # collection.md — The Collection: a deck of heroes, and the stars that grow it
 
-> **STATUS: DIRECTION DECIDED 2026-09-26 (per user direction), NUMBERS OPEN. PHASES 1 (THE DECK) AND 2 (THE STAKES) ARE IN, same day — §10.**
+> **STATUS: DIRECTION DECIDED 2026-09-26 (per user direction), NUMBERS OPEN. PHASES 1–3 (THE DECK, THE STAKES, SINGLE HEROES AND THE SUMMONING) ARE IN, same day — §10.**
 > The designer stops assigning heroes to the draft or the recruit pool; the player does, on a
 > **Deck** built from the heroes the account owns. The base 42 are owned from the first launch
 > and the default deck IS today's split, so a new account plays today's game. Stars become a
@@ -258,6 +258,17 @@ In **constellation.md**:
    bonus as a Records chip, and its Start a New Run names the fee — or, out of reach, says what
    the rung needs, since that button skips the picker. The Constellation's ledger counts both.
    Unmeasured beyond the arithmetic above; the numbers are the designer's after play.
-3. **Single purchases and the Summoning** — needs heroes past the base 42 worth buying; the two
-   bundles are the first.
+3. **Single purchases and the Summoning — BUILT 2026-09-26.** Every hero outside the base 42 is an
+   offer of its own at `HERO_PRICE` = 3 (`hero.<id>`, generated in `data/starShop.ts`). A bundle is
+   those heroes a star cheaper and is **sold only while none of them is owned** (`offerWithdrawn`):
+   past that its heroes are singles, so no hero is paid for twice and no price ever moves; three
+   singles hold the bundle. **The Summoning** is `SUMMON_PRICE` = 2 — under a single, the discount
+   for giving up the choice — and draws from `summonPool`, the heroes outside the base not owned,
+   so never a duplicate; it goes quiet when the pool is empty. It leaves `summon.<id>` in
+   `Profile.purchases`, priced by `starsSpent`, so ownership is still one read
+   (`ownsHero`, `run/recruitment.ts`: base, bundle, single, or drawn). The Constellation's first
+   shelf is **Heroes** — the Summoning over one row a hero — and a draw is revealed on its own sheet.
+   A hero bought or drawn lands in its row's **reserve** in the Collection, never in the deck, and
+   swaps in from either side. Locked heroes are not yet on the Collection's grid; the shop is where
+   they are seen.
 4. **Constellation re-price** against §5.

@@ -119,7 +119,7 @@ import { LocationProvider } from '../view/shared/LocationContext';
 import { LocationChoiceScreen } from '../view/run/LocationChoiceScreen';
 import { ProfileProvider } from '../view/shared/ProfileContext';
 import { starShopCatalog } from '../data/starShop';
-import { buyOffer, canEnterRung, starBalance, type StarShopOffer } from '../run/starShop';
+import { buyOffer, canEnterRung, starBalance, summon, type StarShopOffer } from '../run/starShop';
 import { NODE_TINT_MANA, NODE_TINT_VITAL } from '../view/shared/NodeStage';
 import { prefetchTrack, setTrack } from '../audio/music';
 import { playSfx } from '../audio/sfx';
@@ -583,6 +583,19 @@ export function App() {
   /** A Constellation purchase (run/starShop.ts): written to storage, then the title re-reads it so the balance moves. */
   function handleBuyOffer(offer: StarShopOffer) {
     setProfile(updateProfile((current) => buyOffer(current, starShopCatalog, offer)));
+  }
+
+  /** A Summoning (docs/collection.md §4): written to storage like a purchase, the hero drawn handed back for the reveal. */
+  function handleSummon(): string {
+    let drawn = '';
+    setProfile(
+      updateProfile((current) => {
+        const result = summon(current, starShopCatalog, Math.random());
+        drawn = result.heroId;
+        return result.profile;
+      })
+    );
+    return drawn;
   }
 
   /** The Collection's edit (docs/collection.md §2): the next run drafts from it and is sealed with it. */
@@ -1112,6 +1125,7 @@ export function App() {
           onRefreshProfile={() => setProfile(readProfile())}
           onEraseAllData={handleEraseAllData}
           onBuyOffer={handleBuyOffer}
+          onSummon={handleSummon}
           onChangeDeck={handleChangeDeck}
           parkedRun={saveSlot.save ? saveSummary(saveSlot.save) : null}
           staleSaveReason={saveSlot.staleReason}

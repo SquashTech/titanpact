@@ -7,8 +7,9 @@ import { locations } from '../src/data/locations';
 import { locationPool, unvisitedLocationIds } from '../src/run/locations';
 import { heroes } from '../src/data/heroes';
 import { guildHallOffers, guildHallOffersFor } from '../src/data/recruitment';
-import { heroPool, isRecruitable } from '../src/run/recruitment';
-import { buyOffer, canBuy, canEnterRung, isPurchased, starBalance, starsSpent, StarShopError, type StarShopCatalog, type StarShopGrant } from '../src/run/starShop';
+import { heroOfferId, heroPool, isRecruitable } from '../src/run/recruitment';
+import { deckHeroIds, profileDeck } from '../src/run/deck';
+import { SUMMON_PRICE, buyOffer, canBuy, canEnterRung, canSummon, isPurchased, offerHeld, offerWithdrawn, summon, summonPool, starBalance, starsSpent, StarShopError, type StarShopCatalog, type StarShopGrant } from '../src/run/starShop';
 
 const pack: StarShopGrant = { kind: 'starterPack' };
 
@@ -161,4 +162,59 @@ test('star shop: a profile written before the stakes reads as none earned and no
   assert.strictEqual(old.bonusStars, 0);
   assert.strictEqual(old.feesPaid, 0);
   assert.strictEqual(old.runHistory[0].clearBonus, 0);
+});
+
+test('star shop: every hero outside the base is sold singly, dearer than its share of a bundle', () => {
+  for (const hero of Object.values(heroes)) {
+    const single = starShopCatalog[heroOfferId(hero.id)];
+    if (!hero.unlock) {
+      assert.strictEqual(single, undefined, `${hero.id} is in the base roster and on sale`);
+      continue;
+    }
+    assert.ok(single && single.grant.kind === 'hero' && single.grant.heroId === hero.id, `${hero.id} has no single offer`);
+    const bundle = starShopCatalog[hero.unlock];
+    const size = bundle.grant.kind === 'heroBundle' ? bundle.grant.heroIds.length : 1;
+    assert.ok(single.cost * size > bundle.cost, `${hero.unlock} is no discount on ${hero.id}`);
+    assert.ok(SUMMON_PRICE < single.cost, 'a blind draw is cheaper than a choice');
+  }
+});
+
+test('star shop: a single hero joins the Collection, and its bundle comes off sale rather than charging twice', () => {
+  const rich = { ...createProfile(), bonusStars: 30 };
+  const bought = buyOffer(rich, starShopCatalog, starShopCatalog[heroOfferId('scallywag')]);
+  assert.ok('scallywag' in heroPool(heroes, bought.purchases));
+  assert.ok(!('patch' in heroPool(heroes, bought.purchases)));
+  const bundle = starShopCatalog['bundle.freeCompany'];
+  assert.ok(offerWithdrawn(bought, bundle) && !canBuy(bought, starShopCatalog, bundle));
+  assert.throws(() => buyOffer(bought, starShopCatalog, bundle), StarShopError);
+  assert.throws(() => buyOffer(bought, starShopCatalog, starShopCatalog[heroOfferId('scallywag')]), StarShopError, 'owned already');
+  let all = buyOffer(bought, starShopCatalog, starShopCatalog[heroOfferId('patch')]);
+  all = buyOffer(all, starShopCatalog, starShopCatalog[heroOfferId('vex')]);
+  assert.ok(offerHeld(all, bundle) && !offerWithdrawn(all, bundle), 'three singles hold the bundle');
+  // And the other way: the bundle owns its heroes, so their singles read as held.
+  const viaBundle = buyOffer(rich, starShopCatalog, bundle);
+  assert.ok(offerHeld(viaBundle, starShopCatalog[heroOfferId('patch')]));
+});
+
+test('star shop: a Summoning draws only heroes not owned, costs its price, and stops when there are none', () => {
+  let profile = { ...createProfile(), bonusStars: 100 };
+  const outside = Object.values(heroes).filter((h) => h.unlock).length;
+  const seen = new Set<string>();
+  for (let i = 0; i < outside; i++) {
+    const before = starBalance(profile, starShopCatalog);
+    const result = summon(profile, starShopCatalog, (i * 0.37) % 1);
+    assert.ok(!seen.has(result.heroId), `${result.heroId} drawn twice`);
+    seen.add(result.heroId);
+    assert.ok(result.heroId in heroPool(heroes, result.profile.purchases));
+    assert.strictEqual(starBalance(result.profile, starShopCatalog), before - SUMMON_PRICE);
+    profile = result.profile;
+  }
+  assert.strictEqual(summonPool(profile).length, 0);
+  assert.ok(!canSummon(profile, starShopCatalog));
+  assert.throws(() => summon(profile, starShopCatalog, 0.5), StarShopError);
+  assert.throws(() => summon(createProfile(), starShopCatalog, 0.5), StarShopError, 'no stars');
+  // A drawn hero is in the deck's reserve, not the deck.
+  const drawn = summon({ ...createProfile(), bonusStars: 5 }, starShopCatalog, 0);
+  const deck = profileDeck(drawn.profile, heroes);
+  assert.ok(!deckHeroIds(deck).includes(drawn.heroId));
 });
