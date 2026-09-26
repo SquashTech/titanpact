@@ -27488,30 +27488,59 @@ button.star-shop-bundle-face {
   }
 }
 
-/* A tip about one thing on screen: the scrim moves onto the spotlight's
-   shadow, so everything but that thing dims harder than a plain tip's. */
+/* A tip about things on screen: the scrim moves into an SVG with a hole cut
+   for each thing the page names (tipStaging.ts), so everything else dims
+   harder than a plain tip's while the named things stay lit, each ringed. */
 .tip-overlay.has-spotlight {
   background: none;
+}
+
+.tip-scrim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.tip-scrim-fill {
+  fill: rgba(8, 9, 13, 0.74);
 }
 
 .tip-spotlight {
   position: absolute;
   pointer-events: none;
-  border-radius: var(--radius-lg);
+  border-radius: 9px;
   box-shadow:
     0 0 0 2px var(--accent),
-    0 0 18px 4px rgba(224, 166, 60, 0.45),
-    0 0 0 9999px rgba(8, 9, 13, 0.72);
-  animation: tip-spotlight-pulse 1.6s ease-in-out infinite alternate;
+    0 0 16px 3px rgba(224, 166, 60, 0.45);
+  animation:
+    tip-spotlight-in 240ms ease-out both,
+    tip-spotlight-pulse 1.6s ease-in-out 240ms infinite alternate;
+}
+
+@keyframes tip-spotlight-in {
+  from {
+    opacity: 0;
+    transform: scale(1.08);
+  }
 }
 
 @keyframes tip-spotlight-pulse {
   to {
     box-shadow:
       0 0 0 2px var(--accent),
-      0 0 26px 8px rgba(224, 166, 60, 0.6),
-      0 0 0 9999px rgba(8, 9, 13, 0.72);
+      0 0 24px 7px rgba(224, 166, 60, 0.62);
   }
+}
+
+/* The card goes where it hides least of what is lit (TipOverlay choosePlacement). */
+.tip-overlay.is-top {
+  align-items: flex-start;
+}
+
+.tip-overlay.is-bottom {
+  align-items: flex-end;
 }
 
 /* A tip over a screen whose subject is its middle (the act's arrival): the

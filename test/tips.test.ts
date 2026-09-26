@@ -21,12 +21,10 @@ function ctx(overrides: Partial<FightTipContext> = {}): FightTipContext {
     round: 1,
     nodeType: 'fight',
     anyOutOfMana: false,
-    lockedIn: false,
     benchSize: 0,
     playerKnockouts: 0,
     enemyTypesOnField: [],
     fieldEffectActive: false,
-    pactClockNear: false,
     ...overrides,
   };
 }
@@ -92,21 +90,23 @@ test('tips: each fight tip waits for its own moment', () => {
   assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ round: 2 }), seenBasics)?.id, 'fight.types');
   const past = ['fight.basics', 'fight.types', 'fight.bag'];
   assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ round: 4, anyOutOfMana: true }), past)?.id, 'fight.rest');
-  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ nodeType: 'boss' }), past)?.id, 'fight.guardian');
+  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ nodeType: 'boss' }), past)?.id, 'fight.pactClock', 'the first Guardian warns of the clock');
   assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ nodeType: 'skirmish' }), seenBasics)?.id, 'fight.skirmish');
   assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ nodeType: 'elite' }), seenBasics)?.id, 'fight.skirmish');
   assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ enemyTypesOnField: ['Beast', 'Ancient'] }), past)?.id, 'fight.ancient');
-  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ benchSize: 1 }), past), null, 'the bench waits for round 2');
-  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ round: 2, benchSize: 1 }), past)?.id, 'fight.bench');
+  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ benchSize: 1 }), past)?.id, 'fight.switching', 'the first fight with a bench');
+  assert.strictEqual(
+    matchFightTip(FIGHT_TIPS, ctx({ nodeType: 'skirmish', benchSize: 1 }), seenBasics)?.id,
+    'fight.skirmish',
+    'the Skirmish card first; switching waits a round'
+  );
   assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ playerKnockouts: 1 }), past)?.id, 'fight.knockout');
-  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ lockedIn: true }), past)?.id, 'fight.lockIn');
   assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ fieldEffectActive: true }), past)?.id, 'fight.field');
-  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ pactClockNear: true }), past)?.id, 'fight.pactClock');
 });
 
 test('tips: a seen fight tip never shows again', () => {
   const seen = FIGHT_TIPS.map((tip) => tip.id);
-  const everything = ctx({ round: 40, nodeType: 'boss', anyOutOfMana: true, lockedIn: true, benchSize: 3, playerKnockouts: 3, enemyTypesOnField: ['Ancient'], fieldEffectActive: true, pactClockNear: true });
+  const everything = ctx({ round: 40, nodeType: 'boss', anyOutOfMana: true, benchSize: 3, playerKnockouts: 3, enemyTypesOnField: ['Ancient'], fieldEffectActive: true });
   assert.strictEqual(matchFightTip(FIGHT_TIPS, everything, seen), null);
 });
 
