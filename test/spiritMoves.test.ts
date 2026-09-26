@@ -341,10 +341,7 @@ test('spirit: Revenant holds the magical line and Sorrow the physical one — sp
   assert.ok(magicalReached.every((m) => m.kind !== 'damage'));
 });
 
-test('spirit: Sorrow is a recruit-only mirror of Revenant, and its kit is all its own type', () => {
-  assert.strictEqual(heroes.sorrow.starter, false);
-  assert.strictEqual(heroes.revenant.starter, true, 'Spirit keeps exactly one hero in the draft');
-
+test('spirit: Sorrow is a mirror of Revenant, and its kit is all its own type', () => {
   assert.strictEqual(heroes.sorrow.moveIds.length, 3);
   for (const id of heroes.sorrow.moveIds) assert.strictEqual(moves[id].type, 'Spirit');
   assert.ok(

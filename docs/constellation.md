@@ -1,5 +1,8 @@
 # constellation.md — The Constellation: what a star buys
 
+> **2026-09-26: §3 (Starter Packs) is DELETED** with the starter split (`docs/collection.md` §2), and
+> the Compendium is gone — its stars are this panel's Stars and Spawn tabs (`docs/collection.md` §10).
+
 > **STATUS: DECIDED IN SHAPE 2026-09-17 (per user direction), NOTHING BUILT.** The shop is
 > plumbed (`src/run/starShop.ts`, `Profile.purchases`, `StarShopScreen.tsx`) and its catalog
 > (`src/data/starShop.ts`) is empty. This doc is the plan for what fills it, written ahead of the

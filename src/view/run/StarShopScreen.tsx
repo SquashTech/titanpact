@@ -3,7 +3,7 @@ import { STAR_SHOP_OFFERS, starShopCatalog } from '../../data/starShop';
 import { locationDomains, locations } from '../../data/locations';
 import { heroes } from '../../data/heroes';
 import type { Profile } from '../../run/profile';
-import { SUMMON_PRICE, canBuy, canSummon, offerHeld, offerWithdrawn, starBalance, starsEarned, starsSpent, summonPool, type StarShopGrant, type StarShopOffer } from '../../run/starShop';
+import { SUMMON_PRICE, canBuy, canSummon, offerHeld, offerWithdrawn, starBalance, starsEarned, starsSpent, summonPool, type StarShopOffer } from '../../run/starShop';
 import { HubGlyph } from '../shared/nodeIcons';
 import { ElementGlyph } from '../shared/elementIcons';
 import { LocationHorizon } from '../shared/locationArt';
@@ -13,17 +13,19 @@ import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { HeroDossierOverlay } from './HeroDossierOverlay';
 import { LocationPeekOverlay } from './LocationPeekOverlay';
 import { BundlePeekOverlay } from './BundlePeekOverlay';
+import { HeroStarsPage, SpawnStarsPage } from './StarPages';
 
-/** The shop's name, in one place: the title tile, this panel's header. The Constellation — the stars the Compendium charts, seen as one sky to draw on. */
+/** The shop's name, in one place: the title tile, this panel's header. The Constellation — every star earned, charted, and the sky they are spent on. */
 export const STAR_SHOP_NAME = 'The Constellation';
 
-type ShelfId = StarShopGrant['kind'];
+type ShelfId = 'heroes' | 'places' | 'stars' | 'spawn';
 
-/** One page per kind of grant. Counts come off the catalog, so an empty shelf greys on the strip. */
-const SHELVES: readonly (TabSpec<ShelfId> & { empty: string })[] = [
-  { id: 'hero', label: 'Heroes', glyph: 'recruit', empty: 'Every hero outside the base roster, one at a time.' },
-  { id: 'heroBundle', label: 'Hero Bundles', glyph: 'heroes', empty: 'A bundle is a few heroes into the recruit pool — a fourth for a type, or a themed handful. None are written yet.' },
-  { id: 'location', label: 'Locations', glyph: 'places', empty: 'A place the road can offer beside the base five: its own weather, its own spawn, its own warden.' },
+/** The two shelves stars are spent on, then the two pages that chart where they were earned. A single hero is bought in the Collection. */
+const SHELVES: readonly (TabSpec<ShelfId> & { grant?: StarShopOffer['grant']['kind']; empty?: string })[] = [
+  { id: 'heroes', label: 'Heroes', glyph: 'heroes', grant: 'heroBundle', empty: 'A bundle is a few heroes into the Collection — a fourth for a type, or a themed handful. None are written yet.' },
+  { id: 'places', label: 'Locations', glyph: 'places', grant: 'location', empty: 'A place the road can offer beside the base five: its own weather, its own spawn, its own warden.' },
+  { id: 'stars', label: 'Stars', glyph: 'stars' },
+  { id: 'spawn', label: 'Spawn', glyph: 'spawn' },
 ];
 
 interface Props {
@@ -46,25 +48,26 @@ export interface OfferPurchase {
 }
 
 /**
- * Where stars are spent (run/starShop.ts); the deck is dressed in the Collection. The
- * balance leads — the star and the count — then the shelf the strip has open.
+ * Where stars are spent (run/starShop.ts) and where they are charted; the deck is dressed, and a
+ * single hero bought, in the Collection. The balance leads — the star and the count — then the
+ * page the strip has open.
  * Bundles and Locations are rows that OPEN: a bundle's row is a line-up and a place's row is a
  * scene, and tapping either brings up its own screen, where the heroes can be examined and the
  * place looked around — and where the one Purchase button is. Nothing on a shelf row spends a
- * star; the cost on it is a label. The Compendium's sheet (CompendiumScreen), tabs at the foot.
+ * star; the cost on it is a label. Tabs at the foot, in the thumb's arc.
  */
 export function StarShopScreen({ profile, onBuy, onSummon, onClose }: Props) {
   const earned = starsEarned(profile);
   const spent = starsSpent(profile, starShopCatalog);
   const balance = starBalance(profile, starShopCatalog);
-  const [shelf, setShelf] = useState<ShelfId>('hero');
+  const [shelf, setShelf] = useState<ShelfId>('heroes');
   const [dossierHeroId, setDossierHeroId] = useState<string | null>(null);
   const [openOfferId, setOpenOfferId] = useState<string | null>(null);
   const [summonedHeroId, setSummonedHeroId] = useState<string | null>(null);
 
-  const tabs = SHELVES.map((s) => ({ ...s, count: STAR_SHOP_OFFERS.filter((o) => o.grant.kind === s.id).length }));
+  const tabs = SHELVES.map((s) => (s.id === 'places' ? { ...s, count: STAR_SHOP_OFFERS.filter((o) => o.grant.kind === s.grant).length } : s));
   const open = SHELVES.find((s) => s.id === shelf)!;
-  const offers = STAR_SHOP_OFFERS.filter((o) => o.grant.kind === shelf);
+  const offers = open.grant ? STAR_SHOP_OFFERS.filter((o) => o.grant.kind === open.grant) : [];
   const dossierHero = dossierHeroId ? heroes[dossierHeroId] : null;
   const openOffer = openOfferId ? starShopCatalog[openOfferId] : null;
   const purchaseOf = (offer: StarShopOffer): OfferPurchase => ({
@@ -101,7 +104,7 @@ export function StarShopScreen({ profile, onBuy, onSummon, onClose }: Props) {
             </span>
           </div>
 
-          {shelf === 'hero' && (
+          {shelf === 'heroes' && (
             <SummonRow
               left={summonPool(profile).length}
               enabled={canSummon(profile, starShopCatalog)}
@@ -109,7 +112,11 @@ export function StarShopScreen({ profile, onBuy, onSummon, onClose }: Props) {
             />
           )}
 
-          {offers.length === 0 ? (
+          {shelf === 'stars' ? (
+            <HeroStarsPage profile={profile} />
+          ) : shelf === 'spawn' ? (
+            <SpawnStarsPage profile={profile} />
+          ) : offers.length === 0 ? (
             <div className="star-shop-empty">
               <span className="star-shop-empty-title">Nothing on this shelf yet</span>
               <span className="star-shop-empty-note">{open.empty}</span>
@@ -118,9 +125,6 @@ export function StarShopScreen({ profile, onBuy, onSummon, onClose }: Props) {
             <div className="star-shop-offers">
               {offers.map((offer) => {
                 const held = offerHeld(profile, offer);
-                if (offer.grant.kind === 'hero') {
-                  return <HeroRow key={offer.id} offer={offer} heroId={offer.grant.heroId} held={held} onOpen={() => setOpenOfferId(offer.id)} />;
-                }
                 if (offer.grant.kind === 'location') {
                   return <LocationRow key={offer.id} offer={offer} locationId={offer.grant.locationId} held={held} onOpen={() => setOpenOfferId(offer.id)} />;
                 }
@@ -139,9 +143,11 @@ export function StarShopScreen({ profile, onBuy, onSummon, onClose }: Props) {
             </div>
           )}
 
-          <p className="records-note star-shop-note">
-            {'A star is earned by clearing a run with a hero in one of its Evolutions — three a hero, one a form — and every clear pays a bonus on top, more on a harder rung. Spending one never takes it off the hero: the Compendium keeps every star you have ever earned.'}
-          </p>
+          {shelf === 'stars' && (
+            <p className="records-note star-shop-note">
+              {'A star is earned by clearing a run with a hero in one of its Evolutions — three a hero, one a form — and every clear pays a bonus on top, more on a harder rung. Spending one never takes it off this page.'}
+            </p>
+          )}
         </div>
 
         <TabStrip tabs={tabs} active={shelf} onSelect={setShelf} />
@@ -158,9 +164,6 @@ export function StarShopScreen({ profile, onBuy, onSummon, onClose }: Props) {
       )}
       {openOffer?.grant.kind === 'heroBundle' && (
         <BundlePeekOverlay heroIds={openOffer.grant.heroIds} purchase={purchaseOf(openOffer)} onPeekHero={setDossierHeroId} onClose={() => setOpenOfferId(null)} />
-      )}
-      {openOffer?.grant.kind === 'hero' && (
-        <BundlePeekOverlay heroIds={[openOffer.grant.heroId]} purchase={purchaseOf(openOffer)} onPeekHero={setDossierHeroId} onClose={() => setOpenOfferId(null)} />
       )}
       {summonedHeroId && <SummonReveal heroId={summonedHeroId} onPeekHero={setDossierHeroId} onClose={() => setSummonedHeroId(null)} />}
       {dossierHero && <HeroDossierOverlay hero={dossierHero} onClose={() => setDossierHeroId(null)} />}
@@ -297,29 +300,6 @@ function BundleRow({ offer, heroIds, held, withdrawn, onOpen }: { offer: StarSho
         </span>
       </div>
       <CostBadge offer={offer} held={held} withdrawn={withdrawn} />
-    </OpenRow>
-  );
-}
-
-/** One hero on its own: the face, the name, its types — and opens the hero's own screen with the Purchase. */
-function HeroRow({ offer, heroId, held, onOpen }: { offer: StarShopOffer; heroId: string; held: boolean; onOpen: () => void }) {
-  const hero = heroes[heroId];
-  if (!hero) return null;
-  return (
-    <OpenRow className={`star-shop-bundle star-shop-hero${held ? ' is-held' : ''}`} label={`${hero.name} — see the hero`} onOpen={onOpen}>
-      <span className="star-shop-bundle-face" style={{ color: getTypeColor(hero.types[0]) }} aria-hidden="true">
-        <HeroPortrait heroId={heroId} className="star-shop-bundle-portrait" />
-        <span className="star-shop-bundle-face-type">
-          <ElementGlyph type={hero.types[0]} />
-        </span>
-      </span>
-      <div className="star-shop-offer-body">
-        <span className="star-shop-offer-name">{hero.name}</span>
-        <span className="star-shop-hero-type" style={{ color: getTypeColor(hero.types[0]) }}>
-          {hero.types.join(' / ')}
-        </span>
-      </div>
-      <CostBadge offer={offer} held={held} />
     </OpenRow>
   );
 }

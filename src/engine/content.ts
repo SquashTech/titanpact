@@ -534,12 +534,10 @@ export interface HeroDefinition {
   baseStats: StatLine;
   /** Move ids currently unlocked for this hero instance. */
   moveIds: readonly string[];
-  /** Offered in the start-of-run draft; false = recruit-only (Guild Hall / Recruit Contract). Single source of truth for the split. */
-  starter: boolean;
   /**
-   * The Constellation offer that puts this hero in a run's pools (docs/constellation.md §4): a
-   * bundle hero is recruit-only and outside the base roster, drawn beside it once the offer is
-   * held (run/recruitment.ts `heroPool`). The base roster carries none. Never a starter.
+   * The Constellation offer that puts this hero in the Collection (docs/collection.md §4): a hero
+   * outside the base roster, owned once the offer is held (run/recruitment.ts `heroPool`). The
+   * base roster carries none.
    */
   unlock?: string;
   /**

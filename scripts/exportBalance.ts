@@ -314,7 +314,7 @@ function heroSection(hero: HeroDefinition): string[] {
   const s = hero.baseStats;
   const g = hero.growthGrades;
   const sched = scheduleFor(hero);
-  lines.push(`### ${hero.name} — ${hero.types.join(' / ')} · ${hero.starter ? 'starter' : 'recruit-only'}`);
+  lines.push(`### ${hero.name} — ${hero.types.join(' / ')}`);
   lines.push('');
   lines.push(
     `- **Stats:** ${STAT_ORDER.filter((k) => k !== 'mpRegen')

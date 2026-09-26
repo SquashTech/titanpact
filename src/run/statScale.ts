@@ -67,5 +67,5 @@ export function statScaleFor(run: Pick<RunState, 'roster' | 'encountersWon' | 'r
   return statScaleAt(rosterPar(run), relicTeamStatModifiers(run.relics, relics));
 }
 
-/** Level 1, nothing held: the draft's and the Compendium's reference. */
+/** Level 1, nothing held: the draft's and the Collection's reference. */
 export const BASE_STAT_SCALE: StatScale = statScaleAt(1);

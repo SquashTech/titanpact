@@ -53,7 +53,7 @@ const TITAN_EYE = (
 // The Elite's crown, drawn where it sits on the helm below; HUB_PATHS.crown centres it.
 const CROWN = <path d="M4.6 2.2 8 5.6l4-3.4 4 3.4 3.4-3.4-1 5.4H5.6Z" />;
 
-// Great-helm, drawn once in sectionIcons: the recruitable tile and the Compendium's Recruitable page.
+// Great-helm, drawn once in sectionIcons: the recruitable tile.
 const HELM = SECTION_PATHS.recruit;
 
 // The Mastery Scroll (the Scribe, the Cache, the shelf) — drawn once, in sectionIcons.
@@ -218,9 +218,9 @@ const HUB_PATHS = {
       <rect x="3.4" y="16.2" width="17.2" height="3.2" rx="1.6" />
     </>
   ),
-  // The Compendium. Same open tome as the Mentor node above, deliberately: both are the book
-  // you read to learn what a hero is. They never share a screen — the Mentor is a map tile, the
-  // Compendium a title-screen and squad-select corner — so one picture is the rule, not a clash.
+  // The Reference. Same open tome as the Mentor node above, deliberately: both are a book you
+  // read to learn. They never share a screen — the Mentor is a map tile, the Reference a
+  // squad-select corner — so one picture is the rule, not a clash.
   codex: OPEN_BOOK,
 // Leaving the run: an archway, drawn as the opening rather than as the slab that fills it.
   // A door-and-jamb was drawn first and is a bar beside a box below 22px — the 3-unit jamb and

@@ -45,7 +45,7 @@ export const STAR_SHOP_OFFERS: readonly StarShopOffer[] = [
   {
     id: 'bundle.freeCompany',
     name: 'Free Company',
-    description: 'Blades for hire, sworn to no seal. They take contracts and Guild Hall coin like anyone, and never stand in the draft.',
+    description: 'Blades for hire, sworn to no seal. Into the Collection, to deck like anyone.',
     cost: 8,
     grant: { kind: 'heroBundle', heroIds: ['scallywag', 'patch', 'vex'] },
   },
@@ -53,7 +53,7 @@ export const STAR_SHOP_OFFERS: readonly StarShopOffer[] = [
   {
     id: 'bundle.tallGrass',
     name: 'From the Tall Grass',
-    description: 'Fire, water and green, come up out of the long grass at the road\'s edge. They take contracts and Guild Hall coin like anyone, and never stand in the draft.',
+    description: 'Fire, water and green, come up out of the long grass at the road\'s edge. Into the Collection, to deck like anyone.',
     cost: 8,
     grant: { kind: 'heroBundle', heroIds: ['drake', 'nautilus', 'tixwick'] },
   },

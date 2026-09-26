@@ -11,7 +11,7 @@ import { heroOfferId, heroPool, isRecruitable } from '../src/run/recruitment';
 import { deckHeroIds, profileDeck } from '../src/run/deck';
 import { SUMMON_PRICE, buyOffer, canBuy, canEnterRung, canSummon, isPurchased, offerHeld, offerWithdrawn, summon, summonPool, starBalance, starsSpent, StarShopError, type StarShopCatalog, type StarShopGrant } from '../src/run/starShop';
 
-const pack: StarShopGrant = { kind: 'starterPack' };
+const pack: StarShopGrant = { kind: 'location', locationId: 'holySanctum' };
 
 /** A three-offer catalog for the rules, apart from the shipped one. */
 const catalog: StarShopCatalog = {
@@ -77,12 +77,11 @@ test('star shop: the shipped catalog is consistent with itself', () => {
     assert.strictEqual(starShopCatalog[offer.id], offer);
     // A Location offer names a real place, and that place names the offer back: the pool gate reads the pair.
     if (offer.grant.kind === 'location') assert.strictEqual(locations[offer.grant.locationId]?.unlock, offer.id, `${offer.id} and its Location disagree`);
-    // A bundle names real heroes, each of which names the bundle back, and none of them stands in the draft.
+    // A bundle names real heroes, each of which names the bundle back.
     if (offer.grant.kind === 'heroBundle') {
       assert.ok(offer.grant.heroIds.length > 0, `${offer.id} is an empty bundle`);
       for (const heroId of offer.grant.heroIds) {
         assert.strictEqual(heroes[heroId]?.unlock, offer.id, `${offer.id} and ${heroId} disagree`);
-        assert.strictEqual(heroes[heroId].starter, false, `${heroId} is a bundle hero and a starter`);
       }
     }
   }

@@ -50,7 +50,6 @@ test('titanspawn: fourteen lines in chart order, one per mortal type, three tier
       assert.ok(spawn, `${line.type} has no ${tier}`);
       assert.strictEqual(spawn.tier, tier);
       assert.deepStrictEqual([...spawn.types], [line.type], `${spawn.id} is not mono-${line.type}`);
-      assert.strictEqual(spawn.starter, false);
       assert.strictEqual(spawn.name, line.names[tier]);
       assert.deepStrictEqual(spawnPosition(spawn.id), { line, tier });
     }

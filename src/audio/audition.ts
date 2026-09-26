@@ -50,7 +50,7 @@ const NOTES: Partial<Record<SfxId, string>> = {
   'ui.commit': 'the big one — draft sealed, class taken, evolution chosen',
   'ui.launch': 'Start a Run — the biggest sound in the UI table',
   levelUp: 'a hero gains a level',
-  'pact.bind': 'a starter bound in the draft',
+  'pact.bind': 'a hero bound in the draft',
   equip: 'gear going onto a hero',
   'contract.sign': 'a Recruit Contract signed',
   shrine: 'arriving at a blessing shrine — re-pitched per shrine',

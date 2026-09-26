@@ -224,7 +224,7 @@ function PathButton({ hero, path, onInspect }: { hero: HeroDefinition; path: Evo
       <div className="evolution-path-head">
         <span className="evolution-path-name">{path.name}</span>
         {/* Only the EARNED star is printed here: the choice is between three forms, and three
-            empty outlines would make it read as a checklist. The Compendium is where the gaps show. */}
+            empty outlines would make it read as a checklist. The Constellation's Stars page is where the gaps show. */}
         {starred && <EvolutionStar path={path} className="evolution-path-star" />}
         <span className="evolution-path-chevron" aria-hidden="true">
           ›

@@ -48,9 +48,8 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 /**
  * Lifetime figures, read once when this opens (profileStorage is not React state). Stars
- * themselves live on the Compendium tiles — this screen only counts them, so the two are
- * not two places to keep the same list. The Compendium's sheet (CompendiumScreen), page for
- * page: title bar, well, the strip at the foot, one Close under the panel.
+ * themselves live on the Constellation's Stars page — this screen only counts them, so the two
+ * are not two places to keep the same list. The Constellation's sheet, page for page: title bar, well, the strip at the foot, one Close under the panel.
  */
 export function RecordsScreen({ profile, onEraseAllData, onClose }: Props) {
   // Two taps: this is the only control in the game that destroys something unrecoverable.
@@ -95,7 +94,7 @@ export function RecordsScreen({ profile, onEraseAllData, onClose }: Props) {
 
               <div className="tab-subhead">Stars</div>
               {/* Was a two-sentence paragraph explaining what a star is and where to see one. The
-                  second half is a navigation instruction the Compendium answers by having them on it;
+                  second half is a navigation instruction the Stars page answers by having them on it;
                   the first half is what a star MEANS, which is the only part a record needs. */}
               <p className="records-note">One for every Evolution a run has been cleared in — three a hero.</p>
               <div className="ledger">

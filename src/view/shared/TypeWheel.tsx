@@ -19,7 +19,7 @@ import { getTypeColor } from '../combat/typeColors';
 // exposes three things for a host to animate against: a `--wheel-tint` layer (a second web of
 // chords in one colour, `.is-tint`, off until the host fades it up), lit/dim classes off
 // `focus`, and `--wheel-rest`, the angle a lock lands on to put `topType` at twelve o'clock.
-// With `onPickType` the glyphs are buttons and the dial is the Compendium's chart.
+// With `onPickType` the glyphs are buttons and the dial is the Reference's chart.
 //
 // Geometry is in a fixed 366 box (RING is the title's outer ring's radius, 150) and scales
 // with `size`: the chords end ON the hairline, between its ticks; the glyphs sit just OUTSIDE

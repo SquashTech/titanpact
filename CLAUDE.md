@@ -199,22 +199,27 @@ don't silently override it.
 > Ancient takes its secondary slot, and every later companion of that line joins Ancient
 > (`Profile.ascendedSpawnTypes`). Ancient resists every type, so that is the thing to watch.
 
-> **A ninth is DECIDED, PHASE 1 IN: `docs/collection.md`** (2026-09-26, per user direction).
-> **The player builds the run's pools, not the designer**: a **Deck** of 14 starter slots (one a
-> type, the draft's pool) + 28 recruit slots (two a type), all 42 feeding the run; the base 42
-> owned free, and the default deck IS the `starter` flag's split. **A recruitable fight fields at
+> **A ninth is DECIDED, PHASES 1–3 AND 5 IN: `docs/collection.md`** (2026-09-26, per user direction).
+> **The player builds the run's pools, not the designer**: a **Deck** of three heroes a type, 42
+> in all, **three equal slots — no starter and no recruit-only** (phase 5: `HeroDefinition.starter`,
+> Starter Packs and presets are deleted). **The draft draws one hero from each deck row and shows
+> four of those**, so the four span four types; all 42 feed the run, the Guild Hall included. The
+> base 42 are owned free and are the default deck. **A recruitable fight fields at
 > least two deck heroes; the rest may be strangers** off the whole catalog, never offered a
-> contract. Starter Packs become deck presets, pack zero goes back to *The Fourteen*, and
-> **Classic** names the base run mode. Stars turn renewable — a clear bonus by rung, an entry fee
+> contract. **Classic** names the base run mode. Stars turn renewable — a clear bonus by rung, an entry fee
 > on an Ascension attempt, heroes past the base bought singly, in bundles, or by a no-duplicate
 > **Summoning** — every number open. Build-around heroes that bend a deck rule are PROPOSED (§6a).
 > **Phase 1 is IN** (same day): `src/run/deck.ts`, `Profile.deck`, `RunState.deck` (snapshotted at the
-> seal), the split enemy draw, the title's **Collection**; so the `starter` flag below is now the
-> DEFAULT deck, not an assignment. **Phase 2, the stakes, is IN** (same day, per user direction):
+> seal), the split enemy draw, the title's **Collection**. **Phase 2, the stakes, is IN** (same day, per user direction):
 > Classic pays +1 star every clear, A1 costs 1 at the seal (always spent) and pays 6 — first-pass,
 > `ASCENSION_RUNGS`. **Phase 3 is IN** (same day): every hero past the base 42 sold singly at 3, a
 > bundle only while none of it is owned, and a no-duplicate **Summoning** at 2; a new hero lands in
-> the Collection's reserve. Its §8 lists the rest it reverses.
+> the Collection's reserve. **Phase 5 is IN** (same day): the Collection is one page a type with a
+> type rail on its right edge, a hero tapped for **Info** (the dossier) and **Equip** (swap into its
+> type's three) or **Buy** (a hero not owned, greyed with its price); **the Compendium is gone** —
+> its stars and Spawn bestiary are the Constellation's **Stars** and **Spawn** tabs, its Equipment
+> and type dial the Reference's; the Constellation sells bundles and the Summoning, a single hero
+> is bought in the Collection. Its §8 lists the rest it reverses.
 
 ---
 
@@ -314,8 +319,8 @@ don't silently override it.
   new type's line (`docs/leveling-and-ranks.md` "The RETYPE").
 
 ### Heroes & progression
-- Heroes are **named, authored, fixed specialists** — **42, three a type (one starter, two
-  recruit-only) for the fourteen draftable types, complete as of 2026-09-17** per user direction,
+- Heroes are **named, authored, fixed specialists** — **42, three a type for the fourteen
+  draftable types, complete as of 2026-09-17** per user direction,
   replacing the ~53-concept target. Not procedurally generated. **41 as of 2026-09-19** (per
   user direction): Vesper is deleted, Widow moved Beast/Shadow → mono-Shadow into its seat, and
   Cinder Fire/Iron → mono-Fire, each with the type it lost bought back by an Evolution graft
@@ -323,18 +328,15 @@ don't silently override it.
   Beast seat the same day. **The three-a-type count is the BASE roster's** (`docs/constellation.md`
   §4, §9): a hero with `HeroDefinition.unlock` is outside it, in a run's pools only while that
   Constellation offer is held (`heroPool`, `src/run/recruitment.ts` — the fork's contracts, the
-  Guild Hall and the enemy party read it the way the itinerary reads `locationPool`), recruit-only
-  and never in the draft. **Scallywag is the first** (same day, per user direction): Storm → mono-
+  Guild Hall and the enemy party read it the way the itinerary reads `locationPool`).
+  **Scallywag is the first** (same day, per user direction): Storm → mono-
   Iron, the Stormrunner graft his way back, in the **Free Company** bundle (8 stars) beside
   **Patch** (Mech, the Wisdom-85 medic drone on the repair column) and **Vex** (Beast, the
   Speed-110 vampire bat that feeds on Bleed, its Shadow turn a graft). **Skyshear** took Storm's third seat the same day: the slate's
   magical column at Int 95 / Speed 100. The base is 42 again and `test/roster` pins three a
-  type, one starter, over `heroPool(heroes)` with nothing bought. **Starter Packs are BUILT**
-  (same day, `docs/constellation.md` §11 phase 7): the draft reads `Profile.equippedPackId`
-  (`src/run/starterPacks.ts`), pack zero is the fourteen starters, and **the Second String** —
-  the base roster's recruit-only heroes, one a type — costs no stars and opens on the first
-  cleared run; the Constellation's first shelf is the equip toggle, and every hero and place
-  on any shelf can be examined before it is paid for.
+  type over `heroPool(heroes)` with nothing bought. Every hero and place on any shelf can be
+  examined before it is paid for. (Starter Packs, built the same day, were deleted 2026-09-26
+  with the starter split — `docs/collection.md` §2.)
 - **Mono typing is a valid terminal state**, not a larval stage. Precedent: Pokémon
   Normal/Water/Bug. A numerically common mono type is not a design flaw.
 - **Levels are AUTOMATIC and ROSTER-WIDE** (2026-09-10, `src/run/growth.ts`). Every roster hero
@@ -480,11 +482,9 @@ don't silently override it.
   direction): `EvolutionPath.kind` and its badges are deleted, and a path is known by its name
   alone, and **a path id is `heroId-pathName`** (`cinderKnight-explosive`, the name camel-cased;
   `test/moveTiers` pins it). Stars recorded under the old `heroId-kind` ids were dropped.
-- **Starters vs. recruit-only:** every hero is flagged `starter: true/false`
-  (`HeroDefinition.starter`, `src/data/heroes.ts`). Starters are offered in the
-  start-of-run draft; `starter: false` heroes exist only in the game, obtained
-  in-run via Recruit Contract or Guild Hall. A hero is in exactly one pool, never
-  both (`docs/types-and-heroes.md` "Starters vs. recruit-only heroes").
+- **No starters, no recruit-only** (2026-09-26, per user direction, `docs/collection.md` §2,
+  replacing the `starter: true/false` flag): the draft draws one hero from each of the player's
+  deck rows and shows four; any decked hero can open a run, be fought, contracted or hired.
 - **Recruitment: a contract hero arrives FINISHED, a Guild hire arrives RAW** (2026-09-10,
   Growth Overhaul phase 5). The line — *Guild heroes have decaying runway value; contract heroes
   have flat value* — is now true on **three axes**, where it used to be true on level alone.

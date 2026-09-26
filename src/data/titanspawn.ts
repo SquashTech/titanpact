@@ -161,7 +161,6 @@ export const titanspawn: Record<string, TitanspawnDefinition> = Object.fromEntri
         tier,
         baseStats: line.stats[tier],
         moveIds: line.moveIds[tier],
-        starter: false,
         growthGrades: line.growthGrades,
         // Every spawn carries its type's Mark (docs/innate-passives.md §3) — derived from the line, never authored per tier.
         passiveIds: [titansMarkFor[line.type as keyof typeof titansMarkFor] as string],

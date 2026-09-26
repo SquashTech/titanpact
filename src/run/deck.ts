@@ -1,7 +1,7 @@
 // The Deck (docs/collection.md §2): the player, not the definition, decides which owned heroes
-// open a run and which can join one. A row a draftable type, three heroes a row — index 0 the
-// starter slot (the draft's pool), 1 and 2 the recruit slots — and all of it the run's pool.
-// Pure data in, data out: the profile holds the deck, a run holds a snapshot of it.
+// a run can meet. A row a draftable type, three equal slots a row: the draft draws one hero from
+// each row (run/draft.ts), and all of it is the run's pool. Pure data in, data out: the profile
+// holds the deck, a run holds a snapshot of it.
 
 import type { HeroDefinition, TypeId } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
@@ -11,29 +11,29 @@ export const DECK_ROW_SIZE = 3;
 /** A recruitable fight fields at least this many deck heroes; the rest may be strangers (§3). */
 export const DECK_HEROES_PER_FIGHT = 2;
 
-/** type → [starter, recruit, recruit]. A row is short only when the account owns fewer of the type. */
+/** type → three hero ids. A row is short only when the account owns fewer of the type. */
 export type Deck = Readonly<Record<TypeId, readonly string[]>>;
 
 type Catalog = Record<string, HeroDefinition>;
 
 const primaryOf = (hero: HeroDefinition): TypeId => hero.types[0];
 
-/** The types with a starter in the base roster, in the order the catalog first names them. */
+/** The types the base roster fields, in the order the catalog first names them. */
 export function draftableTypes(catalog: Catalog): TypeId[] {
   const types: TypeId[] = [];
   for (const hero of Object.values(catalog)) {
-    if (hero.starter && !hero.unlock && !types.includes(primaryOf(hero))) types.push(primaryOf(hero));
+    if (!hero.unlock && !types.includes(primaryOf(hero))) types.push(primaryOf(hero));
   }
   return types;
 }
 
-/** Owned heroes of a type, the flagged starter first, then catalog order. */
+/** Owned heroes of a type: the base roster first, then what was bought, each in catalog order. */
 function ownedOfType(owned: Catalog, type: TypeId): string[] {
   const ofType = Object.values(owned).filter((hero) => primaryOf(hero) === type);
-  return [...ofType.filter((h) => h.starter), ...ofType.filter((h) => !h.starter)].map((h) => h.id);
+  return [...ofType.filter((h) => !h.unlock), ...ofType.filter((h) => h.unlock)].map((h) => h.id);
 }
 
-/** The deck a fresh account holds: each type's flagged starter in its starter slot, the base roster's other two in the recruit slots. */
+/** The deck a fresh account holds: the base roster, three a type. */
 export function defaultDeck(catalog: Catalog): Deck {
   return normalizeDeck({}, catalog, []);
 }
@@ -66,16 +66,19 @@ export function profileDeck(profile: { deck: unknown; purchases: readonly string
   return normalizeDeck(profile.deck, catalog, profile.purchases);
 }
 
-/** The draft's pool: every row's starter slot. */
-export function deckStarters(deck: Deck): string[] {
-  return Object.values(deck)
-    .map((row) => row[0])
-    .filter((id): id is string => id !== undefined);
+/** The deck's rows — what the draft draws one hero from each of. */
+export function deckRows(deck: Deck): string[][] {
+  return Object.values(deck).map((row) => [...row]);
 }
 
 /** Every hero in the deck — the run's pool. */
 export function deckHeroIds(deck: Deck): string[] {
   return Object.values(deck).flat();
+}
+
+/** The row a hero belongs in: its innate primary type. */
+export function deckRowOf(hero: HeroDefinition): TypeId {
+  return primaryOf(hero);
 }
 
 /** Owned heroes of `type` not in its row — the ones a swap can bring in. */
@@ -92,35 +95,11 @@ function rowOf(deck: Deck, heroId: string): TypeId {
   return type;
 }
 
-/** Moves a decked hero into its row's starter slot; the old starter takes its place. */
-export function makeStarter(deck: Deck, heroId: string): Deck {
-  const type = rowOf(deck, heroId);
-  const row = [...deck[type]];
-  const at = row.indexOf(heroId);
-  [row[0], row[at]] = [row[at], row[0]];
-  return { ...deck, [type]: row };
-}
-
 /** An owned, un-decked hero takes a decked one's slot in the same row. */
 export function swapIntoDeck(deck: Deck, catalog: Catalog, purchases: readonly string[], inId: string, outId: string): Deck {
   const type = rowOf(deck, outId);
   if (!reserveOfType(deck, catalog, purchases, type).includes(inId)) throw new DeckError(`${inId} cannot take a ${type} slot`);
   return { ...deck, [type]: deck[type].map((id) => (id === outId ? inId : id)) };
-}
-
-/** A preset (docs/collection.md §2) stands each of its heroes in its row's starter slot; a hero not held or not decked is skipped. */
-export function applyPreset(deck: Deck, heroIds: readonly string[]): Deck {
-  let next = deck;
-  for (const id of heroIds) {
-    if (deckHeroIds(next).includes(id)) next = makeStarter(next, id);
-  }
-  return next;
-}
-
-/** Whether every one of a preset's heroes already sits in a starter slot. */
-export function presetApplied(deck: Deck, heroIds: readonly string[]): boolean {
-  const starters = new Set(deckStarters(deck));
-  return heroIds.every((id) => starters.has(id));
 }
 
 export function lookupOf(catalog: Catalog, ids: readonly string[]): HeroLookup {

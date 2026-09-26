@@ -1,6 +1,6 @@
 # collection.md — The Collection: a deck of heroes, and the stars that grow it
 
-> **STATUS: DIRECTION DECIDED 2026-09-26 (per user direction), NUMBERS OPEN. PHASES 1–3 (THE DECK, THE STAKES, SINGLE HEROES AND THE SUMMONING) ARE IN, same day — §10.**
+> **STATUS: DIRECTION DECIDED 2026-09-26 (per user direction), NUMBERS OPEN. PHASES 1–3 (THE DECK, THE STAKES, SINGLE HEROES AND THE SUMMONING) ARE IN, same day — §10. PHASE 5 (NO STARTERS; THE COMPENDIUM DISSOLVED) IS IN, same day.**
 > The designer stops assigning heroes to the draft or the recruit pool; the player does, on a
 > **Deck** built from the heroes the account owns. The base 42 are owned from the first launch
 > and the default deck IS today's split, so a new account plays today's game. Stars become a
@@ -41,29 +41,32 @@ choice of which content, not a stat.
 
 ## 2. The Deck
 
-A deck is **14 starter slots + 28 recruit slots = 42**, one starter and two recruits **per
-draftable type**.
+A deck is **three heroes a draftable type, 42 in all — three equal slots, no starter and no
+recruit** (2026-09-26, per user direction, replacing the 14 starter + 28 recruit split of the
+same morning). **There is no starter / recruit-only distinction anywhere**: `HeroDefinition.starter`
+is deleted, and with it Starter Packs, presets and the Second String.
 
-- **The starter slots feed the draft.** `generateStarterOptions` rolls its four from the fourteen
-  and the screen picks two, as today. One starter per type is what gives the draft its type
-  spread; a deck of three Fire starters would stop it being a draft, so the slot is per type.
+- **The draft draws one hero from each row, then shows four.** `generateStarterOptions(seed,
+  deckRows(deck))` (`src/run/draft.ts`) draws fourteen — one a type — and shows four of them, so
+  the four always span four types, which is what the old one-starter-a-type rule was protecting.
+  The player picks two, as before. Every decked hero can open a run.
 - **All 42 feed the run.** The fork's contracts, the Guild Hall and the hero-pool enemy party
-  read the whole deck — which is what `heroPool()` hands them today (every owned hero, starters
-  included). An owned hero **left out of the deck is out of the run** entirely.
-- **The default deck is today's roster**: each type's `starter: true` hero in its starter slot,
-  its other two in the recruit slots. `HeroDefinition.starter` survives as the default and
-  nothing else.
+  read the whole deck. The Guild Hall offers any deck hero not on the roster — it used to offer
+  only `starter: false` ones. An owned hero **left out of the deck is out of the run** entirely.
+- **The default deck is the base roster**, three a type.
 - **A slot may stay empty** only when the account owns fewer than three of a type. It cannot,
   in the base game.
 - **A slot is filled by a hero of that slot's type** — its innate primary. A dual-typed hero
   goes under its primary.
-- **Starter Packs become presets.** Equipping a pack was loading a deck; a preset is a deck the
-  game hands you whole. The Second String is the preset that swaps every starter for a recruit.
-  Pack zero, currently named *Classic*, goes back to **The Fourteen** — *Classic* is the run
-  mode's name now (§5).
-- **The screen** is a Collection on the title: every hero owned as a card in a scrollable grid
-  (Marvel Snap, Clash Royale), the deck as fourteen type rows of three, a tap to swap a hero in.
-  Locked heroes show on the grid, face visible, dossier open, as a shelf does today.
+- **A new account gets no on-ramp** (decided): its first draft is as random as any other, and
+  the first-time tips carry a new player.
+- **The screen** is the Collection on the title (`CollectionScreen`), after Clash Royale: one
+  long page, a section a type, every hero of the type in it — the three decked first (gold edge,
+  *In deck*), the owned rest, then the heroes not yet owned, greyed with their price. A **rail of
+  type glyphs down the right edge** jumps the page to a type (tap or drag) and lights the type in
+  view. Tapping a hero gives **Info** (the full dossier) and one verb: **Equip** for an owned hero
+  out of the deck — the row's three light as *Replace*, and the one tapped is swapped out — or
+  **Buy** for one not owned, at its single price. Each owned card carries its three path stars.
 
 ---
 
@@ -154,33 +157,36 @@ Hero stars are unchanged: one per hero per path, a set not a count.
 build the strongest deck they can, and a hero no strong deck holds will show plainly. That is
 information, not a defect — it is how a card game balances — but it moves the test from "is this
 hero viable in the pool it was put in" to "does anyone choose it". The sim can be pointed at a
-deck (`SIM_PACK` already takes a draft pool).
+deck (the sim drafts from `deckRows` of the default deck).
 
 ---
 
 ## 6a. Build-arounds — heroes that bend the deck's rules (PROPOSED, 2026-09-26)
 
 A **build-around** hero, once decked, overrides one of §2's deck rules and asks something of
-the deck in return. The worked example: a **Fire Goddess** who requires the deck to hold more
-than one Fire starter, breaking *one starter per type*. That rule exists to give the draft its
-spread, so breaking it is the price. The payoff is a draft leaning toward Fire.
+the deck in return. The worked example was written against starter slots: a **Fire Goddess**
+who requires more than one Fire starter. With starter slots gone (§2) it needs recasting — a
+Fire row that holds four, or a draft that always offers a Fire, are the obvious shapes — and the
+recasting is open. The rule it bends is still the draft's type spread, and bending it is still
+the price.
 
 - **Rules are data.** A build-around carries a `deckRules` entry from a small shared vocabulary
-  (`requiresStarters: { type, count }`, `extraRecruitSlots`, `forbidsType`, …) that deck
-  validation reads. It is never bespoke logic on the hero (the content-is-data rule).
+  (`rowSize: { type, count }`, `draftAlwaysOffers`, `forbidsType`, …) that deck validation
+  and the draft read. It is never bespoke logic on the hero (the content-is-data rule).
 - **A requirement must be visible on the Collection card** before the hero is decked, with the
   deck marked invalid until it is met.
 - **One build-around a deck**, proposed. Two rule-benders stacking is where a deck stops being
   legible.
 - **Open:** whether a build-around's power lives in the rule it bends (a Fire-heavy draft IS the
-  reward), in its own kit reading the deck (+X per Fire starter, a run-time read of deck
+  reward), in its own kit reading the deck (+X per decked Fire hero, a run-time read of deck
   state), or in both. The rule-bend alone is the cheaper, cleaner first version.
 
 ---
 
 ## 7. Code seams
 
-None built.
+The plan as written before phase 1; §10 says what was built. The `starters` / `recruits` shape
+below was superseded by three equal slots a row (§2).
 
 - `Profile.deck` — `{ starters: Record<type, heroId>, recruits: Record<type, [heroId, heroId]> }`,
   decoded from an old file as the default deck (the equipped pack's starters, if one was held).
@@ -206,15 +212,22 @@ None built.
 ## 8. What this changes
 
 In **CLAUDE.md**:
-- *Starters vs. recruit-only — every hero is flagged, a hero is in exactly one pool* → the flag is
-  the **default deck**; the player assigns. "One pool" holds per deck.
+- *Starters vs. recruit-only — every hero is flagged, a hero is in exactly one pool* → **deleted**
+  (phase 5): no flag, no split; the draft draws one hero from each deck row.
 - *42, three a type* → the base collection and the default deck's size, not the run's.
 
 In **constellation.md**:
 - §1 *the supply is finite, the shop finishes* → the clear bonus makes it renewable.
 - §2 *Balance = earned − cost of what is held* → earned (hero stars + clear bonuses) − held −
   spent.
-- §3 Starter Packs → presets of a deck; §3.4 (the un-drafted heroes) is moot — a deck decides it.
+- §3 Starter Packs → deleted with the starter split (phase 5); §3.4 is moot.
+- The Constellation's Heroes shelf of singles → the Collection sells a single hero; the
+  Constellation keeps the Summoning and the bundles, and gains the Compendium's **Stars** and
+  **Spawn** pages.
+
+In **ascension.md** and **progression.md**: the Compendium they name is gone (phase 5) — its
+hero lists are the Collection, its star cells and Spawn bestiary the Constellation's Stars and
+Spawn pages, its Equipment and Types pages the Reference's.
 - §7 pricing is re-done against a renewable supply.
 
 ---
@@ -229,8 +242,8 @@ In **constellation.md**:
   in the collection with a mark, the deck untouched.
 - **Is the deck locked during an Ascension attempt?** An Ascension attempt paid for with stars could fix the deck at
   entry; it does anyway, since the run is saved.
-- **Two per type in the recruit slots** is decided; whether a later size (3, once collections are
-  deep) is ever wanted is not.
+- **Three a type** is decided; whether a later size (four, once collections are deep) is ever
+  wanted is not.
 
 ---
 
@@ -272,3 +285,19 @@ In **constellation.md**:
    swaps in from either side. Locked heroes are not yet on the Collection's grid; the shop is where
    they are seen.
 4. **Constellation re-price** against §5.
+5. **No starters; the Compendium dissolved — BUILT 2026-09-26** (per user direction).
+   `HeroDefinition.starter` deleted from every hero, spawn and Eye, and with it Starter Packs
+   (`run/starterPacks.ts`, `data/starterPacks.ts`), presets, `makeStarter`, the `starterPack`
+   grant kind and the `equippedPackId` migration (an old file opens on the default deck). The
+   deck is three equal slots a row; the draft draws one a row and shows four (`deckRows`); the
+   Guild Hall offers any deck hero off the roster. The **Collection** was rebuilt (§2: the type
+   rail, Info / Equip / Buy, locked heroes greyed with their price). The **Compendium** is gone:
+   its Starters and Recruitable pages are the Collection; its star cells (`HeroStarsPage`) and
+   Spawn bestiary (`SpawnStarsPage`, `view/run/StarPages.tsx`) are the Constellation's **Stars**
+   and **Spawn** tabs; its Equipment catalog and type dial (`view/shared/referencePages.tsx`)
+   are the Reference's, the dial over the grid on its Types tab. The Constellation's shelves are
+   now **Heroes** (the Summoning and bundles), **Locations**, **Stars** and **Spawn** — a single
+   hero is bought in the Collection. The title hub is three tiles. `test/deck` pins that the four
+   options span four types and every decked hero can be drawn. **Unmeasured**: a random draft
+   raises the average opening — sim pass 11 found the Second String beating Classic — and the
+   sim has not been re-run.

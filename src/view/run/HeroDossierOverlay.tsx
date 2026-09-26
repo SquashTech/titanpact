@@ -189,7 +189,7 @@ export function HeroDossierOverlay({ hero, onClose }: Props) {
     { id: 'evolution', label: 'Evolution', glyph: 'buffs' },
   ];
 
-  // stopPropagation on every dismiss: this overlay is a DOM child of the Compendium's own
+  // stopPropagation on every dismiss: this overlay is a DOM child of the Collection's own
   // backdrop, whose onClick closes the whole screen — closing the sheet must not close that too.
   function close(e: { stopPropagation: () => void }) {
     e.stopPropagation();
@@ -199,7 +199,7 @@ export function HeroDossierOverlay({ hero, onClose }: Props) {
   return (
     <div className="detail-overlay is-sheet" onClick={close}>
       {/* Same sheet as the run's own hero preview (HeroPreviewOverlay), cut in the same colour:
-          the Compendium and the roster are two ways into one hero, and they should not be two
+          the Collection and the roster are two ways into one hero, and they should not be two
           designs. */}
       <div
         className="detail-panel is-tabbed is-hero-sheet"
@@ -217,12 +217,12 @@ export function HeroDossierOverlay({ hero, onClose }: Props) {
                 <TypeBadge key={t} type={t} />
               ))}
             </div>
-            <div className="detail-evolution-row">
-              <span className={`dossier-badge ${hero.starter ? 'badge-ally' : 'badge-recruit'}`}>
-                {hero.starter ? 'Starter' : isTitanspawn(hero.id) ? 'Titanspawn' : 'Recruit only'}
-              </span>
-              {isTitanspawn(hero.id) && <span className="companion-mortal is-small">Mortal</span>}
-            </div>
+            {isTitanspawn(hero.id) && (
+              <div className="detail-evolution-row">
+                <span className="dossier-badge badge-recruit">Titanspawn</span>
+                <span className="companion-mortal is-small">Mortal</span>
+              </div>
+            )}
           </div>
         </div>
 

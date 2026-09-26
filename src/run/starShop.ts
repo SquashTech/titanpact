@@ -3,7 +3,7 @@
 // progression.ts against data/progression.ts.
 //
 // Stars are EARNED per Evolution path (profile.ts `evolutionStars`) and that record is
-// permanent — the Compendium shows a star whether or not it has been spent. Spending is a
+// permanent — the Constellation's Stars page shows a star whether or not it has been spent. Spending is a
 // separate ledger, `Profile.purchases`, and the balance is earned minus the cost of what is
 // held. So a star is never taken off a hero; it is the count that is drawn down.
 
@@ -16,11 +16,10 @@ import { ownsHero, summonedId } from './recruitment';
  * What a purchase unlocks (docs/constellation.md §4, §8): a discriminant a pool edge reads once.
  * A Location joins the itinerary draw (run/locations.ts `locationPool`); a hero — singly or in a
  * bundle — joins the Collection (run/recruitment.ts `ownsHero`, off the hero's own `unlock`, which
- * a test holds to the bundle's list). `starterPack` has no offers since packs became deck presets.
+ * a test holds to the bundle's list).
  */
 export type StarShopGrant =
   | { kind: 'location'; locationId: string }
-  | { kind: 'starterPack' }
   | { kind: 'heroBundle'; heroIds: readonly string[] }
   | { kind: 'hero'; heroId: string };
 

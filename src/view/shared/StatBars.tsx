@@ -112,7 +112,7 @@ interface Props {
   /**
    * The reference the bars are drawn against (run/statScale.ts): the run's, so a hero is read
    * against the fights it is in and the roster beside it. Level 1's when omitted — the draft and
-   * the Compendium, where there is no run to be at par with.
+   * the Collection, where there is no run to be at par with.
    */
   scale?: StatScale;
 }

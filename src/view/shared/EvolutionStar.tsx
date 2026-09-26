@@ -4,8 +4,8 @@ import { useHasEvolutionStar } from './ProfileContext';
 /**
  * One Evolution star: lit when the player has cleared a run with the hero in that form, an
  * empty outline when not (profile.ts `evolutionStars`). The same mark everywhere a path is
- * named — the Compendium row, the hero dossier, the Evolution choice — so a lit star on the
- * choice screen is recognisably the one the Compendium is missing.
+ * named — the Stars page, the Collection card, the hero dossier, the Evolution choice — so a lit
+ * star on the choice screen is recognisably the one the Stars page is missing.
  */
 export function EvolutionStar({ path, className }: { path: EvolutionPath; className?: string }) {
   const earned = useHasEvolutionStar(path.heroId, path.id);

@@ -1,5 +1,4 @@
 import { useState, type CSSProperties } from 'react';
-import { CompendiumScreen } from './CompendiumScreen';
 import { CollectionScreen } from './CollectionScreen';
 import type { Deck } from '../../run/deck';
 import { LocationSelectOverlay } from './LocationSelectOverlay';
@@ -130,7 +129,6 @@ export function TitleScreen({
   onStartStatusTestFight,
   onStartTitanEyesTestRun,
 }: Props) {
-  const [showCompendium, setShowCompendium] = useState(false);
   const [showRecords, setShowRecords] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [showCollection, setShowCollection] = useState(false);
@@ -270,15 +268,9 @@ export function TitleScreen({
 
       {/* The three places a player goes BETWEEN runs (2026-09-16, per user direction — they were
           three 36px circles in the corner, which is what a lookup tool deserves and a shop does
-          not): the Compendium, the shop with its star balance on it, and Records. Labelled tiles
+          not): the Collection, the shop with its star balance on it, and Records. Labelled tiles
           under the one real action, quieter than it and louder than the corner. */}
       <div className="title-hub">
-        <button className="title-hub-tile" onClick={() => setShowCompendium(true)}>
-          <span className="title-hub-glyph" aria-hidden="true">
-            <HubGlyph name="codex" />
-          </span>
-          <span className="title-hub-label">Compendium</span>
-        </button>
         <button className="title-hub-tile" onClick={() => setShowCollection(true)}>
           <span className="title-hub-glyph" aria-hidden="true">
             <HubGlyph name="roster" />
@@ -428,8 +420,7 @@ export function TitleScreen({
       )}
 
       {showLocations && <LocationSelectOverlay onPick={onVisitLocation} onClose={() => setShowLocations(false)} />}
-      {showCollection && <CollectionScreen profile={profile} onChangeDeck={onChangeDeck} onClose={() => setShowCollection(false)} />}
-      {showCompendium && <CompendiumScreen profile={profile} onClose={() => setShowCompendium(false)} />}
+      {showCollection && <CollectionScreen profile={profile} onChangeDeck={onChangeDeck} onBuy={onBuyOffer} onClose={() => setShowCollection(false)} />}
       {showRecords && (
         <RecordsScreen profile={profile} onEraseAllData={onEraseAllData} onClose={() => setShowRecords(false)} />
       )}

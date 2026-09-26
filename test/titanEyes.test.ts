@@ -120,7 +120,6 @@ test('titanEyes: two mono-Ancient definitions, held apart from the champion pool
     const eye = titanEyes[id];
     assert.deepStrictEqual([...eye.types], ['Ancient'], `${id} is not mono-Ancient`);
     assert.ok(!(id in enemies), `${id} leaked into the champion pool`);
-    assert.strictEqual(eye.starter, false);
     for (const moveId of eye.moveIds) assert.ok(moves[moveId], `${id} points at missing ${moveId}`);
     assert.strictEqual(eye.baseStats.attack, 40, 'Attack is the dump stat');
   }

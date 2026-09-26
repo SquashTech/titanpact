@@ -41,6 +41,8 @@ export const SECTION_PATHS = {
     />
   ),
   passives: <path d="M12 1.6 14.7 8.9 22.5 9.2 16.4 14 18.5 21.5 12 17.2 5.5 21.5 7.6 14 1.5 9.2 9.3 8.9Z" />,
+  // The same five points: the Constellation's Stars page.
+  stars: <path d="M12 1.6 14.7 8.9 22.5 9.2 16.4 14 18.5 21.5 12 17.2 5.5 21.5 7.6 14 1.5 9.2 9.3 8.9Z" />,
   // Crossed swords; the outer transform re-centres and scales the pair to fill the box.
   moves: (
     <g transform="translate(12 12) scale(1.16) translate(-12 -11.2)">
@@ -57,8 +59,8 @@ export const SECTION_PATHS = {
       <path d="M9.2 13c4.2 0 6.8 2.6 6.8 6.2v2H2.4v-2c0-3.6 2.6-6.2 6.8-6.2Z" />
     </>
   ),
-  // Great-helm — the map's recruitable-encounter tile and the Compendium's Recruitable page wear
-  // one glyph. The eye slit is two pieces so a nose bridge keeps the dome attached.
+  // Great-helm — the map's recruitable-encounter tile.
+  // The eye slit is two pieces so a nose bridge keeps the dome attached.
   recruit: (
     <path
       fillRule="evenodd"
@@ -122,14 +124,6 @@ export const SECTION_PATHS = {
       <path d="M21.6 19.8 20.8 13 14.8 15.8Z" />
     </>
   ),
-  // A sealed pack: a box with its lid lifted a crack — the Constellation's Starter Packs page.
-  packs: (
-    <>
-      <path d="M3 9.4 12 5.2l9 4.2v1.6l-9 4.2-9-4.2Z" />
-      <path d="M3.4 12.8 11 16.4v5.2L3.4 18Z" />
-      <path d="M20.6 12.8 13 16.4v5.2l7.6-3.6Z" />
-    </>
-  ),
   // A place on the horizon: a dome between two towers, the Locations page.
   places: (
     <>
@@ -142,7 +136,7 @@ export const SECTION_PATHS = {
       <path d="M9.6 4.4h4.8V6H9.6Z" />
     </>
   ),
-  // One open eye, the Titan's — the Compendium's Titanspawn page.
+  // One open eye, the Titan's — the Constellation's Spawn page.
   spawn: (
     <path
       fillRule="evenodd"

@@ -239,7 +239,7 @@ export const sounds: Record<SfxId, SoundSpec> = {
     ],
   },
 
-  /** A tab switched (TabStrip, the Compendium, the reference sheet): a page turned. Paper is a hush, not a strike, and the only transient is the leaf seating at the end. */
+  /** A tab switched (TabStrip, the Constellation, the reference sheet): a page turned. Paper is a hush, not a strike, and the only transient is the leaf seating at the end. */
   'ui.tab': {
     gain: 0.62,
     jitter: 0.04,
@@ -345,7 +345,7 @@ export const sounds: Record<SfxId, SoundSpec> = {
     ],
   },
 
-  /** Starter bound in the draft: half a ui.commit (two notes, short tail — the pact seal must outsize it) plus a highpassed "clasp" crack just past the attack. */
+  /** A hero bound in the draft: half a ui.commit (two notes, short tail — the pact seal must outsize it) plus a highpassed "clasp" crack just past the attack. */
   'pact.bind': {
     gain: 0.42,
     jitter: 0.008,

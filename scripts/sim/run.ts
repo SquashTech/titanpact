@@ -4,7 +4,6 @@
 
 import type { StatKey } from '../../src/engine/content';
 import { heroes as allHeroes } from '../../src/data/heroes';
-import { starterPackById } from '../../src/data/starterPacks';
 import { rosterHeroes } from '../../src/data/content';
 import { absorbCompanions, companionCandidate, companionJoinDue, joinCompanion } from '../../src/run/companion';
 import { fallenAfterFight, isPermadeath, releaseFallen } from '../../src/run/ascension';
@@ -29,6 +28,7 @@ import { chooseLocation, drawLocationCandidates, locationChoiceDue, locationForA
 import { ACT_ONE_LOCATION_ID, locations } from '../../src/data/locations';
 import { encounterScaling } from '../../src/run/difficulty';
 import { encounterXpKind, grantEncounterLevels, levelOf, MAX_LEVEL } from '../../src/run/growth';
+import { deckRows, normalizeDeck } from '../../src/run/deck';
 import { generateFinaleEncounter, type Encounter, type EncounterNodeType } from '../../src/run/enemyGen';
 import { pickSquad, requiredSquadSize, STANDARD_SQUAD_SIZE, type Squad } from '../../src/run/squad';
 import {
@@ -91,8 +91,8 @@ import { emptyTimeCounts, type ScreenKind, type TimeCounts } from './time';
 import { emptyKnockoutCounts, type KnockoutCounts } from './types';
 
 const EQUIPMENT_POOL = Object.values(equipment);
-// The draft's pool: pack zero, or the Starter Pack SIM_PACK names (data/starterPacks.ts).
-const STARTER_IDS: readonly string[] = (process.env.SIM_PACK && starterPackById[process.env.SIM_PACK]?.heroIds) || Object.values(heroes).filter((h) => h.starter).map((h) => h.id);
+// The draft's rows: the base roster's default deck, one hero drawn from each (run/draft.ts).
+const DRAFT_ROWS = deckRows(normalizeDeck({}, heroes, SIM_PURCHASES));
 
 /** App.tsx `EncounterMapNodeType` — the reward lane keys off the MAP node, not the flattened encounter kind. */
 type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' | 'finale';
@@ -354,7 +354,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
   };
 
   // --- Draft: 4 starters offered, 2 taken at random (the experiment). ---
-  const draftOptions = generateStarterOptions(randomSeed(rng), STARTER_IDS);
+  const draftOptions = generateStarterOptions(randomSeed(rng), DRAFT_ROWS);
   const drafted = sample(rng, draftOptions, STARTER_PICK_COUNT);
   record.choices.push({ bucket: 'draft', offered: draftOptions, picked: drafted, encountersWonAtChoice: 0 });
   tally(record, 1, 'draft');

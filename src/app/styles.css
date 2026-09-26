@@ -10813,10 +10813,6 @@ button.star-shop-bundle-face {
   background: var(--well);
 }
 
-.dossier-badge.badge-ally {
-  color: var(--ally);
-}
-
 .dossier-badge.badge-recruit {
   color: var(--text-dim);
 }
@@ -21129,7 +21125,7 @@ button.star-shop-bundle-face {
   max-width: 352px;
   margin-top: 2px;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
   animation: title-icon-row-fade 0.7s ease 0.7s both;
 }
@@ -35251,36 +35247,68 @@ button.star-shop-bundle-face {
 }
 
 /* --- The Collection (CollectionScreen) -------------------------------------
-   The deck: a row a type, three hero cards a row, the starter first. The cards
-   stand on the compendium row's type-washed ground; the selected one lights
-   its edge and opens the row's action strip under it. */
-.collection-body {
+   One long well, a section a type: the three decked heroes first (gold edge,
+   "In deck"), the owned rest, then the ones still to buy, greyed with their
+   price. The rail down the right edge is the type index — tap or drag it. A
+   selected card opens the section's action strip under the grid; Equip lights
+   the row's three to be replaced. */
+.collection-balance {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.collection-balance svg {
+  width: 16px;
+  height: 16px;
+}
+
+.collection-frame {
+  flex: 1;
+  min-height: 0;
   display: flex;
-  flex-direction: column;
+}
+
+.collection-body {
+  position: relative;
   gap: 8px;
 }
 
-.collection-presets {
+.collection-rail {
+  flex: none;
   display: flex;
-  gap: 6px;
-}
-
-.collection-preset {
-  flex: 1;
-  padding: 7px 6px;
-  font: inherit;
-  font-size: 12px;
-  color: var(--text);
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(224, 166, 60, 0.35);
-  background: var(--surface-raised);
+  flex-direction: column;
+  justify-content: space-between;
+  width: 26px;
+  padding: 4px 0;
+  margin-left: 4px;
+  border-radius: 13px;
+  background: rgba(0, 0, 0, 0.28);
+  touch-action: none;
   cursor: pointer;
 }
 
-.collection-preset.is-loaded {
-  color: var(--text-dim);
-  border-color: rgba(224, 166, 60, 0.15);
-  cursor: default;
+.collection-rail-type {
+  display: grid;
+  place-items: center;
+  flex: 1;
+  min-height: 0;
+  opacity: 0.45;
+  transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+
+.collection-rail-type svg {
+  width: 15px;
+  height: 15px;
+}
+
+.collection-rail-type.is-active {
+  opacity: 1;
+  transform: scale(1.25);
 }
 
 .collection-row {
@@ -35317,6 +35345,7 @@ button.star-shop-bundle-face {
 }
 
 .collection-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -35329,16 +35358,40 @@ button.star-shop-bundle-face {
   border: 1px solid rgba(var(--type-rgb), 0.22);
   background: rgba(0, 0, 0, 0.22);
   cursor: pointer;
-  transition: border-color var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+  transition: border-color var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out), opacity var(--dur-mid) var(--ease-out);
 }
 
-.collection-card.is-starter {
+.collection-card.is-decked {
   border-color: rgba(224, 166, 60, 0.55);
+}
+
+.collection-card.is-locked .collection-card-portrait {
+  filter: grayscale(1) brightness(0.55);
+}
+
+.collection-card.is-locked .collection-card-name {
+  color: var(--text-dim);
 }
 
 .collection-card.is-selected {
   border-color: rgba(var(--type-rgb), 0.95);
   box-shadow: 0 0 0 1px rgba(var(--type-rgb), 0.6);
+}
+
+.collection-row.is-equipping .collection-card:not(.is-replaceable):not(.is-selected) {
+  opacity: 0.4;
+}
+
+.collection-card.is-replaceable {
+  border-color: rgb(224, 166, 60);
+  box-shadow: 0 0 10px rgba(224, 166, 60, 0.45);
+  animation: collection-replace-pulse 1.1s var(--ease-out) infinite alternate;
+}
+
+@keyframes collection-replace-pulse {
+  to {
+    box-shadow: 0 0 2px rgba(224, 166, 60, 0.2);
+  }
 }
 
 .collection-card:active {
@@ -35349,10 +35402,6 @@ button.star-shop-bundle-face {
   font-size: 9px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-dim);
-}
-
-.collection-card.is-starter .collection-card-slot {
   color: rgb(224, 166, 60);
 }
 
@@ -35371,6 +35420,28 @@ button.star-shop-bundle-face {
   white-space: nowrap;
 }
 
+.collection-card-stars {
+  display: flex;
+  gap: 1px;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.collection-card-price {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.collection-equip-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text);
+}
+
 .collection-actions {
   display: flex;
   flex-wrap: wrap;
@@ -35378,9 +35449,9 @@ button.star-shop-bundle-face {
 }
 
 .collection-action {
-  padding: 5px 9px;
+  padding: 5px 11px;
   font: inherit;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text);
   border-radius: var(--radius-sm);
   border: 1px solid rgba(var(--type-rgb), 0.5);
@@ -35388,8 +35459,15 @@ button.star-shop-bundle-face {
   cursor: pointer;
 }
 
-.collection-action.is-swap {
-  border-style: dashed;
+.collection-action.is-primary {
+  border-color: rgba(224, 166, 60, 0.75);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.collection-action:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 /* --- The Summoning and single heroes (StarShopScreen) ----------------------
@@ -35439,34 +35517,6 @@ button.star-shop-bundle-face {
 .star-shop-reveal-note {
   margin-top: 10px;
   text-align: center;
-}
-
-/* The Collection's reserve: owned heroes a row has no room for, smaller and
-   dashed, under the three that are decked. */
-.collection-reserve {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.collection-reserve-label {
-  font-size: 9px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
-.collection-card.is-reserve {
-  flex-direction: row;
-  gap: 5px;
-  padding: 3px 8px 3px 4px;
-  border-style: dashed;
-}
-
-.collection-card.is-reserve .collection-card-portrait {
-  width: 28px;
-  height: 28px;
 }
 
 .star-shop-hero .star-shop-offer-body {

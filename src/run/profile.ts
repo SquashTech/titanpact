@@ -9,8 +9,6 @@
 // the player did, not state the engine runs on, so a partially-read one is still true.
 
 import { spawnPosition } from '../data/titanspawn';
-import { heroes } from '../data/heroes';
-import { starterPackById } from '../data/starterPacks';
 import { rungOf } from './ascension';
 
 export const PROFILE_VERSION = 1;
@@ -38,7 +36,7 @@ export interface Profile {
   evolutionStars: Record<string, string[]>;
   /**
    * The Titanspawn lines (by type) a run has been cleared with the companion still on the roster —
-   * one star a type, fourteen to collect, on the Compendium's Titanspawn page (docs/ascension.md §7).
+   * one star a type, fourteen to collect, on the Constellation's Spawn page (docs/ascension.md §7).
    * Alive is the condition, not the body it reached.
    */
   companionStars: string[];
@@ -66,7 +64,7 @@ export interface Profile {
   /** Constellation (star shop) offer ids bought (run/starShop.ts), each at most once. Stars are never un-earned; this is what draws the balance down. */
   purchases: string[];
   /**
-   * The deck as stored (run/deck.ts): type → hero ids, starter first. Kept loose and made legal on
+   * The deck as stored (run/deck.ts): type → hero ids, three a row. Kept loose and made legal on
    * read by `profileDeck`, so a hero leaving the catalog or a bundle not held can never strand it.
    * Empty is the default deck.
    */
@@ -294,23 +292,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /** Non-empty strings only, in order; anything else in the list is skipped. */
-/**
- * A file written before decks carries the Starter Pack it had equipped instead; that pack's heroes
- * stand in their rows' starter slots, and `profileDeck` fills the rest.
- */
+/** A file written before decks (or with none) decodes empty, which `profileDeck` reads as the default deck. */
 function decodeDeck(value: Record<string, unknown>): Record<string, string[]> {
-  if (isRecord(value.deck)) {
-    const deck: Record<string, string[]> = {};
-    for (const [type, row] of Object.entries(value.deck)) deck[type] = [...new Set(stringList(row))];
-    return deck;
-  }
-  const pack = typeof value.equippedPackId === 'string' ? starterPackById[value.equippedPackId] : undefined;
-  if (!pack) return {};
+  if (!isRecord(value.deck)) return {};
   const deck: Record<string, string[]> = {};
-  for (const id of pack.heroIds) {
-    const hero = heroes[id];
-    if (hero) deck[hero.types[0]] = [id];
-  }
+  for (const [type, row] of Object.entries(value.deck)) deck[type] = [...new Set(stringList(row))];
   return deck;
 }
 

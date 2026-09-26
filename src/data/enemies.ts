@@ -43,7 +43,6 @@ export const enemies: Record<string, HeroDefinition> = {
     // that was killing a hero per round (docs/run-loop.md).
     baseStats: { hp: 450, attack: 55, defense: 75, intelligence: 60, wisdom: 60, speed: 75, manaPool: 105, mpRegen: 20 },
     moveIds: ['claw', 'maul', 'enfeeble', 'archonBlast'],
-    starter: false,
     growthGrades: CHAMPION_GRADES,
   },
 
@@ -61,7 +60,6 @@ export const enemies: Record<string, HeroDefinition> = {
     types: ['Shadow', 'Ancient'],
     baseStats: { hp: 330, attack: 70, defense: 85, intelligence: 85, wisdom: 75, speed: 70, manaPool: 140, mpRegen: 20 },
     moveIds: ['longDrink', 'forgottenCurse', 'duskBlade', 'eclipse'],
-    starter: false,
     growthGrades: CHAMPION_GRADES,
   },
 
@@ -80,7 +78,6 @@ export const enemies: Record<string, HeroDefinition> = {
     types: ['Nature', 'Ancient'],
     baseStats: { hp: 410, attack: 85, defense: 90, intelligence: 75, wisdom: 65, speed: 30, manaPool: 150, mpRegen: 20 },
     moveIds: ['wardingSigil', 'abide', 'branchSlam', 'forceOfNature'],
-    starter: false,
     growthGrades: CHAMPION_GRADES,
   },
 
@@ -104,7 +101,6 @@ export const enemies: Record<string, HeroDefinition> = {
     types: ['Fire', 'Ancient'],
     baseStats: { hp: 420, attack: 85, defense: 80, intelligence: 80, wisdom: 60, speed: 35, manaPool: 150, mpRegen: 20 },
     moveIds: ['weightOfAges', 'spreadingBlaze', 'immolate', 'firebrand'],
-    starter: false,
     growthGrades: CHAMPION_GRADES,
   },
 
@@ -125,7 +121,6 @@ export const enemies: Record<string, HeroDefinition> = {
     types: ['Spirit', 'Ancient'],
     baseStats: { hp: 310, attack: 85, defense: 90, intelligence: 90, wisdom: 80, speed: 50, manaPool: 150, mpRegen: 20 },
     moveIds: ['runicBlast', 'poltergeist', 'wailingFlight', 'vengeance'],
-    starter: false,
     growthGrades: CHAMPION_GRADES,
   },
 
@@ -139,7 +134,6 @@ export const enemies: Record<string, HeroDefinition> = {
     types: ['Water', 'Ancient'],
     baseStats: { hp: 350, attack: 75, defense: 80, intelligence: 95, wisdom: 80, speed: 45, manaPool: 150, mpRegen: 20 },
     moveIds: ['aquaSlice', 'maelstrom', 'archonBlast', 'tsunami'],
-    starter: false,
     growthGrades: CHAMPION_GRADES,
   },
 
@@ -156,7 +150,6 @@ export const enemies: Record<string, HeroDefinition> = {
     types: ['Light', 'Ancient'],
     baseStats: { hp: 340, attack: 60, defense: 80, intelligence: 95, wisdom: 90, speed: 55, manaPool: 150, mpRegen: 20 },
     moveIds: ['hallow', 'smite', 'sunlance', 'blindingFlash'],
-    starter: false,
     growthGrades: CHAMPION_GRADES,
   },
 
@@ -171,7 +164,6 @@ export const enemies: Record<string, HeroDefinition> = {
     types: ['Mind', 'Ancient'],
     baseStats: { hp: 360, attack: 70, defense: 80, intelligence: 95, wisdom: 90, speed: 35, manaPool: 150, mpRegen: 20 },
     moveIds: ['distort', 'hindsight', 'psychokinesis', 'disorient'],
-    starter: false,
     growthGrades: CHAMPION_GRADES,
   },
 
@@ -186,7 +178,6 @@ export const enemies: Record<string, HeroDefinition> = {
     types: ['Storm', 'Ancient'],
     baseStats: { hp: 320, attack: 90, defense: 65, intelligence: 85, wisdom: 60, speed: 90, manaPool: 150, mpRegen: 20 },
     moveIds: ['stormLash', 'ionize', 'ionCascade', 'skyfall'],
-    starter: false,
     growthGrades: CHAMPION_GRADES,
   },
 
@@ -201,7 +192,6 @@ export const enemies: Record<string, HeroDefinition> = {
     types: ['Frost', 'Ancient'],
     baseStats: { hp: 400, attack: 85, defense: 85, intelligence: 80, wisdom: 60, speed: 40, manaPool: 150, mpRegen: 20 },
     moveIds: ['deepChill', 'coldSnap', 'absoluteZero', 'permafrost'],
-    starter: false,
     growthGrades: CHAMPION_GRADES,
   },
 
@@ -232,7 +222,6 @@ export const enemies: Record<string, HeroDefinition> = {
     baseStats: { hp: 680, attack: 100, defense: 115, intelligence: 135, wisdom: 115, speed: 95, manaPool: 200, mpRegen: 25 },
     moveIds: ['raiseTheStandard', 'erode', 'transfix', 'oblivion'],
     passiveIds: [HERALDS_STANDARD_ID],
-    starter: false,
     growthGrades: CHAMPION_GRADES,
   },
 };
@@ -261,7 +250,6 @@ export const titanEyes: Record<string, HeroDefinition> = {
     baseStats: { hp: 810, attack: 40, defense: 105, intelligence: 135, wisdom: 105, speed: 92, manaPool: 220, mpRegen: 28 },
     moveIds: ['gaze', 'regard', 'archonBlast', 'erode'],
     passiveIds: TITAN_EYE_PASSIVES,
-    starter: false,
     growthGrades: CHAMPION_GRADES,
   },
   rightEye: {
@@ -271,7 +259,6 @@ export const titanEyes: Record<string, HeroDefinition> = {
     baseStats: { hp: 945, attack: 40, defense: 125, intelligence: 105, wisdom: 125, speed: 82, manaPool: 220, mpRegen: 28 },
     moveIds: ['gaze', 'regard', 'forgottenCurse', 'lidded'],
     passiveIds: TITAN_EYE_PASSIVES,
-    starter: false,
     growthGrades: CHAMPION_GRADES,
   },
 };

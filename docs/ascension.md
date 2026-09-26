@@ -216,7 +216,7 @@ The companion kept to the finale and stepped to its Late body is the run's stron
 the intended payoff, and the meta layer does not know it exists: `knownHeroIds` deliberately
 excludes a companion's body (`profile.ts:238`). Three additions, all rungs including Base:
 
-1. **A bestiary tab in the Compendium.** All 42 spawn bodies (`src/data/titanspawn.ts`), each
+1. **A bestiary tab in the Compendium** (the Constellation's **Spawn** tab since 2026-09-26, when the Compendium was dissolved — `docs/collection.md` §10 phase 5). All 42 spawn bodies (`src/data/titanspawn.ts`), each
    revealed as *met* (fought) or *held* (was the companion), the entry drawn by `TitanspawnGlyph`
    at the highest body the companion reached. A `knownSpawnIds` beside the hero set. It does
    double duty — the enemy mob lines get a page they never had.

@@ -34,7 +34,6 @@ import { simulateFight } from './sim/fight';
 import { makeRng, withRandom } from './sim/rng';
 
 const ALL = Object.values(heroes);
-const STARTERS = ALL.filter((h) => h.starter);
 const LEVEL = 5;
 
 /**
@@ -413,7 +412,7 @@ function main() {
   else if (mode === 'budget') budgetExperiment(fights, points, Number(argv[argv.indexOf('--hprate') + 1]) || 2);
   else if (mode === 'mana') manaExperiment(fights, points);
   else if (mode === 'slot') slotExperiment(fights, argv[argv.indexOf('--a') + 1] ?? 'sword.rare', argv[argv.indexOf('--b') + 1] ?? 'plate.rare');
-  else priceExperiment(fights, points, argv.includes('--starters') ? STARTERS : ALL);
+  else priceExperiment(fights, points, ALL);
 }
 
 main();

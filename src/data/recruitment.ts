@@ -1,7 +1,6 @@
-// Guild Hall offer pool: every `starter: false` hero in the run's pool at a flat, untuned cost.
-// Derived from heroes.ts so the draft pool and the Guild Hall pool can never drift apart, and
-// from the POOL (run/recruitment.ts `heroPool`) so a bundle hero is on the shelf exactly when
-// its offer is held.
+// Guild Hall offer pool: every hero in the run's pool at a flat, untuned cost — the run's deck
+// (run/deck.ts) once one is carried, so the shelf and the draft read one table. Heroes already on
+// the roster are dropped where the shelf is rolled (run/shop.ts).
 
 import type { HeroDefinition } from '../engine/content';
 import type { GuildHallOffer } from '../run/recruitment';
@@ -16,7 +15,6 @@ export const GUILD_HALL_RECRUIT_COST = 50;
 
 export function guildHallOffersFor(pool: Record<string, HeroDefinition>): GuildHallOffer[] {
   return Object.values(pool)
-    .filter((hero) => !hero.starter)
     .map((hero) => ({
       id: `guild-${hero.id}`,
       heroId: hero.id,

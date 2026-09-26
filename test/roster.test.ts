@@ -262,21 +262,17 @@ test('roster: every hero starts on the same one item slot, whatever its Speed', 
   assert.strictEqual(itemSlotsFor(heroes.valor, forged), MAX_ITEM_SLOTS);
 });
 
-test('roster: the BASE roster is three a type — one starter, two recruit-only — for the fourteen draftable types, and a bundle hero is outside it', () => {
+test('roster: the BASE roster is three a type for the fourteen draftable types, and a bundle hero is outside it', () => {
   // The count CLAUDE.md pins is the base game's (docs/constellation.md §9): heroPool with nothing
-  // bought. A hero with `unlock` sits beside it, never in it, and never in the draft.
+  // bought. A hero with `unlock` sits beside it, never in it.
   const base = Object.values(heroPool(heroes));
   assert.strictEqual(base.length, 42);
   for (const type of TYPES) {
     if (type === 'Ancient') continue;
     const ofType = base.filter((hero) => hero.types[0] === type);
     assert.strictEqual(ofType.length, 3, `${type} holds ${ofType.length} base heroes, not 3`);
-    assert.strictEqual(ofType.filter((hero) => hero.starter).length, 1, `${type} has ${ofType.filter((h) => h.starter).length} starters, not 1`);
   }
   assert.strictEqual(base.filter((hero) => hero.types[0] === 'Ancient').length, 0, 'Ancient is near-undraftable and holds no hero');
-  for (const hero of Object.values(heroes)) {
-    if (hero.unlock) assert.strictEqual(hero.starter, false, `${hero.id} is a bundle hero and a starter`);
-  }
 });
 
 test('roster: every hero holds exactly ONE innate — a verb, never a bare stat line, in no pool — and every spawn and Guardian its type Mark', () => {

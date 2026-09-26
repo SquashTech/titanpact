@@ -9,7 +9,7 @@ const NEUTRAL_LEAD = '#d9cfb6';
 
 /**
  * The two colours a path is washed in wherever it is drawn — the Evolution choice, the dossier
- * card, the Compendium's star cell — so the same path looks the same on every screen. `lead` is
+ * card, the Stars page's cell — so the same path looks the same on every screen. `lead` is
  * what the path is ABOUT (run/progression.ts pathLeadType: the graft or the granted move's type,
  * or neutral bone), and `trail` the half of the resulting typing that comes along.
  */

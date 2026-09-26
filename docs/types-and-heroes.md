@@ -179,6 +179,10 @@ status currently sits in the stat pipeline at all — see `architecture.md` and
 
 ### Starters vs. recruit-only heroes
 
+> **SUPERSEDED 2026-09-26** (per user direction, `docs/collection.md` §2): the flag is deleted. The
+> draft draws one hero from each of the player's deck rows; no hero is a starter or recruit-only.
+> The section below is the history.
+
 Every hero carries a `starter: boolean` (`HeroDefinition.starter`, `src/data/heroes.ts`)
 — the single source of truth for which of the two acquisition paths a hero belongs to:
 

@@ -102,7 +102,7 @@ import { LORE_LINES, SCREEN_TIPS } from '../data/tips';
 import { TipOverlay } from '../view/run/TipOverlay';
 import { LoreScreen } from '../view/run/LoreScreen';
 import { generateStarterOptions } from '../run/draft';
-import { deckHeroIds, deckStarters, encounterPools, profileDeck, type Deck } from '../run/deck';
+import { deckHeroIds, deckRows, encounterPools, profileDeck, type Deck } from '../run/deck';
 import {
   generateEncounter,
   generateFinaleEncounter,
@@ -483,7 +483,7 @@ export function App() {
     return { save: null, staleReason: result.reason };
   });
 
-  // Held so the title, its Records screen and the Compendium can render it, and so the Evolution
+  // Held so the title, its Records screen and the Constellation can render it, and so the Evolution
   // screen can mark the paths already starred (ProfileProvider). Stars only change at a run's end
   // and this is re-read on the way back to the title, so mid-run it is a snapshot, and current.
   // Everything that WRITES the profile goes straight to storage (profileStorage.updateProfile) —
@@ -532,7 +532,7 @@ export function App() {
 
   usePlaytime();
 
-  // Re-read on the way back to the title so Records and the Compendium show what the run
+  // Re-read on the way back to the title so Records and the Constellation show what the run
   // just banked. Nothing else in the app renders the profile, so nothing else needs this.
   useEffect(() => {
     if (screen.kind === 'title') setProfile(readProfile());
@@ -994,9 +994,8 @@ export function App() {
 
   /** The rung rides `playerRun` across the draft; the run itself is only built on confirm. */
   function handleStartNewRun(ascension: number) {
-    // The deck's starter slots (run/deck.ts): by default the fourteen flagged starters.
-    const starterHeroIds = deckStarters(profileDeck(profile, heroes));
-    const optionIds = generateStarterOptions(randomSeed(), starterHeroIds);
+    // One hero drawn from each deck row, then four of those shown (run/draft.ts).
+    const optionIds = generateStarterOptions(randomSeed(), deckRows(profileDeck(profile, heroes)));
     setPlayerRun((run) => ({ ...run, ascension }));
     const draft: Screen = { kind: 'draft', optionIds };
     // The lore card once an account, ahead of the first draft — its last line is the draft's verb.

@@ -5,6 +5,7 @@ import { passives } from '../../data/passives';
 import type { PassiveDefinition, StatusDefinition } from '../../engine/content';
 import { TypeBadge } from './TypeBadge';
 import { StatusGlyph, statusColor, statusTint, statusClearText, pipelineLabel } from './statusIcons';
+import { EquipmentCatalog, TypeDial } from './referencePages';
 import { PassiveGlyph, passiveColor, passiveTint, passiveEffectSummary, passiveKindLabel, PassiveStatChips } from './passiveIcons';
 
 interface Props {
@@ -12,7 +13,7 @@ interface Props {
   initialTab?: Tab;
 }
 
-type Tab = 'types' | 'statuses' | 'passives';
+type Tab = 'types' | 'statuses' | 'passives' | 'equipment';
 
 function multClass(mult: number): string {
   if (mult > 1) return 'eff-super';
@@ -24,7 +25,7 @@ function formatCell(mult: number): string {
   return mult === 1 ? '–' : `${mult}`;
 }
 
-/** Player-facing rules reference: the authored type chart, the status catalog, the passive catalog. */
+/** Player-facing rules reference: the type dial over the authored chart, the status, passive and equipment catalogs. */
 export function ReferenceOverlay({ onClose, initialTab = 'types' }: Props) {
   const [tab, setTab] = useState<Tab>(initialTab);
 
@@ -47,32 +48,42 @@ export function ReferenceOverlay({ onClose, initialTab = 'types' }: Props) {
           <button className={`reference-tab${tab === 'passives' ? ' reference-tab-active' : ''}`} onClick={() => setTab('passives')}>
             Passives
           </button>
+          <button className={`reference-tab${tab === 'equipment' ? ' reference-tab-active' : ''}`} onClick={() => setTab('equipment')}>
+            Equipment
+          </button>
         </div>
         {tab === 'types' ? (
-          <div className="type-chart-scroll">
-            <div className="type-chart-grid">
-              <div className="tc-cell tc-corner" />
-              {TYPES.map((col) => (
-                <div className="tc-cell tc-col-header" key={col}>
-                  <TypeBadge type={col} iconOnly />
-                </div>
-              ))}
-              {TYPES.map((row) => (
-                <div className="tc-row" key={row}>
-                  <div className="tc-cell tc-row-header">
-                    <TypeBadge type={row} iconOnly />
+          <div className="status-reference-scroll">
+            <TypeDial />
+            <div className="type-chart-scroll">
+              <div className="type-chart-grid">
+                <div className="tc-cell tc-corner" />
+                {TYPES.map((col) => (
+                  <div className="tc-cell tc-col-header" key={col}>
+                    <TypeBadge type={col} iconOnly />
                   </div>
-                  {TYPES.map((col) => {
-                    const mult = typeChart[row][col];
-                    return (
-                      <div className={`tc-cell tc-value ${multClass(mult)}`} key={col}>
-                        {formatCell(mult)}
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
+                ))}
+                {TYPES.map((row) => (
+                  <div className="tc-row" key={row}>
+                    <div className="tc-cell tc-row-header">
+                      <TypeBadge type={row} iconOnly />
+                    </div>
+                    {TYPES.map((col) => {
+                      const mult = typeChart[row][col];
+                      return (
+                        <div className={`tc-cell tc-value ${multClass(mult)}`} key={col}>
+                          {formatCell(mult)}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
             </div>
+          </div>
+        ) : tab === 'equipment' ? (
+          <div className="status-reference-scroll">
+            <EquipmentCatalog />
           </div>
         ) : tab === 'statuses' ? (
           <div className="status-reference-scroll">
