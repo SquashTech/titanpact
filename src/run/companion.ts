@@ -7,6 +7,7 @@
 // new rule is `RosterEntry.mortal` — a knockout removes it from the run, its pips and its gear
 // with it (docs/gear-absorption.md §7).
 
+import type { TypeId } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
 import type { Encounter } from './enemyGen';
 import { SPAWN_TIERS, spawnId, spawnPosition } from '../data/titanspawn';
@@ -49,13 +50,46 @@ export function companionCandidate(encounter: Encounter): string | null {
  * It joins at the roster's par with the growth those levels would have rolled — RAW is unbuilt,
  * not hollow (CLAUDE.md "Recruitment") — holding its authored kit, mortal.
  */
-export function joinCompanion(run: RunState, heroId: string, heroes: HeroLookup, random: () => number = Math.random): RunState {
+export function joinCompanion(
+  run: RunState,
+  heroId: string,
+  heroes: HeroLookup,
+  random: () => number = Math.random,
+  /** Its line woke to Ancient on an earlier run (profile.ts `ascendedSpawnTypes`): it joins already Ancient. */
+  ascended = false
+): RunState {
   const hero = heroes[heroId];
   if (!hero || !spawnPosition(heroId)) throw new Error(`${heroId} is not a spawn and cannot be the companion`);
   const par = run.roster.reduce((best, entry) => Math.max(best, levelOf(entry)), 1);
-  const base = { ...createRosterEntry(freshRosterId(run, heroId), heroId, hero.moveIds), mortal: true };
+  const base = {
+    ...createRosterEntry(freshRosterId(run, heroId), heroId, hero.moveIds),
+    mortal: true,
+    evolutionTypeGraft: ascended ? ANCIENT : null,
+  };
   const entry = levelUpEntry(base, hero, par - 1, random).entry;
   return { ...addRosterEntry(run, entry), companionHeroId: heroId };
+}
+
+/** The type the companion wakes to: the Titan's own, in the secondary slot a hero's graft would fill. */
+export const ANCIENT: TypeId = 'Ancient';
+
+/**
+ * The companion on the roster as the finale opens, when it has not yet woken — the one the
+ * awakening beat is for. Null when there is none, or it already carries Ancient.
+ */
+export function companionToAwaken(run: RunState): RosterEntry | null {
+  const entry = companionOf(run);
+  return entry && entry.evolutionTypeGraft !== ANCIENT ? entry : null;
+}
+
+/**
+ * The companion reaches its true potential: Ancient takes its secondary slot for the rest of the
+ * run. Everything else carries; the body keeps its tier. A spawn line is mono, so nothing is traded.
+ */
+export function awakenCompanion(run: RunState): RunState {
+  const entry = companionToAwaken(run);
+  if (!entry) return run;
+  return { ...run, roster: run.roster.map((r) => (r === entry ? { ...r, evolutionTypeGraft: ANCIENT } : r)) };
 }
 
 export interface Absorption {

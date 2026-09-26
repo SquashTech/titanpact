@@ -142,6 +142,13 @@ export const SECTION_PATHS = {
       <path d="M9.6 4.4h4.8V6H9.6Z" />
     </>
   ),
+  // One open eye, the Titan's — the Compendium's Titanspawn page.
+  spawn: (
+    <path
+      fillRule="evenodd"
+      d="M12 5.2c5 0 8.6 3.6 10.4 6.8-1.8 3.2-5.4 6.8-10.4 6.8S3.4 15.2 1.6 12C3.4 8.8 7 5.2 12 5.2Zm0 2.6a4.2 4.2 0 1 0 0 8.4 4.2 4.2 0 0 0 0-8.4Zm0 2.4a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6Z"
+    />
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type SectionGlyphName = keyof typeof SECTION_PATHS;

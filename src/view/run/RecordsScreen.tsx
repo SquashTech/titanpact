@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { heroes } from '../../data/heroes';
 import { progressionTable } from '../../data/progression';
+import { titanspawnLines } from '../../data/titanspawn';
 import { formatPlaytime, starredHeroCount, totalStars, type Profile } from '../../run/profile';
 import { SEAL_ACTS } from '../../run/state';
 import { HubGlyph } from '../shared/nodeIcons';
@@ -24,8 +25,9 @@ const TABS: readonly TabSpec<RecordsTab>[] = [
 ];
 
 const HERO_COUNT = Object.keys(heroes).length;
-/** Every Evolution path in the game — the ceiling on stars. */
-const STAR_COUNT = Object.values(progressionTable.evolutions).reduce((n, nodes) => n + nodes.reduce((m, node) => m + node.paths.length, 0), 0);
+/** Every Evolution path in the game, and a companion star a Titanspawn line — the ceiling on stars. */
+const STAR_COUNT =
+  Object.values(progressionTable.evolutions).reduce((n, nodes) => n + nodes.reduce((m, node) => m + node.paths.length, 0), 0) + titanspawnLines.length;
 
 /**
  * One line of the record. It was a tile — a big accent numeral over a small caps label, in a
