@@ -19327,6 +19327,99 @@ button.star-shop-bundle-face {
   pointer-events: none;
 }
 
+/* The act's beats drawn as themselves (mapLandmarks.tsx), with no stone and no disc. Sizes are
+   !important because the tier and row-of-one rules above are more specific and set the medallion
+   box; a landmark's box is its own art's, at a clean multiple. */
+.map-medallion.is-landmark,
+.map-medallion.is-landmark:hover,
+.map-atmosphere.has-backdrop ~ * .map-medallion.is-landmark {
+  border: none;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+/* The opening fight: the Titan's eye, opening on the road — the title screen's eye, alone. */
+.map-medallion.is-eye {
+  width: 210px !important;
+  height: 114px !important;
+}
+
+.map-medallion.is-eye .map-medallion-glow {
+  border-radius: 50%;
+  inset: -10px -30px;
+}
+
+.map-landmark-eye {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.map-eye-halo {
+  fill: url(#map-eye-glare);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: titan-eye-flare 29s ease-in-out infinite;
+}
+
+.map-eye-lens {
+  fill: url(#map-eye-iris);
+}
+
+.map-eye-hotspot {
+  fill: url(#map-eye-hotspot);
+  opacity: 0.8;
+}
+
+.map-eye-pupil {
+  fill: #07050a;
+}
+
+/* The Mentor, the Tutor and the Scribe standing on the path: their 48px portraits at 3x. */
+.map-medallion.is-npc {
+  width: 144px !important;
+  height: 144px !important;
+}
+
+/* The Guild Hall (and the Vigil): a 96px building at 2x, doors open. */
+.map-medallion.is-building {
+  width: 192px !important;
+  height: 192px !important;
+}
+
+.map-landmark-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 12px color-mix(in srgb, var(--node-color) 45%, transparent));
+  pointer-events: none;
+}
+
+/* The Guardian: the act's own Guardian figure, looming — the one thing on the map with a face. */
+.map-medallion.is-guardian {
+  width: 200px !important;
+  height: 200px !important;
+}
+
+.map-medallion.is-guardian .map-medallion-glow {
+  inset: -30px;
+}
+
+.map-landmark-figure {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 0 18px var(--node-color)) drop-shadow(0 8px 12px rgba(0, 0, 0, 0.7));
+  pointer-events: none;
+}
+
 /* A scouted encounter's typing: a plaque hung off the medallion's bottom rim, one element per
    enemy type in its own colour — scouting read beside the emblem, not cut into it. */
 .map-medallion-typing {

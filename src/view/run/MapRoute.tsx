@@ -6,6 +6,7 @@ import { playSfx, type SfxId } from '../../audio/sfx';
 import { NODE_COLORS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
 import { nodeFactsLine } from './nodeFacts';
 import { mapNodeArt } from './mapNodeArt';
+import { landmarkKind, MapLandmarkFace } from './mapLandmarks';
 import { ElementPie } from '../shared/ElementPie';
 import { ElementGlyph } from '../shared/elementIcons';
 import { getTypeColor } from '../combat/typeColors';
@@ -131,12 +132,15 @@ function ChoiceMedallion({
   actNumber,
   showLeadOn,
   landDelayMs,
+  guardianId,
   onSelect,
   onPreview,
   measureRef,
 }: {
   map: RunMap;
   node: MapNode;
+  /** The act's Guardian, drawn as the Guardian node's face. */
+  guardianId: string | null;
   /** The enemy typing this tile previews, or none — the Skirmish and the fork only (MapScreen). */
   scouted: readonly TypeId[] | undefined;
   actNumber: number;
@@ -148,17 +152,14 @@ function ChoiceMedallion({
 }) {
   const leadOns = showLeadOn ? leadOnTypes(map, node.id) : [];
   const press = useLongPress(onPreview, onSelect);
-  // Who is in there IS the tile (2026-09-13, per user direction): a recruitable encounter's face
-  // is its enemy typing, cut into wedges, in place of the helm — so the fork is a tactical read and
-  // bring-6-pick-4 starts on the map. On the tile rather than in the long-press readout because a
-  // rule held in the head does not survive the map being a scene (docs/titanspawn-overhaul.md §4).
-  // The Elite keeps its crown, as a badge on the rim: colour carries difficulty, and the crown is
-  // what lets it be told from the Skirmish beside it before the colour is read.
+  // The enemy typing stays ON the tile (docs/titanspawn-overhaul.md §4) — a rule held in the head
+  // does not survive the map being a scene — but as a plaque under the helm, not cut into it.
   const scoutedFace = scouted && scouted.length > 0 ? scouted : null;
   const label = nodeFactsLine(NODE_NAMES[node.type], node.type, actNumber);
   // The pixel medallion wears the node's own emblem — helm or crowned helm on the fork — and a
   // scouted typing hangs under it as a plaque, rather than being cut into the face.
-  const art = mapNodeArt(node.type);
+  const landmark = landmarkKind(node.type);
+  const art = landmark ? undefined : mapNodeArt(node.type);
   return (
     <div
       className={`map-choice tier-${NODE_TIERS[node.type]}`}
@@ -174,7 +175,7 @@ function ChoiceMedallion({
       </span>
       <button
         type="button"
-        className={`map-medallion${scoutedFace ? ' is-scouted' : ''}${art ? ' has-art' : ''}`}
+        className={`map-medallion${scoutedFace ? ' is-scouted' : ''}${art ? ' has-art' : ''}${landmark ? ` is-landmark is-${landmark}` : ''}`}
         ref={measureRef}
         aria-label={scoutedFace ? `${label}. Enemies: ${scoutedFace.join(', ')}` : label}
         data-sfx="none"
@@ -182,6 +183,7 @@ function ChoiceMedallion({
       >
         <span className="map-medallion-glow" aria-hidden="true" />
         <span className="map-choice-burst" aria-hidden="true" />
+        {landmark && <MapLandmarkFace kind={landmark} type={node.type} guardianId={guardianId} />}
         {art && <img src={art} className="map-medallion-art" alt="" draggable={false} />}
         {art && scoutedFace && (
           <span className="map-medallion-typing" aria-hidden="true">
@@ -192,9 +194,9 @@ function ChoiceMedallion({
             ))}
           </span>
         )}
-        {!art && scoutedFace && <ElementPie types={scoutedFace} className="map-medallion-pie" />}
-        {!art && !scoutedFace && <NodeGlyph type={node.type} className="map-medallion-glyph" />}
-        {!art && scoutedFace && node.type === 'elite' && (
+        {!art && !landmark && scoutedFace && <ElementPie types={scoutedFace} className="map-medallion-pie" />}
+        {!art && !landmark && !scoutedFace && <NodeGlyph type={node.type} className="map-medallion-glyph" />}
+        {!art && !landmark && scoutedFace && node.type === 'elite' && (
           <span className="map-medallion-crown" aria-hidden="true">
             <HubGlyph name="crown" />
           </span>
@@ -211,10 +213,13 @@ export function MapRoute({
   choiceIds,
   scouted,
   actNumber,
+  guardianId,
   onSelectNode,
   onPreviewNode,
 }: {
   map: RunMap;
+  /** The act's Guardian (LocationDefinition.guardianFinalEnemyId), for the Guardian node's face. */
+  guardianId: string | null;
   /** The node just resolved, or null on an act's first row — there is nothing behind you yet. */
   originNode: MapNode | null;
   /** The Location's omen — what leaks here — shown in the origin's place at the act's first Monsters node. */
@@ -365,6 +370,7 @@ export function MapRoute({
             scouted={scouted[nodeId]}
             actNumber={actNumber}
             showLeadOn={showLeadOn}
+            guardianId={guardianId}
             landDelayMs={i * PATH_STAGGER_MS + PATH_DRAW_MS}
             onSelect={() => {
               // Played here rather than via data-sfx, which fires on POINTERDOWN — the same press that

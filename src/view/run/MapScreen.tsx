@@ -258,6 +258,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
           choiceIds={choiceIds}
           scouted={scouted}
           actNumber={run.actNumber}
+          guardianId={location.guardianFinalEnemyId}
           onSelectNode={onSelectNode}
           onPreviewNode={setPreviewNode}
         />
