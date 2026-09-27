@@ -19384,6 +19384,35 @@ button.star-shop-bundle-face {
   }
 }
 
+/* A landmark behind you (MapRoute origin): itself, small and unlit, where the medallions sit
+   greyed. The NPC at its native 1x, the hall at a clean half, the eye as a narrow lens. */
+.map-origin-mark.is-landmark,
+.map-atmosphere.has-backdrop ~ * .map-origin-mark.is-landmark {
+  position: relative;
+  border: none;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  filter: grayscale(0.7) brightness(0.6);
+}
+
+.map-origin-mark.is-npc,
+.map-origin-mark.is-building {
+  width: 48px;
+  height: 48px;
+}
+
+/* The eye's own colour is a dark red, so it takes less of the grey or it goes out entirely. */
+.map-origin-mark.is-eye {
+  width: 130px;
+  height: 52px;
+  filter: grayscale(0.45) brightness(0.8);
+}
+
+.map-origin-mark.is-landmark .map-landmark-art {
+  filter: none;
+}
+
 /* The act's starting camp (MapRoute): the Rest vignette at 1x, where the first road begins. */
 .map-origin-mark.is-start,
 .map-atmosphere.has-backdrop ~ * .map-origin-mark.is-start {

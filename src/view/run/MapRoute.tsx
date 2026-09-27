@@ -245,6 +245,7 @@ export function MapRoute({
   const showLeadOn = leadOnsDiffer(map, choiceIds);
   // Gated on the node kind, not just on being row 0: act 6 opens on the Vigil, and an omen
   // over a muster would be naming enemies that are not there — nor does a camp sit before it.
+  const originLandmark = originNode ? landmarkKind(originNode.type) : undefined;
   const opensOnFight = !originNode && map.nodes[choiceIds[0]]?.type === 'fight';
   const showOmen = opensOnFight;
   // An act's first row reveals too, from the camp: the opening fight is reached by a road like
@@ -405,8 +406,15 @@ export function MapRoute({
 
       {originNode && (
         <div className="map-origin">
-          <span className={`map-origin-mark${mapNodeArt(originNode.type) ? ' has-art' : ''}`} ref={originRef} aria-hidden="true">
-            {mapNodeArt(originNode.type) ? (
+          <span
+            className={`map-origin-mark${originLandmark ? ` is-landmark is-${originLandmark}` : mapNodeArt(originNode.type) ? ' has-art' : ''}`}
+            ref={originRef}
+            aria-hidden="true"
+          >
+            {/* A landmark stays itself behind you — the eye, the Mentor, the hall — small and unlit. */}
+            {originLandmark ? (
+              <MapLandmarkFace kind={originLandmark} type={originNode.type} guardianId={guardianId} quiet />
+            ) : mapNodeArt(originNode.type) ? (
               <img src={mapNodeArt(originNode.type)} className="map-origin-art" alt="" draggable={false} />
             ) : (
               <NodeGlyph type={originNode.type} className="map-origin-glyph" />

@@ -74,9 +74,21 @@ function MapTitanEye() {
   );
 }
 
-export function MapLandmarkFace({ kind, type, guardianId }: { kind: LandmarkKind; type: MapNodeType; guardianId: string | null }) {
+export function MapLandmarkFace({
+  kind,
+  type,
+  guardianId,
+  quiet = false,
+}: {
+  kind: LandmarkKind;
+  type: MapNodeType;
+  guardianId: string | null;
+  /** Behind the player (the route's origin): no invitation to tap. */
+  quiet?: boolean;
+}) {
   switch (kind) {
     case 'eye':
+      if (quiet) return <MapTitanEye />;
       // The ripple waits a few seconds and then keeps asking: it is only ever seen by a player
       // who has not tapped yet.
       return (
