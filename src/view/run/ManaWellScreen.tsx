@@ -10,9 +10,9 @@ import { statScaleFor } from '../../run/statScale';
 import { entryStatTotals } from '../shared/entryStatTotals';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { NodeHeader, NodeSky, NODE_TINT_MANA } from '../shared/NodeStage';
-import { StatGlyph } from '../shared/StatBars';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
+import manaWellArt from '../../../art/places/manaWell.png';
 
 interface Props {
   run: RunState;
@@ -52,9 +52,10 @@ export function ManaWellScreen({ run, onRunChange, onContinue }: Props) {
       <RosterPeek run={run} />
 
       <NodeHeader
+        compact
         eyebrow="Cold Water, Far Down"
         title="Mana Well"
-        glyph={<StatGlyph stat="manaPool" tone="inherit" />}
+        art={<img src={manaWellArt} className="place-vignette" alt="" draggable={false} />}
         readoutKey={grantedTo ?? 'idle'}
         readoutLive={!!grantedHero}
         readout={

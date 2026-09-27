@@ -9,9 +9,9 @@ import { anyWounded, mendRoster } from '../../run/wounds';
 import { statScaleFor } from '../../run/statScale';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { NodeHeader, NodeSky, NODE_TINT_VITAL } from '../shared/NodeStage';
-import { NodeGlyph } from '../shared/nodeIcons';
 import { WoundBar, entryHp } from '../shared/WoundBar';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
+import restArt from '../../../art/places/rest.png';
 
 interface Props {
   run: RunState;
@@ -45,9 +45,10 @@ export function RestNodeScreen({ run, onRunChange, onContinue }: Props) {
       <NodeSky />
 
       <NodeHeader
+        compact
         eyebrow="Embers Banked"
         title="Rest"
-        glyph={<NodeGlyph type="restReward" />}
+        art={<img src={restArt} className="place-vignette" alt="" draggable={false} />}
         readoutKey={rested ? 'rested' : 'idle'}
         readoutLive={rested}
         readout={

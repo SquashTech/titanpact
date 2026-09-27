@@ -12,6 +12,7 @@ import { entryPassiveCounts } from '../../run/entryStats';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { NodeHeader, NodeSky, NODE_TINT_ARCANE } from '../shared/NodeStage';
+import shrineArt from '../../../art/places/shrine.png';
 import { PassiveGlyph, passiveColor, passiveKindLabel, passiveTint } from '../shared/passiveIcons';
 import { PassiveDetailCard, PassiveFactRows } from '../shared/PassiveDossier';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
@@ -111,6 +112,7 @@ export function BoonNodeScreen({ run, onRunChange, onContinue }: Props) {
       {!assignedTo && (
         <NodeHeader
           compact
+          art={<img src={shrineArt} className="place-vignette" alt="" draggable={false} />}
           eyebrow={confirmed ? 'Boon Chosen' : 'A Power Stirs'}
           title={confirmed ? 'Choose a Vessel' : 'The Shrine'}
           readout={

@@ -5,6 +5,7 @@ import type { RunState } from '../../run/state';
 import { SEAL_ACTS } from '../../run/state';
 import { LocationMotes } from '../shared/LocationSky';
 import { LocationHorizon } from '../shared/locationArt';
+import { locationBackdrop } from '../shared/locationBackdrops';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { NodeHeader, NodeSky, NODE_TINT_GOLD } from '../shared/NodeStage';
 import { ElementGlyph } from '../shared/elementIcons';
@@ -95,6 +96,7 @@ interface CardProps {
  */
 function LocationChoiceCard({ location, picked, dimmed, revealDelayMs, onPick }: CardProps) {
   const domains = locationDomains(location);
+  const backdrop = locationBackdrop(location.id);
 
   return (
     <button
@@ -104,7 +106,8 @@ function LocationChoiceCard({ location, picked, dimmed, revealDelayMs, onPick }:
       onClick={onPick}
       aria-pressed={picked}
     >
-      <span className="location-choice-scene" aria-hidden="true">
+      <span className={`location-choice-scene${backdrop ? ' has-backdrop' : ''}`} aria-hidden="true">
+        {backdrop && <img className="location-backdrop" src={backdrop} alt="" draggable={false} />}
         <span className="location-choice-wash" />
         <LocationMotes kind={location.ambience} density={CARD_MOTE_DENSITY} />
         {location.guardianFinalEnemyId && (
@@ -112,7 +115,7 @@ function LocationChoiceCard({ location, picked, dimmed, revealDelayMs, onPick }:
             <HeroPortrait heroId={location.guardianFinalEnemyId} className="location-choice-warden-figure" />
           </span>
         )}
-        <LocationHorizon locationId={location.id} />
+        {!backdrop && <LocationHorizon locationId={location.id} />}
       </span>
 
       {/* The name alone: the scene under it is the description. */}

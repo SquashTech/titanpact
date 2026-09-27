@@ -3,6 +3,7 @@ import { locationDomains, locations } from '../../data/locations';
 import { enemies } from '../../data/enemies';
 import { LocationMotes } from '../shared/LocationSky';
 import { LocationHorizon } from '../shared/locationArt';
+import { locationBackdrop } from '../shared/locationBackdrops';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { ElementGlyph } from '../shared/elementIcons';
 import { getTypeColor } from '../combat/typeColors';
@@ -29,12 +30,14 @@ export function LocationPeekOverlay({ locationId, purchase, onClose }: Props) {
   if (!location) return null;
   const domains = locationDomains(location);
   const warden = location.guardianFinalEnemyId ? enemies[location.guardianFinalEnemyId] : null;
+  const backdrop = locationBackdrop(location.id);
 
   return (
     <div className="detail-overlay is-sheet" onClick={onClose}>
       <div className="detail-panel location-peek-panel" style={{ '--node-rgb': location.tintRgb } as CSSProperties} onClick={(e) => e.stopPropagation()}>
         <div className="location-choice-card is-picked location-peek-card">
-          <span className="location-choice-scene" aria-hidden="true">
+          <span className={`location-choice-scene${backdrop ? ' has-backdrop' : ''}`} aria-hidden="true">
+            {backdrop && <img className="location-backdrop" src={backdrop} alt="" draggable={false} />}
             <span className="location-choice-wash" />
             <LocationMotes kind={location.ambience} density={PEEK_MOTE_DENSITY} />
             {location.guardianFinalEnemyId && (
@@ -42,7 +45,7 @@ export function LocationPeekOverlay({ locationId, purchase, onClose }: Props) {
                 <HeroPortrait heroId={location.guardianFinalEnemyId} className="location-choice-warden-figure" />
               </span>
             )}
-            <LocationHorizon locationId={location.id} />
+            {!backdrop && <LocationHorizon locationId={location.id} />}
           </span>
           <span className="location-choice-body">
             <span className="location-choice-name">{location.name}</span>

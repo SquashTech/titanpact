@@ -9,11 +9,11 @@ import type { RosterEntry, RunState } from '../../run/state';
 import { statScaleFor } from '../../run/statScale';
 import { getTypeColorRgb } from '../combat/typeColors';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
-import { NodeGlyph } from '../shared/nodeIcons';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
 import { StatusGlyph } from '../shared/statusIcons';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
+import leyLineArt from '../../../art/places/leyLine.png';
 
 interface Props {
   run: RunState;
@@ -56,9 +56,10 @@ export function LeyLineScreen({ run, onRunChange, onContinue }: Props) {
       <RosterPeek run={run} />
 
       <NodeHeader
+        compact
         eyebrow="Power Under the Ground"
         title="Ley Line"
-        glyph={<NodeGlyph type="leyLineReward" />}
+        art={<img src={leyLineArt} className="place-vignette" alt="" draggable={false} />}
         readoutKey={grantedTo ?? 'idle'}
         readoutLive={!!grantedHero}
         readout={

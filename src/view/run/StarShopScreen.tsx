@@ -7,6 +7,7 @@ import { bundleOwnedHeroIds, canBuy, canCallStarfall, offerHeld, offerPrice, sta
 import { HubGlyph } from '../shared/nodeIcons';
 import { ElementGlyph } from '../shared/elementIcons';
 import { LocationHorizon } from '../shared/locationArt';
+import { locationBackdrop } from '../shared/locationBackdrops';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TabStrip, type TabSpec } from '../shared/TabStrip';
 import { getTypeColor } from '../combat/typeColors';
@@ -244,10 +245,11 @@ function OpenRow({ className, style, label, onOpen, children }: { className: str
 function LocationRow({ offer, locationId, held, onOpen }: { offer: StarShopOffer; locationId: string; held: boolean; onOpen: () => void }) {
   const location = locations[locationId];
   const domains = location ? locationDomains(location) : null;
+  const backdrop = locationBackdrop(locationId);
   return (
     <OpenRow className={`star-shop-place${held ? ' is-held' : ''}`} style={{ '--node-rgb': location?.tintRgb } as CSSProperties} label={`${offer.name} — look around`} onOpen={onOpen}>
-      <span className="star-shop-place-scene" aria-hidden="true">
-        <LocationHorizon locationId={locationId} />
+      <span className={`star-shop-place-scene${backdrop ? ' has-backdrop' : ''}`} aria-hidden="true">
+        {backdrop ? <img className="location-backdrop" src={backdrop} alt="" draggable={false} /> : <LocationHorizon locationId={locationId} />}
       </span>
       <div className="star-shop-offer-body">
         <span className="star-shop-offer-name">{offer.name}</span>
