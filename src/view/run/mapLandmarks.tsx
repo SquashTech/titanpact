@@ -38,7 +38,7 @@ function MapTitanEye() {
   // held open rather than narrowed and flared.
   const lens = 'M-82 0 Q0 -48 82 0 Q0 48 -82 0 Z';
   return (
-    <svg className="map-landmark-eye" viewBox="-130 -70 260 140" aria-hidden="true">
+    <svg className="map-landmark-eye" viewBox="-130 -52 260 104" aria-hidden="true">
       <defs>
         <radialGradient id="map-eye-iris" cx="50%" cy="50%" r="52%">
           <stop offset="0%" stopColor="#f6c070" />
@@ -77,7 +77,15 @@ function MapTitanEye() {
 export function MapLandmarkFace({ kind, type, guardianId }: { kind: LandmarkKind; type: MapNodeType; guardianId: string | null }) {
   switch (kind) {
     case 'eye':
-      return <MapTitanEye />;
+      // The ripple waits a few seconds and then keeps asking: it is only ever seen by a player
+      // who has not tapped yet.
+      return (
+        <>
+          <span className="map-eye-ripple" aria-hidden="true" />
+          <span className="map-eye-ripple is-second" aria-hidden="true" />
+          <MapTitanEye />
+        </>
+      );
     case 'npc':
       return <img src={NPC_ART[type]} className="map-landmark-art" alt="" draggable={false} />;
     case 'building':

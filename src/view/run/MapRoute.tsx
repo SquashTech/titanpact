@@ -7,6 +7,7 @@ import { NODE_COLORS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
 import { nodeFactsLine } from './nodeFacts';
 import { mapNodeArt } from './mapNodeArt';
 import { landmarkKind, MapLandmarkFace } from './mapLandmarks';
+import campArt from '../../../art/places/rest.png';
 import { ElementPie } from '../shared/ElementPie';
 import { ElementGlyph } from '../shared/elementIcons';
 import { getTypeColor } from '../combat/typeColors';
@@ -241,7 +242,9 @@ export function MapRoute({
   const finished = useRef(false);
 
   const choiceKey = choiceIds.join(',');
-  const revealKey = originNode ? `${map.seed}:${originNode.id}` : null;
+  // An act's first row reveals too, from the camp: the opening fight is reached by a road like
+  // every other node, which is what tells a new player it is a place to go.
+  const revealKey = `${map.seed}:${originNode?.id ?? 'start'}`;
   const showLeadOn = leadOnsDiffer(map, choiceIds);
   // Gated on the node kind, not just on being row 0: act 6 opens on the Vigil, and an omen
   // over a muster would be naming enemies that are not there.
@@ -390,6 +393,15 @@ export function MapRoute({
 
       {/* Behind you. Unlit and colourless — it is where the paths come FROM, and the only thing on
           the screen that is not a decision. */}
+      {/* Where the act begins: the company's camp, so the first node has a road leading to it. */}
+      {!originNode && (
+        <div className="map-origin">
+          <span className="map-origin-mark is-start" ref={originRef} aria-hidden="true">
+            <img src={campArt} className="map-origin-camp" alt="" draggable={false} />
+          </span>
+        </div>
+      )}
+
       {originNode && (
         <div className="map-origin">
           <span className={`map-origin-mark${mapNodeArt(originNode.type) ? ' has-art' : ''}`} ref={originRef} aria-hidden="true">

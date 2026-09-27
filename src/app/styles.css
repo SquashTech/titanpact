@@ -19340,9 +19340,66 @@ button.star-shop-bundle-face {
 }
 
 /* The opening fight: the Titan's eye, opening on the road — the title screen's eye, alone. */
+/* Boxed to the lens (the halo overflows), so the road meets the lower lid rather than stopping
+   short of it. */
 .map-medallion.is-eye {
   width: 300px !important;
-  height: 162px !important;
+  height: 120px !important;
+}
+
+/* The invitation: an eye-shaped ring breathing outward, only after the player has hesitated
+   (3s), then every 2.4s with a second ring half a beat behind. A thing that pulses is a thing
+   to touch — no words needed. */
+.map-eye-ripple {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  top: 22%;
+  bottom: 22%;
+  border: 2px solid rgba(240, 120, 90, 0.8);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  animation: map-eye-ripple 2.4s ease-out 3s infinite;
+}
+
+.map-eye-ripple.is-second {
+  animation-delay: 3.6s;
+}
+
+@keyframes map-eye-ripple {
+  0% {
+    opacity: 0.85;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.45);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-eye-ripple {
+    display: none;
+  }
+}
+
+/* The act's starting camp (MapRoute): the Rest vignette at 1x, where the first road begins. */
+.map-origin-mark.is-start,
+.map-atmosphere.has-backdrop ~ * .map-origin-mark.is-start {
+  width: 96px;
+  height: 48px;
+  border: none;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.map-origin-camp {
+  width: 96px;
+  height: 48px;
+  image-rendering: pixelated;
+  filter: brightness(0.85) drop-shadow(0 0 8px rgba(255, 150, 60, 0.35));
 }
 
 /* Held open. The title's eye sits narrow and widens now and then; on the map it is a thing to
