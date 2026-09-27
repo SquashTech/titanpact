@@ -14,6 +14,9 @@ import { TypeBadge } from './TypeBadge';
 import { STAT_COLORS, STAT_LABELS, computeStatTotal, statFraction } from './StatBars';
 import { PassiveGlyph, passiveColor, passiveTint } from './passiveIcons';
 import type { StatScale } from '../../run/statScale';
+import { useAmbientLocation } from './LocationContext';
+import { LocationAmbience } from './LocationSky';
+import { locationBackdrop } from './locationBackdrops';
 
 // The hero stage shared by the draft and the Recruit Contract claim: one hero at 144px in a sigil
 // with its stat sheet beside it (the dais), the kit as the fight's own move console under them, and
@@ -42,6 +45,17 @@ function useMotes(count: number) {
 /** Full-bleed wash and mote field at z-index 0; every sibling after it must be lifted above it. */
 export function StageSky({ motes = DEFAULT_MOTES }: { motes?: number }) {
   const field = useMotes(motes);
+  // Inside an act (the contract claim) the stage stands in the act's place, as every node screen does.
+  const location = useAmbientLocation();
+  if (location && locationBackdrop(location.id, 'map')) {
+    return (
+      <div className="draft-sky is-painted" aria-hidden="true">
+        <LocationAmbience location={location} density={0.5} className="node-location" painted />
+        <span className="draft-sky-wash" />
+      </div>
+    );
+  }
+
   return (
     <div className="draft-sky" aria-hidden="true">
       <span className="draft-sky-wash" />

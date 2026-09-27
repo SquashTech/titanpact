@@ -12793,6 +12793,15 @@ button.star-shop-bundle-face {
     radial-gradient(ellipse 85% 60% at 50% 46%, #171522, #0b0c12 76%);
 }
 
+/* Over the act's painting (StageSky inside an act) the wash keeps its two
+   pools and gives up its opaque ground. */
+.draft-sky.is-painted .draft-sky-wash {
+  background:
+    radial-gradient(ellipse 120% 55% at 50% -6%, rgba(224, 166, 60, 0.13), transparent 62%),
+    radial-gradient(ellipse 120% 60% at 50% 106%, rgba(164, 99, 217, 0.15), transparent 66%),
+    linear-gradient(180deg, rgba(7, 8, 13, 0.45), rgba(7, 8, 13, 0.15) 40%, rgba(7, 8, 13, 0.5));
+}
+
 .draft-motes {
   position: absolute;
   inset: 0;
@@ -19281,6 +19290,67 @@ button.star-shop-bundle-face {
   color: var(--node-color);
 }
 
+/* The pixel medallion (mapNodeArt.ts): a 48x48 stone frame with the emblem baked in, drawn at a
+   clean 2x — 3x for the Guardian and a row of one. The CSS disc, ring and inner light give way to
+   the art; the breathing glow behind it stays, since its colour is what carries difficulty. */
+.map-medallion.has-art {
+  border: none;
+  background: none;
+  box-shadow: none;
+}
+
+.map-medallion.has-art,
+.map-choice.tier-reward .map-medallion.has-art,
+.map-choice.tier-landmark .map-medallion.has-art {
+  width: 96px;
+  height: 96px;
+}
+
+.map-choice.tier-ancient .map-medallion.has-art,
+.map-choices:has(.map-choice:only-child) .map-choice .map-medallion.has-art {
+  width: 144px;
+  height: 144px;
+}
+
+.map-medallion.has-art:hover {
+  border: none;
+  box-shadow: none;
+}
+
+.map-medallion-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6));
+  pointer-events: none;
+}
+
+/* A scouted encounter's typing sits in the frame's recessed centre (the disc is ~26 of 48 px,
+   centred a pixel left of and above the canvas middle). */
+.map-medallion.has-art .map-medallion-pie {
+  inset: 23% 25% 25% 23%;
+  width: auto;
+  height: auto;
+}
+
+/* Behind you: the same medallion, small and unlit. */
+.map-origin-mark.has-art {
+  width: 48px;
+  height: 48px;
+  border: none;
+  background: none;
+  box-shadow: none;
+}
+
+.map-origin-art {
+  width: 48px;
+  height: 48px;
+  image-rendering: pixelated;
+  filter: grayscale(0.7) brightness(0.6);
+}
+
 /* Hub signpost: Relics/Roster/Reference, relocated out of the header
    (2026-08-17) to leave the header to pure run stats. Each button carries
    its own accent (--btn-color), same spirit as .map-node's --node-color. The
@@ -21728,6 +21798,22 @@ button.star-shop-bundle-face {
    sits behind cards, prices and stat lines that have to stay readable. */
 .node-location .location-motes {
   opacity: 0.45;
+}
+
+/* The act's map painting behind a node screen (NodeSky `is-painted`): dimmed
+   further than on the map, since cards and prices sit over all of it, and with
+   the node's own wash laid over it translucent — the painting is the place,
+   the wash is still what kind of moment this is. */
+.node-location .location-backdrop {
+  filter: brightness(0.7);
+  animation: none;
+}
+
+.node-sky.is-painted .node-sky-wash {
+  z-index: 1;
+  background:
+    radial-gradient(ellipse 120% 52% at 50% -8%, rgba(var(--node-rgb), 0.2), transparent 62%),
+    linear-gradient(180deg, rgba(7, 8, 13, 0.35), rgba(7, 8, 13, 0.1) 40%, rgba(7, 8, 13, 0.45));
 }
 
 /* --- The corner glyph buttons -------------------------------------------

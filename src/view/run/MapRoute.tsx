@@ -5,6 +5,7 @@ import { useLongPress } from '../shared/MoveTile';
 import { playSfx, type SfxId } from '../../audio/sfx';
 import { NODE_COLORS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
 import { nodeFactsLine } from './nodeFacts';
+import { MEDALLION_FRAME_ART, mapNodeArt } from './mapNodeArt';
 import { ElementPie } from '../shared/ElementPie';
 import type { TypeId } from '../../engine/content';
 
@@ -153,6 +154,8 @@ function ChoiceMedallion({
   // what lets it be told from the Skirmish beside it before the colour is read.
   const scoutedFace = scouted && scouted.length > 0 ? scouted : null;
   const label = nodeFactsLine(NODE_NAMES[node.type], node.type, actNumber);
+  // The pixel medallion: the emblem baked in, or the empty frame under a scouted typing.
+  const art = scoutedFace ? MEDALLION_FRAME_ART : mapNodeArt(node.type);
   return (
     <div
       className={`map-choice tier-${NODE_TIERS[node.type]}`}
@@ -168,7 +171,7 @@ function ChoiceMedallion({
       </span>
       <button
         type="button"
-        className={`map-medallion${scoutedFace ? ' is-scouted' : ''}`}
+        className={`map-medallion${scoutedFace ? ' is-scouted' : ''}${art ? ' has-art' : ''}`}
         ref={measureRef}
         aria-label={scoutedFace ? `${label}. Enemies: ${scoutedFace.join(', ')}` : label}
         data-sfx="none"
@@ -176,10 +179,11 @@ function ChoiceMedallion({
       >
         <span className="map-medallion-glow" aria-hidden="true" />
         <span className="map-choice-burst" aria-hidden="true" />
+        {art && <img src={art} className="map-medallion-art" alt="" draggable={false} />}
         {scoutedFace ? (
           <ElementPie types={scoutedFace} className="map-medallion-pie" />
         ) : (
-          <NodeGlyph type={node.type} className="map-medallion-glyph" />
+          !art && <NodeGlyph type={node.type} className="map-medallion-glyph" />
         )}
         {scoutedFace && node.type === 'elite' && (
           <span className="map-medallion-crown" aria-hidden="true">
@@ -373,8 +377,12 @@ export function MapRoute({
           the screen that is not a decision. */}
       {originNode && (
         <div className="map-origin">
-          <span className="map-origin-mark" ref={originRef} aria-hidden="true">
-            <NodeGlyph type={originNode.type} className="map-origin-glyph" />
+          <span className={`map-origin-mark${mapNodeArt(originNode.type) ? ' has-art' : ''}`} ref={originRef} aria-hidden="true">
+            {mapNodeArt(originNode.type) ? (
+              <img src={mapNodeArt(originNode.type)} className="map-origin-art" alt="" draggable={false} />
+            ) : (
+              <NodeGlyph type={originNode.type} className="map-origin-glyph" />
+            )}
           </span>
         </div>
       )}

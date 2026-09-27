@@ -242,11 +242,14 @@ has its own ground) and keeps the ambience; the wash becomes a scrim, dark behin
 and at the foot, with a low glow of `tintRgb`. A Location with no file falls back to the
 vector band. **The map screen has a backdrop of its own** (`art/locations/map/<locationId>.png`,
 `LocationAmbience painted`), because the arrival painting failed there: it is composed around a
-centre landmark, and the centre is where the medallions sit. A map backdrop is authored the other
-way round — detail only at the left and right edges, a quiet dark centre, a road climbing from the
-bottom (where the player stands) toward the top (the Guardian), side view. It is dimmed a little,
-scrimmed at the header and the roster tray, and the medallions, origin mark and placard get an
-opaque ground and a dark edge.
+centre landmark, and the centre is where the medallions sit. A map backdrop is AMBIENT, not a
+scene (redone 2026-09-27 after playtest found the first, painted set too busy): flat-shaded
+Pixflux, three silhouette layers low in the bottom third, a plain banded sky, the light kept low
+on the horizon, no sun or moon disc behind the medallions, a handful of colours. It is dimmed a
+little, scrimmed at the header and the roster tray, and the medallions, origin mark and placard
+get an opaque ground and a dark edge. **It is also every in-act screen's ground**: NodeSky
+(`is-painted`) and the contract claim's StageSky stand on it, dimmed further, with the node's own
+wash laid over it translucent so a gold cache or a violet boon still reads as one.
 
 **The fight has a third** (`art/locations/battle/<locationId>.png`, 196x228 — the arena box
 at 2x), composed as an ARENA: one open floor filling the frame that both teams stand on, a thin

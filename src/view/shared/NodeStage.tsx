@@ -1,6 +1,7 @@
 import { useMemo, type CSSProperties, type ReactNode } from 'react';
 import { useAmbientLocation } from './LocationContext';
 import { LocationAmbience } from './LocationSky';
+import { locationBackdrop } from './locationBackdrops';
 import { ResourceGlyph } from './RunGlyph';
 
 // The shared stage every map-node screen is set on: a full-bleed sky and an unboxed header.
@@ -59,12 +60,15 @@ const NODE_MOTE_DENSITY = 0.5;
  */
 export function NodeSky({ motes = MOTE_COUNT }: NodeSkyProps) {
   const location = useAmbientLocation();
+  // Inside an act every node screen stands on the act's own map painting; the node's wash goes
+  // over it translucent, so its tint (gold cache, violet boon) still reads.
+  const painted = !!location && !!locationBackdrop(location.id, 'map');
 
   return (
-    <div className="node-sky" aria-hidden="true">
+    <div className={`node-sky${painted ? ' is-painted' : ''}`} aria-hidden="true">
       <span className="node-sky-wash" />
       {location ? (
-        <LocationAmbience location={location} density={NODE_MOTE_DENSITY} className="node-location" />
+        <LocationAmbience location={location} density={NODE_MOTE_DENSITY} className="node-location" painted />
       ) : (
         <NodeMotes count={motes} />
       )}
