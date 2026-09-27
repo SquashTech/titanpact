@@ -2321,7 +2321,7 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleAlly',
     description: 'Pours 40 mana into an ally — past their pool if it will not fit.',
   },
-  // The roster's only guard, and deliberately a thin slice of it: Glyph and Cortex, both frail
+  // The roster's only guard, and deliberately a thin slice of it: Glyph and Reverie, both frail
   // casters whose problem is being the weakest body on the field rather than a weak one. Priority 2
   // is a bracket of its own above every other move, so the guard is always up before what it stops.
   // Not spam-proofed by a consecutive-use rule — mana is the balance lever on reliable moves
@@ -2868,7 +2868,7 @@ export const moves: Record<string, MoveDefinition> = {
     description: 'Feeds on what the foe is thinking (heals 40% of what it deals).',
   },
 
-  // Embodied's grant (Cortex): Mind's one physical hit — the slate has no other. In no pool. The
+  // Embodied's grant (Reverie): Mind's one physical hit — the slate has no other. In no pool. The
   // rider is the slate's own verb (Psyshock's Wisdom shred) made certain, and it points at the OTHER
   // hand: the body's blow opens the mind for the magical one Either Hand pays +30% on next turn.
   psychokinesis: {

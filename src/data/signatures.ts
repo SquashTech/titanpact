@@ -176,7 +176,7 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'Two throws with no pause between them (2 hits; each 25% to Freeze).',
   },
-  // Cube: everything it is, arriving slowly.
+  // Floe: everything it is, arriving slowly.
   coldMass: {
     id: 'coldMass',
     name: 'Cold Mass',
@@ -485,7 +485,7 @@ export const signatureMoves: Record<string, MoveDefinition> = {
   },
 
   // --- Mind ---
-  // Cortex: strikes, and the pair it threads together runs hotter on both axes — the mixed
+  // Reverie: strikes, and the pair it threads together runs hotter on both axes — the mixed
   // attacker's verb. It was the buff alone at 50, which Oathstrike beat with a hit attached.
   mindlink: {
     id: 'mindlink',

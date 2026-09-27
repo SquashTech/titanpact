@@ -331,7 +331,7 @@ don't silently override it.
   Constellation offer is held (`heroPool`, `src/run/recruitment.ts` — the fork's contracts, the
   Guild Hall and the enemy party read it the way the itinerary reads `locationPool`).
   **Scallywag is the first** (same day, per user direction): Storm → mono-
-  Iron, the Stormrunner graft his way back, Starfall-only since the **Free Company** bundle was deleted (2026-09-26), beside
+  Iron, the Stormrunner graft her way back, Starfall-only since the **Free Company** bundle was deleted (2026-09-26), beside
   **Patch** (Mech, the Wisdom-85 medic drone on the repair column) and **Vex** (Beast, the
   Speed-110 vampire bat that feeds on Bleed, its Shadow turn a graft). **Skyshear** took Storm's third seat the same day: the slate's
   magical column at Int 95 / Speed 100. The base is 42 again and `test/roster` pins three a

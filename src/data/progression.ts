@@ -492,7 +492,7 @@ export const progressionTable: ProgressionTable = {
     // --- Mind ---
     // Psyshock and Psionic Wave are the mid/late damage the pool had none of, and both shred
     // Wisdom, so they double as Entanglement fuel. Phantom Strike and Cog Bop are deliberate
-    // OFF-TYPE coverage: no STAB, no Evolution needed, and the only two things a base Cortex
+    // OFF-TYPE coverage: no STAB, no Evolution needed, and the only two things a base Reverie
     // can point its 53 Attack at. Lull leaves — the one debuff that feeds nothing.
     mindweaver: [
       'brainWard',

@@ -327,7 +327,7 @@ test('arcane: the slate is nineteen moves, and every field effect and status it 
   const slate = Object.values(moves).filter((m) => m.type === 'Arcane' && !signatureMoves[m.id]);
   // Seventeen since 2026-09-09: Barrier joined the slate as the roster's only guard. It is Arcane
   // because shaped mana is the domain a wall of nothing draws on, not because Arcane needed a
-  // sixteenth-plus move — Cortex holds it off-type. Nineteen since 2026-09-15 (Resonant Bolt, Twin Cast).
+  // sixteenth-plus move — Reverie holds it off-type. Nineteen since 2026-09-15 (Resonant Bolt, Twin Cast).
   assert.strictEqual(slate.length, 19);
   for (const move of slate) {
     if (move.fieldEffectApplication) assert.ok(fieldEffects[move.fieldEffectApplication], `${move.id} sets an unknown field`);

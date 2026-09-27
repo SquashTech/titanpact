@@ -467,7 +467,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
     id: 'eitherHand',
     name: 'Either Hand',
     description: 'A blow of the other kind than the last one this hero landed strikes 30% harder.',
-    // The mixed attacker's verb (Tempest's Forked, Cortex's Embodied). A 70/70 line picking the
+    // The mixed attacker's verb (Tempest's Forked, Reverie's Embodied). A 70/70 line picking the
     // weaker defence averages a stat ratio of 1.43 against a 100-point specialist's 1.77 — only
     // 30% of enemy lines have the Def/Wis gap that would pay for the second stat — so mixing is
     // dominated by construction until alternating itself pays: 1.43 x 1.3 lands level with the
@@ -576,7 +576,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
     name: 'Cold Forge',
     description: "Whenever this hero's Defense rises, it gains 10 Attack.",
     // Frozen Stone's trigger with an inward payout: eventFieldPositive is what makes this "rises"
-    // and not "changes". Cube's own Frost Armor and a partner's Bastion or Frost Wall all arm it,
+    // and not "changes". Floe's own Frost Armor and a partner's Bastion or Frost Wall all arm it,
     // which is the whole build — the wall it puts up is the weapon it swings.
     reactive: {
       hook: 'StatChanged',

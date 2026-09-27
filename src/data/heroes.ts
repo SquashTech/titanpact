@@ -205,7 +205,7 @@ export const heroes: Record<string, HeroDefinition> = {
   },
   cube: {
     id: 'cube',
-    name: 'Cube',
+    name: 'Floe',
     types: ['Frost'],
     baseStats: { hp: 250, attack: 60, defense: 115, intelligence: 25, wisdom: 40, speed: 10, manaPool: 50, mpRegen: 10 },
     moveIds: ['iceShard', 'frostArmor', 'pinDown'],
@@ -472,7 +472,7 @@ export const heroes: Record<string, HeroDefinition> = {
   // --- Mind ---
   mindweaver: {
     id: 'mindweaver',
-    name: 'Cortex',
+    name: 'Reverie',
     types: ['Mind'],
     baseStats: { hp: 200, attack: 53, defense: 45, intelligence: 55, wisdom: 55, speed: 67, manaPool: 75, mpRegen: 10 },
     moveIds: ['psiBolt', 'barrier', 'dopamine'],

@@ -19,7 +19,7 @@ import type { Action } from '../src/engine/combat/actions';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
-/** Cortex (the mono-Mind starter) and Lucius (mono-Mind since 2026-09-05, Int 90) attack; Warden and Sentinel defend. */
+/** Reverie (the mono-Mind starter) and Lucius (mono-Mind since 2026-09-05, Int 90) attack; Warden and Sentinel defend. */
 function mindFixture(seed: number) {
   return createFightState(
     seed,

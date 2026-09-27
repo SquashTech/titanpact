@@ -236,7 +236,7 @@ test('arcane repose: a Rested hook — the Shield equals the Mana the Rest resto
   assert.ok(!r2.events.some((e) => e.type === 'StatusApplied' && e.combatantId === 'a1'), 'and no empty status beat');
 });
 
-test('neuroplastic: a statDelta read off the event — Cortex gains exactly the Wisdom an enemy lost, and nothing when it rose', () => {
+test('neuroplastic: a statDelta read off the event — Reverie gains exactly the Wisdom an enemy lost, and nothing when it rose', () => {
   const state = withPassive(twoVTwo(15, 'mindweaver', 'trance', 'ironWarden', 'crag'), 'a1', 'neuroplastic');
   const before = state.combatants.a1.statModifiers.wisdom ?? 0;
   const r = resolveRound(state, [{ kind: 'move', combatantId: 'a2', moveId: 'enervate', declaredTarget: 'b1' }, ...restAll(state).filter((a) => a.combatantId !== 'a2')], config);

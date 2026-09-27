@@ -489,7 +489,7 @@ test('passives: toPassiveInstances converts counts to PassiveInstance records an
   assert.deepStrictEqual(instances, { sanguine: { passiveId: 'sanguine', stacks: 2 } });
 });
 
-// --- Either Hand (Tempest / Forked, Cortex / Embodied) ---
+// --- Either Hand (Tempest / Forked, Reverie / Embodied) ---
 
 function stormFixture(seed: number) {
   return createFightState(
