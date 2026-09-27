@@ -264,7 +264,7 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     target: 'bothAllies',
     description: 'Spreads its wings over the pair and draws every eye to itself (+30 Defense to both allies; Provoke this round).',
   },
-  // Slate: throws the ground up under both of them, and what comes down is in reach of the staff.
+  // Petra: throws the ground up under both of them, and what comes down is in reach of the staff.
   upheaval: {
     id: 'upheaval',
     name: 'Upheaval',

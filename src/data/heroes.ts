@@ -282,7 +282,7 @@ export const heroes: Record<string, HeroDefinition> = {
   },
   slate: {
     id: 'slate',
-    name: 'Slate',
+    name: 'Petra',
     types: ['Stone'],
     // Stone's magical column (Tremor, Rockfall, Landslide) is all spread and had no caster to
     // swing it. An 80/80 mixed line: the quake softens both, the staff finishes one. Bulk is what

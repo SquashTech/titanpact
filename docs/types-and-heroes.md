@@ -259,10 +259,10 @@ stag — Wis 85 healer; Hallowed Step gives its partner Renew 20 on entry). All 
 first-pass numbers and have had no sim pass.
 
 **Renames, 2026-09-27** (per user direction, after the sprite redesign): **Cortex → Reverie**
-(`mindweaver`, now the mesmer moth) and **Cube → Floe** (`cube`, now the glacier snail). Ids,
+(`mindweaver`, now the mesmer moth), **Cube → Floe** (`cube`, now the glacier snail) and **Slate → Petra** (`slate`, now the crystal geomancer). Ids,
 kits and numbers are unchanged; older sections of the docs use the old names. Aegis is now the
-shrine tortoise, Solace the lantern acolyte, and Scallywag and Slate are women (a rapier-and-hook
-duelist, a crystal geomancer) — their names stand.
+shrine tortoise, Solace the lantern acolyte, and Scallywag is a woman now (a rapier-and-hook
+duelist) — her name stands.
 
 ---
 
