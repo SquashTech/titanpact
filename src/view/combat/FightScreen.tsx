@@ -93,8 +93,9 @@ import { STAT_LABELS } from '../shared/StatBars';
 import { HubGlyph } from '../shared/nodeIcons';
 import { SectionGlyph } from '../shared/sectionIcons';
 import { useAmbientLocation } from '../shared/LocationContext';
-import { LocationAmbience } from '../shared/LocationSky';
+import { LocationAmbience, LocationMotes } from '../shared/LocationSky';
 import { LocationHorizon } from '../shared/locationArt';
+import { locationBackdrop } from '../shared/locationBackdrops';
 import { TitanBody } from './TitanBody';
 import { ENDBRINGER_ID, EYE_IDS, isTitanEye } from '../../data/enemies';
 import type { LocationDefinition } from '../../data/locations';
@@ -368,6 +369,17 @@ const SUMMON_MS = 700;
  * arena re-renders on every beat and the particle field has nothing to say about any of them.
  */
 const ArenaLocation = memo(function ArenaLocation({ location }: { location: LocationDefinition }) {
+  // A painted arena carries its own far skyline and near ground, so it stands in for both bands.
+  const backdrop = locationBackdrop(location.id, 'battle');
+  if (backdrop) {
+    return (
+      <div className="battlefield-location has-backdrop" style={{ '--node-rgb': location.tintRgb } as CSSProperties} aria-hidden="true">
+        <img className="location-backdrop" src={backdrop} alt="" draggable={false} />
+        <LocationMotes kind={location.ambience} density={ARENA_MOTE_DENSITY} />
+      </div>
+    );
+  }
+
   return (
     <>
       <LocationAmbience location={location} density={ARENA_MOTE_DENSITY} className="battlefield-location" />
@@ -1351,7 +1363,9 @@ export function FightScreen({
       <div
         className={`battlefield${combat.activeFieldEffect ? ' field-effect-active' : ''}${
           resolving && beat?.dramaticEntrance ? ' dramatic-entrance' : ''
-        }${onTheTitan ? ' on-the-titan' : ''}`}
+        }${onTheTitan ? ' on-the-titan' : ''}${
+          location && !onTheTitan && locationBackdrop(location.id, 'battle') ? ' has-painted-arena' : ''
+        }`}
         /* The Location's lighting recipe keys off this; absent, styles.css's placeless arena stands. */
         data-location={location?.id}
         style={

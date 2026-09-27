@@ -1,6 +1,7 @@
 import { useMemo, type CSSProperties } from 'react';
 import type { AmbienceKind, LocationDefinition } from '../../data/locations';
 import { LocationHorizon } from './locationArt';
+import { locationBackdrop } from './locationBackdrops';
 
 // The arrival screen's place (docs/locations.md §4): NodeSky's contract (keeps `.node-sky` so
 // `.node-screen`'s stacking rule applies) plus a horizon band and a per-kind ambience. Each kind
@@ -99,25 +100,39 @@ export function LocationAmbience({
   location,
   density,
   className,
+  painted = false,
 }: {
   location: LocationDefinition;
   density?: number;
   className: string;
+  /** Stand on the painted backdrop, where the Location has one, in place of the horizon band. */
+  painted?: boolean;
 }) {
+  const backdrop = painted ? locationBackdrop(location.id, 'map') : undefined;
+
   return (
-    <div className={className} style={{ '--node-rgb': location.tintRgb } as CSSProperties} aria-hidden="true">
+    <div
+      className={`${className}${backdrop ? ' has-backdrop' : ''}`}
+      style={{ '--node-rgb': location.tintRgb } as CSSProperties}
+      aria-hidden="true"
+    >
+      {backdrop && <img className="location-backdrop" src={backdrop} alt="" draggable={false} />}
       <LocationMotes kind={location.ambience} density={density} />
-      <LocationHorizon locationId={location.id} />
+      {!backdrop && <LocationHorizon locationId={location.id} />}
     </div>
   );
 }
 
+/** A painted backdrop, where the Location has one, stands in for the horizon band. */
 export function LocationSky({ location }: { location: LocationDefinition }) {
+  const backdrop = locationBackdrop(location.id);
+
   return (
-    <div className="node-sky location-sky" aria-hidden="true">
+    <div className={`node-sky location-sky${backdrop ? ' has-backdrop' : ''}`} aria-hidden="true">
+      {backdrop && <img className="location-backdrop" src={backdrop} alt="" draggable={false} />}
       <span className="node-sky-wash location-sky-wash" />
       <LocationMotes kind={location.ambience} />
-      <LocationHorizon locationId={location.id} />
+      {!backdrop && <LocationHorizon locationId={location.id} />}
     </div>
   );
 }

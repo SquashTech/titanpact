@@ -234,6 +234,30 @@ location supplies three things the sky reads:
 No art assets are involved. Everything is vector + CSS, so a location costs a paragraph of
 data and a path, not a commissioned background.
 
+**Painted backdrops (2026-09-27, per user direction).** The arrival screen now stands on a
+painted pixel backdrop where one exists: `art/locations/<locationId>.png`, 196x344 (2x on the
+394-wide canvas), generated with PixelLab's Pixen model, picked up by glob in
+`src/view/shared/locationBackdrops.ts`. A backdrop REPLACES the horizon band (the painting
+has its own ground) and keeps the ambience; the wash becomes a scrim, dark behind the name
+and at the foot, with a low glow of `tintRgb`. A Location with no file falls back to the
+vector band. **The map screen has a backdrop of its own** (`art/locations/map/<locationId>.png`,
+`LocationAmbience painted`), because the arrival painting failed there: it is composed around a
+centre landmark, and the centre is where the medallions sit. A map backdrop is authored the other
+way round — detail only at the left and right edges, a quiet dark centre, a road climbing from the
+bottom (where the player stands) toward the top (the Guardian), side view. It is dimmed a little,
+scrimmed at the header and the roster tray, and the medallions, origin mark and placard get an
+opaque ground and a dark edge.
+
+**The fight has a third** (`art/locations/battle/<locationId>.png`, 196x228 — the arena box
+at 2x), composed as an ARENA: one open floor filling the frame that both teams stand on, a thin
+skyline strip across the top quarter, props only in the far corners, side view. It replaces
+both bands and the drawn floor fan (`has-painted-arena`), keeps the weather, and sits at z −2 —
+under the Field Effect glow and sweep (z −1), which an opaque image would otherwise hide. It is
+dimmed to 0.6 and desaturated, with a vignette over the corners and the nameplate strip: nothing
+in it may compete with a 48px sprite or an HP bar. Reject a roll with figures in it or a floor
+that is patterned (grass clumps, camouflage) rather than plain. The Titan's back draws none.
+The location-choice cards still draw the band.
+
 ### The location choice
 
 `src/view/run/LocationChoiceScreen.tsx` — the 1-of-2 that opens every seal act after the
