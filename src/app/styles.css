@@ -14850,33 +14850,13 @@ button.star-shop-bundle-face {
 }
 
 /* --- The Guild Hall's atmosphere (2026-09-11, per user direction) --------
-   The screen names the place and then lets the place do the talking: a hung
-   sign for a header, and lantern light instead of the node stage's even wash.
-   Both are ambient — the sign is the header's art, the lanterns paint under
-   the content the way `.shrine-descent` does. */
-.guild-sign {
-  display: block;
-  width: 168px;
-  height: auto;
-  margin: 0 auto -6px;
-  transform-origin: 50% 0;
-  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 10px rgba(var(--node-rgb), 0.28));
-  animation: guild-sign-swing 7s ease-in-out infinite;
-}
-
-@keyframes guild-sign-swing {
-  0%,
-  100% {
-    transform: rotate(-1.4deg);
-  }
-  50% {
-    transform: rotate(1.4deg);
-  }
-}
+   The screen names the place and then lets its keeper and its light do the
+   talking: the guildmaster for a header (2026-09-27, replacing a hung sign),
+   and lantern light instead of the node stage's even wash, painted under the
+   content the way `.shrine-descent` does. */
 
 /* Two lanterns high in the corners and a hearth low behind the shelf, all
-   flickering out of phase. The corner pools are what the sign's drop shadow
-   falls out of; the hearth is what the counter stands in front of. */
+   flickering out of phase. The hearth is what the counter stands in front of. */
 .guild-hall-hearth {
   position: absolute;
   inset: calc(var(--shell-pad) * -1);
@@ -14921,7 +14901,6 @@ button.star-shop-bundle-face {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .guild-sign,
   .guild-hall-hearth::before,
   .guild-hall-hearth::after {
     animation: none;
@@ -17648,6 +17627,20 @@ button.star-shop-bundle-face {
   50% {
     transform: translateY(-4px);
   }
+}
+
+/* The other keepers (art/npc: the Tutor, the Scribe, the guildmaster, the
+   smith) stand in the header the Mentor does, at the same clean 2x and on the
+   same float, lit by their own node's tint rather than the Mentor's teal. */
+.npc-portrait {
+  position: relative;
+  display: block;
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 4px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 16px rgba(var(--node-rgb), 0.55));
+  animation: mentor-float 3.2s ease-in-out infinite;
 }
 
 /* 1x once the Mentor is a reminder rather than the subject (was 72px, 1.5x). */
@@ -33624,6 +33617,8 @@ button.star-shop-bundle-face {
    under the section head rather than taking a row of its own. */
 .smithy-forge {
   position: relative;
+  /* It heads a scrolling flex column; without this a full roster of benches squeezes it to 0. */
+  flex-shrink: 0;
   height: 74px;
   margin: -4px 0 -10px;
   overflow: hidden;

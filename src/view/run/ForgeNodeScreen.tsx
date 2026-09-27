@@ -12,6 +12,7 @@ import { enchantTypeOf, ItemEffectChips, ItemPiece, RARITY_COLOR_VARS, RARITY_LA
 import { ElementGlyph } from '../shared/elementIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { HubGlyph } from '../shared/nodeIcons';
+import smithArt from '../../../art/npc/smith.png';
 import { NodeHeader, NodeSky, NODE_TINT_HEARTH } from '../shared/NodeStage';
 import { overlayHost } from '../shared/overlayHost';
 import { RosterPeek } from './RosterPeek';
@@ -87,7 +88,7 @@ export function ForgeNodeScreen({ run, onRunChange, onContinue }: Props) {
         compact
         eyebrow="Iron and Ember"
         title="The Forge"
-        glyph={<HubGlyph name="anvil" />}
+        art={<img src={smithArt} className="npc-portrait" alt="" draggable={false} />}
         readoutKey={forged?.key ?? 'idle'}
         readoutLive={done}
         readout={readout}

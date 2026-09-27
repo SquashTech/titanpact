@@ -21,6 +21,7 @@ import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { MasteryPips } from '../shared/MasteryPips';
 import { NodeHeader, NodeSky, NODE_TINT_PARCHMENT } from '../shared/NodeStage';
 import { ResourceGlyph } from '../shared/RunGlyph';
+import scribeArt from '../../../art/npc/scribe.png';
 import { CompanionScreen } from './CompanionScreen';
 import { EvolutionScreen } from './EvolutionScreen';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
@@ -126,7 +127,14 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
 
       <RosterPeek run={run} />
 
-      <NodeHeader eyebrow={eyebrow} title={title} glyph={<ResourceGlyph kind="scroll" className="node-header-resource" />} readout={readout} />
+      {/* The Scribe is a person; a Cache or a bought Scroll is only the scroll. */}
+      <NodeHeader
+        eyebrow={eyebrow}
+        title={title}
+        art={plan.kind === 'scribe' ? <img src={scribeArt} className="npc-portrait" alt="" draggable={false} /> : undefined}
+        glyph={plan.kind === 'scribe' ? undefined : <ResourceGlyph kind="scroll" className="node-header-resource" />}
+        readout={readout}
+      />
 
       <HeroPickGrid count={run.roster.length} fill>
         {run.roster.map((entry) => {

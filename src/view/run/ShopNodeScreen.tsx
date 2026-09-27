@@ -4,7 +4,7 @@ import type { GuildHallOffers } from '../../run/shop';
 import type { ConsumableKind } from '../../run/consumables';
 import type { GuildHallOffer } from '../../run/recruitment';
 import { GuildHallPanel, guildHallTabs, type GuildHallTab } from './GuildHallPanel';
-import { GuildSign } from './guildHallArt';
+import guildmasterArt from '../../../art/npc/guildmaster.png';
 import { RosterPeek } from './RosterPeek';
 import { NodeHeader, NodePurse, NodeSky, NODE_TINT_HEARTH } from '../shared/NodeStage';
 import { TabStrip } from '../shared/TabStrip';
@@ -32,8 +32,8 @@ interface Props {
 // The `shop` node. Continue stands down while the panel has a modal open —
 // otherwise two identical gold CTAs sit on screen for two different commitments.
 //
-// The header names the place and nothing else (2026-09-11, per user direction): the sign, the
-// name, and lantern light. "Who Will You Take" / "People and gear — for gold" were a question and
+// The header names the place and nothing else (2026-09-11, per user direction): the keeper, the
+// name, and lantern light (the keeper replaced a hung sign 2026-09-27). "Who Will You Take" / "People and gear — for gold" were a question and
 // a price list over a screen that is plainly both, and every line under a section mark went with
 // them — what a hire is and what a full roster asks are said on the hero's own sheet.
 export function ShopNodeScreen({
@@ -68,7 +68,7 @@ export function ShopNodeScreen({
       {/* The Smithy's own forge is its sign (2026-09-25, per user direction): six benches fit
           under the anvil without a scroll only once the hall's sign is off the top. */}
       {tab !== 'smithy' && (
-        <NodeHeader compact art={<GuildSign />} eyebrow={muster ? 'The Last Muster' : 'Welcome to'} title={muster ? 'The Vigil' : 'The Guild Hall'} />
+        <NodeHeader compact art={<img src={guildmasterArt} className="npc-portrait" alt="" draggable={false} />} eyebrow={muster ? 'The Last Muster' : 'Welcome to'} title={muster ? 'The Vigil' : 'The Guild Hall'} />
       )}
 
       <div className="screen-scroll">

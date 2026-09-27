@@ -9,7 +9,7 @@ import type { RosterEntry, RunState } from '../../run/state';
 import { grantOfferedMove, MOVE_CAP, recordMoveOffer } from '../../run/progression';
 import { tutorMovePool } from '../../run/tutor';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
-import { NodeGlyph } from '../shared/nodeIcons';
+import tutorArt from '../../../art/npc/tutor.png';
 import { NodeHeader, NodeSky, NODE_TINT_INSIGHT } from '../shared/NodeStage';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { MoveLearnedOverlay, MoveOfferOverlay } from './MoveOfferOverlay';
@@ -75,7 +75,8 @@ export function TutorNodeScreen({ run, onRunChange, onContinue }: Props) {
 
       <NodeHeader
         compact
-        glyph={<NodeGlyph type="tutorReward" />}
+        ring
+        art={<img src={tutorArt} className="npc-portrait" alt="" draggable={false} />}
         eyebrow="A Master Waits"
         title="The Tutor"
         readout={
