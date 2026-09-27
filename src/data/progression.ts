@@ -798,6 +798,31 @@ export const progressionTable: ProgressionTable = {
       'apexPredator',
       'packLeader',
     ],
+    // --- Starfall ---
+    // Drift: Mind's magical column, with Water's clouding as the off-type. Mind Leech is Stinger's grant.
+    drift: [
+      'enervate', 'distort', 'dopamine', 'refresh', 'inkCloud',
+      'psyshock', 'cerebralShock', 'stasis', 'hindsight', 'disorient', 'mentalFortress',
+      'psionicWave', 'mindShatter', 'brainFlay', 'breakWill',
+    ],
+    // Rimehold: Frost's walls and the Iron plate that props them up. Frost Wall is Glacier's grant.
+    rimehold: [
+      'deepChill', 'rimeCoat', 'hoarfrostEdge', 'snowBlast', 'pinDown', 'fortify',
+      'icicleThrust', 'coldSnap', 'permafrost', 'glaciate', 'blindingSnow', 'reinforce',
+      'iceShatter', 'avalanche', 'snowball', 'absoluteZero',
+    ],
+    // Carillon: Light's physical column and its guard. Consecrate is Great Bell's grant.
+    carillon: [
+      'vigil', 'purify', 'mend', 'blind', 'hallow', 'provoke', 'fortify',
+      'holySlice', 'sunlance', 'smite', 'radiance', 'benediction', 'shieldBash',
+      'deityBlade', 'judgment', 'exalt', 'divineGrace',
+    ],
+    // Hart: Light's heal column, with Nature's growth as the off-type. Sunlance is White Hart's grant.
+    hart: [
+      'purify', 'bless', 'blind', 'vigil', 'refresh', 'regrowth',
+      'benediction', 'radiantBeam', 'radiance', 'consecrate', 'smite', 'wildBloom',
+      'divineGrace', 'exalt', 'solarFlare', 'forceOfNature',
+    ],
     // The companion's bodies (run/companion.ts): a spawn's pool is its type's whole slate, so
     // the schedule gates it by band like anyone's. No Evolution node — its Mastery pips are its
     // tier-steps instead.
@@ -2498,6 +2523,143 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['spookySlice'],
             typeGraft: 'Spirit',
             learnableMoveIds: ['phantomStrike', 'secondWind', 'unbound', 'torment', 'vengeance', 'wailingFlight'],
+          },
+        ],
+      },
+    ],
+    // --- Starfall ---
+    drift: [
+      {
+        paths: [
+          {
+            id: 'drift-stinger',
+            heroId: 'drift',
+            name: 'Stinger',
+            description: 'Grows its tendrils long, and whatever brushes them keeps a little of it.',
+            statGrants: { intelligence: 20, speed: 10 },
+            unlocksMoveIds: ['mindLeech'],
+          },
+          {
+            id: 'drift-deepbloom',
+            heroId: 'drift',
+            name: 'Deepbloom',
+            description: 'Sinks to where the water is heavy, and brings the weight back up with it.',
+            statGrants: { hp: 30, wisdom: 20 },
+            unlocksMoveIds: ['torrent'],
+            typeGraft: 'Water',
+            learnableMoveIds: ['splash', 'tideGuard', 'washAway', 'cleansingRain', 'highTide', 'tsunami'],
+          },
+          {
+            id: 'drift-moonJelly',
+            heroId: 'drift',
+            name: 'Moon Jelly',
+            description: 'Lit from inside, the way the deep things are, and it turns the light outward.',
+            statGrants: { intelligence: 10, wisdom: 20 },
+            unlocksMoveIds: ['radiantBeam'],
+            typeGraft: 'Light',
+            learnableMoveIds: ['glimmer', 'bless', 'smite', 'radiance', 'solarFlare'],
+          },
+        ],
+      },
+    ],
+    rimehold: [
+      {
+        paths: [
+          {
+            id: 'rimehold-glacier',
+            heroId: 'rimehold',
+            name: 'Glacier',
+            description: 'Stops being a house and starts being a mountain of ice that moved in.',
+            statGrants: { hp: 30, defense: 10 },
+            unlocksMoveIds: ['frostWall'],
+          },
+          {
+            id: 'rimehold-keep',
+            heroId: 'rimehold',
+            name: 'Keep',
+            description: 'Stone in the foundations, and a door nobody gets past.',
+            statGrants: { defense: 10, wisdom: 20 },
+            unlocksMoveIds: ['bastion'],
+            typeGraft: 'Stone',
+            learnableMoveIds: ['rockToss', 'mudBall', 'bodyguard', 'stoneheart', 'rampart'],
+          },
+          {
+            id: 'rimehold-meltwater',
+            heroId: 'rimehold',
+            name: 'Meltwater',
+            description: 'Thaws at the edges, and what runs off it heals what it touches.',
+            statGrants: { hp: 30, wisdom: 20 },
+            unlocksMoveIds: ['oasis'],
+            typeGraft: 'Water',
+            learnableMoveIds: ['splash', 'tideGuard', 'cleansingRain', 'seawall'],
+          },
+        ],
+      },
+    ],
+    carillon: [
+      {
+        paths: [
+          {
+            id: 'carillon-greatBell',
+            heroId: 'carillon',
+            name: 'Great Bell',
+            description: 'Casts a bigger bell, and the ground it rings over is holy for a while.',
+            statGrants: { attack: 10, defense: 20 },
+            unlocksMoveIds: ['consecrate'],
+          },
+          {
+            id: 'carillon-bellfounder',
+            heroId: 'carillon',
+            name: 'Bellfounder',
+            description: 'Learns the foundry the bells came from, and hits like the hammer that made them.',
+            statGrants: { attack: 20, defense: 10 },
+            unlocksMoveIds: ['ironFist'],
+            typeGraft: 'Iron',
+            learnableMoveIds: ['swiftBlow', 'heavyBlow', 'rendArmor', 'momentumSwing', 'onslaught'],
+          },
+          {
+            id: 'carillon-knell',
+            heroId: 'carillon',
+            name: 'Knell',
+            description: 'Rings for the dead now, and the dead come when it rings.',
+            statGrants: { hp: 30, attack: 20 },
+            unlocksMoveIds: ['phantomStrike'],
+            typeGraft: 'Spirit',
+            learnableMoveIds: ['wisp', 'spookySlice', 'soulRend', 'lastRites'],
+          },
+        ],
+      },
+    ],
+    hart: [
+      {
+        paths: [
+          {
+            id: 'hart-whiteHart',
+            heroId: 'hart',
+            name: 'White Hart',
+            description: 'The one the hunters were always after, and never caught.',
+            statGrants: { wisdom: 20, speed: 10 },
+            unlocksMoveIds: ['sunlance'],
+          },
+          {
+            id: 'hart-greenwood',
+            heroId: 'hart',
+            name: 'Greenwood',
+            description: 'Where it walks, the forest follows a step behind.',
+            statGrants: { hp: 30, wisdom: 20 },
+            unlocksMoveIds: ['sow'],
+            typeGraft: 'Nature',
+            learnableMoveIds: ['seedShot', 'vineLash', 'thornWhip', 'magicGrowth', 'overgrowth'],
+          },
+          {
+            id: 'hart-spiritStag',
+            heroId: 'hart',
+            name: 'Spirit Stag',
+            description: 'Seen at the edge of the trees on the night before something ends.',
+            statGrants: { intelligence: 20, speed: 10 },
+            unlocksMoveIds: ['wisp'],
+            typeGraft: 'Spirit',
+            learnableMoveIds: ['drain', 'soulRend', 'flicker', 'ascendant'],
           },
         ],
       },

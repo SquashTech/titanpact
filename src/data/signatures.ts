@@ -764,4 +764,61 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'Opens them and drinks what comes out (Bleed; heals 50% of the damage dealt).',
   },
+
+  // --- Starfall ---
+  // Drift: every tendril at once.
+  stingingBloom: {
+    id: 'stingingBloom',
+    name: 'Stinging Bloom',
+    type: 'Mind',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 60,
+    statDeltas: [{ stat: 'attack', amount: -10 }],
+    manaCost: 60,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'Opens every tendril at once and stings both (−10 Attack on each).',
+  },
+  // Rimehold: the whole house comes down, and the walls stay up.
+  whiteout: {
+    id: 'whiteout',
+    name: 'Whiteout',
+    type: 'Frost',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 85,
+    statusApplication: { statusId: 'Shield', magnitude: 40, target: 'self' },
+    manaCost: 55,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Brings the whole roof down on one foe and packs the snow back around itself (Shield 40).',
+  },
+  // Carillon: the great bell, swung.
+  greatToll: {
+    id: 'greatToll',
+    name: 'Great Toll',
+    type: 'Light',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 80,
+    manaCost: 70,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'Swings the great bell through both of them, and the whole field hears it.',
+  },
+  // Hart: the antlers lit.
+  antlerCrown: {
+    id: 'antlerCrown',
+    name: 'Antler Crown',
+    type: 'Light',
+    category: 'magical',
+    kind: 'heal',
+    healPower: 45,
+    statusApplication: { statusId: 'Renew', magnitude: 20, target: 'bothAllies' },
+    manaCost: 55,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'Lights its antlers over both: heals 45 each, and the light stays with them (Renew 20).',
+  },
 };

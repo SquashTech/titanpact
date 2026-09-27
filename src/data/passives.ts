@@ -1358,6 +1358,47 @@ const innatePassives: Record<string, PassiveDefinition> = {
     cannotSwitchOut: true,
     burden: true,
   },
+  // --- Starfall ---
+  nettle: {
+    id: 'nettle',
+    name: 'Nettle',
+    description: 'Whenever this hero lands a hit, its target loses 5 Attack.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'attack', amount: -5 },
+    },
+  },
+  shelter: {
+    id: 'shelter',
+    name: 'Shelter',
+    description: "Whenever this hero's partner is hit, the partner gains Shield 10.",
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'ally' },
+      effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Shield', magnitude: 10 },
+    },
+  },
+  toll: {
+    id: 'toll',
+    name: 'Toll',
+    description: "Whenever this hero lands a hit, its partner is healed 10.",
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'heal', target: 'ally', amount: { kind: 'flat', value: 10 } },
+    },
+  },
+  hallowedStep: {
+    id: 'hallowedStep',
+    name: 'Hallowed Step',
+    description: "When this hero enters the battlefield, its partner gains Renew 20.",
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew', magnitude: 20 },
+    },
+  },
 };
 
 // --- The mastered innate (HeroDefinition.masteredPassiveIds, docs/mastery.md §5b) ---
@@ -1970,6 +2011,47 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       hook: 'MoveUsed',
       condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 30 },
+    },
+  },
+  // --- Starfall ---
+  nettlestorm: {
+    id: 'nettlestorm',
+    name: 'Nettlestorm',
+    description: 'Whenever this hero lands a hit, its target loses 10 Attack.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'attack', amount: -10 },
+    },
+  },
+  hearthwall: {
+    id: 'hearthwall',
+    name: 'Hearthwall',
+    description: "Whenever this hero's partner is hit, the partner gains Shield 20.",
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'ally' },
+      effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Shield', magnitude: 20 },
+    },
+  },
+  peal: {
+    id: 'peal',
+    name: 'Peal',
+    description: "Whenever this hero lands a hit, its partner is healed 20.",
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'heal', target: 'ally', amount: { kind: 'flat', value: 20 } },
+    },
+  },
+  springtide: {
+    id: 'springtide',
+    name: 'Springtide',
+    description: "When this hero enters the battlefield, its partner gains Renew 40.",
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew', magnitude: 40 },
     },
   },
 };

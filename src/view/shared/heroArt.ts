@@ -46,6 +46,10 @@ import fangArt from '../../../art/heroes/starters/fang.png';
 import ursaArt from '../../../art/heroes/ursa.png';
 import widowArt from '../../../art/heroes/Widow.png';
 import coilArt from '../../../art/heroes/coil.png';
+import driftArt from '../../../art/heroes/unlocks/drift.png';
+import rimeholdArt from '../../../art/heroes/unlocks/rimehold.png';
+import carillonArt from '../../../art/heroes/unlocks/carillon.png';
+import hartArt from '../../../art/heroes/unlocks/hart.png';
 
 /** Portraits keyed by hero id (heroes.ts order). A missing entry renders text-only; a Titanspawn or Guardian id never reaches this — HeroPortrait draws it. */
 export const heroArt: Partial<Record<string, string>> = {
@@ -63,6 +67,7 @@ export const heroArt: Partial<Record<string, string>> = {
   glacialWarden: flurryArt,
   rime: rimeArt,
   cube: cubeArt,
+  rimehold: rimeholdArt,
   // --- Storm ---
   stormRanger: stormRangerArt,
   skyshear: skyshearArt,
@@ -81,6 +86,8 @@ export const heroArt: Partial<Record<string, string>> = {
   dawnwarden: sunPriestArt,
   aegis: aegisArt,
   empyrean: empyreanArt,
+  carillon: carillonArt,
+  hart: hartArt,
   // --- Shadow ---
   marrow: marrowArt,
   lucius: luciusArt,
@@ -92,6 +99,7 @@ export const heroArt: Partial<Record<string, string>> = {
   // --- Mind ---
   mindweaver: mindweaverArt,
   trance: tranceArt,
+  drift: driftArt,
   // --- Spirit ---
   revenant: revenantArt,
   sorrow: sorrowArt,

@@ -715,4 +715,62 @@ export const heroes: Record<string, HeroDefinition> = {
     passiveIds: ['sanguine'],
     masteredPassiveIds: ['hemophage', 'hemophageFrenzy'],
   },
+
+  // --- Starfall-only (2026-09-27, per user direction) ---
+  // The psychic jellyfish: Mind's attrition caster, every hit it lands taking a little Attack with it.
+  drift: {
+    id: 'drift',
+    name: 'Drift',
+    types: ['Mind'],
+    baseStats: { hp: 200, attack: 20, defense: 50, intelligence: 90, wisdom: 80, speed: 45, manaPool: 65, mpRegen: 10 },
+    moveIds: ['psiBolt', 'lull', 'brainWard'],
+    unlock: 'starfall',
+    growthGrades: { hp: 'A', attack: 'F', defense: 'B', intelligence: 'S', wisdom: 'A', speed: 'C', manaPool: 'A' },
+    schedule: { offerLevels: [5, 9, 12, 16, 22, 26], midLevel: 10, lateLevel: 20, signatureLevel: 18 },
+    signatureMoveId: 'stingingBloom',
+    passiveIds: ['nettle'],
+    masteredPassiveIds: ['nettlestorm'],
+  },
+  // The igloo golem: Frost's wall, sheltering whoever stands beside it.
+  rimehold: {
+    id: 'rimehold',
+    name: 'Rimehold',
+    types: ['Frost'],
+    baseStats: { hp: 250, attack: 70, defense: 100, intelligence: 20, wisdom: 45, speed: 15, manaPool: 50, mpRegen: 10 },
+    moveIds: ['iceShard', 'frostArmor', 'provoke'],
+    unlock: 'starfall',
+    growthGrades: { hp: 'S', attack: 'A', defense: 'A', intelligence: 'F', wisdom: 'A', speed: 'D', manaPool: 'A' },
+    schedule: { offerLevels: [6, 10, 13, 17, 21, 27], midLevel: 11, lateLevel: 21, signatureLevel: 23 },
+    signatureMoveId: 'whiteout',
+    passiveIds: ['shelter'],
+    masteredPassiveIds: ['hearthwall'],
+  },
+  // The bell friar: Light's physical tank, every blow rung out as a mend for its partner.
+  carillon: {
+    id: 'carillon',
+    name: 'Carillon',
+    types: ['Light'],
+    baseStats: { hp: 230, attack: 85, defense: 75, intelligence: 20, wisdom: 60, speed: 30, manaPool: 50, mpRegen: 10 },
+    moveIds: ['holyStrike', 'bless', 'secondWind'],
+    unlock: 'starfall',
+    growthGrades: { hp: 'S', attack: 'S', defense: 'A', intelligence: 'F', wisdom: 'A', speed: 'D', manaPool: 'B' },
+    schedule: { offerLevels: [5, 8, 12, 15, 21, 25], midLevel: 10, lateLevel: 19, signatureLevel: 22 },
+    signatureMoveId: 'greatToll',
+    passiveIds: ['toll'],
+    masteredPassiveIds: ['peal'],
+  },
+  // The radiant stag: Light's second healer, arriving with a mend already on its partner.
+  hart: {
+    id: 'hart',
+    name: 'Hart',
+    types: ['Light'],
+    baseStats: { hp: 200, attack: 40, defense: 45, intelligence: 55, wisdom: 85, speed: 65, manaPool: 60, mpRegen: 10 },
+    moveIds: ['mend', 'hallow', 'glimmer'],
+    unlock: 'starfall',
+    growthGrades: { hp: 'B', attack: 'D', defense: 'C', intelligence: 'B', wisdom: 'S', speed: 'A', manaPool: 'B' },
+    schedule: { offerLevels: [4, 8, 13, 16, 20, 24], midLevel: 10, lateLevel: 19, signatureLevel: 15 },
+    signatureMoveId: 'antlerCrown',
+    passiveIds: ['hallowedStep'],
+    masteredPassiveIds: ['springtide'],
+  },
 };

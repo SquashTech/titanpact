@@ -250,6 +250,14 @@ Every hero is on the same five-clause Evolution framework, grade budget, schedul
 stagger and signature slot as the thirty-six before it; `test/roster.test.ts` and
 `test/moveTiers.test.ts` pin all of it.
 
+**Four Starfall-only heroes, 2026-09-27** (per user direction, outside the base count like
+Patch and Vex): **Drift** (Mind, the jellyfish — Int 90 attrition caster; Nettle takes 5 Attack
+off whatever it hits), **Rimehold** (Frost, the igloo golem — Def 100 wall; Shelter gives its
+partner Shield 10 whenever the partner is hit), **Carillon** (Light, the bell friar — the type's
+physical tank; Toll heals its partner 10 on every hit it lands) and **Hart** (Light, the radiant
+stag — Wis 85 healer; Hallowed Step gives its partner Renew 20 on entry). All four carry
+first-pass numbers and have had no sim pass.
+
 ---
 
 ## Hero authoring rules (LOCKED)
