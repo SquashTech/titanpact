@@ -19327,12 +19327,31 @@ button.star-shop-bundle-face {
   pointer-events: none;
 }
 
-/* A scouted encounter's typing sits in the frame's recessed centre (the disc is ~26 of 48 px,
-   centred a pixel left of and above the canvas middle). */
-.map-medallion.has-art .map-medallion-pie {
-  inset: 23% 25% 25% 23%;
-  width: auto;
-  height: auto;
+/* A scouted encounter's typing: a plaque hung off the medallion's bottom rim, one element per
+   enemy type in its own colour — scouting read beside the emblem, not cut into it. */
+.map-medallion-typing {
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  display: flex;
+  gap: 3px;
+  padding: 3px 6px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(214, 178, 96, 0.55);
+  border-radius: 6px;
+  background: rgba(10, 11, 16, 0.94);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.map-medallion-type {
+  display: flex;
+}
+
+.map-medallion-type .element-glyph {
+  width: 16px;
+  height: 16px;
+  filter: drop-shadow(0 0 4px currentColor);
 }
 
 /* Behind you: the same medallion, small and unlit. */

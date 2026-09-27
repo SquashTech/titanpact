@@ -5,8 +5,10 @@ import { useLongPress } from '../shared/MoveTile';
 import { playSfx, type SfxId } from '../../audio/sfx';
 import { NODE_COLORS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
 import { nodeFactsLine } from './nodeFacts';
-import { MEDALLION_FRAME_ART, mapNodeArt } from './mapNodeArt';
+import { mapNodeArt } from './mapNodeArt';
 import { ElementPie } from '../shared/ElementPie';
+import { ElementGlyph } from '../shared/elementIcons';
+import { getTypeColor } from '../combat/typeColors';
 import type { TypeId } from '../../engine/content';
 
 /**
@@ -154,8 +156,9 @@ function ChoiceMedallion({
   // what lets it be told from the Skirmish beside it before the colour is read.
   const scoutedFace = scouted && scouted.length > 0 ? scouted : null;
   const label = nodeFactsLine(NODE_NAMES[node.type], node.type, actNumber);
-  // The pixel medallion: the emblem baked in, or the empty frame under a scouted typing.
-  const art = scoutedFace ? MEDALLION_FRAME_ART : mapNodeArt(node.type);
+  // The pixel medallion wears the node's own emblem — helm or crowned helm on the fork — and a
+  // scouted typing hangs under it as a plaque, rather than being cut into the face.
+  const art = mapNodeArt(node.type);
   return (
     <div
       className={`map-choice tier-${NODE_TIERS[node.type]}`}
@@ -180,12 +183,18 @@ function ChoiceMedallion({
         <span className="map-medallion-glow" aria-hidden="true" />
         <span className="map-choice-burst" aria-hidden="true" />
         {art && <img src={art} className="map-medallion-art" alt="" draggable={false} />}
-        {scoutedFace ? (
-          <ElementPie types={scoutedFace} className="map-medallion-pie" />
-        ) : (
-          !art && <NodeGlyph type={node.type} className="map-medallion-glyph" />
+        {art && scoutedFace && (
+          <span className="map-medallion-typing" aria-hidden="true">
+            {scoutedFace.map((type, i) => (
+              <span key={`${type}-${i}`} className="map-medallion-type" style={{ color: getTypeColor(type) }}>
+                <ElementGlyph type={type} />
+              </span>
+            ))}
+          </span>
         )}
-        {scoutedFace && node.type === 'elite' && (
+        {!art && scoutedFace && <ElementPie types={scoutedFace} className="map-medallion-pie" />}
+        {!art && !scoutedFace && <NodeGlyph type={node.type} className="map-medallion-glyph" />}
+        {!art && scoutedFace && node.type === 'elite' && (
           <span className="map-medallion-crown" aria-hidden="true">
             <HubGlyph name="crown" />
           </span>
