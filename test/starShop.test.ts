@@ -7,9 +7,9 @@ import { locations } from '../src/data/locations';
 import { locationPool, unvisitedLocationIds } from '../src/run/locations';
 import { heroes } from '../src/data/heroes';
 import { guildHallOffers, guildHallOffersFor } from '../src/data/recruitment';
-import { heroOfferId, heroPool, isRecruitable } from '../src/run/recruitment';
+import { heroPool, isRecruitable, starfallLedgerId } from '../src/run/recruitment';
 import { deckHeroIds, profileDeck } from '../src/run/deck';
-import { SUMMON_PRICE, buyOffer, canBuy, canEnterRung, canSummon, isPurchased, offerHeld, offerWithdrawn, summon, summonPool, starBalance, starsSpent, StarShopError, type StarShopCatalog, type StarShopGrant } from '../src/run/starShop';
+import { STARFALL_PRICE, buyOffer, bundleOwnedHeroIds, canBuy, canCallStarfall, canEnterRung, isPurchased, offerHeld, offerPrice, starfall, starfallPool, starBalance, starsSpent, StarShopError, type StarShopCatalog, type StarShopGrant } from '../src/run/starShop';
 
 const pack: StarShopGrant = { kind: 'location', locationId: 'holySanctum' };
 
@@ -42,7 +42,7 @@ test('star shop: the balance is stars earned minus stars spent, and a star is ne
   profile = buyOffer(profile, catalog, catalog.banner);
   assert.strictEqual(starsSpent(profile, catalog), 3);
   assert.strictEqual(starBalance(profile, catalog), 2);
-  assert.strictEqual(Object.values(profile.evolutionStars).flat().length, 5, 'the Compendium still shows every star');
+  assert.strictEqual(Object.values(profile.evolutionStars).flat().length, 5, 'the Stars page still shows every star');
   assert.ok(isPurchased(profile, 'banner'));
 });
 
@@ -89,12 +89,17 @@ test('star shop: the shipped catalog is consistent with itself', () => {
   for (const location of Object.values(locations)) {
     if (location.unlock) assert.ok(starShopCatalog[location.unlock], `${location.id} is locked behind an offer that is not for sale`);
   }
-  // Every hero that has to be bought is on the shelf, in the bundle it names.
+  // Every hero outside the base is in the bundle it names, or is the Starfall's alone. No hero is sold singly.
   for (const hero of Object.values(heroes)) {
-    if (!hero.unlock) continue;
+    if (!hero.unlock || hero.unlock === 'starfall') continue;
     const offer = starShopCatalog[hero.unlock];
     assert.ok(offer?.grant.kind === 'heroBundle' && offer.grant.heroIds.includes(hero.id), `${hero.id} is locked behind an offer that does not list it`);
   }
+  assert.deepStrictEqual(
+    STAR_SHOP_OFFERS.filter((o) => o.grant.kind === 'heroBundle').map((o) => o.id),
+    ['bundle.tallGrass'],
+    'From the Tall Grass is the one bundle'
+  );
 });
 
 test('star shop: a bought Location joins the pool the road draws from, and only then', () => {
@@ -113,17 +118,17 @@ test('star shop: a bought Location joins the pool the road draws from, and only 
 
 test('star shop: a bought bundle puts its heroes in the recruit pool, and only then', () => {
   const base = heroPool(heroes);
-  assert.ok(!('scallywag' in base), 'Scallywag is in the base pool');
-  assert.ok(!isRecruitable('scallywag', base), 'a fight cannot hand over a contract for him');
-  assert.ok(!guildHallOffers.some((o) => o.heroId === 'scallywag'), 'the base Guild Hall shelf sells him');
+  assert.ok(!('drake' in base), 'Drake is in the base pool');
+  assert.ok(!isRecruitable('drake', base), 'a fight cannot hand over a contract for him');
+  assert.ok(!guildHallOffers.some((o) => o.heroId === 'drake'), 'the base Guild Hall shelf sells him');
   for (const hero of Object.values(base)) assert.strictEqual(hero.unlock, undefined, `${hero.id} is in the base pool with an unlock`);
 
-  const bundle = starShopCatalog['bundle.freeCompany'].grant as { kind: 'heroBundle'; heroIds: readonly string[] };
-  const held = heroPool(heroes, ['bundle.freeCompany']);
+  const bundle = starShopCatalog['bundle.tallGrass'].grant as { kind: 'heroBundle'; heroIds: readonly string[] };
+  const held = heroPool(heroes, ['bundle.tallGrass']);
   for (const id of bundle.heroIds) assert.ok(id in held, `${id} is held and not in the pool`);
   assert.strictEqual(Object.keys(held).length, Object.keys(base).length + bundle.heroIds.length, 'a purchase adds its heroes, never replaces one');
-  assert.ok(isRecruitable('scallywag', held));
-  assert.ok(guildHallOffersFor(held).some((o) => o.heroId === 'scallywag'), 'the Guild Hall shelf sells him once the bundle is held');
+  assert.ok(isRecruitable('drake', held));
+  assert.ok(guildHallOffersFor(held).some((o) => o.heroId === 'drake'), 'the Guild Hall shelf sells him once the bundle is held');
 });
 
 test('star shop: the stakes — a clear pays its rung bonus every time, an entry fee is spent at the seal win or lose', () => {
@@ -163,57 +168,53 @@ test('star shop: a profile written before the stakes reads as none earned and no
   assert.strictEqual(old.runHistory[0].clearBonus, 0);
 });
 
-test('star shop: every hero outside the base is sold singly, dearer than its share of a bundle', () => {
-  for (const hero of Object.values(heroes)) {
-    const single = starShopCatalog[heroOfferId(hero.id)];
-    if (!hero.unlock) {
-      assert.strictEqual(single, undefined, `${hero.id} is in the base roster and on sale`);
-      continue;
-    }
-    assert.ok(single && single.grant.kind === 'hero' && single.grant.heroId === hero.id, `${hero.id} has no single offer`);
-    const bundle = starShopCatalog[hero.unlock];
-    const size = bundle.grant.kind === 'heroBundle' ? bundle.grant.heroIds.length : 1;
-    assert.ok(single.cost * size > bundle.cost, `${hero.unlock} is no discount on ${hero.id}`);
-    assert.ok(SUMMON_PRICE < single.cost, 'a blind draw is cheaper than a choice');
-  }
-});
-
-test('star shop: a single hero joins the Collection, and its bundle comes off sale rather than charging twice', () => {
+test('star shop: a bundle is discounted by the heroes already owned, charged what it cost the day it was bought', () => {
   const rich = { ...createProfile(), bonusStars: 30 };
-  const bought = buyOffer(rich, starShopCatalog, starShopCatalog[heroOfferId('scallywag')]);
-  assert.ok('scallywag' in heroPool(heroes, bought.purchases));
-  assert.ok(!('patch' in heroPool(heroes, bought.purchases)));
-  const bundle = starShopCatalog['bundle.freeCompany'];
-  assert.ok(offerWithdrawn(bought, bundle) && !canBuy(bought, starShopCatalog, bundle));
-  assert.throws(() => buyOffer(bought, starShopCatalog, bundle), StarShopError);
-  assert.throws(() => buyOffer(bought, starShopCatalog, starShopCatalog[heroOfferId('scallywag')]), StarShopError, 'owned already');
-  let all = buyOffer(bought, starShopCatalog, starShopCatalog[heroOfferId('patch')]);
-  all = buyOffer(all, starShopCatalog, starShopCatalog[heroOfferId('vex')]);
-  assert.ok(offerHeld(all, bundle) && !offerWithdrawn(all, bundle), 'three singles hold the bundle');
-  // And the other way: the bundle owns its heroes, so their singles read as held.
-  const viaBundle = buyOffer(rich, starShopCatalog, bundle);
-  assert.ok(offerHeld(viaBundle, starShopCatalog[heroOfferId('patch')]));
+  const bundle = starShopCatalog['bundle.tallGrass'];
+  assert.strictEqual(offerPrice(rich, bundle), bundle.cost);
+  // One of the three drawn by a Starfall: the bundle is now the other two's share.
+  const oneOwned = { ...rich, purchases: [starfallLedgerId('drake')] };
+  assert.deepStrictEqual(bundleOwnedHeroIds(oneOwned, bundle), ['drake']);
+  assert.strictEqual(offerPrice(oneOwned, bundle), Math.ceil((bundle.cost * 2) / 3));
+  const twoOwned = { ...rich, purchases: [starfallLedgerId('drake'), starfallLedgerId('tixwick')] };
+  assert.strictEqual(offerPrice(twoOwned, bundle), Math.ceil(bundle.cost / 3));
+  assert.ok(offerPrice(twoOwned, bundle) < offerPrice(oneOwned, bundle) && offerPrice(oneOwned, bundle) < bundle.cost);
+
+  const bought = buyOffer(oneOwned, starShopCatalog, bundle);
+  assert.ok(['drake', 'nautilus', 'tixwick'].every((id) => id in heroPool(heroes, bought.purchases)));
+  assert.strictEqual(starsSpent(bought, starShopCatalog), STARFALL_PRICE + offerPrice(oneOwned, bundle), 'the discount is kept in the ledger');
+  assert.ok(offerHeld(bought, bundle) && !canBuy(bought, starShopCatalog, bundle));
+  assert.throws(() => buyOffer(bought, starShopCatalog, bundle), StarShopError, 'owned already');
+
+  const allDrawn = { ...rich, purchases: ['drake', 'nautilus', 'tixwick'].map(starfallLedgerId) };
+  assert.ok(offerHeld(allDrawn, bundle), 'three drawn heroes hold the bundle');
 });
 
-test('star shop: a Summoning draws only heroes not owned, costs its price, and stops when there are none', () => {
+test('star shop: a single hero bought before singles were withdrawn is still owned, and refunded', () => {
+  const legacy = { ...createProfile(), bonusStars: 5, purchases: ['hero.scallywag', 'bundle.freeCompany'] };
+  assert.ok('scallywag' in heroPool(heroes, legacy.purchases));
+  assert.strictEqual(starBalance(legacy, starShopCatalog), 5);
+});
+
+test('star shop: a Starfall draws only heroes not owned, costs its price, and stops when there are none', () => {
   let profile = { ...createProfile(), bonusStars: 100 };
   const outside = Object.values(heroes).filter((h) => h.unlock).length;
   const seen = new Set<string>();
   for (let i = 0; i < outside; i++) {
     const before = starBalance(profile, starShopCatalog);
-    const result = summon(profile, starShopCatalog, (i * 0.37) % 1);
+    const result = starfall(profile, starShopCatalog, (i * 0.37) % 1);
     assert.ok(!seen.has(result.heroId), `${result.heroId} drawn twice`);
     seen.add(result.heroId);
     assert.ok(result.heroId in heroPool(heroes, result.profile.purchases));
-    assert.strictEqual(starBalance(result.profile, starShopCatalog), before - SUMMON_PRICE);
+    assert.strictEqual(starBalance(result.profile, starShopCatalog), before - STARFALL_PRICE);
     profile = result.profile;
   }
-  assert.strictEqual(summonPool(profile).length, 0);
-  assert.ok(!canSummon(profile, starShopCatalog));
-  assert.throws(() => summon(profile, starShopCatalog, 0.5), StarShopError);
-  assert.throws(() => summon(createProfile(), starShopCatalog, 0.5), StarShopError, 'no stars');
+  assert.strictEqual(starfallPool(profile).length, 0);
+  assert.ok(!canCallStarfall(profile, starShopCatalog));
+  assert.throws(() => starfall(profile, starShopCatalog, 0.5), StarShopError);
+  assert.throws(() => starfall(createProfile(), starShopCatalog, 0.5), StarShopError, 'no stars');
   // A drawn hero is in the deck's reserve, not the deck.
-  const drawn = summon({ ...createProfile(), bonusStars: 5 }, starShopCatalog, 0);
+  const drawn = starfall({ ...createProfile(), bonusStars: 5 }, starShopCatalog, 0);
   const deck = profileDeck(drawn.profile, heroes);
   assert.ok(!deckHeroIds(deck).includes(drawn.heroId));
 });

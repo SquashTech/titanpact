@@ -39,6 +39,9 @@ const UI_IDS: SfxId[] = [
   'map.select',
   'map.boon',
   'map.threat',
+  'star.rise',
+  'star.fall',
+  'star.land',
 ];
 
 const NOTES: Partial<Record<SfxId, string>> = {
@@ -58,6 +61,9 @@ const NOTES: Partial<Record<SfxId, string>> = {
   'class.learn': 'a Class conferred on a hero',
   'seal.strike': 'a warden struck off the Pact Seal',
   'seal.shatter': 'the fifth socket — the seal itself giving way',
+  'star.rise': 'a spent star lifting into the Constellation — re-pitched per star',
+  'star.fall': 'the Starfall — a star leaving the sky',
+  'star.land': 'the star landing, a hero standing up out of it',
   'titan.stir': 'the cold open at the top of a run, under the black',
   'titan.gaze': 'the eyes reaching open',
   'map.path': 'the route drawing forward out of the node just finished',

@@ -6,20 +6,21 @@ import { starShopCatalog } from '../../data/starShop';
 import type { HeroDefinition, TypeId } from '../../engine/content';
 import type { Profile } from '../../run/profile';
 import { draftableTypes, profileDeck, reserveOfType, swapIntoDeck, type Deck } from '../../run/deck';
-import { heroOfferId, ownsHero } from '../../run/recruitment';
-import { canBuy, starBalance, type StarShopOffer } from '../../run/starShop';
+import { ownsHero } from '../../run/recruitment';
+import { canBuy, offerPrice, starBalance, type StarShopOffer } from '../../run/starShop';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
 import { EvolutionStar } from '../shared/EvolutionStar';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { HubGlyph } from '../shared/nodeIcons';
 import { HeroDossierOverlay } from './HeroDossierOverlay';
+import { STARFALL_NAME } from './Starfall';
 
 interface Props {
   profile: Profile;
   /** Writes the edited deck to the profile. */
   onChangeDeck: (deck: Deck) => void;
-  /** Spends stars on a single hero's offer (run/starShop.ts buyOffer). */
+  /** Spends stars on the bundle a locked hero comes in (run/starShop.ts buyOffer). */
   onBuy: (offer: StarShopOffer) => void;
   onClose: () => void;
 }
@@ -32,12 +33,19 @@ const HEROES_BY_TYPE: Record<TypeId, HeroDefinition[]> = Object.fromEntries(TYPE
 
 type CardState = 'decked' | 'reserve' | 'locked';
 
+/** The bundle a hero comes in, or undefined for one only the Starfall draws. */
+function bundleOf(heroId: string): StarShopOffer | undefined {
+  const offer = starShopCatalog[heroes[heroId]?.unlock ?? ''];
+  return offer?.grant.kind === 'heroBundle' ? offer : undefined;
+}
+
 /**
  * The Collection (docs/collection.md §2): one long page, a section a type, every hero of the type
  * in it — the three decked first, then the owned rest, then the ones still to buy, greyed with
  * their price. The rail on the right edge jumps the page to a type and lights the one in view.
  * Tapping a hero opens Info (the dossier) and one verb: Equip for an owned hero out of the deck —
- * the row's three light, and the one tapped is replaced — or Buy for a locked one.
+ * the row's three light, and the one tapped is replaced — or, for a locked one, its bundle to buy
+ * (no hero is sold singly) or word that only the Starfall brings it.
  */
 export function CollectionScreen({ profile, onChangeDeck, onBuy, onClose }: Props) {
   const deck = profileDeck(profile, heroes);
@@ -166,17 +174,17 @@ export function CollectionScreen({ profile, onChangeDeck, onBuy, onClose }: Prop
                         state={stateOf(heroId)}
                         selected={picked === heroId || equippingHere === heroId}
                         replaceable={!!equippingHere && decked.includes(heroId)}
-                        price={starShopCatalog[heroOfferId(heroId)]?.cost}
+                        price={bundleOf(heroId) && offerPrice(profile, bundleOf(heroId)!)}
                         onTap={() => (equippingHere ? (decked.includes(heroId) ? replace(heroId) : setEquipping(null)) : select(heroId))}
                       />
                     ))}
                   </div>
                   {picked && !equippingHere && (
                     <CardActions
-                      heroId={picked}
                       state={stateOf(picked)}
-                      offer={starShopCatalog[heroOfferId(picked)]}
-                      affordable={!!starShopCatalog[heroOfferId(picked)] && canBuy(profile, starShopCatalog, starShopCatalog[heroOfferId(picked)])}
+                      offer={bundleOf(picked)}
+                      price={bundleOf(picked) && offerPrice(profile, bundleOf(picked)!)}
+                      affordable={!!bundleOf(picked) && canBuy(profile, starShopCatalog, bundleOf(picked)!)}
                       onInfo={() => setDossierHeroId(picked)}
                       onEquip={() => setEquipping(picked)}
                       onBuy={onBuy}
@@ -239,7 +247,7 @@ function CollectionCard({
       <HeroPortrait heroId={hero.id} className="collection-card-portrait" />
       <span className="collection-card-name">{hero.name}</span>
       {state === 'locked' ? (
-        <span className="collection-card-price">★ {price ?? '—'}</span>
+        <span className="collection-card-price">{price === undefined ? STARFALL_NAME : `★ ${price}`}</span>
       ) : (
         <span className="collection-card-stars">
           {evolutionPathsOf(hero).map((path) => (
@@ -252,17 +260,17 @@ function CollectionCard({
 }
 
 function CardActions({
-  heroId,
   state,
   offer,
+  price,
   affordable,
   onInfo,
   onEquip,
   onBuy,
 }: {
-  heroId: string;
   state: CardState;
   offer: StarShopOffer | undefined;
+  price: number | undefined;
   affordable: boolean;
   onInfo: () => void;
   onEquip: () => void;
@@ -285,11 +293,12 @@ function CardActions({
           data-sfx={affordable ? 'ui.commit' : 'none'}
           disabled={!affordable}
           onClick={() => onBuy(offer)}
-          aria-label={affordable ? `Buy ${heroes[heroId].name} for ${offer.cost} stars` : `${heroes[heroId].name} costs ${offer.cost} stars — not enough`}
+          aria-label={affordable ? `Buy ${offer.name} for ${price} stars` : `${offer.name} costs ${price} stars — not enough`}
         >
-          Buy · ★ {offer.cost}
+          Buy {offer.name} · ★ {price}
         </button>
       )}
+      {state === 'locked' && !offer && <span className="collection-action-note">Falls only in the Constellation’s {STARFALL_NAME}.</span>}
     </div>
   );
 }

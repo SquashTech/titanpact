@@ -32,7 +32,7 @@ import {
   swapIntoDeck,
 } from '../src/run/deck';
 
-const FREE_COMPANY = 'bundle.freeCompany';
+const TALL_GRASS = 'bundle.tallGrass';
 
 test('deck: the default is the base roster, three a draftable type', () => {
   const deck = defaultDeck(heroes);
@@ -56,18 +56,18 @@ test('deck: a stored deck is made legal — unknown, unowned, mistyped and repea
 });
 
 test('deck: an owned hero is traded into its own row only', () => {
-  assert.deepStrictEqual(reserveOfType(defaultDeck(heroes), heroes, [], 'Iron'), [], 'the base game has no reserve');
-  const owned = normalizeDeck({}, heroes, [FREE_COMPANY]);
-  assert.deepStrictEqual(reserveOfType(owned, heroes, [FREE_COMPANY], 'Iron'), ['scallywag']);
-  const traded = swapIntoDeck(owned, heroes, [FREE_COMPANY], 'scallywag', owned.Iron[2]);
-  assert.ok(traded.Iron.includes('scallywag'));
-  assert.throws(() => swapIntoDeck(owned, heroes, [FREE_COMPANY], 'scallywag', owned.Fire[1]), DeckError, 'wrong row');
-  assert.throws(() => swapIntoDeck(owned, heroes, [], 'scallywag', owned.Iron[2]), DeckError, 'not owned');
+  assert.deepStrictEqual(reserveOfType(defaultDeck(heroes), heroes, [], 'Fire'), [], 'the base game has no reserve');
+  const owned = normalizeDeck({}, heroes, [TALL_GRASS]);
+  assert.deepStrictEqual(reserveOfType(owned, heroes, [TALL_GRASS], 'Fire'), ['drake']);
+  const traded = swapIntoDeck(owned, heroes, [TALL_GRASS], 'drake', owned.Fire[2]);
+  assert.ok(traded.Fire.includes('drake'));
+  assert.throws(() => swapIntoDeck(owned, heroes, [TALL_GRASS], 'drake', owned.Iron[1]), DeckError, 'wrong row');
+  assert.throws(() => swapIntoDeck(owned, heroes, [], 'drake', owned.Fire[2]), DeckError, 'not owned');
 });
 
 test('deck: the profile round-trips it, and a file without one opens on the default', () => {
-  const owned = normalizeDeck({}, heroes, [FREE_COMPANY]);
-  const edited = { ...createProfile(), purchases: [FREE_COMPANY], deck: { ...swapIntoDeck(owned, heroes, [FREE_COMPANY], 'scallywag', owned.Iron[0]) } as Record<string, string[]> };
+  const owned = normalizeDeck({}, heroes, [TALL_GRASS]);
+  const edited = { ...createProfile(), purchases: [TALL_GRASS], deck: { ...swapIntoDeck(owned, heroes, [TALL_GRASS], 'drake', owned.Fire[0]) } as Record<string, string[]> };
   const read = decodeProfile(JSON.parse(JSON.stringify(edited)));
   assert.deepStrictEqual(profileDeck(read, heroes), profileDeck(edited, heroes));
   assert.deepStrictEqual(decodeProfile({}).deck, {});

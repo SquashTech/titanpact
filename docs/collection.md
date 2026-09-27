@@ -1,12 +1,12 @@
 # collection.md — The Collection: a deck of heroes, and the stars that grow it
 
-> **STATUS: DIRECTION DECIDED 2026-09-26 (per user direction), NUMBERS OPEN. PHASES 1–3 (THE DECK, THE STAKES, SINGLE HEROES AND THE SUMMONING) ARE IN, same day — §10. PHASE 5 (NO STARTERS; THE COMPENDIUM DISSOLVED) IS IN, same day.**
+> **STATUS: DIRECTION DECIDED 2026-09-26 (per user direction), NUMBERS OPEN. PHASES 1–3 (THE DECK, THE STAKES, SINGLE HEROES AND THE SUMMONING) ARE IN, same day — §10. PHASE 5 (NO STARTERS; THE COMPENDIUM DISSOLVED) AND PHASE 6 (THE STARFALL; BUNDLES ONLY) ARE IN, same day.**
 > The designer stops assigning heroes to the draft or the recruit pool; the player does, on a
 > **Deck** built from the heroes the account owns. The base 42 are owned from the first launch
 > and the default deck IS today's split, so a new account plays today's game. Stars become a
 > renewable currency — a cleared run pays a base bonus that grows by Ascension rung, and an
-> Ascension attempt costs stars to begin. Heroes past the base 42 are bought singly, in bundles,
-> or drawn blind. §8 lists what this reverses; until the §10 phase that replaces each one lands,
+> Ascension attempt costs stars to begin. Heroes past the base 42 come in bundles or are drawn
+> blind by the **Starfall**; none is sold singly (phase 6). §8 lists what this reverses; until the §10 phase that replaces each one lands,
 > the rule in force is the one it names.
 
 ---
@@ -66,7 +66,8 @@ is deleted, and with it Starter Packs, presets and the Second String.
   type glyphs down the right edge** jumps the page to a type (tap or drag) and lights the type in
   view. Tapping a hero gives **Info** (the full dossier) and one verb: **Equip** for an owned hero
   out of the deck — the row's three light as *Replace*, and the one tapped is swapped out — or
-  **Buy** for one not owned, at its single price. Each owned card carries its three path stars.
+  for one not owned, **Buy** its bundle at the bundle's current price, or a line saying only the
+  Starfall brings it (phase 6: no hero is sold singly). Each owned card carries its three path stars.
 
 ---
 
@@ -97,16 +98,24 @@ before owning it.
 
 - **The base 42 are owned from the first launch**, free. A new account's first run must not be
   worse than today's.
-- **Everything past the base is bought with stars:**
-  - **A single hero**, chosen — the full price.
-  - **A bundle** (the Free Company, From the Tall Grass as they stand) — a set at a discount.
-  - **A Summoning** — a blind draw, stars only, forever. Two rules make it earned rather than
-    predatory:
+- **Everything past the base is got with stars** (phase 6, 2026-09-26, per user direction — no
+  hero is sold singly):
+  - **A bundle** — From the Tall Grass is the only one; the Free Company was deleted and its three
+    are the Starfall's alone (`unlock: 'starfall'`). **A bundle part of which is owned is
+    DISCOUNTED**: its price is its cost times the share of its heroes still to get, rounded up
+    (`offerPrice`) — 8, then 6, then 3 — and the ledger replays purchases in order, so a bundle
+    is charged what it cost the day it was bought.
+  - **The Starfall** (renamed from the Summoning; *Omen* was the user's other candidate and is the
+    Location's word, so it was passed over) — a blind draw, stars only, forever. Two rules make it
+    earned rather than predatory:
     - **It only ever yields a hero you don't own.** No duplicates, so no duplicate currency.
       The excitement is *which*, never *whether*.
-    - **It costs less than a direct purchase.** Buying is choosing; the discount is what giving
-      the choice up is paid. A draw at the direct price should never be taken.
+    - **It costs less than choosing.** `STARFALL_PRICE` = 2 against a bundle's 8 for three: the
+      discount is what giving the choice up is paid.
     - It is not called a Contract — the Recruit Contract is an in-run item.
+- **Alignments** (PROPOSED, nothing built but a seat): a Starfall that draws from a curated few
+  — the Constellation's Heroes page holds an empty section for them. Named Alignments because
+  *Banner* is the Guardian's relic.
 - An owned hero **stars on the base terms** (`constellation.md` §2): three paths, three stars. So
   buying a hero still grows the sky, and the collection and the currency feed each other.
 
@@ -237,8 +246,8 @@ Spawn pages, its Equipment and Types pages the Reference's.
 - **Every number in §5**, and the two candidate fixes for the Classic farm.
 - **Whether a stranger is drawn toward heroes the account doesn't own** (the advert) or evenly
   from everything not decked. Two strangers a party is decided.
-- **Summoning price** against the direct price, and whether bundles survive beside it.
-- **Does a Summoning or a purchase ever put a hero in the deck by itself?** Proposed: no, it lands
+- **The Starfall's price** against a bundle's, and what an Alignment costs.
+- **Does a Starfall or a purchase ever put a hero in the deck by itself?** Proposed: no, it lands
   in the collection with a mark, the deck untouched.
 - **Is the deck locked during an Ascension attempt?** An Ascension attempt paid for with stars could fix the deck at
   entry; it does anyway, since the run is saved.
@@ -301,3 +310,19 @@ Spawn pages, its Equipment and Types pages the Reference's.
    options span four types and every decked hero can be drawn. **Unmeasured**: a random draft
    raises the average opening — sim pass 11 found the Second String beating Classic — and the
    sim has not been re-run.
+6. **The Starfall; bundles only — BUILT 2026-09-26** (per user direction). The Summoning is renamed
+   the **Starfall** (`starfall`, `starfallPool`, `STARFALL_PRICE` = 2; the ledger keeps its
+   `summon.<id>` entries). Single-hero offers are deleted; the Free Company bundle is deleted and
+   Scallywag, Patch and Vex carry `unlock: 'starfall'`. A bundle is discounted by what of it is
+   owned (`offerPrice`, `bundleOwnedHeroIds`) and `starsSpent` replays the ledger in order. A
+   ledger entry this build no longer ships — a single bought earlier, the Free Company — is
+   **refunded**: its stars come back; a legacy single still owns its hero, a legacy Free Company
+   does not. The Constellation's **Heroes** page is the Starfall card (a strip of night, the price,
+   *Call a Star*, and *Who is left* folding out the pool, each face a tap into the dossier), an
+   empty **Alignments** seat, and the bundles (the full price struck beside the discounted one,
+   the owned faces checked). A draw plays on **`StarfallScreen`** (`view/run/Starfall.tsx`):
+   the spent stars leave the balance and arc into the sky, one star of a constellation swells into
+   the hero's type colour, lets go and streaks to the ground, lands in a flash with a ring and
+   embers, and the hero stands up as a silhouette and colours in — four seconds, a tap skips,
+   reduced motion goes straight to the hero; three new sounds, `star.rise` / `star.fall` /
+   `star.land`.

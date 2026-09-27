@@ -22,16 +22,17 @@ export function isRecruitable(heroId: string, recruitablePool: Record<string, un
   return heroId in recruitablePool;
 }
 
-/** A single hero's Constellation offer, and the ledger entry a Summoning leaves (docs/collection.md §4). */
-export const heroOfferId = (heroId: string): string => `hero.${heroId}`;
-export const summonedId = (heroId: string): string => `summon.${heroId}`;
+/** The ledger entry a Starfall leaves (docs/collection.md §4). Stored as `summon.`, the Starfall's first name. */
+export const starfallLedgerId = (heroId: string): string => `summon.${heroId}`;
+/** A single hero bought before singles were withdrawn (2026-09-26): still owned, refunded by the ledger. */
+const legacySingleId = (heroId: string): string => `hero.${heroId}`;
 
 /**
  * Whether an account holds a hero: the base roster always; one outside it (`HeroDefinition.unlock`)
- * by its bundle, its own offer, or a Summoning — all three entries in `Profile.purchases`.
+ * by its bundle or a Starfall — both entries in `Profile.purchases`.
  */
 export function ownsHero(heroId: string, hero: { unlock?: string }, purchases: readonly string[]): boolean {
-  return !hero.unlock || purchases.includes(hero.unlock) || purchases.includes(heroOfferId(heroId)) || purchases.includes(summonedId(heroId));
+  return !hero.unlock || purchases.includes(hero.unlock) || purchases.includes(starfallLedgerId(heroId)) || purchases.includes(legacySingleId(heroId));
 }
 
 /**

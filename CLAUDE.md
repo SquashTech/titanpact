@@ -199,7 +199,7 @@ don't silently override it.
 > Ancient takes its secondary slot, and every later companion of that line joins Ancient
 > (`Profile.ascendedSpawnTypes`). Ancient resists every type, so that is the thing to watch.
 
-> **A ninth is DECIDED, PHASES 1–3 AND 5 IN: `docs/collection.md`** (2026-09-26, per user direction).
+> **A ninth is DECIDED, PHASES 1–3, 5 AND 6 IN: `docs/collection.md`** (2026-09-26, per user direction).
 > **The player builds the run's pools, not the designer**: a **Deck** of three heroes a type, 42
 > in all, **three equal slots — no starter and no recruit-only** (phase 5: `HeroDefinition.starter`,
 > Starter Packs and presets are deleted). **The draft draws one hero from each deck row and shows
@@ -207,19 +207,20 @@ don't silently override it.
 > base 42 are owned free and are the default deck. **A recruitable fight fields at
 > least two deck heroes; the rest may be strangers** off the whole catalog, never offered a
 > contract. **Classic** names the base run mode. Stars turn renewable — a clear bonus by rung, an entry fee
-> on an Ascension attempt, heroes past the base bought singly, in bundles, or by a no-duplicate
-> **Summoning** — every number open. Build-around heroes that bend a deck rule are PROPOSED (§6a).
+> on an Ascension attempt, heroes past the base got in bundles or by a no-duplicate blind draw,
+> the **Starfall** — every number open. Build-around heroes that bend a deck rule are PROPOSED (§6a).
 > **Phase 1 is IN** (same day): `src/run/deck.ts`, `Profile.deck`, `RunState.deck` (snapshotted at the
 > seal), the split enemy draw, the title's **Collection**. **Phase 2, the stakes, is IN** (same day, per user direction):
 > Classic pays +1 star every clear, A1 costs 1 at the seal (always spent) and pays 6 — first-pass,
-> `ASCENSION_RUNGS`. **Phase 3 is IN** (same day): every hero past the base 42 sold singly at 3, a
-> bundle only while none of it is owned, and a no-duplicate **Summoning** at 2; a new hero lands in
+> `ASCENSION_RUNGS`. **Phase 3 is IN** (same day): a no-duplicate blind draw at 2 stars; a new hero lands in
 > the Collection's reserve. **Phase 5 is IN** (same day): the Collection is one page a type with a
 > type rail on its right edge, a hero tapped for **Info** (the dossier) and **Equip** (swap into its
-> type's three) or **Buy** (a hero not owned, greyed with its price); **the Compendium is gone** —
+> type's three) or its bundle to buy (a hero not owned, greyed); **the Compendium is gone** —
 > its stars and Spawn bestiary are the Constellation's **Stars** and **Spawn** tabs, its Equipment
-> and type dial the Reference's; the Constellation sells bundles and the Summoning, a single hero
-> is bought in the Collection. Its §8 lists the rest it reverses.
+> and type dial the Reference's; the Constellation sells bundles and the Starfall. **Phase 6 is IN** (same day): the draw is renamed the **Starfall** and
+> plays as a scene (`StarfallScreen`); **no hero is sold singly** — From the Tall Grass is the one
+> bundle, discounted by what of it is already owned, and the Free Company's three are
+> Starfall-only; the Heroes page keeps an empty seat for curated **Alignments**. Its §8 lists the rest it reverses.
 
 ---
 
@@ -330,7 +331,7 @@ don't silently override it.
   Constellation offer is held (`heroPool`, `src/run/recruitment.ts` — the fork's contracts, the
   Guild Hall and the enemy party read it the way the itinerary reads `locationPool`).
   **Scallywag is the first** (same day, per user direction): Storm → mono-
-  Iron, the Stormrunner graft his way back, in the **Free Company** bundle (8 stars) beside
+  Iron, the Stormrunner graft his way back, Starfall-only since the **Free Company** bundle was deleted (2026-09-26), beside
   **Patch** (Mech, the Wisdom-85 medic drone on the repair column) and **Vex** (Beast, the
   Speed-110 vampire bat that feeds on Bleed, its Shadow turn a graft). **Skyshear** took Storm's third seat the same day: the slate's
   magical column at Int 95 / Speed 100. The base is 42 again and `test/roster` pins three a

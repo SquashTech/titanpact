@@ -3,26 +3,27 @@ import { STAR_SHOP_OFFERS, starShopCatalog } from '../../data/starShop';
 import { locationDomains, locations } from '../../data/locations';
 import { heroes } from '../../data/heroes';
 import type { Profile } from '../../run/profile';
-import { SUMMON_PRICE, canBuy, canSummon, offerHeld, offerWithdrawn, starBalance, starsEarned, starsSpent, summonPool, type StarShopOffer } from '../../run/starShop';
+import { bundleOwnedHeroIds, canBuy, canCallStarfall, offerHeld, offerPrice, starBalance, starfallPool, starsEarned, starsSpent, type StarShopOffer } from '../../run/starShop';
 import { HubGlyph } from '../shared/nodeIcons';
 import { ElementGlyph } from '../shared/elementIcons';
 import { LocationHorizon } from '../shared/locationArt';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TabStrip, type TabSpec } from '../shared/TabStrip';
-import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
+import { getTypeColor } from '../combat/typeColors';
 import { HeroDossierOverlay } from './HeroDossierOverlay';
 import { LocationPeekOverlay } from './LocationPeekOverlay';
 import { BundlePeekOverlay } from './BundlePeekOverlay';
 import { HeroStarsPage, SpawnStarsPage } from './StarPages';
+import { StarfallCard, StarfallScreen } from './Starfall';
 
 /** The shop's name, in one place: the title tile, this panel's header. The Constellation — every star earned, charted, and the sky they are spent on. */
 export const STAR_SHOP_NAME = 'The Constellation';
 
 type ShelfId = 'heroes' | 'places' | 'stars' | 'spawn';
 
-/** The two shelves stars are spent on, then the two pages that chart where they were earned. A single hero is bought in the Collection. */
+/** The two shelves stars are spent on, then the two pages that chart where they were earned. No hero is sold singly. */
 const SHELVES: readonly (TabSpec<ShelfId> & { grant?: StarShopOffer['grant']['kind']; empty?: string })[] = [
-  { id: 'heroes', label: 'Heroes', glyph: 'heroes', grant: 'heroBundle', empty: 'A bundle is a few heroes into the Collection — a fourth for a type, or a themed handful. None are written yet.' },
+  { id: 'heroes', label: 'Heroes', glyph: 'heroes', grant: 'heroBundle' },
   { id: 'places', label: 'Locations', glyph: 'places', grant: 'location', empty: 'A place the road can offer beside the base five: its own weather, its own spawn, its own warden.' },
   { id: 'stars', label: 'Stars', glyph: 'stars' },
   { id: 'spawn', label: 'Spawn', glyph: 'spawn' },
@@ -32,8 +33,8 @@ interface Props {
   profile: Profile;
   /** Spends stars on the offer and hands back the profile to render. */
   onBuy: (offer: StarShopOffer) => void;
-  /** One blind draw (run/starShop.ts summon); returns the hero drawn. */
-  onSummon: () => string;
+  /** One Starfall (run/starShop.ts starfall), written to the profile; returns the hero drawn. */
+  onStarfall: () => string;
   onClose: () => void;
 }
 
@@ -41,29 +42,29 @@ interface Props {
 export interface OfferPurchase {
   offer: StarShopOffer;
   held: boolean;
-  /** A bundle part of which is already owned: its heroes are singles now. */
-  withdrawn: boolean;
+  /** What it costs this profile now — a bundle less the heroes already owned. */
+  price: number;
   affordable: boolean;
   onBuy: () => void;
 }
 
 /**
- * Where stars are spent (run/starShop.ts) and where they are charted; the deck is dressed, and a
- * single hero bought, in the Collection. The balance leads — the star and the count — then the
- * page the strip has open.
+ * Where stars are spent (run/starShop.ts) and where they are charted; the deck is dressed in the
+ * Collection. The balance leads — the star and the count — then the page the strip has open. The
+ * Heroes page is the Starfall, a seat for Alignments, and the bundles.
  * Bundles and Locations are rows that OPEN: a bundle's row is a line-up and a place's row is a
  * scene, and tapping either brings up its own screen, where the heroes can be examined and the
  * place looked around — and where the one Purchase button is. Nothing on a shelf row spends a
  * star; the cost on it is a label. Tabs at the foot, in the thumb's arc.
  */
-export function StarShopScreen({ profile, onBuy, onSummon, onClose }: Props) {
+export function StarShopScreen({ profile, onBuy, onStarfall, onClose }: Props) {
   const earned = starsEarned(profile);
   const spent = starsSpent(profile, starShopCatalog);
   const balance = starBalance(profile, starShopCatalog);
   const [shelf, setShelf] = useState<ShelfId>('heroes');
   const [dossierHeroId, setDossierHeroId] = useState<string | null>(null);
   const [openOfferId, setOpenOfferId] = useState<string | null>(null);
-  const [summonedHeroId, setSummonedHeroId] = useState<string | null>(null);
+  const [fallen, setFallen] = useState<{ heroId: string; balanceBefore: number } | null>(null);
 
   const tabs = SHELVES.map((s) => (s.id === 'places' ? { ...s, count: STAR_SHOP_OFFERS.filter((o) => o.grant.kind === s.grant).length } : s));
   const open = SHELVES.find((s) => s.id === shelf)!;
@@ -73,7 +74,7 @@ export function StarShopScreen({ profile, onBuy, onSummon, onClose }: Props) {
   const purchaseOf = (offer: StarShopOffer): OfferPurchase => ({
     offer,
     held: offerHeld(profile, offer),
-    withdrawn: offerWithdrawn(profile, offer),
+    price: offerPrice(profile, offer),
     affordable: canBuy(profile, starShopCatalog, offer),
     onBuy: () => onBuy(offer),
   });
@@ -105,11 +106,21 @@ export function StarShopScreen({ profile, onBuy, onSummon, onClose }: Props) {
           </div>
 
           {shelf === 'heroes' && (
-            <SummonRow
-              left={summonPool(profile).length}
-              enabled={canSummon(profile, starShopCatalog)}
-              onSummon={() => setSummonedHeroId(onSummon())}
-            />
+            <>
+              <StarfallCard
+                pool={starfallPool(profile)}
+                enabled={canCallStarfall(profile, starShopCatalog)}
+                onCall={() => setFallen({ balanceBefore: balance, heroId: onStarfall() })}
+                onPeekHero={setDossierHeroId}
+              />
+              {/* A seat for curated Starfalls (docs/collection.md §4, PROPOSED): none are authored. */}
+              <div className="tab-subhead star-shop-section-head">Alignments</div>
+              <div className="star-shop-empty star-shop-alignments">
+                <span className="star-shop-empty-title">No stars are aligned</span>
+                <span className="star-shop-empty-note">Now and then the sky lines up over a chosen few, and a Starfall under it draws only from them.</span>
+              </div>
+              <div className="tab-subhead star-shop-section-head">Bundles</div>
+            </>
           )}
 
           {shelf === 'stars' ? (
@@ -129,16 +140,19 @@ export function StarShopScreen({ profile, onBuy, onSummon, onClose }: Props) {
                   return <LocationRow key={offer.id} offer={offer} locationId={offer.grant.locationId} held={held} onOpen={() => setOpenOfferId(offer.id)} />;
                 }
                 if (offer.grant.kind === 'heroBundle') {
-                  return <BundleRow key={offer.id} offer={offer} heroIds={offer.grant.heroIds} held={held} withdrawn={offerWithdrawn(profile, offer)} onOpen={() => setOpenOfferId(offer.id)} />;
+                  return (
+                    <BundleRow
+                      key={offer.id}
+                      offer={offer}
+                      heroIds={offer.grant.heroIds}
+                      ownedIds={bundleOwnedHeroIds(profile, offer)}
+                      price={offerPrice(profile, offer)}
+                      held={held}
+                      onOpen={() => setOpenOfferId(offer.id)}
+                    />
+                  );
                 }
-                return (
-                  <div key={offer.id} className={`star-shop-offer${held ? ' is-held' : ''}`}>
-                    <div className="star-shop-offer-body">
-                      <span className="star-shop-offer-name">{offer.name}</span>
-                    </div>
-                    <CostBadge offer={offer} held={held} />
-                  </div>
-                );
+                return null;
               })}
             </div>
           )}
@@ -163,29 +177,33 @@ export function StarShopScreen({ profile, onBuy, onSummon, onClose }: Props) {
         <LocationPeekOverlay locationId={openOffer.grant.locationId} purchase={purchaseOf(openOffer)} onClose={() => setOpenOfferId(null)} />
       )}
       {openOffer?.grant.kind === 'heroBundle' && (
-        <BundlePeekOverlay heroIds={openOffer.grant.heroIds} purchase={purchaseOf(openOffer)} onPeekHero={setDossierHeroId} onClose={() => setOpenOfferId(null)} />
+        <BundlePeekOverlay
+          heroIds={openOffer.grant.heroIds}
+          ownedIds={bundleOwnedHeroIds(profile, openOffer)}
+          purchase={purchaseOf(openOffer)}
+          onPeekHero={setDossierHeroId}
+          onClose={() => setOpenOfferId(null)}
+        />
       )}
-      {summonedHeroId && <SummonReveal heroId={summonedHeroId} onPeekHero={setDossierHeroId} onClose={() => setSummonedHeroId(null)} />}
+      {fallen && <StarfallScreen heroId={fallen.heroId} balanceBefore={fallen.balanceBefore} onClose={() => setFallen(null)} />}
       {dossierHero && <HeroDossierOverlay hero={dossierHero} onClose={() => setDossierHeroId(null)} />}
     </div>
   );
 }
 
-/** The price as a label, never a button: the Purchase is on the offer's own screen. */
-export function CostBadge({ offer, held, withdrawn = false }: { offer: StarShopOffer; held: boolean; withdrawn?: boolean }) {
-  return <span className={`star-shop-offer-cost${held || withdrawn ? ' is-held' : ''}`}>{held ? 'Owned' : withdrawn ? 'Singles' : `★ ${offer.cost}`}</span>;
+/** The price as a label, never a button: the Purchase is on the offer's own screen. A discounted bundle shows its full price struck beside it. */
+export function CostBadge({ offer, held, price = offer.cost }: { offer: StarShopOffer; held: boolean; price?: number }) {
+  if (held) return <span className="star-shop-offer-cost is-held">Owned</span>;
+  return (
+    <span className={`star-shop-offer-cost${price < offer.cost ? ' is-discounted' : ''}`}>
+      {price < offer.cost && <s className="star-shop-offer-was">{offer.cost}</s>}★ {price}
+    </span>
+  );
 }
 
 /** The one Purchase: on an offer's own screen, above Close. Disabled says why in its label. */
 export function PurchaseButton({ purchase }: { purchase: OfferPurchase }) {
-  const { offer, held, withdrawn, affordable, onBuy } = purchase;
-  if (withdrawn) {
-    return (
-      <button type="button" className="resolve-button sheet-close-button star-shop-purchase" data-sfx="none" disabled>
-        One is yours · buy the rest singly
-      </button>
-    );
-  }
+  const { offer, held, price, affordable, onBuy } = purchase;
   return (
     <button
       type="button"
@@ -193,40 +211,10 @@ export function PurchaseButton({ purchase }: { purchase: OfferPurchase }) {
       data-sfx={held || !affordable ? 'none' : 'ui.commit'}
       disabled={held || !affordable}
       onClick={onBuy}
-      aria-label={held ? `${offer.name}: owned` : affordable ? `Purchase ${offer.name} for ${offer.cost} ${offer.cost === 1 ? 'star' : 'stars'}` : `${offer.name} costs ${offer.cost} stars — not enough`}
+      aria-label={held ? `${offer.name}: owned` : affordable ? `Purchase ${offer.name} for ${price} ${price === 1 ? 'star' : 'stars'}` : `${offer.name} costs ${price} stars — not enough`}
     >
-      {held ? 'Owned' : `Purchase · ★ ${offer.cost}`}
+      {held ? 'Owned' : `Purchase · ★ ${price}`}
     </button>
-  );
-}
-
-/** A line-up of faces, each its primary type's glyph under it, each a tap into the hero's dossier. */
-function FaceRow({ heroIds, onPeekHero }: { heroIds: readonly string[]; onPeekHero: (heroId: string) => void }) {
-  return (
-    <span className="star-shop-bundle-faces">
-      {heroIds.map((heroId) => {
-        const hero = heroes[heroId];
-        if (!hero) return null;
-        return (
-          <button
-            type="button"
-            key={heroId}
-            className="star-shop-bundle-face"
-            style={{ color: getTypeColor(hero.types[0]) }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onPeekHero(heroId);
-            }}
-            aria-label={`${hero.name} — view details`}
-          >
-            <HeroPortrait heroId={heroId} className="star-shop-bundle-portrait" />
-            <span className="star-shop-bundle-face-type" aria-hidden="true">
-              <ElementGlyph type={hero.types[0]} />
-            </span>
-          </button>
-        );
-      })}
-    </span>
   );
 }
 
@@ -278,8 +266,22 @@ function LocationRow({ offer, locationId, held, onOpen }: { offer: StarShopOffer
   );
 }
 
-/** A bundle's row is the heroes — a line-up — and opens the bundle. The faces open nothing here; the bundle's own screen is where they are examined. */
-function BundleRow({ offer, heroIds, held, withdrawn, onOpen }: { offer: StarShopOffer; heroIds: readonly string[]; held: boolean; withdrawn: boolean; onOpen: () => void }) {
+/** A bundle's row is the heroes — a line-up, the ones already owned marked — and opens the bundle. */
+function BundleRow({
+  offer,
+  heroIds,
+  ownedIds,
+  price,
+  held,
+  onOpen,
+}: {
+  offer: StarShopOffer;
+  heroIds: readonly string[];
+  ownedIds: readonly string[];
+  price: number;
+  held: boolean;
+  onOpen: () => void;
+}) {
   return (
     <OpenRow className={`star-shop-bundle${held ? ' is-held' : ''}`} label={`${offer.name} — see the heroes`} onOpen={onOpen}>
       <div className="star-shop-offer-body">
@@ -289,7 +291,7 @@ function BundleRow({ offer, heroIds, held, withdrawn, onOpen }: { offer: StarSho
             const hero = heroes[heroId];
             if (!hero) return null;
             return (
-              <span key={heroId} className="star-shop-bundle-face" style={{ color: getTypeColor(hero.types[0]) }}>
+              <span key={heroId} className={`star-shop-bundle-face${!held && ownedIds.includes(heroId) ? ' is-owned' : ''}`} style={{ color: getTypeColor(hero.types[0]) }}>
                 <HeroPortrait heroId={heroId} className="star-shop-bundle-portrait" />
                 <span className="star-shop-bundle-face-type">
                   <ElementGlyph type={hero.types[0]} />
@@ -298,63 +300,9 @@ function BundleRow({ offer, heroIds, held, withdrawn, onOpen }: { offer: StarSho
             );
           })}
         </span>
+        {!held && ownedIds.length > 0 && <span className="star-shop-bundle-owned">{ownedIds.length} of {heroIds.length} already yours</span>}
       </div>
-      <CostBadge offer={offer} held={held} withdrawn={withdrawn} />
+      <CostBadge offer={offer} held={held} price={price} />
     </OpenRow>
-  );
-}
-
-/**
- * The Summoning (docs/collection.md §4): one hero the account does not own, drawn blind, under a
- * single hero's price. Never a duplicate, so it goes quiet only when there is nothing left to draw.
- */
-function SummonRow({ left, enabled, onSummon }: { left: number; enabled: boolean; onSummon: () => void }) {
-  return (
-    <button type="button" className="star-shop-offer star-shop-summon" disabled={!enabled} data-sfx={enabled ? 'ui.commit' : 'none'} onClick={onSummon}>
-      <span className="star-shop-summon-glyph" aria-hidden="true">
-        <HubGlyph name="star" />
-      </span>
-      <div className="star-shop-offer-body">
-        <span className="star-shop-offer-name">Summoning</span>
-        <span className="star-shop-summon-note">{left === 0 ? 'Every hero is yours.' : `A hero you don't own, drawn blind · ${left} left`}</span>
-      </div>
-      <span className={`star-shop-offer-cost${left === 0 ? ' is-held' : ''}`}>★ {SUMMON_PRICE}</span>
-    </button>
-  );
-}
-
-/** What a Summoning drew: the hero, a tap into its dossier. */
-function SummonReveal({ heroId, onPeekHero, onClose }: { heroId: string; onPeekHero: (heroId: string) => void; onClose: () => void }) {
-  const hero = heroes[heroId];
-  if (!hero) return null;
-  return (
-    <div className="detail-overlay is-sheet" onClick={onClose}>
-      <div className="detail-panel bundle-peek-panel star-shop-reveal" onClick={(e) => e.stopPropagation()}>
-        <div className="detail-header bundle-peek-head">
-          <span className="detail-name">Summoned</span>
-        </div>
-        <div className="bundle-peek-boxes">
-          <button
-            type="button"
-            className="bundle-peek-box"
-            style={{ '--type-rgb': getTypeColorRgb(hero.types[0]) } as CSSProperties}
-            onClick={() => onPeekHero(heroId)}
-            aria-label={`${hero.name} — view details`}
-          >
-            <span className="bundle-peek-figure">
-              <span className="pick-ground" aria-hidden="true" />
-              <HeroPortrait heroId={heroId} className="bundle-peek-portrait" />
-            </span>
-            <span className="bundle-peek-name">{hero.name}</span>
-          </button>
-        </div>
-        <p className="records-note star-shop-reveal-note">In your Collection now. Swap it into your deck there.</p>
-      </div>
-      <div className="sheet-footer" onClick={(e) => e.stopPropagation()}>
-        <button className="resolve-button sheet-close-button" onClick={onClose}>
-          Close
-        </button>
-      </div>
-    </div>
   );
 }

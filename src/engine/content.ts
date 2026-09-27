@@ -535,9 +535,9 @@ export interface HeroDefinition {
   /** Move ids currently unlocked for this hero instance. */
   moveIds: readonly string[];
   /**
-   * The Constellation offer that puts this hero in the Collection (docs/collection.md §4): a hero
-   * outside the base roster, owned once the offer is held (run/recruitment.ts `heroPool`). The
-   * base roster carries none.
+   * How a hero outside the base roster reaches the Collection (docs/collection.md §4): the id of
+   * the bundle offer that holds it, or `'starfall'` for a hero only the Starfall draws. Either way
+   * a Starfall can draw it (run/recruitment.ts `ownsHero`). The base roster carries none.
    */
   unlock?: string;
   /**

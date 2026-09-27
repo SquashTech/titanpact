@@ -53,6 +53,9 @@ export type SfxId =
   | 'map.select'
   | 'map.boon'
   | 'map.threat'
+  | 'star.rise'
+  | 'star.fall'
+  | 'star.land'
   // Combat
   | 'cast'
   | 'cast.Fire'
@@ -599,6 +602,49 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'sine', freq: 140, freqEnd: 52, gain: 0.42, attack: 0.002, decay: 0.36, delay: 0.055 },
       { wave: 'triangle', freq: 330, freqEnd: 494, detune: 7, gain: 0.22, attack: 0.01, hold: 0.04, decay: 0.5, delay: 0.09 },
       { wave: 'sine', freq: 988, gain: 0.12, attack: 0.008, decay: 0.6, delay: 0.16 },
+    ],
+  },
+
+  /**
+   * A spent star leaving the balance for the sky (StarfallScreen), once a star, re-pitched up for the
+   * second. Glass, not metal: two high sines a fifth apart with a band of air lifting under them,
+   * so the sound climbs the way the token does.
+   */
+  'star.rise': {
+    gain: 0.3,
+    jitter: 0.01,
+    voices: [
+      { wave: 'sine', freq: 1319, freqEnd: 1760, gain: 0.2, attack: 0.01, decay: 0.55 },
+      { wave: 'sine', freq: 1976, freqEnd: 2637, detune: 9, gain: 0.1, attack: 0.02, decay: 0.5, delay: 0.04 },
+      { wave: 'noise', gain: 0.1, attack: 0.08, decay: 0.4, filter: { type: 'bandpass', freq: 2200, freqEnd: 6200, q: 1.3 } },
+    ],
+  },
+
+  /** The star letting go of the sky: a long falling band of air with a tone sliding under it — the one sound here that travels downward. */
+  'star.fall': {
+    gain: 0.4,
+    jitter: 0.01,
+    voices: [
+      { wave: 'noise', gain: 0.32, attack: 0.12, decay: 0.55, filter: { type: 'bandpass', freq: 5200, freqEnd: 600, q: 1.1 } },
+      { wave: 'sine', freq: 1568, freqEnd: 392, gain: 0.16, attack: 0.05, hold: 0.1, decay: 0.5 },
+      { wave: 'triangle', freq: 784, freqEnd: 196, detune: 10, gain: 0.1, attack: 0.08, decay: 0.55 },
+    ],
+  },
+
+  /**
+   * The star reaching the ground and a hero standing up out of it. Impact first — lowpassed noise
+   * and a dropping sub, the weight — then a bell a beat later that is the arrival rather than the
+   * crash, so the tail rings up where `seal.shatter`'s falls away.
+   */
+  'star.land': {
+    gain: 0.54,
+    jitter: 0.006,
+    voices: [
+      { wave: 'noise', gain: 0.42, attack: 0.002, decay: 0.5, filter: { type: 'lowpass', freq: 2200, freqEnd: 160, q: 0.9 } },
+      { wave: 'sine', freq: 98, freqEnd: 41, gain: 0.5, attack: 0.003, decay: 0.7 },
+      { wave: 'triangle', freq: 392, freqEnd: 587, detune: 8, gain: 0.22, attack: 0.02, hold: 0.06, decay: 0.9, delay: 0.16 },
+      { wave: 'sine', freq: 1175, gain: 0.12, attack: 0.01, decay: 1.2, delay: 0.2 },
+      { wave: 'sine', freq: 2349, gain: 0.06, attack: 0.01, decay: 1.0, delay: 0.24 },
     ],
   },
 

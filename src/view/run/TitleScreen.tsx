@@ -23,8 +23,8 @@ interface Props {
   onEraseAllData: () => void;
   /** Spends stars on a Constellation offer (run/starShop.ts buyOffer) and re-reads the profile. */
   onBuyOffer: (offer: StarShopOffer) => void;
-  /** One Summoning (run/starShop.ts summon), written to the profile; returns the hero drawn. */
-  onSummon: () => string;
+  /** One Starfall (run/starShop.ts starfall), written to the profile; returns the hero drawn. */
+  onStarfall: () => string;
   /** Writes the edited deck to the profile (run/deck.ts) and re-reads it. */
   onChangeDeck: (deck: Deck) => void;
   /** The parked run a Continue would resume, or null when there is none. */
@@ -112,7 +112,7 @@ export function TitleScreen({
   onRefreshProfile,
   onEraseAllData,
   onBuyOffer,
-  onSummon,
+  onStarfall,
   onChangeDeck,
   parkedRun,
   staleSaveReason,
@@ -447,7 +447,7 @@ export function TitleScreen({
           </div>
         </div>
       )}
-      {showShop && <StarShopScreen profile={profile} onBuy={onBuyOffer} onSummon={onSummon} onClose={() => setShowShop(false)} />}
+      {showShop && <StarShopScreen profile={profile} onBuy={onBuyOffer} onStarfall={onStarfall} onClose={() => setShowShop(false)} />}
     </div>
   );
 }
