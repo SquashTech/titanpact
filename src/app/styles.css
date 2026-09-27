@@ -19341,8 +19341,28 @@ button.star-shop-bundle-face {
 
 /* The opening fight: the Titan's eye, opening on the road — the title screen's eye, alone. */
 .map-medallion.is-eye {
-  width: 210px !important;
-  height: 114px !important;
+  width: 300px !important;
+  height: 162px !important;
+}
+
+/* Held open. The title's eye sits narrow and widens now and then; on the map it is a thing to
+   tap, so it stays open and only closes for a slow blink, and the gaze still wanders. */
+.map-landmark-eye .titan-eye-open {
+  animation: map-eye-hold 11s ease-in-out infinite;
+}
+
+@keyframes map-eye-hold {
+  0%,
+  88%,
+  100% {
+    transform: scaleY(1);
+  }
+  92% {
+    transform: scaleY(0.08);
+  }
+  95% {
+    transform: scaleY(1);
+  }
 }
 
 .map-medallion.is-eye .map-medallion-glow {

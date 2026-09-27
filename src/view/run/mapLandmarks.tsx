@@ -34,7 +34,9 @@ export function landmarkKind(type: MapNodeType): LandmarkKind | undefined {
 
 /** A single Titan eye in the title screen's idiom (titanArt.tsx): lens, lit iris, slit, halo. */
 function MapTitanEye() {
-  const lens = 'M-82 0 Q0 -32 82 0 Q0 32 -82 0 Z';
+  // Rounder than the title's (half-height 48 against its 32): this one is a button, and it is
+  // held open rather than narrowed and flared.
+  const lens = 'M-82 0 Q0 -48 82 0 Q0 48 -82 0 Z';
   return (
     <svg className="map-landmark-eye" viewBox="-130 -70 260 140" aria-hidden="true">
       <defs>
@@ -63,8 +65,9 @@ function MapTitanEye() {
       <g className="titan-eye-open" clipPath="url(#map-eye-lid)">
         <path className="map-eye-lens" d={lens} />
         <g className="titan-eye-gaze">
-          <ellipse className="map-eye-hotspot" rx="51" ry="29" />
-          <ellipse className="map-eye-pupil" rx="9.6" ry="28" />
+          <ellipse className="map-eye-hotspot" rx="52" ry="40" />
+          {/* A slit that tapers inside the lids wherever the gaze takes it, never cut square by them. */}
+          <ellipse className="map-eye-pupil" rx="6" ry="30" />
         </g>
       </g>
     </svg>
