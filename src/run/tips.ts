@@ -73,6 +73,7 @@ export const SCREEN_TIP_IDS = [
   'run',
   'map',
   'wounds',
+  'blessing',
   'fork',
   'squad',
   'item',

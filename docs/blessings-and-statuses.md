@@ -6,8 +6,8 @@
 > game gets easier. Everything else is a proposal until the designer signs it. Build order is
 > §6: **Blessings and Haunt first**, Burn and Renew after, the two fields with them.
 > **Phase 1 is BUILT (2026-09-28):** the engine, the roster flag, the opening pair Blessed at run
-> start (with no scene yet), the spend beat and the marks (§1.6). `SIM_NO_BLESSING=1` is the sim's
-> A/B for phase 4.
+> start, the spend beat and the marks (§1.6). `SIM_NO_BLESSING=1` is the sim's
+> A/B for phase 4. **Phase 2 is BUILT (same day):** the Pactwarden's scene (§1.5).
 
 ---
 
@@ -87,17 +87,28 @@ no roster card endures any more, so it's a question for whoever next gives a her
 **At most one Blessing a hero.** A second one on a Blessed hero is refused (the who-screen greys the
 hero), so the supply stays countable.
 
-### 1.5 The scene
+### 1.5 The scene — BUILT 2026-09-28
 
-- Fires **every run**, after the draft and before the first map. The first-run lore card
-  (`tutorial.md`) stays where it is, ahead of the draft.
-- **One beat**: a PixelLab backdrop, the blessing figure, the two drafted heroes, one line —
-  *"I bless you for this journey. You may need it."* — and a glow landing on each hero. One tap.
-  Run length is always under pressure (`project_sim_run_length`), and this is paid every run.
-- **Who blesses** is a lore question for the designer: whoever sends heroes out against the Titan's
-  seals (`lore.md`). The figure should *not* be Ancient-coloured, for the reason no Guardian is.
+- **Where it sits:** draft → the Titan wakes (the cold open) → **the Blessing** → the act intro.
+  The Titan notices the pact, then someone answers it. The first-run lore card (`tutorial.md`)
+  stays where it is, ahead of the draft. Placeless, like the cold open.
+- **Who blesses: the Pactwarden** (per user direction, picked from three concepts in
+  `art/concepts/blessing/`). She is a blind elder who keeps the old binding rite, with a golden
+  cord and a lantern: the witness to the pact the player has just sealed (`lore.md` §4). She is not
+  Ancient-coloured, for the reason no Guardian is. Art: `art/npc/pactwarden.png` (Pro Flash, 48px,
+  the Mentor as style reference, seed 11).
+- **Where:** a ring of standing stones where the road into the wilds begins, with warm light
+  between the stones (`art/backdrops/blessing.png`, Pixen 196×344, seed 29; the seed-8 roll came out
+  as a Japanese-style shrine and was dropped).
+- **The beat** (`BlessingScreen.tsx`, built from the road encounter's parts): she fades in with the
+  opening pair either side, turned in toward her. Her one line types out: *"I bless you for this
+  journey. You may need it."* A tap sends a shaft of gold down onto each hero and leaves the gold rim
+  at their feet (the fight's rim), with the `blessing` sound. A second tap moves on. Every tap
+  skips ahead, and reduced motion skips the arrival.
+- **What it does is said by a first-time tip, not by her** (the tips rule: out-of-universe, once an
+  account). The `blessing` tip fires on the first map where any roster hero is Blessed.
 - "Starters" were deleted with the starter split (`collection.md` §2): in code and copy these are
-  **the opening pair**.
+  **the opening pair**. The tip says "starting heroes", as the draft's does.
 
 ### 1.6 Presentation
 
@@ -116,9 +127,9 @@ hero for a whole run, so it never takes a word or a status-row chip.
 
 ### 1.7 Interactions to decide
 
-- **Ascension 1 (Permadeath).** A Blessing is a pre-paid Revive, and A1's wall was measured as a
-  Revive-supply problem (`ascension.md` §9b). Either that is welcome help, or **A1 opens without
-  the opening Blessing**. A rung is a rule that removes a safety net, so the second fits the ladder.
+- **Ascension. DECIDED 2026-09-28 (per user direction): A1 keeps the opening Blessing.** It is
+  welcome help against A1's wall, which was measured as a Revive-supply problem (`ascension.md`
+  §9b). Taking the opening Blessing away is a candidate rule for **A5**, if the ladder gets there.
 - **The companion.** It joins after the first fight, so the opening Blessings never reach it. For
   earned ones: *a Revive never saves the companion*, so the parallel is *a Blessing is never given
   to the companion*. Designer's call.

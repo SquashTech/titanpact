@@ -68,6 +68,7 @@ import { HeraldScreen } from '../view/run/HeraldScreen';
 import { CompanionAwakensScreen } from '../view/run/CompanionAwakensScreen';
 import { TitanBoundScreen } from '../view/run/TitanBoundScreen';
 import { TitanWakeScreen } from '../view/run/TitanWakeScreen';
+import { BlessingScreen } from '../view/run/BlessingScreen';
 import { equipment, EQUIPMENT_DROP_POOL, rollEquipmentDrops } from '../data/equipment';
 import {
   equipItem,
@@ -168,6 +169,7 @@ type Screen =
 
   /** Per-act arrival beat; reads its location off the run's itinerary. */
   | { kind: 'titanWake' }
+  | { kind: 'blessing' }
   | { kind: 'actIntro' }
   /** The Herald announced before its fight; `next` is the fight. */
   | { kind: 'herald'; next: Screen }
@@ -245,6 +247,8 @@ const PLACELESS_SCREENS: ReadonlySet<Screen['kind']> = new Set([
   // Placeless is the point: it drops the title's track and leaves the cold open in silence,
   // and Act I's music then starts where it always does, on the arrival screen.
   'titanWake',
+  // Before the act: the stones where the road begins belong to no Location.
+  'blessing',
   // Between two acts, and the property of neither.
   'pactSeal',
   // Each place on offer lights its own card; the sky behind them belongs to none of them.
@@ -423,6 +427,8 @@ function screenTipIds(screen: Screen, run: RunState): readonly ScreenTipId[] {
       // one step away.
       const reachable = reachableNodeIds(run);
       const ids: ScreenTipId[] = reachable.length > 1 ? ['map'] : [];
+      // The opening pair's Blessing, on the first map it can be seen from.
+      if (run.roster.some((entry) => entry.blessed)) ids.unshift('blessing');
       if (anyWounded(run)) ids.push('wounds');
       const ahead = reachable.map((id) => run.map?.nodes[id]?.type);
       if (ahead.includes('elite') || ahead.includes('skirmish')) ids.push('fork');
@@ -1215,7 +1221,9 @@ export function App() {
         <PactSealScreen run={playerRun} onContinue={enterAct} />
       )}
 
-      {screen.kind === 'titanWake' && <TitanWakeScreen onDone={enterAct} />}
+      {screen.kind === 'titanWake' && <TitanWakeScreen onDone={() => setScreen({ kind: 'blessing' })} />}
+
+      {screen.kind === 'blessing' && <BlessingScreen run={playerRun} onDone={enterAct} />}
 
       {screen.kind === 'locationChoice' && (
         <LocationChoiceScreen run={playerRun} candidateIds={screen.candidateIds} onChoose={handleLocationChosen} />

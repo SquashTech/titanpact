@@ -41,6 +41,12 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
     'Tap one of the options ahead. Hold a node to see what happens there.',
     'The track across the top shows the way to the Guardian.'
   ),
+  blessing: tip(
+    'blessing',
+    'Blessings',
+    'Your two starting heroes are Blessed. A gold star marks a Blessed hero.',
+    'The first time a Blessed hero would be knocked out, the blow is turned aside and the Blessing is used up. Until then, it lasts from fight to fight.'
+  ),
   wounds: tip(
     'wounds',
     'Wounds',
