@@ -18,11 +18,11 @@ import type { MoveDefinition } from '../engine/content';
 
 export const signatureMoves: Record<string, MoveDefinition> = {
   // --- Fire ---
-  // Cinder: the knight. Brings the hammer down glowing; what it hits catches, and the plate
-  // comes off the anvil harder.
+  // Cinder: the salamander. Drives the spear in white-hot; what it hits catches, and the shield
+  // comes up harder.
   hammerbrand: {
     id: 'hammerbrand',
-    name: 'Hammerbrand',
+    name: 'Emberlance',
     type: 'Fire',
     category: 'physical',
     kind: 'damage',
@@ -33,7 +33,7 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Brings the hammer down still glowing: what it hits catches, and the plate comes off the anvil harder (Burn 40; +20 Defense to self).',
+    description: 'Drives the spear in white-hot: what it hits catches, and the shield comes up harder (Burn 40; +20 Defense to self).',
   },
   // Crimson: the fire-setter. Everything she lit, at once.
   flashover: {

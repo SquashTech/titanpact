@@ -350,7 +350,7 @@ Wingbeat Barrage is three hits at +1 priority). **Mellow** (Beast, the capybara 
 enemy that lands a hit, and All Aboard Shields and Renews both allies).
 
 **Renames, 2026-09-27** (per user direction, after the sprite redesign): **Cortex → Reverie**
-(`mindweaver`, now the mesmer moth), **Cube → Floe** (`cube`, now the glacier snail) and **Slate → Petra** (`slate`, now the crystal geomancer; redrawn 2026-09-28 as a dwarf quarrywoman with a rune maul, so she no longer reads as a second robed Stone caster beside Cairn). Ids,
+(`mindweaver`, now the mesmer moth), **Cube → Floe** (`cube`, now the glacier snail) and **Slate → Petra** (`slate`, now the crystal geomancer; redrawn 2026-09-28 as a dwarf quarrywoman with a rune maul, so she no longer reads as a second robed Stone caster beside Cairn). **Cinder** was redrawn the same day as a salamander warrior with a shield and spear, because the forgesmith's hammer now overlapped Petra; his signature Hammerbrand is shown as **Emberlance** (id unchanged). Ids,
 kits and numbers are unchanged; older sections of the docs use the old names. Aegis is now the
 shrine tortoise, Solace the lantern acolyte, and Scallywag is a woman now (a rapier-and-hook
 duelist) — her name stands.

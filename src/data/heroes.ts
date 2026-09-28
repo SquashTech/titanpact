@@ -44,7 +44,7 @@
 // GUARANTEED learn at, set by how hard the move hits (docs/mastery.md §5) in three windows:
 //   14-16  the lighter ones — a rider-led hit, a buff, a cheap move (Lizard Rush, Roost Guard,
 //          Icefall, Oathstrike, Nevermore): Act 2's Guardian into Act 3;
-//   18-20  the standard Late-sized hit with one real rider (Hammerbrand, Rootrend, Erasure): late Act 3;
+//   18-20  the standard Late-sized hit with one real rider (Emberlance, Rootrend, Erasure): late Act 3;
 //   22-24  the heaviest — 95+ Base Power, a lockout, a double-on-a-status, a whole-side heal or
 //          a pool refill (Overbear, Hoarfrost, Flashover, Daybreak, Fairy Ring): Act 4.
 // Never on one of the hero's own offer levels, so a report pays it as a beat of its own
