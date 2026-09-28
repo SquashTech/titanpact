@@ -40,6 +40,8 @@ function stackingText(def: StatusDefinition): string {
       return 'Keeps the higher';
     case 'additiveMagnitudeFixedDuration':
       return 'Adds, the timer never resets';
+    case 'additiveRefreshDuration':
+      return 'Adds, and the timer tops back up';
     case 'none':
       return def.shape === 'boolean' ? 'Already there — nothing' : 'Refreshes it';
   }
@@ -48,7 +50,9 @@ function stackingText(def: StatusDefinition): string {
 export function statusFacts(def: StatusDefinition): StatusFact[] {
   const rows: StatusFact[] = [];
   const tick = tickText(def);
+  if (def.ticksOnApply) rows.push({ label: 'Lands', text: 'Heals its magnitude in % of max HP at once' });
   if (tick) rows.push({ label: 'Each round', text: tick });
+  if (def.defaultDuration) rows.push({ label: 'Lasts', text: `${def.defaultDuration} rounds` });
   if (def.shape === 'magnitude' && def.decay === 'halve') rows.push({ label: 'Then', text: 'Halves' });
   if (def.blocksIncomingMoves) rows.push({ label: 'Guard', text: 'Every enemy move aimed here turns away — an ally’s still lands' });
   // The one thing a player has to learn once about a Shield: what goes through it (docs/shield.md §3.2).

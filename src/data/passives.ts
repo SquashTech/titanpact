@@ -329,7 +329,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   unstoppableGrowth: {
     id: 'unstoppableGrowth',
     name: 'Unstoppable Growth',
-    description: 'When this hero enters the battlefield, it gains Renew 40.',
+    description: 'When this hero enters the battlefield, it gains Renew 10%.',
     // Same arrival shape as Imposing Presence, pointed inward: every arrival including the
     // opening lead, so a pivot out and back re-seeds it. Renew stacks additively, which is
     // the intended payoff. A passive-applied HoT is FLAT — the healing formula's Wisdom
@@ -337,7 +337,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew', magnitude: 40 },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew', magnitude: 10 },
     },
   },
   frozenStone: {
@@ -478,11 +478,11 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   restorativeToxin: {
     id: 'restorativeToxin',
     name: 'Restorative Toxin',
-    description: 'Whenever this hero applies Poison, it gains twice that amount as Renew.',
+    description: 'Whenever this hero applies Poison, it gains half that amount as Renew.',
     // Firestarter's source-role shape, but the payout is READ off the event rather than authored:
-    // matchTriggerAmount on StatusApplied's `magnitude`. Note the units differ either side of the
-    // 2x — Poison magnitude is a PERCENT of the victim's max HP, Renew magnitude is FLAT HP on
-    // Sylva. Poison also stacks, so every re-application pays again (docs/leveling-and-ranks.md).
+    // matchTriggerAmount on StatusApplied's `magnitude`. Both sides are a percent of max HP since Renew's
+    // pass (docs/blessings-and-statuses.md §4); ×0.5 is the old 2× flat HP at par, and a Renew heals three times.
+    // Poison also stacks, so every re-application pays again (docs/leveling-and-ranks.md).
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Poison' } },
@@ -490,7 +490,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
         kind: 'applyStatus',
         target: 'self',
         statusId: 'Renew',
-        magnitude: { kind: 'matchTriggerAmount', field: 'magnitude', multiplier: 2 },
+        magnitude: { kind: 'matchTriggerAmount', field: 'magnitude', multiplier: 0.5 },
       },
     },
   },
@@ -627,8 +627,8 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
     name: 'Heartwood',
     description: "Whenever this hero's Renew heals it, it gains 10 Attack and 10 Defense.",
     // Read off the TICK, not the Healed hook: a HoT tick emits StatusTicked (kind 'heal'), never
-    // Healed, so Communion's shape would never fire here. Renew halves each tick but the stat
-    // line does not, which is what turns Hollowbark's own Second Wind into a three-round ramp.
+    // Healed, so Communion's shape would never fire here. Renew heals on landing and twice more, and each
+    // heal banks the stats, which is what turns Hollowbark's own Second Wind into a three-round ramp.
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew', kind: 'heal' } },
@@ -665,14 +665,14 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   grief: {
     id: 'grief',
     name: 'Grief',
-    description: 'Whenever this hero takes damage, it gains Renew 20.',
+    description: 'Whenever this hero takes damage, it gains Renew 5%.',
     // Tempering's trigger paying a HoT instead of Defense, which is the only way a 45-Defense
     // body gets to be the one that stays. Renew is additive and survives switching, so a pivot
     // out to the bench carries the stack with it.
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew', magnitude: 20 },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew', magnitude: 5 },
     },
   },
   sentry: {
@@ -856,25 +856,25 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   nanites: {
     id: 'nanites',
     name: 'Nanites',
-    description: 'When this hero enters the battlefield, its partner gains Renew 30.',
+    description: 'When this hero enters the battlefield, its partner gains Renew 8%.',
     // The partner-on-arrival shape (Arcane Reservoir's mana, Bodyguard's Defense) paying a HoT:
     // the medic starts work on whoever it walks in beside, and a pivot out and back re-seeds it.
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew', magnitude: 30 },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew', magnitude: 8 },
     },
   },
   bloodmeal: {
     id: 'bloodmeal',
     name: 'Bloodmeal',
-    description: 'Whenever this hero applies Bleed, it gains Renew 20.',
+    description: 'Whenever this hero applies Bleed, it gains Renew 5%.',
     // Restorative Toxin's trigger on Bleed, flat since Bleed carries no magnitude: the bat feeds
     // on what it opens, and a 170-HP body that keeps cutting keeps standing.
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Bleed' } },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew', magnitude: 20 },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew', magnitude: 5 },
     },
   },
   // --- From the Tall Grass ---
@@ -1392,11 +1392,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   hallowedStep: {
     id: 'hallowedStep',
     name: 'Hallowed Step',
-    description: "When this hero enters the battlefield, its partner gains Renew 20.",
+    description: "When this hero enters the battlefield, its partner gains Renew 5%.",
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew', magnitude: 20 },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew', magnitude: 5 },
     },
   },
   smoulder: {
@@ -2364,11 +2364,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   springtide: {
     id: 'springtide',
     name: 'Springtide',
-    description: "When this hero enters the battlefield, its partner gains Renew 40.",
+    description: "When this hero enters the battlefield, its partner gains Renew 10%.",
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew', magnitude: 40 },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew', magnitude: 10 },
     },
   },
   rebirth: {

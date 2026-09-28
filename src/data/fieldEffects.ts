@@ -40,9 +40,9 @@ export const fieldEffects: Record<string, FieldEffectDefinition> = {
   verdantEarth: {
     id: 'verdantEarth',
     name: 'Verdant Earth',
-    description: 'Heroes have bonus Attack and Intelligence equal to their current Renew value.',
+    description: 'Renew heals twice as much, and healing past max HP becomes Shield.',
     flavorType: 'Nature',
-    statBonusEqualToStatusMagnitude: { statusId: 'Renew', stats: ['attack', 'intelligence'] },
+    amplifiesStatusHealing: { statusIds: ['Renew'], multiplier: 2, overflowToShield: true },
   },
   // The Titan's (docs/titan-eyes.md §10): set by the Eyes, never by a hero — no Herald, no rider,
   // no reader, so it is the one field with a single route. The fraction is the phase's clock and the

@@ -81,8 +81,48 @@ export interface StatusApplyParams {
   duration?: number;
   /** Passed through onto the StatusApplied event; never read here. */
   sourceCombatantId?: string;
-  /** The holder's max HP — the ceiling a 'shield' pipeline's pool is held at (docs/shield.md §3.1). Read for no other pipeline. */
+  /** The holder's max HP — the ceiling a 'shield' pipeline's pool is held at (docs/shield.md §3.1), and what a `ticksOnApply` HoT heals a percent of. */
   holderMaxHp?: number;
+  /** The active Field Effect's definition, for a `ticksOnApply` heal it amplifies (Verdant Earth). */
+  fieldEffect?: FieldEffectDefinition;
+  /** The status catalog, so an amplified heal can find the Shield its overflow becomes. */
+  statusDefs?: Record<string, StatusDefinition>;
+}
+
+/**
+ * A HoT's heal, the one path for its on-landing tick and its round-end ticks: `percent` of the
+ * holder's max HP (or a flat amount), times the field's `amplifiesStatusHealing`, and — under a
+ * field that says so — whatever passes max HP laid on as Shield (Verdant Earth, docs/blessings-and-statuses.md §5).
+ */
+function healFromStatus(
+  state: CombatState,
+  round: number,
+  combatantId: string,
+  def: StatusDefinition,
+  magnitude: number,
+  maxHp: number,
+  fieldEffect: FieldEffectDefinition | undefined,
+  statusDefs: Record<string, StatusDefinition> | undefined,
+  tick: { newMagnitude?: number; newDuration?: number }
+): StatusResult {
+  const base = def.percentOfMaxHp ? Math.ceil((maxHp * magnitude) / 100) : magnitude;
+  const amplified = fieldEffect?.amplifiesStatusHealing;
+  const boosted = amplified?.statusIds.includes(def.id) ? Math.round(base * amplified.multiplier) : base;
+  const events: CombatEvent[] = [{ type: 'StatusTicked', round, combatantId, statusId: def.id, kind: 'heal', amount: boosted, ...tick }];
+  const room = Math.max(0, maxHp - state.combatants[combatantId].currentHp);
+  const hpResult = applyHpDelta(state, round, combatantId, boosted, maxHp);
+  let working = hpResult.state;
+  events.push(...hpResult.events);
+  const overflow = boosted - room;
+  if (overflow > 0 && amplified?.overflowToShield && amplified.statusIds.includes(def.id) && statusDefs) {
+    const shieldDef = Object.values(statusDefs).find((d) => d.pipeline === 'shield');
+    if (shieldDef) {
+      const shielded = applyStatus(working, round, combatantId, shieldDef, { magnitude: overflow, holderMaxHp: maxHp });
+      working = shielded.state;
+      events.push(...shielded.events);
+    }
+  }
+  return { state: working, events };
 }
 
 /** Applies (or stacks onto) a status per StatusDefinition.stacking. No-ops on a fainted combatant. */
@@ -92,7 +132,7 @@ export function applyStatus(state: CombatState, round: number, combatantId: stri
 
   const existing = combatant.statuses[def.id];
   let magnitude = params.magnitude;
-  let duration = params.duration;
+  let duration = params.duration ?? def.defaultDuration;
   let capped = false;
 
   if (existing) {
@@ -106,6 +146,10 @@ export function applyStatus(state: CombatState, round: number, combatantId: stri
       // Poison: magnitude builds, the timer never resets or extends.
       magnitude = (existing.magnitude ?? 0) + (params.magnitude ?? 0);
       duration = existing.duration;
+    } else if (def.stacking === 'additiveRefreshDuration') {
+      // Renew: the pool builds, and the clock is topped back up to the longer of the two.
+      magnitude = (existing.magnitude ?? 0) + (params.magnitude ?? 0);
+      duration = Math.max(existing.duration ?? 0, duration ?? 0);
     }
   }
 
@@ -117,7 +161,7 @@ export function applyStatus(state: CombatState, round: number, combatantId: stri
   }
 
   const nextState = setStatus(state, combatantId, def.id, { statusId: def.id, magnitude, duration });
-  return {
+  const applied: StatusResult = {
     state: nextState,
     events: [
       {
@@ -132,6 +176,15 @@ export function applyStatus(state: CombatState, round: number, combatantId: stri
       },
     ],
   };
+  // Renew heals the moment it lands, for what this application added — not the whole pool again.
+  if (def.ticksOnApply && def.pipeline === 'hot' && params.holderMaxHp !== undefined && (params.magnitude ?? 0) > 0) {
+    const healed = healFromStatus(applied.state, round, combatantId, def, params.magnitude!, params.holderMaxHp, params.fieldEffect, params.statusDefs, {
+      newMagnitude: magnitude,
+      newDuration: duration,
+    });
+    return { state: healed.state, events: [...applied.events, ...healed.events] };
+  }
+  return applied;
 }
 
 /**
@@ -219,6 +272,22 @@ export function tickEndOfRound(
         } else {
           events.push({ type: 'StatusTicked', round, combatantId, statusId, kind: 'duration', amount: 0, newDuration });
           working = setStatus(working, combatantId, statusId, { ...instance, duration: newDuration });
+        }
+      } else if (def.pipeline === 'hot' && instance.duration !== undefined) {
+        // A HoT on a clock (Renew): the whole pool every round, no decay, until the clock runs out.
+        const newDuration = instance.duration - 1;
+        const healed = healFromStatus(working, round, combatantId, def, instance.magnitude ?? 0, maxHpOf(combatantId), activeFieldEffectDef, statusDefs, {
+          newMagnitude: instance.magnitude,
+          newDuration,
+        });
+        working = healed.state;
+        events.push(...healed.events);
+        if (newDuration <= 0) {
+          const rm = removeStatus(working, round, combatantId, statusId, 'expired');
+          working = rm.state;
+          events.push(...rm.events);
+        } else {
+          working = setStatus(working, combatantId, statusId, { ...working.combatants[combatantId].statuses[statusId], duration: newDuration });
         }
       } else if (def.pipeline === 'dot' || def.pipeline === 'hot') {
         const maxHp = maxHpOf(combatantId);

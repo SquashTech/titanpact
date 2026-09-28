@@ -33,6 +33,7 @@ export const statuses: Record<string, StatusDefinition> = {
     pipeline: 'dot',
     // A percent of the holder's max HP, never caster-scaled (docs/blessings-and-statuses.md §3).
     percentOfMaxHp: true,
+    fixedMagnitude: true,
     description: 'End of round: deal X% of max HP, then halve X. Cleansed by switching.',
   },
   Bleed: {
@@ -119,17 +120,22 @@ export const statuses: Record<string, StatusDefinition> = {
     pipeline: 'trigger',
     description: "Whoever's hit breaks this hero's Shield is Frozen. Spent when it fires.",
   },
+  // docs/blessings-and-statuses.md §4: a percent of the holder's max HP (scaled off the caster's
+  // Wisdom at cast), healed the moment it lands and then at the end of each round while it lasts.
   Renew: {
     id: 'Renew',
     name: 'Renew',
     shape: 'magnitude',
     ticksAtEndOfRound: true,
-    decay: 'halve',
-    stacking: 'additive',
+    decay: 'none',
+    stacking: 'additiveRefreshDuration',
     clearsOnSwitch: false,
     positive: true,
     pipeline: 'hot',
-    description: 'End of round: heal X, then halve it. Persists through switch and cleanse.',
+    percentOfMaxHp: true,
+    ticksOnApply: true,
+    defaultDuration: 2,
+    description: 'Heals X% of max HP when it lands, then at the end of each round for 2 rounds. Persists through switch and cleanse.',
   },
   Conduct: {
     id: 'Conduct',

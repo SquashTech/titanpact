@@ -802,6 +802,8 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             duration: app.duration,
             sourceCombatantId: action.combatantId,
             holderMaxHp: maxHpOf(applyTargetId),
+            fieldEffect: working.activeFieldEffect ? fieldEffects[working.activeFieldEffect.fieldEffectId] : undefined,
+            statusDefs: statuses,
           });
           working = result.state;
           events.push(...result.events);

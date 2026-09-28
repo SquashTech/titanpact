@@ -53,7 +53,9 @@ export type StatusStacking =
   | 'none'
   | 'takeHigher'
   /** Poison: magnitude adds, duration holds — reapplying never resets the clock. */
-  | 'additiveMagnitudeFixedDuration';
+  | 'additiveMagnitudeFixedDuration'
+  /** Renew: magnitude adds, and the duration is refreshed to the longer of the two. */
+  | 'additiveRefreshDuration';
 
 /** Why a status left a combatant — carried on StatusRemovedEvent. */
 export type StatusRemovalReason = 'decay' | 'expired' | 'switch' | 'cleanse' | 'consumed' | 'broken' | 'passed';
@@ -85,8 +87,14 @@ export interface StatusDefinition {
   blocksIncomingMoves?: boolean;
   /** Boolean-shape DoT (Bleed): a fixed fraction of max HP per tick instead of a magnitude. */
   flatPercentOfMaxHp?: number;
-  /** Magnitude-shape DoT or HoT whose magnitude is a PERCENT of the holder's max HP (Burn): a tick deals ceil(maxHp × magnitude / 100), and the authored figure is what lands — never caster-scaled (statusMagnitude.ts magnitudeScales). docs/blessings-and-statuses.md §3. */
+  /** Magnitude-shape DoT or HoT whose magnitude is a PERCENT of the holder's max HP (Burn, Renew): a tick deals or heals ceil(maxHp × magnitude / 100). docs/blessings-and-statuses.md §3–4. */
   percentOfMaxHp?: boolean;
+  /** The authored magnitude is what lands — never caster-scaled (Burn; statusMagnitude.ts magnitudeScales). */
+  fixedMagnitude?: boolean;
+  /** A HoT that heals once the moment it lands, for the magnitude just applied, before its round-end ticks (Renew; statusEngine.ts applyStatus). */
+  ticksOnApply?: boolean;
+  /** Rounds an application lasts when the rider authors none; its round-end ticks count it down (Renew). */
+  defaultDuration?: number;
   /** Conduct: a damage move of one of these types detonates this status on the target for detonateBonusPercentMaxHp of its max HP, then consumes it. Detonate-only — planting it is an ordinary rider (statusEngine.ts detonateTriggeredStatuses). */
   triggerTypes?: readonly TypeId[];
   /** Paired with triggerTypes — fraction of the target's max HP. */
@@ -330,6 +338,8 @@ export interface FieldEffectDefinition {
   slowsStatusDecay?: { statusIds: readonly StatusId[]; retain: number };
   /** Statuses a switch does not cleanse while active (Scorched Land keeping Burn on a hero who leaves the field). switching.ts performSwitch → statusEngine.ts clearOnSwitch. */
   keepsStatusesOnSwitch?: readonly StatusId[];
+  /** A HoT's healing multiplied while active, and what passes max HP laid on as Shield (Verdant Earth on Renew). statusEngine.ts healFromStatus. */
+  amplifiesStatusHealing?: { statusIds: readonly StatusId[]; multiplier: number; overflowToShield?: boolean };
   /** Within a priority bracket, resolve slowest-first (Stasis Bubble). Bracket separation untouched. priority.ts orderActions. */
   reversesSpeedOrder?: boolean;
   /** Added to heal-kind moves' priority bracket (Sanctuary +1). priority.ts orderActions. */

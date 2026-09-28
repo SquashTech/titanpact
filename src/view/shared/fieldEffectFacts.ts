@@ -28,6 +28,10 @@ function effectFacts(def: FieldEffectDefinition): FieldEffectFact[] {
     });
   }
   if (def.keepsStatusesOnSwitch?.length) rows.push({ label: 'Switching', text: `Doesn't cleanse ${statusNames(def.keepsStatusesOnSwitch)}` });
+  if (def.amplifiesStatusHealing) {
+    const amp = def.amplifiesStatusHealing;
+    rows.push({ label: 'Healing', text: `${statusNames(amp.statusIds)} heals ×${amp.multiplier}${amp.overflowToShield ? '; past max HP it becomes Shield' : ''}` });
+  }
   if (def.reversesSpeedOrder) rows.push({ label: 'Order', text: 'Slowest acts first within a priority bracket' });
   if (def.healPriorityBonus != null) {
     rows.push({ label: 'Priority', text: `${def.healPriorityBonus > 0 ? '+' : ''}${def.healPriorityBonus} on every healing move` });

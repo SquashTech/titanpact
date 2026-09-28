@@ -155,7 +155,7 @@ function resolveEffect(
     const target = working.combatants[targetId];
     if (!target || target.fainted) continue;
     if (effect.kind === 'damage' && effect.onlyWithStatus !== undefined && !hasStatus(target, effect.onlyWithStatus)) continue;
-    const resolved = resolveEffectOn(working, round, heroes, statusDefs, passiveDefs, ownerId, targetId, target, effect, context);
+    const resolved = resolveEffectOn(working, round, heroes, statusDefs, passiveDefs, ownerId, targetId, target, effect, context, working.activeFieldEffect ? fieldEffectDefs[working.activeFieldEffect.fieldEffectId] : undefined);
     working = resolved.state;
     produced.push(...resolved.events);
   }
@@ -226,7 +226,9 @@ function resolveEffectOn(
   targetId: string,
   target: Combatant,
   effect: Exclude<PassiveEffect, { kind: 'setFieldEffect' }>,
-  context: TriggerContext
+  context: TriggerContext,
+  /** The active field, for a Renew a passive grants (its on-landing heal reads Verdant Earth). */
+  fieldEffect?: FieldEffectDefinition
 ): { state: CombatState; events: CombatEvent[] } {
   switch (effect.kind) {
     case 'damage': {
@@ -270,6 +272,8 @@ function resolveEffectOn(
         duration: effect.duration,
         sourceCombatantId: ownerId,
         holderMaxHp: getMaxHp(heroes[target.heroId], target),
+        fieldEffect,
+        statusDefs,
       });
     }
     case 'cleanse':

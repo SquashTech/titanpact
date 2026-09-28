@@ -276,72 +276,50 @@ test('fieldEffects: Sanctuary — a heal actually lands before a same-bracket da
   assert.deepStrictEqual(turnOrder, ['a1', 'b2']);
 });
 
-// --- Verdant Earth: bonus Attack/Intelligence equal to the Renew STATUS magnitude (not the MP Regen stat) ---
+// --- Verdant Earth: Renew heals twice as much, and what passes max HP becomes Shield (docs/blessings-and-statuses.md §5) ---
 
-function withRenew(state: CombatState, combatantId: string, magnitude: number): CombatState {
-  return applyStatus(state, 1, combatantId, statuses.Renew, { magnitude }).state;
-}
+const verdant = (state: CombatState): CombatState => ({ ...state, activeFieldEffect: { fieldEffectId: 'verdantEarth', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } });
 
-test('fieldEffects: Verdant Earth adds the combatant\'s own Renew magnitude to Attack and Intelligence, not other stats', () => {
-  const state = withRenew(twoVTwoFixture(440), 'a1', 20);
-  const hero = heroes.cinderKnight;
-  const combatant = state.combatants.a1;
-
-  const noCtx = getEffectiveStat(hero, combatant, 'attack');
-  assert.strictEqual(noCtx, hero.baseStats.attack); // no field effect context passed -> unaffected
-
-  const inactiveCtx = { active: null, defs: fieldEffects };
-  assert.strictEqual(getEffectiveStat(hero, combatant, 'attack', inactiveCtx), hero.baseStats.attack);
-
-  const activeCtx = { active: { fieldEffectId: 'verdantEarth', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS }, defs: fieldEffects };
-  assert.strictEqual(getEffectiveStat(hero, combatant, 'attack', activeCtx), hero.baseStats.attack + 20);
-  assert.strictEqual(getEffectiveStat(hero, combatant, 'intelligence', activeCtx), hero.baseStats.intelligence + 20);
-  assert.strictEqual(getEffectiveStat(hero, combatant, 'defense', activeCtx), hero.baseStats.defense);
-  assert.strictEqual(getEffectiveStat(hero, combatant, 'speed', activeCtx), hero.baseStats.speed);
+test('fieldEffects: under Verdant Earth a Renew tick heals twice its percent', () => {
+  const base = twoVTwoFixture(430);
+  const maxHp = getMaxHp(heroes.cinderKnight, base.combatants.a1);
+  const hurt = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, currentHp: 10 } } };
+  const renewed = applyStatus(hurt, 1, 'a1', statuses.Renew, { magnitude: 5, duration: 2 }).state;
+  const plain = resolveRound(renewed, [], config).state.combatants.a1.currentHp;
+  const doubled = resolveRound(verdant(renewed), [], config).state.combatants.a1.currentHp;
+  assert.strictEqual(plain, 10 + Math.ceil(maxHp * 0.05));
+  assert.strictEqual(doubled, 10 + 2 * Math.ceil(maxHp * 0.05));
 });
 
-test('fieldEffects: Verdant Earth does nothing for a hero not carrying Renew, and shrinks as Renew decays', () => {
-  const activeCtx = { active: { fieldEffectId: 'verdantEarth', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS }, defs: fieldEffects };
-  const hero = heroes.cinderKnight;
+test('fieldEffects: under Verdant Earth a Renew heal past max HP lands as Shield, and without it the excess is lost', () => {
+  const base = twoVTwoFixture(431);
+  const maxHp = getMaxHp(heroes.cinderKnight, base.combatants.a1);
+  const nearlyWhole = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, currentHp: maxHp - 5 } } };
+  const renewed = applyStatus(nearlyWhole, 1, 'a1', statuses.Renew, { magnitude: 10, duration: 2 }).state;
 
-  const bare = twoVTwoFixture(443);
-  assert.strictEqual(getEffectiveStat(hero, bare.combatants.a1, 'attack', activeCtx), hero.baseStats.attack);
+  const plain = resolveRound(renewed, [], config).state.combatants.a1;
+  assert.strictEqual(plain.currentHp, maxHp);
+  assert.strictEqual(plain.statuses.Shield, undefined, 'no field, no Shield');
 
-  const renewed = withRenew(bare, 'a1', 20);
-  assert.strictEqual(getEffectiveStat(hero, renewed.combatants.a1, 'attack', activeCtx), hero.baseStats.attack + 20);
-  const maxHpOf = (id: string) => getMaxHp(heroes[renewed.combatants[id].heroId], renewed.combatants[id]);
-  const afterRound = tickEndOfRound(renewed, 1, statuses, fieldEffects, maxHpOf).state;
-  assert.strictEqual(afterRound.combatants.a1.statuses.Renew.magnitude, 10);
-  assert.strictEqual(getEffectiveStat(hero, afterRound.combatants.a1, 'attack', activeCtx), hero.baseStats.attack + 10);
+  const grown = resolveRound(verdant(renewed), [], config);
+  const a1 = grown.state.combatants.a1;
+  assert.strictEqual(a1.currentHp, maxHp);
+  assert.strictEqual(a1.statuses.Shield?.magnitude, 2 * Math.ceil(maxHp * 0.1) - 5, 'everything past max HP');
+  assert.ok(grown.events.some((e) => e.type === 'StatusApplied' && e.combatantId === 'a1' && e.statusId === 'Shield'));
 });
 
-test('fieldEffects: Verdant Earth raises the damage-pipeline stat ratio via the boosted offStat', () => {
-  const state = withRenew(twoVTwoFixture(441), 'a1', 20);
-  const attackerHero = heroes.cinderKnight; // physical: Attack/Defense
-  const attacker = state.combatants.a1;
-  const defenderHero = heroes.ironWarden;
-  const defender = state.combatants.b1;
-
-  const plainRatio = resolveStatRatio('physical', attackerHero, attacker, defenderHero, defender);
-  const activeCtx = { active: { fieldEffectId: 'verdantEarth', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS }, defs: fieldEffects };
-  const boostedRatio = resolveStatRatio('physical', attackerHero, attacker, defenderHero, defender, activeCtx);
-
-  const expectedRatio = (attackerHero.baseStats.attack + 20) / defenderHero.baseStats.defense;
-  assert.ok(boostedRatio > plainRatio);
-  assert.strictEqual(boostedRatio, expectedRatio);
+test('fieldEffects: Verdant Earth also doubles the heal a Renew makes the moment it lands', () => {
+  const base = verdant(twoVTwoFixture(432));
+  const maxHp = getMaxHp(heroes.cinderKnight, base.combatants.a1);
+  const hurt = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, currentHp: 10 } } };
+  const landed = applyStatus(hurt, 1, 'a1', statuses.Renew, { magnitude: 5, holderMaxHp: maxHp, fieldEffect: fieldEffects.verdantEarth, statusDefs: statuses });
+  assert.strictEqual(landed.state.combatants.a1.currentHp, 10 + 2 * Math.ceil(maxHp * 0.05));
 });
 
-test('fieldEffects: Verdant Earth — a DamageDealt event\'s offStat reflects the Renew bonus end to end', () => {
-  const built = withRenew(twoVTwoFixture(442), 'a1', 20);
-  const state = { ...built, activeFieldEffect: { fieldEffectId: 'verdantEarth', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
-  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }]; // physical, cinderKnight
-
-  const { events } = resolveRound(state, actions, config);
-  const dmg = events.find((e) => e.type === 'DamageDealt');
-  assert.ok(dmg && dmg.type === 'DamageDealt');
-  if (dmg && dmg.type === 'DamageDealt') {
-    assert.strictEqual(dmg.offStat, heroes.cinderKnight.baseStats.attack + 20);
-  }
+test('fieldEffects: Verdant Earth grants no stats any more — Attack and Intelligence read the same with Renew held', () => {
+  const renewed = applyStatus(twoVTwoFixture(433), 1, 'a1', statuses.Renew, { magnitude: 10, duration: 2 }).state;
+  const ctx = { active: { fieldEffectId: 'verdantEarth', roundsRemaining: 5 }, defs: fieldEffects };
+  assert.strictEqual(getEffectiveStat(heroes.cinderKnight, renewed.combatants.a1, 'attack', ctx), getEffectiveStat(heroes.cinderKnight, renewed.combatants.a1, 'attack'));
 });
 
 // --- Sanctuary's second job (2026-09-15, per user direction): a heal-pipeline term, beside the priority ---
@@ -365,7 +343,7 @@ test('fieldEffects: Sanctuary multiplies a heal-kind move\'s restored HP by heal
 });
 
 test('fieldEffects: Sanctuary\'s heal term does not reach a Renew tick — a HoT is not a heal-kind move', () => {
-  const built = withRenew(twoVTwoFixture(451), 'a1', 40);
+  const built = applyStatus(twoVTwoFixture(451), 1, 'a1', statuses.Renew, { magnitude: 10 }).state;
   const hurt: CombatState = { ...built, combatants: { ...built.combatants, a1: { ...built.combatants.a1, currentHp: 1 } } };
   const maxHpOf = (id: string) => getMaxHp(heroes[hurt.combatants[id].heroId], hurt.combatants[id]);
   const plainTick = tickEndOfRound(hurt, 1, statuses, fieldEffects, maxHpOf).events.find((e) => e.type === 'StatusTicked');

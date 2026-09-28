@@ -130,7 +130,7 @@ unchanged, so nothing else moved.
 | Scorched Land | Fire | Switching out doesn't cleanse Burn (2026-09-28; it was 3/4 retention, `blessings-and-statuses.md` §5) | `spreadingBlaze` (Brimstone) |
 | Stasis Field | Mind | Reverses same-bracket Speed order | `stasis` (Cortex), `distort` |
 | Sanctuary | Light | Heal-kind moves get +1 priority and heal ×1.5 (2026-09-15) | `consecrate` (Solace), `hallow` |
-| Verdant Earth | Nature | +Attack/+Intelligence equal to your own Renew | `magicGrowth`, `forceOfNature` (Sylva), `sow` |
+| Verdant Earth | Nature | Renew heals ×2, and healing past max HP becomes Shield (2026-09-28; it was +Atk/+Int equal to Renew, `blessings-and-statuses.md` §5) | `magicGrowth`, `forceOfNature` (Sylva), `sow` |
 
 ### A field effect set by a PASSIVE (2026-09-01, Fire)
 
@@ -271,7 +271,7 @@ Scorched Land's shape, one per field, priced as the payload alone:
 | Scorched Land | — (Firestarter, Spreading Blaze) | — |
 | Stasis Field | **Distort** | −20 Intelligence on one foe |
 | Sanctuary | **Hallow** | heal 35 on one ally |
-| Verdant Earth | **Sow** | Renew 30 on one ally |
+| Verdant Earth | **Sow** | Renew 9% on one ally |
 
 **Stasis** was repriced: 45 mana for +20/+20 on self was the worst card in its slate, so the
 field never came with it. It is +20/+20 on **both allies** at 40 now.
@@ -307,7 +307,7 @@ pipeline and never an MP Regen stat. A Renew tick and a drain are not heals and 
 The bigger number is seen on every heal, which is what the priority never was. It is the
 two-jobs shape Magical Surge already has, accepted with eyes open.
 
-**Verdant Earth's number is untouched.** The standing call (2026-09-05) was to play it before
+**Superseded 2026-09-28:** Verdant Earth now doubles Renew and turns overheal into Shield (`blessings-and-statuses.md` §5). The paragraph below is history. **Verdant Earth's number is untouched.** The standing call (2026-09-05) was to play it before
 dividing it, and the play verdict was that it never appeared — so this pass makes it appear
 and leaves the 1:1 grant where it was. If it now reads as broken, that is the playtest result.
 

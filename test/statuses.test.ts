@@ -149,20 +149,41 @@ test('status: a frozen combatant with higher base Speed is outsped by a faster-a
 
 // --- Renew: the positive mirror of Burn ---
 
-test('status: Renew heals at end of round and decays by halving, like Burn', () => {
+test('status: Renew heals its percent of max HP the moment it lands, then at the end of each of the next 2 rounds, then it is gone', () => {
   const state = twoVTwoFixture(106);
+  const maxHp = fixtureMaxHp('cinderKnight');
   const hurt = { ...state, combatants: { ...state.combatants, a1: { ...state.combatants.a1, currentHp: 10 } } };
-  const regenerating = withStatus(hurt, 'a1', 'Renew', { magnitude: 20 });
+  const per = Math.ceil(maxHp * 0.1);
 
-  const { state: afterRound1, events } = resolveRound(regenerating, [], config);
-  assert.strictEqual(afterRound1.combatants.a1.currentHp, 30); // 10 + 20
-  assert.strictEqual(afterRound1.combatants.a1.statuses.Renew.magnitude, 10); // floor(20/2)
-  assert.ok(events.some((e) => e.type === 'StatusTicked' && e.statusId === 'Renew' && e.kind === 'heal' && e.amount === 20));
+  const landed = applyStatus(hurt, 1, 'a1', statuses.Renew, { magnitude: 10, holderMaxHp: maxHp });
+  assert.strictEqual(landed.state.combatants.a1.currentHp, 10 + per, 'healed on landing');
+  assert.strictEqual(landed.state.combatants.a1.statuses.Renew.duration, 2);
+  assert.ok(landed.events.some((e) => e.type === 'StatusTicked' && e.statusId === 'Renew' && e.kind === 'heal' && e.amount === per));
 
-  const { state: afterRound2 } = resolveRound(afterRound1, [], config);
-  assert.strictEqual(afterRound2.combatants.a1.currentHp, 40); // 30 + 10
-  assert.strictEqual(afterRound2.combatants.a1.statuses.Renew.magnitude, 5); // floor(10/2)
+  const r1 = resolveRound(landed.state, [], config);
+  assert.strictEqual(r1.state.combatants.a1.currentHp, 10 + 2 * per);
+  assert.strictEqual(r1.state.combatants.a1.statuses.Renew.magnitude, 10, 'no decay');
+  assert.strictEqual(r1.state.combatants.a1.statuses.Renew.duration, 1);
+
+  const r2 = resolveRound(r1.state, [], config);
+  assert.strictEqual(r2.state.combatants.a1.currentHp, 10 + 3 * per);
+  assert.strictEqual(hasStatus(r2.state.combatants.a1, 'Renew'), false, 'three heals in all, then expired');
+  assert.ok(r2.events.some((e) => e.type === 'StatusRemoved' && e.statusId === 'Renew' && e.reason === 'expired'));
 });
+
+test('status: a second Renew adds to the pool and tops the clock back up; its landing heal is only what it added', () => {
+  const state = twoVTwoFixture(108);
+  const maxHp = fixtureMaxHp('cinderKnight');
+  const hurt = { ...state, combatants: { ...state.combatants, a1: { ...state.combatants.a1, currentHp: 10 } } };
+  const first = applyStatus(hurt, 1, 'a1', statuses.Renew, { magnitude: 10, holderMaxHp: maxHp });
+  const ticked = resolveRound(first.state, [], config).state; // duration 2 -> 1
+  const before = ticked.combatants.a1.currentHp;
+  const second = applyStatus(ticked, 2, 'a1', statuses.Renew, { magnitude: 6, holderMaxHp: maxHp });
+  assert.strictEqual(second.state.combatants.a1.statuses.Renew.magnitude, 16);
+  assert.strictEqual(second.state.combatants.a1.statuses.Renew.duration, 2, 'refreshed to the longer');
+  assert.strictEqual(second.state.combatants.a1.currentHp, before + Math.ceil(maxHp * 0.06));
+});
+
 
 test('status: Burn/Renew decay to 0 removes the status entirely', () => {
   const state = twoVTwoFixture(107);
@@ -485,8 +506,8 @@ test('status: a DoT aimed at SELF is a cost — it lands at exactly the authored
 });
 
 test('status: a HoT aimed at SELF is a benefit, so it still scales', () => {
-  // The self exemption is about SIGN, not about the target: Second Wind is the mirror of
-  // Volcanic Surge and must go through the formula (50 x Revenant's 0.96 x 1.25 Spirit = 60).
+  // The self exemption is about SIGN, not about the target: Second Wind is the mirror of Volcanic
+  // Surge and must go through the formula (its percent × Revenant's Wisdom StatMult × Spirit STAB).
   const state = deepMana(
     createFightState(
       703,
@@ -497,7 +518,10 @@ test('status: a HoT aimed at SELF is a benefit, so it still scales', () => {
   const { events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'secondWind' }] as Action[], config);
   const applied = events.find((e) => e.type === 'StatusApplied' && e.statusId === 'Renew');
   assert.ok(applied && applied.type === 'StatusApplied');
-  assert.strictEqual(applied.type === 'StatusApplied' ? applied.magnitude : null, 60);
+  const app = statusApplicationsOf(moves.secondWind).find((a) => a.statusId === 'Renew')!;
+  const expected = resolveStatusMagnitudeFor(app.magnitude, statuses.Renew, app, moves.secondWind, { stats: heroes.revenant.baseStats, types: heroes.revenant.types });
+  assert.notStrictEqual(expected, app.magnitude, 'the fixture must actually scale');
+  assert.strictEqual(applied.type === 'StatusApplied' ? applied.magnitude : null, expected);
 });
 
 test('status: the formula is gated on the pipeline — a timer status is scaled by nothing', () => {

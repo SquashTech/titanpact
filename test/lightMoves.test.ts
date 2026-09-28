@@ -329,13 +329,13 @@ test('light: Vigil shields one ally off the caster\'s Defense and Renews it off 
   assert.strictEqual(moves.vigil.target, 'singleAlly');
 
   const caster = state.combatants.a1;
-  const expectedShield = scaleStatusMagnitude(25, statuses.Shield, shieldApp, moves.vigil, heroes.dawnwarden, caster);
-  const expectedRenew = scaleStatusMagnitude(10, statuses.Renew, renewApp, moves.vigil, heroes.dawnwarden, caster);
+  const expectedShield = scaleStatusMagnitude(shieldApp.magnitude, statuses.Shield, shieldApp, moves.vigil, heroes.dawnwarden, caster);
+  const expectedRenew = scaleStatusMagnitude(renewApp.magnitude, statuses.Renew, renewApp, moves.vigil, heroes.dawnwarden, caster);
   const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'vigil', declaredTarget: 'a2' }], config);
 
   assert.strictEqual(statusMagnitude(next.combatants.a2, 'Shield'), expectedShield);
-  assert.ok(hasStatus(next.combatants.a2, 'Renew'), 'the Renew landed and ticked once at end of round');
-  assert.strictEqual(statusMagnitude(next.combatants.a2, 'Renew'), Math.floor(expectedRenew! / 2), 'halved after its first tick');
+  assert.ok(hasStatus(next.combatants.a2, 'Renew'), 'the Renew landed, healed, and ticked once at end of round');
+  assert.strictEqual(statusMagnitude(next.combatants.a2, 'Renew'), expectedRenew, 'a Renew no longer decays');
   assert.notStrictEqual(expectedShield, expectedRenew, 'two stats, two figures');
   assert.strictEqual(statusMagnitude(next.combatants.a1, 'Shield'), 0, 'single ally');
 });

@@ -11,6 +11,8 @@
 > (same day):** Haunt flipped, passing on a knockout, Wisp certain, Lament and Keening on the echo (§2.5).
 > **Phase 5 is BUILT (same day):** Burn is a percent of max HP, never caster-scaled, and Scorched Land
 > stops the switch-cleanse (§3.3, §5). Phase 4, the sim pass, was skipped per user direction.
+> **Phase 6 is BUILT (same day):** Renew is a percent of max HP that heals on landing and twice more,
+> still Wisdom-scaled, and Verdant Earth doubles it and turns overheal into Shield (§4.3, §5).
 
 ---
 
@@ -295,7 +297,7 @@ formula's `dot` arm and Boiler's `scaledBy`: CLAUDE.md is amended), and the halv
 
 ---
 
-## 4. Renew — proposed, not yet scheduled
+## 4. Renew — BUILT 2026-09-28 (§4.3)
 
 ### 4.1 The problem
 
@@ -318,6 +320,31 @@ ways) are a design goal (`project_renew_payoffs_intended`) and are rebuilt with 
 
 ---
 
+### 4.3 As built (2026-09-28)
+
+**Decided per user direction:** a percent of the HOLDER's max HP that **keeps its Wisdom scaling**
+(authored × Wisdom StatMult × STAB, snapshotted at cast; `fixedMagnitude` is what keeps Burn flat and
+Renew scaled). CLAUDE.md's healing formula carries the named exception.
+
+- **Shape:** it heals **the moment it lands** (`ticksOnApply`, for what that application added) and
+  then **at the end of each of the next 2 rounds** (`defaultDuration: 2`), with no decay: three heals
+  in all. A second Renew adds to the pool and tops the clock back up to the longer
+  (`additiveRefreshDuration`). It still persists through switching and Cleanse and still ticks on the
+  bench, so *Renew and rotate* works.
+- **The rate, at parity:** the old Renew healed about twice its landed number over its life, and the
+  new one heals its landed percent three times. The caster's scaling appears on both sides and
+  cancels, so the new percent = authored × 200 ÷ (3 × par HP): about ÷3.5 Early, ÷4 Mid, ÷4.7 Late;
+  signatures and passives ÷4. Refresh 30 → 9%, High Tide 75 → 16%, Overgrowth 150 → 32%, Second Wind
+  50 → 14%, a passive's 40 → 10%. **Restorative Toxin** pays Renew at ×0.5 of the Poison it applied
+  (was ×2 when Renew was flat HP).
+- **Every Renew number in the text wears its %** (from the data; Second Wind's text had drifted to 45).
+- **The trade:** total healing is unchanged at par. What changed is *when*: a third of it lands at
+  once, none of it is lost to decay, and it keeps pace with max HP. **The cost:** a Renew lasts 2
+  rounds now, where a halving one lingered at a trickle for four or five. Moves that read "the user
+  holds Renew" (Branch Slam, Seed Shot's line) have a shorter window. `defaultDuration` is the dial
+  if that bites.
+- The sim pilot prices a percent Renew over its three heals. Not measured (per user direction).
+
 ## 5. Scorched Land and Verdant Earth
 
 Both fields read the magnitude of the status that changes, so both have to move with it.
@@ -327,18 +354,14 @@ Both fields read the magnitude of the status that changes, so both have to move 
   *Burn keeps ¾ of its value instead of half*. A rule, not a number, and it attacks Burn's one counter.
   The conversion alone didn't make the old field stronger (a Burn still lasted about twice as long under
   it); the retention verb stays in the vocabulary with no holder.
-- **Verdant Earth** (*bonus Attack and Intelligence equal to current Renew*). A percent Renew reads
-  as 8, so the grant collapses to nothing — the landmine it was kept for disappears, and so does the
-  field. It needs a new verb. Candidates:
-  - *Heroes holding Renew have +X Attack and Intelligence* (flat, authored — legible, but a bare
-    number on a field).
-  - *Renew heals twice as much, and overheal becomes Shield* — the Nature field grows the Renew it
-    exists to reward, and uses the Shield vocabulary already built.
-  - *Healing from Renew is also dealt as damage to the healed hero's attacker* — a thorn field.
-
-  Recommendation: the second. It rewards what the field's owner is already doing, it has no stat
-  term, and it stays within the one-verb-a-field shape (`field-effects.md`). All three routes
-  (Herald, rider, reader) stay as they are.
+- **Verdant Earth — BUILT 2026-09-28** (per user direction): *Renew heals twice as much, and healing
+  past max HP becomes Shield* (`FieldEffectDefinition.amplifiesStatusHealing`, read in
+  `healFromStatus` for both the landing heal and the round-end ticks), replacing *bonus Attack and
+  Intelligence equal to current Renew*, which a percent Renew would have shrunk to nothing. The
+  field now grows the Renew it exists to reward, with no stat term. Its three routes (Herald, rider,
+  reader) are unchanged. The old `statBonusEqualToStatusMagnitude` verb stays in the vocabulary with
+  no holder. **Knock-on:** the Elder Bough's turn under its own field is now doubled Renew and Shield,
+  not a free Attack stack, so that Guardian plays more defensively than it did.
 
 ---
 

@@ -242,7 +242,10 @@ don't silently override it.
 - **Healing formula (2026-08-28):** `Heal = HealPower × WisdomMult × STAB`, with
   `WisdomMult = 1 + (Wisdom − 50)/100`. Scales with the **caster's Wisdom** (whatever the
   move's category), **never with the target's max HP**, and carries **no variance**. A HoT
-  snapshots it at application time. Reasoning + open questions: `docs/combat.md`.
+  snapshots it at application time. Reasoning + open questions: `docs/combat.md`. **One named
+  exception, Renew** (2026-09-28, per user direction, `docs/blessings-and-statuses.md` §4): its
+  magnitude is a percent of the HOLDER's max HP, still scaled by the caster's Wisdom and STAB at cast;
+  a heal move stays on the formula above.
 - **Status magnitude formula (2026-09-05):** a DoT or HoT rider's authored magnitude is a
   BASE — `magnitude = authored × StatMult × STAB`, `StatMult = 1 + (stat − 50)/100` clamped
   `[0.5, 2.0]`, snapshotted at application. Same shape and same constants as the heal
@@ -259,7 +262,8 @@ don't silently override it.
   output at ≈2× its magnitude however long the fight runs. `docs/combat.md`.
   **Burn left the formula 2026-09-28** (per user direction, `docs/blessings-and-statuses.md` §3):
   its magnitude is a **percent of the holder's max HP** (`StatusDefinition.percentOfMaxHp`), lands
-  as authored and is never caster-scaled, so the `dot` arm and `scaledBy` have no holder today.
+  as authored and is never caster-scaled (`fixedMagnitude`), so the `dot` arm and `scaledBy` have no
+  holder today. Renew is a percent too but keeps its Wisdom scaling (the `hot` arm stands).
 - **Stat line:** HP, Attack/Defense, Intelligence/Wisdom, Speed, Mana, MP Regen.
 - **Every hero's seven stats sum to exactly 550** — HP/Attack/Defense/Intelligence/
   Wisdom/Speed/Mana at FACE VALUE, HP counted at 1:1 (2026-09-09, replacing the 450
@@ -827,8 +831,8 @@ what's still unimplemented:
   under it (Flare Up, Resonant Bolt, Hindsight, Sunlance, Verdant Lash beside Smite and Overload),
   always pooled beside a setter. The spawn kits carry riders and readers, so the enemy side sets
   fields and "no owner" is counterplay. **Sanctuary keeps +1 heal priority and also heals ×1.5**
-  (`healMultiplier`, a heal-pipeline term, never Wisdom). Verdant Earth's number is still the
-  playtest's, untouched. The type-restricted damage term stays deferred. Measured: sets 14.0 →
+  (`healMultiplier`, a heal-pipeline term, never Wisdom). Verdant Earth was reworked 2026-09-28: Renew ×2,
+  overheal to Shield (`docs/blessings-and-statuses.md` §5). The type-restricted damage term stays deferred. Measured: sets 14.0 →
   20.6 per 1000 player turns across the two phases, a field up at 14.7% of round ends,
   full-clear unmoved.
 

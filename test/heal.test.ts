@@ -13,6 +13,9 @@ import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import type { Action } from '../src/engine/combat/actions';
 import type { CombatState } from '../src/engine/state';
+import { getMaxHp } from '../src/engine/state';
+import { statusApplicationsOf } from '../src/engine/content';
+import { resolveStatusMagnitudeFor } from '../src/engine/status/statusMagnitude';
 import {
   calcHeal,
   resolveHealFor,
@@ -153,21 +156,26 @@ test('heal: no variance — the same heal on two different seeds lands on the sa
 
 // --- Renew: the snapshot ---
 
-test('heal: a HoT snapshots the caster Wisdom and STAB at application time', () => {
-  // Second Wind grants Renew 50 (Spirit). Read off the end-of-round tick: Renew halves the moment it
-  // ticks, so the stored magnitude is already half the snapshot by the time the round returns.
-  const firstTick = (heroId: string) => {
-    const { events } = resolveRound(
-      hurt(fixture(204, heroId, 'ironWarden'), ['a1'], 10),
-      [{ kind: 'move', combatantId: 'a1', moveId: 'secondWind' }] as Action[],
-      config
-    );
+test('heal: a HoT snapshots the caster Wisdom and STAB at application time, and heals that percent of the holder', () => {
+  // Second Wind grants Renew (Spirit): the landed percent is the formula's, snapshotted at cast, and
+  // the first heal — on landing — is that percent of the holder's max HP.
+  const read = (heroId: string) => {
+    const state = hurt(fixture(204, heroId, 'ironWarden'), ['a1'], 10);
+    const { events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'secondWind' }] as Action[], config);
+    const applied = events.find((e) => e.type === 'StatusApplied' && e.statusId === 'Renew');
     const tick = events.find((e) => e.type === 'StatusTicked' && e.statusId === 'Renew');
-    return tick && tick.type === 'StatusTicked' ? tick.amount : null;
+    return {
+      landed: applied && applied.type === 'StatusApplied' ? applied.magnitude! : 0,
+      healed: tick && tick.type === 'StatusTicked' ? tick.amount : 0,
+      maxHp: getMaxHp(heroes[heroId], state.combatants.a1),
+    };
   };
-
-  assert.strictEqual(firstTick('revenant'), 60); // 50 x 0.96 x 1.25
-  assert.strictEqual(firstTick('wildOracle'), 55); // 50 x 1.10, no STAB
+  const app = statusApplicationsOf(moves.secondWind).find((a) => a.statusId === 'Renew')!;
+  for (const heroId of ['revenant', 'wildOracle']) {
+    const { landed, healed, maxHp } = read(heroId);
+    assert.strictEqual(landed, resolveStatusMagnitudeFor(app.magnitude, statuses.Renew, app, moves.secondWind, { stats: heroes[heroId].baseStats, types: heroes[heroId].types }));
+    assert.strictEqual(healed, Math.ceil((maxHp * landed) / 100), `${heroId}: the first heal is the landed percent`);
+  }
 });
 
 test('heal: the snapshot is gated on the pipeline — a TIMER rider is scaled by nothing at all', () => {

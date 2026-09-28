@@ -388,8 +388,10 @@ function riderValue(
       return Math.min(total, holder.currentHp);
     }
     case 'hot': {
-      const perTick = magnitude;
-      const total = def.decay === 'halve' ? perTick * 2 : perTick * Math.min(duration, HORIZON);
+      // A percent Renew (docs/blessings-and-statuses.md §4) heals on landing and then once a round while it lasts.
+      const perTick = def.percentOfMaxHp ? (magnitude / 100) * getMaxHp(allCombatants[holder.heroId], holder) : magnitude;
+      const ticks = def.ticksOnApply ? 1 + Math.min(def.defaultDuration ?? duration, HORIZON) : Math.min(duration, HORIZON);
+      const total = def.decay === 'halve' ? perTick * 2 : perTick * ticks;
       return Math.min(total, missingHp(state, holderId) + perTick);
     }
     case 'control':

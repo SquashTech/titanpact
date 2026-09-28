@@ -314,19 +314,23 @@ function renewOf(state: CombatState, id: string): number {
   return state.combatants[id].statuses.Renew?.magnitude ?? 0;
 }
 
-/** Renew's magnitude as each StatusApplied reports it — the RESULTING total, read before the round-boundary tick halves it. */
+/** Renew's magnitude as each StatusApplied reports it — the RESULTING total. */
 function renewGrants(events: readonly CombatEvent[], id: string): number[] {
   return events
     .filter((e): e is Extract<CombatEvent, { type: 'StatusApplied' }> => e.type === 'StatusApplied' && e.combatantId === id && e.statusId === 'Renew')
     .map((e) => e.magnitude ?? 0);
 }
 
-test('unstoppableGrowth: arriving grants the hero itself Renew 40, and nobody else', () => {
+/** What Unstoppable Growth authors: a percent Renew since docs/blessings-and-statuses.md §4. */
+const GROWTH = (passives.unstoppableGrowth.reactive!.effect as { magnitude: number }).magnitude;
+
+test('unstoppableGrowth: arriving grants the hero itself its Renew, and nobody else', () => {
   const state = withPassive(fixture(20), 'a3', 'unstoppableGrowth');
   const result = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }], config);
 
-  assert.deepStrictEqual(renewGrants(result.events, 'a3'), [40]);
-  assert.strictEqual(renewOf(result.state, 'a3'), 20, 'and the round boundary has already healed it once and halved it');
+  assert.deepStrictEqual(renewGrants(result.events, 'a3'), [GROWTH]);
+  assert.strictEqual(renewOf(result.state, 'a3'), GROWTH, 'a Renew no longer decays as it pays');
+  assert.strictEqual(result.state.combatants.a3.statuses.Renew?.duration, 1, 'one round-end tick spent');
   assert.strictEqual(renewOf(result.state, 'a2'), 0, 'the partner is not part of this');
   assert.strictEqual(renewOf(result.state, 'b1'), 0);
 });
@@ -334,24 +338,21 @@ test('unstoppableGrowth: arriving grants the hero itself Renew 40, and nobody el
 test('unstoppableGrowth: the opening lead counts as arriving', () => {
   const state = withPassive(fixture(21), 'a1', 'unstoppableGrowth');
   const opened = resolveBattleStartEntries(state, 1, heroes, statuses, passives, fieldEffects);
-  assert.strictEqual(renewOf(opened.state, 'a1'), 40);
+  assert.strictEqual(renewOf(opened.state, 'a1'), GROWTH);
 });
 
-test('unstoppableGrowth: a pivot out and back re-seeds it, stacking onto what survived the tick', () => {
+test('unstoppableGrowth: a pivot out and back re-seeds it once the last one has run out', () => {
   let state = withPassive(fixture(22), 'a3', 'unstoppableGrowth');
   state = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }], config).state;
-  assert.strictEqual(renewOf(state, 'a3'), 20, '40 granted, ticked, halved');
-
   state = resolveRound(state, [{ kind: 'switch', combatantId: 'a3', benchedCombatantId: 'a1' }], config).state;
-  const back = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }], config);
+  assert.strictEqual(renewOf(state, 'a3'), 0, 'two round-end ticks: the Renew has expired on the bench');
 
-  // Renew survives switching and stacks additively, so the second grant lands ON the remainder (10 + 40).
-  assert.deepStrictEqual(renewGrants(back.events, 'a3'), [50]);
-  assert.ok(renewOf(back.state, 'a3') > 20, 'the second arrival adds to what was left, it does not replace it');
+  const back = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }], config);
+  assert.deepStrictEqual(renewGrants(back.events, 'a3'), [GROWTH], 'a fresh Renew on the way back in');
 });
 
 test('unstoppableGrowth: a passive-applied HoT is FLAT — it is not run through the healing formula', () => {
-  // cinderKnight and sentinel hold different Wisdom and must both read the authored 40.
+  // cinderKnight and sentinel hold different Wisdom and must both read the authored percent.
   assert.notStrictEqual(
     heroes.cinderKnight.baseStats.wisdom,
     heroes.sentinel.baseStats.wisdom,
@@ -364,6 +365,6 @@ test('unstoppableGrowth: a passive-applied HoT is FLAT — it is not run through
     config
   );
 
-  assert.strictEqual(renewOf(lead.state, 'a1'), 40);
-  assert.deepStrictEqual(renewGrants(arrival.events, 'a3'), [40]);
+  assert.strictEqual(renewOf(lead.state, 'a1'), GROWTH);
+  assert.deepStrictEqual(renewGrants(arrival.events, 'a3'), [GROWTH]);
 });

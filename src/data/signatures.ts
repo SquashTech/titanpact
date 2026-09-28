@@ -91,11 +91,11 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     category: 'physical',
     kind: 'damage',
     basePower: 75,
-    statusApplication: { statusId: 'Renew', magnitude: 35, target: 'bothAllies' },
+    statusApplication: { statusId: 'Renew', magnitude: 8, target: 'bothAllies' },
     manaCost: 45,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A charge that drags the whole tide behind it (grants both allies Renew 35).',
+    description: 'A charge that drags the whole tide behind it (grants both allies Renew 8%).',
   },
   // Pincer: the slow crab. Closes, and does not open.
   vise: {
@@ -291,12 +291,12 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     basePower: 50,
     statusApplication: [
       { statusId: 'Poison', magnitude: 10, duration: 3, target: 'moveTarget' },
-      { statusId: 'Renew', magnitude: 25, target: 'bothAllies' },
+      { statusId: 'Renew', magnitude: 6, target: 'bothAllies' },
     ],
     manaCost: 60,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Seeds the whole field: the far side rots and this side grows (Poison 10% to both foes; Renew 25 to both allies).',
+    description: 'Seeds the whole field: the far side rots and this side grows (Poison 10% to both foes; Renew 6% to both allies).',
   },
   // Mordrax: opens them up and puts down roots in the gap.
   rootrend: {
@@ -308,12 +308,12 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     basePower: 80,
     statusApplication: [
       { statusId: 'Bleed', target: 'moveTarget' },
-      { statusId: 'Renew', magnitude: 30, target: 'self' },
+      { statusId: 'Renew', magnitude: 7, target: 'self' },
     ],
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Opens them up and puts down roots in the gap (Bleed; Renew 30 to self).',
+    description: 'Opens them up and puts down roots in the gap (Bleed; Renew 7% to self).',
   },
   // Hollowbark: slow, heavy, and it does not stop coming.
   deadfall: {
@@ -354,11 +354,11 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     kind: 'heal',
     healPower: 60,
     cleanses: true,
-    statusApplication: { statusId: 'Renew', magnitude: 30, target: 'bothAllies' },
+    statusApplication: { statusId: 'Renew', magnitude: 7, target: 'bothAllies' },
     manaCost: 60,
     priority: 0,
     target: 'bothAllies',
-    description: 'Morning for the whole side: mends both, clears what they carry, and keeps mending (Renew 30).',
+    description: 'Morning for the whole side: mends both, clears what they carry, and keeps mending (Renew 7%).',
   },
   // Aegis: strikes, and the shield goes up for both.
   bulwarkStrike: {
@@ -543,11 +543,11 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     kind: 'damage',
     basePower: 65,
     drainPercent: 0.5,
-    statusApplication: { statusId: 'Renew', magnitude: 20, target: 'bothAllies' },
+    statusApplication: { statusId: 'Renew', magnitude: 5, target: 'bothAllies' },
     manaCost: 60,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Takes it back, and shares it out (heals 50% of the damage dealt; Renew 20 to both allies).',
+    description: 'Takes it back, and shares it out (heals 50% of the damage dealt; Renew 5% to both allies).',
   },
   // Sorrow: a wail that takes the strength out of both of them.
   dirgeOfAsh: {
@@ -815,11 +815,11 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     category: 'magical',
     kind: 'heal',
     healPower: 45,
-    statusApplication: { statusId: 'Renew', magnitude: 20, target: 'bothAllies' },
+    statusApplication: { statusId: 'Renew', magnitude: 5, target: 'bothAllies' },
     manaCost: 55,
     priority: 0,
     target: 'bothAllies',
-    description: 'Lights its antlers over both: heals 45 each, and the light stays with them (Renew 20).',
+    description: 'Lights its antlers over both: heals 45 each, and the light stays with them (Renew 5%).',
   },
   // Ashwing: the dive out of its own fire.
   risingPyre: {
@@ -829,11 +829,11 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     category: 'magical',
     kind: 'damage',
     basePower: 70,
-    statusApplication: { statusId: 'Renew', magnitude: 30, target: 'self' },
+    statusApplication: { statusId: 'Renew', magnitude: 7, target: 'self' },
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Dives out of its own fire at one foe and comes up burning clean (Renew 30 on self).',
+    description: 'Dives out of its own fire at one foe and comes up burning clean (Renew 7% on self).',
   },
   // Kappa: drags them under and drinks what the river gives back.
   pullUnder: {
@@ -1020,11 +1020,11 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     category: 'magical',
     kind: 'heal',
     healPower: 70,
-    statusApplication: { statusId: 'Renew', magnitude: 40, target: 'moveTarget' },
+    statusApplication: { statusId: 'Renew', magnitude: 10, target: 'moveTarget' },
     manaCost: 50,
     priority: 0,
     target: 'singleAlly',
-    description: 'Throws her own pelt over one ally, and the sea goes on mending under it (heals 70, Renew 40).',
+    description: 'Throws her own pelt over one ally, and the sea goes on mending under it (heals 70, Renew 10%).',
   },
   // Hush: down out of the dark without a sound.
   silentDescent: {
@@ -1048,11 +1048,11 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     category: 'magical',
     kind: 'damage',
     basePower: 90,
-    statusApplication: { statusId: 'Renew', magnitude: 30, target: 'self' },
+    statusApplication: { statusId: 'Renew', magnitude: 7, target: 'self' },
     manaCost: 60,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Opens every petal and lets them fall on one foe like blades, and the pad floats on (Renew 30 on self).',
+    description: 'Opens every petal and lets them fall on one foe like blades, and the pad floats on (Renew 7% on self).',
   },
   // Nimbus: the lightning falls on their side and the rain on its own.
   cloudburst: {
@@ -1064,12 +1064,12 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     basePower: 55,
     statusApplication: [
       { statusId: 'Conduct', target: 'moveTarget' },
-      { statusId: 'Renew', magnitude: 20, target: 'bothAllies' },
+      { statusId: 'Renew', magnitude: 5, target: 'bothAllies' },
     ],
     manaCost: 65,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Breaks open over the field: lightning on both foes (Conduct), rain on both allies (Renew 20).',
+    description: 'Breaks open over the field: lightning on both foes (Conduct), rain on both allies (Renew 5%).',
   },
   // Kite: flies the kite up into the storm and lets the string go.
   stormkite: {
@@ -1214,11 +1214,11 @@ export const signatureMoves: Record<string, MoveDefinition> = {
       { stat: 'attack', amount: 25 },
       { stat: 'intelligence', amount: 25 },
     ],
-    statusApplication: { statusId: 'Renew', magnitude: 20, target: 'moveTarget' },
+    statusApplication: { statusId: 'Renew', magnitude: 5, target: 'moveTarget' },
     manaCost: 60,
     priority: 0,
     target: 'bothAllies',
-    description: 'Every carved face wakes and stands behind both allies (+25 Attack, +25 Intelligence and Renew 20 each).',
+    description: 'Every carved face wakes and stands behind both allies (+25 Attack, +25 Intelligence and Renew 5% each).',
   },
   // Keen: the keen for the dead, sung over the living.
   lastKeen: {
@@ -1288,11 +1288,11 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     kind: 'buff',
     statusApplication: [
       { statusId: 'Shield', magnitude: 35, target: 'moveTarget' },
-      { statusId: 'Renew', magnitude: 25, target: 'moveTarget' },
+      { statusId: 'Renew', magnitude: 6, target: 'moveTarget' },
     ],
     manaCost: 55,
     priority: 0,
     target: 'bothAllies',
-    description: 'Settles down and lets the whole side climb on: something broad in front of every blow, and a calm that keeps mending (Shield 35 and Renew 25 on both allies).',
+    description: 'Settles down and lets the whole side climb on: something broad in front of every blow, and a calm that keeps mending (Shield 35 and Renew 6% on both allies).',
   },
 };
