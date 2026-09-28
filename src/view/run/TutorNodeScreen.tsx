@@ -14,6 +14,8 @@ import { NodeHeader, NodeSky, NODE_TINT_INSIGHT } from '../shared/NodeStage';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { MoveLearnedOverlay, MoveOfferOverlay } from './MoveOfferOverlay';
 import { RosterPeek } from './RosterPeek';
+import { RoadEncounter } from './RoadEncounter';
+import { TUTOR_LINES } from '../../data/roadLines';
 import { levelOf } from '../../run/growth';
 import { statScaleFor } from '../../run/statScale';
 
@@ -44,6 +46,7 @@ interface Lesson {
 export function TutorNodeScreen({ run, onRunChange, onContinue }: Props) {
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
+  const [greeting, setGreeting] = useState<string | null>(() => TUTOR_LINES[Math.floor(Math.random() * TUTOR_LINES.length)]);
 
   const poolOf = (entry: RosterEntry) => tutorMovePool(progressionTable, moves, entry);
   const anyTeachable = run.roster.some((entry) => poolOf(entry).length > 0);
@@ -68,6 +71,8 @@ export function TutorNodeScreen({ run, onRunChange, onContinue }: Props) {
     onContinue();
   }
 
+  if (greeting) return <RoadEncounter art={tutorArt} name="The Tutor" line={greeting} onDone={() => setGreeting(null)} />;
+
   return (
     <div className="node-screen tutor-node-screen" style={{ '--node-rgb': NODE_TINT_INSIGHT } as CSSProperties}>
       <NodeSky />
@@ -77,7 +82,7 @@ export function TutorNodeScreen({ run, onRunChange, onContinue }: Props) {
         compact
         ring
         art={<img src={tutorArt} className="npc-portrait" alt="" draggable={false} />}
-        eyebrow="A Master Waits"
+        eyebrow="By the Roadside"
         title="The Tutor"
         readout={
           anyTeachable

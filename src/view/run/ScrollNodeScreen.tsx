@@ -28,6 +28,8 @@ import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { MoveOfferOverlay } from './MoveOfferOverlay';
 import { MasteredInnateOverlay } from './MasteredInnateOverlay';
 import { RosterPeek } from './RosterPeek';
+import { RoadEncounter } from './RoadEncounter';
+import { SCRIBE_LINES } from '../../data/roadLines';
 import { useMasteryFlow } from './masteryFlow';
 
 /**
@@ -60,6 +62,10 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
   const [remaining, setRemaining] = useState(plan.kind === 'scribe' ? SCRIBE_PICKS : plan.count);
   const [pickedIds, setPickedIds] = useState<string[]>([]);
   const flow = useMasteryFlow(run, onRunChange);
+  // Only the Scribe is met on the road; a Cache or the shelf opens straight onto the scrolls.
+  const [greeting, setGreeting] = useState<string | null>(() =>
+    plan.kind === 'scribe' ? SCRIBE_LINES[Math.floor(Math.random() * SCRIBE_LINES.length)] : null
+  );
 
   const pipsPerTap = plan.kind === 'scribe' ? SCRIBE_PIPS_EACH : 1;
   const eligible = run.roster.filter((entry) => canTakeMastery(entry) && !pickedIds.includes(entry.rosterId));
@@ -69,8 +75,8 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
   const finished = remaining <= 0 || eligible.length === 0;
 
   useEffect(() => {
-    playSfx('shrine', { pitch: 1.1, delay: 0.12 });
-  }, []);
+    if (!greeting) playSfx('shrine', { pitch: 1.1, delay: 0.12 });
+  }, [greeting]);
 
   useEffect(() => {
     if (!finished || flow.busy || !anyEligible) return;
@@ -89,6 +95,8 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
     // What the pip opened is raised over the LANDED run, not the one this render closed over.
     flow.raise(entry.rosterId, next, entry.mastery);
   }
+
+  if (greeting) return <RoadEncounter art={scribeArt} name="The Scribe" line={greeting} onDone={() => setGreeting(null)} />;
 
   const grownEntry = flow.grown ? (run.roster.find((r) => r.rosterId === flow.grown!.rosterId) ?? null) : null;
   if (flow.grown && grownEntry) {

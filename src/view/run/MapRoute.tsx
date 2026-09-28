@@ -410,7 +410,6 @@ export function MapRoute({
           <span
             className={`map-origin-mark${originLandmark ? ` is-landmark is-${originLandmark}` : mapNodeArt(originNode.type) ? ' has-art' : ''}`}
             ref={originRef}
-            data-node-type={originNode.type}
             aria-hidden="true"
           >
             {/* A landmark stays itself behind you — the eye, the Mentor, the hall — small and unlit. */}

@@ -19423,10 +19423,14 @@ button.star-shop-bundle-face {
   filter: grayscale(0.7) brightness(0.6);
 }
 
-.map-origin-mark.is-npc,
 .map-origin-mark.is-building {
   width: 48px;
   height: 48px;
+}
+
+.map-origin-mark.is-npc {
+  width: 64px;
+  height: 64px;
 }
 
 /* The eye's own colour is a dark red, so it takes less of the grey or it goes out entirely. */
@@ -19511,21 +19515,10 @@ button.star-shop-bundle-face {
   fill: #07050a;
 }
 
-/* The Mentor, the Tutor and the Scribe standing on the path: their 48px portraits at 3x. */
+/* The Mentor, the Tutor and the Scribe met at the roadside: 64px scenes at 2x. */
 .map-medallion.is-npc {
-  width: 144px !important;
-  height: 144px !important;
-}
-
-/* The Mentor is a 64px roadside scene (hooded, by a fire), so 2x rather than a portrait's 3x. */
-.map-choice[data-node-type='mentorReward'] .map-medallion.is-npc {
   width: 128px !important;
   height: 128px !important;
-}
-
-.map-origin-mark.is-npc[data-node-type='mentorReward'] {
-  width: 64px;
-  height: 64px;
 }
 
 /* The Guild Hall (and the Vigil): a 96px building at 2x, doors open. */
