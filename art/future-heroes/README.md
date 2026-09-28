@@ -1,4 +1,4 @@
-﻿# Future heroes
+# Future heroes
 
 Art for heroes that are not in the game yet: idle, `attack` and `damaged` frames at 48×48,
 named the way `art/heroes/` expects. This folder is outside `art/heroes/`, so `heroArt.ts`
@@ -28,6 +28,5 @@ Facing is mixed on purpose, as on the live roster: Ashwing, Kappa, Kong, Omen an
 left; Aurum, Kitsu, Ronin and Tusk face right; Motley faces left-front; Morel and Tome face the viewer. Each
 hero's attack and damaged frames face the same way as its idle.
 
-Known art nits: Omen's attack frame is barely different from its idle and wants a re-roll.
 Rumble (Storm oni drummer) and
 Sprocket (Mech gnome walker) were set aside as weaker concepts.

@@ -47,9 +47,8 @@ What is left is authoring each hero as data. Drift, Rimehold, Carillon and Hart 
 - Run `npm test` with the pinned Node: `export PATH="$PWD/.node-runtime/node-v24.19.0-win-x64:$PATH"`.
   Also `npm run typecheck:view`. 1109 tests passed at `976a3eb`.
 
-## Art nits still open
+## Art notes
 
-- Omen's attack frame is barely different from its idle; re-roll it (PixelLab recipe in
-  memory: `create_image_pro_flash` / `edit_image_pro_flash` at 48×48, edit the idle's
-  `source_image_id` for frames, and check each frame faces the same way as its idle).
+- Art edits use the PixelLab recipe in memory: `create_image_pro_flash` / `edit_image_pro_flash` at
+  48×48, frames edited from the idle's `source_image_id`; check each frame faces the same way as its idle.
 - New heroes have had no sim pass; say so when they ship.
