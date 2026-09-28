@@ -24,5 +24,9 @@ Concepts from 2026-09-27; the role lines are first-pass pitches, not decisions.
 | Tome | Arcane | living spellbook with one eye | magical caster, rune volleys |
 | Tusk | Frost | woolly mammoth | the slow physical Frost body the type lacks |
 
+Facing is mixed on purpose, as on the live roster: Ashwing, Kappa, Omen and Scree face left;
+Aurum, Kitsu, Ronin and Tusk face right; Morel, Motley, Silverback and Tome face the viewer.
+Each hero's attack and damaged frames face the same way as its idle.
+
 Known art nits: Omen's attack frame is barely different from its idle and wants a re-roll.
 Rumble (Storm oni drummer) and Sprocket (Mech gnome walker) were set aside as weaker concepts.
