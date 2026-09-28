@@ -38293,3 +38293,30 @@ img.smithy-service-art {
     animation: none;
   }
 }
+
+/* Four moves must fit the console without a scroll (a two-line row is 42px of content): the slots
+   take the thin carved edge and sit edge to edge, and the ledge gives back the padding it took. */
+.action-area {
+  padding-top: 12px;
+}
+
+.action-area::before {
+  height: 12px;
+}
+
+.move-list {
+  gap: 0;
+}
+
+.move-list .move-button,
+.move-list .move-button:hover:not(.is-unusable),
+.move-list .move-button:not(.is-unusable):active {
+  border-width: 4px;
+  border-image: url('../../art/ui/slot-thin.png') 2 / 4px round;
+  padding: 0 8px 0 10px;
+}
+
+.move-list .move-button.selected,
+.move-list .move-button.selected:hover {
+  border-image-source: url('../../art/ui/slot-thin-lit.png');
+}

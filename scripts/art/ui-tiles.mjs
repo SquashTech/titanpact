@@ -95,12 +95,11 @@ const STONE = {
   fillShadow: hex('#0e1015'),
 };
 const WOOD = {
-  hi: hex('#9b6b3e'),
-  light: hex('#7d5431'),
-  mid: hex('#654226'),
-  dark: hex('#4a2f1a'),
-  grain: hex('#553821'),
-  seam: hex('#24160c'),
+  hi: hex('#7a5132'),
+  hi2: hex('#664329'),
+  mid: hex('#553722'),
+  lo2: hex('#472e1c'),
+  lo: hex('#352213'),
   band: hex('#5b5f6a'),
   bandHi: hex('#8d929e'),
   bandLo: hex('#34363e'),
@@ -161,49 +160,48 @@ function frameStone(name, S) {
   c.save(name);
 }
 
-// A button: 48x24, slice 7. Two boards bound in a metal band with a riveted bracket at each corner.
-function plank(name, W) {
-  seed = 11;
-  const c = canvas(48, 24);
-  c.rect(0, 0, 47, 23, W.mid);
-  for (let y = 3; y <= 20; y++)
-    for (let x = 3; x <= 44; x++) {
-      const r = rnd();
-      if (r < 0.08) c.set(x, y, W.dark);
-      else if (r < 0.13) c.set(x, y, W.light);
-    }
-  for (const gy of [6, 16]) for (let x = 3; x <= 44; x++) if ((x * 7 + gy) % 11 > 2) c.set(x, gy, W.grain);
-  for (let x = 3; x <= 44; x++) {
-    c.set(x, 11, W.seam);
-    c.set(x, 12, W.light);
+// A button: w x h, drawn whole or nine-sliced. A flat stained face with a two-step bevel (no grain:
+// the label has to read on it) in a metal band with a rivet at each corner.
+function smoothButton(name, w, h, W) {
+  const c = canvas(w, h);
+  const R = w - 1;
+  const B = h - 1;
+  c.rect(0, 0, R, B, W.mid);
+  for (let x = 3; x <= R - 3; x++) {
     c.set(x, 3, W.hi);
-    c.set(x, 20, W.dark);
+    c.set(x, 4, W.hi2);
+    c.set(x, B - 4, W.lo2);
+    c.set(x, B - 3, W.lo);
   }
-  for (let y = 3; y <= 20; y++) {
-    c.set(3, y, W.light);
-    c.set(44, y, W.dark);
+  for (let y = 3; y <= B - 3; y++) {
+    c.set(3, y, W.hi2);
+    c.set(R - 3, y, W.lo);
   }
-  c.ring(1, W.band);
-  c.ring(2, W.bandLo);
-  for (let x = 1; x < 47; x++) c.set(x, 1, W.bandHi);
-  for (let y = 1; y < 23; y++) c.set(1, y, W.bandHi);
-  for (const [x0, y0] of [
-    [1, 1],
-    [42, 1],
-    [1, 18],
-    [42, 18],
-  ]) {
-    c.rect(x0, y0, x0 + 4, y0 + 4, W.band);
-    c.set(x0 + 2, y0 + 2, W.rivet);
-    c.set(x0 + 1, y0 + 1, W.bandHi);
-    c.set(x0 + 3, y0 + 3, W.bandLo);
+  for (let x = 1; x < R; x++) {
+    c.set(x, 1, W.bandHi);
+    c.set(x, 2, W.band);
+    c.set(x, B - 2, W.band);
+    c.set(x, B - 1, W.bandLo);
   }
+  for (let y = 1; y < B; y++) {
+    c.set(1, y, W.bandHi);
+    c.set(2, y, W.band);
+    c.set(R - 2, y, W.band);
+    c.set(R - 1, y, W.bandLo);
+  }
+  for (const [x, y] of [
+    [2, 2],
+    [R - 2, 2],
+    [2, B - 2],
+    [R - 2, B - 2],
+  ])
+    c.set(x, y, W.rivet);
   c.ring(0, INK);
   for (const [x, y] of [
     [0, 0],
-    [47, 0],
-    [0, 23],
-    [47, 23],
+    [R, 0],
+    [0, B],
+    [R, B],
   ])
     c.set(x, y, CLEAR);
   c.save(name);
@@ -333,43 +331,6 @@ function lintel(name, S) {
   c.save(name);
 }
 
-// A small square button: 15x15, drawn whole at 2x (30px). One board in a riveted band.
-function plankSquare(name, W) {
-  seed = 61;
-  const N = 15;
-  const L = N - 1;
-  const c = canvas(N, N);
-  c.rect(0, 0, L, L, W.mid);
-  for (let y = 3; y <= L - 3; y++)
-    for (let x = 3; x <= L - 3; x++) {
-      const r = rnd();
-      if (r < 0.1) c.set(x, y, W.dark);
-      else if (r < 0.16) c.set(x, y, W.light);
-    }
-  for (let x = 3; x <= L - 3; x++) if (x % 4 !== 1) c.set(x, 7, W.grain);
-  c.ring(1, W.band);
-  c.ring(2, W.bandLo);
-  for (let k = 1; k < L; k++) {
-    c.set(k, 1, W.bandHi);
-    c.set(1, k, W.bandHi);
-  }
-  for (const [x, y] of [
-    [2, 2],
-    [L - 2, 2],
-    [2, L - 2],
-    [L - 2, L - 2],
-  ])
-    c.set(x, y, W.rivet);
-  c.ring(0, INK);
-  for (const [x, y] of [
-    [0, 0],
-    [L, 0],
-    [0, L],
-    [L, L],
-  ])
-    c.set(x, y, CLEAR);
-  c.save(name);
-}
 
 // A targeting reticle: 12x12, slice 5, only its four corners drawn. Gold brackets on an ink shadow,
 // so a legal target is marked without a box being drawn around it.
@@ -410,14 +371,14 @@ function rule(name, S) {
 
 frameStone('frame-stone', STONE);
 rule('rule', STONE);
-plank('plank', WOOD);
-plank('plank-gilt', GILT);
+smoothButton('plank', 48, 24, WOOD);
+smoothButton('plank-gilt', 48, 24, GILT);
 flagstones('flagstones');
 ledge('ledge', STONE);
 slot('slot', null);
 slot('slot-lit', { lo: STONE.goldLo, mid: STONE.gold, hi: STONE.goldHi });
 lintel('lintel', STONE);
 reticle('reticle', STONE);
-plankSquare('plank-square', WOOD);
+smoothButton('plank-square', 15, 15, WOOD);
 slotThin('slot-thin',{ hi: hex('#4a4f5e'), lo: hex('#1b1e27') });
 slotThin('slot-thin-lit', { hi: STONE.goldHi, lo: STONE.goldLo });
