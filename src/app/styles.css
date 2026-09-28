@@ -39861,3 +39861,50 @@ img.smithy-service-art {
     display: none;
   }
 }
+
+/* A candle: a small warm flame on the same restless flicker as a fire's. */
+.scene-light.is-candle {
+  background: radial-gradient(circle, rgba(255, 225, 150, 0.85), rgba(255, 160, 60, 0.3) 40%, transparent 70%);
+  animation: scene-flame-flicker calc(1.3s * var(--light-rate, 1)) steps(1, end) infinite;
+}
+
+/* A glow in the place's own colour — a sigil, a window, a doorway, a storm's eye — breathing. */
+.scene-light.is-glow {
+  background: radial-gradient(circle, rgba(var(--light-rgb, 255, 220, 150), 0.55), rgba(var(--light-rgb, 255, 220, 150), 0.18) 45%, transparent 70%);
+  animation: scene-glow-breathe calc(5s * var(--light-rate, 1)) ease-in-out infinite;
+}
+
+@keyframes scene-glow-breathe {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+/* An eye: lit most of the time, and every so often it blinks. */
+.scene-light.is-eye {
+  background: radial-gradient(circle, rgba(var(--light-rgb, 140, 255, 150), 0.9), rgba(var(--light-rgb, 140, 255, 150), 0.3) 40%, transparent 70%);
+  animation: scene-eye-blink calc(6s * var(--light-rate, 1)) ease-in-out infinite;
+}
+
+@keyframes scene-eye-blink {
+  0%,
+  86%,
+  100% {
+    opacity: 0.9;
+    transform: scaleY(1);
+  }
+  90% {
+    opacity: 0.05;
+    transform: scaleY(0.1);
+  }
+  94% {
+    opacity: 0.9;
+    transform: scaleY(1);
+  }
+}

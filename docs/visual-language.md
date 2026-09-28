@@ -3804,3 +3804,15 @@ wraps (the Field Effect plaque goes back up to the horizon) and a few console ga
 figures stand on their platforms and the nameplates tighten; last the two rows lean 10px
 into the horizon. Four moves fit down to 664 and a tall phone draws the fight as authored;
 below ~650 (an SE in a Safari tab) the list still scrolls.
+
+**Places wake, paintings move** (eleventh pass, 2026-09-28, per user direction). A place met
+on the road is its own map prop, and it **wakes** as the player arrives: rise, a white flare,
+then its woken self (`art/map-nodes/awake`, one PixelLab edit of each prop) under a halo in the
+place's own light, before the line is read. Every road place wakes — the Scroll crate, the Rest,
+the Boon shrine, the event's signpost, the Mana Well, the Ley Line, the Smithy — except the
+Spilled Purse, which pays on arrival and would only be slowed. The chest is the one that
+bursts open (the Cache). **Scene lights** (`SceneLights.tsx`) lay moving light over every
+arrival painting, placed in % of the art: stars, fireflies, fires and candles that flicker, a
+lighthouse's sweep, a moon's breath, a forest's blinking eyes, sigils and windows that glow.
+They sit over the road scene's shade — a light source is not darkened with its ground — and
+road scenes carry their Location's weather at half density.

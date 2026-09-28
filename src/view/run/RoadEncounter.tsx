@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { playSfx } from '../../audio/sfx';
 import type { RunState } from '../../run/state';
 import { locationBackdrop } from '../shared/locationBackdrops';
@@ -7,6 +7,7 @@ import { NodeSky } from '../shared/NodeStage';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { LocationMotes } from '../shared/LocationSky';
 import { LOCATION_LIGHTS, SceneLights, type SceneLight } from '../shared/SceneLights';
+import type { Awakening } from './mapNodeArt';
 
 // Meeting someone on the road: the act's own painting, the figure fading in where it stands, and
 // one line said before the node's real screen. A tap finishes the line; a second tap moves on. A
@@ -43,8 +44,8 @@ interface Props {
   art: string;
   /** A place rather than a person: no walk, and the line is narration. */
   place?: boolean;
-  /** The place's woken state (mapNodeArt.ts mapNodeAwakeArt): it flares into this before the line. */
-  awakened?: string;
+  /** The place's woken state (mapNodeArt.ts mapNodeAwakening): it flares into this before the line. */
+  awakened?: Awakening;
   /** Light moving on the figure itself — a campfire's flicker (SceneLights PROP_LIGHTS). */
   lights?: readonly SceneLight[];
   name: string;
@@ -57,21 +58,32 @@ export function RoadScene({
   className,
   label,
   onClick,
+  awakenRgb,
   children,
 }: {
   className?: string;
   label: string;
   onClick: () => void;
+  /** A waking place's light (road-awaken in styles.css). */
+  awakenRgb?: string;
   children: ReactNode;
 }) {
   const location = useAmbientLocation();
   const scene = location ? locationBackdrop(location.id, 'arrival') : undefined;
   return (
-    <button type="button" className={`road-encounter${className ? ` ${className}` : ''}`} onClick={onClick} data-sfx="none" aria-label={label}>
+    <button
+      type="button"
+      className={`road-encounter${className ? ` ${className}` : ''}`}
+      style={awakenRgb ? ({ '--awaken-rgb': awakenRgb } as CSSProperties) : undefined}
+      onClick={onClick}
+      data-sfx="none"
+      aria-label={label}
+    >
       {scene ? <img src={scene} className="road-encounter-scene" alt="" draggable={false} /> : <NodeSky />}
-      {scene && location && <SceneLights lights={LOCATION_LIGHTS[location.id]} className="is-cover" />}
       {scene && location && <LocationMotes kind={location.ambience} density={0.5} />}
       <span className="road-encounter-shade" aria-hidden="true" />
+      {/* Over the shade: a light source is not darkened with the ground it stands on. */}
+      {scene && location && <SceneLights lights={LOCATION_LIGHTS[location.id]} className="is-cover" />}
       {children}
     </button>
   );
@@ -118,10 +130,11 @@ export function RoadEncounter({ art, name, line, place = false, awakened, lights
       className={[place ? 'is-place' : '', awakened ? 'is-awakening' : '', skipped ? 'is-skipped' : ''].filter(Boolean).join(' ') || undefined}
       label={`${name}: ${line}`}
       onClick={advance}
+      awakenRgb={awakened?.rgb}
     >
       {awakened && <span className="road-awaken-halo" aria-hidden="true" />}
       <img src={art} className={`road-encounter-figure${instant ? ' is-still' : ''}${awakened ? ' is-dormant' : ''}`} alt="" draggable={false} />
-      {awakened && <img src={awakened} className="road-encounter-figure is-awake" alt="" draggable={false} />}
+      {awakened && <img src={awakened.art} className="road-encounter-figure is-awake" alt="" draggable={false} />}
       <SceneLights lights={lights} className="road-encounter-figure" />
       <span className={`road-encounter-speech${speaking ? ' is-open' : ''}`} aria-hidden="true">
         <span className="road-encounter-name">{name}</span>
@@ -139,18 +152,42 @@ export function RoadEncounter({ art, name, line, place = false, awakened, lights
  * A place with nothing to say: the thing on the road under its name, and a tap walks in. `art` is
  * drawn at 2x (a 96px building) unless `scale` says otherwise.
  */
-export function RoadArrival({ art, name, scale = 2, onDone }: { art: string; name: string; scale?: 2 | 3; onDone: () => void }) {
+export function RoadArrival({
+  art,
+  name,
+  scale = 2,
+  awakened,
+  onDone,
+}: {
+  art: string;
+  name: string;
+  scale?: 2 | 3;
+  awakened?: Awakening;
+  onDone: () => void;
+}) {
   const instant = prefersReducedMotion();
+  useEffect(() => {
+    if (awakened && !instant) playSfx('shrine', { delay: 1.05 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <RoadScene
-      className="is-place is-arrival"
+      className={`is-place is-arrival${awakened ? ' is-awakening' : ''}${instant ? ' is-skipped' : ''}`}
       label={name}
+      awakenRgb={awakened?.rgb}
       onClick={() => {
         playSfx('ui.confirm');
         onDone();
       }}
     >
-      <img src={art} className={`road-encounter-figure is-x${scale}${instant ? ' is-still' : ''}`} alt="" draggable={false} />
+      {awakened && <span className="road-awaken-halo" aria-hidden="true" />}
+      <img
+        src={art}
+        className={`road-encounter-figure is-x${scale}${instant ? ' is-still' : ''}${awakened ? ' is-dormant' : ''}`}
+        alt=""
+        draggable={false}
+      />
+      {awakened && <img src={awakened.art} className={`road-encounter-figure is-x${scale} is-awake`} alt="" draggable={false} />}
       <span className="road-encounter-label" aria-hidden="true">
         {name}
         <span className="road-encounter-more" />
@@ -176,7 +213,7 @@ export function RoadGate({
 }: {
   run: RunState;
   art: string;
-  awakened?: string;
+  awakened?: Awakening;
   lights?: readonly SceneLight[];
   name: string;
   lines: readonly string[];

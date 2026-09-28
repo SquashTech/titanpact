@@ -149,7 +149,7 @@ import type { Squad } from '../run/squad';
 import { statScaleFor } from '../run/statScale';
 import { RoadGate } from '../view/run/RoadEncounter';
 import { CrucibleRite } from '../view/run/CrucibleRite';
-import { mapNodeArt, mapNodeAwakeArt } from '../view/run/mapNodeArt';
+import { mapNodeArt, mapNodeAwakening } from '../view/run/mapNodeArt';
 import { PLACE_LINES } from '../data/roadLines';
 
 type Screen =
@@ -1369,6 +1369,7 @@ export function App() {
           run={playerRun}
           place
           art={mapNodeArt('scrollReward')!}
+          awakened={mapNodeAwakening('scrollReward')}
           {...PLACE_LINES.scrollReward}
           enabled={screen.plan.kind === 'scrolls' && !screen.bought}
         >
@@ -1383,7 +1384,7 @@ export function App() {
       )}
 
       {screen.kind === 'manaWell' && (
-        <RoadGate run={playerRun} place art={mapNodeArt('manaWellReward')!} awakened={mapNodeAwakeArt('manaWellReward')} {...PLACE_LINES.manaWellReward}>
+        <RoadGate run={playerRun} place art={mapNodeArt('manaWellReward')!} awakened={mapNodeAwakening('manaWellReward')} {...PLACE_LINES.manaWellReward}>
           <ManaWellScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
         </RoadGate>
       )}
@@ -1393,13 +1394,13 @@ export function App() {
       )}
 
       {screen.kind === 'leyLine' && (
-        <RoadGate run={playerRun} place art={mapNodeArt('leyLineReward')!} awakened={mapNodeAwakeArt('leyLineReward')} {...PLACE_LINES.leyLineReward}>
+        <RoadGate run={playerRun} place art={mapNodeArt('leyLineReward')!} awakened={mapNodeAwakening('leyLineReward')} {...PLACE_LINES.leyLineReward}>
           <LeyLineScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
         </RoadGate>
       )}
 
       {screen.kind === 'rest' && (
-        <RoadGate run={playerRun} place art={mapNodeArt('restReward')!} lights={PROP_LIGHTS.restReward} {...PLACE_LINES.restReward}>
+        <RoadGate run={playerRun} place art={mapNodeArt('restReward')!} awakened={mapNodeAwakening('restReward')} lights={PROP_LIGHTS.restReward} {...PLACE_LINES.restReward}>
           <RestNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
         </RoadGate>
       )}
@@ -1410,7 +1411,7 @@ export function App() {
 
 
       {screen.kind === 'boonNode' && (
-        <RoadGate run={playerRun} place art={mapNodeArt('passiveReward')!} {...PLACE_LINES.passiveReward}>
+        <RoadGate run={playerRun} place art={mapNodeArt('passiveReward')!} awakened={mapNodeAwakening('passiveReward')} {...PLACE_LINES.passiveReward}>
           <BoonNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
         </RoadGate>
       )}
@@ -1428,7 +1429,7 @@ export function App() {
         (() => {
           const { nodeId, eventId } = screen;
           return (
-            <RoadGate run={playerRun} place art={mapNodeArt('event')!} name={runEvents[eventId].name} lines={[runEvents[eventId].flavor]}>
+            <RoadGate run={playerRun} place art={mapNodeArt('event')!} awakened={mapNodeAwakening('event')} name={runEvents[eventId].name} lines={[runEvents[eventId].flavor]}>
               <EventNodeScreen
                 event={runEvents[eventId]}
                 run={playerRun}

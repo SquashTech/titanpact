@@ -4,7 +4,7 @@ import type { CSSProperties } from 'react';
 // flames, a lighthouse's lamp, a campfire's sparks. Each light is placed in % of the painting it
 // sits on and drawn by styles.css ("Scene lights"); the painting itself is never touched.
 
-export type SceneLightKind = 'star' | 'firefly' | 'flame' | 'ember' | 'beacon' | 'moon';
+export type SceneLightKind = 'star' | 'firefly' | 'flame' | 'candle' | 'ember' | 'beacon' | 'moon' | 'glow' | 'eye';
 
 export interface SceneLight {
   kind: SceneLightKind;
@@ -13,9 +13,13 @@ export interface SceneLight {
   y: number;
   /** Diameter in % of the painting's width. Each kind has a default. */
   size?: number;
+  /** A glow's or an eye's light, as "r, g, b". */
+  rgb?: string;
+  /** Seconds into its cycle. Lights sharing one keep time together — two eyes of one creature blink as one. */
+  phase?: number;
 }
 
-const DEFAULT_SIZE: Record<SceneLightKind, number> = { star: 1.2, firefly: 7, flame: 16, ember: 1.6, beacon: 14, moon: 30 };
+const DEFAULT_SIZE: Record<SceneLightKind, number> = { star: 1.2, firefly: 7, flame: 16, candle: 6, ember: 1.6, beacon: 14, moon: 30, glow: 16, eye: 5 };
 
 /** A campfire: the glow, and three sparks lifting off it. */
 function campfire(x: number, y: number, size: number): SceneLight[] {
@@ -62,6 +66,48 @@ export const LOCATION_LIGHTS: Record<string, readonly SceneLight[]> = {
     { kind: 'flame', x: 76.5, y: 55, size: 12 },
   ],
   stormCoast: [{ kind: 'beacon', x: 62.5, y: 17.5 }],
+  blightedShrine: [
+    { kind: 'glow', x: 18, y: 34, size: 18, rgb: '170, 110, 240' },
+    { kind: 'glow', x: 80, y: 33, size: 20, rgb: '170, 110, 240' },
+    { kind: 'glow', x: 80, y: 44, size: 14, rgb: '170, 110, 240' },
+    { kind: 'glow', x: 50, y: 35, size: 22, rgb: '200, 170, 255' },
+    { kind: 'eye', x: 51, y: 56, size: 7, rgb: '200, 170, 255' },
+  ],
+  dreamingSpires: [
+    { kind: 'moon', x: 63.5, y: 13, size: 56 },
+    { kind: 'glow', x: 49.5, y: 32, size: 8, rgb: '255, 150, 190' },
+  ],
+  forbiddenForest: [
+    { kind: 'eye', x: 8.5, y: 27.5, rgb: '140, 255, 150', phase: 0.4 },
+    { kind: 'eye', x: 14, y: 27.5, rgb: '140, 255, 150', phase: 0.4 },
+    { kind: 'eye', x: 87.5, y: 30, rgb: '140, 255, 150', phase: 3.1 },
+    { kind: 'eye', x: 93, y: 30, rgb: '140, 255, 150', phase: 3.1 },
+    { kind: 'eye', x: 69.5, y: 31.5, size: 4, rgb: '140, 255, 150', phase: 1.8 },
+    { kind: 'glow', x: 15, y: 40, size: 14, rgb: '120, 230, 170' },
+    { kind: 'glow', x: 85, y: 35, size: 12, rgb: '120, 230, 170' },
+  ],
+  frozenReach: [
+    { kind: 'star', x: 70, y: 13 },
+    { kind: 'star', x: 21, y: 29 },
+    { kind: 'star', x: 87.5, y: 36 },
+    { kind: 'star', x: 60, y: 22 },
+  ],
+  holySanctum: [
+    { kind: 'glow', x: 50, y: 33, size: 24, rgb: '255, 220, 140' },
+    { kind: 'glow', x: 15, y: 19, size: 14, rgb: '255, 220, 140' },
+    { kind: 'glow', x: 84, y: 19, size: 14, rgb: '255, 220, 140' },
+    { kind: 'glow', x: 50, y: 58, size: 16, rgb: '255, 170, 90' },
+    { kind: 'candle', x: 4, y: 95 },
+    { kind: 'candle', x: 94.5, y: 95 },
+    { kind: 'candle', x: 18, y: 84 },
+    { kind: 'candle', x: 82, y: 84 },
+    { kind: 'candle', x: 32, y: 75 },
+    { kind: 'candle', x: 67, y: 75 },
+    { kind: 'candle', x: 9, y: 66 },
+    { kind: 'candle', x: 89, y: 66 },
+  ],
+  theThreshold: [{ kind: 'glow', x: 55, y: 38, size: 12, rgb: '220, 230, 190' }],
+  thunderAerie: [{ kind: 'glow', x: 58, y: 15, size: 42, rgb: '200, 150, 255' }],
 };
 
 /** The map's props, where a road scene stands one (art/map-nodes/props), by node type. */
@@ -88,8 +134,9 @@ export function SceneLights({ lights, className }: { lights: readonly SceneLight
               top: `${light.y}%`,
               width: `${light.size ?? DEFAULT_SIZE[light.kind]}%`,
               // Staggered off the index so no two lights in a scene breathe in step.
-              animationDelay: `${-((i * 0.73) % 3.1).toFixed(2)}s`,
-              '--light-rate': (0.85 + ((i * 37) % 30) / 100).toFixed(2),
+              animationDelay: `${-(light.phase ?? (i * 0.73) % 3.1).toFixed(2)}s`,
+              '--light-rate': light.phase != null ? '1' : (0.85 + ((i * 37) % 30) / 100).toFixed(2),
+              ...(light.rgb ? { '--light-rgb': light.rgb } : null),
             } as CSSProperties
           }
         />

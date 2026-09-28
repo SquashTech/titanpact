@@ -15,6 +15,7 @@ import { HubGlyph } from '../shared/nodeIcons';
 import smithArt from '../../../art/npc/smith.png';
 import { RoadArrival, useRoadGreeting } from './RoadEncounter';
 import smithyArt from '../../../art/map-nodes/landmarks/smithy.png';
+import { mapNodeAwakening } from './mapNodeArt';
 import { NodeHeader, NodeSky, NODE_TINT_HEARTH } from '../shared/NodeStage';
 import { overlayHost } from '../shared/overlayHost';
 import { RosterPeek } from './RosterPeek';
@@ -83,7 +84,7 @@ export function ForgeNodeScreen({ run, onRunChange, onContinue }: Props) {
       ? 'Nothing the roster wears can be forged here. Walk on.'
       : 'Upgrade and Enchant an item.';
 
-  if (arriving) return <RoadArrival art={smithyArt} name="The Smithy" onDone={dismissArrival} />;
+  if (arriving) return <RoadArrival art={smithyArt} awakened={mapNodeAwakening('forgeReward')} name="The Smithy" onDone={dismissArrival} />;
 
   return (
     <div className="node-screen forge-node-screen" style={{ '--node-rgb': NODE_TINT_HEARTH } as CSSProperties}>
