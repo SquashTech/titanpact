@@ -258,6 +258,30 @@ physical tank; Toll heals its partner 10 on every hit it lands) and **Hart** (Li
 stag — Wis 85 healer; Hallowed Step gives its partner Renew 20 on entry). All four carry
 first-pass numbers and have had no sim pass.
 
+**Twelve more Starfall-only heroes, 2026-09-28** (per user direction, the `art/future-heroes/`
+set; first-pass numbers, no sim pass). Two were renamed off their art: Omen → **Jinx** (Omen is
+Dread's path and passive) and Tome → **Folio** (Tome is an item family).
+**Ashwing** (Fire, the phoenix — Speed 80 magical caster with a mend in its kit; Smoulder brings
+the endure verb back, the first knockout each fight refused at 1 HP, and its mastered Rebirth
+rises from it healed half its max HP off a new `Endured` passive hook). **Kappa** (Water, the
+river imp — Atk 100 brawler against Pincer's wall; Brimming gains 10 Attack whenever it is healed,
+fed by its own Siphon; the dish-spilling Burden was left unbuilt). **Tusk** (Frost, the woolly
+mammoth — Atk 115 at Speed 15; Stampede gains 5 Attack at every round end it stands on the field).
+**Motley** (Mind, the court fool — Speed 95 chaos; Slapstick gives each hit a 30% chance to Daze a
+random enemy). **Folio** (Arcane, the living spellbook — Int 105 volley caster; Inscribe takes 5
+Wisdom off whatever it hits, so every rune of a volley lands harder than the last). **Ronin**
+(Iron, the wandering samurai — Atk 105 first strike; Iaido sends its first attack after entering
+at +1 priority, and Draw Cut goes at +2). **Kong** (Beast, the gorilla — Atk 95 at Speed 60, the
+mid-speed bruiser against Ursa's slow 115; Chest Beat takes 10 Attack off both active enemies on
+entry). **Morel** (Nature, the mushroom folk — Int 80 spore caster; Mycelium takes 5 Attack and 5
+Intelligence off every enemy it Poisons). **Scree** (Stone, the granite pangolin — Def 100
+curl-and-charge tank that swings Defense through Body Blow; Curl gains 5 Defense whenever it takes
+damage). **Aurum** (Light, the sun-maned lion — Atk 105 / Speed 85, the type's physical striker;
+Blazing Mane gives its Light attacks a 20% Daze). **Jinx** (Shadow, the black cat — Speed 105;
+Bad Luck takes 5 Attack and 5 Intelligence off a random enemy on every hit it lands). **Kitsu**
+(Spirit, the kitsune — Int 95 / Speed 100 caster; Foxfire Burns 10 on every Spirit hit, and
+Tailfire Volley hits both foes twice).
+
 **Renames, 2026-09-27** (per user direction, after the sprite redesign): **Cortex → Reverie**
 (`mindweaver`, now the mesmer moth), **Cube → Floe** (`cube`, now the glacier snail) and **Slate → Petra** (`slate`, now the crystal geomancer). Ids,
 kits and numbers are unchanged; older sections of the docs use the old names. Aegis is now the

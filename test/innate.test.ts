@@ -334,6 +334,20 @@ test('feast: a finishing blow heals Ursa half its max HP; a hit that leaves the 
   assert.strictEqual(cast(standing).state.combatants.a1.currentHp, 10);
 });
 
+test('rebirth: an Endured hook — the hit Ashwing refuses raises it half its max HP; Smoulder alone leaves it at 1', () => {
+  const maxHp = fixtureMaxHp('ashwing');
+  const struck = (passiveId: string, seed: number) => {
+    const state = withField(withPassive(twoVTwo(seed, 'ashwing', 'valor', 'ironWarden', 'crag'), 'a1', passiveId), 'a1', { currentHp: 1, enduresLeft: 1 });
+    return resolveRound(state, [{ kind: 'move', combatantId: 'b1', moveId: 'openingStrike', declaredTarget: 'a1' }, ...restAll(state).filter((a) => a.combatantId !== 'b1')], config);
+  };
+  const risen = struck('rebirth', 26);
+  assert.strictEqual(risen.state.combatants.a1.fainted, false);
+  assert.strictEqual(risen.state.combatants.a1.currentHp, 1 + Math.round(maxHp * 0.5));
+  assert.ok(risen.events.some((e) => e.type === 'PassiveTriggered' && e.passiveId === 'rebirth'));
+  const smouldering = struck('smoulder', 26);
+  assert.strictEqual(smouldering.state.combatants.a1.currentHp, 1);
+});
+
 test('lament: a hit on a Haunted enemy heals Sorrow for its amount, and nothing on an unhaunted one', () => {
   const base = withField(withPassive(twoVTwo(25, 'sorrow', 'valor', 'ironWarden', 'crag'), 'a1', 'lament'), 'a1', { currentHp: 20 });
   const strike = (s: CombatState) =>

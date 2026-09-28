@@ -823,6 +823,78 @@ export const progressionTable: ProgressionTable = {
       'benediction', 'radiantBeam', 'radiance', 'consecrate', 'smite', 'wildBloom',
       'divineGrace', 'exalt', 'solarFlare', 'forceOfNature',
     ],
+    // Ashwing: Fire's magical column with Light's and Water's mending beside it. Immolate is Firebird's grant.
+    ashwing: [
+      'sparkFlash', 'flareUp', 'stokeTheFlames', 'vigil', 'purify', 'refresh',
+      'scorch', 'spreadingBlaze', 'heatHaze', 'backdraft', 'benediction', 'cleansingRain',
+      'inferno', 'firestorm', 'sparkBurst', 'divineGrace', 'highTide',
+    ],
+    // Kappa: Water's physical column and the Iron and Beast brawling around it. Oasis is Deep Pool's grant.
+    kappa: [
+      'tideGuard', 'refresh', 'heavyBlow', 'ironFist', 'rockToss', 'sharpen',
+      'aquaSlice', 'engulf', 'lacerate', 'maul', 'momentumSwing', 'rendArmor',
+      'waveShred', 'onslaught', 'eviscerate', 'rendingLeap', 'juggernaut',
+    ],
+    // Tusk: Frost's physical column with Iron's weight behind it. Snowball is Ice Age's grant.
+    tusk: [
+      'frostArmor', 'rimeCoat', 'pinDown', 'ironFist', 'sharpen', 'openingStrike',
+      'icicleThrust', 'coldSnap', 'iceShell', 'momentumSwing', 'rendArmor', 'permafrost',
+      'iceShatter', 'onslaught', 'swingingChain', 'frostWall', 'juggernaut',
+    ],
+    // Motley: Mind's debuffs and Light's blinding as the off-type. Psychic Blow is Harlequin's grant.
+    motley: [
+      'enervate', 'distort', 'brainWard', 'blind',
+      'psyshock', 'wickedFear', 'cerebralShock', 'disorient', 'hindsight', 'mentalFortress',
+      'psionicWave', 'brainFlay', 'breakWill', 'mindShatter',
+    ],
+    // Folio: Arcane's magical column, with Shadow's weakening as the off-type. Twin Cast is Magnum Opus's grant.
+    folio: [
+      'barrier', 'resonantBolt', 'manaFont', 'infuse', 'weaken',
+      'arcaneBlast', 'arcPulse', 'overload', 'study', 'magicCloak',
+      'singularity', 'cataclysm', 'arcaneOverflow', 'conduit',
+    ],
+    // Ronin: Iron's physical column, with Shadow's first strike and Spirit's flight as the off-types. Onslaught is Kensei's grant.
+    ronin: [
+      'ironFist', 'openingStrike', 'pinDown', 'fortify', 'ironSkin',
+      'serratedSlice', 'rendArmor', 'momentumSwing', 'parry', 'shadowstrike',
+      'juggernaut', 'swingingChain', 'wailingFlight',
+    ],
+    // Kong: Beast's physical column, with Stone's brace as the off-type. Pack Leader is Silverback's grant.
+    kong: [
+      'pounce', 'venomBite', 'prowl', 'rally', 'mudBall', 'toughenUp', 'heavyBlow',
+      'gore', 'rampage', 'thrash', 'packHunt', 'lacerate', 'maul', 'bloodTrail',
+      'apexPredator', 'eviscerate', 'rendingLeap', 'titanicCrush', 'boulderSlam',
+    ],
+    // Morel: Nature's Poison column and Mind's dulling as the off-type. Wild Bloom is Toadstool's grant.
+    morel: [
+      'seedShot', 'regrowth', 'sow', 'lull', 'inkCloud', 'enervate',
+      'blight', 'corrode', 'rootbind', 'magicGrowth', 'disorient', 'mindLeech',
+      'miasma', 'forceOfNature', 'leech', 'breakWill', 'brainFlay',
+    ],
+    // Scree: Stone's guard column, the Defense swings, and Iron's pins. Rampart is Tor's grant.
+    scree: [
+      'rockToss', 'toughenUp', 'provoke', 'gravelSpray', 'openingStrike', 'pinDown',
+      'spireClaw', 'bastion', 'retribution', 'bodyguard', 'faultLine', 'reinforce',
+      'bodyCrush', 'stoneheart', 'boulderSlam', 'landslide',
+    ],
+    // Aurum: Light's physical column and Iron's weight behind it. Deity Blade is Sunlord's grant.
+    aurum: [
+      'hallow', 'vigil', 'purify', 'pounce', 'heavyBlow', 'openingStrike', 'sharpen',
+      'holySlice', 'sunlance', 'consecrate', 'benediction', 'gore', 'serratedSlice', 'momentumSwing',
+      'onslaught', 'apexPredator', 'juggernaut', 'divineGrace', 'exalt',
+    ],
+    // Jinx: Shadow's knives, with the cat's pounce and Iron's pins as the off-types. Shadowstrike is Black Cat's grant.
+    jinx: [
+      'lieInWait', 'backstab', 'openingStrike', 'swiftBlow', 'claw', 'pounce',
+      'shadowSlice', 'cutthroat', 'rend', 'smokeBomb', 'lacerate', 'rendArmor', 'maul',
+      'duskBlade', 'thousandCuts', 'shadowForm', 'rendingLeap', 'eviscerate',
+    ],
+    // Kitsu: Spirit's magical column, with Arcane's bolts as the off-type. Banish is Ninetails' grant.
+    kitsu: [
+      'torment', 'drain', 'soulfire', 'secondWind', 'spite', 'magicBolt', 'focus',
+      'soulRend', 'poltergeist', 'flicker', 'vengeance', 'soulOffering', 'arcPulse', 'arcaneBlast',
+      'seance', 'lastRites', 'ascendant', 'twinCast', 'cataclysm',
+    ],
     // The companion's bodies (run/companion.ts): a spawn's pool is its type's whole slate, so
     // the schedule gates it by band like anyone's. No Evolution node — its Mastery pips are its
     // tier-steps instead.
@@ -2660,6 +2732,414 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['wisp'],
             typeGraft: 'Spirit',
             learnableMoveIds: ['drain', 'soulRend', 'flicker', 'ascendant'],
+          },
+        ],
+      },
+    ],
+    ashwing: [
+      {
+        paths: [
+          {
+            id: 'ashwing-firebird',
+            heroId: 'ashwing',
+            name: 'Firebird',
+            description: 'Burns hotter every time it comes back, and whatever it set alight burns hotter with it.',
+            statGrants: { intelligence: 20, speed: 10 },
+            unlocksMoveIds: ['immolate'],
+          },
+          {
+            id: 'ashwing-sunbird',
+            heroId: 'ashwing',
+            name: 'Sunbird',
+            description: 'Flies high enough to catch the sun, and brings a little of it down for the ones below.',
+            statGrants: { hp: 30, wisdom: 20 },
+            unlocksMoveIds: ['consecrate'],
+            typeGraft: 'Light',
+            learnableMoveIds: ['glimmer', 'bless', 'radiantBeam', 'radiance', 'solarFlare'],
+          },
+          {
+            id: 'ashwing-ashen',
+            heroId: 'ashwing',
+            name: 'Ashen',
+            description: 'Burns itself down to the last ember on purpose, knowing what comes back.',
+            statGrants: { hp: 30, intelligence: 20 },
+            unlocksMoveIds: ['lastRites'],
+            typeGraft: 'Spirit',
+            learnableMoveIds: ['wisp', 'flicker', 'soulRend', 'seance'],
+          },
+        ],
+      },
+    ],
+    kappa: [
+      {
+        paths: [
+          {
+            id: 'kappa-deepPool',
+            heroId: 'kappa',
+            name: 'Deep Pool',
+            description: 'The dish becomes a pool, and whoever stands beside it drinks too.',
+            statGrants: { hp: 30, wisdom: 20 },
+            unlocksMoveIds: ['oasis'],
+          },
+          {
+            id: 'kappa-snapper',
+            heroId: 'kappa',
+            name: 'Snapper',
+            description: 'Grows the shell thick and the beak sharp, and does not let go once it bites.',
+            statGrants: { attack: 20, defense: 10 },
+            unlocksMoveIds: ['bloodTrail'],
+            typeGraft: 'Beast',
+            learnableMoveIds: ['venomBite', 'pounce', 'toxicFangs', 'thrash', 'apexPredator'],
+          },
+          {
+            id: 'kappa-yokai',
+            heroId: 'kappa',
+            name: 'Yokai',
+            description: 'The thing the village tells its children about, and it is there before the story ends.',
+            statGrants: { attack: 10, speed: 20 },
+            unlocksMoveIds: ['spookySlice'],
+            typeGraft: 'Spirit',
+            learnableMoveIds: ['phantomStrike', 'drain', 'secondWind', 'soulRend', 'wailingFlight'],
+          },
+        ],
+      },
+    ],
+    tusk: [
+      {
+        paths: [
+          {
+            id: 'tusk-iceAge',
+            heroId: 'tusk',
+            name: 'Ice Age',
+            description: 'Stops being one animal in the snow and starts being the winter it walked out of.',
+            statGrants: { hp: 30, attack: 20 },
+            unlocksMoveIds: ['snowball'],
+          },
+          {
+            id: 'tusk-erratic',
+            heroId: 'tusk',
+            name: 'Erratic',
+            description: 'Carries the boulders the glacier left behind, and puts them down on whoever is in the way.',
+            statGrants: { hp: 30, defense: 20 },
+            unlocksMoveIds: ['titanicCrush'],
+            typeGraft: 'Stone',
+            learnableMoveIds: ['rockToss', 'rubbleRush', 'faultLine', 'boulderSlam', 'bastion'],
+          },
+          {
+            id: 'tusk-matriarch',
+            heroId: 'tusk',
+            name: 'Matriarch',
+            description: 'Leads the herd now, and the herd comes when she calls.',
+            statGrants: { hp: 30, attack: 10, speed: 10 },
+            unlocksMoveIds: ['howl'],
+            typeGraft: 'Beast',
+            learnableMoveIds: ['claw', 'gore', 'rampage', 'thrash', 'packLeader'],
+          },
+        ],
+      },
+    ],
+    motley: [
+      {
+        paths: [
+          {
+            id: 'motley-harlequin',
+            heroId: 'motley',
+            name: 'Harlequin',
+            description: 'Lighter on its feet than anyone in the room, and the joke lands before the audience sees it coming.',
+            statGrants: { intelligence: 20, speed: 10 },
+            unlocksMoveIds: ['psychicBlow'],
+          },
+          {
+            id: 'motley-conjurer',
+            heroId: 'motley',
+            name: 'Conjurer',
+            description: 'Learns the other half of the act: the sleeve, the cloak, and the thing that was never there.',
+            statGrants: { intelligence: 20, manaPool: 10 },
+            unlocksMoveIds: ['magicCloak'],
+            typeGraft: 'Arcane',
+            learnableMoveIds: ['magicBolt', 'resonantBolt', 'focus', 'arcPulse', 'overload', 'cataclysm'],
+          },
+          {
+            id: 'motley-tragedian',
+            heroId: 'motley',
+            name: 'Tragedian',
+            description: 'Turns the mask to its other face, and nobody laughs any more.',
+            statGrants: { hp: 30, intelligence: 20 },
+            unlocksMoveIds: ['enfeeble'],
+            typeGraft: 'Shadow',
+            learnableMoveIds: ['umbraBolt', 'weaken', 'umbralBeam', 'smokeBomb', 'eclipse', 'umbralWave'],
+          },
+        ],
+      },
+    ],
+    folio: [
+      {
+        paths: [
+          {
+            id: 'folio-magnumOpus',
+            heroId: 'folio',
+            name: 'Magnum Opus',
+            description: 'Writes the last chapter itself, and every spell in it is spoken twice.',
+            statGrants: { intelligence: 20, manaPool: 10 },
+            unlocksMoveIds: ['twinCast'],
+          },
+          {
+            id: 'folio-illuminated',
+            heroId: 'folio',
+            name: 'Illuminated',
+            description: 'Gold leaf in every margin, and the pages shine when they open.',
+            statGrants: { hp: 30, wisdom: 20 },
+            unlocksMoveIds: ['radiantBeam'],
+            typeGraft: 'Light',
+            learnableMoveIds: ['glimmer', 'bless', 'radiance', 'blindingFlash', 'solarFlare'],
+          },
+          {
+            id: 'folio-prophecy',
+            heroId: 'folio',
+            name: 'Prophecy',
+            description: 'The last pages are about what happens next, and they are never wrong.',
+            statGrants: { intelligence: 10, wisdom: 20 },
+            unlocksMoveIds: ['psyshock'],
+            typeGraft: 'Mind',
+            learnableMoveIds: ['psiBolt', 'lull', 'cerebralShock', 'disorient', 'psionicWave'],
+          },
+        ],
+      },
+    ],
+    ronin: [
+      {
+        paths: [
+          {
+            id: 'ronin-kensei',
+            heroId: 'ronin',
+            name: 'Kensei',
+            description: 'Stops wandering, and the sword stops needing a reason.',
+            statGrants: { attack: 20, defense: 10 },
+            unlocksMoveIds: ['onslaught'],
+          },
+          {
+            id: 'ronin-raijin',
+            heroId: 'ronin',
+            name: 'Raijin',
+            description: 'Draws in a thunderstorm, and the blade comes out with the lightning.',
+            statGrants: { attack: 10, speed: 20 },
+            unlocksMoveIds: ['shockSlice'],
+            typeGraft: 'Storm',
+            learnableMoveIds: ['thunderclap', 'zap', 'stormLash', 'rideTheLightning', 'overcharge', 'skyfall'],
+          },
+          {
+            id: 'ronin-shinobi',
+            heroId: 'ronin',
+            name: 'Shinobi',
+            description: 'Gives up the open road for the night, and is never seen drawing.',
+            statGrants: { hp: 30, speed: 10 },
+            unlocksMoveIds: ['duskBlade'],
+            typeGraft: 'Shadow',
+            learnableMoveIds: ['fadeStrike', 'backstab', 'lieInWait', 'shadowSlice', 'cutthroat', 'thousandCuts'],
+          },
+        ],
+      },
+    ],
+    kong: [
+      {
+        paths: [
+          {
+            id: 'kong-silverback',
+            heroId: 'kong',
+            name: 'Silverback',
+            description: 'Goes grey across the back, and the whole troop moves when it does.',
+            statGrants: { hp: 30, attack: 20 },
+            unlocksMoveIds: ['packLeader'],
+          },
+          {
+            id: 'kong-stonefist',
+            heroId: 'kong',
+            name: 'Stonefist',
+            description: 'Walks on knuckles gone to granite, and every step is a blow.',
+            statGrants: { attack: 10, defense: 20 },
+            unlocksMoveIds: ['rubbleRush'],
+            typeGraft: 'Stone',
+            learnableMoveIds: ['rockToss', 'faultLine', 'spireClaw', 'bodyguard', 'stoneheart'],
+          },
+          {
+            id: 'kong-canopyKing',
+            heroId: 'kong',
+            name: 'Canopy King',
+            description: 'Takes to the trees, and the jungle closes in behind it.',
+            statGrants: { hp: 30, speed: 10 },
+            unlocksMoveIds: ['leafSlice'],
+            typeGraft: 'Nature',
+            learnableMoveIds: ['vineLash', 'thornWhip', 'regrowth', 'verdantLash', 'sow', 'branchSlam'],
+          },
+        ],
+      },
+    ],
+    morel: [
+      {
+        paths: [
+          {
+            id: 'morel-toadstool',
+            heroId: 'morel',
+            name: 'Toadstool',
+            description: 'Rings itself in its own kind, and the ring grows whatever stands inside it.',
+            statGrants: { hp: 30, wisdom: 20 },
+            unlocksMoveIds: ['wildBloom'],
+          },
+          {
+            id: 'morel-deathcap',
+            heroId: 'morel',
+            name: 'Deathcap',
+            description: 'Pales to the colour nobody picks twice, and what it plants does not come back up.',
+            statGrants: { intelligence: 20, speed: 10 },
+            unlocksMoveIds: ['grimHarvest'],
+            typeGraft: 'Shadow',
+            learnableMoveIds: ['umbralBeam', 'enfeeble', 'eclipse', 'umbralWave'],
+          },
+          {
+            id: 'morel-corpselight',
+            heroId: 'morel',
+            name: 'Corpselight',
+            description: 'Glows on the old graves it grows from, and the graves answer.',
+            statGrants: { intelligence: 10, wisdom: 20 },
+            unlocksMoveIds: ['soulRend'],
+            typeGraft: 'Spirit',
+            learnableMoveIds: ['wisp', 'drain', 'poltergeist', 'seance', 'banish'],
+          },
+        ],
+      },
+    ],
+    scree: [
+      {
+        paths: [
+          {
+            id: 'scree-tor',
+            heroId: 'scree',
+            name: 'Tor',
+            description: 'Curls so tight it becomes a hilltop, and the hill shelters whoever is behind it.',
+            statGrants: { hp: 30, defense: 20 },
+            unlocksMoveIds: ['rampart'],
+          },
+          {
+            id: 'scree-ironscale',
+            heroId: 'scree',
+            name: 'Ironscale',
+            description: 'Every scale turns to plate, and the plate is what it hits with.',
+            statGrants: { defense: 20, wisdom: 10 },
+            unlocksMoveIds: ['shieldBash'],
+            typeGraft: 'Iron',
+            learnableMoveIds: ['ironSkin', 'parry', 'livingWall', 'juggernaut', 'heavyBlow'],
+          },
+          {
+            id: 'scree-riverstone',
+            heroId: 'scree',
+            name: 'Riverstone',
+            description: 'Rolls down to the river and comes out smooth, and the water rolls with it.',
+            statGrants: { hp: 30, wisdom: 20 },
+            unlocksMoveIds: ['seawall'],
+            typeGraft: 'Water',
+            learnableMoveIds: ['tideGuard', 'crest', 'washAway', 'cleansingRain', 'undertow'],
+          },
+        ],
+      },
+    ],
+    aurum: [
+      {
+        paths: [
+          {
+            id: 'aurum-sunlord',
+            heroId: 'aurum',
+            name: 'Sunlord',
+            description: 'The mane burns white at noon, and nothing looks straight at it.',
+            statGrants: { attack: 20, speed: 10 },
+            unlocksMoveIds: ['deityBlade'],
+          },
+          {
+            id: 'aurum-pride',
+            heroId: 'aurum',
+            name: 'Pride',
+            description: 'Remembers it was a lion before it was a sun, and hunts like one.',
+            statGrants: { hp: 30, attack: 20 },
+            unlocksMoveIds: ['rampage'],
+            typeGraft: 'Beast',
+            learnableMoveIds: ['prowl', 'lacerate', 'maul', 'thrash', 'eviscerate', 'rendingLeap'],
+          },
+          {
+            id: 'aurum-sunfire',
+            heroId: 'aurum',
+            name: 'Sunfire',
+            description: 'The light in the mane catches, and the mane goes on burning.',
+            statGrants: { attack: 10, speed: 20 },
+            unlocksMoveIds: ['firebrand'],
+            typeGraft: 'Fire',
+            learnableMoveIds: ['singe', 'kindle', 'moltenLash', 'blazingRetreat', 'volcanicSurge'],
+          },
+        ],
+      },
+    ],
+    jinx: [
+      {
+        paths: [
+          {
+            id: 'jinx-blackCat',
+            heroId: 'jinx',
+            name: 'Black Cat',
+            description: 'Crosses first, every time, and the luck runs out behind it.',
+            statGrants: { attack: 20, speed: 10 },
+            unlocksMoveIds: ['shadowstrike'],
+          },
+          {
+            id: 'jinx-nekomata',
+            heroId: 'jinx',
+            name: 'Nekomata',
+            description: 'Lives long enough that the tail splits, and the dead start following it home.',
+            statGrants: { hp: 30, wisdom: 20 },
+            unlocksMoveIds: ['phantomStrike'],
+            typeGraft: 'Spirit',
+            learnableMoveIds: ['torment', 'spookySlice', 'wailingFlight', 'soulOffering'],
+          },
+          {
+            id: 'jinx-luckyCat',
+            heroId: 'jinx',
+            name: 'Lucky Cat',
+            description: 'Raises one paw and the luck turns — somebody else’s, into its own pocket.',
+            statGrants: { defense: 20, speed: 10 },
+            unlocksMoveIds: ['jackpot'],
+            typeGraft: 'Mech',
+            learnableMoveIds: ['cogBop', 'pistonPunch', 'overclock', 'cogSlam', 'juryRig'],
+          },
+        ],
+      },
+    ],
+    kitsu: [
+      {
+        paths: [
+          {
+            id: 'kitsu-ninetails',
+            heroId: 'kitsu',
+            name: 'Ninetails',
+            description: 'Grows the ninth tail, and the fire in it is older than the fox.',
+            statGrants: { intelligence: 20, speed: 10 },
+            unlocksMoveIds: ['banish'],
+          },
+          {
+            id: 'kitsu-emberfox',
+            heroId: 'kitsu',
+            name: 'Emberfox',
+            description: 'The ghost-fire takes to the grass, and the grass does not go out.',
+            statGrants: { hp: 30, intelligence: 20 },
+            unlocksMoveIds: ['scorch'],
+            typeGraft: 'Fire',
+            learnableMoveIds: ['setAlight', 'flareUp', 'spreadingBlaze', 'immolate', 'firestorm'],
+          },
+          {
+            id: 'kitsu-trickster',
+            heroId: 'kitsu',
+            name: 'Trickster',
+            description: 'Wears a borrowed face, and the foe forgets which one was real.',
+            statGrants: { wisdom: 20, speed: 10 },
+            unlocksMoveIds: ['wickedFear'],
+            typeGraft: 'Mind',
+            learnableMoveIds: ['lull', 'enervate', 'psyshock', 'disorient', 'psionicWave'],
           },
         ],
       },

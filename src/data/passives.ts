@@ -1399,6 +1399,124 @@ const innatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew', magnitude: 20 },
     },
   },
+  smoulder: {
+    id: 'smoulder',
+    name: 'Smoulder',
+    description: 'The first time this hero would be knocked out each fight, it stands at 1 HP instead.',
+    enduresOnce: true,
+  },
+  brimming: {
+    id: 'brimming',
+    name: 'Brimming',
+    description: 'Whenever this hero is healed, it gains 10 Attack.',
+    reactive: {
+      hook: 'Healed',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10 },
+    },
+  },
+  stampede: {
+    id: 'stampede',
+    name: 'Stampede',
+    description: 'At the end of each round, this hero gains 5 Attack.',
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 5 },
+    },
+  },
+  slapstick: {
+    id: 'slapstick',
+    name: 'Slapstick',
+    description: 'Whenever this hero lands a hit, there is a 30% chance a random enemy is Dazed.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Daze' },
+      chance: 0.3,
+    },
+  },
+  inscribe: {
+    id: 'inscribe',
+    name: 'Inscribe',
+    description: 'Whenever this hero lands a hit, its target loses 5 Wisdom.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', amount: -5 },
+    },
+  },
+  iaido: {
+    id: 'iaido',
+    name: 'Iaido',
+    description: 'When this hero enters the battlefield, its next attack goes at +1 priority.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Poised' },
+    },
+  },
+  chestBeat: {
+    id: 'chestBeat',
+    name: 'Chest Beat',
+    description: 'When this hero enters the battlefield, both active enemies lose 10 Attack.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'attack', amount: -10 },
+    },
+  },
+  mycelium: {
+    id: 'mycelium',
+    name: 'Mycelium',
+    description: 'Whenever this hero Poisons an enemy, that enemy loses 5 Attack and 5 Intelligence.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Poison' } },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['attack', 'intelligence'], amount: -5 },
+    },
+  },
+  curl: {
+    id: 'curl',
+    name: 'Curl',
+    description: 'Whenever this hero takes damage, it gains 5 Defense.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'defense', amount: 5 },
+    },
+  },
+  blazingMane: {
+    id: 'blazingMane',
+    name: 'Blazing Mane',
+    description: 'Light attacks from this hero have a 20% chance to Daze.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Light' } },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Daze' },
+      chance: 0.2,
+    },
+  },
+  badLuck: {
+    id: 'badLuck',
+    name: 'Bad Luck',
+    description: 'Whenever this hero lands a hit, a random enemy loses 5 Attack and 5 Intelligence.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'statDelta', target: 'randomEnemy', stat: ['attack', 'intelligence'], amount: -5 },
+    },
+  },
+  foxfire: {
+    id: 'foxfire',
+    name: 'Foxfire',
+    description: 'Whenever this hero lands a Spirit attack, its target gains Burn 10.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Spirit' } },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', magnitude: 10 },
+    },
+  },
 };
 
 // --- The mastered innate (HeroDefinition.masteredPassiveIds, docs/mastery.md §5b) ---
@@ -2052,6 +2170,140 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
       effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew', magnitude: 40 },
+    },
+  },
+  rebirth: {
+    id: 'rebirth',
+    name: 'Rebirth',
+    description: 'The first time this hero would be knocked out each fight, it stands instead and rises from the ash healed half its max HP.',
+    enduresOnce: true,
+    reactive: {
+      hook: 'Endured',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'heal', target: 'self', amount: { kind: 'percentMaxHp', value: 0.5 } },
+    },
+  },
+  bottomlessDish: {
+    id: 'bottomlessDish',
+    name: 'Bottomless Dish',
+    description: 'Whenever this hero is healed, it gains 20 Attack.',
+    reactive: {
+      hook: 'Healed',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 20 },
+    },
+  },
+  glacialAdvance: {
+    id: 'glacialAdvance',
+    name: 'Glacial Advance',
+    description: 'At the end of each round, this hero gains 10 Attack.',
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10 },
+    },
+  },
+  pandemonium: {
+    id: 'pandemonium',
+    name: 'Pandemonium',
+    description: 'Whenever this hero lands a hit, there is a 60% chance a random enemy is Dazed.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Daze' },
+      chance: 0.6,
+    },
+  },
+  palimpsest: {
+    id: 'palimpsest',
+    name: 'Palimpsest',
+    description: 'Whenever this hero lands a hit, its target loses 10 Wisdom.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', amount: -10 },
+    },
+  },
+  // Poised carries no figure to double, so the mastered draw pays twice, as Deathtrap does.
+  iaijutsu: {
+    id: 'iaijutsu',
+    name: 'Iaijutsu',
+    description: 'When this hero enters the battlefield, its next attack goes at +1 priority and gains Ambush 30.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Poised' },
+    },
+  },
+  iaijutsuEdge: {
+    id: 'iaijutsuEdge',
+    name: 'Iaijutsu',
+    description: 'When this hero enters the battlefield, it gains Ambush 30.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 30 },
+    },
+  },
+  thunderchest: {
+    id: 'thunderchest',
+    name: 'Thunderchest',
+    description: 'When this hero enters the battlefield, both active enemies lose 20 Attack.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'attack', amount: -20 },
+    },
+  },
+  fruitingBody: {
+    id: 'fruitingBody',
+    name: 'Fruiting Body',
+    description: 'Whenever this hero Poisons an enemy, that enemy loses 10 Attack and 10 Intelligence.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Poison' } },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['attack', 'intelligence'], amount: -10 },
+    },
+  },
+  hardball: {
+    id: 'hardball',
+    name: 'Hardball',
+    description: 'Whenever this hero takes damage, it gains 10 Defense.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'defense', amount: 10 },
+    },
+  },
+  noonMane: {
+    id: 'noonMane',
+    name: 'Noon Mane',
+    description: 'Light attacks from this hero have a 40% chance to Daze.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Light' } },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Daze' },
+      chance: 0.4,
+    },
+  },
+  calamity: {
+    id: 'calamity',
+    name: 'Calamity',
+    description: 'Whenever this hero lands a hit, a random enemy loses 10 Attack and 10 Intelligence.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'statDelta', target: 'randomEnemy', stat: ['attack', 'intelligence'], amount: -10 },
+    },
+  },
+  kitsunebi: {
+    id: 'kitsunebi',
+    name: 'Kitsunebi',
+    description: 'Whenever this hero lands a Spirit attack, its target gains Burn 20.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Spirit' } },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', magnitude: 20 },
     },
   },
 };

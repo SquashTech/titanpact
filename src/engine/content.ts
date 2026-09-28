@@ -150,7 +150,8 @@ export type PassiveId = string;
 /** 'StatusDetonated' is a mark cashed in (Conduct burst by a hit; source = the striker); 'Rested' the Rest action, its `manaRestored` readable by matchTriggerAmount. */
 /** 'SwitchedOut' reads a SwitchedIn whose OUTGOING combatant is the subject, and fires from the bench the owner has just reached (Ink) — never on a knockout's replacement, since a fainted owner reacts to nothing. */
 /** 'MoveUsed' is a cast paid for, read after its payload and before any pivot; its subject is the caster, and `damaging` ('true' / 'false') is what eventFieldEquals reads (Poised). */
-export type PassiveHook = 'DamageDealt' | 'Healed' | 'StatusApplied' | 'StatusTicked' | 'StatusDetonated' | 'SwitchedIn' | 'SwitchedOut' | 'StatChanged' | 'RoundEnded' | 'Rested' | 'MoveUsed';
+/** 'Endured' is a knockout refused (enduresOnce); its subject is the holder, read off a hit or a status tick — never the Pact Clock, which is no trigger source. */
+export type PassiveHook = 'DamageDealt' | 'Healed' | 'StatusApplied' | 'StatusTicked' | 'StatusDetonated' | 'SwitchedIn' | 'SwitchedOut' | 'StatChanged' | 'RoundEnded' | 'Rested' | 'MoveUsed' | 'Endured';
 
 /** 'ally' = the owner's partner, not the owner. */
 export type PassiveRelation = 'self' | 'ally' | 'enemy';

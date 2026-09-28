@@ -457,7 +457,9 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
               }
             }
 
-            const damageReactions = resolvePassiveReactions(working, round, [damageDealtEvent], heroes, statuses, passives, fieldEffects);
+            // A knockout this hit refused is read after the hit itself (the Endured hook).
+            const endured = hpResult.events.filter((e) => e.type === 'Endured');
+            const damageReactions = resolvePassiveReactions(working, round, [damageDealtEvent, ...endured], heroes, statuses, passives, fieldEffects);
             working = damageReactions.state;
             events.push(...damageReactions.events);
 

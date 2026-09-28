@@ -100,6 +100,7 @@ function subjectOf(event: CombatEvent, role: 'target' | 'source'): string | unde
     case 'StatChanged':
     case 'Rested':
     case 'MoveUsed':
+    case 'Endured':
       return event.combatantId;
     case 'DamageDealt':
       return event.targetCombatantId;

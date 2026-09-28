@@ -50,6 +50,18 @@ import driftArt from '../../../art/heroes/unlocks/drift.png';
 import rimeholdArt from '../../../art/heroes/unlocks/rimehold.png';
 import carillonArt from '../../../art/heroes/unlocks/carillon.png';
 import hartArt from '../../../art/heroes/unlocks/hart.png';
+import ashwingArt from '../../../art/heroes/unlocks/ashwing.png';
+import kappaArt from '../../../art/heroes/unlocks/kappa.png';
+import tuskArt from '../../../art/heroes/unlocks/tusk.png';
+import motleyArt from '../../../art/heroes/unlocks/motley.png';
+import folioArt from '../../../art/heroes/unlocks/folio.png';
+import roninArt from '../../../art/heroes/unlocks/ronin.png';
+import kongArt from '../../../art/heroes/unlocks/kong.png';
+import morelArt from '../../../art/heroes/unlocks/morel.png';
+import screeArt from '../../../art/heroes/unlocks/scree.png';
+import aurumArt from '../../../art/heroes/unlocks/aurum.png';
+import jinxArt from '../../../art/heroes/unlocks/jinx.png';
+import kitsuArt from '../../../art/heroes/unlocks/kitsu.png';
 
 /** Portraits keyed by hero id (heroes.ts order). A missing entry renders text-only; a Titanspawn or Guardian id never reaches this — HeroPortrait draws it. */
 export const heroArt: Partial<Record<string, string>> = {
@@ -58,16 +70,19 @@ export const heroArt: Partial<Record<string, string>> = {
   crimson: crimsonArt,
   brimstone: brimstoneArt,
   drake: drakeArt,
+  ashwing: ashwingArt,
   // --- Water ---
   tidecaller: tidecallerArt,
   pincer: pincerArt,
   leviathan: leviathanArt,
   nautilus: nautilusArt,
+  kappa: kappaArt,
   // --- Frost ---
   glacialWarden: flurryArt,
   rime: rimeArt,
   cube: cubeArt,
   rimehold: rimeholdArt,
+  tusk: tuskArt,
   // --- Storm ---
   stormRanger: stormRangerArt,
   skyshear: skyshearArt,
@@ -77,37 +92,45 @@ export const heroArt: Partial<Record<string, string>> = {
   crag: cragArt,
   sentinel: sentinelArt,
   slate: slateArt,
+  scree: screeArt,
   // --- Nature ---
   wildOracle: wildOracleArt,
   mordax: mordaxArt,
   hollowbark: hollowbarkArt,
   tixwick: tixwickArt,
+  morel: morelArt,
   // --- Light ---
   dawnwarden: sunPriestArt,
   aegis: aegisArt,
   empyrean: empyreanArt,
   carillon: carillonArt,
   hart: hartArt,
+  aurum: aurumArt,
   // --- Shadow ---
   marrow: marrowArt,
   lucius: luciusArt,
   nightshade: nightshadeArt,
+  jinx: jinxArt,
   // --- Arcane ---
   runescribe: runescribeArt,
   zenith: zenithArt,
   pixie: pixieArt,
+  folio: folioArt,
   // --- Mind ---
   mindweaver: mindweaverArt,
   trance: tranceArt,
   drift: driftArt,
+  motley: motleyArt,
   // --- Spirit ---
   revenant: revenantArt,
   sorrow: sorrowArt,
   dread: dreadArt,
+  kitsu: kitsuArt,
   // --- Iron ---
   ironWarden: ironWardenArt,
   valor: valorArt,
   gallant: gallantArt,
+  ronin: roninArt,
   // --- Mech ---
   forgewright: clockworkArt,
   steamColossus: steamColossusArt,
@@ -119,6 +142,7 @@ export const heroArt: Partial<Record<string, string>> = {
   widow: widowArt,
   coil: coilArt,
   vex: vexArt,
+  kong: kongArt,
 };
 
 // The Guardians and the Endbringer are not here either: guardianFigures.ts draws them, sealed and
