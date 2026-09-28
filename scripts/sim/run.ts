@@ -58,7 +58,12 @@ import { claimContract, claimContractReplacing, deriveContractOffer, heroPool, i
 
 // The run's pool (run/recruitment.ts heroPool): the base game, plus whatever SIM_PURCHASES names —
 // a comma-separated list of Constellation offer ids, so a batch can hold a bundle.
-export const SIM_PURCHASES: readonly string[] = (process.env.SIM_PURCHASES ?? '').split(',').filter(Boolean);
+// SIM_ALL_HEROES=1 owns the whole catalog and drafts from every hero of a type (six a row, not the
+// deck's three), so a batch measures all 84 on equal draft odds.
+export const SIM_ALL_HEROES = process.env.SIM_ALL_HEROES === '1';
+export const SIM_PURCHASES: readonly string[] = SIM_ALL_HEROES
+  ? Object.keys(allHeroes).map((id) => `summon.${id}`)
+  : (process.env.SIM_PURCHASES ?? '').split(',').filter(Boolean);
 const heroes = heroPool(allHeroes, SIM_PURCHASES);
 const guildHallOffers = guildHallOffersFor(heroes);
 import { guildHallEntry } from '../../src/run/guildRecruit';
@@ -92,7 +97,9 @@ import { emptyKnockoutCounts, type KnockoutCounts } from './types';
 
 const EQUIPMENT_POOL = Object.values(equipment);
 // The draft's rows: the base roster's default deck, one hero drawn from each (run/draft.ts).
-const DRAFT_ROWS = deckRows(normalizeDeck({}, heroes, SIM_PURCHASES));
+const DRAFT_ROWS = SIM_ALL_HEROES
+  ? deckRows(normalizeDeck({}, heroes, SIM_PURCHASES)).map((row) => Object.keys(heroes).filter((id) => heroes[id].types[0] === heroes[row[0]].types[0]))
+  : deckRows(normalizeDeck({}, heroes, SIM_PURCHASES));
 
 /** App.tsx `EncounterMapNodeType` — the reward lane keys off the MAP node, not the flattened encounter kind. */
 type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' | 'finale';

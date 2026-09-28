@@ -3,6 +3,7 @@
 //
 //   node dist/scripts/sim/main.js --runs 2000 --policy spread --out sim-report.txt
 //   SIM_PURCHASES=bundle.tallGrass ...     holds a Constellation offer for the batch (run.ts)
+//   SIM_ALL_HEROES=1 ...                   owns every hero and drafts from all six a type
 
 import { fork } from 'child_process';
 import { cpus } from 'os';

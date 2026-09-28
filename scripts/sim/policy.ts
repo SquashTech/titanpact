@@ -42,7 +42,7 @@ import { heroes as allHeroes } from '../../src/data/heroes';
 import { heroPool } from '../../src/run/recruitment';
 
 // The same pool run.ts fields (SIM_PURCHASES).
-const recruitPool = heroPool(allHeroes, (process.env.SIM_PURCHASES ?? '').split(',').filter(Boolean));
+const recruitPool = heroPool(allHeroes, process.env.SIM_ALL_HEROES === '1' ? Object.keys(allHeroes).map((id) => `summon.${id}`) : (process.env.SIM_PURCHASES ?? '').split(',').filter(Boolean));
 import { allCombatants } from '../../src/data/content';
 import { typeChart } from '../../src/data/typechart';
 import { buildCombatState } from '../../src/run/buildCombatState';
