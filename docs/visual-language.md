@@ -3758,10 +3758,13 @@ Starfall card is a stone window onto its strip of night; Constellation offers ar
 carved cards. Deliberately left unboxed: an empty slot on the battlefield (the
 field is a place, not a container).
 
-**The title** (eighth pass, 2026-09-28): the three places between runs are square
-planks, each carrying its own pixel object rather than a line glyph — the party's
-shield (`party.png`, shared with the map's Roster), a star (`stars.png`), a trophy
-(`records.png`) — with the star balance carved into a gold-lipped slot at the
-tile's corner. Start a New Run and the corner controls are planks. The pact plate
-(gold to begin, verdigris to resume) is still CSS-struck metal, the one piece on
-the title not yet in pixels.
+**The title stands apart from the kit** (eighth pass, 2026-09-28, per user
+direction: no wooden buttons on the title). Planks were tried and rejected; struck
+bronze plates, obsidian tiles and bare sigils were auditioned on the live screen,
+and the sigils won. The three places between runs are their own pixel objects at
+2x — the party's shield (`party.png`, shared with the map's Roster), a star
+(`stars.png`), a trophy (`records.png`) — standing free in the seal's gold light
+over their names, no frame. Start a New Run is small capitals between two gold
+rules; the corner controls are bare glyphs. The pact plate (gold to begin,
+verdigris to resume) stays the one struck object on the screen. The kit's
+materials are the world's; the title is the threshold before it.
