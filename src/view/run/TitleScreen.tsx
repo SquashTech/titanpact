@@ -14,8 +14,8 @@ import { ASCENSION_RUNGS } from '../../run/ascension';
 import { AudioSettings } from '../shared/AudioSettings';
 import type { SaveSummary } from '../../run/save';
 import type { Profile } from '../../run/profile';
-import partyArt from '../../../art/ui/party.png';
-import starsArt from '../../../art/ui/stars.png';
+import collectionArt from '../../../art/ui/collection.png';
+import constellationArt from '../../../art/ui/constellation.png';
 import recordsArt from '../../../art/ui/records.png';
 
 interface Props {
@@ -275,7 +275,7 @@ export function TitleScreen({
           under the one real action, quieter than it and louder than the corner. */}
       <div className="title-hub">
         <button className="title-hub-tile" onClick={() => setShowCollection(true)}>
-          <img src={partyArt} className="title-hub-icon" alt="" draggable={false} />
+          <img src={collectionArt} className="title-hub-icon" alt="" draggable={false} />
           <span className="title-hub-label">Collection</span>
         </button>
         <button
@@ -285,7 +285,7 @@ export function TitleScreen({
             setShowShop(true);
           }}
         >
-          <img src={starsArt} className="title-hub-icon" alt="" draggable={false} />
+          <img src={constellationArt} className="title-hub-icon" alt="" draggable={false} />
           {/* Without its article: the tile is a place-name on a sign, the panel header the full name. */}
           <span className="title-hub-label">{STAR_SHOP_NAME.replace(/^The /, '')}</span>
           <span className="title-hub-badge" title={`${starBalance(profile, starShopCatalog)} stars to spend`}>
