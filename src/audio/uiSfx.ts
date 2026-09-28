@@ -12,7 +12,7 @@ import { playSfx } from './sfx';
 import type { SfxId } from './sounds';
 
 // First match wins: the closes and declines carry `resolve-button` / `moveoffer-button` too, and
-// title-cta, draft-cta and class-shrine-confirm-button carry `resolve-button`, so all of those
+// title-cta and draft-cta carry `resolve-button`, so all of those
 // precede the class they share. The shared pick cards (HeroPickCard, EquipChoiceCard) are not here:
 // they play `ui.pick` on the activate itself, since their pointerdown may be the start of a hold.
 const CLASS_SFX: readonly (readonly [string, SfxId])[] = [
