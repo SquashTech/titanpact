@@ -3721,6 +3721,15 @@ stack of planks. The title's Continue keeps its own chamfered metal plate.
 from the screen's edge (`lintel.png`) with the purse carved into it and the two
 corner controls as small square planks (`plank-square.png`); the Roster is a long
 plank the party stands on, and its alert state stays the one lit object on the
-screen — gilt, a warm wash and a pulse in the alert colour. Still to do: the
-level-up report and reward rows, and screen-specific cards (the Starfall card,
-empty-state boxes).
+screen — gilt, a warm wash and a pulse in the alert colour.
+
+**The post-fight chain and the who-screens** (fourth pass, 2026-09-28): what a
+fight paid sits in a well; a level's roll per stat is a small cell with a hard
+two-pixel lip drawn in `box-shadow` (seven to a row cannot spare a tile border);
+every who-screen's hero card (`HeroPickCard`) is carved and gold-lipped when
+chosen; a Boon being given sits in a well in its own colour. Where a carved edge
+is deeper than the hairline it replaced, the card gives the difference back out of
+its own padding — the level-up report must still hold six heroes. Still to do:
+the other nodes' headline cards (Mentor, Tutor, Scribe, Mana Well, Ley Line), the
+target-picker cards, and screen-specific cards (the Starfall card, empty-state
+boxes).
