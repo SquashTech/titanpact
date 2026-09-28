@@ -36484,7 +36484,7 @@ button.star-shop-bundle-face {
 .crucible-rite-words {
   position: relative;
   z-index: 4;
-  margin: 214px 12px 0;
+  margin: 214px -4px 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -36501,9 +36501,10 @@ button.star-shop-bundle-face {
 }
 
 .crucible-rite-line {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.4;
+  white-space: pre-line;
 }
 
 /* Each letter sits as a dark ember until its turn, then catches. */

@@ -39,7 +39,8 @@ const KIND_COLORS: Record<ClassKind, string> = {
   utility: STAT_COLORS.speed,
 };
 
-const CRUCIBLE_LINE = "The Guardian's heart burns in the Crucible. Teach a hero a powerful Class.";
+/** A sentence a line: the ask reads whole rather than wrapping mid-phrase. */
+const CRUCIBLE_LINE = "The Guardian's heart burns in the Crucible.\nTeach a hero a powerful Class.";
 
 /**
  * The Crucible — the Guardian's beat (docs/growth-overhaul.md §5, §11): pick ONE hero, and the fire
