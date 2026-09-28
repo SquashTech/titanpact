@@ -252,28 +252,31 @@ test("mech: Poison from a reel carries the catalog's duration, like every other 
 
 // --- The two-status rows ---
 
-test('mech: Backfire and Overheat Burn the target AND the caster — the target scaled, the caster flat', () => {
-  // Forgewright (Mech, Int 45) scales the rider it aims OUTWARD by 0.95 x 1.25 STAB. The self-Burn
-  // is a cost, so it lands at exactly the authored number (engine/status/statusMagnitude.ts).
-  for (const [id, onTarget, onCaster] of [['backfire', 18, 20], ['overheat', 36, 40]] as const) {
+test('mech: Backfire and Overheat Burn the target AND the caster — both at exactly the authored percent', () => {
+  // A Burn is a percent of max HP and is never caster-scaled (docs/blessings-and-statuses.md §3); the
+  // self-Burn is a cost and was never scaled anyway.
+  const burnOf = (id: string, target: 'moveTarget' | 'self') =>
+    statusApplicationsOf(moves[id]).find((a) => a.statusId === 'Burn' && a.target === target)!.magnitude!;
+  for (const id of ['backfire', 'overheat']) {
     const state = withDeepPools(mechFixture(805));
     const { state: after } = resolveRound(
       state,
       [{ kind: 'move', combatantId: 'a1', moveId: id, declaredTarget: 'b1' }],
       config
     );
-    // Burn ticks and halves at end of the round it was applied, so a fresh Burn N reads N/2.
-    assert.strictEqual(after.combatants.b1.statuses.Burn?.magnitude, onTarget / 2, `${id}: target not Burned`);
-    assert.strictEqual(after.combatants.a1.statuses.Burn?.magnitude, onCaster / 2, `${id}: caster not Burned`);
+    // Burn ticks and halves at end of the round it was applied, so a fresh Burn N reads floor(N/2).
+    assert.strictEqual(after.combatants.b1.statuses.Burn?.magnitude, Math.floor(burnOf(id, 'moveTarget') / 2), `${id}: target not Burned`);
+    assert.strictEqual(after.combatants.a1.statuses.Burn?.magnitude, Math.floor(burnOf(id, 'self') / 2), `${id}: caster not Burned`);
   }
 });
 
 test('mech: Meltdown burns only the CASTER, and hits both enemies', () => {
   const state = withDeepPools(mechFixture(806));
   const { state: after } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'meltdown' }], config);
+  const cost = statusApplicationsOf(moves.meltdown).find((a) => a.statusId === 'Burn')!.magnitude!;
   assert.ok(after.combatants.b1.currentHp < state.combatants.b1.currentHp);
   assert.ok(after.combatants.b2.currentHp < state.combatants.b2.currentHp);
-  assert.strictEqual(after.combatants.a1.statuses.Burn?.magnitude, 25, 'caster not Burned the flat 50 it costs');
+  assert.strictEqual(after.combatants.a1.statuses.Burn?.magnitude, Math.floor(cost / 2), 'caster not Burned the percent it costs');
   assert.strictEqual(after.combatants.b1.statuses.Burn, undefined, 'Meltdown burned its targets');
 });
 
@@ -284,9 +287,10 @@ test('mech: Perfect Creation applies all six of its riders in one cast', () => {
     [{ kind: 'move', combatantId: 'a1', moveId: 'perfectCreation', declaredTarget: 'b1' }],
     config
   );
+  const burn = statusApplicationsOf(moves.perfectCreation).find((a) => a.statusId === 'Burn')!.magnitude!;
   // Daze clears at end of round, so five of six survive; that is the sixth working.
   assert.deepStrictEqual(statusesOn(after, 'b1'), ['Bleed', 'Burn', 'Conduct', 'Haunt', 'Poison']);
-  assert.strictEqual(after.combatants.b1.statuses.Burn?.magnitude, 44, 'Burn 75 scales to 89, then reads 44 post-tick');
+  assert.strictEqual(after.combatants.b1.statuses.Burn?.magnitude, Math.floor(burn / 2), 'the authored percent, halved post-tick');
   assert.strictEqual(after.combatants.b1.statuses.Poison?.duration, 2, 'Poison should have ticked once');
 });
 

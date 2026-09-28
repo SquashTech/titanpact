@@ -12,6 +12,7 @@ import { STAT_LABELS } from './StatBars';
 import { ElementGlyph } from './elementIcons';
 import { MoveKindGlyph, StatGlyph, type MoveKindGlyphKind } from './statIcons';
 import { ManaCost } from './ManaCost';
+import { statusAmountText } from './statusFacts';
 
 // --- Hold-to-inspect gesture ---
 
@@ -376,7 +377,8 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     const verb = grantsRatherThanInflicts(app) ? 'Grants' : 'Applies';
     const statusName = statuses[statusId]?.name ?? statusId;
     const where = riderTargetLabel(app);
-    parts.push(`${odds}${verb} ${statusName}${amount != null ? ` ${amount}` : ''}${where ? ` (${where})` : ''}`);
+    const shown = amount == null ? '' : app.magnitude != null ? ` ${statusAmountText(statusId, amount)}` : ` ${amount}`;
+    parts.push(`${odds}${verb} ${statusName}${shown}${where ? ` (${where})` : ''}`);
   }
 
   if (move.randomStatusApplication?.length) {
@@ -384,7 +386,7 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
       .map((app) => {
         const name = statuses[app.statusId]?.name ?? app.statusId;
         const amount = riderMagnitude(move, app, caster) ?? app.duration;
-        return amount != null ? `${name} ${amount}` : name;
+        return amount != null ? `${name} ${app.magnitude != null ? statusAmountText(app.statusId, amount) : amount}` : name;
       })
       .join(', ');
     parts.push(`Applies one of: ${faces}`);

@@ -85,6 +85,8 @@ export interface StatusDefinition {
   blocksIncomingMoves?: boolean;
   /** Boolean-shape DoT (Bleed): a fixed fraction of max HP per tick instead of a magnitude. */
   flatPercentOfMaxHp?: number;
+  /** Magnitude-shape DoT or HoT whose magnitude is a PERCENT of the holder's max HP (Burn): a tick deals ceil(maxHp × magnitude / 100), and the authored figure is what lands — never caster-scaled (statusMagnitude.ts magnitudeScales). docs/blessings-and-statuses.md §3. */
+  percentOfMaxHp?: boolean;
   /** Conduct: a damage move of one of these types detonates this status on the target for detonateBonusPercentMaxHp of its max HP, then consumes it. Detonate-only — planting it is an ordinary rider (statusEngine.ts detonateTriggeredStatuses). */
   triggerTypes?: readonly TypeId[];
   /** Paired with triggerTypes — fraction of the target's max HP. */
@@ -326,6 +328,8 @@ export interface FieldEffectDefinition {
   mpRegenMultiplier?: number;
   /** Statuses whose post-tick decay is slowed while active (Scorched Land holding Burn). `retain` is the share kept per tick — 0.5 is the ordinary halving, 1 is no decay at all. The tick itself is untouched. */
   slowsStatusDecay?: { statusIds: readonly StatusId[]; retain: number };
+  /** Statuses a switch does not cleanse while active (Scorched Land keeping Burn on a hero who leaves the field). switching.ts performSwitch → statusEngine.ts clearOnSwitch. */
+  keepsStatusesOnSwitch?: readonly StatusId[];
   /** Within a priority bracket, resolve slowest-first (Stasis Bubble). Bracket separation untouched. priority.ts orderActions. */
   reversesSpeedOrder?: boolean;
   /** Added to heal-kind moves' priority bracket (Sanctuary +1). priority.ts orderActions. */

@@ -426,9 +426,8 @@ test('status: Ambush stacks additively, and switching to the bench clears it rat
 
 // --- The magnitude formula (docs/combat.md "Scaled status magnitudes") ---
 
-test('status: a DoT rider scales off the caster stat its own move swings with, and takes STAB', () => {
-  // Crimson (Fire, Int 80) casting the MAGICAL Set Alight: 30 x 1.30 x 1.25 = 49.
-  // Cinder Knight (Fire/Iron, Attack 85) casting the PHYSICAL Molten Lash: 15 x 1.35 x 1.25 = 25.
+test('status: a Burn is a percent of max HP and lands at exactly the authored figure, whoever casts it', () => {
+  // docs/blessings-and-statuses.md §3: no StatMult, no STAB — the number on the card is what lands.
   const cast = (heroId: string, moveId: string) => {
     const state = deepMana(
       createFightState(
@@ -441,40 +440,25 @@ test('status: a DoT rider scales off the caster stat its own move swings with, a
     const event = applied.events.find((e) => e.type === 'StatusApplied' && e.statusId === 'Burn');
     return event && event.type === 'StatusApplied' ? event.magnitude : null;
   };
+  const authored = (moveId: string) => statusApplicationsOf(moves[moveId]).find((app) => app.statusId === 'Burn')!.magnitude!;
 
-  assert.strictEqual(cast('crimson', 'setAlight'), 49);
-  assert.strictEqual(cast('cinderKnight', 'moltenLash'), 25);
+  assert.strictEqual(cast('crimson', 'setAlight'), authored('setAlight'), 'a Fire specialist lands the card');
+  assert.strictEqual(cast('wildOracle', 'setAlight'), authored('setAlight'), 'an off-type caster lands the same');
+  assert.strictEqual(cast('cinderKnight', 'moltenLash'), authored('moltenLash'));
 });
 
-test('status: the same Burn move is worth more in a specialist hand than in an incidental one', () => {
-  // The whole point of the formula: identity, not a uniform buff. Read off the data, not
-  // pinned — what matters is the ORDER, and that the off-type applier lands under the base.
-  const cast = (heroId: string) => {
-    const state = deepMana(
-      createFightState(
-        701,
-        [{ combatantId: 'a1', heroId, side: 'A' }],
-        [{ combatantId: 'b1', heroId: 'ironWarden', side: 'B' }]
-      )
-    );
-    const applied = resolveRound(
-      state,
-      [{ kind: 'move', combatantId: 'a1', moveId: 'setAlight', declaredTarget: 'b1' }] as Action[],
-      config
-    );
-    const event = applied.events.find((e) => e.type === 'StatusApplied' && e.statusId === 'Burn');
-    return (event && event.type === 'StatusApplied' ? event.magnitude : 0) ?? 0;
-  };
-
-  const authored = statusApplicationsOf(moves.setAlight).find((app) => app.statusId === 'Burn')!.magnitude!;
-  const specialist = cast('crimson'); // Fire, Int 80 — the stat term AND STAB
-  const incidental = cast('wildOracle'); // Nature, Int 60 — the stat term alone, no STAB
-
-  assert.strictEqual(specialist, 49); // 30 x 1.30 x 1.25
-  assert.strictEqual(incidental, 33); // 30 x 1.10, and nothing else
-  assert.ok(specialist > authored, `the Fire specialist must beat the authored ${authored}, got ${specialist}`);
-  // STAB is the bulk of the gap, which is why the type a hero draws power from is the read.
-  assert.ok(specialist > incidental * 1.4, `the spread is too narrow to be an identity: ${specialist} vs ${incidental}`);
+test('status: a Burn tick deals its percent of the HOLDER\'s max HP, then halves', () => {
+  let state = withStatus(twoVTwoFixture(704), 'b1', 'Burn', { magnitude: 10 });
+  const maxHp = fixtureMaxHp('ironWarden');
+  const r = resolveRound(state, [], config);
+  const tick = r.events.find((e) => e.type === 'StatusTicked' && e.statusId === 'Burn');
+  assert.ok(tick && tick.type === 'StatusTicked');
+  assert.strictEqual(tick.type === 'StatusTicked' ? tick.amount : 0, Math.ceil(maxHp * 0.1));
+  assert.strictEqual(r.state.combatants.b1.statuses.Burn?.magnitude, 5, 'halved as a percent');
+  state = r.state;
+  const r2 = resolveRound(state, [], config);
+  const tick2 = r2.events.find((e) => e.type === 'StatusTicked' && e.statusId === 'Burn');
+  assert.strictEqual(tick2 && tick2.type === 'StatusTicked' ? tick2.amount : 0, Math.ceil(maxHp * 0.05));
 });
 
 test('status: a DoT aimed at SELF is a cost — it lands at exactly the authored number', () => {
@@ -561,26 +545,30 @@ test('status: the sheet formula and the fight formula are the same formula', () 
 });
 
 test('status: a scaled rider is a BASE, so a low-stat caster lands LESS than the card authored', () => {
-  const burn = statuses.Burn;
-  const ember = moves.ember;
-  const app = statusApplicationsOf(ember).find((a) => a.statusId === 'Burn');
-  assert.ok(app?.magnitude != null, 'Ember no longer carries a Burn magnitude');
+  // Renew, a scaled HoT (Burn left the formula: a percent of max HP lands as authored).
+  const renew = statuses.Renew;
+  const refresh = moves.refresh;
+  const app = statusApplicationsOf(refresh).find((a) => a.statusId === 'Renew');
+  assert.ok(app?.magnitude != null, 'Refresh no longer carries a Renew magnitude');
 
-  // Same move, same card, two Fire heroes: the authored 10 is neither a floor nor a ceiling.
-  const hot = { stats: heroes.crimson.baseStats, types: heroes.crimson.types };
-  const cold = { stats: heroes.cinderKnight.baseStats, types: heroes.cinderKnight.types };
-  const hotMagnitude = resolveStatusMagnitudeFor(app!.magnitude, burn, app!, ember, hot)!;
-  const coldMagnitude = resolveStatusMagnitudeFor(app!.magnitude, burn, app!, ember, cold)!;
-  assert.ok(hotMagnitude > app!.magnitude!, 'a high-Intelligence caster does not exceed the base');
-  assert.ok(coldMagnitude < app!.magnitude!, 'a low-Intelligence caster does not fall under the base');
+  const hot = { stats: { wisdom: 90 }, types: ['Water'] as const };
+  const cold = { stats: { wisdom: 20 }, types: ['Stone'] as const };
+  assert.ok(resolveStatusMagnitudeFor(app!.magnitude, renew, app!, refresh, hot)! > app!.magnitude!, 'a high-Wisdom caster does not exceed the base');
+  assert.ok(resolveStatusMagnitudeFor(app!.magnitude, renew, app!, refresh, cold)! < app!.magnitude!, 'a low-Wisdom caster does not fall under the base');
 });
 
 test('status: a caster carrying no stats reads the authored base, never a scaled guess', () => {
-  const setAlight = moves.setAlight;
-  const app = statusApplicationsOf(setAlight).find((a) => a.statusId === 'Burn');
+  const refresh = moves.refresh;
+  const app = statusApplicationsOf(refresh).find((a) => a.statusId === 'Renew');
   assert.ok(app?.magnitude != null);
-  // Types still count — STAB is knowable without a stat line — so this probes a non-Fire caster.
-  assert.strictEqual(resolveStatusMagnitudeFor(app!.magnitude, statuses.Burn, app!, setAlight, { stats: {}, types: ['Stone'] }), app!.magnitude);
+  // Types still count — STAB is knowable without a stat line — so this probes a non-Water caster.
+  assert.strictEqual(resolveStatusMagnitudeFor(app!.magnitude, statuses.Renew, app!, refresh, { stats: {}, types: ['Stone'] }), app!.magnitude);
+});
+
+test('status: a percent-of-max-HP status is never caster-scaled, even by a stat line far off par', () => {
+  const setAlight = moves.setAlight;
+  const app = statusApplicationsOf(setAlight).find((a) => a.statusId === 'Burn')!;
+  assert.strictEqual(resolveStatusMagnitudeFor(app.magnitude, statuses.Burn, app, setAlight, { stats: { intelligence: 150 }, types: ['Fire'] }), app.magnitude);
 });
 
 // --- Barrier, the guard (StatusDefinition.blocksIncomingMoves) ---

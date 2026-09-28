@@ -71,7 +71,7 @@ export function StatusDetailOverlay({ instance, onClose }: Props) {
             <span className="move-detail-stat">
               <StatusGlyph statusId={instance.statusId} />
               <strong>{instance.magnitude}</strong>
-              <span className="move-detail-unit">{magnitudeUnit(def.pipeline, def.shape)}</span>
+              <span className="move-detail-unit">{def.percentOfMaxHp ? (def.pipeline === 'hot' ? '% max HP heal / round' : '% max HP / round') : magnitudeUnit(def.pipeline, def.shape)}</span>
             </span>
           )}
           {instance.duration !== undefined && (

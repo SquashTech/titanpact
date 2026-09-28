@@ -383,7 +383,7 @@ function riderValue(
     }
     case 'dot': {
       // decay 'halve' caps lifetime output at ~2x the magnitude (CLAUDE.md); 'none' builds instead.
-      const perTick = def.flatPercentOfMaxHp != null ? def.flatPercentOfMaxHp * getMaxHp(allCombatants[holder.heroId], holder) : magnitude;
+      const perTick = def.flatPercentOfMaxHp != null ? def.flatPercentOfMaxHp * getMaxHp(allCombatants[holder.heroId], holder) : def.percentOfMaxHp ? (magnitude / 100) * getMaxHp(allCombatants[holder.heroId], holder) : magnitude;
       const total = def.decay === 'halve' ? perTick * 2 : perTick * Math.min(duration, HORIZON);
       return Math.min(total, holder.currentHp);
     }
@@ -421,7 +421,7 @@ function cleanseValue(state: CombatState, ctx: AiContext, holderId: string, cach
     if (!def || def.positive) continue;
     const magnitude = instance.magnitude ?? 0;
     if (def.pipeline === 'dot') {
-      const perTick = def.flatPercentOfMaxHp != null ? def.flatPercentOfMaxHp * getMaxHp(allCombatants[holder.heroId], holder) : magnitude;
+      const perTick = def.flatPercentOfMaxHp != null ? def.flatPercentOfMaxHp * getMaxHp(allCombatants[holder.heroId], holder) : def.percentOfMaxHp ? (magnitude / 100) * getMaxHp(allCombatants[holder.heroId], holder) : magnitude;
       total += def.decay === 'halve' ? perTick * 2 : perTick * HORIZON;
     } else if (def.pipeline === 'control') {
       total += threatOf(state, ctx, holderId, cache);

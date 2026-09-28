@@ -31,7 +31,9 @@ export const statuses: Record<string, StatusDefinition> = {
     stacking: 'additive',
     clearsOnSwitch: true,
     pipeline: 'dot',
-    description: 'End of round: deal X damage, then halve it. Cleansed by switching.',
+    // A percent of the holder's max HP, never caster-scaled (docs/blessings-and-statuses.md §3).
+    percentOfMaxHp: true,
+    description: 'End of round: deal X% of max HP, then halve X. Cleansed by switching.',
   },
   Bleed: {
     id: 'Bleed',

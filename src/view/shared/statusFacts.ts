@@ -4,6 +4,12 @@
 // is here; a rule that lives in prose alone (Freeze halving Speed) stays in the description.
 
 import type { StatusDefinition } from '../../engine/content';
+import { statuses } from '../../data/statuses';
+
+/** A status's number as the player reads it: a percent of max HP (Burn) wears its %. */
+export function statusAmountText(statusId: string, amount: number): string {
+  return statuses[statusId]?.percentOfMaxHp ? `${amount}%` : `${amount}`;
+}
 
 export interface StatusFact {
   /** The row's register word. */
@@ -20,8 +26,8 @@ function tickText(def: StatusDefinition): string | null {
   if (def.flatPercentOfMaxHp != null) return `Deals ${Math.round(def.flatPercentOfMaxHp * 100)}% of max HP`;
   if (def.shape === 'timer') return 'Counts down — at 0, deals its magnitude in % of max HP';
   if (!def.ticksAtEndOfRound) return null;
-  if (def.pipeline === 'dot') return 'Deals its magnitude';
-  if (def.pipeline === 'hot') return 'Heals its magnitude';
+  if (def.pipeline === 'dot') return def.percentOfMaxHp ? 'Deals its magnitude in % of max HP' : 'Deals its magnitude';
+  if (def.pipeline === 'hot') return def.percentOfMaxHp ? 'Heals its magnitude in % of max HP' : 'Heals its magnitude';
   if (def.shape === 'duration') return 'Counts down one round';
   return null;
 }

@@ -4,7 +4,7 @@
 import type { CombatState, Side } from '../state';
 import { canSwitchOut, isLockedIn, phaseOf } from '../state';
 import type { CombatEvent, BenchRegenTickedEvent } from '../events';
-import type { StatusDefinition } from '../content';
+import type { FieldEffectDefinition, FieldEffectId, StatusDefinition } from '../content';
 import { applyStatus, clearOnSwitch } from './statusEngine';
 
 export class SwitchBlockedError extends Error {}
@@ -22,7 +22,9 @@ export function applyVoluntarySwitch(
   round: number,
   outCombatantId: string,
   inCombatantId: string,
-  statusDefs: Record<string, StatusDefinition>
+  statusDefs: Record<string, StatusDefinition>,
+  /** Read for a field that keeps statuses through a switch (Scorched Land); omitted, nothing is kept. */
+  fieldEffects?: Record<FieldEffectId, FieldEffectDefinition>
 ): { state: CombatState; events: CombatEvent[] } {
   const side = state.combatants[outCombatantId].side;
   if (isLockedIn(state, side)) {
@@ -31,7 +33,7 @@ export function applyVoluntarySwitch(
   if (!canSwitchOut(state, outCombatantId)) {
     throw new SwitchBlockedError(`${outCombatantId} is Ironbound — it never switches out on its own`);
   }
-  return performSwitch(state, round, side, outCombatantId, inCombatantId, statusDefs);
+  return performSwitch(state, round, side, outCombatantId, inCombatantId, statusDefs, undefined, fieldEffects);
 }
 
 /**
@@ -84,7 +86,8 @@ function performSwitch(
   outCombatantId: string | null,
   inCombatantId: string,
   statusDefs: Record<string, StatusDefinition>,
-  knownSlot?: 0 | 1
+  knownSlot?: 0 | 1,
+  fieldEffects?: Record<FieldEffectId, FieldEffectDefinition>
 ): { state: CombatState; events: CombatEvent[] } {
   const slot = knownSlot ?? slotOf(state, side, outCombatantId as string);
   const bench = state.bench[side];
@@ -113,7 +116,8 @@ function performSwitch(
   const events: CombatEvent[] = [{ type: 'SwitchedIn', round, side, slot, outCombatantId, inCombatantId }];
 
   if (outCombatantId) {
-    const cleared = clearOnSwitch(nextState, round, outCombatantId, statusDefs);
+    const field = nextState.activeFieldEffect ? fieldEffects?.[nextState.activeFieldEffect.fieldEffectId] : undefined;
+    const cleared = clearOnSwitch(nextState, round, outCombatantId, statusDefs, field?.keepsStatusesOnSwitch);
     nextState = cleared.state;
     events.push(...cleared.events);
   }

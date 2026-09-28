@@ -34,6 +34,8 @@ export function magnitudeStatKey(def: StatusDefinition, move: MoveDefinition): S
 /** True when the authored magnitude is a BASE the caster scales, rather than the figure that lands. */
 export function magnitudeScales(def: StatusDefinition, app: StatusApplication): boolean {
   if (def.pipeline !== 'hot' && def.pipeline !== 'dot' && def.pipeline !== 'shield') return false;
+  // A percent of the holder's max HP (Burn) is already the figure that lands (docs/blessings-and-statuses.md §3).
+  if (def.percentOfMaxHp) return false;
   return !(def.pipeline === 'dot' && app.target === 'self');
 }
 

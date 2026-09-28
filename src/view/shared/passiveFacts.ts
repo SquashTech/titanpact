@@ -17,6 +17,7 @@ import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
 import type { MoveKindGlyphKind } from './statIcons';
 import { STAT_FULL_LABELS } from './relicStacks';
+import { statusAmountText } from './statusFacts';
 import { BURDEN_SURPLUS, HERO_STAT_TOTAL } from '../../run/statBudget';
 
 /** The mark at the head of a row — resolved to a glyph by the view. */
@@ -187,7 +188,7 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
         effect.magnitude === undefined
           ? ''
           : typeof effect.magnitude === 'number'
-            ? ` ${effect.magnitude}`
+            ? ` ${statusAmountText(effect.statusId, effect.magnitude)}`
             : ` at ${amountWord(effect.magnitude, '').replace('the same amount', hook === 'Rested' ? 'the Mana restored' : 'the same magnitude')}`;
       const duration = effect.duration ? `, ${effect.duration} ${effect.duration === 1 ? 'round' : 'rounds'}` : '';
       const scaled = (effect.scaledBy ? `, scaled by ${STAT_FULL_LABELS[effect.scaledBy]}` : '') + (effect.maxMagnitude !== undefined ? `, up to ${effect.maxMagnitude}` : '');

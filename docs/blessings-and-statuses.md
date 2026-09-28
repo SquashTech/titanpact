@@ -9,6 +9,8 @@
 > start, the spend beat and the marks (§1.6). `SIM_NO_BLESSING=1` is the sim's
 > A/B for phase 4. **Phase 2 is BUILT (same day):** the Pactwarden's scene (§1.5). **Phase 3 is BUILT
 > (same day):** Haunt flipped, passing on a knockout, Wisp certain, Lament and Keening on the echo (§2.5).
+> **Phase 5 is BUILT (same day):** Burn is a percent of max HP, never caster-scaled, and Scorched Land
+> stops the switch-cleanse (§3.3, §5). Phase 4, the sim pass, was skipped per user direction.
 
 ---
 
@@ -232,7 +234,7 @@ to both"*) survives unchanged.
 
 ---
 
-## 3. Burn — proposed, not yet scheduled
+## 3. Burn — BUILT 2026-09-28 (§3.3)
 
 ### 3.1 The change
 
@@ -266,6 +268,31 @@ signatures** — every Fire hero's kit and some of Mech's. The plan to contain i
 3. The readers (anything with `requiresTargetStatus: 'Burn'`, detonations, Scorched Land) keep
    reading "is Burned", so they need no change beyond Scorched Land's number (§5).
 
+### 3.3 As built (2026-09-28)
+
+**Decided per user direction:** a flat percent, **never caster-scaled** (it retires the status-magnitude
+formula's `dot` arm and Boiler's `scaledBy`: CLAUDE.md is amended), and the halving shape kept.
+
+- **The rate was measured, not guessed.** Against an at-par target (roster-average max HP 230 / 266 /
+  311 at levels 6 / 14 / 24, with the average Fire/Mech caster's scaling and STAB), today's Burns
+  land at about **half their authored number as a percent** in every tier: Spark Flash 15 ≈ 8.6%,
+  Scorch 15 ≈ 8.1%, Spark Burst 60 ≈ 30%, Perfect Creation 75 ≈ 38%. Caster scaling grows at about
+  the rate HP does, which is why one rate holds. So:
+  - a Burn on an enemy: **authored ÷ 2** (Ember 5%, Set Alight 15%, Spark Burst 30%, Perfect Creation 38%);
+  - a self-Burn cost (always flat): **÷ 3**, what it cost at par (Overheat 13%, Meltdown and Volcanic
+    Surge 17%, Steam Vent 3%);
+  - a passive's flat Burn: **÷ 3** (Burn 10 → 3%, 5 → 2%, 20 → 7%); Boiler's scaled one ÷ 2 (5%,
+    Boiling Point 10%). **Showstopper** is 4%, not 3%, to keep the mastered card at least double its
+    innate's 2%.
+- **Engine:** `StatusDefinition.percentOfMaxHp`. A tick deals `ceil(maxHp × magnitude / 100)` of
+  the HOLDER's max, and `magnitudeScales` skips it. The halving and additive stacking are unchanged.
+- **Every number in the text now wears its %**: the descriptions (three that had drifted from their
+  data were rewritten from it), and every place a magnitude prints — move tile, move detail, passive
+  facts, the status chip and detail, the beat banner — through `statusAmountText`.
+- The sim pilot prices a percent tick against the holder's HP; the enemy AI reads no magnitudes.
+- **Not measured** (per user direction). The conversion lands at parity at par by construction;
+  what it changes is that Burn no longer falls behind a tank, a Banner stack or late gear.
+
 ---
 
 ## 4. Renew — proposed, not yet scheduled
@@ -295,11 +322,11 @@ ways) are a design goal (`project_renew_payoffs_intended`) and are rebuilt with 
 
 Both fields read the magnitude of the status that changes, so both have to move with it.
 
-- **Scorched Land** (*Burn keeps ¾ of its value each round instead of half*). The shape survives a
-  percent Burn: 12% → 9% → 7% → 5%… ≈ 48% over a Burn's life against ~21%. That may be too much
-  when the field is up for five rounds; candidates are retain 0.75 → ⅔, or *Burn is not cleansed by
-  switching while the field stands* (a verb, not a number, and it attacks Burn's one counter). The
-  second is the more interesting field. Designer's call.
+- **Scorched Land — BUILT 2026-09-28** (per user direction): *switching out doesn't cleanse Burn*
+  (`FieldEffectDefinition.keepsStatusesOnSwitch`, read in `performSwitch` → `clearOnSwitch`), in place of
+  *Burn keeps ¾ of its value instead of half*. A rule, not a number, and it attacks Burn's one counter.
+  The conversion alone didn't make the old field stronger (a Burn still lasted about twice as long under
+  it); the retention verb stays in the vocabulary with no holder.
 - **Verdant Earth** (*bonus Attack and Intelligence equal to current Renew*). A percent Renew reads
   as 8, so the grant collapses to nothing — the landmine it was kept for disappears, and so does the
   field. It needs a new verb. Candidates:

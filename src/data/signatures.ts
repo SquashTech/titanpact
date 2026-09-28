@@ -27,13 +27,13 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     category: 'physical',
     kind: 'damage',
     basePower: 80,
-    statusApplication: { statusId: 'Burn', magnitude: 40, target: 'moveTarget' },
+    statusApplication: { statusId: 'Burn', magnitude: 20, target: 'moveTarget' },
     statDeltas: [{ stat: 'defense', amount: 20 }],
     statDeltaTarget: 'self',
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Drives the spear in white-hot: what it hits catches, and the shield comes up harder (Burn 40; +20 Defense to self).',
+    description: 'Drives the spear in white-hot: what it hits catches, and the shield comes up harder (Burn 20%; +20 Defense to self).',
   },
   // Crimson: the fire-setter. Everything she lit, at once.
   flashover: {
@@ -58,11 +58,11 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     kind: 'damage',
     basePower: 65,
     drainPercent: 0.5,
-    statusApplication: { statusId: 'Burn', magnitude: 40, target: 'moveTarget' },
+    statusApplication: { statusId: 'Burn', magnitude: 20, target: 'moveTarget' },
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Sets them alight and sits by it (Burn 40; heals 50% of the damage dealt).',
+    description: 'Sets them alight and sits by it (Burn 20%; heals 50% of the damage dealt).',
   },
   // Drake: the breath it woke up holding. The only physical Fire move that takes both foes, so an
   // Ambush from Slumber lands on each of them.
@@ -73,11 +73,11 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     category: 'physical',
     kind: 'damage',
     basePower: 80,
-    statusApplication: { statusId: 'Burn', magnitude: 20, target: 'moveTarget' },
+    statusApplication: { statusId: 'Burn', magnitude: 10, target: 'moveTarget' },
     manaCost: 70,
     priority: 0,
     target: 'bothEnemies',
-    description: 'The breath it woke up holding, across the whole opposing side (Burn 20 on both).',
+    description: 'The breath it woke up holding, across the whole opposing side (Burn 10% on both).',
   },
 
   // --- Water ---
@@ -665,13 +665,13 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     kind: 'damage',
     basePower: 100,
     statusApplication: [
-      { statusId: 'Burn', magnitude: 40, target: 'moveTarget' },
-      { statusId: 'Burn', magnitude: 30, target: 'self' },
+      { statusId: 'Burn', magnitude: 20, target: 'moveTarget' },
+      { statusId: 'Burn', magnitude: 10, target: 'self' },
     ],
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Vents the whole boiler through the fist; some of it stays in the housing (Burn 40 to the target, Burn 30 to self).',
+    description: 'Vents the whole boiler through the fist; some of it stays in the housing (Burn 20% to the target, Burn 10% to self).',
   },
   // Rex: bites down and keeps what it takes. Mech's first drain; the boiler runs on it.
   devour: {
@@ -1006,11 +1006,11 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     category: 'magical',
     kind: 'damage',
     basePower: 55,
-    statusApplication: { statusId: 'Burn', magnitude: 20, target: 'moveTarget' },
+    statusApplication: { statusId: 'Burn', magnitude: 10, target: 'moveTarget' },
     manaCost: 60,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Tips back the torch and breathes the whole act out across the far side (Burn 20 on each).',
+    description: 'Tips back the torch and breathes the whole act out across the far side (Burn 10% on each).',
   },
   // Selkie: the pelt, thrown over someone else.
   sealskinCloak: {

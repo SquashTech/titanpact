@@ -222,7 +222,10 @@ export function tickEndOfRound(
         }
       } else if (def.pipeline === 'dot' || def.pipeline === 'hot') {
         const maxHp = maxHpOf(combatantId);
-        const magnitude = instance.magnitude ?? (def.flatPercentOfMaxHp ? Math.ceil(maxHp * def.flatPercentOfMaxHp) : 0);
+        // A percent-of-max-HP magnitude (Burn) is read against the holder's max; Bleed's boolean carries its own fraction.
+        const magnitude = def.percentOfMaxHp
+          ? Math.ceil((maxHp * (instance.magnitude ?? 0)) / 100)
+          : (instance.magnitude ?? (def.flatPercentOfMaxHp ? Math.ceil(maxHp * def.flatPercentOfMaxHp) : 0));
         const delta = def.pipeline === 'dot' ? -magnitude : magnitude;
         // Scorched Land slows decay only; the tick itself is untouched.
         const slowed = activeFieldEffectDef?.slowsStatusDecay;
@@ -279,8 +282,15 @@ export function tickEndOfRound(
 }
 
 /** docs/conditions.md §4: switching to bench clears every status with clearsOnSwitch. */
-export function clearOnSwitch(state: CombatState, round: number, combatantId: string, statusDefs: Record<string, StatusDefinition>): StatusResult {
-  return removeStatusesWhere(state, round, combatantId, statusDefs, (def) => def.clearsOnSwitch, 'switch');
+/** `kept`: statuses the active field holds on through a switch (FieldEffectDefinition.keepsStatusesOnSwitch — Scorched Land's Burn). */
+export function clearOnSwitch(
+  state: CombatState,
+  round: number,
+  combatantId: string,
+  statusDefs: Record<string, StatusDefinition>,
+  kept: readonly StatusId[] = []
+): StatusResult {
+  return removeStatusesWhere(state, round, combatantId, statusDefs, (def) => def.clearsOnSwitch && !kept.includes(def.id), 'switch');
 }
 
 /** Cleanse strips every status not flagged `positive`; `limit` picks that many at random (draws RNG only when it must choose). */

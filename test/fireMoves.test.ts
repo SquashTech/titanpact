@@ -121,9 +121,9 @@ test('fire: an unchanced rider draws no RNG — only a chanced one advances the 
 
   assert.strictEqual(after('scorch'), after('inferno'), 'an unchanced Burn rider must cost the same RNG as no rider at all');
   assert.notStrictEqual(after('ember'), after('inferno'), 'a chanced rider must draw its own roll');
-  // Crimson (Fire, Int 80) lands Burn 15 x 1.30 x 1.25 STAB = 24, then the round tick halves it.
+  // Scorch lands its authored Burn percent whoever casts it, then the round tick halves it.
   const scorched = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'scorch', declaredTarget: 'b1' }] as Action[], config);
-  assert.strictEqual(scorched.state.combatants.b1.statuses.Burn?.magnitude, 12);
+  assert.strictEqual(scorched.state.combatants.b1.statuses.Burn?.magnitude, Math.floor(statusApplicationsOf(moves.scorch).find((a) => a.statusId === 'Burn')!.magnitude! / 2));
 });
 
 test("fire: Ember's 10% Burn lands sometimes and not others across seeds, and the hit itself always resolves", () => {
@@ -219,8 +219,8 @@ test("fire: Molten Lash deals damage, applies Burn, and drops the target's Defen
   const { state: next, events } = resolveRound(state, actions, config);
 
   assert.ok(events.some((e) => e.type === 'DamageDealt'));
-  // Cinder Knight (Fire, Attack 85) on a PHYSICAL move: Burn 15 x 1.35 x 1.25 STAB = 25, halved.
-  assert.strictEqual(next.combatants.b1.statuses.Burn?.magnitude, 12);
+  // Molten Lash lands its authored Burn percent (no caster scaling), halved by the round tick.
+  assert.strictEqual(next.combatants.b1.statuses.Burn?.magnitude, Math.floor(statusApplicationsOf(moves.moltenLash).find((a) => a.statusId === 'Burn')!.magnitude! / 2));
   // The −20 is a base a PHYSICAL move scales off Attack: −20 × 1.35 × 1.25 STAB = −34 (docs/stat-scaling.md §2).
   const drop = landedDelta(state, 'a2', moves.moltenLash, 'defense', -20, 'b1');
   assert.strictEqual(drop, -34);
@@ -249,10 +249,11 @@ test('fire: Spreading Blaze Burns both foes and sets Scorched Land in one cast',
   const { state: next } = resolveRound(state, actions, config);
 
   assert.strictEqual(next.activeFieldEffect?.fieldEffectId, 'scorchedLand');
-  // Crimson lands Burn 15 x 1.30 x 1.25 STAB = 24 on both, and Scorched Land takes the round
-  // tick's decay down to a quarter rather than a half.
-  assert.strictEqual(next.combatants.b1.statuses.Burn?.magnitude, 18);
-  assert.strictEqual(next.combatants.b2.statuses.Burn?.magnitude, 18);
+  // Both foes take the authored Burn percent, halved by the round tick as anywhere: Scorched Land
+  // keeps Burn through a switch now, it no longer slows the decay.
+  const halved = Math.floor(statusApplicationsOf(moves.spreadingBlaze).find((a) => a.statusId === 'Burn')!.magnitude! / 2);
+  assert.strictEqual(next.combatants.b1.statuses.Burn?.magnitude, halved);
+  assert.strictEqual(next.combatants.b2.statuses.Burn?.magnitude, halved);
 });
 
 test('fire: Volcanic Surge Burns the USER, not the target', () => {

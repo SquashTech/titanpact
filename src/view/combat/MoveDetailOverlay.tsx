@@ -28,7 +28,7 @@ import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
 import { StatGlyph, MoveKindGlyph } from '../shared/statIcons';
 import { StatusGlyph, statusColor } from '../shared/statusIcons';
-import { statusFactsLine } from '../shared/statusFacts';
+import { statusAmountText, statusFactsLine } from '../shared/statusFacts';
 import { fieldEffectFactsLine } from '../shared/fieldEffectFacts';
 import { STAT_LABELS, hpTier } from '../shared/StatBars';
 import { ManaCost } from '../shared/ManaCost';
@@ -549,7 +549,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
                 text={`${app.chance != null ? `${Math.round(app.chance * 100)}% ` : ''}${
                   grantsRatherThanInflicts(app) ? 'Grants' : 'Applies'
                 } ${def.name}${
-                  liveMagnitude != null ? ` ${liveMagnitude}` : app.duration != null ? ` ${app.duration}` : ''
+                  liveMagnitude != null ? ` ${statusAmountText(app.statusId, liveMagnitude)}` : app.duration != null ? ` ${app.duration}` : ''
                 }${where ? ` — ${where}` : ''}`}
                 note={[shieldHeldNote, statusFactsLine(def)].filter(Boolean).join(' — ')}
               />

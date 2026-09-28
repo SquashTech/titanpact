@@ -177,41 +177,44 @@ test('fieldEffects: casting magicCloak again while it is already active does not
   assert.strictEqual(next.activeFieldEffect?.roundsRemaining, 2); // ticked down again this round (3 -> 2), not reset to 5
 });
 
-// --- Scorched Land: Burn decays a quarter as fast ---
+// --- Scorched Land: switching out does not cleanse Burn (docs/blessings-and-statuses.md §5) ---
 
-test('fieldEffects: Scorched Land slows Burn\'s end-of-round decay to a quarter; normally it halves', () => {
-  const built = twoVTwoFixture(410);
-  const burned = applyStatus(built, 1, 'a1', statuses.Burn, { magnitude: 20 }).state;
-  const maxHpOf = (id: string) => getMaxHp(heroes[burned.combatants[id].heroId], burned.combatants[id]);
+function benchFixture(seed: number) {
+  return createFightState(
+    seed,
+    [
+      { combatantId: 'a1', heroId: 'cinderKnight', side: 'A' },
+      { combatantId: 'a2', heroId: 'tidecaller', side: 'A' },
+      { combatantId: 'a3', heroId: 'crag', side: 'A' },
+    ],
+    [
+      { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
+      { combatantId: 'b2', heroId: 'wildOracle', side: 'B' },
+    ]
+  );
+}
 
-  const normalTick = tickEndOfRound(burned, 1, statuses, fieldEffects, maxHpOf);
-  assert.strictEqual(normalTick.state.combatants.a1.statuses.Burn?.magnitude, 10); // halved as usual
-  assert.ok(normalTick.events.some((e) => e.type === 'StatusTicked' && e.statusId === 'Burn' && e.newMagnitude === 10));
+test('fieldEffects: under Scorched Land a Burned hero keeps its Burn when it switches out; without it the switch cleanses', () => {
+  const burned = applyStatus(benchFixture(410), 1, 'a1', statuses.Burn, { magnitude: 10 }).state;
+  const switchOut: Action[] = [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }];
+
+  const plain = resolveRound(burned, switchOut, config);
+  assert.ok(plain.state.bench.A.includes('a1'));
+  assert.strictEqual(plain.state.combatants.a1.statuses.Burn, undefined, 'the ordinary switch cleanses');
 
   const scorched = { ...burned, activeFieldEffect: { fieldEffectId: 'scorchedLand', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
-  const scorchedTick = tickEndOfRound(scorched, 1, statuses, fieldEffects, maxHpOf);
-  assert.strictEqual(scorchedTick.state.combatants.a1.statuses.Burn?.magnitude, 15); // three quarters kept, not half
-  const tickEvent = scorchedTick.events.find((e) => e.type === 'StatusTicked' && e.statusId === 'Burn');
-  // The tick itself is untouched — the field moves the decay, never the damage.
-  assert.ok(tickEvent && tickEvent.type === 'StatusTicked' && tickEvent.kind === 'damage' && tickEvent.amount === 20 && tickEvent.newMagnitude === 15);
+  const kept = resolveRound(scorched, switchOut, config);
+  assert.ok(kept.state.bench.A.includes('a1'));
+  assert.ok(kept.state.combatants.a1.statuses.Burn, 'Scorched Land held it through the switch');
+  assert.ok(!kept.events.some((e) => e.type === 'StatusRemoved' && e.statusId === 'Burn' && e.reason === 'switch'));
 });
 
-test('fieldEffects: Scorched Land holds Burn near its magnitude for five rounds, then halving resumes', () => {
-  const built = twoVTwoFixture(411);
-  // A Burn 20 that barely fades: 20 -> 15 -> 11 -> 8 -> 6 -> 4 across the field's whole window.
-  const scorchedCurve = [15, 11, 8, 6, 4];
-  let state = applyStatus(built, 1, 'b1', statuses.Burn, { magnitude: 20 }).state;
-  state = { ...state, activeFieldEffect: { fieldEffectId: 'scorchedLand', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
-
-  assert.strictEqual(scorchedCurve.length, FIELD_EFFECT_DURATION_ROUNDS);
-  for (let i = 0; i < FIELD_EFFECT_DURATION_ROUNDS; i++) {
-    state = resolveRound(state, [], config).state;
-    assert.strictEqual(state.combatants.b1.statuses.Burn?.magnitude, scorchedCurve[i], `quartered decay after round ${i + 1}`);
-  }
-  assert.strictEqual(state.activeFieldEffect, null); // expired exactly on schedule
-
-  state = resolveRound(state, [], config).state;
-  assert.strictEqual(state.combatants.b1.statuses.Burn?.magnitude, 2); // halving again
+test('fieldEffects: Scorched Land no longer touches the decay — a Burn halves under it as anywhere', () => {
+  const burned = applyStatus(twoVTwoFixture(411), 1, 'a1', statuses.Burn, { magnitude: 20 }).state;
+  const scorched = { ...burned, activeFieldEffect: { fieldEffectId: 'scorchedLand', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
+  const maxHpOf = (id: string) => getMaxHp(heroes[scorched.combatants[id].heroId], scorched.combatants[id]);
+  const tick = tickEndOfRound(scorched, 1, statuses, fieldEffects, maxHpOf);
+  assert.strictEqual(tick.state.combatants.a1.statuses.Burn?.magnitude, 10);
 });
 
 // --- Stasis Bubble: reverse Speed order within a shared priority bracket ---

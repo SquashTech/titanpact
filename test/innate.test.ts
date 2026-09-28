@@ -246,7 +246,7 @@ test('neuroplastic: a statDelta read off the event — Reverie gains exactly the
   assert.strictEqual(gained, -(drop as { delta: number }).delta, 'that much, as landed');
 });
 
-test('boiler: chance and scaledBy — at chance 1 every Mech hit Burns, the magnitude scaled by the owner’s Intelligence and no STAB; at chance 0 never', () => {
+test('boiler: chance — at chance 1 every Mech hit Burns the authored percent, scaled by nothing; at chance 0 never', () => {
   const always = { ...passives, boiler: { ...passives.boiler, reactive: { ...passives.boiler.reactive!, chance: 1 } } };
   const never = { ...passives, boiler: { ...passives.boiler, reactive: { ...passives.boiler.reactive!, chance: 0 } } };
   const base = withPassive(twoVTwo(16, 'forgewright', 'valor', 'ironWarden', 'crag'), 'a1', 'boiler');
@@ -254,9 +254,8 @@ test('boiler: chance and scaledBy — at chance 1 every Mech hit Burns, the magn
   const hit = resolveRound(base, cast, { ...config, passives: always });
   const burn = hit.events.find((e) => e.type === 'StatusApplied' && e.statusId === 'Burn' && e.combatantId === 'b1');
   assert.ok(burn && burn.type === 'StatusApplied', 'Burned');
-  // Clockwork is Intelligence 45: StatMult = 1 + (45 - 50) / 100 = 0.95 → 10 × 0.95 = 9.5 → 10 (rounded), and below 50 it can only shrink.
-  const expected = Math.round(10 * (1 + (heroes.forgewright.baseStats.intelligence - 50) / 100));
-  assert.strictEqual(burn.magnitude, expected);
+  // A Burn is a percent of max HP (docs/blessings-and-statuses.md §3): the scaledBy Boiler carried is gone.
+  assert.strictEqual(burn.magnitude, (passives.boiler.reactive!.effect as { magnitude: number }).magnitude);
   const miss = resolveRound(base, cast, { ...config, passives: never });
   assert.ok(!miss.events.some((e) => e.type === 'StatusApplied' && e.statusId === 'Burn'), 'chance 0 never fires');
   assert.ok(passives.boiler.reactive?.chance === 0.3, 'the shipped odds');

@@ -19,6 +19,7 @@ import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
 import { getTypeColor } from './typeColors';
+import { statusAmountText } from '../shared/statusFacts';
 import { cinematicEntranceFor, dramaticEntranceFor, type CinematicEntrance } from '../shared/entrances';
 import { moveKindGlyph } from '../shared/MoveTile';
 import type { MoveKindGlyphKind } from '../shared/statIcons';
@@ -700,7 +701,7 @@ export function buildBeats(
 
       case 'StatusApplied': {
         const targetName = name(e.combatantId);
-        const detail = e.magnitude !== undefined ? ` (${e.magnitude})` : e.duration !== undefined ? ` (${e.duration})` : '';
+        const detail = e.magnitude !== undefined ? ` (${statusAmountText(e.statusId, e.magnitude)})` : e.duration !== undefined ? ` (${e.duration})` : '';
         // Renew and Ambush are things a hero GAINS; only the rest are afflictions.
         const verb = statuses[e.statusId]?.positive ? 'gains' : 'is afflicted with';
         if (statuses[e.statusId]?.pipeline === 'shield') {

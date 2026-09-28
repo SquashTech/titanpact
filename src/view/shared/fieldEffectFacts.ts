@@ -27,6 +27,7 @@ function effectFacts(def: FieldEffectDefinition): FieldEffectFact[] {
       text: `${statusNames(def.slowsStatusDecay.statusIds)} keeps ${Math.round(def.slowsStatusDecay.retain * 100)}% each round, not 50%`,
     });
   }
+  if (def.keepsStatusesOnSwitch?.length) rows.push({ label: 'Switching', text: `Doesn't cleanse ${statusNames(def.keepsStatusesOnSwitch)}` });
   if (def.reversesSpeedOrder) rows.push({ label: 'Order', text: 'Slowest acts first within a priority bracket' });
   if (def.healPriorityBonus != null) {
     rows.push({ label: 'Priority', text: `${def.healPriorityBonus > 0 ? '+' : ''}${def.healPriorityBonus} on every healing move` });

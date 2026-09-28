@@ -521,14 +521,14 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   cinderguard: {
     id: 'cinderguard',
     name: 'Cinderguard',
-    description: 'Whenever this hero takes damage, both active enemies gain Burn 10.',
+    description: 'Whenever this hero takes damage, both active enemies gain Burn 3%.',
     // Target-role DamageDealt: "I was hit". There is no 'triggerSource' target — a passive cannot
     // reach the attacker — so the answer goes to activeEnemies, which in doubles is the attacker
     // plus its partner. Small per firing, stacking additively, and Immolate is what cashes it.
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 10 },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 3 },
     },
   },
   ashfeast: {
@@ -985,11 +985,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   sulphur: {
     id: 'sulphur',
     name: 'Sulphur',
-    description: 'When this hero enters the battlefield, both active enemies gain Burn 5.',
+    description: 'When this hero enters the battlefield, both active enemies gain Burn 2%.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 5 },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 2 },
     },
   },
   drag: {
@@ -1242,13 +1242,12 @@ const innatePassives: Record<string, PassiveDefinition> = {
   boiler: {
     id: 'boiler',
     name: 'Boiler',
-    description: 'Mech attacks from this hero have a 30% chance to Burn 10, scaled by its Intelligence.',
-    // The one passive magnitude that scales (scaledBy: the status-magnitude StatMult, no STAB),
-    // per user direction 2026-09-20 — a bare 10 off a Mech brawler is a Burn nobody feels.
+    description: 'Mech attacks from this hero have a 30% chance to Burn 5%.',
+    // A Burn is a percent of max HP now (docs/blessings-and-statuses.md §3), so the scaledBy it carried is gone.
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Mech' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', magnitude: 10, scaledBy: 'intelligence' },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', magnitude: 5 },
       chance: 0.3,
     },
   },
@@ -1511,21 +1510,21 @@ const innatePassives: Record<string, PassiveDefinition> = {
   foxfire: {
     id: 'foxfire',
     name: 'Foxfire',
-    description: 'Whenever this hero lands a Spirit attack, its target gains Burn 10.',
+    description: 'Whenever this hero lands a Spirit attack, its target gains Burn 3%.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Spirit' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', magnitude: 10 },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', magnitude: 3 },
     },
   },
   fireBreather: {
     id: 'fireBreather',
     name: 'Fire-Breather',
-    description: 'Whenever this hero lands a Fire attack, both active enemies gain Burn 5.',
+    description: 'Whenever this hero lands a Fire attack, both active enemies gain Burn 2%.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Fire' } },
-      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 5 },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 2 },
     },
   },
   saltTears: {
@@ -1731,8 +1730,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
 // the pair, a chance -> always). Where one reaction cannot carry the upgrade the upgrade is two
 // cards, Broadside's shape: a hero's mastered set reads as ONE innate by its first card.
 // In no pool, never granted by anything but the pip (test/mastery pins both). Passive-applied
-// magnitudes stay flat; the one `scaledBy` is Boiling Point, Boiler's own card mastered — the same
-// holder, not a second (CLAUDE.md "Status magnitude formula").
+// magnitudes stay flat.
 const masteredInnatePassives: Record<string, PassiveDefinition> = {
   // --- Fire ---
   forgeheart: {
@@ -1770,11 +1768,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   hellmouth: {
     id: 'hellmouth',
     name: 'Hellmouth',
-    description: 'When this hero enters the battlefield, both active enemies gain Burn 20.',
+    description: 'When this hero enters the battlefield, both active enemies gain Burn 7%.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 20 },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 7 },
     },
   },
 
@@ -2160,16 +2158,15 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   },
 
   // --- Mech ---
-  // Boiler's own card, mastered: the 30% roll becomes every hit, and the Burn doubles. The one
-  // passive `scaledBy` is Clockwork's in both forms — the same holder, not a second exception.
+  // Boiler's own card, mastered: the 30% roll becomes every hit, and the Burn doubles.
   boilingPoint: {
     id: 'boilingPoint',
     name: 'Boiling Point',
-    description: 'Mech attacks from this hero always Burn 20, scaled by its Intelligence.',
+    description: 'Mech attacks from this hero always Burn 10%.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Mech' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', magnitude: 20, scaledBy: 'intelligence' },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', magnitude: 10 },
     },
   },
   // The Burden mastered: the cost stays (it is priced in the 610), and the hero that cannot
@@ -2501,21 +2498,21 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   kitsunebi: {
     id: 'kitsunebi',
     name: 'Kitsunebi',
-    description: 'Whenever this hero lands a Spirit attack, its target gains Burn 20.',
+    description: 'Whenever this hero lands a Spirit attack, its target gains Burn 7%.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Spirit' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', magnitude: 20 },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', magnitude: 7 },
     },
   },
   showstopper: {
     id: 'showstopper',
     name: 'Showstopper',
-    description: 'Whenever this hero lands a Fire attack, both active enemies gain Burn 10.',
+    description: 'Whenever this hero lands a Fire attack, both active enemies gain Burn 4%.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Fire' } },
-      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 10 },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 4 },
     },
   },
   // One affliction has no figure to double, so the reach widens to all of them.

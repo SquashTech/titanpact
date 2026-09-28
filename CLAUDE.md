@@ -257,6 +257,9 @@ don't silently override it.
   conversation (`docs/innate-passives.md` §10). It exists because `HP_SCALE` is
   neutral for what repeats and not for what decays: `decay: 'halve'` caps a Burn's lifetime
   output at ≈2× its magnitude however long the fight runs. `docs/combat.md`.
+  **Burn left the formula 2026-09-28** (per user direction, `docs/blessings-and-statuses.md` §3):
+  its magnitude is a **percent of the holder's max HP** (`StatusDefinition.percentOfMaxHp`), lands
+  as authored and is never caster-scaled, so the `dot` arm and `scaledBy` have no holder today.
 - **Stat line:** HP, Attack/Defense, Intelligence/Wisdom, Speed, Mana, MP Regen.
 - **Every hero's seven stats sum to exactly 550** — HP/Attack/Defense/Intelligence/
   Wisdom/Speed/Mana at FACE VALUE, HP counted at 1:1 (2026-09-09, replacing the 450
