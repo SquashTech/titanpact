@@ -113,6 +113,23 @@ export const CLASS_PATHS: Record<string, ReactNode> = {
       d="M12 1.8c5.6 0 8.4 4 8.4 9.4 0 6-3.8 11-8.4 11S3.6 17.2 3.6 11.2c0-5.4 2.8-9.4 8.4-9.4ZM6.6 10a2.2 2.2 0 1 0 4.4 0 2.2 2.2 0 1 0-4.4 0Zm6.4 0a2.2 2.2 0 1 0 4.4 0 2.2 2.2 0 1 0-4.4 0ZM9 15.2h6v2.4H9Z"
     />
   ),
+  // A chalice: cup, stem, foot.
+  cleric: (
+    <>
+      <path d="M4.2 2.6h15.6c0 5.4-3 9.4-7.8 9.4S4.2 8 4.2 2.6Z" />
+      <path d="M10.8 11.6h2.4v6.6h-2.4Z" />
+      <path d="M6.4 18.6c1.2-1.2 3.4-1.8 5.6-1.8s4.4.6 5.6 1.8v2.8H6.4Z" />
+    </>
+  ),
+  // A dagger, point down, a short guard across the grip.
+  rogue: (
+    <g transform="rotate(-30 12 12)">
+      <path d="M12 23.2 13.6 20V11h-3.2v9Z" />
+      <path d="M7.4 8.6h9.2v2.4H7.4Z" />
+      <path d="M10.9 2.8h2.2v5.8h-2.2Z" />
+      <circle cx="12" cy="2.4" r="1.6" />
+    </g>
+  ),
   // A horseshoe.
   outrider: (
     <path fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" d="M5.2 21V11.4a6.8 6.8 0 0 1 13.6 0V21" />

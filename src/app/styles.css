@@ -15501,16 +15501,14 @@ button.star-shop-bundle-face {
  * three different heights read as a list that happened to be that long.
  */
 .stage-centered > .relic-shrine-list,
-.stage-centered > .equip-cache-list,
-.stage-centered > .class-shrine-list {
+.stage-centered > .equip-cache-list {
   flex: 1 1 auto;
   min-height: 0;
   justify-content: center;
 }
 
 .stage-centered > .relic-shrine-list > *,
-.stage-centered > .equip-cache-list > *,
-.stage-centered > .class-shrine-list > * {
+.stage-centered > .equip-cache-list > * {
   flex: 1 1 auto;
   min-height: 0;
   max-height: var(--stage-card-max, 132px);
@@ -15526,16 +15524,6 @@ button.star-shop-bundle-face {
    The equipment card already centres and is untouched. */
 .stage-centered > .relic-shrine-list > * {
   align-items: center;
-}
-
-.stage-centered > .class-shrine-list > * {
-  justify-content: center;
-}
-
-/* The Mentor's three disciplines share their stage with his portrait and the
-   strip of heroes who can learn, so they get less of it than a Boon does. */
-.stage-centered > .class-shrine-list {
-  --stage-card-max: 108px;
 }
 
 /* The five Banners, which ARE the subject — five objects on a wall, not five
@@ -16941,213 +16929,6 @@ button.star-shop-bundle-face {
   to {
     transform: translateX(-50%) rotate(360deg);
   }
-}
-
-/* 96px — a clean 2x of the 48x48 source (art/npc/mentor.png). It was 84px, a
-   1.75x fractional scale: the defect docs/visual-language.md opens with, which
-   renders some source pixels 1px wide and their neighbours 2px. */
-.class-shrine-mentor {
-  position: relative;
-  display: block;
-  width: 96px;
-  height: 96px;
-  margin: 0 auto 4px;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 0 16px rgba(63, 184, 175, 0.65));
-  animation: mentor-float 3.2s ease-in-out infinite;
-}
-
-@keyframes mentor-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-4px);
-  }
-}
-
-/* The other keepers (art/npc: the Tutor, the Scribe, the guildmaster, the
-   smith) stand in the header the Mentor does, at the same clean 2x and on the
-   same float, lit by their own node's tint rather than the Mentor's teal. */
-.npc-portrait {
-  position: relative;
-  display: block;
-  width: 96px;
-  height: 96px;
-  margin: 0 auto 4px;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 0 16px rgba(var(--node-rgb), 0.55));
-  animation: mentor-float 3.2s ease-in-out infinite;
-}
-
-/* The places with nobody in them (art/places: Rest, the Ley Line, the Mana
-   Well, the Boon shrine) stand in the same header slot as a 96x48 vignette at
-   a clean 2x — the portraits' 96px height, so the hero grid under it still
-   fits. They glow in the node's tint and do not float — a place stays put. */
-.place-vignette {
-  position: relative;
-  display: block;
-  width: 192px;
-  height: 96px;
-  margin: 0 auto 4px;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 0 18px rgba(var(--node-rgb), 0.5));
-}
-
-/* 1x once the Mentor is a reminder rather than the subject (was 72px, 1.5x). */
-.class-shrine-mentor-small {
-  width: 48px;
-  height: 48px;
-}
-
-/* Always rendered (even before a discipline is picked, just disabled) so
-   its height is reserved from the start — it used to only mount once
-   pickedClassId was set, which yanked the whole discipline panel
-   upward the instant a card was tapped. Teal gradient/glow matches the
-   rest of Mentor's Hall's --buff theming instead of the generic gold
-   .resolve-button. */
-.class-shrine-confirm-button {
-  background: linear-gradient(165deg, #5fd6ce, #278f86);
-  border: 1px solid #3fb8af;
-  color: #06211e;
-  text-shadow: none;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 0 1px rgba(63, 184, 175, 0.35), 0 4px 16px rgba(63, 184, 175, 0.35);
-  transition: opacity var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out);
-}
-
-.class-shrine-confirm-button:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 0 0 1px rgba(63, 184, 175, 0.5), 0 6px 20px rgba(63, 184, 175, 0.45);
-}
-
-.class-shrine-confirm-button:disabled {
-  background: var(--panel-alt);
-  border-color: var(--border);
-  color: var(--text-dim);
-  box-shadow: none;
-  opacity: 0.45;
-}
-
-/* Who is still untaught, shown while the disciplines are being read rather than
-   behind the roster glyph. Sized at 1x of the 48px source; the row wraps rather
-   than scrolls, since six is the roster cap and three fit a line. */
-.class-shrine-students {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  margin-top: 8px;
-}
-
-.class-shrine-students-label {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--buff);
-}
-
-.class-shrine-students-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px;
-}
-
-.class-shrine-student {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-  width: 54px;
-}
-
-.class-shrine-student-art {
-  display: block;
-  width: 48px;
-  height: 48px;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 0 8px rgba(63, 184, 175, 0.4));
-}
-
-.class-shrine-student-name {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 9px;
-  font-weight: 600;
-  color: var(--text-dim);
-}
-
-.class-shrine-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
-}
-
-.class-shrine-card {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  text-align: left;
-  font: inherit;
-  color: inherit;
-  padding: 10px 14px;
-  cursor: pointer;
-  --plate-color: var(--buff);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-}
-
-.class-shrine-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--hairline-strong), var(--elev-3);
-}
-
-.class-shrine-card:active {
-  transform: translateY(0);
-}
-
-.class-shrine-card .relic-card-icon {
-  font-size: 20px;
-}
-
-/* The Class mark, in its lead stat's colour, with that colour's own halo behind it. */
-.class-shrine-card-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: color-mix(in srgb, currentColor 16%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 40%, transparent);
-}
-
-.class-shrine-card-glyph {
-  width: 18px;
-  height: 18px;
-  filter: drop-shadow(0 0 5px color-mix(in srgb, currentColor 70%, transparent));
-}
-
-.class-shrine-card .relic-card-name {
-  font-size: 14px;
-}
-
-.class-shrine-card-grants {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 2px;
-}
-
-.class-shrine-card.picked {
-  border-color: var(--buff);
-  box-shadow: 0 0 0 1px var(--buff), 0 4px 18px rgba(63, 184, 175, 0.35);
-  background: linear-gradient(165deg, rgba(63, 184, 175, 0.14), var(--panel) 70%);
 }
 
 /* --- Class-learn reveal (ClassNodeScreen, once a hero is assigned) --------
@@ -31593,83 +31374,356 @@ button.star-shop-bundle-face {
   }
 }
 
-/* --- The Crucible's Class choice (CrucibleScreen.tsx ClassChoice) --------------------------
-   The Mentor's card, re-cut for a verb: the name, and under it the move's own card or the
-   passive's line — the verb is the whole of the choice, so nothing else is on the card. The kind
-   label came off (2026-09-11, per user direction) with the one-per-kind roll. `--kind-color` is
-   set inline per card. */
+/* --- The Crucible's Class choice and its reveal (CrucibleScreen.tsx) ------------------------
+   Still in the fire: the Crucible's lit ground, the hero at the rim at 2x with the pool under it
+   taking the colour of the Class it leans toward, and three carved cards of one height — the mark
+   in a medallion socket, the name, the verb in a line. `--class-color` is set inline. */
+.crucible-ground {
+  position: absolute;
+  inset: calc(var(--shell-pad) * -1);
+  background:
+    radial-gradient(ellipse 80% 30% at 50% 12%, color-mix(in srgb, var(--class-color, #ff8a2a) 30%, transparent), transparent 70%),
+    radial-gradient(ellipse 90% 40% at 50% 100%, rgba(255, 110, 30, 0.2), transparent 70%),
+    linear-gradient(180deg, #070404, #120806 55%, #2a0e05);
+  transition: background 0.6s var(--ease-out);
+  pointer-events: none;
+}
+
+.crucible-choice-head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: none;
+}
+
+.crucible-choice-hero {
+  position: relative;
+  width: 96px;
+  height: 96px;
+}
+
+/* The fire under the hero, in the leaning Class's colour. */
+.crucible-choice-pool {
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 132px;
+  height: 30px;
+  margin-left: -66px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, color-mix(in srgb, var(--class-color) 75%, #fff 10%), color-mix(in srgb, var(--class-color) 30%, transparent) 45%, transparent 72%);
+  filter: blur(2px);
+  animation: crucible-choice-pool 2.6s ease-in-out infinite;
+  transition: background 0.5s var(--ease-out);
+}
+
+@keyframes crucible-choice-pool {
+  0%,
+  100% {
+    opacity: 0.85;
+    transform: scaleX(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1.08);
+  }
+}
+
 .crucible-choice-portrait {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 -4px 10px color-mix(in srgb, var(--class-color) 45%, transparent)) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+  transform-origin: center bottom;
+  animation: hero-idle-breath 3.1s ease-in-out infinite;
+}
+
+/* The picked Class's mark, risen off the hero's shoulder. */
+.crucible-choice-mark {
+  position: absolute;
+  right: -18px;
+  top: 4px;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  color: var(--class-color);
+  background: url('../../art/ui/medallion.png') 0 0 / 30px 30px no-repeat;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--class-color) 70%, transparent));
+  animation: crucible-choice-mark-in 0.35s var(--ease-spring) both;
+}
+
+.crucible-choice-mark > svg {
+  width: 16px;
+  height: 16px;
+}
+
+@keyframes crucible-choice-mark-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.crucible-choice-eyebrow {
+  margin-top: 10px;
+  color: #c87a3a;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.crucible-choice-name {
+  margin: 2px 0 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #ffe2a6;
+  text-shadow: 0 0 10px rgba(255, 150, 40, 0.6), 0 0 22px rgba(255, 90, 20, 0.35);
+}
+
+.crucible-choice-types {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.crucible-class-list {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* One height for all three, so they read as a set on offer rather than a list. */
+.crucible-class-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 112px;
+  padding: 8px 12px 8px 10px;
+  border: 4px solid transparent;
+  border-image: url('../../art/ui/slot-thin.png') 2 / 4px round;
+  background:
+    linear-gradient(100deg, color-mix(in srgb, var(--class-color) 16%, transparent), transparent 55%) padding-box,
+    #120d0b padding-box;
+  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--class-color) 45%, transparent);
+  image-rendering: pixelated;
+  cursor: pointer;
+  transition: transform var(--dur-mid) var(--ease-spring), opacity var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
+}
+
+.crucible-class-card:active {
+  transform: scale(0.985);
+}
+
+.crucible-class-card.is-picked {
+  border-image-source: url('../../art/ui/slot-thin-lit.png');
+  background:
+    linear-gradient(100deg, color-mix(in srgb, var(--class-color) 30%, transparent), transparent 70%) padding-box,
+    #17100c padding-box;
+  box-shadow:
+    inset 0 2px 0 var(--class-color),
+    0 0 18px -4px color-mix(in srgb, var(--class-color) 70%, transparent);
+}
+
+.crucible-class-card.is-dimmed {
+  opacity: 0.55;
+}
+
+.crucible-class-socket {
+  flex: none;
+  display: grid;
+  place-items: center;
   width: 48px;
   height: 48px;
+  color: var(--class-color);
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--class-color) 35%, transparent), transparent 46%),
+    url('../../art/ui/medallion.png') 0 0 / 48px 48px no-repeat;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.6));
+}
+
+.crucible-class-card.is-picked .crucible-class-socket {
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 8px color-mix(in srgb, var(--class-color) 80%, transparent));
+}
+
+.crucible-class-glyph {
+  width: 22px;
+  height: 22px;
+}
+
+.crucible-class-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.crucible-class-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.crucible-class-name {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.crucible-class-card.is-picked .crucible-class-name {
+  color: #ffe2a6;
+}
+
+.crucible-class-kind {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--class-color) 80%, var(--text-dim));
 }
 
 .crucible-class-verb {
-  margin-top: 4px;
-}
-
-.crucible-class-verb .move-detail-card {
-  width: 100%;
-}
-
-.crucible-class-passive {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 6px 8px;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--kind-color, var(--buff)) 10%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--kind-color, var(--buff)) 30%, transparent);
-}
-
-.crucible-class-passive.is-reveal {
-  --kind-color: var(--accent);
-  margin-top: 8px;
-  max-width: 280px;
-}
-
-.crucible-class-passive-name {
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.crucible-class-passive-desc {
+  align-items: center;
+  gap: 8px;
   font-size: 12px;
+}
+
+.crucible-class-verb-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 800;
+}
+
+.crucible-class-verb-name > svg {
+  width: 12px;
+  height: 12px;
+}
+
+.crucible-class-fact {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.crucible-class-fact.is-mana {
+  color: var(--mana, #6cb6ff);
+}
+
+.crucible-class-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 11px;
   line-height: 1.35;
   color: var(--text-dim);
 }
 
-.class-shrine-card.picked {
-  border-color: var(--kind-color, var(--buff));
-  box-shadow: 0 0 0 1px var(--kind-color, var(--buff)), 0 4px 18px color-mix(in srgb, var(--kind-color, var(--buff)) 35%, transparent);
-  background: linear-gradient(165deg, color-mix(in srgb, var(--kind-color, var(--buff)) 14%, transparent), var(--panel) 70%);
+.crucible-choice .resolve-button {
+  position: relative;
+  z-index: 1;
 }
 
-/* The Crucible's three cards each carry a full move card or passive readout, so they are not
-   clamped to a stage slot the way the Mentor's stat-chip cards were: they take their own height
-   and the list scrolls when three do not fit. */
-.crucible-class-list {
+/* The reveal: the same hero at the same rim, a flare out of the fire, the Class named in its colour
+   and the verb it now carries read whole below. */
+.crucible-reveal {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 4px 0 8px;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: 24px 0 12px;
+  text-align: center;
 }
 
-.crucible-class-list > * {
-  flex: 0 0 auto;
+.crucible-reveal-flash {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 360px;
+  height: 300px;
+  margin-left: -180px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 240, 200, 0.85), color-mix(in srgb, var(--class-color) 45%, transparent) 35%, transparent 68%);
+  opacity: 0;
+  pointer-events: none;
+  animation: crucible-rite-flare 1.1s var(--ease-out) both;
 }
 
-.crucible-class-card {
-  cursor: pointer;
+.crucible-choice-mark.is-reveal {
+  right: -22px;
+  top: -4px;
+  width: 40px;
+  height: 40px;
+  background-size: 40px 40px;
+  animation: crucible-choice-mark-in 0.5s var(--ease-spring) 0.35s both;
 }
 
-.crucible-class-verb .move-detail-card,
-.crucible-class-verb .passive-readout {
+.crucible-choice-mark.is-reveal > svg {
+  width: 20px;
+  height: 20px;
+}
+
+.crucible-reveal-class {
+  margin-top: 4px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--class-color);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--class-color) 60%, transparent);
+  animation: title-tagline-fade 0.5s ease 0.45s both;
+}
+
+.crucible-reveal-verb {
+  width: 100%;
+  margin-top: 16px;
+  text-align: left;
+  animation: crucible-rite-step-up 0.6s var(--ease-out) 0.6s both;
+}
+
+.crucible-reveal-verb > * {
   width: 100%;
 }
 
-/* Everything on the card is one tap target — the move card inside it must not swallow the pick. */
-.crucible-class-card .move-detail-card {
-  pointer-events: none;
+/* A move's sheet is drawn bare (it usually sits in a window); here it is carved in like the cards. */
+.crucible-reveal-verb.is-move {
+  padding: 10px 12px;
+  border: 4px solid transparent;
+  border-image: url('../../art/ui/slot-thin-lit.png') 2 / 4px round;
+  background:
+    linear-gradient(100deg, color-mix(in srgb, var(--class-color) 18%, transparent), transparent 60%) padding-box,
+    #120d0b padding-box;
+  image-rendering: pixelated;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crucible-choice-pool,
+  .crucible-choice-portrait {
+    animation: none;
+  }
 }
 
 /* --- The node dossier (NodeDossierOverlay.tsx) ------------------------- */

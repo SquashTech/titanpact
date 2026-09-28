@@ -10,14 +10,16 @@ import type { RosterEntry, RunState } from '../../run/state';
 import { anyClassAvailable, classMoveOverflows, grantClass, rollClassOffers, type ClassDefinition, type ClassKind } from '../../run/classes';
 import { rosterEntryTypes } from '../../run/progression';
 import { getTypeAbbr, getTypeColor, getTypeColorRgb } from '../combat/typeColors';
-import { MoveDetailCard } from '../combat/MoveDetailOverlay';
+import { MoveDetailCard, MoveDetailOverlay } from '../combat/MoveDetailOverlay';
 import { CLASS_PATHS } from '../shared/classIcons';
 import { ElementGlyph } from '../shared/elementIcons';
 import { healCasterForEntry } from '../shared/healCaster';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { useLongPress } from '../shared/MoveTile';
-import { NodeHeader, NodeSky, NODE_TINT_GOLD } from '../shared/NodeStage';
+import { moveEffectSummary, useLongPress } from '../shared/MoveTile';
+import { NodeMotes, NODE_TINT_GOLD } from '../shared/NodeStage';
 import { PassiveGlyph, PassiveReadout, passiveColor } from '../shared/passiveIcons';
+import { PassiveDetailOverlay } from '../shared/PassiveDossier';
+import { moveForPrimaryType } from '../../engine/state';
 import { STAT_COLORS } from '../shared/StatBars';
 import { CrucibleRite } from './CrucibleRite';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
@@ -220,36 +222,71 @@ interface ChoiceProps {
 }
 
 /**
- * Three Classes, read as an Evolution branch — pick, then confirm. No prose (2026-09-11, per user
- * direction): a card is the verb itself, drawn the way the rest of the game draws it — a move as
- * its detail card, at the type it will have on THIS hero; a passive as its readout — under the
- * Class's name. No way back: the hero at the rim is the hero tempered (same day, per user
- * direction), so the only press is the one that commits.
+ * Three Classes, pick then confirm, still standing in the Crucible's fire: the hero at the rim, lit
+ * from below and taking the colour of the Class it is leaning toward, and the three verbs as carved
+ * cards of one height — the Class's mark in a socket, its name, and the move or passive it grants in
+ * a line. A hold reads the verb whole. No way back: the hero at the rim is the hero tempered, so the
+ * only press is the one that commits.
  */
 function ClassChoice({ run, entry, offers, pickedClassId, onPick, onConfirm }: ChoiceProps) {
   const hero = rosterHeroes[entry.heroId];
   const caster = healCasterForEntry(hero, entry, run.relics);
   const picked = pickedClassId ? offers.find((c) => c.id === pickedClassId) ?? null : null;
+  const [reading, setReading] = useState<ClassDefinition | null>(null);
   return (
-    <div className="node-screen crucible-screen crucible-choice" style={{ '--node-rgb': NODE_TINT_GOLD } as CSSProperties}>
-      <NodeSky />
+    <div
+      className={`node-screen crucible-screen crucible-choice${picked ? ' has-pick' : ''}`}
+      style={{ '--node-rgb': NODE_TINT_GOLD, '--class-color': picked ? classColor(picked) : '#ff8a2a' } as CSSProperties}
+    >
+      <span className="node-sky crucible-ground" aria-hidden="true" />
+      <NodeMotes count={14} />
       <RosterPeek run={run} />
-      <NodeHeader
-        compact
-        art={<HeroPortrait heroId={hero.id} className="crucible-choice-portrait" />}
-        eyebrow="Choose a Class"
-        title={hero.name}
-      />
-      <div className="screen-scroll">
-        <div className="class-shrine-list crucible-class-list">
-          {offers.map((cls) => (
-            <ClassCard key={cls.id} cls={cls} picked={pickedClassId === cls.id} caster={caster} onPick={() => onPick(cls.id)} />
+
+      <header className="crucible-choice-head">
+        <span className="crucible-choice-hero">
+          <span className="crucible-choice-pool" aria-hidden="true" />
+          <HeroPortrait heroId={hero.id} className="crucible-choice-portrait" />
+          {picked && (
+            <span className="crucible-choice-mark" key={picked.id} aria-hidden="true">
+              <ClassGlyph cls={picked} />
+            </span>
+          )}
+        </span>
+        <span className="crucible-choice-eyebrow">Choose a Class</span>
+        <h2 className="crucible-choice-name">{hero.name}</h2>
+        <span className="crucible-choice-types">
+          {rosterEntryTypes(hero, entry).map((t) => (
+            <span key={t} className="pick-type-code" style={{ color: getTypeColor(t) }}>
+              <ElementGlyph type={t} />
+              {getTypeAbbr(t)}
+            </span>
           ))}
-        </div>
+        </span>
+      </header>
+
+      <div className="crucible-class-list">
+        {offers.map((cls) => (
+          <ClassCard
+            key={cls.id}
+            cls={cls}
+            picked={pickedClassId === cls.id}
+            dimmed={!!picked && pickedClassId !== cls.id}
+            caster={caster}
+            onPick={() => {
+              playSfx('ui.pick');
+              onPick(cls.id);
+            }}
+            onRead={() => setReading(cls)}
+          />
+        ))}
       </div>
+
       <button className="resolve-button" disabled={!picked} onClick={onConfirm}>
-        {picked ? `Temper — ${picked.name}` : 'Select a Class'}
+        {picked ? `Temper — ${picked.name}` : 'Choose a Class'}
       </button>
+
+      {reading?.grantsMoveId && <MoveDetailOverlay move={moves[reading.grantsMoveId]} caster={caster} onClose={() => setReading(null)} />}
+      {reading?.grantsPassiveId && <PassiveDetailOverlay passive={passives[reading.grantsPassiveId]} onClose={() => setReading(null)} />}
     </div>
   );
 }
@@ -257,41 +294,63 @@ function ClassChoice({ run, entry, offers, pickedClassId, onPick, onConfirm }: C
 interface CardProps {
   cls: ClassDefinition;
   picked: boolean;
+  dimmed: boolean;
   caster: ReturnType<typeof healCasterForEntry>;
   onPick: () => void;
+  onRead: () => void;
 }
 
-/** One Class: name, then exactly what it grants. A div rather than a button because the move card is interactive already. */
-function ClassCard({ cls, picked, caster, onPick }: CardProps) {
-  const move = cls.grantsMoveId ? moves[cls.grantsMoveId] : null;
+/** One Class: its mark, its name, and the verb in a line — the move at the type it will have on THIS hero. Tap picks; hold reads. */
+function ClassCard({ cls, picked, dimmed, caster, onPick, onRead }: CardProps) {
+  const authored = cls.grantsMoveId ? moves[cls.grantsMoveId] : null;
+  const move = authored && caster ? moveForPrimaryType(authored, caster.types[0]) : authored;
   const passive = cls.grantsPassiveId ? passives[cls.grantsPassiveId] : null;
-  const color = classColor(cls);
+  const longPress = useLongPress(onRead, onPick);
+  const summary = move ? moveEffectSummary(move, caster) : passive?.description ?? '';
   return (
     <div
-      className={`relic-card class-shrine-card crucible-class-card${picked ? ' picked' : ''}`}
-      style={{ '--kind-color': color } as CSSProperties}
+      className={`crucible-class-card${picked ? ' is-picked' : ''}${dimmed ? ' is-dimmed' : ''}`}
+      style={{ '--class-color': classColor(cls) } as CSSProperties}
       role="button"
       tabIndex={0}
       aria-pressed={picked}
-      onClick={onPick}
+      aria-label={`${cls.name}: ${move ? move.name : passive?.name}. ${summary}`}
+      data-sfx="none"
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           onPick();
         }
       }}
+      {...longPress}
     >
-      <div className="relic-card-head">
-        <span className="relic-card-icon class-shrine-card-icon" style={{ color }} aria-hidden="true">
-          <ClassGlyph cls={cls} className="class-shrine-card-glyph" />
+      <span className="crucible-class-socket" aria-hidden="true">
+        <ClassGlyph cls={cls} className="crucible-class-glyph" />
+      </span>
+      <span className="crucible-class-body">
+        <span className="crucible-class-head">
+          <span className="crucible-class-name">{cls.name}</span>
+          <span className="crucible-class-kind">{move ? 'Move' : 'Passive'}</span>
         </span>
-        <span className="relic-card-name">{cls.name}</span>
-      </div>
-      <div className="crucible-class-verb">
-        {/* `caster` carries the hero's types, so the card is drawn at the type the move will have on them. */}
-        {move && <MoveDetailCard move={move} caster={caster} terse />}
-        {passive && <PassiveReadout passive={passive} />}
-      </div>
+        {move && (
+          <span className="crucible-class-verb">
+            <span className="crucible-class-verb-name" style={{ color: getTypeColor(move.type) }}>
+              <ElementGlyph type={move.type} />
+              {move.name}
+            </span>
+            {move.kind === 'damage' && move.basePower ? <span className="crucible-class-fact">{move.basePower} BP</span> : null}
+            <span className="crucible-class-fact is-mana">{move.manaCost} MP</span>
+          </span>
+        )}
+        {passive && (
+          <span className="crucible-class-verb">
+            <span className="crucible-class-verb-name" style={{ color: passiveColor(passive.id) }}>
+              {passive.name}
+            </span>
+          </span>
+        )}
+        {summary && <span className="crucible-class-desc">{summary}</span>}
+      </span>
     </div>
   );
 }
@@ -311,35 +370,26 @@ function ClassLearnedReveal({ run, entry, cls, onContinue }: RevealProps) {
   const passive = cls.grantsPassiveId ? passives[cls.grantsPassiveId] : null;
   const color = classColor(cls);
   return (
-    <div className="node-screen crucible-screen" style={{ '--node-rgb': NODE_TINT_GOLD } as CSSProperties}>
-      <NodeSky />
+    <div className="node-screen crucible-screen" style={{ '--node-rgb': NODE_TINT_GOLD, '--class-color': color } as CSSProperties}>
+      <span className="node-sky crucible-ground" aria-hidden="true" />
+      <NodeMotes count={14} />
       <div className="screen-scroll">
-        <div className="class-learn-reveal">
-          <div className="class-learn-flash" aria-hidden="true" />
-          <div className="class-learn-portraits">
-            <span className="tutor-reveal-badge" style={{ color }}>
-              <ClassGlyph cls={cls} className="tutor-reveal-icon" />
+        <div className="crucible-reveal">
+          <span className="crucible-reveal-flash" aria-hidden="true" />
+          <span className="crucible-choice-hero">
+            <span className="crucible-choice-pool" aria-hidden="true" />
+            <HeroPortrait heroId={hero.id} className="crucible-choice-portrait" />
+            <span className="crucible-choice-mark is-reveal" aria-hidden="true">
+              <ClassGlyph cls={cls} />
             </span>
-            <span className="class-learn-arrow" aria-hidden="true">
-              →
-            </span>
-            <HeroPortrait heroId={hero.id} className="class-learn-hero" />
+          </span>
+          <span className="crucible-choice-eyebrow">Tempered</span>
+          <h2 className="crucible-choice-name">{hero.name}</h2>
+          <span className="crucible-reveal-class">{cls.name}</span>
+          <div className={`crucible-reveal-verb${move ? ' is-move' : ''}`}>
+            {move && <MoveDetailCard move={move} caster={caster} />}
+            {passive && <PassiveReadout passive={passive} source="Class" />}
           </div>
-          <div className="class-learn-eyebrow">Tempered</div>
-          <h2 className="class-learn-title">{hero.name}</h2>
-          <div className="class-learn-classname" style={{ color }}>
-            {cls.name}
-          </div>
-          {move && (
-            <div className="tutor-reveal-move">
-              <MoveDetailCard move={move} caster={caster} />
-            </div>
-          )}
-          {passive && (
-            <div className="tutor-reveal-move">
-              <PassiveReadout passive={passive} source="Class" />
-            </div>
-          )}
         </div>
       </div>
       <button className="resolve-button" onClick={onContinue}>
