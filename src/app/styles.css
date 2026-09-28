@@ -39942,3 +39942,64 @@ img.smithy-service-art {
   );
   pointer-events: none;
 }
+
+/* -- The forced replacement (FightScreen, a knocked-out active slot). There is no commander to
+   socket, so the panel's title is lettered on the console's beam where the crest would sit, and
+   the space the beam took is the bench's again. The Confirm is a slimmer plank. And the cards can
+   never spill out of their row: the row measures itself, and a row too short for a 2x figure
+   (a short phone, two knocked out at once) draws its candidates at 1x, the crowded row's shape. -- */
+.target-panel-header {
+  position: relative;
+  z-index: 2;
+  height: 34px;
+  margin-top: calc((var(--console-beam-h, 38px) + 8px) * -1);
+  margin-bottom: 8px;
+  padding: 0 14px;
+}
+
+.target-panel-header::after {
+  background: none;
+}
+
+.target-panel-title {
+  font-size: 10px;
+  text-shadow: 0 1px 0 #0b0a0e, 0 0 10px rgba(var(--console-rgb, 224, 166, 60), 0.5);
+}
+
+.resolve-button.replacement-confirm-button {
+  min-height: 0;
+  margin-top: 6px;
+  padding: 3px 4px;
+  border-width: 10px;
+  border-image: url('../../art/ui/plank-gilt.png') 5 fill / 10px round;
+  font-size: 15px;
+}
+
+.target-panel .bench-row {
+  container-type: size;
+}
+
+@container (max-height: 170px) {
+  .target-panel .bench-row .combatant-card {
+    padding: 4px 4px 5px;
+  }
+
+  .target-panel .bench-row .combatant-portrait {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 3px;
+  }
+
+  .target-panel .bench-row .combatant-name {
+    font-size: 10.5px;
+    margin-bottom: 3px;
+  }
+
+  .target-panel .bench-row .bar-track {
+    height: 11px;
+  }
+
+  .target-panel .bench-row .bar-label {
+    font-size: 8px;
+  }
+}
