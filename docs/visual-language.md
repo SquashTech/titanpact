@@ -3816,3 +3816,13 @@ arrival painting, placed in % of the art: stars, fireflies, fires and candles th
 lighthouse's sweep, a moon's breath, a forest's blinking eyes, sigils and windows that glow.
 They sit over the road scene's shade — a light source is not darkened with its ground — and
 road scenes carry their Location's weather at half density.
+
+**Enchanted items** (twelfth pass, 2026-09-28, per user direction). Every item family has a
+sprite per enchant — 16 families × 14 elements, `art/equipment/enchanted/<enchant>/<family>.png`,
+each set one PixelLab edit of the 16 plain sprites so an element looks the same across
+families, the cells that barely moved redone with a stronger prompt. An enchanted piece's rim
+is lit in its element: a 2px octagonal band cut to the chit's bevel (even-odd `clip-path`), so
+rarity keeps the chit's fill and pips and the element owns the edge. The corner gem is dropped
+where the sprite already says the element; a Unique, which keeps its one sprite, wears the gem
+and the rim. The sprites are forced out of the bundle (`?no-inline`) and fetched ahead with the
+rest of the art after the title.

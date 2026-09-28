@@ -6,7 +6,7 @@ import { StatGlyph, STAT_LABELS } from './StatBars';
 import { STAT_FULL_LABELS } from './relicStacks';
 import { RelicGlyph } from './relicIcons';
 import { EquipmentFormGlyph } from './equipmentIcons';
-import { enchantArt } from './equipmentArt';
+import { enchantArt, hasEnchantedArt } from './equipmentArt';
 import { useLongPress } from './MoveTile';
 import { passives } from '../../data/passives';
 import { PassiveGlyph } from './passiveIcons';
@@ -181,12 +181,20 @@ export function ItemPiece({ item }: { item: EquipmentDefinition | null }) {
   const enchantType = enchantTypeOf(item);
   if (!item) return <EquipmentIcon item={null} className="item-box-icon" />;
   return (
-    <span className="item-piece" style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}>
+    <span
+      className={`item-piece${enchantType ? ' is-enchanted' : ''}`}
+      style={
+        {
+          '--rarity-color': RARITY_COLOR_VARS[item.rarity],
+          ...(enchantType ? { '--enchant-color': getTypeColor(enchantType) } : null),
+        } as CSSProperties
+      }
+    >
       <span className="item-piece-facet" aria-hidden="true" />
       <EquipmentIcon item={item} className="item-box-icon" />
-      {/* Which element the enchant feeds. The name says it ("Blazing Sword") and the box prints
-          no name, so without this an enchanted item and a plain one are the same silhouette. */}
-      {enchantType && <EnchantMark item={item} type={enchantType} />}
+      {/* Which element the enchant feeds: the sprite is drawn in it and the rim is lit in its
+          colour; a Unique, which keeps its one sprite, wears the enchant's gem as well. */}
+      {enchantType && !hasEnchantedArt(item) && <EnchantMark item={item} type={enchantType} />}
       <TierPips rarity={item.rarity} />
     </span>
   );

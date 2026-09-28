@@ -9,6 +9,7 @@ import { ACT_ONE_LOCATION_ID } from '../../data/locations';
 import { locationBackdropUrls } from './locationBackdrops';
 import { heroArt, heroPoses } from './heroArt';
 import { allMapNodeArtUrls } from '../run/mapNodeArt';
+import { enchantedArtUrls } from './equipmentArt';
 
 /** Held so a decoded image is not collected before the screen that wants it mounts. */
 const loaded = new Map<string, Promise<void>>();
@@ -67,5 +68,5 @@ export function launchArtUrls(): string[] {
 export function allArtUrls(): string[] {
   const heroes = Object.values(heroArt).filter((url): url is string => !!url);
   const poses = Object.values(heroPoses).flatMap((p) => (p ? Object.values(p).filter((url): url is string => typeof url === 'string') : []));
-  return [...locationBackdropUrls(), ...allMapNodeArtUrls(), ...heroes, ...poses];
+  return [...locationBackdropUrls(), ...allMapNodeArtUrls(), ...heroes, ...poses, ...enchantedArtUrls()];
 }

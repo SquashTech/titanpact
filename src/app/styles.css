@@ -39908,3 +39908,37 @@ img.smithy-service-art {
     transform: scaleY(1);
   }
 }
+
+/* An enchanted piece's rim is lit in its element (EquipmentBox ItemPiece): a 2px octagonal ring
+   cut to the chit's own bevel, even-odd so only the band is filled. The chit's face and its tier
+   pips stay the rarity's; the rim is the enchant's. */
+.item-piece.is-enchanted::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--enchant-color);
+  box-shadow: none;
+  clip-path: polygon(
+    evenodd,
+    7px 0,
+    calc(100% - 7px) 0,
+    100% 7px,
+    100% calc(100% - 7px),
+    calc(100% - 7px) 100%,
+    7px 100%,
+    0 calc(100% - 7px),
+    0 7px,
+    7px 0,
+    8px 2px,
+    2px 8px,
+    2px calc(100% - 8px),
+    8px calc(100% - 2px),
+    calc(100% - 8px) calc(100% - 2px),
+    calc(100% - 2px) calc(100% - 8px),
+    calc(100% - 2px) 8px,
+    calc(100% - 8px) 2px,
+    8px 2px
+  );
+  pointer-events: none;
+}
