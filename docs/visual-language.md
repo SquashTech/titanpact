@@ -3757,3 +3757,11 @@ reticle's four corners in plain stone (`mount.png`) where a piece would sit. The
 Starfall card is a stone window onto its strip of night; Constellation offers are
 carved cards. Deliberately left unboxed: an empty slot on the battlefield (the
 field is a place, not a container).
+
+**The title** (eighth pass, 2026-09-28): the three places between runs are square
+planks, each carrying its own pixel object rather than a line glyph — the party's
+shield (`party.png`, shared with the map's Roster), a star (`stars.png`), a trophy
+(`records.png`) — with the star balance carved into a gold-lipped slot at the
+tile's corner. Start a New Run and the corner controls are planks. The pact plate
+(gold to begin, verdigris to resume) is still CSS-struck metal, the one piece on
+the title not yet in pixels.
