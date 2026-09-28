@@ -3762,8 +3762,8 @@ field is a place, not a container).
 direction: no wooden buttons on the title). Planks were tried and rejected; struck
 bronze plates, obsidian tiles and bare sigils were auditioned on the live screen,
 and the sigils won. The three places between runs are their own pixel objects at
-2x — a tome for the Collection (`collection.png`), a night-sky medallion with a
-gold constellation in it (`constellation.png`), a trophy (`records.png`); a party
+2x — a red-gemmed tome for the Collection (`collection.png`), a radiant eight-pointed
+star (`constellation.png`), a trophy (`records.png`); a party
 shield and a sparkling star were tried first — standing free in the seal's gold light
 over their names, no frame. Start a New Run is small capitals between two gold
 rules; the corner controls are bare glyphs. The pact plate (gold to begin,
