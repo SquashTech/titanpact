@@ -3762,9 +3762,17 @@ field is a place, not a container).
 direction: no wooden buttons on the title). Planks were tried and rejected; struck
 bronze plates, obsidian tiles and bare sigils were auditioned on the live screen,
 and the sigils won. The three places between runs are their own pixel objects at
-2x — the party's shield (`party.png`, shared with the map's Roster), a star
-(`stars.png`), a trophy (`records.png`) — standing free in the seal's gold light
+2x — a tome for the Collection (`collection.png`), a night-sky medallion with a
+gold constellation in it (`constellation.png`), a trophy (`records.png`); a party
+shield and a sparkling star were tried first — standing free in the seal's gold light
 over their names, no frame. Start a New Run is small capitals between two gold
 rules; the corner controls are bare glyphs. The pact plate (gold to begin,
 verdigris to resume) stays the one struck object on the screen. The kit's
 materials are the world's; the title is the threshold before it.
+
+**The draft** (ninth pass, 2026-09-28): the pact's two sockets are the map's medallion
+rim (`medallion.png`) with the bound hero standing in its light; Choose is a plank,
+gilt once spoken for; on the rail the hero on stage wears the reticle's corners and a
+bound one a gold-lipped slot. A gilt plank's label is always light: the old gold slabs
+set dark ink, and the two rules that still did (Seal the Pact, the recruit screen's
+only-option Leave) are overridden.
