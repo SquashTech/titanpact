@@ -12,6 +12,7 @@ import { NodeHeader, NodeSky, NODE_TINT_VITAL } from '../shared/NodeStage';
 import { WoundBar, entryHp } from '../shared/WoundBar';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import restArt from '../../../art/places/rest.png';
+import { PLACE_LIGHTS, SceneLights } from '../shared/SceneLights';
 
 interface Props {
   run: RunState;
@@ -48,7 +49,12 @@ export function RestNodeScreen({ run, onRunChange, onContinue }: Props) {
         compact
         eyebrow="Embers Banked"
         title="Rest"
-        art={<img src={restArt} className="place-vignette" alt="" draggable={false} />}
+        art={
+          <span className="place-vignette-frame">
+            <img src={restArt} className="place-vignette" alt="" draggable={false} />
+            <SceneLights lights={PLACE_LIGHTS.rest} />
+          </span>
+        }
         readoutKey={rested ? 'rested' : 'idle'}
         readoutLive={rested}
         readout={

@@ -39504,3 +39504,360 @@ img.smithy-service-art {
 .app-shell.canvas-shortest .bottom-bar {
   padding-bottom: 6px;
 }
+
+/* -- road-awaken: a place that wakes as the player arrives (RoadEncounter `awakened`). The map's own
+   prop rises, flares white, and gives way to its woken self in a burst of its light; the woken
+   prop then breathes that light while the line is read. -- */
+.road-encounter.is-awakening {
+  --awaken-rgb: 120, 205, 255;
+}
+
+.road-encounter.is-awakening .road-encounter-figure.is-dormant {
+  animation:
+    road-encounter-rise 0.9s var(--ease-out) both,
+    road-awaken-flare 0.45s ease-in 1s forwards;
+}
+
+@keyframes road-awaken-flare {
+  from {
+    opacity: 1;
+    filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.7));
+  }
+  60% {
+    opacity: 1;
+    filter: brightness(0) invert(1) drop-shadow(0 0 22px rgba(var(--awaken-rgb), 1));
+  }
+  to {
+    opacity: 0;
+    filter: brightness(0) invert(1) drop-shadow(0 0 30px rgba(var(--awaken-rgb), 1));
+  }
+}
+
+.road-encounter.is-awakening .road-encounter-figure.is-awake {
+  opacity: 0;
+  animation:
+    road-awaken-in 0.6s var(--ease-out) 1.3s forwards,
+    road-awaken-breathe 2.8s ease-in-out 1.9s infinite;
+}
+
+@keyframes road-awaken-in {
+  from {
+    opacity: 1;
+    transform: scale(1.06);
+    filter: brightness(0) invert(1) drop-shadow(0 0 30px rgba(var(--awaken-rgb), 1));
+  }
+  45% {
+    opacity: 1;
+    filter: brightness(1.6) drop-shadow(0 0 24px rgba(var(--awaken-rgb), 0.9));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 16px rgba(var(--awaken-rgb), 0.45));
+  }
+}
+
+@keyframes road-awaken-breathe {
+  0%,
+  100% {
+    opacity: 1;
+    filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 16px rgba(var(--awaken-rgb), 0.45));
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 26px rgba(var(--awaken-rgb), 0.75));
+  }
+}
+
+/* The burst the waking gives off, then a standing pool of the place's light behind it. */
+.road-awaken-halo {
+  position: absolute;
+  left: 50%;
+  bottom: 120px;
+  width: 360px;
+  height: 300px;
+  margin-left: -180px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(var(--awaken-rgb), 0.5), rgba(var(--awaken-rgb), 0.14) 38%, transparent 68%);
+  opacity: 0;
+  pointer-events: none;
+  animation: road-awaken-halo 1.6s var(--ease-out) 1.25s forwards;
+}
+
+@keyframes road-awaken-halo {
+  from {
+    opacity: 1;
+    transform: scale(0.35);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  to {
+    opacity: 0.45;
+    transform: scale(0.85);
+  }
+}
+
+.road-encounter.is-skipped .road-encounter-figure.is-dormant {
+  visibility: hidden;
+}
+
+.road-encounter.is-awakening.is-skipped .road-encounter-figure.is-awake {
+  opacity: 1;
+  animation: road-awaken-breathe 2.8s ease-in-out infinite;
+}
+
+.road-encounter.is-skipped .road-awaken-halo {
+  opacity: 0.45;
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .road-encounter.is-awakening .road-encounter-figure.is-awake {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* -- Scene lights (SceneLights.tsx): light that moves in a still painting. The layer is laid over
+   exactly the painting it belongs to — over a cover-fitted backdrop by the backdrop's own geometry
+   (container units on the scene), over a sprite or vignette by filling its box — and each light is
+   placed in % of that painting. Glows are screen-blended, so they read as light, not as paint. -- */
+.road-encounter,
+.node-sky.location-sky {
+  container-type: size;
+}
+
+.scene-lights {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* The arrival paintings are 196x344, drawn cover: height-bound on a phone, width-bound when short. */
+.scene-lights.is-cover,
+.scene-lights.is-cover-bottom {
+  inset: auto;
+  left: 50%;
+  aspect-ratio: 196 / 344;
+  translate: -50% 0;
+}
+
+.scene-lights.is-cover {
+  top: 50%;
+  width: max(calc(100cqw + var(--shell-pad) * 2), calc((100cqh + var(--shell-pad) * 2) * 196 / 344));
+  translate: -50% -50%;
+}
+
+.scene-lights.is-cover-bottom {
+  bottom: 0;
+  width: max(100cqw, calc(100cqh * 196 / 344));
+}
+
+.scene-light {
+  position: absolute;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  animation-iteration-count: infinite;
+}
+
+/* A star: one hard pixel that swells and fades, off-beat from its neighbours. */
+.scene-light.is-star {
+  border-radius: 0;
+  background: #eef4ff;
+  box-shadow: 0 0 4px 1px rgba(200, 220, 255, 0.8);
+  mix-blend-mode: normal;
+  animation: scene-star-twinkle calc(3.4s * var(--light-rate, 1)) ease-in-out infinite;
+}
+
+@keyframes scene-star-twinkle {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: scale(0.6);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  60% {
+    opacity: 0.7;
+    transform: scale(0.9);
+  }
+}
+
+/* A firefly the painter already put there: its glow lifts and sinks. */
+.scene-light.is-firefly {
+  background: radial-gradient(circle, rgba(255, 245, 160, 0.95), rgba(220, 240, 120, 0.35) 35%, transparent 70%);
+  animation: scene-firefly calc(3s * var(--light-rate, 1)) ease-in-out infinite;
+}
+
+@keyframes scene-firefly {
+  0%,
+  100% {
+    opacity: 0.1;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.95;
+    transform: translateY(-2px);
+  }
+}
+
+/* A flame: warm light that never settles — an irregular flicker, not a pulse. */
+.scene-light.is-flame {
+  background: radial-gradient(circle, rgba(255, 210, 120, 0.75), rgba(255, 130, 40, 0.3) 40%, transparent 70%);
+  animation: scene-flame-flicker calc(1.7s * var(--light-rate, 1)) steps(1, end) infinite;
+}
+
+@keyframes scene-flame-flicker {
+  0% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+  11% {
+    opacity: 0.95;
+    transform: scale(1.06);
+  }
+  23% {
+    opacity: 0.62;
+    transform: scale(0.96);
+  }
+  37% {
+    opacity: 0.88;
+    transform: scale(1.03);
+  }
+  52% {
+    opacity: 0.7;
+    transform: scale(0.98);
+  }
+  64% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  78% {
+    opacity: 0.66;
+    transform: scale(0.95);
+  }
+  90% {
+    opacity: 0.85;
+    transform: scale(1.02);
+  }
+}
+
+/* A spark off a fire: a pixel that lifts, drifts and goes out. */
+.scene-light.is-ember {
+  border-radius: 0;
+  background: #ffcf6e;
+  box-shadow: 0 0 3px 1px rgba(255, 150, 50, 0.8);
+  mix-blend-mode: normal;
+  opacity: 0;
+  animation: scene-ember-rise calc(2.2s * var(--light-rate, 1)) ease-out infinite;
+}
+
+@keyframes scene-ember-rise {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(6px, -44px);
+  }
+}
+
+/* A lighthouse lamp: a steady glow, and its beam swinging round through the rain. */
+.scene-light.is-beacon {
+  background: radial-gradient(circle, rgba(255, 244, 200, 0.95), rgba(255, 220, 140, 0.35) 35%, transparent 70%);
+  animation: scene-beacon-glow 4s ease-in-out infinite;
+}
+
+.scene-light.is-beacon::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 900%;
+  height: 26%;
+  translate: -50% -50%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 240, 200, 0.28) 30%,
+    rgba(255, 244, 210, 0.6) 50%,
+    rgba(255, 240, 200, 0.28) 70%,
+    transparent
+  );
+  clip-path: polygon(0 0, 50% 45%, 100% 0, 100% 100%, 50% 55%, 0 100%);
+  animation: scene-beacon-sweep 4s ease-in-out infinite;
+}
+
+@keyframes scene-beacon-glow {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes scene-beacon-sweep {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scaleX(0.08);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+/* The moon: a slow breath of light around the painted disc. */
+.scene-light.is-moon {
+  background: radial-gradient(circle, rgba(220, 255, 245, 0.35), rgba(180, 235, 225, 0.12) 45%, transparent 70%);
+  animation: scene-moon-breathe 7s ease-in-out infinite;
+}
+
+@keyframes scene-moon-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+/* The Rest's header vignette carries its fire. */
+.place-vignette-frame {
+  position: relative;
+  display: block;
+  width: 192px;
+  height: 96px;
+  margin: 0 auto 4px;
+}
+
+.place-vignette-frame .place-vignette {
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-light,
+  .scene-light::after {
+    animation: none !important;
+  }
+
+  .scene-light.is-ember {
+    display: none;
+  }
+}

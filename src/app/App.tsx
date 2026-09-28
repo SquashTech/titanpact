@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { initUiScale } from './uiScale';
+import { PROP_LIGHTS } from '../view/shared/SceneLights';
 import { useReloadOnNewBuild } from './useReloadOnNewBuild';
 import { clearSave, readSave, writeSave } from './saveStorage';
 import { eraseAllData, readProfile, updateProfile } from './profileStorage';
@@ -148,7 +149,7 @@ import type { Squad } from '../run/squad';
 import { statScaleFor } from '../run/statScale';
 import { RoadGate } from '../view/run/RoadEncounter';
 import { CrucibleRite } from '../view/run/CrucibleRite';
-import { mapNodeArt } from '../view/run/mapNodeArt';
+import { mapNodeArt, mapNodeAwakeArt } from '../view/run/mapNodeArt';
 import { PLACE_LINES } from '../data/roadLines';
 
 type Screen =
@@ -1382,7 +1383,7 @@ export function App() {
       )}
 
       {screen.kind === 'manaWell' && (
-        <RoadGate run={playerRun} place art={mapNodeArt('manaWellReward')!} {...PLACE_LINES.manaWellReward}>
+        <RoadGate run={playerRun} place art={mapNodeArt('manaWellReward')!} awakened={mapNodeAwakeArt('manaWellReward')} {...PLACE_LINES.manaWellReward}>
           <ManaWellScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
         </RoadGate>
       )}
@@ -1392,13 +1393,13 @@ export function App() {
       )}
 
       {screen.kind === 'leyLine' && (
-        <RoadGate run={playerRun} place art={mapNodeArt('leyLineReward')!} {...PLACE_LINES.leyLineReward}>
+        <RoadGate run={playerRun} place art={mapNodeArt('leyLineReward')!} awakened={mapNodeAwakeArt('leyLineReward')} {...PLACE_LINES.leyLineReward}>
           <LeyLineScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
         </RoadGate>
       )}
 
       {screen.kind === 'rest' && (
-        <RoadGate run={playerRun} place art={mapNodeArt('restReward')!} {...PLACE_LINES.restReward}>
+        <RoadGate run={playerRun} place art={mapNodeArt('restReward')!} lights={PROP_LIGHTS.restReward} {...PLACE_LINES.restReward}>
           <RestNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
         </RoadGate>
       )}

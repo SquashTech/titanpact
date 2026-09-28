@@ -29,3 +29,13 @@ export function mapNodeArt(type: MapNodeType): string | undefined {
 export function isMapProp(type: MapNodeType): boolean {
   return (ALIAS[type] ?? type) in PROPS;
 }
+
+// A place's second state (art/map-nodes/awake): the same prop woken as the player arrives —
+// the well surging, the stone blazing — drawn over its map self on the road (RoadEncounter).
+const AWAKE = byName(
+  import.meta.glob<string>('../../../art/map-nodes/awake/*.png', { eager: true, query: '?url', import: 'default' })
+);
+
+export function mapNodeAwakeArt(type: MapNodeType): string | undefined {
+  return AWAKE[type];
+}

@@ -5,6 +5,8 @@ import { locationBackdrop } from '../shared/locationBackdrops';
 import { useAmbientLocation } from '../shared/LocationContext';
 import { NodeSky } from '../shared/NodeStage';
 import { prefersReducedMotion } from '../shared/reducedMotion';
+import { LocationMotes } from '../shared/LocationSky';
+import { LOCATION_LIGHTS, SceneLights, type SceneLight } from '../shared/SceneLights';
 
 // Meeting someone on the road: the act's own painting, the figure fading in where it stands, and
 // one line said before the node's real screen. A tap finishes the line; a second tap moves on. A
@@ -33,12 +35,18 @@ export function useRoadGreeting(run: RunState, lines: readonly string[], enabled
 const TYPE_MS = 24;
 /** The fade in, before the line starts (ms). Matches `road-encounter-arrive`. */
 const WALK_MS = 900;
+/** A place that wakes holds the line until it has: rise, flare, the woken art in (styles.css "road-awaken"). */
+const AWAKEN_MS = 1900;
 
 interface Props {
   /** The speaker's 48px portrait, or the place's 48px map piece, drawn at 3x. */
   art: string;
   /** A place rather than a person: no walk, and the line is narration. */
   place?: boolean;
+  /** The place's woken state (mapNodeArt.ts mapNodeAwakeArt): it flares into this before the line. */
+  awakened?: string;
+  /** Light moving on the figure itself — a campfire's flicker (SceneLights PROP_LIGHTS). */
+  lights?: readonly SceneLight[];
   name: string;
   line: string;
   onDone: () => void;
@@ -61,23 +69,32 @@ export function RoadScene({
   return (
     <button type="button" className={`road-encounter${className ? ` ${className}` : ''}`} onClick={onClick} data-sfx="none" aria-label={label}>
       {scene ? <img src={scene} className="road-encounter-scene" alt="" draggable={false} /> : <NodeSky />}
+      {scene && location && <SceneLights lights={LOCATION_LIGHTS[location.id]} className="is-cover" />}
+      {scene && location && <LocationMotes kind={location.ambience} density={0.5} />}
       <span className="road-encounter-shade" aria-hidden="true" />
       {children}
     </button>
   );
 }
 
-export function RoadEncounter({ art, name, line, place = false, onDone }: Props) {
+export function RoadEncounter({ art, name, line, place = false, awakened, lights, onDone }: Props) {
   const instant = prefersReducedMotion();
   const [shown, setShown] = useState(instant ? line.length : 0);
   const [speaking, setSpeaking] = useState(instant);
+  // A tap before the place has woken skips the waking too, not only the line.
+  const [skipped, setSkipped] = useState(instant);
   const done = shown >= line.length;
 
   useEffect(() => {
     if (speaking) return;
-    const start = window.setTimeout(() => setSpeaking(true), WALK_MS);
+    const start = window.setTimeout(() => setSpeaking(true), awakened ? AWAKEN_MS : WALK_MS);
     return () => window.clearTimeout(start);
-  }, [speaking]);
+  }, [speaking, awakened]);
+
+  useEffect(() => {
+    if (awakened && !instant) playSfx('shrine', { delay: 1.05 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!speaking || done) return;
@@ -88,6 +105,7 @@ export function RoadEncounter({ art, name, line, place = false, onDone }: Props)
   function advance() {
     if (!done) {
       setSpeaking(true);
+      setSkipped(true);
       setShown(line.length);
       return;
     }
@@ -96,8 +114,15 @@ export function RoadEncounter({ art, name, line, place = false, onDone }: Props)
   }
 
   return (
-    <RoadScene className={place ? 'is-place' : undefined} label={`${name}: ${line}`} onClick={advance}>
-      <img src={art} className={`road-encounter-figure${instant ? ' is-still' : ''}`} alt="" draggable={false} />
+    <RoadScene
+      className={[place ? 'is-place' : '', awakened ? 'is-awakening' : '', skipped ? 'is-skipped' : ''].filter(Boolean).join(' ') || undefined}
+      label={`${name}: ${line}`}
+      onClick={advance}
+    >
+      {awakened && <span className="road-awaken-halo" aria-hidden="true" />}
+      <img src={art} className={`road-encounter-figure${instant ? ' is-still' : ''}${awakened ? ' is-dormant' : ''}`} alt="" draggable={false} />
+      {awakened && <img src={awakened} className="road-encounter-figure is-awake" alt="" draggable={false} />}
+      <SceneLights lights={lights} className="road-encounter-figure" />
       <span className={`road-encounter-speech${speaking ? ' is-open' : ''}`} aria-hidden="true">
         <span className="road-encounter-name">{name}</span>
         <span className="road-encounter-line">
@@ -144,11 +169,15 @@ export function RoadGate({
   name,
   lines,
   place = false,
+  awakened,
+  lights,
   enabled = true,
   children,
 }: {
   run: RunState;
   art: string;
+  awakened?: string;
+  lights?: readonly SceneLight[];
   name: string;
   lines: readonly string[];
   place?: boolean;
@@ -156,6 +185,6 @@ export function RoadGate({
   children: ReactNode;
 }) {
   const [line, dismiss] = useRoadGreeting(run, lines, enabled);
-  if (line) return <RoadEncounter art={art} name={name} line={line} place={place} onDone={dismiss} />;
+  if (line) return <RoadEncounter art={art} name={name} line={line} place={place} awakened={awakened} lights={lights} onDone={dismiss} />;
   return <>{children}</>;
 }
