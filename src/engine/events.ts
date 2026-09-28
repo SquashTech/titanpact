@@ -64,6 +64,8 @@ export interface DamageDealtEvent extends BaseEvent {
   amount: number;
   /** What the target's Shield took first (docs/shield.md §3.3); absent when no Shield was held. A fully absorbed hit is amount 0. */
   absorbed?: number;
+  /** What a Blessing turned aside (docs/blessings-and-statuses.md §1); absent unless one was spent. A prevented hit is amount 0. */
+  prevented?: number;
   category: DamageCategory;
   moveType: TypeId;
   typeMult: number;
@@ -216,6 +218,14 @@ export interface EnduredEvent extends BaseEvent {
   combatantId: string;
 }
 
+/** A knockout prevented by a Blessing (Combatant.blessed, docs/blessings-and-statuses.md §1): the HpChanged before it left HP untouched. */
+export interface BlessingSpentEvent extends BaseEvent {
+  type: 'BlessingSpent';
+  combatantId: string;
+  /** The loss that would have knocked the holder out. */
+  prevented: number;
+}
+
 /** A manaSurcharge passive effect raised every price for this combatant (Deepgrip). `delta` is what landed under the cap, `total` the surcharge now held. */
 export interface ManaSurchargedEvent extends BaseEvent {
   type: 'ManaSurcharged';
@@ -357,6 +367,7 @@ export type CombatEvent =
   | MoveGuardedEvent
   | FaintedEvent
   | EnduredEvent
+  | BlessingSpentEvent
   | SwitchedInEvent
   | ManaSurchargedEvent
   | BenchRegenTickedEvent

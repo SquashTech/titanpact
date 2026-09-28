@@ -91,6 +91,11 @@ export interface RosterEntry {
    * roll) cannot quietly stand a downed hero back up.
    */
   down: boolean;
+  /**
+   * Holds a Blessing (run/blessings.ts, docs/blessings-and-statuses.md §1): the next knockout, in
+   * any fight, is prevented and this is spent. Carried from fight to fight until it is used.
+   */
+  blessed: boolean;
 }
 
 /**
@@ -200,6 +205,7 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     mortal: false,
     wounds: 0,
     down: false,
+    blessed: false,
   };
 }
 

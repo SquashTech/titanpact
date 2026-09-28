@@ -80,7 +80,8 @@ export interface BeatFlavor {
     | 'detonate'
     | 'mana'
     | 'field'
-    | 'shield';
+    | 'shield'
+    | 'blessing';
   /** Type color the headline glows in, overriding the kind's own. */
   bannerAccent?: string;
   /** Stamp under the headline — "Critical hit!", "Super effective!". */
@@ -179,6 +180,7 @@ const ACTION_EVENTS: ReadonlySet<CombatEvent['type']> = new Set([
   'Healed',
   'Fainted',
   'Endured',
+  'BlessingSpent',
   'StatChanged',
   'StatusApplied',
   'StatusRemoved',
@@ -357,9 +359,29 @@ export function buildBeats(
           shieldBroken = true;
         }
         if (events[i]?.type === 'HpChanged') applied.push(events[i++]);
+        if (events[i]?.type === 'BlessingSpent') applied.push(events[i++]);
         // Fainted gets its OWN beat so the bar is seen to hit 0 before the card vanishes.
         let faintEvent: CombatEvent | null = null;
         if (events[i]?.type === 'Fainted') faintEvent = events[i++];
+        const tagText = e.isCrit ? 'Critical hit!' : e.typeMult >= 2 ? 'Super effective!' : e.typeMult <= 0.5 ? 'Not very effective...' : undefined;
+        // A Blessing turned the killing blow aside (docs/blessings-and-statuses.md §1.6): the number
+        // that would have landed is shown struck through, in the Blessing's own tone.
+        if (e.prevented) {
+          const blessedName = name(e.targetCombatantId);
+          push(
+            applied,
+            `${blessedName}'s Blessing turns aside ${e.prevented} damage!`,
+            [{ combatantId: e.targetCombatantId, text: `${e.prevented}`, className: 'popup-blessed' }],
+            {
+              bannerLead: `${blessedName}'s Blessing turns aside`,
+              bannerFocus: `${e.prevented} damage`,
+              bannerFocusKind: 'blessing',
+              bannerTag: tagText,
+              fx: landing(e.targetCombatantId, true),
+            }
+          );
+          break;
+        }
         const tag = e.isCrit
           ? ' — Critical hit!'
           : e.typeMult >= 2
@@ -367,7 +389,6 @@ export function buildBeats(
             : e.typeMult <= 0.5
               ? ' — Not very effective...'
               : '';
-        const tagText = e.isCrit ? 'Critical hit!' : e.typeMult >= 2 ? 'Super effective!' : e.typeMult <= 0.5 ? 'Not very effective...' : undefined;
         const tagKind = e.isCrit ? 'crit' : e.typeMult >= 2 ? 'super' : e.typeMult <= 0.5 ? 'resist' : 'damage';
         const targetName = name(e.targetCombatantId);
         // Haunt dragged this target into a hit declared against its partner.
@@ -946,6 +967,19 @@ export function buildBeats(
             bannerFocusKind: 'mana',
           }
         );
+        i++;
+        break;
+      }
+
+      // A Blessing spent on anything but a move's hit (a DoT tick, a passive, the Gaze) — the hit's
+      // own case folds it into the strike instead.
+      case 'BlessingSpent': {
+        const blessedName = name(e.combatantId);
+        push([e], `${blessedName}'s Blessing turns aside ${e.prevented} damage!`, [{ combatantId: e.combatantId, text: `${e.prevented}`, className: 'popup-blessed' }], {
+          bannerLead: `${blessedName}'s Blessing turns aside`,
+          bannerFocus: `${e.prevented} damage`,
+          bannerFocusKind: 'blessing',
+        });
         i++;
         break;
       }

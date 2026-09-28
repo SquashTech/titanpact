@@ -32,6 +32,12 @@ export function applyEventToState(state: CombatState, event: CombatEvent): Comba
     case 'StatusDetonated':
       return absorbShield(state, event.combatantId, event.absorbed);
 
+    case 'BlessingSpent':
+      return {
+        ...state,
+        combatants: { ...state.combatants, [event.combatantId]: { ...state.combatants[event.combatantId], blessed: false } },
+      };
+
     case 'HpChanged':
       return {
         ...state,

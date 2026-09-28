@@ -39,6 +39,9 @@
   /* A Shield's pool (docs/shield.md §5, statusIcons.tsx STATUS_COLOR.Shield): pale steel, so the
      band past the HP fill reads as health-not-yet-spent rather than a fourth tier of green. */
   --shield: #d8dde6;
+  /* A Blessing (docs/blessings-and-statuses.md §1.6): warm pale gold, lighter than --accent so the
+     badge never reads as a button. */
+  --blessing: #f6dc8c;
   --accent: #e0a63c;
   --enemy: #d9534f;
   --ally: #4a90d9;
@@ -1738,6 +1741,10 @@ textarea,
   --banner-kind-color: var(--shield);
 }
 
+.banner-kind-blessing {
+  --banner-kind-color: var(--blessing);
+}
+
 @keyframes banner-lead-in {
   0% {
     opacity: 0;
@@ -2965,6 +2972,29 @@ textarea,
   height: 28px;
 }
 
+/* A Blessing held (docs/blessings-and-statuses.md §1.6): a thin gold rim on the ground under the
+   figure, breathing slowly — no word, nothing in the status row, since it can sit there all run. It
+   goes when the Blessing is spent, and the spend beat is what says what it was. */
+.team-row .combatant-card.is-blessed .combatant-platform::after {
+  content: '';
+  position: absolute;
+  inset: -1px -3px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(246, 220, 140, 0.5), 0 0 7px rgba(246, 220, 140, 0.3);
+  animation: blessing-rim-breathe 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes blessing-rim-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 /* Which way is "at the enemy". The strike lean goes toward the other row and
    the hit recoil away from it, so both are read off the row the figure is
    standing in rather than being authored twice. */
@@ -3247,7 +3277,6 @@ textarea,
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-
 /* Rim ticks flanking the figure's feet, where they read as markings on the
    ground rather than badges pinned to a card corner. Anchored from the
    platform's own line rather than the top: a hero can carry enough
@@ -6125,6 +6154,30 @@ textarea,
   }
   35% {
     filter: var(--figure-shadow) drop-shadow(0 0 6px rgba(216, 221, 230, 0.9)) brightness(1.15);
+  }
+}
+
+/* A Blessing spent (buildBeats.ts): the blow that would have knocked the hero out, struck through in
+   the Blessing's tone, and a flare of gold on the figure — no hurt frame, nothing landed. */
+.dmg-popup.popup-blessed {
+  color: var(--blessing);
+  font-size: 17px;
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  text-shadow: 0 0 10px rgba(246, 220, 140, 0.8), 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.combatant-card.blessing-hit .combatant-portrait {
+  animation: blessing-flare 760ms ease-out;
+}
+
+@keyframes blessing-flare {
+  0%,
+  100% {
+    filter: var(--figure-shadow);
+  }
+  30% {
+    filter: var(--figure-shadow) drop-shadow(0 0 12px rgba(246, 220, 140, 0.95)) brightness(1.3);
   }
 }
 
@@ -39613,6 +39666,42 @@ img.smithy-service-art {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #ff9b95;
+}
+
+/* A roster hero's Blessing (BlessingMark.tsx): a small gold star wherever the hero is read off the
+   map. The shape is the badge's; each seat below only places it. */
+.blessing-mark {
+  display: inline-flex;
+  flex: none;
+  width: 12px;
+  height: 12px;
+  color: var(--blessing);
+  filter: drop-shadow(0 0 3px rgba(246, 220, 140, 0.75)) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.7));
+}
+
+.blessing-mark svg {
+  display: block;
+  width: 12px;
+  height: 12px;
+}
+
+.roster-sheet-blessing {
+  position: absolute;
+  right: 7px;
+  bottom: 10px;
+}
+
+.squad-slot-blessing {
+  position: absolute;
+  left: 5px;
+  top: 5px;
+}
+
+/* The nameplate's Blessing star, beside the level: the badge's shape at the level's size. */
+.blessing-mark.combatant-blessing,
+.blessing-mark.combatant-blessing svg {
+  width: 9px;
+  height: 9px;
 }
 
 .node-roster-gear {

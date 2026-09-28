@@ -88,16 +88,21 @@ export function standingRoster(roster: readonly RosterEntry[]): RosterEntry[] {
 /**
  * Read one side's ending HP back onto its roster. The fight's own buffs are not carried — a
  * wound is read against the hero's baseline max, the same figure the next fight will place it
- * against. A KO is written as `down` with the whole max missing. Heroes the fight did not field
+ * against. A KO is written as `down` with the whole max missing, and a Blessing the fight spent
+ * is gone (a replayed fight never reaches here, so it refunds one). Heroes the fight did not field
  * keep what they had.
  */
 export function recordWounds(run: RunState, state: CombatState, side: Side, heroes: HeroLookup): RunState {
-  const after = new Map<string, Pick<RosterEntry, 'wounds' | 'down'>>();
+  const after = new Map<string, Pick<RosterEntry, 'wounds' | 'down' | 'blessed'>>();
   for (const combatant of Object.values(state.combatants)) {
     if (combatant.side !== side) continue;
     const baselineMax = getMaxHp(heroes[combatant.heroId], { ...combatant, statModifiers: {} });
     const down = combatant.fainted || combatant.currentHp <= 0;
-    after.set(rosterIdOfCombatant(combatant.combatantId), { wounds: down ? baselineMax : woundsFrom(baselineMax, combatant.currentHp), down });
+    after.set(rosterIdOfCombatant(combatant.combatantId), {
+      wounds: down ? baselineMax : woundsFrom(baselineMax, combatant.currentHp),
+      down,
+      blessed: combatant.blessed === true,
+    });
   }
   return {
     ...run,

@@ -74,7 +74,7 @@ export function tickPactClock(
       const maxHp = maxHpOf(id);
       // At least 1, so a low-HP hero is never exempt.
       const amount = Math.max(1, Math.ceil(maxHp * fraction));
-      const hit = applyHpDelta(working, round, id, -amount, maxHp);
+      const hit = applyHpDelta(working, round, id, -amount, maxHp, { source: 'clock' });
       working = hit.state;
       events.push(...hit.events);
     }

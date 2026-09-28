@@ -15,6 +15,7 @@ import { useLongPress } from '../shared/MoveTile';
 import { StatusDetailOverlay } from './StatusDetailOverlay';
 import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { TypeFx } from './TypeFx';
+import { BlessingMark } from '../shared/BlessingMark';
 
 export interface Popup {
   key: number;
@@ -109,6 +110,7 @@ const POPUP_FLASH_CLASS: Record<string, string> = {
   // Gaining a Shield is a grant, not a hit (2026-09-25): a shimmer, never the hurt frame or the recoil.
   // 'popup-shield' — a hit a Shield soaked — stays in POPUP_HIT_CLASS above.
   'popup-shield-gain': 'shield-gain-hit',
+  'popup-blessed': 'blessing-hit',
 };
 
 interface Props {
@@ -323,6 +325,7 @@ export function CombatantCard({
   const classes = ['combatant-card'];
   if (compact) classes.push('compact');
   if (combatant.fainted) classes.push('fainted');
+  if (combatant.blessed && !combatant.fainted) classes.push('is-blessed');
   if (pose === 'closed') classes.push('is-closed-eye');
   if (targetable && !combatant.fainted) classes.push('targetable');
   if (selected) classes.push('selected');
@@ -398,6 +401,7 @@ export function CombatantCard({
               {level}
             </span>
           )}
+          {combatant.blessed && !combatant.fainted && <BlessingMark className="combatant-blessing" />}
           <span className="hero-name-text">{hero.name}</span>
           <span className="combatant-types">
             {types.map((t) => (

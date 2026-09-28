@@ -29,6 +29,7 @@ import { canUseRevive, spendRevive } from '../../run/consumables';
 import { levelOf } from '../../run/growth';
 import { statScaleFor } from '../../run/statScale';
 import { WoundBar, entryHp } from '../shared/WoundBar';
+import { BlessingMark } from '../shared/BlessingMark';
 
 interface Props {
   run: RunState;
@@ -375,6 +376,7 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
                         <span className="pick-level squad-slot-level" aria-hidden="true">
                           {levelOf(entry)}
                         </span>
+                        {entry.blessed && <BlessingMark className="squad-slot-blessing" />}
                         <div className="roster-card-name">{hero.name}</div>
                         <div className="roster-card-types">
                           {rosterEntryTypes(hero, entry).map((t) => (

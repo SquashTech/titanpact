@@ -22,6 +22,7 @@ import { guildHallOffersFor, CONTRACT_PURCHASE_COST } from '../../src/data/recru
 import { SCRIBE_PIPS_EACH, SCROLL_CACHE_COUNT, buyScroll, canBuyScroll, grantMastery } from '../../src/run/mastery';
 
 import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry, ROSTER_CAP, TOTAL_ACTS, type RunState, type RosterEntry } from '../../src/run/state';
+import { blessOpeningPair } from '../../src/run/blessings';
 import { generateMap, type MapNode, type MapNodeType } from '../../src/run/map';
 import { generateStarterOptions, STARTER_PICK_COUNT } from '../../src/run/draft';
 import { chooseLocation, drawLocationCandidates, locationChoiceDue, locationForAct } from '../../src/run/locations';
@@ -64,6 +65,8 @@ export const SIM_ALL_HEROES = process.env.SIM_ALL_HEROES === '1';
 export const SIM_PURCHASES: readonly string[] = SIM_ALL_HEROES
   ? Object.keys(allHeroes).map((id) => `summon.${id}`)
   : (process.env.SIM_PURCHASES ?? '').split(',').filter(Boolean);
+// SIM_NO_BLESSING=1 opens the run without the opening pair's Blessings, the A/B for docs/blessings-and-statuses.md.
+export const SIM_NO_BLESSING = process.env.SIM_NO_BLESSING === '1';
 const heroes = heroPool(allHeroes, SIM_PURCHASES);
 const guildHallOffers = guildHallOffersFor(heroes);
 import { guildHallEntry } from '../../src/run/guildRecruit';
@@ -370,6 +373,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
   for (const heroId of drafted) {
     run = addRosterEntry(run, createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
   }
+  if (!SIM_NO_BLESSING) run = blessOpeningPair(run);
   run = { ...run, map: generateMap(randomSeed(rng)), locationIds: [ACT_ONE_LOCATION_ID] };
 
   let alive = true;

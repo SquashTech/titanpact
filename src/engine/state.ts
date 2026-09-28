@@ -60,6 +60,8 @@ export interface Combatant {
   passives: Record<PassiveId, PassiveInstance>;
   /** How many more knockouts this combatant shrugs off at 1 HP (PassiveDefinition.enduresOnce), set at fight build and spent in applyHpDelta. */
   enduresLeft?: number;
+  /** Holds a Blessing (docs/blessings-and-statuses.md §1): the next knockout's whole loss is prevented and this goes false. Copied from the roster entry at fight build, read back at resolve. */
+  blessed?: boolean;
   /** Never switches out voluntarily (PassiveDefinition.cannotSwitchOut), set at fight build. Read through canSwitchOut. */
   switchLocked?: boolean;
   /** Stat gains a `permanent` passive statDelta banked this fight, for the roster to keep (run/runProgress.ts recordPermanentStatGains). */

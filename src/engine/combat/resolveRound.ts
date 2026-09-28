@@ -372,7 +372,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
               statusDefs: statuses,
               sourceCombatantId: action.combatantId,
             });
-            const amount = rolledAmount - hpResult.absorbed;
+            const amount = rolledAmount - hpResult.absorbed - hpResult.prevented;
             const finishing = hpResult.events.some((e) => e.type === 'Fainted' && e.combatantId === targetId);
 
             const [offKey, defKey] = statKeysForMove(move);
@@ -385,6 +385,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
               ...(finishing ? { finishing: true } : {}),
               amount,
               ...(hpResult.absorbed > 0 ? { absorbed: hpResult.absorbed } : {}),
+              ...(hpResult.prevented > 0 ? { prevented: hpResult.prevented } : {}),
               category: move.category,
               moveType: move.type,
               typeMult: rolled.typeMult,
@@ -549,7 +550,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
               modifiers: [],
               recoil: { damageDealt: recoilBase, percent: move.recoilPercent },
             });
-            const recoilResult = applyHpDelta(working, round, action.combatantId, -recoilAmount, userMaxHp);
+            const recoilResult = applyHpDelta(working, round, action.combatantId, -recoilAmount, userMaxHp, { source: 'cost' });
             working = recoilResult.state;
             events.push(...recoilResult.events);
           }
@@ -864,7 +865,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             modifiers: [],
             selfCost: { mode: move.selfHpCost.mode, amount: move.selfHpCost.amount },
           });
-          const costResult = applyHpDelta(working, round, action.combatantId, -cost, userMaxHp);
+          const costResult = applyHpDelta(working, round, action.combatantId, -cost, userMaxHp, { source: 'cost' });
           working = costResult.state;
           events.push(...costResult.events);
         }

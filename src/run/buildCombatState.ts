@@ -60,6 +60,7 @@ function placeEntry(
     statuses,
     enduresLeft: enduranceOf(passiveCounts, passiveDefs),
     switchLocked: switchLockOf(passiveCounts, passiveDefs),
+    ...(entry.blessed ? { blessed: true } : {}),
   };
   return { ...withMods, currentHp: woundedHp(getMaxHp(hero, withMods), entry.wounds), currentMana: getMaxMana(hero, withMods) };
 }

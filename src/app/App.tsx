@@ -79,6 +79,7 @@ import {
   type EquipmentDefinition,
 } from '../run/equipment';
 import { createRunState, createRosterEntry, addRosterEntry, FINALE_ACT, ROSTER_CAP, SEAL_ACTS, TOTAL_ACTS } from '../run/state';
+import { blessOpeningPair } from '../run/blessings';
 import {
   deriveContractOffer,
   claimContract,
@@ -280,7 +281,7 @@ function addHeroes(run: RunState, heroIds: readonly string[], level?: number): R
  */
 function createStartingRun(heroIds: readonly string[], ascension: number): RunState {
   return {
-    ...addHeroes(createRunState(40, 1, ascension), heroIds),
+    ...blessOpeningPair(addHeroes(createRunState(40, 1, ascension), heroIds)),
     map: generateMap(randomSeed()),
     locationIds: [ACT_ONE_LOCATION_ID],
   };

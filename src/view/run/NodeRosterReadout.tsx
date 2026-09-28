@@ -23,6 +23,7 @@ import { WoundBar, entryHp } from '../shared/WoundBar';
 import { EquipmentIcon, RARITY_COLOR_VARS } from '../shared/EquipmentBox';
 import { entryStatTotals } from '../shared/entryStatTotals';
 import { ResourceGlyph } from '../shared/RunGlyph';
+import { BlessingMark } from '../shared/BlessingMark';
 
 /** What of the roster a node's decision turns on. Null: nothing on the roster changes the answer. */
 type Lens = 'mastery' | 'mana' | 'force' | 'gear' | 'hp' | 'moves' | 'types' | 'level' | null;
@@ -224,6 +225,7 @@ export function NodeRosterReadout({ type, run }: { type: MapNodeType; run: RunSt
                 {rosterEntryTypes(hero, entry).map((t) => (
                   <TypeBadge key={t} type={t} iconOnly />
                 ))}
+                {entry.blessed && <BlessingMark className="node-roster-blessing" />}
                 {entry.down ? <span className="node-roster-down">Down</span> : <WoundBar hp={hp} maxHp={maxHp} figure className="node-roster-hp" />}
               </Row>
             );

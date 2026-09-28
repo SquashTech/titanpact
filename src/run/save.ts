@@ -274,6 +274,8 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
   if (!isInt(wounds, 0)) reject(`${label}.wounds is not an HP count`);
   // Absent on a file written before knockouts persisted; standing is the honest default.
   const down = value.down === true;
+  // Absent on a file written before Blessings; unblessed is the honest default.
+  const blessed = value.blessed === true;
 
   const graft = value.evolutionTypeGraft ?? null;
   if (graft !== null) {
@@ -305,6 +307,7 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
     mortal: value.mortal === true,
     wounds,
     down,
+    blessed,
   };
 }
 

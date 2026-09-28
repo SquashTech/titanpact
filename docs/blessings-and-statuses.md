@@ -5,6 +5,9 @@
 > hero at 1 HP), and **lasts until it is used** — no fade at the end of Act 1, accepting that the
 > game gets easier. Everything else is a proposal until the designer signs it. Build order is
 > §6: **Blessings and Haunt first**, Burn and Renew after, the two fields with them.
+> **Phase 1 is BUILT (2026-09-28):** the engine, the roster flag, the opening pair Blessed at run
+> start (with no scene yet), the spend beat and the marks (§1.6). `SIM_NO_BLESSING=1` is the sim's
+> A/B for phase 4.
 
 ---
 
@@ -54,15 +57,20 @@ hero, not in a fight, so it carries from fight to fight until it is used.
 | A DoT tick (Burn, Bleed, Poison), a passive's damage (Nightmare) | **Yes** | "Any source of damage", per the ask. |
 | Withering Gaze | **Yes** | It is a field, not the terminator. |
 | **The Pact Clock** | **No** | The Clock ends stalls and nothing answers it — no Shield, no reaction pass. A Blessing that stopped it would add a round to a stall. |
-| Recoil, a self-Burn, a self-cost | **No** | A cost must stay a cost. Otherwise Fire's and Mech's self-Burn become free on a Blessed hero. |
+| Recoil, a self-HP price | **No** | A cost must stay a cost. |
+| A self-Burn's tick | **Yes, as built** | A status instance doesn't record who applied it, so a self-Burn tick can't be told apart from an enemy's. It only matters when the tick would be lethal, and then the Blessing is spent, not saved. Revisit if the Burn rework (§3) gives an instance a source. |
 
 **Shield first, then the Blessing.** A hit that the Shield takes whole never reaches the Blessing;
 only what would bring HP to 0 after the Shield is prevented. The Blessing is spent only when it
 actually saves the hero.
 
-Note: the existing `enduresOnce` floor in `applyHpDelta` (`faintHandling.ts`) reads *every*
-source, the Clock included, which disagrees with the `'Endured'` comment in `content.ts`. The
-Blessing needs a source filter the floor doesn't have; reconcile the two while touching it.
+**Lingering refuses first.** A hero holding both an endure and a Blessing spends the endure (it
+comes back next fight) and keeps the Blessing (it doesn't).
+
+As built, `HpLossSource` gained `'clock'` and `'cost'`: the Pact Clock, recoil and a self-HP price
+pass them, and the Blessing ignores both. The `enduresOnce` floor still reads every source, the
+Clock included, which disagrees with the `'Endured'` comment in `content.ts`. That was left alone:
+no roster card endures any more, so it's a question for whoever next gives a hero that verb.
 
 ### 1.4 Proposed: where Blessings come from
 
@@ -93,11 +101,18 @@ hero), so the supply stays countable.
 
 ### 1.6 Presentation
 
-- A **badge on the hero** everywhere HP is shown: the fight nameplate, the roster, the squad screen,
-  the who-screens. It has to be readable from the map, because protecting it is a map decision.
-- **Spending it is a beat**: the killing number shown, struck through, the glow breaking. The
-  `Endured` event is the model; the Blessing gets its own event (`BlessingSpent`) so the view can
-  tell the two apart.
+**Quiet while held, loud when spent** (per user direction, 2026-09-28): a Blessing can sit on a
+hero for a whole run, so it never takes a word or a status-row chip.
+- **In a fight**: a thin gold rim on the ground under the figure, breathing slowly, and a small gold
+  star beside the level on the nameplate. A worded "Blessed" chip was built first and taken out.
+- **Off the map**: the same star (`BlessingMark`) on the roster sheet, the route's roster readout
+  and the squad screen, since protecting a Blessing is a map decision. The who-screens get it when
+  a map faucet exists (§1.4).
+- **Spending it is the beat that explains it**: the banner *"X's Blessing turns aside N damage"* in
+  the Blessing's gold, the number struck through, a gold flare on the figure and no hurt frame;
+  then the rim and the star are gone. Its own event (`BlessingSpent`, and `DamageDealt.prevented`
+  on a hit) keeps it apart from `Endured`. The `blessing` sound effect exists and isn't wired to
+  the beat yet.
 
 ### 1.7 Interactions to decide
 

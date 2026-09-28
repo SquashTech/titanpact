@@ -18,6 +18,7 @@ import { TypeBadge } from '../shared/TypeBadge';
 import { ItemBox, slotBoxes } from '../shared/EquipmentBox';
 import { MasteryPips } from '../shared/MasteryPips';
 import { WoundBar, entryHp } from '../shared/WoundBar';
+import { BlessingMark } from '../shared/BlessingMark';
 import { playSfx } from '../../audio/sfx';
 
 interface Props {
@@ -138,6 +139,7 @@ function RosterSheetCard({ hero, entry, relicIds, onInspect, onItem }: CardProps
             ))}
           </span>
           {entry.down && <span className="roster-sheet-down">Down</span>}
+          {entry.blessed && <BlessingMark className="roster-sheet-blessing" />}
           {/* The level's bar, laid along the alcove's floor. */}
           <span className="roster-sheet-xp" aria-hidden="true">
             <span style={{ width: `${Math.round(xpProgress(entry.xp) * 100)}%` }} />

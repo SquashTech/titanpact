@@ -44,6 +44,7 @@ function sampleRun(): RunState {
     growthStatGrants: { hp: 10 },
     wounds: 37,
     down: true,
+    blessed: true,
   };
   return {
     ...run,
