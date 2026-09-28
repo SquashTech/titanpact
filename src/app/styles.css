@@ -37094,3 +37094,97 @@ img.smithy-service-art {
     rgba(34, 22, 13, 0.9) padding-box;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
 }
+
+/* A socket's name and tier: a plain pair under the box on the Forge, a parchment tag in the hall. */
+.smithy-socket-tag {
+  display: contents;
+}
+
+/* -- The Smithy's sockets in the hall: wooden cubbies lined in felt, each piece standing in its own
+   as the thing itself, its name on a parchment tag. The felt takes the tier's colour and the pips
+   count it, so the tag carries the name alone and a socket is no taller than it was. -- */
+.shop-node-screen .smithy-socket-box {
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 0;
+  border-image: url('../../art/guild/panel-wood.png') 14 / 7px stretch;
+  background:
+    radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--rarity-color, #2a1c12) 72%, #1c130b), color-mix(in srgb, var(--rarity-color, #2a1c12) 22%, #0f0a06) 82%) padding-box;
+  box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.7);
+}
+
+.shop-node-screen .smithy-socket.is-empty .smithy-socket-box {
+  background: radial-gradient(circle at 50% 42%, #22170e, #0c0805 78%) padding-box;
+}
+
+.shop-node-screen .smithy-socket.is-empty .smithy-socket-box::before {
+  display: none;
+}
+
+.shop-node-screen .smithy-socket:not(.is-empty) .smithy-socket-box {
+  border-color: transparent;
+}
+
+.shop-node-screen .smithy-socket:not(.is-empty):hover .smithy-socket-box {
+  box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.7), 0 0 10px -2px color-mix(in srgb, var(--rarity-color) 70%, transparent);
+}
+
+/* In the cubby the chit comes off: no cut body, facet or rim, just the piece and its tier pips. */
+.shop-node-screen .smithy-socket-box .item-piece {
+  clip-path: none;
+  background: none;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.7));
+}
+
+.shop-node-screen .smithy-socket-box .item-piece-facet,
+.shop-node-screen .smithy-socket-box .item-piece::after {
+  display: none;
+}
+
+.shop-node-screen .smithy-socket-box .item-box-pips {
+  bottom: 5px;
+}
+
+.shop-node-screen .smithy-socket-tag {
+  display: flex;
+  justify-content: center;
+  max-width: 62px;
+  padding: 0 3px;
+  border-style: solid;
+  border-width: 4px;
+  border-image: url('../../art/guild/panel-parch.png') 12 fill / 4px stretch;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55));
+}
+
+.shop-node-screen .smithy-socket-name {
+  color: #3a2412;
+  font-weight: 800;
+}
+
+.shop-node-screen .smithy-socket-tier {
+  display: none;
+}
+
+.shop-node-screen .smithy-socket.is-empty .smithy-socket-tag {
+  border-color: transparent;
+  border-image: none;
+  filter: none;
+}
+
+.shop-node-screen .smithy-socket.is-empty .smithy-socket-name {
+  color: #b89a70;
+}
+
+/* The socket the last piece of work landed in: the felt flares in its tier's colour. */
+.shop-node-screen .smithy-socket.is-fresh .smithy-socket-box {
+  animation: hall-socket-fresh 2.4s var(--ease-out);
+}
+
+@keyframes hall-socket-fresh {
+  0% {
+    box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.7), 0 0 22px 2px color-mix(in srgb, var(--rarity-color) 80%, transparent);
+  }
+  100% {
+    box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.7), 0 0 0 0 transparent;
+  }
+}

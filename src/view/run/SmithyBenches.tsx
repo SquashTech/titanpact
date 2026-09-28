@@ -79,7 +79,9 @@ export function SmithyBenches({ run, liftFor, pickable, onPick, fresh }: Props) 
                       <span className="smithy-socket-box">
                         <ItemPiece item={null} />
                       </span>
-                      <span className="smithy-socket-name">Open</span>
+                      <span className="smithy-socket-tag">
+                        <span className="smithy-socket-name">Open</span>
+                      </span>
                     </span>
                   );
                 }
@@ -109,10 +111,12 @@ export function SmithyBenches({ run, liftFor, pickable, onPick, fresh }: Props) 
                         </span>
                       )}
                     </span>
-                    <span className="smithy-socket-name">{item.name}</span>
-                    <span className="smithy-socket-tier">
-                      {RARITY_LABELS[item.rarity]}
-                      {enchantType && <ElementGlyph type={enchantType} className="smithy-socket-bound" />}
+                    <span className="smithy-socket-tag">
+                      <span className="smithy-socket-name">{item.name}</span>
+                      <span className="smithy-socket-tier">
+                        {RARITY_LABELS[item.rarity]}
+                        {enchantType && <ElementGlyph type={enchantType} className="smithy-socket-bound" />}
+                      </span>
                     </span>
                   </button>
                 );
