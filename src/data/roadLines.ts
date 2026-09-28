@@ -59,11 +59,3 @@ export const PLACE_LINES: Record<string, { name: string; lines: readonly string[
     ],
   },
 };
-
-/** The fallen Guardian's last words over the Crucible — its fire, handed on. */
-export const CRUCIBLE_LINES: readonly string[] = [
-  'My fire does not go out. It only changes hands. Choose who will carry it.',
-  'You broke me, so you have earned what burned in me. Give it to one of yours.',
-  'I was the seal. Now I am only heat. Step into it, one of you, and come out something more.',
-  'Take what is left of me. Temper one of yours in it, and see what they become.',
-];

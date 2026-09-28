@@ -151,7 +151,6 @@ import type { RunState, RosterEntry } from '../run/state';
 import type { Squad } from '../run/squad';
 import { statScaleFor } from '../run/statScale';
 import { RoadGate } from '../view/run/RoadEncounter';
-import { CrucibleRite } from '../view/run/CrucibleRite';
 import { mapNodeArt, mapNodeAwakening } from '../view/run/mapNodeArt';
 import { PLACE_LINES } from '../data/roadLines';
 
@@ -1467,9 +1466,7 @@ export function App() {
       )}
 
       {screen.kind === 'crucible' && (
-        <CrucibleRite run={playerRun}>
-          <CrucibleScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => setScreen(screen.next)} />
-        </CrucibleRite>
+        <CrucibleScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => setScreen(screen.next)} />
       )}
 
       {screen.kind === 'champions' && <ChampionScreen run={playerRun} onContinue={() => setScreen({ kind: 'runComplete' })} />}

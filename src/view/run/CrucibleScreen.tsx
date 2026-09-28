@@ -19,7 +19,7 @@ import { useLongPress } from '../shared/MoveTile';
 import { NodeHeader, NodeSky, NODE_TINT_GOLD } from '../shared/NodeStage';
 import { PassiveGlyph, PassiveReadout, passiveColor } from '../shared/passiveIcons';
 import { STAT_COLORS } from '../shared/StatBars';
-import { CrucibleChain, CrucibleVessel } from './crucibleArt';
+import { CrucibleRite } from './CrucibleRite';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { MoveOfferOverlay } from './MoveOfferOverlay';
 import { RosterPeek } from './RosterPeek';
@@ -38,6 +38,8 @@ const KIND_COLORS: Record<ClassKind, string> = {
   defensive: STAT_COLORS.defense,
   utility: STAT_COLORS.speed,
 };
+
+const CRUCIBLE_LINE = "The Guardian's heart burns in the Crucible. Teach one hero a powerful Class.";
 
 /**
  * The Crucible — the Guardian's beat (docs/growth-overhaul.md §5, §11): pick ONE hero, and the fire
@@ -138,94 +140,46 @@ export function CrucibleScreen({ run, onRunChange, onContinue }: Props) {
     setChosenRosterId(armedEntry.rosterId);
   }
 
-  // The place, then the ask (2026-09-11, per user direction): "One of you is tempered" and its
-  // instruction line were two sentences about a screen that shows a bowl of fire and six rosterHeroes.
-  const readout = cold
-    ? 'Every hero already carries a Class.'
-    : armedEntry
-      ? `${rosterHeroes[armedEntry.heroId].name} stands at the rim. The Class they take is theirs for the run.`
-      : 'Choose a hero to learn a Class.';
-
   return (
-    <div
-      className={`node-screen crucible-screen${armedEntry ? ' is-armed' : ''}${cold ? ' is-cold' : ''}`}
-      style={{ '--node-rgb': NODE_TINT_GOLD } as CSSProperties}
-    >
-      <NodeSky />
+    <div className={`node-screen crucible-screen${cold ? ' is-cold' : ''}`} style={{ '--node-rgb': NODE_TINT_GOLD } as CSSProperties}>
       <RosterPeek run={run} />
-      <NodeHeader
-        eyebrow={cold ? 'The Crucible' : undefined}
-        title={cold ? 'The fire is cold' : 'The Crucible'}
-        readout={readout}
-        readoutKey={armedRosterId ?? String(cold)}
-        readoutLive={!!armedEntry}
+      <CrucibleRite
+        line={cold ? 'The fire is cold. Every hero already carries a Class.' : CRUCIBLE_LINE}
+        stage={
+          // No boxes — a figure is lit by the fire and grows a frame only once it is the one chosen,
+          // the battlefield's own targetability idiom.
+          <div className="crucible-ranks">
+            {[back, front].map((rank, r) => (
+              <div key={r} className={`crucible-rank ${r === 0 ? 'is-back' : 'is-front'}`}>
+                {rank.map((entry) => (
+                  <CrucibleFigure
+                    key={entry.rosterId}
+                    entry={entry}
+                    pending={entry.classId === null}
+                    armed={entry.rosterId === armedRosterId}
+                    dimmed={!!armedEntry && entry.rosterId !== armedRosterId}
+                    onArm={() => arm(entry.rosterId)}
+                    onPreview={() => setPreviewing({ hero: rosterHeroes[entry.heroId], entry })}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+        }
+        footer={
+          // An unspent Crucible is never walked past — it does not bank, so leaving is the same as
+          // burning it. The button commits only once a hero stands at the rim; cold, it is the exit.
+          cold ? (
+            <button className="resolve-button" onClick={onContinue}>
+              Continue
+            </button>
+          ) : (
+            <button className="resolve-button crucible-enter" disabled={!armedEntry} onClick={enter}>
+              {armedEntry ? `Enter the Crucible — ${rosterHeroes[armedEntry.heroId].name}` : 'Choose a hero'}
+            </button>
+          )
+        }
       />
-
-      {/* The scene: a bowl of molten gold, the light it throws upward, the embers it sheds, and the
-          roster standing around it in two ranks. No boxes — a figure is lit by the fire and grows a
-          frame only once it is the one chosen, the battlefield's own targetability idiom. */}
-      <div className="crucible-stage">
-        <span className="crucible-heat" aria-hidden="true" />
-        <CrucibleChain side="left" />
-        <CrucibleChain side="right" />
-        {SMOKE.map((sm, i) => (
-          <span
-            key={i}
-            className="crucible-smoke"
-            aria-hidden="true"
-            style={{ '--smoke-dur': `${sm.duration}s`, '--smoke-delay': `${sm.delay}s`, '--smoke-drift': `${sm.drift}px` } as CSSProperties}
-          />
-        ))}
-        <div className="crucible-embers" aria-hidden="true">
-          {EMBERS.map((e, i) => (
-            <span
-              key={i}
-              className="crucible-ember"
-              style={
-                {
-                  '--ember-x': `${e.x}%`,
-                  '--ember-delay': `${e.delay}s`,
-                  '--ember-dur': `${e.duration}s`,
-                  '--ember-drift': `${e.drift}px`,
-                  '--ember-size': `${e.size}px`,
-                } as CSSProperties
-              }
-            />
-          ))}
-        </div>
-
-        <div className="crucible-ranks">
-          {[back, front].map((rank, r) => (
-            <div key={r} className={`crucible-rank ${r === 0 ? 'is-back' : 'is-front'}`}>
-              {rank.map((entry) => (
-                <CrucibleFigure
-                  key={entry.rosterId}
-                  entry={entry}
-                  pending={entry.classId === null}
-                  armed={entry.rosterId === armedRosterId}
-                  dimmed={!!armedEntry && entry.rosterId !== armedRosterId}
-                  onArm={() => arm(entry.rosterId)}
-                  onPreview={() => setPreviewing({ hero: rosterHeroes[entry.heroId], entry })}
-                />
-              ))}
-            </div>
-          ))}
-        </div>
-
-        <CrucibleVessel />
-      </div>
-
-      {/* An unspent Crucible is never walked past — it does not bank, so leaving is the same as
-          burning it. The button commits only once a hero stands at the rim; cold, it is the exit. */}
-      {cold ? (
-        <button className="resolve-button" onClick={onContinue}>
-          Continue
-        </button>
-      ) : (
-        <button className="resolve-button crucible-enter" disabled={!armedEntry} onClick={enter}>
-          {armedEntry ? `Enter the Crucible — ${rosterHeroes[armedEntry.heroId].name}` : 'Choose a hero'}
-        </button>
-      )}
 
       {previewing && (
         <HeroPreviewOverlay
@@ -444,21 +398,3 @@ function CrucibleFigure({ entry, pending, armed, dimmed, onArm, onPreview }: Fig
     </div>
   );
 }
-
-const SMOKE = [
-  { duration: 9.7, delay: 0, drift: -60 },
-  { duration: 12.3, delay: -4.1, drift: 50 },
-  { duration: 14.9, delay: -8.6, drift: -15 },
-];
-
-// Golden-angle spread, the same as the Pact Seal's shards: stable, never symmetrical, no seed.
-const EMBERS = Array.from({ length: 18 }, (_, i) => {
-  const seed = i * 137.51;
-  return {
-    x: 22 + (seed % 56),
-    delay: (seed * 0.37) % 7,
-    duration: 4.2 + ((seed * 0.11) % 3.6),
-    drift: -22 + ((seed * 0.53) % 44),
-    size: 2 + ((seed * 0.07) % 2.5),
-  };
-});
