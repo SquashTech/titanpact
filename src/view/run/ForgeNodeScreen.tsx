@@ -230,7 +230,7 @@ function ForgeSheet({
               <span className="smithy-service-art is-circle" aria-hidden="true" />
               <span className="smithy-service-title">Enchant</span>
               <span className="smithy-service-sub">
-                Bind an element: Force +{ENCHANT_FORCE_BY_RARITY[toRarity]} to a hero of that type.
+                Bind an element: Force +{ENCHANT_FORCE_BY_RARITY[toRarity]} to moves of that element.
                 {heldEnchant ? ' Rebinding overwrites.' : ''}
               </span>
             </header>

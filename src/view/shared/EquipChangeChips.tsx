@@ -51,7 +51,7 @@ export function ChangeChip({ change }: { change: EquipChange }) {
 
   if (change.kind === 'status') {
     const def = statuses[change.key];
-    // Elemental Force is worth its magnitude only to a hero of that type, so the chip is drawn in
+    // Elemental Force is worth its magnitude only on moves of that type, so the chip is drawn in
     // the type's colour to be checked against the hero's own types.
     const forceType = def?.forceType;
     const label = forceType ? getTypeAbbr(forceType) : (def?.name ?? change.key);

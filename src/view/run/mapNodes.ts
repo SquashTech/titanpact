@@ -13,7 +13,7 @@ export const NODE_NAMES: Record<MapNodeType, string> = {
   elite: 'Skirmish',
   boss: 'Guardian',
   shop: 'Guild Hall',
-  equipmentReward: 'Item',
+  equipmentReward: 'Equipment Cache',
   scrollReward: 'Scroll Cache',
   passiveReward: 'Boon',
   currencyReward: 'Gold',

@@ -172,7 +172,7 @@ export function SmithyWorkSheet({ run, hero, entry, itemRef, item, onCommit, onC
               <span className="smithy-service-art is-circle" aria-hidden="true" />
               <span className="smithy-service-title">The Enchanter</span>
               <span className="smithy-service-sub">
-                Bind an element: Force +{ENCHANT_FORCE_BY_RARITY[item.rarity]} to a hero of that type.
+                Bind an element: Force +{ENCHANT_FORCE_BY_RARITY[item.rarity]} to moves of that element.
                 {heldEnchant ? ' Rebinding overwrites.' : ''}
               </span>
             </header>

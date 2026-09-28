@@ -240,7 +240,7 @@ export function ItemEffectChips({ item, labelled }: { item: EquipmentDefinition;
       {forces.map(({ statusId, magnitude }) => {
         const def = statuses[statusId];
         if (!def) return null;
-        // Force is worth its magnitude only to a hero of that type, so it wears the type's colour.
+        // Force is worth its magnitude only on moves of that type, so it wears the type's colour.
         return (
           <span
             key={statusId}
