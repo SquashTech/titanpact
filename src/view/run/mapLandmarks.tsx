@@ -1,15 +1,22 @@
+import type { CSSProperties } from 'react';
 import type { MapNodeType } from '../../run/map';
+import { allCombatants } from '../../data/content';
+import { getTypeColor } from '../combat/typeColors';
+import { ElementGlyph } from '../shared/elementIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import mentorArt from '../../../art/map-nodes/landmarks/mentor.png';
 import tutorArt from '../../../art/map-nodes/landmarks/tutor.png';
 import scribeArt from '../../../art/map-nodes/landmarks/scribe.png';
 import guildHallArt from '../../../art/map-nodes/landmarks/guildHall.png';
+import gateArt from '../../../art/map-nodes/landmarks/guardianGate.png';
 
 // The act's beats, drawn as themselves rather than as a stone medallion: the opening fight is the
 // Titan's eye opening on the road, the Mentor, the Tutor and the Scribe are met at the
-// roadside (a fire, a practice post, a writing desk), the Guild Hall is a building you walk into, and the Guardian is the Guardian.
+// roadside (a fire, a practice post, a writing desk), the Guild Hall is a building you walk into,
+// the act's Guardian waits behind a sealed gate carrying its element's sigil, and the finale's
+// Herald is itself.
 
-export type LandmarkKind = 'eye' | 'npc' | 'building' | 'guardian';
+export type LandmarkKind = 'eye' | 'npc' | 'building' | 'gate' | 'guardian';
 
 const KIND: Partial<Record<MapNodeType, LandmarkKind>> = {
   fight: 'eye',
@@ -18,7 +25,7 @@ const KIND: Partial<Record<MapNodeType, LandmarkKind>> = {
   scribeReward: 'npc',
   shop: 'building',
   muster: 'building',
-  boss: 'guardian',
+  boss: 'gate',
   finale: 'guardian',
 };
 
@@ -102,6 +109,20 @@ export function MapLandmarkFace({
       return <img src={NPC_ART[type]} className="map-landmark-art" alt="" draggable={false} />;
     case 'building':
       return <img src={guildHallArt} className="map-landmark-art" alt="" draggable={false} />;
+    case 'gate': {
+      // The seal is the Guardian's own element: what is behind the door is named, never shown.
+      const type = guardianId ? allCombatants[guardianId]?.types[0] : undefined;
+      return (
+        <>
+          <img src={gateArt} className="map-landmark-art" alt="" draggable={false} />
+          {type && (
+            <span className={`map-gate-seal${quiet ? ' is-quiet' : ''}`} style={{ '--seal-color': getTypeColor(type) } as CSSProperties} aria-hidden="true">
+              <ElementGlyph type={type} className="map-gate-sigil" />
+            </span>
+          )}
+        </>
+      );
+    }
     case 'guardian':
       return guardianId ? <HeroPortrait heroId={guardianId} className="map-landmark-figure" /> : null;
   }

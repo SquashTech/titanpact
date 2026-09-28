@@ -38616,3 +38616,87 @@ img.smithy-service-art {
   text-shadow: 0 2px 0 #1a0f07, 0 0 12px rgba(224, 166, 60, 0.7);
   box-shadow: none;
 }
+
+/* -- The Guardian's gate. The act's Guardian is not shown on the map: its node is a sealed stone
+   gate (96px at 2x) with the Guardian's element burning as a seal on the disc where the doors meet,
+   pulsing like something pressing from the other side. -- */
+.map-medallion.is-gate {
+  width: 192px !important;
+  height: 192px !important;
+}
+
+.map-medallion.is-gate .map-medallion-glow {
+  inset: -20px;
+}
+
+.map-gate-seal {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 44px;
+  height: 44px;
+  translate: -50% -50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--seal-color) 55%, transparent), color-mix(in srgb, var(--seal-color) 16%, transparent) 55%, transparent 72%);
+  box-shadow: 0 0 18px 4px color-mix(in srgb, var(--seal-color) 45%, transparent);
+  pointer-events: none;
+  animation: map-gate-seal 2.6s ease-in-out infinite;
+}
+
+.map-gate-sigil {
+  width: 26px;
+  height: 26px;
+  color: #fff;
+  filter: drop-shadow(0 0 3px var(--seal-color)) drop-shadow(0 0 8px var(--seal-color));
+}
+
+@keyframes map-gate-seal {
+  0%,
+  100% {
+    box-shadow: 0 0 14px 2px color-mix(in srgb, var(--seal-color) 35%, transparent);
+    opacity: 0.85;
+  }
+  50% {
+    box-shadow: 0 0 26px 8px color-mix(in srgb, var(--seal-color) 60%, transparent);
+    opacity: 1;
+  }
+}
+
+/* Behind the player (the route's origin): the gate small and unlit, its seal gone dark. */
+.map-origin-mark.is-gate {
+  width: 48px;
+  height: 48px;
+}
+
+.map-gate-seal.is-quiet {
+  width: 12px;
+  height: 12px;
+  animation: none;
+  box-shadow: none;
+}
+
+.map-gate-seal.is-quiet .map-gate-sigil {
+  width: 8px;
+  height: 8px;
+  filter: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-gate-seal {
+    animation: none;
+  }
+}
+
+/* The seal's ring: a burning circle in the element's colour, so it reads as a seal set in the door
+   rather than an icon laid on it. */
+.map-gate-seal:not(.is-quiet)::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--seal-color) 85%, #fff);
+  box-shadow: 0 0 8px var(--seal-color), inset 0 0 8px color-mix(in srgb, var(--seal-color) 60%, transparent);
+}
