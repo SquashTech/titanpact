@@ -12,6 +12,8 @@ import { SectionGlyph } from '../shared/sectionIcons';
 import { BANNER } from '../shared/relicIcons';
 import { RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import { overlayHost } from '../shared/overlayHost';
+import type { RunState } from '../../run/state';
+import { NodeRosterReadout } from './NodeRosterReadout';
 
 /** Every mark a ledger row can lead with, drawn from the glyph sets the rest of the run already uses. */
 const FACT_GLYPHS: Record<NodeFactGlyph, ReactNode> = {
@@ -78,8 +80,8 @@ function RarityOdds({ odds }: { odds: Record<EquipmentRarity, number> }) {
  * so the tile the player is still holding down reads as having opened rather than as a panel
  * about it. Portalled into overlayHost(), never document.body — see overlayHost.ts.
  */
-export function NodeDossierOverlay({ node, actNumber, onClose }: { node: MapNode; actNumber: number; onClose: () => void }) {
-  const dossier = nodeDossier(node.type, actNumber);
+export function NodeDossierOverlay({ node, run, onClose }: { node: MapNode; run: RunState; onClose: () => void }) {
+  const dossier = nodeDossier(node.type, run.actNumber);
   const color = NODE_COLORS[node.type];
 
   function closeAndStop(e: { stopPropagation: () => void }) {
@@ -100,6 +102,8 @@ export function NodeDossierOverlay({ node, actNumber, onClose }: { node: MapNode
           </div>
         </div>
 
+        <p className="node-dossier-about">{dossier.about}</p>
+
         <div className="node-dossier-facts">
           {dossier.facts.map((fact) => (
             <div key={fact.label} className={`node-dossier-fact${fact.value === null ? ' is-none' : ''}`}>
@@ -114,6 +118,19 @@ export function NodeDossierOverlay({ node, actNumber, onClose }: { node: MapNode
         </div>
 
         {dossier.odds && <RarityOdds odds={dossier.odds} />}
+
+        <NodeRosterReadout type={node.type} run={run} />
+
+        {dossier.terms.length > 0 && (
+          <dl className="node-dossier-terms">
+            {dossier.terms.map((t) => (
+              <div key={t.term} className="node-dossier-term">
+                <dt>{t.term}</dt>
+                <dd>{t.text}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
 
         <div className="detail-close-hint">Tap anywhere to close</div>
       </div>

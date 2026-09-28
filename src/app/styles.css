@@ -36358,49 +36358,171 @@ button.star-shop-bundle-face {
   }
 }
 
-/* The Cache on the road: the chest's pixel frames at 3x, straining, then flashing open. */
-.road-chest {
+/* The Cache on the road: the map's own chest at 4x rises where it stands, blinks white as the
+   lock gives, and is the same chest open on the burst — rays behind it, sparks off the gold. */
+.road-cache {
   position: absolute;
   left: 50%;
-  bottom: 110px;
+  bottom: 118px;
   width: 192px;
   height: 192px;
   margin-left: -96px;
-  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 22px rgba(255, 200, 90, 0.3));
+  pointer-events: none;
+}
+
+.road-cache-art {
+  position: absolute;
+  inset: 0;
+  width: 192px;
+  height: 192px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 18px rgba(255, 200, 90, 0.25));
+}
+
+.road-cache-art.is-closed {
   animation: road-encounter-arrive 0.9s var(--ease-out) both;
 }
 
-.road-chest-frames {
+.road-cache-art.is-open {
+  opacity: 0;
+}
+
+/* Three blinks to white, the chest jolting on each, and held white into the burst. */
+.road-encounter.is-flash .road-cache-art.is-closed {
+  animation: road-cache-blink 0.7s steps(1, end) both;
+}
+
+@keyframes road-cache-blink {
+  0% {
+    transform: none;
+    filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.7));
+  }
+  12% {
+    transform: translate(-3px, 0);
+    filter: brightness(0) invert(1) drop-shadow(0 0 14px rgba(255, 240, 200, 0.9));
+  }
+  26% {
+    transform: none;
+    filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.7));
+  }
+  44% {
+    transform: translate(3px, -3px);
+    filter: brightness(0) invert(1) drop-shadow(0 0 18px rgba(255, 240, 200, 0.9));
+  }
+  58% {
+    transform: none;
+    filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.7));
+  }
+  74% {
+    transform: translate(0, -6px);
+    filter: brightness(0) invert(1) drop-shadow(0 0 24px rgba(255, 240, 200, 1));
+  }
+  100% {
+    transform: translate(0, -6px);
+    filter: brightness(0) invert(1) drop-shadow(0 0 28px rgba(255, 240, 200, 1));
+  }
+}
+
+.road-encounter.is-burst .road-cache-art.is-closed {
+  opacity: 0;
+  animation: none;
+}
+
+.road-encounter.is-burst .road-cache-art.is-open {
+  animation: road-cache-open 0.6s var(--ease-out) both;
+}
+
+@keyframes road-cache-open {
+  from {
+    opacity: 1;
+    transform: translateY(-6px) scale(1.08);
+    filter: brightness(0) invert(1) drop-shadow(0 0 28px rgba(255, 240, 200, 1));
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(2px) scale(0.98);
+    filter: brightness(1.5) drop-shadow(0 0 26px rgba(255, 210, 110, 0.9));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 22px rgba(255, 200, 90, 0.45));
+  }
+}
+
+/* Light standing up out of the open chest, turning slowly. */
+.road-cache-rays {
   position: absolute;
-  inset: 0;
-  background-image: var(--chest-seal);
-  background-size: 1728px 192px;
-  background-repeat: no-repeat;
-  image-rendering: pixelated;
-  animation: road-chest-rattle 0.82s steps(9) infinite;
+  left: 50%;
+  top: 50%;
+  width: 340px;
+  height: 340px;
+  margin: -196px 0 0 -170px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 220, 140, 0.34) 0deg 7deg, transparent 7deg 22deg);
+  -webkit-mask: radial-gradient(circle, #000 18%, transparent 68%);
+  mask: radial-gradient(circle, #000 18%, transparent 68%);
+  opacity: 0;
 }
 
-.road-encounter.is-burst .road-chest-frames {
-  background-image: var(--chest-open);
-  background-size: 1152px 192px;
-  animation: road-chest-swing 0.52s steps(6, jump-none) forwards;
+.road-encounter.is-burst .road-cache-rays {
+  animation:
+    road-cache-rays-in 0.5s var(--ease-out) 0.05s both,
+    road-cache-rays-turn 12s linear infinite;
 }
 
-@keyframes road-chest-rattle {
+@keyframes road-cache-rays-in {
   from {
-    background-position: 0 0;
+    opacity: 0;
+    scale: 0.4;
   }
   to {
-    background-position: -1728px 0;
+    opacity: 1;
+    scale: 1;
   }
 }
 
-@keyframes road-chest-swing {
+@keyframes road-cache-rays-turn {
+  to {
+    rotate: 360deg;
+  }
+}
+
+/* Sparks off the gold: 3x3 pixel motes that rise and drift out of the chest's mouth. */
+.road-cache-spark {
+  position: absolute;
+  left: calc(50% + var(--spark-x));
+  top: 74px;
+  width: 6px;
+  height: 6px;
+  background: #fff3c4;
+  box-shadow: 0 0 6px 2px rgba(255, 200, 90, 0.8);
+  opacity: 0;
+}
+
+.road-encounter.is-burst .road-cache-spark {
+  animation: road-cache-spark 1.1s var(--ease-out) both;
+}
+
+@keyframes road-cache-spark {
   from {
-    background-position: 0 0;
+    opacity: 1;
+    transform: translate(0, 0);
   }
   to {
-    background-position: -960px 0;
+    opacity: 0;
+    transform: translate(var(--spark-drift), -120px);
+  }
+}
+
+.road-encounter.is-chest .road-encounter-label {
+  animation: road-encounter-arrive 0.9s var(--ease-out) 0.3s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .road-cache-rays,
+  .road-cache-spark {
+    animation: none !important;
   }
 }
 
@@ -38713,4 +38835,592 @@ img.smithy-service-art {
 .map-origin-mark.is-titanGate {
   width: 64px;
   height: 64px;
+}
+
+/* -- The console's top edge is a beam. The arena's floor ends on a lintel of dressed stone between
+   two gold inlays, studded at the screen's edges, and the command crest is set INTO it: the two
+   sockets are wells cut in the beam, the commander's name is lettered on its face. The crest used
+   to be a row of its own under a thin ledge, which spent 64px on a seam and a header; the beam is
+   both at 38, and the move slots take the difference as air between them. -- */
+.action-area {
+  --console-beam-h: 38px;
+  padding-top: calc(var(--console-beam-h) + 6px);
+  background:
+    radial-gradient(ellipse 62% 26% at 50% 34px, rgba(var(--console-rgb, 224, 166, 60), 0.26), transparent 70%),
+    radial-gradient(ellipse 135% 60% at 50% 20px, rgba(var(--console-rgb, 224, 166, 60), 0.16), transparent 66%),
+    linear-gradient(180deg, rgba(8, 9, 13, 0.55), rgba(8, 9, 13, 0.1)),
+    url('../../art/ui/flagstones.png') 0 0 / 64px 64px repeat,
+    #15171e;
+}
+
+.action-area::before {
+  z-index: 1;
+  height: var(--console-beam-h);
+  border: 0 solid transparent;
+  border-image: url('../../art/ui/beam.png') 0 7 fill / 0 14px round;
+  background: none;
+  box-shadow: 0 0 16px -2px rgba(var(--console-rgb, 224, 166, 60), 0.22);
+}
+
+.console-crest {
+  position: relative;
+  z-index: 2;
+  height: 34px;
+  margin-top: calc((var(--console-beam-h) + 8px) * -1);
+  margin-bottom: 12px;
+  padding: 0 6px;
+  gap: 10px;
+}
+
+.console-socket {
+  width: 30px;
+  height: 30px;
+  border-radius: 0;
+  background: #0e1015;
+  box-shadow: inset 0 0 0 1px #0b0a0e, inset 0 2px 0 1px #08090d, inset 0 -1px 0 1px #3a3e4b;
+}
+
+.console-socket.acting {
+  box-shadow:
+    inset 0 0 0 1px #0b0a0e,
+    inset 0 0 0 2px rgba(var(--socket-rgb), 0.8),
+    inset 0 -6px 12px -6px rgba(var(--socket-rgb), 0.5),
+    0 0 12px -2px rgba(var(--socket-rgb), 0.5);
+}
+
+.console-commander {
+  font-size: 10px;
+  text-shadow: 0 1px 0 #0b0a0e, 0 0 10px rgba(var(--console-rgb, 224, 166, 60), 0.5);
+}
+
+.console-commander:not(.acting) {
+  text-shadow: 0 1px 0 #0b0a0e;
+}
+
+.console-rule {
+  background: none;
+}
+
+.move-list {
+  gap: 5px;
+}
+
+/* The keys' rim is sliced at the band and bevel (5px of the tile, 10 drawn) rather than 7, which
+   was 14px a side of wood that "Switch" and the Bag's count were being cut off by. */
+.bottom-bar button.bottom-action {
+  min-height: 44px;
+  padding: 0 1px;
+  border-width: 10px;
+  border-image: url('../../art/ui/plank.png') 5 fill / 10px round;
+}
+
+.bottom-bar button.bottom-action.selected:not(:disabled),
+.bottom-bar button.bottom-action-auto.engaged,
+.bottom-bar-solo button.bottom-action-primary:not(:disabled) {
+  border-image-source: url('../../art/ui/plank-gilt.png');
+}
+
+.bottom-bar .bottom-action-bag {
+  overflow: visible;
+}
+
+.bottom-bar .bottom-action-bag-count {
+  bottom: -5px;
+  right: -7px;
+  z-index: 1;
+}
+
+/* -- The Roster is the whole screen (RosterManagementScreen). Nothing on it is managed any more, so
+   the sheet is given every pixel to read by: six carved cards, two across, each hero standing at 2x
+   in a lit alcove of its own colour with its level on a plaque, the level's bar along the floor,
+   then its name and form, its HP, its Mastery and its three sockets. -- */
+.roster-sheet-overlay {
+  padding: 0;
+  align-items: stretch;
+}
+
+.log-panel.roster-sheet {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  border-width: 16px;
+  border-image-width: 20px;
+  overflow: hidden;
+}
+
+.roster-sheet-header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 10px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #e2b862;
+  text-shadow: 0 1px 0 #0b0a0e;
+}
+
+.roster-sheet-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(188px, 1fr);
+  gap: 6px;
+  padding: 8px 2px 2px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.roster-sheet-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.roster-sheet-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+  padding: 4px;
+  border: 4px solid transparent;
+  border-image: url('../../art/ui/slot-thin.png') 2 / 4px round;
+  background: linear-gradient(180deg, #121419, #0f1116) padding-box;
+  image-rendering: pixelated;
+}
+
+.roster-sheet-top {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  gap: 4px;
+}
+
+.roster-sheet-foot {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 1px 0 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* The hero's own recess: dark stone, its domain's light rising off the floor, a warm pool where
+   it stands. The figure is anchored to the floor, so a short card trims headroom, never feet. */
+.roster-sheet-alcove {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 96px;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 70% 22% at 50% 88%, rgba(255, 200, 120, 0.3), rgba(255, 170, 90, 0.08) 60%, transparent 75%),
+    radial-gradient(ellipse 90% 80% at 50% 100%, rgba(var(--hero-rgb, 120, 128, 142), 0.34), transparent 70%),
+    linear-gradient(180deg, #08090d, #11131a);
+  box-shadow: inset 0 0 0 1px #0b0a0e, inset 0 3px 0 rgba(var(--hero-rgb, 120, 128, 142), 0.85),
+    inset 0 10px 14px -8px rgba(0, 0, 0, 0.9);
+  transition: filter var(--dur-mid) var(--ease-out);
+}
+
+.roster-sheet-card:hover .roster-sheet-alcove {
+  filter: brightness(1.12);
+}
+
+.roster-sheet-figure {
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  width: 96px;
+  height: 96px;
+  translate: -50% 0;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.8));
+}
+
+.roster-sheet-level {
+  position: absolute;
+  top: 7px;
+  left: 6px;
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  padding: 1px 5px;
+  background: rgba(8, 9, 13, 0.82);
+  box-shadow: inset 0 0 0 1px #0b0a0e, inset 0 -1px 0 1px rgba(183, 138, 60, 0.55);
+  color: #f2d690;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.roster-sheet-level small {
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  color: #b78a3c;
+}
+
+.roster-sheet-types {
+  position: absolute;
+  top: 7px;
+  right: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.roster-sheet-xp {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: #06070a;
+}
+
+.roster-sheet-xp > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #6f4e1f, #e2b862);
+  box-shadow: 0 0 6px rgba(226, 184, 98, 0.6);
+}
+
+.roster-sheet-down {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  padding: 2px 8px;
+  background: rgba(40, 8, 10, 0.88);
+  box-shadow: inset 0 0 0 1px #0b0a0e, inset 0 0 0 2px rgba(226, 80, 80, 0.7);
+  color: #ff9b95;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.roster-sheet-card.is-down .roster-sheet-figure {
+  filter: grayscale(1) brightness(0.5);
+}
+
+.roster-sheet-card.is-down .roster-sheet-alcove {
+  background: linear-gradient(180deg, #08090d, #0e0f13);
+}
+
+.roster-sheet-ident {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 2px 2px 0;
+}
+
+.roster-sheet-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.roster-sheet-form {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-left: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 12px;
+  color: #d8b56a;
+}
+
+.roster-sheet-hp {
+  flex: none;
+  padding: 0 2px;
+}
+
+.roster-sheet-hp .wound-bar-track {
+  height: 6px;
+  border-radius: 0;
+  background: #06070a;
+  box-shadow: inset 0 0 0 1px #000, 0 1px 0 #2a2e3a;
+}
+
+.roster-sheet-hp .wound-bar-fill {
+  border-radius: 0;
+}
+
+.roster-sheet-hp .wound-bar-figure {
+  font-size: 10px;
+}
+
+.roster-sheet-mastery {
+  flex: none;
+  margin: 0 0 1px;
+}
+
+/* The three sockets stand in a column beside the alcove, the rig at the hero's side. */
+.roster-sheet-mount {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 3px;
+}
+
+.roster-sheet-mount .item-box {
+  --item-box-size: 42px;
+}
+
+.roster-sheet-mount .item-box .item-piece {
+  position: absolute;
+  inset: 3px;
+  width: auto;
+  height: auto;
+}
+
+.roster-sheet .roster-close-button {
+  flex: none;
+  margin: 8px 0 0;
+}
+
+.roster-sheet .resolve-button.roster-close-button {
+  min-height: 0;
+  padding: 4px;
+}
+
+/* -- The node dossier reads further (NodeDossierOverlay): what the node does in plain words under
+   its name, the ledger, then the roster through the one lens the decision turns on, and the words
+   the explanation leans on defined at the foot. It scrolls inside the window when that runs long. -- */
+.detail-panel.node-dossier-panel {
+  max-height: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.detail-panel.node-dossier-panel::-webkit-scrollbar {
+  display: none;
+}
+
+.node-dossier-about {
+  margin: 10px 2px 2px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.node-roster {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+}
+
+.node-roster-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.node-roster-aside,
+.node-roster-purse {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.node-roster-purse {
+  color: #f2d690;
+}
+
+.node-roster-purse .resource-glyph,
+.node-roster-purse svg {
+  width: 13px;
+  height: 13px;
+}
+
+.node-roster-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 28px;
+  padding: 2px 6px 2px 2px;
+  background: rgba(0, 0, 0, 0.22);
+  box-shadow: inset 2px 0 0 var(--hero-color, var(--border));
+}
+
+.node-roster-row.is-dim {
+  opacity: 0.5;
+}
+
+.node-roster-row.is-down .node-roster-portrait {
+  filter: grayscale(1) brightness(0.55);
+}
+
+.node-roster-portrait {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+}
+
+.node-roster-name {
+  flex: 0 0 72px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.node-roster-readout {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.node-roster-readout .type-badge {
+  flex: none;
+  transform: scale(0.85);
+}
+
+.node-roster-pips.mastery-pips {
+  width: auto;
+  margin: 0;
+  gap: 2px;
+}
+
+.node-roster-note {
+  flex: none;
+  min-width: 58px;
+  text-align: right;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.node-roster-figure {
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.node-roster-figure strong {
+  color: var(--text);
+}
+
+.node-roster-arrow {
+  color: rgba(226, 184, 98, 0.8);
+}
+
+.node-roster-level {
+  flex: none;
+  margin-right: auto;
+  font-size: 11px;
+  font-weight: 800;
+  color: #f2d690;
+  font-variant-numeric: tabular-nums;
+}
+
+.node-roster-hp.wound-bar {
+  flex: 0 1 120px;
+}
+
+.node-roster-down {
+  flex: 0 1 120px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #ff9b95;
+}
+
+.node-roster-gear {
+  display: flex;
+  gap: 3px;
+}
+
+.node-roster-socket {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: #0b0c10;
+  box-shadow: inset 0 0 0 1px #262a35;
+}
+
+.node-roster-socket.is-filled {
+  box-shadow: inset 0 0 0 1px var(--rarity-color), inset 0 -6px 8px -6px var(--rarity-color);
+}
+
+.node-roster-item {
+  width: 16px;
+  height: 16px;
+}
+
+.node-roster-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.node-dossier-terms {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 10px 0 0;
+  padding: 8px 9px;
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: inset 0 0 0 1px #0b0a0e, inset 0 -1px 0 1px rgba(183, 138, 60, 0.35);
+}
+
+.node-dossier-term dt {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #e2b862;
+}
+
+.node-dossier-term dd {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--text-dim);
 }

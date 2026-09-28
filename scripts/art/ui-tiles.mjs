@@ -331,6 +331,32 @@ function lintel(name, S) {
   c.save(name);
 }
 
+// The fight console's top edge: 32x19, sliced 7 left and right so a gold stud caps each end and the
+// middle repeats. A flat dressed-stone face (the commander's name is set on it) between two gold
+// inlays, with a soft shadow cast onto the flagstones below.
+function beam(name, S) {
+  const c = canvas(32, 19);
+  const face = { top: hex('#3a3e4b'), hi: hex('#323541'), mid: hex('#2a2d38'), shade: hex('#1d1f27') };
+  for (let x = 0; x < 32; x++) {
+    c.set(x, 0, INK);
+    c.set(x, 1, S.goldHi);
+    c.set(x, 2, S.goldLo);
+    c.set(x, 3, INK);
+    c.set(x, 4, face.top);
+    c.set(x, 5, face.hi);
+    for (let y = 6; y <= 11; y++) c.set(x, y, face.mid);
+    c.set(x, 12, face.shade);
+    c.set(x, 13, INK);
+    c.set(x, 14, S.goldHi);
+    c.set(x, 15, S.goldLo);
+    c.set(x, 16, INK);
+    c.set(x, 17, [0, 0, 0, 130]);
+    c.set(x, 18, [0, 0, 0, 50]);
+  }
+  stud(c, 3, 8, S);
+  stud(c, 28, 8, S);
+  c.save(name);
+}
 
 // A targeting reticle: 12x12, slice 5, only its four corners drawn. Gold brackets on an ink shadow,
 // so a legal target is marked without a box being drawn around it.
@@ -378,6 +404,7 @@ ledge('ledge', STONE);
 slot('slot', null);
 slot('slot-lit', { lo: STONE.goldLo, mid: STONE.gold, hi: STONE.goldHi });
 lintel('lintel', STONE);
+beam('beam', STONE);
 reticle('reticle', STONE);
 // The same four corners in plain stone: an empty mount, waiting for something to be fitted.
 reticle('mount', STONE, true);

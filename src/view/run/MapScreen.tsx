@@ -342,7 +342,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
 
       {rosterOpen && <RosterManagementScreen run={run} onClose={() => setRosterOpen(false)} />}
       {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
-      {previewNode && <NodeDossierOverlay node={previewNode} actNumber={run.actNumber} onClose={() => setPreviewNode(null)} />}
+      {previewNode && <NodeDossierOverlay node={previewNode} run={run} onClose={() => setPreviewNode(null)} />}
     </div>
   );
 }

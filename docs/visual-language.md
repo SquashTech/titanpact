@@ -3776,3 +3776,21 @@ gilt once spoken for; on the rail the hero on stage wears the reticle's corners 
 bound one a gold-lipped slot. A gilt plank's label is always light: the old gold slabs
 set dark ink, and the two rules that still did (Seal the Pact, the recruit screen's
 only-option Leave) are overridden.
+
+**The console, the Roster, the dossier and the Cache** (tenth pass, 2026-09-28, per user
+direction). The fight console's top edge is a **beam** (`beam.png`): dressed stone between
+two gold inlays, a stud at each screen edge, with the command crest set into it — the two
+sockets are wells in the beam and the commander's name is lettered on its flat face. The
+old thin ledge plus a crest row spent 64px on a seam and a header that read as two
+unrelated strips; the beam is both at 38, and the move slots take the difference back as
+a 5px gap (four slots edge to edge read as crammed). The keys' plank is sliced at 5px
+rather than 7, so Switch and the Bag's count fit. The **Roster** is the whole screen now
+that nothing on it is managed: two across, each hero standing at 2x in an alcove of its
+own colour (level plaque, the level's bar along the floor), its three sockets in a column
+beside it, name, form, HP and Mastery below. The **node dossier** explains itself: a
+plain-words line under the name, the ledger, the roster through the one lens the choice
+turns on (`NodeRosterReadout`: pips for a Scroll, pool for a Well, Force and move count
+for a Ley Line, sockets for a Cache or Forge, HP for a fight or the Hall), and the terms
+it leans on defined at the foot. The **Cache** on the road is the map's own chest at 4x:
+it rises in, blinks white three times, and bursts into the same chest open
+(`art/cache/chest-opened.png`, a PixelLab edit of the map prop) under turning rays.
