@@ -171,7 +171,7 @@ function RosterSheetCard({ hero, entry, relicIds, onInspect, onItem }: CardProps
           {formLine && <span className="roster-sheet-form">{formLine}</span>}
         </span>
         <WoundBar hp={hp} maxHp={maxHp} figure className="roster-sheet-hp" />
-        <MasteryPips mastery={entry.mastery} className="roster-sheet-mastery" />
+        <MasteryPips mastery={entry.mastery} marked className="roster-sheet-mastery" />
       </button>
     </div>
   );
