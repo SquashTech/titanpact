@@ -3729,7 +3729,16 @@ two-pixel lip drawn in `box-shadow` (seven to a row cannot spare a tile border);
 every who-screen's hero card (`HeroPickCard`) is carved and gold-lipped when
 chosen; a Boon being given sits in a well in its own colour. Where a carved edge
 is deeper than the hairline it replaced, the card gives the difference back out of
-its own padding — the level-up report must still hold six heroes. Still to do:
-the other nodes' headline cards (Mentor, Tutor, Scribe, Mana Well, Ley Line), the
-target-picker cards, and screen-specific cards (the Starfall card, empty-state
-boxes).
+its own padding — the level-up report must still hold six heroes.
+
+**Headline cards and the Roster** (fifth pass, 2026-09-28): a node's headline card —
+the move a Mentor, Tutor or level offers — is a stone window of its own over a pair
+of planks, Confirm gilt with a green label (committing still reads apart from a gold
+Continue; the signature keeps its own frame). The Smithy sheet is the hall's
+furniture: wood frame, a well for the lift, Strike a gilt plank in the work's
+colour, carved element slots. The map's **Roster** stopped being a plank, per user
+direction — the party was hard to read on the grain: it is a gold-rimmed **alcove**,
+dark inside, each hero at 1x (48px, six fit exactly) in a pool of warm light over a
+carved HP track, with the party's emblem (`party.png`, PixelLab) over a parchment
+tag. Still to do: the target-picker cards and screen-specific cards (the Starfall
+card, empty-state boxes).
