@@ -39,7 +39,7 @@ const KIND_COLORS: Record<ClassKind, string> = {
   utility: STAT_COLORS.speed,
 };
 
-const CRUCIBLE_LINE = "The Guardian's heart burns in the Crucible. Teach one hero a powerful Class.";
+const CRUCIBLE_LINE = "The Guardian's heart burns in the Crucible. Teach a hero a powerful Class.";
 
 /**
  * The Crucible — the Guardian's beat (docs/growth-overhaul.md §5, §11): pick ONE hero, and the fire
