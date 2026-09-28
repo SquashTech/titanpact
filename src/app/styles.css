@@ -38320,3 +38320,99 @@ img.smithy-service-art {
 .move-list .move-button.selected:hover {
   border-image-source: url('../../art/ui/slot-thin-lit.png');
 }
+
+/* -- The Starfall card and the empty states in the kit. The Starfall is a stone window onto its
+   strip of night, the pool's faces carved in their type. Nothing-here is an empty well (a box of
+   its own) or an empty mount (a socket, a seat): four plain-stone corners where a piece would sit,
+   never a dashed line. -- */
+.starfall-card {
+  border: 20px solid transparent;
+  border-image: url('../../art/ui/frame-stone.png') 10 fill / 20px round;
+  border-radius: 0;
+  background: none;
+  image-rendering: pixelated;
+}
+
+.starfall-card-sky {
+  border-bottom: 0;
+  box-shadow: inset 0 -2px 0 #6f4e1f, inset 0 -4px 0 #0b0a0e;
+}
+
+.starfall-card-body {
+  padding: 8px 0 0;
+}
+
+.starfall-card-face {
+  padding: 3px 1px;
+  border: 4px solid transparent;
+  border-image: url('../../art/ui/slot-thin.png') 2 / 4px round;
+  border-radius: 0;
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(var(--type-rgb), 0.2), transparent 70%) padding-box, #111319 padding-box;
+  box-shadow: inset 0 2px 0 rgba(var(--type-rgb), 0.45);
+  image-rendering: pixelated;
+}
+
+.star-shop-empty {
+  padding: 10px 6px;
+  border: 8px solid transparent;
+  border-image: url('../../art/ui/slot.png') 4 / 8px round;
+  border-radius: 0;
+  background: #0c0d12 padding-box;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+
+.star-shop-empty-title {
+  color: var(--text-dim);
+}
+
+.star-shop-alignments {
+  border-style: solid;
+}
+
+.item-box {
+  padding: 0;
+  border: 4px solid transparent;
+  border-image: url('../../art/ui/slot-thin.png') 2 / 4px round;
+  border-radius: 0;
+  background: #0e1015 padding-box;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+
+.item-box.filled {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--rarity-color, #0e1015) 10%, #0e1015) padding-box;
+}
+
+.item-box.empty::before,
+.squad-slot.empty::after {
+  inset: 2px;
+  border: 10px solid transparent;
+  border-image: url('../../art/ui/mount.png') 5 / 10px;
+  border-radius: 0;
+  opacity: 0.7;
+  -webkit-mask: none;
+  mask: none;
+  image-rendering: pixelated;
+}
+
+.squad-slot.empty::after {
+  inset: 6px;
+}
+
+.squad-slot.empty {
+  background: #0c0d12 padding-box;
+  box-shadow: none;
+}
+
+/* A Constellation offer (a bundle, a Location): carved like any card in a window. */
+.star-shop-offer {
+  padding: 6px 7px;
+  border: 4px solid transparent;
+  border-image: url('../../art/ui/slot-thin.png') 2 / 4px round;
+  border-radius: 0;
+  background: radial-gradient(ellipse 120% 90% at 8% -10%, rgba(224, 166, 60, 0.14), transparent 64%) padding-box, #111319 padding-box;
+  box-shadow: inset 0 2px 0 rgba(224, 166, 60, 0.35);
+  image-rendering: pixelated;
+}

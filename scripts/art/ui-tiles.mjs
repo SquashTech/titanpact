@@ -334,7 +334,7 @@ function lintel(name, S) {
 
 // A targeting reticle: 12x12, slice 5, only its four corners drawn. Gold brackets on an ink shadow,
 // so a legal target is marked without a box being drawn around it.
-function reticle(name, S) {
+function reticle(name, S, dim = false) {
   const c = canvas(12, 12);
   const L = 11;
   const corners = [
@@ -350,8 +350,8 @@ function reticle(name, S) {
       c.set(x0 + dx, y0 + dy * (k + 1), INK);
     }
     for (let k = 0; k < 5; k++) {
-      c.set(x0 + dx * k, y0, k < 2 ? S.goldHi : S.gold);
-      c.set(x0, y0 + dy * k, k < 2 ? S.goldHi : S.gold);
+      c.set(x0 + dx * k, y0, dim ? S.light : k < 2 ? S.goldHi : S.gold);
+      c.set(x0, y0 + dy * k, dim ? S.light : k < 2 ? S.goldHi : S.gold);
     }
   }
   c.save(name);
@@ -379,6 +379,8 @@ slot('slot', null);
 slot('slot-lit', { lo: STONE.goldLo, mid: STONE.gold, hi: STONE.goldHi });
 lintel('lintel', STONE);
 reticle('reticle', STONE);
+// The same four corners in plain stone: an empty mount, waiting for something to be fitted.
+reticle('mount', STONE, true);
 smoothButton('plank-square', 15, 15, WOOD);
 slotThin('slot-thin',{ hi: hex('#4a4f5e'), lo: hex('#1b1e27') });
 slotThin('slot-thin-lit', { hi: STONE.goldHi, lo: STONE.goldLo });
