@@ -4,17 +4,18 @@ import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import { moves } from '../../data/moves';
 import { passives } from '../../data/passives';
-import type { HeroDefinition } from '../../engine/content';
+import type { HeroDefinition, PassiveDefinition } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
 import { boonMoveCount, boonMoveType, pickBoonOffers } from '../../run/boons';
 import { grantEventPassive } from '../../run/events';
 import { entryPassiveCounts } from '../../run/entryStats';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
-import { NodeHeader, NodeSky, NODE_TINT_ARCANE } from '../shared/NodeStage';
-import shrineArt from '../../../art/places/shrine.png';
-import { PassiveGlyph, passiveColor, passiveKindLabel, passiveTint } from '../shared/passiveIcons';
-import { PassiveDetailCard, PassiveFactRows } from '../shared/PassiveDossier';
+import { useLongPress } from '../shared/MoveTile';
+import { NodeMotes, NODE_TINT_ARCANE } from '../shared/NodeStage';
+import { PassiveGlyph, PassiveReadout, passiveColor, passiveKindLabel } from '../shared/passiveIcons';
+import { PassiveDetailOverlay } from '../shared/PassiveDossier';
+import shrineArt from '../../../art/map-nodes/awake/passiveReward.png';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
 import { levelOf } from '../../run/growth';
@@ -26,52 +27,74 @@ interface Props {
   onContinue: () => void;
 }
 
-function BoonChoiceCard({ passiveId, picked, onPick }: { passiveId: string; picked: boolean; onPick: () => void }) {
-  const passive = passives[passiveId];
-  const color = passiveColor(passiveId);
+/** One Boon as a verb card: its mark in a socket, its name and kind, the rule in a line. Tap picks; hold reads it whole. */
+function BoonCard({
+  passive,
+  picked = false,
+  dimmed = false,
+  onPick,
+  onRead,
+}: {
+  passive: PassiveDefinition;
+  picked?: boolean;
+  dimmed?: boolean;
+  onPick?: () => void;
+  onRead: () => void;
+}) {
+  const longPress = useLongPress(onRead, onPick);
   return (
-    <button
-      className={`relic-card relic-shrine-card boon-shrine-card${picked ? ' picked' : ''}`}
-      style={{ '--boon-color': color, '--passive-color': color } as CSSProperties}
+    <div
+      className={`verb-card${picked ? ' is-picked' : ''}${dimmed ? ' is-dimmed' : ''}`}
+      style={{ '--rite-color': passiveColor(passive.id) } as CSSProperties}
+      role="button"
+      tabIndex={0}
       aria-pressed={picked}
-      onClick={onPick}
+      aria-label={`${passive.name}: ${passive.description}`}
+      data-sfx="none"
+      onKeyDown={(e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && onPick) {
+          e.preventDefault();
+          onPick();
+        }
+      }}
+      {...longPress}
     >
-      <span className="relic-shrine-card-icon-badge boon-card-badge" style={{ color, background: passiveTint(passiveId, 0.18) }}>
-        <PassiveGlyph passiveId={passiveId} className="boon-card-icon" />
+      <span className="verb-card-socket" aria-hidden="true">
+        <PassiveGlyph passiveId={passive.id} className="verb-card-glyph" />
       </span>
-      <span className="boon-card-body">
-        <span className="relic-card-name">{passive.name}</span>
-        <span className="relic-card-desc">{passive.description}</span>
-        <span className="boon-card-kind">{passiveKindLabel(passive)}</span>
-        {/* The rule unfolds under the picked card — the same rows its dossier prints, in its colour. */}
-        {picked && (
-          <span className="boon-card-rule">
-            <PassiveFactRows passive={passive} />
-          </span>
-        )}
+      <span className="verb-card-body">
+        <span className="verb-card-head">
+          <span className="verb-card-name">{passive.name}</span>
+          <span className="verb-card-kind">{passiveKindLabel(passive)}</span>
+        </span>
+        <span className="verb-card-desc is-full">{passive.description}</span>
       </span>
-    </button>
+    </div>
   );
 }
 
 /**
- * `passiveReward` node: pick 1 of 3 Boons, then the hero it settles on. Same three-phase shape as
- * the Mentor (select-then-confirm, tap-to-assign, reveal) because it is the same decision — a
- * permanent, hero-specific grant that the player should not be able to mis-tap their way into.
+ * `passiveReward` node: pick 1 of 3 Boons, then the hero it settles on, then the reveal — a
+ * permanent, hero-specific grant the player should not be able to mis-tap their way into. It is
+ * staged as a rite at the woken Shrine (the Crucible's shape in violet): the Boons as verb cards,
+ * the chosen one lit over the roster, and the hero it settles on standing in its light.
  *
  * Unlike a Class, a Boon STACKS: `grantEventPassive` appends, so every hero is eligible however
- * many they already hold, and a card showing "×1 already" is an invitation rather than a block.
+ * many they already hold, and a card showing "holds ×1" is an invitation rather than a block.
  */
 export function BoonNodeScreen({ run, onRunChange, onContinue }: Props) {
   const [boonChoices] = useState(() => pickBoonOffers(run.roster, rosterHeroes));
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [confirmedId, setConfirmedId] = useState<string | null>(null);
   const [assignedTo, setAssignedTo] = useState<string | null>(null);
+  const [reading, setReading] = useState<PassiveDefinition | null>(null);
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
 
+  const picked = pickedId ? passives[pickedId] : null;
   const confirmed = confirmedId ? passives[confirmedId] : null;
   const assignedEntry = assignedTo ? run.roster.find((r) => r.rosterId === assignedTo) ?? null : null;
   const assignedHero = assignedEntry ? rosterHeroes[assignedEntry.heroId] : null;
+  const leaning = confirmed ?? picked;
 
   function handleAssign(rosterId: string) {
     if (!confirmedId) return;
@@ -80,7 +103,7 @@ export function BoonNodeScreen({ run, onRunChange, onContinue }: Props) {
     setAssignedTo(rosterId);
   }
 
-  /** How many copies this hero already carries, from every source — the card's "already holds" line. */
+  /** How many copies this hero already carries, from every source — the card's "holds" line. */
   function heldCount(entry: RosterEntry): number {
     return confirmedId ? entryPassiveCounts(entry, equipment)[confirmedId] ?? 0 : 0;
   }
@@ -103,43 +126,82 @@ export function BoonNodeScreen({ run, onRunChange, onContinue }: Props) {
     );
   }
 
-  return (
-    <div className="node-screen boon-node-screen" style={{ '--node-rgb': NODE_TINT_ARCANE } as CSSProperties}>
-      <NodeSky />
+  const style = {
+    '--node-rgb': NODE_TINT_ARCANE,
+    '--rite-color': leaning ? passiveColor(leaning.id) : '#9b6bff',
+  } as CSSProperties;
 
-      <RosterPeek run={run} />
-
-      {!assignedTo && (
-        <NodeHeader
-          compact
-          art={<img src={shrineArt} className="place-vignette" alt="" draggable={false} />}
-          eyebrow={confirmed ? 'Boon Chosen' : 'A Power Stirs'}
-          title={confirmed ? 'Choose a Vessel' : 'The Shrine'}
-          readout={
-            confirmed
-              ? 'It stays with them for the rest of the run. Hold a hero to review its sheet.'
-              : 'Tap a boon to select it, then choose who it settles on. It stays with them for the rest of the run.'
-          }
-        />
-      )}
-
-      {/* Phase 2's grid is a direct child of the screen (not inside `.screen-scroll`) so its figures
-          sit at the same height as on the Mentor and the stat shrines. */}
-      {!confirmed ? (
+  // The reveal: the hero at the shrine, the Boon's mark landing on it, the rule read whole below.
+  if (assignedHero && confirmed) {
+    return (
+      <div className="node-screen rite-screen is-shrine boon-node-screen" style={style}>
+        <span className="node-sky shrine-ground" aria-hidden="true" />
+        <NodeMotes count={14} />
         <div className="screen-scroll">
-          <div className="stage-centered">
-            <div className="relic-shrine-list">
-              {boonChoices.map((id) => (
-                <BoonChoiceCard key={id} passiveId={id} picked={pickedId === id} onPick={() => setPickedId(pickedId === id ? null : id)} />
-              ))}
+          <div className="rite-reveal">
+            <span className="rite-reveal-flash" aria-hidden="true" />
+            <span className="rite-hero">
+              <span className="rite-pool" aria-hidden="true" />
+              <HeroPortrait heroId={assignedHero.id} className="rite-portrait" />
+              <span className="rite-mark is-reveal" aria-hidden="true">
+                <PassiveGlyph passiveId={confirmed.id} />
+              </span>
+            </span>
+            <span className="rite-eyebrow">Boon Granted</span>
+            <h2 className="rite-name">{assignedHero.name}</h2>
+            <span className="rite-reveal-name">{confirmed.name}</span>
+            <div className="rite-reveal-verb">
+              <PassiveReadout passive={confirmed} source="Boon" />
             </div>
           </div>
         </div>
-      ) : !assignedTo ? (
+        <button className="resolve-button" onClick={onContinue}>
+          Continue
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`node-screen rite-screen is-shrine boon-node-screen${confirmed ? ' is-choosing-vessel' : ''}`} style={style}>
+      <span className="node-sky shrine-ground" aria-hidden="true" />
+      <NodeMotes count={14} />
+      <RosterPeek run={run} />
+
+      <header className="rite-head">
+        <span className="boon-shrine-figure">
+          <span className="rite-pool" aria-hidden="true" />
+          <img src={shrineArt} className="boon-shrine-art" alt="" draggable={false} />
+        </span>
+        <span className="rite-eyebrow">A Wayside Shrine</span>
+        <h2 className="rite-name">{confirmed ? 'Who carries it?' : 'Choose a Boon'}</h2>
+      </header>
+
+      {!confirmed ? (
         <>
-          {/* The whole dossier over the roster — the rule it is asking a hero to carry, not a sentence in the header. */}
-          <div className="boon-who-rule" style={{ '--passive-color': passiveColor(confirmed.id) } as CSSProperties}>
-            <PassiveDetailCard passive={confirmed} />
+          <div className="verb-card-list">
+            {boonChoices.map((id) => (
+              <BoonCard
+                key={id}
+                passive={passives[id]}
+                picked={pickedId === id}
+                dimmed={!!pickedId && pickedId !== id}
+                onPick={() => {
+                  playSfx('ui.pick');
+                  setPickedId(pickedId === id ? null : id);
+                }}
+                onRead={() => setReading(passives[id])}
+              />
+            ))}
+          </div>
+          <button className="resolve-button" disabled={!picked} onClick={() => pickedId && setConfirmedId(pickedId)}>
+            {picked ? `Take — ${picked.name}` : 'Choose a Boon'}
+          </button>
+        </>
+      ) : (
+        <>
+          <div className="boon-vessel-verb">
+            <BoonCard passive={confirmed} picked onRead={() => setReading(confirmed)} />
           </div>
           <HeroPickGrid count={run.roster.length} fill columns={run.roster.length > 4 ? 3 : 2}>
             {run.roster.map((entry) => {
@@ -160,47 +222,9 @@ export function BoonNodeScreen({ run, onRunChange, onContinue }: Props) {
             })}
           </HeroPickGrid>
         </>
-      ) : (
-        <div className="screen-scroll">
-          {assignedHero && confirmed && (
-            <div className="class-learn-reveal">
-              <div className="class-learn-flash" aria-hidden="true" />
-              <div className="class-learn-portraits">
-                <span
-                  className="boon-reveal-badge"
-                  style={{ color: passiveColor(confirmed.id), background: passiveTint(confirmed.id, 0.18) }}
-                >
-                  <PassiveGlyph passiveId={confirmed.id} className="boon-reveal-icon" />
-                </span>
-                <span className="class-learn-arrow" aria-hidden="true">
-                  →
-                </span>
-                <HeroPortrait heroId={assignedHero.id} className="class-learn-hero" />
-              </div>
-              <div className="class-learn-eyebrow">Boon Granted</div>
-              <h2 className="class-learn-title">{assignedHero.name}</h2>
-              <div className="class-learn-classname" style={{ color: passiveColor(confirmed.id) }}>
-                {confirmed.name}
-              </div>
-              <p className="relic-reveal-desc">{confirmed.description}</p>
-            </div>
-          )}
-        </div>
       )}
 
-      {!confirmed ? (
-        <button
-          className="resolve-button relic-shrine-claim-button"
-          disabled={!pickedId}
-          onClick={() => pickedId && setConfirmedId(pickedId)}
-        >
-          {pickedId ? `Confirm ${passives[pickedId].name}` : 'Select a boon'}
-        </button>
-      ) : (
-        <button className="resolve-button" disabled={!assignedTo} onClick={onContinue}>
-          Continue
-        </button>
-      )}
+      {reading && <PassiveDetailOverlay passive={reading} onClose={() => setReading(null)} />}
 
       {previewEntry && (
         <HeroPreviewOverlay

@@ -439,7 +439,7 @@ export const sounds: Record<SfxId, SoundSpec> = {
 
   /**
    * Class conferred (CrucibleScreen; ui.confirm already played on entering the fire). A chord struck whole — sus4, not major — with a late bell.
-   * Timed to styles.css class-learn-flash-burst 0.6s / class-learn-pop 0.5s.
+   * Timed to styles.css rite-reveal-flash (crucible-rite-flare, 1.1s).
    */
   'class.learn': {
     gain: 0.44,

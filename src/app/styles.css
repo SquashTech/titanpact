@@ -4705,7 +4705,6 @@ textarea,
   }
 }
 
-
 /* Floating combat-log numbers over a combatant card — mounted fresh (new
    `key`) on every hit so the rise-and-fade animation restarts even when the
    same amount lands twice in a row. */
@@ -10910,7 +10909,6 @@ button.star-shop-bundle-face {
   color: var(--text-dim);
 }
 
-
 /* Caption above a run of tiles or chips (a tier gate, what a path grants).
    Quieter than .detail-section-title's gold eyebrow and with no rule of its
    own — it labels a block inside a section, not a section. */
@@ -14838,43 +14836,6 @@ button.star-shop-bundle-face {
   margin-top: 4px;
 }
 
-.relic-card {
-  --plate-color: var(--magical);
-  border-radius: var(--radius-sm);
-  padding: 8px 10px;
-  box-shadow: var(--hairline), var(--elev-1);
-}
-
-.relic-card-head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.relic-card-icon {
-  font-size: 14px;
-  line-height: 1;
-}
-
-.relic-card-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.relic-card-count {
-  margin-left: auto;
-  font-size: 11px;
-  color: var(--text-dim);
-  font-weight: 700;
-}
-
-.relic-card-desc {
-  font-size: 11px;
-  color: var(--text-dim);
-  margin-top: 3px;
-}
-
 /* --- Guild Hall panel -----------------------------------------------------
    Overhauled (2026-08-18, per user direction): a real multi-good shop —
    2-3 curated hero recruits plus a small equipment shelf — rather than a flat
@@ -15500,30 +15461,16 @@ button.star-shop-bundle-face {
  * a cost — three plates of one height read as a set of things offered, where
  * three different heights read as a list that happened to be that long.
  */
-.stage-centered > .relic-shrine-list,
 .stage-centered > .equip-cache-list {
   flex: 1 1 auto;
   min-height: 0;
   justify-content: center;
 }
 
-.stage-centered > .relic-shrine-list > *,
 .stage-centered > .equip-cache-list > * {
   flex: 1 1 auto;
   min-height: 0;
   max-height: var(--stage-card-max, 132px);
-}
-
-/* A card that GREW has to re-centre what is in it, or the height it gained
-   lands underneath its content — which is the same dead space this rule set out
-   to remove, moved inside the card. Measured on the first attempt: a 132px Boon
-   plate with 11px above its badge and 51px of nothing below it.
-   ┄
-   Split by flex direction because the axis differs: the shrine cards are rows
-   whose cross axis is vertical, the Mentor's are columns whose main axis is.
-   The equipment card already centres and is untouched. */
-.stage-centered > .relic-shrine-list > * {
-  align-items: center;
 }
 
 /* The five Banners, which ARE the subject — five objects on a wall, not five
@@ -16146,124 +16093,6 @@ button.star-shop-bundle-face {
   }
 }
 
-/* --- The relic offer list (GuardianBannerScreen) --------------------------
-   Overhauled (2026-08-23, per user direction) from a 2x2 grid of icon-only
-   tiles — which read oddly with only 3 offers, always leaving one tile
-   orphaned in the second row — into a vertical stack of full-width rows,
-   each printing the relic's actual description (data/relics.ts) right on the
-   card so a player can read exactly what an offer does without holding
-   anything. Claiming one now hands off to .relic-reveal below (its own
-   top-level sibling, same split as the Equipment Cache's chest-reveal
-   phases) instead of just swapping in a line of "Relic claimed." text, so
-   picking up a relic reads as the moment it should be. */
-
-/* Full-width rows, not a square grid — reads correctly whether the pool has
-   1, 2, or 3 relics left instead of leaving an orphaned tile in a 2x2 grid. */
-.relic-shrine-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-}
-
-.relic-shrine-card {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  text-align: left;
-  gap: 12px;
-  font: inherit;
-  color: inherit;
-  padding: 10px 14px;
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-  /* Staggered fade-up-in via revealDelayMs (NodeRewardScreen), same entrance as EquipCacheCard. */
-  animation: equip-cache-fade-up 0.3s ease-out backwards;
-}
-
-.relic-shrine-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--hairline-strong), var(--elev-3);
-}
-
-.relic-shrine-card:active {
-  transform: translateY(0);
-}
-
-/* Circular glow badge behind the relic glyph/art — same wrap-don't-style-
-   directly trick as .equip-cache-card-icon-badge so the fixed circle doesn't
-   fight .equip-icon-img's 1em sizing for relics with dedicated art. */
-/* Grown with the card (2026-09-10). A 46px badge on a 132px plate is a list
-   row's bullet; at 62px it is the thing the card is ABOUT, which is what makes
-   a stack of three read as objects on a shrine rather than as options in a
-   form. */
-.relic-shrine-card-icon-badge {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 62px;
-  height: 62px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(139, 127, 224, 0.28), transparent 75%);
-  box-shadow: inset 0 0 0 1px rgba(139, 127, 224, 0.35);
-}
-
-.relic-shrine-card .relic-card-icon {
-  font-size: 28px;
-  line-height: 1;
-}
-
-.relic-shrine-card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.relic-shrine-card .relic-card-name {
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.relic-shrine-card-desc {
-  font-size: 11px;
-  color: var(--text-dim);
-  line-height: 1.4;
-  margin: 0;
-}
-
-.relic-shrine-card.picked {
-  border-color: var(--magical);
-  box-shadow: 0 0 0 1px var(--magical), 0 4px 18px rgba(139, 127, 224, 0.35);
-  background: linear-gradient(165deg, rgba(139, 127, 224, 0.14), var(--panel) 70%);
-}
-
-/* Purple-gradient confirm button — .class-shrine-confirm-button's treatment
-   retinted --magical instead of --buff, so claiming a relic reads as
-   distinctly "arcane" from teaching a Class. */
-.relic-shrine-claim-button {
-  background: linear-gradient(165deg, #a89ae8, #6a5cc4);
-  border: 1px solid var(--magical);
-  color: #17122c;
-  text-shadow: none;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 0 1px rgba(139, 127, 224, 0.35), 0 4px 16px rgba(139, 127, 224, 0.35);
-  transition: opacity var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out);
-}
-
-.relic-shrine-claim-button:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 0 0 1px rgba(139, 127, 224, 0.5), 0 6px 20px rgba(139, 127, 224, 0.45);
-}
-
-.relic-shrine-claim-button:disabled {
-  background: var(--panel-alt);
-  border-color: var(--border);
-  color: var(--text-dim);
-  box-shadow: none;
-  opacity: 0.45;
-}
-
 /* --- Relics as objects (relicArt.tsx) -------------------------------------
    The Banner drawn at display size (2026-09-08, per user
    direction). The flat 24x24 marks in relicIcons.tsx still serve every chip
@@ -16676,106 +16505,6 @@ button.star-shop-bundle-face {
   }
 }
 
-/* --- The Boon shrine (BoonNodeScreen's passiveReward) ---------------------
-   The Banner screen's row, wearing the PASSIVE's own colour instead of the
-   shrine's fixed violet: `passiveIcons.tsx` derives a colour per passive (an
-   element for a type-locked Boon, a status or stat for a reaction), and a row
-   that borrowed the screen tint would throw that away — twelve Boons that all
-   look the same is the thing the derived-art vocabulary exists to prevent. */
-
-.boon-shrine-card {
-  --plate-color: var(--boon-color);
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.boon-card-badge {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-}
-
-.boon-card-icon {
-  width: 22px;
-  height: 22px;
-}
-
-.boon-card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  text-align: left;
-}
-
-/* "Reactive", "Damage pipeline", "Always on" — how the Boon reaches the board,
-   the same line the passive dossier prints. It is the difference between two
-   Boons whose descriptions both read as "more damage". */
-.boon-card-kind {
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-weight: 700;
-  color: var(--boon-color);
-  opacity: 0.85;
-}
-
-.boon-shrine-card.picked {
-  border-color: var(--boon-color);
-  box-shadow: 0 0 0 1px var(--boon-color), 0 6px 24px color-mix(in srgb, var(--boon-color) 35%, transparent);
-  background: linear-gradient(165deg, color-mix(in srgb, var(--boon-color) 16%, transparent), var(--panel) 70%);
-}
-
-/* The picked Boon is the one being read, so it grows past the stage cap and
-   unfolds its rule — the dossier's When / Then rows, in its colour — while its
-   description steps up from fine print to the card's own voice. The other two
-   step back, as the unpicked standards do on the Banner screen. */
-.stage-centered > .relic-shrine-list > .boon-shrine-card.picked {
-  flex: 0 0 auto;
-  max-height: none;
-}
-
-.boon-shrine-card.picked .relic-card-desc {
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--text);
-}
-
-.boon-card-rule {
-  display: block;
-  width: 100%;
-  margin-top: 6px;
-  animation: equip-cache-fade-up 0.3s ease-out backwards;
-}
-
-.boon-card-rule .passive-detail-facts {
-  padding-top: 8px;
-  border-top-color: color-mix(in srgb, var(--boon-color) 40%, transparent);
-}
-
-.boon-card-rule .passive-detail-fact {
-  padding: 5px 0;
-}
-
-.boon-card-rule .passive-detail-fact-text {
-  font-size: 14px;
-}
-
-.relic-shrine-list:has(.picked) .boon-shrine-card:not(.picked) {
-  opacity: 0.5;
-}
-
-/* Phase 2: the Boon's whole dossier over the roster it is choosing from. */
-.boon-who-rule {
-  flex: 0 0 auto;
-  margin: 4px 0 10px;
-  padding: 12px 14px;
-  border-radius: var(--radius-lg);
-  border: 1px solid color-mix(in srgb, var(--passive-color) 45%, transparent);
-  background: linear-gradient(165deg, color-mix(in srgb, var(--passive-color) 14%, transparent), var(--panel) 70%);
-  animation: equip-cache-fade-up 0.3s ease-out backwards;
-}
-
 /* A hero already carrying this Boon: an invitation, not a block — a second copy
    stacks (src/run/boons.ts), so the count is information rather than a warning. */
 .boon-held-note {
@@ -16793,124 +16522,6 @@ button.star-shop-bundle-face {
 
 .boon-fit-note.is-dead {
   color: var(--enemy);
-}
-
-/* Stands where the Mentor's portrait stands on the Class reveal — the Boon has
-   no NPC, so the mark that will follow the hero around is what hands it over. */
-.boon-reveal-badge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-}
-
-.boon-reveal-icon {
-  width: 40px;
-  height: 40px;
-}
-
-/* --- Relic reveal (NodeRewardScreen, once a relic is claimed) -------------
-   Same "this is a big deal" beat as ClassNodeScreen's class-learn-reveal
-   below, retinted --magical: a flash-burst behind a single glowing icon
-   badge, with the name and full description cascading in after. Reuses that
-   screen's keyframes (class-learn-flash-burst, class-learn-pop) and Mentor's
-   Hall's mentor-ring-spin — none of them bake in a color, so there's no need
-   for relic-specific duplicates. */
-
-.relic-reveal {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  overflow: hidden;
-  padding: 30px 16px 22px;
-  border-radius: 14px;
-  border: 1px solid var(--magical);
-  background: radial-gradient(circle at 50% 0%, rgba(139, 127, 224, 0.28), transparent 70%),
-    linear-gradient(180deg, rgba(139, 127, 224, 0.14), transparent 75%);
-  box-shadow: 0 0 0 1px rgba(139, 127, 224, 0.25), 0 8px 30px rgba(0, 0, 0, 0.4);
-}
-
-.relic-reveal-flash {
-  position: absolute;
-  top: 34%;
-  left: 50%;
-  width: 260px;
-  height: 260px;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(139, 127, 224, 0.6), transparent 68%);
-  animation: class-learn-flash-burst 0.6s ease-out forwards;
-  pointer-events: none;
-}
-
-.relic-reveal-icon-badge {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 96px;
-  height: 96px;
-  margin-bottom: 6px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(139, 127, 224, 0.3), transparent 72%);
-  box-shadow: inset 0 0 0 1px rgba(139, 127, 224, 0.4);
-  animation: class-learn-pop 0.5s ease-out;
-}
-
-/* Rotating ring behind the reveal's icon badge — bigger, centered version of
-   the shrine banner's ambient-magic ring. */
-.relic-reveal-icon-badge::after {
-  content: '';
-  position: absolute;
-  inset: -14px;
-  border-radius: 50%;
-  border: 1px dashed rgba(139, 127, 224, 0.35);
-  animation: mentor-ring-spin 12s linear infinite;
-  pointer-events: none;
-}
-
-/* The bloom is the relic's own colour (relicIcons.tsx sets it inline, so
-   currentColor is it), not the shrine's violet: the badge, its ring and the
-   burst behind are all still violet, which is what says "a relic was claimed"
-   — the glow says WHICH one. Tighter than the 16px it replaced because
-   currentColor lands at full alpha where the violet was at .75. */
-.relic-reveal-icon {
-  position: relative;
-  font-size: 48px;
-  line-height: 1;
-  filter: drop-shadow(0 0 14px currentColor);
-}
-
-.relic-reveal-eyebrow {
-  position: relative;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--magical);
-  margin-bottom: 4px;
-  animation: class-learn-pop 0.4s ease-out;
-}
-
-.relic-reveal-name {
-  position: relative;
-  font-size: 21px;
-  margin: 0 0 6px;
-  text-shadow: 0 0 20px rgba(139, 127, 224, 0.65);
-  animation: class-learn-pop 0.45s ease-out;
-}
-
-.relic-reveal-desc {
-  position: relative;
-  font-size: 12px;
-  color: var(--text-dim);
-  max-width: 320px;
-  margin: 0;
-  line-height: 1.5;
 }
 
 /* --- Mentor's Hall (ClassNodeScreen's classReward) ------------------------
@@ -16931,39 +16542,6 @@ button.star-shop-bundle-face {
   }
 }
 
-/* --- Class-learn reveal (ClassNodeScreen, once a hero is assigned) --------
-   Replaces the hero grid entirely once a pick lands — same "this is a big
-   deal" logic as .evolution-banner, but staged as a two-portrait moment (the
-   Mentor conferring the Class onto the chosen hero) with the stat grants
-   cascading in afterward rather than all appearing at once. */
-
-.class-learn-reveal {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  overflow: hidden;
-  padding: 26px 16px 20px;
-  border-radius: 14px;
-  border: 1px solid var(--buff);
-  background: radial-gradient(circle at 50% 0%, rgba(63, 184, 175, 0.26), transparent 70%), linear-gradient(180deg, rgba(63, 184, 175, 0.14), transparent 75%);
-  box-shadow: 0 0 0 1px rgba(63, 184, 175, 0.25), 0 8px 30px rgba(0, 0, 0, 0.4);
-}
-
-.class-learn-flash {
-  position: absolute;
-  top: 30%;
-  left: 50%;
-  width: 260px;
-  height: 260px;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(63, 184, 175, 0.55), transparent 68%);
-  animation: class-learn-flash-burst 0.6s ease-out forwards;
-  pointer-events: none;
-}
-
 @keyframes class-learn-flash-burst {
   0% {
     opacity: 0;
@@ -16976,105 +16554,6 @@ button.star-shop-bundle-face {
     opacity: 0;
     transform: translate(-50%, -50%) scale(1.6);
   }
-}
-
-.class-learn-portraits {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  margin-bottom: 4px;
-}
-
-/* 1x against the student's 2x — same clean-multiple rule, and the size gap is
-   what makes the hero the subject of the reveal (both were fractional: 72px
-   and 88px off a 48px source). */
-.class-learn-mentor {
-  display: block;
-  width: 48px;
-  height: 48px;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 0 10px rgba(63, 184, 175, 0.5));
-  opacity: 0.85;
-}
-
-.class-learn-arrow {
-  font-size: 20px;
-  color: var(--buff);
-}
-
-.class-learn-hero {
-  display: block;
-  width: 96px;
-  height: 96px;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 0 18px rgba(63, 184, 175, 0.75));
-  animation: class-learn-pop 0.5s ease-out;
-}
-
-@keyframes class-learn-pop {
-  0% {
-    opacity: 0;
-    transform: scale(0.6);
-  }
-  60% {
-    opacity: 1;
-    transform: scale(1.12);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.class-learn-eyebrow {
-  position: relative;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--buff);
-  margin-bottom: 4px;
-  animation: class-learn-pop 0.4s ease-out;
-}
-
-.class-learn-title {
-  position: relative;
-  font-size: 20px;
-  margin: 0 0 4px;
-  text-shadow: 0 0 20px rgba(63, 184, 175, 0.6);
-  animation: class-learn-pop 0.45s ease-out;
-}
-
-.class-learn-classname {
-  position: relative;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--buff);
-  margin: 0 0 14px;
-}
-
-.class-learn-grants {
-  position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px;
-}
-
-.class-learn-grant-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: rgba(63, 184, 175, 0.14);
-  border: 1px solid rgba(63, 184, 175, 0.4);
-  border-radius: 12px;
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text);
-  animation: equip-cache-fade-up 0.3s ease-out backwards;
 }
 
 /* Full passive description(s) granted by the item being equipped — spelled
@@ -21536,7 +21015,6 @@ button.star-shop-bundle-face {
   opacity: 0.7;
 }
 
-
 .pick-name {
   max-width: 100%;
   overflow: hidden;
@@ -22616,7 +22094,6 @@ button.star-shop-bundle-face {
 .hero-grid-card:disabled .hero-grid-cta {
   color: var(--text-dim);
 }
-
 
 .training-row {
   display: flex;
@@ -28389,7 +27866,6 @@ button.star-shop-bundle-face {
   text-shadow: 0 0 26px rgba(224, 166, 60, 0.5);
 }
 
-
 /* --- Guild Hall: the Anvil and the Enchanter (docs/equipment.md §5) ------
    Both are repeatable shop services, so this is a WORKING list of everything
    owned rather than a shelf of offers: the player picks an item, not a slot. */
@@ -28574,7 +28050,6 @@ button.star-shop-bundle-face {
   color: var(--text-dim);
   cursor: pointer;
 }
-
 
 /* --- Slots past a hero's capacity (HeroSlotCard) -------------------------
    Drawn, not omitted. Every card's slot row is three columns wide —
@@ -28884,7 +28359,6 @@ button.star-shop-bundle-face {
   flex: none;
 }
 
-
 /* --- The Tutor (TutorNodeScreen) -----------------------------------------
  *
  * The one node whose body is a *reading* task: a hero's whole level-up pool,
@@ -28935,34 +28409,6 @@ button.star-shop-bundle-face {
    nearest the thumb. */
 .tutor-actions .secondary-button {
   min-height: 42px;
-}
-
-.tutor-reveal-badge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  color: #48c9e8;
-  background: rgba(72, 201, 232, 0.18);
-}
-
-.tutor-reveal-icon {
-  width: 40px;
-  height: 40px;
-}
-
-/* Same treatment the move-replace offer gives its headline dossier, minus the
-   pulse: by the reveal the choice is made and nothing is asking to be pressed. */
-.tutor-reveal-move {
-  width: 100%;
-  margin-top: 10px;
-  padding: 10px;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  text-align: left;
 }
 
 /* --- Manage Roster's gear board --------------------------------------------------------------
@@ -30677,7 +30123,6 @@ button.star-shop-bundle-face {
 .roster-card,
 .squad-slot,
 .enemy-scout-chip,
-.relic-card,
 .equip-cache-card,
 .equip-target-card,
 .equip-spotlight-passive,
@@ -30711,7 +30156,6 @@ button.star-shop-bundle-face {
 .roster-card,
 .squad-slot,
 .enemy-scout-chip,
-.relic-card,
 .equip-cache-card,
 .equip-target-card,
 .hero-grid-card,
@@ -31374,22 +30818,101 @@ button.star-shop-bundle-face {
   }
 }
 
-/* --- The Crucible's Class choice and its reveal (CrucibleScreen.tsx) ------------------------
-   Still in the fire: the Crucible's lit ground, the hero at the rim at 2x with the pool under it
-   taking the colour of the Class it leans toward, and three carved cards of one height — the mark
-   in a medallion socket, the name, the verb in a line. `--class-color` is set inline. */
+/* --- Rites: the Crucible's Class and the Shrine's Boon (CrucibleScreen.tsx, BoonNodeScreen.tsx) ---
+   A place that grants one hero a verb: a lit ground, the hero at 2x with a pool under it taking the
+   colour of the verb it leans toward, and three carved verb cards of one height — the mark in a
+   medallion socket, the name, the verb in a line. `--rite-color` is set inline; the place sets the
+   inks below (the Crucible's fire by default, the Shrine's violet). */
+.rite-screen {
+  --rite-ink: #c87a3a;
+  --rite-title: #ffe2a6;
+  --rite-glow: rgba(255, 150, 40, 0.6);
+  --rite-glow-far: rgba(255, 90, 20, 0.35);
+  --rite-card: #120d0b;
+  --rite-card-lit: #17100c;
+}
+
+.rite-screen.is-shrine {
+  --rite-ink: #a98be0;
+  --rite-title: #efe4ff;
+  --rite-glow: rgba(170, 120, 255, 0.6);
+  --rite-glow-far: rgba(120, 70, 230, 0.35);
+  --rite-card: #0f0d16;
+  --rite-card-lit: #15111f;
+}
+
+.shrine-ground {
+  position: absolute;
+  inset: calc(var(--shell-pad) * -1);
+  background:
+    radial-gradient(ellipse 80% 32% at 50% 14%, color-mix(in srgb, var(--rite-color, #9b6bff) 30%, transparent), transparent 70%),
+    radial-gradient(ellipse 90% 40% at 50% 100%, rgba(120, 70, 230, 0.18), transparent 70%),
+    linear-gradient(180deg, #050409, #0c0914 55%, #1a1030);
+  transition: background 0.6s var(--ease-out);
+  pointer-events: none;
+}
+
+/* The Shrine, woken, at 2x in its own light; a Boon's rule gets a third line where a Class's verb needs two. */
+.boon-shrine-figure {
+  position: relative;
+  width: 96px;
+  height: 96px;
+}
+
+.boon-shrine-art {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 12px var(--rite-glow)) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+  animation: boon-shrine-hum 3.4s ease-in-out infinite;
+}
+
+@keyframes boon-shrine-hum {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 10px var(--rite-glow)) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+  }
+  50% {
+    filter: drop-shadow(0 0 18px var(--rite-glow)) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+  }
+}
+
+.verb-card-desc.is-full {
+  -webkit-line-clamp: 3;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--text) 80%, var(--text-dim));
+}
+
+/* Choosing who carries it: the Boon stays lit above the roster, and the roster stands right under it. */
+.boon-vessel-verb {
+  position: relative;
+  z-index: 1;
+  flex: none;
+}
+
+.is-choosing-vessel .pick-grid.is-filling {
+  align-content: start;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boon-shrine-art {
+    animation: none;
+  }
+}
+
 .crucible-ground {
   position: absolute;
   inset: calc(var(--shell-pad) * -1);
   background:
-    radial-gradient(ellipse 80% 30% at 50% 12%, color-mix(in srgb, var(--class-color, #ff8a2a) 30%, transparent), transparent 70%),
+    radial-gradient(ellipse 80% 30% at 50% 12%, color-mix(in srgb, var(--rite-color, #ff8a2a) 30%, transparent), transparent 70%),
     radial-gradient(ellipse 90% 40% at 50% 100%, rgba(255, 110, 30, 0.2), transparent 70%),
     linear-gradient(180deg, #070404, #120806 55%, #2a0e05);
   transition: background 0.6s var(--ease-out);
   pointer-events: none;
 }
 
-.crucible-choice-head {
+.rite-head {
   position: relative;
   z-index: 1;
   display: flex;
@@ -31398,14 +30921,14 @@ button.star-shop-bundle-face {
   flex: none;
 }
 
-.crucible-choice-hero {
+.rite-hero {
   position: relative;
   width: 96px;
   height: 96px;
 }
 
 /* The fire under the hero, in the leaning Class's colour. */
-.crucible-choice-pool {
+.rite-pool {
   position: absolute;
   left: 50%;
   bottom: -6px;
@@ -31413,13 +30936,13 @@ button.star-shop-bundle-face {
   height: 30px;
   margin-left: -66px;
   border-radius: 50%;
-  background: radial-gradient(ellipse, color-mix(in srgb, var(--class-color) 75%, #fff 10%), color-mix(in srgb, var(--class-color) 30%, transparent) 45%, transparent 72%);
+  background: radial-gradient(ellipse, color-mix(in srgb, var(--rite-color) 75%, #fff 10%), color-mix(in srgb, var(--rite-color) 30%, transparent) 45%, transparent 72%);
   filter: blur(2px);
-  animation: crucible-choice-pool 2.6s ease-in-out infinite;
+  animation: rite-pool 2.6s ease-in-out infinite;
   transition: background 0.5s var(--ease-out);
 }
 
-@keyframes crucible-choice-pool {
+@keyframes rite-pool {
   0%,
   100% {
     opacity: 0.85;
@@ -31431,18 +30954,18 @@ button.star-shop-bundle-face {
   }
 }
 
-.crucible-choice-portrait {
+.rite-portrait {
   position: relative;
   width: 96px;
   height: 96px;
   image-rendering: pixelated;
-  filter: drop-shadow(0 -4px 10px color-mix(in srgb, var(--class-color) 45%, transparent)) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+  filter: drop-shadow(0 -4px 10px color-mix(in srgb, var(--rite-color) 45%, transparent)) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
   transform-origin: center bottom;
   animation: hero-idle-breath 3.1s ease-in-out infinite;
 }
 
 /* The picked Class's mark, risen off the hero's shoulder. */
-.crucible-choice-mark {
+.rite-mark {
   position: absolute;
   right: -18px;
   top: 4px;
@@ -31450,19 +30973,19 @@ button.star-shop-bundle-face {
   height: 30px;
   display: grid;
   place-items: center;
-  color: var(--class-color);
+  color: var(--rite-color);
   background: url('../../art/ui/medallion.png') 0 0 / 30px 30px no-repeat;
   image-rendering: pixelated;
-  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--class-color) 70%, transparent));
-  animation: crucible-choice-mark-in 0.35s var(--ease-spring) both;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--rite-color) 70%, transparent));
+  animation: rite-mark-in 0.35s var(--ease-spring) both;
 }
 
-.crucible-choice-mark > svg {
+.rite-mark > svg {
   width: 16px;
   height: 16px;
 }
 
-@keyframes crucible-choice-mark-in {
+@keyframes rite-mark-in {
   from {
     opacity: 0;
     transform: translateY(8px) scale(0.6);
@@ -31473,30 +30996,30 @@ button.star-shop-bundle-face {
   }
 }
 
-.crucible-choice-eyebrow {
+.rite-eyebrow {
   margin-top: 10px;
-  color: #c87a3a;
+  color: var(--rite-ink);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.28em;
   text-transform: uppercase;
 }
 
-.crucible-choice-name {
+.rite-name {
   margin: 2px 0 0;
   font-size: 22px;
   font-weight: 800;
-  color: #ffe2a6;
-  text-shadow: 0 0 10px rgba(255, 150, 40, 0.6), 0 0 22px rgba(255, 90, 20, 0.35);
+  color: var(--rite-title);
+  text-shadow: 0 0 10px var(--rite-glow), 0 0 22px var(--rite-glow-far);
 }
 
-.crucible-choice-types {
+.rite-types {
   display: flex;
   gap: 8px;
   margin-top: 2px;
 }
 
-.crucible-class-list {
+.verb-card-list {
   position: relative;
   z-index: 1;
   flex: 1 1 auto;
@@ -31508,7 +31031,7 @@ button.star-shop-bundle-face {
 }
 
 /* One height for all three, so they read as a set on offer rather than a list. */
-.crucible-class-card {
+.verb-card {
   position: relative;
   display: flex;
   align-items: center;
@@ -31518,56 +31041,56 @@ button.star-shop-bundle-face {
   border: 4px solid transparent;
   border-image: url('../../art/ui/slot-thin.png') 2 / 4px round;
   background:
-    linear-gradient(100deg, color-mix(in srgb, var(--class-color) 16%, transparent), transparent 55%) padding-box,
-    #120d0b padding-box;
-  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--class-color) 45%, transparent);
+    linear-gradient(100deg, color-mix(in srgb, var(--rite-color) 16%, transparent), transparent 55%) padding-box,
+    var(--rite-card) padding-box;
+  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--rite-color) 45%, transparent);
   image-rendering: pixelated;
   cursor: pointer;
   transition: transform var(--dur-mid) var(--ease-spring), opacity var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
 }
 
-.crucible-class-card:active {
+.verb-card:active {
   transform: scale(0.985);
 }
 
-.crucible-class-card.is-picked {
+.verb-card.is-picked {
   border-image-source: url('../../art/ui/slot-thin-lit.png');
   background:
-    linear-gradient(100deg, color-mix(in srgb, var(--class-color) 30%, transparent), transparent 70%) padding-box,
-    #17100c padding-box;
+    linear-gradient(100deg, color-mix(in srgb, var(--rite-color) 30%, transparent), transparent 70%) padding-box,
+    var(--rite-card-lit) padding-box;
   box-shadow:
-    inset 0 2px 0 var(--class-color),
-    0 0 18px -4px color-mix(in srgb, var(--class-color) 70%, transparent);
+    inset 0 2px 0 var(--rite-color),
+    0 0 18px -4px color-mix(in srgb, var(--rite-color) 70%, transparent);
 }
 
-.crucible-class-card.is-dimmed {
+.verb-card.is-dimmed {
   opacity: 0.55;
 }
 
-.crucible-class-socket {
+.verb-card-socket {
   flex: none;
   display: grid;
   place-items: center;
   width: 48px;
   height: 48px;
-  color: var(--class-color);
+  color: var(--rite-color);
   background:
-    radial-gradient(circle, color-mix(in srgb, var(--class-color) 35%, transparent), transparent 46%),
+    radial-gradient(circle, color-mix(in srgb, var(--rite-color) 35%, transparent), transparent 46%),
     url('../../art/ui/medallion.png') 0 0 / 48px 48px no-repeat;
   image-rendering: pixelated;
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.6));
 }
 
-.crucible-class-card.is-picked .crucible-class-socket {
-  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 8px color-mix(in srgb, var(--class-color) 80%, transparent));
+.verb-card.is-picked .verb-card-socket {
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 8px color-mix(in srgb, var(--rite-color) 80%, transparent));
 }
 
-.crucible-class-glyph {
+.verb-card-glyph {
   width: 22px;
   height: 22px;
 }
 
-.crucible-class-body {
+.verb-card-body {
   flex: 1 1 auto;
   min-width: 0;
   display: flex;
@@ -31575,62 +31098,62 @@ button.star-shop-bundle-face {
   gap: 3px;
 }
 
-.crucible-class-head {
+.verb-card-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
 }
 
-.crucible-class-name {
+.verb-card-name {
   font-size: 17px;
   font-weight: 800;
   color: var(--text);
 }
 
-.crucible-class-card.is-picked .crucible-class-name {
-  color: #ffe2a6;
+.verb-card.is-picked .verb-card-name {
+  color: var(--rite-title);
 }
 
-.crucible-class-kind {
+.verb-card-kind {
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--class-color) 80%, var(--text-dim));
+  color: color-mix(in srgb, var(--rite-color) 80%, var(--text-dim));
 }
 
-.crucible-class-verb {
+.verb-card-verb {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 12px;
 }
 
-.crucible-class-verb-name {
+.verb-card-verb-name {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   font-weight: 800;
 }
 
-.crucible-class-verb-name > svg {
+.verb-card-verb-name > svg {
   width: 12px;
   height: 12px;
 }
 
-.crucible-class-fact {
+.verb-card-fact {
   font-size: 10px;
   font-weight: 700;
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
 }
 
-.crucible-class-fact.is-mana {
+.verb-card-fact.is-mana {
   color: var(--mana, #6cb6ff);
 }
 
-.crucible-class-desc {
+.verb-card-desc {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -31640,14 +31163,14 @@ button.star-shop-bundle-face {
   color: var(--text-dim);
 }
 
-.crucible-choice .resolve-button {
+.rite-screen .resolve-button {
   position: relative;
   z-index: 1;
 }
 
 /* The reveal: the same hero at the same rim, a flare out of the fire, the Class named in its colour
    and the verb it now carries read whole below. */
-.crucible-reveal {
+.rite-reveal {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -31658,7 +31181,7 @@ button.star-shop-bundle-face {
   text-align: center;
 }
 
-.crucible-reveal-flash {
+.rite-reveal-flash {
   position: absolute;
   left: 50%;
   top: 0;
@@ -31666,62 +31189,69 @@ button.star-shop-bundle-face {
   height: 300px;
   margin-left: -180px;
   border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(255, 240, 200, 0.85), color-mix(in srgb, var(--class-color) 45%, transparent) 35%, transparent 68%);
+  background: radial-gradient(ellipse, rgba(255, 240, 200, 0.85), color-mix(in srgb, var(--rite-color) 45%, transparent) 35%, transparent 68%);
   opacity: 0;
   pointer-events: none;
   animation: crucible-rite-flare 1.1s var(--ease-out) both;
 }
 
-.crucible-choice-mark.is-reveal {
+.rite-mark.is-reveal {
   right: -22px;
   top: -4px;
   width: 40px;
   height: 40px;
   background-size: 40px 40px;
-  animation: crucible-choice-mark-in 0.5s var(--ease-spring) 0.35s both;
+  animation: rite-mark-in 0.5s var(--ease-spring) 0.35s both;
 }
 
-.crucible-choice-mark.is-reveal > svg {
+.rite-mark.is-reveal > svg {
   width: 20px;
   height: 20px;
 }
 
-.crucible-reveal-class {
+.rite-reveal-name {
   margin-top: 4px;
   font-size: 15px;
   font-weight: 800;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--class-color);
-  text-shadow: 0 0 12px color-mix(in srgb, var(--class-color) 60%, transparent);
+  color: var(--rite-color);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--rite-color) 60%, transparent);
   animation: title-tagline-fade 0.5s ease 0.45s both;
 }
 
-.crucible-reveal-verb {
+.rite-reveal-verb {
   width: 100%;
   margin-top: 16px;
   text-align: left;
   animation: crucible-rite-step-up 0.6s var(--ease-out) 0.6s both;
 }
 
-.crucible-reveal-verb > * {
+.rite-reveal-verb > * {
   width: 100%;
 }
 
 /* A move's sheet is drawn bare (it usually sits in a window); here it is carved in like the cards. */
-.crucible-reveal-verb.is-move {
+.rite-reveal-verb > .passive-readout {
+  border-image-source: url('../../art/ui/slot-thin-lit.png');
+  background:
+    linear-gradient(100deg, color-mix(in srgb, var(--rite-color) 18%, transparent), transparent 60%) padding-box,
+    var(--rite-card) padding-box;
+}
+
+.rite-reveal-verb.is-move {
   padding: 10px 12px;
   border: 4px solid transparent;
   border-image: url('../../art/ui/slot-thin-lit.png') 2 / 4px round;
   background:
-    linear-gradient(100deg, color-mix(in srgb, var(--class-color) 18%, transparent), transparent 60%) padding-box,
-    #120d0b padding-box;
+    linear-gradient(100deg, color-mix(in srgb, var(--rite-color) 18%, transparent), transparent 60%) padding-box,
+    var(--rite-card) padding-box;
   image-rendering: pixelated;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .crucible-choice-pool,
-  .crucible-choice-portrait {
+  .rite-pool,
+  .rite-portrait {
     animation: none;
   }
 }
@@ -32768,7 +32298,6 @@ button.star-shop-bundle-face {
   transition-duration: 1.4s;
 }
 
-
 /* The party wears the footer button (2026-09-15, wounds): the glyph and its label become a
    cap on the left, and the six chips take the rest of the slab. A wounded roster is read
    from the map, not from a tap. */
@@ -33049,7 +32578,6 @@ button.star-shop-bundle-face {
   opacity: 0.8;
   filter: grayscale(0.15);
 }
-
 
 /* =========================================================================
    The Smithy (ItemServicesSection, SmithyWorkSheet, SmithyBeat) — 2026-09-16, per user direction.
@@ -38416,17 +37944,6 @@ img.smithy-service-art {
 
 .pick-card.is-selected {
   box-shadow: inset 0 2px 0 rgba(224, 166, 60, 0.6), 0 0 14px -2px rgba(224, 166, 60, 0.5);
-}
-
-/* The Boon being given, over the heroes it may go to: a well in its own colour. */
-.boon-who-rule {
-  padding: 4px 6px;
-  border: 8px solid transparent;
-  border-image: url('../../art/ui/slot.png') 4 / 8px round;
-  border-radius: 0;
-  background: linear-gradient(165deg, color-mix(in srgb, var(--passive-color) 16%, #111319), #111319 70%) padding-box;
-  box-shadow: 0 0 16px -6px color-mix(in srgb, var(--passive-color) 60%, transparent);
-  image-rendering: pixelated;
 }
 
 /* -- A node's headline card in the kit: the move a Mentor, a Tutor or a level offers is a stone

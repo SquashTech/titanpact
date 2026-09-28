@@ -235,26 +235,26 @@ function ClassChoice({ run, entry, offers, pickedClassId, onPick, onConfirm }: C
   const [reading, setReading] = useState<ClassDefinition | null>(null);
   return (
     <div
-      className={`node-screen crucible-screen crucible-choice${picked ? ' has-pick' : ''}`}
-      style={{ '--node-rgb': NODE_TINT_GOLD, '--class-color': picked ? classColor(picked) : '#ff8a2a' } as CSSProperties}
+      className={`node-screen crucible-screen rite-screen crucible-choice${picked ? ' has-pick' : ''}`}
+      style={{ '--node-rgb': NODE_TINT_GOLD, '--rite-color': picked ? classColor(picked) : '#ff8a2a' } as CSSProperties}
     >
       <span className="node-sky crucible-ground" aria-hidden="true" />
       <NodeMotes count={14} />
       <RosterPeek run={run} />
 
-      <header className="crucible-choice-head">
-        <span className="crucible-choice-hero">
-          <span className="crucible-choice-pool" aria-hidden="true" />
-          <HeroPortrait heroId={hero.id} className="crucible-choice-portrait" />
+      <header className="rite-head">
+        <span className="rite-hero">
+          <span className="rite-pool" aria-hidden="true" />
+          <HeroPortrait heroId={hero.id} className="rite-portrait" />
           {picked && (
-            <span className="crucible-choice-mark" key={picked.id} aria-hidden="true">
+            <span className="rite-mark" key={picked.id} aria-hidden="true">
               <ClassGlyph cls={picked} />
             </span>
           )}
         </span>
-        <span className="crucible-choice-eyebrow">Choose a Class</span>
-        <h2 className="crucible-choice-name">{hero.name}</h2>
-        <span className="crucible-choice-types">
+        <span className="rite-eyebrow">Choose a Class</span>
+        <h2 className="rite-name">{hero.name}</h2>
+        <span className="rite-types">
           {rosterEntryTypes(hero, entry).map((t) => (
             <span key={t} className="pick-type-code" style={{ color: getTypeColor(t) }}>
               <ElementGlyph type={t} />
@@ -264,7 +264,7 @@ function ClassChoice({ run, entry, offers, pickedClassId, onPick, onConfirm }: C
         </span>
       </header>
 
-      <div className="crucible-class-list">
+      <div className="verb-card-list crucible-class-list">
         {offers.map((cls) => (
           <ClassCard
             key={cls.id}
@@ -309,8 +309,8 @@ function ClassCard({ cls, picked, dimmed, caster, onPick, onRead }: CardProps) {
   const summary = move ? moveEffectSummary(move, caster) : passive?.description ?? '';
   return (
     <div
-      className={`crucible-class-card${picked ? ' is-picked' : ''}${dimmed ? ' is-dimmed' : ''}`}
-      style={{ '--class-color': classColor(cls) } as CSSProperties}
+      className={`verb-card${picked ? ' is-picked' : ''}${dimmed ? ' is-dimmed' : ''}`}
+      style={{ '--rite-color': classColor(cls) } as CSSProperties}
       role="button"
       tabIndex={0}
       aria-pressed={picked}
@@ -324,32 +324,32 @@ function ClassCard({ cls, picked, dimmed, caster, onPick, onRead }: CardProps) {
       }}
       {...longPress}
     >
-      <span className="crucible-class-socket" aria-hidden="true">
-        <ClassGlyph cls={cls} className="crucible-class-glyph" />
+      <span className="verb-card-socket" aria-hidden="true">
+        <ClassGlyph cls={cls} className="verb-card-glyph" />
       </span>
-      <span className="crucible-class-body">
-        <span className="crucible-class-head">
-          <span className="crucible-class-name">{cls.name}</span>
-          <span className="crucible-class-kind">{move ? 'Move' : 'Passive'}</span>
+      <span className="verb-card-body">
+        <span className="verb-card-head">
+          <span className="verb-card-name">{cls.name}</span>
+          <span className="verb-card-kind">{move ? 'Move' : 'Passive'}</span>
         </span>
         {move && (
-          <span className="crucible-class-verb">
-            <span className="crucible-class-verb-name" style={{ color: getTypeColor(move.type) }}>
+          <span className="verb-card-verb">
+            <span className="verb-card-verb-name" style={{ color: getTypeColor(move.type) }}>
               <ElementGlyph type={move.type} />
               {move.name}
             </span>
-            {move.kind === 'damage' && move.basePower ? <span className="crucible-class-fact">{move.basePower} BP</span> : null}
-            <span className="crucible-class-fact is-mana">{move.manaCost} MP</span>
+            {move.kind === 'damage' && move.basePower ? <span className="verb-card-fact">{move.basePower} BP</span> : null}
+            <span className="verb-card-fact is-mana">{move.manaCost} MP</span>
           </span>
         )}
         {passive && (
-          <span className="crucible-class-verb">
-            <span className="crucible-class-verb-name" style={{ color: passiveColor(passive.id) }}>
+          <span className="verb-card-verb">
+            <span className="verb-card-verb-name" style={{ color: passiveColor(passive.id) }}>
               {passive.name}
             </span>
           </span>
         )}
-        {summary && <span className="crucible-class-desc">{summary}</span>}
+        {summary && <span className="verb-card-desc">{summary}</span>}
       </span>
     </div>
   );
@@ -370,23 +370,23 @@ function ClassLearnedReveal({ run, entry, cls, onContinue }: RevealProps) {
   const passive = cls.grantsPassiveId ? passives[cls.grantsPassiveId] : null;
   const color = classColor(cls);
   return (
-    <div className="node-screen crucible-screen" style={{ '--node-rgb': NODE_TINT_GOLD, '--class-color': color } as CSSProperties}>
+    <div className="node-screen crucible-screen rite-screen" style={{ '--node-rgb': NODE_TINT_GOLD, '--rite-color': color } as CSSProperties}>
       <span className="node-sky crucible-ground" aria-hidden="true" />
       <NodeMotes count={14} />
       <div className="screen-scroll">
-        <div className="crucible-reveal">
-          <span className="crucible-reveal-flash" aria-hidden="true" />
-          <span className="crucible-choice-hero">
-            <span className="crucible-choice-pool" aria-hidden="true" />
-            <HeroPortrait heroId={hero.id} className="crucible-choice-portrait" />
-            <span className="crucible-choice-mark is-reveal" aria-hidden="true">
+        <div className="rite-reveal">
+          <span className="rite-reveal-flash" aria-hidden="true" />
+          <span className="rite-hero">
+            <span className="rite-pool" aria-hidden="true" />
+            <HeroPortrait heroId={hero.id} className="rite-portrait" />
+            <span className="rite-mark is-reveal" aria-hidden="true">
               <ClassGlyph cls={cls} />
             </span>
           </span>
-          <span className="crucible-choice-eyebrow">Tempered</span>
-          <h2 className="crucible-choice-name">{hero.name}</h2>
-          <span className="crucible-reveal-class">{cls.name}</span>
-          <div className={`crucible-reveal-verb${move ? ' is-move' : ''}`}>
+          <span className="rite-eyebrow">Tempered</span>
+          <h2 className="rite-name">{hero.name}</h2>
+          <span className="rite-reveal-name">{cls.name}</span>
+          <div className={`rite-reveal-verb${move ? ' is-move' : ''}`}>
             {move && <MoveDetailCard move={move} caster={caster} />}
             {passive && <PassiveReadout passive={passive} source="Class" />}
           </div>
