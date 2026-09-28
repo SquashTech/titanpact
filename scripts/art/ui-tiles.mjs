@@ -371,6 +371,31 @@ function plankSquare(name, W) {
   c.save(name);
 }
 
+// A targeting reticle: 12x12, slice 5, only its four corners drawn. Gold brackets on an ink shadow,
+// so a legal target is marked without a box being drawn around it.
+function reticle(name, S) {
+  const c = canvas(12, 12);
+  const L = 11;
+  const corners = [
+    [0, 0, 1, 1],
+    [L, 0, -1, 1],
+    [0, L, 1, -1],
+    [L, L, -1, -1],
+  ];
+  for (const [x0, y0, dx, dy] of corners) {
+    // Shadow first, one pixel in, then the bracket over it.
+    for (let k = 0; k < 5; k++) {
+      c.set(x0 + dx * (k + 1), y0 + dy, INK);
+      c.set(x0 + dx, y0 + dy * (k + 1), INK);
+    }
+    for (let k = 0; k < 5; k++) {
+      c.set(x0 + dx * k, y0, k < 2 ? S.goldHi : S.gold);
+      c.set(x0, y0 + dy * k, k < 2 ? S.goldHi : S.gold);
+    }
+  }
+  c.save(name);
+}
+
 // A title bar's underline: 16x4, tiles horizontally. The window frame's gold inlay, on its own.
 function rule(name, S) {
   const c = canvas(16, 4);
@@ -392,6 +417,7 @@ ledge('ledge', STONE);
 slot('slot', null);
 slot('slot-lit', { lo: STONE.goldLo, mid: STONE.gold, hi: STONE.goldHi });
 lintel('lintel', STONE);
+reticle('reticle', STONE);
 plankSquare('plank-square', WOOD);
 slotThin('slot-thin',{ hi: hex('#4a4f5e'), lo: hex('#1b1e27') });
 slotThin('slot-thin-lit', { hi: STONE.goldHi, lo: STONE.goldLo });

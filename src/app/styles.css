@@ -38224,3 +38224,72 @@ img.smithy-service-art {
   background: linear-gradient(180deg, rgba(var(--type-rgb), 0.5), rgba(var(--type-rgb), 0.2)) padding-box, #111319 padding-box;
   box-shadow: 0 0 16px -2px var(--type-color);
 }
+
+/* -- The target picker in the kit. In the console each target is a slot cut into the flagstones,
+   washed in its type, lit gold on the press. On the battlefield a legal target is marked by a
+   reticle's four pixel corners rather than a box: the mark is the affordance, and nothing is
+   drawn around a figure that is not one. -- */
+.target-row .combatant-card {
+  border: 8px solid transparent;
+  border-image: url('../../art/ui/slot.png') 4 / 8px round;
+  border-radius: 0;
+  background:
+    radial-gradient(ellipse 100% 65% at 50% 0%, rgba(var(--type-rgb, 150, 150, 150), 0.26), transparent 70%) padding-box,
+    #111319 padding-box;
+  box-shadow: inset 0 3px 0 rgba(var(--type-rgb, 150, 150, 150), 0.6);
+  padding: 0 2px;
+  image-rendering: pixelated;
+}
+
+.target-row .combatant-card.targetable:hover {
+  border-image-source: url('../../art/ui/slot-lit.png');
+  transform: none;
+  box-shadow: inset 0 3px 0 rgba(var(--type-rgb, 150, 150, 150), 0.8), 0 0 14px -4px rgba(224, 166, 60, 0.7);
+}
+
+.target-row-spread {
+  border: 8px solid transparent;
+  border-image: url('../../art/ui/slot-lit.png') 4 / 8px round;
+  border-radius: 0;
+  padding: 0;
+  image-rendering: pixelated;
+}
+
+.team-row .combatant-card.targetable {
+  outline: none;
+}
+
+.team-row .combatant-card.targetable::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border: 10px solid transparent;
+  border-image: url('../../art/ui/reticle.png') 5 / 10px;
+  image-rendering: pixelated;
+  pointer-events: none;
+  animation: reticle-breathe 1.4s ease-in-out infinite;
+}
+
+.team-row .combatant-card.targetable:hover::before {
+  inset: -3px;
+  filter: drop-shadow(0 0 4px rgba(224, 166, 60, 0.9));
+}
+
+@keyframes reticle-breathe {
+  0%,
+  100% {
+    inset: 0;
+    opacity: 0.8;
+  }
+  50% {
+    inset: 3px;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .team-row .combatant-card.targetable::before {
+    animation: none;
+  }
+}
