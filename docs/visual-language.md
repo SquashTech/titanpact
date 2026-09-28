@@ -3749,5 +3749,11 @@ dark inside, each hero at 1x (48px, six fit exactly) in a pool of warm light ove
 carved HP track, with the party's emblem (`party.png`, PixelLab) over a parchment
 tag. The **target picker** (sixth pass): console targets are carved slots in their type,
 and on the battlefield a legal target wears a reticle's four pixel corners
-(`reticle.png`) rather than a box. Still to do: screen-specific cards (the Starfall
-card, empty-state boxes).
+(`reticle.png`) rather than a box.
+
+**Empty is never dashed** (seventh pass, 2026-09-28). An empty box (no alignments
+yet) is an empty well; an empty mount (a gear socket, a squad seat) carries the
+reticle's four corners in plain stone (`mount.png`) where a piece would sit. The
+Starfall card is a stone window onto its strip of night; Constellation offers are
+carved cards. Deliberately left unboxed: an empty slot on the battlefield (the
+field is a place, not a container).
