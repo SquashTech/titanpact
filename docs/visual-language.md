@@ -3709,6 +3709,13 @@ materials, each with one meaning, so the rule above survives the change of mater
 A frame paints over its rule's existing padding rather than adding to it, so no
 screen grows. The Guild Hall keeps its own wood: it is a place, not a window.
 
+**No texture behind a label** (2026-09-28, per user direction). The first planks
+were grained boards, and the grain behind every label cost readability. Smooth
+stained wood, stone, iron and a parchment face were compared side by side over a
+battle backdrop; the plank keeps its wood, band and rivets but its face is now
+flat with a two-step bevel. Texture belongs on frames and grounds, never under
+text.
+
 **Inside a window** (second pass, 2026-09-28) the stone is cut rather than built on:
 a page is a **well** (`slot.png`), a tab or a move is a **slot** rimmed in gold while
 chosen (`slot-lit.png`), a title bar stands on the frame's gold inlay (`rule.png`), and
@@ -3740,5 +3747,7 @@ colour, carved element slots. The map's **Roster** stopped being a plank, per us
 direction — the party was hard to read on the grain: it is a gold-rimmed **alcove**,
 dark inside, each hero at 1x (48px, six fit exactly) in a pool of warm light over a
 carved HP track, with the party's emblem (`party.png`, PixelLab) over a parchment
-tag. Still to do: the target-picker cards and screen-specific cards (the Starfall
+tag. The **target picker** (sixth pass): console targets are carved slots in their type,
+and on the battlefield a legal target wears a reticle's four pixel corners
+(`reticle.png`) rather than a box. Still to do: screen-specific cards (the Starfall
 card, empty-state boxes).
