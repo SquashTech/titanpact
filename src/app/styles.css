@@ -21146,7 +21146,7 @@ button.star-shop-bundle-face {
   grid-template-columns: repeat(10, minmax(0, 1fr));
   justify-items: center;
   align-items: center;
-  row-gap: 3px;
+  row-gap: 2px;
   column-gap: 0;
 }
 
@@ -38855,12 +38855,13 @@ img.smithy-service-art {
   min-height: 0;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  /* Always a third of the sheet, the height six heroes fill it at: a short roster leaves the
-     floor empty rather than stretching two cards the height of the screen. */
-  grid-auto-rows: max(188px, calc((100% - 12px) / 3));
+  /* Never shorter than its card, never taller than a third of the sheet (the height six heroes
+     fill it at): a short roster leaves the floor empty rather than stretching two cards the
+     height of the screen, and a short screen scrolls rather than squeezing sockets into names. */
+  grid-auto-rows: minmax(min-content, calc((100% - 12px) / 3));
   align-content: start;
   gap: 6px;
-  padding: 8px 2px 2px;
+  padding: 6px 2px 2px;
   overflow-y: auto;
   scrollbar-width: none;
 }
@@ -38872,9 +38873,9 @@ img.smithy-service-art {
 .roster-sheet-card {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   min-height: 0;
-  padding: 4px;
+  padding: 3px;
   border: 4px solid transparent;
   border-image: url('../../art/ui/slot-thin.png') 2 / 4px round;
   background: linear-gradient(180deg, #121419, #0f1116) padding-box;
@@ -38882,8 +38883,7 @@ img.smithy-service-art {
 }
 
 .roster-sheet-top {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 1 0 auto;
   display: flex;
   gap: 4px;
 }
@@ -39013,7 +39013,7 @@ img.smithy-service-art {
   align-items: center;
   gap: 6px;
   min-width: 0;
-  padding: 2px 2px 0;
+  padding: 0 2px;
 }
 
 .roster-sheet-name {
@@ -39062,7 +39062,7 @@ img.smithy-service-art {
 
 .roster-sheet-mastery {
   flex: none;
-  margin: 2px 0 1px;
+  margin: 0 0 1px;
   padding: 0 2px;
 }
 
@@ -39072,12 +39072,12 @@ img.smithy-service-art {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 4px;
-  padding: 3px;
+  gap: 3px;
+  padding: 1px 3px;
 }
 
 .roster-sheet-mount .item-box {
-  --item-box-size: 42px;
+  --item-box-size: 38px;
 }
 
 .roster-sheet-mount .item-box .item-piece {
