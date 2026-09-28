@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { SealArt } from '../shared/SealArt';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { TitanColossus, TitanRidge } from './titanArt';
+import { launchArtUrls, preloadImages } from '../shared/preload';
 
 interface Props {
   /** Mount the title under this screen; it fades out over the top of it. */
@@ -18,6 +19,8 @@ const WAKE_MS = 800;
 const FADE_MS = 700;
 /** Reduced motion: no climb, just a beat on the finished picture. */
 const STILL_MS = 700;
+/** The longest a slow connection may hold the launch for the first run's paintings (ms). */
+const ART_WAIT_MS = 4000;
 
 type LaunchPhase = 'rise' | 'wake' | 'reveal';
 
@@ -27,7 +30,7 @@ type LaunchPhase = 'rise' | 'wake' | 'reveal';
  * in the middle of the dark while the title's Titan rises into the frame behind it, and the
  * lids open as it arrives; then it fades off the title, which has been mounted underneath for the
  * last beat so the picture is already there when this goes. It waits for the webfonts too, so
- * the title never lands in a fallback face.
+ * the title never lands in a fallback face, and for the first act's paintings (shared/preload.ts).
  *
  * The cost of dropping the gate: no browser sounds a note before the page is touched, so the
  * title opens silent and its score starts on the player's first touch (the window-level unlock
@@ -59,7 +62,9 @@ export function LaunchScreen({ onReveal, onDone }: Props) {
     const fontsReady = document.fonts?.ready ?? Promise.resolve();
     const minimum = new Promise<void>((resolve) => timers.push(window.setTimeout(resolve, still ? STILL_MS : RISE_MS + WAKE_MS)));
     if (!still) timers.push(window.setTimeout(() => setPhase((p) => (p === 'rise' ? 'wake' : p)), RISE_MS));
-    void Promise.all([fontsReady, minimum]).then(() => {
+    // Wild's Edge is the first thing a new run shows; its paintings load under the climb.
+    const art = preloadImages(launchArtUrls(), ART_WAIT_MS);
+    void Promise.all([fontsReady, minimum, art]).then(() => {
       if (!cancelled) skip.current();
     });
     return () => {

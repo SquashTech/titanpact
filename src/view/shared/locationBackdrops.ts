@@ -25,3 +25,10 @@ const BACKDROPS = Object.fromEntries(
 export function locationBackdrop(locationId: string, kind: BackdropKind = 'arrival'): string | undefined {
   return BACKDROPS[kind][locationId];
 }
+
+/** Every painting one Location owns (all of them without an id) — what the preloader fetches ahead. */
+export function locationBackdropUrls(locationId?: string): string[] {
+  return (Object.keys(BACKDROPS) as BackdropKind[]).flatMap((kind) =>
+    locationId ? (BACKDROPS[kind][locationId] ? [BACKDROPS[kind][locationId]] : []) : Object.values(BACKDROPS[kind])
+  );
+}

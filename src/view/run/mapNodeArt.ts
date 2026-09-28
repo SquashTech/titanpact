@@ -56,3 +56,8 @@ export function mapNodeAwakening(type: MapNodeType): Awakening | undefined {
   const art = AWAKE[type];
   return art ? { art, rgb: AWAKE_RGB[type] ?? '255, 220, 150' } : undefined;
 }
+
+/** Every map piece, prop and woken state — what the preloader fetches ahead. */
+export function allMapNodeArtUrls(): string[] {
+  return [...Object.values(MEDALLIONS), ...Object.values(PROPS), ...Object.values(AWAKE)];
+}

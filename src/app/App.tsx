@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { initUiScale } from './uiScale';
 import { PROP_LIGHTS } from '../view/shared/SceneLights';
+import { allArtUrls, locationArtUrls, prefetchImages, preloadImages } from '../view/shared/preload';
 import { useReloadOnNewBuild } from './useReloadOnNewBuild';
 import { clearSave, readSave, writeSave } from './saveStorage';
 import { eraseAllData, readProfile, updateProfile } from './profileStorage';
@@ -506,6 +507,10 @@ export function App() {
   // fade, `launchDone` takes it down. Neither goes back to false this session.
   const [launched, setLaunched] = useState(false);
   const [launchDone, setLaunchDone] = useState(false);
+  // Once the title is up, the rest of the game's larger art is fetched quietly (shared/preload.ts).
+  useEffect(() => {
+    if (launchDone) prefetchImages(allArtUrls());
+  }, [launchDone]);
 
   /** The profile either side of the finished run, so the summary can show what the run added. */
   const [runOutcome, setRunOutcome] = useState<{ before: Profile; after: Profile } | null>(null);
@@ -1068,6 +1073,8 @@ export function App() {
       // The pool is the profile's: a Location bought at the Constellation is drawn beside the base five.
       const pool = locationPool(profile.purchases);
       const candidateIds = drawLocationCandidates(playerRun.locationIds, randomSeed(), pool);
+      // Whichever is taken, its arrival screen is next: fetch both places' paintings now.
+      void preloadImages(locationArtUrls(candidateIds));
       if (candidateIds.length > 1) {
         setScreen({ kind: 'locationChoice', candidateIds });
         return;
