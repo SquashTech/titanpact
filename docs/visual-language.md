@@ -3794,3 +3794,13 @@ for a Ley Line, sockets for a Cache or Forge, HP for a fight or the Hall), and t
 it leans on defined at the foot. The **Cache** on the road is the map's own chest at 4x:
 it rises in, blinks white three times, and bursts into the same chest open
 (`art/cache/chest-opened.png`, a PixelLab edit of the map prop) under turning rays.
+
+**Short screens** (2026-09-28, per user direction). The console holds four moves at a 780px
+canvas with nothing to spare, and a phone's canvas is its browser's visible height — an
+iPhone in a Safari tab is about 664. `uiScale.ts` puts `canvas-short` (< 780),
+`canvas-shorter` (< 734) and `canvas-shortest` (< 712) on the shell, and the arena gives
+height back in that order, cheapest first: the foot it kept for a status row that no longer
+wraps (the Field Effect plaque goes back up to the horizon) and a few console gaps; then the
+figures stand on their platforms and the nameplates tighten; last the two rows lean 10px
+into the horizon. Four moves fit down to 664 and a tall phone draws the fight as authored;
+below ~650 (an SE in a Safari tab) the list still scrolls.

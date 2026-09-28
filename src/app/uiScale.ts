@@ -17,6 +17,12 @@ const MAX_SCALE = 1.2;
 // bottom. Under this floor the canvas shrinks instead, so a viewport too short for the game is
 // small rather than broken. Nothing hits it in portrait; a turned phone hits it every time.
 const MIN_CANVAS_HEIGHT = 600;
+// Classes the shell wears below each canvas height, cumulatively.
+const CANVAS_HEIGHT_TIERS: readonly [string, number][] = [
+  ['canvas-short', 780],
+  ['canvas-shorter', 734],
+  ['canvas-shortest', 712],
+];
 
 // Layout viewport px plus the page zoom relating them to device px. At zoom 0.5 an iPhone with
 // `screen 390x844` reports `innerWidth 780`; page zoom is a per-site browser setting the page can't
@@ -64,8 +70,12 @@ function layout(shell: HTMLElement): void {
   const canvasWidth = Math.min(footprintWidth / scale, MAX_WIDTH);
 
   // Back to layout px; the transform carries the extra 1/zoom so the shell still covers the screen.
+  const canvasHeight = deviceHeight / scale;
   shell.style.width = `${canvasWidth}px`;
-  shell.style.height = `${deviceHeight / scale}px`;
+  shell.style.height = `${canvasHeight}px`;
+  // The fight console holds four moves with nothing to spare at 780; under that the arena gives
+  // back height in steps, so a tall phone draws the fight exactly as authored (styles.css).
+  for (const [className, below] of CANVAS_HEIGHT_TIERS) shell.classList.toggle(className, canvasHeight < below);
   shell.style.left = `${(vw - (canvasWidth * scale) / zoom) / 2}px`;
   shell.style.transform = `scale(${scale / zoom})`;
 }

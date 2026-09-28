@@ -39424,3 +39424,83 @@ img.smithy-service-art {
   line-height: 1.4;
   color: var(--text-dim);
 }
+
+/* -- A short screen (uiScale.ts's canvas-* classes). The console holds four moves at 780 with nothing
+   to spare, so below it the arena gives height back in steps, largest-first where it costs least:
+   first the arena's foot (reserved for a status row that no longer wraps; the field's plaque goes
+   back up to the horizon) and a few gaps, then the figures sit on their platforms and the
+   nameplates tighten, and last the two rows lean into the horizon. A tall phone matches none of
+   these and draws the fight exactly as authored. -- */
+.app-shell.canvas-short {
+  --bf-pad-top: calc(var(--figure-status-h) + var(--figure-status-gap));
+  --divider-h: 14px;
+  --divider-pull: 0px;
+}
+
+.app-shell.canvas-short .battlefield {
+  padding-top: var(--bf-pad-top);
+  padding-bottom: 4px;
+}
+
+.app-shell.canvas-short .battlefield-divider {
+  min-height: var(--divider-h);
+  margin: calc(var(--divider-pull) * -1) 0;
+}
+
+.app-shell.canvas-short .battlefield > .field-effect-badge {
+  top: calc(var(--bf-pad-top) + var(--figure-h) - var(--divider-pull) + var(--divider-h) / 2);
+  bottom: auto;
+  translate: 0 -50%;
+}
+
+.app-shell.canvas-short .console-crest {
+  margin-bottom: 6px;
+}
+
+.app-shell.canvas-short .move-list {
+  gap: 3px;
+}
+
+.app-shell.canvas-short .action-area {
+  padding-bottom: 4px;
+}
+
+.app-shell.canvas-short .bottom-bar {
+  padding-top: 4px;
+  padding-bottom: 8px;
+}
+
+.app-shell.canvas-shorter {
+  --figure-stage-h: 96px;
+  --figure-name-h: 16px;
+  --figure-h: calc(
+    var(--figure-stage-h) + var(--figure-plate-pad) + var(--figure-name-h) + var(--figure-name-gap) +
+      var(--figure-bar-h) * 2 + var(--figure-bar-gap) + var(--figure-status-gap) + var(--figure-status-h)
+  );
+}
+
+.app-shell.canvas-shorter .team-row .combatant-portrait {
+  margin-bottom: 0;
+}
+
+.app-shell.canvas-shortest {
+  --figure-status-gap: 0px;
+  --bf-pad-top: 18px;
+  --divider-pull: 10px;
+  --figure-h: calc(
+    var(--figure-stage-h) + var(--figure-plate-pad) + var(--figure-name-h) + var(--figure-name-gap) +
+      var(--figure-bar-h) * 2 + var(--figure-bar-gap) + var(--figure-status-gap) + var(--figure-status-h)
+  );
+}
+
+.app-shell.canvas-shortest .move-list {
+  gap: 2px;
+}
+
+.app-shell.canvas-shortest .console-crest {
+  margin-bottom: 4px;
+}
+
+.app-shell.canvas-shortest .bottom-bar {
+  padding-bottom: 6px;
+}
