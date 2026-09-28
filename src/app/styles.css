@@ -37345,3 +37345,150 @@ img.smithy-service-art {
 .tip-box .tip-pip.is-current {
   background: #8a3f10;
 }
+
+/* -- The combat console in the kit. The near ground is laid flagstone under the commander's light,
+   a stone ledge with a gold inlay is where the arena's floor ends, each move is a slot cut into the
+   stone (gold-rimmed once chosen), and the keys along the bottom are planks. -- */
+.action-area {
+  padding-top: 20px;
+  background:
+    radial-gradient(ellipse 62% 26% at 50% -2%, rgba(var(--console-rgb, 224, 166, 60), 0.3), transparent 70%),
+    radial-gradient(ellipse 135% 66% at 50% -8%, rgba(var(--console-rgb, 224, 166, 60), 0.19), transparent 66%),
+    linear-gradient(180deg, rgba(8, 9, 13, 0.55), rgba(8, 9, 13, 0.1)),
+    url('../../art/ui/flagstones.png') 0 0 / 64px 64px repeat,
+    #15171e;
+  image-rendering: pixelated;
+}
+
+.action-area::before {
+  height: 16px;
+  background: url('../../art/ui/ledge.png') 0 0 / 32px 16px repeat-x;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6), 0 0 14px 1px rgba(var(--console-rgb, 224, 166, 60), 0.28);
+  image-rendering: pixelated;
+}
+
+.bottom-bar {
+  background:
+    linear-gradient(180deg, rgba(8, 9, 13, 0.1), rgba(8, 9, 13, 0.25)),
+    url('../../art/ui/flagstones.png') 0 0 / 64px 64px repeat,
+    #15171e;
+  image-rendering: pixelated;
+}
+
+.move-list {
+  gap: 4px;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.move-list .move-button,
+.move-list .move-button:hover:not(.is-unusable),
+.move-list .move-button:not(.is-unusable):active {
+  padding: 0 8px 0 10px;
+  border: 8px solid transparent;
+  border-image: url('../../art/ui/slot.png') 4 / 8px round;
+  background-clip: padding-box;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+
+.move-list .move-button {
+  background:
+    linear-gradient(90deg, rgba(var(--move-type-rgb, 53, 59, 74), 0.26), rgba(var(--move-type-rgb, 53, 59, 74), 0.06) 32%, transparent 62%),
+    #111319;
+  background-clip: padding-box;
+}
+
+.move-list .move-button:hover:not(.is-unusable) {
+  background:
+    linear-gradient(90deg, rgba(var(--move-type-rgb, 53, 59, 74), 0.32), rgba(var(--move-type-rgb, 53, 59, 74), 0.09) 36%, transparent 64%),
+    #161922;
+  background-clip: padding-box;
+}
+
+.move-list .move-button:not(.is-unusable):active {
+  background:
+    linear-gradient(90deg, rgba(var(--move-type-rgb, 53, 59, 74), 0.36), rgba(var(--move-type-rgb, 53, 59, 74), 0.1) 38%, transparent 66%),
+    #0c0e13;
+  background-clip: padding-box;
+}
+
+.move-list .move-button.selected,
+.move-list .move-button.selected:hover {
+  border-image-source: url('../../art/ui/slot-lit.png');
+  background:
+    linear-gradient(90deg, rgba(224, 166, 60, 0.3), rgba(224, 166, 60, 0.12) 42%, rgba(224, 166, 60, 0.05) 78%),
+    #17140f;
+  background-clip: padding-box;
+  box-shadow: 0 0 14px -4px rgba(224, 166, 60, 0.6);
+}
+
+.move-list .move-button.is-unusable {
+  background: #0c0d12;
+  background-clip: padding-box;
+  box-shadow: none;
+}
+
+/* The domain's light burns inside the slot, not on its wall. */
+.move-list .move-button::before {
+  left: 0;
+  top: 10%;
+  bottom: 10%;
+  width: 3px;
+  border-radius: 0;
+}
+
+.move-list .move-button:hover:not(.is-unusable)::before,
+.move-list .move-button.selected::before,
+.move-list .move-button.selected:hover::before {
+  top: 0;
+  bottom: 0;
+  width: 3px;
+}
+
+.move-list .move-button.rest-button {
+  padding-left: 8px;
+}
+
+.bottom-bar button.bottom-action {
+  min-height: 46px;
+  padding: 0 2px;
+  border: 14px solid transparent;
+  border-image: url('../../art/ui/plank.png') 7 fill / 14px round;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: #eadbbf;
+  text-shadow: 0 2px 0 #1a0f07;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.55));
+  image-rendering: pixelated;
+}
+
+.bottom-bar button.bottom-action:hover:not(:disabled) {
+  box-shadow: none;
+  color: #fff3d6;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.55)) brightness(1.12);
+}
+
+/* Held: a chosen Rest, a latched Auto, and the lone Back while a target is picked. */
+.bottom-bar button.bottom-action.selected:not(:disabled),
+.bottom-bar button.bottom-action-auto.engaged,
+.bottom-bar-solo button.bottom-action-primary:not(:disabled) {
+  border-image-source: url('../../art/ui/plank-gilt.png');
+  background: none;
+  box-shadow: none;
+  color: #fff3d6;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 8px rgba(224, 166, 60, 0.5));
+}
+
+.bottom-bar button.bottom-action:disabled {
+  background: none;
+  box-shadow: none;
+  color: #9a917f;
+  filter: grayscale(0.9) brightness(0.62);
+}
+
+.bottom-bar .bottom-action-bag-count {
+  bottom: -3px;
+  right: -5px;
+}
