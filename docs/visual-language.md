@@ -3707,6 +3707,14 @@ materials, each with one meaning, so the rule above survives the change of mater
 | Parchment | a note for the player | `.tip-box`, the Guild Hall's tags and posters |
 
 A frame paints over its rule's existing padding rather than adding to it, so no
-screen grows. The Guild Hall keeps its own wood: it is a place, not a window. The
-next targets are window interiors (the gray rows inside dossiers and menus), the
-map HUD, the level-up report and the reward rows.
+screen grows. The Guild Hall keeps its own wood: it is a place, not a window.
+
+**Inside a window** (second pass, 2026-09-28) the stone is cut rather than built on:
+a page is a **well** (`slot.png`), a tab or a move is a **slot** rimmed in gold while
+chosen (`slot-lit.png`), a title bar stands on the frame's gold inlay (`rule.png`), and
+a card with an identity hue — the plate family, roster cards, the Bag's picker — is
+sunk in with a **thin carved edge** (`slot-thin.png`, 4px, so a card grows by a pixel a
+side), its hue kept as the wash, gold-lipped when picked. A menu of destinations is a
+stack of planks. The title's Continue keeps its own chamfered metal plate. Still to
+do: the map HUD, the level-up report and reward rows, and screen-specific cards
+(the Starfall card, empty-state boxes).
