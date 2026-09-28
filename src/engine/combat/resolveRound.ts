@@ -117,7 +117,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
     if (action.kind === 'switch') {
       try {
-        const result = applyVoluntarySwitch(working, round, action.combatantId, action.benchedCombatantId, statuses, fieldEffects);
+        const result = applyVoluntarySwitch(working, round, action.combatantId, action.benchedCombatantId, statuses);
         working = result.state;
         events.push(...result.events);
         // Every resolvePassiveReactions call site feeds its own new slice, never the round's log.
@@ -906,7 +906,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         !working.combatants[incoming]?.fainted;
       if (stillStanding && !stillStanding.fainted && incomingOk) {
         try {
-          const pivot = applyVoluntarySwitch(working, round, action.combatantId, incoming as string, statuses, fieldEffects);
+          const pivot = applyVoluntarySwitch(working, round, action.combatantId, incoming as string, statuses);
           working = pivot.state;
           events.push(...pivot.events);
           const pivotEntry = resolvePassiveReactions(working, round, pivot.events, heroes, statuses, passives, fieldEffects);

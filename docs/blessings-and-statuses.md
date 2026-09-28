@@ -9,8 +9,8 @@
 > start, the spend beat and the marks (§1.6). `SIM_NO_BLESSING=1` is the sim's
 > A/B for phase 4. **Phase 2 is BUILT (same day):** the Pactwarden's scene (§1.5). **Phase 3 is BUILT
 > (same day):** Haunt flipped, passing on a knockout, Wisp certain, Lament and Keening on the echo (§2.5).
-> **Phase 5 is BUILT (same day):** Burn is a percent of max HP, never caster-scaled, and Scorched Land
-> stops the switch-cleanse (§3.3, §5). Phase 4, the sim pass, was skipped per user direction.
+> **Phase 5 is BUILT (same day):** Burn is a percent of max HP, never caster-scaled, and keeps the higher
+> of two (§3.3, §3.4); Scorched Land stays at ¾ retention (§5). Phase 4, the sim pass, was skipped per user direction.
 > **Phase 6 is BUILT (same day):** Renew is a percent of max HP that heals on landing and twice more,
 > still Wisdom-scaled, and Verdant Earth doubles it and turns overheal into Shield (§4.3, §5).
 
@@ -242,7 +242,7 @@ to both"*) survives unchanged.
 
 Keep everything that makes it Burn — front-loaded, halving, **cleansed by switching**, *switch out
 or it hurts* — and change the unit: **the magnitude is a percent of the target's max HP**, halving
-each round (12% → 6% → 3%, ~21% over its life), stacking additively. Against the others:
+each round (12% → 6% → 3%, ~21% over its life), stacking additively (keep-the-higher since §3.4). Against the others:
 
 | Status | Shape | Switching |
 |---|---|---|
@@ -287,7 +287,7 @@ formula's `dot` arm and Boiler's `scaledBy`: CLAUDE.md is amended), and the halv
     Boiling Point 10%). **Showstopper** is 4%, not 3%, to keep the mastered card at least double its
     innate's 2%.
 - **Engine:** `StatusDefinition.percentOfMaxHp`. A tick deals `ceil(maxHp × magnitude / 100)` of
-  the HOLDER's max, and `magnitudeScales` skips it. The halving and additive stacking are unchanged.
+  the HOLDER's max, and `magnitudeScales` skips it. The halving is unchanged; the stacking changed in §3.4.
 - **Every number in the text now wears its %**: the descriptions (three that had drifted from their
   data were rewritten from it), and every place a magnitude prints — move tile, move detail, passive
   facts, the status chip and detail, the beat banner — through `statusAmountText`.
@@ -296,6 +296,26 @@ formula's `dot` arm and Boiler's `scaledBy`: CLAUDE.md is amended), and the halv
   what it changes is that Burn no longer falls behind a tank, a Banner stack or late gear.
 
 ---
+
+### 3.4 Burn keeps the higher (2026-09-28, per user direction)
+
+Burn's stacking went from **additive** to **keep the higher** (`takeHigher`): a new Burn refreshes a
+fading one to the larger of the two and never adds to it.
+
+**Why:** the one-cast comparison in the first pass hid the real case, **the same target Burned every
+round** by a player whose target never switches. Additive + halving settles at twice the magnitude
+every round: Scorch every round ticked 8, 12, 14, 15, 15… (64% of max HP over 5 rounds), and Set
+Alight 15, 22, 26, 28, 29… (120% over 5, for 20 mana a cast, with no hit on it). Poison's timer
+never resets, so repeated casts bunch into one burst every third round (Corrode every round: 30% over
+5), and a Bleed recast adds nothing (25% over 5 from the first cast).
+
+**After:** a single cast is unchanged (8 → 4 → 2 → 1), so no kit was renumbered; spam now ticks
+8, 8, 8… (40% over 5). Each status has its own job: **Bleed** is set and forget, **Burn** is a spike
+you keep refreshing, **Poison** is the one that stacks and bursts, as its card already says. The costs:
+two Fire heroes on one target no longer add, and passive Burns (Showstopper) refresh rather than pile
+up. **Set Alight** (Early, 20 mana, 15%) is still the best cheap status move and is left for playtest;
+12% is the candidate if it reads as too strong. The sim pilot values a Burn only by what it raises the
+held magnitude.
 
 ## 4. Renew — BUILT 2026-09-28 (§4.3)
 
@@ -349,11 +369,13 @@ Renew scaled). CLAUDE.md's healing formula carries the named exception.
 
 Both fields read the magnitude of the status that changes, so both have to move with it.
 
-- **Scorched Land — BUILT 2026-09-28** (per user direction): *switching out doesn't cleanse Burn*
-  (`FieldEffectDefinition.keepsStatusesOnSwitch`, read in `performSwitch` → `clearOnSwitch`), in place of
-  *Burn keeps ¾ of its value instead of half*. A rule, not a number, and it attacks Burn's one counter.
-  The conversion alone didn't make the old field stronger (a Burn still lasted about twice as long under
-  it); the retention verb stays in the vocabulary with no holder.
+- **Scorched Land — kept at "Burn keeps ¾ instead of half"** (2026-09-28, per user direction). For
+  one commit it was *switching out doesn't cleanse Burn*, and that was reverted the same day: **the
+  enemy AI never switches**, so the rule never touched an enemy the player Burned. It only bit when
+  an enemy set the field against the player (the Dragon Guardian's Spreading Blaze), which turned a
+  player's field into an enemy-only one. Switch-denial is dead design while the AI doesn't switch.
+  The ¾ retention works against a target that stays in, and with Burn refreshing instead of stacking
+  (§3.4) it makes one Burn linger rather than making a stack snowball.
 - **Verdant Earth — BUILT 2026-09-28** (per user direction): *Renew heals twice as much, and healing
   past max HP becomes Shield* (`FieldEffectDefinition.amplifiesStatusHealing`, read in
   `healFromStatus` for both the landing heal and the round-end ticks), replacing *bonus Attack and

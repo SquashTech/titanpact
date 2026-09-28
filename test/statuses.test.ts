@@ -468,6 +468,17 @@ test('status: a Burn is a percent of max HP and lands at exactly the authored fi
   assert.strictEqual(cast('cinderKnight', 'moltenLash'), authored('moltenLash'));
 });
 
+test('status: a new Burn keeps the higher of the two — recasting refreshes, it never compounds', () => {
+  const state = twoVTwoFixture(705);
+  const once = applyStatus(state, 1, 'b1', statuses.Burn, { magnitude: 8 }).state;
+  const ticked = resolveRound(once, [], config).state; // 8 -> 4
+  assert.strictEqual(ticked.combatants.b1.statuses.Burn?.magnitude, 4);
+  const recast = applyStatus(ticked, 2, 'b1', statuses.Burn, { magnitude: 8 });
+  assert.strictEqual(recast.state.combatants.b1.statuses.Burn?.magnitude, 8, 'topped back up to 8, not 12');
+  const weaker = applyStatus(recast.state, 2, 'b1', statuses.Burn, { magnitude: 3 });
+  assert.strictEqual(weaker.state.combatants.b1.statuses.Burn?.magnitude, 8, 'a smaller Burn changes nothing');
+});
+
 test('status: a Burn tick deals its percent of the HOLDER\'s max HP, then halves', () => {
   let state = withStatus(twoVTwoFixture(704), 'b1', 'Burn', { magnitude: 10 });
   const maxHp = fixtureMaxHp('ironWarden');

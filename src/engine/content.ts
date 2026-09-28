@@ -336,8 +336,6 @@ export interface FieldEffectDefinition {
   mpRegenMultiplier?: number;
   /** Statuses whose post-tick decay is slowed while active (Scorched Land holding Burn). `retain` is the share kept per tick — 0.5 is the ordinary halving, 1 is no decay at all. The tick itself is untouched. */
   slowsStatusDecay?: { statusIds: readonly StatusId[]; retain: number };
-  /** Statuses a switch does not cleanse while active (Scorched Land keeping Burn on a hero who leaves the field). switching.ts performSwitch → statusEngine.ts clearOnSwitch. */
-  keepsStatusesOnSwitch?: readonly StatusId[];
   /** A HoT's healing multiplied while active, and what passes max HP laid on as Shield (Verdant Earth on Renew). statusEngine.ts healFromStatus. */
   amplifiesStatusHealing?: { statusIds: readonly StatusId[]; multiplier: number; overflowToShield?: boolean };
   /** Within a priority bracket, resolve slowest-first (Stasis Bubble). Bracket separation untouched. priority.ts orderActions. */

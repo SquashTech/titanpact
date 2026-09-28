@@ -27,7 +27,6 @@ function effectFacts(def: FieldEffectDefinition): FieldEffectFact[] {
       text: `${statusNames(def.slowsStatusDecay.statusIds)} keeps ${Math.round(def.slowsStatusDecay.retain * 100)}% each round, not 50%`,
     });
   }
-  if (def.keepsStatusesOnSwitch?.length) rows.push({ label: 'Switching', text: `Doesn't cleanse ${statusNames(def.keepsStatusesOnSwitch)}` });
   if (def.amplifiesStatusHealing) {
     const amp = def.amplifiesStatusHealing;
     rows.push({ label: 'Healing', text: `${statusNames(amp.statusIds)} heals ×${amp.multiplier}${amp.overflowToShield ? '; past max HP it becomes Shield' : ''}` });

@@ -127,7 +127,7 @@ unchanged, so nothing else moved.
 | Field Effect | flavorType | Effect | Move (starter) |
 | --- | --- | --- | --- |
 | Magical Surge | Arcane | Doubles MP Regen | `manaFont`, `magicCloak` (Glyph) |
-| Scorched Land | Fire | Switching out doesn't cleanse Burn (2026-09-28; it was 3/4 retention, `blessings-and-statuses.md` §5) | `spreadingBlaze` (Brimstone) |
+| Scorched Land | Fire | Burn keeps 3/4 of its value a round instead of half | `spreadingBlaze` (Brimstone) |
 | Stasis Field | Mind | Reverses same-bracket Speed order | `stasis` (Cortex), `distort` |
 | Sanctuary | Light | Heal-kind moves get +1 priority and heal ×1.5 (2026-09-15) | `consecrate` (Solace), `hallow` |
 | Verdant Earth | Nature | Renew heals ×2, and healing past max HP becomes Shield (2026-09-28; it was +Atk/+Int equal to Renew, `blessings-and-statuses.md` §5) | `magicGrowth`, `forceOfNature` (Sylva), `sow` |

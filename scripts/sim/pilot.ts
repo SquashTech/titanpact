@@ -383,7 +383,9 @@ function riderValue(
     }
     case 'dot': {
       // decay 'halve' caps lifetime output at ~2x the magnitude (CLAUDE.md); 'none' builds instead.
-      const perTick = def.flatPercentOfMaxHp != null ? def.flatPercentOfMaxHp * getMaxHp(allCombatants[holder.heroId], holder) : def.percentOfMaxHp ? (magnitude / 100) * getMaxHp(allCombatants[holder.heroId], holder) : magnitude;
+      // A keep-the-higher status (Burn) is worth only what it raises the held magnitude by.
+      const added = def.stacking === 'takeHigher' ? Math.max(0, magnitude - statusMagnitude(holder, def.id)) : magnitude;
+      const perTick = def.flatPercentOfMaxHp != null ? def.flatPercentOfMaxHp * getMaxHp(allCombatants[holder.heroId], holder) : def.percentOfMaxHp ? (added / 100) * getMaxHp(allCombatants[holder.heroId], holder) : added;
       const total = def.decay === 'halve' ? perTick * 2 : perTick * Math.min(duration, HORIZON);
       return Math.min(total, holder.currentHp);
     }

@@ -351,15 +351,8 @@ export function tickEndOfRound(
 }
 
 /** docs/conditions.md §4: switching to bench clears every status with clearsOnSwitch. */
-/** `kept`: statuses the active field holds on through a switch (FieldEffectDefinition.keepsStatusesOnSwitch — Scorched Land's Burn). */
-export function clearOnSwitch(
-  state: CombatState,
-  round: number,
-  combatantId: string,
-  statusDefs: Record<string, StatusDefinition>,
-  kept: readonly StatusId[] = []
-): StatusResult {
-  return removeStatusesWhere(state, round, combatantId, statusDefs, (def) => def.clearsOnSwitch && !kept.includes(def.id), 'switch');
+export function clearOnSwitch(state: CombatState, round: number, combatantId: string, statusDefs: Record<string, StatusDefinition>): StatusResult {
+  return removeStatusesWhere(state, round, combatantId, statusDefs, (def) => def.clearsOnSwitch, 'switch');
 }
 
 /** Cleanse strips every status not flagged `positive`; `limit` picks that many at random (draws RNG only when it must choose). */

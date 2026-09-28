@@ -28,13 +28,14 @@ export const statuses: Record<string, StatusDefinition> = {
     shape: 'magnitude',
     ticksAtEndOfRound: true,
     decay: 'halve',
-    stacking: 'additive',
+    // Keeps the higher (docs/blessings-and-statuses.md §3.4): recasting refreshes a Burn, it never compounds.
+    stacking: 'takeHigher',
     clearsOnSwitch: true,
     pipeline: 'dot',
     // A percent of the holder's max HP, never caster-scaled (docs/blessings-and-statuses.md §3).
     percentOfMaxHp: true,
     fixedMagnitude: true,
-    description: 'End of round: deal X% of max HP, then halve X. Cleansed by switching.',
+    description: 'End of round: deal X% of max HP, then halve X. A new Burn keeps the higher of the two. Cleansed by switching.',
   },
   Bleed: {
     id: 'Bleed',

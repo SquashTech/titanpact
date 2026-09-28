@@ -249,11 +249,11 @@ test('fire: Spreading Blaze Burns both foes and sets Scorched Land in one cast',
   const { state: next } = resolveRound(state, actions, config);
 
   assert.strictEqual(next.activeFieldEffect?.fieldEffectId, 'scorchedLand');
-  // Both foes take the authored Burn percent, halved by the round tick as anywhere: Scorched Land
-  // keeps Burn through a switch now, it no longer slows the decay.
-  const halved = Math.floor(statusApplicationsOf(moves.spreadingBlaze).find((a) => a.statusId === 'Burn')!.magnitude! / 2);
-  assert.strictEqual(next.combatants.b1.statuses.Burn?.magnitude, halved);
-  assert.strictEqual(next.combatants.b2.statuses.Burn?.magnitude, halved);
+  // Both foes take the authored Burn percent, and Scorched Land (set by the same cast) takes the
+  // round tick's decay down to a quarter rather than a half.
+  const kept = Math.floor(statusApplicationsOf(moves.spreadingBlaze).find((a) => a.statusId === 'Burn')!.magnitude! * 0.75);
+  assert.strictEqual(next.combatants.b1.statuses.Burn?.magnitude, kept);
+  assert.strictEqual(next.combatants.b2.statuses.Burn?.magnitude, kept);
 });
 
 test('fire: Volcanic Surge Burns the USER, not the target', () => {

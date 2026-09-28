@@ -18,9 +18,9 @@ export const fieldEffects: Record<string, FieldEffectDefinition> = {
   scorchedLand: {
     id: 'scorchedLand',
     name: 'Scorched Land',
-    description: "Switching out doesn't cleanse Burn.",
+    description: 'Burn keeps three quarters of its value each round instead of half.',
     flavorType: 'Fire',
-    keepsStatusesOnSwitch: ['Burn'],
+    slowsStatusDecay: { statusIds: ['Burn'], retain: 0.75 },
   },
   stasisBubble: {
     id: 'stasisBubble',
