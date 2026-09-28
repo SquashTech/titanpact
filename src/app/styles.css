@@ -36866,3 +36866,279 @@ button.star-shop-bundle-face {
     transform: translateY(3px);
   }
 }
+
+/* A place met on the road: it rises out of the ground rather than walking up, and its line is
+   narration, so it is set in italics under the place's name. */
+.road-encounter.is-place .road-encounter-figure {
+  animation-name: road-encounter-rise;
+  animation-timing-function: var(--ease-out);
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 18px rgba(255, 214, 140, 0.25));
+}
+
+.road-encounter.is-place .road-encounter-line {
+  font-style: italic;
+  color: rgba(236, 228, 210, 0.92);
+}
+
+@keyframes road-encounter-rise {
+  from {
+    transform: translateY(18px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* --- The Crucible's entrance (CrucibleRite.tsx) --------------------------------
+   Dark, then the vessel lowered on its chains, a flare and a shudder as it comes
+   to rest, the fallen Guardian's shape burning behind it, and its last words
+   catching fire a letter at a time. The whole screen is the button. */
+.crucible-rite {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  overflow: visible;
+}
+
+.crucible-rite-glow {
+  position: absolute;
+  inset: calc(var(--shell-pad) * -1);
+  background:
+    radial-gradient(ellipse 70% 38% at 50% 30%, rgba(255, 138, 42, 0.16), transparent 70%),
+    linear-gradient(180deg, #040305, #0b0605 55%, #240c05);
+  transition: background 1.2s var(--ease-out);
+}
+
+.crucible-rite.is-landed .crucible-rite-glow {
+  background:
+    radial-gradient(ellipse 80% 42% at 50% 30%, rgba(255, 150, 50, 0.34), transparent 70%),
+    linear-gradient(180deg, #070404, #140806 55%, #3a1206);
+  animation: crucible-rite-flicker 2.8s ease-in-out infinite;
+}
+
+@keyframes crucible-rite-flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  40% {
+    opacity: 0.86;
+  }
+  65% {
+    opacity: 0.96;
+  }
+}
+
+/* 96px frames at 2x, lowered from above the screen and settling with a small swing. */
+.crucible-rite-vessel {
+  position: absolute;
+  left: 50%;
+  top: 150px;
+  width: 192px;
+  height: 192px;
+  margin-left: -96px;
+  z-index: 2;
+  animation: crucible-rite-lower 1.4s cubic-bezier(0.22, 0.9, 0.32, 1.12) both;
+  filter: drop-shadow(0 0 24px rgba(255, 130, 40, 0.55));
+}
+
+@keyframes crucible-rite-lower {
+  from {
+    transform: translateY(-460px);
+  }
+  78% {
+    transform: translateY(6px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.crucible-rite-frames {
+  position: absolute;
+  inset: 0;
+  background-image: var(--crucible-frames);
+  background-size: 1536px 192px;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  animation: crucible-rite-churn 0.8s steps(8) infinite;
+}
+
+@keyframes crucible-rite-churn {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -1536px 0;
+  }
+}
+
+/* The chains carried on up out of frame from where they leave the sprite (x 28 and 64 of 96). */
+.crucible-rite-chains::before,
+.crucible-rite-chains::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  width: 8px;
+  height: 600px;
+  background: repeating-linear-gradient(180deg, #3a302a 0 5px, #120e0c 5px 7px, #241d19 7px 12px, #120e0c 12px 14px);
+}
+
+.crucible-rite-chains::before {
+  left: 52px;
+}
+
+.crucible-rite-chains::after {
+  left: 125px;
+}
+
+/* White-gold light out of the bowl as it comes to rest. */
+.crucible-rite-flare {
+  position: absolute;
+  left: 50%;
+  top: 114px;
+  width: 360px;
+  height: 260px;
+  margin-left: -180px;
+  z-index: 3;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 240, 200, 0.9), rgba(255, 170, 60, 0.4) 35%, transparent 68%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.crucible-rite.is-landed .crucible-rite-flare {
+  animation: crucible-rite-flare 0.8s var(--ease-out) both;
+}
+
+@keyframes crucible-rite-flare {
+  from {
+    opacity: 0.95;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.3);
+  }
+}
+
+.crucible-rite.is-landed:not(.is-still) {
+  animation: crucible-rite-shake 0.42s linear;
+}
+
+@keyframes crucible-rite-shake {
+  0%,
+  100% {
+    transform: none;
+  }
+  20% {
+    transform: translate(-3px, 2px);
+  }
+  40% {
+    transform: translate(3px, -2px);
+  }
+  60% {
+    transform: translate(-2px, 1px);
+  }
+  80% {
+    transform: translate(1px, -1px);
+  }
+}
+
+/* The Guardian that fell, as a shape of black cut out of the fire behind the bowl, rising. */
+.crucible-rite-ghost {
+  position: absolute;
+  left: 50%;
+  top: 64px;
+  width: 260px;
+  height: 260px;
+  margin-left: -130px;
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.crucible-rite.is-landed .crucible-rite-ghost {
+  animation: crucible-rite-ghost 3.2s var(--ease-out) 0.2s both;
+}
+
+@keyframes crucible-rite-ghost {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.92);
+  }
+  to {
+    opacity: 0.55;
+    transform: none;
+  }
+}
+
+.crucible-rite-ghost-figure {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  filter: brightness(0) drop-shadow(0 0 6px #ff8a2a) drop-shadow(0 0 22px rgba(255, 110, 30, 0.7));
+}
+
+.crucible-rite-words {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 120px;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.crucible-rite-eyebrow {
+  color: #c87a3a;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+}
+
+.crucible-rite-line {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+/* Each letter sits as a dark ember until its turn, then catches. */
+.crucible-rite-line > span {
+  color: rgba(110, 40, 14, 0.35);
+  transition: color 0.35s ease-out, text-shadow 0.35s ease-out;
+}
+
+.crucible-rite-line > span.is-lit {
+  color: #ffe2a6;
+  text-shadow: 0 0 8px rgba(255, 150, 40, 0.9), 0 0 20px rgba(255, 90, 20, 0.55);
+}
+
+.crucible-rite-words .road-encounter-more {
+  position: static;
+  border-top-color: #ffb45c;
+}
+
+.crucible-rite.is-still .crucible-rite-vessel,
+.crucible-rite.is-still .crucible-rite-frames {
+  animation: none;
+}
+
+.crucible-rite.is-still .crucible-rite-ghost {
+  animation: none;
+  opacity: 0.55;
+}

@@ -45,3 +45,71 @@ export const SMITH_LINES: readonly string[] = [
   'I do not sell. I do not haggle. I make one thing better, once, and then you walk on.',
   'Heard you coming three hills off, clanking like a tinker cart. Sit. Let us fix that.',
 ];
+
+/** The places met on the road, keyed by map node type: a name and the lines narrated over it. */
+export const PLACE_LINES: Record<string, { name: string; lines: readonly string[] }> = {
+  passiveReward: {
+    name: 'A Wayside Shrine',
+    lines: [
+      'A shrine older than the road, its star still burning. It will bless one of you, and only one.',
+      'Moss has taken the steps, but not the light above them. Something here is still listening.',
+      'Pilgrims left offerings here once. Now there is only the star, and whoever kneels first.',
+    ],
+  },
+  equipmentReward: {
+    name: 'A Forgotten Chest',
+    lines: [
+      'A chest half sunk in the grass, its owner long gone. The lock gives at the first touch.',
+      'Iron-banded and heavy, abandoned by the roadside. Whoever left it here left in a hurry.',
+      'Coins glint around a sealed chest. Either a trap, or the luckiest turn in the road so far.',
+    ],
+  },
+  currencyReward: {
+    name: 'A Spilled Purse',
+    lines: [
+      'A merchant\'s purse, split open in the dirt. No merchant in sight, and no one to argue.',
+      'Gold and a few stray gems, scattered where a cart overturned. Finders keepers.',
+      'A sack of coin left under a milestone, as if for you. Best not to ask.',
+    ],
+  },
+  scrollReward: {
+    name: 'A Crate of Scrolls',
+    lines: [
+      'A crate of old teachings, ribbon still on every roll. Three of them are worth reading.',
+      'Someone\'s library, dumped by the roadside. The ink is faded, the lessons are not.',
+      'Scrolls, stacked and sealed, waiting for hands that know what to do with them.',
+    ],
+  },
+  restReward: {
+    name: 'A Quiet Camp',
+    lines: [
+      'A tent already pitched, a fire already laid. For one night, the road can wait.',
+      'Warm embers, a dry tent, and nothing hunting you. Rest while you can.',
+      'Someone camped here and moved on. Their fire still takes a spark.',
+    ],
+  },
+  manaWellReward: {
+    name: 'An Old Well',
+    lines: [
+      'The water at the bottom glows blue. One of you could drink deep enough to hold more of it.',
+      'A well sunk into a vein of pure mana. It hums when you lean over the edge.',
+      'The rope is rotten but the light below is not. Let one of you draw from it.',
+    ],
+  },
+  leyLineReward: {
+    name: 'A Ley Stone',
+    lines: [
+      'Runes crawl across the standing stone, and the ground beneath it thrums with power.',
+      'A ley line surfaces here, bright as a vein of lightning. It will bind itself to one of you.',
+      'The stone is warm to the touch. Whoever lays a hand on it will not be quite the same.',
+    ],
+  },
+};
+
+/** The fallen Guardian's last words over the Crucible — its fire, handed on. */
+export const CRUCIBLE_LINES: readonly string[] = [
+  'My fire does not go out. It only changes hands. Choose who will carry it.',
+  'You broke me, so you have earned what burned in me. Give it to one of yours.',
+  'I was the seal. Now I am only heat. Step into it, one of you, and come out something more.',
+  'Take what is left of me. Temper one of yours in it, and see what they become.',
+];

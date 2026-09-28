@@ -146,6 +146,10 @@ import { progressionTable } from '../data/progression';
 import type { RunState, RosterEntry } from '../run/state';
 import type { Squad } from '../run/squad';
 import { statScaleFor } from '../run/statScale';
+import { RoadGate } from '../view/run/RoadEncounter';
+import { CrucibleRite } from '../view/run/CrucibleRite';
+import { mapNodeArt } from '../view/run/mapNodeArt';
+import { PLACE_LINES } from '../data/roadLines';
 
 type Screen =
   | { kind: 'title' }
@@ -1349,27 +1353,40 @@ export function App() {
       )}
 
       {screen.kind === 'reward' && (
-        <NodeRewardScreen
-          nodeType={screen.nodeType}
-          run={playerRun}
-          onRunChange={setPlayerRun}
-          onContinue={() => handleNodeContinue(screen.nodeId)}
-          onClaimEquipment={(itemId) => handleClaimEquipment(screen.nodeId, itemId)}
-        />
+        <RoadGate run={playerRun} place art={mapNodeArt(screen.nodeType)!} {...PLACE_LINES[screen.nodeType]}>
+          <NodeRewardScreen
+            nodeType={screen.nodeType}
+            run={playerRun}
+            onRunChange={setPlayerRun}
+            onContinue={() => handleNodeContinue(screen.nodeId)}
+            onClaimEquipment={(itemId) => handleClaimEquipment(screen.nodeId, itemId)}
+          />
+        </RoadGate>
       )}
 
       {screen.kind === 'scrolls' && (
-        <ScrollNodeScreen
+        // The Cache is met as a place; the Scribe greets from inside its screen, the shelf not at all.
+        <RoadGate
           run={playerRun}
-          onRunChange={setPlayerRun}
-          plan={screen.plan}
-          bought={screen.bought}
-          onDone={() => (screen.nodeId ? handleNodeContinue(screen.nodeId) : setScreen(screen.next))}
-        />
+          place
+          art={mapNodeArt('scrollReward')!}
+          {...PLACE_LINES.scrollReward}
+          enabled={screen.plan.kind === 'scrolls' && !screen.bought}
+        >
+          <ScrollNodeScreen
+            run={playerRun}
+            onRunChange={setPlayerRun}
+            plan={screen.plan}
+            bought={screen.bought}
+            onDone={() => (screen.nodeId ? handleNodeContinue(screen.nodeId) : setScreen(screen.next))}
+          />
+        </RoadGate>
       )}
 
       {screen.kind === 'manaWell' && (
-        <ManaWellScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+        <RoadGate run={playerRun} place art={mapNodeArt('manaWellReward')!} {...PLACE_LINES.manaWellReward}>
+          <ManaWellScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+        </RoadGate>
       )}
 
       {screen.kind === 'forge' && (
@@ -1377,11 +1394,15 @@ export function App() {
       )}
 
       {screen.kind === 'leyLine' && (
-        <LeyLineScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+        <RoadGate run={playerRun} place art={mapNodeArt('leyLineReward')!} {...PLACE_LINES.leyLineReward}>
+          <LeyLineScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+        </RoadGate>
       )}
 
       {screen.kind === 'rest' && (
-        <RestNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+        <RoadGate run={playerRun} place art={mapNodeArt('restReward')!} {...PLACE_LINES.restReward}>
+          <RestNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+        </RoadGate>
       )}
 
       {screen.kind === 'itemWho' && (
@@ -1390,7 +1411,9 @@ export function App() {
 
 
       {screen.kind === 'boonNode' && (
-        <BoonNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+        <RoadGate run={playerRun} place art={mapNodeArt('passiveReward')!} {...PLACE_LINES.passiveReward}>
+          <BoonNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+        </RoadGate>
       )}
 
       {screen.kind === 'tutorNode' && (
@@ -1406,13 +1429,15 @@ export function App() {
         (() => {
           const { nodeId, eventId } = screen;
           return (
-            <EventNodeScreen
-              event={runEvents[eventId]}
-              run={playerRun}
-              onRunChange={setPlayerRun}
-              onGrantEquipment={(itemIds) => handleClaimEquipment(nodeId, itemIds)}
-              onContinue={() => handleNodeContinue(nodeId)}
-            />
+            <RoadGate run={playerRun} place art={mapNodeArt('event')!} name={runEvents[eventId].name} lines={[runEvents[eventId].flavor]}>
+              <EventNodeScreen
+                event={runEvents[eventId]}
+                run={playerRun}
+                onRunChange={setPlayerRun}
+                onGrantEquipment={(itemIds) => handleClaimEquipment(nodeId, itemIds)}
+                onContinue={() => handleNodeContinue(nodeId)}
+              />
+            </RoadGate>
           );
         })()}
 
@@ -1436,7 +1461,9 @@ export function App() {
       )}
 
       {screen.kind === 'crucible' && (
-        <CrucibleScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => setScreen(screen.next)} />
+        <CrucibleRite run={playerRun}>
+          <CrucibleScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => setScreen(screen.next)} />
+        </CrucibleRite>
       )}
 
       {screen.kind === 'champions' && <ChampionScreen run={playerRun} onContinue={() => setScreen({ kind: 'runComplete' })} />}
