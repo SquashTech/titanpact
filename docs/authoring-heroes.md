@@ -1,20 +1,11 @@
-# Implementing the future heroes
+# Authoring a hero
 
-Handoff for the chat that turns `art/future-heroes/` into playable heroes. The art is done
-(idle, `attack`, `damaged` for all twelve; see `README.md` for concepts, types and facing).
-What is left is authoring each hero as data. Drift, Rimehold, Carillon and Hart (commit
-`085cd3e`) are the worked example: copy their shape.
-
-## Decisions to make with the user first
-
-- **How they are unlocked.** Drift/Rimehold/Carillon/Hart are `unlock: 'starfall'`. The
-  alternative is one or more bundles (`unlock: 'bundle.<id>'`, see From the Tall Grass in
-  `docs/constellation.md`). Kappa, Kitsu, Ronin and Motley could make a folklore bundle.
-- **Names.** Working names are the file names (Ashwing, Aurum, Kappa, Kitsu, Kong, Morel,
-  Motley, Omen, Ronin, Scree, Tome, Tusk). Check none clashes with a move, passive or Location.
-- **The role pitches in README.md are first passes, not decisions.**
-- Ashwing's pitch reuses the endure verb (Lingering, `enduresOnce`), which is off the roster
-  today; bringing it back is a design call.
+A runbook, like `authoring-moves.md`: how a new hero goes from concept art to playable data.
+The latest worked examples are commits `5e051e0` (twelve heroes) and the 2026-09-28 twenty that
+filled the roster to six a type; Drift, Rimehold, Carillon and Hart (`085cd3e`) came first.
+A new hero is Starfall-only (`unlock: 'starfall'`) unless it is sold in a bundle
+(`unlock: 'bundle.<id>'`, `docs/constellation.md`). Check every name — hero, move, passive,
+path, signature — against `src` and `docs` before using it.
 
 ## Per hero, what to author
 

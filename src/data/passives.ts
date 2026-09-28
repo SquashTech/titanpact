@@ -1517,6 +1517,207 @@ const innatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', magnitude: 10 },
     },
   },
+  fireBreather: {
+    id: 'fireBreather',
+    name: 'Fire-Breather',
+    description: 'Whenever this hero lands a Fire attack, both active enemies gain Burn 5.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Fire' } },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 5 },
+    },
+  },
+  saltTears: {
+    id: 'saltTears',
+    name: 'Salt Tears',
+    description: 'Whenever this hero grants Renew, it washes one affliction off whoever receives it.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Renew' } },
+      effect: { kind: 'cleanse', target: 'triggerTarget', count: 1 },
+    },
+  },
+  silentWings: {
+    id: 'silentWings',
+    name: 'Silent Wings',
+    description: 'Whenever this hero Freezes an enemy, it gains Ambush 15.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Freeze' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 15 },
+    },
+  },
+  unfurl: {
+    id: 'unfurl',
+    name: 'Unfurl',
+    description: 'Whenever this hero gains Renew, it gains 10 Intelligence.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew' } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 10 },
+    },
+  },
+  anvilCloud: {
+    id: 'anvilCloud',
+    name: 'Anvil Cloud',
+    description: 'Whenever this hero takes damage, there is a 50% chance a random enemy becomes Conducting.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Conduct' },
+      chance: 0.5,
+    },
+  },
+  headwind: {
+    id: 'headwind',
+    name: 'Headwind',
+    description: 'Whenever this hero uses a move that deals no damage, both active enemies lose 10 Speed.',
+    reactive: {
+      hook: 'MoveUsed',
+      condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'speed', amount: -10 },
+    },
+  },
+  staticWake: {
+    id: 'staticWake',
+    name: 'Static Wake',
+    description: 'When this hero switches out, a random enemy becomes Conducting.',
+    reactive: {
+      hook: 'SwitchedOut',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Conduct' },
+    },
+  },
+  undermine: {
+    id: 'undermine',
+    name: 'Undermine',
+    description: 'Whenever this hero lands a Stone attack, its target loses 10 Defense.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Stone' } },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'defense', amount: -10 },
+    },
+  },
+  waystone: {
+    id: 'waystone',
+    name: 'Waystone',
+    description: "At the end of each round, this hero's partner gains Shield 10.",
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Shield', magnitude: 10 },
+    },
+  },
+  bogblood: {
+    id: 'bogblood',
+    name: 'Bogblood',
+    description: 'At the end of each round, this hero heals 5% of its max HP.',
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'heal', target: 'self', amount: { kind: 'percentMaxHp', value: 0.05 } },
+    },
+  },
+  peckingCrow: {
+    id: 'peckingCrow',
+    name: 'Pecking Crow',
+    description: 'Whenever this hero uses a move that deals no damage, a random enemy loses 5% of its max HP.',
+    reactive: {
+      hook: 'MoveUsed',
+      condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
+      effect: { kind: 'damage', target: 'randomEnemy', percentMaxHp: 0.05 },
+    },
+  },
+  foresight: {
+    id: 'foresight',
+    name: 'Foresight',
+    description: 'Whenever this hero takes damage, its next attack goes at +1 priority.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Poised' },
+    },
+  },
+  etchedRunes: {
+    id: 'etchedRunes',
+    name: 'Etched Runes',
+    description: 'Whenever this hero uses a move that deals no damage, it gains Ambush 20.',
+    reactive: {
+      hook: 'MoveUsed',
+      condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 20 },
+    },
+  },
+  glitteringHoard: {
+    id: 'glitteringHoard',
+    name: 'Glittering Hoard',
+    description: 'When this hero enters the battlefield, every move both active enemies hold costs 5 more Mana for the rest of the fight, up to 15.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'manaSurcharge', target: 'activeEnemies', amount: 5, max: 15 },
+    },
+  },
+  ancestralGuidance: {
+    id: 'ancestralGuidance',
+    name: 'Ancestral Guidance',
+    description: "At the end of each round, this hero's partner gains Ambush 15.",
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Ambush', magnitude: 15 },
+    },
+  },
+  deathWail: {
+    id: 'deathWail',
+    name: 'Death Wail',
+    description: 'Whenever this hero lands a Spirit attack, both active enemies lose 5 Attack and 5 Intelligence.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Spirit' } },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: ['attack', 'intelligence'], amount: -5 },
+    },
+  },
+  lodestone: {
+    id: 'lodestone',
+    name: 'Lodestone',
+    description: 'When this hero enters the battlefield, both active enemies are left Conducting.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Conduct' },
+    },
+  },
+  tally: {
+    id: 'tally',
+    name: 'Tally',
+    description: 'Whenever an enemy attacks, this hero gains 5 Intelligence.',
+    reactive: {
+      hook: 'MoveUsed',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { damaging: 'true' } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 5 },
+    },
+  },
+  flit: {
+    id: 'flit',
+    name: 'Flit',
+    description: 'Whenever this hero attacks, it gains Ambush 10 for the next one.',
+    reactive: {
+      hook: 'MoveUsed',
+      condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'true' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 10 },
+    },
+  },
+  unbothered: {
+    id: 'unbothered',
+    name: 'Unbothered',
+    description: 'Whenever an enemy lands a hit, that enemy loses 5 Attack and 5 Intelligence.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'enemy', subjectRole: 'source' },
+      effect: { kind: 'statDelta', target: 'triggerSubject', stat: ['attack', 'intelligence'], amount: -5 },
+    },
+  },
 };
 
 // --- The mastered innate (HeroDefinition.masteredPassiveIds, docs/mastery.md §5b) ---
@@ -2304,6 +2505,230 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Spirit' } },
       effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', magnitude: 20 },
+    },
+  },
+  showstopper: {
+    id: 'showstopper',
+    name: 'Showstopper',
+    description: 'Whenever this hero lands a Fire attack, both active enemies gain Burn 10.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Fire' } },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 10 },
+    },
+  },
+  // One affliction has no figure to double, so the reach widens to all of them.
+  seaOfTears: {
+    id: 'seaOfTears',
+    name: 'Sea of Tears',
+    description: 'Whenever this hero grants Renew, it washes every affliction off whoever receives it.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Renew' } },
+      effect: { kind: 'cleanse', target: 'triggerTarget' },
+    },
+  },
+  moonlessGlide: {
+    id: 'moonlessGlide',
+    name: 'Moonless Glide',
+    description: 'Whenever this hero Freezes an enemy, it gains Ambush 30.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Freeze' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 30 },
+    },
+  },
+  fullBloom: {
+    id: 'fullBloom',
+    name: 'Full Bloom',
+    description: 'Whenever this hero gains Renew, it gains 20 Intelligence.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew' } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 20 },
+    },
+  },
+  // Conduct carries no figure to double, so the mastered cloud takes the roll off, as Boiling Point does.
+  cumulonimbus: {
+    id: 'cumulonimbus',
+    name: 'Cumulonimbus',
+    description: 'Whenever this hero takes damage, a random enemy becomes Conducting.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Conduct' },
+    },
+  },
+  galeWarning: {
+    id: 'galeWarning',
+    name: 'Gale Warning',
+    description: 'Whenever this hero uses a move that deals no damage, both active enemies lose 20 Speed.',
+    reactive: {
+      hook: 'MoveUsed',
+      condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'speed', amount: -20 },
+    },
+  },
+  // Conduct carries no figure to double, so the mastered wake widens its reach to both.
+  ballLightning: {
+    id: 'ballLightning',
+    name: 'Ball Lightning',
+    description: 'When this hero switches out, both active enemies become Conducting.',
+    reactive: {
+      hook: 'SwitchedOut',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Conduct' },
+    },
+  },
+  sinkhole: {
+    id: 'sinkhole',
+    name: 'Sinkhole',
+    description: 'Whenever this hero lands a Stone attack, its target loses 20 Defense.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Stone' } },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'defense', amount: -20 },
+    },
+  },
+  standingStones: {
+    id: 'standingStones',
+    name: 'Standing Stones',
+    description: "At the end of each round, this hero's partner gains Shield 20.",
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Shield', magnitude: 20 },
+    },
+  },
+  peatHeart: {
+    id: 'peatHeart',
+    name: 'Peat Heart',
+    description: 'At the end of each round, this hero heals 10% of its max HP.',
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'heal', target: 'self', amount: { kind: 'percentMaxHp', value: 0.1 } },
+    },
+  },
+  murderOfCrows: {
+    id: 'murderOfCrows',
+    name: 'Murder of Crows',
+    description: 'Whenever this hero uses a move that deals no damage, a random enemy loses 10% of its max HP.',
+    reactive: {
+      hook: 'MoveUsed',
+      condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
+      effect: { kind: 'damage', target: 'randomEnemy', percentMaxHp: 0.1 },
+    },
+  },
+  // Poised carries no figure to double, so the mastered read pays twice, as Deathtrap does.
+  satori: {
+    id: 'satori',
+    name: 'Satori',
+    description: 'Whenever this hero takes damage, its next attack goes at +1 priority and gains Ambush 30.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Poised' },
+    },
+  },
+  satoriStrike: {
+    id: 'satoriStrike',
+    name: 'Satori',
+    description: 'Whenever this hero takes damage, it gains Ambush 30.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 30 },
+    },
+  },
+  runesAblaze: {
+    id: 'runesAblaze',
+    name: 'Runes Ablaze',
+    description: 'Whenever this hero uses a move that deals no damage, it gains Ambush 40.',
+    reactive: {
+      hook: 'MoveUsed',
+      condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 40 },
+    },
+  },
+  foolsGold: {
+    id: 'foolsGold',
+    name: "Fool's Gold",
+    description: 'When this hero enters the battlefield, every move both active enemies hold costs 10 more Mana for the rest of the fight, up to 30.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'manaSurcharge', target: 'activeEnemies', amount: 10, max: 30 },
+    },
+  },
+  councilOfElders: {
+    id: 'councilOfElders',
+    name: 'Council of Elders',
+    description: "At the end of each round, this hero's partner gains Ambush 30.",
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Ambush', magnitude: 30 },
+    },
+  },
+  graveChorus: {
+    id: 'graveChorus',
+    name: 'Grave Chorus',
+    description: 'Whenever this hero lands a Spirit attack, both active enemies lose 10 Attack and 10 Intelligence.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Spirit' } },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: ['attack', 'intelligence'], amount: -10 },
+    },
+  },
+  lodestorm: {
+    id: 'lodestorm',
+    name: 'Lodestorm',
+    description: 'When this hero enters the battlefield, both active enemies are left Conducting and lose 15 Defense.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Conduct' },
+    },
+  },
+  lodestormPull: {
+    id: 'lodestormPull',
+    name: 'Lodestorm',
+    description: 'When this hero enters the battlefield, both active enemies lose 15 Defense.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'defense', amount: -15 },
+    },
+  },
+  calculus: {
+    id: 'calculus',
+    name: 'Calculus',
+    description: 'Whenever an enemy attacks, this hero gains 10 Intelligence.',
+    reactive: {
+      hook: 'MoveUsed',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { damaging: 'true' } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 10 },
+    },
+  },
+  blur: {
+    id: 'blur',
+    name: 'Blur',
+    description: 'Whenever this hero attacks, it gains Ambush 20 for the next one.',
+    reactive: {
+      hook: 'MoveUsed',
+      condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'true' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 20 },
+    },
+  },
+  serene: {
+    id: 'serene',
+    name: 'Serene',
+    description: 'Whenever an enemy lands a hit, that enemy loses 10 Attack and 10 Intelligence.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'enemy', subjectRole: 'source' },
+      effect: { kind: 'statDelta', target: 'triggerSubject', stat: ['attack', 'intelligence'], amount: -10 },
     },
   },
 };

@@ -2582,6 +2582,34 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'The same spell spoken twice in one breath (two hits of 45).',
   },
+  // 2026-09-28: the slate's first physical column, for Thane and Trove (docs/types-and-heroes.md).
+  runeslash: {
+    id: 'runeslash',
+    name: 'Runeslash',
+    tier: 'early',
+    type: 'Arcane',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 45,
+    manaCost: 25,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A rune-cut edge drawn across the guard, the glyph still burning in the wound.',
+  },
+  wardblade: {
+    id: 'wardblade',
+    name: 'Wardblade',
+    tier: 'mid',
+    type: 'Arcane',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 55,
+    statusApplication: { statusId: 'Shield', magnitude: 20, target: 'self' },
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Cuts, and leaves the rune behind as a ward (Shield 20 on self, scaled off Defense).',
+  },
 
   // --- Mind ---
   psiBolt: {

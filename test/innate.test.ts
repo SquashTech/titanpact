@@ -348,6 +348,54 @@ test('rebirth: an Endured hook — the hit Ashwing refuses raises it half its ma
   assert.strictEqual(smouldering.state.combatants.a1.currentHp, 1);
 });
 
+test('bogblood: Murk mends 5% of its max HP at each round end, and Peat Heart 10%', () => {
+  const maxHp = fixtureMaxHp('murk');
+  const rested = (passiveId: string) => {
+    const state = withField(withPassive(twoVTwo(27, 'murk', 'valor', 'ironWarden', 'crag'), 'a1', passiveId), 'a1', { currentHp: 20 });
+    return resolveRound(state, restAll(state), config).state.combatants.a1.currentHp;
+  };
+  assert.strictEqual(rested('bogblood'), 20 + Math.round(maxHp * 0.05));
+  assert.strictEqual(rested('peatHeart'), 20 + Math.round(maxHp * 0.1));
+});
+
+test('pecking crow: a move that deals no damage costs a random enemy 5% of its max HP, direct; a hit fires nothing', () => {
+  const cast = (moveId: string) => {
+    const state = withPassive(twoVTwo(28, 'rook', 'valor', 'ironWarden', 'crag'), 'a1', 'peckingCrow');
+    return resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId, declaredTarget: 'b1' }, ...restAll(state).filter((a) => a.combatantId !== 'a1')], config);
+  };
+  const hexed = cast('weaken');
+  assert.ok(hexed.events.some((e) => e.type === 'PassiveTriggered' && e.passiveId === 'peckingCrow'));
+  const lost = (['b1', 'b2'] as const).map((id) => fixtureMaxHp(id === 'b1' ? 'ironWarden' : 'crag') - hexed.state.combatants[id].currentHp);
+  const pecked = lost.findIndex((n) => n > 0);
+  assert.strictEqual(lost[pecked], Math.round(fixtureMaxHp(pecked === 0 ? 'ironWarden' : 'crag') * 0.05));
+  assert.strictEqual(lost[1 - pecked], 0, 'one crow, one enemy');
+  assert.ok(!cast('umbraBolt').events.some((e) => e.type === 'PassiveTriggered' && e.passiveId === 'peckingCrow'));
+});
+
+test('waystone: Cairn lays Shield 10 on his partner at each round end, Standing Stones 20, and nothing on himself', () => {
+  const rested = (passiveId: string) => {
+    const state = withPassive(twoVTwo(29, 'cairn', 'valor', 'ironWarden', 'crag'), 'a1', passiveId);
+    return resolveRound(state, restAll(state), config).state.combatants;
+  };
+  assert.strictEqual(statusMagnitude(rested('waystone').a2, 'Shield'), 10);
+  assert.strictEqual(statusMagnitude(rested('standingStones').a2, 'Shield'), 20);
+  assert.strictEqual(statusMagnitude(rested('waystone').a1, 'Shield'), 0);
+});
+
+test('foresight: a hit taken leaves Koan Poised; Satori adds Ambush 30 beside it', () => {
+  const struck = (passiveIds: string[]) => {
+    let state = twoVTwo(30, 'koan', 'valor', 'ironWarden', 'crag');
+    for (const id of passiveIds) state = withPassive(state, 'a1', id);
+    return resolveRound(state, [{ kind: 'move', combatantId: 'b1', moveId: 'heavyBlow', declaredTarget: 'a1' }, ...restAll(state).filter((a) => a.combatantId !== 'b1')], config).state.combatants.a1;
+  };
+  const read = struck(['foresight']);
+  assert.ok(read.statuses.Poised, 'Poised after the hit');
+  assert.strictEqual(statusMagnitude(read, 'Ambush'), 0);
+  const mastered = struck(['satori', 'satoriStrike']);
+  assert.ok(mastered.statuses.Poised);
+  assert.strictEqual(statusMagnitude(mastered, 'Ambush'), 30);
+});
+
 test('lament: a hit on a Haunted enemy heals Sorrow for its amount, and nothing on an unhaunted one', () => {
   const base = withField(withPassive(twoVTwo(25, 'sorrow', 'valor', 'ironWarden', 'crag'), 'a1', 'lament'), 'a1', { currentHp: 20 });
   const strike = (s: CombatState) =>
@@ -376,6 +424,28 @@ test('rivet: at each round end the partner gains 5 Defense, and alone on the fie
   const r = resolveRound(state, restAll(state), config);
   assert.strictEqual(r.state.combatants.a2.statModifiers.defense, 5);
   assert.strictEqual(r.state.combatants.a1.statModifiers.defense, undefined);
+});
+
+test('ancestral guidance: at each round end the partner gains Ambush 15, and Totem itself does not', () => {
+  const state = withPassive(twoVTwo(28, 'totem', 'valor', 'crag', 'rime'), 'a1', 'ancestralGuidance');
+  const r = resolveRound(state, restAll(state), config);
+  assert.strictEqual(statusMagnitude(r.state.combatants.a2, 'Ambush'), 15);
+  assert.strictEqual(statusMagnitude(r.state.combatants.a1, 'Ambush'), 0);
+});
+
+test('death wail: a Spirit hit takes 5 Attack and 5 Intelligence off BOTH active enemies; a non-Spirit hit takes nothing', () => {
+  const struck = (moveId: string) => {
+    const state = withPassive(twoVTwo(29, 'keen', 'valor', 'ironWarden', 'crag'), 'a1', 'deathWail');
+    const actions = [{ kind: 'move', combatantId: 'a1', moveId, declaredTarget: 'b1' } as Action, ...restAll(state).filter((a) => a.combatantId !== 'a1')];
+    return resolveRound(state, actions, config).state;
+  };
+  const wailed = struck('wisp');
+  for (const id of ['b1', 'b2']) {
+    assert.strictEqual(wailed.combatants[id].statModifiers.attack, -5, `${id} Attack`);
+    assert.strictEqual(wailed.combatants[id].statModifiers.intelligence, -5, `${id} Intelligence`);
+  }
+  const chilled = struck('rimeWind');
+  assert.strictEqual(chilled.combatants.b2.statModifiers.attack, undefined);
 });
 
 // --- Broadside: the one bench-side reaction ---

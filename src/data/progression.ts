@@ -895,6 +895,126 @@ export const progressionTable: ProgressionTable = {
       'soulRend', 'poltergeist', 'flicker', 'vengeance', 'soulOffering', 'arcPulse', 'arcaneBlast',
       'seance', 'lastRites', 'ascendant', 'twinCast', 'cataclysm',
     ],
+    // Tinder: Fire's magical Burn column, with Spirit's and Storm's quick casts as the off-types. Firestorm is Headliner's grant.
+    tinder: [
+      'setAlight', 'stokeTheFlames', 'zap', 'unbound', 'wisp', 'spite',
+      'scorch', 'spreadingBlaze', 'heatHaze', 'backdraft', 'immolate', 'flicker', 'stunningBolt',
+      'sparkBurst', 'inferno', 'ionicZap', 'banish',
+    ],
+    // Selkie: Water's mending column, with Light's and Nature's healing beside it. High Tide is Tidewife's grant.
+    selkie: [
+      'tideGuard', 'inkCloud', 'siphon', 'mend', 'purify', 'vigil',
+      'oasis', 'washAway', 'cleansingRain', 'crest', 'engulf', 'benediction', 'wildBloom',
+      'seawall', 'tsunami', 'divineGrace', 'overgrowth',
+    ],
+    // Hush: Frost's magical Freeze column, with Arcane's bolts and Light's glare as the off-types. Absolute Zero is Tundra Hunter's grant.
+    hush: [
+      'snowBlast', 'hoarfrostEdge', 'rimeCoat', 'focus', 'manaTap', 'glimmer',
+      'glaciate', 'quickFreeze', 'permafrost', 'blindingSnow', 'frigidAir', 'arcaneBlast', 'radiantBeam',
+      'avalanche', 'cataclysm', 'solarFlare', 'twinCast',
+    ],
+    // Lotus: Nature's magical column, with Arcane's and Light's nukes as the off-types. Force of Nature is Thousand Petals' grant.
+    lotus: [
+      'sow', 'toxicSpores', 'focus', 'magicBolt', 'glimmer', 'bless',
+      'corrode', 'blight', 'magicGrowth', 'wildBloom', 'rootbind', 'radiantBeam', 'arcaneBlast',
+      'leech', 'miasma', 'overgrowth', 'solarFlare', 'cataclysm',
+    ],
+    // Nimbus: Storm's magical column, with Water's rain as the off-type. Ionic Zap is Anvilhead's grant.
+    nimbus: [
+      'risingStatic', 'staticCharge', 'zap', 'tideGuard', 'splash', 'undercurrent',
+      'chainLightning', 'stunningBolt', 'ionize', 'electricBurst', 'shockBubble', 'cleansingRain', 'torrent',
+      'thunderbolt', 'ionCascade', 'tsunami', 'highTide',
+    ],
+    // Kite: Storm's marks and tailwinds, with the Beast howl, Water's ink and the Frost and Mind guards beside them. Chain Lightning is Highflyer's grant.
+    kite: [
+      'jolt', 'charge', 'howl', 'refresh', 'inkCloud', 'brainWard',
+      'tailwind', 'ionize', 'stunningBolt', 'blindingSnow', 'electricBurst', 'mentalFortress',
+      'stormSurge', 'thunderbolt', 'ionCascade', 'ionicZap',
+    ],
+    // Raiju: Storm's physical column and every pivot on the table, with Iron's and Shadow's quick blades. Shock Slice is Kaminari's grant.
+    raiju: [
+      'swiftBlow', 'openingStrike', 'hamstring', 'sharpen', 'mudBall', 'heavyBlow',
+      'rideTheLightning', 'stormLash', 'tailwind', 'livingWall', 'rendArmor', 'shadowstrike',
+      'skyfall', 'overcharge', 'stormSurge', 'juggernaut',
+    ],
+    // Dune: Stone's physical column, with Iron's pins and weight. Body Crush is Worldworm's grant.
+    dune: [
+      'mudBall', 'gravelSpray', 'openingStrike', 'pinDown', 'fortify', 'heavyBlow',
+      'faultLine', 'rubbleRush', 'spireClaw', 'rendArmor', 'momentumSwing', 'retribution',
+      'boulderSlam', 'titanicCrush', 'stoneheart', 'swingingChain',
+    ],
+    // Cairn: Stone's guard column, Light's mending beside it, and Stone's magical spread. Body Blow is Menhir's grant.
+    cairn: [
+      'mudBall', 'provoke', 'vigil', 'mend', 'purify',
+      'bastion', 'bodyguard', 'rockfall', 'benediction', 'consecrate',
+      'rampart', 'landslide', 'divineGrace',
+    ],
+    // Murk: Shadow's physical column with Stone's mud and Nature's moss as the off-types. Shadowstrike is Lurker's grant.
+    murk: [
+      'fadeStrike', 'backstab', 'mudBall', 'vineLash', 'pinDown',
+      'shadowSlice', 'rend', 'smokeBomb', 'rubbleRush', 'thornWhip',
+      'duskBlade', 'shadowForm', 'boulderSlam', 'thousandCuts',
+    ],
+    // Rook: Shadow's magical column, with Mind's hexes as the off-type. Enfeeble is Coven's grant.
+    rook: [
+      'lull', 'enervate', 'inkCloud', 'distort',
+      'umbralBeam', 'wickedFear', 'disorient', 'mindLeech',
+      'eclipse', 'umbralWave', 'grimHarvest', 'breakWill',
+    ],
+    // Koan: Mind has no fists, so Iron's and Stone's counters and Shadow's first strike carry him. Psychokinesis is Third Eye's grant.
+    koan: [
+      'swiftBlow', 'heavyBlow', 'enervate', 'ironSkin',
+      'parry', 'retribution', 'shadowstrike', 'momentumSwing', 'mentalFortress', 'rendArmor',
+      'stoneheart', 'onslaught', 'juggernaut',
+    ],
+    // Thane: Arcane's physical column and its mana buffs, with Iron's blades beside them. Arcane Overflow is Spellsword's grant.
+    thane: [
+      'ironFist', 'openingStrike', 'fortify', 'pinDown', 'infuse', 'manaFont',
+      'wardblade', 'magicCloak', 'empower', 'momentumSwing', 'rendArmor', 'serratedSlice', 'parry',
+      'conduit', 'onslaught', 'juggernaut', 'swingingChain', 'wailingFlight',
+    ],
+    // Trove: the bait-and-bite of Stone's guard column, with Arcane's pool-sharing. Font of Power is Bottomless Chest's grant.
+    trove: [
+      'barrier', 'manaTap', 'mudBall', 'toughenUp', 'pinDown', 'rockToss',
+      'wardblade', 'magicCloak', 'empower', 'bodyguard', 'bodyBlow', 'retribution', 'spireClaw',
+      'arcaneOverflow', 'stoneheart', 'onslaught', 'bodyCrush', 'conduit',
+    ],
+    // Totem: Spirit's support and every type's ally buffs. Banish is Elder Pole's grant.
+    totem: [
+      'torment', 'secondWind', 'soulfire', 'frostArmor', 'brainWard', 'mend', 'tideGuard',
+      'soulOffering', 'poltergeist', 'soulRend', 'reinforce', 'mentalFortress', 'bastion', 'radiance',
+      'seance', 'highTide', 'stormSurge', 'frostWall', 'exalt',
+    ],
+    // Keen: Spirit's magical column, with every other type's spreads as the off-type. Last Rites is Harbinger's grant.
+    keen: [
+      'drain', 'spite', 'unbound', 'soulfire', 'inkCloud', 'sparkFlash', 'tremor',
+      'soulRend', 'poltergeist', 'flicker', 'arcPulse', 'disorient', 'deluge', 'backdraft',
+      'seance', 'banish', 'ascendant', 'psionicWave', 'cataclysm', 'maelstrom',
+    ],
+    // Ferra: Iron's one magical row is Conjured Sword, kept off every pool (test/ironMoves), so Storm's current and Arcane's bolts carry her. Conjured Sword is Magnetar's grant.
+    ferra: [
+      'charge', 'zap', 'focus', 'fortify', 'barrier', 'manaTap',
+      'electricBurst', 'stunningBolt', 'arcaneBlast', 'arcPulse', 'livingWall', 'study', 'reinforce',
+      'thunderbolt', 'cataclysm', 'twinCast', 'singularity',
+    ],
+    // Abacus: Mech's magical column with Mind's reading of the far side; Distort sets the Stasis Field Hindsight reads. Perfect Creation is Difference Engine's grant.
+    abacus: [
+      'kickstart', 'lull', 'focus', 'enervate', 'magicBolt', 'overclock',
+      'overheat', 'malfunction', 'salvage', 'hindsight', 'cerebralShock', 'stasis', 'psyshock',
+      'meltdown', 'psionicWave', 'brainFlay', 'mindShatter',
+    ],
+    // Whirr: Mech's physical column with Storm's darting and Iron's quick blows; Spark Plug plants what Overcharge and Whirling Blades run on. Overdrive is Gyre's grant.
+    whirr: [
+      'cogBop', 'steamVent', 'overclock', 'thunderclap', 'openingStrike', 'pinDown',
+      'whirlingBlades', 'shockCoil', 'cogSlam', 'shockSlice', 'rideTheLightning', 'momentumSwing',
+      'salvo', 'jackpot', 'overcharge', 'skyfall', 'onslaught',
+    ],
+    // Mellow: Beast's rallying with Water's and Nature's mending and Stone's guard beside it. Pack Leader is Gentle Giant's grant.
+    mellow: [
+      'rally', 'claw', 'tideGuard', 'regrowth', 'toughenUp', 'provoke',
+      'bodyguard', 'washAway', 'oasis', 'cleansingRain', 'bastion', 'wildBloom', 'packHunt',
+      'highTide', 'rampart', 'overgrowth', 'seawall',
+    ],
     // The companion's bodies (run/companion.ts): a spawn's pool is its type's whole slate, so
     // the schedule gates it by band like anyone's. No Evolution node — its Mastery pips are its
     // tier-steps instead.
@@ -3140,6 +3260,686 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['wickedFear'],
             typeGraft: 'Mind',
             learnableMoveIds: ['lull', 'enervate', 'psyshock', 'disorient', 'psionicWave'],
+          },
+        ],
+      },
+    ],
+    tinder: [
+      {
+        paths: [
+          {
+            id: 'tinder-headliner',
+            heroId: 'tinder',
+            name: 'Headliner',
+            description: 'Top of the bill now, and the whole ring goes up when she takes the stage.',
+            statGrants: { intelligence: 20, speed: 10 },
+            unlocksMoveIds: ['firestorm'],
+          },
+          {
+            id: 'tinder-sparkler',
+            heroId: 'tinder',
+            name: 'Sparkler',
+            description: 'Learns the fireworks act, and the flame comes out crackling with something faster than fire.',
+            statGrants: { intelligence: 10, speed: 20 },
+            unlocksMoveIds: ['chainLightning'],
+            typeGraft: 'Storm',
+            learnableMoveIds: ['jolt', 'charge', 'ionize', 'electricBurst', 'thunderbolt'],
+          },
+          {
+            id: 'tinder-limelight',
+            heroId: 'tinder',
+            name: 'Limelight',
+            description: 'Steps into the spotlight, and the flash off the flame leaves the front row seeing stars.',
+            statGrants: { hp: 30, intelligence: 20 },
+            unlocksMoveIds: ['blindingFlash'],
+            typeGraft: 'Light',
+            learnableMoveIds: ['glimmer', 'bless', 'purify', 'radiantBeam', 'solarFlare'],
+          },
+        ],
+      },
+    ],
+    selkie: [
+      {
+        paths: [
+          {
+            id: 'selkie-tidewife',
+            heroId: 'selkie',
+            name: 'Tidewife',
+            description: 'Keeps the pelt and the shore both, and the tide comes in when she asks it to.',
+            statGrants: { hp: 30, wisdom: 20 },
+            unlocksMoveIds: ['highTide'],
+          },
+          {
+            id: 'selkie-seasinger',
+            heroId: 'selkie',
+            name: 'Seasinger',
+            description: 'Sings from the rocks at dusk, and the song reaches further into a mind than the sea goes down.',
+            statGrants: { intelligence: 10, wisdom: 20 },
+            unlocksMoveIds: ['mindShatter'],
+            typeGraft: 'Mind',
+            learnableMoveIds: ['psiBolt', 'lull', 'dopamine', 'brainWard', 'psyshock', 'psionicWave'],
+          },
+          {
+            id: 'selkie-roane',
+            heroId: 'selkie',
+            name: 'Roane',
+            description: 'Swims out to where the drowned wear seal-skins too, and brings something of them back.',
+            statGrants: { hp: 30, intelligence: 20 },
+            unlocksMoveIds: ['soulRend'],
+            typeGraft: 'Spirit',
+            learnableMoveIds: ['wisp', 'drain', 'secondWind', 'poltergeist', 'seance'],
+          },
+        ],
+      },
+    ],
+    hush: [
+      {
+        paths: [
+          {
+            id: 'hush-tundraHunter',
+            heroId: 'hush',
+            name: 'Tundra Hunter',
+            description: 'Hunts the long white nights alone, and what it finds frozen it finishes.',
+            statGrants: { intelligence: 20, speed: 10 },
+            unlocksMoveIds: ['absoluteZero'],
+          },
+          {
+            id: 'hush-nightOwl',
+            heroId: 'hush',
+            name: 'Night Owl',
+            description: 'Gives the snow up for the dark, and the dark is quieter still.',
+            statGrants: { intelligence: 10, speed: 20 },
+            unlocksMoveIds: ['eclipse'],
+            typeGraft: 'Shadow',
+            learnableMoveIds: ['umbraBolt', 'weaken', 'umbralBeam', 'enfeeble', 'umbralWave'],
+          },
+          {
+            id: 'hush-athene',
+            heroId: 'hush',
+            name: 'Athene',
+            description: 'Sits on the shoulder of something wise long enough to learn what it knows.',
+            statGrants: { hp: 30, wisdom: 20 },
+            unlocksMoveIds: ['psychicBlow'],
+            typeGraft: 'Mind',
+            learnableMoveIds: ['psiBolt', 'lull', 'psyshock', 'cerebralShock', 'psionicWave'],
+          },
+        ],
+      },
+    ],
+    lotus: [
+      {
+        paths: [
+          {
+            id: 'lotus-thousandPetals',
+            heroId: 'lotus',
+            name: 'Thousand Petals',
+            description: 'Opens past the last petal anyone has counted, and the whole pond answers.',
+            statGrants: { intelligence: 20, manaPool: 10 },
+            unlocksMoveIds: ['forceOfNature'],
+          },
+          {
+            id: 'lotus-enlightened',
+            heroId: 'lotus',
+            name: 'Enlightened',
+            description: 'Sits so still the mind goes out past the pond, and presses on everything it reaches.',
+            statGrants: { intelligence: 10, wisdom: 20 },
+            unlocksMoveIds: ['psionicWave'],
+            typeGraft: 'Mind',
+            learnableMoveIds: ['lull', 'psyshock', 'cerebralShock', 'mentalFortress', 'brainFlay'],
+          },
+          {
+            id: 'lotus-moonpond',
+            heroId: 'lotus',
+            name: 'Moonpond',
+            description: 'Sinks its roots into the deep water, and the water rises when it is called.',
+            statGrants: { hp: 30, intelligence: 20 },
+            unlocksMoveIds: ['deluge'],
+            typeGraft: 'Water',
+            learnableMoveIds: ['splash', 'undercurrent', 'torrent', 'engulf', 'tsunami'],
+          },
+        ],
+      },
+    ],
+    nimbus: [
+      {
+        paths: [
+          {
+            id: 'nimbus-anvilhead',
+            heroId: 'nimbus',
+            name: 'Anvilhead',
+            description: 'Towers until its crown flattens against the sky, and the lightning comes down first.',
+            statGrants: { hp: 30, intelligence: 20 },
+            unlocksMoveIds: ['ionicZap'],
+          },
+          {
+            id: 'nimbus-hailcloud',
+            heroId: 'nimbus',
+            name: 'Hailcloud',
+            description: 'Climbs into the cold, and what falls out of it next is ice.',
+            statGrants: { defense: 20, intelligence: 10 },
+            unlocksMoveIds: ['avalanche'],
+            typeGraft: 'Frost',
+            learnableMoveIds: ['deepChill', 'rimeWind', 'blindingSnow', 'glaciate', 'permafrost'],
+          },
+          {
+            id: 'nimbus-sunshower',
+            heroId: 'nimbus',
+            name: 'Sunshower',
+            description: 'Lets the sun through its rain, and whatever it falls on mends.',
+            statGrants: { hp: 30, wisdom: 20 },
+            unlocksMoveIds: ['consecrate'],
+            typeGraft: 'Light',
+            learnableMoveIds: ['mend', 'hallow', 'radiantBeam', 'benediction', 'divineGrace'],
+          },
+        ],
+      },
+    ],
+    kite: [
+      {
+        paths: [
+          {
+            id: 'kite-highflyer',
+            heroId: 'kite',
+            name: 'Highflyer',
+            description: 'Lets out the whole string, and the kite goes up into the heart of the storm.',
+            statGrants: { wisdom: 20, speed: 10 },
+            unlocksMoveIds: ['chainLightning'],
+          },
+          {
+            id: 'kite-seedwind',
+            heroId: 'kite',
+            name: 'Seedwind',
+            description: 'Flies it over the meadow, and the wind carries everything that grows.',
+            statGrants: { hp: 30, wisdom: 20 },
+            unlocksMoveIds: ['rootbind'],
+            typeGraft: 'Nature',
+            learnableMoveIds: ['regrowth', 'sow', 'blight', 'magicGrowth', 'wildBloom'],
+          },
+          {
+            id: 'kite-sunkite',
+            heroId: 'kite',
+            name: 'Sunkite',
+            description: 'Paints the kite gold and flies it at dawn, and the light comes down the string.',
+            statGrants: { intelligence: 20, speed: 10 },
+            unlocksMoveIds: ['radiance'],
+            typeGraft: 'Light',
+            learnableMoveIds: ['bless', 'mend', 'glimmer', 'hallow', 'benediction'],
+          },
+        ],
+      },
+    ],
+    raiju: [
+      {
+        paths: [
+          {
+            id: 'raiju-kaminari',
+            heroId: 'raiju',
+            name: 'Kaminari',
+            description: 'Becomes the bolt it used to ride, and there is no telling where it struck from.',
+            statGrants: { attack: 20, speed: 10 },
+            unlocksMoveIds: ['shockSlice'],
+          },
+          {
+            id: 'raiju-kamaitachi',
+            heroId: 'raiju',
+            name: 'Kamaitachi',
+            description: 'Rides the whirlwind instead, and its claws come out as sickles.',
+            statGrants: { attack: 10, speed: 20 },
+            unlocksMoveIds: ['rendingLeap'],
+            typeGraft: 'Beast',
+            learnableMoveIds: ['claw', 'pounce', 'lacerate', 'maul', 'eviscerate'],
+          },
+          {
+            id: 'raiju-heatLightning',
+            heroId: 'raiju',
+            name: 'Heat Lightning',
+            description: 'Runs through the dry summer grass, and the grass goes up behind it.',
+            statGrants: { hp: 30, attack: 20 },
+            unlocksMoveIds: ['blazingRetreat'],
+            typeGraft: 'Fire',
+            learnableMoveIds: ['singe', 'kindle', 'firebrand', 'moltenLash', 'volcanicSurge'],
+          },
+        ],
+      },
+    ],
+    dune: [
+      {
+        paths: [
+          {
+            id: 'dune-worldworm',
+            heroId: 'dune',
+            name: 'Worldworm',
+            description: 'Grows until the desert is its body, and it simply lies down on what it hunts.',
+            statGrants: { hp: 30, attack: 20 },
+            unlocksMoveIds: ['bodyCrush'],
+          },
+          {
+            id: 'dune-glassback',
+            heroId: 'dune',
+            name: 'Glassback',
+            description: 'Basks in the noon sand until its plates fuse to glass, and every blow sears.',
+            statGrants: { attack: 20, defense: 10 },
+            unlocksMoveIds: ['firebrand'],
+            typeGraft: 'Fire',
+            learnableMoveIds: ['singe', 'kindle', 'moltenLash', 'blazingRetreat', 'volcanicSurge'],
+          },
+          {
+            id: 'dune-duneshade',
+            heroId: 'dune',
+            name: 'Duneshade',
+            description: 'Swims only by night, and nothing it surfaces under sees it coming.',
+            statGrants: { hp: 30, speed: 10 },
+            unlocksMoveIds: ['shadowstrike'],
+            typeGraft: 'Shadow',
+            learnableMoveIds: ['backstab', 'fadeStrike', 'shadowSlice', 'cutthroat', 'duskBlade'],
+          },
+        ],
+      },
+    ],
+    cairn: [
+      {
+        paths: [
+          {
+            id: 'cairn-menhir',
+            heroId: 'cairn',
+            name: 'Menhir',
+            description: 'Stops building the pile and becomes the stone at the top of it, and hits like one.',
+            statGrants: { hp: 30, defense: 20 },
+            unlocksMoveIds: ['bodyBlow'],
+          },
+          {
+            id: 'cairn-riverbed',
+            heroId: 'cairn',
+            name: 'Riverbed',
+            description: 'Goes back to the river the stones came out of, and brings the water up with them.',
+            statGrants: { hp: 30, wisdom: 20 },
+            unlocksMoveIds: ['seawall'],
+            typeGraft: 'Water',
+            learnableMoveIds: ['refresh', 'washAway', 'torrent', 'cleansingRain', 'highTide'],
+          },
+          {
+            id: 'cairn-barrow',
+            heroId: 'cairn',
+            name: 'Barrow',
+            description: 'Remembers what a cairn is raised over, and the ones lying under it answer when he calls.',
+            statGrants: { hp: 30, intelligence: 20 },
+            unlocksMoveIds: ['soulRend'],
+            typeGraft: 'Spirit',
+            learnableMoveIds: ['wisp', 'torment', 'secondWind', 'poltergeist', 'seance'],
+          },
+        ],
+      },
+    ],
+    murk: [
+      {
+        paths: [
+          {
+            id: 'murk-lurker',
+            heroId: 'murk',
+            name: 'Lurker',
+            description: 'Waits under the black water without a ripple, and is out of it before the far side sees it move.',
+            statGrants: { hp: 30, attack: 10, defense: 10 },
+            unlocksMoveIds: ['shadowstrike'],
+          },
+          {
+            id: 'murk-mossback',
+            heroId: 'murk',
+            name: 'Mossback',
+            description: 'Lies still long enough for the bog to grow over it, and the moss keeps it mending.',
+            statGrants: { hp: 30, defense: 20 },
+            unlocksMoveIds: ['regrowth'],
+            typeGraft: 'Nature',
+            learnableMoveIds: ['ivySpike', 'sow', 'leafSlice', 'verdantLash', 'branchSlam'],
+          },
+          {
+            id: 'murk-drowner',
+            heroId: 'murk',
+            name: 'Drowner',
+            description: 'Learns the deep pools of the mire, and whatever it catches it holds under.',
+            statGrants: { attack: 20, speed: 10 },
+            unlocksMoveIds: ['aquaSlice'],
+            typeGraft: 'Water',
+            learnableMoveIds: ['undertow', 'siphon', 'tideGuard', 'engulf', 'waveShred'],
+          },
+        ],
+      },
+    ],
+    rook: [
+      {
+        paths: [
+          {
+            id: 'rook-coven',
+            heroId: 'rook',
+            name: 'Coven',
+            description: 'Takes her seat among the old witches, and learns the curse they lay together.',
+            statGrants: { intelligence: 20, speed: 10 },
+            unlocksMoveIds: ['enfeeble'],
+          },
+          {
+            id: 'rook-nightcrow',
+            heroId: 'rook',
+            name: 'Nightcrow',
+            description: 'The crow on her shoulder was never only a bird, and now it flies between the living and the rest.',
+            statGrants: { hp: 30, speed: 10 },
+            unlocksMoveIds: ['poltergeist'],
+            typeGraft: 'Spirit',
+            learnableMoveIds: ['wisp', 'drain', 'soulRend', 'seance', 'banish'],
+          },
+          {
+            id: 'rook-hedgeWitch',
+            heroId: 'rook',
+            name: 'Hedge Witch',
+            description: 'Goes out past the last house to where the bitter herbs grow, and brews what she finds.',
+            statGrants: { hp: 30, intelligence: 10 },
+            unlocksMoveIds: ['blight'],
+            typeGraft: 'Nature',
+            learnableMoveIds: ['toxicSpores', 'corrode', 'rootbind', 'miasma', 'leech'],
+          },
+        ],
+      },
+    ],
+    koan: [
+      {
+        paths: [
+          {
+            id: 'koan-thirdEye',
+            heroId: 'koan',
+            name: 'Third Eye',
+            description: 'Opens the eye behind the blindfold, and strikes with the mind as surely as the hand.',
+            statGrants: { attack: 20, speed: 10 },
+            unlocksMoveIds: ['psychokinesis'],
+          },
+          {
+            id: 'koan-crane',
+            heroId: 'koan',
+            name: 'Crane',
+            description: 'Takes the crane’s stance, one foot and all patience, and the strike comes from above.',
+            statGrants: { attack: 10, speed: 20 },
+            unlocksMoveIds: ['rendingLeap'],
+            typeGraft: 'Beast',
+            learnableMoveIds: ['claw', 'pounce', 'lacerate', 'bloodTrail', 'eviscerate'],
+          },
+          {
+            id: 'koan-bodhi',
+            heroId: 'koan',
+            name: 'Bodhi',
+            description: 'Sits long enough under the sun to see by it, and the fist comes down lit.',
+            statGrants: { hp: 30, wisdom: 20 },
+            unlocksMoveIds: ['holySlice'],
+            typeGraft: 'Light',
+            learnableMoveIds: ['holyStrike', 'vigil', 'purify', 'deityBlade', 'divineGrace'],
+          },
+        ],
+      },
+    ],
+    thane: [
+      {
+        paths: [
+          {
+            id: 'thane-spellsword',
+            heroId: 'thane',
+            name: 'Spellsword',
+            description: 'Stops choosing between the spell and the sword; the mana runs down the blade.',
+            statGrants: { attack: 20, manaPool: 20 },
+            unlocksMoveIds: ['arcaneOverflow'],
+          },
+          {
+            id: 'thane-ironsworn',
+            heroId: 'thane',
+            name: 'Ironsworn',
+            description: 'Swears the oath in steel, and the runes are hammered into plate.',
+            statGrants: { hp: 30, defense: 20 },
+            unlocksMoveIds: ['reinforce'],
+            typeGraft: 'Iron',
+            learnableMoveIds: ['swiftBlow', 'heavyBlow', 'ironSkin', 'shieldBash', 'livingWall'],
+          },
+          {
+            id: 'thane-stormbrand',
+            heroId: 'thane',
+            name: 'Stormbrand',
+            description: 'Writes the last rune in lightning, and the blade never stops humming.',
+            statGrants: { attack: 10, speed: 20 },
+            unlocksMoveIds: ['skyfall'],
+            typeGraft: 'Storm',
+            learnableMoveIds: ['thunderclap', 'staticCharge', 'stormLash', 'shockSlice', 'stormSurge'],
+          },
+        ],
+      },
+    ],
+    trove: [
+      {
+        paths: [
+          {
+            id: 'trove-bottomlessChest',
+            heroId: 'trove',
+            name: 'Bottomless Chest',
+            description: 'Opens the lid all the way, and there is more inside than the chest could ever hold.',
+            statGrants: { hp: 30, manaPool: 20 },
+            unlocksMoveIds: ['fontOfPower'],
+          },
+          {
+            id: 'trove-strongbox',
+            heroId: 'trove',
+            name: 'Strongbox',
+            description: 'Bands itself in iron and locks, and nothing that reaches in comes out whole.',
+            statGrants: { hp: 30, defense: 20 },
+            unlocksMoveIds: ['reinforce'],
+            typeGraft: 'Iron',
+            learnableMoveIds: ['ironFist', 'ironSkin', 'shieldBash', 'livingWall', 'juggernaut'],
+          },
+          {
+            id: 'trove-vaultshade',
+            heroId: 'trove',
+            name: 'Vaultshade',
+            description: 'Sits in the dark corner of the vault and waits for a hand to lift the lid.',
+            statGrants: { attack: 20, speed: 10 },
+            unlocksMoveIds: ['shadowForm'],
+            typeGraft: 'Shadow',
+            learnableMoveIds: ['lieInWait', 'backstab', 'cutthroat', 'smokeBomb', 'duskBlade'],
+          },
+        ],
+      },
+    ],
+    totem: [
+      {
+        paths: [
+          {
+            id: 'totem-elderPole',
+            heroId: 'totem',
+            name: 'Elder Pole',
+            description: 'Carves the oldest face at the top, and that one does not only guide.',
+            statGrants: { hp: 30, wisdom: 20 },
+            unlocksMoveIds: ['banish'],
+          },
+          {
+            id: 'totem-oldGrowth',
+            heroId: 'totem',
+            name: 'Old Growth',
+            description: 'Puts down roots where it stands, and the pole comes into leaf again.',
+            statGrants: { hp: 30, defense: 10, wisdom: 10 },
+            unlocksMoveIds: ['wildBloom'],
+            typeGraft: 'Nature',
+            learnableMoveIds: ['regrowth', 'sow', 'rootbind', 'magicGrowth', 'overgrowth'],
+          },
+          {
+            id: 'totem-spiritAnimal',
+            heroId: 'totem',
+            name: 'Spirit Animal',
+            description: 'The beasts carved beneath the ancestors wake, and they run with the living.',
+            statGrants: { hp: 30, speed: 20 },
+            unlocksMoveIds: ['packLeader'],
+            typeGraft: 'Beast',
+            learnableMoveIds: ['rally', 'howl', 'prowl', 'venomBite', 'animalSpirit'],
+          },
+        ],
+      },
+    ],
+    keen: [
+      {
+        paths: [
+          {
+            id: 'keen-harbinger',
+            heroId: 'keen',
+            name: 'Harbinger',
+            description: 'No longer mourns the dead; she names the next.',
+            statGrants: { intelligence: 20, manaPool: 20 },
+            unlocksMoveIds: ['lastRites'],
+          },
+          {
+            id: 'keen-shroud',
+            heroId: 'keen',
+            name: 'Shroud',
+            description: 'Wraps herself in the dark between the candles, and the wail comes from everywhere.',
+            statGrants: { intelligence: 10, speed: 20 },
+            unlocksMoveIds: ['eclipse'],
+            typeGraft: 'Shadow',
+            learnableMoveIds: ['umbraBolt', 'weaken', 'umbralBeam', 'enfeeble', 'umbralWave'],
+          },
+          {
+            id: 'keen-wintermourn',
+            heroId: 'keen',
+            name: 'Wintermourn',
+            description: 'Wails across the frozen moor, and the breath of all who hear it turns to frost.',
+            statGrants: { hp: 30, wisdom: 20 },
+            unlocksMoveIds: ['frigidAir'],
+            typeGraft: 'Frost',
+            learnableMoveIds: ['deepChill', 'snowBlast', 'blindingSnow', 'permafrost', 'avalanche'],
+          },
+        ],
+      },
+    ],
+    ferra: [
+      {
+        paths: [
+          {
+            id: 'ferra-magnetar',
+            heroId: 'ferra',
+            name: 'Magnetar',
+            description: 'Stops pulling the plate off the far side and pulls a blade together out of the air instead.',
+            statGrants: { intelligence: 20, wisdom: 10 },
+            unlocksMoveIds: ['conjuredSword'],
+          },
+          {
+            id: 'ferra-electromagnet',
+            heroId: 'ferra',
+            name: 'Electromagnet',
+            description: 'Runs a current through the coil, and the pull never switches off.',
+            statGrants: { intelligence: 20, speed: 10 },
+            unlocksMoveIds: ['ionize'],
+            typeGraft: 'Storm',
+            learnableMoveIds: ['staticCharge', 'chainLightning', 'ionicZap', 'ionCascade'],
+          },
+          {
+            id: 'ferra-railgun',
+            heroId: 'ferra',
+            name: 'Railgun',
+            description: 'Lays two rails and fires what she pulls down them, whatever the barrel can stand.',
+            statGrants: { hp: 30, intelligence: 20 },
+            unlocksMoveIds: ['overheat'],
+            typeGraft: 'Mech',
+            learnableMoveIds: ['backfire', 'malfunction', 'meltdown'],
+          },
+        ],
+      },
+    ],
+    abacus: [
+      {
+        paths: [
+          {
+            id: 'abacus-differenceEngine',
+            heroId: 'abacus',
+            name: 'Difference Engine',
+            description: 'Adds a second dome of gears, and runs every failure mode to the end before it happens.',
+            statGrants: { intelligence: 20, manaPool: 20 },
+            unlocksMoveIds: ['perfectCreation'],
+          },
+          {
+            id: 'abacus-prognosticator',
+            heroId: 'abacus',
+            name: 'Prognosticator',
+            description: 'Stops counting what the foe did and starts counting what it is about to.',
+            statGrants: { wisdom: 20, speed: 10 },
+            unlocksMoveIds: ['disorient'],
+            typeGraft: 'Mind',
+            learnableMoveIds: ['psychicBlow', 'wickedFear', 'mindLeech', 'breakWill'],
+          },
+          {
+            id: 'abacus-arithmancer',
+            heroId: 'abacus',
+            name: 'Arithmancer',
+            description: 'Finds that the numbers were spells all along, and says them aloud.',
+            statGrants: { hp: 30, intelligence: 20 },
+            unlocksMoveIds: ['study'],
+            typeGraft: 'Arcane',
+            learnableMoveIds: ['arcaneBlast', 'arcPulse', 'twinCast', 'singularity'],
+          },
+        ],
+      },
+    ],
+    whirr: [
+      {
+        paths: [
+          {
+            id: 'whirr-gyre',
+            heroId: 'whirr',
+            name: 'Gyre',
+            description: 'Winds the mainspring past its stop and never lets it run down.',
+            statGrants: { attack: 15, speed: 10 },
+            unlocksMoveIds: ['overdrive'],
+          },
+          {
+            id: 'whirr-sparkwing',
+            heroId: 'whirr',
+            name: 'Sparkwing',
+            description: 'Beats its wings fast enough to strike sparks off the air.',
+            statGrants: { attack: 15, speed: 10 },
+            unlocksMoveIds: ['stormLash'],
+            typeGraft: 'Storm',
+            learnableMoveIds: ['staticCharge', 'tailwind', 'ionize', 'stormSurge'],
+          },
+          {
+            id: 'whirr-nectarwing',
+            heroId: 'whirr',
+            name: 'Nectarwing',
+            description: 'Learns which flowers to drink from, and which to cut on the way past.',
+            statGrants: { hp: 30, attack: 15 },
+            unlocksMoveIds: ['leafSlice'],
+            typeGraft: 'Nature',
+            learnableMoveIds: ['vineLash', 'ivySpike', 'regrowth', 'branchSlam'],
+          },
+        ],
+      },
+    ],
+    mellow: [
+      {
+        paths: [
+          {
+            id: 'mellow-gentleGiant',
+            heroId: 'mellow',
+            name: 'Gentle Giant',
+            description: 'Grows big enough for the whole side to ride, and the side goes where it goes.',
+            statGrants: { hp: 30, defense: 10 },
+            unlocksMoveIds: ['packLeader'],
+          },
+          {
+            id: 'mellow-hotSpring',
+            heroId: 'mellow',
+            name: 'Hot Spring',
+            description: 'Finds the warm water and never quite gets out of it.',
+            statGrants: { hp: 30, wisdom: 20 },
+            unlocksMoveIds: ['aquaSlice'],
+            typeGraft: 'Water',
+            learnableMoveIds: ['undertow', 'inkCloud', 'siphon', 'waveShred'],
+          },
+          {
+            id: 'mellow-meadow',
+            heroId: 'mellow',
+            name: 'Meadow',
+            description: 'Lies down in the long grass, and the grass grows up around everyone lying on it.',
+            statGrants: { wisdom: 20, defense: 10 },
+            unlocksMoveIds: ['sow'],
+            typeGraft: 'Nature',
+            learnableMoveIds: ['vineLash', 'ivySpike', 'magicGrowth', 'verdantLash'],
           },
         ],
       },

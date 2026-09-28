@@ -282,8 +282,75 @@ Bad Luck takes 5 Attack and 5 Intelligence off a random enemy on every hit it la
 (Spirit, the kitsune — Int 95 / Speed 100 caster; Foxfire Burns 10 on every Spirit hit, and
 Tailfire Volley hits both foes twice).
 
+**Tinder, Selkie, Hush and Lotus, Starfall-only, 2026-09-28** (per user direction; first-pass
+numbers, no sim pass). **Tinder** (Fire, the fire-eater — Speed 105, Fire's fastest by 25, a
+magical Burn-spreader; Fire-Breather gives both active enemies Burn 5 on every Fire hit it lands,
+and Grand Finale breathes Burn 20 across both). **Selkie** (Water, the seal-maiden — Wis 90, the
+type's Wisdom healer beside Nautilus's 75/75 caster-support; Salt Tears washes one affliction off
+whoever it grants Renew, and Sealskin Cloak heals one ally 70 under Renew 40). **Hush** (Frost, the
+snowy owl — Int 95 / Speed 95 against a slate whose heroes top out at Speed 42; Silent Wings gains
+Ambush 15 whenever it Freezes an enemy, so Deep Chill sets up the next strike, and Silent Descent
+drops at +1 priority). **Lotus** (Nature, the lotus mystic — Int 105, the type's magical nuker;
+Unfurl gains 10 Intelligence whenever it gains Renew, fed by its own Regrowth, which also doubles
+its Seed Shot).
+
+**Four more Starfall-only heroes for Storm and Stone, 2026-09-28** (per user direction; first-pass
+numbers, no sim pass). **Nimbus** (Storm, the thunderhead giant — HP 240, the type's first bulk,
+an Int 85 caster at Speed 30; Anvil Cloud gives every hit it takes a 50% chance to leave a random
+enemy Conducting, so the blows it soaks arm the Storm hits that cash them, and Cloudburst marks
+both foes while it rains Renew 20 on both allies). **Kite** (Storm, the windcaller boy — Speed 105
+/ Wis 75, the type's support; Headwind takes 10 Speed off both active enemies whenever he uses a
+move that deals no damage, beside Rising Static and Tailwind for his own side, and Stormkite marks
+and slows both foes at once). **Raiju** (Storm, the thunder weasel — Atk 90 / Speed 100, the
+pivot; Static Wake leaves a random enemy Conducting whenever it switches out, so every Ride the
+Lightning or Relay Strike hands the incoming partner a mark to cash). **Dune** (Stone, the sand
+wyrm — Atk 100 at Speed 65, the mid-speed striker against Crag at Speed 40 and the walls; Undermine
+takes 10 Defense off whatever its Stone attacks hit, coming up from under the armour, and
+Sandbreach bursts out of the sand at +1 priority).
+
+**Cairn, Murk, Rook and Koan, Starfall-only, 2026-09-28** (per user direction; first-pass numbers,
+no sim pass). **Cairn** (Stone, the stone shaman — Def 90 / Wis 75, the type's support against
+Sentinel's wall and Scree's roll; Waystone lays Shield 10 on his partner at every round end, and
+Raise the Cairn shields both allies 40 off his Defense). **Murk** (Shadow, the bog troll — the
+type's bulk at HP 245 against the 180–190 the other Shadow heroes carry, Atk 95 at Speed 25;
+Bogblood mends 5% of its max HP at every round end). **Rook** (Shadow, the crow witch — Int 85
+hexer against Marrow's nuking and Jinx's hit-to-curse; Pecking Crow costs a random enemy 5% of
+its max HP, direct, whenever she uses a move that deals no damage, so her hex turns are her
+damage). **Koan** (Mind, the blind monk — Mind's first physical hero, Atk 90 / Speed 70, carried
+by Iron's and Stone's counters since the Mind slate has no fists; Foresight leaves him Poised
+whenever he takes damage, so the answer lands before the next blow, and Foreseen Blow strikes at
++1 priority behind Shield 30).
+
+**Thane, Trove, Totem and Keen, 2026-09-28** (Starfall-only, first-pass numbers, no sim pass).
+**Thane** (Arcane, the spellblade knight — Atk 100, the type's first physical attacker; Etched
+Runes gives it Ambush 20 whenever it casts a move that deals no damage, so Barrier and Sharpen
+load the next swing, and Spellsword hands it Arcane Overflow, the capstone that only pays on a
+physical body). Arcane had no physical move, so the slate gained two, **Runeslash** (Early, 45)
+and **Wardblade** (Mid, 55 and Shield 20 on self); Trove swings them too. **Trove** (Arcane, the
+mimic chest — HP 230 / Def 85 against a type that stops at 190; Glittering Hoard makes every move
+both active enemies hold cost 5 more Mana on its entry, up to 15, so it is a pivot that taxes, and
+Mimic's Maw drains 30%). **Totem** (Spirit, the ancestor pole — Wis 85 at Speed 20; Ancestral
+Guidance gives its partner Ambush 15 at every round end, a buff that needs no turn and no Speed).
+**Keen** (Spirit, the banshee — Int 100 caster; Death Wail takes 5 Attack and 5 Intelligence off
+BOTH active enemies on every Spirit hit). The Spirit slate stays single-target by design (Haunt is
+its spread), so Keen's wail is her innate, her signature Last Keen (a 65 spread, −15 Attack and
+Intelligence on each) and an off-type spread column in her pool, not a new Spirit row.
+
+**Four more Starfall-only heroes, 2026-09-28** (per user direction; first-pass numbers, no sim
+pass). **Ferra** (Iron, the magnet sorceress — Int 95, Iron's first magical hero; Lodestone
+leaves both active enemies Conducting on entry, so her Storm bolts and the Iron and Mech blows
+beside her cash it, and Ferrous Crush hits a Shield twice as hard. Conjured Sword, the slate's one
+magical row, stays off every Iron pool by `test/ironMoves`, so it is her Magnetar path's grant).
+**Abacus** (Mech, the calculating engine — Int 100 at Speed 45, the type's magical caster against
+Patch's medic; Tally gains 5 Intelligence whenever an enemy attacks, and Distort in its kit sets
+the Stasis Field its slowness wants). **Whirr** (Mech, the clockwork hummingbird — Speed 110 on a
+180 body, the fast striker Rex is not; Flit gives every attack Ambush 10 for the next, and
+Wingbeat Barrage is three hits at +1 priority). **Mellow** (Beast, the capybara — HP 240 / Wisdom
+80, Beast's support against five attackers; Unbothered takes 5 Attack and 5 Intelligence off any
+enemy that lands a hit, and All Aboard Shields and Renews both allies).
+
 **Renames, 2026-09-27** (per user direction, after the sprite redesign): **Cortex → Reverie**
-(`mindweaver`, now the mesmer moth), **Cube → Floe** (`cube`, now the glacier snail) and **Slate → Petra** (`slate`, now the crystal geomancer). Ids,
+(`mindweaver`, now the mesmer moth), **Cube → Floe** (`cube`, now the glacier snail) and **Slate → Petra** (`slate`, now the crystal geomancer; redrawn 2026-09-28 as a dwarf quarrywoman with a rune maul, so she no longer reads as a second robed Stone caster beside Cairn). Ids,
 kits and numbers are unchanged; older sections of the docs use the old names. Aegis is now the
 shrine tortoise, Solace the lantern acolyte, and Scallywag is a woman now (a rapier-and-hook
 duelist) — her name stands.

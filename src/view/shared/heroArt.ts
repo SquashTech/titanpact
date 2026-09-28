@@ -62,6 +62,26 @@ import screeArt from '../../../art/heroes/unlocks/scree.png';
 import aurumArt from '../../../art/heroes/unlocks/aurum.png';
 import jinxArt from '../../../art/heroes/unlocks/jinx.png';
 import kitsuArt from '../../../art/heroes/unlocks/kitsu.png';
+import tinderArt from '../../../art/heroes/unlocks/tinder.png';
+import selkieArt from '../../../art/heroes/unlocks/selkie.png';
+import hushArt from '../../../art/heroes/unlocks/hush.png';
+import lotusArt from '../../../art/heroes/unlocks/lotus.png';
+import nimbusArt from '../../../art/heroes/unlocks/nimbus.png';
+import kiteArt from '../../../art/heroes/unlocks/kite.png';
+import raijuArt from '../../../art/heroes/unlocks/raiju.png';
+import duneArt from '../../../art/heroes/unlocks/dune.png';
+import cairnArt from '../../../art/heroes/unlocks/cairn.png';
+import murkArt from '../../../art/heroes/unlocks/murk.png';
+import rookArt from '../../../art/heroes/unlocks/rook.png';
+import koanArt from '../../../art/heroes/unlocks/koan.png';
+import thaneArt from '../../../art/heroes/unlocks/thane.png';
+import troveArt from '../../../art/heroes/unlocks/trove.png';
+import totemArt from '../../../art/heroes/unlocks/totem.png';
+import keenArt from '../../../art/heroes/unlocks/keen.png';
+import ferraArt from '../../../art/heroes/unlocks/ferra.png';
+import abacusArt from '../../../art/heroes/unlocks/abacus.png';
+import whirrArt from '../../../art/heroes/unlocks/whirr.png';
+import mellowArt from '../../../art/heroes/unlocks/mellow.png';
 
 /** Portraits keyed by hero id (heroes.ts order). A missing entry renders text-only; a Titanspawn or Guardian id never reaches this — HeroPortrait draws it. */
 export const heroArt: Partial<Record<string, string>> = {
@@ -71,34 +91,43 @@ export const heroArt: Partial<Record<string, string>> = {
   brimstone: brimstoneArt,
   drake: drakeArt,
   ashwing: ashwingArt,
+  tinder: tinderArt,
   // --- Water ---
   tidecaller: tidecallerArt,
   pincer: pincerArt,
   leviathan: leviathanArt,
   nautilus: nautilusArt,
   kappa: kappaArt,
+  selkie: selkieArt,
   // --- Frost ---
   glacialWarden: flurryArt,
   rime: rimeArt,
   cube: cubeArt,
   rimehold: rimeholdArt,
   tusk: tuskArt,
+  hush: hushArt,
   // --- Storm ---
   stormRanger: stormRangerArt,
   skyshear: skyshearArt,
   tempest: tempestArt,
   scallywag: scallywagArt,
+  nimbus: nimbusArt,
+  kite: kiteArt,
+  raiju: raijuArt,
   // --- Stone ---
   crag: cragArt,
   sentinel: sentinelArt,
   slate: slateArt,
   scree: screeArt,
+  dune: duneArt,
+  cairn: cairnArt,
   // --- Nature ---
   wildOracle: wildOracleArt,
   mordax: mordaxArt,
   hollowbark: hollowbarkArt,
   tixwick: tixwickArt,
   morel: morelArt,
+  lotus: lotusArt,
   // --- Light ---
   dawnwarden: sunPriestArt,
   aegis: aegisArt,
@@ -111,31 +140,41 @@ export const heroArt: Partial<Record<string, string>> = {
   lucius: luciusArt,
   nightshade: nightshadeArt,
   jinx: jinxArt,
+  murk: murkArt,
+  rook: rookArt,
   // --- Arcane ---
   runescribe: runescribeArt,
   zenith: zenithArt,
   pixie: pixieArt,
   folio: folioArt,
+  thane: thaneArt,
+  trove: troveArt,
   // --- Mind ---
   mindweaver: mindweaverArt,
   trance: tranceArt,
   drift: driftArt,
   motley: motleyArt,
+  koan: koanArt,
   // --- Spirit ---
   revenant: revenantArt,
   sorrow: sorrowArt,
   dread: dreadArt,
   kitsu: kitsuArt,
+  totem: totemArt,
+  keen: keenArt,
   // --- Iron ---
   ironWarden: ironWardenArt,
   valor: valorArt,
   gallant: gallantArt,
   ronin: roninArt,
+  ferra: ferraArt,
   // --- Mech ---
   forgewright: clockworkArt,
   steamColossus: steamColossusArt,
   rex: rexArt,
   patch: patchArt,
+  abacus: abacusArt,
+  whirr: whirrArt,
   // --- Beast ---
   packAlpha: fangArt,
   ursa: ursaArt,
@@ -143,6 +182,7 @@ export const heroArt: Partial<Record<string, string>> = {
   coil: coilArt,
   vex: vexArt,
   kong: kongArt,
+  mellow: mellowArt,
 };
 
 // The Guardians and the Endbringer are not here either: guardianFigures.ts draws them, sealed and
