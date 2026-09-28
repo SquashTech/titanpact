@@ -304,6 +304,73 @@ function slotThin(name, lip) {
   c.save(name);
 }
 
+// The map's top bar: 16x27, tiles horizontally. Dark dressed stone hanging from the screen's top
+// edge, a gold inlay along its foot, and a soft shadow cast onto the scene below.
+function lintel(name, S) {
+  seed = 53;
+  const c = canvas(16, 27);
+  const stone = { mid: hex('#2f323d'), dark: hex('#262833'), light: hex('#3a3e4b'), shade: hex('#1d1f27') };
+  c.rect(0, 0, 15, 20, stone.mid);
+  for (let y = 0; y <= 19; y++)
+    for (let x = 0; x < 16; x++) {
+      const r = rnd();
+      if (r < 0.14) c.set(x, y, stone.dark);
+      else if (r < 0.2) c.set(x, y, stone.light);
+    }
+  // A course joint every block, offset between the two courses.
+  for (let y = 0; y <= 19; y++) c.set(y < 10 ? 0 : 8, y, stone.shade);
+  for (let x = 0; x < 16; x++) {
+    c.set(x, 9, stone.shade);
+    c.set(x, 10, stone.light);
+    c.set(x, 20, stone.shade);
+    c.set(x, 21, S.goldHi);
+    c.set(x, 22, S.goldLo);
+    c.set(x, 23, INK);
+    c.set(x, 24, [0, 0, 0, 140]);
+    c.set(x, 25, [0, 0, 0, 80]);
+    c.set(x, 26, [0, 0, 0, 36]);
+  }
+  c.save(name);
+}
+
+// A small square button: 15x15, drawn whole at 2x (30px). One board in a riveted band.
+function plankSquare(name, W) {
+  seed = 61;
+  const N = 15;
+  const L = N - 1;
+  const c = canvas(N, N);
+  c.rect(0, 0, L, L, W.mid);
+  for (let y = 3; y <= L - 3; y++)
+    for (let x = 3; x <= L - 3; x++) {
+      const r = rnd();
+      if (r < 0.1) c.set(x, y, W.dark);
+      else if (r < 0.16) c.set(x, y, W.light);
+    }
+  for (let x = 3; x <= L - 3; x++) if (x % 4 !== 1) c.set(x, 7, W.grain);
+  c.ring(1, W.band);
+  c.ring(2, W.bandLo);
+  for (let k = 1; k < L; k++) {
+    c.set(k, 1, W.bandHi);
+    c.set(1, k, W.bandHi);
+  }
+  for (const [x, y] of [
+    [2, 2],
+    [L - 2, 2],
+    [2, L - 2],
+    [L - 2, L - 2],
+  ])
+    c.set(x, y, W.rivet);
+  c.ring(0, INK);
+  for (const [x, y] of [
+    [0, 0],
+    [L, 0],
+    [0, L],
+    [L, L],
+  ])
+    c.set(x, y, CLEAR);
+  c.save(name);
+}
+
 // A title bar's underline: 16x4, tiles horizontally. The window frame's gold inlay, on its own.
 function rule(name, S) {
   const c = canvas(16, 4);
@@ -324,5 +391,7 @@ flagstones('flagstones');
 ledge('ledge', STONE);
 slot('slot', null);
 slot('slot-lit', { lo: STONE.goldLo, mid: STONE.gold, hi: STONE.goldHi });
-slotThin('slot-thin', { hi: hex('#4a4f5e'), lo: hex('#1b1e27') });
+lintel('lintel', STONE);
+plankSquare('plank-square', WOOD);
+slotThin('slot-thin',{ hi: hex('#4a4f5e'), lo: hex('#1b1e27') });
 slotThin('slot-thin-lit', { hi: STONE.goldHi, lo: STONE.goldLo });

@@ -37732,3 +37732,124 @@ img.smithy-service-art {
   padding: 0 3px;
   gap: 4px;
 }
+
+/* -- The map's HUD in the kit. The top bar is a stone lintel hung from the screen's edge with the
+   resources carved into it and two small planks at its ends; the Roster is a long plank the party
+   stands on, gilt and glowing when something on it wants opening. -- */
+.map-header::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: calc(var(--shell-pad) * -1);
+  right: calc(var(--shell-pad) * -1);
+  left: calc(var(--shell-pad) * -1);
+  height: calc(var(--shell-pad) + 42px);
+  background: url('../../art/ui/lintel.png') 0 100% / 32px 54px repeat-x;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.map-header-button {
+  opacity: 1;
+  background: url('../../art/ui/plank-square.png') 0 0 / 30px 30px no-repeat;
+  border-radius: 0;
+  color: #eadbbf;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.55));
+  image-rendering: pixelated;
+}
+
+.map-header-button:hover {
+  color: #fff3d6;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.55)) brightness(1.15);
+}
+
+.map-stat {
+  padding: 0 5px;
+  min-height: 24px;
+  border: 4px solid transparent;
+  border-image: url('../../art/ui/slot-thin.png') 2 / 4px round;
+  border-radius: 0;
+  background: #0f1117 padding-box;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+
+.map-footer-button,
+.map-footer-button:hover,
+.map-footer-button.has-unopened,
+.map-footer-button.has-unopened:hover {
+  border: 14px solid transparent;
+  border-image: url('../../art/ui/plank.png') 7 fill / 14px round;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  padding: 0 4px 0 0;
+  color: #eadbbf;
+  text-shadow: 0 2px 0 #1a0f07;
+  image-rendering: pixelated;
+}
+
+.map-footer-button {
+  overflow: visible;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6));
+}
+
+.map-footer-button:hover {
+  transform: none;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6)) brightness(1.1);
+}
+
+/* The party stands on the plank: portraits rise out of the board rather than sitting in it. */
+.map-footer-party {
+  align-self: flex-end;
+  margin-top: -12px;
+}
+
+.map-footer-button.has-unopened {
+  border-image-source: url('../../art/ui/plank-gilt.png');
+  color: #fff3d6;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 10px var(--btn-color));
+}
+
+.map-footer-button.has-unopened .node-glyph {
+  color: #fff3d6;
+}
+
+.map-footer-button.has-unopened::after {
+  inset: -8px;
+  mix-blend-mode: overlay;
+}
+
+.map-footer-button.has-unopened {
+  animation: map-roster-alert 1.8s ease-in-out infinite;
+}
+
+.map-footer-button.has-unopened::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  background: radial-gradient(ellipse 70% 90% at 50% 50%, rgba(255, 214, 140, 0.34), rgba(255, 214, 140, 0.08) 70%, transparent);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.map-footer-button.has-unopened::after {
+  mix-blend-mode: normal;
+  opacity: 0.55;
+}
+
+@keyframes map-roster-alert {
+  0%,
+  100% {
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 5px rgba(255, 214, 140, 0.75)) drop-shadow(0 0 12px var(--btn-color));
+  }
+  50% {
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 8px rgba(255, 214, 140, 1)) drop-shadow(0 0 22px var(--btn-color));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-footer-button.has-unopened {
+    animation: none;
+  }
+}
