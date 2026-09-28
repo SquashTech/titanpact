@@ -7,7 +7,8 @@
 > §6: **Blessings and Haunt first**, Burn and Renew after, the two fields with them.
 > **Phase 1 is BUILT (2026-09-28):** the engine, the roster flag, the opening pair Blessed at run
 > start, the spend beat and the marks (§1.6). `SIM_NO_BLESSING=1` is the sim's
-> A/B for phase 4. **Phase 2 is BUILT (same day):** the Pactwarden's scene (§1.5).
+> A/B for phase 4. **Phase 2 is BUILT (same day):** the Pactwarden's scene (§1.5). **Phase 3 is BUILT
+> (same day):** Haunt flipped, passing on a knockout, Wisp certain, Lament and Keening on the echo (§2.5).
 
 ---
 
@@ -195,7 +196,7 @@ because the player now hits the Haunted hero directly instead of around it.
 | Card | Holder | Today | Under the flip | Watch |
 |---|---|---|---|---|
 | Ghostlight / Wraithfire | Revenant (innate / mastered) | Spirit Force on each Haunt applied | Fires on every KO pass as well | Force stacks faster; fine at 10, watch 25 |
-| Lament / Keening | Sorrow (innate / mastered) | Heal when damaging a Haunted enemy | Fires on nearly every hit | **Likely too strong** — a drain on every attack. Halve it, or have it read the echo only |
+| Lament / Keening | Sorrow (innate / mastered) | Heal when damaging a Haunted enemy | Would fire on nearly every hit | **Built: reads the echo only** (`viaStatusId: 'Haunt'`), healing for what the echo dealt |
 | Nightmare / Night Terror | Dread (innate / mastered) | 10% / 20% max HP a round to each Haunted enemy | Haunt persists through KOs, so the tick keeps finding a host | Night Terror's 20% may need to come down |
 | Enthrall | Evolution grant | Water hits apply Haunt | Unchanged — a delivery | — |
 | Omen | Evolution grant | Both enemies Haunted on entry | Both Haunted means a Spirit hit on either strikes both: two-target Spirit for the fight | Strong but it's the Evolution's payoff; keep |
@@ -208,6 +209,26 @@ because the player now hits the Haunted hero directly instead of around it.
 Card text: *"A Spirit or Mind attack on this hero also strikes its partner. When this hero falls,
 the Haunt passes to its partner. Cleared by switching."* Torment's line (*"a blow to one is a blow
 to both"*) survives unchanged.
+
+### 2.5 As built (2026-09-28)
+
+- **The flip:** `expandSpreadTargets` asks whether the *target* holds a status whose
+  `spreadTriggerTypes` include the move's type, and if so adds the target's standing partner, stamped
+  `viaStatusId`. A hit on the Haunted hero's partner no longer spreads.
+- **Passing on:** `StatusDefinition.passesOnFaint` (Haunt alone). `passFaintedStatuses` sweeps
+  between actions and after each round-end step (the ticks, the Clock, the round's end). It takes
+  the status off the fallen (`StatusRemoved` with reason `'passed'`) and applies it to the partner.
+  With no partner free, it goes on `CombatState.pendingSideStatuses`, and the next hero to enter on
+  that side takes it (`performSwitch`). Removing it from the fallen is what makes the sweep run once.
+  The pass is a `StatusApplied`, so Revenant's Ghostlight fires on it. The view shows one beat:
+  *"The Haunt on X passes to Y"*. The echo's banner now reads *"Y is caught in the Haunt"*, since
+  the partner isn't the Haunted one any more.
+- **Wisp** is certain (a guaranteed rider at its old price). That leaves it Poltergeist's cheaper
+  Early twin; whether Poltergeist wants something of its own is a question for phase 4.
+- **Lament and Keening read the echo only** (§2.3). **Night Terror stays at 20%** until phase 4
+  measures it.
+- `authoring-moves.md`'s status reference row is updated; its older slate notes that describe the
+  old direction are left as history.
 
 ---
 

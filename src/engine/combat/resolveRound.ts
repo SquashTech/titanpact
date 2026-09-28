@@ -36,6 +36,7 @@ import {
   statusGatedTargets,
   blockingStatusId,
   expandSpreadTargets,
+  passFaintedStatuses,
   tickEndOfRound,
   resolveShieldBrokenRiders,
 } from './statusEngine';
@@ -83,6 +84,18 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
   const maxHpOf = (id: string) => getMaxHp(heroes[working.combatants[id].heroId], working.combatants[id]);
   const maxManaOf = (id: string) => getMaxMana(heroes[working.combatants[id].heroId], working.combatants[id]);
 
+  // Haunt passing on a knockout (passesOnFaint), swept between actions and after each round-end
+  // step that can knock someone out; the pass is a StatusApplied, so it feeds the reaction pass.
+  const sweepPassing = () => {
+    const passed = passFaintedStatuses(working, round, statuses);
+    if (passed.events.length === 0) return;
+    working = passed.state;
+    events.push(...passed.events);
+    const reactions = resolvePassiveReactions(working, round, passed.events, heroes, statuses, passives, fieldEffects);
+    working = reactions.state;
+    events.push(...reactions.events);
+  };
+
   const { ordered, keys, reversedSpeed, nextRngState } = orderActions(working, heroes, actions, moves, working.rngState, fieldEffects, passives, statuses);
   working = { ...working, rngState: nextRngState };
   if (keys.length > 0) {
@@ -95,6 +108,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
   }
 
   for (const action of ordered) {
+    sweepPassing();
     const actor = working.combatants[action.combatantId];
     if (!actor || actor.fainted) continue;
 
@@ -906,6 +920,8 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     }
   }
 
+  sweepPassing();
+
   // Round-boundary steps, in this fixed order.
   const regen = applyBenchHpRegen(working, round, config.benchHpRegenFlat, maxHpOf);
   working = regen.state;
@@ -922,6 +938,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
   const tickReactions = resolvePassiveReactions(working, round, statusTicks.events, heroes, statuses, passives, fieldEffects);
   working = tickReactions.state;
   events.push(...tickReactions.events);
+  sweepPassing();
 
   // A draining field presses on the Clock's terms — no reaction pass — then the field counts down.
   const drain = tickFieldEffectDrain(working, round, fieldEffects, heroes, maxHpOf);
@@ -943,6 +960,8 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
   const roundEndReactions = resolvePassiveReactions(working, round, [ended], heroes, statuses, passives, fieldEffects);
   working = roundEndReactions.state;
   events.push(...roundEndReactions.events);
+
+  sweepPassing();
 
   return { state: { ...working, round: working.round + 1 }, events };
 }

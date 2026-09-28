@@ -56,7 +56,7 @@ export type StatusStacking =
   | 'additiveMagnitudeFixedDuration';
 
 /** Why a status left a combatant — carried on StatusRemovedEvent. */
-export type StatusRemovalReason = 'decay' | 'expired' | 'switch' | 'cleanse' | 'consumed' | 'broken';
+export type StatusRemovalReason = 'decay' | 'expired' | 'switch' | 'cleanse' | 'consumed' | 'broken' | 'passed';
 
 /** One record per status (docs/conditions.md); statusEngine.ts reads these flags generically. */
 export interface StatusDefinition {
@@ -89,8 +89,10 @@ export interface StatusDefinition {
   triggerTypes?: readonly TypeId[];
   /** Paired with triggerTypes — fraction of the target's max HP. */
   detonateBonusPercentMaxHp?: number;
-  /** Haunt: a singleEnemy damage move of one of these types also strikes an active ally-of-target carrying this status (statusEngine.ts expandSpreadTargets). */
+  /** Haunt: a singleEnemy damage move of one of these types aimed at the holder also strikes the holder's active partner (statusEngine.ts expandSpreadTargets). */
   spreadTriggerTypes?: readonly TypeId[];
+  /** Haunt: when the holder is knocked out the status passes to its active partner, or, with none free, to the next hero to enter on that side (statusEngine.ts passFaintedStatuses). */
+  passesOnFaint?: boolean;
   /** Provoke: every single-target move the OPPOSING side aims at this side lands on the holder — any kind. Own-side and spread moves untouched. */
   redirectsSingleTargetEnemyMoves?: boolean;
   /** Elemental Force: magnitude added to the BasePower of moves of this type BEFORE the multiplier chain — not a DamageModifier (damagePipeline.ts resolveElementalForceBonus). One status per type. */
@@ -171,7 +173,7 @@ export interface PassiveTriggerCondition {
   everyNRounds?: number;
   /** DamageDealt only: the hit knocked its target out (DamageDealtEvent.finishing). Rex's and Ursa's finishing blows. */
   finishingBlow?: true;
-  /** The event's target-role combatant holds this status when the reaction is read (after the hit has landed). Sorrow's Lament: a Haunted enemy struck. */
+  /** The event's target-role combatant holds this status when the reaction is read (after the hit has landed). */
   eventTargetHasStatus?: StatusId;
 }
 

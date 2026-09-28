@@ -392,8 +392,9 @@ export function detonateStatusNow(
 }
 
 /**
- * Haunt's hook, generic over `spreadTriggerTypes`: a singleEnemy damage move resolved to
- * one target also hits the target's active ally if that ally holds a matching status.
+ * Haunt's hook, generic over `spreadTriggerTypes`: a singleEnemy damage move resolved to one
+ * target that holds a matching status also hits that target's active partner — the echo follows
+ * the hit, so focusing the Haunted hero is what spreads it (docs/blessings-and-statuses.md §2).
  * Only singleEnemy expands (LOCKED, docs/conditions.md §7) — native spread moves are untouched.
  */
 export function expandSpreadTargets(
@@ -407,17 +408,53 @@ export function expandSpreadTargets(
   const target = state.combatants[targetIds[0]];
   if (!target) return { targetIds: [...targetIds], spreadVia: {} };
 
-  const spreadDefs = Object.values(statusDefs).filter((def) => def.spreadTriggerTypes?.includes(moveType));
-  // spreadVia lets the caller stamp DamageDealt.viaStatusId on the dragged-in target.
+  const match = Object.values(statusDefs).find((def) => def.spreadTriggerTypes?.includes(moveType) && hasStatus(target, def.id));
+  if (!match) return { targetIds: [...targetIds], spreadVia: {} };
+  // spreadVia lets the caller stamp DamageDealt.viaStatusId on the dragged-in partner.
   const spreadVia: Record<string, StatusId> = {};
-  const extra = state.active[target.side].filter((id): id is string => {
-    if (!id || id === targetIds[0] || state.combatants[id]?.fainted) return false;
-    const match = spreadDefs.find((def) => hasStatus(state.combatants[id], def.id));
-    if (match) spreadVia[id] = match.id;
-    return !!match;
-  });
+  const extra = state.active[target.side].filter((id): id is string => !!id && id !== targetIds[0] && !state.combatants[id]?.fainted);
+  for (const id of extra) spreadVia[id] = match.id;
 
   return { targetIds: extra.length > 0 ? [...targetIds, ...extra] : [...targetIds], spreadVia };
+}
+
+/**
+ * Haunt passing on (`passesOnFaint`): a knocked-out holder gives the status to its active partner,
+ * or, with none free (no partner, or one already holding it), leaves it waiting for the next hero
+ * to enter on that side (`pendingSideStatuses`, taken in switching.ts performSwitch). Removing it
+ * from the fallen is what marks it passed, so the sweep can run at any point and runs once.
+ */
+export function passFaintedStatuses(
+  state: CombatState,
+  round: number,
+  statusDefs: Record<string, StatusDefinition>
+): StatusResult {
+  let working = state;
+  const events: CombatEvent[] = [];
+  for (const fallen of Object.values(state.combatants)) {
+    if (!fallen.fainted) continue;
+    for (const statusId of Object.keys(fallen.statuses)) {
+      const def = statusDefs[statusId];
+      if (!def?.passesOnFaint) continue;
+      const removed = removeStatus(working, round, fallen.combatantId, statusId, 'passed');
+      working = removed.state;
+      events.push(...removed.events);
+      const partnerId = working.active[fallen.side].find(
+        (id): id is string => !!id && id !== fallen.combatantId && !working.combatants[id].fainted && !hasStatus(working.combatants[id], statusId)
+      );
+      if (partnerId) {
+        const applied = applyStatus(working, round, partnerId, def, {});
+        working = applied.state;
+        events.push(...applied.events);
+      } else {
+        const waiting = working.pendingSideStatuses?.[fallen.side] ?? [];
+        if (!waiting.includes(statusId)) {
+          working = { ...working, pendingSideStatuses: { ...working.pendingSideStatuses, [fallen.side]: [...waiting, statusId] } };
+        }
+      }
+    }
+  }
+  return { state: working, events };
 }
 
 /**

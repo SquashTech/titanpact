@@ -396,16 +396,15 @@ test('foresight: a hit taken leaves Koan Poised; Satori adds Ambush 30 beside it
   assert.strictEqual(statusMagnitude(mastered, 'Ambush'), 30);
 });
 
-test('lament: a hit on a Haunted enemy heals Sorrow for its amount, and nothing on an unhaunted one', () => {
+test('lament: Sorrow heals for what its echo dealt — the partner a Haunt drags in — and not for the hit on the Haunted one', () => {
   const base = withField(withPassive(twoVTwo(25, 'sorrow', 'valor', 'ironWarden', 'crag'), 'a1', 'lament'), 'a1', { currentHp: 20 });
   const strike = (s: CombatState) =>
     resolveRound(s, [{ kind: 'move', combatantId: 'a1', moveId: 'phantomStrike', declaredTarget: 'b1' }, ...restAll(s).filter((a) => a.combatantId !== 'a1')], config);
-  // Torment (a buff-kind move) sets the table out of the box; the next Phantom Strike drains.
   const r = strike(withStatus(base, 'b1', 'Haunt'));
-  const dealt = r.events.find((e) => e.type === 'DamageDealt' && e.sourceCombatantId === 'a1');
-  assert.ok(dealt && dealt.type === 'DamageDealt');
-  assert.strictEqual(r.state.combatants.a1.currentHp, 20 + dealt.amount);
-  assert.strictEqual(strike(base).state.combatants.a1.currentHp, 20, 'not Haunted: nothing');
+  const echo = r.events.find((e) => e.type === 'DamageDealt' && e.sourceCombatantId === 'a1' && e.viaStatusId === 'Haunt');
+  assert.ok(echo && echo.type === 'DamageDealt' && echo.targetCombatantId === 'b2', 'the hit on the Haunted b1 spread to its partner');
+  assert.strictEqual(r.state.combatants.a1.currentHp, 20 + echo.amount);
+  assert.strictEqual(strike(base).state.combatants.a1.currentHp, 20, 'nothing Haunted, no echo: nothing');
 });
 
 test('nightmare: at round end every Haunted active enemy loses a tenth of its max HP, direct — past a Shield, never an unhaunted one', () => {

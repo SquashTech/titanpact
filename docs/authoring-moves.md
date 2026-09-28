@@ -510,7 +510,7 @@ The catalog (`src/data/statuses.ts`, `docs/conditions new.md`):
 | `Daze` | boolean | Cannot use a move for the REST OF THE ROUND, then gone. Flinch: worth nothing if its applier acted second | Yes (moot) |
 | `Poison` | timer | Magnitude builds, duration only ticks while active, detonates at 0 | No (stalls on the bench) |
 | `Conduct` | boolean | A Storm/Iron/Mech damage move detonates it for bonus %maxHP | No |
-| `Haunt` | boolean | A Spirit/Mind single-target hit on the partner also strikes the holder | Yes |
+| `Haunt` | boolean | A Spirit/Mind single-target hit on the holder also strikes its partner; passes to the partner on a knockout (`blessings-and-statuses.md` §2, 2026-09-28) | Yes |
 | `Ambush` | magnitude, positive | Adds its magnitude as flat Base Power to the next attack the holder lands, whatever the move type, then is spent. No clock | Yes |
 | `Provoke` | duration | Every single-target move the enemy side aims at this side is redirected onto the holder. Spread moves are unaffected | Yes |
 | `Shield` | magnitude, positive | Bonus health (`docs/shield.md`): a move's hit is taken from it before HP; a DoT tick, the Pact Clock, recoil and a self-cost go straight through. Lasts until a hit empties it; adds up to the holder's max HP. X scales off the caster's **Defense** (§3) | No |

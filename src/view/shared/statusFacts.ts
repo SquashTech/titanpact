@@ -59,7 +59,8 @@ export function statusFacts(def: StatusDefinition): StatusFact[] {
       text: `A ${typeList(def.triggerTypes)} hit: +${Math.round(def.detonateBonusPercentMaxHp * 100)}% of max HP, then spent`,
     });
   }
-  if (def.spreadTriggerTypes) rows.push({ label: 'Spread', text: `A ${typeList(def.spreadTriggerTypes)} hit on the partner also strikes here` });
+  if (def.spreadTriggerTypes) rows.push({ label: 'Spread', text: `A ${typeList(def.spreadTriggerTypes)} hit here also strikes the partner` });
+  if (def.passesOnFaint) rows.push({ label: 'Passes on', text: 'When this hero falls, it passes to the partner' });
   if (def.forceType) rows.push({ label: 'Base Power', text: `+magnitude on every ${def.forceType} move` });
   if (def.forceAllTypes) rows.push({ label: 'Base Power', text: `+magnitude on the next hit, any type${def.consumedOnDamage ? ' — then spent' : ''}` });
   rows.push({ label: 'Reapplied', text: stackingText(def) });
@@ -83,7 +84,8 @@ export function statusFactsLine(def: StatusDefinition): string {
   if (def.triggerTypes && def.detonateBonusPercentMaxHp != null) {
     parts.push(`${typeList(def.triggerTypes)} hit detonates it for ${Math.round(def.detonateBonusPercentMaxHp * 100)}% max HP`);
   }
-  if (def.spreadTriggerTypes) parts.push(`${typeList(def.spreadTriggerTypes)} hits on the partner spread here`);
+  if (def.spreadTriggerTypes) parts.push(`${typeList(def.spreadTriggerTypes)} hits here spread to the partner`);
+  if (def.passesOnFaint) parts.push('passes to the partner on a knockout');
   if (def.forceType) parts.push(`+BP on ${def.forceType} moves`);
   if (def.forceAllTypes) parts.push('+BP on the next hit');
   // A control status carries its rule in prose alone (Freeze, Daze), so the sentence stands in.

@@ -101,6 +101,8 @@ export interface CombatState {
    * phased fight is bracketed on its own (docs/titan-eyes.md §10). Unset = round 1.
    */
   phaseStartedRound?: number;
+  /** A passesOnFaint status with no partner free to take it, waiting for the next hero to enter on that side (statusEngine.ts passFaintedStatuses, switching.ts performSwitch). */
+  pendingSideStatuses?: Partial<Record<Side, StatusId[]>>;
 }
 
 /** The fight phase a combatant belongs to: 0 for the opening company, Squad.reserves' index + 1 after. */

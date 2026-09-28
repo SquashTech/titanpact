@@ -169,8 +169,9 @@ export const statuses: Record<string, StatusDefinition> = {
     stacking: 'none',
     clearsOnSwitch: true,
     spreadTriggerTypes: ['Spirit', 'Mind'],
+    passesOnFaint: true,
     pipeline: 'target',
-    description: "While active, a Spirit or Mind attack aimed at this hero's partner also strikes this hero. Cleared by switching.",
+    description: 'A Spirit or Mind attack on this hero also strikes its partner. When this hero falls, the Haunt passes to its partner. Cleared by switching.',
   },
   // Broadside's magazine (docs/innate-passives.md §7, Scallywag): one loaded a round on the bench, all
   // fired on the way in. A counter and nothing else — no tick, no decay, spent by the firing.

@@ -12,6 +12,7 @@ import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
 import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
+import { applyForcedReplacement } from '../src/engine/combat/switching';
 import type { Action } from '../src/engine/combat/actions';
 import { getEffectiveStat, hasStatus } from '../src/engine/state';
 import { applyStatus, cleanseStatuses, selectableTargets } from '../src/engine/combat/statusEngine';
@@ -269,9 +270,9 @@ test('status: reapplying Poison mid-timer adds to magnitude without resetting th
 
 // --- Haunt: singleEnemy Spirit/Mind attacks become spread ---
 
-test('status: Haunt turns a singleEnemy Spirit/Mind attack into a spread hit on the Haunted partner', () => {
+test('status: Haunt turns a singleEnemy Spirit/Mind attack ON the Haunted hero into a spread hit on its partner', () => {
   const state = twoVTwoFixture(220);
-  const haunted = withStatus(state, 'b2', 'Haunt', {});
+  const haunted = withStatus(state, 'b1', 'Haunt', {});
   const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'soulRend', declaredTarget: 'b1' }]; // Spirit-typed
 
   const { state: next, events } = resolveRound(haunted, actions, config);
@@ -281,13 +282,77 @@ test('status: Haunt turns a singleEnemy Spirit/Mind attack into a spread hit on 
   assert.ok(next.combatants.b2.currentHp < fixtureMaxHp('wildOracle'));
 });
 
+test('status: a hit on the Haunted hero\'s PARTNER does not spread — the echo follows the hit on the Haunted one', () => {
+  const state = twoVTwoFixture(222);
+  const haunted = withStatus(state, 'b2', 'Haunt', {});
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'soulRend', declaredTarget: 'b1' }];
+
+  const { state: next, events } = resolveRound(haunted, actions, config);
+  assert.ok(!events.some((e) => e.type === 'DamageDealt' && e.viaStatusId === 'Haunt'));
+  assert.strictEqual(next.combatants.b2.currentHp, fixtureMaxHp('wildOracle'));
+});
+
 test('status: a non-Spirit/Mind attack does not trigger Haunt spread', () => {
   const state = twoVTwoFixture(221);
-  const haunted = withStatus(state, 'b2', 'Haunt', {});
+  const haunted = withStatus(state, 'b1', 'Haunt', {});
   const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }]; // Fire-typed
 
   const { state: next } = resolveRound(haunted, actions, config);
   assert.strictEqual(next.combatants.b2.currentHp, fixtureMaxHp('wildOracle'));
+});
+
+// --- Haunt passes on a knockout (passesOnFaint) ---
+
+function hauntBenchFixture(seed: number) {
+  return deepMana(
+    createFightState(
+      seed,
+      [
+        { combatantId: 'a1', heroId: 'cinderKnight', side: 'A' },
+        { combatantId: 'a2', heroId: 'tidecaller', side: 'A' },
+      ],
+      [
+        { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
+        { combatantId: 'b2', heroId: 'wildOracle', side: 'B' },
+        { combatantId: 'b3', heroId: 'crag', side: 'B' },
+      ]
+    )
+  );
+}
+
+const koB1: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }];
+
+test('status: a Haunted hero knocked out passes its Haunt to its partner, the same round', () => {
+  let state = withStatus(hauntBenchFixture(230), 'b1', 'Haunt', {});
+  state = { ...state, combatants: { ...state.combatants, b1: { ...state.combatants.b1, currentHp: 1 } } };
+  const { state: next, events } = resolveRound(state, koB1, config);
+  assert.ok(next.combatants.b1.fainted);
+  assert.ok(hasStatus(next.combatants.b2, 'Haunt'), 'the partner took it');
+  assert.ok(!hasStatus(next.combatants.b1, 'Haunt'), 'and the fallen no longer holds it');
+  assert.ok(events.some((e) => e.type === 'StatusRemoved' && e.combatantId === 'b1' && e.statusId === 'Haunt' && e.reason === 'passed'));
+  assert.ok(events.some((e) => e.type === 'StatusApplied' && e.combatantId === 'b2' && e.statusId === 'Haunt'));
+});
+
+test('status: with its partner already Haunted, a fallen Haunt waits for the next hero in — one pass, never two', () => {
+  let state = withStatus(withStatus(hauntBenchFixture(231), 'b1', 'Haunt', {}), 'b2', 'Haunt', {});
+  state = { ...state, combatants: { ...state.combatants, b1: { ...state.combatants.b1, currentHp: 1 } } };
+  const r = resolveRound(state, koB1, config);
+  assert.deepStrictEqual(r.state.pendingSideStatuses?.B, ['Haunt']);
+  assert.ok(!hasStatus(r.state.combatants.b3, 'Haunt'), 'still on the bench');
+  const slot = r.state.active.B[0] === null ? 0 : 1;
+  const replaced = applyForcedReplacement(r.state, r.state.round, 'B', slot, 'b3', statuses);
+  assert.ok(hasStatus(replaced.state.combatants.b3, 'Haunt'), 'the hero taking the fallen one\'s place is Haunted');
+  assert.deepStrictEqual(replaced.state.pendingSideStatuses?.B, []);
+  assert.ok(replaced.events.some((e) => e.type === 'StatusApplied' && e.combatantId === 'b3' && e.statusId === 'Haunt'));
+});
+
+test('status: a status without passesOnFaint dies with its holder', () => {
+  let state = withStatus(hauntBenchFixture(232), 'b1', 'Bleed', {});
+  state = { ...state, combatants: { ...state.combatants, b1: { ...state.combatants.b1, currentHp: 1 } } };
+  const { state: next } = resolveRound(state, koB1, config);
+  assert.ok(next.combatants.b1.fainted);
+  assert.ok(!hasStatus(next.combatants.b2, 'Bleed'));
+  assert.strictEqual(next.pendingSideStatuses, undefined);
 });
 
 // --- Ambush: a typeless Force, spent on the next attack ---

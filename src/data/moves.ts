@@ -2923,11 +2923,11 @@ export const moves: Record<string, MoveDefinition> = {
     category: 'magical',
     kind: 'damage',
     basePower: 40,
-    statusApplication: { statusId: 'Haunt', chance: 0.5, target: 'moveTarget' },
+    statusApplication: { statusId: 'Haunt', target: 'moveTarget' },
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A drifting light that sometimes catches and clings (50% chance to Haunt).',
+    description: 'A drifting light that catches and clings (applies Haunt).',
   },
   torment: {
     id: 'torment',

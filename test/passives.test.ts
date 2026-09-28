@@ -994,22 +994,22 @@ test('passives: Enthrall Haunts what its Water hits, and only that', () => {
 test('passives: Enthrall plants with Water and cashes with the GRAFT — a Mind move then hits both', () => {
   const state = withPassive(riptideFixture(701), 'a1', 'enthrall');
   const marked = resolveRound(state, [waterHit], config).state;
-  const { events } = resolveRound(marked, [{ kind: 'move', combatantId: 'a1', moveId: 'psyshock', declaredTarget: 'b2' } as Action], config);
+  const { events } = resolveRound(marked, [{ kind: 'move', combatantId: 'a1', moveId: 'psyshock', declaredTarget: 'b1' } as Action], config);
 
   const hits = (events.filter((e) => e.type === 'DamageDealt') as any[]).filter((h) => h.sourceCombatantId === 'a1');
   assert.deepStrictEqual(hits.map((h) => h.targetCombatantId).sort(), ['b1', 'b2']);
-  assert.strictEqual(hits.find((h) => h.targetCombatantId === 'b1').viaStatusId, 'Haunt');
+  assert.strictEqual(hits.find((h) => h.targetCombatantId === 'b2').viaStatusId, 'Haunt');
 });
 
 test('passives: Enthrall keeps planting and cashing in SEPARATE columns — Water never spreads off its own mark', () => {
   const state = withPassive(riptideFixture(702), 'a1', 'enthrall');
   const marked = resolveRound(state, [waterHit], config).state;
-  // b1 is Haunted; a Water move aimed at b2 would spread if Water triggered Haunt. It does not:
+  // b1 is Haunted; a Water move aimed at it would spread if Water triggered Haunt. It does not:
   // Haunt.spreadTriggerTypes is Spirit and Mind, which is what makes the graft load-bearing.
-  const { events } = resolveRound(marked, [{ kind: 'move', combatantId: 'a1', moveId: 'torrent', declaredTarget: 'b2' } as Action], config);
+  const { events } = resolveRound(marked, [{ kind: 'move', combatantId: 'a1', moveId: 'torrent', declaredTarget: 'b1' } as Action], config);
 
   const hits = (events.filter((e) => e.type === 'DamageDealt') as any[]).filter((h) => h.sourceCombatantId === 'a1');
-  assert.deepStrictEqual(hits.map((h) => h.targetCombatantId), ['b2']);
+  assert.deepStrictEqual(hits.map((h) => h.targetCombatantId), ['b1']);
 });
 
 test('passives: Enthrall reads the move TYPE — a non-Water hit from the same hero plants nothing', () => {

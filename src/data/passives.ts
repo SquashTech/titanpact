@@ -1209,11 +1209,12 @@ const innatePassives: Record<string, PassiveDefinition> = {
   lament: {
     id: 'lament',
     name: 'Lament',
-    description: 'Whenever this hero damages a Haunted enemy, it heals for that amount.',
-    // Read after the hit lands. Torment (a buff-kind move) sets the Haunt out of the box; the strikes after it drain.
+    description: "Whenever this hero's attack spreads through a Haunt, it heals for what the echo dealt.",
+    // The echo alone (DamageDealt.viaStatusId): since the flip every hit on the Haunted target spreads, and
+    // healing off all of them would be a drain on every attack (docs/blessings-and-statuses.md §2.3).
     reactive: {
       hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Haunt' },
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { viaStatusId: 'Haunt' } },
       effect: { kind: 'heal', target: 'self', amount: { kind: 'matchTriggerAmount' } },
     },
   },
@@ -2085,20 +2086,20 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   keening: {
     id: 'keening',
     name: 'Keening',
-    description: 'Whenever this hero damages a Haunted enemy, it heals for that amount, and its partner for half of it.',
+    description: "Whenever this hero's attack spreads through a Haunt, it heals for what the echo dealt, and its partner for half of it.",
     reactive: {
       hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Haunt' },
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { viaStatusId: 'Haunt' } },
       effect: { kind: 'heal', target: 'self', amount: { kind: 'matchTriggerAmount' } },
     },
   },
   keeningShare: {
     id: 'keeningShare',
     name: 'Keening',
-    description: "Whenever this hero damages a Haunted enemy, its partner heals for half of it.",
+    description: "Whenever this hero's attack spreads through a Haunt, its partner heals for half of what the echo dealt.",
     reactive: {
       hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Haunt' },
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { viaStatusId: 'Haunt' } },
       effect: { kind: 'heal', target: 'ally', amount: { kind: 'matchTriggerAmount', multiplier: 0.5 } },
     },
   },

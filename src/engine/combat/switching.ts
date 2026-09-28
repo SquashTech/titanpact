@@ -5,7 +5,7 @@ import type { CombatState, Side } from '../state';
 import { canSwitchOut, isLockedIn, phaseOf } from '../state';
 import type { CombatEvent, BenchRegenTickedEvent } from '../events';
 import type { StatusDefinition } from '../content';
-import { clearOnSwitch } from './statusEngine';
+import { applyStatus, clearOnSwitch } from './statusEngine';
 
 export class SwitchBlockedError extends Error {}
 
@@ -116,6 +116,19 @@ function performSwitch(
     const cleared = clearOnSwitch(nextState, round, outCombatantId, statusDefs);
     nextState = cleared.state;
     events.push(...cleared.events);
+  }
+
+  // A Haunt left with no partner to take it lands on whoever enters next (passFaintedStatuses).
+  const waiting = nextState.pendingSideStatuses?.[side];
+  if (waiting && waiting.length > 0) {
+    nextState = { ...nextState, pendingSideStatuses: { ...nextState.pendingSideStatuses, [side]: [] } };
+    for (const statusId of waiting) {
+      const def = statusDefs[statusId];
+      if (!def) continue;
+      const applied = applyStatus(nextState, round, inCombatantId, def, {});
+      nextState = applied.state;
+      events.push(...applied.events);
+    }
   }
 
   return { state: nextState, events };

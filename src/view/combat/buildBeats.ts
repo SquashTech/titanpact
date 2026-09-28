@@ -391,7 +391,7 @@ export function buildBeats(
               : '';
         const tagKind = e.isCrit ? 'crit' : e.typeMult >= 2 ? 'super' : e.typeMult <= 0.5 ? 'resist' : 'damage';
         const targetName = name(e.targetCombatantId);
-        // Haunt dragged this target into a hit declared against its partner.
+        // Haunt dragged this target into a hit declared against its Haunted partner.
         const haunted = e.viaStatusId === 'Haunt';
         const absorbed = e.absorbed ?? 0;
         // The Shield's share is the figure the player sees, never a silent nothing (docs/shield.md §3.3):
@@ -414,7 +414,7 @@ export function buildBeats(
               : absorbed > 0
                 ? `${targetName}'s Shield absorbs ${absorbed}${tag}`
                 : haunted
-                  ? `${targetName}'s Haunt drags them into the attack — takes ${e.amount} damage${tag}`
+                  ? `${targetName} is caught in the Haunt — takes ${e.amount} damage${tag}`
                   : `${targetName} takes ${e.amount} damage${tag}`;
         push(
           applied,
@@ -433,7 +433,7 @@ export function buildBeats(
               : absorbed > 0
                 ? `${targetName}'s Shield absorbs`
                 : haunted
-                  ? `${targetName}'s Haunt drags them in`
+                  ? `${targetName} is caught in the Haunt`
                   : `${targetName} takes`,
             bannerFocus: absorbed > 0 && !shieldBroken ? `${absorbed}` : `${e.amount} damage`,
             bannerFocusKind: absorbed > 0 && !shieldBroken ? 'shield' : tagKind,
@@ -820,6 +820,19 @@ export function buildBeats(
       // A status leaving on its own — expiry, decay, a switch — is bookkeeping, carried so the
       // badge still clears. Only a cleanse is somebody's payload.
       case 'StatusRemoved': {
+        // A Haunt passing off the fallen (passesOnFaint): one beat with its new host when it has one.
+        const next = events[i + 1];
+        if (e.reason === 'passed' && next?.type === 'StatusApplied' && next.statusId === e.statusId) {
+          const hostName = name(next.combatantId);
+          push([e, next], `The ${e.statusId} on ${name(e.combatantId)} passes to ${hostName}`, [{ combatantId: next.combatantId, text: e.statusId, className: 'popup-status', glyph: e.statusId }], {
+            bannerLead: `The ${e.statusId} passes to`,
+            bannerFocus: hostName,
+            bannerFocusKind: 'status',
+            fx: landing(next.combatantId),
+          });
+          i += 2;
+          break;
+        }
         if (e.reason !== 'cleanse') {
           carry.push(e);
           i++;

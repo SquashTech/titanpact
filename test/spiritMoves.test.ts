@@ -119,7 +119,7 @@ test('spirit: the user-HP multiplier lands on BasePower, never on multiplierTerm
 
 test('spirit: the user-HP form is asked ONCE PER CAST — a Haunted pair is doubled on both hits or neither', () => {
   const wounded30 = wounded(withDeepPools(spiritFixture(15)), 'a1', 0.3);
-  const haunted = withStatus(wounded30, 'b2', 'Haunt', {});
+  const haunted = withStatus(wounded30, 'b1', 'Haunt', {});
   const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'spite', declaredTarget: 'b1' }];
   const { events } = resolveRound(haunted, actions, config);
 
@@ -254,12 +254,9 @@ test('spirit: three moves plant Haunt and all thirteen damage moves cash it in',
     .map((m) => m.id)
     .sort();
   assert.deepStrictEqual(planters, ['poltergeist', 'torment', 'wisp']);
-  // One of the three rolls for it and two are certain — which is the shape, where the roll's odds
-  // are a balance figure. Pinning them made the tuning pass fail this.
-  const wispChance = firstStatusApplication(moves.wisp)?.chance;
-  assert.ok(wispChance != null && wispChance < 1, 'Wisp should be the chanced planter');
-  assert.strictEqual(firstStatusApplication(moves.torment)?.chance, undefined);
-  assert.strictEqual(firstStatusApplication(moves.poltergeist)?.chance, undefined);
+  // All three are certain since the Haunt pass (docs/blessings-and-statuses.md §2.2): a coin flip on
+  // the Early delivery was the finickiness, so no planter rolls for it.
+  for (const id of planters) assert.strictEqual(firstStatusApplication(moves[id])?.chance, undefined, `${id} rolls for its Haunt`);
 });
 
 test('spirit: Flicker is the slate only bracket play — everything else resolves at priority 0', () => {
