@@ -34855,11 +34855,11 @@ button.star-shop-bundle-face {
 }
 
 /* --- The Collection (CollectionScreen) -------------------------------------
-   One long well, a section a type: the three decked heroes first (gold edge,
-   "In deck"), the owned rest, then the ones still to buy, greyed with their
-   price. The rail down the right edge is the type index — tap or drag it. A
-   selected card opens the section's action strip under the grid; Equip lights
-   the row's three to be replaced. */
+   One long well, a section a type. The deck is a gilt alcove at the head of
+   each section, one plaque for its three; the owned rest and the ones still to
+   buy sit under it on the same measure. A tapped card lifts with its verbs
+   hung under it on planks; a held one is picked up and dropped on the hero it
+   trades with. The rail down the right edge is the type index. */
 .collection-balance {
   display: inline-flex;
   align-items: center;
@@ -34919,163 +34919,414 @@ button.star-shop-bundle-face {
   transform: scale(1.25);
 }
 
-.collection-row {
+.collection-body.is-dragging {
+  overflow: hidden;
+  touch-action: none;
+}
+
+.coll-type {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 6px 7px 7px;
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(var(--type-rgb), 0.28);
-  background:
-    radial-gradient(ellipse 60% 140% at 0% 50%, rgba(var(--type-rgb), 0.16), transparent 70%),
-    var(--surface-raised);
+  gap: 8px;
+  padding: 4px 2px 10px;
+  background: radial-gradient(ellipse 80% 70% at 0% 0%, rgba(var(--type-rgb), 0.13), transparent 70%);
 }
 
-.collection-row-head {
+/* Room under the last row for a lifted card's verbs. */
+.coll-type:last-child {
+  padding-bottom: 76px;
+}
+
+.coll-type-head {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 7px;
+  padding: 0 2px;
+}
+
+.coll-type-sigil {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  color: var(--type-color);
+  background: radial-gradient(circle, rgba(var(--type-rgb), 0.45), rgba(var(--type-rgb), 0.08) 60%, transparent 72%);
+  filter: drop-shadow(0 0 4px rgba(var(--type-rgb), 0.7));
+}
+
+.coll-type-sigil svg {
+  width: 15px;
+  height: 15px;
+}
+
+.coll-type-name {
   font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  font-weight: 800;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
+  color: color-mix(in srgb, var(--type-color) 70%, #fff);
+  text-shadow: 0 2px 0 #07080b, 0 0 10px rgba(var(--type-rgb), 0.6);
 }
 
-.collection-row-head svg {
-  width: 14px;
-  height: 14px;
+.coll-type-rule {
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(var(--type-rgb), 0.7), rgba(var(--type-rgb), 0.15) 70%, transparent);
+  box-shadow: 0 2px 0 #07080b;
 }
 
-.collection-cards {
+/* The deck: a gilt alcove, one plaque for the row. */
+.coll-deck {
+  position: relative;
+  margin-top: 6px;
+  padding: 11px 6px 7px;
+  border: 8px solid transparent;
+  border-image: url('../../art/ui/slot-lit.png') 4 / 8px round;
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 0%, rgba(224, 166, 60, 0.18), transparent 70%) padding-box,
+    radial-gradient(ellipse 90% 60% at 50% 100%, rgba(var(--type-rgb), 0.2), transparent 75%) padding-box,
+    #0c0d12 padding-box;
+  box-shadow: 0 0 16px -6px rgba(224, 166, 60, 0.5);
+  image-rendering: pixelated;
+  transition: box-shadow var(--dur-mid) var(--ease-out);
+}
+
+.coll-deck.is-armed {
+  animation: coll-alcove-call 0.9s var(--ease-out) infinite alternate;
+}
+
+@keyframes coll-alcove-call {
+  from {
+    box-shadow: 0 0 10px -4px rgba(224, 166, 60, 0.45);
+  }
+  to {
+    box-shadow: 0 0 22px 0 rgba(224, 166, 60, 0.75);
+  }
+}
+
+.coll-deck-label {
+  position: absolute;
+  top: -17px;
+  left: 50%;
+  z-index: 1;
+  transform: translateX(-50%);
+  padding: 2px 10px 3px;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #fff1cf;
+  text-shadow: 0 1px 0 #1a0f07;
+  background: linear-gradient(180deg, #8c6326, #5a3a14);
+  box-shadow: 0 0 0 1px #1a0f07, inset 0 1px 0 #e3b563, inset 0 -1px 0 #3a240b, 0 3px 0 rgba(0, 0, 0, 0.5);
+}
+
+.coll-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
 }
 
-.collection-card {
+/* The owned rest and the ones to buy, on the same measure as the alcove's three. */
+.coll-grid.is-reserve {
+  padding: 0 14px;
+}
+
+.coll-slot {
+  position: relative;
+  min-width: 0;
+}
+
+.coll-slot.is-selected {
+  z-index: 20;
+}
+
+.coll-slot.is-dragged {
+  z-index: 40;
+}
+
+.coll-card {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  min-width: 0;
-  padding: 5px 4px 6px;
+  gap: 2px;
+  width: 100%;
+  padding: 6px 2px 5px;
   font: inherit;
   color: var(--text);
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(var(--type-rgb), 0.22);
-  background: rgba(0, 0, 0, 0.22);
-  cursor: pointer;
-  transition: border-color var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out), opacity var(--dur-mid) var(--ease-out);
-}
-
-.collection-card.is-decked {
-  border-color: rgba(224, 166, 60, 0.55);
-}
-
-.collection-card.is-locked .collection-card-portrait {
-  filter: grayscale(1) brightness(0.55);
-}
-
-.collection-card.is-locked .collection-card-name {
-  color: var(--text-dim);
-}
-
-.collection-card.is-selected {
-  border-color: rgba(var(--type-rgb), 0.95);
-  box-shadow: 0 0 0 1px rgba(var(--type-rgb), 0.6);
-}
-
-.collection-row.is-equipping .collection-card:not(.is-replaceable):not(.is-selected) {
-  opacity: 0.4;
-}
-
-.collection-card.is-replaceable {
-  border-color: rgb(224, 166, 60);
-  box-shadow: 0 0 10px rgba(224, 166, 60, 0.45);
-  animation: collection-replace-pulse 1.1s var(--ease-out) infinite alternate;
-}
-
-@keyframes collection-replace-pulse {
-  to {
-    box-shadow: 0 0 2px rgba(224, 166, 60, 0.2);
-  }
-}
-
-.collection-card:active {
-  transform: scale(0.97);
-}
-
-.collection-card-slot {
-  font-size: 9px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgb(224, 166, 60);
-}
-
-.collection-card-portrait {
-  width: 44px;
-  height: 44px;
+  border: 4px solid transparent;
+  border-image: url('../../art/ui/slot-thin.png') 2 / 4px round;
+  border-radius: 0;
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 110%, rgba(var(--type-rgb), 0.28), transparent 70%) padding-box,
+    linear-gradient(180deg, #151820, #0e1015) padding-box;
+  box-shadow: inset 0 2px 0 rgba(var(--type-rgb), 0.4);
   image-rendering: pixelated;
-  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.65));
+  cursor: pointer;
+  -webkit-touch-callout: none;
+  transition: transform 180ms cubic-bezier(0.2, 0.9, 0.3, 1.3), box-shadow var(--dur-mid) var(--ease-out), filter var(--dur-mid) var(--ease-out);
 }
 
-.collection-card-name {
+.coll-card.is-decked {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 110%, rgba(var(--type-rgb), 0.34), transparent 70%) padding-box,
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(224, 166, 60, 0.14), transparent 70%) padding-box,
+    linear-gradient(180deg, #19171a, #0f1015) padding-box;
+  box-shadow: inset 0 2px 0 rgba(224, 166, 60, 0.45);
+}
+
+.coll-card:active {
+  transform: scale(0.96);
+}
+
+/* The pool of the type's own light the figure stands in. */
+.coll-card-light {
+  position: absolute;
+  left: 50%;
+  top: 38px;
+  width: 58px;
+  height: 18px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(var(--type-rgb), 0.55), rgba(var(--type-rgb), 0.12) 55%, transparent 72%);
+  pointer-events: none;
+}
+
+.coll-card-portrait {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.7));
+  pointer-events: none;
+}
+
+.coll-card-name {
+  position: relative;
   max-width: 100%;
   overflow: hidden;
   font-size: 11px;
+  font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-shadow: 0 1px 0 #07080b;
 }
 
-.collection-card-stars {
+.coll-card-stars {
   display: flex;
   gap: 1px;
   font-size: 10px;
   line-height: 1;
 }
 
-.collection-card-price {
-  font-size: 11px;
-  font-weight: 700;
+.coll-card-price {
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
   color: var(--accent);
+  text-shadow: 0 1px 0 #07080b;
 }
 
-.collection-equip-bar {
+.coll-card.is-locked {
+  background: linear-gradient(180deg, #121317, #0c0d10) padding-box;
+  box-shadow: none;
+}
+
+.coll-card.is-locked .coll-card-light {
+  opacity: 0.25;
+}
+
+.coll-card.is-locked .coll-card-portrait {
+  filter: grayscale(1) brightness(0.45) drop-shadow(0 3px 3px rgba(0, 0, 0, 0.7));
+}
+
+.coll-card.is-locked .coll-card-name {
+  color: var(--text-dim);
+}
+
+/* Lifted: a tapped card rises out of its row with its verbs hung under it. */
+.coll-slot.is-selected .coll-card {
+  transform: translateY(-3px) scale(1.07);
+  border-image-source: url('../../art/ui/slot-thin-lit.png');
+  box-shadow: inset 0 2px 0 rgba(224, 166, 60, 0.55), 0 8px 14px rgba(0, 0, 0, 0.6), 0 0 14px rgba(var(--type-rgb), 0.45);
+}
+
+.coll-tray {
+  position: absolute;
+  top: calc(100% + 3px);
+  left: -3px;
+  right: -3px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--text);
+  flex-direction: column;
+  gap: 2px;
+  padding: 3px;
+  background: linear-gradient(180deg, #1c1810, #0b0c10);
+  box-shadow: 0 0 0 1px #1a0f07, 0 0 0 2px rgba(224, 166, 60, 0.6), 0 8px 14px rgba(0, 0, 0, 0.75);
+  transform-origin: 50% 0;
+  animation: coll-tray-in 170ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
 }
 
-.collection-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
+/* The notch that hangs the tray from its card. */
+.coll-tray::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  transform: translateX(-50%) rotate(45deg);
+  background: #1c1810;
+  box-shadow: -1px -1px 0 0 rgba(224, 166, 60, 0.6);
 }
 
-.collection-action {
-  padding: 5px 11px;
+@keyframes coll-tray-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scaleY(0.7);
+  }
+}
+
+.coll-tray-note {
+  padding: 3px 4px;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  color: #e9dcc0;
+  background: #0b0c10;
+  box-shadow: 0 0 0 1px rgba(224, 166, 60, 0.4);
+}
+
+.coll-tray-button {
+  padding: 0 2px;
   font: inherit;
-  font-size: 12px;
-  color: var(--text);
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(var(--type-rgb), 0.5);
-  background: rgba(0, 0, 0, 0.3);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 14px;
+  letter-spacing: 0.04em;
+  color: #eadbbf;
+  text-shadow: 0 2px 0 #1a0f07;
+  border: 10px solid transparent;
+  border-image: url('../../art/ui/plank.png') 5 fill / 10px round;
+  border-radius: 0;
+  background: none;
+  image-rendering: pixelated;
   cursor: pointer;
 }
 
-.collection-action.is-primary {
-  border-color: rgba(224, 166, 60, 0.75);
-  color: var(--accent);
-  font-weight: 700;
+.coll-tray-button.is-primary {
+  border-image-source: url('../../art/ui/plank-gilt.png');
+  color: #fff3d6;
+  text-shadow: 0 2px 0 #1a0f07, 0 0 8px rgba(224, 166, 60, 0.7);
 }
 
-.collection-action:disabled {
-  opacity: 0.5;
+.coll-tray-button:active:not(:disabled) {
+  filter: brightness(0.85);
+}
+
+.coll-tray-button:disabled {
+  border-image-source: url('../../art/ui/plank.png');
+  color: #a69a88;
+  filter: grayscale(0.9) brightness(0.6);
   cursor: default;
+}
+
+/* Picked up: the card follows the finger; its seat keeps an empty mount. */
+.coll-slot.is-dragged::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 10px solid transparent;
+  border-image: url('../../art/ui/mount.png') 5 / 10px;
+  opacity: 0.6;
+  image-rendering: pixelated;
+}
+
+.coll-slot.is-dragged .coll-card {
+  transform: translate(var(--drag-x, 0), calc(var(--drag-y, 0px) - 24px)) scale(1.14) rotate(-4deg);
+  transition: none;
+  pointer-events: none;
+  border-image-source: url('../../art/ui/slot-thin-lit.png');
+  box-shadow: inset 0 2px 0 rgba(224, 166, 60, 0.55), 0 16px 22px rgba(0, 0, 0, 0.65), 0 0 18px rgba(var(--type-rgb), 0.6);
+}
+
+/* The heroes it can trade places with shiver to be chosen; the one under the finger opens up. */
+.coll-slot.is-target .coll-card {
+  border-image-source: url('../../art/ui/slot-thin-lit.png');
+  animation: coll-wiggle 0.42s ease-in-out infinite alternate;
+}
+
+.coll-slot.is-target:nth-child(2) .coll-card {
+  animation-delay: -0.14s;
+}
+
+.coll-slot.is-target:nth-child(3) .coll-card {
+  animation-delay: -0.28s;
+}
+
+@keyframes coll-wiggle {
+  from {
+    transform: rotate(-2deg);
+  }
+  to {
+    transform: rotate(2deg);
+  }
+}
+
+.coll-slot.is-over .coll-card {
+  animation: none;
+  transform: scale(1.1);
+  box-shadow: inset 0 2px 0 rgba(224, 166, 60, 0.6), 0 0 18px rgba(224, 166, 60, 0.8);
+  filter: brightness(1.2);
+}
+
+.coll-card-swap {
+  position: absolute;
+  top: 1px;
+  right: 3px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  color: #ffd98a;
+  text-shadow: 0 1px 0 #1a0f07, 0 0 6px rgba(224, 166, 60, 0.9);
+}
+
+.coll-slot.is-muted {
+  opacity: 0.4;
+  filter: saturate(0.4);
+}
+
+/* Landed in the deck: a gold ring breaks off the card. */
+.coll-slot.is-landed .coll-card::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  box-shadow: 0 0 0 2px #ffd98a, 0 0 16px rgba(224, 166, 60, 0.9);
+  animation: coll-landed 620ms var(--ease-out) forwards;
+  pointer-events: none;
+}
+
+@keyframes coll-landed {
+  from {
+    opacity: 1;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coll-slot.is-target .coll-card,
+  .coll-deck.is-armed,
+  .coll-slot.is-landed .coll-card::after,
+  .coll-tray {
+    animation: none;
+  }
 }
 
 /* --- The Constellation's Heroes page (StarShopScreen) ----------------------
@@ -35131,12 +35382,6 @@ button.star-shop-bundle-face {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ally);
-}
-
-.collection-action-note {
-  align-self: center;
-  font-size: 11px;
-  color: var(--text-dim);
 }
 
 /* --- The Starfall card ------------------------------------------------------
