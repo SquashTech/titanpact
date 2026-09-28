@@ -3679,7 +3679,10 @@ Roughly in order of expected payoff.
 
 - **Diegetic framing** (the whole UI as a pact-stone or commander's slate) was
   considered and rejected: expensive, and it fights the at-a-glance parsing that
-  doubles combat demands.
+  doubles combat demands. **Reversed 2026-09-27** (per user direction, after the
+  PixelLab art pass left CSS chrome as the one thing not in the world): see "The
+  pixel kit" below. The parsing concern is met by keeping every layout, register
+  and colour cue and changing only the material they are drawn in.
 - **Accent color at region boundaries.** Separate with value and depth, not hue. The
   arena already carries per-hero type tints, ally/enemy zone gradients, and a
   full-battlefield tint while a Field Effect is up; a colored seam only adds noise.
@@ -3689,3 +3692,21 @@ Roughly in order of expected payoff.
     full-screen tint failed — how often does it change? Twice a turn, at the
     moment command passes, is a signal. Once per rail tap would have been a
     strobe. Reach for this only where the recolour is itself the information.
+
+## The pixel kit (2026-09-27)
+
+Once heroes, Locations, map nodes and the Guild Hall were pixel art, the gray CSS
+panels were the one thing on screen not in the world. The kit (`art/ui`, drawn by
+`scripts/art/ui-tiles.mjs` as nine-slice tiles at 2x) gives the chrome three
+materials, each with one meaning, so the rule above survives the change of material:
+
+| Material | Means | Where |
+|---|---|---|
+| Stone with a gold inlay | a window — a place the game shows you something | `.detail-panel`, `.log-panel`, `.result-panel`, the console's flagstones, ledge and move slots |
+| Wooden plank | something you press; **gilt** is the screen's one way forward, or a key being held | `.resolve-button` (gilt), `.secondary-button`, close buttons, the console keys |
+| Parchment | a note for the player | `.tip-box`, the Guild Hall's tags and posters |
+
+A frame paints over its rule's existing padding rather than adding to it, so no
+screen grows. The Guild Hall keeps its own wood: it is a place, not a window. The
+next targets are window interiors (the gray rows inside dossiers and menus), the
+map HUD, the level-up report and the reward rows.
