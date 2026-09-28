@@ -32,6 +32,7 @@ import { useProfile } from '../shared/ProfileContext';
 import { enemies } from '../../data/enemies';
 import { allCombatants } from '../../data/content';
 import type { TypeId } from '../../engine/content';
+import partyArt from '../../../art/ui/party.png';
 
 /**
  * What the Skirmish and Elite tiles in front of the player preview: the typing of the squad
@@ -270,7 +271,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
       <div className="map-footer">
         <button className="map-footer-button" style={{ '--btn-color': 'var(--ally)' } as CSSProperties} onClick={() => setRosterOpen(true)}>
           <span className="map-footer-cap">
-            <span className="map-footer-icon"><HubGlyph name="roster" /></span>
+            <img src={partyArt} className="map-footer-emblem" alt="" draggable={false} />
             <span className="map-footer-label">Roster</span>
           </span>
           {/* The party, where the act has left it (run/wounds.ts): HP carries between fights, so

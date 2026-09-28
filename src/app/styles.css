@@ -37958,3 +37958,183 @@ img.smithy-service-art {
   box-shadow: 0 0 16px -6px color-mix(in srgb, var(--passive-color) 60%, transparent);
   image-rendering: pixelated;
 }
+
+/* -- A node's headline card in the kit: the move a Mentor, a Tutor or a level offers is a stone
+   window of its own (the signature keeps its own frame), and the either/or under it is a pair of
+   planks — Confirm gilt with a green label, so committing still reads apart from a gold Continue. -- */
+.offer-move-highlight:not(.is-signature) {
+  padding: 0 2px;
+  border: 20px solid transparent;
+  border-image: url('../../art/ui/frame-stone.png') 10 fill / 20px round;
+  border-radius: 0;
+  background: none;
+  image-rendering: pixelated;
+}
+
+.moveoffer-button,
+.moveoffer-button:not(:disabled):hover {
+  padding: 0 4px;
+  border: 14px solid transparent;
+  border-image: url('../../art/ui/plank.png') 7 fill / 14px round;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: #eadbbf;
+  text-shadow: 0 2px 0 #1a0f07;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55));
+  image-rendering: pixelated;
+}
+
+.moveoffer-button:not(:disabled):hover {
+  transform: none;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)) brightness(1.1);
+}
+
+.moveoffer-button .moveoffer-icon {
+  font-size: 16px;
+}
+
+.moveoffer-decline:hover {
+  border-color: transparent;
+  color: #fff3d6;
+}
+
+.moveoffer-confirm,
+.moveoffer-confirm:not(:disabled):hover {
+  border-image-source: url('../../art/ui/plank-gilt.png');
+  color: #9ff5c2;
+  text-shadow: 0 2px 0 #06200f, 0 0 10px rgba(95, 207, 143, 0.6);
+}
+
+.moveoffer-confirm {
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 8px rgba(95, 207, 143, 0.45));
+}
+
+.moveoffer-confirm:disabled {
+  border-color: transparent;
+  border-image-source: url('../../art/ui/plank.png');
+  background: none;
+  color: #a69a88;
+  text-shadow: 0 2px 0 #1a0f07;
+  opacity: 1;
+  filter: grayscale(0.9) brightness(0.55);
+}
+
+/* -- The Roster, second look: not a plank but an alcove cut into the stone and rimmed in gold, dark
+   inside so the party reads. Each hero stands in its own pool of warm light at 1x, its HP in a
+   carved track; the party's emblem (a shield with a sword and a staff crossed behind it) stands
+   over a parchment tag. -- */
+.map-footer-button,
+.map-footer-button:hover,
+.map-footer-button.has-unopened,
+.map-footer-button.has-unopened:hover {
+  gap: 6px;
+  padding: 4px 6px 2px 2px;
+  border: 8px solid transparent;
+  border-image: url('../../art/ui/slot-lit.png') 4 / 8px round;
+  background:
+    radial-gradient(ellipse 90% 70% at 55% 100%, rgba(255, 190, 110, 0.14), transparent 70%) padding-box,
+    linear-gradient(180deg, #0a0b0f, #12141a) padding-box;
+  color: #eadbbf;
+  text-shadow: none;
+}
+
+.map-footer-button {
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6));
+}
+
+.map-footer-button:hover {
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 6px rgba(224, 166, 60, 0.45));
+}
+
+.map-footer-cap {
+  min-width: 44px;
+  gap: 1px;
+}
+
+.map-footer-emblem {
+  display: block;
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.7));
+}
+
+.map-footer-label {
+  padding: 0 3px;
+  border: 4px solid transparent;
+  border-image: url('../../art/guild/panel-parch.png') 12 fill / 4px stretch;
+  color: #3a2412;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  image-rendering: pixelated;
+}
+
+.map-footer-party {
+  margin-top: 0;
+  gap: 0;
+  justify-content: space-evenly;
+}
+
+.map-party-chip {
+  position: relative;
+  flex: 0 1 48px;
+  gap: 2px;
+}
+
+/* The pool of light the hero stands in. */
+.map-party-chip::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  width: 42px;
+  height: 12px;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 200, 120, 0.42), rgba(255, 170, 90, 0.12) 55%, transparent 72%);
+  pointer-events: none;
+}
+
+.map-party-portrait {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  margin-bottom: -6px;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.8));
+}
+
+.map-party-chip .wound-bar {
+  position: relative;
+  width: 40px;
+}
+
+.map-party-chip .wound-bar-track {
+  height: 6px;
+  border-radius: 0;
+  background: #06070a;
+  box-shadow: inset 0 0 0 1px #000, 0 1px 0 #2a2e3a;
+}
+
+/* Something on the Roster wants opening: the alcove is the one lit object on the screen. */
+.map-footer-button.has-unopened {
+  background:
+    radial-gradient(ellipse 90% 90% at 50% 50%, rgba(255, 214, 140, 0.3), rgba(255, 214, 140, 0.08) 70%) padding-box,
+    linear-gradient(180deg, #16120a, #1c170d) padding-box;
+}
+
+.map-footer-button.has-unopened .map-footer-label {
+  color: #3a2412;
+}
+
+/* The Forge's two services, in the hall's wood like its benches. */
+.smithy-service {
+  border: 1px solid transparent;
+  border-image: url('../../art/guild/panel-wood.png') 14 / 12px stretch;
+  border-radius: 0;
+  background: rgba(34, 22, 13, 0.92) padding-box;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  image-rendering: pixelated;
+}
