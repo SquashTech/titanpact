@@ -37853,3 +37853,97 @@ img.smithy-service-art {
     animation: none;
   }
 }
+
+/* -- The post-fight chain in the kit. -- */
+/* What the fight paid is set down in a well cut into the stone, a pixel rule between the lines. */
+.fight-result-ledger {
+  padding: 0 8px;
+  border: 8px solid transparent;
+  border-image: url('../../art/ui/slot.png') 4 / 8px round;
+  background: rgba(12, 14, 19, 0.92) padding-box;
+  image-rendering: pixelated;
+}
+
+.fight-result-ledger-slot + .fight-result-ledger-slot .fight-result-row {
+  border-top: 2px solid #1b1e27;
+  box-shadow: inset 0 2px 0 #08090d;
+}
+
+/* A level's roll per stat is a small cell cut into the row: a hard two-pixel lip, shadowed above
+   and lit below, the stat's colour filling the ones that rolled. */
+.level-up-cell {
+  border-radius: 0;
+  box-shadow: inset 2px 2px 0 #08090d, inset -2px -2px 0 #262a35;
+  background: #0e1015;
+}
+
+.level-up-cell.is-hit {
+  background: color-mix(in srgb, var(--stat-color) 16%, #0e1015);
+}
+
+.level-up-cell.is-big {
+  background: color-mix(in srgb, var(--stat-color) 32%, #0e1015);
+  box-shadow: inset 2px 2px 0 #08090d, inset -2px -2px 0 color-mix(in srgb, var(--stat-color) 70%, #262a35),
+    0 0 10px color-mix(in srgb, var(--stat-color) 40%, transparent);
+}
+
+/* The corner glyph (the roster peek, and anything beside it): a square plank at any size. */
+.corner-glyph-button {
+  border: 8px solid transparent;
+  border-image: url('../../art/ui/plank-square.png') 4 fill / 8px round;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: #eadbbf;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.55));
+  image-rendering: pixelated;
+}
+
+.corner-glyph-button:hover {
+  border-color: transparent;
+  box-shadow: none;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.55)) brightness(1.12);
+}
+
+/* The carved edge is 3px deeper than the hairline it replaced; the row gives it back out of its own
+   padding so six heroes still fit the report without a scroll. */
+.level-up-row {
+  padding: 4px 7px;
+}
+
+/* The who-screens' hero cards (HeroPickCard): carved into the scene like a window's cards, the hero's
+   type as the wash, a gold lip on the one chosen or blessed. The edge's extra depth comes out of the
+   card's padding, so a grid of six is no taller. */
+.pick-card {
+  padding: 5px 3px 4px;
+  border: 4px solid transparent;
+  border-image: url('../../art/ui/slot-thin.png') 2 / 4px round;
+  border-radius: 0;
+  background:
+    radial-gradient(ellipse 130% 95% at 10% -10%, rgba(var(--type-rgb), 0.24), transparent 64%) padding-box,
+    #111319 padding-box;
+  box-shadow: inset 0 2px 0 rgba(var(--type-rgb), 0.45), 0 4px 10px rgba(0, 0, 0, 0.45);
+  image-rendering: pixelated;
+}
+
+.pick-card:hover:not(.is-locked):not(.is-leveling) {
+  border-color: transparent;
+  background:
+    radial-gradient(ellipse 130% 95% at 10% -10%, rgba(var(--type-rgb), 0.34), transparent 64%) padding-box,
+    #161922 padding-box;
+  box-shadow: inset 0 2px 0 rgba(var(--type-rgb), 0.7), 0 6px 14px rgba(0, 0, 0, 0.5), 0 0 14px -4px rgba(var(--type-rgb), 0.6);
+}
+
+.pick-card.is-locked {
+  box-shadow: inset 0 2px 0 rgba(var(--type-rgb), 0.25);
+}
+
+.pick-card.is-selected,
+.pick-card.is-blessed {
+  border-color: transparent;
+  border-image-source: url('../../art/ui/slot-thin-lit.png');
+}
+
+.pick-card.is-selected {
+  box-shadow: inset 0 2px 0 rgba(224, 166, 60, 0.6), 0 0 14px -2px rgba(224, 166, 60, 0.5);
+}
