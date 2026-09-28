@@ -38138,3 +38138,89 @@ img.smithy-service-art {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
   image-rendering: pixelated;
 }
+
+/* The battle preview's two side tools, square planks like every corner control. */
+.squad-tool-button,
+.squad-tool-button:hover:not(:disabled) {
+  border: 8px solid transparent;
+  border-image: url('../../art/ui/plank-square.png') 4 fill / 8px round;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: #eadbbf;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.55));
+  image-rendering: pixelated;
+}
+
+.squad-tool-button:hover:not(:disabled) {
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.55)) brightness(1.12);
+}
+
+/* The Smithy's work sheet is the hall's own furniture: a wood-framed board, the lift preview a well
+   in it, Strike a gilt plank burning in the work's colour, and the elements carved slots. */
+.detail-panel.smithy-work {
+  border: 12px solid transparent;
+  border-image: url('../../art/guild/panel-wood.png') 14 / 12px stretch;
+  border-radius: 0;
+  background: linear-gradient(178deg, #2a1c12, #1f150d 40%, #170f09) padding-box;
+  box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.85);
+  image-rendering: pixelated;
+}
+
+.smithy-lift {
+  padding: 1px 2px;
+  border: 8px solid transparent;
+  border-image: url('../../art/ui/slot.png') 4 / 8px round;
+  border-radius: 0;
+  background: #111319 padding-box;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+
+.smithy-commit,
+.smithy-commit:not(:disabled):hover {
+  padding: 0 4px;
+  border: 14px solid transparent;
+  border-image: url('../../art/ui/plank-gilt.png') 7 fill / 14px round;
+  border-radius: 0;
+  background: none;
+  color: #fff3d6;
+  text-shadow: 0 2px 0 #1a0f07, 0 0 10px color-mix(in srgb, var(--commit-color, var(--accent)) 70%, transparent);
+  box-shadow: none;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 8px color-mix(in srgb, var(--commit-color, var(--accent)) 55%, transparent));
+  image-rendering: pixelated;
+}
+
+.smithy-commit:not(:disabled):hover {
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 12px color-mix(in srgb, var(--commit-color, var(--accent)) 80%, transparent)) brightness(1.08);
+}
+
+.smithy-commit:disabled {
+  border-image-source: url('../../art/ui/plank.png');
+  opacity: 1;
+  filter: grayscale(0.9) brightness(0.55);
+}
+
+.smithy-element,
+.smithy-element.is-held,
+.smithy-element.is-picked {
+  padding: 4px 1px 3px;
+  border: 4px solid transparent;
+  border-image: url('../../art/ui/slot-thin.png') 2 / 4px round;
+  border-radius: 0;
+  image-rendering: pixelated;
+}
+
+.smithy-element {
+  background: linear-gradient(180deg, rgba(var(--type-rgb), 0.16), rgba(var(--type-rgb), 0.04)) padding-box, #111319 padding-box;
+}
+
+.smithy-element.is-held {
+  background: linear-gradient(180deg, rgba(var(--type-rgb), 0.34), rgba(var(--type-rgb), 0.12)) padding-box, #111319 padding-box;
+}
+
+.smithy-element.is-picked {
+  border-image-source: url('../../art/ui/slot-thin-lit.png');
+  background: linear-gradient(180deg, rgba(var(--type-rgb), 0.5), rgba(var(--type-rgb), 0.2)) padding-box, #111319 padding-box;
+  box-shadow: 0 0 16px -2px var(--type-color);
+}
