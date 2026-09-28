@@ -17754,6 +17754,80 @@ button.star-shop-bundle-face {
   height: 20px;
 }
 
+/* The Scroll Cache's holdings, one scroll a pip; a spent one lifts away and leaves its place empty
+   so the row never reflows under the tap. */
+.scroll-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.scroll-row-scroll {
+  width: 48px;
+  height: 48px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 8px rgba(var(--node-rgb), 0.45));
+  transition:
+    opacity 0.45s ease,
+    transform 0.45s var(--ease-out);
+}
+
+.scroll-row-scroll.is-spent {
+  opacity: 0;
+  transform: translateY(-14px) scale(0.7);
+}
+
+/* The Scribe's page: a blank line a pick, the hero's name written onto it left to right. */
+.scribe-ledger {
+  display: flex;
+  gap: 10px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scribe-ledger-line {
+  flex: 1;
+  max-width: 120px;
+  height: 20px;
+  border-bottom: 1px dashed rgba(var(--node-rgb), 0.55);
+  font-size: 13px;
+  font-style: italic;
+  font-weight: 700;
+  line-height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: rgb(var(--node-rgb));
+}
+
+.scribe-ledger-line.is-inked {
+  border-bottom-style: solid;
+  animation: scribe-ink 0.6s steps(12) both;
+}
+
+@keyframes scribe-ink {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-row-scroll {
+    transition: opacity 0.2s ease;
+  }
+  .scroll-row-scroll.is-spent {
+    transform: none;
+  }
+  .scribe-ledger-line.is-inked {
+    animation: none;
+  }
+}
+
 /* The map field itself: a recessed well the route sits inside, so the
    ascent reads as terrain viewed through a frame rather than nodes floating
    on the page.

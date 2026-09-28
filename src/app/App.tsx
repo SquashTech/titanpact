@@ -1380,23 +1380,13 @@ export function App() {
       )}
 
       {screen.kind === 'scrolls' && (
-        // The Cache is met as a place; the Scribe greets from inside its screen, the shelf not at all.
-        <RoadGate
+        <ScrollNodeScreen
           run={playerRun}
-          place
-          art={mapNodeArt('scrollReward')!}
-          awakened={mapNodeAwakening('scrollReward')}
-          {...PLACE_LINES.scrollReward}
-          enabled={screen.plan.kind === 'scrolls' && !screen.bought}
-        >
-          <ScrollNodeScreen
-            run={playerRun}
-            onRunChange={setPlayerRun}
-            plan={screen.plan}
-            bought={screen.bought}
-            onDone={() => (screen.nodeId ? handleNodeContinue(screen.nodeId) : setScreen(screen.next))}
-          />
-        </RoadGate>
+          onRunChange={setPlayerRun}
+          plan={screen.plan}
+          bought={screen.bought}
+          onDone={() => (screen.nodeId ? handleNodeContinue(screen.nodeId) : setScreen(screen.next))}
+        />
       )}
 
       {screen.kind === 'manaWell' && (

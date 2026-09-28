@@ -34,16 +34,6 @@ export const PLACE_LINES: Record<string, { name: string; lines: readonly string[
       'Pilgrims left offerings here once. Now there is only the star, and whoever kneels first.',
     ],
   },
-
-
-  scrollReward: {
-    name: 'A Crate of Scrolls',
-    lines: [
-      'A crate of old teachings, ribbon still on every roll. Three of them are worth reading.',
-      'Someone\'s library, dumped by the roadside. The ink is faded, the lessons are not.',
-      'Scrolls, stacked and sealed, waiting for hands that know what to do with them.',
-    ],
-  },
   restReward: {
     name: 'A Quiet Camp',
     lines: [

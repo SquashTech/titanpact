@@ -40,7 +40,6 @@ const AWAKE = byName(
 const AWAKE_RGB: Partial<Record<MapNodeType, string>> = {
   manaWellReward: '120, 205, 255',
   leyLineReward: '120, 230, 255',
-  scrollReward: '255, 210, 120',
   restReward: '255, 160, 70',
   passiveReward: '190, 130, 255',
   event: '255, 215, 120',

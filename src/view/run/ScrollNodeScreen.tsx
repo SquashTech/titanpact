@@ -20,8 +20,8 @@ import { isCompanion } from '../../run/companion';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { MasteryPips } from '../shared/MasteryPips';
 import { NodeHeader, NodeSky, NODE_TINT_PARCHMENT } from '../shared/NodeStage';
-import { ResourceGlyph } from '../shared/RunGlyph';
 import scribeArt from '../../../art/npc/scribe.png';
+import scrollArt from '../../../art/ui/scroll.png';
 import { CompanionScreen } from './CompanionScreen';
 import { EvolutionScreen } from './EvolutionScreen';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
@@ -122,8 +122,8 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
   const readout = !anyEligible
     ? `Every hero is already at ${MASTERY_CAP} Mastery — there is nobody left to teach.`
     : plan.kind === 'scribe'
-      ? `${SCRIBE_PIPS_EACH} Mastery each for ${remaining === 1 ? 'one more' : `${remaining}`} of you. ${MASTERY_EVOLUTION} Evolves a hero; ${MASTERY_CAP} masters its innate. Hold to review a sheet.`
-      : `${remaining} ${remaining === 1 ? 'Scroll' : 'Scrolls'} left — one Mastery each, to whoever you tap. ${MASTERY_EVOLUTION} Evolves a hero; ${MASTERY_CAP} masters its innate.`;
+      ? `${SCRIBE_PIPS_EACH} Mastery each, to a different hero a line. ${MASTERY_EVOLUTION} Evolves a hero; ${MASTERY_CAP} masters its innate. Hold to review a sheet.`
+      : `One Mastery a Scroll, to whoever you tap. ${MASTERY_EVOLUTION} Evolves a hero; ${MASTERY_CAP} masters its innate.`;
 
   return (
     <div className="node-screen shrine-screen scroll-screen" style={{ '--node-rgb': NODE_TINT_PARCHMENT } as CSSProperties}>
@@ -133,15 +133,21 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
 
       <RosterPeek run={run} />
 
-      {/* The Scribe is a person; a Cache or a bought Scroll is only the scroll. */}
+      {/* The Scribe is a person; a Cache or a bought Scroll is only the scrolls, counted under the title. */}
       <NodeHeader
         eyebrow={eyebrow}
         title={title}
         side
         art={plan.kind === 'scribe' ? <img src={scribeArt} className="npc-portrait" alt="" draggable={false} /> : undefined}
-        glyph={plan.kind === 'scribe' ? undefined : <ResourceGlyph kind="scroll" className="node-header-resource" />}
         readout={readout}
-      />
+      >
+        {anyEligible &&
+          (plan.kind === 'scribe' ? (
+            <ScribeLedger names={pickedIds.map((id) => rosterHeroes[run.roster.find((r) => r.rosterId === id)!.heroId].name)} />
+          ) : (
+            <ScrollRow count={plan.count} remaining={remaining} />
+          ))}
+      </NodeHeader>
 
       <HeroPickGrid count={run.roster.length} fill>
         {run.roster.map((entry) => {
@@ -210,5 +216,30 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
         />
       )}
     </div>
+  );
+}
+
+/** What a Cache or the shelf still holds: one scroll a pip, the last one leaving first. */
+function ScrollRow({ count, remaining }: { count: number; remaining: number }) {
+  return (
+    <div className="scroll-row" role="img" aria-label={`${remaining} ${remaining === 1 ? 'Scroll' : 'Scrolls'} left`}>
+      {Array.from({ length: count }, (_, i) => (
+        <img key={i} src={scrollArt} className={`scroll-row-scroll${i >= remaining ? ' is-spent' : ''}`} alt="" draggable={false} />
+      ))}
+    </div>
+  );
+}
+
+/** The Scribe's page: a blank line a pick, inked with the hero's name as it is taken. */
+function ScribeLedger({ names }: { names: string[] }) {
+  const open = SCRIBE_PICKS - names.length;
+  return (
+    <ol className="scribe-ledger" aria-label={`${open} ${open === 1 ? 'name' : 'names'} left to write`}>
+      {Array.from({ length: SCRIBE_PICKS }, (_, i) => (
+        <li key={i} className={`scribe-ledger-line${names[i] ? ' is-inked' : ''}`}>
+          {names[i] ?? ''}
+        </li>
+      ))}
+    </ol>
   );
 }
