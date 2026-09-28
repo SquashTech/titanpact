@@ -349,6 +349,12 @@ Wingbeat Barrage is three hits at +1 priority). **Mellow** (Beast, the capybara 
 80, Beast's support against five attackers; Unbothered takes 5 Attack and 5 Intelligence off any
 enemy that lands a hit, and All Aboard Shields and Renews both allies).
 
+**The base roster re-chosen, 2026-09-28** (per user direction): with six heroes a type, the base three
+of each should teach that type cleanly, so eight swapped with the Starfall. In: Ashwing, Selkie, Hush,
+Nimbus, Murk, Thane, Drift, Patch. Out: Brimstone, Riptide, Flurry, Tempest, Nightshade, Zenith,
+Reverie, Bellows. `docs/collection.md` §4 has the reasoning and the save migration. The promoted
+eight have had no sim pass.
+
 **Renames, 2026-09-27** (per user direction, after the sprite redesign): **Cortex → Reverie**
 (`mindweaver`, now the mesmer moth), **Cube → Floe** (`cube`, now the glacier snail) and **Slate → Petra** (`slate`, now the crystal geomancer; redrawn 2026-09-28 as a dwarf quarrywoman with a rune maul, so she no longer reads as a second robed Stone caster beside Cairn). **Cinder** was redrawn the same day as a salamander warrior with a shield and spear, because the forgesmith's hammer now overlapped Petra; his signature Hammerbrand is shown as **Emberlance** (id unchanged). Ids,
 kits and numbers are unchanged; older sections of the docs use the old names. Aegis is now the

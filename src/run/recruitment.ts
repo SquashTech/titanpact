@@ -26,13 +26,15 @@ export function isRecruitable(heroId: string, recruitablePool: Record<string, un
 export const starfallLedgerId = (heroId: string): string => `summon.${heroId}`;
 /** A single hero bought before singles were withdrawn (2026-09-26): still owned, refunded by the ledger. */
 const legacySingleId = (heroId: string): string => `hero.${heroId}`;
+/** A hero given free by a profile migration (run/profile.ts); costs nothing against the balance. */
+export const grantLedgerId = (heroId: string): string => `grant.${heroId}`;
 
 /**
  * Whether an account holds a hero: the base roster always; one outside it (`HeroDefinition.unlock`)
  * by its bundle or a Starfall — both entries in `Profile.purchases`.
  */
 export function ownsHero(heroId: string, hero: { unlock?: string }, purchases: readonly string[]): boolean {
-  return !hero.unlock || purchases.includes(hero.unlock) || purchases.includes(starfallLedgerId(heroId)) || purchases.includes(legacySingleId(heroId));
+  return !hero.unlock || purchases.includes(hero.unlock) || purchases.includes(starfallLedgerId(heroId)) || purchases.includes(legacySingleId(heroId)) || purchases.includes(grantLedgerId(heroId));
 }
 
 /**

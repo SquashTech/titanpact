@@ -97,7 +97,12 @@ before owning it.
 ## 4. Getting heroes
 
 - **The base 42 are owned from the first launch**, free. A new account's first run must not be
-  worse than today's.
+  worse than today's. **Re-chosen 2026-09-28** (per user direction), once the roster reached six a type:
+  the base should teach the clean version of each type, so eight heroes swapped places with the
+  Starfall. Ashwing, Selkie, Hush, Nimbus, Murk, Thane, Drift and Patch came in; Brimstone, Riptide,
+  Flurry, Tempest, Nightshade, Zenith, Reverie and Bellows went out. Four of those eight are mixed lines
+  and two are the complexity exceptions (a dual type, the Burden). A profile written before the swap
+  keeps the eight free (`LEFT_BASE_2026_09_28`, a `grant.` ledger entry, `PROFILE_VERSION` 2).
 - **Everything past the base is got with stars** (phase 6, 2026-09-26, per user direction — no
   hero is sold singly):
   - **A bundle** — From the Tall Grass is the only one; the Free Company was deleted and its three
@@ -115,7 +120,9 @@ before owning it.
     - It is not called a Contract — the Recruit Contract is an in-run item.
 - **Alignments** (PROPOSED, nothing built but a seat): a Starfall that draws from a curated few
   — the Constellation's Heroes page holds an empty section for them. Named Alignments because
-  *Banner* is the Guardian's relic.
+  *Banner* is the Guardian's relic. **Direction, 2026-09-28** (per user direction, not built): themed
+  Starfalls are for COSMETICS, not heroes. Hero unlocking stays a true blind draw, where the player
+  never knows what comes next.
 - An owned hero **stars on the base terms** (`constellation.md` §2): three paths, three stars. So
   buying a hero still grows the sky, and the collection and the currency feed each other.
 

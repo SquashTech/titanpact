@@ -10,8 +10,15 @@
 
 import { spawnPosition } from '../data/titanspawn';
 import { rungOf } from './ascension';
+import { grantLedgerId } from './recruitment';
 
-export const PROFILE_VERSION = 1;
+export const PROFILE_VERSION = 2;
+
+/**
+ * Heroes that left the base roster on 2026-09-28 (docs/types-and-heroes.md): a profile written
+ * before then owned them free, so it is granted them (`grantLedgerId`) rather than losing them.
+ */
+export const LEFT_BASE_2026_09_28 = ['brimstone', 'tidecaller', 'glacialWarden', 'tempest', 'nightshade', 'zenith', 'mindweaver', 'steamColossus'];
 
 export interface Profile {
   version: number;
@@ -396,7 +403,7 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     // Absent on every file written before the stakes; such a player has earned and paid none.
     bonusStars: count(value.bonusStars),
     feesPaid: count(value.feesPaid),
-    purchases: [...new Set(stringList(value.purchases))],
+    purchases: [...new Set([...stringList(value.purchases), ...(count(value.version, 1) < 2 ? LEFT_BASE_2026_09_28.map(grantLedgerId) : [])])],
     deck: decodeDeck(value),
     firstPlayedAt: count(value.firstPlayedAt),
     lastPlayedAt: count(value.lastPlayedAt),

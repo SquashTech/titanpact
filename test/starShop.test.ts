@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import { test } from './harness';
-import { createProfile, decodeProfile, recordRunEnded, recordRunStarted } from '../src/run/profile';
+import { LEFT_BASE_2026_09_28, PROFILE_VERSION, createProfile, decodeProfile, recordRunEnded, recordRunStarted } from '../src/run/profile';
 import { MAX_ASCENSION, rungOf } from '../src/run/ascension';
 import { STAR_SHOP_OFFERS, starShopCatalog } from '../src/data/starShop';
 import { locations } from '../src/data/locations';
@@ -64,8 +64,19 @@ test('star shop: a purchase whose offer was withdrawn costs nothing against the 
 test('star shop: purchases survive a round trip and decode deduplicated', () => {
   const profile = buyOffer(withStars(4), catalog, catalog.lantern);
   assert.deepStrictEqual(decodeProfile(JSON.parse(JSON.stringify(profile))).purchases, ['lantern']);
-  assert.deepStrictEqual(decodeProfile({ purchases: ['lantern', 'lantern', 4, ''] }).purchases, ['lantern']);
-  assert.deepStrictEqual(decodeProfile({}).purchases, []);
+  assert.deepStrictEqual(decodeProfile({ version: PROFILE_VERSION, purchases: ['lantern', 'lantern', 4, ''] }).purchases, ['lantern']);
+  assert.deepStrictEqual(decodeProfile({ version: PROFILE_VERSION }).purchases, []);
+});
+
+test('star shop: a profile from before the 2026-09-28 base swap keeps the heroes that left the base, free', () => {
+  const old = decodeProfile({ version: 1, purchases: [] });
+  for (const id of LEFT_BASE_2026_09_28) {
+    assert.ok(heroes[id].unlock, `${id} is no longer base`);
+    assert.ok(heroPool(heroes, old.purchases)[id], `${id} is still owned`);
+  }
+  assert.strictEqual(starsSpent(old, starShopCatalog), 0);
+  const fresh = decodeProfile(JSON.parse(JSON.stringify(createProfile())));
+  for (const id of LEFT_BASE_2026_09_28) assert.ok(!heroPool(heroes, fresh.purchases)[id], `a new account does not own ${id}`);
 });
 
 test('star shop: the shipped catalog is consistent with itself', () => {
