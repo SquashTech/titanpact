@@ -3,20 +3,20 @@ import type { MapNodeType } from '../../run/map';
 import { allCombatants } from '../../data/content';
 import { getTypeColor } from '../combat/typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
-import { HeroPortrait } from '../shared/HeroPortrait';
 import mentorArt from '../../../art/map-nodes/landmarks/mentor.png';
 import tutorArt from '../../../art/map-nodes/landmarks/tutor.png';
 import scribeArt from '../../../art/map-nodes/landmarks/scribe.png';
 import guildHallArt from '../../../art/map-nodes/landmarks/guildHall.png';
 import gateArt from '../../../art/map-nodes/landmarks/guardianGate.png';
+import titanGateArt from '../../../art/map-nodes/landmarks/titanGate.png';
 
 // The act's beats, drawn as themselves rather than as a stone medallion: the opening fight is the
 // Titan's eye opening on the road, the Mentor, the Tutor and the Scribe are met at the
 // roadside (a fire, a practice post, a writing desk), the Guild Hall is a building you walk into,
-// the act's Guardian waits behind a sealed gate carrying its element's sigil, and the finale's
-// Herald is itself.
+// the act's Guardian waits behind a sealed gate carrying its element's sigil, and the finale is a
+// greater gate sealed with the Titan's own eye.
 
-export type LandmarkKind = 'eye' | 'npc' | 'building' | 'gate' | 'guardian';
+export type LandmarkKind = 'eye' | 'npc' | 'building' | 'gate' | 'titanGate';
 
 const KIND: Partial<Record<MapNodeType, LandmarkKind>> = {
   fight: 'eye',
@@ -26,7 +26,7 @@ const KIND: Partial<Record<MapNodeType, LandmarkKind>> = {
   shop: 'building',
   muster: 'building',
   boss: 'gate',
-  finale: 'guardian',
+  finale: 'titanGate',
 };
 
 const NPC_ART: Partial<Record<MapNodeType, string>> = {
@@ -123,7 +123,14 @@ export function MapLandmarkFace({
         </>
       );
     }
-    case 'guardian':
-      return guardianId ? <HeroPortrait heroId={guardianId} className="map-landmark-figure" /> : null;
+    case 'titanGate':
+      return (
+        <>
+          <img src={titanGateArt} className="map-landmark-art" alt="" draggable={false} />
+          <span className={`map-gate-seal is-titan${quiet ? ' is-quiet' : ''}`} aria-hidden="true">
+            <MapTitanEye />
+          </span>
+        </>
+      );
   }
 }

@@ -18823,26 +18823,6 @@ button.star-shop-bundle-face {
   pointer-events: none;
 }
 
-/* The Guardian: the act's own Guardian figure, looming — the one thing on the map with a face. */
-.map-medallion.is-guardian {
-  width: 200px !important;
-  height: 200px !important;
-}
-
-.map-medallion.is-guardian .map-medallion-glow {
-  inset: -30px;
-}
-
-.map-landmark-figure {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  filter: drop-shadow(0 0 18px var(--node-color)) drop-shadow(0 8px 12px rgba(0, 0, 0, 0.7));
-  pointer-events: none;
-}
-
 /* A scouted encounter's typing: a plaque hung off the medallion's bottom rim, one element per
    enemy type in its own colour — scouting read beside the emblem, not cut into it. */
 .map-medallion-typing {
@@ -38699,4 +38679,38 @@ img.smithy-service-art {
   border-radius: 50%;
   border: 2px solid color-mix(in srgb, var(--seal-color) 85%, #fff);
   box-shadow: 0 0 8px var(--seal-color), inset 0 0 8px color-mix(in srgb, var(--seal-color) 60%, transparent);
+}
+
+/* The finale: a greater gate (128px at 2x), gold-banded pillars and a crimson seam, sealed with the
+   Titan's own eye in place of an element. */
+.map-medallion.is-titanGate {
+  width: 256px !important;
+  height: 256px !important;
+}
+
+.map-medallion.is-titanGate .map-medallion-glow {
+  inset: -24px;
+}
+
+.map-gate-seal.is-titan {
+  --seal-color: #e0393f;
+  top: 47%;
+  width: 68px;
+  height: 68px;
+}
+
+.map-gate-seal.is-titan .map-landmark-eye {
+  position: relative;
+  flex: none;
+  width: 100px;
+  height: auto;
+}
+
+.map-gate-seal.is-titan::before {
+  inset: 4px;
+}
+
+.map-origin-mark.is-titanGate {
+  width: 64px;
+  height: 64px;
 }
