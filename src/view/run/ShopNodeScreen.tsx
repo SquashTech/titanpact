@@ -5,8 +5,8 @@ import type { ConsumableKind } from '../../run/consumables';
 import type { GuildHallOffer } from '../../run/recruitment';
 import { GuildHallPanel, guildHallTabs, type GuildHallTab } from './GuildHallPanel';
 import guildmasterArt from '../../../art/npc/guildmaster.png';
-import { RoadEncounter, useRoadGreeting } from './RoadEncounter';
-import { GUILDMASTER_LINES, VIGIL_LINES } from '../../data/roadLines';
+import { useAmbientLocation } from '../shared/LocationContext';
+import { locationBackdrop } from '../shared/locationBackdrops';
 import { RosterPeek } from './RosterPeek';
 import { NodeHeader, NodePurse, NodeSky, NODE_TINT_HEARTH } from '../shared/NodeStage';
 import { TabStrip } from '../shared/TabStrip';
@@ -55,25 +55,33 @@ export function ShopNodeScreen({
 }: Props) {
   const [overlayOpen, setOverlayOpen] = useState(false);
   // The counter the player was last at, across a who-screen's unmount and across visits.
+  const location = useAmbientLocation();
+  const hall = location ? locationBackdrop(location.id, 'hall') : undefined;
   const [tab, setTab] = useState<GuildHallTab>(() => readGuildHallTab(muster ? 'shop' : 'tavern'));
   const selectTab = (next: GuildHallTab) => {
     setTab(next);
     writeGuildHallTab(next);
   };
-  const [greeting, dismissGreeting] = useRoadGreeting(run, muster ? VIGIL_LINES : GUILDMASTER_LINES);
-  if (greeting) return <RoadEncounter art={guildmasterArt} name="The Guildmaster" line={greeting} onDone={dismissGreeting} />;
-
   return (
     <div className={`node-screen shop-node-screen is-${tab}`} style={{ '--node-rgb': NODE_TINT_HEARTH } as CSSProperties}>
-      <NodeSky />
-      <div className="guild-hall-hearth" aria-hidden="true" />
+      {/* Inside, where a hall is painted for this Location; the act's sky and a lamp-lit hearth where not. */}
+      {hall ? (
+        <div className="guild-hall-interior" aria-hidden="true">
+          <img src={hall} alt="" draggable={false} />
+        </div>
+      ) : (
+        <>
+          <NodeSky />
+          <div className="guild-hall-hearth" aria-hidden="true" />
+        </>
+      )}
       <RosterPeek run={run} />
       <NodePurse gold={run.gold} />
 
       {/* The Smithy's own forge is its sign (2026-09-25, per user direction): six benches fit
           under the anvil without a scroll only once the hall's sign is off the top. */}
       {tab !== 'smithy' && (
-        <NodeHeader compact art={<img src={guildmasterArt} className="npc-portrait" alt="" draggable={false} />} eyebrow={muster ? 'The Last Muster' : 'Welcome to'} title={muster ? 'The Vigil' : 'The Guild Hall'} />
+        <NodeHeader compact side art={<img src={guildmasterArt} className="npc-portrait" alt="" draggable={false} />} eyebrow={muster ? 'The Last Muster' : 'Welcome to'} title={muster ? 'The Vigil' : 'The Guild Hall'} />
       )}
 
       <div className="screen-scroll">

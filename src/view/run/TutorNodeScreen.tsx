@@ -81,6 +81,7 @@ export function TutorNodeScreen({ run, onRunChange, onContinue }: Props) {
       <NodeHeader
         compact
         ring
+        side
         art={<img src={tutorArt} className="npc-portrait" alt="" draggable={false} />}
         eyebrow="By the Roadside"
         title="The Tutor"

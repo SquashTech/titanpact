@@ -1353,15 +1353,13 @@ export function App() {
       )}
 
       {screen.kind === 'reward' && (
-        <RoadGate run={playerRun} place art={mapNodeArt(screen.nodeType)!} {...PLACE_LINES[screen.nodeType]}>
-          <NodeRewardScreen
-            nodeType={screen.nodeType}
-            run={playerRun}
-            onRunChange={setPlayerRun}
-            onContinue={() => handleNodeContinue(screen.nodeId)}
-            onClaimEquipment={(itemId) => handleClaimEquipment(screen.nodeId, itemId)}
-          />
-        </RoadGate>
+        <NodeRewardScreen
+          nodeType={screen.nodeType}
+          run={playerRun}
+          onRunChange={setPlayerRun}
+          onContinue={() => handleNodeContinue(screen.nodeId)}
+          onClaimEquipment={(itemId) => handleClaimEquipment(screen.nodeId, itemId)}
+        />
       )}
 
       {screen.kind === 'scrolls' && (

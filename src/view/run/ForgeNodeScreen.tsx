@@ -13,14 +13,14 @@ import { ElementGlyph } from '../shared/elementIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { HubGlyph } from '../shared/nodeIcons';
 import smithArt from '../../../art/npc/smith.png';
-import { RoadEncounter, useRoadGreeting } from './RoadEncounter';
-import { SMITH_LINES } from '../../data/roadLines';
+import { RoadArrival, useRoadGreeting } from './RoadEncounter';
+import smithyArt from '../../../art/map-nodes/landmarks/smithy.png';
 import { NodeHeader, NodeSky, NODE_TINT_HEARTH } from '../shared/NodeStage';
 import { overlayHost } from '../shared/overlayHost';
 import { RosterPeek } from './RosterPeek';
 import { SmithyBeat, type SmithyWork } from './SmithyBeat';
 import { refKey, SmithyBenches } from './SmithyBenches';
-import { AnvilFigure, ForgeSign } from './smithyArt';
+import { AnvilFigure } from './smithyArt';
 
 interface Props {
   run: RunState;
@@ -50,11 +50,12 @@ export function ForgeNodeScreen({ run, onRunChange, onContinue }: Props) {
   const [bench, setBench] = useState<{ ref: ItemRef; item: EquipmentDefinition } | null>(null);
   const [beat, setBeat] = useState<SmithyWork | null>(null);
 
-  const [greeting, dismissGreeting] = useRoadGreeting(run, SMITH_LINES);
+  // The Smithy on the road first, a tap to walk in: no words, the building is the invitation.
+  const [arriving, dismissArrival] = useRoadGreeting(run, ['The Smithy']);
 
   useEffect(() => {
-    if (!greeting) playSfx('anvil.ring', { pitch: 0.85, delay: 0.15 });
-  }, [greeting]);
+    if (!arriving) playSfx('anvil.ring', { pitch: 0.85, delay: 0.15 });
+  }, [arriving]);
 
   const workable = run.roster.reduce((n, entry) => n + entry.equipment.filter((itemId) => forgeable(run, itemId, equipment)).length, 0);
   const done = forged !== null;
@@ -82,7 +83,7 @@ export function ForgeNodeScreen({ run, onRunChange, onContinue }: Props) {
       ? 'Nothing the roster wears can be forged here. Walk on.'
       : 'Upgrade and Enchant an item.';
 
-  if (greeting) return <RoadEncounter art={smithArt} name="The Smith" line={greeting} onDone={dismissGreeting} />;
+  if (arriving) return <RoadArrival art={smithyArt} name="The Smithy" onDone={dismissArrival} />;
 
   return (
     <div className="node-screen forge-node-screen" style={{ '--node-rgb': NODE_TINT_HEARTH } as CSSProperties}>
@@ -94,6 +95,7 @@ export function ForgeNodeScreen({ run, onRunChange, onContinue }: Props) {
         compact
         eyebrow="Iron and Ember"
         title="The Forge"
+        side
         art={<img src={smithArt} className="npc-portrait" alt="" draggable={false} />}
         readoutKey={forged?.key ?? 'idle'}
         readoutLive={done}
@@ -101,7 +103,6 @@ export function ForgeNodeScreen({ run, onRunChange, onContinue }: Props) {
       />
 
       <div className="screen-scroll">
-        <ForgeSign />
         <SmithyBenches
           run={run}
           liftFor={(item) => {

@@ -3,6 +3,13 @@ import { STAT_ORDER } from '../../engine/content';
 import { StatGlyph } from './statIcons';
 import { grantsFor, relicColor } from './relicIcons';
 
+/** Pixel standards (art/relics/<relicId>.png, 64x64); a relic without one keeps the vector cloth. */
+const PIXEL_ART: Record<string, string> = Object.fromEntries(
+  Object.entries(
+    import.meta.glob<string>('../../../art/relics/*.png', { eager: true, query: '?url', import: 'default' })
+  ).map(([path, url]) => [path.slice(path.lastIndexOf('/') + 1, -'.png'.length), url])
+);
+
 // The relic drawn as an OBJECT rather than as the 24x24 currentColor mark in relicIcons.tsx
 // (2026-09-08, per user direction). A relic offer used to be rectangles of prose; the axis is
 // flat stats, so the words were the only thing carrying it and they carried it badly. This is
@@ -44,6 +51,16 @@ function RelicCharge({ relicId, className }: { relicId: string; className?: stri
  * on. The sheen runs down the cloth rather than across it — a banner is lit from above.
  */
 export function BannerStandard({ relicId, className }: { relicId: string; className?: string }) {
+  const art = PIXEL_ART[relicId];
+  if (art) {
+    // The pixel standard carries its own emblem; the stat glyphs stay, as a row under the pole.
+    return (
+      <span className={`banner-standard is-pixel${className ? ` ${className}` : ''}`} style={relicStyle(relicId)} aria-hidden="true">
+        <img src={art} className="banner-standard-pixel" alt="" draggable={false} />
+        <RelicCharge relicId={relicId} className="banner-standard-charge" />
+      </span>
+    );
+  }
   return (
     <span className={`banner-standard${className ? ` ${className}` : ''}`} style={relicStyle(relicId)} aria-hidden="true">
       <svg className="banner-standard-cloth" viewBox="0 0 64 80" focusable="false">

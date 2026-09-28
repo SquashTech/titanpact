@@ -24,28 +24,6 @@ export const SCRIBE_LINES: readonly string[] = [
   'Careful, the ink is still wet. I have pages here that were meant for someone. Perhaps for you.',
 ];
 
-export const GUILDMASTER_LINES: readonly string[] = [
-  'Come in, come in, shut the door on that wind. Coin buys a sword arm here, and the fire is free.',
-  'Pact-bound, are you? Then you will want steady hands behind you. I have a few for hire, for the right price.',
-  'Every company that passes through here leaves a little lighter. Mostly in the purse. Let us see about yours.',
-  'The mead is warm, the blades are sharp, and the sellswords are only mostly sober. What will it be?',
-  'Ah, the road has not killed you yet. Good for you. Better for business. Step inside.',
-];
-
-export const VIGIL_LINES: readonly string[] = [
-  'So you have broken every seal. I kept the lamps lit for you. Take what you need; there is no coming back from where you go next.',
-  'The last company to stand here never returned. Spend every coin you have. You will not need it after tonight.',
-  'I have seen the Herald from my window. It is waiting for you. Rest, gather yourselves, and then go end this.',
-];
-
-export const SMITH_LINES: readonly string[] = [
-  'Mind the sparks. Hand me something worth the heat and I will make it sing.',
-  'Your gear is dented, chipped, and a disgrace to whoever forged it. Give it here. One piece, done right.',
-  'Out here the ore is good and the fire is hotter than any town forge. Pick your piece, and pick the element to bind in it.',
-  'I do not sell. I do not haggle. I make one thing better, once, and then you walk on.',
-  'Heard you coming three hills off, clanking like a tinker cart. Sit. Let us fix that.',
-];
-
 /** The places met on the road, keyed by map node type: a name and the lines narrated over it. */
 export const PLACE_LINES: Record<string, { name: string; lines: readonly string[] }> = {
   passiveReward: {
@@ -56,22 +34,8 @@ export const PLACE_LINES: Record<string, { name: string; lines: readonly string[
       'Pilgrims left offerings here once. Now there is only the star, and whoever kneels first.',
     ],
   },
-  equipmentReward: {
-    name: 'A Forgotten Chest',
-    lines: [
-      'A chest half sunk in the grass, its owner long gone. The lock gives at the first touch.',
-      'Iron-banded and heavy, abandoned by the roadside. Whoever left it here left in a hurry.',
-      'Coins glint around a sealed chest. Either a trap, or the luckiest turn in the road so far.',
-    ],
-  },
-  currencyReward: {
-    name: 'A Spilled Purse',
-    lines: [
-      'A merchant\'s purse, split open in the dirt. No merchant in sight, and no one to argue.',
-      'Gold and a few stray gems, scattered where a cart overturned. Finders keepers.',
-      'A sack of coin left under a milestone, as if for you. Best not to ask.',
-    ],
-  },
+
+
   scrollReward: {
     name: 'A Crate of Scrolls',
     lines: [

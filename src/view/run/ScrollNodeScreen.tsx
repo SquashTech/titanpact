@@ -137,6 +137,7 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
       <NodeHeader
         eyebrow={eyebrow}
         title={title}
+        side
         art={plan.kind === 'scribe' ? <img src={scribeArt} className="npc-portrait" alt="" draggable={false} /> : undefined}
         glyph={plan.kind === 'scribe' ? undefined : <ResourceGlyph kind="scroll" className="node-header-resource" />}
         readout={readout}

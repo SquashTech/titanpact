@@ -79,7 +79,8 @@ export function MentorNodeScreen({ run, onRunChange, onContinue }: Props) {
       <NodeHeader
         compact
         ring
-        art={<img src={mentorArt} className="class-shrine-mentor" alt="" draggable={false} />}
+        side
+        art={<img src={mentorArt} className="npc-portrait" alt="" draggable={false} />}
         eyebrow="By the Roadside"
         title="The Mentor"
         readoutLive={anyTeachable}

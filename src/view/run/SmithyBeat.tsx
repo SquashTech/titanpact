@@ -9,6 +9,37 @@ import { ElementGlyph } from '../shared/elementIcons';
 import { overlayHost } from '../shared/overlayHost';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { AnvilFigure, HammerFigure, RuneRing } from './smithyArt';
+import { enchantArt, equipmentArt } from '../shared/equipmentArt';
+import { parseEquipmentId } from '../../run/equipment';
+import sparkBurst from '../../../art/smithy/sparks.png';
+import magicBurst from '../../../art/smithy/magic.png';
+
+/**
+ * The piece as the thing itself on the anvil or in the circle: its pixel art at 2x, lit in its
+ * tier's colour, the enchant's gem on its shoulder. A piece with no art keeps its chit.
+ */
+function BeatPiece({ item }: { item: EquipmentDefinition }) {
+  const art = equipmentArt(item);
+  if (!art) return <ItemPiece item={item} />;
+  const { enchantId } = parseEquipmentId(item.id);
+  const gem = enchantId ? enchantArt(enchantId) : undefined;
+  return (
+    <span className="smithy-beat-sprite" style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}>
+      <img src={art} alt="" draggable={false} />
+      {gem && <img src={gem} className="smithy-beat-gem" alt="" draggable={false} />}
+    </span>
+  );
+}
+
+/** One strike's pixel spark burst, keyed per strike by the caller so it replays. */
+function StrikeBurst() {
+  return <span className="smithy-beat-burst" style={{ '--burst-art': `url(${sparkBurst})` } as CSSProperties} aria-hidden="true" />;
+}
+
+/** The bind's burst, cut from the element's own colour. */
+function BindBurst() {
+  return <span className="smithy-beat-magic" style={{ '--burst-art': `url(${magicBurst})` } as CSSProperties} aria-hidden="true" />;
+}
 
 export type SmithyWork =
   | { kind: 'anvil' | 'enchant'; before: EquipmentDefinition; after: EquipmentDefinition }
@@ -160,7 +191,7 @@ export function SmithyBeat({ work, onDone }: { work: SmithyWork; onDone: () => v
             <AnvilFigure key={`anvil-${strikes}`} className={`smithy-beat-anvil${strikes > 0 ? ' is-rung' : ''}`} />
             {/* Keyed on the strike count so every jolt, flash and spark fan restarts on the hit. */}
             <span key={`piece-${strikes}`} className={`smithy-beat-piece${strikes > 0 ? ' is-struck' : ''}`}>
-              <ItemPiece item={shown} />
+              <BeatPiece item={shown} />
             </span>
             {strikes > 0 && (
               <span key={`sparks-${strikes}`} className="smithy-beat-sparks" aria-hidden="true">
@@ -180,6 +211,7 @@ export function SmithyBeat({ work, onDone }: { work: SmithyWork; onDone: () => v
                 ))}
               </span>
             )}
+            {strikes > 0 && <StrikeBurst key={`burst-${strikes}`} />}
             {strikes > 0 && <span key={`flash-${strikes}`} className={`smithy-beat-flash${done ? ' is-final' : ''}`} aria-hidden="true" />}
             {done && (
               <>
@@ -213,10 +245,11 @@ export function SmithyBeat({ work, onDone }: { work: SmithyWork; onDone: () => v
               </span>
             )}
             <span key={bound ? 'after' : 'before'} className={`smithy-beat-piece${bound ? ' is-bound' : ''}`}>
-              <ItemPiece item={shown} />
+              <BeatPiece item={shown} />
             </span>
             {bound && (
               <>
+                <BindBurst />
                 <span className="smithy-beat-flash is-final" aria-hidden="true" />
                 <span className="smithy-beat-ring" aria-hidden="true" />
                 <span className="smithy-beat-ring is-late" aria-hidden="true" />
@@ -330,9 +363,10 @@ function ForgeBeat({
             <span className="smithy-beat-heat" aria-hidden="true" />
             <AnvilFigure key={`anvil-${struck}`} className={`smithy-beat-anvil${struck > 0 ? ' is-rung' : ''}`} />
             <span key={`piece-${struck}`} className={`smithy-beat-piece${struck > 0 ? ' is-struck' : ''}`}>
-              <ItemPiece item={onAnvil} />
+              <BeatPiece item={onAnvil} />
             </span>
             {struck > 0 && !risen && <Sparks key={`sparks-${struck}`} />}
+            {struck > 0 && !risen && <StrikeBurst key={`burst-${struck}`} />}
             {struck > 0 && !risen && (
               <span key={`flash-${struck}`} className={`smithy-beat-flash${struck >= STRIKE_AT.length ? ' is-final' : ''}`} aria-hidden="true" />
             )}
@@ -355,10 +389,11 @@ function ForgeBeat({
             {enchantType && <ElementGlyph type={enchantType} className="smithy-beat-sigil" />}
             {!bound && <Motes />}
             <span key={bound ? 'after' : 'before'} className={`smithy-beat-piece${bound ? ' is-bound' : ' is-rising'}`}>
-              <ItemPiece item={bound ? work.after : lifted} />
+              <BeatPiece item={bound ? work.after : lifted} />
             </span>
             {bound && !reduced && (
               <>
+                <BindBurst />
                 <span className="smithy-beat-flash is-final is-forge-final" aria-hidden="true" />
                 <span className="smithy-beat-ring" aria-hidden="true" />
                 <span className="smithy-beat-ring is-tier is-late" aria-hidden="true" />

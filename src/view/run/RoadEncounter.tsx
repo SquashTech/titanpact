@@ -6,9 +6,9 @@ import { useAmbientLocation } from '../shared/LocationContext';
 import { NodeSky } from '../shared/NodeStage';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 
-// Meeting someone on the road: the act's own painting, the figure walking up out of it, and one
-// line said before the node's real screen. A tap finishes the line; a second tap moves on. A PLACE
-// (a shrine, a chest, a well) is met the same way, rising into view with its line narrated.
+// Meeting someone on the road: the act's own painting, the figure fading in where it stands, and
+// one line said before the node's real screen. A tap finishes the line; a second tap moves on. A
+// PLACE (a shrine, a chest, a well) is met the same way, rising into view with its line narrated.
 
 /** Nodes whose greeting has been heard this session: a screen that remounts mid-visit does not greet twice. */
 const greeted = new Set<string>();
@@ -31,7 +31,7 @@ export function useRoadGreeting(run: RunState, lines: readonly string[], enabled
 
 /** Per character (ms). Quick enough that a reader never waits on it. */
 const TYPE_MS = 24;
-/** The walk in, before the line starts (ms). Matches `road-encounter-walk`. */
+/** The fade in, before the line starts (ms). Matches `road-encounter-arrive`. */
 const WALK_MS = 900;
 
 interface Props {
@@ -44,9 +44,30 @@ interface Props {
   onDone: () => void;
 }
 
-export function RoadEncounter({ art, name, line, place = false, onDone }: Props) {
+/** The act's arrival painting under a shade, full-bleed; the whole screen is the button. */
+export function RoadScene({
+  className,
+  label,
+  onClick,
+  children,
+}: {
+  className?: string;
+  label: string;
+  onClick: () => void;
+  children: ReactNode;
+}) {
   const location = useAmbientLocation();
   const scene = location ? locationBackdrop(location.id, 'arrival') : undefined;
+  return (
+    <button type="button" className={`road-encounter${className ? ` ${className}` : ''}`} onClick={onClick} data-sfx="none" aria-label={label}>
+      {scene ? <img src={scene} className="road-encounter-scene" alt="" draggable={false} /> : <NodeSky />}
+      <span className="road-encounter-shade" aria-hidden="true" />
+      {children}
+    </button>
+  );
+}
+
+export function RoadEncounter({ art, name, line, place = false, onDone }: Props) {
   const instant = prefersReducedMotion();
   const [shown, setShown] = useState(instant ? line.length : 0);
   const [speaking, setSpeaking] = useState(instant);
@@ -75,9 +96,7 @@ export function RoadEncounter({ art, name, line, place = false, onDone }: Props)
   }
 
   return (
-    <button type="button" className={`road-encounter${place ? ' is-place' : ''}`} onClick={advance} data-sfx="none" aria-label={`${name}: ${line}`}>
-      {scene ? <img src={scene} className="road-encounter-scene" alt="" draggable={false} /> : <NodeSky />}
-      <span className="road-encounter-shade" aria-hidden="true" />
+    <RoadScene className={place ? 'is-place' : undefined} label={`${name}: ${line}`} onClick={advance}>
       <img src={art} className={`road-encounter-figure${instant ? ' is-still' : ''}`} alt="" draggable={false} />
       <span className={`road-encounter-speech${speaking ? ' is-open' : ''}`} aria-hidden="true">
         <span className="road-encounter-name">{name}</span>
@@ -87,7 +106,31 @@ export function RoadEncounter({ art, name, line, place = false, onDone }: Props)
         </span>
         {done && <span className="road-encounter-more" />}
       </span>
-    </button>
+    </RoadScene>
+  );
+}
+
+/**
+ * A place with nothing to say: the thing on the road under its name, and a tap walks in. `art` is
+ * drawn at 2x (a 96px building) unless `scale` says otherwise.
+ */
+export function RoadArrival({ art, name, scale = 2, onDone }: { art: string; name: string; scale?: 2 | 3; onDone: () => void }) {
+  const instant = prefersReducedMotion();
+  return (
+    <RoadScene
+      className="is-place is-arrival"
+      label={name}
+      onClick={() => {
+        playSfx('ui.confirm');
+        onDone();
+      }}
+    >
+      <img src={art} className={`road-encounter-figure is-x${scale}${instant ? ' is-still' : ''}`} alt="" draggable={false} />
+      <span className="road-encounter-label" aria-hidden="true">
+        {name}
+        <span className="road-encounter-more" />
+      </span>
+    </RoadScene>
   );
 }
 

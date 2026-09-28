@@ -13497,7 +13497,7 @@ button.star-shop-bundle-face {
    ┄
    A ring collapsing *onto* the figure. Every other burst in this stylesheet
    expands (@keyframes class-learn-flash-burst, title-launch-ring-out,
-   cache-burst-ring) because they are all things being released; this is the
+   road-chest-flash) because they are all things being released; this is the
    one moment that is something being caught, and reversing the direction is
    what makes it read that way without any new vocabulary.
 
@@ -16406,393 +16406,6 @@ button.star-shop-bundle-face {
    difference was the whole screen hopping up as the grid grew into it. */
 .item-who-screen > .item-who-sell {
   min-height: 68px;
-}
-
-/* --- A cache opening (CacheReveal.tsx) ------------------------------------
-   The beat in front of the Item Cache's three offers. What was here — the block
-   this replaces — was `.equip-cache-chest-*`, and it was wrong in three ways
-   that CacheReveal.tsx's own header sets out in full. The two that are this
-   file's fault:
-
-   1. **The glow was never on the chest.** `.equip-cache-chest-glow` centred
-      itself with `transform: translate(-50%, -50%)` and then ran
-      `evolution-glow-pulse`, whose keyframes set `transform: translateX(-50%)
-      scale(...)`. An animation's transform REPLACES the base one, so the Y
-      half of that centring vanished on the first frame and 220px of light sat
-      half its own height below the thing it was lighting. Nothing here centres
-      with a transform: every layer is inset to `.cache-open-stage` or offset
-      with a negative margin, so `transform` belongs to the keyframes outright.
-      Anything added to this block later must keep that split.
-   2. **`font-size: 64px` did nothing.** The icon was a `.run-glyph`, which
-      pins `--iconset-glyph-size: 16px`, so the chest was 16 pixels wide inside
-      a 220px pool. It is now an SVG sized by its own box.
-
-   The chest is a rig, not an icon: body, seam and lid transform separately, so
-   the lid can actually swing on a hinge and the seam can light up behind it. */
-
-.cache-open {
-  /* Burst length, shared by every layer that reacts to the lid giving —
-     matches CACHE_BURST_MS so the JS phase change and the animations end
-     together. Change both or neither. */
-  --cache-burst: 520ms;
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-}
-
-/* A header that names the moment without taking part in centring what follows.
-   The Weapon/Armor/Accessory cache screen keeps its title — it is the only
-   thing saying which slot is about to drop — but in flow the title pushed the
-   beat down: `.screen-scroll` started under it, the chest centred in what was
-   left, and landed ~43px below the middle of the phone. Out of flow the scroll
-   area is the whole screen again and the chest centres on the screen, the way
-   the Equipment Cache's does (that one renders no header at all while the chest
-   is shut). Only for a screen with nothing but sky under the title.
-   ┄
-   `.is-floating` is named in the `.node-screen > *` exclusion list, which
-   would otherwise force it back to `position: relative`; `z-index: 1` is what
-   that rule was giving it, kept so the header still paints over `.node-sky`. */
-.node-header.is-floating {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1;
-}
-
-/* The fixed box everything in the beat is sized against. */
-.cache-open-stage {
-  position: relative;
-  width: 158px;
-  height: 158px;
-  flex: none;
-}
-
-/* The pool of light the chest stands in — inset past the stage rather than
-   sized and re-centred, so the breathing keyframe owns `transform`.
-   ┄
-   The insets are uneven by 15px so the circle centres on the CHEST rather than
-   on the stage: the art sits low in its own 24-unit box (it spans y 8.66-21.9,
-   leaving room over the lid for the swing), so a stage-centred pool of light
-   hangs above the thing it is meant to be lighting. Height and width still come
-   out equal — 158 + 29 + 59 = 158 + 44 + 44 — so it stays a circle. */
-.cache-open-glow {
-  position: absolute;
-  inset: -29px -44px -59px;
-  z-index: 0;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(var(--node-rgb), 0.32), transparent 66%);
-  animation: cache-glow-breathe 1.4s ease-in-out infinite;
-  pointer-events: none;
-}
-
-.cache-open.is-opening .cache-open-glow {
-  /* A white-hot core replaces the ambient amber for the burst. Without it the
-     brightest frame of the beat is dimmer than the waiting was: the flare
-     spreads the same light over a bigger circle, which lowers it per pixel
-     exactly when it should be going up. */
-  background: radial-gradient(circle, rgba(255, 238, 196, 0.55), rgba(var(--node-rgb), 0.32) 38%, transparent 68%);
-  animation: cache-glow-flare var(--cache-burst) var(--ease-out) forwards;
-}
-
-@keyframes cache-glow-breathe {
-  0%,
-  100% {
-    opacity: 0.55;
-    transform: scale(0.92);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.06);
-  }
-}
-
-/* Holds full brightness for the first half rather than fading from the frame
-   it flares on: the burst is 520ms and the chest is still on screen for most of
-   it, so a glow that starts dying immediately leaves the middle of the beat —
-   the part with the lid at full swing — darker than the anticipation was. */
-@keyframes cache-glow-flare {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  18% {
-    opacity: 1;
-    transform: scale(1.3);
-  }
-  60% {
-    opacity: 0.85;
-    transform: scale(1.36);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.55);
-  }
-}
-
-/* One ring off the lid — the shockwave, and the only thing in the beat that
-   reads as a shape rather than as light. */
-/* Shifted down the same 15px as the glow, and by the same trick — 158 - 51 - 21
-   is 158 - 36 - 36, so the ring stays a circle centred on the chest. */
-.cache-open-burst {
-  position: absolute;
-  inset: 51px 36px 21px;
-  z-index: 1;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 231, 176, 0.8);
-  box-shadow: 0 0 14px rgba(var(--node-rgb), 0.55), inset 0 0 10px rgba(var(--node-rgb), 0.4);
-  opacity: 0;
-  pointer-events: none;
-}
-
-.cache-open.is-opening .cache-open-burst {
-  animation: cache-burst-ring var(--cache-burst) var(--ease-out) forwards;
-}
-
-@keyframes cache-burst-ring {
-  0% {
-    opacity: 0;
-    transform: scale(0.35);
-  }
-  12% {
-    opacity: 0.95;
-  }
-  100% {
-    opacity: 0;
-    transform: scale(2.1);
-  }
-}
-
-/* The shaft standing out of the open lid. Anchored at the seam (46% down the
-   stage, where the lid's hinge line sits) and grown upward from its own base,
-   so it reads as light leaving the chest rather than as a bar fading in. */
-.cache-open-shaft {
-  position: absolute;
-  left: 50%;
-  top: 46%;
-  width: 76px;
-  z-index: 2;
-  height: 118px;
-  margin-left: -38px;
-  margin-top: -116px;
-  transform-origin: 50% 100%;
-  background: linear-gradient(to top, rgba(255, 231, 172, 0.62), rgba(255, 231, 172, 0) 82%);
-  clip-path: polygon(36% 100%, 64% 100%, 100% 0, 0 0);
-  opacity: 0;
-  pointer-events: none;
-}
-
-.cache-open.is-opening .cache-open-shaft {
-  animation: cache-shaft-rise var(--cache-burst) var(--ease-out) forwards;
-}
-
-@keyframes cache-shaft-rise {
-  0% {
-    opacity: 0;
-    transform: scaleY(0.1);
-  }
-  30% {
-    opacity: 1;
-    transform: scaleY(1);
-  }
-  100% {
-    opacity: 0;
-    transform: scaleY(1.08);
-  }
-}
-
-/* Twelve sparks, angle/distance/size/delay all inline from CacheReveal's
-   golden-angle scatter. Positioned with a negative margin rather than a
-   centring transform for the reason at the top of this block — `rotate()` in
-   the keyframe would otherwise wipe the centring out. */
-.cache-open-sparks {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  pointer-events: none;
-}
-
-.cache-spark {
-  position: absolute;
-  left: 50%;
-  top: 46%;
-  border-radius: 50%;
-  background: #ffeaad;
-  box-shadow: 0 0 8px 2px rgba(var(--node-rgb), 0.7);
-  opacity: 0;
-}
-
-.cache-open.is-opening .cache-spark {
-  animation: cache-spark-fly 0.56s var(--ease-out) forwards;
-}
-
-@keyframes cache-spark-fly {
-  0% {
-    opacity: 0;
-    transform: rotate(var(--spark-angle)) translateY(0) scale(0.4);
-  }
-  18% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: rotate(var(--spark-angle)) translateY(calc(var(--spark-distance) * -1)) scale(0.9);
-  }
-}
-
-/* What is inside, for the caches that know (the three slot caches). Rises out
-   of the lid and dissolves — a promise, not a reveal: the item's real name and
-   numbers are the next screen's job. */
-.cache-open-payload {
-  position: absolute;
-  left: 50%;
-  top: 46%;
-  width: 52px;
-  z-index: 4;
-  height: 52px;
-  margin-left: -26px;
-  margin-top: -26px;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.cache-payload-glyph {
-  width: 100%;
-  height: 100%;
-  color: #ffeec2;
-  filter: drop-shadow(0 0 10px rgba(var(--node-rgb), 0.8));
-}
-
-/* Delayed a frame or two behind the lid: it has to come out of a chest that is
-   already open, and starting them together puts the silhouette behind the lid
-   for the half of the burst where it is brightest. */
-.cache-open.is-opening .cache-open-payload {
-  animation: cache-payload-rise var(--cache-burst) var(--ease-out) 70ms forwards;
-}
-
-@keyframes cache-payload-rise {
-  0% {
-    opacity: 0;
-    transform: translateY(8px) scale(0.45);
-  }
-  30% {
-    opacity: 1;
-    transform: translateY(-18px) scale(1.05);
-  }
-  62% {
-    opacity: 1;
-    transform: translateY(-32px) scale(1.1);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-48px) scale(1.15);
-  }
-}
-
-/* --- The chest itself ---------------------------------------------------- */
-
-/* Sized outright rather than by `inset` + `width: auto`. An <svg> is a REPLACED
-   element, and a replaced box whose width and height are auto does not reliably
-   take its size from its insets: Chrome solved this to the 108px the insets
-   describe, iOS WebKit sized it to the whole 158px stage and kept only the left
-   and top offsets — so on a phone the chest rendered 46% too big and sat down
-   and to the right of where it was drawn here. Anything absolutely positioned in
-   this beat that is an image or an SVG must state its own width and height for
-   the same reason. */
-.cache-chest {
-  position: absolute;
-  left: 15px;
-  top: 15px;
-  z-index: 3;
-  width: 128px;
-  height: 128px;
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.55));
-}
-
-/* The whole object shifts its weight while it is still shut — small, and
-   under the lid's own strain, so the two read as one thing straining rather
-   than as two animations. */
-.cache-open.is-sealed .cache-chest {
-  animation: cache-chest-shudder 0.62s ease-in-out infinite;
-}
-
-.cache-open.is-opening .cache-chest {
-  animation: cache-chest-settle var(--cache-burst) var(--ease-out) forwards;
-}
-
-@keyframes cache-chest-shudder {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  30% {
-    transform: translateX(-1.5px);
-  }
-  62% {
-    transform: translateX(1.5px);
-  }
-  82% {
-    transform: translateX(-0.6px);
-  }
-}
-
-/* The chest drops back on its base as the lid goes over, then falls away
-   under the light — the frame the component swaps it out on. */
-@keyframes cache-chest-settle {
-  0% {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-  22% {
-    transform: translateY(2px) scale(1.05);
-    opacity: 1;
-  }
-  70% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-4px) scale(0.9);
-    opacity: 0;
-  }
-}
-
-/* The frames: 64px pixel strips (art/cache) at a clean 2x. The rattle loops for
-   the sealed strain; the lid swing plays once and holds its last frame. */
-.cache-chest-frames {
-  position: absolute;
-  inset: 0;
-  background-image: var(--chest-seal);
-  background-size: 1152px 128px;
-  background-repeat: no-repeat;
-  image-rendering: pixelated;
-  animation: cache-chest-rattle 0.82s steps(9) infinite;
-}
-
-.cache-open.is-opening .cache-chest-frames {
-  background-image: var(--chest-open);
-  background-size: 768px 128px;
-  animation: cache-chest-swing var(--cache-burst) steps(6, jump-none) forwards;
-}
-
-@keyframes cache-chest-rattle {
-  from {
-    background-position: 0 0;
-  }
-  to {
-    background-position: -1152px 0;
-  }
-}
-
-@keyframes cache-chest-swing {
-  from {
-    background-position: 0 0;
-  }
-  to {
-    background-position: -640px 0;
-  }
 }
 
 /* Cascading fade-up applied to the banner/cards/button once the chest
@@ -21984,11 +21597,12 @@ button.star-shop-bundle-face {
 /* `.pact-seal-flash` is the opposite case to `.shrine-descent`: an ambient
    layer that has to paint ABOVE the content, at the z-index it names itself.
    `.guild-hall-hearth` is `.shrine-descent`'s case again — the Guild Hall's
-   lantern light, under the content (ShopNodeScreen). `.node-purse` is a
+   lantern light, under the content (ShopNodeScreen) — and so is its painted
+   `.guild-hall-interior`. `.node-purse` is a
    corner chip like `.corner-glyph-button`; lifted, it lost its absolute
    position and stretched across the top of both shops as a bar. */
 .node-screen
-  > *:not(.node-sky):not(.shrine-descent):not(.guild-hall-hearth):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button):not(
+  > *:not(.node-sky):not(.shrine-descent):not(.guild-hall-hearth):not(.guild-hall-interior):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button):not(
     .node-purse
   ):not(.is-floating):not(.pact-seal-flash),
 .levelup-screen > *:not(.node-sky):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button),
@@ -22502,139 +22116,6 @@ button.star-shop-bundle-face {
 .node-spacer {
   flex: 1 1 auto;
   min-height: 0;
-}
-
-/* Gold and XP caches have nothing to choose between, so the amount *is* the
-   screen: one numeral at display size lit by the node's hue, where there used
-   to be a line of 11px hint text inside a bordered banner. The unit rides
-   smaller alongside it, the same label/value split .pick-level makes. */
-/* The numeral is the player's OWN total, climbing (NodeRewardScreen's Hoard) —
-   not the size of the drop, which is the small chip above it. A cache that
-   states its own payout tells you nothing you can act on; a purse you watch
-   fill is the only reason the number was worth stopping for. */
-.node-hoard {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  /* Centred in the room rather than pinned above the CTA: there is nothing to
-     pick here, so the amount is the whole screen and belongs at its optical
-     centre — the thumb-reach argument that puts pickers low doesn't apply to
-     something you can't press. */
-  min-height: 100%;
-  animation: title-heading-drop 0.6s var(--ease-spring) both;
-}
-
-.node-hoard-amount {
-  display: inline-flex;
-  align-items: baseline;
-  font-size: 64px;
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: -0.03em;
-  color: var(--text);
-  text-shadow: 0 0 26px rgba(var(--node-rgb, 224, 166, 60), 0.55);
-  /* Tabular so a purse crossing 99 → 100 doesn't shove the glyph sideways. */
-  font-variant-numeric: tabular-nums;
-}
-
-.node-hoard-glyph {
-  align-self: center;
-  width: 34px;
-  height: 34px;
-  margin-right: 8px;
-}
-
-.node-hoard-unit {
-  margin-left: 4px;
-  font-size: 22px;
-  font-weight: 800;
-  color: rgb(var(--node-rgb, 224, 166, 60));
-}
-
-/* What this node added, over the total it added to. Rises off the numeral once,
-   then stays put as the receipt. */
-.node-hoard-delta {
-  padding: 3px 10px;
-  border: 1px solid rgba(var(--node-rgb, 224, 166, 60), 0.5);
-  border-radius: 999px;
-  background: rgba(var(--node-rgb, 224, 166, 60), 0.14);
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  color: rgb(var(--node-rgb, 224, 166, 60));
-  animation: hoard-delta-rise 0.6s var(--ease-spring) 0.32s both;
-}
-
-@keyframes hoard-delta-rise {
-  from {
-    opacity: 0;
-    transform: translateY(14px) scale(0.85);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.node-hoard-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
-/* The count landing, once — the numeral takes the hit rather than a label
-   changing underneath it. */
-.node-hoard.is-settled .node-hoard-amount {
-  animation: growth-pip-seal 0.45s var(--ease-spring);
-}
-
-/* Coins thrown out of the numeral and falling past it. Purely decorative: the
-   layer is inert and the count reads correctly with every coin suppressed. */
-.node-hoard-coins {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.node-coin {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  border-radius: 50%;
-  background: radial-gradient(circle at 34% 28%, #ffeab0, #e0a63c 58%, #9c6a17);
-  box-shadow: 0 0 8px rgba(224, 166, 60, 0.6);
-  animation: hoard-coin-arc 1.1s cubic-bezier(0.35, 0, 0.65, 1) both;
-}
-
-/* rotateY, not rotate: a disc seen edge-on is what makes it read as a coin
-   rather than a dot. */
-@keyframes hoard-coin-arc {
-  0% {
-    opacity: 0;
-    transform: translate(0, 0) scale(0.4) rotateY(0deg);
-  }
-  12% {
-    opacity: 1;
-  }
-  45% {
-    transform: translate(calc(var(--coin-x) * 0.55), calc(var(--coin-rise) * -1)) scale(1) rotateY(540deg);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(var(--coin-x), 130px) scale(0.85) rotateY(1080deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .node-hoard-coins {
-    display: none;
-  }
 }
 
 /* An obtained item's stat chips and full passive text — the contents of the `.equip-spotlight`
@@ -36779,7 +36260,7 @@ button.star-shop-bundle-face {
   margin-left: -72px;
   image-rendering: pixelated;
   filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.7));
-  animation: road-encounter-walk 0.9s steps(6) both;
+  animation: road-encounter-arrive 0.9s var(--ease-out) both;
   pointer-events: none;
 }
 
@@ -36787,17 +36268,13 @@ button.star-shop-bundle-face {
   animation: none;
 }
 
-/* Up the road toward you: small and far, then here. Stepped, so it reads as a walk and not a zoom. */
-@keyframes road-encounter-walk {
+/* Simply there: faded in where they stand, a touch of brightness settling as they do. */
+@keyframes road-encounter-arrive {
   from {
-    transform: translateY(-70px) scale(0.45);
     opacity: 0;
-  }
-  30% {
-    opacity: 1;
+    filter: brightness(1.6) drop-shadow(0 6px 8px rgba(0, 0, 0, 0.7));
   }
   to {
-    transform: none;
     opacity: 1;
   }
 }
@@ -37141,4 +36618,375 @@ button.star-shop-bundle-face {
 .crucible-rite.is-still .crucible-rite-ghost {
   animation: none;
   opacity: 0.55;
+}
+
+/* A place with nothing to say (RoadArrival): the thing stands lower on the road, with its name in
+   a small plate under it and the tap-on chevron beside the name. */
+.road-encounter.is-arrival .road-encounter-figure {
+  bottom: 120px;
+}
+
+.road-encounter-figure.is-x2 {
+  width: 192px;
+  height: 192px;
+  margin-left: -96px;
+}
+
+.road-encounter-label {
+  position: absolute;
+  left: 50%;
+  bottom: 64px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(214, 178, 96, 0.55);
+  border-radius: 999px;
+  background: rgba(10, 11, 16, 0.88);
+  color: #e8c46a;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  animation: road-encounter-arrive 0.9s var(--ease-out) 0.4s both;
+}
+
+.road-encounter-label .road-encounter-more {
+  position: static;
+}
+
+/* NodeHeader `side`: the keeper beside the words, not over them — a screen whose body is a roster
+   grid cannot spend a portrait's height above its title. */
+.node-header.is-side {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 12px;
+  align-items: center;
+  text-align: left;
+}
+
+.node-header.is-side > .node-header-art {
+  grid-row: 1 / span 4;
+  display: flex;
+}
+
+.node-header.is-side > .node-header-art > .npc-portrait {
+  width: 56px;
+  height: 56px;
+  animation: none;
+}
+
+.node-header.is-side .node-title {
+  justify-content: flex-start;
+}
+
+.node-header.is-side .node-readout {
+  min-height: 0;
+  margin: 2px 0 0;
+  text-align: left;
+}
+
+/* Gold on the road: the pile, and what it held rising off it in the purse's gold. */
+.road-gold-delta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 290px;
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 2px;
+  color: #ffd35a;
+  font-size: 44px;
+  font-weight: 800;
+  text-shadow: 0 2px 0 #6a3d08, 0 0 18px rgba(255, 190, 60, 0.7);
+  animation: road-gold-rise 1.4s var(--ease-out) 0.5s both;
+  pointer-events: none;
+}
+
+.road-gold-unit {
+  font-size: 26px;
+}
+
+@keyframes road-gold-rise {
+  from {
+    opacity: 0;
+    transform: translateY(26px) scale(0.7);
+  }
+  35% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1.08);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The Cache on the road: the chest's pixel frames at 3x, straining, then flashing open. */
+.road-chest {
+  position: absolute;
+  left: 50%;
+  bottom: 110px;
+  width: 192px;
+  height: 192px;
+  margin-left: -96px;
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 22px rgba(255, 200, 90, 0.3));
+  animation: road-encounter-arrive 0.9s var(--ease-out) both;
+}
+
+.road-chest-frames {
+  position: absolute;
+  inset: 0;
+  background-image: var(--chest-seal);
+  background-size: 1728px 192px;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  animation: road-chest-rattle 0.82s steps(9) infinite;
+}
+
+.road-encounter.is-burst .road-chest-frames {
+  background-image: var(--chest-open);
+  background-size: 1152px 192px;
+  animation: road-chest-swing 0.52s steps(6, jump-none) forwards;
+}
+
+@keyframes road-chest-rattle {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -1728px 0;
+  }
+}
+
+@keyframes road-chest-swing {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -960px 0;
+  }
+}
+
+/* The flash the lid gives way on: white-gold out of the chest, then gone. */
+.road-chest-flash {
+  position: absolute;
+  left: 50%;
+  bottom: 60px;
+  width: 420px;
+  height: 320px;
+  margin-left: -210px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 250, 225, 0.95), rgba(255, 200, 90, 0.45) 32%, transparent 66%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.road-encounter.is-burst .road-chest-flash {
+  animation: road-chest-flash 0.9s var(--ease-out) both;
+}
+
+@keyframes road-chest-flash {
+  from {
+    opacity: 1;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+}
+
+/* Inside the Guild Hall (art/locations/hall): the Location's own hall at 2x, dimmed toward the top
+   and foot where the header and the counters sit, so the room is felt more than read. */
+.guild-hall-interior {
+  position: absolute;
+  inset: calc(var(--shell-pad) * -1);
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.guild-hall-interior img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+}
+
+.guild-hall-interior::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(8, 7, 9, 0.72), rgba(8, 7, 9, 0.42) 30%, rgba(8, 7, 9, 0.5) 65%, rgba(8, 7, 9, 0.82));
+}
+
+/* A Banner in pixels (relicArt.tsx, art/relics): the 64px standard fills the box and sways from
+   its bar; the stat glyphs sit as a row on a dark plate at its foot rather than in the cloth, which
+   now carries an emblem of its own. */
+.banner-standard.is-pixel {
+  width: 1em;
+  height: 1em;
+}
+
+.banner-standard-pixel {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  transform-origin: 50% 8%;
+  animation: banner-sway 5.2s ease-in-out infinite;
+  filter: drop-shadow(0 0.04em 0.06em rgba(0, 0, 0, 0.6));
+}
+
+.banner-standard.is-pixel .banner-standard-charge {
+  top: auto;
+  bottom: -0.04em;
+  transform: translateX(-50%);
+  max-width: none;
+  padding: 0.03em 0.08em;
+  border-radius: 0.1em;
+  background: rgba(8, 9, 14, 0.85);
+  font-size: 0.16em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .banner-standard-pixel {
+    animation: none;
+  }
+}
+
+/* --- The Smithy's pixel hardware (smithyArt.tsx, art/smithy) ---------------------------------- */
+.smithy-pixel {
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+/* The service rows' small anvil: 64px art at a clean half, standing in the row's glyph cell. */
+img.smithy-service-art {
+  width: 44px;
+  height: 44px;
+}
+
+/* On the beat, 64px at 3x on the stage floor (the art has 6px of air under the stump). */
+.smithy-beat-anvil.smithy-pixel {
+  bottom: 0;
+  width: 192px;
+  height: 192px;
+}
+
+/* The anvil's face is 30px under the top of that box: the piece stands on it. */
+.is-anvil .smithy-beat-piece {
+  bottom: 156px;
+  width: 64px;
+  height: 64px;
+}
+
+/* Drawn on the diagonal: turned upright in the swing's box so the handle's end is the pivot. */
+.smithy-hammer-art {
+  position: absolute;
+  left: -8px;
+  top: 25px;
+  width: 96px;
+  height: 96px;
+  transform: rotate(-45deg);
+}
+
+.smithy-circle-art {
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  -webkit-mask: var(--circle-art) center / contain no-repeat;
+  mask: var(--circle-art) center / contain no-repeat;
+  animation: smithy-rune-turn 16s linear infinite;
+}
+
+/* The piece itself on the anvil or in the circle (SmithyBeat BeatPiece): its 32px art at 2x, lit
+   in its tier's colour, the enchant's gem on its shoulder. */
+.smithy-beat-sprite {
+  position: relative;
+  display: block;
+  width: 64px;
+  height: 64px;
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--rarity-color) 70%, transparent));
+}
+
+.smithy-beat-sprite > img:first-child {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+/* Under the hammer the metal is hot: warmed toward orange and glowing, until the last strike. */
+.is-anvil:not(.is-done) .smithy-beat-sprite > img:first-child {
+  filter: sepia(0.6) saturate(2.2) hue-rotate(-12deg) brightness(1.15) drop-shadow(0 0 8px rgba(255, 140, 40, 0.9));
+}
+
+.smithy-beat-gem {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
+}
+
+/* A strike's burst of sparks off the anvil's face: 64px frames at 3x, played once. */
+.smithy-beat-burst {
+  position: absolute;
+  left: 50%;
+  bottom: 92px;
+  z-index: 4;
+  width: 192px;
+  height: 192px;
+  margin-left: -96px;
+  background: var(--burst-art) 0 0 / 1536px 192px no-repeat;
+  image-rendering: pixelated;
+  pointer-events: none;
+  animation: smithy-burst 0.45s steps(8) forwards;
+}
+
+@keyframes smithy-burst {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -1536px 0;
+  }
+}
+
+/* The bind: the magic burst's frames as a mask over the element's colour, at 4x. */
+.smithy-beat-magic {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 4;
+  width: 256px;
+  height: 256px;
+  margin: -128px 0 0 -128px;
+  background: var(--beat-color);
+  -webkit-mask: var(--burst-art) 0 0 / 2048px 256px no-repeat;
+  mask: var(--burst-art) 0 0 / 2048px 256px no-repeat;
+  pointer-events: none;
+  filter: drop-shadow(0 0 10px var(--beat-color));
+  animation: smithy-magic 0.7s steps(8) forwards;
+}
+
+@keyframes smithy-magic {
+  from {
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+  }
+  to {
+    -webkit-mask-position: -2048px 0;
+    mask-position: -2048px 0;
+  }
+}
+
+/* The Forge fits a full roster of six benches under its header without a scroll. */
+.forge-node-screen .smithy-benches {
+  gap: 5px;
 }
