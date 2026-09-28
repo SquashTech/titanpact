@@ -3715,6 +3715,12 @@ chosen (`slot-lit.png`), a title bar stands on the frame's gold inlay (`rule.png
 a card with an identity hue — the plate family, roster cards, the Bag's picker — is
 sunk in with a **thin carved edge** (`slot-thin.png`, 4px, so a card grows by a pixel a
 side), its hue kept as the wash, gold-lipped when picked. A menu of destinations is a
-stack of planks. The title's Continue keeps its own chamfered metal plate. Still to
-do: the map HUD, the level-up report and reward rows, and screen-specific cards
-(the Starfall card, empty-state boxes).
+stack of planks. The title's Continue keeps its own chamfered metal plate.
+
+**The map's HUD** (third pass, 2026-09-28): the top bar is a stone **lintel** hung
+from the screen's edge (`lintel.png`) with the purse carved into it and the two
+corner controls as small square planks (`plank-square.png`); the Roster is a long
+plank the party stands on, and its alert state stays the one lit object on the
+screen — gilt, a warm wash and a pulse in the alert colour. Still to do: the
+level-up report and reward rows, and screen-specific cards (the Starfall card,
+empty-state boxes).
