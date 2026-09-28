@@ -6,8 +6,6 @@ import { equipment } from '../../data/equipment';
 import { ItemServicesSection } from './ItemServicesSection';
 import { guildHallOffersFor, CONTRACT_PURCHASE_COST } from '../../data/recruitment';
 import { ResourceGlyph } from '../shared/RunGlyph';
-import { Coin } from '../shared/Coin';
-import { SectionGlyph } from '../shared/sectionIcons';
 import type { HeroDefinition } from '../../engine/content';
 import type { RunState } from '../../run/state';
 import { ROSTER_CAP, RosterFullError } from '../../run/state';
@@ -17,7 +15,6 @@ import { SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT, canBuyScroll } from '../..
 import { CONSUMABLE_HOLD_CAP, CONSUMABLE_KINDS, CONSUMABLE_NAMES, REVIVE_PURCHASE_LIMIT, canBuyConsumable, consumablePrice, type ConsumableKind } from '../../run/consumables';
 import { anyWounded, canBuyMend, mendPrice } from '../../run/wounds';
 import { entryHp } from '../shared/WoundBar';
-import { StatGlyph } from '../shared/StatBars';
 import {
   recruitFromGuildHall,
   buyContract,
@@ -33,6 +30,7 @@ import { HeroStageOverlay } from './HeroStageOverlay';
 import { overlayHost } from '../shared/overlayHost';
 import type { TabSpec } from '../shared/TabStrip';
 import { RecruitFanfare } from './RecruitFanfare';
+import { GOOD_ART, HALL_ART, HallGood } from './guildHallArt';
 
 export type GuildHallTab = 'shop' | 'tavern' | 'smithy';
 
@@ -95,22 +93,26 @@ interface HeroCardProps {
 }
 
 // A tap puts the hire on the stage; the stage is where gold is spent. Unaffordable offers still open.
+// Pinned to the Tavern's board as a parchment notice: the face, the name, what it is, what it asks.
 function GuildHallHeroCard({ hero, offer, level, affordable, onInspect }: HeroCardProps) {
   return (
     <button
-      className={`guild-hall-hero-card${affordable ? '' : ' unaffordable'}`}
+      className={`hall-poster${affordable ? '' : ' unaffordable'}`}
       style={{ '--plate-color': getTypeColor(hero.types[0]) } as CSSProperties}
       onClick={onInspect}
     >
-      <span className="guild-hall-hero-level">Lv{level}</span>
-      <HeroPortrait heroId={hero.id} className="guild-hall-hero-portrait" />
-      <div className="guild-hall-hero-name">{hero.name}</div>
-      <div className="roster-card-types">
+      <span className="hall-poster-pin" aria-hidden="true" />
+      <span className="hall-poster-level">Lv{level}</span>
+      <HeroPortrait heroId={hero.id} className="hall-poster-portrait" />
+      <span className="hall-poster-name">{hero.name}</span>
+      <span className="hall-poster-types">
         {hero.types.map((t) => (
           <TypeBadge key={t} type={t} />
         ))}
-      </div>
-      <div className="guild-hall-hero-cost">{offer.cost}g</div>
+      </span>
+      <span className="hall-poster-price">
+        <ResourceGlyph kind="gold" /> {offer.cost}
+      </span>
     </button>
   );
 }
@@ -182,158 +184,101 @@ export function GuildHallPanel({
   return (
     <div className="guild-hall">
       {tab === 'tavern' && (
-        <div className="guild-hall-section">
+        <div className="guild-hall-section is-tavern">
+          {/* The notice board: every hire on offer is a poster pinned to it. What a hire is — raw,
+              unevolved — and what a full roster asks are both said on the hero's own stage. */}
           {!vigil && (
-            <>
-              {/* The mark and nothing under it (2026-09-11, per user direction): what a hire is — raw,
-                  unevolved — and what a full roster asks are both said on the hero's own stage, at the
-                  moment the gold is about to be spent. */}
-              <div className="guild-hall-section-head">
-                <span className="guild-hall-section-title">
-                  <SectionGlyph name="heroes" /> Recruits
-                </span>
+            <div className="hall-board">
+              <img src={HALL_ART.board} className="hall-board-art" alt="" draggable={false} />
+              <div className="hall-board-posters">
+                {heroOffers.length > 0 ? (
+                  heroOffers.map((offer) => (
+                    <GuildHallHeroCard
+                      key={offer.id}
+                      hero={heroes[offer.heroId]}
+                      offer={offer}
+                      level={guildHallLevel(run.actNumber)}
+                      affordable={run.gold >= offer.cost}
+                      onInspect={() => setPreviewOfferId(offer.id)}
+                    />
+                  ))
+                ) : (
+                  <span className="hall-poster is-note">No one is looking for work this visit.</span>
+                )}
               </div>
-              {heroOffers.length > 0 ? (
-                <div className="guild-hall-hero-grid">
-                  {heroOffers.map((offer) => {
-                    const hero = heroes[offer.heroId];
-                    return (
-                      <GuildHallHeroCard
-                        key={offer.id}
-                        hero={hero}
-                        offer={offer}
-                        level={guildHallLevel(run.actNumber)}
-                        affordable={run.gold >= offer.cost}
-                        onInspect={() => setPreviewOfferId(offer.id)}
-                      />
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="hint">No recruits on offer this visit.</p>
-              )}
-            </>
+            </div>
           )}
-          {/* Goods on a shelf, side by side. The Contract and Scroll used to be two full-width rows — glyph,
-              name, gray sentence, price hard right — which is a shopping-cart line item, and it
-              is what made the whole panel read as an invoice rather than as a counter. */}
-          <div className="guild-hall-shelf">
-            {!vigil && (
-              <>
-                <button className="guild-hall-good is-contract" disabled={!canBuyContract} onClick={() => setConfirmingContract(true)}>
-                  <span className="guild-hall-good-glyph">
-                    <ResourceGlyph kind="contract" tone="inherit" />
-                  </span>
-                  <span className="guild-hall-good-name">Recruit Contract</span>
-                  <span className="guild-hall-good-price">
-                    <ResourceGlyph kind="gold" /> {CONTRACT_PURCHASE_COST}
-                  </span>
-                  {run.recruitContracts > 0 && (
-                    <span className="guild-hall-good-held" aria-label={`${run.recruitContracts} held`}>
-                      {run.recruitContracts}
-                    </span>
-                  )}
-                </button>
 
-                {/* The reroll (run/shop.ts): a fresh shelf of faces, dearer each time this visit. Dark
-                    with nobody left to show — a pool the roster has emptied has nothing to reroll into. */}
-                <button className="guild-hall-good is-reroll" disabled={run.gold < rerollCost || offers.heroOfferIds.length === 0} onClick={onReroll}>
-                  <span className="guild-hall-good-glyph">
-                    <SectionGlyph name="reroll" />
-                  </span>
-                  <span className="guild-hall-good-name">Reroll Recruits</span>
-                  <span className="guild-hall-good-price">
-                    <ResourceGlyph kind="gold" /> {rerollCost}
-                  </span>
-                </button>
-              </>
-            )}
-
-            {/* The mend (run/wounds.ts), a night at the Tavern (2026-09-24, per user direction): the
-                one good here that is for everyone at once, so it takes the whole shelf, and since
-                2026-09-17 it stands the downed up too. Dark while nobody is hurt — a heal with
-                nothing to heal is not for sale. */}
-            <button className={`guild-hall-good is-mend${anyWounded(run) ? '' : ' sold-out'}`} disabled={!canBuyMend(run, mendCost)} onClick={onBuyMend}>
-              <span className="guild-hall-good-glyph">
-                <StatGlyph stat="hp" tone="inherit" />
-              </span>
-              <span className="guild-hall-good-name">Full Party Heal</span>
-              {anyWounded(run) ? (
-                <span className="guild-hall-good-price">
-                  <ResourceGlyph kind="gold" /> {mendCost}
-                </span>
-              ) : (
-                <span className="guild-hall-good-price is-soldout">Nobody hurt</span>
+          {/* The bar: the Contract, the bell that calls a fresh shelf of faces (dearer each ring this
+              visit, dark with nobody left to call), and a hot meal for everyone — the mend, which
+              since 2026-09-17 stands the downed up too, and is not for sale while nobody is hurt. */}
+          <div className="hall-counter">
+            <div className="hall-counter-goods">
+              {!vigil && (
+                <>
+                  <HallGood
+                    art={GOOD_ART.contract}
+                    name="Contract"
+                    price={CONTRACT_PURCHASE_COST}
+                    held={run.recruitContracts > 0 ? run.recruitContracts : undefined}
+                    disabled={!canBuyContract}
+                    onClick={() => setConfirmingContract(true)}
+                  />
+                  <HallGood
+                    art={GOOD_ART.reroll}
+                    name="New Faces"
+                    price={rerollCost}
+                    disabled={run.gold < rerollCost || offers.heroOfferIds.length === 0}
+                    onClick={onReroll}
+                  />
+                </>
               )}
-            </button>
+              <HallGood
+                art={GOOD_ART.mend}
+                name="Party Heal"
+                price={anyWounded(run) ? mendCost : 'Nobody hurt'}
+                soldOut={!anyWounded(run)}
+                disabled={!canBuyMend(run, mendCost)}
+                onClick={onBuyMend}
+              />
+            </div>
+            <img src={HALL_ART.counter} className="hall-counter-art" alt="" draggable={false} />
           </div>
         </div>
       )}
 
       {tab === 'shop' && (
         <div className="guild-hall-section is-shop">
-          <div className="guild-hall-shelf">
-            {/* The Mastery Scroll (docs/mastery.md §3): one pip. No confirm, unlike the Contract — the
-                tap opens the who screen, and that is the decision. The shelf holds
-                SCROLL_PURCHASE_LIMIT a visit, and the corner count is how many are already landed. */}
-            <button
-              className={`guild-hall-good is-scroll${scrollsSoldOut ? ' sold-out' : ''}`}
+          {/* The shelf: the Mastery Scroll (one pip, SCROLL_PURCHASE_LIMIT a visit, the tap opens the
+              who screen) and the flasks (the flask's own cap is the shelf's; the Revive is one a visit). */}
+          <div className="hall-shelf">
+            <img src={HALL_ART.shelf} className="hall-shelf-art" alt="" draggable={false} />
+            <HallGood
+              className="is-slot-1"
+              art={GOOD_ART.scroll}
+              name="Mastery Scroll"
+              price={scrollsSoldOut ? 'Sold out' : SCROLL_PURCHASE_COST}
+              soldOut={scrollsSoldOut}
+              held={scrollsBought > 0 ? `${scrollsBought}/${SCROLL_PURCHASE_LIMIT}` : undefined}
               disabled={!canBuyScrollNow}
               onClick={onBuyScroll}
-            >
-              <span className="guild-hall-good-glyph">
-                <ResourceGlyph kind="scroll" tone="inherit" />
-              </span>
-              <span className="guild-hall-good-name">Mastery Scroll</span>
-              <span className="guild-hall-good-desc">+1 Mastery</span>
-              {scrollsSoldOut ? (
-                <span className="guild-hall-good-price is-soldout">Sold out</span>
-              ) : (
-                <span className="guild-hall-good-price">
-                  <ResourceGlyph kind="gold" /> {SCROLL_PURCHASE_COST}
-                </span>
-              )}
-              {scrollsBought > 0 && (
-                <span className="guild-hall-good-held is-scroll" aria-label={`${scrollsBought} of ${SCROLL_PURCHASE_LIMIT} bought`}>
-                  {scrollsBought}/{SCROLL_PURCHASE_LIMIT}
-                </span>
-              )}
-            </button>
-            {/* The potions (2026-09-16, per user direction, off the Smithy's counter): consumed rather
-                than worn. No per-visit limit — the flask's own cap (CONSUMABLE_HOLD_CAP) is the shelf's.
-                The Revive (2026-09-18) is sold steep and one a visit (run/consumables.ts REVIVE_PRICE). */}
-            {CONSUMABLE_KINDS.map((kind) => {
+            />
+            {CONSUMABLE_KINDS.map((kind, i) => {
               const held = run.consumables[kind];
               const atCap = held >= CONSUMABLE_HOLD_CAP;
               const visitDone = kind === 'revive' && revivesBought >= REVIVE_PURCHASE_LIMIT;
               return (
-                <button
+                <HallGood
                   key={kind}
-                  className={`guild-hall-good is-${kind}${atCap || visitDone ? ' sold-out' : ''}`}
+                  className={`is-slot-${i + 2}`}
+                  art={GOOD_ART[kind === 'hpPotion' ? 'hp' : kind === 'mpPotion' ? 'mp' : 'revive']}
+                  name={CONSUMABLE_NAMES[kind]}
+                  price={atCap ? (kind === 'revive' ? 'Holding three' : 'Flask full') : visitDone ? 'One a visit' : consumablePrice(kind)}
+                  soldOut={atCap || visitDone}
+                  held={held > 0 ? `${held}/${CONSUMABLE_HOLD_CAP}` : undefined}
                   disabled={!canBuyConsumable(run, kind, revivesBought)}
                   onClick={() => onBuyConsumable(kind)}
-                >
-                  {/* The flask on a coin (shared/Coin.tsx), as the Bag wears it in a fight. */}
-                  <span className="guild-hall-good-glyph guild-hall-good-coin">
-                    <Coin />
-                    <ResourceGlyph kind={kind} tone="inherit" className="guild-hall-good-coin-glyph" />
-                  </span>
-                  <span className="guild-hall-good-name">{CONSUMABLE_NAMES[kind]}</span>
-                  {atCap ? (
-                    <span className="guild-hall-good-price is-soldout">{kind === 'revive' ? 'Holding three' : 'Flask full'}</span>
-                  ) : visitDone ? (
-                    <span className="guild-hall-good-price is-soldout">One a visit</span>
-                  ) : (
-                    <span className="guild-hall-good-price">
-                      <ResourceGlyph kind="gold" /> {consumablePrice(kind)}
-                    </span>
-                  )}
-                  {held > 0 && (
-                    <span className={`guild-hall-good-held is-${kind}`} aria-label={`${held} of ${CONSUMABLE_HOLD_CAP} held`}>
-                      {held}/{CONSUMABLE_HOLD_CAP}
-                    </span>
-                  )}
-                </button>
+                />
               );
             })}
           </div>

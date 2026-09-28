@@ -4,12 +4,11 @@ import type { GuildHallOffers } from '../../run/shop';
 import type { ConsumableKind } from '../../run/consumables';
 import type { GuildHallOffer } from '../../run/recruitment';
 import { GuildHallPanel, guildHallTabs, type GuildHallTab } from './GuildHallPanel';
-import guildmasterArt from '../../../art/npc/guildmaster.png';
 import { useAmbientLocation } from '../shared/LocationContext';
 import { locationBackdrop } from '../shared/locationBackdrops';
 import { RosterPeek } from './RosterPeek';
 import { NodeHeader, NodePurse, NodeSky, NODE_TINT_HEARTH } from '../shared/NodeStage';
-import { TabStrip } from '../shared/TabStrip';
+import { HallSigns } from './guildHallArt';
 import { readGuildHallTab, writeGuildHallTab } from './guildHallTabMemory';
 
 interface Props {
@@ -81,7 +80,7 @@ export function ShopNodeScreen({
       {/* The Smithy's own forge is its sign (2026-09-25, per user direction): six benches fit
           under the anvil without a scroll only once the hall's sign is off the top. */}
       {tab !== 'smithy' && (
-        <NodeHeader compact side art={<img src={guildmasterArt} className="npc-portrait" alt="" draggable={false} />} eyebrow={muster ? 'The Last Muster' : 'Welcome to'} title={muster ? 'The Vigil' : 'The Guild Hall'} />
+        <NodeHeader compact eyebrow={muster ? 'The Last Muster' : 'Welcome to'} title={muster ? 'The Vigil' : 'The Guild Hall'} />
       )}
 
       <div className="screen-scroll">
@@ -105,7 +104,7 @@ export function ShopNodeScreen({
 
       {/* At the foot, over Continue (2026-09-11, per user direction): the counters are the
           control the thumb comes back to, and the foot is where the thumb already is. */}
-      <TabStrip className="guild-hall-tabs" tabs={guildHallTabs(run, offers, muster)} active={tab} onSelect={selectTab} />
+      <HallSigns tabs={guildHallTabs(run, offers, muster)} active={tab} onSelect={selectTab} />
       {!overlayOpen && (
         <button className="resolve-button" onClick={onContinue}>
           {muster ? 'Walk on' : 'Continue'}

@@ -14848,7 +14848,6 @@ button.star-shop-bundle-face {
   gap: 14px;
 }
 
-
 /* The goods clear the hall's sign (2026-09-25, per user direction): flush under the header, the
    top row's held badges sat on the sign's lower edge and read as overlapping it. */
 .guild-hall-section.is-shop {
@@ -14863,47 +14862,6 @@ button.star-shop-bundle-face {
    ended in a gap and hid it. */
 .shop-node-screen .guild-hall {
   padding-bottom: 10px;
-}
-
-/* The counter switch, at the FOOT of the screen (2026-09-11, per user direction), directly over
-   Continue: it is the control the thumb comes back to, and the top of the screen is the far end
-   of a thumb's reach. Taller than a sheet's tabs because it is a screen control, not a page one. */
-.guild-hall-tabs {
-  margin-top: 0;
-  padding: 3px;
-  background: linear-gradient(180deg, #1c1a20, #14131a);
-  border-color: rgba(var(--node-rgb), 0.28);
-  box-shadow: var(--hairline), var(--elev-1);
-}
-
-.guild-hall-tabs .tab-button {
-  padding: 8px 2px 7px;
-  gap: 3px;
-}
-
-.guild-hall-tabs .tab-button .section-glyph {
-  width: 18px;
-  height: 18px;
-}
-
-.guild-hall-tabs .tab-button-label {
-  font-size: 10.5px;
-}
-
-.guild-hall-tabs .tab-button.is-active {
-  color: rgb(var(--node-rgb));
-  background: linear-gradient(180deg, rgba(var(--node-rgb), 0.2), rgba(var(--node-rgb), 0.06)), var(--surface-raised);
-  box-shadow: var(--hairline), var(--elev-1), 0 0 14px -4px rgba(var(--node-rgb), 0.7);
-}
-
-.guild-hall-tabs .tab-button-count {
-  top: 4px;
-  right: 6px;
-  font-size: 9px;
-}
-
-.guild-hall-tabs .tab-button.is-active .tab-button-count {
-  color: rgb(var(--node-rgb));
 }
 
 /* --- The Guild Hall's atmosphere (2026-09-11, per user direction) --------
@@ -15082,78 +15040,6 @@ button.star-shop-bundle-face {
   max-width: 42ch;
 }
 
-.guild-hall-hero-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
-  gap: 8px;
-}
-
-.guild-hall-hero-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  border-radius: var(--radius-md);
-  padding: 10px 8px 8px;
-  text-align: center;
-  color: var(--text);
-  cursor: pointer;
-  box-shadow: var(--hairline), var(--elev-1);
-  transition: transform var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), border-color var(--dur-mid) var(--ease-out);
-}
-
-.guild-hall-hero-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--accent);
-  box-shadow: var(--hairline-strong), var(--elev-2);
-}
-
-.guild-hall-hero-card:active {
-  transform: translateY(0);
-}
-
-.guild-hall-hero-card.unaffordable {
-  opacity: 0.5;
-}
-
-.guild-hall-hero-portrait {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  /* A ring + inner shadow frames the portrait instead of letting a circular
-     crop float free on the card. Costs no layout space (both are shadows). */
-  box-shadow: 0 0 0 1px var(--border), inset 0 0 0 1px rgba(0, 0, 0, 0.4);
-}
-
-.guild-hall-hero-name {
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.guild-hall-hero-cost {
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--accent);
-  margin-top: 2px;
-}
-
-.guild-hall-hero-card.unaffordable .guild-hall-hero-cost {
-  color: var(--enemy);
-}
-
-/* Corner badge, not a row: the level is half of what the gold buys, and the
-   Hall is tuned to fit a phone without scrolling. */
-.guild-hall-hero-level {
-  position: absolute;
-  top: 4px;
-  right: 5px;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  color: var(--text-dim);
-}
-
 /* A hero on the draft's stage (shared/HeroStage.tsx, .draft-* above) as an
    overlay (HeroStageOverlay): the hero sheet's own panel holding the dais and
    the console, the action and Close in the sheet footer under it. The Guild
@@ -15290,219 +15176,6 @@ button.star-shop-bundle-face {
 .guild-hall-confirm-ledger strong {
   font-weight: 800;
   color: var(--accent);
-}
-
-/* --- The shelf (GuildHallPanel) -------------------------------------------
- *
- * The Contract and the Mastery Scroll, as two goods standing side by side.
- * They were two stacked full-width rows — glyph, bold name, gray sentence,
- * price hard right — which is a shopping-cart line item, and stacking two of
- * them under a table header is what made the whole panel read as an invoice.
- * Two plates on a counter is the same information in the shape of a shop.
- */
-.guild-hall-shelf {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.guild-hall-good {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  padding: 10px 8px 8px;
-  border-radius: var(--radius-md);
-  color: var(--text);
-  text-align: center;
-  cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease-out), border-color var(--dur-mid) var(--ease-out),
-    box-shadow var(--dur-mid) var(--ease-out);
-}
-
-/* Each good is lit by the resource it buys, not by the panel's gold — the
-   Contract's blue and the Scroll's parchment are the same hues their glyphs
-   already wear (RunGlyph RESOURCE_COLORS). */
-.guild-hall-good.is-contract {
-  --plate-color: #9bc9ff;
-}
-
-.guild-hall-good.is-scroll {
-  --plate-color: #e0c27a;
-}
-
-.guild-hall-good.is-sell {
-  --plate-color: var(--accent);
-}
-
-.guild-hall-good.is-hpPotion {
-  --plate-color: #ff8a8a;
-  --coin-rgb: 255, 138, 138;
-}
-
-.guild-hall-good.is-mpPotion {
-  --plate-color: #8fb4ff;
-  --coin-rgb: 143, 180, 255;
-}
-
-/* The Revive in the resource's own gold (shared/RunGlyph.tsx RESOURCE_COLORS), as the Bag wears it. */
-.guild-hall-good.is-revive {
-  --plate-color: #ffb454;
-  --coin-rgb: 255, 180, 84;
-}
-
-/* The potions' glyph is the coin the Bag wears in a fight, the flask struck on it; the good's
-   own disabled fade is what dims it. */
-.guild-hall-good-coin {
-  position: relative;
-}
-
-.guild-hall-good-coin .coin-crown {
-  fill: rgba(var(--coin-rgb), 0.45);
-}
-
-.guild-hall-good-glyph > .guild-hall-good-coin-glyph {
-  position: relative;
-  width: 15px;
-  height: 15px;
-  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.7));
-}
-
-.guild-hall-good-held.is-hpPotion {
-  border-color: color-mix(in srgb, #ff8a8a 55%, var(--border));
-  color: #ff8a8a;
-}
-
-.guild-hall-good-held.is-mpPotion {
-  border-color: color-mix(in srgb, #8fb4ff 55%, var(--border));
-  color: #8fb4ff;
-}
-
-.guild-hall-good-held.is-revive {
-  border-color: color-mix(in srgb, #ffb454 55%, var(--border));
-  color: #ffb454;
-}
-
-/* One good, and not stretched across the row: a plate that fills the width is
-   the row this stopped being. */
-.guild-hall-shelf.is-single {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  justify-content: center;
-}
-
-.guild-hall-shelf.is-single > .guild-hall-good {
-  grid-column: 1 / -1;
-  max-width: 62%;
-  justify-self: center;
-}
-
-.guild-hall-good-held.is-gold {
-  border-color: rgba(224, 166, 60, 0.55);
-  color: var(--accent);
-}
-
-.guild-hall-good:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: var(--hairline), var(--elev-2);
-}
-
-.guild-hall-good:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.guild-hall-good-glyph {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  color: var(--plate-color);
-}
-
-.guild-hall-good-glyph > svg {
-  width: 100%;
-  height: 100%;
-}
-
-.guild-hall-good-name {
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-/* The Sell good carries a line (SellSection), and the Mastery Scroll its "+1 Mastery" (the pip is
-   the whole of what it buys, and the who screen is where it lands). The Contract's came off
-   (2026-09-11, per user direction) — a good named "Recruit Contract" with a coin under it is read. */
-.guild-hall-good-desc {
-  font-size: 10px;
-  line-height: 1.3;
-  color: var(--text-dim);
-  text-wrap: balance;
-}
-
-/* A struck coin rather than a figure at the end of a row. */
-.guild-hall-good-price {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 3px;
-  padding: 2px 9px;
-  border-radius: var(--radius-pill);
-  background: rgba(224, 166, 60, 0.1);
-  border: 1px solid rgba(224, 166, 60, 0.3);
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--accent);
-  font-variant-numeric: tabular-nums;
-}
-
-.guild-hall-good-price .resource-glyph {
-  width: 12px;
-  height: 12px;
-}
-
-/* The shelf's Scroll limit reached (SCROLL_PURCHASE_LIMIT): the coin becomes the notice, and the
-   good greys the way a bought item on the equipment shelf does. */
-.guild-hall-good-price.is-soldout {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: var(--border);
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-size: 10px;
-}
-
-.guild-hall-good.sold-out:disabled {
-  opacity: 0.55;
-}
-
-.guild-hall-good-held.is-scroll {
-  border-color: color-mix(in srgb, #e0c27a 55%, var(--border));
-  color: #e0c27a;
-}
-
-/* How many Contracts are already held, as a count ON the good rather than a
-   "N held" chip in the row — a contract's value depends entirely on how many
-   you have, and a corner tally reads as stock the way a sentence does not. */
-.guild-hall-good-held {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  min-width: 19px;
-  height: 19px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 5px;
-  border-radius: var(--radius-pill);
-  background: var(--bg);
-  border: 1px solid color-mix(in srgb, #9bc9ff 55%, var(--border));
-  font-size: 10px;
-  font-weight: 800;
-  color: #9bc9ff;
-  font-variant-numeric: tabular-nums;
 }
 
 /* Primary bottom-docked CTA, shared by every "commit this choice and move on"
@@ -31342,8 +31015,6 @@ button.star-shop-bundle-face {
 .squad-slot,
 .enemy-scout-chip,
 .relic-card,
-.guild-hall-hero-card,
-.guild-hall-good,
 .equip-cache-card,
 .equip-target-card,
 .equip-spotlight-passive,
@@ -31378,8 +31049,6 @@ button.star-shop-bundle-face {
 .squad-slot,
 .enemy-scout-chip,
 .relic-card,
-.guild-hall-hero-card,
-.guild-hall-good,
 .equip-cache-card,
 .equip-target-card,
 .hero-grid-card,
@@ -33163,22 +32832,6 @@ button.star-shop-bundle-face {
   transition-duration: 1.4s;
 }
 
-/* The mend spans the potion shelf: it is the one good that is for everyone at once. */
-.guild-hall-good.is-mend {
-  grid-column: 1 / -1;
-  --plate-color: var(--hp-high);
-}
-
-/* The Tavern's reroll, lit in the hearth's own amber: it buys the room's next faces. */
-.guild-hall-good.is-reroll {
-  --plate-color: rgb(var(--node-rgb));
-}
-
-/* The glyph slot sizes a ResourceGlyph; a SectionGlyph there takes the same box. */
-.guild-hall-good-glyph > .section-glyph {
-  width: 22px;
-  height: 22px;
-}
 
 /* The party wears the footer button (2026-09-15, wounds): the glyph and its label become a
    cap on the left, and the six chips take the rest of the slab. A wounded roster is read
@@ -36989,4 +36642,455 @@ img.smithy-service-art {
 /* The Forge fits a full roster of six benches under its header without a scroll. */
 .forge-node-screen .smithy-benches {
   gap: 5px;
+}
+
+/* ===== The Guild Hall as a room (GuildHallPanel, guildHallArt.tsx, art/guild) ==================
+   The Shop is a shelf with its goods standing on it, the Tavern a notice board of recruits over a
+   bar with its services on the counter, the counters signs hung from a beam. Every piece is 1x
+   pixel art at a clean 2x (the signs 3x); text sits on parchment or wood, never on a CSS card. */
+
+.shop-node-screen .guild-hall-section.is-shop,
+.shop-node-screen .guild-hall-section.is-tavern {
+  align-items: center;
+  gap: 4px;
+  /* Centred in the room rather than hung from the header: the shelf is furniture, not a list. */
+  margin: auto 0;
+}
+
+.shop-node-screen .guild-hall {
+  min-height: 100%;
+}
+
+/* A good: the thing, and a parchment tag naming it and its price under it. */
+.hall-good {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 104px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.hall-good-art {
+  width: 64px;
+  height: 64px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.55));
+  transition: transform var(--dur-fast) var(--ease-out), filter var(--dur-fast) var(--ease-out);
+}
+
+.hall-good:not(:disabled):hover .hall-good-art,
+.hall-good:not(:disabled):active .hall-good-art {
+  transform: translateY(-3px);
+  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 8px rgba(255, 214, 140, 0.6));
+}
+
+.hall-good.is-sold-out .hall-good-art {
+  filter: grayscale(0.9) brightness(0.6);
+}
+
+.hall-good:disabled {
+  cursor: default;
+}
+
+.hall-tag {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 2px;
+  padding: 1px 6px;
+  border-style: solid;
+  border-width: 8px;
+  border-image: url('../../art/guild/panel-parch.png') 12 fill / 8px stretch;
+  color: #3a2412;
+  line-height: 1.1;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5));
+}
+
+.hall-tag-name {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.hall-tag-price {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.hall-tag-price .run-glyph {
+  --iconset-glyph-size: 12px;
+}
+
+.hall-tag-price.is-note {
+  font-size: 9.5px;
+  font-weight: 700;
+  font-style: italic;
+  color: #6a4a2a;
+}
+
+.hall-good:disabled:not(.is-sold-out) .hall-tag-price {
+  color: #9a2818;
+}
+
+.hall-good-held {
+  position: absolute;
+  top: -4px;
+  right: 14px;
+  min-width: 20px;
+  padding: 1px 5px;
+  border: 1px solid rgba(232, 196, 106, 0.8);
+  border-radius: 999px;
+  background: rgba(20, 13, 8, 0.92);
+  color: #f3dfb8;
+  font-size: 10px;
+  font-weight: 800;
+  text-align: center;
+}
+
+/* -- The Shop's shelf: 154x108 at 2x. Its middle plank's top is 120px down, its base 216px. -- */
+.hall-shelf {
+  position: relative;
+  width: 308px;
+  height: 256px;
+  flex: none;
+}
+
+.hall-shelf-art {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 308px;
+  height: 216px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.6));
+}
+
+.hall-shelf .hall-good {
+  position: absolute;
+}
+
+.hall-shelf .hall-good.is-slot-1,
+.hall-shelf .hall-good.is-slot-2 {
+  top: 58px;
+}
+
+.hall-shelf .hall-good.is-slot-3,
+.hall-shelf .hall-good.is-slot-4 {
+  top: 154px;
+}
+
+.hall-shelf .hall-good.is-slot-1,
+.hall-shelf .hall-good.is-slot-3 {
+  left: 48px;
+}
+
+.hall-shelf .hall-good.is-slot-2,
+.hall-shelf .hall-good.is-slot-4 {
+  left: 156px;
+}
+
+/* -- The Tavern's notice board: 140x124 at 2x; posters pinned across it under its roof. -- */
+.hall-board {
+  position: relative;
+  width: 280px;
+  height: 248px;
+  flex: none;
+}
+
+.hall-board-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.6));
+}
+
+.hall-board-posters {
+  position: absolute;
+  left: -14px;
+  right: -14px;
+  top: 74px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.hall-poster {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  width: 98px;
+  padding: 2px 2px 3px;
+  border-style: solid;
+  border-width: 12px;
+  border-image: url('../../art/guild/panel-parch.png') 12 fill / 12px stretch;
+  background: none;
+  color: #3a2412;
+  font: inherit;
+  cursor: pointer;
+  filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.55));
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.hall-poster:nth-child(odd) {
+  transform: rotate(-2deg);
+}
+
+.hall-poster:nth-child(even) {
+  transform: rotate(1.5deg) translateY(4px);
+}
+
+.hall-poster:hover,
+.hall-poster:active {
+  transform: translateY(-3px) scale(1.03);
+}
+
+.hall-poster.unaffordable {
+  filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.55)) grayscale(0.4) brightness(0.8);
+}
+
+.hall-poster.is-note {
+  width: 180px;
+  padding: 10px 6px;
+  font-size: 11px;
+  font-style: italic;
+  text-align: center;
+  cursor: default;
+}
+
+.hall-poster-pin {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  margin-left: -3.5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ff8a7a, #b0281c 60%, #5a0e08);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
+}
+
+.hall-poster-level {
+  align-self: flex-start;
+  font-size: 9px;
+  font-weight: 800;
+  color: #6a4a2a;
+}
+
+.hall-poster-portrait {
+  width: 48px;
+  height: 48px;
+  margin-top: -6px;
+}
+
+.hall-poster-name {
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.hall-poster-types {
+  display: flex;
+  gap: 2px;
+  transform: scale(0.85);
+}
+
+.hall-poster-price {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.hall-poster-price .run-glyph {
+  --iconset-glyph-size: 13px;
+}
+
+.hall-poster.unaffordable .hall-poster-price {
+  color: #9a2818;
+}
+
+/* -- The bar: 171x47 at 2x, its goods standing on the top plank, their tags on its front. -- */
+.hall-counter {
+  position: relative;
+  width: 342px;
+  height: 160px;
+  flex: none;
+  margin-top: -6px;
+}
+
+.hall-counter-art {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 342px;
+  height: 94px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.6));
+}
+
+.hall-counter-goods {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 8px;
+  z-index: 1;
+  display: flex;
+  justify-content: space-evenly;
+}
+
+.hall-counter .hall-tag {
+  margin-top: 18px;
+}
+
+/* -- The counters: sign boards (33x14 at 3x) hung on two cords from a beam, the lit one in use. -- */
+.hall-signs {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex: none;
+  margin: 0 calc(var(--shell-pad) * -1);
+  padding-top: 2px;
+}
+
+.hall-signs-beam {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 10px;
+  background: linear-gradient(180deg, #5a3a22, #3a2414 60%, #1e120a);
+  border-top: 1px solid #7a5230;
+  border-bottom: 2px solid #120a05;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5);
+}
+
+.hall-sign {
+  position: relative;
+  width: 99px;
+  height: 42px;
+  margin-top: 16px;
+  padding: 0;
+  border: none;
+  background: var(--sign-art) 0 0 / 99px 42px no-repeat;
+  image-rendering: pixelated;
+  color: #f3dfb8;
+  font: inherit;
+  cursor: pointer;
+  filter: brightness(0.58) saturate(0.7);
+  transform-origin: 50% 0;
+  transition: filter var(--dur-mid) var(--ease-out);
+}
+
+.hall-sign.is-active {
+  filter: brightness(1.05) drop-shadow(0 0 8px rgba(255, 190, 90, 0.45));
+  animation: hall-sign-sway 3.6s ease-in-out infinite;
+}
+
+@keyframes hall-sign-sway {
+  0%,
+  100% {
+    transform: rotate(-1.5deg);
+  }
+  50% {
+    transform: rotate(1.5deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hall-sign.is-active {
+    animation: none;
+  }
+}
+
+/* The icon sits on the board's left and hangs over its edge; the name fills the rest. */
+.hall-sign::before,
+.hall-sign::after {
+  content: '';
+  position: absolute;
+  top: -16px;
+  width: 3px;
+  height: 18px;
+  background: linear-gradient(90deg, #8a6436, #5a3c1e);
+}
+
+.hall-sign::before {
+  left: 20px;
+}
+
+.hall-sign::after {
+  right: 20px;
+}
+
+.hall-sign-icon {
+  position: absolute;
+  left: -2px;
+  top: 4px;
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 1px rgba(0, 0, 0, 0.6));
+}
+
+.hall-sign-label {
+  position: absolute;
+  left: 30px;
+  right: 4px;
+  top: 13px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 #1a0e06, 0 0 3px rgba(0, 0, 0, 0.8);
+}
+
+.hall-sign-count {
+  position: absolute;
+  top: -8px;
+  right: -4px;
+  min-width: 18px;
+  padding: 1px 4px;
+  border-radius: 999px;
+  background: #b0281c;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+/* -- Continue as a plank, and the Smithy's benches framed in wood. -- */
+.shop-node-screen > .resolve-button {
+  border-style: solid;
+  border-width: 2px;
+  border-image: url('../../art/guild/panel-wood.png') 14 / 24px stretch;
+  border-radius: 0;
+  background: #3b2616 padding-box;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.55);
+  color: #f3dfb8;
+}
+
+/* The frame paints over the bench's own padding rather than adding to its height, so six still fit. */
+.shop-node-screen .smithy-bench {
+  border-radius: 0;
+  border: 1px solid transparent;
+  border-image: url('../../art/guild/panel-wood.png') 14 / 12px stretch;
+  background:
+    linear-gradient(90deg, rgba(var(--type-rgb), 0.18), transparent 50%),
+    rgba(34, 22, 13, 0.9) padding-box;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
 }
