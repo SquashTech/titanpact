@@ -14,7 +14,7 @@ import { NodeHeader, NodeSky, NODE_TINT_INSIGHT } from '../shared/NodeStage';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { MoveLearnedOverlay, MoveOfferOverlay } from './MoveOfferOverlay';
 import { RosterPeek } from './RosterPeek';
-import { RoadEncounter } from './RoadEncounter';
+import { RoadEncounter, useRoadGreeting } from './RoadEncounter';
 import { MENTOR_LINES } from '../../data/roadLines';
 import { levelOf } from '../../run/growth';
 import { statScaleFor } from '../../run/statScale';
@@ -44,7 +44,7 @@ interface Lesson {
 export function MentorNodeScreen({ run, onRunChange, onContinue }: Props) {
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
-  const [greeting, setGreeting] = useState<string | null>(() => MENTOR_LINES[Math.floor(Math.random() * MENTOR_LINES.length)]);
+  const [greeting, dismissGreeting] = useRoadGreeting(run, MENTOR_LINES);
 
   const poolOf = (entry: RosterEntry) => mentorMovePool(progressionTable, moves, entry);
   const anyTeachable = run.roster.some((entry) => poolOf(entry).length > 0);
@@ -69,7 +69,7 @@ export function MentorNodeScreen({ run, onRunChange, onContinue }: Props) {
     onContinue();
   }
 
-  if (greeting) return <RoadEncounter art={mentorArt} name="The Mentor" line={greeting} onDone={() => setGreeting(null)} />;
+  if (greeting) return <RoadEncounter art={mentorArt} name="The Mentor" line={greeting} onDone={dismissGreeting} />;
 
   return (
     <div className="node-screen tutor-node-screen mentor-node-screen" style={{ '--node-rgb': NODE_TINT_INSIGHT } as CSSProperties}>

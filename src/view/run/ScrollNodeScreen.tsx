@@ -28,7 +28,7 @@ import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { MoveOfferOverlay } from './MoveOfferOverlay';
 import { MasteredInnateOverlay } from './MasteredInnateOverlay';
 import { RosterPeek } from './RosterPeek';
-import { RoadEncounter } from './RoadEncounter';
+import { RoadEncounter, useRoadGreeting } from './RoadEncounter';
 import { SCRIBE_LINES } from '../../data/roadLines';
 import { useMasteryFlow } from './masteryFlow';
 
@@ -63,9 +63,7 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
   const [pickedIds, setPickedIds] = useState<string[]>([]);
   const flow = useMasteryFlow(run, onRunChange);
   // Only the Scribe is met on the road; a Cache or the shelf opens straight onto the scrolls.
-  const [greeting, setGreeting] = useState<string | null>(() =>
-    plan.kind === 'scribe' ? SCRIBE_LINES[Math.floor(Math.random() * SCRIBE_LINES.length)] : null
-  );
+  const [greeting, dismissGreeting] = useRoadGreeting(run, SCRIBE_LINES, plan.kind === 'scribe');
 
   const pipsPerTap = plan.kind === 'scribe' ? SCRIBE_PIPS_EACH : 1;
   const eligible = run.roster.filter((entry) => canTakeMastery(entry) && !pickedIds.includes(entry.rosterId));
@@ -96,7 +94,7 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
     flow.raise(entry.rosterId, next, entry.mastery);
   }
 
-  if (greeting) return <RoadEncounter art={scribeArt} name="The Scribe" line={greeting} onDone={() => setGreeting(null)} />;
+  if (greeting) return <RoadEncounter art={scribeArt} name="The Scribe" line={greeting} onDone={dismissGreeting} />;
 
   const grownEntry = flow.grown ? (run.roster.find((r) => r.rosterId === flow.grown!.rosterId) ?? null) : null;
   if (flow.grown && grownEntry) {

@@ -13,6 +13,8 @@ import { ElementGlyph } from '../shared/elementIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { HubGlyph } from '../shared/nodeIcons';
 import smithArt from '../../../art/npc/smith.png';
+import { RoadEncounter, useRoadGreeting } from './RoadEncounter';
+import { SMITH_LINES } from '../../data/roadLines';
 import { NodeHeader, NodeSky, NODE_TINT_HEARTH } from '../shared/NodeStage';
 import { overlayHost } from '../shared/overlayHost';
 import { RosterPeek } from './RosterPeek';
@@ -48,9 +50,11 @@ export function ForgeNodeScreen({ run, onRunChange, onContinue }: Props) {
   const [bench, setBench] = useState<{ ref: ItemRef; item: EquipmentDefinition } | null>(null);
   const [beat, setBeat] = useState<SmithyWork | null>(null);
 
+  const [greeting, dismissGreeting] = useRoadGreeting(run, SMITH_LINES);
+
   useEffect(() => {
-    playSfx('anvil.ring', { pitch: 0.85, delay: 0.15 });
-  }, []);
+    if (!greeting) playSfx('anvil.ring', { pitch: 0.85, delay: 0.15 });
+  }, [greeting]);
 
   const workable = run.roster.reduce((n, entry) => n + entry.equipment.filter((itemId) => forgeable(run, itemId, equipment)).length, 0);
   const done = forged !== null;
@@ -77,6 +81,8 @@ export function ForgeNodeScreen({ run, onRunChange, onContinue }: Props) {
     : workable === 0
       ? 'Nothing the roster wears can be forged here. Walk on.'
       : 'Upgrade and Enchant an item.';
+
+  if (greeting) return <RoadEncounter art={smithArt} name="The Smith" line={greeting} onDone={dismissGreeting} />;
 
   return (
     <div className="node-screen forge-node-screen" style={{ '--node-rgb': NODE_TINT_HEARTH } as CSSProperties}>

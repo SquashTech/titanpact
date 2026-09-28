@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { playSfx } from '../../audio/sfx';
+import type { RunState } from '../../run/state';
 import { locationBackdrop } from '../shared/locationBackdrops';
 import { useAmbientLocation } from '../shared/LocationContext';
 import { NodeSky } from '../shared/NodeStage';
@@ -7,6 +8,25 @@ import { prefersReducedMotion } from '../shared/reducedMotion';
 
 // Meeting someone on the road: the act's own painting, the figure walking up out of it, and one
 // line said before the node's real screen. A tap finishes the line; a second tap moves on.
+
+/** Nodes whose greeting has been heard this session: a screen that remounts mid-visit does not greet twice. */
+const greeted = new Set<string>();
+
+/**
+ * The line to open a node with, or null once it has been said. Keyed by the node stood on, since
+ * a screen like the Guild Hall unmounts under a who-screen and comes back within the same visit.
+ */
+export function useRoadGreeting(run: RunState, lines: readonly string[], enabled = true): [string | null, () => void] {
+  const key = `${run.map?.seed}:${run.actNumber}:${run.currentNodeId}`;
+  const [line, setLine] = useState<string | null>(() =>
+    enabled && !greeted.has(key) ? lines[Math.floor(Math.random() * lines.length)] : null
+  );
+  const dismiss = () => {
+    greeted.add(key);
+    setLine(null);
+  };
+  return [line, dismiss];
+}
 
 /** Per character (ms). Quick enough that a reader never waits on it. */
 const TYPE_MS = 24;

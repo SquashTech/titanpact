@@ -5,6 +5,8 @@ import type { ConsumableKind } from '../../run/consumables';
 import type { GuildHallOffer } from '../../run/recruitment';
 import { GuildHallPanel, guildHallTabs, type GuildHallTab } from './GuildHallPanel';
 import guildmasterArt from '../../../art/npc/guildmaster.png';
+import { RoadEncounter, useRoadGreeting } from './RoadEncounter';
+import { GUILDMASTER_LINES, VIGIL_LINES } from '../../data/roadLines';
 import { RosterPeek } from './RosterPeek';
 import { NodeHeader, NodePurse, NodeSky, NODE_TINT_HEARTH } from '../shared/NodeStage';
 import { TabStrip } from '../shared/TabStrip';
@@ -58,6 +60,9 @@ export function ShopNodeScreen({
     setTab(next);
     writeGuildHallTab(next);
   };
+  const [greeting, dismissGreeting] = useRoadGreeting(run, muster ? VIGIL_LINES : GUILDMASTER_LINES);
+  if (greeting) return <RoadEncounter art={guildmasterArt} name="The Guildmaster" line={greeting} onDone={dismissGreeting} />;
+
   return (
     <div className={`node-screen shop-node-screen is-${tab}`} style={{ '--node-rgb': NODE_TINT_HEARTH } as CSSProperties}>
       <NodeSky />
