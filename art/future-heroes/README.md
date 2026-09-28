@@ -15,18 +15,19 @@ Concepts from 2026-09-27; the role lines are first-pass pitches, not decisions.
 | Aurum | Light | sun-maned lion | a physical Light attacker; the mane flares blinding light |
 | Kappa | Water | river imp with a water dish on its head | physical brawler; spilling the dish could be its Burden |
 | Kitsu | Spirit | kitsune with ghost-fire tails | fast magical Spirit caster, ghost-fire volleys |
+| Kong | Beast | knuckle-walking gorilla | heavy physical bruiser |
 | Morel | Nature | mushroom folk | spores: Poison and debuffs |
 | Motley | Mind | mad jester juggling psychic orbs | chaos and confusion control |
 | Omen | Shadow | black cat with a smoke tail | fast Shadow striker, bad luck as a verb |
 | Ronin | Iron | wandering samurai | fast single-target physical, priority draw-cut |
 | Scree | Stone | granite pangolin | rolls up into a wall, curl-and-charge tank |
-| Silverback | Beast | gorilla warlord | heavy physical bruiser |
 | Tome | Arcane | living spellbook with one eye | magical caster, rune volleys |
 | Tusk | Frost | woolly mammoth | the slow physical Frost body the type lacks |
 
-Facing is mixed on purpose, as on the live roster: Ashwing, Kappa, Omen and Scree face left;
-Aurum, Kitsu, Ronin and Tusk face right; Morel, Motley, Silverback and Tome face the viewer.
-Each hero's attack and damaged frames face the same way as its idle.
+Facing is mixed on purpose, as on the live roster: Ashwing, Kappa, Kong, Omen and Scree face
+left; Aurum, Kitsu, Ronin and Tusk face right; Morel, Motley and Tome face the viewer. Each
+hero's attack and damaged frames face the same way as its idle.
 
 Known art nits: Omen's attack frame is barely different from its idle and wants a re-roll.
-Rumble (Storm oni drummer) and Sprocket (Mech gnome walker) were set aside as weaker concepts.
+Motley's design is being replaced by a new jester concept. Rumble (Storm oni drummer) and
+Sprocket (Mech gnome walker) were set aside as weaker concepts.
