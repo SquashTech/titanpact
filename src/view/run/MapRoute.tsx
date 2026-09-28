@@ -5,7 +5,7 @@ import { useLongPress } from '../shared/MoveTile';
 import { playSfx, type SfxId } from '../../audio/sfx';
 import { NODE_COLORS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
 import { nodeFactsLine } from './nodeFacts';
-import { mapNodeArt } from './mapNodeArt';
+import { isMapProp, mapNodeArt } from './mapNodeArt';
 import { landmarkKind, MapLandmarkFace } from './mapLandmarks';
 import campArt from '../../../art/places/rest.png';
 import { ElementPie } from '../shared/ElementPie';
@@ -161,6 +161,7 @@ function ChoiceMedallion({
   // scouted typing hangs under it as a plaque, rather than being cut into the face.
   const landmark = landmarkKind(node.type);
   const art = landmark ? undefined : mapNodeArt(node.type);
+  const prop = art !== undefined && isMapProp(node.type);
   return (
     <div
       className={`map-choice tier-${NODE_TIERS[node.type]}`}
@@ -176,7 +177,7 @@ function ChoiceMedallion({
       </span>
       <button
         type="button"
-        className={`map-medallion${scoutedFace ? ' is-scouted' : ''}${art ? ' has-art' : ''}${landmark ? ` is-landmark is-${landmark}` : ''}`}
+        className={`map-medallion${scoutedFace ? ' is-scouted' : ''}${art ? (prop ? ' has-prop' : ' has-art') : ''}${landmark ? ` is-landmark is-${landmark}` : ''}`}
         ref={measureRef}
         aria-label={scoutedFace ? `${label}. Enemies: ${scoutedFace.join(', ')}` : label}
         data-sfx="none"
@@ -185,7 +186,7 @@ function ChoiceMedallion({
         <span className="map-medallion-glow" aria-hidden="true" />
         <span className="map-choice-burst" aria-hidden="true" />
         {landmark && <MapLandmarkFace kind={landmark} type={node.type} guardianId={guardianId} />}
-        {art && <img src={art} className="map-medallion-art" alt="" draggable={false} />}
+        {art && <img src={art} className={prop ? 'map-medallion-prop' : 'map-medallion-art'} alt="" draggable={false} />}
         {art && scoutedFace && (
           <span className="map-medallion-typing" aria-hidden="true">
             {scoutedFace.map((type, i) => (
@@ -409,6 +410,7 @@ export function MapRoute({
           <span
             className={`map-origin-mark${originLandmark ? ` is-landmark is-${originLandmark}` : mapNodeArt(originNode.type) ? ' has-art' : ''}`}
             ref={originRef}
+            data-node-type={originNode.type}
             aria-hidden="true"
           >
             {/* A landmark stays itself behind you — the eye, the Mentor, the hall — small and unlit. */}

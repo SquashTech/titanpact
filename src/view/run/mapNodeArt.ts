@@ -1,17 +1,31 @@
 import type { MapNodeType } from '../../run/map';
 
-// The map's pixel medallions (art/map-nodes): one 48x48 stone frame with each node's emblem
-// painted into its centre, drawn at a clean 2x (3x for the Guardian and a row of one).
+// The map's pixel art for a node. A node with a PROP (art/map-nodes/props) is drawn as the thing
+// itself — a shrine, a chest, a war banner — standing in a lit disc; one without falls back to its
+// 48x48 stone medallion (art/map-nodes), the emblem painted into one shared frame. Both are drawn at
+// a clean 2x (3x for the Guardian and a row of one).
 
-const files = import.meta.glob<string>('../../../art/map-nodes/*.png', { eager: true, query: '?url', import: 'default' });
+function byName(files: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(files).map(([path, url]) => [path.slice(path.lastIndexOf('/') + 1, -'.png'.length), url])
+  );
+}
 
-const ART: Record<string, string> = Object.fromEntries(
-  Object.entries(files).map(([path, url]) => [path.slice(path.lastIndexOf('/') + 1, -'.png'.length), url])
+const MEDALLIONS = byName(
+  import.meta.glob<string>('../../../art/map-nodes/*.png', { eager: true, query: '?url', import: 'default' })
+);
+const PROPS = byName(
+  import.meta.glob<string>('../../../art/map-nodes/props/*.png', { eager: true, query: '?url', import: 'default' })
 );
 
 /** Nodes that share another's face: the `battle` is the same Titanspawn pool as the `fight`. */
 const ALIAS: Partial<Record<MapNodeType, MapNodeType>> = { battle: 'fight' };
 
 export function mapNodeArt(type: MapNodeType): string | undefined {
-  return ART[ALIAS[type] ?? type];
+  const key = ALIAS[type] ?? type;
+  return PROPS[key] ?? MEDALLIONS[key];
+}
+
+export function isMapProp(type: MapNodeType): boolean {
+  return (ALIAS[type] ?? type) in PROPS;
 }

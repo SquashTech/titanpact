@@ -1,13 +1,13 @@
 import type { MapNodeType } from '../../run/map';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import mentorArt from '../../../art/npc/mentor.png';
+import mentorArt from '../../../art/map-nodes/landmarks/mentor.png';
 import tutorArt from '../../../art/npc/tutor.png';
 import scribeArt from '../../../art/npc/scribe.png';
 import guildHallArt from '../../../art/map-nodes/landmarks/guildHall.png';
 
 // The act's beats, drawn as themselves rather than as a stone medallion: the opening fight is the
-// Titan's eye opening on the road, the Mentor/Tutor and the Scribe stand on the path as the people
-// they are, the Guild Hall is a building you walk into, and the Guardian is the Guardian.
+// Titan's eye opening on the road, the Mentor sits hooded by a roadside fire, the Tutor and the Scribe
+// stand on the path as the people they are, the Guild Hall is a building you walk into, and the Guardian is the Guardian.
 
 export type LandmarkKind = 'eye' | 'npc' | 'building' | 'guardian';
 

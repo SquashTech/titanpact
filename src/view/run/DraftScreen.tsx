@@ -7,6 +7,7 @@ import { STARTER_PICK_COUNT } from '../../run/draft';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { getTypeColorRgb } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import draftBackdrop from '../../../art/backdrops/draft.png';
 import { PassiveDetailOverlay } from '../shared/PassiveDossier';
 import {
   StageCandidate,
@@ -72,7 +73,7 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
 
   return (
     <div className="draft-screen" style={{ '--pact-rgb': featuredRgb } as CSSProperties}>
-      <StageSky />
+      <StageSky backdrop={draftBackdrop} />
 
       <header className="draft-header">
         <div className="draft-eyebrow">A Titan Stirs</div>

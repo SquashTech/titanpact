@@ -43,7 +43,7 @@ function useMotes(count: number) {
 }
 
 /** Full-bleed wash and mote field at z-index 0; every sibling after it must be lifted above it. */
-export function StageSky({ motes = DEFAULT_MOTES }: { motes?: number }) {
+export function StageSky({ motes = DEFAULT_MOTES, backdrop }: { motes?: number; backdrop?: string }) {
   const field = useMotes(motes);
   // Inside an act (the contract claim) the stage stands in the act's place, as every node screen does.
   const location = useAmbientLocation();
@@ -57,7 +57,8 @@ export function StageSky({ motes = DEFAULT_MOTES }: { motes?: number }) {
   }
 
   return (
-    <div className="draft-sky" aria-hidden="true">
+    <div className={`draft-sky${backdrop ? ' is-painted' : ''}`} aria-hidden="true">
+      {backdrop && <img src={backdrop} className="draft-sky-backdrop" alt="" draggable={false} />}
       <span className="draft-sky-wash" />
       <div className="draft-motes">
         {field.map((m, i) => (
