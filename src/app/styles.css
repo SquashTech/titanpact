@@ -11246,6 +11246,18 @@ button.star-shop-bundle-face {
   height: 10px;
 }
 
+/* The enchant's pixel gem: a 24px sprite drawn at roughly half, so it stays a mark. */
+.item-box-enchant.is-gem {
+  top: 1px;
+  right: 1px;
+}
+
+.item-box-enchant.is-gem img {
+  width: calc(var(--item-box-size, 46px) * 0.3);
+  height: calc(var(--item-box-size, 46px) * 0.3);
+  image-rendering: pixelated;
+}
+
 /* The buy sheet's boxes are 30px tall; a full-size corner glyph on one is a badge, not a mark. */
 .roster-mgmt-grid.is-compact .item-box-enchant .element-glyph {
   width: 8px;
@@ -11535,6 +11547,19 @@ button.star-shop-bundle-face {
   flex-shrink: 0;
   color: var(--rarity-color, currentColor);
   vertical-align: -0.14em;
+}
+
+/* Pixel item art (equipmentArt.ts) fills more of its box than the flat glyph did: the sprite
+   carries its own outline and shading, so it needs the room a silhouette did not. */
+.equip-glyph.is-pixel {
+  width: 1.4em;
+  height: 1.4em;
+  image-rendering: pixelated;
+  object-fit: contain;
+}
+
+.item-piece .item-box-icon.is-pixel {
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.45));
 }
 
 /* Relic glyph (relicIcons.tsx). Same em sizing as .equip-glyph — one rule
@@ -16666,14 +16691,12 @@ button.star-shop-bundle-face {
    the same reason. */
 .cache-chest {
   position: absolute;
-  left: 25px;
-  top: 25px;
+  left: 15px;
+  top: 15px;
   z-index: 3;
-  width: calc(100% - 50px);
-  height: calc(100% - 50px);
-  color: rgb(var(--node-rgb));
+  width: 128px;
+  height: 128px;
   filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.55));
-  overflow: visible;
 }
 
 /* The whole object shifts its weight while it is still shut — small, and
@@ -16723,95 +16746,39 @@ button.star-shop-bundle-face {
   }
 }
 
-.cache-chest-body {
-  opacity: 0.86;
+/* The frames: 64px pixel strips (art/cache) at a clean 2x. The rattle loops for
+   the sealed strain; the lid swing plays once and holds its last frame. */
+.cache-chest-frames {
+  position: absolute;
+  inset: 0;
+  background-image: var(--chest-seal);
+  background-size: 1152px 128px;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  animation: cache-chest-rattle 0.82s steps(9) infinite;
 }
 
-/* The line of light between body and lid. Drawn under the lid, so it is
-   invisible while the chest is shut no matter how bright it gets — which is
-   what lets it be lit the whole time and simply *revealed* by the hinge. */
-.cache-chest-seam {
-  fill: #ffe7b4;
-  opacity: 0;
+.cache-open.is-opening .cache-chest-frames {
+  background-image: var(--chest-open);
+  background-size: 768px 128px;
+  animation: cache-chest-swing var(--cache-burst) steps(6, jump-none) forwards;
 }
 
-.cache-open.is-sealed .cache-chest-seam {
-  animation: cache-seam-leak 0.62s ease-in-out infinite;
-}
-
-.cache-open.is-opening .cache-chest-seam {
-  animation: cache-seam-blow var(--cache-burst) var(--ease-out) forwards;
-}
-
-@keyframes cache-seam-leak {
-  0%,
-  100% {
-    opacity: 0.35;
+@keyframes cache-chest-rattle {
+  from {
+    background-position: 0 0;
   }
-  50% {
-    opacity: 0.75;
+  to {
+    background-position: -1152px 0;
   }
 }
 
-@keyframes cache-seam-blow {
-  0% {
-    opacity: 1;
+@keyframes cache-chest-swing {
+  from {
+    background-position: 0 0;
   }
-  55% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-/* Hinged at the left end of its own baseline: 17% x 47.5% of the 24-unit
-   viewBox is (4.1, 11.4), which is where the lid meets the body. `view-box`
-   rather than `fill-box` because the lid's own bounding box moves as it
-   rotates, and an origin that moves with it is not a hinge. */
-.cache-chest-lid {
-  transform-box: view-box;
-  transform-origin: 17% 47.5%;
-}
-
-.cache-open.is-sealed .cache-chest-lid {
-  animation: cache-lid-strain 0.62s ease-in-out infinite;
-}
-
-.cache-open.is-opening .cache-chest-lid {
-  animation: cache-lid-fling var(--cache-burst) var(--ease-out) forwards;
-}
-
-/* Something inside testing the lid: it lifts, drops back, lifts further. The
-   drop between the two is what makes it read as failing to get out rather
-   than as a lid wobbling. */
-@keyframes cache-lid-strain {
-  0%,
-  100% {
-    transform: rotate(0deg);
-  }
-  42% {
-    transform: rotate(-5deg) translateY(-0.3px);
-  }
-  56% {
-    transform: rotate(-1deg);
-  }
-  74% {
-    transform: rotate(-7deg) translateY(-0.5px);
-  }
-}
-
-/* Overshoots past where it lands, which is the whole difference between a lid
-   thrown open and a lid opened. */
-@keyframes cache-lid-fling {
-  0% {
-    transform: rotate(0deg);
-  }
-  40% {
-    transform: rotate(-52deg) translateY(-1px);
-  }
-  100% {
-    transform: rotate(-42deg) translateY(-0.5px);
+  to {
+    background-position: -640px 0;
   }
 }
 

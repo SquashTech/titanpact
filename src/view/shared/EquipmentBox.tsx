@@ -6,6 +6,7 @@ import { StatGlyph, STAT_LABELS } from './StatBars';
 import { STAT_FULL_LABELS } from './relicStacks';
 import { RelicGlyph } from './relicIcons';
 import { EquipmentFormGlyph } from './equipmentIcons';
+import { enchantArt } from './equipmentArt';
 import { useLongPress } from './MoveTile';
 import { passives } from '../../data/passives';
 import { PassiveGlyph } from './passiveIcons';
@@ -79,6 +80,24 @@ export function enchantTypeOf(item: EquipmentDefinition | null): string | null {
   if (!item) return null;
   const { enchantId } = parseEquipmentId(item.id);
   return enchantId ? (ENCHANTMENTS[enchantId] ?? null) : null;
+}
+
+/** The enchant's gem in the box's corner, or the element glyph where no gem is drawn. */
+function EnchantMark({ item, type }: { item: EquipmentDefinition; type: string }) {
+  const { enchantId } = parseEquipmentId(item.id);
+  const art = enchantId ? enchantArt(enchantId) : undefined;
+  if (art) {
+    return (
+      <span className="item-box-enchant is-gem">
+        <img src={art} alt="" draggable={false} />
+      </span>
+    );
+  }
+  return (
+    <span className="item-box-enchant" style={{ color: getTypeColor(type) }}>
+      <ElementGlyph type={type} />
+    </span>
+  );
 }
 
 /** One line naming what an item does, for a tooltip or an aria-label — the text the box itself no longer prints. */
@@ -167,11 +186,7 @@ export function ItemPiece({ item }: { item: EquipmentDefinition | null }) {
       <EquipmentIcon item={item} className="item-box-icon" />
       {/* Which element the enchant feeds. The name says it ("Blazing Sword") and the box prints
           no name, so without this an enchanted item and a plain one are the same silhouette. */}
-      {enchantType && (
-        <span className="item-box-enchant" style={{ color: getTypeColor(enchantType) }}>
-          <ElementGlyph type={enchantType} />
-        </span>
-      )}
+      {enchantType && <EnchantMark item={item} type={enchantType} />}
       <TierPips rarity={item.rarity} />
     </span>
   );

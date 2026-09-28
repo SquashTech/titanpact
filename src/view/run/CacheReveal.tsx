@@ -1,6 +1,8 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { prefersReducedMotion } from '../shared/reducedMotion';
+import chestSeal from '../../../art/cache/chest-seal.png';
+import chestOpen from '../../../art/cache/chest-open.png';
 
 // The cache-opening beat, shared by NodeRewardScreen's equipmentReward and
 // CacheOpenScreen. Nothing in here centres with a transform: every keyframe
@@ -89,22 +91,14 @@ export function CacheOpening({ phase, payload }: CacheOpeningProps) {
 
         {payload && <div className="cache-open-payload">{payload}</div>}
 
-        {/* A rig — body, seam, lid as separate pieces — not sectionIcons' one-mass chest. */}
-        <svg className="cache-chest" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
-          {/* Sat a shade high so the swinging lid doesn't clip. */}
-          <g transform="translate(0 1.1)">
-            <path
-              className="cache-chest-body"
-              fillRule="evenodd"
-              d="M3.2 12.4h17.6v6.2a2.2 2.2 0 0 1-2.2 2.2H5.4a2.2 2.2 0 0 1-2.2-2.2Zm7.3 1.3v3.4h3v-3.4Z"
-            />
-            <rect className="cache-chest-seam" x="3.6" y="11.5" width="16.8" height="1.2" rx="0.6" />
-            <g className="cache-chest-lid">
-              <path d="M3.2 11.4a12 12 0 0 1 17.6 0Z" />
-              <rect x="3.2" y="10" width="17.6" height="1.8" rx="0.7" />
-            </g>
-          </g>
-        </svg>
+        {/* Pixel frames (art/cache): the rattle loops while sealed, the lid swing plays once on the burst. */}
+        <div
+          className="cache-chest"
+          style={{ '--chest-seal': `url(${chestSeal})`, '--chest-open': `url(${chestOpen})` } as CSSProperties}
+          aria-hidden="true"
+        >
+          <span className="cache-chest-frames" />
+        </div>
       </div>
 
     </div>

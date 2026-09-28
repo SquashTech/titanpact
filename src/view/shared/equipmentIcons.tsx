@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react';
 import type { EquipmentDefinition, EquipmentFamilyId } from '../../run/equipment';
 import { STAT_PATHS } from './statIcons';
+import { equipmentArt } from './equipmentArt';
 
 // What an item IS, as a shape: 24x24, `currentColor` only, nothing finer than ~2 units. There are
 // too many items to author a glyph per item, so an item resolves to one of ~30 FORMS by its name
 // (`equipmentForm`). `sword` and `shield` are the Attack and Defense stat glyphs, literally.
+// An item with pixel art (equipmentArt.ts) draws that instead; the forms are the fallback.
 
 const GREATSWORD = (
   <>
@@ -436,6 +438,18 @@ export function equipmentForm(item: EquipmentDefinition): EquipmentFormName {
 
 /** The one place an item is drawn. `aria-hidden`: the item's name sits beside it. */
 export function EquipmentFormGlyph({ item, className }: { item: EquipmentDefinition | null; className?: string }) {
+  const art = item ? equipmentArt(item) : undefined;
+  if (art) {
+    return (
+      <img
+        src={art}
+        className={`equip-glyph is-pixel${className ? ` ${className}` : ''}`}
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+      />
+    );
+  }
   const form = item ? equipmentForm(item) : FALLBACK_FORM;
   return (
     <svg
