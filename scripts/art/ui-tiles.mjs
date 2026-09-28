@@ -283,10 +283,46 @@ function slot(name, rim) {
   c.save(name);
 }
 
+// A card's edge: 8x8, slice 2. The slot's cut at half its depth, so a card sunk into a window grows
+// by a pixel a side rather than four. The lit variant's lip is gold.
+function slotThin(name, lip) {
+  const c = canvas(8, 8);
+  const L = 7;
+  c.rect(0, 0, L, L, hex('#111319'));
+  for (let k = 0; k <= L; k++) {
+    c.set(k, 0, INK);
+    c.set(0, k, INK);
+    c.set(k, L, lip.hi);
+    c.set(L, k, lip.hi);
+  }
+  for (let k = 1; k < L; k++) {
+    c.set(k, 1, hex('#08090d'));
+    c.set(1, k, hex('#08090d'));
+    c.set(k, L - 1, lip.lo);
+    c.set(L - 1, k, lip.lo);
+  }
+  c.save(name);
+}
+
+// A title bar's underline: 16x4, tiles horizontally. The window frame's gold inlay, on its own.
+function rule(name, S) {
+  const c = canvas(16, 4);
+  for (let x = 0; x < 16; x++) {
+    c.set(x, 0, INK);
+    c.set(x, 1, S.goldHi);
+    c.set(x, 2, S.goldLo);
+    c.set(x, 3, INK);
+  }
+  c.save(name);
+}
+
 frameStone('frame-stone', STONE);
+rule('rule', STONE);
 plank('plank', WOOD);
 plank('plank-gilt', GILT);
 flagstones('flagstones');
 ledge('ledge', STONE);
 slot('slot', null);
 slot('slot-lit', { lo: STONE.goldLo, mid: STONE.gold, hi: STONE.goldHi });
+slotThin('slot-thin', { hi: hex('#4a4f5e'), lo: hex('#1b1e27') });
+slotThin('slot-thin-lit', { hi: STONE.goldHi, lo: STONE.goldLo });

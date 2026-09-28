@@ -37492,3 +37492,243 @@ img.smithy-service-art {
   bottom: -3px;
   right: -5px;
 }
+
+/* -- Window interiors. The dossier sheet is a stone window like any other; its title bar stands on
+   the frame's gold inlay, the page is a well cut into the stone (the portrait's plate too), a tab
+   is a slot rimmed in gold while its page is open, and a menu's rows are planks. -- */
+.detail-panel.is-hero-sheet {
+  border: 20px solid transparent;
+  border-image: url('../../art/ui/frame-stone.png') 10 fill / 20px round;
+  border-radius: 0;
+  background: none;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.6);
+  image-rendering: pixelated;
+}
+
+.is-hero-sheet .detail-header.is-hero {
+  padding: 0 2px 12px;
+  background: none;
+  border-bottom: 0;
+}
+
+.is-hero-sheet .detail-header.is-hero::after {
+  bottom: 0;
+  height: 8px;
+  background: url('../../art/ui/rule.png') 0 0 / 32px 8px repeat-x;
+  image-rendering: pixelated;
+}
+
+.is-hero-sheet .detail-tab-body {
+  margin: 8px 0;
+  padding: 3px;
+  border: 8px solid transparent;
+  border-image: url('../../art/ui/slot.png') 4 / 8px round;
+  border-radius: 0;
+  background: #111319 padding-box;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+
+.detail-portrait-plate {
+  border: 8px solid transparent;
+  border-image: url('../../art/ui/slot.png') 4 / 8px round;
+  border-radius: 0;
+  background: linear-gradient(180deg, #0c0e13, color-mix(in srgb, var(--hero-color, transparent) 16%, #111319)) padding-box;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+
+/* The strip is not a box; each tab is its own slot. */
+.tab-strip,
+.is-hero-sheet .tab-strip {
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.tab-button {
+  padding: 0 2px;
+  border: 8px solid transparent;
+  border-image: url('../../art/ui/slot.png') 4 / 8px round;
+  border-radius: 0;
+  background: #111319 padding-box;
+  image-rendering: pixelated;
+}
+
+.tab-button:hover:not(.is-active) {
+  background: #181b24 padding-box;
+  color: var(--text);
+}
+
+.tab-button.is-active,
+.is-hero-sheet .tab-button.is-active {
+  border-image-source: url('../../art/ui/slot-lit.png');
+  background: linear-gradient(180deg, color-mix(in srgb, var(--hero-color, var(--accent)) 24%, #17140f), #17140f) padding-box;
+  color: color-mix(in srgb, var(--hero-color, var(--accent)) 35%, #ffffff);
+  box-shadow: 0 0 12px -4px rgba(224, 166, 60, 0.6);
+}
+
+.options-item {
+  padding: 0 4px;
+  border: 14px solid transparent;
+  border-image: url('../../art/ui/plank.png') 7 fill / 14px round;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: #eadbbf;
+  text-shadow: 0 2px 0 #1a0f07;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.5));
+  image-rendering: pixelated;
+}
+
+.options-item:hover {
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.5)) brightness(1.12);
+}
+
+.options-item-danger {
+  border-color: transparent;
+  background: none;
+  color: #ff9d8f;
+}
+
+/* Armed: the second tap fires, so the plank burns red at its edges. */
+.options-item-danger.armed {
+  border-color: transparent;
+  background: none;
+  color: #fff0ec;
+  box-shadow: none;
+  filter: drop-shadow(0 0 3px rgba(217, 83, 79, 0.95)) drop-shadow(0 0 10px rgba(217, 83, 79, 0.6));
+}
+
+.audio-faders {
+  border: 8px solid transparent;
+  border-image: url('../../art/ui/slot.png') 4 / 8px round;
+  border-radius: 0;
+  background: #111319 padding-box;
+  padding: 2px 6px;
+  image-rendering: pixelated;
+}
+
+/* The title's Continue is the pact's own chamfered metal plate, not a plank. */
+.title-cta {
+  border: 0;
+  border-image: none;
+  background: var(--plate-face);
+  color: var(--plate-ink);
+  text-shadow: 0 1px 0 var(--plate-lip);
+  filter: none;
+}
+
+/* Every card with an identity hue (the plate family above, and a dossier's move tiles) is sunk into
+   its window: a thin carved edge, the hue kept as the wash and a lit top rim. Picked or selected
+   cards take a gold lip, as a chosen slot does. */
+:is(.status-ref-row, .evo-path-card, .item-readout, .passive-readout, .draft-innate, .roster-card, .squad-slot,
+    .enemy-scout-chip, .relic-card, .equip-cache-card, .equip-target-card, .equip-spotlight-passive, .hero-grid-card,
+    .sandbox-hero-card, .swap-option-badge, .item-service-row, .move-tile, .level-up-row, .grant-source-row) {
+  border: 4px solid transparent;
+  border-image: url('../../art/ui/slot-thin.png') 2 / 4px round;
+  border-radius: 0;
+  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--plate-hue, var(--border)) 45%, transparent);
+  image-rendering: pixelated;
+}
+
+.tab-move-list .move-button {
+  border: 4px solid transparent;
+  border-image: url('../../art/ui/slot-thin.png') 2 / 4px round;
+  border-radius: 0;
+  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--plate-hue) 45%, transparent);
+  image-rendering: pixelated;
+  --plate-hue: rgb(var(--move-type-rgb, 53, 59, 74));
+}
+
+.tab-move-list .move-button:hover:not(.is-unusable) {
+  border-color: transparent;
+  transform: none;
+  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--plate-hue) 70%, transparent);
+}
+
+:is(.status-ref-row, .evo-path-card, .item-readout, .passive-readout, .draft-innate, .roster-card, .squad-slot,
+    .enemy-scout-chip, .relic-card, .equip-cache-card, .equip-target-card, .equip-spotlight-passive, .hero-grid-card,
+    .sandbox-hero-card, .swap-option-badge, .item-service-row, .move-tile, .level-up-row, .move-button):is(.picked, .is-picked,
+    .selected, .is-selected, .is-active, .is-chosen) {
+  border-image-source: url('../../art/ui/slot-thin-lit.png');
+}
+
+.log-panel-header {
+  position: relative;
+  padding-bottom: 10px;
+}
+
+.log-panel-header::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 8px;
+  background: url('../../art/ui/rule.png') 0 0 / 32px 8px repeat-x;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+/* A roster card is carved like any other; its hero's colour is the stripe along the top. */
+.roster-mgmt-card {
+  border: 4px solid transparent;
+  border-image: url('../../art/ui/slot-thin.png') 2 / 4px round;
+  border-radius: 0;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--hero-color, var(--border)) 16%, #151820), #111319 62%) padding-box;
+  box-shadow: inset 0 3px 0 var(--hero-color, var(--border));
+  padding: 4px;
+  image-rendering: pixelated;
+}
+
+.roster-mgmt-card.can-take,
+.roster-mgmt-card.can-swap,
+.roster-mgmt-card.is-over {
+  border-color: transparent;
+  border-image-source: url('../../art/ui/slot-thin-lit.png');
+}
+
+/* The Bag's flask picker and the switch-in's candidates: carved like every other choice in a window. */
+.bag-kind,
+.switch-option {
+  border: 4px solid transparent;
+  border-image: url('../../art/ui/slot-thin.png') 2 / 4px round;
+  border-radius: 0;
+  background: #111319 padding-box;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+
+.bag-kind.selected {
+  border-color: transparent;
+  border-image-source: url('../../art/ui/slot-thin-lit.png');
+  background: linear-gradient(180deg, rgba(var(--flask-rgb), 0.18), rgba(var(--flask-rgb), 0.04)) padding-box, #111319;
+  box-shadow: 0 0 12px -4px rgba(var(--flask-rgb), 0.6);
+}
+
+.switch-option:hover {
+  border-color: transparent;
+  background: #161922 padding-box;
+  box-shadow: 0 0 14px -4px rgba(var(--socket-rgb), 0.6);
+}
+
+.switch-option.selected {
+  border-color: transparent;
+  border-image-source: url('../../art/ui/slot-thin-lit.png');
+  background: var(--selected-fill) padding-box;
+}
+
+.switch-option.claimed:hover {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.bag-kind {
+  padding: 0 3px;
+  gap: 4px;
+}
