@@ -37320,6 +37320,45 @@ img.smithy-service-art {
   filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.6));
 }
 
+/* Under the bar: the roster's standing HP, the Party Heal's reason to buy (or not). */
+.tavern-roster {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.tavern-roster-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 50px;
+}
+
+.tavern-roster-portrait {
+  width: 48px;
+  height: 48px;
+  image-rendering: pixelated;
+}
+
+.tavern-roster-hp {
+  width: 40px;
+}
+
+.tavern-roster-hero.is-down .tavern-roster-portrait {
+  filter: grayscale(1) brightness(0.55);
+}
+
+.tavern-roster-down {
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 4px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #ff9b95;
+}
+
 .hall-counter-goods {
   position: absolute;
   left: 0;

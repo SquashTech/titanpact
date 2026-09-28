@@ -14,7 +14,7 @@ import { guildHallLevel } from '../../run/difficulty';
 import { SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT, canBuyScroll } from '../../run/mastery';
 import { CONSUMABLE_HOLD_CAP, CONSUMABLE_KINDS, CONSUMABLE_NAMES, REVIVE_PURCHASE_LIMIT, canBuyConsumable, consumablePrice, type ConsumableKind } from '../../run/consumables';
 import { anyWounded, canBuyMend, mendPrice } from '../../run/wounds';
-import { entryHp } from '../shared/WoundBar';
+import { WoundBar, entryHp } from '../shared/WoundBar';
 import {
   recruitFromGuildHall,
   buyContract,
@@ -244,6 +244,8 @@ export function GuildHallPanel({
             </div>
             <img src={HALL_ART.counter} className="hall-counter-art" alt="" draggable={false} />
           </div>
+
+          <TavernRoster run={run} />
         </div>
       )}
 
@@ -372,6 +374,24 @@ export function GuildHallPanel({
         </>,
         overlayHost()
       )}
+    </div>
+  );
+}
+
+/** The roster at a glance under the bar, so the Party Heal is priced against who is actually hurt. */
+function TavernRoster({ run }: { run: RunState }) {
+  return (
+    <div className="tavern-roster">
+      {run.roster.map((entry) => {
+        const hero = rosterHeroes[entry.heroId];
+        const { hp, maxHp } = entryHp(hero, entry, run.relics);
+        return (
+          <div key={entry.rosterId} className={`tavern-roster-hero${entry.down ? ' is-down' : ''}`}>
+            <HeroPortrait heroId={hero.id} className="tavern-roster-portrait" />
+            {entry.down ? <span className="tavern-roster-down">Down</span> : <WoundBar hp={hp} maxHp={maxHp} className="tavern-roster-hp" />}
+          </div>
+        );
+      })}
     </div>
   );
 }
