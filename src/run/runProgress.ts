@@ -139,11 +139,12 @@ export function grantRelicReward(run: RunState, relicId: string): RunState {
 
 
 /**
- * The Mana Well node (docs/run-loop.md "The Mana Well"): +MANA_WELL_AMOUNT max Mana to one hero,
- * permanently, onto `bonusStatGrants` beside every other map grant. A multiple of 10, as every
- * authored stat grant is. Never refused — there is no cap on a pool.
+ * The Mana Well node (docs/run-loop.md "The Mana Well"): +MANA_WELL_AMOUNT max Mana and
+ * +MANA_WELL_REGEN MP Regen to one hero, permanently, onto `bonusStatGrants` beside every other map
+ * grant — the map's one per-hero regen. Never refused — there is no cap on a pool.
  */
-export const MANA_WELL_AMOUNT = 30;
+export const MANA_WELL_AMOUNT = 40;
+export const MANA_WELL_REGEN = 5;
 
 /**
  * What a `permanent` passive statDelta banked this fight (Combatant.permanentStatGains — Rex's
@@ -176,7 +177,11 @@ export function grantManaWell(run: RunState, rosterId: string): RunState {
   if (!entry) throw new RunProgressError(`${rosterId} is not on the roster`);
   const nextEntry: RosterEntry = {
     ...entry,
-    bonusStatGrants: { ...entry.bonusStatGrants, manaPool: (entry.bonusStatGrants.manaPool ?? 0) + MANA_WELL_AMOUNT },
+    bonusStatGrants: {
+      ...entry.bonusStatGrants,
+      manaPool: (entry.bonusStatGrants.manaPool ?? 0) + MANA_WELL_AMOUNT,
+      mpRegen: (entry.bonusStatGrants.mpRegen ?? 0) + MANA_WELL_REGEN,
+    },
   };
   return { ...run, roster: run.roster.map((r) => (r.rosterId === rosterId ? nextEntry : r)) };
 }

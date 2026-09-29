@@ -459,8 +459,10 @@ the bridge state — phase 3 deletes the ladder whole.
 ### The Mana Well
 
 **2026-09-13, per user direction.** `manaWellReward` → `ManaWellScreen`, weight 20 in the reward
-rows beside the purse: pick a hero, and its max Mana rises by `MANA_WELL_AMOUNT` = 30 for the
-rest of the run. The Forge's grammar — one tap, who — and every card says the pool it would
+rows beside the purse: pick a hero, and its max Mana rises by `MANA_WELL_AMOUNT` = 40 and its MP
+Regen by `MANA_WELL_REGEN` = 5 for the rest of the run (2026-09-28, per user direction — it was +30
+Mana alone and never taken: a quarter of what growth paid the same hero by the run's end, before
+growth came down to 1 a point. The regen makes it the map's only per-hero regen). The Forge's grammar — one tap, who — and every card says the pool it would
 leave the hero with.
 
 It is the `manaBoostReward` shrine the Growth Overhaul deleted under *a bare number never gets a
@@ -796,9 +798,20 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
 
   | Banner | Concept | Grant |
   |---|---|---|
-  | Banner of the Warcry | Offense | Team-wide +40 Attack, +40 Intelligence |
-  | Banner of the Bulwark | Defense | Team-wide +15 Defense, +15 Wisdom |
-  | Banner of the Wellspring | Staying power | Team-wide +40 HP, +30 Mana Pool, +10 MP Regen |
+  | Banner of the Warcry | Offense | Team-wide +30 Attack, +30 Intelligence, +10 Speed |
+  | Banner of the Bulwark | Defense | Team-wide +15 Defense, +15 Wisdom, +5 MP Regen |
+  | Banner of the Wellspring | Staying power | Team-wide +60 HP, +50 Mana Pool |
+
+  **Reshaped 2026-09-28, per user direction.** In play the Wellspring was the take after Act 1
+  every run: +40 HP for survival and +10 MP Regen on a flat base of 10 — one copy doubled every
+  hero's regen, two tripled it — so it bought "cast everything forever" alongside the HP. Regen
+  moved to the Bulwark at half the figure (a defensive Banner is the patient one), the Wellspring
+  became the big flat pools (+60 HP, +50 Mana — the place to go for depth now that levels grow a
+  pool 1 a point, not 2), and the Warcry came down 40 → 30 to carry **+10 Speed**. That rider
+  reverses "no Banner carries Speed" (below) on purpose: Swiftness died as a Banner of its own, and
+  a rider on the offense Banner is a different claim to test. The measured-parity figures below are
+  the history the new shapes start from; the sim pass that priced the reshape is under "The Mana
+  Well".
 
   **The figures are measured parity, not a point scale.** A hero swings with Attack *or* with
   Intelligence, never both, so the Warcry's two stats are worth *one* stat to any given hero —

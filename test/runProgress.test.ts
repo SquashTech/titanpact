@@ -20,6 +20,7 @@ import {
   grantRelicReward,
   grantManaWell,
   MANA_WELL_AMOUNT,
+  MANA_WELL_REGEN,
   forgeItem,
   forgeable,
   grantLeyLine,
@@ -171,16 +172,18 @@ test('runProgress: absorbItem rejects an unknown rosterId and an unknown item', 
   assert.throws(() => absorbItem(run, 'cinderKnight', 'nothing', equipment, heroes), RunProgressError);
 });
 
-test("runProgress: a Mana Well grant deepens one hero's pool by MANA_WELL_AMOUNT, stacks, and refuses nobody but a stranger", () => {
+test("runProgress: a Mana Well grant deepens one hero's pool by MANA_WELL_AMOUNT and its regen by MANA_WELL_REGEN, stacks, and refuses nobody but a stranger", () => {
   // The one bare-number screen the constitution allows (docs/run-loop.md "The Mana Well"): a
   // pool gates a whole tier of moves, so the number IS the capability. No cap, so no refusal.
   assert.strictEqual(MANA_WELL_AMOUNT % 10, 0, 'a stat grant is a multiple of 5 or 10');
   let run = seedRoster(['cinderKnight', 'crimson']);
   run = grantManaWell(run, 'cinderKnight');
   assert.strictEqual(run.roster[0].bonusStatGrants.manaPool, MANA_WELL_AMOUNT);
+  assert.strictEqual(run.roster[0].bonusStatGrants.mpRegen, MANA_WELL_REGEN);
   assert.strictEqual(run.roster[1].bonusStatGrants.manaPool, undefined, 'one hero, not the team');
   run = grantManaWell(run, 'cinderKnight');
   assert.strictEqual(run.roster[0].bonusStatGrants.manaPool, MANA_WELL_AMOUNT * 2, 'a second well stacks');
+  assert.strictEqual(run.roster[0].bonusStatGrants.mpRegen, MANA_WELL_REGEN * 2);
   assert.throws(() => grantManaWell(run, 'nobody'), RunProgressError);
 });
 

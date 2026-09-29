@@ -13,36 +13,31 @@ import type { RelicDefinition } from '../run/relics';
 // team shape ("two Warcries, a Bulwark, a Wellspring"). `guardianBanner: true` is the family flag
 // the run sheet groups on.
 //
-// The values are NOT symmetric, and deliberately. They are sized to MEASURED parity, not to a
-// point scale: batch simulation prices a point of Defense/Wisdom at roughly six times a point of
-// Attack/Intelligence, so the Warcry carries +40 against the Bulwark's +15 and the three come
-// out within one standard error of each other (docs/run-loop.md "The Guardian's Banner").
-// Speed has no Banner: a flat team-wide grant never flips an intra-team ordering and pays only
-// at a threshold, and it measured dead in every batch.
+// Three shapes (2026-09-28, per user direction, docs/run-loop.md "The Guardian's Banner"): the
+// Warcry is offense with a step of Speed, the Bulwark defense with the team's regen, the
+// Wellspring the big flat pools. Regen left the pools' Banner because the two stacked on one pick
+// was a cast-forever take every run. The Speed rider reverses 2026-09-14 on purpose: Swiftness
+// died as a Banner of its own, and this is a rider on one that pays continuously.
 const guardianBanners: Record<string, RelicDefinition> = {
   bannerOfTheWarcry: {
     id: 'bannerOfTheWarcry',
     name: 'Banner of the Warcry',
-    description: 'Team-wide +40 Attack, +40 Intelligence.',
-    statGrants: { attack: 40, intelligence: 40 },
+    description: 'Team-wide +30 Attack, +30 Intelligence, +10 Speed.',
+    statGrants: { attack: 30, intelligence: 30, speed: 10 },
     guardianBanner: true,
   },
   bannerOfTheBulwark: {
     id: 'bannerOfTheBulwark',
     name: 'Banner of the Bulwark',
-    description: 'Team-wide +15 Defense, +15 Wisdom.',
-    statGrants: { defense: 15, wisdom: 15 },
+    description: 'Team-wide +15 Defense, +15 Wisdom, +5 MP Regen.',
+    statGrants: { defense: 15, wisdom: 15, mpRegen: 5 },
     guardianBanner: true,
   },
   bannerOfTheWellspring: {
     id: 'bannerOfTheWellspring',
     name: 'Banner of the Wellspring',
-    // HP and both halves of the mana axis: what keeps a hero on the field and casting. Mana pool
-    // SATURATES — batch simulation measures +50, +150 and +300 identically, a fight ending long
-    // before a deeper reserve is reached — and MP Regen alone was the auto-take, being +100% of
-    // a flat base 10; HP is the half that pays when the pilot dies before mana does.
-    description: 'Team-wide +40 HP, +30 Mana Pool, +10 MP Regen.',
-    statGrants: { hp: 40, manaPool: 30, mpRegen: 10 },
+    description: 'Team-wide +60 HP, +50 Mana Pool.',
+    statGrants: { hp: 60, manaPool: 50 },
     guardianBanner: true,
   },
 };

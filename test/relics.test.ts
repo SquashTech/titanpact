@@ -36,7 +36,7 @@ test('relics: the catalog is exactly the Banners', () => {
 
 test('relics: relicTeamStatModifiers merges owned relics additively and ignores unknown ids', () => {
   const mods = relicTeamStatModifiers(['bannerOfTheWarcry', 'bannerOfTheBulwark', 'unknown-relic'], relics);
-  assert.deepStrictEqual(mods, { attack: 40, intelligence: 40, defense: 15, wisdom: 15 });
+  assert.deepStrictEqual(mods, { attack: 30, intelligence: 30, speed: 10, defense: 15, wisdom: 15, mpRegen: 5 });
 });
 
 test('relics: relicTeamStatModifiers stacks a duplicate relic id', () => {
@@ -60,18 +60,16 @@ test('relics: the three Guardian Banners are catalogued, in offer order', () => 
 
 test('relics: a Banner taken four times stacks to four times its grant', () => {
   const mods = relicTeamStatModifiers(['bannerOfTheWarcry', 'bannerOfTheWarcry', 'bannerOfTheWarcry', 'bannerOfTheWarcry'], relics);
-  assert.deepStrictEqual(mods, { attack: 160, intelligence: 160 });
+  assert.deepStrictEqual(mods, { attack: 120, intelligence: 120, speed: 40 });
 });
 
-test('relics: the three Banners are offense, defense and staying power, no stat twice, and no Speed', () => {
+test('relics: the three Banners are offense, defense and staying power, and no stat twice', () => {
   // One Banner per concept is what makes five acts of fixed offers read as a team shape
-  // (docs/run-loop.md "The Guardian's Banner", 2026-09-14). The figures are MEASURED parity —
-  // the sim prices a defensive point at ~6× an offensive one, hence +40 against +15. Speed is
-  // left off on purpose: a flat team-wide grant of it measured dead in every batch.
-  assert.deepStrictEqual(relics.bannerOfTheWarcry.statGrants, { attack: 40, intelligence: 40 });
-  assert.deepStrictEqual(relics.bannerOfTheBulwark.statGrants, { defense: 15, wisdom: 15 });
-  assert.deepStrictEqual(relics.bannerOfTheWellspring.statGrants, { hp: 40, manaPool: 30, mpRegen: 10 });
-  for (const banner of guardianBannerRelics) assert.ok(!banner.statGrants.speed, `${banner.id} grants Speed`);
+  // (docs/run-loop.md "The Guardian's Banner", 2026-09-14). Regen rides the Bulwark, not the
+  // pools' Banner (2026-09-28): the two on one pick was a cast-forever take.
+  assert.deepStrictEqual(relics.bannerOfTheWarcry.statGrants, { attack: 30, intelligence: 30, speed: 10 });
+  assert.deepStrictEqual(relics.bannerOfTheBulwark.statGrants, { defense: 15, wisdom: 15, mpRegen: 5 });
+  assert.deepStrictEqual(relics.bannerOfTheWellspring.statGrants, { hp: 60, manaPool: 50 });
 
   // No stat is carried by two Banners — an axis reachable two ways is one the player cannot price.
   const carried = guardianBannerRelics.flatMap((r) => Object.keys(r.statGrants));
@@ -102,7 +100,7 @@ test('entryStats: the out-of-combat sheet math equals the combatant a fight actu
   );
 
   assert.deepStrictEqual(sheetMods, state.combatants['A:cinderKnight'].baselineStatModifiers);
-  assert.strictEqual(sheetMods.attack, 40);
+  assert.strictEqual(sheetMods.attack, 30);
   assert.strictEqual(sheetMods.defense, 30);
   assert.strictEqual(state.combatants['A:cinderKnight'].passives.warden?.stacks, 1);
 });
@@ -114,6 +112,6 @@ test('entryStats: relicStatContribution isolates the relic-sourced slice', () =>
     relicTeamPassiveGrants(relicIds, relics),
     passives
   );
-  assert.deepStrictEqual(contribution, { attack: 40, intelligence: 40 });
+  assert.deepStrictEqual(contribution, { attack: 30, intelligence: 30, speed: 10 });
   assert.deepStrictEqual(relicStatContribution({}, {}, passives), {});
 });

@@ -125,8 +125,9 @@ fight is. Every faucet a pool has today, and what each is:
 
 | Faucet | Scope | Size | Kind |
 |---|---|---|---|
-| **Growth** (`run/growth.ts`) | every hero, every level | **2 mana a point** (`GROWTH_UNIT_MANA`; a B grade ≈ +2.6 a level, ~+65 by level 25) | automatic, no screen |
-| **Banner of Wellspring** | team-wide, 1-of-5 at each Guardian | +40 pool, +10 regen, stackable | a choice against four other Banners |
+| **Growth** (`run/growth.ts`) | every hero, every level | **1 mana a point** (`GROWTH_UNIT_MANA`, 2 → 1 on 2026-09-28; a B grade ≈ +1.3 a level, ~+38 by level 30) | automatic, no screen |
+| **Banner of the Wellspring** | team-wide, 1-of-3 at each Guardian | +50 pool (+60 HP), stackable | a choice against two other Banners |
+| **Banner of the Bulwark** | team-wide, 1-of-3 at each Guardian | +5 regen (+15 Def/Wis), stackable | a choice against two other Banners |
 | **Equipment** | per hero, per slot | authored on the item, ⅓ point a mana | the item's whole budget |
 | **An Evolution path** | per hero, once | +10–20 on the mana-flavoured paths | part of a branch |
 | **The Deep Well** (`data/events.ts`) | one chosen hero, when the event rolls | **−20 HP for +30 Mana** | a TRADE, narrated — the events grammar's `statShift` |
@@ -140,7 +141,19 @@ and from 11% of Act 4's casts to 21%, 18% of Act 5's to 33%, 23% of the finale's
 at Late and +15 at Mid — mana had stopped reading as a cost, and a spread hit at a single hit's
 price was the top of every damage-per-mana table. Late is still cast 1.6 times a fight in Act 5.
 
-| **The Mana Well** (`manaWellReward`) | one chosen hero, a reward-row seat at weight 20 | **+30 max Mana** (`MANA_WELL_AMOUNT`), stacks | the one bare-number screen — pick who |
+| **The Mana Well** (`manaWellReward`) | one chosen hero, a reward-row seat at weight 20 | **+40 max Mana, +5 MP Regen** (`MANA_WELL_AMOUNT`, `MANA_WELL_REGEN`), stacks | the one bare-number screen — pick who |
+
+**2026-09-28, per user direction: mana is bought, not grown.** At 2 a point the pool outgrew
+every price by Act 3 and the Wellspring doubled regen on top, so mana mattered early and then
+stopped mattering. Growth came back to 1 a point, regen left the pools' Banner for the Bulwark
+(+5, half what the Wellspring carried), the Wellspring took the big flat pool (+50), and the Mana
+Well went to +40 and +5 regen. The tension named: a 45–50 pool hero now reaches about 85 by
+level 30, so a 65+ Late move is castable once a fight and a second cast is a choice someone made.
+Measured (3000 runs, greedy pilot, seed 1): full-clear 92.2 → 93.4%, Resting 0.3% of turns both
+sides of the change, Late casts 14.7 → 14.6% of Act 5's, Banner lifts +0.07 / +0.07 / −0.14
+(Warcry / Bulwark / Wellspring), the Mana Well −0.13 → −0.23. **The sim cannot see this change**:
+its pilot cycles to the bench for mana and never runs dry, so a pool it never empties is a pool it
+never values. Whether mana now reads as a decision is a playtest call.
 
 **The Mana Well is the exception to *a bare number never gets a screen*, decided 2026-09-13**
 (per user direction, on the argument that a pool is the stat a whole tier of moves is priced in,

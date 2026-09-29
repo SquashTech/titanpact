@@ -9,7 +9,7 @@ import { ENCHANT_FORCE_BY_RARITY, EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, RARITY_ORD
 import { goldRangeFor, purseRangeFor } from '../../run/runProgress';
 import { MASTERY_EVOLUTION, SCRIBE_PICKS, SCRIBE_PIPS_EACH, SCROLL_CACHE_COUNT, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT } from '../../run/mastery';
 import { ENCOUNTER_XP_MULTIPLIER, encounterXpForAct, encounterXpKind } from '../../run/growth';
-import { LEY_LINE_FORCE, MANA_WELL_AMOUNT } from '../../run/runProgress';
+import { LEY_LINE_FORCE, MANA_WELL_AMOUNT, MANA_WELL_REGEN } from '../../run/runProgress';
 import { BOON_OFFER_COUNT } from '../../run/boons';
 import { championLevel, enemyLevelFor, guildHallLevel, openerEscortTiersFor, spawnLeaderTierFor, type EncounterNodeKind } from '../../run/difficulty';
 import type { SpawnTier } from '../../data/titanspawn';
@@ -148,7 +148,7 @@ const TERMS = {
   },
   banner: {
     term: 'Banner',
-    text: 'A team-wide stat grant, chosen 1 of 3 at each Guardian: Warcry (offense), Bulwark (defense) or Wellspring (HP, Mana, MP Regen). They stack across acts.',
+    text: 'A team-wide stat grant, chosen 1 of 3 at each Guardian: Warcry (offense, Speed), Bulwark (defense, MP Regen) or Wellspring (HP, Mana). They stack across acts.',
   },
   class: {
     term: 'Class',
@@ -274,9 +274,12 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
     case 'manaWellReward':
       return {
         kind: 'Reward · Growth',
-        facts: [{ glyph: 'mana', label: 'Max Mana', value: `+${MANA_WELL_AMOUNT}`, note: 'to 1 hero, permanent' }],
+        facts: [
+          { glyph: 'mana', label: 'Max Mana', value: `+${MANA_WELL_AMOUNT}`, note: 'to 1 hero, permanent' },
+          { glyph: 'mana', label: 'MP Regen', value: `+${MANA_WELL_REGEN}`, note: 'every round, permanent' },
+        ],
         odds: null,
-        about: `One hero’s Mana pool grows by ${MANA_WELL_AMOUNT} for the run. Moves are priced in Mana, so a bigger pool is more casts before a Rest — about one more Late move a fight.`,
+        about: `One hero’s Mana pool grows by ${MANA_WELL_AMOUNT} and its MP Regen by ${MANA_WELL_REGEN} for the run. Levels barely grow a pool, so this is where a hero goes to cast its Late moves more than once.`,
         terms: [],
       };
     case 'forgeReward':

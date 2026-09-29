@@ -395,11 +395,11 @@ don't silently override it.
   A grade is a **distribution over points, not a coin** (`GRADE_ROLL`, 2026-09-10, per user
   direction — the flat "+2 or nothing" it replaced read as a schedule): a level lands **+0 to
   +4 points** on a stat, an S rarely missing (10%) and reaching +4, an F almost always missing
-  (92%) and never passing +2. **A point is +1, or +3 HP, or +2 Mana** (CLAUDE.md's own
-  measured HP break-even is ≈0.33 a point, so 3 HP IS 1 point's worth; Mana grows 2 since
-  2026-09-13 because a Late move is priced in it and at 1 a point a 50-pool hero cast one once a
-  fight at level 25 — player-only, since an enemy rolls no growth; `docs/mana.md` "Growing the
-  pool" lists every faucet and why a Mana Well node is not one of them). **Every row's mean is exactly
+  (92%) and never passing +2. **A point is +1, or +3 HP, or +1 Mana** (CLAUDE.md's own
+  measured HP break-even is ≈0.33 a point, so 3 HP IS 1 point's worth; Mana grew 2 from
+  2026-09-13 and came back to 1 on **2026-09-28, per user direction** — at 2 the pool outgrew every
+  price by Act 3 and mana stopped being a decision, so a deeper pool is BOUGHT: the Wellspring, the
+  Mana Well, gear; `docs/mana.md` "Growing the pool" lists every faucet). **Every row's mean is exactly
   `0.1 + 0.3 × cost`** — what the flat roll paid — so the budget below and the phase-6
   difficulty re-fit both still hold; only the shape changed. Grades
   cover the **seven stats the 550 budget covers** — MP Regen excluded, as from every other
@@ -572,9 +572,10 @@ don't silently override it.
   `src/run/boons.ts`, `docs/run-loop.md` "Boons".
 - **There is no per-hero stat-investment currency** — with ONE authored exception since
   2026-09-13, per user direction: **the Mana Well** node (`manaWellReward`, `ManaWellScreen`,
-  `grantManaWell`), pick a hero for +30 max Mana. Allowed because a pool is different in kind from
+  `grantManaWell`), pick a hero for +40 max Mana and +5 MP Regen (2026-09-28; it was +30 Mana and
+  never taken) — the map's one per-hero regen. Allowed because a pool is different in kind from
   the numbers the rule was written against: it is the stat a whole tier of moves is priced in, so
-  +30 Mana is a Late cast a fight, visibly, where +10 Attack never was. It is an exception for
+  +40 Mana is a Late cast a fight, visibly, where +10 Attack never was. It is an exception for
   mana alone; a Vitality shrine does not get to ride on it (`docs/run-loop.md` "The Mana Well").
   **A second named exception, 2026-09-17, per user direction: the Ley Line** (`leyLineReward`,
   `grantLeyLine`, `LEY_LINE_FORCE` = 10) — pick a hero for +10 Elemental Force at its innate
@@ -758,17 +759,17 @@ what's still unimplemented:
   now come only from that per-act grant, a beaten enemy's contract claim, or a Guild
   Hall purchase). Beating an act's Guardian also grants **the Guardian's
   Banner** (2026-08-30; reshaped 2026-09-07; **three since 2026-09-14**, per user direction): a
-  fixed, never-rolled **1-of-3** team-wide relic, one per CONCEPT — Warcry (offense: +40 Atk,
-  +40 Int), Bulwark (defense: +15 Def, +15 Wis), Wellspring (staying power: +40 HP, +30 Mana,
-  +10 MP Regen) — stackable across the five acts and displayed folded ("Banner of the Bulwark
+  fixed, never-rolled **1-of-3** team-wide relic, one per CONCEPT — Warcry (offense: +30 Atk,
+  +30 Int, +10 Speed), Bulwark (defense: +15 Def, +15 Wis, +5 MP Regen), Wellspring (staying power:
+  +60 HP, +50 Mana) — stackable across the five acts and displayed folded ("Banner of the Bulwark
   +2"), so a run's picks read as a team shape. The Warcry carries two stats because a hero
-  swings with one or the other. **The figures are MEASURED parity, not a point scale**: the sim
-  prices a point of Def/Wis at ~6× a point of Atk/Int, so +40 stands against +15 and the three
-  land within half a standard error of each other under the skilled pilot. It was five, one per
-  STAT: Vitality's HP moved to the Wellspring, and **Swiftness was deleted** — Speed pays only
-  at a threshold, so a flat team-wide grant of it measured dead in every batch under both
-  pilots and in play; no Banner carries Speed. Under the weak pilot the Bulwark still leads and
-  the Wellspring trails (z ±2) — the open balance question for playtest (`docs/run-loop.md`
+  swings with one or the other. **Reshaped 2026-09-28, per user direction**: the Wellspring
+  carried HP, pool AND regen and was the take every run in play (regen doubling off a flat 10 is
+  what "cast forever" was), so regen moved to the Bulwark and the Wellspring became the big flat
+  pools. The sim prices a point of Def/Wis at ~6× a point of Atk/Int, which is why the Warcry's
+  figures run larger. It was five, one per STAT, and **Swiftness was deleted** — Speed pays only
+  at a threshold and a flat team-wide grant of it measured dead; **a Speed RIDER on the Warcry
+  reverses that on purpose** (2026-09-28) — watch whether it pays (`docs/run-loop.md`
   "The Guardian's Banner"). **Enemies are LEVELLED, not stepped** (2026-09-15, per user
   direction, `docs/enemy-levels.md`, replacing the two-track act-step curve, the Elite's and
   Guardian's node-kind stat bonuses and the champion multiplier, all deleted): an enemy's ONE
