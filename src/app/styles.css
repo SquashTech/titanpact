@@ -31063,9 +31063,39 @@ button.star-shop-bundle-face {
 /* The Mentor's one line: the node's whole explanation, said as the screen's pitch. */
 .keeper-line {
   flex-basis: 100%;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
+  white-space: nowrap;
   color: var(--rite-title);
+}
+
+/* The Scribe's desk and the Scroll Cache: candle-gold on dark wood. */
+.rite-screen.is-scribe {
+  --rite-ink: #d9b572;
+  --rite-title: #fff3dc;
+  --rite-glow: rgba(224, 194, 122, 0.55);
+  --rite-glow-far: rgba(180, 130, 60, 0.35);
+}
+
+.scribe-ground {
+  position: absolute;
+  inset: calc(var(--shell-pad) * -1);
+  background:
+    radial-gradient(ellipse 75% 28% at 30% 10%, rgba(224, 194, 122, 0.26), transparent 70%),
+    radial-gradient(ellipse 100% 40% at 50% 100%, rgba(90, 60, 25, 0.3), transparent 72%),
+    linear-gradient(180deg, #060504, #110d08 50%, #1c150c);
+  pointer-events: none;
+}
+
+.keeper-offer .scribe-ledger {
+  flex-basis: 100%;
+  margin-top: 4px;
+}
+
+.scroll-terms {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-dim);
 }
 
 .tutor-fit {
@@ -31095,7 +31125,12 @@ button.star-shop-bundle-face {
   align-items: center;
   gap: 14px;
   flex: none;
-  padding-right: 44px;
+}
+
+/* Clear of the roster button in the corner; the lines under the title run the full width. */
+.keeper-words > .rite-eyebrow,
+.keeper-words > .rite-name {
+  margin-right: 44px;
 }
 
 .keeper-figure {

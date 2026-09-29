@@ -19,7 +19,7 @@ import { statScaleFor } from '../../run/statScale';
 import { isCompanion } from '../../run/companion';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { MasteryPips } from '../shared/MasteryPips';
-import { NodeHeader, NodeSky, NODE_TINT_PARCHMENT } from '../shared/NodeStage';
+import { NodeMotes, NODE_TINT_PARCHMENT } from '../shared/NodeStage';
 import scribeArt from '../../../art/npc/scribe.png';
 import scrollArt from '../../../art/ui/scroll.png';
 import { CompanionScreen } from './CompanionScreen';
@@ -117,37 +117,47 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
   const overflowEntry = flow.overflow ? (run.roster.find((r) => r.rosterId === flow.overflow!.rosterId) ?? null) : null;
   const masteredEntry = flow.mastered ? (run.roster.find((r) => r.rosterId === flow.mastered!.rosterId) ?? null) : null;
 
-  const title = 'Mastery Scrolls';
-  const eyebrow = plan.kind === 'scribe' ? 'The Scribe' : bought ? 'Off the shelf' : 'Scroll Cache';
-  const readout = !anyEligible
-    ? `Every hero is already at ${MASTERY_CAP} Mastery — there is nobody left to teach.`
-    : plan.kind === 'scribe'
-      ? `${SCRIBE_PIPS_EACH} Mastery each, to a different hero a line. ${MASTERY_EVOLUTION} Evolves a hero; ${MASTERY_CAP} masters its innate. Hold to review a sheet.`
-      : `One Mastery a Scroll, to whoever you tap. ${MASTERY_EVOLUTION} Evolves a hero; ${MASTERY_CAP} masters its innate.`;
+  const milestones = `${MASTERY_EVOLUTION} Evolves · ${MASTERY_CAP} masters the innate`;
+  const nobody = `Every hero is already at ${MASTERY_CAP} Mastery — there is nobody left to teach.`;
 
   return (
-    <div className="node-screen shrine-screen scroll-screen" style={{ '--node-rgb': NODE_TINT_PARCHMENT } as CSSProperties}>
-      <NodeSky />
-
-      <span className="shrine-descent" aria-hidden="true" />
-
+    <div className="node-screen rite-screen is-scribe scroll-screen" style={{ '--node-rgb': NODE_TINT_PARCHMENT, '--rite-color': `rgb(${NODE_TINT_PARCHMENT})` } as CSSProperties}>
+      <span className="node-sky scribe-ground" aria-hidden="true" />
+      <NodeMotes count={12} />
       <RosterPeek run={run} />
 
-      {/* The Scribe is a person; a Cache or a bought Scroll is only the scrolls, counted under the title. */}
-      <NodeHeader
-        eyebrow={eyebrow}
-        title={title}
-        side
-        art={plan.kind === 'scribe' ? <img src={scribeArt} className="npc-portrait" alt="" draggable={false} /> : undefined}
-        readout={readout}
-      >
-        {anyEligible &&
-          (plan.kind === 'scribe' ? (
-            <ScribeLedger names={pickedIds.map((id) => rosterHeroes[run.roster.find((r) => r.rosterId === id)!.heroId].name)} />
-          ) : (
-            <ScrollRow count={plan.count} remaining={remaining} />
-          ))}
-      </NodeHeader>
+      {/* The Scribe is a person, at the desk by the road; a Cache or a bought Scroll is only the
+          scrolls, counted under the title. */}
+      {plan.kind === 'scribe' ? (
+        <header className="keeper-head">
+          <span className="keeper-figure">
+            <span className="rite-pool" aria-hidden="true" />
+            <img src={scribeArt} className="keeper-art" alt="" draggable={false} />
+          </span>
+          <span className="keeper-words">
+            <span className="rite-eyebrow">By the Roadside</span>
+            <h2 className="rite-name">The Scribe</h2>
+            {anyEligible ? (
+              <span className="keeper-offer">
+                <span className="keeper-line">
+                  {SCRIBE_PIPS_EACH} Mastery each, to {SCRIBE_PICKS === 2 ? 'two' : SCRIBE_PICKS} heroes.
+                </span>
+                <span className="keeper-terms">{milestones}</span>
+                <ScribeLedger names={pickedIds.map((id) => rosterHeroes[run.roster.find((r) => r.rosterId === id)!.heroId].name)} />
+              </span>
+            ) : (
+              <span className="keeper-offer">{nobody}</span>
+            )}
+          </span>
+        </header>
+      ) : (
+        <header className="rite-head">
+          <span className="rite-eyebrow">{bought ? 'Off the Shelf' : 'Scroll Cache'}</span>
+          <h2 className="rite-name">Mastery Scrolls</h2>
+          {anyEligible && <ScrollRow count={plan.count} remaining={remaining} />}
+          <span className="scroll-terms">{anyEligible ? `One Mastery a Scroll · ${milestones}` : nobody}</span>
+        </header>
+      )}
 
       <HeroPickGrid count={run.roster.length} fill>
         {run.roster.map((entry) => {
