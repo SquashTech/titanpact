@@ -163,7 +163,8 @@ export type PassiveId = string;
 /** 'SwitchedOut' reads a SwitchedIn whose OUTGOING combatant is the subject, and fires from the bench the owner has just reached (Ink) — never on a knockout's replacement, since a fainted owner reacts to nothing. */
 /** 'MoveUsed' is a cast paid for, read after its payload and before any pivot; its subject is the caster, and `damaging` ('true' / 'false') is what eventFieldEquals reads (Poised). */
 /** 'Endured' is a knockout refused (enduresOnce); its subject is the holder, read off a hit or a status tick — never the Pact Clock, which is no trigger source. */
-export type PassiveHook = 'DamageDealt' | 'Healed' | 'StatusApplied' | 'StatusTicked' | 'StatusDetonated' | 'SwitchedIn' | 'SwitchedOut' | 'StatChanged' | 'RoundEnded' | 'Rested' | 'MoveUsed' | 'Endured';
+/** 'ManaGained' reads every way mana arrives — a grant (move or passive), the round's regen, a Rest — never a potion; its subject is the receiver and `manaGained` what landed (Zenith). */
+export type PassiveHook = 'DamageDealt' | 'Healed' | 'StatusApplied' | 'StatusTicked' | 'StatusDetonated' | 'SwitchedIn' | 'SwitchedOut' | 'StatChanged' | 'RoundEnded' | 'Rested' | 'MoveUsed' | 'Endured' | 'ManaGained';
 
 /** 'ally' = the owner's partner, not the owner. */
 export type PassiveRelation = 'self' | 'ally' | 'enemy';
@@ -185,6 +186,8 @@ export interface PassiveTriggerCondition {
   finishingBlow?: true;
   /** The event's target-role combatant holds this status when the reaction is read (after the hit has landed). */
   eventTargetHasStatus?: StatusId;
+  /** Every living active ally of the owner moves before every living active enemy on effective Speed, strictly — the slower side under Stasis Bubble (Kite's Outpace). */
+  sideOutspeeds?: true;
 }
 
 /** matchTriggerAmount reads the triggering event's `field` (default 'amount'): Sanguine takes a tick's amount, Restorative Toxin a StatusApplied's magnitude. */
@@ -209,7 +212,8 @@ export type PassiveEffectTarget = 'self' | 'ally' | 'triggerSubject' | 'triggerT
 
 /** The reactive effect primitives. */
 export type PassiveEffect =
-  | { kind: 'heal'; target: PassiveEffectTarget; amount: PassiveAmount }
+  /** `scaledBy` runs the amount through the heal formula's stat term off the OWNER (WisdomMult, no STAB — a passive has no move): Patch's Upkeep. */
+  | { kind: 'heal'; target: PassiveEffectTarget; amount: PassiveAmount; scaledBy?: StatKey }
   /**
    * `magnitude` may read off the triggering event rather than being authored flat. `scaledBy`
    * multiplies it by the OWNER's stat on the status-magnitude formula's StatMult (no STAB — a
@@ -278,6 +282,8 @@ export interface PassiveDefinition {
   statGrants?: Partial<Record<StatKey, number>>;
   /** Conditional counterpart of `statGrants` (Bloodthirsty). */
   conditionalStatGrants?: PassiveConditionalStatGrants;
+  /** Flat grants the owner's ACTIVE partner holds while the owner stands active beside it — an aura, read live, gone the moment either leaves (Pixie's Mana Chime). */
+  partnerStatGrants?: Partial<Record<StatKey, number>>;
   /**
    * The Herald's guard (docs/titan-eyes.md §10): while any standing ally of the owner's phase or
    * earlier is on its side — field or bench; a later phase's reserves do not count — every move
@@ -313,12 +319,13 @@ export function isValidPassiveDefinition(passive: PassiveDefinition): boolean {
     passive.damageModifier !== undefined ||
     passive.statGrants !== undefined ||
     passive.conditionalStatGrants !== undefined ||
+    passive.partnerStatGrants !== undefined ||
     passive.wardedWhileCompanyStands !== undefined ||
     passive.enduresOnce !== undefined ||
     passive.cannotSwitchOut !== undefined;
   if (!hasEffect) return false;
   const ok = (amount: number | undefined) => amount === undefined || isValidFlatStatGrant(amount);
-  return Object.values(passive.statGrants ?? {}).every(ok) && Object.values(passive.conditionalStatGrants?.statGrants ?? {}).every(ok);
+  return Object.values(passive.statGrants ?? {}).every(ok) && Object.values(passive.conditionalStatGrants?.statGrants ?? {}).every(ok) && Object.values(passive.partnerStatGrants ?? {}).every(ok);
 }
 
 /** Opaque field-effect-catalog key; concrete field effects are data (src/data/fieldEffects.ts). */

@@ -885,6 +885,80 @@ export const BROADSIDE_SHOT = 0.05;
 export const BROADSIDE_MAGAZINE_MASTERED = 6;
 
 const innatePassives: Record<string, PassiveDefinition> = {
+  // Re-authored 2026-09-29 (per user direction, sim pass 14).
+  surgingIntellect: {
+    id: 'surgingIntellect',
+    name: 'Surging Intellect',
+    description: 'Whenever this hero gains Mana, it gains that much Intelligence.',
+    // Every way mana arrives — regen, a grant, a Rest — so it pays a little every round it spends
+    // and a lot off a Font of Power. The ×4 fight ceiling is what bounds it.
+    reactive: {
+      hook: 'ManaGained',
+      condition: { relativeTo: 'self', eventFieldPositive: 'manaGained' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: { kind: 'matchTriggerAmount', field: 'manaGained' } },
+    },
+  },
+  manaChime: {
+    id: 'manaChime',
+    name: 'Mana Chime',
+    description: "While this hero is on the field, its partner has +10 MP Regen.",
+    partnerStatGrants: { mpRegen: 10 },
+  },
+  frostbite: {
+    id: 'frostbite',
+    name: 'Frostbite',
+    description: 'At the end of each round, every Frozen enemy loses 10% of its max HP.',
+    // Nightmare's shape on Freeze: direct loss, only while Flurry stands on the field.
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'damage', target: 'activeEnemies', percentMaxHp: 0.1, onlyWithStatus: 'Freeze' },
+    },
+  },
+  outpace: {
+    id: 'outpace',
+    name: 'Outpace',
+    description: 'At the end of each round, if both active allies move before both active enemies, this hero gains 20 Intelligence.',
+    // Stacks every round the lead holds, to the fight ceiling — the speed race is the whole game.
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self', sideOutspeeds: true },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 20 },
+    },
+  },
+  upkeep: {
+    id: 'upkeep',
+    name: 'Upkeep',
+    description: "At the end of each round, this hero's partner recovers a little HP (12 healing power, scaled by this hero's Wisdom).",
+    // Leftovers for the partner: ~6-8% of a partner's max HP a round across the run, on the heal formula's Wisdom term.
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'heal', target: 'ally', amount: { kind: 'flat', value: 12 }, scaledBy: 'wisdom' },
+    },
+  },
+  sporefall: {
+    id: 'sporefall',
+    name: 'Sporefall',
+    description: 'At the end of each round, both active enemies are Poisoned 5.',
+    // Poison's timer does not reset on reapply, so a standing Morel loads a 15% burst every three rounds on both.
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Poison', magnitude: 5, duration: 3 },
+    },
+  },
+  stormveil: {
+    id: 'stormveil',
+    name: 'Stormveil',
+    description: "The first time each fight an enemy's Conduct bursts, this hero gains Barrier for the rest of the round.",
+    reactive: {
+      hook: 'StatusDetonated',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Conduct' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Barrier' },
+      oncePerFight: true,
+    },
+  },
   kindling: {
     id: 'kindling',
     name: 'Kindling',
@@ -967,16 +1041,6 @@ const innatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 30 },
     },
   },
-  glaciate: {
-    id: 'glaciate',
-    name: 'Glaciate',
-    description: 'Whenever this hero takes damage, both active enemies lose 5 Speed.',
-    reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'speed', amount: -5 },
-    },
-  },
   coldSnap: {
     id: 'coldSnap',
     name: 'Cold Snap',
@@ -1016,16 +1080,6 @@ const innatePassives: Record<string, PassiveDefinition> = {
       hook: 'StatusDetonated',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Conduct' } },
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 20 },
-    },
-  },
-  staticField: {
-    id: 'staticField',
-    name: 'Static Field',
-    description: 'Whenever an enemy becomes Conducting, this hero gains 10 Intelligence.',
-    reactive: {
-      hook: 'StatusApplied',
-      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Conduct' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 10 },
     },
   },
   stoneWall: {
@@ -1242,16 +1296,6 @@ const innatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'damage', target: 'activeEnemies', percentMaxHp: BROADSIDE_SHOT, perHeldStatus: 'Cannonball' },
     },
   },
-  fieldRepair: {
-    id: 'fieldRepair',
-    name: 'Field Repair',
-    description: 'Whenever this hero heals an ally, that ally is Cleansed of one affliction.',
-    reactive: {
-      hook: 'Healed',
-      condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'cleanse', target: 'triggerTarget', count: 1 },
-    },
-  },
   packHunter: {
     id: 'packHunter',
     name: 'Pack Hunter',
@@ -1412,16 +1456,6 @@ const innatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'attack', amount: -10 },
     },
   },
-  mycelium: {
-    id: 'mycelium',
-    name: 'Mycelium',
-    description: 'Whenever this hero Poisons an enemy, that enemy loses 5 Attack and 5 Intelligence.',
-    reactive: {
-      hook: 'StatusApplied',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Poison' } },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['attack', 'intelligence'], amount: -5 },
-    },
-  },
   curl: {
     id: 'curl',
     name: 'Curl',
@@ -1512,16 +1546,6 @@ const innatePassives: Record<string, PassiveDefinition> = {
       condition: { relativeTo: 'self' },
       effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Conduct' },
       chance: 0.5,
-    },
-  },
-  headwind: {
-    id: 'headwind',
-    name: 'Headwind',
-    description: 'Whenever this hero uses a move that deals no damage, both active enemies lose 10 Speed.',
-    reactive: {
-      hook: 'MoveUsed',
-      condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
-      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'speed', amount: -10 },
     },
   },
   staticWake: {
@@ -1678,6 +1702,86 @@ const innatePassives: Record<string, PassiveDefinition> = {
 // In no pool, never granted by anything but the pip (test/mastery pins both). Passive-applied
 // magnitudes stay flat.
 const masteredInnatePassives: Record<string, PassiveDefinition> = {
+  // Re-authored 2026-09-29 (per user direction, sim pass 14).
+  surgingIntellectPlus: {
+    id: 'surgingIntellectPlus',
+    name: 'Surging Intellect+',
+    description: 'Whenever this hero gains Mana, it gains twice that much Intelligence.',
+    reactive: {
+      hook: 'ManaGained',
+      condition: { relativeTo: 'self', eventFieldPositive: 'manaGained' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: { kind: 'matchTriggerAmount', field: 'manaGained', multiplier: 2 } },
+    },
+  },
+  manaChimePlus: {
+    id: 'manaChimePlus',
+    name: 'Mana Chime+',
+    description: 'While this hero is on the field, its partner has +10 MP Regen, and so does this hero.',
+    partnerStatGrants: { mpRegen: 10 },
+    statGrants: { mpRegen: 10 },
+  },
+  frostbitePlus: {
+    id: 'frostbitePlus',
+    name: 'Frostbite+',
+    description: 'At the end of each round, every Frozen enemy loses 20% of its max HP.',
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'damage', target: 'activeEnemies', percentMaxHp: 0.2, onlyWithStatus: 'Freeze' },
+    },
+  },
+  outpacePlus: {
+    id: 'outpacePlus',
+    name: 'Outpace+',
+    description: 'At the end of each round, if both active allies move before both active enemies, this hero gains 40 Intelligence.',
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self', sideOutspeeds: true },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 40 },
+    },
+  },
+  upkeepPlus: {
+    id: 'upkeepPlus',
+    name: 'Upkeep+',
+    description: "At the end of each round, this hero's partner recovers HP (24 healing power, scaled by this hero's Wisdom).",
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'heal', target: 'ally', amount: { kind: 'flat', value: 24 }, scaledBy: 'wisdom' },
+    },
+  },
+  sporefallPlus: {
+    id: 'sporefallPlus',
+    name: 'Sporefall+',
+    description: 'At the end of each round, both active enemies are Poisoned 10.',
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Poison', magnitude: 10, duration: 3 },
+    },
+  },
+  stormveilPlus: {
+    id: 'stormveilPlus',
+    name: 'Stormveil+',
+    description: "The first time each fight an enemy's Conduct bursts, this hero and its partner gain Barrier for the rest of the round.",
+    reactive: {
+      hook: 'StatusDetonated',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Conduct' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Barrier' },
+      oncePerFight: true,
+    },
+  },
+  stormveilPartner: {
+    id: 'stormveilPartner',
+    name: 'Stormveil+',
+    description: "The first time each fight an enemy's Conduct bursts, this hero's partner gains Barrier for the rest of the round.",
+    reactive: {
+      hook: 'StatusDetonated',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Conduct' } },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Barrier' },
+      oncePerFight: true,
+    },
+  },
   // --- Fire ---
   forgeheart: {
     id: 'forgeheart',
@@ -1753,17 +1857,6 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
     },
   },
 
-  // --- Frost ---
-  deepWinter: {
-    id: 'deepWinter',
-    name: 'Glaciate+',
-    description: 'Whenever this hero takes damage, both active enemies lose 15 Speed.',
-    reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'speed', amount: -15 },
-    },
-  },
   shatterpoint: {
     id: 'shatterpoint',
     name: 'Cold Snap+',
@@ -1804,16 +1897,6 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       hook: 'StatusDetonated',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Conduct' } },
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 50 },
-    },
-  },
-  supercell: {
-    id: 'supercell',
-    name: 'Static Field+',
-    description: 'Whenever an enemy becomes Conducting, this hero gains 25 Intelligence.',
-    reactive: {
-      hook: 'StatusApplied',
-      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Conduct' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 25 },
     },
   },
 
@@ -1959,26 +2042,6 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       hook: 'Rested',
       condition: { relativeTo: 'self' },
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: { kind: 'matchTriggerAmount', field: 'manaRestored', multiplier: 2 } },
-    },
-  },
-  starwell: {
-    id: 'starwell',
-    name: 'Arcane Reservoir+',
-    description: 'When this hero enters the battlefield, it gains 75 Mana, past its pool.',
-    reactive: {
-      hook: 'SwitchedIn',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 75 } },
-    },
-  },
-  feyCommunion: {
-    id: 'feyCommunion',
-    name: 'Attunement+',
-    description: 'When this hero enters the battlefield, its partner gains 50 Mana, past its pool.',
-    reactive: {
-      hook: 'SwitchedIn',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'manaGrant', target: 'ally', amount: { kind: 'flat', value: 50 } },
     },
   },
 
@@ -2138,26 +2201,6 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
       effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10, permanent: true },
-    },
-  },
-  refit: {
-    id: 'refit',
-    name: 'Field Repair+',
-    description: 'Whenever this hero heals an ally, that ally is Cleansed of every affliction and gains Shield 30.',
-    reactive: {
-      hook: 'Healed',
-      condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'cleanse', target: 'triggerTarget' },
-    },
-  },
-  refitPlate: {
-    id: 'refitPlate',
-    name: 'Field Repair+',
-    description: 'Whenever this hero heals an ally, that ally gains Shield 30.',
-    reactive: {
-      hook: 'Healed',
-      condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Shield', magnitude: 30 },
     },
   },
 
@@ -2400,16 +2443,6 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'attack', amount: -20 },
     },
   },
-  fruitingBody: {
-    id: 'fruitingBody',
-    name: 'Mycelium+',
-    description: 'Whenever this hero Poisons an enemy, that enemy loses 10 Attack and 10 Intelligence.',
-    reactive: {
-      hook: 'StatusApplied',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Poison' } },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['attack', 'intelligence'], amount: -10 },
-    },
-  },
   hardball: {
     id: 'hardball',
     name: 'Curl+',
@@ -2501,16 +2534,6 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
       effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Conduct' },
-    },
-  },
-  galeWarning: {
-    id: 'galeWarning',
-    name: 'Headwind+',
-    description: 'Whenever this hero uses a move that deals no damage, both active enemies lose 20 Speed.',
-    reactive: {
-      hook: 'MoveUsed',
-      condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
-      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'speed', amount: -20 },
     },
   },
   // Conduct carries no figure to double, so the mastered wake widens its reach to both.

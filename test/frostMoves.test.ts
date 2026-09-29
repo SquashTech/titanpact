@@ -77,7 +77,7 @@ test('frost: the authored pool is the fifteen designed moves plus Snowball, Rime
   assert.deepStrictEqual(
     frost.map((m) => m.id).sort(),
     [
-      'absoluteZero', 'avalanche', 'blindingSnow', 'coldSnap', 'deepChill', 'frigidAir', 'frostArmor', 'frostWall',
+      'absoluteZero', 'avalanche', 'blindingSnow', 'coldSnap', 'deepChill', 'frigidAir', 'frostArmor', 'frostBolt', 'frostWall',
       'glaciate', 'hoarfrostEdge', 'iceShard', 'iceShatter', 'iceShell', 'icicleThrust', 'permafrost', 'quickFreeze', 'rimeCoat', 'rimeWind',
       'snowBlast', 'snowball',
     ]

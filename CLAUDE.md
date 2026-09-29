@@ -269,8 +269,9 @@ don't silently override it.
   button is pressed); a `hot` on self is a benefit and scales. Passive-applied magnitudes
   are flat — a passive has no move to take STAB from — **with one named exception** (2026-09-20,
   per user direction): a passive's `applyStatus` may carry `scaledBy`, the StatMult off the
-  OWNER's stat and still no STAB; Boiler's Burn is the only holder, and a second is a
-  conversation (`docs/innate-passives.md` §10). It exists because `HP_SCALE` is
+  OWNER's stat and still no STAB; Boiler's Burn was the only holder, and **the second is Patch's
+  Upkeep** (2026-09-29, per user direction): a passive `heal` may carry `scaledBy: 'wisdom'`, the
+  heal formula's WisdomMult off the owner (`docs/innate-passives.md` §7c). It exists because `HP_SCALE` is
   neutral for what repeats and not for what decays: `decay: 'halve'` caps a Burn's lifetime
   output at ≈2× its magnitude however long the fight runs. `docs/combat.md`.
   **Burn left the formula 2026-09-28** (per user direction, `docs/blessings-and-statuses.md` §3):
@@ -316,8 +317,10 @@ don't silently override it.
   (2026-08-30): a **derived** grant, whose amount is read off live state rather than
   authored, lands unrounded — Arcane Overflow grants Attack/Intelligence equal to the
   caster's current Mana, and Beast's Apex Predator grants Attack equal to the caster's
-  own current Attack (`MoveDefinition.derivedStatDeltas`, `docs/combat.md`). Two
-  sources, one exemption; a third should be a conversation, not a habit.
+  own current Attack (`MoveDefinition.derivedStatDeltas`, `docs/combat.md`). **The third
+  was that conversation** (2026-09-29, per user direction): Zenith's Surging Intellect grants
+  Intelligence equal to every Mana it gains — regen, a grant, a Rest — bounded by the ×4 fight
+  ceiling (`docs/innate-passives.md` §7c). A fourth is a conversation again.
 - **No accuracy stat.** Moves always land. **Mana cost is the primary balance lever** on
   reliable moves. **A guaranteed lockout is priced by the fight, not the cast** (2026-09-11):
   Feint, Blind and Barrier carry `manaCostGainOnUse` = 20, so each cast is dearer for the rest

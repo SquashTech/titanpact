@@ -617,6 +617,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
     // Mana grants are UNCAPPED (docs/mana.md "Overflow") — no clamp helper exists for mana on purpose.
     if (move.manaGrant) {
+      const granted: CombatEvent[] = [];
       for (const targetId of targetIds) {
         const target = working.combatants[targetId];
         if (!target || target.fainted) continue;
@@ -639,7 +640,12 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           maxMana: targetMaxMana,
           overflow: Math.max(0, newTargetMana - targetMaxMana),
         });
+        granted.push(events[events.length - 1]);
       }
+      // Mana gained is a trigger (Zenith's Surging Intellect).
+      const grantReactions = resolvePassiveReactions(working, round, granted, heroes, statuses, passives, fieldEffects);
+      working = grantReactions.state;
+      events.push(...grantReactions.events);
     }
 
     // Collected across both stat-writing blocks and fed to one reaction pass below (Frozen Stone).
@@ -932,6 +938,9 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
   const manaRegen = applyManaRegen(working, round, heroes, fieldEffects, passives);
   working = manaRegen.state;
   events.push(...manaRegen.events);
+  const regenReactions = resolvePassiveReactions(working, round, manaRegen.events, heroes, statuses, passives, fieldEffects);
+  working = regenReactions.state;
+  events.push(...regenReactions.events);
 
   const statusTicks = tickEndOfRound(working, round, statuses, fieldEffects, maxHpOf);
   working = statusTicks.state;

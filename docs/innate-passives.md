@@ -310,6 +310,32 @@ Things the table is *for*, beyond filling seats:
 
 ---
 
+## 7c. Seven innates re-authored (2026-09-29, per user direction)
+
+Sim pass 13 put seven of these heroes in the roster's bottom ten; each also took a second on-type
+attack into its starting kit the same day (Jolt, Jolt, Frost Bolt — a new Frost early bolt, since Snow Blast
+catches the partner and measured as costing Flurry runs —, Backfire, Magic Bolt, Seed Shot,
+and Magic Bolt for Zenith's Empower — Barrier kept). The innates were then rewritten by the
+designer, with three edits from review: Pixie's aura is **while on the field**, Patch's heal runs on
+**the heal formula's Wisdom term** rather than a share of max HP (Renew stays the one percent heal),
+and Skyshear's Barrier is **once a fight** — Barrier is the game's hardest lockout.
+
+| Hero | Innate | What it does | Mastered (+) | Engine |
+|---|---|---|---|---|
+| Zenith | **Surging Intellect** | Whenever this hero gains Mana — regen, a grant, a Rest — it gains that much Intelligence. | twice that much | new `ManaGained` hook; the third derived grant (CLAUDE.md) |
+| Pixie | **Mana Chime** | While this hero is on the field, its partner has +10 MP Regen. | and +10 MP Regen on Pixie | new `partnerStatGrants` aura, read live in `getEffectiveStat` |
+| Flurry | **Frostbite** | At the end of each round, every Frozen enemy loses 10% of its max HP. | 20% | Nightmare's shape on Freeze |
+| Kite | **Outpace** | At the end of each round, if both active allies move before both active enemies, this hero gains 20 Intelligence — it stacks. | 40 | new `sideOutspeeds` condition (reversed under Stasis Bubble) |
+| Patch | **Upkeep** | At the end of each round, its partner heals 12 healing power, scaled by this hero's Wisdom. | 24 | passive `heal` `scaledBy` — the second `scaledBy` holder |
+| Morel | **Sporefall** | At the end of each round, both active enemies are Poisoned 5. | Poisoned 10 | none — Poison's timer holds while the magnitude climbs, so a 15% burst every three rounds |
+| Skyshear | **Stormveil** | The first time each fight an enemy's Conduct bursts, this hero gains Barrier for the rest of the round. | this hero and its partner | none |
+
+Retired with them: Glaciate, Headwind, Field Repair, Mycelium, Static Field and their mastered
+cards. Arcane Reservoir and Attunement stay as equipment cards. Two notes for playtest: Zenith has
+no fixed cap but the ceiling (+255 Intelligence at base 85), and Outpace and Frostbite are strongest
+against the enemy AI precisely because it never switches (Freeze never clears, a speed lead never
+breaks on a pivot).
+
 ## 8. Measured
 
 Sim, 3000 runs, chart pilot, seed 7, against the pre-innate tree on the same seed (the doc

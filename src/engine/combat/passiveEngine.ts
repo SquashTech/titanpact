@@ -101,7 +101,10 @@ function subjectOf(event: CombatEvent, role: 'target' | 'source'): string | unde
     case 'Rested':
     case 'MoveUsed':
     case 'Endured':
+    case 'ManaRegenTicked':
       return event.combatantId;
+    case 'ManaGranted':
+      return event.targetCombatantId;
     case 'DamageDealt':
       return event.targetCombatantId;
     case 'Healed':
@@ -111,6 +114,42 @@ function subjectOf(event: CombatEvent, role: 'target' | 'source'): string | unde
     default:
       return undefined;
   }
+}
+
+const MANA_GAINED_EVENTS = new Set<CombatEvent['type']>(['ManaGranted', 'ManaRegenTicked', 'Rested']);
+
+function hookMatches(hook: string, event: CombatEvent): boolean {
+  return hook === 'ManaGained' ? MANA_GAINED_EVENTS.has(event.type) : hook === event.type;
+}
+
+/** The event as a condition reads it; the three ways mana arrives share one `manaGained` field. */
+function contextFor(event: CombatEvent): TriggerContext {
+  const context = event as unknown as TriggerContext;
+  switch (event.type) {
+    case 'ManaGranted':
+      return { ...context, manaGained: event.amount };
+    case 'ManaRegenTicked':
+      return { ...context, manaGained: event.manaRegen };
+    case 'Rested':
+      return { ...context, manaGained: event.manaRestored };
+    default:
+      return context;
+  }
+}
+
+/** Every living active ally moves before every living active enemy on effective Speed, strictly — slower under Stasis Bubble, which reverses the order. An empty side never qualifies. */
+function sideOutspeeds(state: CombatState, side: Side, heroes: HeroLookup, passiveDefs: Record<PassiveId, PassiveDefinition>, fieldEffectDefs: Record<string, FieldEffectDefinition>): boolean {
+  const statCtx = { active: state.activeFieldEffect, defs: fieldEffectDefs, board: { state, passives: passiveDefs } };
+  const speeds = (of: Side) =>
+    state.active[of]
+      .map((id) => (id ? state.combatants[id] : undefined))
+      .filter((c): c is Combatant => !!c && !c.fainted)
+      .map((c) => getEffectiveStat(heroes[c.heroId], c, 'speed', statCtx));
+  const mine = speeds(side);
+  const theirs = speeds(side === 'A' ? 'B' : 'A');
+  if (mine.length === 0 || theirs.length === 0) return false;
+  const reversed = !!(state.activeFieldEffect && fieldEffectDefs[state.activeFieldEffect.fieldEffectId]?.reversesSpeedOrder);
+  return reversed ? Math.max(...mine) < Math.min(...theirs) : Math.min(...mine) > Math.max(...theirs);
 }
 
 /** `targetMaxHp` is the effect target's, for a percentMaxHp amount; a caller without a target reads it as 0. */
@@ -242,7 +281,11 @@ function resolveEffectOn(
     }
     case 'heal': {
       const maxHp = getMaxHp(heroes[target.heroId], target);
-      const amount = resolveAmount(effect.amount, context, maxHp);
+      let amount = resolveAmount(effect.amount, context, maxHp);
+      if (effect.scaledBy !== undefined) {
+        const owner = state.combatants[ownerId];
+        if (owner) amount = Math.round(amount * magnitudeMultFromStat(getEffectiveStat(heroes[owner.heroId], owner, effect.scaledBy)));
+      }
       if (amount <= 0) return { state, events: [] };
       // Nothing to restore is a no-op, not a "+0 HP" beat.
       if (target.currentHp >= maxHp) return { state, events: [] };
@@ -372,9 +415,12 @@ export function resolvePassiveReactions(
 ): { state: CombatState; events: CombatEvent[] } {
   let working = state;
   const produced: CombatEvent[] = [];
+  // Mana a reaction grants is itself mana gained, so it joins the queue (Attunement filling Zenith). Bounded: nothing grants mana off a gain.
+  const queue: CombatEvent[] = [...events];
 
-  for (const event of events) {
-    const context = event as unknown as TriggerContext;
+  for (let at = 0; at < queue.length; at++) {
+    const event = queue[at];
+    const context = contextFor(event);
 
     for (const ownerId of Object.keys(working.combatants)) {
       const owner = working.combatants[ownerId];
@@ -388,7 +434,7 @@ export function resolvePassiveReactions(
         if (!reactive) continue;
         // SwitchedOut is the SwitchedIn that sent the owner out, read from the bench it has just reached.
         const switchedOut = reactive.hook === 'SwitchedOut';
-        if ((switchedOut ? 'SwitchedIn' : reactive.hook) !== event.type) continue;
+        if (!hookMatches(switchedOut ? 'SwitchedIn' : reactive.hook, event)) continue;
         if (reactive.whileBenched || switchedOut ? onField : !onField) continue;
         // A round's end is about nobody, so each active owner is its own subject: 'self' fires, nothing else does.
         const subjectId =
@@ -405,6 +451,7 @@ export function resolvePassiveReactions(
           const struck = eventTargetId ? working.combatants[eventTargetId] : undefined;
           if (!struck || !hasStatus(struck, reactive.condition.eventTargetHasStatus)) continue;
         }
+        if (reactive.condition.sideOutspeeds && !sideOutspeeds(working, owner.side, heroes, passiveDefs, fieldEffectDefs)) continue;
         // Checked AFTER the match and marked BEFORE the effect resolves, so a re-entrant reaction cannot fire itself twice.
         if (reactive.oncePerFight) {
           if (working.combatants[ownerId]?.passives[instance.passiveId]?.firedThisFight) continue;
@@ -422,6 +469,7 @@ export function resolvePassiveReactions(
           // A no-op (a heal at full HP, a target already fainted) is not a trigger: nothing to log.
           if (resolved.events.length === 0) continue;
           produced.push({ type: 'PassiveTriggered', round, combatantId: ownerId, passiveId: instance.passiveId }, ...resolved.events);
+          if (queue.length < 64) queue.push(...resolved.events.filter((e) => e.type === 'ManaGranted'));
         }
       }
     }

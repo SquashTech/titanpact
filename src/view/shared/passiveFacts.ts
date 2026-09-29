@@ -165,6 +165,8 @@ function triggerFact(def: NonNullable<PassiveDefinition['reactive']>): PassiveFa
       return { label: 'When', text: `${who} Rests`, glyph: { kind: 'stat', stat: 'manaPool' } };
     case 'Endured':
       return { label: 'When', text: `${who} refuses a knockout`, glyph: { kind: 'stat', stat: 'hp' } };
+    case 'ManaGained':
+      return { label: 'When', text: `${who} gains Mana — regen, a grant or a Rest`, glyph: { kind: 'stat', stat: 'manaPool' } };
     case 'MoveUsed':
       return {
         label: 'When',
@@ -180,7 +182,7 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
     case 'heal':
       return {
         label: 'Then',
-        text: `Heals ${targetWord(effect.target, condition, hook)} ${amountWord(effect.amount, 'HP')}`,
+        text: `Heals ${targetWord(effect.target, condition, hook)} ${amountWord(effect.amount, 'HP')}${effect.scaledBy ? `, scaled by ${STAT_FULL_LABELS[effect.scaledBy]}` : ''}`,
         glyph: { kind: 'stat', stat: 'hp' },
       };
     case 'applyStatus': {
@@ -261,6 +263,7 @@ export function passiveFacts(def: PassiveDefinition): PassiveFact[] {
     rows.push(effectFact(def.reactive.effect, def.reactive.condition, def.reactive.hook));
     if (def.reactive.condition.finishingBlow) rows.push({ label: 'Only', text: 'A hit that knocks its target out', glyph: { kind: 'stat', stat: 'attack' } });
     if (def.reactive.condition.eventTargetHasStatus) rows.push({ label: 'While', text: `The one struck is ${statusName(def.reactive.condition.eventTargetHasStatus)}`, glyph: { kind: 'status', statusId: def.reactive.condition.eventTargetHasStatus }, color: 'status' });
+    if (def.reactive.condition.sideOutspeeds) rows.push({ label: 'While', text: 'Both active allies move before both active enemies', glyph: { kind: 'stat', stat: 'speed' } });
     if (def.reactive.oncePerFight) rows.push({ label: 'Limit', text: 'Once per fight', glyph: { kind: 'move', move: 'debuff' } });
   }
   if (def.damageModifier) {
@@ -284,6 +287,10 @@ export function passiveFacts(def: PassiveDefinition): PassiveFact[] {
       glyph: { kind: 'status', statusId },
       color: 'status',
     });
+  }
+  if (def.partnerStatGrants) {
+    const grants = Object.entries(def.partnerStatGrants).map(([stat, amount]) => `${fmt(amount as number)} ${STAT_FULL_LABELS[stat as StatKey]}`).join(', ');
+    rows.push({ label: 'Aura', text: `Its active partner has ${grants} while this hero stands beside it`, glyph: { kind: 'move', move: 'buff' } });
   }
   if (def.wardedWhileCompanyStands) {
     rows.push({ label: 'While', text: 'Any ally of its company still stands, on the field or behind it', glyph: { kind: 'move', move: 'buff' } });

@@ -164,6 +164,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     // --- Frost ---
     glacialWarden: [
       'snowBlast',
+      'frostArmor',
       'glaciate',
       'permafrost',
       'iceShell',
@@ -245,7 +246,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     // Skyshear: the magical column entire, with Arcane, Light and Frost as the off-type — a caster's
     // colours, none of it on Rimewing's or Sunward's line.
     skyshear: [
-      'jolt',
+      'zap',
       'risingStatic',
       'magicBolt',
       'blind',
@@ -480,14 +481,14 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'twinCast',
     ],
     zenith: [
-      'infuse','conduit', 'fontOfPower', 'arcaneOverflow', 'magicBolt', 'cataclysm', 'focus', 'arcPulse', 'magicCloak', 'glimmer', 'psiBolt', 'manaFont', 'splash', 'arcaneBlast', 'overload', 'study', 'wickedFear',
+      'infuse','conduit', 'fontOfPower', 'arcaneOverflow', 'empower', 'cataclysm', 'focus', 'arcPulse', 'magicCloak', 'glimmer', 'psiBolt', 'manaFont', 'splash', 'arcaneBlast', 'overload', 'study', 'wickedFear',
       'resonantBolt',
       'twinCast',
     ],
     // The support half of Arcane plus the two nukes a partner will want poured into. Bless, Lull
     // and Wisp are the off-type support colours; Stasis telegraphs the Mind graft alongside Lull.
     pixie: [
-      'magicBolt', 'focus', 'barrier', 'manaTap', 'bless', 'lull', 'wisp',
+      'manaFont', 'focus', 'barrier', 'manaTap', 'bless', 'lull', 'wisp',
       'empower', 'arcPulse', 'study', 'magicCloak', 'overload', 'stasis',
       'conduit', 'arcaneOverflow', 'fontOfPower', 'twinCast', 'cataclysm',
     ],
@@ -695,7 +696,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     // Patch: the repair column, with Light, Water and Arcane support as the off-type — a medic's
     // colours. Beacon's and Coolant's lines are the heal columns proper, so they are not here.
     patch: [
-      'backfire',
+      'overclock',
       'purify',
       'mend',
       'refresh',
@@ -869,7 +870,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // Morel: Nature's Poison column and Mind's dulling as the off-type. Wild Bloom is Toadstool's grant.
     morel: [
-      'seedShot', 'regrowth', 'sow', 'lull', 'inkCloud', 'enervate',
+      'weaken', 'regrowth', 'sow', 'lull', 'inkCloud', 'enervate',
       'blight', 'corrode', 'rootbind', 'magicGrowth', 'disorient', 'mindLeech',
       'miasma', 'forceOfNature', 'leech', 'breakWill', 'brainFlay',
     ],
@@ -929,7 +930,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // Kite: Storm's marks and tailwinds, with the Beast howl, Water's ink and the Frost and Mind guards beside them. Chain Lightning is Highflyer's grant.
     kite: [
-      'jolt', 'charge', 'howl', 'refresh', 'inkCloud', 'brainWard',
+      'toxicSpores', 'charge', 'howl', 'refresh', 'inkCloud', 'brainWard',
       'tailwind', 'ionize', 'stunningBolt', 'blindingSnow', 'electricBurst', 'mentalFortress',
       'stormSurge', 'thunderbolt', 'ionCascade', 'ionicZap',
     ],

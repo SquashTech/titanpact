@@ -27,6 +27,8 @@ import { recordPermanentStatGains } from '../src/run/runProgress';
 import { combatantIdFor } from '../src/run/combatantIds';
 import { innatePassiveOf, titansMarkOf } from '../src/run/innate';
 import { collectPassiveDamageModifiers } from '../src/engine/combat/passiveEngine';
+import { applyManaRegen } from '../src/engine/combat/manaRegen';
+import { magnitudeMultFromStat } from '../src/engine/heal/healPipeline';
 import { titanspawn } from '../src/data/titanspawn';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
@@ -474,4 +476,79 @@ test('broadside: a cannonball loads each round on the bench (never on the field,
   const empty = holder(fixture(33));
   const r2 = resolveRound(empty, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }, ...restAll(empty).filter((a) => a.combatantId !== 'a1')], config);
   assert.strictEqual(r2.state.combatants.b1.currentHp, fixtureMaxHp(empty.combatants.b1.heroId));
+});
+
+// --- The 2026-09-29 innates (sim pass 14, per user direction) ---
+
+test('surging intellect: a ManaGained hook — a Rest and a grant both pay Intelligence equal to the mana, and a full pool pays nothing', () => {
+  let state = withPassive(twoVTwo(40, 'zenith', 'pixie', 'ironWarden', 'crag'), 'a1', 'surgingIntellect');
+  state = withField(state, 'a1', { currentMana: 10 });
+  const rested = resolveRound(state, restAll(state), config);
+  const restored = rested.events.find((e) => e.type === 'Rested' && e.combatantId === 'a1');
+  assert.ok(restored && restored.type === 'Rested' && restored.manaRestored > 0);
+  assert.strictEqual(rested.state.combatants.a1.statModifiers.intelligence, restored.manaRestored);
+
+  const full = withPassive(twoVTwo(41, 'zenith', 'pixie', 'ironWarden', 'crag'), 'a1', 'surgingIntellect');
+  const infused = resolveRound(full, [{ kind: 'move', combatantId: 'a2', moveId: 'infuse', declaredTarget: 'a1' }, ...restAll(full).filter((a) => a.combatantId !== 'a2')], config);
+  assert.strictEqual(infused.state.combatants.a1.statModifiers.intelligence, moves.infuse.manaGrant, 'the grant lands past a full pool, and pays in full');
+});
+
+test('outpace: Intelligence each round both allies move first, stacking; nothing when a partner is slower than an enemy', () => {
+  let state = withPassive(twoVTwo(42, 'kite', 'whirr', 'ursa', 'steamColossus'), 'a1', 'outpace');
+  state = resolveRound(state, restAll(state), config).state;
+  assert.strictEqual(state.combatants.a1.statModifiers.intelligence, 20);
+  state = resolveRound(state, restAll(state), config).state;
+  assert.strictEqual(state.combatants.a1.statModifiers.intelligence, 40, 'it stacks while the lead holds');
+  const slow = withPassive(twoVTwo(43, 'kite', 'steamColossus', 'ursa', 'crag'), 'a1', 'outpace');
+  assert.strictEqual(resolveRound(slow, restAll(slow), config).state.combatants.a1.statModifiers.intelligence, undefined);
+});
+
+test('mana chime: the active partner regenerates 10 more while Pixie stands beside it; Pixie and the bench do not', () => {
+  const drained = (s: CombatState) => (['a1', 'a2', 'a3'] as const).reduce((acc, id) => withField(acc, id, { currentMana: 0 }), s);
+  const base = drained(fixture(44));
+  const chimed = withPassive(base, 'a1', 'manaChime');
+  const regen = (s: CombatState) => Object.fromEntries(applyManaRegen(s, 1, allCombatants, fieldEffects, passives).events.map((e) => [e.combatantId, e.manaRegen]));
+  const without = regen(base);
+  const withChime = regen(chimed);
+  assert.strictEqual(withChime.a2, without.a2 + 10, 'the partner');
+  assert.strictEqual(withChime.a1, without.a1, 'not the holder');
+  assert.strictEqual(withChime.a3, without.a3, 'not the bench');
+});
+
+test('upkeep: the partner heals 12 healing power off Patch\'s Wisdom each round end; alone on the field nobody does', () => {
+  let state = withPassive(twoVTwo(45, 'patch', 'valor', 'ironWarden', 'crag'), 'a1', 'upkeep');
+  state = withField(state, 'a2', { currentHp: 50 });
+  const r = resolveRound(state, restAll(state), config);
+  const expected = Math.round(12 * magnitudeMultFromStat(heroes.patch.baseStats.wisdom));
+  assert.strictEqual(r.state.combatants.a2.currentHp, 50 + expected);
+});
+
+test('sporefall: both active enemies are Poisoned 5 each round end, the timer holding as the magnitude climbs', () => {
+  let state = withPassive(twoVTwo(46, 'morel', 'valor', 'ironWarden', 'crag'), 'a1', 'sporefall');
+  state = resolveRound(state, restAll(state), config).state;
+  assert.strictEqual(statusMagnitude(state.combatants.b1, 'Poison'), 5);
+  assert.strictEqual(statusMagnitude(state.combatants.b2, 'Poison'), 5);
+  state = resolveRound(state, restAll(state), config).state;
+  assert.strictEqual(statusMagnitude(state.combatants.b1, 'Poison'), 10);
+});
+
+test('frostbite: a Frozen active enemy loses a tenth of its max HP each round end; an unfrozen one does not', () => {
+  let state = withPassive(twoVTwo(47, 'glacialWarden', 'valor', 'ironWarden', 'crag'), 'a1', 'frostbite');
+  state = withStatus(state, 'b1', 'Freeze');
+  const r = resolveRound(state, restAll(state), config);
+  const b1Max = fixtureMaxHp('ironWarden');
+  assert.strictEqual(r.state.combatants.b1.currentHp, b1Max - Math.round(b1Max * 0.1));
+  assert.strictEqual(r.state.combatants.b2.currentHp, fixtureMaxHp('crag'));
+});
+
+test('stormveil: the first Conduct burst of the fight Barriers Skyshear, and the second does not', () => {
+  let state = withPassive(twoVTwo(48, 'skyshear', 'tempest', 'ironWarden', 'crag'), 'a1', 'stormveil');
+  state = withStatus(state, 'b1', 'Conduct');
+  const strike = (s: CombatState) => resolveRound(s, [{ kind: 'move', combatantId: 'a2', moveId: 'jolt', declaredTarget: 'b1' }, ...restAll(s).filter((a) => a.combatantId !== 'a2')], config);
+  const barriered = (r: ReturnType<typeof strike>) => r.events.some((e) => e.type === 'StatusApplied' && e.combatantId === 'a1' && e.statusId === 'Barrier');
+  const first = strike(state);
+  assert.ok(first.events.some((e) => e.type === 'StatusDetonated'));
+  assert.ok(barriered(first), 'the first burst');
+  const second = strike(withStatus(first.state, 'b1', 'Conduct'));
+  assert.ok(!barriered(second), 'once a fight');
 });

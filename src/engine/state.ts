@@ -401,6 +401,18 @@ export function getEffectiveStat(
       if (!anyActiveEnemyHasStatus(fieldEffectCtx.board.state, combatant.side, conditional.requiresEnemyStatus)) continue;
       raw += amount * instance.stacks;
     }
+    // A partner's aura (Mana Chime): only between the two actives, so the bench and a lone lead hold none.
+    const board = fieldEffectCtx.board.state;
+    const active = board.active[combatant.side];
+    if (active.includes(combatant.combatantId)) {
+      const partner = active.map((id) => (id && id !== combatant.combatantId ? board.combatants[id] : undefined)).find((c) => c && !c.fainted);
+      if (partner) {
+        for (const instance of Object.values(partner.passives)) {
+          const amount = fieldEffectCtx.board.passives[instance.passiveId]?.partnerStatGrants?.[stat];
+          if (amount) raw += amount * instance.stacks;
+        }
+      }
+    }
   }
 
   // Floor of 1 across every stat, applied last — a 0 or negative defStat would break the off/def ratio.
