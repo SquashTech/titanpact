@@ -448,19 +448,6 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['attack', 'intelligence'], amount: 20 },
     },
   },
-  afterimage: {
-    id: 'afterimage',
-    name: 'Afterimage',
-    description: 'When this hero enters the battlefield, it gains Ambush 20.',
-    // Ambush clears on switch, so this cannot be banked by cycling — every arrival buys exactly
-    // one loaded attack, the opening lead included. It is what makes a pivot an offensive move
-    // rather than only a mana-recovery one, which is the whole reason the bench regenerates.
-    reactive: {
-      hook: 'SwitchedIn',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 20 },
-    },
-  },
   eitherHand: {
     id: 'eitherHand',
     name: 'Either Hand',

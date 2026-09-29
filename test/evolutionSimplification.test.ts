@@ -21,6 +21,7 @@ const REWIRES = [
   'wildOracle-druid',
   'revenant-wraithblade',
   'sorrow-dirge',
+  'nightshade-hemlock',
 ];
 
 function pathsOf(heroId: string): EvolutionPath[] {

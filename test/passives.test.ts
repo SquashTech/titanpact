@@ -698,7 +698,7 @@ test("passives: Charged Air is Bloodthirsty on Conduct — OFF on a clean board,
   assert.strictEqual(getEffectiveStat(hero, marked.combatants.a1, 'speed', boardOf(marked)), hero.baseStats.speed + 20);
 });
 
-// --- Afterimage (Nightshade / Penumbra) ---
+// --- Umbral Veil (Nightshade's mastered innate): the arrival Ambush ---
 
 // Nightshade benched behind a pair, so arriving is a real switch. Deep mana on both sides; the
 // point of these is the arrival and what it arms, not the economy.
@@ -724,36 +724,36 @@ function nightshadeFixture(seed: number) {
 const nightshadeArrives: Action = { kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' };
 const strikes: Action = { kind: 'move', combatantId: 'a3', moveId: 'backstab', declaredTarget: 'b1' };
 
-test('passives: Afterimage arms the hero that walks on with Ambush 20', () => {
-  const state = withPassive(nightshadeFixture(400), 'a3', 'afterimage');
+test('passives: Umbral Veil arms the hero that walks on with Ambush 30', () => {
+  const state = withPassive(nightshadeFixture(400), 'a3', 'umbralVeil');
   const { state: next } = resolveRound(state, [nightshadeArrives], config);
 
-  assert.strictEqual(next.combatants.a3.statuses.Ambush?.magnitude, 20);
+  assert.strictEqual(next.combatants.a3.statuses.Ambush?.magnitude, 30);
 });
 
 test('passives: the arrival Ambush is cashed by the next attack, then gone', () => {
-  const state = withPassive(nightshadeFixture(401), 'a3', 'afterimage');
+  const state = withPassive(nightshadeFixture(401), 'a3', 'umbralVeil');
   const arrived = resolveRound(state, [nightshadeArrives], config).state;
   const { state: next, events } = resolveRound(arrived, [strikes], config);
 
   const swing = (events.filter((e) => e.type === 'DamageDealt') as any[]).find((e) => e.sourceCombatantId === 'a3');
-  assert.strictEqual(swing.elementalForceBonus, 20, 'Backstab is 30 Base Power, so the arrival is most of the hit');
+  assert.strictEqual(swing.elementalForceBonus, 30, 'the arrival is most of the hit');
   assert.strictEqual(hasStatus(next.combatants.a3, 'Ambush'), false);
 });
 
 test('passives: cycling out and back never banks — Ambush clears on the way to the bench', () => {
-  const state = withPassive(nightshadeFixture(402), 'a3', 'afterimage');
+  const state = withPassive(nightshadeFixture(402), 'a3', 'umbralVeil');
   const arrived = resolveRound(state, [nightshadeArrives], config).state;
-  // Straight back out without spending it, then back in: still 20, never 40.
+  // Straight back out without spending it, then back in: still 30, never 60.
   const left = resolveRound(arrived, [{ kind: 'switch', combatantId: 'a3', benchedCombatantId: 'a1' } as Action], config).state;
   assert.strictEqual(hasStatus(left.combatants.a3, 'Ambush'), false, 'the bench strips it');
 
   const returned = resolveRound(left, [nightshadeArrives], config).state;
-  assert.strictEqual(returned.combatants.a3.statuses.Ambush?.magnitude, 20, 'one loaded attack an arrival, not a stacking engine');
+  assert.strictEqual(returned.combatants.a3.statuses.Ambush?.magnitude, 30, 'one loaded attack an arrival, not a stacking engine');
 });
 
-test('passives: Afterimage is self-only — a partner arriving arms nobody else', () => {
-  const state = withPassive(nightshadeFixture(403), 'a3', 'afterimage');
+test('passives: Umbral Veil is self-only — a partner arriving arms nobody else', () => {
+  const state = withPassive(nightshadeFixture(403), 'a3', 'umbralVeil');
   const { state: next } = resolveRound(state, [nightshadeArrives], config);
 
   assert.strictEqual(hasStatus(next.combatants.a2, 'Ambush'), false);
