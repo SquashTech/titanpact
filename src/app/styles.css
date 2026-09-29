@@ -31098,6 +31098,24 @@ button.star-shop-bundle-face {
   color: var(--text-dim);
 }
 
+/* The Equipment Cache: the opened chest's gold on a dark ground. */
+.rite-screen.is-cache {
+  --rite-ink: #e0b85a;
+  --rite-title: #fff3d6;
+  --rite-glow: rgba(240, 190, 80, 0.6);
+  --rite-glow-far: rgba(200, 130, 40, 0.35);
+}
+
+.cache-ground {
+  position: absolute;
+  inset: calc(var(--shell-pad) * -1);
+  background:
+    radial-gradient(ellipse 80% 30% at 50% 12%, rgba(240, 190, 80, 0.3), transparent 70%),
+    radial-gradient(ellipse 100% 40% at 50% 100%, rgba(100, 70, 20, 0.28), transparent 72%),
+    linear-gradient(180deg, #060504, #110d07 50%, #1b140a);
+  pointer-events: none;
+}
+
 .tutor-fit {
   font-size: 10px;
   color: var(--text-dim);

@@ -5,8 +5,7 @@ import type { RunState } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { rarityWeightsFor } from '../../run/equipment';
 import { grantCurrencyReward, purseRangeFor, rollGoldRange } from '../../run/runProgress';
-import { SectionGlyph } from '../shared/sectionIcons';
-import { NodeHeader, NodeSky, NODE_TINT_GOLD } from '../shared/NodeStage';
+import { NodeMotes, NODE_TINT_GOLD } from '../shared/NodeStage';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
 import { mapNodeArt } from './mapNodeArt';
@@ -135,16 +134,20 @@ function EquipmentCache({ run, onClaimEquipment }: Pick<Props, 'run' | 'onClaimE
   }
 
   return (
-    <div className="node-screen node-reward-screen" style={{ '--node-rgb': NODE_TINT_GOLD } as CSSProperties}>
-      <NodeSky />
+    <div className="node-screen rite-screen is-cache node-reward-screen" style={{ '--node-rgb': NODE_TINT_GOLD, '--rite-color': `rgb(${NODE_TINT_GOLD})` } as CSSProperties}>
+      <span className="node-sky cache-ground" aria-hidden="true" />
+      <NodeMotes count={16} />
       <RosterPeek run={run} />
-      <NodeHeader
-        compact
-        eyebrow="A Cache Opens"
-        title="Equipment Cache"
-        glyph={<SectionGlyph name="equipment" />}
-        readout="Tap a piece of gear to select it, hold to read it in full."
-      />
+
+      {/* The chest the road just opened, still giving off its light; the three pieces rise out of it. */}
+      <header className="rite-head">
+        <span className="rite-place">
+          <span className="rite-pool" aria-hidden="true" />
+          <img src={cacheOpen} className="rite-place-art" alt="" draggable={false} />
+        </span>
+        <span className="rite-eyebrow">A Forgotten Chest</span>
+        <h2 className="rite-name">Choose One</h2>
+      </header>
 
       <div className="screen-scroll">
         <div className="stage-centered">
@@ -169,7 +172,7 @@ function EquipmentCache({ run, onClaimEquipment }: Pick<Props, 'run' | 'onClaimE
         disabled={!pickedItemId}
         onClick={() => pickedItemId && onClaimEquipment(pickedItemId)}
       >
-        {pickedItemId ? `Claim ${choices.find((i) => i.id === pickedItemId)?.name}` : 'Select a piece of gear'}
+        {pickedItemId ? `Take — ${choices.find((i) => i.id === pickedItemId)?.name}` : 'Choose a piece'}
       </button>
 
       {inspectItemId &&
