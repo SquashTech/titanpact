@@ -313,17 +313,6 @@ export const fieldHeraldPassiveFor: Partial<Record<TitanpactType, string>> = Obj
 
 // --- Evolution-granted (progression.ts grantsPassiveIds) ---
 const evolutionPassives: Record<string, PassiveDefinition> = {
-  // Cinder's Explosive: Kindling's shape on the column the rewire hands it.
-  flashpoint: {
-    id: 'flashpoint',
-    name: 'Flashpoint',
-    description: 'Whenever this hero afflicts Burn, it gains 10 Intelligence.',
-    reactive: {
-      hook: 'StatusApplied',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Burn' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 10 },
-    },
-  },
   firestarter: {
     id: 'firestarter',
     name: 'Firestarter',
@@ -383,12 +372,9 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
     id: 'staticTide',
     name: 'Static Tide',
     description: 'Every Water attack this hero lands leaves its target Conducting.',
-    // RESERVED, not dead (2026-09-02): Riptide's Storm graft became Water/Mind, so nothing grants
-    // this today. Held for a future recruit-only Water hero that grafts Storm — with Shock Bubble,
-    // the Water move that plants Conduct, which is parked in the orphan list for the same reason.
     // subjectRole 'source' + relativeTo 'self' = "I dealt this hit"; the Conduct then has to
     // land on 'triggerTarget', the defender, because the condition's subject is the attacker.
-    // Maelstrom's own Storm moves are what cash the mark in (Conduct.triggerTypes).
+    // Pincer's Iron hits are what cash the mark in (Conduct.triggerTypes).
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
@@ -553,21 +539,6 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       hook: 'StatusTicked',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Burn', kind: 'damage' } },
       effect: { kind: 'heal', target: 'self', amount: { kind: 'matchTriggerAmount' } },
-    },
-  },
-  hexfume: {
-    id: 'hexfume',
-    name: 'Hexfume',
-    description: 'When this hero enters the battlefield, both active enemies gain Poison 10.',
-    // Imposing Presence's arrival shape carrying a status instead of a stat. Poison only counts
-    // down while its holder is ACTIVE, so a foe that pivots out banks the timer rather than
-    // clearing it — arriving repeatedly raises the percentage without ever resetting the clock.
-    // The 3-round timer is authored per APPLICATION, the way every Poison move authors it; omit it
-    // and the timer starts at 0 and the payload fires at the end of the round it landed in.
-    reactive: {
-      hook: 'SwitchedIn',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Poison', magnitude: 10, duration: 3 },
     },
   },
   killingFrost: {

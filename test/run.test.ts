@@ -341,8 +341,9 @@ test('progression: a graft path adds its learnableMoveIds to the level-up pool w
   }
   // The Fire pool is widened, not replaced.
   assert.ok(after.includes('inferno'));
-  // Cinderveil's own grant is the one exception to "learnable, not granted": Flicker arrives outright.
-  assert.deepStrictEqual(next.roster[0].unlockedMoveIds, [...heroes.crimson.moveIds, 'flicker']);
+  // Cinderveil is Type + Passive: it grants no move, only the line and Ember Veil.
+  assert.deepStrictEqual(next.roster[0].unlockedMoveIds, [...heroes.crimson.moveIds]);
+  assert.deepStrictEqual(next.roster[0].evolutionPassiveGrants, ['emberVeil']);
 });
 
 test('progression: an untaken path\'s learnableMoveIds stay out of the pool, and tier gating still applies', () => {
@@ -364,8 +365,7 @@ test('progression: a path that grants a Passive records it on the entry (Crimson
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'crimson', 'crimson-pyroclasm');
   assert.deepStrictEqual(next.roster[0].evolutionPassiveGrants, ['firestarter']);
   assert.ok(!next.roster[0].evolutionTypeGraft); // the mono path stays mono
-  assert.strictEqual(next.roster[0].evolutionStatGrants.defense, 10);
-  assert.strictEqual(next.roster[0].evolutionStatGrants.manaPool, 10);
+  assert.ok(next.roster[0].unlockedMoveIds.includes('landslide'));
 });
 
 test('progression: Warhowl inverts Fang\'s attacking stat — a NEGATIVE Evolution grant is legal and lands', () => {
