@@ -16336,6 +16336,21 @@ button.star-shop-bundle-face {
   font-size: 104px;
 }
 
+/* On the choice screen the glyph plate hangs clear of the pole rather than across its foot, and the
+   art keeps room for it so the name sits under the plate. Lowered a step: centred alone, the row
+   floated high over the empty plaque. */
+.relic-pick-row.is-banners {
+  margin-top: 72px;
+}
+
+.relic-pick-row.is-banners .banner-standard.is-pixel {
+  margin-bottom: 0.36em;
+}
+
+.relic-pick-row.is-banners .banner-standard.is-pixel .banner-standard-charge {
+  bottom: -0.34em;
+}
+
 /* A pair has to share the width one glyph had. The cloth is 0.55em wide (62% of
    the art box), so two marks plus their gap have to come in under that: at
    0.2em each they measure 0.45em together and clear both folds. */
