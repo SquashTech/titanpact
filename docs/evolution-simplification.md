@@ -143,6 +143,18 @@ Intelligence, Flashpoint repeats it and is replaced in the roster pass (§8).
    full detail under it, and the Evolve button pinned at the bottom. The awakening and the evolve
    cinematic are unchanged (`src/view/run/EvolutionScreen.tsx`).
 6. **Long-term, filed not scheduled:** a new sprite for each Evolution form (252), keyed by path id.
+   **Cheaper routes, prototyped 2026-09-29 and SET ASIDE (per user direction, to re-explore later):**
+   - *Type marks drawn in code* (snowfall and rime for Frost, a striking thundercloud for Storm, on
+     the sprite's own 48px grid): read clearly but judged too busy. A full outline reads as a
+     selection border; partial, moving effects work better.
+   - *A palette swap* (a shiny): the sprite's dominant hue family rotated to the type's colour,
+     shading kept. Calm and readable: 144 of 168 grafts changed clearly (median 38% of pixels). Needed:
+     the next family when the body is already the type's hue, a light wash of the type over greys
+     when too little is coloured (Crag), and a per-hero flag sparing human faces (pixel skin
+     detection caught Ursa's tan belly). The 24 weak cases were Iron (a grey type colour wants
+     desaturate-to-steel), warm types onto warm heroes, and heroes already the type's colour. Open:
+     a swap replaces the hero's own colours, and the 84 same-type paths get nothing. Tint and
+     accent-only swaps were tried and rejected (muddy hues; barely visible).
 
 ## 8. Converting a hero
 
