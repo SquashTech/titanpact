@@ -16,7 +16,7 @@ import smithArt from '../../../art/npc/smith.png';
 import { RoadArrival, useRoadGreeting } from './RoadEncounter';
 import smithyArt from '../../../art/map-nodes/landmarks/smithy.png';
 import { mapNodeAwakening } from './mapNodeArt';
-import { NodeHeader, NodeSky, NODE_TINT_HEARTH } from '../shared/NodeStage';
+import { NodeMotes, NODE_TINT_HEARTH } from '../shared/NodeStage';
 import { overlayHost } from '../shared/overlayHost';
 import { RosterPeek } from './RosterPeek';
 import { SmithyBeat, type SmithyWork } from './SmithyBeat';
@@ -78,30 +78,56 @@ export function ForgeNodeScreen({ run, onRunChange, onContinue }: Props) {
   }
 
   const afterType = forged ? enchantTypeOf(forged.after) : null;
-  const readout = forged
-    ? `${forged.after.name}: ${RARITY_LABELS[forged.after.rarity]}${afterType ? `, ${afterType}-bound` : ''}.`
-    : workable === 0
-      ? 'Nothing the roster wears can be forged here. Walk on.'
-      : 'Upgrade and Enchant an item.';
 
   if (arriving) return <RoadArrival art={smithyArt} awakened={mapNodeAwakening('forgeReward')} name="The Smithy" onDone={dismissArrival} />;
 
   return (
-    <div className="node-screen forge-node-screen" style={{ '--node-rgb': NODE_TINT_HEARTH } as CSSProperties}>
-      <NodeSky />
-
+    <div
+      className={`node-screen rite-screen is-forge forge-node-screen${done ? ' is-forged' : ''}`}
+      style={{ '--node-rgb': NODE_TINT_HEARTH, '--rite-color': afterType ? getTypeColor(afterType) : '#ff8a2a' } as CSSProperties}
+    >
+      <span className="node-sky forge-ground" aria-hidden="true" />
+      <NodeMotes count={16} />
       <RosterPeek run={run} />
 
-      <NodeHeader
-        compact
-        eyebrow="Iron and Ember"
-        title="The Forge"
-        side
-        art={<img src={smithArt} className="npc-portrait" alt="" draggable={false} />}
-        readoutKey={forged?.key ?? 'idle'}
-        readoutLive={done}
-        readout={readout}
-      />
+      {/* The smith at the hearth, and what the Forge does — or, once it has, what it made. */}
+      <header className="forge-head">
+        <span className="forge-smith">
+          <span className="rite-pool" aria-hidden="true" />
+          <img src={smithArt} className="forge-smith-art" alt="" draggable={false} />
+          <span className="forge-flare" aria-hidden="true" />
+        </span>
+        <span className="forge-head-words">
+          <span className="rite-eyebrow">Iron and Ember</span>
+          <h2 className="rite-name">The Forge</h2>
+          {forged ? (
+            <span className="forge-made" key={forged.key}>
+              <span className="forge-made-name">{forged.after.name}</span>
+              <span className="forge-tag" style={{ '--tag-color': RARITY_COLOR_VARS[forged.after.rarity] } as CSSProperties}>
+                {RARITY_LABELS[forged.after.rarity]}
+              </span>
+              {afterType && (
+                <span className="forge-tag" style={{ '--tag-color': getTypeColor(afterType) } as CSSProperties}>
+                  <ElementGlyph type={afterType} className="forge-tag-glyph" />
+                  {afterType}-bound
+                </span>
+              )}
+            </span>
+          ) : workable === 0 ? (
+            <span className="forge-made">Nothing the roster wears can be forged here.</span>
+          ) : (
+            <span className="forge-offer">
+              <span className="forge-tag">
+                <HubGlyph name="anvil" className="forge-tag-glyph" />A tier up
+              </span>
+              <span className="forge-tag">
+                <span className="forge-tag-rune" aria-hidden="true" />An element bound
+              </span>
+              <span className="forge-offer-terms">One piece · free</span>
+            </span>
+          )}
+        </span>
+      </header>
 
       <div className="screen-scroll">
         <SmithyBenches
