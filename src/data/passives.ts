@@ -886,6 +886,17 @@ export const BROADSIDE_MAGAZINE_MASTERED = 6;
 
 const innatePassives: Record<string, PassiveDefinition> = {
   // Re-authored 2026-09-29 (per user direction, sim pass 14).
+  dawnlight: {
+    id: 'dawnlight',
+    name: 'Dawnlight',
+    description: 'When this hero enters the battlefield, it gains Light Force 10.',
+    // The Force stack never decays, so a Solace cycled in and out keeps building its Light hits.
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'LightForce', magnitude: 10 },
+    },
+  },
   surgingIntellect: {
     id: 'surgingIntellect',
     name: 'Surging Intellect',
@@ -1113,16 +1124,6 @@ const innatePassives: Record<string, PassiveDefinition> = {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Renew' } },
       effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Poison', magnitude: 5, duration: 3 },
-    },
-  },
-  grace: {
-    id: 'grace',
-    name: 'Grace',
-    description: 'Whenever this hero heals an ally, it gains 10 Mana, past its pool.',
-    reactive: {
-      hook: 'Healed',
-      condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 10 } },
     },
   },
   consecrate: {
@@ -1372,11 +1373,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   toll: {
     id: 'toll',
     name: 'Toll',
-    description: "Whenever this hero lands a hit, its partner is healed 10.",
+    description: "Whenever this hero lands a hit, its partner is healed 5% of its max HP.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'heal', target: 'ally', amount: { kind: 'flat', value: 10 } },
+      effect: { kind: 'heal', target: 'ally', amount: { kind: 'percentMaxHp', value: 0.05 } },
     },
   },
   hallowedStep: {
@@ -1520,11 +1521,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   silentWings: {
     id: 'silentWings',
     name: 'Silent Wings',
-    description: 'Whenever this hero Freezes an enemy, it gains Ambush 15.',
+    description: 'Whenever this hero Freezes an enemy, it gains Frost Force 10.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Freeze' } },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 15 },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'FrostForce', magnitude: 10 },
     },
   },
   unfurl: {
@@ -1703,6 +1704,16 @@ const innatePassives: Record<string, PassiveDefinition> = {
 // magnitudes stay flat.
 const masteredInnatePassives: Record<string, PassiveDefinition> = {
   // Re-authored 2026-09-29 (per user direction, sim pass 14).
+  dawnlightPlus: {
+    id: 'dawnlightPlus',
+    name: 'Dawnlight+',
+    description: 'When this hero enters the battlefield, it gains Light Force 20.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'LightForce', magnitude: 20 },
+    },
+  },
   surgingIntellectPlus: {
     id: 'surgingIntellectPlus',
     name: 'Surging Intellect+',
@@ -1965,17 +1976,6 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
     },
   },
 
-  // --- Light ---
-  beatitude: {
-    id: 'beatitude',
-    name: 'Grace+',
-    description: 'Whenever this hero heals an ally, it gains 25 Mana, past its pool.',
-    reactive: {
-      hook: 'Healed',
-      condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 25 } },
-    },
-  },
   sanctified: {
     id: 'sanctified',
     name: 'Consecrate+',
@@ -2343,11 +2343,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   peal: {
     id: 'peal',
     name: 'Toll+',
-    description: "Whenever this hero lands a hit, its partner is healed 20.",
+    description: "Whenever this hero lands a hit, its partner is healed 10% of its max HP.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'heal', target: 'ally', amount: { kind: 'flat', value: 20 } },
+      effect: { kind: 'heal', target: 'ally', amount: { kind: 'percentMaxHp', value: 0.1 } },
     },
   },
   springtide: {
@@ -2508,11 +2508,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   moonlessGlide: {
     id: 'moonlessGlide',
     name: 'Silent Wings+',
-    description: 'Whenever this hero Freezes an enemy, it gains Ambush 30.',
+    description: 'Whenever this hero Freezes an enemy, it gains Frost Force 20.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Freeze' } },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 30 },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'FrostForce', magnitude: 20 },
     },
   },
   fullBloom: {

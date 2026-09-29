@@ -330,6 +330,14 @@ and Skyshear's Barrier is **once a fight** — Barrier is the game's hardest loc
 | Morel | **Sporefall** | At the end of each round, both active enemies are Poisoned 5. | Poisoned 10 | none — Poison's timer holds while the magnitude climbs, so a 15% burst every three rounds |
 | Skyshear | **Stormveil** | The first time each fight an enemy's Conduct bursts, this hero gains Barrier for the rest of the round. | this hero and its partner | none |
 
+| Solace | **Dawnlight** | When this hero enters the battlefield, it gains Light Force 10 — the stack never decays, so cycling builds it. | Light Force 20 | none (replaced Grace) |
+| Carillon | **Toll** (reworked) | Whenever this hero lands a hit, its partner is healed 5% of its max HP. | 10% | a percent heal beside Feast, outside the heal formula |
+| Hush | **Silent Wings** (reworked) | Whenever this hero Freezes an enemy, it gains Frost Force 10 (was Ambush 15). | Frost Force 20 | none |
+
+The second pass the same day added the last three rows, and two early moves that fill slate gaps:
+**Ki Strike** (Mind, physical 40, 20 mana, 20% Daze) for Koan and **Primal Roar** (Beast, magical 40, 20
+mana, 20% Bleed) for Coil; Hush opens on Frost Bolt. Beast now has two magical rows, not one.
+
 Retired with them: Glaciate, Headwind, Field Repair, Mycelium, Static Field and their mastered
 cards. Arcane Reservoir and Attunement stay as equipment cards. Two notes for playtest: Zenith has
 no fixed cap but the ceiling (+255 Intelligence at base 85), and Outpace and Frostbite are strongest

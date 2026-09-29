@@ -914,7 +914,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     hush: [
       'snowBlast', 'hoarfrostEdge', 'rimeCoat', 'focus', 'manaTap', 'glimmer',
       'glaciate', 'quickFreeze', 'permafrost', 'blindingSnow', 'frigidAir', 'arcaneBlast', 'radiantBeam',
-      'avalanche', 'cataclysm', 'solarFlare', 'twinCast',
+      'avalanche', 'cataclysm', 'solarFlare', 'twinCast', 'magicBolt',
     ],
     // Lotus: Nature's magical column, with Arcane's and Light's nukes as the off-types. Force of Nature is Thousand Petals' grant.
     lotus: [
@@ -968,7 +968,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     koan: [
       'swiftBlow', 'heavyBlow', 'enervate', 'ironSkin',
       'parry', 'retribution', 'shadowstrike', 'momentumSwing', 'mentalFortress', 'rendArmor',
-      'stoneheart', 'onslaught', 'juggernaut',
+      'stoneheart', 'onslaught', 'juggernaut', 'fortify',
     ],
     // Thane: Arcane's physical column and its mana buffs, with Iron's blades beside them. Arcane Overflow is Spellsword's grant.
     thane: [

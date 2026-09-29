@@ -2050,7 +2050,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A dart of congealed dark that sometimes leaves rot behind (20% chance of Poison 5).',
+    description: 'A dart of congealed dark that sometimes leaves rot behind (30% chance of Poison 5).',
   },
   lieInWait: {
     id: 'lieInWait',
@@ -2628,6 +2628,22 @@ export const moves: Record<string, MoveDefinition> = {
   },
 
   // --- Mind ---
+  // Mind's early physical hand (2026-09-29, per user direction): the slate had none, so its one
+  // physical hero opened on Iron's Opening Strike. The flinch is Mind's control in a fist.
+  kiStrike: {
+    id: 'kiStrike',
+    name: 'Ki Strike',
+    tier: 'early',
+    type: 'Mind',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 40,
+    statusApplication: { statusId: 'Daze', target: 'moveTarget', chance: 0.2 },
+    manaCost: 20,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A palm strike thrown with the whole mind behind it, which sometimes leaves the target reeling (20% chance of Daze).',
+  },
   psiBolt: {
     id: 'psiBolt',
     name: 'Psi Bolt',
@@ -3826,6 +3842,22 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'bothAllies',
     description: 'A rousing howl that sharpens both allies’ offense (+20 Attack).',
+  },
+  // Beast's early magical hand (2026-09-29, per user direction): every Beast attack below Late was
+  // physical, so an Intelligence Beast had nothing of its own type to open with.
+  primalRoar: {
+    id: 'primalRoar',
+    name: 'Primal Roar',
+    tier: 'early',
+    type: 'Beast',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 40,
+    statusApplication: { statusId: 'Bleed', target: 'moveTarget', chance: 0.2 },
+    manaCost: 20,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A roar old enough to split skin on its own (20% Bleed).',
   },
   claw: {
     id: 'claw',
