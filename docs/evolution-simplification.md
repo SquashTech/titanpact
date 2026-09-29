@@ -135,7 +135,14 @@ Intelligence, Flashpoint repeats it and is replaced in the roster pass (§8).
    retype line requirement), and fold this into CLAUDE.md as the rule in force.
 4. A sim pass (`SIM_ALL_HEROES`, per path). Directional only: sims find faults, and balance is
    played.
-5. Then the Evolution screen, made worth the moment (user direction, after the roster).
+5. **The Evolution screen: BUILT 2026-09-29** (per user direction, picked from three mockups).
+   The choice is a **triptych**: three form cards side by side, sized to their content and centred,
+   each showing the hero lit in the path's colours, the typing it lands on (a retype marked with what
+   it loses), a rewire ribbon, and its two grants as medallions. A tap opens the **showcase**, which
+   replaced the dossier sheet: the hero on rays, arrows and a swipe to page between the three, the
+   full detail under it, and the Evolve button pinned at the bottom. The awakening and the evolve
+   cinematic are unchanged (`src/view/run/EvolutionScreen.tsx`).
+6. **Long-term, filed not scheduled:** a new sprite for each Evolution form (252), keyed by path id.
 
 ## 8. Converting a hero
 

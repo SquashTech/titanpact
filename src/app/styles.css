@@ -12416,8 +12416,7 @@ button.star-shop-bundle-face {
    one pulls it back to .stat-glyph's inline contract, sized off the chip's
    own font rather than a constant so the three chip scales stay in step. */
 .detail-modifier-chip .status-glyph,
-.detail-passive-chip .status-glyph,
-.evolution-path-passive .status-glyph {
+.detail-passive-chip .status-glyph {
   display: inline-block;
   width: 1.2em;
   height: 1.2em;
@@ -21972,240 +21971,373 @@ button.star-shop-bundle-face {
   background: var(--selected-fill);
 }
 
-.evolution-path-list {
+/* --- The three forms (2026-09-29, per user direction) ---------------------
+   Side by side, so the choice is compared at a glance: each card is the hero
+   lit in the colours the path lands it on, the typing it ends with, and the
+   path's two grants as medallions (docs/evolution-simplification.md: a path
+   is exactly two things, which is what makes three columns fit). Sized to
+   their content and centred in the room under the header rather than stretched
+   to fill it. `--path-lead` / `--path-trail` come from pathTintStyle. */
+.evo-forms {
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-top: 4px;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 2px 8px;
 }
 
-/* --- Evolution path card ------------------------------------------------
-   An Evolution is permanent for the run and gates the whole movepool — the
-   single most consequential press in the game — so the card is built as an
-   object rather than a list row: a rail down the leading edge, a wash fading
-   across the face, and a sheen that sweeps on press.
+.evo-form-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
 
-   The two colours are the TYPES the path produces, not its offensive/
-   defensive/utility kind (2026-09-07, per user direction): the card should
-   look like the hero it makes. `--path-lead` is what the path is about — the
-   type of the move it grants, or the type it grafts — and `--path-trail` is
-   the half of the resulting typing that comes along, so a graft path reads as
-   two elements meeting and a mono path reads as one deepening. Both are set
-   inline by `paletteStyle` (EvolutionScreen.tsx pathPalette).
-
-   What it grants is banded into labelled ZONES — typing, stats, move,
-   passive, pool — rather than run together in one chip row: a path makes four
-   unrelated claims, and undivided they were a paragraph to parse at the
-   moment the player is trying to compare three of them. */
-.evolution-path-button {
-  --path-lead: var(--accent);
-  --path-trail: var(--accent);
+.evo-form-card {
   position: relative;
   display: flex;
   flex-direction: column;
-  width: 100%;
-  overflow: hidden;
-  isolation: isolate;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 4px 12px;
+  border: 2px solid color-mix(in srgb, var(--path-lead) 70%, #000);
+  border-radius: 6px;
   background:
-    radial-gradient(135% 105% at 0% 0%, color-mix(in srgb, var(--path-lead) 26%, transparent), transparent 58%),
-    radial-gradient(120% 100% at 100% 100%, color-mix(in srgb, var(--path-trail) 18%, transparent), transparent 62%),
-    var(--surface-raised);
-  border: 1px solid color-mix(in srgb, var(--path-lead) 28%, var(--border));
-  border-radius: var(--radius-md);
-  color: var(--text);
-  padding: 0;
-  font-size: 12px;
-  text-align: left;
+    radial-gradient(120% 45% at 50% 28%, color-mix(in srgb, var(--path-lead) 34%, transparent), transparent 72%),
+    linear-gradient(180deg, color-mix(in srgb, var(--path-lead) 20%, #15100c), #0d0a08 85%);
+  box-shadow: inset 0 0 0 1px rgba(255, 240, 210, 0.08), 0 8px 18px rgba(0, 0, 0, 0.55);
+  color: #fff3d6;
+  text-align: center;
   cursor: pointer;
-  box-shadow: var(--hairline), var(--elev-1);
-  transition: border-color var(--dur-mid) var(--ease-out), transform var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
+  transition: transform var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
 }
 
-/* The rail: the two types as a lit edge rather than a 3px border, so it glows
-   into the card's own wash instead of stopping against it. On a graft path
-   the gradient IS the trade, read top to bottom. */
-.evolution-path-button::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
-  background: linear-gradient(180deg, var(--path-lead), var(--path-trail));
-  box-shadow: 0 0 10px color-mix(in srgb, var(--path-lead) 55%, transparent);
+.evo-form-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0 0 1px var(--path-lead), 0 0 18px color-mix(in srgb, var(--path-lead) 55%, transparent), 0 8px 18px rgba(0, 0, 0, 0.55);
 }
 
-/* Swept on press, not on a timer: it is the card acknowledging the tap that
-   opens the dossier. Off the pointer path so it can never eat the press. */
-.evolution-path-sheen {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.07) 50%, transparent 62%);
-  transform: translateX(-120%);
-  transition: transform 0.55s var(--ease-out);
-}
-
-.evolution-path-button:hover .evolution-path-sheen,
-.evolution-path-button:active .evolution-path-sheen {
-  transform: translateX(120%);
-}
-
-/* The hover lift is a touch stronger than the app's usual 1px so the branch
-   cards feel weighty to handle. */
-.evolution-path-button:hover {
-  border-color: color-mix(in srgb, var(--path-lead) 70%, var(--border));
-  transform: translateY(-2px);
-  box-shadow: var(--hairline-strong), var(--elev-2), 0 0 18px color-mix(in srgb, var(--path-lead) 22%, transparent);
-}
-
-.evolution-path-button:active {
+.evo-form-card:active {
   transform: translateY(0);
 }
 
-.evolution-path-head {
-  display: flex;
+.evo-form-name {
+  max-width: 100%;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px 9px 14px;
-  background: linear-gradient(
-    100deg,
-    color-mix(in srgb, var(--path-lead) 22%, transparent),
-    color-mix(in srgb, var(--path-trail) 12%, transparent) 72%,
-    transparent
-  );
-  border-bottom: 1px solid var(--border-sunken);
+  gap: 3px;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 2px 0 #000, 0 0 10px var(--path-lead);
 }
 
-.evolution-path-name {
-  flex: 1;
-  min-width: 0;
-  font-weight: 700;
-  font-size: 15px;
-  letter-spacing: 0.01em;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-/* The card opens a dossier rather than spending the choice, and this is what
-   says so — the same affordance a disclosure row carries anywhere else. */
-.evolution-path-chevron {
-  flex: none;
-  font-size: 17px;
-  line-height: 1;
-  color: var(--text-dim);
-  transition: transform var(--dur-mid) var(--ease-out), color var(--dur-mid) var(--ease-out);
-}
-
-.evolution-path-button:hover .evolution-path-chevron {
-  transform: translateX(3px);
-  color: var(--path-lead);
-}
-
-/* One band per claim. The label column is fixed so five zones line their
-   bodies up on one edge and the card scans down rather than zig-zagging. */
-.evolution-zone {
+.evo-form-stage {
+  position: relative;
+  width: 100%;
+  height: 120px;
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 7px 12px 7px 14px;
+  align-items: flex-end;
+  justify-content: center;
 }
 
-.evolution-zone + .evolution-zone {
-  border-top: 1px solid var(--border-sunken);
+.evo-form-aura {
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 124px;
+  height: 124px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--path-lead) 70%, transparent),
+    color-mix(in srgb, var(--path-trail) 25%, transparent) 55%,
+    transparent 70%
+  );
+  filter: blur(4px);
 }
 
-.evolution-zone-label {
-  flex: none;
-  width: 44px;
-  padding-top: 3px;
-  font-size: 8.5px;
+.evo-form-portrait {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 6px var(--path-lead));
+}
+
+.evo-form-types {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.evo-form-traded {
+  margin-top: -3px;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--enemy);
+}
+
+.evo-form-rewire {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--stat-attack, #b8412c), var(--stat-intelligence, #6a4bd8));
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.evo-form-grants {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.evo-form-grant {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.evo-form-medal {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    color-mix(in srgb, var(--grant) 55%, #fff) 0%,
+    var(--grant) 45%,
+    color-mix(in srgb, var(--grant) 45%, #000) 100%
+  );
+  box-shadow: 0 0 0 2px #e8c170, 0 0 12px color-mix(in srgb, var(--grant) 80%, transparent);
+}
+
+.evo-form-medal svg,
+.evo-form-medal .status-glyph {
+  width: 26px;
+  height: 26px;
+  color: #fff;
+}
+
+.evo-form-kind {
+  margin-top: 3px;
+  font-size: 8px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--text-dim);
 }
 
-.evolution-zone-body {
-  display: flex;
-  flex: 1;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-}
-
-/* The pool line is prose, not a chip: it promises futures rather than naming
-   a grant, so it takes the description's size and dimness. */
-.evolution-zone.is-pool .evolution-zone-body {
-  padding-top: 2px;
-}
-
-.evolution-path-grant-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 2px 7px;
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.evolution-path-mono {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--text-dim);
-  font-weight: 500;
-  font-style: italic;
+.evo-form-grant-name {
   font-size: 11px;
+  font-weight: 800;
+  line-height: 1.1;
 }
 
-/* A granted Passive is the loudest thing on a path with no graft, so its chip
-   is the only one filled — it has to win the glance against a graft's type
-   badge on the card beside it. The colour is the passive's own identity
-   (--passive-color), which is what it wears on every other screen. */
-.evolution-path-passive {
+/* --- The showcase (2026-09-29, per user direction) ------------------------
+   One form at full size, and where the choice is spent: the hero on rays in the
+   path's colours, arrows and a swipe to page between the three, and under it
+   everything the path hands over. Covers the screen rather than sitting in a
+   sheet, and the commit is pinned under a body that scrolls on its own. */
+.evo-show {
+  position: absolute;
+  inset: calc(var(--shell-pad) * -1);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: calc(var(--shell-pad) + 4px) calc(var(--shell-pad) + 4px) calc(var(--shell-pad) + 6px);
+  background:
+    radial-gradient(90% 40% at 50% 18%, color-mix(in srgb, var(--path-lead) 30%, transparent), transparent 75%),
+    #0b0907;
+  animation: evo-show-in var(--dur-mid) var(--ease-out);
+}
+
+@keyframes evo-show-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.evo-show-hero {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  touch-action: pan-y;
+}
+
+.evo-show-stage {
+  position: relative;
+  width: 220px;
+  height: 180px;
+  margin-top: 6px;
+  display: grid;
+  place-items: center;
+}
+
+.evo-show-rays {
+  position: absolute;
+  inset: -24px;
+  background: repeating-conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--path-lead) 38%, transparent) 0deg 6deg,
+    transparent 6deg 18deg
+  );
+  mask-image: radial-gradient(circle, #000 18%, transparent 66%);
+  -webkit-mask-image: radial-gradient(circle, #000 18%, transparent 66%);
+  animation: evo-show-spin 30s linear infinite;
+}
+
+@keyframes evo-show-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.evo-show-aura {
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--path-lead) 72%, #fff 8%),
+    color-mix(in srgb, var(--path-trail) 32%, transparent) 50%,
+    transparent 70%
+  );
+}
+
+.evo-show-portrait {
+  position: relative;
+  width: 168px;
+  height: 168px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 10px var(--path-lead));
+  animation: evo-show-in var(--dur-mid) var(--ease-out);
+}
+
+.evo-show-nav {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.evo-show-arrow {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border: 2px solid #e8c170;
+  border-radius: 50%;
+  background: rgba(20, 14, 10, 0.85);
+  color: #fff3d6;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.evo-show-arrow:hover {
+  box-shadow: 0 0 10px rgba(232, 193, 112, 0.6);
+}
+
+.evo-show-title {
+  min-width: 150px;
+}
+
+.evo-show-name {
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1.05;
+  text-shadow: 0 2px 0 #000, 0 0 16px currentColor;
+}
+
+.evo-show-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.evo-show-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 240, 210, 0.25);
+}
+
+.evo-show-dot.is-on {
+  background: #e8c170;
+  box-shadow: 0 0 6px #e8c170;
+}
+
+.evo-show-desc {
+  max-width: 340px;
+  margin: 0;
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.35;
+  color: #e6d6b6;
+}
+
+.evo-show-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+}
+
+.evo-show-panel {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  border: 14px solid transparent;
+  border-image: url('../../art/ui/frame-stone.png') 10 fill / 14px round;
+  image-rendering: pixelated;
+}
+
+.evo-show-kind {
+  margin-bottom: 4px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #e8c170;
+}
+
+.evo-pool-chip {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  background: var(--passive-tint, transparent);
-  border-color: var(--passive-color, var(--accent));
-  color: var(--passive-color, var(--accent));
-}
-
-/* A stat this path SPENDS rather than grants (Warhowl's -30 Attack). Reads as
-   a cost at a glance so a refocus path cannot be mistaken for a pure gain. */
-.evolution-path-grant-loss {
-  border-color: var(--enemy);
-  color: var(--enemy);
-}
-
-/* A move, in its own type colour — which on a graft path is the grafted type,
-   so the chip and the type badge above it read as one claim, and neither can
-   be mistaken for the passive chip, which wears the passive's colour. */
-.evolution-path-move {
-  border-color: var(--move-color, var(--accent));
-  color: var(--move-color, var(--accent));
-}
-
-/* A pool chip that opens the move (the dossier's). Same face as the static
-   chip; the fill on press is what says the tap did something. */
-.evolution-path-grant-chip.is-readable {
+  gap: 4px;
+  padding: 3px 8px;
+  border: 1px solid color-mix(in srgb, var(--move-color) 60%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--move-color) 16%, transparent);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
   cursor: pointer;
-  transition: background var(--dur-fast) var(--ease-out);
 }
 
-.evolution-path-grant-chip.is-readable:hover,
-.evolution-path-grant-chip.is-readable:active {
-  background: color-mix(in srgb, var(--move-color, var(--accent)) 18%, var(--panel));
-}
-
-.evolution-path-learnable {
-  font-size: 10px;
-  line-height: 1.4;
-  color: var(--text-dim);
+.evo-pool-chip:hover,
+.evo-pool-chip:active {
+  border-color: var(--move-color);
 }
 
 /* --- Evolution screen (full-screen takeover) -----------------------------
@@ -22258,126 +22390,16 @@ button.star-shop-bundle-face {
   filter: drop-shadow(0 0 14px rgba(224, 166, 60, 0.55));
 }
 
-.evolution-path-list-big {
-  gap: 12px;
-}
-
-/* A path card is one press target end to end and it opens the dossier rather
+/* A form card is one press target end to end and it opens the showcase rather
    than spending the choice — stated here rather than left to be discovered,
    because "tapping this is safe" is exactly what a player will not risk
    finding out on a permanent decision. */
 .evolution-inspect-hint {
-  margin: 12px 0 0;
+  margin: 0;
   font-size: 10px;
   font-style: italic;
   text-align: center;
   color: var(--text-dim);
-}
-
-/* --- The path dossier ----------------------------------------------------
-   Where the choice is actually spent (2026-09-07, per user direction). The
-   cards behind it headline three paths; this reads ONE of them out in full —
-   the stat line it lands on, the move against post-graft STAB, the passive,
-   the pool by name — and carries the Confirm.
-
-   Full-bleed, and the Confirm is pinned under a body that scrolls on its own:
-   a permanent choice must never have its commit below a fold, and the card's
-   flavour line is not worth the room a full-screen sheet is trying to save. */
-/* A gutter, not full-bleed (2026-09-08, per user direction). The backdrop has
-   always closed this sheet, but at 100% x 100% there was no backdrop left to
-   tap — the only way back to the three cards was the corner ✕. A band of scrim
-   top and bottom restores the dismissal every other overlay in the app has. */
-.evolution-dossier-overlay {
-  padding: 30px 8px 34px;
-}
-
-.detail-panel.evolution-dossier {
-  --path-lead: var(--accent);
-  --path-trail: var(--accent);
-  width: 100%;
-  max-width: none;
-  height: 100%;
-  max-height: none;
-  overflow: hidden;
-  gap: 8px;
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-top: 2px solid var(--path-lead);
-  border-radius: var(--radius-lg);
-  background:
-    radial-gradient(90% 34% at 0% 0%, color-mix(in srgb, var(--path-lead) 15%, transparent), transparent 70%),
-    radial-gradient(80% 30% at 100% 0%, color-mix(in srgb, var(--path-trail) 12%, transparent), transparent 70%),
-    var(--surface-raised);
-}
-
-.evolution-dossier-head {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
-}
-
-.evolution-dossier-title {
-  flex: 1;
-  min-width: 0;
-  font-size: 17px;
-  font-weight: 700;
-}
-
-/* In the header row rather than floating in the corner: on a full-bleed sheet
-   the corner is where the title is, and the two would collide. */
-.evolution-dossier-close {
-  flex: none;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  color: var(--text-dim);
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.evolution-dossier-close:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-/* The only thing that scrolls. Everything a path grants normally fits a
-   full-height sheet; a Mythic-length passive plus a granted move is what this
-   is here for. */
-.evolution-dossier-body {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  overflow-y: auto;
-}
-
-/* One block per thing the path hands over. A path grants four or five
-   unrelated claims — a typing, a stat line, a move, a passive, a pool — and
-   stacked flat under bare captions they ran together into one wall. Sunken
-   because they are set into the sheet rather than raised above it, the same
-   treatment .evo-path-card gets in the hero dossier. */
-.evolution-dossier-section {
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  padding: 8px 10px;
-  background: var(--surface-sunken);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
-}
-
-.evolution-dossier-section > .evo-path-label {
-  margin-top: 0;
 }
 
 .evolution-dossier-note {
