@@ -126,7 +126,7 @@ fight is. Every faucet a pool has today, and what each is:
 | Faucet | Scope | Size | Kind |
 |---|---|---|---|
 | **Growth** (`run/growth.ts`) | every hero, every level | **1 mana a point** (`GROWTH_UNIT_MANA`, 2 → 1 on 2026-09-28; a B grade ≈ +1.3 a level, ~+38 by level 30) | automatic, no screen |
-| **Banner of the Wellspring** | team-wide, 1-of-3 at each Guardian | +50 pool (+60 HP), stackable | a choice against two other Banners |
+| **Banner of the Wellspring** | team-wide, 1-of-3 at each Guardian | +25 pool, +5 regen (+50 HP), stackable | a choice against two other Banners |
 | **Banner of the Bulwark** | team-wide, 1-of-3 at each Guardian | +5 regen (+15 Def/Wis), stackable | a choice against two other Banners |
 | **Equipment** | per hero, per slot | authored on the item, ⅓ point a mana | the item's whole budget |
 | **An Evolution path** | per hero, once | +10–20 on the mana-flavoured paths | part of a branch |
@@ -145,15 +145,19 @@ price was the top of every damage-per-mana table. Late is still cast 1.6 times a
 
 **2026-09-28, per user direction: mana is bought, not grown.** At 2 a point the pool outgrew
 every price by Act 3 and the Wellspring doubled regen on top, so mana mattered early and then
-stopped mattering. Growth came back to 1 a point, regen left the pools' Banner for the Bulwark
-(+5, half what the Wellspring carried), the Wellspring took the big flat pool (+50), and the Mana
-Well went to +40 and +5 regen. The tension named: a 45–50 pool hero now reaches about 85 by
+stopped mattering. Growth came back to 1 a point, the Wellspring's regen was halved to +5
+with a matching +5 on the Bulwark, the Wellspring went to +50 HP / +25 Mana, the Mana Well to +40
+and +5 regen, and eight of the most-cast Late moves went up 10 (`docs/authoring-moves.md` §8). The tension named: a 45–50 pool hero now reaches about 85 by
 level 30, so a 65+ Late move is castable once a fight and a second cast is a choice someone made.
-Measured (3000 runs, greedy pilot, seed 1): full-clear 92.2 → 93.4%, Resting 0.3% of turns both
+Measured on the first pass (Wellspring +60 HP / +50 Mana, no regen, no Late re-price; 3000 runs, greedy pilot, seed 1): full-clear 92.2 → 93.4%, Resting 0.3% of turns both
 sides of the change, Late casts 14.7 → 14.6% of Act 5's, Banner lifts +0.07 / +0.07 / −0.14
 (Warcry / Bulwark / Wellspring), the Mana Well −0.13 → −0.23. **The sim cannot see this change**:
 its pilot cycles to the bench for mana and never runs dry, so a pool it never empties is a pool it
 never values. Whether mana now reads as a decision is a playtest call.
+The revision (Wellspring +50 HP / +25 Mana / +5 regen, the eight Late moves +10), same batch:
+full-clear 93.3%, Banner lifts +0.08 / −0.03 / −0.05, Late 14.6 → 12.3% of Act 5's casts. The
+eight re-priced moves lost a quarter to two thirds of their casts (Onslaught 1873 → 1071, Salvo
+1137 → 547, Dusk Blade 1072 → 365 — the steepest, being a 55 that became a 65).
 
 **The Mana Well is the exception to *a bare number never gets a screen*, decided 2026-09-13**
 (per user direction, on the argument that a pool is the stat a whole tier of moves is priced in,

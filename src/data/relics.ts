@@ -14,9 +14,9 @@ import type { RelicDefinition } from '../run/relics';
 // the run sheet groups on.
 //
 // Three shapes (2026-09-28, per user direction, docs/run-loop.md "The Guardian's Banner"): the
-// Warcry is offense with a step of Speed, the Bulwark defense with the team's regen, the
-// Wellspring the big flat pools. Regen left the pools' Banner because the two stacked on one pick
-// was a cast-forever take every run. The Speed rider reverses 2026-09-14 on purpose: Swiftness
+// Warcry is offense with a step of Speed, the Bulwark defense with a little regen, the
+// Wellspring HP and mana with a little regen. Regen halved off the Wellspring because +10 on a
+// flat 10 was a cast-forever take every run. The Speed rider reverses 2026-09-14 on purpose: Swiftness
 // died as a Banner of its own, and this is a rider on one that pays continuously.
 const guardianBanners: Record<string, RelicDefinition> = {
   bannerOfTheWarcry: {
@@ -36,8 +36,8 @@ const guardianBanners: Record<string, RelicDefinition> = {
   bannerOfTheWellspring: {
     id: 'bannerOfTheWellspring',
     name: 'Banner of the Wellspring',
-    description: 'Team-wide +60 HP, +50 Mana Pool.',
-    statGrants: { hp: 60, manaPool: 50 },
+    description: 'Team-wide +50 HP, +25 Mana Pool, +5 MP Regen.',
+    statGrants: { hp: 50, manaPool: 25, mpRegen: 5 },
     guardianBanner: true,
   },
 };

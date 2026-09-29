@@ -761,12 +761,12 @@ what's still unimplemented:
   Banner** (2026-08-30; reshaped 2026-09-07; **three since 2026-09-14**, per user direction): a
   fixed, never-rolled **1-of-3** team-wide relic, one per CONCEPT — Warcry (offense: +30 Atk,
   +30 Int, +10 Speed), Bulwark (defense: +15 Def, +15 Wis, +5 MP Regen), Wellspring (staying power:
-  +60 HP, +50 Mana) — stackable across the five acts and displayed folded ("Banner of the Bulwark
+  +50 HP, +25 Mana, +5 MP Regen) — stackable across the five acts and displayed folded ("Banner of the Bulwark
   +2"), so a run's picks read as a team shape. The Warcry carries two stats because a hero
   swings with one or the other. **Reshaped 2026-09-28, per user direction**: the Wellspring
   carried HP, pool AND regen and was the take every run in play (regen doubling off a flat 10 is
-  what "cast forever" was), so regen moved to the Bulwark and the Wellspring became the big flat
-  pools. The sim prices a point of Def/Wis at ~6× a point of Atk/Int, which is why the Warcry's
+  what "cast forever" was), so its regen was halved to +5 and a matching +5 put on the Bulwark — regen
+  is the one stat two Banners carry. The sim prices a point of Def/Wis at ~6× a point of Atk/Int, which is why the Warcry's
   figures run larger. It was five, one per STAT, and **Swiftness was deleted** — Speed pays only
   at a threshold and a flat team-wide grant of it measured dead; **a Speed RIDER on the Warcry
   reverses that on purpose** (2026-09-28) — watch whether it pays (`docs/run-loop.md`

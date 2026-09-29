@@ -148,7 +148,7 @@ const TERMS = {
   },
   banner: {
     term: 'Banner',
-    text: 'A team-wide stat grant, chosen 1 of 3 at each Guardian: Warcry (offense, Speed), Bulwark (defense, MP Regen) or Wellspring (HP, Mana). They stack across acts.',
+    text: 'A team-wide stat grant, chosen 1 of 3 at each Guardian: Warcry (offense, Speed), Bulwark (defense, MP Regen) or Wellspring (HP, Mana, MP Regen). They stack across acts.',
   },
   class: {
     term: 'Class',

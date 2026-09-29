@@ -1167,6 +1167,10 @@ three level-ups paying out nothing the player can press. Three rules:
   spread had been 10–12, and full clear 57 → 62% — the enemy pays the same prices and the shipped
   AI does not manage mana, so its Late kits thin faster than a pilot's. That five points is a
   known side effect, not a target.
+  **The strongest eight, +10 more, 2026-09-28** (per user direction, beside mana growth coming back
+  to 1 a point — `docs/mana.md` "Growing the pool"): picked off the sim's Late table by casts and
+  damage a mana — Onslaught 80, Psionic Wave 80, Swinging Chain 80, Salvo 90, Titanic Crush 75,
+  Thousand Cuts 70, Twin Cast 70, Dusk Blade 65. The conventions above are floors, not prices.
 - **Enemies are the real version of that check.** Enemies get no relics, no equipment
   and no Evolution, so an enemy's pool genuinely is fixed for the whole game. An enemy
   that cannot afford its own kit is a live finding — bump its mana rather than

@@ -800,14 +800,15 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   |---|---|---|
   | Banner of the Warcry | Offense | Team-wide +30 Attack, +30 Intelligence, +10 Speed |
   | Banner of the Bulwark | Defense | Team-wide +15 Defense, +15 Wisdom, +5 MP Regen |
-  | Banner of the Wellspring | Staying power | Team-wide +60 HP, +50 Mana Pool |
+  | Banner of the Wellspring | Staying power | Team-wide +50 HP, +25 Mana Pool, +5 MP Regen |
 
   **Reshaped 2026-09-28, per user direction.** In play the Wellspring was the take after Act 1
   every run: +40 HP for survival and +10 MP Regen on a flat base of 10 — one copy doubled every
   hero's regen, two tripled it — so it bought "cast everything forever" alongside the HP. Regen
-  moved to the Bulwark at half the figure (a defensive Banner is the patient one), the Wellspring
-  became the big flat pools (+60 HP, +50 Mana — the place to go for depth now that levels grow a
-  pool 1 a point, not 2), and the Warcry came down 40 → 30 to carry **+10 Speed**. That rider
+  was halved to +5 on the Wellspring and a matching +5 put on the Bulwark (a defensive Banner is
+  the patient one) — regen is the one stat two Banners carry, so stacking it takes a commitment
+  across both; the Wellspring is +50 HP, +25 Mana (a first pass at +60 HP / +50 Mana, no regen,
+  was revised the same day), and the Warcry came down 40 → 30 to carry **+10 Speed**. That rider
   reverses "no Banner carries Speed" (below) on purpose: Swiftness died as a Banner of its own, and
   a rider on the offense Banner is a different claim to test. The measured-parity figures below are
   the history the new shapes start from; the sim pass that priced the reshape is under "The Mana

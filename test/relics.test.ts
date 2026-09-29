@@ -63,16 +63,16 @@ test('relics: a Banner taken four times stacks to four times its grant', () => {
   assert.deepStrictEqual(mods, { attack: 120, intelligence: 120, speed: 40 });
 });
 
-test('relics: the three Banners are offense, defense and staying power, and no stat twice', () => {
+test('relics: the three Banners are offense, defense and staying power, and no stat twice but regen', () => {
   // One Banner per concept is what makes five acts of fixed offers read as a team shape
-  // (docs/run-loop.md "The Guardian's Banner", 2026-09-14). Regen rides the Bulwark, not the
-  // pools' Banner (2026-09-28): the two on one pick was a cast-forever take.
+  // (docs/run-loop.md "The Guardian's Banner", 2026-09-14). Regen is the one stat on two Banners
+  // (2026-09-28, per user direction), +5 on each.
   assert.deepStrictEqual(relics.bannerOfTheWarcry.statGrants, { attack: 30, intelligence: 30, speed: 10 });
   assert.deepStrictEqual(relics.bannerOfTheBulwark.statGrants, { defense: 15, wisdom: 15, mpRegen: 5 });
-  assert.deepStrictEqual(relics.bannerOfTheWellspring.statGrants, { hp: 60, manaPool: 50 });
+  assert.deepStrictEqual(relics.bannerOfTheWellspring.statGrants, { hp: 50, manaPool: 25, mpRegen: 5 });
 
-  // No stat is carried by two Banners — an axis reachable two ways is one the player cannot price.
-  const carried = guardianBannerRelics.flatMap((r) => Object.keys(r.statGrants));
+  // No other stat is carried by two Banners — an axis reachable two ways is one the player cannot price.
+  const carried = guardianBannerRelics.flatMap((r) => Object.keys(r.statGrants)).filter((stat) => stat !== 'mpRegen');
   assert.strictEqual(new Set(carried).size, carried.length, 'two Banners carry the same stat');
 });
 
