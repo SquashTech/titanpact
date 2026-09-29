@@ -16527,15 +16527,17 @@ button.star-shop-bundle-face {
   color: var(--text-dim);
 }
 
-/* How many of this hero's moves a type-locked Boon would fire on. Dimmed at zero
-   rather than disabled: a hero may pick up moves of the type later, and off-type
-   coverage is authored policy, so this states the cost and leaves the call. */
-.boon-fit-note {
+/* How many of this hero's moves a type-locked Boon (or a Ley Line's Force) would fire on. Dimmed
+   at zero rather than disabled: a hero may pick up moves of the type later, and off-type coverage
+   is authored policy, so this states the cost and leaves the call. */
+.boon-fit-note,
+.ley-fit {
   font-size: 10px;
   color: var(--text-dim);
 }
 
-.boon-fit-note.is-dead {
+.boon-fit-note.is-dead,
+.ley-fit.is-dead {
   color: var(--enemy);
 }
 
@@ -30948,6 +30950,7 @@ button.star-shop-bundle-face {
 .well-ledger-glyph {
   width: 16px;
   height: 16px;
+  color: color-mix(in srgb, var(--rite-color) 80%, #fff);
 }
 
 .well-ledger-label {
@@ -30974,6 +30977,30 @@ button.star-shop-bundle-face {
   .well-pool-gain {
     animation: none;
   }
+}
+
+.rite-screen.is-ley {
+  --rite-ink: #7fdcef;
+  --rite-title: #e2fbff;
+  --rite-glow: rgba(120, 230, 255, 0.55);
+  --rite-glow-far: rgba(60, 170, 220, 0.35);
+  --rite-card: #0a1216;
+  --rite-card-lit: #0e1a20;
+}
+
+.ley-ground {
+  position: absolute;
+  inset: calc(var(--shell-pad) * -1);
+  background:
+    radial-gradient(ellipse 80% 32% at 50% 14%, color-mix(in srgb, var(--rite-color) 28%, transparent), transparent 70%),
+    radial-gradient(ellipse 90% 40% at 50% 100%, rgba(60, 170, 220, 0.16), transparent 70%),
+    linear-gradient(180deg, #030709, #071217 55%, #0b2029);
+  transition: background 0.6s var(--ease-out);
+  pointer-events: none;
+}
+
+.ley-gift .verb-card-verb-name {
+  color: var(--rite-title);
 }
 
 .shrine-ground {
@@ -31118,6 +31145,8 @@ button.star-shop-bundle-face {
 .rite-mark > svg {
   width: 16px;
   height: 16px;
+  color: color-mix(in srgb, var(--rite-color) 70%, #fff);
+  filter: drop-shadow(0 0 3px var(--rite-color));
 }
 
 @keyframes rite-mark-in {

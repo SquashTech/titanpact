@@ -2,18 +2,21 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
+import { moves } from '../../data/moves';
 import type { HeroDefinition } from '../../engine/content';
 import { levelOf } from '../../run/growth';
 import { grantLeyLine, LEY_LINE_FORCE, leyLineStatusId } from '../../run/runProgress';
 import type { RosterEntry, RunState } from '../../run/state';
 import { statScaleFor } from '../../run/statScale';
-import { getTypeColorRgb } from '../combat/typeColors';
+import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
-import { NodeHeader, NodeSky } from '../shared/NodeStage';
+import { HeroPortrait } from '../shared/HeroPortrait';
+import { NodeMotes } from '../shared/NodeStage';
+import { NodeGlyph } from '../shared/nodeIcons';
 import { StatusGlyph } from '../shared/statusIcons';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
-import leyLineArt from '../../../art/places/leyLine.png';
+import stoneArt from '../../../art/map-nodes/awake/leyLineReward.png';
 
 interface Props {
   run: RunState;
@@ -21,87 +24,148 @@ interface Props {
   onContinue: () => void;
 }
 
-/** Ember red — the Force chip's family colour (mapNodes NODE_COLORS leyLineReward). */
-const NODE_TINT_EMBER = '232, 100, 60';
+/** The woken stone's light (mapNodeArt AWAKE_RGB leyLineReward). */
+const LEY_RGB = '120, 230, 255';
+
+/** How many of the hero's moves hit at its own element — what the Force is added to. */
+function movesAtElement(entry: RosterEntry, element: string): number {
+  return entry.unlockedMoveIds.filter((id) => moves[id]?.type === element).length;
+}
 
 /**
  * The Ley Line (docs/run-loop.md "The Forge and the Ley Line", 2026-09-17, per user direction):
  * one hero draws LEY_LINE_FORCE of Elemental Force at its own element, for the run — the
- * Enchanter's binding, free, and on the hero rather than a piece. Every card says the Force the
- * hero would hold at its element after the tap, since a second Ley Line and an enchant of the
- * same type all sum onto one figure, and that figure is what every hit of the type adds.
+ * Enchanter's binding, free, and on the hero rather than a piece. Staged as a rite at the woken
+ * stone: what it gives on one card, and every hero's card saying the Force it would hold at its
+ * element and how many of its moves that Force is added to — a second Ley Line and an enchant of
+ * the same type all sum onto one figure, and a hero with none of its element's moves gains nothing.
  */
 export function LeyLineScreen({ run, onRunChange, onContinue }: Props) {
   const [grantedTo, setGrantedTo] = useState<string | null>(null);
+  const [before, setBefore] = useState(0);
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
 
   useEffect(() => {
     playSfx('enchant.bind', { pitch: 0.8, delay: 0.1 });
   }, []);
 
-  function handleGrant(rosterId: string) {
+  function handleGrant(entry: RosterEntry) {
     playSfx('enchant.bind');
-    onRunChange(grantLeyLine(run, rosterId, rosterHeroes));
-    setGrantedTo(rosterId);
+    setBefore(entry.bonusStatusGrants[leyLineStatusId(rosterHeroes[entry.heroId])] ?? 0);
+    onRunChange(grantLeyLine(run, entry.rosterId, rosterHeroes));
+    setGrantedTo(entry.rosterId);
   }
 
-  const grantedHero = grantedTo ? rosterHeroes[run.roster.find((r) => r.rosterId === grantedTo)!.heroId] : null;
+  const grantedEntry = grantedTo ? run.roster.find((r) => r.rosterId === grantedTo) ?? null : null;
+
+  if (grantedEntry) {
+    const hero = rosterHeroes[grantedEntry.heroId];
+    const element = hero.types[0];
+    const statusId = leyLineStatusId(hero);
+    const count = movesAtElement(grantedEntry, element);
+    return (
+      <div className="node-screen rite-screen is-ley ley-line-screen" style={{ '--rite-color': getTypeColor(element) } as CSSProperties}>
+        <span className="node-sky ley-ground" aria-hidden="true" />
+        <NodeMotes count={14} />
+        <div className="screen-scroll">
+          <div className="rite-reveal">
+            <span className="rite-reveal-flash" aria-hidden="true" />
+            <span className="rite-hero">
+              <span className="rite-pool" aria-hidden="true" />
+              <HeroPortrait heroId={hero.id} className="rite-portrait" />
+              <span className="rite-mark is-reveal" aria-hidden="true">
+                <StatusGlyph statusId={statusId} />
+              </span>
+            </span>
+            <span className="rite-eyebrow">The Line Answers</span>
+            <h2 className="rite-name">{hero.name}</h2>
+            <span className="rite-reveal-name">{element} Force</span>
+            <div className="rite-reveal-verb well-ledger">
+              <span className="well-ledger-row">
+                <StatusGlyph statusId={statusId} className="well-ledger-glyph" />
+                <span className="well-ledger-label">{element} Force</span>
+                <span className="well-ledger-figure">
+                  {before} <span className="well-ledger-arrow">→</span> <strong>{before + LEY_LINE_FORCE}</strong>
+                </span>
+              </span>
+              <span className="well-ledger-row">
+                <span className="well-ledger-label">Added to every hit of</span>
+                <span className="well-ledger-figure">
+                  <strong>{count}</strong> {element} {count === 1 ? 'move' : 'moves'}
+                </span>
+              </span>
+            </div>
+          </div>
+        </div>
+        <button className="resolve-button" onClick={onContinue}>
+          Continue
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="node-screen shrine-screen ley-line-screen" style={{ '--node-rgb': NODE_TINT_EMBER } as CSSProperties}>
-      <NodeSky />
-
-      <span className="shrine-descent" aria-hidden="true" />
-
+    <div className="node-screen rite-screen is-ley ley-line-screen" style={{ '--rite-color': `rgb(${LEY_RGB})` } as CSSProperties}>
+      <span className="node-sky ley-ground" aria-hidden="true" />
+      <NodeMotes count={14} />
       <RosterPeek run={run} />
 
-      <NodeHeader
-        compact
-        eyebrow="Power Under the Ground"
-        title="Ley Line"
-        art={<img src={leyLineArt} className="place-vignette" alt="" draggable={false} />}
-        readoutKey={grantedTo ?? 'idle'}
-        readoutLive={!!grantedHero}
-        readout={
-          grantedHero
-            ? `${grantedHero.name} draws on the line now — +${LEY_LINE_FORCE} ${grantedHero.types[0]} Force on every ${grantedHero.types[0]} hit, for the rest of the run.`
-            : `Choose a hero to draw +${LEY_LINE_FORCE} Force at its own element — added to every hit of that type, each target, each strike. Hold to review a sheet.`
-        }
-      />
+      <header className="rite-head">
+        <span className="rite-place">
+          <span className="rite-pool" aria-hidden="true" />
+          <img src={stoneArt} className="rite-place-art" alt="" draggable={false} />
+        </span>
+        <span className="rite-eyebrow">Power Under the Ground</span>
+        <h2 className="rite-name">The Ley Line</h2>
+      </header>
 
-      <HeroPickGrid count={run.roster.length} fill>
+      <div className="verb-card is-static is-picked ley-gift">
+        <span className="verb-card-socket" aria-hidden="true">
+          <NodeGlyph type="leyLineReward" className="verb-card-glyph" />
+        </span>
+        <span className="verb-card-body">
+          <span className="verb-card-head">
+            <span className="verb-card-name">Draw the Line</span>
+            <span className="verb-card-kind">One hero</span>
+          </span>
+          <span className="verb-card-verb">
+            <span className="verb-card-verb-name">+{LEY_LINE_FORCE} Force at the hero's own element</span>
+          </span>
+          <span className="verb-card-desc">Added to every hit of that type, each target, for the rest of the run.</span>
+        </span>
+      </div>
+
+      <HeroPickGrid count={run.roster.length} fill columns={run.roster.length > 4 ? 3 : 2}>
         {run.roster.map((entry) => {
           const hero = rosterHeroes[entry.heroId];
           const type = hero.types[0];
           const statusId = leyLineStatusId(hero);
           const held = entry.bonusStatusGrants[statusId] ?? 0;
-          const isGranted = grantedTo === entry.rosterId;
+          const count = movesAtElement(entry, type);
           return (
             <HeroPickCard
               key={entry.rosterId}
               hero={hero}
               entry={entry}
-              className={isGranted ? 'is-blessed' : ''}
-              disabled={!!grantedTo && !isGranted}
-              onActivate={() => !grantedTo && handleGrant(entry.rosterId)}
+              onActivate={() => handleGrant(entry)}
               onPreview={() => setPreviewEntry({ hero, entry })}
-              ariaLabel={`${hero.name}, level ${levelOf(entry)} — ${held} ${type} Force from the land, draw ${LEY_LINE_FORCE} more`}
-              overlay={isGranted ? <span className="blessing-flare" aria-hidden="true" /> : undefined}
-              ctaClassName={isGranted ? 'is-done' : 'is-accent'}
+              ariaLabel={`${hero.name}, level ${levelOf(entry)} — ${held} ${type} Force from the land, ${count} ${type} moves, draw ${LEY_LINE_FORCE} more`}
+              detail={
+                <span className={`ley-fit${count === 0 ? ' is-dead' : ''}`}>
+                  {count === 0 ? `no ${type} moves` : `${count} ${type} move${count === 1 ? '' : 's'}`}
+                </span>
+              }
+              ctaClassName="is-accent"
               cta={
                 <span className="ley-line-cta" style={{ '--force-rgb': getTypeColorRgb(type) } as CSSProperties}>
                   <StatusGlyph statusId={statusId} className="ley-line-cta-glyph" />
-                  {isGranted ? `${held} ${type} Force` : held > 0 ? `${held} → ${held + LEY_LINE_FORCE} ${type} Force` : `+${LEY_LINE_FORCE} ${type} Force`}
+                  {held} → {held + LEY_LINE_FORCE}
                 </span>
               }
             />
           );
         })}
       </HeroPickGrid>
-
-      <button className="resolve-button" disabled={!grantedTo} onClick={onContinue}>
-        Continue
-      </button>
 
       {previewEntry && (
         <HeroPreviewOverlay
