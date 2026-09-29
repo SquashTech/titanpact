@@ -8,10 +8,12 @@
 // `learnableMoveIds` JOIN the level-up pool rather than being handed over (docs/leveling-and-ranks.md).
 
 import type { ProgressionTable } from '../run/progression';
-import { spawnMoveTiers } from './titanspawn';
+import type { TypeId } from '../engine/content';
+import { heroes } from './heroes';
+import { moves } from './moves';
+import { spawnMoveTiers, spawnSlate } from './titanspawn';
 
-export const progressionTable: ProgressionTable = {
-  moveTiers: {
+const moveTiers: ProgressionTable['moveTiers'] = {
     // FLOOR (test/moveTiers.test.ts, movePoolFloor): after the starting kit is filtered out, every
     // pool holds MOVE_CAP more than the level curve can draw FROM EACH OFFERABLE SET — Early expires
     // when Mid opens, so the sets are Early alone (2 offers), Mid alone (2) and Mid+Late (6), and an
@@ -1019,7 +1021,27 @@ export const progressionTable: ProgressionTable = {
     // the schedule gates it by band like anyone's. No Evolution node — its Mastery pips are its
     // tier-steps instead.
     ...spawnMoveTiers,
-  },
+};
+
+/**
+ * The line an Evolution opens, by rule rather than by list (docs/evolution-simplification.md §3):
+ * every tiered move of `type` the hero's own pool does not already hold — its damage moves only on
+ * the column the hero swings with after the path (flipped by a rewire), its other moves whole —
+ * minus what the path hands over outright.
+ */
+function evolutionLine(heroId: string, type: TypeId, { swapped = false, granted = [] as readonly string[] } = {}): string[] {
+  const hero = heroes[heroId];
+  const physical = hero.baseStats.attack >= hero.baseStats.intelligence !== swapped;
+  const own = new Set([...hero.moveIds, ...(moveTiers[heroId] ?? []), ...granted]);
+  return spawnSlate(type).filter((id) => {
+    const move = moves[id];
+    if (own.has(id)) return false;
+    return move.kind !== 'damage' || move.category === (physical ? 'physical' : 'magical');
+  });
+}
+
+export const progressionTable: ProgressionTable = {
+  moveTiers,
   evolutions: {
     // --- Fire ---
     cinderKnight: [
@@ -1030,19 +1052,23 @@ export const progressionTable: ProgressionTable = {
             heroId: 'cinderKnight',
             name: 'Explosive',
             description: 'Stops swinging the fire and starts setting it off — everything it lights, it lights again.',
-            statGrants: { attack: -40, intelligence: 60, manaPool: 20 },
+            // The simplified framework's pilot (docs/evolution-simplification.md): Move + Passive,
+            // the rewire on top. Ironclad is Type + Passive, Thunderblaze Type + Move.
+            statGrants: {},
+            swapsOffense: true,
             unlocksMoveIds: ['immolate'],
-            learnableMoveIds: ['sparkFlash', 'scorch', 'backdraft', 'sparkBurst', 'inferno'],
+            grantsPassiveIds: ['flashpoint'],
+            learnableMoveIds: evolutionLine('cinderKnight', 'Fire', { swapped: true, granted: ['immolate'] }),
           },
           {
             id: 'cinderKnight-ironclad',
             heroId: 'cinderKnight',
             name: 'Ironclad',
             description: 'Puts the plate on and keeps it; armour that answers back, and whatever strikes it comes away alight.',
-            statGrants: { hp: 60, defense: 10 },
-            unlocksMoveIds: ['shieldBash'],
+            statGrants: {},
+            unlocksMoveIds: [],
             typeGraft: 'Iron',
-            learnableMoveIds: ['ironSkin', 'fortify', 'parry', 'livingWall', 'reinforce', 'juggernaut'],
+            learnableMoveIds: evolutionLine('cinderKnight', 'Iron'),
             grantsPassiveIds: ['cinderguard'],
           },
           {
@@ -1050,10 +1076,10 @@ export const progressionTable: ProgressionTable = {
             heroId: 'cinderKnight',
             name: 'Thunderblaze',
             description: 'The fire was only ever the front of the storm that was chasing it — lets it through, and it comes out charged.',
-            statGrants: { attack: 10, speed: 30 },
+            statGrants: {},
             unlocksMoveIds: ['stormLash'],
             typeGraft: 'Storm',
-            learnableMoveIds: ['thunderclap', 'shockSlice', 'tailwind', 'overcharge', 'ionize'],
+            learnableMoveIds: evolutionLine('cinderKnight', 'Storm', { granted: ['stormLash'] }),
           },
         ],
       },

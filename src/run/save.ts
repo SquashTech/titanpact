@@ -300,6 +300,8 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
     growthStatGrants: decodeStatGrants(value.growthStatGrants, `${label}.growthStatGrants`),
     scheduleTaken: value.scheduleTaken,
     mastery: value.mastery,
+    // Absent on a file written before rewire paths; nothing was traded.
+    offenseSwapped: value.offenseSwapped === true,
     evolutionTypeGraft: graft as TypeId | null,
     classId: classId as string | null,
     classPassiveId,

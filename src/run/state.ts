@@ -67,6 +67,8 @@ export interface RosterEntry {
    * hero and a hire read theirs off the act (masteryForAct).
    */
   mastery: number;
+  /** A rewire path has traded Attack and Intelligence — base, growth and grades (EvolutionPath.swapsOffense). */
+  offenseSwapped: boolean;
   /** Current secondary-type grant from the latest type-graft path; a later graft overwrites. Innate primary never changes. */
   evolutionTypeGraft: TypeId | null;
   /** One Class per run holds structurally — a single slot, and classes.ts grantClass replaces. */
@@ -199,6 +201,7 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     growthStatGrants: {},
     scheduleTaken: 0,
     mastery: 0,
+    offenseSwapped: false,
     evolutionTypeGraft: null,
     classId: null,
     classPassiveId: null,

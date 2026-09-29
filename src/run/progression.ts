@@ -155,6 +155,20 @@ export interface EvolutionPath {
   /** Secondary-type grant; only legal on a mono-type hero (enforced in chooseEvolutionPath). A later graft overwrites, never stacks. */
   typeGraft?: TypeId;
   grantsPassiveIds?: readonly PassiveId[];
+  /**
+   * The rewire: Attack and Intelligence trade places — base and growth as a derived grant
+   * (`offenseSwapDelta`), and the two grades for every later level. Gear is the player's and is
+   * not traded. docs/evolution-simplification.md §4.
+   */
+  swapsOffense?: boolean;
+}
+
+/** What a rewire moves: the difference between the hero's own Intelligence and Attack, base and growth and any earlier Evolution. Derived, so it lands unrounded. */
+export function offenseSwapDelta(hero: HeroDefinition, entry: RosterEntry): Partial<Record<StatKey, number>> {
+  const own = (stat: 'attack' | 'intelligence') =>
+    hero.baseStats[stat] + (entry.growthStatGrants[stat] ?? 0) + (entry.evolutionStatGrants[stat] ?? 0);
+  const diff = own('intelligence') - own('attack');
+  return diff === 0 ? {} : { attack: diff, intelligence: -diff };
 }
 
 export interface EvolutionNode {
@@ -412,6 +426,14 @@ export function chooseEvolutionPath(
     }
   }
 
+  let swapGrant: Partial<Record<StatKey, number>> = {};
+  if (path.swapsOffense) {
+    const hero = heroes[entry.heroId];
+    if (!hero) throw new ProgressionError(`Unknown hero ${entry.heroId}`);
+    if (entry.offenseSwapped) throw new ProgressionError(`${rosterId} has already traded Attack and Intelligence`);
+    swapGrant = offenseSwapDelta(hero, entry);
+  }
+
   let evolutionTypeGraft = entry.evolutionTypeGraft;
   if (path.typeGraft) {
     const hero = heroes[entry.heroId];
@@ -431,8 +453,9 @@ export function chooseEvolutionPath(
     unlockedMoveIds: applyEvolutionMoves(entry.unlockedMoveIds, path.unlocksMoveIds).unlockedMoveIds,
     // Both halves are spent: what the cap took, and the overflow the caller is about to offer.
     offeredMoveIds: withOffers(entry, path.unlocksMoveIds),
-    evolutionStatGrants: mergeStatMods(entry.evolutionStatGrants, path.statGrants),
+    evolutionStatGrants: mergeStatMods(entry.evolutionStatGrants, path.statGrants, swapGrant),
     evolutionPassiveGrants: [...new Set([...entry.evolutionPassiveGrants, ...(path.grantsPassiveIds ?? [])])],
+    offenseSwapped: entry.offenseSwapped || !!path.swapsOffense,
     evolutionTypeGraft,
   };
   return replaceEntry(run, rosterId, nextEntry);

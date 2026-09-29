@@ -130,6 +130,13 @@ function EvolutionPathCard({
       {path.description && <div className="evo-path-desc">{path.description}</div>}
 
       <StatGrantChips grants={path.statGrants} />
+      {path.swapsOffense && (
+        <div className="detail-modifier-list">
+          <span className="detail-modifier-chip">
+            <StatGlyph stat="attack" tone="inherit" /> Attack ⇄ <StatGlyph stat="intelligence" tone="inherit" /> Intelligence
+          </span>
+        </div>
+      )}
 
       {path.typeGraft && (
         <>

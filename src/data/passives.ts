@@ -312,6 +312,17 @@ export const fieldHeraldPassiveFor: Partial<Record<TitanpactType, string>> = Obj
 
 // --- Evolution-granted (progression.ts grantsPassiveIds) ---
 const evolutionPassives: Record<string, PassiveDefinition> = {
+  // Cinder's Explosive: Kindling's shape on the column the rewire hands it.
+  flashpoint: {
+    id: 'flashpoint',
+    name: 'Flashpoint',
+    description: 'Whenever this hero afflicts Burn, it gains 10 Intelligence.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Burn' } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 10 },
+    },
+  },
   firestarter: {
     id: 'firestarter',
     name: 'Firestarter',

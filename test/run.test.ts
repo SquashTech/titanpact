@@ -277,7 +277,7 @@ test('progression: an offer is spent by being MADE — declined or swapped away,
   assert.throws(() => recordMoveOffer(run, 'nobody', ['moltenLash']), ProgressionError);
 });
 
-test('progression: an Evolution opens at MASTERY_EVOLUTION pips and at no level; offers exactly three paths, grants stats, and is one-shot', () => {
+test('progression: an Evolution opens at MASTERY_EVOLUTION pips and at no level; offers exactly three paths, and is one-shot', () => {
   // docs/mastery.md §2: the Scroll that lands the fifth pip raises the Evolution, for that hero,
   // on the node that paid it. Level has nothing to do with it.
   let run = seedRoster(['cinderKnight']);
@@ -294,8 +294,8 @@ test('progression: an Evolution opens at MASTERY_EVOLUTION pips and at no level;
   assert.strictEqual(node!.paths.length, 3, 'CLAUDE.md: a choice of three options');
 
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'cinderKnight', 'cinderKnight-explosive');
-  // Explosive is a REFOCUS: it SPENDS the Attack a physical Cinder lived on to buy Intelligence.
-  assert.strictEqual(next.roster[0].evolutionStatGrants.attack, -40);
+  // Explosive is the REWIRE: Attack and Intelligence trade places (85 / 25 on a fresh Cinder).
+  assert.strictEqual(next.roster[0].evolutionStatGrants.attack, -60);
   assert.strictEqual(next.roster[0].evolutionStatGrants.intelligence, 60);
   assert.ok(next.roster[0].chosenPathIds.includes('cinderKnight-explosive'));
 

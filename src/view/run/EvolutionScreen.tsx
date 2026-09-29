@@ -2,7 +2,7 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { HeroDefinition, StatKey, TypeId } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
-import { pathTypes, type EvolutionNode, type EvolutionPath } from '../../run/progression';
+import { offenseSwapDelta, pathTypes, type EvolutionNode, type EvolutionPath } from '../../run/progression';
 import { pathTintStyle } from '../shared/pathTint';
 import { passives } from '../../data/passives';
 import { PassiveGlyph, passiveColor, passiveTint } from '../shared/passiveIcons';
@@ -245,6 +245,14 @@ function PathButton({ hero, path, onInspect }: { hero: HeroDefinition; path: Evo
         {!path.typeGraft && <span className="evolution-path-mono">unchanged</span>}
       </PathZone>
 
+      {path.swapsOffense && (
+        <PathZone label="Stats" className="is-stats">
+          <span className="evolution-path-grant-chip">
+            <StatGlyph stat="attack" /> Attack ⇄ <StatGlyph stat="intelligence" /> Intelligence
+          </span>
+        </PathZone>
+      )}
+
       {statEntries.length > 0 && (
         <PathZone label="Stats" className="is-stats">
           {/* Signed, not always "+": a refocus path spends a stat to buy another. */}
@@ -341,7 +349,9 @@ function PathDossier({
   // Post-graft types, not the entry's current ones: the granted move is usually the graft's own type.
   const caster = { ...healCasterForEntry(hero, entry, run.relics), types };
   const current = entryStatTotals(hero, entry, run.relics);
-  const statEntries = statEntriesOf(path);
+  // A rewire's rows are read off this hero's own Attack and Intelligence — what it would trade now.
+  const swapEntries = path.swapsOffense ? (Object.entries(offenseSwapDelta(hero, entry)) as [StatKey, number][]) : [];
+  const statEntries = [...statEntriesOf(path), ...swapEntries];
   const grantedPassives = (path.grantsPassiveIds ?? []).filter((id) => passives[id]);
   const grantedMoves = path.unlocksMoveIds.filter((id) => moves[id]);
   const poolMoves = (path.learnableMoveIds ?? []).filter((id) => moves[id]);

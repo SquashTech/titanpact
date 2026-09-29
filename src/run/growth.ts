@@ -121,6 +121,12 @@ export function gradesFor(hero: HeroDefinition | undefined): GrowthGrades {
   return hero?.growthGrades ?? DEFAULT_GRADES;
 }
 
+/** The grades THIS hero rolls against: a rewire path trades the Attack and Intelligence grades with the stats (docs/evolution-simplification.md §4). */
+export function entryGradesFor(hero: HeroDefinition | undefined, entry: Pick<RosterEntry, 'offenseSwapped'>): GrowthGrades {
+  const grades = gradesFor(hero);
+  return entry.offenseSwapped ? { ...grades, attack: grades.intelligence, intelligence: grades.attack } : grades;
+}
+
 export function gradeBudgetOf(grades: GrowthGrades): number {
   return GROWTH_STATS.reduce((total, stat) => total + GRADE_COST[grades[stat]], 0);
 }
@@ -279,7 +285,7 @@ export function grantXp(
   xp: number,
   random: () => number = Math.random
 ): { entry: RosterEntry; gained: Partial<Record<StatKey, number>> } {
-  const grades = gradesFor(hero);
+  const grades = entryGradesFor(hero, entry);
   const next = Math.min(MAX_XP, entry.xp + Math.max(0, xp));
   const target = levelForXp(next);
   let gained: Partial<Record<StatKey, number>> = {};
