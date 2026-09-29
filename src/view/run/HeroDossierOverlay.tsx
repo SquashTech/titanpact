@@ -173,6 +173,7 @@ export function HeroDossierOverlay({ hero: opened, cycle, onClose }: Props) {
   const [popupMoveId, setPopupMoveId] = useState<string | null>(null);
   const [heroId, setHeroId] = useState(opened.id);
   const [showMastered, setShowMastered] = useState(false);
+  const [openPools, setOpenPools] = useState<readonly string[]>([]);
   const [stepDir, setStepDir] = useState<'next' | 'prev' | null>(null);
   const swipeRef = useRef<{ pointerId: number; x: number } | null>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -186,6 +187,7 @@ export function HeroDossierOverlay({ hero: opened, cycle, onClose }: Props) {
     setHeroId(cycle![(index + dir + cycle!.length) % cycle!.length].id);
     setStepDir(dir > 0 ? 'next' : 'prev');
     setShowMastered(false);
+    setOpenPools([]);
     setPopupMoveId(null);
     bodyRef.current?.scrollTo({ top: 0 });
   }
@@ -390,9 +392,20 @@ export function HeroDossierOverlay({ hero: opened, cycle, onClose }: Props) {
               {/* What each Evolution adds to the level-up pool, read here with the moves rather than on the path card. */}
               {evolutionPools.length > 0 && <div className="tab-subhead">Evolution pool</div>}
               {evolutionPools.map(({ path, moveIds, pathCaster }) => (
-                <div key={path.id}>
-                  <div className="evo-path-label">{path.name}</div>
-                  <MoveList moveIds={moveIds} caster={pathCaster} onInspect={setPopupMoveId} />
+                <div key={path.id} className={`evo-pool${openPools.includes(path.id) ? ' is-open' : ''}`}>
+                  <button
+                    type="button"
+                    className="evo-pool-head"
+                    aria-expanded={openPools.includes(path.id)}
+                    onClick={() => setOpenPools((open) => (open.includes(path.id) ? open.filter((id) => id !== path.id) : [...open, path.id]))}
+                  >
+                    <span className="evo-pool-name">{path.name}</span>
+                    <span className="evo-pool-count">{moveIds.length}</span>
+                    <svg className="evo-pool-chevron" viewBox="0 0 16 16" aria-hidden="true">
+                      <path d="M4 6l4 4 4-4" />
+                    </svg>
+                  </button>
+                  {openPools.includes(path.id) && <MoveList moveIds={moveIds} caster={pathCaster} onInspect={setPopupMoveId} />}
                 </div>
               ))}
             </>

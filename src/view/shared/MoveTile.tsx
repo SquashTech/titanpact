@@ -12,6 +12,7 @@ import { STAT_LABELS } from './StatBars';
 import { ElementGlyph } from './elementIcons';
 import { MoveKindGlyph, StatGlyph, type MoveKindGlyphKind } from './statIcons';
 import { ManaCost } from './ManaCost';
+import { playSfx } from '../../audio/sfx';
 import { statusAmountText } from './statusFacts';
 
 // --- Hold-to-inspect gesture ---
@@ -20,6 +21,8 @@ export const LONG_PRESS_MS = 500;
 
 /** Past this much travel the gesture is a scroll, not a hold. Generous: a resting thumb wanders. */
 const HOLD_CANCEL_PX = 12;
+/** The element itself moved this far between press and release: its panel scrolled. */
+const SCROLLED_PX = 6;
 
 /**
  * A ~500ms press calls `onLongPress`, a tap calls `onClick`; the click after a completed hold is
@@ -37,7 +40,7 @@ export function useLongPress(onLongPress?: () => void, onClick?: () => void) {
   const timer = useRef<number | null>(null);
   /** The hold fired, or the tap was already committed on pointerup: the trailing click is spent. */
   const consumed = useRef(false);
-  const origin = useRef<{ x: number; y: number } | null>(null);
+  const origin = useRef<{ x: number; y: number; top: number } | null>(null);
   const [holding, setHolding] = useState(false);
 
   function clearTimer() {
@@ -59,7 +62,7 @@ export function useLongPress(onLongPress?: () => void, onClick?: () => void) {
     onContextMenu: (e: MouseEvent) => e.preventDefault(),
     onPointerDown: (e: PointerEvent) => {
       consumed.current = false;
-      origin.current = { x: e.clientX, y: e.clientY };
+      origin.current = { x: e.clientX, y: e.clientY, top: e.currentTarget.getBoundingClientRect().top };
       if (!onLongPress) return;
       setHolding(true);
       timer.current = window.setTimeout(() => {
@@ -75,9 +78,13 @@ export function useLongPress(onLongPress?: () => void, onClick?: () => void) {
       if (!from) return;
       if (Math.abs(e.clientX - from.x) > HOLD_CANCEL_PX || Math.abs(e.clientY - from.y) > HOLD_CANCEL_PX) cancel();
     },
-    onPointerUp: () => {
-      const tapped = origin.current !== null && !consumed.current;
+    onPointerUp: (e: PointerEvent) => {
+      const from = origin.current;
+      // A panel that scrolled under a still finger moved the element, not the pointer: that is a scroll too.
+      const scrolled = from !== null && Math.abs(e.currentTarget.getBoundingClientRect().top - from.top) > SCROLLED_PX;
+      const tapped = from !== null && !consumed.current && !scrolled;
       cancel();
+      if (scrolled) consumed.current = true;
       if (!tapped) return;
       consumed.current = true;
       onClick?.();
@@ -520,13 +527,15 @@ export function MoveButtonReplica({
 }) {
   // A Class move wears the caster's type (state.ts) — resolved here so every replica agrees with the fight.
   const move = caster ? moveForPrimaryType(authored, caster.types[0]) : authored;
-  const longPress = useLongPress(onLongPress, onClick);
+  // Sounded on the committed tap rather than the press (uiSfx's pointerdown), since a press in a list may be a scroll.
+  const longPress = useLongPress(onLongPress, onClick ? () => { playSfx('ui.move'); onClick(); } : undefined);
   const heal = healReadout(move, caster);
   return (
     <button
       type="button"
       className={`move-button${selected ? ' selected' : ''}${unusable ? ' is-unusable' : ''}`}
       style={{ '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}
+      data-sfx="none"
       {...longPress}
     >
       <div className="move-row-top">

@@ -40833,3 +40833,61 @@ img.smithy-service-art {
   text-transform: uppercase;
   color: var(--text-dim);
 }
+
+/* The dossier Moves tab: each Evolution path pool folded shut behind a header row, opened on a tap. */
+.evo-pool + .evo-pool {
+  margin-top: 4px;
+}
+
+.evo-pool-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid #2a303d;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #1b1f29, #151820);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.evo-pool.is-open .evo-pool-head {
+  border-color: color-mix(in srgb, var(--hero-color, var(--accent)) 45%, #2a303d);
+  margin-bottom: 4px;
+}
+
+.evo-pool-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.evo-pool-count {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.evo-pool-chevron {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: var(--text-dim);
+  stroke-width: 2;
+  transition: transform 160ms ease;
+}
+
+.evo-pool.is-open .evo-pool-chevron {
+  transform: rotate(180deg);
+}
