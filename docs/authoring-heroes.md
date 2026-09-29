@@ -2,7 +2,7 @@
 
 A runbook, like `authoring-moves.md`: how a new hero goes from concept art to playable data.
 The latest worked examples are commits `5e051e0` (twelve heroes) and the 2026-09-28 twenty that
-filled the roster to six a type; Drift, Rimehold, Carillon and Hart (`085cd3e`) came first.
+filled the roster to six a type; Drift, Igloo (then Rimehold), Carillon and Hart (`085cd3e`) came first.
 A new hero is Starfall-only (`unlock: 'starfall'`) unless it is sold in a bundle
 (`unlock: 'bundle.<id>'`, `docs/constellation.md`). Check every name — hero, move, passive,
 path, signature — against `src` and `docs` before using it.

@@ -808,7 +808,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'psyshock', 'cerebralShock', 'stasis', 'hindsight', 'disorient', 'mentalFortress',
       'psionicWave', 'mindShatter', 'brainFlay', 'breakWill',
     ],
-    // Rimehold: Frost's walls and the Iron plate that props them up. Frost Wall is Glacier's grant.
+    // Igloo: Frost's walls and the Iron plate that props them up. Frost Wall is Glacier's grant.
     rimehold: [
       'deepChill', 'rimeCoat', 'hoarfrostEdge', 'snowBlast', 'pinDown', 'fortify',
       'icicleThrust', 'coldSnap', 'permafrost', 'glaciate', 'blindingSnow', 'reinforce',

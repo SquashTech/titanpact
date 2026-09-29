@@ -780,7 +780,7 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     target: 'bothEnemies',
     description: 'Opens every tendril at once and stings both (−10 Attack on each).',
   },
-  // Rimehold: the whole house comes down, and the walls stay up.
+  // Igloo: the whole house comes down, and the walls stay up.
   whiteout: {
     id: 'whiteout',
     name: 'Whiteout',

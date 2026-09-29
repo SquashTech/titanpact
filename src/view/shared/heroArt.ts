@@ -47,7 +47,7 @@ import ursaArt from '../../../art/heroes/ursa.png';
 import widowArt from '../../../art/heroes/Widow.png';
 import coilArt from '../../../art/heroes/coil.png';
 import driftArt from '../../../art/heroes/unlocks/drift.png';
-import rimeholdArt from '../../../art/heroes/unlocks/rimehold.png';
+import iglooArt from '../../../art/heroes/unlocks/igloo.png';
 import carillonArt from '../../../art/heroes/unlocks/carillon.png';
 import hartArt from '../../../art/heroes/unlocks/hart.png';
 import ashwingArt from '../../../art/heroes/unlocks/ashwing.png';
@@ -103,7 +103,7 @@ export const heroArt: Partial<Record<string, string>> = {
   glacialWarden: flurryArt,
   rime: rimeArt,
   cube: cubeArt,
-  rimehold: rimeholdArt,
+  rimehold: iglooArt,
   tusk: tuskArt,
   hush: hushArt,
   // --- Storm ---

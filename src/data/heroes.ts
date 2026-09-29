@@ -740,7 +740,7 @@ export const heroes: Record<string, HeroDefinition> = {
   // The igloo golem: Frost's wall, sheltering whoever stands beside it.
   rimehold: {
     id: 'rimehold',
-    name: 'Rimehold',
+    name: 'Igloo',
     types: ['Frost'],
     baseStats: { hp: 250, attack: 70, defense: 100, intelligence: 20, wisdom: 45, speed: 15, manaPool: 50, mpRegen: 10 },
     moveIds: ['iceShard', 'frostArmor', 'provoke'],

@@ -33,7 +33,7 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 20 },
     },
   },
-  // Rimehold's Glacier: every arrival, the opening lead included.
+  // Igloo's Glacier: every arrival, the opening lead included.
   coldFront: {
     id: 'coldFront',
     name: 'Cold Front',
@@ -44,7 +44,7 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Freeze' },
     },
   },
-  // Rimehold's Keep: target-role StatusApplied, so its own Provoke (or the Stone line's Bodyguard) arms it.
+  // Igloo's Keep: target-role StatusApplied, so its own Provoke (or the Stone line's Bodyguard) arms it.
   portcullis: {
     id: 'portcullis',
     name: 'Portcullis',
