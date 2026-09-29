@@ -19,6 +19,8 @@ const REWIRES = [
   'cinderKnight-explosive',
   'hollowbark-wraithwood',
   'wildOracle-druid',
+  'revenant-wraithblade',
+  'sorrow-dirge',
 ];
 
 function pathsOf(heroId: string): EvolutionPath[] {
