@@ -1,9 +1,9 @@
 # Evolution Simplification
 
-**Status: PROPOSED, PILOTED on Cinder (2026-09-29, per user direction).** One hero is converted
-and pinned by `test/evolutionSimplification.test.ts`; the other 83 are still on the five-clause
-framework (`docs/leveling-and-ranks.md` "The Evolution framework"), which stays the rule in force
-for them until the migration in §7 lands.
+**Status: DECIDED (2026-09-29, per user direction); piloted on Cinder, the roster pass under way
+(§7–8).** A converted hero is bound by `test/evolutionSimplification.test.ts`; a hero not yet
+converted is still on the five-clause framework (`docs/leveling-and-ranks.md` "The Evolution
+framework"), which stays the rule in force for it until the migration lands.
 
 ## 1. The problem
 
@@ -99,28 +99,27 @@ else does.
 **Flashpoint** (new, Evolution-only): *whenever this hero afflicts Burn, it gains 10
 Intelligence.* It is Kindling's shape on the column the rewire hands over.
 
-**A tension the pilot surfaced:** Cinder's innate Kindling (+5 Attack on afflicting Burn) and
-its mastered form Kindling+ both read Attack, the stat Explosive gives away. Flashpoint covers
-the gap, but the innate stays dead weight on an Explosive Cinder. Every rewire will hit this
-wherever the innate reads the traded stat. The options are to accept it, have the swap also
-retarget innate `statDelta`s (an engine verb), or never rewire a hero whose innate reads the
-stat it trades. **Undecided.**
+**The innate reads both columns (decided 2026-09-29, per user direction).** Kindling read Attack,
+the stat Explosive gives away, so it now grants **5 Attack and 5 Intelligence** (Kindling+ 10 /
+10 / 10 Defense). No engine verb retargets an innate on a swap; the rule for every rewire is that
+**an innate or mastered innate reading a traded stat reads both.** With Kindling covering the
+Intelligence, Flashpoint repeats it and is replaced in the roster pass (§8).
 
 ## 6. Open questions
 
-1. **Dual-typed heroes.** The retype rule says exactly one path per dual hero changes its
-   secondary type, but the three pairs give every hero two type paths. There are only three dual
-   heroes (of 84), so either they get an exemption (one retype path, the other Type path becomes
-   a second Move + Passive) or they get two retypes. **Undecided.**
-2. **Passive supply.** Two of the three pairs carry a passive, so the roster needs ~168 path
-   passives against 49 today. Reusing catalog cards is allowed but conflicts with "Evolution
-   passives are excluded from the Boon pool", since a reused Boon card would then be both.
-   Watch the late-run passive stack too: innate, mastered innate, Class, Evolution and Boons can
-   become the new pile.
-3. **Power.** Stat lines were 50–110 points of stats a hero at pip 5, roster-wide. Taking them
-   out is a real loss that has to land somewhere: `ACT_LEVEL_ADJUST`, the Scroll supply, or
-   accepted. Measure before choosing. Mastery already cost 62 → 54% full-clear by making
-   Evolutions arrive later.
+1. **Dual-typed heroes: DECIDED (2026-09-29, per user direction).** A dual hero takes the same
+   three pairs, so **both type paths retype** (the old "exactly one retype" rule is retired for
+   converted heroes). The path that **keeps its pairing** is the Move + Passive one, and its move
+   is **a Late move of its secondary type**, off its own pool: the special move is the reason to
+   stay what it was born as, and it is of the type the other two paths trade away.
+2. **Passive supply: DECIDED, author them.** Two of the three pairs carry a passive, so the
+   roster needs ~168 path passives against 49 today. The engine's hooks, conditions and effects
+   support far more than that; the pass authors new cards (one file a type,
+   `src/data/evolutionPassives/`) and keeps an existing Evolution passive where it still fits.
+   A Boon card is never reused as a path passive. Watch the late-run passive stack (innate,
+   mastered innate, Class, Evolution, Boons) in play.
+3. **Power: DECIDED, accepted.** Stat lines were 50–110 points a hero at pip 5. The user judges
+   the game too easy as it stands, so the loss is not compensated; measure it, don't pay it back.
 4. **The rewire's Mana.** Explosive's old +20 Mana existed because a caster lives on its pool.
    The swap doesn't move Mana, and a rewired hero keeps its old pool. Probably fine (the Mana
    Well is the faucet), but watch it.
@@ -128,10 +127,34 @@ stat it trades. **Undecided.**
 ## 7. Migration
 
 1. Pilot (done): Cinder, the engine for the swap, the derived line, the pinned test.
-2. A sim pass over Cinder's paths against the old ones (`SIM_ALL_HEROES`, per path). Directional
-   only: sims find faults, and balance is played.
-3. Decide §5's innate tension and §6.1 (duals); then convert a type at a time, adding each hero
-   to `SIMPLIFIED` in the test. As each type lands, delete its authored `learnableMoveIds` lists.
-4. When `SIMPLIFIED` is the roster: delete `statGrants` from `EvolutionPath`, retire the
-   five-clause framework and its roster tests (the Rare-to-Epic stat-line ceiling, the retype
-   line requirement), and fold this into CLAUDE.md as the rule in force.
+2. The roster pass (§8), two types at a time. A hero counts as **converted** once no path of its
+   carries a stat line, and `test/evolutionSimplification` binds every converted hero, so no
+   list has to be kept.
+3. When every hero is converted: delete `statGrants` from `EvolutionPath`, retire the five-clause
+   framework and its roster tests (the Rare-to-Epic stat-line ceiling, the one-retype rule, the
+   retype line requirement), and fold this into CLAUDE.md as the rule in force.
+4. A sim pass (`SIM_ALL_HEROES`, per path). Directional only: sims find faults, and balance is
+   played.
+5. Then the Evolution screen, made worth the moment (user direction, after the roster).
+
+## 8. Converting a hero
+
+- **Keep every path's name and id** (a star is keyed on the id). Rewrite its `description` to the
+  two things it now is, in the same voice: one sentence, flavour first.
+- **Assign the three pairs by identity.** Most paths already hold two or three of the verbs;
+  keep the two that make the path what it is, and move or drop the third. A path that was mostly
+  a stat line needs its verb found: that is the design work.
+- **Type + Move:** the move is of the grafted type (it colours the path) and is not already in
+  the hero's pool. **Type + Passive:** a different graft from the other type path.
+  **Move + Passive:** keeps the typing; a Mid or Late move worth a path, off the hero's own pool.
+- **Lines:** a graft's `learnableMoveIds` is `evolutionLine(heroId, graft, { granted })`; a
+  rewire's is `evolutionLine(heroId, primary, { swapped: true, granted })`; any other path has
+  none. `statGrants: {}` on every path.
+- **Passives are verbs** from the existing vocabulary (`PassiveDefinition`, `src/engine/content.ts`:
+  hooks, conditions, effects, damage modifiers, conditional grants), never a bare `statGrants`
+  card. Flat magnitudes (a passive has no move to take STAB from), stat deltas in multiples of 5,
+  Burn and Renew in percent of max HP. Sized as an Evolution, above an innate's narrow band.
+  Never a restatement of the hero's own innate. A design that needs an engine verb that does not
+  exist is set aside and reported, not built inside the pass.
+- **A rewire** only where the path's identity is a category flip (the old line traded Attack and
+  Intelligence against each other). Pin it in `REWIRES`, and apply §5's rule to the innate.

@@ -3,6 +3,7 @@
 
 import type { PassiveDefinition } from '../engine/content';
 import { classPassives } from './classes';
+import { pathPassives } from './evolutionPassives';
 import { TYPES, type TitanpactType } from './typechart';
 import { fieldEffects } from './fieldEffects';
 
@@ -643,7 +644,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew', kind: 'heal' } },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'defense'], amount: 10 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence', 'defense'], amount: 10 },
     },
   },
   shieldbearer: {
@@ -954,12 +955,12 @@ const innatePassives: Record<string, PassiveDefinition> = {
   kindling: {
     id: 'kindling',
     name: 'Kindling',
-    description: 'Whenever this hero afflicts Burn, it gains 5 Attack.',
-    // Fires on Fire's self-Burn too — the cost pays a little back, which is the brawler's reading.
+    description: 'Whenever this hero afflicts Burn, it gains 5 Attack and 5 Intelligence.',
+    // Fires on Fire's self-Burn too. Both columns, so the knight's Explosive turn keeps it live.
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Burn' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 5 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], amount: 5 },
     },
   },
   stoke: {
@@ -1747,13 +1748,12 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   forgeheart: {
     id: 'forgeheart',
     name: 'Kindling+',
-    description: 'Whenever this hero afflicts Burn, it gains 10 Attack and 10 Defense.',
-    // Kindling's +5 Attack, doubled, and the plate coming off the anvil with it: the knight's
-    // own self-Burn now pays for both halves of the brawler.
+    description: 'Whenever this hero afflicts Burn, it gains 10 Attack, 10 Intelligence and 10 Defense.',
+    // Kindling doubled on both columns, and the plate coming off the anvil with it.
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Burn' } },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'defense'], amount: 10 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence', 'defense'], amount: 10 },
     },
   },
   wildfire: {
@@ -2191,7 +2191,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'defense'], amount: 10 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence', 'defense'], amount: 10 },
     },
   },
   apexTyrant: {
@@ -2839,6 +2839,7 @@ export const passives: Record<string, PassiveDefinition> = {
   ...typeDamagePassives,
   ...fieldHeraldPassives,
   ...evolutionPassives,
+  ...pathPassives,
   ...classPassives,
   ...innatePassives,
   ...masteredInnatePassives,

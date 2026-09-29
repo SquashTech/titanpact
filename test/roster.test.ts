@@ -21,6 +21,11 @@ import { createRosterEntry } from '../src/run/state';
 import { heroPool } from '../src/run/recruitment';
 import { TYPES } from '../src/data/typechart';
 
+/** Still on the five-clause framework: some path carries a stat line (docs/evolution-simplification.md §7). */
+function onLegacyFramework(heroId: string): boolean {
+  return (progressionTable.evolutions[heroId] ?? []).some((node) => node.paths.some((path) => Object.values(path.statGrants).some(Boolean)));
+}
+
 /** HP + Mana + the five battle stats at face value. MP Regen is a flat 10 outside the total. */
 test('roster: every seven-stat line sums to 550 — a Burden hero to 550 + the surplus — and MP Regen is flat 10 outside it', () => {
   const { isBurden } = require('../src/data/passives') as typeof import('../src/data/passives');
@@ -92,7 +97,7 @@ test('roster: a dual-typed hero gets exactly one RETYPE path — its secondary i
   // with. One path per node does it: three would make the innate pairing a starting state rather
   // than an identity, and none leaves the node with no way to move on the type chart at all.
   for (const hero of Object.values(heroes)) {
-    if (hero.types.length < 2) continue;
+    if (hero.types.length < 2 || !onLegacyFramework(hero.id)) continue;
     for (const node of progressionTable.evolutions[hero.id] ?? []) {
       const retypes = node.paths.filter((path) => path.typeGraft);
       assert.strictEqual(retypes.length, 1, `${hero.id} offers ${retypes.length} retype paths, not 1`);
@@ -110,7 +115,7 @@ test('roster: a retype pays for the STAB it costs — it carries a line of the t
   // The hero keeps moves that just stopped being same-type. Clause 5's fix for a stat refocus is
   // the fix here too: hand over the move that makes the new typing land, plus the line behind it.
   for (const hero of Object.values(heroes)) {
-    if (hero.types.length < 2) continue;
+    if (hero.types.length < 2 || !onLegacyFramework(hero.id)) continue;
     for (const node of progressionTable.evolutions[hero.id] ?? []) {
       for (const path of node.paths.filter((p) => p.typeGraft)) {
         assert.ok(path.unlocksMoveIds.length > 0, `${path.id} retypes and grants no move`);

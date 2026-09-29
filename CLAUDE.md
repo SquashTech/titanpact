@@ -222,12 +222,15 @@ don't silently override it.
 > bundle, discounted by what of it is already owned, and the Free Company's three are
 > Starfall-only; the Heroes page keeps an empty seat for curated **Alignments**. Its §8 lists the rest it reverses.
 
-> **A tenth is PROPOSED and PILOTED ON CINDER ALONE: `docs/evolution-simplification.md`**
+> **A tenth is DECIDED, the roster pass under way: `docs/evolution-simplification.md`**
 > (2026-09-29, per user direction). A path grants **exactly two of a type, a move and a passive,
 > and no stat line**; a hero's three paths are the three pairs; a graft's line is DERIVED
 > (`evolutionLine`), not authored; the one stat exception is the **rewire**, Attack ⇄ Intelligence
-> (`swapsOffense`, a third derived grant, pinned per path). `test/evolutionSimplification` pins the
-> converted heroes; every other hero is still on the five-clause framework below.
+> (`swapsOffense`, a third derived grant, pinned per path; an innate reading a traded stat reads
+> both). A **dual** hero retypes on both type paths and keeps its pairing on the third, with a Late
+> move of its secondary type. The power the stat lines carried is NOT paid back. A hero with no
+> stat line on any path is converted and bound by `test/evolutionSimplification`; the rest are
+> still on the five-clause framework below.
 
 ---
 
