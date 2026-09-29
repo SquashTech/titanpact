@@ -2191,7 +2191,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence', 'defense'], amount: 10 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'defense'], amount: 10 },
     },
   },
   apexTyrant: {
