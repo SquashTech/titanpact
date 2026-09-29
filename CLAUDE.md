@@ -222,15 +222,15 @@ don't silently override it.
 > bundle, discounted by what of it is already owned, and the Free Company's three are
 > Starfall-only; the Heroes page keeps an empty seat for curated **Alignments**. Its §8 lists the rest it reverses.
 
-> **A tenth is DECIDED, the roster pass under way: `docs/evolution-simplification.md`**
+> **A tenth is BUILT for all 84 heroes: `docs/evolution-simplification.md`**
 > (2026-09-29, per user direction). A path grants **exactly two of a type, a move and a passive,
 > and no stat line**; a hero's three paths are the three pairs; a graft's line is DERIVED
 > (`evolutionLine`), not authored; the one stat exception is the **rewire**, Attack ⇄ Intelligence
 > (`swapsOffense`, a third derived grant, pinned per path; an innate reading a traded stat reads
 > both). A **dual** hero retypes on both type paths and keeps its pairing on the third, with a Late
-> move of its secondary type. The power the stat lines carried is NOT paid back. A hero with no
-> stat line on any path is converted and bound by `test/evolutionSimplification`; the rest are
-> still on the five-clause framework below.
+> move of its secondary type. The power the stat lines carried is NOT paid back. No path carries
+> a stat line (`EvolutionPath.statGrants` is deleted); `test/evolutionSimplification` binds every
+> hero, and 123 new path passives live in `src/data/evolutionPassives/`, one file a type.
 
 ---
 
@@ -493,8 +493,10 @@ don't silently override it.
   was absorbed — `docs/gear-absorption.md` §4).
 - **Evolutions are authored branch points**, each option carrying a **single
   identifiable name** (e.g. Cinder's Explosive / Ironclad / Thunderblaze).
-  **All 36 heroes are on the five-clause Evolution framework** as of 2026-09-05 — no
-  path is ever a bare stat line (`docs/leveling-and-ranks.md`).
+  **Every path is exactly TWO of a type graft, ONE move and ONE passive, and never a stat
+  line; a hero's three paths are the three pairs** (2026-09-29, all 84 heroes,
+  `docs/evolution-simplification.md`, replacing the five-clause framework). A graft's line is
+  derived (`evolutionLine`); the one stat verb is the pinned **rewire**, Attack ⇄ Intelligence.
   Options take the hero in different directions, are **permanent within a run**, and gate the
   movepool. **The offensive / defensive / utility label is GONE** (2026-09-16, per user
   direction): `EvolutionPath.kind` and its badges are deleted, and a path is known by its name

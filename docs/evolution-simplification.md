@@ -1,9 +1,9 @@
 # Evolution Simplification
 
-**Status: DECIDED (2026-09-29, per user direction); piloted on Cinder, the roster pass under way
-(§7–8).** A converted hero is bound by `test/evolutionSimplification.test.ts`; a hero not yet
-converted is still on the five-clause framework (`docs/leveling-and-ranks.md` "The Evolution
-framework"), which stays the rule in force for it until the migration lands.
+**Status: BUILT for all 84 heroes (2026-09-29, per user direction).** `EvolutionPath.statGrants`
+is deleted and `test/evolutionSimplification.test.ts` binds every hero. The five-clause framework
+(`docs/leveling-and-ranks.md`) is history. §9 records what the roster pass found; the sim pass and
+the Evolution screen are next (§7).
 
 ## 1. The problem
 
@@ -92,12 +92,12 @@ else does.
 
 | Path | Before | After |
 |---|---|---|
-| **Explosive** | Atk −40, Int +60, Mana +20; Immolate; 5 learnables | **Immolate + Flashpoint**, rewire; Fire's magical line (11) |
+| **Explosive** | Atk −40, Int +60, Mana +20; Immolate; 5 learnables | **Immolate + Rekindle**, rewire; Fire's magical line (11) |
 | **Ironclad** | HP +60, Def +10; Shield Bash; Iron; 6 learnables; Cinderguard | **Iron + Cinderguard**; Iron's line (8, Shield Bash in it) |
 | **Thunderblaze** | Atk +10, Spd +30; Storm Lash; Storm; 5 learnables | **Storm + Storm Lash**; Storm's line (11) |
 
-**Flashpoint** (new, Evolution-only): *whenever this hero afflicts Burn, it gains 10
-Intelligence.* It is Kindling's shape on the column the rewire hands over.
+**Rekindle** (new, Evolution-only): *whenever this hero lands a Fire attack on a Burning foe,
+that foe gains Burn 10%.* It replaced the pilot's Flashpoint, which repeated Kindling.
 
 **The innate reads both columns (decided 2026-09-29, per user direction).** Kindling read Attack,
 the stat Explosive gives away, so it now grants **5 Attack and 5 Intelligence** (Kindling+ 10 /
@@ -158,3 +158,41 @@ Intelligence, Flashpoint repeats it and is replaced in the roster pass (§8).
   exist is set aside and reported, not built inside the pass.
 - **A rewire** only where the path's identity is a category flip (the old line traded Attack and
   Intelligence against each other). Pin it in `REWIRES`, and apply §5's rule to the innate.
+
+## 9. What the roster pass found (2026-09-29)
+
+Converted in seven parallel groups of two types, then reviewed as one catalog. **123 new path
+passives** (`src/data/evolutionPassives/`), **9 rewires** (pinned in the test's `REWIRES`), and
+three kept-pairing paths for the duals: Brimstone's Cauldronborn (Eclipse), Bellows' Redline
+(Juggernaut), Coil's Mesmer (Brain Flay). Each rewired hero whose innate read the traded stat
+now reads both: Kindling, Pack Hunter and their mastered forms, and Reverie's Neuroplastic+.
+
+**Fixed in review.** An id collision (Carillon's and Keen's `deathKnell`: the spread kept one card
+for both paths), three word-for-word duplicate cards written independently by different groups,
+and two dead cards that granted Ambush on the holder's own hit (the move that landed it spends it).
+Both failure shapes are now pinned by `test/evolutionPassives.test.ts`.
+
+**Engine limits every group ran into** (verbs set aside, not built — candidates for a later pass):
+- **Passive-caused events don't trigger other passives.** A Burn, Freeze, Shield or Renew a
+  passive applies never fires "whenever this hero Burns/Freezes/Shields" cards; only a move's
+  rider does. Several cards read narrower in play than on paper because of it.
+- **No effect target reaches the attacker.** Every group wanted a true counter-hit.
+- **`Healed` fires only on heal moves and drains**, not on Renew ticks or passive heals.
+- Also wanted: a "both allies" passive target, a MoveUsed condition on the move's type, a
+  condition on the holder's own statuses, a KO hook for an ally falling, and a "plant after the
+  burst" order for Conduct.
+
+**Watch in play.**
+- **Mana income.** About a dozen cards pay mana past the pool: Stored Charge, Tithe, Blade
+  Channel, Apogee, Death Knell (Keen), Storm Drinker, Moonwell, Runic Ward, Overspill,
+  Mainspring. This cuts against the 2026-09-28 reshape that made the pool scarce again, and the
+  sim can't see mana.
+- **Stacking ramps.** Glitter and Spirit Pack pay the partner every round.
+- **Proc-heavy verbs.** 25–30% Daze or Freeze on hit (Shriek, Footlights, Winter's Weight),
+  Bleed on every Water hit (Snapping Jaw), and Updraft's partner priority.
+- **Off-type moves on mono paths.** Many heroes' own pools already held every fitting same-type
+  Mid/Late move, so Move + Passive paths often hand over an off-type move (Crimson's Landslide,
+  Flurry's Landslide, Drake's Juggernaut). That's legal under off-type policy. Flurry's case
+  could be fixed by moving Avalanche out of her pool so the path can grant it.
+- **Rewired heroes keep their old pool.** A rewired hero's level-up pool still offers the
+  column it left. Off-stat moves are a normal pick, so this is left as is.

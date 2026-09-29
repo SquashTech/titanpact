@@ -51,10 +51,6 @@ function poolPromise(path: EvolutionPath): string | null {
     : 'New moves join what a level can teach.';
 }
 
-function statEntriesOf(path: EvolutionPath): [StatKey, number][] {
-  return Object.entries(path.statGrants).filter(([, amount]) => !!amount) as [StatKey, number][];
-}
-
 /**
  * Full-screen Evolution choice. Tap a path and the whole thing opens as a dossier — the choice is
  * permanent for the run, so the confirm lives in there, on the screen that actually explains it,
@@ -205,7 +201,6 @@ function PathZone({ label, className, children }: { label: string; className?: s
 
 /** Tap opens the dossier — the card is a headline, not the decision. */
 function PathButton({ hero, path, onInspect }: { hero: HeroDefinition; path: EvolutionPath; onInspect: () => void }) {
-  const statEntries = statEntriesOf(path);
   const grantedPassives = (path.grantsPassiveIds ?? []).filter((id) => passives[id]);
   const grantedMoves = path.unlocksMoveIds.filter((id) => moves[id]);
   const promise = poolPromise(path);
@@ -250,18 +245,6 @@ function PathButton({ hero, path, onInspect }: { hero: HeroDefinition; path: Evo
           <span className="evolution-path-grant-chip">
             <StatGlyph stat="attack" /> Attack ⇄ <StatGlyph stat="intelligence" /> Intelligence
           </span>
-        </PathZone>
-      )}
-
-      {statEntries.length > 0 && (
-        <PathZone label="Stats" className="is-stats">
-          {/* Signed, not always "+": a refocus path spends a stat to buy another. */}
-          {statEntries.map(([stat, amount]) => (
-            <span key={stat} className={`evolution-path-grant-chip${amount < 0 ? ' evolution-path-grant-loss' : ''}`}>
-              <StatGlyph stat={stat} /> {STAT_LABELS[stat]} {amount > 0 ? '+' : ''}
-              {amount}
-            </span>
-          ))}
         </PathZone>
       )}
 
@@ -351,7 +334,7 @@ function PathDossier({
   const current = entryStatTotals(hero, entry, run.relics);
   // A rewire's rows are read off this hero's own Attack and Intelligence — what it would trade now.
   const swapEntries = path.swapsOffense ? (Object.entries(offenseSwapDelta(hero, entry)) as [StatKey, number][]) : [];
-  const statEntries = [...statEntriesOf(path), ...swapEntries];
+  const statEntries = swapEntries;
   const grantedPassives = (path.grantsPassiveIds ?? []).filter((id) => passives[id]);
   const grantedMoves = path.unlocksMoveIds.filter((id) => moves[id]);
   const poolMoves = (path.learnableMoveIds ?? []).filter((id) => moves[id]);

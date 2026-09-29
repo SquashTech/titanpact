@@ -1,7 +1,6 @@
 // The simplified Evolution (docs/evolution-simplification.md): a path pays exactly two of a type,
-// a move and a passive, never a stat line, and a hero's three paths are the three pairs. A hero is
-// CONVERTED once no path of its carries a stat line; everything below binds the converted heroes,
-// and the migration ends when that is all of them.
+// a move and a passive, never a stat line, and a hero's three paths are the three pairs. Every hero
+// is on it (the roster pass landed 2026-09-29).
 
 import * as assert from 'assert';
 import { test } from './harness';
@@ -31,12 +30,7 @@ function pathsOf(heroId: string): EvolutionPath[] {
   return (progressionTable.evolutions[heroId] ?? []).flatMap((node) => node.paths);
 }
 
-function isConverted(heroId: string): boolean {
-  const paths = pathsOf(heroId);
-  return paths.length > 0 && paths.every((path) => Object.values(path.statGrants).every((amount) => !amount));
-}
-
-const converted = Object.keys(heroes).filter(isConverted);
+const heroIds = Object.keys(heroes);
 
 function pairOf(path: EvolutionPath): string {
   const parts = [
@@ -51,12 +45,12 @@ function seed(id: string): RunState {
   return addRosterEntry(createRunState(0), atEvolution(createRosterEntry(id, id, heroes[id].moveIds)));
 }
 
-test('evolution simplification: the pilot is converted', () => {
-  assert.ok(converted.includes('cinderKnight'));
+test('evolution simplification: every hero has one Evolution node of three paths', () => {
+  for (const heroId of heroIds) assert.strictEqual(pathsOf(heroId).length, 3, heroId);
 });
 
-test('evolution simplification: a converted hero offers the three pairs, one of each — one move, one passive, never a stat line', () => {
-  for (const heroId of converted) {
+test('evolution simplification: every hero offers the three pairs, one of each — one move, one passive, never a stat line', () => {
+  for (const heroId of heroIds) {
     const paths = pathsOf(heroId);
     assert.deepStrictEqual(paths.map(pairOf).sort(), ['move+passive', 'type+move', 'type+passive'], heroId);
     for (const path of paths) {
@@ -76,7 +70,7 @@ test('evolution simplification: a converted hero offers the three pairs, one of 
 });
 
 test('evolution simplification: a line is the rule, not a list — the new type\'s slate on the column the hero swings with', () => {
-  for (const heroId of converted) {
+  for (const heroId of heroIds) {
     const hero = heroes[heroId];
     const own = new Set([...hero.moveIds, ...(progressionTable.moveTiers[heroId] ?? [])]);
     for (const path of pathsOf(heroId)) {
@@ -99,7 +93,7 @@ test('evolution simplification: a line is the rule, not a list — the new type\
 });
 
 test('evolution simplification: a dual hero retypes on both type paths, and the path that keeps its pairing grants a Late move of the type the others trade away', () => {
-  for (const heroId of converted) {
+  for (const heroId of heroIds) {
     const hero = heroes[heroId];
     if (hero.types.length < 2) continue;
     const paths = pathsOf(heroId);

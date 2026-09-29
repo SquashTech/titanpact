@@ -12,19 +12,14 @@ import { moves } from '../src/data/moves';
 import { passives } from '../src/data/passives';
 import { statuses } from '../src/data/statuses';
 import { progressionTable } from '../src/data/progression';
-import { BASE_ITEM_SLOTS, MAX_ITEM_SLOTS, statGrantCost } from '../src/run/equipment';
-import type { GrowthStatKey, StatKey } from '../src/engine/content';
+import { BASE_ITEM_SLOTS, MAX_ITEM_SLOTS } from '../src/run/equipment';
+import type { GrowthStatKey } from '../src/engine/content';
 import { GRADE_BUDGET, GROWTH_STATS, gradeBudgetOf, gradeExpectedPoints, gradesFor } from '../src/run/growth';
 import { BURDEN_SURPLUS, HERO_STAT_TOTAL, heroStatTotal, heroStatTotalFor } from '../src/run/statBudget';
 import { itemSlotsFor } from '../src/run/progression';
 import { createRosterEntry } from '../src/run/state';
 import { heroPool } from '../src/run/recruitment';
 import { TYPES } from '../src/data/typechart';
-
-/** Still on the five-clause framework: some path carries a stat line (docs/evolution-simplification.md §7). */
-function onLegacyFramework(heroId: string): boolean {
-  return (progressionTable.evolutions[heroId] ?? []).some((node) => node.paths.some((path) => Object.values(path.statGrants).some(Boolean)));
-}
 
 /** HP + Mana + the five battle stats at face value. MP Regen is a flat 10 outside the total. */
 test('roster: every seven-stat line sums to 550 — a Burden hero to 550 + the surplus — and MP Regen is flat 10 outside it', () => {
@@ -88,39 +83,6 @@ test('roster: no hero starts with a move it cannot pay for', () => {
         moves[moveId].manaCost <= hero.baseStats.manaPool,
         `${hero.id} cannot afford its own starting move ${moveId}`
       );
-    }
-  }
-});
-
-test('roster: a dual-typed hero gets exactly one RETYPE path — its secondary is traded, never added to', () => {
-  // A graft owns the secondary slot, so on an innately dual hero it SPENDS the type it was born
-  // with. One path per node does it: three would make the innate pairing a starting state rather
-  // than an identity, and none leaves the node with no way to move on the type chart at all.
-  for (const hero of Object.values(heroes)) {
-    if (hero.types.length < 2 || !onLegacyFramework(hero.id)) continue;
-    for (const node of progressionTable.evolutions[hero.id] ?? []) {
-      const retypes = node.paths.filter((path) => path.typeGraft);
-      assert.strictEqual(retypes.length, 1, `${hero.id} offers ${retypes.length} retype paths, not 1`);
-      for (const path of retypes) {
-        assert.ok(
-          !hero.types.includes(path.typeGraft!),
-          `${path.id} trades ${path.typeGraft} for itself — a no-op chooseEvolutionPath refuses`
-        );
-      }
-    }
-  }
-});
-
-test('roster: a retype pays for the STAB it costs — it carries a line of the type it bought', () => {
-  // The hero keeps moves that just stopped being same-type. Clause 5's fix for a stat refocus is
-  // the fix here too: hand over the move that makes the new typing land, plus the line behind it.
-  for (const hero of Object.values(heroes)) {
-    if (hero.types.length < 2 || !onLegacyFramework(hero.id)) continue;
-    for (const node of progressionTable.evolutions[hero.id] ?? []) {
-      for (const path of node.paths.filter((p) => p.typeGraft)) {
-        assert.ok(path.unlocksMoveIds.length > 0, `${path.id} retypes and grants no move`);
-        assert.ok((path.learnableMoveIds ?? []).length >= 4, `${path.id} retypes and opens no line`);
-      }
     }
   }
 });
@@ -224,29 +186,6 @@ test('roster: every passive in the catalog has a granter — a passive nobody gr
   const orphans = Object.keys(passives).filter((id) => !granted.has(id)).sort();
   assert.deepStrictEqual(orphans, [], 'these passives exist but nothing hands them out');
 });
-test('roster: an Evolution stat line is Rare-to-Epic in equipment currency, spent or refunded', () => {
-  // Read GROSS — a refocus path's negative half is spent, not discounted — so Warhowl's -30/+60
-  // reads 105, and that ceiling is what stops a path buying a whole second hero. The floor is 0
-  // because a path may pay entirely in a passive and a graft instead (Riptide's Siren grants no
-  // stats at all).
-  //
-  // The CEILING is absolute, not a tier name: the 2026-09-06 budget pass rebased item currency
-  // (Mythic 50 -> 110) without touching a single Evolution path, so the same numbers that used to
-  // read "about two Mythics" now read "about one". That is a real shift in how items and
-  // Evolutions trade against each other, and it is deliberate — see docs/progression.md.
-  for (const [heroId, nodes] of Object.entries(progressionTable.evolutions)) {
-    for (const node of nodes) {
-      for (const path of node.paths) {
-        const gross = (Object.entries(path.statGrants) as [StatKey, number | undefined][]).reduce(
-          (sum, [stat, amount]) => sum + Math.abs(statGrantCost(stat, amount ?? 0)),
-          0
-        );
-        assert.ok(gross <= 120, `${path.id} spends ${gross} points — past anything authored so far`);
-      }
-    }
-  }
-});
-
 test('roster: every hero starts on the same one item slot, whatever its Speed', () => {
   // Nine heroes used to author `itemSlots: 2` for being at Speed <= 40. Speed and HP are
   // anti-correlated here, so that rule read as a Speed rule and landed as an HP rule, handing the

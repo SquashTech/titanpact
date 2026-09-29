@@ -304,25 +304,6 @@ test('progression: an Evolution opens at MASTERY_EVOLUTION pips and at no level;
   assert.strictEqual(availableEvolution(progressionTable, next.roster[0]), null);
 });
 
-test('progression: an Evolution path with a non-multiple-of-5 stat grant is rejected', () => {
-  let run = seedRoster(['cinderKnight']);
-  run = atEvolutionRung(run, 'cinderKnight');
-
-  const badTable = {
-    moveTiers: {},
-    evolutions: {
-      cinderKnight: [
-        {
-          paths: [
-            { id: 'bad', heroId: 'cinderKnight', name: 'Bad Path', statGrants: { attack: 7 }, unlocksMoveIds: [] },
-          ],
-        },
-      ],
-    },
-  };
-  assert.throws(() => chooseEvolutionPath(run, badTable, heroes, 'cinderKnight', 'bad'), ProgressionError);
-});
-
 // --- learnableMoveIds: Evolution steers future level-up offerings (docs/leveling-and-ranks.md) ---
 
 test('progression: a graft path adds its learnableMoveIds to the level-up pool without granting them', () => {

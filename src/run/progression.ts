@@ -7,7 +7,6 @@
 // (run/mastery.ts, docs/mastery.md) — but the tree and the choice live here.
 
 import type { HeroDefinition, LevelSchedule, MoveDefinition, MoveTier, PassiveId, StatKey, TypeId } from '../engine/content';
-import { isValidFlatStatGrant } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
 import { BASE_ITEM_SLOTS } from './equipment';
 import { MASTERY_EVOLUTION } from './mastery';
@@ -141,18 +140,18 @@ export function movePoolFloor(schedule: LevelSchedule = DEFAULT_SCHEDULE): MoveP
   };
 }
 
+/** Exactly two of a graft, one granted move and one passive; never a stat line (docs/evolution-simplification.md). */
 export interface EvolutionPath {
   id: string;
   heroId: string;
   name: string;
   /** Shown on the Evolution choice screen. */
   description?: string;
-  statGrants: Partial<Record<StatKey, number>>;
   /** Granted outright the moment the path is chosen, up to MOVE_CAP — see applyEvolutionMoves for the overflow. */
   unlocksMoveIds: string[];
-  /** Join the hero's level-up pool (still tier-gated) rather than being granted — a set of futures, not a loadout. */
+  /** Join the hero's level-up pool (still tier-gated) rather than being granted. Derived, never authored: data/progression.ts evolutionLine. */
   learnableMoveIds?: readonly string[];
-  /** Secondary-type grant; only legal on a mono-type hero (enforced in chooseEvolutionPath). A later graft overwrites, never stacks. */
+  /** The secondary type. A graft owns the slot: a mono hero gains a type, a dual one trades the one it was born with. */
   typeGraft?: TypeId;
   grantsPassiveIds?: readonly PassiveId[];
   /**
@@ -420,11 +419,6 @@ export function chooseEvolutionPath(
   if (!node) throw new ProgressionError(`No Evolution is currently available for ${rosterId}`);
   const path = node.paths.find((p) => p.id === pathId);
   if (!path) throw new ProgressionError(`${pathId} is not one of the offered paths`);
-  for (const amount of Object.values(path.statGrants)) {
-    if (amount !== undefined && !isValidFlatStatGrant(amount)) {
-      throw new ProgressionError(`Evolution stat grant ${amount} must be a multiple of 5 or 10`);
-    }
-  }
 
   let swapGrant: Partial<Record<StatKey, number>> = {};
   if (path.swapsOffense) {
@@ -453,7 +447,7 @@ export function chooseEvolutionPath(
     unlockedMoveIds: applyEvolutionMoves(entry.unlockedMoveIds, path.unlocksMoveIds).unlockedMoveIds,
     // Both halves are spent: what the cap took, and the overflow the caller is about to offer.
     offeredMoveIds: withOffers(entry, path.unlocksMoveIds),
-    evolutionStatGrants: mergeStatMods(entry.evolutionStatGrants, path.statGrants, swapGrant),
+    evolutionStatGrants: mergeStatMods(entry.evolutionStatGrants, swapGrant),
     evolutionPassiveGrants: [...new Set([...entry.evolutionPassiveGrants, ...(path.grantsPassiveIds ?? [])])],
     offenseSwapped: entry.offenseSwapped || !!path.swapsOffense,
     evolutionTypeGraft,

@@ -450,6 +450,9 @@ identity.
 
 > ### The Evolution framework (2026-09-01 designer call)
 >
+> **SUPERSEDED 2026-09-29 by `docs/evolution-simplification.md`:** a path is two of a type, a
+> move and a passive, never a stat line. What follows is the history of the framework it replaced.
+>
 > The shape every hero's node is authored to. **All 36 heroes are on it** as of
 > 2026-09-05 — the 14 starters landed 2026-09-02, the 22 recruit-only heroes in the
 > baseline pass that followed. `test/roster.test.ts` pins the parts of it that are

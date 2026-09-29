@@ -56,10 +56,6 @@ function tierLevels(tier: MoveTier, schedule: LevelSchedule): string {
   return `from ${schedule.lateLevel}`;
 }
 
-function fmtGrant(amount: number): string {
-  return amount > 0 ? `+${amount}` : `${amount}`;
-}
-
 
 /**
  * A list of moves as full-width cards, each already carrying its mana, power and effect line.
@@ -85,20 +81,6 @@ function MoveList({
           </span>
         )
       )}
-    </div>
-  );
-}
-
-function StatGrantChips({ grants }: { grants: Partial<Record<StatKey, number>> }) {
-  const entries = Object.entries(grants).filter(([, amount]) => amount) as [StatKey, number][];
-  if (entries.length === 0) return null;
-  return (
-    <div className="detail-modifier-list">
-      {entries.map(([stat, amount]) => (
-        <span key={stat} className={`detail-modifier-chip ${amount > 0 ? 'stat-buff' : 'stat-debuff'}`}>
-          <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} {fmtGrant(amount)}
-        </span>
-      ))}
     </div>
   );
 }
@@ -129,7 +111,6 @@ function EvolutionPathCard({
       </div>
       {path.description && <div className="evo-path-desc">{path.description}</div>}
 
-      <StatGrantChips grants={path.statGrants} />
       {path.swapsOffense && (
         <div className="detail-modifier-list">
           <span className="detail-modifier-chip">
@@ -175,9 +156,6 @@ function EvolutionPathCard({
         </>
       )}
 
-      {granted.length === 0 && learnable.length === 0 && grantedPassives.length === 0 && !path.typeGraft && (
-        <div className="evo-path-label">Stats only.</div>
-      )}
     </div>
   );
 }

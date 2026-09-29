@@ -306,7 +306,7 @@ function pathRow(p: EvolutionPath, hero: HeroDefinition): string {
     })
     .join('; ') || '—';
   const learn = (p.learnableMoveIds ?? []).map((id) => moveTag(id, hero)).join(', ') || '—';
-  return `| **${p.name}** | ${statGrants(p.statGrants)} | ${graft} | ${cell(move)} | ${cell(passive)} | ${cell(learn)} | ${cell(p.description ?? '')} |`;
+  return `| **${p.name}** | ${p.swapsOffense ? 'Atk ⇄ Int' : '—'} | ${graft} | ${cell(move)} | ${cell(passive)} | ${cell(learn)} | ${cell(p.description ?? '')} |`;
 }
 
 function heroSection(hero: HeroDefinition): string[] {
@@ -338,7 +338,7 @@ function heroSection(hero: HeroDefinition): string[] {
     lines.push(`- **Signature:** ${m.name} — ${m.category === 'physical' ? 'Phy' : 'Mag'} ${m.kind}, Pow ${m.basePower ?? '—'}, ${m.manaCost} mana, prio ${signed(m.priority)}, ${TARGET_LABEL[m.target]}; ${effect(m)}`);
   }
   lines.push('');
-  lines.push('| Path | Stat grants | Graft | Grants move | Passive | Joins pool | Description |');
+  lines.push('| Path | Rewire | Graft | Grants move | Passive | Joins pool | Description |');
   lines.push('|---|---|---|---|---|---|---|');
   for (const node of progressionTable.evolutions[hero.id] ?? []) for (const p of node.paths) lines.push(pathRow(p, hero));
   lines.push('');
