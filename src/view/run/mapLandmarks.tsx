@@ -2,7 +2,8 @@ import type { CSSProperties } from 'react';
 import type { MapNodeType } from '../../run/map';
 import { allCombatants } from '../../data/content';
 import { getTypeColor } from '../combat/typeColors';
-import { ElementGlyph } from '../shared/elementIcons';
+import { SealArt } from '../shared/SealArt';
+import { SEAL_ACTS } from '../../run/state';
 import mentorArt from '../../../art/map-nodes/landmarks/mentor.png';
 import tutorArt from '../../../art/map-nodes/landmarks/tutor.png';
 import scribeArt from '../../../art/map-nodes/landmarks/scribe.png';
@@ -13,7 +14,7 @@ import titanGateArt from '../../../art/map-nodes/landmarks/titanGate.png';
 // The act's beats, drawn as themselves rather than as a stone medallion: the opening fight is the
 // Titan's eye opening on the road, the Mentor, the Tutor and the Scribe are met at the
 // roadside (a fire, a practice post, a writing desk), the Guild Hall is a building you walk into,
-// the act's Guardian waits behind a sealed gate carrying its element's sigil, and the finale is a
+// the act's Guardian waits behind a sealed gate standing in the Pact Seal, and the finale is a
 // greater gate sealed with the Titan's own eye.
 
 export type LandmarkKind = 'eye' | 'npc' | 'building' | 'gate' | 'titanGate';
@@ -85,11 +86,14 @@ export function MapLandmarkFace({
   kind,
   type,
   guardianId,
+  actNumber,
   quiet = false,
 }: {
   kind: LandmarkKind;
   type: MapNodeType;
   guardianId: string | null;
+  /** The act on the map: the gate's warden is this act's seal. */
+  actNumber: number;
   /** Behind the player (the route's origin): no invitation to tap. */
   quiet?: boolean;
 }) {
@@ -110,16 +114,25 @@ export function MapLandmarkFace({
     case 'building':
       return <img src={guildHallArt} className="map-landmark-art" alt="" draggable={false} />;
     case 'gate': {
-      // The seal is the Guardian's own element: what is behind the door is named, never shown.
+      // The gate stands in the Pact Seal it guards: the wardens already broken struck out, this
+      // act's burning in its Guardian's element — what is behind the door is felt, never shown.
+      if (quiet) return <img src={gateArt} className="map-landmark-art" alt="" draggable={false} />;
       const type = guardianId ? allCombatants[guardianId]?.types[0] : undefined;
+      const warden = Math.min(actNumber, SEAL_ACTS) - 1;
+      const style = { '--warden-color': type ? getTypeColor(type) : '#e0a63c', '--warden': warden } as CSSProperties;
       return (
         <>
+          <span className="map-gate-pact" style={style} aria-hidden="true">
+            <span className="map-gate-pact-light" />
+            <SealArt spent={warden} current={warden} />
+          </span>
           <img src={gateArt} className="map-landmark-art" alt="" draggable={false} />
-          {type && (
-            <span className={`map-gate-seal${quiet ? ' is-quiet' : ''}`} style={{ '--seal-color': getTypeColor(type) } as CSSProperties} aria-hidden="true">
-              <ElementGlyph type={type} className="map-gate-sigil" />
-            </span>
-          )}
+          <span className="map-gate-seam" style={style} aria-hidden="true" />
+          {/* This act's warden, turned to the crown of the arch and burning. */}
+          <span className="map-gate-warden" style={style} aria-hidden="true">
+            <span className="map-gate-warden-glow" />
+            <span className="map-gate-warden-gem" />
+          </span>
         </>
       );
     }

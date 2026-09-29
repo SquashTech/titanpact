@@ -185,7 +185,7 @@ function ChoiceMedallion({
       >
         <span className="map-medallion-glow" aria-hidden="true" />
         <span className="map-choice-burst" aria-hidden="true" />
-        {landmark && <MapLandmarkFace kind={landmark} type={node.type} guardianId={guardianId} />}
+        {landmark && <MapLandmarkFace kind={landmark} type={node.type} guardianId={guardianId} actNumber={actNumber} />}
         {art && <img src={art} className={prop ? 'map-medallion-prop' : 'map-medallion-art'} alt="" draggable={false} />}
         {art && scoutedFace && (
           <span className="map-medallion-typing" aria-hidden="true">
@@ -414,7 +414,7 @@ export function MapRoute({
           >
             {/* A landmark stays itself behind you — the eye, the Mentor, the hall — small and unlit. */}
             {originLandmark ? (
-              <MapLandmarkFace kind={originLandmark} type={originNode.type} guardianId={guardianId} quiet />
+              <MapLandmarkFace kind={originLandmark} type={originNode.type} guardianId={guardianId} actNumber={actNumber} quiet />
             ) : mapNodeArt(originNode.type) ? (
               <img src={mapNodeArt(originNode.type)} className="map-origin-art" alt="" draggable={false} />
             ) : (

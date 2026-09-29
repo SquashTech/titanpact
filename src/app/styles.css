@@ -38605,8 +38605,9 @@ img.smithy-service-art {
 }
 
 /* -- The Guardian's gate. The act's Guardian is not shown on the map: its node is a sealed stone
-   gate (96px at 2x) with the Guardian's element burning as a seal on the disc where the doors meet,
-   pulsing like something pressing from the other side. -- */
+   gate (96px at 2x) standing in the Pact Seal it guards — the title's seal, turning behind the arch,
+   the wardens already broken struck out and this act's burning in the Guardian's element. The same
+   light leaks through the seam where the doors meet, like something pressing from the other side. -- */
 .map-medallion.is-gate {
   width: 192px !important;
   height: 192px !important;
@@ -38614,6 +38615,171 @@ img.smithy-service-art {
 
 .map-medallion.is-gate .map-medallion-glow {
   inset: -20px;
+}
+
+.map-medallion.is-gate .map-landmark-art {
+  z-index: 1;
+}
+
+/* The seal behind the arch at the title's own size, so the wardens ride outside the stone. The box is
+   a stacking context so the seal's own z-index: -1 stays behind the door and not behind the map.
+   The rings are drawn up from the title's: they stand against a lit sky here, not the dark. */
+.map-gate-pact {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.map-gate-pact .title-seal {
+  top: 50%;
+}
+
+.map-gate-pact .title-seal .type-wheel {
+  opacity: 0.45;
+}
+
+.map-gate-pact .title-seal-ring.is-outer {
+  background: repeating-conic-gradient(from 12.857deg, rgba(240, 190, 90, 0.7) 0deg 1.1deg, transparent 1.1deg 25.714deg);
+  box-shadow: inset 0 0 0 1px rgba(240, 190, 90, 0.4);
+}
+
+.map-gate-pact .title-seal-ring.is-mid {
+  border: 1px dashed rgba(240, 190, 90, 0.45);
+}
+
+.map-gate-pact .title-seal-ring.is-inner {
+  border: 2px solid color-mix(in srgb, var(--warden-color) 55%, rgba(240, 190, 90, 0.6));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--warden-color) 40%, transparent), inset 0 0 26px color-mix(in srgb, var(--warden-color) 25%, transparent);
+}
+
+.map-gate-pact .title-seal-sigil {
+  background: rgba(250, 210, 120, 0.95);
+  box-shadow: 0 0 10px rgba(240, 180, 70, 0.8);
+}
+
+/* The warden's light behind the door, breathing. */
+.map-gate-pact-light {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 280px;
+  height: 280px;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--warden-color) 60%, transparent), color-mix(in srgb, var(--warden-color) 22%, transparent) 42%, transparent 68%);
+  animation: map-gate-breathe 3.2s ease-in-out infinite;
+}
+
+@keyframes map-gate-breathe {
+  0%,
+  100% {
+    opacity: 0.6;
+    scale: 0.94;
+  }
+  50% {
+    opacity: 1;
+    scale: 1.04;
+  }
+}
+
+/* The wardens hold still, turned so this act's stands at the crown: the broken ones to its left,
+   the ones to come to its right. Its own sigil gives way to the burning gem over the arch. */
+.map-gate-pact .title-seal-sigils {
+  animation: none;
+  transform: rotate(calc(var(--warden) * -72deg));
+}
+
+.map-gate-pact .title-seal-sigil {
+  top: -6px;
+  left: -6px;
+  width: 12px;
+  height: 12px;
+}
+
+.map-gate-pact .title-seal-sigil.is-spent {
+  background: rgba(40, 44, 54, 0.9);
+  box-shadow: none;
+}
+
+.map-gate-pact .title-seal-sigil.is-current {
+  visibility: hidden;
+}
+
+/* The warden: a gem at the crown of the arch (the seal's mid ring, 112px up from its centre),
+   burning in the Guardian's element, the light pulsing out of it. */
+.map-gate-warden {
+  position: absolute;
+  left: 50%;
+  top: calc(50% - 112px);
+  z-index: 3;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.map-gate-warden-glow {
+  position: absolute;
+  left: -30px;
+  top: -30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--warden-color) 80%, #fff) 0, color-mix(in srgb, var(--warden-color) 45%, transparent) 30%, transparent 70%);
+  animation: map-gate-warden 1.8s ease-in-out infinite;
+}
+
+.map-gate-warden-gem {
+  position: absolute;
+  left: -11px;
+  top: -14px;
+  width: 22px;
+  height: 28px;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  background: linear-gradient(160deg, #fff 0 18%, color-mix(in srgb, var(--warden-color) 55%, #fff) 30%, var(--warden-color) 62%, color-mix(in srgb, var(--warden-color) 60%, #000));
+}
+
+@keyframes map-gate-warden {
+  0%,
+  100% {
+    opacity: 0.7;
+    scale: 0.9;
+  }
+  50% {
+    opacity: 1;
+    scale: 1.15;
+  }
+}
+
+/* The light through the seam where the two doors meet. */
+.map-gate-seam {
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  bottom: 14%;
+  z-index: 2;
+  width: 2px;
+  margin-left: -1px;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--warden-color) 60%, #fff) 20%, var(--warden-color) 80%, transparent);
+  box-shadow: 0 0 6px var(--warden-color), 0 0 14px var(--warden-color);
+  pointer-events: none;
+  animation: map-gate-seam 2.3s ease-in-out infinite;
+}
+
+@keyframes map-gate-seam {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  38% {
+    opacity: 1;
+  }
+  46% {
+    opacity: 0.6;
+  }
+  60% {
+    opacity: 0.95;
+  }
 }
 
 .map-gate-seal {
@@ -38631,13 +38797,6 @@ img.smithy-service-art {
   box-shadow: 0 0 18px 4px color-mix(in srgb, var(--seal-color) 45%, transparent);
   pointer-events: none;
   animation: map-gate-seal 2.6s ease-in-out infinite;
-}
-
-.map-gate-sigil {
-  width: 26px;
-  height: 26px;
-  color: #fff;
-  filter: drop-shadow(0 0 3px var(--seal-color)) drop-shadow(0 0 8px var(--seal-color));
 }
 
 @keyframes map-gate-seal {
@@ -38665,14 +38824,11 @@ img.smithy-service-art {
   box-shadow: none;
 }
 
-.map-gate-seal.is-quiet .map-gate-sigil {
-  width: 8px;
-  height: 8px;
-  filter: none;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .map-gate-seal {
+  .map-gate-seal,
+  .map-gate-pact-light,
+  .map-gate-warden-glow,
+  .map-gate-seam {
     animation: none;
   }
 }
