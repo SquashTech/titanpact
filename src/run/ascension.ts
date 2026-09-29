@@ -2,11 +2,17 @@
 // run start and held on `RunState.ascension`; Base is rung 0. Ascension 1 is Permadeath: every
 // hero is mortal, a knockout on a won fight is gone with its gear unless a Revive is spent on it
 // at the Fallen beat, and the companion — mortal since it joined — is the one body a Revive
-// never saves. Rungs above it are proposed, not built (§5), so the ladder stops at 1.
+// never saves. Beside it the Guardians wake (§2a): the champion leads its fight, wears its type's
+// Mark and grows on hero grades, and the escorts rise to three from Act 3. Rungs above it are
+// proposed, not built (§5), so the ladder stops at 1.
 
+import type { HeroDefinition } from '../engine/content';
+import { titansMarkFor } from '../data/passives';
+import type { TitanpactType } from '../data/typechart';
 import type { Profile } from './profile';
 import type { RosterEntry, RunState } from './state';
 import { isCompanion } from './companion';
+import { DEFAULT_GRADES } from './growth';
 
 /** The rungs that exist. A2–A5 are proposed (docs/ascension.md §5); the picker offers up to here. */
 export const MAX_ASCENSION = 1;
@@ -30,7 +36,7 @@ export const ASCENSION_RUNGS: readonly AscensionRung[] = [
   {
     rung: 1,
     name: 'Ascension 1',
-    rule: 'Permadeath. A hero knocked out is gone from the run with everything it carried, unless a Revive is spent on it when the fight ends. Nothing saves the companion.',
+    rule: 'Permadeath. A hero knocked out is gone from the run with everything it carried, unless a Revive is spent on it when the fight ends. Nothing saves the companion. And the Guardians wake: each takes the field from the first round, bears the Titan’s Mark, and brings a third escort from Act 3.',
     entryFee: 1,
     clearBonus: 6,
   },
@@ -43,6 +49,30 @@ export function rungOf(rung: number): AscensionRung {
 
 export function isPermadeath(run: Pick<RunState, 'ascension'>): boolean {
   return run.ascension >= PERMADEATH_FROM_ASCENSION;
+}
+
+/** The rung the Guardians wake at (docs/ascension.md §2a), and every rung above it. */
+export const GUARDIANS_WAKE_FROM_ASCENSION = 1;
+
+/** A woken Guardian's escorts by act. A Location has two or three spawn lines and an escort never repeats one, so three is the ceiling. */
+export const WOKEN_ESCORTS_BY_ACT: readonly number[] = [2, 2, 3, 3, 3];
+
+export function guardiansWake(run: Pick<RunState, 'ascension'>): boolean {
+  return run.ascension >= GUARDIANS_WAKE_FROM_ASCENSION;
+}
+
+export function wokenEscortCount(actNumber: number): number {
+  return WOKEN_ESCORTS_BY_ACT[Math.max(1, Math.min(actNumber, WOKEN_ESCORTS_BY_ACT.length)) - 1];
+}
+
+/** The champion as it wakes: its front-loaded E grades traded for a hero's, so it keeps pace with the act. */
+export function wokenChampion(definition: HeroDefinition): HeroDefinition {
+  return { ...definition, growthGrades: DEFAULT_GRADES };
+}
+
+/** The Mark a woken champion wears: its primary type's, the one its seal kept off at Base. */
+export function wokenChampionMark(definition: HeroDefinition): string | null {
+  return titansMarkFor[definition.types[0] as TitanpactType] ?? null;
 }
 
 /** Mortal by the rule of the run, or by what it is: the companion always, everyone under Permadeath. */

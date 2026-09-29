@@ -14,6 +14,8 @@ import { generateItinerary, locationForAct } from '../src/run/locations';
 import { addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
 import { encounterSeedFor, nodeEncounter, scoutedTypes, type EncounterContext } from '../src/run/encounters';
 import { isRecruitable } from '../src/run/recruitment';
+import { wokenChampion, wokenChampionMark, wokenEscortCount } from '../src/run/ascension';
+import { guardianEscortPool } from '../src/run/spawn';
 
 function runAt(seed: number, act: number): RunState {
   let run = createRunState(50);
@@ -81,6 +83,28 @@ test('encounters: the mob nodes draw spawn and the Guardian draws escorts plus i
   assert.strictEqual(guardian.run.roster.length, 3);
   assert.strictEqual(guardian.squad.benchIds[0], ctx.location.guardianFinalEnemyId);
   for (const id of guardian.squad.activeIds) assert.ok(id && id in titanspawn, `${id} is not a spawn escort`);
+});
+
+test('encounters: from A1 the Guardian wakes — it leads, wears its Mark, grows on hero grades, and gains an escort from Act 3', () => {
+  for (const act of [1, 2, 3, 5]) {
+    const base = runAt(9, act);
+    const [boss] = nodesOfType(base, 'boss');
+    const asleep = nodeEncounter(boss, contextFor(base));
+    const woken = nodeEncounter(boss, contextFor({ ...base, ascension: 1 }));
+    const championId = contextFor(base).location.guardianFinalEnemyId!;
+    const champion = (e: typeof woken) => e.run.roster.find((r) => r.rosterId === championId)!;
+
+    assert.ok(asleep.squad.benchIds.includes(championId) && !asleep.squad.activeIds.includes(championId), `act ${act}: Base keeps the champion benched`);
+    assert.deepStrictEqual(champion(asleep).bonusPassiveGrants, [], `act ${act}: Base keeps the Mark off`);
+    assert.strictEqual(woken.squad.activeIds[1], championId, `act ${act}: the woken champion leads`);
+    assert.deepStrictEqual(champion(woken).bonusPassiveGrants, [wokenChampionMark(enemies[championId])]);
+    assert.notDeepStrictEqual(wokenChampion(enemies[championId]).growthGrades, enemies[championId].growthGrades, 'the woken champion trades its E grades');
+
+    const escorts = (e: typeof woken) => e.run.roster.filter((r) => r.rosterId !== championId).length;
+    assert.strictEqual(escorts(asleep), act === 1 ? Math.min(2, base.roster.length) : 2);
+    assert.strictEqual(escorts(woken), Math.min(wokenEscortCount(act), Object.keys(guardianEscortPool(contextFor(base).location, act)).length));
+    assert.strictEqual(new Set([...woken.squad.activeIds, ...woken.squad.benchIds]).size, woken.run.roster.length, `act ${act}: every body fielded once`);
+  }
 });
 
 test('encounters: a hero on the roster is never drawn against the player', () => {

@@ -18,6 +18,7 @@ import { encounterScaling, encounterHeroCountOverride, enemyLoadoutFor } from '.
 import { appendFinalEnemy, generateEncounter, type Encounter, type EncounterNodeType } from './enemyGen';
 import { locationBias } from './locations';
 import { isCompanion } from './companion';
+import { guardiansWake, wokenChampion, wokenChampionMark, wokenEscortCount } from './ascension';
 import { guardianEscortPool, mobEncounter } from './spawn';
 import { DECK_HEROES_PER_FIGHT } from './deck';
 
@@ -75,7 +76,9 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
   // reach one roster via a contract claim (mirrors rollGuildHallOffers). Passed unconditionally:
   // enemy and hero ids never collide (test/recruitment.test.ts), so it is inert on a mob pool.
   const excludeHeroIds = run.roster.map((r) => r.heroId);
-  const standardCount = encounterKind === 'boss' ? 2 : 4;
+  // From A1 the Guardians wake (run/ascension.ts): the escorts climb with the act, the champion leads.
+  const woken = type === 'boss' && guardiansWake(run);
+  const standardCount = encounterKind === 'boss' ? (woken ? wokenEscortCount(run.actNumber) : 2) : 4;
   // Act 1 caps the enemy count at the roster — the IMMORTAL roster (2026-09-13, per user
   // direction, titanspawn-overhaul.md "Phase 6 findings"): the companion is half a hero and must
   // not invite a whole enemy, so the Act 1 Skirmish is 3v2 with it on the bench.
@@ -86,7 +89,7 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
   // Location affinity bias applies to the recruitable pool only (docs/locations.md §2).
   const bias = pool === heroes ? locationBias(location, heroes, heroCount) : undefined;
   let encounter = generateEncounter(encounterKind, seed, pool, {
-    heroCount: heroCountOverride,
+    heroCount: heroCountOverride ?? (woken ? standardCount : undefined),
     bias,
     excludeHeroIds,
     scaling,
@@ -98,10 +101,27 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
   });
   // The Location's held-back champion arrives benched, so the first enemy KO brings him in.
   const finalEnemyId = type === 'boss' ? location.guardianFinalEnemyId : null;
-  if (finalEnemyId) {
-    encounter = appendFinalEnemy(encounter, finalEnemyId, enemies, encounterSeedFor(ctx.run.map!, `${node.id}:champion`), scaling, loadout);
+  if (finalEnemyId && enemies[finalEnemyId]) {
+    const championPool = woken ? { ...enemies, [finalEnemyId]: wokenChampion(enemies[finalEnemyId]) } : enemies;
+    encounter = appendFinalEnemy(encounter, finalEnemyId, championPool, encounterSeedFor(ctx.run.map!, `${node.id}:champion`), scaling, loadout);
+    if (woken) encounter = wakeChampion(encounter, finalEnemyId, wokenChampionMark(enemies[finalEnemyId]));
   }
   return encounter;
+}
+
+/** A woken champion wears its Mark and takes the second lead slot from round one; the escort it displaces waits on the bench. */
+function wakeChampion(encounter: Encounter, championId: string, markId: string | null): Encounter {
+  const roster = markId
+    ? encounter.run.roster.map((entry) => (entry.rosterId === championId ? { ...entry, bonusPassiveGrants: [...entry.bonusPassiveGrants, markId] } : entry))
+    : encounter.run.roster;
+  const { activeIds, benchIds } = encounter.squad;
+  const displaced = activeIds[1];
+  const squad = {
+    ...encounter.squad,
+    activeIds: [activeIds[0], championId] as typeof activeIds,
+    benchIds: [...benchIds.filter((id) => id !== championId), ...(displaced ? [displaced] : [])],
+  };
+  return { run: { ...encounter.run, roster }, squad };
 }
 
 /** The types the enemy side shows, in field order (active first), each hero's effective types deduped. */

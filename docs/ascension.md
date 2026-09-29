@@ -1,6 +1,6 @@
 # ascension.md — The Ascension ladder: Permadeath, then rules
 
-> **STATUS: A1 DECIDED 2026-09-21 (per user direction); PHASES 0–1 ARE IN — A1 is PLAYABLE (`src/run/ascension.ts`, the title's rung picker, the Fallen beat), phase 0 measured in §9b. Phase 2 is IN (2026-09-26) as §7a records it — the bestiary page, the companion star and the awakening; phase 3 (the star colours) NOT BUILT. A2–A5 PROPOSED, not decided.**
+> **STATUS: A1 DECIDED 2026-09-21 (per user direction); PHASES 0–1 ARE IN — A1 is PLAYABLE (`src/run/ascension.ts`, the title's rung picker, the Fallen beat), phase 0 measured in §9b. Phase 2 is IN (2026-09-26) as §7a records it — the bestiary page, the companion star and the awakening; phase 3 (the star colours) NOT BUILT. **The Guardians wake at A1 (2026-09-29, §2a): the champion leads, wears its Mark, grows on hero grades, escorts 2/2/3/3/3 — A1 measured 49.6% skilled / 5.2% chart.** A2–A5 PROPOSED, not decided.**
 > Ascension 1 is Permadeath from the first fight, the Revive consumable the one way back, offered
 > at the end of the fight that took the hero — and **a Revive cannot save the companion** at any
 > rung. The three companion additions in §7 are decided the same day. Every rung above A1
@@ -102,6 +102,41 @@ tutorial-shaped 3v2 Skirmish ignores the companion). Under A1 that is the empty 
 `companionHeroId` the IDENTITY, and `companionOf`, the Scribe screen's *Grows!* label and the
 count cap all read the rule today because the two have never disagreed.
 
+## 2a. The Guardians wake — BUILT (2026-09-29, per user direction)
+
+Sim pass 13 put A1 at 74.6% full-clear (skilled) / 16.9% (chart) against Base's 92.1 / 55.4:
+Blessings and the in-fight lead pick had lifted both rungs, and Permadeath alone bit only in Act 2.
+The designer's yardstick (Base = Pokémon Emerald as an adult, A1 = an Emerald Nuzlocke, A5 = a
+difficulty rom hack) wants A1 steeper, and **Blessings stay** — so A1 took half of what §5 had
+proposed for A2, plus two pieces of its own. From A1 every Guardian fight (`guardiansWake`,
+`src/run/ascension.ts`, applied in `encounters.ts`):
+
+- **The champion leads**: it takes the second lead slot from round one, the escort it displaces
+  on the bench. At Base it still waits for the first KO.
+- **It wears its primary type's Mark** (`wokenChampionMark`): the +5 Force a round every spawn
+  carries, which its seal keeps off at Base (`innate-passives.md` §3).
+- **It grows on hero grades** (`wokenChampion`, `DEFAULT_GRADES` for `CHAMPION_GRADES`), so it keeps
+  pace with the act instead of arriving front-loaded.
+- **Escorts by act** (`WOKEN_ESCORTS_BY_ACT` = 2 / 2 / 3 / 3 / 3). Three is the ceiling: a Location
+  has two or three spawn lines and an escort never repeats one, so a fourth needs repeated lines.
+
+Measured (4000 runs a pilot, seed 84, all 84 heroes), each piece and the whole:
+
+| A1 variant | skilled | chart | where it bit |
+|---|---|---|---|
+| Permadeath alone | 74.8% | 17.0% | Act 2 |
+| champion leads | 70.2 | 15.0 | Acts 1–2 |
+| Mark | 68.5 | 13.2 | the Act 1 Manticore (98 → 94 / 87 → 74) |
+| hero grades | 70.5 | 13.6 | the Act 2 Guardian |
+| lead + Mark + grades | 53.9 | 7.8 | Acts 1–2 only |
+| + escorts 2/3/3/3/3 | 46.0 | 4.5 | Act 2 the wall (69 / 32) |
+| **+ escorts 2/2/3/3/3 (shipped)** | **49.6** | **5.2** | acts 87/75/92/92/96/94 skilled, 57/38/73/70/79/59 chart |
+
+Base is untouched (91.6% on the built tree). **Acts 4–5 did not move with anything the champion
+holds**: a champion five levels further over its escorts took a point off each. By Act 4 six grown
+heroes outclass one more body; the late Guardians need a shape change — repeated escort lines, a
+second phase (§5's A5), or an authored Ascended move — and the designer chose to hold here.
+
 ---
 
 ## 3. The Fallen — the beat
@@ -160,7 +195,7 @@ comps scripted rather than random, new mechanics on boss fights.
 | Rung | Rule | The lever |
 |---|---|---|
 | **A1** | **Permadeath.** Every hero mortal; the Revive the one save, offered at the fight's end; the companion beyond it. | `mortal`, `absorbCompanions`, `reviveHero` — all exist. |
-| **A2** | **The Guardians wake.** Every Guardian carries its type's Mark, and is **warded while its escorts stand** — the Herald's rule, trickled down. The boss is the last thing you kill, and it grows while you get there. | `titansMarkFor` (measured 2026-09-20: a Marked champion was the whole of a twelve-point Act 1 loss — the size of the rung is already known), `wardedWhileCompanyStands`. |
+| **A2** | **The ward.** Every Guardian is **warded while its escorts stand** — the Herald's rule, trickled down. The boss is the last thing you kill. (The Mark half of this row moved to A1 on 2026-09-29, §2a; A2 needs a second piece to stand as a rung.) | `wardedWhileCompanyStands`. The ward reads oddly beside §2a's leading champion — a warded champion on the field from round one is a target you cannot hit, which may be the point. |
 | **A3** | **Warbands.** The fork and the Guardian's escorts draw **authored comps** — a setter beside its reader, a Shield wall behind a DoT, a Haunt engine — in place of the typing roll, and enemies wear gear from Act 1. The tile still previews the typing; what it cannot preview is that the pair was built. | `nodeEncounter` / the map-seeded draw in `src/run/encounters.ts`; `ENEMY_GEAR_FROM_ACT` 4 → 1. The one rung that is authoring work: a warband is content, one or two per type pair. |
 | **A4** | **The Banners fray.** Each Banner at half, and the Anvil and Enchanter at ×1.5. The economy rung — the one that taxes the Revive (§1). | `guardianBannerRelics` (`src/data/relics.ts`; the three are measured parity, so one factor keeps it), `ANVIL_PRICE_BY_TARGET`, `ENCHANT_PRICE_BY_RARITY` (`src/run/shop.ts`). |
 | **A5** | **The Titan's reach.** Withering Gaze at a tenth, every Guardian a two-phase fight, and an Ascension AI tier. | `WITHERING_GAZE_FRACTION` 0.05 → 0.10 (a tenth measured as the Eyes phase's whole margin, `titan-eyes.md` §10.3); the `reserves` phase (`Squad.reserves`, `buildCombatState.ts`) is the finale's and takes a second phase on any squad. **The AI tier does not exist** — the one rung with nothing to turn yet (`run-loop.md:586` reserves it a dial). |
@@ -290,7 +325,7 @@ or from the Late step), not whether the line wakes.
 | 1 | **DONE 2026-09-21.** **A1.** `RunState.ascension` (saved; an older file loads as Base), `Profile.ascensionCleared` and `RunRecord.ascension`, the title's rung sheet (*How hard?* — every rung up to `openAscension`, a Base clear opening A1; the summary's *New Run* keeps the rung), `isPermadeath` / `isMortal` / `fallenAfterFight` / `releaseFallen` in `src/run/ascension.ts`, the Fallen beat (`FallenScreen`) first in the post-fight chain with the KO'd left `down` on the roster until Continue so the level report reads the roster for who is still there, the map header's `Asc N` chip | The companion's row unbuttoned, its KO absorbed as at Base. The map-side Revive needed no hiding: nobody is ever `down` on the map at A1. The sim's `resolveFallen` reads the same verbs. `test/ascension.test.ts`. The tutorial forces rung 0. |
 | 2 | **DONE 2026-09-26** (§7a). **The companion** (§7): the bestiary page, the `companion:<type>` star read at the Eyes' close, the awakening at the finale and the woken line on later runs | All rungs including Base. `test/companion`, `test/profile`. |
 | 3 | **Stars and colours** (§8): `Profile.ascension`, the unlock, the colour mapping, the storage change | The first rung a star can record. |
-| 4 | **A2** — the Mark and the ward on every Guardian | Measured against phase 0's A1 baseline. |
+| 4 | **A2** — the ward on every Guardian (the Mark went to A1, §2a) | Measured against §2a's A1. |
 | 5 | **A3** — warbands as content, enemy gear from Act 1 | The content phase; one or two warbands a type pair, pooled beside the typing draw. |
 | 6 | **A4** — the Banners at half, the Smithy ×1.5 | Read `spent:revive` first (§4). |
 | 7 | **A5** — the Gaze at a tenth, two-phase Guardians, the AI tier | The AI tier is new work and its own document. |
@@ -360,7 +395,8 @@ nothing at either rung; and the Act 2 wall as the thing to play before A2 exists
 | CLAUDE.md "Roster hard cap = 6" | *One exception, the companion … a knockout removes it from the run* | **A1**: every hero is that exception. The companion stays the ONE a Revive cannot reach. |
 | CLAUDE.md "Wounds" | *a KO'd hero is `down` … stands up only at the Rest seat, the Guild Hall's mend, a Revive, or the act's end* | **A1**: three of the four faucets are gone; the Revive stays, moved to the Fallen beat. Base untouched. |
 | CLAUDE.md "Consumables" — the Revive | *spent on a hero that is DOWN — on the map, on the squad screen, on a hero a fight left down* | **A1**: there is no `down`; the Revive is spent at the fight's end or in the fight. |
-| `innate-passives.md` §3 | *no Guardian carries the Mark* — the seal keeps it off | **A2** reverses it, on purpose, at the measured price. |
+| `innate-passives.md` §3 | *no Guardian carries the Mark* — the seal keeps it off | **A1** reverses it (§2a, 2026-09-29), on purpose, at the measured price. |
+| CLAUDE.md "Enemies are LEVELLED" | *a champion is FRONT-LOADED*, all-E grades; the Guardian fields two escorts, its champion benched | **A1** (§2a): hero grades, the champion leads, escorts 2/2/3/3/3. |
 | CLAUDE.md "Enemies are LEVELLED" | *Enemy gear from Act 4* (`ENEMY_GEAR_FROM_ACT`) | **A3**: from Act 1. |
 | CLAUDE.md "The Guardian's Banner" | the figures are measured parity | **A4** keeps the parity (one factor on all three) and halves the size. |
 | `titan-eyes.md` §10 | `WITHERING_GAZE_FRACTION` = 0.05 | **A5**: a tenth. |

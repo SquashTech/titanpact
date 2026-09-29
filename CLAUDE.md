@@ -194,6 +194,9 @@ don't silently override it.
 > `--ascension`; measured (§9b, 3000 runs, skilled pilot) full-clear 73.7 → 31.2%, Act 2
 > the wall (91 → 66), contracts claimed 1.74 → 2.57 a run and the swap route 2.27 → 0.39, the Revive
 > crowding the Smithy out through Act 3 — the Revive supply is the binding number.
+> **A1 also wakes the Guardians** (2026-09-29, per user direction, §2a): the champion leads from round one,
+> wears its type's Mark, grows on hero grades, and brings escorts 2/2/3/3/3 by act — A1 49.6% skilled /
+> 5.2% chart against Base's 92 / 55, Blessings kept on every rung.
 > **Phase 2 is IN (2026-09-26, §7a):** the Compendium's Spawn page (a line revealed by its star), the
 > `companion:<type>` star, and — per user direction — the companion **awakening** at the finale:
 > Ancient takes its secondary slot, and every later companion of that line joins Ancient
