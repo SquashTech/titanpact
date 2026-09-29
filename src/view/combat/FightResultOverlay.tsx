@@ -11,6 +11,7 @@ import { ItemDetailOverlay } from '../shared/ItemDossier';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { NODE_TINT_GOLD, NodeMotes } from '../shared/NodeStage';
 import { prefersReducedMotion } from '../shared/reducedMotion';
+import { useCoinCount } from '../shared/useCoinCount';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { playXpBar, xpBarSegments, xpBarTickTimes, xpBarTotalMs } from '../shared/xpBar';
 import { getTypeColor } from './typeColors';
@@ -26,10 +27,6 @@ const CAPTION_LEAD_MS = 60;
 const LEDGER_LEAD_MS = 200;
 const LEDGER_STAGGER_MS = 150;
 const CTA_LEAD_MS = 180;
-
-/** Gold counts up in the ledger the way a Cache does, at one strike a step until it has to stride. */
-const COIN_TICK_MS = 50;
-const COIN_MAX_TICKS = 12;
 
 const STAGE_TITLE = 0;
 const STAGE_FILL = 1;
@@ -317,33 +314,6 @@ function PartyMember({ entry, index, xp, fielded, filling, landed, hpAfter }: Me
       {!fielded && <span className="fight-result-reserve-tag">Reserve</span>}
     </div>
   );
-}
-
-/** Runs 0 up to `amount`, one coin-strike a step. */
-function useCoinCount(amount: number, active: boolean): number {
-  const [shown, setShown] = useState(() => (prefersReducedMotion() ? amount : 0));
-
-  useEffect(() => {
-    if (!active) return;
-    if (prefersReducedMotion()) {
-      setShown(amount);
-      return;
-    }
-    const steps = Math.max(1, Math.min(COIN_MAX_TICKS, amount));
-    let step = 0;
-    const interval = window.setInterval(() => {
-      step += 1;
-      setShown(Math.round((amount * step) / steps));
-      playSfx('gold.coin', { pitch: 1 + step * 0.04 });
-      if (step >= steps) {
-        window.clearInterval(interval);
-        playSfx('gold.purse', { delay: 0.05 });
-      }
-    }, COIN_TICK_MS);
-    return () => window.clearInterval(interval);
-  }, [amount, active]);
-
-  return active ? shown : 0;
 }
 
 /** The count starts when the row lands, not when the overlay does — so it is heard where it is seen. */

@@ -7,6 +7,8 @@ import { rarityWeightsFor } from '../../run/equipment';
 import { grantCurrencyReward, purseRangeFor, rollGoldRange } from '../../run/runProgress';
 import { NodeMotes, NODE_TINT_GOLD } from '../shared/NodeStage';
 import { prefersReducedMotion } from '../shared/reducedMotion';
+import { ResourceGlyph } from '../shared/RunGlyph';
+import { useCoinCount } from '../shared/useCoinCount';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
 import { mapNodeArt } from './mapNodeArt';
 import { RoadScene } from './RoadEncounter';
@@ -53,9 +55,25 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
   return <EquipmentCache run={run} onClaimEquipment={onClaimEquipment} />;
 }
 
-/** The pile, and the haul rising over it. Paid on arrival: the tap only walks on. */
+/** Coins out of the pouch: x drift (px), peak height (px), delay (s). Golden-ratio spread, so no two land together. */
+const GOLD_COINS = Array.from({ length: 12 }, (_, i) => {
+  const t = (i * 0.618034) % 1;
+  return { x: Math.round(-95 + t * 190), rise: Math.round(28 + ((i * 0.382) % 1) * 36), delay: +((i * 0.035) % 0.3).toFixed(3) };
+});
+
+/** When the pouch gives (ms): the coins burst and the count starts. */
+const POUCH_BURST_AT = 650;
+
+/**
+ * The purse by the road. Paid on arrival — the tap only walks on — and staged as a payout: the
+ * pouch jolts, coins burst out of it, the haul counts up coin by coin, and the purse under it shows
+ * what it now holds.
+ */
 function GoldOnTheRoad({ run, onRunChange, onContinue }: Pick<Props, 'run' | 'onRunChange' | 'onContinue'>) {
   const [amount] = useState(() => rollGoldRange(purseRangeFor(run.actNumber)));
+  const [from] = useState(run.gold);
+  const [burst, setBurst] = useState(() => prefersReducedMotion());
+  const counted = useCoinCount(amount, burst);
   // Ref-guarded rather than deps-guarded: StrictMode mounts the effect twice, and the second pass
   // must not pay the player again.
   const granted = useRef(false);
@@ -63,19 +81,37 @@ function GoldOnTheRoad({ run, onRunChange, onContinue }: Pick<Props, 'run' | 'on
     if (granted.current) return;
     granted.current = true;
     onRunChange(grantCurrencyReward(run, amount));
-    playSfx('gold.coin', { delay: 0.55 });
-    playSfx('gold.purse', { delay: 0.8 });
     // `run` is deliberately absent: this fires once, on arrival, against the state it arrived with.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (burst) return;
+    const timer = window.setTimeout(() => setBurst(true), POUCH_BURST_AT);
+    return () => window.clearTimeout(timer);
+  }, [burst]);
+
   const name = 'A Spilled Purse';
   return (
-    <RoadScene className="is-place is-arrival is-gold" label={`${name}: +${amount} gold`} onClick={onContinue}>
-      <img src={mapNodeArt('currencyReward')} className={`road-encounter-figure${prefersReducedMotion() ? ' is-still' : ''}`} alt="" draggable={false} />
+    <RoadScene className={`is-place is-arrival is-gold${burst ? ' is-burst' : ''}`} label={`${name}: +${amount} gold`} onClick={onContinue}>
+      <img src={mapNodeArt('currencyReward')} className={`road-encounter-figure road-gold-pouch${prefersReducedMotion() ? ' is-still' : ''}`} alt="" draggable={false} />
+      {burst && (
+        <span className="road-gold-fountain" aria-hidden="true">
+          {GOLD_COINS.map((c, i) => (
+            <span
+              key={i}
+              className="road-gold-coin"
+              style={{ '--coin-x': `${c.x}px`, '--coin-rise': `${c.rise}px`, animationDelay: `${c.delay}s` } as CSSProperties}
+            />
+          ))}
+        </span>
+      )}
       <span className="road-gold-delta" aria-hidden="true">
-        +{amount}
+        +{counted}
         <span className="road-gold-unit">g</span>
+      </span>
+      <span className="road-gold-purse" aria-hidden="true">
+        <ResourceGlyph kind="gold" /> {from} <span className="road-gold-arrow">→</span> <strong>{from + counted}</strong>
       </span>
       <span className="road-encounter-label" aria-hidden="true">
         {name}
