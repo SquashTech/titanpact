@@ -16,7 +16,8 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { getTypeColor } from '../combat/typeColors';
 import { MoveButtonReplica } from '../shared/MoveTile';
 import { PassiveReadout } from '../shared/passiveIcons';
-import { computeStatTotal, StatBars, StatGlyph, STAT_LABELS } from '../shared/StatBars';
+import { computeStatTotal, StatGlyph, STAT_LABELS } from '../shared/StatBars';
+import { StatColumns } from '../shared/StatColumns';
 import { ElementGlyph } from '../shared/elementIcons';
 import { TabStrip, type TabSpec } from '../shared/TabStrip';
 import { TypeBadge } from '../shared/TypeBadge';
@@ -362,7 +363,7 @@ export function HeroDossierOverlay({ hero: opened, cycle, onClose }: Props) {
               )}
               {mark && <PassiveReadout passive={mark} source="Titan's Mark" />}
 
-              <StatBars baseStats={hero.baseStats} grades={gradesFor(hero)} />
+              <StatColumns baseStats={hero.baseStats} grades={gradesFor(hero)} />
               <TypeMatchups types={hero.types} />
             </>
           )}
