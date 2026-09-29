@@ -68,6 +68,11 @@ export interface Combatant {
   permanentStatGains?: Partial<Record<StatKey, number>>;
   fainted: boolean;
   /**
+   * Came into the fight already down (Squad.downIds): no knockout of this fight's, so it counts
+   * toward neither the side's size nor its knockouts until a Revive stands it up and clears this.
+   */
+  enteredDown?: boolean;
+  /**
    * A bench entry held back for a later PHASE of the fight (switching.ts replacementCandidates):
    * it enters only once nothing of an earlier phase stands. Unset = the opening company, phase 0.
    * Set at fight build from Squad.reserves — the Titan's Eyes, docs/titan-eyes.md §6, §10.
@@ -118,7 +123,7 @@ export function phaseOf(combatant: Combatant | undefined): number {
  */
 export function lockInThreshold(state: CombatState, side: Side): number {
   let size = 0;
-  for (const id in state.combatants) if (state.combatants[id].side === side) size++;
+  for (const id in state.combatants) if (state.combatants[id].side === side && !state.combatants[id].enteredDown) size++;
   return Math.max(2, Math.ceil(size / 2));
 }
 

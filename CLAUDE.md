@@ -517,9 +517,12 @@ don't silently override it.
   catches it inverting again.
 - **Roster hard cap = 6, and EVERY fight fields the whole roster** (2026-09-17, per user
   direction, FOR PLAYTEST — `STANDARD_SQUAD_SIZE` = `ROSTER_CAP`, `src/run/squad.ts`; it was
-  bring-6-pick-4). The pre-fight screen is **lead order**, not a pick: against a fully scouted
+  bring-6-pick-4). There is no pick, only **leads**: against a fully scouted
   AI party the pick was a chart lookup with a hidden answer key, and roster-wide levelling had
-  already made rotation free. Lock-in derives from the side's size (`lockInThreshold`, half,
+  already made rotation free. **The leads are chosen IN the fight** (2026-09-28, per user
+  direction, replacing the pre-fight lead-order screen): the enemy's two take the field first,
+  then the player picks two from the whole roster — HP and a matchup arrow per enemy lead on
+  every cell — and the fight goes straight on (`openingSquad`, `placeLeads`, `LeadPickPanel`). Lock-in derives from the side's size (`lockInThreshold`, half,
   floor 2), so six locks at **3**. Named costs, all open for playtest: the companion can no
   longer be benched out of a fight it would die in; Wounds lose the sideboard faucet (Rest, the
   mend and a contract carry it); the finale's squad size is no longer special. 6v4 is a player
@@ -658,8 +661,8 @@ don't silently override it.
   low-odds drop off a won encounter — deliberately no reward-node type. What a fight drank comes
   off the purse at resolve, so a replayed fight refunds it. **The Revive** (2026-09-17, per user
   direction) is the third kind and different in every way that matters: spent on a hero that is
-  DOWN — on the **map**, on the squad screen, on a hero a fight left down (`reviveHero`, half HP),
-  and **in a fight since 2026-09-18** (per user direction), from the Bag on the potions' terms,
+  DOWN — a downed hero enters every fight fallen (`Squad.downIds`, `enteredDown`), so it is spent
+  on the lead pick (2026-09-28) or from the Bag on the potions' terms (2026-09-18),
   the fallen hero standing onto the bench at half (`useConsumable` 'revive') — the saved-for-the-
   finale layer of safety in a fight nothing mends inside;
   **sold steep, one a visit** (`REVIVE_PRICE` = 80, `REVIVE_PURCHASE_LIMIT` = 1, 2026-09-18 per
@@ -799,7 +802,7 @@ what's still unimplemented:
   what is missing** since 2026-09-18 per user direction — `mendPrice`, `MEND_PRICE_PER_HERO` = 15
   a hero's worth of missing HP, a downed hero a whole one, floor 5, so six at half is 45 where
   the flat price was 40 and a scratch costs a scratch), a
-  **Revive** (a rare drop, spent on the squad screen, half HP), or the act's end — the one free
+  **Revive** (a rare drop, spent in the next fight, half HP), or the act's end — the one free
   mend, everyone whole. The 25% walk floor this replaces was the guard against the 2026-08-16
   reversal, where raw persistence bricked a KO'd hero for the run with no way back; the four
   faucets are now the way back, and a KO is meant to cost the rest of the act. `down` is a flag,

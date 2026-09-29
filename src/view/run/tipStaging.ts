@@ -50,7 +50,7 @@ export const TIP_STAGING: Readonly<Record<string, TipStaging>> = {
   map: { pages: [[MAP_CHOICES], ['.map-rail'], [MAP_CHOICES]] },
   wounds: { pages: [['.map-party-chip .wound-bar']] },
   fork: { pages: [['.map-choice[data-node-type="elite"]']] },
-  squad: { pages: [['.squad-section-player', '.squad-footer .resolve-button']] },
+  squad: { pages: [['.lead-pick-grid', '.lead-pick-panel .resolve-button'], ['.lead-pick-grid .squad-slot-matchups', ENEMY_CARDS]] },
   item: { pages: [[PICK_CARDS], ['.item-who-sockets'], ['.item-who-sell']] },
   fallen: { pages: [[PICK_CARDS]] },
   scribe: { pages: [[PICK_CARDS], ['.scroll-screen .mastery-pips']] },

@@ -14,6 +14,11 @@ export interface Squad {
    * the side's defeat. Player squads never carry any.
    */
   reserves?: readonly (readonly string[])[];
+  /**
+   * Roster heroes a fight left down (run/wounds.ts): placed fallen and off the bench, so the
+   * fight's own Revive can stand one up. Player squads only.
+   */
+  downIds?: readonly string[];
 }
 
 export class SquadSelectionError extends Error {}
@@ -57,4 +62,17 @@ export function pickSquad(
 
   const [a, b, ...bench] = pickedRosterIds;
   return { activeIds: [a ?? null, b ?? null], benchIds: bench };
+}
+
+/**
+ * A run fight's squad before its leads are chosen: every standing hero benched, both slots empty,
+ * the downed carried in fallen. The player picks the leads in the fight, once the enemy's are on
+ * the field (FightScreen's lead pick). Two standing and nobody down has nothing to decide, so those
+ * two lead straight away.
+ */
+export function openingSquad(roster: readonly RosterEntry[]): Squad {
+  const standingIds = standingRoster(roster).map((r) => r.rosterId);
+  const downIds = roster.filter((r) => r.down).map((r) => r.rosterId);
+  if (standingIds.length <= 2 && downIds.length === 0) return pickSquad(roster, standingIds);
+  return { activeIds: [null, null], benchIds: standingIds, downIds };
 }

@@ -60,6 +60,7 @@ import './events.test';
 import './ai.test';
 import './save.test';
 import './wounds.test';
+import './leadPick.test';
 import './blessings.test';
 import './profile.test';
 import './starShop.test';

@@ -433,7 +433,8 @@ export function resolvePassiveReactions(
 /**
  * The opening lead's entry trigger: synthesises the SwitchedIn each starting active
  * would have produced and runs the normal matcher. The synthesised events are NOT
- * returned — only what the passives did. Called once at fight construction.
+ * returned — only what the passives did. Called at fight construction, and again for a side
+ * whose leads are placed after it (switching.ts placeLeads), with `sides` naming that side alone.
  */
 export function resolveBattleStartEntries(
   state: CombatState,
@@ -441,10 +442,11 @@ export function resolveBattleStartEntries(
   heroes: HeroLookup,
   statusDefs: Record<string, StatusDefinition>,
   passiveDefs: Record<PassiveId, PassiveDefinition>,
-  fieldEffectDefs: Record<string, FieldEffectDefinition>
+  fieldEffectDefs: Record<string, FieldEffectDefinition>,
+  sides: readonly Side[] = ['A', 'B']
 ): { state: CombatState; events: CombatEvent[] } {
   const entries: CombatEvent[] = [];
-  for (const side of ['A', 'B'] as const) {
+  for (const side of sides) {
     state.active[side].forEach((inCombatantId, slot) => {
       if (!inCombatantId) return;
       entries.push({ type: 'SwitchedIn', round, side, slot: slot as 0 | 1, outCombatantId: null, inCombatantId });

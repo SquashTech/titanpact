@@ -61,7 +61,8 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
   squad: tip(
     'squad',
     'Pick Your Leads',
-    'Tap two heroes to lead the fight. The rest wait on the bench.'
+    'The enemy sends out its leads first. Tap two heroes to answer them. The rest wait on the bench.',
+    'A green arrow means that hero has the type advantage over the enemy above it. A red arrow means the enemy has it.'
   ),
   item: tip(
     'item',

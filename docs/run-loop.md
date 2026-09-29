@@ -634,8 +634,9 @@ same coin.
 
 **The Revive** (2026-09-17, per user direction, with knockouts persisting — "Wounds" below). One
 downed hero stood up at **half HP** (`REVIVE_FRACTION`, the potions' figure), spent on the
-**squad screen** — the downed cell wears the key while one is held, and that screen is forced
-before every fight, so the moment a KO would bite is the moment the Revive is offered — **and,
+**lead pick** at the top of the next fight (2026-09-28; it was the pre-fight squad screen) — a
+downed hero enters fallen and its cell wears the key while one is held, so the moment a KO would
+bite is the moment the Revive is offered (`combat.md` "The lead pick") — **and,
 since 2026-09-18 (per user direction), in a fight**, from the Bag, on the potions' terms: a free
 command-phase action on a FALLEN hero, who stands onto the bench at half and is one fewer KO
 against lock-in (`useConsumable` 'revive', `engine/combat/consumables.ts`). It was kept off the

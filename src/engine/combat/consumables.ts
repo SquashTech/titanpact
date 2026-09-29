@@ -61,14 +61,16 @@ export function useConsumable(
   if (kind === 'revive') {
     // Stands, onto the bench at the back, and the side's knockouts count one fewer for lock-in —
     // half a side down is what locks it, and this hero is no longer down. Statuses and modifiers
-    // are whatever the KO left (a KO clears nothing of its own; switching does).
+    // are whatever the KO left (a KO clears nothing of its own; switching does). A hero that came
+    // in down was never one of the side's knockouts, so standing it takes none off.
     const maxHp = maxHpOf(combatantId);
     const amount = Math.max(1, Math.round(maxHp * CONSUMABLE_RESTORE_FRACTION));
+    const koRefund = combatant.enteredDown ? 0 : 1;
     const standing: CombatState = {
       ...state,
-      combatants: { ...state.combatants, [combatantId]: { ...combatant, fainted: false, currentHp: 0 } },
+      combatants: { ...state.combatants, [combatantId]: { ...combatant, fainted: false, enteredDown: false, currentHp: 0 } },
       bench: { ...state.bench, [combatant.side]: [...state.bench[combatant.side], combatantId] },
-      koCount: { ...state.koCount, [combatant.side]: Math.max(0, state.koCount[combatant.side] - 1) },
+      koCount: { ...state.koCount, [combatant.side]: Math.max(0, state.koCount[combatant.side] - koRefund) },
     };
     const up = applyHpDelta(standing, round, combatantId, amount, maxHp);
     return {

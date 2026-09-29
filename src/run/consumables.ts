@@ -1,8 +1,8 @@
 // Consumables (docs/run-loop.md "Consumables"): the run's two potions and the Revive. A TEAM
 // purse, not a per-hero bag — held beside gold and the Scrolls. A potion is drunk in a fight on
 // whichever active hero needs it (the engine half is engine/combat/consumables.ts); the Revive is
-// spent on a hero that is down — in a fight, from the Bag (the same engine half), or on the map,
-// on the squad screen, on a hero a fight left down (run/wounds.ts). This is what the run holds,
+// spent on a hero that is down — in a fight, from the Bag or the lead pick (the same engine half),
+// a hero a fight left down entering the next one fallen (run/squad.ts openingSquad). This is what the run holds,
 // pays and drops.
 
 import type { PotionKind } from '../engine/combat/consumables';
@@ -11,7 +11,7 @@ import type { RunState } from './state';
 
 export type { PotionKind };
 
-/** Every kind the purse holds. `revive` is never sold; since 2026-09-18 it is used in a fight as well as on the squad screen. */
+/** Every kind the purse holds. `revive` is never sold; it is used in a fight, the lead pick included (a downed hero enters fallen). */
 export type ConsumableKind = PotionKind | 'revive';
 
 export class ConsumableError extends Error {}

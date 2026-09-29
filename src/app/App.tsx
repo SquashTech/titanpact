@@ -24,7 +24,6 @@ import { FightScreen } from '../view/combat/FightScreen';
 import { TitleScreen } from '../view/run/TitleScreen';
 import { LaunchScreen } from '../view/run/LaunchScreen';
 import { DraftScreen } from '../view/run/DraftScreen';
-import { SquadSelectScreen } from '../view/run/SquadSelectScreen';
 import { MapScreen } from '../view/run/MapScreen';
 import { ShopNodeScreen } from '../view/run/ShopNodeScreen';
 import { BoonNodeScreen } from '../view/run/BoonNodeScreen';
@@ -58,7 +57,7 @@ import { fallenAfterFight, isPermadeath, openAscension } from '../run/ascension'
 import { FallenScreen } from '../view/run/FallenScreen';
 import type { CombatState } from '../engine/state';
 import { koRosterIdsOf } from '../run/buildCombatState';
-import { WoundsError, anyDown, anyWounded, buyMend, mendPrice, recordWounds, mendRoster, standingRoster } from '../run/wounds';
+import { WoundsError, anyWounded, buyMend, mendPrice, recordWounds, mendRoster } from '../run/wounds';
 import { entryHp } from '../view/shared/WoundBar';
 import { enemies, finaleEnemies, ENDBRINGER_ID, MANTICORE_ID, titanEyes, EYE_PHASES } from '../data/enemies';
 import { relics } from '../data/relics';
@@ -128,7 +127,7 @@ import { NODE_TINT_MANA, NODE_TINT_VITAL } from '../view/shared/NodeStage';
 import { prefetchTrack, setTrack } from '../audio/music';
 import { playSfx } from '../audio/sfx';
 import { hasTrack } from '../audio/tracks';
-import { pickSquad } from '../run/squad';
+import { openingSquad } from '../run/squad';
 import {
   reachableNodeIds,
   advanceToNode,
@@ -177,7 +176,6 @@ type Screen =
   /** The Eyes have closed: the collapse and the re-binding, ahead of everything the fight pays. */
   | { kind: 'titanBound'; next: Screen }
   | { kind: 'map' }
-  | { kind: 'squadSelect'; nodeId: string; nodeType: EncounterNodeType; encounter: Encounter }
   | {
       kind: 'fight';
       nodeId: string;
@@ -433,8 +431,6 @@ function screenTipIds(screen: Screen, run: RunState): readonly ScreenTipId[] {
       if (ahead.includes('elite') || ahead.includes('skirmish')) ids.push('fork');
       return ids;
     }
-    case 'squadSelect':
-      return ['squad'];
     case 'itemWho':
       return ['item'];
     case 'fallen':
@@ -461,14 +457,6 @@ function screenTipIds(screen: Screen, run: RunState): readonly ScreenTipId[] {
     default:
       return [];
   }
-}
-
-/**
- * With 2 or fewer heroes there is no lead order to decide, so the squad screen is skipped — unless
- * one of them is down, since that screen is where a Revive is spent (run/wounds.ts).
- */
-function skipSquadSelect(run: RunState): boolean {
-  return run.roster.length <= 2 && !anyDown(run);
 }
 
 export function App() {
@@ -677,11 +665,7 @@ export function App() {
         { spawnTypesFor: (locationId) => locations[locationId]?.spawnTypes ?? null, heraldLeads: true },
         { phases: EYE_PHASES, pool: titanEyes }
       );
-      if (skipSquadSelect(playerRun)) {
-        handleSquadConfirmed(pickSquad(playerRun.roster, standingRoster(playerRun.roster).map((r) => r.rosterId)), nodeId, 'boss', encounter);
-      } else {
-        setScreen({ kind: 'squadSelect', nodeId, nodeType: 'boss', encounter });
-      }
+      handleEnterFight(openingSquad(playerRun.roster), nodeId, 'boss', encounter);
     } else if (
       node.type === 'fight' ||
       node.type === 'skirmish' ||
@@ -689,8 +673,7 @@ export function App() {
       node.type === 'elite' ||
       node.type === 'boss'
     ) {
-      // Built at node-select time so SquadSelectScreen can scout the enemy squad — from the same
-      // deterministic draw the map's tile previewed (run/encounters.ts).
+      // The same deterministic draw the map's tile previewed (run/encounters.ts).
       const isMobFight = node.type === 'fight' || node.type === 'battle';
       const encounterKind = encounterKindOf(node.type);
       let encounter = nodeEncounter(node, {
@@ -709,12 +692,8 @@ export function App() {
       if (encounterKind === 'fight') {
         setPlayerRun((run) => ({ ...run, fightsStarted: run.fightsStarted + 1 }));
       }
-      if (skipSquadSelect(playerRun)) {
-        const squad = pickSquad(playerRun.roster, standingRoster(playerRun.roster).map((r) => r.rosterId));
-        handleSquadConfirmed(squad, nodeId, encounterKind, encounter);
-      } else {
-        setScreen({ kind: 'squadSelect', nodeId, nodeType: encounterKind, encounter });
-      }
+      // Leads are picked in the fight, once the enemy's are on the field (FightScreen's lead pick).
+      handleEnterFight(openingSquad(playerRun.roster), nodeId, encounterKind, encounter);
     } else if (node.type === 'shop' || node.type === 'muster') {
       setScreen({
         kind: 'shop',
@@ -752,7 +731,7 @@ export function App() {
     }
   }
 
-  function handleSquadConfirmed(squad: Squad, nodeId: string, nodeType: EncounterNodeType, encounter: Encounter) {
+  function handleEnterFight(squad: Squad, nodeId: string, nodeType: EncounterNodeType, encounter: Encounter) {
     const mapNodeType = playerRun.map!.nodes[nodeId].type as EncounterMapNodeType;
     const equipmentReward = equipmentDropFor(mapNodeType, playerRun.actNumber);
     const fight: Screen = {
@@ -768,7 +747,7 @@ export function App() {
       equipmentReward,
       consumableReward: rollConsumableDrop(mapNodeType),
     };
-    // The Herald is announced between the squad and the fight, once the squad is settled — and a
+    // The Herald is announced before the fight — and a
     // companion brought this far answers it: it wakes to Ancient for the fight, and its line joins
     // Ancient on every run after (profile.ts `ascendedSpawnTypes`).
     const waking = mapNodeType === 'finale' ? companionToAwaken(playerRun) : null;
@@ -1249,15 +1228,6 @@ export function App() {
           onSelectNode={handleSelectNode}
           onSaveAndQuit={() => setScreen({ kind: 'title' })}
           onAbandonRun={handleAbandonRun}
-        />
-      )}
-
-      {screen.kind === 'squadSelect' && (
-        <SquadSelectScreen
-          run={playerRun}
-          encounter={screen.encounter}
-          onRunChange={setPlayerRun}
-          onConfirm={(squad) => handleSquadConfirmed(squad, screen.nodeId, screen.nodeType, screen.encounter)}
         />
       )}
 

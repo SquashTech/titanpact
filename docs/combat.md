@@ -48,7 +48,7 @@ What it changes, all named for playtest rather than decided:
   one"). It is gone; the Rest seat, the Guild Hall mend and a contract arriving whole carry it.
   **And Wounds are the counterweight** (same day, per user direction): the 25% walk floor is
   deleted and **a knockout persists through the act** — a KO'd hero is `down`, not fielded, and
-  stands up only at a Rest, the mend, a Revive (a rare drop, spent on the squad screen) or the
+  stands up only at a Rest, the mend, a Revive (a rare drop, spent in the next fight) or the
   act's end (`run-loop.md` "Wounds"). Six bodies a fight, and a KO costs the rest of the act.
 - **The finale** is no longer special in squad size. Its identity is the Eyes, not the six.
 - **6v4 is a player buff.** The enemy party stays at 4 (2 + champion at a Guardian): more
@@ -64,6 +64,27 @@ Reader, a completed run). **The companion is lost in 40 → 56% of chart runs** 
 skilled): the shelter cost above is real and its size depends on the pilot. Every figure is
 the sim's; the call on which act term takes the buff, and whether the companion's exposure is
 its stake or its bug, is the playtest's.
+
+### The lead pick (2026-09-28, per user direction)
+
+The lead-order screen before every fight is gone. A run fight now opens with the enemy's two
+leads on the field and the player's slots empty (`openingSquad`, `src/run/squad.ts`); once the
+VS card and the enemy's entry passives have played, the console holds `LeadPickPanel` — the
+whole roster, each cell with its HP as the fight has it and one matchup arrow per enemy lead —
+and **Take the Field** in the bottom row. The two are placed by `placeLeads`
+(`engine/combat/switching.ts`), which is not a switch: no `SwitchedIn`, no lost first turn. Their
+entry passives run through `resolveBattleStartEntries` for that side alone, and round 1 follows
+at once. Two standing and nobody down still lead without asking.
+
+It is the VGC order made honest: the old screen scouted all four enemies and asked for leads
+blind to which two opened, so the arrows answered a question the fight never asked. Now they
+are drawn against the pair actually standing there. What the player gives up is the full scout
+of the enemy bench before committing — the map tile's typing preview is what remains of it.
+
+**The downed come in fallen** (`Squad.downIds`, `Combatant.enteredDown`): off every slot and
+bench, greyed on the lead pick with the Revive key while one is held, and reachable from the Bag
+all fight. `enteredDown` keeps them out of `lockInThreshold`'s side size and stops their Revive
+refunding one of this fight's knockouts, so lock-in reads exactly as it did when they stayed home.
 
 ---
 

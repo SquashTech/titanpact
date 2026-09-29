@@ -168,3 +168,22 @@ export function applyBenchHpRegen(
 
   return { state: { ...state, combatants }, events };
 }
+
+/**
+ * The opening leads of a side that entered with both slots empty, chosen once the other side's
+ * are on the field. Not a switch: nobody leaves, no SwitchedIn is emitted and the round-1 first
+ * turn is kept — resolveBattleStartEntries runs the entry hook for them, as it does for any lead.
+ */
+export function placeLeads(state: CombatState, side: Side, leadIds: readonly string[]): CombatState {
+  if (state.active[side].some((id) => id !== null)) throw new Error(`Side ${side} already has leads`);
+  const candidates = replacementCandidates(state, side);
+  if (leadIds.length === 0 || leadIds.length > 2 || new Set(leadIds).size !== leadIds.length) {
+    throw new Error('A side leads with one or two heroes');
+  }
+  for (const id of leadIds) if (!candidates.includes(id)) throw new Error(`${id} cannot lead`);
+  return {
+    ...state,
+    active: { ...state.active, [side]: [leadIds[0], leadIds[1] ?? null] },
+    bench: { ...state.bench, [side]: state.bench[side].filter((id) => !leadIds.includes(id)) },
+  };
+}

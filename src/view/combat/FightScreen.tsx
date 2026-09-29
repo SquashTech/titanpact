@@ -30,7 +30,7 @@ import {
 import { fieldHealMultiplier, type HealCaster } from '../../engine/heal/healPipeline';
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { DEFAULT_PACT_CLOCK, PACT_WARNING_ROUNDS, pactFractionFor, pactRoundOf } from '../../engine/combat/pactClock';
-import { applyForcedReplacement, replacementCandidates } from '../../engine/combat/switching';
+import { applyForcedReplacement, placeLeads, replacementCandidates } from '../../engine/combat/switching';
 import { consumableRefusal, useConsumable, type FightConsumableKind } from '../../engine/combat/consumables';
 import { CONSUMABLE_KINDS, CONSUMABLE_NAMES, type ConsumableKind, type ConsumablePurse } from '../../run/consumables';
 import { BagPanel, type BagTarget } from './BagPanel';
@@ -52,7 +52,8 @@ import { resolveElementalForceBonus } from '../../engine/damage/damagePipeline';
 import type { RunState, RosterEntry } from '../../run/state';
 import type { MapNodeType } from '../../run/map';
 import { matchFightTip, type FightTipContext } from '../../run/tips';
-import { FIGHT_TIPS } from '../../data/tips';
+import { FIGHT_TIPS, SCREEN_TIPS } from '../../data/tips';
+import { LeadPickPanel, LEAD_COUNT, type LeadPickHero } from './LeadPickPanel';
 import { TipOverlay } from '../run/TipOverlay';
 import { TitanRiseScreen } from '../run/TitanRiseScreen';
 import { overlayHost } from '../shared/overlayHost';
@@ -655,7 +656,10 @@ export function FightScreen({
   /** Bench hero tapped but not yet confirmed in the forced-replacement panel. Reset after each confirm (a double KO opens two in sequence). */
   const [replacementPick, setReplacementPick] = useState<string | null>(null);
   /** A forced replacement resolves outside a round, so it has no beat to carry its send-out; this holds the arrival for one animation. */
-  const [summonedId, setSummonedId] = useState<string | null>(null);
+  const [summonedIds, setSummonedIds] = useState<readonly string[]>([]);
+  /** A run fight opens with the player's slots empty (run/squad.ts openingSquad): the leads are picked once the enemy's are on the field. */
+  const [leadsPending, setLeadsPending] = useState(() => playerSquad.activeIds.every((id) => id === null));
+  const [leadPicks, setLeadPicks] = useState<string[]>([]);
   const [pending, setPending] = useState<Record<string, PendingAction>>({});
   const [selecting, setSelecting] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
   /** Second stage of a switchesUserOut declaration: target chosen, now picking who comes in. Commits a move, not a switch. */
@@ -755,7 +759,13 @@ export function FightScreen({
   const fieldEffectPress = useLongPress(inspectFieldEffect, inspectFieldEffect);
 
   // A player slot fainted and needs a bench replacement before the next round can be declared.
-  const openReplacementSlots = ([0, 1] as const).filter((slot) => combat.active[PLAYER_SIDE][slot] === null && playerBench.length > 0);
+  // Not while the leads are still to be picked: both slots are empty then, and that is the lead pick's to fill.
+  const openReplacementSlots = leadsPending
+    ? []
+    : ([0, 1] as const).filter((slot) => combat.active[PLAYER_SIDE][slot] === null && playerBench.length > 0);
+  const pickingLeads = leadsPending && !resolving;
+  const effectiveLeadPicks = playerBench.length <= LEAD_COUNT ? playerBench : leadPicks.filter((id) => playerBench.includes(id));
+  const leadsReady = playerBench.length > 0 && effectiveLeadPicks.length === Math.min(LEAD_COUNT, playerBench.length);
 
   const canAct = !resolving && openReplacementSlots.length === 0 && playerActiveAlive.length > 0;
   /** The VS card is up: it takes a tap and nothing else — no hold, no latched key. */
@@ -1057,8 +1067,38 @@ export function FightScreen({
     setCombat(entry.state);
     appendLog(formatEvents([...result.events, ...entry.events], allCombatants, entry.state.combatants, moves));
     setReplacementPick(null);
-    setSummonedId(benchedCombatantId);
-    window.setTimeout(() => setSummonedId((cur) => (cur === benchedCombatantId ? null : cur)), SUMMON_MS);
+    summon([benchedCombatantId]);
+  }
+
+  function leadPickHero(combatantId: string): LeadPickHero {
+    const combatant = combat.combatants[combatantId];
+    return { combatantId, hero: allCombatants[combatant.heroId], combatant, level: levelFor(combatantId), maxHp: maxHpOf(combatantId) };
+  }
+
+  function summon(ids: readonly string[]) {
+    setSummonedIds(ids);
+    window.setTimeout(() => setSummonedIds((cur) => (cur === ids ? [] : cur)), SUMMON_MS);
+  }
+
+  /** Three standing or more: a third tap replaces the earlier pick. Two or fewer all lead, picked for the player. */
+  function handleToggleLead(combatantId: string) {
+    setLeadPicks((prev) =>
+      prev.includes(combatantId) ? prev.filter((id) => id !== combatantId) : [...prev, combatantId].slice(-LEAD_COUNT)
+    );
+  }
+
+  /**
+   * The leads walk on and the fight goes straight on: their entry passives play as the opening's
+   * did, then the first command phase. Nothing between — the pick was the beat.
+   */
+  function handleConfirmLeads() {
+    const placed = placeLeads(combat, PLAYER_SIDE, effectiveLeadPicks);
+    const entry = resolveBattleStartEntries(placed, combat.round, allCombatants, statuses, passives, fieldEffects, [PLAYER_SIDE]);
+    setLeadsPending(false);
+    setLeadPicks([]);
+    summon(effectiveLeadPicks);
+    playSfx('switchIn');
+    startBeatPlayback(placed, entry.events, entry.state);
   }
 
   // formatEvents keys by round+index within its own call, which collides across calls in one round; re-key against the running length.
@@ -1294,7 +1334,7 @@ export function FightScreen({
           statCtx={statCtx}
           striking={beat?.strikeCombatantId === id}
           recalling={resolving && beat?.recallCombatantId === id}
-          summoning={(resolving && beat?.summonCombatantId === id) || summonedId === id}
+          summoning={(resolving && beat?.summonCombatantId === id) || summonedIds.includes(id)}
           fx={figureFx[id]}
           warded={wardOn(combat, id, passives)}
         />
@@ -1322,6 +1362,13 @@ export function FightScreen({
       }
     }
     const bench = combat.bench[side];
+    if (side === PLAYER_SIDE && pickingLeads) {
+      return (
+        <div className="combatant-card empty-slot" key={`empty-${side}-${slot}`}>
+          <div className="combatant-name">Choose a lead below</div>
+        </div>
+      );
+    }
     if (side === PLAYER_SIDE && bench.length > 0 && !resolving) {
       return (
         <div className="combatant-card empty-slot" key={`empty-${side}-${slot}`}>
@@ -1559,6 +1606,17 @@ export function FightScreen({
             </span>
           </div>
         )}
+        {pickingLeads && (
+          <LeadPickPanel
+            candidates={playerBench.map(leadPickHero)}
+            fallen={playerFallen.map(leadPickHero)}
+            enemyTypes={enemyActiveAlive.map((id) => effectiveTypes(allCombatants[combat.combatants[id].heroId], combat.combatants[id]))}
+            picks={effectiveLeadPicks}
+            onToggle={handleToggleLead}
+            onInspect={setInspecting}
+            onRevive={flaskPurse.revive > 0 ? (id) => handleDrinkPotion(id, 'revive') : undefined}
+          />
+        )}
         {/* Forced replacement: select-then-Confirm, since it cannot be undone once committed. */}
         {!resolving &&
           openReplacementSlots.length > 0 &&
@@ -1776,7 +1834,7 @@ export function FightScreen({
       {/* Fixed bottom row; buttons stay mounted and disable rather than hide, so the row's height never changes.
           While a target is being chosen it collapses to a single full-width Back — that state has one legal exit. */}
       <div
-        className={`bottom-bar${showingTargetPanel && !resolving ? ' bottom-bar-solo' : ''}${resolving ? ' bottom-bar-playback' : ''}`}
+        className={`bottom-bar${(showingTargetPanel || pickingLeads) && !resolving ? ' bottom-bar-solo' : ''}${resolving ? ' bottom-bar-playback' : ''}`}
         style={consoleStyle}
       >
         {/* While the round plays out there is nothing to command, so the row carries the
@@ -1804,6 +1862,11 @@ export function FightScreen({
               Fast
             </button>
           </>
+        ) : pickingLeads ? (
+          // The lead pick's one exit, where Back sits while a target is chosen.
+          <button className="bottom-action bottom-action-primary bottom-action-take-field" disabled={!leadsReady} onClick={handleConfirmLeads}>
+            Take the Field
+          </button>
         ) : (
           <>
           <button
@@ -2103,6 +2166,9 @@ export function FightScreen({
       )}
 
       {fightTip && tips && <TipOverlay key={fightTip.id} tip={fightTip} onDone={() => tips.onSeen(fightTip.id)} />}
+      {pickingLeads && tips && !tips.seenIds.includes('squad') && (
+        <TipOverlay key="squad" tip={SCREEN_TIPS.squad} onDone={() => tips.onSeen('squad')} />
+      )}
     </>
   );
 }

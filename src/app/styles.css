@@ -14106,7 +14106,7 @@ button.star-shop-bundle-face {
   box-shadow: var(--hairline-strong), var(--elev-2);
 }
 
-/* The arrow a held hero drops under each enemy (SquadSelectScreen MatchupArrow):
+/* The matchup arrow (shared/MatchupArrows.tsx MatchupArrow):
    a doubling ahead in green, a doubling behind in red, and an empty slot of the
    same height otherwise so the row never jumps. It arrives with a pop, since it
    is the answer to the tap that just happened. */
@@ -14396,7 +14396,7 @@ button.star-shop-bundle-face {
   color: var(--text-dim);
 }
 
-/* Player squad grid (SquadSelectScreen) — ONE fixed 2-wide/3-tall grid (the
+/* Hero grid (LeadPickPanel; the squad screen until 2026-09-28) — ONE fixed 2-wide/3-tall grid (the
    roster hard cap), no Active or Bench zones (2026-09-24, per user direction):
    the player taps the two heroes who open and every other one benches. The
    cells never move; a picked cell lights up in the old Active band's blue. */
@@ -14538,7 +14538,7 @@ button.star-shop-bundle-face {
   height: 13px;
 }
 
-/* The Revive key (SquadSelectScreen SquadSlot): on a downed hero's cell while a
+/* The Revive key (LeadPickPanel LeadCell): on a downed hero's cell while a
    Revive is held, raised off the cell's corner so the one control that spends
    something is the one that looks like a button. It was the move-here key's
    shape until a tap alone picked the leads (2026-09-24). */
@@ -14604,6 +14604,78 @@ button.star-shop-bundle-face {
 }
 
 .squad-slot-revive > svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* The lead pick (LeadPickPanel): the squad grid's cells, in the fight's console once
+   the enemy leads are on the field. Six cells share the console's height, so a cell
+   is three short lines — name; typing with the two arrows beside it, one per enemy
+   lead in slot order; the HP bar — and the arrows are drawn larger than the old
+   scouting row's, since against two there is room and they are the whole read. */
+.lead-pick-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 6px;
+  padding: 2px 2px 4px;
+}
+
+.lead-pick-grid .squad-slot {
+  min-height: 0;
+  padding: 5px 8px;
+}
+
+.lead-pick-grid .squad-slot.filled {
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  grid-template-rows: auto auto auto;
+  column-gap: 7px;
+  row-gap: 2px;
+}
+
+.lead-pick-grid .squad-slot.filled .roster-card-portrait {
+  grid-row: 1 / 4;
+}
+
+.lead-pick-grid .squad-slot.filled .roster-card-name {
+  grid-column: 2 / 4;
+  padding-right: 18px;
+}
+
+.lead-pick-grid .squad-slot.filled .roster-card-types {
+  grid-column: 2;
+  margin-top: 0;
+}
+
+.lead-pick-grid .squad-slot-matchups,
+.lead-pick-grid .squad-slot-down-label {
+  grid-column: 3;
+  grid-row: 2;
+  margin-top: 0;
+}
+
+.lead-pick-grid .enemy-scout-verdict-small {
+  width: 17px;
+  height: 17px;
+}
+
+.lead-pick-grid .enemy-scout-verdict-small > svg {
+  width: 12px;
+  height: 12px;
+}
+
+.lead-pick-grid .squad-slot .wound-bar {
+  grid-column: 2 / 4;
+  margin-top: 1px;
+}
+
+.lead-pick-grid .squad-slot.filled.is-down:has(.squad-slot-revive) {
+  padding-right: 34px;
+}
+
+.lead-pick-grid .squad-slot-pick {
+  top: 4px;
+  right: 4px;
   width: 18px;
   height: 18px;
 }

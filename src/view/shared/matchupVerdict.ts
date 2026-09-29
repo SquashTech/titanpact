@@ -5,7 +5,7 @@ import { resolveTypeMult } from '../../engine/damage/typeMult';
 export type MatchupVerdict = 'up' | 'down' | null;
 
 /**
- * One hero against one enemy, as an arrow (SquadSelectScreen, 2026-09-11, per user direction).
+ * One hero against one enemy, as an arrow (LeadPickPanel; the squad screens until 2026-09-28).
  * Read both ways through the same resolveTypeMult the damage pipeline uses: the hero's best STAB
  * type into the enemy's typing, and the enemy's best into the hero's. The two are set against
  * each other in doublings, so a 2× swing that is also a 2× exposure is a wash — an arrow only

@@ -85,7 +85,8 @@ export function buildCombatState(
     bench[side] = [...squad.benchIds, ...reserveIds].map((id) => combatantIdFor(side, id));
     const entriesById = new Map(roster.map((r) => [r.rosterId, r]));
 
-    for (const rosterId of [...squad.activeIds, ...squad.benchIds, ...reserveIds]) {
+    const downIds = new Set(squad.downIds ?? []);
+    for (const rosterId of [...squad.activeIds, ...squad.benchIds, ...reserveIds, ...downIds]) {
       if (!rosterId) continue;
       const entry = entriesById.get(rosterId);
       if (!entry) throw new Error(`${rosterId} is not on the roster`);
@@ -100,7 +101,9 @@ export function buildCombatState(
         teamStatusGrants ?? {}
       );
       const reservePhase = phaseOf.get(rosterId);
-      combatants[combatant.combatantId] = reservePhase !== undefined ? { ...combatant, reservePhase } : combatant;
+      // A hero the act left down enters fallen, on no slot and no bench: there for a Revive to find.
+      if (downIds.has(rosterId)) combatants[combatant.combatantId] = { ...combatant, fainted: true, enteredDown: true, currentHp: 0 };
+      else combatants[combatant.combatantId] = reservePhase !== undefined ? { ...combatant, reservePhase } : combatant;
     }
   }
 
