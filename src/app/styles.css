@@ -12661,19 +12661,6 @@ button.star-shop-bundle-face {
   cursor: pointer;
 }
 
-/* --- Squad select screen ------------------------------------------------ */
-
-.squad-select {
-  /* Positioning context for the corner glyph buttons, same as .node-screen's
-     is for the sky and its own. */
-  position: relative;
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
 /* Same containment pattern as FightScreen's .action-area — the roster/guild
    hall list scrolls internally so "Start Fight" stays reachable without the
    page itself ever growing past the viewport (see .app-shell). */
@@ -12699,110 +12686,11 @@ button.star-shop-bundle-face {
    line box. Display-size type set at default tracking looks loose and
    web-default; pulling it in is most of what separates a designed heading
    from an <h2>. */
-.squad-select h2,
 .guild-hall-header h2,
 .sandbox-header h2,
 .reward-panel h2 {
   letter-spacing: -0.01em;
   line-height: 1.2;
-}
-
-.squad-select h2 {
-  font-size: 16px;
-  margin: 4px 0 2px;
-}
-
-.squad-select .hint {
-  margin: 0 0 10px;
-}
-
-/* --- The battle preview, unboxed (2026-09-11, per user direction) ---------
-   Two bordered panels — a red one and a blue one, each with a bold left-tick
-   heading — stacked at the top of the screen with the sky empty under them.
-   The panels are gone: each half is a centred chapter mark in its side's
-   colour with rules fading away from it, the whole stage floats to the
-   vertical middle of what is left above the footer, and the three rows of
-   the squad are BANDS with their own headers rather than a left column of
-   three small words. */
-.squad-stage {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-block: auto;
-  padding: 10px 0 8px;
-}
-
-/* A breath under the scouted row before the VS (2026-09-11, per user direction). */
-.squad-section-enemy {
-  margin-bottom: 8px;
-}
-
-.squad-section {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.squad-section-title {
-  --side-rgb: 217, 83, 79;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  margin: 0;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgb(var(--side-rgb));
-  text-shadow: 0 0 12px rgba(var(--side-rgb), 0.45);
-}
-
-.squad-section-player .squad-section-title {
-  --side-rgb: 74, 144, 217;
-}
-
-.squad-section-title::before,
-.squad-section-title::after {
-  content: '';
-  flex: 1 1 auto;
-  min-width: 16px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(var(--side-rgb), 0.55));
-}
-
-.squad-section-title::after {
-  transform: scaleX(-1);
-}
-
-/* The VS, struck between two hairlines the way the fight's opening beat draws it. */
-.squad-vs-divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0 18px;
-}
-
-.squad-vs-divider::before,
-.squad-vs-divider::after {
-  content: '';
-  flex: 1 1 auto;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16));
-}
-
-.squad-vs-divider::after {
-  transform: scaleX(-1);
-}
-
-.squad-vs-divider > span {
-  font-size: 13px;
-  font-weight: 900;
-  font-style: italic;
-  letter-spacing: 0.12em;
-  color: var(--accent);
-  text-shadow: 0 0 12px rgba(224, 166, 60, 0.55);
 }
 
 /* --- Start-of-run draft (DraftScreen) ----------------------------------
@@ -14032,80 +13920,6 @@ button.star-shop-bundle-face {
   }
 }
 
-/* Scouted enemy squad (SquadSelectScreen) — deliberately minimal: sprite +
-   type only, no name/level/active-bench label, so a full 4-hero enemy
-   squad (2 active + 2 bench) costs one compact row instead of stacking
-   full-size .roster-cards into two rows — that was the main source of
-   this screen's mobile scroll when paired with a full 6-hero player
-   roster below it. Tap the chip for the full stat block (HeroPreviewOverlay)
-   instead of a separate info button, since there's no room left for one. */
-.enemy-scout-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-}
-
-/* The finale scouts six. Four across then two under it was a second row of
-   the same height, and the whole screen scrolled for it; three across in a
-   ROW chip — figure left, name and typing beside it — is two rows that
-   together stand as tall as the one row four take. */
-.enemy-scout-grid-dense {
-  grid-template-columns: repeat(3, 1fr);
-}
-
-.enemy-scout-grid-dense .enemy-scout-chip {
-  display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) 18px;
-  grid-template-rows: auto auto;
-  align-items: center;
-  column-gap: 4px;
-  row-gap: 2px;
-  padding: 5px 5px 5px 5px;
-  min-width: 0;
-}
-
-.enemy-scout-grid-dense .enemy-scout-portrait {
-  grid-column: 1;
-  grid-row: 1 / 3;
-  width: 32px;
-  height: 32px;
-}
-
-.enemy-scout-grid-dense .enemy-scout-name {
-  grid-column: 2 / 4;
-  justify-self: start;
-  max-width: 100%;
-  text-align: left;
-  font-size: 10px;
-}
-
-.enemy-scout-grid-dense .enemy-scout-types {
-  grid-column: 2;
-  align-items: flex-start;
-}
-
-/* The same plate every hero card in the run wears (the shared plate rule
-   below), washed in the enemy's own type, with the name under the figure —
-   a scouted enemy is read here, not only counted. */
-.enemy-scout-chip {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  border-radius: var(--radius-md);
-  padding: 8px 2px 7px;
-  color: var(--text);
-  cursor: pointer;
-  box-shadow: var(--hairline), var(--elev-1);
-  transition: border-color var(--dur-mid) var(--ease-out), transform var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
-}
-
-.enemy-scout-chip:hover {
-  border-color: var(--accent);
-  transform: translateY(-1px);
-  box-shadow: var(--hairline-strong), var(--elev-2);
-}
-
 /* The matchup arrow (shared/MatchupArrows.tsx MatchupArrow):
    a doubling ahead in green, a doubling behind in red, and an empty slot of the
    same height otherwise so the row never jumps. It arrives with a pop, since it
@@ -14196,55 +14010,6 @@ button.star-shop-bundle-face {
   background: color-mix(in srgb, var(--hp-low) 26%, transparent);
 }
 
-.enemy-scout-name {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 10.5px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-/* `.enemy-scout-chip-bench` used to dim the two who start on the bench. Gone
-   (2026-08-31, user direction): scouting says WHAT is in the fight, not what
-   will be standing on turn one, and knowing the opening pair up front let the
-   player hard-counter it before a command was given. The row is also drawn in
-   a shuffled order now, since `encounter.run.roster` is generated
-   active-first and a fixed order is the same tell without the styling — see
-   SquadSelectScreen.tsx `scoutOrder`. */
-
-/* The fight's hidden card (view/shared/entrances.ts) — scouted as a shape and
-   a typing, nothing more. Rendered from the REAL portrait rather than a
-   placeholder glyph, so the silhouette is honestly that figure's outline: the
-   player gets the size and stance of what is coming, and none of its identity.
-
-   Not a button (SquadSelectScreen), so the hover lift and the pointer are both
-   cancelled here — a chip that looks pressable and opens nothing reads as
-   broken, where one that plainly cannot be pressed reads as withheld. */
-.enemy-scout-chip-concealed {
-  cursor: default;
-  background:
-    radial-gradient(ellipse 90% 70% at 50% 38%, rgba(217, 83, 79, 0.16), transparent 72%),
-    var(--surface-raised);
-}
-
-.enemy-scout-chip-concealed:hover {
-  border-color: inherit;
-  transform: none;
-  box-shadow: var(--hairline), var(--elev-1);
-}
-
-/* brightness(0) flattens the sprite to solid black and keeps its alpha; the
-   invert then lifts it to white so it reads against a dark card, where a black
-   silhouette would simply disappear. Held well under full opacity so it stays
-   a shape rather than becoming a bright new figure, and given a red rim so the
-   eye lands on it. */
-.enemy-scout-chip-concealed .enemy-scout-portrait {
-  filter: brightness(0) invert(1) opacity(0.32) drop-shadow(0 0 3px rgba(217, 83, 79, 0.75));
-  animation: enemy-scout-concealed-breathe 3.4s ease-in-out infinite;
-}
-
 @keyframes enemy-scout-concealed-breathe {
   0%,
   100% {
@@ -14253,61 +14018,6 @@ button.star-shop-bundle-face {
   50% {
     filter: brightness(0) invert(1) opacity(0.4) drop-shadow(0 0 5px rgba(217, 83, 79, 0.9));
   }
-}
-
-.enemy-scout-portrait {
-  display: block;
-  width: 36px;
-  height: 36px;
-  image-rendering: pixelated;
-}
-
-/* The chip anchors its level on the figure's corner, as the player's own slots wear it. */
-.enemy-scout-chip {
-  position: relative;
-}
-
-.enemy-scout-level {
-  left: 4px;
-  top: 3px;
-}
-
-.enemy-scout-types {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-/* The scouted innate (docs/innate-passives.md §6): glyph and name in the passive's colour under
-   the typing, the width of the chip. A spawn's reads "Mark" — one word is what a chip holds, and
-   after the first fight it is the whole sentence. */
-.enemy-scout-innate {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  max-width: 100%;
-  padding: 1px 5px 1px 3px;
-  border-radius: 999px;
-  color: var(--passive-color);
-  background: var(--passive-tint);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  line-height: 1.3;
-}
-
-.enemy-scout-innate .status-glyph {
-  width: 10px;
-  height: 10px;
-  flex-shrink: 0;
-}
-
-.enemy-scout-innate-name {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .roster-grid {
@@ -14406,13 +14116,6 @@ button.star-shop-bundle-face {
   gap: 8px;
 }
 
-/* The whole interaction, said once where it happens, with the count. */
-.squad-pick-hint {
-  margin: -2px 2px 6px;
-  font-size: 11px;
-  color: var(--text-dim);
-}
-
 .squad-slot {
   position: relative;
   min-height: 56px;
@@ -14466,43 +14169,6 @@ button.star-shop-bundle-face {
   left: 5px;
   top: auto;
   bottom: 4px;
-}
-
-/* An empty slot is a hole in the layout, not an object in it — so it drops
-   the raised treatment entirely and becomes a sunken dashed outline. Same
-   figure/ground logic as .item-box's empty state. */
-/* A hole in the rack, not a dashed field. Same call as .item-box.empty (eighth
-   pass): a dashed rectangle reads as a disabled form input, where a recess with
-   four corner brackets reads as a mount waiting for something. */
-.squad-slot.empty {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface-sunken);
-  border-color: var(--border-sunken, var(--border));
-  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.55);
-  opacity: 0.72;
-}
-
-.squad-slot.empty::after {
-  content: '';
-  position: absolute;
-  inset: 6px;
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  opacity: 0.5;
-  /* Only the four corners survive the mask, so the mark is four L-cuts. */
-  -webkit-mask: radial-gradient(circle 14px at 0 0, #000 99%, transparent), radial-gradient(circle 14px at 100% 0, #000 99%, transparent),
-    radial-gradient(circle 14px at 0 100%, #000 99%, transparent), radial-gradient(circle 14px at 100% 100%, #000 99%, transparent);
-  mask: radial-gradient(circle 14px at 0 0, #000 99%, transparent), radial-gradient(circle 14px at 100% 0, #000 99%, transparent),
-    radial-gradient(circle 14px at 0 100%, #000 99%, transparent), radial-gradient(circle 14px at 100% 100%, #000 99%, transparent);
-  pointer-events: none;
-}
-
-.squad-slot-empty-label {
-  font-size: 11px;
-  color: var(--text-dim);
 }
 
 .squad-slot.filled.is-picked {
@@ -15068,7 +14734,6 @@ button.star-shop-bundle-face {
    long single-scroll shop the eye needs a repeating anchor to find section
    boundaries while flicking past; an uppercase label alone at 12px doesn't
    provide one, a colored tick does. */
-.squad-section-title > svg,
 .guild-hall-section-title > svg {
   width: 18px;
   height: 18px;
@@ -15369,59 +15034,8 @@ button.star-shop-bundle-face {
    the bank-and-leave out for a pool the player would rather keep. Spending
    stays the primary action and lives on the hero cards themselves. */
 .levelup-screen > .secondary-button,
-.squad-select > .squad-footer,
 .draft-screen > .resolve-button {
   margin-bottom: 12px;
-}
-
-/* The battle preview's foot: Manage Roster and the reference as two square
-   tiles either side of Start Fight (2026-09-11, per user direction). They
-   were corner glyphs at the top right — on a phone, the one place a thumb
-   cannot reach without re-gripping. Same raised-tile language as the corner
-   glyph, at the CTA's own height, so the row reads as one bar with one big
-   press and two small ones. */
-.squad-footer {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: stretch;
-  gap: 8px;
-}
-
-.squad-footer > .resolve-button {
-  flex: 1 1 auto;
-  width: auto;
-  min-width: 0;
-}
-
-.squad-tool-button {
-  flex: 0 0 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-top-color: color-mix(in srgb, var(--border) 60%, #ffffff);
-  border-radius: var(--radius-lg);
-  color: var(--text-dim);
-  cursor: pointer;
-  box-shadow: var(--hairline), var(--elev-1);
-  transition: border-color var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), color var(--dur-mid) var(--ease-out),
-    transform var(--dur-fast) var(--ease-out);
-}
-
-.squad-tool-button .node-glyph {
-  width: 26px;
-  height: 26px;
-}
-
-.squad-tool-button:hover {
-  color: var(--text);
-  border-color: var(--accent);
-  box-shadow: var(--hairline), var(--elev-2);
-}
-
-.squad-tool-button:active {
-  transform: translateY(1px);
 }
 
 /* Lifted out of the sky's paint order for the same reason .draft-header /
@@ -20755,11 +20369,7 @@ button.star-shop-bundle-face {
   > *:not(.node-sky):not(.shrine-descent):not(.guild-hall-hearth):not(.guild-hall-interior):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button):not(
     .node-purse
   ):not(.is-floating):not(.pact-seal-flash),
-.levelup-screen > *:not(.node-sky):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button),
-/* .squad-select joined the stage in 2026-08-29 so it could carry the act's
-   Location (docs/locations.md §5.5). Its root rule was already this stage's,
-   copied verbatim; this is the one line it was missing. */
-.squad-select > *:not(.node-sky):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button) {
+.levelup-screen > *:not(.node-sky):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button) {
   position: relative;
   z-index: 1;
 }
@@ -30232,7 +29842,6 @@ button.star-shop-bundle-face {
 .draft-innate,
 .roster-card,
 .squad-slot,
-.enemy-scout-chip,
 .equip-cache-card,
 .equip-target-card,
 .equip-spotlight-passive,
@@ -30265,7 +29874,6 @@ button.star-shop-bundle-face {
 .draft-innate,
 .roster-card,
 .squad-slot,
-.enemy-scout-chip,
 .equip-cache-card,
 .equip-target-card,
 .hero-grid-card,
@@ -38401,8 +38009,8 @@ img.smithy-service-art {
    its window: a thin carved edge, the hue kept as the wash and a lit top rim. Picked or selected
    cards take a gold lip, as a chosen slot does. */
 :is(.status-ref-row, .evo-path-card, .item-readout, .passive-readout, .draft-innate, .roster-card, .squad-slot,
-    .enemy-scout-chip, .relic-card, .equip-cache-card, .equip-target-card, .equip-spotlight-passive, .hero-grid-card,
-    .sandbox-hero-card, .swap-option-badge, .item-service-row, .move-tile, .level-up-row, .grant-source-row) {
+    .relic-card, .equip-cache-card, .equip-target-card, .equip-spotlight-passive, .hero-grid-card, .sandbox-hero-card,
+    .swap-option-badge, .item-service-row, .move-tile, .level-up-row, .grant-source-row) {
   border: 4px solid transparent;
   border-image: url('../../art/ui/slot-thin.png') 2 / 4px round;
   border-radius: 0;
@@ -38426,8 +38034,8 @@ img.smithy-service-art {
 }
 
 :is(.status-ref-row, .evo-path-card, .item-readout, .passive-readout, .draft-innate, .roster-card, .squad-slot,
-    .enemy-scout-chip, .relic-card, .equip-cache-card, .equip-target-card, .equip-spotlight-passive, .hero-grid-card,
-    .sandbox-hero-card, .swap-option-badge, .item-service-row, .move-tile, .level-up-row, .move-button):is(.picked, .is-picked,
+    .relic-card, .equip-cache-card, .equip-target-card, .equip-spotlight-passive, .hero-grid-card, .sandbox-hero-card,
+    .swap-option-badge, .item-service-row, .move-tile, .level-up-row, .move-button):is(.picked, .is-picked,
     .selected, .is-selected, .is-active, .is-chosen) {
   border-image-source: url('../../art/ui/slot-thin-lit.png');
 }
@@ -38902,23 +38510,6 @@ img.smithy-service-art {
   image-rendering: pixelated;
 }
 
-/* The battle preview's two side tools, square planks like every corner control. */
-.squad-tool-button,
-.squad-tool-button:hover:not(:disabled) {
-  border: 8px solid transparent;
-  border-image: url('../../art/ui/plank-square.png') 4 fill / 8px round;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-  color: #eadbbf;
-  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.55));
-  image-rendering: pixelated;
-}
-
-.squad-tool-button:hover:not(:disabled) {
-  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.55)) brightness(1.12);
-}
-
 /* The Smithy's work sheet is the hall's own furniture: a wood-framed board, the lift preview a well
    in it, Strike a gilt plank burning in the work's colour, and the elements carved slots. */
 .detail-panel.smithy-work {
@@ -39148,8 +38739,7 @@ img.smithy-service-art {
   background: color-mix(in srgb, var(--rarity-color, #0e1015) 10%, #0e1015) padding-box;
 }
 
-.item-box.empty::before,
-.squad-slot.empty::after {
+.item-box.empty::before {
   inset: 2px;
   border: 10px solid transparent;
   border-image: url('../../art/ui/mount.png') 5 / 10px;
@@ -39158,15 +38748,6 @@ img.smithy-service-art {
   -webkit-mask: none;
   mask: none;
   image-rendering: pixelated;
-}
-
-.squad-slot.empty::after {
-  inset: 6px;
-}
-
-.squad-slot.empty {
-  background: #0c0d12 padding-box;
-  box-shadow: none;
 }
 
 /* A Constellation offer (a bundle, a Location): carved like any card in a window. */
