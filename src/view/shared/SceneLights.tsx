@@ -115,11 +115,6 @@ export const PROP_LIGHTS: Record<string, readonly SceneLight[]> = {
   restReward: campfire(33, 72, 40),
 };
 
-/** The places' header vignettes (art/places), by file name. */
-export const PLACE_LIGHTS: Record<string, readonly SceneLight[]> = {
-  rest: campfire(43, 70, 22),
-};
-
 export function SceneLights({ lights, className }: { lights: readonly SceneLight[] | undefined; className?: string }) {
   if (!lights || lights.length === 0) return null;
   return (
