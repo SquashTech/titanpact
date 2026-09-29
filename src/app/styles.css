@@ -20648,14 +20648,6 @@ button.star-shop-bundle-face {
   animation: title-tagline-fade 0.35s ease both;
 }
 
-/* The Mentor's one line is the whole explanation of the node (it carries no tip), so it is
-   set as the screen's pitch rather than as a dim instruction. */
-.mentor-node-screen .node-readout {
-  margin-top: 10px;
-  font-size: 15px;
-  letter-spacing: 0.01em;
-}
-
 .node-readout.is-live {
   color: var(--text);
   font-weight: 700;
@@ -31049,6 +31041,31 @@ button.star-shop-bundle-face {
     radial-gradient(ellipse 100% 40% at 50% 100%, rgba(30, 80, 110, 0.3), transparent 72%),
     linear-gradient(180deg, #030609, #081219 50%, #0c1d27);
   pointer-events: none;
+}
+
+.rite-screen.is-mentor {
+  --rite-ink: #7fd8cf;
+  --rite-title: #e6fffb;
+  --rite-glow: rgba(63, 184, 175, 0.55);
+  --rite-glow-far: rgba(30, 130, 120, 0.35);
+}
+
+.mentor-ground {
+  position: absolute;
+  inset: calc(var(--shell-pad) * -1);
+  background:
+    radial-gradient(ellipse 70% 26% at 22% 10%, rgba(63, 184, 175, 0.28), transparent 70%),
+    radial-gradient(ellipse 100% 40% at 50% 100%, rgba(25, 90, 85, 0.3), transparent 72%),
+    linear-gradient(180deg, #030707, #07130f 50%, #0b1f1b);
+  pointer-events: none;
+}
+
+/* The Mentor's one line: the node's whole explanation, said as the screen's pitch. */
+.keeper-line {
+  flex-basis: 100%;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--rite-title);
 }
 
 .tutor-fit {

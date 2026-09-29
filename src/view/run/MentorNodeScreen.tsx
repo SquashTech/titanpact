@@ -10,7 +10,7 @@ import type { RosterEntry, RunState } from '../../run/state';
 import { grantOfferedMove, MOVE_CAP, recordMoveOffer } from '../../run/progression';
 import { mentorMovePool } from '../../run/tutor';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
-import { NodeHeader, NodeSky, NODE_TINT_INSIGHT } from '../shared/NodeStage';
+import { NodeMotes } from '../shared/NodeStage';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { MoveLearnedOverlay, MoveOfferOverlay } from './MoveOfferOverlay';
 import { RosterPeek } from './RosterPeek';
@@ -24,6 +24,9 @@ interface Props {
   onRunChange: (next: RunState) => void;
   onContinue: () => void;
 }
+
+/** The Mentor's teal (the map tile's --buff). */
+const MENTOR_RGB = '63, 184, 175';
 
 /** The roll, once made. Below the cap the move has already landed; at the cap it is the replace question. */
 interface Lesson {
@@ -72,30 +75,39 @@ export function MentorNodeScreen({ run, onRunChange, onContinue }: Props) {
   if (greeting) return <RoadEncounter art={mentorArt} name="The Mentor" line={greeting} onDone={dismissGreeting} />;
 
   return (
-    <div className="node-screen tutor-node-screen mentor-node-screen" style={{ '--node-rgb': NODE_TINT_INSIGHT } as CSSProperties}>
-      <NodeSky />
+    <div className="node-screen rite-screen is-mentor tutor-node-screen mentor-node-screen" style={{ '--node-rgb': MENTOR_RGB, '--rite-color': `rgb(${MENTOR_RGB})` } as CSSProperties}>
+      <span className="node-sky mentor-ground" aria-hidden="true" />
+      <NodeMotes count={14} />
       <RosterPeek run={run} />
 
-      <NodeHeader
-        compact
-        ring
-        side
-        art={<img src={mentorArt} className="npc-portrait" alt="" draggable={false} />}
-        eyebrow="By the Roadside"
-        title="The Mentor"
-        readoutLive={anyTeachable}
-        readout={
-          anyTeachable
-            ? 'The Mentor can teach any hero a powerful move.'
-            : 'There is nothing left here the Mentor can teach.'
-        }
-      />
+      {/* The Mentor by the road. Its one line is the node's whole explanation — one of a new
+          player's first nodes, with no tip — so it is said plainly rather than as tags. */}
+      <header className="keeper-head">
+        <span className="keeper-figure">
+          <span className="rite-pool" aria-hidden="true" />
+          <img src={mentorArt} className="keeper-art" alt="" draggable={false} />
+        </span>
+        <span className="keeper-words">
+          <span className="rite-eyebrow">By the Roadside</span>
+          <h2 className="rite-name">The Mentor</h2>
+          {anyTeachable ? (
+            <span className="keeper-offer">
+              <span className="keeper-line">Teaches any hero a powerful move.</span>
+              <span className="keeper-terms">One hero · from its own moves</span>
+            </span>
+          ) : (
+            <span className="keeper-offer">There is nothing left here the Mentor can teach.</span>
+          )}
+        </span>
+      </header>
 
       {anyTeachable ? (
         <HeroPickGrid count={run.roster.length} fill>
           {run.roster.map((entry) => {
             const hero = rosterHeroes[entry.heroId];
-            const teachable = poolOf(entry).length > 0;
+            const pool = poolOf(entry).length;
+            const teachable = pool > 0;
+            const full = entry.unlockedMoveIds.length >= MOVE_CAP;
             return (
               <HeroPickCard
                 key={entry.rosterId}
@@ -104,7 +116,14 @@ export function MentorNodeScreen({ run, onRunChange, onContinue }: Props) {
                 disabled={!teachable || !!lesson}
                 onActivate={() => teach(entry)}
                 onPreview={() => setPreviewEntry({ hero, entry })}
-                ariaLabel={`${hero.name}, level ${levelOf(entry)} — ${teachable ? 'learn a move' : 'nothing left to teach'}`}
+                ariaLabel={`${hero.name}, level ${levelOf(entry)} — ${teachable ? `${pool} moves to draw from, ${full ? 'replaces one' : 'learns outright'}` : 'nothing left to teach'}`}
+                detail={
+                  teachable ? (
+                    <span className="tutor-fit">
+                      {pool} {pool === 1 ? 'move' : 'moves'} · {full ? 'replaces one' : 'learns outright'}
+                    </span>
+                  ) : undefined
+                }
                 ctaClassName="is-accent"
                 cta={teachable ? 'Learn' : 'Nothing left'}
               />
