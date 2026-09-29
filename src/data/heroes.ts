@@ -589,7 +589,7 @@ export const heroes: Record<string, HeroDefinition> = {
     growthGrades: { hp: 'B', attack: 'B', defense: 'A', intelligence: 'D', wisdom: 'A', speed: 'A', manaPool: 'C' },
     schedule: { offerLevels: [5, 6, 10, 14, 19, 25], midLevel: 9, lateLevel: 18, signatureLevel: 23 },
     signatureMoveId: 'fullTilt',
-    passiveIds: ['sunder'],
+    passiveIds: ['breach'],
     masteredPassiveIds: ['shatterlance'],
   },
   // The first bundle hero (docs/constellation.md §4): outside the base three-a-type, in a run's
@@ -634,7 +634,7 @@ export const heroes: Record<string, HeroDefinition> = {
     schedule: { offerLevels: [6, 10, 14, 17, 24, 26], midLevel: 13, lateLevel: 22, signatureLevel: 22 },
     signatureMoveId: 'boilerBlow',
     passiveIds: ['ironbound'],
-    masteredPassiveIds: ['ironMountain'],
+    masteredPassiveIds: ['ironMountain', 'ironMountainPressure'],
   },
   rex: {
     id: 'rex',
@@ -643,7 +643,7 @@ export const heroes: Record<string, HeroDefinition> = {
     // The roster's top Attack, and unlike Bellows it gets there before the round is over: 110 at
     // Speed 70 against 105 at 5. It pays in every other column, and Speed grows S so the gap
     // between it and the things it eats only widens.
-    baseStats: { hp: 210, attack: 110, defense: 55, intelligence: 15, wisdom: 35, speed: 70, manaPool: 55, mpRegen: 10 },
+    baseStats: { hp: 220, attack: 100, defense: 55, intelligence: 15, wisdom: 35, speed: 70, manaPool: 55, mpRegen: 10 },
     // Spark Plug then Steam Vent: the spread cashes the mark and hits the partner beside it.
     moveIds: ['steamVent', 'sparkPlug', 'overclock'],
     growthGrades: { hp: 'B', attack: 'A', defense: 'B', intelligence: 'F', wisdom: 'B', speed: 'S', manaPool: 'A' },
@@ -762,8 +762,8 @@ export const heroes: Record<string, HeroDefinition> = {
     growthGrades: { hp: 'S', attack: 'S', defense: 'A', intelligence: 'F', wisdom: 'A', speed: 'D', manaPool: 'B' },
     schedule: { offerLevels: [5, 8, 12, 15, 21, 25], midLevel: 10, lateLevel: 19, signatureLevel: 22 },
     signatureMoveId: 'greatToll',
-    passiveIds: ['toll'],
-    masteredPassiveIds: ['peal'],
+    passiveIds: ['onTheHour', 'onTheHourMana'],
+    masteredPassiveIds: ['onTheHourPlus', 'onTheHourPlusMana'],
   },
   // The radiant stag: Light's second healer, arriving with a mend already on its partner.
   hart: {
@@ -798,7 +798,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Kappa',
     types: ['Water'],
     baseStats: { hp: 210, attack: 100, defense: 70, intelligence: 20, wisdom: 55, speed: 50, manaPool: 45, mpRegen: 10 },
-    moveIds: ['undertow', 'siphon', 'claw'],
+    moveIds: ['undertow', 'tideGuard', 'claw'],
     unlock: 'starfall',
     growthGrades: { hp: 'A', attack: 'S', defense: 'A', intelligence: 'F', wisdom: 'B', speed: 'B', manaPool: 'B' },
     schedule: { offerLevels: [5, 9, 13, 17, 22, 26], midLevel: 10, lateLevel: 20, signatureLevel: 15 },

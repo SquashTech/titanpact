@@ -248,6 +248,10 @@ export type PassiveEffect =
   | { kind: 'cleanse'; target: PassiveEffectTarget; count?: number }
   /** UNCAPPED, like a move's `manaGrant` — overflow past the pool is the point (docs/mana.md). */
   | { kind: 'manaGrant'; target: PassiveEffectTarget; amount: PassiveAmount }
+  /** Refills the target to its pool, as a Rest does: never past it, and never lowers an overflow (Carillon's On the Hour). */
+  | { kind: 'restoreMana'; target: PassiveEffectTarget }
+  /** Mana lost outright, overflow first, never below 0 (Bellows' Boiler Pressure). */
+  | { kind: 'loseMana'; target: PassiveEffectTarget; amount: number }
   /** Global — no `target`. */
   | { kind: 'setFieldEffect'; fieldEffectId: FieldEffectId };
 

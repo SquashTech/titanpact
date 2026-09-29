@@ -321,6 +321,27 @@ function resolveEffectOn(
     }
     case 'cleanse':
       return cleanseStatuses(state, round, targetId, statusDefs, effect.count);
+    case 'loseMana': {
+      const previousMana = target.currentMana;
+      const newMana = Math.max(0, previousMana - effect.amount);
+      if (newMana === previousMana) return { state, events: [] };
+      const nextState: CombatState = { ...state, combatants: { ...state.combatants, [targetId]: { ...target, currentMana: newMana } } };
+      return {
+        state: nextState,
+        events: [{ type: 'ManaChanged', round, combatantId: targetId, previousMana, newMana, maxMana: getMaxMana(heroes[target.heroId], target) }],
+      };
+    }
+    case 'restoreMana': {
+      const maxMana = getMaxMana(heroes[target.heroId], target);
+      const previousMana = target.currentMana;
+      if (previousMana >= maxMana) return { state, events: [] };
+      const nextState: CombatState = { ...state, combatants: { ...state.combatants, [targetId]: { ...target, currentMana: maxMana } } };
+      // Reported as a grant so ManaGained listeners hear it; it can never overflow.
+      return {
+        state: nextState,
+        events: [{ type: 'ManaGranted', round, sourceCombatantId: ownerId, targetCombatantId: targetId, amount: maxMana - previousMana, previousMana, newMana: maxMana, maxMana, overflow: 0 }],
+      };
+    }
     case 'manaGrant': {
       const amount = resolveAmount(effect.amount, context);
       if (amount <= 0) return { state, events: [] };

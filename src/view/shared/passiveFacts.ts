@@ -216,6 +216,10 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
         text: `Cleanses ${targetWord(effect.target, condition, hook)}${effect.count ? ` — ${effect.count} at random` : ''}`,
         glyph: { kind: 'move', move: 'buff' },
       };
+    case 'loseMana':
+      return { label: 'Then', text: `${targetWord(effect.target, condition, hook)} loses ${effect.amount} Mana`, glyph: { kind: 'stat', stat: 'manaPool' } };
+    case 'restoreMana':
+      return { label: 'Then', text: `Refills ${targetWord(effect.target, condition, hook)}'s Mana to its pool`, glyph: { kind: 'stat', stat: 'manaPool' } };
     case 'manaGrant':
       return {
         label: 'Then',

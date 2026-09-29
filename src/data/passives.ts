@@ -885,7 +885,40 @@ export const BROADSIDE_SHOT = 0.05;
 export const BROADSIDE_MAGAZINE_MASTERED = 6;
 
 const innatePassives: Record<string, PassiveDefinition> = {
+  // Gallant's own Sunder at half (2026-09-29, per user direction): the enemy never switches, so the
+  // shred sat on a target all fight and lifted the whole team. Swords and the Boon keep Sunder at 10.
+  breach: {
+    id: 'breach',
+    name: 'Breach',
+    description: 'Whenever this hero lands an attack, its target loses 5 Defense.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'defense', amount: -5 },
+    },
+  },
   // Re-authored 2026-09-29 (per user direction, sim pass 14).
+  // Carillon's bell: two ids under one name, as Broadside is, because it does two things on one beat.
+  onTheHour: {
+    id: 'onTheHour',
+    name: 'On the Hour',
+    description: "At the end of every third round, the bell tolls: Sanctuary is set, and this hero's Mana is fully restored.",
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self', everyNRounds: 3 },
+      effect: { kind: 'setFieldEffect', fieldEffectId: 'sanctuary' },
+    },
+  },
+  onTheHourMana: {
+    id: 'onTheHourMana',
+    name: 'On the Hour',
+    description: "At the end of every third round, this hero's Mana is fully restored.",
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self', everyNRounds: 3 },
+      effect: { kind: 'restoreMana', target: 'self' },
+    },
+  },
   dawnlight: {
     id: 'dawnlight',
     name: 'Dawnlight',
@@ -1267,11 +1300,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   feast: {
     id: 'feast',
     name: 'Feast',
-    description: 'Whenever this hero lands a finishing blow, it heals half its max HP.',
+    description: 'Whenever this hero lands a finishing blow, it heals a third of its max HP.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
-      effect: { kind: 'heal', target: 'self', amount: { kind: 'percentMaxHp', value: 0.5 } },
+      effect: { kind: 'heal', target: 'self', amount: { kind: 'percentMaxHp', value: 0.33 } },
     },
   },
   broadside: {
@@ -1345,9 +1378,17 @@ const innatePassives: Record<string, PassiveDefinition> = {
   ironbound: {
     id: 'ironbound',
     name: 'Ironbound',
-    description: 'This hero cannot switch.',
+    // Boiler Pressure (2026-09-29, per user direction): the lock alone cost nothing — a tank the
+    // whole roster fields never wants to leave. The drain lands after regen, so it nets −5 a round
+    // before a cast, and with no bench to cycle to, the answer is a Rest: a turn the colossus stands still.
+    description: 'This hero cannot switch. At the end of each round on the field, its boiler vents 15 Mana.',
     cannotSwitchOut: true,
     burden: true,
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'loseMana', target: 'self', amount: 15 },
+    },
   },
   // --- Starfall ---
   nettle: {
@@ -1368,16 +1409,6 @@ const innatePassives: Record<string, PassiveDefinition> = {
       hook: 'DamageDealt',
       condition: { relativeTo: 'ally' },
       effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Shield', magnitude: 10 },
-    },
-  },
-  toll: {
-    id: 'toll',
-    name: 'Toll',
-    description: "Whenever this hero lands a hit, its partner is healed 5% of its max HP.",
-    reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'heal', target: 'ally', amount: { kind: 'percentMaxHp', value: 0.05 } },
     },
   },
   hallowedStep: {
@@ -1704,6 +1735,26 @@ const innatePassives: Record<string, PassiveDefinition> = {
 // magnitudes stay flat.
 const masteredInnatePassives: Record<string, PassiveDefinition> = {
   // Re-authored 2026-09-29 (per user direction, sim pass 14).
+  onTheHourPlus: {
+    id: 'onTheHourPlus',
+    name: 'On the Hour+',
+    description: "At the end of every second round, the bell tolls: Sanctuary is set, and this hero's Mana is fully restored.",
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self', everyNRounds: 2 },
+      effect: { kind: 'setFieldEffect', fieldEffectId: 'sanctuary' },
+    },
+  },
+  onTheHourPlusMana: {
+    id: 'onTheHourPlusMana',
+    name: 'On the Hour+',
+    description: "At the end of every second round, this hero's Mana is fully restored.",
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self', everyNRounds: 2 },
+      effect: { kind: 'restoreMana', target: 'self' },
+    },
+  },
   dawnlightPlus: {
     id: 'dawnlightPlus',
     name: 'Dawnlight+',
@@ -2144,12 +2195,12 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   },
   shatterlance: {
     id: 'shatterlance',
-    name: 'Sunder+',
-    description: 'Whenever this hero lands an attack, its target loses 25 Defense.',
+    name: 'Breach+',
+    description: 'Whenever this hero lands an attack, its target loses 15 Defense.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'defense', amount: -25 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'defense', amount: -15 },
     },
   },
   // Broadside mastered: two balls a round into a deeper magazine. The firing card is Broadside's
@@ -2183,13 +2234,24 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   ironMountain: {
     id: 'ironMountain',
     name: 'Ironbound+',
-    description: 'This hero cannot switch. At the end of each round, it gains 10 Attack and 10 Defense.',
+    description: 'This hero cannot switch. At the end of each round, it gains 10 Attack and 10 Defense, and its boiler vents 15 Mana.',
     cannotSwitchOut: true,
     burden: true,
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
       effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'defense'], amount: 10 },
+    },
+  },
+  // The mastered Burden is still a Burden: the vent rides beside Iron Mountain under one name.
+  ironMountainPressure: {
+    id: 'ironMountainPressure',
+    name: 'Ironbound+',
+    description: "At the end of each round on the field, this hero's boiler vents 15 Mana.",
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'loseMana', target: 'self', amount: 15 },
     },
   },
   apexTyrant: {
@@ -2338,16 +2400,6 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       hook: 'DamageDealt',
       condition: { relativeTo: 'ally' },
       effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Shield', magnitude: 20 },
-    },
-  },
-  peal: {
-    id: 'peal',
-    name: 'Toll+',
-    description: "Whenever this hero lands a hit, its partner is healed 10% of its max HP.",
-    reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'heal', target: 'ally', amount: { kind: 'percentMaxHp', value: 0.1 } },
     },
   },
   springtide: {

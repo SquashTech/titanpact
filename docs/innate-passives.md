@@ -331,7 +331,7 @@ and Skyshear's Barrier is **once a fight** — Barrier is the game's hardest loc
 | Skyshear | **Stormveil** | The first time each fight an enemy's Conduct bursts, this hero gains Barrier for the rest of the round. | this hero and its partner | none |
 
 | Solace | **Dawnlight** | When this hero enters the battlefield, it gains Light Force 10 — the stack never decays, so cycling builds it. | Light Force 20 | none (replaced Grace) |
-| Carillon | **Toll** (reworked) | Whenever this hero lands a hit, its partner is healed 5% of its max HP. | 10% | a percent heal beside Feast, outside the heal formula |
+| Carillon | **On the Hour** | At the end of every third round, the bell tolls: Sanctuary is set, and this hero's Mana is fully restored (two ids under one name, as Broadside is; replaced Toll). | every second round | new `restoreMana` effect — refills to the pool, never past it |
 | Hush | **Silent Wings** (reworked) | Whenever this hero Freezes an enemy, it gains Frost Force 10 (was Ambush 15). | Frost Force 20 | none |
 
 The second pass the same day added the last three rows, and two early moves that fill slate gaps:
@@ -340,6 +340,23 @@ mana, 20% Bleed) for Coil; Hush opens on Frost Bolt. Beast now has two magical r
 20% Daze), took Second Wind's seat in Carillon's kit: Light had one early physical attack. Second Wind itself is
 sound — Renew 14% ticks three times, ~40% of max HP for 30 mana — and the sim reads it as 0 healing
 because its move ledger credits a cast, not the Renew ticks after it.
+
+**The Burden tightened (same day, per user direction).** Bellows was the roster's top hero: Ironbound
+cost nothing when the whole roster fields and the enemy never forces a pivot. Ironbound now also
+**vents 15 Mana at every round end on the field** (Boiler Pressure, a new `loseMana` effect), after
+regen, so it nets −5 a round before a cast; with no bench to cycle to, the answer is a Rest — about
+one round in three he stands still. Ironbound+ keeps the vent beside its +10 Attack and Defense. The
+610 stands. **Kappa** opens on Tide Guard in place of Siphon (now in his pool): Siphon healing him
+fed Brimming's +10 Attack every cast, a self-loop from turn one; without it Brimming reads a
+partner's heal.
+
+**Gallant, Rex and Ursa, the same day.** Gallant's innate is now **Breach** (5 Defense a landed
+attack; Breach+ 15), his own card, so Swords and the Boon keep Sunder at 10. Rex trades 10 Attack
+for 10 HP (100 / 220). Feast heals a third of max HP, not half. Measured (10k a pilot, seed 84): none
+of the five nerfs moved its hero past noise (chart ±0.45); the top six are high-Attack physical heroes
+at +0.2 to +0.6 skilled and +1.8 to +2.5 chart. Each +10 base Attack reads as ≈ +0.43 chart-pilot
+fights across the physical roster (r 0.51): Act 1 spawn average 32 Defense. The edge is structural,
+and strong for a middling player rather than an expert.
 
 Retired with them: Glaciate, Headwind, Field Repair, Mycelium, Static Field and their mastered
 cards. Arcane Reservoir and Attunement stay as equipment cards. Two notes for playtest: Zenith has

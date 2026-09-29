@@ -834,7 +834,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // Kappa: Water's physical column and the Iron and Beast brawling around it. Oasis is Deep Pool's grant.
     kappa: [
-      'tideGuard', 'refresh', 'heavyBlow', 'ironFist', 'rockToss', 'sharpen',
+      'siphon', 'refresh', 'heavyBlow', 'ironFist', 'rockToss', 'sharpen',
       'aquaSlice', 'engulf', 'lacerate', 'maul', 'momentumSwing', 'rendArmor',
       'waveShred', 'onslaught', 'eviscerate', 'rendingLeap', 'juggernaut',
     ],

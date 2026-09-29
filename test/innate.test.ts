@@ -323,14 +323,14 @@ test("tyrant's due: a finishing blow banks +10 Attack for the run, once a fight,
   assert.strictEqual(recordPermanentStatGains(run, r3.state, 'A'), run, 'nothing banked, nothing written');
 });
 
-test('feast: a finishing blow heals Ursa half its max HP; a hit that leaves the target standing heals nothing', () => {
+test('feast: a finishing blow heals Ursa a third of its max HP; a hit that leaves the target standing heals nothing', () => {
   let state = withPassive(twoVTwo(23, 'ursa', 'valor', 'ironWarden', 'crag'), 'a1', 'feast');
   state = withField(state, 'a1', { currentHp: 10 });
   state = withField(state, 'b1', { currentHp: 1 });
   const maxHp = fixtureMaxHp('ursa');
   const cast = (s: CombatState) => resolveRound(s, [{ kind: 'move', combatantId: 'a1', moveId: 'claw', declaredTarget: 'b1' }, ...restAll(s).filter((a) => a.combatantId !== 'a1')], config);
   const r = cast(state);
-  assert.strictEqual(r.state.combatants.a1.currentHp, 10 + Math.round(maxHp * 0.5));
+  assert.strictEqual(r.state.combatants.a1.currentHp, 10 + Math.round(maxHp * 0.33));
   const standing = withField(withPassive(twoVTwo(24, 'ursa', 'valor', 'ironWarden', 'crag'), 'a1', 'feast'), 'a1', { currentHp: 10 });
   assert.strictEqual(cast(standing).state.combatants.a1.currentHp, 10);
 });
@@ -551,4 +551,26 @@ test('stormveil: the first Conduct burst of the fight Barriers Skyshear, and the
   assert.ok(barriered(first), 'the first burst');
   const second = strike(withStatus(first.state, 'b1', 'Conduct'));
   assert.ok(!barriered(second), 'once a fight');
+});
+
+test('on the hour: at the end of every third round Carillon sets Sanctuary and refills to its pool, never past it', () => {
+  let state = withPassive(withPassive(twoVTwo(49, 'carillon', 'valor', 'ironWarden', 'crag'), 'a1', 'onTheHour'), 'a1', 'onTheHourMana');
+  const swing = (s: CombatState) => resolveRound(s, [{ kind: 'move', combatantId: 'a1', moveId: 'holyStrike', declaredTarget: 'b1' }, ...restAll(s).filter((a) => a.combatantId !== 'a1')], config).state;
+  state = swing(swing(state));
+  assert.strictEqual(state.activeFieldEffect, null, 'the bell has not tolled by the end of round two');
+  assert.ok(state.combatants.a1.currentMana < heroes.carillon.baseStats.manaPool, 'two swings spent mana');
+  state = swing(state);
+  assert.strictEqual(state.activeFieldEffect?.fieldEffectId, 'sanctuary');
+  assert.strictEqual(state.combatants.a1.currentMana, heroes.carillon.baseStats.manaPool, 'full, and no further');
+});
+
+test('boiler pressure: Ironbound vents 15 Mana at every round end on the field, after regen, never below 0', () => {
+  let state = withPassive(twoVTwo(50, 'steamColossus', 'valor', 'ironWarden', 'crag'), 'a1', 'ironbound');
+  const pool = heroes.steamColossus.baseStats.manaPool;
+  const swing = (s: CombatState) => resolveRound(s, [{ kind: 'move', combatantId: 'a1', moveId: 'cogBop', declaredTarget: 'b1' }, ...restAll(s).filter((a) => a.combatantId !== 'a1')], config).state;
+  state = swing(state);
+  assert.strictEqual(state.combatants.a1.currentMana, pool - moves.cogBop.manaCost + heroes.steamColossus.baseStats.mpRegen - 15);
+  state = withField(state, 'a1', { currentMana: 5 });
+  state = resolveRound(state, restAll(state).map((a) => (a.combatantId === 'a1' ? { kind: 'move', combatantId: 'a1', moveId: 'sharpen', declaredTarget: 'a1' } as Action : a)), config).state;
+  assert.ok(state.combatants.a1.currentMana >= 0);
 });
