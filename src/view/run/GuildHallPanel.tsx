@@ -261,7 +261,7 @@ export function GuildHallPanel({
               name="Mastery Scroll"
               price={scrollsSoldOut ? 'Sold out' : SCROLL_PURCHASE_COST}
               soldOut={scrollsSoldOut}
-              held={scrollsBought > 0 ? `${scrollsBought}/${SCROLL_PURCHASE_LIMIT}` : undefined}
+              held={scrollsSoldOut ? undefined : `${SCROLL_PURCHASE_LIMIT - scrollsBought} left`}
               disabled={!canBuyScrollNow}
               onClick={onBuyScroll}
             />

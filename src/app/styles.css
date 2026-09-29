@@ -16559,6 +16559,29 @@ button.star-shop-bundle-face {
   }
 }
 
+@keyframes mentor-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* The keepers (art/npc: the Mentor, the Tutor, the Scribe) stand in the node header at a clean 2x,
+   floating, lit by their own node's tint. */
+.npc-portrait {
+  position: relative;
+  display: block;
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 4px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 16px rgba(var(--node-rgb), 0.55));
+  animation: mentor-float 3.2s ease-in-out infinite;
+}
+
 @keyframes class-learn-flash-burst {
   0% {
     opacity: 0;
@@ -37176,10 +37199,12 @@ img.smithy-service-art {
   color: #9a2818;
 }
 
+/* On the good's own picture, at its lower-right corner: a badge above the good reached up into the
+   price tag of the good on the shelf above it. */
 .hall-good-held {
   position: absolute;
-  top: -4px;
-  right: 14px;
+  top: 44px;
+  right: 12px;
   min-width: 20px;
   padding: 1px 5px;
   border: 1px solid rgba(232, 196, 106, 0.8);
