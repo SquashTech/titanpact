@@ -39538,7 +39538,7 @@ img.smithy-service-art {
   position: relative;
   flex: 1 1 auto;
   min-width: 0;
-  min-height: 96px;
+  min-height: 80px;
   padding: 0;
   border: 0;
   cursor: pointer;
@@ -40594,9 +40594,10 @@ img.smithy-service-art {
 
 .dossier-showcase {
   position: relative;
-  flex: none;
-  height: 196px;
-  margin-bottom: 6px;
+  flex: 1 1 0;
+  min-height: 72px;
+  max-height: 210px;
+  margin-bottom: 4px;
   overflow: hidden;
   touch-action: pan-y;
   background:
@@ -40648,7 +40649,7 @@ img.smithy-service-art {
 .dossier-showcase-pedestal {
   position: absolute;
   left: 50%;
-  bottom: 16px;
+  bottom: 8px;
   width: 150px;
   height: 22px;
   margin-left: -75px;
@@ -40660,11 +40661,11 @@ img.smithy-service-art {
 
 .dossier-showcase-portrait {
   position: absolute;
-  left: 50%;
-  bottom: 22px;
-  width: 168px;
-  height: 168px;
-  margin-left: -84px;
+  left: 0;
+  right: 0;
+  bottom: 14px;
+  width: 100%;
+  height: calc(100% - 20px);
   object-fit: contain;
   image-rendering: pixelated;
   filter: drop-shadow(0 0 10px color-mix(in srgb, var(--hero-color) 55%, transparent)) drop-shadow(0 4px 2px rgba(0, 0, 0, 0.6));
@@ -40735,167 +40736,6 @@ img.smithy-service-art {
   background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 70%, #3a2a10), color-mix(in srgb, var(--accent) 40%, #1a1308));
   color: #1a1206;
   box-shadow: 0 0 10px -2px var(--accent);
-}
-
-/* The stat shape. The SVG is sized explicitly: inset alone sizes it wrongly on iOS. */
-.stat-radar {
-  position: relative;
-  flex: none;
-  width: 100%;
-  aspect-ratio: 300 / 236;
-  margin-top: 4px;
-}
-
-.stat-radar-svg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-
-.stat-radar-ring {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.08);
-  stroke-width: 1;
-}
-
-.stat-radar-spoke {
-  stroke: rgba(255, 255, 255, 0.07);
-  stroke-width: 1;
-}
-
-.stat-radar-par {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.32);
-  stroke-width: 1;
-  stroke-dasharray: 3 3;
-}
-
-.stat-radar-shape {
-  fill: color-mix(in srgb, var(--radar-color) 34%, transparent);
-  stroke: var(--radar-color);
-  stroke-width: 2;
-  stroke-linejoin: round;
-  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--radar-color) 60%, transparent));
-  transform-box: view-box;
-  transform-origin: 150px 120px;
-  animation: stat-radar-grow 420ms cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
-}
-
-@keyframes stat-radar-grow {
-  from {
-    transform: scale(0.2);
-    opacity: 0;
-  }
-}
-
-.stat-radar-dot {
-  stroke: #0e1016;
-  stroke-width: 1;
-}
-
-.stat-radar-dot.is-best {
-  fill: var(--accent);
-  filter: drop-shadow(0 0 4px var(--accent));
-}
-
-.stat-radar-label {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-  transform: translate(-50%, -50%);
-  white-space: nowrap;
-  line-height: 1.1;
-}
-
-.stat-radar-label-name {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  color: var(--text-dim);
-}
-
-.stat-radar-label-name svg {
-  width: 11px;
-  height: 11px;
-}
-
-.stat-radar-label-value {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
-}
-
-.stat-radar-label.is-best .stat-radar-label-value {
-  color: var(--accent);
-  text-shadow: 0 0 8px color-mix(in srgb, var(--accent) 55%, transparent);
-}
-
-.stat-radar-grade {
-  font-size: 10px;
-  font-weight: 800;
-  color: var(--text-dim);
-  opacity: 0.6;
-}
-
-.stat-radar-grade.is-S,
-.stat-radar-grade.is-A {
-  color: var(--accent);
-  opacity: 1;
-}
-
-.stat-radar-grade.is-B {
-  color: var(--text);
-  opacity: 0.75;
-}
-
-.stat-radar-grade.is-E,
-.stat-radar-grade.is-F {
-  opacity: 0.4;
-}
-
-.dossier-stat-foot {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin: 2px 0 8px;
-}
-
-.dossier-stat-chip {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 9px;
-  border: 1px solid #2a303d;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.03);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
-.dossier-stat-chip svg {
-  width: 11px;
-  height: 11px;
-}
-
-.dossier-stat-chip b {
-  color: var(--text);
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
 }
 
 /* A tap on the showcase plays a pose: the attack frame lunges and pops, the hurt frame recoils and
@@ -40996,4 +40836,80 @@ img.smithy-service-art {
   100% {
     opacity: 0;
   }
+}
+
+/* The Stats page fits the well without a scroll: every block keeps its own height and the
+   showcase takes what is left, so a short phone gets a smaller hero rather than a scrollbar. */
+.detail-tab-body.is-showcase-page {
+  gap: 3px;
+}
+
+.is-showcase-page .dossier-showcase {
+  margin-bottom: 0;
+}
+
+.detail-tab-body.is-showcase-page > :not(.dossier-showcase) {
+  flex: none;
+}
+
+/* The innate's chips and summary restate its description; on this page the sentence alone is read. */
+.is-showcase-page .passive-readout-meta,
+.is-showcase-page .passive-readout .detail-modifier-list {
+  display: none;
+}
+
+/* Two columns of four rows: the bars at half the height, so the hero keeps the room. */
+.is-showcase-page .stat-bars {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: repeat(4, auto);
+  grid-auto-flow: column;
+  column-gap: 12px;
+  row-gap: 3px;
+}
+
+/* Set over StatBars' inline graded columns, which are sized for a full-width row. */
+.is-showcase-page .stat-bar-row {
+  grid-template-columns: 42px minmax(0, 1fr) 26px 10px !important;
+  gap: 5px;
+}
+
+.is-showcase-page .stat-total-row {
+  grid-row: 5;
+  grid-column: 1 / -1;
+  margin-top: 3px;
+  padding-top: 4px;
+}
+
+.is-showcase-page .stat-par-key {
+  display: none;
+}
+
+/* Stat Total rides on the showcase corner, opposite the type sigil, instead of a row of its own. */
+.is-showcase-page .stat-total-row {
+  display: none;
+}
+
+.dossier-showcase-total {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--accent);
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.8);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.dossier-showcase-total span {
+  margin-bottom: 2px;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
 }

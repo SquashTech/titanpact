@@ -16,8 +16,7 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { getTypeColor } from '../combat/typeColors';
 import { MoveButtonReplica } from '../shared/MoveTile';
 import { PassiveReadout } from '../shared/passiveIcons';
-import { computeStatTotal, StatGlyph, STAT_LABELS } from '../shared/StatBars';
-import { StatRadar } from '../shared/StatRadar';
+import { computeStatTotal, StatBars, StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { ElementGlyph } from '../shared/elementIcons';
 import { TabStrip, type TabSpec } from '../shared/TabStrip';
 import { TypeBadge } from '../shared/TypeBadge';
@@ -321,7 +320,7 @@ export function HeroDossierOverlay({ hero: opened, cycle, onClose }: Props) {
           {canCycle && <StepButton dir="next" onClick={() => step(1)} />}
         </div>
 
-        <div ref={bodyRef} className="detail-tab-body" role="tabpanel">
+        <div ref={bodyRef} className={`detail-tab-body${tab === 'stats' ? ' is-showcase-page' : ''}`} role="tabpanel">
           {tab === 'stats' && (
             <>
               {/* The hero first and large: this page is the showcase, a swipe across it the next hero. */}
@@ -338,6 +337,10 @@ export function HeroDossierOverlay({ hero: opened, cycle, onClose }: Props) {
                   <ElementGlyph type={hero.types[0]} />
                 </span>
                 <span className="dossier-showcase-pedestal" aria-hidden="true" />
+                <span className="dossier-showcase-total">
+                  <span>Stat Total</span>
+                  {computeStatTotal(hero.baseStats)}
+                </span>
                 {pose && <span key={`flash-${pose.beat}`} className={`dossier-showcase-flash is-${pose.kind}`} aria-hidden="true" />}
                 <HeroPortrait
                   key={pose ? `pose-${pose.beat}` : 'idle'}
@@ -370,16 +373,7 @@ export function HeroDossierOverlay({ hero: opened, cycle, onClose }: Props) {
               )}
               {mark && <PassiveReadout passive={mark} source="Titan's Mark" />}
 
-              <StatRadar key={`radar-${hero.id}`} baseStats={hero.baseStats} grades={gradesFor(hero)} color={getTypeColor(hero.types[0])} />
-              <div className="dossier-stat-foot">
-                <span className="dossier-stat-chip">
-                  Stat Total <b>{computeStatTotal(hero.baseStats)}</b>
-                </span>
-                <span className="dossier-stat-chip">
-                  <StatGlyph stat="mpRegen" /> {STAT_LABELS.mpRegen} <b>{hero.baseStats.mpRegen}</b>
-                </span>
-              </div>
-
+              <StatBars baseStats={hero.baseStats} grades={gradesFor(hero)} />
               <TypeMatchups types={hero.types} />
             </>
           )}
