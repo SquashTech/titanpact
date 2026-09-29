@@ -747,18 +747,6 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'defense', amount: -10 },
     },
   },
-  pixieDust: {
-    id: 'pixieDust',
-    name: 'Pixie Dust',
-    description: 'When this hero enters the battlefield, its partner gains 30 mana, past their pool.',
-    // Overspill pointed at the partner. A support that pivots in is paying a turn to arrive, and
-    // the arrival itself is the pour — the bench-cycling engine, read from the other seat.
-    reactive: {
-      hook: 'SwitchedIn',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'manaGrant', target: 'ally', amount: { kind: 'flat', value: 30 } },
-    },
-  },
   rampant: {
     id: 'rampant',
     name: 'Rampant',
@@ -902,7 +890,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
 // Mordrax, Sunder on Gallant) reaches the Boon pool as the equipment card it is, and stacks.
 // The band is deliberately narrow: an entry grant, a 5-point reaction, a rider on a typed hit,
 // a trickle. Sibling pairs across a type (Fault Line / Aftershock, Live Wire / Static Field) and
-// innate → Evolution chains (Impale → Thornrot, Attunement → Pixie Dust) are what the seats are for.
+// innate → Evolution chains (Impale → Thornrot) are what the seats are for.
 /** Broadside's magazine: cannonballs Scallywag can hold; and what one deals, as a share of each enemy's max HP. */
 export const BROADSIDE_MAGAZINE = 4;
 export const BROADSIDE_SHOT = 0.05;
@@ -2010,11 +1998,12 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   mindthief: {
     id: 'mindthief',
     name: 'Neuroplastic+',
-    description: "Whenever an enemy's Wisdom is lowered, this hero gains that much Wisdom and that much Intelligence.",
+    description: "Whenever an enemy's Wisdom is lowered, this hero gains that much Wisdom, Attack and Intelligence.",
+    // Both hands, so Construct's rewire keeps it live (docs/evolution-simplification.md §5).
     reactive: {
       hook: 'StatChanged',
       condition: { relativeTo: 'enemy', eventFieldEquals: { stat: 'wisdom' }, eventFieldNegative: 'delta' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['wisdom', 'intelligence'], amount: { kind: 'matchTriggerAmount', field: 'delta', multiplier: -1 } },
+      effect: { kind: 'statDelta', target: 'self', stat: ['wisdom', 'attack', 'intelligence'], amount: { kind: 'matchTriggerAmount', field: 'delta', multiplier: -1 } },
     },
   },
   insatiable: {

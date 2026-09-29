@@ -153,10 +153,9 @@ test('roster: no Evolution path is bare stats — each pays a type, a move, or a
 });
 
 test('roster: an Evolution never hands over a move the hero could already be offered', () => {
-  // A grant that duplicates the base pool pays in timing alone. Reverie's Cog Bop is the one
-  // documented exemption: it is authored OFF-TYPE coverage in the pool and part of the Mech
-  // graft's line, and it has to be both (docs/authoring-moves.md, off-type coverage policy).
-  const EXEMPT = new Set(['mindweaver-construct:cogBop']);
+  // A grant that duplicates the base pool pays in timing alone. A derived line (evolutionLine)
+  // leaves the pool out by construction, so Reverie's off-type Cog Bop no longer needs exempting.
+  const EXEMPT = new Set<string>();
   const found: string[] = [];
   for (const hero of Object.values(heroes)) {
     const known = new Set([...hero.moveIds, ...(progressionTable.moveTiers[hero.id] ?? [])]);

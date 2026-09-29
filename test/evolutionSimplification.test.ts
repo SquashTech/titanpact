@@ -22,6 +22,7 @@ const REWIRES = [
   'revenant-wraithblade',
   'sorrow-dirge',
   'nightshade-hemlock',
+  'mindweaver-construct',
 ];
 
 function pathsOf(heroId: string): EvolutionPath[] {
