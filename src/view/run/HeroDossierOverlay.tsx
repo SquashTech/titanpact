@@ -1,4 +1,5 @@
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
+import { playSfx } from '../../audio/sfx';
 import { moves } from '../../data/moves';
 import { passives } from '../../data/passives';
 import { progressionTable } from '../../data/progression';
@@ -14,7 +15,9 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { getTypeColor } from '../combat/typeColors';
 import { MoveButtonReplica } from '../shared/MoveTile';
 import { PassiveReadout } from '../shared/passiveIcons';
-import { StatBars, StatGlyph, STAT_LABELS } from '../shared/StatBars';
+import { computeStatTotal, StatGlyph, STAT_LABELS } from '../shared/StatBars';
+import { StatRadar } from '../shared/StatRadar';
+import { ElementGlyph } from '../shared/elementIcons';
 import { TabStrip, type TabSpec } from '../shared/TabStrip';
 import { TypeBadge } from '../shared/TypeBadge';
 import { isTitanspawn } from '../../data/titanspawn';
@@ -24,8 +27,13 @@ import { EvolutionStar } from '../shared/EvolutionStar';
 
 interface Props {
   hero: HeroDefinition;
+  /** The heroes the arrows step through, wrapping at either end. Omitted, or without the hero opened, there are no arrows. */
+  cycle?: readonly HeroDefinition[];
   onClose: () => void;
 }
+
+/** A horizontal drag this long across the showcase steps to the neighbouring hero. */
+const SWIPE_PX = 44;
 
 type TabId = 'stats' | 'moves' | 'evolution';
 
@@ -163,14 +171,66 @@ function EvolutionPathCard({
   );
 }
 
+function StepButton({ dir, onClick }: { dir: 'prev' | 'next'; onClick: () => void }) {
+  return (
+    <button type="button" className={`dossier-step is-${dir}`} aria-label={dir === 'prev' ? 'Previous hero' : 'Next hero'} data-sfx="none" onClick={onClick}>
+      <svg viewBox="0 0 16 16" aria-hidden="true">
+        <path d={dir === 'prev' ? 'M10 3 5 8l5 5' : 'M6 3l5 5-5 5'} />
+      </svg>
+    </button>
+  );
+}
+
 /**
  * The whole authored hero, in three pages: Stats, Moves, Evolution (2026-09-07, per user
  * direction). Read-only and run-independent — it reads `heroes`/`progressionTable` directly, never
  * a RosterEntry, so it shows the hero as designed rather than as levelled.
  */
-export function HeroDossierOverlay({ hero, onClose }: Props) {
+export function HeroDossierOverlay({ hero: opened, cycle, onClose }: Props) {
   const [tab, setTab] = useState<TabId>('stats');
   const [popupMoveId, setPopupMoveId] = useState<string | null>(null);
+  const [heroId, setHeroId] = useState(opened.id);
+  const [showMastered, setShowMastered] = useState(false);
+  const [stepDir, setStepDir] = useState<'next' | 'prev' | null>(null);
+  const swipeRef = useRef<{ pointerId: number; x: number } | null>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const index = cycle ? cycle.findIndex((h) => h.id === heroId) : -1;
+  const canCycle = !!cycle && cycle.length > 1 && index >= 0;
+  const hero = canCycle ? cycle![index] : opened;
+
+  function step(dir: 1 | -1) {
+    if (!canCycle) return;
+    playSfx('ui.pick');
+    setHeroId(cycle![(index + dir + cycle!.length) % cycle!.length].id);
+    setStepDir(dir > 0 ? 'next' : 'prev');
+    setShowMastered(false);
+    setPopupMoveId(null);
+    bodyRef.current?.scrollTo({ top: 0 });
+  }
+
+  useEffect(() => {
+    if (!canCycle) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') step(-1);
+      else if (e.key === 'ArrowRight') step(1);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+
+  function onSwipeDown(e: ReactPointerEvent<HTMLElement>) {
+    if (canCycle) swipeRef.current = { pointerId: e.pointerId, x: e.clientX };
+  }
+
+  function onSwipeUp(e: ReactPointerEvent<HTMLElement>) {
+    const start = swipeRef.current;
+    swipeRef.current = null;
+    if (!start || start.pointerId !== e.pointerId) return;
+    // Screen px to canvas px: the design canvas is transform-scaled.
+    const scale = e.currentTarget.getBoundingClientRect().width / (e.currentTarget.offsetWidth || 1) || 1;
+    const dx = (e.clientX - start.x) / scale;
+    if (Math.abs(dx) >= SWIPE_PX) step(dx < 0 ? 1 : -1);
+  }
 
   const startingKit = hero.moveIds;
   // The starting kit is filtered out of the pool by masteryMovePool, so it is filtered out here too.
@@ -206,10 +266,14 @@ export function HeroDossierOverlay({ hero, onClose }: Props) {
         style={{ '--hero-color': getTypeColor(hero.types[0]) } as CSSProperties}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="detail-header is-hero">
-          <span className="detail-portrait-plate">
-            <HeroPortrait heroId={hero.id} className="detail-portrait is-inline" />
-          </span>
+        <div className={`detail-header is-hero dossier-head${canCycle ? ' can-cycle' : ''}`}>
+          {canCycle && <StepButton dir="prev" onClick={() => step(-1)} />}
+          {/* The Stats page seats the hero large, so the title bar drops its thumbnail there. */}
+          {tab !== 'stats' && (
+            <span className="detail-portrait-plate">
+              <HeroPortrait heroId={hero.id} className="detail-portrait is-inline" />
+            </span>
+          )}
           <div className="detail-header-titles">
             <div className="detail-name">{hero.name}</div>
             <div className="combatant-types">
@@ -224,18 +288,63 @@ export function HeroDossierOverlay({ hero, onClose }: Props) {
               </div>
             )}
           </div>
+          {canCycle && <StepButton dir="next" onClick={() => step(1)} />}
         </div>
 
-        <div className="detail-tab-body" role="tabpanel">
+        <div ref={bodyRef} className="detail-tab-body" role="tabpanel">
           {tab === 'stats' && (
             <>
-              {/* Matchups lead the page — see HeroPreviewOverlay. The innate sits between them and
-                  the bars: it is what the hero DOES before it has evolved (docs/innate-passives.md §6). */}
-              <TypeMatchups types={hero.types} />
-              {innate && <PassiveReadout passive={innate} source="Innate" />}
-              {mastered && <PassiveReadout passive={mastered} source={`Mastery ${MASTERY_INNATE}`} />}
+              {/* The hero first and large: this page is the showcase, a swipe across it the next hero. */}
+              <div
+                key={`showcase-${hero.id}`}
+                className={`dossier-showcase${stepDir ? ` is-from-${stepDir}` : ''}`}
+                style={{ '--hero-color-2': getTypeColor(hero.types[1] ?? hero.types[0]) } as CSSProperties}
+                onPointerDown={onSwipeDown}
+                onPointerUp={onSwipeUp}
+                onPointerCancel={() => (swipeRef.current = null)}
+              >
+                <span className="dossier-showcase-rays" aria-hidden="true" />
+                <span className="dossier-showcase-sigil" aria-hidden="true">
+                  <ElementGlyph type={hero.types[0]} />
+                </span>
+                <span className="dossier-showcase-pedestal" aria-hidden="true" />
+                <HeroPortrait heroId={hero.id} className="dossier-showcase-portrait" />
+              </div>
+
+              {/* The innate is what the hero DOES before it has evolved (docs/innate-passives.md §6);
+                  its mastered form is one tap away rather than a second card. */}
+              {innate && (
+                <PassiveReadout
+                  passive={showMastered && mastered ? mastered : innate}
+                  source={showMastered && mastered ? `Innate, mastered at Mastery ${MASTERY_INNATE}` : 'Innate'}
+                  action={
+                    mastered && (
+                      <button
+                        type="button"
+                        className={`innate-plus-toggle${showMastered ? ' is-on' : ''}`}
+                        aria-pressed={showMastered}
+                        aria-label={showMastered ? `Show ${innate.name}` : `Show ${mastered.name}`}
+                        onClick={() => setShowMastered((on) => !on)}
+                      >
+                        +
+                      </button>
+                    )
+                  }
+                />
+              )}
               {mark && <PassiveReadout passive={mark} source="Titan's Mark" />}
-              <StatBars baseStats={hero.baseStats} grades={gradesFor(hero)} />
+
+              <StatRadar key={`radar-${hero.id}`} baseStats={hero.baseStats} grades={gradesFor(hero)} color={getTypeColor(hero.types[0])} />
+              <div className="dossier-stat-foot">
+                <span className="dossier-stat-chip">
+                  Stat Total <b>{computeStatTotal(hero.baseStats)}</b>
+                </span>
+                <span className="dossier-stat-chip">
+                  <StatGlyph stat="mpRegen" /> {STAT_LABELS.mpRegen} <b>{hero.baseStats.mpRegen}</b>
+                </span>
+              </div>
+
+              <TypeMatchups types={hero.types} />
             </>
           )}
 

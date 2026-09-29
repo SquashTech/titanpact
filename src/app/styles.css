@@ -40204,3 +40204,354 @@ img.smithy-service-art {
     font-size: 8px;
   }
 }
+
+/* -- The hero dossier as a showcase (HeroDossierOverlay): the Stats page seats the hero large on a
+   stage lit in its type colour, the numbers read as a shape, and arrows in the title bar step
+   through the Collection without closing the sheet. -- */
+.dossier-head.can-cycle {
+  gap: 8px;
+}
+
+.dossier-step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 36px;
+  height: 44px;
+  padding: 0;
+  border: 8px solid transparent;
+  border-image: url('../../art/ui/slot.png') 4 / 8px round;
+  background: #111319 padding-box;
+  color: color-mix(in srgb, var(--hero-color, var(--accent)) 45%, #ffffff);
+  cursor: pointer;
+  image-rendering: pixelated;
+}
+
+.dossier-step:hover {
+  border-image-source: url('../../art/ui/slot-lit.png');
+}
+
+.dossier-step:active {
+  transform: translateY(1px);
+}
+
+.dossier-step svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: square;
+}
+
+.dossier-head.can-cycle .detail-header-titles {
+  align-items: center;
+  text-align: center;
+}
+
+.dossier-showcase {
+  position: relative;
+  flex: none;
+  height: 196px;
+  margin-bottom: 6px;
+  overflow: hidden;
+  touch-action: pan-y;
+  background:
+    radial-gradient(ellipse 62% 70% at 50% 58%, color-mix(in srgb, var(--hero-color) 42%, transparent), transparent 72%),
+    radial-gradient(ellipse 90% 60% at 50% 105%, color-mix(in srgb, var(--hero-color-2) 30%, transparent), transparent 70%),
+    linear-gradient(180deg, #0b0d12, color-mix(in srgb, var(--hero-color) 10%, #0e1016));
+  box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.75);
+}
+
+.dossier-showcase.is-from-next .dossier-showcase-portrait {
+  animation: dossier-in-next 280ms cubic-bezier(0.2, 0.9, 0.3, 1.1) both, dossier-float 4.2s ease-in-out 280ms infinite;
+}
+
+.dossier-showcase.is-from-prev .dossier-showcase-portrait {
+  animation: dossier-in-prev 280ms cubic-bezier(0.2, 0.9, 0.3, 1.1) both, dossier-float 4.2s ease-in-out 280ms infinite;
+}
+
+.dossier-showcase-rays {
+  position: absolute;
+  left: 50%;
+  top: 56%;
+  width: 420px;
+  height: 420px;
+  margin: -210px 0 0 -210px;
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--hero-color) 22%, transparent) 0deg 7deg, transparent 7deg 22.5deg);
+  -webkit-mask-image: radial-gradient(circle, #000 12%, transparent 62%);
+  mask-image: radial-gradient(circle, #000 12%, transparent 62%);
+  opacity: 0.7;
+  animation: dossier-rays 48s linear infinite;
+  pointer-events: none;
+}
+
+.dossier-showcase-sigil {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 44px;
+  height: 44px;
+  color: var(--hero-color);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.dossier-showcase-sigil svg {
+  width: 100%;
+  height: 100%;
+}
+
+.dossier-showcase-pedestal {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  width: 150px;
+  height: 22px;
+  margin-left: -75px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.7), transparent 70%);
+  box-shadow: 0 0 22px 2px color-mix(in srgb, var(--hero-color) 30%, transparent);
+  pointer-events: none;
+}
+
+.dossier-showcase-portrait {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  width: 168px;
+  height: 168px;
+  margin-left: -84px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--hero-color) 55%, transparent)) drop-shadow(0 4px 2px rgba(0, 0, 0, 0.6));
+  animation: dossier-float 4.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes dossier-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes dossier-in-next {
+  from {
+    opacity: 0;
+    transform: translateX(60px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes dossier-in-prev {
+  from {
+    opacity: 0;
+    transform: translateX(-60px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes dossier-rays {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* The mastered innate, one tap away: a small gilt key on the innate card head. */
+.innate-plus-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin: -3px -2px -3px 2px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, #3a3222);
+  border-radius: 4px;
+  background: linear-gradient(180deg, #221d14, #15120c);
+  color: var(--accent);
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.innate-plus-toggle.is-on {
+  border-color: var(--accent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 70%, #3a2a10), color-mix(in srgb, var(--accent) 40%, #1a1308));
+  color: #1a1206;
+  box-shadow: 0 0 10px -2px var(--accent);
+}
+
+/* The stat shape. The SVG is sized explicitly: inset alone sizes it wrongly on iOS. */
+.stat-radar {
+  position: relative;
+  flex: none;
+  width: 100%;
+  aspect-ratio: 300 / 236;
+  margin-top: 4px;
+}
+
+.stat-radar-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.stat-radar-ring {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 1;
+}
+
+.stat-radar-spoke {
+  stroke: rgba(255, 255, 255, 0.07);
+  stroke-width: 1;
+}
+
+.stat-radar-par {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.32);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.stat-radar-shape {
+  fill: color-mix(in srgb, var(--radar-color) 34%, transparent);
+  stroke: var(--radar-color);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--radar-color) 60%, transparent));
+  transform-box: view-box;
+  transform-origin: 150px 120px;
+  animation: stat-radar-grow 420ms cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+}
+
+@keyframes stat-radar-grow {
+  from {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+}
+
+.stat-radar-dot {
+  stroke: #0e1016;
+  stroke-width: 1;
+}
+
+.stat-radar-dot.is-best {
+  fill: var(--accent);
+  filter: drop-shadow(0 0 4px var(--accent));
+}
+
+.stat-radar-label {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  line-height: 1.1;
+}
+
+.stat-radar-label-name {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+
+.stat-radar-label-name svg {
+  width: 11px;
+  height: 11px;
+}
+
+.stat-radar-label-value {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-radar-label.is-best .stat-radar-label-value {
+  color: var(--accent);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.stat-radar-grade {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-dim);
+  opacity: 0.6;
+}
+
+.stat-radar-grade.is-S,
+.stat-radar-grade.is-A {
+  color: var(--accent);
+  opacity: 1;
+}
+
+.stat-radar-grade.is-B {
+  color: var(--text);
+  opacity: 0.75;
+}
+
+.stat-radar-grade.is-E,
+.stat-radar-grade.is-F {
+  opacity: 0.4;
+}
+
+.dossier-stat-foot {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 2px 0 8px;
+}
+
+.dossier-stat-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border: 1px solid #2a303d;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.dossier-stat-chip svg {
+  width: 11px;
+  height: 11px;
+}
+
+.dossier-stat-chip b {
+  color: var(--text);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}

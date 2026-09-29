@@ -32,6 +32,9 @@ const TYPE_ORDER: TypeId[] = draftableTypes(heroes).sort((a, b) => typeIndex(a) 
 /** Every hero of a type in the catalog, owned or not, in catalog order. */
 const HEROES_BY_TYPE: Record<TypeId, HeroDefinition[]> = Object.fromEntries(TYPE_ORDER.map((type) => [type, Object.values(heroes).filter((hero) => hero.types[0] === type)]));
 
+/** The dossier's arrows walk the whole catalog in the page's own order, a type at a time. */
+const DOSSIER_CYCLE: HeroDefinition[] = TYPE_ORDER.flatMap((type) => HEROES_BY_TYPE[type]);
+
 /** How long a card is held before it lifts off the page to be dragged. */
 const PICK_UP_MS = 320;
 /** A finger that travels this far before the hold lands is scrolling, not picking up. */
@@ -464,7 +467,7 @@ export function CollectionScreen({ profile, onChangeDeck, onBuy, onClose }: Prop
         </button>
       </div>
 
-      {dossierHero && <HeroDossierOverlay hero={dossierHero} onClose={() => setDossierHeroId(null)} />}
+      {dossierHero && <HeroDossierOverlay hero={dossierHero} cycle={DOSSIER_CYCLE} onClose={() => setDossierHeroId(null)} />}
     </div>
   );
 }

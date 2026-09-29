@@ -235,12 +235,16 @@ hero relies on, turned all the way up. `HeroDefinition.masteredPassiveIds` holds
 `innatePassiveIdsFor(hero, entry)` (`src/run/innate.ts`) is the one read, and every fight build and
 hero sheet goes through it, so the swap is total: the born card is gone, not stacked under.
 
-**The authoring rule** (pinned in `test/mastery.test.ts`): the same trigger, a new name, in no
-pool, and **every flat figure at least doubled** — or the reach widened (one enemy → both, self →
+**The authoring rule** (pinned in `test/mastery.test.ts`): the same trigger, **the innate's own name with a +** (Kindling → *Kindling+*; 2026-09-28, per user direction —
+the upgrade is the same verb, and a new name read as a new card), in no pool, and **every flat figure at least doubled** — or the reach widened (one enemy → both, self →
 the pair), a cap taken off (Apex Tyrant keeps Tyrant's Due's 10 and loses once-a-fight), or a roll
 made certain (Boiling Point). Where one reaction cannot carry the upgrade it is two cards,
 Broadside's shape, read as one innate by its first. A Burden stays a Burden: Iron Mountain still
 cannot switch, and now grows for staying.
+
+The Mastered column below names each card by its id (Forgeheart is `forgeheart`); the player reads it as
+its innate's name plus a +. The hero dossier shows the innate alone, with a + key that turns it to the
+mastered card.
 
 | Hero | Innate | Mastered |
 |---|---|---|

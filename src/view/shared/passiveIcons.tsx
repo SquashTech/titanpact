@@ -200,11 +200,14 @@ export function PassiveReadout({
   passive,
   source,
   count = 1,
+  action,
 }: {
   passive: PassiveDefinition;
   /** Where it came from, in the player's words — an item's name, "Evolution", "Class", "Boon". */
   source?: string;
   count?: number;
+  /** A control seated at the head's right edge — the dossier's mastered-innate toggle. */
+  action?: ReactNode;
 }) {
   const color = passiveColor(passive.id);
   const summary = passiveEffectSummary(passive);
@@ -217,6 +220,7 @@ export function PassiveReadout({
         <span className="passive-readout-name">{passive.name}</span>
         {count > 1 && <span className="passive-readout-stack">×{count}</span>}
         <span className="passive-readout-kind">{passiveKindLabel(passive)}</span>
+        {action}
       </div>
       {source && <div className="passive-readout-source">{source}</div>}
       <div className="passive-readout-desc">{passive.description}</div>

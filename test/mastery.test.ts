@@ -277,7 +277,7 @@ function flatFigure(passive: PassiveDefinition): number | null {
   return null;
 }
 
-test('mastered innate: every hero authors one — new cards, named apart from the innate, in no pool, on the innate\'s own trigger', () => {
+test('mastered innate: every hero authors one — new cards, named as the innate with a +, in no pool, on the innate\'s own trigger', () => {
   for (const hero of Object.values(heroes)) {
     const innate = innatePassiveOf(hero)!;
     const mastered = masteredInnateOf(hero);
@@ -287,7 +287,7 @@ test('mastered innate: every hero authors one — new cards, named apart from th
       assert.ok(!boonPassives[id], `${hero.id}: ${id} is in the Boon pool`);
     }
     assert.notStrictEqual(mastered!.id, innate.id, `${hero.id}: the mastered card is the innate itself`);
-    assert.notStrictEqual(mastered!.name, innate.name, `${hero.id}: the mastered card wears the innate's name`);
+    assert.strictEqual(mastered!.name, `${innate.name}+`, `${hero.id}: the mastered card is the innate's name with a +`);
     // The same verb, louder: it fires off the same hook. A verb-only innate (Ironbound) keeps its
     // verb and may gain the reaction it never had — Iron Mountain grows for staying.
     if (innate.reactive) assert.strictEqual(mastered!.reactive?.hook, innate.reactive.hook, `${hero.id}: ${mastered!.id} reacts to a different hook than ${innate.id}`);
