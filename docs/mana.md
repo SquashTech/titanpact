@@ -157,7 +157,7 @@ never values. Whether mana now reads as a decision is a playtest call.
 The revision (Wellspring +50 HP / +25 Mana / +5 regen, the eight Late moves +10), same batch:
 full-clear 93.3%, Banner lifts +0.08 / −0.03 / −0.05, Late 14.6 → 12.3% of Act 5's casts. The
 eight re-priced moves lost a quarter to two thirds of their casts (Onslaught 1873 → 1071, Salvo
-1137 → 547, Dusk Blade 1072 → 365 — the steepest, being a 55 that became a 65).
+1137 → 547, Dusk Blade 1072 → 365 — the steepest, so it came back to 60).
 
 **The Mana Well is the exception to *a bare number never gets a screen*, decided 2026-09-13**
 (per user direction, on the argument that a pool is the stat a whole tier of moves is priced in,

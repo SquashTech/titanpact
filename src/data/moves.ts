@@ -2221,7 +2221,7 @@ export const moves: Record<string, MoveDefinition> = {
     kind: 'damage',
     basePower: 85,
     statusApplication: { statusId: 'Bleed', target: 'moveTarget' },
-    manaCost: 65,
+    manaCost: 60,
     priority: 0,
     target: 'singleEnemy',
     description: 'A cut that will not close (inflicts Bleed).',
