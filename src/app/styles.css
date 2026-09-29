@@ -18528,6 +18528,12 @@ button.star-shop-bundle-face {
   transform: scaleY(0.04);
 }
 
+/* The gaze holds forward here: the eyes only open and burn, they never wander. */
+.launch-screen .titan-eye-gaze {
+  animation: none;
+  transform: none;
+}
+
 .launch-screen .title-titan .titan-eye-halo {
   animation: none;
   opacity: 0.1;
