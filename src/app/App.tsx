@@ -31,6 +31,7 @@ import { TutorNodeScreen } from '../view/run/TutorNodeScreen';
 import { MentorNodeScreen } from '../view/run/MentorNodeScreen';
 import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScreen';
 import { ItemWhoScreen } from '../view/run/ItemWhoScreen';
+import { clearGuildHallTab } from '../view/run/guildHallTabMemory';
 import { ScrollNodeScreen, type ScrollPlan } from '../view/run/ScrollNodeScreen';
 import { ManaWellScreen } from '../view/run/ManaWellScreen';
 import { ForgeNodeScreen } from '../view/run/ForgeNodeScreen';
@@ -695,6 +696,7 @@ export function App() {
       // Leads are picked in the fight, once the enemy's are on the field (FightScreen's lead pick).
       handleEnterFight(openingSquad(playerRun.roster), nodeId, encounterKind, encounter);
     } else if (node.type === 'shop' || node.type === 'muster') {
+      clearGuildHallTab();
       setScreen({
         kind: 'shop',
         nodeId,

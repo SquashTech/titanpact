@@ -58,7 +58,7 @@ export function ShopNodeScreen({
   muster = false,
 }: Props) {
   const [overlayOpen, setOverlayOpen] = useState(false);
-  // The counter the player was last at, across a who-screen's unmount and across visits.
+  // The counter the player was last at this visit, across a who-screen's unmount; a visit opens on the Tavern.
   const location = useAmbientLocation();
   const hall = location ? locationBackdrop(location.id, 'hall') : undefined;
   const [tab, setTab] = useState<GuildHallTab>(() => readGuildHallTab(muster ? 'shop' : 'tavern'));

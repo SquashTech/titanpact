@@ -1,7 +1,6 @@
 // The Guild Hall counter the player was last at (2026-09-25, per user direction): a buy that
-// raises a who-screen unmounts the hall, and the next visit is a fresh mount — both used to land
-// back on the Tavern. A preference, not a record of play, so it lives in its own key beside the
-// autoplay and audio prefs rather than in the save or the Profile.
+// raises a who-screen unmounts the hall, and used to land back on the Tavern. Held for one visit
+// only: walking in opens on the Tavern (2026-09-29, per user direction), so entry clears it.
 
 import type { GuildHallTab } from './GuildHallPanel';
 
@@ -15,6 +14,15 @@ export function readGuildHallTab(fallback: GuildHallTab): GuildHallTab {
   } catch {
     // Private-mode Safari throws on localStorage access.
     return fallback;
+  }
+}
+
+/** A fresh visit: the next mount opens on its default counter. */
+export function clearGuildHallTab(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    /* Storage unavailable — nothing was held. */
   }
 }
 
