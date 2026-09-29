@@ -23,6 +23,8 @@ const REWIRES = [
   'sorrow-dirge',
   'nightshade-hemlock',
   'mindweaver-construct',
+  'packAlpha-warhowl',
+  'steamColossus-overpressure',
 ];
 
 function pathsOf(heroId: string): EvolutionPath[] {

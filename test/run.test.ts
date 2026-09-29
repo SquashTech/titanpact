@@ -368,26 +368,29 @@ test('progression: a path that grants a Passive records it on the entry (Crimson
   assert.ok(next.roster[0].unlockedMoveIds.includes('landslide'));
 });
 
-test('progression: Warhowl inverts Fang\'s attacking stat — a NEGATIVE Evolution grant is legal and lands', () => {
+test('progression: Warhowl rewires Fang — a NEGATIVE Evolution grant is legal and lands, and the Spirit line is magical', () => {
   let run = seedRoster(['packAlpha']);
   run = atEvolutionRung(run, 'packAlpha');
 
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'packAlpha', 'packAlpha-warhowl');
-  const grants = next.roster[0].evolutionStatGrants;
-  assert.strictEqual(grants.attack, -30);
-  assert.strictEqual(grants.intelligence, 60);
-  assert.strictEqual(grants.mpRegen, 5);
-  assert.ok(next.roster[0].unlockedMoveIds.includes('poltergeist'), 'Warhowl hands Fang a Spirit attack to use the new Intelligence on');
+  const entry = next.roster[0];
+  const grants = entry.evolutionStatGrants;
+  assert.ok(entry.offenseSwapped);
+  assert.ok(grants.attack! < 0, 'the Attack Fang lived on is given away');
+  assert.strictEqual(grants.intelligence, -grants.attack!);
+  assert.ok(entry.unlockedMoveIds.includes('poltergeist'), 'Warhowl hands Fang a Spirit attack to use the new Intelligence on');
 
   const base = heroes.packAlpha.baseStats;
+  const atk = base.attack + (entry.growthStatGrants.attack ?? 0) + grants.attack!;
+  const int = base.intelligence + (entry.growthStatGrants.intelligence ?? 0) + grants.intelligence!;
   assert.ok(base.attack > base.intelligence, 'base Fang attacks with Attack');
-  assert.ok(base.intelligence + grants.intelligence! > base.attack + grants.attack!, 'Warhowl Fang attacks with Intelligence');
+  assert.ok(int > atk, 'Warhowl Fang attacks with Intelligence');
 
-  // Animal Spirit is Beast's one magical row, absent from base Fang's pool (Int 20); Warhowl makes it reachable.
-  const pool = poolAtTop(next.roster[0]);
-  assert.ok(!progressionTable.moveTiers.packAlpha.includes('animalSpirit'));
-  assert.ok(pool.includes('animalSpirit'));
-  assert.strictEqual(moves.animalSpirit.type, 'Beast');
+  // The graft's line is Spirit's magical column, which base Fang (Int 20) never drew from.
+  const pool = poolAtTop(entry);
+  const spiritMagical = pool.filter((id) => moves[id].type === 'Spirit' && moves[id].kind === 'damage');
+  assert.ok(spiritMagical.length > 0);
+  assert.ok(spiritMagical.every((id) => moves[id].category === 'magical'));
 });
 
 // --- unlocksMoveIds: an Evolution grants its move outright, under the same MOVE_CAP as a level-up ---

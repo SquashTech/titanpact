@@ -683,19 +683,6 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10 },
     },
   },
-  superheat: {
-    id: 'superheat',
-    name: 'Superheat',
-    description: 'Whenever this hero is Burned, it gains 20 Intelligence.',
-    // Combustion aimed at the other offensive stat, which is what makes it a REFOCUS payoff
-    // rather than a copy: Overpressure SPENDS Bellows' Attack, and Mech's magical column
-    // (Backfire, Overheat, Meltdown) burns its own caster, so the drawback funds the new stat.
-    reactive: {
-      hook: 'StatusApplied',
-      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Burn' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 20 },
-    },
-  },
   widowsKiss: {
     id: 'widowsKiss',
     name: "Widow's Kiss",
@@ -1268,11 +1255,12 @@ const innatePassives: Record<string, PassiveDefinition> = {
   packHunter: {
     id: 'packHunter',
     name: 'Pack Hunter',
-    description: "Whenever this hero's partner lands an attack, this hero gains 5 Attack.",
+    description: "Whenever this hero's partner lands an attack, this hero gains 5 Attack and 5 Intelligence.",
+    // Both columns, so Warhowl's rewire keeps it live.
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'ally', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 5 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], amount: 5 },
     },
   },
   serpentsEye: {
@@ -2177,11 +2165,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   alphasCall: {
     id: 'alphasCall',
     name: 'Pack Hunter+',
-    description: "Whenever this hero's partner lands an attack, both of them gain 10 Attack.",
+    description: "Whenever this hero's partner lands an attack, this hero gains 10 Attack and 10 Intelligence, and the partner 10 Attack.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'ally', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], amount: 10 },
     },
   },
   alphasCallFollow: {
