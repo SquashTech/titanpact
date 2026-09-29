@@ -644,7 +644,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew', kind: 'heal' } },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence', 'defense'], amount: 10 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'defense'], amount: 10 },
     },
   },
   shieldbearer: {
