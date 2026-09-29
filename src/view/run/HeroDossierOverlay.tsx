@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 import { playSfx } from '../../audio/sfx';
+import type { SfxId } from '../../audio/sounds';
 import { moves } from '../../data/moves';
 import { passives } from '../../data/passives';
 import { progressionTable } from '../../data/progression';
@@ -34,6 +35,10 @@ interface Props {
 
 /** A horizontal drag this long across the showcase steps to the neighbouring hero. */
 const SWIPE_PX = 44;
+/** Less travel than this and the press on the showcase was a tap. */
+const TAP_SLOP_PX = 10;
+/** How long a tapped pose holds before the hero settles back to idle. */
+const POSE_MS = 720;
 
 type TabId = 'stats' | 'moves' | 'evolution';
 
@@ -218,8 +223,31 @@ export function HeroDossierOverlay({ hero: opened, cycle, onClose }: Props) {
     return () => window.removeEventListener('keydown', onKey);
   });
 
+  // A tap on the showcase plays the hero's poses in turn: attack, then hurt, then attack again.
+  const [pose, setPose] = useState<{ kind: 'attack' | 'hurt'; beat: number } | null>(null);
+  const nextPoseRef = useRef<'attack' | 'hurt'>('attack');
+  const poseTimer = useRef<number | undefined>(undefined);
+
+  function playPose() {
+    const kind = nextPoseRef.current;
+    nextPoseRef.current = kind === 'attack' ? 'hurt' : 'attack';
+    playSfx(kind === 'attack' ? (`cast.${hero.types[0]}` as SfxId) : 'hit.physical');
+    setStepDir(null);
+    setPose((prev) => ({ kind, beat: (prev?.beat ?? 0) + 1 }));
+    clearTimeout(poseTimer.current);
+    poseTimer.current = window.setTimeout(() => setPose(null), POSE_MS);
+  }
+
+  useEffect(() => {
+    clearTimeout(poseTimer.current);
+    setPose(null);
+    nextPoseRef.current = 'attack';
+  }, [heroId]);
+
+  useEffect(() => () => clearTimeout(poseTimer.current), []);
+
   function onSwipeDown(e: ReactPointerEvent<HTMLElement>) {
-    if (canCycle) swipeRef.current = { pointerId: e.pointerId, x: e.clientX };
+    swipeRef.current = { pointerId: e.pointerId, x: e.clientX };
   }
 
   function onSwipeUp(e: ReactPointerEvent<HTMLElement>) {
@@ -229,7 +257,9 @@ export function HeroDossierOverlay({ hero: opened, cycle, onClose }: Props) {
     // Screen px to canvas px: the design canvas is transform-scaled.
     const scale = e.currentTarget.getBoundingClientRect().width / (e.currentTarget.offsetWidth || 1) || 1;
     const dx = (e.clientX - start.x) / scale;
-    if (Math.abs(dx) >= SWIPE_PX) step(dx < 0 ? 1 : -1);
+    if (Math.abs(dx) >= SWIPE_PX) {
+      if (canCycle) step(dx < 0 ? 1 : -1);
+    } else if (Math.abs(dx) < TAP_SLOP_PX) playPose();
   }
 
   const startingKit = hero.moveIds;
@@ -308,7 +338,13 @@ export function HeroDossierOverlay({ hero: opened, cycle, onClose }: Props) {
                   <ElementGlyph type={hero.types[0]} />
                 </span>
                 <span className="dossier-showcase-pedestal" aria-hidden="true" />
-                <HeroPortrait heroId={hero.id} className="dossier-showcase-portrait" />
+                {pose && <span key={`flash-${pose.beat}`} className={`dossier-showcase-flash is-${pose.kind}`} aria-hidden="true" />}
+                <HeroPortrait
+                  key={pose ? `pose-${pose.beat}` : 'idle'}
+                  heroId={hero.id}
+                  pose={pose?.kind ?? 'idle'}
+                  className={`dossier-showcase-portrait${pose ? ` is-${pose.kind}` : ''}`}
+                />
               </div>
 
               {/* The innate is what the hero DOES before it has evolved (docs/innate-passives.md §6);
