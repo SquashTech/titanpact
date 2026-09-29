@@ -292,7 +292,7 @@ export const heroes: Record<string, HeroDefinition> = {
     // swing it. An 80/80 mixed line: the quake softens both, the staff finishes one. Bulk is what
     // it costs — the first Stone hero under 240 HP.
     baseStats: { hp: 190, attack: 80, defense: 55, intelligence: 80, wisdom: 35, speed: 50, manaPool: 60, mpRegen: 10 },
-    moveIds: ['tremor', 'toughenUp', 'focus'],
+    moveIds: ['tremor', 'toughenUp', 'rockToss'],
     growthGrades: { hp: 'C', attack: 'A', defense: 'C', intelligence: 'A', wisdom: 'D', speed: 'B', manaPool: 'S' },
     schedule: { offerLevels: [7, 9, 14, 18, 23, 28], midLevel: 10, lateLevel: 20, signatureLevel: 19 },
     signatureMoveId: 'upheaval',
@@ -743,7 +743,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Igloo',
     types: ['Frost'],
     baseStats: { hp: 250, attack: 70, defense: 100, intelligence: 20, wisdom: 45, speed: 15, manaPool: 50, mpRegen: 10 },
-    moveIds: ['iceShard', 'frostArmor', 'provoke'],
+    moveIds: ['iceShard', 'mudBall', 'provoke'],
     unlock: 'starfall',
     growthGrades: { hp: 'S', attack: 'A', defense: 'A', intelligence: 'F', wisdom: 'A', speed: 'D', manaPool: 'A' },
     schedule: { offerLevels: [6, 10, 13, 17, 21, 27], midLevel: 11, lateLevel: 21, signatureLevel: 23 },

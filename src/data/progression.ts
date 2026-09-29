@@ -311,7 +311,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     // Both of Stone's columns, since the line swings both. Ember, Singe and Magic Bolt telegraph
     // the grafts; Titanic Crush is Quakebringer's grant, so it is not here.
     slate: [
-      'rockToss', 'mudBall', 'gravelSpray', 'ember', 'singe', 'magicBolt',
+      'focus', 'mudBall', 'gravelSpray', 'ember', 'singe', 'magicBolt',
       'faultLine', 'rockfall', 'rubbleRush', 'spireClaw', 'bodyBlow', 'retribution',
       'landslide', 'boulderSlam', 'stoneheart', 'bodyCrush',
     ],
@@ -812,7 +812,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     rimehold: [
       'deepChill', 'rimeCoat', 'hoarfrostEdge', 'snowBlast', 'pinDown', 'fortify',
       'icicleThrust', 'coldSnap', 'permafrost', 'glaciate', 'blindingSnow', 'reinforce',
-      'iceShatter', 'avalanche', 'snowball', 'absoluteZero',
+      'iceShatter', 'avalanche', 'snowball', 'absoluteZero', 'frostArmor',
     ],
     // Carillon: Light's physical column and its guard. Consecrate is Great Bell's grant.
     carillon: [
