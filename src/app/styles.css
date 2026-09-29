@@ -30841,6 +30841,126 @@ button.star-shop-bundle-face {
   --rite-card-lit: #15111f;
 }
 
+.rite-screen.is-well {
+  --rite-ink: #7fb3e8;
+  --rite-title: #e4f1ff;
+  --rite-glow: rgba(90, 160, 240, 0.6);
+  --rite-glow-far: rgba(40, 100, 220, 0.35);
+  --rite-card: #0b0f18;
+  --rite-card-lit: #0f1522;
+}
+
+.well-ground {
+  position: absolute;
+  inset: calc(var(--shell-pad) * -1);
+  background:
+    radial-gradient(ellipse 80% 32% at 50% 14%, rgba(74, 144, 217, 0.32), transparent 70%),
+    radial-gradient(ellipse 90% 40% at 50% 100%, rgba(40, 90, 200, 0.18), transparent 70%),
+    linear-gradient(180deg, #03060b, #070d18 55%, #0c1a33);
+  pointer-events: none;
+}
+
+/* What the Well gives: a verb card that is read, not pressed. */
+.verb-card.is-static {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  height: auto;
+  min-height: 84px;
+  cursor: default;
+}
+
+.verb-card.is-static:active {
+  transform: none;
+}
+
+.well-gift .verb-card-verb {
+  gap: 12px;
+}
+
+/* Each hero's pool, and the stretch the Well would add past it. */
+.well-pool {
+  display: flex;
+  width: 84%;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--well);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+}
+
+.well-pool-fill {
+  background: #4a90d9;
+  box-shadow: 0 0 5px rgba(74, 144, 217, 0.6);
+}
+
+.well-pool-gain {
+  background: repeating-linear-gradient(90deg, rgba(150, 200, 255, 0.75) 0 3px, rgba(150, 200, 255, 0.35) 3px 5px);
+  animation: well-pool-gain 1.6s ease-in-out infinite;
+}
+
+@keyframes well-pool-gain {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* The reveal's ledger: the pool and the regen, before and after. */
+.well-ledger {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 4px solid transparent;
+  border-image: url('../../art/ui/slot-thin-lit.png') 2 / 4px round;
+  background:
+    linear-gradient(100deg, color-mix(in srgb, var(--rite-color) 18%, transparent), transparent 60%) padding-box,
+    var(--rite-card) padding-box;
+  image-rendering: pixelated;
+}
+
+.well-ledger-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.well-ledger-glyph {
+  width: 16px;
+  height: 16px;
+}
+
+.well-ledger-label {
+  flex: 1;
+  color: var(--text-dim);
+  font-weight: 700;
+}
+
+.well-ledger-figure {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+
+.well-ledger-figure strong {
+  color: var(--rite-title);
+  font-size: 16px;
+}
+
+.well-ledger-arrow {
+  color: var(--rite-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .well-pool-gain {
+    animation: none;
+  }
+}
+
 .shrine-ground {
   position: absolute;
   inset: calc(var(--shell-pad) * -1);
@@ -30853,22 +30973,22 @@ button.star-shop-bundle-face {
 }
 
 /* The Shrine, woken, at 2x in its own light; a Boon's rule gets a third line where a Class's verb needs two. */
-.boon-shrine-figure {
+.rite-place {
   position: relative;
   width: 96px;
   height: 96px;
 }
 
-.boon-shrine-art {
+.rite-place-art {
   position: relative;
   width: 96px;
   height: 96px;
   image-rendering: pixelated;
   filter: drop-shadow(0 0 12px var(--rite-glow)) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
-  animation: boon-shrine-hum 3.4s ease-in-out infinite;
+  animation: rite-place-hum 3.4s ease-in-out infinite;
 }
 
-@keyframes boon-shrine-hum {
+@keyframes rite-place-hum {
   0%,
   100% {
     filter: drop-shadow(0 0 10px var(--rite-glow)) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
@@ -30891,12 +31011,12 @@ button.star-shop-bundle-face {
   flex: none;
 }
 
-.is-choosing-vessel .pick-grid.is-filling {
+.rite-screen .pick-grid.is-filling {
   align-content: start;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .boon-shrine-art {
+  .rite-place-art {
     animation: none;
   }
 }

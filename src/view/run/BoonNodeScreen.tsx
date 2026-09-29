@@ -169,9 +169,9 @@ export function BoonNodeScreen({ run, onRunChange, onContinue }: Props) {
       <RosterPeek run={run} />
 
       <header className="rite-head">
-        <span className="boon-shrine-figure">
+        <span className="rite-place">
           <span className="rite-pool" aria-hidden="true" />
-          <img src={shrineArt} className="boon-shrine-art" alt="" draggable={false} />
+          <img src={shrineArt} className="rite-place-art" alt="" draggable={false} />
         </span>
         <span className="rite-eyebrow">A Wayside Shrine</span>
         <h2 className="rite-name">{confirmed ? 'Who carries it?' : 'Choose a Boon'}</h2>
