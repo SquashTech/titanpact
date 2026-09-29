@@ -10,7 +10,7 @@ import { grantOfferedMove, MOVE_CAP, recordMoveOffer } from '../../run/progressi
 import { tutorMovePool } from '../../run/tutor';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import tutorArt from '../../../art/npc/tutor.png';
-import { NodeHeader, NodeSky, NODE_TINT_INSIGHT } from '../shared/NodeStage';
+import { NodeMotes, NODE_TINT_INSIGHT } from '../shared/NodeStage';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { MoveLearnedOverlay, MoveOfferOverlay } from './MoveOfferOverlay';
 import { RosterPeek } from './RosterPeek';
@@ -74,29 +74,39 @@ export function TutorNodeScreen({ run, onRunChange, onContinue }: Props) {
   if (greeting) return <RoadEncounter art={tutorArt} name="The Tutor" line={greeting} onDone={dismissGreeting} />;
 
   return (
-    <div className="node-screen tutor-node-screen" style={{ '--node-rgb': NODE_TINT_INSIGHT } as CSSProperties}>
-      <NodeSky />
+    <div className="node-screen rite-screen is-tutor tutor-node-screen" style={{ '--node-rgb': NODE_TINT_INSIGHT, '--rite-color': `rgb(${NODE_TINT_INSIGHT})` } as CSSProperties}>
+      <span className="node-sky tutor-ground" aria-hidden="true" />
+      <NodeMotes count={14} />
       <RosterPeek run={run} />
 
-      <NodeHeader
-        compact
-        ring
-        side
-        art={<img src={tutorArt} className="npc-portrait" alt="" draggable={false} />}
-        eyebrow="By the Roadside"
-        title="The Tutor"
-        readout={
-          anyTeachable
-            ? 'The Tutor teaches any hero one of its deepest techniques — a Late move, guaranteed. Choose who; hold a card to review its sheet.'
-            : 'There is nothing left here the Tutor can teach.'
-        }
-      />
+      {/* The Tutor by the road, and what the lesson is. */}
+      <header className="keeper-head">
+        <span className="keeper-figure">
+          <span className="rite-pool" aria-hidden="true" />
+          <img src={tutorArt} className="keeper-art" alt="" draggable={false} />
+        </span>
+        <span className="keeper-words">
+          <span className="rite-eyebrow">By the Roadside</span>
+          <h2 className="rite-name">The Tutor</h2>
+          {anyTeachable ? (
+            <span className="keeper-offer">
+              <span className="keeper-tag">A Late move</span>
+              <span className="keeper-tag">Guaranteed</span>
+              <span className="keeper-terms">One hero · from its own moves</span>
+            </span>
+          ) : (
+            <span className="keeper-offer">There is nothing left here the Tutor can teach.</span>
+          )}
+        </span>
+      </header>
 
       {anyTeachable ? (
         <HeroPickGrid count={run.roster.length} fill>
           {run.roster.map((entry) => {
             const hero = rosterHeroes[entry.heroId];
-            const teachable = poolOf(entry).length > 0;
+            const pool = poolOf(entry).length;
+            const teachable = pool > 0;
+            const full = entry.unlockedMoveIds.length >= MOVE_CAP;
             return (
               <HeroPickCard
                 key={entry.rosterId}
@@ -105,7 +115,14 @@ export function TutorNodeScreen({ run, onRunChange, onContinue }: Props) {
                 disabled={!teachable || !!lesson}
                 onActivate={() => teach(entry)}
                 onPreview={() => setPreviewEntry({ hero, entry })}
-                ariaLabel={`${hero.name}, level ${levelOf(entry)} — ${teachable ? 'learn a Late move' : 'nothing left to teach'}`}
+                ariaLabel={`${hero.name}, level ${levelOf(entry)} — ${teachable ? `${pool} Late moves to draw from, ${full ? 'replaces one' : 'learns outright'}` : 'nothing left to teach'}`}
+                detail={
+                  teachable ? (
+                    <span className="tutor-fit">
+                      {pool} Late {pool === 1 ? 'move' : 'moves'} · {full ? 'replaces one' : 'learns outright'}
+                    </span>
+                  ) : undefined
+                }
                 ctaClassName="is-accent"
                 cta={teachable ? 'Learn' : 'Nothing left'}
               />

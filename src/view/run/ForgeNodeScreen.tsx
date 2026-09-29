@@ -91,24 +91,24 @@ export function ForgeNodeScreen({ run, onRunChange, onContinue }: Props) {
       <RosterPeek run={run} />
 
       {/* The smith at the hearth, and what the Forge does — or, once it has, what it made. */}
-      <header className="forge-head">
-        <span className="forge-smith">
+      <header className="keeper-head">
+        <span className="keeper-figure">
           <span className="rite-pool" aria-hidden="true" />
-          <img src={smithArt} className="forge-smith-art" alt="" draggable={false} />
+          <img src={smithArt} className="keeper-art" alt="" draggable={false} />
           <span className="forge-flare" aria-hidden="true" />
         </span>
-        <span className="forge-head-words">
+        <span className="keeper-words">
           <span className="rite-eyebrow">Iron and Ember</span>
           <h2 className="rite-name">The Forge</h2>
           {forged ? (
             <span className="forge-made" key={forged.key}>
               <span className="forge-made-name">{forged.after.name}</span>
-              <span className="forge-tag" style={{ '--tag-color': RARITY_COLOR_VARS[forged.after.rarity] } as CSSProperties}>
+              <span className="keeper-tag" style={{ '--tag-color': RARITY_COLOR_VARS[forged.after.rarity] } as CSSProperties}>
                 {RARITY_LABELS[forged.after.rarity]}
               </span>
               {afterType && (
-                <span className="forge-tag" style={{ '--tag-color': getTypeColor(afterType) } as CSSProperties}>
-                  <ElementGlyph type={afterType} className="forge-tag-glyph" />
+                <span className="keeper-tag" style={{ '--tag-color': getTypeColor(afterType) } as CSSProperties}>
+                  <ElementGlyph type={afterType} className="keeper-tag-glyph" />
                   {afterType}-bound
                 </span>
               )}
@@ -116,14 +116,14 @@ export function ForgeNodeScreen({ run, onRunChange, onContinue }: Props) {
           ) : workable === 0 ? (
             <span className="forge-made">Nothing the roster wears can be forged here.</span>
           ) : (
-            <span className="forge-offer">
-              <span className="forge-tag">
-                <HubGlyph name="anvil" className="forge-tag-glyph" />A tier up
+            <span className="keeper-offer">
+              <span className="keeper-tag">
+                <HubGlyph name="anvil" className="keeper-tag-glyph" />A tier up
               </span>
-              <span className="forge-tag">
-                <span className="forge-tag-rune" aria-hidden="true" />An element bound
+              <span className="keeper-tag">
+                <span className="keeper-tag-rune" aria-hidden="true" />An element bound
               </span>
-              <span className="forge-offer-terms">One piece · free</span>
+              <span className="keeper-terms">One piece · free</span>
             </span>
           )}
         </span>
