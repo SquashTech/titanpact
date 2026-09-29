@@ -95,7 +95,7 @@ import {
 } from '../run/recruitment';
 import { guildHallOffersFor } from '../data/recruitment';
 import { MASTERY_CAP, SCROLL_CACHE_COUNT, buyScroll, canBuyScroll } from '../run/mastery';
-import { TavernRerollError, rerollGuildHallOffers, rollGuildHallOffers, type GuildHallOffers } from '../run/shop';
+import { ShopItemError, TavernRerollError, buyShopItem, rerollGuildHallOffers, rollGuildHallOffers, type GuildHallOffers } from '../run/shop';
 import { ConsumableError, buyConsumable, grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse, type PotionKind } from '../run/consumables';
 import { guildHallEntry } from '../run/guildRecruit';
 import { anyClassAvailable } from '../run/classes';
@@ -195,7 +195,7 @@ type Screen =
   /** TEMPORARY DEV/TEST — src/run/statusTestFight.ts. Own kind so leaving returns to the title. */
   | { kind: 'statusTestFight'; player: Encounter; ai: Encounter }
   /** `offers` lives on the screen, not in the shop component: a purchase re-renders the shop and component-local state would reroll / forget. */
-  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; scrollsBought: number; revivesBought: number; rerolls: number }
+  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; scrollsBought: number; revivesBought: number; rerolls: number; itemsBought: number[] }
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType }
   /** The Forge: +1 item slot to one hero. */
   /** An item has arrived and asks who carries it (docs/gear-absorption.md §2). `next` is where the run goes once it is absorbed or sold. */
@@ -702,6 +702,7 @@ export function App() {
         scrollsBought: 0,
         revivesBought: 0,
         rerolls: 0,
+        itemsBought: [],
       });
     } else if (node.type === 'manaWellReward') {
       setScreen({ kind: 'manaWell', nodeId });
@@ -950,6 +951,23 @@ export function App() {
     setPlayerRun(buyScroll(playerRun, screen.scrollsBought));
     playSfx('gold.coin');
     setScreen({ kind: 'scrolls', plan: { kind: 'scrolls', count: 1 }, nodeId: null, bought: true, next: { ...screen, scrollsBought: screen.scrollsBought + 1 } });
+  }
+
+  /** The Shop's gear shelf: the gold is charged on the confirm, and the who screen absorbs the piece. */
+  function handleBuyGuildItem(slot: number) {
+    if (screen.kind !== 'shop' || screen.itemsBought.includes(slot)) return;
+    const item = equipment[screen.offers.itemIds[slot]];
+    if (!item || !anyoneCanReceive(playerRun, item, equipment, rosterHeroes)) return;
+    let next: RunState;
+    try {
+      next = buyShopItem(playerRun, item);
+    } catch (err) {
+      if (!(err instanceof ShopItemError)) throw err;
+      return;
+    }
+    playSfx('gold.coin');
+    setPlayerRun(next);
+    setScreen({ kind: 'itemWho', itemId: item.id, next: { ...screen, itemsBought: [...screen.itemsBought, slot] } });
   }
 
   /**
@@ -1284,8 +1302,10 @@ export function App() {
           scrollsBought={screen.scrollsBought}
           revivesBought={screen.revivesBought}
           rerolls={screen.rerolls}
+          itemsBought={screen.itemsBought}
           onRunChange={setPlayerRun}
           onBuyScroll={handleBuyGuildScroll}
+          onBuyItem={handleBuyGuildItem}
           onReroll={handleRerollTavern}
           onBuyConsumable={handleBuyGuildConsumable}
           onBuyMend={handleBuyGuildMend}

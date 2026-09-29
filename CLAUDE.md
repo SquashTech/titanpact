@@ -727,8 +727,10 @@ what's still unimplemented:
   reward row was added and the funnel became a **pick 1 of 2 from act 3** — Guild Hall or
   **Blacksmith** (item slots, the Anvil, the Enchanter). **Reversed 2026-09-15**
   (`docs/gear-absorption.md` §6): the Blacksmith is deleted, the funnel is **one forced Guild
-  Hall every act**, and the Anvil and Enchanter sit on its Smithy tab over worn gear; the shelf
-  sells no gear and nothing is sold. Map tiles
+  Hall every act**, and the Anvil and Enchanter sit on its Smithy tab over worn gear; nothing is
+  sold. **The Shop's bottom plank sells two pieces of gear a visit** (2026-09-28, per user
+  direction — one more gold sink): one of each, on the act's standard drop curve, at the tier's
+  value (`shopItemPrice`), read whole before paying and absorbed through the who-screen. Map tiles
   **dropped their labels** to pay for the extra row — glyph, silhouette and colour carry
   what the words did, a long press still reads any node out, and this supersedes the
   two-word Monsters/Skirmish vocabulary below. **2026-08-29:** the boss was

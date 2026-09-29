@@ -157,6 +157,12 @@ loses the item shelf and the Sell section: nothing is loose to sell, and the she
 the screen read as analysis paralysis (per user direction) — four items against a roster is a
 compare, and compares are what this doc deletes.
 
+**Partly reversed 2026-09-28, per user direction:** the Shop's third plank sells TWO pieces a
+visit, one of each, as one more gold sink. It is not the old shelf: two pieces not four, rolled on
+the act's standard drop curve, read whole on a confirm before any gold moves, absorbed through the
+who-screen like any drop, and refused while nobody can receive the piece. Priced at the tier's
+value, twice what it sells back for (`shopItemPrice`); a first-pass number.
+
 The 2026-09-08 one-verb-per-node split was made because people and gear on one screen read as a
 chore hub. The merged node holds FEWER verbs than the two did combined — the shelf, the sale and
 the slot purchase are gone — so it is worth a look, not a rule.

@@ -19,8 +19,11 @@ interface Props {
   revivesBought: number;
   /** Tavern rerolls this visit (run/shop.ts tavernRerollCost). */
   rerolls: number;
+  /** Gear-shelf slots sold this visit. */
+  itemsBought: readonly number[];
   onRunChange: (next: RunState) => void;
   onBuyScroll: () => void;
+  onBuyItem: (slot: number) => void;
   onReroll: () => void;
   onBuyConsumable: (kind: ConsumableKind) => void;
   onBuyMend: () => void;
@@ -43,8 +46,10 @@ export function ShopNodeScreen({
   scrollsBought,
   revivesBought,
   rerolls,
+  itemsBought,
   onRunChange,
   onBuyScroll,
+  onBuyItem,
   onReroll,
   onBuyConsumable,
   onBuyMend,
@@ -90,8 +95,10 @@ export function ShopNodeScreen({
           scrollsBought={scrollsBought}
           revivesBought={revivesBought}
           rerolls={rerolls}
+          itemsBought={itemsBought}
           onRunChange={onRunChange}
           onBuyScroll={onBuyScroll}
+          onBuyItem={onBuyItem}
           onReroll={onReroll}
           onBuyConsumable={onBuyConsumable}
           onBuyMend={onBuyMend}

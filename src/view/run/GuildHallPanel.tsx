@@ -3,6 +3,10 @@ import { createPortal } from 'react-dom';
 import { heroes } from '../../data/heroes';
 import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
+import { anyoneCanReceive } from '../../run/runProgress';
+import { equipmentArt } from '../shared/equipmentArt';
+import { ItemDetailCard } from '../shared/ItemDossier';
+import { RARITY_COLOR_VARS } from '../shared/EquipmentBox';
 import { ItemServicesSection } from './ItemServicesSection';
 import { guildHallOffersFor, CONTRACT_PURCHASE_COST } from '../../data/recruitment';
 import { ResourceGlyph } from '../shared/RunGlyph';
@@ -21,7 +25,7 @@ import {
   RecruitmentError,
   type GuildHallOffer,
 } from '../../run/recruitment';
-import { tavernRerollCost, type GuildHallOffers } from '../../run/shop';
+import { shopItemPrice, tavernRerollCost, type GuildHallOffers } from '../../run/shop';
 import { statScaleFor } from '../../run/statScale';
 import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
@@ -66,9 +70,13 @@ interface Props {
   revivesBought: number;
   /** Tavern rerolls this visit; the next one costs tavernRerollCost(rerolls). */
   rerolls: number;
+  /** Gear-shelf slots sold this visit (offers.itemIds indices). */
+  itemsBought: readonly number[];
   onRunChange: (next: RunState) => void;
   /** Hands off to App.tsx, which charges the gold and opens the who screen for the pip. */
   onBuyScroll: () => void;
+  /** Hands off to App.tsx, which charges the gold and opens the who screen for the piece. */
+  onBuyItem: (slot: number) => void;
   /** Hands off to App.tsx, which charges the gold and swaps the shelf on the screen (run/shop.ts rerollGuildHallOffers). */
   onReroll: () => void;
   /** Hands off to App.tsx, which charges the gold and fills the flask (run/consumables.ts). */
@@ -125,8 +133,10 @@ export function GuildHallPanel({
   scrollsBought,
   revivesBought,
   rerolls,
+  itemsBought,
   onRunChange,
   onBuyScroll,
+  onBuyItem,
   onReroll,
   onBuyConsumable,
   onBuyMend,
@@ -137,6 +147,8 @@ export function GuildHallPanel({
 }: Props) {
   const [previewOfferId, setPreviewOfferId] = useState<string | null>(null);
   const [confirmingContract, setConfirmingContract] = useState(false);
+  /** The gear-shelf slot being looked at before it is paid for. */
+  const [inspectingSlot, setInspectingSlot] = useState<number | null>(null);
   /** The hero the joining cinematic is running for. The roster-full path fires it from App instead. */
   const [fanfareHeroId, setFanfareHeroId] = useState<string | null>(null);
 
@@ -154,7 +166,10 @@ export function GuildHallPanel({
   const rerollCost = tavernRerollCost(rerolls);
 
   // Derived from state rather than pushed from each setter, so a later modal can't forget to report.
-  const overlayOpen = !!previewOffer || confirmingContract || !!fanfareHeroId;
+  const overlayOpen = !!previewOffer || confirmingContract || inspectingSlot !== null || !!fanfareHeroId;
+  const shelfItems = offers.itemIds.map((id) => equipment[id]);
+  const inspectingItem = inspectingSlot !== null ? shelfItems[inspectingSlot] : undefined;
+  const inspectingRoom = !!inspectingItem && anyoneCanReceive(run, inspectingItem, equipment, rosterHeroes);
   useEffect(() => {
     onOverlayChange?.(overlayOpen);
   }, [overlayOpen, onOverlayChange]);
@@ -252,7 +267,8 @@ export function GuildHallPanel({
       {tab === 'shop' && (
         <div className="guild-hall-section is-shop">
           {/* The shelf: the Mastery Scroll (one pip, SCROLL_PURCHASE_LIMIT a visit, the tap opens the
-              who screen) and the flasks (the flask's own cap is the shelf's; the Revive is one a visit). */}
+              who screen), the flasks (the flask's own cap is the shelf's; the Revive is one a visit),
+              and two pieces of gear on the bottom plank. */}
           <div className="hall-shelf">
             <img src={HALL_ART.shelf} className="hall-shelf-art" alt="" draggable={false} />
             <HallGood
@@ -280,6 +296,25 @@ export function GuildHallPanel({
                   held={held > 0 ? `${held}/${CONSUMABLE_HOLD_CAP}` : undefined}
                   disabled={!canBuyConsumable(run, kind, revivesBought)}
                   onClick={() => onBuyConsumable(kind)}
+                />
+              );
+            })}
+            {/* The bottom plank: gear, one of each. The tap reads the piece whole before any gold moves. */}
+            {shelfItems.map((item, i) => {
+              if (!item) return null;
+              const sold = itemsBought.includes(i);
+              const noRoom = !sold && !anyoneCanReceive(run, item, equipment, rosterHeroes);
+              return (
+                <HallGood
+                  key={i}
+                  className={`is-slot-${i + 5} is-gear`}
+                  style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}
+                  art={equipmentArt(item) ?? GOOD_ART.sack}
+                  name={item.name}
+                  price={sold ? 'Sold' : noRoom ? 'No room' : shopItemPrice(item)}
+                  soldOut={sold || noRoom}
+                  disabled={sold}
+                  onClick={() => setInspectingSlot(i)}
                 />
               );
             })}
@@ -336,6 +371,43 @@ export function GuildHallPanel({
                 />
               );
             })()}
+
+          {/* A shelf piece read whole before any gold moves; the who screen seats it after. */}
+          {inspectingItem && inspectingSlot !== null && (
+            <div className="log-overlay" onClick={() => setInspectingSlot(null)}>
+              <div
+                className="log-panel move-popup-panel equip-inspect-panel"
+                style={{ borderTopColor: RARITY_COLOR_VARS[inspectingItem.rarity] }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ItemDetailCard item={inspectingItem} />
+                {!inspectingRoom ? (
+                  <div className="guild-hall-confirm-body">Nobody has a free socket, or a piece of this family to merge it into.</div>
+                ) : (
+                  run.gold < shopItemPrice(inspectingItem) && (
+                    <div className="guild-hall-confirm-body">
+                      Not enough gold — {shopItemPrice(inspectingItem)}g needed, you have {run.gold}g.
+                    </div>
+                  )
+                )}
+                <div className="detail-action">
+                  <button
+                    className="resolve-button"
+                    disabled={!inspectingRoom || run.gold < shopItemPrice(inspectingItem)}
+                    onClick={() => {
+                      setInspectingSlot(null);
+                      onBuyItem(inspectingSlot);
+                    }}
+                  >
+                    Buy for {shopItemPrice(inspectingItem)}g
+                  </button>
+                  <button className="detail-action-cancel" onClick={() => setInspectingSlot(null)}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* The one purchase with nothing to open first, so it gets its own confirm. */}
           {confirmingContract && (

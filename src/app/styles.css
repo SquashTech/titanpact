@@ -37475,11 +37475,12 @@ img.smithy-service-art {
   text-align: center;
 }
 
-/* -- The Shop's shelf: 154x108 at 2x. Its middle plank's top is 120px down, its base 216px. -- */
+/* -- The Shop's shelf: 154x171 at 2x, a crown and three planks. The planks' outlines sit 112, 212 and
+   312px down, and each row of goods stands 54px above its plank. -- */
 .hall-shelf {
   position: relative;
   width: 308px;
-  height: 256px;
+  height: 364px;
   flex: none;
 }
 
@@ -37488,7 +37489,7 @@ img.smithy-service-art {
   left: 0;
   top: 0;
   width: 308px;
-  height: 216px;
+  height: 342px;
   image-rendering: pixelated;
   filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.6));
 }
@@ -37504,17 +37505,33 @@ img.smithy-service-art {
 
 .hall-shelf .hall-good.is-slot-3,
 .hall-shelf .hall-good.is-slot-4 {
-  top: 154px;
+  top: 158px;
+}
+
+.hall-shelf .hall-good.is-slot-5,
+.hall-shelf .hall-good.is-slot-6 {
+  top: 258px;
 }
 
 .hall-shelf .hall-good.is-slot-1,
-.hall-shelf .hall-good.is-slot-3 {
+.hall-shelf .hall-good.is-slot-3,
+.hall-shelf .hall-good.is-slot-5 {
   left: 48px;
 }
 
 .hall-shelf .hall-good.is-slot-2,
-.hall-shelf .hall-good.is-slot-4 {
+.hall-shelf .hall-good.is-slot-4,
+.hall-shelf .hall-good.is-slot-6 {
   left: 156px;
+}
+
+/* A piece of gear: its 32px sprite at 2x, lit in its tier's colour. */
+.hall-good.is-gear .hall-good-art {
+  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 5px var(--rarity-color));
+}
+
+.hall-good.is-gear.is-sold-out .hall-good-art {
+  filter: grayscale(0.9) brightness(0.6);
 }
 
 /* -- The Tavern's notice board: 140x124 at 2x; posters pinned across it under its roof. -- */
@@ -39510,19 +39527,35 @@ img.smithy-service-art {
   }
 }
 
-/* The light through the seam where the two doors meet. */
+/* The light through the seam where the two doors meet: the art's crack is columns 46-47 of 96, and
+   the boss at the doors' middle (rows 40-59) breaks it in two, so the light does too. */
 .map-gate-seam {
   position: absolute;
-  left: 50%;
-  top: 22%;
-  bottom: 14%;
+  inset: 0;
   z-index: 2;
+  pointer-events: none;
+  animation: map-gate-seam 2.3s ease-in-out infinite;
+}
+
+.map-gate-seam::before,
+.map-gate-seam::after {
+  content: '';
+  position: absolute;
+  left: calc(47 / 96 * 100%);
   width: 2px;
   margin-left: -1px;
   background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--warden-color) 60%, #fff) 20%, var(--warden-color) 80%, transparent);
   box-shadow: 0 0 6px var(--warden-color), 0 0 14px var(--warden-color);
-  pointer-events: none;
-  animation: map-gate-seam 2.3s ease-in-out infinite;
+}
+
+.map-gate-seam::before {
+  top: calc(18 / 96 * 100%);
+  bottom: calc(56 / 96 * 100%);
+}
+
+.map-gate-seam::after {
+  top: calc(60 / 96 * 100%);
+  bottom: calc(6 / 96 * 100%);
 }
 
 @keyframes map-gate-seam {

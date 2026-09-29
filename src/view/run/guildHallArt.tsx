@@ -30,6 +30,7 @@ export const GOOD_ART = {
   contract: contractArt,
   reroll: bellArt,
   mend: stewArt,
+  sack: sackArt,
 } as const;
 
 export const COUNTER_SIGN_ART = { shop: sackArt, tavern: tankardArt, smithy: anvilArt } as const;
@@ -46,6 +47,7 @@ export function HallGood({
   held,
   disabled,
   className,
+  style,
   onClick,
 }: {
   art: string;
@@ -56,10 +58,11 @@ export function HallGood({
   held?: ReactNode;
   disabled?: boolean;
   className?: string;
+  style?: CSSProperties;
   onClick: () => void;
 }) {
   return (
-    <button className={`hall-good${soldOut ? ' is-sold-out' : ''}${className ? ` ${className}` : ''}`} disabled={disabled} onClick={onClick}>
+    <button className={`hall-good${soldOut ? ' is-sold-out' : ''}${className ? ` ${className}` : ''}`} style={style} disabled={disabled} onClick={onClick}>
       <img src={art} className="hall-good-art" alt="" draggable={false} />
       <span className="hall-tag">
         <span className="hall-tag-name">{name}</span>

@@ -1,13 +1,15 @@
 // Guild Hall commerce beyond recruitment: the one-time offer set a `shop` node presents, and
 // the prices gear is valued and worked at. Offers are rolled ONCE at node-select time and carried
-// on the Screen — a component-local roll would reroll on re-render of the shop. Nothing here
-// sells an item: gear is found and absorbed (docs/gear-absorption.md §6).
+// on the Screen — a component-local roll would reroll on re-render of the shop. The Shop's third
+// shelf sells two pieces of gear a visit, one of each (2026-09-28, per user direction), absorbed
+// through the same who-screen a drop is (docs/gear-absorption.md §6).
 
 import type { RunState } from './state';
-import type { EquipmentDefinition, EquipmentRarity } from './equipment';
+import { rarityWeightsFor, type EquipmentDefinition, type EquipmentRarity } from './equipment';
+import { rollEquipmentDrops } from '../data/equipment';
 import type { GuildHallOffer } from './recruitment';
 
-/** What a tier is worth in gold — the base `sellValueFor` reads. Untuned. Nothing buys an item at it any more. */
+/** What a tier is worth in gold: the Shop's shelf price (`shopItemPrice`) and the base `sellValueFor` reads. Untuned. */
 export const EQUIPMENT_PRICE_BY_RARITY: Record<EquipmentRarity, number> = {
   common: 15,
   rare: 30,
@@ -59,6 +61,25 @@ export const ENCHANT_PRICE_BY_RARITY: Record<EquipmentRarity, number> = {
 export interface GuildHallOffers {
   /** GuildHallOffer.id values, 2 or 3 of them. */
   heroOfferIds: string[];
+  /** The Shop's gear shelf: SHOP_ITEM_COUNT equipment ids, one of each for sale, never restocked. */
+  itemIds: string[];
+}
+
+/** Two pieces a visit, on the act's standard drop curve. */
+export const SHOP_ITEM_COUNT = 2;
+
+/** First pass: the tier's value, so a shelf piece costs twice what it would sell for. */
+export function shopItemPrice(item: EquipmentDefinition): number {
+  return EQUIPMENT_PRICE_BY_RARITY[item.rarity];
+}
+
+export class ShopItemError extends Error {}
+
+/** Charges the shelf price; the who-screen absorbs the piece after. */
+export function buyShopItem(run: RunState, item: EquipmentDefinition): RunState {
+  const price = shopItemPrice(item);
+  if (run.gold < price) throw new ShopItemError(`${item.name} costs ${price}g; ${run.gold}g held.`);
+  return { ...run, gold: run.gold - price };
 }
 
 function sample<T>(pool: readonly T[], count: number): T[] {
@@ -70,17 +91,18 @@ function sample<T>(pool: readonly T[], count: number): T[] {
   return picked;
 }
 
-/** 2-3 heroes not already on the roster. No gear: every item in the run is found, and absorbed where it is found (docs/gear-absorption.md §6). */
+/** 2-3 heroes not already on the roster, and the gear shelf's pieces. */
 export function rollGuildHallOffers(
   run: RunState,
   heroPool: readonly GuildHallOffer[],
   /** Act 6's Vigil recruits nobody: the finale is fought by the roster the run kept. */
   muster = false
 ): GuildHallOffers {
-  if (muster) return { heroOfferIds: [] };
+  const itemIds = rollEquipmentDrops(SHOP_ITEM_COUNT, rarityWeightsFor(run.actNumber, 'standard')).map((item) => item.id);
+  if (muster) return { heroOfferIds: [], itemIds };
   const rosterHeroIds = new Set(run.roster.map((r) => r.heroId));
   const availableHeroes = heroPool.filter((o) => !rosterHeroIds.has(o.heroId));
-  return { heroOfferIds: sample(availableHeroes, Math.random() < 0.5 ? 2 : 3).map((o) => o.id) };
+  return { heroOfferIds: sample(availableHeroes, Math.random() < 0.5 ? 2 : 3).map((o) => o.id), itemIds };
 }
 
 /** The Tavern's first reroll a visit; each one after costs `TAVERN_REROLL_STEP` more. Untuned. */
@@ -114,6 +136,6 @@ export function rerollGuildHallOffers(
   const picked = sample(fresh, count);
   // A pool too thin to fill the shelf with new faces tops up from the ones just shown.
   if (picked.length < count) picked.push(...sample(available.filter((o) => shown.has(o.id)), count - picked.length));
-  return { run: { ...run, gold: run.gold - cost }, offers: { heroOfferIds: picked.map((o) => o.id) } };
+  return { run: { ...run, gold: run.gold - cost }, offers: { ...offers, heroOfferIds: picked.map((o) => o.id) } };
 }
 

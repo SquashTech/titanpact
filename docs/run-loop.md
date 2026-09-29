@@ -118,8 +118,9 @@ never rerolls. The same day the panel stopped dropping bundle hires: it resolved
 against the base-game list, so a bundle hero the roll picked never reached the shelf.
 
 **The Blacksmith (act 3 on) — DELETED 2026-09-15 (`docs/gear-absorption.md` §6): the funnel is one
-forced Guild Hall every act, its Smithy tab holding the Anvil and Enchanter over worn gear; the
-shelf sells no gear and nothing is sold. The Smithy is laid out by hero since 2026-09-16 — a bench
+forced Guild Hall every act, its Smithy tab holding the Anvil and Enchanter over worn gear;
+nothing is sold. Since 2026-09-28 (per user direction) the Shop's bottom plank sells two pieces of
+gear a visit, one of each, at `EQUIPMENT_PRICE_BY_RARITY` (`shopItemPrice`, `src/run/shop.ts`). The Smithy is laid out by hero since 2026-09-16 — a bench
 a hero with its sprite and sockets, a work sheet a piece, and a hammer-and-anvil or binding beat
 for what each service makes (`docs/visual-language.md` "Thirty-seventh pass"). What follows is
 the record.** From act 3 the funnel widens to two and the act's guaranteed

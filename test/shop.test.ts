@@ -4,7 +4,7 @@ import { heroes } from '../src/data/heroes';
 import { equipment } from '../src/data/equipment';
 import { guildHallOffers } from '../src/data/recruitment';
 import { createRunState, createRosterEntry, addRosterEntry } from '../src/run/state';
-import { rollGuildHallOffers, rerollGuildHallOffers, tavernRerollCost, TavernRerollError, ANVIL_PRICE_BY_TARGET, EQUIPMENT_PRICE_BY_RARITY, EQUIPMENT_SELL_SHARE, sellValueFor } from '../src/run/shop';
+import { rollGuildHallOffers, rerollGuildHallOffers, tavernRerollCost, TavernRerollError, ANVIL_PRICE_BY_TARGET, EQUIPMENT_PRICE_BY_RARITY, EQUIPMENT_SELL_SHARE, sellValueFor, SHOP_ITEM_COUNT, shopItemPrice, buyShopItem, ShopItemError } from '../src/run/shop';
 import { RARITY_ORDER } from '../src/run/equipment';
 
 function seedRoster(heroIds: string[], gold = 0) {
@@ -15,7 +15,7 @@ function seedRoster(heroIds: string[], gold = 0) {
   return run;
 }
 
-// --- Gear is valued, never bought (docs/gear-absorption.md §6) ---
+// --- Gear is valued, and the Shop's bottom plank sells two pieces a visit ---
 
 test('shop: sellValueFor pays the sell share of the tier\'s value, rising with the tier', () => {
   for (let i = 0; i + 1 < RARITY_ORDER.length; i++) {
@@ -24,6 +24,24 @@ test('shop: sellValueFor pays the sell share of the tier\'s value, rising with t
     assert.ok(higher > lower, `${RARITY_ORDER[i + 1]} should sell for more than ${RARITY_ORDER[i]}`);
   }
   assert.strictEqual(sellValueFor(equipment['sword.common']), Math.floor(EQUIPMENT_PRICE_BY_RARITY.common * EQUIPMENT_SELL_SHARE));
+});
+
+test('shop: the gear shelf holds SHOP_ITEM_COUNT real items, the Vigil included, and a Tavern reroll keeps them', () => {
+  const run = seedRoster(['ironWarden'], 1000);
+  for (const muster of [false, true]) {
+    const offers = rollGuildHallOffers(run, guildHallOffers, muster);
+    assert.strictEqual(offers.itemIds.length, SHOP_ITEM_COUNT);
+    assert.ok(offers.itemIds.every((id) => equipment[id]));
+  }
+  const offers = rollGuildHallOffers(run, guildHallOffers);
+  assert.deepStrictEqual(rerollGuildHallOffers(run, guildHallOffers, offers, 0).offers.itemIds, offers.itemIds);
+});
+
+test('shop: a shelf piece costs its price, and never sells back for as much', () => {
+  const item = equipment['sword.rare'];
+  assert.ok(shopItemPrice(item) > sellValueFor(item));
+  assert.strictEqual(buyShopItem(seedRoster([], 100), item).gold, 100 - shopItemPrice(item));
+  assert.throws(() => buyShopItem(seedRoster([], shopItemPrice(item) - 1), item), ShopItemError);
 });
 
 test('shop: rollGuildHallOffers excludes heroes already on the roster', () => {
@@ -72,7 +90,7 @@ test('shop: a Tavern reroll keeps the shelf size and shows new faces, never a ro
 test('shop: a Tavern reroll over a thin pool tops up from the faces just shown', () => {
   const pool = guildHallOffers.slice(0, 3);
   const run = seedRoster([], 1000);
-  const offers = { heroOfferIds: pool.slice(0, 2).map((o) => o.id) };
+  const offers = { heroOfferIds: pool.slice(0, 2).map((o) => o.id), itemIds: [] };
   const next = rerollGuildHallOffers(run, pool, offers, 0).offers;
   assert.strictEqual(next.heroOfferIds.length, 2);
   assert.ok(next.heroOfferIds.includes(pool[2].id));
@@ -80,8 +98,8 @@ test('shop: a Tavern reroll over a thin pool tops up from the faces just shown',
 
 // --- No gold printer (docs/equipment.md §5) ---
 //
-// With no shelf and no sale of held gear there is no path from gold back to gold at all: the
-// Anvil spends, and the only sale is an unheld drop on the who-screen, priced by its own tier.
+// With no sale of held gear there is no path from gold back to gold at all: the Anvil and the
+// shelf spend, and the only sale is an unheld piece on the who-screen, at half its tier's value.
 // What survives is the shape of the Anvil table — a lift must cost more than the tier it reaches
 // would sell for, so a Sell can never read as the Anvil undone at a profit.
 
