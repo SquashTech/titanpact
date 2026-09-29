@@ -1809,6 +1809,22 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'Floods a foe with white until there is nothing to aim at (inflicts Daze). Each cast costs 20 more Mana for the rest of the fight.',
   },
+  // Light's second early physical attack (2026-09-29, per user direction): the slate had only
+  // Holy Strike, so a physical Light hero could not open with two. The glare is Light's Daze.
+  radiantBlow: {
+    id: 'radiantBlow',
+    name: 'Radiant Blow',
+    tier: 'early',
+    type: 'Light',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 40,
+    statusApplication: { statusId: 'Daze', target: 'moveTarget', chance: 0.2 },
+    manaCost: 20,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A blow thrown out of the glare, which sometimes leaves the target reeling (20% chance of Daze).',
+  },
   holyStrike: {
     id: 'holyStrike',
     name: 'Holy Strike',

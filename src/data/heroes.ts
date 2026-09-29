@@ -757,7 +757,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Carillon',
     types: ['Light'],
     baseStats: { hp: 230, attack: 85, defense: 75, intelligence: 20, wisdom: 60, speed: 30, manaPool: 50, mpRegen: 10 },
-    moveIds: ['holyStrike', 'bless', 'secondWind'],
+    moveIds: ['holyStrike', 'bless', 'radiantBlow'],
     unlock: 'starfall',
     growthGrades: { hp: 'S', attack: 'S', defense: 'A', intelligence: 'F', wisdom: 'A', speed: 'D', manaPool: 'B' },
     schedule: { offerLevels: [5, 8, 12, 15, 21, 25], midLevel: 10, lateLevel: 19, signatureLevel: 22 },

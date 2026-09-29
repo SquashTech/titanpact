@@ -816,7 +816,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // Carillon: Light's physical column and its guard. Consecrate is Great Bell's grant.
     carillon: [
-      'vigil', 'purify', 'mend', 'blind', 'hallow', 'provoke', 'fortify',
+      'vigil', 'purify', 'mend', 'blind', 'hallow', 'provoke', 'fortify', 'secondWind',
       'holySlice', 'sunlance', 'smite', 'radiance', 'benediction', 'shieldBash',
       'deityBlade', 'judgment', 'exalt', 'divineGrace',
     ],

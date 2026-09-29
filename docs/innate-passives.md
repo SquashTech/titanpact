@@ -336,7 +336,10 @@ and Skyshear's Barrier is **once a fight** — Barrier is the game's hardest loc
 
 The second pass the same day added the last three rows, and two early moves that fill slate gaps:
 **Ki Strike** (Mind, physical 40, 20 mana, 20% Daze) for Koan and **Primal Roar** (Beast, magical 40, 20
-mana, 20% Bleed) for Coil; Hush opens on Frost Bolt. Beast now has two magical rows, not one.
+mana, 20% Bleed) for Coil; Hush opens on Frost Bolt. Beast now has two magical rows, not one. A third, **Radiant Blow** (Light, physical 40, 20 mana,
+20% Daze), took Second Wind's seat in Carillon's kit: Light had one early physical attack. Second Wind itself is
+sound — Renew 14% ticks three times, ~40% of max HP for 30 mana — and the sim reads it as 0 healing
+because its move ledger credits a cast, not the Renew ticks after it.
 
 Retired with them: Glaciate, Headwind, Field Repair, Mycelium, Static Field and their mastered
 cards. Arcane Reservoir and Attunement stay as equipment cards. Two notes for playtest: Zenith has
