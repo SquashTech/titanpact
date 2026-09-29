@@ -97,7 +97,6 @@ function EvolutionPathCard({
   onInspect: (id: string) => void;
 }) {
   const granted = path.unlocksMoveIds ?? [];
-  const learnable = path.learnableMoveIds ?? [];
   const grantedPassives = (path.grantsPassiveIds ?? []).filter((id) => passives[id]);
   const types = pathTypes(hero, path);
   // A graft path's own types, so its moves read with the STAB the path would actually give them.
@@ -149,12 +148,6 @@ function EvolutionPathCard({
         </>
       )}
 
-      {learnable.length > 0 && (
-        <>
-          <div className="evo-path-label">Joins the level-up pool</div>
-          <MoveList moveIds={learnable} caster={pathCaster} onInspect={onInspect} />
-        </>
-      )}
 
     </div>
   );
@@ -251,6 +244,15 @@ export function HeroDossierOverlay({ hero: opened, cycle, onClose }: Props) {
   const pool = (progressionTable.moveTiers[hero.id] ?? []).filter((id) => !startingKit.includes(id));
   const byTier = TIER_ORDER.map((tier) => ({ tier, moveIds: pool.filter((id) => tierOf(id) === tier) }));
   const nodes = progressionTable.evolutions[hero.id] ?? [];
+  const evolutionPools = nodes
+    .flatMap((node) => node.paths)
+    .filter((path) => (path.learnableMoveIds ?? []).length > 0)
+    .map((path) => ({
+      path,
+      moveIds: path.learnableMoveIds!,
+      // A graft path's own types, so its moves read with the STAB the path would actually give them.
+      pathCaster: path.typeGraft ? { wisdom: hero.baseStats.wisdom, types: pathTypes(hero, path) } : { wisdom: hero.baseStats.wisdom, types: hero.types },
+    }));
   const innate = innatePassiveOf(hero);
   const mastered = masteredInnateOf(hero);
   const mark = innate ? null : titansMarkOf(hero);
@@ -259,7 +261,7 @@ export function HeroDossierOverlay({ hero: opened, cycle, onClose }: Props) {
 
   const tabs: TabSpec<TabId>[] = [
     { id: 'stats', label: 'Stats', glyph: 'stats' },
-    { id: 'moves', label: 'Moves', glyph: 'moves', count: startingKit.length + pool.length + (hero.signatureMoveId ? 1 : 0) },
+    { id: 'moves', label: 'Moves', glyph: 'moves', count: startingKit.length + pool.length + (hero.signatureMoveId ? 1 : 0) + evolutionPools.reduce((n, p) => n + p.moveIds.length, 0) },
     { id: 'evolution', label: 'Evolution', glyph: 'buffs' },
   ];
 
@@ -385,6 +387,14 @@ export function HeroDossierOverlay({ hero: opened, cycle, onClose }: Props) {
                   <MoveList moveIds={[hero.signatureMoveId]} caster={caster} onInspect={setPopupMoveId} />
                 </>
               )}
+              {/* What each Evolution adds to the level-up pool, read here with the moves rather than on the path card. */}
+              {evolutionPools.length > 0 && <div className="tab-subhead">Evolution pool</div>}
+              {evolutionPools.map(({ path, moveIds, pathCaster }) => (
+                <div key={path.id}>
+                  <div className="evo-path-label">{path.name}</div>
+                  <MoveList moveIds={moveIds} caster={pathCaster} onInspect={setPopupMoveId} />
+                </div>
+              ))}
             </>
           )}
 
