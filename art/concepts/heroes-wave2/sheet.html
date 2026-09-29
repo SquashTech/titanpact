@@ -1,0 +1,6 @@
+<html><body style="background:#3a3a44;margin:8px;font:12px sans-serif;color:#eee"><div id=g style="display:grid;grid-template-columns:repeat(5,200px);gap:6px"></div>
+<script>
+const v=new URLSearchParams(location.search).get('v')||'v1';
+const names=(new URLSearchParams(location.search).get('n')||'tinder selkie hush nimbus kite raiju dune cairn lotus murk rook thane trove koan totem keen ferra abacus whirr mellow').split(' ');
+for(const n of names){const d=document.createElement('div');d.innerHTML=`<img src="${n.includes('.')?n:n+'_'+v+'.png'}" style="width:192px;height:192px;image-rendering:pixelated;background:#55606a"><div>${n}</div>`;g.appendChild(d)}
+</script></body></html>
