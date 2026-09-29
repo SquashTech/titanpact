@@ -88,11 +88,11 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   stillness: {
     id: 'stillness',
     name: 'Stillness',
-    description: 'Whenever this hero Rests, it gains Ambush 40.',
+    description: 'Whenever this hero Rests, every affliction on it is washed away.',
     reactive: {
       hook: 'Rested',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 40 },
+      effect: { kind: 'cleanse', target: 'self' },
     },
   },
   innerLight: {

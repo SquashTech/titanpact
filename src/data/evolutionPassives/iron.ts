@@ -44,14 +44,14 @@ export const ironPathPassives: Record<string, PassiveDefinition> = {
       whileBenched: true,
     },
   },
-  unbrokenStroke: {
-    id: 'unbrokenStroke',
-    name: 'Unbroken Stroke',
-    description: 'Whenever this hero lands an attack, it gains Ambush 15.',
+  readyStance: {
+    id: 'readyStance',
+    name: 'Ready Stance',
+    description: 'Whenever an enemy enters the battlefield, this hero gains 15 Attack.',
     reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 15 },
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'enemy' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 15 },
     },
   },
   unseenCut: {

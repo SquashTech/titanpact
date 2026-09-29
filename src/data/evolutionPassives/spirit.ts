@@ -83,15 +83,14 @@ export const spiritPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 50 } },
     },
   },
-  frostbreath: {
-    id: 'frostbreath',
-    name: 'Frostbreath',
-    description: 'Whenever this hero lands a Frost attack, there is a 30% chance its target is Frozen.',
+  graveFrost: {
+    id: 'graveFrost',
+    name: 'Grave Frost',
+    description: 'Whenever this hero Freezes an enemy, that enemy is Haunted.',
     reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Frost' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Freeze' },
-      chance: 0.3,
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Freeze' } },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Haunt' },
     },
   },
 };

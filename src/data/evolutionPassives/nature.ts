@@ -27,11 +27,11 @@ export const naturePathPassives: Record<string, PassiveDefinition> = {
   deadLeaf: {
     id: 'deadLeaf',
     name: 'Dead Leaf',
-    description: 'Whenever this hero lands a finishing blow, it gains Ambush 45.',
+    description: 'Whenever this hero knocks an enemy out, both active enemies are Haunted.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 45 },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Haunt' },
     },
   },
   // Morel's Toadstool: per grant, so Wild Bloom pays both allies.

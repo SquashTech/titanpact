@@ -68,6 +68,7 @@ import './deck.test';
 import './tips.test';
 import './innate.test';
 import './evolutionSimplification.test';
+import './evolutionPassives.test';
 import { run } from './harness';
 
 run();

@@ -46,9 +46,9 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
     },
   },
   // Carillon's Knell: Enthrall's shape — the Light hit plants the mark, the grafted Spirit line cashes it.
-  deathKnell: {
-    id: 'deathKnell',
-    name: 'Death Knell',
+  lastToll: {
+    id: 'lastToll',
+    name: 'Last Toll',
     description: 'Every Light attack this hero lands leaves its target Haunted.',
     reactive: {
       hook: 'DamageDealt',

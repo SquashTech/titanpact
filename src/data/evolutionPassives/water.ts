@@ -45,15 +45,15 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 30 } },
     },
   },
-  // Nautilus's Inkmind: every cast softens the mind the next one goes through.
-  coldRead: {
-    id: 'coldRead',
-    name: 'Cold Read',
-    description: 'Whenever this hero lands a magical attack, its target loses 10 Wisdom.',
+  // Nautilus's Inkmind: every arrival clouds the water.
+  inkCloud: {
+    id: 'inkCloud',
+    name: 'Ink Cloud',
+    description: 'When this hero enters the battlefield, both active enemies lose 10 Intelligence and 10 Speed.',
     reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'magical' } },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', amount: -10 },
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: ['intelligence', 'speed'], amount: -10 },
     },
   },
   // Kappa's Deep Pool: Brimming, shared with whoever stands beside it.
