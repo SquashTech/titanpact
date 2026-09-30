@@ -110,7 +110,7 @@ test('classes: a move-Class lands its move in an open slot, and records no passi
 
 test('classes: at the cap a move-Class replaces on request, or takes the Class without the move when declined', () => {
   let run = seedRoster(['cinderKnight']);
-  const full = [...heroes.cinderKnight.moveIds, 'feint'].slice(0, MOVE_CAP);
+  const full = [...heroes.cinderKnight.moveIds, 'kindle', 'feint'].slice(0, MOVE_CAP);
   run = { ...run, roster: [{ ...run.roster[0], unlockedMoveIds: full }] };
   assert.ok(classMoveOverflows(classes.ranger, run.roster[0]), 'the kit is full, so Volley overflows');
 

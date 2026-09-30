@@ -364,6 +364,8 @@ const ARENA_MOTE_DENSITY = 0.45;
 
 /** How long a send-out plays (styles.css .summoning) — how long a replacement made outside a round holds its class. */
 const SUMMON_MS = 700;
+/** How long a switch beat holds the outgoing hero on the field for its recall (styles.css .recalling) before the swap lands. */
+const RECALL_MS = 440;
 
 /**
  * The act's place, standing behind the fight (docs/locations.md §5.5). Memoised because the
@@ -557,6 +559,8 @@ interface Props {
   /** Displayed only — the caller grants it in onResolved. */
   /** XP this win pays the WHOLE roster (run/growth.ts). A report, not a screen — nothing is spent. */
   xpGained: number;
+  /** Seeds the level roll so the result overlay can show the stat gains the resolve will land. */
+  levelSeed?: number;
   /** The opener fight's guaranteed drop, rolled up front so the victory screen can show it. Displayed only. */
   equipmentReward: EquipmentDefinition | null;
   /** A potion this win drops (run/consumables.ts), rolled up front like the item. Displayed only. */
@@ -593,6 +597,7 @@ export function FightScreen({
   playerRelicIds = [],
   goldReward,
   xpGained,
+  levelSeed,
   equipmentReward,
   consumableReward = null,
   onResolved,
@@ -691,6 +696,8 @@ export function FightScreen({
   const beatQueue = useRef<Beat[]>([]);
   const displayState = useRef<CombatState | null>(null);
   const finalState = useRef<CombatState | null>(null);
+  /** A switch beat's swap, held back until the recall has played; the next advance lands it early. */
+  const pendingSwap = useRef<{ events: readonly CombatEvent[]; timer: number } | null>(null);
   // Hold-to-auto-play: `autoEngaged` lets the trailing click (pointerup always fires one) be swallowed.
   const holdTimer = useRef<number | null>(null);
   const autoPlayInterval = useRef<number | null>(null);
@@ -1204,7 +1211,20 @@ export function FightScreen({
   }
 
   /** Reveals the next beat, or finalizes the round once the queue is empty. Returns whether a beat was shown, so the auto-play loop knows when to stop. */
+  /** Lands a held switch now: its timer ran out, or something is about to be drawn on top of it. */
+  function landPendingSwap() {
+    const held = pendingSwap.current;
+    if (!held) return;
+    window.clearTimeout(held.timer);
+    pendingSwap.current = null;
+    let next = displayState.current!;
+    for (const event of held.events) next = applyEventToState(next, event);
+    displayState.current = next;
+    setCombat(next);
+  }
+
   function handleAdvance(): boolean {
+    landPendingSwap();
     const revealed = beatQueue.current.shift();
 
     if (!revealed) {
@@ -1222,8 +1242,12 @@ export function FightScreen({
       return false;
     }
 
+    // A switch is ONE beat (buildBeats): the outgoing hero recalls on the field as it lands, and the
+    // swap follows once the recall has played — the incoming card's send-out plays as it mounts.
+    const holdsSwap = !!revealed.recallCombatantId && !!revealed.summonCombatantId;
     let next = displayState.current!;
-    for (const event of revealed.events) next = applyEventToState(next, event);
+    if (holdsSwap) pendingSwap.current = { events: revealed.events, timer: window.setTimeout(landPendingSwap, RECALL_MS) };
+    else for (const event of revealed.events) next = applyEventToState(next, event);
     displayState.current = next;
     // Walk the order: a turn begins on TurnStarted, on a Daze block (no TurnStarted precedes it)
     // and on a voluntary switch (the outgoing hero is the actor). A skipped action — its owner
@@ -1241,7 +1265,7 @@ export function FightScreen({
       return cur;
     });
 
-    setCombat(next);
+    if (!holdsSwap) setCombat(next);
     appendLog(formatEvents(revealed.events, allCombatants, next.combatants, moves));
     playBeatSfx(revealed);
     // EXPERIMENTAL: a dramatic entrance drags the music down for the rest of the fight. Delete this line to drop it.
@@ -2156,6 +2180,7 @@ export function FightScreen({
           roster={resultRoster}
           fieldedIds={new Set([...playerSquad.activeIds, ...playerSquad.benchIds].filter((id): id is string => id !== null))}
           xpGained={xpGained}
+          levelSeed={levelSeed}
           goldFrom={playerRun.gold}
           goldReward={goldReward}
           equipmentReward={equipmentReward}

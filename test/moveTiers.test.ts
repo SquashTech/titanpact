@@ -119,12 +119,12 @@ test('move tiers: each band offers its own tier — Early expires when Mid opens
   assert.strictEqual(MAX_BAND_RANK, MOVE_TIER_RANK.late, 'the top band is the last one');
 });
 
-test('schedule: the default is the table a generated hero already read — offers every three levels, Mid at 10, Late at 21, and no Evolution on it', () => {
-  assert.deepStrictEqual(DEFAULT_SCHEDULE, { offerLevels: [4, 7, 10, 13, 16, 19, 22, 25, 28], midLevel: 10, lateLevel: 21 });
+test("schedule: the default is a hero's shape — five offers, two Early, two Mid from the opening at 10, one Late at 22 — and no Evolution on it", () => {
+  assert.deepStrictEqual(DEFAULT_SCHEDULE, { offerLevels: [4, 7, 10, 16, 22], midLevel: 10, lateLevel: 21 });
   const entries = scheduleEntries(DEFAULT_SCHEDULE);
   assert.deepStrictEqual(
     entries.map((e) => [e.level, e.kind]),
-    [[4, 'offer'], [7, 'offer'], [10, 'offer'], [13, 'offer'], [16, 'offer'], [19, 'offer'], [22, 'offer'], [25, 'offer'], [28, 'offer']],
+    [[4, 'offer'], [7, 'offer'], [10, 'offer'], [16, 'offer'], [22, 'offer']],
     'every entry is an offer — the Evolution sits behind Mastery pips, not a level (docs/mastery.md)'
   );
   // A level not on the list is a plain level; an entry is owed once the level reaches it.
@@ -251,9 +251,8 @@ test('schedule: a dry band pays nothing and the entry is still taken — the nex
 
 test('move tiers: the floor is a BAND surviving the offers the schedule makes from it', () => {
   // What a band must survive is the offers the schedule makes from it: two Early (4, 7) before
-  // midLevel opens Mid, four Mid (10, 13, 16, 19) before lateLevel, and three Late (22, 25, 28)
-  // from it.
-  assert.deepStrictEqual(movePoolFloor(), { early: 2, mid: 4, late: 3 });
+  // midLevel opens Mid, two Mid (10, 16) before lateLevel, and one Late (22) from it.
+  assert.deepStrictEqual(movePoolFloor(), { early: 2, mid: 2, late: 1 });
   assert.deepStrictEqual(movePoolFloor({ offerLevels: [3, 5, 8, 12, 20], midLevel: 6, lateLevel: 20 }), { early: 2, mid: 2, late: 1 });
 });
 

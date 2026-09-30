@@ -137,9 +137,9 @@ interface Props {
   statCtx?: StatContext;
   /** The roster entry's level (run/growth.ts levelOf), on the nameplate for both sides so the gap reads at a glance. */
   level?: number;
-  /** Switching out: drawn back into its platform on the beat before the swap (buildBeats recallCombatantId). */
+  /** Switching out: drawn back into its platform while the switch beat holds the swap (buildBeats recallCombatantId). */
   recalling?: boolean;
-  /** Switching in: rising out of its platform on the beat that puts it on the field (buildBeats summonCombatantId). */
+  /** Switching in: rising out of its platform as the swap lands (buildBeats summonCombatantId). */
   summoning?: boolean;
   /** The passive warding this combatant right now (engine/combat/ward.ts wardOn) — worn as a badge beside its statuses, since it is not one. */
   warded?: PassiveId | null;

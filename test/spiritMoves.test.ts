@@ -339,7 +339,7 @@ test('spirit: Revenant holds the magical line and Sorrow the physical one — sp
 });
 
 test('spirit: Sorrow is a mirror of Revenant, and its kit is all its own type', () => {
-  assert.strictEqual(heroes.sorrow.moveIds.length, 3);
+  assert.strictEqual(heroes.sorrow.moveIds.length, 2);
   for (const id of heroes.sorrow.moveIds) assert.strictEqual(moves[id].type, 'Spirit');
   assert.ok(
     firstStatusApplication(moves[heroes.sorrow.moveIds[1]])?.statusId === 'Haunt',

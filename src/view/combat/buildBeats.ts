@@ -4,6 +4,7 @@
 import type {
   FaintedEvent,
   CombatEvent,
+  HealedEvent,
   HpChangedEvent,
   ManaSurchargedEvent,
   MoveUsedEvent,
@@ -112,10 +113,10 @@ export interface BeatFlavor {
    */
   strikeCombatantId?: string;
   /**
-   * A switch, in two beats (2026-09-25, per user direction — Pokémon's recall and send-out,
-   * without the ball): `recallCombatantId` is the hero leaving, drawn back into its platform on a
-   * beat of its own before the swap is applied; `summonCombatantId` is the one arriving, rising out
-   * of the same ground on the beat that applies it (styles.css .recalling / .summoning).
+   * A switch (2026-09-25, per user direction — Pokémon's recall and send-out, without the ball;
+   * one beat since 2026-09-30): `recallCombatantId` is the hero leaving, drawn back into its
+   * platform while FightScreen holds the swap back; `summonCombatantId` is the one arriving, rising
+   * out of the same ground once the swap lands (styles.css .recalling / .summoning).
    */
   recallCombatantId?: string;
   summonCombatantId?: string;
@@ -211,6 +212,23 @@ function joinNames(names: readonly string[]): string {
   return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }
 
+/** A passive's name without its parenthetical — "Mark of the Titan (Fire)" and "(Water)" are one family. */
+function passiveFamily(label: string): string {
+  return label.replace(/\s*\([^)]*\)$/, '');
+}
+
+/** What rides along inside the round's end beat without a figure of its own. */
+const ROUND_END_BOOKKEEPING: ReadonlySet<CombatEvent['type']> = new Set([
+  'StatusRemoved',
+  'Healed',
+  'ManaChanged',
+  'ManaSurcharged',
+  'Endured',
+  'BlessingSpent',
+  'FieldEffectTicked',
+  'RoundEnded',
+]);
+
 /** Consecutive StatChanged events, folded per target, first-seen order kept. */
 function groupByCombatant(changes: readonly StatChangedEvent[]): { combatantId: string; changes: StatChangedEvent[] }[] {
   const groups: { combatantId: string; changes: StatChangedEvent[] }[] = [];
@@ -286,6 +304,8 @@ export function buildBeats(
   // hit of a multi-hit move lands (DamageDealt bypasses the set).
   let strikerMove: MoveDefinition | undefined;
   let landed = new Set<string>();
+  // The round's end beat (regen and ticks), so a field lapsing right behind it can ride on it.
+  let roundEndBeat = null as Beat | null;
 
   function push(applied: CombatEvent[], banner: string, popups: BeatPopup[] = [], flavor: BeatFlavor = {}) {
     beats.push({ events: [...carry, ...applied], banner, popups, strikeCombatantId: striker, ...flavor });
@@ -307,15 +327,159 @@ export function buildBeats(
     return all.length > 0 ? all : undefined;
   }
 
+  /**
+   * The round's end as ONE beat (2026-09-30, per user direction, widened from the regen-and-tick
+   * block it was): bench and mana regen, every status tick and expiry, every passive that fires on
+   * them or on the round's end (the Marks, Halo, Rivet, Sporefall…) with its payload, and a field
+   * lapsing — none of it a decision, and 1.8 taps a round before. Each figure gets one popup: its
+   * net HP (glyph of the biggest tick), else its stat shift, else what it gained, else its mana; the
+   * detail stays in the Battle Log. A KO still splits off, one beat for all of them, so the bar
+   * drains before the card leaves; the Clock, a draining field and a field set carry rules text and
+   * keep beats of their own.
+   */
+  function roundEnd() {
+    const applied: CombatEvent[] = [];
+    const faints: FaintedEvent[] = [];
+    const hp = new Map<string, { delta: number; glyph: string; glyphAmount: number; named: boolean }>();
+    const mana = new Map<string, number>();
+    const shifts = new Map<string, StatChangedEvent[]>();
+    const gained = new Map<string, string[]>();
+    const clauses: string[] = [];
+    const sources: string[] = [];
+    let faded: string | null = null;
+    // Renew heals as it lands, so a tick can come mid-round: only regen or the round's end itself
+    // earns the beat its "round ends" title.
+    let closing = false;
+    const hpOf = (id: string) => hp.get(id) ?? { delta: 0, glyph: '', glyphAmount: -1, named: false };
+    const source = (label: string) => {
+      if (!sources.includes(label)) sources.push(label);
+    };
+    for (;;) {
+      const next = events[i];
+      if (!next) break;
+      if (next.type === 'BenchRegenTicked' || next.type === 'ManaRegenTicked' || next.type === 'RoundEnded') closing = true;
+      if (next.type === 'BenchRegenTicked') {
+        const cur = hpOf(next.combatantId);
+        cur.delta += next.hpRegen;
+        hp.set(next.combatantId, cur);
+      } else if (next.type === 'ManaRegenTicked') {
+        mana.set(next.combatantId, (mana.get(next.combatantId) ?? 0) + next.manaRegen);
+      } else if (next.type === 'StatusTicked') {
+        applied.push(next);
+        i++;
+        if (next.kind !== 'duration') {
+          const cur = hpOf(next.combatantId);
+          cur.delta += next.kind === 'damage' ? -next.amount : next.amount;
+          cur.named = true;
+          if (next.amount > cur.glyphAmount) {
+            cur.glyph = next.statusId;
+            cur.glyphAmount = next.amount;
+          }
+          hp.set(next.combatantId, cur);
+          source(next.statusId);
+          clauses.push(
+            STATUS_TICK_BANNER[next.statusId]?.(name(next.combatantId), next.amount) ??
+              `${name(next.combatantId)} ${next.kind === 'damage' ? 'takes' : 'recovers'} ${next.amount} from ${next.statusId}`
+          );
+          // The tick's own HP change is counted by its amount above, not again below.
+          if (events[i]?.type === 'HpChanged') applied.push(events[i++]);
+        }
+        continue;
+      } else if (next.type === 'HpChanged') {
+        const cur = hpOf(next.combatantId);
+        cur.delta += next.newHp - next.previousHp;
+        cur.named = true;
+        hp.set(next.combatantId, cur);
+      } else if (next.type === 'PassiveTriggered') {
+        const label = passiveFamily(passives[next.passiveId]?.name ?? next.passiveId);
+        source(label);
+        clauses.push(`${name(next.combatantId)}'s ${label}`);
+      } else if (next.type === 'StatusApplied') {
+        const shield = statuses[next.statusId]?.pipeline === 'shield';
+        gained.set(next.combatantId, [...(gained.get(next.combatantId) ?? []), shield && next.magnitude !== undefined ? `Shield ${next.magnitude}` : next.statusId]);
+      } else if (next.type === 'StatChanged') {
+        shifts.set(next.combatantId, [...(shifts.get(next.combatantId) ?? []), next]);
+      } else if (next.type === 'ManaGranted') {
+        mana.set(next.targetCombatantId, (mana.get(next.targetCombatantId) ?? 0) + next.amount);
+      } else if (next.type === 'FieldEffectExpired') {
+        faded = fieldEffects[next.fieldEffectId]?.name ?? next.fieldEffectId;
+      } else if (next.type === 'Fainted') {
+        // A KO ends the beat; every KO standing in a row behind it shares one beat of its own.
+        while (events[i]?.type === 'Fainted') faints.push(events[i++] as FaintedEvent);
+        break;
+      } else if (!ROUND_END_BOOKKEEPING.has(next.type)) {
+        break;
+      }
+      applied.push(next);
+      i++;
+    }
+
+    const popups: BeatPopup[] = [];
+    for (const combatantId of new Set([...hp.keys(), ...shifts.keys(), ...gained.keys(), ...mana.keys()])) {
+      const tick = hp.get(combatantId);
+      const shift = shifts.get(combatantId);
+      const marks = gained.get(combatantId);
+      const regen = mana.get(combatantId) ?? 0;
+      if (tick && tick.delta !== 0) {
+        const flavored = tick.glyph !== '' && STATUS_TICK_BANNER[tick.glyph] !== undefined;
+        popups.push({
+          combatantId,
+          text: `${tick.delta > 0 ? '+' : ''}${tick.delta}`,
+          className: flavored ? `popup-${tick.glyph.toLowerCase()}` : tick.delta > 0 ? 'popup-heal' : 'popup-damage',
+          glyph: tick.glyph || undefined,
+        });
+      } else if (shift) {
+        popups.push({ combatantId, text: deltaSummary(shift), className: shift.every((c) => c.delta > 0) ? 'popup-buff' : 'popup-debuff' });
+      } else if (marks) {
+        const shield = marks.some((m) => m.startsWith('Shield'));
+        popups.push({ combatantId, text: [...new Set(marks)].join(' · '), className: shield ? 'popup-shield-gain' : 'popup-status', glyph: shield ? 'Shield' : undefined });
+      } else if (regen > 0) {
+        popups.push({ combatantId, text: `+${regen}`, className: 'popup-mana' });
+      }
+    }
+
+    // The big line names what hurt or healed someone for a reason — a tick or a passive — and
+    // leaves the bench's quiet regen to its popup.
+    let net = 0;
+    const focus: string[] = [];
+    for (const [combatantId, tick] of hp) {
+      if (!tick.named || tick.delta === 0) continue;
+      net += tick.delta;
+      focus.push(`${name(combatantId)} ${tick.delta > 0 ? '+' : '−'}${Math.abs(tick.delta)}`);
+    }
+    const eventful = clauses.length > 0;
+    const sentence = eventful ? clauses.join('; ') : 'Mana recovers';
+    push(applied, faded ? `${sentence}; ${faded} fades from the battlefield.` : sentence, popups, {
+      bannerLead: eventful && closing ? 'The round ends' : undefined,
+      bannerFocus: !eventful ? 'Mana recovers' : focus.length > 0 ? focus.join(' · ') : sources.join(' · '),
+      bannerSub: eventful && focus.length > 0 ? `▸${sources.join(' · ')}` : undefined,
+      bannerFocusKind: !eventful ? 'mana' : net < 0 ? 'damage' : net > 0 ? 'heal' : 'status',
+      bannerMeta: faded ? `${faded} fades` : undefined,
+    });
+    roundEndBeat = beats[beats.length - 1];
+    if (faints.length > 0) {
+      const who = joinNames(faints.map((f) => name(f.combatantId)));
+      push(faints, `${who} ${faints.length > 1 ? 'are' : 'is'} knocked out!`, [], { bannerFocusKind: 'ko' });
+    }
+  }
+
   while (i < events.length) {
     const e = events[i];
     if (!ACTION_EVENTS.has(e.type)) striker = undefined;
 
     switch (e.type) {
+      case 'RoundEnded':
+        if (events[i + 1]?.type === 'PassiveTriggered') {
+          roundEnd();
+          break;
+        }
+        carry.push(e);
+        i++;
+        break;
+
       case 'RoundStarted':
       case 'RoundOrdered':
       case 'TurnStarted':
-      case 'RoundEnded':
         carry.push(e);
         i++;
         break;
@@ -495,13 +659,30 @@ export function buildBeats(
             { bannerLead: `${label} · ${ownerName}`, bannerFocus: `+${amount} HP`, bannerFocusKind: 'heal' }
           );
         } else if (effectKind === 'applyStatus' && events[i]?.type === 'StatusApplied') {
-          const applied2 = events[i++] as StatusAppliedEvent;
-          applied.push(applied2);
+          // EVERY consecutive trigger of the same passive, as one beat: three spawn's Marks at a
+          // round's end are one thing happening, not three taps. "Same" reads the name without its
+          // parenthetical, so each type's Mark of the Titan folds with the others.
+          const landed: StatusAppliedEvent[] = [events[i++] as StatusAppliedEvent];
+          applied.push(landed[0]);
+          while (
+            events[i]?.type === 'PassiveTriggered' &&
+            events[i + 1]?.type === 'StatusApplied' &&
+            passives[(events[i] as typeof e).passiveId]?.reactive?.effect.kind === 'applyStatus' &&
+            passiveFamily(passives[(events[i] as typeof e).passiveId]?.name ?? '') === passiveFamily(label)
+          ) {
+            applied.push(events[i++]);
+            const more = events[i++] as StatusAppliedEvent;
+            applied.push(more);
+            landed.push(more);
+          }
+          const statusIds = [...new Set(landed.map((l) => l.statusId))];
+          const who = joinNames([...new Set(landed.map((l) => name(l.combatantId)))]);
+          const shownLabel = landed.length > 1 ? passiveFamily(label) : label;
           push(
             applied,
-            `${label} afflicts ${name(applied2.combatantId)} with ${applied2.statusId}!`,
-            [{ combatantId: applied2.combatantId, text: applied2.statusId, className: 'popup-status' }],
-            { bannerLead: `${label} · ${name(applied2.combatantId)}`, bannerFocus: applied2.statusId, bannerFocusKind: 'status' }
+            landed.length > 1 ? `${shownLabel} marks ${who}!` : `${label} afflicts ${who} with ${statusIds[0]}!`,
+            landed.map((l) => ({ combatantId: l.combatantId, text: l.statusId, className: 'popup-status' })),
+            { bannerLead: `${shownLabel} · ${who}`, bannerFocus: statusIds.join(' · '), bannerFocusKind: 'status' }
           );
         } else if (effectKind === 'statDelta' && events[i]?.type === 'StatChanged') {
           // EVERY consecutive StatChanged: a group-target effect emits one per member behind a single trigger.
@@ -611,15 +792,21 @@ export function buildBeats(
           i++;
           break;
         }
-        // The leaving hero gets a beat of its own, before the swap is applied, so it is still on the
-        // field to be drawn back. A replacement for a fallen hero has nobody to recall.
+        // One beat for the whole switch (2026-09-30, per user direction — it was two): FightScreen
+        // holds the swap back while the leaving hero recalls, then lands it and the arrival is sent
+        // out. A replacement for a fallen hero has nobody to recall.
         if (e.outCombatantId) {
-          push([], `${name(e.outCombatantId)} falls back`, [], {
-            bannerLead: 'Switching out',
-            bannerFocus: name(e.outCombatantId),
+          const outName = name(e.outCombatantId);
+          push([e], `${outName} falls back — ${inName} switches in!`, [], {
+            bannerLead: `${outName} falls back`,
+            bannerFocus: inName,
+            bannerSub: 'switches in',
             bannerFocusKind: 'buff',
             recallCombatantId: e.outCombatantId,
+            summonCombatantId: e.inCombatantId,
           });
+          i++;
+          break;
         }
         push([e], `${inName} switches in!`, [], {
           bannerLead: 'Switching in',
@@ -650,6 +837,30 @@ export function buildBeats(
         const applied: CombatEvent[] = [e];
         i++;
         if (events[i]?.type === 'HpChanged') applied.push(events[i++]);
+        // A heal on both allies is one payload: every consecutive plain heal folds into this beat.
+        const heals: HealedEvent[] = [e];
+        while (!e.drain && events[i]?.type === 'Healed' && !(events[i] as HealedEvent).drain) {
+          const more = events[i++] as HealedEvent;
+          heals.push(more);
+          applied.push(more);
+          if (events[i]?.type === 'HpChanged') applied.push(events[i++]);
+        }
+        if (heals.length > 1) {
+          const who = joinNames(heals.map((h) => name(h.targetCombatantId)));
+          const uniform = heals.every((h) => h.amount === e.amount);
+          push(
+            applied,
+            uniform ? `${who} recover ${e.amount} HP each` : heals.map((h) => `${name(h.targetCombatantId)} recovers ${h.amount} HP`).join('; '),
+            heals.map((h) => ({ combatantId: h.targetCombatantId, text: `+${h.amount}`, className: 'popup-heal' })),
+            {
+              bannerLead: `${who} recover`,
+              bannerFocus: uniform ? `+${e.amount} HP each` : heals.map((h) => `+${h.amount}`).join(' · '),
+              bannerFocusKind: 'heal',
+              fx: landings(heals.map((h) => h.targetCombatantId)),
+            }
+          );
+          break;
+        }
         const targetName = name(e.targetCombatantId);
         const drainedFrom = e.drain ? name(e.drain.fromCombatantId) : null;
         push(
@@ -706,6 +917,33 @@ export function buildBeats(
         const verb = statuses[e.statusId]?.positive ? 'gains' : 'is afflicted with';
         if (statuses[e.statusId]?.pipeline === 'shield') {
           // A pool, not a mark: the figure is the beat, and at the cap the beat says why (docs/shield.md §5).
+          // Laid on several allies at once (Tide Guard, Bastion), it is one beat with a figure each.
+          const pools: StatusAppliedEvent[] = [e];
+          while (events[i + pools.length]?.type === 'StatusApplied' && (events[i + pools.length] as StatusAppliedEvent).statusId === e.statusId) {
+            pools.push(events[i + pools.length] as StatusAppliedEvent);
+          }
+          if (pools.length > 1) {
+            const who = joinNames(pools.map((p) => name(p.combatantId)));
+            const same = pools.every((p) => p.magnitude === e.magnitude && !p.capped);
+            push(
+              pools,
+              same ? `${who} gain Shield ${e.magnitude}` : pools.map((p) => (p.capped ? `${name(p.combatantId)}'s Shield can't go any higher` : `${name(p.combatantId)} gains Shield ${p.magnitude}`)).join('; '),
+              pools.map((p) => ({
+                combatantId: p.combatantId,
+                text: p.capped ? "Can't go any higher" : `Shield ${p.magnitude}`,
+                className: p.capped ? 'popup-ceiling' : 'popup-shield-gain',
+                glyph: 'Shield',
+              })),
+              {
+                bannerLead: `${who} gain`,
+                bannerFocus: same ? `Shield ${e.magnitude}` : 'Shield',
+                bannerFocusKind: 'shield',
+                fx: landings(pools.map((p) => p.combatantId)),
+              }
+            );
+            i += pools.length;
+            break;
+          }
           const capped = e.capped === true;
           push(
             [e],
@@ -721,6 +959,26 @@ export function buildBeats(
           i++;
           break;
         }
+        // The same status landing on several targets back to back (a spread rider, a team grant) is
+        // one payload, so one beat — the detail kept only when every target took the same figure.
+        const group: StatusAppliedEvent[] = [e];
+        let j = i + 1;
+        while (events[j]?.type === 'StatusApplied' && (events[j] as StatusAppliedEvent).statusId === e.statusId && (events[j] as StatusAppliedEvent).combatantId !== e.combatantId) {
+          group.push(events[j++] as StatusAppliedEvent);
+        }
+        if (group.length > 1) {
+          const who = joinNames(group.map((g) => name(g.combatantId)));
+          const same = group.every((g) => g.magnitude === e.magnitude && g.duration === e.duration);
+          const pluralVerb = statuses[e.statusId]?.positive ? 'gain' : 'are afflicted with';
+          push(
+            group,
+            `${who} ${pluralVerb} ${e.statusId}${same ? detail : ''}`,
+            group.map((g) => ({ combatantId: g.combatantId, text: e.statusId, className: 'popup-status' })),
+            { bannerLead: `${who} ${pluralVerb}`, bannerFocus: `${e.statusId}${same ? detail : ''}`, bannerFocusKind: 'status', fx: landings(group.map((g) => g.combatantId)) }
+          );
+          i = j;
+          break;
+        }
         push(
           [e],
           `${targetName} ${verb} ${e.statusId}${detail}`,
@@ -731,92 +989,12 @@ export function buildBeats(
         break;
       }
 
-      // The round's end is ONE beat. Bench and mana regen, every status tick and every expiry
-      // arrive as one contiguous block between the last action and RoundEnded, and used to cost a
-      // tap apiece — a quarter of a round's beats, measured, none of it a decision. Each figure
-      // gets one popup: its net HP from ticks (glyph of the biggest), or its regen if only mana
-      // touched it. A KO still splits off so the bar drains before the card leaves.
+      // The round's end: one beat for all of its upkeep (roundEnd, above).
       case 'BenchRegenTicked':
       case 'ManaRegenTicked':
-      case 'StatusTicked': {
-        const applied: CombatEvent[] = [];
-        const faints: FaintedEvent[] = [];
-        const hp = new Map<string, { delta: number; glyph: string; glyphAmount: number }>();
-        const mana = new Map<string, number>();
-        const clauses: string[] = [];
-        for (;;) {
-          const next = events[i];
-          if (!next) break;
-          if (next.type === 'BenchRegenTicked') {
-            applied.push(next);
-            const cur = hp.get(next.combatantId) ?? { delta: 0, glyph: '', glyphAmount: -1 };
-            cur.delta += next.hpRegen;
-            hp.set(next.combatantId, cur);
-            i++;
-          } else if (next.type === 'ManaRegenTicked') {
-            applied.push(next);
-            mana.set(next.combatantId, (mana.get(next.combatantId) ?? 0) + next.manaRegen);
-            i++;
-          } else if (next.type === 'StatusTicked') {
-            applied.push(next);
-            i++;
-            if (next.kind !== 'duration') {
-              const cur = hp.get(next.combatantId) ?? { delta: 0, glyph: '', glyphAmount: -1 };
-              cur.delta += next.kind === 'damage' ? -next.amount : next.amount;
-              if (next.amount > cur.glyphAmount) {
-                cur.glyph = next.statusId;
-                cur.glyphAmount = next.amount;
-              }
-              hp.set(next.combatantId, cur);
-              clauses.push(STATUS_TICK_BANNER[next.statusId]?.(name(next.combatantId), next.amount) ?? `${name(next.combatantId)} ${next.kind === 'damage' ? 'takes' : 'recovers'} ${next.amount} from ${next.statusId}`);
-            }
-            if (events[i]?.type === 'HpChanged') applied.push(events[i++]);
-            if (events[i]?.type === 'Fainted') faints.push(events[i++] as FaintedEvent);
-          } else if (next.type === 'StatusRemoved' && (next.reason === 'expired' || next.reason === 'decay')) {
-            applied.push(next);
-            i++;
-          } else {
-            break;
-          }
-        }
-
-        const popups: BeatPopup[] = [];
-        for (const [combatantId, tick] of hp) {
-          if (tick.delta === 0) continue;
-          const flavored = tick.glyph !== '' && STATUS_TICK_BANNER[tick.glyph] !== undefined;
-          popups.push({
-            combatantId,
-            text: `${tick.delta > 0 ? '+' : ''}${tick.delta}`,
-            className: flavored ? `popup-${tick.glyph.toLowerCase()}` : tick.delta > 0 ? 'popup-heal' : 'popup-damage',
-            glyph: tick.glyph || undefined,
-          });
-        }
-        for (const [combatantId, regen] of mana) {
-          if (regen <= 0 || hp.has(combatantId)) continue;
-          popups.push({ combatantId, text: `+${regen}`, className: 'popup-mana' });
-        }
-
-        let net = 0;
-        const focus: string[] = [];
-        const statusNames: string[] = [];
-        for (const [combatantId, tick] of hp) {
-          net += tick.delta;
-          if (tick.glyph === '') continue;
-          focus.push(`${name(combatantId)} ${tick.delta > 0 ? '+' : '−'}${Math.abs(tick.delta)}`);
-          if (!statusNames.includes(tick.glyph)) statusNames.push(tick.glyph);
-        }
-        const ticked = clauses.length > 0;
-        push(applied, ticked ? clauses.join('; ') : 'Mana recovers', popups, {
-          bannerLead: ticked ? 'The round ends' : undefined,
-          bannerFocus: ticked ? focus.join(' · ') : 'Mana recovers',
-          bannerSub: ticked ? `▸${statusNames.join(' · ')}` : undefined,
-          bannerFocusKind: !ticked ? 'mana' : net < 0 ? 'damage' : 'heal',
-        });
-        for (const faint of faints) {
-          push([faint], `${name(faint.combatantId)} is knocked out!`, [], { bannerFocusKind: 'ko' });
-        }
+      case 'StatusTicked':
+        roundEnd();
         break;
-      }
 
       // A status leaving on its own — expiry, decay, a switch — is bookkeeping, carried so the
       // badge still clears. Only a cleanse is somebody's payload.
@@ -896,6 +1074,18 @@ export function buildBeats(
 
       case 'FieldEffectExpired': {
         const fx = fieldEffects[e.fieldEffectId];
+        // Right behind the round's end beat, the lapse rides on it as a line rather than a tap of its
+        // own (2026-09-30, per user direction). Anything shown in between keeps it separate, so the
+        // plaque never clears ahead of a beat that still reads the field.
+        const last = beats[beats.length - 1];
+        if (last && last === roundEndBeat) {
+          last.events.push(...carry, e);
+          carry = [];
+          last.banner = `${last.banner}; ${fx?.name ?? e.fieldEffectId} fades from the battlefield.`;
+          last.bannerMeta = `${fx?.name ?? e.fieldEffectId} fades`;
+          i++;
+          break;
+        }
         push([e], `${fx?.name ?? e.fieldEffectId} fades from the battlefield.`, [], {
           bannerLead: 'The field settles',
           bannerFocus: `${fx?.name ?? e.fieldEffectId} fades`,

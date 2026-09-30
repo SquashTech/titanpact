@@ -1,6 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { initUiScale } from './uiScale';
-import { PROP_LIGHTS } from '../view/shared/SceneLights';
 import { allArtUrls, locationArtUrls, prefetchImages, preloadImages } from '../view/shared/preload';
 import { useReloadOnNewBuild } from './useReloadOnNewBuild';
 import { clearSave, readSave, writeSave } from './saveStorage';
@@ -39,6 +38,7 @@ import { LeyLineScreen } from '../view/run/LeyLineScreen';
 import { RestNodeScreen } from '../view/run/RestNodeScreen';
 import { GuardianBannerScreen } from '../view/run/GuardianBannerScreen';
 import { LevelUpScreen } from '../view/run/LevelUpScreen';
+import { levelPayoffOwed } from '../view/run/levelUpFlow';
 import { CrucibleScreen } from '../view/run/CrucibleScreen';
 import { RosterReplaceScreen } from '../view/run/RosterReplaceScreen';
 import { RecruitScreen } from '../view/run/RecruitScreen';
@@ -115,7 +115,7 @@ import {
   type Encounter,
 } from '../run/enemyGen';
 import { CHAMPION_LEVEL_BONUS, encounterScaling, enemyLevelFor } from '../run/difficulty';
-import { ENCOUNTERS_PER_ACT, MAX_LEVEL, applyEncounterLevels, encounterXpKind, levelOf, xpForEncounter, xpForLevel, type HeroLevelUp } from '../run/growth';
+import { ENCOUNTERS_PER_ACT, MAX_LEVEL, applySeededEncounterLevels, encounterXpKind, levelOf, xpForEncounter, xpForLevel, type HeroLevelUp } from '../run/growth';
 import { chooseLocation, drawLocationCandidates, generateItinerary, locationChoiceDue, locationForAct, locationPool } from '../run/locations';
 import { encounterKindOf, encounterSeedFor, nodeEncounter } from '../run/encounters';
 import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
@@ -145,14 +145,13 @@ import {
 } from '../run/runProgress';
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
 import { createStatusTestSides } from '../run/statusTestFight';
-import { atEvolution, currentEvolutionPathId, fullMovepool, pendingScheduleEntry } from '../run/progression';
+import { atEvolution, currentEvolutionPathId, fullMovepool } from '../run/progression';
 import { progressionTable } from '../data/progression';
 import type { RunState, RosterEntry } from '../run/state';
 import type { Squad } from '../run/squad';
 import { statScaleFor } from '../run/statScale';
 import { RoadGate } from '../view/run/RoadEncounter';
 import { mapNodeArt, mapNodeAwakening } from '../view/run/mapNodeArt';
-import { PLACE_LINES } from '../data/roadLines';
 
 type Screen =
   | { kind: 'title' }
@@ -189,6 +188,8 @@ type Screen =
       equipmentReward: EquipmentDefinition | null;
       /** The potion drop, rolled and carried the same way. */
       consumableReward: ConsumableKind | null;
+      /** Seeds the level roll, so the victory screen shows the growth handleFightResolved will land (run/growth.ts previewLevelUp). */
+      levelSeed: number;
     }
   | { kind: 'quickBattle'; player: Encounter; ai: Encounter }
   | { kind: 'sandboxBattle' }
@@ -749,6 +750,7 @@ export function App() {
       xpGained: xpForEncounter(playerRun.encountersWon + 1, encounterXpKind(mapNodeType)),
       equipmentReward,
       consumableReward: rollConsumableDrop(mapNodeType),
+      levelSeed: randomSeed(),
     };
     // The Herald is announced before the fight — and a
     // companion brought this far answers it: it wakes to Ancient for the fight, and its line joins
@@ -776,7 +778,8 @@ export function App() {
     /** The player's own KO'd roster ids at the end — what the companion's mortality reads. */
     koRosterIds: readonly string[] = [],
     /** The fight's end state — what the roster's wounds are read off (run/wounds.ts). */
-    finalState: CombatState | null = null
+    finalState: CombatState | null = null,
+    levelSeed: number = randomSeed()
   ) {
     if (outcome === 'loss') {
       setScreen({ kind: 'runFailed' });
@@ -806,7 +809,7 @@ export function App() {
     // Automatic and roster-wide, benched heroes included: no pool and no allocation. The report
     // is what the screen after the fight reads — the roll is destructive, so it cannot be
     // recovered from the roster afterwards.
-    const levelled = applyEncounterLevels(next, rosterHeroes, Math.random, encounterXpKind(mapNodeType));
+    const levelled = applySeededEncounterLevels(next, rosterHeroes, levelSeed, encounterXpKind(mapNodeType));
     next = levelled.run;
     // The run's first fight is won: one of the Earlies it beat asks to come along, and it does.
     // Joined after the levels roll so the report is the fight's and the newcomer arrives at par.
@@ -872,13 +875,12 @@ export function App() {
     // The join beat sits between the level report and the drop: the run state already holds the
     // newcomer, so it must be met before the who-screen can offer it the item.
     const afterLevels: Screen = companionId ? { kind: 'companion', beat: { kind: 'join', heroId: companionId }, next: afterDrop } : afterDrop;
-    // Levels go FIRST, ahead of the Banner and everything under it: they are what this fight did,
-    // and the rest of the chain is what the ACT pays. Skipped when nobody levelled and nobody is
-    // owed a schedule entry — a fight the XP left part-way to the next level (the fight result
-    // already showed the bars move), past the finale, a roster entirely at the cap. A raw hire
-    // with a backlog still gets its one entry a fight, level or no level.
-    const owed = levelled.run.roster.some((entry) => pendingScheduleEntry(rosterHeroes[entry.heroId], entry) !== null);
-    const afterLoss: Screen = levelled.report.some((hero) => hero.toLevel > hero.fromLevel) || owed
+    // What the levels PAY goes first, ahead of the Banner and everything under it: they are what
+    // this fight did, and the rest of the chain is what the ACT pays. The report itself lives on
+    // the victory screen (FightResultOverlay, stat gains a tap away), so this beat only exists when
+    // somebody is owed a move, a signature or an Evolution. A raw hire with a backlog still gets its
+    // one entry a fight, level or no level.
+    const afterLoss: Screen = levelled.run.roster.some((entry) => levelPayoffOwed(levelled.run, entry.rosterId))
       ? { kind: 'levelUp', report: levelled.report, next: afterLevels }
       : afterLevels;
     // And the companion's loss ahead of even that — the one thing the fight took (§5). Under
@@ -1260,6 +1262,7 @@ export function App() {
           playerRelicIds={playerRun.relics}
           goldReward={screen.goldReward}
           xpGained={screen.xpGained}
+          levelSeed={screen.levelSeed}
           equipmentReward={screen.equipmentReward}
           consumableReward={screen.consumableReward}
           onResolved={(outcome, finalState, consumablesUsed) =>
@@ -1272,7 +1275,8 @@ export function App() {
               outcome,
               consumablesUsed,
               koRosterIdsOf(finalState, 'A'),
-              finalState
+              finalState,
+              screen.levelSeed
             )
           }
           onSaveAndQuit={() => setScreen({ kind: 'title' })}
@@ -1381,9 +1385,7 @@ export function App() {
       )}
 
       {screen.kind === 'manaWell' && (
-        <RoadGate run={playerRun} place art={mapNodeArt('manaWellReward')!} awakened={mapNodeAwakening('manaWellReward')} {...PLACE_LINES.manaWellReward}>
-          <ManaWellScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
-        </RoadGate>
+        <ManaWellScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
       {screen.kind === 'forge' && (
@@ -1391,15 +1393,11 @@ export function App() {
       )}
 
       {screen.kind === 'leyLine' && (
-        <RoadGate run={playerRun} place art={mapNodeArt('leyLineReward')!} awakened={mapNodeAwakening('leyLineReward')} {...PLACE_LINES.leyLineReward}>
-          <LeyLineScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
-        </RoadGate>
+        <LeyLineScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
       {screen.kind === 'rest' && (
-        <RoadGate run={playerRun} place art={mapNodeArt('restReward')!} awakened={mapNodeAwakening('restReward')} lights={PROP_LIGHTS.restReward} {...PLACE_LINES.restReward}>
-          <RestNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
-        </RoadGate>
+        <RestNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
       {screen.kind === 'itemWho' && (
@@ -1408,9 +1406,7 @@ export function App() {
 
 
       {screen.kind === 'boonNode' && (
-        <RoadGate run={playerRun} place art={mapNodeArt('passiveReward')!} awakened={mapNodeAwakening('passiveReward')} {...PLACE_LINES.passiveReward}>
-          <BoonNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
-        </RoadGate>
+        <BoonNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
       {screen.kind === 'tutorNode' && (

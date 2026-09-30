@@ -3,7 +3,8 @@ import { rosterHeroes as heroes } from '../../data/content';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
 import type { RunState } from '../../run/state';
-import { MOVE_CAP, grantOfferedMove, levelMovePool, pendingScheduleEntry, pendingSignature, recordMoveOffer, takeScheduleEntry } from '../../run/progression';
+import { MOVE_CAP, availableEvolution, grantOfferedMove, levelMovePool, pendingScheduleEntry, pendingSignature, recordMoveOffer, takeScheduleEntry } from '../../run/progression';
+import { companionTierStep } from '../../run/companion';
 import { playSfx } from '../../audio/sfx';
 import { useMasteryFlow, type MasteryFlow } from './masteryFlow';
 
@@ -46,6 +47,17 @@ export interface LevelUpFlow extends MasteryFlow {
   closeOffer: () => void;
   resolveSignature: (replaceMoveId: string | null, learn: boolean) => void;
   closeSignature: () => void;
+}
+
+/** Whether `next` would pay this hero anything — what decides if the post-fight chain stops for the level flow at all. */
+export function levelPayoffOwed(run: RunState, rosterId: string): boolean {
+  const entry = run.roster.find((r) => r.rosterId === rosterId);
+  if (!entry) return false;
+  const hero = heroes[entry.heroId];
+  if (companionTierStep(entry)) return true;
+  const node = availableEvolution(progressionTable, entry);
+  if (node && node.paths.length > 0) return true;
+  return pendingSignature(hero, entry) !== null || pendingScheduleEntry(hero, entry) !== null;
 }
 
 export function useLevelUpFlow(run: RunState, onRunChange: (next: RunState) => void): LevelUpFlow {

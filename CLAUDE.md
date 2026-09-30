@@ -399,10 +399,13 @@ don't silently override it.
   compounds. The supply is the only balance number and phase 6 sets it.
   **A level-up REPORT screen is not an allocation screen** (2026-09-10,
   `src/view/run/LevelUpScreen.tsx`): the ban is on a screen that collects a decision which is
-  really a spreadsheet, not on the player seeing growth happen. It is first in the post-fight
-  chain — the fight's own consequence, ahead of the Banner and everything under it — lists the
-  whole roster, benched included, and gives **every** growth stat a cell whether or not it rolled,
-  because the misses are what make the hits read as a roll against a grade. **It carries exactly
+  really a spreadsheet, not on the player seeing growth happen. **Since 2026-09-30 (per user
+  direction, run length) the report lives ON the victory screen**: levels and bars at a glance,
+  and a **Stat gains** tap opens the whole roster, benched included, with **every** growth stat a
+  cell whether or not it rolled, because the misses are what make the hits read as a roll against
+  a grade (`LevelUpList`; the roll is seeded per hero so the preview is what lands,
+  `applySeededEncounterLevels`). The level screen is reached only when a payoff is owed, first in
+  the post-fight chain, ahead of the Banner and everything under it. **It carries exactly
   ONE decision kind** (2026-09-13, XP Overhaul phase 3): once the rows have landed, each hero whose
   level has reached a schedule entry takes it there — a move offer over the report (a receipt
   below `MOVE_CAP`, replace-or-decline at it) or its Evolution as a screen of its own — in roster
@@ -450,7 +453,14 @@ don't silently override it.
   `src/data/heroes.ts`), inside the rules `test/moveTiers` pins: sorted offers, **4–7 a hero and
   under 6 on average** (the ladder's open-ended nine measured as 41 decisions a run), the
   Evolution in 10–24 with both ends populated, Mid before Late, an offer from every band
-  (`movePoolFloor(schedule)`). Three groups by `evolutionLevel`: **early turners** (10–12, the
+  (`movePoolFloor(schedule)`). **Since 2026-09-30 (per user direction, run length and decision
+  fatigue) every hero makes FIVE offers — two Early, two Mid, one Late** (the Act 5 Late offer was
+  cut: the most crowded band, beside the signature, the Evolution's move and two Tutors) — the
+  first Mid at the Mid opening (or the fight after the second Early), the rest ~every 2–3 fights
+  with the last by the end of Act 4; `DEFAULT_SCHEDULE`, which the companion reads, went from nine
+  offers to the same five — and **a hero starts with TWO moves**
+  (`HeroDefinition.moveIds`; the third authored move went into its own Early pool, chosen so the
+  innate still fires off the kit), so both Early offers land as receipts below `MOVE_CAP`. Three groups by `evolutionLevel`: **early turners** (10–12, the
   Evolution inside Act 2 — Valor the fight after the tutorial, the brawlers and glass cannons),
   the **middle** (13–19, Act 3), **late turners** (20–24, Act 4 on — the slow tanks, the Colossus,
   and the front-loaded casters Marrow and Zenith). Deliberately NOT aligned with the grade
@@ -516,7 +526,7 @@ don't silently override it.
   have flat value* — is now true on **three axes**, where it used to be true on level alone.
   A **contract** hero (free, and it IS the enemy you beat) arrives with its Evolution already
   chosen, every schedule entry below its level taken, and a kit the game picked. A **Guild hire**
-  (50g) arrives unevolved, its whole schedule still owed, holding its authored three moves — and
+  (50g) arrives unevolved, its whole schedule still owed, holding its authored two moves — and
   works the backlog off one entry a fight. You save the walk on a contract, and in exchange you
   authored none of it.
   **RAW is unbuilt, not hollow** — a hire still gets the growth its levels earned, or it would be

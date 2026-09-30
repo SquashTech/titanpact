@@ -235,6 +235,7 @@ test('progression: levelMovePool + grantOfferedMove resolve a level\'s move offe
   // Read at the three bands rather than at one level: each band offers its own tier, so no single
   // level sees the whole authored pool. Together these three pin all of it.
   assert.deepStrictEqual(poolAtStart(entry), [
+    'kindle',
     'heavyBlow',
     'ironFist',
     'openingStrike',
@@ -245,10 +246,11 @@ test('progression: levelMovePool + grantOfferedMove resolve a level\'s move offe
   assert.deepStrictEqual(poolAtMid(entry), ['moltenLash', 'firebrand', 'blazingRetreat', 'momentumSwing', 'serratedSlice', 'rendArmor', 'metallicBlade']);
   assert.deepStrictEqual(poolAtTop(entry), ['volcanicSurge', 'onslaught', 'swingingChain']);
 
-  const withMove = grantOfferedMove(run, 'cinderKnight', 'firebrand');
+  const withKindle = grantOfferedMove(run, 'cinderKnight', 'kindle');
+  const withMove = grantOfferedMove(withKindle, 'cinderKnight', 'firebrand');
   assert.ok(withMove.roster[0].unlockedMoveIds.includes('firebrand'));
   assert.ok(!poolAtTop(withMove.roster[0]).includes('firebrand')); // granted move drops out of the pool
-  assert.strictEqual(withMove.roster[0].unlockedMoveIds.length, 4); // starting 3 + this grant hits MOVE_CAP
+  assert.strictEqual(withMove.roster[0].unlockedMoveIds.length, 4); // starting 2 + two grants hits MOVE_CAP
 
   // Already at MOVE_CAP: further offers require replacing an unlocked move.
   const swapped = grantOfferedMove(withMove, 'cinderKnight', 'heavyBlow', 'kindle');
@@ -391,7 +393,7 @@ test('progression: an Evolution grant fills an open slot, and the cap refuses th
 
 test('progression: choosing Stonehide at the move cap leaves the loadout untouched — the grant does not silently displace a move', () => {
   let run = createRunState(0);
-  run = addRosterEntry(run, createRosterEntry('packAlpha', 'packAlpha', [...heroes.packAlpha.moveIds, 'maul']));
+  run = addRosterEntry(run, createRosterEntry('packAlpha', 'packAlpha', [...heroes.packAlpha.moveIds, 'rally', 'maul']));
   run = atEvolutionRung(run, 'packAlpha');
   assert.strictEqual(run.roster[0].unlockedMoveIds.length, 4);
 

@@ -814,7 +814,7 @@ gold costs, not a value that decays as the run progresses).
 ### A hire arrives RAW (2026-09-10, Growth Overhaul phase 5)
 
 **A Guild Hall hire is unbuilt.** It arrives at the act's hire level with the growth those
-levels earned, and nothing else: **no Evolution, Mastery Rank 1, its own authored three moves**
+levels earned, and nothing else: **no Evolution, Mastery Rank 1, its own authored two moves**
 (`guildHallEntry`, `src/run/guildRecruit.ts`). Every decision about what it becomes is still the
 player's, and that is the whole of what 50 gold buys.
 

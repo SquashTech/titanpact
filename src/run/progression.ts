@@ -31,11 +31,13 @@ export const MOVE_CAP = 4;
 // 12 every game, and in a roguelike that makes every Cinder the same Cinder.
 
 /**
- * The default an unauthored definition reads — the Titanspawn: Mid at 10, Late at 21, an offer
- * every three levels. Every hero authors its own (src/data/heroes.ts).
+ * The default an unauthored definition reads — the Titanspawn, and so the companion: Mid at 10,
+ * Late at 21, and a hero's shape of five offers (two Early, two Mid from the opening, one Late).
+ * It was an offer every three levels, nine a run, which made the companion the loudest prompter on
+ * the roster (2026-09-30, per user direction). Every hero authors its own (src/data/heroes.ts).
  */
 export const DEFAULT_SCHEDULE: LevelSchedule = {
-  offerLevels: [4, 7, 10, 13, 16, 19, 22, 25, 28],
+  offerLevels: [4, 7, 10, 16, 22],
   midLevel: 10,
   lateLevel: 21,
 };

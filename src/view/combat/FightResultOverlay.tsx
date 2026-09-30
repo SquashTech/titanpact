@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { CONSUMABLE_BLURBS, CONSUMABLE_NAMES, type ConsumableKind } from '../../run/consumables';
-import { MAX_LEVEL, MAX_XP, levelForXp, levelOf, xpForLevel, xpProgress } from '../../run/growth';
+import { MAX_LEVEL, MAX_XP, levelForXp, levelOf, previewLevelUp, xpForLevel, xpProgress } from '../../run/growth';
+import { LevelUpList } from '../run/LevelUpList';
+import { overlayHost } from '../shared/overlayHost';
 import { WoundBar } from '../shared/WoundBar';
 import type { RosterEntry } from '../../run/state';
 import { ItemEffectChips, ItemPiece, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
@@ -42,6 +45,11 @@ export interface FightResultProps {
   fieldedIds: ReadonlySet<string>;
   /** XP this win pays every roster hero. How many levels that is, is each hero's own (run/growth.ts). */
   xpGained: number;
+  /**
+   * The seed the level roll will use (run/growth.ts applySeededEncounterLevels). With it the
+   * stat gains are read here, a tap away, and no separate report screen follows the fight.
+   */
+  levelSeed?: number;
   /** The purse before this fight paid, so the ledger can show where it lands. */
   goldFrom: number;
   goldReward: number;
@@ -59,13 +67,13 @@ export interface FightResultProps {
 
 /**
  * The fight's result, over the dimmed field. A sequence rather than a card: the strike, then
- * the roster's bars filling once per level — which is what makes the stat sheet on the next
- * screen read as the consequence of THIS fight rather than as a grant from nowhere — then the
- * ledger, then the way out. Every beat is timed, and a tap anywhere lands all of them: this
+ * the roster's bars filling once per level — the whole level report at a glance, with every
+ * stat's roll a tap away on Stat gains (2026-09-30, per user direction: the report used to be a
+ * screen of its own after this one) — then the ledger, then the way out. Every beat is timed, and a tap anywhere lands all of them: this
  * plays after every won fight, so waiting it out must never be the only way through.
  *
- * Nothing here is boxed but the item chit, which is the one thing that can be tapped for more
- * (docs/visual-language.md, "a rectangle means you can act on this").
+ * Nothing here is boxed but the item chit and the Stat gains button, the two things that can be
+ * tapped for more (docs/visual-language.md, "a rectangle means you can act on this").
  */
 export function FightResultOverlay({
   outcome,
@@ -73,6 +81,7 @@ export function FightResultOverlay({
   roster,
   fieldedIds,
   xpGained,
+  levelSeed,
   goldFrom,
   goldReward,
   equipmentReward,
@@ -89,6 +98,12 @@ export function FightResultOverlay({
   const mostFills = Math.max(0, ...fillsByHero);
   const fewestFills = Math.min(mostFills, ...fillsByHero.filter((n) => n > 0));
   const barsByHero = roster.map((entry) => xpBarSegments(entry.xp, entry.xp + xpGained));
+  const levelReport = useMemo(
+    () => (levelSeed === undefined || mostFills === 0 ? null : roster.map((entry) => previewLevelUp(entry, rosterHeroes[entry.heroId], xpGained, levelSeed))),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [levelSeed, xpGained]
+  );
+  const [showingGains, setShowingGains] = useState(false);
   const longestBar = barsByHero.reduce((best, bar) => (xpBarTotalMs(bar) > xpBarTotalMs(best) ? bar : best), barsByHero[0] ?? []);
 
   const ledger = useMemo(() => {
@@ -189,6 +204,19 @@ export function FightResultOverlay({
                     : 'No level yet'
                   : `Heroes +${fewestFills === mostFills ? mostFills : `${fewestFills}–${mostFills}`} ${mostFills === 1 ? 'Level' : 'Levels'}`}
               </span>
+              {levelReport && (
+                <button
+                  type="button"
+                  className={`fight-result-gains-button${stage >= STAGE_CAPTION ? ' is-shown' : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setStage(stageDone);
+                    setShowingGains(true);
+                  }}
+                >
+                  Stat gains
+                </button>
+              )}
             </div>
           </section>
         )}
@@ -218,7 +246,26 @@ export function FightResultOverlay({
       </button>
 
       {inspecting && <ItemDetailOverlay item={equipmentReward} onClose={() => setInspecting(false)} />}
+      {showingGains && levelReport && <StatGainsSheet report={levelReport} onClose={() => setShowingGains(false)} />}
     </div>
+  );
+}
+
+/** Every hero's rolls, cell by cell — the full level report, read on request rather than as a screen of its own. */
+function StatGainsSheet({ report, onClose }: { report: ReturnType<typeof previewLevelUp>[]; onClose: () => void }) {
+  function closeAndStop(e: { stopPropagation: () => void }) {
+    e.stopPropagation();
+    onClose();
+  }
+  return createPortal(
+    <div className="detail-overlay" onClick={closeAndStop}>
+      <div className="detail-panel level-gains-panel" onClick={closeAndStop}>
+        <h3 className="level-gains-title">Stat gains</h3>
+        <LevelUpList report={report} gains />
+        <div className="detail-close-hint">Tap anywhere to close</div>
+      </div>
+    </div>,
+    overlayHost()
   );
 }
 

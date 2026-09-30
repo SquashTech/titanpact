@@ -28919,26 +28919,6 @@ button.star-shop-bundle-face {
   transform: translateY(6px);
 }
 
-/* A band of light crossing the row as it lands, left to right — the same direction the cells
-   pop in, so the two read as one thing passing over the hero rather than as two effects. */
-.level-up-sweep {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(100deg, transparent 25%, rgba(var(--node-rgb), 0.28) 45%, rgba(255, 255, 255, 0.22) 50%, transparent 72%);
-  transform: translateX(-100%);
-  pointer-events: none;
-}
-
-.level-up-row.is-shown .level-up-sweep {
-  animation: level-up-sweep 520ms ease-out 80ms both;
-}
-
-@keyframes level-up-sweep {
-  to {
-    transform: translateX(100%);
-  }
-}
-
 .level-up-row.is-shown {
   visibility: visible;
   animation: level-up-row-land 320ms cubic-bezier(0.16, 0.9, 0.3, 1) forwards;
@@ -29262,7 +29242,6 @@ button.star-shop-bundle-face {
   .level-up-row.is-shown .level-up-to,
   .level-up-row.is-shown .level-up-cell.is-hit,
   .level-up-row.is-shown .level-up-cell.is-big::after,
-  .level-up-row.is-shown .level-up-sweep,
   .level-up-flash,
   .level-up-rays,
   .level-up-title,
@@ -30552,10 +30531,63 @@ button.star-shop-bundle-face {
 
   .fight-result-ledger-slot,
   .fight-result-xp-gain,
-  .fight-result-caption {
+  .fight-result-caption,
+  .fight-result-gains-button {
     opacity: 1;
     transform: none;
   }
+}
+
+/* Stat gains: the level report's cells, a tap away (FightResultOverlay StatGainsSheet). A plain
+   plank, not gilt — Continue is the way forward. */
+.fight-result-gains-button {
+  margin-top: 2px;
+  padding: 0 6px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #eadbbf;
+  text-shadow: 0 2px 0 #1a0f07;
+  border: 10px solid transparent;
+  border-image: url('../../art/ui/plank.png') 5 fill / 10px round;
+  border-radius: 0;
+  background: none;
+  image-rendering: pixelated;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fight-result-gains-button.is-shown {
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 0.25s ease-out;
+}
+
+.fight-result-gains-button:active {
+  filter: brightness(0.85);
+}
+
+.level-gains-panel {
+  gap: 8px;
+  padding: 12px 10px;
+}
+
+.level-gains-title {
+  margin: 0;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hp-high);
+}
+
+.level-gains-panel .level-up-list {
+  margin-block: 0;
 }
 
 /* --- Rites: the Crucible's Class and the Shrine's Boon (CrucibleScreen.tsx, BoonNodeScreen.tsx) ---

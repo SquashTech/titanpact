@@ -28,6 +28,7 @@ import {
   MAX_XP,
   TOTAL_ENCOUNTERS,
   applyEncounterLevels,
+  applySeededEncounterLevels,
   gradeBudgetOf,
   gradeExpectedPoints,
   gradeMaxPoints,
@@ -38,6 +39,7 @@ import {
   levelForXp,
   levelOf,
   levelUpEntry,
+  previewLevelUp,
   rollGradePoints,
   rollLevelGrowth,
   xpAfterEncounters,
@@ -237,6 +239,23 @@ test('growth: the report says what each hero actually rolled, and matches the ro
       const delta = (entry.growthStatGrants[stat] ?? 0) - (before.growthStatGrants[stat] ?? 0);
       assert.strictEqual(line.gained[stat] ?? 0, delta, `${line.heroId}'s reported ${stat} is what it actually banked`);
     }
+  }
+});
+
+test('growth: the victory screen reads the same roll the resolve lands, even with a hero gone from the roster between', () => {
+  // FightResultOverlay shows the stat gains before handleFightResolved rolls them; both read a
+  // hero's own stream off the fight's seed, so the companion leaving the roster moves nobody's roll.
+  let run = soloRun();
+  run = addRosterEntry(run, createRosterEntry('crimson', 'crimson', heroes.crimson.moveIds));
+  run = addRosterEntry(run, createRosterEntry('gone', 'crimson', heroes.crimson.moveIds));
+  const seed = 12345;
+  const xp = xpForEncounter(1, 'standard');
+  const previews = run.roster.map((entry) => previewLevelUp(entry, heroes[entry.heroId], xp, seed));
+
+  const withoutOne = { ...run, roster: run.roster.filter((entry) => entry.rosterId !== 'gone'), encountersWon: 1 };
+  const { report } = applySeededEncounterLevels(withoutOne, heroes, seed, 'standard');
+  for (const line of report) {
+    assert.deepStrictEqual(line, previews.find((p) => p.rosterId === line.rosterId), `${line.heroId}'s previewed gains are the ones that land`);
   }
 });
 

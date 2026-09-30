@@ -429,10 +429,9 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
         record.deathNodeType = 'exhausted';
         break;
       }
-      // Automatic and roster-wide, benched heroes included (src/run/growth.ts); the report pays
-      // the schedule (docs/xp-overhaul.md §4).
+      // Automatic and roster-wide, benched heroes included (src/run/growth.ts); the payoffs are the
+      // schedule (docs/xp-overhaul.md §4). The report itself is on the fight result, not a screen.
       run = grantEncounterLevels(run, rosterHeroes, rng, encounterXpKind(node.type));
-      tally(record, run.actNumber, 'levelUp');
       run = paySchedule(run, rng, record);
       record.encountersWon = run.encountersWon;
       // The run's first fight: one of the Earlies it beat joins, and there is no declining.

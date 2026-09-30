@@ -23,39 +23,3 @@ export const SCRIBE_LINES: readonly string[] = [
   'I copy what the old heroes knew, a line at a time. Two of you, sit. This will not take long.',
   'Careful, the ink is still wet. I have pages here that were meant for someone. Perhaps for you.',
 ];
-
-/** The places met on the road, keyed by map node type: a name and the lines narrated over it. */
-export const PLACE_LINES: Record<string, { name: string; lines: readonly string[] }> = {
-  passiveReward: {
-    name: 'A Wayside Shrine',
-    lines: [
-      'A shrine older than the road, its star still burning. It will bless one of you, and only one.',
-      'Moss has taken the steps, but not the light above them. Something here is still listening.',
-      'Pilgrims left offerings here once. Now there is only the star, and whoever kneels first.',
-    ],
-  },
-  restReward: {
-    name: 'A Quiet Camp',
-    lines: [
-      'A tent already pitched, a fire already laid. For one night, the road can wait.',
-      'Warm embers, a dry tent, and nothing hunting you. Rest while you can.',
-      'Someone camped here and moved on. Their fire still takes a spark.',
-    ],
-  },
-  manaWellReward: {
-    name: 'An Old Well',
-    lines: [
-      'The water at the bottom glows blue. One of you could drink deep enough to hold more of it.',
-      'A well sunk into a vein of pure mana. It hums when you lean over the edge.',
-      'The rope is rotten but the light below is not. Let one of you draw from it.',
-    ],
-  },
-  leyLineReward: {
-    name: 'A Ley Stone',
-    lines: [
-      'Runes crawl across the standing stone, and the ground beneath it thrums with power.',
-      'A ley line surfaces here, bright as a vein of lightning. It will bind itself to one of you.',
-      'The stone is warm to the touch. Whoever lays a hand on it will not be quite the same.',
-    ],
-  },
-};

@@ -17,6 +17,7 @@ import type { GrowthStatKey, HeroDefinition, StatKey } from '../engine/content';
 import type { MapNodeType } from './map';
 import type { RosterEntry, RunState } from './state';
 import { mergeStatMods } from './statMods';
+import { createRng, nextFloat } from '../engine/rng/seededRng';
 
 export const MAX_LEVEL = 30;
 
@@ -340,12 +341,55 @@ export function applyEncounterLevels(
   /** What was fought — the Elite and the Guardian pay more than the count alone says. */
   kind: EncounterXpKind = encounterXpKindAtPar(run.encountersWon)
 ): { run: RunState; report: HeroLevelUp[] } {
-  const xp = xpForEncounter(run.encountersWon, kind);
-  if (xp <= 0) return { run, report: [] };
-  const report: HeroLevelUp[] = [];
-  const roster = run.roster.map((entry) => {
-    const { entry: levelled, gained } = grantXp(entry, heroLookup[entry.heroId], xp, random);
-    report.push({
+  return levelRoster(run, heroLookup, xpForEncounter(run.encountersWon, kind), () => random);
+}
+
+/**
+ * The same grant with each hero rolling on its own stream off a fight's seed (`levelRandomFor`),
+ * so the Victory screen can show exactly what the resolve will land (`previewLevelUp`).
+ */
+export function applySeededEncounterLevels(
+  run: RunState,
+  heroLookup: Record<string, HeroDefinition>,
+  seed: number,
+  kind: EncounterXpKind = encounterXpKindAtPar(run.encountersWon)
+): { run: RunState; report: HeroLevelUp[] } {
+  return levelRoster(run, heroLookup, xpForEncounter(run.encountersWon, kind), (rosterId) => levelRandomFor(seed, rosterId));
+}
+
+/** One hero's line of the report, rolled on the stream `applySeededEncounterLevels` will use. */
+export function previewLevelUp(entry: RosterEntry, hero: HeroDefinition | undefined, xp: number, seed: number): HeroLevelUp {
+  return levelEntry(entry, hero, xp, levelRandomFor(seed, entry.rosterId)).line;
+}
+
+/**
+ * A hero's own stream off a fight's seed, keyed by roster id rather than drawn in roster order —
+ * so a companion leaving the roster between the Victory screen and the resolve moves nobody's roll.
+ */
+export function levelRandomFor(seed: number, rosterId: string): () => number {
+  let h = 0x811c9dc5 ^ seed;
+  for (let i = 0; i < rosterId.length; i++) {
+    h ^= rosterId.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  let state = createRng(h >>> 0);
+  return () => {
+    const { value, nextState } = nextFloat(state);
+    state = nextState;
+    return value;
+  };
+}
+
+function levelEntry(
+  entry: RosterEntry,
+  hero: HeroDefinition | undefined,
+  xp: number,
+  random: () => number
+): { entry: RosterEntry; line: HeroLevelUp } {
+  const { entry: levelled, gained } = grantXp(entry, hero, xp, random);
+  return {
+    entry: levelled,
+    line: {
       rosterId: entry.rosterId,
       heroId: entry.heroId,
       fromLevel: levelOf(entry),
@@ -353,7 +397,21 @@ export function applyEncounterLevels(
       fromXp: entry.xp,
       toXp: levelled.xp,
       gained,
-    });
+    },
+  };
+}
+
+function levelRoster(
+  run: RunState,
+  heroLookup: Record<string, HeroDefinition>,
+  xp: number,
+  randomFor: (rosterId: string) => () => number
+): { run: RunState; report: HeroLevelUp[] } {
+  if (xp <= 0) return { run, report: [] };
+  const report: HeroLevelUp[] = [];
+  const roster = run.roster.map((entry) => {
+    const { entry: levelled, line } = levelEntry(entry, heroLookup[entry.heroId], xp, randomFor(entry.rosterId));
+    report.push(line);
     return levelled;
   });
   return { run: { ...run, roster }, report };
