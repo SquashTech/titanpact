@@ -21,7 +21,8 @@ const statTotal = (hero: HeroDefinition) => statBudgetTotal(hero.baseStats, COMB
 test('guardians: every champion is a 550 Ancient-second line at 20 MP Regen with a full kit on both pipelines', () => {
   for (const id of CHAMPION_IDS) {
     const champion = enemies[id];
-    assert.strictEqual(statTotal(champion), 550, `${id} is off the champion line`);
+    // The Manticore alone sits at 540 (test/manticore.test.ts): Act 1 is always his, and he was its longest fight.
+    assert.strictEqual(statTotal(champion), id === 'manticore' ? 540 : 550, `${id} is off the champion line`);
     assert.strictEqual(champion.types[1], 'Ancient', `${id} carries no seal`);
     assert.strictEqual(champion.baseStats.mpRegen, 20, `${id} moves the regen ceiling`);
     assert.strictEqual(champion.moveIds.length, MOVE_CAP);

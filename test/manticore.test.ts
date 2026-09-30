@@ -12,17 +12,21 @@ import { COMBAT_BUDGET_STATS, statBudgetTotal, grantBudgetTotal } from '../src/r
 /** The game's stat-total convention (docs/run-loop.md "Measured baseline") — six combat stats, not mana or MP Regen. */
 const COMBAT_STATS = COMBAT_BUDGET_STATS;
 
-test('manticore: the authored stat total is 550, on the same six stats the difficulty curve measures', () => {
+test('manticore: the authored stat total is 540 — the one champion under 550 — on the same six stats the difficulty curve measures', () => {
   const lord = enemies[MANTICORE_ID];
   const total = statBudgetTotal(lord.baseStats, COMBAT_STATS);
   // Was 600. Batch simulation put the Act 1 Guardian at a 4.6% player win rate — the run's
   // single choke point — so the champion came down 50 points, almost all of it off Attack.
-  assert.strictEqual(total, 550);
+  // 540 since 2026-09-30 (per user direction): -10 Wisdom taken out outright to shorten the Act 1
+  // Guardian, which is always his fight.
+  assert.strictEqual(total, 540);
   // Mean Act 1 Guardian sits at 432, the Goblin Chief at 218.
   assert.ok(total > 432, 'the champion should out-stat the boss he reinforces');
   // Attack is the term Enfeeble multiplies, so it carries the cut: 90 -> 65, then 65 -> 55 on
   // 2026-09-15 (into +20 HP) — the Act 1 Guardian measured 77% with everything else re-fitted.
-  assert.strictEqual(lord.baseStats.attack, 55);
+  // Back up to 70 on 2026-09-30 (from -15 Defense, per user direction): the fight had turned from
+  // a wall into a chore, and a harder hit is what makes a shorter one.
+  assert.strictEqual(lord.baseStats.attack, 70);
 });
 
 test('manticore: every stat is a multiple of 5 — the locked authoring rule, not a coincidence', () => {

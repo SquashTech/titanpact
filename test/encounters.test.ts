@@ -16,6 +16,8 @@ import { encounterSeedFor, nodeEncounter, scoutedTypes, type EncounterContext } 
 import { isRecruitable } from '../src/run/recruitment';
 import { wokenChampion, wokenChampionMark, wokenEscortCount } from '../src/run/ascension';
 import { guardianEscortPool } from '../src/run/spawn';
+import { championGradeFor, encounterScaling, guardianEscortCount } from '../src/run/difficulty';
+import { appendFinalEnemy } from '../src/run/enemyGen';
 
 function runAt(seed: number, act: number): RunState {
   let run = createRunState(50);
@@ -94,17 +96,35 @@ test('encounters: from A1 the Guardian wakes — it leads, wears its Mark, grows
     const championId = contextFor(base).location.guardianFinalEnemyId!;
     const champion = (e: typeof woken) => e.run.roster.find((r) => r.rosterId === championId)!;
 
-    assert.ok(asleep.squad.benchIds.includes(championId) && !asleep.squad.activeIds.includes(championId), `act ${act}: Base keeps the champion benched`);
+    // Base fields one escort in Acts 1-2 (difficulty.ts GUARDIAN_ESCORTS_BY_ACT), and the champion
+    // takes the lead slot it leaves; with two it waits on the bench for the first KO.
+    const lone = guardianEscortCount(act) === 1;
+    if (lone) assert.strictEqual(asleep.squad.activeIds[1], championId, `act ${act}: a lone escort leaves the champion a lead slot`);
+    else assert.ok(asleep.squad.benchIds.includes(championId) && !asleep.squad.activeIds.includes(championId), `act ${act}: Base keeps the champion benched`);
     assert.deepStrictEqual(champion(asleep).bonusPassiveGrants, [], `act ${act}: Base keeps the Mark off`);
     assert.strictEqual(woken.squad.activeIds[1], championId, `act ${act}: the woken champion leads`);
     assert.deepStrictEqual(champion(woken).bonusPassiveGrants, [wokenChampionMark(enemies[championId])]);
     assert.notDeepStrictEqual(wokenChampion(enemies[championId]).growthGrades, enemies[championId].growthGrades, 'the woken champion trades its E grades');
 
     const escorts = (e: typeof woken) => e.run.roster.filter((r) => r.rosterId !== championId).length;
-    assert.strictEqual(escorts(asleep), act === 1 ? Math.min(2, base.roster.length) : 2);
+    assert.strictEqual(escorts(asleep), act === 1 ? Math.min(guardianEscortCount(act), base.roster.length) : guardianEscortCount(act));
     assert.strictEqual(escorts(woken), Math.min(wokenEscortCount(act), Object.keys(guardianEscortPool(contextFor(base).location, act)).length));
     assert.strictEqual(new Set([...woken.squad.activeIds, ...woken.squad.benchIds]).size, woken.run.roster.length, `act ${act}: every body fielded once`);
   }
+});
+
+test("encounters: a Base champion grows on its act's grade — E to Act 3, D in Act 4, C in Act 5", () => {
+  assert.deepStrictEqual([1, 2, 3, 4, 5].map(championGradeFor), ['E', 'E', 'E', 'D', 'C']);
+  // The same champion, seed and level on E and on C: the draw walks the row in order, so the
+  // stronger row never pays less on a draw.
+  const championId = 'manticore';
+  const empty = { run: createRunState(0), squad: { activeIds: [null, null] as [null, null], benchIds: [] } };
+  const scaling = encounterScaling('boss', 5);
+  const onE = appendFinalEnemy(empty, championId, enemies, 7, scaling).run.roster[0];
+  const graded = { ...enemies[championId], growthGrades: Object.fromEntries(Object.keys(enemies[championId].growthGrades!).map((k) => [k, 'C'])) as typeof enemies[string]['growthGrades'] };
+  const onC = appendFinalEnemy(empty, championId, { ...enemies, [championId]: graded }, 7, scaling).run.roster[0];
+  const total = (grants: Record<string, number | undefined>) => Object.values(grants).reduce<number>((sum, v) => sum + (v ?? 0), 0);
+  assert.ok(total(onC.growthStatGrants) > total(onE.growthStatGrants), 'C grows the champion further than E');
 });
 
 test('encounters: a hero on the roster is never drawn against the player', () => {

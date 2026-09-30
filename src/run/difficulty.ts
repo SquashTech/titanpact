@@ -3,7 +3,7 @@
 // growth grades exactly as a Guild hire's is — no act-steps, no node-kind stat bonus.
 
 import type { SpawnTier } from '../data/titanspawn';
-import { ENCOUNTERS_PER_ACT, MAX_LEVEL, levelAfterEncounters } from './growth';
+import { ENCOUNTERS_PER_ACT, MAX_LEVEL, levelAfterEncounters, type GrowthGrade } from './growth';
 import { masteryForAct } from './mastery';
 import { LOOT_SOURCE, rarityWeightsFor } from './equipment';
 import type { EnemyLoadout } from './enemyGen';
@@ -43,6 +43,31 @@ export const ENEMY_LEVEL_OFFSET: Record<EncounterNodeKind, number> = {
 };
 
 export const CHAMPION_LEVEL_BONUS = 2;
+
+/**
+ * The Guardian's shape by act at Base (2026-09-30, per user direction: the Act 1 Guardian never
+ * lost and took longest of any boss to beat, 9.3 rounds against a Skirmish's 5; the Act 5 one fell
+ * fastest, 4.7, and could be one-shot with the finale in sight). Index 0 unused. From A1 the woken
+ * Guardian reads ascension.ts instead.
+ *
+ * ESCORTS: one in Acts 1-2, two after — a body is most of what a Guardian fight's length is. A lone
+ * escort leaves a lead slot empty, so the champion takes it from round one (unmarked; the Mark is
+ * the woken rule's).
+ *
+ * GRADE: what the champion grows on. E is front-loaded by design (enemies.ts CHAMPION_GRADES) —
+ * 2.8 points a level against a hero's 9.1 — so a late champion trails the roster by ~160 points;
+ * D in Act 4 and C in Act 5 give it back part of that (+40 and +109 at their levels).
+ */
+export const GUARDIAN_ESCORTS_BY_ACT: readonly number[] = [0, 1, 1, 2, 2, 2];
+export const CHAMPION_GRADE_BY_ACT: readonly GrowthGrade[] = ['E', 'E', 'E', 'E', 'D', 'C'];
+
+export function guardianEscortCount(actNumber: number): number {
+  return GUARDIAN_ESCORTS_BY_ACT[Math.min(clampAct(actNumber), GUARDIAN_ESCORTS_BY_ACT.length - 1)];
+}
+
+export function championGradeFor(actNumber: number): GrowthGrade {
+  return CHAMPION_GRADE_BY_ACT[Math.min(clampAct(actNumber), CHAMPION_GRADE_BY_ACT.length - 1)];
+}
 
 /**
  * The act's own term on every enemy level in it, index 0 unused (2026-09-15, per user

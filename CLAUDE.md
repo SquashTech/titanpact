@@ -816,7 +816,10 @@ what's still unimplemented:
   **plus the act's own term** (`ACT_LEVEL_ADJUST`, 2026-09-15: Act 1 −2, Acts 3 and 5 +2), the
   fine dial that shapes the run where the kind offsets shape a row.
   Mastery still reads off the act. **A champion is FRONT-LOADED**: `CHAMPION_GRADES`, all E,
-  because on hero grades the Act 2 Guardian measured 67% cleared. **Enemy gear from Act 4**
+  because on hero grades the Act 2 Guardian measured 67% cleared. **Per act at Base** (2026-09-30, per user direction — the Act 1 Guardian was the longest
+  boss, the Act 5 one could be one-shot): **one escort in Acts 1–2** (the champion takes the lead
+  slot it leaves, unmarked) and **two after**; the champion grows on **D in Act 4 and C in Act 5**
+  (`GUARDIAN_ESCORTS_BY_ACT`, `CHAMPION_GRADE_BY_ACT`, `src/run/difficulty.ts`). **Enemy gear from Act 4**
   (`ENEMY_GEAR_FROM_ACT`, `EnemyLoadout`): one item each on the node's own rarity curve,
   stripped on a contract claim — level alone cannot track a player stacking Banners and
   late-window gear, and gear is the seam passives will share. Measured (sim pass 9): full-clear

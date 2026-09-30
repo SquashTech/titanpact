@@ -7,14 +7,14 @@
 // tap starts are the same draw. Nothing new is stored on the node for it.
 
 import type { HeroLookup } from '../engine/state';
-import type { TypeId } from '../engine/content';
+import type { HeroDefinition, TypeId } from '../engine/content';
 import { createRng, nextFloat } from '../engine/rng/seededRng';
 import type { LocationDefinition } from '../data/locations';
 import type { MapNode, MapNodeType, RunMap } from './map';
 import type { RunState } from './state';
 import type { ProgressionTable } from './progression';
 import { rosterEntryTypes } from './progression';
-import { encounterScaling, encounterHeroCountOverride, enemyLoadoutFor } from './difficulty';
+import { championGradeFor, encounterScaling, encounterHeroCountOverride, enemyLoadoutFor, guardianEscortCount } from './difficulty';
 import { appendFinalEnemy, generateEncounter, type Encounter, type EncounterNodeType } from './enemyGen';
 import { locationBias } from './locations';
 import { isCompanion } from './companion';
@@ -78,7 +78,7 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
   const excludeHeroIds = run.roster.map((r) => r.heroId);
   // From A1 the Guardians wake (run/ascension.ts): the escorts climb with the act, the champion leads.
   const woken = type === 'boss' && guardiansWake(run);
-  const standardCount = encounterKind === 'boss' ? (woken ? wokenEscortCount(run.actNumber) : 2) : 4;
+  const standardCount = encounterKind === 'boss' ? (woken ? wokenEscortCount(run.actNumber) : guardianEscortCount(run.actNumber)) : 4;
   // Act 1 caps the enemy count at the roster — the IMMORTAL roster (2026-09-13, per user
   // direction, titanspawn-overhaul.md "Phase 6 findings"): the companion is half a hero and must
   // not invite a whole enemy, so the Act 1 Skirmish is 3v2 with it on the bench.
@@ -89,7 +89,7 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
   // Location affinity bias applies to the recruitable pool only (docs/locations.md §2).
   const bias = pool === heroes ? locationBias(location, heroes, heroCount) : undefined;
   let encounter = generateEncounter(encounterKind, seed, pool, {
-    heroCount: heroCountOverride ?? (woken ? standardCount : undefined),
+    heroCount: heroCountOverride ?? (encounterKind === 'boss' ? standardCount : undefined),
     bias,
     excludeHeroIds,
     scaling,
@@ -102,11 +102,21 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
   // The Location's held-back champion arrives benched, so the first enemy KO brings him in.
   const finalEnemyId = type === 'boss' ? location.guardianFinalEnemyId : null;
   if (finalEnemyId && enemies[finalEnemyId]) {
-    const championPool = woken ? { ...enemies, [finalEnemyId]: wokenChampion(enemies[finalEnemyId]) } : enemies;
-    encounter = appendFinalEnemy(encounter, finalEnemyId, championPool, encounterSeedFor(ctx.run.map!, `${node.id}:champion`), scaling, loadout);
+    const champion = woken ? wokenChampion(enemies[finalEnemyId]) : grownOnActGrade(enemies[finalEnemyId], run.actNumber);
+    encounter = appendFinalEnemy(encounter, finalEnemyId, { ...enemies, [finalEnemyId]: champion }, encounterSeedFor(ctx.run.map!, `${node.id}:champion`), scaling, loadout);
     if (woken) encounter = wakeChampion(encounter, finalEnemyId, wokenChampionMark(enemies[finalEnemyId]));
+    // A lone escort (difficulty.ts GUARDIAN_ESCORTS_BY_ACT) leaves a lead slot for the champion.
+    else if (encounter.squad.activeIds[1] === null) encounter = wakeChampion(encounter, finalEnemyId, null);
   }
   return encounter;
+}
+
+/** The champion on its act's grade (difficulty.ts CHAMPION_GRADE_BY_ACT) — its own E grades until Act 4. */
+function grownOnActGrade(definition: HeroDefinition, actNumber: number): HeroDefinition {
+  const grade = championGradeFor(actNumber);
+  if (grade === 'E') return definition;
+  const growthGrades = Object.fromEntries(Object.keys(definition.growthGrades ?? {}).map((stat) => [stat, grade])) as HeroDefinition['growthGrades'];
+  return { ...definition, growthGrades };
 }
 
 /** A woken champion wears its Mark and takes the second lead slot from round one; the escort it displaces waits on the bench. */

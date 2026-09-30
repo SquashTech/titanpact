@@ -33,15 +33,20 @@ export const enemies: Record<string, HeroDefinition> = {
   // heroes a fight; Attack is the term his whole kit swings with, and HP is what the trade buys
   // (Guardian 77 -> 82%, Act 1 58 -> 62%). A shift into Mana measured WORSE — the pool feeds
   // Archon Blast — and MP Regen barely moved it; Attack is the dial.
+  // 2026-09-30, per user direction: -60 HP into +30 Speed (an enemy line pays HP at half). With
+  // one escort he leads from round one, and at 450 HP he was still the run's longest boss (8.8
+  // rounds against 5-6) — never a threat, only a chore. Now he moves before most of the roster,
+  // and dies sooner. The same day: -15 Defense into +15 Attack, and -10 Wisdom taken out
+  // outright — 540, the one champion under the line, because Act 1 is always his fight.
   manticore: {
     id: 'manticore',
     name: 'Manticore',
     types: ['Beast', 'Ancient'],
-    // 550, the figure the other five were brought down TO on 2026-09-06. What still makes this
+    // 540 — the other champions' 550 less the Wisdom taken out 2026-09-30. What still makes this
     // the run's lightest Guardian is the escorts (Act 1 fields Early spawn at 200) and a Beast
     // kit that has to set Bleed up with Claw before Maul pays out, rather than the spread damage
     // that was killing a hero per round (docs/run-loop.md).
-    baseStats: { hp: 450, attack: 55, defense: 75, intelligence: 60, wisdom: 60, speed: 75, manaPool: 105, mpRegen: 20 },
+    baseStats: { hp: 390, attack: 70, defense: 60, intelligence: 60, wisdom: 50, speed: 105, manaPool: 105, mpRegen: 20 },
     moveIds: ['claw', 'maul', 'enfeeble', 'archonBlast'],
     growthGrades: CHAMPION_GRADES,
   },
