@@ -39393,6 +39393,18 @@ img.smithy-service-art {
   animation: map-opening-flood 0.5s ease-in 0.75s forwards;
 }
 
+/* The same flood on the screen that follows (EntranceFlood), mounted full and lifting off it. */
+.map-opening-flood.is-lifting {
+  opacity: 1;
+  animation: map-opening-lift 0.7s ease-out 0.08s forwards;
+}
+
+@keyframes map-opening-lift {
+  to {
+    opacity: 0;
+  }
+}
+
 .map-opening-flood.is-stone {
   animation-duration: 0.4s;
   animation-delay: 0.3s;

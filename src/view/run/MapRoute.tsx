@@ -14,6 +14,7 @@ import { ElementGlyph } from '../shared/elementIcons';
 import { getTypeColor } from '../combat/typeColors';
 import type { TypeId } from '../../engine/content';
 import { canvasPoint, overlayHost } from '../shared/overlayHost';
+import { handOffFlood } from '../shared/EntranceFlood';
 import { allCombatants } from '../../data/content';
 
 /**
@@ -410,8 +411,14 @@ export function MapRoute({
                 // doorway, the stone's eye.
                 const box = medallionRefs.current.get(nodeId)?.getBoundingClientRect();
                 const at = box ? canvasPoint(box.x + box.width / 2, box.y + box.height * (kind === 'stone' ? 0.3 : 0.55)) : { x: 0, y: 0 };
-                setOpening({ id: nodeId, color: kind === 'gate' ? gateWardenColor(guardianId) : TITAN_LIGHT, x: at.x, y: at.y });
-                timers.current.push(window.setTimeout(() => onSelectNode(nodeId), beat.ms));
+                const flood = { color: kind === 'gate' ? gateWardenColor(guardianId) : TITAN_LIGHT, x: at.x, y: at.y };
+                setOpening({ id: nodeId, ...flood });
+                timers.current.push(
+                  window.setTimeout(() => {
+                    handOffFlood(flood);
+                    onSelectNode(nodeId);
+                  }, beat.ms)
+                );
                 return;
               }
               onSelectNode(nodeId);

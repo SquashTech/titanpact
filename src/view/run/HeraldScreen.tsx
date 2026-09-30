@@ -5,6 +5,7 @@ import { allCombatants } from '../../data/content';
 import { TitanBody } from '../combat/TitanBody';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { prefersReducedMotion } from '../shared/reducedMotion';
+import { EntranceFlood } from '../shared/EntranceFlood';
 
 interface Props {
   onContinue: () => void;
@@ -52,6 +53,7 @@ export function HeraldScreen({ onContinue }: Props) {
 
   return (
     <div className={`herald-screen is-${phase}`} onClick={() => phase !== 'here' && setPhase('here')}>
+      <EntranceFlood />
       <div className="herald-shake">
         <TitanBody />
         <span className="herald-haze" aria-hidden="true" />

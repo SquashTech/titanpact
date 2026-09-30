@@ -98,6 +98,7 @@ import { LocationAmbience, LocationMotes } from '../shared/LocationSky';
 import { LocationHorizon } from '../shared/locationArt';
 import { locationBackdrop } from '../shared/locationBackdrops';
 import { TitanBody } from './TitanBody';
+import { EntranceFlood } from '../shared/EntranceFlood';
 import { ENDBRINGER_ID, EYE_IDS, isTitanEye } from '../../data/enemies';
 import type { LocationDefinition } from '../../data/locations';
 
@@ -1410,6 +1411,7 @@ export function FightScreen({
 
   return (
     <>
+      <EntranceFlood />
       {/* Full-screen tap-to-advance catcher; sits below the log overlay's z-index.
           Inert while an Auto key is latched — it still gates the screen, but a stray
           tap must not step an extra beat and a pointerup must not kill the timer.
