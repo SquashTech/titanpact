@@ -338,6 +338,21 @@ function basePowerGrantValue(
   return Math.min(best * casts, remaining);
 }
 
+/**
+ * A KO refused is priced as a KO landed is (2026-09-29): when the far side's biggest hit would drop
+ * the holder through its HP and Shield this round, and `buffer` more HP or pool stops it, the save is
+ * worth the holder's output over the horizon — halved, because the far side may swing at the other
+ * body. Without it a heal or a Shield was only ever the HP it restored, and a KO dealt always outbid it.
+ */
+function lethalSaveValue(state: CombatState, ctx: AiContext, holderId: string, buffer: number, cache: Map<string, number>): number {
+  const holder = state.combatants[holderId];
+  if (!holder || buffer <= 0) return 0;
+  const biggest = aliveActiveIdsOn(state, otherSide(holder.side)).reduce((max, foeId) => Math.max(max, bestHitOn(state, ctx, foeId, holderId, cache)), 0);
+  const through = biggest - statusMagnitude(holder, shieldStatusId);
+  if (through < holder.currentHp || through - buffer >= holder.currentHp) return 0;
+  return threatOf(state, ctx, holderId, cache) * HORIZON * 0.5;
+}
+
 /** What one applied rider is worth to the side that wanted it, in HP. Negative statuses are priced on the HOLDER's cost. */
 function riderValue(
   state: CombatState,
@@ -375,11 +390,16 @@ function riderValue(
       // the far side would land on the holder over the horizon. A pool already at the holder's max
       // HP can't go any higher, so the room left is what is priced, not the authored figure.
       const room = Math.max(0, getMaxHp(allCombatants[holder.heroId], holder) - statusMagnitude(holder, def.id));
-      const incoming = aliveActiveIdsOn(state, otherSide(holder.side)).reduce(
-        (sum, foeId) => sum + threatOf(state, ctx, foeId, cache),
-        0
-      );
-      return Math.min(magnitude, room, incoming * Math.min(duration, HORIZON) * 0.5);
+      const foes = aliveActiveIdsOn(state, otherSide(holder.side));
+      const incoming = foes.reduce((sum, foeId) => sum + threatOf(state, ctx, foeId, cache), 0);
+      // A pool lasts until a hit empties it, not a round: with no authored duration it is priced over
+      // the horizon (2026-09-29 — at the default duration of 1 every Shield read as half a round's
+      // damage and the replace-at-cap rule never kept one).
+      const rounds = app.duration ?? HORIZON;
+      let value = Math.min(magnitude, room, incoming * rounds * 0.5);
+      // The KO it refuses is priced as a KO landed is: the holder's output over the horizon, halved
+      // because the far side may swing at the other body.
+      return value + lethalSaveValue(state, ctx, holderId, Math.min(magnitude, room), cache);
     }
     case 'dot': {
       // decay 'halve' caps lifetime output at ~2x the magnitude (CLAUDE.md); 'none' builds instead.
@@ -394,7 +414,9 @@ function riderValue(
       const perTick = def.percentOfMaxHp ? (magnitude / 100) * getMaxHp(allCombatants[holder.heroId], holder) : magnitude;
       const ticks = def.ticksOnApply ? 1 + Math.min(def.defaultDuration ?? duration, HORIZON) : Math.min(duration, HORIZON);
       const total = def.decay === 'halve' ? perTick * 2 : perTick * ticks;
-      return Math.min(total, missingHp(state, holderId) + perTick);
+      // Only the tick that lands with the cast can refuse this round's KO.
+      const landing = def.ticksOnApply ? Math.min(perTick, missingHp(state, holderId)) : 0;
+      return Math.min(total, missingHp(state, holderId) + perTick) + lethalSaveValue(state, ctx, holderId, landing, cache);
     }
     case 'control':
       // A turn taken off the holder is a round of its output.
@@ -552,7 +574,8 @@ function scoreCast(
     const heal = resolveHeal(move, allCombatants[caster.heroId], caster, fieldCtx(state)).heal;
     for (const { id, share } of targets) {
       if (state.combatants[id]?.side !== casterSide) continue;
-      score += Math.min(heal, missingHp(state, id)) * share;
+      const filled = Math.min(heal, missingHp(state, id));
+      score += (filled + lethalSaveValue(state, ctx, id, filled, cache)) * share;
     }
     priced = true;
   }
