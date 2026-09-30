@@ -121,14 +121,16 @@ export function LeadPickPanel({ candidates, fallen, enemyTypes, picks, onToggle,
         onRevive={down && onRevive ? () => onRevive(combatantId) : undefined}
       >
         <HeroPortrait heroId={hero.id} className="roster-card-portrait" />
-        <span className="pick-level squad-slot-level" aria-hidden="true">
-          {level}
+        {/* The Blessing rides in the level's tag, after the number, as it does on the nameplate. */}
+        <span className="pick-level squad-slot-level">
+          <span aria-hidden="true">{level}</span>
+          {combatant.blessed && <BlessingMark className="squad-slot-blessing" />}
         </span>
-        {combatant.blessed && <BlessingMark className="squad-slot-blessing" />}
         <div className="roster-card-name">{hero.name}</div>
+        {/* Two labelled badges and the arrows do not share the row: a dual typing goes glyph-only. */}
         <div className="roster-card-types">
           {types.map((t) => (
-            <TypeBadge key={t} type={t} />
+            <TypeBadge key={t} type={t} iconOnly={types.length > 1} />
           ))}
         </div>
         {down ? <div className="squad-slot-down-label">Down</div> : <MatchupRow heroTypes={types} enemyTypes={enemyTypes} />}

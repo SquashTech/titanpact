@@ -40061,10 +40061,17 @@ img.smithy-service-art {
   bottom: 10px;
 }
 
-.squad-slot-blessing {
-  position: absolute;
-  left: 5px;
-  top: 5px;
+.squad-slot-level:has(.squad-slot-blessing) {
+  bottom: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.blessing-mark.squad-slot-blessing,
+.blessing-mark.squad-slot-blessing svg {
+  width: 9px;
+  height: 9px;
 }
 
 /* The nameplate's Blessing star, beside the level: the badge's shape at the level's size. */
