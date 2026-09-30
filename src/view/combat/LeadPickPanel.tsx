@@ -44,7 +44,7 @@ export const LEAD_COUNT = 2;
 
 function LeadCell({
   entry,
-  picked,
+  pickSlot,
   down,
   onActivate,
   onInspect,
@@ -52,7 +52,8 @@ function LeadCell({
   children,
 }: {
   entry: LeadPickHero;
-  picked: boolean;
+  /** 1 or 2 — the field slot this hero leads into, left then right — or null when not picked. */
+  pickSlot: number | null;
   down: boolean;
   onActivate: () => void;
   onInspect: () => void;
@@ -61,6 +62,7 @@ function LeadCell({
 }) {
   const press = useLongPress(onInspect, onActivate);
   const { hero, level } = entry;
+  const picked = pickSlot !== null;
   return (
     <div
       className={`squad-slot filled${picked ? ' is-picked' : ''}${down ? ' is-down' : ''}`}
@@ -80,9 +82,7 @@ function LeadCell({
       {children}
       {picked && (
         <span className="squad-slot-pick" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="currentColor" focusable="false">
-            <path d="M9.4 16.6 4.8 12l-1.9 1.9 6.5 6.5L21.1 8.7l-1.9-1.9Z" />
-          </svg>
+          {pickSlot}
         </span>
       )}
       {onRevive && (
@@ -114,7 +114,7 @@ export function LeadPickPanel({ candidates, fallen, enemyTypes, picks, onToggle,
       <LeadCell
         key={combatantId}
         entry={entry}
-        picked={picks.includes(combatantId)}
+        pickSlot={picks.includes(combatantId) ? picks.indexOf(combatantId) + 1 : null}
         down={down}
         onActivate={() => !down && onToggle(combatantId)}
         onInspect={() => onInspect(combatantId)}
@@ -127,10 +127,10 @@ export function LeadPickPanel({ candidates, fallen, enemyTypes, picks, onToggle,
           {combatant.blessed && <BlessingMark className="squad-slot-blessing" />}
         </span>
         <div className="roster-card-name">{hero.name}</div>
-        {/* Two labelled badges and the arrows do not share the row: a dual typing goes glyph-only. */}
+        {/* Glyph-only, so a dual typing and the arrows share the row; long press reads the names. */}
         <div className="roster-card-types">
           {types.map((t) => (
-            <TypeBadge key={t} type={t} iconOnly={types.length > 1} />
+            <TypeBadge key={t} type={t} iconOnly />
           ))}
         </div>
         {down ? <div className="squad-slot-down-label">Down</div> : <MatchupRow heroTypes={types} enemyTypes={enemyTypes} />}
@@ -146,7 +146,7 @@ export function LeadPickPanel({ candidates, fallen, enemyTypes, picks, onToggle,
           {required > 1 ? 'Choose your leads' : 'Choose your lead'} · {picks.length}/{required}
         </span>
       </div>
-      <div className="squad-grid lead-pick-grid">
+      <div className={`squad-grid lead-pick-grid${picks.length >= required ? ' is-full' : ''}`}>
         {candidates.map((entry) => cell(entry, false))}
         {fallen.map((entry) => cell(entry, true))}
       </div>
