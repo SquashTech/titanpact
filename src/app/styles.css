@@ -17764,35 +17764,43 @@ button.star-shop-bundle-face {
   box-shadow: none;
 }
 
-/* The opening fight: the Titan's eye, opening on the road — the title screen's eye, alone. */
-/* Boxed to the lens (the halo overflows), so the road meets the lower lid rather than stopping
-   short of it. */
-.map-medallion.is-eye {
-  width: 300px !important;
-  height: 120px !important;
+/* The opening fight: a standing stone the Titan's eye has cracked open on the road, 64px at 2x,
+   the eye burning and embers lifting off its foot (mapLandmarks STONE_LIGHTS). */
+.map-medallion.is-stone {
+  width: 128px !important;
+  height: 128px !important;
 }
 
-/* The invitation: an eye-shaped ring breathing outward, only after the player has hesitated
-   (3s), then every 2.4s with a second ring half a beat behind. A thing that pulses is a thing
-   to touch — no words needed. */
-.map-eye-ripple {
+.map-medallion.is-stone .map-medallion-glow {
+  border-radius: 50%;
+  inset: 10px;
+}
+
+.map-stone-lights {
+  z-index: 1;
+}
+
+/* The invitation: a ring on the ground round the stone's foot breathing outward, only after the
+   player has hesitated (3s), then every 2.4s with a second ring half a beat behind. A thing that
+   pulses is a thing to touch — no words needed. */
+.map-stone-ripple {
   position: absolute;
-  left: 12%;
-  right: 12%;
-  top: 22%;
-  bottom: 22%;
+  left: 14%;
+  right: 14%;
+  top: 72%;
+  bottom: 4%;
   border: 2px solid rgba(240, 120, 90, 0.8);
   border-radius: 50%;
   opacity: 0;
   pointer-events: none;
-  animation: map-eye-ripple 2.4s ease-out 3s infinite;
+  animation: map-stone-ripple 2.4s ease-out 3s infinite;
 }
 
-.map-eye-ripple.is-second {
+.map-stone-ripple.is-second {
   animation-delay: 3.6s;
 }
 
-@keyframes map-eye-ripple {
+@keyframes map-stone-ripple {
   0% {
     opacity: 0.85;
     transform: scale(0.9);
@@ -17804,7 +17812,7 @@ button.star-shop-bundle-face {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .map-eye-ripple {
+  .map-stone-ripple {
     display: none;
   }
 }
@@ -17831,11 +17839,9 @@ button.star-shop-bundle-face {
   height: 64px;
 }
 
-/* The eye's own colour is a dark red, so it takes less of the grey or it goes out entirely. */
-.map-origin-mark.is-eye {
-  width: 130px;
-  height: 52px;
-  filter: grayscale(0.45) brightness(0.8);
+.map-origin-mark.is-stone {
+  width: 64px;
+  height: 64px;
 }
 
 .map-origin-mark.is-landmark .map-landmark-art {
@@ -17878,11 +17884,6 @@ button.star-shop-bundle-face {
   95% {
     transform: scaleY(1);
   }
-}
-
-.map-medallion.is-eye .map-medallion-glow {
-  border-radius: 50%;
-  inset: -10px -30px;
 }
 
 .map-landmark-eye {
@@ -39238,6 +39239,189 @@ img.smithy-service-art {
   }
 }
 
+/* A gate's art in layers (mapLandmarks GateArt): the arch round its doorway, the light inside it,
+   and the two leaves hinged on the arch's inner edges, the doorway's box set per gate. */
+.map-gate-art img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.map-gate-inner {
+  position: absolute;
+  left: var(--door-l);
+  right: calc(100% - var(--door-r));
+  top: var(--door-t);
+  bottom: calc(100% - var(--door-b));
+  border-radius: 50% 50% 0 0 / 30% 30% 0 0;
+  background: radial-gradient(ellipse 70% 60% at 50% 62%, color-mix(in srgb, var(--door-light) 55%, #fff) 0, var(--door-light) 34%, color-mix(in srgb, var(--door-light) 30%, transparent) 70%, transparent);
+  opacity: 0;
+}
+
+.map-gate-leaf.is-left {
+  transform-origin: var(--door-l) 50%;
+}
+
+.map-gate-leaf.is-right {
+  transform-origin: var(--door-r) 50%;
+}
+
+/* Opened (MapRoute OPENING.gate = 1250ms): the gate shudders and the warden's gem bursts, the
+   doors swing in on their hinges — stepped, as a sprite's frames would — and the light inside
+   floods out over the screen (.map-opening-flood). */
+.map-medallion.is-opening {
+  pointer-events: none;
+}
+
+.map-medallion.is-opening .map-gate-art {
+  animation: map-gate-rumble 0.42s steps(1, end);
+}
+
+@keyframes map-gate-rumble {
+  0% {
+    translate: 2px 0;
+  }
+  15% {
+    translate: -2px 1px;
+  }
+  30% {
+    translate: 2px -1px;
+  }
+  45% {
+    translate: -1px 0;
+  }
+  60% {
+    translate: 1px 1px;
+  }
+  75% {
+    translate: -1px 0;
+  }
+  100% {
+    translate: 0 0;
+  }
+}
+
+.map-medallion.is-opening .map-gate-seal.is-titan {
+  animation: map-gate-warden-burst 0.4s var(--ease-out) forwards;
+}
+
+.map-medallion.is-opening .map-gate-warden {
+  animation: map-gate-warden-burst 0.4s var(--ease-out) forwards;
+}
+
+@keyframes map-gate-warden-burst {
+  0% {
+    scale: 1;
+    opacity: 1;
+    filter: brightness(1);
+  }
+  40% {
+    scale: 1.7;
+    opacity: 1;
+    filter: brightness(2);
+  }
+  100% {
+    scale: 2.4;
+    opacity: 0;
+    filter: brightness(2.5);
+  }
+}
+
+.map-medallion.is-opening .map-gate-seam {
+  animation: map-gate-seam-burst 0.45s ease-out forwards;
+}
+
+@keyframes map-gate-seam-burst {
+  0% {
+    opacity: 1;
+    filter: brightness(1.8);
+  }
+  100% {
+    opacity: 0;
+    filter: brightness(3);
+  }
+}
+
+.map-medallion.is-opening .map-gate-pact {
+  animation: map-gate-pact-out 0.5s ease-in forwards;
+}
+
+@keyframes map-gate-pact-out {
+  to {
+    opacity: 0;
+    scale: 1.15;
+  }
+}
+
+.map-medallion.is-opening .map-gate-inner {
+  animation: map-gate-inner-light 0.7s ease-out 0.3s forwards;
+}
+
+@keyframes map-gate-inner-light {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.map-medallion.is-opening .map-gate-leaf {
+  animation: map-gate-leaf-swing 0.5s steps(5, end) 0.34s forwards;
+}
+
+@keyframes map-gate-leaf-swing {
+  0% {
+    scale: 1 1;
+    filter: brightness(1);
+  }
+  100% {
+    scale: 0.14 1;
+    filter: brightness(0.35);
+  }
+}
+
+.map-opening-flood {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  background: radial-gradient(circle at var(--flood-x, 50%) var(--flood-y, 40%), color-mix(in srgb, var(--flood-color) 60%, #fff) 0, var(--flood-color) 16%, color-mix(in srgb, var(--flood-color) 22%, #07080d) 46%, #07080d 78%);
+  opacity: 0;
+  animation: map-opening-flood 0.5s ease-in 0.75s forwards;
+}
+
+.map-opening-flood.is-stone {
+  animation-duration: 0.4s;
+  animation-delay: 0.3s;
+}
+
+/* The opening stone woken (OPENING.stone = 700ms): it shudders and its eye flares, then the red
+   floods out of the eye. */
+.map-medallion.is-stone.is-opening > .map-landmark-art {
+  animation: map-gate-rumble 0.36s steps(1, end);
+}
+
+.map-medallion.is-stone.is-opening .map-stone-lights .scene-light.is-glow {
+  animation: map-stone-wake 0.45s ease-out forwards;
+}
+
+@keyframes map-stone-wake {
+  to {
+    opacity: 1;
+    transform: scale(2.4);
+    filter: brightness(1.8);
+  }
+}
+
+@keyframes map-opening-flood {
+  to {
+    opacity: 1;
+  }
+}
+
 /* Behind the player (the route's origin): the gate small and unlit, its seal gone dark. */
 .map-origin-mark.is-gate {
   width: 48px;
@@ -40133,7 +40317,9 @@ img.smithy-service-art {
    (container units on the scene), over a sprite or vignette by filling its box — and each light is
    placed in % of that painting. Glows are screen-blended, so they read as light, not as paint. -- */
 .road-encounter,
-.node-sky.location-sky {
+.node-sky.location-sky,
+.map-atmosphere.has-backdrop,
+.node-location.has-backdrop {
   container-type: size;
 }
 
@@ -40194,6 +40380,124 @@ img.smithy-service-art {
   60% {
     opacity: 0.7;
     transform: scale(0.9);
+  }
+}
+
+/* A twinkle and a glint: a map painting's stars, drawn in its own pixels (MAP_LIGHTS). The star
+   steps between brightnesses rather than fading, as a sprite would, and once a cycle it flares into
+   a cross on the ::after. */
+.scene-light.is-twinkle,
+.scene-light.is-glint {
+  border-radius: 0;
+  mix-blend-mode: normal;
+  image-rendering: pixelated;
+  background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 7' shape-rendering='crispEdges'><rect x='2' y='2' width='1' height='1' fill='%23a3892f'/><rect x='4' y='2' width='1' height='1' fill='%23a3892f'/><rect x='2' y='4' width='1' height='1' fill='%23a3892f'/><rect x='4' y='4' width='1' height='1' fill='%23a3892f'/><rect x='3' y='2' width='1' height='1' fill='%23dfb11d'/><rect x='2' y='3' width='1' height='1' fill='%23dfb11d'/><rect x='3' y='3' width='1' height='1' fill='%23dfb11d'/><rect x='4' y='3' width='1' height='1' fill='%23dfb11d'/><rect x='3' y='4' width='1' height='1' fill='%23dfb11d'/></svg>") center / 100% 100% no-repeat;
+  animation: scene-twinkle calc(4.2s * var(--light-rate, 1)) step-end infinite;
+}
+
+.scene-light.is-glint {
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 3 3' shape-rendering='crispEdges'><rect x='1' y='1' width='1' height='1' fill='%23dfb11d'/></svg>");
+  animation-duration: calc(3.1s * var(--light-rate, 1));
+}
+
+.scene-light.is-twinkle::after,
+.scene-light.is-glint::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 7' shape-rendering='crispEdges'><rect x='3' y='0' width='1' height='1' fill='%23a3892f'/><rect x='0' y='3' width='1' height='1' fill='%23a3892f'/><rect x='6' y='3' width='1' height='1' fill='%23a3892f'/><rect x='3' y='6' width='1' height='1' fill='%23a3892f'/><rect x='3' y='1' width='1' height='1' fill='%23f3dc8a'/><rect x='1' y='3' width='1' height='1' fill='%23f3dc8a'/><rect x='5' y='3' width='1' height='1' fill='%23f3dc8a'/><rect x='3' y='5' width='1' height='1' fill='%23f3dc8a'/><rect x='3' y='2' width='1' height='1' fill='%23f3dc8a'/><rect x='2' y='3' width='1' height='1' fill='%23f3dc8a'/><rect x='4' y='3' width='1' height='1' fill='%23f3dc8a'/><rect x='3' y='4' width='1' height='1' fill='%23f3dc8a'/><rect x='3' y='3' width='1' height='1' fill='%23fff6d0'/></svg>") center / 100% 100% no-repeat;
+  opacity: 0;
+  animation: scene-twinkle-flare calc(4.2s * var(--light-rate, 1)) step-end infinite;
+  animation-delay: inherit;
+}
+
+.scene-light.is-glint::after {
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 3 3' shape-rendering='crispEdges'><rect x='1' y='0' width='1' height='1' fill='%23a3892f'/><rect x='0' y='1' width='1' height='1' fill='%23a3892f'/><rect x='2' y='1' width='1' height='1' fill='%23a3892f'/><rect x='1' y='2' width='1' height='1' fill='%23a3892f'/><rect x='1' y='1' width='1' height='1' fill='%23fff6d0'/></svg>");
+  animation-duration: calc(3.1s * var(--light-rate, 1));
+}
+
+/* A sparkle and a glimmer: a cross flaring now and then over a star the painting already has, in
+   that star's colour (--light-rgb) whitened at the heart. Dark the rest of the cycle, so the
+   painted star is what is seen between flares. */
+.scene-light.is-sparkle,
+.scene-light.is-glimmer {
+  border-radius: 0;
+  mix-blend-mode: normal;
+  background: color-mix(in srgb, rgb(var(--light-rgb, 255, 255, 255)) 55%, #fff);
+  -webkit-mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 7' shape-rendering='crispEdges'><rect x='3' y='0' width='1' height='1'/><rect x='3' y='1' width='1' height='1'/><rect x='3' y='2' width='1' height='1'/><rect x='0' y='3' width='1' height='1'/><rect x='1' y='3' width='1' height='1'/><rect x='2' y='3' width='1' height='1'/><rect x='3' y='3' width='1' height='1'/><rect x='4' y='3' width='1' height='1'/><rect x='5' y='3' width='1' height='1'/><rect x='6' y='3' width='1' height='1'/><rect x='3' y='4' width='1' height='1'/><rect x='3' y='5' width='1' height='1'/><rect x='3' y='6' width='1' height='1'/></svg>") center / 100% 100% no-repeat;
+  mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 7' shape-rendering='crispEdges'><rect x='3' y='0' width='1' height='1'/><rect x='3' y='1' width='1' height='1'/><rect x='3' y='2' width='1' height='1'/><rect x='0' y='3' width='1' height='1'/><rect x='1' y='3' width='1' height='1'/><rect x='2' y='3' width='1' height='1'/><rect x='3' y='3' width='1' height='1'/><rect x='4' y='3' width='1' height='1'/><rect x='5' y='3' width='1' height='1'/><rect x='6' y='3' width='1' height='1'/><rect x='3' y='4' width='1' height='1'/><rect x='3' y='5' width='1' height='1'/><rect x='3' y='6' width='1' height='1'/></svg>") center / 100% 100% no-repeat;
+  opacity: 0;
+  animation: scene-sparkle calc(5.6s * var(--light-rate, 1)) step-end infinite;
+}
+
+.scene-light.is-glimmer {
+  -webkit-mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 3 3' shape-rendering='crispEdges'><rect x='1' y='0' width='1' height='1'/><rect x='0' y='1' width='1' height='1'/><rect x='1' y='1' width='1' height='1'/><rect x='2' y='1' width='1' height='1'/><rect x='1' y='2' width='1' height='1'/></svg>");
+  mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 3 3' shape-rendering='crispEdges'><rect x='1' y='0' width='1' height='1'/><rect x='0' y='1' width='1' height='1'/><rect x='1' y='1' width='1' height='1'/><rect x='2' y='1' width='1' height='1'/><rect x='1' y='2' width='1' height='1'/></svg>");
+  animation-duration: calc(4.4s * var(--light-rate, 1));
+}
+
+/* The sparkle's arm tips, dimmer, on the frame before and after the full cross. */
+.scene-light.is-sparkle::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgb(var(--light-rgb, 255, 255, 255));
+  -webkit-mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 7' shape-rendering='crispEdges'><rect x='3' y='0' width='1' height='1'/><rect x='0' y='3' width='1' height='1'/><rect x='6' y='3' width='1' height='1'/><rect x='3' y='6' width='1' height='1'/></svg>") center / 100% 100% no-repeat;
+  mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 7' shape-rendering='crispEdges'><rect x='3' y='0' width='1' height='1'/><rect x='0' y='3' width='1' height='1'/><rect x='6' y='3' width='1' height='1'/><rect x='3' y='6' width='1' height='1'/></svg>") center / 100% 100% no-repeat;
+  opacity: 0.5;
+}
+
+@keyframes scene-sparkle {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.55;
+  }
+  44% {
+    opacity: 1;
+  }
+  49% {
+    opacity: 0.55;
+  }
+  53% {
+    opacity: 0;
+  }
+}
+
+@keyframes scene-twinkle {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  18% {
+    opacity: 0.75;
+  }
+  30% {
+    opacity: 1;
+  }
+  52% {
+    opacity: 0.75;
+  }
+  68% {
+    opacity: 0.45;
+  }
+}
+
+@keyframes scene-twinkle-flare {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  36% {
+    opacity: 1;
+  }
+  42% {
+    opacity: 0.5;
+  }
+  47% {
+    opacity: 0;
   }
 }
 

@@ -51,6 +51,7 @@ export type SfxId =
   | 'companion.gone'
   | 'map.path'
   | 'map.select'
+  | 'map.gate'
   | 'map.boon'
   | 'map.threat'
   | 'star.rise'
@@ -727,6 +728,24 @@ export const sounds: Record<SfxId, SoundSpec> = {
       // The medallion: bronze partials, inharmonic like `ui.confirm`'s, the ring the choice is spent on.
       { wave: 'sine', freq: 1568, detune: 12, gain: 0.09, attack: 0.004, decay: 0.42, delay: 0.03 },
       { wave: 'sine', freq: 4120, detune: 18, gain: 0.04, attack: 0.004, decay: 0.3, delay: 0.03 },
+    ],
+  },
+
+  /**
+   * The Guardian's gate giving way (MapRoute), timed to its opening: the warden's seal cracking,
+   * the doors grinding inward over a rising sub, and the boom of them meeting the walls as the
+   * light floods out.
+   */
+  'map.gate': {
+    gain: 0.5,
+    jitter: 0.008,
+    voices: [
+      { wave: 'noise', gain: 0.3, attack: 0.001, decay: 0.12, filter: { type: 'highpass', freq: 2800 } },
+      { wave: 'triangle', freq: 330, freqEnd: 247, detune: 9, gain: 0.16, attack: 0.004, decay: 0.3 },
+      { wave: 'noise', gain: 0.34, attack: 0.18, hold: 0.25, decay: 0.3, delay: 0.2, filter: { type: 'bandpass', freq: 260, freqEnd: 900, q: 2.2 } },
+      { wave: 'sawtooth', freq: 46, freqEnd: 62, gain: 0.16, attack: 0.2, hold: 0.2, decay: 0.3, delay: 0.22, filter: { type: 'lowpass', freq: 200, q: 2 } },
+      { wave: 'noise', gain: 0.44, attack: 0.002, decay: 0.6, delay: 0.72, filter: { type: 'lowpass', freq: 1600, freqEnd: 120, q: 1 } },
+      { wave: 'sine', freq: 88, freqEnd: 36, gain: 0.55, attack: 0.003, decay: 0.8, delay: 0.72 },
     ],
   },
 

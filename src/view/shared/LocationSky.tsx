@@ -2,7 +2,7 @@ import { useMemo, type CSSProperties } from 'react';
 import type { AmbienceKind, LocationDefinition } from '../../data/locations';
 import { LocationHorizon } from './locationArt';
 import { locationBackdrop } from './locationBackdrops';
-import { LOCATION_LIGHTS, SceneLights } from './SceneLights';
+import { LOCATION_LIGHTS, MAP_LIGHTS, SceneLights } from './SceneLights';
 
 // The arrival screen's place (docs/locations.md §4): NodeSky's contract (keeps `.node-sky` so
 // `.node-screen`'s stacking rule applies) plus a horizon band and a per-kind ambience. Each kind
@@ -118,6 +118,7 @@ export function LocationAmbience({
       aria-hidden="true"
     >
       {backdrop && <img className="location-backdrop" src={backdrop} alt="" draggable={false} />}
+      {backdrop && <SceneLights lights={MAP_LIGHTS[location.id]} className="is-cover-bottom" />}
       <LocationMotes kind={location.ambience} density={density} />
       {!backdrop && <LocationHorizon locationId={location.id} />}
     </div>

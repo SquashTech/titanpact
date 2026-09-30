@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
 import type { MapNode, MapNodeType, RunMap } from '../../run/map';
 import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
 import { useLongPress } from '../shared/MoveTile';
@@ -6,12 +7,14 @@ import { playSfx, type SfxId } from '../../audio/sfx';
 import { NODE_COLORS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
 import { nodeFactsLine } from './nodeFacts';
 import { isMapProp, mapNodeArt } from './mapNodeArt';
-import { landmarkKind, MapLandmarkFace } from './mapLandmarks';
+import { landmarkKind, MapLandmarkFace, TITAN_LIGHT, type LandmarkKind } from './mapLandmarks';
 import campArt from '../../../art/places/rest.png';
 import { ElementPie } from '../shared/ElementPie';
 import { ElementGlyph } from '../shared/elementIcons';
 import { getTypeColor } from '../combat/typeColors';
 import type { TypeId } from '../../engine/content';
+import { canvasPoint, overlayHost } from '../shared/overlayHost';
+import { allCombatants } from '../../data/content';
 
 /**
  * The route out of where the player is standing (2026-09-08, per user direction): the node just
@@ -50,6 +53,15 @@ const ARRIVAL_SFX: Record<NodeTier, { id: SfxId; pitch?: number; gain?: number }
   encounter: { id: 'map.threat' },
   // There is one of these an act. It gets the bottom of the register and the room to use it.
   ancient: { id: 'map.threat', pitch: 0.66, gain: 1.25 },
+};
+
+// Three landmarks are opened before their fight starts, and the fight mounts under the light that
+// floods out of them (styles.css "is-opening"): the Guardian's gate and the finale's, their seals
+// cracking and their doors swinging in, and the act's opening stone, the Titan's eye in it flaring.
+const OPENING: Partial<Record<LandmarkKind, { ms: number; sfx: SfxId }>> = {
+  gate: { ms: 1250, sfx: 'map.gate' },
+  titanGate: { ms: 1250, sfx: 'map.gate' },
+  stone: { ms: 700, sfx: 'titan.gaze' },
 };
 
 /** Set once per node arrived at, so the reveal survives a trip to the Roster sheet without replaying. */
@@ -134,6 +146,7 @@ function ChoiceMedallion({
   showLeadOn,
   landDelayMs,
   guardianId,
+  opening,
   onSelect,
   onPreview,
   measureRef,
@@ -147,6 +160,8 @@ function ChoiceMedallion({
   actNumber: number;
   showLeadOn: boolean;
   landDelayMs: number;
+  /** Tapped and opening: the gate or the stone playing its beat before the fight (OPENING). */
+  opening: boolean;
   onSelect: () => void;
   onPreview: () => void;
   measureRef: (el: HTMLButtonElement | null) => void;
@@ -177,7 +192,7 @@ function ChoiceMedallion({
       </span>
       <button
         type="button"
-        className={`map-medallion${scoutedFace ? ' is-scouted' : ''}${art ? (prop ? ' has-prop' : ' has-art') : ''}${landmark ? ` is-landmark is-${landmark}` : ''}`}
+        className={`map-medallion${scoutedFace ? ' is-scouted' : ''}${art ? (prop ? ' has-prop' : ' has-art') : ''}${landmark ? ` is-landmark is-${landmark}` : ''}${opening ? ' is-opening' : ''}`}
         ref={measureRef}
         aria-label={scoutedFace ? `${label}. Enemies: ${scoutedFace.join(', ')}` : label}
         data-sfx="none"
@@ -236,6 +251,8 @@ export function MapRoute({
 }) {
   const [segments, setSegments] = useState<RouteSegment[]>([]);
   const [revealing, setRevealing] = useState(false);
+  const [opening, setOpening] = useState<{ id: string; color: string; x: number; y: number } | null>(null);
+  const openingId = opening?.id ?? null;
   const routeRef = useRef<HTMLDivElement>(null);
   const originRef = useRef<HTMLSpanElement>(null);
   const medallionRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -378,11 +395,25 @@ export function MapRoute({
             showLeadOn={showLeadOn}
             guardianId={guardianId}
             landDelayMs={i * PATH_STAGGER_MS + PATH_DRAW_MS}
+            opening={openingId === nodeId}
             onSelect={() => {
+              if (openingId) return;
               // Played here rather than via data-sfx, which fires on POINTERDOWN — the same press that
               // starts a long-press preview. Committing to a path should not sound when you are only
               // asking what it is.
               playSfx('map.select');
+              const kind = landmarkKind(map.nodes[nodeId].type);
+              const beat = kind && OPENING[kind];
+              if (beat && !prefersReducedMotion()) {
+                playSfx(beat.sfx);
+                // The flood pours out of the landmark, wherever it stands on the screen: the gate's
+                // doorway, the stone's eye.
+                const box = medallionRefs.current.get(nodeId)?.getBoundingClientRect();
+                const at = box ? canvasPoint(box.x + box.width / 2, box.y + box.height * (kind === 'stone' ? 0.3 : 0.55)) : { x: 0, y: 0 };
+                setOpening({ id: nodeId, color: kind === 'gate' ? gateWardenColor(guardianId) : TITAN_LIGHT, x: at.x, y: at.y });
+                timers.current.push(window.setTimeout(() => onSelectNode(nodeId), beat.ms));
+                return;
+              }
               onSelectNode(nodeId);
             }}
             onPreview={() => onPreviewNode(map.nodes[nodeId])}
@@ -424,8 +455,29 @@ export function MapRoute({
         </div>
       )}
 
+      {openingId &&
+        createPortal(
+          <div
+            className={`map-opening-flood is-${landmarkKind(map.nodes[opening!.id].type)}`}
+            style={
+              {
+                '--flood-color': opening!.color,
+                '--flood-x': `${opening!.x}px`,
+                '--flood-y': `${opening!.y}px`,
+              } as CSSProperties
+            }
+            aria-hidden="true"
+          />,
+          overlayHost()
+        )}
+
       {/* Plain div, so uiSfx's delegated listener leaves it alone (it only catches real controls). */}
       {revealing && <div className="map-reveal-skip" onClick={skip} />}
     </div>
   );
+}
+
+function gateWardenColor(guardianId: string | null): string {
+  const type = guardianId ? allCombatants[guardianId]?.types[0] : undefined;
+  return type ? getTypeColor(type) : '#e0a63c';
 }
