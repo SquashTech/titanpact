@@ -199,18 +199,18 @@ export const FIGHT_TIPS: readonly FightTip[] = [
  */
 export const INSTALL_CARD: Readonly<Record<InstallPlatform, { title: string; lead: string; steps: readonly string[]; note?: string }>> = {
   ios: {
-    title: 'Play Full Screen',
-    lead: 'Titanpact plays best from your Home Screen: full screen, no browser bars.',
+    title: 'Welcome to Titanpact!',
+    lead: 'Titanpact plays best installed as a full screen app.',
     steps: ['Tap [share] Share in the browser bar.', 'Scroll down and tap Add to Home Screen.', 'Open Titanpact from the new icon.'],
     note: "Progress in the browser doesn't carry over to the Home Screen app, so add it before you play.",
   },
   android: {
-    title: 'Play Full Screen',
-    lead: 'Titanpact plays best installed: full screen, no browser bars, its own icon.',
+    title: 'Welcome to Titanpact!',
+    lead: 'Titanpact plays best installed as a full screen app.',
     steps: ['Tap [menu] at the top right of the browser.', 'Tap Install app or Add to Home screen.', 'Open Titanpact from the new icon.'],
   },
   inApp: {
-    title: 'Open in Your Browser',
+    title: 'Welcome to Titanpact!',
     lead: "This page is open inside another app, which can't save Titanpact to your home screen.",
     steps: ['Tap [menu] or [share] in this app.', 'Choose Open in browser (Safari or Chrome).'],
   },
