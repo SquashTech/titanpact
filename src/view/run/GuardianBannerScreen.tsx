@@ -4,8 +4,8 @@ import { guardianBannerRelics } from '../../data/relics';
 import type { RunState } from '../../run/state';
 import { grantRelicReward } from '../../run/runProgress';
 import { NodeHeader, NodeSky, NODE_TINT_GOLD } from '../shared/NodeStage';
-import { RelicKindGlyph } from '../shared/relicIcons';
-import { stackedGrantSummary, stackedRelicName } from '../shared/relicStacks';
+import { RelicKindGlyph, relicColor } from '../shared/relicIcons';
+import { stackedRelicName } from '../shared/relicStacks';
 import { BannerGrantPlaque } from './BannerGrantPlaque';
 import { RelicChoiceCard } from './RelicChoiceCard';
 import { RelicFamilyTally } from './RelicFamilyTally';
@@ -14,6 +14,14 @@ import { RosterPeek } from './RosterPeek';
 /** Six is the roster cap, so a run never holds more Banners than this can name. */
 const COUNT_WORDS = ['', 'one', 'two', 'three', 'four', 'five', 'six'];
 const countWord = (n: number) => COUNT_WORDS[n] ?? String(n);
+
+/** The cloth each pixel standard is dyed (art/relics), which the way-forward button burns in. The stat colour relicColor reads would turn the Bulwark grey. */
+const BANNER_CLOTH: Record<string, string> = {
+  bannerOfTheWarcry: '#e0473c',
+  bannerOfTheBulwark: '#4a8ae0',
+  bannerOfTheWellspring: '#3fb35c',
+};
+const clothStyle = (relicId: string) => ({ '--relic-color': BANNER_CLOTH[relicId] ?? relicColor(relicId) }) as CSSProperties;
 
 interface Props {
   run: RunState;
@@ -38,7 +46,6 @@ export function GuardianBannerScreen({ run, onRunChange, onContinue }: Props) {
   const counts = new Map<string, number>();
   for (const id of run.relics) counts.set(id, (counts.get(id) ?? 0) + 1);
   const claimedCount = claimedRelic ? counts.get(claimedRelic.id) ?? 0 : 0;
-  const pickedHeld = pickedRelic ? counts.get(pickedRelic.id) ?? 0 : 0;
 
   function handleClaim(relicId: string) {
     playSfx('seal.strike');
@@ -62,7 +69,7 @@ export function GuardianBannerScreen({ run, onRunChange, onContinue }: Props) {
         readout={
           claimedRelic
             ? 'Raised for the acts ahead.'
-            : 'One standard for the acts ahead. Every hero carries it — the ones you have and the ones you have not met.'
+            : 'Each standard benefits the whole roster.'
         }
       />
 
@@ -82,15 +89,7 @@ export function GuardianBannerScreen({ run, onRunChange, onContinue }: Props) {
                   />
                 ))}
               </div>
-              <BannerGrantPlaque
-                relic={pickedRelic}
-                copies={1}
-                note={
-                  pickedRelic && pickedHeld > 0
-                    ? `Over the ${countWord(pickedHeld)} you hold: ${stackedGrantSummary(pickedRelic, pickedHeld + 1)}.`
-                    : undefined
-                }
-              />
+              <BannerGrantPlaque relic={pickedRelic} copies={1} />
             </>
           ) : (
             claimedRelic && (
@@ -111,13 +110,18 @@ export function GuardianBannerScreen({ run, onRunChange, onContinue }: Props) {
       {!claimed ? (
         <button
           className="resolve-button relic-banner-claim-button"
+          style={pickedRelic ? clothStyle(pickedRelic.id) : undefined}
           disabled={!pickedRelicId}
           onClick={() => pickedRelicId && handleClaim(pickedRelicId)}
         >
           {pickedRelic ? `Raise the ${pickedRelic.name}` : 'Choose a banner'}
         </button>
       ) : (
-        <button className="resolve-button" onClick={onContinue}>
+        <button
+          className="resolve-button relic-banner-claim-button"
+          style={claimedRelic ? clothStyle(claimedRelic.id) : undefined}
+          onClick={onContinue}
+        >
           Continue
         </button>
       )}

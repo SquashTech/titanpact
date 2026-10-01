@@ -16087,8 +16087,11 @@ button.star-shop-bundle-face {
   margin-bottom: 0.36em;
 }
 
+/* Hung from the art box's foot, not from its own `em`: the plate's font is a sixth of the art's,
+   so a `bottom` in ems dropped it a few pixels and it sat over the pole. */
 .relic-pick-row.is-banners .banner-standard.is-pixel .banner-standard-charge {
-  bottom: -0.34em;
+  top: calc(100% + 4px);
+  bottom: auto;
 }
 
 /* A pair has to share the width one glyph had. The cloth is 0.55em wide (62% of
@@ -38716,6 +38719,17 @@ img.smithy-service-art {
   border-image-source: url('../../art/ui/plank.png');
   opacity: 1;
   filter: grayscale(0.9) brightness(0.55);
+}
+
+/* The Banner screen's way forward burns in the picked standard's colour, the Strike's idiom. */
+.resolve-button.relic-banner-claim-button:not(:disabled) {
+  color: color-mix(in srgb, var(--relic-color, var(--accent)) 60%, #fff3d6);
+  text-shadow: 0 2px 0 #1a0f07, 0 0 12px var(--relic-color, var(--accent));
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 4px var(--relic-color, var(--accent))) drop-shadow(0 0 14px color-mix(in srgb, var(--relic-color, var(--accent)) 70%, transparent));
+}
+
+.resolve-button.relic-banner-claim-button:not(:disabled):hover {
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 5px var(--relic-color, var(--accent))) drop-shadow(0 0 18px color-mix(in srgb, var(--relic-color, var(--accent)) 85%, transparent)) brightness(1.08);
 }
 
 .smithy-element,
