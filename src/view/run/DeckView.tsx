@@ -1,4 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
 import { heroes } from '../../data/heroes';
 import { TYPES } from '../../data/typechart';
 import { starShopCatalog } from '../../data/starShop';
@@ -13,6 +14,7 @@ import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
+import { overlayHost } from '../shared/overlayHost';
 import { STARFALL_NAME } from './Starfall';
 
 const typeIndex = (type: TypeId) => TYPES.indexOf(type as (typeof TYPES)[number]);
@@ -101,7 +103,8 @@ export function DeckView({ profile, deck, freshHeroId, onChangeDeck, onPeekHero 
         })}
       </div>
 
-      {pickedHero && pickedType && (
+      {pickedHero && pickedType && createPortal(
+        // Portalled: a fixed sheet inside the scrolling body is stacked inside it on iOS.
         <div className="deck-sheet-scrim" onClick={() => setPicked(null)}>
           <div className="deck-sheet" style={{ '--type-rgb': getTypeColorRgb(pickedType), '--type-color': getTypeColor(pickedType) } as CSSProperties} onClick={(e) => e.stopPropagation()}>
             <div className="deck-sheet-bar">
@@ -127,7 +130,8 @@ export function DeckView({ profile, deck, freshHeroId, onChangeDeck, onPeekHero 
               })}
             </div>
           </div>
-        </div>
+        </div>,
+        overlayHost()
       )}
     </div>
   );

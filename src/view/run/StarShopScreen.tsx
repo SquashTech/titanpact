@@ -114,7 +114,7 @@ export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, fresh
                 className={`lodestar${canCall ? ' is-ready' : ''}`}
                 data-sfx={canCall ? 'ui.commit' : 'ui.denied'}
                 onClick={call}
-                aria-label={canCall ? `Call a star for ${STARFALL_PRICE} stars` : 'Not enough stars to call one'}
+                aria-label={canCall ? `Call to the stars for ${STARFALL_PRICE} stars` : 'Not enough stars to call one'}
               >
                 <span className="lodestar-rays" aria-hidden="true" />
                 <span className="lodestar-halo" aria-hidden="true" />
@@ -126,12 +126,12 @@ export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, fresh
 
             <div className="sky-tally">
               <span className="sky-tally-count">{lit}</span>
-              <span className="sky-tally-of"> / {SKY_HERO_COUNT} stars lit</span>
+              <span className="sky-tally-of"> / {SKY_HERO_COUNT} heroes owned</span>
             </div>
 
             <button type="button" className="sky-call" disabled={!canCall} data-sfx={canCall ? 'ui.commit' : 'none'} onClick={call}>
               <span className="sky-call-sheen" aria-hidden="true" />
-              <span className="sky-call-label">{pool.length === 0 ? 'The sky is quiet' : 'Call a Star'}</span>
+              <span className="sky-call-label">{pool.length === 0 ? 'The sky is quiet' : 'Call to the Stars'}</span>
               {pool.length > 0 && (
                 <span className="sky-call-price">
                   <HubGlyph name="star" />
@@ -144,7 +144,7 @@ export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, fresh
                 ? 'Every hero is yours.'
                 : balance < STARFALL_PRICE
                   ? `${STARFALL_PRICE - balance} more ${STARFALL_PRICE - balance === 1 ? 'star' : 'stars'} to call one down. Clear a run to earn them.`
-                  : 'A hero you don’t own falls with it.'}
+                  : 'A hero you don’t own falls into your Collection.'}
             </p>
 
             {pool.length > 0 && (
@@ -223,7 +223,7 @@ export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, fresh
             </div>
             <HeroStarsPage profile={profile} />
             <p className="records-note star-shop-note">
-              {'A star is earned by clearing a run with a hero in one of its Evolutions — three a hero, one a form — and every clear pays a bonus on top, more on a harder rung. Spending one never takes it off this page.'}
+              {'One star is earned by winning a run with an evolved hero. The star can only be earned one time per evolution.'}
             </p>
           </>
         )}
