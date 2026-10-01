@@ -104,6 +104,9 @@ import { generateMap, type MapNodeType } from '../run/map';
 import { firstUnseenTip, LORE_TIP_ID, type ScreenTipId } from '../run/tips';
 import { LORE_LINES, SCREEN_TIPS } from '../data/tips';
 import { TipOverlay } from '../view/run/TipOverlay';
+import { InstallOverlay } from '../view/run/InstallOverlay';
+import { currentInstallPlatform } from './installPrompt';
+import { INSTALL_TIP_ID } from '../run/installHint';
 import { LoreScreen } from '../view/run/LoreScreen';
 import { generateStarterOptions } from '../run/draft';
 import { deckHeroIds, deckRows, encounterPools, profileDeck, type Deck } from '../run/deck';
@@ -464,6 +467,8 @@ function screenTipIds(screen: Screen, run: RunState): readonly ScreenTipId[] {
 export function App() {
   const [playerRun, setPlayerRun] = useState<RunState>(() => createRunState(40));
   const [screen, setScreen] = useState<Screen>({ kind: 'title' });
+  // Read once: a device does not change platform mid-session, and installing reopens the game.
+  const [installPlatform] = useState(currentInstallPlatform);
   const shellRef = useRef<HTMLDivElement>(null);
 
   // A Guardian's fall bumps `actNumber` before its spoils are handed out, so between that win
@@ -1483,6 +1488,11 @@ export function App() {
       {/* The first-time tip for whatever screen is up. Last in the tree so it paints above
           everything; FightScreen mounts its own for the mid-fight tips. Held back while a recruit's
           fanfare plays, so the two never stack. */}
+      {/* The install card, once an account, over the title on its first launch — ahead of any
+          play, since an iPhone's Home Screen app does not share the browser's storage. */}
+      {screen.kind === 'title' && launchDone && installPlatform && !profile.seenTipIds.includes(INSTALL_TIP_ID) && (
+        <InstallOverlay platform={installPlatform} onDone={() => markTipSeen(INSTALL_TIP_ID)} />
+      )}
       {(() => {
         if (recruitFanfare) return null;
         const tip = firstUnseenTip(SCREEN_TIPS, screenTipIds(screen, playerRun), profile.seenTipIds);

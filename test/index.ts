@@ -66,6 +66,7 @@ import './profile.test';
 import './starShop.test';
 import './deck.test';
 import './tips.test';
+import './installHint.test';
 import './innate.test';
 import './evolutionSimplification.test';
 import './evolutionPassives.test';

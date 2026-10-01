@@ -10,6 +10,7 @@
 //   - A page may print a move-kind icon inline: `[physical]`, `[magical]`, `[heal]`, `[buff]`,
 //     `[debuff]`. A misspelt token prints literally and fails `test/tips.test.ts`.
 
+import type { InstallPlatform } from '../run/installHint';
 import type { FightTip, ScreenTipId, Tip } from '../run/tips';
 
 /**
@@ -190,3 +191,27 @@ export const FIGHT_TIPS: readonly FightTip[] = [
     pages: ['A Field Effect is up. It changes the rules for everyone until its pips run out; tap it to read it.'],
   },
 ];
+
+/**
+ * The first-launch install card (run/installHint.ts), per platform. `steps` are numbered; a
+ * `[share]` or `[menu]` token prints the browser's own glyph. Android's `steps` are the fallback
+ * for a browser that never offered its install dialog — when it does, the card is one button.
+ */
+export const INSTALL_CARD: Readonly<Record<InstallPlatform, { title: string; lead: string; steps: readonly string[]; note?: string }>> = {
+  ios: {
+    title: 'Play Full Screen',
+    lead: 'Titanpact plays best from your Home Screen: full screen, no browser bars.',
+    steps: ['Tap [share] Share in the browser bar.', 'Scroll down and tap Add to Home Screen.', 'Open Titanpact from the new icon.'],
+    note: "Progress in the browser doesn't carry over to the Home Screen app, so add it before you play.",
+  },
+  android: {
+    title: 'Play Full Screen',
+    lead: 'Titanpact plays best installed: full screen, no browser bars, its own icon.',
+    steps: ['Tap [menu] at the top right of the browser.', 'Tap Install app or Add to Home screen.', 'Open Titanpact from the new icon.'],
+  },
+  inApp: {
+    title: 'Open in Your Browser',
+    lead: "This page is open inside another app, which can't save Titanpact to your home screen.",
+    steps: ['Tap [menu] or [share] in this app.', 'Choose Open in browser (Safari or Chrome).'],
+  },
+};
