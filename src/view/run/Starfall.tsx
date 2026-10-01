@@ -237,7 +237,7 @@ export function StarfallScreen({ heroId, balanceBefore, onClose }: ScreenProps) 
 
       {locked && !past('reveal') && (
         <div className="summon-omen" aria-hidden="true">
-          <span className="summon-omen-line">{`A ${type} star answers`}</span>
+          <span className="summon-omen-line">{`A ${type} hero answers`}</span>
         </div>
       )}
 
