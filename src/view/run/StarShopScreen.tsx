@@ -149,7 +149,7 @@ export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, fresh
 
             {pool.length > 0 && (
               <button type="button" className="sky-pool-toggle" aria-expanded={showPool} onClick={() => setShowPool((v) => !v)}>
-                {showPool ? 'Hide who is left' : `Still in the sky · ${pool.length}`}
+                {showPool ? 'Hide who is left' : `Still undiscovered · ${pool.length}`}
                 <span className={`sky-pool-chevron${showPool ? ' is-open' : ''}`} aria-hidden="true">
                   ▾
                 </span>
