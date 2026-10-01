@@ -66,7 +66,7 @@ export function InstallOverlay({ platform, onDone }: Props) {
   return createPortal(
     <div className="tip-overlay install-overlay" role="dialog" aria-live="polite">
       <div className="tip-box install-box">
-        <div className="tip-title">{card.title}</div>
+        <h2 className="install-title">{card.title}</h2>
         <p className="tip-page">{card.lead}</p>
         {!oneTap && (
           <ol className="install-steps">

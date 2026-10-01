@@ -37830,6 +37830,15 @@ img.smithy-service-art {
   animation-delay: 1.5s;
 }
 
+.install-title {
+  margin: 2px 0 0;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  color: #8a3f10;
+}
+
 .install-steps {
   margin: 0;
   padding-left: 20px;
