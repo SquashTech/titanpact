@@ -19308,33 +19308,6 @@ button.star-shop-bundle-face {
   transform: rotate(var(--a)) translateY(-112px);
 }
 
-/* The failed one. Dark, cold, and stuttering back to life at intervals that
-   do not divide into each other — it is not off, it is going. */
-.title-seal-sigil.is-broken {
-  background: rgba(146, 182, 196, 0.22);
-  box-shadow: none;
-  animation: title-sigil-gutter 6.7s steps(1, end) infinite;
-}
-
-@keyframes title-sigil-gutter {
-  0%,
-  100% {
-    background: rgba(146, 182, 196, 0.22);
-  }
-  41% {
-    background: rgba(240, 196, 108, 0.55);
-  }
-  44% {
-    background: rgba(146, 182, 196, 0.16);
-  }
-  73% {
-    background: rgba(240, 196, 108, 0.3);
-  }
-  76% {
-    background: rgba(146, 182, 196, 0.22);
-  }
-}
-
 /*
  * Wordmark. Upgraded from flat gold + text-shadow to a gradient-filled
  * letterform: pale highlight at the top, saturated gold through the middle,
@@ -27541,8 +27514,7 @@ button.star-shop-bundle-face {
   opacity: 0.9;
 }
 
-/* Out until re-lit. The dead sigil's own look (title-seal-sigil.is-broken),
-   without the gutter: nothing is coming back on its own here. */
+/* Out until re-lit: dark and cold. */
 .titan-bound .title-seal-sigil:not(.is-lit) {
   background: rgba(146, 182, 196, 0.22);
   box-shadow: none;

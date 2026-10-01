@@ -76,11 +76,6 @@ const MOTES = Array.from({ length: MOTE_COUNT }, (_, i) => {
   };
 });
 
-// The fourth sigil is the one that has gone out (SealArt.tsx): the binding is failing at the
-// moment the player picks it up, which is the entire premise, and it is cheaper to say once in
-// a dead sigil than in copy.
-const BROKEN_SIGIL = 3;
-
 /**
  * The one press this screen is built around. The bezel and the specular sweep are separate
  * elements rather than shadows on the button because the plate is chamfered by a
@@ -223,7 +218,7 @@ export function TitleScreen({
             the screen, so they track the wordmark's actual position instead of drifting
             into empty space whenever the stack below it changes. */}
         <div className="title-mark">
-          <SealArt brokenIndex={BROKEN_SIGIL} />
+          <SealArt />
           <span className="title-ray-burst" aria-hidden="true" />
           <span className="title-core-glow" aria-hidden="true" />
           <div className="title-logo">
