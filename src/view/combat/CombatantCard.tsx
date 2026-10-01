@@ -205,6 +205,27 @@ type Pose = 'idle' | 'attack' | 'hurt' | 'closed';
  * frame is the entire artifact. React supports this shape for exactly this —
  * the extra render is thrown away before anything is committed.
  */
+/** styles.css .summoning's 620ms, with a frame to spare. */
+const SUMMON_HOLD_MS = 660;
+
+/**
+ * Holds the send-out class for exactly its animation's length once it starts, whatever the beat
+ * does. Tied to the beat, a quick advance pulled the class off mid-flash, and iOS Safari left the
+ * figure painted at the white frame it was taken off on.
+ */
+function useSendOut(summoning: boolean): boolean {
+  const [held, setHeld] = useState(summoning);
+  const timer = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (!summoning) return;
+    setHeld(true);
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => setHeld(false), SUMMON_HOLD_MS);
+  }, [summoning]);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+  return held;
+}
+
 function usePoseRelease(pose: Pose): Pose | null {
   const [released, setReleased] = useState<Pose | null>(null);
   const [shown, setShown] = useState<Pose>(pose);
@@ -263,6 +284,7 @@ export function CombatantCard({
   // A knocked-out Eye stays on the field with its lid shut (FightScreen keeps its card in the slot).
   const pose: Pose = combatant.fainted && isTitanEye(hero.id) ? 'closed' : hitClass ? 'hurt' : striking ? 'attack' : 'idle';
   const released = usePoseRelease(pose);
+  const sendingOut = useSendOut(!!summoning);
   const maxHp = getMaxHp(hero, combatant);
   const maxMana = getMaxMana(hero, combatant);
   const hpFraction = Math.max(0, combatant.currentHp / maxHp);
@@ -335,7 +357,7 @@ export function CombatantCard({
   if (popup && POPUP_FLASH_CLASS[popup.className]) classes.push(POPUP_FLASH_CLASS[popup.className]);
   if (striking) classes.push('striking');
   if (recalling) classes.push('recalling');
-  if (summoning) classes.push('summoning');
+  if (sendingOut) classes.push('summoning');
   if (struck && hitClass) classes.push(hitClass);
   if (released) classes.push('releasing', `releasing-${released}`);
 

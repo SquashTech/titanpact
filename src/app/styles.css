@@ -16632,19 +16632,35 @@ button.star-shop-bundle-face {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  /* Tight: the finale's two-word label, an Ascension rung and four-digit gold have to share one row. */
+  gap: 4px;
   padding: 0;
 }
 
 /* Bare on the track, not a chip — a chip would make it a fourth resource.
    `margin-right: auto` keeps the original left/right split now that the two
    corner buttons flank the row: the act still hugs the left, the purse the right. */
+.map-act-group {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-right: auto;
+}
+
+/* "A1", the rung's own shorthand: tight, so it reads as one word. */
+.map-ascension {
+  gap: 1px;
+}
+
+.map-ascension .map-act-label {
+  letter-spacing: 0;
+}
+
 .map-act {
   display: flex;
   align-items: baseline;
   gap: 5px;
-  min-width: 0;
-  margin-right: auto;
   white-space: nowrap;
 }
 
@@ -16715,7 +16731,7 @@ button.star-shop-bundle-face {
 .map-purse {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 
 .map-stat {
@@ -28413,6 +28429,9 @@ button.star-shop-bundle-face {
 .signature-frame {
   position: relative;
   width: 100%;
+  /* A flex child of the panel with overflow hidden: allowed to shrink, it clipped its own card
+     whenever the panel ran short, and the move's rows were what went. */
+  flex-shrink: 0;
   padding: 2px;
   border-radius: calc(var(--radius-lg) + 2px);
   overflow: hidden;

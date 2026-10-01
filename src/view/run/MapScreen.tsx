@@ -15,7 +15,6 @@ import { MapRoute } from './MapRoute';
 import { BannerShelf } from './BannerShelf';
 import { NODE_COLORS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
 import { NodeDossierOverlay } from './NodeDossierOverlay';
-import { rosterPar } from '../../run/statScale';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
 import { locationForAct } from '../../run/locations';
@@ -162,8 +161,6 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
   if (!map) return null;
 
   const location = locationForAct(run.locationIds, run.actNumber);
-  // The roster's PAR (run/statScale.ts): everyone but a late joiner under automatic levelling.
-  const rosterLevel = rosterPar(run);
 
   // The whole view: where the player stands, and what they may take from here.
   const choiceIds = reachableNodeIds(run);
@@ -190,35 +187,29 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
         >
           <HubGlyph name="reference" />
         </button>
-        {/* Level is a property of the RUN, not of a hero: automatic levelling puts the whole
-            roster on the same number, and a figure identical across six cards carries no
-            information there. It reads here, beside the act, and per-hero only where a hero
-            DEVIATES — a recruit that is behind (docs/growth-overhaul.md §4). */}
-        {run.actNumber > SEAL_ACTS ? (
-          // The finale is the corridor past the fifth seal, not a sixth act, so it counts nothing.
-          <span className="map-act" aria-label="The final pact">
-            <span className="map-act-label">Final</span>
-            <span className="map-act-count">Pact</span>
-          </span>
-        ) : (
-          <span className="map-act" aria-label={`Act ${run.actNumber} of ${SEAL_ACTS}`}>
-            <span className="map-act-label">Act</span>
-            <span className="map-act-count">
-              {run.actNumber}
-              <span className="map-act-total">/{SEAL_ACTS}</span>
+        <div className="map-act-group">
+          {run.actNumber > SEAL_ACTS ? (
+            // The finale is the corridor past the fifth seal, not a sixth act, so it counts nothing.
+            <span className="map-act" aria-label="The final pact">
+              <span className="map-act-label">Final</span>
+              <span className="map-act-count">Pact</span>
             </span>
-          </span>
-        )}
-        <span className="map-level" aria-label={`Roster level ${rosterLevel}`}>
-          <span className="map-act-label">Lv</span>
-          <span className="map-act-count">{rosterLevel}</span>
-        </span>
-        {run.ascension > 0 && (
-          <span className="map-level map-ascension" aria-label={`Ascension ${run.ascension}`} title="Permadeath: a knocked-out hero is gone unless a Revive is spent on it when the fight ends.">
-            <span className="map-act-label">Asc</span>
-            <span className="map-act-count">{run.ascension}</span>
-          </span>
-        )}
+          ) : (
+            <span className="map-act" aria-label={`Act ${run.actNumber} of ${SEAL_ACTS}`}>
+              <span className="map-act-label">Act</span>
+              <span className="map-act-count">
+                {run.actNumber}
+                <span className="map-act-total">/{SEAL_ACTS}</span>
+              </span>
+            </span>
+          )}
+          {run.ascension > 0 && (
+            <span className="map-act map-ascension" aria-label={`Ascension ${run.ascension}`} title="Permadeath: a knocked-out hero is gone unless a Revive is spent on it when the fight ends.">
+              <span className="map-act-label">A</span>
+              <span className="map-act-count">{run.ascension}</span>
+            </span>
+          )}
+        </div>
         <div className="map-purse">
           <ResourceStat kind="gold" label="Gold" value={run.gold} />
           <ResourceStat kind="contract" label="Recruit Contracts" value={run.recruitContracts} />
