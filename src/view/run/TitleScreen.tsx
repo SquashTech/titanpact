@@ -4,7 +4,8 @@ import type { Deck } from '../../run/deck';
 import { LocationSelectOverlay } from './LocationSelectOverlay';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { RecordsScreen } from './RecordsScreen';
-import { STAR_SHOP_NAME, StarShopScreen } from './StarShopScreen';
+import { StarShopScreen } from './StarShopScreen';
+import { HUB_TABS, HubNav, type HubTab } from './HubNav';
 import { starShopCatalog } from '../../data/starShop';
 import { canEnterRung, starBalance, type StarShopOffer } from '../../run/starShop';
 import { TitanColossus, TitanRidge } from './titanArt';
@@ -14,8 +15,6 @@ import { ASCENSION_RUNGS } from '../../run/ascension';
 import { AudioSettings } from '../shared/AudioSettings';
 import type { SaveSummary } from '../../run/save';
 import type { Profile } from '../../run/profile';
-import collectionArt from '../../../art/ui/collection.png';
-import constellationArt from '../../../art/ui/constellation.png';
 import recordsArt from '../../../art/ui/records.png';
 
 interface Props {
@@ -128,8 +127,11 @@ export function TitleScreen({
   onStartTitanEyesTestRun,
 }: Props) {
   const [showRecords, setShowRecords] = useState(false);
-  const [showShop, setShowShop] = useState(false);
-  const [showCollection, setShowCollection] = useState(false);
+  const [tab, setTab] = useState<HubTab>('play');
+  /** Which way the page slid in: +1 from the left, -1 from the right. */
+  const [slide, setSlide] = useState(0);
+  const [freshHeroId, setFreshHeroId] = useState<string | null>(null);
+  const [collectionSeen, setCollectionSeen] = useState(true);
   const [showReference, setShowReference] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [showLocations, setShowLocations] = useState(false);
@@ -164,6 +166,13 @@ export function TitleScreen({
     launch(() => onStartRun(0));
   }
 
+  function selectTab(next: HubTab) {
+    setSlide(Math.sign(HUB_TABS.indexOf(next) - HUB_TABS.indexOf(tab)));
+    setTab(next);
+    if (next === 'constellation') onRefreshProfile();
+    if (next === 'collection') setCollectionSeen(true);
+  }
+
   /** Every Dev row leaves the title, so none of them needs the menu left standing. */
   function runDev(action: () => void) {
     setShowDev(false);
@@ -176,8 +185,13 @@ export function TitleScreen({
   // of it — they can only inherit the palette from an ancestor both of them share.
   const tone = parkedRun ? 'verdigris' : 'gold';
 
+  const balance = starBalance(profile, starShopCatalog);
+
   return (
-    <div className={`title-screen is-${tone}${launching ? ' is-launching' : ''}`}>
+    <div className={`title-screen is-${tone}${launching ? ' is-launching' : ''}${tab !== 'play' ? ' is-away' : ''}`}>
+      {/* The Play page is the title itself; its layers stay mounted under the other pages so coming
+          back is instant, and display: contents keeps them in the screen's own flex and stacking. */}
+      <div className="title-play">
       {/* Before the Titan, not after: the figure is a hole cut in this light. */}
       <span className="title-backlight" aria-hidden="true" />
       <TitanColossus />
@@ -264,42 +278,18 @@ export function TitleScreen({
         )}
       </div>
 
-      {/* The three places a player goes BETWEEN runs (2026-09-16, per user direction — they were
-          three 36px circles in the corner, which is what a lookup tool deserves and a shop does
-          not): the Collection, the shop with its star balance on it, and Records. Labelled tiles
-          under the one real action, quieter than it and louder than the corner. */}
-      <div className="title-hub">
-        <button className="title-hub-tile" onClick={() => setShowCollection(true)}>
-          <img src={collectionArt} className="title-hub-icon" alt="" draggable={false} />
-          <span className="title-hub-label">Collection</span>
-        </button>
-        <button
-          className="title-hub-tile is-shop"
-          onClick={() => {
-            onRefreshProfile();
-            setShowShop(true);
-          }}
-        >
-          <img src={constellationArt} className="title-hub-icon" alt="" draggable={false} />
-          {/* Without its article: the tile is a place-name on a sign, the panel header the full name. */}
-          <span className="title-hub-label">{STAR_SHOP_NAME.replace(/^The /, '')}</span>
-          <span className="title-hub-badge" title={`${starBalance(profile, starShopCatalog)} stars to spend`}>
-            ★ {starBalance(profile, starShopCatalog)}
-          </span>
-        </button>
-        <button
-          className="title-hub-tile"
-          onClick={() => {
-            onRefreshProfile();
-            setShowRecords(true);
-          }}
-        >
-          <img src={recordsArt} className="title-hub-icon" alt="" draggable={false} />
-          <span className="title-hub-label">Records</span>
-        </button>
-      </div>
-
-      {/* Reference and Options stay corner glyphs: a lookup mid-thought and a dial, not somewhere you go. */}
+      {/* Records, Reference and Options are corner glyphs: a ledger, a lookup and a dial, not places. */}
+      <button
+        className="title-records-button"
+        onClick={() => {
+          onRefreshProfile();
+          setShowRecords(true);
+        }}
+        aria-label="Records"
+        title="Records"
+      >
+        <img src={recordsArt} alt="" draggable={false} />
+      </button>
       <div className="title-icon-row">
         <button className="title-icon-button" onClick={() => setShowReference(true)} aria-label="Reference" title="Reference">
           <HubGlyph name="reference" />
@@ -351,6 +341,29 @@ export function TitleScreen({
 
       {/* Plain <div>, so the delegated sfx listener leaves a dismissing tap silent. */}
       {showDev && <div className="title-dev-backdrop" onClick={() => setShowDev(false)} />}
+      </div>
+
+      {tab === 'collection' && (
+        <div className="hub-slot" style={{ '--slide': slide } as CSSProperties}>
+          <CollectionScreen profile={profile} onChangeDeck={onChangeDeck} onBuy={onBuyOffer} freshHeroId={freshHeroId} />
+        </div>
+      )}
+      {tab === 'constellation' && (
+        <div className="hub-slot" style={{ '--slide': slide } as CSSProperties}>
+          <StarShopScreen
+            profile={profile}
+            onBuy={onBuyOffer}
+            onStarfall={onStarfall}
+            freshHeroId={freshHeroId}
+            onHeroFallen={(heroId) => {
+              setFreshHeroId(heroId);
+              setCollectionSeen(false);
+            }}
+          />
+        </div>
+      )}
+
+      <HubNav tab={tab} onSelect={selectTab} balance={balance} collectionFresh={!collectionSeen} disabled={launching} />
 
       {/* Starting over with a run parked deletes it, so it asks — a sheet, not a
           re-labelled button, because a button that changes what it says under
@@ -412,7 +425,6 @@ export function TitleScreen({
       )}
 
       {showLocations && <LocationSelectOverlay onPick={onVisitLocation} onClose={() => setShowLocations(false)} />}
-      {showCollection && <CollectionScreen profile={profile} onChangeDeck={onChangeDeck} onBuy={onBuyOffer} onClose={() => setShowCollection(false)} />}
       {showRecords && (
         <RecordsScreen profile={profile} onEraseAllData={onEraseAllData} onClose={() => setShowRecords(false)} />
       )}
@@ -439,7 +451,6 @@ export function TitleScreen({
           </div>
         </div>
       )}
-      {showShop && <StarShopScreen profile={profile} onBuy={onBuyOffer} onStarfall={onStarfall} onClose={() => setShowShop(false)} />}
     </div>
   );
 }

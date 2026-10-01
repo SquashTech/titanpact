@@ -3,32 +3,26 @@ import { STAR_SHOP_OFFERS, starShopCatalog } from '../../data/starShop';
 import { locationDomains, locations } from '../../data/locations';
 import { heroes } from '../../data/heroes';
 import type { Profile } from '../../run/profile';
-import { bundleOwnedHeroIds, canBuy, canCallStarfall, offerHeld, offerPrice, starBalance, starfallPool, starsEarned, starsSpent, type StarShopOffer } from '../../run/starShop';
+import { ownsHero } from '../../run/recruitment';
+import { STARFALL_PRICE, bundleOwnedHeroIds, canBuy, canCallStarfall, offerHeld, offerPrice, starBalance, starfallPool, starsEarned, starsSpent, type StarShopOffer } from '../../run/starShop';
 import { HubGlyph } from '../shared/nodeIcons';
 import { ElementGlyph } from '../shared/elementIcons';
 import { LocationHorizon } from '../shared/locationArt';
 import { locationBackdrop } from '../shared/locationBackdrops';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { TabStrip, type TabSpec } from '../shared/TabStrip';
-import { getTypeColor } from '../combat/typeColors';
+import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { HeroDossierOverlay } from './HeroDossierOverlay';
 import { LocationPeekOverlay } from './LocationPeekOverlay';
 import { BundlePeekOverlay } from './BundlePeekOverlay';
 import { HeroStarsPage, SpawnStarsPage } from './StarPages';
-import { StarfallCard, StarfallScreen } from './Starfall';
+import { STARFALL_NAME, StarfallScreen } from './Starfall';
+import { SKY_HERO_COUNT, StarSky } from './StarSky';
+import { HubPageHead, HubSubtabs, type SubtabSpec } from './hubChrome';
 
-/** The shop's name, in one place: the title tile, this panel's header. The Constellation — every star earned, charted, and the sky they are spent on. */
+/** The shop's name, in one place: the hub tab, this page's head. The Constellation — every star earned, charted, and the sky they are spent on. */
 export const STAR_SHOP_NAME = 'The Constellation';
 
-type ShelfId = 'heroes' | 'places' | 'stars' | 'spawn';
-
-/** The two shelves stars are spent on, then the two pages that chart where they were earned. No hero is sold singly. */
-const SHELVES: readonly (TabSpec<ShelfId> & { grant?: StarShopOffer['grant']['kind']; empty?: string })[] = [
-  { id: 'heroes', label: 'Heroes', glyph: 'heroes', grant: 'heroBundle' },
-  { id: 'places', label: 'Locations', glyph: 'places', grant: 'location', empty: 'A place the road can offer beside the base five: its own weather, its own spawn, its own warden.' },
-  { id: 'stars', label: 'Stars', glyph: 'stars' },
-  { id: 'spawn', label: 'Spawn', glyph: 'spawn' },
-];
+type SectionId = 'sky' | 'shop' | 'stars' | 'spawn';
 
 interface Props {
   profile: Profile;
@@ -36,7 +30,10 @@ interface Props {
   onBuy: (offer: StarShopOffer) => void;
   /** One Starfall (run/starShop.ts starfall), written to the profile; returns the hero drawn. */
   onStarfall: () => string;
-  onClose: () => void;
+  /** A Starfall's hero once its scene closes — the hub marks it new in the Collection. */
+  onHeroFallen: (heroId: string) => void;
+  /** The last hero fallen this session; its star flares in the sky. */
+  freshHeroId: string | null;
 }
 
 /** What an offer's own screen needs to say and do about buying it. */
@@ -50,26 +47,27 @@ export interface OfferPurchase {
 }
 
 /**
- * Where stars are spent (run/starShop.ts) and where they are charted; the deck is dressed in the
- * Collection. The balance leads — the star and the count — then the page the strip has open. The
- * Heroes page is the Starfall, a seat for Alignments, and the bundles.
- * Bundles and Locations are rows that OPEN: a bundle's row is a line-up and a place's row is a
- * scene, and tapping either brings up its own screen, where the heroes can be examined and the
- * place looked around — and where the one Purchase button is. Nothing on a shelf row spends a
- * star; the cost on it is a label. Tabs at the foot, in the thumb's arc.
+ * The Constellation, a hub page (run/starShop.ts): where stars are spent and charted. Its first
+ * section is the sky itself — every hero a star, the owned ones lit — with the Lodestar at its
+ * centre, which calls the Starfall. The Market holds the bundles and the Locations; Stars and
+ * Spawn chart where stars were earned. Nothing on a Market row spends a star: rows open the
+ * offer's own screen, where the one Purchase button is.
  */
-export function StarShopScreen({ profile, onBuy, onStarfall, onClose }: Props) {
+export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, freshHeroId }: Props) {
   const earned = starsEarned(profile);
   const spent = starsSpent(profile, starShopCatalog);
   const balance = starBalance(profile, starShopCatalog);
-  const [shelf, setShelf] = useState<ShelfId>('heroes');
+  const [section, setSection] = useState<SectionId>('sky');
   const [dossierHeroId, setDossierHeroId] = useState<string | null>(null);
   const [openOfferId, setOpenOfferId] = useState<string | null>(null);
   const [fallen, setFallen] = useState<{ heroId: string; balanceBefore: number } | null>(null);
+  const [showPool, setShowPool] = useState(false);
 
-  const tabs = SHELVES.map((s) => (s.id === 'places' ? { ...s, count: STAR_SHOP_OFFERS.filter((o) => o.grant.kind === s.grant).length } : s));
-  const open = SHELVES.find((s) => s.id === shelf)!;
-  const offers = open.grant ? STAR_SHOP_OFFERS.filter((o) => o.grant.kind === open.grant) : [];
+  const pool = starfallPool(profile);
+  const lit = Object.values(heroes).filter((hero) => ownsHero(hero.id, hero, profile.purchases)).length;
+  const canCall = canCallStarfall(profile, starShopCatalog);
+  const bundles = STAR_SHOP_OFFERS.filter((o) => o.grant.kind === 'heroBundle');
+  const places = STAR_SHOP_OFFERS.filter((o) => o.grant.kind === 'location');
   const dossierHero = dossierHeroId ? heroes[dossierHeroId] : null;
   const openOffer = openOfferId ? starShopCatalog[openOfferId] : null;
   const purchaseOf = (offer: StarShopOffer): OfferPurchase => ({
@@ -80,98 +78,157 @@ export function StarShopScreen({ profile, onBuy, onStarfall, onClose }: Props) {
     onBuy: () => onBuy(offer),
   });
 
+  const sections: readonly SubtabSpec<SectionId>[] = [
+    { id: 'sky', label: STARFALL_NAME },
+    { id: 'shop', label: 'Market' },
+    { id: 'stars', label: 'Stars' },
+    { id: 'spawn', label: 'Spawn' },
+  ];
+
+  function call() {
+    if (!canCall) return;
+    setFallen({ balanceBefore: balance, heroId: onStarfall() });
+  }
+
   return (
-    <div className="detail-overlay is-sheet" onClick={onClose}>
-      <div className="detail-panel is-tabbed is-hero-sheet compendium-sheet" onClick={(e) => e.stopPropagation()}>
-        <div className="detail-header is-hero compendium-head">
-          <span className="detail-portrait-plate compendium-head-plate" aria-hidden="true">
-            <HubGlyph name="star" className="compendium-head-glyph" />
-          </span>
-          <span className="detail-name compendium-head-title">{STAR_SHOP_NAME}</span>
-        </div>
+    <div className="hub-page sky-page">
+      <div className="sky-backdrop" aria-hidden="true">
+        <span className="sky-nebula is-a" />
+        <span className="sky-nebula is-b" />
+        <span className="sky-field is-far" />
+        <span className="sky-field is-near" />
+        <span className="sky-meteor is-a" />
+        <span className="sky-meteor is-b" />
+        <span className="sky-meteor is-c" />
+      </div>
 
-        {/* Keyed on the shelf so a switch scrolls the well back to its top. */}
-        <div key={shelf} className="detail-tab-body compendium-body" role="tabpanel">
-          {/* The balance as the thing itself: the star and the count side by side, the ledger under them. */}
-          <div className="star-shop-balance">
-            <span className="star-shop-balance-head">
-              <span className="star-shop-balance-star" aria-hidden="true">
-                <HubGlyph name="star" />
-              </span>
-              <span className="star-shop-balance-count">{balance}</span>
-            </span>
-            <span className="star-shop-balance-label">{balance === 1 ? 'star' : 'stars'} to spend</span>
-            <span className="star-shop-balance-ledger">
-              {earned} earned · {spent} spent
-            </span>
-          </div>
+      <HubPageHead title={STAR_SHOP_NAME} balance={balance} />
+      <HubSubtabs tabs={sections} active={section} onSelect={setSection} />
 
-          {shelf === 'heroes' && (
-            <>
-              <StarfallCard
-                pool={starfallPool(profile)}
-                enabled={canCallStarfall(profile, starShopCatalog)}
-                onCall={() => setFallen({ balanceBefore: balance, heroId: onStarfall() })}
-                onPeekHero={setDossierHeroId}
-              />
-              {/* A seat for curated Starfalls (docs/collection.md §4, PROPOSED): none are authored. */}
-              <div className="tab-subhead star-shop-section-head">Alignments</div>
-              <div className="star-shop-empty star-shop-alignments">
-                <span className="star-shop-empty-title">No stars are aligned</span>
-                <span className="star-shop-empty-note">Now and then the sky lines up over a chosen few, and a Starfall under it draws only from them.</span>
-              </div>
-              <div className="tab-subhead star-shop-section-head">Bundles</div>
-            </>
-          )}
+      <div key={section} className={`hub-body sky-body is-${section}`}>
+        {section === 'sky' && (
+          <>
+            <StarSky purchases={profile.purchases} freshId={freshHeroId} onPeekHero={setDossierHeroId}>
+              <button
+                type="button"
+                className={`lodestar${canCall ? ' is-ready' : ''}`}
+                data-sfx={canCall ? 'ui.commit' : 'ui.denied'}
+                onClick={call}
+                aria-label={canCall ? `Call a star for ${STARFALL_PRICE} stars` : 'Not enough stars to call one'}
+              >
+                <span className="lodestar-rays" aria-hidden="true" />
+                <span className="lodestar-halo" aria-hidden="true" />
+                <span className="lodestar-core" aria-hidden="true">
+                  <HubGlyph name="star" />
+                </span>
+              </button>
+            </StarSky>
 
-          {shelf === 'stars' ? (
-            <HeroStarsPage profile={profile} />
-          ) : shelf === 'spawn' ? (
-            <SpawnStarsPage profile={profile} />
-          ) : offers.length === 0 ? (
-            <div className="star-shop-empty">
-              <span className="star-shop-empty-title">Nothing on this shelf yet</span>
-              <span className="star-shop-empty-note">{open.empty}</span>
+            <div className="sky-tally">
+              <span className="sky-tally-count">{lit}</span>
+              <span className="sky-tally-of"> / {SKY_HERO_COUNT} stars lit</span>
             </div>
-          ) : (
-            <div className="star-shop-offers">
-              {offers.map((offer) => {
-                const held = offerHeld(profile, offer);
-                if (offer.grant.kind === 'location') {
-                  return <LocationRow key={offer.id} offer={offer} locationId={offer.grant.locationId} held={held} onOpen={() => setOpenOfferId(offer.id)} />;
-                }
-                if (offer.grant.kind === 'heroBundle') {
+
+            <button type="button" className="sky-call" disabled={!canCall} data-sfx={canCall ? 'ui.commit' : 'none'} onClick={call}>
+              <span className="sky-call-sheen" aria-hidden="true" />
+              <span className="sky-call-label">{pool.length === 0 ? 'The sky is quiet' : 'Call a Star'}</span>
+              {pool.length > 0 && (
+                <span className="sky-call-price">
+                  <HubGlyph name="star" />
+                  {STARFALL_PRICE}
+                </span>
+              )}
+            </button>
+            <p className="sky-hint">
+              {pool.length === 0
+                ? 'Every hero is yours.'
+                : balance < STARFALL_PRICE
+                  ? `${STARFALL_PRICE - balance} more ${STARFALL_PRICE - balance === 1 ? 'star' : 'stars'} to call one down. Clear a run to earn them.`
+                  : 'A hero you don’t own falls with it.'}
+            </p>
+
+            {pool.length > 0 && (
+              <button type="button" className="sky-pool-toggle" aria-expanded={showPool} onClick={() => setShowPool((v) => !v)}>
+                {showPool ? 'Hide who is left' : `Still in the sky · ${pool.length}`}
+                <span className={`sky-pool-chevron${showPool ? ' is-open' : ''}`} aria-hidden="true">
+                  ▾
+                </span>
+              </button>
+            )}
+            {showPool && (
+              <div className="sky-pool">
+                {pool.map((id) => {
+                  const hero = heroes[id];
+                  if (!hero) return null;
                   return (
-                    <BundleRow
-                      key={offer.id}
-                      offer={offer}
-                      heroIds={offer.grant.heroIds}
-                      ownedIds={bundleOwnedHeroIds(profile, offer)}
-                      price={offerPrice(profile, offer)}
-                      held={held}
-                      onOpen={() => setOpenOfferId(offer.id)}
-                    />
+                    <button
+                      key={id}
+                      type="button"
+                      className="sky-pool-face"
+                      style={{ '--type-rgb': getTypeColorRgb(hero.types[0]) } as CSSProperties}
+                      onClick={() => setDossierHeroId(id)}
+                      aria-label={`${hero.name} — view details`}
+                    >
+                      <HeroPortrait heroId={id} className="sky-pool-portrait" />
+                      <span className="sky-pool-name">{hero.name}</span>
+                    </button>
                   );
-                }
-                return null;
-              })}
-            </div>
-          )}
+                })}
+              </div>
+            )}
+          </>
+        )}
 
-          {shelf === 'stars' && (
+        {section === 'shop' && (
+          <>
+            <div className="hub-section-head">Bundles</div>
+            <div className="star-shop-offers">
+              {bundles.map((offer) =>
+                offer.grant.kind === 'heroBundle' ? (
+                  <BundleRow
+                    key={offer.id}
+                    offer={offer}
+                    heroIds={offer.grant.heroIds}
+                    ownedIds={bundleOwnedHeroIds(profile, offer)}
+                    price={offerPrice(profile, offer)}
+                    held={offerHeld(profile, offer)}
+                    onOpen={() => setOpenOfferId(offer.id)}
+                  />
+                ) : null
+              )}
+            </div>
+            {/* A seat for curated Starfalls (docs/collection.md §4, PROPOSED): none are authored. */}
+            <div className="hub-section-head">Alignments</div>
+            <div className="star-shop-empty star-shop-alignments">
+              <span className="star-shop-empty-title">No stars are aligned</span>
+              <span className="star-shop-empty-note">Now and then the sky lines up over a chosen few, and a Starfall under it draws only from them.</span>
+            </div>
+            <div className="hub-section-head">Locations</div>
+            <div className="star-shop-offers">
+              {places.map((offer) =>
+                offer.grant.kind === 'location' ? (
+                  <LocationRow key={offer.id} offer={offer} locationId={offer.grant.locationId} held={offerHeld(profile, offer)} onOpen={() => setOpenOfferId(offer.id)} />
+                ) : null
+              )}
+            </div>
+          </>
+        )}
+
+        {section === 'stars' && (
+          <>
+            <div className="star-shop-balance">
+              <span className="star-shop-balance-ledger">
+                {earned} earned · {spent} spent
+              </span>
+            </div>
+            <HeroStarsPage profile={profile} />
             <p className="records-note star-shop-note">
               {'A star is earned by clearing a run with a hero in one of its Evolutions — three a hero, one a form — and every clear pays a bonus on top, more on a harder rung. Spending one never takes it off this page.'}
             </p>
-          )}
-        </div>
+          </>
+        )}
 
-        <TabStrip tabs={tabs} active={shelf} onSelect={setShelf} />
-      </div>
-
-      <div className="sheet-footer" onClick={(e) => e.stopPropagation()}>
-        <button className="resolve-button sheet-close-button" onClick={onClose}>
-          Close
-        </button>
+        {section === 'spawn' && <SpawnStarsPage profile={profile} />}
       </div>
 
       {openOffer?.grant.kind === 'location' && (
@@ -186,7 +243,17 @@ export function StarShopScreen({ profile, onBuy, onStarfall, onClose }: Props) {
           onClose={() => setOpenOfferId(null)}
         />
       )}
-      {fallen && <StarfallScreen heroId={fallen.heroId} balanceBefore={fallen.balanceBefore} onClose={() => setFallen(null)} />}
+      {fallen && (
+        <StarfallScreen
+          heroId={fallen.heroId}
+          balanceBefore={fallen.balanceBefore}
+          onClose={() => {
+            onHeroFallen(fallen.heroId);
+            setFallen(null);
+            setShowPool(false);
+          }}
+        />
+      )}
       {dossierHero && <HeroDossierOverlay hero={dossierHero} onClose={() => setDossierHeroId(null)} />}
     </div>
   );

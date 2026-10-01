@@ -223,6 +223,23 @@ below was superseded by three equal slots a row (§2).
 - The Summoning: a seeded draw over `heroes` not owned, and a `grant: 'summon'` offer kind.
 - The Collection screen on the title; the Constellation's pack shelf becomes presets + bundles.
 
+**The title hub (2026-10-01, per user direction — Clash Royale / Marvel Snap).** The Collection
+and the Constellation stopped being sheets with a Close button and became whole pages along a
+bottom bar, `Collection · Play · Constellation` (`HubNav.tsx`), Play raised in the middle as the
+title itself. Records went to a corner glyph on Play: a ledger, not somewhere you go. Each page
+has its own sections along its top (`hubChrome.tsx`):
+- **Collection** — *Deck*, the run's 42 on one screen, two types a line, a tap opening that
+  type's bench to swap from (`DeckView.tsx`); and *All heroes*, the long page a type with the rail.
+- **Constellation** — *Starfall*, the sky: every hero in the catalog a star on its type's spoke,
+  the owned ones lit, the Lodestar at the centre and the call under it (`StarSky.tsx`); *Market*,
+  bundles, Alignments and Locations; *Stars* and *Spawn* as before.
+
+The Starfall scene (`Starfall.tsx`) runs ~7.7s, every beat skippable: the stars rise, the type
+wheel spins up and ticks to a stop on the hero's type (the first thing told), the light swells in
+that colour and leaves the sky, falls as a meteor, strikes, and the hero rises out of the pillar
+as a silhouette before colouring in. A hero just fallen flares in the sky, dots the Collection's
+tab and wears a New tag until the session ends.
+
 ---
 
 ## 8. What this changes

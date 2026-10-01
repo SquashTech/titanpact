@@ -16,6 +16,8 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { HubGlyph } from '../shared/nodeIcons';
 import { HeroDossierOverlay } from './HeroDossierOverlay';
 import { STARFALL_NAME } from './Starfall';
+import { HubPageHead, HubSubtabs, type SubtabSpec } from './hubChrome';
+import { DeckView, bundleOf } from './DeckView';
 
 interface Props {
   profile: Profile;
@@ -23,8 +25,11 @@ interface Props {
   onChangeDeck: (deck: Deck) => void;
   /** Spends stars on the bundle a locked hero comes in (run/starShop.ts buyOffer). */
   onBuy: (offer: StarShopOffer) => void;
-  onClose: () => void;
+  /** A hero fallen this session: tagged New until the Collection has been seen. */
+  freshHeroId: string | null;
 }
+
+type View = 'deck' | 'all';
 
 const typeIndex = (type: TypeId) => TYPES.indexOf(type as (typeof TYPES)[number]);
 const TYPE_ORDER: TypeId[] = draftableTypes(heroes).sort((a, b) => typeIndex(a) - typeIndex(b));
@@ -52,14 +57,9 @@ interface Drag {
   scale: number;
 }
 
-/** The bundle a hero comes in, or undefined for one only the Starfall draws. */
-function bundleOf(heroId: string): StarShopOffer | undefined {
-  const offer = starShopCatalog[heroes[heroId]?.unlock ?? ''];
-  return offer?.grant.kind === 'heroBundle' ? offer : undefined;
-}
-
 /**
- * The Collection (docs/collection.md §2): one long page, a section a type. Each section's deck
+ * The Collection (docs/collection.md §2), a hub page in two views. Deck is the run's pools at a
+ * glance (DeckView.tsx). All heroes is one long page, a section a type. Each section's deck
  * sits in a gilt alcove at its head; the owned rest and the ones still to buy are under it. The
  * rail on the right edge jumps the page to a type and lights the one in view.
  *
@@ -68,9 +68,15 @@ function bundleOf(heroId: string): StarShopOffer | undefined {
  * Swap light the other side of the section to be tapped. A held card lifts off the page and is
  * dropped on the hero it trades places with.
  */
-export function CollectionScreen({ profile, onChangeDeck, onBuy, onClose }: Props) {
+export function CollectionScreen({ profile, onChangeDeck, onBuy, freshHeroId }: Props) {
   const deck = profileDeck(profile, heroes);
   const balance = starBalance(profile, starShopCatalog);
+  const [view, setView] = useState<View>('deck');
+  const ownedCount = Object.values(heroes).filter((hero) => ownsHero(hero.id, hero, profile.purchases)).length;
+  const views: readonly SubtabSpec<View>[] = [
+    { id: 'deck', label: 'Deck' },
+    { id: 'all', label: 'All heroes', count: ownedCount },
+  ];
   const [selected, setSelected] = useState<string | null>(null);
   const [swapping, setSwapping] = useState<string | null>(null);
   const [drag, setDrag] = useState<Drag | null>(null);
@@ -248,7 +254,7 @@ export function CollectionScreen({ profile, onChangeDeck, onBuy, onClose }: Prop
     };
     scroller.addEventListener('touchmove', block, { passive: false });
     return () => scroller.removeEventListener('touchmove', block);
-  }, []);
+  }, [view]);
 
   useEffect(() => cancelHold, []);
 
@@ -293,7 +299,8 @@ export function CollectionScreen({ profile, onChangeDeck, onBuy, onClose }: Prop
     if (type !== activeType) jumpTo(type, false);
   }
 
-  useEffect(syncActiveType, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(syncActiveType, [view]);
 
   // A lifted card's verbs hang below it; bring them into view if the card sat low in the well.
   useEffect(() => {
@@ -343,6 +350,7 @@ export function CollectionScreen({ profile, onChangeDeck, onBuy, onClose }: Prop
           <span className="coll-card-light" aria-hidden="true" />
           <HeroPortrait heroId={heroId} className="coll-card-portrait" />
           <span className="coll-card-name">{heroes[heroId].name}</span>
+          {heroId === freshHeroId && <span className="coll-card-new">New</span>}
           {state === 'locked' ? (
             <span className="coll-card-price">{price === undefined ? STARFALL_NAME : `★ ${price}`}</span>
           ) : (
@@ -389,19 +397,13 @@ export function CollectionScreen({ profile, onChangeDeck, onBuy, onClose }: Prop
   }
 
   return (
-    <div className="detail-overlay is-sheet compendium-overlay" onClick={onClose}>
-      <div className="detail-panel is-hero-sheet compendium-sheet collection-sheet" onClick={(e) => e.stopPropagation()}>
-        <div className="detail-header is-hero compendium-head">
-          <span className="detail-portrait-plate compendium-head-plate" aria-hidden="true">
-            <HubGlyph name="roster" className="compendium-head-glyph" />
-          </span>
-          <span className="detail-name compendium-head-title">Collection</span>
-          <span className="collection-balance" aria-label={`${balance} ${balance === 1 ? 'star' : 'stars'}`}>
-            <HubGlyph name="star" />
-            {balance}
-          </span>
-        </div>
+    <div className="hub-page coll-page">
+      <HubPageHead title="Collection" balance={balance} />
+      <HubSubtabs tabs={views} active={view} onSelect={setView} />
 
+      {view === 'deck' ? (
+        <DeckView profile={profile} deck={deck} freshHeroId={freshHeroId} onChangeDeck={onChangeDeck} onPeekHero={setDossierHeroId} />
+      ) : (
         <div className="collection-frame">
           <div
             ref={scrollerRef}
@@ -459,13 +461,7 @@ export function CollectionScreen({ profile, onChangeDeck, onBuy, onClose }: Prop
             ))}
           </div>
         </div>
-      </div>
-
-      <div className="sheet-footer" onClick={(e) => e.stopPropagation()}>
-        <button className="resolve-button sheet-close-button" onClick={onClose}>
-          Close
-        </button>
-      </div>
+      )}
 
       {dossierHero && <HeroDossierOverlay hero={dossierHero} cycle={DOSSIER_CYCLE} onClose={() => setDossierHeroId(null)} />}
     </div>

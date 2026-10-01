@@ -57,6 +57,10 @@ export type SfxId =
   | 'star.rise'
   | 'star.fall'
   | 'star.land'
+  | 'star.tick'
+  | 'star.lock'
+  | 'star.charge'
+  | 'star.reveal'
   // Combat
   | 'cast'
   | 'cast.Fire'
@@ -646,6 +650,54 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'triangle', freq: 392, freqEnd: 587, detune: 8, gain: 0.22, attack: 0.02, hold: 0.06, decay: 0.9, delay: 0.16 },
       { wave: 'sine', freq: 1175, gain: 0.12, attack: 0.01, decay: 1.2, delay: 0.2 },
       { wave: 'sine', freq: 2349, gain: 0.06, attack: 0.01, decay: 1.0, delay: 0.24 },
+    ],
+  },
+
+  /** The summoning wheel passing a sigil (StarfallScreen): one glass tick, re-pitched as the wheel slows. */
+  'star.tick': {
+    gain: 0.22,
+    jitter: 0.02,
+    voices: [
+      { wave: 'noise', gain: 0.3, attack: 0.001, decay: 0.03, filter: { type: 'bandpass', freq: 4200, q: 6 } },
+      { wave: 'sine', freq: 2093, gain: 0.12, attack: 0.002, decay: 0.08 },
+    ],
+  },
+
+  /** The wheel stopping on the hero's type: a struck bell over a low bloom, so the answer lands before the star does. */
+  'star.lock': {
+    gain: 0.48,
+    jitter: 0.004,
+    voices: [
+      { wave: 'noise', gain: 0.22, attack: 0.001, decay: 0.12, filter: { type: 'bandpass', freq: 2600, freqEnd: 1200, q: 5 } },
+      { wave: 'sine', freq: 131, freqEnd: 98, gain: 0.34, attack: 0.004, decay: 0.9 },
+      { wave: 'triangle', freq: 523, detune: 6, gain: 0.2, attack: 0.004, decay: 1.4 },
+      { wave: 'sine', freq: 1568, detune: 11, gain: 0.1, attack: 0.004, decay: 1.6, delay: 0.02 },
+      { wave: 'sine', freq: 2093, gain: 0.06, attack: 0.01, decay: 1.2, delay: 0.05 },
+    ],
+  },
+
+  /** The answering star swelling before it lets go: a long rising band of air with a fifth climbing under it. */
+  'star.charge': {
+    gain: 0.36,
+    jitter: 0,
+    voices: [
+      { wave: 'noise', gain: 0.24, attack: 0.8, decay: 0.2, filter: { type: 'bandpass', freq: 500, freqEnd: 5200, q: 1.4 } },
+      { wave: 'sine', freq: 196, freqEnd: 784, gain: 0.18, attack: 0.7, hold: 0.1, decay: 0.2 },
+      { wave: 'triangle', freq: 294, freqEnd: 1175, detune: 12, gain: 0.08, attack: 0.75, decay: 0.2 },
+    ],
+  },
+
+  /** The hero coloured in: a rising major arpeggio that rings on, the Starfall's one fanfare. */
+  'star.reveal': {
+    gain: 0.42,
+    jitter: 0,
+    voices: [
+      { wave: 'triangle', freq: 392, gain: 0.2, attack: 0.01, decay: 1.4 },
+      { wave: 'triangle', freq: 494, gain: 0.18, attack: 0.01, decay: 1.4, delay: 0.09 },
+      { wave: 'triangle', freq: 587, gain: 0.18, attack: 0.01, decay: 1.5, delay: 0.18 },
+      { wave: 'sine', freq: 784, detune: 8, gain: 0.16, attack: 0.01, decay: 1.9, delay: 0.27 },
+      { wave: 'sine', freq: 1568, detune: 14, gain: 0.07, attack: 0.02, decay: 1.8, delay: 0.3 },
+      { wave: 'noise', gain: 0.08, attack: 0.3, decay: 1.2, delay: 0.2, filter: { type: 'highpass', freq: 5200 } },
     ],
   },
 

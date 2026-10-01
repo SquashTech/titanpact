@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { heroes } from '../../data/heroes';
 import { playSfx } from '../../audio/sfx';
@@ -9,41 +9,52 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { HeroDossierOverlay } from './HeroDossierOverlay';
 import { HubGlyph } from '../shared/nodeIcons';
 import { TypeBadge } from '../shared/TypeBadge';
+import { TypeWheel, WHEEL_STEP_DEG, wheelRestDeg } from '../shared/TypeWheel';
 import { overlayHost } from '../shared/overlayHost';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 
-// The Starfall (docs/collection.md §4): a blind draw of a hero the account does not own. The
-// shelf card, and the screen a draw plays out on — the spent stars rising into the Constellation,
-// one star answering, and falling to the ground with the hero in it.
+// The Starfall (docs/collection.md §4): a blind draw of a hero the account does not own, played as
+// a summoning. The spent stars rise into the sky; the type wheel spins up around them and slows,
+// ticking, until it locks on the hero's type — the first thing the player learns; the gathered
+// light swells in that colour, leaves the sky, and comes back down as a falling star; it strikes
+// the ground and the hero rises out of the light as a silhouette before colouring in.
 
-/** The draw's name, in one place: the card, the screen, the Collection's note. */
+/** The draw's name, in one place: the Constellation, the scene, the Collection's note. */
 export const STARFALL_NAME = 'Starfall';
 
-/** A fixed night: the same sky every draw, so the Constellation reads as a place and not as noise. */
+/** A fixed night: the same sky every draw. */
 function skyStars(count: number): { x: number; y: number; r: number; delay: number }[] {
   let seed = 7;
   const next = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-  return Array.from({ length: count }, () => ({ x: next() * 100, y: next() * 66, r: 0.35 + next() * 0.9, delay: next() * 4 }));
+  return Array.from({ length: count }, () => ({ x: next() * 100, y: next() * 100, r: 0.35 + next() * 1.1, delay: next() * 4 }));
 }
-const SKY = skyStars(64);
-
-/** Where the answering star hangs, and where it lands — percent of the stage. */
-const TARGET = { x: 64, y: 21 };
-const GROUND = { x: 50, y: 74 };
-/** The constellation it belongs to, drawn up to it as it wakes. */
-const FIGURE: readonly { x: number; y: number }[] = [
-  { x: 22, y: 30 },
-  { x: 33, y: 16 },
-  { x: 47, y: 25 },
-  TARGET,
-  { x: 79, y: 12 },
-  { x: 86, y: 33 },
-];
+const SKY = skyStars(90);
+const STREAKS = Array.from({ length: 28 }, (_, i) => ({ angle: (i * 137.51) % 360, delay: (i * 0.071) % 0.6, len: 30 + ((i * 53) % 40) }));
+const EMBERS = 22;
 
 /** Beat boundaries in ms from the tap. */
-const BEATS = { firstStar: 450, starGap: 330, kindle: 1350, fall: 2250, land: 2900, reveal: 3350, settled: 4250 } as const;
+const BEATS = {
+  firstToken: 260,
+  tokenGap: 320,
+  spin: 1050,
+  spinMs: 2600,
+  charge: 3900,
+  kindle: 4150,
+  launch: 4950,
+  fall: 5350,
+  land: 5950,
+  rise: 6100,
+  reveal: 6950,
+  settled: 7700,
+} as const;
+/** Whole turns the wheel makes before it lands. */
+const SPIN_TURNS = 4;
 
-type Phase = 'rise' | 'kindle' | 'fall' | 'land' | 'reveal';
+type Phase = 'gather' | 'spin' | 'lock' | 'kindle' | 'launch' | 'fall' | 'land' | 'rise' | 'reveal';
+const ORDER: readonly Phase[] = ['gather', 'spin', 'lock', 'kindle', 'launch', 'fall', 'land', 'rise', 'reveal'];
+
+/** Ease-out quart: fast off the mark, a long ticking crawl into the lock. */
+const ease = (t: number) => 1 - Math.pow(1 - t, 4);
 
 interface ScreenProps {
   heroId: string;
@@ -52,34 +63,28 @@ interface ScreenProps {
   onClose: () => void;
 }
 
-/**
- * The draw, as a scene. The stars leave the balance one at a time and fly up into the sky; one
- * star of a constellation answers, swells and takes the hero's colour — the first hint of what
- * is coming — then lets go, streaks to the ground and lands; the hero stands up out of the light
- * as a silhouette and colours in. A tap before the end skips to the hero.
- */
 export function StarfallScreen({ heroId, balanceBefore, onClose }: ScreenProps) {
   const hero = heroes[heroId];
-  const [phase, setPhase] = useState<Phase>('rise');
+  const type = hero?.types[0];
+  const [phase, setPhase] = useState<Phase>('gather');
   const [launched, setLaunched] = useState(0);
   const [settled, setSettled] = useState(false);
-  const [fallAngle, setFallAngle] = useState(0);
   const [showDossier, setShowDossier] = useState(false);
-  const stageRef = useRef<HTMLDivElement>(null);
+  const wheelRef = useRef<HTMLDivElement>(null);
   const timers = useRef<number[]>([]);
+  const frame = useRef(0);
 
-  // The streak's tail points back along the path, so it needs the stage's real aspect.
-  useLayoutEffect(() => {
-    const rect = stageRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const dx = ((GROUND.x - TARGET.x) / 100) * rect.width;
-    const dy = ((GROUND.y - TARGET.y) / 100) * rect.height;
-    setFallAngle((Math.atan2(dy, dx) * 180) / Math.PI);
-  }, []);
+  const finalSpin = wheelRestDeg(type) - SPIN_TURNS * 360;
+
+  function setSpin(deg: number) {
+    wheelRef.current?.style.setProperty('--spin', `${deg}deg`);
+  }
 
   function skipToReveal() {
     timers.current.forEach(window.clearTimeout);
     timers.current = [];
+    cancelAnimationFrame(frame.current);
+    setSpin(finalSpin);
     setLaunched(STARFALL_PRICE);
     setPhase('reveal');
     setSettled(true);
@@ -92,12 +97,36 @@ export function StarfallScreen({ heroId, balanceBefore, onClose }: ScreenProps) 
     }
     const at = (ms: number, fn: () => void) => timers.current.push(window.setTimeout(fn, ms));
     for (let i = 0; i < STARFALL_PRICE; i++) {
-      at(BEATS.firstStar + i * BEATS.starGap, () => {
+      at(BEATS.firstToken + i * BEATS.tokenGap, () => {
         setLaunched(i + 1);
         playSfx('star.rise', { pitch: 1 + i * 0.12 });
       });
     }
+    at(BEATS.spin, () => {
+      setPhase('spin');
+      const start = performance.now();
+      let lastStep = 0;
+      const tick = (now: number) => {
+        const t = Math.min(1, (now - start) / BEATS.spinMs);
+        const deg = finalSpin * ease(t);
+        setSpin(deg);
+        const step = Math.floor(Math.abs(deg) / WHEEL_STEP_DEG);
+        if (step !== lastStep) {
+          lastStep = step;
+          // Rising as it slows: the last few ticks are the tension, so they climb.
+          playSfx('star.tick', { pitch: 0.8 + t * 0.7, gain: 0.5 + t * 0.6 });
+        }
+        if (t < 1) frame.current = requestAnimationFrame(tick);
+        else {
+          setPhase('lock');
+          playSfx('star.lock');
+        }
+      };
+      frame.current = requestAnimationFrame(tick);
+    });
+    at(BEATS.charge, () => playSfx('star.charge'));
     at(BEATS.kindle, () => setPhase('kindle'));
+    at(BEATS.launch, () => setPhase('launch'));
     at(BEATS.fall, () => {
       setPhase('fall');
       playSfx('star.fall');
@@ -105,106 +134,131 @@ export function StarfallScreen({ heroId, balanceBefore, onClose }: ScreenProps) 
     at(BEATS.land, () => {
       setPhase('land');
       playSfx('star.land');
+      if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') navigator.vibrate([30, 40, 60]);
     });
-    at(BEATS.reveal, () => setPhase('reveal'));
+    at(BEATS.rise, () => setPhase('rise'));
+    at(BEATS.reveal, () => {
+      setPhase('reveal');
+      playSfx('star.reveal');
+    });
     at(BEATS.settled, () => setSettled(true));
-    return () => timers.current.forEach(window.clearTimeout);
+    return () => {
+      timers.current.forEach(window.clearTimeout);
+      cancelAnimationFrame(frame.current);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!hero) return null;
-  const typeRgb = getTypeColorRgb(hero.types[0]);
-  const past = (p: Phase) => ['rise', 'kindle', 'fall', 'land', 'reveal'].indexOf(phase) >= ['rise', 'kindle', 'fall', 'land', 'reveal'].indexOf(p);
+  if (!hero || !type) return null;
+  const past = (p: Phase) => ORDER.indexOf(phase) >= ORDER.indexOf(p);
+  const locked = past('lock');
 
   // Portalled into overlayHost(), never body (overlayHost.ts).
   return createPortal(
     <div
-      className={`starfall is-${phase}${settled ? ' is-settled' : ''}`}
-      style={
-        {
-          '--star-rgb': typeRgb,
-          '--target-x': `${TARGET.x}%`,
-          '--target-y': `${TARGET.y}%`,
-          '--ground-x': `${GROUND.x}%`,
-          '--ground-y': `${GROUND.y}%`,
-          '--fall-angle': `${fallAngle}deg`,
-        } as CSSProperties
-      }
-      // A portal still bubbles through React to the Constellation, whose backdrop closes it.
+      className={`summon is-${phase}${locked ? ' is-locked' : ''}${past('land') ? ' is-landed' : ''}${settled ? ' is-settled' : ''}`}
+      style={{ '--type-rgb': getTypeColorRgb(type), '--type-color': getTypeColor(type) } as CSSProperties}
+      // A portal still bubbles through React to whatever hosts it; nothing behind should hear this tap.
       onClick={(e) => {
         e.stopPropagation();
         if (!settled) skipToReveal();
       }}
     >
-      <div ref={stageRef} className="starfall-stage">
-        <div className="starfall-sky" aria-hidden="true">
+      <div className="summon-stage">
+        <div className="summon-sky" aria-hidden="true">
+          <span className="summon-nebula" />
           {SKY.map((star, i) => (
-            <span
-              key={i}
-              className="starfall-sky-star"
-              style={{ left: `${star.x}%`, top: `${star.y}%`, '--r': star.r, animationDelay: `${star.delay}s` } as CSSProperties}
-            />
+            <span key={i} className="summon-sky-star" style={{ left: `${star.x}%`, top: `${star.y}%`, '--r': star.r, animationDelay: `${star.delay}s` } as CSSProperties} />
           ))}
-          <svg className="starfall-figure" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <polyline pathLength={1} points={FIGURE.map((p) => `${p.x},${p.y}`).join(' ')} vectorEffect="non-scaling-stroke" />
-          </svg>
-          {FIGURE.filter((p) => p !== TARGET).map((p, i) => (
-            <span key={i} className="starfall-figure-star" style={{ left: `${p.x}%`, top: `${p.y}%` }} />
+          <span className="summon-flood" />
+        </div>
+
+        {/* The sky rushing past while the wheel spins. */}
+        <div className="summon-warp" aria-hidden="true">
+          {STREAKS.map((s, i) => (
+            <span key={i} style={{ '--a': `${s.angle}deg`, '--d': `${s.delay}s`, '--len': `${s.len}%` } as CSSProperties} />
           ))}
         </div>
 
-        {/* The balance, counting the spend down as each star leaves it. */}
-        <div className="starfall-balance" aria-label={`${balanceBefore - launched} stars`}>
+        <div className="summon-balance" aria-label={`${balanceBefore - launched} stars`}>
           <HubGlyph name="star" />
-          <span key={launched} className="starfall-balance-count">
+          <span key={launched} className="summon-balance-count">
             {balanceBefore - launched}
           </span>
         </div>
 
         {Array.from({ length: STARFALL_PRICE }, (_, i) => (
-          <span key={i} className={`starfall-token${i < launched ? ' is-launched' : ''}`} style={{ '--i': i } as CSSProperties} aria-hidden="true">
-            <span className="starfall-token-body">
-              <HubGlyph name="star" />
-            </span>
+          <span key={i} className={`summon-token${i < launched ? ' is-launched' : ''}`} style={{ '--i': i } as CSSProperties} aria-hidden="true">
+            <HubGlyph name="star" />
           </span>
         ))}
 
-        {/* The answering star: hangs, swells into the hero's colour, lets go. */}
-        <span className={`starfall-star${past('kindle') ? ' is-kindled' : ''}`} aria-hidden="true">
-          <span className="starfall-star-tail" />
-          <span className="starfall-star-core" />
+        <div className="summon-altar" aria-hidden="true">
+          <div ref={wheelRef} className="summon-wheel" style={{ '--spin': '0deg', '--wheel-tint': getTypeColor(type) } as CSSProperties}>
+            <TypeWheel size={300} ring focus={locked ? [type] : undefined} topType={type} />
+          </div>
+          <span className="summon-pointer" />
+          <span className="summon-lock-ring" />
+          <span className="summon-lock-ring is-second" />
+          <span className="summon-orb">
+            <span className="summon-orb-glow" />
+            <span className="summon-orb-core" />
+            {locked && (
+              <span className="summon-orb-sigil">
+                <ElementGlyph type={type} />
+              </span>
+            )}
+          </span>
+        </div>
+
+        <span className="summon-meteor" aria-hidden="true">
+          <span className="summon-meteor-tail" />
+          <span className="summon-meteor-head" />
         </span>
 
-        <div className="starfall-ground" aria-hidden="true" />
-        <span className="starfall-flash" aria-hidden="true" />
-        <span className="starfall-ring" aria-hidden="true" />
-        <span className="starfall-embers" aria-hidden="true">
-          {Array.from({ length: 14 }, (_, i) => (
-            <span key={i} style={{ '--e': i } as CSSProperties} />
+        <div className="summon-ground" aria-hidden="true">
+          <span className="summon-crater" />
+        </div>
+        <span className="summon-flash" aria-hidden="true" />
+        <span className="summon-shock" aria-hidden="true" />
+        <span className="summon-shock is-second" aria-hidden="true" />
+        <span className="summon-pillar" aria-hidden="true" />
+        <span className="summon-embers" aria-hidden="true">
+          {Array.from({ length: EMBERS }, (_, i) => (
+            <span key={i} style={{ '--e': i, '--x': `${((i * 61) % 100) - 50}px`, '--h': `${90 + ((i * 37) % 120)}px` } as CSSProperties} />
           ))}
         </span>
-        <span className="starfall-rays" aria-hidden="true" />
+        <span className="summon-rays" aria-hidden="true" />
 
-        <div className="starfall-hero">
-          <HeroPortrait heroId={hero.id} className="starfall-hero-figure" />
+        <div className="summon-hero">
+          <HeroPortrait heroId={hero.id} className="summon-hero-figure" />
         </div>
       </div>
 
-      <div className="starfall-plate">
-        <div className="starfall-kicker">
-          <ElementGlyph type={hero.types[0]} />
-          {STARFALL_NAME}
+      {locked && !past('reveal') && (
+        <div className="summon-omen" aria-hidden="true">
+          <span className="summon-omen-line">{`A ${type} star answers`}</span>
         </div>
-        <h2 className="starfall-name" style={{ color: getTypeColor(hero.types[0]) }}>
-          {hero.name}
+      )}
+
+      <div className="summon-plate">
+        <div className="summon-ribbon">
+          <span>New hero</span>
+        </div>
+        <h2 className="summon-name" aria-label={hero.name}>
+          {Array.from(hero.name).map((ch, i) => (
+            <span key={i} style={{ '--l': i } as CSSProperties} aria-hidden="true">
+              {ch === ' ' ? ' ' : ch}
+            </span>
+          ))}
         </h2>
-        <div className="starfall-types">
+        <div className="summon-types">
           {hero.types.map((t) => (
             <TypeBadge key={t} type={t} />
           ))}
         </div>
-        <div className="starfall-oath">falls into your Collection</div>
-        <div className="starfall-actions">
+        <div className="summon-oath">falls into your Collection</div>
+        <div className="summon-actions">
           <button type="button" className="resolve-button is-secondary" disabled={!settled} onClick={() => setShowDossier(true)}>
             Info
           </button>
@@ -214,79 +268,10 @@ export function StarfallScreen({ heroId, balanceBefore, onClose }: ScreenProps) 
         </div>
       </div>
 
-      {!settled && <span className="starfall-skip">Tap to skip</span>}
+      {!settled && <span className="summon-skip">Tap to skip</span>}
       {/* Inside the portal, so the dossier stands over the scene rather than under it. */}
       {showDossier && <HeroDossierOverlay hero={hero} onClose={() => setShowDossier(false)} />}
     </div>,
     overlayHost()
-  );
-}
-
-interface CardProps {
-  /** Every hero a Starfall can still draw (run/starShop.ts starfallPool). */
-  pool: readonly string[];
-  enabled: boolean;
-  onCall: () => void;
-  onPeekHero: (heroId: string) => void;
-}
-
-/**
- * The Starfall on the Constellation's Heroes page: a strip of night over the price and the one
- * button, and — folded away until asked for — every hero it could still bring down.
- */
-export function StarfallCard({ pool, enabled, onCall, onPeekHero }: CardProps) {
-  const [open, setOpen] = useState(false);
-  const empty = pool.length === 0;
-  return (
-    <section className="starfall-card">
-      <div className="starfall-card-sky" aria-hidden="true">
-        {SKY.slice(0, 26).map((star, i) => (
-          <span key={i} className="starfall-sky-star" style={{ left: `${star.x}%`, top: `${star.y * 1.4}%`, '--r': star.r, animationDelay: `${star.delay}s` } as CSSProperties} />
-        ))}
-        <span className="starfall-card-streak" />
-      </div>
-      <div className="starfall-card-body">
-        <div className="starfall-card-head">
-          <span className="starfall-card-title">{STARFALL_NAME}</span>
-          <span className="starfall-card-price">
-            <HubGlyph name="star" />
-            {STARFALL_PRICE}
-          </span>
-        </div>
-        <p className="starfall-card-text">{empty ? 'Every hero is yours. The sky is quiet.' : 'Call a star down, and a hero you don’t own falls with it.'}</p>
-        <button type="button" className="resolve-button starfall-card-call" disabled={!enabled} data-sfx={enabled ? 'ui.commit' : 'none'} onClick={onCall}>
-          {empty ? 'Nothing left to fall' : 'Call a Star'}
-        </button>
-        {!empty && (
-          <button type="button" className="starfall-card-toggle" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
-            {open ? 'Hide who is left' : `Who is left · ${pool.length}`}
-            <span className={`starfall-card-chevron${open ? ' is-open' : ''}`} aria-hidden="true">
-              ▾
-            </span>
-          </button>
-        )}
-        {open && (
-          <div className="starfall-card-pool">
-            {pool.map((id) => {
-              const hero = heroes[id];
-              if (!hero) return null;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  className="starfall-card-face"
-                  style={{ '--type-rgb': getTypeColorRgb(hero.types[0]) } as CSSProperties}
-                  onClick={() => onPeekHero(id)}
-                  aria-label={`${hero.name} — view details`}
-                >
-                  <HeroPortrait heroId={id} className="starfall-card-portrait" />
-                  <span className="starfall-card-face-name">{hero.name}</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </section>
   );
 }

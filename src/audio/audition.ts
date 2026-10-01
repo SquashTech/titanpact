@@ -42,6 +42,10 @@ const UI_IDS: SfxId[] = [
   'star.rise',
   'star.fall',
   'star.land',
+  'star.tick',
+  'star.lock',
+  'star.charge',
+  'star.reveal',
 ];
 
 const NOTES: Partial<Record<SfxId, string>> = {
@@ -64,6 +68,10 @@ const NOTES: Partial<Record<SfxId, string>> = {
   'star.rise': 'a spent star lifting into the Constellation — re-pitched per star',
   'star.fall': 'the Starfall — a star leaving the sky',
   'star.land': 'the star landing, a hero standing up out of it',
+  'star.tick': 'the summoning wheel passing a sigil — re-pitched as it slows',
+  'star.lock': 'the wheel stopping on the hero’s type',
+  'star.charge': 'the answering star swelling before it falls',
+  'star.reveal': 'the hero coloured in — the Starfall fanfare',
   'titan.stir': 'the cold open at the top of a run, under the black',
   'titan.gaze': 'the eyes reaching open',
   'map.path': 'the route drawing forward out of the node just finished',
