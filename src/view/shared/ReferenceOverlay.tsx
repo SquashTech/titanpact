@@ -2,7 +2,12 @@ import { useState, type CSSProperties } from 'react';
 import { TYPES, typeChart } from '../../data/typechart';
 import { statuses } from '../../data/statuses';
 import { passives } from '../../data/passives';
-import type { PassiveDefinition, StatusDefinition } from '../../engine/content';
+import { fieldEffects } from '../../data/fieldEffects';
+import { FIELD_EFFECT_DURATION_ROUNDS } from '../../engine/combat/fieldEffectEngine';
+import type { FieldEffectDefinition, PassiveDefinition, StatusDefinition } from '../../engine/content';
+import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
+import { ElementGlyph } from './elementIcons';
+import { fieldEffectIconArt } from './iconArt';
 import { TypeBadge } from './TypeBadge';
 import { StatusGlyph, statusColor, statusTint, statusClearText, pipelineLabel } from './statusIcons';
 import { EquipmentCatalog, TypeDial } from './referencePages';
@@ -13,7 +18,10 @@ interface Props {
   initialTab?: Tab;
 }
 
-type Tab = 'types' | 'statuses' | 'passives' | 'equipment';
+type Tab = 'types' | 'statuses' | 'passives' | 'fields' | 'equipment';
+
+/** The fields a hero can set. Withering Gaze is the Titan's, met first in the finale, and is kept for it. */
+const REFERENCE_FIELD_EFFECTS = Object.values(fieldEffects).filter((def) => def.id !== 'witheringGaze');
 
 function multClass(mult: number): string {
   if (mult > 1) return 'eff-super';
@@ -25,7 +33,7 @@ function formatCell(mult: number): string {
   return mult === 1 ? '–' : `${mult}`;
 }
 
-/** Player-facing rules reference: the type dial over the authored chart, the status, passive and equipment catalogs. */
+/** Player-facing rules reference: the type dial over the authored chart, the status, passive, Field Effect and equipment catalogs. */
 export function ReferenceOverlay({ onClose, initialTab = 'types' }: Props) {
   const [tab, setTab] = useState<Tab>(initialTab);
 
@@ -47,6 +55,9 @@ export function ReferenceOverlay({ onClose, initialTab = 'types' }: Props) {
           </button>
           <button className={`reference-tab${tab === 'passives' ? ' reference-tab-active' : ''}`} onClick={() => setTab('passives')}>
             Passives
+          </button>
+          <button className={`reference-tab${tab === 'fields' ? ' reference-tab-active' : ''}`} onClick={() => setTab('fields')}>
+            Fields
           </button>
           <button className={`reference-tab${tab === 'equipment' ? ' reference-tab-active' : ''}`} onClick={() => setTab('equipment')}>
             Equipment
@@ -84,6 +95,13 @@ export function ReferenceOverlay({ onClose, initialTab = 'types' }: Props) {
         ) : tab === 'equipment' ? (
           <div className="status-reference-scroll">
             <EquipmentCatalog />
+          </div>
+        ) : tab === 'fields' ? (
+          <div className="status-reference-scroll">
+            <p className="reference-lead">One field at a time, for {FIELD_EFFECT_DURATION_ROUNDS} rounds. A different one replaces it.</p>
+            {REFERENCE_FIELD_EFFECTS.map((def) => (
+              <FieldEffectReferenceRow key={def.id} def={def} />
+            ))}
           </div>
         ) : tab === 'statuses' ? (
           <div className="status-reference-scroll">
@@ -123,6 +141,29 @@ function PassiveReferenceRow({ def }: { def: PassiveDefinition }) {
         <div className="status-ref-desc">{def.description}</div>
         <PassiveStatChips def={def} />
         {summary && <div className="status-ref-meta">{summary}</div>}
+      </div>
+    </div>
+  );
+}
+
+function FieldEffectReferenceRow({ def }: { def: FieldEffectDefinition }) {
+  const type = def.flavorType ?? 'Arcane';
+  const color = getTypeColor(type);
+  const iconSrc = fieldEffectIconArt[def.id];
+
+  return (
+    <div className="status-ref-row" style={{ '--plate-color': color } as CSSProperties}>
+      <span className="status-ref-icon" style={{ color, background: `rgba(${getTypeColorRgb(type)}, 0.16)` }}>
+        {iconSrc ? <img src={iconSrc} alt="" draggable={false} /> : <ElementGlyph type={type} />}
+      </span>
+      <div className="status-ref-body">
+        <div className="status-ref-head">
+          <span className="status-ref-name" style={{ color }}>
+            {def.name}
+          </span>
+          <span className="status-ref-pipeline">{type}</span>
+        </div>
+        <div className="status-ref-desc">{def.description}</div>
       </div>
     </div>
   );

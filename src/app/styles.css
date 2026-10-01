@@ -9132,6 +9132,13 @@ textarea,
   flex-shrink: 0;
 }
 
+/* A Field Effect's own icon art (Reference, Fields tab), at the field dossier's size. */
+.status-ref-icon > img {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+}
+
 .status-ref-body {
   min-width: 0;
   display: flex;
@@ -9180,6 +9187,18 @@ textarea,
   font-size: 11px;
   color: var(--text-dim);
   font-style: italic;
+}
+
+/* Five tabs: sized to their labels, or "Equipment" is the one that ellipsises. */
+.reference-tab {
+  flex: 1 1 auto;
+}
+
+/* The one rule every row on a tab shares, said once above them (the Fields tab's clock). */
+.reference-lead {
+  margin: 0 2px 2px;
+  font-size: 11px;
+  color: var(--text-dim);
 }
 
 /* Full-screen dimming backdrop only — the actual readable content lives in
@@ -24048,7 +24067,6 @@ button.star-shop-bundle-face {
 .move-detail-card.is-terse .move-detail-effects {
   gap: 5px;
 }
-
 .move-detail-forecast {
   display: flex;
   flex-direction: column;
