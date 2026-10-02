@@ -194,6 +194,15 @@ function ChoiceMedallion({
           </span>
         ))}
       </span>
+      {/* Above the tile: the route lines arrive from below. */}
+      <span className="map-choice-label" aria-hidden="true">
+        {NODE_LABELS[node.type]}
+      </span>
+      {hint && !opening && (
+        <span className="map-choice-hint" aria-hidden="true">
+          {hint}
+        </span>
+      )}
       <button
         type="button"
         className={`map-medallion${scoutedFace ? ' is-scouted' : ''}${art ? (prop ? ' has-prop' : ' has-art') : ''}${landmark ? ` is-landmark is-${landmark}` : ''}${opening ? ' is-opening' : ''}`}
@@ -223,14 +232,6 @@ function ChoiceMedallion({
           </span>
         )}
       </button>
-      <span className={`map-choice-label${scoutedFace && art ? ' is-scouted' : ''}`} aria-hidden="true">
-        {NODE_LABELS[node.type]}
-      </span>
-      {hint && !opening && (
-        <span className="map-choice-hint" aria-hidden="true">
-          {hint}
-        </span>
-      )}
     </div>
   );
 }
