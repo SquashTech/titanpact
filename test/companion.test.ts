@@ -25,7 +25,7 @@ import {
 } from '../src/run/companion';
 import { mobEncounter } from '../src/run/spawn';
 import { encounterScaling } from '../src/run/difficulty';
-import { DEFAULT_SCHEDULE, entryBandRank, levelMovePool, rosterEntryTypes, scheduleEntries, scheduleFor } from '../src/run/progression';
+import { DEFAULT_SCHEDULE, entryBandRank, levelMovePool, pendingScheduleEntry, rosterEntryTypes, scheduleEntries, scheduleFor } from '../src/run/progression';
 import { MASTERY_CAP, MASTERY_EVOLUTION } from '../src/run/mastery';
 import { ROSTER_CAP, addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
 import { equipItem } from '../src/run/equipment';
@@ -76,6 +76,15 @@ test('companion: it joins at the roster\'s par with its growth rolled, mortal, i
   assert.ok(!isRecruitable('cubling', heroes));
   assert.throws(() => joinCompanion(run, 'valor', rosterHeroes), 'a hero cannot be the companion');
   for (const entry of run.roster) assert.strictEqual(entry.mortal, false);
+});
+
+test('companion: it joins with the offers below its level behind it, so the next level-up owes at most one', () => {
+  const run = starterRun(5);
+  const companion = companionOf(joinCompanion(run, 'cubling', rosterHeroes, () => 0.99))!;
+  const below = scheduleEntries(DEFAULT_SCHEDULE).filter((e) => e.level <= 5).length;
+  assert.ok(below > 0, 'the default schedule has an offer at or below 5');
+  assert.strictEqual(companion.scheduleTaken, below);
+  assert.strictEqual(pendingScheduleEntry(rosterHeroes.cubling, companion), null, 'nothing owed on arrival');
 });
 
 test('companion: a knockout takes it — off the roster, its gear with it; a KO\'d hero stays', () => {

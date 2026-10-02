@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { rosterHeroes as heroes } from '../../data/content';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
@@ -64,6 +64,8 @@ export function useLevelUpFlow(run: RunState, onRunChange: (next: RunState) => v
   const [offer, setOffer] = useState<ScheduleOffer | null>(null);
   const [signature, setSignature] = useState<SignatureOffer | null>(null);
   const mastery = useMasteryFlow(run, onRunChange);
+  // One schedule entry a hero a report: a backlog (a raw hire's) is worked off a fight at a time.
+  const tookEntry = useRef(new Set<string>());
 
   /**
    * The entry's offer, rolled off the post-level entry. A dry band takes the entry and puts
@@ -113,7 +115,8 @@ export function useLevelUpFlow(run: RunState, onRunChange: (next: RunState) => v
         return true;
       }
       const owed = pendingScheduleEntry(heroes[entry.heroId], entry);
-      if (!owed) continue;
+      if (!owed || tookEntry.current.has(rosterId)) continue;
+      tookEntry.current.add(rosterId);
       // A dry band took the entry; the run has changed under us either way, so let the caller re-enter.
       rollOffer(rosterId);
       return true;

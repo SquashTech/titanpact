@@ -12,6 +12,7 @@ import type { HeroLookup } from '../engine/state';
 import type { Encounter } from './enemyGen';
 import { SPAWN_TIERS, spawnId, spawnPosition } from '../data/titanspawn';
 import { levelOf, levelUpEntry } from './growth';
+import { scheduleEntriesBelow } from './progression';
 import { MASTERY_EVOLUTION, MASTERY_INNATE } from './mastery';
 import { ROSTER_CAP, addRosterEntry, createRosterEntry, type RosterEntry, type RunState } from './state';
 import { freshRosterId } from './recruitment';
@@ -66,7 +67,9 @@ export function joinCompanion(
     mortal: true,
     evolutionTypeGraft: ascended ? ANCIENT : null,
   };
-  const entry = levelUpEntry(base, hero, par - 1, random).entry;
+  const levelled = levelUpEntry(base, hero, par - 1, random).entry;
+  // It joins with the offers below its level behind it, as a contract hero does: no backlog to pay.
+  const entry = { ...levelled, scheduleTaken: scheduleEntriesBelow(hero, levelOf(levelled)) };
   return { ...addRosterEntry(run, entry), companionHeroId: heroId };
 }
 
