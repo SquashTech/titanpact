@@ -3,7 +3,7 @@
 // checkpoint's own new event slice) and collectPassiveDamageModifiers
 // (synchronous, evaluated before a hit is rolled).
 
-import type { HeroLookup, CombatState, Combatant, Side } from '../state';
+import type { HeroLookup, CombatState, Combatant, PassiveInstance, Side } from '../state';
 import { getMaxHp, getMaxMana, applyStatModifierDelta, getEffectiveStat } from '../state';
 import type { FieldEffectDefinition, PassiveDefinition, PassiveId, PassiveEffect, PassiveEffectTarget, PassiveTriggerCondition, PassiveAmount, StatKey, StatusDefinition, MoveDefinition } from '../content';
 import type { CombatEvent } from '../events';
@@ -407,7 +407,7 @@ function resolveEffectOn(
   }
 }
 
-function markFired(state: CombatState, ownerId: string, passiveId: PassiveId): CombatState {
+function updateInstance(state: CombatState, ownerId: string, passiveId: PassiveId, patch: (instance: PassiveInstance) => Partial<PassiveInstance>): CombatState {
   const owner = state.combatants[ownerId];
   const instance = owner?.passives[passiveId];
   if (!owner || !instance) return state;
@@ -415,9 +415,17 @@ function markFired(state: CombatState, ownerId: string, passiveId: PassiveId): C
     ...state,
     combatants: {
       ...state.combatants,
-      [ownerId]: { ...owner, passives: { ...owner.passives, [passiveId]: { ...instance, firedThisFight: true } } },
+      [ownerId]: { ...owner, passives: { ...owner.passives, [passiveId]: { ...instance, ...patch(instance) } } },
     },
   };
+}
+
+function markFired(state: CombatState, ownerId: string, passiveId: PassiveId): CombatState {
+  return updateInstance(state, ownerId, passiveId, () => ({ firedThisFight: true }));
+}
+
+function firesSoFar(state: CombatState, ownerId: string, passiveId: PassiveId): number {
+  return state.combatants[ownerId]?.passives[passiveId]?.firesThisFight ?? 0;
 }
 
 /**
@@ -479,7 +487,9 @@ export function resolvePassiveReactions(
           working = markFired(working, ownerId, instance.passiveId);
         }
 
+        const limit = reactive.maxFiresPerFight;
         for (let i = 0; i < (reactive.oncePerFight ? 1 : instance.stacks); i++) {
+          if (limit !== undefined && firesSoFar(working, ownerId, instance.passiveId) >= limit) break;
           if (reactive.chance !== undefined) {
             const roll = nextFloat(working.rngState);
             working = { ...working, rngState: roll.nextState };
@@ -489,6 +499,7 @@ export function resolvePassiveReactions(
           working = resolved.state;
           // A no-op (a heal at full HP, a target already fainted) is not a trigger: nothing to log.
           if (resolved.events.length === 0) continue;
+          if (limit !== undefined) working = updateInstance(working, ownerId, instance.passiveId, (held) => ({ firesThisFight: (held.firesThisFight ?? 0) + 1 }));
           produced.push({ type: 'PassiveTriggered', round, combatantId: ownerId, passiveId: instance.passiveId }, ...resolved.events);
           if (queue.length < 64) queue.push(...resolved.events.filter((e) => e.type === 'ManaGranted'));
         }

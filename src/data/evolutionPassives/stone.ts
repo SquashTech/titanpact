@@ -104,11 +104,12 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   barrowCall: {
     id: 'barrowCall',
     name: 'Barrow-Call',
-    description: "When a hit lands on this hero's partner's Shield, this hero gains Spirit Force 5.",
+    description: "When a hit lands on this hero's partner's Shield, this hero gains Spirit Force 10. Up to 3 times a fight.",
     reactive: {
+      maxFiresPerFight: 3,
       hook: 'DamageDealt',
       condition: { relativeTo: 'ally', eventFieldPositive: 'absorbed' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'SpiritForce', magnitude: 5 },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'SpiritForce', magnitude: 10 },
     },
   },
 };

@@ -35,12 +35,13 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Poison', magnitude: 5, duration: 3 },
     },
   },
-  // Ashwing's Firebird. Fire Force survives the bench, so every pivot back in banks more.
+  // Ashwing's Firebird.
   risingFlame: {
     id: 'risingFlame',
     name: 'Rising Flame',
-    description: 'When this hero enters the battlefield, it gains Fire Force 15.',
+    description: 'When this hero enters the battlefield, it gains Fire Force 15. Up to 3 times a fight.',
     reactive: {
+      maxFiresPerFight: 3,
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
       effect: { kind: 'applyStatus', target: 'self', statusId: 'FireForce', magnitude: 15 },

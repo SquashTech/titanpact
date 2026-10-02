@@ -199,7 +199,7 @@ because the player now hits the Haunted hero directly instead of around it.
 
 | Card | Holder | Today | Under the flip | Watch |
 |---|---|---|---|---|
-| Ghostlight / Wraithfire | Revenant (innate / mastered) | Spirit Force on each Haunt applied | Fires on every KO pass as well | Force stacks faster; fine at 10, watch 25 |
+| Ghostlight / Wraithfire | Revenant (innate / mastered) | +25% Spirit damage to a Haunted foe (2026-10-02; was Spirit Force a Haunt) | A pass keeps the bonus live on the partner | No stack to watch |
 | Lament / Keening | Sorrow (innate / mastered) | Heal when damaging a Haunted enemy | Would fire on nearly every hit | **Built: reads the echo only** (`viaStatusId: 'Haunt'`), healing for what the echo dealt |
 | Nightmare / Night Terror | Dread (innate / mastered) | 10% / 20% max HP a round to each Haunted enemy | Haunt persists through KOs, so the tick keeps finding a host | Night Terror's 20% may need to come down |
 | Enthrall | Evolution grant | Water hits apply Haunt | Unchanged — a delivery | — |
@@ -224,7 +224,7 @@ to both"*) survives unchanged.
   the status off the fallen (`StatusRemoved` with reason `'passed'`) and applies it to the partner.
   With no partner free, it goes on `CombatState.pendingSideStatuses`, and the next hero to enter on
   that side takes it (`performSwitch`). Removing it from the fallen is what makes the sweep run once.
-  The pass is a `StatusApplied`, so Revenant's Ghostlight fires on it. The view shows one beat:
+  The pass keeps Revenant's Ghostlight bonus live on the partner. The view shows one beat:
   *"The Haunt on X passes to Y"*. The echo's banner now reads *"Y is caught in the Haunt"*, since
   the partner isn't the Haunted one any more.
 - **Wisp** is certain (a guaranteed rider at its old price). That leaves it Poltergeist's cheaper

@@ -277,7 +277,7 @@ in the last column so the two can be read as a pair. Every magnitude is a first 
 | Cortex | Mind | **Neuroplastic** | Whenever an enemy's Wisdom is lowered, this hero gains that much Wisdom. | new · event-read `statDelta` | Either Hand (Embodied) |
 | Lucius | Mind | **Hunger** | Whenever this hero lands a Mind attack, it heals for 20% of the damage dealt. | new | Sanguine — the other half of the vampire |
 | Trance | Mind | **Lullaby** | At the end of each round, both active enemies lose 5 Speed. | new | Puppet Strings (Puppeteer) |
-| Revenant | Spirit | **Ghostlight** | Whenever an enemy is Haunted, this hero gains Spirit Force 10. Torment (a starter since 2026-09-20, in Second Wind's seat) Haunts on its own. Lingering (the endure verb) was its innate for a day; the verb stays in the engine, unheld. | new | Communion (Undying) |
+| Revenant | Spirit | **Ghostlight** | This hero's Spirit moves deal 25% more to a Haunted foe (2026-10-02, per user direction — it was Spirit Force 10 a Haunt, which banked a permanent stack off every fresh enemy and took Wisp to 155 BP in play). Torment (a starter since 2026-09-20, in Second Wind's seat) Haunts on its own. Lingering (the endure verb) was its innate for a day; the verb stays in the engine, unheld. | new | Communion (Undying) |
 | Sorrow | Spirit | **Lament** | Whenever this hero damages a Haunted enemy, it heals for that amount. Torment (in the kit) sets the Haunt. | new · `eventTargetHasStatus` | Grief (Mourner) |
 | Dread | Spirit | **Nightmare** | At the end of each round, every Haunted enemy loses 10% of its max HP — direct, past any Shield. | new · `damage` effect | Omen — feeds the innate |
 | Warden | Iron | **Rivet** | At the end of each round, its partner gains 5 Defense. | new | Sentry (Bulwark) |
@@ -330,9 +330,9 @@ and Skyshear's Barrier is **once a fight** — Barrier is the game's hardest loc
 | Morel | **Sporefall** | At the end of each round, both active enemies are Poisoned 5. | Poisoned 10 | none — Poison's timer holds while the magnitude climbs, so a 15% burst every three rounds |
 | Skyshear | **Stormveil** | The first time each fight an enemy's Conduct bursts, this hero gains Barrier for the rest of the round. | this hero and its partner | none |
 
-| Solace | **Dawnlight** | When this hero enters the battlefield, it gains Light Force 10 — the stack never decays, so cycling builds it. | Light Force 20 | none (replaced Grace) |
+| Solace | **Dawnlight** | When this hero enters the battlefield, it gains Light Force 10, up to 3 times a fight (2026-10-02: `maxFiresPerFight`, so pivoting no longer farms it). | Light Force 20 | none (replaced Grace) |
 | Carillon | **On the Hour** | At the end of every third round, the bell tolls: Sanctuary is set, and this hero's Mana is fully restored (two ids under one name, as Broadside is; replaced Toll). | every second round | new `restoreMana` effect — refills to the pool, never past it |
-| Hush | **Silent Wings** (reworked) | Whenever this hero Freezes an enemy, it gains Frost Force 10 (was Ambush 15). | Frost Force 20 | none |
+| Hush | **Silent Wings** (reworked) | Whenever this hero Freezes an enemy, it gains Frost Force 10 (was Ambush 15), up to 3 times a fight. | Frost Force 20 | none |
 
 The second pass the same day added the last three rows, and two early moves that fill slate gaps:
 **Ki Strike** (Mind, physical 40, 20 mana, 20% Daze) for Koan and **Primal Roar** (Beast, magical 40, 20

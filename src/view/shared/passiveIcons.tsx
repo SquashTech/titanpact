@@ -143,7 +143,11 @@ export function passiveTint(passiveId: string, alpha: number): string {
 export function passiveKindLabel(def: PassiveDefinition): string {
   if (def.burden) return 'Burden';
   if (def.enduresOnce) return 'Once per fight';
-  if (def.reactive) return def.reactive.oncePerFight ? 'Triggered · once per fight' : 'Triggered';
+  if (def.reactive) {
+    if (def.reactive.oncePerFight) return 'Triggered · once per fight';
+    if (def.reactive.maxFiresPerFight !== undefined) return `Triggered · ${def.reactive.maxFiresPerFight} times per fight`;
+    return 'Triggered';
+  }
   if (def.damageModifier) return 'Damage bonus';
   if (def.conditionalStatGrants) return 'Conditional';
   return 'Always on';

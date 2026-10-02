@@ -27,8 +27,9 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
   tidalMass: {
     id: 'tidalMass',
     name: 'Tidal Mass',
-    description: 'When this hero uses a move, it gains Water Force equal to a fifth of the Mana it spent.',
+    description: 'When this hero uses a move, it gains Water Force equal to a fifth of the Mana it spent. Up to 3 times a fight.',
     reactive: {
+      maxFiresPerFight: 3,
       hook: 'MoveUsed',
       condition: { relativeTo: 'self' },
       effect: { kind: 'applyStatus', target: 'self', statusId: 'WaterForce', magnitude: { kind: 'matchTriggerAmount', field: 'manaSpent', multiplier: 0.2 } },

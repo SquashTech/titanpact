@@ -922,9 +922,9 @@ const innatePassives: Record<string, PassiveDefinition> = {
   dawnlight: {
     id: 'dawnlight',
     name: 'Dawnlight',
-    description: 'When this hero enters the battlefield, it gains Light Force 10.',
-    // The Force stack never decays, so a Solace cycled in and out keeps building its Light hits.
+    description: 'When this hero enters the battlefield, it gains Light Force 10. Up to 3 times a fight.',
     reactive: {
+      maxFiresPerFight: 3,
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
       effect: { kind: 'applyStatus', target: 'self', statusId: 'LightForce', magnitude: 10 },
@@ -1354,13 +1354,9 @@ const innatePassives: Record<string, PassiveDefinition> = {
   ghostlight: {
     id: 'ghostlight',
     name: 'Ghostlight',
-    description: 'When an enemy is Haunted, this hero gains Spirit Force 10.',
+    description: "This hero's Spirit moves deal 25% more damage to a Haunted foe.",
     // Torment in the starting kit Haunts on its own; Wail (Sorrow) and Omen (Dread) feed it too.
-    reactive: {
-      hook: 'StatusApplied',
-      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Haunt' } },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'SpiritForce', magnitude: 10 },
-    },
+    damageModifier: { eventFieldEquals: { moveType: 'Spirit' }, requiresTargetStatuses: ['Haunt'], amount: 0.25 },
   },
   arcaneRepose: {
     id: 'arcaneRepose',
@@ -1552,8 +1548,9 @@ const innatePassives: Record<string, PassiveDefinition> = {
   silentWings: {
     id: 'silentWings',
     name: 'Silent Wings',
-    description: 'When this hero Freezes an enemy, it gains Frost Force 10.',
+    description: 'When this hero Freezes an enemy, it gains Frost Force 10. Up to 3 times a fight.',
     reactive: {
+      maxFiresPerFight: 3,
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Freeze' } },
       effect: { kind: 'applyStatus', target: 'self', statusId: 'FrostForce', magnitude: 10 },
@@ -1758,8 +1755,9 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   dawnlightPlus: {
     id: 'dawnlightPlus',
     name: 'Dawnlight+',
-    description: 'When this hero enters the battlefield, it gains Light Force 20.',
+    description: 'When this hero enters the battlefield, it gains Light Force 20. Up to 3 times a fight.',
     reactive: {
+      maxFiresPerFight: 3,
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
       effect: { kind: 'applyStatus', target: 'self', statusId: 'LightForce', magnitude: 20 },
@@ -2133,12 +2131,8 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   wraithfire: {
     id: 'wraithfire',
     name: 'Ghostlight+',
-    description: 'When an enemy is Haunted, this hero gains Spirit Force 25.',
-    reactive: {
-      hook: 'StatusApplied',
-      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Haunt' } },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'SpiritForce', magnitude: 25 },
-    },
+    description: "This hero's Spirit moves deal 50% more damage to a Haunted foe.",
+    damageModifier: { eventFieldEquals: { moveType: 'Spirit' }, requiresTargetStatuses: ['Haunt'], amount: 0.5 },
   },
   // Lament already heals the whole of it, so the mastered card shares it: the pair drinks.
   keening: {
@@ -2560,8 +2554,9 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   moonlessGlide: {
     id: 'moonlessGlide',
     name: 'Silent Wings+',
-    description: 'When this hero Freezes an enemy, it gains Frost Force 20.',
+    description: 'When this hero Freezes an enemy, it gains Frost Force 20. Up to 3 times a fight.',
     reactive: {
+      maxFiresPerFight: 3,
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Freeze' } },
       effect: { kind: 'applyStatus', target: 'self', statusId: 'FrostForce', magnitude: 20 },

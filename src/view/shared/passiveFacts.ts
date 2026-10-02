@@ -269,6 +269,7 @@ export function passiveFacts(def: PassiveDefinition): PassiveFact[] {
     if (def.reactive.condition.eventTargetHasStatus) rows.push({ label: 'While', text: `The one struck is ${statusName(def.reactive.condition.eventTargetHasStatus)}`, glyph: { kind: 'status', statusId: def.reactive.condition.eventTargetHasStatus }, color: 'status' });
     if (def.reactive.condition.sideOutspeeds) rows.push({ label: 'While', text: 'Both active allies move before both active enemies', glyph: { kind: 'stat', stat: 'speed' } });
     if (def.reactive.oncePerFight) rows.push({ label: 'Limit', text: 'Once per fight', glyph: { kind: 'move', move: 'debuff' } });
+    if (def.reactive.maxFiresPerFight !== undefined) rows.push({ label: 'Limit', text: `${def.reactive.maxFiresPerFight} times per fight`, glyph: { kind: 'move', move: 'debuff' } });
   }
   if (def.damageModifier) {
     const type = def.damageModifier.eventFieldEquals?.moveType;

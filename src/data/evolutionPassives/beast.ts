@@ -5,8 +5,9 @@ export const beastPathPassives: Record<string, PassiveDefinition> = {
   bedrockHide: {
     id: 'bedrockHide',
     name: 'Bedrock Hide',
-    description: 'When this hero takes damage, it gains Stone Force 10.',
+    description: 'When this hero takes damage, it gains Stone Force 10. Up to 3 times a fight.',
     reactive: {
+      maxFiresPerFight: 3,
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
       effect: { kind: 'applyStatus', target: 'self', statusId: 'StoneForce', magnitude: 10 },

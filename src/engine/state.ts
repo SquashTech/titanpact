@@ -22,6 +22,8 @@ export interface PassiveInstance {
   stacks: number;
   /** Set once a `reactive.oncePerFight` passive has fired — the only field on a held passive that changes mid-fight. */
   firedThisFight?: boolean;
+  /** Firings so far this fight, counted only for a `reactive.maxFiresPerFight` passive. */
+  firesThisFight?: number;
 }
 
 /** Flat additive only — never % or stages. Locked: mods persist on switch, so they live on the Combatant, not the slot. */

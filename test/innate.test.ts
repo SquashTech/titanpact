@@ -276,7 +276,7 @@ test('lethal bite: a damage modifier gated on the target — doubles against Ble
   assert.deepStrictEqual(collectPassiveDamageModifiers(attacker, move, passives), [], 'a forecast with no target reports it unfired');
 });
 
-test('hunger and ghostlight: out of the box — Lucius drains a fifth of a Mind hit, Revenant gains Spirit Force 10 the moment Torment Haunts', () => {
+test('hunger and ghostlight: out of the box — Lucius drains a fifth of a Mind hit, and a Revenant Spirit hit lands 25% harder on a Haunted foe, banking nothing', () => {
   const l = withPassive(twoVTwo(18, 'lucius', 'valor', 'ironWarden', 'crag'), 'a1', 'hunger');
   const wounded = withField(l, 'a1', { currentHp: 50 });
   const r = resolveRound(wounded, [{ kind: 'move', combatantId: 'a1', moveId: 'psiBolt', declaredTarget: 'b1' }, ...restAll(wounded).filter((a) => a.combatantId !== 'a1')], config);
@@ -289,7 +289,25 @@ test('hunger and ghostlight: out of the box — Lucius drains a fifth of a Mind 
   const v = withPassive(twoVTwo(19, 'revenant', 'valor', 'ironWarden', 'crag'), 'a1', 'ghostlight');
   const r2 = resolveRound(v, [{ kind: 'move', combatantId: 'a1', moveId: 'torment', declaredTarget: 'b1' }, ...restAll(v).filter((a) => a.combatantId !== 'a1')], config);
   assert.ok(r2.events.some((e) => e.type === 'StatusApplied' && e.statusId === 'Haunt' && e.combatantId === 'b1'));
-  assert.strictEqual(statusMagnitude(r2.state.combatants.a1, 'SpiritForce'), 10);
+  assert.strictEqual(statusMagnitude(r2.state.combatants.a1, 'SpiritForce'), 0, 'a Haunt banks no Force');
+  const haunted = r2.state.combatants.b1;
+  const revenant = r2.state.combatants.a1;
+  assert.deepStrictEqual(collectPassiveDamageModifiers(revenant, moves.wisp, passives, haunted), [{ source: 'ghostlight', amount: 0.25 }]);
+  assert.deepStrictEqual(collectPassiveDamageModifiers(revenant, moves.wisp, passives, r2.state.combatants.b2), [], 'an unhaunted foe takes no bonus');
+  assert.deepStrictEqual(collectPassiveDamageModifiers(revenant, moves.psiBolt, passives, haunted), [], 'only a Spirit move');
+});
+
+test('maxFiresPerFight: Bedrock Hide banks Stone Force on the first three hits taken and never a fourth', () => {
+  let state = withPassive(twoVTwo(23, 'ironWarden', 'valor', 'lucius', 'crag'), 'a1', 'bedrockHide');
+  const fullHp = state.combatants.a1.currentHp;
+  for (let round = 0; round < 4; round++) {
+    state = withField(withField(state, 'a1', { currentHp: fullHp }), 'b1', { currentMana: 200 });
+    const r = resolveRound(state, [{ kind: 'move', combatantId: 'b1', moveId: 'psiBolt', declaredTarget: 'a1' }, ...restAll(state).filter((a) => a.combatantId !== 'b1')], config);
+    assert.ok(r.events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'a1'), 'the hit landed');
+    state = r.state;
+  }
+  assert.strictEqual(statusMagnitude(state.combatants.a1, 'StoneForce'), 30);
+  assert.strictEqual(state.combatants.a1.passives.bedrockHide.firesThisFight, 3);
 });
 
 // --- The third wave: finishing blows, a run-permanent gain, a target-status read, percent-of-max damage ---

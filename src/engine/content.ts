@@ -279,8 +279,8 @@ export interface PassiveDefinition {
   name: string;
   /** Player-facing, required. */
   description: string;
-  /** `oncePerFight` caps the whole reaction at one firing per combat regardless of stacks (state.ts PassiveInstance.firedThisFight). `chance` (0–1) rolls the seeded rng per matched event, per stack; absent = always. `whileBenched` inverts the field rule: this reaction fires only while its owner is standing on the BENCH (Broadside loading a cannonball a round), where every other passive is silent. */
-  reactive?: { hook: PassiveHook; condition: PassiveTriggerCondition; effect: PassiveEffect; oncePerFight?: boolean; chance?: number; whileBenched?: true };
+  /** `oncePerFight` caps the whole reaction at one firing per combat regardless of stacks (state.ts PassiveInstance.firedThisFight). `maxFiresPerFight` caps it at N firings per combat, stacks included (PassiveInstance.firesThisFight) — the brake on a reaction that banks a permanent stack each time it matches. `chance` (0–1) rolls the seeded rng per matched event, per stack; absent = always. `whileBenched` inverts the field rule: this reaction fires only while its owner is standing on the BENCH (Broadside loading a cannonball a round), where every other passive is silent. */
+  reactive?: { hook: PassiveHook; condition: PassiveTriggerCondition; effect: PassiveEffect; oncePerFight?: boolean; maxFiresPerFight?: number; chance?: number; whileBenched?: true };
   damageModifier?: PassiveDamageModifier;
   /** Always-on flat grants, applied at fight build like Equipment/Relic statGrants (src/run/passives.ts); not read by passiveEngine. Classes are this alone. */
   statGrants?: Partial<Record<StatKey, number>>;

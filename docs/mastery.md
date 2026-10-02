@@ -289,7 +289,7 @@ mastered card.
 | Cortex | Neuroplastic (enemy Wis lost → gain it) | **Mindthief** — gain it as Wis AND Int |
 | Lucius | Hunger (Mind hit: heal 20%) | **Insatiable** — heal 50% |
 | Trance | Lullaby (round end: −5 Spe both) | **Deep Slumber** — −15 Spe both |
-| Revenant | Ghostlight (Haunt: Spirit Force 10) | **Wraithfire** — Spirit Force 25 |
+| Revenant | Ghostlight (+25% Spirit vs Haunted) | **Wraithfire** — +50% |
 | Sorrow | Lament (hit a Haunted: heal it) | **Keening** — heal it, and the partner half |
 | Dread | Nightmare (Haunted lose 10%) | **Night Terror** — Haunted lose 20% |
 | Warden | Rivet (round end: partner +5 Def) | **Riveted Line** — partner +15 Def |
