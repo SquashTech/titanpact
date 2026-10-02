@@ -60,12 +60,13 @@ It is not one of the path's two things: the Evolution screen's "New Storm moves 
 level can teach" line is the type's consequence, not a third grant. The dossier still lists the
 moves for a player who wants them.
 
-**A consequence to measure:** the derived lines are longer than the hand-authored ones. Cinder's
-are 11 / 8 / 11 against 5 / 6 / 5. A grafted hero's level-up rolls therefore draw more often
-from the new type. That arguably makes the graft read as a graft, but it dilutes the hero's own
-pool, and graft moves are gated on *reaching* their tier rather than expiring, so an Early graft
-move stays in the pool at Late. If it measures badly, the dial is the filter (for example,
-dropping graft Early moves once the hero is past Mid), not a return to hand-written lists.
+**Capped at four (2026-10-02, per user direction).** The uncapped lines averaged 13 moves (5–19)
+against a hero's own pool of about 18, and diluted it with only a handful of offers left after the
+Evolution. The line is now **two Mid and two Late**: at each tier, the first damage move (on the
+hero's column) and the first other move in slate order, filling from the same tier where one kind
+is missing. Early is dropped: a hero who evolves before Mid sees the line open at Mid. Graft moves are still gated on *reaching* their tier, never
+expiring, so the Mid half survives into Late. `EVOLUTION_LINE_TIERS` / `EVOLUTION_LINE_PER_TIER`
+are the dials; `test/evolutionSimplification` pins the shape.
 
 ## 4. The rewire: the one stat exception
 
@@ -142,6 +143,11 @@ Intelligence, Flashpoint repeats it and is replaced in the roster pass (§8).
    replaced the dossier sheet: the hero on rays, arrows and a swipe to page between the three, the
    full detail under it, and the Evolve button pinned at the bottom. The awakening and the evolve
    cinematic are unchanged (`src/view/run/EvolutionScreen.tsx`).
+   **The showcase does not scroll (2026-10-02, per user direction).** The hero sits beside its
+   name, typing and weak/resists, and every grant is one row in a single panel: the new type as a
+   badge, the move as the fight's own move row, the passive clamped to two lines, a rewire on one
+   line, and the line's four moves as chips. A tap on any row opens its full card. Every path fits
+   a 680px-tall canvas.
 6. **Long-term, filed not scheduled:** a new sprite for each Evolution form (252), keyed by path id.
    **Cheaper routes, prototyped 2026-09-29 and SET ASIDE (per user direction, to re-explore later):**
    - *Type marks drawn in code* (snowfall and rime for Frost, a striking thundercloud for Storm, on

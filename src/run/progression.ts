@@ -106,10 +106,8 @@ export function isMoveTierReached(move: MoveDefinition | undefined, rank: number
 
 /**
  * Reached AND not expired — the gate on the base pool. A graft's line is gated on
- * isMoveTierReached instead: a graft can land on a hero already past midLevel, and applying the
- * expiry to it would make every Early move in the grafted type's line permanently unreachable.
- * The expiry stops the BASE pool paying starter moves late; a grafted type is new to this hero,
- * and its Early moves are the way into it.
+ * isMoveTierReached instead: an Evolution can land on a hero already past lateLevel, and applying
+ * the expiry to it would make the Mid half of the line unreachable the day it opened.
  */
 export function isMoveTierOfferable(move: MoveDefinition | undefined, rank: number): boolean {
   const tier = move?.tier;

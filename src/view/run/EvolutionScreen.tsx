@@ -6,9 +6,9 @@ import { offenseSwapDelta, pathTypes, type EvolutionNode, type EvolutionPath } f
 import { pathTint, pathTintStyle } from '../shared/pathTint';
 import { passives } from '../../data/passives';
 import { PassiveGlyph, passiveColor } from '../shared/passiveIcons';
-import { PassiveDetailCard } from '../shared/PassiveDossier';
+import { PassiveDetailOverlay } from '../shared/PassiveDossier';
 import { moves } from '../../data/moves';
-import { MoveDetailCard, MoveDetailOverlay } from '../combat/MoveDetailOverlay';
+import { MoveDetailOverlay } from '../combat/MoveDetailOverlay';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { TypeBadge } from '../shared/TypeBadge';
 import { TypeMatchups } from '../shared/TypeMatchups';
@@ -16,7 +16,7 @@ import { ElementGlyph } from '../shared/elementIcons';
 import { getTypeColor } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeWheel } from '../shared/TypeWheel';
-import { useLongPress } from '../shared/MoveTile';
+import { MoveButtonReplica, useLongPress } from '../shared/MoveTile';
 import { healCasterForEntry } from '../shared/healCaster';
 import { entryStatTotals } from '../shared/entryStatTotals';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
@@ -41,14 +41,6 @@ interface Props {
 /** The type a graft COSTS — only a hero born dual has one to give up. */
 function tradedType(hero: HeroDefinition, path: EvolutionPath): TypeId | null {
   return path.typeGraft ? hero.types[1] ?? null : null;
-}
-
-/** What `learnableMoveIds` buys, as a promise. The showcase names them. */
-function poolPromise(path: EvolutionPath): string | null {
-  if (!path.learnableMoveIds?.length) return null;
-  return path.typeGraft
-    ? `New ${path.typeGraft} moves join what a level can teach.`
-    : 'New moves join what a level can teach.';
 }
 
 /**
@@ -277,16 +269,38 @@ function PoolMoveChip({ moveId, onRead }: { moveId: string; onRead: () => void }
   );
 }
 
+/** A granted passive as one row: the glyph, the name and the rule, clamped. The tap opens it whole. */
+function PassiveGrantRow({ passiveId, onRead }: { passiveId: string; onRead: () => void }) {
+  const passive = passives[passiveId];
+  return (
+    <button
+      type="button"
+      className="evo-passive-row"
+      style={{ '--passive-color': passiveColor(passiveId) } as CSSProperties}
+      data-sfx="ui.select"
+      onClick={onRead}
+    >
+      <span className="evo-passive-icon">
+        <PassiveGlyph passiveId={passiveId} />
+      </span>
+      <span className="evo-passive-text">
+        <span className="evo-passive-name">{passive.name}</span>
+        <span className="evo-passive-desc">{passive.description}</span>
+      </span>
+    </button>
+  );
+}
+
 /** A horizontal drag this long across the stage steps to the neighbouring form. */
 const SHOWCASE_SWIPE_PX = 44;
 
 /**
  * One form at full size, and where the choice is spent (2026-09-29, per user direction, replacing
  * the dossier sheet). The hero stands on rays in the path's colours; the arrows, the dots and a
- * swipe page between the three without going back; under it, everything the path hands over at
- * full detail — the typing and its matchups, a rewire's stat rows, the granted move read against
- * the post-graft types, the passive's own panel, the pool by name. The commit and the way back are
- * pinned under a body that scrolls on its own: a permanent choice never has its Confirm below a fold.
+ * swipe page between the three without going back. Under it, ONE panel of rows — the new type and
+ * what it changes on the chart, the move as the fight draws it, the passive, a rewire, the line —
+ * each tap opening the full card. Nothing scrolls (2026-10-02, per user direction): the stage
+ * gives up height on a short screen so the rows and the commit never fall below a fold.
  */
 function PathShowcase({
   hero,
@@ -308,6 +322,7 @@ function PathShowcase({
   onClose: () => void;
 }) {
   const [readingMoveId, setReadingMoveId] = useState<string | null>(null);
+  const [readingPassiveId, setReadingPassiveId] = useState<string | null>(null);
   const [dragFrom, setDragFrom] = useState<number | null>(null);
   const path = paths[index];
   const tint = pathTint(hero, path);
@@ -321,7 +336,6 @@ function PathShowcase({
   const grantedMoves = path.unlocksMoveIds.filter((id) => moves[id]);
   const poolMoves = (path.learnableMoveIds ?? []).filter((id) => moves[id]);
   const traded = tradedType(hero, path);
-  const promise = poolPromise(path);
   const step = (delta: number) => onIndex((index + delta + paths.length) % paths.length);
 
   return (
@@ -335,104 +349,84 @@ function PathShowcase({
         }}
         onPointerCancel={() => setDragFrom(null)}
       >
+        <button className="evo-show-arrow is-prev" aria-label="Previous form" data-sfx="ui.select" onClick={() => step(-1)}>
+          ‹
+        </button>
         <span className="evo-show-stage">
           <span className="evo-show-rays" aria-hidden="true" />
           <span className="evo-show-aura" aria-hidden="true" />
           <HeroPortrait key={path.id} heroId={hero.id} className="evo-show-portrait" />
         </span>
-        <div className="evo-show-nav">
-          <button className="evo-show-arrow" aria-label="Previous form" data-sfx="ui.select" onClick={() => step(-1)}>
-            ‹
-          </button>
-          <div className="evo-show-title">
-            <div className="evo-show-name" style={{ color: tint.lead }}>
-              {path.name}
-            </div>
-            <div className="evo-show-dots" aria-hidden="true">
-              {paths.map((p, i) => (
-                <span key={p.id} className={`evo-show-dot${i === index ? ' is-on' : ''}`} />
-              ))}
-            </div>
+        <div className="evo-show-info">
+          <div className="evo-show-name" style={{ color: tint.lead }}>
+            {path.name}
           </div>
-          <button className="evo-show-arrow" aria-label="Next form" data-sfx="ui.select" onClick={() => step(1)}>
-            ›
-          </button>
+          <div className="evo-show-types">
+            {types.map((t) => (
+              <TypeBadge key={t} type={t} />
+            ))}
+          </div>
+          <TypeMatchups types={types} />
+        </div>
+        <button className="evo-show-arrow is-next" aria-label="Next form" data-sfx="ui.select" onClick={() => step(1)}>
+          ›
+        </button>
+        <div className="evo-show-dots" aria-hidden="true">
+          {paths.map((p, i) => (
+            <span key={p.id} className={`evo-show-dot${i === index ? ' is-on' : ''}`} />
+          ))}
         </div>
         {path.description && <p className="evo-show-desc">{path.description}</p>}
       </div>
 
       <div className="evo-show-body">
-        <section className="evo-show-panel">
-          <div className="evo-show-kind">{path.typeGraft ? 'New type' : 'Typing'}</div>
-          <div className="evo-path-types">
-            {types.map((t) => (
-              <TypeBadge key={t} type={t} />
-            ))}
-            {!path.typeGraft && <span className="evolution-dossier-note">unchanged</span>}
-            {traded && (
-              <span className="evolution-dossier-note">
-                trades {traded} for {path.typeGraft}
-              </span>
-            )}
-          </div>
-          <TypeMatchups types={types} />
-        </section>
+        <div className="evo-show-rows">
+        {path.typeGraft && (
+          <section className="evo-show-row is-inline">
+            <div className="evo-show-kind">New type</div>
+            <TypeBadge type={path.typeGraft} />
+            {traded && <span className="evo-show-kind-note">trades {traded} for {path.typeGraft}</span>}
+          </section>
+        )}
+
+        {grantedMoves.map((id) => (
+          <section key={id} className="evo-show-row">
+            <div className="evo-show-kind">New move</div>
+            <MoveButtonReplica move={moves[id]} caster={caster} onClick={() => setReadingMoveId(id)} onLongPress={() => setReadingMoveId(id)} />
+          </section>
+        ))}
+
+        {grantedPassives.map((id) => (
+          <section key={id} className="evo-show-row">
+            <div className="evo-show-kind">New passive</div>
+            <PassiveGrantRow passiveId={id} onRead={() => setReadingPassiveId(id)} />
+          </section>
+        ))}
 
         {swapEntries.length > 0 && (
-          <section className="evo-show-panel">
-            <div className="evo-show-kind">Attack ⇄ Intelligence</div>
-            <div className="evolution-stat-table">
+          <section className="evo-show-row is-inline">
+            <div className="evo-show-kind">Atk ⇄ Int</div>
+            <div className="evo-show-swap">
               {swapEntries.map(([stat, amount]) => (
-                <div key={stat} className={`evolution-stat-row${amount < 0 ? ' is-loss' : ''}`}>
-                  <span className="evolution-stat-name">
-                    <StatGlyph stat={stat} /> {STAT_LABELS[stat]}
-                  </span>
-                  <span className="evolution-stat-now">{current[stat]}</span>
-                  <span className="evolution-stat-arrow" aria-hidden="true">
-                    →
-                  </span>
-                  <span className="evolution-stat-next">{current[stat] + amount}</span>
-                  <span className="evolution-stat-delta">
-                    {amount > 0 ? '+' : ''}
-                    {amount}
-                  </span>
-                </div>
+                <span key={stat} className={`evo-show-swap-stat${amount < 0 ? ' is-loss' : ''}`}>
+                  <StatGlyph stat={stat} /> {STAT_LABELS[stat]} {current[stat]} → <strong>{current[stat] + amount}</strong>
+                </span>
               ))}
             </div>
           </section>
         )}
 
-        {grantedMoves.length > 0 && (
-          <section className="evo-show-panel">
-            <div className="evo-show-kind">New move</div>
-            {grantedMoves.map((id) => (
-              <MoveDetailCard key={id} move={moves[id]} caster={caster} />
-            ))}
+        {poolMoves.length > 0 && (
+          <section className="evo-show-row">
+            <div className="evo-show-kind">Level-ups can teach</div>
+            <div className="evolution-pool-chips">
+              {poolMoves.map((id) => (
+                <PoolMoveChip key={id} moveId={id} onRead={() => setReadingMoveId(id)} />
+              ))}
+            </div>
           </section>
         )}
-
-        {grantedPassives.length > 0 && (
-          <section className="evo-show-panel">
-            <div className="evo-show-kind">New passive</div>
-            {grantedPassives.map((id) => (
-              <PassiveDetailCard key={id} passive={passives[id]} />
-            ))}
-          </section>
-        )}
-
-        {promise && (
-          <section className="evo-show-panel">
-            <div className="evo-show-kind">Level-up pool</div>
-            <p className="evolution-dossier-pool">{promise}</p>
-            {poolMoves.length > 0 && (
-              <div className="evolution-pool-chips">
-                {poolMoves.map((id) => (
-                  <PoolMoveChip key={id} moveId={id} onRead={() => setReadingMoveId(id)} />
-                ))}
-              </div>
-            )}
-          </section>
-        )}
+        </div>
       </div>
 
       {/* Not `.resolve-button`: this is the one press in the run that spends something
@@ -455,10 +449,10 @@ function PathShowcase({
       {readingMoveId && (
         <MoveDetailOverlay move={moves[readingMoveId]} caster={caster} onClose={() => setReadingMoveId(null)} />
       )}
+      <PassiveDetailOverlay passive={readingPassiveId ? passives[readingPassiveId] : null} onClose={() => setReadingPassiveId(null)} />
     </div>
   );
 }
-
 
 /** Beat boundaries for the evolution cinematic, in ms from the press. */
 const EVOLVE_BEATS = { burst: 1150, reveal: 1520, done: 4100 } as const;

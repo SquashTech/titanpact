@@ -69,7 +69,7 @@ test('evolution simplification: every hero offers the three pairs, one of each �
   }
 });
 
-test('evolution simplification: a line is the rule, not a list — the new type\'s slate on the column the hero swings with', () => {
+test('evolution simplification: a line is the rule, not a list — a hit and a tool of the new type at Mid and at Late, on the column the hero swings with', () => {
   for (const heroId of heroIds) {
     const hero = heroes[heroId];
     const own = new Set([...hero.moveIds, ...(progressionTable.moveTiers[heroId] ?? [])]);
@@ -80,14 +80,23 @@ test('evolution simplification: a line is the rule, not a list — the new type\
         continue;
       }
       const physical = hero.baseStats.attack >= hero.baseStats.intelligence !== !!path.swapsOffense;
-      const expected = spawnSlate(lineType).filter(
+      const open = spawnSlate(lineType).filter(
         (id) =>
           !own.has(id) &&
           !path.unlocksMoveIds.includes(id) &&
           (moves[id].kind !== 'damage' || moves[id].category === (physical ? 'physical' : 'magical'))
       );
-      assert.deepStrictEqual([...(path.learnableMoveIds ?? [])], expected, path.id);
-      assert.ok(expected.length > 0, `${path.id} opens an empty line`);
+      const line = [...(path.learnableMoveIds ?? [])];
+      assert.ok(line.length > 0, `${path.id} opens an empty line`);
+      for (const id of line) assert.ok(open.includes(id), `${path.id}: ${id} is not on the open slate`);
+      assert.ok(line.every((id) => moves[id].tier === 'mid' || moves[id].tier === 'late'), `${path.id}: a line is Mid and Late only`);
+      for (const tier of ['mid', 'late'] as const) {
+        const inTier = open.filter((id) => moves[id].tier === tier);
+        const taken = line.filter((id) => moves[id].tier === tier);
+        assert.strictEqual(taken.length, Math.min(2, inTier.length), `${path.id}: two ${tier} moves where the slate has them`);
+        if (inTier.some((id) => moves[id].kind === 'damage')) assert.ok(taken.some((id) => moves[id].kind === 'damage'), `${path.id}: a ${tier} hit`);
+        if (inTier.some((id) => moves[id].kind !== 'damage')) assert.ok(taken.some((id) => moves[id].kind !== 'damage'), `${path.id}: a ${tier} tool`);
+      }
     }
   }
 });

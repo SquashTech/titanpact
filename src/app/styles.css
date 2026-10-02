@@ -22122,28 +22122,44 @@ button.star-shop-bundle-face {
   }
 }
 
+/* The hero and its typing side by side: the sprite on the left, the name, the
+   badges and what the chart does to them on the right, the arrows on the outer
+   edges. The matchups live up here so the body below only lists the grants. */
 .evo-show-hero {
   flex: none;
-  display: flex;
-  flex-direction: column;
+  margin-top: 40px;
+  display: grid;
+  grid-template-columns: 30px 132px minmax(0, 1fr) 30px;
+  grid-template-areas:
+    'prev stage info next'
+    'dots dots dots dots'
+    'desc desc desc desc';
   align-items: center;
-  gap: 4px;
-  text-align: center;
+  column-gap: 6px;
+  row-gap: 4px;
   touch-action: pan-y;
 }
 
+.evo-show-arrow.is-prev {
+  grid-area: prev;
+}
+
+.evo-show-arrow.is-next {
+  grid-area: next;
+}
+
 .evo-show-stage {
+  grid-area: stage;
   position: relative;
-  width: 220px;
-  height: 180px;
-  margin-top: 6px;
+  width: 132px;
+  height: 132px;
   display: grid;
   place-items: center;
 }
 
 .evo-show-rays {
   position: absolute;
-  inset: -24px;
+  inset: -18px;
   background: repeating-conic-gradient(
     from 0deg,
     color-mix(in srgb, var(--path-lead) 38%, transparent) 0deg 6deg,
@@ -22162,8 +22178,8 @@ button.star-shop-bundle-face {
 
 .evo-show-aura {
   position: absolute;
-  width: 160px;
-  height: 160px;
+  width: 116px;
+  height: 116px;
   border-radius: 50%;
   background: radial-gradient(
     circle,
@@ -22175,29 +22191,31 @@ button.star-shop-bundle-face {
 
 .evo-show-portrait {
   position: relative;
-  width: 168px;
-  height: 168px;
+  width: 124px;
+  height: 124px;
   object-fit: contain;
   image-rendering: pixelated;
   filter: drop-shadow(0 0 10px var(--path-lead));
   animation: evo-show-in var(--dur-mid) var(--ease-out);
 }
 
-.evo-show-nav {
+.evo-show-info {
+  grid-area: info;
+  min-width: 0;
   display: flex;
-  align-items: center;
-  gap: 18px;
+  flex-direction: column;
+  gap: 5px;
 }
 
 .evo-show-arrow {
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   flex: none;
   border: 2px solid #e8c170;
   border-radius: 50%;
   background: rgba(20, 14, 10, 0.85);
   color: #fff3d6;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 800;
   line-height: 1;
   cursor: pointer;
@@ -22207,22 +22225,29 @@ button.star-shop-bundle-face {
   box-shadow: 0 0 10px rgba(232, 193, 112, 0.6);
 }
 
-.evo-show-title {
-  min-width: 150px;
-}
-
 .evo-show-name {
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 900;
   line-height: 1.05;
   text-shadow: 0 2px 0 #000, 0 0 16px currentColor;
 }
 
+.evo-show-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.evo-show-info .matchup-side {
+  width: 40px;
+  font-size: 9px;
+}
+
 .evo-show-dots {
+  grid-area: dots;
   display: flex;
   justify-content: center;
   gap: 6px;
-  margin-top: 6px;
 }
 
 .evo-show-dot {
@@ -22238,25 +22263,29 @@ button.star-shop-bundle-face {
 }
 
 .evo-show-desc {
+  grid-area: desc;
+  justify-self: center;
   max-width: 340px;
   margin: 0;
   font-size: 12px;
   font-style: italic;
   line-height: 1.35;
+  text-align: center;
   color: #e6d6b6;
 }
 
+/* One stone panel, the grants as rows inside it; the frame is paid once, not
+   once a grant. Sits at the foot of the free space so the commit stays pinned
+   and nothing scrolls. */
 .evo-show-body {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  overflow-y: auto;
+  justify-content: safe center;
 }
 
-.evo-show-panel {
-  flex: none;
+.evo-show-rows {
   display: flex;
   flex-direction: column;
   border: 14px solid transparent;
@@ -22264,13 +22293,105 @@ button.star-shop-bundle-face {
   image-rendering: pixelated;
 }
 
+.evo-show-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 5px 0;
+  border-top: 1px solid rgba(232, 193, 112, 0.18);
+}
+
+.evo-show-row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.evo-show-row:last-child {
+  padding-bottom: 0;
+}
+
+.evo-show-row.is-inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
 .evo-show-kind {
-  margin-bottom: 4px;
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: #e8c170;
+}
+
+.evo-show-kind-note {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--text-dim);
+}
+
+.evo-show-swap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 12px;
+  color: var(--hp-high);
+}
+
+.evo-show-swap-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.evo-show-swap-stat.is-loss {
+  color: var(--hp-low);
+}
+
+.evo-passive-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid color-mix(in srgb, var(--passive-color) 55%, transparent);
+  border-radius: var(--radius-sm, 6px);
+  background: color-mix(in srgb, var(--passive-color) 12%, rgba(10, 8, 6, 0.6));
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.evo-passive-icon {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  color: var(--passive-color);
+}
+
+.evo-passive-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.evo-passive-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--passive-color);
+}
+
+.evo-passive-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 1.3;
+  color: #e6d6b6;
 }
 
 .evo-pool-chip {

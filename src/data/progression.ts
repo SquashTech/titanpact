@@ -1108,20 +1108,32 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ...spawnMoveTiers,
 };
 
+/** Moves an Evolution's line takes from each of these tiers: a hit and a tool, in slate order. */
+export const EVOLUTION_LINE_TIERS = ['mid', 'late'] as const;
+export const EVOLUTION_LINE_PER_TIER = 2;
+
 /**
  * The line an Evolution opens, by rule rather than by list (docs/evolution-simplification.md §3):
- * every tiered move of `type` the hero's own pool does not already hold — its damage moves only on
- * the column the hero swings with after the path (flipped by a rewire), its other moves whole —
- * minus what the path hands over outright.
+ * of the tiered moves of `type` the hero's own pool does not already hold — damage only on the
+ * column the hero swings with after the path (flipped by a rewire), minus what the path hands
+ * over — two from Mid and two from Late, one damage move and one other where the tier has both.
  */
-function evolutionLine(heroId: string, type: TypeId, { swapped = false, granted = [] as readonly string[] } = {}): string[] {
+export function evolutionLine(heroId: string, type: TypeId, { swapped = false, granted = [] as readonly string[] } = {}): string[] {
   const hero = heroes[heroId];
   const physical = hero.baseStats.attack >= hero.baseStats.intelligence !== swapped;
   const own = new Set([...hero.moveIds, ...(moveTiers[heroId] ?? []), ...granted]);
-  return spawnSlate(type).filter((id) => {
+  const open = spawnSlate(type).filter((id) => {
     const move = moves[id];
     if (own.has(id)) return false;
     return move.kind !== 'damage' || move.category === (physical ? 'physical' : 'magical');
+  });
+  return EVOLUTION_LINE_TIERS.flatMap((tier) => {
+    const inTier = open.filter((id) => moves[id].tier === tier);
+    const hit = inTier.find((id) => moves[id].kind === 'damage');
+    const tool = inTier.find((id) => moves[id].kind !== 'damage');
+    const picked = [hit, tool].filter((id): id is string => !!id);
+    for (const id of inTier) if (picked.length < EVOLUTION_LINE_PER_TIER && !picked.includes(id)) picked.push(id);
+    return open.filter((id) => picked.includes(id));
   });
 }
 

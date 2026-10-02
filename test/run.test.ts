@@ -318,7 +318,7 @@ test('progression: a graft path adds its learnableMoveIds to the level-up pool w
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'crimson', 'crimson-cinderveil');
   const after = poolAtTop(next.roster[0]);
 
-  for (const id of ['drain', 'secondWind', 'soulRend', 'banish']) {
+  for (const id of ['soulOffering', 'soulRend', 'banish', 'ascendant']) {
     assert.ok(after.includes(id), `${id} should be learnable after Cinderveil`);
     assert.ok(!next.roster[0].unlockedMoveIds.includes(id), `${id} should be LEARNABLE, not granted`);
   }
@@ -336,8 +336,8 @@ test('progression: an untaken path\'s learnableMoveIds stay out of the pool, and
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'crimson', 'crimson-emberweave');
   const atEvolutionLevel = levelMovePool(progressionTable, moves, heroes.crimson, next.roster[0]);
 
-  assert.ok(atEvolutionLevel.includes('manaTap')); // Early — reachable the moment the graft lands
-  assert.ok(!atEvolutionLevel.includes('cataclysm')); // Late — still gated until lateLevel
+  assert.ok(poolAtTop(next.roster[0]).includes('arcaneBlast')); // the line is there once its tier is reached
+  assert.ok(!atEvolutionLevel.includes('singularity')); // Late — still gated until lateLevel
   assert.ok(!atEvolutionLevel.includes('soulRend')); // Cinderveil's, and Cinderveil was not taken
 });
 
