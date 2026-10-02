@@ -4,7 +4,7 @@ import type { MapNode, MapNodeType, RunMap } from '../../run/map';
 import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
 import { useLongPress } from '../shared/MoveTile';
 import { playSfx, type SfxId } from '../../audio/sfx';
-import { NODE_COLORS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
+import { NODE_COLORS, NODE_LABELS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
 import { nodeFactsLine } from './nodeFacts';
 import { isMapProp, mapNodeArt } from './mapNodeArt';
 import { landmarkKind, MapLandmarkFace, TITAN_LIGHT, type LandmarkKind } from './mapLandmarks';
@@ -223,6 +223,9 @@ function ChoiceMedallion({
           </span>
         )}
       </button>
+      <span className={`map-choice-label${scoutedFace && art ? ' is-scouted' : ''}`} aria-hidden="true">
+        {NODE_LABELS[node.type]}
+      </span>
       {hint && !opening && (
         <span className="map-choice-hint" aria-hidden="true">
           {hint}

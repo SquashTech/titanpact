@@ -770,7 +770,9 @@ what's still unimplemented:
   value (`shopItemPrice`), read whole before paying and absorbed through the who-screen. Map tiles
   **dropped their labels** to pay for the extra row — glyph, silhouette and colour carry
   what the words did, a long press still reads any node out, and this supersedes the
-  two-word Monsters/Skirmish vocabulary below. **2026-08-29:** the boss was
+  two-word Monsters/Skirmish vocabulary below. **Labels came back 2026-10-02** (per user
+  direction — the map had become a scene of one row, so the space was free again): one short word
+  under every tile (`NODE_LABELS`, `mapNodes.ts` — Fight, Elite, Scrolls, Items, Guardian…). **2026-08-29:** the boss was
   renamed Ancient → **Guardian**; "Ancient" is reserved for something later in a run and
   is otherwise only the locked TYPE, which is untouched. The map's encounter labels are
   now a two-word vocabulary — **Monsters** (not recruitable: `fight`, `battle`) and

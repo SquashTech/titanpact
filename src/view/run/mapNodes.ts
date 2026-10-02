@@ -29,6 +29,31 @@ export const NODE_NAMES: Record<MapNodeType, string> = {
   finale: 'The Titan',
 };
 
+// The word under a tile on the map: one short plain name, read at a glance. NODE_NAMES stays the
+// full name for the long-press dossier and the accessible label.
+export const NODE_LABELS: Record<MapNodeType, string> = {
+  fight: 'Fight',
+  skirmish: 'Skirmish',
+  battle: 'Fight',
+  elite: 'Elite',
+  boss: 'Guardian',
+  shop: 'Guild Hall',
+  equipmentReward: 'Items',
+  scrollReward: 'Scrolls',
+  passiveReward: 'Boon',
+  currencyReward: 'Gold',
+  manaWellReward: 'Mana Well',
+  forgeReward: 'Forge',
+  leyLineReward: 'Ley Line',
+  restReward: 'Rest',
+  mentorReward: 'Mentor',
+  tutorReward: 'Tutor',
+  scribeReward: 'Scribe',
+  event: 'Event',
+  muster: 'Vigil',
+  finale: 'The Titan',
+};
+
 // Stat-reward colours match StatBars' STAT_COLORS. `battle` stays `--ally`,
 // not `--enemy`: two reds a shade apart on the Elite-or-Battle row was illegible.
 export const NODE_COLORS: Record<MapNodeType, string> = {
