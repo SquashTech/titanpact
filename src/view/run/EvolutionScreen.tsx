@@ -228,7 +228,7 @@ function FormCard({ hero, path, onInspect }: { hero: HeroDefinition; path: Evolu
       </span>
       <span className="evo-form-stage">
         <span className="evo-form-aura" aria-hidden="true" />
-        <HeroPortrait heroId={hero.id} className="evo-form-portrait" />
+        <HeroPortrait heroId={hero.id} pathId={path.id} className="evo-form-portrait" />
       </span>
       <span className="evo-form-types">
         {pathTypes(hero, path).map((t) => (
@@ -355,7 +355,7 @@ function PathShowcase({
         <span className="evo-show-stage">
           <span className="evo-show-rays" aria-hidden="true" />
           <span className="evo-show-aura" aria-hidden="true" />
-          <HeroPortrait key={path.id} heroId={hero.id} className="evo-show-portrait" />
+          <HeroPortrait key={path.id} heroId={hero.id} pathId={path.id} className="evo-show-portrait" />
         </span>
         <div className="evo-show-info">
           <div className="evo-show-name" style={{ color: tint.lead }}>
@@ -508,7 +508,8 @@ function EvolutionCinematic({ hero, path, onDone }: { hero: HeroDefinition; path
         <span className="evolve-ring is-outer" aria-hidden="true" />
         <span className="evolve-ring is-inner" aria-hidden="true" />
         <span className="evolve-column" aria-hidden="true" />
-        <HeroPortrait heroId={hero.id} className="evolve-figure" />
+        {/* The new form arrives under the white-out, which is what the burst is for. */}
+        <HeroPortrait heroId={hero.id} pathId={beat === 'reveal' ? path.id : undefined} className="evolve-figure" />
         <span className="evolve-flash" aria-hidden="true" />
       </div>
 

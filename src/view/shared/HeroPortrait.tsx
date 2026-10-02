@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { heroArt, heroPoses } from './heroArt';
+import { evolutionArt } from './evolutionArt';
 import { TitanspawnGlyph } from './titanspawnArt';
 import { GuardianGlyph } from './guardianArt';
 import { isGuardianFigure } from './guardianFigures';
@@ -12,6 +13,8 @@ interface Props {
   seed?: string;
   /** Which frame to draw. Falls back to the idle frame for a hero that has no art for the pose asked for; `closed` is the Titan's Eyes' alone (guardianFigures.ts). */
   pose?: 'idle' | 'attack' | 'hurt' | 'closed';
+  /** An Evolution path: its own form is drawn where one exists (evolutionArt.ts), the hero's sprite where not. */
+  pathId?: string;
 }
 
 /** FNV-1a; only feeds cosmetic jitter. */
@@ -30,7 +33,7 @@ function hashSeed(key: string): number {
  * same class, seed and pose, so every screen that shows a hero shows a spawn with no other change.
  * The Guardians and the Endbringer (data/enemies.ts) are drawn the same way (guardianArt.tsx).
  */
-export function HeroPortrait({ heroId, className, seed, pose = 'idle' }: Props) {
+export function HeroPortrait({ heroId, className, seed, pose = 'idle', pathId }: Props) {
   const h = hashSeed(seed ?? heroId);
   const idleStyle = {
     '--idle-phase': ((h % 97) / 97).toFixed(3),
@@ -38,7 +41,7 @@ export function HeroPortrait({ heroId, className, seed, pose = 'idle' }: Props) 
   } as CSSProperties;
   if (isTitanspawn(heroId)) return <TitanspawnGlyph heroId={heroId} className={className} pose={pose === 'closed' ? 'idle' : pose} style={idleStyle} />;
   if (isGuardianFigure(heroId)) return <GuardianGlyph heroId={heroId} className={className} pose={pose} style={idleStyle} />;
-  const src = (pose === 'attack' || pose === 'hurt' ? heroPoses[heroId]?.[pose] : undefined) ?? heroArt[heroId];
+  const src = (pose === 'attack' || pose === 'hurt' ? heroPoses[heroId]?.[pose] : undefined) ?? (pathId ? evolutionArt[pathId] : undefined) ?? heroArt[heroId];
   if (!src) return null;
   // draggable={false} as well as CSS `-webkit-user-drag: none` (WebKit-only): a drag ghost eats the long-press.
   return <img className={className} src={src} alt="" style={idleStyle} draggable={false} />;
