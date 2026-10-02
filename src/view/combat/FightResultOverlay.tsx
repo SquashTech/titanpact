@@ -388,12 +388,13 @@ function GoldRow({ from, amount, shown }: { from: number; amount: number; shown:
   );
 }
 
-const MVP_LINES: Record<MvpColumn, (percent: number) => string> = {
-  damage: (p) => `Dealt ${p}% of the damage`,
-  finishes: (p) => `Landed ${p}% of the knockouts`,
-  support: (p) => `Did ${p}% of the healing and shielding`,
-  anchor: (p) => `Took ${p}% of the hits`,
-  control: (p) => `Landed ${p}% of the statuses and buffs`,
+/** The role the MVP was named for — a title, never the share behind it (run/mvp.ts keeps the number). */
+const MVP_TITLES: Record<MvpColumn, string> = {
+  damage: 'Striker',
+  finishes: 'Finisher',
+  support: 'Lifeline',
+  anchor: 'Anchor',
+  control: 'Tactician',
 };
 
 /** The fight's MVP: who, the column it dominated, and the pip it is paid. */
@@ -406,7 +407,7 @@ function MvpRow({ heroId, pathId, pick }: { heroId: string; pathId: string | nul
       </span>
       <span className="fight-result-row-text">
         <span className="fight-result-row-label">MVP · {name}</span>
-        <span className="fight-result-row-sub">{MVP_LINES[pick.column](Math.round(pick.share * 100))}</span>
+        <span className="fight-result-row-sub">{MVP_TITLES[pick.column]}</span>
       </span>
       <span className="fight-result-row-value">+1 Mastery</span>
     </div>

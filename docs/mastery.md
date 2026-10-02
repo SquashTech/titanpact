@@ -18,7 +18,9 @@
 > two packs a visit, split freely; `SCROLL_PACK_PIPS`), and **the MVP pip** reverses "never a
 > post-fight drop": after every won fight but the finale, the hero with the biggest share of one
 > team column — damage, finishes, support, anchor, control — takes one free pip, named on the
-> victory screen (`src/run/mvp.ts`, `MvpRow`). Never a hero at the cap, never the same hero twice
+> victory screen (`src/run/mvp.ts`, `MvpRow`) with a one-word title for the column and never the
+> share behind it (per user direction: Striker, Finisher, Lifeline, Anchor, Tactician — the role is
+> what teaches, a percentage only invites an argument). Never a hero at the cap, never the same hero twice
 > running, two rounds on the field to qualify. The Scribe stays 2 + 2. Measured: 45 pips a
 > completed run, every hero evolved 77% of runs against 82% under five acts.
 
