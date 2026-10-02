@@ -1,6 +1,6 @@
 # xp-overhaul.md — The XP Overhaul
 
-> **STATUS: §2–4 DECIDED (2026-09-13, per user direction); §5 (four acts) DEFERRED, not decided.
+> **STATUS: §2–4 DECIDED (2026-09-13, per user direction); §5 (four acts) DEFERRED, not decided — re-drafted and MEASURED 2026-10-01.
 > PHASE 1 OF §8 IS IN.** **Superseded in part by `docs/mastery.md` (2026-09-14): §3's Ichor is
 > RETIRED (its seats went back to the Scroll Cache) and §4's Evolution moved off the level schedule
 > onto Mastery pips; the XP curve, the offers and the bands stand.** `CLAUDE.md` and `growth-overhaul.md` still describe the game in force
@@ -256,38 +256,93 @@ is the right system carrying the wrong price.
 
 ## 5. Four acts, then the finale
 
-> **Provisional, per user direction (2026-09-13): "the right answer MIGHT be four acts."** A
-> separate decision from §2–4 — §8 phases it last so the rest can ship without it — but it re-fits
-> the same table, so it is written here rather than in a fourth doc.
+> **Re-drafted 2026-10-01 as a decision draft, per user direction, and MEASURED — not decided.**
+> Playtest found the run's escalation ending at the Act 4 Guardian: every hero holds a full kit
+> and full sockets, and Act 5 is gear merges and maybe one hero to Mastery 10. That is the
+> structure, not a feeling: since 2026-09-30 every schedule's last offer lands by the end of Act 4,
+> signatures land at 14–24 (par is 24 at Act 4's end), and the Evolution comes at 5 pips. Act 5
+> paid levels 24 → 28, which are stat rolls only, plus one forced Tutor. The 2026-09-13 draft
+> this replaces (the Herald rename, `ACT_STEP_CURVE`, the Forge, the Crucible) is superseded
+> wholesale; this is the re-fit against the game as it stands.
 
-`TOTAL_ACTS` 6 → 5: four acts of the decided shape, then a finale act that is **the Vigil → the
-Herald** (the Endbringer, renamed) **→ the Titan's Eyes**, the planned final boss. Two bosses in
-the finale, no map between them.
+**The shape.** `TOTAL_ACTS` 6 → 5, `SEAL_ACTS` 5 → 4: Wild's Edge, then three chosen Locations,
+then the finale as act 5 — the Vigil → the Herald → the Titan's Eyes, unchanged. Four seals
+broken of six base Locations, so **two** stay shut every run (lore §5's "the sixth" becomes "the
+ones you never reached", which the Holy Sanctum case already needed).
 
-**Why four and not three.** The sim's act-clear table says acts 2 and 3 are the plateau
-(95% clears; deaths are in 1, 4 and 5). Three acts is the honest reading of that and the tidiest
-fit to the content's own tripartite shape (Titanspawn Early/Mid/Late, three move bands). Four
-keeps a middle long enough for a roster to *turn over* — a recruit in Act 2 has two acts to
-matter — and keeps the Guardian count at four, which is a Banner shy of today rather than two.
-Time, at today's prices, cut act ≈ −16 min, second finale boss ≈ +7: **~79 min tapping / ~55
-Auto / ~33 Fast** before the rest of this doc, **~70 / ~48 / ~28** after it. Four acts is therefore
-also a decision that the target player is on Auto, or that a first-run reader gets 70 minutes.
-Say which.
+**Delete the fifth act, do not compress the four.** The draft's first pass re-fitted par to act
+ends 9/17/24/29 so the finale still reached 30. Measured (variant B below), that pulls every
+schedule forward: Late casts are 11.9% of Act 4 — exactly where today's Act 5 sat — so the
+plateau would move into Act 4, not go away. Keeping `ENCOUNTER_XP_BY_ACT` as it is for acts 1–4
+means **acts 1–4 play exactly as today** and the build completes at the last Guardian, which is
+the point. The finale's own XP figure stops mattering (nothing after it spends XP). The roster
+enters the finale at par 24, not 28; enemies are levelled off par, so that is relative.
 
-**What it re-fits** (all in phase 5; none of it is hard, all of it is one pass):
+**What it re-fits** (first pass; the experiment branch `sim/four-acts` carries the code half):
 
-| Thing | Today | Under four acts (first pass) |
+| Thing | Today | Under four acts |
 |---|---|---|
-| `LEVEL_AFTER_ENCOUNTER` | act ends 8/14/19/24/28, finale 30 | act ends **9/17/24/29**, Herald 30, Eyes 30 (18 encounters) |
-| `ENEMY_LEVEL_BY_ACT` | derived, lag 2 | derived, unchanged rule |
-| `ACT_STEP_CURVE` | `[0, 1, 3, 6, 10]` | `[0, 1, 3, 6]` + the finale on the skirmish track as now |
-| `SPAWN_TIER_BY_ACT` | early/mid/mid/late/late | **early/mid/late/late** |
-| Guardians, Banners, Classes, seals | 5 | **4** — four of six heroes Classed, which is a real pick where five-of-six was not |
-| Location itinerary | 5 of the set | 4 of the set — more of the map unseen each run |
-| Mentor / Forge / Tutor rows | Mentor 1–3, Forge 4, Tutor 4–5 | **Mentor 1–2, Forge 3, Tutor 3–4** |
-| `GUILD_HALL_ACT_LAG` | 1 act of 5 | 1 act of 4 — the runway is a larger share of the run, which is the direction §3 wants |
-| Finale | Vigil → Endbringer | Vigil → Herald → Eyes; `brokenSeals` reads four |
-| `docs/lore.md` | five seals | four seals, and the Herald is the Titan's herald rather than its end |
+| `TOTAL_ACTS` / `SEAL_ACTS` | 6 / 5 | **5 / 4** |
+| `ENCOUNTER_XP_BY_ACT` | 150/560/1060/1750/2000, finale 5000 | **150/560/1060/1750**, finale 5000 (unspent) — par 8/14/19/24, the finale at 24 |
+| `SCRIBE_PIPS_EACH` | 2 | **3** — an act's Scribe is 6 pips; see the measurement |
+| `masteryForAct` | `2N−2`, the finale reads 10 by arithmetic | `2N−2` for acts 1–4, **the finale reads `MASTERY_CAP` by rule** (it would read 8 otherwise and lose its mastered innates) |
+| `ACT_LEVEL_ADJUST[finale]` | +2, but clamped: par 28 + 2 + 2 = 32 → **30**, an effective +2 | **0** — at par 24 the clamp no longer bites, so +2 would be a real +4 |
+| Act 4 Guardian | `GUARDIAN_ESCORTS_BY_ACT` 2, `CHAMPION_GRADE_BY_ACT` D | unchanged — the last Guardian is Act 4's as tuned; whether it takes Act 5's C is open |
+| Finale escorts | one Late Titanspawn per broken seal: Herald + 5 | **Herald + 4 — the finale is 6v5**; `test/finale` pins 6 a side |
+| Guardians, Banners | 5 | **4** |
+| Spliced row | Mentor 1–3, Tutor 4–5 | Mentor 1–3, **Tutor 4 only** (one guaranteed Late move a run, not two) |
+| Gear | `ACT_RARITY_WINDOW` act 5 drops Commons; `ENEMY_GEAR_FROM_ACT` 4 | act 5's window is the finale's; enemy gear is Act 4 only — one geared act |
+| Gold | `ACT_GOLD_SCALE` to 3 | unchanged; the run simply ends a Guild Hall sooner (~270g less earned) |
+| Location itinerary | 5 of 6 | 4 of 6, the act-2/3/4 pick 1-of-2 unchanged |
+| `docs/lore.md` §5 | five seals, "the sixth" | four seals, two shut |
+| Saves | `actNumber` 1–6 | `SAVE_VERSION` bump; a save in act 5 or 6 has no migration that makes sense — discard in-flight runs |
+| Tests | — | 20 fail on the branch, every one pinning a five-act constant (map shape by act, Tutor in 4–5, finale 6 a side, the itinerary's one shut seal, act-end levels) |
+| `SmithyWorkSheet` | hard-coded `act <= 6` | reads `TOTAL_ACTS` (fixed on the branch) |
+
+**Measured** (2026-10-01, 3000 runs a batch, seed 1, `--workers 2`; skilled pilot / chart pilot).
+Acts 1–4 are identical to the baseline in every variant, as designed, so every difference is the
+finale and what the roster carries into it.
+
+| Variant | Full-clear | Finale | Reader / Auto min | Pips a completed run | Every hero evolved |
+|---|---|---|---|---|---|
+| **Today** (five acts) | 91.6 / 54.6% | 98.7 / 83.4% | 73.0 / 51.5 (chart 84.2 / 58.8) | 33.6 | 82.0 / 58.7% |
+| **A** — Act 5 deleted, nothing else | 86.2 / 40.5% | 92.4 / 61.0% | 61.9 / 43.6 (71.3 / 49.8) | 26.5 | 21.1 / 14.0% |
+| **AS** — A + Scribe 3+3 | 86.2 / 38.8% | 93.2 / 59.0% | 62.5 / 44.1 (72.1 / 50.3) | 34.4 | 57.7 / 40.6% |
+| **ASF** — AS + finale act term 0 | **87.3 / 41.9%** | **94.4 / 63.7%** | 62.2 / 43.9 (71.7 / 50.1) | 34.4 | 57.7 / 40.6% |
+| **B** — §5's old par re-fit, 9/17/24/29 | 89.3% / — | 95.8% / — | 61.6 / 43.4 | 26.7 | 24.8% / — |
+
+What it says:
+
+1. **Time: −11 minutes Reader, −8 Auto, −12 chart Reader.** The finale gets a little longer
+   (18.7 → 21.6 rounds skilled) and eats a sliver of it back.
+2. **Mastery is the supply cliff, and the Scribe at 3+3 closes most of it.** Without it, one act
+   fewer of Scribe, Cache and shelf takes pips 33.6 → 26.5 and "every hero evolved" 82 → 21%.
+   At 3+3 the pips are back (34.4) and Evolutions land EARLIER — 53% of them in Act 3 against
+   17% today — but "every hero evolved" stops at 58%, because shelf Scrolls also fell with the lost
+   Guild Hall and the pips crowd onto fewer, earlier heroes. Mastery 10 a run will be rarer than
+   today either way; the sim does not report it directly.
+3. **The finale becomes the wall — 83 → 61% on the chart pilot — and the level clamp is only
+   part of it.** Setting the finale's act term to 0 restores the effective +2 and buys back ~5
+   points (59 → 64%). The rest is real: the stat-total ratio into the finale is unchanged (0.79 →
+   0.81), but the Herald's DPR rises 61 → 68–70 because its kit's BasePower is authored against a
+   level-28 roster's HP, and the roster arrives one Banner, one Tutor move, ~0.2 Revives and an
+   act of merges short. **The finale's own numbers are the dial**, not the acts before it: the
+   Herald's and the Eyes' kit power, Withering Gaze's fraction, or the finale's level offset.
+4. **B is rejected.** It reaches the finale stronger (95.8%) by moving the build forward an act,
+   which re-creates the plateau one act earlier.
+
+**Open, for the designer:**
+
+- **The finale's re-fit.** The chart pilot loses ~20 points there against today. Which lever —
+  kit power, Gaze, a further level offset — is a feel call.
+- **Act 4's Guardian as the last one.** It clears 98–99%; today's Act 5 Guardian measured as one
+  that "could be one-shot". The last Guardian probably wants `CHAMPION_GRADE_BY_ACT` C or a third
+  escort, so the final seal reads as the hardest.
+- **One Tutor a run.** Act 5's forced Tutor goes; whether the Vigil takes a Tutor (the "last
+  things before the test" beat) is the natural home for it.
+- **Mastery 10.** At 3+3 the supply matches today's, but spread across a shorter run; whether one
+  hero reaching ten is still a run's realistic ceiling is for play to say.
+- **Ascension's per-act tables** (`WOKEN_ESCORTS_BY_ACT`, the A1 measurements) were not re-run.
 
 ---
 
@@ -335,7 +390,7 @@ Sequenced so the tree is playable at every boundary. Numbering is dependency ord
 | 2 | **Ichor.** The two Scroll nodes re-pointed; the shelf; the *who* screen; the report shows the jump. Scrolls still exist and still buy moves — this is a working bridge state where Ichor buys levels-and-stats and Scrolls buy moves. | Both nodes grant XP to one hero; the sim tallies Ichor by source and the paired focus/spread batch runs. | **DONE 2026-09-13.** `src/run/ichor.ts`, `IchorNodeScreen`; nodes are `ichorReward` / `ichorDropReward` (renamed, not just re-pointed — a node named for Scrolls that grants levels would outlive phase 3); the shelf sells a Drop for the bundle's 35g, 2 a visit; `SAVE_VERSION` 13. Measured below. |
 | 3 | **Levels teach.** The destructive one. `HeroDefinition.schedule` on the default table; offers roll from the report; the Evolution raises from `evolutionLevel`; enemies and hires read the same schedule; delete everything in §7. Tutorial re-checked. | No Scroll anywhere. `test/moveTiers.test.ts` rewritten against the schedule. A run completable end to end. | **DONE 2026-09-13.** `LevelSchedule` / `DEFAULT_SCHEDULE` / `scheduleEntries` / `pendingScheduleEntry` / `takeScheduleEntry` / `levelMovePool` (`src/run/progression.ts`); `RosterEntry.scheduleTaken`; `levelUpFlow.ts` pays the report; `MasteryScreen`/`MasteryBoard` deleted; `SAVE_VERSION` 14. **One rule added:** a hero takes at most ONE entry per level-up, so a raw hire's backlog is worked off one fight at a time (§4's "un-crossed"), and the report never stacks two decisions on one hero. Measured below. |
 | 4 | **Author 36 schedules.** Parallelisable from phase 3 on. The interesting authoring is the spread: who evolves at 12 and who at 22, and whether the low-base/high-grade late bloomers from the grade pass are also the late evolvers (they should not all be — a hero can bloom in stats and turn early, or the reverse). | No hero on the default schedule; the 10–24 Evolution window pinned by test beside the grade budget. | **DONE 2026-09-13** (per user direction: fewer offers a hero). `src/data/heroes.ts`: 11 early turners (10–12), 18 middle (13–19), 7 late (20–24); 5–6 offers a hero, Glyph 7, 5.4 on average; Mid 9–13 and Late 18–25 move with the Evolution. Crossed against the grades on purpose: Marrow, Zenith and Bellows are front-loaded in stats and turn LAST; Riptide and Pincer bloom in stats and turn early/mid. Pinned in `test/moveTiers.test.ts`. Measured below. |
-| 5 | **Four acts and the finale.** §5's table, in one pass. The Herald rename; the Eyes as a second finale champion through `appendFinalEnemy`. | `TOTAL_ACTS` = 5; the sim's act table reads four; 18 encounters at par reach 30. | |
+| 5 | **Four acts and the finale.** §5's table, in one pass. The Herald rename; the Eyes as a second finale champion through `appendFinalEnemy`. | `TOTAL_ACTS` = 5; the sim's act table reads four; 18 encounters at par reach 30. | **RE-SCOPED 2026-10-01, NOT BUILT:** §5 re-drafted — delete Act 5, keep acts 1–4 as they are, Scribe 3+3, the finale re-fitted. Measured on branch `sim/four-acts`; the finale's re-fit is the open dial. |
 | 6 | **Re-fit.** Ichor supply, `ACT_STEP_CURVE`, `ENEMY_LEVEL_LAG`, champion multipliers, reward weights, against the sim and the skilled pilot; then the length report. | No dead node, no unreachable band, no wall the old curve did not have; run length reported per profile. Win-rate targets are a playtest question. | **DONE 2026-09-13** (per user direction: Late moves realistically accessible). Three dials: each band offers ITS OWN tier (`MOVE_TIER_RANK_EXPIRY.mid` = Late); every schedule re-authored to two offers a band, Late opening 17–22; **Late-tier mana ×0.75** (floor 45, the 100+ whole-pool casts exempt) and `ACT_STEP_CURVE` 9/15 → 8/13 to pay for its enemy half. Measured below. The Act 1 wall is NOT re-fitted — see §10. |
 
 **What each phase measures.** Phase 1: nothing moves *at par*, and that held — but the roster is
