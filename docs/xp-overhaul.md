@@ -331,6 +331,34 @@ What it says:
 4. **B is rejected.** It reaches the finale stronger (95.8%) by moving the build forward an act,
    which re-creates the plateau one act earlier.
 
+**Mastery supply levers** (2026-10-02, per user direction; same batches, all with the finale act
+term at 0, skilled / chart pilot). Three ways to buy back the lost act's pips:
+
+| Lever | Full-clear | Pips a completed run | Every hero evolved | Evolutions in Acts 1–2 |
+|---|---|---|---|---|
+| Scribe 3+3 (ASF above) | 87.3 / 41.9% | 34.4 | 57.7 / 40.6% | 5.9% |
+| Shelf 2-packs (25g, 2 a visit, one hero each), Scribe 2+2 | 86.7 / 42.9% | 33.8 | 33.8 / 24.0% | 2.9% |
+| 2-packs + Scribe 3+3 | 87.3 / 41.9% | 41.7 | 72.9 / 54.2% | 20.7% |
+| **MVP pip every fight**, Scribe 2+2, single Scrolls | 87.1 / 41.6% | 37.6 | **67.3 / 48.9%** | 24.9% |
+
+- **None of them moves full-clear** (41.6–42.9% chart). Mastery supply is not what the finale
+  wall is made of; that stays the finale's own re-fit.
+- **Where the pips land matters as much as how many.** The 2-packs restore today's count but
+  the fewest fully evolved rosters: the shelf buys for the four strongest heroes, and a pack
+  doubles down on them. The MVP pip goes where the fight says, and reaches 67% fully evolved on
+  fewer pips than packs + Scribe 3+3 need for 73%.
+- **The MVP** (`src/run/mvp.ts` on the branch): each hero's score is its weighted share of
+  whichever team column it led most — Damage (Shield-absorbed and DoT included), Finishes (×0.8),
+  Support (non-drain heals plus Shield it granted that a hit emptied), Anchor (damage taken from
+  enemies), Control (statuses and stat drops on enemies, buffs on allies) — on the field 2+ rounds;
+  never a hero at Mastery 10, never the same hero twice running. Winners split Anchor 29 /
+  Control 26 / Damage 21 / Support 11 / Finishes 7% (skilled); the no-repeat rule moved 24% of
+  pips; a run's most-picked hero takes ~40% of its MVPs, 4.5 distinct heroes a run. The share a
+  winner holds is high (76%), so the victory line has a real number to say. **Anchor leads,
+  which is the tanks' column — watch it in play; a weight below 1 is the dial.** It is also the
+  first post-fight pip, reversing "never a post-fight drop" (`docs/mastery.md`), and it moves
+  Evolutions earlier: a quarter land in Acts 1–2.
+
 **Open, for the designer:**
 
 - **The finale's re-fit.** The chart pilot loses ~20 points there against today. Which lever —
