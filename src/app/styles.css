@@ -30360,6 +30360,14 @@ button.star-shop-bundle-face {
   filter: drop-shadow(0 0 6px rgba(var(--result-rgb), 0.5));
 }
 
+/* The MVP row's glyph is the hero, sized to the disc. */
+.fight-result-row-glyph > .fight-result-mvp-portrait {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
 .fight-result-row-text {
   flex: 1 1 auto;
   min-width: 0;

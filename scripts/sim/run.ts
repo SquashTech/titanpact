@@ -19,7 +19,11 @@ import { enemies, finaleEnemies, ENDBRINGER_ID, titanEyes, EYE_PHASES } from '..
 import { encounterKindOf, encounterSeedFor, nodeEncounter } from '../../src/run/encounters';
 import { allCombatants } from '../../src/data/content';
 import { guildHallOffersFor, CONTRACT_PURCHASE_COST } from '../../src/data/recruitment';
-import { SCRIBE_PIPS_EACH, SCROLL_CACHE_COUNT, buyScroll, canBuyScroll, grantMastery } from '../../src/run/mastery';
+import { chooseMvp, mvpLedgersFromEvents } from '../../src/run/mvp';
+import { statuses } from '../../src/data/statuses';
+import type { CombatEvent } from '../../src/engine/events';
+import type { CombatState } from '../../src/engine/state';
+import { MASTERY_CAP, SCRIBE_PIPS_EACH, SCROLL_CACHE_COUNT, SCROLL_PACK_PIPS, buyScroll, canBuyScroll, grantMastery } from '../../src/run/mastery';
 
 import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry, ROSTER_CAP, TOTAL_ACTS, type RunState, type RosterEntry } from '../../src/run/state';
 import { blessOpeningPair } from '../../src/run/blessings';
@@ -28,7 +32,7 @@ import { generateStarterOptions, STARTER_PICK_COUNT } from '../../src/run/draft'
 import { chooseLocation, drawLocationCandidates, locationChoiceDue, locationForAct } from '../../src/run/locations';
 import { ACT_ONE_LOCATION_ID, locations } from '../../src/data/locations';
 import { encounterScaling } from '../../src/run/difficulty';
-import { encounterXpKind, grantEncounterLevels, levelOf, MAX_LEVEL } from '../../src/run/growth';
+import { encounterXpKind, grantEncounterLevels, grantXp, levelOf, MAX_LEVEL } from '../../src/run/growth';
 import { deckRows, normalizeDeck } from '../../src/run/deck';
 import { generateFinaleEncounter, type Encounter, type EncounterNodeType } from '../../src/run/enemyGen';
 import { pickSquad, requiredSquadSize, STANDARD_SQUAD_SIZE, type Squad } from '../../src/run/squad';
@@ -199,6 +203,10 @@ export interface RunRecord {
   equipped: string[];
   /** Mastery pips landed this run, by source (run/mastery.ts). */
   pipsBySource: Record<string, number>;
+  /** The MVP pip (run/mvp.ts, SIM_MVP=1): tallies keyed `col:<column>`, `hero:<heroId>`, `repeatBlocked`, `fights`; the run's MVPs by roster id; the last one. */
+  mvp: Record<string, number>;
+  mvpByRoster: Record<string, number>;
+  mvpLast?: string;
   /** Signatures owed at the tenth pip this run, by hero: times reached and times the kit took it. */
   signatures: Record<string, { reached: number; taken: number }>;
   /** Every rolled move offer (schedule, Mentor, Tutor, signature) by move id: times on the table, times the kit took it. */
@@ -353,6 +361,8 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     choices: [],
     equipped: [],
     pipsBySource: {},
+    mvp: {},
+    mvpByRoster: {},
     signatures: {},
     moveOffers: {},
     recruitsBySource: {},
@@ -713,10 +723,32 @@ function resolveEncounterNode(
   record.knockouts.koInWinsByKind[kindKey] = (record.knockouts.koInWinsByKind[kindKey] ?? 0) + koRosterIds.length;
   // The consumable drop (src/run/consumables.ts). Potions are never drunk here — the pilot has no
   // Bag — but a Revive IS spent (spendRevives), since a persisting knockout is what it prices.
+  if (MVP_ON && mapNodeType !== 'finale') workingRun = awardMvp(workingRun, fight.events, fight.final, rng, record);
   const consumableDrop = rollConsumableDrop(kindKey, rng);
   if (consumableDrop) workingRun = grantConsumable(workingRun, consumableDrop);
   if (consumableDrop === 'revive') record.knockouts.revivesFound += 1;
   return { run: workingRun, won: true, defeatedRoster: encounter.run.roster, drop, encounter, koRosterIds };
+}
+
+const MVP_ON = process.env.SIM_MVP === '1';
+
+/** One pip to the fight's MVP (run/mvp.ts): never a capped hero, never the same hero twice running. */
+function awardMvp(run: RunState, events: readonly CombatEvent[], final: CombatState, rng: Rng, record: RunRecord): RunState {
+  const onRoster = new Set(run.roster.map((e) => e.rosterId));
+  const ledgers = mvpLedgersFromEvents(events, final, PLAYER_SIDE, statuses).filter((l) => onRoster.has(l.rosterId));
+  const ineligible = new Set(run.roster.filter((e) => e.mastery >= MASTERY_CAP).map((e) => e.rosterId));
+  const unruled = chooseMvp(ledgers, { ineligible });
+  const pick = chooseMvp(ledgers, { ineligible, lastMvpRosterId: record.mvpLast });
+  record.mvp.fights = (record.mvp.fights ?? 0) + 1;
+  if (!pick) return run;
+  if (unruled && unruled.rosterId !== pick.rosterId) record.mvp.repeatBlocked = (record.mvp.repeatBlocked ?? 0) + 1;
+  const heroId = run.roster.find((e) => e.rosterId === pick.rosterId)?.heroId ?? '?';
+  record.mvp[`col:${pick.column}`] = (record.mvp[`col:${pick.column}`] ?? 0) + 1;
+  record.mvp[`hero:${heroId}`] = (record.mvp[`hero:${heroId}`] ?? 0) + 1;
+  record.mvp.shareSum = (record.mvp.shareSum ?? 0) + pick.share;
+  record.mvpByRoster[pick.rosterId] = (record.mvpByRoster[pick.rosterId] ?? 0) + 1;
+  record.mvpLast = pick.rosterId;
+  return landPips(run, pick.rosterId, 1, 'mvp', rng, record);
 }
 
 /** The Guardian's Banner: a fixed 1-of-5, taken at random. */
@@ -846,8 +878,14 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
     case 'event':
       return resolveEvent(run, locationId, rng, record);
     case 'shop':
-    case 'muster':
-      return resolveShop(run, nodeType === 'muster', rng, record, options);
+    case 'muster': {
+      // Diagnostic (SIM_VIGIL_XP): the XP a lost act paid, granted at the Vigil — stats only, no schedule payout.
+      const vigilXp = nodeType === 'muster' ? Number(process.env.SIM_VIGIL_XP ?? 0) : 0;
+      // Diagnostic (SIM_VIGIL_BANNER=1): the lost act's Banner, claimed at the Vigil.
+      if (nodeType === 'muster' && process.env.SIM_VIGIL_BANNER === '1') run = claimBanner(run, rng, record);
+      const grown = vigilXp > 0 ? { ...run, roster: run.roster.map((e) => grantXp(e, rosterHeroes[e.heroId], vigilXp, rng).entry) } : run;
+      return resolveShop(grown, nodeType === 'muster', rng, record, options);
+    }
     default:
       return run;
   }
@@ -1070,7 +1108,7 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
   for (let bought = 0; canBuyScroll(next, bought); bought++) {
     const target = policy.scrollTarget(next.roster, options.levelPolicy);
     if (!target) break;
-    spend('scroll', () => landPips(buyScroll(next, bought), target.rosterId, 1, 'shelf', rng, record));
+    spend('scroll', () => landPips(buyScroll(next, bought), target.rosterId, SCROLL_PACK_PIPS, 'shelf', rng, record));
   }
 
   spend('anvil', () => resolveAnvil(next));

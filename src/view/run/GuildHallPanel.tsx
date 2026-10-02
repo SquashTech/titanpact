@@ -15,7 +15,7 @@ import type { RunState } from '../../run/state';
 import { ROSTER_CAP, RosterFullError } from '../../run/state';
 import { guildHallEntry } from '../../run/guildRecruit';
 import { guildHallLevel } from '../../run/difficulty';
-import { SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT, canBuyScroll } from '../../run/mastery';
+import { SCROLL_PACK_PIPS, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT, canBuyScroll } from '../../run/mastery';
 import { CONSUMABLE_HOLD_CAP, CONSUMABLE_KINDS, CONSUMABLE_NAMES, REVIVE_PURCHASE_LIMIT, canBuyConsumable, consumablePrice, type ConsumableKind } from '../../run/consumables';
 import { anyWounded, canBuyMend, mendPrice } from '../../run/wounds';
 import { WoundBar, entryHp } from '../shared/WoundBar';
@@ -266,7 +266,7 @@ export function GuildHallPanel({
 
       {tab === 'shop' && (
         <div className="guild-hall-section is-shop">
-          {/* The shelf: the Mastery Scroll (one pip, SCROLL_PURCHASE_LIMIT a visit, the tap opens the
+          {/* The shelf: a pack of Mastery Scrolls (SCROLL_PACK_PIPS pips in any split, SCROLL_PURCHASE_LIMIT a visit, the tap opens the
               who screen), the flasks (the flask's own cap is the shelf's; the Revive is one a visit),
               and two pieces of gear on the bottom plank. */}
           <div className="hall-shelf">
@@ -274,7 +274,7 @@ export function GuildHallPanel({
             <HallGood
               className="is-slot-1"
               art={GOOD_ART.scroll}
-              name="Mastery Scroll"
+              name={`${SCROLL_PACK_PIPS} Mastery Scrolls`}
               price={scrollsSoldOut ? 'Sold out' : SCROLL_PURCHASE_COST}
               soldOut={scrollsSoldOut}
               held={scrollsSoldOut ? undefined : `${SCROLL_PURCHASE_LIMIT - scrollsBought} left`}

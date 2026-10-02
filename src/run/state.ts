@@ -10,13 +10,13 @@ import { xpForLevel } from './growth';
 
 export const ROSTER_CAP = 6;
 
-/** 5 acts of the run-loop.md §1 shape, then the finale act. */
-export const TOTAL_ACTS = 6;
+/** 4 acts of the run-loop.md §1 shape, then the finale act (docs/xp-overhaul.md §5). */
+export const TOTAL_ACTS = 5;
 
 /** Acts that break a seal — the ones with a Guardian, a location draw and a §1 map. */
-export const SEAL_ACTS = 5;
+export const SEAL_ACTS = 4;
 
-/** Act 6: the Vigil and the final battle (docs/run-loop.md §4). */
+/** Act 5: the Vigil and the final battle (docs/run-loop.md §4). */
 export const FINALE_ACT = TOTAL_ACTS;
 
 export interface RosterEntry {
@@ -161,6 +161,8 @@ export interface RunState {
   ascension: number;
   /** The deck the run was sealed with (run/deck.ts), fixed for the run: its recruitable pool. Null on a run saved before decks, which reads the owned roster whole. */
   deck: readonly string[] | null;
+  /** Last fight's MVP (run/mvp.ts) — the no-repeat rule reads it. Null before the first win. */
+  lastMvpRosterId: string | null;
 }
 
 export function createRunState(gold = 0, recruitContracts = 1, ascension = 0): RunState {
@@ -181,6 +183,7 @@ export function createRunState(gold = 0, recruitContracts = 1, ascension = 0): R
     brokenSeals: [],
     ascension,
     deck: null,
+    lastMvpRosterId: null,
   };
 }
 

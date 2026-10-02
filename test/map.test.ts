@@ -50,7 +50,7 @@ const REWARD_TYPES = new Set([
 // One shape for every act 1-5 since 2026-09-14: three fights, the spliced seat and the Scribe in all five.
 test('map: the per-act shape — Fight, pick-3 reward, spliced seat, pick-3 reward, Scribe, (Elite or Skirmish), pick-3 reward, funnel, Guardian', () => {
   for (const seed of [1, 2, 3, 4, 5]) {
-    for (const actNumber of [1, 2, 3, 4, 5]) {
+    for (const actNumber of [1, 2, 3, 4]) {
       const map = generateMap(seed, actNumber);
       const rows = map.rows;
       const rowTypes = (r: number) => rows[r].map((id) => map.nodes[id].type);
@@ -84,7 +84,7 @@ test('map: the per-act shape — Fight, pick-3 reward, spliced seat, pick-3 rewa
 
 test('map: the funnel is one Guild Hall in every act, and a Guild Hall is never rolled elsewhere', () => {
   for (const seed of [1, 2, 3, 4, 5]) {
-    for (const actNumber of [1, 2, 3, 4, 5]) {
+    for (const actNumber of [1, 2, 3, 4]) {
       const map = generateMap(seed, actNumber);
       const funnelRow = map.rows.length - 2;
       assert.deepStrictEqual(map.rows[funnelRow].map((id) => map.nodes[id].type), ['shop'], `act ${actNumber} seed ${seed}`);
@@ -98,9 +98,9 @@ test('map: the funnel is one Guild Hall in every act, and a Guild Hall is never 
   }
 });
 
-test('map: the single-node rows before a pick-3 reward row connect to all 3 of them (Act 5)', () => {
+test('map: the single-node rows before a pick-3 reward row connect to all 3 of them (Act 4)', () => {
   for (const seed of [1, 2, 3, 4, 5]) {
-    const map = generateMap(seed, 5);
+    const map = generateMap(seed, 4);
     assert.strictEqual(map.rows[1].length, 3, 'row 1 must be the pick-3 this test is about');
     assert.strictEqual(map.rows[3].length, 3, 'row 3 must be the pick-3 this test is about');
     assert.deepStrictEqual([...map.nodes[map.rows[0][0]].nextIds].sort(), [...map.rows[1]].sort());
@@ -108,9 +108,9 @@ test('map: the single-node rows before a pick-3 reward row connect to all 3 of t
   }
 });
 
-test('map: the Elite/Skirmish choice stays reachable from the Scribe on every seed (Act 5)', () => {
+test('map: the Elite/Skirmish choice stays reachable from the Scribe on every seed (Act 4)', () => {
   for (const seed of [1, 2, 3, 4, 5]) {
-    const map = generateMap(seed, 5);
+    const map = generateMap(seed, 4);
     assert.deepStrictEqual(map.rows[5].map((id) => map.nodes[id].type).sort(), ['elite', 'skirmish'], 'row 5 must be the Elite/Skirmish row');
     const reachableFromScribe = new Set(map.rows[4].flatMap((id) => map.nodes[id].nextIds));
     for (const optionId of map.rows[5]) {
@@ -150,9 +150,9 @@ test('map: the Mentor row sits between the first two reward rows, and every path
   }
 });
 
-test('map: the spliced seat is the Mentor in acts 1-3 and the Tutor in acts 4-5', () => {
+test('map: the spliced seat is the Mentor in acts 1-3 and the Tutor in act 4', () => {
   for (const seed of [1, 2, 3, 4, 5]) {
-    for (const actNumber of [1, 2, 3, 4, 5]) {
+    for (const actNumber of [1, 2, 3, 4]) {
       const map = generateMap(seed, actNumber);
       const expected = actNumber <= 3 ? 'mentorReward' : 'tutorReward';
       assert.strictEqual(map.nodes[map.rows[2][0]].type, expected, `Act ${actNumber} (seed ${seed})`);
@@ -165,7 +165,7 @@ test('map: the spliced seat is the Mentor in acts 1-3 and the Tutor in acts 4-5'
 
 test('map: mentorReward never rerolls into a pick-1-of-3 reward row — the forced Mentor row is its only source', () => {
   for (const seed of Array.from({ length: 30 }, (_, i) => i + 1)) {
-    for (const actNumber of [1, 2, 3, 4, 5]) {
+    for (const actNumber of [1, 2, 3, 4]) {
       const map = generateMap(seed, actNumber);
       const rewardRowIndices = [1, 3, 5];
       for (const r of rewardRowIndices) {
@@ -222,7 +222,7 @@ test('map: the Scribe above Elite-or-Skirmish keeps both options open', () => {
 // (MapRoute's leadOnsDiffer), so an unsteered row is also what takes them off it. The row above
 // the Scribe is the one with a choice in it; the Scribe itself leads to both.
 test('map: the reward row above the Scribe has nothing left to signpost', () => {
-  for (const act of [1, 2, 3, 4, 5]) {
+  for (const act of [1, 2, 3, 4]) {
     for (const seed of [1, 7, 42, 99, 2024]) {
       const map = generateMap(seed, act);
       const feeding = map.rows[map.rows.length - 6];

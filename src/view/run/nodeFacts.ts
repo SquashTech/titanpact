@@ -7,7 +7,7 @@ import type { MapNodeType } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
 import { ENCHANT_FORCE_BY_RARITY, EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, RARITY_ORDER, rarityWeightsFor } from '../../run/equipment';
 import { goldRangeFor, purseRangeFor } from '../../run/runProgress';
-import { MASTERY_EVOLUTION, SCRIBE_PICKS, SCRIBE_PIPS_EACH, SCROLL_CACHE_COUNT, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT } from '../../run/mastery';
+import { MASTERY_EVOLUTION, SCRIBE_PICKS, SCRIBE_PIPS_EACH, SCROLL_CACHE_COUNT, SCROLL_PACK_PIPS, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT } from '../../run/mastery';
 import { ENCOUNTER_XP_MULTIPLIER, encounterXpForAct, encounterXpKind } from '../../run/growth';
 import { LEY_LINE_FORCE, MANA_WELL_AMOUNT, MANA_WELL_REGEN } from '../../run/runProgress';
 import { BOON_OFFER_COUNT } from '../../run/boons';
@@ -231,7 +231,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         facts: [
           { glyph: 'hero', label: 'Hire', value: `${GUILD_HALL_RECRUIT_COST}g`, note: `Lv ${guildHallLevel(actNumber)}, raw` },
           { glyph: 'contract', label: 'Contract', value: `${CONTRACT_PURCHASE_COST}g` },
-          { glyph: 'scroll', label: 'Mastery Scroll', value: `${SCROLL_PURCHASE_COST}g`, note: `up to ${SCROLL_PURCHASE_LIMIT}` },
+          { glyph: 'scroll', label: `${SCROLL_PACK_PIPS} Mastery Scrolls`, value: `${SCROLL_PURCHASE_COST}g`, note: `up to ${SCROLL_PURCHASE_LIMIT}` },
           { glyph: 'anvil', label: 'Anvil', value: priceBand(ANVIL_PRICE_BY_TARGET), note: '+1 tier' },
           { glyph: 'enchant', label: 'Enchanter', value: priceBand(ENCHANT_PRICE_BY_RARITY), note: 'one element' },
           { glyph: 'hp', label: 'Mend', value: `${MEND_PRICE_PER_HERO}g`, note: 'a hero’s worth of missing HP' },
@@ -245,7 +245,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
       return {
         kind: 'Landmark · The last stop',
         facts: [
-          { glyph: 'scroll', label: 'Mastery Scroll', value: `${SCROLL_PURCHASE_COST}g`, note: `up to ${SCROLL_PURCHASE_LIMIT}` },
+          { glyph: 'scroll', label: `${SCROLL_PACK_PIPS} Mastery Scrolls`, value: `${SCROLL_PURCHASE_COST}g`, note: `up to ${SCROLL_PURCHASE_LIMIT}` },
           { glyph: 'anvil', label: 'Anvil', value: priceBand(ANVIL_PRICE_BY_TARGET), note: '+1 tier' },
           { glyph: 'enchant', label: 'Enchanter', value: priceBand(ENCHANT_PRICE_BY_RARITY), note: 'one element' },
           { glyph: 'hp', label: 'Mend', value: `${MEND_PRICE_PER_HERO}g`, note: 'a hero’s worth of missing HP' },

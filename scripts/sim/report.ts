@@ -665,6 +665,17 @@ export function formatReport(
   out.push(`    spent cycling out        ${pct(agg.playerSwitches, agg.playerTurns)}`);
   out.push(`    fights reaching lock-in  ${pct(agg.lockInFights, totalFights)}  (player side lost 2+ heroes)`);
 
+  if (agg.mvp.fights) {
+    const m = agg.mvp;
+    const runs = m.runs ?? 1;
+    out.push('');
+    out.push(`  MVP pip (run/mvp.ts): ${m.fights} fights, a winner's mean share of its column ${(100 * (m.shareSum ?? 0) / m.fights).toFixed(1)}%, the no-repeat rule moved ${(100 * (m.repeatBlocked ?? 0) / m.fights).toFixed(1)}% of pips`);
+    out.push(`    by column: ${Object.keys(m).filter((k) => k.startsWith('col:')).sort((a, b) => m[b] - m[a]).map((k) => `${k.slice(4)} ${(100 * m[k] / m.fights).toFixed(1)}%`).join(', ')}`);
+    out.push(`    per run: ${(m.distinctSum / runs).toFixed(2)} distinct MVPs; the run's most-picked hero takes ${(100 * m.topShareSum / runs).toFixed(1)}% of its MVPs`);
+    const heroes = Object.keys(m).filter((k) => k.startsWith('hero:')).sort((a, b) => m[b] - m[a]);
+    out.push(`    most picked: ${heroes.slice(0, 10).map((k) => `${k.slice(5)} ${m[k]}`).join(', ')}`);
+    out.push(`    least picked: ${heroes.slice(-8).map((k) => `${k.slice(5)} ${m[k]}`).join(', ')}`);
+  }
   // Mastery pips by source (docs/mastery.md §3): the supply is the only balance number — the
   // target is every hero evolved and ~3 signatures a run, ~35-40 pips on the middle path.
   out.push('');

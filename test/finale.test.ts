@@ -1,4 +1,4 @@
-// Act 6 — the Vigil and the final battle (docs/run-loop.md §4, docs/lore.md). The
+// The finale act — the Vigil and the final battle (docs/run-loop.md §4, docs/lore.md). The
 // decided shape a later pass could move without noticing: what the finale fields, in
 // what order, at what power, and the three windows 6v6 actually opens.
 
@@ -62,8 +62,9 @@ test('endbringer: mono-Ancient, and therefore the only thing on the board nothin
   }
 });
 
-test('endbringer: 900 stats — a step above the champions, not a different number class', () => {
-  assert.strictEqual(statTotal(ENDBRINGER_ID), 900);
+test('endbringer: 860 stats — a step above the champions, not a different number class', () => {
+  // 900 until 2026-10-02: the four-act finale re-fit took 20 Attack and 20 Intelligence (docs/xp-overhaul.md §5).
+  assert.strictEqual(statTotal(ENDBRINGER_ID), 860);
   for (const id of CHAMPION_IDS) {
     assert.ok(statTotal(ENDBRINGER_ID) > statTotal(id), `${id} matches the Titan`);
   }
@@ -169,12 +170,13 @@ test('finale: a champion arrives at the level and growth it was beaten at, not a
   assert.deepStrictEqual(early.roster[0].evolutionStatGrants, {});
 });
 
-test('finale: it is 6 a side, and every one of them is a distinct combatant', () => {
+test('finale: one body a broken seal and the Herald, every one of them a distinct combatant', () => {
   const seals = CHAMPION_IDS.slice(0, SEAL_ACTS).map((id, i) => seal(i + 1, id));
   const { run, squad } = generateFinaleEncounter(seals, ENDBRINGER_ID, finaleEnemies, 1);
-  assert.strictEqual(run.roster.length, ROSTER_CAP);
+  assert.strictEqual(run.roster.length, SEAL_ACTS + 1);
+  assert.ok(run.roster.length <= ROSTER_CAP);
   const fielded = [...squad.activeIds.filter((id): id is string => id !== null), ...squad.benchIds];
-  assert.strictEqual(new Set(fielded).size, ROSTER_CAP);
+  assert.strictEqual(new Set(fielded).size, SEAL_ACTS + 1);
 });
 
 test('finale: a run that somehow broke nothing still meets the Titan alone rather than crashing', () => {
@@ -195,7 +197,7 @@ test('brokenSeals: a re-resolved Guardian node never records the same act twice'
 
 // --- The itinerary ---
 
-test('finale: an itinerary is six long, ends at the Threshold, and leaves exactly one seal unbroken', () => {
+test('finale: an itinerary is TOTAL_ACTS long, ends at the Threshold, and leaves two seals unbroken', () => {
   for (let seed = 1; seed <= 40; seed++) {
     const itinerary = generateItinerary(seed);
     assert.strictEqual(itinerary.length, TOTAL_ACTS);
@@ -203,8 +205,8 @@ test('finale: an itinerary is six long, ends at the Threshold, and leaves exactl
     const visitedPool = ITINERARY_POOL_IDS.filter((id) => itinerary.includes(id));
     assert.strictEqual(visitedPool.length, SEAL_ACTS - 1, `seed ${seed}`);
     const unbroken = unbrokenSealLocationIds(itinerary);
-    assert.strictEqual(unbroken.length, 1, `seed ${seed} has no sixth seal`);
-    assert.ok(!itinerary.includes(unbroken[0]));
+    assert.strictEqual(unbroken.length, 2, `seed ${seed}`);
+    for (const id of unbroken) assert.ok(!itinerary.includes(id));
   }
 });
 
@@ -216,7 +218,7 @@ test('finale: the Threshold is a real location the draw can never produce', () =
 
 // --- The map ---
 
-test('finale: act 6 is a corridor — the Vigil, then the one fight the Herald and the Eyes share, no branch', () => {
+test('finale: the finale act is a corridor — the Vigil, then the one fight the Herald and the Eyes share, no branch', () => {
   const map = generateMap(1234, FINALE_ACT);
   assert.deepStrictEqual(
     map.rows.map((row) => row.map((id) => map.nodes[id].type)),

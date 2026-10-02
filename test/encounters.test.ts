@@ -50,7 +50,7 @@ test('encounters: the seed is a function of the map and the node, so two builds 
 
 test('encounters: the fork is Elite-or-Skirmish, both recruitable, and the two never show the same typing', () => {
   for (let seed = 1; seed <= 40; seed++) {
-    const run = runAt(seed, 2 + (seed % 4));
+    const run = runAt(seed, 2 + (seed % 3));
     const ctx = contextFor(run);
     const [elite] = nodesOfType(run, 'elite');
     const fork = run.map!.rows[elite.row].map((id) => run.map!.nodes[id]);
@@ -88,7 +88,7 @@ test('encounters: the mob nodes draw spawn and the Guardian draws escorts plus i
 });
 
 test('encounters: from A1 the Guardian wakes — it leads, wears its Mark, grows on hero grades, and gains an escort from Act 3', () => {
-  for (const act of [1, 2, 3, 5]) {
+  for (const act of [1, 2, 3, 4]) {
     const base = runAt(9, act);
     const [boss] = nodesOfType(base, 'boss');
     const asleep = nodeEncounter(boss, contextFor(base));
@@ -113,13 +113,13 @@ test('encounters: from A1 the Guardian wakes — it leads, wears its Mark, grows
   }
 });
 
-test("encounters: a Base champion grows on its act's grade — E to Act 3, D in Act 4, C in Act 5", () => {
-  assert.deepStrictEqual([1, 2, 3, 4, 5].map(championGradeFor), ['E', 'E', 'E', 'D', 'C']);
+test("encounters: a Base champion grows on its act's grade — E to Act 3, C in Act 4, the last seal", () => {
+  assert.deepStrictEqual([1, 2, 3, 4].map(championGradeFor), ['E', 'E', 'E', 'C']);
   // The same champion, seed and level on E and on C: the draw walks the row in order, so the
   // stronger row never pays less on a draw.
   const championId = 'manticore';
   const empty = { run: createRunState(0), squad: { activeIds: [null, null] as [null, null], benchIds: [] } };
-  const scaling = encounterScaling('boss', 5);
+  const scaling = encounterScaling('boss', 4);
   const onE = appendFinalEnemy(empty, championId, enemies, 7, scaling).run.roster[0];
   const graded = { ...enemies[championId], growthGrades: Object.fromEntries(Object.keys(enemies[championId].growthGrades!).map((k) => [k, 'C'])) as typeof enemies[string]['growthGrades'] };
   const onC = appendFinalEnemy(empty, championId, { ...enemies, [championId]: graded }, 7, scaling).run.roster[0];

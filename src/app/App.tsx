@@ -95,7 +95,8 @@ import {
   type RosterReplaceCandidate,
 } from '../run/recruitment';
 import { guildHallOffersFor } from '../data/recruitment';
-import { MASTERY_CAP, SCROLL_CACHE_COUNT, buyScroll, canBuyScroll } from '../run/mastery';
+import { MASTERY_CAP, SCROLL_CACHE_COUNT, SCROLL_PACK_PIPS, buyScroll, canBuyScroll, canTakeMastery, grantMastery } from '../run/mastery';
+import type { MvpPick } from '../run/mvp';
 import { ShopItemError, TavernRerollError, buyShopItem, rerollGuildHallOffers, rollGuildHallOffers, type GuildHallOffers } from '../run/shop';
 import { ConsumableError, buyConsumable, grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse, type PotionKind } from '../run/consumables';
 import { guildHallEntry } from '../run/guildRecruit';
@@ -784,7 +785,9 @@ export function App() {
     koRosterIds: readonly string[] = [],
     /** The fight's end state — what the roster's wounds are read off (run/wounds.ts). */
     finalState: CombatState | null = null,
-    levelSeed: number = randomSeed()
+    levelSeed: number = randomSeed(),
+    /** The fight's MVP (run/mvp.ts), named on the victory screen: its free pip lands here. */
+    mvp: MvpPick | null = null
   ) {
     if (outcome === 'loss') {
       setScreen({ kind: 'runFailed' });
@@ -811,6 +814,9 @@ export function App() {
     // a hero that is already gone (docs/titanspawn-overhaul.md §5). Its gear goes with it.
     const absorption = absorbCompanions(next, koRosterIds);
     next = absorption.run;
+    // The MVP's pip, before the levels: an Evolution it opens is raised by the level flow below.
+    const mvpEntry = mvp ? next.roster.find((entry) => entry.rosterId === mvp.rosterId) : undefined;
+    if (mvpEntry && canTakeMastery(mvpEntry)) next = { ...grantMastery(next, mvpEntry.rosterId, 1), lastMvpRosterId: mvpEntry.rosterId };
     // Automatic and roster-wide, benched heroes included: no pool and no allocation. The report
     // is what the screen after the fight reads — the roll is destructive, so it cannot be
     // recovered from the roster afterwards.
@@ -959,7 +965,7 @@ export function App() {
     if (screen.kind !== 'shop' || !canBuyScroll(playerRun, screen.scrollsBought)) return;
     setPlayerRun(buyScroll(playerRun, screen.scrollsBought));
     playSfx('gold.coin');
-    setScreen({ kind: 'scrolls', plan: { kind: 'scrolls', count: 1 }, nodeId: null, bought: true, next: { ...screen, scrollsBought: screen.scrollsBought + 1 } });
+    setScreen({ kind: 'scrolls', plan: { kind: 'scrolls', count: SCROLL_PACK_PIPS }, nodeId: null, bought: true, next: { ...screen, scrollsBought: screen.scrollsBought + 1 } });
   }
 
   /** The Shop's gear shelf: the gold is charged on the confirm, and the who screen absorbs the piece. */
@@ -1270,7 +1276,7 @@ export function App() {
           levelSeed={screen.levelSeed}
           equipmentReward={screen.equipmentReward}
           consumableReward={screen.consumableReward}
-          onResolved={(outcome, finalState, consumablesUsed) =>
+          onResolved={(outcome, finalState, consumablesUsed, mvp) =>
             handleFightResolved(
               screen.nodeId,
               screen.goldReward,
@@ -1281,8 +1287,17 @@ export function App() {
               consumablesUsed,
               koRosterIdsOf(finalState, 'A'),
               finalState,
-              screen.levelSeed
+              screen.levelSeed,
+              mvp
             )
+          }
+          mvpRules={
+            playerRun.map!.nodes[screen.nodeId].type === 'finale'
+              ? undefined
+              : {
+                  ineligible: new Set(playerRun.roster.filter((entry) => entry.mastery >= MASTERY_CAP).map((entry) => entry.rosterId)),
+                  lastMvpRosterId: playerRun.lastMvpRosterId ?? undefined,
+                }
           }
           onSaveAndQuit={() => setScreen({ kind: 'title' })}
           onAbandonRun={handleAbandonRun}

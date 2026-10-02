@@ -5,7 +5,7 @@
 import type { FieldEffectDefinition } from '../engine/content';
 
 /** Withering Gaze's share a round: five rounds unanswered is a quarter of a hero. The dial the sim reads first — a tenth measured as the Eyes phase's whole margin (docs/titan-eyes.md §10.3). */
-export const WITHERING_GAZE_FRACTION = 0.05;
+export const WITHERING_GAZE_FRACTION = 0.04;
 
 export const fieldEffects: Record<string, FieldEffectDefinition> = {
   surgingMagic: {

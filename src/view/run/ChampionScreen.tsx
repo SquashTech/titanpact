@@ -89,7 +89,7 @@ export function ChampionScreen({ run, onContinue }: Props) {
               );
             })}
           </div>
-          <p className="champion-line">Their names are kept where the seals are. The sixth held; the world is still here.</p>
+          <p className="champion-line">Their names are kept where the seals are. The last two held; the world is still here.</p>
           <button type="button" className="resolve-button champion-continue" onClick={onContinue}>
             Continue
           </button>

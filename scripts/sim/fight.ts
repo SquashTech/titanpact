@@ -160,6 +160,8 @@ export interface FightOutcome {
   /** Player squad's surviving HP over its max, at the final state. */
   playerHpFrac: number;
   telemetry: Record<string, CombatantTelemetry>;
+  /** Every event the fight emitted, in order — what run/mvp.ts reads. */
+  events: readonly CombatEvent[];
   final: CombatState;
 }
 
@@ -511,6 +513,8 @@ export function simulateFight(input: FightInput): FightOutcome {
   let state = opening.state;
   // A Herald on the opening lead sets its field here, before any round.
   recordEvents(opening.events, telemetry, undefined, undefined, undefined, field);
+  // The whole stream, for what is read off a finished fight (run/mvp.ts).
+  const allEvents: CombatEvent[] = [...opening.events];
   let beats = countBeats(opening.events);
 
   const playerCtx = { ...contextFor(playerRoster, state), random: rng };
@@ -552,6 +556,7 @@ export function simulateFight(input: FightInput): FightOutcome {
     // The player's forced replacements resolve before declaration, the AI's after
     // resolution — the same order the screen enforces.
     state = fillOpenSlots(state, PLAYER_SIDE, events);
+    allEvents.push(...events);
     recordEvents(events, telemetry);
     beats += countBeats(events);
 
@@ -583,6 +588,7 @@ export function simulateFight(input: FightInput): FightOutcome {
     state = fillOpenSlots(state, AI_SIDE, replacementEvents);
     roundEvents.push(...replacementEvents);
 
+    allEvents.push(...roundEvents);
     recordEvents(roundEvents, telemetry, casts, deltas, shield, field, moveTallies, dots);
     beats += countBeats(roundEvents);
     creditKos(roundEvents, telemetry, moveTallies, dots);
@@ -656,6 +662,7 @@ export function simulateFight(input: FightInput): FightOutcome {
     floored,
     playerHpFrac: maxHp > 0 ? hp / maxHp : 0,
     telemetry,
+    events: allEvents,
     final: state,
   };
 }

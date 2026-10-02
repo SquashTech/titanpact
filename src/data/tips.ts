@@ -33,7 +33,7 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
   run: tip(
     'run',
     'The Journey',
-    "Venture forth to defeat five Guardians of the Titan's Seal.",
+    "Venture forth to defeat four Guardians of the Titan's Seal.",
     'If all your heroes fall, the journey is over.'
   ),
   map: tip(

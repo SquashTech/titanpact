@@ -82,6 +82,14 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
 
   for (const key of record.equipped) agg.equipRarityByAct[key] = (agg.equipRarityByAct[key] ?? 0) + 1;
   for (const key of Object.keys(record.goldFlow)) agg.goldFlow[key] = (agg.goldFlow[key] ?? 0) + record.goldFlow[key];
+  for (const key of Object.keys(record.mvp)) agg.mvp[key] = (agg.mvp[key] ?? 0) + record.mvp[key];
+  const mvpCounts = Object.values(record.mvpByRoster);
+  const mvpTotal = mvpCounts.reduce((a, b) => a + b, 0);
+  if (mvpTotal > 0) {
+    agg.mvp.runs = (agg.mvp.runs ?? 0) + 1;
+    agg.mvp.topShareSum = (agg.mvp.topShareSum ?? 0) + Math.max(...mvpCounts) / mvpTotal;
+    agg.mvp.distinctSum = (agg.mvp.distinctSum ?? 0) + mvpCounts.length;
+  }
   for (const key of Object.keys(record.pipsBySource)) {
     agg.pipsBySource[key] = (agg.pipsBySource[key] ?? 0) + record.pipsBySource[key];
     if (record.won) agg.pipsBySourceWon[key] = (agg.pipsBySourceWon[key] ?? 0) + record.pipsBySource[key];

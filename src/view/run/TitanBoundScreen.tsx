@@ -117,7 +117,7 @@ export function TitanBoundScreen({ onContinue }: Props) {
           </div>
 
           <div className="titan-bound-caption">
-            <div className="titan-bound-eyebrow">The sixth held</div>
+            <div className="titan-bound-eyebrow">The last seals held</div>
             <h2 className="titan-bound-title">The Titan is bound</h2>
             <p className="titan-bound-line">Bound to those who put it down. A thousand years, if the seals are kept.</p>
             <button type="button" className="resolve-button titan-bound-continue" onClick={() => done.current()}>

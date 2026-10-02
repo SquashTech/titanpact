@@ -70,8 +70,10 @@ import { MASTERY_CAP } from './mastery';
  * (2026-09-24, no bump): the scripted first run is gone, and with it `tutorial` and
  * `tutorialSeenBeatIds`. A file still carrying them decodes — the two fields are ignored — so
  * removing them costs nobody a run.
+ * v20 (2026-10-02): four acts (docs/xp-overhaul.md §5) — `actNumber` runs 1-5, so a v19 run in
+ * its fifth act or the finale has no honest reading; and RunState gained `lastMvpRosterId`.
  */
-export const SAVE_VERSION = 19;
+export const SAVE_VERSION = 20;
 
 /**
  * Where a restored run resumes. Both are settled points: every reward is banked, the
@@ -450,6 +452,7 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
     brokenSeals: decodeBrokenSeals(value.brokenSeals, index),
     ascension,
     deck,
+    lastMvpRosterId: typeof value.lastMvpRosterId === 'string' ? value.lastMvpRosterId : null,
   };
 }
 

@@ -70,7 +70,7 @@ export function HeraldScreen({ onContinue }: Props) {
         <h2 className="herald-title">{herald?.name ?? 'Endbringer'}</h2>
         <p className="herald-line">
           The Titan's hand and its voice. The eye on its banner is not its own. It walks at the front, and
-          what the five lands turned walks behind it.
+          what the four lands turned walks behind it.
         </p>
         <button
           type="button"

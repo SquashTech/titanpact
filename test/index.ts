@@ -70,6 +70,7 @@ import './installHint.test';
 import './innate.test';
 import './evolutionSimplification.test';
 import './evolutionPassives.test';
+import './mvp.test';
 import { run } from './harness';
 
 run();
