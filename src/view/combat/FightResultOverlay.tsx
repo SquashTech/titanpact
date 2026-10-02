@@ -405,9 +405,9 @@ function MvpRow({ heroId, pick }: { heroId: string; pick: MvpPick }) {
       </span>
       <span className="fight-result-row-text">
         <span className="fight-result-row-label">MVP · {name}</span>
-        <span className="fight-result-row-sub">{MVP_LINES[pick.column](Math.round(pick.share * 100))} — a free Mastery pip</span>
+        <span className="fight-result-row-sub">{MVP_LINES[pick.column](Math.round(pick.share * 100))}</span>
       </span>
-      <span className="fight-result-row-value">+1</span>
+      <span className="fight-result-row-value">+1 Mastery</span>
     </div>
   );
 }
