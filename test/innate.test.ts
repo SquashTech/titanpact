@@ -547,11 +547,13 @@ test('siphon (Warlock): every magical hit restores 10 Mana, a physical hit nothi
   assert.strictEqual(manaAfter(siphon, 'volley'), manaAfter(base, 'volley'), 'a physical spread pays nothing');
 });
 
-test('deep breath (Sage): a Rest grants the holder 20 Intelligence', () => {
+test('deep breath (Sage): a Rest grants the holder 20 Intelligence and 20 Wisdom', () => {
   const state = withPassive(twoVTwo(62, 'cinderKnight', 'valor', 'ironWarden', 'crag'), 'a1', 'sage');
   const { events } = resolveRound(state, restAll(state), config);
-  const gain = events.find((e) => e.type === 'StatChanged' && e.combatantId === 'a1' && e.stat === 'intelligence') as { delta: number } | undefined;
-  assert.strictEqual(gain?.delta, 20);
+  for (const stat of ['intelligence', 'wisdom']) {
+    const gain = events.find((e) => e.type === 'StatChanged' && e.combatantId === 'a1' && e.stat === stat) as { delta: number } | undefined;
+    assert.strictEqual(gain?.delta, 20, stat);
+  }
 });
 
 test('sporefall: both active enemies are Poisoned 5 each round end, the timer holding as the magnitude climbs', () => {

@@ -145,7 +145,7 @@ export const classPassives: Record<string, PassiveDefinition> = {
   herald: {
     id: 'herald',
     name: 'Wayfinder',
-    description: 'Whenever a partner enters the battlefield beside this hero, that partner gains 20 Mana.',
+    description: 'When a partner enters the battlefield beside this hero, that partner gains 20 Mana.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'ally' },
@@ -176,11 +176,11 @@ export const classPassives: Record<string, PassiveDefinition> = {
   sage: {
     id: 'sage',
     name: 'Deep Breath',
-    description: 'Whenever this hero Rests, it gains 20 Intelligence.',
+    description: 'When this hero Rests, it gains 20 Intelligence and 20 Wisdom.',
     reactive: {
       hook: 'Rested',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 20 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['intelligence', 'wisdom'], amount: 20 },
     },
   },
 };
@@ -269,7 +269,7 @@ export const classes: Record<string, ClassDefinition> = {
   },
   herald: {
     id: 'herald',
-    name: 'Herald',
+    name: 'Bard',
     kind: 'utility',
     grantsPassiveId: 'herald',
   },

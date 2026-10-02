@@ -141,6 +141,15 @@ export const CLASS_PATHS: Record<string, ReactNode> = {
   ),
   // A drop, drawn off.
   warlock: <path d="M12 1.6c3.6 5 7 9 7 13a7 7 0 0 1-14 0c0-4 3.4-8 7-13Z" />,
+  // A lyre: two curved arms, a crossbar, three strings (the Bard; id kept from its old name).
+  herald: (
+    <>
+      <path fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" d="M5 3c-1.6 4 0 8 3 10v8M19 3c1.6 4 0 8-3 10v8" />
+      <path d="M4.6 4.4h14.8v2.2H4.6Z" />
+      <path d="M6.4 19.6h11.2v2.4H6.4Z" />
+      <path d="M10.9 6.6h2.2v13h-2.2Z" />
+    </>
+  ),
   // A horseshoe.
   outrider: (
     <path fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" d="M5.2 21V11.4a6.8 6.8 0 0 1 13.6 0V21" />
