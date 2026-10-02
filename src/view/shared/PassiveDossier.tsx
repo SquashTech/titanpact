@@ -73,7 +73,7 @@ export function PassiveDetailCard({ passive }: { passive: PassiveDefinition }) {
           </div>
           <div className="move-detail-line">
             {/* The cap is its own row below, so the line does not say it twice. */}
-            <span>{passive.reactive?.oncePerFight ? 'Reactive' : passiveKindLabel(passive)}</span>
+            <span>{passive.reactive?.oncePerFight ? 'Triggered' : passiveKindLabel(passive)}</span>
           </div>
         </div>
       </div>

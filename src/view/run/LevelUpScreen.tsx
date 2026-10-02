@@ -1,4 +1,4 @@
-import { useEffect, type CSSProperties } from 'react';
+import { useEffect, useRef, type CSSProperties } from 'react';
 import { rosterHeroes } from '../../data/content';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
@@ -38,9 +38,16 @@ export function LevelUpScreen({ run, onRunChange, report, onContinue }: Props) {
   const rosterIds = report.map((hero) => hero.rosterId);
 
   // One entry at a time: each payoff changes the run, the run comes back, and the next hero owed
-  // is asked. Out when nobody is.
+  // is asked. Out when nobody is. `next` is not idempotent: asked once per run, since a second pass
+  // on the same run (StrictMode's double effect) overwrote the first payoff. `busy` resets the guard.
+  const askedOn = useRef<RunState | null>(null);
   useEffect(() => {
-    if (flow.busy) return;
+    if (flow.busy) {
+      askedOn.current = null;
+      return;
+    }
+    if (askedOn.current === run) return;
+    askedOn.current = run;
     if (!flow.next(rosterIds)) onContinue();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [run, flow.busy]);

@@ -217,7 +217,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
           { glyph: 'class', label: 'Class', value: '1 hero', note: 'the Crucible' },
         ],
         odds: odds('boss'),
-        about: 'The act’s end: its champion stands over an escort. Beat it for a Banner, a Contract and the chance to spend one, and the Crucible. Closing the act mends the roster and stands the Down up.',
+        about: 'The act’s end: its champion stands over an escort. Beat it for a Banner, a Contract and the chance to spend one, and the Crucible. Closing the act mends the roster and stands knocked-out heroes back up.',
         terms: [TERMS.banner, TERMS.class, TERMS.contract],
       };
     case 'finale':
@@ -246,7 +246,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
           { glyph: 'hp', label: 'Potion · Revive', value: `${CONSUMABLE_PRICE}g · ${REVIVE_PRICE}g` },
         ],
         odds: null,
-        about: 'Where gold is spent. The Tavern hires heroes raw — an act behind, unevolved, bare-socketed. The shelf sells Scrolls, potions and one Revive; the Smithy works worn gear; the mend heals everyone, the Down included.',
+        about: 'Where gold is spent. The Tavern hires heroes raw — an act behind, unevolved, bare-socketed. The shelf sells Scrolls, potions and one Revive; the Smithy works worn gear; the mend heals everyone, knocked-out heroes included.',
         terms: [TERMS.contract],
       };
     case 'muster':
@@ -314,7 +314,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         kind: 'Reward · Recovery',
         facts: [{ glyph: 'hp', label: 'Mend', value: 'whole roster', note: 'HP carries between fights' }],
         odds: null,
-        about: 'Every hero heals to full and the Down stand up. Nothing to choose — it is worth exactly what your roster is missing.',
+        about: 'Every hero heals to full and knocked-out heroes stand back up. Nothing to choose — it is worth exactly what your roster is missing.',
         terms: [TERMS.wounds],
       };
     case 'currencyReward':

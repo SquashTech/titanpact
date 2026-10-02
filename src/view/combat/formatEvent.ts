@@ -122,8 +122,10 @@ export function formatEvents(
           key: `${key}-math`,
           text:
             `${bpText} × (${e.offStat} ${offStatLabel} ÷ ${e.defStat} ${defLabel} = ${fmt(e.ratio)}) ` +
-            `× STAB ${fmt(e.stab)}× × Type ${fmt(e.typeMult)}× × Var ${fmt(e.variance)}× × Crit ${fmt(e.critMultiplier)}×${modsText} = ${e.amount + (e.absorbed ?? 0)} dmg` +
-            (e.absorbed ? ` (${e.absorbed} to the Shield, ${e.amount} to HP)` : ''),
+            `× Same type ${fmt(e.stab)}× × Type ${fmt(e.typeMult)}× × Roll ${fmt(e.variance)}× × Crit ${fmt(e.critMultiplier)}×${modsText} = ${e.amount + (e.absorbed ?? 0) + (e.prevented ?? 0)} dmg` +
+            (e.absorbed || e.prevented
+              ? ` (${[e.absorbed ? `${e.absorbed} to the Shield` : '', e.prevented ? `${e.prevented} turned aside` : '', `${e.amount} to HP`].filter(Boolean).join(', ')})`
+              : ''),
           className: 'log-math',
         });
         break;

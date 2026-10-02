@@ -725,7 +725,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
           {move.manaCostGainOnUse != null && (
             <EffectRow
               glyph={<StatGlyph stat="manaPool" />}
-              text={`+${move.manaCostGainOnUse} mana each use`}
+              text={`Costs ${move.manaCostGainOnUse} more each use`}
               note={
                 attacker
                   ? `costs ${liveCost} now, ${liveCost + move.manaCostGainOnUse} after this cast · this fight`
@@ -745,7 +745,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
           {move.manaDiscountOnUse != null && (
             <EffectRow
               glyph={<StatGlyph stat="manaPool" />}
-              text={`−${move.manaDiscountOnUse} mana each use`}
+              text={`Costs ${move.manaDiscountOnUse} less each use`}
               note={
                 attacker
                   ? `costs ${liveCost} now, ${Math.max(0, liveCost - move.manaDiscountOnUse)} after this cast · this fight`

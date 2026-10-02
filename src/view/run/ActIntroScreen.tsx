@@ -57,7 +57,7 @@ export function ActIntroScreen({ run, location, onEnter }: Props) {
             the omen waits for the map's first node (docs/locations.md "The omen"). */}
         <div className="act-intro-dossier">
           <div className="act-intro-domains">
-            {domains ? (
+            {domains?.length === 0 ? null : domains ? (
               <>
                 <span className="act-intro-domains-label">Domains here</span>
                 <span className="act-intro-domain-marks">
