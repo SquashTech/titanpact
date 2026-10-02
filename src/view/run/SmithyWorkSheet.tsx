@@ -17,7 +17,7 @@ import {
 import { levelOf } from '../../run/growth';
 import { anvilQuote, anvilUpgrade, enchantItem, RunProgressError, type ItemRef } from '../../run/runProgress';
 import { ENCHANT_PRICE_BY_RARITY } from '../../run/shop';
-import type { RosterEntry, RunState } from '../../run/state';
+import { TOTAL_ACTS, type RosterEntry, type RunState } from '../../run/state';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { enchantTypeOf, ItemEffectChips, ItemPiece, RARITY_COLOR_VARS, RARITY_LABELS, RARITY_RGB_VARS } from '../shared/EquipmentBox';
 import { ElementGlyph } from '../shared/elementIcons';
@@ -44,7 +44,7 @@ function anvilRefusal(run: RunState, item: EquipmentDefinition): string {
   if (item.familyId === undefined) return 'A Unique has no ladder to climb.';
   const target = nextRarity(item.rarity);
   if (target === null) return 'Nothing stands above Mythic.';
-  for (let act = run.actNumber + 1; act <= 6; act++) {
+  for (let act = run.actNumber + 1; act <= TOTAL_ACTS; act++) {
     if (actAllowsRarity(act, target)) return `${RARITY_LABELS[target]} is not forged until Act ${act}.`;
   }
   return `${RARITY_LABELS[target]} is not forged in this act.`;

@@ -195,7 +195,7 @@ export function xpToNextLevel(xp: number): number {
  * inside an act par walks 5/6/8, 10/11/14, 15/17/19, 20/21/24, 25/26/28. Index is the act,
  * 0-based; the last entry is the finale's one fight. First-pass playtest figures.
  */
-export const ENCOUNTER_XP_BY_ACT: readonly number[] = [150, 560, 1060, 1750, 2000, 5000];
+export const ENCOUNTER_XP_BY_ACT: readonly number[] = [150, 560, 1060, 1750, 5000];
 
 /**
  * What a fight's KIND pays over the act's base — the one place a node type prices its XP. The

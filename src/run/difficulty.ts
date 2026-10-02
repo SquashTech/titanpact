@@ -79,7 +79,7 @@ export function championGradeFor(actNumber: number): GrowthGrade {
  * act clear at Act 1's par and ~1 at Act 5's — and this is the measured first pass: Act 1
  * 50 → 58%, Act 3 98 → 96, Act 5 90 → 88. Acts past the table hold at its last entry.
  */
-export const ACT_LEVEL_ADJUST: readonly number[] = [0, -2, 0, 2, 0, 2];
+export const ACT_LEVEL_ADJUST: readonly number[] = [0, -2, 0, 2, 0, 0];
 
 export function actLevelAdjust(actNumber: number): number {
   const act = clampAct(actNumber);

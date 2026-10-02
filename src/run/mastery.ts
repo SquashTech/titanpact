@@ -20,7 +20,7 @@ export const MASTERY_INNATE = MASTERY_CAP;
 
 /** The Scribe: pick this many heroes, and each takes this many pips. Cannot be concentrated — that is what the Cache and the shelf are for. */
 export const SCRIBE_PICKS = 2;
-export const SCRIBE_PIPS_EACH = 2;
+export const SCRIBE_PIPS_EACH = 3;
 
 /** The Scroll Cache, a reward-row seat: this many pips, divided as the player likes. */
 export const SCROLL_CACHE_COUNT = 3;
@@ -44,7 +44,7 @@ export class MasteryError extends Error {}
  */
 export function masteryForAct(actNumber: number): number {
   const act = Number.isFinite(actNumber) && actNumber >= 1 ? Math.floor(actNumber) : 1;
-  return Math.min(MASTERY_CAP, 2 * act - 2);
+  return act >= 5 ? MASTERY_CAP : Math.min(MASTERY_CAP, 2 * act - 2);
 }
 
 /** A Guild hire arrives one pip behind a contract (both raw at 0 in Act 1) — raw: its Evolution, when it has the pips for one, is still the player's to choose. */
