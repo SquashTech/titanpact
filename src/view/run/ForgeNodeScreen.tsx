@@ -14,9 +14,6 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { currentEvolutionPathId } from '../../run/progression';
 import { HubGlyph } from '../shared/nodeIcons';
 import smithArt from '../../../art/npc/smith.png';
-import { RoadArrival, useRoadGreeting } from './RoadEncounter';
-import smithyArt from '../../../art/map-nodes/landmarks/smithy.png';
-import { mapNodeAwakening } from './mapNodeArt';
 import { NodeMotes, NODE_TINT_HEARTH } from '../shared/NodeStage';
 import { overlayHost } from '../shared/overlayHost';
 import { RosterPeek } from './RosterPeek';
@@ -52,12 +49,9 @@ export function ForgeNodeScreen({ run, onRunChange, onContinue }: Props) {
   const [bench, setBench] = useState<{ ref: ItemRef; item: EquipmentDefinition } | null>(null);
   const [beat, setBeat] = useState<SmithyWork | null>(null);
 
-  // The Smithy on the road first, a tap to walk in: no words, the building is the invitation.
-  const [arriving, dismissArrival] = useRoadGreeting(run, ['The Smithy']);
-
   useEffect(() => {
-    if (!arriving) playSfx('anvil.ring', { pitch: 0.85, delay: 0.15 });
-  }, [arriving]);
+    playSfx('anvil.ring', { pitch: 0.85, delay: 0.15 });
+  }, []);
 
   const workable = run.roster.reduce((n, entry) => n + entry.equipment.filter((itemId) => forgeable(run, itemId, equipment)).length, 0);
   const done = forged !== null;
@@ -79,8 +73,6 @@ export function ForgeNodeScreen({ run, onRunChange, onContinue }: Props) {
   }
 
   const afterType = forged ? enchantTypeOf(forged.after) : null;
-
-  if (arriving) return <RoadArrival art={smithyArt} awakened={mapNodeAwakening('forgeReward')} name="The Smithy" onDone={dismissArrival} />;
 
   return (
     <div

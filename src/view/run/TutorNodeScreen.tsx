@@ -14,7 +14,7 @@ import { NodeMotes, NODE_TINT_INSIGHT } from '../shared/NodeStage';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { MoveLearnedOverlay, MoveOfferOverlay } from './MoveOfferOverlay';
 import { RosterPeek } from './RosterPeek';
-import { RoadEncounter, useRoadGreeting } from './RoadEncounter';
+import { KeeperVoice, useKeeperLine } from './RoadEncounter';
 import { TUTOR_LINES } from '../../data/roadLines';
 import { levelOf } from '../../run/growth';
 import { statScaleFor } from '../../run/statScale';
@@ -46,7 +46,7 @@ interface Lesson {
 export function TutorNodeScreen({ run, onRunChange, onContinue }: Props) {
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
-  const [greeting, dismissGreeting] = useRoadGreeting(run, TUTOR_LINES);
+  const voice = useKeeperLine(TUTOR_LINES);
 
   const poolOf = (entry: RosterEntry) => tutorMovePool(progressionTable, moves, entry);
   const anyTeachable = run.roster.some((entry) => poolOf(entry).length > 0);
@@ -71,8 +71,6 @@ export function TutorNodeScreen({ run, onRunChange, onContinue }: Props) {
     onContinue();
   }
 
-  if (greeting) return <RoadEncounter art={tutorArt} name="The Tutor" line={greeting} onDone={dismissGreeting} />;
-
   return (
     <div className="node-screen rite-screen is-tutor tutor-node-screen" style={{ '--node-rgb': NODE_TINT_INSIGHT, '--rite-color': `rgb(${NODE_TINT_INSIGHT})` } as CSSProperties}>
       <span className="node-sky tutor-ground" aria-hidden="true" />
@@ -88,6 +86,7 @@ export function TutorNodeScreen({ run, onRunChange, onContinue }: Props) {
         <span className="keeper-words">
           <span className="rite-eyebrow">By the Roadside</span>
           <h2 className="rite-name">The Tutor</h2>
+          <KeeperVoice line={voice} />
           {anyTeachable ? (
             <span className="keeper-offer">
               <span className="keeper-tag">A Late move</span>

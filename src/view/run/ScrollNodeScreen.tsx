@@ -28,7 +28,7 @@ import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { MoveOfferOverlay } from './MoveOfferOverlay';
 import { MasteredInnateOverlay } from './MasteredInnateOverlay';
 import { RosterPeek } from './RosterPeek';
-import { RoadEncounter, useRoadGreeting } from './RoadEncounter';
+import { KeeperVoice, useKeeperLine } from './RoadEncounter';
 import { SCRIBE_LINES } from '../../data/roadLines';
 import { useMasteryFlow } from './masteryFlow';
 
@@ -62,8 +62,7 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
   const [remaining, setRemaining] = useState(plan.kind === 'scribe' ? SCRIBE_PICKS : plan.count);
   const [pickedIds, setPickedIds] = useState<string[]>([]);
   const flow = useMasteryFlow(run, onRunChange);
-  // Only the Scribe is met on the road; a Cache or the shelf opens straight onto the scrolls.
-  const [greeting, dismissGreeting] = useRoadGreeting(run, SCRIBE_LINES, plan.kind === 'scribe');
+  const voice = useKeeperLine(SCRIBE_LINES);
 
   const pipsPerTap = plan.kind === 'scribe' ? SCRIBE_PIPS_EACH : 1;
   const eligible = run.roster.filter((entry) => canTakeMastery(entry) && !pickedIds.includes(entry.rosterId));
@@ -73,8 +72,8 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
   const finished = remaining <= 0 || eligible.length === 0;
 
   useEffect(() => {
-    if (!greeting) playSfx('shrine', { pitch: 1.1, delay: 0.12 });
-  }, [greeting]);
+    playSfx('shrine', { pitch: 1.1, delay: 0.12 });
+  }, []);
 
   useEffect(() => {
     if (!finished || flow.busy || !anyEligible) return;
@@ -93,8 +92,6 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
     // What the pip opened is raised over the LANDED run, not the one this render closed over.
     flow.raise(entry.rosterId, next, entry.mastery);
   }
-
-  if (greeting) return <RoadEncounter art={scribeArt} name="The Scribe" line={greeting} onDone={dismissGreeting} />;
 
   const grownEntry = flow.grown ? (run.roster.find((r) => r.rosterId === flow.grown!.rosterId) ?? null) : null;
   if (flow.grown && grownEntry) {
@@ -137,6 +134,7 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
           <span className="keeper-words">
             <span className="rite-eyebrow">By the Roadside</span>
             <h2 className="rite-name">The Scribe</h2>
+            <KeeperVoice line={voice} />
             {anyEligible ? (
               <span className="keeper-offer">
                 <span className="keeper-line">

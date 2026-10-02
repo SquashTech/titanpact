@@ -14,7 +14,7 @@ import { NodeMotes } from '../shared/NodeStage';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { MoveLearnedOverlay, MoveOfferOverlay } from './MoveOfferOverlay';
 import { RosterPeek } from './RosterPeek';
-import { RoadEncounter, useRoadGreeting } from './RoadEncounter';
+import { KeeperVoice, useKeeperLine } from './RoadEncounter';
 import { MENTOR_LINES } from '../../data/roadLines';
 import { levelOf } from '../../run/growth';
 import { statScaleFor } from '../../run/statScale';
@@ -47,7 +47,7 @@ interface Lesson {
 export function MentorNodeScreen({ run, onRunChange, onContinue }: Props) {
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
-  const [greeting, dismissGreeting] = useRoadGreeting(run, MENTOR_LINES);
+  const voice = useKeeperLine(MENTOR_LINES);
 
   const poolOf = (entry: RosterEntry) => mentorMovePool(progressionTable, moves, entry);
   const anyTeachable = run.roster.some((entry) => poolOf(entry).length > 0);
@@ -72,8 +72,6 @@ export function MentorNodeScreen({ run, onRunChange, onContinue }: Props) {
     onContinue();
   }
 
-  if (greeting) return <RoadEncounter art={mentorArt} name="The Mentor" line={greeting} onDone={dismissGreeting} />;
-
   return (
     <div className="node-screen rite-screen is-mentor tutor-node-screen mentor-node-screen" style={{ '--node-rgb': MENTOR_RGB, '--rite-color': `rgb(${MENTOR_RGB})` } as CSSProperties}>
       <span className="node-sky mentor-ground" aria-hidden="true" />
@@ -90,6 +88,7 @@ export function MentorNodeScreen({ run, onRunChange, onContinue }: Props) {
         <span className="keeper-words">
           <span className="rite-eyebrow">By the Roadside</span>
           <h2 className="rite-name">The Mentor</h2>
+          <KeeperVoice line={voice} />
           {anyTeachable ? (
             <span className="keeper-offer">
               <span className="keeper-line">Teaches any hero a powerful move.</span>

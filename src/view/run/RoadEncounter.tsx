@@ -32,6 +32,16 @@ export function useRoadGreeting(run: RunState, lines: readonly string[], enabled
   return [line, dismiss];
 }
 
+/** One of a roadside keeper's lines, drawn once for the visit: said in its node's header, not as a beat of its own. */
+export function useKeeperLine(lines: readonly string[]): string {
+  const [line] = useState(() => lines[Math.floor(Math.random() * lines.length)]);
+  return line;
+}
+
+export function KeeperVoice({ line }: { line: string }) {
+  return <span className="keeper-voice">“{line}”</span>;
+}
+
 /** Per character (ms). Quick enough that a reader never waits on it. */
 const TYPE_MS = 24;
 /** The fade in, before the line starts (ms). Matches `road-encounter-arrive`. */
@@ -143,54 +153,6 @@ export function RoadEncounter({ art, name, line, place = false, awakened, lights
           <span className="road-encounter-rest">{line.slice(shown)}</span>
         </span>
         {done && <span className="road-encounter-more" />}
-      </span>
-    </RoadScene>
-  );
-}
-
-/**
- * A place with nothing to say: the thing on the road under its name, and a tap walks in. `art` is
- * drawn at 2x (a 96px building) unless `scale` says otherwise.
- */
-export function RoadArrival({
-  art,
-  name,
-  scale = 2,
-  awakened,
-  onDone,
-}: {
-  art: string;
-  name: string;
-  scale?: 2 | 3;
-  awakened?: Awakening;
-  onDone: () => void;
-}) {
-  const instant = prefersReducedMotion();
-  useEffect(() => {
-    if (awakened && !instant) playSfx('shrine', { delay: 1.05 });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  return (
-    <RoadScene
-      className={`is-place is-arrival${awakened ? ' is-awakening' : ''}${instant ? ' is-skipped' : ''}`}
-      label={name}
-      awakenRgb={awakened?.rgb}
-      onClick={() => {
-        playSfx('ui.confirm');
-        onDone();
-      }}
-    >
-      {awakened && <span className="road-awaken-halo" aria-hidden="true" />}
-      <img
-        src={art}
-        className={`road-encounter-figure is-x${scale}${instant ? ' is-still' : ''}${awakened ? ' is-dormant' : ''}`}
-        alt=""
-        draggable={false}
-      />
-      {awakened && <img src={awakened.art} className={`road-encounter-figure is-x${scale} is-awake`} alt="" draggable={false} />}
-      <span className="road-encounter-label" aria-hidden="true">
-        {name}
-        <span className="road-encounter-more" />
       </span>
     </RoadScene>
   );

@@ -31152,6 +31152,15 @@ button.star-shop-bundle-face {
   box-shadow: inset 0 0 0 1.5px transparent, 0 0 4px currentColor;
 }
 
+.keeper-voice {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.35;
+  color: var(--text-dim);
+}
+
 .keeper-terms {
   flex-basis: 100%;
   font-size: 10px;
@@ -35902,18 +35911,6 @@ button.star-shop-bundle-face {
 .crucible-rite.is-still .crucible-rite-ghost {
   animation: none;
   opacity: 0.55;
-}
-
-/* A place with nothing to say (RoadArrival): the thing stands lower on the road, with its name in
-   a small plate under it and the tap-on chevron beside the name. */
-.road-encounter.is-arrival .road-encounter-figure {
-  bottom: 120px;
-}
-
-.road-encounter-figure.is-x2 {
-  width: 192px;
-  height: 192px;
-  margin-left: -96px;
 }
 
 .road-encounter-label {
