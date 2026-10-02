@@ -43,7 +43,7 @@ export type NodeFactGlyph =
 export interface NodeFact {
   glyph: NodeFactGlyph;
   label: string;
-  /** The figure. `null` is a lane this node does not pay, printed as a dash so the fork's rows line up. */
+  /** The figure. `null` is a lane this node does not pay; the dossier leaves the row out. */
   value: string | null;
   /** Fine print beside the figure — who it goes to, what tier it rolls at. */
   note?: string;
@@ -160,6 +160,14 @@ const TERMS = {
   },
 } satisfies Record<string, NodeTerm>;
 
+/** A Titanspawn tile's lanes, its enemies as one row: how many, their level and their tiers. */
+function spawnFacts(type: 'fight' | 'battle', actNumber: number, shapeAct: number): NodeFact[] {
+  const spawn = spawnLine(shapeAct);
+  return encounterFacts(type, actNumber).map((fact) =>
+    fact.label === 'Enemies' ? { ...fact, value: spawn.value, note: `${fact.value} · ${spawn.note}` } : fact
+  );
+}
+
 const SPAWN_ABOUT = 'The Titan’s brood, one line per type. Win and every hero on the roster gains the XP, fielded or not. Spawn never sign a contract.';
 
 export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
@@ -169,19 +177,19 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
   switch (type) {
     case 'fight':
       return {
-        kind: 'Encounter · Not recruitable',
-        facts: [...encounterFacts('fight', actNumber), { glyph: 'enemy', label: 'Titanspawn', ...spawnLine(actNumber) }],
+        kind: 'Not recruitable',
+        facts: spawnFacts('fight', actNumber, actNumber),
         odds: odds('fight'),
         about: SPAWN_ABOUT,
-        terms: [TERMS.wounds],
+        terms: [],
       };
     case 'battle':
       return {
-        kind: 'Encounter · Not recruitable',
-        facts: [...encounterFacts('battle', actNumber), { glyph: 'enemy', label: 'Titanspawn', ...spawnLine(Math.max(2, actNumber)) }],
+        kind: 'Not recruitable',
+        facts: spawnFacts('battle', actNumber, Math.max(2, actNumber)),
         odds: odds('battle'),
         about: SPAWN_ABOUT,
-        terms: [TERMS.wounds],
+        terms: [],
       };
     case 'skirmish':
       return {
@@ -189,7 +197,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         facts: encounterFacts('skirmish', actNumber),
         odds: odds('skirmish'),
         about: 'A band of heroes at your level. Beat them and you may spend a Recruit Contract on one of them. The typing on the tile is the typing you will face.',
-        terms: [TERMS.contract, TERMS.wounds],
+        terms: [TERMS.contract],
       };
     case 'elite':
       return {
@@ -197,7 +205,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         facts: encounterFacts('elite', actNumber),
         odds: odds('elite'),
         about: `A level over you, and it pays for it: ×${ENCOUNTER_XP_MULTIPLIER.elite} XP and an item rolled a tier up. Recruitable like a Skirmish, and its hero arrives stronger than any hire.`,
-        terms: [TERMS.contract, TERMS.wounds],
+        terms: [TERMS.contract],
       };
     case 'boss':
       return {
@@ -223,7 +231,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         ],
         odds: null,
         about: 'The Herald leads one Late Titanspawn for every seal you broke, and nothing reaches it while any of its company stands. Nobody is recruited here: you arrive with the roster you kept.',
-        terms: [TERMS.wounds],
+        terms: [],
       };
     case 'shop':
       return {
@@ -239,7 +247,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         ],
         odds: null,
         about: 'Where gold is spent. The Tavern hires heroes raw — an act behind, unevolved, bare-socketed. The shelf sells Scrolls, potions and one Revive; the Smithy works worn gear; the mend heals everyone, the Down included.',
-        terms: [TERMS.contract, TERMS.force, TERMS.wounds],
+        terms: [TERMS.contract],
       };
     case 'muster':
       return {
@@ -253,7 +261,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         ],
         odds: null,
         about: 'The last stop before the final battle: the Guild Hall without its Tavern. Heal up, stock the Bag, finish the gear.',
-        terms: [TERMS.force, TERMS.wounds],
+        terms: [],
       };
     case 'equipmentReward':
       return {
@@ -291,7 +299,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         ],
         odds: null,
         about: 'The Smithy’s two works on one worn piece, free: lifted a tier where the act allows, and bound to the element you pick. Only a roster that wears nothing gets nothing here.',
-        terms: [TERMS.force],
+        terms: [],
       };
     case 'leyLineReward':
       return {

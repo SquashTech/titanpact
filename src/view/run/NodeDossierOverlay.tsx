@@ -3,7 +3,9 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { MapNode } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
 import { RARITY_ORDER } from '../../run/equipment';
-import { NODE_COLORS, NODE_NAMES } from './mapNodes';
+import { NODE_COLORS, NODE_LABELS, NODE_NAMES } from './mapNodes';
+import { mapNodeArt } from './mapNodeArt';
+import { landmarkStillArt } from './mapLandmarks';
 import { nodeDossier, type NodeFactGlyph } from './nodeFacts';
 import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
 import { ResourceGlyph } from '../shared/RunGlyph';
@@ -83,6 +85,10 @@ function RarityOdds({ odds }: { odds: Record<EquipmentRarity, number> }) {
 export function NodeDossierOverlay({ node, run, onClose }: { node: MapNode; run: RunState; onClose: () => void }) {
   const dossier = nodeDossier(node.type, run.actNumber);
   const color = NODE_COLORS[node.type];
+  // The tile's own pixel art, so the panel reads as the tile opened up.
+  const art = landmarkStillArt(node.type) ?? mapNodeArt(node.type);
+  const label = NODE_LABELS[node.type];
+  const name = NODE_NAMES[node.type];
 
   function closeAndStop(e: { stopPropagation: () => void }) {
     e.stopPropagation();
@@ -93,20 +99,20 @@ export function NodeDossierOverlay({ node, run, onClose }: { node: MapNode; run:
     <div className="detail-overlay" onClick={closeAndStop}>
       <div className="detail-panel node-dossier-panel" style={{ borderTopColor: color, '--node-color': color } as CSSProperties} onClick={closeAndStop}>
         <div className="node-dossier-head">
-          <span className="node-dossier-disc">
-            <NodeGlyph type={node.type} />
+          <span className={`node-dossier-disc${art ? ' has-art' : ''}`}>
+            {art ? <img src={art} alt="" draggable={false} /> : <NodeGlyph type={node.type} />}
           </span>
           <div className="node-dossier-titles">
-            <div className="node-dossier-name">{NODE_NAMES[node.type]}</div>
-            <div className="node-dossier-line">{dossier.kind}</div>
+            <div className="node-dossier-name">{label}</div>
+            <div className="node-dossier-line">{name === label ? dossier.kind : `${name} · ${dossier.kind}`}</div>
           </div>
         </div>
 
         <p className="node-dossier-about">{dossier.about}</p>
 
         <div className="node-dossier-facts">
-          {dossier.facts.map((fact) => (
-            <div key={fact.label} className={`node-dossier-fact${fact.value === null ? ' is-none' : ''}`}>
+          {dossier.facts.filter((fact) => fact.value !== null).map((fact) => (
+            <div key={fact.label} className="node-dossier-fact">
               <span className="node-dossier-fact-glyph">{FACT_GLYPHS[fact.glyph]}</span>
               <span className="node-dossier-fact-label">{fact.label}</span>
               <span className="node-dossier-fact-value">

@@ -90,6 +90,20 @@ export function landmarkKind(type: MapNodeType): LandmarkKind | undefined {
   return KIND[type];
 }
 
+const LANDMARK_STILL: Partial<Record<LandmarkKind, string>> = {
+  stone: titanStoneArt,
+  building: guildHallArt,
+  gate: gateArt,
+  titanGate: titanGateArt,
+};
+
+/** A landmark as one still sprite — the gate shut, no lights — for where it is drawn small, off the map. */
+export function landmarkStillArt(type: MapNodeType): string | undefined {
+  const kind = KIND[type];
+  if (!kind) return undefined;
+  return kind === 'npc' ? NPC_ART[type] : LANDMARK_STILL[kind];
+}
+
 /** A single Titan eye in the title screen's idiom (titanArt.tsx): lens, lit iris, slit, halo. */
 function MapTitanEye() {
   // Rounder than the title's (half-height 48 against its 32): this one is a button, and it is
