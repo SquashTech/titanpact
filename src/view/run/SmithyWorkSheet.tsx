@@ -26,6 +26,7 @@ import { currentEvolutionPathId } from '../../run/progression';
 import { HubGlyph } from '../shared/nodeIcons';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { overlayHost } from '../shared/overlayHost';
+import { useArmedTap } from '../shared/useArmedTap';
 import type { SmithyWork } from './SmithyBeat';
 import { AnvilFigure } from './smithyArt';
 
@@ -80,6 +81,15 @@ export function SmithyWorkSheet({ run, hero, entry, itemRef, item, onCommit, onC
       playSfx('ui.denied');
     }
   }
+
+  const strike = useArmedTap(() => {
+    if (!quote || !lifted) return;
+    commit(() => anvilUpgrade(run, itemRef, equipment), { kind: 'anvil', before: item, after: lifted });
+  }, anvilAffordable);
+  const bind = useArmedTap(() => {
+    if (!pickedEnchant || !boundTarget) return;
+    commit(() => enchantItem(run, itemRef, pickedEnchant, equipment), { kind: 'enchant', before: item, after: boundTarget });
+  }, !!pickedEnchant && !!boundTarget && enchantAffordable);
 
   const heroColor = getTypeColor(hero.types[0]);
   const style = {
@@ -144,20 +154,15 @@ export function SmithyWorkSheet({ run, hero, entry, itemRef, item, onCommit, onC
               </div>
             )}
             <button
-              className="smithy-commit is-strike"
+              ref={strike.ref}
+              className={`smithy-commit is-strike${strike.armed ? ' is-armed' : ''}`}
               data-sfx="none"
               disabled={!anvilAffordable}
               style={quote ? ({ '--commit-color': RARITY_COLOR_VARS[quote.targetRarity] } as CSSProperties) : undefined}
-              onClick={() => {
-                if (!quote || !lifted) return;
-                commit(
-                  () => anvilUpgrade(run, itemRef, equipment),
-                  { kind: 'anvil', before: item, after: lifted }
-                );
-              }}
+              onClick={strike.onClick}
             >
               <HubGlyph name="anvil" className="smithy-commit-glyph" />
-              <span className="smithy-commit-label">{quote ? 'Strike' : 'Cannot lift'}</span>
+              <span className="smithy-commit-label">{!quote ? 'Cannot lift' : strike.armed ? 'Tap again' : 'Strike'}</span>
               {quote && (
                 <span className={`smithy-commit-price${anvilAffordable ? '' : ' is-short'}`}>
                   <ResourceGlyph kind="gold" /> {quote.cost}
@@ -202,20 +207,17 @@ export function SmithyWorkSheet({ run, hero, entry, itemRef, item, onCommit, onC
               })}
             </div>
             <button
-              className="smithy-commit is-bind"
+              ref={bind.ref}
+              className={`smithy-commit is-bind${bind.armed ? ' is-armed' : ''}`}
               data-sfx="none"
               disabled={!pickedEnchant || !boundTarget || !enchantAffordable}
               style={pickedEnchant ? ({ '--commit-color': getTypeColor(ENCHANTMENTS[pickedEnchant]) } as CSSProperties) : undefined}
-              onClick={() => {
-                if (!pickedEnchant || !boundTarget) return;
-                commit(
-                  () => enchantItem(run, itemRef, pickedEnchant, equipment),
-                  { kind: 'enchant', before: item, after: boundTarget }
-                );
-              }}
+              onClick={bind.onClick}
             >
               {pickedEnchant ? <ElementGlyph type={ENCHANTMENTS[pickedEnchant]} className="smithy-commit-glyph" /> : null}
-              <span className="smithy-commit-label">{pickedEnchant ? `Bind ${enchantLabel(pickedEnchant)}` : 'Pick an element'}</span>
+              <span className="smithy-commit-label">
+                {!pickedEnchant ? 'Pick an element' : bind.armed ? 'Tap again' : `Bind ${enchantLabel(pickedEnchant)}`}
+              </span>
               <span className={`smithy-commit-price${enchantAffordable ? '' : ' is-short'}`}>
                 <ResourceGlyph kind="gold" /> {enchantCost}
               </span>

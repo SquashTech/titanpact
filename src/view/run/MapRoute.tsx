@@ -183,7 +183,7 @@ function ChoiceMedallion({
   const prop = art !== undefined && isMapProp(node.type);
   return (
     <div
-      className={`map-choice tier-${NODE_TIERS[node.type]}`}
+      className={`map-choice tier-${NODE_TIERS[node.type]}${landmark ? ` has-${landmark}` : ''}`}
       data-node-type={node.type}
       style={{ '--land-delay': `${landDelayMs}ms`, '--node-color': NODE_COLORS[node.type] } as CSSProperties}
     >

@@ -195,24 +195,25 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone }: 
         <StageInnate key={`${featured.rosterId}-innate`} hero={hero} entry={featured} onOpen={setPopupPassive} />
 
         <StageKit key={`${featured.rosterId}-kit`} moveIds={featured.unlockedMoveIds} caster={caster} onPick={setPopupMove} />
-
-        {/* `data-sfx="none"` only while it can sign — `contract.sign` is this press's sound. Left
-            off when inert so the delegated listener's disabled buzz still fires (audio/uiSfx.ts). */}
-        <button
-          className={`draft-choose recruit-sign${featuredClaimed ? ' chosen' : ''}`}
-          data-sfx={canSign ? 'none' : undefined}
-          disabled={!canSign}
-          onClick={handleSign}
-        >
-          {featuredClaimed
-            ? `✦ ${hero.name} signed`
-            : contracts <= 0
-              ? 'No Contracts left'
-              : rosterFull
-                ? `Replace a hero for ${hero.name}`
-                : `Sign ${hero.name} — 1 Contract`}
-        </button>
       </div>
+
+      {/* Outside the stage, so a long kit or a veteran's marks never move it. `data-sfx="none"`
+          only while it can sign — `contract.sign` is this press's sound. Left off when inert so
+          the delegated listener's disabled buzz still fires (audio/uiSfx.ts). */}
+      <button
+        className={`draft-choose recruit-sign${featuredClaimed ? ' chosen' : ''}`}
+        data-sfx={canSign ? 'none' : undefined}
+        disabled={!canSign}
+        onClick={handleSign}
+      >
+        {featuredClaimed
+          ? `✦ ${hero.name} signed`
+          : contracts <= 0
+            ? 'No Contracts left'
+            : rosterFull
+              ? `Replace a hero for ${hero.name}`
+              : `Sign ${hero.name} — 1 Contract`}
+      </button>
 
       {offers.length > 1 && (
         <StageRail>

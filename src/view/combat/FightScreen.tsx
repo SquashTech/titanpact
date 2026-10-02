@@ -85,7 +85,7 @@ import { playBeatSfx } from '../../audio/beatSfx';
 import { setMusicRate } from '../../audio/music';
 import { getTypeColorRgb } from './typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
-import { MoveKindBadge, MoveTraitChips, TARGET_MODE_LABELS, healReadout, moveEffectSummary, riderTargetLabel, useLongPress } from '../shared/MoveTile';
+import { MoveKindBadge, MoveTraitChips, TARGET_MODE_LABELS, healReadout, moveEffectSummary, riderTargetLabel, statDeltaReadout, useLongPress } from '../shared/MoveTile';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { AudioSettings } from '../shared/AudioSettings';
 import { ManaCost } from '../shared/ManaCost';
@@ -218,14 +218,18 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
                 </span>
               );
             })}
-            {move.statDeltas?.map(({ stat, amount }, i) => (
-              <span key={stat} className="move-eff-status">
-                {/* One roll gates the whole list, so the odds print once. */}
-                {move.statDeltaChance != null && i === 0 ? `${Math.round(move.statDeltaChance * 100)}% ` : ''}
-                {amount >= 0 ? '+' : ''}
-                {amount} {STAT_LABELS[stat]}
-              </span>
-            ))}
+            {move.statDeltas?.map(({ stat, amount: authored }, i) => {
+              // What lands off this caster — the number the dossier and the draft print too.
+              const amount = statDeltaReadout(move, stat, authored, caster);
+              return (
+                <span key={stat} className="move-eff-status">
+                  {/* One roll gates the whole list, so the odds print once. */}
+                  {move.statDeltaChance != null && i === 0 ? `${Math.round(move.statDeltaChance * 100)}% ` : ''}
+                  {amount >= 0 ? '+' : ''}
+                  {amount} {STAT_LABELS[stat]}
+                </span>
+              );
+            })}
             {move.conditionalPower && (
               <span
                 className={`move-eff-status${
@@ -1010,20 +1014,44 @@ export function FightScreen({
     }
   }
 
-  // Always a two-tap commit: this loads the move and lights its targets; a second tap on a card commits.
+  /** The one card a single-target move could be aimed at, or null when there is a choice to make. */
+  function soleTarget(combatantId: string, move: MoveDefinition): string | null {
+    const mode = declarationMode(move);
+    const candidates =
+      mode === 'singleEnemy'
+        ? visibleTargets(move, mode, enemyActiveAlive)
+        : mode === 'singleAlly'
+          ? visibleTargets(move, mode, playerActiveAlive)
+          : mode === 'self'
+            ? [combatantId]
+            : [];
+    return candidates.length === 1 ? candidates[0] : null;
+  }
+
+  // Two taps when there is a choice: this loads the move and lights its targets, a second tap on a
+  // card commits. With exactly one legal target the first tap commits — nothing is left to choose.
   function handleMoveClick(combatantId: string, move: MoveDefinition) {
+    const only = soleTarget(combatantId, move);
+    if (only) {
+      declareMove(combatantId, move, only);
+      return;
+    }
     setSelecting({ combatantId, move });
   }
 
-  /** Commits the selected move against `targetId`, or holds it in `pivoting` when a switchesUserOut move still needs its replacement chosen. */
-  function declareSelectedMove(targetId: string | null) {
-    if (!selecting) return;
-    if (selecting.move.switchesUserOut && canPivot()) {
-      setPivoting({ combatantId: selecting.combatantId, move: selecting.move, declaredTarget: targetId });
+  /** Commits a move against `targetId`, or holds it in `pivoting` when a switchesUserOut move still needs its replacement chosen. */
+  function declareMove(combatantId: string, move: MoveDefinition, targetId: string | null) {
+    if (move.switchesUserOut && canPivot()) {
+      setPivoting({ combatantId, move, declaredTarget: targetId });
       setSelecting(null);
       return;
     }
-    commitAction(selecting.combatantId, { kind: 'move', moveId: selecting.move.id, declaredTarget: targetId });
+    commitAction(combatantId, { kind: 'move', moveId: move.id, declaredTarget: targetId });
+  }
+
+  function declareSelectedMove(targetId: string | null) {
+    if (!selecting) return;
+    declareMove(selecting.combatantId, selecting.move, targetId);
   }
 
   /** The nameplate's level, either side — the enemy's roster is the encounter's (src/run/enemyGen.ts). */

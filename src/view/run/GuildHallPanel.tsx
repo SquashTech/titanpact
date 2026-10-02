@@ -36,6 +36,7 @@ import { overlayHost } from '../shared/overlayHost';
 import type { TabSpec } from '../shared/TabStrip';
 import { RecruitFanfare } from './RecruitFanfare';
 import { GOOD_ART, HALL_ART, HallGood } from './guildHallArt';
+import { CONFIRM_PURCHASE_FROM } from '../shared/useArmedTap';
 
 export type GuildHallTab = 'shop' | 'tavern' | 'smithy';
 
@@ -127,7 +128,8 @@ function GuildHallHeroCard({ hero, offer, level, affordable, onInspect }: HeroCa
 }
 
 // Guild Hall (docs/progression.md "The raise-vs-recruit axis"). One rule for
-// every purchase: a tap opens the thing, and the thing asks.
+// every purchase: a tap opens the thing and the thing asks — or, for a good bought on the tap
+// itself, the first tap arms it and the second pays.
 export function GuildHallPanel({
   run,
   offers,
@@ -245,6 +247,7 @@ export function GuildHallPanel({
                     name="New Faces"
                     price={rerollCost}
                     disabled={run.gold < rerollCost || offers.heroOfferIds.length === 0}
+                    confirm={rerollCost >= CONFIRM_PURCHASE_FROM}
                     onClick={onReroll}
                   />
                 </>
@@ -255,6 +258,7 @@ export function GuildHallPanel({
                 price={anyWounded(run) ? mendCost : 'Nobody hurt'}
                 soldOut={!anyWounded(run)}
                 disabled={!canBuyMend(run, mendCost)}
+                confirm={mendCost >= CONFIRM_PURCHASE_FROM}
                 onClick={onBuyMend}
               />
             </div>
@@ -280,6 +284,7 @@ export function GuildHallPanel({
               soldOut={scrollsSoldOut}
               held={scrollsSoldOut ? undefined : `${SCROLL_PURCHASE_LIMIT - scrollsBought} left`}
               disabled={!canBuyScrollNow}
+              confirm={SCROLL_PURCHASE_COST >= CONFIRM_PURCHASE_FROM}
               onClick={onBuyScroll}
             />
             {CONSUMABLE_KINDS.map((kind, i) => {
@@ -296,6 +301,7 @@ export function GuildHallPanel({
                   soldOut={atCap || visitDone}
                   held={held > 0 ? `${held}/${CONSUMABLE_HOLD_CAP}` : undefined}
                   disabled={!canBuyConsumable(run, kind, revivesBought)}
+                  confirm={consumablePrice(kind) >= CONFIRM_PURCHASE_FROM}
                   onClick={() => onBuyConsumable(kind)}
                 />
               );

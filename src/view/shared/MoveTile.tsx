@@ -549,6 +549,14 @@ export function MoveButtonReplica({
             <strong>{move.basePower}</strong>BP
           </span>
         )}
+        {move.kind === 'damage' && move.randomBasePower && (
+          <span className="move-power">
+            <strong>
+              {move.randomBasePower.min}–{move.randomBasePower.max}
+            </strong>
+            BP
+          </span>
+        )}
         {heal && (
           <span className="move-power move-heal">
             <strong>{heal.value}</strong>

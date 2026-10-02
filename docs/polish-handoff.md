@@ -54,20 +54,23 @@ not kit; the Mentor's "powerful move" was twice a sidegrade.
    "Daze is flinch"). Options: Daze immunity for a round after one lands, diminishing returns on
    bosses, or a price on Mesmerize. Run the sim (`--workers 2`) on Coil/Mesmer and any Mesmerize
    holder before touching numbers.
-2. **Ghostlight+ cap** and a look at Brain Flay's ×2 condition — sim first, design call after.
-3. **Shop: confirm before buying** above a threshold (Revive 80g, Anvil) — Scrolls, Party Heal and
-   Revive buy on one tap; Contract confirms. The Scroll screen auto-returns to the shelf, so the next
-   tap can buy a second pack by accident.
-4. **Fewer taps/screens:** auto-target when there's one legal target; consider auto-declining (or
-   batching) offers strictly worse than every held move.
-5. **Smaller display bugs** (each has a screenshot in the report folder):
-   - Jackpot's offer card shows no power/effect (`randomBasePower` 50–150 isn't rendered on the big
-     card; the moveset row does render it).
-   - "Merged" screen shows the incoming item, not the merged result.
-   - "GUARDIAN" map label pierced by the gate's diamond.
-   - Stat deltas differ by screen (Undertow −16 / −10 / −17 DEF; Vise −48 / −20 SPD) — one shows
-     the authored base, one the landed value.
-   - Evolution carousel arrows drop taps mid-slide; recruit "Sign" button moves with kit size.
+2. **DONE 2026-10-02 (c81ff05d):** Ghostlight is +25% Spirit damage to a Haunted foe (Ghostlight+
+   +50%), no Force at all. No cap on Force (per user direction); instead every passive that banked
+   Force on a repeating trigger fires at most 3 times a fight (`maxFiresPerFight`): Dawnlight,
+   Silent Wings, Bedrock Hide, Rising Flame, Barrow-Call (5 → 10), Tidal Mass. Sim (4000 runs)
+   unmoved, 91.3 → 91.2%: the pilot never built the stack, so play is the test. Still unbounded and
+   left alone: the +25 self-Force setup moves (Static Charge, Soulfire, Hoarfrost Edge, Undercurrent,
+   Stoke the Flames), Deepsurge's +25 on hit, the Titanspawn Mark. Brain Flay's ×2 still open.
+3. **DONE:** a one-tap good at 25g or more arms on the first tap and buys on the second
+   (`useArmedTap`, 4 s window): Scrolls, Revive, Party Heal, New Faces, and the Smithy's Strike and
+   Bind. Potions stay one tap. The shelf comes back from the Scroll screen un-armed.
+4. **Auto-target DONE:** a single-target move with one legal target commits on the first tap.
+   Auto-declining worse offers is NOT done — "strictly worse" has no definition yet (design call).
+5. **DONE:** Jackpot shows 50–150 BP on the big card and the row; the Merged screen shows the
+   result; the gate label climbs clear of the seal; the combat move row prints the landed delta
+   (the draft and dossier already did); the recruit Sign button sits outside the scrolling stage;
+   the Crucible's class cards print Physical / Magical (Volley vs Cascade). NOT reproduced: the
+   Evolution carousel dropping taps — the handlers read correctly; it needs a hands-on repro.
 6. **Art consistency:** the Endbringer and the Titan's Eyes are flat vector shapes beside pixel-art
    heroes, and Early Titanspawn sprites are tiny — reads as unfinished in the biggest fights.
 

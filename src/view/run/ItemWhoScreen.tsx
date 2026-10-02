@@ -64,6 +64,8 @@ export function ItemWhoScreen({ run, itemId, onRunChange, onDone }: Props) {
   const columns = run.roster.length > 4 || grantCount > 3 ? 3 : 2;
   const stacked = run.roster.length > columns;
   const mergeResult = outcome?.kind === 'merge' ? equipment[outcome.resultId] : null;
+  // Once merged, the card is the piece the hero now wears, not the one that arrived.
+  const shownItem = mergeResult ?? item;
 
   function handleGive(rosterId: string) {
     if (done) return;
@@ -112,7 +114,7 @@ export function ItemWhoScreen({ run, itemId, onRunChange, onDone }: Props) {
 
       {/* The piece's name, tier and every grant spelled out: the header says only what kind of moment this is. */}
       <div className="item-who-piece">
-        <EquipChoiceCard item={item} revealDelayMs={0} labelled onInspect={() => setInspecting(true)} />
+        <EquipChoiceCard key={shownItem.id} item={shownItem} revealDelayMs={0} labelled onInspect={() => setInspecting(true)} />
       </div>
 
       {/* The wrapper is a size container: the cards read their portrait size off the height the
@@ -172,7 +174,7 @@ export function ItemWhoScreen({ run, itemId, onRunChange, onDone }: Props) {
 
       {burst && equipment[burst] && <MergeBurst result={equipment[burst]} onDone={() => setBurst(null)} />}
 
-      {inspecting && <EquipInspectOverlay item={item} onClose={() => setInspecting(false)} />}
+      {inspecting && <EquipInspectOverlay item={shownItem} onClose={() => setInspecting(false)} />}
 
       {previewEntry && (
         <HeroPreviewOverlay

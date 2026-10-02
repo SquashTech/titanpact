@@ -339,6 +339,8 @@ function ClassCard({ cls, picked, dimmed, caster, onPick, onRead }: CardProps) {
               {move.name}
             </span>
             {move.kind === 'damage' && move.basePower ? <span className="verb-card-fact">{move.basePower} BP</span> : null}
+            {/* The twins (Volley / Cascade) differ only here, so it is printed. */}
+            {move.kind === 'damage' ? <span className="verb-card-fact">{move.category === 'physical' ? 'Physical' : 'Magical'}</span> : null}
             <span className="verb-card-fact is-mana">{move.manaCost} MP</span>
           </span>
         )}

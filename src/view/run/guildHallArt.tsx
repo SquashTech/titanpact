@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { ResourceGlyph } from '../shared/RunGlyph';
+import { useArmedTap } from '../shared/useArmedTap';
 import shelfArt from '../../../art/guild/shelf.png';
 import boardArt from '../../../art/guild/board.png';
 import counterArt from '../../../art/guild/counter.png';
@@ -48,6 +49,7 @@ export function HallGood({
   disabled,
   className,
   style,
+  confirm,
   onClick,
 }: {
   art: string;
@@ -59,14 +61,25 @@ export function HallGood({
   disabled?: boolean;
   className?: string;
   style?: CSSProperties;
+  /** Tap to arm, tap again to buy (useArmedTap) — for a purchase that happens on the tap itself. */
+  confirm?: boolean;
   onClick: () => void;
 }) {
+  const tap = useArmedTap(onClick, !!confirm && !disabled);
   return (
-    <button className={`hall-good${soldOut ? ' is-sold-out' : ''}${className ? ` ${className}` : ''}`} style={style} disabled={disabled} onClick={onClick}>
+    <button
+      ref={tap.ref}
+      className={`hall-good${soldOut ? ' is-sold-out' : ''}${tap.armed ? ' is-armed' : ''}${className ? ` ${className}` : ''}`}
+      style={style}
+      disabled={disabled}
+      onClick={tap.onClick}
+    >
       <img src={art} className="hall-good-art" alt="" draggable={false} />
       <span className="hall-tag">
         <span className="hall-tag-name">{name}</span>
-        {typeof price === 'number' ? (
+        {tap.armed ? (
+          <span className="hall-tag-price is-confirm">Tap to buy</span>
+        ) : typeof price === 'number' ? (
           <span className="hall-tag-price">
             <ResourceGlyph kind="gold" /> {price}
           </span>

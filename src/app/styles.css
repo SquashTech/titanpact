@@ -13809,6 +13809,14 @@ button.star-shop-bundle-face {
    later seals; here the stage button IS the spend, so it carries the gold of
    a committed action rather than the pact-tinted "selected" look, and says
    the price in the label. */
+/* Out of the scrolling stage and pinned above the rail, so it never walks with the kit's length. */
+.recruit-screen > .recruit-sign {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  margin-top: 0;
+}
+
 .recruit-sign:not(:disabled) {
   border-color: rgba(224, 166, 60, 0.7);
   background: linear-gradient(180deg, rgba(224, 166, 60, 0.28), rgba(224, 166, 60, 0.08));
@@ -33772,6 +33780,10 @@ button.star-shop-bundle-face {
   transform: translateY(1px) scale(0.985);
 }
 
+.smithy-commit.is-armed .smithy-commit-label {
+  animation: armed-pulse 0.9s ease-in-out infinite;
+}
+
 .smithy-commit:disabled {
   cursor: default;
   filter: saturate(0.3);
@@ -36573,6 +36585,23 @@ img.smithy-service-art {
   color: #9a2818;
 }
 
+/* Armed (useArmedTap): the next tap pays. */
+.hall-tag-price.is-confirm {
+  font-size: 10px;
+  color: #2c6a1c;
+  animation: armed-pulse 0.9s ease-in-out infinite;
+}
+
+.hall-good.is-armed .hall-good-art {
+  filter: drop-shadow(0 0 6px rgba(255, 214, 120, 0.95));
+}
+
+@keyframes armed-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
 /* On the good's own picture, at its lower-right corner: a badge above the good reached up into the
    price tag of the good on the shelf above it. */
 .hall-good-held {
@@ -38467,6 +38496,12 @@ img.smithy-service-art {
 
 .map-medallion.is-gate .map-landmark-art {
   z-index: 1;
+}
+
+/* The seal rides outside the gate's box, so the word above it climbs clear of the seal's top marker. */
+.map-choice.has-gate .map-choice-label,
+.map-choice.has-titanGate .map-choice-label {
+  transform: translateY(-28px);
 }
 
 /* The seal behind the arch at the title's own size, so the wardens ride outside the stone. The box is

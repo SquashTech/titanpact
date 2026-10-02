@@ -329,6 +329,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
       move.manaCostGainOnUse ||
       move.typeFollowsUser ||
       move.basePowerGainOnUse ||
+      move.randomBasePower ||
       move.conditionalPriority ||
       move.conditionalManaCost ||
       move.conditionalStatDeltas ||
@@ -374,6 +375,16 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
             <strong>{move.basePower + forceBonus}</strong>
             <span className="move-detail-unit">BP</span>
             {move.hitCount ? <span className="move-detail-unit">×{move.hitCount}</span> : null}
+            {forceBonus > 0 && <span className="move-detail-boost">▲{forceBonus}</span>}
+          </span>
+        )}
+        {move.kind === 'damage' && move.randomBasePower && (
+          <span className="move-detail-stat" title="Base Power is rolled each round and shown on the button before you commit">
+            <MoveKindGlyph kind={kindGlyph} />
+            <strong>
+              {move.randomBasePower.min + forceBonus}–{move.randomBasePower.max + forceBonus}
+            </strong>
+            <span className="move-detail-unit">BP</span>
             {forceBonus > 0 && <span className="move-detail-boost">▲{forceBonus}</span>}
           </span>
         )}
@@ -706,6 +717,13 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
                   ? `Cleanses ${move.cleanseCount} negative ${move.cleanseCount === 1 ? 'status' : 'statuses'} at random`
                   : 'Cleanses every negative status'
               }
+            />
+          )}
+          {move.randomBasePower && (
+            <EffectRow
+              glyph={<MoveKindGlyph kind={move.category} />}
+              text={`Base Power rolls ${move.randomBasePower.min}–${move.randomBasePower.max} each round`}
+              note="The roll is on the button before you commit"
             />
           )}
           {move.basePowerGainOnUse && (
