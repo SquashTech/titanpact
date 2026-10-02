@@ -7,6 +7,7 @@ import { MASTERY_INNATE } from '../../run/mastery';
 import type { RosterEntry } from '../../run/state';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { currentEvolutionPathId } from '../../run/progression';
 import { PassiveDetailCard } from '../shared/PassiveDossier';
 import { PassiveGlyph } from '../shared/passiveIcons';
 import { overlayHost } from '../shared/overlayHost';
@@ -50,7 +51,7 @@ export function MasteredInnateOverlay({ entry, onClose }: Props) {
           </span>
         </div>
         <div className="offer-hero-head">
-          <HeroPortrait heroId={hero.id} className="offer-hero-portrait" />
+          <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(entry)} className="offer-hero-portrait" />
           <h3>{hero.name}</h3>
         </div>
         <p className="offer-hero-eyebrow">Mastery {MASTERY_INNATE} — the innate, perfected</p>

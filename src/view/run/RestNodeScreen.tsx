@@ -8,6 +8,7 @@ import type { RosterEntry, RunState } from '../../run/state';
 import { anyWounded, mendRoster } from '../../run/wounds';
 import { statScaleFor } from '../../run/statScale';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { currentEvolutionPathId } from '../../run/progression';
 import { useLongPress } from '../shared/MoveTile';
 import { NodeMotes, NODE_TINT_VITAL } from '../shared/NodeStage';
 import { WoundBar, entryHp } from '../shared/WoundBar';
@@ -49,7 +50,7 @@ function CampFigure({
       {...longPress}
     >
       <span className="camp-figure-glow" aria-hidden="true" />
-      <HeroPortrait heroId={hero.id} className="camp-portrait" />
+      <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(entry)} className="camp-portrait" />
       {healed ? (
         <span className="camp-heal" aria-hidden="true">
           +{healed}

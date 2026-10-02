@@ -8,7 +8,7 @@ import { passives } from '../../data/passives';
 import type { HeroDefinition } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
 import { anyClassAvailable, classMoveOverflows, grantClass, rollClassOffers, type ClassDefinition, type ClassKind } from '../../run/classes';
-import { rosterEntryTypes } from '../../run/progression';
+import { rosterEntryTypes, currentEvolutionPathId } from '../../run/progression';
 import { getTypeAbbr, getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { MoveDetailCard, MoveDetailOverlay } from '../combat/MoveDetailOverlay';
 import { CLASS_PATHS } from '../shared/classIcons';
@@ -245,7 +245,7 @@ function ClassChoice({ run, entry, offers, pickedClassId, onPick, onConfirm }: C
       <header className="rite-head">
         <span className="rite-hero">
           <span className="rite-pool" aria-hidden="true" />
-          <HeroPortrait heroId={hero.id} className="rite-portrait" />
+          <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(entry)} className="rite-portrait" />
           {picked && (
             <span className="rite-mark" key={picked.id} aria-hidden="true">
               <ClassGlyph cls={picked} />
@@ -378,7 +378,7 @@ function ClassLearnedReveal({ run, entry, cls, onContinue }: RevealProps) {
           <span className="rite-reveal-flash" aria-hidden="true" />
           <span className="rite-hero">
             <span className="rite-pool" aria-hidden="true" />
-            <HeroPortrait heroId={hero.id} className="rite-portrait" />
+            <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(entry)} className="rite-portrait" />
             <span className="rite-mark is-reveal" aria-hidden="true">
               <ClassGlyph cls={cls} />
             </span>
@@ -435,7 +435,7 @@ function CrucibleFigure({ entry, pending, armed, dimmed, onArm, onPreview }: Fig
     >
       <span className="crucible-figure-frame" aria-hidden="true" />
       <span className="crucible-figure-ground" aria-hidden="true" />
-      <HeroPortrait heroId={hero.id} className="crucible-portrait" />
+      <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(entry)} className="crucible-portrait" />
       <span className="crucible-figure-name">{hero.name}</span>
       <span className="crucible-figure-types">
         {rosterEntryTypes(hero, entry).map((t) => (

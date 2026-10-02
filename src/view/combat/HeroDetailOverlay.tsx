@@ -159,7 +159,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
       >
         <div className="detail-header is-hero">
           <span className="detail-portrait-plate">
-            <HeroPortrait heroId={hero.id} className="detail-portrait is-inline" />
+            <HeroPortrait heroId={hero.id} pathId={combatant.formPathId} className="detail-portrait is-inline" />
           </span>
           <div className="detail-header-titles">
             <div className="detail-name">

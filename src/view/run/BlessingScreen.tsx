@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { playSfx } from '../../audio/sfx';
 import type { RunState } from '../../run/state';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { currentEvolutionPathId } from '../../run/progression';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import blessingBackdrop from '../../../art/backdrops/blessing.png';
 import pactwardenArt from '../../../art/npc/pactwarden.png';
@@ -83,7 +84,7 @@ export function BlessingScreen({ run, onDone }: { run: RunState; onDone: () => v
           <span key={entry.rosterId} className={`blessing-hero ${i === 0 ? 'is-left' : 'is-right'}${lit ? ' is-lit' : ''}`} aria-hidden="true">
             <span className="blessing-shaft" />
             <span className="blessing-rim" />
-            <HeroPortrait heroId={entry.heroId} className="blessing-hero-figure" />
+            <HeroPortrait heroId={entry.heroId} pathId={currentEvolutionPathId(entry)} className="blessing-hero-figure" />
           </span>
         ) : null
       )}

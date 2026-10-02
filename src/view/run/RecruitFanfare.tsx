@@ -16,6 +16,8 @@ interface Props {
   source: 'contract' | 'guild';
   /** The typing the hero actually arrives with — a contract veteran may already be grafted. */
   types?: readonly TypeId[];
+  /** The form a contract veteran arrives in, if it evolved before it was beaten. */
+  pathId?: string | null;
   onDone: () => void;
 }
 
@@ -36,7 +38,7 @@ const SOURCE_KICKER: Record<Props['source'], string> = {
  * then the oath lands and the name and typing print under it. Tap skips; a player recruiting four
  * rosterHeroes in one Guild Hall visit should not have to watch it four times.
  */
-export function RecruitFanfare({ heroId, source, types, onDone }: Props) {
+export function RecruitFanfare({ heroId, source, types, pathId, onDone }: Props) {
   const [sworn, setSworn] = useState(false);
   const hero = rosterHeroes[heroId];
 
@@ -77,7 +79,7 @@ export function RecruitFanfare({ heroId, source, types, onDone }: Props) {
         <TypeWheel className="recruit-fanfare-wheel" size={280} focus={types ?? hero.types} topType={hero.types[0]} />
         <span className="recruit-fanfare-ring is-outer" aria-hidden="true" />
         <span className="recruit-fanfare-ring is-inner" aria-hidden="true" />
-        <HeroPortrait heroId={hero.id} className="recruit-fanfare-figure" />
+        <HeroPortrait heroId={hero.id} pathId={pathId} className="recruit-fanfare-figure" />
         <span className="recruit-fanfare-flash" aria-hidden="true" />
       </div>
 

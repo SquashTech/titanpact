@@ -9,7 +9,7 @@ import type { MoveDefinition, PassiveDefinition } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
 import { ROSTER_CAP } from '../../run/state';
 import { entryPassiveCounts, entryStatModifiers } from '../../run/entryStats';
-import { chosenEvolutionPaths, rosterEntryTypes } from '../../run/progression';
+import { chosenEvolutionPaths, rosterEntryTypes, currentEvolutionPathId } from '../../run/progression';
 import { chosenClass } from '../../run/classes';
 import { deriveContractOffer } from '../../run/recruitment';
 import { getTypeColorRgb } from '../combat/typeColors';
@@ -263,6 +263,7 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone }: 
           heroId={fanfare.heroId}
           source="contract"
           types={rosterEntryTypes(rosterHeroes[fanfare.heroId], fanfare)}
+          pathId={currentEvolutionPathId(fanfare)}
           onDone={() => setFanfare(null)}
         />
       )}

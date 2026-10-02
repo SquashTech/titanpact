@@ -30,6 +30,7 @@ import { statScaleFor } from '../../run/statScale';
 import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { currentEvolutionPathId } from '../../run/progression';
 import { HeroStageOverlay } from './HeroStageOverlay';
 import { overlayHost } from '../shared/overlayHost';
 import type { TabSpec } from '../shared/TabStrip';
@@ -459,7 +460,7 @@ function TavernRoster({ run }: { run: RunState }) {
         const { hp, maxHp } = entryHp(hero, entry, run.relics);
         return (
           <div key={entry.rosterId} className={`tavern-roster-hero${entry.down ? ' is-down' : ''}`}>
-            <HeroPortrait heroId={hero.id} className="tavern-roster-portrait" />
+            <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(entry)} className="tavern-roster-portrait" />
             {entry.down ? <span className="tavern-roster-down">Down</span> : <WoundBar hp={hp} maxHp={maxHp} className="tavern-roster-hp" />}
           </div>
         );

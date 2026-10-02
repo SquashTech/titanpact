@@ -11,6 +11,7 @@ import { statScaleFor } from '../../run/statScale';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { currentEvolutionPathId } from '../../run/progression';
 import { NodeMotes } from '../shared/NodeStage';
 import { NodeGlyph } from '../shared/nodeIcons';
 import { StatusGlyph } from '../shared/statusIcons';
@@ -72,7 +73,7 @@ export function LeyLineScreen({ run, onRunChange, onContinue }: Props) {
             <span className="rite-reveal-flash" aria-hidden="true" />
             <span className="rite-hero">
               <span className="rite-pool" aria-hidden="true" />
-              <HeroPortrait heroId={hero.id} className="rite-portrait" />
+              <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(grantedEntry)} className="rite-portrait" />
               <span className="rite-mark is-reveal" aria-hidden="true">
                 <StatusGlyph statusId={statusId} />
               </span>

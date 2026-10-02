@@ -520,7 +520,7 @@ function ConsoleCrest({
                 : cHero.name
           }
         >
-          <HeroPortrait heroId={cHero.id} className="console-socket-portrait" />
+          <HeroPortrait heroId={cHero.id} pathId={c.formPathId} className="console-socket-portrait" />
           {committed && !committedMove && (
             <span className="console-socket-mark" aria-hidden="true">
               {committed.kind === 'rest' ? '◌' : '⇄'}
@@ -906,7 +906,7 @@ export function FightScreen({
   const orderTrack: OrderTrackEntry[] = orderSources.flatMap((source) => {
     const c = combat.combatants[source.combatantId];
     const mark = orderMarks[source.combatantId];
-    return c && mark ? [{ combatantId: c.combatantId, heroId: c.heroId, side: c.side === PLAYER_SIDE ? 'ally' : 'enemy', mark }] : [];
+    return c && mark ? [{ combatantId: c.combatantId, heroId: c.heroId, formPathId: c.formPathId, side: c.side === PLAYER_SIDE ? 'ally' : 'enemy', mark }] : [];
   });
 
   // The console is lit in the commanding hero's domain color, from under that hero's side of the

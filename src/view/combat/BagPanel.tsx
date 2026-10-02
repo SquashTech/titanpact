@@ -112,7 +112,7 @@ export function BagPanel({ purse, targets, fallen, actingId, onDrink, onClose }:
                 }}
               >
                 <span className="switch-option-socket">
-                  <HeroPortrait heroId={hero.id} className="switch-option-portrait" />
+                  <HeroPortrait heroId={hero.id} pathId={combatant.formPathId} className="switch-option-portrait" />
                 </span>
                 <span className="switch-option-body">
                   <span className="switch-option-head">

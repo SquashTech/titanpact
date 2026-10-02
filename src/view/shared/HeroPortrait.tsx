@@ -14,7 +14,7 @@ interface Props {
   /** Which frame to draw. Falls back to the idle frame for a hero that has no art for the pose asked for; `closed` is the Titan's Eyes' alone (guardianFigures.ts). */
   pose?: 'idle' | 'attack' | 'hurt' | 'closed';
   /** An Evolution path: its own form is drawn where one exists (evolutionArt.ts), the hero's sprite where not. */
-  pathId?: string;
+  pathId?: string | null;
 }
 
 /** FNV-1a; only feeds cosmetic jitter. */

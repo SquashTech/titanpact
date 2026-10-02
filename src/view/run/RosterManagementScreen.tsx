@@ -7,7 +7,7 @@ import type { HeroDefinition } from '../../engine/content';
 import { MAX_ITEM_SLOTS } from '../../run/equipment';
 import { chosenClass } from '../../run/classes';
 import { levelOf, xpProgress } from '../../run/growth';
-import { chosenEvolutionPaths, itemSlotsFor, rosterEntryTypes } from '../../run/progression';
+import { chosenEvolutionPaths, itemSlotsFor, rosterEntryTypes, currentEvolutionPathId } from '../../run/progression';
 import type { RunState, RosterEntry } from '../../run/state';
 import { statScaleFor } from '../../run/statScale';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
@@ -128,7 +128,7 @@ function RosterSheetCard({ hero, entry, relicIds, onInspect, onItem }: CardProps
     >
       <div className="roster-sheet-top">
         <button type="button" className="roster-sheet-alcove" data-sfx="none" onClick={onInspect} aria-label={label}>
-          <HeroPortrait heroId={hero.id} className="roster-sheet-figure" />
+          <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(entry)} className="roster-sheet-figure" />
           <span className="roster-sheet-level">
             <small>Lv</small>
             {level}

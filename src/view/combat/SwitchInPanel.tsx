@@ -116,7 +116,7 @@ export function SwitchInPanel({
 
         <div className="switch-outgoing" style={{ '--socket-rgb': getTypeColorRgb(outgoingTypes[0]) } as CSSProperties}>
           <span className="switch-outgoing-socket">
-            <HeroPortrait heroId={outgoingHero.id} className="switch-outgoing-portrait" />
+            <HeroPortrait heroId={outgoingHero.id} pathId={outgoing.formPathId} className="switch-outgoing-portrait" />
           </span>
           <span className="switch-outgoing-text">
             <strong>{outgoingHero.name}</strong> steps out
@@ -168,7 +168,7 @@ export function SwitchInPanel({
                 }}
               >
                 <span className="switch-option-socket">
-                  <HeroPortrait heroId={hero.id} className="switch-option-portrait" />
+                  <HeroPortrait heroId={hero.id} pathId={combatant.formPathId} className="switch-option-portrait" />
                 </span>
 
                 <span className="switch-option-body">

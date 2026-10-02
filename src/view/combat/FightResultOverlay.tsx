@@ -5,6 +5,7 @@ import { rosterHeroes } from '../../data/content';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { CONSUMABLE_BLURBS, CONSUMABLE_NAMES, type ConsumableKind } from '../../run/consumables';
 import { MAX_LEVEL, MAX_XP, levelForXp, levelOf, previewLevelUp, xpForLevel, xpProgress } from '../../run/growth';
+import { currentEvolutionPathId } from '../../run/progression';
 import { LevelUpList } from '../run/LevelUpList';
 import { overlayHost } from '../shared/overlayHost';
 import { WoundBar } from '../shared/WoundBar';
@@ -114,7 +115,7 @@ export function FightResultOverlay({
     const rows: { key: string; render: (shown: boolean) => ReactNode }[] = [];
     if (!won) return rows;
     const mvpEntry = mvp ? roster.find((entry) => entry.rosterId === mvp.rosterId) : undefined;
-    if (mvp && mvpEntry) rows.push({ key: 'mvp', render: () => <MvpRow heroId={mvpEntry.heroId} pick={mvp} /> });
+    if (mvp && mvpEntry) rows.push({ key: 'mvp', render: () => <MvpRow heroId={mvpEntry.heroId} pathId={currentEvolutionPathId(mvpEntry)} pick={mvp} /> });
     if (goldReward > 0) rows.push({ key: 'gold', render: (shown) => <GoldRow from={goldFrom} amount={goldReward} shown={shown} /> });
     if (equipmentReward) rows.push({ key: 'item', render: () => <ItemRow item={equipmentReward} onInspect={() => setInspecting(true)} /> });
     if (consumableReward) rows.push({ key: 'potion', render: () => <PotionRow kind={consumableReward} /> });
@@ -252,13 +253,13 @@ export function FightResultOverlay({
       </button>
 
       {inspecting && <ItemDetailOverlay item={equipmentReward} onClose={() => setInspecting(false)} />}
-      {showingGains && levelReport && <StatGainsSheet report={levelReport} onClose={() => setShowingGains(false)} />}
+      {showingGains && levelReport && <StatGainsSheet report={levelReport} roster={roster} onClose={() => setShowingGains(false)} />}
     </div>
   );
 }
 
 /** Every hero's rolls, cell by cell — the full level report, read on request rather than as a screen of its own. */
-function StatGainsSheet({ report, onClose }: { report: ReturnType<typeof previewLevelUp>[]; onClose: () => void }) {
+function StatGainsSheet({ report, roster, onClose }: { report: ReturnType<typeof previewLevelUp>[]; roster: readonly RosterEntry[]; onClose: () => void }) {
   function closeAndStop(e: { stopPropagation: () => void }) {
     e.stopPropagation();
     onClose();
@@ -267,7 +268,7 @@ function StatGainsSheet({ report, onClose }: { report: ReturnType<typeof preview
     <div className="detail-overlay" onClick={closeAndStop}>
       <div className="detail-panel level-gains-panel" onClick={closeAndStop}>
         <h3 className="level-gains-title">Stat gains</h3>
-        <LevelUpList report={report} gains />
+        <LevelUpList report={report} gains formFor={(rosterId) => { const entry = roster.find((r) => r.rosterId === rosterId); return entry ? currentEvolutionPathId(entry) : null; }} />
         <div className="detail-close-hint">Tap anywhere to close</div>
       </div>
     </div>,
@@ -341,7 +342,7 @@ function PartyMember({ entry, index, xp, fielded, filling, landed, hpAfter }: Me
     >
       <div className="fight-result-figure">
         {shownFills > 0 && !landed && <span key={shownFills} className="fight-result-figure-bloom" aria-hidden="true" />}
-        <HeroPortrait heroId={definition.id} className="fight-result-portrait" />
+        <HeroPortrait heroId={definition.id} pathId={currentEvolutionPathId(entry)} className="fight-result-portrait" />
       </div>
 
       <span className="fight-result-lv">
@@ -396,12 +397,12 @@ const MVP_LINES: Record<MvpColumn, (percent: number) => string> = {
 };
 
 /** The fight's MVP: who, the column it dominated, and the pip it is paid. */
-function MvpRow({ heroId, pick }: { heroId: string; pick: MvpPick }) {
+function MvpRow({ heroId, pathId, pick }: { heroId: string; pathId: string | null; pick: MvpPick }) {
   const name = rosterHeroes[heroId]?.name ?? heroId;
   return (
     <div className="fight-result-row is-mvp">
       <span className="fight-result-row-glyph">
-        <HeroPortrait heroId={heroId} className="fight-result-mvp-portrait" />
+        <HeroPortrait heroId={heroId} pathId={pathId} className="fight-result-mvp-portrait" />
       </span>
       <span className="fight-result-row-text">
         <span className="fight-result-row-label">MVP · {name}</span>

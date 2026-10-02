@@ -17,7 +17,7 @@ import { equipmentStatModifiers } from '../../run/equipment';
 import { relicTeamStatModifiers } from '../../run/relics';
 import { relicTeamPassiveGrants, passiveStatModifiers } from '../../run/passives';
 import { entryPassiveCounts, entryStatModifiers, relicStatContribution } from '../../run/entryStats';
-import { chosenEvolutionPaths, itemSlotsFor, rosterEntryTypes } from '../../run/progression';
+import { chosenEvolutionPaths, itemSlotsFor, rosterEntryTypes, currentEvolutionPathId } from '../../run/progression';
 import { chosenClass } from '../../run/classes';
 import { innatePassiveIdsFor } from '../../run/innate';
 import { StatBars, StatGlyph, STAT_LABELS } from '../shared/StatBars';
@@ -218,7 +218,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
       >
         <div className="detail-header is-hero">
           <span className="detail-portrait-plate">
-            <HeroPortrait heroId={hero.id} className="detail-portrait is-inline" />
+            <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(entry)} className="detail-portrait is-inline" />
           </span>
           <div className="detail-header-titles">
             {/* The level is set apart rather than run into the name with an em dash: it is a figure

@@ -2,7 +2,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { HeroDefinition } from '../../engine/content';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { MAX_ITEM_SLOTS } from '../../run/equipment';
-import { itemSlotsFor, rosterEntryTypes } from '../../run/progression';
+import { itemSlotsFor, rosterEntryTypes, currentEvolutionPathId } from '../../run/progression';
 import type { RosterEntry } from '../../run/state';
 import { getTypeColor } from '../combat/typeColors';
 import { HeroPortrait } from './HeroPortrait';
@@ -72,7 +72,7 @@ export function HeroSlotCard({
           the item sockets below it make. A bare 28px sprite on a panel reads as an image that has
           not finished loading. */}
       <span className="roster-mgmt-plate">
-        <HeroPortrait heroId={hero.id} className="roster-mgmt-portrait" />
+        <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(entry)} className="roster-mgmt-portrait" />
       </span>
       <span className="roster-mgmt-ident">
         <span className="roster-mgmt-name">{hero.name}</span>

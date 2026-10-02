@@ -120,7 +120,7 @@ export function LeadPickPanel({ candidates, fallen, enemyTypes, picks, onToggle,
         onInspect={() => onInspect(combatantId)}
         onRevive={down && onRevive ? () => onRevive(combatantId) : undefined}
       >
-        <HeroPortrait heroId={hero.id} className="roster-card-portrait" />
+        <HeroPortrait heroId={hero.id} pathId={combatant.formPathId} className="roster-card-portrait" />
         {/* The Blessing rides in the level's tag, after the number, as it does on the nameplate. */}
         <span className="pick-level squad-slot-level">
           <span aria-hidden="true">{level}</span>

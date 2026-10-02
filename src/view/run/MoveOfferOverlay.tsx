@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { rosterHeroes } from '../../data/content';
 import { moves } from '../../data/moves';
 import type { RosterEntry, RunState } from '../../run/state';
-import { MOVE_CAP } from '../../run/progression';
+import { MOVE_CAP, currentEvolutionPathId } from '../../run/progression';
 import { levelOf } from '../../run/growth';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { playSfx } from '../../audio/sfx';
@@ -99,7 +99,7 @@ export function MoveOfferOverlay({ run, entry, moveId, eyebrow, onResolve, signa
           <HubGlyph name="reference" />
         </button>
         <div className="offer-hero-head" {...headPress}>
-          <HeroPortrait heroId={hero.id} className="offer-hero-portrait" />
+          <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(entry)} className="offer-hero-portrait" />
           <h3>{hero.name}</h3>
         </div>
         <p className="offer-hero-eyebrow">{eyebrow}</p>
@@ -190,7 +190,7 @@ export function MoveLearnedOverlay({ run, entry, moveId, eyebrow, onClose, signa
       <div className={`reward-panel moveoffer-panel is-learned${signature ? ' is-signature' : ''}`}>
         {signature && <SignatureCrest />}
         <div className="offer-hero-head">
-          <HeroPortrait heroId={hero.id} className="offer-hero-portrait" />
+          <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(entry)} className="offer-hero-portrait" />
           <h3>{hero.name}</h3>
         </div>
         <p className="offer-hero-eyebrow">{eyebrow}</p>

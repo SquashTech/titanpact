@@ -404,6 +404,7 @@ export function CombatantCard({
         <span className="combatant-platform" aria-hidden="true" />
         <HeroPortrait
           heroId={hero.id}
+          pathId={combatant.formPathId}
           seed={combatant.combatantId}
           className="combatant-portrait"
           pose={pose}

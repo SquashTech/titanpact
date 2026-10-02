@@ -163,7 +163,7 @@ function ForecastRow({ move, ctx, defenderId }: { move: MoveDefinition; ctx: Mov
 
   return (
     <div className="move-forecast-row">
-      <HeroPortrait heroId={defender.heroId} className="move-forecast-portrait" seed={defenderId} />
+      <HeroPortrait heroId={defender.heroId} pathId={defender.formPathId} className="move-forecast-portrait" seed={defenderId} />
       <div className="move-forecast-body">
       <div className="move-forecast-who">
         <span className="move-forecast-name">{hero.name}</span>

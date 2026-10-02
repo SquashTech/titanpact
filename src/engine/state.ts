@@ -40,6 +40,8 @@ export interface Combatant {
   statModifiers: StatModifiers;
   /** Type-graft Evolution grants on top of HeroDefinition.types (which never changes). */
   grantedTypes: readonly TypeId[];
+  /** The Evolution path whose form the view draws (art/evolutions/). Presentation only: the engine never reads it. */
+  formPathId?: string;
   /** Equipment/relic status grants (Elemental Force) baked into `statuses` at build, recorded so the view can net them out. Never mutated. */
   baselineStatusMagnitudes: Partial<Record<StatusId, number>>;
   /** One instance per status id — never stacked as multiple instances. */

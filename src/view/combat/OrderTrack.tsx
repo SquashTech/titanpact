@@ -4,6 +4,7 @@ import { bracketPip, type OrderMark } from './orderMarks';
 export interface OrderTrackEntry {
   combatantId: string;
   heroId: string;
+  formPathId?: string;
   /** Which zone the fighter stands in — its frame takes that zone's tint. */
   side: 'enemy' | 'ally';
   mark: OrderMark;
@@ -63,7 +64,7 @@ export function OrderTrack({ entries, onInspect }: Props) {
               onClick={onInspect ? () => onInspect(entry.combatantId) : undefined}
             >
               <span className="order-track-frame">
-                <HeroPortrait heroId={entry.heroId} seed={entry.combatantId} className="order-track-sprite" />
+                <HeroPortrait heroId={entry.heroId} pathId={entry.formPathId} seed={entry.combatantId} className="order-track-sprite" />
               </span>
             </span>
           </span>

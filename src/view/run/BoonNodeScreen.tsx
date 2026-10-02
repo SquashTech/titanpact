@@ -10,6 +10,7 @@ import { boonMoveCount, boonMoveType, pickBoonOffers } from '../../run/boons';
 import { grantEventPassive } from '../../run/events';
 import { entryPassiveCounts } from '../../run/entryStats';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { currentEvolutionPathId } from '../../run/progression';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { useLongPress } from '../shared/MoveTile';
 import { NodeMotes, NODE_TINT_ARCANE } from '../shared/NodeStage';
@@ -142,7 +143,7 @@ export function BoonNodeScreen({ run, onRunChange, onContinue }: Props) {
             <span className="rite-reveal-flash" aria-hidden="true" />
             <span className="rite-hero">
               <span className="rite-pool" aria-hidden="true" />
-              <HeroPortrait heroId={assignedHero.id} className="rite-portrait" />
+              <HeroPortrait heroId={assignedHero.id} pathId={assignedEntry && currentEvolutionPathId(assignedEntry)} className="rite-portrait" />
               <span className="rite-mark is-reveal" aria-hidden="true">
                 <PassiveGlyph passiveId={confirmed.id} />
               </span>

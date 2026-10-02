@@ -30,6 +30,8 @@ interface ListProps {
   gains?: boolean;
   /** The tag for what a hero's level still owes it; omitted, no row wears one. */
   owedFor?: (rosterId: string) => string | null;
+  /** The form each hero is drawn in (art/evolutions/), by rosterId. */
+  formFor?: (rosterId: string) => string | null;
 }
 
 /**
@@ -37,11 +39,11 @@ interface ListProps {
  * levelling would read as participation XP. Landed at once and still: the victory screen has
  * already swept the bars.
  */
-export function LevelUpList({ report, gains = false, owedFor }: ListProps) {
+export function LevelUpList({ report, gains = false, owedFor, formFor }: ListProps) {
   return (
     <div className={`level-up-list${gains ? '' : ' is-compact'}`}>
       {report.map((hero) => (
-        <LevelUpRow key={hero.rosterId} hero={hero} gains={gains} owed={owedFor?.(hero.rosterId) ?? null} />
+        <LevelUpRow key={hero.rosterId} hero={hero} gains={gains} owed={owedFor?.(hero.rosterId) ?? null} pathId={formFor?.(hero.rosterId) ?? null} />
       ))}
     </div>
   );
@@ -52,9 +54,10 @@ interface RowProps {
   gains: boolean;
   /** The tag for what this level still owes the hero, or null for nothing. */
   owed: string | null;
+  pathId: string | null;
 }
 
-function LevelUpRow({ hero, gains, owed }: RowProps) {
+function LevelUpRow({ hero, gains, owed, pathId }: RowProps) {
   const definition = rosterHeroes[hero.heroId];
   if (!definition) return null;
   const levels = hero.toLevel - hero.fromLevel;
@@ -69,7 +72,7 @@ function LevelUpRow({ hero, gains, owed }: RowProps) {
       className={`level-up-row is-shown${capped ? ' is-capped' : ''}`}
       style={{ '--plate-color': getTypeColor(definition.types[0]) } as CSSProperties}
     >
-      <HeroPortrait heroId={definition.id} className="level-up-portrait" />
+      <HeroPortrait heroId={definition.id} pathId={pathId} className="level-up-portrait" />
 
       <div className="level-up-body">
         <div className="level-up-ident">

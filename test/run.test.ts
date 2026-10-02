@@ -424,6 +424,9 @@ test('progression: a type-graft path grants a second type without touching the i
     { side: 'B', squad: aiSquad, roster: aiRun.roster },
   ]);
   assert.deepStrictEqual(state.combatants['A:tidecaller'].grantedTypes, ['Frost']);
+  // The view draws the form the hero is in (art/evolutions/); an unevolved hero carries none.
+  assert.strictEqual(state.combatants['A:tidecaller'].formPathId, 'tidecaller-frostbound');
+  assert.strictEqual(state.combatants['B:ironWarden'].formPathId, undefined);
   // Out-of-combat screens read the graft off the RosterEntry, with no Combatant built yet.
   assert.deepStrictEqual(rosterEntryTypes(heroes.tidecaller, next.roster[0]), ['Water', 'Frost']);
 });

@@ -15,6 +15,7 @@ import type { Squad } from './squad';
 import type { EquipmentDefinition } from './equipment';
 import { entryPassiveCounts, entryStatModifiers } from './entryStats';
 import { innatePassiveIdsFor } from './innate';
+import { currentEvolutionPathId } from './progression';
 import { enduranceOf, switchLockOf, toPassiveInstances } from './passives';
 import { equipmentStatusGrants, mergeStatusGrants, toStatusInstances } from './statusGrants';
 
@@ -51,6 +52,7 @@ function placeEntry(
   const baselineStatusMagnitudes = mergeStatusGrants(equipmentStatusGrants(entry.equipment, equipmentLookup), entry.bonusStatusGrants, teamStatusGrants);
   const statuses = toStatusInstances(baselineStatusMagnitudes);
   const grantedTypes = entry.evolutionTypeGraft ? [entry.evolutionTypeGraft] : [];
+  const formPathId = currentEvolutionPathId(entry);
   const withMods = {
     ...createCombatant(combatantIdFor(side, entry.rosterId), entry.heroId, side, 0, 0),
     baselineStatModifiers,
@@ -61,6 +63,7 @@ function placeEntry(
     enduresLeft: enduranceOf(passiveCounts, passiveDefs),
     switchLocked: switchLockOf(passiveCounts, passiveDefs),
     ...(entry.blessed ? { blessed: true } : {}),
+    ...(formPathId ? { formPathId } : {}),
   };
   return { ...withMods, currentHp: woundedHp(getMaxHp(hero, withMods), entry.wounds), currentMana: getMaxMana(hero, withMods) };
 }
