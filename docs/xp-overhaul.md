@@ -340,6 +340,7 @@ term at 0, skilled / chart pilot). Three ways to buy back the lost act's pips:
 | Shelf 2-packs (25g, 2 a visit, one hero each), Scribe 2+2 | 86.7 / 42.9% | 33.8 | 33.8 / 24.0% | 2.9% |
 | 2-packs + Scribe 3+3 | 87.3 / 41.9% | 41.7 | 72.9 / 54.2% | 20.7% |
 | **MVP pip every fight**, Scribe 2+2, single Scrolls | 87.1 / 41.6% | 37.6 | **67.3 / 48.9%** | 24.9% |
+| **MVP pip + 2-packs**, Scribe 2+2 | 87.5 / 42.3% | 45.0 | **77.1 / 54.0%** | 33.9% |
 
 - **None of them moves full-clear** (41.6–42.9% chart). Mastery supply is not what the finale
   wall is made of; that stays the finale's own re-fit.
