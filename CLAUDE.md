@@ -75,7 +75,14 @@ don't silently override it.
 > because a spread hit at a single hit's price topped every damage-per-mana table
 > (`docs/authoring-moves.md`). Late is still cast 1.6 times a fight in Act 5. Measured: full-clear 57%, Late casts 19 / 29 / 36% of Acts 4 / 5 /
 > finale (was 11 / 18 / 23), the Act 1 wall at 76% untouched by every non-design lever (§8).
-> Phase 5 (four acts) stays deferred.
+> **Phase 5 is IN (2026-10-02, per user direction, §5): FOUR ACTS.** Act 5 is deleted, not
+> compressed — Wild's Edge, three chosen Locations, then the Vigil → Herald → Eyes as act 5
+> (`TOTAL_ACTS` = 5, `SEAL_ACTS` = 4; two seals stay shut). Acts 1–4 are untouched (par 8/14/19/24,
+> the finale at par 24). Act 4's Guardian, the last seal, grows on C; the finale is re-fitted —
+> Eyes Int −20 with their HP kept, Herald Atk/Int −20, Withering Gaze 4%. **The MVP pip**
+> (`src/run/mvp.ts`) reverses "never a post-fight drop": the biggest share of one team column takes
+> a free Mastery pip, never twice running; the shelf sells Scrolls **two to a pack**. Measured:
+> full-clear 48 / 90% chart / skilled, ~63 min Reader. Wherever a line below says five acts, read four.
 
 > **A fourth overhaul is BUILT IN FULL: `docs/mastery.md`** (2026-09-14, per user
 > direction). Evolutions come off the level schedule onto **Mastery**: every hero has ten pips,

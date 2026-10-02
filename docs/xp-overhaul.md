@@ -1,6 +1,6 @@
 # xp-overhaul.md — The XP Overhaul
 
-> **STATUS: §2–4 DECIDED (2026-09-13, per user direction); §5 (four acts) DEFERRED, not decided — re-drafted and MEASURED 2026-10-01.
+> **STATUS: §2–4 DECIDED (2026-09-13, per user direction); §5 (four acts) DECIDED AND BUILT 2026-10-02, per user direction.
 > PHASE 1 OF §8 IS IN.** **Superseded in part by `docs/mastery.md` (2026-09-14): §3's Ichor is
 > RETIRED (its seats went back to the Scroll Cache) and §4's Evolution moved off the level schedule
 > onto Mastery pips; the XP curve, the offers and the bands stand.** `CLAUDE.md` and `growth-overhaul.md` still describe the game in force
@@ -392,13 +392,18 @@ chart pilot unless marked.
 - **The run, chosen shape:** 61.7 min Reader / 43.5 Auto skilled (today 73.0 / 51.5); chart
   70.8 Reader (today 84.2).
 
+**Shipped, 2026-10-02 (per user direction):** the MVP pip + 2-packs (Scribe 2+2), **Act 4's Guardian
+on C** (it is the last seal), and the chosen finale re-fit **with the Eyes' HP kept at 810 / 945** —
+they should feel big. Measured: the finale **74.4% chart / 97.3% skilled**, full-clear **48.2 / 90.1%**,
+the Act 4 Guardian 97.7% chart; 62.6 min Reader skilled.
+
 **Open, for the designer:**
 
 - **The finale's feel.** 79% chart / 98% skilled is the number; whether the Eyes at their old
   HP still read as the climax is for play to say.
-- **Act 4's Guardian as the last one.** It clears 98–99%; today's Act 5 Guardian measured as one
-  that "could be one-shot". The last Guardian probably wants `CHAMPION_GRADE_BY_ACT` C or a third
-  escort, so the final seal reads as the hardest.
+- **Act 4's Guardian as the last one.** On C it clears 97.7% chart (98.0% on D) — the grade
+  barely moves it. If the final seal still does not read as the hardest in play, a third escort is
+  the next lever.
 - **One Tutor a run.** Act 5's forced Tutor goes; whether the Vigil takes a Tutor (the "last
   things before the test" beat) is the natural home for it.
 - **Mastery 10.** At 3+3 the supply matches today's, but spread across a shorter run; whether one
@@ -451,7 +456,7 @@ Sequenced so the tree is playable at every boundary. Numbering is dependency ord
 | 2 | **Ichor.** The two Scroll nodes re-pointed; the shelf; the *who* screen; the report shows the jump. Scrolls still exist and still buy moves — this is a working bridge state where Ichor buys levels-and-stats and Scrolls buy moves. | Both nodes grant XP to one hero; the sim tallies Ichor by source and the paired focus/spread batch runs. | **DONE 2026-09-13.** `src/run/ichor.ts`, `IchorNodeScreen`; nodes are `ichorReward` / `ichorDropReward` (renamed, not just re-pointed — a node named for Scrolls that grants levels would outlive phase 3); the shelf sells a Drop for the bundle's 35g, 2 a visit; `SAVE_VERSION` 13. Measured below. |
 | 3 | **Levels teach.** The destructive one. `HeroDefinition.schedule` on the default table; offers roll from the report; the Evolution raises from `evolutionLevel`; enemies and hires read the same schedule; delete everything in §7. Tutorial re-checked. | No Scroll anywhere. `test/moveTiers.test.ts` rewritten against the schedule. A run completable end to end. | **DONE 2026-09-13.** `LevelSchedule` / `DEFAULT_SCHEDULE` / `scheduleEntries` / `pendingScheduleEntry` / `takeScheduleEntry` / `levelMovePool` (`src/run/progression.ts`); `RosterEntry.scheduleTaken`; `levelUpFlow.ts` pays the report; `MasteryScreen`/`MasteryBoard` deleted; `SAVE_VERSION` 14. **One rule added:** a hero takes at most ONE entry per level-up, so a raw hire's backlog is worked off one fight at a time (§4's "un-crossed"), and the report never stacks two decisions on one hero. Measured below. |
 | 4 | **Author 36 schedules.** Parallelisable from phase 3 on. The interesting authoring is the spread: who evolves at 12 and who at 22, and whether the low-base/high-grade late bloomers from the grade pass are also the late evolvers (they should not all be — a hero can bloom in stats and turn early, or the reverse). | No hero on the default schedule; the 10–24 Evolution window pinned by test beside the grade budget. | **DONE 2026-09-13** (per user direction: fewer offers a hero). `src/data/heroes.ts`: 11 early turners (10–12), 18 middle (13–19), 7 late (20–24); 5–6 offers a hero, Glyph 7, 5.4 on average; Mid 9–13 and Late 18–25 move with the Evolution. Crossed against the grades on purpose: Marrow, Zenith and Bellows are front-loaded in stats and turn LAST; Riptide and Pincer bloom in stats and turn early/mid. Pinned in `test/moveTiers.test.ts`. Measured below. |
-| 5 | **Four acts and the finale.** §5's table, in one pass. The Herald rename; the Eyes as a second finale champion through `appendFinalEnemy`. | `TOTAL_ACTS` = 5; the sim's act table reads four; 18 encounters at par reach 30. | **RE-SCOPED 2026-10-01, NOT BUILT:** §5 re-drafted — delete Act 5, keep acts 1–4 as they are, Scribe 3+3, the finale re-fitted. Measured on branch `sim/four-acts`; the finale's re-fit is the open dial. |
+| 5 | **Four acts and the finale.** §5's table, in one pass. The Herald rename; the Eyes as a second finale champion through `appendFinalEnemy`. | `TOTAL_ACTS` = 5; the sim's act table reads four; 18 encounters at par reach 30. | **DONE 2026-10-02** (per user direction): Act 5 deleted, acts 1–4 untouched; the MVP pip and shelf 2-packs (Scribe 2+2); Act 4's Guardian on C; the finale re-fit with the Eyes' HP kept. `SAVE_VERSION` 20. Measured in §5. |
 | 6 | **Re-fit.** Ichor supply, `ACT_STEP_CURVE`, `ENEMY_LEVEL_LAG`, champion multipliers, reward weights, against the sim and the skilled pilot; then the length report. | No dead node, no unreachable band, no wall the old curve did not have; run length reported per profile. Win-rate targets are a playtest question. | **DONE 2026-09-13** (per user direction: Late moves realistically accessible). Three dials: each band offers ITS OWN tier (`MOVE_TIER_RANK_EXPIRY.mid` = Late); every schedule re-authored to two offers a band, Late opening 17–22; **Late-tier mana ×0.75** (floor 45, the 100+ whole-pool casts exempt) and `ACT_STEP_CURVE` 9/15 → 8/13 to pay for its enemy half. Measured below. The Act 1 wall is NOT re-fitted — see §10. |
 
 **What each phase measures.** Phase 1: nothing moves *at par*, and that held — but the roster is

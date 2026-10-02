@@ -12,6 +12,15 @@
 > schedule at the hero's own `signatureLevel` (§5), set by how hard the move hits; the tenth pip
 > replaces the hero's innate passive with an authored, sizable upgrade of the same verb (§5b).
 > Wherever a line below says "ten is its signature", read §5 and §5b.
+>
+> **REVISED 2026-10-02 (per user direction, with four acts — `docs/xp-overhaul.md` §5): two
+> faucets changed and a fourth arrived.** The shelf sells Scrolls **two to a pack** (25g a pack,
+> two packs a visit, split freely; `SCROLL_PACK_PIPS`), and **the MVP pip** reverses "never a
+> post-fight drop": after every won fight but the finale, the hero with the biggest share of one
+> team column — damage, finishes, support, anchor, control — takes one free pip, named on the
+> victory screen (`src/run/mvp.ts`, `MvpRow`). Never a hero at the cap, never the same hero twice
+> running, two rounds on the field to qualify. The Scribe stays 2 + 2. Measured: 45 pips a
+> completed run, every hero evolved 77% of runs against 82% under five acts.
 
 ---
 
