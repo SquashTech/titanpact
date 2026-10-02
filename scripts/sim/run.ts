@@ -19,7 +19,8 @@ import { enemies, finaleEnemies, ENDBRINGER_ID, titanEyes, EYE_PHASES } from '..
 import { encounterKindOf, encounterSeedFor, nodeEncounter } from '../../src/run/encounters';
 import { allCombatants } from '../../src/data/content';
 import { guildHallOffersFor, CONTRACT_PURCHASE_COST } from '../../src/data/recruitment';
-import { SCRIBE_PIPS_EACH, SCROLL_CACHE_COUNT, buyScroll, canBuyScroll, grantMastery } from '../../src/run/mastery';
+import { chooseMvp, type MvpLedger } from '../../src/run/mvp';
+import { MASTERY_CAP, SCRIBE_PIPS_EACH, SCROLL_CACHE_COUNT, SCROLL_PACK_PIPS, buyScroll, canBuyScroll, grantMastery } from '../../src/run/mastery';
 
 import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry, ROSTER_CAP, TOTAL_ACTS, type RunState, type RosterEntry } from '../../src/run/state';
 import { blessOpeningPair } from '../../src/run/blessings';
@@ -91,7 +92,7 @@ import { passives } from '../../src/data/passives';
 import { getMaxHp } from '../../src/engine/state';
 import { createCombatant } from '../../src/engine/state';
 
-import { simulateFight, PLAYER_SIDE, type PilotKind, type ShieldTally, type MoveTally } from './fight';
+import { simulateFight, PLAYER_SIDE, type CombatantTelemetry, type PilotKind, type ShieldTally, type MoveTally } from './fight';
 import * as policy from './policy';
 import type { PourEvolution } from './policy';
 import { makeRng, pick, randomSeed, sample, withRandom, type Rng } from './rng';
@@ -199,6 +200,10 @@ export interface RunRecord {
   equipped: string[];
   /** Mastery pips landed this run, by source (run/mastery.ts). */
   pipsBySource: Record<string, number>;
+  /** The MVP pip (run/mvp.ts, SIM_MVP=1): tallies keyed `col:<column>`, `hero:<heroId>`, `repeatBlocked`, `fights`; the run's MVPs by roster id; the last one. */
+  mvp: Record<string, number>;
+  mvpByRoster: Record<string, number>;
+  mvpLast?: string;
   /** Signatures owed at the tenth pip this run, by hero: times reached and times the kit took it. */
   signatures: Record<string, { reached: number; taken: number }>;
   /** Every rolled move offer (schedule, Mentor, Tutor, signature) by move id: times on the table, times the kit took it. */
@@ -353,6 +358,8 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     choices: [],
     equipped: [],
     pipsBySource: {},
+    mvp: {},
+    mvpByRoster: {},
     signatures: {},
     moveOffers: {},
     recruitsBySource: {},
@@ -713,10 +720,34 @@ function resolveEncounterNode(
   record.knockouts.koInWinsByKind[kindKey] = (record.knockouts.koInWinsByKind[kindKey] ?? 0) + koRosterIds.length;
   // The consumable drop (src/run/consumables.ts). Potions are never drunk here — the pilot has no
   // Bag — but a Revive IS spent (spendRevives), since a persisting knockout is what it prices.
+  if (MVP_ON && mapNodeType !== 'finale') workingRun = awardMvp(workingRun, fight.telemetry, rng, record);
   const consumableDrop = rollConsumableDrop(kindKey, rng);
   if (consumableDrop) workingRun = grantConsumable(workingRun, consumableDrop);
   if (consumableDrop === 'revive') record.knockouts.revivesFound += 1;
   return { run: workingRun, won: true, defeatedRoster: encounter.run.roster, drop, encounter, koRosterIds };
+}
+
+const MVP_ON = process.env.SIM_MVP === '1';
+
+/** One pip to the fight's MVP (run/mvp.ts): never a capped hero, never the same hero twice running. */
+function awardMvp(run: RunState, telemetry: Record<string, CombatantTelemetry>, rng: Rng, record: RunRecord): RunState {
+  const onRoster = new Set(run.roster.map((e) => e.rosterId));
+  const ledgers: MvpLedger[] = Object.values(telemetry)
+    .filter((t) => t.side === PLAYER_SIDE && onRoster.has(t.rosterId))
+    .map((t) => ({ rosterId: t.rosterId, roundsActive: t.roundsActive, damage: t.mvpHit, finishes: t.kos, support: t.mvpSupport, anchor: t.mvpAnchor, control: t.mvpControl }));
+  const capped = new Set(run.roster.filter((e) => e.mastery >= MASTERY_CAP).map((e) => e.rosterId));
+  const unruled = chooseMvp(ledgers, { capped });
+  const pick = chooseMvp(ledgers, { capped, lastMvpRosterId: record.mvpLast });
+  record.mvp.fights = (record.mvp.fights ?? 0) + 1;
+  if (!pick) return run;
+  if (unruled && unruled.rosterId !== pick.rosterId) record.mvp.repeatBlocked = (record.mvp.repeatBlocked ?? 0) + 1;
+  const heroId = run.roster.find((e) => e.rosterId === pick.rosterId)?.heroId ?? '?';
+  record.mvp[`col:${pick.column}`] = (record.mvp[`col:${pick.column}`] ?? 0) + 1;
+  record.mvp[`hero:${heroId}`] = (record.mvp[`hero:${heroId}`] ?? 0) + 1;
+  record.mvp.shareSum = (record.mvp.shareSum ?? 0) + pick.share;
+  record.mvpByRoster[pick.rosterId] = (record.mvpByRoster[pick.rosterId] ?? 0) + 1;
+  record.mvpLast = pick.rosterId;
+  return landPips(run, pick.rosterId, 1, 'mvp', rng, record);
 }
 
 /** The Guardian's Banner: a fixed 1-of-5, taken at random. */
@@ -1070,7 +1101,7 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
   for (let bought = 0; canBuyScroll(next, bought); bought++) {
     const target = policy.scrollTarget(next.roster, options.levelPolicy);
     if (!target) break;
-    spend('scroll', () => landPips(buyScroll(next, bought), target.rosterId, 1, 'shelf', rng, record));
+    spend('scroll', () => landPips(buyScroll(next, bought), target.rosterId, SCROLL_PACK_PIPS, 'shelf', rng, record));
   }
 
   spend('anvil', () => resolveAnvil(next));

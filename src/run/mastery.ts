@@ -20,7 +20,7 @@ export const MASTERY_INNATE = MASTERY_CAP;
 
 /** The Scribe: pick this many heroes, and each takes this many pips. Cannot be concentrated — that is what the Cache and the shelf are for. */
 export const SCRIBE_PICKS = 2;
-export const SCRIBE_PIPS_EACH = 3;
+export const SCRIBE_PIPS_EACH = 2;
 
 /** The Scroll Cache, a reward-row seat: this many pips, divided as the player likes. */
 export const SCROLL_CACHE_COUNT = 3;
@@ -31,6 +31,8 @@ export const SCROLL_CACHE_COUNT = 3;
  */
 export const SCROLL_PURCHASE_COST = 25;
 export const SCROLL_PURCHASE_LIMIT = 2;
+/** Pips one shelf purchase lands, on one hero. */
+export const SCROLL_PACK_PIPS = 1;
 
 export class MasteryError extends Error {}
 

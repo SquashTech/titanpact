@@ -228,6 +228,8 @@ export interface Aggregate {
   /** Mastery pips landed, by source (scribe / shelf; the Cache from phase 2), all runs and won runs. */
   pipsBySource: Record<string, number>;
   pipsBySourceWon: Record<string, number>;
+  /** run/mvp.ts tallies summed over runs, plus `runs`, `topShareSum` (the run's most-picked hero's share of its MVPs) and `distinctSum`. */
+  mvp: Record<string, number>;
   /** The gold ledger summed over runs (run.ts RunRecord.goldFlow). */
   goldFlow: Record<string, number>;
   /** Heroes who joined the roster after the draft, by route. */
@@ -324,6 +326,7 @@ export function emptyAggregate(): Aggregate {
     peakModifierFracSumByAct: [],
     pipsBySource: {},
     pipsBySourceWon: {},
+    mvp: {},
     goldFlow: {},
     recruitsBySource: {},
     itemsBySource: {},
@@ -461,6 +464,7 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   mergeArray(into.heroLevelHistogramDeep, from.heroLevelHistogramDeep);
   for (const key of Object.keys(from.castsByTier)) into.castsByTier[key] = (into.castsByTier[key] ?? 0) + from.castsByTier[key];
   for (const key of Object.keys(from.castsByManaBand)) into.castsByManaBand[key] = (into.castsByManaBand[key] ?? 0) + from.castsByManaBand[key];
+  for (const key of Object.keys(from.mvp)) into.mvp[key] = (into.mvp[key] ?? 0) + from.mvp[key];
   for (const key of Object.keys(from.pipsBySource)) into.pipsBySource[key] = (into.pipsBySource[key] ?? 0) + from.pipsBySource[key];
   for (const key of Object.keys(from.pipsBySourceWon)) into.pipsBySourceWon[key] = (into.pipsBySourceWon[key] ?? 0) + from.pipsBySourceWon[key];
   for (const key of Object.keys(from.goldFlow)) into.goldFlow[key] = (into.goldFlow[key] ?? 0) + from.goldFlow[key];
