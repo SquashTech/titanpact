@@ -148,12 +148,15 @@ function ChoiceMedallion({
   landDelayMs,
   guardianId,
   opening,
+  hint,
   onSelect,
   onPreview,
   measureRef,
 }: {
   map: RunMap;
   node: MapNode;
+  /** A word under the tile when nothing else says it is the thing to tap: the run's first node. */
+  hint?: string;
   /** The act's Guardian, drawn as the Guardian node's face. */
   guardianId: string | null;
   /** The enemy typing this tile previews, or none — the Skirmish and the fork only (MapScreen). */
@@ -220,6 +223,11 @@ function ChoiceMedallion({
           </span>
         )}
       </button>
+      {hint && !opening && (
+        <span className="map-choice-hint" aria-hidden="true">
+          {hint}
+        </span>
+      )}
     </div>
   );
 }
@@ -397,6 +405,7 @@ export function MapRoute({
             guardianId={guardianId}
             landDelayMs={i * PATH_STAGGER_MS + PATH_DRAW_MS}
             opening={openingId === nodeId}
+            hint={actNumber === 1 && !originNode && choiceIds.length === 1 ? 'Tap to begin' : undefined}
             onSelect={() => {
               if (openingId) return;
               // Played here rather than via data-sfx, which fires on POINTERDOWN — the same press that

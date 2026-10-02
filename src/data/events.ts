@@ -52,8 +52,8 @@ export const runEvents: Record<string, RunEventDefinition> = {
   fruitSlicer: {
     id: 'fruitSlicer',
     name: 'Fruit Slicer',
-    eyebrow: 'A Wager of Blades',
-    flavor: 'A grinning vendor stacks melons on a crate and offers the knife to whoever thinks they can keep up.',
+    eyebrow: 'A Trick of the Blade',
+    flavor: 'A grinning vendor halves melons faster than the eye can follow, and offers to teach the cut to one of you.',
     tone: 'vital',
     outcome: { kind: 'learnMove', pool: { nameIncludes: 'Slice' } },
   },

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { rosterHeroes } from '../../data/content';
 import { playSfx } from '../../audio/sfx';
 import type { RunState } from '../../run/state';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -68,6 +69,8 @@ export function BlessingScreen({ run, onDone }: { run: RunState; onDone: () => v
   }
 
   const lit = phase === 'bless' || phase === 'blessed';
+  const names = [left, right].flatMap((entry) => (entry ? [rosterHeroes[entry.heroId]?.name ?? entry.heroId] : []));
+  const blessedLine = `${names.join(' and ')} ${names.length > 1 ? 'are' : 'is'} Blessed. ${names.length > 1 ? 'Each' : 'It'} will shrug off the first blow that would knock it out.`;
   return (
     <button
       type="button"
@@ -96,7 +99,12 @@ export function BlessingScreen({ run, onDone }: { run: RunState; onDone: () => v
         </span>
         {typed && <span className="road-encounter-more" />}
       </span>
-      {phase === 'blessed' && <span className="road-encounter-more blessing-more" aria-hidden="true" />}
+      {/* What the light did, said where it happened rather than on the map after. */}
+      <span className={`road-encounter-speech${phase === 'blessed' ? ' is-open' : ''}`} aria-hidden="true">
+        <span className="road-encounter-name">Blessed</span>
+        <span className="road-encounter-line">{blessedLine}</span>
+        <span className="road-encounter-more" />
+      </span>
     </button>
   );
 }

@@ -130,7 +130,7 @@ export const FIGHT_TIPS: readonly FightTip[] = [
     title: 'Skirmish',
     when: { nodeTypes: ['skirmish', 'elite'] },
     pages: [
-      'Skirmishes are fights against other heroes attempting to stop the Titan. If you win, you can use a Contract to recruit one to your party.',
+      'Skirmishes are fights against other heroes who would rather seal the pact themselves. If you win, you can use a Contract to recruit one to your party.',
     ],
   },
   {
@@ -150,8 +150,13 @@ export const FIGHT_TIPS: readonly FightTip[] = [
     pages: [
       "The number on a move is how well it hits the target's type: above 1 is strong, below 1 is resisted.",
       "The icon before a move's name is its type. A move that shares a type with the hero using it deals 25% more.",
-      '[physical] Physical moves use Attack against Defense. [magical] Magical moves use Intelligence against Wisdom.',
     ],
+  },
+  {
+    id: 'fight.attacks',
+    title: 'Attacks',
+    when: { minRound: 2 },
+    pages: ['[physical] Physical moves use Attack against Defense. [magical] Magical moves use Intelligence against Wisdom.'],
   },
   {
     id: 'fight.rest',

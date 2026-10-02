@@ -82,9 +82,10 @@ Checked at the top of every command phase — never between two orders — again
 | Id | When |
 | --- | --- |
 | `fight.basics` | the first command phase of the first fight: orders and turn order, the Mana gem on each move and the MP bar, reading fighters and moves |
-| `fight.skirmish` | the first Skirmish or Elite: other heroes, and a Contract recruits one after a win |
+| `fight.skirmish` | the first Skirmish or Elite: other heroes who would seal the pact themselves, and a Contract recruits one after a win |
 | `fight.switching` | the first fight with a bench: what Switch does and when to use it, bench Mana, lock-in |
-| `fight.types` | round 2+: the multiplier beside each enemy's name, the type icon and STAB, physical vs magical (with the move-kind glyphs inline) |
+| `fight.types` | round 2+: the multiplier beside each enemy's name, the type icon and STAB |
+| `fight.attacks` | the next phase: physical vs magical (with the move-kind glyphs inline) |
 | `fight.rest` | a player hero can afford nothing |
 | `fight.ancient` | an Ancient on the field (every Guardian): it resists everything, what breaks even, Ancient moves are never resisted |
 | `fight.pactClock` | "One Last Thing", the first Guardian fight: the Pact Clock from round 30, and that only a stall loses |
