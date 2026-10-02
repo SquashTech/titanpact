@@ -19455,7 +19455,7 @@ button.star-shop-bundle-face {
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 268px;
+  max-width: 296px;
   /* Tall enough for the CTA and the New Run row whether or not the row is
      there, so parking a run does not move the seal. */
   min-height: 116px;
@@ -19553,9 +19553,11 @@ button.star-shop-bundle-face {
 .title-cta {
   position: relative;
   min-height: 0;
-  padding: 16px 14px;
-  font-size: 17px;
-  letter-spacing: 0.08em;
+  padding: 21px 14px;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   border: 0;
   border-radius: 0;
   clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
@@ -19626,7 +19628,66 @@ button.star-shop-bundle-face {
 }
 
 .title-cta-label {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   line-height: 1.1;
+}
+
+/* A seal-diamond either side of the words, cut in the plate's own ink. */
+.title-cta-label::before,
+.title-cta-label::after {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 7px;
+  background: var(--plate-ink);
+  opacity: 0.7;
+  transform: rotate(45deg);
+}
+
+/* Gilt wings off the plate's flanks, each ending in a diamond: the plate is struck into the
+   screen rather than floating on it. On the socket, outside the chamfer's clip. */
+.title-cta-socket::before,
+.title-cta-socket::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  height: 2px;
+  margin-top: -1px;
+  background: linear-gradient(90deg, transparent, rgba(var(--plate-rgb), 0.9));
+  pointer-events: none;
+}
+
+.title-cta-socket::before {
+  right: calc(100% + 7px);
+}
+
+.title-cta-socket::after {
+  left: calc(100% + 7px);
+  transform: scaleX(-1);
+}
+
+.title-cta-wing-tip {
+  position: absolute;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  background: rgba(var(--plate-rgb), 1);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+.title-cta-wing-tip.is-left {
+  right: calc(100% + 21px);
+}
+
+.title-cta-wing-tip.is-right {
+  left: calc(100% + 21px);
 }
 
 /* Secondary to Continue: starting over is the rarer intent once a run is parked. */
@@ -19731,10 +19792,10 @@ button.star-shop-bundle-face {
 @keyframes title-cta-pulse {
   0%,
   100% {
-    filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 14px rgba(var(--plate-rgb), 0.24));
+    filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 18px rgba(var(--plate-rgb), 0.32));
   }
   50% {
-    filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 26px rgba(var(--plate-rgb), 0.48));
+    filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 34px rgba(var(--plate-rgb), 0.6));
   }
 }
 

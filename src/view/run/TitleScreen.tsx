@@ -95,6 +95,8 @@ function PactButton({
 }) {
   return (
     <div className="title-cta-socket">
+      <span className="title-cta-wing-tip is-left" aria-hidden="true" />
+      <span className="title-cta-wing-tip is-right" aria-hidden="true" />
       <span className="title-cta-frame" aria-hidden="true" />
       <button className="resolve-button title-cta" onClick={onClick} disabled={disabled}>
         <span className="title-cta-sheen" aria-hidden="true" />
