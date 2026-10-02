@@ -34476,10 +34476,11 @@ button.star-shop-bundle-face {
 }
 
 /* -- The Forge: both verbs as one beat --
-   Two layers over one stage. The anvil's is the Anvil beat verbatim until the piece rises; then
-   it drops away and the Enchanter's circle takes the stage, the piece arriving from the anvil's
-   face. The binding is the fourth hit — the heaviest shake and wash of the beat — and it lands
-   with rays, both colours' rings (the tier's and the element's) and a shard burst. */
+   Two layers over one stage, and the piece never moves. Three strikes take the tier on the
+   anvil; then the anvil dims under the piece and the Enchanter's circle opens round it where it
+   lies, the circle's layer raised to the anvil's face (~46px above the stage's centre). The
+   binding is the fourth hit — the heaviest shake and wash of the beat — and it lands with rays,
+   both colours' rings (the tier's and the element's) and a shard burst. */
 .smithy-beat-layer {
   position: absolute;
   inset: 0;
@@ -34489,44 +34490,29 @@ button.star-shop-bundle-face {
 }
 
 .smithy-beat-layer.is-anvil.is-leaving {
-  animation: smithy-forge-anvil-away 0.5s var(--ease-out) forwards;
+  animation: smithy-forge-anvil-dim 0.5s var(--ease-out) forwards;
 }
 
+/* The circle's piece takes over in the same spot. */
 .smithy-beat-layer.is-anvil.is-leaving .smithy-beat-piece {
   visibility: hidden;
 }
 
-@keyframes smithy-forge-anvil-away {
+@keyframes smithy-forge-anvil-dim {
   to {
-    opacity: 0;
-    transform: translateY(34px) scale(0.92);
+    opacity: 0.4;
   }
 }
 
 .smithy-beat-layer.is-enchant {
+  transform: translateY(-46px);
   animation: smithy-beat-fade 0.3s var(--ease-out);
 }
 
-/* The anvil's face sits ~46px above the circle's centre: the piece starts there, still white-hot
-   in its new tier's colour, and settles into the hover. */
+/* Still white-hot from the hammer, hovering where the anvil left it. */
 .is-forge .smithy-beat-piece.is-rising {
-  animation:
-    smithy-forge-rise 0.7s var(--ease-out),
-    smithy-piece-hover 1.1s ease-in-out 0.7s infinite alternate;
+  animation: smithy-piece-hover 1.1s ease-in-out infinite alternate;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 14px color-mix(in srgb, var(--rarity-color) 75%, transparent));
-}
-
-@keyframes smithy-forge-rise {
-  0% {
-    transform: translateY(-46px) scale(0.84);
-    filter: drop-shadow(0 0 22px var(--rarity-color)) brightness(2.2);
-  }
-  55% {
-    transform: translateY(-58px) scale(1.08);
-  }
-  100% {
-    transform: translateY(-3px) scale(1);
-  }
 }
 
 .is-forge .smithy-beat-piece.is-bound {

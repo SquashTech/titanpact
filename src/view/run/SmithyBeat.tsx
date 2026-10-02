@@ -51,7 +51,7 @@ const STRIKE_AT = [420, 800, 1180] as const;
 /** When the Enchanter's circle closes on the piece (ms). */
 const BIND_AT = 1050;
 /**
- * The Forge's two acts (ms): the anvil drops away and the piece rises into the circle, then the
+ * The Forge's two acts (ms): the circle opens round the piece where it lies on the anvil, then the
  * element binds on the fourth and heaviest hit of the whole beat.
  */
 const FORGE_RISE_AT = 1600;
@@ -99,7 +99,7 @@ export function SmithyBeat({ work, onDone }: { work: SmithyWork; onDone: () => v
   const reduced = prefersReducedMotion();
   const [strikes, setStrikes] = useState(reduced ? 3 : 0);
   const [bound, setBound] = useState(reduced);
-  /** The Forge only: the anvil has done its work and the piece has risen into the circle. */
+  /** The Forge only: the anvil has done its work and the circle has opened round the piece. */
   const [risen, setRisen] = useState(reduced);
   const enchantType = enchantTypeOf(work.after);
   // Read through a ref: the timeline runs once per piece of work, and a parent re-render handing
@@ -320,9 +320,10 @@ function Motes() {
 /**
  * The Forge's beat (2026-09-24, per user direction — "we want this to feel awesome"): both of the
  * Smithy's verbs in one piece of work, played as one. Three strikes on the anvil take the tier;
- * the anvil drops away and the piece rises, glowing from the hammer, into the Enchanter's circle;
- * the element draws in, and the binding lands as the heaviest hit of the beat — a shake, a
- * white-out, rays, both colours' rings and a shard burst — before the caption names what it is.
+ * the anvil dims and the Enchanter's circle opens round the piece where it lies, still glowing
+ * from the hammer; the element draws in, and the binding lands as the heaviest hit of the beat — a
+ * shake, a white-out, rays, both colours' rings and a shard burst — before the caption names what
+ * it is. The piece never moves between the two.
  */
 function ForgeBeat({
   work,
@@ -357,7 +358,7 @@ function ForgeBeat({
       onClick={onDone}
     >
       <div className="smithy-beat-stage">
-        {/* Act one: the anvil. Leaves once the piece rises; its own is-done rests the hammer. */}
+        {/* Act one: the anvil. Dims under the circle once it opens; its own is-done rests the hammer. */}
         {!reduced && (
           <div className={`smithy-beat-layer is-anvil${struck >= STRIKE_AT.length ? ' is-done' : ''}${risen ? ' is-leaving' : ''}`}>
             <span className="smithy-beat-heat" aria-hidden="true" />
@@ -380,7 +381,7 @@ function ForgeBeat({
           </div>
         )}
 
-        {/* Act two: the circle. The piece arrives from the anvil's face and binds. */}
+        {/* Act two: the circle, opened round the piece on the anvil's face, where it binds. */}
         {(risen || reduced) && (
           <div className={`smithy-beat-layer is-enchant${bound ? ' is-done' : ''}`}>
             {bound && !reduced && <span className="smithy-beat-rays" aria-hidden="true" />}
