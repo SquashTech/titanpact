@@ -360,10 +360,42 @@ term at 0, skilled / chart pilot). Three ways to buy back the lost act's pips:
   first post-fight pip, reversing "never a post-fight drop" (`docs/mastery.md`), and it moves
   Evolutions earlier: a quarter land in Acts 1–2.
 
+**The finale re-fit** (2026-10-02, per user direction: **no added Banner, ~80% on the chart
+pilot** — the finale should stay a challenge). All on the MVP + 2-packs, Scribe 2+2 base above;
+chart pilot unless marked.
+
+| Variant | Finale | Full-clear |
+|---|---|---|
+| Today (five acts), chart / skilled | 83.4 / 98.7% | 54.6 / 91.6% |
+| Four acts, finale un-fitted | 65.2% | 42.3% |
+| Eyes HP ×0.8 / ×0.67 | 69.0 / 72.6% | 44.8 / 47.1% |
+| … + Eyes Int −20 | 73.5 / 75.9% | 47.8 / 49.3% |
+| Eyes HP ×0.8, Int −20, Herald Atk/Int −20 | 76.0% | 49.4% |
+| Eyes HP ×0.8, Int −20, Gaze 4% | 74.4% | 48.4% |
+| A Tutor at the Vigil (no stat change) | 64.7% | 42.0% |
+| *Diagnostic:* Act 5's XP at the Vigil, enemies at today's relative level | 69.3% | 45.0% |
+| *Diagnostic:* a fifth Banner at the Vigil / + Eyes HP ×0.8, Int −20 | 77.4 / 84.9% | 50.3 / 55.1% |
+| **Chosen: Eyes HP 540 / 630, Eyes Int −20, Herald Atk and Int −20, Gaze 4%** | **79.0%** (skilled **98.2%**) | **51.3%** (skilled **91.1%**) |
+
+- **What the wall was.** Levels were the smaller part: restoring Act 5's XP buys four points. The
+  rest is the loadout layer Act 5 paid for — its Banner (about 60–80 stats a hero) and an act of
+  gear and Smithy work. The player side enters the finale with 6,563 stat points against today's
+  7,441; the Herald and the Eyes grow on all-E grades, so four fewer levels barely shrank them.
+  A fifth Banner put the finale back exactly; per user direction it is not taken, and the bosses
+  come down instead.
+- **No single number does it.** Every lever bought one to four points and they saturate; the
+  chosen set spends four small ones. The Eyes' HP returns to its pre-§10 figures (§10.3's ×1.5 is
+  undone), their Intelligence takes a second −20, the Herald loses 20 Attack and 20 Intelligence,
+  and `WITHERING_GAZE_FRACTION` is 0.04.
+- **The Vigil Tutor measured as nothing** — but the chart pilot barely casts Late moves, so this
+  says the sim cannot see a Tutor, not that a Tutor is worthless.
+- **The run, chosen shape:** 61.7 min Reader / 43.5 Auto skilled (today 73.0 / 51.5); chart
+  70.8 Reader (today 84.2).
+
 **Open, for the designer:**
 
-- **The finale's re-fit.** The chart pilot loses ~20 points there against today. Which lever —
-  kit power, Gaze, a further level offset — is a feel call.
+- **The finale's feel.** 79% chart / 98% skilled is the number; whether the Eyes at their old
+  HP still read as the climax is for play to say.
 - **Act 4's Guardian as the last one.** It clears 98–99%; today's Act 5 Guardian measured as one
   that "could be one-shot". The last Guardian probably wants `CHAMPION_GRADE_BY_ACT` C or a third
   escort, so the final seal reads as the hardest.
