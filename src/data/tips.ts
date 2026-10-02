@@ -80,7 +80,7 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
   scribe: tip(
     'scribe',
     'Mastery Scrolls',
-    'Choose two heroes. Each gets 2 Mastery Scrolls.',
+    'Tap a hero to give it Mastery Scrolls.',
     'At 5 Scrolls, a hero Evolves into a new form. At 10, their innate powers will grow.'
   ),
   shop: tip(

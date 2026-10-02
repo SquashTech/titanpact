@@ -448,8 +448,8 @@ function screenTipIds(screen: Screen, run: RunState): readonly ScreenTipId[] {
     case 'scrolls':
       // A bought Scroll is the Guild Hall's, whose own tip has already named it.
       if (screen.bought) return [];
-      // The Cache carries none: the Scribe's tip has already said how Scrolls work.
-      return screen.plan.kind === 'scribe' ? ['scribe'] : [];
+      // The Scribe or the Cache, whichever comes first, says how Scrolls work.
+      return ['scribe'];
     case 'shop':
       return ['shop'];
     case 'recruit':

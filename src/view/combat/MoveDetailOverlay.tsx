@@ -464,7 +464,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
             <EffectRow
               key={stat}
               glyph={<StatGlyph stat={stat} />}
-              text={`${amount >= 0 ? '+' : ''}${amount} ${STAT_LABELS[stat]} to ${(move.statDeltaTarget === 'bothAllies'
+              text={`${move.statDeltaChance != null ? `${Math.round(move.statDeltaChance * 100)}% chance: ` : ''}${amount >= 0 ? '+' : ''}${amount} ${STAT_LABELS[stat]} to ${(move.statDeltaTarget === 'bothAllies'
                 ? TARGET_MODE_LABELS.bothAllies
                 : move.statDeltaTarget === 'self'
                   ? TARGET_MODE_LABELS.self
@@ -474,7 +474,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
                 [
                   held,
                   amount !== authored ? `base ${authored >= 0 ? '+' : ''}${authored}, scaled off your ${amount > 0 ? 'Wisdom' : 'attacking stat'}` : undefined,
-                  move.statDeltaChance != null ? `${Math.round(move.statDeltaChance * 100)}% chance, rolled per target` : undefined,
+                  move.statDeltaChance != null ? 'rolled per target' : undefined,
                 ]
                   .filter(Boolean)
                   .join(' — ') || undefined

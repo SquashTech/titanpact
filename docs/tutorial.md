@@ -61,7 +61,7 @@ first meeting with two things shows the second on its next visit.
 | `squad` | lead pick — tap two heroes (skipped while the roster is two) |
 | `item` | the item who-screen (sockets, merge, sell) |
 | `fallen` | Permadeath's Fallen beat (Ascension 1) |
-| `scribe` | the Scribe's scroll screen (the Cache and a bought Scroll get none — the Scribe's and the Guild Hall's tips named them) |
+| `scribe` | the first Scribe or Scroll Cache screen, whichever comes first (a bought Scroll gets none — the Guild Hall's tip named it) |
 | `shop` | the Guild Hall |
 | `recruit` | the Recruit Contract claim (roster cap, termination) |
 | `banner`, `crucible` | the Guardian's two beats |

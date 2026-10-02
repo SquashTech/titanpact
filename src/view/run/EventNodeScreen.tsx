@@ -61,8 +61,8 @@ const TONE_PITCH: Record<EventTone, number> = {
   mana: 0.95,
 };
 
-/** How long the event holds on its flavor line before the offer and roster arrive (ms). */
-const EVENT_BEAT_MS = 1150;
+/** A breath before the offer and roster arrive (ms). Short: the road scene has just typed the flavor line, and the header keeps it. */
+const EVENT_BEAT_MS = 250;
 
 function shiftEntries(deltas: Partial<Record<StatKey, number>>): [StatKey, number][] {
   return Object.entries(deltas).filter(([, amount]) => !!amount) as [StatKey, number][];
