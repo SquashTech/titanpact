@@ -145,21 +145,21 @@ test('schedule: the band is read off level — Early below midLevel, Mid to late
 });
 
 test('move tiers: levelMovePool only offers what the hero\'s LEVEL has opened', () => {
-  // Warden's pool: ironFist/pinDown/rockToss/bodyBlow are Early or untiered, rendArmor Mid, juggernaut Late.
+  // Warden's pool: swiftBlow/pinDown/rockToss/bodyBlow are Early or untiered, rendArmor Mid, juggernaut Late.
   const atOne = poolOf(entryAtRank('ironWarden', 1));
   assert.ok(!atOne.includes('rendArmor'), 'a Mid move must not be offered below midLevel');
   assert.ok(!atOne.includes('juggernaut'), 'a Late move must not be offered below lateLevel');
-  assert.ok(atOne.includes('ironFist'));
+  assert.ok(atOne.includes('pinDown'));
 
   const atTwo = poolOf(entryAtRank('ironWarden', 2));
   assert.ok(atTwo.includes('rendArmor'), 'Mid unlocks at midLevel');
   assert.ok(!atTwo.includes('juggernaut'));
-  assert.ok(!atTwo.includes('ironFist'), 'and Early has EXPIRED — past midLevel a starter-tier move is never paid');
+  assert.ok(!atTwo.includes('pinDown'), 'and Early has EXPIRED — past midLevel a starter-tier move is never paid');
 
   const atThree = poolOf(entryAtRank('ironWarden', 3));
   assert.ok(atThree.includes('juggernaut'), 'Late unlocks at lateLevel');
   assert.ok(!atThree.includes('rendArmor'), 'and Mid has EXPIRED — the Late band teaches Late');
-  assert.ok(!atThree.includes('ironFist'));
+  assert.ok(!atThree.includes('pinDown'));
 
   const held = poolOf(entryAtRank('ironWarden', 3, ['juggernaut']));
   assert.ok(!held.includes('juggernaut'));
@@ -429,5 +429,13 @@ test('schedule: offers are staggered across the roster — no fight at par fires
   }
   for (let f = 1; f < par.length; f++) {
     assert.ok(perFight[f] <= heroList.length * 0.6, `fight ${f} (level ${par[f]}) fires ${perFight[f]} of ${heroList.length} heroes`);
+  }
+});
+
+test('move tiers: a starting kit is one attack and one move that is not — Widow alone holds two', () => {
+  const TWO_ATTACKS = new Set(['widow']);
+  for (const hero of Object.values(heroesById)) {
+    const attacks = hero.moveIds.filter((id) => moves[id]?.kind === 'damage').length;
+    assert.strictEqual(attacks, TWO_ATTACKS.has(hero.id) ? 2 : 1, `${hero.name} starts with ${attacks} attacks`);
   }
 });

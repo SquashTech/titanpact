@@ -467,7 +467,7 @@ don't silently override it.
   with the last by the end of Act 4; `DEFAULT_SCHEDULE`, which the companion reads, went from nine
   offers to the same five — and **a hero starts with TWO moves**
   (`HeroDefinition.moveIds`; the third authored move went into its own Early pool, chosen so the
-  innate still fires off the kit), so both Early offers land as receipts below `MOVE_CAP`. Three groups by `evolutionLevel`: **early turners** (10–12, the
+  innate still fires off the kit; **one attack and one move that is not** since 2026-10-02, per user direction — Widow the named exception, whose innate needs a Bleed and a Poison), so both Early offers land as receipts below `MOVE_CAP`. Three groups by `evolutionLevel`: **early turners** (10–12, the
   Evolution inside Act 2 — Valor the fight after the tutorial, the brawlers and glass cannons),
   the **middle** (13–19, Act 3), **late turners** (20–24, Act 4 on — the slow tanks, the Colossus,
   and the front-loaded casters Marrow and Zenith). Deliberately NOT aligned with the grade

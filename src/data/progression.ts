@@ -70,7 +70,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'heatHaze',
     ],
     brimstone: [
-      'weaken',
+      'umbraBolt',
       'sparkFlash',
       'spreadingBlaze',
       'backdraft',
@@ -510,7 +510,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     zenith: [
       'barrier',
-      'infuse','conduit', 'fontOfPower', 'arcaneOverflow', 'empower', 'cataclysm', 'focus', 'arcPulse', 'magicCloak', 'glimmer', 'psiBolt', 'manaFont', 'splash', 'arcaneBlast', 'overload', 'study', 'wickedFear',
+      'infuse','conduit', 'fontOfPower', 'arcaneOverflow', 'empower', 'cataclysm', 'focus', 'arcPulse', 'magicCloak', 'glimmer', 'psiBolt', 'manaTap', 'splash', 'arcaneBlast', 'overload', 'study', 'wickedFear',
       'resonantBolt',
       'twinCast',
     ],
@@ -570,7 +570,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'enervate',
       'arcaneBlast',
       'brainFlay',
-      'distort',
+      'wickedFear',
       'hindsight',
       'mindLeech',
       'twinCast',
@@ -632,7 +632,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // --- Iron ---
     ironWarden: [
-    'openingStrike','ironFist', 'pinDown', 'ironSkin', 'rendArmor', 'livingWall', 'juggernaut', 'rockToss', 'bodyBlow', 'reinforce', 'bastion', 'holyStrike', 'claw', 'metallicBlade', 'heavyBlow', 'momentumSwing', 'onslaught', 'swingingChain', 'stoneheart', 'shieldBash', 'bodyguard'],
+    'openingStrike','swiftBlow', 'pinDown', 'ironSkin', 'rendArmor', 'livingWall', 'juggernaut', 'rockToss', 'bodyBlow', 'reinforce', 'bastion', 'holyStrike', 'claw', 'metallicBlade', 'heavyBlow', 'momentumSwing', 'onslaught', 'swingingChain', 'stoneheart', 'shieldBash', 'bodyguard'],
     valor: [
       'provoke',
       'openingStrike',
@@ -669,7 +669,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'holyStrike',
       'thunderclap',
       'sharpen',
-      'pinDown',
+      'openingStrike',
       'ironSkin',
       'reinforce',
       'shockSlice',
@@ -684,7 +684,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'sharpen',
       'ironFist',
       'openingStrike',
-      'heavyBlow',
+      'swiftBlow',
       'fadeStrike',
       'backstab',
       'rockToss',
@@ -716,7 +716,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'onslaught',
       'thunderclap',
       'rockToss',
-      'overclock',
+      'ironFist',
       'openingStrike',
       'serratedSlice',
       'momentumSwing',
@@ -776,7 +776,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'provoke',
       'vineLash',
       'duskBlade',
-      'howl',
+      'venomBite',
       'gore',
       'bloodTrail',
       'rendingLeap',
@@ -937,7 +937,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     // Scree: Stone's guard column, the Defense swings, and Iron's pins. Rampart is Tor's grant.
     scree: [
       'fortify',
-      'rockToss', 'toughenUp', 'provoke', 'gravelSpray', 'openingStrike', 'pinDown',
+      'rockToss', 'toughenUp', 'mudBall', 'gravelSpray', 'openingStrike', 'pinDown',
       'spireClaw', 'bastion', 'retribution', 'bodyguard', 'faultLine', 'reinforce',
       'bodyCrush', 'stoneheart', 'boulderSlam', 'landslide',
     ],
@@ -951,21 +951,21 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     // Jinx: Shadow's knives, with the cat's pounce and Iron's pins as the off-types. Shadowstrike is Black Cat's grant.
     jinx: [
       'pinDown',
-      'lieInWait', 'backstab', 'openingStrike', 'swiftBlow', 'claw', 'pounce',
+      'hamstring', 'backstab', 'openingStrike', 'swiftBlow', 'claw', 'pounce',
       'shadowSlice', 'cutthroat', 'rend', 'smokeBomb', 'lacerate', 'rendArmor', 'maul',
       'duskBlade', 'thousandCuts', 'shadowForm', 'rendingLeap', 'eviscerate',
     ],
     // Kitsu: Spirit's magical column, with Arcane's bolts as the off-type. Banish is Ninetails' grant.
     kitsu: [
       'unbound',
-      'torment', 'drain', 'soulfire', 'secondWind', 'spite', 'magicBolt', 'focus',
+      'ember', 'drain', 'soulfire', 'secondWind', 'spite', 'magicBolt', 'focus',
       'soulRend', 'poltergeist', 'flicker', 'vengeance', 'soulOffering', 'arcPulse', 'arcaneBlast',
       'seance', 'lastRites', 'ascendant', 'twinCast', 'cataclysm',
     ],
     // Tinder: Fire's magical Burn column, with Spirit's and Storm's quick casts as the off-types. Firestorm is Headliner's grant.
     tinder: [
       'sparkFlash',
-      'setAlight', 'stokeTheFlames', 'zap', 'unbound', 'wisp', 'spite',
+      'setAlight', 'flareUp', 'zap', 'unbound', 'wisp', 'spite',
       'scorch', 'spreadingBlaze', 'heatHaze', 'backdraft', 'immolate', 'flicker', 'stunningBolt',
       'sparkBurst', 'inferno', 'ionicZap', 'banish',
     ],
@@ -1091,7 +1091,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     // Whirr: Mech's physical column with Storm's darting and Iron's quick blows; Spark Plug plants what Overcharge and Whirling Blades run on. Overdrive is Gyre's grant.
     whirr: [
       'swiftBlow',
-      'cogBop', 'steamVent', 'overclock', 'thunderclap', 'openingStrike', 'pinDown',
+      'cogBop', 'steamVent', 'sparkPlug', 'thunderclap', 'openingStrike', 'pinDown',
       'whirlingBlades', 'shockCoil', 'cogSlam', 'shockSlice', 'rideTheLightning', 'momentumSwing',
       'salvo', 'jackpot', 'overcharge', 'skyfall', 'onslaught',
     ],
