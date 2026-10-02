@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { heroArt, heroPoses } from './heroArt';
-import { evolutionArt } from './evolutionArt';
+import { evolutionArt, evolutionPoses } from './evolutionArt';
 import { TitanspawnGlyph } from './titanspawnArt';
 import { GuardianGlyph } from './guardianArt';
 import { isGuardianFigure } from './guardianFigures';
@@ -41,7 +41,9 @@ export function HeroPortrait({ heroId, className, seed, pose = 'idle', pathId }:
   } as CSSProperties;
   if (isTitanspawn(heroId)) return <TitanspawnGlyph heroId={heroId} className={className} pose={pose === 'closed' ? 'idle' : pose} style={idleStyle} />;
   if (isGuardianFigure(heroId)) return <GuardianGlyph heroId={heroId} className={className} pose={pose} style={idleStyle} />;
-  const src = (pose === 'attack' || pose === 'hurt' ? heroPoses[heroId]?.[pose] : undefined) ?? (pathId ? evolutionArt[pathId] : undefined) ?? heroArt[heroId];
+  // A form draws its own frame, then the hero's (a flash of the old look beats a pose that never moves), then its idle.
+  const posed = pose === 'attack' || pose === 'hurt' ? (pathId ? evolutionPoses[pathId]?.[pose] : undefined) ?? heroPoses[heroId]?.[pose] : undefined;
+  const src = posed ?? (pathId ? evolutionArt[pathId] : undefined) ?? heroArt[heroId];
   if (!src) return null;
   // draggable={false} as well as CSS `-webkit-user-drag: none` (WebKit-only): a drag ghost eats the long-press.
   return <img className={className} src={src} alt="" style={idleStyle} draggable={false} />;
