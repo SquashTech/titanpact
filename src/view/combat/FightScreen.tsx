@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { memo, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { statusApplicationsOf, STAT_ORDER } from '../../engine/content';
 import { allCombatants } from '../../data/content';
@@ -61,6 +61,7 @@ import type { Squad } from '../../run/squad';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { buildCombatState, koRosterIdsOf } from '../../run/buildCombatState';
 import { combatantIdFor } from '../../run/combatantIds';
+import { chooseMvp, mvpLedgersFromEvents, type MvpPick, type MvpRules } from '../../run/mvp';
 import { woundedHp, woundsFrom } from '../../run/wounds';
 import { entryHp } from '../shared/WoundBar';
 import { levelOf } from '../../run/growth';
@@ -570,7 +571,9 @@ interface Props {
    * Fired when the player dismisses the result overlay — the caller owns what a win/loss means for
    * the run. `consumablesUsed` is what this fight drank, for the caller to take off the purse.
    */
-  onResolved: (outcome: 'win' | 'loss', finalState: CombatState, consumablesUsed: ConsumablePurse) => void;
+  onResolved: (outcome: 'win' | 'loss', finalState: CombatState, consumablesUsed: ConsumablePurse, mvp: MvpPick | null) => void;
+  /** Who can be the MVP (run/mvp.ts). Omitted — a fight outside a run, or the finale — names none. */
+  mvpRules?: MvpRules;
   /** Leave to the title with the run left parked at its map checkpoint — this fight replays. Omit for fights outside a run. */
   onSaveAndQuit?: () => void;
   /** Discard the run and its save (two-tap armed). Omit for fights outside a run. */
@@ -607,6 +610,7 @@ export function FightScreen({
   onExitToTitle,
   tips,
   cinematicWin = false,
+  mvpRules,
 }: Props) {
   /** null outside an act (sandbox, quick battle): the arena keeps its placeless neutral scene. */
   const location = useAmbientLocation();
@@ -697,6 +701,8 @@ export function FightScreen({
   const beatQueue = useRef<Beat[]>([]);
   const displayState = useRef<CombatState | null>(null);
   const finalState = useRef<CombatState | null>(null);
+  // Every event the fight has resolved, in order — what the MVP is read off (run/mvp.ts).
+  const fightEvents = useRef<CombatEvent[]>([]);
   /** A switch beat's swap, held back until the recall has played; the next advance lands it early. */
   const pendingSwap = useRef<{ events: readonly CombatEvent[]; timer: number } | null>(null);
   // Hold-to-auto-play: `autoEngaged` lets the trailing click (pointerup always fires one) be swallowed.
@@ -742,13 +748,21 @@ export function FightScreen({
   handoff.current = onResolved;
   useEffect(() => {
     if (!skipResult) return;
-    const t = window.setTimeout(() => handoff.current('win', combat, usedConsumables), 650);
+    const t = window.setTimeout(() => handoff.current('win', combat, usedConsumables, null), 650);
     return () => window.clearTimeout(t);
   }, [skipResult]);
   // A KO'd companion is gone from the run (run/companion.ts absorbCompanions): it is still on the
   // roster this side of onResolved, but the result fills no bar for it — the fight took it.
   const playerKoIds = winner ? koRosterIdsOf(combat, PLAYER_SIDE) : [];
   const resultRoster = playerRun.roster.filter((entry) => !(entry.mortal && playerKoIds.includes(entry.rosterId)));
+  // Read once the fight is won; a hero the fight took off the roster cannot take the pip.
+  const mvp = useMemo(() => {
+    if (winner !== PLAYER_SIDE || !mvpRules) return null;
+    const standing = new Set(resultRoster.map((entry) => entry.rosterId));
+    const ledgers = mvpLedgersFromEvents(fightEvents.current, combat, PLAYER_SIDE, statuses).filter((l) => standing.has(l.rosterId));
+    return chooseMvp(ledgers, mvpRules) ?? null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [winner, resolving]);
   // Where the fight leaves every hero's HP (run/wounds.ts recordWounds, read the same way): the
   // fielded off the end state against their baseline max, the reserve off what they carried in.
   const hpAfter = new Map(
@@ -1073,6 +1087,7 @@ export function FightScreen({
     // A replacement is still an arrival — same entry hook a declared switch runs, applied here because forced replacement resolves outside a round.
     const entry = resolvePassiveReactions(result.state, combat.round, result.events, allCombatants, statuses, passives, fieldEffects);
     setCombat(entry.state);
+    fightEvents.current.push(...result.events, ...entry.events);
     appendLog(formatEvents([...result.events, ...entry.events], allCombatants, entry.state.combatants, moves));
     setReplacementPick(null);
     summon([benchedCombatantId]);
@@ -1193,6 +1208,7 @@ export function FightScreen({
   // the queue empties, so playback can never drift from the authoritative result.
   // `prelude` is for beats that are not grouped from events — today only the intro's engagement beat.
   function startBeatPlayback(startState: CombatState, events: CombatEvent[], nextFinalState: CombatState, prelude: Beat[] = []) {
+    fightEvents.current.push(...events);
     const beats = [...prelude, ...buildBeats(events, allCombatants, moves, startState.combatants, PLAYER_SIDE)];
     displayState.current = startState;
     finalState.current = nextFinalState;
@@ -2188,7 +2204,8 @@ export function FightScreen({
           equipmentReward={equipmentReward}
           consumableReward={consumableReward}
           hpAfter={hpAfter}
-          onContinue={() => onResolved(winner === PLAYER_SIDE ? 'win' : 'loss', combat, usedConsumables)}
+          mvp={mvp}
+          onContinue={() => onResolved(winner === PLAYER_SIDE ? 'win' : 'loss', combat, usedConsumables, mvp)}
         />
       )}
 

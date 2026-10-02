@@ -4,7 +4,7 @@
 // does nothing but count. Scrolls come from the map — the Scribe, the Scroll Cache, the Guild
 // Hall shelf — and never from a fight: fights pay XP, the map pays Scrolls.
 
-import type { RosterEntry, RunState } from './state';
+import { FINALE_ACT, type RosterEntry, type RunState } from './state';
 
 export const MASTERY_CAP = 10;
 
@@ -39,14 +39,14 @@ export class MasteryError extends Error {}
 /**
  * The pips a hero the player does not control holds in `actNumber` — an enemy, and the contract
  * hero claimed off it: the Scribe's pace for a hero it touched every act BEFORE this one (0 / 2 /
- * 4 / 6 / 8; the finale's 10). Derived, so nobody reads a private model: every hero-pool enemy
+ * 4 / 6; the finale reads the cap, so its heroes hold their mastered innates). Derived, so nobody reads a private model: every hero-pool enemy
  * from Act 4 arrives evolved, the finale's with its innate mastered. It was `2N - 1` for a day (Mastery
  * phase 2), which evolved every enemy from Act 3 and measured as the whole of a five-point
  * full-clear drop (Act 4 89 -> 82%); phase 5 set it here, per user direction (docs/mastery.md §8).
  */
 export function masteryForAct(actNumber: number): number {
   const act = Number.isFinite(actNumber) && actNumber >= 1 ? Math.floor(actNumber) : 1;
-  return act >= 5 ? MASTERY_CAP : Math.min(MASTERY_CAP, 2 * act - 2);
+  return act >= FINALE_ACT ? MASTERY_CAP : Math.min(MASTERY_CAP, 2 * act - 2);
 }
 
 /** A Guild hire arrives one pip behind a contract (both raw at 0 in Act 1) — raw: its Evolution, when it has the pips for one, is still the player's to choose. */

@@ -53,8 +53,9 @@ test('locations: an act offers two of what is left, and the last seal act still 
       }
       run = chooseLocation(run, offered[seed % 2]);
     }
-    // Exactly one seal location goes unvisited: the sixth seal (docs/lore.md §5).
-    assert.strictEqual(unvisitedLocationIds(run.locationIds).length, 1, `seed ${seed}`);
+    // Two seal locations go unvisited under four acts: the seals that held (docs/lore.md §5).
+    assert.strictEqual(unvisitedLocationIds(run.locationIds).length, ITINERARY_POOL_IDS.length - (SEAL_ACTS - 1), `seed ${seed}`);
+    assert.strictEqual(unvisitedLocationIds(run.locationIds).length, 2, `seed ${seed}`);
     assert.deepStrictEqual(unbrokenSealLocationIds(run.locationIds), unvisitedLocationIds(run.locationIds));
   }
 });
@@ -98,9 +99,9 @@ test('locations: an itinerary covers every act and never repeats a location', ()
 });
 
 test('locations: the authored pool leaves the last act a real choice', () => {
-  // SEAL_ACTS - 1 picks plus one spare, so the last seal act's 1-of-2 choice is real — and
-  // exactly one location goes unvisited every run, which is the sixth seal (docs/lore.md §5).
-  assert.strictEqual(ITINERARY_POOL_IDS.length, SEAL_ACTS);
+  // SEAL_ACTS - 1 picks from the pool, and the last seal act still sees two of what is left —
+  // so its 1-of-2 choice is real. Under four acts two locations go unvisited (docs/lore.md §5).
+  assert.ok(ITINERARY_POOL_IDS.length - (SEAL_ACTS - 2) >= LOCATION_CHOICE_COUNT);
   assert.ok(!ITINERARY_POOL_IDS.includes(FINALE_LOCATION_ID), 'the finale location must never be drawn');
 });
 

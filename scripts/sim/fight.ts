@@ -101,11 +101,6 @@ export interface CombatantTelemetry {
   healingDone: number;
   kos: number;
   died: boolean;
-  /** The MVP ledger's own columns (run/mvp.ts): hits with Shield-absorbed, non-drain heals and Shield credited to its caster, enemy-dealt damage taken, control landed. */
-  mvpHit: number;
-  mvpSupport: number;
-  mvpAnchor: number;
-  mvpControl: number;
 }
 
 export interface FightOutcome {
@@ -165,6 +160,8 @@ export interface FightOutcome {
   /** Player squad's surviving HP over its max, at the final state. */
   playerHpFrac: number;
   telemetry: Record<string, CombatantTelemetry>;
+  /** Every event the fight emitted, in order — what run/mvp.ts reads. */
+  events: readonly CombatEvent[];
   final: CombatState;
 }
 
@@ -251,17 +248,11 @@ function recordEvents(
   };
   // A StatChanged names its holder, not its caster; the caster is the side of the last MoveUsed.
   let casterSide: Side | undefined;
-  let casterId: string | undefined;
-  const shieldGranter: Record<string, string> = {};
   const lastMoveOf: Record<string, string> = {};
   // A FieldEffectSet names no side either: it follows the MoveUsed that carried it, or the SwitchedIn a Herald fired on.
   let fieldSetterSide: Side | undefined;
   for (const event of events) {
-    if (event.type === 'MoveUsed') {
-      casterSide = fieldSetterSide = telemetry[event.combatantId]?.side;
-      casterId = event.combatantId;
-    }
-    mvpCredit(event, telemetry, casterId, shieldGranter);
+    if (event.type === 'MoveUsed') casterSide = fieldSetterSide = telemetry[event.combatantId]?.side;
     if (event.type === 'SwitchedIn') fieldSetterSide = event.side;
     // ...or the passive that fired it off a round's end (the Eyes' Withering Gaze returning).
     if (event.type === 'PassiveTriggered') fieldSetterSide = telemetry[event.combatantId]?.side;
@@ -305,7 +296,6 @@ function recordEvents(
       if (holder) holder.damageTaken += event.amount;
       if (applier && owner) {
         applier.damageDealt += event.amount;
-        applier.mvpHit += event.amount;
         for (const tally of talliesFor(owner.applierId, owner.moveId)) {
           tally.damage += event.amount;
           tally.dot += event.amount;
@@ -388,54 +378,6 @@ function recordEvents(
       default:
         break;
     }
-  }
-}
-
-/** The MVP columns the base telemetry does not carry (run/mvp.ts). */
-function mvpCredit(event: CombatEvent, telemetry: Record<string, CombatantTelemetry>, casterId: string | undefined, shieldGranter: Record<string, string>): void {
-  switch (event.type) {
-    case 'DamageDealt': {
-      const source = telemetry[event.sourceCombatantId];
-      const target = telemetry[event.targetCombatantId];
-      if (!source || !target || event.recoil || event.selfCost || source.side === target.side) break;
-      const hit = event.amount + (event.absorbed ?? 0);
-      source.mvpHit += hit;
-      target.mvpAnchor += hit;
-      const granter = telemetry[shieldGranter[event.targetCombatantId] ?? ''];
-      if (granter && event.absorbed) granter.mvpSupport += event.absorbed;
-      break;
-    }
-    case 'StatusDetonated': {
-      const granter = telemetry[shieldGranter[event.combatantId] ?? ''];
-      if (granter && event.absorbed) granter.mvpSupport += event.absorbed;
-      break;
-    }
-    case 'Healed': {
-      const source = telemetry[event.sourceCombatantId];
-      if (source && !event.drain) source.mvpSupport += event.amount;
-      break;
-    }
-    case 'StatusApplied': {
-      if (!event.sourceCombatantId) break;
-      const source = telemetry[event.sourceCombatantId];
-      if (!source || !telemetry[event.combatantId]) break;
-      if (event.statusId === SHIELD_ID) {
-        shieldGranter[event.combatantId] = event.sourceCombatantId;
-        break;
-      }
-      if (statuses[event.statusId]?.pipeline === 'dot') break;
-      source.mvpControl += 1;
-      break;
-    }
-    case 'StatChanged': {
-      const caster = telemetry[casterId ?? ''];
-      const holder = telemetry[event.combatantId];
-      if (!caster || !holder || event.delta === 0) break;
-      if ((holder.side !== caster.side && event.delta < 0) || (holder.side === caster.side && event.delta > 0)) caster.mvpControl += 1;
-      break;
-    }
-    default:
-      break;
   }
 }
 
@@ -563,10 +505,6 @@ export function simulateFight(input: FightInput): FightOutcome {
       healingDone: 0,
       kos: 0,
       died: false,
-      mvpHit: 0,
-      mvpSupport: 0,
-      mvpAnchor: 0,
-      mvpControl: 0,
     };
   }
 
@@ -575,6 +513,8 @@ export function simulateFight(input: FightInput): FightOutcome {
   let state = opening.state;
   // A Herald on the opening lead sets its field here, before any round.
   recordEvents(opening.events, telemetry, undefined, undefined, undefined, field);
+  // The whole stream, for what is read off a finished fight (run/mvp.ts).
+  const allEvents: CombatEvent[] = [...opening.events];
   let beats = countBeats(opening.events);
 
   const playerCtx = { ...contextFor(playerRoster, state), random: rng };
@@ -616,6 +556,7 @@ export function simulateFight(input: FightInput): FightOutcome {
     // The player's forced replacements resolve before declaration, the AI's after
     // resolution — the same order the screen enforces.
     state = fillOpenSlots(state, PLAYER_SIDE, events);
+    allEvents.push(...events);
     recordEvents(events, telemetry);
     beats += countBeats(events);
 
@@ -647,6 +588,7 @@ export function simulateFight(input: FightInput): FightOutcome {
     state = fillOpenSlots(state, AI_SIDE, replacementEvents);
     roundEvents.push(...replacementEvents);
 
+    allEvents.push(...roundEvents);
     recordEvents(roundEvents, telemetry, casts, deltas, shield, field, moveTallies, dots);
     beats += countBeats(roundEvents);
     creditKos(roundEvents, telemetry, moveTallies, dots);
@@ -720,6 +662,7 @@ export function simulateFight(input: FightInput): FightOutcome {
     floored,
     playerHpFrac: maxHp > 0 ? hp / maxHp : 0,
     telemetry,
+    events: allEvents,
     final: state,
   };
 }

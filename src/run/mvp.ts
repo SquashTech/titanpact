@@ -1,6 +1,10 @@
 // The fight's MVP: one free Mastery pip to the hero that dominated a column, not the one that hit
-// hardest (docs/xp-overhaul.md §5, measured on the four-acts branch). Pure: the caller builds the
-// ledger off the fight's event stream.
+// hardest (docs/mastery.md "The MVP pip"). Pure: the ledger is built off the fight's event stream.
+
+import type { StatusDefinition } from '../engine/content';
+import type { CombatEvent } from '../engine/events';
+import type { CombatState, Side } from '../engine/state';
+import { rosterIdOfCombatant } from './combatantIds';
 
 export type MvpColumn = 'damage' | 'finishes' | 'support' | 'anchor' | 'control';
 
@@ -9,6 +13,7 @@ export const MVP_COLUMNS: readonly MvpColumn[] = ['damage', 'finishes', 'support
 /** One player hero's fight, in the columns' own units — a share is read per column, so units never mix. */
 export interface MvpLedger {
   rosterId: string;
+  /** Turns taken on the field — what the presence floor reads. */
   roundsActive: number;
   /** HP removed from enemies, Shield-absorbed and DoT ticks included. */
   damage: number;
@@ -36,6 +41,117 @@ export interface MvpPick {
   score: number;
 }
 
+/** `side`'s ledgers, one per roster id that took the field, read off the whole fight's events. */
+export function mvpLedgersFromEvents(
+  events: readonly CombatEvent[],
+  state: CombatState,
+  side: Side,
+  statusDefs: Record<string, StatusDefinition>
+): MvpLedger[] {
+  const sideOf = (id: string | undefined): Side | undefined => (id ? state.combatants[id]?.side : undefined);
+  const ledgers = new Map<string, MvpLedger>();
+  const ledger = (combatantId: string | undefined): MvpLedger | undefined => {
+    if (!combatantId || sideOf(combatantId) !== side) return undefined;
+    const rosterId = rosterIdOfCombatant(combatantId);
+    let found = ledgers.get(rosterId);
+    if (!found) {
+      found = { rosterId, roundsActive: 0, damage: 0, finishes: 0, support: 0, anchor: 0, control: 0 };
+      ledgers.set(rosterId, found);
+    }
+    return found;
+  };
+  const opposed = (a: string | undefined, b: string | undefined) => !!sideOf(a) && !!sideOf(b) && sideOf(a) !== sideOf(b);
+
+  const shieldGranter: Record<string, string> = {};
+  const dotApplier: Record<string, string> = {};
+  const lastHitter: Record<string, string> = {};
+  let casterId: string | undefined;
+
+  for (const event of events) {
+    switch (event.type) {
+      case 'TurnStarted': {
+        const own = ledger(event.combatantId);
+        if (own) own.roundsActive += 1;
+        break;
+      }
+      case 'MoveUsed':
+        casterId = event.combatantId;
+        break;
+      case 'DamageDealt': {
+        if (event.recoil || event.selfCost || !opposed(event.sourceCombatantId, event.targetCombatantId)) break;
+        const hit = event.amount + (event.absorbed ?? 0);
+        const source = ledger(event.sourceCombatantId);
+        if (source) source.damage += hit;
+        const target = ledger(event.targetCombatantId);
+        if (target) target.anchor += hit;
+        const granter = ledger(shieldGranter[event.targetCombatantId]);
+        if (granter && event.absorbed) granter.support += event.absorbed;
+        lastHitter[event.targetCombatantId] = event.sourceCombatantId;
+        break;
+      }
+      case 'StatusTicked': {
+        if (event.kind !== 'damage' || event.amount <= 0) break;
+        const applier = dotApplier[`${event.combatantId}:${event.statusId}`];
+        const source = ledger(applier);
+        if (source) source.damage += event.amount;
+        if (applier) lastHitter[event.combatantId] = applier;
+        break;
+      }
+      case 'StatusDetonated': {
+        const applier = event.sourceCombatantId ?? dotApplier[`${event.combatantId}:${event.statusId}`];
+        if (opposed(applier, event.combatantId)) {
+          const source = ledger(applier);
+          if (source) source.damage += event.amount + (event.absorbed ?? 0);
+          if (applier) lastHitter[event.combatantId] = applier;
+        }
+        const granter = ledger(shieldGranter[event.combatantId]);
+        if (granter && event.absorbed) granter.support += event.absorbed;
+        break;
+      }
+      case 'Healed': {
+        const source = ledger(event.sourceCombatantId);
+        if (source && !event.drain) source.support += event.amount;
+        break;
+      }
+      case 'StatusApplied': {
+        if (!event.sourceCombatantId || !sideOf(event.combatantId)) break;
+        const pipeline = statusDefs[event.statusId]?.pipeline;
+        if (pipeline === 'shield') {
+          shieldGranter[event.combatantId] = event.sourceCombatantId;
+          break;
+        }
+        if (pipeline === 'dot' || pipeline === 'timer') {
+          if (opposed(event.sourceCombatantId, event.combatantId)) dotApplier[`${event.combatantId}:${event.statusId}`] = event.sourceCombatantId;
+          if (pipeline === 'dot') break;
+        }
+        const source = ledger(event.sourceCombatantId);
+        if (source) source.control += 1;
+        break;
+      }
+      case 'StatChanged': {
+        if (event.delta === 0 || !sideOf(casterId) || !sideOf(event.combatantId)) break;
+        const hostile = opposed(casterId, event.combatantId);
+        if ((hostile && event.delta < 0) || (!hostile && event.delta > 0)) {
+          const caster = ledger(casterId);
+          if (caster) caster.control += 1;
+        }
+        break;
+      }
+      case 'Fainted': {
+        const killer = lastHitter[event.combatantId];
+        if (opposed(killer, event.combatantId)) {
+          const own = ledger(killer);
+          if (own) own.finishes += 1;
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }
+  return [...ledgers.values()];
+}
+
 /** Every qualifying hero, best first, each scored by its weighted share of the one column it led most. */
 export function rankMvp(ledgers: readonly MvpLedger[]): MvpPick[] {
   const totals = Object.fromEntries(MVP_COLUMNS.map((c) => [c, ledgers.reduce((sum, l) => sum + l[c], 0)])) as Record<MvpColumn, number>;
@@ -55,14 +171,14 @@ export function rankMvp(ledgers: readonly MvpLedger[]): MvpPick[] {
 }
 
 export interface MvpRules {
-  /** Heroes that cannot take a pip — at the Mastery cap. */
-  capped: ReadonlySet<string>;
+  /** Roster ids that cannot take the pip — at the Mastery cap, or no longer on the roster. */
+  ineligible: ReadonlySet<string>;
   /** Last fight's MVP: never twice running while anyone else qualifies. */
   lastMvpRosterId?: string;
 }
 
 /** The MVP after the two rules; undefined when nobody qualifies. */
 export function chooseMvp(ledgers: readonly MvpLedger[], rules: MvpRules): MvpPick | undefined {
-  const ranked = rankMvp(ledgers).filter((pick) => !rules.capped.has(pick.rosterId));
+  const ranked = rankMvp(ledgers).filter((pick) => !rules.ineligible.has(pick.rosterId));
   return ranked.find((pick) => pick.rosterId !== rules.lastMvpRosterId) ?? ranked[0];
 }

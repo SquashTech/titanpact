@@ -59,7 +59,7 @@ export const CHAMPION_LEVEL_BONUS = 2;
  * D in Act 4 and C in Act 5 give it back part of that (+40 and +109 at their levels).
  */
 export const GUARDIAN_ESCORTS_BY_ACT: readonly number[] = [0, 1, 1, 2, 2, 2];
-export const CHAMPION_GRADE_BY_ACT: readonly GrowthGrade[] = ['E', 'E', 'E', 'E', 'D', 'C'];
+export const CHAMPION_GRADE_BY_ACT: readonly GrowthGrade[] = ['E', 'E', 'E', 'E', 'C', 'C'];
 
 export function guardianEscortCount(actNumber: number): number {
   return GUARDIAN_ESCORTS_BY_ACT[Math.min(clampAct(actNumber), GUARDIAN_ESCORTS_BY_ACT.length - 1)];

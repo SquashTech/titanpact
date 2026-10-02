@@ -19,7 +19,10 @@ import { enemies, finaleEnemies, ENDBRINGER_ID, titanEyes, EYE_PHASES } from '..
 import { encounterKindOf, encounterSeedFor, nodeEncounter } from '../../src/run/encounters';
 import { allCombatants } from '../../src/data/content';
 import { guildHallOffersFor, CONTRACT_PURCHASE_COST } from '../../src/data/recruitment';
-import { chooseMvp, type MvpLedger } from '../../src/run/mvp';
+import { chooseMvp, mvpLedgersFromEvents } from '../../src/run/mvp';
+import { statuses } from '../../src/data/statuses';
+import type { CombatEvent } from '../../src/engine/events';
+import type { CombatState } from '../../src/engine/state';
 import { MASTERY_CAP, SCRIBE_PIPS_EACH, SCROLL_CACHE_COUNT, SCROLL_PACK_PIPS, buyScroll, canBuyScroll, grantMastery } from '../../src/run/mastery';
 
 import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry, ROSTER_CAP, TOTAL_ACTS, type RunState, type RosterEntry } from '../../src/run/state';
@@ -92,7 +95,7 @@ import { passives } from '../../src/data/passives';
 import { getMaxHp } from '../../src/engine/state';
 import { createCombatant } from '../../src/engine/state';
 
-import { simulateFight, PLAYER_SIDE, type CombatantTelemetry, type PilotKind, type ShieldTally, type MoveTally } from './fight';
+import { simulateFight, PLAYER_SIDE, type PilotKind, type ShieldTally, type MoveTally } from './fight';
 import * as policy from './policy';
 import type { PourEvolution } from './policy';
 import { makeRng, pick, randomSeed, sample, withRandom, type Rng } from './rng';
@@ -720,7 +723,7 @@ function resolveEncounterNode(
   record.knockouts.koInWinsByKind[kindKey] = (record.knockouts.koInWinsByKind[kindKey] ?? 0) + koRosterIds.length;
   // The consumable drop (src/run/consumables.ts). Potions are never drunk here — the pilot has no
   // Bag — but a Revive IS spent (spendRevives), since a persisting knockout is what it prices.
-  if (MVP_ON && mapNodeType !== 'finale') workingRun = awardMvp(workingRun, fight.telemetry, rng, record);
+  if (MVP_ON && mapNodeType !== 'finale') workingRun = awardMvp(workingRun, fight.events, fight.final, rng, record);
   const consumableDrop = rollConsumableDrop(kindKey, rng);
   if (consumableDrop) workingRun = grantConsumable(workingRun, consumableDrop);
   if (consumableDrop === 'revive') record.knockouts.revivesFound += 1;
@@ -730,14 +733,12 @@ function resolveEncounterNode(
 const MVP_ON = process.env.SIM_MVP === '1';
 
 /** One pip to the fight's MVP (run/mvp.ts): never a capped hero, never the same hero twice running. */
-function awardMvp(run: RunState, telemetry: Record<string, CombatantTelemetry>, rng: Rng, record: RunRecord): RunState {
+function awardMvp(run: RunState, events: readonly CombatEvent[], final: CombatState, rng: Rng, record: RunRecord): RunState {
   const onRoster = new Set(run.roster.map((e) => e.rosterId));
-  const ledgers: MvpLedger[] = Object.values(telemetry)
-    .filter((t) => t.side === PLAYER_SIDE && onRoster.has(t.rosterId))
-    .map((t) => ({ rosterId: t.rosterId, roundsActive: t.roundsActive, damage: t.mvpHit, finishes: t.kos, support: t.mvpSupport, anchor: t.mvpAnchor, control: t.mvpControl }));
-  const capped = new Set(run.roster.filter((e) => e.mastery >= MASTERY_CAP).map((e) => e.rosterId));
-  const unruled = chooseMvp(ledgers, { capped });
-  const pick = chooseMvp(ledgers, { capped, lastMvpRosterId: record.mvpLast });
+  const ledgers = mvpLedgersFromEvents(events, final, PLAYER_SIDE, statuses).filter((l) => onRoster.has(l.rosterId));
+  const ineligible = new Set(run.roster.filter((e) => e.mastery >= MASTERY_CAP).map((e) => e.rosterId));
+  const unruled = chooseMvp(ledgers, { ineligible });
+  const pick = chooseMvp(ledgers, { ineligible, lastMvpRosterId: record.mvpLast });
   record.mvp.fights = (record.mvp.fights ?? 0) + 1;
   if (!pick) return run;
   if (unruled && unruled.rosterId !== pick.rosterId) record.mvp.repeatBlocked = (record.mvp.repeatBlocked ?? 0) + 1;

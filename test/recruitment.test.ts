@@ -329,12 +329,12 @@ test('recruitment: a contract hero arrives FINISHED where a hire arrives RAW —
 });
 
 test('recruitment: the MASTERY axis points the right way — an enemy, and the contract off it, is a pip ahead of a hire in every act', () => {
-  for (let act = 1; act <= 5; act++) {
+  for (let act = 1; act <= 4; act++) {
     assert.strictEqual(masteryForAct(act), 2 * act - 2, `act ${act}`);
     assert.ok(masteryForAct(act) >= guildHallMastery(act), `act ${act}: a contract hero at ${masteryForAct(act)} pips must not trail a hire at ${guildHallMastery(act)}`);
     if (act > 1) assert.ok(masteryForAct(act) > guildHallMastery(act), `act ${act}: and past Act 1 it is a pip ahead`);
   }
-  assert.strictEqual(masteryForAct(6), MASTERY_CAP, 'the finale holds the signature pip');
+  assert.strictEqual(masteryForAct(5), MASTERY_CAP, 'the finale holds the tenth pip');
   assert.strictEqual(guildHallMastery(1), 0, 'an act-1 hire is raw to the bone');
   assert.ok(masteryForAct(4) >= MASTERY_EVOLUTION && masteryForAct(3) < MASTERY_EVOLUTION, 'every hero-pool enemy from Act 4 arrives evolved, none in Act 3 (2N-2, phase 5)');
 });
@@ -344,7 +344,7 @@ test('recruitment: the LEVEL axis points the right way — a contract hero outra
   // hire arrived at 24 — because the enemy table was fitted to a 10-level cap. Both read off the
   // same curve now (docs/enemy-levels.md §4): a Skirmish enemy sits AT the fork's par, a hire a
   // whole act behind, so a Skirmish contract never trails a hire and an Elite's outranks it.
-  for (let act = 1; act <= 5; act++) {
+  for (let act = 1; act <= 4; act++) {
     for (const kind of ['skirmish', 'elite'] as const) {
       const outranks = kind === 'elite' ? enemyLevelFor(kind, act) > guildHallLevel(act) : enemyLevelFor(kind, act) >= guildHallLevel(act);
       assert.ok(

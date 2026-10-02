@@ -9,6 +9,7 @@ import { LevelUpList } from '../run/LevelUpList';
 import { overlayHost } from '../shared/overlayHost';
 import { WoundBar } from '../shared/WoundBar';
 import type { RosterEntry } from '../../run/state';
+import type { MvpColumn, MvpPick } from '../../run/mvp';
 import { ItemEffectChips, ItemPiece, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import { ItemDetailOverlay } from '../shared/ItemDossier';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -62,6 +63,8 @@ export interface FightResultProps {
    * outside a run) and no bar is drawn.
    */
   hpAfter?: ReadonlyMap<string, { hp: number; maxHp: number }>;
+  /** The fight's MVP (run/mvp.ts) and the free Mastery pip it takes. Null when nobody qualified. */
+  mvp?: MvpPick | null;
   onContinue: () => void;
 }
 
@@ -87,6 +90,7 @@ export function FightResultOverlay({
   equipmentReward,
   consumableReward = null,
   hpAfter,
+  mvp = null,
   onContinue,
 }: FightResultProps) {
   const won = outcome === 'win';
@@ -109,11 +113,13 @@ export function FightResultOverlay({
   const ledger = useMemo(() => {
     const rows: { key: string; render: (shown: boolean) => ReactNode }[] = [];
     if (!won) return rows;
+    const mvpEntry = mvp ? roster.find((entry) => entry.rosterId === mvp.rosterId) : undefined;
+    if (mvp && mvpEntry) rows.push({ key: 'mvp', render: () => <MvpRow heroId={mvpEntry.heroId} pick={mvp} /> });
     if (goldReward > 0) rows.push({ key: 'gold', render: (shown) => <GoldRow from={goldFrom} amount={goldReward} shown={shown} /> });
     if (equipmentReward) rows.push({ key: 'item', render: () => <ItemRow item={equipmentReward} onInspect={() => setInspecting(true)} /> });
     if (consumableReward) rows.push({ key: 'potion', render: () => <PotionRow kind={consumableReward} /> });
     return rows;
-  }, [won, goldFrom, goldReward, equipmentReward, consumableReward]);
+  }, [won, goldFrom, goldReward, equipmentReward, consumableReward, mvp]);
 
   const stageDone = STAGE_LEDGER + ledger.length;
   const [stage, setStage] = useState(() => (prefersReducedMotion() ? stageDone : STAGE_TITLE));
@@ -377,6 +383,31 @@ function GoldRow({ from, amount, shown }: { from: number; amount: number; shown:
         <span className="fight-result-row-sub">Purse {from + counted}g</span>
       </span>
       <span className="fight-result-row-value">+{counted}g</span>
+    </div>
+  );
+}
+
+const MVP_LINES: Record<MvpColumn, (percent: number) => string> = {
+  damage: (p) => `Dealt ${p}% of the damage`,
+  finishes: (p) => `Landed ${p}% of the knockouts`,
+  support: (p) => `Did ${p}% of the healing and shielding`,
+  anchor: (p) => `Took ${p}% of the hits`,
+  control: (p) => `Landed ${p}% of the statuses and buffs`,
+};
+
+/** The fight's MVP: who, the column it dominated, and the pip it is paid. */
+function MvpRow({ heroId, pick }: { heroId: string; pick: MvpPick }) {
+  const name = rosterHeroes[heroId]?.name ?? heroId;
+  return (
+    <div className="fight-result-row is-mvp">
+      <span className="fight-result-row-glyph">
+        <HeroPortrait heroId={heroId} className="fight-result-mvp-portrait" />
+      </span>
+      <span className="fight-result-row-text">
+        <span className="fight-result-row-label">MVP · {name}</span>
+        <span className="fight-result-row-sub">{MVP_LINES[pick.column](Math.round(pick.share * 100))} — a free Mastery pip</span>
+      </span>
+      <span className="fight-result-row-value">+1</span>
     </div>
   );
 }

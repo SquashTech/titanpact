@@ -38,7 +38,7 @@ import { signatureMoves } from '../src/data/signatures';
 import { generateEncounter } from '../src/run/enemyGen';
 import { mentorMovePool, tutorMovePool } from '../src/run/tutor';
 import { companionOf, companionTierStep, joinCompanion } from '../src/run/companion';
-import { addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
+import { FINALE_ACT, addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
 import { generateMap, MAP_NODE_TYPES, REWARD_WEIGHTS } from '../src/run/map';
 import { xpForLevel } from '../src/run/growth';
 import { decodeSave, encodeSave, buildContentIndex } from '../src/run/save';
@@ -103,11 +103,12 @@ test('mastery: the fifth pip opens the Evolution, at any level, and the Evolutio
 });
 
 test('mastery: enemies, contracts and hires read their pips off the act — one model for everybody', () => {
-  assert.deepStrictEqual([1, 2, 3, 4, 5, 6].map(masteryForAct), [0, 2, 4, 6, 8, 10]);
-  assert.deepStrictEqual([1, 2, 3, 4, 5, 6].map(guildHallMastery), [0, 1, 3, 5, 7, 9]);
+  // Four acts, then the finale at the cap (docs/xp-overhaul.md §5).
+  assert.deepStrictEqual([1, 2, 3, 4, 5].map(masteryForAct), [0, 2, 4, 6, MASTERY_CAP]);
+  assert.deepStrictEqual([1, 2, 3, 4, 5].map(guildHallMastery), [0, 1, 3, 5, MASTERY_CAP - 1]);
   assert.strictEqual(masteryForAct(0), 0, 'clamped below');
   assert.strictEqual(masteryForAct(99), MASTERY_CAP, 'clamped above');
-  for (let act = 2; act <= 6; act++) assert.ok(masteryForAct(act) > guildHallMastery(act), `act ${act}: a contract is a pip ahead of a hire`);
+  for (let act = 2; act <= 5; act++) assert.ok(masteryForAct(act) > guildHallMastery(act), `act ${act}: a contract is a pip ahead of a hire`);
   assert.strictEqual(guildHallMastery(1), 0, 'and both are raw in Act 1');
 });
 
@@ -155,14 +156,14 @@ test('mastery: the Scroll Cache sits in the reward pool at the seat Ichor held, 
 test('mastery: the Scribe is a forced row every act, never in the reward pool', () => {
   assert.ok(MAP_NODE_TYPES.includes('scribeReward'));
   assert.ok(!REWARD_WEIGHTS.some(([type]) => type === 'scribeReward'), 'absent from REWARD_WEIGHTS');
-  for (const act of [1, 2, 3, 4, 5]) {
+  for (const act of [1, 2, 3, 4]) {
     const map = generateMap(7, act);
     const scribes = Object.values(map.nodes).filter((n) => n.type === 'scribeReward');
     assert.strictEqual(scribes.length, 1, `act ${act}`);
     const fork = map.rows[scribes[0].row + 1].map((id) => map.nodes[id].type).sort();
     assert.deepStrictEqual(fork, ['elite', 'skirmish'], `act ${act}: the Scribe sits right above the fork`);
   }
-  assert.strictEqual(Object.values(generateMap(7, 6).nodes).filter((n) => n.type === 'scribeReward').length, 0, 'the finale has no Scribe');
+  assert.strictEqual(Object.values(generateMap(7, FINALE_ACT).nodes).filter((n) => n.type === 'scribeReward').length, 0, 'the finale has no Scribe');
 });
 
 test('mastery: pips round-trip through a save', () => {
