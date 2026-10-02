@@ -32,7 +32,7 @@ export const SCROLL_CACHE_COUNT = 3;
 export const SCROLL_PURCHASE_COST = 25;
 export const SCROLL_PURCHASE_LIMIT = 2;
 /** Pips one shelf purchase lands, on one hero. */
-export const SCROLL_PACK_PIPS = 1;
+export const SCROLL_PACK_PIPS = 2;
 
 export class MasteryError extends Error {}
 
