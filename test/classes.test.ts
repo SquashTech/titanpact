@@ -44,11 +44,18 @@ test('classes: every Class grants exactly one verb — a move or a passive, neve
   }
 });
 
-test('classes: three of each kind, as authored', () => {
+test('classes: every kind is authored', () => {
   for (const kind of CLASS_KINDS) {
-    const ofKind = Object.values(classes).filter((cls) => cls.kind === kind);
-    assert.strictEqual(ofKind.length, 3, `${kind} has ${ofKind.length} Classes`);
+    assert.ok(Object.values(classes).some((cls) => cls.kind === kind), `${kind} has no Classes`);
   }
+});
+
+test('classes: a damaging class move has a counterpart in the other category', () => {
+  // Volley/Cascade, Feint/Jinx, Vanish/Blink: no damaging Class is a trap pick for one half of the roster.
+  const damaging = Object.values(classMoves).filter((m) => m.kind === 'damage');
+  const physical = damaging.filter((m) => m.category === 'physical').length;
+  const magical = damaging.filter((m) => m.category === 'magical').length;
+  assert.strictEqual(physical, magical, `${physical} physical against ${magical} magical damaging Class moves`);
 });
 
 test('classes: a class move is in no Scroll pool and no Tutor pool, and a class passive is in no Boon pool', () => {

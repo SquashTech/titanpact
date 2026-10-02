@@ -659,6 +659,17 @@ from the whole catalog and prints no kind (revised 2026-09-11, per user directio
 per kind under an Offensive/Defensive/Utility tag, which read as a category the screen then had to
 explain). Nine to start, three per kind as authoring intent (`src/data/classes.ts`).
 
+**Caster pass (2026-10-02, per user direction).** All three damaging class moves were physical, so
+a caster holding one swung its dump stat — a trap pick. Five Classes were added, fourteen in all:
+**Sorcerer** (Cascade, the magical Volley), **Hexer** (Jinx: priority 2, BP 40, −15 Intelligence
+on the target — the magical Feint, a debuff where Feint locks a turn), **Conjurer** (Blink, the
+magical Vanish), **Warlock** (Siphon: every magical hit restores 10 Mana) and **Sage** (Deep
+Breath: a Rest grants +20 Intelligence). Every damaging class move now has a twin in the other
+category (`test/classes.test.ts`). **Volley came down 55 / 30 → 50 / 35**, Cascade at the same
+figures: it was the best damage per mana in the game (10.2 against a Mid spread's ~3.5). **Succor
+became the Cleric's passive**: every hit the holder lands mends its partner 15 healing power off
+its Wisdom — on-hit rather than at round end so it is not Patch's Upkeep, and a spread mends twice.
+
 Two exclusivity rules, without which a Class is a Boon with a hat:
 
 - A class passive is not in the Boon pool, and no Boon passive is a Class.

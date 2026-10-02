@@ -523,6 +523,37 @@ test('upkeep: the partner heals 12 healing power off Patch\'s Wisdom each round 
   assert.strictEqual(r.state.combatants.a2.currentHp, 50 + expected);
 });
 
+// --- Class passives (src/data/classes.ts) ---
+
+const castBy = (state: CombatState, moveId: string): Action[] => [
+  { kind: 'move', combatantId: 'a1', moveId, declaredTarget: 'b1' },
+  ...restAll(state).filter((a) => a.combatantId !== 'a1'),
+];
+
+test('succor (Cleric): every hit the holder lands mends its partner 15 healing power off its Wisdom — a spread mends twice', () => {
+  const base = withField(withField(twoVTwo(60, 'cinderKnight', 'valor', 'ironWarden', 'crag'), 'a1', { currentMana: 400 }), 'a2', { currentHp: 50 });
+  const without = resolveRound(base, castBy(base, 'volley'), config).state.combatants.a2.currentHp;
+  const withCleric = withPassive(base, 'a1', 'cleric');
+  const mended = resolveRound(withCleric, castBy(withCleric, 'volley'), config).state.combatants.a2.currentHp;
+  const perHit = Math.round(15 * magnitudeMultFromStat(heroes.cinderKnight.baseStats.wisdom));
+  assert.strictEqual(mended - without, 2 * perHit);
+});
+
+test('siphon (Warlock): every magical hit restores 10 Mana, a physical hit nothing', () => {
+  const base = withField(twoVTwo(61, 'cinderKnight', 'valor', 'ironWarden', 'crag'), 'a1', { currentMana: 200 });
+  const manaAfter = (s: CombatState, moveId: string) => resolveRound(s, castBy(s, moveId), config).state.combatants.a1.currentMana;
+  const siphon = withPassive(base, 'a1', 'warlock');
+  assert.strictEqual(manaAfter(siphon, 'cascade') - manaAfter(base, 'cascade'), 20, 'two magical hits, 10 each');
+  assert.strictEqual(manaAfter(siphon, 'volley'), manaAfter(base, 'volley'), 'a physical spread pays nothing');
+});
+
+test('deep breath (Sage): a Rest grants the holder 20 Intelligence', () => {
+  const state = withPassive(twoVTwo(62, 'cinderKnight', 'valor', 'ironWarden', 'crag'), 'a1', 'sage');
+  const { events } = resolveRound(state, restAll(state), config);
+  const gain = events.find((e) => e.type === 'StatChanged' && e.combatantId === 'a1' && e.stat === 'intelligence') as { delta: number } | undefined;
+  assert.strictEqual(gain?.delta, 20);
+});
+
 test('sporefall: both active enemies are Poisoned 5 each round end, the timer holding as the magnitude climbs', () => {
   let state = withPassive(twoVTwo(46, 'morel', 'valor', 'ironWarden', 'crag'), 'a1', 'sporefall');
   state = resolveRound(state, restAll(state), config).state;

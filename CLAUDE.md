@@ -493,8 +493,10 @@ don't silently override it.
   price of a late recruit. `crucibleReward` is deleted; its weight went to the (now Ichor) seat.
   **A Class is a VERB, never a number**: its schema is the Evolution path's minus the graft and
   the hero — a name, a kind, and exactly ONE of a granted move (`grantMove`, replace-or-decline
-  at `MOVE_CAP`) or a passive (`ClassDefinition`, `src/run/classes.ts`; nine in
-  `src/data/classes.ts`, three a kind; the Crucible rolls **three distinct from the whole catalog**,
+  at `MOVE_CAP`) or a passive (`ClassDefinition`, `src/run/classes.ts`; fourteen in
+  `src/data/classes.ts` — **every damaging class move has a twin in the other category**
+  (2026-10-02, per user direction: Volley/Cascade, Feint/Jinx, Vanish/Blink, pinned by test), and
+  Succor is the Cleric's on-hit partner heal, no longer a move; the Crucible rolls **three distinct from the whole catalog**,
   un-labelled — the one-per-kind roll and its Offensive/Defensive/Utility tags came off 2026-09-11
   per user direction). One per hero, replace-not-stack. **The hero at the rim is the hero
   tempered**: the Class choice has no way back to the roster.

@@ -344,7 +344,7 @@ test('shadow: Dusk Blade is the only guaranteed Bleed, and Bleed is the type fla
 
 test('shadow: Shadowstrike is the slate only bracket play — everything else resolves at priority 0', () => {
   for (const move of Object.values(moves)) {
-    if (move.type !== 'Shadow' || signatureMoves[move.id]) continue;
+    if (move.type !== 'Shadow' || signatureMoves[move.id] || classMoves[move.id]) continue;
     assert.strictEqual(move.priority, move.id === 'shadowstrike' ? 1 : 0, `${move.id} has an unexpected priority bracket`);
   }
 });

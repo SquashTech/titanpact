@@ -1,4 +1,4 @@
-// The Class catalog (docs/growth-overhaul.md §11): nine verbs, three a kind, tempered into one
+// The Class catalog (docs/growth-overhaul.md §11): fourteen verbs, tempered into one
 // hero at each Guardian's Crucible. A Class is a role any hero can take — the doubles toolkit no
 // single type slate covers evenly. A class move wears the HOLDER's type (`typeFollowsUser`, so STAB is
 // guaranteed and the tile is the hero's colour) and is authored as a role verb rather than a nuke,
@@ -33,11 +33,52 @@ export const classMoves: Record<string, MoveDefinition> = {
     typeFollowsUser: true,
     category: 'physical',
     kind: 'damage',
-    basePower: 55,
-    manaCost: 30,
+    basePower: 50,
+    manaCost: 35,
     priority: 0,
     target: 'bothEnemies',
     description: 'A flight of shafts across the whole enemy line. Takes the type of whoever holds it.',
+  },
+  cascade: {
+    id: 'cascade',
+    name: 'Cascade',
+    type: 'Arcane',
+    typeFollowsUser: true,
+    category: 'magical',
+    kind: 'damage',
+    basePower: 50,
+    manaCost: 35,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'A torrent of raw power across the whole enemy line. Takes the type of whoever holds it.',
+  },
+  jinx: {
+    id: 'jinx',
+    name: 'Jinx',
+    type: 'Shadow',
+    typeFollowsUser: true,
+    category: 'magical',
+    kind: 'damage',
+    basePower: 40,
+    statDeltas: [{ stat: 'intelligence', amount: -15 }],
+    manaCost: 30,
+    priority: 2,
+    target: 'singleEnemy',
+    description: 'A curse cast before anything else moves, fouling the foe’s spellwork (−15 Intelligence). Takes the type of whoever holds it.',
+  },
+  blink: {
+    id: 'blink',
+    name: 'Blink',
+    type: 'Arcane',
+    typeFollowsUser: true,
+    category: 'magical',
+    kind: 'damage',
+    basePower: 50,
+    switchesUserOut: true,
+    manaCost: 25,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A spell loosed as the caster winks out — the user withdraws to the bench after striking. Takes the type of whoever holds it.',
   },
   intercept: {
     id: 'intercept',
@@ -53,19 +94,6 @@ export const classMoves: Record<string, MoveDefinition> = {
     priority: 1,
     target: 'self',
     description: 'Steps in front of the partner — single-target enemy moves aimed at either ally land here this round, and the guard holds (+10 Defense). Takes the type of whoever holds it.',
-  },
-  succor: {
-    id: 'succor',
-    name: 'Succor',
-    type: 'Light',
-    typeFollowsUser: true,
-    category: 'magical',
-    kind: 'heal',
-    healPower: 50,
-    manaCost: 30,
-    priority: 0,
-    target: 'singleAlly',
-    description: 'Closes an ally’s wounds. Takes the type of whoever holds it.',
   },
   vanish: {
     id: 'vanish',
@@ -124,6 +152,37 @@ export const classPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'manaGrant', target: 'triggerSubject', amount: { kind: 'flat', value: 20 } },
     },
   },
+  cleric: {
+    id: 'cleric',
+    name: 'Succor',
+    description: "Every hit this hero lands mends its partner (15 healing power, scaled by this hero's Wisdom).",
+    // On-hit rather than round-end, so it is not Patch's Upkeep; a spread hit mends twice.
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'heal', target: 'ally', amount: { kind: 'flat', value: 15 }, scaledBy: 'wisdom' },
+    },
+  },
+  warlock: {
+    id: 'warlock',
+    name: 'Siphon',
+    description: 'Every magical hit this hero lands restores 10 Mana.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'magical' } },
+      effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 10 } },
+    },
+  },
+  sage: {
+    id: 'sage',
+    name: 'Deep Breath',
+    description: 'Whenever this hero Rests, it gains 20 Intelligence.',
+    reactive: {
+      hook: 'Rested',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 20 },
+    },
+  },
 };
 
 export const classes: Record<string, ClassDefinition> = {
@@ -146,6 +205,24 @@ export const classes: Record<string, ClassDefinition> = {
     kind: 'offensive',
     grantsMoveId: 'volley',
   },
+  sorcerer: {
+    id: 'sorcerer',
+    name: 'Sorcerer',
+    kind: 'offensive',
+    grantsMoveId: 'cascade',
+  },
+  hexer: {
+    id: 'hexer',
+    name: 'Hexer',
+    kind: 'offensive',
+    grantsMoveId: 'jinx',
+  },
+  sage: {
+    id: 'sage',
+    name: 'Sage',
+    kind: 'offensive',
+    grantsPassiveId: 'sage',
+  },
   // --- Defensive ---
   guardian: {
     id: 'guardian',
@@ -163,7 +240,7 @@ export const classes: Record<string, ClassDefinition> = {
     id: 'cleric',
     name: 'Cleric',
     kind: 'defensive',
-    grantsMoveId: 'succor',
+    grantsPassiveId: 'cleric',
   },
   // --- Utility ---
   monk: {
@@ -177,6 +254,18 @@ export const classes: Record<string, ClassDefinition> = {
     name: 'Rogue',
     kind: 'utility',
     grantsMoveId: 'vanish',
+  },
+  conjurer: {
+    id: 'conjurer',
+    name: 'Conjurer',
+    kind: 'utility',
+    grantsMoveId: 'blink',
+  },
+  warlock: {
+    id: 'warlock',
+    name: 'Warlock',
+    kind: 'utility',
+    grantsPassiveId: 'warlock',
   },
   herald: {
     id: 'herald',

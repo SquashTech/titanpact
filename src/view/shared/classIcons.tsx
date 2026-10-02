@@ -130,6 +130,17 @@ export const CLASS_PATHS: Record<string, ReactNode> = {
       <circle cx="12" cy="2.4" r="1.6" />
     </g>
   ),
+  // A crescent moon.
+  hexer: <path d="M15.4 2.2A10 10 0 1 0 21.8 17 8 8 0 0 1 15.4 2.2Z" />,
+  // A scrying orb on its stand.
+  conjurer: (
+    <>
+      <circle cx="12" cy="9.4" r="7.4" />
+      <path d="M7 17.6h10l2 4H5Z" />
+    </>
+  ),
+  // A drop, drawn off.
+  warlock: <path d="M12 1.6c3.6 5 7 9 7 13a7 7 0 0 1-14 0c0-4 3.4-8 7-13Z" />,
   // A horseshoe.
   outrider: (
     <path fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" d="M5.2 21V11.4a6.8 6.8 0 0 1 13.6 0V21" />
