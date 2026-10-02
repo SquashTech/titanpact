@@ -188,7 +188,7 @@ Intelligence, Flashpoint repeats it and is replaced in the roster pass (§8).
 
 Converted in seven parallel groups of two types, then reviewed as one catalog. **123 new path
 passives** (`src/data/evolutionPassives/`), **9 rewires** (pinned in the test's `REWIRES`), and
-three kept-pairing paths for the duals: Brimstone's Cauldronborn (Eclipse), Bellows' Redline
+three kept-pairing paths for the duals: Brimstone's Rotflame (Eclipse), Bellows' Redline
 (Juggernaut), Coil's Mesmer (Brain Flay). Each rewired hero whose innate read the traded stat
 now reads both: Kindling, Pack Hunter and their mastered forms, and Reverie's Neuroplastic+.
 

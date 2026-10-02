@@ -24,7 +24,7 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 20 },
     },
   },
-  // Brimstone's Cauldronborn: the fire feeds the rot Grim Harvest reaps.
+  // Brimstone's Rotflame: the fire feeds the rot Grim Harvest reaps.
   witchsBrew: {
     id: 'witchsBrew',
     name: "Witch's Brew",

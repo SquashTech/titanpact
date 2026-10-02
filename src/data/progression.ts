@@ -1216,10 +1216,10 @@ export const progressionTable: ProgressionTable = {
       {
         paths: [
           {
-            id: 'brimstone-cauldronborn',
+            id: 'brimstone-rotflame',
             heroId: 'brimstone',
-            name: 'Cauldronborn',
-            description: 'The pot boils over: what it set alight curdles into rot, and the dark it brews finishes what is left.',
+            name: 'Rotflame',
+            description: 'Its fire stops burning clean: whatever it sets alight curdles into rot, and the dark finishes what is left.',
             // The keeper: Fire/Shadow stays, and Eclipse is the Shadow Late the two retypes trade away.
             unlocksMoveIds: ['eclipse'],
             grantsPassiveIds: ['witchsBrew'],
