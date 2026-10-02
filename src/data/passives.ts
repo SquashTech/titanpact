@@ -12,7 +12,7 @@ const fixturePassives: Record<string, PassiveDefinition> = {
   sanguine: {
     id: 'sanguine',
     name: 'Sanguine',
-    description: 'Whenever an enemy takes Bleed damage, this hero heals for the same amount.',
+    description: 'When an enemy takes Bleed damage, this hero heals for the same amount.',
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Bleed', kind: 'damage' } },
@@ -26,7 +26,7 @@ const equipmentPassives: Record<string, PassiveDefinition> = {
   bloodthirst: {
     id: 'bloodthirst',
     name: 'Bloodthirst',
-    description: "Whenever this hero's side deals damage to an enemy, heal this hero for 15% of that damage.",
+    description: "When this hero's side deals damage to an enemy, heal this hero for 15% of that damage.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'enemy' },
@@ -36,7 +36,7 @@ const equipmentPassives: Record<string, PassiveDefinition> = {
   wardensVigil: {
     id: 'wardensVigil',
     name: "Warden's Vigil",
-    description: 'Whenever this hero takes damage, heal for 10% of that damage.',
+    description: 'When this hero takes damage, heal for 10% of that damage.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -46,7 +46,7 @@ const equipmentPassives: Record<string, PassiveDefinition> = {
   vengefulEmblem: {
     id: 'vengefulEmblem',
     name: 'Vengeful Emblem',
-    description: 'Whenever this hero takes damage, gain +10 Attack.',
+    description: 'When this hero takes damage, gain +10 Attack.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -63,7 +63,7 @@ const equipmentPassives: Record<string, PassiveDefinition> = {
     name: 'Sunder',
     // subjectRole 'source' + relativeTo 'self' = "this hero dealt it"; 'triggerTarget' is then
     // the defender, which is the only way a source-role passive reaches who it just hit.
-    description: 'Whenever this hero lands an attack, its target loses 10 Defense.',
+    description: 'When this hero lands an attack, its target loses 10 Defense.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -75,7 +75,7 @@ const equipmentPassives: Record<string, PassiveDefinition> = {
     name: 'Second Skin',
     // Vengeful Emblem's shape turned inward — that one pays an attacker for being hit, this
     // one pays a wall for holding. One statDelta per stat, sharing the amount.
-    description: 'Whenever this hero takes damage, it gains 5 Defense and 5 Wisdom.',
+    description: 'When this hero takes damage, it gains 5 Defense and 5 Wisdom.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -141,7 +141,7 @@ const equipmentPassives: Record<string, PassiveDefinition> = {
     name: 'Impale',
     // The Spear's Awakening. Sunder's trigger with a DoT payload instead of a debuff, so the two
     // Attack families that both fire on landing a hit still read differently.
-    description: "Whenever this hero lands an attack, its target suffers Poison 5.",
+    description: "When this hero lands an attack, its target suffers Poison 5.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -162,7 +162,7 @@ const equipmentPassives: Record<string, PassiveDefinition> = {
     name: 'Overchannel',
     // The Staff's. manaGrant is UNCAPPED (docs/mana.md "Overflow"), so a hero that keeps swinging
     // banks past its pool — the Int family's answer to mana being the primary balance lever.
-    description: 'Whenever this hero lands an attack, it gains 10 Mana, past its pool.',
+    description: 'When this hero lands an attack, it gains 10 Mana, past its pool.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -175,7 +175,7 @@ const equipmentPassives: Record<string, PassiveDefinition> = {
     // The Leathers'. A true counter-attack is not expressible — there is no `damage` effect, and a
     // target-role DamageDealt cannot reach its attacker (triggerTarget is the DEFENDER whatever the
     // condition read) — so this hits activeEnemies instead. Lower than Impale's 5: it lands on both.
-    description: 'Whenever this hero takes damage, enemies suffer Poison 3.',
+    description: 'When this hero takes damage, enemies suffer Poison 3.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -187,7 +187,7 @@ const equipmentPassives: Record<string, PassiveDefinition> = {
     name: 'Mana Ward',
     // The Robe's. Warden's Vigil's shape paid in mana instead of HP, which is why the Robe and the
     // Plate can share a trigger without sharing an identity.
-    description: 'Whenever this hero takes damage, it gains Mana equal to 15% of it, past its pool.',
+    description: 'When this hero takes damage, it gains Mana equal to 15% of it, past its pool.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -344,7 +344,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   frozenStone: {
     id: 'frozenStone',
     name: 'Frozen Stone',
-    description: 'Whenever this hero\'s Defense rises, Freeze a random enemy.',
+    description: 'When this hero\'s Defense rises, Freeze a random enemy.',
     // eventFieldPositive is what makes this "rises" rather than "changes" — a Defense DEBUFF
     // must not freeze anyone. Fed only by a move's own stat deltas, so the hero's own Bastion
     // and a partner's Frost Wall both arm it, and a passive-caused change never chains.
@@ -398,7 +398,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   communion: {
     id: 'communion',
     name: 'Communion',
-    description: 'Whenever this hero is healed, its partner is healed for the same amount.',
+    description: 'When this hero is healed, its partner is healed for the same amount.',
     // Target-role Healed: "I was healed". Revenant's Drain and Soul Rend are drainPercent riders,
     // which DO emit Healed, so every drain now sustains the pair. A passive heal runs applyHpDelta
     // and emits HpChanged rather than Healed, so this cannot bounce between the two of them.
@@ -411,7 +411,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   tempering: {
     id: 'tempering',
     name: 'Tempering',
-    description: 'Whenever this hero takes damage, it gains 10 Defense.',
+    description: 'When this hero takes damage, it gains 10 Defense.',
     // Target-role DamageDealt: "I was hit". Steel worked by blows. Unbounded within a fight on
     // purpose — Valor is the hero that wins the long one, and the Pact Clock is what brackets it.
     reactive: {
@@ -423,7 +423,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   combustion: {
     id: 'combustion',
     name: 'Combustion',
-    description: 'Whenever this hero is Burned, it gains 20 Attack.',
+    description: 'When this hero is Burned, it gains 20 Attack.',
     // Target-role StatusApplied: "I caught fire". Mech's whole Burn line burns its OWN caster —
     // Backfire, Overheat and Meltdown each apply Burn to the target AND to self — so the drawback
     // written into the type becomes the fuel, and an enemy burning Clockwork is a mistake.
@@ -437,7 +437,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   afterglow: {
     id: 'afterglow',
     name: 'Afterglow',
-    description: 'Whenever this hero heals an ally, that ally gains 20 Attack and 20 Intelligence.',
+    description: 'When this hero heals an ally, that ally gains 20 Attack and 20 Intelligence.',
     // Source-role on the Healed hook: "I did the healing", landing on triggerTarget, the ally
     // who received it. BOTH offensive stats on purpose — Solace does not get to choose her
     // partner, so the buff has to be worth the same to a Crag as to a Glyph. It also means a
@@ -463,7 +463,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   restorativeToxin: {
     id: 'restorativeToxin',
     name: 'Restorative Toxin',
-    description: 'Whenever this hero applies Poison, it gains half that amount as Renew.',
+    description: 'When this hero applies Poison, it gains half that amount as Renew.',
     // Firestarter's source-role shape, but the payout is READ off the event rather than authored:
     // matchTriggerAmount on StatusApplied's `magnitude`. Both sides are a percent of max HP since Renew's
     // pass (docs/blessings-and-statuses.md §4); ×0.5 is the old 2× flat HP at par, and a Renew heals three times.
@@ -506,7 +506,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   cinderguard: {
     id: 'cinderguard',
     name: 'Cinderguard',
-    description: 'Whenever this hero takes damage, both active enemies gain Burn 3%.',
+    description: 'When this hero takes damage, both active enemies gain Burn 3%.',
     // Target-role DamageDealt: "I was hit". There is no 'triggerSource' target — a passive cannot
     // reach the attacker — so the answer goes to activeEnemies, which in doubles is the attacker
     // plus its partner. Small per firing, stacking additively, and Immolate is what cashes it.
@@ -519,7 +519,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   ashfeast: {
     id: 'ashfeast',
     name: 'Ashfeast',
-    description: 'Whenever an enemy takes Burn damage, this hero heals for the same amount.',
+    description: 'When an enemy takes Burn damage, this hero heals for the same amount.',
     // Sanguine's exact shape moved off Bleed onto Burn — and Burn is a magnitude status Brimstone
     // stacks itself, so unlike Sanguine this one does not need a partner to arm it.
     reactive: {
@@ -531,7 +531,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   killingFrost: {
     id: 'killingFrost',
     name: 'Killing Frost',
-    description: 'Whenever this hero Freezes an enemy, it gains 10 Intelligence.',
+    description: 'When this hero Freezes an enemy, it gains 10 Intelligence.',
     // Feedback Loop's shape on Freeze. Freeze is stacking 'none', so re-freezing an already
     // frozen foe emits nothing and pays nothing; the ramp costs fresh targets, and Permafrost
     // and Avalanche reaching both foes at once is the two-for-one that makes it worth a path.
@@ -544,7 +544,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   coldForge: {
     id: 'coldForge',
     name: 'Cold Forge',
-    description: "Whenever this hero's Defense rises, it gains 10 Attack.",
+    description: "When this hero's Defense rises, it gains 10 Attack.",
     // Frozen Stone's trigger with an inward payout: eventFieldPositive is what makes this "rises"
     // and not "changes". Floe's own Frost Armor and a partner's Bastion or Frost Wall all arm it,
     // which is the whole build — the wall it puts up is the weapon it swings.
@@ -557,7 +557,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   squallLine: {
     id: 'squallLine',
     name: 'Squall Line',
-    description: 'Whenever this hero lands an attack, it gains 5 Attack and 5 Speed.',
+    description: 'When this hero lands an attack, it gains 5 Attack and 5 Speed.',
     // Unconditional and per HIT, so a spread cast pays twice — the smallest per-firing figure of
     // any evolution passive for that reason. Speed on the roster's fastest hero compounds: the
     // ramp buys the turn order it needs to keep ramping.
@@ -570,7 +570,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   plunder: {
     id: 'plunder',
     name: 'Plunder',
-    description: 'Whenever this hero lands an attack, it gains 10 mana.',
+    description: 'When this hero lands an attack, it gains 10 mana.',
     // Overspill's uncapped grant metered out a hit at a time instead of an arrival at a time
     // (docs/mana.md "Overflow"). Scallywag's late column is expensive and its Attack is not, so
     // the aggression funds itself — and the overflow is what reaches Overcharge without a Rest.
@@ -583,7 +583,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   thornrot: {
     id: 'thornrot',
     name: 'Thornrot',
-    description: 'Whenever this hero applies Poison, it gains 10 Attack and 10 Speed.',
+    description: 'When this hero applies Poison, it gains 10 Attack and 10 Speed.',
     // Restorative Toxin's trigger paying a stat line instead of a HoT — Sylva turns Poison into
     // sustain, Mordrax turns it into pressure. Poison stacks, so every re-application pays again.
     reactive: {
@@ -595,7 +595,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   heartwood: {
     id: 'heartwood',
     name: 'Heartwood',
-    description: "Whenever this hero's Renew heals it, it gains 10 Attack and 10 Defense.",
+    description: "When this hero's Renew heals it, it gains 10 Attack and 10 Defense.",
     // Read off the TICK, not the Healed hook: a HoT tick emits StatusTicked (kind 'heal'), never
     // Healed, so Communion's shape would never fire here. Renew heals on landing and twice more, and each
     // heal banks the stats, which is what turns Hollowbark's own Second Wind into a three-round ramp.
@@ -621,7 +621,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   puppetStrings: {
     id: 'puppetStrings',
     name: 'Puppet Strings',
-    description: "Whenever an enemy's Intelligence drops, this hero gains 10 Intelligence.",
+    description: "When an enemy's Intelligence drops, this hero gains 10 Intelligence.",
     // Entanglement's trigger on the other magical stat, paying the owner rather than marking the
     // foe. Trance's slate is an Intelligence shredder (Lull, Disorient, Break Will), and Disorient
     // reaching both foes is two firings. ATTRIBUTION: StatChanged carries no source, so a Mind
@@ -635,7 +635,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   grief: {
     id: 'grief',
     name: 'Grief',
-    description: 'Whenever this hero takes damage, it gains Renew 5%.',
+    description: 'When this hero takes damage, it gains Renew 5%.',
     // Tempering's trigger paying a HoT instead of Defense, which is the only way a 45-Defense
     // body gets to be the one that stays. Renew is additive and survives switching, so a pivot
     // out to the bench carries the stack with it.
@@ -673,7 +673,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   runawayPressure: {
     id: 'runawayPressure',
     name: 'Runaway Pressure',
-    description: 'Whenever this hero lands an attack, it gains 10 Attack.',
+    description: 'When this hero lands an attack, it gains 10 Attack.',
     // Squall Line's shape at double the figure on one axis, because Bellows at 5 Speed acts last
     // in nearly every exchange — the ramp is what it is paid for never getting to go first.
     // Unbounded within a fight on purpose; the Pact Clock is what brackets it.
@@ -686,7 +686,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   widowsKiss: {
     id: 'widowsKiss',
     name: "Widow's Kiss",
-    description: 'Whenever this hero applies Bleed, that target also gains Poison 10.',
+    description: 'When this hero applies Bleed, that target also gains Poison 10.',
     // Source-role StatusApplied landing on triggerTarget — the hero that RECEIVED the Bleed,
     // which is the only way a source-role passive reaches it. Widow's two damage-over-time
     // columns collapse into one: every Bleed is also a Poison, and Toxic Fangs is both twice.
@@ -712,7 +712,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   constrict: {
     id: 'constrict',
     name: 'Constrict',
-    description: 'Whenever this hero lands a magical attack, its target loses 10 Speed.',
+    description: 'When this hero lands a magical attack, its target loses 10 Speed.',
     // Enthrall's source-role shape paying a stat debuff instead of a mark. Coil's slate is
     // magical end to end, so every cast tightens; Psionic Wave reaching both foes slows both.
     reactive: {
@@ -725,7 +725,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   aftershock: {
     id: 'aftershock',
     name: 'Aftershock',
-    description: 'Whenever this hero lands a magical attack, its target loses 10 Defense.',
+    description: 'When this hero lands a magical attack, its target loses 10 Defense.',
     // Constrict's shape aimed at Defense: the mixed line's two halves feed each other, since
     // Stone's magical column is all spread — one Rockfall softens both foes for the staff.
     reactive: {
@@ -737,7 +737,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   rampant: {
     id: 'rampant',
     name: 'Rampant',
-    description: 'Whenever this hero takes damage, it gains 10 Attack.',
+    description: 'When this hero takes damage, it gains 10 Attack.',
     // Tempering's trigger paying the offensive stat, on the body least interested in defending.
     // Every hit it eats is a bigger bite back; the Pact Clock is what brackets it.
     reactive: {
@@ -762,7 +762,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   sunblind: {
     id: 'sunblind',
     name: 'Sunblind',
-    description: 'Whenever this hero Dazes a foe, that foe loses 20 Wisdom.',
+    description: 'When this hero Dazes a foe, that foe loses 20 Wisdom.',
     // Widow's Kiss on the Daze rider: a flash that lands before the foe acts costs them the
     // turn, and now the follow-up burns through them too. Only pays on a hero fast enough to
     // land the Daze first, which is the whole line.
@@ -775,7 +775,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   thickHide: {
     id: 'thickHide',
     name: 'Thick Hide',
-    description: 'Whenever this hero takes damage, it gains Shield 20.',
+    description: 'When this hero takes damage, it gains Shield 20.',
     // Grief's trigger paying a Shield pool instead of a HoT: flat, since a passive has no move to
     // scale off, additive up to max HP, and taken only by the next hit — on a hero whose kit
     // draws the hits (Provoke), each one it eats is the next one it half-eats.
@@ -813,7 +813,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   bloodmeal: {
     id: 'bloodmeal',
     name: 'Bloodmeal',
-    description: 'Whenever this hero applies Bleed, it gains Renew 5%.',
+    description: 'When this hero applies Bleed, it gains Renew 5%.',
     // Restorative Toxin's trigger on Bleed, flat since Bleed carries no magnitude: the bat feeds
     // on what it opens, and a 170-HP body that keeps cutting keeps standing.
     reactive: {
@@ -826,7 +826,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   hoard: {
     id: 'hoard',
     name: 'Hoard',
-    description: 'Whenever this hero Rests, it heals for the Mana it recovered.',
+    description: 'When this hero Rests, it heals for the Mana it recovered.',
     // A flat heal off the Rest's own number, outside the heal formula: a Rest that recovers nothing heals nothing.
     reactive: {
       hook: 'Rested',
@@ -837,7 +837,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   deepgrip: {
     id: 'deepgrip',
     name: 'Deepgrip',
-    description: "Whenever this hero lands a Water attack, every move its target holds costs 5 more Mana for the rest of the fight, up to 20.",
+    description: "When this hero lands a Water attack, every move its target holds costs 5 more Mana for the rest of the fight, up to 20.",
     // Holds on where a hold cannot matter — the enemy never switches — so the grip is priced in the
     // lever every move already answers to. Capped so a long fight tightens it without a lockout.
     reactive: {
@@ -849,7 +849,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   lure: {
     id: 'lure',
     name: 'Lure',
-    description: 'Whenever this hero takes damage, its next attack goes at +1 priority.',
+    description: 'When this hero takes damage, its next attack goes at +1 priority.',
     // The orchid mantis: it is struck because it looks like a flower, and answers before the striker moves again.
     reactive: {
       hook: 'DamageDealt',
@@ -860,7 +860,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   magmaHide: {
     id: 'magmaHide',
     name: 'Magma Hide',
-    description: 'Whenever this hero Rests, it gains Shield 40.',
+    description: 'When this hero Rests, it gains Shield 40.',
     reactive: {
       hook: 'Rested',
       condition: { relativeTo: 'self' },
@@ -890,7 +890,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   breach: {
     id: 'breach',
     name: 'Breach',
-    description: 'Whenever this hero lands an attack, its target loses 5 Defense.',
+    description: 'When this hero lands an attack, its target loses 5 Defense.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -933,7 +933,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   surgingIntellect: {
     id: 'surgingIntellect',
     name: 'Surging Intellect',
-    description: 'Whenever this hero gains Mana, it gains that much Intelligence.',
+    description: 'When this hero gains Mana, it gains that much Intelligence.',
     // Every way mana arrives — regen, a grant, a Rest — so it pays a little every round it spends
     // and a lot off a Font of Power. The ×4 fight ceiling is what bounds it.
     reactive: {
@@ -1006,7 +1006,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   kindling: {
     id: 'kindling',
     name: 'Kindling',
-    description: 'Whenever this hero afflicts Burn, it gains 5 Attack and 5 Intelligence.',
+    description: 'When this hero afflicts Burn, it gains 5 Attack and 5 Intelligence.',
     // Fires on Fire's self-Burn too. Both columns, so the knight's Explosive turn keeps it live.
     reactive: {
       hook: 'StatusApplied',
@@ -1017,7 +1017,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   stoke: {
     id: 'stoke',
     name: 'Stoke',
-    description: 'Whenever an enemy takes Burn damage, this hero gains 10 Intelligence.',
+    description: 'When an enemy takes Burn damage, this hero gains 10 Intelligence.',
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Burn', kind: 'damage' } },
@@ -1027,7 +1027,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   slumber: {
     id: 'slumber',
     name: 'Slumber',
-    description: 'Whenever this hero Rests, it gains Ambush 45.',
+    description: 'When this hero Rests, it gains Ambush 45.',
     // Drake's pool runs dry every few turns, so the Rest the rules force is the breath it draws.
     reactive: {
       hook: 'Rested',
@@ -1038,7 +1038,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   poised: {
     id: 'poised',
     name: 'Poised',
-    description: 'Whenever this hero uses a move that deals no damage, its next attack goes at +1 priority.',
+    description: 'When this hero uses a move that deals no damage, its next attack goes at +1 priority.',
     reactive: {
       hook: 'MoveUsed',
       condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
@@ -1058,7 +1058,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   drag: {
     id: 'drag',
     name: 'Drag',
-    description: 'Whenever this hero lands a Water attack, its target loses 5 Speed.',
+    description: 'When this hero lands a Water attack, its target loses 5 Speed.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
@@ -1088,7 +1088,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   coldSnap: {
     id: 'coldSnap',
     name: 'Cold Snap',
-    description: 'Whenever this hero Freezes an enemy, it gains 10 Attack.',
+    description: 'When this hero Freezes an enemy, it gains 10 Attack.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Freeze' } },
@@ -1098,7 +1098,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   absoluteZero: {
     id: 'absoluteZero',
     name: 'Absolute Zero',
-    description: "Whenever this hero's Defense rises, both active enemies lose 5 Speed.",
+    description: "When this hero's Defense rises, both active enemies lose 5 Speed.",
     reactive: {
       hook: 'StatChanged',
       condition: { relativeTo: 'self', eventFieldEquals: { stat: 'defense' }, eventFieldPositive: 'delta' },
@@ -1118,7 +1118,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   liveWire: {
     id: 'liveWire',
     name: 'Live Wire',
-    description: 'Whenever this hero sets off Conduct, it gains Shield 20.',
+    description: 'When this hero sets off Conduct, it gains Shield 20.',
     // Rising Static plants the mark and Jolt cashes it: the starting kit fires this on its own.
     reactive: {
       hook: 'StatusDetonated',
@@ -1139,7 +1139,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   faultLine: {
     id: 'faultLine',
     name: 'Fault Line',
-    description: 'Whenever this hero lands a Stone attack, it gains Shield 10.',
+    description: 'When this hero lands a Stone attack, it gains Shield 10.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Stone' } },
@@ -1149,7 +1149,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   verdurous: {
     id: 'verdurous',
     name: 'Verdurous',
-    description: 'Whenever this hero grants Renew, a random enemy suffers Poison 5.',
+    description: 'When this hero grants Renew, a random enemy suffers Poison 5.',
     // Per GRANT, not per cast (2026-09-20, per user direction): Regrowth on both allies is two
     // StatusApplied events and so two rolls, which may land on one enemy and stack. It replaced
     // Verdure ("whenever this hero heals an ally"), which no move in Sylva's starting kit could fire.
@@ -1162,7 +1162,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   consecrate: {
     id: 'consecrate',
     name: 'Consecrate',
-    description: 'Whenever this hero is healed, it gains 5 Defense and 5 Wisdom.',
+    description: 'When this hero is healed, it gains 5 Defense and 5 Wisdom.',
     reactive: {
       hook: 'Healed',
       condition: { relativeTo: 'self' },
@@ -1190,7 +1190,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   necrosis: {
     id: 'necrosis',
     name: 'Necrosis',
-    description: 'Whenever an enemy takes Poison damage, this hero heals for the same amount.',
+    description: 'When an enemy takes Poison damage, this hero heals for the same amount.',
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Poison', kind: 'damage' } },
@@ -1210,7 +1210,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   neuroplastic: {
     id: 'neuroplastic',
     name: 'Neuroplastic',
-    description: "Whenever an enemy's Wisdom is lowered, this hero gains that much Wisdom.",
+    description: "When an enemy's Wisdom is lowered, this hero gains that much Wisdom.",
     // The drop is read off the StatChanged that landed (negative delta → the same figure, positive).
     reactive: {
       hook: 'StatChanged',
@@ -1221,7 +1221,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   hunger: {
     id: 'hunger',
     name: 'Hunger',
-    description: 'Whenever this hero lands a Mind attack, it heals for 20% of the damage dealt.',
+    description: 'When this hero lands a Mind attack, it heals for 20% of the damage dealt.',
     // The vampire's verb, a drain — and Sanguine (its Evolution) feeds off the Bleeds it goes on to open.
     reactive: {
       hook: 'DamageDealt',
@@ -1242,7 +1242,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   lament: {
     id: 'lament',
     name: 'Lament',
-    description: "Whenever this hero's attack spreads through a Haunt, it heals for what the echo dealt.",
+    description: "When this hero's attack spreads through a Haunt, it heals for what the echo dealt.",
     // The echo alone (DamageDealt.viaStatusId): since the flip every hit on the Haunted target spreads, and
     // healing off all of them would be a drain on every attack (docs/blessings-and-statuses.md §2.3).
     reactive: {
@@ -1300,7 +1300,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   feast: {
     id: 'feast',
     name: 'Feast',
-    description: 'Whenever this hero lands a finishing blow, it heals a third of its max HP.',
+    description: 'When this hero lands a finishing blow, it heals a third of its max HP.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
@@ -1333,7 +1333,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   packHunter: {
     id: 'packHunter',
     name: 'Pack Hunter',
-    description: "Whenever this hero's partner lands an attack, this hero gains 5 Attack and 5 Intelligence.",
+    description: "When this hero's partner lands an attack, this hero gains 5 Attack and 5 Intelligence.",
     // Both columns, so Warhowl's rewire keeps it live.
     reactive: {
       hook: 'DamageDealt',
@@ -1354,7 +1354,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   ghostlight: {
     id: 'ghostlight',
     name: 'Ghostlight',
-    description: 'Whenever an enemy is Haunted, this hero gains Spirit Force 10.',
+    description: 'When an enemy is Haunted, this hero gains Spirit Force 10.',
     // Torment in the starting kit Haunts on its own; Wail (Sorrow) and Omen (Dread) feed it too.
     reactive: {
       hook: 'StatusApplied',
@@ -1365,7 +1365,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   arcaneRepose: {
     id: 'arcaneRepose',
     name: 'Arcane Repose',
-    description: 'Whenever this hero Rests, it gains Shield equal to the Mana it recovered.',
+    description: 'When this hero Rests, it gains Shield equal to the Mana it recovered.',
     // A Rest that recovers nothing (a full or overflowing pool) grants nothing.
     reactive: {
       hook: 'Rested',
@@ -1394,7 +1394,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   nettle: {
     id: 'nettle',
     name: 'Nettle',
-    description: 'Whenever this hero lands a hit, its target loses 5 Attack.',
+    description: 'When this hero lands a hit, its target loses 5 Attack.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -1404,7 +1404,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   shelter: {
     id: 'shelter',
     name: 'Shelter',
-    description: "Whenever this hero's partner is hit, the partner gains Shield 10.",
+    description: "When this hero's partner is hit, the partner gains Shield 10.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'ally' },
@@ -1430,7 +1430,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   brimming: {
     id: 'brimming',
     name: 'Brimming',
-    description: 'Whenever this hero is healed, it gains 10 Attack.',
+    description: 'When this hero is healed, it gains 10 Attack.',
     reactive: {
       hook: 'Healed',
       condition: { relativeTo: 'self' },
@@ -1450,7 +1450,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   slapstick: {
     id: 'slapstick',
     name: 'Slapstick',
-    description: 'Whenever this hero lands a hit, there is a 30% chance a random enemy is Dazed.',
+    description: 'When this hero lands a hit, there is a 30% chance a random enemy is Dazed.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -1461,7 +1461,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   inscribe: {
     id: 'inscribe',
     name: 'Inscribe',
-    description: 'Whenever this hero lands a hit, its target loses 5 Wisdom.',
+    description: 'When this hero lands a hit, its target loses 5 Wisdom.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -1491,7 +1491,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   curl: {
     id: 'curl',
     name: 'Curl',
-    description: 'Whenever this hero takes damage, it gains 5 Defense.',
+    description: 'When this hero takes damage, it gains 5 Defense.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -1512,7 +1512,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   badLuck: {
     id: 'badLuck',
     name: 'Bad Luck',
-    description: 'Whenever this hero lands a hit, a random enemy loses 5 Attack and 5 Intelligence.',
+    description: 'When this hero lands a hit, a random enemy loses 5 Attack and 5 Intelligence.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -1522,7 +1522,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   foxfire: {
     id: 'foxfire',
     name: 'Foxfire',
-    description: 'Whenever this hero lands a Spirit attack, its target gains Burn 3%.',
+    description: 'When this hero lands a Spirit attack, its target gains Burn 3%.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Spirit' } },
@@ -1532,7 +1532,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   fireBreather: {
     id: 'fireBreather',
     name: 'Fire-Breather',
-    description: 'Whenever this hero lands a Fire attack, both active enemies gain Burn 2%.',
+    description: 'When this hero lands a Fire attack, both active enemies gain Burn 2%.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Fire' } },
@@ -1542,7 +1542,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   saltTears: {
     id: 'saltTears',
     name: 'Salt Tears',
-    description: 'Whenever this hero grants Renew, it washes one affliction off whoever receives it.',
+    description: 'When this hero grants Renew, it washes one affliction off whoever receives it.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Renew' } },
@@ -1552,7 +1552,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   silentWings: {
     id: 'silentWings',
     name: 'Silent Wings',
-    description: 'Whenever this hero Freezes an enemy, it gains Frost Force 10.',
+    description: 'When this hero Freezes an enemy, it gains Frost Force 10.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Freeze' } },
@@ -1562,7 +1562,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   unfurl: {
     id: 'unfurl',
     name: 'Unfurl',
-    description: 'Whenever this hero gains Renew, it gains 10 Intelligence.',
+    description: 'When this hero gains Renew, it gains 10 Intelligence.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew' } },
@@ -1572,7 +1572,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   anvilCloud: {
     id: 'anvilCloud',
     name: 'Anvil Cloud',
-    description: 'Whenever this hero takes damage, there is a 50% chance a random enemy becomes Conducting.',
+    description: 'When this hero takes damage, there is a 50% chance a random enemy becomes Conducting.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -1593,7 +1593,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   undermine: {
     id: 'undermine',
     name: 'Undermine',
-    description: 'Whenever this hero lands a Stone attack, its target loses 10 Defense.',
+    description: 'When this hero lands a Stone attack, its target loses 10 Defense.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Stone' } },
@@ -1623,7 +1623,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   peckingCrow: {
     id: 'peckingCrow',
     name: 'Pecking Crow',
-    description: 'Whenever this hero uses a move that deals no damage, a random enemy loses 5% of its max HP.',
+    description: 'When this hero uses a move that deals no damage, a random enemy loses 5% of its max HP.',
     reactive: {
       hook: 'MoveUsed',
       condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
@@ -1633,7 +1633,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   foresight: {
     id: 'foresight',
     name: 'Foresight',
-    description: 'Whenever this hero takes damage, its next attack goes at +1 priority.',
+    description: 'When this hero takes damage, its next attack goes at +1 priority.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -1643,7 +1643,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   etchedRunes: {
     id: 'etchedRunes',
     name: 'Etched Runes',
-    description: 'Whenever this hero uses a move that deals no damage, it gains Ambush 20.',
+    description: 'When this hero uses a move that deals no damage, it gains Ambush 20.',
     reactive: {
       hook: 'MoveUsed',
       condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
@@ -1673,7 +1673,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   deathWail: {
     id: 'deathWail',
     name: 'Death Wail',
-    description: 'Whenever this hero lands a Spirit attack, both active enemies lose 5 Attack and 5 Intelligence.',
+    description: 'When this hero lands a Spirit attack, both active enemies lose 5 Attack and 5 Intelligence.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Spirit' } },
@@ -1693,7 +1693,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   tally: {
     id: 'tally',
     name: 'Tally',
-    description: 'Whenever an enemy attacks, this hero gains 5 Intelligence.',
+    description: 'When an enemy attacks, this hero gains 5 Intelligence.',
     reactive: {
       hook: 'MoveUsed',
       condition: { relativeTo: 'enemy', eventFieldEquals: { damaging: 'true' } },
@@ -1703,7 +1703,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   flit: {
     id: 'flit',
     name: 'Flit',
-    description: 'Whenever this hero attacks, it gains Ambush 10 for the next one.',
+    description: 'When this hero attacks, it gains Ambush 10 for the next one.',
     reactive: {
       hook: 'MoveUsed',
       condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'true' } },
@@ -1713,7 +1713,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   unbothered: {
     id: 'unbothered',
     name: 'Unbothered',
-    description: 'Whenever an enemy lands a hit, that enemy loses 5 Attack and 5 Intelligence.',
+    description: 'When an enemy lands a hit, that enemy loses 5 Attack and 5 Intelligence.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'enemy', subjectRole: 'source' },
@@ -1768,7 +1768,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   surgingIntellectPlus: {
     id: 'surgingIntellectPlus',
     name: 'Surging Intellect+',
-    description: 'Whenever this hero gains Mana, it gains twice that much Intelligence.',
+    description: 'When this hero gains Mana, it gains twice that much Intelligence.',
     reactive: {
       hook: 'ManaGained',
       condition: { relativeTo: 'self', eventFieldPositive: 'manaGained' },
@@ -1848,7 +1848,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   forgeheart: {
     id: 'forgeheart',
     name: 'Kindling+',
-    description: 'Whenever this hero afflicts Burn, it gains 10 Attack, 10 Intelligence and 10 Defense.',
+    description: 'When this hero afflicts Burn, it gains 10 Attack, 10 Intelligence and 10 Defense.',
     // Kindling doubled on both columns, and the plate coming off the anvil with it.
     reactive: {
       hook: 'StatusApplied',
@@ -1859,7 +1859,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   wildfire: {
     id: 'wildfire',
     name: 'Stoke+',
-    description: 'Whenever an enemy takes Burn damage, this hero gains 20 Intelligence and 10 Mana, past its pool.',
+    description: 'When an enemy takes Burn damage, this hero gains 20 Intelligence and 10 Mana, past its pool.',
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Burn', kind: 'damage' } },
@@ -1869,7 +1869,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   wildfireMana: {
     id: 'wildfireMana',
     name: 'Stoke+',
-    description: 'Whenever an enemy takes Burn damage, this hero gains 10 Mana, past its pool.',
+    description: 'When an enemy takes Burn damage, this hero gains 10 Mana, past its pool.',
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Burn', kind: 'damage' } },
@@ -1891,7 +1891,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   ripCurrent: {
     id: 'ripCurrent',
     name: 'Drag+',
-    description: 'Whenever this hero lands a Water attack, its target loses 15 Speed.',
+    description: 'When this hero lands a Water attack, its target loses 15 Speed.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
@@ -1911,7 +1911,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   abyssalWell: {
     id: 'abyssalWell',
     name: 'Overchannel+',
-    description: 'Whenever this hero lands an attack, it gains 25 Mana, past its pool.',
+    description: 'When this hero lands an attack, it gains 25 Mana, past its pool.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -1922,7 +1922,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   shatterpoint: {
     id: 'shatterpoint',
     name: 'Cold Snap+',
-    description: 'Whenever this hero Freezes an enemy, it gains 25 Attack.',
+    description: 'When this hero Freezes an enemy, it gains 25 Attack.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Freeze' } },
@@ -1932,7 +1932,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   zeroKelvin: {
     id: 'zeroKelvin',
     name: 'Absolute Zero+',
-    description: "Whenever this hero's Defense rises, both active enemies lose 15 Speed.",
+    description: "When this hero's Defense rises, both active enemies lose 15 Speed.",
     reactive: {
       hook: 'StatChanged',
       condition: { relativeTo: 'self', eventFieldEquals: { stat: 'defense' }, eventFieldPositive: 'delta' },
@@ -1954,7 +1954,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   thunderhead: {
     id: 'thunderhead',
     name: 'Live Wire+',
-    description: 'Whenever this hero sets off Conduct, it gains Shield 50.',
+    description: 'When this hero sets off Conduct, it gains Shield 50.',
     reactive: {
       hook: 'StatusDetonated',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Conduct' } },
@@ -1966,7 +1966,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   bedrockWrath: {
     id: 'bedrockWrath',
     name: 'Vengeful Emblem+',
-    description: 'Whenever this hero takes damage, it gains 25 Attack.',
+    description: 'When this hero takes damage, it gains 25 Attack.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -1986,7 +1986,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   tectonic: {
     id: 'tectonic',
     name: 'Fault Line+',
-    description: 'Whenever this hero lands a Stone attack, it gains Shield 30.',
+    description: 'When this hero lands a Stone attack, it gains Shield 30.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Stone' } },
@@ -1998,7 +1998,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   rampantBloom: {
     id: 'rampantBloom',
     name: 'Verdurous+',
-    description: 'Whenever this hero grants Renew, both active enemies suffer Poison 10.',
+    description: 'When this hero grants Renew, both active enemies suffer Poison 10.',
     // Verdurous's one random enemy at 5, widened to the whole far side and doubled.
     reactive: {
       hook: 'StatusApplied',
@@ -2009,7 +2009,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   skewer: {
     id: 'skewer',
     name: 'Impale+',
-    description: 'Whenever this hero lands an attack, its target suffers Poison 12.',
+    description: 'When this hero lands an attack, its target suffers Poison 12.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -2019,7 +2019,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   thornmail: {
     id: 'thornmail',
     name: 'Barbs+',
-    description: 'Whenever this hero takes damage, enemies suffer Poison 8.',
+    description: 'When this hero takes damage, enemies suffer Poison 8.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -2030,7 +2030,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   sanctified: {
     id: 'sanctified',
     name: 'Consecrate+',
-    description: 'Whenever this hero is healed, it gains 15 Defense and 15 Wisdom.',
+    description: 'When this hero is healed, it gains 15 Defense and 15 Wisdom.',
     reactive: {
       hook: 'Healed',
       condition: { relativeTo: 'self' },
@@ -2066,7 +2066,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   lichsDraught: {
     id: 'lichsDraught',
     name: 'Necrosis+',
-    description: 'Whenever an enemy takes Poison damage, this hero heals for twice that amount.',
+    description: 'When an enemy takes Poison damage, this hero heals for twice that amount.',
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Poison', kind: 'damage' } },
@@ -2088,7 +2088,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   arcaneBastion: {
     id: 'arcaneBastion',
     name: 'Arcane Repose+',
-    description: 'Whenever this hero Rests, it gains Shield equal to twice the Mana it recovered.',
+    description: 'When this hero Rests, it gains Shield equal to twice the Mana it recovered.',
     reactive: {
       hook: 'Rested',
       condition: { relativeTo: 'self' },
@@ -2100,7 +2100,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   mindthief: {
     id: 'mindthief',
     name: 'Neuroplastic+',
-    description: "Whenever an enemy's Wisdom is lowered, this hero gains that much Wisdom, Attack and Intelligence.",
+    description: "When an enemy's Wisdom is lowered, this hero gains that much Wisdom, Attack and Intelligence.",
     // Both hands, so Construct's rewire keeps it live (docs/evolution-simplification.md §5).
     reactive: {
       hook: 'StatChanged',
@@ -2111,7 +2111,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   insatiable: {
     id: 'insatiable',
     name: 'Hunger+',
-    description: 'Whenever this hero lands a Mind attack, it heals for 50% of the damage dealt.',
+    description: 'When this hero lands a Mind attack, it heals for 50% of the damage dealt.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Mind' } },
@@ -2133,7 +2133,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   wraithfire: {
     id: 'wraithfire',
     name: 'Ghostlight+',
-    description: 'Whenever an enemy is Haunted, this hero gains Spirit Force 25.',
+    description: 'When an enemy is Haunted, this hero gains Spirit Force 25.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Haunt' } },
@@ -2144,7 +2144,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   keening: {
     id: 'keening',
     name: 'Lament+',
-    description: "Whenever this hero's attack spreads through a Haunt, it heals for what the echo dealt, and its partner for half of it.",
+    description: "When this hero's attack spreads through a Haunt, it heals for what the echo dealt, and its partner for half of it.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { viaStatusId: 'Haunt' } },
@@ -2154,7 +2154,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   keeningShare: {
     id: 'keeningShare',
     name: 'Lament+',
-    description: "Whenever this hero's attack spreads through a Haunt, its partner heals for half of what the echo dealt.",
+    description: "When this hero's attack spreads through a Haunt, its partner heals for half of what the echo dealt.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { viaStatusId: 'Haunt' } },
@@ -2196,7 +2196,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   shatterlance: {
     id: 'shatterlance',
     name: 'Breach+',
-    description: 'Whenever this hero lands an attack, its target loses 15 Defense.',
+    description: 'When this hero lands an attack, its target loses 15 Defense.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -2257,7 +2257,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   apexTyrant: {
     id: 'apexTyrant',
     name: "Tyrant's Due+",
-    description: 'Whenever this hero lands a finishing blow, it gains 10 Attack for the rest of the run.',
+    description: 'When this hero lands a finishing blow, it gains 10 Attack for the rest of the run.',
     // Tyrant's Due without its once-a-fight cap: every kill is banked (recordPermanentStatGains).
     reactive: {
       hook: 'DamageDealt',
@@ -2270,7 +2270,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   alphasCall: {
     id: 'alphasCall',
     name: 'Pack Hunter+',
-    description: "Whenever this hero's partner lands an attack, this hero gains 10 Attack and 10 Intelligence, and the partner 10 Attack.",
+    description: "When this hero's partner lands an attack, this hero gains 10 Attack and 10 Intelligence, and the partner 10 Attack.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'ally', subjectRole: 'source' },
@@ -2280,7 +2280,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   alphasCallFollow: {
     id: 'alphasCallFollow',
     name: 'Pack Hunter+',
-    description: "Whenever this hero's partner lands an attack, the partner gains 10 Attack.",
+    description: "When this hero's partner lands an attack, the partner gains 10 Attack.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'ally', subjectRole: 'source' },
@@ -2290,7 +2290,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   glut: {
     id: 'glut',
     name: 'Feast+',
-    description: 'Whenever this hero lands a finishing blow, it heals to full and gains 20 Attack.',
+    description: 'When this hero lands a finishing blow, it heals to full and gains 20 Attack.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
@@ -2300,7 +2300,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   glutRage: {
     id: 'glutRage',
     name: 'Feast+',
-    description: 'Whenever this hero lands a finishing blow, it gains 20 Attack.',
+    description: 'When this hero lands a finishing blow, it gains 20 Attack.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
@@ -2320,7 +2320,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   hemophage: {
     id: 'hemophage',
     name: 'Sanguine+',
-    description: 'Whenever an enemy takes Bleed damage, this hero heals for 1.5× that amount and gains 10 Attack.',
+    description: 'When an enemy takes Bleed damage, this hero heals for 1.5× that amount and gains 10 Attack.',
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Bleed', kind: 'damage' } },
@@ -2330,7 +2330,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   hemophageFrenzy: {
     id: 'hemophageFrenzy',
     name: 'Sanguine+',
-    description: 'Whenever an enemy takes Bleed damage, this hero gains 10 Attack.',
+    description: 'When an enemy takes Bleed damage, this hero gains 10 Attack.',
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Bleed', kind: 'damage' } },
@@ -2341,7 +2341,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   dragonsDream: {
     id: 'dragonsDream',
     name: 'Slumber+',
-    description: 'Whenever this hero Rests, it gains Ambush 90.',
+    description: 'When this hero Rests, it gains Ambush 90.',
     // Slumber's 45, doubled: the Rest the rules force becomes the wind-up for the biggest swing in the run.
     reactive: {
       hook: 'Rested',
@@ -2364,7 +2364,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   deathtrap: {
     id: 'deathtrap',
     name: 'Poised+',
-    description: 'Whenever this hero uses a move that deals no damage, its next attack goes at +1 priority and gains Ambush 30.',
+    description: 'When this hero uses a move that deals no damage, its next attack goes at +1 priority and gains Ambush 30.',
     reactive: {
       hook: 'MoveUsed',
       condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
@@ -2374,7 +2374,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   deathtrapEdge: {
     id: 'deathtrapEdge',
     name: 'Poised+',
-    description: 'Whenever this hero uses a move that deals no damage, it gains Ambush 30.',
+    description: 'When this hero uses a move that deals no damage, it gains Ambush 30.',
     reactive: {
       hook: 'MoveUsed',
       condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
@@ -2385,7 +2385,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   nettlestorm: {
     id: 'nettlestorm',
     name: 'Nettle+',
-    description: 'Whenever this hero lands a hit, its target loses 10 Attack.',
+    description: 'When this hero lands a hit, its target loses 10 Attack.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -2395,7 +2395,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   hearthwall: {
     id: 'hearthwall',
     name: 'Shelter+',
-    description: "Whenever this hero's partner is hit, the partner gains Shield 20.",
+    description: "When this hero's partner is hit, the partner gains Shield 20.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'ally' },
@@ -2426,7 +2426,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   bottomlessDish: {
     id: 'bottomlessDish',
     name: 'Brimming+',
-    description: 'Whenever this hero is healed, it gains 20 Attack.',
+    description: 'When this hero is healed, it gains 20 Attack.',
     reactive: {
       hook: 'Healed',
       condition: { relativeTo: 'self' },
@@ -2446,7 +2446,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   pandemonium: {
     id: 'pandemonium',
     name: 'Slapstick+',
-    description: 'Whenever this hero lands a hit, there is a 60% chance a random enemy is Dazed.',
+    description: 'When this hero lands a hit, there is a 60% chance a random enemy is Dazed.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -2457,7 +2457,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   palimpsest: {
     id: 'palimpsest',
     name: 'Inscribe+',
-    description: 'Whenever this hero lands a hit, its target loses 10 Wisdom.',
+    description: 'When this hero lands a hit, its target loses 10 Wisdom.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -2498,7 +2498,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   hardball: {
     id: 'hardball',
     name: 'Curl+',
-    description: 'Whenever this hero takes damage, it gains 10 Defense.',
+    description: 'When this hero takes damage, it gains 10 Defense.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -2519,7 +2519,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   calamity: {
     id: 'calamity',
     name: 'Bad Luck+',
-    description: 'Whenever this hero lands a hit, a random enemy loses 10 Attack and 10 Intelligence.',
+    description: 'When this hero lands a hit, a random enemy loses 10 Attack and 10 Intelligence.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -2529,7 +2529,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   kitsunebi: {
     id: 'kitsunebi',
     name: 'Foxfire+',
-    description: 'Whenever this hero lands a Spirit attack, its target gains Burn 7%.',
+    description: 'When this hero lands a Spirit attack, its target gains Burn 7%.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Spirit' } },
@@ -2539,7 +2539,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   showstopper: {
     id: 'showstopper',
     name: 'Fire-Breather+',
-    description: 'Whenever this hero lands a Fire attack, both active enemies gain Burn 4%.',
+    description: 'When this hero lands a Fire attack, both active enemies gain Burn 4%.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Fire' } },
@@ -2550,7 +2550,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   seaOfTears: {
     id: 'seaOfTears',
     name: 'Salt Tears+',
-    description: 'Whenever this hero grants Renew, it washes every affliction off whoever receives it.',
+    description: 'When this hero grants Renew, it washes every affliction off whoever receives it.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Renew' } },
@@ -2560,7 +2560,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   moonlessGlide: {
     id: 'moonlessGlide',
     name: 'Silent Wings+',
-    description: 'Whenever this hero Freezes an enemy, it gains Frost Force 20.',
+    description: 'When this hero Freezes an enemy, it gains Frost Force 20.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Freeze' } },
@@ -2570,7 +2570,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   fullBloom: {
     id: 'fullBloom',
     name: 'Unfurl+',
-    description: 'Whenever this hero gains Renew, it gains 20 Intelligence.',
+    description: 'When this hero gains Renew, it gains 20 Intelligence.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew' } },
@@ -2581,7 +2581,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   cumulonimbus: {
     id: 'cumulonimbus',
     name: 'Anvil Cloud+',
-    description: 'Whenever this hero takes damage, a random enemy becomes Conducting.',
+    description: 'When this hero takes damage, a random enemy becomes Conducting.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -2602,7 +2602,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   sinkhole: {
     id: 'sinkhole',
     name: 'Undermine+',
-    description: 'Whenever this hero lands a Stone attack, its target loses 20 Defense.',
+    description: 'When this hero lands a Stone attack, its target loses 20 Defense.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Stone' } },
@@ -2632,7 +2632,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   murderOfCrows: {
     id: 'murderOfCrows',
     name: 'Pecking Crow+',
-    description: 'Whenever this hero uses a move that deals no damage, a random enemy loses 10% of its max HP.',
+    description: 'When this hero uses a move that deals no damage, a random enemy loses 10% of its max HP.',
     reactive: {
       hook: 'MoveUsed',
       condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
@@ -2643,7 +2643,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   satori: {
     id: 'satori',
     name: 'Foresight+',
-    description: 'Whenever this hero takes damage, its next attack goes at +1 priority and gains Ambush 30.',
+    description: 'When this hero takes damage, its next attack goes at +1 priority and gains Ambush 30.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -2653,7 +2653,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   satoriStrike: {
     id: 'satoriStrike',
     name: 'Foresight+',
-    description: 'Whenever this hero takes damage, it gains Ambush 30.',
+    description: 'When this hero takes damage, it gains Ambush 30.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -2663,7 +2663,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   runesAblaze: {
     id: 'runesAblaze',
     name: 'Etched Runes+',
-    description: 'Whenever this hero uses a move that deals no damage, it gains Ambush 40.',
+    description: 'When this hero uses a move that deals no damage, it gains Ambush 40.',
     reactive: {
       hook: 'MoveUsed',
       condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
@@ -2693,7 +2693,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   graveChorus: {
     id: 'graveChorus',
     name: 'Death Wail+',
-    description: 'Whenever this hero lands a Spirit attack, both active enemies lose 10 Attack and 10 Intelligence.',
+    description: 'When this hero lands a Spirit attack, both active enemies lose 10 Attack and 10 Intelligence.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Spirit' } },
@@ -2723,7 +2723,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   calculus: {
     id: 'calculus',
     name: 'Tally+',
-    description: 'Whenever an enemy attacks, this hero gains 10 Intelligence.',
+    description: 'When an enemy attacks, this hero gains 10 Intelligence.',
     reactive: {
       hook: 'MoveUsed',
       condition: { relativeTo: 'enemy', eventFieldEquals: { damaging: 'true' } },
@@ -2733,7 +2733,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   blur: {
     id: 'blur',
     name: 'Flit+',
-    description: 'Whenever this hero attacks, it gains Ambush 20 for the next one.',
+    description: 'When this hero attacks, it gains Ambush 20 for the next one.',
     reactive: {
       hook: 'MoveUsed',
       condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'true' } },
@@ -2743,7 +2743,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   serene: {
     id: 'serene',
     name: 'Unbothered+',
-    description: 'Whenever an enemy lands a hit, that enemy loses 10 Attack and 10 Intelligence.',
+    description: 'When an enemy lands a hit, that enemy loses 10 Attack and 10 Intelligence.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'enemy', subjectRole: 'source' },

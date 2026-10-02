@@ -266,7 +266,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
     case 'scrollReward':
       return {
         kind: 'Reward · Growth',
-        facts: [{ glyph: 'scroll', label: 'Mastery', value: `+${SCROLL_CACHE_COUNT}`, note: `divided as you like — ${MASTERY_EVOLUTION} Evolves` }],
+        facts: [{ glyph: 'scroll', label: 'Mastery', value: `+${SCROLL_CACHE_COUNT}`, note: `divided as you like · evolves at ${MASTERY_EVOLUTION}` }],
         odds: null,
         about: `${SCROLL_CACHE_COUNT} Mastery pips, one tap at a time — all on one hero or spread across the roster.`,
         terms: [TERMS.mastery],
@@ -328,7 +328,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
     case 'scribeReward':
       return {
         kind: 'Reward · Growth',
-        facts: [{ glyph: 'scroll', label: 'Mastery', value: `+${SCRIBE_PIPS_EACH}`, note: `to ${SCRIBE_PICKS} heroes — ${MASTERY_EVOLUTION} Evolves` }],
+        facts: [{ glyph: 'scroll', label: 'Mastery', value: `+${SCRIBE_PIPS_EACH}`, note: `to ${SCRIBE_PICKS} heroes · evolves at ${MASTERY_EVOLUTION}` }],
         odds: null,
         about: `${SCRIBE_PICKS} different heroes take ${SCRIBE_PIPS_EACH} Mastery pips each.`,
         terms: [TERMS.mastery],

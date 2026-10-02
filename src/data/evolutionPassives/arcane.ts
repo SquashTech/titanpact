@@ -5,7 +5,7 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
   capacitor: {
     id: 'capacitor',
     name: 'Capacitor',
-    description: 'Whenever this hero Rests, a random enemy starts Conducting.',
+    description: 'When this hero Rests, a random enemy starts Conducting.',
     reactive: {
       hook: 'Rested',
       condition: { relativeTo: 'self' },
@@ -16,7 +16,7 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
   apogee: {
     id: 'apogee',
     name: 'Apogee',
-    description: 'Whenever this hero knocks an enemy out, it gains 75 Mana, past its pool.',
+    description: 'When this hero knocks an enemy out, it gains 75 Mana, past its pool.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
@@ -27,7 +27,7 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
   foreordained: {
     id: 'foreordained',
     name: 'Foreordained',
-    description: 'Whenever this hero uses a move that deals no damage, set Stasis Field.',
+    description: 'When this hero uses a move that deals no damage, set Stasis Field.',
     reactive: {
       hook: 'MoveUsed',
       condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
@@ -47,7 +47,7 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
   mirage: {
     id: 'mirage',
     name: 'Mirage',
-    description: 'Whenever this hero takes damage, both active enemies lose 10 Attack and 10 Intelligence.',
+    description: 'When this hero takes damage, both active enemies lose 10 Attack and 10 Intelligence.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -58,7 +58,7 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
   crescendo: {
     id: 'crescendo',
     name: 'Crescendo',
-    description: 'Whenever this hero lands a hit, it gains 10 Intelligence.',
+    description: 'When this hero lands a hit, it gains 10 Intelligence.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -80,7 +80,7 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
   bladeChannel: {
     id: 'bladeChannel',
     name: 'Blade Channel',
-    description: 'Whenever this hero lands a hit, it gains 15 Mana, past its pool.',
+    description: 'When this hero lands a hit, it gains 15 Mana, past its pool.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -102,7 +102,7 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
   tithe: {
     id: 'tithe',
     name: 'Tithe',
-    description: 'Whenever an enemy uses a move, this hero gains 10 Mana, past its pool.',
+    description: 'When an enemy uses a move, this hero gains 10 Mana, past its pool.',
     reactive: {
       hook: 'MoveUsed',
       condition: { relativeTo: 'enemy' },
@@ -112,7 +112,7 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
   barbedLock: {
     id: 'barbedLock',
     name: 'Barbed Lock',
-    description: 'Whenever this hero takes damage, both active enemies start Bleeding.',
+    description: 'When this hero takes damage, both active enemies start Bleeding.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },

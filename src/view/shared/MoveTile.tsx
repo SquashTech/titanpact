@@ -405,8 +405,8 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
 
   if (move.cleanses) parts.push(move.cleanseCount != null ? `Cleanses ${move.cleanseCount} at random` : 'Cleanses');
 
-  if (move.manaDiscountOnUse) parts.push(`−${move.manaDiscountOnUse} MP each use`);
-  if (move.manaCostGainOnUse) parts.push(`+${move.manaCostGainOnUse} MP each use`);
+  if (move.manaDiscountOnUse) parts.push(`costs ${move.manaDiscountOnUse} less each use`);
+  if (move.manaCostGainOnUse) parts.push(`costs ${move.manaCostGainOnUse} more each use`);
 
   if (move.randomPriority?.length) {
     const brackets = [...move.randomPriority].sort((a, b) => a - b).map((p) => (p >= 0 ? `+${p}` : `${p}`));

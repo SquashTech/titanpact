@@ -15,7 +15,7 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
   rollingSnow: {
     id: 'rollingSnow',
     name: 'Rolling Snow',
-    description: 'Whenever this hero knocks out an enemy, it gains 20 Attack and 20 Speed.',
+    description: 'When this hero knocks out an enemy, it gains 20 Attack and 20 Speed.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
@@ -48,7 +48,7 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
   portcullis: {
     id: 'portcullis',
     name: 'Portcullis',
-    description: 'Whenever this hero becomes Provoking, it gains Shield 30.',
+    description: 'When this hero becomes Provoking, it gains Shield 30.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Provoke' } },
@@ -59,7 +59,7 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
   wintersWeight: {
     id: 'wintersWeight',
     name: "Winter's Weight",
-    description: 'Whenever this hero lands a Frost attack, there is a 30% chance its target is Frozen.',
+    description: 'When this hero lands a Frost attack, there is a 30% chance its target is Frozen.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Frost' } },
@@ -71,7 +71,7 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
   matriarchsFury: {
     id: 'matriarchsFury',
     name: "Matriarch's Fury",
-    description: "Whenever this hero's partner takes damage, this hero gains 10 Attack.",
+    description: "When this hero's partner takes damage, this hero gains 10 Attack.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'ally' },
@@ -89,7 +89,7 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
   owlsGaze: {
     id: 'owlsGaze',
     name: "Owl's Gaze",
-    description: 'Whenever this hero lands a magical attack, its target loses 10 Wisdom.',
+    description: 'When this hero lands a magical attack, its target loses 10 Wisdom.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'magical' } },

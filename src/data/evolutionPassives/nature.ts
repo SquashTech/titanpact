@@ -27,7 +27,7 @@ export const naturePathPassives: Record<string, PassiveDefinition> = {
   deadLeaf: {
     id: 'deadLeaf',
     name: 'Dead Leaf',
-    description: 'Whenever this hero knocks an enemy out, both active enemies are Haunted.',
+    description: 'When this hero knocks an enemy out, both active enemies are Haunted.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
@@ -38,7 +38,7 @@ export const naturePathPassives: Record<string, PassiveDefinition> = {
   sporeRing: {
     id: 'sporeRing',
     name: 'Spore Ring',
-    description: 'Whenever this hero grants Renew, whoever receives it gains 10 Attack and 10 Intelligence.',
+    description: 'When this hero grants Renew, whoever receives it gains 10 Attack and 10 Intelligence.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Renew' } },
@@ -49,7 +49,7 @@ export const naturePathPassives: Record<string, PassiveDefinition> = {
   graveglow: {
     id: 'graveglow',
     name: 'Graveglow',
-    description: 'Whenever this hero Poisons an enemy, that enemy is Haunted.',
+    description: 'When this hero Poisons an enemy, that enemy is Haunted.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Poison' } },
@@ -60,7 +60,7 @@ export const naturePathPassives: Record<string, PassiveDefinition> = {
   petalStorm: {
     id: 'petalStorm',
     name: 'Petal Storm',
-    description: 'Whenever this hero lands a Nature attack, its target loses 10 Wisdom.',
+    description: 'When this hero lands a Nature attack, its target loses 10 Wisdom.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Nature' } },
@@ -71,7 +71,7 @@ export const naturePathPassives: Record<string, PassiveDefinition> = {
   moonwell: {
     id: 'moonwell',
     name: 'Moonwell',
-    description: "Whenever this hero's Renew heals it, it gains 10 Mana, past its pool.",
+    description: "When this hero's Renew heals it, it gains 10 Mana, past its pool.",
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew', kind: 'heal' } },

@@ -5,7 +5,7 @@ export const mechPathPassives: Record<string, PassiveDefinition> = {
   ignition: {
     id: 'ignition',
     name: 'Ignition',
-    description: 'Whenever this hero sets off a Conduct, its target gains Burn 15%.',
+    description: 'When this hero sets off a Conduct, its target gains Burn 15%.',
     reactive: {
       hook: 'StatusDetonated',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Conduct' } },
@@ -38,7 +38,7 @@ export const mechPathPassives: Record<string, PassiveDefinition> = {
   heatSink: {
     id: 'heatSink',
     name: 'Heat Sink',
-    description: "Whenever this hero's partner is Burned, the partner gains Renew 10%.",
+    description: "When this hero's partner is Burned, the partner gains Renew 10%.",
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'ally', eventFieldEquals: { statusId: 'Burn' } },
@@ -55,7 +55,7 @@ export const mechPathPassives: Record<string, PassiveDefinition> = {
   recitation: {
     id: 'recitation',
     name: 'Recitation',
-    description: 'Whenever this hero lands a magical attack, both active enemies lose 5 Wisdom.',
+    description: 'When this hero lands a magical attack, both active enemies lose 5 Wisdom.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'magical' } },
@@ -66,7 +66,7 @@ export const mechPathPassives: Record<string, PassiveDefinition> = {
   mainspring: {
     id: 'mainspring',
     name: 'Mainspring',
-    description: 'Whenever this hero attacks, it gets back half the mana it spent.',
+    description: 'When this hero attacks, it gets back half the mana it spent.',
     reactive: {
       hook: 'MoveUsed',
       condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'true' } },
@@ -76,7 +76,7 @@ export const mechPathPassives: Record<string, PassiveDefinition> = {
   nectar: {
     id: 'nectar',
     name: 'Nectar',
-    description: 'Whenever this hero lands an attack, it heals 5% of its max HP.',
+    description: 'When this hero lands an attack, it heals 5% of its max HP.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },

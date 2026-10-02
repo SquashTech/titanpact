@@ -116,11 +116,11 @@ export function MentorNodeScreen({ run, onRunChange, onContinue }: Props) {
                 disabled={!teachable || !!lesson}
                 onActivate={() => teach(entry)}
                 onPreview={() => setPreviewEntry({ hero, entry })}
-                ariaLabel={`${hero.name}, level ${levelOf(entry)} — ${teachable ? `${pool} moves to draw from, ${full ? 'replaces one' : 'learns outright'}` : 'nothing left to teach'}`}
+                ariaLabel={`${hero.name}, level ${levelOf(entry)} — ${teachable ? `${pool} moves to draw from, ${full ? 'kit full' : 'has room'}` : 'nothing left to teach'}`}
                 detail={
                   teachable ? (
                     <span className="tutor-fit">
-                      {pool} {pool === 1 ? 'move' : 'moves'} · {full ? 'replaces one' : 'learns outright'}
+                      {pool} {pool === 1 ? 'move' : 'moves'} · {full ? 'kit full' : 'has room'}
                     </span>
                   ) : undefined
                 }

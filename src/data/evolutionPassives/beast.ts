@@ -5,7 +5,7 @@ export const beastPathPassives: Record<string, PassiveDefinition> = {
   bedrockHide: {
     id: 'bedrockHide',
     name: 'Bedrock Hide',
-    description: 'Whenever this hero takes damage, it gains Stone Force 10.',
+    description: 'When this hero takes damage, it gains Stone Force 10.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -15,7 +15,7 @@ export const beastPathPassives: Record<string, PassiveDefinition> = {
   wellFed: {
     id: 'wellFed',
     name: 'Well Fed',
-    description: 'Whenever this hero gains Renew, it gains 10 Attack.',
+    description: 'When this hero gains Renew, it gains 10 Attack.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew' } },
@@ -27,7 +27,7 @@ export const beastPathPassives: Record<string, PassiveDefinition> = {
   mesmerize: {
     id: 'mesmerize',
     name: 'Mesmerize',
-    description: "Whenever an enemy's Intelligence drops, that enemy is Dazed.",
+    description: "When an enemy's Intelligence drops, that enemy is Dazed.",
     reactive: {
       hook: 'StatChanged',
       condition: { relativeTo: 'enemy', eventFieldEquals: { stat: 'intelligence' }, eventFieldNegative: 'delta' },
@@ -37,7 +37,7 @@ export const beastPathPassives: Record<string, PassiveDefinition> = {
   graveMark: {
     id: 'graveMark',
     name: 'Grave Mark',
-    description: 'Whenever this hero applies Bleed, that target is also Haunted.',
+    description: 'When this hero applies Bleed, that target is also Haunted.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Bleed' } },
@@ -47,7 +47,7 @@ export const beastPathPassives: Record<string, PassiveDefinition> = {
   troopLeader: {
     id: 'troopLeader',
     name: 'Troop Leader',
-    description: "Whenever this hero attacks, its partner gains 10 Attack and 10 Speed.",
+    description: "When this hero attacks, its partner gains 10 Attack and 10 Speed.",
     reactive: {
       hook: 'MoveUsed',
       condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'true' } },
@@ -68,7 +68,7 @@ export const beastPathPassives: Record<string, PassiveDefinition> = {
   broadBack: {
     id: 'broadBack',
     name: 'Broad Back',
-    description: "Whenever this hero's partner takes damage, the partner gains Shield 15.",
+    description: "When this hero's partner takes damage, the partner gains Shield 15.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'ally' },

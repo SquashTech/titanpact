@@ -3,7 +3,7 @@ import { rosterHeroes } from '../../data/content';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
 import { levelOf, type HeroLevelUp } from '../../run/growth';
-import { availableEvolution, entryBandRank, levelMovePool, pendingScheduleEntry, pendingSignature, scheduleFor, currentEvolutionPathId } from '../../run/progression';
+import { availableEvolution, levelMovePool, pendingScheduleEntry, pendingSignature, currentEvolutionPathId } from '../../run/progression';
 import { companionTierStep } from '../../run/companion';
 import type { RosterEntry, RunState } from '../../run/state';
 import { NodeSky, NODE_TINT_VITAL } from '../shared/NodeStage';
@@ -122,12 +122,7 @@ interface OfferBoxProps {
 
 /** The box a level's offer ends in: a receipt below the cap, the replace question at it. */
 function OfferBox({ run, entry, offer, onResolve, onClose }: OfferBoxProps) {
-  const hero = rosterHeroes[entry.heroId];
-  const level = levelOf(entry);
-  const band = ['Early', 'Mid', 'Late'][entryBandRank(hero, entry) - 1];
-  const schedule = scheduleFor(hero);
-  const opened = level >= schedule.lateLevel ? schedule.lateLevel : level >= schedule.midLevel ? schedule.midLevel : null;
-  const eyebrow = `Level ${level} — ${band} band${opened === level ? ', just opened' : ''}`;
+  const eyebrow = `Level ${levelOf(entry)}`;
   return offer.learned ? (
     <MoveLearnedOverlay run={run} entry={entry} moveId={offer.moveId} eyebrow={eyebrow} onClose={onClose} />
   ) : (

@@ -117,7 +117,7 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
   const overflowEntry = flow.overflow ? (run.roster.find((r) => r.rosterId === flow.overflow!.rosterId) ?? null) : null;
   const masteredEntry = flow.mastered ? (run.roster.find((r) => r.rosterId === flow.mastered!.rosterId) ?? null) : null;
 
-  const milestones = `${MASTERY_EVOLUTION} Evolves · ${MASTERY_CAP} masters the innate`;
+  const milestones = `Evolves at ${MASTERY_EVOLUTION} · Innate grows at ${MASTERY_CAP}`;
   const nobody = `Every hero is already at ${MASTERY_CAP} Mastery — there is nobody left to teach.`;
 
   return (

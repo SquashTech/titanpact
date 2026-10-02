@@ -6,7 +6,7 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
   rekindle: {
     id: 'rekindle',
     name: 'Rekindle',
-    description: 'Whenever this hero lands a Fire attack on a Burning foe, that foe gains Burn 10%.',
+    description: 'When this hero lands a Fire attack on a Burning foe, that foe gains Burn 10%.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Fire' }, eventTargetHasStatus: 'Burn' },
@@ -17,7 +17,7 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
   emberVeil: {
     id: 'emberVeil',
     name: 'Ember Veil',
-    description: 'Whenever this hero afflicts Burn, it gains Shield 20.',
+    description: 'When this hero afflicts Burn, it gains Shield 20.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Burn' } },
@@ -28,7 +28,7 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
   witchsBrew: {
     id: 'witchsBrew',
     name: "Witch's Brew",
-    description: 'Whenever an enemy takes Burn damage, it gains Poison 5.',
+    description: 'When an enemy takes Burn damage, it gains Poison 5.',
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Burn', kind: 'damage' } },
@@ -50,7 +50,7 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
   funeralPyre: {
     id: 'funeralPyre',
     name: 'Funeral Pyre',
-    description: 'Whenever this hero stands at 1 HP instead of being knocked out, both active enemies gain Burn 20%.',
+    description: 'When this hero stands at 1 HP instead of being knocked out, both active enemies gain Burn 20%.',
     reactive: {
       hook: 'Endured',
       condition: { relativeTo: 'self' },
@@ -68,7 +68,7 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
   footlights: {
     id: 'footlights',
     name: 'Footlights',
-    description: 'Whenever this hero lands a Fire attack, its target is Dazed 25% of the time.',
+    description: 'When this hero lands a Fire attack, its target is Dazed 25% of the time.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Fire' } },

@@ -5,7 +5,7 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
   swell: {
     id: 'swell',
     name: 'Swell',
-    description: 'Whenever this hero lands a Water attack, it gains 5 Attack, 5 Intelligence and 5 Speed.',
+    description: 'When this hero lands a Water attack, it gains 5 Attack, 5 Intelligence and 5 Speed.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
@@ -16,7 +16,7 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
   plating: {
     id: 'plating',
     name: 'Plating',
-    description: 'Whenever this hero gains Shield, it gains 10 Defense.',
+    description: 'When this hero gains Shield, it gains 10 Defense.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Shield' } },
@@ -27,7 +27,7 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
   tidalMass: {
     id: 'tidalMass',
     name: 'Tidal Mass',
-    description: 'Whenever this hero uses a move, it gains Water Force equal to a fifth of the Mana it spent.',
+    description: 'When this hero uses a move, it gains Water Force equal to a fifth of the Mana it spent.',
     reactive: {
       hook: 'MoveUsed',
       condition: { relativeTo: 'self' },
@@ -38,7 +38,7 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
   stormDrinker: {
     id: 'stormDrinker',
     name: 'Storm Drinker',
-    description: 'Whenever this hero sets off Conduct, it gains 30 Mana, past its pool.',
+    description: 'When this hero sets off Conduct, it gains 30 Mana, past its pool.',
     reactive: {
       hook: 'StatusDetonated',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Conduct' } },
@@ -60,7 +60,7 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
   sharedDish: {
     id: 'sharedDish',
     name: 'Shared Dish',
-    description: 'Whenever this hero is healed, its partner gains 10 Attack and 10 Intelligence.',
+    description: 'When this hero is healed, its partner gains 10 Attack and 10 Intelligence.',
     reactive: {
       hook: 'Healed',
       condition: { relativeTo: 'self' },
@@ -71,7 +71,7 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
   snappingJaw: {
     id: 'snappingJaw',
     name: 'Snapping Jaw',
-    description: 'Whenever this hero lands a Water attack, its target starts Bleeding.',
+    description: 'When this hero lands a Water attack, its target starts Bleeding.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
@@ -82,7 +82,7 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
   highWater: {
     id: 'highWater',
     name: 'High Water',
-    description: 'Whenever this hero grants Renew, whoever receives it also gains Shield 20.',
+    description: 'When this hero grants Renew, whoever receives it also gains Shield 20.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Renew' } },
@@ -93,7 +93,7 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
   drownedGift: {
     id: 'drownedGift',
     name: 'Drowned Gift',
-    description: "Whenever a hit knocks out a foe, this hero's partner gains Renew 10%.",
+    description: "When a hit knocks out a foe, this hero's partner gains Renew 10%.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'enemy', finishingBlow: true },

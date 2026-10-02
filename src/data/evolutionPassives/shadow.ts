@@ -5,7 +5,7 @@ export const shadowPathPassives: Record<string, PassiveDefinition> = {
   festering: {
     id: 'festering',
     name: 'Festering',
-    description: 'Whenever this hero hits a Poisoned foe, that foe gains Poison 10.',
+    description: 'When this hero hits a Poisoned foe, that foe gains Poison 10.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Poison' },
@@ -16,7 +16,7 @@ export const shadowPathPassives: Record<string, PassiveDefinition> = {
   ashenPyre: {
     id: 'ashenPyre',
     name: 'Pyre',
-    description: 'Whenever an enemy takes Poison damage, it gains Burn 10%.',
+    description: 'When an enemy takes Poison damage, it gains Burn 10%.',
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Poison', kind: 'damage' } },
@@ -38,7 +38,7 @@ export const shadowPathPassives: Record<string, PassiveDefinition> = {
   misfortune: {
     id: 'misfortune',
     name: 'Misfortune',
-    description: 'Whenever this hero lands a hit, every move its target holds costs 10 more Mana for the rest of the fight, up to 30.',
+    description: 'When this hero lands a hit, every move its target holds costs 10 more Mana for the rest of the fight, up to 30.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -61,7 +61,7 @@ export const shadowPathPassives: Record<string, PassiveDefinition> = {
   stillWater: {
     id: 'stillWater',
     name: 'Still Water',
-    description: 'Whenever this hero Rests, it gains Ambush 40.',
+    description: 'When this hero Rests, it gains Ambush 40.',
     reactive: {
       hook: 'Rested',
       condition: { relativeTo: 'self' },
@@ -72,7 +72,7 @@ export const shadowPathPassives: Record<string, PassiveDefinition> = {
   heldUnder: {
     id: 'heldUnder',
     name: 'Held Under',
-    description: 'Whenever this hero lands a hit, its target loses 10 Defense and 10 Speed.',
+    description: 'When this hero lands a hit, its target loses 10 Defense and 10 Speed.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -83,7 +83,7 @@ export const shadowPathPassives: Record<string, PassiveDefinition> = {
   witchmark: {
     id: 'witchmark',
     name: 'Witchmark',
-    description: 'Whenever a move lowers an enemy stat, that enemy gains Poison 5.',
+    description: 'When a move lowers an enemy stat, that enemy gains Poison 5.',
     reactive: {
       hook: 'StatChanged',
       condition: { relativeTo: 'enemy', eventFieldNegative: 'delta' },
@@ -94,7 +94,7 @@ export const shadowPathPassives: Record<string, PassiveDefinition> = {
   bitterBrew: {
     id: 'bitterBrew',
     name: 'Bitter Brew',
-    description: 'Whenever this hero afflicts Poison, its partner gains Renew 5%.',
+    description: 'When this hero afflicts Poison, its partner gains Renew 5%.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Poison' } },

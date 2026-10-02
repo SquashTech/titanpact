@@ -27,7 +27,7 @@ export const stormPathPassives: Record<string, PassiveDefinition> = {
   hailstrike: {
     id: 'hailstrike',
     name: 'Hailstrike',
-    description: 'Whenever this hero sets off Conduct, its target is Frozen.',
+    description: 'When this hero sets off Conduct, its target is Frozen.',
     reactive: {
       hook: 'StatusDetonated',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Conduct' } },
@@ -38,7 +38,7 @@ export const stormPathPassives: Record<string, PassiveDefinition> = {
   anvilCrown: {
     id: 'anvilCrown',
     name: 'Anvil Crown',
-    description: 'Whenever this hero takes damage, it gains 10 Intelligence.',
+    description: 'When this hero takes damage, it gains 10 Intelligence.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -49,7 +49,7 @@ export const stormPathPassives: Record<string, PassiveDefinition> = {
   sunbreak: {
     id: 'sunbreak',
     name: 'Sunbreak',
-    description: "Whenever an enemy becomes Conducting, this hero's partner heals 10% of its max HP.",
+    description: "When an enemy becomes Conducting, this hero's partner heals 10% of its max HP.",
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Conduct' } },
@@ -60,7 +60,7 @@ export const stormPathPassives: Record<string, PassiveDefinition> = {
   updraft: {
     id: 'updraft',
     name: 'Updraft',
-    description: "Whenever this hero lands an attack, its partner's next attack goes at +1 priority.",
+    description: "When this hero lands an attack, its partner's next attack goes at +1 priority.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -71,7 +71,7 @@ export const stormPathPassives: Record<string, PassiveDefinition> = {
   gildedString: {
     id: 'gildedString',
     name: 'Gilded String',
-    description: "Whenever this hero uses a move that deals no damage, its partner gains 15 Attack and 15 Intelligence.",
+    description: "When this hero uses a move that deals no damage, its partner gains 15 Attack and 15 Intelligence.",
     reactive: {
       hook: 'MoveUsed',
       condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },

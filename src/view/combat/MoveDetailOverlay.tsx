@@ -382,7 +382,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
             className="move-detail-stat move-detail-stat-heal"
             title={
               healTerms
-                ? `${healTerms.healPower} HealPower × ${healTerms.wisdomMult.toFixed(2)} Wisdom${healTerms.stab > 1 ? ' × 1.25 STAB' : ''}${healTerms.fieldMult !== 1 ? ` × ${healTerms.fieldMult} ${activeFieldName}` : ''}`
+                ? `${healTerms.healPower} HealPower × ${healTerms.wisdomMult.toFixed(2)} Wisdom${healTerms.stab > 1 ? ' × 1.25 same type' : ''}${healTerms.fieldMult !== 1 ? ` × ${healTerms.fieldMult} ${activeFieldName}` : ''}`
                 : undefined
             }
           >
@@ -403,7 +403,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
           <span className="move-detail-stat move-detail-stat-stab" title="Same-Type Attack Bonus">
             <ElementGlyph type={move.type} />
             <strong>×1.25</strong>
-            <span className="move-detail-unit">STAB</span>
+            <span className="move-detail-unit">same type</span>
           </span>
         )}
         {/* The LIVE bracket (conditionalPriority folded in), so a base-0 move can appear here. */}
@@ -647,7 +647,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
             <EffectRow
               glyph={<StatGlyph stat="hp" />}
               text={`Heals ${Math.round(move.drainPercent * 100)}% of damage dealt`}
-              note="unscaled by Wisdom or STAB"
+              note="unscaled by Wisdom or type"
             />
           )}
           {move.offStatOverride && (
@@ -739,7 +739,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
               glyph={<ElementGlyph type={move.type} />}
               color={getTypeColor(move.type)}
               text="Wears the user's type"
-              note="Class move · always STAB"
+              note="Class move · always its own type"
             />
           )}
           {move.manaDiscountOnUse != null && (

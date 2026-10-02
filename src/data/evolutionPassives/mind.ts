@@ -5,7 +5,7 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   inTheGap: {
     id: 'inTheGap',
     name: 'In the Gap',
-    description: 'Whenever its partner takes damage, this hero gains Ambush 20.',
+    description: 'When its partner takes damage, this hero gains Ambush 20.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'ally' },
@@ -15,7 +15,7 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   gorge: {
     id: 'gorge',
     name: 'Gorge',
-    description: 'Whenever this hero knocks an enemy out, it heals half its max HP.',
+    description: 'When this hero knocks an enemy out, it heals half its max HP.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
@@ -26,7 +26,7 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   sealedScript: {
     id: 'sealedScript',
     name: 'Sealed Script',
-    description: "Whenever this hero lands a hit, every move its target holds costs 5 more Mana for the rest of the fight, up to 20.",
+    description: "When this hero lands a hit, every move its target holds costs 5 more Mana for the rest of the fight, up to 20.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -36,7 +36,7 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   sleepwalk: {
     id: 'sleepwalk',
     name: 'Sleepwalk',
-    description: 'Whenever this hero Rests, it heals a quarter of its max HP.',
+    description: 'When this hero Rests, it heals a quarter of its max HP.',
     reactive: {
       hook: 'Rested',
       condition: { relativeTo: 'self' },
@@ -46,7 +46,7 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   stingingCells: {
     id: 'stingingCells',
     name: 'Stinging Cells',
-    description: 'Whenever this hero takes damage, both active enemies gain Poison 5.',
+    description: 'When this hero takes damage, both active enemies gain Poison 5.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -67,7 +67,7 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   setup: {
     id: 'setup',
     name: 'Setup',
-    description: 'Whenever this hero lands a hit, its partner gains Ambush 15.',
+    description: 'When this hero lands a hit, its partner gains Ambush 15.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -77,7 +77,7 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   hubris: {
     id: 'hubris',
     name: 'Hubris',
-    description: "Whenever an enemy's stat rises, it loses 15 Defense and 15 Wisdom.",
+    description: "When an enemy's stat rises, it loses 15 Defense and 15 Wisdom.",
     reactive: {
       hook: 'StatChanged',
       condition: { relativeTo: 'enemy', eventFieldPositive: 'delta' },
@@ -88,7 +88,7 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   stillness: {
     id: 'stillness',
     name: 'Stillness',
-    description: 'Whenever this hero Rests, every affliction on it is washed away.',
+    description: 'When this hero Rests, every affliction on it is washed away.',
     reactive: {
       hook: 'Rested',
       condition: { relativeTo: 'self' },
@@ -98,7 +98,7 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   innerLight: {
     id: 'innerLight',
     name: 'Inner Light',
-    description: 'Whenever this hero takes damage, it heals a quarter of what it lost.',
+    description: 'When this hero takes damage, it heals a quarter of what it lost.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },

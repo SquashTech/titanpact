@@ -5,7 +5,7 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   bury: {
     id: 'bury',
     name: 'Bury',
-    description: 'Whenever this hero lands a Stone attack, its target loses 10 Speed.',
+    description: 'When this hero lands a Stone attack, its target loses 10 Speed.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Stone' } },
@@ -16,7 +16,7 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   gatheringWeight: {
     id: 'gatheringWeight',
     name: 'Gathering Weight',
-    description: 'Whenever this hero uses a move that deals no damage, it gains 10 Defense.',
+    description: 'When this hero uses a move that deals no damage, it gains 10 Defense.',
     reactive: {
       hook: 'MoveUsed',
       condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
@@ -27,7 +27,7 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   nightVigil: {
     id: 'nightVigil',
     name: 'Night Vigil',
-    description: "Whenever this hero's partner is hit, this hero gains Ambush 15.",
+    description: "When this hero's partner is hit, this hero gains Ambush 15.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'ally' },
@@ -38,7 +38,7 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   runicWard: {
     id: 'runicWard',
     name: 'Runic Ward',
-    description: "Whenever a hit lands on this hero's Shield, it gains Mana equal to what the Shield took, past its pool.",
+    description: "When a hit lands on this hero's Shield, it gains Mana equal to what the Shield took, past its pool.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', eventFieldPositive: 'absorbed' },
@@ -49,7 +49,7 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   leeward: {
     id: 'leeward',
     name: 'Leeward',
-    description: 'Whenever this hero takes damage, its partner gains Shield 10.',
+    description: 'When this hero takes damage, its partner gains Shield 10.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -71,7 +71,7 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   desertBody: {
     id: 'desertBody',
     name: 'Desert Body',
-    description: 'Whenever this hero lands a Stone attack, it gains 10 Defense.',
+    description: 'When this hero lands a Stone attack, it gains 10 Defense.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Stone' } },
@@ -104,7 +104,7 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   barrowCall: {
     id: 'barrowCall',
     name: 'Barrow-Call',
-    description: "Whenever a hit lands on this hero's partner's Shield, this hero gains Spirit Force 5.",
+    description: "When a hit lands on this hero's partner's Shield, this hero gains Spirit Force 5.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'ally', eventFieldPositive: 'absorbed' },

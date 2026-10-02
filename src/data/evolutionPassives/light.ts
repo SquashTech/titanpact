@@ -5,7 +5,7 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
   rimeMantle: {
     id: 'rimeMantle',
     name: 'Rime Mantle',
-    description: 'Whenever this hero heals an ally, that ally gains Shield 20.',
+    description: 'When this hero heals an ally, that ally gains Shield 20.',
     reactive: {
       hook: 'Healed',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -16,7 +16,7 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
   answeringBlade: {
     id: 'answeringBlade',
     name: 'Answering Blade',
-    description: 'Whenever this hero takes a hit, it gains Ambush 15, up to 45.',
+    description: 'When this hero takes a hit, it gains Ambush 15, up to 45.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -27,7 +27,7 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
   radiantVessel: {
     id: 'radiantVessel',
     name: 'Radiant Vessel',
-    description: 'Whenever this hero lands a hit, its partner is healed a third of the damage dealt.',
+    description: 'When this hero lands a hit, its partner is healed a third of the damage dealt.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -38,7 +38,7 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
   reverberation: {
     id: 'reverberation',
     name: 'Reverberation',
-    description: 'Whenever this hero heals an ally, both active enemies lose 10 Speed.',
+    description: 'When this hero heals an ally, both active enemies lose 10 Speed.',
     reactive: {
       hook: 'Healed',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -60,7 +60,7 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
   unblemished: {
     id: 'unblemished',
     name: 'Unblemished',
-    description: 'Whenever this hero heals an ally, every affliction on that ally is washed away.',
+    description: 'When this hero heals an ally, every affliction on that ally is washed away.',
     reactive: {
       hook: 'Healed',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -71,7 +71,7 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
   deathwatch: {
     id: 'deathwatch',
     name: 'Deathwatch',
-    description: "Whenever Renew mends one of this hero's allies, a random enemy loses 4% of its max HP.",
+    description: "When Renew mends one of this hero's allies, a random enemy loses 4% of its max HP.",
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'ally', eventFieldEquals: { statusId: 'Renew', kind: 'heal' }, eventFieldPositive: 'amount' },

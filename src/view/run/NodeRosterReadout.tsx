@@ -212,7 +212,7 @@ export function NodeRosterReadout({ type, run }: { type: MapNodeType; run: RunSt
                 <span className="node-roster-figure">
                   <strong>{held}</strong>/{MOVE_CAP}
                 </span>
-                <span className="node-roster-note">{pool.length === 0 ? 'nothing to roll' : held >= MOVE_CAP ? 'replaces one' : 'learns outright'}</span>
+                <span className="node-roster-note">{pool.length === 0 ? 'nothing to roll' : held >= MOVE_CAP ? 'kit full' : 'has room'}</span>
               </Row>
             );
           }

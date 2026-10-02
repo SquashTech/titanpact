@@ -913,8 +913,10 @@ export function buildBeats(
       case 'StatusApplied': {
         const targetName = name(e.combatantId);
         const detail = e.magnitude !== undefined ? ` (${statusAmountText(e.statusId, e.magnitude)})` : e.duration !== undefined ? ` (${e.duration})` : '';
-        // Renew and Ambush are things a hero GAINS; only the rest are afflictions.
-        const verb = statuses[e.statusId]?.positive ? 'gains' : 'is afflicted with';
+        // Renew and Ambush are things a hero GAINS, and so is anything it puts on itself (Provoke);
+        // only the rest are afflictions.
+        const gained = statuses[e.statusId]?.positive || e.sourceCombatantId === e.combatantId;
+        const verb = gained ? 'gains' : 'is afflicted with';
         if (statuses[e.statusId]?.pipeline === 'shield') {
           // A pool, not a mark: the figure is the beat, and at the cap the beat says why (docs/shield.md §5).
           // Laid on several allies at once (Tide Guard, Bastion), it is one beat with a figure each.
@@ -969,7 +971,7 @@ export function buildBeats(
         if (group.length > 1) {
           const who = joinNames(group.map((g) => name(g.combatantId)));
           const same = group.every((g) => g.magnitude === e.magnitude && g.duration === e.duration);
-          const pluralVerb = statuses[e.statusId]?.positive ? 'gain' : 'are afflicted with';
+          const pluralVerb = statuses[e.statusId]?.positive || group.every((g) => g.sourceCombatantId === g.combatantId) ? 'gain' : 'are afflicted with';
           push(
             group,
             `${who} ${pluralVerb} ${e.statusId}${same ? detail : ''}`,
