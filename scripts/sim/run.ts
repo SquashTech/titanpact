@@ -29,7 +29,7 @@ import { generateStarterOptions, STARTER_PICK_COUNT } from '../../src/run/draft'
 import { chooseLocation, drawLocationCandidates, locationChoiceDue, locationForAct } from '../../src/run/locations';
 import { ACT_ONE_LOCATION_ID, locations } from '../../src/data/locations';
 import { encounterScaling } from '../../src/run/difficulty';
-import { encounterXpKind, grantEncounterLevels, levelOf, MAX_LEVEL } from '../../src/run/growth';
+import { encounterXpKind, grantEncounterLevels, grantXp, levelOf, MAX_LEVEL } from '../../src/run/growth';
 import { deckRows, normalizeDeck } from '../../src/run/deck';
 import { generateFinaleEncounter, type Encounter, type EncounterNodeType } from '../../src/run/enemyGen';
 import { pickSquad, requiredSquadSize, STANDARD_SQUAD_SIZE, type Squad } from '../../src/run/squad';
@@ -877,8 +877,14 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
     case 'event':
       return resolveEvent(run, locationId, rng, record);
     case 'shop':
-    case 'muster':
-      return resolveShop(run, nodeType === 'muster', rng, record, options);
+    case 'muster': {
+      // Diagnostic (SIM_VIGIL_XP): the XP a lost act paid, granted at the Vigil — stats only, no schedule payout.
+      const vigilXp = nodeType === 'muster' ? Number(process.env.SIM_VIGIL_XP ?? 0) : 0;
+      // Diagnostic (SIM_VIGIL_BANNER=1): the lost act's Banner, claimed at the Vigil.
+      if (nodeType === 'muster' && process.env.SIM_VIGIL_BANNER === '1') run = claimBanner(run, rng, record);
+      const grown = vigilXp > 0 ? { ...run, roster: run.roster.map((e) => grantXp(e, rosterHeroes[e.heroId], vigilXp, rng).entry) } : run;
+      return resolveShop(grown, nodeType === 'muster', rng, record, options);
+    }
     default:
       return run;
   }
