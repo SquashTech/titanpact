@@ -33502,14 +33502,13 @@ button.star-shop-bundle-face {
   }
 }
 
-/* The head: holder top-left, then the piece, its name and its chips centred under a rarity wash. */
+/* The head, one row: the piece on the left, its name, tier, holder and chips beside it, under a rarity wash. */
 .smithy-work-head {
   position: relative;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 5px;
-  padding: 12px 14px 12px;
+  gap: 12px;
+  padding: 10px 12px;
   background:
     radial-gradient(ellipse 60% 90% at 50% 0%, rgba(var(--rarity-rgb), 0.26), transparent 70%),
     linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3));
@@ -33518,36 +33517,15 @@ button.star-shop-bundle-face {
 }
 
 .smithy-work-holder {
-  position: absolute;
-  top: 8px;
-  left: 8px;
   display: flex;
   align-items: center;
-  gap: 6px;
-}
-
-.smithy-work-plate {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-xs);
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.42), color-mix(in srgb, var(--hero-color) 16%, rgba(0, 0, 0, 0.18)));
-  border: 1px solid color-mix(in srgb, var(--hero-color) 28%, #2b3140);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+  gap: 5px;
 }
 
 .smithy-work-portrait {
-  width: 30px;
-  height: 30px;
+  width: 22px;
+  height: 22px;
   image-rendering: pixelated;
-}
-
-.smithy-work-holder-text {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
 }
 
 .smithy-work-holder-name {
@@ -33565,20 +33543,21 @@ button.star-shop-bundle-face {
 }
 
 .smithy-work-piece {
-  --item-box-size: 72px;
+  --item-box-size: 64px;
   --item-box-pip: 5px;
   display: block;
-  width: 68px;
-  height: 68px;
-  margin-top: 6px;
+  flex: none;
+  width: 60px;
+  height: 60px;
   filter: drop-shadow(0 0 16px color-mix(in srgb, var(--rarity-color) 55%, transparent));
 }
 
 .smithy-work-title {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 2px;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
 }
 
 .smithy-work-name {
@@ -33600,9 +33579,8 @@ button.star-shop-bundle-face {
 .smithy-work-chips {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   gap: 6px;
-  margin-top: 3px;
+  margin-top: 1px;
 }
 
 /* The two slabs, in a page well that scrolls under the head. */
@@ -33825,17 +33803,17 @@ button.star-shop-bundle-face {
 .smithy-elements {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(7, 1fr);
   gap: 5px;
 }
 
 .smithy-element {
   position: relative;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 7px 2px 6px;
+  justify-content: center;
+  height: 36px;
+  padding: 0;
   border-radius: var(--radius-sm);
   background: linear-gradient(180deg, rgba(var(--type-rgb), 0.16), rgba(var(--type-rgb), 0.05)), var(--surface-sunken);
   border: 1px solid color-mix(in srgb, var(--type-color) 30%, var(--border));
@@ -33887,26 +33865,16 @@ button.star-shop-bundle-face {
   }
 }
 
-.smithy-element-name {
-  font-size: 8.5px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--type-color) 55%, #ffffff);
-}
-
+/* The element already bound: a lit pip in the corner. */
 .smithy-element-held {
   position: absolute;
-  top: -5px;
-  right: -3px;
-  padding: 1px 5px;
-  border-radius: var(--radius-pill);
+  top: 3px;
+  right: 3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
   background: var(--type-color);
-  color: #0d0f14;
-  font-size: 7px;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  box-shadow: 0 0 6px var(--type-color);
 }
 
 .smithy-close {

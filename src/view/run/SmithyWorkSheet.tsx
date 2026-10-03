@@ -104,15 +104,6 @@ export function SmithyWorkSheet({ run, hero, entry, itemRef, item, onCommit, onC
       <div className="detail-panel smithy-work" style={style} onClick={(e) => e.stopPropagation()}>
         {/* The piece, on its holder's bench: who wears it, and what it does now. */}
         <div className="smithy-work-head">
-          <span className="smithy-work-holder">
-            <span className="smithy-work-plate">
-              <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(entry)} className="smithy-work-portrait" />
-            </span>
-            <span className="smithy-work-holder-text">
-              <span className="smithy-work-holder-name">{hero.name}</span>
-              <span className="smithy-work-holder-level">Lv {levelOf(entry)} · wears</span>
-            </span>
-          </span>
           <span className="smithy-work-piece">
             <ItemPiece item={item} />
           </span>
@@ -122,9 +113,14 @@ export function SmithyWorkSheet({ run, hero, entry, itemRef, item, onCommit, onC
               {RARITY_LABELS[item.rarity]}
               {heldType ? ` · ${heldType}-bound` : ''}
             </span>
-          </span>
-          <span className="smithy-work-chips">
-            <ItemEffectChips item={item} labelled />
+            <span className="smithy-work-holder">
+              <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(entry)} className="smithy-work-portrait" />
+              <span className="smithy-work-holder-name">{hero.name}</span>
+              <span className="smithy-work-holder-level">Lv {levelOf(entry)} · wears</span>
+            </span>
+            <span className="smithy-work-chips">
+              <ItemEffectChips item={item} labelled />
+            </span>
           </span>
         </div>
 
@@ -196,12 +192,14 @@ export function SmithyWorkSheet({ run, hero, entry, itemRef, item, onCommit, onC
                     style={{ '--type-color': getTypeColor(type), '--type-rgb': getTypeColorRgb(type) } as CSSProperties}
                     disabled={held || !exists}
                     aria-pressed={picked}
+                    aria-label={held ? `${enchantLabel(enchantId)} (bound)` : enchantLabel(enchantId)}
+                    title={enchantLabel(enchantId)}
                     data-sfx={picked ? 'none' : 'ui.select'}
                     onClick={() => setPickedEnchant(picked ? null : enchantId)}
                   >
+                    {/* Glyph only, seven across: the picked element is named on the Bind button. */}
                     <ElementGlyph type={type} className="smithy-element-glyph" />
-                    <span className="smithy-element-name">{enchantLabel(enchantId)}</span>
-                    {held && <span className="smithy-element-held">Bound</span>}
+                    {held && <span className="smithy-element-held" aria-hidden="true" />}
                   </button>
                 );
               })}

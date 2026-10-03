@@ -195,17 +195,6 @@ function ForgeSheet({
     <div className="detail-overlay is-sheet smithy-sheet" onClick={onClose}>
       <div className="detail-panel smithy-work forge-work" style={style} onClick={(e) => e.stopPropagation()}>
         <div className="smithy-work-head">
-          {hero && entry && (
-            <span className="smithy-work-holder">
-              <span className="smithy-work-plate">
-                <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(entry)} className="smithy-work-portrait" />
-              </span>
-              <span className="smithy-work-holder-text">
-                <span className="smithy-work-holder-name">{hero.name}</span>
-                <span className="smithy-work-holder-level">wears</span>
-              </span>
-            </span>
-          )}
           <span className="smithy-work-piece">
             <ItemPiece item={item} />
           </span>
@@ -215,6 +204,13 @@ function ForgeSheet({
               {RARITY_LABELS[item.rarity]}
               {heldEnchant ? ` · ${ENCHANTMENTS[heldEnchant]}-bound` : ''}
             </span>
+            {hero && entry && (
+              <span className="smithy-work-holder">
+                <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(entry)} className="smithy-work-portrait" />
+                <span className="smithy-work-holder-name">{hero.name}</span>
+                <span className="smithy-work-holder-level">wears</span>
+              </span>
+            )}
           </span>
         </div>
 
@@ -268,12 +264,13 @@ function ForgeSheet({
                     style={{ '--type-color': getTypeColor(type), '--type-rgb': getTypeColorRgb(type) } as CSSProperties}
                     disabled={!possible}
                     aria-pressed={isPicked}
+                    aria-label={held ? `${enchantLabel(enchantId)} (bound)` : enchantLabel(enchantId)}
+                    title={enchantLabel(enchantId)}
                     data-sfx={isPicked ? 'none' : 'ui.select'}
                     onClick={() => setPicked(enchantId)}
                   >
                     <ElementGlyph type={type} className="smithy-element-glyph" />
-                    <span className="smithy-element-name">{enchantLabel(enchantId)}</span>
-                    {held && <span className="smithy-element-held">Bound</span>}
+                    {held && <span className="smithy-element-held" aria-hidden="true" />}
                   </button>
                 );
               })}
