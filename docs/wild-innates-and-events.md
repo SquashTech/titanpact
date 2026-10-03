@@ -69,8 +69,8 @@ supersedes §3.3's bite-retypes-now shape.
 - **Weight 5, ungated.**
 - **A star:** clearing a run with a Turned hero on the final roster stars the curse once
   (`Profile.curseStars`, `curse:werewolf` in run history, counted in `totalStars`), per user
-  direction. A hero only bitten earns nothing. The Constellation's Stars page does not draw it
-  yet; the Records total and run history do.
+  direction. A hero only bitten earns nothing. The Constellation's Stars page charts it under
+  **Curses** (`CurseStarsSection`), hidden as ??? until earned, as a Spawn line is.
 
 Open on it:
 

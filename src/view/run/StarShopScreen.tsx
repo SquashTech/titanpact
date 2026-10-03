@@ -14,7 +14,7 @@ import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { HeroDossierOverlay } from './HeroDossierOverlay';
 import { LocationPeekOverlay } from './LocationPeekOverlay';
 import { BundlePeekOverlay } from './BundlePeekOverlay';
-import { HeroStarsPage, SpawnStarsPage } from './StarPages';
+import { CurseStarsSection, HeroStarsPage, SpawnStarsPage } from './StarPages';
 import { STARFALL_NAME, StarfallScreen } from './Starfall';
 import { SKY_HERO_COUNT, StarSky } from './StarSky';
 import { HubPageHead, HubSubtabs, type SubtabSpec } from './hubChrome';
@@ -225,6 +225,7 @@ export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, fresh
             <p className="records-note star-shop-note">
               {'One star is earned by winning a run with an evolved hero. The star can only be earned one time per evolution.'}
             </p>
+            <CurseStarsSection profile={profile} />
           </>
         )}
 

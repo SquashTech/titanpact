@@ -3,7 +3,9 @@ import { heroes } from '../../data/heroes';
 import { TYPES } from '../../data/typechart';
 import { progressionTable } from '../../data/progression';
 import type { HeroDefinition, TypeId } from '../../engine/content';
-import { hasCompanionStar, isSpawnAscended, type Profile } from '../../run/profile';
+import { hasCompanionStar, hasCurseStar, isSpawnAscended, type Profile } from '../../run/profile';
+import { curses, type CurseDefinition } from '../../data/curses';
+import { passives } from '../../data/passives';
 import { heroPool } from '../../run/recruitment';
 import { ANCIENT } from '../../run/companion';
 import { SPAWN_TIERS, spawnId, titanspawnLines, type SpawnTier, type TitanspawnLine } from '../../data/titanspawn';
@@ -14,8 +16,9 @@ import { EvolutionStar } from '../shared/EvolutionStar';
 import { pathTintStyle } from '../shared/pathTint';
 import { HeroDossierOverlay } from './HeroDossierOverlay';
 
-// The Constellation's two star pages: where every star the account has earned is charted — a
-// hero's three Evolution paths, and a Titanspawn line's companion star (docs/collection.md §2).
+// The Constellation's star pages: where every star the account has earned is charted — a hero's
+// three Evolution paths, a curse's one (docs/wild-innates-and-events.md §3.3), and a Titanspawn
+// line's companion star (docs/collection.md §2).
 
 // Primary type in type-chart order (TYPES); a stable sort keeps same-type heroes in authoring order.
 function byPrimaryType(a: HeroDefinition, b: HeroDefinition): number {
@@ -83,6 +86,76 @@ export function HeroStarsPage({ profile }: { profile: Profile }) {
         ))}
       </div>
       {dossierHero && <HeroDossierOverlay hero={dossierHero} onClose={() => setDossierHeroId(null)} />}
+    </>
+  );
+}
+
+/**
+ * One curse: hidden as a Spawn line is until a run has been cleared with a hero it Turned
+ * (profile.ts `curseStars`), then drawn in its own form with its star lit. Its three cells say
+ * what the Turn makes of a hero — the typing, the pip it lands on, the innate.
+ */
+function CurseStarRow({ curse, profile }: { curse: CurseDefinition; profile: Profile }) {
+  const known = hasCurseStar(profile, curse.id);
+  const type = curse.types[0];
+  const lead = getTypeColor(type);
+  const cells = [
+    curse.types.join(' / '),
+    `Mastery ${curse.turnAt}`,
+    passives[curse.passiveIds[0]]?.name ?? '',
+  ];
+  return (
+    <div
+      className={`compendium-row compendium-spawn-row${known ? '' : ' is-unknown'}`}
+      style={{ '--type-rgb': getTypeColorRgb(type) } as CSSProperties}
+      aria-label={known ? `${curse.name}: star earned` : 'An unknown curse'}
+    >
+      <span className="compendium-row-head">
+        <span className="compendium-row-figure">
+          <span className="pick-ground" aria-hidden="true" />
+          {/* The form is the curse's, not any hero's: the portrait draws art/evolutions/<formId>.png. */}
+          <HeroPortrait heroId={Object.keys(heroes)[0]} pathId={curse.formId} className="compendium-row-portrait compendium-spawn-portrait" />
+        </span>
+        <span className="compendium-row-body">
+          <span className="compendium-row-name">{known ? curse.name : '???'}</span>
+          <span className="pick-types compendium-row-types">
+            {curse.types.map((t) => (
+              <span key={t} className="pick-type-code" style={{ color: getTypeColor(t) }} title={t}>
+                <ElementGlyph type={t} />
+                {getTypeAbbr(t)}
+              </span>
+            ))}
+          </span>
+        </span>
+        <span
+          className={`evo-star compendium-spawn-star ${known ? 'is-earned' : 'is-empty'}`}
+          title={known ? 'Star earned' : 'Clear a run with a hero this curse has Turned to earn'}
+          aria-hidden="true"
+        >
+          {known ? '★' : '☆'}
+        </span>
+      </span>
+      <span className="compendium-row-paths">
+        {cells.map((cell, i) => (
+          <span key={i} className="compendium-path-cell" style={{ '--path-lead': lead } as CSSProperties}>
+            <span className="compendium-path-name">{known ? cell : '???'}</span>
+          </span>
+        ))}
+      </span>
+    </div>
+  );
+}
+
+/** Every curse in the game, one star each. */
+export function CurseStarsSection({ profile }: { profile: Profile }) {
+  return (
+    <>
+      <div className="hub-section-head">Curses</div>
+      <div className="compendium-list">
+        {Object.values(curses).map((curse) => (
+          <CurseStarRow key={curse.id} curse={curse} profile={profile} />
+        ))}
+      </div>
     </>
   );
 }
