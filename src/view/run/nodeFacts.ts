@@ -171,8 +171,8 @@ function spawnFacts(type: 'fight' | 'battle', actNumber: number, shapeAct: numbe
 const SPAWN_ABOUT = 'The Titan’s brood, one line per type. Win and every hero on the roster gains the XP, fielded or not. Spawn never sign a contract.';
 
 export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
-  const odds = (kind: EncounterNodeKind | 'standard') =>
-    rarityWeightsFor(actNumber, kind === 'standard' ? 'standard' : LOOT_SOURCE[kind]);
+  const odds = (kind: EncounterNodeKind | 'standard' | 'cache') =>
+    rarityWeightsFor(actNumber, kind === 'standard' || kind === 'cache' ? kind : LOOT_SOURCE[kind]);
 
   switch (type) {
     case 'fight':
@@ -267,7 +267,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
       return {
         kind: 'Reward · Gear',
         facts: [{ glyph: 'item', label: 'Item', value: '1 of 3' }],
-        odds: odds('standard'),
+        odds: odds('cache'),
         about: 'A chest with three pieces in it: claim one and choose who wears it. Declining a piece is selling it.',
         terms: [TERMS.sockets],
       };

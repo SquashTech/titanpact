@@ -342,8 +342,12 @@ export const ACT_RARITY_WINDOW: readonly (readonly [EquipmentRarity, EquipmentRa
   ['rare', 'mythic'], // act 5 — commons are gone
 ];
 
-/** `elite` covers Elite nodes and the act's Guardian — both roll one loot tier ahead. */
-export type LootSource = 'standard' | 'elite';
+/**
+ * `elite` covers Elite nodes and the act's Guardian — both roll one loot tier ahead. `cache` is
+ * the Item Cache node, which rolls BEHIND: exact in Act 1, falling a tier further back every
+ * other act (`cacheLootTier`).
+ */
+export type LootSource = 'standard' | 'elite' | 'cache';
 
 /**
  * The best tier an act allows, whatever the path. `ACT_RARITY_WINDOW` began life capping DROPS
@@ -366,7 +370,20 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 export function lootTierFor(actNumber: number, source: LootSource = 'standard'): number {
+  if (source === 'cache') return cacheLootTier(actNumber);
   return clamp(actNumber + (source === 'elite' ? 1 : 0), 1, MAX_LOOT_TIER);
+}
+
+/**
+ * The Item Cache's loot tier: ⌈act / 2⌉ — 1, 1, 2, 2, 3 — so it is right in Act 1 and worse and worse
+ * after (2026-10-03, per user direction, docs/events.md §1b). The cache was the best reward row in
+ * the game and the one every event was measured against; this lets the run's other rewards — the
+ * events above all — overtake it as the run goes on, while every FIGHT's drop keeps the act's own
+ * curve, which is where the early game's power was measured to come from. The act's rarity window
+ * still applies (`rarityWeightsFor`).
+ */
+export function cacheLootTier(actNumber: number): number {
+  return clamp(Math.ceil(Math.max(1, actNumber) / 2), 1, MAX_LOOT_TIER);
 }
 
 /**

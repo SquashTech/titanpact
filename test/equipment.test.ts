@@ -223,3 +223,14 @@ test('equipment: a merge needs a matching family, and Mythic has nowhere to go',
   assert.strictEqual(mergeIntoHeld(equipment['spear.mythic'], equipment['spear.common']), null, 'nothing above Mythic');
   assert.strictEqual(mergeIntoHeld(equipment['spear.common'], equipment['spear.mythic']), null, 'nothing above Mythic, whichever side');
 });
+
+test('equipment: the Item Cache rolls exact in Act 1 and falls further behind the act as the run goes on', () => {
+  const { cacheLootTier, lootTierFor, rarityWeightsFor } = require('../src/run/equipment') as typeof import('../src/run/equipment');
+  assert.deepStrictEqual([1, 2, 3, 4, 5].map((act) => cacheLootTier(act)), [1, 1, 2, 2, 3]);
+  assert.deepStrictEqual(rarityWeightsFor(1, 'cache'), rarityWeightsFor(1, 'standard'), 'Act 1 is the act’s own curve');
+  for (let act = 2; act <= 5; act++) {
+    assert.ok(lootTierFor(act, 'cache') < lootTierFor(act, 'standard'), `Act ${act}: the cache is not behind`);
+    const lag = lootTierFor(act, 'standard') - lootTierFor(act, 'cache');
+    assert.ok(lag >= lootTierFor(act - 1, 'standard') - lootTierFor(act - 1, 'cache'), 'the lag never shrinks');
+  }
+});

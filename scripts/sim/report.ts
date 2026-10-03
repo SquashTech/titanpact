@@ -2,6 +2,7 @@
 // only lays the counters out so a designer can read them.
 
 import { heroes } from '../../src/data/heroes';
+import { runEvents } from '../../src/data/events';
 import { allCombatants } from '../../src/data/content';
 import { isTitanspawn } from '../../src/data/titanspawn';
 import { relics } from '../../src/data/relics';
@@ -420,6 +421,13 @@ export function formatReport(
   out.push('  was worth against whatever else its row could have given. A row whose options were all');
   out.push('  one type contributes nothing.');
   out.push(liftTable('', agg.nodeChoices, (id) => id, 30));
+  out.push('');
+
+  out.push('  EVENT LIFT — an event node rolls one event among those eligible there, so this is which');
+  out.push('  event was worth more than the others the same node could have been (not against the cache:');
+  out.push('  read NODE LIFT for that). The pilot takes the first option it can, a gamble on its strongest');
+  out.push('  hero, a recruit only into an empty seat, and never a curse.');
+  out.push(liftTable('', agg.eventChoices, (id) => runEvents[id]?.name ?? id, 20));
   out.push('');
 
   out.push('  LOCATION LIFT — acts 2-5 each offer two places and the walk takes one at random, so');

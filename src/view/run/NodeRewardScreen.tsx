@@ -123,7 +123,7 @@ function GoldOnTheRoad({ run, onRunChange, onContinue }: Pick<Props, 'run' | 'on
 
 /** Chest on the road, then the three pieces. A tap on the road skips straight to them. */
 function EquipmentCache({ run, onClaimEquipment }: Pick<Props, 'run' | 'onClaimEquipment'>) {
-  const [choices] = useState<EquipmentDefinition[]>(() => rollEquipmentDrops(3, rarityWeightsFor(run.actNumber, 'standard')));
+  const [choices] = useState<EquipmentDefinition[]>(() => rollEquipmentDrops(3, rarityWeightsFor(run.actNumber, 'cache')));
   const [pickedItemId, setPickedItemId] = useState<string | null>(null);
   const [inspectItemId, setInspectItemId] = useState<string | null>(null);
   const [phase, setPhase] = useState<'road' | 'flash' | 'burst' | 'open'>(() => (prefersReducedMotion() ? 'open' : 'road'));

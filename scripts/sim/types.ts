@@ -169,6 +169,8 @@ export interface Aggregate {
   nodeChoices: Record<string, ChoiceAgg>;
   /** The act's 1-of-2 location offer, and which place the walk took. */
   locationChoices: Record<string, ChoiceAgg>;
+  /** Which event an event node rolled, among those eligible there. */
+  eventChoices: Record<string, ChoiceAgg>;
   /** Equipment rarity actually equipped, by act. */
   equipRarityByAct: Record<string, number>;
   /** Round-count histogram across every fight, bucketed by round. */
@@ -285,6 +287,7 @@ export function emptyAggregate(): Aggregate {
     draftChoices: {},
     nodeChoices: {},
     locationChoices: {},
+    eventChoices: {},
     equipRarityByAct: {},
     roundHistogram: [],
     heroLevelHistogram: [],
@@ -494,4 +497,5 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   mergeCounts(into.draftChoices, from.draftChoices, emptyChoice);
   mergeCounts(into.nodeChoices, from.nodeChoices, emptyChoice);
   mergeCounts(into.locationChoices, from.locationChoices, emptyChoice);
+  mergeCounts(into.eventChoices, from.eventChoices, emptyChoice);
 }

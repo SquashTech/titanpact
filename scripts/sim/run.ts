@@ -78,7 +78,7 @@ import { ENCHANT_PRICE_BY_RARITY, rollGuildHallOffers, sellValueFor } from '../.
 import { mentorMovePool, tutorMovePool } from '../../src/run/tutor';
 import { grantClass, rollClassOffers } from '../../src/run/classes';
 import { boonMoveCount, pickBoonOffers } from '../../src/run/boons';
-import { applyEventCost, applyHeroOutcome, applyStatShift, costAffordable, eventRecruitEntry, grantEventPassive, heroOutcomeAllowed, joinEventRecruit, outcomeForAct, recruitPool, resolveGamble, rollRecruits, rollRunEvent, rollEventMove, statShiftAllowed } from '../../src/run/events';
+import { applyEventCost, applyHeroOutcome, applyStatShift, costAffordable, eventRecruitEntry, grantEventPassive, heroOutcomeAllowed, joinEventRecruit, eligibleEvents, outcomeForAct, recruitPool, resolveGamble, rollRecruits, rollRunEvent, rollEventMove, statShiftAllowed } from '../../src/run/events';
 import type { EventCost, ResolvableOutcome } from '../../src/data/events';
 import {
   pickWeightedEquipment,
@@ -124,7 +124,7 @@ const UPGRADE_REWARD_XP = 2;
 // --- Records the aggregator consumes ---
 
 export interface ChoiceEvent {
-  bucket: 'banner' | 'boon' | 'evolution' | 'class' | 'draft' | 'node' | 'location';
+  bucket: 'banner' | 'boon' | 'evolution' | 'class' | 'draft' | 'node' | 'location' | 'event';
   offered: string[];
   /** Usually one; the draft takes two of its four. */
   picked: string[];
@@ -851,7 +851,7 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
     case 'equipmentReward': {
       // Three offered; the policy takes the one worth most to somebody. Equipment is a
       // power question, not a design experiment — the rarity curve is what's under test.
-      const choices = pickWeightedEquipment(EQUIPMENT_POOL, 3, rarityWeightsFor(run.actNumber, 'standard'));
+      const choices = pickWeightedEquipment(EQUIPMENT_POOL, 3, rarityWeightsFor(run.actNumber, 'cache'));
       if (choices.length === 0) return run;
       const best = choices.reduce((a, b) => ((policy.bestReceiver(run.roster, b)?.gain ?? 0) > (policy.bestReceiver(run.roster, a)?.gain ?? 0) ? b : a));
       return resolveDrop(run, best.id, record, run.actNumber, 'node');
@@ -1012,6 +1012,10 @@ function resolveEnchanter(run: RunState): RunState {
 function resolveEvent(run: RunState, locationId: string, rng: Rng, record: RunRecord): RunState {
   const event = rollRunEvent(runEvents, run.actNumber, locationId);
   if (!event) return run;
+  // The roll is random among what is eligible here, so it is the same matched experiment the
+  // node lift reads: which EVENT, against the others this event node could have been.
+  const eligible = eligibleEvents(runEvents, run.actNumber, locationId).map((e) => e.id);
+  if (eligible.length > 1) record.choices.push({ bucket: 'event', offered: eligible, picked: [event.id], encountersWonAtChoice: run.encountersWon });
   if (event.outcome.kind !== 'choice') return resolveEventOutcome(run, outcomeForAct(event.outcome, run.actNumber), event.cost, record);
   // A choice: the first option the pilot can pay for and use, else Leave.
   for (const option of event.outcome.options) {

@@ -106,8 +106,10 @@ Every stat figure above is the **Act 1** payout. Gains grow with the act (§1b).
 event is not knowing which one you will get, never that the one you got was a poor trade.
 
 **The bar is the Item Cache:** the best of three items on the act's curve. In item-budget points
-(`run/equipment.ts` `statGrantCost`: 1 a stat point, 3 HP a point, MP Regen 3) that is about
-**50 in Act 1, rising to about 100 by Act 5**. A single random item is 38 → 85.
+(`run/equipment.ts` `statGrantCost`: 1 a stat point, 3 HP a point, MP Regen 3) that was
+about 50 in Act 1, rising to about 100 by Act 5. Since the item floor was cut (2026-10-03,
+`docs/equipment.md`) it is **~39 in Act 1, ~59 / ~79 / ~92 / ~100 after**. An event's Act 1
+figures were set against the old 50, so in the early acts an event now pays MORE than the cache.
 
 **Stat payouts grow with the act:**
 
@@ -134,8 +136,41 @@ event is not knowing which one you will get, never that the one you got was a po
 Before the pass, the gambles' EV was +5 to +14 points and the trades +23 to +47, flat across
 acts. Every gamble and most trades were worse than the cache they sat beside.
 
-**Not measured.** The sim's pilot takes events and gambles but has no node-choice comparison
-against the cache. A sim pass should read win rate by the reward picked.
+**Measured (2026-10-03, sim, 4000 runs a batch, seed 1).** The comparison is `165feda3` (before)
+against `4c74903d` (after). NODE LIFT is extra encounters won by taking a node against whatever
+else its row offered; the walk picks uniformly, so it is a matched comparison.
+
+| pilot | full-clear | event lift | Item Cache lift | event − cache |
+| --- | --- | --- | --- | --- |
+| chart, before | 47.8% | −0.06 ±0.07 | +0.09 ±0.05 | −0.15 |
+| chart, after | 49.1% | −0.00 ±0.07 | +0.07 ±0.05 | −0.07 |
+| skilled, before | 90.3% | −0.11 ±0.06 | −0.05 ±0.04 | −0.06 |
+| skilled, after | 90.8% | −0.09 ±0.06 | −0.05 ±0.04 | −0.04 |
+
+**What it says:**
+
+- **The gap to the cache halved,** and an event node is now level with the average node in its
+  row. It is still not ahead of the cache, and every difference is inside about 1.5 SE.
+- **The full-clear rate moved by noise.**
+- **EVENT LIFT** (per event, against the other events the node could have rolled; new in the
+  report) ranks the recruits highest. Rustling Grass is +1.25 (z 3.5) on the chart pilot.
+
+**Lowest under EVENT LIFT, all for reasons the pilot explains:**
+
+- **Werewolf Bite, −0.48:** the pilot never takes a curse, so the node gives nothing.
+- **The Deep Well, −0.30:** the sim cannot see mana.
+- **Wildcard and Assertiveness Training, about −0.19.**
+
+**The Item Cache rolls behind the curve** (2026-10-03, per user direction: "correct in Act 1 but
+worse and worse as the run goes on"). Its three items roll at loot tier ⌈act/2⌉ — 1, 1, 2, 2, 3 —
+instead of the act's own (`LootSource 'cache'`, `cacheLootTier`), still inside the act's rarity
+window. Its best-of-three by act is about 47 / 47 / 64 / 64 / 80 points, against the old
+47 / 64 / 80 / 92 / 100. Fight drops, the Shop and the loot events keep the act's curve. A
+global cut to Common and Rare was tried first and reverted: it cost 2.4 points of full-clear
+and moved events against the cache by nothing, since loot events lost value too.
+
+**Not yet "strong".** If events should beat the cache rather than tie it, the next lever is the
+floor in `test/eventVocabulary` (45 → ~60), or a Location event weight.
 
 `test/eventVocabulary` pins that every Location a run can visit before the finale holds at
 least one event of its own.
