@@ -28,11 +28,12 @@ export const beastPathPassives: Record<string, PassiveDefinition> = {
   mesmerize: {
     id: 'mesmerize',
     name: 'Mesmerize',
-    description: "When an enemy's Intelligence drops, that enemy is Dazed.",
+    description: "When an enemy's Intelligence drops, that enemy is Dazed. Up to 3 times a fight.",
     reactive: {
       hook: 'StatChanged',
       condition: { relativeTo: 'enemy', eventFieldEquals: { stat: 'intelligence' }, eventFieldNegative: 'delta' },
       effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Daze' },
+      maxFiresPerFight: 3,
     },
   },
   graveMark: {

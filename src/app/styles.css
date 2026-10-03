@@ -22358,16 +22358,23 @@ button.star-shop-bundle-face {
   touch-action: pan-y;
 }
 
+/* Pinned to the stage's centre (132px), not the row's: the info column's height changes from path to
+   path, and a centred arrow walked under the thumb between taps. */
 .evo-show-arrow.is-prev {
   grid-area: prev;
+  align-self: start;
+  margin-top: 51px;
 }
 
 .evo-show-arrow.is-next {
   grid-area: next;
+  align-self: start;
+  margin-top: 51px;
 }
 
 .evo-show-stage {
   grid-area: stage;
+  align-self: start;
   position: relative;
   width: 132px;
   height: 132px;
