@@ -50,10 +50,10 @@ not kit; the Mentor's "powerful move" was twice a sidegrade.
 
 ## 3. What to do next (ranked)
 
-1. **Boss Daze lock** — design call for the user (CLAUDE.md: Daze is flinch; see memory
-   "Daze is flinch"). Options: Daze immunity for a round after one lands, diminishing returns on
-   bosses, or a price on Mesmerize. Run the sim (`--workers 2`) on Coil/Mesmer and any Mesmerize
-   holder before touching numbers.
+1. **DONE 2026-10-03 (0c5a1f64):** the boss Daze lock. Mesmerize Dazes at most 3 times a fight
+   (`maxFiresPerFight`, per user direction); Daze stays pure flinch everywhere else. **Saves are
+   next:** `docs/save-system.md` is the design (every-screen saves, mid-fight resume, durability),
+   with the user's decisions D1–D4 recorded; build waits on review.
 2. **DONE 2026-10-02 (c81ff05d):** Ghostlight is +25% Spirit damage to a Haunted foe (Ghostlight+
    +50%), no Force at all. No cap on Force (per user direction); instead every passive that banked
    Force on a repeating trigger fires at most 3 times a fight (`maxFiresPerFight`): Dawnlight,
@@ -69,8 +69,8 @@ not kit; the Mentor's "powerful move" was twice a sidegrade.
 5. **DONE:** Jackpot shows 50–150 BP on the big card and the row; the Merged screen shows the
    result; the gate label climbs clear of the seal; the combat move row prints the landed delta
    (the draft and dossier already did); the recruit Sign button sits outside the scrolling stage;
-   the Crucible's class cards print Physical / Magical (Volley vs Cascade). NOT reproduced: the
-   Evolution carousel dropping taps — the handlers read correctly; it needs a hands-on repro.
+   the Crucible's class cards print Physical / Magical (Volley vs Cascade). The Evolution
+   carousel's arrows moved between paths (centred on a row whose height changes); pinned 0c5a1f64.
 6. **Art consistency:** the Endbringer and the Titan's Eyes are flat vector shapes beside pixel-art
    heroes, and Early Titanspawn sprites are tiny — reads as unfinished in the biggest fights.
 
