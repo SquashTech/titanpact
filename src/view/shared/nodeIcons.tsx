@@ -114,6 +114,8 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
   ),
   // The Passives section mark, for the node that hands one over — same rule.
   passiveReward: SECTION_PATHS.passives,
+  // The Blessing's four-point star, the mark a Blessed hero wears, said large.
+  blessingReward: <path d="M12 1.2 14.6 9.4 22.8 12 14.6 14.6 12 22.8 9.4 14.6 1.2 12 9.4 9.4Z" />,
   // Money bag.
   currencyReward: (
     <>

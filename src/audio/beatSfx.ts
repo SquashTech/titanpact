@@ -82,6 +82,12 @@ export function playBeatSfx(beat: Beat): void {
     return;
   }
 
+  // A Blessing breaking rings over whatever else the beat is: the guard shattering, then the light.
+  if (beat.events.some((e) => e.type === 'BlessingSpent')) {
+    playSfx('shield.break', { pitch: 1.3, gain: 0.8 });
+    playSfx('blessing', { delay: 0.12 });
+  }
+
   const lead = leadEvent(beat);
   if (!lead) return;
 

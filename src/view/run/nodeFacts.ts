@@ -154,6 +154,10 @@ const TERMS = {
     term: 'Class',
     text: 'The Crucible tempers one hero into a Class: a move or a passive in its own element, one per hero.',
   },
+  blessing: {
+    term: 'Blessing',
+    text: 'The first time a Blessed hero would be knocked out, the blow is turned aside and the Blessing is used up. Until then it lasts from fight to fight. One a hero.',
+  },
   moveCap: {
     term: 'Four moves',
     text: 'A hero holds four moves. Offered a fifth, it replaces one or declines — and a declined roll is spent.',
@@ -332,6 +336,14 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         odds: null,
         about: `Pick one of ${BOON_OFFER_COUNT} passives, then the hero who keeps it.`,
         terms: [TERMS.boon],
+      };
+    case 'blessingReward':
+      return {
+        kind: 'Reward · Rare',
+        facts: [{ glyph: 'hero', label: 'Blessing', value: '1 hero', note: 'not one already Blessed' }],
+        odds: null,
+        about: 'The Pactwarden blesses one hero: the first blow that would knock it out is turned aside. Rare — the only Blessings past the opening pair.',
+        terms: [TERMS.blessing],
       };
     case 'scribeReward':
       return {

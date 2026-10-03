@@ -6180,6 +6180,123 @@ textarea,
   }
 }
 
+/* The Blessing breaking (CombatantCard BlessingBreak): the nameplate's star swells over the figure,
+   a ring of light goes out from it, and it shatters into shards — the guard is seen to be gone. */
+.blessing-break {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  color: var(--blessing);
+}
+
+.blessing-break-star {
+  position: absolute;
+  left: 50%;
+  top: 46px;
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  filter: drop-shadow(0 0 10px rgba(246, 220, 140, 0.95)) drop-shadow(0 0 3px rgba(255, 255, 255, 0.9));
+  opacity: 0;
+  animation: blessing-break-star 1100ms ease-out forwards;
+}
+
+@keyframes blessing-break-star {
+  0% {
+    opacity: 0;
+    transform: scale(0.2) rotate(0deg);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1.15) rotate(20deg);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1) rotate(30deg);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.25) rotate(34deg);
+    filter: drop-shadow(0 0 16px rgba(255, 245, 210, 1)) brightness(1.6);
+  }
+  62%,
+  100% {
+    opacity: 0;
+    transform: scale(1.5) rotate(36deg);
+  }
+}
+
+.blessing-break-ring {
+  position: absolute;
+  left: 50%;
+  top: 46px;
+  width: 60px;
+  height: 60px;
+  margin: -30px 0 0 -30px;
+  border-radius: 50%;
+  border: 3px solid rgba(246, 220, 140, 0.9);
+  box-shadow: 0 0 14px rgba(246, 220, 140, 0.8);
+  opacity: 0;
+  animation: blessing-break-ring 1100ms ease-out forwards;
+}
+
+@keyframes blessing-break-ring {
+  0%,
+  52% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  58% {
+    opacity: 1;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.4);
+    border-width: 1px;
+  }
+}
+
+.blessing-break-shard {
+  position: absolute;
+  left: 50%;
+  top: 46px;
+  width: 6px;
+  height: 12px;
+  margin: -6px 0 0 -3px;
+  background: currentColor;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  filter: drop-shadow(0 0 4px rgba(246, 220, 140, 0.9));
+  opacity: 0;
+  transform: rotate(var(--shard-angle)) translateY(0);
+  animation: blessing-break-shard 1100ms ease-out forwards;
+}
+
+@keyframes blessing-break-shard {
+  0%,
+  54% {
+    opacity: 0;
+    transform: rotate(var(--shard-angle)) translateY(0);
+  }
+  60% {
+    opacity: 1;
+    transform: rotate(var(--shard-angle)) translateY(-10px);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--shard-angle)) translateY(-52px) scale(0.6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blessing-break-star,
+  .blessing-break-ring,
+  .blessing-break-shard {
+    animation-duration: 1ms;
+  }
+}
+
 .dmg-popup.popup-shield-broken {
   color: var(--shield);
   font-size: 16px;
@@ -43152,4 +43269,106 @@ img.smithy-service-art {
 
 .event-transform-line strong {
   color: var(--text);
+}
+
+/* Selling a piece off the who-screen asks once (ItemWhoScreen): the piece named in its tier's
+   colour, the price, and the two answers side by side. */
+.sell-confirm-panel {
+  max-width: 340px;
+  margin: 0 16px;
+  padding: 18px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: center;
+  border-top: 3px solid;
+}
+
+.sell-confirm-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.sell-confirm-note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.sell-confirm-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.sell-confirm-actions > button {
+  flex: 1 1 0;
+  min-height: 54px;
+  font-size: 14px;
+}
+
+/* The Pactwarden's Shrine (BlessingShrineScreen): the Blessing's gold on old stone at dusk. */
+.rite-screen.is-blessing {
+  --rite-ink: #e8cf8c;
+  --rite-title: #fff6dc;
+  --rite-glow: rgba(246, 220, 140, 0.6);
+  --rite-glow-far: rgba(220, 170, 70, 0.35);
+  --rite-card: #12100a;
+  --rite-card-lit: #1a160c;
+}
+
+.blessing-ground {
+  position: absolute;
+  inset: calc(var(--shell-pad) * -1);
+  background:
+    radial-gradient(ellipse 60% 30% at 24% 10%, rgba(246, 220, 140, 0.26), transparent 70%),
+    radial-gradient(ellipse 100% 40% at 50% 100%, rgba(150, 110, 40, 0.24), transparent 72%),
+    linear-gradient(180deg, #060504, #120e07 52%, #221a0c);
+  pointer-events: none;
+}
+
+/* The light falling on the hero it chose, behind the figure. */
+.blessing-shrine-shaft {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  width: 70px;
+  height: 180px;
+  margin-left: -35px;
+  background: linear-gradient(180deg, rgba(255, 246, 214, 0), rgba(255, 238, 180, 0.55) 60%, rgba(246, 220, 140, 0.15));
+  filter: blur(4px);
+  transform-origin: 50% 0;
+  animation: blessing-shrine-shaft 1.2s var(--ease-out) both;
+  pointer-events: none;
+}
+
+@keyframes blessing-shrine-shaft {
+  0% {
+    opacity: 0;
+    transform: scaleY(0.2);
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.75;
+    transform: scaleY(1);
+  }
+}
+
+.blessing-shrine-screen .rite-mark .blessing-mark,
+.blessing-shrine-screen .rite-mark .blessing-mark svg {
+  width: 16px;
+  height: 16px;
+}
+
+.blessing-shrine-rule {
+  margin: 6px 0 0;
+  max-width: 34ch;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-dim);
+  text-align: center;
 }

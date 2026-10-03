@@ -45,6 +45,7 @@ const LENS: Record<MapNodeType, Lens> = {
   manaWellReward: 'mana',
   leyLineReward: 'force',
   passiveReward: 'types',
+  blessingReward: 'hp',
   mentorReward: 'moves',
   tutorReward: 'moves',
   currencyReward: null,

@@ -37,6 +37,7 @@ export function ItemWhoScreen({ run, itemId, onRunChange, onDone }: Props) {
   const [outcome, setOutcome] = useState<{ kind: 'take' } | { kind: 'merge'; resultId: string } | { kind: 'sold'; gold: number } | null>(null);
   const [burst, setBurst] = useState<string | null>(null);
   const [inspecting, setInspecting] = useState(false);
+  const [confirmingSell, setConfirmingSell] = useState(false);
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
 
   useEffect(() => {
@@ -85,6 +86,8 @@ export function ItemWhoScreen({ run, itemId, onRunChange, onDone }: Props) {
 
   function handleSell() {
     if (done) return;
+    setConfirmingSell(false);
+    playSfx('ui.confirm');
     onRunChange(sellItem(run, itemId, equipment));
     setOutcome({ kind: 'sold', gold: sellGold });
   }
@@ -167,9 +170,34 @@ export function ItemWhoScreen({ run, itemId, onRunChange, onDone }: Props) {
           Continue
         </button>
       ) : (
-        <button className="secondary-button item-who-sell" onClick={handleSell}>
+        <button className="secondary-button item-who-sell" onClick={() => setConfirmingSell(true)}>
           Sell for {sellGold} gold
         </button>
+      )}
+
+      {confirmingSell && !done && (
+        <div className="log-overlay" onClick={() => setConfirmingSell(false)}>
+          <div
+            className="log-panel sell-confirm-panel"
+            style={{ borderTopColor: RARITY_COLOR_VARS[item.rarity] } as CSSProperties}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label={`Sell ${item.name}?`}
+          >
+            <div className="sell-confirm-title">
+              Sell <span style={{ color: RARITY_COLOR_VARS[item.rarity] }}>{item.name}</span>?
+            </div>
+            <p className="sell-confirm-note">It goes for {sellGold} gold, and no hero will wear it.</p>
+            <div className="sell-confirm-actions">
+              <button className="secondary-button" onClick={() => setConfirmingSell(false)}>
+                Keep it
+              </button>
+              <button className="resolve-button" onClick={handleSell}>
+                Sell
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {burst && equipment[burst] && <MergeBurst result={equipment[burst]} onDone={() => setBurst(null)} />}

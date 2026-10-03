@@ -2,6 +2,7 @@
 // FightScreen reveals per tap. Presentation-only grouping.
 
 import type {
+  BlessingSpentEvent,
   FaintedEvent,
   CombatEvent,
   HealedEvent,
@@ -327,6 +328,17 @@ export function buildBeats(
     return all.length > 0 ? all : undefined;
   }
 
+  /** A Blessing spent on anything but a move's hit: its own beat, the guard seen to break. */
+  function blessingBeat(e: BlessingSpentEvent) {
+    const blessedName = name(e.combatantId);
+    push([e], `${blessedName}'s Blessing breaks — it turns aside ${e.prevented} damage! The Blessing is used up.`, [{ combatantId: e.combatantId, text: `${e.prevented}`, className: 'popup-blessed' }], {
+      bannerLead: `${blessedName}'s Blessing breaks`,
+      bannerFocus: `${e.prevented} damage turned aside`,
+      bannerFocusKind: 'blessing',
+      bannerTag: 'Blessing used up',
+    });
+  }
+
   /**
    * The round's end as ONE beat (2026-09-30, per user direction, widened from the regen-and-tick
    * block it was): bench and mana regen, every status tick and expiry, every passive that fires on
@@ -340,6 +352,7 @@ export function buildBeats(
   function roundEnd() {
     const applied: CombatEvent[] = [];
     const faints: FaintedEvent[] = [];
+    const blessings: BlessingSpentEvent[] = [];
     const hp = new Map<string, { delta: number; glyph: string; glyphAmount: number; named: boolean }>();
     const mana = new Map<string, number>();
     const shifts = new Map<string, StatChangedEvent[]>();
@@ -403,6 +416,15 @@ export function buildBeats(
         mana.set(next.targetCombatantId, (mana.get(next.targetCombatantId) ?? 0) + next.amount);
       } else if (next.type === 'FieldEffectExpired') {
         faded = fieldEffects[next.fieldEffectId]?.name ?? next.fieldEffectId;
+      } else if (next.type === 'BlessingSpent') {
+        // A tick that would have knocked out was turned aside: its HP never left, and the Blessing
+        // breaks on a beat of its own after the round's summary, never folded silently into it.
+        const cur = hpOf(next.combatantId);
+        cur.delta += next.prevented;
+        hp.set(next.combatantId, cur);
+        blessings.push(next);
+        i++;
+        continue;
       } else if (next.type === 'Fainted') {
         // A KO ends the beat; every KO standing in a row behind it shares one beat of its own.
         while (events[i]?.type === 'Fainted') faints.push(events[i++] as FaintedEvent);
@@ -457,6 +479,7 @@ export function buildBeats(
       bannerMeta: faded ? `${faded} fades` : undefined,
     });
     roundEndBeat = beats[beats.length - 1];
+    for (const spent of blessings) blessingBeat(spent);
     if (faints.length > 0) {
       const who = joinNames(faints.map((f) => name(f.combatantId)));
       push(faints, `${who} ${faints.length > 1 ? 'are' : 'is'} knocked out!`, [], { bannerFocusKind: 'ko' });
@@ -535,13 +558,13 @@ export function buildBeats(
           const blessedName = name(e.targetCombatantId);
           push(
             applied,
-            `${blessedName}'s Blessing turns aside ${e.prevented} damage!`,
+            `${blessedName}'s Blessing breaks — it turns aside ${e.prevented} damage! The Blessing is used up.`,
             [{ combatantId: e.targetCombatantId, text: `${e.prevented}`, className: 'popup-blessed' }],
             {
-              bannerLead: `${blessedName}'s Blessing turns aside`,
-              bannerFocus: `${e.prevented} damage`,
+              bannerLead: `${blessedName}'s Blessing breaks`,
+              bannerFocus: `${e.prevented} damage turned aside`,
               bannerFocusKind: 'blessing',
-              bannerTag: tagText,
+              bannerTag: tagText ? `${tagText} Blessing used up` : 'Blessing used up',
               fx: landing(e.targetCombatantId, true),
             }
           );
@@ -1179,16 +1202,10 @@ export function buildBeats(
 
       // A Blessing spent on anything but a move's hit (a DoT tick, a passive, the Gaze) — the hit's
       // own case folds it into the strike instead.
-      case 'BlessingSpent': {
-        const blessedName = name(e.combatantId);
-        push([e], `${blessedName}'s Blessing turns aside ${e.prevented} damage!`, [{ combatantId: e.combatantId, text: `${e.prevented}`, className: 'popup-blessed' }], {
-          bannerLead: `${blessedName}'s Blessing turns aside`,
-          bannerFocus: `${e.prevented} damage`,
-          bannerFocusKind: 'blessing',
-        });
+      case 'BlessingSpent':
+        blessingBeat(e);
         i++;
         break;
-      }
 
       default:
         carry.push(e);

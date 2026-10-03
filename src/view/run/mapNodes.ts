@@ -16,6 +16,7 @@ export const NODE_NAMES: Record<MapNodeType, string> = {
   equipmentReward: 'Equipment Cache',
   scrollReward: 'Scroll Cache',
   passiveReward: 'Boon',
+  blessingReward: "Pactwarden's Shrine",
   currencyReward: 'Gold',
   manaWellReward: 'Mana Well',
   forgeReward: 'Forge',
@@ -41,6 +42,7 @@ export const NODE_LABELS: Record<MapNodeType, string> = {
   equipmentReward: 'Items',
   scrollReward: 'Scrolls',
   passiveReward: 'Boon',
+  blessingReward: 'Blessing',
   currencyReward: 'Gold',
   manaWellReward: 'Mana Well',
   forgeReward: 'Forge',
@@ -70,6 +72,8 @@ export const NODE_COLORS: Record<MapNodeType, string> = {
   scrollReward: '#e0c27a',
   // Arcane violet, the hue the whole passive vocabulary already sits on (passiveIcons' fallback).
   passiveReward: 'var(--magical)',
+  // The Blessing's own gold, the star every Blessed hero wears.
+  blessingReward: 'var(--blessing)',
   currencyReward: 'var(--accent)',
   // The MP gauge's own blue (RunGlyph RESOURCE_COLORS mpPotion): a Mana Well reads as the bar it deepens.
   manaWellReward: '#8fb4ff',
@@ -106,6 +110,7 @@ export const NODE_TIERS: Record<MapNodeType, NodeTier> = {
   equipmentReward: 'reward',
   scrollReward: 'reward',
   passiveReward: 'reward',
+  blessingReward: 'reward',
   currencyReward: 'reward',
   manaWellReward: 'reward',
   forgeReward: 'reward',

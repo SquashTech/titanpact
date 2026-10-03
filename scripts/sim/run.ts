@@ -26,7 +26,7 @@ import type { CombatState } from '../../src/engine/state';
 import { MASTERY_CAP, SCRIBE_PIPS_EACH, SCROLL_CACHE_COUNT, SCROLL_PACK_PIPS, buyScroll, canBuyScroll, grantMastery } from '../../src/run/mastery';
 
 import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry, ROSTER_CAP, TOTAL_ACTS, type RunState, type RosterEntry } from '../../src/run/state';
-import { blessOpeningPair } from '../../src/run/blessings';
+import { blessOpeningPair, canBless, grantBlessing } from '../../src/run/blessings';
 import { generateMap, type MapNode, type MapNodeType } from '../../src/run/map';
 import { generateStarterOptions, STARTER_PICK_COUNT } from '../../src/run/draft';
 import { chooseLocation, drawLocationCandidates, locationChoiceDue, locationForAct } from '../../src/run/locations';
@@ -838,6 +838,11 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       // The hero the pool is worth most to (policy.statBoostTarget) — the one screen that asks who.
       const target = policy.statBoostTarget(run.roster, 'manaPool');
       return target ? grantManaWell(run, target.rosterId) : run;
+    }
+    case 'blessingReward': {
+      // The strongest hero not already Blessed: the carry is the one a turned-aside KO saves most.
+      const target = policy.statBoostTarget(run.roster.filter(canBless), 'hp');
+      return target ? grantBlessing(run, target.rosterId) : run;
     }
     case 'forgeReward':
       // The Anvil's pick with no price on it: the most valuable liftable piece on the strongest hero.

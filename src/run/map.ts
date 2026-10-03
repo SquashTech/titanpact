@@ -23,6 +23,7 @@ export const MAP_NODE_TYPES = [
   'leyLineReward',
   'restReward',
   'passiveReward',
+  'blessingReward',
   'currencyReward',
   'mentorReward',
   'tutorReward',
@@ -137,6 +138,10 @@ export const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // act (docs/run-loop.md "The Forge and the Ley Line").
   ['forgeReward', 25],
   ['leyLineReward', 25],
+  // The Pactwarden's Shrine (2026-10-03, per user direction): a Blessing for one hero not already
+  // holding one. Very rare on purpose — the run's opening pair is the Blessing supply, and this is
+  // the one way to add to it: about one act in eleven, a third of runs.
+  ['blessingReward', 3],
 ];
 
 /** Weighted sample WITHOUT replacement — a reward row never repeats a type. REWARD_WEIGHTS is wider than any row, so `count` is always satisfiable. */

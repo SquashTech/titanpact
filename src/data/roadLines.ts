@@ -23,3 +23,9 @@ export const SCRIBE_LINES: readonly string[] = [
   'I copy what the old heroes knew, a line at a time. Two of you, sit. This will not take long.',
   'Careful, the ink is still wet. I have pages here that were meant for someone. Perhaps for you.',
 ];
+
+export const PACTWARDEN_LINES: readonly string[] = [
+  'You found my stones again. The light has a little left in it. Who will carry it?',
+  'I cannot walk this road with you. But one of you may take my blessing a little further.',
+  'The Titan stirs, and the pact still holds. Bring me the one who needs it most.',
+];

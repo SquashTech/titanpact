@@ -33,6 +33,7 @@ import { ItemWhoScreen } from '../view/run/ItemWhoScreen';
 import { clearGuildHallTab } from '../view/run/guildHallTabMemory';
 import { ScrollNodeScreen, type ScrollPlan } from '../view/run/ScrollNodeScreen';
 import { ManaWellScreen } from '../view/run/ManaWellScreen';
+import { BlessingShrineScreen } from '../view/run/BlessingShrineScreen';
 import { ForgeNodeScreen } from '../view/run/ForgeNodeScreen';
 import { LeyLineScreen } from '../view/run/LeyLineScreen';
 import { RestNodeScreen } from '../view/run/RestNodeScreen';
@@ -209,6 +210,7 @@ type Screen =
   | { kind: 'itemWho'; itemId: string; next: Screen }
   /** The Mana Well: +MANA_WELL_AMOUNT max Mana to one hero. */
   | { kind: 'manaWell'; nodeId: string }
+  | { kind: 'blessingShrine'; nodeId: string }
   | { kind: 'forge'; nodeId: string }
   | { kind: 'leyLine'; nodeId: string }
   | { kind: 'rest'; nodeId: string }
@@ -721,6 +723,8 @@ export function App() {
       });
     } else if (node.type === 'manaWellReward') {
       setScreen({ kind: 'manaWell', nodeId });
+    } else if (node.type === 'blessingReward') {
+      setScreen({ kind: 'blessingShrine', nodeId });
     } else if (node.type === 'forgeReward') {
       setScreen({ kind: 'forge', nodeId });
     } else if (node.type === 'leyLineReward') {
@@ -1413,6 +1417,10 @@ export function App() {
 
       {screen.kind === 'manaWell' && (
         <ManaWellScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+      )}
+
+      {screen.kind === 'blessingShrine' && (
+        <BlessingShrineScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
       {screen.kind === 'forge' && (

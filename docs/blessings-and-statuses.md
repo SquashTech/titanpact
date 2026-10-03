@@ -83,6 +83,10 @@ no roster card endures any more, so it's a question for whoever next gives a her
 2. **Earned on the map.** Candidates: a rare reward-row seat (pick a hero); the Guild Hall shelf,
    priced against the Revive at 80g (a Blessing is prevention, a Revive is recovery, so it should
    cost at least as much); a Guardian's Banner-beat alternative. Pick one faucet first and measure it.
+   **BUILT 2026-10-03, per user direction: the rare reward-row seat.** `blessingReward`, the
+   Pactwarden's Shrine (`BlessingShrineScreen`), weight 3 in `REWARD_WEIGHTS` — about one act in
+   eleven, a third of runs. Pick one hero not already Blessed; a Blessed hero is greyed. Not yet
+   measured.
 3. **In kits.** A move that Blesses an ally mid-fight guarantees one knockout won't happen, the
    same category as Feint, Blind and Barrier. It should carry `manaCostGainOnUse` (a guaranteed
    lockout is priced by the fight) and **only last for that fight**, so an in-fight grant never
@@ -127,8 +131,13 @@ hero for a whole run, so it never takes a word or a status-row chip.
 - **Spending it is the beat that explains it**: the banner *"X's Blessing turns aside N damage"* in
   the Blessing's gold, the number struck through, a gold flare on the figure and no hurt frame;
   then the rim and the star are gone. Its own event (`BlessingSpent`, and `DamageDealt.prevented`
-  on a hit) keeps it apart from `Endured`. The `blessing` sound effect exists and isn't wired to
-  the beat yet.
+  on a hit) keeps it apart from `Endured`.
+  **Made louder 2026-10-03** (per user direction — a spend was going unnoticed): the banner reads
+  *"X's Blessing breaks"* with a **Blessing used up** tag; the nameplate's star swells over the
+  figure, rings out and shatters (`BlessingBreak`, CombatantCard); a shatter plus the `blessing`
+  chime plays (beatSfx). A Blessing spent by a round-end tick (Burn, the Gaze) used to be folded
+  silently into the round's summary — and its tick shown as damage that never landed; it now gets
+  its own beat after the summary (`buildBeats` `blessingBeat`).
 
 ### 1.7 Interactions to decide
 

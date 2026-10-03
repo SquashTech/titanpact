@@ -44,6 +44,7 @@ const REWARD_TYPES = new Set([
   'restReward',
   'forgeReward',
   'leyLineReward',
+  'blessingReward',
   'event',
 ]);
 

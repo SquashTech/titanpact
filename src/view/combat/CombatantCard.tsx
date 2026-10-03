@@ -145,6 +145,23 @@ interface Props {
   warded?: PassiveId | null;
 }
 
+const BLESSING_STAR = 'M6 0 L7.3 4.7 L12 6 L7.3 7.3 L6 12 L4.7 7.3 L0 6 L4.7 4.7 Z';
+
+/** A Blessing spent: the nameplate's star swells over the figure, rings out and shatters, so the guard is seen to go. */
+function BlessingBreak() {
+  return (
+    <span className="blessing-break" aria-hidden="true">
+      <span className="blessing-break-ring" />
+      <svg className="blessing-break-star" viewBox="0 0 12 12">
+        <path d={BLESSING_STAR} fill="currentColor" />
+      </svg>
+      {Array.from({ length: 8 }, (_, index) => (
+        <span key={index} className="blessing-break-shard" style={{ '--shard-angle': `${index * 45 + 22}deg` } as CSSProperties} />
+      ))}
+    </span>
+  );
+}
+
 /** Icon + bare number (magnitude, falling back to duration). A ~500ms hold opens StatusDetailOverlay; a tap only stops propagation. */
 function StatusChip({ instance, onInspect }: { instance: StatusInstance; onInspect: () => void }) {
   const longPress = useLongPress(onInspect);
@@ -410,6 +427,7 @@ export function CombatantCard({
           pose={pose}
         />
         {fx && <TypeFx key={fx.key} type={fx.type} kind={fx.kind} count={fx.count} />}
+        {popup?.className === 'popup-blessed' && <BlessingBreak key={popup.key} />}
       </div>
       {/* Always rendered so the row reserves its height whether or not this card has a badge. */}
       <div className="eff-badge-row">
