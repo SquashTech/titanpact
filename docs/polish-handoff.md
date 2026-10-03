@@ -60,7 +60,7 @@ not kit; the Mentor's "powerful move" was twice a sidegrade.
    Silent Wings, Bedrock Hide, Rising Flame, Barrow-Call (5 → 10), Tidal Mass. Sim (4000 runs)
    unmoved, 91.3 → 91.2%: the pilot never built the stack, so play is the test. Still unbounded and
    left alone: the +25 self-Force setup moves (Static Charge, Soulfire, Hoarfrost Edge, Undercurrent,
-   Stoke the Flames), Deepsurge's +25 on hit, the Titanspawn Mark. Brain Flay's ×2 still open.
+   Stoke the Flames), Deepsurge's +25 on hit, the Titanspawn Mark. Brain Flay re-priced 70 → 90 MP (per user direction): the ×2 stays, since any lowered stat arms it for the whole fight.
 3. **DONE:** a one-tap good at 25g or more arms on the first tap and buys on the second
    (`useArmedTap`, 4 s window): Scrolls, Revive, Party Heal, New Faces, and the Smithy's Strike and
    Bind. Potions stay one tap. The shelf comes back from the Scroll screen un-armed.

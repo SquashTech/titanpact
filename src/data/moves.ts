@@ -2717,7 +2717,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: "Dulls a foe's focus — -20 Intelligence.",
+    description: "Dulls a foe's focus — -30 Intelligence.",
   },
   dopamine: {
     id: 'dopamine',
@@ -2878,7 +2878,8 @@ export const moves: Record<string, MoveDefinition> = {
     kind: 'damage',
     basePower: 55,
     conditionalPower: { requiresTargetStatReduction: true, multiplier: 2 },
-    manaCost: 70,
+    // Priced over Psionic Wave: any lowered stat arms the ×2, and a reduction lasts the fight.
+    manaCost: 90,
     priority: 0,
     target: 'bothEnemies',
     description: "Tears open every wound already in both foes' minds — double power against a foe whose stats have been lowered.",
