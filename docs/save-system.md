@@ -42,8 +42,8 @@
   gear sold) are restored with the screen.
 - **D4 — an update never deletes a run.** A save from the previous version is read by a narrow
   reader that recovers its last map checkpoint, when the full decode refuses it.
-- **D5 — built as written, awaiting confirmation:** Save & Quit from a fight resumes the fight at its
-  last command phase. The note beside it (`FightScreen.tsx`) now says so.
+- **D5 — Save & Quit from a fight resumes the fight** at its last command phase (user, 2026-10-03:
+  critical). The note beside it (`FightScreen.tsx`) says so.
 
 ## 4. Phase A — a save on every screen (`SAVE_VERSION` 21)
 
