@@ -48,6 +48,8 @@ interface Props {
   /** Roster-full variant, wired to the in-place RosterReplaceScreen below. */
   onClaimReplace: (defeated: RosterEntry, terminatedRosterId: string) => boolean;
   onDone: () => void;
+  /** Offers signed before a reload; App records each claim, so a resumed screen cannot sign one twice. */
+  claimedRosterIds?: readonly string[];
 }
 
 /**
@@ -56,9 +58,9 @@ interface Props {
  * gear it fought in (deriveContractOffer, docs/gear-absorption.md §7) — so the piece it wears is
  * a veteran mark beside its path and Class, and the silhouette counts it.
  */
-export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone }: Props) {
-  const [featuredRosterId, setFeaturedRosterId] = useState<string>(offers[0].rosterId);
-  const [claimedRosterIds, setClaimedRosterIds] = useState<string[]>([]);
+export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, claimedRosterIds: claimedBefore = [] }: Props) {
+  const [featuredRosterId, setFeaturedRosterId] = useState<string>(() => (offers.find((o) => !claimedBefore.includes(o.rosterId)) ?? offers[0]).rosterId);
+  const [claimedRosterIds, setClaimedRosterIds] = useState<string[]>(() => [...claimedBefore]);
   const [popupMove, setPopupMove] = useState<MoveDefinition | null>(null);
   const [popupPassive, setPopupPassive] = useState<PassiveDefinition | null>(null);
   const [inspecting, setInspecting] = useState(false);

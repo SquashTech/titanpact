@@ -41,6 +41,22 @@ export interface MvpPick {
   score: number;
 }
 
+/**
+ * The ledgers part-way through a fight, with what the next events need to attribute damage and
+ * knockouts. Plain JSON, so a fight saved mid-way carries this rather than its event log.
+ */
+export interface MvpTally {
+  ledgers: Record<string, MvpLedger>;
+  shieldGranter: Record<string, string>;
+  dotApplier: Record<string, string>;
+  lastHitter: Record<string, string>;
+  casterId?: string;
+}
+
+export function emptyMvpTally(): MvpTally {
+  return { ledgers: {}, shieldGranter: {}, dotApplier: {}, lastHitter: {} };
+}
+
 /** `side`'s ledgers, one per roster id that took the field, read off the whole fight's events. */
 export function mvpLedgersFromEvents(
   events: readonly CombatEvent[],
@@ -48,24 +64,36 @@ export function mvpLedgersFromEvents(
   side: Side,
   statusDefs: Record<string, StatusDefinition>
 ): MvpLedger[] {
+  return Object.values(tallyMvpEvents(emptyMvpTally(), events, state, side, statusDefs).ledgers);
+}
+
+/** `tally` carried past `events`, as a new tally. `state` is read only for each combatant's side. */
+export function tallyMvpEvents(
+  tally: MvpTally,
+  events: readonly CombatEvent[],
+  state: CombatState,
+  side: Side,
+  statusDefs: Record<string, StatusDefinition>
+): MvpTally {
   const sideOf = (id: string | undefined): Side | undefined => (id ? state.combatants[id]?.side : undefined);
-  const ledgers = new Map<string, MvpLedger>();
+  const ledgers: Record<string, MvpLedger> = {};
+  for (const [id, l] of Object.entries(tally.ledgers)) ledgers[id] = { ...l };
   const ledger = (combatantId: string | undefined): MvpLedger | undefined => {
     if (!combatantId || sideOf(combatantId) !== side) return undefined;
     const rosterId = rosterIdOfCombatant(combatantId);
-    let found = ledgers.get(rosterId);
+    let found = ledgers[rosterId];
     if (!found) {
       found = { rosterId, roundsActive: 0, damage: 0, finishes: 0, support: 0, anchor: 0, control: 0 };
-      ledgers.set(rosterId, found);
+      ledgers[rosterId] = found;
     }
     return found;
   };
   const opposed = (a: string | undefined, b: string | undefined) => !!sideOf(a) && !!sideOf(b) && sideOf(a) !== sideOf(b);
 
-  const shieldGranter: Record<string, string> = {};
-  const dotApplier: Record<string, string> = {};
-  const lastHitter: Record<string, string> = {};
-  let casterId: string | undefined;
+  const shieldGranter = { ...tally.shieldGranter };
+  const dotApplier = { ...tally.dotApplier };
+  const lastHitter = { ...tally.lastHitter };
+  let casterId = tally.casterId;
 
   for (const event of events) {
     switch (event.type) {
@@ -149,7 +177,7 @@ export function mvpLedgersFromEvents(
         break;
     }
   }
-  return [...ledgers.values()];
+  return { ledgers, shieldGranter, dotApplier, lastHitter, ...(casterId !== undefined ? { casterId } : {}) };
 }
 
 /** Every qualifying hero, best first, each scored by its weighted share of the one column it led most. */

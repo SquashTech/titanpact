@@ -1,6 +1,7 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { prefersReducedMotion } from '../shared/reducedMotion';
+import { seededRandom, withSeededRandom } from '../shared/seededRandom';
 import { equipment, rollEquipmentDrops } from '../../data/equipment';
 import { heroes } from '../../data/heroes';
 import { curses } from '../../data/curses';
@@ -64,6 +65,8 @@ interface Props {
   /** A recruit has joined: App plays the fanfare. */
   onRecruited?: (heroId: string) => void;
   onContinue: () => void;
+  /** Fixes what every option holds and how a gamble falls, so a resumed run meets the same (docs/save-system.md D2). */
+  seed: number;
 }
 
 const TONE_TINT: Record<EventTone, string> = {
@@ -176,15 +179,15 @@ function optionEmpty(outcome: ResolvableOutcome, rolled: Rolled): boolean {
 
 // Branches on `outcome.kind`, never on an event id — a new branch means
 // extending the vocabulary in src/data/events.ts, not adding a case here.
-export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onRecruited, onContinue }: Props) {
+export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onRecruited, onContinue, seed }: Props) {
   const isChoice = event.outcome.kind === 'choice';
   // As THIS act pays them: an event's stat gains grow with the act, as the Item Cache does (run/events.ts).
   const options: readonly EventOption[] = (
     event.outcome.kind === 'choice' ? event.outcome.options : [{ label: event.name, outcome: event.outcome, cost: event.cost }]
   ).map((option) => ({ ...option, outcome: outcomeForAct(option.outcome, run.actNumber) }));
 
-  // Contents roll here, once: the screen is never unmounted mid-event.
-  const [rolls] = useState<Rolled[]>(() => options.map((option) => rollContents(option.outcome, run)));
+  // Contents roll here, off the screen's seed: a reload rolls the same.
+  const [rolls] = useState<Rolled[]>(() => withSeededRandom(seed, () => options.map((option) => rollContents(option.outcome, run))));
   /** The option being played out; a non-choice event is its own one option. */
   const [picked, setPicked] = useState<number | null>(isChoice ? null : 0);
 
@@ -281,7 +284,7 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
       return;
     }
     if (outcome.kind === 'gamble') {
-      const result = resolveGamble(outcome.chance);
+      const result = resolveGamble(outcome.chance, seededRandom(seed, 'gamble'));
       commit(applyHeroOutcome(run, entry.rosterId, result === 'win' ? outcome.win : outcome.lose, passives));
       setGambleResult(result);
       setResolvedTo(entry.rosterId);

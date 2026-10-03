@@ -8,17 +8,8 @@ import { NodeHeader, NodeSky } from '../shared/NodeStage';
 import { TypeBadge } from '../shared/TypeBadge';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 
-/**
- * The companion's three beats (docs/titanspawn-overhaul.md §5, run/companion.ts):
- * `join` — the run's first fight is won and one of the Earlies asks to come along; there is no
- * declining (per user direction), so the one button is a welcome. `grown` — a tier-step on the
- * ladder, the same creature in its next body. `lost` — a knockout took it back into the Titan;
- * first in the post-fight chain, the fight's own consequence.
- */
-export type CompanionBeat =
-  | { kind: 'join'; heroId: string }
-  | { kind: 'grown'; fromHeroId: string; toHeroId: string }
-  | { kind: 'lost'; heroId: string };
+import type { CompanionBeat } from '../../run/companion';
+export type { CompanionBeat };
 
 interface Props {
   run: RunState;

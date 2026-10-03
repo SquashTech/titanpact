@@ -2,11 +2,12 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { initUiScale } from './uiScale';
 import { allArtUrls, locationArtUrls, prefetchImages, preloadImages } from '../view/shared/preload';
 import { useReloadOnNewBuild } from './useReloadOnNewBuild';
-import { clearSave, readSave, writeSave } from './saveStorage';
+import { clearSave, flushSave, persistStorage, readResume, readSave, readSaveFromMirror, saveStorageFull, writeSave, type SaveRead } from './saveStorage';
 import { eraseAllData, readProfile, updateProfile } from './profileStorage';
 import { usePlaytime } from './usePlaytime';
 import type { StatKey } from '../engine/content';
-import { saveSummary, type SavedRun } from '../run/save';
+import { saveSummary, type SaveCheckpoint, type SavedRun } from '../run/save';
+import { isResumable, resumeTarget, type CombatSnapshot, type ResumePayload, type RunScreen, type ScrollProgress } from '../run/resume';
 import {
   companionTypeOf,
   isSpawnAscended,
@@ -28,10 +29,10 @@ import { ShopNodeScreen } from '../view/run/ShopNodeScreen';
 import { BoonNodeScreen } from '../view/run/BoonNodeScreen';
 import { TutorNodeScreen } from '../view/run/TutorNodeScreen';
 import { MentorNodeScreen } from '../view/run/MentorNodeScreen';
-import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScreen';
+import { NodeRewardScreen } from '../view/run/NodeRewardScreen';
 import { ItemWhoScreen } from '../view/run/ItemWhoScreen';
 import { clearGuildHallTab } from '../view/run/guildHallTabMemory';
-import { ScrollNodeScreen, type ScrollPlan } from '../view/run/ScrollNodeScreen';
+import { ScrollNodeScreen } from '../view/run/ScrollNodeScreen';
 import { ManaWellScreen } from '../view/run/ManaWellScreen';
 import { BlessingShrineScreen } from '../view/run/BlessingShrineScreen';
 import { ForgeNodeScreen } from '../view/run/ForgeNodeScreen';
@@ -54,7 +55,7 @@ import { RunSummaryScreen } from '../view/run/RunSummaryScreen';
 import { heroes } from '../data/heroes';
 import { moves } from '../data/moves';
 import { allCombatants, rosterHeroes } from '../data/content';
-import { CompanionScreen, type CompanionBeat } from '../view/run/CompanionScreen';
+import { CompanionScreen } from '../view/run/CompanionScreen';
 import { absorbCompanions, awakenCompanion, companionCandidate, companionJoinDue, companionToAwaken, joinCompanion } from '../run/companion';
 import { fallenAfterFight, isPermadeath, openAscension } from '../run/ascension';
 import { FallenScreen } from '../view/run/FallenScreen';
@@ -159,91 +160,8 @@ import { statScaleFor } from '../run/statScale';
 import { RoadGate } from '../view/run/RoadEncounter';
 import { mapNodeArt, mapNodeAwakening } from '../view/run/mapNodeArt';
 
-type Screen =
-  | { kind: 'title' }
-  /** The lore card, ahead of the first draft on an account (docs/tutorial.md). */
-  | { kind: 'lore'; next: Screen }
-  | { kind: 'draft'; optionIds: string[] }
-  /** Permadeath's post-fight beat (docs/ascension.md §3): the KO'd heroes, still on the roster until Continue, and the companion the same fight took. */
-  | { kind: 'fallen'; rosterIds: string[]; companion: RosterEntry | null; next: Screen }
-  /** The act-boundary beat: five sockets, one per Guardian (docs/run-loop.md §4). */
-  | { kind: 'pactSeal' }
-  /** Acts 2-5 open on a 1-of-2 (docs/locations.md §1): the offer is drawn once, when the seal is behind the player. */
-  | { kind: 'locationChoice'; candidateIds: string[] }
-
-  /** Per-act arrival beat; reads its location off the run's itinerary. */
-  | { kind: 'titanWake' }
-  | { kind: 'blessing' }
-  | { kind: 'actIntro' }
-  /** The Herald announced before its fight; `next` is the fight. */
-  | { kind: 'herald'; next: Screen }
-  /** The companion, brought to the finale, wakes to Ancient; `next` is the fight. */
-  | { kind: 'companionAwakens'; heroId: string; next: Screen }
-  /** The Eyes have closed: the collapse and the re-binding, ahead of everything the fight pays. */
-  | { kind: 'titanBound'; next: Screen }
-  | { kind: 'map' }
-  | {
-      kind: 'fight';
-      nodeId: string;
-      nodeType: EncounterNodeType;
-      squad: Squad;
-      encounter: Encounter;
-      goldReward: number;
-      xpGained: number;
-      /** Rolled at squad-confirm time so the victory screen can spotlight it; handleFightResolved reuses it. */
-      equipmentReward: EquipmentDefinition | null;
-      /** The potion drop, rolled and carried the same way. */
-      consumableReward: ConsumableKind | null;
-      /** Seeds the level roll, so the victory screen shows the growth handleFightResolved will land (run/growth.ts previewLevelUp). */
-      levelSeed: number;
-    }
-  | { kind: 'quickBattle'; player: Encounter; ai: Encounter }
-  | { kind: 'sandboxBattle' }
-  | { kind: 'sandboxFight'; player: Encounter; ai: Encounter; playerRelics: string[] }
-  /** TEMPORARY DEV/TEST — src/run/statusTestFight.ts. Own kind so leaving returns to the title. */
-  | { kind: 'statusTestFight'; player: Encounter; ai: Encounter }
-  /** `offers` lives on the screen, not in the shop component: a purchase re-renders the shop and component-local state would reroll / forget. */
-  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; scrollsBought: number; revivesBought: number; rerolls: number; itemsBought: number[] }
-  | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType }
-  /** The Forge: +1 item slot to one hero. */
-  /** An item has arrived and asks who carries it (docs/gear-absorption.md §2). `next` is where the run goes once it is absorbed or sold. */
-  | { kind: 'itemWho'; itemId: string; next: Screen }
-  /** The Mana Well: +MANA_WELL_AMOUNT max Mana to one hero. */
-  | { kind: 'manaWell'; nodeId: string }
-  | { kind: 'blessingShrine'; nodeId: string }
-  | { kind: 'forge'; nodeId: string }
-  | { kind: 'leyLine'; nodeId: string }
-  | { kind: 'rest'; nodeId: string }
-  /**
-   * Mastery Scrolls to whoever the player taps (run/mastery.ts, docs/mastery.md): the Scribe's
-   * forced row, the Scroll Cache's reward seat, and the Guild Hall shelf (`bought`, `nodeId` null,
-   * the gold already charged). The Evolution the fifth pip raises is the screen's own; it walks
-   * the node when every pip is down.
-   */
-  | { kind: 'scrolls'; plan: ScrollPlan; nodeId: string | null; bought: boolean; next: Screen }
-  | { kind: 'boonNode'; nodeId: string }
-  /** The Mentor (acts 1-3): pick a hero, and one Mid move is rolled for it. */
-  | { kind: 'mentorNode'; nodeId: string }
-  /** The Tutor (acts 4-5): pick a hero, then ANY move off its own pool. */
-  | { kind: 'tutorNode'; nodeId: string }
-  /** Which event this node is gets rolled ONCE at node-select time — the screen re-renders on every onRunChange. */
-  | { kind: 'event'; nodeId: string; eventId: string }
-  /** What the fight just did to the roster. First in the post-fight chain — it is the fight's own consequence. */
-  | { kind: 'levelUp'; report: readonly HeroLevelUp[]; next: Screen }
-  /** The companion's beats (run/companion.ts): the loss goes AHEAD of the level report; the join right after it; the tier-step is the report's own. */
-  | { kind: 'companion'; beat: CompanionBeat; next: Screen }
-  /** Guardian's Banner after a Guardian win in acts 1-4. Not a map node, so no nodeId. */
-  | { kind: 'guardianBanner'; next: Screen }
-  /** The Crucible: pick one hero, and that hero takes a Class. The Guardian's beat. */
-  | { kind: 'crucible'; next: Screen }
-  /** Roster-full replacement, Guild Hall path only; the contract path resolves in RecruitScreen. */
-  | { kind: 'rosterReplace'; candidate: RosterReplaceCandidate; next: Screen }
-  /** Offers sampled once in handleFightResolved; only pushed when the player holds a contract. */
-  | { kind: 'recruit'; offers: RosterEntry[]; next: Screen }
-  /** The Eyes have closed: the roster presented as the heroes of the land, then the summary. */
-  | { kind: 'champions' }
-  | { kind: 'runComplete' }
-  | { kind: 'runFailed' };
+/** The screen machine (run/resume.ts), so a save can carry the screen it was written on. */
+type Screen = RunScreen;
 
 /** Screens outside an act get no ambient Location (LocationContext). Listed as the exceptions so new node screens inherit the place by default. */
 const PLACELESS_SCREENS: ReadonlySet<Screen['kind']> = new Set([
@@ -270,6 +188,16 @@ const PLACELESS_SCREENS: ReadonlySet<Screen['kind']> = new Set([
   'runComplete',
   'runFailed',
 ]);
+
+/** What the title holds for a save read at boot. A refused save is dropped, but the reason is kept so the title can say why the run is gone. */
+function slotFrom(result: SaveRead | null): { save: SavedRun | null; staleReason: string | null; recovered?: boolean } {
+  if (!result) return { save: null, staleReason: null };
+  if (result.ok) return { save: result.save, staleReason: null, ...(result.source !== 'main' ? { recovered: true } : {}) };
+  clearSave();
+  // The title says only that a save was cleared; the reason is for whoever is debugging it.
+  console.warn(`Titanpact: refused a stored run — ${result.reason}`);
+  return { save: null, staleReason: result.reason };
+}
 
 /** Throwaway (unseeded) seed for the entry-point rolls in this file. */
 function randomSeed(): number {
@@ -484,15 +412,19 @@ export function App() {
   // dropped rather than left to fail again, but the reason is kept so the title can say why
   // the run the player left is gone instead of silently not offering it. One state, not two,
   // so the read happens in a single lazy initializer.
-  const [saveSlot, setSaveSlot] = useState<{ save: SavedRun | null; staleReason: string | null }>(() => {
-    const result = readSave();
-    if (!result) return { save: null, staleReason: null };
-    if (result.ok) return { save: result.save, staleReason: null };
-    clearSave();
-    // The title says only that a save was cleared; the reason is for whoever is debugging it.
-    console.warn(`Titanpact: refused a stored run — ${result.reason}`);
-    return { save: null, staleReason: result.reason };
-  });
+  const [saveSlot, setSaveSlot] = useState<{ save: SavedRun | null; staleReason: string | null; recovered?: boolean }>(() => slotFrom(readSave()));
+  // localStorage came back empty — an evicted Home Screen app — so the IndexedDB mirror is asked.
+  useEffect(() => {
+    if (saveSlot.save || saveSlot.staleReason) return;
+    let live = true;
+    void readSaveFromMirror().then((result) => {
+      if (live && result) setSaveSlot(slotFrom(result));
+    });
+    return () => {
+      live = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Held so the title, its Records screen and the Constellation can render it, and so the Evolution
   // screen can mark the paths already starred (ProfileProvider). Stars only change at a run's end
@@ -531,19 +463,71 @@ export function App() {
     if (shellRef.current) return initUiScale(shellRef.current);
   }, []);
 
-  // Title screen only. A checkpointed run now survives a reload, but everything between two
-  // checkpoints does not, so a mid-fight reload would still cost the fight.
-  useReloadOnNewBuild(screen.kind === 'title');
+  // Every run screen is saved now, so a new build may reload anywhere but where it would cost a
+  // moment the save does not hold: a fight's playback between command phases, and the Guild Hall's
+  // open tab (docs/save-system.md §4).
+  useReloadOnNewBuild(screen.kind === 'title' || (isResumable(screen.kind) && screen.kind !== 'fight' && screen.kind !== 'shop'));
+
+  // The last map or act intro, which a save written anywhere else falls back to when its screen
+  // cannot be restored. Null until the run has stood on one; the run's start falls back to its intro.
+  const fallback = useRef<{ run: RunState; checkpoint: SaveCheckpoint } | null>(null);
+  // The board the fight on screen last waited on, cleared when the screen moves off it.
+  const combatSnapshot = useRef<{ screen: Screen; snapshot: CombatSnapshot } | null>(null);
+  /** A fight resumed from the save opens on this board, once. */
+  const [resumedCombat, setResumedCombat] = useState<{ screen: Screen; snapshot: CombatSnapshot } | null>(null);
+
+  /** Writes the run as it stands on `at`: a checkpoint is itself; anywhere else rides on the last one. */
+  function persist(run: RunState, at: Screen) {
+    if (!run.map || !isResumable(at.kind)) return;
+    let save: SavedRun | null;
+    if (at.kind === 'map' || at.kind === 'actIntro') {
+      fallback.current = { run, checkpoint: at.kind };
+      save = writeSave(run, at.kind);
+    } else {
+      const base = fallback.current ?? { run, checkpoint: 'actIntro' as const };
+      const combat = at.kind === 'fight' && combatSnapshot.current?.screen === at ? combatSnapshot.current.snapshot : undefined;
+      const resume: ResumePayload = { screen: at, ...(combat ? { combat } : {}), ...(actBreak ? { actBreak: true } : {}) };
+      save = writeSave(run, base.checkpoint, { fallbackRun: base.run, resume });
+    }
+    if (save) setSaveSlot({ save, staleReason: null });
+  }
 
   // Autosave. An effect rather than a call inside each transition handler for two reasons:
   // it sees state that has actually committed (several handlers still read the pre-setState
-  // `playerRun`), and one place cannot forget a path. Checkpoints only — see SaveCheckpoint.
+  // `playerRun`), and one place cannot forget a path.
   useEffect(() => {
-    if (screen.kind !== 'map' && screen.kind !== 'actIntro') return;
-    if (!playerRun.map) return;
-    const save = writeSave(playerRun, screen.kind);
-    setSaveSlot({ save, staleReason: null });
+    if (combatSnapshot.current && combatSnapshot.current.screen !== screen) combatSnapshot.current = null;
+    persist(playerRun, screen);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playerRun, screen]);
+
+  // A write the OS interrupted, or one the quota refused, is tried again as the page goes away.
+  useEffect(() => {
+    const flush = () => {
+      if (document.visibilityState === 'hidden') flushSave();
+    };
+    window.addEventListener('pagehide', flushSave);
+    document.addEventListener('visibilitychange', flush);
+    return () => {
+      window.removeEventListener('pagehide', flushSave);
+      document.removeEventListener('visibilitychange', flush);
+    };
+  }, []);
+
+  /** A fight's board waiting on the player: saved where it stands (D1 — the enemy's picks are seeded off it). */
+  function handleCommandPhase(snapshot: CombatSnapshot) {
+    if (screen.kind !== 'fight') return;
+    combatSnapshot.current = { screen, snapshot };
+    persist(playerRun, screen);
+  }
+
+  /** onRunChange for a screen that grants once: the grant marks it settled, so a resume goes past it (run/resume.ts). */
+  function settlingRunChange(current: Screen) {
+    return (next: RunState) => {
+      setPlayerRun(next);
+      setScreen((at) => (at === current ? ({ ...at, settled: true } as Screen) : at));
+    };
+  }
 
   usePlaytime();
 
@@ -598,6 +582,7 @@ export function App() {
     eraseAllData();
     setProfile(readProfile());
     setSaveSlot({ save: null, staleReason: null });
+    fallback.current = null;
   }
 
   /** A Constellation purchase (run/starShop.ts): written to storage, then the title re-reads it so the balance moves. */
@@ -635,11 +620,26 @@ export function App() {
     setScreen({ kind: 'title' });
   }
 
+  /** The screen the save was written on, past anything it had already granted; else its checkpoint. */
   function handleContinueRun() {
     const parked = saveSlot.save;
     if (!parked) return;
-    setPlayerRun(parked.run);
-    setScreen({ kind: parked.checkpoint });
+    const checkpointRun = parked.fallbackRun ?? parked.run;
+    fallback.current = { run: checkpointRun, checkpoint: parked.checkpoint };
+    const resume = readResume(parked);
+    if (!resume) {
+      setPlayerRun(checkpointRun);
+      setScreen({ kind: parked.checkpoint });
+      return;
+    }
+    const target = resumeTarget(resume.screen, parked.run);
+    setActBreak(resume.actBreak === true);
+    if (target.screen === resume.screen && resume.combat) {
+      setResumedCombat({ screen: target.screen, snapshot: resume.combat });
+      combatSnapshot.current = { screen: target.screen, snapshot: resume.combat };
+    }
+    setPlayerRun(target.run);
+    setScreen(target.screen);
   }
 
   function handleClaimContract(defeated: RosterEntry): boolean {
@@ -649,7 +649,12 @@ export function App() {
     const offer = deriveContractOffer(defeated);
     const rosterId = freshRosterId(playerRun, defeated.heroId);
     setPlayerRun((run) => claimContract(run, offer, rosterId));
+    recordClaim(defeated.rosterId);
     return true;
+  }
+
+  function recordClaim(offerRosterId: string) {
+    setScreen((at) => (at.kind === 'recruit' ? { ...at, claimedRosterIds: [...(at.claimedRosterIds ?? []), offerRosterId] } : at));
   }
 
   function handleClaimContractReplace(defeated: RosterEntry, terminatedRosterId: string): boolean {
@@ -658,6 +663,7 @@ export function App() {
     const offer = deriveContractOffer(defeated);
     const rosterId = freshRosterId(playerRun, defeated.heroId);
     setPlayerRun((run) => claimContractReplacing(run, offer, rosterId, terminatedRosterId));
+    recordClaim(defeated.rosterId);
     return true;
   }
 
@@ -736,24 +742,25 @@ export function App() {
     } else if (node.type === 'scrollReward') {
       setScreen({ kind: 'scrolls', plan: { kind: 'scrolls', count: SCROLL_CACHE_COUNT }, nodeId, bought: false, next: { kind: 'map' } });
     } else if (node.type === 'mentorReward') {
-      setScreen({ kind: 'mentorNode', nodeId });
+      setScreen({ kind: 'mentorNode', nodeId, seed: randomSeed() });
     } else if (node.type === 'passiveReward') {
-      setScreen({ kind: 'boonNode', nodeId });
+      setScreen({ kind: 'boonNode', nodeId, seed: randomSeed() });
     } else if (node.type === 'tutorReward') {
-      setScreen({ kind: 'tutorNode', nodeId });
+      setScreen({ kind: 'tutorNode', nodeId, seed: randomSeed() });
     } else if (node.type === 'event') {
       const rolled = rollRunEvent(runEvents, playerRun.actNumber, location.id);
       // Nothing eligible skips the node rather than stranding the player on an empty screen.
-      if (rolled) setScreen({ kind: 'event', nodeId, eventId: rolled.id });
+      if (rolled) setScreen({ kind: 'event', nodeId, eventId: rolled.id, seed: randomSeed() });
       else handleNodeContinue(nodeId);
     } else {
-      setScreen({ kind: 'reward', nodeId, nodeType: node.type });
+      setScreen({ kind: 'reward', nodeId, nodeType: node.type as 'currencyReward' | 'equipmentReward', seed: randomSeed() });
     }
   }
 
   function handleEnterFight(squad: Squad, nodeId: string, nodeType: EncounterNodeType, encounter: Encounter) {
     const mapNodeType = playerRun.map!.nodes[nodeId].type as EncounterMapNodeType;
     const equipmentReward = equipmentDropFor(mapNodeType, playerRun.actNumber);
+    setResumedCombat(null);
     const fight: Screen = {
       kind: 'fight',
       nodeId,
@@ -764,7 +771,7 @@ export function App() {
       // Read off the win this fight WILL be: the act's base is a function of encounters won and
       // the kind is the tile's, so the figure is known before the fight rather than rolled after it.
       xpGained: xpForEncounter(playerRun.encountersWon + 1, encounterXpKind(mapNodeType)),
-      equipmentReward,
+      equipmentRewardId: equipmentReward?.id ?? null,
       consumableReward: rollConsumableDrop(mapNodeType),
       levelSeed: randomSeed(),
     };
@@ -799,6 +806,7 @@ export function App() {
     /** The fight's MVP (run/mvp.ts), named on the victory screen: its free pip lands here. */
     mvp: MvpPick | null = null
   ) {
+    setResumedCombat(null);
     if (outcome === 'loss') {
       setScreen({ kind: 'runFailed' });
       return;
@@ -880,7 +888,7 @@ export function App() {
     // hero takes a Class, in the chain Guardian → Banner → Crucible → Pact Seal → act intro. Team,
     // hero, run — three scales ascending. Skipped when every hero already holds one.
     const crucible = isGuardian && anyClassAvailable(next.roster);
-    const afterCrucible: Screen = crucible ? { kind: 'crucible', next: afterScreen } : afterScreen;
+    const afterCrucible: Screen = crucible ? { kind: 'crucible', next: afterScreen, seed: randomSeed() } : afterScreen;
 
     // Gate order is deliberate: banner, then recruit, then the Crucible — so a hero recruited
     // this beat already stands under the Banner, and can walk into the Crucible itself.
@@ -902,7 +910,7 @@ export function App() {
     // somebody is owed a move, a signature or an Evolution. A raw hire with a backlog still gets its
     // one entry a fight, level or no level.
     const afterLoss: Screen = levelled.run.roster.some((entry) => levelPayoffOwed(levelled.run, entry.rosterId))
-      ? { kind: 'levelUp', report: levelled.report, next: afterLevels }
+      ? { kind: 'levelUp', report: levelled.report, next: afterLevels, seed: randomSeed() }
       : afterLevels;
     // And the companion's loss ahead of even that — the one thing the fight took (§5). Under
     // Permadeath the Fallen beat is that screen for everyone the fight knocked out (docs/ascension.md
@@ -1048,6 +1056,8 @@ export function App() {
     // is built here: binding is mutual (docs/lore.md §1), so the thing on the far end of the
     // leash notices when the pact is sealed, not when a menu is browsed.
     setScreen({ kind: 'titanWake' });
+    fallback.current = null;
+    persistStorage();
     // Sealing the pact is the start, not pressing the title button: a draft backed out of
     // is not a run. An abandoned run still counts here — it was played.
     // The rung's entry fee is spent here, with the seal (docs/collection.md §5).
@@ -1057,18 +1067,21 @@ export function App() {
 
   /** TEMPORARY DEV/TEST — the Crucible sits behind a Guardian, which is three fights away. */
   function handleStartCrucibleTestRun() {
+    fallback.current = null;
     setPlayerRun(createLevel4TestRun());
-    setScreen({ kind: 'crucible', next: { kind: 'map' } });
+    setScreen({ kind: 'crucible', next: { kind: 'map' }, seed: randomSeed() });
   }
 
   /** TEMPORARY DEV/TEST — see createTitanEyesTestRun. */
   function handleStartTitanEyesTestRun() {
+    fallback.current = null;
     setPlayerRun(createTitanEyesTestRun());
     setScreen({ kind: 'map' });
   }
 
   /** TEMPORARY DEV/TEST — see createLevel4TestRun. */
   function handleStartLevel4TestRun() {
+    fallback.current = null;
     setPlayerRun(createLevel4TestRun());
     setScreen({ kind: 'map' });
   }
@@ -1086,6 +1099,7 @@ export function App() {
   }
 
   function handleVisitLocation(locationId: string) {
+    fallback.current = null;
     setPlayerRun(createLocationVisitRun(locationId));
     enterAct();
   }
@@ -1174,6 +1188,13 @@ export function App() {
           onChangeDeck={handleChangeDeck}
           parkedRun={saveSlot.save ? saveSummary(saveSlot.save) : null}
           staleSaveReason={saveSlot.staleReason}
+          saveNotice={
+            saveSlot.recovered
+              ? "The last save was cut off, so the run was restored from the one before it."
+              : saveSlot.save && saveStorageFull()
+                ? "This device is out of storage space, so the run is only saved on the map."
+                : null
+          }
           onContinueRun={handleContinueRun}
           onStartRun={handleStartNewRun}
           openAscension={openAscension(profile)}
@@ -1285,13 +1306,15 @@ export function App() {
           goldReward={screen.goldReward}
           xpGained={screen.xpGained}
           levelSeed={screen.levelSeed}
-          equipmentReward={screen.equipmentReward}
+          equipmentReward={screen.equipmentRewardId ? equipment[screen.equipmentRewardId] ?? null : null}
           consumableReward={screen.consumableReward}
+          initialSnapshot={resumedCombat?.screen === screen ? resumedCombat.snapshot : undefined}
+          onCommandPhase={handleCommandPhase}
           onResolved={(outcome, finalState, consumablesUsed, mvp) =>
             handleFightResolved(
               screen.nodeId,
               screen.goldReward,
-              screen.equipmentReward,
+              screen.equipmentRewardId ? equipment[screen.equipmentRewardId] ?? null : null,
               screen.consumableReward,
               screen.encounter,
               outcome,
@@ -1356,6 +1379,7 @@ export function App() {
         <RecruitScreen
           run={playerRun}
           offers={screen.offers}
+          claimedRosterIds={screen.claimedRosterIds}
           onClaim={handleClaimContract}
           onClaimReplace={handleClaimContractReplace}
           onDone={() => setScreen(screen.next)}
@@ -1399,9 +1423,10 @@ export function App() {
         <NodeRewardScreen
           nodeType={screen.nodeType}
           run={playerRun}
-          onRunChange={setPlayerRun}
+          onRunChange={settlingRunChange(screen)}
           onContinue={() => handleNodeContinue(screen.nodeId)}
           onClaimEquipment={(itemId) => handleClaimEquipment(screen.nodeId, itemId)}
+          seed={screen.seed}
         />
       )}
 
@@ -1412,56 +1437,60 @@ export function App() {
           plan={screen.plan}
           bought={screen.bought}
           onDone={() => (screen.nodeId ? handleNodeContinue(screen.nodeId) : setScreen(screen.next))}
+          progress={screen.progress}
+          onProgress={(progress: ScrollProgress) => setScreen((at) => (at.kind === 'scrolls' ? { ...at, progress } : at))}
         />
       )}
 
       {screen.kind === 'manaWell' && (
-        <ManaWellScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+        <ManaWellScreen run={playerRun} onRunChange={settlingRunChange(screen)} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
       {screen.kind === 'blessingShrine' && (
-        <BlessingShrineScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+        <BlessingShrineScreen run={playerRun} onRunChange={settlingRunChange(screen)} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
       {screen.kind === 'forge' && (
-        <ForgeNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+        <ForgeNodeScreen run={playerRun} onRunChange={settlingRunChange(screen)} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
       {screen.kind === 'leyLine' && (
-        <LeyLineScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+        <LeyLineScreen run={playerRun} onRunChange={settlingRunChange(screen)} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
       {screen.kind === 'rest' && (
-        <RestNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+        <RestNodeScreen run={playerRun} onRunChange={settlingRunChange(screen)} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
       {screen.kind === 'itemWho' && (
-        <ItemWhoScreen key={`${screen.itemId}:${whoScreensBehind(screen.next)}`} run={playerRun} itemId={screen.itemId} onRunChange={setPlayerRun} onDone={() => setScreen(screen.next)} />
+        <ItemWhoScreen key={`${screen.itemId}:${whoScreensBehind(screen.next)}`} run={playerRun} itemId={screen.itemId} onRunChange={settlingRunChange(screen)} onDone={() => setScreen(screen.next)} />
       )}
 
 
       {screen.kind === 'boonNode' && (
-        <BoonNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+        <BoonNodeScreen run={playerRun} onRunChange={settlingRunChange(screen)} onContinue={() => handleNodeContinue(screen.nodeId)} seed={screen.seed} />
       )}
 
       {screen.kind === 'tutorNode' && (
-        <TutorNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+        <TutorNodeScreen run={playerRun} onRunChange={settlingRunChange(screen)} onContinue={() => handleNodeContinue(screen.nodeId)} seed={screen.seed} />
       )}
 
       {screen.kind === 'mentorNode' && (
-        <MentorNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+        <MentorNodeScreen run={playerRun} onRunChange={settlingRunChange(screen)} onContinue={() => handleNodeContinue(screen.nodeId)} seed={screen.seed} />
       )}
 
       {screen.kind === 'event' &&
         runEvents[screen.eventId] &&
         (() => {
-          const { nodeId, eventId } = screen;
+          const { nodeId, eventId, seed } = screen;
+          const onEventRunChange = settlingRunChange(screen);
           return (
             <RoadGate run={playerRun} place art={mapNodeArt('event')!} awakened={mapNodeAwakening('event')} name={runEvents[eventId].name} lines={[runEvents[eventId].flavor]}>
               <EventNodeScreen
                 event={runEvents[eventId]}
                 run={playerRun}
-                onRunChange={setPlayerRun}
+                onRunChange={onEventRunChange}
+                seed={seed}
                 onGrantEquipment={(itemIds, base) => handleClaimEquipment(nodeId, itemIds, base)}
                 onRecruited={(heroId) => setRecruitFanfare({ heroId, source: 'event' })}
                 onContinue={() => handleNodeContinue(nodeId)}
@@ -1476,6 +1505,11 @@ export function App() {
           onRunChange={setPlayerRun}
           report={screen.report.filter((hero) => playerRun.roster.some((entry) => entry.rosterId === hero.rosterId))}
           onContinue={() => setScreen(screen.next)}
+          memory={{
+            seed: screen.seed,
+            taken: screen.taken ?? [],
+            onTaken: (taken) => setScreen((at) => (at.kind === 'levelUp' ? { ...at, taken } : at)),
+          }}
         />
       )}
 
@@ -1486,11 +1520,11 @@ export function App() {
       {screen.kind === 'companion' && <CompanionScreen run={playerRun} beat={screen.beat} onContinue={() => setScreen(screen.next)} />}
 
       {screen.kind === 'guardianBanner' && (
-        <GuardianBannerScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => setScreen(screen.next)} />
+        <GuardianBannerScreen run={playerRun} onRunChange={settlingRunChange(screen)} onContinue={() => setScreen(screen.next)} />
       )}
 
       {screen.kind === 'crucible' && (
-        <CrucibleScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => setScreen(screen.next)} />
+        <CrucibleScreen run={playerRun} onRunChange={settlingRunChange(screen)} onContinue={() => setScreen(screen.next)} seed={screen.seed} />
       )}
 
       {screen.kind === 'champions' && <ChampionScreen run={playerRun} onContinue={() => setScreen({ kind: 'runComplete' })} />}

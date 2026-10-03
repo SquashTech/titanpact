@@ -99,3 +99,9 @@ export function buyScroll(run: RunState, bought: number): RunState {
   if (!anyMasteryEligible(run.roster)) throw new MasteryError(`every hero is already at ${MASTERY_CAP} Mastery`);
   return { ...run, gold: run.gold - SCROLL_PURCHASE_COST };
 }
+
+/**
+ * What a Scroll screen hands out. The Scribe picks two heroes and pays each the same; a Scroll count
+ * is tapped out one pip at a time, in any split (docs/mastery.md §3).
+ */
+export type ScrollPlan = { kind: 'scribe' } | { kind: 'scrolls'; count: number };

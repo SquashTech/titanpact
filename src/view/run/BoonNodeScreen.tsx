@@ -1,5 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
+import { withSeededRandom } from '../shared/seededRandom';
 import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import { moves } from '../../data/moves';
@@ -26,6 +27,8 @@ interface Props {
   run: RunState;
   onRunChange: (next: RunState) => void;
   onContinue: () => void;
+  /** Fixes the screen's roll, so a resumed run is offered the same (docs/save-system.md D2). */
+  seed: number;
 }
 
 /** One Boon as a verb card: its mark in a socket, its name and kind, the rule in a line. Tap picks; hold reads it whole. */
@@ -83,8 +86,8 @@ function BoonCard({
  * Unlike a Class, a Boon STACKS: `grantEventPassive` appends, so every hero is eligible however
  * many they already hold, and a card showing "holds ×1" is an invitation rather than a block.
  */
-export function BoonNodeScreen({ run, onRunChange, onContinue }: Props) {
-  const [boonChoices] = useState(() => pickBoonOffers(run.roster, rosterHeroes));
+export function BoonNodeScreen({ run, onRunChange, onContinue, seed }: Props) {
+  const [boonChoices] = useState(() => withSeededRandom(seed, () => pickBoonOffers(run.roster, rosterHeroes)));
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [confirmedId, setConfirmedId] = useState<string | null>(null);
   const [assignedTo, setAssignedTo] = useState<string | null>(null);

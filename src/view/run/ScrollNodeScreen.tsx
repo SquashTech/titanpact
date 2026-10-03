@@ -32,11 +32,9 @@ import { KeeperVoice, useKeeperLine } from './RoadEncounter';
 import { SCRIBE_LINES } from '../../data/roadLines';
 import { useMasteryFlow } from './masteryFlow';
 
-/**
- * What the node hands out. The Scribe picks two heroes and pays each the same; a Scroll count
- * is tapped out one pip at a time, in any split (docs/mastery.md §3).
- */
-export type ScrollPlan = { kind: 'scribe' } | { kind: 'scrolls'; count: number };
+import type { ScrollPlan } from '../../run/mastery';
+import type { ScrollProgress } from '../../run/resume';
+export type { ScrollPlan };
 
 interface Props {
   run: RunState;
@@ -46,6 +44,9 @@ interface Props {
   bought?: boolean;
   /** Every pip landed and every payoff resolved — or nothing to land. The caller walks the node. */
   onDone: () => void;
+  /** The pips still to land and the heroes already paid, held by App so a reload neither repays nor forgets them. Omitted = none landed yet. */
+  progress?: ScrollProgress;
+  onProgress: (progress: ScrollProgress) => void;
 }
 
 /** A beat between the last pip lighting and the screen leaving, so the row is seen lit. */
@@ -57,10 +58,10 @@ const LEAVE_MS = 700;
  * over it is the one worth having — the Evolution the fifth pip raises (masteryFlow.ts). No
  * purse: what the node holds is assigned here, and the screen leaves on its own when it is.
  */
-export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDone }: Props) {
+export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDone, progress, onProgress }: Props) {
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
-  const [remaining, setRemaining] = useState(plan.kind === 'scribe' ? SCRIBE_PICKS : plan.count);
-  const [pickedIds, setPickedIds] = useState<string[]>([]);
+  const remaining = progress?.remaining ?? (plan.kind === 'scribe' ? SCRIBE_PICKS : plan.count);
+  const pickedIds = progress?.pickedIds ?? [];
   const flow = useMasteryFlow(run, onRunChange);
   const voice = useKeeperLine(SCRIBE_LINES);
 
@@ -87,8 +88,7 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
     const next = grantMastery(run, entry.rosterId, pipsPerTap);
     onRunChange(next);
     playSfx('scroll.spend');
-    setRemaining((n) => n - 1);
-    if (plan.kind === 'scribe') setPickedIds((ids) => [...ids, entry.rosterId]);
+    onProgress({ remaining: remaining - 1, pickedIds: plan.kind === 'scribe' ? [...pickedIds, entry.rosterId] : pickedIds });
     // What the pip opened is raised over the LANDED run, not the one this render closed over.
     flow.raise(entry.rosterId, next, entry.mastery);
   }

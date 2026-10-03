@@ -33,6 +33,8 @@ interface Props {
   parkedRun: SaveSummary | null;
   /** Set when a stored run was refused on load — shown once so a vanished Continue is explained, not just missing. */
   staleSaveReason: string | null;
+  /** A line about the save the player can act on or should know: restored from a backup, or storage full. */
+  saveNotice?: string | null;
   onContinueRun: () => void;
   /** Start a run on the given Ascension rung (run/ascension.ts); 0 is Classic. */
   onStartRun: (ascension: number) => void;
@@ -115,6 +117,7 @@ export function TitleScreen({
   onChangeDeck,
   parkedRun,
   staleSaveReason,
+  saveNotice = null,
   onContinueRun,
   onStartRun,
   openAscension,
@@ -276,6 +279,11 @@ export function TitleScreen({
         {staleSaveReason && !staleNoteDismissed && (
           <button className="title-stale-note" onClick={() => setStaleNoteDismissed(true)}>
             A run saved by an earlier version of the game could not be loaded, and has been cleared. Tap to dismiss.
+          </button>
+        )}
+        {!staleSaveReason && saveNotice && !staleNoteDismissed && (
+          <button className="title-stale-note" onClick={() => setStaleNoteDismissed(true)}>
+            {saveNotice} Tap to dismiss.
           </button>
         )}
       </div>

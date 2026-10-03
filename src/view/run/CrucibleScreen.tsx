@@ -1,5 +1,6 @@
 import { type CSSProperties, useState } from 'react';
 import { playSfx } from '../../audio/sfx';
+import { seededRandom } from '../shared/seededRandom';
 import { classes } from '../../data/classes';
 import { equipment } from '../../data/equipment';
 import { rosterHeroes } from '../../data/content';
@@ -32,6 +33,8 @@ interface Props {
   run: RunState;
   onRunChange: (next: RunState) => void;
   onContinue: () => void;
+  /** Fixes the screen's roll, so a resumed run is offered the same (docs/save-system.md D2). */
+  seed: number;
 }
 
 /** The colour a kind wears — the stat the kind is about, the same palette an Evolution's kind chip uses. */
@@ -56,12 +59,12 @@ const CRUCIBLE_LINE = "The Guardian's heart burns in the Crucible.\nTeach a hero
  *
  * **Non-bankable.** A turning point is decided now, which is why it is a beat rather than an item.
  */
-export function CrucibleScreen({ run, onRunChange, onContinue }: Props) {
+export function CrucibleScreen({ run, onRunChange, onContinue, seed }: Props) {
   /** Standing at the rim — chosen, not yet committed. */
   const [armedRosterId, setArmedRosterId] = useState<string | null>(null);
   const [chosenRosterId, setChosenRosterId] = useState<string | null>(null);
   /** Rolled once, on mount: three from the whole catalog. */
-  const [offers] = useState(() => rollClassOffers(classes, Math.random));
+  const [offers] = useState(() => rollClassOffers(classes, seededRandom(seed)));
   const [pickedClassId, setPickedClassId] = useState<string | null>(null);
   /** A move-Class whose move the kit refuses: the replace-or-decline before the grant lands. */
   const [overflow, setOverflow] = useState<{ rosterId: string; classId: string } | null>(null);

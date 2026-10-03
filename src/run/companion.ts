@@ -140,3 +140,14 @@ export function applyCompanionTierStep(run: RunState, rosterId: string): RunStat
   if (!entry || !nextId) return run;
   return { ...run, roster: run.roster.map((r) => (r === entry ? { ...r, heroId: nextId } : r)) };
 }
+
+/**
+ * The companion's three beats (docs/titanspawn-overhaul.md §5): `join` — the run's first fight is
+ * won and one of the Earlies asks to come along; there is no declining (per user direction), so the
+ * one button is a welcome. `grown` — a tier-step on the ladder, the same creature in its next body.
+ * `lost` — a knockout took it back into the Titan; first in the post-fight chain.
+ */
+export type CompanionBeat =
+  | { kind: 'join'; heroId: string }
+  | { kind: 'grown'; fromHeroId: string; toHeroId: string }
+  | { kind: 'lost'; heroId: string };

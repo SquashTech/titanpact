@@ -73,8 +73,14 @@ import { curses } from '../data/curses';
  * removing them costs nobody a run.
  * v20 (2026-10-02): four acts (docs/xp-overhaul.md §5) — `actNumber` runs 1-5, so a v19 run in
  * its fifth act or the finale has no honest reading; and RunState gained `lastMvpRosterId`.
+ * v21 (2026-10-03): a save on every screen (docs/save-system.md) — the file carries the screen it
+ * was written on (`resume`, run/resume.ts) and the last map or act-intro state to fall back to.
+ * RunState did not change, so a v20 file is still read, as its checkpoint (LEGACY_VERSIONS).
  */
-export const SAVE_VERSION = 20;
+export const SAVE_VERSION = 21;
+
+/** Older versions whose run still decodes: read as their checkpoint and nothing more (D4). */
+export const LEGACY_VERSIONS: readonly number[] = [20];
 
 /**
  * Where a restored run resumes. Both are settled points: every reward is banked, the
@@ -89,8 +95,14 @@ export interface SavedRun {
   version: number;
   /** ms epoch. Feeds the title screen's "saved ..." line and nothing mechanical. */
   savedAt: number;
+  /** Where the run falls back to when the screen it was saved on cannot be restored. */
   checkpoint: SaveCheckpoint;
+  /** The run as it stood when written — on the screen `resume` names, else at `checkpoint`. */
   run: RunState;
+  /** The run at `checkpoint`, when the save was written off it; absent = `run` is that state. */
+  fallbackRun?: RunState;
+  /** The screen it was written on, still raw: run/resume.ts decodes it against `run`. */
+  resume?: unknown;
 }
 
 /**
@@ -110,6 +122,9 @@ export interface SaveContentIndex {
   championIds: ReadonlySet<string>;
   typeIds: ReadonlySet<TypeId>;
   evolutionPathIds: ReadonlySet<string>;
+  /** Every body a fight can field, spawn and Guardians included — what a saved enemy party names. */
+  combatantIds: ReadonlySet<string>;
+  eventIds: ReadonlySet<string>;
 }
 
 export type LoadResult = { ok: true; save: SavedRun } | { ok: false; reason: string };
@@ -131,6 +146,9 @@ export interface SaveCatalogs {
   championIds: readonly string[];
   types: readonly string[];
   progression: ProgressionTable;
+  /** Every fieldable body; omitted, a saved fight's enemy party is checked against `heroes`. */
+  combatants?: Record<string, unknown>;
+  events?: Record<string, unknown>;
 }
 
 /**
@@ -155,6 +173,8 @@ export function buildContentIndex(catalogs: SaveCatalogs): SaveContentIndex {
     championIds: new Set(catalogs.championIds),
     typeIds: new Set<string>(catalogs.types),
     evolutionPathIds,
+    combatantIds: new Set(Object.keys(catalogs.combatants ?? catalogs.heroes)),
+    eventIds: new Set(Object.keys(catalogs.events ?? {})),
   };
 }
 
@@ -169,8 +189,20 @@ export interface SaveSummary {
 
 // --- Encoding ---
 
-export function encodeSave(run: RunState, checkpoint: SaveCheckpoint, now = Date.now()): SavedRun {
-  return { version: SAVE_VERSION, savedAt: now, checkpoint, run };
+export function encodeSave(
+  run: RunState,
+  checkpoint: SaveCheckpoint,
+  now = Date.now(),
+  extras: { fallbackRun?: RunState; resume?: unknown } = {}
+): SavedRun {
+  return {
+    version: SAVE_VERSION,
+    savedAt: now,
+    checkpoint,
+    run,
+    ...(extras.fallbackRun && extras.fallbackRun !== run ? { fallbackRun: extras.fallbackRun } : {}),
+    ...(extras.resume !== undefined ? { resume: extras.resume } : {}),
+  };
 }
 
 export function saveSummary(save: SavedRun): SaveSummary {
@@ -185,27 +217,27 @@ export function saveSummary(save: SavedRun): SaveSummary {
 // --- Decoding ---
 
 /** Internal control flow only: every rejection carries the reason the caller reports. */
-class Rejected extends Error {}
+export class Rejected extends Error {}
 
-function reject(reason: string): never {
+export function reject(reason: string): never {
   throw new Rejected(reason);
 }
 
 type Json = Record<string, unknown>;
 
-function isObject(value: unknown): value is Json {
+export function isObject(value: unknown): value is Json {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function isInt(value: unknown, min: number, max = Number.MAX_SAFE_INTEGER): value is number {
+export function isInt(value: unknown, min: number, max = Number.MAX_SAFE_INTEGER): value is number {
   return typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max;
 }
 
-function isStringArray(value: unknown): value is string[] {
+export function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === 'string');
 }
 
-function requireIds(value: unknown, known: ReadonlySet<string>, label: string): string[] {
+export function requireIds(value: unknown, known: ReadonlySet<string>, label: string): string[] {
   if (!isStringArray(value)) reject(`${label} is not a list of ids`);
   for (const id of value) if (!known.has(id)) reject(`${label} references unknown content "${id}"`);
   return [...value];
@@ -253,8 +285,8 @@ function decodeLoadout(value: unknown, index: SaveContentIndex, label: string): 
   return [...value];
 }
 
-function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number): RosterEntry {
-  const label = `roster[${at}]`;
+/** `label` names the entry in a refusal. An enemy party passes an index whose heroIds are every combatant. */
+export function decodeRosterEntry(value: unknown, index: SaveContentIndex, label: string): RosterEntry {
   if (!isObject(value)) reject(`${label} is not an object`);
   if (typeof value.rosterId !== 'string' || value.rosterId.length === 0) reject(`${label}.rosterId is missing`);
   if (typeof value.heroId !== 'string') reject(`${label}.heroId is missing`);
@@ -389,7 +421,7 @@ function decodeBrokenSeals(value: unknown, index: SaveContentIndex): BrokenSeal[
   return seals.sort((a, b) => a.actNumber - b.actNumber);
 }
 
-function decodeConsumables(value: unknown): ConsumablePurse {
+export function decodeConsumables(value: unknown): ConsumablePurse {
   if (!isObject(value)) reject('run.consumables is not an object');
   const purse = {} as ConsumablePurse;
   for (const kind of CONSUMABLE_KINDS) {
@@ -406,7 +438,7 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
   if (!Array.isArray(value.roster)) reject('run.roster is not a list');
   if (value.roster.length > ROSTER_CAP) reject(`run.roster holds ${value.roster.length} heroes, over the ${ROSTER_CAP} cap`);
 
-  const roster = value.roster.map((entry, at) => decodeRosterEntry(entry, index, at));
+  const roster = value.roster.map((entry, at) => decodeRosterEntry(entry, index, `roster[${at}]`));
   const seen = new Set<string>();
   for (const entry of roster) {
     if (seen.has(entry.rosterId)) reject(`run.roster repeats rosterId "${entry.rosterId}"`);
@@ -466,15 +498,26 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
 
 /**
  * Validates and REBUILDS the save rather than casting the parsed blob, so nothing a
- * hand-edited file smuggled in reaches the run.
+ * hand-edited file smuggled in reaches the run. A newer half that fails while its fallback
+ * passes comes back as the fallback at its checkpoint: a bad screen never costs the run.
  */
 export function decodeSave(raw: unknown, index: SaveContentIndex): LoadResult {
   try {
     if (!isObject(raw)) reject('save is not an object');
-    if (raw.version !== SAVE_VERSION) reject(`save is version ${String(raw.version)}, this build reads ${SAVE_VERSION}`);
+    const legacy = LEGACY_VERSIONS.includes(raw.version as number);
+    if (raw.version !== SAVE_VERSION && !legacy) reject(`save is version ${String(raw.version)}, this build reads ${SAVE_VERSION}`);
     if (raw.checkpoint !== 'map' && raw.checkpoint !== 'actIntro') reject(`save has unknown checkpoint "${String(raw.checkpoint)}"`);
     const savedAt = isInt(raw.savedAt, 0) ? raw.savedAt : 0;
-    return { ok: true, save: { version: SAVE_VERSION, savedAt, checkpoint: raw.checkpoint, run: decodeRun(raw.run, index) } };
+    const base = { version: SAVE_VERSION, savedAt, checkpoint: raw.checkpoint as SaveCheckpoint };
+    const resume = !legacy && raw.resume !== undefined ? { resume: raw.resume } : {};
+    if (legacy || raw.fallbackRun === undefined) return { ok: true, save: { ...base, run: decodeRun(raw.run, index), ...resume } };
+    const fallbackRun = decodeRun(raw.fallbackRun, index);
+    try {
+      return { ok: true, save: { ...base, run: decodeRun(raw.run, index), fallbackRun, ...resume } };
+    } catch (err) {
+      if (!(err instanceof Rejected)) throw err;
+      return { ok: true, save: { ...base, run: fallbackRun } };
+    }
   } catch (err) {
     if (err instanceof Rejected) return { ok: false, reason: err.message };
     throw err;

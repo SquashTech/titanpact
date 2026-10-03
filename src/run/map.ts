@@ -314,3 +314,6 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
     bossNodeId: rows[bossRow][0],
   };
 }
+
+/** The two reward nodes that open on the road's chest (NodeRewardScreen). */
+export type RewardNodeType = 'currencyReward' | 'equipmentReward';

@@ -7,6 +7,7 @@ import { MOVE_CAP, availableEvolution, grantOfferedMove, levelMovePool, pendingS
 import { companionTierStep } from '../../run/companion';
 import { curseTurnOwed } from '../../run/curse';
 import { playSfx } from '../../audio/sfx';
+import { seededRandom } from '../shared/seededRandom';
 import { useMasteryFlow, type MasteryFlow } from './masteryFlow';
 
 export type { Evolving, Grown, Mastered, Overflow } from './masteryFlow';
@@ -62,12 +63,22 @@ export function levelPayoffOwed(run: RunState, rosterId: string): boolean {
   return pendingSignature(hero, entry) !== null || pendingScheduleEntry(hero, entry) !== null;
 }
 
-export function useLevelUpFlow(run: RunState, onRunChange: (next: RunState) => void): LevelUpFlow {
+/**
+ * What the report keeps outside itself so a reload resumes it (docs/save-system.md): the seed its
+ * offers roll off, and who has already taken an entry this report.
+ */
+export interface LevelUpMemory {
+  seed: number;
+  taken: readonly string[];
+  onTaken: (taken: string[]) => void;
+}
+
+export function useLevelUpFlow(run: RunState, onRunChange: (next: RunState) => void, memory: LevelUpMemory): LevelUpFlow {
   const [offer, setOffer] = useState<ScheduleOffer | null>(null);
   const [signature, setSignature] = useState<SignatureOffer | null>(null);
   const mastery = useMasteryFlow(run, onRunChange);
   // One schedule entry a hero a report: a backlog (a raw hire's) is worked off a fight at a time.
-  const tookEntry = useRef(new Set<string>());
+  const tookEntry = useRef(new Set<string>(memory.taken));
 
   /**
    * The entry's offer, rolled off the post-level entry. A dry band takes the entry and puts
@@ -81,7 +92,8 @@ export function useLevelUpFlow(run: RunState, onRunChange: (next: RunState) => v
       onRunChange(next);
       return false;
     }
-    const moveId = pool[Math.floor(Math.random() * pool.length)];
+    // Seeded per entry, so a reload offers the move this entry rolled.
+    const moveId = pool[Math.floor(seededRandom(memory.seed, `${rosterId}:${current.scheduleTaken}`)() * pool.length)];
     // The offer is spent by being MADE — declining still burns it (docs/leveling-and-ranks.md).
     next = recordMoveOffer(next, rosterId, [moveId]);
     // Room in the kit: the move simply lands (2026-09-10, per user direction). "Learn or decline"
@@ -119,6 +131,7 @@ export function useLevelUpFlow(run: RunState, onRunChange: (next: RunState) => v
       const owed = pendingScheduleEntry(heroes[entry.heroId], entry);
       if (!owed || tookEntry.current.has(rosterId)) continue;
       tookEntry.current.add(rosterId);
+      memory.onTaken([...tookEntry.current]);
       // A dry band took the entry; the run has changed under us either way, so let the caller re-enter.
       rollOffer(rosterId);
       return true;

@@ -1,8 +1,9 @@
-# save-system.md — run saves that survive anything (DESIGN, NOT BUILT)
+# save-system.md — run saves that survive anything (BUILT, phases A–C)
 
 > Drafted 2026-10-03 per user direction: "make sure run saves are rock solid and can even save
 > mid-fight". Decisions D1–D4 below were made by the user the same day; the build waits on review
 > of this document. Phases are ordered so each one ships alone.
+> **All three phases are BUILT (2026-10-03).** §8 lists where the build departs from the plan below.
 
 ---
 
@@ -41,8 +42,8 @@
   gear sold) are restored with the screen.
 - **D4 — an update never deletes a run.** A save from the previous version is read by a narrow
   reader that recovers its last map checkpoint, when the full decode refuses it.
-- **Open — D5:** Save & Quit from a fight resumes the fight once phase B lands. The copy beside it
-  (`FightScreen.tsx`, "Save & Quit") changes with it.
+- **D5 — built as written, awaiting confirmation:** Save & Quit from a fight resumes the fight at its
+  last command phase. The note beside it (`FightScreen.tsx`) now says so.
 
 ## 4. Phase A — a save on every screen (`SAVE_VERSION` 21)
 
@@ -130,3 +131,37 @@
   - The checksum.
   - The order of fallbacks on read.
   - The quota fallback.
+
+## 8. As built (2026-10-03)
+
+- **Settled screens.** More screens granted twice on a reload than §2 listed. The Scrolls, the Mana
+  Well, the Shrine, the Forge, the Ley Line, the Boon, the Mentor and Tutor, events, the item
+  who-screen, the Banner and the Crucible all granted through `onRunChange` and kept their "done"
+  flag in component state. One rule covers them: App wraps their `onRunChange`
+  (`settlingRunChange`), which marks the screen `settled` as the grant lands, and `resumeTarget`
+  (`run/resume.ts`) goes past a settled screen. A node is walked; a chain link opens its `next`.
+  **The cost:** a reload after a grant loses that screen's reveal. It also loses a replace-or-decline
+  question still open at the move cap: the Mentor, the Tutor, a level-up offer, an Evolution's
+  overflow, a curse's Turn. The offer was already spent, so nothing is granted twice.
+- **Multi-step screens keep their progress on the App screen:**
+  - the Scrolls' pips left and heroes paid (`progress`);
+  - the heroes on the level report that took an entry (`taken`);
+  - the contracts signed (`claimedRosterIds`).
+- **Rolls lock in (D2) off a seed on the screen.** That covers the purse, the Item Cache, the Boon,
+  the Crucible, the Mentor and Tutor (seeded by hero), an event's contents and its gamble, and a
+  level-up offer (seeded by hero and entry). Some catalog rolls draw their randomness several calls
+  deep; those run under `withSeededRandom` (`view/shared/seededRandom.ts`) rather than threading a
+  `random` through them.
+- **The file.** `fallbackRun` is written only when the save is off a checkpoint, so a map save holds
+  one run, not two. When `run` fails to decode and `fallbackRun` passes, the save loads as the
+  fallback. The v20 reader is `LEGACY_VERSIONS` in `run/save.ts`. RunState did not change, so a v20
+  file decodes whole and only its checkpoint is used.
+- **The fight.** `CombatSnapshot` is `{ state, usedConsumables, leadsPending, mvpTally }`, and the
+  opening seed is `state.seed`. The MVP ledger became a running tally (`tallyMvpEvents`); a test pins
+  it to the whole-stream reader. A board that fails its checks costs the board, not the fight, which
+  opens fresh. The enemy declares off `derivedRandom(state, id, 'ai')` (`engine/state.ts`).
+- **Storage.** The envelope is `tp1:<fnv1a>:<json>`, and a bare-JSON file from before it is read
+  unchecked. A full quota drops the backup first, then the screen, and keeps the checkpoint. The
+  title says so only when the player returns to it, so a mid-run warning is still open. The title
+  also says when a backup was used.
+- **Tests** live in one file, `test/resume.test.ts`, rather than the four §7 names.

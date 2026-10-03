@@ -1,5 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
+import { seededRandom } from '../shared/seededRandom';
 import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import { moves } from '../../data/moves';
@@ -23,6 +24,8 @@ interface Props {
   run: RunState;
   onRunChange: (next: RunState) => void;
   onContinue: () => void;
+  /** Fixes the screen's roll, so a resumed run is offered the same (docs/save-system.md D2). */
+  seed: number;
 }
 
 /** The roll, once made. Below the cap the move has already landed; at the cap it is the replace question. */
@@ -43,7 +46,7 @@ interface Lesson {
  * The offer is spent by being made (`recordMoveOffer` before the answer): a roll declined is a
  * roll burned.
  */
-export function TutorNodeScreen({ run, onRunChange, onContinue }: Props) {
+export function TutorNodeScreen({ run, onRunChange, onContinue, seed }: Props) {
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
   const voice = useKeeperLine(TUTOR_LINES);
@@ -55,7 +58,7 @@ export function TutorNodeScreen({ run, onRunChange, onContinue }: Props) {
   function teach(entry: RosterEntry) {
     const pool = poolOf(entry);
     if (pool.length === 0) return;
-    const moveId = pool[Math.floor(Math.random() * pool.length)];
+    const moveId = pool[Math.floor(seededRandom(seed, entry.rosterId)() * pool.length)];
     playSfx('class.learn');
     let next = recordMoveOffer(run, entry.rosterId, [moveId]);
     // Room in the kit: it simply lands, and the box only says so. At the cap the question is real.

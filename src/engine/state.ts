@@ -335,6 +335,20 @@ export function resolveMetamorphicFaces(state: CombatState, combatantId: string,
   return picked;
 }
 
+/**
+ * A stream of floats in [0, 1) DERIVED from (seed, round, combatantId, salt) like the faces above —
+ * never stored, never advances rngState. The enemy's declarations read it, so a fight resumed from
+ * a save faces the same picks it left (docs/save-system.md D1).
+ */
+export function derivedRandom(state: CombatState, combatantId: string, salt: string): () => number {
+  let rng: RngState = mixString(mixString((state.seed ^ Math.imul(state.round, 0x9e3779b1)) >>> 0, combatantId), salt);
+  return () => {
+    const { value, nextState } = nextRange(rng, 0, 1);
+    rng = nextState;
+    return value;
+  };
+}
+
 /** hasAffordableMove's board-aware counterpart — the Rest fallback must agree with what the button costs. */
 export function hasAffordableMoveInFight(
   state: CombatState,

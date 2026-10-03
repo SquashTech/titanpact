@@ -11,7 +11,7 @@ import { RosterPeek } from './RosterPeek';
 import { CompanionScreen } from './CompanionScreen';
 import { EvolutionScreen } from './EvolutionScreen';
 import { MoveLearnedOverlay, MoveOfferOverlay, SignatureBox } from './MoveOfferOverlay';
-import { useLevelUpFlow } from './levelUpFlow';
+import { useLevelUpFlow, type LevelUpMemory } from './levelUpFlow';
 import { LevelUpList, SIGNATURE_TAG } from './LevelUpList';
 import { MasteredInnateOverlay } from './MasteredInnateOverlay';
 
@@ -21,6 +21,7 @@ interface Props {
   /** One entry per roster hero, in roster order — including any that were already at the cap. */
   report: readonly HeroLevelUp[];
   onContinue: () => void;
+  memory: LevelUpMemory;
 }
 
 /**
@@ -34,8 +35,8 @@ interface Props {
  * `gains`). So this screen is reached only when somebody is owed a payoff, starts paying on
  * arrival — the roster's levels and tags behind each offer — and leaves once nobody is owed.
  */
-export function LevelUpScreen({ run, onRunChange, report, onContinue }: Props) {
-  const flow = useLevelUpFlow(run, onRunChange);
+export function LevelUpScreen({ run, onRunChange, report, onContinue, memory }: Props) {
+  const flow = useLevelUpFlow(run, onRunChange, memory);
   const rosterIds = report.map((hero) => hero.rosterId);
 
   // One entry at a time: each payoff changes the run, the run comes back, and the next hero owed

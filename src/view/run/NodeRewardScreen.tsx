@@ -7,6 +7,7 @@ import { rarityWeightsFor } from '../../run/equipment';
 import { grantCurrencyReward, purseRangeFor, rollGoldRange } from '../../run/runProgress';
 import { NodeMotes, NODE_TINT_GOLD } from '../shared/NodeStage';
 import { prefersReducedMotion } from '../shared/reducedMotion';
+import { seededRandom, withSeededRandom } from '../shared/seededRandom';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { useCoinCount } from '../shared/useCoinCount';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
@@ -15,7 +16,8 @@ import { RoadScene } from './RoadEncounter';
 import { RosterPeek } from './RosterPeek';
 import cacheOpen from '../../../art/cache/chest-opened.png';
 
-export type RewardNodeType = 'currencyReward' | 'equipmentReward';
+import type { RewardNodeType } from '../../run/map';
+export type { RewardNodeType };
 
 /** The chest on the road (ms from mount): the map's own piece rises in, blinks white, bursts open. */
 const CHEST_FLASH_AT = 1300;
@@ -42,6 +44,8 @@ interface Props {
   onContinue: () => void;
   /** equipmentReward only: a claim hands straight off to the item gate (App.tsx), which seats or bags it. */
   onClaimEquipment: (itemId: string) => void;
+  /** Fixes what the purse or the chest holds, so a resumed run finds the same (docs/save-system.md D2). */
+  seed: number;
 }
 
 /**
@@ -50,9 +54,9 @@ interface Props {
  * and swings open before offering its 3. The Scroll nodes are not here: which hero takes a pip IS
  * a decision (ScrollNodeScreen).
  */
-export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onClaimEquipment }: Props) {
-  if (nodeType === 'currencyReward') return <GoldOnTheRoad run={run} onRunChange={onRunChange} onContinue={onContinue} />;
-  return <EquipmentCache run={run} onClaimEquipment={onClaimEquipment} />;
+export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onClaimEquipment, seed }: Props) {
+  if (nodeType === 'currencyReward') return <GoldOnTheRoad run={run} onRunChange={onRunChange} onContinue={onContinue} seed={seed} />;
+  return <EquipmentCache run={run} onClaimEquipment={onClaimEquipment} seed={seed} />;
 }
 
 /** Coins out of the pouch: x drift (px), peak height (px), delay (s). Golden-ratio spread, so no two land together. */
@@ -69,8 +73,8 @@ const POUCH_BURST_AT = 650;
  * pouch jolts, coins burst out of it, the haul counts up coin by coin, and the purse under it shows
  * what it now holds.
  */
-function GoldOnTheRoad({ run, onRunChange, onContinue }: Pick<Props, 'run' | 'onRunChange' | 'onContinue'>) {
-  const [amount] = useState(() => rollGoldRange(purseRangeFor(run.actNumber)));
+function GoldOnTheRoad({ run, onRunChange, onContinue, seed }: Pick<Props, 'run' | 'onRunChange' | 'onContinue' | 'seed'>) {
+  const [amount] = useState(() => rollGoldRange(purseRangeFor(run.actNumber), seededRandom(seed)));
   const [from] = useState(run.gold);
   const [burst, setBurst] = useState(() => prefersReducedMotion());
   const counted = useCoinCount(amount, burst);
@@ -122,8 +126,8 @@ function GoldOnTheRoad({ run, onRunChange, onContinue }: Pick<Props, 'run' | 'on
 }
 
 /** Chest on the road, then the three pieces. A tap on the road skips straight to them. */
-function EquipmentCache({ run, onClaimEquipment }: Pick<Props, 'run' | 'onClaimEquipment'>) {
-  const [choices] = useState<EquipmentDefinition[]>(() => rollEquipmentDrops(3, rarityWeightsFor(run.actNumber, 'cache')));
+function EquipmentCache({ run, onClaimEquipment, seed }: Pick<Props, 'run' | 'onClaimEquipment' | 'seed'>) {
+  const [choices] = useState<EquipmentDefinition[]>(() => withSeededRandom(seed, () => rollEquipmentDrops(3, rarityWeightsFor(run.actNumber, 'cache'))));
   const [pickedItemId, setPickedItemId] = useState<string | null>(null);
   const [inspectItemId, setInspectItemId] = useState<string | null>(null);
   const [phase, setPhase] = useState<'road' | 'flash' | 'burst' | 'open'>(() => (prefersReducedMotion() ? 'open' : 'road'));

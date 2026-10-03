@@ -27,6 +27,7 @@ import {
   getMaxHp,
   getMaxMana,
   moveForHero,
+  derivedRandom,
 } from '../../engine/state';
 import { fieldHealMultiplier, type HealCaster } from '../../engine/heal/healPipeline';
 import { resolveRound } from '../../engine/combat/resolveRound';
@@ -62,7 +63,8 @@ import type { Squad } from '../../run/squad';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { buildCombatState, koRosterIdsOf } from '../../run/buildCombatState';
 import { combatantIdFor } from '../../run/combatantIds';
-import { chooseMvp, mvpLedgersFromEvents, type MvpPick, type MvpRules } from '../../run/mvp';
+import { chooseMvp, emptyMvpTally, tallyMvpEvents, type MvpPick, type MvpRules, type MvpTally } from '../../run/mvp';
+import type { CombatSnapshot } from '../../run/resume';
 import { woundedHp, woundsFrom } from '../../run/wounds';
 import { entryHp } from '../shared/WoundBar';
 import { levelOf } from '../../run/growth';
@@ -584,8 +586,12 @@ interface Props {
   onResolved: (outcome: 'win' | 'loss', finalState: CombatState, consumablesUsed: ConsumablePurse, mvp: MvpPick | null) => void;
   /** Who can be the MVP (run/mvp.ts). Omitted — a fight outside a run, or the finale — names none. */
   mvpRules?: MvpRules;
-  /** Leave to the title with the run left parked at its map checkpoint — this fight replays. Omit for fights outside a run. */
+  /** Leave to the title; the run is saved at this fight's last command phase. Omit for fights outside a run. */
   onSaveAndQuit?: () => void;
+  /** A fight resumed from a save (docs/save-system.md §5): the board opens idle on it, with no intro. */
+  initialSnapshot?: CombatSnapshot;
+  /** Called at every point the board waits on the player, with what a resume needs to carry on from there. */
+  onCommandPhase?: (snapshot: CombatSnapshot) => void;
   /** Discard the run and its save (two-tap armed). Omit for fights outside a run. */
   onAbandonRun?: () => void;
   /** Plain one-tap exit for fights outside a run (Quick Battle). A caller passes this or the run pair, never both. */
@@ -621,6 +627,8 @@ export function FightScreen({
   tips,
   cinematicWin = false,
   mvpRules,
+  initialSnapshot,
+  onCommandPhase,
 }: Props) {
   /** null outside an act (sandbox, quick battle): the arena keeps its placeless neutral scene. */
   const location = useAmbientLocation();
@@ -657,8 +665,9 @@ export function FightScreen({
     );
   }
 
-  const [opening] = useState(() => openBattle(Math.floor(Math.random() * 2 ** 31)));
-  const [combat, setCombat] = useState<CombatState>(opening.start);
+  // A resumed fight has no opening: its board is the snapshot, and the intro already played.
+  const [opening] = useState(() => (initialSnapshot ? null : openBattle(Math.floor(Math.random() * 2 ** 31))));
+  const [combat, setCombat] = useState<CombatState>(() => initialSnapshot?.state ?? opening!.start);
   /** Empty at open: the opening events reach the log through the intro's beats as they reveal, like any round's. */
   const [log, setLog] = useState<LogLine[]>([]);
   const [logOpen, setLogOpen] = useState(false);
@@ -669,7 +678,7 @@ export function FightScreen({
   /** The Bag — every consumable held, and who drinks it — open off the bottom row's key. */
   const [bagOpen, setBagOpen] = useState(false);
   /** Potions drunk this fight. The run's purse is only debited at resolve, so a replayed fight refunds them. */
-  const [usedConsumables, setUsedConsumables] = useState<ConsumablePurse>({ hpPotion: 0, mpPotion: 0, revive: 0 });
+  const [usedConsumables, setUsedConsumables] = useState<ConsumablePurse>(() => initialSnapshot?.usedConsumables ?? { hpPotion: 0, mpPotion: 0, revive: 0 });
   const [menuOpen, setMenuOpen] = useState(false);
   /** Quit is armed by a first tap and fires on the second; reset whenever the menu opens. */
   const [confirmingQuit, setConfirmingQuit] = useState(false);
@@ -678,7 +687,7 @@ export function FightScreen({
   /** A forced replacement resolves outside a round, so it has no beat to carry its send-out; this holds the arrival for one animation. */
   const [summonedIds, setSummonedIds] = useState<readonly string[]>([]);
   /** A run fight opens with the player's slots empty (run/squad.ts openingSquad): the leads are picked once the enemy's are on the field. */
-  const [leadsPending, setLeadsPending] = useState(() => playerSquad.activeIds.every((id) => id === null));
+  const [leadsPending, setLeadsPending] = useState(() => initialSnapshot?.leadsPending ?? playerSquad.activeIds.every((id) => id === null));
   const [leadPicks, setLeadPicks] = useState<string[]>([]);
   const [pending, setPending] = useState<Record<string, PendingAction>>({});
   const [selecting, setSelecting] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
@@ -692,7 +701,7 @@ export function FightScreen({
   // in refs — only ever touched inside handleAdvance, never rendered.
   // Starts true: a fight opens mid-playback (the intro), and the mount effect below fills the
   // queue. Initialising it false would paint one frame of a live action console first.
-  const [resolving, setResolving] = useState(true);
+  const [resolving, setResolving] = useState(!initialSnapshot);
   const [beat, setBeat] = useState<Beat | null>(null);
   /**
    * The round being played back, for the order marks: the resolve order the engine settled
@@ -711,8 +720,11 @@ export function FightScreen({
   const beatQueue = useRef<Beat[]>([]);
   const displayState = useRef<CombatState | null>(null);
   const finalState = useRef<CombatState | null>(null);
-  // Every event the fight has resolved, in order — what the MVP is read off (run/mvp.ts).
-  const fightEvents = useRef<CombatEvent[]>([]);
+  // Every event the fight has resolved, tallied as it lands — what the MVP is read off (run/mvp.ts).
+  const mvpTally = useRef<MvpTally>(initialSnapshot?.mvpTally ?? emptyMvpTally());
+  // What a snapshot reads, current even from a playback closure older than the render that changed it.
+  const snapshotParts = useRef({ usedConsumables, leadsPending });
+  snapshotParts.current = { usedConsumables, leadsPending };
   /** A switch beat's swap, held back until the recall has played; the next advance lands it early. */
   const pendingSwap = useRef<{ events: readonly CombatEvent[]; timer: number } | null>(null);
   // Hold-to-auto-play: `autoEngaged` lets the trailing click (pointerup always fires one) be swallowed.
@@ -737,10 +749,16 @@ export function FightScreen({
   // into the same beat player a round uses and advanced the same way — tap per beat, hold to
   // auto-play — so the fight's first input teaches the input every round after it wants.
   useEffect(() => {
+    if (!opening) return;
     startBeatPlayback(opening.start, opening.events, opening.final, [
       openingBeat(opening.start, allCombatants, AI_SIDE, location),
     ]);
   }, []);
+
+  /** The board is waiting on the player: hand the caller what a resume carries on from. */
+  function reportCommandPhase(state: CombatState, parts: Partial<Pick<CombatSnapshot, 'usedConsumables' | 'leadsPending'>> = {}) {
+    onCommandPhase?.({ state, ...snapshotParts.current, ...parts, mvpTally: mvpTally.current });
+  }
 
   /** The one StatContext every number on this screen reads through, so cards, dossier and forecast agree with resolveRound. */
   const statCtx = { active: combat.activeFieldEffect, defs: fieldEffects, board: { state: combat, passives } };
@@ -769,7 +787,7 @@ export function FightScreen({
   const mvp = useMemo(() => {
     if (winner !== PLAYER_SIDE || !mvpRules) return null;
     const standing = new Set(resultRoster.map((entry) => entry.rosterId));
-    const ledgers = mvpLedgersFromEvents(fightEvents.current, combat, PLAYER_SIDE, statuses).filter((l) => standing.has(l.rosterId));
+    const ledgers = Object.values(mvpTally.current.ledgers).filter((l) => standing.has(l.rosterId));
     return chooseMvp(ledgers, mvpRules) ?? null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [winner, resolving]);
@@ -1105,8 +1123,10 @@ export function FightScreen({
         className: kind === 'mpPotion' ? 'popup-mana' : 'popup-heal',
       },
     }));
-    setUsedConsumables((prev) => ({ ...prev, [kind]: prev[kind] + 1 }));
+    const spent = { ...usedConsumables, [kind]: usedConsumables[kind] + 1 };
+    setUsedConsumables(spent);
     setBagOpen(false);
+    reportCommandPhase(result.state, { usedConsumables: spent });
     // A hero that had committed Rest has lost its reason for it: the console goes back and re-asks.
     if (pending[combatantId]?.kind === 'rest') {
       const next = { ...pending };
@@ -1121,7 +1141,8 @@ export function FightScreen({
     // A replacement is still an arrival — same entry hook a declared switch runs, applied here because forced replacement resolves outside a round.
     const entry = resolvePassiveReactions(result.state, combat.round, result.events, allCombatants, statuses, passives, fieldEffects);
     setCombat(entry.state);
-    fightEvents.current.push(...result.events, ...entry.events);
+    mvpTally.current = tallyMvpEvents(mvpTally.current, [...result.events, ...entry.events], entry.state, PLAYER_SIDE, statuses);
+    reportCommandPhase(entry.state);
     appendLog(formatEvents([...result.events, ...entry.events], allCombatants, entry.state.combatants, moves));
     setReplacementPick(null);
     summon([benchedCombatantId]);
@@ -1152,6 +1173,7 @@ export function FightScreen({
     const placed = placeLeads(combat, PLAYER_SIDE, effectiveLeadPicks);
     const entry = resolveBattleStartEntries(placed, combat.round, allCombatants, statuses, passives, fieldEffects, [PLAYER_SIDE]);
     setLeadsPending(false);
+    snapshotParts.current = { ...snapshotParts.current, leadsPending: false };
     setLeadPicks([]);
     summon(effectiveLeadPicks);
     playSfx('switchIn');
@@ -1220,7 +1242,7 @@ export function FightScreen({
         switchToCombatantId: p.switchToCombatantId,
       };
     });
-    const aiActions: Action[] = enemyActiveAlive.map((id) => pickAiAction(combat, id, aiContext));
+    const aiActions: Action[] = enemyActiveAlive.map((id) => pickAiAction(combat, id, { ...aiContext, random: derivedRandom(combat, id, 'ai') }));
 
     const result = resolveRound(combat, [...playerActions, ...aiActions], config);
     let nextState = result.state;
@@ -1247,7 +1269,7 @@ export function FightScreen({
   // the queue empties, so playback can never drift from the authoritative result.
   // `prelude` is for beats that are not grouped from events — today only the intro's engagement beat.
   function startBeatPlayback(startState: CombatState, events: CombatEvent[], nextFinalState: CombatState, prelude: Beat[] = []) {
-    fightEvents.current.push(...events);
+    mvpTally.current = tallyMvpEvents(mvpTally.current, events, nextFinalState, PLAYER_SIDE, statuses);
     const beats = [...prelude, ...buildBeats(events, allCombatants, moves, startState.combatants, PLAYER_SIDE)];
     displayState.current = startState;
     finalState.current = nextFinalState;
@@ -1285,6 +1307,7 @@ export function FightScreen({
 
     if (!revealed) {
       setCombat(finalState.current!);
+      reportCommandPhase(finalState.current!);
       setPopups({});
       setFigureFx({});
       setBeat(null);
@@ -2087,7 +2110,7 @@ export function FightScreen({
               <p className="options-note">
                 {confirmingQuit
                   ? 'This run ends now. Roster, relics and map progress are lost.'
-                  : 'The run is saved on the map. Quitting mid-fight replays this fight from the start.'}
+                  : 'The run is saved as it stands. Continue picks this fight up where you left it.'}
               </p>
             )}
           </div>

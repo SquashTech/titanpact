@@ -63,6 +63,7 @@ import './gildedMane.test';
 import './werewolf.test';
 import './ai.test';
 import './save.test';
+import './resume.test';
 import './wounds.test';
 import './leadPick.test';
 import './blessings.test';
