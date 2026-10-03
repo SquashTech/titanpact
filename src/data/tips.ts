@@ -29,7 +29,7 @@ function tip(id: string, title: string, ...pages: string[]): Tip {
 }
 
 export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
-  draft: tip('draft', 'Starting Heroes', 'Pick two heroes from the bottom row to start the run. More join along the way.'),
+  draft: tip('draft', 'Starting Heroes', 'Pick two heroes from the bottom row to start the run. More will join along the way.'),
   run: tip(
     'run',
     'The Journey',
