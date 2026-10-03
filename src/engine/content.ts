@@ -309,6 +309,17 @@ export interface PassiveDefinition {
    */
   cannotSwitchOut?: true;
   /**
+   * How many faces each `metamorphic` move in the holder's kit shows a round (Motley's Trick 1, its
+   * mastered form 2), the player picking either. The largest held wins; absent, a metamorphic move shows one.
+   */
+  metamorphicFaces?: number;
+  /**
+   * Gilded Mane (docs/wild-innates-and-events.md §2): `statGrants` once for every `perGold` the
+   * holder's run holds, read at fight build (run/passives.ts passiveStatModifiers). A grant read off
+   * the purse rather than authored as a number, so the shop is a decision for this hero's side alone.
+   */
+  goldStatGrants?: { perGold: number; statGrants: Partial<Record<StatKey, number>> };
+  /**
    * A Burden (docs/innate-passives.md §4): this passive is a COST, and the hero born with it comes
    * in BURDEN_SURPLUS over the 550 (run/statBudget.ts). Presentation tints it as a price; the
    * roster test reads it for the one budget exemption.
@@ -326,10 +337,18 @@ export function isValidPassiveDefinition(passive: PassiveDefinition): boolean {
     passive.partnerStatGrants !== undefined ||
     passive.wardedWhileCompanyStands !== undefined ||
     passive.enduresOnce !== undefined ||
-    passive.cannotSwitchOut !== undefined;
+    passive.cannotSwitchOut !== undefined ||
+    passive.metamorphicFaces !== undefined ||
+    passive.goldStatGrants !== undefined;
   if (!hasEffect) return false;
   const ok = (amount: number | undefined) => amount === undefined || isValidFlatStatGrant(amount);
-  return Object.values(passive.statGrants ?? {}).every(ok) && Object.values(passive.conditionalStatGrants?.statGrants ?? {}).every(ok) && Object.values(passive.partnerStatGrants ?? {}).every(ok);
+  return (
+    Object.values(passive.statGrants ?? {}).every(ok) &&
+    Object.values(passive.conditionalStatGrants?.statGrants ?? {}).every(ok) &&
+    Object.values(passive.partnerStatGrants ?? {}).every(ok) &&
+    Object.values(passive.goldStatGrants?.statGrants ?? {}).every(ok) &&
+    (passive.goldStatGrants === undefined || passive.goldStatGrants.perGold > 0)
+  );
 }
 
 /** Opaque field-effect-catalog key; concrete field effects are data (src/data/fieldEffects.ts). */
@@ -527,6 +546,15 @@ export interface MoveDefinition {
    * edge, by state.ts moveForHero; engine and view both read the resolved move, never this flag.
    */
   typeFollowsUser?: boolean;
+  /**
+   * Motley's Trick (docs/wild-innates-and-events.md §1): this move is never cast as itself. Each
+   * round it is swapped, at declaration, for a FACE — another move rolled from the whole catalog,
+   * DERIVED from (seed, round, combatantId) like randomBasePower — and the face is what is declared,
+   * priced and resolved. run/metamorphic.ts kitForRound is the one place the swap happens.
+   */
+  metamorphic?: true;
+  /** No replace path may take this move off a hero (run/progression.ts isLockedMove): it is part of who the hero is. */
+  permanent?: true;
   target: TargetMode;
   /** Level-up tier gate (MOVE_TIER_LEVEL, src/run/progression.ts); cumulative. Omitted = 'early'. The engine never reads it. */
   tier?: MoveTier;

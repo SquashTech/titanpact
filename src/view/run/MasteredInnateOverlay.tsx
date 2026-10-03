@@ -2,12 +2,12 @@ import { useEffect, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
-import { innatePassiveOf, masteredInnateOf } from '../../run/innate';
+import { innatePassiveOf, masteredInnateFor } from '../../run/innate';
 import { MASTERY_INNATE } from '../../run/mastery';
 import type { RosterEntry } from '../../run/state';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { currentEvolutionPathId } from '../../run/progression';
+import { formIdFor } from '../../run/progression';
 import { PassiveDetailCard } from '../shared/PassiveDossier';
 import { PassiveGlyph } from '../shared/passiveIcons';
 import { overlayHost } from '../shared/overlayHost';
@@ -26,7 +26,7 @@ interface Props {
 export function MasteredInnateOverlay({ entry, onClose }: Props) {
   const hero = rosterHeroes[entry.heroId];
   const before = innatePassiveOf(hero);
-  const after = masteredInnateOf(hero);
+  const after = masteredInnateFor(hero, entry);
 
   useEffect(() => {
     playSfx('seal.strike');
@@ -51,7 +51,7 @@ export function MasteredInnateOverlay({ entry, onClose }: Props) {
           </span>
         </div>
         <div className="offer-hero-head">
-          <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(entry)} className="offer-hero-portrait" />
+          <HeroPortrait heroId={hero.id} pathId={formIdFor(entry)} className="offer-hero-portrait" />
           <h3>{hero.name}</h3>
         </div>
         <p className="offer-hero-eyebrow">Mastery {MASTERY_INNATE} — the innate, perfected</p>

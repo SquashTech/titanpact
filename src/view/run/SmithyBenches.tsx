@@ -3,7 +3,7 @@ import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import type { EquipmentDefinition, EquipmentRarity } from '../../run/equipment';
 import { levelOf } from '../../run/growth';
-import { itemSlotsFor, rosterEntryTypes, currentEvolutionPathId } from '../../run/progression';
+import { itemSlotsFor, rosterEntryTypes, formIdFor } from '../../run/progression';
 import type { ItemRef } from '../../run/runProgress';
 import type { RunState } from '../../run/state';
 import { getTypeAbbr, getTypeColor, getTypeColorRgb } from '../combat/typeColors';
@@ -52,7 +52,7 @@ export function SmithyBenches({ run, liftFor, pickable, onPick, fresh }: Props) 
             <div className="smithy-bench-hero">
               <span className="smithy-bench-figure">
                 <span className="smithy-bench-ground" aria-hidden="true" />
-                <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(entry)} className="smithy-bench-portrait" />
+                <HeroPortrait heroId={hero.id} pathId={formIdFor(entry)} className="smithy-bench-portrait" />
               </span>
               <span className="smithy-bench-ident">
                 <span className="smithy-bench-name">{hero.name}</span>

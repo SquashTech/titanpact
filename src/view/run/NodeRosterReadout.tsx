@@ -8,7 +8,7 @@ import type { MapNodeType } from '../../run/map';
 import { MASTERY_CAP, MASTERY_EVOLUTION } from '../../run/mastery';
 import { MANA_WELL_AMOUNT, LEY_LINE_FORCE } from '../../run/runProgress';
 import { levelOf } from '../../run/growth';
-import { MOVE_CAP, rosterEntryTypes, currentEvolutionPathId } from '../../run/progression';
+import { MOVE_CAP, rosterEntryTypes, formIdFor } from '../../run/progression';
 import { equipmentStatusGrants } from '../../run/statusGrants';
 import { rosterTypes } from '../../run/boons';
 import { mentorMovePool, tutorMovePool } from '../../run/tutor';
@@ -78,7 +78,7 @@ function Row({ hero, entry, children, dim = false }: { hero: HeroDefinition; ent
       className={`node-roster-row${entry.down ? ' is-down' : ''}${dim ? ' is-dim' : ''}`}
       style={{ '--hero-color': getTypeColor(hero.types[0]) } as CSSProperties}
     >
-      <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(entry)} className="node-roster-portrait" />
+      <HeroPortrait heroId={hero.id} pathId={formIdFor(entry)} className="node-roster-portrait" />
       <span className="node-roster-name">{hero.name}</span>
       <span className="node-roster-readout">{children}</span>
     </div>

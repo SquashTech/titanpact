@@ -518,7 +518,7 @@ export function App() {
   const [runOutcome, setRunOutcome] = useState<{ before: Profile; after: Profile } | null>(null);
 
   /** The joining cinematic for the one recruit path that resolves here: terminating a hero to make room. */
-  const [recruitFanfare, setRecruitFanfare] = useState<{ heroId: string; source: 'contract' | 'guild' } | null>(null);
+  const [recruitFanfare, setRecruitFanfare] = useState<{ heroId: string; source: 'contract' | 'guild' | 'event' } | null>(null);
 
   // Owned here rather than in SandboxBattleScreen, which unmounts during a sandbox fight.
   const [sandboxSideA, setSandboxSideA] = useState<SandboxSideConfig>(() => createEmptySandboxSide());
@@ -988,10 +988,11 @@ export function App() {
   /**
    * Claiming an item advances the node, then asks who carries it — one who-screen per item, in
    * order, since the Loot Pile event hands over three at once. An item nobody can take is gold.
+   * `base` is the run to advance from when the caller has just changed it (an event's cost).
    */
-  function handleClaimEquipment(nodeId: string, itemIds: string | string[]) {
+  function handleClaimEquipment(nodeId: string, itemIds: string | string[], base: RunState = playerRun) {
     const ids = (Array.isArray(itemIds) ? itemIds : [itemIds]).filter((id) => equipment[id]);
-    const advanced = advanceToNode(playerRun, nodeId);
+    const advanced = advanceToNode(base, nodeId);
     setPlayerRun(advanced);
     setScreen(whoScreensFor(advanced, ids, { kind: 'map' }));
   }
@@ -1447,7 +1448,8 @@ export function App() {
                 event={runEvents[eventId]}
                 run={playerRun}
                 onRunChange={setPlayerRun}
-                onGrantEquipment={(itemIds) => handleClaimEquipment(nodeId, itemIds)}
+                onGrantEquipment={(itemIds, base) => handleClaimEquipment(nodeId, itemIds, base)}
+                onRecruited={(heroId) => setRecruitFanfare({ heroId, source: 'event' })}
                 onContinue={() => handleNodeContinue(nodeId)}
               />
             </RoadGate>

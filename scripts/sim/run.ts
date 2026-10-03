@@ -78,7 +78,8 @@ import { ENCHANT_PRICE_BY_RARITY, rollGuildHallOffers, sellValueFor } from '../.
 import { mentorMovePool, tutorMovePool } from '../../src/run/tutor';
 import { grantClass, rollClassOffers } from '../../src/run/classes';
 import { boonMoveCount, pickBoonOffers } from '../../src/run/boons';
-import { applyStatShift, grantEventPassive, rollRunEvent, rollEventMove, statShiftAllowed } from '../../src/run/events';
+import { applyEventCost, applyHeroOutcome, applyStatShift, costAffordable, eventRecruitEntry, grantEventPassive, heroOutcomeAllowed, joinEventRecruit, recruitPool, resolveGamble, rollRecruits, rollRunEvent, rollEventMove, statShiftAllowed } from '../../src/run/events';
+import type { EventCost, ResolvableOutcome } from '../../src/data/events';
 import {
   pickWeightedEquipment,
   rarityWeightsFor,
@@ -622,6 +623,7 @@ function resolveEncounterNode(
     playerRoster: workingRun.roster,
     playerSquad,
     playerRelicIds: workingRun.relics,
+    playerGold: workingRun.gold,
     aiRoster: encounter.run.roster,
     aiSquad: encounter.squad,
     rng,
@@ -1010,7 +1012,27 @@ function resolveEnchanter(run: RunState): RunState {
 function resolveEvent(run: RunState, locationId: string, rng: Rng, record: RunRecord): RunState {
   const event = rollRunEvent(runEvents, run.actNumber, locationId);
   if (!event) return run;
-  const outcome = event.outcome;
+  if (event.outcome.kind !== 'choice') return resolveEventOutcome(run, event.outcome, event.cost, record);
+  // A choice: the first option the pilot can pay for and use, else Leave.
+  for (const option of event.outcome.options) {
+    if (!costAffordable(run, option.cost)) continue;
+    if (option.outcome.kind === 'recruit' && run.roster.length >= ROSTER_CAP) continue;
+    return resolveEventOutcome(run, option.outcome, option.cost, record);
+  }
+  return run;
+}
+
+function simMaxHp(entry: RosterEntry): number {
+  const combatant = createCombatant('probe', entry.heroId, 'A', 0, 0);
+  return getMaxHp(rosterHeroes[entry.heroId], {
+    ...combatant,
+    baselineStatModifiers: { ...entry.evolutionStatGrants, ...entry.bonusStatGrants },
+  });
+}
+
+function resolveEventOutcome(run: RunState, outcome: ResolvableOutcome, cost: EventCost | undefined, record: RunRecord): RunState {
+  if (!costAffordable(run, cost)) return run;
+  const paid = () => applyEventCost(run, cost, simMaxHp);
 
   if (outcome.kind === 'learnMove') {
     const moveId = rollEventMove(outcome.pool, moves);
@@ -1018,6 +1040,7 @@ function resolveEvent(run: RunState, locationId: string, rng: Rng, record: RunRe
     if (!moveId || !target) return run;
     const entry = entryOf(run, target.rosterId);
     if (entry.unlockedMoveIds.includes(moveId)) return run;
+    run = paid();
     // An event's gift never spends a level-up offer (grantMove).
     if (entry.unlockedMoveIds.length < MOVE_CAP) return grantMove(run, target.rosterId, moveId);
     const replaceId = policy.replacementTarget(entry, moveId, run.roster);
@@ -1026,26 +1049,41 @@ function resolveEvent(run: RunState, locationId: string, rng: Rng, record: RunRe
 
   if (outcome.kind === 'statShift') {
     // Trades are accepted whenever the floor allows and the hero can use what it gains.
-    const candidates = run.roster.filter((entry) => {
-      const combatant = createCombatant('probe', entry.heroId, 'A', 0, 0);
-      const maxHp = getMaxHp(rosterHeroes[entry.heroId], {
-        ...combatant,
-        baselineStatModifiers: { ...entry.evolutionStatGrants, ...entry.bonusStatGrants },
-      });
-      return statShiftAllowed(outcome.deltas, maxHp);
-    });
+    const candidates = run.roster.filter((entry) => statShiftAllowed(outcome.deltas, simMaxHp(entry)));
     const target = policy.passiveTarget(candidates);
-    return target ? applyStatShift(run, target.rosterId, outcome.deltas) : run;
+    return target ? applyStatShift(paid(), target.rosterId, outcome.deltas) : run;
   }
 
   if (outcome.kind === 'grantPassive') {
     const target = policy.passiveTarget(run.roster);
     if (!target || !policy.passiveExists(outcome.passiveId)) return run;
-    return grantEventPassive(run, target.rosterId, outcome.passiveId, passives);
+    return grantEventPassive(paid(), target.rosterId, outcome.passiveId, passives);
   }
 
+  if (outcome.kind === 'gamble') {
+    const candidates = run.roster.filter(
+      (entry) => heroOutcomeAllowed(outcome.win, simMaxHp(entry)) && heroOutcomeAllowed(outcome.lose, simMaxHp(entry))
+    );
+    const target = policy.passiveTarget(candidates);
+    if (!target) return run;
+    const branch = resolveGamble(outcome.chance) === 'win' ? outcome.win : outcome.lose;
+    return applyHeroOutcome(paid(), target.rosterId, branch, passives);
+  }
+
+  if (outcome.kind === 'recruit') {
+    // Fills an empty seat only: the pilot never trades a built hero for a raw one.
+    if (run.roster.length >= ROSTER_CAP) return run;
+    const [heroId] = rollRecruits(run, outcome.pool, 1, recruitPool(run, heroes));
+    if (!heroId) return run;
+    const next = paid();
+    return joinEventRecruit(next, eventRecruitEntry(next, heroes[heroId], freshRosterId(next, heroId)));
+  }
+
+  // A curse rewrites a hero's typing for a payout ten pips away: the pilot cannot weigh that, so it walks on.
+  if (outcome.kind === 'transform') return run;
+
   // loot
-  let next = run;
+  let next = paid();
   const drops = pickWeightedEquipment(EQUIPMENT_POOL, outcome.count, rarityWeightsFor(run.actNumber, 'standard'));
   for (const item of drops) next = resolveDrop(next, item.id, record, run.actNumber, 'event');
   return next;

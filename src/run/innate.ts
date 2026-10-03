@@ -33,10 +33,21 @@ export function titansMarkOf(hero: Pick<HeroDefinition, 'passiveIds'>): PassiveD
 /** The passive ids this hero fights with as its own: the mastered set once the tenth pip has landed, the born set before. */
 export function innatePassiveIdsFor(
   hero: Pick<HeroDefinition, 'passiveIds' | 'masteredPassiveIds'>,
-  entry: Pick<RosterEntry, 'mastery'> | undefined
+  entry: (Pick<RosterEntry, 'mastery'> & Partial<Pick<RosterEntry, 'masteryOverride'>>) | undefined
 ): readonly PassiveId[] | undefined {
+  // A curse's Turn (Werewolf Bite) pays this entry's tenth pip in place of the authored upgrade.
+  if (entry && isInnateMastered(entry) && entry.masteryOverride) return entry.masteryOverride.passiveIds;
   if (entry && isInnateMastered(entry) && hero.masteredPassiveIds && hero.masteredPassiveIds.length > 0) return hero.masteredPassiveIds;
   return hero.passiveIds;
+}
+
+/** What the tenth pip pays THIS entry, read by its first card: a curse's Turn, else the authored upgrade. */
+export function masteredInnateFor(
+  hero: Pick<HeroDefinition, 'masteredPassiveIds'>,
+  entry: Partial<Pick<RosterEntry, 'masteryOverride'>>
+): PassiveDefinition | null {
+  if (entry.masteryOverride) return innatePassiveOf({ passiveIds: entry.masteryOverride.passiveIds });
+  return masteredInnateOf(hero);
 }
 
 /** The upgrade the tenth pip teaches, read by its first card, or null for a definition with none. */
@@ -47,7 +58,7 @@ export function masteredInnateOf(hero: Pick<HeroDefinition, 'masteredPassiveIds'
 /** The innate as it stands on THIS roster entry — mastered once the tenth pip has landed. What an entry-aware surface names. */
 export function currentInnateOf(
   hero: Pick<HeroDefinition, 'passiveIds' | 'masteredPassiveIds'>,
-  entry: Pick<RosterEntry, 'mastery'> | undefined
+  entry: (Pick<RosterEntry, 'mastery'> & Partial<Pick<RosterEntry, 'masteryOverride'>>) | undefined
 ): PassiveDefinition | null {
   return innatePassiveOf({ passiveIds: innatePassiveIdsFor(hero, entry) });
 }

@@ -9,10 +9,11 @@
 import type { HeroDefinition, LevelSchedule, MoveDefinition, MoveTier, PassiveId, StatKey, TypeId } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
 import { BASE_ITEM_SLOTS } from './equipment';
-import { MASTERY_EVOLUTION } from './mastery';
+import { MASTERY_CAP, MASTERY_EVOLUTION } from './mastery';
 import type { RosterEntry, RunState } from './state';
 import { mergeStatMods } from './statMods';
 import { levelOf } from './growth';
+import { moves as moveCatalog } from '../data/moves';
 
 /** Past the cap, growth is substitution, never expansion. */
 export const MOVE_CAP = 4;
@@ -321,10 +322,23 @@ export function grantMove(run: RunState, rosterId: string, moveId: string, repla
   if (replaceMoveId && !entry.unlockedMoveIds.includes(replaceMoveId)) {
     throw new ProgressionError(`${replaceMoveId} is not currently unlocked on ${rosterId}`);
   }
+  if (replaceMoveId && isLockedMove(replaceMoveId)) {
+    throw new ProgressionError(`${replaceMoveId} is permanent on ${rosterId} and cannot be replaced`);
+  }
   const unlockedMoveIds = replaceMoveId
     ? entry.unlockedMoveIds.map((id) => (id === replaceMoveId ? moveId : id))
     : [...entry.unlockedMoveIds, moveId];
   return replaceEntry(run, rosterId, { ...entry, unlockedMoveIds });
+}
+
+/** A `permanent` move (Motley's Trick): every replace path refuses it. */
+export function isLockedMove(moveId: string): boolean {
+  return !!moveCatalog[moveId]?.permanent;
+}
+
+/** The moves a replace-or-decline offer may swap out — the kit less its permanent moves. */
+export function replaceableMoveIds(moveIds: readonly string[]): string[] {
+  return moveIds.filter((id) => !isLockedMove(id));
 }
 
 /** A schedule offer, taken. Grants, and spends the offer — swapping the move away later does not put it back in the pool. */
@@ -360,7 +374,8 @@ export function availableEvolution(table: ProgressionTable, entry: RosterEntry):
 }
 
 /** The primary plus the current graft — the out-of-combat mirror of engine/state.ts effectiveTypes, and it must stay identical to it. UI must read this, not `hero.types`. */
-export function rosterEntryTypes(hero: HeroDefinition, entry: RosterEntry): readonly TypeId[] {
+export function rosterEntryTypes(hero: HeroDefinition, entry: Pick<RosterEntry, 'evolutionTypeGraft'> & Partial<Pick<RosterEntry, 'typeOverride'>>): readonly TypeId[] {
+  if (entry.typeOverride) return entry.typeOverride;
   return entry.evolutionTypeGraft ? [hero.types[0], entry.evolutionTypeGraft] : hero.types;
 }
 
@@ -395,6 +410,12 @@ export function pathLeadType(hero: HeroDefinition, path: EvolutionPath, moves: R
 }
 
 /** The form a hero is in now: the last path taken, or null while unevolved. What a clear's star is keyed by (profile.ts). */
+/** The form a hero's art wears: a mastered curse's (the Werewolf's Turn, RosterEntry.masteryOverride), else its current Evolution path. */
+export function formIdFor(entry: RosterEntry): string | null {
+  if (entry.masteryOverride?.formId && entry.mastery >= MASTERY_CAP) return entry.masteryOverride.formId;
+  return currentEvolutionPathId(entry);
+}
+
 export function currentEvolutionPathId(entry: RosterEntry): string | null {
   return entry.chosenPathIds[entry.chosenPathIds.length - 1] ?? null;
 }

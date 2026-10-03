@@ -13,7 +13,7 @@ import { prefersReducedMotion } from '../shared/reducedMotion';
 interface Props {
   heroId: string;
   /** How the hero was got — the only thing that differs between the two beats is the word and the sound. */
-  source: 'contract' | 'guild';
+  source: 'contract' | 'guild' | 'event';
   /** The typing the hero actually arrives with — a contract veteran may already be grafted. */
   types?: readonly TypeId[];
   /** The form a contract veteran arrives in, if it evolved before it was beaten. */
@@ -27,6 +27,7 @@ const BEATS = { swear: 620, done: 2600 } as const;
 const SOURCE_KICKER: Record<Props['source'], string> = {
   contract: 'Contract Sealed',
   guild: 'Hired at the Guild Hall',
+  event: 'Joined on the Road',
 };
 
 /**
@@ -47,7 +48,7 @@ export function RecruitFanfare({ heroId, source, types, pathId, onDone }: Props)
       onDone();
       return;
     }
-    playSfx(source === 'contract' ? 'contract.sign' : 'gold.purse');
+    playSfx(source === 'guild' ? 'gold.purse' : 'contract.sign');
     const timers = [
       window.setTimeout(() => {
         setSworn(true);

@@ -22,7 +22,7 @@ import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { enchantTypeOf, ItemEffectChips, ItemPiece, RARITY_COLOR_VARS, RARITY_LABELS, RARITY_RGB_VARS } from '../shared/EquipmentBox';
 import { ElementGlyph } from '../shared/elementIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { currentEvolutionPathId } from '../../run/progression';
+import { formIdFor } from '../../run/progression';
 import { HubGlyph } from '../shared/nodeIcons';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { overlayHost } from '../shared/overlayHost';
@@ -114,7 +114,7 @@ export function SmithyWorkSheet({ run, hero, entry, itemRef, item, onCommit, onC
               {heldType ? ` · ${heldType}-bound` : ''}
             </span>
             <span className="smithy-work-holder">
-              <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(entry)} className="smithy-work-portrait" />
+              <HeroPortrait heroId={hero.id} pathId={formIdFor(entry)} className="smithy-work-portrait" />
               <span className="smithy-work-holder-name">{hero.name}</span>
               <span className="smithy-work-holder-level">Lv {levelOf(entry)} · wears</span>
             </span>

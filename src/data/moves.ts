@@ -2661,6 +2661,21 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'A palm strike thrown with the whole mind behind it, which sometimes leaves the target reeling (20% chance of Daze).',
   },
+  // Never cast as itself: run/metamorphic.ts swaps it for this round's face at declaration. The
+  // body below is what the sheet shows out of a fight. Motley's alone, held by its innate.
+  motleysTrick: {
+    id: 'motleysTrick',
+    name: "Motley's Trick",
+    type: 'Mind',
+    category: 'magical',
+    kind: 'buff',
+    manaCost: 0,
+    priority: 0,
+    target: 'self',
+    metamorphic: true,
+    permanent: true,
+    description: 'Becomes a random move from anywhere in the game each round — its type, cost and effects. Cannot be replaced.',
+  },
   psiBolt: {
     id: 'psiBolt',
     name: 'Psi Bolt',

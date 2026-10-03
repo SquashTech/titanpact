@@ -5,7 +5,7 @@ import { rosterHeroes } from '../../data/content';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { CONSUMABLE_BLURBS, CONSUMABLE_NAMES, type ConsumableKind } from '../../run/consumables';
 import { MAX_LEVEL, MAX_XP, levelForXp, levelOf, previewLevelUp, xpForLevel, xpProgress } from '../../run/growth';
-import { currentEvolutionPathId } from '../../run/progression';
+import { formIdFor } from '../../run/progression';
 import { LevelUpList } from '../run/LevelUpList';
 import { overlayHost } from '../shared/overlayHost';
 import { WoundBar } from '../shared/WoundBar';
@@ -115,7 +115,7 @@ export function FightResultOverlay({
     const rows: { key: string; render: (shown: boolean) => ReactNode }[] = [];
     if (!won) return rows;
     const mvpEntry = mvp ? roster.find((entry) => entry.rosterId === mvp.rosterId) : undefined;
-    if (mvp && mvpEntry) rows.push({ key: 'mvp', render: () => <MvpRow heroId={mvpEntry.heroId} pathId={currentEvolutionPathId(mvpEntry)} pick={mvp} /> });
+    if (mvp && mvpEntry) rows.push({ key: 'mvp', render: () => <MvpRow heroId={mvpEntry.heroId} pathId={formIdFor(mvpEntry)} pick={mvp} /> });
     if (goldReward > 0) rows.push({ key: 'gold', render: (shown) => <GoldRow from={goldFrom} amount={goldReward} shown={shown} /> });
     if (equipmentReward) rows.push({ key: 'item', render: () => <ItemRow item={equipmentReward} onInspect={() => setInspecting(true)} /> });
     if (consumableReward) rows.push({ key: 'potion', render: () => <PotionRow kind={consumableReward} /> });
@@ -268,7 +268,7 @@ function StatGainsSheet({ report, roster, onClose }: { report: ReturnType<typeof
     <div className="detail-overlay" onClick={closeAndStop}>
       <div className="detail-panel level-gains-panel" onClick={closeAndStop}>
         <h3 className="level-gains-title">Stat gains</h3>
-        <LevelUpList report={report} gains formFor={(rosterId) => { const entry = roster.find((r) => r.rosterId === rosterId); return entry ? currentEvolutionPathId(entry) : null; }} />
+        <LevelUpList report={report} gains formFor={(rosterId) => { const entry = roster.find((r) => r.rosterId === rosterId); return entry ? formIdFor(entry) : null; }} />
         <div className="detail-close-hint">Tap anywhere to close</div>
       </div>
     </div>,
@@ -342,7 +342,7 @@ function PartyMember({ entry, index, xp, fielded, filling, landed, hpAfter }: Me
     >
       <div className="fight-result-figure">
         {shownFills > 0 && !landed && <span key={shownFills} className="fight-result-figure-bloom" aria-hidden="true" />}
-        <HeroPortrait heroId={definition.id} pathId={currentEvolutionPathId(entry)} className="fight-result-portrait" />
+        <HeroPortrait heroId={definition.id} pathId={formIdFor(entry)} className="fight-result-portrait" />
       </div>
 
       <span className="fight-result-lv">

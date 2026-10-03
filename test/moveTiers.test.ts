@@ -39,6 +39,7 @@ import {
   scheduleFor,
   scheduleRemaining,
   takeScheduleEntry,
+  replaceableMoveIds,
 } from '../src/run/progression';
 import { heroes as heroesById } from '../src/data/heroes';
 import { LEVEL_AFTER_ENCOUNTER, MAX_LEVEL, levelOf, levelUpEntry, xpForLevel } from '../src/run/growth';
@@ -87,7 +88,8 @@ test('move tiers: every move of a tiered slate carries a tier, and no other type
   for (const move of Object.values(moves)) {
     // A class move wears a type for flavour and no tier: it is in no pool (test/classes.test.ts).
     // A signature likewise: its only source is the tenth Mastery pip (test/mastery.test.ts).
-    if (classMoves[move.id] || signatureMoves[move.id]) continue;
+    // A metamorphic move (Motley's Trick) is never cast as itself and is in no pool either.
+    if (classMoves[move.id] || signatureMoves[move.id] || move.metamorphic) continue;
     if (TIERED_TYPES.includes(move.type)) {
       assert.ok(move.tier, `${move.id} (${move.type}) has no tier`);
     } else {
@@ -289,7 +291,7 @@ test('move tiers: every hero walks its whole schedule with a move to show for ea
         run = takeScheduleEntry(run, hero.id);
         run = decline
           ? recordMoveOffer(run, hero.id, [moveId])
-          : grantOfferedMove(run, hero.id, moveId, run.roster[0].unlockedMoveIds[0]);
+          : grantOfferedMove(run, hero.id, moveId, replaceableMoveIds(run.roster[0].unlockedMoveIds)[0]);
         decline = !decline;
       }
       assert.strictEqual(run.roster[0].scheduleTaken, entries.length, `${hero.id} via ${path.id} did not take every entry`);
@@ -308,7 +310,7 @@ test('move tiers: a loadout filled from the hero\'s own pool still leaves the fi
     for (let slot = 0; slot < MOVE_CAP; slot++) {
       const gift = poolOf(run.roster[0])[slot];
       if (!gift) break;
-      run = grantMove(run, hero.id, gift, run.roster[0].unlockedMoveIds[0]);
+      run = grantMove(run, hero.id, gift, replaceableMoveIds(run.roster[0].unlockedMoveIds)[0]);
     }
     const first = scheduleEntries(scheduleFor(hero)).find((e) => e.kind === 'offer')!;
     assert.ok(

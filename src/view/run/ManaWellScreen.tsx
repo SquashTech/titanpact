@@ -10,7 +10,7 @@ import { statScaleFor } from '../../run/statScale';
 import { entryStatTotals } from '../shared/entryStatTotals';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { currentEvolutionPathId } from '../../run/progression';
+import { formIdFor } from '../../run/progression';
 import { NodeMotes, NODE_TINT_MANA } from '../shared/NodeStage';
 import { STAT_COLORS, StatGlyph } from '../shared/statIcons';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
@@ -72,7 +72,7 @@ export function ManaWellScreen({ run, onRunChange, onContinue }: Props) {
             <span className="rite-reveal-flash" aria-hidden="true" />
             <span className="rite-hero">
               <span className="rite-pool" aria-hidden="true" />
-              <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(grantedEntry)} className="rite-portrait" />
+              <HeroPortrait heroId={hero.id} pathId={formIdFor(grantedEntry)} className="rite-portrait" />
               <span className="rite-mark is-reveal" aria-hidden="true">
                 <StatGlyph stat="manaPool" />
               </span>
@@ -171,6 +171,7 @@ export function ManaWellScreen({ run, onRunChange, onContinue }: Props) {
           entry={previewEntry.entry}
           equipmentLookup={equipment}
           relicIds={run.relics}
+          gold={run.gold}
           scale={statScaleFor(run)}
           onClose={() => setPreviewEntry(null)}
         />

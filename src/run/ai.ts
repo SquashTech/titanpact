@@ -27,6 +27,8 @@ import {
 import { selectableTargets, statusGatedTargets } from '../engine/combat/statusEngine';
 import { replacementCandidates } from '../engine/combat/switching';
 import { resolveTypeMult, TYPE_MULT_FLOOR, type TypeChart } from '../engine/damage/typeMult';
+import { kitForRound } from './metamorphic';
+import { passives as passiveCatalog } from '../data/passives';
 
 export interface AiContext {
   /** Every combatant on the board, both sides. */
@@ -341,7 +343,8 @@ function pickTarget(state: CombatState, casterId: string, move: MoveDefinition, 
 export function pickAiAction(state: CombatState, combatantId: string, ctx: AiContext): Action {
   const random = ctx.random ?? Math.random;
   const combatant = state.combatants[combatantId];
-  const moveIds = ctx.moveIdsFor(combatantId);
+  // This round's kit: a metamorphic move (Motley's Trick) is already its face here (run/metamorphic.ts).
+  const moveIds = kitForRound(state, combatantId, ctx.moveIdsFor(combatantId), ctx.moves, ctx.passives ?? passiveCatalog);
   // As this actor casts them — a typeFollowsUser move is weighed at the actor's type (state.ts).
   const moveOf = (id: string) => moveForHero(ctx.moves[id], ctx.heroes[combatant.heroId]);
 

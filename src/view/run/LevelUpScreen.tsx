@@ -3,7 +3,7 @@ import { rosterHeroes } from '../../data/content';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
 import { levelOf, type HeroLevelUp } from '../../run/growth';
-import { availableEvolution, levelMovePool, pendingScheduleEntry, pendingSignature, currentEvolutionPathId } from '../../run/progression';
+import { availableEvolution, levelMovePool, pendingScheduleEntry, pendingSignature, formIdFor } from '../../run/progression';
 import { companionTierStep } from '../../run/companion';
 import type { RosterEntry, RunState } from '../../run/state';
 import { NodeSky, NODE_TINT_VITAL } from '../shared/NodeStage';
@@ -95,7 +95,7 @@ export function LevelUpScreen({ run, onRunChange, report, onContinue }: Props) {
       </header>
 
       <div className="screen-scroll">
-        <LevelUpList report={report} owedFor={(rosterId) => owedLabel(run, rosterId)} formFor={(rosterId) => { const entry = run.roster.find((r) => r.rosterId === rosterId); return entry ? currentEvolutionPathId(entry) : null; }} />
+        <LevelUpList report={report} owedFor={(rosterId) => owedLabel(run, rosterId)} formFor={(rosterId) => { const entry = run.roster.find((r) => r.rosterId === rosterId); return entry ? formIdFor(entry) : null; }} />
       </div>
 
       {flow.signature && signatureEntry && (

@@ -11,7 +11,7 @@ import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { enchantTypeOf, ItemEffectChips, ItemPiece, RARITY_COLOR_VARS, RARITY_LABELS, RARITY_RGB_VARS } from '../shared/EquipmentBox';
 import { ElementGlyph } from '../shared/elementIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { currentEvolutionPathId } from '../../run/progression';
+import { formIdFor } from '../../run/progression';
 import { HubGlyph } from '../shared/nodeIcons';
 import smithArt from '../../../art/npc/smith.png';
 import { NodeMotes, NODE_TINT_HEARTH } from '../shared/NodeStage';
@@ -206,7 +206,7 @@ function ForgeSheet({
             </span>
             {hero && entry && (
               <span className="smithy-work-holder">
-                <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(entry)} className="smithy-work-portrait" />
+                <HeroPortrait heroId={hero.id} pathId={formIdFor(entry)} className="smithy-work-portrait" />
                 <span className="smithy-work-holder-name">{hero.name}</span>
                 <span className="smithy-work-holder-level">wears</span>
               </span>

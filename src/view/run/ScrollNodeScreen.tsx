@@ -219,6 +219,7 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
           entry={previewEntry.entry}
           equipmentLookup={equipment}
           relicIds={run.relics}
+          gold={run.gold}
           scale={statScaleFor(run)}
           onClose={() => setPreviewEntry(null)}
         />

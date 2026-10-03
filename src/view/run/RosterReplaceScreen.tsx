@@ -4,7 +4,7 @@ import type { HeroDefinition } from '../../engine/content';
 import type { RosterEntry } from '../../run/state';
 import { createRosterEntry } from '../../run/state';
 import type { RosterReplaceCandidate } from '../../run/recruitment';
-import { rosterEntryTypes, currentEvolutionPathId } from '../../run/progression';
+import { rosterEntryTypes, formIdFor } from '../../run/progression';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
@@ -92,7 +92,7 @@ export function RosterReplaceScreen({ roster, candidate, incomingEntry, relicIds
 
         <NodeHeader
           compact
-          art={<HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(previewNewEntry)} className="roster-replace-portrait" />}
+          art={<HeroPortrait heroId={hero.id} pathId={formIdFor(previewNewEntry)} className="roster-replace-portrait" />}
           eyebrow="Roster Full — New Hero"
           title={hero.name}
           readout={

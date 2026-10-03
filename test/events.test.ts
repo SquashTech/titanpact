@@ -9,10 +9,12 @@ import { moves } from '../src/data/moves';
 import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
 import { fieldEffects } from '../src/data/fieldEffects';
-import { typeChart } from '../src/data/typechart';
+import { typeChart, TYPES } from '../src/data/typechart';
 import { equipment } from '../src/data/equipment';
+import { signatureMoves } from '../src/data/signatures';
+import { classMoves } from '../src/data/classes';
 import { locations } from '../src/data/locations';
-import { runEvents, type RunEventDefinition } from '../src/data/events';
+import { runEvents, type EventCost, type HeroOutcome, type ResolvableOutcome, type RunEventDefinition } from '../src/data/events';
 import { isValidFlatStatGrant } from '../src/engine/content';
 import type { PassiveInstance, CombatState } from '../src/engine/state';
 import type { CombatEvent } from '../src/engine/events';
@@ -26,6 +28,7 @@ import {
   eligibleEvents,
   grantEventPassive,
   movePoolFor,
+  recruitCandidates,
   MIN_HP_AFTER_SHIFT,
   rollEventMove,
   rollRunEvent,
@@ -49,25 +52,65 @@ function seedRoster(heroIds: string[]) {
 
 test('events: every authored event is coherent content — a resolvable outcome, and nothing that would dead-end a node', () => {
   const problems: string[] = [];
+  const checkDeltas = (id: string, deltas: Partial<Record<string, number>>) => {
+    const entries = Object.entries(deltas).filter(([, amount]) => amount);
+    if (entries.length === 0) problems.push(`${id} is a statShift that shifts nothing`);
+    for (const [stat, amount] of entries) {
+      // The multiples-of-5 rule is about magnitude, so a cost obeys it exactly as a grant does.
+      if (!isValidFlatStatGrant(Math.abs(amount as number))) problems.push(`${id}'s ${stat} delta ${amount} is not a multiple of 5`);
+    }
+  };
+  const checkHero = (id: string, outcome: HeroOutcome) => {
+    if (outcome.kind === 'statShift') checkDeltas(id, outcome.deltas);
+    else if (!passives[outcome.passiveId]) problems.push(`${id} grants unknown passive '${outcome.passiveId}'`);
+  };
+  const checkCost = (id: string, cost: EventCost | undefined) => {
+    if (!cost) return;
+    if (cost.gold !== undefined && cost.gold <= 0) problems.push(`${id} costs ${cost.gold} gold`);
+    if (cost.woundAll !== undefined && !(cost.woundAll > 0 && cost.woundAll < 1)) problems.push(`${id} wounds by ${cost.woundAll}, not a share of max HP`);
+  };
+  const check = (id: string, outcome: ResolvableOutcome) => {
+    if (outcome.kind === 'learnMove' && movePoolFor(outcome.pool, moves).length === 0) problems.push(`${id} has a learnMove filter that matches no move`);
+    if (outcome.kind === 'statShift' || outcome.kind === 'grantPassive') checkHero(id, outcome);
+    if (outcome.kind === 'loot' && outcome.count < 1) problems.push(`${id} is a loot event granting ${outcome.count} items`);
+    if (outcome.kind === 'gamble') {
+      if (!(outcome.chance > 0 && outcome.chance < 1)) problems.push(`${id} gambles at ${outcome.chance}, which is no gamble`);
+      checkHero(`${id} (win)`, outcome.win);
+      checkHero(`${id} (lose)`, outcome.lose);
+    }
+    if (outcome.kind === 'transform') {
+      if (outcome.types.length < 1 || outcome.types.length > 2) problems.push(`${id} transforms into ${outcome.types.length} types`);
+      for (const type of outcome.types) if (!(TYPES as readonly string[]).includes(type)) problems.push(`${id} transforms into unknown type '${type}'`);
+      if (outcome.moveId && !moves[outcome.moveId]) problems.push(`${id} teaches unknown move '${outcome.moveId}'`);
+      for (const passiveId of outcome.mastery?.passiveIds ?? []) if (!passives[passiveId]) problems.push(`${id}'s Turn grants unknown passive '${passiveId}'`);
+    }
+    if (outcome.kind === 'recruit') {
+      if (outcome.count < 1) problems.push(`${id} recruits from ${outcome.count} candidates`);
+      // Against the whole catalog with an empty roster: a filter that admits nobody is a typo.
+      if (recruitCandidates(createRunState(0), outcome.pool, heroes).length === 0) problems.push(`${id}'s recruit filter admits no hero`);
+      for (const heroId of outcome.pool.heroIds ?? []) if (!heroes[heroId]) problems.push(`${id} recruits unknown hero '${heroId}'`);
+    }
+  };
   for (const event of Object.values(runEvents)) {
     const { outcome } = event;
     if (!event.name || !event.eyebrow || !event.flavor) problems.push(`${event.id} is missing a name/eyebrow/flavor`);
-    if (outcome.kind === 'learnMove') {
-      const pool = movePoolFor(outcome.pool, moves);
-      if (pool.length === 0) problems.push(`${event.id} has a learnMove filter that matches no move`);
-    }
-    if (outcome.kind === 'statShift') {
-      const entries = Object.entries(outcome.deltas).filter(([, amount]) => amount);
-      if (entries.length === 0) problems.push(`${event.id} is a statShift that shifts nothing`);
-      for (const [stat, amount] of entries) {
-        // The multiples-of-5 rule is about magnitude, so a cost obeys it exactly as a grant does.
-        if (!isValidFlatStatGrant(Math.abs(amount as number))) problems.push(`${event.id}'s ${stat} delta ${amount} is not a multiple of 5`);
+    if (event.weight !== undefined && !(event.weight > 0)) problems.push(`${event.id} has weight ${event.weight}`);
+    if (outcome.kind === 'choice') {
+      if (outcome.options.length < 1 || outcome.options.length > 3) problems.push(`${event.id} offers ${outcome.options.length} options (1–3, plus Leave)`);
+      if (event.cost) problems.push(`${event.id} is a choice with an event-level cost — price the options instead`);
+      const labels = new Set(outcome.options.map((o) => o.label));
+      if (labels.size !== outcome.options.length) problems.push(`${event.id} repeats an option label`);
+      for (const option of outcome.options) {
+        check(`${event.id}/${option.label}`, option.outcome);
+        checkCost(`${event.id}/${option.label}`, option.cost);
       }
+    } else {
+      check(event.id, outcome);
+      checkCost(event.id, event.cost);
+      // A risk or a price is only fair with a way out, and only a choice has Leave.
+      if (outcome.kind === 'gamble') problems.push(`${event.id} is a bare gamble — put it in a choice so it can be left`);
+      if (event.cost) problems.push(`${event.id} carries a cost outside a choice — put it in one so it can be left`);
     }
-    if (outcome.kind === 'grantPassive' && !passives[outcome.passiveId]) {
-      problems.push(`${event.id} grants unknown passive '${outcome.passiveId}'`);
-    }
-    if (outcome.kind === 'loot' && outcome.count < 1) problems.push(`${event.id} is a loot event granting ${outcome.count} items`);
     for (const locationId of event.locationIds ?? []) {
       if (!locations[locationId]) problems.push(`${event.id} is gated to unknown location '${locationId}'`);
     }
@@ -83,7 +126,14 @@ test("events: Fruit Slicer's pool is exactly the Slice moves, and Wildcard's is 
     'the Slice filter let a non-Slice move through'
   );
   assert.ok(slicePool.length < Object.keys(moves).length);
-  assert.strictEqual(movePoolFor(undefined, moves).length, Object.keys(moves).length);
+  const owned = Object.keys(moves).filter((id) => signatureMoves[id] || classMoves[id] || moves[id].metamorphic);
+  assert.strictEqual(movePoolFor(undefined, moves).length, Object.keys(moves).length - owned.length);
+});
+
+test("events: no event pool can teach a signature or a Class move — both are somebody's already", () => {
+  const pool = new Set(movePoolFor(undefined, moves));
+  for (const id of Object.keys(signatureMoves)) assert.ok(!pool.has(id), `signature ${id} is in the event pool`);
+  for (const id of Object.keys(classMoves)) assert.ok(!pool.has(id), `class move ${id} is in the event pool`);
 });
 
 test('events: a learnMove roll always lands on a move that exists', () => {
@@ -97,14 +147,17 @@ test('events: movePoolFor ANDs its filters, and an empty filter object is permis
   const fireDamage = movePoolFor({ types: ['Fire'], kinds: ['damage'] }, moves);
   assert.ok(fireDamage.length > 0);
   assert.ok(fireDamage.every((id) => moves[id].type === 'Fire' && moves[id].kind === 'damage'));
-  assert.strictEqual(movePoolFor({}, moves).length, Object.keys(moves).length);
+  assert.strictEqual(movePoolFor({}, moves).length, movePoolFor(undefined, moves).length);
 });
 
 // --- Selection: the act and Location gates ---
 
 test('events: an ungated event is eligible in every act and every Location', () => {
-  const eligible = eligibleEvents(runEvents, 1, 'wildsEdge').map((e) => e.id);
-  assert.deepStrictEqual(eligible.sort(), Object.keys(runEvents).sort());
+  const ungated = Object.values(runEvents).filter((e) => !e.locationIds && e.minAct === undefined).map((e) => e.id);
+  for (const locationId of Object.keys(locations)) {
+    const eligible = new Set(eligibleEvents(runEvents, 1, locationId).map((e) => e.id));
+    for (const id of ungated) assert.ok(eligible.has(id), `${id} is not eligible in ${locationId}`);
+  }
 });
 
 test('events: a Location-gated event is only eligible in its own Locations', () => {

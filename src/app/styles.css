@@ -43043,3 +43043,113 @@ img.smithy-service-art {
     animation: none;
   }
 }
+
+/* --- Event choices (EventNodeScreen, docs/wild-innates-and-events.md §3.1) ----------------- */
+
+/* A `choice` event's options and its Leave: full-width planks, stacked, each a title and what it
+   holds — the same plank as a move offer's either/or, laid out as a list. */
+.event-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.event-option {
+  flex: none;
+  min-height: 64px;
+}
+
+/* Unaffordable, or rolled empty: still read, not pressed. */
+.event-option:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.event-option .event-option-chips {
+  justify-content: center;
+}
+
+.event-option-cost,
+.event-cost-line {
+  color: #f0b27a;
+}
+
+.event-cost-line {
+  margin: 6px 0 0;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* A gamble's two branches, odds first, side by side; the branch that did not land dims. */
+.event-gamble {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.event-gamble-branch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: opacity var(--dur-mid) var(--ease-out);
+}
+
+.event-gamble-branch.is-dimmed {
+  opacity: 0.35;
+}
+
+.event-gamble-odds {
+  min-width: 3.2em;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: right;
+  color: var(--accent);
+}
+
+.event-leave-actions {
+  padding: 0 16px 12px;
+}
+
+/* The card a recruit at the cap would send away. */
+.pick-cta.is-danger {
+  color: var(--hp-low);
+}
+
+/* --- Motley's Trick (docs/wild-innates-and-events.md §1) -------------------------------------- */
+
+/* A face of a metamorphic move: the Trick's name rides over the face's, so the player can see
+   which row is this round's roll and which are the moves the hero always holds. */
+.move-trick-tag {
+  display: block;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #d6a5ff;
+  line-height: 1;
+  margin-bottom: 1px;
+}
+
+/* A curse spelled out under its event's title (EventNodeScreen, `transform`): the typing it takes,
+   the move it teaches, and what the tenth pip will pay instead. */
+.event-transform {
+  gap: 4px;
+}
+
+.event-transform-line {
+  margin: 0;
+  max-width: 40ch;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.event-transform-line strong {
+  color: var(--text);
+}

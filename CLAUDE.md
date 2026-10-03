@@ -242,6 +242,14 @@ don't silently override it.
 > a stat line (`EvolutionPath.statGrants` is deleted); `test/evolutionSimplification` binds every
 > hero, and 123 new path passives live in `src/data/evolutionPassives/`, one file a type.
 
+> **An eleventh is PARTLY BUILT: `docs/wild-innates-and-events.md`** (2026-10-02, decided 2026-10-03
+> per user direction). **Events** gain `choice` (options + an implicit Leave), `gamble`, `recruit`
+> (raw at par, from the deck — an event may now GRANT a hero), `transform`, costs (gold, `woundAll`)
+> and weights; the slate is 26, most of it Location-gated. **Motley's Trick**: a `metamorphic`,
+> `permanent` move swapped each round for a face off the whole catalog (`run/metamorphic.ts`), on a
+> 170 / 50×5 / 130 Motley. **Gilded Mane** (Aurum): +5 Atk/Def per 50 gold held. **Werewolf Bite**:
+> a curse that rewrites a hero's typing and its tenth pip. Seven more innates there are PROPOSED.
+
 ---
 
 ## Locked invariants — do not violate without an explicit decision
@@ -341,7 +349,9 @@ don't silently override it.
   Spirit, Iron, Mech, Beast, Ancient.
 - **Type = the domain a hero's power draws from, not what its body is made of.** This reframe
   is the identity filter for the whole roster — apply it everywhere.
-- A hero's **innate primary type is immutable.** Evolution may add or shift a *secondary*
+- A hero's **innate primary type is immutable** — **one named exception**, a curse
+  (`RosterEntry.typeOverride`, Werewolf Bite, 2026-10-03 per user direction): an event may
+  replace a roster entry's whole typing, both slots, for the run. Evolution may add or shift a *secondary*
   type (type-graft); it never changes the innate primary. **The graft owns the secondary
   SLOT, it does not append** (2026-09-05): a mono hero gains a second type, an innately
   dual one TRADES the one it was born with, and nothing ever reaches three types

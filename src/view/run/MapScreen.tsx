@@ -10,7 +10,7 @@ import { ResourceGlyph, type ResourceKind } from '../shared/RunGlyph';
 import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
 import { rosterHeroes } from '../../data/content';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { currentEvolutionPathId } from '../../run/progression';
+import { formIdFor } from '../../run/progression';
 import { WoundBar, entryHp } from '../shared/WoundBar';
 import { MapRoute } from './MapRoute';
 import { BannerShelf } from './BannerShelf';
@@ -274,7 +274,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
               const { hp, maxHp } = entryHp(hero, entry, run.relics);
               return (
                 <span key={entry.rosterId} className="map-party-chip" aria-label={`${hero.name}: ${hp} of ${maxHp} HP`}>
-                  <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(entry)} className="map-party-portrait" />
+                  <HeroPortrait heroId={hero.id} pathId={formIdFor(entry)} className="map-party-portrait" />
                   <WoundBar hp={hp} maxHp={maxHp} />
                 </span>
               );

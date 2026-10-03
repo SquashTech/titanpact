@@ -7,6 +7,7 @@ import { typeChart } from '../../data/typechart';
 import { equipment } from '../../data/equipment';
 import { statuses } from '../../data/statuses';
 import { passives } from '../../data/passives';
+import { kitForRound } from '../../run/metamorphic';
 import { fieldEffects } from '../../data/fieldEffects';
 import { relics } from '../../data/relics';
 import type { CombatState, Side } from '../../engine/state';
@@ -136,13 +137,15 @@ interface MoveRowProps {
   liveTargetMode: MoveDefinition['target'];
   caster: HealCaster;
   matchups: readonly MoveMatchup[];
+  /** The metamorphic move this row is this round's face of (Motley's Trick), for the tag over its name. */
+  faceOf?: MoveDefinition;
   onSelect: () => void;
   onInspect: () => void;
 }
 
 // Lifted out of the `.map()` because useLongPress is a hook. Unaffordable rows are
 // `.is-unaffordable` + aria-disabled rather than `disabled` so a hold still opens the dossier.
-function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, selfHpCost, rolledBasePower, userConditionMet, packBonusActive, liveTargetMode, caster, matchups, onSelect, onInspect }: MoveRowProps) {
+function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, selfHpCost, rolledBasePower, userConditionMet, packBonusActive, liveTargetMode, caster, matchups, faceOf, onSelect, onInspect }: MoveRowProps) {
   const usable = affordable && !gateUnmet;
   const longPress = useLongPress(onInspect, () => {
     if (usable) onSelect();
@@ -158,7 +161,7 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
 
   return (
     <button
-      className={`move-button${selected ? ' selected' : ''}${usable ? '' : ' is-unusable'}${affordable ? '' : ' is-unaffordable'}`}
+      className={`move-button${selected ? ' selected' : ''}${usable ? '' : ' is-unusable'}${affordable ? '' : ' is-unaffordable'}${faceOf ? ' is-trick-face' : ''}`}
       style={{ '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}
       aria-disabled={!usable}
       {...longPress}
@@ -168,7 +171,10 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
         <span className="move-type-code" title={move.type}>
           <ElementGlyph type={move.type} />
         </span>
-        <span className="move-name">{move.name}</span>
+        <span className="move-name">
+          {faceOf && <span className="move-trick-tag">{faceOf.name}</span>}
+          {move.name}
+        </span>
         {move.kind === 'damage' && (move.basePower ?? rolledBasePower) != null && (
           <span
             className={`move-power${boosted ? ' move-boosted' : ''}`}
@@ -644,7 +650,7 @@ export function FightScreen({
       allCombatants,
       equipment,
       [
-        { side: PLAYER_SIDE, squad: playerSquad, roster: playerRun.roster, teamStatModifiers, teamPassiveGrants, teamStatusGrants },
+        { side: PLAYER_SIDE, squad: playerSquad, roster: playerRun.roster, teamStatModifiers, teamPassiveGrants, teamStatusGrants, gold: playerRun.gold },
         { side: AI_SIDE, squad: aiSquad, roster: aiRun.roster },
       ],
       passives
@@ -818,7 +824,7 @@ export function FightScreen({
       round: combat.round,
       nodeType: tips.nodeType,
       anyOutOfMana: playerActiveAlive.some(
-        (id) => !hasAffordableMoveInFight(combat, id, entryFor(playerRun.roster, id).unlockedMoveIds, moves, allCombatants)
+        (id) => !hasAffordableMoveInFight(combat, id, kitOf(id), moves, allCombatants)
       ),
       benchSize: playerBench.length,
       enemyTypesOnField: enemyActiveAlive.flatMap((id) => {
@@ -1155,6 +1161,11 @@ export function FightScreen({
   // formatEvents keys by round+index within its own call, which collides across calls in one round; re-key against the running length.
   function appendLog(newLines: LogLine[]) {
     setLog((prev) => [...prev, ...newLines.map((l, i) => ({ ...l, key: `${prev.length + i}-${l.key}` }))]);
+  }
+
+  /** A player hero's kit THIS round — a metamorphic move already swapped for its face(s) (run/metamorphic.ts). */
+  function kitOf(combatantId: string): string[] {
+    return kitForRound(combat, combatantId, entryFor(playerRun.roster, combatantId).unlockedMoveIds, moves, passives);
   }
 
   const aiContext: AiContext = {
@@ -1787,7 +1798,7 @@ export function FightScreen({
             }
 
             // Softlock fallback (CLAUDE.md "Mana & tempo"): Rest replaces an all-unaffordable grid, carrying the explanation the bottom-bar key has no room for.
-            const canAffordAnyMove = hasAffordableMoveInFight(combat, id, entry.unlockedMoveIds, moves, allCombatants);
+            const canAffordAnyMove = hasAffordableMoveInFight(combat, id, kitOf(id), moves, allCombatants);
             const maxHp = getMaxHp(hero, combatant);
             const partnerTypes = activePartnerTypes(combat, id, allCombatants) ?? [];
             const casterStats = Object.fromEntries(
@@ -1841,8 +1852,9 @@ export function FightScreen({
                 )}
                 {canAffordAnyMove && (
                 <div className="move-list">
-                  {entry.unlockedMoveIds.map((moveId) => {
+                  {kitOf(id).map((moveId) => {
                     const move = moveForHero(moves[moveId], hero);
+                    const trick = entry.unlockedMoveIds.includes(moveId) ? undefined : entry.unlockedMoveIds.map((kitId) => moves[kitId]).find((m) => m?.metamorphic);
                     const cost = resolveManaCost(combat, id, move, allCombatants);
                     const isSelected =
                       (pending[id]?.kind === 'move' && pending[id]?.moveId === moveId) ||
@@ -1880,6 +1892,7 @@ export function FightScreen({
                         }
                         liveTargetMode={resolveTargetMode(combat, move)}
                         caster={caster}
+                        faceOf={trick}
                         matchups={
                           move.kind === 'damage'
                             ? enemyActiveAlive.map((eid) => ({

@@ -285,6 +285,24 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
     if (!index.typeIds.has(graft)) reject(`${label} references unknown type "${graft}"`);
   }
 
+  // Absent on a file written before curses; an uncursed hero is the honest default.
+  const typeOverride = value.typeOverride ?? null;
+  if (typeOverride !== null) {
+    if (!isStringArray(typeOverride) || typeOverride.length < 1 || typeOverride.length > 2) reject(`${label}.typeOverride is not one or two types`);
+    for (const type of typeOverride) if (!index.typeIds.has(type as TypeId)) reject(`${label} references unknown type "${type}"`);
+  }
+  const rawOverride = value.masteryOverride ?? null;
+  let masteryOverride: RosterEntry['masteryOverride'] = null;
+  if (rawOverride !== null) {
+    if (!isObject(rawOverride)) reject(`${label}.masteryOverride is not an object`);
+    const formId = rawOverride.formId;
+    if (formId !== undefined && typeof formId !== 'string') reject(`${label}.masteryOverride.formId is not an id`);
+    masteryOverride = {
+      passiveIds: requireIds(rawOverride.passiveIds, index.passiveIds, `${label}.masteryOverride.passiveIds`),
+      ...(formId !== undefined ? { formId } : {}),
+    };
+  }
+
   return {
     rosterId: value.rosterId,
     heroId: value.heroId,
@@ -305,6 +323,8 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
     // Absent on a file written before rewire paths; nothing was traded.
     offenseSwapped: value.offenseSwapped === true,
     evolutionTypeGraft: graft as TypeId | null,
+    typeOverride: typeOverride as TypeId[] | null,
+    masteryOverride,
     classId: classId as string | null,
     classPassiveId,
     // Absent on a file written before the companion; a hero that never was one is not one.

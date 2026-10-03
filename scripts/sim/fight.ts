@@ -453,6 +453,8 @@ export interface FightInput {
   playerRoster: readonly RosterEntry[];
   playerSquad: Squad;
   playerRelicIds: readonly string[];
+  /** The purse entering the fight, for a goldStatGrants innate (Gilded Mane). Default none. */
+  playerGold?: number;
   aiRoster: readonly RosterEntry[];
   aiSquad: Squad;
   rng: Rng;
@@ -473,7 +475,7 @@ function chartPilotActions(state: CombatState, playerCtx: AiContext, playerActiv
 }
 
 export function simulateFight(input: FightInput): FightOutcome {
-  const { seed, playerRoster, playerSquad, playerRelicIds, aiRoster, aiSquad, rng } = input;
+  const { seed, playerRoster, playerSquad, playerRelicIds, playerGold, aiRoster, aiSquad, rng } = input;
 
   const start = buildCombatState(
     seed,
@@ -487,6 +489,7 @@ export function simulateFight(input: FightInput): FightOutcome {
         teamStatModifiers: relicTeamStatModifiers(playerRelicIds, relics),
         teamPassiveGrants: relicTeamPassiveGrants(playerRelicIds, relics),
         teamStatusGrants: relicTeamStatusGrants(playerRelicIds, relics),
+        gold: playerGold,
       },
       { side: AI_SIDE, squad: aiSquad, roster: aiRoster },
     ],

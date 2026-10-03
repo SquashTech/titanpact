@@ -66,6 +66,8 @@ export interface Combatant {
   enduresLeft?: number;
   /** Holds a Blessing (docs/blessings-and-statuses.md §1): the next knockout's whole loss is prevented and this goes false. Copied from the roster entry at fight build, read back at resolve. */
   blessed?: boolean;
+  /** A curse's typing (RosterEntry.typeOverride), set at fight build; effectiveTypes returns it whole. */
+  typeOverride?: readonly TypeId[];
   /** Never switches out voluntarily (PassiveDefinition.cannotSwitchOut), set at fight build. Read through canSwitchOut. */
   switchLocked?: boolean;
   /** Stat gains a `permanent` passive statDelta banked this fight, for the roster to keep (run/runProgress.ts recordPermanentStatGains). */
@@ -316,6 +318,23 @@ export function resolveRandomBasePower(
   return Math.min(roll.max, Math.floor(nextRange(seeded, roll.min, roll.max + 1).value));
 }
 
+/**
+ * This round's faces for a metamorphic move (Motley's Trick): `faces` distinct ids from `pool`.
+ * DERIVED from (seed, round, combatantId) like resolveRandomBasePower — never stored, never advances
+ * rngState — so the button, the declaration, the AI and a replay all see the same faces.
+ */
+export function resolveMetamorphicFaces(state: CombatState, combatantId: string, pool: readonly string[], faces: number): string[] {
+  const remaining = [...pool];
+  const picked: string[] = [];
+  let rng: RngState = mixString(mixString((state.seed ^ Math.imul(state.round, 0x9e3779b1)) >>> 0, combatantId), 'metamorphic');
+  while (picked.length < faces && remaining.length > 0) {
+    const { value, nextState } = nextRange(rng, 0, remaining.length);
+    rng = nextState;
+    picked.push(remaining.splice(Math.min(remaining.length - 1, Math.floor(value)), 1)[0]);
+  }
+  return picked;
+}
+
 /** hasAffordableMove's board-aware counterpart — the Rest fallback must agree with what the button costs. */
 export function hasAffordableMoveInFight(
   state: CombatState,
@@ -523,6 +542,8 @@ export type HeroLookup = Record<string, HeroDefinition>;
 
 /** Innate types plus type-graft grants (STAB, TypeMult). Never written back to HeroDefinition. */
 export function effectiveTypes(hero: HeroDefinition, combatant: Combatant): readonly TypeId[] {
+  // A curse (Werewolf Bite) is the hero's whole typing, both slots, ahead of any graft.
+  if (combatant.typeOverride) return combatant.typeOverride;
   // A grant fills the SECONDARY SLOT, it does not append: the primary is immutable and nothing
   // ever reaches three types. Identical to appending for a mono hero; for an innately dual one
   // the grant REPLACES the secondary, which is what lets a dual hero be offered a graft at all.

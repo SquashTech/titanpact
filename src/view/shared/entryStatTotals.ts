@@ -19,12 +19,14 @@ import { relics } from '../../data/relics';
 export function entryStatTotals(
   hero: HeroDefinition,
   entry: RosterEntry,
-  relicIds: readonly string[] = []
+  relicIds: readonly string[] = [],
+  /** The run's purse, for a goldStatGrants passive (Gilded Mane). */
+  gold = 0
 ): StatLine {
   const teamStatModifiers = relicTeamStatModifiers(relicIds, relics);
   const teamPassiveGrants = relicTeamPassiveGrants(relicIds, relics);
   const passiveCounts = entryPassiveCounts(entry, equipment, teamPassiveGrants, innatePassiveIdsFor(hero, entry));
-  const grants = entryStatModifiers(entry, equipment, passives, passiveCounts, teamStatModifiers);
+  const grants = entryStatModifiers(entry, equipment, passives, passiveCounts, teamStatModifiers, gold);
 
   const out = { ...hero.baseStats };
   for (const key of Object.keys(out) as StatKey[]) out[key] += grants[key] ?? 0;

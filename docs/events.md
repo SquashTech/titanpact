@@ -23,19 +23,38 @@ That is the load-bearing constraint. If a new event wants behavior the outcome v
 cannot express, the fix is to **extend the vocabulary**, not to special-case an id — the
 same rule CLAUDE.md states for every other content type.
 
-### The outcome vocabulary (four kinds)
+### The outcome vocabulary
 
-| kind | what it does | today's events |
+| kind | what it does | e.g. |
 | --- | --- | --- |
-| `learnMove` | Rolls ONE move from a declarative `MovePoolFilter` and lets the player teach it to any roster hero — swapping one out if that hero is at `MOVE_CAP`. | Fruit Slicer, Wildcard |
+| `learnMove` | Rolls ONE move from a declarative `MovePoolFilter` and lets the player teach it to any roster hero, swapping one out if that hero is at `MOVE_CAP`. **No pool holds a signature or a Class move** (`movePoolFor`): both belong to somebody. | Fruit Slicer, Wildcard |
 | `statShift` | Flat additive stat deltas, some possibly negative, permanently-for-the-run on one chosen hero (`RosterEntry.bonusStatGrants`). | Soul Transfer |
 | `grantPassive` | Teaches a Passive to one chosen hero (`RosterEntry.bonusPassiveGrants`). | Assertiveness Training |
-| `loot` | N pieces of equipment on the act’s own drop curve, dropped straight into the bag. | Loot Pile |
+| `loot` | N pieces of equipment on the act's own drop curve, through the who-screens. | Loot Pile |
+| `recruit` | `count` heroes from a `HeroPoolFilter` over the run's deck, none already held. One joins **raw at the player's par** (`eventRecruitEntry`: a hire's terms without a hire's act of lag). At the cap, someone leaves with their gear. Always declinable. | Rustling Grass, Raise the Dead |
+| `gamble` | A chosen hero takes `win` at `chance`, `lose` otherwise. Both branches are a `statShift` or a `grantPassive`, both are shown first, and a hero that could not survive the worse one is greyed. | The Two-Headed Coin, the Fae Ring |
+| `transform` | A curse on one chosen hero, in one transform (`applyTransform`). Its typing is **replaced in both slots** (`RosterEntry.typeOverride`, the one thing that overrides the innate primary). `moveId` is taught (replace-or-decline). The tenth Mastery pip pays `mastery` instead of the hero's own upgrade (`RosterEntry.masteryOverride`, with a `formId` for the art). | Werewolf Bite |
+| `choice` | One to three options, each its own outcome and cost, **plus an implicit Leave**. Options never nest. Every option's contents roll at mount, so an option shows what it holds. | Lucid Dream, the Whispering Altar |
 
-**What is deliberately NOT in the vocabulary:** gold, Mastery Scrolls, Recruit Contracts.
-Each is already a whole map-node type or a per-act grant, and an event that duplicated one
-would be a reward node wearing a costume. An event should be a thing the map cannot
-otherwise do.
+**Costs** (`EventCost`, 2026-10-03) sit beside an outcome and land in the same transform:
+
+- **`gold`**: a sink, never a grant.
+- **`woundAll`**: a share of max HP off every standing hero as Wounds. It stops at 1 HP, so
+  an event never KOs anyone.
+
+**A gamble or a cost lives inside a `choice`**, so there is always a way out. `test/events`
+enforces it.
+
+**Never GRANTED by an event:** gold, Mastery Scrolls, Recruit Contracts. Each is already a
+whole map-node type or a per-act grant, and an event that duplicated one would be a reward
+node wearing a costume.
+
+**A hero is granted now** (`recruit`, 2026-10-03, per user direction). The difference from a
+contract is the point:
+
+- A recruit is raw, not finished.
+- It is narrowed by theme: the Necropolis raises the dead, the Foundry builds a Mech.
+- It is paid for by the node it took, not by a contract.
 
 ### The authored slate
 
@@ -48,6 +67,37 @@ otherwise do.
 | **Assertiveness Training** | A chosen hero learns **Imposing Presence** (§4). |
 | **Loot Pile** | **3** random pieces of equipment on the act's rarity curve. |
 
+**The second wave** (2026-10-03, `docs/wild-innates-and-events.md` §3.2) brought the slate
+to 26. Two are anywhere:
+
+- **Mercenary Camp:** 40g, one of three heroes joins.
+- **The Two-Headed Coin:** 50%, +20 Atk/Int or −15 each.
+
+A third, **Werewolf Bite** (weight 5, anywhere), is the `transform` curse
+(`docs/wild-innates-and-events.md` §3.3):
+
+- The hero becomes pure Beast.
+- It learns Lacerate.
+- At Mastery 10 it Turns: Lycanthrope, and the werewolf form.
+
+The rest are a Location's own:
+
+| Location | Events |
+| --- | --- |
+| Wild's Edge | **Rustling Grass** (a recruit), **Abandoned Camp** (2 loot, everyone −15% HP) |
+| Blighted Shrine | **The Whispering Altar** (a Shadow move for blood, an Arcane one for gold), **The Hermit's Lantern** (a Shadow/Arcane/Mind recruit) |
+| Forbidden Forest | **The Fae Ring** (+30 Speed or −30 HP), **The Dryad's Call** (a Nature/Beast/Light recruit) |
+| Molten Foundry | **The Slag Bath** (−20 HP, +20 Def, +10 Wis), **Automaton Kit** (30g, a Mech/Iron/Fire recruit) |
+| Storm Coast | **Shipwreck** (3 loot, −20% HP), **Siren Song** (a recruit), **Lightning Rod** (60%: +20 Spd +10 Int, or −30 HP; also the Aerie) |
+| Necropolis | **Grave Robbing** (2 loot, −25% HP), **Raise the Dead** (a Spirit/Frost recruit), **The Lich's Bargain** (−40 HP for +20 Int/Wis/Mana) |
+| Holy Sanctum | **The Pilgrim's Font** (a Light move for 25g, or a recruit) |
+| Dreaming Spires | **Lucid Dream** (a Mind move or an Arcane one) |
+| Thunder Aerie | **The Roc's Nest** (loot for HP, or a Storm/Beast recruit), Lightning Rod |
+| Frozen Reach | **The Icy Plunge** (+20 Def/Wis or −20 Speed, or 20g for a recruit) |
+
+`test/eventVocabulary` pins that every Location a run can visit before the finale holds at
+least one event of its own.
+
 ---
 
 ## 2. Selection: act and Location gates
@@ -58,12 +108,9 @@ gates before `rollRunEvent` picks uniformly among what is left:
 - **`minAct`** — earliest act, inclusive.
 - **`locationIds`** — the Locations (docs/locations.md) this event belongs to.
 
-Every event on the current slate leaves both unset, so today's five are one general pool
-that can appear anywhere. **The Location gate is the hook for Location-specific events**
-(user direction, 2026-08-31: "in the future, there may be Location-specific events... make
-sure the engine is prepared to tackle that down the line"). A Molten Foundry event sets
-`locationIds: ['moltenFoundry']` and is never rolled elsewhere; nothing else changes, and
-`test/events.test.ts` already covers the gate with a synthetic event.
+**The Location gate is how a place gets its own events** (user direction, 2026-08-31; used
+since 2026-10-03). Eight of the slate are ungated. The rest are a Location's own, so a run
+meets its Location's events beside the general pool.
 
 A run with **no** itinerary (an `enemyGen` throwaway roster, a fixture) passes
 `locationId: null`, which matches only the ungated events — the conservative reading: an
@@ -76,11 +123,12 @@ different event each time the run state moved. The event's *own contents* (which
 which loot) roll inside the screen, which is safe because the screen is never unmounted
 mid-event: its one hand-off, loot → the bag, is terminal.
 
-**Weighting:** none. `event` has a single weight in `map.ts` `REWARD_WEIGHTS` (raised
-8 → 14 when the node stopped being empty — **flagged as an inference, not a decision**),
-and the events inside it are equiprobable. With five entries a weight table would be five
-numbers nobody yet has a reason to pick. Add a `weight` field when the pool grows to where
-some events should be rarer, the same call `REWARD_WEIGHTS` already made for map nodes.
+**Weighting** (2026-10-03):
+
+- **Inside the node,** an event's `weight` defaults to `DEFAULT_EVENT_WEIGHT` = 10. Recruits
+  sit at 6, so a Location's own trades and gambles outnumber its strangers.
+- **On the map,** `event` weighs **30** in `REWARD_WEIGHTS`. It was 8, then 16, and was
+  raised when the slate grew from six to twenty-five. Still an inference, not a measurement.
 
 ---
 

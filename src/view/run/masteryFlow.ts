@@ -3,7 +3,7 @@ import { rosterHeroes as heroes } from '../../data/content';
 import { progressionTable } from '../../data/progression';
 import { applyCompanionTierStep, companionTierStep } from '../../run/companion';
 import { MASTERY_INNATE } from '../../run/mastery';
-import { masteredInnateOf } from '../../run/innate';
+import { masteredInnateFor } from '../../run/innate';
 import type { RunState } from '../../run/state';
 import { applyEvolutionMoves, availableEvolution, chooseEvolutionPath, grantOfferedMove, type EvolutionNode } from '../../run/progression';
 
@@ -82,7 +82,7 @@ export function useMasteryFlow(run: RunState, onRunChange: (next: RunState) => v
       return true;
     }
     // The tenth pip: the innate, mastered. Held from the moment the pip landed; this only says so.
-    if (fromMastery !== undefined && fromMastery < MASTERY_INNATE && entry.mastery >= MASTERY_INNATE && masteredInnateOf(heroes[entry.heroId])) {
+    if (fromMastery !== undefined && fromMastery < MASTERY_INNATE && entry.mastery >= MASTERY_INNATE && masteredInnateFor(heroes[entry.heroId], entry)) {
       setMastered({ rosterId });
       return true;
     }

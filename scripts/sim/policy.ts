@@ -32,6 +32,7 @@ import {
   rosterEntryTypes,
   takeScheduleEntry,
   pendingSignature,
+  replaceableMoveIds,
 } from '../../src/run/progression';
 import { progressionTable } from '../../src/data/progression';
 import { mergeStatMods } from '../../src/run/statMods';
@@ -284,7 +285,7 @@ export function replacementTarget(entry: RosterEntry, incomingMoveId: string, ro
 
   let worstId: string | null = null;
   let worst = Infinity;
-  for (const id of entry.unlockedMoveIds) {
+  for (const id of replaceableMoveIds(entry.unlockedMoveIds)) {
     // Keep the last castable move, whatever it scores.
     const keepsOneCastable = affordable(incomingMoveId) || entry.unlockedMoveIds.some((other) => other !== id && affordable(other));
     if (!keepsOneCastable) continue;

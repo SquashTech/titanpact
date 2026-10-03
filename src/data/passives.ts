@@ -1443,16 +1443,13 @@ const innatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 5 },
     },
   },
-  slapstick: {
-    id: 'slapstick',
-    name: 'Slapstick',
-    description: 'When this hero lands a hit, there is a 30% chance a random enemy is Dazed.',
-    reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Daze' },
-      chance: 0.3,
-    },
+  // docs/wild-innates-and-events.md §1: Metronome, shown before you commit. The verb is the move
+  // (motleysTrick, `metamorphic` + `permanent`); this card is what holds it in the kit and says so.
+  motleysTrick: {
+    id: 'motleysTrick',
+    name: "Motley's Trick",
+    description: "Motley always carries Motley's Trick, and nothing can replace it. Each round it becomes a random move from anywhere in the game — its type, cost and effects — shown before you choose.",
+    metamorphicFaces: 1,
   },
   inscribe: {
     id: 'inscribe',
@@ -1494,16 +1491,25 @@ const innatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'self', stat: 'defense', amount: 5 },
     },
   },
-  blazingMane: {
-    id: 'blazingMane',
-    name: 'Blazing Mane',
-    description: 'Light attacks from this hero have a 20% chance to Daze.',
+  // The Werewolf's Turn (docs/wild-innates-and-events.md §3.3): what the tenth pip pays a bitten
+  // hero instead of its own upgrade. Run-scoped, by an event — never a HeroDefinition's, in no pool.
+  lycanthrope: {
+    id: 'lycanthrope',
+    name: 'Lycanthrope',
+    description: 'The Turn: +50 HP, +40 Attack, +20 Defense, +20 Speed, and a finishing blow heals a fifth of max HP.',
+    statGrants: { hp: 50, attack: 40, defense: 20, speed: 20 },
     reactive: {
       hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Light' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Daze' },
-      chance: 0.2,
+      condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
+      effect: { kind: 'heal', target: 'self', amount: { kind: 'percentMaxHp', value: 0.2 } },
     },
+  },
+  // docs/wild-innates-and-events.md §2: gold as a combat stat — every Shop visit becomes spend-or-keep.
+  gildedMane: {
+    id: 'gildedMane',
+    name: 'Gilded Mane',
+    description: 'This hero gains +5 Attack and +5 Defense for every 50 gold you hold.',
+    goldStatGrants: { perGold: 50, statGrants: { attack: 5, defense: 5 } },
   },
   badLuck: {
     id: 'badLuck',
@@ -2437,16 +2443,12 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10 },
     },
   },
-  pandemonium: {
-    id: 'pandemonium',
-    name: 'Slapstick+',
-    description: 'When this hero lands a hit, there is a 60% chance a random enemy is Dazed.',
-    reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Daze' },
-      chance: 0.6,
-    },
+  // The figure doubled is the hand: two faces a round, Motley's pick.
+  motleysTrickMastered: {
+    id: 'motleysTrickMastered',
+    name: "Motley's Trick+",
+    description: "Motley's Trick shows two random moves each round instead of one, and Motley may use either.",
+    metamorphicFaces: 2,
   },
   palimpsest: {
     id: 'palimpsest',
@@ -2499,16 +2501,12 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'self', stat: 'defense', amount: 10 },
     },
   },
-  noonMane: {
-    id: 'noonMane',
-    name: 'Blazing Mane+',
-    description: 'Light attacks from this hero have a 40% chance to Daze.',
-    reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Light' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Daze' },
-      chance: 0.4,
-    },
+  // The figure doubled: the same grant at half the gold.
+  gildedManeMastered: {
+    id: 'gildedManeMastered',
+    name: 'Gilded Mane+',
+    description: 'This hero gains +5 Attack and +5 Defense for every 25 gold you hold.',
+    goldStatGrants: { perGold: 25, statGrants: { attack: 5, defense: 5 } },
   },
   calamity: {
     id: 'calamity',

@@ -345,7 +345,8 @@ test('arcane: the slate is twenty-one moves, and every field effect and status i
 
 test('arcane: Mana Tap is the only 0-mana move in the game, so its holder can never be forced to Rest', () => {
   // hasAffordableMove is a `>=` check, so 0 is always affordable (state.ts).
-  const free = Object.values(moves).filter((m) => m.manaCost === 0);
+  // A metamorphic move's 0 is never paid: it is swapped for a priced face before it can be declared.
+  const free = Object.values(moves).filter((m) => m.manaCost === 0 && !m.metamorphic);
   assert.deepStrictEqual(free.map((m) => m.id), ['manaTap']);
 
   const built = withMana(survivable(arcaneFixture(17)), 'a2', 0);

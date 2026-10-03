@@ -17,7 +17,7 @@ import { equipmentStatModifiers } from '../../run/equipment';
 import { relicTeamStatModifiers } from '../../run/relics';
 import { relicTeamPassiveGrants, passiveStatModifiers } from '../../run/passives';
 import { entryPassiveCounts, entryStatModifiers, relicStatContribution } from '../../run/entryStats';
-import { chosenEvolutionPaths, itemSlotsFor, rosterEntryTypes, currentEvolutionPathId } from '../../run/progression';
+import { chosenEvolutionPaths, itemSlotsFor, rosterEntryTypes, formIdFor } from '../../run/progression';
 import { chosenClass } from '../../run/classes';
 import { innatePassiveIdsFor } from '../../run/innate';
 import { StatBars, StatGlyph, STAT_LABELS } from '../shared/StatBars';
@@ -41,6 +41,8 @@ interface Props {
   equipmentLookup: Record<string, EquipmentDefinition>;
   /** The owning team's relics (RunState.relics). Omit for a hero not on this team — a scouted enemy, or the pre-run draft. */
   relicIds?: readonly string[];
+  /** The run's purse, so a goldStatGrants innate (Gilded Mane) reads on the sheet as it lands in the fight. */
+  gold?: number;
   /** The run's stat reference (run/statScale.ts) — the player's even for a scouted enemy, so both sides are read on one scale. Omit at the draft. */
   scale?: StatScale;
   /**
@@ -157,12 +159,12 @@ function ForceSourceRow({ label, grants }: { label: string; grants: RosterEntry[
  * Stats come from entryStats.ts — the same function buildCombatState.ts uses for a Combatant's
  * baseline — so this sheet cannot drift from the fight.
  */
-export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = [], scale, unowned = false, action, onClose }: Props) {
+export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = [], gold = 0, scale, unowned = false, action, onClose }: Props) {
   const heroClass = chosenClass(classes, entry);
   const teamStatModifiers = relicTeamStatModifiers(relicIds, relics);
   const teamPassiveGrants = relicTeamPassiveGrants(relicIds, relics);
   const passiveCounts = entryPassiveCounts(entry, equipmentLookup, teamPassiveGrants, innatePassiveIdsFor(hero, entry));
-  const grants = entryStatModifiers(entry, equipmentLookup, passives, passiveCounts, teamStatModifiers);
+  const grants = entryStatModifiers(entry, equipmentLookup, passives, passiveCounts, teamStatModifiers, gold);
   const evolved = chosenEvolutionPaths(progressionTable, entry);
   const types = rosterEntryTypes(hero, entry);
   // Not healCasterForEntry: that reads the global equipment table, and this sheet must honour `equipmentLookup`.
@@ -218,7 +220,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
       >
         <div className="detail-header is-hero">
           <span className="detail-portrait-plate">
-            <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(entry)} className="detail-portrait is-inline" />
+            <HeroPortrait heroId={hero.id} pathId={formIdFor(entry)} className="detail-portrait is-inline" />
           </span>
           <div className="detail-header-titles">
             {/* The level is set apart rather than run into the name with an em dash: it is a figure

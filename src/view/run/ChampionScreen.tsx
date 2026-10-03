@@ -7,7 +7,7 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
 import { levelOf } from '../../run/growth';
-import { rosterEntryTypes, currentEvolutionPathId } from '../../run/progression';
+import { rosterEntryTypes, formIdFor } from '../../run/progression';
 import type { RunState } from '../../run/state';
 import { getTypeColorRgb } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -57,7 +57,7 @@ export function ChampionScreen({ run, onContinue }: Props) {
         <div className="champion-stage" key={entry.rosterId}>
           <span className="champion-ring is-outer" aria-hidden="true" />
           <span className="champion-ring is-inner" aria-hidden="true" />
-          <HeroPortrait heroId={hero.id} pathId={currentEvolutionPathId(entry)} className="champion-figure" seed={entry.rosterId} />
+          <HeroPortrait heroId={hero.id} pathId={formIdFor(entry)} className="champion-figure" seed={entry.rosterId} />
           <div className="champion-plate">
             <div className="champion-kicker">
               {index + 1} of {roster.length}
@@ -83,7 +83,7 @@ export function ChampionScreen({ run, onContinue }: Props) {
               if (!h) return null;
               return (
                 <div key={r.rosterId} className="champion-cell" style={{ '--pact-rgb': getTypeColorRgb(h.types[0]) } as CSSProperties}>
-                  <HeroPortrait heroId={h.id} pathId={currentEvolutionPathId(r)} className="champion-cell-figure" seed={r.rosterId} />
+                  <HeroPortrait heroId={h.id} pathId={formIdFor(r)} className="champion-cell-figure" seed={r.rosterId} />
                   <div className="champion-cell-name">{h.name}</div>
                 </div>
               );

@@ -116,8 +116,9 @@ export const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // rather than how big its numbers are.
   ['passiveReward', 22],
   ['currencyReward', 20],
-  // FLAGGED FOR THE DESIGNER: 16 is an inference, not a decision — how often a run meets an event is a real tuning question.
-  ['event', 16],
+  // 16 → 30 when the slate grew from six to twenty-six, two thirds Location-gated (docs/wild-innates-and-events.md
+  // §3.4): about five events offered a run where there were three. Still an inference, not a measured figure.
+  ['event', 30],
   // The Mana Well (2026-09-13, per user direction): +MANA_WELL_AMOUNT max Mana and +MANA_WELL_REGEN
   // MP Regen to one hero. The one bare-number screen the constitution allows, because a pool is the
   // stat that gates a whole tier of moves, where +10 Attack was never visible.

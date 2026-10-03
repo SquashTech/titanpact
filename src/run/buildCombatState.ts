@@ -15,7 +15,7 @@ import type { Squad } from './squad';
 import type { EquipmentDefinition } from './equipment';
 import { entryPassiveCounts, entryStatModifiers } from './entryStats';
 import { innatePassiveIdsFor } from './innate';
-import { currentEvolutionPathId } from './progression';
+import { formIdFor } from './progression';
 import { enduranceOf, switchLockOf, toPassiveInstances } from './passives';
 import { equipmentStatusGrants, mergeStatusGrants, toStatusInstances } from './statusGrants';
 
@@ -30,6 +30,8 @@ export interface SquadPlacement {
   teamPassiveGrants?: Record<PassiveId, number>;
   /** Team-wide status-magnitude grants (relics — currently Elemental Force only). */
   teamStatusGrants?: Record<StatusId, number>;
+  /** The side's purse, for a goldStatGrants passive (Gilded Mane). Omitted = none: the AI holds no gold. */
+  gold?: number;
 }
 
 // Mana starts full (docs/mana.md); HP starts where the act's wounds left it (run/wounds.ts).
@@ -42,17 +44,18 @@ function placeEntry(
   passiveDefs: Record<PassiveId, PassiveDefinition>,
   teamStatModifiers: StatModifiers,
   teamPassiveGrants: Record<PassiveId, number>,
-  teamStatusGrants: Record<StatusId, number>
+  teamStatusGrants: Record<StatusId, number>,
+  gold: number
 ): Combatant {
   const hero = heroes[entry.heroId];
   // Both halves come from entryStats.ts, shared with the hero sheet — never recompute inline.
   const passiveCounts = entryPassiveCounts(entry, equipmentLookup, teamPassiveGrants, innatePassiveIdsFor(hero, entry));
   const passives = toPassiveInstances(passiveCounts);
-  const baselineStatModifiers = entryStatModifiers(entry, equipmentLookup, passiveDefs, passiveCounts, teamStatModifiers);
+  const baselineStatModifiers = entryStatModifiers(entry, equipmentLookup, passiveDefs, passiveCounts, teamStatModifiers, gold);
   const baselineStatusMagnitudes = mergeStatusGrants(equipmentStatusGrants(entry.equipment, equipmentLookup), entry.bonusStatusGrants, teamStatusGrants);
   const statuses = toStatusInstances(baselineStatusMagnitudes);
   const grantedTypes = entry.evolutionTypeGraft ? [entry.evolutionTypeGraft] : [];
-  const formPathId = currentEvolutionPathId(entry);
+  const formPathId = formIdFor(entry);
   const withMods = {
     ...createCombatant(combatantIdFor(side, entry.rosterId), entry.heroId, side, 0, 0),
     baselineStatModifiers,
@@ -63,6 +66,7 @@ function placeEntry(
     enduresLeft: enduranceOf(passiveCounts, passiveDefs),
     switchLocked: switchLockOf(passiveCounts, passiveDefs),
     ...(entry.blessed ? { blessed: true } : {}),
+    ...(entry.typeOverride ? { typeOverride: entry.typeOverride } : {}),
     ...(formPathId ? { formPathId } : {}),
   };
   return { ...withMods, currentHp: woundedHp(getMaxHp(hero, withMods), entry.wounds), currentMana: getMaxMana(hero, withMods) };
@@ -80,7 +84,7 @@ export function buildCombatState(
   const active: CombatState['active'] = { A: [null, null], B: [null, null] };
   const bench: CombatState['bench'] = { A: [], B: [] };
 
-  for (const { side, squad, roster, teamStatModifiers, teamPassiveGrants, teamStatusGrants } of placements) {
+  for (const { side, squad, roster, teamStatModifiers, teamPassiveGrants, teamStatusGrants, gold } of placements) {
     active[side] = squad.activeIds.map((id) => (id ? combatantIdFor(side, id) : null)) as [string | null, string | null];
     const phaseOf = new Map<string, number>();
     (squad.reserves ?? []).forEach((phase, i) => phase.forEach((id) => phaseOf.set(id, i + 1)));
@@ -101,7 +105,8 @@ export function buildCombatState(
         passiveDefs,
         teamStatModifiers ?? {},
         teamPassiveGrants ?? {},
-        teamStatusGrants ?? {}
+        teamStatusGrants ?? {},
+        gold ?? 0
       );
       const reservePhase = phaseOf.get(rosterId);
       // A hero the act left down enters fallen, on no slot and no bench: there for a Revive to find.

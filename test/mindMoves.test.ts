@@ -278,7 +278,8 @@ test('mind: each Mind hero attacks with a stat it is actually good at', () => {
 });
 
 test('mind: the authored slate is 16 moves plus the three 2026-09-15 additions, Embodied’s Psychokinesis and Ki Strike (2026-09-29), and every authored stat delta is still a multiple of 5', () => {
-  const mind = Object.values(moves).filter((m) => m.type === 'Mind' && !signatureMoves[m.id]);
+  // Motley's Trick is Mind by its sheet only — it is never cast as itself (run/metamorphic.ts).
+  const mind = Object.values(moves).filter((m) => m.type === 'Mind' && !signatureMoves[m.id] && !m.metamorphic);
   assert.strictEqual(mind.length, 21);
   for (const m of mind) {
     for (const d of m.statDeltas ?? []) {

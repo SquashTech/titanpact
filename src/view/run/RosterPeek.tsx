@@ -118,6 +118,7 @@ export function RosterPeek({ run, className }: Props) {
           entry={inspecting.entry}
           equipmentLookup={equipment}
           relicIds={run.relics}
+          gold={run.gold}
           scale={statScaleFor(run)}
           onClose={() => setInspecting(null)}
         />

@@ -59,12 +59,16 @@ export function switchLockOf(counts: Record<PassiveId, number>, passiveDefs: Rec
 }
 
 /** Sums every held passive's statGrants, N stacks N times. */
-export function passiveStatModifiers(counts: Record<PassiveId, number>, passiveDefs: Record<PassiveId, PassiveDefinition>): StatModifiers {
+/** `gold` is the holder's purse, for a goldStatGrants passive (Gilded Mane); omitted, the purse reads empty. */
+export function passiveStatModifiers(counts: Record<PassiveId, number>, passiveDefs: Record<PassiveId, PassiveDefinition>, gold = 0): StatModifiers {
   const grants: StatModifiers[] = [];
   for (const [passiveId, stacks] of Object.entries(counts)) {
+    if (stacks <= 0) continue;
     const grant = passiveDefs[passiveId]?.statGrants;
-    if (!grant || stacks <= 0) continue;
-    for (let i = 0; i < stacks; i++) grants.push(grant);
+    if (grant) for (let i = 0; i < stacks; i++) grants.push(grant);
+    const golden = passiveDefs[passiveId]?.goldStatGrants;
+    const times = golden ? Math.floor(Math.max(0, gold) / golden.perGold) * stacks : 0;
+    for (let i = 0; i < times; i++) grants.push(golden!.statGrants);
   }
   return mergeStatMods(...grants);
 }

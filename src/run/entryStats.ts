@@ -40,7 +40,9 @@ export function entryStatModifiers(
   equipmentLookup: Record<string, EquipmentDefinition>,
   passiveDefs: Record<PassiveId, PassiveDefinition>,
   passiveCounts: Record<PassiveId, number>,
-  teamStatModifiers: StatModifiers = {}
+  teamStatModifiers: StatModifiers = {},
+  /** The run's purse, for a goldStatGrants passive; omitted on a surface with no run (the draft, a scouted enemy). */
+  gold = 0
 ): StatModifiers {
   return mergeStatMods(
     equipmentStatModifiers(entry.equipment, equipmentLookup),
@@ -48,7 +50,7 @@ export function entryStatModifiers(
     entry.bonusStatGrants,
     entry.growthStatGrants,
     teamStatModifiers,
-    passiveStatModifiers(passiveCounts, passiveDefs)
+    passiveStatModifiers(passiveCounts, passiveDefs, gold)
   );
 }
 

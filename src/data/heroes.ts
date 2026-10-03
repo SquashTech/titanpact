@@ -820,19 +820,21 @@ export const heroes: Record<string, HeroDefinition> = {
     passiveIds: ['stampede'],
     masteredPassiveIds: ['glacialAdvance'],
   },
-  // The court fool: Mind's chaos, every hit it lands liable to trip whichever foe is nearest.
+  // The court fool: Mind's chaos, its turn decided by the round (Motley's Trick, docs/wild-innates-and-events.md §1).
+  // Five identical combat stats so no face is a dud roll, physical or magical; the roster's deepest
+  // pool, because the price of whatever it rolled is the whole balance of the card.
   motley: {
     id: 'motley',
     name: 'Motley',
     types: ['Mind'],
-    baseStats: { hp: 190, attack: 30, defense: 45, intelligence: 75, wisdom: 60, speed: 95, manaPool: 55, mpRegen: 10 },
-    moveIds: ['psiBolt', 'lull'],
+    baseStats: { hp: 170, attack: 50, defense: 50, intelligence: 50, wisdom: 50, speed: 50, manaPool: 130, mpRegen: 10 },
+    moveIds: ['motleysTrick', 'psiBolt'],
     unlock: 'starfall',
-    growthGrades: { hp: 'B', attack: 'F', defense: 'B', intelligence: 'A', wisdom: 'B', speed: 'S', manaPool: 'A' },
+    growthGrades: { hp: 'C', attack: 'B', defense: 'B', intelligence: 'B', wisdom: 'B', speed: 'B', manaPool: 'A' },
     schedule: { offerLevels: [5, 9, 11, 17, 21], midLevel: 10, lateLevel: 20, signatureLevel: 15 },
     signatureMoveId: 'tragicomedy',
-    passiveIds: ['slapstick'],
-    masteredPassiveIds: ['pandemonium'],
+    passiveIds: ['motleysTrick'],
+    masteredPassiveIds: ['motleysTrickMastered'],
   },
   // The living spellbook: Arcane's volley caster, every rune it lands wearing the target's guard thinner.
   folio: {
@@ -904,7 +906,7 @@ export const heroes: Record<string, HeroDefinition> = {
     passiveIds: ['curl'],
     masteredPassiveIds: ['hardball'],
   },
-  // The sun-maned lion: Light's physical striker, its mane flaring in the eyes of whatever it hits.
+  // The sun-maned lion: Light's physical striker, its mane gilded by the gold the pact carries (Gilded Mane).
   aurum: {
     id: 'aurum',
     name: 'Aurum',
@@ -915,8 +917,8 @@ export const heroes: Record<string, HeroDefinition> = {
     growthGrades: { hp: 'A', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'B', speed: 'A', manaPool: 'B' },
     schedule: { offerLevels: [5, 9, 11, 17, 21], midLevel: 10, lateLevel: 20, signatureLevel: 19 },
     signatureMoveId: 'solarPounce',
-    passiveIds: ['blazingMane'],
-    masteredPassiveIds: ['noonMane'],
+    passiveIds: ['gildedMane'],
+    masteredPassiveIds: ['gildedManeMastered'],
   },
   // The black cat: Shadow's fast striker, and whoever its path crosses comes off a little worse.
   jinx: {

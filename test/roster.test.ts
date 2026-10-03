@@ -174,9 +174,16 @@ test('roster: every passive in the catalog has a granter — a passive nobody gr
   }
   for (const item of Object.values(equipment)) for (const id of item.grantsPassiveIds ?? []) granted.add(id);
   for (const relic of Object.values(relics)) for (const id of relic.grantsPassiveIds ?? []) granted.add(id);
-  for (const event of Object.values(runEvents)) {
-    if (event.outcome.kind === 'grantPassive') granted.add(event.outcome.passiveId);
-  }
+  // Every outcome an event can resolve to: a choice's options, a gamble's two branches, a curse's Turn.
+  type Outcome = (typeof runEvents)[string]['outcome'];
+  const grantsOf = (outcome: Outcome): string[] => {
+    if (outcome.kind === 'grantPassive') return [outcome.passiveId];
+    if (outcome.kind === 'choice') return outcome.options.flatMap((option) => grantsOf(option.outcome));
+    if (outcome.kind === 'gamble') return [...grantsOf(outcome.win), ...grantsOf(outcome.lose)];
+    if (outcome.kind === 'transform') return [...(outcome.mastery?.passiveIds ?? [])];
+    return [];
+  };
+  for (const event of Object.values(runEvents)) for (const id of grantsOf(event.outcome)) granted.add(id);
   // Innate to a definition (HeroDefinition.passiveIds): every hero's one, the spawn's Marks, the Titan's pieces.
   for (const definition of Object.values(allCombatants)) for (const id of definition.passiveIds ?? []) granted.add(id);
   // The tenth Mastery pip's upgrade (HeroDefinition.masteredPassiveIds, docs/mastery.md §5b).
