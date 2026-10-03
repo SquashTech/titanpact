@@ -16,6 +16,7 @@ import type { EquipmentDefinition } from './equipment';
 import { entryPassiveCounts, entryStatModifiers } from './entryStats';
 import { innatePassiveIdsFor } from './innate';
 import { formIdFor } from './progression';
+import { turnedCurse } from './curse';
 import { enduranceOf, switchLockOf, toPassiveInstances } from './passives';
 import { equipmentStatusGrants, mergeStatusGrants, toStatusInstances } from './statusGrants';
 
@@ -66,7 +67,7 @@ function placeEntry(
     enduresLeft: enduranceOf(passiveCounts, passiveDefs),
     switchLocked: switchLockOf(passiveCounts, passiveDefs),
     ...(entry.blessed ? { blessed: true } : {}),
-    ...(entry.typeOverride ? { typeOverride: entry.typeOverride } : {}),
+    ...(turnedCurse(entry) ? { typeOverride: turnedCurse(entry)!.types } : {}),
     ...(formPathId ? { formPathId } : {}),
   };
   return { ...withMods, currentHp: woundedHp(getMaxHp(hero, withMods), entry.wounds), currentMana: getMaxMana(hero, withMods) };

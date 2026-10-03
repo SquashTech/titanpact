@@ -72,16 +72,16 @@ export interface RosterEntry {
   /** Current secondary-type grant from the latest type-graft path; a later graft overwrites. Innate primary never changes. */
   evolutionTypeGraft: TypeId | null;
   /**
-   * A curse's typing (Werewolf Bite, docs/wild-innates-and-events.md §3.3): when set, the hero IS
-   * these types — both slots, any graft suppressed. The one thing that overrides the innate
-   * primary, and only ever for one roster entry, by an event.
+   * The curse an event MARKED this hero with (data/curses.ts, Werewolf Bite —
+   * docs/wild-innates-and-events.md §3.3). A mark alone changes nothing; see `curseTurned`.
    */
-  typeOverride: readonly TypeId[] | null;
+  curseId: string | null;
   /**
-   * What the tenth Mastery pip pays THIS entry in place of its authored mastered innate — the
-   * Werewolf's Turn. `formId` names the art the turned hero wears (art/evolutions/<formId>.png).
+   * The Turn has landed (run/curse.ts): from here the hero IS the curse — its typing in both slots
+   * (the one override of the innate primary), its base line, its innate and its art. Set on the beat
+   * the curse's pip raises, or on the spot when the hero was already past it.
    */
-  masteryOverride: { passiveIds: readonly PassiveId[]; formId?: string } | null;
+  curseTurned: boolean;
   /** One Class per run holds structurally — a single slot, and classes.ts grantClass replaces. */
   classId: string | null;
   /** The Class's passive, when it grants one — recorded so entryStats.ts can count it without the Class catalog. Written only by grantClass. */
@@ -217,8 +217,8 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     mastery: 0,
     offenseSwapped: false,
     evolutionTypeGraft: null,
-    typeOverride: null,
-    masteryOverride: null,
+    curseId: null,
+    curseTurned: false,
     classId: null,
     classPassiveId: null,
     mortal: false,

@@ -9,7 +9,8 @@
 import type { HeroDefinition, LevelSchedule, MoveDefinition, MoveTier, PassiveId, StatKey, TypeId } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
 import { BASE_ITEM_SLOTS } from './equipment';
-import { MASTERY_CAP, MASTERY_EVOLUTION } from './mastery';
+import { MASTERY_EVOLUTION } from './mastery';
+import { turnedCurse } from './curse';
 import type { RosterEntry, RunState } from './state';
 import { mergeStatMods } from './statMods';
 import { levelOf } from './growth';
@@ -374,8 +375,9 @@ export function availableEvolution(table: ProgressionTable, entry: RosterEntry):
 }
 
 /** The primary plus the current graft — the out-of-combat mirror of engine/state.ts effectiveTypes, and it must stay identical to it. UI must read this, not `hero.types`. */
-export function rosterEntryTypes(hero: HeroDefinition, entry: Pick<RosterEntry, 'evolutionTypeGraft'> & Partial<Pick<RosterEntry, 'typeOverride'>>): readonly TypeId[] {
-  if (entry.typeOverride) return entry.typeOverride;
+export function rosterEntryTypes(hero: HeroDefinition, entry: Pick<RosterEntry, 'evolutionTypeGraft'> & Partial<Pick<RosterEntry, 'curseId' | 'curseTurned'>>): readonly TypeId[] {
+  const curse = turnedCurse(entry);
+  if (curse) return curse.types;
   return entry.evolutionTypeGraft ? [hero.types[0], entry.evolutionTypeGraft] : hero.types;
 }
 
@@ -410,9 +412,10 @@ export function pathLeadType(hero: HeroDefinition, path: EvolutionPath, moves: R
 }
 
 /** The form a hero is in now: the last path taken, or null while unevolved. What a clear's star is keyed by (profile.ts). */
-/** The form a hero's art wears: a mastered curse's (the Werewolf's Turn, RosterEntry.masteryOverride), else its current Evolution path. */
+/** The form a hero's art wears: a Turned curse's (the Werewolf, run/curse.ts), else its current Evolution path. */
 export function formIdFor(entry: RosterEntry): string | null {
-  if (entry.masteryOverride?.formId && entry.mastery >= MASTERY_CAP) return entry.masteryOverride.formId;
+  const curse = turnedCurse(entry);
+  if (curse) return curse.formId;
   return currentEvolutionPathId(entry);
 }
 

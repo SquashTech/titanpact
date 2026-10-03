@@ -248,7 +248,8 @@ don't silently override it.
 > and weights; the slate is 26, most of it Location-gated. **Motley's Trick**: a `metamorphic`,
 > `permanent` move swapped each round for a face off the whole catalog (`run/metamorphic.ts`), on a
 > 170 / 50×5 / 130 Motley. **Gilded Mane** (Aurum): +5 Atk/Def per 50 gold held. **Werewolf Bite**:
-> a curse that rewrites a hero's typing and its tenth pip. Seven more innates there are PROPOSED.
+> a `curse` that MARKS a hero, which Turns at Mastery 5 (at once if past it) into pure Beast on a
+> 650 base line (`data/curses.ts`, `run/curse.ts`). Seven more innates there are PROPOSED.
 
 ---
 
@@ -350,8 +351,9 @@ don't silently override it.
 - **Type = the domain a hero's power draws from, not what its body is made of.** This reframe
   is the identity filter for the whole roster — apply it everywhere.
 - A hero's **innate primary type is immutable** — **one named exception**, a curse
-  (`RosterEntry.typeOverride`, Werewolf Bite, 2026-10-03 per user direction): an event may
-  replace a roster entry's whole typing, both slots, for the run. Evolution may add or shift a *secondary*
+  (a Turned curse, `run/curse.ts`, Werewolf Bite, 2026-10-03 per user direction): a roster
+  entry's whole typing, both slots, for the run. Its 650 base line is likewise the one hero over the
+  550 that is not a Burden. Evolution may add or shift a *secondary*
   type (type-graft); it never changes the innate primary. **The graft owns the secondary
   SLOT, it does not append** (2026-09-05): a mono hero gains a second type, an innately
   dual one TRADES the one it was born with, and nothing ever reaches three types

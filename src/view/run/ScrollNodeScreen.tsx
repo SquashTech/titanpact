@@ -201,14 +201,14 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
         </button>
       )}
 
-      {flow.mastered && masteredEntry && <MasteredInnateOverlay entry={masteredEntry} onClose={flow.closeMastered} />}
+      {flow.mastered && masteredEntry && <MasteredInnateOverlay entry={masteredEntry} turn={flow.mastered.turn} onClose={flow.closeMastered} />}
 
       {flow.overflow && overflowEntry && (
         <MoveOfferOverlay
           run={run}
           entry={overflowEntry}
           moveId={flow.overflow.queue[0]}
-          eyebrow="The Evolution grants a move, and the kit is full"
+          eyebrow={flow.overflow.eyebrow ?? 'The Evolution grants a move, and the kit is full'}
           onResolve={flow.resolveOverflow}
         />
       )}

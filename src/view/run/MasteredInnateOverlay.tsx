@@ -2,7 +2,8 @@ import { useEffect, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
-import { innatePassiveOf, masteredInnateFor } from '../../run/innate';
+import { currentInnateOf, innatePassiveOf, masteredInnateFor } from '../../run/innate';
+import { curseOf } from '../../run/curse';
 import { MASTERY_INNATE } from '../../run/mastery';
 import type { RosterEntry } from '../../run/state';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
@@ -14,6 +15,8 @@ import { overlayHost } from '../shared/overlayHost';
 
 interface Props {
   entry: RosterEntry;
+  /** A curse's Turn (run/curse.ts): the innate the curse replaces, and the body that came with it. */
+  turn?: boolean;
   onClose: () => void;
 }
 
@@ -23,10 +26,12 @@ interface Props {
  * the pip landed — so this is one card, one button and the signature's crest in the pip's gold.
  * The born card is drawn small above the new one so the step reads as a step, not a swap.
  */
-export function MasteredInnateOverlay({ entry, onClose }: Props) {
+export function MasteredInnateOverlay({ entry, turn = false, onClose }: Props) {
   const hero = rosterHeroes[entry.heroId];
-  const before = innatePassiveOf(hero);
-  const after = masteredInnateFor(hero, entry);
+  const curse = turn ? curseOf(entry) : null;
+  // Before the Turn the hero held its own innate, mastered or not; after it, the curse's.
+  const before = curse ? currentInnateOf(hero, { mastery: entry.mastery }) : innatePassiveOf(hero);
+  const after = curse ? currentInnateOf(hero, entry) : masteredInnateFor(hero, entry);
 
   useEffect(() => {
     playSfx('seal.strike');
@@ -34,7 +39,7 @@ export function MasteredInnateOverlay({ entry, onClose }: Props) {
   }, []);
 
   if (!after) return null;
-  const type = hero.types[0];
+  const type = curse ? curse.types[0] : hero.types[0];
   return createPortal(
     <div
       className="log-overlay moveoffer-overlay is-signature is-mastered"
@@ -46,7 +51,7 @@ export function MasteredInnateOverlay({ entry, onClose }: Props) {
           <span className="signature-crest-rays" />
           <span className="signature-crest-title">
             <span className="signature-crest-star">✦</span>
-            Innate Mastered
+            {curse ? 'The Turn' : 'Innate Mastered'}
             <span className="signature-crest-star">✦</span>
           </span>
         </div>
@@ -54,7 +59,11 @@ export function MasteredInnateOverlay({ entry, onClose }: Props) {
           <HeroPortrait heroId={hero.id} pathId={formIdFor(entry)} className="offer-hero-portrait" />
           <h3>{hero.name}</h3>
         </div>
-        <p className="offer-hero-eyebrow">Mastery {MASTERY_INNATE} — the innate, perfected</p>
+        <p className="offer-hero-eyebrow">
+          {curse
+            ? `Mastery ${curse.turnAt} — the curse takes hold: pure ${curse.types.join(' / ')}, a ${Object.values(curse.baseStats).reduce((a, b) => a + b, 0)} body`
+            : `Mastery ${MASTERY_INNATE} — the innate, perfected`}
+        </p>
 
         {before && (
           <div className="mastered-from">

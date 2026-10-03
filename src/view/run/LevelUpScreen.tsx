@@ -13,6 +13,7 @@ import { EvolutionScreen } from './EvolutionScreen';
 import { MoveLearnedOverlay, MoveOfferOverlay, SignatureBox } from './MoveOfferOverlay';
 import { useLevelUpFlow } from './levelUpFlow';
 import { LevelUpList, SIGNATURE_TAG } from './LevelUpList';
+import { MasteredInnateOverlay } from './MasteredInnateOverlay';
 
 interface Props {
   run: RunState;
@@ -73,6 +74,7 @@ export function LevelUpScreen({ run, onRunChange, report, onContinue }: Props) {
 
   const offerEntry = flow.offer ? (run.roster.find((r) => r.rosterId === flow.offer!.rosterId) ?? null) : null;
   const overflowEntry = flow.overflow ? (run.roster.find((r) => r.rosterId === flow.overflow!.rosterId) ?? null) : null;
+  const masteredEntry = flow.mastered ? (run.roster.find((r) => r.rosterId === flow.mastered!.rosterId) ?? null) : null;
   const signatureEntry = flow.signature ? (run.roster.find((r) => r.rosterId === flow.signature!.rosterId) ?? null) : null;
 
   return (
@@ -102,12 +104,14 @@ export function LevelUpScreen({ run, onRunChange, report, onContinue }: Props) {
         <SignatureBox run={run} entry={signatureEntry} offer={flow.signature} onResolve={flow.resolveSignature} onClose={flow.closeSignature} />
       )}
 
+      {flow.mastered && masteredEntry && <MasteredInnateOverlay entry={masteredEntry} turn={flow.mastered.turn} onClose={flow.closeMastered} />}
+
       {flow.overflow && overflowEntry && (
         <MoveOfferOverlay
           run={run}
           entry={overflowEntry}
           moveId={flow.overflow.queue[0]}
-          eyebrow="The path grants a move — your kit is full"
+          eyebrow={flow.overflow.eyebrow ?? 'The path grants a move — your kit is full'}
           onResolve={flow.resolveOverflow}
         />
       )}

@@ -2,7 +2,7 @@
 // from a closed vocabulary that src/run/events.ts and EventNodeScreen interpret generically.
 // A new event that needs behaviour the outcome kinds can't express extends the vocabulary.
 
-import type { MoveDefinition, PassiveId, StatKey, TypeId } from '../engine/content';
+import type { MoveDefinition, MoveTier, PassiveId, StatKey, TypeId } from '../engine/content';
 
 /**
  * Declarative filter for a `learnMove` pool, so it tracks the catalog instead of going stale.
@@ -13,6 +13,8 @@ export interface MovePoolFilter {
   nameIncludes?: string;
   types?: readonly TypeId[];
   kinds?: readonly MoveDefinition['kind'][];
+  /** Only these tiers (an untiered move reads as Early). An event's move should be worth a node: Mid or Late. */
+  tiers?: readonly MoveTier[];
 }
 
 /** Which heroes a `recruit` draws from: the run's deck (the whole owned catalog on an old save), narrowed. Fields AND together. */
@@ -47,12 +49,10 @@ export type RunEventOutcome =
   /** Two or three options and an implicit Leave. Options never nest. */
   | { kind: 'choice'; options: readonly EventOption[] }
   /**
-   * A curse on one chosen hero (Werewolf Bite, docs/wild-innates-and-events.md §3.3): its typing
-   * REPLACED (RosterEntry.typeOverride, both slots), `moveId` taught (replace-or-decline at
-   * MOVE_CAP) so the new typing has STAB from the day it lands, and the tenth Mastery pip's payout
-   * rewritten (RosterEntry.masteryOverride) — the Turn.
+   * MARKS one chosen hero with a curse (data/curses.ts, docs/wild-innates-and-events.md §3.3). The
+   * mark changes nothing until the Turn at the curse's pip — on the spot for a hero already past it.
    */
-  | { kind: 'transform'; types: readonly TypeId[]; moveId?: string; mastery?: { passiveIds: readonly PassiveId[]; formId?: string } };
+  | { kind: 'curse'; curseId: string };
 
 /** What an outcome costs on top of itself, paid as it resolves. Gold is a sink here, never a grant. */
 export interface EventCost {
@@ -124,7 +124,7 @@ export const runEvents: Record<string, RunEventDefinition> = {
     // SATURATES (docs/run-loop.md), so the sim took it every time and lost ground.
     // Intelligence and Wisdom both stay live for the whole fight, and
     // the Wisdom half gives back some of what the HP took — against magic, at least.
-    outcome: { kind: 'statShift', deltas: { hp: -30, intelligence: 15, wisdom: 15, manaPool: 15 } },
+    outcome: { kind: 'statShift', deltas: { hp: -20, intelligence: 20, wisdom: 20, manaPool: 20 } },
   },
 
   deepWell: {
@@ -138,7 +138,7 @@ export const runEvents: Record<string, RunEventDefinition> = {
     // (CLAUDE.md: break-even ≈ 0.33 a point) and Mana the one a Late move is priced in, so the
     // trade is even at break-even and reads as a gift on a caster. Not a Mana Well: a bare
     // number never gets a screen, and a trade is a decision, not a deposit.
-    outcome: { kind: 'statShift', deltas: { hp: -20, manaPool: 30 } },
+    outcome: { kind: 'statShift', deltas: { hp: -20, manaPool: 40, mpRegen: 5 } },
   },
 
   assertivenessTraining: {
@@ -161,8 +161,8 @@ export const runEvents: Record<string, RunEventDefinition> = {
 
   // --- Anywhere (docs/wild-innates-and-events.md §3.2) ---
 
-  // §3.3, per user direction: mono-Beast in both slots, a Beast move for STAB on the day, and at
-  // the tenth pip the Turn. Rare: a curse that rewrites a hero's typing should be a story, not a habit.
+  // §3.3, per user direction: the bite only marks; at the fifth pip the hero Turns — pure Beast, a
+  // 650 body, Lacerate and the werewolf. Rare: a curse that rewrites a hero should be a story, not a habit.
   werewolfBite: {
     id: 'werewolfBite',
     name: 'Werewolf Bite',
@@ -175,12 +175,7 @@ export const runEvents: Record<string, RunEventDefinition> = {
       options: [
         {
           label: 'Hold out an arm',
-          outcome: {
-            kind: 'transform',
-            types: ['Beast'],
-            moveId: 'lacerate',
-            mastery: { passiveIds: ['lycanthrope'], formId: 'werewolf' },
-          },
+          outcome: { kind: 'curse', curseId: 'werewolf' },
         },
       ],
     },
@@ -195,7 +190,7 @@ export const runEvents: Record<string, RunEventDefinition> = {
     weight: 6,
     outcome: {
       kind: 'choice',
-      options: [{ label: 'Pay the captain', outcome: { kind: 'recruit', pool: {}, count: 3 }, cost: { gold: 40 } }],
+      options: [{ label: 'Pay the captain', outcome: { kind: 'recruit', pool: {}, count: 3 }, cost: { gold: 20 } }],
     },
   },
 
@@ -203,7 +198,7 @@ export const runEvents: Record<string, RunEventDefinition> = {
     id: 'twoHeadedCoin',
     name: 'The Two-Headed Coin',
     eyebrow: 'Call It',
-    flavor: 'A coin with a face on both sides. Only one of them is smiling.',
+    flavor: 'A coin with a face on both sides. One is grinning, and the other is merely smiling.',
     tone: 'arcane',
     outcome: {
       kind: 'choice',
@@ -213,8 +208,8 @@ export const runEvents: Record<string, RunEventDefinition> = {
           outcome: {
             kind: 'gamble',
             chance: 0.5,
-            win: { kind: 'statShift', deltas: { attack: 20, intelligence: 20 } },
-            lose: { kind: 'statShift', deltas: { attack: -15, intelligence: -15 } },
+            win: { kind: 'statShift', deltas: { attack: 30, intelligence: 30, speed: 20 } },
+            lose: { kind: 'statShift', deltas: { defense: 20, wisdom: 20 } },
           },
         },
       ],
@@ -243,7 +238,7 @@ export const runEvents: Record<string, RunEventDefinition> = {
     locationIds: ['wildsEdge'],
     outcome: {
       kind: 'choice',
-      options: [{ label: 'Search the packs', outcome: { kind: 'loot', count: 2 }, cost: { woundAll: 0.15 } }],
+      options: [{ label: 'Search the packs', outcome: { kind: 'loot', count: 2 }, cost: { woundAll: 0.1 } }],
     },
   },
 
@@ -259,8 +254,8 @@ export const runEvents: Record<string, RunEventDefinition> = {
     outcome: {
       kind: 'choice',
       options: [
-        { label: 'Bleed on the stone', outcome: { kind: 'learnMove', pool: { types: ['Shadow'] } }, cost: { woundAll: 0.2 } },
-        { label: 'Read the carvings', outcome: { kind: 'learnMove', pool: { types: ['Arcane'] } }, cost: { gold: 30 } },
+        { label: 'Bleed on the stone', outcome: { kind: 'learnMove', pool: { types: ['Shadow'], tiers: ['mid', 'late'] } } },
+        { label: 'Read the carvings', outcome: { kind: 'learnMove', pool: { types: ['Arcane'], tiers: ['mid', 'late'] } } },
       ],
     },
   },
@@ -282,7 +277,7 @@ export const runEvents: Record<string, RunEventDefinition> = {
     id: 'faeRing',
     name: 'The Fae Ring',
     eyebrow: 'Step Inside',
-    flavor: 'A circle of mushrooms, perfectly round. Whoever steps in comes out quicker, or smaller.',
+    flavor: 'A circle of mushrooms, perfectly round. Whoever steps in comes out quicker — or, if the fae are bored, merely sturdier.',
     tone: 'vital',
     locationIds: ['forbiddenForest'],
     outcome: {
@@ -293,8 +288,8 @@ export const runEvents: Record<string, RunEventDefinition> = {
           outcome: {
             kind: 'gamble',
             chance: 0.5,
-            win: { kind: 'statShift', deltas: { speed: 30 } },
-            lose: { kind: 'statShift', deltas: { hp: -30 } },
+            win: { kind: 'statShift', deltas: { speed: 40, attack: 20, intelligence: 20 } },
+            lose: { kind: 'statShift', deltas: { hp: 60, defense: 20 } },
           },
         },
       ],
@@ -323,7 +318,7 @@ export const runEvents: Record<string, RunEventDefinition> = {
     locationIds: ['moltenFoundry'],
     outcome: {
       kind: 'choice',
-      options: [{ label: 'Wade in', outcome: { kind: 'statShift', deltas: { hp: -20, defense: 20, wisdom: 10 } } }],
+      options: [{ label: 'Wade in', outcome: { kind: 'statShift', deltas: { hp: -20, defense: 40, wisdom: 20 } } }],
     },
   },
 
@@ -337,7 +332,7 @@ export const runEvents: Record<string, RunEventDefinition> = {
     locationIds: ['moltenFoundry'],
     outcome: {
       kind: 'choice',
-      options: [{ label: 'Buy the parts', outcome: { kind: 'recruit', pool: { types: ['Mech', 'Iron', 'Fire'] }, count: 2 }, cost: { gold: 30 } }],
+      options: [{ label: 'Assemble it', outcome: { kind: 'recruit', pool: { types: ['Mech', 'Iron', 'Fire'] }, count: 2 } }],
     },
   },
 
@@ -352,7 +347,7 @@ export const runEvents: Record<string, RunEventDefinition> = {
     locationIds: ['stormCoast'],
     outcome: {
       kind: 'choice',
-      options: [{ label: 'Dive the wreck', outcome: { kind: 'loot', count: 3 }, cost: { woundAll: 0.2 } }],
+      options: [{ label: 'Dive the wreck', outcome: { kind: 'loot', count: 3 }, cost: { woundAll: 0.1 } }],
     },
   },
 
@@ -382,8 +377,8 @@ export const runEvents: Record<string, RunEventDefinition> = {
           outcome: {
             kind: 'gamble',
             chance: 0.6,
-            win: { kind: 'statShift', deltas: { speed: 20, intelligence: 10 } },
-            lose: { kind: 'statShift', deltas: { hp: -30 } },
+            win: { kind: 'statShift', deltas: { speed: 25, attack: 30, intelligence: 30 } },
+            lose: { kind: 'statShift', deltas: { speed: 20, hp: 60 } },
           },
         },
       ],
@@ -401,7 +396,7 @@ export const runEvents: Record<string, RunEventDefinition> = {
     locationIds: ['necropolis'],
     outcome: {
       kind: 'choice',
-      options: [{ label: 'Dig', outcome: { kind: 'loot', count: 2 }, cost: { woundAll: 0.25 } }],
+      options: [{ label: 'Dig', outcome: { kind: 'loot', count: 2 }, cost: { woundAll: 0.1 } }],
     },
   },
 
@@ -425,7 +420,7 @@ export const runEvents: Record<string, RunEventDefinition> = {
     locationIds: ['necropolis'],
     outcome: {
       kind: 'choice',
-      options: [{ label: 'Take the bargain', outcome: { kind: 'statShift', deltas: { hp: -40, intelligence: 20, wisdom: 20, manaPool: 20 } } }],
+      options: [{ label: 'Take the bargain', outcome: { kind: 'statShift', deltas: { hp: -40, intelligence: 30, wisdom: 30, manaPool: 30 } } }],
     },
   },
 
@@ -441,7 +436,7 @@ export const runEvents: Record<string, RunEventDefinition> = {
     outcome: {
       kind: 'choice',
       options: [
-        { label: 'Leave an offering', outcome: { kind: 'learnMove', pool: { types: ['Light'] } }, cost: { gold: 25 } },
+        { label: 'Leave an offering', outcome: { kind: 'learnMove', pool: { types: ['Light'], tiers: ['mid', 'late'] } } },
         { label: 'Take a vow', outcome: { kind: 'recruit', pool: { types: ['Light', 'Spirit', 'Mind'] }, count: 2 } },
       ],
     },
@@ -457,8 +452,8 @@ export const runEvents: Record<string, RunEventDefinition> = {
     outcome: {
       kind: 'choice',
       options: [
-        { label: 'The violet door', outcome: { kind: 'learnMove', pool: { types: ['Mind'] } } },
-        { label: 'The silver door', outcome: { kind: 'learnMove', pool: { types: ['Arcane'] } } },
+        { label: 'The violet door', outcome: { kind: 'learnMove', pool: { types: ['Mind'], tiers: ['mid', 'late'] } } },
+        { label: 'The silver door', outcome: { kind: 'learnMove', pool: { types: ['Arcane'], tiers: ['mid', 'late'] } } },
       ],
     },
   },
@@ -473,7 +468,7 @@ export const runEvents: Record<string, RunEventDefinition> = {
     outcome: {
       kind: 'choice',
       options: [
-        { label: 'Climb for the shining things', outcome: { kind: 'loot', count: 2 }, cost: { woundAll: 0.2 } },
+        { label: 'Climb for the shining things', outcome: { kind: 'loot', count: 2 }, cost: { woundAll: 0.1 } },
         { label: 'Wait for the hatchlings', outcome: { kind: 'recruit', pool: { types: ['Storm', 'Beast'] }, count: 2 } },
       ],
     },
@@ -483,7 +478,7 @@ export const runEvents: Record<string, RunEventDefinition> = {
     id: 'icyPlunge',
     name: 'The Icy Plunge',
     eyebrow: 'Through the Ice',
-    flavor: 'A hole cut in the lake. Whoever climbs back out is harder to hurt, if they climb back out quickly.',
+    flavor: 'A hole cut in the lake. Whoever climbs back out is harder to hurt — much harder, if they stayed under long enough.',
     tone: 'teal',
     locationIds: ['frozenReach'],
     outcome: {
@@ -494,11 +489,11 @@ export const runEvents: Record<string, RunEventDefinition> = {
           outcome: {
             kind: 'gamble',
             chance: 0.5,
-            win: { kind: 'statShift', deltas: { defense: 20, wisdom: 20 } },
-            lose: { kind: 'statShift', deltas: { speed: -20 } },
+            win: { kind: 'statShift', deltas: { defense: 40, wisdom: 40 } },
+            lose: { kind: 'statShift', deltas: { hp: 60, defense: 10, wisdom: 10 } },
           },
         },
-        { label: 'Thaw the one in the ice', outcome: { kind: 'recruit', pool: { types: ['Frost', 'Water', 'Stone'] }, count: 1 }, cost: { gold: 20 } },
+        { label: 'Thaw the one in the ice', outcome: { kind: 'recruit', pool: { types: ['Frost', 'Water', 'Stone'] }, count: 1 } },
       ],
     },
   },

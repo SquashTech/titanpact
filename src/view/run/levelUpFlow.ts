@@ -5,6 +5,7 @@ import { progressionTable } from '../../data/progression';
 import type { RunState } from '../../run/state';
 import { MOVE_CAP, availableEvolution, grantOfferedMove, levelMovePool, pendingScheduleEntry, pendingSignature, recordMoveOffer, takeScheduleEntry } from '../../run/progression';
 import { companionTierStep } from '../../run/companion';
+import { curseTurnOwed } from '../../run/curse';
 import { playSfx } from '../../audio/sfx';
 import { useMasteryFlow, type MasteryFlow } from './masteryFlow';
 
@@ -55,6 +56,7 @@ export function levelPayoffOwed(run: RunState, rosterId: string): boolean {
   if (!entry) return false;
   const hero = heroes[entry.heroId];
   if (companionTierStep(entry)) return true;
+  if (curseTurnOwed(entry)) return true;
   const node = availableEvolution(progressionTable, entry);
   if (node && node.paths.length > 0) return true;
   return pendingSignature(hero, entry) !== null || pendingScheduleEntry(hero, entry) !== null;

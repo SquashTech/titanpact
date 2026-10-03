@@ -44,22 +44,40 @@ it reverses; none of them moves until it is decided.
 - **The AI holds no gold, so an enemy Aurum fights bare.** Flagged: it may want a stand-in
   figure.
 
-**Werewolf Bite is IN** (§3.3, as decided).
+**Werewolf Bite is IN, reworked the same day** (per user direction: "the full transformation
+doesn't happen until Mastery 5, instant if the hero is already there", and a 650 body). It
+supersedes §3.3's bite-retypes-now shape.
 
-- **The outcome:** a `transform` kind on one chosen hero.
-- **The curse:** `RosterEntry.typeOverride` (both slots, read by `rosterEntryTypes` and, via
-  `Combatant.typeOverride`, by `effectiveTypes`).
-- **The move:** Lacerate is taught, replace-or-decline at the cap.
-- **The Turn:** `RosterEntry.masteryOverride` (Lycanthrope, form `werewolf`, read by
-  `innatePassiveIdsFor` / `masteredInnateFor` / `formIdFor`). Every portrait reads
-  `formIdFor`.
-- **Saves:** both fields are saved, and an older save reads uncursed.
+- **The bite only MARKS.** It is a `curse` outcome writing `RosterEntry.curseId`, and a marked
+  hero is exactly itself.
+- **The Turn** comes at the curse's pip, 5 (`data/curses.ts` `turnAt`). It is raised as a beat
+  by `masteryFlow` on whatever screen landed the pip (the Scroll node, or the level-up report
+  for an MVP pip), ahead of the Evolution the same pip opens. A hero already past the pip Turns
+  on the bite. The beat sets `curseTurned` (`run/curse.ts` `turnedCurse`), and everything
+  reads that flag:
+  - **typing:** pure Beast, both slots (`rosterEntryTypes`, `Combatant.typeOverride` →
+    `effectiveTypes`);
+  - **body:** `curseStatDelta` replaces the base line with the Werewolf's **650**
+    (220 / 130 / 75 / 15 / 60 / 100 / 50), measured past a rewire, with the levels already
+    rolled kept on top;
+  - **innate:** Lycanthrope, a finishing blow heals ⅕ of max HP; ⅖ from the tenth pip;
+  - **art:** `formIdFor`.
+- **The move:** Lacerate is taught at the Turn, replace-or-decline at the cap. A decline still
+  Turns.
+- **The reveal:** `MasteredInnateOverlay turn`, titled *The Turn*.
+- **Saves:** both fields are saved, an older save reads uncursed, and an unknown curse is refused.
 - **Weight 5, ungated.**
+- **A star:** clearing a run with a Turned hero on the final roster stars the curse once
+  (`Profile.curseStars`, `curse:werewolf` in run history, counted in `totalStars`), per user
+  direction. A hero only bitten earns nothing. The Constellation's Stars page does not draw it
+  yet; the Records total and run history do.
 
 Open on it:
 
-- **The werewolf sprite does not exist yet.** `art/evolutions/werewolf.png` plus its attack and
-  damaged frames plug in with no code. Until then a turned hero wears its own art.
+- **The werewolf sprite is drawn** (2026-10-03, PixelLab, 20 generations):
+  `art/evolutions/werewolf.png` plus its attack and damaged frames. Concepts, including the
+  unused seed-23 idle, are in `art/concepts/werewolf/`. Every Turned hero wears the same
+  sprite, since the form belongs to the curse, not the hero.
 - **A Class move** (`typeFollowsUser`) still wears the hero's authored primary, not Beast.
 - **The sim's pilot never accepts a curse.**
 

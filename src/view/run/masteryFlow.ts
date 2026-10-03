@@ -5,7 +5,9 @@ import { applyCompanionTierStep, companionTierStep } from '../../run/companion';
 import { MASTERY_INNATE } from '../../run/mastery';
 import { masteredInnateFor } from '../../run/innate';
 import type { RunState } from '../../run/state';
-import { applyEvolutionMoves, availableEvolution, chooseEvolutionPath, grantOfferedMove, type EvolutionNode } from '../../run/progression';
+import { MOVE_CAP, applyEvolutionMoves, availableEvolution, chooseEvolutionPath, grantOfferedMove, type EvolutionNode } from '../../run/progression';
+import { curseOf, curseTurnOwed } from '../../run/curse';
+import { turnCurse } from '../../run/events';
 
 /** The Evolution, waiting on the player. */
 export interface Evolving {
@@ -17,6 +19,8 @@ export interface Evolving {
 export interface Overflow {
   rosterId: string;
   queue: string[];
+  /** What granted it, for the offer's eyebrow; omitted reads as the Evolution. */
+  eyebrow?: string;
 }
 
 /**
@@ -26,6 +30,10 @@ export interface Overflow {
  */
 export interface Mastered {
   rosterId: string;
+  /** A curse's Turn (run/curse.ts) rather than the tenth pip — the same reveal, louder. */
+  turn?: boolean;
+  /** The Turn's move, when the kit was full: offered as a replace-or-decline once the reveal closes. */
+  pendingMoveId?: string;
 }
 
 /** The companion's tier-step (run/companion.ts): the pip a hero would evolve at, and the pip it would master its innate at. */
@@ -76,6 +84,14 @@ export function useMasteryFlow(run: RunState, onRunChange: (next: RunState) => v
       setGrown({ rosterId, fromHeroId: entry.heroId, toHeroId: stepTo });
       return true;
     }
+    // A curse's Turn lands ahead of the Evolution its pip also opens: the body first, then the path.
+    if (curseTurnOwed(entry)) {
+      const curse = curseOf(entry)!;
+      const needsRoom = !entry.unlockedMoveIds.includes(curse.moveId) && entry.unlockedMoveIds.length >= MOVE_CAP;
+      onRunChange(turnCurse(on, rosterId));
+      setMastered({ rosterId, turn: true, ...(needsRoom ? { pendingMoveId: curse.moveId } : {}) });
+      return true;
+    }
     const node = availableEvolution(progressionTable, entry);
     if (node && node.paths.length > 0) {
       setEvolving({ rosterId, node });
@@ -109,6 +125,15 @@ export function useMasteryFlow(run: RunState, onRunChange: (next: RunState) => v
     const next = learn ? grantOfferedMove(run, overflow.rosterId, moveId, replaceMoveId ?? undefined) : run;
     onRunChange(next);
     setOverflow(rest.length > 0 ? { ...overflow, queue: rest } : null);
+    // A Turn's move was the first thing its pip owed; the Evolution the same pip opened comes next.
+    if (rest.length === 0 && overflow.eyebrow) raise(overflow.rosterId, next);
+  }
+
+  function closeMastered() {
+    if (!mastered) return;
+    setMastered(null);
+    if (mastered.pendingMoveId) setOverflow({ rosterId: mastered.rosterId, queue: [mastered.pendingMoveId], eyebrow: 'The Turn teaches a move — your kit is full' });
+    else if (mastered.turn) raise(mastered.rosterId);
   }
 
   return {
@@ -121,6 +146,6 @@ export function useMasteryFlow(run: RunState, onRunChange: (next: RunState) => v
     closeGrown: () => setGrown(null),
     chooseEvolution,
     resolveOverflow,
-    closeMastered: () => setMastered(null),
+    closeMastered,
   };
 }

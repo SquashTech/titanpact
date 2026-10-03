@@ -1496,12 +1496,21 @@ const innatePassives: Record<string, PassiveDefinition> = {
   lycanthrope: {
     id: 'lycanthrope',
     name: 'Lycanthrope',
-    description: 'The Turn: +50 HP, +40 Attack, +20 Defense, +20 Speed, and a finishing blow heals a fifth of max HP.',
-    statGrants: { hp: 50, attack: 40, defense: 20, speed: 20 },
+    description: 'When this hero lands a finishing blow, it heals a fifth of its max HP.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
       effect: { kind: 'heal', target: 'self', amount: { kind: 'percentMaxHp', value: 0.2 } },
+    },
+  },
+  lycanthropeMastered: {
+    id: 'lycanthropeMastered',
+    name: 'Lycanthrope+',
+    description: 'When this hero lands a finishing blow, it heals two fifths of its max HP.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
+      effect: { kind: 'heal', target: 'self', amount: { kind: 'percentMaxHp', value: 0.4 } },
     },
   },
   // docs/wild-innates-and-events.md §2: gold as a combat stat — every Shop visit becomes spend-or-keep.

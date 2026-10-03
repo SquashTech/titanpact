@@ -3,6 +3,7 @@ import { playSfx } from '../../audio/sfx';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { equipment, rollEquipmentDrops } from '../../data/equipment';
 import { heroes } from '../../data/heroes';
+import { curses } from '../../data/curses';
 import { rosterHeroes } from '../../data/content';
 import { moves } from '../../data/moves';
 import { passives } from '../../data/passives';
@@ -12,9 +13,11 @@ import type { EquipmentDefinition } from '../../run/equipment';
 import { rarityWeightsFor } from '../../run/equipment';
 import {
   applyEventCost,
+  applyCurse,
   applyHeroOutcome,
   applyStatShift,
-  applyTransform,
+  curseTurnsOnBite,
+  outcomeForAct,
   costAffordable,
   eventRecruitEntry,
   grantEventPassive,
@@ -159,8 +162,8 @@ function optionSummary(outcome: ResolvableOutcome, rolled: Rolled): ReactNode {
         : 'Nobody answers';
     case 'gamble':
       return `${percent(outcome.chance)} chance`;
-    case 'transform':
-      return `Becomes ${outcome.types.join(' / ')}${outcome.moveId ? `, learns ${moves[outcome.moveId].name}` : ''}`;
+    case 'curse':
+      return `A curse: at Mastery ${curses[outcome.curseId].turnAt}, the ${curses[outcome.curseId].name}`;
   }
 }
 
@@ -175,8 +178,10 @@ function optionEmpty(outcome: ResolvableOutcome, rolled: Rolled): boolean {
 // extending the vocabulary in src/data/events.ts, not adding a case here.
 export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onRecruited, onContinue }: Props) {
   const isChoice = event.outcome.kind === 'choice';
-  const options: readonly EventOption[] =
-    event.outcome.kind === 'choice' ? event.outcome.options : [{ label: event.name, outcome: event.outcome, cost: event.cost }];
+  // As THIS act pays them: an event's stat gains grow with the act, as the Item Cache does (run/events.ts).
+  const options: readonly EventOption[] = (
+    event.outcome.kind === 'choice' ? event.outcome.options : [{ label: event.name, outcome: event.outcome, cost: event.cost }]
+  ).map((option) => ({ ...option, outcome: outcomeForAct(option.outcome, run.actNumber) }));
 
   // Contents roll here, once: the screen is never unmounted mid-event.
   const [rolls] = useState<Rolled[]>(() => options.map((option) => rollContents(option.outcome, run)));
@@ -210,7 +215,8 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
   const active = picked !== null ? options[picked] : null;
   const outcome = active?.outcome ?? null;
   const rolled = picked !== null ? rolls[picked] : null;
-  const offeredMove = outcome?.kind === 'transform' ? (outcome.moveId ? moves[outcome.moveId] : undefined) : rolled?.moveId ? moves[rolled.moveId] : undefined;
+  const curse = outcome?.kind === 'curse' ? curses[outcome.curseId] : undefined;
+  const offeredMove = curse ? moves[curse.moveId] : rolled?.moveId ? moves[rolled.moveId] : undefined;
   const grantedPassive = outcome?.kind === 'grantPassive' ? passives[outcome.passiveId] : undefined;
   const lootItems = rolled?.loot ?? [];
   const resolvedEntry = resolvedTo ? run.roster.find((r) => r.rosterId === resolvedTo) ?? null : null;
@@ -226,8 +232,8 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
   }
 
   function teach(rosterId: string, replaceMoveId?: string) {
-    if (outcome?.kind === 'transform') {
-      commit(applyTransform(run, rosterId, outcome, replaceMoveId));
+    if (outcome?.kind === 'curse') {
+      commit(applyCurse(run, rosterId, outcome.curseId, replaceMoveId));
       setResolvedTo(rosterId);
       setSwapping(null);
       setSelectedReplaceId(null);
@@ -267,8 +273,9 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
       setResolvedTo(entry.rosterId);
       return;
     }
-    if (outcome.kind === 'transform') {
-      const needsSwap = !!offeredMove && !entry.unlockedMoveIds.includes(offeredMove.id) && entry.unlockedMoveIds.length >= MOVE_CAP;
+    if (outcome.kind === 'curse') {
+      // Only a hero the bite Turns on the spot learns the move now; the rest learn it at the Turn.
+      const needsSwap = curseTurnsOnBite(entry, outcome.curseId) && !!offeredMove && !entry.unlockedMoveIds.includes(offeredMove.id) && entry.unlockedMoveIds.length >= MOVE_CAP;
       if (needsSwap) setSwapping(entry.rosterId);
       else teach(entry.rosterId);
       return;
@@ -301,15 +308,15 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
   function heroCta(entry: RosterEntry, blocked: boolean): ReactNode {
     if (resolvedTo === entry.rosterId) {
       if (outcome?.kind === 'statShift') return 'Traded';
-      if (outcome?.kind === 'gamble') return gambleResult === 'win' ? 'Won' : 'Lost';
-      if (outcome?.kind === 'transform') return 'Changed';
+      if (outcome?.kind === 'gamble') return gambleResult === 'win' ? 'Jackpot' : 'Won';
+      if (outcome?.kind === 'curse') return entry.curseTurned ? 'Turned' : 'Bitten';
       return 'Learned';
     }
     if (blocked) return 'Too frail';
     if (outcome?.kind === 'learnMove') return entry.unlockedMoveIds.length >= MOVE_CAP ? 'Replace…' : 'Teach';
     if (outcome?.kind === 'statShift') return 'Trade';
     if (outcome?.kind === 'gamble') return 'Risk it';
-    if (outcome?.kind === 'transform') return 'Choose';
+    if (outcome?.kind === 'curse') return curseTurnsOnBite(entry, outcome.curseId) ? 'Turns now' : 'Choose';
     return 'Learn';
   }
 
@@ -327,8 +334,8 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
     if (resolvedHero) {
       if (outcome.kind === 'learnMove' && offeredMove) return `${resolvedHero.name} learned ${offeredMove.name}.`;
       if (outcome.kind === 'statShift') return `${resolvedHero.name} made the trade.`;
-      if (outcome.kind === 'gamble') return gambleResult === 'win' ? `${resolvedHero.name} won the gamble.` : `${resolvedHero.name} lost the gamble.`;
-      if (outcome.kind === 'transform') return `${resolvedHero.name} will never be the same.`;
+      if (outcome.kind === 'gamble') return gambleResult === 'win' ? `${resolvedHero.name} hit the jackpot.` : `${resolvedHero.name} took the smaller prize.`;
+      if (outcome.kind === 'curse' && curse) return resolvedEntry?.curseTurned ? `${resolvedHero.name} Turns.` : `${resolvedHero.name} is bitten. At Mastery ${curse.turnAt}, it Turns.`;
       if (grantedPassive) return `${resolvedHero.name} learned ${grantedPassive.name}.`;
     }
     if (outcome.kind === 'learnMove') {
@@ -337,7 +344,7 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
     if (outcome.kind === 'statShift') return 'Choose who makes the trade. Hold a hero to review its sheet.';
     if (outcome.kind === 'grantPassive') return 'Choose who learns it. Hold a hero to review its sheet.';
     if (outcome.kind === 'gamble') return 'Choose who takes the chance. Hold a hero to review its sheet.';
-    if (outcome.kind === 'transform') return 'Choose who it takes. Hold a hero to review its sheet.';
+    if (outcome.kind === 'curse') return 'Choose who it takes. Hold a hero to review its sheet.';
     return `${lootItems.length} ${lootItems.length === 1 ? 'piece' : 'pieces'} of gear. Take them, then place each one.`;
   }
 
@@ -392,17 +399,15 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
               </div>
             </div>
           )}
-          {arrived && outcome?.kind === 'transform' && (
+          {arrived && curse && (
             <div className="node-item-effects event-transform event-reveal-in">
               <p className="event-transform-line">
-                Becomes {outcome.types.length === 1 ? `pure ${outcome.types[0]}` : outcome.types.join(' / ')}
-                {offeredMove ? ` and learns ${offeredMove.name}` : ''}.
+                The bite marks the hero. At <strong>Mastery {curse.turnAt}</strong> it Turns — at once, if it is already there:
               </p>
-              {outcome.mastery && passives[outcome.mastery.passiveIds[0]] && (
-                <p className="event-transform-line">
-                  Mastery 10: <strong>{passives[outcome.mastery.passiveIds[0]].name}</strong> — {passives[outcome.mastery.passiveIds[0]].description}
-                </p>
-              )}
+              <p className="event-transform-line">
+                Pure {curse.types.join(' / ')}, a {Object.values(curse.baseStats).reduce((a, b) => a + b, 0)}-stat body, {offeredMove?.name}, and{' '}
+                <strong>{passives[curse.passiveIds[0]]?.name}</strong> in place of its own innate.
+              </p>
             </div>
           )}
           {arrived && cost && !resolvedTo && <p className="event-cost-line event-reveal-in">{cost}</p>}

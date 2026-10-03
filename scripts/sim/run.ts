@@ -78,7 +78,7 @@ import { ENCHANT_PRICE_BY_RARITY, rollGuildHallOffers, sellValueFor } from '../.
 import { mentorMovePool, tutorMovePool } from '../../src/run/tutor';
 import { grantClass, rollClassOffers } from '../../src/run/classes';
 import { boonMoveCount, pickBoonOffers } from '../../src/run/boons';
-import { applyEventCost, applyHeroOutcome, applyStatShift, costAffordable, eventRecruitEntry, grantEventPassive, heroOutcomeAllowed, joinEventRecruit, recruitPool, resolveGamble, rollRecruits, rollRunEvent, rollEventMove, statShiftAllowed } from '../../src/run/events';
+import { applyEventCost, applyHeroOutcome, applyStatShift, costAffordable, eventRecruitEntry, grantEventPassive, heroOutcomeAllowed, joinEventRecruit, outcomeForAct, recruitPool, resolveGamble, rollRecruits, rollRunEvent, rollEventMove, statShiftAllowed } from '../../src/run/events';
 import type { EventCost, ResolvableOutcome } from '../../src/data/events';
 import {
   pickWeightedEquipment,
@@ -1012,12 +1012,12 @@ function resolveEnchanter(run: RunState): RunState {
 function resolveEvent(run: RunState, locationId: string, rng: Rng, record: RunRecord): RunState {
   const event = rollRunEvent(runEvents, run.actNumber, locationId);
   if (!event) return run;
-  if (event.outcome.kind !== 'choice') return resolveEventOutcome(run, event.outcome, event.cost, record);
+  if (event.outcome.kind !== 'choice') return resolveEventOutcome(run, outcomeForAct(event.outcome, run.actNumber), event.cost, record);
   // A choice: the first option the pilot can pay for and use, else Leave.
   for (const option of event.outcome.options) {
     if (!costAffordable(run, option.cost)) continue;
     if (option.outcome.kind === 'recruit' && run.roster.length >= ROSTER_CAP) continue;
-    return resolveEventOutcome(run, option.outcome, option.cost, record);
+    return resolveEventOutcome(run, outcomeForAct(option.outcome, run.actNumber), option.cost, record);
   }
   return run;
 }
@@ -1080,7 +1080,7 @@ function resolveEventOutcome(run: RunState, outcome: ResolvableOutcome, cost: Ev
   }
 
   // A curse rewrites a hero's typing for a payout ten pips away: the pilot cannot weigh that, so it walks on.
-  if (outcome.kind === 'transform') return run;
+  if (outcome.kind === 'curse') return run;
 
   // loot
   let next = paid();

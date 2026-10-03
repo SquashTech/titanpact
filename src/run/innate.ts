@@ -6,6 +6,7 @@
 import type { HeroDefinition, PassiveDefinition, PassiveId } from '../engine/content';
 import { isTitansMark, passives } from '../data/passives';
 import { isInnateMastered } from './mastery';
+import { curseInnateIds, turnedCurse } from './curse';
 import type { RosterEntry } from './state';
 
 /** The hero's innate, or null for a definition that holds none (a Titan's piece, a fixture). A two-card innate (Broadside's load and its firing) is read by its first. */
@@ -33,20 +34,22 @@ export function titansMarkOf(hero: Pick<HeroDefinition, 'passiveIds'>): PassiveD
 /** The passive ids this hero fights with as its own: the mastered set once the tenth pip has landed, the born set before. */
 export function innatePassiveIdsFor(
   hero: Pick<HeroDefinition, 'passiveIds' | 'masteredPassiveIds'>,
-  entry: (Pick<RosterEntry, 'mastery'> & Partial<Pick<RosterEntry, 'masteryOverride'>>) | undefined
+  entry: (Pick<RosterEntry, 'mastery'> & Partial<Pick<RosterEntry, 'curseId' | 'curseTurned'>>) | undefined
 ): readonly PassiveId[] | undefined {
-  // A curse's Turn (Werewolf Bite) pays this entry's tenth pip in place of the authored upgrade.
-  if (entry && isInnateMastered(entry) && entry.masteryOverride) return entry.masteryOverride.passiveIds;
+  // A Turned curse (Werewolf Bite) replaces the innate outright, and masters into its own upgrade.
+  const cursed = entry ? curseInnateIds(entry) : null;
+  if (cursed) return cursed;
   if (entry && isInnateMastered(entry) && hero.masteredPassiveIds && hero.masteredPassiveIds.length > 0) return hero.masteredPassiveIds;
   return hero.passiveIds;
 }
 
-/** What the tenth pip pays THIS entry, read by its first card: a curse's Turn, else the authored upgrade. */
+/** What the tenth pip pays THIS entry, read by its first card: a Turned curse's upgrade, else the authored one. */
 export function masteredInnateFor(
   hero: Pick<HeroDefinition, 'masteredPassiveIds'>,
-  entry: Partial<Pick<RosterEntry, 'masteryOverride'>>
+  entry: Partial<Pick<RosterEntry, 'curseId' | 'curseTurned'>>
 ): PassiveDefinition | null {
-  if (entry.masteryOverride) return innatePassiveOf({ passiveIds: entry.masteryOverride.passiveIds });
+  const curse = turnedCurse(entry);
+  if (curse) return innatePassiveOf({ passiveIds: curse.masteredPassiveIds });
   return masteredInnateOf(hero);
 }
 
@@ -58,7 +61,7 @@ export function masteredInnateOf(hero: Pick<HeroDefinition, 'masteredPassiveIds'
 /** The innate as it stands on THIS roster entry — mastered once the tenth pip has landed. What an entry-aware surface names. */
 export function currentInnateOf(
   hero: Pick<HeroDefinition, 'passiveIds' | 'masteredPassiveIds'>,
-  entry: (Pick<RosterEntry, 'mastery'> & Partial<Pick<RosterEntry, 'masteryOverride'>>) | undefined
+  entry: (Pick<RosterEntry, 'mastery'> & Partial<Pick<RosterEntry, 'curseId' | 'curseTurned'>>) | undefined
 ): PassiveDefinition | null {
   return innatePassiveOf({ passiveIds: innatePassiveIdsFor(hero, entry) });
 }

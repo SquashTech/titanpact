@@ -1,5 +1,5 @@
 /**
- * An Evolution form's own sprites, keyed by path id: drop `art/evolutions/<pathId>.png`
+ * An Evolution form's own sprites, keyed by path id — or a curse's form id (`werewolf`, data/curses.ts): drop `art/evolutions/<pathId>.png`
  * (`cinderKnight-explosive.png`) and every surface that passes a `pathId` to HeroPortrait draws
  * it; `<pathId>attack.png` and `<pathId>damaged.png` beside it are its pose frames, as a hero's are
  * (heroArt.ts). Anything missing falls back to the hero's own sprite, so art can land a type and a

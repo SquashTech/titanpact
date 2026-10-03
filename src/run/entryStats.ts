@@ -9,6 +9,8 @@ import type { EquipmentDefinition } from './equipment';
 import { equipmentStatModifiers } from './equipment';
 import { equipmentPassiveGrants, mergePassiveGrants, passiveStatModifiers } from './passives';
 import { mergeStatMods } from './statMods';
+import { curseStatDelta } from './curse';
+import { rosterHeroes } from '../data/content';
 
 /** id -> stack count across equipment, Evolution, events, Class, team relics and the definition's own (HeroDefinition.passiveIds). */
 export function entryPassiveCounts(
@@ -46,6 +48,7 @@ export function entryStatModifiers(
 ): StatModifiers {
   return mergeStatMods(
     equipmentStatModifiers(entry.equipment, equipmentLookup),
+    curseStatDelta(rosterHeroes[entry.heroId], entry),
     entry.evolutionStatGrants,
     entry.bonusStatGrants,
     entry.growthStatGrants,

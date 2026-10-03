@@ -9,13 +9,16 @@ import {
   type HeroOutcome,
   type HeroPoolFilter,
   type MovePoolFilter,
+  type ResolvableOutcome,
   type RunEventDefinition,
-  type RunEventOutcome,
 } from '../data/events';
+import { curses } from '../data/curses';
+import { curseOf, curseTurnOwed } from './curse';
 import { grantMove, MOVE_CAP } from './progression';
 import type { RosterEntry, RunState } from './state';
 import { addRosterEntry, createRosterEntry, replaceRosterEntry, ROSTER_CAP } from './state';
 import { mergeStatMods } from './statMods';
+import { statGrantCost } from './equipment';
 import { levelAfterEncounters, levelUpEntry } from './growth';
 import { guildHallMastery } from './mastery';
 import { lookupOf } from './deck';
@@ -70,6 +73,7 @@ export function movePoolFor(filter: MovePoolFilter | undefined, moves: Record<st
       if (needle && !move.name.toLowerCase().includes(needle)) return false;
       if (filter?.types && !filter.types.includes(move.type)) return false;
       if (filter?.kinds && !filter.kinds.includes(move.kind)) return false;
+      if (filter?.tiers && !filter.tiers.includes(move.tier ?? 'early')) return false;
       return true;
     })
     .map((move) => move.id);
@@ -80,6 +84,47 @@ export function rollEventMove(filter: MovePoolFilter | undefined, moves: Record<
   const pool = movePoolFor(filter, moves);
   if (pool.length === 0) return undefined;
   return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// --- Balance (docs/events.md "Balance") ---
+//
+// An event competes for its row with the Item Cache, whose best-of-three grows ~50 → ~100 budget
+// points from Act 1 to Act 5. So an event's stat payout is authored at its Act 1 figure and GROWS
+// with the act as the cache does; only the gains grow — a cost stays what it says. The price of an
+// event is that you do not know which one you will get, never that it might be a bad trade.
+
+/** What an event's stat GAINS are multiplied by, by act (1-indexed; the last entry holds past it). */
+export const EVENT_STAT_SCALE_BY_ACT: readonly number[] = [1, 1.25, 1.5, 1.75, 2];
+
+export function eventStatScale(actNumber: number): number {
+  const index = Math.max(1, Math.floor(actNumber)) - 1;
+  return EVENT_STAT_SCALE_BY_ACT[Math.min(index, EVENT_STAT_SCALE_BY_ACT.length - 1)];
+}
+
+/** Gains scaled to the act and kept on the multiples of 5; costs left as authored. */
+export function scaleDeltas(deltas: Partial<Record<StatKey, number>>, actNumber: number): Partial<Record<StatKey, number>> {
+  const scale = eventStatScale(actNumber);
+  const out: Partial<Record<StatKey, number>> = {};
+  for (const [stat, amount] of Object.entries(deltas) as [StatKey, number][]) {
+    out[stat] = amount > 0 ? Math.round((amount * scale) / 5) * 5 : amount;
+  }
+  return out;
+}
+
+function scaleHero(outcome: HeroOutcome, actNumber: number): HeroOutcome {
+  return outcome.kind === 'statShift' ? { ...outcome, deltas: scaleDeltas(outcome.deltas, actNumber) } : outcome;
+}
+
+/** An outcome as THIS act pays it: what the screen shows and what resolution lands. */
+export function outcomeForAct(outcome: ResolvableOutcome, actNumber: number): ResolvableOutcome {
+  if (outcome.kind === 'statShift') return scaleHero(outcome, actNumber);
+  if (outcome.kind === 'gamble') return { ...outcome, win: scaleHero(outcome.win, actNumber), lose: scaleHero(outcome.lose, actNumber) };
+  return outcome;
+}
+
+/** A stat line in item-budget points (run/equipment.ts statGrantCost): the scale the Item Cache is read on. */
+export function deltaPoints(deltas: Partial<Record<StatKey, number>>): number {
+  return (Object.entries(deltas) as [StatKey, number][]).reduce((sum, [stat, amount]) => sum + statGrantCost(stat, amount), 0);
 }
 
 // --- Resolution ---
@@ -120,28 +165,34 @@ export function grantEventPassive(
 }
 
 /**
- * A curse, in one transform: the typing replaced, the move taught (`replaceMoveId` at MOVE_CAP; a
- * move the hero already holds is not taught twice), and the tenth pip's payout rewritten.
+ * The Turn (data/curses.ts): the hero becomes the curse, and its move is taught — below MOVE_CAP it
+ * simply lands, at it only with `replaceMoveId` (no replace is the decline, and the Turn lands
+ * anyway). A move already held is not taught twice.
  */
-export function applyTransform(
-  run: RunState,
-  rosterId: string,
-  outcome: Extract<RunEventOutcome, { kind: 'transform' }>,
-  replaceMoveId?: string
-): RunState {
+export function turnCurse(run: RunState, rosterId: string, replaceMoveId?: string): RunState {
+  const entry = requireEntry(run, rosterId);
+  const curse = curseOf(entry);
+  if (!curse) throw new RunEventError(`${rosterId} carries no curse`);
   let next = run;
-  const entry = requireEntry(next, rosterId);
-  if (outcome.moveId && !entry.unlockedMoveIds.includes(outcome.moveId)) {
-    if (entry.unlockedMoveIds.length >= MOVE_CAP && !replaceMoveId) throw new RunEventError(`${rosterId} is at the move cap — name a move to replace`);
-    next = grantMove(next, rosterId, outcome.moveId, entry.unlockedMoveIds.length >= MOVE_CAP ? replaceMoveId : undefined);
+  if (!entry.unlockedMoveIds.includes(curse.moveId)) {
+    if (entry.unlockedMoveIds.length < MOVE_CAP) next = grantMove(next, rosterId, curse.moveId);
+    else if (replaceMoveId) next = grantMove(next, rosterId, curse.moveId, replaceMoveId);
   }
-  const cursed = requireEntry(next, rosterId);
-  const changed: RosterEntry = {
-    ...cursed,
-    typeOverride: [...outcome.types],
-    masteryOverride: outcome.mastery ? { passiveIds: [...outcome.mastery.passiveIds], ...(outcome.mastery.formId ? { formId: outcome.mastery.formId } : {}) } : cursed.masteryOverride,
-  };
-  return { ...next, roster: next.roster.map((r) => (r.rosterId === rosterId ? changed : r)) };
+  const turned: RosterEntry = { ...requireEntry(next, rosterId), curseTurned: true };
+  return { ...next, roster: next.roster.map((r) => (r.rosterId === rosterId ? turned : r)) };
+}
+
+/** The bite: marks the hero; one already at the curse's pip Turns on the spot (`replaceMoveId` as turnCurse). */
+export function applyCurse(run: RunState, rosterId: string, curseId: string, replaceMoveId?: string): RunState {
+  if (!curses[curseId]) throw new RunEventError(`Unknown curse ${curseId}`);
+  const marked: RosterEntry = { ...requireEntry(run, rosterId), curseId, curseTurned: false };
+  const next = { ...run, roster: run.roster.map((r) => (r.rosterId === rosterId ? marked : r)) };
+  return curseTurnOwed(marked) ? turnCurse(next, rosterId, replaceMoveId) : next;
+}
+
+/** Whether the bite would Turn this hero now — and so whether its move needs room. */
+export function curseTurnsOnBite(entry: RosterEntry, curseId: string): boolean {
+  return curseTurnOwed({ ...entry, curseId, curseTurned: false });
 }
 
 /** A gamble's branch, or a lone hero outcome, onto one hero. */

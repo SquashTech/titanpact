@@ -33,7 +33,7 @@ same rule CLAUDE.md states for every other content type.
 | `loot` | N pieces of equipment on the act's own drop curve, through the who-screens. | Loot Pile |
 | `recruit` | `count` heroes from a `HeroPoolFilter` over the run's deck, none already held. One joins **raw at the player's par** (`eventRecruitEntry`: a hire's terms without a hire's act of lag). At the cap, someone leaves with their gear. Always declinable. | Rustling Grass, Raise the Dead |
 | `gamble` | A chosen hero takes `win` at `chance`, `lose` otherwise. Both branches are a `statShift` or a `grantPassive`, both are shown first, and a hero that could not survive the worse one is greyed. | The Two-Headed Coin, the Fae Ring |
-| `transform` | A curse on one chosen hero, in one transform (`applyTransform`). Its typing is **replaced in both slots** (`RosterEntry.typeOverride`, the one thing that overrides the innate primary). `moveId` is taught (replace-or-decline). The tenth Mastery pip pays `mastery` instead of the hero's own upgrade (`RosterEntry.masteryOverride`, with a `formId` for the art). | Werewolf Bite |
+| `curse` | MARKS one chosen hero with a curse (`data/curses.ts`, `applyCurse`), which changes nothing until the **Turn** at the curse's Mastery pip. The hero turns on the spot if already past it. The Turn is the whole transformation: the typing in both slots (the one override of the innate primary), the curse's base line in place of the hero's, its innate, its move and its art (`run/curse.ts`). | Werewolf Bite |
 | `choice` | One to three options, each its own outcome and cost, **plus an implicit Leave**. Options never nest. Every option's contents roll at mount, so an option shows what it holds. | Lucid Dream, the Whispering Altar |
 
 **Costs** (`EventCost`, 2026-10-03) sit beside an outcome and land in the same transform:
@@ -62,38 +62,80 @@ contract is the point:
 | --- | --- |
 | **Fruit Slicer** | A random *Slice* move (`{ nameIncludes: 'Slice' }` — seven moves across seven types), taught to a chosen hero. |
 | **Wildcard** | A random move from the **entire** catalog, taught to a chosen hero. Ancient-type moves join this pool automatically the day they are authored — the filter is the catalog, not a list. |
-| **Soul Transfer** | A chosen hero trades **−30 max HP for +15 Intelligence, +15 Wisdom, +15 Mana**. |
-| **The Deep Well** | A chosen hero trades **−20 max HP for +30 Mana** (2026-09-13) — the map's one mana faucet that is a choice rather than a roll (`docs/mana.md` "Growing the pool"). |
+| **Soul Transfer** | A chosen hero trades **−20 max HP for +20 Intelligence, +20 Wisdom, +20 Mana**. |
+| **The Deep Well** | A chosen hero trades **−20 max HP for +40 Mana and +5 MP Regen**: the Mana Well's grant, for a scratch (`docs/mana.md` "Growing the pool"). |
 | **Assertiveness Training** | A chosen hero learns **Imposing Presence** (§4). |
 | **Loot Pile** | **3** random pieces of equipment on the act's rarity curve. |
 
 **The second wave** (2026-10-03, `docs/wild-innates-and-events.md` §3.2) brought the slate
 to 26. Two are anywhere:
 
-- **Mercenary Camp:** 40g, one of three heroes joins.
-- **The Two-Headed Coin:** 50%, +20 Atk/Int or −15 each.
+- **Mercenary Camp:** 20g, one of three heroes joins.
+- **The Two-Headed Coin:** 50%, +30 Atk / +30 Int / +20 Spd, else +20 Def / +20 Wis.
 
-A third, **Werewolf Bite** (weight 5, anywhere), is the `transform` curse
-(`docs/wild-innates-and-events.md` §3.3):
+A third, **Werewolf Bite** (weight 5, anywhere), is the `curse`
+(`docs/wild-innates-and-events.md` §3.3). The bite marks; at Mastery 5 (or at once, past it) the
+hero Turns:
 
-- The hero becomes pure Beast.
-- It learns Lacerate.
-- At Mastery 10 it Turns: Lycanthrope, and the werewolf form.
+- pure Beast;
+- a 650-stat body;
+- Lacerate;
+- Lycanthrope;
+- the werewolf form.
 
 The rest are a Location's own:
 
 | Location | Events |
 | --- | --- |
-| Wild's Edge | **Rustling Grass** (a recruit), **Abandoned Camp** (2 loot, everyone −15% HP) |
-| Blighted Shrine | **The Whispering Altar** (a Shadow move for blood, an Arcane one for gold), **The Hermit's Lantern** (a Shadow/Arcane/Mind recruit) |
-| Forbidden Forest | **The Fae Ring** (+30 Speed or −30 HP), **The Dryad's Call** (a Nature/Beast/Light recruit) |
-| Molten Foundry | **The Slag Bath** (−20 HP, +20 Def, +10 Wis), **Automaton Kit** (30g, a Mech/Iron/Fire recruit) |
-| Storm Coast | **Shipwreck** (3 loot, −20% HP), **Siren Song** (a recruit), **Lightning Rod** (60%: +20 Spd +10 Int, or −30 HP; also the Aerie) |
-| Necropolis | **Grave Robbing** (2 loot, −25% HP), **Raise the Dead** (a Spirit/Frost recruit), **The Lich's Bargain** (−40 HP for +20 Int/Wis/Mana) |
-| Holy Sanctum | **The Pilgrim's Font** (a Light move for 25g, or a recruit) |
-| Dreaming Spires | **Lucid Dream** (a Mind move or an Arcane one) |
-| Thunder Aerie | **The Roc's Nest** (loot for HP, or a Storm/Beast recruit), Lightning Rod |
-| Frozen Reach | **The Icy Plunge** (+20 Def/Wis or −20 Speed, or 20g for a recruit) |
+| Wild's Edge | **Rustling Grass** (a recruit), **Abandoned Camp** (2 loot, everyone −10% HP) |
+| Blighted Shrine | **The Whispering Altar** (a Mid/Late Shadow move or Arcane move), **The Hermit's Lantern** (a Shadow/Arcane/Mind recruit) |
+| Forbidden Forest | **The Fae Ring** (+40 Spd +20 Atk/Int, else +60 HP +20 Def), **The Dryad's Call** (a Nature/Beast/Light recruit) |
+| Molten Foundry | **The Slag Bath** (−20 HP, +40 Def, +20 Wis), **Automaton Kit** (a Mech/Iron/Fire recruit) |
+| Storm Coast | **Shipwreck** (3 loot, −10% HP), **Siren Song** (a recruit), **Lightning Rod** (60%: +25 Spd +30 Atk/Int, else +20 Spd +60 HP; also the Aerie) |
+| Necropolis | **Grave Robbing** (2 loot, −10% HP), **Raise the Dead** (a Spirit/Frost recruit), **The Lich's Bargain** (−40 HP for +30 Int/Wis/Mana) |
+| Holy Sanctum | **The Pilgrim's Font** (a Mid/Late Light move, or a recruit) |
+| Dreaming Spires | **Lucid Dream** (a Mid/Late Mind move or Arcane one) |
+| Thunder Aerie | **The Roc's Nest** (2 loot for −10% HP, or a Storm/Beast recruit), Lightning Rod |
+| Frozen Reach | **The Icy Plunge** (+40 Def/Wis, else +60 HP +10 Def/Wis; or a free recruit) |
+
+Every stat figure above is the **Act 1** payout. Gains grow with the act (§1b).
+
+### 1b. Balance (2026-10-03, per user direction)
+
+**An event is never a bad pick.** It competes for its row with the Item Cache. The price of an
+event is not knowing which one you will get, never that the one you got was a poor trade.
+
+**The bar is the Item Cache:** the best of three items on the act's curve. In item-budget points
+(`run/equipment.ts` `statGrantCost`: 1 a stat point, 3 HP a point, MP Regen 3) that is about
+**50 in Act 1, rising to about 100 by Act 5**. A single random item is 38 → 85.
+
+**Stat payouts grow with the act:**
+
+- **Authored at their Act 1 figure,** multiplied by `EVENT_STAT_SCALE_BY_ACT` =
+  ×1 / 1.25 / 1.5 / 1.75 / 2 through `outcomeForAct`, and rounded to the multiples of 5.
+- **Only gains grow;** a cost stays as written.
+- **The screen shows the scaled figure,** and the sim resolves it.
+
+**The pinned floors** (`test/eventVocabulary` "event balance"):
+
+- **A stat trade** nets ≥ 45 points in Act 1, costs counted. The slate's trades sit at 48–77.
+- **A gamble never loses.** Both branches pay, the jackpot pays more, and the EV clears 55. The
+  slate's gambles are 80–85 against a 40 consolation: EV 60–67.
+- **A typed move event** teaches only Mid or Late moves (`MovePoolFilter.tiers`), the
+  Mentor's band or better.
+
+**Costs mostly went:**
+
+- Recruits are free, except Mercenary Camp's 20g.
+- Move events are free.
+- A loot event's wound is 10%. Two or three whole items against one picked of three is what
+  that 10% buys.
+
+Before the pass, the gambles' EV was +5 to +14 points and the trades +23 to +47, flat across
+acts. Every gamble and most trades were worse than the cache they sat beside.
+
+**Not measured.** The sim's pilot takes events and gambles but has no node-choice comparison
+against the cache. A sim pass should read win rate by the reward picked.
 
 `test/eventVocabulary` pins that every Location a run can visit before the finale holds at
 least one event of its own.

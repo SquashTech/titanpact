@@ -6,9 +6,14 @@ import { test } from './harness';
 import { heroes } from '../src/data/heroes';
 import { passives } from '../src/data/passives';
 import { locations } from '../src/data/locations';
-import { runEvents, type RunEventDefinition } from '../src/data/events';
+import { runEvents, type ResolvableOutcome, type RunEventDefinition } from '../src/data/events';
+import { moves } from '../src/data/moves';
 import {
   applyEventCost,
+  deltaPoints,
+  movePoolFor,
+  outcomeForAct,
+  scaleDeltas,
   applyHeroOutcome,
   costAffordable,
   eventRecruitEntry,
@@ -142,4 +147,61 @@ test('event slate: every Location a run can visit before the finale holds at lea
     (id) => id !== FINALE_LOCATION_ID && !Object.values(runEvents).some((e) => e.locationIds?.includes(id))
   );
   assert.deepStrictEqual(bare, []);
+});
+
+// --- Balance (docs/events.md "Balance") ---
+// The bar is the Item Cache: the best of three items on the act's curve, ~50 budget points in Act 1.
+// An event is never a bad pick — the price of one is not knowing which you will get.
+
+const CACHE_FLOOR_ACT_ONE = 45;
+
+function everyOutcome(): { id: string; outcome: ResolvableOutcome }[] {
+  return Object.values(runEvents).flatMap((event) =>
+    event.outcome.kind === 'choice'
+      ? event.outcome.options.map((option) => ({ id: `${event.id}/${option.label}`, outcome: option.outcome }))
+      : [{ id: event.id, outcome: event.outcome }]
+  );
+}
+
+test('event balance: every stat trade nets at least an Item Cache in Act 1, costs included', () => {
+  for (const { id, outcome } of everyOutcome()) {
+    if (outcome.kind !== 'statShift') continue;
+    const points = deltaPoints(outcome.deltas);
+    assert.ok(points >= CACHE_FLOOR_ACT_ONE, `${id} nets ${points.toFixed(1)} points`);
+  }
+});
+
+test('event balance: a gamble never loses — both branches pay, and the expected payout clears the cache', () => {
+  for (const { id, outcome } of everyOutcome()) {
+    if (outcome.kind !== 'gamble') continue;
+    for (const branch of [outcome.win, outcome.lose]) {
+      if (branch.kind !== 'statShift') continue;
+      assert.ok(Object.values(branch.deltas).every((amount) => (amount ?? 0) > 0), `${id}: a branch takes something away`);
+    }
+    const value = (branch: typeof outcome.win) => (branch.kind === 'statShift' ? deltaPoints(branch.deltas) : CACHE_FLOOR_ACT_ONE);
+    const expected = outcome.chance * value(outcome.win) + (1 - outcome.chance) * value(outcome.lose);
+    assert.ok(expected >= CACHE_FLOOR_ACT_ONE + 10, `${id} pays ${expected.toFixed(1)} on average — a gamble should beat the cache`);
+    assert.ok(value(outcome.win) > value(outcome.lose), `${id}: the jackpot is not the bigger prize`);
+  }
+});
+
+test('event balance: gains grow with the act as the cache does — doubled by Act 5, costs left as written, still multiples of 5', () => {
+  assert.deepStrictEqual(scaleDeltas({ hp: -20, attack: 30, speed: 25 }, 1), { hp: -20, attack: 30, speed: 25 });
+  assert.deepStrictEqual(scaleDeltas({ hp: -20, attack: 30, speed: 25 }, 5), { hp: -20, attack: 60, speed: 50 });
+  for (let act = 1; act <= 6; act++) {
+    for (const { outcome } of everyOutcome()) {
+      const scaled = outcomeForAct(outcome, act);
+      const lines = scaled.kind === 'statShift' ? [scaled.deltas] : scaled.kind === 'gamble' ? [scaled.win, scaled.lose].flatMap((b) => (b.kind === 'statShift' ? [b.deltas] : [])) : [];
+      for (const line of lines) for (const amount of Object.values(line)) assert.strictEqual(Math.abs(amount ?? 0) % 5, 0);
+    }
+  }
+});
+
+test('event balance: a typed move event teaches a Mid or Late move, never an Early one', () => {
+  for (const { id, outcome } of everyOutcome()) {
+    if (outcome.kind !== 'learnMove' || !outcome.pool?.types) continue;
+    const pool = movePoolFor(outcome.pool, moves);
+    assert.ok(pool.length > 0, `${id} has an empty pool`);
+    assert.ok(pool.every((moveId) => (moves[moveId].tier ?? 'early') !== 'early'), `${id} can roll an Early move`);
+  }
 });

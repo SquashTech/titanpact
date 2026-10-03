@@ -46,6 +46,7 @@ import { RecruitFanfare } from '../view/run/RecruitFanfare';
 import { EventNodeScreen } from '../view/run/EventNodeScreen';
 import { runEvents } from '../data/events';
 import { rollRunEvent } from '../run/events';
+import { turnedCurse } from '../run/curse';
 import { SandboxBattleScreen } from '../view/run/SandboxBattleScreen';
 import { ChampionScreen } from '../view/run/ChampionScreen';
 import { RunSummaryScreen } from '../view/run/RunSummaryScreen';
@@ -579,7 +580,12 @@ export function App() {
       locationId: playerRun.actNumber <= SEAL_ACTS ? playerRun.locationIds[playerRun.actNumber - 1] ?? null : null,
       encountersWon: playerRun.encountersWon,
       ascension: playerRun.ascension,
-      roster: playerRun.roster.map((entry) => ({ heroId: entry.heroId, level: levelOf(entry), evolutionPathId: currentEvolutionPathId(entry) })),
+      roster: playerRun.roster.map((entry) => ({
+        heroId: entry.heroId,
+        level: levelOf(entry),
+        evolutionPathId: currentEvolutionPathId(entry),
+        ...(turnedCurse(entry) ? { curseId: turnedCurse(entry)!.id } : {}),
+      })),
     };
     const before = readProfile();
     const after = updateProfile((current) => recordRunEnded(current, end, now));

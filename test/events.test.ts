@@ -10,6 +10,7 @@ import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
 import { fieldEffects } from '../src/data/fieldEffects';
 import { typeChart, TYPES } from '../src/data/typechart';
+import { curses } from '../src/data/curses';
 import { equipment } from '../src/data/equipment';
 import { signatureMoves } from '../src/data/signatures';
 import { classMoves } from '../src/data/classes';
@@ -78,11 +79,15 @@ test('events: every authored event is coherent content — a resolvable outcome,
       checkHero(`${id} (win)`, outcome.win);
       checkHero(`${id} (lose)`, outcome.lose);
     }
-    if (outcome.kind === 'transform') {
-      if (outcome.types.length < 1 || outcome.types.length > 2) problems.push(`${id} transforms into ${outcome.types.length} types`);
-      for (const type of outcome.types) if (!(TYPES as readonly string[]).includes(type)) problems.push(`${id} transforms into unknown type '${type}'`);
-      if (outcome.moveId && !moves[outcome.moveId]) problems.push(`${id} teaches unknown move '${outcome.moveId}'`);
-      for (const passiveId of outcome.mastery?.passiveIds ?? []) if (!passives[passiveId]) problems.push(`${id}'s Turn grants unknown passive '${passiveId}'`);
+    if (outcome.kind === 'curse') {
+      const curse = curses[outcome.curseId];
+      if (!curse) problems.push(`${id} marks with unknown curse '${outcome.curseId}'`);
+      else {
+        if (curse.types.length < 1 || curse.types.length > 2) problems.push(`${curse.id} turns into ${curse.types.length} types`);
+        for (const type of curse.types) if (!(TYPES as readonly string[]).includes(type)) problems.push(`${curse.id} turns into unknown type '${type}'`);
+        if (!moves[curse.moveId]) problems.push(`${curse.id} teaches unknown move '${curse.moveId}'`);
+        for (const passiveId of [...curse.passiveIds, ...curse.masteredPassiveIds]) if (!passives[passiveId]) problems.push(`${curse.id} grants unknown passive '${passiveId}'`);
+      }
     }
     if (outcome.kind === 'recruit') {
       if (outcome.count < 1) problems.push(`${id} recruits from ${outcome.count} candidates`);

@@ -48,6 +48,12 @@ export interface Profile {
    */
   companionStars: string[];
   /**
+   * The curses (data/curses.ts, by id) a run has been cleared with a Turned hero still on the
+   * roster — the Werewolf's star (docs/wild-innates-and-events.md §3.3). Turned is the condition:
+   * a hero only bitten has not become the thing the star is for.
+   */
+  curseStars: string[];
+  /**
    * The Titanspawn lines (by type) whose companion reached the finale and woke to Ancient. Every
    * later companion of that line joins with Ancient in its secondary slot (run/companion.ts).
    */
@@ -96,6 +102,8 @@ export interface RunRecordHero {
   level: number;
   /** The last Evolution path taken, or null for a hero that finished unevolved. */
   evolutionPathId: string | null;
+  /** The curse the hero finished Turned by (data/curses.ts), or null; absent on records before curses. */
+  curseId?: string | null;
 }
 
 /** One line of the run history: what a finished run came to, as the summary screen showed it. */
@@ -133,6 +141,7 @@ export function createProfile(): Profile {
     ascensionCleared: 0,
     evolutionStars: {},
     companionStars: [],
+    curseStars: [],
     ascendedSpawnTypes: [],
     runHistory: [],
     runStartedAtPlaytimeMs: null,
@@ -184,9 +193,14 @@ export function recordRunStarted(profile: Profile, now: number, ascension = 0, b
 export function recordRunEnded(profile: Profile, end: RunEnd, now: number): Profile {
   const evolutionStars = { ...profile.evolutionStars };
   const companionStars = [...profile.companionStars];
+  const curseStars = [...profile.curseStars];
   const starsEarned: string[] = [];
   if (end.outcome === 'win') {
-    for (const { heroId, evolutionPathId } of end.roster) {
+    for (const { heroId, evolutionPathId, curseId } of end.roster) {
+      if (curseId && !curseStars.includes(curseId)) {
+        curseStars.push(curseId);
+        starsEarned.push(curseStarId(curseId));
+      }
       // The roster at the Eyes' close: a companion KO'd in the finale is already off it.
       const type = companionTypeOf(heroId);
       if (type && !companionStars.includes(type)) {
@@ -215,6 +229,7 @@ export function recordRunEnded(profile: Profile, end: RunEnd, now: number): Prof
     ascensionCleared: end.outcome === 'win' ? Math.max(profile.ascensionCleared, end.ascension) : profile.ascensionCleared,
     evolutionStars,
     companionStars,
+    curseStars,
     bonusStars: profile.bonusStars + record.clearBonus,
     runHistory: [record, ...profile.runHistory].slice(0, RUN_HISTORY_CAP),
     // The run is over; a dev test run started without a pact must not inherit this one's clock.
@@ -260,6 +275,15 @@ export function companionStarId(type: string): string {
   return `companion:${type}`;
 }
 
+/** A curse star as `RunRecord.starsEarned` names it. */
+export function curseStarId(curseId: string): string {
+  return `curse:${curseId}`;
+}
+
+export function hasCurseStar(profile: Profile, curseId: string): boolean {
+  return profile.curseStars.includes(curseId);
+}
+
 export function hasCompanionStar(profile: Profile, type: string): boolean {
   return profile.companionStars.includes(type);
 }
@@ -269,7 +293,7 @@ export function isSpawnAscended(profile: Profile, type: string): boolean {
 }
 
 export function totalStars(profile: Profile): number {
-  let total = profile.companionStars.length;
+  let total = profile.companionStars.length + profile.curseStars.length;
   for (const paths of Object.values(profile.evolutionStars)) total += paths.length;
   return total;
 }
@@ -328,7 +352,12 @@ function decodeRunRecord(raw: unknown, knownPathIds?: ReadonlySet<string>): RunR
   if (Array.isArray(raw.roster)) {
     for (const hero of raw.roster) {
       if (!isRecord(hero) || typeof hero.heroId !== 'string' || hero.heroId.length === 0) continue;
-      roster.push({ heroId: hero.heroId, level: Math.max(1, count(hero.level, 1)), evolutionPathId: knownPath(hero.evolutionPathId) });
+      roster.push({
+        heroId: hero.heroId,
+        level: Math.max(1, count(hero.level, 1)),
+        evolutionPathId: knownPath(hero.evolutionPathId),
+        ...(typeof hero.curseId === 'string' && hero.curseId.length > 0 ? { curseId: hero.curseId } : {}),
+      });
     }
   }
   return {
@@ -340,7 +369,7 @@ function decodeRunRecord(raw: unknown, knownPathIds?: ReadonlySet<string>): RunR
     encountersWon: count(raw.encountersWon),
     ascension: count(raw.ascension),
     roster,
-    starsEarned: stringList(raw.starsEarned).filter((id) => id.startsWith('companion:') || knownPath(id) !== null),
+    starsEarned: stringList(raw.starsEarned).filter((id) => id.startsWith('companion:') || id.startsWith('curse:') || knownPath(id) !== null),
     clearBonus: count(raw.clearBonus),
   };
 }
@@ -395,6 +424,8 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     evolutionStars,
     // Absent on every file written before the bestiary; such a player starts both empty.
     companionStars: [...new Set(stringList(value.companionStars))],
+    // Absent on every file written before curses.
+    curseStars: [...new Set(stringList(value.curseStars))],
     ascendedSpawnTypes: [...new Set(stringList(value.ascendedSpawnTypes))],
     runHistory,
     runStartedAtPlaytimeMs: typeof value.runStartedAtPlaytimeMs === 'number' && Number.isFinite(value.runStartedAtPlaytimeMs) ? Math.max(0, Math.floor(value.runStartedAtPlaytimeMs)) : null,

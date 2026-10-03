@@ -23,6 +23,7 @@ import { ROSTER_CAP, TOTAL_ACTS } from './state';
 import { CONSUMABLE_HOLD_CAP, CONSUMABLE_KINDS, type ConsumablePurse } from './consumables';
 import { MAX_XP, xpForLevel } from './growth';
 import { MASTERY_CAP } from './mastery';
+import { curses } from '../data/curses';
 
 /**
  * Bump whenever a change to RunState or RunMap makes older files unreadable. Older versions
@@ -286,22 +287,9 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
   }
 
   // Absent on a file written before curses; an uncursed hero is the honest default.
-  const typeOverride = value.typeOverride ?? null;
-  if (typeOverride !== null) {
-    if (!isStringArray(typeOverride) || typeOverride.length < 1 || typeOverride.length > 2) reject(`${label}.typeOverride is not one or two types`);
-    for (const type of typeOverride) if (!index.typeIds.has(type as TypeId)) reject(`${label} references unknown type "${type}"`);
-  }
-  const rawOverride = value.masteryOverride ?? null;
-  let masteryOverride: RosterEntry['masteryOverride'] = null;
-  if (rawOverride !== null) {
-    if (!isObject(rawOverride)) reject(`${label}.masteryOverride is not an object`);
-    const formId = rawOverride.formId;
-    if (formId !== undefined && typeof formId !== 'string') reject(`${label}.masteryOverride.formId is not an id`);
-    masteryOverride = {
-      passiveIds: requireIds(rawOverride.passiveIds, index.passiveIds, `${label}.masteryOverride.passiveIds`),
-      ...(formId !== undefined ? { formId } : {}),
-    };
-  }
+  const curseId = value.curseId ?? null;
+  if (curseId !== null && (typeof curseId !== 'string' || !curses[curseId])) reject(`${label} carries unknown curse "${String(curseId)}"`);
+  const curseTurned = curseId !== null && value.curseTurned === true;
 
   return {
     rosterId: value.rosterId,
@@ -323,8 +311,8 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
     // Absent on a file written before rewire paths; nothing was traded.
     offenseSwapped: value.offenseSwapped === true,
     evolutionTypeGraft: graft as TypeId | null,
-    typeOverride: typeOverride as TypeId[] | null,
-    masteryOverride,
+    curseId: curseId as string | null,
+    curseTurned,
     classId: classId as string | null,
     classPassiveId,
     // Absent on a file written before the companion; a hero that never was one is not one.

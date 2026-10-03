@@ -161,6 +161,7 @@ test('roster: every passive in the catalog has a granter — a passive nobody gr
   const { equipment } = require('../src/data/equipment') as typeof import('../src/data/equipment');
   const { relics } = require('../src/data/relics') as typeof import('../src/data/relics');
   const { runEvents } = require('../src/data/events') as typeof import('../src/data/events');
+  const { curses } = require('../src/data/curses') as typeof import('../src/data/curses');
   const { classes } = require('../src/data/classes') as typeof import('../src/data/classes');
   const { boonPassives, fieldHeraldPassiveFor, typeDamagePassiveFor } = require('../src/data/passives') as typeof import('../src/data/passives');
 
@@ -180,7 +181,7 @@ test('roster: every passive in the catalog has a granter — a passive nobody gr
     if (outcome.kind === 'grantPassive') return [outcome.passiveId];
     if (outcome.kind === 'choice') return outcome.options.flatMap((option) => grantsOf(option.outcome));
     if (outcome.kind === 'gamble') return [...grantsOf(outcome.win), ...grantsOf(outcome.lose)];
-    if (outcome.kind === 'transform') return [...(outcome.mastery?.passiveIds ?? [])];
+    if (outcome.kind === 'curse') return [...(curses[outcome.curseId]?.passiveIds ?? []), ...(curses[outcome.curseId]?.masteredPassiveIds ?? [])];
     return [];
   };
   for (const event of Object.values(runEvents)) for (const id of grantsOf(event.outcome)) granted.add(id);

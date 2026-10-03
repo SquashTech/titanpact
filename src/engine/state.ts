@@ -66,7 +66,7 @@ export interface Combatant {
   enduresLeft?: number;
   /** Holds a Blessing (docs/blessings-and-statuses.md §1): the next knockout's whole loss is prevented and this goes false. Copied from the roster entry at fight build, read back at resolve. */
   blessed?: boolean;
-  /** A curse's typing (RosterEntry.typeOverride), set at fight build; effectiveTypes returns it whole. */
+  /** A Turned curse's typing (run/curse.ts), set at fight build; effectiveTypes returns it whole. */
   typeOverride?: readonly TypeId[];
   /** Never switches out voluntarily (PassiveDefinition.cannotSwitchOut), set at fight build. Read through canSwitchOut. */
   switchLocked?: boolean;

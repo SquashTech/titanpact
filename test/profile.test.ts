@@ -6,7 +6,9 @@ import {
   addPlaytime,
   companionStarId,
   createProfile,
+  curseStarId,
   decodeProfile,
+  hasCurseStar,
   formatPlaytime,
   hasCompanionStar,
   hasEvolutionStar,
@@ -307,4 +309,23 @@ test('profile: a line woken in the finale stays woken, idempotently, and survive
   assert.ok(isSpawnAscended(profile, 'Fire') && !isSpawnAscended(profile, 'Water'));
   assert.deepStrictEqual(decodeProfile(JSON.parse(JSON.stringify(profile))).ascendedSpawnTypes, ['Fire']);
   assert.deepStrictEqual(decodeProfile({ runsStarted: 3 }).ascendedSpawnTypes, [], 'absent on an older file');
+});
+
+test('profile: a clear with a Turned werewolf on the final roster stars the curse, once — a loss, or a hero only bitten, stars nothing', () => {
+  const wolf = (heroId: string): RunRecordHero => ({ heroId, level: 30, evolutionPathId: null, curseId: 'werewolf' });
+  let profile = recordRunEnded(createProfile(), wiped(4, [wolf('cinderKnight')]), 1_000);
+  assert.deepStrictEqual(profile.curseStars, [], 'a loss');
+  profile = recordRunEnded(profile, cleared([{ heroId: 'cinderKnight', level: 30, evolutionPathId: null, curseId: null }]), 2_000);
+  assert.deepStrictEqual(profile.curseStars, [], 'bitten but never Turned is recorded as no curse');
+  profile = recordRunEnded(profile, cleared([wolf('cinderKnight')]), 3_000);
+  assert.ok(hasCurseStar(profile, 'werewolf'));
+  assert.deepStrictEqual(profile.runHistory[0].starsEarned, [curseStarId('werewolf')]);
+  assert.strictEqual(totalStars(profile), 1);
+  profile = recordRunEnded(profile, cleared([wolf('rime')]), 4_000);
+  assert.deepStrictEqual(profile.curseStars, ['werewolf'], 'the same curse twice is the same star');
+  const decoded = decodeProfile(JSON.parse(JSON.stringify(profile)), knownHeroIds, knownPathIds);
+  assert.deepStrictEqual(decoded.curseStars, ['werewolf']);
+  assert.deepStrictEqual(decoded.runHistory[1].starsEarned, [curseStarId('werewolf')], 'a curse star survives the path filter');
+  assert.strictEqual(decoded.runHistory[1].roster[0].curseId, 'werewolf');
+  assert.deepStrictEqual(decodeProfile({ ...JSON.parse(JSON.stringify(profile)), curseStars: undefined }, knownHeroIds, knownPathIds).curseStars, [], 'a profile from before curses');
 });
