@@ -1,43 +1,46 @@
-// The companion (src/run/companion.ts, docs/titanspawn-overhaul.md §5): joins after the first
-// fight and cannot be declined, is a hero in every respect but one, and that one is `mortal`.
+// The companion (src/run/companion.ts, docs/companion-call.md): joins after the first fight and
+// cannot be declined, and is a summon, not a party member — off the roster, its tier read off the
+// act, seated in every fight as the side's Called caster at the run's par.
 
 import * as assert from 'assert';
 import { test } from './harness';
 import { heroes } from '../src/data/heroes';
-import { rosterHeroes } from '../src/data/content';
+import { allCombatants, rosterHeroes } from '../src/data/content';
 import { equipment } from '../src/data/equipment';
 import { moves } from '../src/data/moves';
 import { progressionTable } from '../src/data/progression';
-import { spawnPosition, spawnSlate, titanspawn } from '../src/data/titanspawn';
+import { spawnLineOf, spawnPosition } from '../src/data/titanspawn';
 import { locations } from '../src/data/locations';
+import { statuses } from '../src/data/statuses';
 import { generateMap } from '../src/run/map';
 import {
   ANCIENT,
-  absorbCompanions,
+  COMPANION_ROSTER_ID,
   awakenCompanion,
-  companionToAwaken,
-  applyCompanionTierStep,
+  companionCallFor,
+  companionCallMoveId,
   companionCandidate,
+  companionGrowth,
+  companionHeroId,
   companionJoinDue,
-  companionOf,
-  companionTierStep,
+  companionToAwaken,
   joinCompanion,
 } from '../src/run/companion';
 import { mobEncounter } from '../src/run/spawn';
 import { encounterScaling } from '../src/run/difficulty';
-import { DEFAULT_SCHEDULE, entryBandRank, levelMovePool, pendingScheduleEntry, rosterEntryTypes, scheduleEntries, scheduleFor } from '../src/run/progression';
-import { MASTERY_CAP, MASTERY_EVOLUTION } from '../src/run/mastery';
 import { ROSTER_CAP, addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
-import { equipItem } from '../src/run/equipment';
 import { isRecruitable } from '../src/run/recruitment';
 import { nodeEncounter } from '../src/run/encounters';
+import { buildCombatState } from '../src/run/buildCombatState';
+import { pickSquad } from '../src/run/squad';
 import { decodeSave, encodeSave, buildContentIndex } from '../src/run/save';
 import { classes } from '../src/data/classes';
 import { relics } from '../src/data/relics';
 import { passives } from '../src/data/passives';
 import { CHAMPION_IDS } from '../src/data/enemies';
 import { TYPES } from '../src/data/typechart';
-import { levelOf, xpForLevel, MAX_XP } from '../src/run/growth';
+import { expectedGrowthAt, levelAfterEncounters, levelOf, xpForLevel } from '../src/run/growth';
+import { applyForcedReplacement } from '../src/engine/combat/switching';
 
 function starterRun(level = 3): RunState {
   let run = createRunState(50);
@@ -45,12 +48,15 @@ function starterRun(level = 3): RunState {
   return { ...run, fightsStarted: 1 };
 }
 
+const contentIndex = () =>
+  buildContentIndex({ heroes: rosterHeroes, moves, equipment, relics, passives, classes, locations, championIds: CHAMPION_IDS, types: TYPES, progression: progressionTable });
+
 test('companion: the join is due exactly once — the first fight, won, nothing joined yet', () => {
   const run = starterRun();
   assert.ok(companionJoinDue(run, 'fight'));
   assert.ok(!companionJoinDue(run, 'skirmish'));
   assert.ok(!companionJoinDue({ ...run, fightsStarted: 2 }, 'fight'));
-  assert.ok(!companionJoinDue({ ...run, companionHeroId: 'cubling' }, 'fight'), 'one per run, and a dead one is still the one');
+  assert.ok(!companionJoinDue({ ...run, companion: { type: 'Beast', ascended: false } }, 'fight'), 'one per run');
 });
 
 test('companion: the candidate is the beaten side\'s lead Early, and the Act 1 opener always has one', () => {
@@ -62,129 +68,129 @@ test('companion: the candidate is the beaten side\'s lead Early, and the Act 1 o
   }
 });
 
-test('companion: it joins at the roster\'s par with its growth rolled, mortal, in its authored kit, and is never a contract', () => {
+test('companion: it joins as its line, off the roster — no slot, no cap, and never a contract', () => {
   const run = starterRun(3);
-  const next = joinCompanion(run, 'cubling', rosterHeroes, () => 0.99);
-  const companion = companionOf(next)!;
-  assert.strictEqual(next.roster.length, 3);
-  assert.strictEqual(companion.heroId, 'cubling');
-  assert.strictEqual(companion.mortal, true);
-  assert.strictEqual(levelOf(companion), 3);
-  assert.ok(Object.keys(companion.growthStatGrants).length > 0, 'two levels of growth rolled — RAW is unbuilt, not hollow');
-  assert.deepStrictEqual(companion.unlockedMoveIds, [...titanspawn.cubling.moveIds]);
-  assert.strictEqual(next.companionHeroId, 'cubling');
+  const next = joinCompanion(run, 'cubling');
+  assert.deepStrictEqual(next.companion, { type: 'Beast', ascended: false });
+  assert.strictEqual(next.roster, run.roster, 'the roster is untouched');
   assert.ok(!isRecruitable('cubling', heroes));
-  assert.throws(() => joinCompanion(run, 'valor', rosterHeroes), 'a hero cannot be the companion');
-  for (const entry of run.roster) assert.strictEqual(entry.mortal, false);
+  assert.throws(() => joinCompanion(run, 'valor'), 'a hero cannot be the companion');
+
+  let full = starterRun();
+  for (const id of ['crimson', 'tidecaller', 'rime', 'crag']) full = addRosterEntry(full, createRosterEntry(id, id, heroes[id].moveIds));
+  assert.strictEqual(full.roster.length, ROSTER_CAP);
+  assert.ok(companionJoinDue(full, 'fight'), 'a full roster still takes it — it presses on nothing');
 });
 
-test('companion: it joins with the offers below its level behind it, so the next level-up owes at most one', () => {
-  const run = starterRun(5);
-  const companion = companionOf(joinCompanion(run, 'cubling', rosterHeroes, () => 0.99))!;
-  const below = scheduleEntries(DEFAULT_SCHEDULE).filter((e) => e.level <= 5).length;
-  assert.ok(below > 0, 'the default schedule has an offer at or below 5');
-  assert.strictEqual(companion.scheduleTaken, below);
-  assert.strictEqual(pendingScheduleEntry(rosterHeroes.cubling, companion), null, 'nothing owed on arrival');
+test('companion: its body and its Call follow the act, on the escorts\' schedule', () => {
+  const line = spawnLineOf('Beast')!;
+  const run = joinCompanion(starterRun(), 'cubling');
+  const at = (actNumber: number) => ({ ...run, actNumber });
+  assert.deepStrictEqual([1, 2, 3, 4, 5].map((act) => companionHeroId(at(act))), ['cubling', 'ravager', 'ravager', 'behemoth', 'behemoth']);
+  assert.deepStrictEqual(
+    [1, 2, 4].map((act) => companionCallMoveId(at(act))),
+    [line.callMoveIds.early, line.callMoveIds.mid, line.callMoveIds.late]
+  );
+  assert.strictEqual(companionHeroId(starterRun()), null);
 });
 
-test('companion: a knockout takes it — off the roster, its gear with it; a KO\'d hero stays', () => {
-  let run = joinCompanion(starterRun(), 'cubling', rosterHeroes);
-  const companion = companionOf(run)!;
-  run = { ...run, roster: run.roster.map((r) => (r === companion ? { ...r, equipment: equipItem(r.equipment, 'dagger.common') } : r)) };
-  const { run: after, absorbed } = absorbCompanions(run, [companion.rosterId, 'valor']);
-  assert.deepStrictEqual(absorbed.map((r) => r.heroId), ['cubling']);
-  assert.strictEqual(companionOf(after), null);
-  assert.ok(after.roster.some((r) => r.rosterId === 'valor'), 'a hero KO is not a death');
-  assert.ok(!after.roster.some((r) => r.equipment.includes('dagger.common')), 'what it carried is gone with it — gear is absorbed, never carried');
-  assert.strictEqual(after.companionHeroId, 'cubling', 'the run remembers it had one');
-  const untouched = absorbCompanions(run, ['valor']);
-  assert.strictEqual(untouched.run, run);
+test('companion: an act boundary that changes the tier is a grown beat, and one that does not is nothing', () => {
+  const run = joinCompanion(starterRun(), 'cubling');
+  assert.deepStrictEqual(companionGrowth(run, 1, 2), { fromHeroId: 'cubling', toHeroId: 'ravager' });
+  assert.strictEqual(companionGrowth(run, 2, 3), null);
+  assert.deepStrictEqual(companionGrowth(run, 3, 4), { fromHeroId: 'ravager', toHeroId: 'behemoth' });
+  assert.strictEqual(companionGrowth(run, 4, 5), null);
+  assert.strictEqual(companionGrowth(starterRun(), 1, 2), null, 'no companion, no beat');
 });
 
-test('companion: the tier-steps sit on the Mastery pips a hero would evolve and master at, and everything carries', () => {
-  // A mortal entry's schedule is offers like anyone's (progression.ts scheduleEntries); its steps
-  // are DERIVED off its pips and the body it stands in (docs/mastery.md §2).
-  const schedule = scheduleFor(rosterHeroes.cubling);
-  assert.ok(scheduleEntries(schedule).every((e) => e.kind === 'offer'), 'a companion has no branch and no step on its schedule');
-  const run = joinCompanion(starterRun(), 'cubling', rosterHeroes);
-  const id = companionOf(run)!.rosterId;
-  const at = (mastery: number) => ({ ...run, roster: run.roster.map((r) => (r.rosterId === id ? { ...r, mastery, unlockedMoveIds: ['claw', 'venomBite', 'prowl', 'lacerate'], equipment: ['dagger.common'] } : r)) });
-  assert.strictEqual(companionTierStep(companionOf(at(MASTERY_EVOLUTION - 1))!), null, 'not before the pip');
-  assert.strictEqual(companionTierStep(companionOf(at(MASTERY_EVOLUTION))!), 'ravager');
-  const mid = applyCompanionTierStep(at(MASTERY_EVOLUTION), id);
-  const grown = companionOf(mid)!;
-  assert.strictEqual(grown.heroId, 'ravager');
-  assert.deepStrictEqual(grown.unlockedMoveIds, ['claw', 'venomBite', 'prowl', 'lacerate']);
-  assert.deepStrictEqual(grown.equipment, ['dagger.common']);
-  assert.strictEqual(grown.mastery, MASTERY_EVOLUTION, 'the pips carry');
-  assert.strictEqual(companionTierStep(grown), null, 'a Mid at five is a Mid until ten');
-  const lateReady = { ...grown, mastery: MASTERY_CAP };
-  assert.strictEqual(companionTierStep(lateReady), 'behemoth');
-  assert.strictEqual(companionTierStep({ ...lateReady, heroId: 'behemoth' }), null, 'the Late is the end of the line');
-  // A hero at the same pips is not stepped: the flag is what the rule reads.
-  assert.strictEqual(companionTierStep({ ...run.roster[0], mastery: MASTERY_EVOLUTION }), null);
+test('companion: the Call it brings is the act\'s body at par on the expected line, one Call, nothing the roster carries', () => {
+  const run = { ...joinCompanion(starterRun(), 'cubling'), encountersWon: 4, actNumber: 2 };
+  const call = companionCallFor(run, allCombatants)!;
+  const level = levelAfterEncounters(4);
+  assert.strictEqual(call.entry.heroId, 'ravager');
+  assert.strictEqual(call.entry.rosterId, COMPANION_ROSTER_ID);
+  assert.strictEqual(levelOf(call.entry), level);
+  assert.deepStrictEqual(call.entry.growthStatGrants, expectedGrowthAt(allCombatants.ravager, level));
+  assert.deepStrictEqual(call.entry.equipment, []);
+  assert.strictEqual(call.moveId, spawnLineOf('Beast')!.callMoveIds.mid);
+  assert.strictEqual(call.calls, 1);
+  assert.strictEqual(call.phaseGrant, 0);
+  assert.strictEqual(companionCallFor(starterRun(), allCombatants), null);
 });
 
-test('companion: its level-up pool is its type\'s slate, gated by band like anyone\'s', () => {
-  const run = joinCompanion(starterRun(), 'cubling', rosterHeroes);
-  const entry = companionOf(run)!;
-  const hero = rosterHeroes.cubling;
-  assert.deepStrictEqual([...progressionTable.moveTiers.cubling].sort(), spawnSlate('Beast').sort());
-  const early = levelMovePool(progressionTable, moves, hero, entry);
-  assert.ok(early.length > 0 && early.every((id: string) => moves[id].tier === 'early'), 'below midLevel offers Early only');
-  assert.ok(!early.includes('claw'), 'the kit is filtered out');
-  const mid = { ...entry, xp: xpForLevel(DEFAULT_SCHEDULE.midLevel) };
-  assert.strictEqual(entryBandRank(hero, mid), 2);
-  assert.ok(levelMovePool(progressionTable, moves, hero, mid).some((id: string) => moves[id].tier === 'mid'));
-  void MAX_XP;
+test('companion: a fight seats it as the side\'s Called caster — on no slot and no bench', () => {
+  const run = { ...joinCompanion(starterRun(), 'cubling'), encountersWon: 1 };
+  const squad = pickSquad(run.roster, run.roster.map((r) => r.rosterId));
+  const state = buildCombatState(1, allCombatants, equipment, [{ side: 'A', squad, roster: run.roster, call: companionCallFor(run, allCombatants) }], passives);
+  const caster = state.combatants[`A:${COMPANION_ROSTER_ID}`];
+  assert.ok(caster?.called, 'the caster is seated and marked');
+  assert.deepStrictEqual(caster.passives, {}, 'no Mark');
+  assert.ok(![...state.active.A, ...state.bench.A].includes(caster.combatantId));
+  assert.deepStrictEqual(state.calls?.A, { combatantId: caster.combatantId, moveId: companionCallMoveId(run)!, remaining: 1 });
 });
 
-test('companion: the flag and the run\'s memory of it survive a save', () => {
-  const run = { ...joinCompanion(starterRun(), 'cubling', rosterHeroes), map: generateMap(3), locationIds: Object.keys(locations).slice(0, 5) };
-  const index = buildContentIndex({ heroes: rosterHeroes, moves, equipment, relics, passives, classes, locations, championIds: CHAMPION_IDS, types: TYPES, progression: progressionTable });
+test('companion: brought to the finale it wakes once, and a woken Call refreshes when the Eyes\' phase begins', () => {
+  const run = joinCompanion(starterRun(), 'cubling');
+  assert.deepStrictEqual(companionToAwaken(run), { type: 'Beast', ascended: false });
+  const woken = awakenCompanion(run);
+  assert.strictEqual(woken.companion?.ascended, true);
+  assert.strictEqual(companionToAwaken(woken), null, 'nothing left to wake');
+  assert.strictEqual(awakenCompanion(woken), woken);
+  assert.strictEqual(companionToAwaken(starterRun()), null, 'no companion, no beat');
+  assert.strictEqual(joinCompanion(starterRun(), 'cubling', true).companion?.ascended, true, 'a woken line joins woken');
+
+  const finale = { ...woken, actNumber: 5, encountersWon: 12 };
+  const call = companionCallFor(finale, allCombatants)!;
+  assert.strictEqual(call.entry.evolutionTypeGraft, ANCIENT);
+  assert.strictEqual(call.phaseGrant, 1);
+
+  // A later phase entering on the far side hands the side its refresh.
+  const enemy = { ...createRosterEntry('eye', 'valor', heroes.valor.moveIds), xp: xpForLevel(3) };
+  const reserve = { ...createRosterEntry('eye2', 'crimson', heroes.crimson.moveIds), xp: xpForLevel(3) };
+  const squad = pickSquad(finale.roster, finale.roster.map((r) => r.rosterId));
+  const state = buildCombatState(
+    1,
+    allCombatants,
+    equipment,
+    [
+      { side: 'A', squad, roster: finale.roster, call },
+      { side: 'B', squad: { activeIds: ['eye', null], benchIds: [], reserves: [['eye2']] }, roster: [enemy, reserve] },
+    ],
+    passives
+  );
+  const spent = { ...state, calls: { ...state.calls, A: { ...state.calls!.A!, remaining: 0 } } };
+  const after = applyForcedReplacement(spent, 3, 'B', 0, 'B:eye2', statuses).state;
+  assert.strictEqual(after.calls?.A?.remaining, 1);
+});
+
+test('companion: it survives a save, and a file from before the Call reads its roster companion off the roster', () => {
+  const run = { ...awakenCompanion(joinCompanion(starterRun(), 'cubling')), map: generateMap(3), locationIds: Object.keys(locations).slice(0, 5) };
+  const index = contentIndex();
   const saved = JSON.parse(JSON.stringify(encodeSave(run, 'map')));
   const loaded = decodeSave(saved, index);
   assert.ok(loaded.ok, loaded.ok ? '' : loaded.reason);
   if (!loaded.ok) return;
-  const companion = companionOf(loaded.save.run)!;
-  assert.strictEqual(companion.heroId, 'cubling');
-  assert.strictEqual(companion.mortal, true);
-  assert.strictEqual(loaded.save.run.companionHeroId, 'cubling');
+  assert.deepStrictEqual(loaded.save.run.companion, { type: 'Beast', ascended: true });
+
+  // The old shape: the companion on the roster, `mortal`, and the run remembering it by body.
+  const old = JSON.parse(JSON.stringify(saved));
+  delete old.run.companion;
+  old.run.companionHeroId = 'cubling';
+  old.run.roster.push({ ...old.run.roster[0], rosterId: 'cubling-1', heroId: 'ravager', mortal: true, evolutionTypeGraft: 'Ancient' });
+  const migrated = decodeSave(old, index);
+  assert.ok(migrated.ok, migrated.ok ? '' : migrated.reason);
+  if (!migrated.ok) return;
+  assert.deepStrictEqual(migrated.save.run.companion, { type: 'Beast', ascended: true });
+  assert.ok(!migrated.save.run.roster.some((entry) => spawnPosition(entry.heroId)), 'the companion left the roster');
+  assert.strictEqual(migrated.save.run.roster.length, run.roster.length);
 });
 
-test('companion: it presses on the cap like anyone — a full roster refuses the join', () => {
-  let run = starterRun();
-  for (const id of ['crimson', 'tidecaller', 'rime', 'crag']) run = addRosterEntry(run, createRosterEntry(id, id, heroes[id].moveIds));
-  assert.strictEqual(run.roster.length, ROSTER_CAP);
-  assert.ok(!companionJoinDue(run, 'fight'));
-  assert.throws(() => joinCompanion(run, 'cubling', rosterHeroes));
-});
-
-test('companion: it does not count toward Act 1\'s enemy-count cap — the Skirmish is 3v2 with it on the roster', () => {
-  // Per user direction (2026-09-13): the companion is half a hero and must not invite a whole enemy.
-  let run = joinCompanion({ ...starterRun(), map: generateMap(5, 1), locationIds: Object.keys(locations).slice(0, 5), actNumber: 1, fightsStarted: 2 }, 'cubling', rosterHeroes);
+test('companion: Act 1\'s cap reads the roster alone — the Skirmish meets two heroes with two', () => {
+  const run = joinCompanion({ ...starterRun(), map: generateMap(5, 1), locationIds: Object.keys(locations).slice(0, 5), actNumber: 1, fightsStarted: 2 }, 'cubling');
   // fightsStarted 2: past the run's 2v2 breather, so the count is the cap's and nothing else's.
-  assert.strictEqual(run.roster.length, 3);
   const skirmish = Object.values(run.map!.nodes).find((n) => n.type === 'skirmish')!;
   const ctx = { run, location: locations.wildsEdge, heroes, allCombatants: rosterHeroes, enemies: {}, progression: progressionTable };
-  assert.strictEqual(nodeEncounter(skirmish, ctx).run.roster.length, 2, 'two enemies against two heroes and a companion');
-  // A real third hero does raise it.
-  run = addRosterEntry(run, createRosterEntry('crimson', 'crimson', heroes.crimson.moveIds));
-  assert.strictEqual(nodeEncounter(skirmish, { ...ctx, run }).run.roster.length, 3);
-});
-
-test('companion: brought to the finale it wakes to Ancient in its secondary slot, once, and a woken line joins woken', () => {
-  const run = joinCompanion(starterRun(), 'cubling', rosterHeroes);
-  assert.strictEqual(companionToAwaken(run)?.heroId, 'cubling');
-  const woken = awakenCompanion(run);
-  const companion = companionOf(woken)!;
-  assert.deepStrictEqual(rosterEntryTypes(rosterHeroes.cubling, companion), ['Beast', ANCIENT]);
-  assert.strictEqual(companionToAwaken(woken), null, 'nothing left to wake');
-  assert.strictEqual(awakenCompanion(woken), woken);
-  const stepped = applyCompanionTierStep({ ...woken, roster: woken.roster.map((r) => (r === companion ? { ...r, mastery: MASTERY_EVOLUTION } : r)) }, companion.rosterId);
-  assert.strictEqual(companionOf(stepped)!.evolutionTypeGraft, ANCIENT, 'a tier-step carries it');
-  assert.strictEqual(companionToAwaken(starterRun()), null, 'no companion, no beat');
-  const joined = companionOf(joinCompanion(starterRun(), 'cubling', rosterHeroes, Math.random, true))!;
-  assert.strictEqual(joined.evolutionTypeGraft, ANCIENT);
-  assert.strictEqual(companionOf(joinCompanion(starterRun(), 'cubling', rosterHeroes))!.evolutionTypeGraft, null);
+  assert.strictEqual(nodeEncounter(skirmish, ctx).run.roster.length, 2);
+  const three = addRosterEntry(run, createRosterEntry('crimson', 'crimson', heroes.crimson.moveIds));
+  assert.strictEqual(nodeEncounter(skirmish, { ...ctx, run: three }).run.roster.length, 3);
 });

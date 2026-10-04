@@ -168,7 +168,6 @@ function RosterSheetCard({ hero, entry, relicIds, onInspect, onItem }: CardProps
       <button type="button" className="roster-sheet-foot" data-sfx="none" onClick={onInspect} aria-label={label} tabIndex={-1}>
         <span className="roster-sheet-ident">
           <span className="roster-sheet-name">{hero.name}</span>
-          {entry.mortal && <span className="companion-mortal is-small">Mortal</span>}
           {formLine && <span className="roster-sheet-form">{formLine}</span>}
         </span>
         <WoundBar hp={hp} maxHp={maxHp} figure className="roster-sheet-hp" />

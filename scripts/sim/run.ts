@@ -5,7 +5,7 @@
 import type { StatKey } from '../../src/engine/content';
 import { heroes as allHeroes } from '../../src/data/heroes';
 import { rosterHeroes } from '../../src/data/content';
-import { absorbCompanions, companionCandidate, companionJoinDue, joinCompanion } from '../../src/run/companion';
+import { companionCallFor, companionCandidate, companionJoinDue, joinCompanion } from '../../src/run/companion';
 import { fallenAfterFight, isPermadeath, releaseFallen } from '../../src/run/ascension';
 import { anyDown, canBuyMend, buyMend, mendPrice, mendRoster, recordWounds, reviveHero, standingRoster } from '../../src/run/wounds';
 import { buyConsumable, canBuyConsumable, canUseRevive, grantConsumable, rollConsumableDrop, spendRevive } from '../../src/run/consumables';
@@ -186,9 +186,8 @@ export interface RunRecord {
   deathAct: number;
   deathNodeType: string | null;
   encountersWon: number;
-  /** The companion this run took, and the encounter count at which a knockout took it back (null = it survived, or never joined). */
+  /** The companion this run took, by the body it joined as. */
   companionHeroId: string | null;
-  companionLostAt: number | null;
   goldEnd: number;
   rosterLevelEnd: number;
   rosterSizeEnd: number;
@@ -349,7 +348,6 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     deathAct: 0,
     deathNodeType: null,
     companionHeroId: null,
-    companionLostAt: null,
     encountersWon: 0,
     goldEnd: 0,
     goldFlow: {},
@@ -428,10 +426,6 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
       }
       run = advanceToNode(run, nodeId);
       run = { ...run, encountersWon: run.encountersWon + 1 };
-      // A KO'd companion is gone from the run, before the levels roll (src/run/companion.ts).
-      const absorbed = absorbCompanions(run, outcome.koRosterIds);
-      if (absorbed.absorbed.length > 0) record.companionLostAt ??= run.encountersWon;
-      run = absorbed.run;
       // Under Permadeath every other KO is the same beat, with a Revive as its one way back.
       run = resolveFallen(run, outcome.koRosterIds, record);
       if (run.roster.length === 0) {
@@ -448,7 +442,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
       // The run's first fight: one of the Earlies it beat joins, and there is no declining.
       const companionId = companionJoinDue(run, node.type) && outcome.encounter ? companionCandidate(outcome.encounter) : null;
       if (companionId) {
-        run = joinCompanion(run, companionId, rosterHeroes, rng);
+        run = joinCompanion(run, companionId);
         record.companionHeroId = companionId;
         tally(record, run.actNumber, 'companion');
       }
@@ -632,6 +626,7 @@ function resolveEncounterNode(
     // Saved for the final battle: the pilot spends a Revive in a fight only there, where nothing
     // mends inside (docs/titan-eyes.md §10); everywhere else the map's spendRevives has first call.
     revives: mapNodeType === 'finale' ? workingRun.consumables.revive : 0,
+    playerCall: companionCallFor(workingRun, allCombatants),
   });
   for (let i = 0; i < fight.revivesUsed; i++) {
     workingRun = spendRevive(workingRun);

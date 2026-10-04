@@ -16,13 +16,11 @@ import {
 } from '../../run/mastery';
 import type { RosterEntry, RunState } from '../../run/state';
 import { statScaleFor } from '../../run/statScale';
-import { isCompanion } from '../../run/companion';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { MasteryPips } from '../shared/MasteryPips';
 import { NodeMotes, NODE_TINT_PARCHMENT } from '../shared/NodeStage';
 import scribeArt from '../../../art/npc/scribe.png';
 import scrollArt from '../../../art/ui/scroll.png';
-import { CompanionScreen } from './CompanionScreen';
 import { EvolutionScreen } from './EvolutionScreen';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { MoveOfferOverlay } from './MoveOfferOverlay';
@@ -93,11 +91,6 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
     flow.raise(entry.rosterId, next, entry.mastery);
   }
 
-  const grownEntry = flow.grown ? (run.roster.find((r) => r.rosterId === flow.grown!.rosterId) ?? null) : null;
-  if (flow.grown && grownEntry) {
-    return <CompanionScreen run={run} beat={{ kind: 'grown', fromHeroId: flow.grown.fromHeroId, toHeroId: flow.grown.toHeroId }} onContinue={flow.closeGrown} />;
-  }
-
   const evolvingEntry = flow.evolving ? (run.roster.find((r) => r.rosterId === flow.evolving!.rosterId) ?? null) : null;
   if (flow.evolving && evolvingEntry) {
     return (
@@ -163,10 +156,9 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
           const picked = pickedIds.includes(entry.rosterId);
           const open = !finished && canTakeMastery(entry) && !picked;
           const room = masteryRoom(entry, pipsPerTap);
-          // The fifth pip is a hero's Evolution and the companion's first step; the tenth is a
-          // hero's innate mastered (when an upgrade is authored) and the companion's second step.
+          // The fifth pip is a hero's Evolution; the tenth is its innate mastered, when an upgrade is authored.
           const evolves = crossesMastery(entry, pipsPerTap, MASTERY_EVOLUTION);
-          const masters = crossesMastery(entry, pipsPerTap, MASTERY_CAP) && (isCompanion(entry) || !!hero.masteredPassiveIds?.length);
+          const masters = crossesMastery(entry, pipsPerTap, MASTERY_CAP) && !!hero.masteredPassiveIds?.length;
           // The count is what the hero HOLDS — the pips draw the gain in the node's colour, and
           // printing the post-tap total here read as if the hero already had it.
           const held = `${entry.mastery}/${MASTERY_CAP}`;
@@ -175,7 +167,7 @@ export function ScrollNodeScreen({ run, onRunChange, plan, bought = false, onDon
             : picked
               ? `${held} ✓`
               : evolves || masters
-                ? `${held} · ${isCompanion(entry) ? 'Grows!' : evolves ? 'Evolves!' : 'Masters!'}`
+                ? `${held} · ${evolves ? 'Evolves!' : 'Masters!'}`
                 : `${held} · +${room}`;
           return (
             <HeroPickCard

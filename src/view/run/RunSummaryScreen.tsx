@@ -8,7 +8,6 @@ import { chosenClass } from '../../run/classes';
 import { locationForAct } from '../../run/locations';
 import { companionTypeOf, hasCompanionStar, hasEvolutionStar, type Profile } from '../../run/profile';
 import { currentEvolutionPathId } from '../../run/progression';
-import { isCompanion } from '../../run/companion';
 import type { HeroDefinition } from '../../engine/content';
 import { SEAL_ACTS, type RosterEntry, type RunState } from '../../run/state';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
@@ -112,7 +111,7 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
                       ) : undefined
                     }
                     /* What this hero became, falling back to its Class; the card badges the level itself. */
-                    cta={evolutionName(entry) ?? (heroClass ? heroClass.name.replace('Class - ', '') : isCompanion(entry) ? 'Companion' : null)}
+                    cta={evolutionName(entry) ?? (heroClass ? heroClass.name.replace('Class - ', '') : null)}
                   />
                 );
               })}

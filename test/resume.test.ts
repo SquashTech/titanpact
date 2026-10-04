@@ -72,7 +72,6 @@ test('resume: every resumable kind round trips, nested chains included', () => {
   const chain: RunScreen = {
     kind: 'fallen',
     rosterIds: ['rime-1'],
-    companion: null,
     next: {
       kind: 'levelUp',
       report: [{ rosterId: 'rime-1', heroId: 'rime', fromLevel: 4, toLevel: 5, fromXp: 64, toXp: 125, gained: { attack: 2 } }],
@@ -153,7 +152,7 @@ test('resume: a bad node, item or hero fails the screen, which then falls back r
   const run = sampleRun();
   assert.strictEqual(roundTrip({ screen: { kind: 'manaWell', nodeId: 'nowhere' } }, run), null);
   assert.strictEqual(roundTrip({ screen: { kind: 'itemWho', itemId: 'itemThatWasCut', next: { kind: 'map' } } }, run), null);
-  assert.strictEqual(roundTrip({ screen: { kind: 'fallen', rosterIds: ['ghost-1'], companion: null, next: { kind: 'map' } } }, run), null);
+  assert.strictEqual(roundTrip({ screen: { kind: 'fallen', rosterIds: ['ghost-1'], next: { kind: 'map' } } }, run), null);
   assert.strictEqual(decodeResume('junk', index, run), null);
   assert.strictEqual(decodeResume({ screen: { kind: 'map', next: 5 } }, index, run)?.screen.kind, 'map');
 });

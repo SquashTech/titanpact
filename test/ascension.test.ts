@@ -1,5 +1,5 @@
 // The Ascension ladder (src/run/ascension.ts, docs/ascension.md): Ascension 1 is Permadeath,
-// the Revive the one way back at the Fallen beat, and never for the companion.
+// the Revive the one way back at the Fallen beat. The companion is off the roster and cannot fall.
 
 import * as assert from 'assert';
 import { test } from './harness';
@@ -14,8 +14,8 @@ import { locations } from '../src/data/locations';
 import { CHAMPION_IDS } from '../src/data/enemies';
 import { TYPES } from '../src/data/typechart';
 import { progressionTable } from '../src/data/progression';
-import { ASCENSION_RUNGS, MAX_ASCENSION, fallenAfterFight, isMortal, isPermadeath, openAscension, releaseFallen } from '../src/run/ascension';
-import { absorbCompanions, companionOf, joinCompanion } from '../src/run/companion';
+import { ASCENSION_RUNGS, MAX_ASCENSION, fallenAfterFight, isPermadeath, openAscension, releaseFallen } from '../src/run/ascension';
+import { joinCompanion } from '../src/run/companion';
 import { equipItem } from '../src/run/equipment';
 import { generateMap } from '../src/run/map';
 import { createProfile, decodeProfile, recordRunEnded } from '../src/run/profile';
@@ -26,7 +26,7 @@ import { reviveHero } from '../src/run/wounds';
 function run(ascension: number): RunState {
   let next = createRunState(50, 1, ascension);
   for (const id of ['valor', 'packAlpha', 'rime']) next = addRosterEntry(next, createRosterEntry(id, id, heroes[id].moveIds));
-  next = joinCompanion({ ...next, fightsStarted: 1 }, 'cubling', rosterHeroes);
+  next = joinCompanion({ ...next, fightsStarted: 1 }, 'cubling');
   return next;
 }
 
@@ -43,26 +43,13 @@ test('ascension: Base is rung 0, Permadeath is rung 1, and the ladder stops wher
   assert.deepStrictEqual(ASCENSION_RUNGS.map((r) => r.rung), Array.from({ length: MAX_ASCENSION + 1 }, (_, i) => i));
 });
 
-test('ascension: at Base only the companion is mortal; under Permadeath everyone is', () => {
-  const base = run(0);
-  const companion = companionOf(base)!;
-  assert.strictEqual(isMortal(base, companion), true);
-  assert.ok(base.roster.filter((r) => r !== companion).every((r) => !isMortal(base, r)));
-  const a1 = run(1);
-  assert.ok(a1.roster.every((r) => isMortal(a1, r)));
-});
+test('ascension: the Fallen are the knocked-out heroes, in roster order, and none at Base', () => {
+  const base = knockedOut(run(0), ['valor']);
+  assert.deepStrictEqual(fallenAfterFight(base, ['valor']), [], 'Base: a KO stands back up later');
 
-test('ascension: the Fallen are the KO\'d heroes, never the companion, and none at Base', () => {
-  const companionId = companionOf(run(1))!.rosterId;
-  const base = knockedOut(run(0), ['valor', companionId]);
-  assert.deepStrictEqual(fallenAfterFight(base, ['valor', companionId]), [], 'Base: a KO stands back up later');
-
-  const a1 = knockedOut(run(1), ['valor', 'rime', companionId]);
-  const fallen = fallenAfterFight(a1, ['valor', 'rime', companionId]);
-  assert.deepStrictEqual(fallen.map((r) => r.rosterId), ['valor', 'rime'], 'roster order, the companion left to absorbCompanions');
-  // The companion's loss is the companion's rule, at every rung — and a Revive is not offered to it.
-  const { absorbed } = absorbCompanions(a1, [companionId]);
-  assert.deepStrictEqual(absorbed.map((r) => r.heroId), ['cubling']);
+  const a1 = knockedOut(run(1), ['valor', 'rime']);
+  assert.deepStrictEqual(fallenAfterFight(a1, ['valor', 'rime']).map((r) => r.rosterId), ['valor', 'rime']);
+  assert.ok(a1.companion, 'the companion travels on, off the roster');
 });
 
 test('ascension: a Revive keeps a fallen hero at half; letting go takes it and its gear off the run', () => {
@@ -77,7 +64,7 @@ test('ascension: a Revive keeps a fallen hero at half; letting go takes it and i
   const stillDown = fallenAfterFight(kept, ['valor', 'rime']).map((r) => r.rosterId);
   assert.deepStrictEqual(stillDown, ['valor']);
   const after = releaseFallen(kept, stillDown);
-  assert.deepStrictEqual(after.roster.map((r) => r.rosterId), ['packAlpha', 'rime', 'cubling']);
+  assert.deepStrictEqual(after.roster.map((r) => r.rosterId), ['packAlpha', 'rime']);
   assert.ok(!after.roster.some((r) => r.equipment.includes('dagger.common')), 'gear is absorbed, never handed on');
   assert.strictEqual(releaseFallen(after, []), after, 'nothing to release, nothing changes');
 });

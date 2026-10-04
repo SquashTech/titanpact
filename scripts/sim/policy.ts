@@ -11,7 +11,6 @@
 import type { MoveDefinition, StatKey } from '../../src/engine/content';
 import { statusApplicationsOf } from '../../src/engine/content';
 import { rosterHeroes as heroes } from '../../src/data/content';
-import { applyCompanionTierStep, companionTierStep } from '../../src/run/companion';
 import { moves } from '../../src/data/moves';
 import { equipment } from '../../src/data/equipment';
 import { passives } from '../../src/data/passives';
@@ -360,7 +359,7 @@ export function emptyPayout(): SchedulePayout {
 
 /**
  * What a hero's Mastery pips owe it (src/view/run/masteryFlow.ts), paid for every hero on the
- * roster: the companion's tier-step, or its Evolution — the path taken at random, since the path
+ * roster: its Evolution — the path taken at random, since the path
  * table is what is under test, and its granted move's overflow resolved. Called wherever a pip
  * lands and from the level-up report as the catch-all a hire arriving past the pip needs.
  */
@@ -369,10 +368,6 @@ export function payMastery(run: RunState, rng: () => number, payout: SchedulePay
   for (const { rosterId } of run.roster) {
     const entry = next.roster.find((r) => r.rosterId === rosterId);
     if (!entry) continue;
-    if (companionTierStep(entry)) {
-      next = applyCompanionTierStep(next, rosterId);
-      continue;
-    }
     const node = availableEvolution(progressionTable, entry);
     if (!node || node.paths.length === 0) {
       // The signature at its level (docs/mastery.md §5): the same take-if-it-beats-the-worst rule an

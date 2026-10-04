@@ -60,7 +60,7 @@ import { heroes } from '../data/heroes';
 import { moves } from '../data/moves';
 import { allCombatants, rosterHeroes } from '../data/content';
 import { CompanionScreen } from '../view/run/CompanionScreen';
-import { absorbCompanions, awakenCompanion, companionCandidate, companionJoinDue, companionToAwaken, joinCompanion } from '../run/companion';
+import { awakenCompanion, companionCandidate, companionGrowth, companionHeroId, companionJoinDue, companionToAwaken, joinCompanion } from '../run/companion';
 import { fallenAfterFight, isPermadeath, openAscension } from '../run/ascension';
 import { FallenScreen } from '../view/run/FallenScreen';
 import type { CombatState } from '../engine/state';
@@ -596,6 +596,7 @@ export function App() {
         evolutionPathId: currentEvolutionPathId(entry),
         ...(turnedCurse(entry) ? { curseId: turnedCurse(entry)!.id } : {}),
       })),
+      companionType: playerRun.companion?.type ?? null,
     };
     const before = readProfile();
     const after = updateProfile((current) => recordRunEnded(current, end, now));
@@ -819,12 +820,12 @@ export function App() {
     // companion brought this far answers it: it wakes to Ancient for the fight, and its line joins
     // Ancient on every run after (profile.ts `ascendedSpawnTypes`).
     const waking = mapNodeType === 'finale' ? companionToAwaken(playerRun) : null;
+    const wakingHeroId = waking ? companionHeroId(playerRun) : null;
     if (waking) {
       setPlayerRun((run) => awakenCompanion(run));
-      const type = companionTypeOf(waking.heroId);
-      if (type) setProfile(updateProfile((current) => recordSpawnAscended(current, type)));
+      setProfile(updateProfile((current) => recordSpawnAscended(current, waking.type)));
     }
-    const afterHerald: Screen = waking ? { kind: 'companionAwakens', heroId: waking.heroId, next: fight } : fight;
+    const afterHerald: Screen = wakingHeroId ? { kind: 'companionAwakens', heroId: wakingHeroId, next: fight } : fight;
     setScreen(mapNodeType === 'finale' ? { kind: 'herald', next: afterHerald } : fight);
   }
 
@@ -838,7 +839,7 @@ export function App() {
     outcome: 'win' | 'loss',
     /** What the fight drank; debited here, so a fight quit and replayed refunds it. */
     consumablesUsed: ConsumablePurse,
-    /** The player's own KO'd roster ids at the end — what the companion's mortality reads. */
+    /** The player's own KO'd roster ids at the end — what Permadeath's Fallen beat reads. */
     koRosterIds: readonly string[] = [],
     /** The fight's end state — what the roster's wounds are read off (run/wounds.ts). */
     finalState: CombatState | null = null,
@@ -868,10 +869,6 @@ export function App() {
     // Every node kind, unlike `fightsStarted` — this one is the run summary's tally, and since
     // 2026-09-10 it is also what the level curve reads (run/growth.ts).
     next = { ...next, encountersWon: next.encountersWon + 1 };
-    // A KO'd companion is gone from the run — BEFORE the level report, so the report never lists
-    // a hero that is already gone (docs/titanspawn-overhaul.md §5). Its gear goes with it.
-    const absorption = absorbCompanions(next, koRosterIds);
-    next = absorption.run;
     // The MVP's pip, before the levels: an Evolution it opens is raised by the level flow below.
     const mvpEntry = mvp ? next.roster.find((entry) => entry.rosterId === mvp.rosterId) : undefined;
     if (mvpEntry && canTakeMastery(mvpEntry)) next = { ...grantMastery(next, mvpEntry.rosterId, 1), lastMvpRosterId: mvpEntry.rosterId };
@@ -883,7 +880,7 @@ export function App() {
     // The run's first fight is won: one of the Earlies it beat asks to come along, and it does.
     // Joined after the levels roll so the report is the fight's and the newcomer arrives at par.
     const companionId = companionJoinDue(playerRun, mapNodeType) ? companionCandidate(encounter) : null;
-    if (companionId) next = joinCompanion(next, companionId, rosterHeroes, Math.random, isSpawnAscended(readProfile(), companionTypeOf(companionId) ?? ''));
+    if (companionId) next = joinCompanion(next, companionId, isSpawnAscended(readProfile(), companionTypeOf(companionId) ?? ''));
 
     let afterScreen: Screen;
     if (isFinale) {
@@ -906,11 +903,13 @@ export function App() {
         });
       }
       if (next.actNumber < TOTAL_ACTS) {
+        const grown = companionGrowth(next, next.actNumber, next.actNumber + 1);
         next = advanceToNextAct(next, randomSeed());
         setActBreak(true);
         // The seal grants nothing, so it goes last in the chain — the socket fills, then
         // you arrive somewhere new. The opposite of the Banner's placement, for the same reason.
-        afterScreen = { kind: 'pactSeal' };
+        // The companion's tier-step rides the act boundary just ahead of it (docs/companion-call.md §4).
+        afterScreen = grown ? { kind: 'companion', beat: { kind: 'grown', ...grown }, next: { kind: 'pactSeal' } } : { kind: 'pactSeal' };
       } else {
         afterScreen = { kind: 'runComplete' };
       }
@@ -952,18 +951,14 @@ export function App() {
     const afterLoss: Screen = levelled.run.roster.some((entry) => levelPayoffOwed(levelled.run, entry.rosterId))
       ? { kind: 'levelUp', report: levelled.report, next: afterLevels, seed: randomSeed() }
       : afterLevels;
-    // And the companion's loss ahead of even that — the one thing the fight took (§5). Under
-    // Permadeath the Fallen beat is that screen for everyone the fight knocked out (docs/ascension.md
-    // §3): the KO'd stay on the roster, `down`, until it lets them go, so the level report that
-    // follows reads the roster to know who is still there.
+    // Under Permadeath the Fallen beat goes ahead of even that, for everyone the fight knocked out
+    // (docs/ascension.md §3): the KO'd stay on the roster, `down`, until it lets them go, so the
+    // level report that follows reads the roster to know who is still there.
     const fallen = fallenAfterFight(next, koRosterIds);
     const chain: Screen =
-      isPermadeath(next) && (fallen.length > 0 || absorption.absorbed.length > 0)
-        ? { kind: 'fallen', rosterIds: fallen.map((entry) => entry.rosterId), companion: absorption.absorbed[0] ?? null, next: afterLoss }
-        : absorption.absorbed.reduce<Screen>(
-            (rest, gone) => ({ kind: 'companion', beat: { kind: 'lost', heroId: gone.heroId }, next: rest }),
-            afterLoss
-          );
+      isPermadeath(next) && fallen.length > 0
+        ? { kind: 'fallen', rosterIds: fallen.map((entry) => entry.rosterId), next: afterLoss }
+        : afterLoss;
     // The Eyes closing is the fight's own last beat, so the collapse and the binding go ahead of
     // even the level report: nothing the fight pays is worth seeing before the Titan is down.
     setScreen(isFinale ? { kind: 'titanBound', next: chain } : chain);
@@ -1625,7 +1620,7 @@ export function App() {
       )}
 
       {screen.kind === 'fallen' && (
-        <FallenScreen run={playerRun} rosterIds={screen.rosterIds} companion={screen.companion} onRunChange={setPlayerRun} onContinue={() => setScreen(screen.next)} />
+        <FallenScreen run={playerRun} rosterIds={screen.rosterIds} onRunChange={setPlayerRun} onContinue={() => setScreen(screen.next)} />
       )}
 
       {screen.kind === 'companion' && <CompanionScreen run={playerRun} beat={screen.beat} onContinue={() => setScreen(screen.next)} />}

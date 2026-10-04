@@ -125,6 +125,8 @@ export interface SideCall {
   combatantId: string;
   moveId: string;
   remaining: number;
+  /** Calls added each time a later phase of the fight begins (the woken companion before the Eyes). */
+  phaseGrant?: number;
 }
 
 /** A combatant that fights — every one but a Called caster, which is never fielded, targeted or counted. */
@@ -142,12 +144,13 @@ export function availableCall(state: CombatState, side: Side): SideCall | null {
  * Seats a Called caster: `combatant` joins `combatants` marked `called`, with no passives (a Call
  * carries no Mark and no innate), and its side holds `remaining` Calls of `moveId`.
  */
-export function withCalledCaster(state: CombatState, combatant: Combatant, moveId: string, remaining = 1): CombatState {
+export function withCalledCaster(state: CombatState, combatant: Combatant, moveId: string, remaining = 1, phaseGrant = 0): CombatState {
   const caster: Combatant = { ...combatant, called: true, passives: {} };
+  const call: SideCall = { combatantId: caster.combatantId, moveId, remaining, ...(phaseGrant > 0 ? { phaseGrant } : {}) };
   return {
     ...state,
     combatants: { ...state.combatants, [caster.combatantId]: caster },
-    calls: { ...state.calls, [caster.side]: { combatantId: caster.combatantId, moveId, remaining } },
+    calls: { ...state.calls, [caster.side]: call },
   };
 }
 

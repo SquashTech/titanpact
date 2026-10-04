@@ -3,7 +3,7 @@
 // from statModifiers, which is reserved for in-combat deltas).
 
 import type { HeroLookup, CombatState, Side, Combatant, StatModifiers } from '../engine/state';
-import { createCombatant, getMaxHp, getMaxMana } from '../engine/state';
+import { createCombatant, getMaxHp, getMaxMana, withCalledCaster } from '../engine/state';
 import { combatantIdFor, koRosterIdsOf, rosterIdOfCombatant } from './combatantIds';
 import { woundedHp } from './wounds';
 
@@ -33,6 +33,17 @@ export interface SquadPlacement {
   teamStatusGrants?: Record<StatusId, number>;
   /** The side's purse, for a goldStatGrants passive (Gilded Mane). Omitted = none: the AI holds no gold. */
   gold?: number;
+  /** The side's companion, seated as its Called caster (run/companion.ts companionCallFor). Omitted = no Call. */
+  call?: CallPlacement | null;
+}
+
+/** An off-field caster for one side (docs/companion-call.md §7): the entry it is built from, its one move, its Calls. */
+export interface CallPlacement {
+  entry: RosterEntry;
+  moveId: string;
+  calls: number;
+  /** Calls added when a later phase of the fight begins. */
+  phaseGrant?: number;
 }
 
 // Mana starts full (docs/mana.md); HP starts where the act's wounds left it (run/wounds.ts).
@@ -85,7 +96,10 @@ export function buildCombatState(
   const active: CombatState['active'] = { A: [null, null], B: [null, null] };
   const bench: CombatState['bench'] = { A: [], B: [] };
 
-  for (const { side, squad, roster, teamStatModifiers, teamPassiveGrants, teamStatusGrants, gold } of placements) {
+  const calls: { combatant: Combatant; placement: CallPlacement }[] = [];
+  for (const { side, squad, roster, teamStatModifiers, teamPassiveGrants, teamStatusGrants, gold, call } of placements) {
+    // Built bare — no gear, no team grants, no purse: the Call is the line at par, nothing the roster carries.
+    if (call) calls.push({ combatant: placeEntry(call.entry, side, heroes, equipmentLookup, passiveDefs, {}, {}, {}, 0), placement: call });
     active[side] = squad.activeIds.map((id) => (id ? combatantIdFor(side, id) : null)) as [string | null, string | null];
     const phaseOf = new Map<string, number>();
     (squad.reserves ?? []).forEach((phase, i) => phase.forEach((id) => phaseOf.set(id, i + 1)));
@@ -116,7 +130,7 @@ export function buildCombatState(
     }
   }
 
-  return {
+  const built: CombatState = {
     seed,
     rngState: createRng(seed),
     round: 1,
@@ -126,4 +140,8 @@ export function buildCombatState(
     koCount: { A: 0, B: 0 },
     activeFieldEffect: null,
   };
+  return calls.reduce(
+    (state, { combatant, placement }) => withCalledCaster(state, combatant, placement.moveId, placement.calls, placement.phaseGrant ?? 0),
+    built
+  );
 }

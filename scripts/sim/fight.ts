@@ -11,7 +11,7 @@ import { fieldEffects } from '../../src/data/fieldEffects';
 import { equipment } from '../../src/data/equipment';
 import { relics } from '../../src/data/relics';
 import type { CombatState, Side } from '../../src/engine/state';
-import { getMaxHp, getMaxMana, getEffectiveStat, sideDefeated } from '../../src/engine/state';
+import { getMaxHp, getMaxMana, getEffectiveStat, isFighter, sideDefeated } from '../../src/engine/state';
 import { useConsumable } from '../../src/engine/combat/consumables';
 import type { CombatEvent } from '../../src/engine/events';
 import type { StatKey } from '../../src/engine/content';
@@ -21,7 +21,7 @@ import { resolveRound } from '../../src/engine/combat/resolveRound';
 import { applyForcedReplacement, replacementCandidates } from '../../src/engine/combat/switching';
 import { resolveBattleStartEntries, resolvePassiveReactions } from '../../src/engine/combat/passiveEngine';
 import { DEFAULT_PACT_CLOCK } from '../../src/engine/combat/pactClock';
-import { buildCombatState, rosterIdOfCombatant } from '../../src/run/buildCombatState';
+import { buildCombatState, rosterIdOfCombatant, type CallPlacement } from '../../src/run/buildCombatState';
 import { pickAiAction, type AiContext } from '../../src/run/ai';
 import { canSwitchOut, hasAffordableMoveInFight, isLockedIn } from '../../src/engine/state';
 import { relicTeamStatModifiers } from '../../src/run/relics';
@@ -171,7 +171,7 @@ const STAT_TOTAL_KEYS = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 's
 function squadStatTotal(state: CombatState, side: Side): number {
   let total = 0;
   for (const combatant of Object.values(state.combatants)) {
-    if (combatant.side !== side) continue;
+    if (combatant.side !== side || !isFighter(combatant)) continue;
     const hero = allCombatants[combatant.heroId];
     for (const stat of STAT_TOTAL_KEYS) total += getEffectiveStat(hero, combatant, stat);
   }
@@ -465,6 +465,8 @@ export interface FightInput {
   aiPilot?: PilotKind;
   /** Revives the pilot may spend in this fight, on the first fallen hero, before its command phase (engine/combat/consumables.ts). Default none. */
   revives?: number;
+  /** The player's companion, seated as its Called caster (run/companion.ts companionCallFor). Default none. */
+  playerCall?: CallPlacement | null;
 }
 
 /** The original player side: run/ai.ts plus the reactive mana cycle. */
@@ -476,7 +478,7 @@ function chartPilotActions(state: CombatState, playerCtx: AiContext, playerActiv
 }
 
 export function simulateFight(input: FightInput): FightOutcome {
-  const { seed, playerRoster, playerSquad, playerRelicIds, playerGold, aiRoster, aiSquad, rng } = input;
+  const { seed, playerRoster, playerSquad, playerRelicIds, playerGold, aiRoster, aiSquad, rng, playerCall } = input;
 
   const start = buildCombatState(
     seed,
@@ -491,6 +493,7 @@ export function simulateFight(input: FightInput): FightOutcome {
         teamPassiveGrants: relicTeamPassiveGrants(playerRelicIds, relics),
         teamStatusGrants: relicTeamStatusGrants(playerRelicIds, relics),
         gold: playerGold,
+        call: playerCall ?? null,
       },
       { side: AI_SIDE, squad: aiSquad, roster: aiRoster },
     ],
@@ -499,6 +502,7 @@ export function simulateFight(input: FightInput): FightOutcome {
 
   const telemetry: Record<string, CombatantTelemetry> = {};
   for (const combatant of Object.values(start.combatants)) {
+    if (!isFighter(combatant)) continue;
     telemetry[combatant.combatantId] = {
       heroId: combatant.heroId,
       rosterId: rosterIdOfCombatant(combatant.combatantId),
@@ -624,7 +628,7 @@ export function simulateFight(input: FightInput): FightOutcome {
   let hp = 0;
   let maxHp = 0;
   for (const combatant of Object.values(state.combatants)) {
-    if (combatant.side !== PLAYER_SIDE) continue;
+    if (combatant.side !== PLAYER_SIDE || !isFighter(combatant)) continue;
     hp += Math.max(0, combatant.currentHp);
     maxHp += getMaxHp(allCombatants[combatant.heroId], combatant);
   }

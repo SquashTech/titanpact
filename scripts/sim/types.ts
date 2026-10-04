@@ -143,10 +143,8 @@ export interface Aggregate {
   rosterSizeEndSum: number;
   /** Finales entered / won, keyed by heroes standing on entry. */
   finaleBySize: Record<number, { entered: number; won: number }>;
-  /** The companion (src/run/companion.ts): runs it joined, runs a knockout took it, and the encounter count it was lost at, summed. */
+  /** The companion (src/run/companion.ts): runs it joined. */
   companionJoined: number;
-  companionLost: number;
-  companionLostAtSum: number;
   /** Sum of the mean roster level at run end. */
   rosterLevelEndSum: number;
   rosterEvolvedEndSum: number;
@@ -270,8 +268,6 @@ export function emptyAggregate(): Aggregate {
     rosterSizeEndSum: 0,
     finaleBySize: {},
     companionJoined: 0,
-    companionLost: 0,
-    companionLostAtSum: 0,
     rosterLevelEndSum: 0,
     rosterEvolvedEndSum: 0,
     runsRosterEvolved: 0,
@@ -413,8 +409,6 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
     slot.won += from.finaleBySize[n].won;
   }
   into.companionJoined += from.companionJoined;
-  into.companionLost += from.companionLost;
-  into.companionLostAtSum += from.companionLostAtSum;
   into.rosterLevelEndSum += from.rosterLevelEndSum;
   into.rosterEvolvedEndSum += from.rosterEvolvedEndSum;
   into.runsRosterEvolved += from.runsRosterEvolved;

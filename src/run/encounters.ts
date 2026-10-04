@@ -17,7 +17,6 @@ import { rosterEntryTypes } from './progression';
 import { championGradeFor, encounterScaling, encounterHeroCountOverride, enemyLoadoutFor, guardianEscortCount } from './difficulty';
 import { appendFinalEnemy, generateEncounter, type Encounter, type EncounterNodeType } from './enemyGen';
 import { locationBias } from './locations';
-import { isCompanion } from './companion';
 import { guardiansWake, wokenChampion, wokenChampionMark, wokenEscortCount } from './ascension';
 import { guardianEscortPool, mobEncounter } from './spawn';
 import { DECK_HEROES_PER_FIGHT } from './deck';
@@ -79,12 +78,9 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
   // From A1 the Guardians wake (run/ascension.ts): the escorts climb with the act, the champion leads.
   const woken = type === 'boss' && guardiansWake(run);
   const standardCount = encounterKind === 'boss' ? (woken ? wokenEscortCount(run.actNumber) : guardianEscortCount(run.actNumber)) : 4;
-  // Act 1 caps the enemy count at the roster — the IMMORTAL roster (2026-09-13, per user
-  // direction, titanspawn-overhaul.md "Phase 6 findings"): the companion is half a hero and must
-  // not invite a whole enemy, so the Act 1 Skirmish is 3v2 with it on the bench.
-  const immortalRoster = run.roster.filter((entry) => !isCompanion(entry)).length;
+  // Act 1 caps the enemy count at the roster (the companion is off it — docs/companion-call.md §6).
   const heroCountOverride =
-    type === 'fight' || isSecondFight ? 2 : encounterHeroCountOverride(type, run.actNumber, immortalRoster, standardCount);
+    type === 'fight' || isSecondFight ? 2 : encounterHeroCountOverride(type, run.actNumber, run.roster.length, standardCount);
   const heroCount = heroCountOverride ?? standardCount;
   // Location affinity bias applies to the recruitable pool only (docs/locations.md §2).
   const bias = pool === heroes ? locationBias(location, heroes, heroCount) : undefined;

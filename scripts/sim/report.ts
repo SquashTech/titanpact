@@ -226,8 +226,7 @@ export function formatReport(
     }
   }
   out.push(
-    `  companion                  joined ${pct(agg.companionJoined, R)}, lost ${pct(agg.companionLost, Math.max(1, agg.companionJoined))} of those` +
-      (agg.companionLost > 0 ? ` (mean encounter ${num(agg.companionLostAtSum / agg.companionLost, 1)})` : '')
+    `  companion                  joined ${pct(agg.companionJoined, R)}`
   );
   out.push('');
   out.push(`  ${pad('act', 6)}${padStart('entered', 10)}${padStart('cleared', 10)}${padStart('clear%', 9)}${padStart('died here', 11)}`);

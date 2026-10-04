@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { rosterHeroes as heroes } from '../../data/content';
 import { progressionTable } from '../../data/progression';
-import { applyCompanionTierStep, companionTierStep } from '../../run/companion';
 import { MASTERY_INNATE } from '../../run/mastery';
 import { masteredInnateFor } from '../../run/innate';
 import type { RunState } from '../../run/state';
@@ -36,12 +35,6 @@ export interface Mastered {
   pendingMoveId?: string;
 }
 
-/** The companion's tier-step (run/companion.ts): the pip a hero would evolve at, and the pip it would master its innate at. */
-export interface Grown {
-  rosterId: string;
-  fromHeroId: string;
-  toHeroId: string;
-}
 
 /**
  * What a hero's Mastery pips owe it, paid one screen at a time (docs/mastery.md §2): the
@@ -52,7 +45,6 @@ export interface Grown {
  */
 export interface MasteryFlow {
   evolving: Evolving | null;
-  grown: Grown | null;
   overflow: Overflow | null;
   mastered: Mastered | null;
   /** Something is on screen waiting on the player. */
@@ -63,7 +55,6 @@ export interface MasteryFlow {
    * `fromMastery` the pips it held before, which is how the tenth pip's reveal is raised once.
    */
   raise: (rosterId: string, on?: RunState, fromMastery?: number) => boolean;
-  closeGrown: () => void;
   chooseEvolution: (pathId: string) => void;
   resolveOverflow: (replaceMoveId: string | null, learn: boolean) => void;
   closeMastered: () => void;
@@ -71,19 +62,12 @@ export interface MasteryFlow {
 
 export function useMasteryFlow(run: RunState, onRunChange: (next: RunState) => void): MasteryFlow {
   const [evolving, setEvolving] = useState<Evolving | null>(null);
-  const [grown, setGrown] = useState<Grown | null>(null);
   const [overflow, setOverflow] = useState<Overflow | null>(null);
   const [mastered, setMastered] = useState<Mastered | null>(null);
 
   function raise(rosterId: string, on: RunState = run, fromMastery?: number): boolean {
     const entry = on.roster.find((r) => r.rosterId === rosterId);
     if (!entry) return false;
-    const stepTo = companionTierStep(entry);
-    if (stepTo) {
-      onRunChange(applyCompanionTierStep(on, rosterId));
-      setGrown({ rosterId, fromHeroId: entry.heroId, toHeroId: stepTo });
-      return true;
-    }
     // A curse's Turn lands ahead of the Evolution its pip also opens: the body first, then the path.
     if (curseTurnOwed(entry)) {
       const curse = curseOf(entry)!;
@@ -138,12 +122,10 @@ export function useMasteryFlow(run: RunState, onRunChange: (next: RunState) => v
 
   return {
     evolving,
-    grown,
     overflow,
     mastered,
-    busy: !!evolving || !!grown || !!overflow || !!mastered,
+    busy: !!evolving || !!overflow || !!mastered,
     raise,
-    closeGrown: () => setGrown(null),
     chooseEvolution,
     resolveOverflow,
     closeMastered,

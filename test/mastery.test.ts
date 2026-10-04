@@ -37,7 +37,6 @@ import type { PassiveDefinition } from '../src/engine/content';
 import { signatureMoves } from '../src/data/signatures';
 import { generateEncounter } from '../src/run/enemyGen';
 import { mentorMovePool, tutorMovePool } from '../src/run/tutor';
-import { companionOf, companionTierStep, joinCompanion } from '../src/run/companion';
 import { FINALE_ACT, addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
 import { generateMap, MAP_NODE_TYPES, REWARD_WEIGHTS } from '../src/run/map';
 import { xpForLevel } from '../src/run/growth';
@@ -110,14 +109,6 @@ test('mastery: enemies, contracts and hires read their pips off the act — one 
   assert.strictEqual(masteryForAct(99), MASTERY_CAP, 'clamped above');
   for (let act = 2; act <= 5; act++) assert.ok(masteryForAct(act) > guildHallMastery(act), `act ${act}: a contract is a pip ahead of a hire`);
   assert.strictEqual(guildHallMastery(1), 0, 'and both are raw in Act 1');
-});
-
-test('mastery: the companion steps up at the pips a hero would evolve and master at, and its pips die with it', () => {
-  let run = joinCompanion(seed(['valor', 'packAlpha']), 'cubling', rosterHeroes);
-  const id = companionOf(run)!.rosterId;
-  run = grantMastery(run, id, MASTERY_EVOLUTION);
-  assert.strictEqual(companionTierStep(companionOf(run)!), 'ravager');
-  assert.strictEqual(availableEvolution(progressionTable, companionOf(run)!), null, 'a spawn has no branch, only a step');
 });
 
 test('mastery: the shelf sells a Scroll for flat gold, capped a visit, only while somebody can take one', () => {

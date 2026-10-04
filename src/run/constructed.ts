@@ -10,7 +10,7 @@ import type { Squad } from './squad';
 import { openingSquad } from './squad';
 import { createRosterEntry, createRunState, ROSTER_CAP, type RosterEntry, type RunState } from './state';
 import { BASE_ITEM_SLOTS, parseEquipmentId, type EquipmentDefinition, type EquipmentRarity } from './equipment';
-import { GROWTH_STATS, MAX_LEVEL, gradeExpectedPoints, gradesFor, growthUnitFor, xpForLevel } from './growth';
+import { MAX_LEVEL, expectedGrowthAt, xpForLevel } from './growth';
 import { MASTERY_CAP } from './mastery';
 import { MOVE_CAP, chooseEvolutionPath, rosterEntryTypes, scheduleEntries, scheduleFor, type EvolutionPath, type ProgressionTable } from './progression';
 
@@ -71,14 +71,7 @@ export function isConstructedOpen(profile: Pick<Profile, 'runsCompleted'>): bool
 
 /** §4: every roll from level 1 to CONSTRUCTED_LEVEL at its grade's mean, rounded once. */
 export function expectedGrowthGrants(hero: HeroDefinition): Partial<Record<StatKey, number>> {
-  const grades = gradesFor(hero);
-  const levels = CONSTRUCTED_LEVEL - 1;
-  const grants: Partial<Record<StatKey, number>> = {};
-  for (const stat of GROWTH_STATS) {
-    const amount = Math.round(levels * gradeExpectedPoints(grades[stat]) * growthUnitFor(stat));
-    if (amount !== 0) grants[stat] = amount;
-  }
-  return grants;
+  return expectedGrowthAt(hero, CONSTRUCTED_LEVEL);
 }
 
 export function constructedPath(table: ProgressionTable, heroId: string, pathId: string | null): EvolutionPath | null {

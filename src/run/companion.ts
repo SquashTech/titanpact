@@ -1,39 +1,34 @@
-// The companion (docs/titanspawn-overhaul.md §5): the Fire Emblem trainee fused with death
-// fodder. One of the two Early spawn the player beats in the run's first fight asks to join, and
-// it does — there is no declining (per user direction). It takes a roster slot, levels roster-wide,
-// takes its schedule's offers, holds items and restores between nodes like anyone; the Mastery
-// pip that opens a hero's Evolution is a TIER-STEP for it (Early → Mid), and the pip that masters
-// a hero's innate a second one (Mid → Late), in place of a branch (docs/mastery.md §2); and the only
-// new rule is `RosterEntry.mortal` — a knockout removes it from the run, its pips and its gear
-// with it (docs/gear-absorption.md §7).
+// The companion (docs/companion-call.md): one of the two Early spawn the player beats in the run's
+// first fight asks to join, and it does — there is no declining (per user direction). It is a summon,
+// not a party member: it takes no roster slot, levels with nobody, holds nothing, and cannot be
+// lost. Once a fight an active hero can spend its turn to Call it, and it casts its tier's one move
+// from off the field. Its tier follows the act (SPAWN_TIER_BY_ACT), and its stats are its line's at
+// the run's par on the expected line, so a Call scales with the run without the companion levelling.
 
 import type { TypeId } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
 import type { Encounter } from './enemyGen';
-import { SPAWN_TIERS, spawnId, spawnPosition } from '../data/titanspawn';
-import { levelOf, levelUpEntry } from './growth';
-import { scheduleEntriesBelow } from './progression';
-import { MASTERY_EVOLUTION, MASTERY_INNATE } from './mastery';
-import { ROSTER_CAP, addRosterEntry, createRosterEntry, type RosterEntry, type RunState } from './state';
-import { freshRosterId } from './recruitment';
+import type { CallPlacement } from './buildCombatState';
+import { spawnId, spawnLineOf, spawnPosition, type SpawnTier } from '../data/titanspawn';
+import { expectedGrowthAt, levelAfterEncounters, xpForLevel } from './growth';
+import { SPAWN_TIER_BY_ACT } from './difficulty';
+import { createRosterEntry, type RunState } from './state';
 
-/**
- * The companion by IDENTITY — a spawn body, which is on a roster only as the companion (the draft
- * is starters, the Guild Hall pool is `heroes`, a contract needs `isRecruitable`). `mortal` is the
- * RULE it lives under, and the two must never be read for each other: Ascension 1 makes every hero
- * mortal (docs/ascension.md §2) without making any of them the companion.
- */
-export function isCompanion(entry: Pick<RosterEntry, 'heroId'>): boolean {
-  return spawnPosition(entry.heroId) !== undefined;
+/** The companion a run took: its line, and whether it has woken to Ancient (this run, or its line on an earlier one). */
+export interface CompanionState {
+  type: TypeId;
+  ascended: boolean;
 }
 
-export function companionOf(run: RunState): RosterEntry | null {
-  return run.roster.find(isCompanion) ?? null;
-}
+/** The roster id the Called caster is placed under — never a real roster entry's. */
+export const COMPANION_ROSTER_ID = 'companion';
 
-/** True once, on the run's first fight: a `fight` node, nothing joined yet, and no companion ever taken. */
+/** The type the companion wakes to: the Titan's own, in the secondary slot a hero's graft would fill. */
+export const ANCIENT: TypeId = 'Ancient';
+
+/** True once, on the run's first fight: a `fight` node, and no companion ever taken. */
 export function companionJoinDue(run: RunState, mapNodeType: string): boolean {
-  return mapNodeType === 'fight' && run.fightsStarted === 1 && run.companionHeroId === null && run.roster.length < ROSTER_CAP;
+  return mapNodeType === 'fight' && run.fightsStarted === 1 && run.companion === null;
 }
 
 /** The body that asks: the beaten side's lead, if it is an Early spawn — which the first fight's always are. */
@@ -47,107 +42,78 @@ export function companionCandidate(encounter: Encounter): string | null {
   return null;
 }
 
+/** It joins as its line. `ascended`: its line woke on an earlier run (profile.ts `ascendedSpawnTypes`). */
+export function joinCompanion(run: RunState, heroId: string, ascended = false): RunState {
+  const position = spawnPosition(heroId);
+  if (!position) throw new Error(`${heroId} is not a spawn and cannot be the companion`);
+  return { ...run, companion: { type: position.line.type, ascended } };
+}
+
+/** The tier the companion stands at in an act — the escorts' own schedule. */
+export function companionTier(actNumber: number): SpawnTier {
+  return SPAWN_TIER_BY_ACT[Math.min(Math.max(actNumber, 1), SPAWN_TIER_BY_ACT.length) - 1];
+}
+
+/** The body the run's companion stands in this act, or null without one. */
+export function companionHeroId(run: Pick<RunState, 'companion' | 'actNumber'>): string | null {
+  const line = run.companion && spawnLineOf(run.companion.type);
+  return line ? spawnId(line, companionTier(run.actNumber)) : null;
+}
+
+/** The one move the companion casts when Called this act, or null without one. */
+export function companionCallMoveId(run: Pick<RunState, 'companion' | 'actNumber'>): string | null {
+  const line = run.companion && spawnLineOf(run.companion.type);
+  return line ? line.callMoveIds[companionTier(run.actNumber)] : null;
+}
+
 /**
- * It joins at the roster's par with the growth those levels would have rolled — RAW is unbuilt,
- * not hollow (CLAUDE.md "Recruitment") — holding its authored kit, mortal.
+ * The Called caster a fight seats (docs/companion-call.md §3.1): the act's body at the run's par,
+ * every level at its grade's mean so the figure is the same every fight of a stretch — no gear, no
+ * Banners, nothing the roster carries. One Call; a woken companion takes one more when a later
+ * phase of the fight begins (the Eyes, §3.4).
  */
-export function joinCompanion(
-  run: RunState,
-  heroId: string,
-  heroes: HeroLookup,
-  random: () => number = Math.random,
-  /** Its line woke to Ancient on an earlier run (profile.ts `ascendedSpawnTypes`): it joins already Ancient. */
-  ascended = false
-): RunState {
-  const hero = heroes[heroId];
-  if (!hero || !spawnPosition(heroId)) throw new Error(`${heroId} is not a spawn and cannot be the companion`);
-  const par = run.roster.reduce((best, entry) => Math.max(best, levelOf(entry)), 1);
-  const base = {
-    ...createRosterEntry(freshRosterId(run, heroId), heroId, hero.moveIds),
-    mortal: true,
-    evolutionTypeGraft: ascended ? ANCIENT : null,
+export function companionCallFor(run: RunState, heroes: HeroLookup): CallPlacement | null {
+  const heroId = companionHeroId(run);
+  const moveId = companionCallMoveId(run);
+  const hero = heroId ? heroes[heroId] : undefined;
+  if (!heroId || !moveId || !hero) return null;
+  const level = levelAfterEncounters(run.encountersWon);
+  const entry = {
+    ...createRosterEntry(COMPANION_ROSTER_ID, heroId, [moveId]),
+    xp: xpForLevel(level),
+    growthStatGrants: expectedGrowthAt(hero, level),
+    evolutionTypeGraft: run.companion!.ascended ? ANCIENT : null,
   };
-  const levelled = levelUpEntry(base, hero, par - 1, random).entry;
-  // It joins with the offers below its level behind it, as a contract hero does: no backlog to pay.
-  const entry = { ...levelled, scheduleTaken: scheduleEntriesBelow(hero, levelOf(levelled)) };
-  return { ...addRosterEntry(run, entry), companionHeroId: heroId };
+  return { entry, moveId, calls: 1, phaseGrant: run.companion!.ascended ? 1 : 0 };
 }
 
-/** The type the companion wakes to: the Titan's own, in the secondary slot a hero's graft would fill. */
-export const ANCIENT: TypeId = 'Ancient';
-
-/**
- * The companion on the roster as the finale opens, when it has not yet woken — the one the
- * awakening beat is for. Null when there is none, or it already carries Ancient.
- */
-export function companionToAwaken(run: RunState): RosterEntry | null {
-  const entry = companionOf(run);
-  return entry && entry.evolutionTypeGraft !== ANCIENT ? entry : null;
+/** The companion as the finale opens, when it has not yet woken — the one the awakening beat is for. */
+export function companionToAwaken(run: RunState): CompanionState | null {
+  return run.companion && !run.companion.ascended ? run.companion : null;
 }
 
-/**
- * The companion reaches its true potential: Ancient takes its secondary slot for the rest of the
- * run. Everything else carries; the body keeps its tier. A spawn line is mono, so nothing is traded.
- */
+/** The companion reaches its true potential: Ancient takes its secondary slot, and its Call refreshes for the Eyes. */
 export function awakenCompanion(run: RunState): RunState {
-  const entry = companionToAwaken(run);
-  if (!entry) return run;
-  return { ...run, roster: run.roster.map((r) => (r === entry ? { ...r, evolutionTypeGraft: ANCIENT } : r)) };
-}
-
-export interface Absorption {
-  run: RunState;
-  /** The companions the fight took, as they were — for the screen that shows them go. */
-  absorbed: RosterEntry[];
+  return companionToAwaken(run) ? { ...run, companion: { ...run.companion!, ascended: true } } : run;
 }
 
 /**
- * A KO'd companion is gone from the run: off the roster, and what it held goes with it — gear is
- * absorbed, never carried. Called on the fight's resolution, before the level report, so the
- * report never lists a hero that is already gone.
+ * The step an act boundary takes the companion through, when the tier changes — the `grown` beat's
+ * two bodies. Null when it does not, or there is no companion.
  */
-export function absorbCompanions(run: RunState, koRosterIds: readonly string[]): Absorption {
-  const absorbed = run.roster.filter((entry) => entry.mortal && koRosterIds.includes(entry.rosterId));
-  if (absorbed.length === 0) return { run, absorbed };
-  return { run: { ...run, roster: run.roster.filter((entry) => !absorbed.includes(entry)) }, absorbed };
-}
-
-/** The pip each body steps up at: an Early to Mid where a hero would evolve, a Mid to Late where a hero would master its innate. */
-const STEP_PIPS: Record<string, number> = { early: MASTERY_EVOLUTION, mid: MASTERY_INNATE };
-
-/**
- * The body the entry's Mastery has earned it, when it is standing in the one below: DERIVED off
- * the pips and the body it is in, so nothing is owed and nothing is taken — a Mid at ten pips is
- * a Late the moment anyone asks. Null for a hero, or a body with nowhere to step.
- */
-export function companionTierStep(entry: RosterEntry): string | null {
-  const position = spawnPosition(entry.heroId);
-  if (!position) return null;
-  const pip = STEP_PIPS[position.tier];
-  if (pip === undefined || entry.mastery < pip) return null;
-  const nextTier = SPAWN_TIERS[SPAWN_TIERS.indexOf(position.tier) + 1];
-  return nextTier ? spawnId(position.line, nextTier) : null;
+export function companionGrowth(run: Pick<RunState, 'companion'>, fromAct: number, toAct: number): { fromHeroId: string; toHeroId: string } | null {
+  const line = run.companion && spawnLineOf(run.companion.type);
+  if (!line) return null;
+  const from = companionTier(fromAct);
+  const to = companionTier(toAct);
+  return from === to ? null : { fromHeroId: spawnId(line, from), toHeroId: spawnId(line, to) };
 }
 
 /**
- * The step itself: the same entry in the next body. Everything it has — moves, items, levels,
- * growth — carries; only the base line and the figure change, which is what an objective upgrade
- * in the Squirtle/Wartortle/Blastoise sense means.
- */
-export function applyCompanionTierStep(run: RunState, rosterId: string): RunState {
-  const entry = run.roster.find((r) => r.rosterId === rosterId);
-  const nextId = entry && companionTierStep(entry);
-  if (!entry || !nextId) return run;
-  return { ...run, roster: run.roster.map((r) => (r === entry ? { ...r, heroId: nextId } : r)) };
-}
-
-/**
- * The companion's three beats (docs/titanspawn-overhaul.md §5): `join` — the run's first fight is
- * won and one of the Earlies asks to come along; there is no declining (per user direction), so the
- * one button is a welcome. `grown` — a tier-step on the ladder, the same creature in its next body.
- * `lost` — a knockout took it back into the Titan; first in the post-fight chain.
+ * The companion's beats (docs/companion-call.md §8): `join` — the run's first fight is won and one
+ * of the Earlies asks to come along; there is no declining, so the one button is a welcome. `grown`
+ * — the act boundary steps its tier, the same creature in its next body with its next Call.
  */
 export type CompanionBeat =
   | { kind: 'join'; heroId: string }
-  | { kind: 'grown'; fromHeroId: string; toHeroId: string }
-  | { kind: 'lost'; heroId: string };
+  | { kind: 'grown'; fromHeroId: string; toHeroId: string };

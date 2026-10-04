@@ -62,7 +62,8 @@ import { TitanRiseScreen } from '../run/TitanRiseScreen';
 import { overlayHost } from '../shared/overlayHost';
 import type { Squad } from '../../run/squad';
 import type { EquipmentDefinition } from '../../run/equipment';
-import { buildCombatState, koRosterIdsOf } from '../../run/buildCombatState';
+import { buildCombatState } from '../../run/buildCombatState';
+import { companionCallFor } from '../../run/companion';
 import { combatantIdFor } from '../../run/combatantIds';
 import { chooseMvp, emptyMvpTally, tallyMvpEvents, type MvpPick, type MvpRules, type MvpTally } from '../../run/mvp';
 import type { CombatSnapshot } from '../../run/resume';
@@ -661,7 +662,16 @@ export function FightScreen({
       allCombatants,
       equipment,
       [
-        { side: PLAYER_SIDE, squad: playerSquad, roster: playerRun.roster, teamStatModifiers, teamPassiveGrants, teamStatusGrants, gold: playerRun.gold },
+        {
+          side: PLAYER_SIDE,
+          squad: playerSquad,
+          roster: playerRun.roster,
+          teamStatModifiers,
+          teamPassiveGrants,
+          teamStatusGrants,
+          gold: playerRun.gold,
+          call: companionCallFor(playerRun, allCombatants),
+        },
         { side: AI_SIDE, squad: aiSquad, roster: aiRun.roster },
       ],
       passives
@@ -782,10 +792,7 @@ export function FightScreen({
     const t = window.setTimeout(() => handoff.current('win', combat, usedConsumables, null), 650);
     return () => window.clearTimeout(t);
   }, [skipResult]);
-  // A KO'd companion is gone from the run (run/companion.ts absorbCompanions): it is still on the
-  // roster this side of onResolved, but the result fills no bar for it — the fight took it.
-  const playerKoIds = winner ? koRosterIdsOf(combat, PLAYER_SIDE) : [];
-  const resultRoster = playerRun.roster.filter((entry) => !(entry.mortal && playerKoIds.includes(entry.rosterId)));
+  const resultRoster = playerRun.roster;
   // Read once the fight is won; a hero the fight took off the roster cannot take the pip.
   const mvp = useMemo(() => {
     if (winner !== PLAYER_SIDE || !mvpRules) return null;

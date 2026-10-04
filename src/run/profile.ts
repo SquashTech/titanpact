@@ -135,6 +135,8 @@ export interface RunRecord {
   ascension: number;
   /** The roster at the end, in roster order. */
   roster: RunRecordHero[];
+  /** The companion's line (run/companion.ts), or null for a run that never took one; absent on records before the Call. */
+  companionType?: string | null;
   /** The Evolution path ids — and `companion:<type>` — this run's clear starred for the first time; a loss stars nothing. */
   starsEarned: string[];
   /** The rung's clear bonus this run paid; 0 on a loss and on every record written before the stakes. */
@@ -217,18 +219,18 @@ export function recordRunEnded(profile: Profile, end: RunEnd, now: number): Prof
         curseStars.push(curseId);
         starsEarned.push(curseStarId(curseId));
       }
-      // The roster at the Eyes' close: a companion KO'd in the finale is already off it.
-      const type = companionTypeOf(heroId);
-      if (type && !companionStars.includes(type)) {
-        companionStars.push(type);
-        starsEarned.push(companionStarId(type));
-      }
       if (!evolutionPathId) continue;
       const held = evolutionStars[heroId] ?? [];
       if (held.includes(evolutionPathId)) continue;
       evolutionStars[heroId] = [...held, evolutionPathId];
       starsEarned.push(evolutionPathId);
     }
+  }
+  // A clear with the companion's line along: it cannot be lost, so a clear is the whole condition.
+  const companionType = end.outcome === 'win' ? end.companionType : null;
+  if (companionType && !companionStars.includes(companionType)) {
+    companionStars.push(companionType);
+    starsEarned.push(companionStarId(companionType));
   }
   const record: RunRecord = {
     ...end,
@@ -413,6 +415,7 @@ function decodeRunRecord(raw: unknown, knownPathIds?: ReadonlySet<string>): RunR
     encountersWon: count(raw.encountersWon),
     ascension: count(raw.ascension),
     roster,
+    ...(typeof raw.companionType === 'string' && raw.companionType.length > 0 ? { companionType: raw.companionType } : {}),
     starsEarned: stringList(raw.starsEarned).filter((id) => id.startsWith('companion:') || id.startsWith('curse:') || knownPath(id) !== null),
     clearBonus: count(raw.clearBonus),
   };

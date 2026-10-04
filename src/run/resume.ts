@@ -37,8 +37,8 @@ export type RunScreen =
   /** The lore card, ahead of the first draft on an account (docs/tutorial.md). */
   | { kind: 'lore'; next: RunScreen }
   | { kind: 'draft'; optionIds: string[] }
-  /** Permadeath's post-fight beat (docs/ascension.md §3): the KO'd heroes, still on the roster until Continue, and the companion the same fight took. */
-  | { kind: 'fallen'; rosterIds: string[]; companion: RosterEntry | null; next: RunScreen }
+  /** Permadeath's post-fight beat (docs/ascension.md §3): the KO'd heroes, still on the roster until Continue. */
+  | { kind: 'fallen'; rosterIds: string[]; next: RunScreen }
   /** The act-boundary beat: five sockets, one per Guardian (docs/run-loop.md §4). */
   | { kind: 'pactSeal' }
   /** Acts 2-5 open on a 1-of-2 (docs/locations.md §1): the offer is drawn once, when the seal is behind the player. */
@@ -107,7 +107,7 @@ export type RunScreen =
   | { kind: 'event'; nodeId: string; eventId: string; seed: number; settled?: boolean }
   /** What the fight just did to the roster. `taken` is who has already taken a schedule entry this report. */
   | { kind: 'levelUp'; report: readonly HeroLevelUp[]; next: RunScreen; seed: number; taken?: string[] }
-  /** The companion's beats (run/companion.ts): the loss goes AHEAD of the level report; the join right after it; the tier-step is the report's own. */
+  /** The companion's beats (run/companion.ts): the join after the level report; the tier-step at the act boundary, before the seal. */
   | { kind: 'companion'; beat: CompanionBeat; next: RunScreen }
   /** Guardian's Banner after a Guardian win. Not a map node, so no nodeId. */
   | { kind: 'guardianBanner'; next: RunScreen; settled?: boolean }
@@ -336,7 +336,7 @@ function decodeCandidate(value: unknown, ctx: Ctx): RosterReplaceCandidate {
 
 function decodeBeat(value: unknown, ctx: Ctx): CompanionBeat {
   if (!isObject(value)) reject('companion.beat is not an object');
-  if (value.kind === 'join' || value.kind === 'lost') return { kind: value.kind, heroId: heroId(value.heroId, ctx, 'companion.beat.heroId') };
+  if (value.kind === 'join') return { kind: 'join', heroId: heroId(value.heroId, ctx, 'companion.beat.heroId') };
   if (value.kind === 'grown') {
     return { kind: 'grown', fromHeroId: heroId(value.fromHeroId, ctx, 'companion.beat.fromHeroId'), toHeroId: heroId(value.toHeroId, ctx, 'companion.beat.toHeroId') };
   }
@@ -374,7 +374,6 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
       return {
         kind,
         rosterIds: rosterIds(raw.rosterIds, ctx, 'fallen.rosterIds'),
-        companion: raw.companion === null || raw.companion === undefined ? null : decodeRosterEntry(raw.companion, ctx.enemyIndex, 'fallen.companion'),
         next: next(),
       };
     case 'locationChoice': {

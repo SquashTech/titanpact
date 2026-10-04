@@ -303,7 +303,6 @@ export function HeroDossierOverlay({ hero: opened, cycle, onClose }: Props) {
             {isTitanspawn(hero.id) && (
               <div className="detail-evolution-row">
                 <span className="dossier-badge badge-recruit">Titanspawn</span>
-                <span className="companion-mortal is-small">Mortal</span>
               </div>
             )}
           </div>

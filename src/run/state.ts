@@ -1,6 +1,7 @@
 // Run-tier state (docs/architecture.md "State shapes (three tiers)"). Combat
 // state is built FROM this (buildCombatState.ts) and never writes back.
 
+import type { CompanionState } from './companion';
 import type { PassiveId, StatKey, StatusId, TypeId } from '../engine/content';
 import type { EquipmentLoadout } from './equipment';
 import { createEmptyLoadout } from './equipment';
@@ -87,12 +88,6 @@ export interface RosterEntry {
   /** The Class's passive, when it grants one — recorded so entryStats.ts can count it without the Class catalog. Written only by grantClass. */
   classPassiveId: PassiveId | null;
   /**
-   * The companion (run/companion.ts, docs/titanspawn-overhaul.md §5): a hero in every respect
-   * but one — a knockout removes it from the run. The ONLY rule the flag carries; everything
-   * else it does, it does by being on the roster.
-   */
-  mortal: boolean;
-  /**
    * HP missing going into the next node (run/wounds.ts): a fight writes it, the act's end clears
    * it, and buildCombatState places the hero that far down.
    */
@@ -140,11 +135,10 @@ export interface RunState {
   /** The potions, a TEAM purse capped per kind (run/consumables.ts). Spent only in a fight. */
   consumables: ConsumablePurse;
   /**
-   * The companion this run took, by the body it joined as (run/companion.ts) — kept after its
-   * death, since one per run is the rule and a replacement is not (docs/titanspawn-overhaul.md
-   * §10). Null until the join beat.
+   * The companion this run took (run/companion.ts, docs/companion-call.md): its line and whether it
+   * has woken. Off the roster — a summon a hero Calls, never a party member. Null until the join beat.
    */
-  companionHeroId: string | null;
+  companion: CompanionState | null;
   /** Null for a RunState that never gets a map (enemyGen.ts throwaway rosters). */
   map: RunMap | null;
   /** Null = map generated but not yet entered. */
@@ -183,7 +177,7 @@ export function createRunState(gold = 0, recruitContracts = 1, ascension = 0): R
     relics: [],
     recruitContracts,
     consumables: { ...STARTING_CONSUMABLES },
-    companionHeroId: null,
+    companion: null,
     map: null,
     currentNodeId: null,
     visitedNodeIds: [],
@@ -221,7 +215,6 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     curseTurned: false,
     classId: null,
     classPassiveId: null,
-    mortal: false,
     wounds: 0,
     down: false,
     blessed: false,

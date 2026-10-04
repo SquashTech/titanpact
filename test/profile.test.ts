@@ -285,21 +285,22 @@ test('profile: every path in the game is a star, and every hero has exactly thre
   }
 });
 
-test('profile: a clear with the companion on the final roster stars its line, once, and a loss or a lost companion stars nothing', () => {
-  let profile = recordRunEnded(createProfile(), wiped(6, [{ heroId: 'behemoth', level: 30, evolutionPathId: null }]), 1_000);
+test('profile: a clear with a companion stars its line, once, and a loss or a run without one stars nothing', () => {
+  let profile = recordRunEnded(createProfile(), { ...wiped(6, [finished('cinderKnight', 'explosive')]), companionType: 'Beast' }, 1_000);
   assert.deepStrictEqual(profile.companionStars, [], 'a loss');
   profile = recordRunEnded(profile, cleared([finished('cinderKnight', 'explosive')]), 2_000);
-  assert.deepStrictEqual(profile.companionStars, [], 'the companion fell before the Eyes closed');
-  profile = recordRunEnded(profile, cleared([{ heroId: 'ravager', level: 30, evolutionPathId: null }]), 3_000);
-  assert.ok(hasCompanionStar(profile, 'Beast'), 'alive is the condition, not the Late body');
-  assert.deepStrictEqual(profile.runHistory[0].starsEarned, [companionStarId('Beast')]);
-  assert.strictEqual(totalStars(profile), 2);
-  profile = recordRunEnded(profile, cleared([{ heroId: 'behemoth', level: 30, evolutionPathId: null }]), 4_000);
+  assert.deepStrictEqual(profile.companionStars, [], 'no companion this run');
+  profile = recordRunEnded(profile, { ...cleared([finished('rime', 'avalanche')]), companionType: 'Beast' }, 3_000);
+  assert.ok(hasCompanionStar(profile, 'Beast'), 'it cannot be lost, so the clear is the whole condition');
+  assert.deepStrictEqual(profile.runHistory[0].starsEarned, ['rime-avalanche', companionStarId('Beast')]);
+  assert.strictEqual(totalStars(profile), 3);
+  profile = recordRunEnded(profile, { ...cleared([finished('rime', 'avalanche')]), companionType: 'Beast' }, 4_000);
   assert.deepStrictEqual(profile.companionStars, ['Beast'], 'the same line twice is the same star');
   assert.deepStrictEqual(profile.runHistory[0].starsEarned, []);
   const decoded = decodeProfile(JSON.parse(JSON.stringify(profile)), knownHeroIds, knownPathIds);
   assert.deepStrictEqual(decoded.companionStars, ['Beast']);
-  assert.deepStrictEqual(decoded.runHistory[1].starsEarned, [companionStarId('Beast')], 'a companion star survives the path filter');
+  assert.deepStrictEqual(decoded.runHistory[1].starsEarned, ['rime-avalanche', companionStarId('Beast')], 'a companion star survives the path filter');
+  assert.strictEqual(decoded.runHistory[1].companionType, 'Beast');
 });
 
 test('profile: a line woken in the finale stays woken, idempotently, and survives a round trip', () => {

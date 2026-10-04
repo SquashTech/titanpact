@@ -1,6 +1,8 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
+import { moves } from '../../data/moves';
+import { companionCallMoveId } from '../../run/companion';
 import type { RunState } from '../../run/state';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -21,48 +23,36 @@ interface Props {
 const HOP_MS = 520;
 const HOPS = 5;
 
-function copyFor(beat: CompanionBeat): { eyebrow: string; title: string; readout: string; button: string } {
+function copyFor(beat: CompanionBeat, callName: string | null): { eyebrow: string; title: string; readout: string; button: string } {
   const named = (id: string) => rosterHeroes[id]?.name ?? id;
   switch (beat.kind) {
     case 'join':
       return {
         eyebrow: 'Something small stirs',
         title: `The friendly ${named(beat.heroId)} wants to accompany you!`,
-        readout: 'It has great potential, but death is permanent.',
+        readout: `Once a fight, a hero can spend its turn to call on it${callName ? ` — ${callName}` : ''}.`,
         button: `Welcome, ${named(beat.heroId)}`,
       };
     case 'grown':
       return {
         eyebrow: 'The leak grows',
         title: `${named(beat.fromHeroId)} has grown into ${named(beat.toHeroId)}!`,
-        readout: 'Same creature, next body: every move, item and level it had comes with it.',
+        readout: callName ? `Same creature, next body. Its Call is now ${callName}.` : 'Same creature, next body.',
         button: 'Onward',
-      };
-    case 'lost':
-      return {
-        eyebrow: 'The pact comes due',
-        title: `${named(beat.heroId)} was taken back into the Titan.`,
-        readout: 'Nothing of it comes back — what it carried goes with it.',
-        button: 'Carry on',
       };
   }
 }
 
-// `run` is unused today: the plate names the creature, and the roster peek every other node
-// screen wears would cover a title that is the point of the screen.
-export function CompanionScreen({ beat, onContinue }: Props) {
+export function CompanionScreen({ run, beat, onContinue }: Props) {
   const heroId = beat.kind === 'grown' ? beat.toHeroId : beat.heroId;
   const hero = rosterHeroes[heroId];
-  const dancing = beat.kind !== 'lost';
   const [hop, setHop] = useState(0);
-  const copy = copyFor(beat);
+  // The run already stands in the act the beat belongs to, so its Call move is the one to name.
+  const callMoveId = companionCallMoveId(run);
+  const copy = copyFor(beat, callMoveId ? (moves[callMoveId]?.name ?? null) : null);
 
   useEffect(() => {
     if (prefersReducedMotion()) return;
-    if (!dancing) {
-      playSfx('companion.gone');
-      return;
-    }
     // The dance: a few hops on a fixed beat, each one a chirp a little higher than the last, then
     // it settles and waits — a creature that has finished saying hello.
     playSfx('companion.chirp');
@@ -82,7 +72,7 @@ export function CompanionScreen({ beat, onContinue }: Props) {
 
   return (
     <div
-      className={`node-screen companion-screen is-${beat.kind}${dancing && !settled ? ' is-dancing' : ''}`}
+      className={`node-screen companion-screen is-${beat.kind}${!settled ? ' is-dancing' : ''}`}
       style={{ '--node-rgb': getTypeColorRgb(type), '--type-color': getTypeColor(type) } as CSSProperties}
     >
       <NodeSky />
@@ -90,28 +80,10 @@ export function CompanionScreen({ beat, onContinue }: Props) {
       <NodeHeader eyebrow={copy.eyebrow} title={copy.title} readout={copy.readout} readoutLive />
 
       <div className="companion-stage" aria-hidden="true">
-        {beat.kind === 'lost' && (
-          <span className="companion-eyes">
-            <span className="titan-eye is-left companion-eye">
-              <span className="titan-eye-halo" />
-              <span className="titan-eye-clip">
-                <span className="titan-eye-globe" />
-                <span className="titan-eye-pupil" />
-              </span>
-            </span>
-            <span className="titan-eye is-right companion-eye">
-              <span className="titan-eye-halo" />
-              <span className="titan-eye-clip">
-                <span className="titan-eye-globe" />
-                <span className="titan-eye-pupil" />
-              </span>
-            </span>
-          </span>
-        )}
         <span className="companion-platform" />
         {/* Keyed on the hop so the hop animation restarts on each beat; the pose flips with it. */}
         <span key={hop} className="companion-figure">
-          <HeroPortrait heroId={heroId} className="companion-portrait" pose={dancing && !settled && hop % 2 === 1 ? 'attack' : 'idle'} />
+          <HeroPortrait heroId={heroId} className="companion-portrait" pose={!settled && hop % 2 === 1 ? 'attack' : 'idle'} />
         </span>
       </div>
 
@@ -122,7 +94,6 @@ export function CompanionScreen({ beat, onContinue }: Props) {
             <TypeBadge key={t} type={t} />
           ))}
         </span>
-        {beat.kind !== 'lost' && <span className="companion-mortal">Mortal</span>}
       </div>
 
       <div className="node-spacer" />

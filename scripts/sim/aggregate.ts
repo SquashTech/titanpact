@@ -65,10 +65,6 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
     if (record.won) slot.won += 1;
   }
   if (record.companionHeroId) agg.companionJoined += 1;
-  if (record.companionLostAt !== null) {
-    agg.companionLost += 1;
-    agg.companionLostAtSum += record.companionLostAt;
-  }
   agg.rosterLevelEndSum += record.rosterLevelEnd;
   agg.rosterEvolvedEndSum += record.rosterEvolvedEnd;
   if (record.rosterEvolvedEnd >= 1) agg.runsRosterEvolved += 1;

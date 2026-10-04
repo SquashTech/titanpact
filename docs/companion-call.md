@@ -1,6 +1,6 @@
 # companion-call.md — The companion off the roster: a Call
 
-> **STATUS: DECIDED 2026-10-04, per user direction — PHASES 1–2 (CONTENT, ENGINE) BUILT.** The companion still joins
+> **STATUS: DECIDED 2026-10-04, per user direction — PHASES 1–3 (CONTENT, ENGINE, RUN) BUILT.** The companion still joins
 > after the run's first fight, but it **never takes one of the six roster slots**: it travels with
 > the party, and **once a fight an active hero can spend its turn to Call it** — the companion
 > casts its tier's ONE move, which never asks for a target, from off the field. **No
@@ -297,10 +297,17 @@ fallback is a key in the Bag or the bottom row).
    the caller's action (`castOf` orders it off the caster), the `Called` event and the
    `callUnavailable` block, cost waived, caster-side effects dropped, spent only once the caller's
    turn happens, untargetable and outside defeat, lock-in and regen. `test/companionCall.test.ts`.
-3. **Run.** `RunState.companion = { heroId, ascended }` replaces the roster entry; the fight build
-   adds the Called caster at the act's tier and par; the awakening adds a Call; `absorbCompanions`,
-   the pip tier-steps and the companion-only `mortal` readers go; a save migration moves an
-   on-roster companion off the roster; the star re-read; A1's rule retired.
+3. **Run — BUILT 2026-10-04.** `RunState.companion = { type, ascended }` replaces the roster entry and
+   `companionHeroId`; `RosterEntry.mortal`, `absorbCompanions`, the pip tier-steps and the `lost`
+   beat are gone. `companionCallFor` seats the act's body (`companionTier`) at the par curve's level
+   (`levelAfterEncounters`) on the EXPECTED line (`expectedGrowthAt`, shared with Constructed) —
+   no gear, no Banners, the same figure every fight of a stretch — through `SquadPlacement.call`,
+   in the view and the sim alike. A woken companion's `SideCall.phaseGrant` adds a Call when the
+   Eyes' phase enters (switching.ts). The `grown` beat sits ahead of the Pact Seal on an act
+   boundary that steps the tier (`companionGrowth`). A full roster still takes the companion. The
+   star reads `RunRecord.companionType` on a clear. An older save decodes, its roster companion read
+   off into `companion` (save.ts `decodeCompanion`, no version bump). Act 1's cap reads the roster
+   alone, so the Act 1 Skirmish is 2v2 (§6).
 4. **View.** The field figure, the Call card, the commit into the acting hero's socket, queued /
    spent states, the playback beat, the order track mark, the map footer chip, the roster strip,
    join copy, the tip; the companion off the level report, who-screens and Fallen screen.

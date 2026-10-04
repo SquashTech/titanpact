@@ -24,6 +24,8 @@ import { CONSUMABLE_HOLD_CAP, CONSUMABLE_KINDS, type ConsumablePurse } from './c
 import { MAX_XP, xpForLevel } from './growth';
 import { MASTERY_CAP } from './mastery';
 import { curses } from '../data/curses';
+import { spawnLineOf, spawnPosition } from '../data/titanspawn';
+import type { CompanionState } from './companion';
 
 /**
  * Bump whenever a change to RunState or RunMap makes older files unreadable. Older versions
@@ -76,6 +78,9 @@ import { curses } from '../data/curses';
  * v21 (2026-10-03): a save on every screen (docs/save-system.md) — the file carries the screen it
  * was written on (`resume`, run/resume.ts) and the last map or act-intro state to fall back to.
  * RunState did not change, so a v20 file is still read, as its checkpoint (LEGACY_VERSIONS).
+ * (2026-10-04, no bump): the companion left the roster (docs/companion-call.md) — RunState holds
+ * `companion` where it held `companionHeroId`, and entries lost `mortal`. An older file still
+ * decodes: a spawn on its roster is the companion, read off into `companion` (decodeCompanion).
  */
 export const SAVE_VERSION = 21;
 
@@ -347,12 +352,25 @@ export function decodeRosterEntry(value: unknown, index: SaveContentIndex, label
     curseTurned,
     classId: classId as string | null,
     classPassiveId,
-    // Absent on a file written before the companion; a hero that never was one is not one.
-    mortal: value.mortal === true,
     wounds,
     down,
     blessed,
   };
+}
+
+/**
+ * The run's companion: `companion` as written, or — on a file from before the Call — the spawn the
+ * roster held, woken if it carried Ancient. A file with neither has none.
+ */
+function decodeCompanion(value: Record<string, unknown>, roster: readonly RosterEntry[]): CompanionState | null {
+  const written = value.companion;
+  if (isObject(written) && typeof written.type === 'string' && spawnLineOf(written.type as TypeId)) {
+    return { type: written.type as TypeId, ascended: written.ascended === true };
+  }
+  const onRoster = roster.find((entry) => spawnPosition(entry.heroId));
+  const joined = onRoster?.heroId ?? (typeof value.companionHeroId === 'string' ? value.companionHeroId : null);
+  const position = joined ? spawnPosition(joined) : undefined;
+  return position ? { type: position.line.type, ascended: onRoster?.evolutionTypeGraft === 'Ancient' } : null;
 }
 
 function decodeMap(value: unknown): RunMap {
@@ -438,7 +456,9 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
   if (!Array.isArray(value.roster)) reject('run.roster is not a list');
   if (value.roster.length > ROSTER_CAP) reject(`run.roster holds ${value.roster.length} heroes, over the ${ROSTER_CAP} cap`);
 
-  const roster = value.roster.map((entry, at) => decodeRosterEntry(entry, index, `roster[${at}]`));
+  const decodedRoster = value.roster.map((entry, at) => decodeRosterEntry(entry, index, `roster[${at}]`));
+  // A file written while the companion stood on the roster: it leaves it (decodeCompanion reads it).
+  const roster = decodedRoster.filter((entry) => !spawnPosition(entry.heroId));
   const seen = new Set<string>();
   for (const entry of roster) {
     if (seen.has(entry.rosterId)) reject(`run.roster repeats rosterId "${entry.rosterId}"`);
@@ -480,8 +500,7 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
     relics: requireIds(value.relics, index.relicIds, 'run.relics'),
     recruitContracts: value.recruitContracts,
     consumables,
-    // Absent on a file written before the companion; a run that never had one has none.
-    companionHeroId: typeof value.companionHeroId === 'string' && index.heroIds.has(value.companionHeroId) ? value.companionHeroId : null,
+    companion: decodeCompanion(value, decodedRoster),
     map,
     currentNodeId,
     visitedNodeIds: [...value.visitedNodeIds],

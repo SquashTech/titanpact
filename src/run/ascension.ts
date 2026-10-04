@@ -1,8 +1,7 @@
 // The Ascension ladder (docs/ascension.md). A rung is a RULE the run plays under, chosen at
 // run start and held on `RunState.ascension`; Base is rung 0. Ascension 1 is Permadeath: every
-// hero is mortal, a knockout on a won fight is gone with its gear unless a Revive is spent on it
-// at the Fallen beat, and the companion — mortal since it joined — is the one body a Revive
-// never saves. Beside it the Guardians wake (§2a): the champion leads its fight, wears its type's
+// hero is mortal, and a knockout on a won fight is gone with its gear unless a Revive is spent on
+// it at the Fallen beat (the companion is off the roster and cannot fall). Beside it the Guardians wake (§2a): the champion leads its fight, wears its type's
 // Mark and grows on hero grades, and the escorts rise to three from Act 3. Rungs above it are
 // proposed, not built (§5), so the ladder stops at 1.
 
@@ -11,7 +10,6 @@ import { titansMarkFor } from '../data/passives';
 import type { TitanpactType } from '../data/typechart';
 import type { Profile } from './profile';
 import type { RosterEntry, RunState } from './state';
-import { isCompanion } from './companion';
 import { DEFAULT_GRADES } from './growth';
 
 /** The rungs that exist. A2–A5 are proposed (docs/ascension.md §5); the picker offers up to here. */
@@ -36,7 +34,7 @@ export const ASCENSION_RUNGS: readonly AscensionRung[] = [
   {
     rung: 1,
     name: 'Ascension 1',
-    rule: 'Permadeath. A hero knocked out is gone from the run with everything it carried, unless a Revive is spent on it when the fight ends. Nothing saves the companion. And the Guardians wake: each takes the field from the first round, bears the Titan’s Mark, and brings a third escort from Act 3.',
+    rule: 'Permadeath. A hero knocked out is gone from the run with everything it carried, unless a Revive is spent on it when the fight ends. And the Guardians wake: each takes the field from the first round, bears the Titan’s Mark, and brings a third escort from Act 3.',
     entryFee: 1,
     clearBonus: 6,
   },
@@ -75,11 +73,6 @@ export function wokenChampionMark(definition: HeroDefinition): string | null {
   return titansMarkFor[definition.types[0] as TitanpactType] ?? null;
 }
 
-/** Mortal by the rule of the run, or by what it is: the companion always, everyone under Permadeath. */
-export function isMortal(run: Pick<RunState, 'ascension'>, entry: Pick<RosterEntry, 'heroId' | 'mortal'>): boolean {
-  return entry.mortal || isPermadeath(run);
-}
-
 /**
  * The highest rung a profile may start a run on: cleared at N opens N+1, a Base clear opens
  * Ascension 1, and nothing opens until something has been cleared.
@@ -91,13 +84,12 @@ export function openAscension(profile: Pick<Profile, 'runsCompleted' | 'ascensio
 
 /**
  * The Fallen (docs/ascension.md §3): the heroes a WON fight knocked out that Permadeath will take
- * unless a Revive keeps them — every KO'd hero still on the roster but the companion, whose loss
- * absorbCompanions already took, at Base and on every rung. Empty at Base. Roster order, so the
+ * unless a Revive keeps them — every KO'd hero still on the roster. Empty at Base. Roster order, so the
  * screen's rows sit where the player expects them.
  */
 export function fallenAfterFight(run: RunState, koRosterIds: readonly string[]): RosterEntry[] {
   if (!isPermadeath(run)) return [];
-  return run.roster.filter((entry) => koRosterIds.includes(entry.rosterId) && !isCompanion(entry) && entry.down);
+  return run.roster.filter((entry) => koRosterIds.includes(entry.rosterId) && entry.down);
 }
 
 /** Let go: off the roster, and what it carried goes with it — gear is absorbed, never handed on. */

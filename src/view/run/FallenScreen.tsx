@@ -13,21 +13,18 @@ import { entryHp } from '../shared/WoundBar';
 /**
  * The Fallen (docs/ascension.md §3): under Permadeath, first in the post-fight chain — every
  * hero the won fight knocked out, one row each, kept by a Revive while the stock lasts or gone
- * with everything it carried when the player carries on. The companion's row, when the fight took
- * it, is here too and has no button: a Revive never saves it, at any rung. Nothing is released
- * until Continue, so a tap on the wrong row costs nothing but a Revive.
+ * with everything it carried when the player carries on. Nothing is released until Continue, so a
+ * tap on the wrong row costs nothing but a Revive.
  */
 interface Props {
   run: RunState;
   /** The heroes the fight knocked out, still on the roster and `down` until Continue lets them go. */
   rosterIds: readonly string[];
-  /** The companion the same fight took, already off the roster (run/companion.ts absorbCompanions). */
-  companion: RosterEntry | null;
   onRunChange: (run: RunState) => void;
   onContinue: () => void;
 }
 
-export function FallenScreen({ run, rosterIds, companion, onRunChange, onContinue }: Props) {
+export function FallenScreen({ run, rosterIds, onRunChange, onContinue }: Props) {
   const fallen = rosterIds.map((id) => run.roster.find((entry) => entry.rosterId === id)).filter((entry): entry is RosterEntry => !!entry);
   const stillDown = fallen.filter((entry) => entry.down);
   const revives = run.consumables.revive;
@@ -49,7 +46,7 @@ export function FallenScreen({ run, rosterIds, companion, onRunChange, onContinu
     onContinue();
   }
 
-  const count = fallen.length + (companion ? 1 : 0);
+  const count = fallen.length;
   const title = count === 1 ? 'A hero has fallen' : `${count} heroes have fallen`;
   const readout =
     stillDown.length === 0
@@ -91,16 +88,6 @@ export function FallenScreen({ run, rosterIds, companion, onRunChange, onContinu
             />
           );
         })}
-        {companion && (
-          <HeroPickCard
-            key={companion.rosterId}
-            hero={rosterHeroes[companion.heroId]}
-            entry={companion}
-            disabled
-            ariaLabel={`${rosterHeroes[companion.heroId].name} — taken back into the Titan`}
-            cta="Taken back"
-          />
-        )}
       </HeroPickGrid>
 
       <div className="node-spacer" />

@@ -122,6 +122,18 @@ export function gradesFor(hero: HeroDefinition | undefined): GrowthGrades {
   return hero?.growthGrades ?? DEFAULT_GRADES;
 }
 
+/** Every roll from level 1 to `level` at its grade's mean, rounded once — a line nobody rolled (Constructed, the companion's Call). */
+export function expectedGrowthAt(hero: HeroDefinition | undefined, level: number): Partial<Record<StatKey, number>> {
+  const grades = gradesFor(hero);
+  const levels = Math.max(0, level - 1);
+  const grants: Partial<Record<StatKey, number>> = {};
+  for (const stat of GROWTH_STATS) {
+    const amount = Math.round(levels * gradeExpectedPoints(grades[stat]) * growthUnitFor(stat));
+    if (amount !== 0) grants[stat] = amount;
+  }
+  return grants;
+}
+
 /** The grades THIS hero rolls against: a rewire path trades the Attack and Intelligence grades with the stats (docs/evolution-simplification.md §4). */
 export function entryGradesFor(hero: HeroDefinition | undefined, entry: Pick<RosterEntry, 'offenseSwapped'>): GrowthGrades {
   const grades = gradesFor(hero);

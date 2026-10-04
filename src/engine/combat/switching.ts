@@ -2,7 +2,7 @@
 // 2+ KOs disables voluntary switching; forced replacement still happens.
 
 import type { CombatState, Side } from '../state';
-import { canSwitchOut, isLockedIn, phaseOf } from '../state';
+import { canSwitchOut, grantCalls, isLockedIn, phaseOf } from '../state';
 import type { CombatEvent, BenchRegenTickedEvent } from '../events';
 import type { StatusDefinition } from '../content';
 import { applyStatus, clearOnSwitch } from './statusEngine';
@@ -108,7 +108,14 @@ function performSwitch(
   };
   // A later phase's first body on the field begins the phase: the Pact Clock counts from here.
   const incomingPhase = phaseOf(state.combatants[inCombatantId]);
-  if (incomingPhase > currentPhase(state)) nextState = { ...nextState, phaseStartedRound: round };
+  if (incomingPhase > currentPhase(state)) {
+    nextState = { ...nextState, phaseStartedRound: round };
+    // A side whose Call refreshes with the phase takes it now (state.ts SideCall.phaseGrant).
+    for (const callSide of ['A', 'B'] as const) {
+      const grant = nextState.calls?.[callSide]?.phaseGrant ?? 0;
+      if (grant > 0) nextState = grantCalls(nextState, callSide, grant);
+    }
+  }
 
   const events: CombatEvent[] = [{ type: 'SwitchedIn', round, side, slot, outCombatantId, inCombatantId }];
 

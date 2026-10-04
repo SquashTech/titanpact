@@ -4,11 +4,9 @@ import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
 import { levelOf, type HeroLevelUp } from '../../run/growth';
 import { availableEvolution, levelMovePool, pendingScheduleEntry, pendingSignature, formIdFor } from '../../run/progression';
-import { companionTierStep } from '../../run/companion';
 import type { RosterEntry, RunState } from '../../run/state';
 import { NodeSky, NODE_TINT_VITAL } from '../shared/NodeStage';
 import { RosterPeek } from './RosterPeek';
-import { CompanionScreen } from './CompanionScreen';
 import { EvolutionScreen } from './EvolutionScreen';
 import { MoveLearnedOverlay, MoveOfferOverlay, SignatureBox } from './MoveOfferOverlay';
 import { useLevelUpFlow, type LevelUpMemory } from './levelUpFlow';
@@ -55,10 +53,6 @@ export function LevelUpScreen({ run, onRunChange, report, onContinue, memory }: 
   }, [run, flow.busy]);
 
   const levels = report.reduce((best, hero) => Math.max(best, hero.toLevel - hero.fromLevel), 0);
-
-  if (flow.grown) {
-    return <CompanionScreen run={run} beat={{ kind: 'grown', fromHeroId: flow.grown.fromHeroId, toHeroId: flow.grown.toHeroId }} onContinue={flow.closeGrown} />;
-  }
 
   const evolvingEntry = flow.evolving ? (run.roster.find((r) => r.rosterId === flow.evolving!.rosterId) ?? null) : null;
   if (flow.evolving && evolvingEntry) {
@@ -151,7 +145,6 @@ function OfferBox({ run, entry, offer, onResolve, onClose }: OfferBoxProps) {
 function owedLabel(run: RunState, rosterId: string): string | null {
   const entry = run.roster.find((r) => r.rosterId === rosterId);
   if (!entry) return null;
-  if (companionTierStep(entry)) return 'Grows!';
   const node = availableEvolution(progressionTable, entry);
   if (node && node.paths.length > 0) return 'Evolution!';
   const hero = rosterHeroes[entry.heroId];
