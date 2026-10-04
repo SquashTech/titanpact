@@ -916,7 +916,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A cheap arc of current that sometimes leaves the target charged.',
+    description: 'A cheap arc of current that sometimes leaves the target charged (20% chance of Conduct).',
   },
   charge: {
     id: 'charge',
@@ -1041,7 +1041,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A charged edge drawn across the guard, often deep enough to open it.',
+    description: 'A charged edge drawn across the guard, often deep enough to open it (30% chance of Bleed).',
   },
   overcharge: {
     id: 'overcharge',
