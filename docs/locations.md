@@ -4,10 +4,10 @@
 > per-act *map shape*) and `types-and-heroes.md` (which owns the type roster). This doc
 > owns the layer above the map: **which place an act happens in**, and what that changes.
 
-A run chains 5 acts of the standard shape, then the finale act (`run-loop.md` §3-4). Until now every act was the same
-act — same generated map shape, same encounter pools, same Goblins, differing only in
-seed. A **Location** is the identity an act wears: a name, the spawn types it fields, a type
-affinity, a set of heroes findable nowhere else, and a look.
+A run chains four seal acts of the standard shape, then the finale act (`run-loop.md` §3-4;
+`TOTAL_ACTS` = 5, `SEAL_ACTS` = 4). A **Location** is the identity an act wears: a name, the
+spawn types it fields, a type affinity, a Guardian's champion, and a look
+(`src/data/locations.ts`, `src/run/locations.ts`).
 
 ---
 
@@ -18,16 +18,17 @@ Skirmishes draw on *every* type — the player has no team identity yet, so noth
 be pressuring it. Its mob layer is every line's Early — the leak runs thin out here
 (`spawnTypes: null`, §3).
 
-**Acts 2-5 draw from the remaining locations without replacement.** A location is never
+**Acts 2-4 draw from the remaining locations without replacement.** A location is never
 visited twice in one run.
 
-**Act 6 is a fixed location the draw can never produce** — no mob layer, no affinity, and no
-map of the `run-loop.md` §1 shape. It is where the binding was made (`run-loop.md` §4).
+**The finale act is a fixed location the draw can never produce** — The Threshold: no mob
+layer, no affinity that biases anything, and no map of the `run-loop.md` §1 shape. It is where
+the binding was made (`run-loop.md` §4).
 
-**Exactly one location goes unvisited every run**, and that is load-bearing rather than
-leftover: six locations, five seals broken, and the sixth is why there is a world left at
-all (`lore.md` §5). It is also the natural anchor for `progression.md`'s light
-meta-progression — the thread between runs.
+**Locations go unvisited every run**, and that is load-bearing rather than leftover: since the
+run went to four acts, two of the base five seal locations stay shut, and the unbroken seals are
+why there is a world left at all (`lore.md` §5). They are also the natural anchor for
+`progression.md`'s light meta-progression — the thread between runs.
 
 ### Choice, not a roll (decided 2026-08-28, per user direction)
 
@@ -37,37 +38,31 @@ no upside a player can reason about, so the interesting case — weighing two re
 never happens.
 
 Instead, **each act offers 2 named locations and the player picks one.** With Wild's Edge
-locked to Act 1 and five other locations authored, the arithmetic closes exactly: Act 2
-picks 1 of 2 drawn from 5, Act 3 from the remaining 4, Act 4 from 3, and Act 5 has exactly
-2 left — every act keeps a real choice, including the last.
+locked to Act 1 and five other base locations, Act 2 picks 1 of 2 drawn from 5, Act 3 from the
+remaining 4, Act 4 from 3 — every act keeps a real choice, including the last. Bought locations
+(§4) join the pool and only widen it.
 
 What that buys over a roll is a **sequencing** decision layered on top of the pick. The
 player is not choosing *whether* to visit Necropolis so much as *when* — "take it now
-while I still have Fire coverage, because I will have to eat it eventually." The choice is
-never removed, it is priced — the same texture the reward-row steering carried until it was
-reverted on 2026-09-08 (`run-loop.md` §1), and this is now where that texture lives.
+while I still have Fire coverage." The choice is never removed, it is priced — the texture the
+reward-row steering carried until it was reverted on 2026-09-08 (`run-loop.md` §1).
 
 It also puts the location decision on the same footing as everything else in the run. The
 map is fully visible and priceable from the start of an act; a random location would be
 the only major strategic axis decided by luck the player cannot see coming.
 
-> **Built in full (2026-09-19):** `RunState.locationIds` is a **history** — where the run
-> has been and where it stands, never a plan — and every seal act after the first opens on
-> the **location choice** (`LocationChoiceScreen`, §4 "The location choice"), between the
-> Pact Seal and the arrival screen. `drawLocationCandidates` draws
-> `LOCATION_CHOICE_COUNT` = 2 of what is unvisited (`unvisitedLocationIds`: every seal
-> location the run has not stood in — so a "Visit Location" dev run that opens elsewhere has
-> Wild's Edge on offer later), `chooseLocation` seats the pick, and `advanceToNextAct`
-> seats the Threshold itself, since it is where the seals lead rather than a place to pick.
-> The offer is drawn flat off what is left and never weighted: sequencing is the decision.
-> `generateItinerary` survives for fixtures and the dev routes that stand a run past the
-> choices it would have made. The sim takes the offer at random and reports a **location
-> lift** table (which PLACE is the wall, matched against the one it could have gone to).
+**As built:** `RunState.locationIds` is a **history** — where the run has been and where it
+stands, never a plan. Every seal act after the first opens on `LocationChoiceScreen` (§4),
+between the Pact Seal and the arrival screen; `drawLocationCandidates` draws
+`LOCATION_CHOICE_COUNT` = 2 flat (never weighted) from `unvisitedLocationIds`, `chooseLocation`
+seats the pick, and `advanceToNextAct` seats the Threshold itself. `generateItinerary` survives
+for fixtures and dev routes. The sim takes the offer at random and reports a **location lift**
+table (which PLACE is the wall, matched against the one it could have gone to).
 
 ## 2. Weighting, not filtering
 
 A location carries an `affinity: readonly TypeId[] | null` — the types its Skirmishes and
-Elites lean on. `null` means "every type", and Wild's Edge is the only location that holds
+Elites lean on. `null` means "every type", and Wild's Edge is the only seal location that holds
 it.
 
 **Affinity biases the encounter pool; it does not filter it.** An encounter fills all but
@@ -75,35 +70,27 @@ one of its slots from heroes matching the location's affinity, then fills the re
 slot from the whole pool (`src/run/enemyGen.ts` `PoolBias`, supplied by
 `src/run/locations.ts` `locationBias`).
 
-This is not a stylistic preference — a hard filter breaks on the current roster. Measured
-against `src/data/heroes.ts`'s 32 heroes:
+| Location | Affinity |
+|---|---|
+| Wild's Edge | *all* |
+| Blighted Shrine | Shadow / Arcane / Mind |
+| Forbidden Forest | Nature / Beast / Light |
+| Molten Foundry | Fire / Mech / Iron |
+| Storm Coast | Storm / Water / Stone |
+| Necropolis | Spirit / Frost / Shadow |
 
-| Location | Affinity | Heroes matching |
-|---|---|---|
-| Wild's Edge | *all* | 32 |
-| Storm Coast | Storm / Iron / Water | 10 |
-| Blighted Shrine | Shadow / Arcane / Mind | 8 |
-| Molten Foundry | Fire / Mech / Iron | 8 |
-| Necropolis | Spirit / Frost / Shadow | 8 |
-| Forbidden Forest | Nature / Stone / Light | 7 |
-
-A Skirmish fields 4. Under a hard filter, Necropolis on its originally proposed
-Spirit/Frost pair matched **exactly 4 heroes** — it would have fielded the identical four
-every single time, and its Elite and Guardian would have drawn from that same closed set.
-Shadow was added as a third Necropolis type to open it up, at the cost of overlapping
-Blighted Shrine. Weighting rather than filtering is what keeps every location varied
-without blocking the feature on authoring twenty more heroes.
-
-The one type no location claims is **Beast**, which lives at Wild's Edge with the
-Goblins. That is an accident of the example set and a good one — Wild's Edge is the
-wilderness.
+A hard filter was rejected on measurement: on the 32-hero roster of the time, Necropolis's
+originally proposed Spirit/Frost pair matched **exactly 4 heroes** — it would have fielded the
+identical four every time. Shadow stays in Necropolis's affinity (though not its spawn types)
+for that reason. Weighting is what keeps every location varied whatever the roster's shape, and
+the recruitable fight's deck rule (`docs/collection.md`) now narrows the pool further.
 
 ## 3. What a location does and does not touch
 
 | Surface | Location-aware? |
 |---|---|
 | `skirmish` / `elite` encounter pool | **Yes** — affinity-biased (§2). |
-| `fight` / `battle` / `boss` encounter pool | **Yes** — the Location's `spawnTypes`, exactly (§3 "The mob layer"). The Guardian's escorts joined this row on 2026-09-06 (`run-loop.md` "The Guardian's escorts"); affinity never applies here, because the spawn types *are* the filter. |
+| `fight` / `battle` / `boss` encounter pool | **Yes** — the Location's `spawnTypes`, exactly (§3 "The mob layer"), the Guardian's escorts included; affinity never applies here, because the spawn types *are* the filter. |
 | Recruit Contract offers | **Yes, transitively** — contracts are claimed off beaten Skirmish heroes, so biasing Skirmishes is what makes a hero "findable here". |
 | Guild Hall recruit pool | **No, deliberately** — see below. |
 | Map shape, node types, rewards | No. `run-loop.md` §1 is unchanged. |
@@ -116,150 +103,106 @@ the pressure valve: it offers from the whole pool, so the pressure a location ap
 on the combat side, where it is legible.
 
 The *intent* is that it also offers the location's exclusives on top, so a location **adds**
-options rather than removing them. That half is **not built** — `rollGuildHallOffers` has no
-idea where the run is. See §5.4.
+options rather than removing them. That half is **not built** (§5.4).
 
 ### `exclusiveHeroIds`
 
 Each location carries a list of hero ids obtainable only while that location is current.
-The field exists and is threaded through; **it is empty on every location today, and nothing
-reads it** (§5.4). Which heroes are rare and where they live is authoring work for when the
-real roster lands (`run-loop.md` §4, README "Next steps" #5) — the schema is here so that
-work is data entry rather than plumbing.
+The field exists and is threaded through; **it is empty on every location, and nothing reads
+it** (§5.4).
 
 ### The mob layer — Titanspawn (2026-09-13, replacing the factions)
 
-The six factions — Goblins, Cultists, Raiders, Fae, Vulcans, Undead — were deleted whole
-(`docs/titanspawn-overhaul.md` §7; their sprites are archived under `art/archive/factions/`).
-What `fight`, `battle` and the Guardian's escorts field now is **Titanspawn**
-(`src/data/titanspawn.ts`): one mob line per mortal type in three tiers, and a Location names
-the lines it fields through `LocationDefinition.spawnTypes` — a **hard filter**, where
-`affinity` stays a weighting. The five run Locations partition the fourteen spawning types
-between them (§3 of the overhaul doc has the table and why the Necropolis holds two).
+The six factions were deleted whole (`docs/titanspawn-overhaul.md` §7; sprites archived under
+`art/archive/factions/`). What `fight`, `battle` and the Guardian's escorts field is
+**Titanspawn** (`src/data/titanspawn.ts`): one mob line per mortal type in three tiers, and a
+Location names the lines it fields through `LocationDefinition.spawnTypes` — a **hard filter**,
+where `affinity` stays a weighting. The five base run Locations partition the fourteen spawning
+types between them (the overhaul doc's §3 has the table and why the Necropolis holds two).
 
-What the factions were for is still done, by fewer parts. The Location still decides who
-you fight; the mob layer is still the easy track by construction (Early 200, Mid 400, Late
-600 against the hero pool, all on the monsters curve — `difficulty.ts`); and a Location is
-still counterable as a unit, now *exactly* so, because a spawn has no second type and no
-exception. The faction "tell" (the Fae's Renew, the Vulcans' Scorched Land, the Undead's
-Haunt) survives as the slate's own shape — a spawn's kit is its type's authored moves read
-at its tier's band, so a Necropolis still Haunts and a Foundry still Burns. The one thing a
-faction could do that a spawn cannot — put an exception inside the roster — is now the
-Guardian's alone, which is the overhaul's whole thesis: **the mob layer is the type chart
-made flesh, and the Guardian is where the chart lies.**
+The Location still decides who you fight; the mob layer is still the easy track by
+construction (Early 200, Mid 400, Late 600 combat-stat totals, `SPAWN_COMBAT_TOTAL`, and every
+spawn levelled to its node — `docs/enemy-levels.md`); and a Location is counterable as a unit,
+exactly so, because a spawn has no second type and no exception. A spawn's kit is its type's
+authored moves read at its tier's band, so a Necropolis still Haunts and a Foundry still Burns.
+The one thing a faction could do that a spawn cannot — put an exception inside the roster — is
+the Guardian's alone: **the mob layer is the type chart made flesh, and the Guardian is where
+the chart lies.**
 
 The composition by act lives in `src/run/spawn.ts` and is pinned by `test/mobLayer.test.ts`:
 Act 1's opener is two bare Earlies from every line; from Act 2 the opener is a leader at the
-act's tier (`SPAWN_TIER_BY_ACT`, floored at Mid) over three escorts whose tiers are the act's
-(`OPENER_ESCORT_TIERS_BY_ACT`, 2026-09-17: Mid/Early/Early, Mid/Mid/Early, Mid/Mid/Mid,
-Late/Mid/Mid — the Earlies phased out escort by escort; `run-loop.md` "Titanspawn" has the
-measurement), each carrying an item rolled on the act's drop curve; the `battle` node is that
-shape in every act; the Guardian's escorts are two spawn at the act's tier. A two-line Location
-repeats a body rather than coming up short.
+act's tier (`SPAWN_TIER_BY_ACT`, floored at Mid) over escorts whose tiers are the act's
+(`OPENER_ESCORT_TIERS_BY_ACT` — the Earlies phased out escort by escort; `run-loop.md`
+"Titanspawn" has the measurement), each carrying an item rolled on the act's drop curve; the
+`battle` node is that shape in every act; the Guardian's escorts are spawn at the act's tier,
+`GUARDIAN_ESCORTS_BY_ACT` of them. A two-line Location repeats a body rather than coming up short.
 
 ### `guardianFinalEnemyId` — the champion
 
-One enemy id per location, held on the **bench** of that location's Guardian fight so it
-is the last combatant to reach the field (`run-loop.md` "The Guardian's champion" for the
-mechanism and the balance questions). **All six have one**, as of 2026-09-05: Wild's Edge's
-**Manticore** (600 stat total, Beast/Ancient, physical), the Blighted Shrine's
-**Yugzulach** (700, Shadow/Ancient, magical — the same silhouette one act later and down the
-other damage pipeline), the Storm Coast's **Kraken** (700, Water/Ancient), the Forbidden
-Forest's **Elder Bough** (700, Nature/Ancient), the Molten Foundry's **Dragon** (700,
-Fire/Ancient) and the Necropolis's **Skeleton King** (700, Spirit/Ancient). No location
-carries `null` any more.
+One enemy id per location, appended to that location's Guardian fight behind its escorts
+(`appendFinalEnemy`; `run-loop.md` "The Guardian's champion" for the mechanism). Every location
+has one: Wild's Edge's **Manticore** (Beast/Ancient), the Blighted Shrine's **Yugzulach**
+(Shadow/Ancient), the Storm Coast's **Kraken** (Water/Ancient), the Forbidden Forest's **Elder
+Bough** (Nature/Ancient), the Molten Foundry's **Dragon** (Fire/Ancient), the Necropolis's
+**Skeleton King** (Spirit/Ancient), and the bought locations' **Seraph**, **Sphinx**, **Roc** and
+**Wendigo** (§4). The Threshold's is the Endbringer, which is what the finale's bench ends on.
 
-All six are **Ancient-second**, which is a convention worth naming now that the set is
-closed: Ancient's attacker row is empty and every other row resists it, so a champion is a
-type-chart *wall* — nothing on the board is super-effective against one. That is the
-silhouette the fight is meant to have, and it is also the lever the Vulcans use (below).
+All are **Ancient-second**: Ancient's attacker row is empty and every other row resists it, so a
+champion is a type-chart *wall* — nothing on the board is super-effective against one. Each
+champion's mortal type is one of its location's spawn types, so the answer that beat the mob
+layer is still the right colour at the boss; the Ancient half is what blunts it.
 
-Whether the champion sits inside its faction's type spine is a per-location call, and all
-three readings are now in the game. Yugzulach, the Elder Bough and the Skeleton King **do**,
-so the answer that beat the basics still beats the boss — the readable version. The Kraken
-does **not**, because the Storm Coast's apex is a thing that lives in the water rather than a
-bigger Raider. The Dragon is the third: inside the spine, but its Ancient half is what
-takes the faction's one answer away exactly when the player reaches for it (see the Vulcans
-note above).
-
-**The leader is a separate question, and the Undead answered it differently (2026-09-05).**
-Every other faction's `leaderId` shares its basics' primary type. The **Dread Raven** is
-Beast/Shadow against four Spirits, and the consequence is mechanical rather than cosmetic:
-Haunt triggers off Spirit and Mind, so the Raven is the one Undead whose blows do not carry.
-That turns a `battle` node into a real fork — kill the Raven, which is the fastest and
-hardest-hitting thing on the board and the softest leader in the game at 70 Defense, or kill
-the Bone Conjurer, which is what makes everything *else* hurt twice. A leader outside the
-spine is worth reaching for exactly when the faction's tell has trigger types to sit outside
-*of*; it would have bought the Cultists or the Vulcans nothing.
-
-A **location** property rather than a faction or boss-node one, and that placement is the
-decision worth recording. What comes out of the treeline at Wild's Edge is a Manticore
-because Wild's Edge is where the Goblins are; the same node type in the Necropolis should
-produce something else entirely. Hanging it off the node would have made it a property of
-*how hard this fight is*, which is what `run-loop.md` §2's node kinds already say and what
-the act curve already scales. Hanging it off the *faction* would have handed the four
-placeholder Goblin locations a Manticore they were never meant to field. This says *whose
-ground you are standing on* — the same thing `faction`, `factionId` and `affinity` say, and
-so it belongs beside them.
-
-It is also the half of the faction bill above, and it is now paid in full — six locations,
-six factions, six champions.
+It is a **location** property rather than a node one: hanging it off the node would have made
+it a property of *how hard this fight is*, which `run-loop.md` §2's node kinds and the enemy
+level curve already say. This says *whose ground you are standing on*, and belongs beside
+`spawnTypes` and `affinity`.
 
 ## 4. The arrival screen
 
 `src/view/run/ActIntroScreen.tsx` — shown once per act, before the map: after the draft
-for Act 1, and after `advanceToNextAct` for acts 2-5. It is the **per-act beat**, not an
-Act-1-only title card.
+for Act 1, and after the location choice for each seal act after it. It is the **per-act beat**,
+not an Act-1-only title card.
 
-It stands on the shared node stage (`visual-language.md` ninth pass — a place, a voice,
-and nothing drawn around either) but replaces `NodeSky` with a **`LocationSky`**, because
-the whole point of this screen is that Necropolis must not look like Molten Foundry. Each
-location supplies three things the sky reads:
+It stands on the shared node stage (`visual-language.md` ninth pass) with a **`LocationSky`**,
+because the whole point of this screen is that Necropolis must not look like Molten Foundry.
+Each location supplies three things the sky reads:
 
-1. **`tintRgb`** — drives `--node-rgb`, which the existing stage already routes through
-   the wash, the header bloom and the particles. One property, everything downstream.
+1. **`tintRgb`** — drives `--node-rgb`, which the stage routes through the wash, the header
+   bloom and the particles.
 2. **`horizon`** — an authored SVG silhouette band along the bottom edge
    (`src/view/shared/locationArt.tsx`), on the same `currentColor`-only discipline as the
-   other vector families (`elementIcons.tsx`, `nodeIcons.tsx`). A treeline and palisade
-   for Wild's Edge, smokestacks for the Foundry, tombstones and a mausoleum spire for the
-   Necropolis. This is the element doing the most work — colour alone reads as a *mood*, a
-   silhouette reads as a *place*.
-3. **`ambience`** — how the particle field behaves. Six kinds, differing in direction,
-   speed, drift and shape: `fireflies` rise and wander, `embers` rise fast and hot, `snow`
-   falls and sways, `rain` falls fast on a slant, `spores` drift up slowly and wide,
-   `sigils` fall while pulsing. Reusing the one existing `title-ember-rise` keyframe for
-   all six was tried and abandoned — motion is half of what separates a forest from a
-   foundry.
+   other vector families. Colour alone reads as a *mood*, a silhouette reads as a *place*.
+   Where a painted backdrop exists (below) the band is the fallback.
+3. **`ambience`** — how the particle field behaves: `fireflies`, `embers`, `snow`, `rain`,
+   `spores`, `sigils`, and the bought locations' `radiance`, `drift`, `lightning` and
+   `blizzard`, differing in direction, speed, drift and shape. One shared keyframe for all of
+   them was tried and abandoned — motion is half of what separates a forest from a foundry.
 
-No art assets are involved. Everything is vector + CSS, so a location costs a paragraph of
-data and a path, not a commissioned background.
+**Painted backdrops (2026-09-27, per user direction).** Every location has three, picked up by
+glob in `src/view/shared/locationBackdrops.ts`, generated with PixelLab:
 
-**Painted backdrops (2026-09-27, per user direction).** The arrival screen now stands on a
-painted pixel backdrop where one exists: `art/locations/<locationId>.png`, 196x344 (2x on the
-394-wide canvas), generated with PixelLab's Pixen model, picked up by glob in
-`src/view/shared/locationBackdrops.ts`. A backdrop REPLACES the horizon band (the painting
-has its own ground) and keeps the ambience; the wash becomes a scrim, dark behind the name
-and at the foot, with a low glow of `tintRgb`. A Location with no file falls back to the
-vector band. **The map screen has a backdrop of its own** (`art/locations/map/<locationId>.png`,
-`LocationAmbience painted`), because the arrival painting failed there: it is composed around a
-centre landmark, and the centre is where the medallions sit. A map backdrop is AMBIENT, not a
-scene (redone 2026-09-27 after playtest found the first, painted set too busy): flat-shaded
-Pixflux, three silhouette layers low in the bottom third, a plain banded sky, the light kept low
-on the horizon, no sun or moon disc behind the medallions, a handful of colours. It is dimmed a
-little, scrimmed at the header and the roster tray, and the medallions, origin mark and placard
-get an opaque ground and a dark edge. **It is also every in-act screen's ground**: NodeSky
-(`is-painted`) and the contract claim's StageSky stand on it, dimmed further, with the node's own
-wash laid over it translucent so a gold cache or a violet boon still reads as one.
+- **Arrival** — `art/locations/<locationId>.png`, 196x344 (2x on the 394-wide canvas). It
+  replaces the horizon band (the painting has its own ground) and keeps the ambience; the wash
+  becomes a scrim, dark behind the name and at the foot, with a low glow of `tintRgb`.
+- **Map** — `art/locations/map/<locationId>.png`, because the arrival painting is composed
+  around a centre landmark and the centre is where the medallions sit. A map backdrop is
+  AMBIENT, not a scene (redone after playtest found the first set too busy): flat-shaded
+  Pixflux, three silhouette layers low in the bottom third, a plain banded sky, the light low on
+  the horizon, no sun or moon disc behind the medallions, a handful of colours. It is dimmed,
+  scrimmed at the header and the roster tray, and the medallions, origin mark and placard get
+  an opaque ground and a dark edge. **It is also every in-act screen's ground**: NodeSky
+  (`is-painted`) and the contract claim's StageSky stand on it, dimmed further, with the node's
+  own wash laid over it translucent so a gold cache or a violet boon still reads as one.
+- **Arena** — `art/locations/battle/<locationId>.png`, 196x228 (the arena box at 2x), composed
+  as an ARENA: one open floor filling the frame that both teams stand on, a thin skyline strip
+  across the top quarter, props only in the far corners, side view. It replaces the bands and
+  the drawn floor fan (`has-painted-arena`), keeps the weather, and sits at z −2 — under the
+  Field Effect glow and sweep (z −1). Dimmed to 0.6 and desaturated, vignetted over the corners
+  and the nameplate strip: nothing in it may compete with a 48px sprite or an HP bar. Reject a
+  roll with figures in it or a floor that is patterned rather than plain. The Titan's back
+  draws none.
 
-**The fight has a third** (`art/locations/battle/<locationId>.png`, 196x228 — the arena box
-at 2x), composed as an ARENA: one open floor filling the frame that both teams stand on, a thin
-skyline strip across the top quarter, props only in the far corners, side view. It replaces
-both bands and the drawn floor fan (`has-painted-arena`), keeps the weather, and sits at z −2 —
-under the Field Effect glow and sweep (z −1), which an opaque image would otherwise hide. It is
-dimmed to 0.6 and desaturated, with a vignette over the corners and the nameplate strip: nothing
-in it may compete with a 48px sprite or an HP bar. Reject a roll with figures in it or a floor
-that is patterned (grass clumps, camouflage) rather than plain. The Titan's back draws none.
-The location-choice cards still draw the band.
+The location-choice cards still draw the vector band.
 
 ### The location choice
 
@@ -269,292 +212,153 @@ first (§1), shown after the Pact Seal and before the arrival screen. Two places
 things the arrival screen reads — its `tintRgb` on the card's own wash, its `ambience`
 at half density, its horizon band in front — plus one thing the arrival screen keeps back:
 **the warden on the skyline**. `guardianFinalEnemyId` is drawn through `HeroPortrait`
-(so it is the same generated figure the fight will show) standing behind the horizon band,
-dim and desaturated, its feet hidden by the silhouette so it reads as some way off. The
-domains sit over the band, where the glyphs' own glow reads best; Wild's Edge gets the
-words.
+(the same generated figure the fight will show) standing behind the horizon band, dim and
+desaturated, its feet hidden by the silhouette so it reads as some way off. The domains sit
+over the band; Wild's Edge gets the words.
 
 The screen itself is **placeless** (`PLACELESS_SCREENS`), like the Pact Seal: gold sky,
 gold header, until a card is picked — then the screen's `--node-rgb` takes that place's
 tint, so the sky, the title bloom and the button all turn its colour, the warden comes
 forward, the other place steps back into the dark. No line under the name on either card
 (2026-09-19, per user direction): the scene is the description, and the omen waits for the
-map's first node. The choice is felt before the button is pressed. Pick-then-confirm, the
-Banner's idiom: the button names the pick (*Set out for the Necropolis*), and the arrival
-screen's *Enter* is the next beat. Both candidates' tracks are prefetched while the player
-weighs them, since a run cannot know its next place any earlier.
+map's first node. Pick-then-confirm, the Banner's idiom: the button names the pick (*Set out
+for the Necropolis*), and the arrival screen's *Enter* is the next beat. Both candidates'
+tracks are prefetched while the player weighs them.
 
 One card is no choice: `enterAct` takes a lone candidate silently and the arrival screen
 says where. It only happens on a dev run that opened somewhere other than Wild's Edge.
 
 ### Bought Locations — the Holy Sanctum, Dreaming Spires, Thunder Aerie, Frozen Reach (2026-09-19)
 
-The Sanctum is the first place the Constellation sells; the other three followed the same
-day on the same seam, each with a warden of a type no base Guardian covers (Mind, Storm,
-Frost) and three new ambience kinds (`drift`, `lightning`, `blizzard`; `docs/constellation.md`
-§11 phase 5 has each one's kit and look). What follows is the seam itself. (`docs/constellation.md` §11 phase 5, built ahead of
-the rest per user direction). `LocationDefinition.unlock` names its offer, and it is in a
+Four places the Constellation sells (`docs/constellation.md` §11 phase 5 has each one's kit and
+look), each with a warden of a type no base Guardian covers — the Seraph (Light), Sphinx (Mind),
+Roc (Storm) and Wendigo (Frost). `LocationDefinition.unlock` names its offer, and it is in a
 run's pool only while that offer is held: `locationPool(profile.purchases)` in
-`src/run/locations.ts`, read once where the act's offer is drawn. It is drawn **beside** the
-base five, so its spawn types overlap theirs (Light, Spirit, Mind) — the partition in §3 is a
-rule for the base pool, which `ITINERARY_POOL_IDS` still is. Its warden is the Seraph, its
-weather the seventh ambience kind (`radiance`), its horizon a basilica; its track is owed.
+`src/run/locations.ts`, read once where the act's offer is drawn. A bought location is drawn
+**beside** the base five, so its spawn types overlap theirs — the partition in §3 is a rule for
+the base pool, which `ITINERARY_POOL_IDS` still is.
 
-## 5. What is not built yet
-
-Everything below is a known gap, not an oversight. Roughly in the order that
-would make the system worth the ceremony it already has.
+## 5. Status and known gaps
 
 ### 5.1 The 1-of-2 location choice — built (2026-09-19)
 
-§1 decided that **each act offers 2 named locations and the player picks one**, and it
-is now what the run does (§1's note, §4 "The location choice"). Built exactly as scoped
-here: a `locationChoice` Screen before `actIntro`, `locationIds` a history, the draw
-moved from "draw all" to "draw 2 from what is left", `locationForAct` untouched.
-
-What it leaves open, for the Constellation's purchased locations: the offer draws from
-**every** seal location the run has not stood in, so a bought seventh place simply joins
-the pool — but then two seals hold at the end of a run rather than one, and `lore.md` §5's
-"the sixth is why there is a world left" needs to become "the ones you never reached".
-The arithmetic that made the last act's choice real (five in the pool, four picks) also
-loosens: with seven, Act 5 offers 2 of 3. Neither is a problem; both are decisions.
+See §1 and §4 "The location choice".
 
 ### 5.2 The mob layer — built, then replaced
 
-The faction content this section tracked was paid in full on 2026-09-05 and retired whole on
-2026-09-13 by the Titanspawn overhaul (§3 above, `docs/titanspawn-overhaul.md`). Nothing here
-is outstanding: `spawnTypes` replaced `factionId`, `run/spawn.ts` replaced
-`generateLeaderEncounter` and `basicEnemiesOf`, and the monsters track's baseline is the
-track default again. What the factions taught — a shared type spine reads as one answer, a
-gimmick wants a cheap detonator on every body, mana is the brake on a hero-sized stat line —
-is in the git history and in the spawn's authoring (a spawn's mana is where it is still a mob).
+The faction content was retired whole on 2026-09-13 by the Titanspawn overhaul (§3,
+`docs/titanspawn-overhaul.md`); nothing here is outstanding.
 
-### 5.3 Per-location Guardians
+### 5.3 Per-location Guardians — built
 
-`run-loop.md` §4 still lists "a real Guardian boss hero" as unbuilt — the boss is
-two fixture heroes with a bigger stat bonus. Locations are the reason to author
-six of them instead of one: each location's Guardian is its faction's apex. Blocked
-behind 5.2 in practice, since a Guardian without its faction reads as unrelated.
-
-**Three of six authored (2026-09-03).** The Kraken joins the Manticore and
-Yugzulach, and is the case that proves the field belongs on the Location rather than
-the faction: it is Water/Ancient where every Raider is Iron, because what comes out of
-the surf is not a member of the warband. One open dependency — its Ancient STAB is
-`archonBlast`, already the Manticore's, because the Ancient slate is three
-placeholder moves long (`CLAUDE.md` "Repo map"). Revisit when Ancient is authored.
-**Authored 2026-09-17** (`authoring-moves.md` §10 "Ancient"): the Kraken and the Manticore keep
-Archon Blast; Yugzulach took Long Drink, the Dragon Weight of Ages, the Elder Bough Warding
-Sigil and Abide; the Skeleton King was left alone.
-
-**Partly answered, from an unexpected direction (2026-09-01).** The Manticore is the
-Goblins' apex, and he shipped without waiting on 5.2 — because
-`guardianFinalEnemyId` puts him *beside* the generated boss rather than in place of it.
-That is a cheaper shape than this section assumed: a champion is one enemy definition and
-one field, where replacing the Guardian outright would mean authoring a whole boss and
-deciding what happens to the +20-to-3-stats bonus, the Banner, and the contract claim.
-Whether the other five factions want a champion, a replacement Guardian, or both is now a
-real choice rather than a foregone one.
-
-**Worked a second time (2026-09-02).** Yugzulach, Shadow/Ancient, arrives on the Blighted
-Shrine Guardian bench exactly as the Lord does at Wild's Edge. Two data points make the
-shape look deliberate rather than opportunistic: both champions are dual-typed with
-**Ancient** as the second type, which is what that type keeps itself for, and both spend
-their four moves across both damage pipelines. They differ in which pipeline they *lean* on
-— the Lord is 90 Attack to 70 Intelligence, Yugzulach 120 Intelligence to 90 Attack — so
-the answer a player needs at the end of Act 1 is not the answer they need again later. Four
-to go.
+Every location carries a champion (§3); the Ancient slate's moves were given to them on
+2026-09-17 (`authoring-moves.md` §10 "Ancient").
 
 ### 5.4 `exclusiveHeroIds` has no consumer
 
-The field exists and is empty on every location, and **neither of the two
-consumers §3 describes is written**:
+The field exists and is empty on every location, and **neither consumer §3 describes is
+written**:
 
-- The Skirmish pool does not add them (`locationBias` only weights heroes
-  already in the pool; it never inserts one).
-- The Guild Hall does not add them either — `rollGuildHallOffers` takes the flat
-  `guildHallOffers` list built from `HeroDefinition.starter`, with no knowledge of
-  where the run currently is.
+- The Skirmish pool does not add them (`locationBias` only weights heroes already in the pool;
+  it never inserts one).
+- The Guild Hall does not add them either — `rollGuildHallOffers` takes the deck-built
+  `guildHallOffersFor(recruitPool)` list, with no knowledge of where the run currently is.
 
-So the "some heroes are only findable in certain locations" mechanic is currently
-a schema, not a behaviour. Both consumers are small; what they are waiting on is
-a real roster to declare rare in the first place.
+So "some heroes are only findable in certain locations" is a schema, not a behaviour. Both
+consumers are small; what they wait on is a decision about which heroes are rare, and how that
+sits beside the Collection's rule that the player's deck builds the run's pools
+(`docs/collection.md`).
 
 ### 5.5 The location follows the player through the act
 
-**Closed 2026-08-29.** A location used to be announced once and then vanish:
-the map well was one hardcoded warm gold in every act, and every screen past it
-had no idea where it was. It is now carried by the map, its name, and every
-screen inside an act.
+A location is carried by the map, its name, and every screen inside an act, not announced once
+and dropped. On every surface the painted backdrops (§4) now carry most of it; what follows is
+the structure they sit in.
 
 #### The map well
 
-The same three identity channels the arrival screen uses, at a fraction of
-their strength (`MapScreen`, styles.css "The map well's Location"):
+The same three identity channels the arrival screen uses, at a fraction of their strength
+(`MapScreen`, styles.css "The map well's Location"):
 
-- **Tint and lighting.** `--node-rgb` and `data-location` are set on
-  `.map-screen`; each location gets its own wash recipe. Tint alone would have
-  produced six versions of one place, so the recipes differ in *where the light
-  comes from* — open dusk over hills, a lit corridor between dark trunks, a hot
-  floor under a black ceiling, flat overcast with a squall band, a fog that lies
-  on the ground, a single altar bloom. That wash is the well's own `background`
-  rather than a layer, deliberately: a background is fixed to its element, so it
-  survives a map tall enough to scroll.
-- **Weather.** The same six ambience keyframes, at `MAP_MOTE_DENSITY` (half the
-  count) and half the opacity. `LocationSky` was split so `LocationMotes` can be
-  used without a sky; `data-ambience` moved onto the motes container, which is
-  the only ancestor both call sites share.
-- **Horizon.** The same silhouette band, shorter, dimmer and with the entrance
-  animation off — the map is re-entered after every node, and a band that
-  settles in each time reads as a transition rather than as land. It sits at the
-  BOTTOM of the well, which on this screen is the act's origin: the route climbs
-  away from where you walked in, toward the Guardian.
-
-The direction cue the old gold well carried survives the recolour — lit ground
-at the bottom, a crown at the top — it is simply the location's colour now.
+- **Tint and lighting.** `--node-rgb` and `data-location` are set on `.map-screen`; each
+  location's wash recipe differs in *where the light comes from*, not only in hue. The wash is
+  the well's own `background` rather than a layer, so it survives a map tall enough to scroll.
+- **Weather.** The same ambience keyframes, at `MAP_MOTE_DENSITY` (half the count) and half the
+  opacity, through `LocationMotes` (split from `LocationSky` so it can run without a sky).
+- **Horizon** (fallback when no map backdrop exists). The same band, shorter, dimmer and with
+  the entrance animation off — the map is re-entered after every node. It sits at the BOTTOM of
+  the well, the act's origin: the route climbs away from where you walked in, toward the
+  Guardian.
 
 #### The omen
 
-**Added 2026-09-08, per user direction.** `LocationDefinition.omen` is one line naming
-whose land this is — "Goblins roam these lands.", "The Fae are watching, and have not
-decided about you." It is shown **once per act**, on the map screen at the act's first
-Monsters node, and nowhere else.
-
-That node is the only row with nothing behind it — every other row fills `MapRoute`'s
-bottom band with the greyed node just resolved — so the act's opening screen is a single
-lonely sigil with room to spare, and the omen costs it nothing.
+**Added 2026-09-08, per user direction.** `LocationDefinition.omen` is one line said by the
+place — "The rain never stops falling along these shores." It is shown **once per act**, on the
+map screen at the act's first Monsters node, and nowhere else. That node is the only row with
+nothing behind it, so the omen costs the screen nothing.
 
 It sits **above** the sigil, which is the direction an act runs in: the place speaks, and
-the fight is what answers it. That also puts the line in open sky by construction. It was
-in the bottom band first, where it had the horizon silhouette under half of it and lit
-ground under the other half, and read as neither.
+the fight is what answers it. It is written **on** the place rather than under it: tracked out
+large, in the location's own light, over a breathing haze of that light — a small italic caption
+read as UI chrome. It is the only text on the map that is neither a control nor a readout.
 
-It is written **on** the place rather than under it: tracked out at the size of something the
-location is saying, in the location’s own light, over a haze of that light that breathes on its
-own — it was a small italic caption at the foot of the well first, which read as UI chrome laid
-over a scene rather than as part of one. It is the only text on the map that is neither a control
-nor a readout, and the only one that gets to be big.
-
-It is the **only line a Location speaks** (2026-09-19, per user direction: the `flavor`
-line the arrival screen and the choice screen carried under the name is deleted — the
-visuals do the talking, and the same beat twice was the beat weakened). It answers *what
-leaks here*, and it answers it standing in front of the fight that proves it. Gated on the node kind rather than on being row 0, so
-act 6's Vigil never gets a line naming enemies that are not there.
+It is the **only line a Location speaks** (2026-09-19, per user direction: the arrival and
+choice screens' `flavor` line is deleted — the visuals do the talking). Gated on the node kind
+rather than on being row 0, so the finale's Vigil never gets a line naming enemies that are not
+there.
 
 #### The name
 
 `MapScreen`'s `MapPlacard` etches the location's name and its spawn types' marks into the
-well's **bottom-left corner**. It is unboxed, per `visual-language.md`'s rule
-that the only rectangles are controls, and `pointer-events: none` so no map
-shape can lose a tap to it.
-
-It sat top-left first, reasoning that the top two rows are width-1 and a
-width-1 row pins to the centre column (`ROW_COLUMNS`). True, and not enough —
-**pinning a tile to a column does not keep it inside one.** The Guardian is
-`tier-ancient`, whose 124px min-width exceeds the ~117px column, so it spills
-into both neighbours and ran under the placard on longer names. The bottom row
-is the act's opener, a `tier-encounter` tile at 92px that fits its column, so
-that corner is genuinely empty; the width cap is now sized to the free column
-rather than to the well, so a long name wraps rather than reaching whatever
-tier ends up beside it. Measured clearance across all six names: 19px at worst.
-
-Landing on the horizon silhouette turned out to be a gain rather than a cost —
-dark land is a better ground for lit text than open sky, and a name at the foot
-of the climb reads as a signpost at the place you walked in from.
+well's **bottom-left corner**, unboxed (`visual-language.md`: the only rectangles are
+controls) and `pointer-events: none`. It was top-left first, where the Guardian's
+`tier-ancient` tile (124px, wider than its ~117px column) spilled under it on longer names;
+the bottom row is the act's opener, a 92px tile that fits its column, and the placard's width
+cap is sized to the free column so a long name wraps. A name at the foot of the climb reads as
+a signpost at the place you walked in from.
 
 #### Every screen inside an act
 
-`NodeSky` (`NodeStage.tsx`) renders the location whenever `LocationContext` has
-one, which reaches all ten node screens — the Guild Hall, every reward and stat
-grant, the Mentor, level-up, forced equip, evolution, roster replace — plus the
-squad select, without any of them knowing the system exists.
+`NodeSky` (`NodeStage.tsx`) renders the location whenever `LocationContext` has one, which
+reaches every node screen without any of them knowing the system exists.
 
-The division of the screen is the design. A node screen's own `--node-rgb` is a
-**semantic** tint (gold for a cache, violet for a relic, teal for the Mentor,
-an item's rarity colour for a forced equip) and it still owns the wash's upper
-pool and the header bloom: *what kind of moment is this*. `LocationAmbience`
-redefines `--node-rgb` for its own subtree only and takes the bottom: ground
-glow, weather, horizon — *where is it happening*. Neither has to be dimmed for
-the other, and the generic rising motes are **replaced** rather than joined,
-since two particle fields on one screen is noise rather than twice the
-atmosphere.
+The division of the screen is the design. A node screen's own `--node-rgb` is a **semantic**
+tint (gold for a cache, violet for a relic, teal for the Mentor, an item's rarity colour on the
+item who-screen) and it owns the wash's upper pool and the header bloom: *what kind of moment
+is this*. `LocationAmbience` redefines `--node-rgb` for its own subtree only and takes the
+bottom: ground, weather, horizon — *where is it happening*. The generic rising motes are
+**replaced** rather than joined, since two particle fields on one screen is noise.
 
-Two things this cost, both worth naming:
-
-- **`LocationContext` is the first React context in the repo.** A location is
-  ambient — true of the whole act, read by one shared leaf component, used for
-  nothing else by any of the ten screens that render it. Prop-drilling it meant
-  ten prop lists and ten call sites growing a field they only forward, and
-  `RosterReplaceScreen` taking a `RunState` it does not otherwise want. The
-  value is nullable and `App.tsx` decides: `null` outside an act
-  (`PLACELESS_SCREENS`) is what keeps the title and the sandbox tools on the
-  plain placeless sky with no opt-out at any call site.
-- **`ShopNodeScreen` never actually stood on the node stage.** It carried
-  `.node-screen` from the day it was written but rendered no sky and set no
-  tint, so the Guild Hall was the one node in the run loop drawn on bare page
-  background. It now has both; the tint is `NODE_TINT_MANA`, the same blue its
-  tile wears on the map.
-
-No per-location wash recipes on node screens, unlike the map well. The map is
-dwelt on and can afford six lighting ideas; a node screen is passed through in
-seconds and already has a tint of its own competing for the same field.
+`LocationContext` is the first React context in the repo, because a location is ambient — true
+of the whole act, read by one shared leaf component — and prop-drilling it meant every node
+screen forwarding a field it never reads. The value is nullable and `App.tsx` decides: `null`
+outside an act (`PLACELESS_SCREENS`) keeps the title and the sandbox tools on the plain
+placeless sky. No per-location wash recipes on node screens: a node screen is passed through in
+seconds and already has a tint of its own.
 
 #### The arena
 
-**Closed 2026-09-01.** `FightScreen` was the last surface that did not know
-where it was, and the worst one to leave out: the map is looked at between
-nodes, the fight is where the act is actually spent.
+`FightScreen`'s `.battlefield` carries `data-location` and the location's `--node-rgb`, and
+renders one `LocationAmbience` layer (`ArenaLocation`, memoised because the arena re-renders on
+every beat):
 
-The three channels again, in the arena's own grammar rather than the node
-stage's — `.battlefield` carries `data-location` and the location's
-`--node-rgb`, and renders one `LocationAmbience` layer (`ArenaLocation`,
-memoised because the arena re-renders on every beat and the weather has nothing
-to say about any of them):
+- **Lighting recipes** per location, each keeping the two zone tints at 0.18 — "enemy up
+  there, me down here" is information and the location is only mood.
+- **The horizon band** (fallback under the painted arena), anchored to `.battlefield-divider`
+  so the skyline stands *behind the enemy row*. It has to be tall (28% of the arena, or only
+  its ground shows behind the enemy pills), its base dissolves under a `mask-image`, and it
+  carries half a pixel of blur so it sits in a different focal plane from the name pills.
+- **Weather at `ARENA_MOTE_DENSITY` = 0.45**, the lowest of any surface — the one screen where
+  a mote can cross a damage numeral.
 
-- **Six lighting recipes**, full overrides of the placeless scene, on the same
-  rule the map well follows: the light is what separates the places, not the
-  hue. Each keeps the two zone tints at a slightly reduced 0.18 — "enemy up
-  there, me down here" is information and the location is only mood — and each
-  carries its own weight of tactical grid, which finally means something: a
-  foundry has plating, a forest has no floor to draw.
-- **The horizon silhouette, anchored to `.battlefield-divider`.** On every
-  other screen the far distance is the bottom edge; here it is the middle,
-  which is the whole reason that divider became a horizon. So the treeline
-  stands *behind the enemy row*, which is where "over there" is.
-- **Weather at `ARENA_MOTE_DENSITY` = 0.45**, the lowest of any surface. This
-  is the one screen where a mote can cross a damage numeral.
-
-The console below is deliberately untouched. The scene is the place; the
-console is the instrument panel it is read through, and weather in both would
-erase the one line on this screen that separates world from UI.
-
-Three things the horizon band cost, all of them invisible until it was on
-screen (`visual-language.md` fourteenth pass has the shots):
-
-- **It has to be TALL**, which is the opposite of what it looks like it wants.
-  Sized to sit in the gap under the enemy row, the whole silhouette lands
-  behind that row's HP and MP pills and the only thing visible is its own
-  ground — a black bar across the middle of the screen. It is 28% of the
-  arena, reaching up past the pills to the portraits.
-- **Its base has to dissolve.** Every band in `locationArt.tsx` ends in a
-  full-width ground fill, which is correct where the band sits on the bottom
-  edge and is a hard slab anywhere else. A `mask-image` fading the lowest 26%
-  turns it into mist at the foot of the treeline.
-- **Half a pixel of blur**, which is depth of field rather than softening: the
-  skyline is the only far-away thing on the screen, and a hard edge on it put
-  the treeline in the same focal plane as the name pills in front of it.
-
-An active Field Effect still owns the horizon line and its haze — those rules
-are authored later in `styles.css` at equal specificity, deliberately, so
-standing battlefield state outranks the place it is standing in.
-
-**Still owed.** Nothing outside the view layer knows about any of this; the
-location still changes only *who* you fight (§5.6). A location-specific Field
-Effect remains explicitly deferred (§6).
+The console below is deliberately untouched: the scene is the place, the console the
+instrument panel it is read through. An active Field Effect still owns the horizon line and its
+haze — authored later in `styles.css` at equal specificity, so standing battlefield state
+outranks the place it is standing in.
 
 ### 5.6 Difficulty is location-blind
 
-A location changes *who* you fight, never how hard. That is deliberate for this
-pass, but it interacts with the still-open per-act scaling question — see §6.
+A location changes *who* you fight, never how hard (§6).
 
 ### 5.7 Constraints for anyone authoring a new location
 
@@ -570,65 +374,28 @@ Two that are easy to violate and only visible on device:
   Forest's original canopy; its trunks now run past y=0 and are clipped flat by
   the SVG viewport instead.
 
-Every presentation surface — the arrival screen, the map well, the node
-screens and the arena (§5.5) — has **no automated coverage**. Each was verified
-by screenshot, which is the standard method for this repo
-(`visual-language.md`); the map well and the arena were checked across all six
-locations, the node screens across three. The data and selection layers are tested (`test/locations.test.ts`).
+A band has to be tall enough that half of it clears whatever button the screen ends in; one
+authored at 22% of screen height showed only a stray spire above a full-width button.
 
-A second trap, this one on the map: the atmosphere layer has to reach back over
-the well's padding so its horizon meets the frame's real inside edge, and it
-did that with negative insets while it still lived inside `.map-scroll`. A
-negatively-inset child of a **scroll container** does not overhang — it becomes
-scrollable overflow, and it put 14px of vertical and 12px of horizontal scroll
-on a map deliberately sized to fit its canvas exactly. The fix was to split the
-well into a `.map-well` frame (wash, border, radius, atmosphere, placard) and a
-`.map-scroll` scroller inside it. Anything that must overhang the padding, or
-must stay put while the route scrolls, belongs on the frame.
+On the map, anything that must overhang the well's padding, or stay put while the route
+scrolls, belongs on the `.map-well` frame, not inside the `.map-scroll` scroller: a
+negatively-inset child of a scroll container does not overhang, it becomes scrollable overflow.
 
-One trap the node screens hit that is worth repeating from the §5.7 list: the
-horizon band was authored at 22% of screen height first, which put the whole
-silhouette under the squad select's full-width "Start Fight" button with only
-the Necropolis mausoleum's spire showing — a stray spike, not a skyline. It is
-the same failure as drawing below y≈78 of the viewBox. A band has to be tall
-enough that half of it clears whatever button the screen ends in.
+Every presentation surface has **no automated coverage**; each was verified by screenshot, the
+standard method for this repo (`visual-language.md`). The data and selection layers are tested
+(`test/locations.test.ts`).
 
 ## 6. Open questions — do not silently resolve
 
-- **Does a location modify difficulty?** Right now it changes *who* you fight, never how
-  hard. Per-act difficulty scaling is already an open question (`run-loop.md` §3); if it
-  lands, whether locations carry their own difficulty weight — a "deep" location worth
-  more gold — is a second question, not the same one.
+- **Does a location modify difficulty?** It changes *who* you fight, never how hard. The enemy
+  curve is per node and per act (`docs/enemy-levels.md`, `ACT_LEVEL_ADJUST`); whether a
+  location carries its own difficulty weight — a "deep" location worth more gold — is a
+  separate question. The sim's location-lift table is where to look first.
 - **Should Wild's Edge always be first?** It is locked that way here on tutorial grounds. A
   later meta-progression unlock ("start in a different region") is the obvious pressure on
   that rule, and `progression.md`'s light-meta-progression decision is where it would live.
 - **Location-specific Field Effects.** A Necropolis where a Frost field is pre-applied, or
   a Foundry that re-lights itself, is the natural marriage of this system and
-  `field-effects.md`. Deliberately not attempted — Field Effects has exactly one authored
-  effect today, and the second one should not be a location's ambient passive.
-- **May a faction share one type spine?** *Closed by the Titanspawn overhaul (2026-09-13):
-  every Location's mob layer is now a pure type partition with no exception in it, and the
-  exception lives on the Guardian alone — which is the finding below, made into the rule.*
-  The history: all six
-  factions are authored now and four answers are on the table. The Cultists (Shadow),
-  Raiders (Iron), Fae (Nature) and Undead (Spirit) each share a spine, and what that costs
-  varies more than expected: Spirit and Shadow give up two attacking types, Iron three,
-  Nature four. The Goblins share none. The **Vulcans** are the interesting case, because
-  they show a mixed faction is not automatically the safer choice — Fire and Mech happen to
-  share Water as an answer, so the Foundry is *tighter* to counter than the Cultists despite
-  having no spine at all.
-
-  What the set suggests, and what a playtest should check: the spine is not the lever that
-  matters. The **exception** is. A faction whose Guardian sits outside its own answer (the
-  Dragon) or whose leader sits outside its own tell (the Dread Raven) stays interesting
-  at every stat band, spine or no spine. Measure whether that holds before writing it down
-  as house style.
-- **Where does the mob curve sit against the player curve?** The monsters track's baseline
-  is the track default again (`BASELINE_ACT`, 2026-09-13), and the mob layer's tier by act
-  (`SPAWN_TIER_BY_ACT`) is the new dial; phase 6 of the Titanspawn overhaul measures it.
-  The history: `FactionRoster.baselineAct`
-  made "which act is this roster for" authorable, but the Cultists' 400 stat total at
-  Act 2 and the +30/act above it are figures chosen against the hero roster as written,
-  not measured against a played Act 3. The 400 already replaced a 280 that was wrong by
-  inspection rather than by measurement; the +30/act has had neither test. Same status as
-  every other number in `difficulty.ts`.
+  `field-effects.md`. Deliberately not attempted.
+- **Music for the bought locations and the Threshold.** `music/` holds a track for Wild's Edge
+  and the five base locations only.

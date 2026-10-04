@@ -12,7 +12,7 @@ trap picks or prescribe team archetypes prematurely; they should emerge from con
 ## Read first
 
 - `docs/architecture.md` — system boundaries and event contract.
-- `docs/combat.md`, `docs/mana.md`, `docs/conditions new.md` — combat rules.
+- `docs/combat.md`, `docs/mana.md`, `docs/conditions.md` — combat rules.
 - `docs/run-loop.md`, `docs/progression.md`, `docs/types-and-heroes.md` — content and
   progression rules.
 - `src/engine/content.ts` — canonical data vocabulary.

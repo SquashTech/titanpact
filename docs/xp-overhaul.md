@@ -1,14 +1,13 @@
 # xp-overhaul.md — The XP Overhaul
 
-> **STATUS: §2–4 DECIDED (2026-09-13, per user direction); §5 (four acts) DECIDED AND BUILT 2026-10-02, per user direction.
-> PHASE 1 OF §8 IS IN.** **Superseded in part by `docs/mastery.md` (2026-09-14): §3's Ichor is
-> RETIRED (its seats went back to the Scroll Cache) and §4's Evolution moved off the level schedule
-> onto Mastery pips; the XP curve, the offers and the bands stand.** `CLAUDE.md` and `growth-overhaul.md` still describe the game in force
-> wherever a §8 phase has not yet landed; §8 is the route and §9 the list of sign-offs each phase
-> spends — **check its Status column before assuming anything here is live.** Where a number
-> below is a first pass it says so — the design is the shape, and the sim (§8, phase 6) is where
-> the numbers get set. §5 is phased last so the rest ships without it, and is to be revisited
-> once the clock is re-measured with the ladder gone.
+> **STATUS: BUILT IN FULL** (§2–4 decided 2026-09-13, §5's four acts decided and built 2026-10-02,
+> all per user direction; every phase of §8 is in). In force: the `L³` curve and authored
+> encounter XP (§2), moves from a per-hero level **schedule** with the roll kept (§4), each band
+> offering its own tier, Late-tier mana ×0.75, and **four acts then the finale** (§5).
+> **Superseded by `docs/mastery.md` (2026-09-14):** §3's **Ichor is retired** (its seats went back
+> to the Scroll Cache), and §4's **Evolution moved off the schedule onto Mastery pip 5**. The
+> schedule has since been cut to **five offers a hero** and a **two-move starting kit**
+> (2026-09-30, `CLAUDE.md`). This doc replaced the Scroll ladder of `growth-overhaul.md` §4, §11, §12.
 
 ---
 
@@ -16,24 +15,19 @@
 
 Two measurements, one week apart, pointed at the same thing.
 
-**The clock.** `scripts/sim` now estimates wall-clock run length (`scripts/sim/time.ts`,
-2026-09-13): a full clear is **~88 minutes** for a player who taps every beat, ~60 on Auto, ~36
-on Fast, against a 45-minute target. Half of it is out-of-fight. The single largest out-of-fight
-item is **the Mastery ladder: ~47 rung screens a run** (~9 min), because ~150 Scrolls under rising
-prices is 47 decisions. Acts are flat at 15–19 minutes each, and acts 2–3 clear at 95% — they are
-the run's plateau.
+**The clock.** `scripts/sim/time.ts` put a full clear at **~88 minutes** tapping against a
+45-minute target, half of it out-of-fight. The single largest out-of-fight item was **the Mastery
+ladder: ~47 rung screens a run** (~9 min).
 
-**The load.** The game runs *two* progression models side by side. Every hero the player does not
-control — enemies, Guild hires, contract heroes — reads its rank and Evolution off its **level**
-through one table (`ENEMY_RUNGS_BY_LEVEL`, `src/run/enemyGen.ts`: Mid at 10, Evolution at 16, Late
-at 21). Only the player's six carry the Scroll economy on top: a currency, a price curve, an income
-table, a purse that banks, a bank button, a forced screen, and the rule that the ceiling must sit
-behind the spend. That is the system a new player has to learn that nobody else in the game uses.
+**The load.** The game ran *two* progression models side by side. Every hero the player did not
+control — enemies, Guild hires, contract heroes — read its rank and Evolution off its **level**
+through one table. Only the player's six carried the Scroll economy on top: a currency, a price
+curve, an income table, a purse, a bank button, a forced screen. That was the system a new player
+had to learn that nobody else in the game used.
 
-The proposal is to stop the player's roster being the exception. Levels become the one faucet for
-everything — stats, moves and Evolutions — the way Pokémon does it, with two things Pokémon does
-not do: the move at each level is **rolled from a band**, not fixed, and the run hands out **XP
-that must be aimed at one hero**, so the carry build and the catch-up both come back.
+The answer was to stop the player's roster being the exception: levels became the one faucet for
+stats and moves, the way Pokémon does it, except that the move at each level is **rolled from a
+band**, not fixed.
 
 ---
 
@@ -42,605 +36,279 @@ that must be aimed at one hero**, so the carry build and the catch-up both come 
 > **One curve. A hero's level is the only thing that says what it has, and the only things that
 > move it are what the roster won and what the player aimed.**
 
-Everything the Scroll ladder did — pace moves, gate tiers, time the Evolution, price a carry in
-breadth — the level table does, and the level table already exists. The Scroll was a second clock
-running beside the first. `growth-overhaul.md` §4's guard rail — *the ceiling sits behind the
-spend, never behind a clock* — was written because act-gating made **holding** a Scroll optimal.
-With no Scroll there is nothing to hold. The rule is not violated; its premise is gone, and it
-retires.
+The Scroll was a second clock running beside the first. `growth-overhaul.md` §4's guard rail —
+*the ceiling sits behind the spend, never behind a clock* — was written because act-gating made
+**holding** a Scroll optimal. With no Scroll there is nothing to hold; the rule's premise is gone,
+and it retires. (Mastery pips later brought a currency back, flat and unbanked — `mastery.md`.)
 
 `growth-overhaul.md` §1's rule still governs: *a bare number never gets a screen, and a screen
-never buys a bare number.* Every screen this adds collects **who**, and what the hero gets is a
-level — stat rolls, an offer, sometimes an Evolution — which is a thing that happened, not a
-number.
+never buys a bare number.*
 
 ---
 
 ## 2. The XP curve
 
-**Level is derived from cumulative XP.** `RosterEntry.xp` is stored; `level` is read off the
-curve. Pokémon's Medium Fast is the baseline:
+**Level is derived from cumulative XP.** `RosterEntry.xp` is stored; `level` is read off the curve
+(`xpForLevel` / `levelOf`, `src/run/growth.ts`). Pokémon's Medium Fast:
 
 > `XP(L) = L³` — the cumulative XP to *be* level L. 27,000 to the cap of 30.
 
-**Encounter XP is the authored object; par is derived from it** (2026-09-13, per user direction —
-reversing the phase-1 build, which derived encounter XP from `LEVEL_AFTER_ENCOUNTER` so that a hero
-at par landed exactly ON a level every fight). That build kept par identical to the point and was
-invisible for exactly that reason: the bar filled to the top every time, XP was never a number the
-player saw, and a fight paying two levels and the next paying one read as arbitrary. Now
-`ENCOUNTER_XP_BY_ACT` — 120 / 450 / 850 / 1400 / 1600 a fight by act, the finale 5000 — is what a
-win pays, **the Guardian pays ×2 and the Elite ×1.5** (`ENCOUNTER_XP_MULTIPLIER`, read off the node
-fought; par assumes the Skirmish, so the Elite is above par), a level costs what the cube says, and
-the bar lands wherever that leaves it. Sized so par still reaches 8 / 14 / 19 / 24 / 28 / 30 at the act ends (everything
-downstream reads those); inside an act par walks 4/6/7/8, 10/11/12/14, 15/16/17/19, 20/21/22/24,
-25/25/26/28 — one fight in Act 5 pays no level at par, and its bar shows why. **The bar is real:**
-the fight result sweeps each hero's bar from where its XP stood to where the grant left it,
-topping out once a level (`src/view/shared/xpBar.ts`), and the level-up report repeats the sweep
-beside the cells it paid for, with *N to Lv X* under it. A partial bar is the normal state and the
-whole of how catch-up reads.
+**Encounter XP is the authored object; par is derived from it** (2026-09-13, per user direction).
+The first build derived XP from a level table so a hero at par landed exactly ON a level every
+fight — the bar filled to the top every time, XP was never a number the player saw, and a fight
+paying two levels and the next paying one read as arbitrary. Now `ENCOUNTER_XP_BY_ACT` —
+**150 / 560 / 1060 / 1750** a fight by act, the finale 5000 (unspent) — is what a win pays; **the
+Guardian pays ×2 and the Elite ×1.5** (`ENCOUNTER_XP_MULTIPLIER`; par assumes the Skirmish, so the
+Elite is above par). Par reaches **8 / 14 / 19 / 24** at the act ends and walks 5/6/8, 10/11/14,
+15/17/19, 20/21/24 inside them. **The bar is real:** the fight result sweeps each hero's bar from
+where its XP stood to where the grant left it (`src/view/shared/xpBar.ts`). A partial bar is the
+normal state and the whole of how catch-up reads.
 
-**Roster-wide and automatic**, benched included, as today. No pool, no allocation.
+**Roster-wide and automatic**, benched included. No pool, no allocation.
 
 ### The convex curve is the mechanism
 
-A fixed XP amount is worth more levels to a hero below par and fewer to one above it. That is not a
-rule anyone has to write; it is what the cube does. Two consequences, both wanted:
+A fixed XP amount is worth more levels to a hero below par and fewer to one above it — what the cube
+does, not a rule anyone wrote.
 
-- **Catch-up is built in.** A Guild hire one act behind receives the same XP per encounter as the
-  roster and climbs faster for being lower. The gap closes on its own — slowly — and an Ichor (§3)
-  closes it in one node.
-- **The carry throttles itself.** Every Ichor into the same hero buys less level than the last.
-  What it *does* buy is the next threshold sooner — the Evolution, the Late band — and a threshold
-  is a step in power, not in level. The player is trading a smaller, earlier step against breadth.
-  Both curves are readable on the sheet.
+- **Catch-up is built in.** A Guild hire one act behind receives the same XP per encounter and
+  climbs faster for being lower. The gap closes on its own, slowly.
+- **A carry throttles itself.** Any aimed XP into one hero buys less level than the last.
 
 ### What this changes about "a delta, never a target"
 
-Today a hero that joins late has missed the level *grants* before it and **stays behind
-permanently** — `test/recruitment.test.ts` pins it, `CLAUDE.md` states it. Under a convex curve the
-same XP grants close the gap asymptotically. The archetype survives (a hire *is* behind, and
-visibly), but "permanently" becomes "unless the player closes it, and slowly even if not." That is
-Pokémon's behaviour and it is the better one for a roguelike, because the runway is now something
-the player chooses to spend a node on. **§9 lists it as a reversal; the test moves with it.**
+A hero that joined late used to **stay behind permanently**. Under a convex curve the same XP
+grants close the gap asymptotically. The archetype survives (a hire *is* behind, and visibly), but
+"permanently" became "slowly". Measured: a hire that misses eight wins ends the run two levels short
+(`test/growth.test.ts`).
 
 ---
 
 ## 3. Ichor — XP the player aims
 
-**An Ichor is a map-node reward that grants XP to ONE hero.** Pokémon's EXP Ichor, as a node. It
-replaces the Scroll Cache and the Lone Scroll in the reward rows, seat for seat and weight for
-weight (`scrollReward` 46, `loneScrollReward` 14 in `REWARD_WEIGHTS`), and the Guild Hall shelf
-sells one for gold where it sold a Scroll. Every source is a node that displaced another reward —
-the Tutor's pricing principle — so an Ichor is never free and never compounds.
+> **RETIRED 2026-09-14 by `docs/mastery.md` §4.** Ichor was a reward node (and a Guild Hall shelf
+> item) granting XP to ONE hero, priced in fights' worth of the act's XP (`ICHOR_FIGHTS`). Measured,
+> ~13 levels-at-par a run moved full-clear by nothing — focus vs spread was a wash (60.3 / 61.8%) —
+> and it was a second aimed currency beside Mastery Scrolls with the same who-screen. Its seats
+> went back to the Scroll Cache. The catch-up it was *also* for is the curve's job (§2).
 
-**Priced in FIGHTS** (2026-09-14, per user direction; `ICHOR_FIGHTS`, `ichorXpForAct`). An Ichor
-is a fixed number of the act's ordinary fights' XP — the figure the player just watched a Skirmish
-pay, on the bar it moved:
-
-| Node | Size | Act 1 · 2 · 3 · 4 · 5 |
-|---|---|---|
-| Ichor (the old Scroll Cache's seat, weight 46) | **2.5 fights' worth** | 375 · 1,400 · 2,650 · 4,375 · 5,000 XP |
-| Drop of Ichor (the old Lone Scroll's seat, weight 14) | **1.25 fights' worth** | 188 · 700 · 1,325 · 2,188 · 2,500 XP |
-| Guild Hall shelf | a Drop, flat gold, limit 2 a visit | replaces `SCROLL_PURCHASE_*` |
-
-(3 and 1.5 fights for a few hours on 2026-09-14, until the act went from four fights to three and
-the base fight grew ×1.25 to hold the act ends — `run-loop.md` "Three fights an act". The re-fit
-holds the XP an Ichor pays, so it is still ≈ two levels at par at an act's end.)
-
-It was denominated in **levels-at-par** — the XP from `levelAfterEncounters` to par+2 — under the
-"every Ichor is a moment" rule (`growth-overhaul.md` §4's silent-deposit objection: XP that lands
-no level is invisible). Two things retired that: XP became a visible number with a real bar, so a
-grant that fills most of a bar is no longer invisible; and par was a figure the player never saw,
-so "2 levels at par" was a second currency beside the one the fights pay in. Sized to what two
-levels at par cost at each act's END (488 / 1,352 / 2,402 / 3,752 / 5,048 against 3× 120 / 450 /
-850 / 1,400 / 1,600), and FLAT within the act where the old figure grew with par — so at an act's
-first reward row it is up to a level richer than it was (Act 3's opener: +3 at par, not +2), and
-at its last it is what it was. A modest upsizing, in the direction §10's "worth its seat" question
-leans; the sim's Ichor tally now counts fights' worth, so re-measure before resizing.
-What changed is legibility: the who screen shows **each hero's bar, from → to**, with the levels it
-would cross struck beside it — a hero behind par visibly crosses more, a carry visibly less — and
-the node dossier prints the XP beside the fights'. The level-up report is where it pays out, same
-screen, same rows, same bar.
-
-**The screen is one tap: who.** Pushed on the node, like every other reward screen. A hero at
-`MAX_LEVEL` is refused rather than wasted, which is the one place the cap quietly pushes spread.
-
-### Why this is not the two things already rejected
-
-- **Not participation XP** (`growth-overhaul.md` §3): that compounds — the four who fight level,
-  so they win, so they fight. An Ichor is finite, node-priced, and goes where the player points.
-  The bench never rots because encounter XP is still roster-wide.
-- **Not Gems** (§1 there): the screen buys a level, and a level is stat rolls against a grade, an
-  offer from a band, and maybe an Evolution — a story with a hero's name on it, not "+5 Attack."
-- **Not the focus-hero dial** it resembles — or rather, it is that dial in the shape it should
-  have had. §3 there dropped the dial *"once Rank made it unnecessary."* Rank is what §4 below
-  deletes, so the reason for dropping it leaves with it; and a node the player aims is a better
-  dial than a percentage the act sets.
-
-### The supply is the only balance number
-
-Expected Ichor nodes a run at the inherited weights: ~3 Ichor + ~1 Small ≈ **7 levels-at-par**
-across a run (first pass — the sim's Scroll node counts, 3.1 and 1.1 a run, are the basis).
-Poured into one hero that is a carry ~+5 by Act 3 after the curve's throttle; spread, it is a
-hire lifted from −5 to par with change. Too little and the carry cannot exist; too much and par
-stops meaning anything. **This is a sim question before a playtest one** — `scripts/sim` still
-carries `--policy focus|spread` and `--xpmult` from the old allocation era, inert today and
-precisely the two experiments this needs.
+What it taught, kept: it was **not participation XP** (`growth-overhaul.md` §3 — that compounds:
+the four who fight level, so they win, so they fight), and a node the player aims is a better focus
+dial than a percentage the act sets. Mastery pips are that dial now.
 
 ---
 
-## 4. Moves and Evolutions come from levels
+## 4. Moves come from levels
 
-**The Scroll ladder is deleted whole.** Rank, rungs, prices, income, the purse, banking,
-`masteryDue`, the Bank button, the map's Scroll chip, `MasteryScreen`, `MasteryBoard`,
-`canSpendScroll`, the Vigil's clearing rule, `ENEMY_RUNGS_BY_LEVEL`. §7 has the list.
-
-**What replaces it is the thing enemies already use: a per-hero schedule read off level.**
+**The Scroll ladder is deleted whole** (§7). **What replaces it is the thing enemies already used:
+a per-hero schedule read off level** (`LevelSchedule`, `src/engine/content.ts`;
+`src/run/progression.ts`):
 
 ```
 HeroDefinition.schedule: {
-  midLevel:       number   // the Mid band opens; Early expires (RANK_THRESHOLDS[1] today)
-  evolutionLevel: number   // the Evolution is offered, in place of that level's move offer
-  lateLevel:      number   // the Late band opens (RANK_THRESHOLDS[2] today)
-  offerLevels:    number[] // levels that roll a move offer from the highest open band
+  offerLevels:    number[] // levels that roll a move offer from the open band
+  midLevel:       number   // the Mid band opens; Early expires
+  lateLevel:      number   // the Late band opens; Mid expires
+  signatureLevel: number   // the guaranteed signature learn (mastery.md §5)
 }
 ```
 
-**Keep the roll, lose the currency.** This is the one place *not* to copy Pokémon. Charmander
-learns Ember at 12 every game, and in a roguelike that makes every Cinder the same Cinder. Here a
-level on `offerLevels` fires an offer **rolled from the band that level has opened** — the Scroll
-rung minus the Scroll. Take it or decline; the move is burned either way; at `MOVE_CAP` it is
-replace-or-decline. `RosterEntry.offeredMoveIds` and `grantOfferedMove` are the same code. The
-schedule says *when*, the band says *from what*, the roll says *which*.
+(`evolutionLevel` was here until `mastery.md` moved the Evolution onto pips.)
 
-**The offer lands on the level-up report.** `LevelUpScreen` is already first in the post-fight
-chain and already lists every hero's roll; a hero whose level crossed an offer gets its offer as
-part of its row, and the Evolution screen is raised from there when a hero crosses
-`evolutionLevel`. This is a reversal of the report's "one button, no choice" rule (§9): the report
-gains exactly one decision kind, and it is the one that was a screen of its own before. It must
-not gain a second.
+**Keep the roll, lose the currency.** This is the one place *not* to copy Pokémon: Charmander learns
+Ember at 12 every game, and in a roguelike that makes every Cinder the same Cinder. A level on
+`offerLevels` fires an offer **rolled from the band that level has opened**. Take it or decline; the
+move is burned either way; at `MOVE_CAP` it is replace-or-decline. The schedule says *when*, the
+band says *from what*, the roll says *which*.
 
-**Per-hero timing is the lever the roster was missing.** Growth grades make late bloomers and
-front-loaders *numerically*; nobody feels a C grade. Everybody feels Magikarp. A hero whose sheet
-says *evolves at 12* against one that says *evolves at 20* is an identity a player reads before
-drafting — exactly what the 550 rule was written to give stats. Today every hero can be rushed to
-its Evolution in Act 1 for 10 Scrolls, so "early powerhouse" is not something a hero can *be*.
-`EVOLUTION_LEVEL` = 5 already exists as inert per-hero data; this pass gives it its job back.
+**The offer lands on the level-up report** (`levelUpFlow.ts`). The report gained exactly one
+decision kind, and it must not gain a second. **A hero takes at most ONE entry per level-up**
+(`RosterEntry.scheduleTaken`, `pendingScheduleEntry`), so a raw hire's backlog is worked off one
+fight at a time and the report never stacks two decisions on one hero.
 
-**Default schedule** (ships in phase 3 so the engine runs before the content pass; authored per
-hero in phase 4, the way grades were):
+**Every hero authors its own schedule** (`src/data/heroes.ts`), pinned by `test/moveTiers`:
+**five offers — two Early, two Mid, one Late** (2026-09-30, per user direction; it was 5–7), the
+first Mid at the Mid opening, the last by the end of Act 4; a hero starts with **two moves**.
+`DEFAULT_SCHEDULE` (4, 7, 10, 16, 22; Mid 10, Late 21) is what an unauthored definition — the
+Titanspawn and the companion — reads. **Each band offers its own tier**: Early expires at
+`midLevel`, Mid at `lateLevel`.
 
-| | Level |
-|---|---|
-| `offerLevels` | 4, 7, 10, 13, **16**, 19, 22, 25, 28 |
-| `midLevel` | 10 |
-| `evolutionLevel` | 16 (the offer at 16 *is* the Evolution) |
-| `lateLevel` | 21 |
+**Offers are staggered across the roster** (2026-09-16). Par is roster-wide, so a hero's own
+spacing does nothing when every schedule shares a phase: the first pass put 33 of 36 heroes' first
+offer on the opener and six move screens after one fight. Every offer level is now the par a FIGHT
+reaches, and schedules are phased against each other so each fight's window holds a handful.
+Pinned in `test/moveTiers` ("staggered").
 
-That is the enemy table verbatim, so on the day it ships a starter and a contract hero of the same
-level are the same hero. The authoring pass is what pulls them apart. Two authoring rules, mirrors
-of the grade rules: a hero's Evolution sits **between 10 and 24** (before Act 2's Guardian at the
-earliest, before the finale at the latest — a hero that cannot evolve in a run is a trap pick), and
-the count of `offerLevels` is bounded by `movePoolFloor` — the offers it takes to climb out of a
-band — rewritten against the schedule.
+**One model for everybody.** A generated hero reads the same schedule as a roster hero
+(`rollLevelProgression`). A contract hero arrives with every entry below its level taken; a Guild
+hire arrives with them owed, which is what raw means.
 
-**One model for everybody.** A generated hero reads the same schedule as a roster hero;
-`enemyScrollsForLevel` goes. A contract hero arriving at the act's enemy level has crossed its
-levels and rolled its kit — what it does today, by the same code now. A Guild hire arrives one act
-behind with its levels *un*-crossed, which is what raw means, and its first Ichor is where the
-player decides whether that runway is worth closing.
-
-**What survives, and why:**
-
-- **The Mentor and the Tutor.** They keep their reason and gain a cleaner one: they are the only
-  way to get a move *ahead of* its schedule. The Mentor rolls Mid un-gated in the early acts; the
-  Tutor picks any move late.
-- **Classes, Boons, items.** Untouched. They are now the three "pick a hero" screens, and with
-  Scrolls gone they carry the whole of per-hero *choice*; §10 names what that means.
-- **The companion's tier-step** fires at `evolutionLevel` and `lateLevel` in place of a branch, as
-  it fired at the rungs.
-- **The RETYPE, the five-clause framework, every authored path.** `chooseEvolutionPath` is
-  untouched; only the trigger moves.
+**What survives:** the Mentor and the Tutor — the only way to a move *ahead of* its schedule;
+Classes, Boons and items; the companion's tier-steps (now at 5 and 10 Mastery pips); every authored
+Evolution path, with only the trigger moved.
 
 ### What is given up
 
-The carry build as **increasing returns inside a hero**. `growth-overhaul.md` §4 priced
-concentration in breadth: pour Scrolls into one hero and its ceiling rises, spread them and nobody
-ranks up. Under one curve, concentration has *decreasing* returns in level and *stepped* returns
-in power, and it is bought with Ichor the player could have spread. That is a different texture —
-Pokémon's, not Slay the Spire's — and it means **Titanpact's team-building is about who and which,
-never how much.** If that is not acceptable, this overhaul is not the answer, and the Scroll ladder
-is the right system carrying the wrong price.
+The carry build as **increasing returns inside a hero**. Under one curve, concentration has
+*decreasing* returns in level. **Titanpact's team-building is about who and which, never how
+much** — with Mastery pips (`mastery.md`) the one place concentration still pays.
 
 ---
 
 ## 5. Four acts, then the finale
 
-> **Re-drafted 2026-10-01 as a decision draft, per user direction, and MEASURED — not decided.**
-> Playtest found the run's escalation ending at the Act 4 Guardian: every hero holds a full kit
-> and full sockets, and Act 5 is gear merges and maybe one hero to Mastery 10. That is the
-> structure, not a feeling: since 2026-09-30 every schedule's last offer lands by the end of Act 4,
-> signatures land at 14–24 (par is 24 at Act 4's end), and the Evolution comes at 5 pips. Act 5
-> paid levels 24 → 28, which are stat rolls only, plus one forced Tutor. The 2026-09-13 draft
-> this replaces (the Herald rename, `ACT_STEP_CURVE`, the Forge, the Crucible) is superseded
-> wholesale; this is the re-fit against the game as it stands.
+> **DECIDED AND BUILT 2026-10-02, per user direction.** Playtest found the run's escalation ending
+> at the Act 4 Guardian: every hero held a full kit and full sockets by then, and Act 5 was stat
+> rolls, gear merges and one forced Tutor.
 
-**The shape.** `TOTAL_ACTS` 6 → 5, `SEAL_ACTS` 5 → 4: Wild's Edge, then three chosen Locations,
-then the finale as act 5 — the Vigil → the Herald → the Titan's Eyes, unchanged. Four seals
-broken of six base Locations, so **two** stay shut every run (lore §5's "the sixth" becomes "the
-ones you never reached", which the Holy Sanctum case already needed).
+**The shape.** `TOTAL_ACTS` = 5, `SEAL_ACTS` = 4 (`src/run/state.ts`): Wild's Edge, then three
+chosen Locations, then the finale as act 5 — the Vigil → the Herald → the Titan's Eyes. Four seals
+broken of six base Locations, so **two** stay shut every run.
 
-**Delete the fifth act, do not compress the four.** The draft's first pass re-fitted par to act
-ends 9/17/24/29 so the finale still reached 30. Measured (variant B below), that pulls every
-schedule forward: Late casts are 11.9% of Act 4 — exactly where today's Act 5 sat — so the
-plateau would move into Act 4, not go away. Keeping `ENCOUNTER_XP_BY_ACT` as it is for acts 1–4
-means **acts 1–4 play exactly as today** and the build completes at the last Guardian, which is
-the point. The finale's own XP figure stops mattering (nothing after it spends XP). The roster
-enters the finale at par 24, not 28; enemies are levelled off par, so that is relative.
+**Delete the fifth act, do not compress the four.** A par re-fit to 9/17/24/29 (variant B) was
+measured and rejected: it pulled every schedule forward and moved the plateau into Act 4 rather
+than removing it. Keeping acts 1–4's XP as it was means **acts 1–4 play exactly as before** and the
+build completes at the last Guardian. The roster enters the finale at par 24.
 
-**What it re-fits** (first pass; the experiment branch `sim/four-acts` carries the code half):
+**What shipped:**
 
-| Thing | Today | Under four acts |
-|---|---|---|
-| `TOTAL_ACTS` / `SEAL_ACTS` | 6 / 5 | **5 / 4** |
-| `ENCOUNTER_XP_BY_ACT` | 150/560/1060/1750/2000, finale 5000 | **150/560/1060/1750**, finale 5000 (unspent) — par 8/14/19/24, the finale at 24 |
-| `SCRIBE_PIPS_EACH` | 2 | **3** — an act's Scribe is 6 pips; see the measurement |
-| `masteryForAct` | `2N−2`, the finale reads 10 by arithmetic | `2N−2` for acts 1–4, **the finale reads `MASTERY_CAP` by rule** (it would read 8 otherwise and lose its mastered innates) |
-| `ACT_LEVEL_ADJUST[finale]` | +2, but clamped: par 28 + 2 + 2 = 32 → **30**, an effective +2 | **0** — at par 24 the clamp no longer bites, so +2 would be a real +4 |
-| Act 4 Guardian | `GUARDIAN_ESCORTS_BY_ACT` 2, `CHAMPION_GRADE_BY_ACT` D | unchanged — the last Guardian is Act 4's as tuned; whether it takes Act 5's C is open |
-| Finale escorts | one Late Titanspawn per broken seal: Herald + 5 | **Herald + 4 — the finale is 6v5**; `test/finale` pins 6 a side |
-| Guardians, Banners | 5 | **4** |
-| Spliced row | Mentor 1–3, Tutor 4–5 | Mentor 1–3, **Tutor 4 only** (one guaranteed Late move a run, not two) |
-| Gear | `ACT_RARITY_WINDOW` act 5 drops Commons; `ENEMY_GEAR_FROM_ACT` 4 | act 5's window is the finale's; enemy gear is Act 4 only — one geared act |
-| Gold | `ACT_GOLD_SCALE` to 3 | unchanged; the run simply ends a Guild Hall sooner (~270g less earned) |
-| Location itinerary | 5 of 6 | 4 of 6, the act-2/3/4 pick 1-of-2 unchanged |
-| `docs/lore.md` §5 | five seals, "the sixth" | four seals, two shut |
-| Saves | `actNumber` 1–6 | `SAVE_VERSION` bump; a save in act 5 or 6 has no migration that makes sense — discard in-flight runs |
-| Tests | — | 20 fail on the branch, every one pinning a five-act constant (map shape by act, Tutor in 4–5, finale 6 a side, the itinerary's one shut seal, act-end levels) |
-| `SmithyWorkSheet` | hard-coded `act <= 6` | reads `TOTAL_ACTS` (fixed on the branch) |
+- `ENCOUNTER_XP_BY_ACT` 150/560/1060/1750, finale 5000 (unspent); par 8/14/19/24.
+- `masteryForAct` = `2N − 2` for acts 1–4; **the finale reads `MASTERY_CAP` by rule**, so its
+  enemies keep their mastered innates.
+- `ACT_LEVEL_ADJUST[finale]` = 0 (at par 24 the level clamp no longer bites, so +2 would be a real +4).
+- **Act 4's Guardian on C** (`CHAMPION_GRADE_BY_ACT`) — it is the last seal.
+- The finale is **Herald + 4 escorts** — one per broken seal.
+- Four Guardians, four Banners, four Classes; the spliced row is the Mentor in 1–3 and **the Tutor
+  in act 4 only** (one guaranteed Late move a run, not two).
+- **Mastery supply: the MVP pip and shelf 2-packs**, the Scribe at 2 + 2 (`mastery.md` §3).
+- **The finale re-fit:** Eyes Int −20, Herald Atk and Int −20, `WITHERING_GAZE_FRACTION` 0.04, the
+  Eyes' HP **kept** at 810 / 945 (per user direction — they should feel big).
+- `SAVE_VERSION` 20; in-flight five-act runs are discarded.
 
-**Measured** (2026-10-01, 3000 runs a batch, seed 1, `--workers 2`; skilled pilot / chart pilot).
-Acts 1–4 are identical to the baseline in every variant, as designed, so every difference is the
-finale and what the roster carries into it.
+**Measured (3000 runs, chart / skilled pilot):** the finale **74.4 / 97.3%**, full-clear
+**48.2 / 90.1%** (five acts: 54.6 / 91.6%), the Act 4 Guardian 97.7% chart; **62.6 min Reader**
+skilled, against 73.0.
 
-| Variant | Full-clear | Finale | Reader / Auto min | Pips a completed run | Every hero evolved |
-|---|---|---|---|---|---|
-| **Today** (five acts) | 91.6 / 54.6% | 98.7 / 83.4% | 73.0 / 51.5 (chart 84.2 / 58.8) | 33.6 | 82.0 / 58.7% |
-| **A** — Act 5 deleted, nothing else | 86.2 / 40.5% | 92.4 / 61.0% | 61.9 / 43.6 (71.3 / 49.8) | 26.5 | 21.1 / 14.0% |
-| **AS** — A + Scribe 3+3 | 86.2 / 38.8% | 93.2 / 59.0% | 62.5 / 44.1 (72.1 / 50.3) | 34.4 | 57.7 / 40.6% |
-| **ASF** — AS + finale act term 0 | **87.3 / 41.9%** | **94.4 / 63.7%** | 62.2 / 43.9 (71.7 / 50.1) | 34.4 | 57.7 / 40.6% |
-| **B** — §5's old par re-fit, 9/17/24/29 | 89.3% / — | 95.8% / — | 61.6 / 43.4 | 26.7 | 24.8% / — |
+**What the finale wall was.** Levels were the smaller part — restoring Act 5's XP bought four points.
+The rest was the loadout layer Act 5 paid for: its Banner (60–80 stats a hero) and an act of gear
+and Smithy work. A fifth Banner put the finale back exactly; per user direction it was not taken,
+and the bosses came down instead. No single number did it; the chosen set spends four small ones.
 
-What it says:
+**Mastery supply** — none of the levers moved full-clear; where the pips land mattered as much as how
+many. The shelf buys for the four strongest heroes and a pack doubles down on them; the MVP pip goes
+where the fight says.
 
-1. **Time: −11 minutes Reader, −8 Auto, −12 chart Reader.** The finale gets a little longer
-   (18.7 → 21.6 rounds skilled) and eats a sliver of it back.
-2. **Mastery is the supply cliff, and the Scribe at 3+3 closes most of it.** Without it, one act
-   fewer of Scribe, Cache and shelf takes pips 33.6 → 26.5 and "every hero evolved" 82 → 21%.
-   At 3+3 the pips are back (34.4) and Evolutions land EARLIER — 53% of them in Act 3 against
-   17% today — but "every hero evolved" stops at 58%, because shelf Scrolls also fell with the lost
-   Guild Hall and the pips crowd onto fewer, earlier heroes. Mastery 10 a run will be rarer than
-   today either way; the sim does not report it directly.
-3. **The finale becomes the wall — 83 → 61% on the chart pilot — and the level clamp is only
-   part of it.** Setting the finale's act term to 0 restores the effective +2 and buys back ~5
-   points (59 → 64%). The rest is real: the stat-total ratio into the finale is unchanged (0.79 →
-   0.81), but the Herald's DPR rises 61 → 68–70 because its kit's BasePower is authored against a
-   level-28 roster's HP, and the roster arrives one Banner, one Tutor move, ~0.2 Revives and an
-   act of merges short. **The finale's own numbers are the dial**, not the acts before it: the
-   Herald's and the Eyes' kit power, Withering Gaze's fraction, or the finale's level offset.
-4. **B is rejected.** It reaches the finale stronger (95.8%) by moving the build forward an act,
-   which re-creates the plateau one act earlier.
-
-**Mastery supply levers** (2026-10-02, per user direction; same batches, all with the finale act
-term at 0, skilled / chart pilot). Three ways to buy back the lost act's pips:
-
-| Lever | Full-clear | Pips a completed run | Every hero evolved | Evolutions in Acts 1–2 |
-|---|---|---|---|---|
-| Scribe 3+3 (ASF above) | 87.3 / 41.9% | 34.4 | 57.7 / 40.6% | 5.9% |
-| Shelf 2-packs (25g, 2 a visit, one hero each), Scribe 2+2 | 86.7 / 42.9% | 33.8 | 33.8 / 24.0% | 2.9% |
-| 2-packs + Scribe 3+3 | 87.3 / 41.9% | 41.7 | 72.9 / 54.2% | 20.7% |
-| **MVP pip every fight**, Scribe 2+2, single Scrolls | 87.1 / 41.6% | 37.6 | **67.3 / 48.9%** | 24.9% |
-| **MVP pip + 2-packs**, Scribe 2+2 | 87.5 / 42.3% | 45.0 | **77.1 / 54.0%** | 33.9% |
-
-- **None of them moves full-clear** (41.6–42.9% chart). Mastery supply is not what the finale
-  wall is made of; that stays the finale's own re-fit.
-- **Where the pips land matters as much as how many.** The 2-packs restore today's count but
-  the fewest fully evolved rosters: the shelf buys for the four strongest heroes, and a pack
-  doubles down on them. The MVP pip goes where the fight says, and reaches 67% fully evolved on
-  fewer pips than packs + Scribe 3+3 need for 73%.
-- **The MVP** (`src/run/mvp.ts` on the branch): each hero's score is its weighted share of
-  whichever team column it led most — Damage (Shield-absorbed and DoT included), Finishes (×0.8),
-  Support (non-drain heals plus Shield it granted that a hit emptied), Anchor (damage taken from
-  enemies), Control (statuses and stat drops on enemies, buffs on allies) — on the field 2+ rounds;
-  never a hero at Mastery 10, never the same hero twice running. Winners split Anchor 29 /
-  Control 26 / Damage 21 / Support 11 / Finishes 7% (skilled); the no-repeat rule moved 24% of
-  pips; a run's most-picked hero takes ~40% of its MVPs, 4.5 distinct heroes a run. The share a
-  winner holds is high (76%), so the victory line has a real number to say. **Anchor leads,
-  which is the tanks' column — watch it in play; a weight below 1 is the dial.** It is also the
-  first post-fight pip, reversing "never a post-fight drop" (`docs/mastery.md`), and it moves
-  Evolutions earlier: a quarter land in Acts 1–2.
-
-**The finale re-fit** (2026-10-02, per user direction: **no added Banner, ~80% on the chart
-pilot** — the finale should stay a challenge). All on the MVP + 2-packs, Scribe 2+2 base above;
-chart pilot unless marked.
-
-| Variant | Finale | Full-clear |
-|---|---|---|
-| Today (five acts), chart / skilled | 83.4 / 98.7% | 54.6 / 91.6% |
-| Four acts, finale un-fitted | 65.2% | 42.3% |
-| Eyes HP ×0.8 / ×0.67 | 69.0 / 72.6% | 44.8 / 47.1% |
-| … + Eyes Int −20 | 73.5 / 75.9% | 47.8 / 49.3% |
-| Eyes HP ×0.8, Int −20, Herald Atk/Int −20 | 76.0% | 49.4% |
-| Eyes HP ×0.8, Int −20, Gaze 4% | 74.4% | 48.4% |
-| A Tutor at the Vigil (no stat change) | 64.7% | 42.0% |
-| *Diagnostic:* Act 5's XP at the Vigil, enemies at today's relative level | 69.3% | 45.0% |
-| *Diagnostic:* a fifth Banner at the Vigil / + Eyes HP ×0.8, Int −20 | 77.4 / 84.9% | 50.3 / 55.1% |
-| **Chosen: Eyes HP 540 / 630, Eyes Int −20, Herald Atk and Int −20, Gaze 4%** | **79.0%** (skilled **98.2%**) | **51.3%** (skilled **91.1%**) |
-
-- **What the wall was.** Levels were the smaller part: restoring Act 5's XP buys four points. The
-  rest is the loadout layer Act 5 paid for — its Banner (about 60–80 stats a hero) and an act of
-  gear and Smithy work. The player side enters the finale with 6,563 stat points against today's
-  7,441; the Herald and the Eyes grow on all-E grades, so four fewer levels barely shrank them.
-  A fifth Banner put the finale back exactly; per user direction it is not taken, and the bosses
-  come down instead.
-- **No single number does it.** Every lever bought one to four points and they saturate; the
-  chosen set spends four small ones. The Eyes' HP returns to its pre-§10 figures (§10.3's ×1.5 is
-  undone), their Intelligence takes a second −20, the Herald loses 20 Attack and 20 Intelligence,
-  and `WITHERING_GAZE_FRACTION` is 0.04.
-- **The Vigil Tutor measured as nothing** — but the chart pilot barely casts Late moves, so this
-  says the sim cannot see a Tutor, not that a Tutor is worthless.
-- **The run, chosen shape:** 61.7 min Reader / 43.5 Auto skilled (today 73.0 / 51.5); chart
-  70.8 Reader (today 84.2).
-
-**Shipped, 2026-10-02 (per user direction):** the MVP pip + 2-packs (Scribe 2+2), **Act 4's Guardian
-on C** (it is the last seal), and the chosen finale re-fit **with the Eyes' HP kept at 810 / 945** —
-they should feel big. Measured: the finale **74.4% chart / 97.3% skilled**, full-clear **48.2 / 90.1%**,
-the Act 4 Guardian 97.7% chart; 62.6 min Reader skilled.
+| Lever (finale act term 0) | Full-clear skilled / chart | Pips a completed run | Every hero evolved |
+|---|---|---|---|
+| Scribe 3+3 | 87.3 / 41.9% | 34.4 | 57.7 / 40.6% |
+| Shelf 2-packs, Scribe 2+2 | 86.7 / 42.9% | 33.8 | 33.8 / 24.0% |
+| MVP pip, Scribe 2+2 | 87.1 / 41.6% | 37.6 | 67.3 / 48.9% |
+| **MVP pip + 2-packs, Scribe 2+2 (shipped)** | 87.5 / 42.3% | 45.0 | 77.1 / 54.0% |
 
 **Open, for the designer:**
 
-- **The finale's feel.** 79% chart / 98% skilled is the number; whether the Eyes at their old
-  HP still read as the climax is for play to say.
-- **Act 4's Guardian as the last one.** On C it clears 97.7% chart (98.0% on D) — the grade
-  barely moves it. If the final seal still does not read as the hardest in play, a third escort is
-  the next lever.
-- **One Tutor a run.** Act 5's forced Tutor goes; whether the Vigil takes a Tutor (the "last
-  things before the test" beat) is the natural home for it.
-- **Mastery 10.** At 3+3 the supply matches today's, but spread across a shorter run; whether one
-  hero reaching ten is still a run's realistic ceiling is for play to say.
-- **Ascension's per-act tables** (`WOKEN_ESCORTS_BY_ACT`, the A1 measurements) were not re-run.
+- **The finale's feel.** Whether the Eyes at their kept HP read as the climax is for play to say.
+- **Act 4's Guardian as the last one.** On C it clears 97.7% chart (98.0% on D) — the grade barely
+  moves it. If the final seal does not read as the hardest in play, a third escort is the next lever.
+- **One Tutor a run.** Whether the Vigil takes a Tutor ("last things before the test") is the
+  natural home for a second.
+- **Mastery 10** — whether one hero reaching ten is still a run's realistic ceiling.
+- **Ascension's per-act tables** (`WOKEN_ESCORTS_BY_ACT`, the A1 measurements) were not re-run for
+  four acts.
 
 ---
 
 ## 6. What the run feels like
 
-Node → do a thing → node. The post-fight chain is *Level-up report (with any offers and any
-Evolution) → Banner → Crucible → map*. No Mastery screen behind it, no Scroll chip on the map, no
-purse to read. An Ichor node is one tap. The Guild Hall sells people, gear and Ichor.
+Node → do a thing → node. The post-fight chain is *victory and level-up report (with any offers and
+the signature) → Banner → Crucible → map*. No ladder behind it, no purse to read.
 
-The arc, under four acts and authored schedules: Act 1 is who you are (draft, companion, first
-contract, Early kits); Act 2 is who you are becoming (the early evolvers turn, Mid bands open,
-the roster fills); Act 3 is the team taking shape (the late evolvers turn, Late bands, the Tutor);
-Act 4 is the finished team under test; the finale is the test. What the player chose is the
-roster, the paths, the Classes, the Boons, the items, and **where the Ichor went** — and the last
-one is the one that says "this is my carry."
+The arc: Act 1 is who you are (draft, companion, first contract, Early kits); Act 2 is who you are
+becoming (Mid bands open, the first Evolutions, the roster fills); Act 3 is the team taking shape
+(signatures, Late bands); Act 4 is the finished team under test; the finale is the test. What the
+player chose is the roster, the paths, the Classes, the Boons, the items, and where the Mastery
+went.
 
 ---
 
 ## 7. What is deleted
 
-| Going | Surface |
-|---|---|
-| **Mastery Scrolls, entire** | `RunState.masteryScrolls`, `masteryDeferred`, `RosterEntry.masteryScrollsSpent`, `scrollCost`, `MAX_SCROLL_COST`, `scrollsToReachRung`, `masteryRung`, `masteryRank`, `RANK_THRESHOLDS`, `EVOLUTION_RUNG`, `EVOLUTION_SCROLLS`, `SCROLLS_TO_MAX_RANK`, `canSpendScroll`, `canAffordAnyScroll`, `spendMasteryScroll`, `grantMasteryScrolls`, `masteryMovePool` (re-pointed at the schedule) |
-| **Scroll income** | `scrollsFor`, `ACT_SCROLL_STEP`, `SCROLL_REWARD_COUNT`, `LONE_SCROLL_COUNT`, `SCROLL_PURCHASE_COST`, `SCROLL_PURCHASE_LIMIT`, `buyMasteryScroll`, the Guild Hall shelf's Scroll bundle |
-| **The screens** | `MasteryScreen.tsx`, `MasteryBoard.tsx`, `useScrollPour`, the map's Scroll chip, the Bank button, the Vigil's clear-on-exit |
-| **The nodes** | `scrollReward`, `loneScrollReward` — RE-POINTED at Ichor, seat and weight kept (§3) |
-| **Level as inert data** | `EVOLUTION_LEVEL` as a flat 5 — REPLACED by `schedule.evolutionLevel`, per hero |
-| **The enemy's private table** | `ENEMY_RUNGS_BY_LEVEL`, `enemyScrollsForLevel` — REPLACED by the shared schedule |
-| **The level table as levels** | `LEVEL_AFTER_ENCOUNTER` stays authored; `levelsForEncounter` becomes `xpForEncounter`, and `grantEncounterLevels` grants XP |
-| **The sim's Scroll telemetry** | `scrollsBySource`, `heroScrollHistogram*`, the `rung`/`evolution` screen tallies in `time.ts` → Ichor and offer tallies |
-
-The tutorial script (`src/data/tutorial.ts`) narrates Scroll beats and must be re-checked in
-phase 3, as it was in the growth overhaul's.
+Done: **Mastery Scrolls as a ladder** (`masteryScrollsSpent`, `scrollCost`, rungs, rank,
+`RANK_THRESHOLDS`, `EVOLUTION_RUNG`, `canSpendScroll`, the purse, `masteryDeferred`); **Scroll
+income** (`scrollsFor`, `ACT_SCROLL_STEP`, the Guild Hall's Scroll bundle); **the screens**
+(`MasteryScreen`, `MasteryBoard`, the map's Scroll chip, the Bank button, the Vigil's clear-on-exit);
+**the enemy's private table** (`ENEMY_RUNGS_BY_LEVEL`). `scrollReward` and the shelf later came back
+as flat Mastery Scrolls (`mastery.md`).
 
 ---
 
 ## 8. Order of work
 
-Sequenced so the tree is playable at every boundary. Numbering is dependency order.
-`SAVE_VERSION` bumps freely at each.
+All phases **DONE**. Measured on the sim (1000 runs, seed 11, greedy pilot unless noted).
 
-| # | Phase | Exit criterion | Status |
-|---|---|---|---|
-| 1 | **XP under the hood.** `RosterEntry.xp`; level derived off `XP(L) = L³`; encounter XP derived from `LEVEL_AFTER_ENCOUNTER` so par is unchanged to the point. Growth rolls fire per level crossed, as now. No visible change. | Every existing test green with no numeric change at par. A hire behind par measurably gains on it — the new test that replaces "stays behind permanently". | **DONE 2026-09-13.** `xpForLevel` / `levelForXp` / `levelOf` / `xpForEncounter` / `grantXp` (`src/run/growth.ts`); `level` is gone from `RosterEntry` and every reader derives it; `SAVE_VERSION` 12. Measured below. |
-| 2 | **Ichor.** The two Scroll nodes re-pointed; the shelf; the *who* screen; the report shows the jump. Scrolls still exist and still buy moves — this is a working bridge state where Ichor buys levels-and-stats and Scrolls buy moves. | Both nodes grant XP to one hero; the sim tallies Ichor by source and the paired focus/spread batch runs. | **DONE 2026-09-13.** `src/run/ichor.ts`, `IchorNodeScreen`; nodes are `ichorReward` / `ichorDropReward` (renamed, not just re-pointed — a node named for Scrolls that grants levels would outlive phase 3); the shelf sells a Drop for the bundle's 35g, 2 a visit; `SAVE_VERSION` 13. Measured below. |
-| 3 | **Levels teach.** The destructive one. `HeroDefinition.schedule` on the default table; offers roll from the report; the Evolution raises from `evolutionLevel`; enemies and hires read the same schedule; delete everything in §7. Tutorial re-checked. | No Scroll anywhere. `test/moveTiers.test.ts` rewritten against the schedule. A run completable end to end. | **DONE 2026-09-13.** `LevelSchedule` / `DEFAULT_SCHEDULE` / `scheduleEntries` / `pendingScheduleEntry` / `takeScheduleEntry` / `levelMovePool` (`src/run/progression.ts`); `RosterEntry.scheduleTaken`; `levelUpFlow.ts` pays the report; `MasteryScreen`/`MasteryBoard` deleted; `SAVE_VERSION` 14. **One rule added:** a hero takes at most ONE entry per level-up, so a raw hire's backlog is worked off one fight at a time (§4's "un-crossed"), and the report never stacks two decisions on one hero. Measured below. |
-| 4 | **Author 36 schedules.** Parallelisable from phase 3 on. The interesting authoring is the spread: who evolves at 12 and who at 22, and whether the low-base/high-grade late bloomers from the grade pass are also the late evolvers (they should not all be — a hero can bloom in stats and turn early, or the reverse). | No hero on the default schedule; the 10–24 Evolution window pinned by test beside the grade budget. | **DONE 2026-09-13** (per user direction: fewer offers a hero). `src/data/heroes.ts`: 11 early turners (10–12), 18 middle (13–19), 7 late (20–24); 5–6 offers a hero, Glyph 7, 5.4 on average; Mid 9–13 and Late 18–25 move with the Evolution. Crossed against the grades on purpose: Marrow, Zenith and Bellows are front-loaded in stats and turn LAST; Riptide and Pincer bloom in stats and turn early/mid. Pinned in `test/moveTiers.test.ts`. Measured below. |
-| 5 | **Four acts and the finale.** §5's table, in one pass. The Herald rename; the Eyes as a second finale champion through `appendFinalEnemy`. | `TOTAL_ACTS` = 5; the sim's act table reads four; 18 encounters at par reach 30. | **DONE 2026-10-02** (per user direction): Act 5 deleted, acts 1–4 untouched; the MVP pip and shelf 2-packs (Scribe 2+2); Act 4's Guardian on C; the finale re-fit with the Eyes' HP kept. `SAVE_VERSION` 20. Measured in §5. |
-| 6 | **Re-fit.** Ichor supply, `ACT_STEP_CURVE`, `ENEMY_LEVEL_LAG`, champion multipliers, reward weights, against the sim and the skilled pilot; then the length report. | No dead node, no unreachable band, no wall the old curve did not have; run length reported per profile. Win-rate targets are a playtest question. | **DONE 2026-09-13** (per user direction: Late moves realistically accessible). Three dials: each band offers ITS OWN tier (`MOVE_TIER_RANK_EXPIRY.mid` = Late); every schedule re-authored to two offers a band, Late opening 17–22; **Late-tier mana ×0.75** (floor 45, the 100+ whole-pool casts exempt) and `ACT_STEP_CURVE` 9/15 → 8/13 to pay for its enemy half. Measured below. The Act 1 wall is NOT re-fitted — see §10. |
+| # | Phase | Status |
+|---|---|---|
+| 1 | **XP under the hood** — `RosterEntry.xp`, level derived off `L³` | **DONE 2026-09-13.** Full-clear 51.7 → 61.9%: the whole lift is catch-up landing on recruits off par. |
+| 2 | **Ichor** (since retired, `mastery.md`) | **DONE 2026-09-13.** ~13 levels-at-par a run; focus vs spread a wash; full-clear unmoved. |
+| 3 | **Levels teach** — the schedule, offers on the report, the ladder deleted | **DONE 2026-09-13.** Full-clear 61.8 → 54.1%, all of it the Act 1 wall (83 → 76%). Late band reached by twice as many (81% vs 37%). Offers made 41.5 decisions a run — the cut came in phase 4. |
+| 4 | **Author 36 schedules** | **DONE 2026-09-13.** Offers 41.5 → 26.4 a run; full-clear 51.3%. Crossed against the grades on purpose: a hero can bloom in stats and turn early, or the reverse. |
+| 5 | **Four acts and the finale** | **DONE 2026-10-02.** §5. |
+| 6 | **Re-fit** (per user direction: Late moves realistically accessible) | **DONE 2026-09-13.** Three causes of the 4.5% Late-cast share: (1) a Late offer rolled from Mid+Late — **each band now offers its own tier**; (2) Late offers sat at 25–29 — re-authored earlier; (3) a 70+ move against a 50–95 pool is cast once a fight — **Late-tier mana ×0.75** (floor 45; the 100+ whole-pool casts exempt). Landed: full-clear 57.1%, Late 18.5 / 28.9 / 36.4% of Acts 4 / 5 / finale. MP Regen 10 → 15 was tried and is not the lever. |
 
-**What each phase measures.** Phase 1: nothing moves *at par*, and that held — but the roster is
-not all at par. A contract hero arrives at the act's enemy level (par − `ENEMY_LEVEL_LAG`) and a
-hire an act behind, and under the cube both now gain on par with every win where they used to
-trail by a fixed count. Measured (1000 runs, seed 11, greedy pilot): full-clear **51.7% → 61.9%**,
-Act 1 flat (82.0% → 82.2%: nobody is off par yet), Act 2 94.1 → 96.8, Act 3 96.5 → 99.2, Act 4
-83.0 → 89.0, Act 5 84.8 → 88.8. The whole lift is the catch-up §2 promised, landing on recruits
-before Ichor exists to aim it — so phase 6's re-fit starts ten points looser than the growth
-overhaul left it, and the contract hero's "arrives finished" value is now also "arrives and
-closes". A hire that misses eight wins ends the run two levels short (`test/growth.test.ts`).
-Phase 2, measured (1000 runs, seed 11, greedy pilot; the ladder still in, so Ichor is purely
-additive): **supply is ~13 levels-at-par a completed run, not the ~7 §3 estimated** — Ichor 6.3,
-Drop 1.1, and the Guild Hall shelf **5.7**, which §3's estimate left out and which is nearly half
-of it (the sim buys both Drops every visit; a player may not). **Focus vs spread is a wash:
-60.3% vs 61.8% full-clear**, and spread is 61.8% against phase 1's 61.9% with no Ichor at all —
-13 levels-at-par per run moved the clear rate by nothing measurable. Mean end level rose 22.6 →
-23.5, so the Ichor landed; it just is not a lever at this size, which is consistent with a level
-being ~9 budget points (an Ichor at par ≈ 18 points ≈ six-tenths of a Common item, for one hero).
-Two readings, both for phase 6: Ichor is under-sized for what its seat displaces (an item or a
-Boon), or the greedy pilot cannot exploit a carry the way a player would. The sign did not flip
-between policies, so it is not a scorer fault (`docs/growth-overhaul.md` §8's lesson) — but the
-focus policy feeds the *strongest* hero, who is already ahead of par and so gets the least from
-each Ichor; a player's carry is a hero they are *about* to make strong. §10 gains the question. Phase 3: full-clear and encounters-won against
-phase 2 — expect a drop, since ~47 rung offers become ~40 scheduled ones at a different cadence,
-and the drop is what phase 6 re-fits. Phase 5: the act table and the clock. Phase 6: the clock
-against the target, per profile, and a named decision about which profile the target is for.
+**Phase 6's Act 1 finding:** stat ratios were byte-identical to before the overhaul, so the 76% wall
+was kit — the ladder had let one hero buy Mid moves and an Evolution inside Act 1 — and every
+symmetric number measured ±0 there. Mastery answered it with an Act 1 Evolution *by choice* (the
+Scribe before the fork, `mastery.md` §3), and `ACT_LEVEL_ADJUST` (Act 1 −2, `enemy-levels.md`) is the
+enemy-side dial.
 
-Phase 3, measured (1000 runs, seed 11): **full-clear 61.8% → 54.1%, all of it the Act 1 wall
-(83.2% → 76.0%)** — the ladder let a player buy Mid moves and an Evolution inside Act 1 for 10
-Scrolls; the default schedule's Act 1 is two Early offers and the Evolution is Act 3, which is
-§10's "can the carry rush an Evolution" question answered *no* before anyone chose. Acts 2–5 held
-(96.8 / 99.0 / 87.8 / 85.8). Gates on the level histogram, act 4+: Mid 93.9%, Evolution 87.9%,
-Late 80.6% — against the ladder's 87 / 81 / **37**: the Late band is reached by twice as many,
-because it sits behind a level everyone crosses rather than 20 Scrolls poured into one hero.
-Late-tier casts still fell, 9.3% → 6.0%, since Late opens at 21 (Act 4). **The clock did not
-move: 86 → 90 min tapping.** §0's arithmetic assumed the ladder's ~47 screens would become ~40;
-the schedule makes **41.5 replace-or-decline offers a run and only 3.9 receipts**, because a hero
-starts with three moves and hits `MOVE_CAP` on its first offer — nine offers a hero to six heroes
-is MORE decisions than a breadth-limited purse ever bought. The schedule did not cut the screens;
-it moved the decision from *who* to *which*. Two levers, both phase 4/6: fewer `offerLevels`
-(nine is the ladder's open-ended top handed to everybody; `movePoolFloor` bounds it from below),
-and a cheaper offer screen. `time.ts` now prices a receipt (4s) apart from a decision (12s).
-
-Phase 4, measured (1000 runs, seed 11): **offers 41.5 → 26.4 a run** (8.3 → 5.3 min of decisions),
-the clock 89.5 → 88.1 min tapping — the fights got a little longer on thinner kits and ate most of
-the saving. **Full-clear 54.1% → 51.3%**, Act 1 flat (76.0 → 75.7), Acts 4–5 down (87.8 → 86.2,
-85.8 → 83.0): fewer moves is weaker, and the roster's kits are now Early-heavy — casts 71% Early /
-24% Mid / 4.5% Late against phase 3's 63 / 31 / 6. Evolutions 5.8 → 5.0 a run and "every hero
-evolved" 68.6% → 64.6% of runs, since a late turner at 22–24 does not reach it in a run that dies
-in Act 4. Three phase-6 dials fall out: the offer count against the cast-tier mix (5.4 a hero may
-be one too few for the Late band to ever show up), the Act 1 wall (unchanged since phase 3 — the
-early turners' Evolution is Act 2, not Act 1, and that is §10's question decided), and whether the
-late turners' 22–24 is a turn the player gets to see. What the numbers cannot say is whether the
-roster now READS as thirty-six different heroes, which is the watch item this phase existed for.
-
-Phase 6, measured (1000 runs, seed 11, each step against the last). The 4.5% had three causes
-stacked, and only one was the schedule. (1) *The Late band diluted itself*: a Late offer rolled
-from Mid+Late was Late ~40% of the time — each band now offers its own tier, and the two Late
-offers are two Late moves. (2) *Late offers sat at 25–29* — re-authored to two a band with Late
-opening 17–22, both reachable inside Act 5 on every hero. Together: Late 4.5% → 7.9%, full-clear
-51.3% → 55.6%. (3) *Mana*: with Late kits in hand, Act 4 was still 55% Early casts, because a
-70+ move against a 50–95 pool is cast **once a fight** and the hero fills with 20-mana Early.
-MP Regen 10 → 15 moved Late casts 7.9 → 8.3% and cost Act 1 (enemies regen too) — not the lever.
-**Late-tier mana ×0.75** (floor 45; the 100+ whole-pool casts exempt, since Pack Leader's 100/50
-and Overdrive's 100 are designed numbers) took Late to 11.2% overall and 17.6 / 25.9 / 33.6% of
-Acts 4 / 5 / finale — and full-clear to 49.5%, the re-price being symmetric and an Act 4–5 enemy
-arriving with a Late kit. `ENEMY_LEVEL_LAG` 3 compensated best but ties an Act 5 contract hero
-with a hire on level, a pinned invariant, so `ACT_STEP_CURVE` 9/15 → 8/13 carries it instead.
-**Landed: full-clear 57.1%, Acts 4–5 at 89.4 / 89.4 (phase 2's 88 / 89), Late casts 18.5 / 28.9
-/ 36.4% of Acts 4 / 5 / finale, 12% of the run** — the whole-run figure is bounded by three acts
-in which Late cannot exist. Clock 87 min tapping / 60 Auto, unchanged. **The Act 1 wall stays at
-76%** (the old curve's 82%): stat ratios are byte-identical to before the overhaul (1.31 / 1.20 /
-1.56), so it is kit — the ladder bought one hero Mid moves and an Evolution inside Act 1 — and
-every lever that is a number is symmetric there (a first offer at 3 for everyone, regen, lag:
-each measured ±0). What would move it is a design decision, listed in §10.
-
-Same day, two follow-ups (per user direction). **The Tutor is the Mentor's beat at Late** — a
-guaranteed Late move rolled for a chosen hero, in place of the any-move shelf (`docs/run-loop.md`
-"The Tutor"). And **mana grows 2 a point** (`GROWTH_UNIT_MANA`), player-only, with **The Deep
-Well** event (−20 HP for +30 Mana on a chosen hero) as the map's in-grammar mana faucet
-(`docs/mana.md` "Growing the pool", which also says why a Mana Well node is not built). Measured:
-Late casts 21 / 33 / 40% of Acts 4 / 5 / finale, 13.6% of the run, full-clear 58%.
+Same day: **the Tutor became the Mentor's beat at Late** (`docs/run-loop.md` "The Tutor"), and mana
+growth went to 2 a point (back to 1 on 2026-09-28; `docs/mana.md` "Growing the pool").
 
 ---
 
 ## 9. Locked invariants this overturns
 
-Each is a sign-off. In force until the phase that replaces it lands.
+All landed. Rows marked † were later superseded by `mastery.md`.
 
-| Today (`CLAUDE.md`) | Becomes | Phase |
+| Before (`CLAUDE.md`) | Became | Phase |
 |---|---|---|
-| Levels are automatic and roster-wide; the curve is authored as levels | Still automatic and roster-wide; **the curve is authored as XP a fight pays** (by act, Guardian ×2) and par is derived from it — revised 2026-09-13 from "authored as levels, paid in XP sized to land on them" | 1 |
-| A level grant is a delta; a late hero stays behind **permanently** | XP is the delta; a convex curve closes the gap slowly on its own, and Ichor closes it on purpose | 1 |
-| There is no per-hero stat-investment currency (Gems deleted) | Still no *stat* currency. Ichor is per-hero **level** investment — it buys a story, not a number — and it is the focus dial §3 dropped, in node form | 2 |
+| Levels are automatic and roster-wide; the curve is authored as levels | Still automatic and roster-wide; **the curve is authored as XP a fight pays** (by act, Guardian ×2, Elite ×1.5) and par is derived | 1 |
+| A level grant is a delta; a late hero stays behind **permanently** | XP is the delta; a convex curve closes the gap slowly on its own | 1 |
+| † There is no per-hero stat-investment currency | Ichor as per-hero **level** investment — retired; Mastery pips took the role | 2 |
 | Moves come from ONE faucet: Mastery Scrolls, gated by Rank | Moves come from ONE faucet: **levels**, on a per-hero schedule, rolled from the band the level opens | 3 |
 | A rung has a price that rises; the purse banks; the ceiling sits behind the spend | Deleted. Nothing is held, so nothing needs to be behind a spend | 3 |
-| Evolutions come from the 4th rung, paced by the player | From `schedule.evolutionLevel`, authored per hero; the player paces it only with Ichor | 3 |
-| A level-up REPORT is not an allocation screen — one button, no choice | Still not allocation. It gains exactly one decision kind: the move offer (take / replace / decline), which was its own screen before | 3 |
-| A generated hero reads its ladder off level through `ENEMY_RUNGS_BY_LEVEL` | Through the same schedule a roster hero uses; the private table goes | 3 |
-| `EVOLUTION_LEVEL` gates nothing; authored data only | Per-hero and load-bearing again | 3–4 |
-| Five acts of the decided shape, then a finale | **Four**, then a finale with two bosses | 5 |
-| Five Guardians, five Banners, five Classes, six heroes — one ends Classless | Four of each; two heroes end Classless, and which two is a choice | 5 |
-| `SPAWN_TIER_BY_ACT` folds five acts into three tiers | early / mid / late / late | 5 |
+| † Evolutions come from the 4th rung, paced by the player | From `schedule.evolutionLevel` — now from Mastery pip 5 | 3 |
+| A level-up REPORT is not an allocation screen — one button, no choice | Still not allocation. It gains exactly one decision kind: the move offer | 3 |
+| A generated hero reads its ladder off level through `ENEMY_RUNGS_BY_LEVEL` | Through the same schedule a roster hero uses | 3 |
+| † `EVOLUTION_LEVEL` gates nothing; authored data only | Per-hero and load-bearing — then deleted with the move to pips | 3–4 |
+| Five acts of the decided shape, then a finale | **Four**, then the finale | 5 |
+| Five Guardians, five Banners, five Classes, six heroes — one ends Classless | Four of each; two heroes end Classless | 5 |
+| `SPAWN_TIER_BY_ACT` folds five acts into three tiers | Early / Mid / Mid / Late, the finale Late | 5 |
 
-Untouched, and worth saying so: the 550 and 28 budgets, growth grades, the damage and heal
-formulas, the graft-owns-the-slot rule, Classes as verbs, Boons, the item rules, the Banner
-family, the Pact Clock, the companion, potions, the map shape within an act.
+Untouched: the 550 and 28 budgets, growth grades, the damage and heal formulas, the
+graft-owns-the-slot rule, Classes as verbs, Boons, the item rules, the Banner family, the Pact
+Clock, the companion, potions, the map shape within an act.
 
 ---
 
 ## 10. Open questions — DO NOT silently resolve
 
-- **Which profile is the 45 minutes for?** Four acts plus this doc lands Auto at ~48 and a
-  tapping first-run reader at ~70. The remaining lever for the reader is the command phase
-  (declaring actions is ~25 min a run at a guessed 6 s each — preselected targets and a
-  "same as last round" tap are UX, not design). Decide the player before deciding the number.
-- **Can the carry rush an Evolution in Act 1?** Under the default schedule, no: Act 1 pays
-  roughly one Ichor, so a carry leaves Act 1 about +2 over a par of 9 and crosses 16 early in
-  Act 2 rather than at its end — an act early, not two. An authored `evolutionLevel` of 10 says
-  yes for that hero. That is a fact about the hero, and it should be authored on purpose for a
-  few — the early powerhouses — and refused for the rest.
-- **Does Ichor make Ascension's job harder?** A +5 carry beside a par partner is what a harder
-  mode has to punish first (`memory: project_ascension_scope`). Ichor supply per Ascension is a
-  dial; so is a Guardian that targets the highest level on the field.
-- **Do offers on the report read as a chain?** The report was one button. A round where three
-  heroes cross offer levels at once is three prompts in one screen. The default schedule staggers
-  offer levels 3 apart, and par moves ~1–2 a fight, so it should be rare — measure it in phase 3
-  (`time.ts` tallies it) before adding any batching.
-  **Answered in play, 2026-09-16: it was not rare, it was the rule.** Staggering a hero's own
-  offers 3 apart does nothing for the roster when every hero's schedule has the same phase — par
-  is roster-wide, so an offer at 4 and one at 5 both fire on the opener (par 5), and the phase-4
-  pass put 33 of 36 heroes there and 30 on Act 2's Guardian (par 14): six move screens after one
-  fight. The fix is in the data, not in batching: every offer level is now the par a FIGHT
-  reaches (5 6 8 / 10 11 14 / 15 17 19 / 20 21 24 / 25 26 28 / 30) and the 36 schedules are
-  phased against each other so each fight's window holds 12–20 of them instead of 4–33. A random
-  six averages ~2 offers a report; five-or-more fell from 15% of reports to 3%; the floor is
-  36 offers over 16 fights ≈ 2.25. Act 1 is still the fullest window (3 a report for a full
-  roster, which in Act 1 is 2–4 heroes) because every hero's first offer sits inside it — the
-  "levels teach" beat has to land in the tutorial. Pinned in `test/moveTiers` ("staggered").
-  The companion is on `DEFAULT_SCHEDULE` (nine offers, 9 of the 16 fights) and adds one screen to
-  most reports on its own — that count is a separate dial.
-- **How many offers a hero?** Nine on the default is the ladder's open-ended top for everyone,
-  and phase 3 measured it as 41 decisions a run — the clock the overhaul set out to cut. Phase 4
-  authored 5–6 (Glyph 7), which halved the decisions and cost 3 points of clear and most of the
-  Late-tier casts. The count is itself identity — a hero that learns five things against one that
-  learns seven — but the Late band needs an offer AFTER `lateLevel` that a run at par actually
-  reaches, and at 25–29 on the late turners it mostly does not. Phase 6's dial.
-- ~~**A Mana Well node?**~~ **Decided 2026-09-13, per user direction: built** (`manaWellReward`,
-  +30 to one hero, weight 20) as the one exception to *a bare number never gets a screen*,
-  because a pool is the stat a tier of moves is priced in. Measured ~4 points of full-clear on
-  the greedy pilot at that weight (`docs/run-loop.md` "The Mana Well"); a playtest number.
-- **The Act 1 wall (76%, was 82%).** Not a number. The candidates are all decisions: let the
-  early turners' `evolutionLevel` sit at 8 (the Act 1 Guardian's report — the window's floor of
-  10 was written to keep the Evolution out of Act 1, and this would put it exactly at the
-  boundary), a Mid offer inside Act 1 for the early turners (their `midLevel` at 7–8), an
-  asymmetric Act 1 enemy kit (Act 1 enemies on `DEFAULT_SCHEDULE` rather than their own — the
-  one place "one model for everybody" would bend), or accepting that the run's first wall moved
-  from 82 to 76 when the Act-1 Evolution rush stopped being a play. Decide the player, then the
-  number.
-- **Is `L³` the right curve?** Medium Fast is the baseline because it is the one everyone has
-  felt. Steeper (Slow, 1.25·L³) makes the carry throttle harder and the hire catch up faster;
-  shallower does the reverse. Phase 6's focus/spread batch is where this gets set; ship the cube.
-- **Does the Guild Hall shelf sell one Ichor or two?** The Scroll limit was 2 a visit. Two Drops
-  a visit at flat gold is NOT a purchased +2 for one hero — the second is eaten by a hero now
-  ahead of par and buys less than a level (the throttle, §2, pinned in `test/Ichor.test.ts`) — but
-  it is nearly half the run's Ichor in the sim (phase 2's measurement). Start at 2 and watch.
-- **Is an Ichor big enough to be worth its seat?** Phase 2 measured 13 levels-at-par a run moving
-  the clear rate by nothing, and an Ichor at par is ~18 budget points against the ~30 of the Common
-  item the same seat could have paid. Either the size goes up (3 / 2?), the seat goes down (weight
-  46 is the Scroll Cache's, sized for a currency that bought Evolutions), or the value is in what
-  a level *opens* once phase 3 puts offers and the Evolution on the schedule — in which case the
-  question is not answerable until then. Do not resize before phase 3; do not skip resizing after.
+Answered and removed: whether the carry can rush an Act 1 Evolution (by choice, through Mastery);
+offers stacking on the report (staggered across the roster, §4); how many offers a hero (five,
+2026-09-30); a Mana Well node (built, now +40 Mana / +5 MP Regen); the Act 1 wall (§8); and every
+Ichor question (retired).
+
+- **Which profile is the 45 minutes for?** Four acts land a skilled Reader at ~63 min. The
+  remaining lever for the reader is the command phase (declaring actions is ~25 min a run at a
+  guessed 6 s each — preselected targets and a "same as last round" tap are UX, not design). Decide
+  the player before deciding the number.
+- **Is `L³` the right curve?** Steeper (Slow, 1.25·L³) makes a carry throttle harder and a hire
+  catch up faster; shallower does the reverse. Shipped the cube; no batch has argued against it.
 
 ### Watch in playtest
 
-- **Does the roster read too flat *without* the ladder?** The growth overhaul's own watch item,
-  now with its drafted answer built in. If six heroes at par with one Ichor-carry still read as
-  interchangeable, the schedules are too similar — that is a phase 4 authoring finding, not a
-  systems one.
-- **Does declining an offer feel bad when it was free?** A Scroll declined was a Scroll spent, and
-  that stung in a way that made the take feel like a decision. A level-up offer declined costs
-  nothing but the roll. If declining starts to feel like nothing, the Mentor/Tutor grammar (a
-  free pick, earned) is the drafted answer, on the Late band only.
-- **Does the finale's second boss read as a second act?** Two fights with no map between them is
-  the intended "end"; if the Herald reads as a Guardian and the Eyes as the *real* end, the
-  Herald is the one to make shorter, not the one to cut.
+- **Does the roster read too flat?** If six heroes at par still read as interchangeable, the
+  schedules are too similar — an authoring finding, not a systems one.
+- **Does declining an offer feel bad when it was free?** A Scroll declined was a Scroll spent; a
+  level-up offer declined costs nothing but the roll. If declining starts to feel like nothing, the
+  Mentor/Tutor grammar (a free pick, earned) is the drafted answer, on the Late band only.

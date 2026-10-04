@@ -56,6 +56,7 @@ first meeting with two things shows the second on its next visit.
 | `draft` | the draft (spotlights the starter rail, `TIP_STAGING` in TipOverlay) |
 | `run` | the act's arrival screen ("The Journey", the card sat low so the place stays in view) |
 | `map` | the map, once there is a choice to make — not at an act's opener, the only node on offer |
+| `blessing` | the first map a Blessed hero can be seen from (ahead of `map`) |
 | `wounds` | the map, once any hero is hurt (HP carries across an act; Mana does not) |
 | `fork` | the map, once an Elite or Skirmish is one step away |
 | `squad` | lead pick — tap two heroes (skipped while the roster is two) |
@@ -139,18 +140,16 @@ the Scribe, the third reward row, the Titanspawn rewrite) and the script was off
 because of it. Tips key on **mechanics**, not on a staged act, so a system that moves changes one
 card's text rather than a corridor.
 
-Gone: `src/run/tutorial.ts`, `src/data/tutorial.ts`, `TutorialOverlay`, `test/tutorial.test.ts`,
-`Profile.tutorialDone`, the two `RunState` fields, the RecruitScreen's `required` offer, the
-SquadSelectScreen's pinned heroes, the encounter builder's `scripted` roster. Kept, as generic
-test levers: `generateEncounter`'s `forcedHeroIds` and `statGrants`.
+Gone with it: `src/run/tutorial.ts`, `src/data/tutorial.ts`, `TutorialOverlay` and every scripted
+lever on the screens; `generateEncounter`'s `forcedHeroIds` and `statGrants` stay as test levers.
 
 ## 7. Open questions
 
 - **A first run is the real Act 1.** The curated act guaranteed a survivable opener; now a new
   player meets the same Act 1 wall a veteran does (measured 58–68% cleared under the sim's
   pilots). Whether that needs a first-run softening is for playtest.
-- **Clusters.** The first won fight can raise three cards in a row (level report, item,
-  then the map's wounds). Each is short; if it reads as a wall, the lower-priority one can wait
+- **Clusters.** The first won fight can raise three cards in a row (item, then the map's
+  choice and wounds). Each is short; if it reads as a wall, the lower-priority one can wait
   for the next occasion.
 - **An opt-out.** There is no player-facing "turn tips off" setting yet — only the Dev reset.
 - **Veterans** on an existing profile see every tip once. Deliberate for playtest; a veteran

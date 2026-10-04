@@ -1,10 +1,7 @@
 # gear-absorption.md — Gear is absorbed: assign on receipt, never unequip
 
-> **STATUS: DECIDED 2026-09-15 (per user direction); ALL FOUR PHASES OF §8 ARE IN.** `CLAUDE.md`,
-> `docs/equipment.md` and `docs/progression.md` describe the game in force wherever a §8 phase has
-> not landed; §8 is the route and §9 the list of sign-offs each phase spends — **check its Status
-> column before assuming anything here is live.** The supply figures in §5 are measured; every
-> other number is a first pass.
+> **STATUS: DECIDED 2026-09-15 (per user direction); BUILT IN FULL the same day (§8).** The
+> supply figures in §5 are measured; every other number is a first pass.
 
 ---
 
@@ -92,16 +89,17 @@ about which input survives, and a duplicate of any tier is always good news.
   empty socket on Fang is *Cinder to Epic* or *Fang gets a Spear*. Deepen or widen — that is the
   build decision, and it arrives on the same tap as every other item.
 
-The bag-merge (`mergeFromStash`, the pair picker, the Merges Ready label) is deleted with the bag.
-`MergeBurst` is promoted from a bag animation to the who-screen's merge beat.
+The bag-merge (`mergeFromStash`, the pair picker, the Merges Ready label) went with the bag;
+`MergeBurst` is the who-screen's merge beat.
 
 ---
 
 ## 4. Three sockets, always
 
-`BASE_ITEM_SLOTS` = 3 = `MAX_ITEM_SLOTS`; `RosterEntry.bonusItemSlots` is deleted from the schema;
-`itemSlotsFor` returns the constant. **The Forge is deleted** — the node, the screen, the tutorial
-row — and the Blacksmith's slot sale with it.
+`BASE_ITEM_SLOTS` = 3 = `MAX_ITEM_SLOTS`; `RosterEntry.bonusItemSlots` is gone from the schema;
+`itemSlotsFor` returns the constant. **The Forge's slot grant is deleted** — the node, the screen,
+the tutorial row — and the Blacksmith's slot sale with it. (A different Forge, the Smithy's Anvil
+and Enchanter free once, took the name later: `CLAUDE.md`.)
 
 The 2026-09-06 argument for one slot was dilution: an item that is a third of a hero's gear is a
 third of a rounding error. That argument was about slot scarcity making an item matter. Here
@@ -119,7 +117,7 @@ open.
 
 ## 5. Supply — measured, and the dial
 
-Items a completed run obtains today, by source (3000 runs, skilled pilot, `sim-out/items-baseline`):
+Items a completed run obtained BEFORE absorption, by source (3000 runs, skilled pilot, `sim-out/items-baseline`):
 
 | Act | fight drops | Cache node | Loot Pile | **no Guild Hall** | Guild Hall shelf |
 |---|---|---|---|---|---|
@@ -167,60 +165,48 @@ The 2026-09-08 one-verb-per-node split was made because people and gear on one s
 chore hub. The merged node holds FEWER verbs than the two did combined — the shelf, the sale and
 the slot purchase are gone — so it is worth a look, not a rule.
 
-**Gold.** Two sinks go (items, slots), one faucet arrives (overflow and Sell). The player's
-playtest read is that late runs had no gold, so this is welcome; the Anvil's prices were set to be
-dearer than buying the tier outright, and that comparison no longer exists, so they are re-based
-against hires and Scrolls in phase 2 and watched.
+**Gold.** Two sinks went (items, slots), one faucet arrived (overflow and Sell). The player's
+playtest read was that late runs had no gold, so this was welcome. The Anvil's prices were set to
+be dearer than buying the tier outright, and that comparison no longer exists; they were left
+standing and re-justified against hires (§10).
 
 ---
 
 ## 7. A contract arrives armed
 
-Enemies carry one item from Act 4 (`ENEMY_GEAR_FROM_ACT`), stripped on a contract claim today.
-Under absorption a contract hero **arrives with its piece absorbed** — finished on a fourth axis
-(level, Evolution, kit, gear) against a hire's raw one, and the piece is rolled to fit the hero
-(the family against its offensive stat, the enchant against a type it fields). No who-screen: it
-is already on the hero. Gear dies with a hero on termination or a companion's death — it always
-did; now there is no bag for it to fall into.
+Enemies carry one item from Act 4 (`ENEMY_GEAR_FROM_ACT`), and a contract hero **arrives with its
+piece absorbed** — finished on a fourth axis (level, Evolution, kit, gear) against a hire's raw
+one. The piece is rolled to fit the hero (`rollFittingGear`, `data/equipment.ts`: a family that
+suits its offensive stat, the node's rarity curve, an enchant only of a type it fields), so the
+piece the player saw it wearing is the piece they get; the recruit stage shows it as a veteran
+mark. No who-screen: it is already on the hero. Gear dies with a hero on termination or a
+companion's death — it always did; now there is no bag for it to fall into.
 
 ---
 
 ## 8. Order of work
 
-Sequenced so the tree is playable at every boundary. `SAVE_VERSION` bumps at each.
+All four phases are **DONE 2026-09-15** (`SAVE_VERSION` 18; an older save is refused):
+1. **Absorption** — `absorbItem` / `itemReceiptFor` / `anyoneCanReceive` / `sellItem`
+   (`runProgress.ts`), `mergeIntoHeld` (`equipment.ts`), `ItemWhoScreen` chained by App.tsx
+   (`whoScreensFor`). The act-4 in-row Tutor seat retired with the Forge: the spliced row is the
+   Tutor in acts 4 and 5.
+2. **One Guild Hall** — the **Smithy** tab (`GuildHallPanel`) holds `ItemServicesSection`, potions
+   and the mend; `GuildHallOffers` is heroes only.
+3. **A contract arrives armed** — `ContractOffer.equipment`, kept by `claimContract` /
+   `claimContractReplacing` (§7).
+4. **Supply** — the drop table and the Cache weight below.
 
-| # | Phase | Exit criterion | Status |
-|---|---|---|---|
-| 1 | **Absorption.** Three sockets, `bonusItemSlots` gone, the Forge deleted (node, screen, tutorial row → the Boon; its 38 weight simply left the pool — the Cache's weight is phase 4's), the slot sale deleted; `ItemWhoScreen` on every receipt with take / merge / sell; merge at any tier on the holder; the stash, the unseen marks, the footer label, the swap screen, move / unequip / sell-from-stash / trash deleted; the Roster screen read-only for gear; the sim's item policy on the same three verbs. | No reader of `stash`, `bonusItemSlots` or `unseenItemIds`; a run completable end to end; every test green. | **DONE 2026-09-15.** `absorbItem` / `itemReceiptFor` / `anyoneCanReceive` / `sellItem` (`runProgress.ts`), `mergeIntoHeld` (`equipment.ts`), `ItemWhoScreen` chained by App.tsx (`whoScreensFor`); a v17 save is refused rather than converted, since the codec refuses every version but its own. The act-4 in-row Tutor seat retired with the Forge: the spliced row is the Tutor in acts 4 and 5. `SAVE_VERSION` 18. Measured below. |
-| 2 | **One Guild Hall.** The Blacksmith node and screen deleted; the funnel one wide; the Anvil and Enchanter in the Guild Hall over held gear; the item shelf and the Sell section deleted; Anvil prices re-based. | No `'blacksmith'` node type; `rollGuildHallOffers` rolls no gear. **Separable.** | **DONE 2026-09-15**, in the same pass — the Blacksmith depended on the bag's item refs, so it was rewritten once rather than twice. The **Smithy** tab (`GuildHallPanel`) holds `ItemServicesSection`, potions and the mend; `GuildHallOffers` is heroes only. Anvil prices NOT re-based yet — the table stands and `test/shop.test.ts` pins only that a lift costs more than the tier sells for. |
-| 3 | **A contract arrives armed.** `claimContract` absorbs the enemy's gear; `enemyGen` rolls the piece to fit. | An Act 4 contract holds one item on arrival; the recruitment test pins it. **Separable.** | **DONE 2026-09-15.** `ContractOffer` carries `equipment`; `claimContract` / `claimContractReplacing` keep it and the terminated hero's gear goes with it (so does a hire's replacement — nothing is handed on). The enemy's piece is rolled by `rollFittingGear` (`data/equipment.ts`): a family that suits its offensive stat (`familyFitsHero` — no off-stat offensive family; a defensive one or the Crest fits anyone), the node's rarity curve, and an enchant only of a type it fields, so **the piece the player saw it wearing is the piece they get** — §10's "fit vs. what it wore" is both. The recruit stage shows it as a veteran mark beside the path and Class, and the silhouette counts it. Measured below. |
-| 4 | **Supply.** The drop table (§5), the Cache's weight, against the sim; docs and `CLAUDE.md` caught up. | Items a run and who-screens a run reported; full-clear against the phase-0 baseline. | **DONE 2026-09-15.** Seven tables measured (below); `EQUIPMENT_DROP_CHANCE` elite and boss → 1, the Cache 40 → 78. Anvil prices left standing, re-justified against hires (Rare → Epic ≈ a hire) rather than the shelf; a playtest number. |
+**Measured** (3000 runs, seed 100000, skilled pilot). Phases 1–2: **full-clear 12.0 → 18.8%**
+against `items-baseline`, most of it in acts 4–5 where a roster used to be socket-bound — three
+sockets for everyone is a player buff of about seven points. **A merge was OFFERED 4.7 times a
+completed run and TAKEN 0.6**: the pilot scores a take at the item's whole value and a merge at
+the tier step it buys, and a tier step is +20 budget points (or the Awakening at Epic) against a
+fresh socket's 30–90 — so **"deepen or widen" is only a live decision once sockets fill, or when
+the drop fits nobody with a socket free** (§10). Phase 3: 18.8 → 18.3%, +1 item an act in acts 4–5
+from contracts.
 
-**What each phase measures.** Phase 1: items a run, merges a run, seats used at the end, and
-full-clear against `items-baseline` (12.0%, acts 46 / 55 / 96 / 61 / 81 — a batch that already
-carries Wounds, and reads far under the 42% `CLAUDE.md` records; whether that is the pilot
-mishandling Rest and mend or the curve is a playtest question, not this doc's). Phase 4: the same
-under the proposed drop table.
-
-Phases 1–2, measured (3000 runs, seed 100000, skilled pilot, the same seed as the baseline):
-**full-clear 12.0 → 18.8%**, acts 46 / 55 / 96 / 61 / 81 → 49 / 58 / 97 / 76 / 90. Three sockets
-for everyone is a player buff of about seven points, most of it in acts 4–5 where a roster used
-to be socket-bound — the difficulty re-fit is phase 4's, with the drop table. Items a completed
-run 16.4 → **17.2** (the Cache 2.5 → 3.0: the Forge's weight leaving the pool made every other
-reward proportionally commoner). **A merge was OFFERED 4.7 times a completed run and TAKEN 0.6**:
-the pilot's `bestReceiver` scores a take at the item's whole value and a merge at the tier step it
-buys, so while any socket is free it widens, and with 18 seats against 17 items one nearly always
-is. That is the pilot's policy, but the arithmetic under it is the game's — a tier step is +20
-budget points (or the Awakening at Epic) against a fresh socket's 30–90 — so **"deepen or widen"
-is only a live decision once sockets fill, or when the drop fits nobody with a socket free.** A
-design question for phase 4, listed in §10.
-
-Phase 3, measured (3000 runs, same seed): full-clear 18.8 → **18.3%** (acts 4–5 at 76 / 89
-against 76 / 90 — an enemy wearing a piece that suits it is a shade harder than one wearing a
-Staff on a brawler). A contract is claimed once an act in acts 4–5 under the pilot, so **+1 item
-an act** from it: 19.3 a completed run. Merges offered 4.8, taken 0.7.
-
-Phase 4, measured (2000 runs a variant, same seed; opener / Skirmish / Elite / Guardian, Cache):
+Phase 4 (2000 runs a variant, same seed; opener / Skirmish / Elite / Guardian, Cache):
 
 | Table | Full-clear | Acts 1–5 | Items | Merges offered → taken |
 |---|---|---|---|---|
@@ -235,17 +221,16 @@ Phase 4, measured (2000 runs a variant, same seed; opener / Skirmish / Elite / G
 Every table without the opener's drop loses six to eight points, in acts 1–2. **Shipped: F with
 the Cache at 78** — 3000 runs: **full-clear 19.9%**, acts 50 / 61 / 98 / 75 / 90, **21.0 items a
 completed run**, merges offered **5.8 → taken 1.0**, gold unspent 30, Reader 74.8 min (the
-pre-absorption baseline 77). Against the phase-0 baseline the overhaul is +8 points of
-full-clear, all of it the third socket; the enemy curve has not been touched and is the next
-dial, with the Act 1 wall still the run's wall.
+pre-absorption baseline 77). The enemy curve was re-fitted afterwards with an act term
+(`ACT_LEVEL_ADJUST`, `docs/enemy-levels.md` §4).
 
 ---
 
 ## 9. Locked invariants this overturns
 
-Each is a sign-off. In force until the phase that replaces it lands.
+All landed 2026-09-15.
 
-| Today (`CLAUDE.md` / `equipment.md` / `progression.md`) | Becomes | Phase |
+| Was (`CLAUDE.md` / `equipment.md` / `progression.md`) | Now | Phase |
 |---|---|---|
 | Every hero starts on `BASE_ITEM_SLOTS` = 1; the Forge grants +1 to `MAX_ITEM_SLOTS` = 3 | **Three sockets, always.** The Forge and `bonusItemSlots` are deleted | 1 |
 | Every item goes straight to the bag; a badge on the Roster button says one is waiting | **No bag.** Every item raises a who-screen on receipt and is absorbed by the hero chosen | 1 |
@@ -256,7 +241,7 @@ Each is a sign-off. In force until the phase that replaces it lands.
 | The funnel is pick-1-of-2 from act 3: Guild Hall or Blacksmith | **Forced Guild Hall**, every act; the Blacksmith is deleted and its Anvil and Enchanter move in | 2 |
 | The Guild Hall shelf sells one of four items; the run's only place to SELL | The shelf sells **no gear**; there is no sale | 2 |
 | Enemy gear is stripped on a contract claim | **Absorbed** on the contract hero | 3 |
-| Drops: `fight` 1, `battle` 1, `skirmish` 0.6, `elite` 0.8, `boss` 0.95 | Playtest's dial; §5's first pass | 4 |
+| Drops: `fight` 1, `battle` 1, `skirmish` 0.6, `elite` 0.8, `boss` 0.95 | Elite and Guardian always drop: 1 / 0.6 / 1 / 1 (§5) | 4 |
 
 **Held, and worth saying so:** the rarity budget and the monotonicity rule, the 16 families and
 14 enchants, the Awakening at Epic, the act window on drops and the Anvil, the one-per-family
@@ -267,20 +252,14 @@ and *a bare number never gets a screen* — the who-screen collects a hero, not 
 
 ## 10. Open questions — DO NOT silently resolve
 
-- **Does the merged Guild Hall read as one place?** Phase 2 ships it; the 2026-09-08 split is the
-  fallback if it reads as a chore hub again.
-- **The Act 1 / full-clear gap** between `items-baseline` and `CLAUDE.md`'s enemy-levels figures.
-  Not this doc's, but it is the baseline every phase here is measured against.
+- **Does the merged Guild Hall read as one place?** The 2026-09-08 split is the fallback if it
+  reads as a chore hub again. A playtest call.
 - **Is merging worth choosing?** Measured (§8): offered 5.8 times a run under the shipped table,
   taken 1.0 by a pilot that widens while a socket is free, and the budget table says it is right
   to. Twenty-one items against eighteen seats means the late game merges because it must; if a
   merge is meant to compete with a take BEFORE the roster fills, it has to buy more than a tier
   step — a second family Awakening at Legendary, say. Playtest first: a human may merge for the
   Awakening alone.
-- **The enemy curve** was tuned against one socket and a Forge; full-clear came up +8 points over
-  the phase-0 baseline, all of it the third socket. Answered the same day with an act term on the
-  enemy level (`ACT_LEVEL_ADJUST`, `docs/enemy-levels.md` §4, per user direction): Act 1 two
-  levels lighter, Acts 3 and 5 two heavier — Act 1 50 → 58%, Act 3 98 → 96, Act 5 90 → 88. The
-  Act 1 Guardian (77%) is the remaining Act 1 wall and is the champion's body, not a level.
-- **The Anvil's prices** are un-rebased: the shelf they were priced against is gone. Re-base
-  against hires (50g) and Scrolls (25g) once gold is watched through a few runs.
+- **The Anvil's prices** (`ANVIL_PRICE_BY_TARGET`, `src/run/shop.ts`) are un-rebased: the shelf
+  they were priced against is gone, and they stand re-justified against hires (Rare → Epic ≈ a
+  50g hire). Re-base once gold is watched through a few runs.

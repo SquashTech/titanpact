@@ -2,7 +2,7 @@
 
 > The 15-type elemental system, how effectiveness resolves, the roster model, and the
 > rules for authoring heroes. The **type chart itself (the 15×15 matrix) is data** and
-> lives in `/data/typechart.ts` — this doc specifies how it behaves and what's known
+> lives in `src/data/typechart.ts` — this doc specifies how it behaves and what's known
 > to be mistuned, not the individual cells.
 
 ## The foundational principle: type = power source
@@ -109,30 +109,18 @@ justify drafting. Fixed from opposite directions:
 `Fire → Iron` dropped **2× → 1×**. Fire keeps Nature and Frost, so it now carries
 two super-effective targets, the same as Stone, Iron, Spirit, Light and Nature.
 
-The cell was not over-tuned in the abstract — Fire's chart profile was net +1,
-tied with Water, Arcane, Spirit and Mech. It was over-tuned against the *factions*.
-Every early faction is a mono-type family with a second type stapled on, and those
-secondaries are overwhelmingly Nature, Iron and Frost — all three Fire-weak, and
-dual types stack multiplicatively. Measured across the six early factions, Fire
-answered **five of six** at a mean 1.55× where no other type cleared 1.35×, and
-Crimson (the only mono-Fire starter) measured a **+3.90 encounter draft lift**
-against a next-best of +1.33. Ablating Crimson's whole support kit moved that to
-+4.30 — it was never the kit.
-
-Of the four candidate cells measured, this is the only one that moved the number:
-Crimson's offensive coverage 1.54 → 1.20, which puts Storm (1.35) and Mech (1.28)
-ahead of it. Adding a new weakness to Fire, or a new resistance against it, both
-measured as near-no-ops, because the problem was never what Fire *takes*.
+The cell was not over-tuned in the abstract — Fire's chart profile was net +1, tied
+with Water, Arcane, Spirit and Mech. It was over-tuned against the early mob layer of
+the time (the factions, since replaced by Titanspawn), whose secondaries were
+overwhelmingly Nature, Iron and Frost: Fire answered five of six at a mean 1.55× where
+no other type cleared 1.35×, and the mono-Fire starter measured a +3.90 draft lift
+against a next-best of +1.33. Of four candidate cells measured, this was the only one
+that moved the number; a new weakness for Fire, or a new resistance against it, were
+near-no-ops, because the problem was never what Fire *takes*.
 
 It is also the cell the type filter argues for. "Fire melts iron" is a reading of
 what a body is *made of*; Iron as a **domain** is armament and discipline, which
-fire has no particular claim on. See the banner at the top of this file.
-
-**What it costs, explicitly:** the Raiders are a mono-Iron warband whose design
-prices that spine at being weak to Fire, Storm and Mech. That price is now paid by
-two types rather than three (`test/raiders.test.ts`). Storm Coast has the highest
-act-2 Guardian clear rate of the five, so it has the room — but this is the thing
-to watch if act 2 gets harder.
+fire has no particular claim on.
 
 ### Resolved: Light/Shadow over-resist
 
@@ -148,8 +136,8 @@ in the pass: the opposite reading (conviction is precisely what shrugs off doubt
 just as defensible, and it was taken this way because Mind was the chart's weakest
 type and needed the offensive target. Watch it in playtest.
 
-None of this is playtested yet. Adjust in `/data`, playtest, don't silently rewrite
-the type philosophy to paper over a bad matchup.
+Adjust in `/data`, playtest, don't silently rewrite the type philosophy to paper over
+a bad matchup.
 
 ---
 
@@ -171,195 +159,49 @@ status currently sits in the stat pipeline at all — see `architecture.md` and
 
 - **Hard cap of 6 heroes** on a team.
 - **Every fight fields the whole roster** (2026-09-17, per user direction, for playtest):
-  you build up to 6, and all of them come — 2 active, the rest benched, the pre-fight
-  screen a lead-order screen. It was bring-6-pick-4; `combat.md` "The fielded roster"
-  carries why the pick came out and what it costs.
+  you build up to 6, and all of them come — 2 active, the rest benched, the leads picked
+  in the fight. It was bring-6-pick-4; `combat.md` "The fielded roster" carries why the
+  pick came out and what it costs.
 - Switching/bench/lock-in mechanics are in `combat.md`; how heroes are acquired and
-  developed is in `progression.md`.
+  developed is in `progression.md`; how the player's deck builds a run's pools is in
+  `collection.md`.
 
 ### Starters vs. recruit-only heroes
 
-> **SUPERSEDED 2026-09-26** (per user direction, `docs/collection.md` §2): the flag is deleted. The
-> draft draws one hero from each of the player's deck rows; no hero is a starter or recruit-only.
-> The section below is the history.
+**Deleted 2026-09-26** (per user direction, `docs/collection.md` §2): `HeroDefinition.starter`
+is gone. The draft draws one hero from each of the player's deck rows and shows four; any
+decked hero can open a run, be fought, contracted or hired. The split's lasting lesson: before
+2026-09-05 only the starters were on the stat budget and the recruit-only heroes ran 390–480,
+which read as "recruits are the weaker pool" — exactly what the split was never meant to say.
 
-Every hero carries a `starter: boolean` (`HeroDefinition.starter`, `src/data/heroes.ts`)
-— the single source of truth for which of the two acquisition paths a hero belongs to:
+### The roster (2026-09-28)
 
-- **`starter: true`** — offered as a candidate in the start-of-run draft
-  (`src/run/draft.ts`, `DraftScreen`: pick 2 of 4 random starter candidates).
-- **`starter: false`** — **recruit-only**. Never appears in the draft; exists in the
-  game solely as a Guild Hall offer or a Recruit Contract catch (`progression.md`
-  "The raise-vs-recruit axis"). `src/data/recruitment.ts`'s Guild Hall offer pool is
-  *derived* from `starter: false` heroes, not hand-maintained, so the two pools can
-  never drift apart.
+**84 heroes, six a type for the fourteen draftable types** (`src/data/heroes.ts`; Ancient holds
+none, per "Ancient is special"). **The base 42 — three a type — are owned free and are the
+default deck**; the other 42 carry `HeroDefinition.unlock` and come from the Starfall or a bundle
+(`docs/collection.md`, `docs/constellation.md`), in a run's pools only while held (`heroPool`).
+`test/roster` pins three a type over `heroPool(heroes)` with nothing bought. The base three of
+each type were re-chosen on 2026-09-28 to teach that type cleanly (`docs/collection.md` §4). Every
+hero is on the same Evolution framework (`docs/evolution-simplification.md`), grade budget,
+schedule and signature rules; `test/roster.test.ts` and `test/moveTiers.test.ts` pin all of it.
+**The 42 Starfall heroes added 2026-09-27/28 carry first-pass numbers and have had no sim pass**,
+nor have the eight promoted into the base on 2026-09-28.
 
-A hero is in exactly one pool, never both, and never neither. This split is
-independent of type coverage — a type can have both a starter and a recruit-only
-hero (Iron currently does: Valor starts, Warden is recruit-only), and recruit-only
-status says nothing about a hero's power level, just where you first meet them.
-The **one-starter-per-type** shape is a RULE since 2026-09-17, per user direction: the base
-roster is **three heroes a type — one starter, two recruit-only — for the fourteen draftable
-types, 42 heroes**, and the roster is COMPLETE at that count (Ancient is near-undraftable per
-"Ancient is special" above, so it holds none). It was a consequence of the fixture roster until
-then, load-bearing enough that new heroes were added as recruit-only to preserve it (Widow and
-Coil, Beast, 2026-08-30). If a type ever wants two draftable heroes, that should be a decision
-taken on purpose.
+Decisions worth keeping from the roster's authoring:
 
-**Current state (2026-09-17):** 14 starters, one per type — Crimson (Fire), Riptide (Water),
-Rime (Frost), Tempest (Storm), Crag (Stone), Sylva (Nature), Solace (Light), Nightshade
-(Shadow), Glyph (Arcane), Cortex (Mind), Revenant (Spirit), Valor (Iron), Clockwork (Mech),
-Fang (Beast) — and 28 recruit-only, two per type. The last six landed together on 2026-09-17,
-each authored against the hole the type's existing pair left: **Leviathan** (Water, the
-slate's magical column at full weight — Int 100), **Slate** (Stone, an 80/80 mixed line that
-swings the magical spread column nobody held), **Empyrean** (Light, the type's first attacker,
-at Speed 100 so its Daze riders land first), **Pixie** (Arcane, the Wisdom-85 support whose
-buffs land bigger by the stat-scaling rule), **Dread** (Spirit, the 230-HP body that can pay
-the slate's HP-priced cards) and **Rex** (Mech, Attack 110 at Speed 70, the Beast graft on its
-node). **2026-09-19, per user direction:** Vesper is deleted, **Widow** goes Beast/Shadow →
-**mono-Shadow** and takes its Shadow seat (kit Fade Strike / Lie in Wait / Weaken — Prowl, Beast and a second
-Ambush, went to Carapace, and Backstab to the pool so the kit is not Nightshade's; Widowbite is Shadow), and **Cinder** goes Fire/Iron → **mono-Fire** (kit Singe / Set Alight / Kindle — Sharpen,
-Iron and a second Attack buff, left). Each keeps the type it lost as an
-Evolution graft — Widow's Carapace is the Beast body (Apex Predator granted, the mauler's column
-as its line), Cinder's Ironclad is the plate (Shield Bash granted, Iron's guard column as its
-line, Cinderguard kept) — so the old dual build is one of the three paths rather than the
-starting state, and Thunderblaze and Silkbinder are now plain grafts on a mono hero. **Ursa** took
-the Beast seat the same day: the roster's top Attack (115) on its second-slowest body (Speed 20,
-only Bellows is slower), HP 235 / Def 70, kit Claw / Prowl / Provoke — the Stone off-type the pool
-telegraphs, since Stoneheart is what a hero that draws the hits wants at Late — and a node of
-Grizzly (Thick Hide: Shield 20 on every hit taken, the tank loop Provoke feeds), Polar (Frost
-graft, Icicle Thrust and the physical Frost column) and Timberback (Nature graft, Branch Slam
-with Regrowth and Wild Bloom to arm its Renew clause). Overbear is its signature: 105, recoil
-25%. The count was 42 again — and then **Scallywag left the base roster the same day** (per user
-direction): re-authored **mono-Iron** (kit Swift Blow / Pin Down / Sharpen; Corsair with Plunder,
-**Stormrunner** the Storm graft back to the type he was born to, Seawise the Water graft; Broadside
-Iron) and sold in the Constellation's first Hero Bundle, the **Free Company** — a hero with
-`HeroDefinition.unlock` is outside the three-a-type count and in a run's pools only while the
-offer is held (`docs/constellation.md` §11 phase 6). **Skyshear** took Storm's third seat the same
-day: the storm eagle, the slate's
-magical column swung at full weight — Int 95 / Speed 100 on 175 HP, kit Zap / Charge / Static
-Charge (strike first, charge up), Arcane / Light / Frost as the pool's colours; Stormeye (Charged
-Air: +20 Int / +20 Spd while a foe holds Conduct — Bloodthirsty on the mark Skyshear plants), Rimewing
-(Frost graft: Deep Chill and the Freeze column), Sunward (Light graft: Radiant Beam and Light's
-damage column); Stoop the signature (65, +1 priority, Conduct). The base is 42 again, and
-`test/roster` now pins three a type over `heroPool(heroes)`.
-One consequence to watch: Fire's physical column is four moves past Cinder's kit, so his Early
-band is entirely Iron off-type and his in-type pool is Molten Lash, Firebrand, Blazing Retreat
-and Volcanic Surge — a physical Fire Early or two would give the mono hero a band of its own.
-Every hero is on the same five-clause Evolution framework, grade budget, schedule
-stagger and signature slot as the thirty-six before it; `test/roster.test.ts` and
-`test/moveTiers.test.ts` pin all of it.
-
-**Four Starfall-only heroes, 2026-09-27** (per user direction, outside the base count like
-Patch and Vex): **Drift** (Mind, the jellyfish — Int 90 attrition caster; Nettle takes 5 Attack
-off whatever it hits), **Igloo** (Frost, the igloo golem — Def 100 wall; Shelter gives its
-partner Shield 10 whenever the partner is hit), **Carillon** (Light, the bell friar — the type's
-physical tank; Toll heals its partner 10 on every hit it lands) and **Hart** (Light, the radiant
-stag — Wis 85 healer; Hallowed Step gives its partner Renew 20 on entry). All four carry
-first-pass numbers and have had no sim pass.
-
-**Twelve more Starfall-only heroes, 2026-09-28** (per user direction, the `art/future-heroes/`
-set; first-pass numbers, no sim pass). Two were renamed off their art: Omen → **Jinx** (Omen is
-Dread's path and passive) and Tome → **Folio** (Tome is an item family).
-**Ashwing** (Fire, the phoenix — Speed 80 magical caster with a mend in its kit; Smoulder brings
-the endure verb back, the first knockout each fight refused at 1 HP, and its mastered Rebirth
-rises from it healed half its max HP off a new `Endured` passive hook). **Kappa** (Water, the
-river imp — Atk 100 brawler against Pincer's wall; Brimming gains 10 Attack whenever it is healed,
-fed by its own Siphon; the dish-spilling Burden was left unbuilt). **Tusk** (Frost, the woolly
-mammoth — Atk 115 at Speed 15; Stampede gains 5 Attack at every round end it stands on the field).
-**Motley** (Mind, the court fool — Speed 95 chaos; Slapstick gives each hit a 30% chance to Daze a
-random enemy). **Folio** (Arcane, the living spellbook — Int 105 volley caster; Inscribe takes 5
-Wisdom off whatever it hits, so every rune of a volley lands harder than the last). **Ronin**
-(Iron, the wandering samurai — Atk 105 first strike; Iaido sends its first attack after entering
-at +1 priority, and Draw Cut goes at +2). **Kong** (Beast, the gorilla — Atk 95 at Speed 60, the
-mid-speed bruiser against Ursa's slow 115; Chest Beat takes 10 Attack off both active enemies on
-entry). **Morel** (Nature, the mushroom folk — Int 80 spore caster; Mycelium takes 5 Attack and 5
-Intelligence off every enemy it Poisons). **Scree** (Stone, the granite pangolin — Def 100
-curl-and-charge tank that swings Defense through Body Blow; Curl gains 5 Defense whenever it takes
-damage). **Aurum** (Light, the sun-maned lion — Atk 105 / Speed 85, the type's physical striker;
-Blazing Mane gives its Light attacks a 20% Daze). **Jinx** (Shadow, the black cat — Speed 105;
-Bad Luck takes 5 Attack and 5 Intelligence off a random enemy on every hit it lands). **Kitsu**
-(Spirit, the kitsune — Int 95 / Speed 100 caster; Foxfire Burns 10 on every Spirit hit, and
-Tailfire Volley hits both foes twice).
-
-**Tinder, Selkie, Hush and Lotus, Starfall-only, 2026-09-28** (per user direction; first-pass
-numbers, no sim pass). **Tinder** (Fire, the fire-eater — Speed 105, Fire's fastest by 25, a
-magical Burn-spreader; Fire-Breather gives both active enemies Burn 5 on every Fire hit it lands,
-and Grand Finale breathes Burn 20 across both). **Selkie** (Water, the seal-maiden — Wis 90, the
-type's Wisdom healer beside Nautilus's 75/75 caster-support; Salt Tears washes one affliction off
-whoever it grants Renew, and Sealskin Cloak heals one ally 70 under Renew 40). **Hush** (Frost, the
-snowy owl — Int 95 / Speed 95 against a slate whose heroes top out at Speed 42; Silent Wings gains
-Ambush 15 whenever it Freezes an enemy, so Deep Chill sets up the next strike, and Silent Descent
-drops at +1 priority). **Lotus** (Nature, the lotus mystic — Int 105, the type's magical nuker;
-Unfurl gains 10 Intelligence whenever it gains Renew, fed by its own Regrowth, which also doubles
-its Seed Shot).
-
-**Four more Starfall-only heroes for Storm and Stone, 2026-09-28** (per user direction; first-pass
-numbers, no sim pass). **Nimbus** (Storm, the thunderhead giant — HP 240, the type's first bulk,
-an Int 85 caster at Speed 30; Anvil Cloud gives every hit it takes a 50% chance to leave a random
-enemy Conducting, so the blows it soaks arm the Storm hits that cash them, and Cloudburst marks
-both foes while it rains Renew 20 on both allies). **Kite** (Storm, the windcaller boy — Speed 105
-/ Wis 75, the type's support; Headwind takes 10 Speed off both active enemies whenever he uses a
-move that deals no damage, beside Rising Static and Tailwind for his own side, and Stormkite marks
-and slows both foes at once). **Raiju** (Storm, the thunder weasel — Atk 90 / Speed 100, the
-pivot; Static Wake leaves a random enemy Conducting whenever it switches out, so every Ride the
-Lightning or Relay Strike hands the incoming partner a mark to cash). **Dune** (Stone, the sand
-wyrm — Atk 100 at Speed 65, the mid-speed striker against Crag at Speed 40 and the walls; Undermine
-takes 10 Defense off whatever its Stone attacks hit, coming up from under the armour, and
-Sandbreach bursts out of the sand at +1 priority).
-
-**Cairn, Murk, Rook and Koan, Starfall-only, 2026-09-28** (per user direction; first-pass numbers,
-no sim pass). **Cairn** (Stone, the stone shaman — Def 90 / Wis 75, the type's support against
-Sentinel's wall and Scree's roll; Waystone lays Shield 10 on his partner at every round end, and
-Raise the Cairn shields both allies 40 off his Defense). **Murk** (Shadow, the bog troll — the
-type's bulk at HP 245 against the 180–190 the other Shadow heroes carry, Atk 95 at Speed 25;
-Bogblood mends 5% of its max HP at every round end). **Rook** (Shadow, the crow witch — Int 85
-hexer against Marrow's nuking and Jinx's hit-to-curse; Pecking Crow costs a random enemy 5% of
-its max HP, direct, whenever she uses a move that deals no damage, so her hex turns are her
-damage). **Koan** (Mind, the blind monk — Mind's first physical hero, Atk 90 / Speed 70, carried
-by Iron's and Stone's counters since the Mind slate has no fists; Foresight leaves him Poised
-whenever he takes damage, so the answer lands before the next blow, and Foreseen Blow strikes at
-+1 priority behind Shield 30).
-
-**Thane, Trove, Totem and Keen, 2026-09-28** (Starfall-only, first-pass numbers, no sim pass).
-**Thane** (Arcane, the spellblade knight — Atk 100, the type's first physical attacker; Etched
-Runes gives it Ambush 20 whenever it casts a move that deals no damage, so Barrier and Sharpen
-load the next swing, and Spellsword hands it Arcane Overflow, the capstone that only pays on a
-physical body). Arcane had no physical move, so the slate gained two, **Runeslash** (Early, 45)
-and **Wardblade** (Mid, 55 and Shield 20 on self); Trove swings them too. **Trove** (Arcane, the
-mimic chest — HP 230 / Def 85 against a type that stops at 190; Glittering Hoard makes every move
-both active enemies hold cost 5 more Mana on its entry, up to 15, so it is a pivot that taxes, and
-Mimic's Maw drains 30%). **Totem** (Spirit, the ancestor pole — Wis 85 at Speed 20; Ancestral
-Guidance gives its partner Ambush 15 at every round end, a buff that needs no turn and no Speed).
-**Keen** (Spirit, the banshee — Int 100 caster; Death Wail takes 5 Attack and 5 Intelligence off
-BOTH active enemies on every Spirit hit). The Spirit slate stays single-target by design (Haunt is
-its spread), so Keen's wail is her innate, her signature Last Keen (a 65 spread, −15 Attack and
-Intelligence on each) and an off-type spread column in her pool, not a new Spirit row.
-
-**Four more Starfall-only heroes, 2026-09-28** (per user direction; first-pass numbers, no sim
-pass). **Ferra** (Iron, the magnet sorceress — Int 95, Iron's first magical hero; Lodestone
-leaves both active enemies Conducting on entry, so her Storm bolts and the Iron and Mech blows
-beside her cash it, and Ferrous Crush hits a Shield twice as hard. Conjured Sword, the slate's one
-magical row, stays off every Iron pool by `test/ironMoves`, so it is her Magnetar path's grant).
-**Abacus** (Mech, the calculating engine — Int 100 at Speed 45, the type's magical caster against
-Patch's medic; Tally gains 5 Intelligence whenever an enemy attacks, and Distort in its kit sets
-the Stasis Field its slowness wants). **Whirr** (Mech, the clockwork hummingbird — Speed 110 on a
-180 body, the fast striker Rex is not; Flit gives every attack Ambush 10 for the next, and
-Wingbeat Barrage is three hits at +1 priority). **Mellow** (Beast, the capybara — HP 240 / Wisdom
-80, Beast's support against five attackers; Unbothered takes 5 Attack and 5 Intelligence off any
-enemy that lands a hit, and All Aboard Shields and Renews both allies).
-
-**The base roster re-chosen, 2026-09-28** (per user direction): with six heroes a type, the base three
-of each should teach that type cleanly, so eight swapped with the Starfall. In: Ashwing, Selkie, Hush,
-Nimbus, Murk, Thane, Drift, Patch. Out: Brimstone, Riptide, Flurry, Tempest, Nightshade, Zenith,
-Reverie, Bellows. `docs/collection.md` §4 has the reasoning and the save migration. The promoted
-eight have had no sim pass.
-
-**Renames, 2026-09-27** (per user direction, after the sprite redesign): **Cortex → Reverie**
-(`mindweaver`, now the mesmer moth), **Cube → Floe** (`cube`, now the glacier snail) and **Slate → Petra** (`slate`, now the crystal geomancer; redrawn 2026-09-28 as a dwarf quarrywoman with a rune maul, so she no longer reads as a second robed Stone caster beside Cairn). **Cinder** was redrawn the same day as a salamander warrior with a shield and spear, because the forgesmith's hammer now overlapped Petra; his signature Hammerbrand is shown as **Emberlance** (id unchanged). Ids,
-kits and numbers are unchanged; older sections of the docs use the old names. Aegis is now the
-shrine tortoise, Solace the lantern acolyte, and Scallywag is a woman now (a rapier-and-hook
-duelist) — her name stands.
+- **Widow and Cinder went mono** (2026-09-19): Widow Beast/Shadow → mono-Shadow, Cinder
+  Fire/Iron → mono-Fire, each keeping the type it lost as an Evolution graft (Carapace,
+  Ironclad), so the old dual build is one of three paths rather than the starting state.
+  **One consequence to watch:** Fire's physical column is four moves past Cinder's kit, so his
+  Early band is entirely Iron off-type — a physical Fire Early or two would give the mono hero a
+  band of its own.
+- **Scallywag left the base** the same day, re-authored mono-Iron with Stormrunner the Storm
+  graft back; she is Starfall-only.
+- **Renames, 2026-09-27** (after the sprite redesign; ids, kits and numbers unchanged — older
+  docs use the old names): **Cortex → Reverie** (`mindweaver`), **Cube → Floe** (`cube`),
+  **Slate → Petra** (`slate`), and among the Starfall heroes Omen → **Jinx** and Tome →
+  **Folio** (both names were taken by a path and an item family). Cinder's signature
+  Hammerbrand is shown as **Emberlance** (id unchanged).
 
 ---
 
@@ -370,8 +212,8 @@ duelist) — her name stands.
   present across every Evolution path a hero is ever offered. **The SECONDARY type
   slot is the Evolution branch axis**: an Evolution path may add or shift it, but
   never touch the primary (`docs/leveling-and-ranks.md` "The immutability nuance" —
-  the authoritative spec for how this works; `progression.md` "Type-graft paths" is
-  being reconciled with it, see that section's note).
+  the authoritative spec; `progression.md` "Type-graft paths" agrees). The one named
+  exception is a Turned curse (CLAUDE.md, `run/curse.ts`).
 - **Mono is a valid terminal state.** A mono-type hero that never gains a second type
   is a legitimate, finished design identity — not an unfinished or "larval" one.
   Don't treat dual-typing as the goal state every hero climbs toward.
@@ -398,19 +240,15 @@ The total is a *shape* rule, not a power rule. What it buys is that two heroes a
 never separated by raw total — only by where they put it — so "which hero is
 stronger" is always a question about the matchup and never about the sheet. A hero
 that wants to be enormous somewhere has to be small somewhere else, and the roster's
-extremes are authored that way on purpose: Bellows at **105 Attack / 5 Speed**, Cube
-at **115 Defense / 10 Speed**, Squall and Widow at **100+ Speed** off 45-Defense
-bodies. Coming in under 550 is not the way to signal a specialist — spiking one stat
-past anything else in the roster is.
+extremes are authored that way on purpose: Floe at **115 Defense / 10 Speed**, Squall
+and Widow at **100+ Speed** off 45-Defense bodies, and Bellows at **120 Attack / 5
+Speed** (a Burden, 60 over — CLAUDE.md). Coming in under 550 is not the way to signal a
+specialist — spiking one stat past anything else in the roster is.
 
 The 2026-09-09 re-base paid its bill **out of HP** and left **Speed untouched on every
 hero**, so no priority order moved. HP now costs three times what it costs an enemy
 line, and the roster's HP range compressed from 160–300 to **180–250** in consequence
 — an accepted, measured cost, not an oversight (`docs/progression.md` "Pricing HP").
-
-Before 2026-09-05 only the 14 starters were on budget and the 22 recruit-only heroes
-ran 390–480. That gap read as "recruits are the weaker pool", which is exactly what
-`starter: false` is *not* supposed to mean (see "Starters vs. recruit-only heroes").
 
 **Lucius is mono-Mind** as of the same pass — a deliberate retype of the authored
 hero, not an in-run graft. Shadow/Mind was a dual typing doing the work an Evolution
@@ -420,10 +258,11 @@ is born into. His pool follows the primary type; Weaken stays as the one Shadow
 keepsake.
 
 This still holds now that a dual hero *can* trade its secondary in-run
-(`leveling-and-ranks.md` "The RETYPE"): a mono hero is offered two grafts and a mono
-path, a dual hero one retype. Born dual is no longer a tax on Evolution, but it is
-still less branching than born mono — so the choice between the two is a real
-authoring decision, not a default.
+(`leveling-and-ranks.md` "The RETYPE"): a mono hero's two type paths each add a
+second type, where a dual hero's retype — a swap that costs the old column and its
+STAB (`docs/evolution-simplification.md`). Born dual is no longer a tax on Evolution,
+but its branches read differently from born mono's — so the choice between the two is
+a real authoring decision, not a default.
 
 ### Growth grades — the second budget (2026-09-10)
 
@@ -456,8 +295,8 @@ Two rules bound both, and they are what keep the second budget honest:
   trap-pick territory (draft lift −1.99 → −3.23 against the all-B baseline), which the
   north star forbids. Nightshade had the same fault and the same fix.
 
-The late bloomer is the archetype the pass exists to create. The Guild Hall pool is
-exactly the `starter: false` heroes, and a hire arrives an act behind
+The late bloomer is the archetype the pass exists to create. A Guild hire arrives an
+act behind
 (`guildHallLevel`) — so an underlevelled hire is a *downside* unless its grades make
 the levels it has left worth more than the ones it missed. That is a decision the
 player can only make by reading the grades, which is why `StatBars` renders the letter
@@ -466,19 +305,17 @@ column on the hero sheet and the Guild Hall preview.
 Measured cost of the pass, same 1000-run batch either side: full-clear **29.6% →
 35.6%**. The player side gained because a targeted line spends the same budget on
 stats the hero actually uses, where all-B spent a seventh of it on a caster's Attack.
-Enemies take no growth rolls at all, so the lift lands on the player alone — if the
-run wants to come back down, `ACT_STEP_CURVE` is the one knob
-(`docs/run-loop.md`), not the grades.
+Enemies took no growth rolls then; since 2026-09-15 they are levelled through their
+own grades (`docs/enemy-levels.md`), and the enemy curve's knob is the per-node level
+offset and `ACT_LEVEL_ADJUST`, not the grades.
 
 ### The authored roster
 
-Eight authored heroes exist in the prototype with full type coverage. Their concrete
-stat lines, typings, and movepools are **data** (`/data/heroes.ts`) — this doc governs
-the rules they're authored under, not their individual values.
+Concrete stat lines, typings and movepools are **data** (`src/data/heroes.ts`) — this
+doc governs the rules they're authored under, not their individual values.
 
-> 🔒 **OPEN — do not resolve without designer sign-off.**
-> **Five heroes have unresolved (50/50) typings:** Giant Lobster, Solace, Crystal
-> Guardian, Hellhound, Artificer. Each is a genuine coin-flip between two power-source
-> readings and must not be assigned a type unilaterally — run each through the
-> power-source filter *with the designer* and lock it deliberately. Leave them
-> explicitly flagged in `/data` until then.
+> **OPEN — do not resolve without designer sign-off.** The prototype named five
+> heroes with unresolved (50/50) typings: Giant Lobster, Solace, Crystal Guardian,
+> Hellhound, Artificer. Solace is authored (mono-Light); the other four are not in the
+> roster. If any is authored, run it through the power-source filter *with the
+> designer* rather than assigning a type unilaterally.

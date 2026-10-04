@@ -6,6 +6,11 @@
 > The act-step curve, the node-kind stat bonuses and the champion multiplier are deleted. §4's
 > figures are a first pass fitted by the sim to hold the previous run shape (§6); §7 lists the
 > invariants this reverses. §5's loadout seam is BUILT and wired for gear only, from Act 4.
+> **Since then:** the Guardian's shape is set per act (2026-09-30, `GUARDIAN_ESCORTS_BY_ACT` =
+> one escort in Acts 1–2 and two after, `CHAMPION_GRADE_BY_ACT`), and the run went to **four
+> acts** (2026-10-02, `docs/xp-overhaul.md` §5): Act 5 is the finale, Act 4's champion grows on C,
+> and `ACT_LEVEL_ADJUST` is now Act 1 −2, Act 3 +2, the rest 0. The tables below were measured on
+> five acts; their Act 5 column is history.
 
 ---
 
@@ -27,8 +32,8 @@ machinery for "an enemy is a hero at a level" existed; it was not pointed at ene
 **An enemy is a `RosterEntry` built the way a hire is.** Its level is rolled through its
 definition's growth grades from 1 (`enemyGen.ts growTo` → `levelUpEntry`), its Mastery pips
 come off the act (`masteryForAct`, unchanged), its kit is walked off its schedule
-(`rollLevelProgression`, unchanged). `evolutionStatGrants` on an enemy now holds only the
-scripted first act's flat grant. A contract hero is therefore *literally* the enemy you beat:
+(`rollLevelProgression`, unchanged). `evolutionStatGrants` on an enemy holds only the
+encounter's optional flat `statGrants` (a test lever since the scripted first act was deleted). A contract hero is therefore *literally* the enemy you beat:
 level, growth, Evolution, kit — the same fields a roster hero has, no side channel.
 
 Three bodies, one rule:
@@ -101,8 +106,8 @@ stored or drawn.
 
 **Wired today: gear only, from Act 4** (`ENEMY_GEAR_FROM_ACT`, `enemyLoadoutFor`): one item
 per hero-pool enemy, Guardian escort and champion, rolled on the node's own rarity curve
-(`LOOT_SOURCE` — the Elite's and the Guardian's a tier ahead). Stripped on a contract claim,
-as any equipment is. Passives are the seam's other half and nothing hands them out yet.
+(`LOOT_SOURCE` — the Elite's and the Guardian's a tier ahead). A contract hero keeps the piece
+it fought in (`docs/gear-absorption.md` §7). Passives are the seam's other half and nothing hands them out yet.
 
 Why gear has to exist at all: level alone falls behind. The player's stat total in Act 5 is
 base + growth + up to three items + four Banners + Boons + a Class; an enemy at Act 5's level
@@ -125,14 +130,13 @@ spread +10 over random stats with HP double-weighted. The shipped table gets bac
 baseline's full-clear with the Guardian a little under par, the champion front-loaded, and gear
 from Act 4.
 
-Two dials left for playtest, both named in the table above:
+The two dials this pass left for playtest have both been acted on:
 
-- **Act 1 at 79% (was 85).** The Skirmish at par against a two-hero roster. `skirmish` −1
-  measured 88% there but puts a Skirmish contract a level *under* a hire from Act 3, which is
-  the inversion `test/recruitment` guards; the alternative is the hire's `+1`.
-- **Act 5 at 92% (was 82).** Gear from Act 3 instead of 4 measured 90 / 76 / 92 with a bump at
-  Act 3; a second item for the Guardian, or passives through the seam, are the levers that
-  scale with the act. `CHAMPION_LEVEL_BONUS` barely moves it under all-E grades.
+- **Act 1 at 79% (was 85).** Answered by the act term (§4, Act 1 −2) rather than `skirmish` −1,
+  which would have put a Skirmish contract a level *under* a hire from Act 3 — the inversion
+  `test/recruitment` guards.
+- **Act 5 at 92% (was 82).** Act 5 was deleted with the move to four acts; the last seal is
+  Act 4's, whose champion grows on C.
 
 ## 7. Locked invariants this reverses
 

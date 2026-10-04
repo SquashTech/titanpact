@@ -1,9 +1,8 @@
 # mana.md
 
 > The mana / MP resource system. Mana replaced accuracy as the primary balance lever,
-> so this system carries a lot of load — but several of its mechanics are still
-> underspecified. This doc states what's locked and **flags the open sub-questions
-> explicitly** rather than inventing mechanics. Do not fill the gaps unilaterally.
+> so this system carries a lot of load. Every question this doc once flagged is resolved;
+> Field Effects keep their own open questions (`docs/field-effects.md`).
 
 ## Why mana matters: it is the primary balance lever
 
@@ -46,21 +45,15 @@ Treat this as a hard constraint when tuning mana-node values in `/data`.
   and benched combatants — mana regen is one more reason switching is productive,
   same as HP.
 - **Starting state: full.** Every hero starts a fight with a full mana pool.
-- **Implemented.** The regen tick above is wired into the engine
-  (`engine/combat/manaRegen.ts`, called from `resolveRound.ts` at the round
-  boundary alongside bench HP regen), emitting a `ManaRegenTicked` event per
-  combatant whose mana changed. It walks every non-fainted combatant (active
-  and benched) rather than reusing the bench-only `applyBenchHpRegen` path,
-  since mana regen — unlike HP regen — isn't bench-exclusive.
+- **Implemented** in `engine/combat/manaRegen.ts`, called from `resolveRound.ts` at the round
+  boundary, emitting `ManaRegenTicked` per combatant whose mana changed. It walks every
+  non-fainted combatant, active and benched.
 
 ## Resolved (2026-08-21 designer sign-off)
 
 - **Weather subsystem interaction with mana: RESOLVED.** Field Effects
-  (`docs/field-effects.md`) **is** the weather subsystem, generalized beyond just
-  weather-flavored effects — a single global battlefield state, one active at a time,
-  lasting a flat 5 rounds. The first content, Magical Surge, doubles every hero's MP
-  Regen while active (`engine/combat/manaRegen.ts`, `engine/combat/
-  fieldEffectEngine.ts`). This was the mana system's only remaining open question.
+  (`docs/field-effects.md`) **is** the weather subsystem; Magical Surge doubles every hero's MP
+  Regen while active.
 
 ## Mana pools GROW over a run (2026-08-30 designer sign-off)
 
@@ -77,28 +70,11 @@ the number on the hero sheet is where the hero *starts*.
 
 ### Where the growth actually comes from
 
-There is **no automatic stat growth from leveling** (`CLAUDE.md` — level-ups unlock
-moves and surface Evolutions; they never raise stats). Mana growth is a **loadout**
-fact, on three independent axes:
-
-| Axis | Scope | What exists today |
-|---|---|---|
-| **Relics** | Team-wide, accumulate all run | Deep Reserve Flask +50 · Wellspring Heart +40/+10 regen · Deep Wellstone +20/+5 · Overflowing Vessel +20 · Bloodfire Catalyst +20 · Windrunner's Flask +20 |
-| **Equipment** | Per hero, 3 slots | Archon's Staff +20 (weapon) · Vital Charm +10/+5 (accessory) · Apprentice's Band +10 (accessory) · Mystic's Robe +5 (armor) |
-| **Evolution** | Per hero, once | A mana branch on **9 of 31** heroes: +10 pool / +5 regen. Not universal — do not assume a given hero has one |
-
-All three land in `Combatant.baselineStatModifiers` at fight-build time
-(`src/run/buildCombatState.ts`), which is exactly why that field is kept separate from
-`statModifiers` — a loadout grant reads as part of the hero's stat block, not as a
-temporary combat buff (`engine/state.ts`).
-
-**Scale, concretely.** The two axes that apply to *every* hero are relics and
-equipment. A modest mid-run pairing — Deep Wellstone (+20) and an Apprentice's Band
-(+10) — is **+30**, which takes Sentinel from 30 to 60 and makes Body Blow (40)
-comfortable. A run drafting for mana stacks well past +100: relics alone total +170 if
-every mana relic is picked up, and they are team-wide, so both actives get the full
-amount. Against that, a 75–80 mana capstone is a move you build toward, which is the
-intended shape.
+See "Growing the pool" below for every faucet in force. (The original table here — relics,
+equipment, Evolution stat branches — is gone: the relic pool was deleted, Evolution paths grant no
+stats, and levels do grow stats.) Loadout grants land in `Combatant.baselineStatModifiers` at
+fight build (`src/run/buildCombatState.ts`), kept separate from `statModifiers` so a loadout
+grant reads as part of the hero's stat block, not a temporary combat buff.
 
 ### What this means when authoring a slate
 
@@ -109,17 +85,15 @@ intended shape.
   pay out later than the point at which a weak team dies") is what keeps that investment
   honest rather than free.
 - **The one case that IS still a finding**: a hero that cannot afford its own *starting
-  kit*, or an ENEMY that cannot act — enemies get no relics, no equipment and no
-  Evolution, so their pools really are fixed and really do need checking
+  kit*, or an ENEMY that cannot act — an enemy gets no Banners, no Mana Well and no events, so
+  its pool grows only by level (and gear from Act 4) and really does need checking
   (`docs/authoring-moves.md` §8).
 
-**Classes remain the exception**: `src/data/classes.ts` deliberately grants neither
-`manaPool` nor `mpRegen`, which is still an open question and is unaffected by this.
+**Classes grant no mana**: a Class is a verb, never a stat (`CLAUDE.md`).
 
-### Growing the pool (2026-09-13, XP Overhaul phase 6 — supersedes the axes table above)
+### Growing the pool (2026-09-13, XP Overhaul phase 6)
 
-The axes table is history: the relic pool is gone (the Banner is the only team-wide grant) and
-levels DO grow stats now. Measured against the schedule, a Late move at 70+ against a 50–95 pool
+Measured against the schedule, a Late move at 70+ against a 50–95 pool
 plus 10 a round was castable **once a fight**, so "reachable" was never the question — twice a
 fight is. Every faucet a pool has today, and what each is:
 
@@ -128,9 +102,9 @@ fight is. Every faucet a pool has today, and what each is:
 | **Growth** (`run/growth.ts`) | every hero, every level | **1 mana a point** (`GROWTH_UNIT_MANA`, 2 → 1 on 2026-09-28; a B grade ≈ +1.3 a level, ~+38 by level 30) | automatic, no screen |
 | **Banner of the Wellspring** | team-wide, 1-of-3 at each Guardian | +25 pool, +5 regen (+50 HP), stackable | a choice against two other Banners |
 | **Banner of the Bulwark** | team-wide, 1-of-3 at each Guardian | +5 regen (+15 Def/Wis), stackable | a choice against two other Banners |
+| **The Mana Well** (`manaWellReward`) | one chosen hero, a reward-row seat at weight 20 | **+40 max Mana, +5 MP Regen** (`MANA_WELL_AMOUNT`, `MANA_WELL_REGEN`), stacks | the one bare-number screen — pick who |
 | **Equipment** | per hero, per slot | authored on the item, ⅓ point a mana | the item's whole budget |
-| **An Evolution path** | per hero, once | +10–20 on the mana-flavoured paths | part of a branch |
-| **The Deep Well** (`data/events.ts`) | one chosen hero, when the event rolls | **−20 HP for +30 Mana** | a TRADE, narrated — the events grammar's `statShift` |
+| **The Deep Well** (`data/events.ts`) | one chosen hero, when the event rolls | **−20 HP for +40 Mana, +5 MP Regen** | a TRADE, narrated — the events grammar's `statShift` |
 | **Arcane overflow** | the caster, in a fight | a mana grant past the pool | a move |
 | **MP Potion** | one active hero, in a fight | half of max, 3 held | a consumable |
 
@@ -140,8 +114,6 @@ and from 11% of Act 4's casts to 21%, 18% of Act 5's to 33%, 23% of the finale's
 **Pushed part-way back on 2026-09-17** (`docs/authoring-moves.md`): Late +10, spread damage +20
 at Late and +15 at Mid — mana had stopped reading as a cost, and a spread hit at a single hit's
 price was the top of every damage-per-mana table. Late is still cast 1.6 times a fight in Act 5.
-
-| **The Mana Well** (`manaWellReward`) | one chosen hero, a reward-row seat at weight 20 | **+40 max Mana, +5 MP Regen** (`MANA_WELL_AMOUNT`, `MANA_WELL_REGEN`), stacks | the one bare-number screen — pick who |
 
 **2026-09-28, per user direction: mana is bought, not grown.** At 2 a point the pool outgrew
 every price by Act 3 and the Wellspring doubled regen on top, so mana mattered early and then
@@ -163,7 +135,7 @@ eight re-priced moves lost a quarter to two thirds of their casts (Onslaught 187
 (per user direction, on the argument that a pool is the stat a whole tier of moves is priced in,
 so the number IS the capability where +10 Attack never was). It is an exception for mana alone —
 `docs/run-loop.md` "The Mana Well" and `CLAUDE.md`. If playtest says the pool still runs dry, the
-dials are `GROWTH_UNIT_MANA` (3?), `MANA_WELL_AMOUNT`, the Wellspring's +40, and the Well's weight.
+dials are `GROWTH_UNIT_MANA`, `MANA_WELL_AMOUNT`, the Wellspring's +25, and the Well's weight.
 
 ## Overflow: mana above the pool (2026-08-30 designer sign-off, Arcane)
 
@@ -213,23 +185,20 @@ beat stream.
 
 ## What is still OPEN (do not resolve unilaterally)
 
-Nothing currently — see `docs/field-effects.md`'s own open questions for what's still
-undecided about Field Effects specifically (a type-restricted damage-modifier surface,
-whether relics should be able to grant one passively).
+Nothing of this doc's own. Whether mana reads as a decision after the 2026-09-28 reshape is a
+playtest call ("Growing the pool"); Field Effects keep their own open questions.
 
 ---
 
 ## Engine placement
 
 - Mana is **combat state** (`architecture.md`): it lives on the fight, spends when a
-  move is used, and regenerates per the (open) regen rules.
-- Mana changes emit a **`ManaChanged` event** (proposed event set, `architecture.md`)
-  so the presentation layer can show the resource draining and refilling — same
-  engine/presentation discipline as HP. The engine spends and regenerates mana; the
-  view shows it. Never gate a move's *legality* in the view — legality (can this move
-  be afforded?) is an engine decision surfaced as state (`engine/state.ts`
-  `hasAffordableMove`, a pure query over mana + move costs that both the player UI
-  and the AI consult).
+  move is used, and regenerates every round, active and bench alike.
+- Mana changes emit a **`ManaChanged` event** (`engine/events.ts`) so the presentation layer can
+  show the resource draining and refilling — same engine/presentation discipline as HP. Never
+  gate a move's *legality* in the view — legality (can this move be afforded?) is an engine
+  decision surfaced as state (`engine/state.ts` `hasAffordableMove`, a pure query over mana +
+  move costs that both the player UI and the AI consult).
 - **Rest** (`combat.md` "Rest") is the resolution to the case where a hero can afford
   *none* of their moves: it fully restores Mana instead of spending it, implemented
   as its own `Action` kind (`engine/combat/actions.ts`) rather than a move, so it
@@ -238,21 +207,8 @@ whether relics should be able to grant one passively).
 
 ---
 
-## Numerical Examples for future reference:
+## Numbers in force
 
-A "standard" starting mana stat would be something like 80. A decent attack might cost
-roughly 30 mana, and the hero's mana regen stats may be 30. This allows easy usage
-of that attack. However, a more powerful attack may cost 60 mana. With only 30
-regen, continuous usage of this attack will not be possible without careful
-management.
-
-Note that every figure above is a **starting** one — see "Mana pools GROW over a run"
-above. The same hero four relics and three equipment slots later is playing a different
-curve, and the authored slates are priced for both ends of it.
-
-## Note for Claude Code
-
-Resource model, regen cadence, and starting mana are now locked (above) — build
-against them directly, including the regen tick, which is implemented. Weather
-coupling is also resolved now, via Field Effects (`docs/field-effects.md`) — this
-doc has no open questions of its own left.
+Starting pools run 45–130 (most heroes 50–95) with MP Regen a flat 10 outside the 550 budget, so
+a 30-mana move is cast freely and a 65+ Late move about once a fight before the pool grows. Every
+figure on a hero sheet is a **starting** one — see "Mana pools GROW over a run".

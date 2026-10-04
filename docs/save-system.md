@@ -1,8 +1,8 @@
 # save-system.md — run saves that survive anything (BUILT, phases A–C)
 
 > Drafted 2026-10-03 per user direction: "make sure run saves are rock solid and can even save
-> mid-fight". Decisions D1–D4 below were made by the user the same day; the build waits on review
-> of this document. Phases are ordered so each one ships alone.
+> mid-fight". Decisions D1–D5 below were made by the user the same day. Phases are ordered so each
+> one ships alone.
 > **All three phases are BUILT (2026-10-03).** §8 lists where the build departs from the plan below.
 
 ---
@@ -162,6 +162,10 @@
   opens fresh. The enemy declares off `derivedRandom(state, id, 'ai')` (`engine/state.ts`).
 - **Storage.** The envelope is `tp1:<fnv1a>:<json>`, and a bare-JSON file from before it is read
   unchecked. A full quota drops the backup first, then the screen, and keeps the checkpoint. The
-  title says so only when the player returns to it, so a mid-run warning is still open. The title
-  also says when a backup was used.
+  title also says when a backup was used.
+- **A save that fails is said once, in the run** (`SaveTroubleBanner`), the way console games do
+  it: a banner over the current screen the first time a write is refused or cut back to the
+  checkpoint, never blocking play. While it lasts, the map's menu key wears a mark and the map and
+  fight menus say why; the next write that lands clears both. No early "storage almost full"
+  warning — the save is a few KB, and the browser's quota, not the device, is what fills.
 - **Tests** live in one file, `test/resume.test.ts`, rather than the four §7 names.

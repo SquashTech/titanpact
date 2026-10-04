@@ -44,7 +44,9 @@ interface FieldEffectDefinition {
   reversesSpeedOrder?: boolean;
   healPriorityBonus?: number; // added to a heal-kind move's priority bracket
   healMultiplier?: number; // multiplies a heal-kind move's restored HP (Sanctuary 1.5)
-  statBonusEqualToStatusMagnitude?: { statusId: StatusId; stats: readonly StatKey[] };
+  amplifiesStatusHealing?: { statusIds: readonly StatusId[]; multiplier: number; overflowToShield?: boolean }; // Verdant Earth
+  statBonusEqualToStatusMagnitude?: { statusId: StatusId; stats: readonly StatKey[] }; // no holder since 2026-09-28
+  drainsPercentMaxHp?: { fraction: number; exemptTypes?: readonly TypeId[] }; // Withering Gaze
 }
 ```
 
@@ -84,19 +86,13 @@ actually applies it:
   fight tile and the detail overlay preview the same figure the fight pays, and reported on
   `Healed.fieldMult`. Never folded into Wisdom; a Renew tick and a drain never ran the formula
   and do not read it. Same discipline as `mpRegenMultiplier`, one pipeline over.
-- **`statBonusEqualToStatusMagnitude`** — `engine/state.ts` `getEffectiveStat`. A genuine
-  stat-pipeline bonus (pipeline 1, not a damage modifier): every stat in `stats` gains a
-  bonus equal to the combatant's **own current magnitude of `statusId`** — for Verdant
-  Earth, its Renew. Read live off the status each call, so the bonus decays as Renew
-  halves and is 0 for a hero not carrying it: the effect is a payoff for building around
-  the status, not a flat buff to the whole field. Keyed by status id rather than
-  hardcoding Renew, so a later effect can scale a stat off any magnitude-shape status.
-  Threaded as an optional `FieldEffectContext` argument (`{ active, defs }`) so every existing 3-arg call site
-  (tests, non-combat stat sheets) is unaffected; `damagePipeline.ts`'s
-  `resolveStatRatio` and `resolveRound.ts`'s per-hit `DamageDealt` readout both pass it
-  through, and it's recomputed fresh per hit (not hoisted before the action loop) so a
-  Field Effect set by a faster action earlier the same round already applies to a
-  slower action's damage later that round.
+- **`amplifiesStatusHealing`** — `engine/combat/statusEngine.ts` `healFromStatus`. A HoT's tick
+  multiplied while the field is up, and with `overflowToShield` what passes max HP laid on as
+  Shield — Verdant Earth on Renew (2026-09-28, `blessings-and-statuses.md` §5).
+- **`statBonusEqualToStatusMagnitude`** — `engine/state.ts` `getEffectiveStat`. A stat-pipeline
+  bonus equal to the combatant's own current magnitude of `statusId`, read live per hit. It was
+  Verdant Earth's +Atk/+Int-equal-to-Renew until the 2026-09-28 rework; the vocabulary stays and
+  no field holds it today.
 
 A **type-restricted damage-pipeline modifier** ("certain type of moves" from the
 original ask — e.g. a future effect boosting Fire-type moves specifically) remains a
@@ -111,24 +107,16 @@ Effect is actually authored.
 ## Content (2026-08-21 batch)
 
 Each is flavored around one type (`flavorType`, presentational only) but — like
-Magical Surge — mechanically **global**, affecting both sides. The original setting
-moves all mirrored `arcaneSurge`'s shape (`kind: 'buff'`, `target: 'self'`, 20 mana,
-sets its field effect), the same "small dedicated buff move" pattern `moves.ts`'s file
-header documents for status-granting moves like `lieInWait` (Ambush) and `secondWind`
-(Renew). **Every one of those bare setters is now gone**, folded by the authored slates
-into a move that also *does* something — Nature's Magic Growth and Force of Nature,
-Light's Consecrate (a 45-mana `bothAllies` heal that turns the ground on the way past)
-and Arcane's Mana Font and Magic Cloak (all 2026-08-30):
+Magical Surge — mechanically **global**, affecting both sides. No setter is a bare
+"set the field" buff any more: each is a move that also *does* something (Nature's
+Magic Growth and Force of Nature, Light's Consecrate, Arcane's Mana Font and Magic Cloak,
+2026-08-30). Magical Surge's id is still `surgingMagic` (renamed for display 2026-08-30).
 
-**Surging Magic was renamed Magical Surge** on 2026-08-30, when the Arcane design table
-arrived calling it that three times over. Display name only — the `surgingMagic` id is
-unchanged, so nothing else moved.
-
-| Field Effect | flavorType | Effect | Move (starter) |
+| Field Effect | flavorType | Effect | Setter moves |
 | --- | --- | --- | --- |
 | Magical Surge | Arcane | Doubles MP Regen | `manaFont`, `magicCloak` (Glyph) |
 | Scorched Land | Fire | Burn keeps 3/4 of its value a round instead of half | `spreadingBlaze` (Brimstone) |
-| Stasis Field | Mind | Reverses same-bracket Speed order | `stasis` (Cortex), `distort` |
+| Stasis Field | Mind | Reverses same-bracket Speed order | `stasis` (Reverie), `distort` |
 | Sanctuary | Light | Heal-kind moves get +1 priority and heal ×1.5 (2026-09-15) | `consecrate` (Solace), `hallow` |
 | Verdant Earth | Nature | Renew heals ×2, and healing past max HP becomes Shield (2026-09-28; it was +Atk/+Int equal to Renew, `blessings-and-statuses.md` §5) | `magicGrowth`, `forceOfNature` (Sylva), `sow` |
 
@@ -196,32 +184,18 @@ Regen (which the Arcane battery is built around) and spreading one move. Neither
 interferes with the other, but it does mean an Arcane player has one field they always
 want up for two reasons, where Light's Sanctuary is a genuine choice.
 
-Each move is tied to that starter through `progressionTable.moveTiers`
-(`src/data/progression.ts`) — a **level-up unlock**, not part of the starting kit.
-It was originally granted as a fourth starting move, which made those five heroes the
-only ones opening with four (2026-08-26): starting kits are now uniformly three across
-the whole roster, both because the draft screen compares four candidates side by side
-and because a 20-mana field setter is a strange thing to hand a level-1 hero whose
-other moves cost 10-15. A hero that wants its field effect grows into it.
-
-This is placeholder-tier balance content (mana costs, and which starter carries each
-move, are both open to reassignment) — the mechanics and the definitions are real, but
-nothing here has been through a tuning pass.
+Each setter is an ordinary move in its heroes' level-up pools (`moveTiers`, `src/data/progression.ts`),
+not part of a starting kit. Mana costs and seats are first-pass, never tuned.
 
 ### View layer: per-effect color
 
-The battlefield glow/border and the divider badge (`FightScreen.tsx`) were originally
-hardcoded to Magical Surge's Arcane purple — the CSS itself flagged this as
-provisional ("revisit if/when a non-Arcane Field Effect ships"). Now generalized:
 `FightScreen.tsx` sets a `--field-effect-rgb` custom property (an "r, g, b" triplet
 from `typeColors.ts` `getTypeColorRgb(def.flavorType)`) on `.battlefield`, and
 `styles.css`'s glow/badge/keyframes all read `rgba(var(--field-effect-rgb, 195, 86,
 208), …)` — the fallback triplet is Arcane's own color, so an effect with no
 `flavorType` still renders instead of going colorless.
-`FieldEffectDetailOverlay.tsx` sets its own border-top-color inline the same way
-(`getTypeColor`, not the custom property) since it's portalled to `document.body` and
-so sits outside `.battlefield`'s subtree — custom properties don't cross a portal
-boundary.
+`FieldEffectDetailOverlay.tsx` sets its own border-top-color inline (`getTypeColor`)
+since it is portalled to `overlayHost()`, outside `.battlefield`'s subtree.
 
 ## Why four of five never appeared, and the three routes that fix it (2026-09-15)
 
@@ -307,9 +281,8 @@ pipeline and never an MP Regen stat. A Renew tick and a drain are not heals and 
 The bigger number is seen on every heal, which is what the priority never was. It is the
 two-jobs shape Magical Surge already has, accepted with eyes open.
 
-**Superseded 2026-09-28:** Verdant Earth now doubles Renew and turns overheal into Shield (`blessings-and-statuses.md` §5). The paragraph below is history. **Verdant Earth's number is untouched.** The standing call (2026-09-05) was to play it before
-dividing it, and the play verdict was that it never appeared — so this pass makes it appear
-and leaves the 1:1 grant where it was. If it now reads as broken, that is the playtest result.
+**Verdant Earth was reworked 2026-09-28:** Renew ×2 and overheal to Shield, replacing the 1:1
+Renew-to-stats grant (`blessings-and-statuses.md` §5).
 
 ### Measured (600 runs, seed 1, skilled pilot; `scripts/sim` now counts field sets)
 
@@ -338,39 +311,12 @@ end (a tenth measured as the Eyes phase's whole margin), on the Pact Clock's ter
 field's own countdown. The player's answer is any field of their own, which the no-refresh rule
 prices at one to three rounds.
 
-### Still deferred
-
-- **The type-restricted damage term** (Pokémon terrain: "+X% Fire moves") — asked and declined
-  this pass, to keep the five distinct in kind. Revisit once the setter rate has been played.
-
 ## Open questions — do not silently resolve
 
-- **The damage-modifier surface** (above) — deferred until a concrete type-restricted
-  Field Effect is authored.
-- **Should a relic be able to grant a Field Effect passively at fight-build time**
-  (like `RelicDefinition.grantsStatusIds` does for Elemental Force), rather than only
-  through a reactive Passive hook firing mid-fight? **Half of the premise this was
-  written on has since changed** (2026-08-31): `PassiveHook` now includes
-  `SwitchedIn`, the entry hook Imposing Presence needed (docs/events.md), and it fires
-  for the opening lead as well as for every mid-fight arrival
-  (`passiveEngine.ts` `resolveBattleStartEntries`). So a relic granting a Field
-  Effect on entry IS now reachable — a relic-held `{ hook: 'SwitchedIn', effect:
-  { kind: 'setFieldEffect' } }` would set it the moment a fight opens, since a relic
-  broadcasts to every combatant on the side. The question that remains is narrower and
-  still open: should it be expressible as a plain build-time grant (like
-  `RelicDefinition.grantsStatusIds`) rather than as a hook that has to fire? Nothing
-  needs either yet.
-- **Verdant Earth's bonus size**, as of the Nature slate, is no longer bounded by the
-  20–30 Renew the fixture content granted: Overgrowth's Renew 100 makes this a ~+125
-  Attack/Intelligence swing. **Signed off 2026-08-30** — see docs/combat.md "Renew's
-  stacked payoffs". Renew is a slow passive effect and its payoffs are meant to be
-  worth the turn; the halving curve is what bounds the window rather than the
-  magnitude. Not a finding; do not re-report it.
-- **Verdant Earth's bonus applying to benched heroes too** — `getEffectiveStat` has no
-  active/bench distinction, so (like Magical Surge's `mpRegenMultiplier`) the
-  Attack/Intelligence bonus applies to any combatant carrying Renew regardless of bench
-  status. Mostly moot while the bonus only feeds the damage pipeline (a benched hero
-  isn't attacking), but it means a hero can be switched in mid-effect already boosted.
-  Consistent with existing precedent, but not something a designer has explicitly
-  signed off on for this specific effect — flag if that's ever meant to be
-  active-only.
+- **The type-restricted damage term** (Pokémon terrain: "+X% Fire moves") — deferred (see "Content
+  schema" above); asked and declined in the 2026-09-15 pass to keep the fields distinct in kind.
+  Revisit once the setter rate has been played.
+- **A build-time Field Effect grant.** A relic or item can already set a field on entry with a
+  `{ hook: 'SwitchedIn', effect: { kind: 'setFieldEffect' } }` passive (the Heralds do exactly this,
+  and `SwitchedIn` fires for the opening lead too). Whether it should also be expressible as a plain
+  build-time grant, like `RelicDefinition.grantsStatusIds`, is still open; nothing needs it.

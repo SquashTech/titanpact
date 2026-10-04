@@ -2,8 +2,9 @@
 
 **Status: BUILT for all 84 heroes (2026-09-29, per user direction).** `EvolutionPath.statGrants`
 is deleted and `test/evolutionSimplification.test.ts` binds every hero. The five-clause framework
-(`docs/leveling-and-ranks.md`) is history. §9 records what the roster pass found; the sim pass and
-the Evolution screen are next (§7).
+(`docs/leveling-and-ranks.md`) is history, and CLAUDE.md carries the rule. The Evolution screen is
+built (§7). §9 records what the roster pass found. Still outstanding: a per-path sim pass (§7) and
+the engine verbs §9 set aside.
 
 ## 1. The problem
 
@@ -127,15 +128,11 @@ Intelligence, Flashpoint repeats it and is replaced in the roster pass (§8).
 
 ## 7. Migration
 
-1. Pilot (done): Cinder, the engine for the swap, the derived line, the pinned test.
-2. The roster pass (§8), two types at a time. A hero counts as **converted** once no path of its
-   carries a stat line, and `test/evolutionSimplification` binds every converted hero, so no
-   list has to be kept.
-3. When every hero is converted: delete `statGrants` from `EvolutionPath`, retire the five-clause
-   framework and its roster tests (the Rare-to-Epic stat-line ceiling, the one-retype rule, the
-   retype line requirement), and fold this into CLAUDE.md as the rule in force.
-4. A sim pass (`SIM_ALL_HEROES`, per path). Directional only: sims find faults, and balance is
-   played.
+1–3. **Done 2026-09-29:** the Cinder pilot, the roster pass (§8, §9), `statGrants` deleted from
+   `EvolutionPath`, the five-clause framework and its roster tests retired, and the rule folded
+   into CLAUDE.md.
+4. **Not yet done:** a sim pass (`SIM_ALL_HEROES`, per path) against the converted roster.
+   Directional only: sims find faults, and balance is played.
 5. **The Evolution screen: BUILT 2026-09-29** (per user direction, picked from three mockups).
    The choice is a **triptych**: three form cards side by side, sized to their content and centred,
    each showing the hero lit in the path's colours, the typing it lands on (a retype marked with what
@@ -174,7 +171,7 @@ Intelligence, Flashpoint repeats it and is replaced in the roster pass (§8).
   **Move + Passive:** keeps the typing; a Mid or Late move worth a path, off the hero's own pool.
 - **Lines:** a graft's `learnableMoveIds` is `evolutionLine(heroId, graft, { granted })`; a
   rewire's is `evolutionLine(heroId, primary, { swapped: true, granted })`; any other path has
-  none. `statGrants: {}` on every path.
+  none. A path carries no stat field at all.
 - **Passives are verbs** from the existing vocabulary (`PassiveDefinition`, `src/engine/content.ts`:
   hooks, conditions, effects, damage modifiers, conditional grants), never a bare `statGrants`
   card. Flat magnitudes (a passive has no move to take STAB from), stat deltas in multiples of 5,

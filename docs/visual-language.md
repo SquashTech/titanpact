@@ -299,12 +299,8 @@ Details worth keeping:
 ### Scoping discipline
 
 Every rule is scoped under a `.draft-*` class, and the old `.draft-banner*` block was
-deleted outright. `.roster-card` and `.roster-grid` are untouched — `SquadSelectScreen`
-and the reward nodes still use them, and **`.roster-card-portrait` still carries the
-0.833× scale defect there**. That is a real, known bug on a screen the player sees
-before every fight; it was left alone because fixing it changes that screen's card
-height and its layout budget is already tight (see the `.enemy-scout-grid` comment).
-It belongs in its own pass, with its own measurements.
+deleted outright. `.roster-card` and `.roster-grid` were left untouched, and with them
+`.roster-card-portrait`'s 0.833× defect — still open, see open item 6.
 
 ---
 
@@ -390,143 +386,51 @@ Details worth keeping:
 
 ### Scoping discipline
 
-Every rule is scoped under `.levelup-*` or `.growth-*`. **`.hero-grid` is untouched** —
-`ItemFoundScreen`, `StatBoostScreen`, `ClassNodeScreen` and `RosterReplaceScreen` still
-use it, and `.hero-grid-portrait` **still carries the 30px 0.625× defect there**, the same
-way `.roster-card-portrait` was left carrying 0.833× after the draft pass. Both are real,
-known bugs on screens the player sees, and both belong in their own pass with their own
-measurements. What *was* removed from that block is only what LevelUpScreen alone used:
-`.hero-grid-card-evolving`, `-leveling`, `.hero-grid-levelup-bar{,-fill}`, the
-`hero-grid-levelup-fill` keyframes, and the orphaned `.hero-grid-card-disabled` selectors.
-`.training-hero-portrait` (32px, 0.667×) is likewise left alone — it is
-`SandboxBattleScreen`'s now; the move-replace offer took a new `.offer-hero-portrait` at a
-clean 48px instead.
-
-### Verification
-
-Driven through every state in the running app and measured, not eyeballed. Both fixtures:
-🧪 Test: Lv4 Squad for the six-hero/three-column case, and a real run from the draft for
-the two-hero/two-column one.
-
-- Geometry: portrait exactly **48.0px** at three columns and **96.0px** at two — the
-  scales this doc requires. Ground ellipse 0.9×/0.19× the portrait, centred **3.0%** above
-  the sprite's base at both sizes (the draft's is 2.8%).
-- Layout: nothing scrolls at 375×812, 375×667 or 360×600; Continue on screen at all three;
-  no horizontal overflow anywhere; no payoff label or hero name clipped in a 100px card.
-- Flow: level-up → charge animation → move grant → readout; level-up → Evolution →
-  `EvolutionScreen` → path chosen → back with the track replaced by the path name; and the
-  four-move-cap path all the way through the **move-replace offer**, which this doc
-  previously recorded as never having been seen rendering. It fits its scroll area with
-  0px of overflow.
-- No console errors. `npm test` (200 engine tests), `npm run typecheck:view` and
-  `npm run build:view` all pass.
-
-Two caveats, both the documented hazards rather than new ones:
-
-- **The frozen-timeline trap, a third time.** `.growth-charge` starts at `scaleY(0)`, and
-  in a non-compositing pane `getBoundingClientRect()` duly reported its height as **0**.
-  The rule was confirmed instead from its computed `animation-name`/`duration`/
-  `transform-origin`. Likewise the diamond pip's resting `rotate(45deg)` and the
-  `.is-evolving` card's fill were read off synthetic probe elements with
-  `style.animation = 'none'`.
-- **Nothing here has been seen rendering.** The Browser pane was not displayed for this
-  session, so screenshots were unavailable and every figure above is geometry. The
-  composition has not been looked at — including whether 2× figures at two columns are the
-  right weight next to a 25px heading.
+Every rule is scoped under `.levelup-*` or `.growth-*`; only what LevelUpScreen alone used
+was removed from the shared `.hero-grid` block. (`.hero-grid`'s 30px portraits later left
+the run loop entirely — ninth and tenth passes; see open item 6.)
 
 ---
 
 ## Verification standard
 
-This pass was verified by measuring computed geometry and styles in the running app
-across every phase (move-select, targeting, resolving, mid-fight KO), not by eye:
-full-bleed offsets, exact portrait dimensions, label/track overlay, badge collision
-boxes, empty-slot row height after a KO, and Field Effect state. `npm test` (200
-engine tests) and `npm run build:view` both pass.
+Every pass is verified by driving the real screens through every state and **measuring
+computed geometry** (portrait dimensions, full-bleed offsets, overflow, collision boxes),
+then **looking at it**: a throwaway harness (a root `.html` plus an entry mounting the real
+screen modules from a synthetic `RunState`, deleted before committing) screenshotted in
+headless Edge over CDP or the Browser pane. Most of what each pass below calls "found by
+looking" was invisible in computed style. Nothing has been checked on a real device unless a
+pass says so.
 
-Two notes for whoever picks this up:
+Traps that have each bitten more than once:
 
-- **The production build needs Node 24.** The pinned runtime is at
-  `.node-runtime/node-v24.19.0-win-x64/`; a system Node older than that fails on `??=`
-  with a confusing unhandled-rejection warning rather than a clear version error.
-- Nothing here has been checked on a real device yet. Everything above is geometry,
-  not aesthetics.
-
-The second pass was verified the same way — plaque size/centring/row clearance, move
-button footprints and per-move `--move-type-rgb`, sub-box computed backgrounds and
-borders, no horizontal overflow, the arrival banner's meta text and class, the absence
-of a per-round tick beat, and the tick still reaching the event log. `npm test` (200
-engine tests), `npm run typecheck:view` and `npm run build:view` all pass. Two gaps to
-know about:
-
-- **Transitioned and animated properties can't be measured in a hidden browser pane.**
-  With `document.visibilityState === 'hidden'` the animation timeline is frozen at 0, so
-  `getComputedStyle` reports the *start* value of anything with a `transition` on it —
-  even a value just set inline. The "VS" fade reads as `opacity: 1` there; the rule was
-  confirmed instead against a synthetic element carrying the same classes, which resolves
-  to `0`. Don't trust an animated computed value from a non-compositing pane.
-
-  **This bit the plaque measurements themselves, which is worth spelling out.** The
-  arrival keyframe starts at `scale(0.82)`, and a frozen timeline pins it there — so
-  `getBoundingClientRect()` returned every plaque dimension multiplied by 0.82, and the
-  figures first recorded here (135 × 18px, "36% of screen", 6.4px of row clearance) were
-  all understated by that factor. The corrected numbers above come from setting
-  `element.style.animation = 'none'` before measuring, and they change the story: the
-  plaque is **not narrower** than the badge it replaced (159px vs 156px — a wash). What it
-  actually won was height (32px → 22px), a centred position instead of a right-pinned one,
-  no collision with "VS", and real clearance from both team rows where the old badge
-  overhung them by ~9px. That is still the fix; it just isn't the width fix the first
-  measurement claimed. **Kill the animation before measuring an animated element, or use
-  `offsetWidth`/`offsetHeight`, which ignore transforms.**
-- `MoveButtonReplica` (LevelUpScreen's move-replace offer) got the identical treatment and
-  compiles and typechecks, but that screen only appears when a hero with four moves is
-  offered a fifth, which the test squad doesn't reach. It has not been seen rendering.
-  **Resolved in the fourth pass** — reaching it needs a real run rather than a fixture
-  (win the opening fight, spend the point, win the Skirmish, spend a point on the hero
-  that just hit four moves), and driven that way the panel measures 577px inside a 661px
-  scroll area with 0px of overflow.
-
-The third pass was verified the same way, driving the screen through every state:
-figure/portrait geometry (`.draft-portrait` computed 144px — exactly 3×), stage
-content height against available height at three viewports, feature-switch,
-commit/release, pact-full with an unchosen hero on stage, socket fill, CTA
-enable, the info overlay, and `onConfirm` actually reaching the map screen. No
-horizontal overflow at any size. At 375×812 and 375×667 nothing scrolls; at a
-deliberately undersized 360×560 the stage scrolls internally and the rail and CTA
-stay on screen, which is what its `overflow-y` is there for. `npm test` (200 engine
-tests), `npm run typecheck:view` and `npm run build:view` all pass.
-
-Two caveats on this pass specifically:
-
-- **The frozen-timeline trap from the second pass bit again, and confirmed itself.**
-  `.draft-figure`'s arrival keyframe starts at `scale(0.94)`, so every rect it and
-  `.draft-portrait` reported was multiplied by 0.94 — the portrait measured 149.3
-  device px where 158.8 was expected, and 149.3 / 158.8 is exactly 0.94. `transform`
-  doesn't affect layout, so the *stack* was unaffected; only the reported rects were.
-  Separately, `.draft-choose:disabled` read back with its gold glow still on because
-  `box-shadow` is transitioned; a synthetic probe element carrying the same classes
-  resolved it to `none`, correctly. Both are the documented hazard, not new bugs.
-- **Nothing here has been seen rendering.** The Browser pane was not displayed for
-  this session, so screenshots were unavailable and every figure above is geometry.
-  The composition — 3× sprite scale in particular — has not been looked at.
+- **A hidden pane freezes the animation timeline at 0.** `getComputedStyle` then reports the
+  *start* value of anything transitioned or animated, and `getBoundingClientRect()` is
+  multiplied by an arrival keyframe's starting `scale()` (the Field Effect plaque's first
+  measurements were all ×0.82, the draft portrait's ×0.94). Set `element.style.animation =
+  'none'` before measuring, use `offsetWidth`/`offsetHeight` (which ignore transforms), or
+  read the value off a synthetic probe element carrying the same classes.
+- **`initUiScale` (`src/app/uiScale.ts`) measures the viewport once on mount** and only
+  re-runs on `resize`. Mounted into a hidden pane it reports 0×0 and every later measurement
+  is garbage — dispatch a `resize` first. In headless Edge it can produce a canvas wider than
+  the window; pin `.app-shell` to `width: 394px; height: 800px; transform: none` instead.
+- **Headless Edge drops screenshots at random** — roughly one run in three writes no file,
+  exit 0, no stderr. Loop until the file is non-empty; don't debug the screen.
+- **The production build needs Node 24** (`.node-runtime/node-v24.19.0-win-x64/`); an older
+  system Node fails on `??=` with a confusing unhandled-rejection warning.
 
 ### Getting to the states worth measuring
 
-Two title-screen shortcuts exist so UI work doesn't have to be played to:
+Two title-screen Dev shortcuts exist so UI work doesn't have to be played to:
 
 - **🧪 Test: Status FX** (`src/run/statusTestFight.ts`) — 9999 HP and 999 mana on all
   eight combatants, and a movepool made of nothing but status moves, derived from
   `src/data/moves.ts` rather than a hand-kept list. Nothing faints, nothing has to
   Rest, and four statuses stack on one figure within a few rounds. This is the fixture
   for the status badge cluster, tick flashes, and popup collisions.
-- **🧪 Test: Lv4 Squad** — a roster one Training Point short of Evolution.
+- **🧪 Test: Lv4 Squad** — a full roster with its first hero stood at its Evolution.
 
-Both are marked `temp` in the UI and each carries its own removal note.
-
-One trap when driving the app through the Browser pane: `initUiScale` (`src/app/uiScale.ts`)
-measures the visual viewport **once on mount** and only re-runs on `resize`. Mounting into a
-hidden pane reports a 0×0 viewport, so the shell renders `width: 0; height: 0` and every
-layout measurement taken afterwards is garbage. Dispatch a `resize` event before measuring.
+Both are marked temporary in the code and each carries its own removal note.
 
 ---
 
@@ -576,7 +480,7 @@ Two defects underneath, and they are the same two every pass has found:
 | 2-col `.move-grid`, one empty cell at 3 moves | 1-col `.move-list`, `grid-auto-rows: 1fr` — fills exactly at **any** move count |
 | Name / type / cost / BP, effect behind a hold | A second line per row: **live per-enemy effectiveness** for attacks, `moveEffectSummary()` for everything else |
 | Meta on its own `.move-row-mid` line | Meta rides the name's line — full row width made room, which is what freed the second line |
-| 82px banner, 226px of bare face under it | Banner fills, carrying a **beat trail** of the round so far |
+| 82px banner, 226px of bare face under it | Banner fills, carrying a **beat trail** of the round so far (removed in the eighth pass) |
 | Target cards 98.7px, 157.9px of gray below | Target cards **248.6px**, portrait at a clean **2×** |
 | Target cards `compact` — portrait, name, type | HP/MP back on them, in the battlefield's own numerals-inside-the-track register |
 
@@ -594,20 +498,10 @@ Details worth keeping:
   a ring — would have put the first one straight back, so the tier reads as
   colored text, and the 4×/0.25× escalation as a glow on the numeral rather
   than the filled tint `.eff-chip` uses. Same two-step hierarchy, no rectangle.
-- **The beat trail only ever lists *revealed* beats.** The queue holds the rest
-  of the round, already resolved by the engine; rendering that would hand the
-  player the enemy's turn before it happens. Newest-first, so the freshest
-  history sits under the beat it followed and old lines fall off the bottom
-  instead of pushing the current beat down.
-- **The current beat and its trail centre as one group.** Top-aligning them
-  would put a single sentence at the ceiling of a 295px box on every round's
-  first beat — trading bare console face for the same emptiness with a gold
-  border drawn around it. `.combat-banner-hint` is absolute so its height never
-  enters that centring, and `.beat-trail` is `flex: 0 1 auto` so it takes only
-  what its lines need.
-- **`banner-pop` now fires per beat, not per round.** The banner was one
-  persistent element whose text swapped; `.combat-banner-current` is keyed on
-  the trail's length, so each beat remounts it and replays the arrival.
+- **The beat trail is gone** (eighth pass). What survives of it: the current beat
+  centres in the console rather than top-aligning (`.combat-banner-hint` is absolute
+  so its height never enters that centring), and the banner remounts per beat, not
+  per round, so each beat replays its arrival.
 - **2× on the target picker is not a precedent for the arena.** Open item 5 is
   about the battlefield, which holds four figures in a fixed-height scene and is
   unchanged. This is the picker: two figures, and a panel that now has 248.6px
@@ -637,61 +531,11 @@ Details worth keeping:
   `.target-panel`, so the switch-in picker's overlay copy is unaffected
   (verified: its cards still compute `display: block`).
 
-### Verification
-
-Driven and measured in the running app at 375×812, per the standard below.
-
-- **Fill.** Panel bottom 744 against a bottom-bar top of 752 in *every* state —
-  move select, targeting, forced replacement, resolving. The 8px is
-  `.action-area`'s own `padding-bottom`. The 108.9 / 157.9 / 226.4px bands are
-  gone and the panel's edges no longer move between steps.
-- **Move counts.** 3 → 79.9px rows; 4 (synthetic 4th row injected into the live
-  grid) → 58.4px rows, `scrollHeight === clientHeight` at both.
-- **Row interior.** Effect line starts at x=66, exactly under `.move-name`, and
-  reserves 15.0px whether it holds effectiveness chips or a summary sentence —
-  the two must match or the grid's rows step against each other, the defect
-  `.move-row-mid`'s `min-height` was originally added for.
-- **Beat trail.** 11 lines fit 180px without scrolling; banner held at 295.6px
-  throughout; group stays centred as it grows.
-- **Forced replacement.** Panel 295.6px, bench row 198.6px, Confirm 43px and
-  unstretched.
-- **Rest fallback.** Synthetic probe (it needs a hero with no affordable move;
-  25 driven rounds of Quick Battle never drained one). Fills the list at
-  251.6px, centred to within 0.5px, indent correctly neutralised, text not
-  clipped.
-- **Target picker.** Card 248.6px, portrait exactly **96.0px** (2× of the 48px
-  source — the scale this doc requires), `.bar-label` computing `position:
-  absolute`, i.e. inside the track as intended.
-- **Power column.** Type codes land within 3.1px of each other across a 4-move
-  list (249.2–252.3), the residue being the glyph widths of FRS/LIT/SPI rather
-  than the layout.
-- No horizontal overflow at any point (`documentElement.scrollWidth === 375`).
-  No console errors. `npm test` (203 engine tests), `npm run typecheck:view` and
-  `npm run build:view` all pass.
-
-Three things to know:
-
-- **`1fr` is `minmax(auto, 1fr)`, so rows have a floor** — measured at 56px for
-  a two-line row. At `MOVE_CAP` the tracks land at 58.4px, clearing it by only
-  2.4px, and the 🧪 Status FX fixture's 7-move movepool blows straight through
-  it (428px of rows in a 252px list) and drew over the panel's own border.
-  `.move-list` now scrolls internally as a backstop. It does not engage at 3 or
-  4 moves.
-- **At 375×667 the move list scrolls**, because the console is only 171.6px
-  there — the battlefield is a content-sized 441.4px regardless of viewport, i.e.
-  66% of a 667px screen. This is not a regression (the old panel was 194.8px in
-  the same 171.6px area, so `.action-area` scrolled instead); the scroll just
-  moved one level in, which keeps the header pinned and the chassis intact.
-  Making the arena height-responsive is the actual fix and belongs with open
-  item 2.
-- **This one was actually looked at** — the first pass in four where the Browser
-  pane composited, so move-select, targeting and mid-round playback were all
-  seen rendering rather than only measured. Three things the geometry did not
-  catch and the screenshots did: the ragged type-code column (fixed, above), a
-  target card that read as sparse until HP/MP went back on it (fixed, above),
-  and the stacked bar labels that gave the picker a different register from the
-  battlefield directly above it (fixed, above). **Still not seen on a real
-  device** — every figure is a 375×812 emulated viewport.
+One thing to know: **`1fr` is `minmax(auto, 1fr)`, so rows have a floor** (~56px for
+a two-line row). At `MOVE_CAP` the tracks clear it by only 2.4px, and a longer movepool
+(the 🧪 Status FX fixture's seven) blows through it, so `.move-list` scrolls internally as
+a backstop. It does not engage at 3 or 4 moves. (Short canvases: see "Short screens" under
+the pixel kit.)
 
 ---
 
@@ -837,45 +681,10 @@ Details worth keeping:
   opacity: this field is a third of the height and passes behind move names and
   damage numbers being read against a clock, not behind a figure being admired.
 
-### Verification
-
-Driven through every console state in the running app and measured.
-
-- **The rule, asserted rather than eyeballed.** Walking every element inside
-  `.action-area` and collecting those with a real top border: **move select →
-  zero**. Targeting → `combatant-card` only, which is exactly right (the frame
-  *is* the affordance). Resolving → `beat-trail` only, which is its scored
-  separator, not a box.
-- **Fill survived the fifth pass intact.** Panel 447.4 → 744 against a
-  bottom-bar top of 752 in every state; `.action-area` `scrollHeight ===
-  clientHeight`; no horizontal overflow (`documentElement.scrollWidth === 375`).
-- **The light tracks command.** Water `74, 144, 217` at origin `27%` (ally slot
-  0) → Frost `127, 214, 224` at `73%` (slot 1) → gold `224, 166, 60` at `50%`
-  while resolving. Crest sockets follow: the hero that just committed keeps full
-  color and gains its move's mana crystal.
-- **Forced replacement.** Panel 296.6px, card 168 x 223.6px, portrait exactly
-  96.0px, bar labels computing position: absolute (in-track).
-- **Facets tile exactly.** Three rows at 85.5px, each spanning 0 → 375 (full
-  bleed past the shell's 12px padding), `scrollHeight === clientHeight`.
-- `npm test` (203 engine tests), `npm run typecheck:view` and `npm run
-  build:view` all pass. No console errors. Dead CSS removed with the markup it
-  belonged to (`.move-panel-header/-title/-hint`, its glow keyframe,
-  `.target-panel-move-meta/-name`); `.target-panel-header/-title` stay, since the
-  forced-replacement panel still uses them.
-
-Two caveats:
-
-- **Seen rendering, at one size.** Move select for four different domains (Stone,
-  Iron, Fire, Frost, Water — the low-chroma cases picked on purpose), targeting,
-  command passing between the two heroes, and mid-round playback. All at an
-  emulated 375×812. **Not seen on a real device**, and the seam light in
-  particular is a 1px feature at 20-90% alpha — the thing most likely to read
-  differently on real glass.
-- **375×667 still scrolls the move list**, unchanged from the fifth pass and for
-  the same reason: the arena is content-sized at 441.4px whatever the viewport,
-  so the console gets 172px there. Full-bleed facets make the cut-off row read as
-  a list continuing rather than as a clipped card, which softens it, but the
-  actual fix is a height-responsive arena — see open item 2.
+The rule was asserted rather than eyeballed: walking every element inside
+`.action-area` for a real top border finds **zero** in move select and only the
+target frame in targeting. The seam light is a 1px feature at 20–90% alpha — the
+thing most likely to read differently on a real device.
 
 ---
 
@@ -1008,28 +817,6 @@ Details worth keeping:
   let the hand-rolled timer this button carried be deleted in favour of the
   shared one.
 
-### Verification
-
-Driven in the running app at 375×812 and screenshotted through headless Edge
-over CDP (the Browser pane does not composite in this session).
-
-- **Card states seen rendering**: a damage move with a status rider (Cinder
-  Bite), a plain attack, a magical attack, a self-buff (Fortify), a heal +
-  cleanse (Purify), and a priority attack (Fang Rush, `+1 STRIKES FIRST`).
-  Heights 221–387px inside an 812px viewport.
-- **Forecast geometry** asserted per row, not eyeballed: HP fill, bite
-  left/width, notch position and HP tier all computed from the same fractions.
-- **Forecast honesty** confirmed against a resolved round (above).
-- **The charge** confirmed at both ends: invisible 100ms into a press (opacity
-  0, delay 0.18s), and the row lit from its leading edge on a real hold.
-- **Unaffordable treatment survived the `:disabled` → `.is-unaffordable` swap**,
-  and now actually dims (opacity 0.4, measured) for the first time.
-- `npm test` (203 engine tests), `npm run typecheck:view` and `npm run
-  build:view` all pass. Dead CSS removed with the markup it belonged to
-  (`.move-popup-meta/-kind/-target/-matchups/-matchup-row`, `.move-stab`);
-  `.move-popup-panel/-hint/-description` stay, since the map node preview, the
-  equipment popups and the level-up offer still use them.
-
 ### A portal to `document.body` leaves the design canvas
 
 Found the moment this reached a real phone, and it is a *class* of bug rather
@@ -1135,19 +922,9 @@ copy of the block.
 `-webkit-tap-highlight-color` to a component.** It is already handled. If a
 surface needs the opposite, that is `.selectable`.
 
-Verified in the running app on the two surfaces named in the report — every text
-node and portrait in the move dossier and in the targeting panel computes
-`user-select: none` with a transparent tap highlight, and `user-drag: none` on the
-sprites — and all three properties survive minification into the production
-bundle.
-
-Two caveats:
-
-- **The haptic has been feature-detected, never felt**, and iOS Safari has no
-  Vibration API at all — on iPhone the charge is the entire feedback.
-- **The hold is still 500ms.** With the charge drawn it is legible rather than
-  dead, but whether 500 is the right number is a feel question that wants a
-  thumb, not a measurement.
+Open feel questions on the hold: **the haptic has been feature-detected, never
+felt** (iOS Safari has no Vibration API, so on iPhone the charge is the entire
+feedback), and **whether 500ms is the right hold** wants a thumb, not a measurement.
 
 ---
 
@@ -1229,23 +1006,6 @@ being the thing you look at. The plain-damage kind is `#ccd3e0` rather than
   alpha, not full: at full strength a Fire commander turned it solid orange,
   which reads as a warning rather than as a menu.
 
-### Verification
-
-Driven through a real Quick Battle round over CDP, reading computed style off
-the live DOM.
-
-- **The trail is gone at every beat** (`.beat-trail` absent for all 8 beats of
-  the round), and the headline computes to 30px — 19px on the sentence fallback.
-- **Type accent tracks content**: Beast `#b5772f` → Iron `#9aa3ad` → Light
-  `#e8d16a`, each with `.combat-banner-focus` color matching exactly.
-- **Kinds resolve**: `banner-kind-damage` `rgb(204, 211, 224)`,
-  `banner-kind-ko` `rgb(217, 83, 79)`, `banner-kind-resist` `rgb(153, 160, 175)`
-  with the "Not very effective..." chip attached.
-- **Back's two states are structurally different, not just dimmer**: disabled
-  carries no accent ring and a `rgb(78, 86, 101)` glyph; enabled carries
-  `rgba(224, 166, 60, 0.6)` at 1px and a `rgb(224, 166, 60)` glyph. Opacity is
-  `1` in both.
-
 ## Ninth pass — the map-node screens, and the size of a Continue (2026-08-28)
 
 Open item 6's remainder ("apply the rule outside combat… still outstanding: the
@@ -1326,34 +1086,6 @@ Details worth keeping:
   small card is doing no harm. The class exists for those two now, not as the
   app's pick-a-hero idiom.
 
-### Verification
-
-Every screen was driven and **looked at**, not measured — rendered through a
-throwaway harness (a root `nodes.html` plus an entry importing the real screen
-modules, both deleted before committing) into headless Edge at 394×800 device
-pixels ×2, then read back as PNGs. That is what caught the green-header/gold-
-numeral inheritance bug and both ring placements; none of the three would have
-shown up in computed style.
-
-Shot and checked: Vitality Shrine, Mana Well, Gold Cache, XP Cache, Equipment
-Cache, Relic Shrine, Mentor's Hall, the Event placeholder, ItemFoundScreen,
-EvolutionScreen, and the Level Up screen itself (unchanged in appearance after
-its card and header were replaced by the shared ones — which is the point of
-the refactor). `npm test` (203 engine tests), `npm run typecheck:view` and the
-production build all pass.
-
-Two notes for whoever picks this up:
-
-- **Headless Edge drops screenshots at random here.** Roughly one run in three
-  writes no file at all, exit code 0, no stderr — unrelated to the page (the
-  same URL succeeds on retry). Loop until the file is non-empty; don't debug the
-  screen.
-- **`initUiScale` fights a headless viewport.** Mounting the real shell in
-  headless Edge produced a canvas wider than the window and clipped the right
-  column. The harness pinned `.app-shell` to `width: 394px; height: 800px;
-  transform: none` instead, which is the canvas the UI is authored against
-  anyway.
-
 ## Tenth pass — one shape for every pick-a-hero screen (2026-08-28)
 
 A direct report, same day as the ninth: *every screen that asks the player to
@@ -1431,21 +1163,6 @@ Details worth keeping:
   drops 16px so its rightmost chip clears the buttons' bottom edge. Both were
   found by looking, not by reasoning.
 
-### Verification
-
-Same method as the ninth pass and the same caveats apply — a throwaway harness
-(root `shots.html` + an entry importing the real screen modules from a synthetic
-`RunState`, both deleted before committing) driven in headless Edge over CDP,
-read back as PNGs. Shot and looked at: Level Up, the peek overlay over it, the
-peek's hero sheet, Vitality Shrine, ForceEquip, Mentor's Hall (both phases),
-Relic Shrine, Equipment Cache, the Event placeholder, Guild Hall, Roster
-Replace, Squad Select, Evolution. The Squad Select corner collision and the
-peek card's redundant "LEVEL 4" line were both only visible in the PNGs.
-
-The real app (not just the harness) was then driven from the title screen into
-Level Up to confirm the peek button mounts and the CTA measures 70px with its
-bottom 12px clear of the shell. `npm run typecheck:view` passes.
-
 ## Eleventh pass — the Recruit Contract gets a screen (2026-08-28)
 
 A direct report: *the recruit screen should be its own screen, with presentation
@@ -1505,20 +1222,6 @@ Details worth keeping:
   hero sheet all read off an ungeared copy of the entry rather than the build
   that just fought — the old claim preview advertised a weapon that never came.
 
-### Verification
-
-Same method as the ninth and tenth passes: a throwaway harness (root
-`recruitshot.html` + an entry mounting the real `RecruitScreen` /
-`DraftScreen` from a synthetic `RunState`, both deleted before committing),
-headless Edge over CDP, PNGs read back. Shot and looked at: two offers at two
-contracts, the state after signing one (stage advances to the unsigned offer,
-rail seals the signed one, CTA becomes "Done Recruiting"), one offer at one
-contract with a full roster ("Replace a hero for Cinder"), the
-`RosterReplaceScreen` overlay opened over it, and the draft itself as a
-regression check on the extraction. The gold "Leave Them" was only visible in
-the first PNG. `npm run typecheck:view`, `npm run typecheck` and `npm test`
-(203 passing) all pass.
-
 ## Twelfth pass — the equip screen becomes a comparison (2026-08-31)
 
 A direct report: *the "give a piece of equipment to a hero" screen has some
@@ -1529,6 +1232,11 @@ menus/overlays to read what each hero has equipped, and it's very cumbersome
 and inefficient.* With a stated ask: handle six heroes on screen, show what
 each hero's currently equipped item is doing, and show what the offered item
 does.
+
+> `ItemFoundScreen` and its row were replaced when gear was absorbed
+> (`docs/gear-absorption.md`; the screen is now `ItemWhoScreen`). The diff and its rules
+> below survive: `compareEquipment` (`src/run/equipCompare.ts`) drawn as
+> `EquipChangeChips`.
 
 ### What was wrong
 
@@ -1608,22 +1316,6 @@ Details worth keeping:
   `.equip-seat-flare` were written for the cards; what they animate is a thing
   accepting weight, not a card, so they read the same on a row.
 
-### Verification
-
-Same method as the ninth through eleventh passes: a throwaway harness (root
-`equipcheck.html` + `src/app/equipcheck.tsx` mounting the real
-`ItemFoundScreen` from a synthetic mid-run `RunState`, both deleted before
-committing) served by vite, driven and shot in the Browser pane. Shot and
-looked at: a legendary weapon against six heroes (five filled slots and one
-empty), the same screen after equipping — which proves the bump path, since
-the displaced Torch returns as the queue head under "Needs a New Home" with
-every row recomputed against it — a common weapon whose holder already has
-one (the `No change` row), a mythic armour against six armours (five chips per
-row, wrapping), the roomy scale at four heroes, the `i` sheet opening over the
-table, and the seating flare frozen mid-sweep. The short-viewport squash and
-the clipped 25px title were both found this way. `npm run typecheck`,
-`npm run typecheck:view` and `npm test` (581 passing) all pass.
-
 ## Thirteenth pass — a named enemy takes the field (2026-09-01)
 
 The ask, alongside the Manticore content itself: *have some battlefield effect
@@ -1654,8 +1346,10 @@ A **dramatic entrance**: one flag, five answers.
   the house style for arriving. The finale's *unsealed* champions are deliberately
   out: the player has already fought all six, so there is nothing left to conceal
   and the act's one hidden card stays the thing at the end of it.
-- `SquadSelectScreen.tsx` — the same table conceals the chip on the battle
-  preview: a **silhouette and its typing**, no name, no portrait, no stat sheet.
+- *(No longer built: `SquadSelectScreen` was deleted when leads moved into the
+  fight, and nothing in `src/view` conceals a chip today; the `.enemy-scout-concealed`
+  rules in `styles.css` are dead.)* `SquadSelectScreen.tsx` — the same table concealed
+  the chip on the battle preview: a **silhouette and its typing**, no name, no portrait, no stat sheet.
   The two halves are one flag on purpose, because either alone is worse than
   neither — concealing something that then walks on like an ordinary bench pivot
   is a promise not kept, and announcing something the player already read a full
@@ -1687,33 +1381,10 @@ A **dramatic entrance**: one flag, five answers.
   the track belongs to the act and would otherwise carry the drop out onto the
   map. One constant, `DREAD_MUSIC_RATE`, walks it back.
 
-### Verification
-
-The standard method (ninth pass onward): a throwaway `lordcheck.html` +
-`src/app/lordcheck.tsx` mounting the real `FightScreen` against a real
-`appendFinalEnemy`-ed boss encounter, with the enemy pair given `hp: -9999` so
-the first exchange KOs one and the forced replacement fires on round 1. Both
-deleted before committing.
-
-Two things were found and fixed by looking at it. The shockwave ring was first
-authored at 60% width scaling to 2.6 — a ~340px final radius on a ~430px arena,
-which read not as a shockwave but as a stray arc sweeping across the player's own
-team. It is 26%/2.2 now, sized to die on the horizon. And the veil held full
-opacity to 55% of its run, which washed out the portrait for the better part of a
-second — the beat exists to make the player look at that card. It comes off the
-peak at 32% now.
-
-The music path was confirmed live rather than reasoned about: the harness
-exposed `setTrack`/`setMusicRate`/`musicDebug` on `window`, and with
-`wildsEdge` actually sounding (`contextState: "running"`) the rate moved
-1 → 0.8 → 1 through the real AudioParam ramp.
-
-The concealed chip got a second harness of its own (`scoutcheck.html` +
-`src/app/scoutcheck.tsx`, mounting the real `SquadSelectScreen` against the same
-encounter, likewise deleted). Shot at 1x and again at 4x to read the silhouette
-itself: three chips, two of them clickable, the third a dim outline over `BST` /
-`ANC` badges that opens nothing and reports `cursor: default`. `npm run
-typecheck`, `npm run typecheck:view` and `npm test` (594 passing) all pass.
+Two things were found by looking: the shockwave ring is sized to die on the horizon
+(26% width scaling to 2.2 — at 60%/2.6 it read as a stray arc sweeping the player's own
+team), and the veil comes off its peak at 32% of its run, since holding full opacity
+longer washed out the very portrait the beat exists to show.
 
 ## Fourteenth pass — the arena stands somewhere (2026-09-01)
 
@@ -1793,18 +1464,6 @@ sit later in `styles.css` at equal specificity, which is deliberate and is
 worth not "tidying": standing battlefield state outranks the place it is
 standing in.
 
-### Verification
-
-The standard method (ninth pass onward): a throwaway `harness.html` +
-`src/app/harness.tsx` mounting the real `FightScreen` inside a
-`LocationProvider` chosen by `?loc=`, both deleted before committing. All six
-locations shot at 394x790, plus `?loc=none` to confirm the placeless arena
-(sandbox, quick battle) is byte-for-byte the scene it was. The Field Effect
-override was checked live rather than reasoned about — `.field-effect-active`
-forced on with a location set, and `getComputedStyle(divider, '::before')`
-reporting the effect's colour, not the location's. No console errors. `npm run
-typecheck`, `npm run typecheck:view` and `npm test` (637 passing) all pass.
-
 One thing was tuned and left deliberately quiet: the Molten Foundry's floor
 heat. It wants to be brighter than it is, and the ally row's HP and MP bars are
 sitting in it.
@@ -1861,21 +1520,13 @@ That split is the whole fix; everything below is presentation on top of it.
   there is nothing to say — an intro that appears only sometimes reads as an
   interruption rather than a ritual, and it would announce "something happened"
   before the player could know what. So an ordinary fight is **exactly one tap**,
-  and a fight with an entry passive on both leads is three.
-  - ⚠️ **Reversed same day, on user direction, after the first phone test.** This
-    shipped auto-advancing at `INTRO_BEAT_MS` = 1000 with a tap to skip, on the
-    reasoning that the common case should cost **zero** inputs. Held in the hand
-    that was worse, not better: *"I honestly think it's okay and won't be too
-    cumbersome."* A timed beat the player cannot control is a wait, however short,
-    and it also made the fight's very first input mean something (**skip**) that
-    the identical tap means nothing like for the rest of the fight (**advance**).
-    Tap-advancing it deletes `INTRO_BEAT_MS`, `introPlaying` and `skipIntro`
-    outright — the intro is now *only* `startBeatPlayback` with a prelude, sharing
-    the round's overlay, its hold-to-auto-play and its
-    `tap ▸ or hold to auto-play ⏵⏵` hint. The general lesson is the cheaper one:
-    **a new moment should borrow the input the surrounding screen already
-    teaches**, and inventing a second verb for the same gesture costs more than
-    the input it saves.
+  and a fight with an entry passive on both leads is three. An auto-advancing
+  version (1s a beat, tap to skip) was tried and reversed after the first phone
+  test, per user direction: a timed beat is a wait however short, and it made the
+  fight's first tap mean **skip** where every later one means **advance**. The
+  intro is *only* `startBeatPlayback` with a prelude, sharing the round's overlay
+  and hold-to-auto-play. **A new moment should borrow the input the surrounding
+  screen already teaches.**
 - `sounds.ts` — one row, `battle.join`: a struck low drum, then a swell that rises
   where `entrance.dread`'s sweeps fall. Fires once a battle so it may have
   presence, but it is capped under dread (0.44 against 0.52) on purpose — **the
@@ -1891,34 +1542,6 @@ That split is the whole fix; everything below is presentation on top of it.
 The thirteenth pass's dramatic entrance is untouched and does not collide: a
 Guardian never leads a fight, so a staged arrival is still only ever a mid-fight
 event.
-
-### Verification
-
-The standard method: a throwaway `introharness.html` + `src/app/introHarness.tsx`
-mounting the real `FightScreen` against a real `generateEncounter` pair, with
-`imposingPresence` pushed onto both player leads' `bonusPassiveGrants` (its only
-real source is a map event, too many clicks deep to reach for a view check).
-`?p=0` drops the passive and `?loc=none` goes placeless. Both files deleted before
-committing.
-
-Read as a recording rather than as a screenshot, since the thing under test is a
-sequence: `.combat-banner-current`, `.combat-banner-hint` and `.move-button`
-sampled after each synthetic tap.
-
-- With none: the engagement beat **holds indefinitely** with no tap (`moveBtns=0`,
-  hint reads `tap ▸ or hold to auto-play ⏵⏵`), and **one** tap puts 4 move buttons
-  on screen. One tap, exactly as asked.
-- With two holders: hold → tap 1 → `IMPOSING PRESENCE · CORTEX AND CRIMSON /
-  ATK -10` → tap 2 → the second holder's identical beat → tap 3 → console. Input
-  gated for the whole intro.
-- Placeless: the lead reads `BATTLE`.
-
-Under the auto-advancing first cut, the same harness proved the board and the
-**battle log after skipping were byte-identical to watching** — six lines, both
-`Imposing Presence triggers` and all four `attack -10`. That property is now free:
-with no skip path, there is only the one path.
-
-`npm run typecheck:view` and `npm test` (720 passing) pass.
 
 One thing found by looking at it and **not** fixed: two holders of the same
 passive produce two consecutive beats with identical text, distinguishable only by
@@ -2242,13 +1865,6 @@ HP and MP did not move off the screen, get smaller, or become a hover. They are 
 player reads every single turn. What changed is that they stopped being the widest thing on the
 field.
 
-### Verification
-
-Harness (`fight-harness.html` + `src/app/fightHarness.tsx`, both throwaway) mounting `FightScreen`
-from a quick-battle encounter, driven headless over CDP — the standard method from the ninth pass
-on. Checked: command phase placeless and in four Locations, targeting, a resolving strike pose, a
-damage popup's landing point, a KO'd slot's replacement placeholder, and the bench/switch panel.
-
 Four absolutely-positioned things measure from the card and so had to learn where the stage went
 on the mirrored side — the type chips, the KO tag, the floating damage number, and the stat-mod
 rim ticks. The damage number is the one that matters: unfixed, a hit landing on the far row puts
@@ -2398,14 +2014,6 @@ The binding is now kept to the collar above it, the two flanks outside the butto
 heavy span across the waist in the band the layout leaves empty — which is the one place where
 the atmosphere and the dead space solved each other.
 
-### Verification
-
-Screenshotted through the harness in `reference-screenshot-harness` at 394x780: the idle screen,
-the launch beat mid-bloom, the parked-run variant (Continue over Start a New Run, which shifts
-the whole stack up and still composes), `prefers-reduced-motion: reduce` (the global collapse
-holds a legible final state on every new layer — the sweep parks off-plate, the dead sigil stays
-dead), and the CTA under `:focus-visible`.
-
 ## Twenty-first pass — the last emoji come off (2026-09-10)
 
 *Per user direction, after a friend's note that "there are screens in the game that feel like web
@@ -2494,44 +2102,10 @@ rotated 45° are two 4-unit blades, which go spindly at 16px beside 15px bold te
 **The Dev menu's `🧪` rows are deliberately untouched.** They are throwaway fixtures already marked
 as such, and drawing them properly would make scaffolding look shipped.
 
-### Verification
-
-Typecheck clean, 988 engine tests passing, and the affected screens screenshotted through the
-harness in `reference-screenshot-harness` at 394x780: the title, Records, the Compendium, the map
-Options sheet, Squad Select, the Guild Hall, the Blacksmith, and a fight in progress.
-
-### What this pass did NOT touch
-
-The five other idioms the audit named, in the order they are worth doing:
-
-1. ~~**The colored-left-border list card**~~ — done in the twenty-second pass below.
-   Was: — `border-left: 3px solid <hue>` on a dark rounded rect
-   with a bold title, a gray sentence and a caps label, i.e. Bootstrap's `alert` / `list-group-item`.
-   **16 components wear it**: `.status-ref-row`, `.evo-path-card`, `.item-readout`,
-   `.passive-readout`, `.roster-card`, `.squad-slot`, `.relic-card`, `.guild-hall-hero-card`,
-   `.guild-hall-contract-row`, `.equip-cache-card`, `.boon-shrine-card`, `.equip-spotlight-passive`,
-   `.equip-target-card`, `.hero-grid-card`, `.sandbox-hero-card`, `.swap-option-badge`. The Reference
-   overlay, the Boon shrine, the Mentor's Hall, the Equipment Cache and the Guild Hall are the same
-   list in different hues. One shape, sixteen places — the highest-leverage fix left.
-2. ~~**The Guild Hall and the Blacksmith**~~ — done in the twenty-third pass below. Was: — shopping-cart line items, a form-validation sentence in
-   orange, a right-aligned italic hint in a table-header row, and (the Blacksmith) a screen that
-   titles itself twice. Open item 6 below has exempted the Guild Hall since the ninth pass.
-3. ~~**The map is inside a card**~~ — done in the twenty-fourth pass below. Was: — a header rect, a body rect and a footer rect, each with a 1px
-   border and a radius, around a scene. The fight screen's own rule ("a place, not a container") has
-   never reached it.
-4. ~~**The hero sheet**~~ — mostly a MISREADING; see the twenty-fifth pass below, which corrects it. Was:
-   an iOS-style bottom tab bar with superscript count badges, a three-sentence
-   paragraph of documentation prose about growth grades, and ~400px of empty panel under ITEMS.
-5. ~~**The KPI tile grid** on Records and Run Summary~~ — done in the twenty-fifth pass below. Was: — a big accent numeral over a small caps label,
-   2-up. A SaaS analytics dashboard, verbatim.
-
-Two measured defects worth fixing alongside those:
-
-- **Dead vertical space.** Tallest empty band per screen: Crucible **416px, 53% of the phone**,
-  reward-equip 177, Forge 167, Boon 161, Banner 161, Tutor 157, draft 153. The Gold Cache and the
-  act intro *compose* their space and are the counterexample to copy.
-- ~~**`.resolve-button:disabled` reads as a bug**~~ — fixed in the twenty-third pass. Was:, not as a waiting control: at `opacity: 0.55` over a
-  node screen's parallax, the mountains are visible through the button.
+The audit's other five idioms — the colored-left-border list card, the two shops, the map in
+a card, the hero sheet and the KPI tile grid — and its two measured defects (dead vertical space
+on the node screens, a see-through disabled CTA) were taken in the twenty-second through
+twenty-sixth passes below.
 
 ## Twenty-second pass — the list-row marker comes off nineteen cards (2026-09-10)
 
@@ -2594,26 +2168,10 @@ surface from the component's own `background`. Every *state* variant — `.picke
 touching. Eight `border-left-color` overrides on kind/tier variants became `--plate-color`
 declarations; the seven JSX sites that set `borderLeftColor` inline now set `--plate-color`.
 
-### Verification
-
-Typecheck clean, 988 engine tests passing, and screenshotted at 394x780: the Reference overlay's
-Statuses tab, the Boon shrine, the Mentor's Hall, the Equipment Cache, the Guild Hall, the
-Blacksmith, the Mastery board, the level-up report, the Evolution screen, the draft, and the hero
-sheet's Moves page. Nothing lost a state it had; the Equipment Cache keeps its rarity bloom (that
-lives in `box-shadow`, which this rule does not touch).
-
-### What it did not fix, and what it exposed
-
-The plate changes what the cards are *made of*. It does not change that several screens are still a
-**list of cards floating in the middle of a tall empty screen** — the Boon, the Cache and the
-Crucible all still measure 160–420px of dead band. That is the composition problem, and it is next
-after the two shop screens.
-
-It also leaves the **dashed empty slot** untouched — the Mastery board's fourth move chip, the
-Blacksmith's unbought slots, the roster's empty gear cells. A dashed rectangle is the wireframe
-idiom the same way a left bar is the list idiom, and `styles.css` still has twenty of them. The
-eighth pass already machined some of these (`.item-box`, whose comment says the dashed version "read
-as a disabled form field"); the rest never followed.
+The plate changes what the cards are *made of*, not where they sit: the composition problem
+(cards floating in a tall empty screen) was the twenty-sixth pass, and the **dashed empty slot** —
+a dashed rectangle is the wireframe idiom the way a left bar is the list idiom — was retired by
+the pixel kit ("Empty is never dashed").
 
 ## Twenty-third pass — the two shops stop being a pricing page (2026-09-10)
 
@@ -2708,19 +2266,11 @@ is what it always meant.
   crossing the label. Measured on the Mastery board and the Boon shrine. The dimming is now baked
   into the fill and the text instead, so the plate stays a solid object while it waits.
 
-### Verification
-
-Typecheck clean, 988 engine tests passing. Screenshotted at 394x780, both screens top and bottom,
-plus the Guild Hall at a full roster (the state that used to raise the gold warning) and the
-disabled CTA cropped against the parallax it used to show through.
-
-### What is still open on these two screens
-
-- **The equipment card is still a row**: icon, name, RARITY in caps, stat chips, price. The plate
-  now carries the rarity as light, so the caps word is saying a second time what the card's own
-  colour says — but removing it is a content call, not a styling one.
-- **The Anvil & Enchanter rows** keep two square action buttons at the right end. They are two
-  genuine actions, so the shape is honest; they just have not been given the shelf's treatment.
+The Blacksmith and the item shelf this pass styled were later deleted with gear absorption
+(`docs/gear-absorption.md`); the Anvil and Enchanter became the Smithy tab (thirty-seventh pass).
+**Still open:** a gear card (`EquipChoiceCard`, `item-readout`) still prints its RARITY in caps
+under the name though the plate already carries rarity as light — removing it is a content call,
+not a styling one.
 
 ## Twenty-fourth pass — the map is a place (2026-09-10)
 
@@ -2776,26 +2326,7 @@ readouts and have to hold against a lit scene; the tray they sat in is what had 
 gets a rectangle. It only lost the square top corners, which existed to seam it against a frame
 that no longer exists.
 
-### Verification
-
-Screenshotted at 394x780 at Wild's Edge and the Forbidden Forest — two locations chosen because
-their authored light is opposite (widest/softest versus heaviest vignette with a single central
-shaft), so a location rule that failed to re-target would be obvious rather than subtle.
-
-**The test suite was not clean on this commit and that is not this change**: another session was
-authoring the Iron and Beast move slates in the same tree at the time (`src/data/moves.ts` and
-`src/data/heroes.ts` modified mid-run), and its three failures are content assertions with nothing
-to do with the view layer. Only `styles.css` and `MapScreen.tsx` were committed here.
-
-### What this leaves
-
-- **The hamburger.** `HUB_PATHS.menu` is still three stacked bars, and so is FightScreen's `☰`
-  Menu key. It is a web idiom, and it is also the single most universally-understood control on the
-  screen; the audit named it and this pass deliberately did not take it, because the fix is a new
-  object rather than a restyle and the container was the real problem. Revisit it alongside the
-  fight screen's bottom bar.
-- **The route still only draws the current row.** Nothing here changed what the map shows — the
-  2026-09-08 pass owns that — only what it is set in.
+The hamburger was left for later and then kept on purpose (twenty-seventh pass).
 
 ## Twenty-fifth pass — the ledger, and a key instead of a paragraph (2026-09-10)
 
@@ -2872,29 +2403,6 @@ the same day, with reasons written down**, and re-litigating them would have bee
 The lesson is worth keeping for the next audit: **an audit measures a screen, and a screen is not
 its own argument.** Two of the five things flagged here were already answered in a comment three
 lines above the CSS the audit was reading.
-
-### Verification
-
-Typecheck clean. Screenshotted at 394x780: Records, the Run Summary, and a hero sheet's Stats page.
-
-**The engine suite was not clean, and none of it is this**: another session was authoring the
-Shadow, Spirit, Iron, Beast and Undead move slates in the same tree throughout, and its nine
-failures are content assertions about passives, per-type slates and the grade budget. The engine
-tests do not compile `src/view` at all (`tsconfig.json` versus `tsconfig.view.json`), and the four
-files committed here are view-only.
-
-### What is still open, across the whole sweep
-
-- ~~**The hamburger**~~ — resolved as KEPT in the twenty-seventh pass below, with the reason.
-- ~~**Two affordances for one thing**~~ — done in the twenty-seventh pass below. Was: on `HeroPickCard` — a corner `i` button and an INSPECT line on
-  the same card, with long-press doing it too. Three ways into one sheet.
-- **The equipment card is still a row** (icon, name, RARITY in caps, stat chips, price) even though
-  the plate now carries the rarity as light. Removing the caps word is a content call.
-- ~~**Composition, not chrome.**~~ — done in the twenty-sixth pass below. Was: several node screens float a short list in the middle of a tall
-  screen: Crucible 416px of dead band, then reward-equip 177, Forge 167, Boon 161, Banner 161,
-  Tutor 157, draft 153. The Gold Cache and the act intro *compose* their space and are the
-  counterexample to copy. This is the biggest thing the sweep did not touch, and it is a layout
-  problem rather than a styling one.
 
 ## Twenty-sixth pass — the node screens fill their frames (2026-09-10)
 
@@ -2993,16 +2501,6 @@ Nothing overflows: every stage stack and pick grid measures `scrollHeight === cl
 this pass is calibrated against — one lit numeral with air around it — and filling that frame would
 make it worse. The draft's 40–48px bands are ordinary spacing between three composed regions.
 
-### Verification
-
-Typecheck clean; every affected screen screenshotted at 394x780 and measured before and after,
-plus the Banner row at 3× to check the charges against the cloth.
-
-**The engine suite reports nine failures and none is this**: another session has been authoring the
-Shadow, Spirit, Iron, Beast and Undead move slates in the same tree all day. The failing set is
-identical to the one standing before this pass began (passives, per-type slates, the grade budget),
-the engine tests do not compile `src/view`, and the four files committed here are view-only.
-
 ## Twenty-seventh pass — the battlefield gauge, and one affordance too many (2026-09-10)
 
 *The last two items off the audit. Per user direction after a review of what was left: "do the
@@ -3072,29 +2570,14 @@ The Crucible, the Boon's vessel step and the roster-replacement screen now say i
 removes an affordance owes the remaining one a sentence** — particularly the two where the tap
 being explained is irreversible.
 
-### Verification
+### The hamburger stays
 
-Typecheck clean. Screenshotted in a real fight at 3× — full bars, and a spread of partial values
-driven in to check the lit head and the quarter marks at every level — plus the switch picker and a
-hero sheet to confirm the three capsule contexts are untouched, and the Crucible to confirm zero
-`.pick-info` nodes with long-press still opening the sheet.
-
-**The engine suite's nine failures are, again, not this**: another session has been authoring move
-slates in this tree all day, the failing set is unchanged, and the engine tests do not compile
-`src/view`.
-
-### What is left, and deliberately
-
-- **The hamburger stays.** Both the map's Options button and the fight console's Menu key open the
-  same system menu — sound, save, quit, abandon — which is not part of the fiction and is not
-  something a player should hunt for. Three bars is the one mark everybody already reads as
-  "everything else lives here", and the obvious alternative, a cog, collides with the Mech type
-  glyph, which can be on screen at the same time in combat. **This is the second thing the audit
-  flagged that turned out to be right** (the hero sheet's fixed height was the first), and it is
-  recorded here as decided rather than left on a list.
-- ~~`.hint` is globally `color: var(--accent)`~~ — done, below.
-- The equipment card still prints its rarity in caps under the name, now that the plate carries
-  rarity as light. A content call, not a styling one.
+Decided, not deferred. Both the map's Options button and the fight console's Menu key open the
+same system menu — sound, save, quit, abandon — which is not part of the fiction and is not
+something a player should hunt for. Three bars is the one mark everybody already reads as
+"everything else lives here", and the obvious alternative, a cog, collides with the Mech type
+glyph, which can be on screen at the same time in combat. **This is the second thing the audit
+flagged that turned out to be fine as it was** (the hero sheet's fixed height was the first).
 
 ### Addendum — `.hint` goes dim app-wide
 
@@ -3184,12 +2667,6 @@ at y=74, so the composition survives the dial being turned.
 - **Cold.** With nobody left to evolve the melt goes dark, the glow, embers and smoke stop, the
   title changes, and the CTA is the exit. The chains and the lip keep their metal.
 
-### Verification
-
-Rendered through the throwaway harness at 394×780: six heroes with two evolved, a hero armed,
-a four-hero roster, and the cold state. The chains converge on a point above the title in every
-case, and the CTA stays on the bottom edge with the vessel's plinth running off the frame under it.
-
 ## Twenty-ninth pass — the fight ends on a curtain, not a card (2026-09-11)
 
 *Per user direction: "significantly improve the victory overlay … more sleek and professional …
@@ -3232,13 +2709,6 @@ class flip, and a tap anywhere lands all of them.
 were deleted with the panel, and the `.equip-spotlight` card block — which nothing had rendered
 since the item gate went — went with them. `NodeSky`'s motes came out as `NodeMotes` so the
 overlay could have the air without the wash.
-
-### Verification
-
-Rendered through the throwaway harness at 394×780: six heroes with two reserve (+1), four with
-one at the cap (+2, frames at 900/1250/1900ms showing the wave, the tick to Lv 2 and the bloom),
-the tutorial's two, a loss, and a Quick Battle with nothing to pay. The Browser pane's tab was
-hidden throughout (`document.hidden`, timeline at 0) so every frame came from headless Edge.
 
 ## Thirtieth pass — the element manifests (2026-09-11)
 
@@ -3316,16 +2786,9 @@ beating; Spirit slow fifths; Iron a swipe then steel ringing; Mech a servo then 
 snarl; Ancient a gong, the one cast allowed to outlast its beat. All fifteen are on the audition
 page. Offline-rendered peaks were evened to 0.17–0.40 (the hits sit at 0.39–0.45).
 
-### Verification
-
-A throwaway harness mounting fifteen real `CombatantCard`s (one hero per type) at 394×780,
-frames at ~120/300/520ms from headless Edge with animations paused, and the buff over six types;
-then a real Quick Battle driven over CDP, which caught a Storm bolt on "Lucius takes 52 damage"
-with the recoil, and a Beast team buff (+20 ATK) raising two amber rings with paw medallions on
-the beat the banner said so. Two fixes came out of the frames: the bolt was
-too thin to register at 28px and was widened to 38px with a fatter polygon; Shadow's vignette
-and Light's column both showed the stage's rectangular edge and were softened to a halo and a
-horizontally masked column.
+Found by looking: the Storm bolt is 38px wide (at 28px it did not register), and Shadow's
+vignette and Light's column are a halo and a horizontally masked column so neither shows the
+stage's rectangular edge.
 
 **Open:** the bolt and the column both reach above the stage, which on the enemy row is the
 nameplate; a per-move animation layer; the cast sound under the hit is untested by ear (two
@@ -3424,6 +2887,9 @@ Companion's grown beat (a node screen, not a cinematic; the platform is its stag
 
 ### The Compendium's Types tab — the chart, tappable (same day)
 
+> The Compendium is gone (`docs/collection.md` phase 5); this dial now lives in the Reference
+> overlay as `TypeDial` (`src/view/shared/referencePages.tsx`).
+
 The fifth seat, and the one that is a reference rather than an ornament: a **Types** tab on the
 Compendium (`CompendiumScreen.tsx TypeChartTab`) holding the dial still, with `onPickType`
 making every glyph a button on a 22-unit hit circle. A tap lights the type BOTH ways —
@@ -3445,20 +2911,16 @@ The six champions and the Endbringer leave pixel art for the spawn's geometry
 (`src/view/shared/guardianFigures.ts`, mounted through `HeroPortrait` like a spawn; rules in
 `docs/titanspawn-overhaul.md` §2 "Guardian art"; review page `docs/art/guardian-bestiary.html`).
 The Pact Seal ring's six medallions are now the Guardians themselves (`PactSealScreen` draws
-through `HeroPortrait`; a figure breaking its socket a little is on-theme and left alone). A
-worn SEAL — the Ancient half as a ring in the Ancient hue with a third eye in it, struck off for
-the finale's unsealed champion — was built first and removed the same day per user direction:
-it did not look right, and the finale fields the same figure. The Late's second, wrong-placed
-eye went the same way: every Guardian carries one. On the battlefield a Guardian
+through `HeroPortrait`; a figure breaking its socket a little is on-theme and left alone).
+Nothing Ancient-coloured is on a Guardian's body and every Guardian carries ONE eye — a worn
+Ancient seal ring and a second wrong-placed eye were both tried and removed per user direction;
+the finale fields the same figure, and only the type comes off. On the battlefield a Guardian
 runs up behind the enemy nameplate — the frame it breaks is the hero cell, and the bars sit over
-it as they sit over anything tall. The spawn's no-flip rule holds. Same day: the Lava Beast
-became the Dragon, and the Endbringer was redrawn from a colossus to the Titan's **Herald** — a
-standard-bearer whose banner carries the title screen's lens eye — because it is the herald, not
-the Titan (per user direction). And the Goblin Lord became the Manticore — the last of the
-three renamed because their old names were the least evocative — a lion under a mane of spikes
-with a scorpion tail that strikes forward. The ring-struck-off
-drawing for the finale's unsealed champions was set aside the same day: the finale fields the
-same figure, and only the type comes off.
+it as they sit over anything tall. The spawn's no-flip rule holds. The Endbringer is drawn as
+the Titan's **Herald** — a standard-bearer whose banner carries the title screen's lens eye —
+because it is the herald, not the Titan (per user direction). Renamed in the same pass: the Lava
+Beast → Dragon, the Goblin Lord → Manticore (a lion under a mane of spikes with a scorpion tail
+that strikes forward).
 
 ## Thirty-fifth pass — the Titan's Eyes and the champion's hall (2026-09-16)
 
@@ -3532,12 +2994,10 @@ so a piece looks here exactly as it did when it was given; each carries its name
 it, the enchant's element glyph beside the tier, and a small anvil badge in the colour of the
 tier the Anvil would lift it to — **only when the purse covers the lift** (2026-09-17, per user
 direction: on the act window alone it sat on every piece by Act 3 and said nothing), so "which
-of these can I lift right now" is read off the tab without opening anything, and the hint's
-tally counts the same set. An empty socket is a drawn hole labelled *Open*, since who-has-what
+of these can I lift right now" is read off the tab without opening anything. An empty socket is a drawn hole labelled *Open*, since who-has-what
 includes what room is left; a hero wearing nothing keeps its bench, dimmed. Six benches at
 ~110px each scroll under the tab strip, which was the user's stated tolerance ("up to 18
-pieces"). The hint line carries the tally: *12 pieces on the roster · 12 can be lifted · tap one
-to work it*.
+pieces").
 
 **A tap opens the work sheet.** The hero sheet's panel shape (`.detail-overlay.is-sheet`, a
 sheet footer with *Leave the bench*), the piece as its subject: the holder in the corner on a
@@ -3582,6 +3042,11 @@ the result and its caption for 900ms.
 
 ## Thirty-eighth pass — the Compendium as a sheet (2026-09-18)
 
+> The Compendium was later split up (`docs/collection.md` phase 5): its Equipment shelves and
+> Types dial are the Reference overlay's (`src/view/shared/referencePages.tsx`), its stars and
+> Spawn pages the Constellation's. The sheet shape below is what Records and the Constellation
+> still wear.
+
 The Compendium (`CompendiumScreen.tsx`) was a `.roster-panel` — the gear sheet's chassis —
 with a segmented control across the top, a 13px title jammed into its corner with no bar, and a
 full-width Close at the foot doubling the header's ✕; the panel was content-sized, so it stood a
@@ -3615,23 +3080,19 @@ one sheet, standing the same height with the Close in the same place.
 
 Roughly in order of expected payoff.
 
-1. ~~**Move-button internals.**~~ Done in the second pass above.
-2. **Phase-shift the whole screen.** The console and arena are active at different
-   times. Planning: console hot and full, arena dimmed. Resolving: console collapses
-   to a thin ticker, arena goes full-bleed and full-brightness. The beat stream
-   already drives this — it is the natural payoff of the engine/presentation split,
-   and it would make the split feel *authored* rather than merely clean. The fifth
-   pass took the interim step (the resolving console fills and carries a beat trail
-   instead of collapsing) precisely because the full version makes the arena's
-   height variable, and **the arena's height is currently content-sized and fixed
-   at 441.4px whatever the viewport** — 66% of a 375×667 screen, which is why the
-   move list has to scroll there. Making the arena height-responsive is the same
-   piece of work as this item; do them together.
-3. ~~**A persistent console shell.**~~ Done across the fifth and sixth passes.
-   The variants share a boundary, a fill behaviour, and — since the sixth — one
-   header object (`ConsoleCrest`) across move selection and targeting. They are
-   still separate JSX branches, but there is no longer a "framed container" to
-   unify them into: the frame is gone.
+Items 1, 3, 6 and 7 are done (6 with one leftover) and kept because their numbers are
+cited elsewhere.
+
+1. **Move-button internals.** Done (second pass).
+2. **Phase-shift the whole screen.** *Not built.* The console and arena are active at
+   different times. Planning: console hot and full, arena dimmed. Resolving: console
+   collapses to a thin ticker, arena goes full-bleed and full-brightness. The beat stream
+   already drives this — it is the natural payoff of the engine/presentation split, and
+   it would make the split feel *authored* rather than merely clean. It needs the arena's
+   height to be variable; the pixel kit's "Short screens" step (the arena gives height back
+   on short canvases) is the only height-responsiveness so far.
+3. **A persistent console shell.** Done (fifth and sixth passes): one boundary, one fill
+   behaviour and one header object (`ConsoleCrest`) across move selection and targeting.
 4. **Numerals on busy backgrounds.** Without card boxes, HP/MP legibility rests on
    text shadows. This needs checking against the noisiest case — Field Effect active,
    multiple statuses, damage popup mid-flight, low-HP pulse — on a real device.
@@ -3640,40 +3101,31 @@ Roughly in order of expected payoff.
    draft screen (third pass), where exactly one figure is on stage — so the scale has
    been *built* but still hasn't been **eyeballed on a real device**, which was the
    actual condition. Look at it there before considering it for the arena.
-6. **Apply the rule outside combat.** ~~Draft~~ (third pass), ~~level-up~~ (fourth)
-   and ~~the shrine/node screens~~ (ninth) are done. Still outstanding: the **map**
-   and **roster** screens, which keep the same nesting — and the **Guild Hall**
-   (`GuildHallPanel`, which `ShopNodeScreen` wraps), deliberately left alone in the
-   ninth pass because it is a shop with three distinct lists, not a one-decision
-   node. Each finished pass is a worked example — and note that in all of them, as
-   on the Field Effect badge, the win came as much from asking what the boxes
-   *contained* as from removing them. That question is now 5 for 5; treat it as part
-   of the procedure rather than an extra.
-   - **One portrait is still at a broken scale, knowingly.**
-     `.roster-card-portrait` is 40px (0.833×) on `SquadSelectScreen` and the Guild
-     Hall. It was left alone because fixing it changes that card's height and those
-     screens' layout budgets are tight; it is the first thing to fix when they come
-     up. `.hero-grid-portrait`'s 30px is now out of the run loop entirely — the
-     node screens took `HeroPickCard` in the ninth pass, `RosterReplaceScreen` and
-     the roster peek in the tenth. `.hero-grid` itself survives only as dead
-     styling; delete it when something else touches that block.
-7. **Ground-plane depth.** The platform currently carries distance via size and
-   opacity. A true perspective floor grid (fading toward the horizon) would sell it
-   further, at some risk of noise behind the figures.
+6. **Apply the rule outside combat.** Done: draft (third pass), level-up (fourth), the
+   node screens (ninth), the Guild Hall (twenty-third), the map (twenty-fourth) and the
+   Roster (the pixel kit). In every one, as on the Field Effect badge, the win came as
+   much from asking what the boxes *contained* as from removing them — treat that
+   question as part of the procedure rather than an extra.
+   - **One portrait is still at a broken scale.** `.roster-card-portrait` is 40px
+     (0.833×), and it is still drawn — by the in-fight lead pick (`LeadPickPanel`), which
+     inherited it from the deleted Squad Select. `.hero-grid` (and its 30px portrait) is
+     used by no component and survives only as dead styling in `styles.css`.
+7. **Ground-plane depth.** Done (nineteenth pass): a perspective fan floor sharing the
+   horizon's vanishing point, plus the near half drawn as ground.
 8. **A register audit for the arena.** The Field Effect badge inherited a 16px root
    font simply because nobody set one, and no check would have caught it. Everything
    drawn on the battlefield now falls into one of three registers — 9px/800
    letterspaced (horizon marks), 11–13px/700 (figure labels), 17px (damage popups) —
    and it's worth asserting that in the verification sweep rather than rediscovering
    the next violation by looking at it.
-9. **Field-effect moves aren't identifiable in the move grid.** `Arcane Surge` renders
+9. **Field-effect moves have no kind glyph of their own.** `Arcane Surge` renders
    with the generic buff glyph and no BP, so nothing distinguishes "this rewrites
    the battlefield for 5 rounds" from an ordinary self-buff until it resolves. Wants a
    distinct kind glyph, which is a `MoveKindBadge`/content-schema question, not a
    styling one — the glyph is keyed on `move.kind`, and there is no `fieldEffect`
-   kind today. Partly mitigated by the seventh pass: the move dossier now draws a
-   `Field: <name>` row in the effect's own element glyph and colour. The *grid* is
-   still silent about it.
+   kind today. Partly mitigated: the move dossier draws a `Field: <name>` row in the
+   effect's own glyph and colour, and the row's effect line ends `Field: <name>`
+   (`MoveTile.tsx`). What is still missing is a kind glyph of its own.
 
 ## Non-goals
 

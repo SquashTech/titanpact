@@ -1,16 +1,13 @@
 # constellation.md — The Constellation: what a star buys
 
-> **2026-09-26: §3 (Starter Packs) is DELETED** with the starter split (`docs/collection.md` §2), and
-> the Compendium is gone — its stars are this panel's Stars and Spawn tabs (`docs/collection.md` §10).
-
-> **STATUS: DECIDED IN SHAPE 2026-09-17 (per user direction), NOTHING BUILT.** The shop is
-> plumbed (`src/run/starShop.ts`, `Profile.purchases`, `StarShopScreen.tsx`) and its catalog
-> (`src/data/starShop.ts`) is empty. This doc is the plan for what fills it, written ahead of the
-> content so the content has a shape to land in. §3 (Starter Packs), §5 (nothing with power, no
-> difficulty) and §6 (star tiers, five rungs) are the designer's decisions; §3.4 is a proposal
-> carried forward that has not been ruled on; §7's prices are a first pass; §10 names what is
-> still open. Every hero, pack and Location named here is a placeholder for authoring, not
-> authored.
+> **STATUS (2026-10-03).** Decided in shape 2026-09-17 (per user direction). **Built:** the shop
+> (`src/run/starShop.ts`, `src/data/starShop.ts`, `StarShopScreen.tsx`, tabs Starfall / Market /
+> Stars / Spawn) selling four bought Locations (§11 phase 5), one hero bundle, From the Tall Grass
+> (§11 phase 6), and the Starfall blind draw (`docs/collection.md` §4). **Deleted 2026-09-26:**
+> Starter Packs (§3), with the starter split, and the Compendium, whose stars are this panel's
+> Stars and Spawn tabs (`docs/collection.md` §2, §10). **Not built:** star tiers (§6), Class trios,
+> Titanspawn lines and cosmetics (§4), and the re-price against a renewable supply (§7,
+> `docs/collection.md` phase 4, held).
 
 ---
 
@@ -19,14 +16,9 @@
 `progression.md` locks the meta-game as **unlocks only**: a run resets everything, and what
 persists is the pool a future run draws from. The earning half was built 2026-09-16 — a star per
 hero per Evolution path, on the final roster of a clear — and the spending half was left as a
-sentence: stars buy "new things for runs". This is that sentence unpacked.
-
-The designer's first and favourite item is the **Starter Pack**: something equipped on the title
-that replaces the pool the start-of-run draft is rolled from. A pack can be a re-cut of the
-existing roster (Cinder, Leviathan, Squall and Mordrax in the draft instead of their types'
-starters) or a set of brand-new heroes with a theme of their own — in-universe or out of it. The
-worked example is **the Slashers**: a dream-stalker as Mind, a masked camper as Iron, a phone
-caller as Shadow, a trap-builder as Mech. The rest of the catalog is built around that idea.
+sentence: stars buy "new things for runs". This is that sentence unpacked. Its first item, the
+Starter Pack, is gone with the starter split; the Collection's deck (`docs/collection.md`) is what
+a player now shapes a run's pools with.
 
 ---
 
@@ -35,158 +27,38 @@ caller as Shadow, a trap-builder as Mech. The rest of the catalog is built aroun
 **You buy content, never configuration — and content grows the sky.**
 
 Two halves. The first is the locked line re-stated: nothing in the Constellation carries power
-into a run. A purchase adds things to the pools a run draws from (heroes, Locations, Classes,
-spawn), or changes what the player looks at (cosmetics). Equipping a pack is free and reversible
-and is not a purchase; a pack once bought is held forever.
+into a run. A purchase adds things to the pools a run draws from (heroes, Locations, and in
+future Classes and spawn), or changes what the player looks at (cosmetics).
 
-The second half is what keeps the shop alive. A star is earned per hero per path, so the supply
-is finite — **126 for the base roster** (§2) — and a shop against a finite supply is finished the
-day the sky is full. A pack of new heroes brings **three stars per hero** on the same terms as
-Valor's, so every theme pack bought extends the supply past what it cost. The catalog is sized so
-that the base game's stars buy the base catalog, and each pack pays for the next.
+The second half is what keeps the shop alive: a hero bought brings **three stars** on the same
+terms as a base hero's, so a purchase grows the supply it was paid from. The supply is no longer
+finite — a cleared run also pays a repeatable **clear bonus** by rung (`docs/collection.md` §5) —
+so the shop is never finished just because the sky is full.
 
 ---
 
 ## 2. Supply — what a star is and how many there are
 
-- One star per hero per Evolution path: **42 × 3 = 126** for the base roster, permanent, a set
-  not a count (`Profile.evolutionStars`). A hero that finishes unevolved earns nothing; clearing
-  the same path twice is the same star.
-- A clear pays at most six (the final roster), and measured runs evolve everyone 64% of the time,
-  so an early clear is worth **3–5 new stars**, falling toward zero as the sky fills.
-- **Balance = earned − cost of what is held** (`starBalance`). A star never comes off a hero; the
-  Compendium keeps every one.
+- One star per hero per Evolution path, permanent, a set not a count (`Profile.evolutionStars`):
+  three a hero. A hero that finishes unevolved earns nothing; clearing the same path twice is the
+  same star. A `companion:<type>` star is earned for clearing with the companion alive
+  (`docs/ascension.md`).
+- A **clear bonus** on every won run, by rung (`ASCENSION_RUNGS`, `src/run/ascension.ts`); an
+  Ascension attempt costs an entry fee, always spent (`docs/collection.md` §5).
+- **Balance = earned (hero stars, companion stars, clear bonuses) − cost of what is held − spent**
+  (`starBalance`). A star never comes off a hero.
 
-What that prices: the first purchase must be reachable off one clear (≤ 4), the base catalog must
-fit inside 126 with room for the player to not finish it, and anything that does not bring stars
-back is a pure draw-down.
-
-**A pack's heroes star on exactly the same terms** (per user direction) — an eight-hero pack is
-24 stars in the sky it did not have before. A re-cut pack brings no hero stars (its heroes are
-already in the roster), so **a re-cut pack carries a star of its own**, earned by clearing a run
-with it equipped (§3.5).
+An owned hero stars on these terms whatever way it was got, so buying a hero still grows the sky
+and the collection and the currency feed each other.
 
 ---
 
 ## 3. Starter Packs
 
-### 3.1 Shape
-
-A pack is a list of hero ids the start-of-run draft is rolled from **instead of** the fourteen
-starters. The draft is untouched: `generateStarterOptions(seed, heroIds)` already takes its pool
-as a parameter and rolls `STARTER_OPTION_COUNT` = 4 from it, and the screen picks
-`STARTER_PICK_COUNT` = 2. A pack is a different `heroIds`; four of eight is the same function as
-four of fourteen.
-
-- **Eight heroes minimum, no maximum** (per user direction). Eight is the floor so the four shown
-  are always a real draw from something larger.
-- **Any types, in any mix** (per user direction). A pack is not held to one hero a type and not
-  held to type coverage. A **Foundry pack** of nothing but Fire, Iron and Mech is a legitimate
-  pack: the four it shows may share a type, the pact it seals may be mono-slate, and the run's
-  counter-pick game is narrower for it. The designer's ruling is that this is flavour, not a
-  balance concern — a pack IS a self-imposed shape, and a player who equips one has chosen it.
-  Record it here so nobody "fixes" a mono-slate pack into coverage later.
-- **Exclusive**: an equipped pack is the whole draft. There is no fill-from-default; the base
-  starters are not in a pack run's draft.
-- **The base game is pack zero.** The fourteen starters are a pack with the id `base`, held by
-  every profile, equipped by default. One code path, one Compendium shape, one equip toggle.
-  `HeroDefinition.starter` stays as the authoring of pack zero's membership; a pack's own list is
-  authored on the pack.
-
-```ts
-interface StarterPack {
-  id: string;
-  name: string;
-  /** One line on the title tile and the Compendium row. */
-  description: string;
-  /** ≥ 8. Any types, any overlap. The draft's pool while this pack is equipped. */
-  heroIds: readonly string[];
-  /** 'theme' brings new heroes and their stars; 'recut' is drawn from the base roster and carries a pack star. */
-  kind: 'theme' | 'recut';
-}
-```
-
-A test pins: eight or more; every id a known hero; a `recut` pack lists only base-roster heroes;
-a `theme` pack lists only heroes outside pack zero.
-
-### 3.2 Two kinds
-
-**Theme packs** are new heroes. Each is the full authoring job a base hero is: a 550 line,
-28 grade points, a schedule, a signature, three Evolutions on the five-clause framework, pixel
-art with attack and hurt pose frames, three stars. In-universe or not — the Slashers are not, a
-"Founders of the Guild" pack would be. Eight heroes is two-thirds of the pass that closed the
-roster at 42; a theme is a release, not a patch.
-
-**Re-cut packs** are the base roster re-drafted. No new heroes, no new art; a list and a name.
-Their value is that the recruit-only two-thirds of the roster never gets drafted, and a re-cut is
-the only way to open a run on Leviathan. Cheap to make, so the catalog can carry several.
-
-### 3.3 Buy vs. equip
-
-Buying puts the pack in `Profile.purchases` like any offer. **Equipping is a separate, free,
-reversible choice** — `Profile.equippedPackId`, defaulting to `'base'`, set from the title. The
-Constellation sells; the title dresses. A player who buys the Slashers and never equips them has
-lost nothing but the stars, and has the pack's heroes wherever §3.4 puts them.
-
-### 3.4 The un-drafted heroes — PROPOSED, NOT RULED ON
-
-An eight-pack shows four and the player takes two. What happens to the six left over decides
-whether a pack is a *run* or a *draft screen*.
-
-Under pack zero a starter is draft-only: the twelve not shown are unreachable that run, and the
-in-run pools (the fork's contracts, the Guild Hall) draw only from `starter: false`. If a pack's
-heroes are starters in that sense, a theme pack's 24 stars come two a run and take a dozen clears
-to fill, and a Slasher run is two Slashers and twenty-eight ordinary recruits.
-
-**Proposal: while a pack is equipped, its un-drafted heroes join the recruit pool for that run.**
-The base roster's recruit-only 28 stay in the pool too; the base *starters* stay out (they are
-draft-only, and this run's draft was the pack). So a Slasher run drafts two Slashers and can meet
-the other six at the fork — which is what makes it a Slasher run — and when nothing is equipped
-the base game is exactly what it is today.
-
-What it costs: the CLAUDE.md line *a hero is in exactly one pool, never both* becomes a per-run
-fact rather than a per-definition one (§9). A re-cut pack already needs that reading — its eight
-are recruit-only heroes stood in the draft — so the proposal changes the wording once, not twice.
-
-### 3.5 Stars
-
-- A pack hero stars per path, on the base terms. The Compendium's hero list grows a section per
-  pack held (pack zero's fourteen and twenty-eight are its first two).
-- **A re-cut pack carries one star of its own** (per user direction), earned by clearing a run
-  with the pack equipped, on top of whatever hero stars that clear earned. It sits on the pack's
-  row in the Compendium and counts toward the balance like any star. It takes a tier like a hero's
-  (§6): a re-cut cleared at Ascension 3 shows a gold pack star.
-- Whether a theme pack — and pack zero — also carries a pack star is open (§10). It is cheap and
-  symmetric, and it would make the sky's first row *the packs*; it is not what was asked for.
-
-### 3.6 The tutorial
-
-There is no scripted first run since 2026-09-24 (`docs/tutorial.md`): a first run drafts from the
-equipped pack like any other, and first-time tips are the only thing it adds.
-
-### 3.7 Worked examples
-
-**The Slashers** (theme, out of universe, eight-plus). Archetypes, never the names — homage is
-stronger unnamed, and the named ones are licensed. A type each is not required (§3.1) but reads
-well for a set this size:
-
-| Slot | Type | Sketch |
-|---|---|---|
-| the Dreamer | Mind | reaches you asleep; a Daze / Sleep kit, the signature lands only on a Dazed target |
-| the Camper | Iron | the unkillable walker; Shield and recoil, never fast |
-| the Caller | Shadow | knows where you are; priority, Feint, the pivot-and-strike |
-| the Puzzler | Mech | traps; DoTs the target chooses to trigger, a self-cost kit |
-| the Shape | Spirit | silent, stands back up; the Revive-adjacent passive, Spirit's drain |
-| the Doll | Arcane | a puppet by rite; mana overflow, the small body with the big pool |
-| the Chainsaw | Beast | Apex Predator's natural home |
-| the Burned | Fire | shears and a scarred face; self-Burn as the cost, the Fire slate's ramp |
-
-Eight named; a ninth and tenth are welcome (the Snowman as Frost, the Fisherman as Water). Every
-slot is a sketch for the hero pass, not a kit.
-
-**The Foundry pack** (re-cut, in universe). The base roster's Fire, Iron and Mech heroes — nine
-heroes, three slates — and nothing else. Equipped, a run opens on two of them, and the Molten
-Foundry act is a mirror match. That is the point of it.
+**Deleted 2026-09-26** with the starter split (`docs/collection.md` §2): the draft draws one hero
+from each of the player's deck rows, and there is no pool for a pack to replace. A pack's two
+ideas live on elsewhere — a themed set of new heroes is a **bundle** (§11 phase 6), and choosing
+what a run opens on is the **deck**.
 
 ---
 
@@ -195,35 +67,32 @@ Foundry act is a mirror match. That is the point of it.
 Every item is an unlock into a pool a run draws from, or a cosmetic. In order of how well each
 fits the engine:
 
-- **Classes, in trios.** A Class is one move or one passive, untiered, wearing its holder's type
-  (`src/data/classes.ts`, nine today). The Crucible rolls three from the whole catalog, so a trio
-  bought is in every Crucible from then on. The cheapest real content in the game and the best
-  value a star buys.
-- **Titanspawn lines.** A second Early / Mid / Late line for a type: geometric SVG (cheap art),
-  new enemies at the fork, and — because the companion is drawn from the Early spawn the first
-  fight beats — a new companion. One purchase, three systems.
-- **Heroes, singly.** A fourth hero for a type, into the recruit pool, three stars back. The
-  "three a type, complete at 42" line is the *base game's* completeness; the Constellation is
-  where a type gets its fourth (§9).
-- **Locations, as alternates.** The fourteen types are already partitioned across the five
-  itinerary Locations, so a new one cannot take a fresh slice: it is an alternate for an existing
-  slate — same `spawnTypes`, its own name, Guardian, tint, ambience and track — entering
-  `ITINERARY_POOL_IDS` so the four-of-N draw has more to draw from. Guardian art is the generated
-  grammar (`guardianFigures.ts`) and the Crucible is decoupled from the Guardian count, so a
-  sixth Guardian breaks nothing. The cost is the music: a FLAC track per Location.
-- **Cosmetics.** A hero's alternate palette (portrait plus the pose frames), a title sky, a map
-  tint. The purest fit for "no power", the weakest for "new things for runs": cheap, a few in the
-  catalog as the first thing a single clear can afford, never the spine.
+- **Classes, in trios — not built.** A Class is one move or one passive, untiered, wearing its
+  holder's type (`src/data/classes.ts`). The Crucible rolls three from the whole catalog, so a
+  trio bought would be in every Crucible from then on. The cheapest real content in the game.
+- **Titanspawn lines — not built.** A second Early / Mid / Late line for a type: geometric SVG
+  (cheap art), new enemies at the fork, and — because the companion is drawn from the Early spawn
+  the first fight beats — a new companion. One purchase, three systems.
+- **Heroes — built as bundles and the Starfall.** No hero is sold singly (2026-09-26): a bundle
+  sells a set at a price discounted by what of it is owned, and the Starfall is a blind draw of a
+  hero not owned (`docs/collection.md` §4). The base roster's "three a type" is the *base game's*
+  completeness; every hero past it carries `HeroDefinition.unlock` (§9).
+- **Locations — built, four** (§11 phase 5). Drawn **beside** the base five rather than as an
+  alternate for one, so a bought place's spawn types overlap the base partition. The cost is the
+  music: none of the four has a track yet.
+- **Cosmetics — not built.** A hero's alternate palette, a title sky, a map tint. The purest fit
+  for "no power", the weakest for "new things for runs". **Direction, 2026-09-28** (per user
+  direction): themed Starfalls (*Alignments*, `docs/collection.md` §4) are for cosmetics, never
+  heroes.
 
 ---
 
 ## 5. Not in the catalog
 
 - **Ascension.** Unlocked by clearing the rung below, never bought (per user direction; the
-  Slay the Spire shape). Paying the reward of clearing to make clearing harder is backwards, and
+  Slay the Spire shape) — an attempt's star fee is the price of a try, not of the unlock.
   Ascension is where mastery is priced — comps, kits, passives, AI, not numbers
-  (`project-ascension-scope`). **Five rungs, Ascension 5 the ceiling** (per user direction): the
-  game is simple enough that five is the ladder, and §6's palette is sized to it.
+  (`docs/ascension.md`). **Five rungs, Ascension 5 the ceiling** (per user direction).
 - **Banners.** The three concepts are a closed family by invariant; a fourth would be a
   team-wide grant and there is no such thing.
 - **Anything a run carries in as power.** No starting gold, no extra socket, no head start on a
@@ -231,138 +100,97 @@ fits the engine:
 
 ---
 
-## 6. Star tiers — Ascension colours
+## 6. Star tiers — Ascension colours (NOT BUILT)
 
 A star records the highest Ascension it was cleared at, and shows a colour for it. **White,
 bronze, silver, gold, rainbow** — five colours for the five rungs (per user direction).
-**Purely cosmetic**: a star is a star to the balance whatever its colour, so the tier adds
-nothing to the Constellation's resources and no purchase reads it.
+**Purely cosmetic**: a star is a star to the balance whatever its colour.
 
 - Max-only, never regressed: a gold star cleared again at the base tier stays gold.
-- Pack stars (§3.5) take a tier the same way.
-- Storage: `evolutionStars` is `heroId → pathId[]` today and becomes
+- Storage: `evolutionStars` is `heroId → pathId[]` today and would become
   `heroId → { pathId → tier }`, with existing entries decoding to the lowest tier. `totalStars`
   counts entries, so nothing downstream moves.
-- **The mapping is the one number this section does not settle.** Five colours; but a base clear
-  and Ascension 1–5 are six states. Either the base game *is* the first rung (Ascension 1 with
-  nothing turned on, so a base clear is white and A5 is rainbow), or the base clear is white and
-  two of the middle rungs share a colour. Decide when Ascension is designed; the palette is
-  spoken for either way.
+- **The mapping is unsettled.** Five colours, but a base clear and Ascension 1–5 are six states.
+  `docs/ascension.md` §8 proposes Base white, A1–A5 bronze / silver / silver / gold / rainbow.
 
 ---
 
 ## 7. Pricing — first pass
 
-| Item | Stars | Brings back |
+| Item | Stars | Status |
 |---|---|---|
-| Cosmetic | 1–2 | — |
-| Class trio | 2–3 | — |
-| Single hero | 3 | 3 |
-| Titanspawn line | 4 | — |
-| Re-cut pack | 5 | 1 (the pack star) |
-| Location (alternate) | 5–6 | — |
-| Theme pack (8+) | 10–12 | 24+ |
+| Starfall (one hero, blind) | 2 | built (`STARFALL_PRICE`) |
+| Hero bundle (three) | 8, discounted by what is owned | built (`offerPrice`) |
+| Location | 6 | built |
+| Cosmetic | 1–2 | proposed |
+| Class trio | 2–3 | proposed |
+| Titanspawn line | 4 | proposed |
 
-Sized so a first clear (3–5 stars) buys something, the base catalog without theme packs comes in
-around 100 against the 126 supply, and every theme pack is net positive for the sky. Nothing here
-is measured; the sim can price a pack's *difficulty* (run the pilot on the pack's pool) but not
-its worth in stars — that is the designer's, after play.
+Sized when the supply was finite so a first clear (3–5 stars) buys something. Nothing here is
+measured; the re-price against the renewable supply is `docs/collection.md` phase 4, held. The
+sim can price an offer's *difficulty* but not its worth in stars — that is the designer's, after
+play.
 
 ---
 
 ## 8. Code seams
 
-None built. Where each lands when it is:
+Built: `StarShopOffer.grant` is `location` or `heroBundle`; `buyOffer` is unchanged by grant kind.
+A place is in a run's pool only while its offer is held (`LocationDefinition.unlock`,
+`locationPool(profile.purchases)` in `src/run/locations.ts`); a hero likewise
+(`HeroDefinition.unlock`, `heroPool` in `src/run/recruitment.ts`). Each is a filter on the
+profile applied once where the pool is read; the sim and the tests pass nothing and get the base
+game. `rosterHeroes` and the save's hero index hold every authored hero, so a run carrying an
+unowned hero decodes on any profile.
 
-- `src/data/starterPacks.ts` — the packs as data (`StarterPack`, §3.1), pack zero included.
-- `src/data/starShop.ts` — the catalog: an offer per pack, Class trio, spawn line, Location,
-  hero, cosmetic. `StarShopOffer` grows a `grant` discriminant so a purchase knows what it
-  unlocks; `buyOffer` is unchanged.
-- `Profile.equippedPackId` (`'base'` by default); `Profile.evolutionStars` re-shaped for tiers
-  (§6) with a decode migration; `Profile.packStars` for §3.5.
-- The draft: `generateStarterOptions` is handed the equipped pack's `heroIds`. The recruit pool
-  (`heroes` in `data/content.ts`, the fork's contract draw, the Guild Hall) reads the equipped
-  pack under §3.4 if it is taken up.
-- The Compendium's `starters` / `recruitable` tabs become a section per pack held; the
-  `STARTER_HEROES` / `RECRUIT_HEROES` module constants stop being constants.
-- `RunRecord.packId` — a cleared run with the Slashers is a different record than one without
-  (§10).
-- The title: the equip toggle, beside the Constellation tile.
-- Unlock gating at the pool edges: a bought Class into `classes`, a bought Location into
-  `ITINERARY_POOL_IDS`, a bought spawn line into the type's spawn draw — each a filter on the
-  profile, applied once where the pool is read.
+Still to land with their items: a bought Class into `classes`, a bought spawn line into the
+type's spawn draw, and the tier storage (§6).
 
 ---
 
 ## 9. What this changes in CLAUDE.md
 
-- *A hero is in exactly one pool, never both* → true **per run**, decided by the equipped pack,
-  not per definition. A re-cut pack stands recruit-only heroes in the draft; §3.4 puts a pack's
-  un-drafted heroes in the recruit pool.
-- *42, three a type, complete* → the **base game's** roster. The Constellation is where a type
-  gets a fourth hero and where heroes outside the universe exist at all.
-- The Compendium's starters / recruitable split is per pack, not per `HeroDefinition.starter`.
-- Nothing else. The stars' earning rules, the balance, the empty-catalog rule (an offer needs a
-  grant to make) and the unlocks-only lock all stand.
+- *42, three a type, complete* → the **base game's** roster. `test/roster` pins three a type over
+  `heroPool(heroes)` with nothing bought; every hero past it carries `unlock`.
+- The starter split and pack-based readings are gone with §3.
+- Nothing else. The stars' earning rules, the empty-catalog rule (an offer needs a grant to make)
+  and the unlocks-only lock all stand.
 
 ---
 
 ## 10. Open questions
 
-1. **§3.4** — do a pack's un-drafted heroes join the recruit pool while it is equipped? Proposed
-   yes; not ruled on. It is the difference between a pack run and a pack draft.
-2. **Pack stars on theme packs and pack zero.** Cheap and symmetric; would make the packs the
-   sky's first row. Not asked for.
-3. **The tier mapping** (§6): six clear states on five colours.
-4. **Run History and the pack.** A record should say which pack a run opened on; whether the
-   history filters by it is a screen question for later.
-5. **A mono-slate pack and the Locations.** The Foundry pack into the Molten Foundry is a
-   mirror; the Foundry pack into the Blighted Shrine is a run whose whole draft is Shadow-weak.
-   Ruled flavour, not balance — recorded so the first playtest that hates it knows it was chosen.
-6. **Whether a bought hero can be in more than one pack.** A Slasher in a later "Villains" pack
-   is the same hero twice; the schema allows it and nothing needs it yet.
+1. **The tier mapping** (§6): six clear states on five colours.
+2. **Re-pricing** every offer against a renewable supply (`docs/collection.md` phase 4).
+3. **Music for the four bought Locations** (`hasTrack` is false for each; the act plays in
+   silence).
+4. **`lore.md` §5** still reads "the sixth" seal; with bought Locations and four acts, several
+   base seals hold at the end of a run, and it should read "the ones you never reached".
 
 ---
 
 ## 11. Phases
 
-1. **The pack schema and pack zero** — `StarterPack`, `equippedPackId`, the draft reading the
-   equipped pack, the title toggle, the Compendium per pack. No new content; the base game
-   unchanged under it. A re-cut pack (the Foundry) as the first offer, to prove the seam.
-2. **Star tiers** — the storage re-shape, the decode migration, the five colours on every star
-   cell. Waits on Ascension existing to have a tier to record; the storage can land first.
-3. **The small catalog** — Class trios, a Titanspawn line, a cosmetic or two; each is a pool
-   filter on the profile.
-4. **The first theme pack** — the Slashers, eight heroes through the full hero pass, with
-   whatever §3.4 became.
-5. **An alternate Location** — the first one with its own Guardian and track. **BUILT
-   2026-09-19, per user direction, ahead of phases 1–4: the Holy Sanctum.** What landed, and
-   where it diverged from §4's "same `spawnTypes` as an existing slate":
+1. **The pack schema** — built 2026-09-19 (Classic and the Second String), deleted 2026-09-26
+   with §3.
+2. **Star tiers** — not built (§6).
+3. **The small catalog** — Class trios, a Titanspawn line, a cosmetic or two — not built.
+4. **The first theme pack** — superseded by bundles (phase 6).
+5. **Bought Locations — BUILT 2026-09-19, per user direction.**
    - `LocationDefinition.unlock` names the offer that puts a place in the pool; the base six
-     carry none. `ITINERARY_POOL_IDS` is the base pool (no `unlock`), and a run's real pool is
-     `locationPool(profile.purchases)` (`src/run/locations.ts`), read once in `enterAct` — the
-     draw and the pick both take it. The sim and the tests pass nothing and get the base game.
-   - **It is drawn BESIDE the base five, never instead of one**, so its spawn types overlap
-     (Light / Spirit / Mind — three base Locations' lines). The partition test still holds
-     because it runs over the base pool. Two base seals then hold at the end of a run that
-     stood in the Sanctum (`unbrokenSealLocationIds`, plural now); `lore.md` §5's "the sixth"
-     is "the ones you never reached" and has not been re-written.
-   - The Guardian is the **Seraph** (Light / Ancient, `enemies.ts`): the Light reader pattern
-     at boss scale — Hallow sets Sanctuary, Smite and Sunlance land ×2 on it, Blinding Flash
-     is the spread Daze. Drawn in the Guardian grammar (`guardianFigures.ts`): a blank face
-     of light, a burning wheel, three pairs of wings, the eye in the chest. Entrance line
-     authored. It clears every champion invariant in `test/guardians`.
-   - The ambience is a seventh kind, `radiance` (candle-light that rises and swells), and the
-     horizon a basilica. **No track yet** — `hasTrack('holySanctum')` is false, so the act
-     plays in silence until `music/holy sanctum.flac` exists and `audio/tracks.ts` names it.
-   - The shop grew its shape: `StarShopOffer.grant` (§8's discriminant — `location`,
-     `starterPack`, `heroBundle`) and the Constellation has one tab per kind. Only the
-     Locations shelf is stocked; the other two stand empty with a line saying what they are.
-   - Priced at 6 stars (§7's "5–6"). Unmeasured.
-
-   **Three more the same day, per user direction**, chosen so each warden covers a type no
-   base Guardian does (Mind, Storm, Frost), each two shared types and one from elsewhere so
-   none reads as a base Location with different weather:
+     carry none. `ITINERARY_POOL_IDS` is the base pool, and a run's real pool is
+     `locationPool(profile.purchases)`, read once in `enterAct`. A bought place is drawn
+     **beside** the base five, never instead of one, so its spawn types overlap; the partition
+     test still holds because it runs over the base pool. More base seals then hold at the end
+     of a run (`unbrokenSealLocationIds`).
+   - Each warden covers a type no base Guardian does, and each Location takes two shared types
+     and one from elsewhere so none reads as a base Location with different weather. All are 6
+     stars, unmeasured, and none has a track.
+   - **Holy Sanctum** — Light / Spirit / Mind; the **Seraph** (Light / Ancient): the Light
+     reader pattern at boss scale — Hallow sets Sanctuary, Smite and Sunlance land ×2 on it,
+     Blinding Flash is the spread Daze. A blank face of light, a burning wheel, three pairs of
+     wings, the eye in the chest. Ambience `radiance` (candle-light that rises and swells), a
+     basilica horizon.
    - **Dreaming Spires** — Mind / Arcane / Spirit; the **Sphinx** (Distort sets Stasis Field,
      Hindsight lands ×2 under it at −1 priority, Psychokinesis the physical hand, Disorient
      the spread debuff; Speed 35). Ambience `drift` (rings that hang and wander), a horizon
@@ -370,111 +198,44 @@ None built. Where each lands when it is:
    - **Thunder Aerie** — Storm / Arcane / Beast; the **Roc** (Storm Lash and Ionize mark with
      Conduct, Ion Cascade ×2 across the marked pair, Skyfall the dive; Speed 90 — the fastest
      champion, 320 HP so the Skeleton King keeps the floor). Ambience `lightning` (bolts that
-     stand still, dark 88% of the cycle, and light the sky when they fire), a peak past the
-     top of the frame.
+     stand still, dark 88% of the cycle), a peak past the top of the frame.
    - **Frozen Reach** — Frost / Water / Stone; the **Wendigo** (Deep Chill and Permafrost
      Freeze, Cold Snap ×2 spending the mark, Absolute Zero only on a Frozen hero — Freeze
      halves Speed and a switch clears it, so the bench is the answer). Ambience `blizzard`
      (snow driven sideways on one wind), ice shelves with a ship frozen in.
    - Brass Works was proposed and dropped as redundant with the Foundry; Crystal Hollow, Iron
-     Bastion and Witchwood Fen are the un-built rest of that list. All four bought Locations
-     are 6 stars; none has a track yet.
-
-6. **The first Hero Bundle — BUILT 2026-09-19, per user direction: the Free Company**, §4's
-   "heroes, singly" as a shelf of a few at once. What landed:
+     Bastion and Witchwood Fen are the un-built rest of that list.
+6. **Hero bundles — BUILT 2026-09-19, reshaped 2026-09-26.**
    - `HeroDefinition.unlock` names the offer that puts a hero in a run's pools, exactly as
-     `LocationDefinition.unlock` does a place; the base roster carries none. A bundle hero is
-     `starter: false` by test — it is recruit-only, never in the draft — and the base game's
-     three-a-type count is the count of heroes WITHOUT an `unlock` (§9).
-   - `heroPool(heroes, purchases)` (`src/run/recruitment.ts`) is the one filter, read once
-     in App (`recruitPool`) and handed to the three edges: the hero-pool encounter draw (so a
-     bundle hero fights at the fork and can be claimed on a contract), `isRecruitable` at the
-     claim, and the Guild Hall shelf (`guildHallOffersFor(pool)`; `guildHallOffers` is the
-     base shelf). The sim and the tests pass nothing and get the base game. `rosterHeroes` and
-     the save's hero index hold every authored hero whatever is bought, so a run carrying a
-     bundle hero decodes on any profile.
-   - The grant is `{ kind: 'heroBundle', heroIds }`; a test holds each hero's `unlock` and the
-     bundle's list to each other, so neither can name the other wrongly. The Constellation
-     draws a bundle as a line-up (faces, primary type under each); the Compendium's
-     recruitable page grows a shelf per bundle held.
-   - **Scallywag** is the first, moved OUT of the base roster (Storm holds two until the new
-     Storm hero lands) and re-authored **mono-Iron**: kit Swift Blow / Pin Down / Sharpen, the
-     cutlass column with Shadow and Stone off-type; Corsair (mono, Plunder), **Stormrunner**
-     (Storm graft — the type he was born to, Storm Lash and the physical Storm column),
-     Seawise (Water graft); Broadside is Iron. Saltrig (Mech) retired with the Storm typing.
-   - **Patch and Vex filled the other two seats the same day** (per user direction). Patch is
-     the support/healing Mech: Wisdom 85 on a 190-HP drone, kit Spark Plug / Kickstart /
-     Overclock (the mark is the attack's job), the repair column in the pool with Light, Water
-     and Arcane support as its colours; Triage (Nanites — the partner gains Renew 30 on
-     arrival), Beacon (Light graft: Consecrate and the Light heal column), Coolant (Water
-     graft: Oasis and Water's); Overhaul the signature (heal 75, +20 Def). Vex is the vampire
-     bat, Beast to start per user direction: Speed 110 on a 170-HP body, kit Claw / Howl /
-     Lie in Wait, the Bleed column in the pool; Nightfeeder (Bloodmeal — Renew 20 on every
-     Bleed it applies), Vampyr (Shadow graft: Shadowstrike and the knife column — the turn is
-     a path, not the start), Wraithwing (Spirit graft: Spooky Slice and the physical Spirit
-     column); Exsanguinate the signature (70, Bleed, drain 50%).
-   - **8 stars** — three a hero, rounded down for the set. §3.4's question (do a bundle's
-     heroes join the recruit pool?) is answered YES for bundles by construction — that is what
-     a bundle IS — and still open for packs.
-   - **From the Tall Grass** (2026-09-24, per user direction) is the second bundle, 8 stars, the
-     starter triangle — Fire, Water, Nature — as a Pokémon nod. **Drake** fills the first seat:
-     the fire dragon, Fire's physical column swung hard (Attack 105) on a thin pool (Mana 50,
-     grade C), kit Singe / Kindle / Stoke the Flames. Innate **Slumber** — a Rest grants
-     Ambush 45 — so the pool running dry IS the breath drawn; its Rest is the rhythm, and an MP
-     Potion trades the Ambush away. Hoardwyrm (mono, Hoard — a Rest heals the Mana recovered),
-     Wyvern (Storm graft: Shock Slice and the physical Storm column; Fire/Storm is 4× weak to
-     Stone, Charizard's Rock weakness on purpose), Cinderscale (Stone graft: Spire Claw, and
-     Magma Hide — Shield 40 on a Rest); **Wyrmfire** the signature, the only physical Fire move
-     that takes both foes (80, Burn 20, 70 mana), which a Slumber Ambush lands on each of.
-     **Nautilus** fills the second seat (same day): the octopus controller, Wisdom 75 and
-     Intelligence 75 on Speed 40, kit Splash / Ink Cloud (a new Early Water debuff, −15 Attack and
-     −15 Intelligence on both) / Lull. Innate **Ink** — on switching out, both active enemies lose
-     10 Attack and 10 Intelligence — on a new `SwitchedOut` hook (the SwitchedIn that sent the
-     owner out, fired from the bench it reached; never on a knockout). Signature **Ink Blast**:
-     +2 priority, Daze on both foes, then a retreat that fires Ink — gated three ways because a
-     double flinch is a free turn: `firstTurnOnly` (Combatant.firstActionRound, round 1 for a
-     lead), `oncePerFight` (Combatant.spentMoveIds), and `manaCostAll` (every drop held, 45 the
-     floor), all read through `isMoveUsable` / `resolveManaCost` by the engine, the AI and the
-     fight screen. A hold (the target cannot switch) was designed first and dropped: the enemy AI
-     never switches, so it could not matter. Deepgrip (mono: a Water hit makes every move the
-     target holds cost 5 more Mana for the fight, up to 20 — the `manaSurcharge` effect, a
-     `ManaSurcharged` event), Inkmind (Mind graft, Disorient), Mimic (Shadow graft, Enfeeble).
-     **Tixwick** fills the third seat (2026-09-25): the mantis, Attack 105 on Speed 45 — slow,
-     and first anyway. Kit Ivy Spike (already +1) / Lie in Wait / Pin Down. Innate **Poised** —
-     a move that deals no damage leaves it Poised, and its next attack goes a bracket early — on
-     a new `MoveUsed` hook (the cast, read after its payload and before any pivot;
-     `MoveUsed.damaging` is what the condition reads) and a new **Poised** status carrying
-     `StatusDefinition.priorityBonus` = 1 on damage moves, spent by Ambush's `consumedOnDamage`;
-     `priority.ts` reads it for the real order and the fight screen's preview alike. Signature
-     **Guillotine** (60, +1 priority, Bleed, ×2 below half HP; +2 when Poised). The pool is the
-     Bleed column the mantis cuts for, Lacerate its reliable opener. Reaper (Iron graft,
-     Serrated Slice — Scyther into Scizor), Orchid (mono: Provoke, and **Lure** — struck, it is
-     Poised; a counter-striker), Ghost Mantis (Spirit graft, Phantom Strike). The bundle is full.
-
-7. **Phase 1 — BUILT 2026-09-19, per user direction, as the shake-up rather than the Foundry:**
-   `StarterPack` (`src/run/starterPacks.ts`, packs in `src/data/starterPacks.ts`), pack zero
-   **The Fourteen** derived from `HeroDefinition.starter`, `Profile.equippedPackId` (`'base'` by
-   default, decoded from an old file as such, and `equippedPack` falls back to pack zero when
-   the id names a pack not held or not shipped), the draft reading the equipped pack's
-   `heroIds` in `beginRun`, and the Constellation's first shelf as the radio — Equipped / Equip /
-   Locked with what opens it. The sim drafts from `SIM_PACK`.
-   - **A pack is not necessarily bought.** `PackUnlock` is `{ kind: 'clear' }` or
-     `{ kind: 'offer', offerId }`; the first pack costs no stars and opens on the profile's first
-     cleared run. **The Second String** (recut): the base roster's recruit-only heroes stood in
-     the draft, one a type — Cinder, Pincer, Flurry, Squall, Slate, Mordrax, Empyrean, Marrow,
-     Pixie, Sorrow, Trance, Gallant, Rex, Ursa. A player who has seen the fourteen through once
-     is handed fourteen others to open on. The name is a placeholder the designer may change.
-   - **§3.4 for a recut is moot:** its heroes are recruit-only already, so the twelve not
-     drafted are at the fork and the Guild Hall exactly as they always were, and the base
-     starters stay out of the run's pools as they always did. The question stays open for a
-     theme pack.
+     `LocationDefinition.unlock` does a place. `heroPool(heroes, purchases)` is the one filter,
+     read once in App (`recruitPool`) and handed to the hero-pool encounter draw, `isRecruitable`
+     at the claim, and the Guild Hall shelf (`guildHallOffersFor(pool)`). The grant is
+     `{ kind: 'heroBundle', heroIds }`; a test holds each hero's `unlock` and the bundle's list to
+     each other.
+   - The first bundle, **the Free Company** (Scallywag, Patch, Vex), was deleted 2026-09-26; its
+     three are Starfall-only (`unlock: 'starfall'`), and Patch has since joined the base.
+   - **From the Tall Grass** (2026-09-24, per user direction) is the one bundle: 8 stars, the
+     starter triangle — Fire, Water, Nature — as a Pokémon nod.
+     **Drake** — the fire dragon, Attack 105 on a thin pool. Innate **Slumber**: a Rest grants
+     Ambush 45, so the pool running dry IS the breath drawn, and an MP Potion trades the Ambush
+     away. Paths Hoardwyrm, Wyvern (Storm graft; Fire/Storm is 4× weak to Stone on purpose) and
+     Cinderscale (Stone graft); signature **Wyrmfire**, the only physical Fire move that takes
+     both foes.
+     **Nautilus** — the octopus controller, Wisdom 75 / Intelligence 75 on Speed 40. Innate
+     **Ink**: on switching out, both active enemies lose 10 Attack and 10 Intelligence (a new
+     `SwitchedOut` hook, never on a knockout). Signature **Ink Blast** (+2 priority, Daze on both
+     foes, then a retreat that fires Ink) is gated three ways because a double flinch is a free
+     turn: `firstTurnOnly`, `oncePerFight` and `manaCostAll`. A hold (the target cannot switch)
+     was designed first and dropped — the enemy AI never switches, so it could not matter. Paths
+     Deepgrip (the `manaSurcharge` effect), Inkmind (Mind graft), Mimic (Shadow graft).
+     **Tixwick** — the mantis, Attack 105 on Speed 45: slow, and first anyway. Innate **Poised**:
+     a move that deals no damage leaves it Poised, and its next attack goes a bracket early (a new
+     `MoveUsed` hook and a **Poised** status carrying `StatusDefinition.priorityBonus`). Signature
+     **Guillotine**. Paths Reaper (Iron graft), Orchid (mono: Provoke and **Lure**), Ghost Mantis
+     (Spirit graft).
    - **Everything on a shelf can be looked at before it is paid for** (per user direction): a
-     hero's face — in a pack, held or locked, or a bundle — opens its dossier
-     (`HeroDossierOverlay`), and a Location's row opens the place (`LocationPeekOverlay`: the
-     choice card at full size, its omen, its domains by name, who keeps it).
-   - **Revised the same day, per user direction:** pack zero is **Classic**; no row on any shelf
-     carries a description; the balance reads star-and-count side by side. **A shelf row never
-     spends a star**: the cost on it is a label, and tapping a bundle or a Location row opens the
-     offer's own screen — a bundle's is one box a hero (`BundlePeekOverlay`), each a tap into the
-     dossier; a place's is the peek — and that screen carries the ONE Purchase button, above Close.
-     A pack's faces still open the dossier from the shelf, since a pack has no screen to open.
+     hero's face opens its dossier (`HeroDossierOverlay`), a bundle row its own screen
+     (`BundlePeekOverlay`), a Location row the place (`LocationPeekOverlay`: the choice card at
+     full size, its omen, its domains by name, who keeps it). **A shelf row never spends a
+     star**: the cost on it is a label, and the offer's own screen carries the ONE Purchase
+     button, above Close. No row carries a description.

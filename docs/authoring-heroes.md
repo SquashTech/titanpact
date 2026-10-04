@@ -11,11 +11,13 @@ path, signature — against `src` and `docs` before using it.
 
 1. `src/data/heroes.ts`: the definition. Seven stats sum to exactly **550** (MP Regen a flat
    10 outside it); growth grades sum to **28** (S6 A5 B4 C3 D2 E1 F0); a dump stat stays E/F;
-   a stat it swings or defends with never below C.
-2. `schedule`: 4 to 7 sorted `offerLevels`, an offer from every band (Early below
-   `midLevel`, Mid to `lateLevel`, Late after), `signatureLevel` in 14-16 / 18-20 / 22-24 by how
-   hard the signature hits and never on an offer level. Offers are staggered across the
-   roster; if `moveTiers` "staggered" fails, nudge levels.
+   a stat it swings or defends with never below C. A starting kit (`moveIds`) is **two moves, one
+   attack and one that is not**, chosen so the innate fires off it.
+2. `schedule`: sorted `offerLevels` — every hero today makes **five** (two Early, two Mid, one
+   Late; the test allows 4–7), an offer from every band (Early below `midLevel`, Mid to
+   `lateLevel`, Late after), `signatureLevel` in 14-16 / 18-20 / 22-24 by how hard the signature
+   hits and never on an offer level. Offers are staggered across the roster; if `moveTiers`
+   "staggered" fails, nudge levels.
 3. `src/data/signatures.ts`: a unique signature at the hero's primary type, no `tier`, in no
    pool, kit or Evolution list.
 4. `src/data/passives.ts`: an innate in `innatePassives` (a verb, not a bare stat grant) and
@@ -24,8 +26,9 @@ path, signature — against `src` and `docs` before using it.
 5. `src/data/progression.ts`: a move pool (`moveTiers`) with enough Early/Mid/Late moves to
    survive the offers, and an Evolution node of **three paths with three different lead
    types**: one mono path plus grafts (`typeGraft`) whose `learnableMoveIds` are that type's
-   moves. No path hands over a move already in the pool, kit or signature; no path is bare
-   stats.
+   moves. Each path is exactly TWO of a type graft, a move and a passive — the three paths are the
+   three pairs, and no path carries a stat line (`docs/evolution-simplification.md`). No path hands
+   over a move already in the pool, kit or signature.
 6. Art: move the three PNGs into `art/heroes/unlocks/` (or `art/heroes/`) and add the idle to
    `src/view/shared/heroArt.ts` (import plus entry); pose frames are picked up by filename.
 
@@ -36,7 +39,7 @@ path, signature — against `src` and `docs` before using it.
 - A hero that can be offered **Smite or Sunlance** needs a way to set Sanctuary (Hallow,
   Consecrate) in reach (`test/lightMoves.test.ts`). Other field readers have the same rule.
 - Run `npm test` with the pinned Node: `export PATH="$PWD/.node-runtime/node-v24.19.0-win-x64:$PATH"`.
-  Also `npm run typecheck:view`. 1109 tests passed at `976a3eb`.
+  Also `npm run typecheck:view`.
 
 ## Art notes
 

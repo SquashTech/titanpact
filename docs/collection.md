@@ -1,13 +1,13 @@
 # collection.md — The Collection: a deck of heroes, and the stars that grow it
 
-> **STATUS: DIRECTION DECIDED 2026-09-26 (per user direction), NUMBERS OPEN. PHASES 1–3 (THE DECK, THE STAKES, SINGLE HEROES AND THE SUMMONING) ARE IN, same day — §10. PHASE 5 (NO STARTERS; THE COMPENDIUM DISSOLVED) AND PHASE 6 (THE STARFALL; BUNDLES ONLY) ARE IN, same day.**
+> **STATUS: DIRECTION DECIDED 2026-09-26 (per user direction), NUMBERS OPEN. BUILT except phase 4
+> (the Constellation re-price), which is held — §10.**
 > The designer stops assigning heroes to the draft or the recruit pool; the player does, on a
 > **Deck** built from the heroes the account owns. The base 42 are owned from the first launch
-> and the default deck IS today's split, so a new account plays today's game. Stars become a
-> renewable currency — a cleared run pays a base bonus that grows by Ascension rung, and an
-> Ascension attempt costs stars to begin. Heroes past the base 42 come in bundles or are drawn
-> blind by the **Starfall**; none is sold singly (phase 6). §8 lists what this reverses; until the §10 phase that replaces each one lands,
-> the rule in force is the one it names.
+> and are the default deck. Stars are a renewable currency — a cleared run pays a base bonus that
+> grows by Ascension rung, and an Ascension attempt costs stars to begin. Heroes past the base 42
+> come in bundles or are drawn blind by the **Starfall**; none is sold singly. §8 lists what this
+> reversed.
 
 ---
 
@@ -23,9 +23,8 @@ Two problems with one answer.
   (`ascension.md` §9b). Nothing a player keeps says they climbed.
 
 And a third that the first two expose: **a growing collection has no use** while the designer
-decides which fourteen heroes open a run and which twenty-eight can join one. Starter Packs
-(`constellation.md` §3) are a first answer — a whole pool swapped at once — and the Deck is the
-general one.
+decides which fourteen heroes open a run and which twenty-eight can join one. The Deck is the
+answer (Starter Packs, a first answer that swapped a whole pool at once, were deleted with it).
 
 ---
 
@@ -201,27 +200,13 @@ the price.
 
 ## 7. Code seams
 
-The plan as written before phase 1; §10 says what was built. The `starters` / `recruits` shape
-below was superseded by three equal slots a row (§2).
-
-- `Profile.deck` — `{ starters: Record<type, heroId>, recruits: Record<type, [heroId, heroId]> }`,
-  decoded from an old file as the default deck (the equipped pack's starters, if one was held).
-- `heroPool()` gains the deck: owned (`unlock` held) AND decked. Every reader already goes
-  through it or `recruitPool` in `App.tsx`. The enemy draw (`heroPoolEncounter`,
-  `src/run/encounters.ts`) splits in two: the first two from the deck, any more from the
-  catalog. The claim side needs nothing: `App.tsx` already filters the defeated party through
-  `isRecruitable` against `recruitPool` before `pickContractOffers`, so once `recruitPool` is
-  the deck a stranger is never offered. The care is all in the draw: it must stay deterministic
-  (the fork tile previews the typing off the same seed), keep the roster exclusion and the
-  Location bias, and hand the sim and tests the base game when no deck is given.
-- `beginRun`'s draft reads the deck's starters in place of `equippedPack`; `Profile.equippedPackId`
-  becomes "load a preset" and goes.
-- `starBalance` is no longer fully derived: an entry fee buys nothing held, so the profile keeps a
-  spent-stars ledger (`Profile.starsSpent`) beside the offer purchases.
-- `Profile.clearBonuses` — the clear bonuses paid, by rung, for the balance and for "first clear
-  only" if that is chosen.
-- The Summoning: a seeded draw over `heroes` not owned, and a `grant: 'summon'` offer kind.
-- The Collection screen on the title; the Constellation's pack shelf becomes presets + bundles.
+The deck is `src/run/deck.ts` (`deckRows`, `normalizeDeck`, `encounterPools`), held on
+`Profile.deck` and snapshotted on `RunState.deck` at the seal, so an edit between sessions never
+moves a run's pools. The enemy draw splits in `enemyGen.ts drawParty` (the deck floor first, the
+rest from deck and strangers together, shuffled), and the map's preview reads the same pools as the
+fight; `isRecruitable` against the deck is what refuses a stranger. The stakes are
+`AscensionRung.entryFee` / `clearBonus` with the profile's ledger (`starsEarned` / `starsSpent` /
+`starBalance`, `starShop.ts`); the Starfall is `starfall` / `starfallPool` / `STARFALL_PRICE`.
 
 **The title hub (2026-10-01, per user direction — Clash Royale / Marvel Snap).** The Collection
 and the Constellation stopped being sheets with a Close button and became whole pages along a
@@ -254,99 +239,42 @@ In **constellation.md**:
 - §2 *Balance = earned − cost of what is held* → earned (hero stars + clear bonuses) − held −
   spent.
 - §3 Starter Packs → deleted with the starter split (phase 5); §3.4 is moot.
-- The Constellation's Heroes shelf of singles → the Collection sells a single hero; the
-  Constellation keeps the Summoning and the bundles, and gains the Compendium's **Stars** and
-  **Spawn** pages.
+- The Heroes shelf of singles → no hero is sold singly (phase 6); the Constellation sells the
+  Starfall and bundles, and holds the Compendium's **Stars** and **Spawn** pages.
+- §7 pricing is to be re-done against a renewable supply — phase 4, held.
 
 In **ascension.md** and **progression.md**: the Compendium they name is gone (phase 5) — its
 hero lists are the Collection, its star cells and Spawn bestiary the Constellation's Stars and
 Spawn pages, its Equipment and Types pages the Reference's.
-- §7 pricing is re-done against a renewable supply.
 
 ---
 
 ## 9. Open questions — DO NOT silently resolve
 
-- **Every number in §5**, and the two candidate fixes for the Classic farm.
+- **Every number in §5** (first-pass, unmeasured beyond the arithmetic there).
 - **Whether a stranger is drawn toward heroes the account doesn't own** (the advert) or evenly
   from everything not decked. Two strangers a party is decided.
 - **The Starfall's price** against a bundle's, and what an Alignment costs.
-- **Does a Starfall or a purchase ever put a hero in the deck by itself?** Proposed: no, it lands
-  in the collection with a mark, the deck untouched.
-- **Is the deck locked during an Ascension attempt?** An Ascension attempt paid for with stars could fix the deck at
-  entry; it does anyway, since the run is saved.
 - **Three a type** is decided; whether a later size (four, once collections are deep) is ever
   wanted is not.
+
+Settled by the build: a Starfall or a purchase lands a hero in the Collection's reserve with a
+mark, never in the deck; and the deck is fixed for a run (Ascension included) because it is
+snapshotted at the seal.
 
 ---
 
 ## 10. Phases
 
-1. **The Deck — BUILT 2026-09-26.** `src/run/deck.ts` (the rows, the default, `normalizeDeck` making
-   any stored value legal against what is owned, presets, `encounterPools`); `Profile.deck`, stored
-   loose and made legal on read (`profileDeck`), a pre-deck file's equipped pack migrating into its
-   starter slots; `RunState.deck`, the deck snapshotted when the pact is sealed, so an edit between
-   sessions never moves a run's pools (null on an older save, which reads every owned hero and
-   fields no strangers); the draft rolling from the starter slots; the enemy draw split in
-   `enemyGen.ts drawParty` — the deck floor first, the rest from deck and strangers together, the
-   party shuffled so its order says nothing — with the map's preview reading the same pools as the
-   fight. The claim side needed nothing: `isRecruitable` against the deck refuses a stranger. The
-   **Collection** tile on the title (`CollectionScreen`): a row a type, tap a hero to make it the
-   starter, read it, or trade in an owned hero the row has no room for; the two presets above. The
-   Constellation lost its Starter Packs shelf; rung 0 is named **Classic**. The Second String's
-   first-clear gate went with the equip toggle — any deck is buildable by hand from launch.
-2. **The stakes — BUILT 2026-09-26.** `AscensionRung.entryFee` / `clearBonus` (`rungOf`); the
-   profile's ledger, `bonusStars` and `feesPaid`, beside the hero stars (`starsEarned` /
-   `starsSpent` / `starBalance` in `starShop.ts`, the balance no longer fully derived);
-   `recordRunStarted` spends the fee at the seal and refuses a rung the balance cannot cover;
-   `recordRunEnded` pays the bonus on a win into `RunRecord.clearBonus`. The rung picker prints
-   each rung's cost and pay and greys one out of reach (`canEnterRung`); the run summary shows the
-   bonus as a Records chip, and its Start a New Run names the fee — or, out of reach, says what
-   the rung needs, since that button skips the picker. The Constellation's ledger counts both.
-   Unmeasured beyond the arithmetic above; the numbers are the designer's after play.
-3. **Single purchases and the Summoning — BUILT 2026-09-26.** Every hero outside the base 42 is an
-   offer of its own at `HERO_PRICE` = 3 (`hero.<id>`, generated in `data/starShop.ts`). A bundle is
-   those heroes a star cheaper and is **sold only while none of them is owned** (`offerWithdrawn`):
-   past that its heroes are singles, so no hero is paid for twice and no price ever moves; three
-   singles hold the bundle. **The Summoning** is `SUMMON_PRICE` = 2 — under a single, the discount
-   for giving up the choice — and draws from `summonPool`, the heroes outside the base not owned,
-   so never a duplicate; it goes quiet when the pool is empty. It leaves `summon.<id>` in
-   `Profile.purchases`, priced by `starsSpent`, so ownership is still one read
-   (`ownsHero`, `run/recruitment.ts`: base, bundle, single, or drawn). The Constellation's first
-   shelf is **Heroes** — the Summoning over one row a hero — and a draw is revealed on its own sheet.
-   A hero bought or drawn lands in its row's **reserve** in the Collection, never in the deck, and
-   swaps in from either side. Locked heroes are not yet on the Collection's grid; the shop is where
-   they are seen.
-4. **Constellation re-price** against §5.
-5. **No starters; the Compendium dissolved — BUILT 2026-09-26** (per user direction).
-   `HeroDefinition.starter` deleted from every hero, spawn and Eye, and with it Starter Packs
-   (`run/starterPacks.ts`, `data/starterPacks.ts`), presets, `makeStarter`, the `starterPack`
-   grant kind and the `equippedPackId` migration (an old file opens on the default deck). The
-   deck is three equal slots a row; the draft draws one a row and shows four (`deckRows`); the
-   Guild Hall offers any deck hero off the roster. The **Collection** was rebuilt (§2: the type
-   rail, Info / Equip / Buy, locked heroes greyed with their price). The **Compendium** is gone:
-   its Starters and Recruitable pages are the Collection; its star cells (`HeroStarsPage`) and
-   Spawn bestiary (`SpawnStarsPage`, `view/run/StarPages.tsx`) are the Constellation's **Stars**
-   and **Spawn** tabs; its Equipment catalog and type dial (`view/shared/referencePages.tsx`)
-   are the Reference's, the dial over the grid on its Types tab. The Constellation's shelves are
-   now **Heroes** (the Summoning and bundles), **Locations**, **Stars** and **Spawn** — a single
-   hero is bought in the Collection. The title hub is three tiles. `test/deck` pins that the four
-   options span four types and every decked hero can be drawn. **Unmeasured**: a random draft
+1. **The Deck — BUILT 2026-09-26** (§2, §3, §7).
+2. **The stakes — BUILT 2026-09-26** (§5): the fee spent at the seal, the bonus paid on a win, the
+   rung picker printing both and greying a rung out of reach (`canEnterRung`).
+3. **The Summoning — BUILT 2026-09-26**, then reshaped by phase 6 (its single-hero offers deleted).
+4. **Constellation re-price** against §5 — **HELD**, not started.
+5. **No starters; the Compendium dissolved — BUILT 2026-09-26** (§2, §8). `test/deck` pins that the
+   four options span four types and every decked hero can be drawn. **Unmeasured**: a random draft
    raises the average opening — sim pass 11 found the Second String beating Classic — and the
    sim has not been re-run.
-6. **The Starfall; bundles only — BUILT 2026-09-26** (per user direction). The Summoning is renamed
-   the **Starfall** (`starfall`, `starfallPool`, `STARFALL_PRICE` = 2; the ledger keeps its
-   `summon.<id>` entries). Single-hero offers are deleted; the Free Company bundle is deleted and
-   Scallywag, Patch and Vex carry `unlock: 'starfall'`. A bundle is discounted by what of it is
-   owned (`offerPrice`, `bundleOwnedHeroIds`) and `starsSpent` replays the ledger in order. A
-   ledger entry this build no longer ships — a single bought earlier, the Free Company — is
-   **refunded**: its stars come back; a legacy single still owns its hero, a legacy Free Company
-   does not. The Constellation's **Heroes** page is the Starfall card (a strip of night, the price,
-   *Call a Star*, and *Who is left* folding out the pool, each face a tap into the dossier), an
-   empty **Alignments** seat, and the bundles (the full price struck beside the discounted one,
-   the owned faces checked). A draw plays on **`StarfallScreen`** (`view/run/Starfall.tsx`):
-   the spent stars leave the balance and arc into the sky, one star of a constellation swells into
-   the hero's type colour, lets go and streaks to the ground, lands in a flash with a ring and
-   embers, and the hero stands up as a silhouette and colours in — four seconds, a tap skips,
-   reduced motion goes straight to the hero; three new sounds, `star.rise` / `star.fall` /
-   `star.land`.
+6. **The Starfall; bundles only — BUILT 2026-09-26** (§4). A ledger entry this build no longer
+   ships — a single bought earlier, the Free Company — is **refunded**: its stars come back; a
+   legacy single still owns its hero, a legacy Free Company does not.

@@ -1,12 +1,9 @@
 # shield.md — Shield: bonus health, off Defense
 
-> **STATUS: DECIDED 2026-09-14 (per user direction — the six decisions in §3 are the designer's,
-> the cap at 100% of max HP over the proposed 50%). PHASES 1–3 ARE BUILT (2026-09-15):** the
-> engine, the seven moves and the presentation are in; §8's Status column says what each phase
-> landed, and §8's "What was built" names the three places the build departed from the text
-> (Vigil for Sanctuary, `onShieldBroken` as the broken trigger's shape, the pool seats). Phase 4
-> is measured (§8 "Measured") and left the bases and the cap where they are — the designer's to
-> move. Every number below is a first pass unless it says otherwise; the design is the shape.
+> **STATUS: BUILT AND MEASURED (decided 2026-09-14 per user direction, built 2026-09-15).** The six
+> decisions in §3 are the designer's (the cap at 100% of max HP over the proposed 50%). §8 names
+> where the build departed from the text and what was measured; the bases and the cap are the
+> designer's to move. Every number below is a first pass unless it says otherwise.
 
 ---
 
@@ -54,14 +51,14 @@ Everything below is that sentence made precise.
     DefMult   = 1 + (casterDefense − 50) / 100, clamped [0.5, 2.0]
 
 The heal formula's constants, the heal formula's clamp, Defense in Wisdom's seat — `magnitudeStatKey`
-in `statusMagnitude.ts` gains a third arm (`hot → wisdom`, `dot → the move's offensive stat`,
+in `statusMagnitude.ts` has a third arm (`hot → wisdom`, `dot → the move's offensive stat`,
 **`shield → defense`**) and `magnitudeScales` admits the pipeline. A Shield on self is a benefit
 and scales like a HoT on self. **Snapshotted at application**: the pool is what the caster's
 Defense made it at cast, and the holder's Defense never re-sizes it. A 100-Defense tank shields
 for ×1.5; a 32-Defense caster for ×0.82. That is Defense's support job, and it makes a
 Defense-heavy hero a *guardian* the way a Wisdom-heavy one is a healer.
 
-Definition, as `src/data/statuses.ts` will carry it:
+Definition, as `src/data/statuses.ts` carries it:
 
 | Field | Value | Why |
 |---|---|---|
@@ -118,16 +115,15 @@ lost; a new `absorbed` field carries what the Shield took, and a Shield emptied 
 ### 3.4 Heals and Shields do not talk
 
 A Shield does not fill missing HP (`missingHp` reads HP alone); a heal does not become Shield.
-**Overheal-becomes-Shield is deferred explicitly**, not rejected: it is a second faucet for the
-pool, and the first one should be seen in play before it opens. If it comes, it comes as its own
-phase with its own sign-off. *Decided.*
+*Decided.* The one exception since 2026-09-28 is a field: under **Verdant Earth** a Renew's
+overheal becomes Shield (`docs/blessings-and-statuses.md` §5); outside it, the rule stands.
 
 ### 3.5 The moves: two converts and a handful of new ones
 
 Two existing buffs read better as Shields than as the Defense they grant, and converting them
 gives the mechanic a home in two slates the day it lands:
 
-| Move | Today | Becomes |
+| Move | Was | Now |
 |---|---|---|
 | **Tide Guard** (Water, Early, both allies, 15 mana) | +15 Defense both | **Shield 20 on both allies** — a standing swell that takes the first hit |
 | **Bastion** (Stone, Mid, both allies, 40 mana) | +30 Defense both | **Shield 45 on both allies** — both heroes set their feet |
@@ -150,10 +146,8 @@ HP (roughly a tenth, a fifth, a third):
 
 Nine new, two converted, in five slates. **Not** in Wisdom's slates — Mind, Spirit, Arcane
 carry the buffs and heals; a Shield there would be Wisdom doing Defense's new job. Each new move
-is authored on the runbook (`authoring-moves.md`): tier, target, mana in its band, a description
-that names the number, a slate test, and it takes the slate's `moveIds`/schedule seat the
-designer places it in — the converts keep their seats. *Decided, the set to be reviewed as
-content when phase 2 lands.*
+is authored on the runbook (`authoring-moves.md`) with a slate test; the converts kept their
+seats. *Decided.*
 
 ### 3.6 The AI and the pilot price it as a guard
 
@@ -172,7 +166,7 @@ bonus (`:423`), recoil (`:472`), the self-cost (`:816`), DoT ticks and detonatio
 (`statusEngine.ts:147`, `:319`), the Pact Clock (`pactClock.ts:66`), a passive's own damage
 (`passiveEngine.ts:208`), and potions. The absorb sits **there**, gated on a new argument —
 `source: 'hit' | 'direct'` — so §3.2 is one parameter at each call site and not a rule spread
-across eight files. `'hit'` at the move's hit and the detonate bonus; `'direct'` everywhere else,
+across eight files (the line numbers above are as of the build). `'hit'` at the move's hit and the detonate bonus; `'direct'` everywhere else,
 which is also the default, so a call site nobody updated is direct and a Shield never silently
 absorbs something it should not.
 
@@ -186,16 +180,14 @@ the Shield's magnitude drops by it, the remainder goes to HP as today, and the r
 Shield heals for what got through, which is the honest reading. **Retribution** reads
 `damageTakenSinceLastTurn`, likewise HP only.
 
-**Stacking with a cap** is the one new clause in `applyStatus` (`statusEngine.ts`): for a
+**Stacking with a cap** is the one clause in `applyStatus` (`statusEngine.ts`): for a
 `'shield'` pipeline, `magnitude = min(existing + incoming, getMaxHp(holder))`, and the
 `StatusApplied` event gains `capped: true` when the cap took some — the same field, the same
 word, as `StatChanged`.
 
-**A trigger on `'broken'`** is one new `PassiveTrigger`/status hook: Ice Shell's Freeze-the-striker
-is authored as a rider on the *status* rather than the move, fired by the removal reason. If that
-reads as more engine than phase 2 wants, Ice Shell ships as a plain Shield 50 and the trigger
-waits; the doc prefers building it, since a Shield that punishes being broken is the one that
-creates a decision on the other side of the board.
+**A trigger on `'broken'`**: Ice Shell's Freeze-the-striker is a rider on the *status* rather
+than the move, fired by the removal reason (built as `onShieldBroken`, §8) — a Shield that
+punishes being broken is the one that creates a decision on the other side of the board.
 
 **No change to the damage pipeline.** The hit is computed in full — ratio, chart, variance, crit,
 every modifier — and only then absorbed. `docs/combat.md`'s two-pipeline rule is untouched; the
@@ -204,8 +196,8 @@ the hit as computed; `amount` is what reached HP; `absorbed` is the difference.
 
 **On a physical hit Defense counts twice** — it shrank the hit, then it sized the pool. That is
 the point, not a bug: it is the mirror of Wisdom scaling a heal that then patches a physical hit.
-But it means the physical/magical split of the *enemy* pool now decides how good a tank feels,
-and the sim should report damage taken by category beside the absorb figures (§8, phase 4).
+But it means the physical/magical split of the *enemy* pool decides how good a tank feels; §8
+"Measured" has the split.
 
 ---
 
@@ -232,8 +224,8 @@ and the sim should report damage taken by category beside the absorb figures (§
 ## 6. Enemies
 
 Titanspawn kits are drawn from the type slates, so an Iron, Stone, Water, Frost or Light spawn
-holding one of §3.5's moves shields the way a hero does, off its own Defense — a Late Stone spawn
-on the step curve shields for ×2. That is the curve doing to enemy Shields what it does to enemy
+holding one of §3.5's moves shields the way a hero does, off its own Defense — a high-level Late
+Stone spawn shields for up to ×2. That is the curve doing to enemy Shields what it does to enemy
 hits, and the reason a player needs the §3.2 answer in the bag by Act 4. `masteryForAct` and the
 schedules are untouched: a Shield move is a move.
 
@@ -241,29 +233,18 @@ schedules are untouched: a Shield move is a move.
 
 ## 7. What is deleted or changed
 
-- `authoring-moves.md` §10's *"Protect / shield / damage negation"* entry moves to the built
-  list, and the runbook gains a `Shield` rider paragraph beside the Renew one.
-- Tide Guard's and Bastion's `statDeltas` are deleted in favour of a `statusApplication`; every
-  test that pins them as Defense grants (`test/waterMoves`, `test/stoneMoves`) re-pins them as
-  Shields, and `test/statScaling.test.ts`'s body floor no longer sees them.
-- `combat.md`'s *direct HP loss* paragraph gains "no Shield"; its `applyHpDelta` note gains the
-  `source` argument.
-- `StatusRemovalReason` (`content.ts`) gains `'broken'` beside decay / expired / switch / cleanse /
-  consumed; `DamageDealt` gains `absorbed`; `StatusApplied` gains `capped`.
-- `SAVE_VERSION`: none — a mid-fight save carries statuses by id and magnitude already.
+Done at the build: Tide Guard's and Bastion's Defense grants became Shield applications (their
+slate tests re-pinned); `combat.md`'s *direct HP loss* reads "no Shield"; `StatusRemovalReason`
+has `'broken'`, `DamageDealt` has `absorbed`, `StatusApplied` has `capped`. No `SAVE_VERSION`
+change was needed.
 
 ---
 
 ## 8. Order of work
 
-Sequenced so the tree is playable at every boundary and each phase can be refused alone.
-
-| # | Phase | Exit criterion | Status |
-|---|---|---|---|
-| 1 | **The engine.** `'shield'` pipeline; `magnitudeStatKey → defense`; `applyHpDelta(source)` with the absorb at the two `'hit'` sites; capped additive stacking in `applyStatus`; `DamageDealt.absorbed`, `StatusRemoved 'broken'`, `StatusApplied.capped`; the `Shield` status; `test/shield.test.ts` (absorb, overflow to HP, break, cap, snapshot off the caster's Defense, DoT and Clock go through, drain reads HP, an absorbed hit still triggers). One fixture move, in no pool. | Every §2–§4 sentence pinned; nothing in any slate changed. | **IN** 2026-09-15 |
-| 2 | **The content.** Tide Guard and Bastion converted; Iron Skin, Sanctuary, Ice Shell, Rampart, Living Wall authored on the runbook with slate tests; the `'broken'` trigger for Ice Shell, or Ice Shell plain with the trigger deferred (§4); schedule seats placed by the designer. | Seven Shield moves in five slates; every slate test green; the Water/Stone converts' old pins gone. | **IN** 2026-09-15 (the trigger built; seats a first pass) |
-| 3 | **Presentation.** The bar segment, `+N` on the label, *absorbed N* / *Shield broken* popups, *Shield N* on cast, the move card's figure and *can't go any higher*, the status dossier's "what goes through". Verified with the throwaway harness over headless Edge. | A player reads a Shield, a hit into it, and its breaking from the fight screen without the log. | **IN** 2026-09-15 |
-| 4 | **Measure and re-fit.** The pilot and the AI price a Shield as a guard with a number and treat a capped one as inert; the sim reports Shield granted / absorbed / broken by act and damage taken by category; a batch against the phase-2b tree (67.1% full-clear, Reader 68 min); the Defense question re-read — does a Defense-heavy hero's draft lift move? | Figures reported; the bases and the cap are the designer's to move. | **MEASURED** 2026-09-15, nothing moved |
+All four phases are done (2026-09-15): **1** the engine (`test/shield.test.ts` pins §2–§4),
+**2** the content (§3.5's cards with slate tests, the `'broken'` trigger built), **3** the
+presentation (§5), **4** measured — below — with nothing moved.
 
 **What was built, where it departs from the text above (2026-09-15).**
 
@@ -336,19 +317,13 @@ tree the Shield landed on, not phase 2b's: full-clear 23.1%, acts 62 / 63 / 95 /
   against if a Shield base is ever raised: a bigger pool buys more in the finale, where it is
   already 13% of hits, than in Act 1, where the wall is.
 
-**What each phase measures.** Phase 1: nothing — it is a contract. Phase 2: the slate tests.
-Phase 4: absorbed as a share of damage dealt by act; how often the cap binds; whether the Water
-and Stone converts are cast more or less than the Defense buffs they replaced; whether Iron and
-Stone heroes' draft lift moved; the physical/magical split of damage taken, so the §4 "counts
-twice" reading has a number.
-
 ---
 
 ## 9. Locked invariants this overturns
 
-Each is a sign-off. In force until the phase that replaces it lands.
+All landed 2026-09-15.
 
-| Today (`CLAUDE.md` / `combat.md` / `authoring-moves.md`) | Becomes | Phase |
+| Was (`CLAUDE.md` / `combat.md` / `authoring-moves.md`) | Now | Phase |
 |---|---|---|
 | *Protect / shield / damage negation* is a deliberately unbuilt shape | **Built**, as bonus health: a `'shield'` status pipeline, absorbed at the HP chokepoint | 1 |
 | Direct HP loss: no Defense, no type chart, no variance, no passive reaction pass | Gains **no Shield** — a DoT, the Clock, a cost and recoil go through | 1 |
@@ -367,10 +342,11 @@ screen" — a Shield is a rider on a move, chosen by casting it.
 
 ## 10. Open questions — DO NOT silently resolve
 
-- **Overheal → Shield** (§3.4). Deferred, not rejected. If it comes: only from a heal move (never
-  a HoT tick, never a potion), at the heal's own Wisdom scaling, into the same cap. It would give
-  every healer a Shield job off Wisdom — which is exactly the thing this doc gives Defense, so it
-  is a decision about whether Defense keeps the job to itself.
+- **Overheal → Shield beyond Verdant Earth** (§3.4). The field's version is built
+  (`blessings-and-statuses.md` §5); a general one — only from a heal move (never a HoT tick, never
+  a potion), at the heal's own Wisdom scaling, into the same cap — is still undecided. It would give
+  every healer a Shield job off Wisdom, which is the thing this doc gives Defense, so it is a
+  decision about whether Defense keeps the job to itself.
 - **Bench regen and Shield.** `benchHpRegenFlat` heals HP on the bench; a Shield neither regens
   nor decays there. Nothing to decide unless bench HP regen ever becomes a fraction of max, in
   which case "does the Shield count" is a real question.
@@ -378,14 +354,13 @@ screen" — a Shield is a rider on a move, chosen by casting it.
   Shield-specific by design, not a general status-removal hook. A Renew that pays out when
   cleansed or a Barrier that punishes the move it turned would want the general shape, and that
   is still its own conversation.
-- **The Class and the signature.** A Class verb ("a shield" beside "a redirect, a priority strike,
-  a spread, a heal") is the obvious ninth-plus Class; and one of the Iron or Stone signatures may
-  want to be a Shield card once the mechanic exists. Neither is in §8; both are content to place
-  after phase 2 is played.
+- **The Class and the signature.** No Class grants a Shield (a Class verb "a shield" beside "a
+  redirect, a priority strike, a spread, a heal" is the obvious candidate). Among signatures,
+  Dread's is a Shield card; none of the Iron or Stone signatures is. Content to place.
 - **The equipment passive Second Skin** (*+5 Defense, +5 Wisdom on taking a hit*) fires on an
   absorbed hit under §3.3. Intended — it is the item most likely to sit on a tank — but it is
-  the first passive whose trigger count a Shield raises, and the sim should say by how much.
-- **Guardians.** A champion with a Shield move is the one place a Shield off the step curve's
+  the first passive whose trigger count a Shield raises, and no sim pass has reported by how much.
+- **Guardians.** A champion with a Shield move is the one place a Shield off a high-level boss's
   Defense could read as unfair (a ×2 pool on a 400-HP boss is 800 effective). No champion holds
   one until the numbers are seen; if one should, the doc would rather author its base down than
   exempt it from the formula.

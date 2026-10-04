@@ -17,57 +17,40 @@
 
 ### The fielded roster (2026-09-17, per user direction, FOR PLAYTEST)
 
-It was **bring-6-pick-4**: `STANDARD_SQUAD_SIZE` = 4, the pre-fight screen a pick with a
-Reserve band, and `docs/run-loop.md` §4 made the finale the one 6v6 exception. Nine hours of
-play read the pick as a chore, and the reasons it was there had thinned:
+`STANDARD_SQUAD_SIZE` = `ROSTER_CAP`: every fight fields the whole roster. It replaced
+**bring-6-pick-4**, which nine hours of play read as a chore, for three reasons:
 
-- **In VGC team preview is a mind-game** — you know the chart and the opponent's six, not
-  their four, and there is a human to bluff. Here the enemy party is fully scouted and the
-  AI does not bluff, so the pick was a lookup against a chart the player has not memorised:
-  tap every hero, read its arrows, arrange. Under the repo's own rule that is a bare number
-  given a screen.
-- **"Your sideboard rots"** was the runaway roster-wide levelling was built to remove. It
-  did; a benched hero is at parity, so there was nothing left for the pick to price.
-- **The finale already fielded six** and its lead-order screen already worked. The
-  paragraph that made that the "single place breadth is priced in gameplay" was written
+- **In VGC team preview is a mind-game** — you know the opponent's six, not their four, and
+  there is a human to bluff. Here the enemy party is fully scouted and the AI does not bluff,
+  so the pick was a lookup against a chart the player has not memorised: a bare number given
+  a screen.
+- **"Your sideboard rots"** was the runaway roster-wide levelling was built to remove. A
+  benched hero is at parity, so there was nothing left for the pick to price.
+- **The finale already fielded six**, and the case for pricing breadth there was written
   against hyperfocus levelling, which is gone.
 
-What the flip is: `STANDARD_SQUAD_SIZE` = `ROSTER_CAP`, the Reserve band deleted, the
-screen a **lead-order** screen — who opens, who sits — with every hero's matchups against
-every scouted enemy drawn at once (`MatchupRow`), so the read the pick used to gate is a
-glance. The board is still 2v2; six-a-side is a bench change, as the finale's was.
+The board is still 2v2; six-a-side is a bench change. What it changes, all named for
+playtest rather than decided:
 
-What it changes, all named for playtest rather than decided:
-
-- **Lock-in.** Already derived: `lockInThreshold` is half the side, floor 2, so six locks
-  at **3**. The fraction is what the rule was, the count moved.
-- **The companion.** It could be benched out of a fight it would die in; now it is always in
-  the party and can be forced in on a KO. Either that is what a mortal stake should be, or
-  its death rate climbs past where it is a fun bet — watch it.
-- **Wounds.** The sideboard was one of four healing faucets ("a fresh hero over a wounded
-  one"). It is gone; the Rest seat, the Guild Hall mend and a contract arriving whole carry it.
-  **And Wounds are the counterweight** (same day, per user direction): the 25% walk floor is
-  deleted and **a knockout persists through the act** — a KO'd hero is `down`, not fielded, and
-  stands up only at a Rest, the mend, a Revive (a rare drop, spent in the next fight) or the
-  act's end (`run-loop.md` "Wounds"). Six bodies a fight, and a KO costs the rest of the act.
+- **Lock-in.** `lockInThreshold` is half the side, floor 2, so six locks at **3**.
+- **The companion** can no longer be benched out of a fight it would die in. Either that is
+  what a mortal stake should be, or its death rate climbs past a fun bet — watch it.
+- **Wounds.** The sideboard was one of the healing faucets; the counterweight is that **a
+  knockout persists through the act** — a KO'd hero is `down`, not fielded, and stands up
+  only at a Rest, the Guild Hall mend, a Revive or the act's end (`run-loop.md` "Wounds").
 - **The finale** is no longer special in squad size. Its identity is the Eyes, not the six.
-- **6v4 is a player buff.** The enemy party stays at 4 (2 + champion at a Guardian): more
-  enemy bodies is more rounds, and the run is at 77 minutes Reader. Persisting knockouts are
-  the designed counterweight; `ACT_LEVEL_ADJUST` is the dial for whatever they leave — after
-  play.
+- **6v4 is a player buff.** The enemy party stays at 4: more enemy bodies is more rounds.
+  `ACT_LEVEL_ADJUST` is the dial for whatever the persisting knockouts leave — after play.
 
-**Measured (2026-09-17, 600 runs, seed 7, paired on the constant alone):** full-clear
-**58.3 → 80.7%** under the skilled pilot, 10.3 → 25.5% under chart; act clears (skilled)
-88/83/99/87/96/97 → 91/95/100/98/99/97, so the lift is Acts 2 and 4 — the escort-tier
-walls — where a four-deep bench absorbs a bad lead. Run length unmoved (76.5 → 76.9 min
-Reader, a completed run). **The companion is lost in 40 → 56% of chart runs** (36 → 39%
-skilled): the shelter cost above is real and its size depends on the pilot. Every figure is
-the sim's; the call on which act term takes the buff, and whether the companion's exposure is
-its stake or its bug, is the playtest's.
+**Measured (2026-09-17, 600 runs, paired on the constant alone):** full-clear 58.3 → 80.7%
+under the skilled pilot (10.3 → 25.5% chart), the lift in Acts 2 and 4 — the escort-tier
+walls — where a four-deep bench absorbs a bad lead; run length unmoved. **The companion is
+lost in 40 → 56% of chart runs** (36 → 39% skilled). Whether that exposure is its stake or
+its bug is the playtest's call.
 
 ### The lead pick (2026-09-28, per user direction)
 
-The lead-order screen before every fight is gone. A run fight now opens with the enemy's two
+There is no pre-fight lead screen. A run fight opens with the enemy's two
 leads on the field and the player's slots empty (`openingSquad`, `src/run/squad.ts`); once the
 VS card and the enemy's entry passives have played, the console holds `LeadPickPanel` — the
 whole roster, each cell with its HP as the fight has it and one matchup arrow per enemy lead —
@@ -76,8 +59,9 @@ and **Take the Field** in the bottom row. The two are placed by `placeLeads`
 entry passives run through `resolveBattleStartEntries` for that side alone, and round 1 follows
 at once. Two standing and nobody down still lead without asking.
 
-It is the VGC order made honest: the old screen scouted all four enemies and asked for leads
-blind to which two opened, so the arrows answered a question the fight never asked. Now they
+It is the VGC order made honest: the lead-order screen it replaced scouted all four enemies
+and asked for leads blind to which two opened, so the arrows answered a question the fight
+never asked. Now they
 are drawn against the pair actually standing there. What the player gives up is the full scout
 of the enemy bench before committing — the map tile's typing preview is what remains of it.
 
@@ -96,10 +80,7 @@ refunding one of this fight's knockouts, so lock-in reads exactly as it did when
   actions (including switches). Actions then resolve in priority/speed order.
 - **Bench regen** and any per-round bookkeeping tick at round boundaries.
 
-This matches the already-implemented model (`resolveRound.ts`) — locking it promotes
-it from draft to rule; no code change was needed.
-
-The declare-then-resolve structure (both sides commit, then the round plays out) is
+Implemented in `resolveRound.ts`. The declare-then-resolve structure (both sides commit, then the round plays out) is
 what makes prediction the core skill. Preserve it.
 
 ---
@@ -181,7 +162,7 @@ Fixed terms:
 - **Variance = 0.85–1.0**, drawn from the seeded RNG. Do not remove it; it is
   deliberate for replayability and the skill ceiling.
 - **TypeMult** comes from the chart, dual-type stacking is multiplicative (up to 4×,
-  down to the 0.25× floor). Details and the open floor question are in
+  down to the soft 0.25× floor, no hard immunities). Details are in
   `types-and-heroes.md`.
 
 ### The damage-modifier multiplier term
@@ -192,8 +173,7 @@ etc.) collect into the pipeline-2 multiplier term — **not** into stats.
 **Stacking policy (LOCKED — 2026-08-15 designer sign-off): multiplicative.** Each
 modifier multiplies onto the running total, matching how STAB/TypeMult/Variance/Crit
 already combine. `damagePipeline.ts resolveMultiplierTerm` implements both policies
-as a one-line swap by design — the default should now be `'multiplicative'`, not
-`'additive'`.
+as a one-line swap; `LOCKED_MODIFIER_STACKING` is `'multiplicative'`.
 
 ### Crit
 
@@ -203,15 +183,12 @@ lives in `/data`).
 **Crit source (LOCKED — 2026-08-15 designer sign-off): loadout/equipment layer, not
 a base stat.** Base crit is ~0 for everyone; crit chance is something built toward
 via equipment/relics — it does not become a per-hero authoring axis.
-**NOT YET IMPLEMENTED:** `equipment.ts` has no crit-chance field yet (only the
-`StatKey` stat line), and `damagePipeline.ts`'s flat `PROVISIONAL_CRIT_CHANCE`
-(1/16, sourced from nothing) is still a placeholder. Wiring crit into equipment is
-follow-up work: add a crit-chance grant to equipment/relic definitions and thread it
-into `rollDamage` in place of the flat constant.
+**NOT YET BUILT:** equipment has no crit-chance grant, and `damagePipeline.ts`'s flat
+`PROVISIONAL_CRIT_CHANCE` (1/16, sourced from nothing) is still a placeholder. The work
+is a crit-chance grant on equipment threaded into `rollDamage` in place of the constant.
 
-**A second crit source now exists (2026-08-29, from Fire's authored movepool):
-`MoveDefinition.critChance`** — a per-move rate replacing the default for that move
-only (Singe and Firebrand at 30%). This does not break the lock: the lock says crit
+**A second crit source exists: `MoveDefinition.critChance`** — a per-move rate replacing
+the default for that move only (Fire's Singe and Firebrand, one signature). This does not break the lock: the lock says crit
 is not a *base stat* / per-hero authoring axis, and a move-authored rate is neither.
 It does raise one question the lock did not anticipate, deliberately left **OPEN**:
 
@@ -259,6 +236,9 @@ entire point — a heal is a fact about the caster, not about the move:
 | Revenant (Spirit) | Mend Wounds 45 | 46 | ✓ | 54 |
 | Solace (Light) | Restore Vigor 40 | 70 | ✓ | 60 |
 
+(Illustrative: Restore Vigor and Mend Wounds were fixture moves since replaced by the
+authored slates; the arithmetic is the formula's.)
+
 Wisdom rather than the move's category off-stat (Intelligence/Attack) so that
 support is **its own build axis** instead of collapsing into "mage who
 sometimes heals" — a healer invests in a defensive stat, pays for it in
@@ -268,7 +248,7 @@ self-heal scale off a 90-Attack bruiser.
 
 The 1-point-of-Wisdom = 1% shape lines up with the locked "flat additives in
 multiples of 5 or 10" rule, so it reads at the design table as **"+10 Wisdom is
-+10% healing"** — a Fortify visibly helps the healer.
++10% healing"** — a Wisdom buff visibly helps the healer.
 
 ### Three deliberate asymmetries with the damage formula
 
@@ -281,7 +261,9 @@ regression.
    scaling by max HP would multiply that same bias again and make low-HP heroes
    effectively un-healable — straight into CLAUDE.md's "no hero is a trap pick".
    Healing is absolute, and that is the point. It also means a `bothAllies` heal
-   resolves **once** and pays every ally the same number.
+   resolves **once** and pays every ally the same number. **Renew is the one named
+   exception** (2026-09-28): a percent of the holder's max HP, so a HoT keeps pace with
+   HP growth (`docs/blessings-and-statuses.md` §4). A heal *move* stays absolute.
 2. **No variance.** Variance is load-bearing on *damage* — it blurs the kill
    range so the attacker cannot compute a guaranteed lethal. On a heal the
    planner and the randomised party are the same person, so it punishes correct
@@ -293,20 +275,21 @@ regression.
 
 ### Heal-over-turn (Renew)
 
-A HoT is healing, so it runs the same formula — **snapshotted at application
-time** off the caster, not recomputed per tick off whoever holds it. Renew
-persists through a switch (`conditions.md`), and the caster earned the
-magnitude; re-reading the holder's Wisdom every round would make the same
-Second Wind worth more on a bulkier ally who had nothing to do with casting it.
-Decay-by-halving operates on whatever magnitude the snapshot produced.
+A HoT is healing, so it is scaled by the caster's Wisdom and STAB — **snapshotted at
+application time** off the caster, not recomputed per tick off whoever holds it. Renew
+persists through a switch (`conditions.md`), and the caster earned the magnitude;
+re-reading the holder's Wisdom every round would make the same Second Wind worth more on a
+bulkier ally who had nothing to do with casting it. Since 2026-09-28 the magnitude is a
+percent of the holder's max HP, healed when it lands and at the end of each of the next two
+rounds, with no decay (`docs/blessings-and-statuses.md` §4).
 
-The scaling is gated on `StatusDefinition.pipeline`, not on the move's kind, so
-a damage move that grants Renew scales its Renew and a heal move that inflicts
-Burn scales its Burn. See "Scaled status magnitudes" below for the DoT half.
+The scaling is gated on `StatusDefinition.pipeline`, not on the move's kind, so a damage
+move that grants Renew scales its Renew. See "Scaled status magnitudes" below.
 
 **Passive heals are not scaled.** `PassiveEffect { kind: 'heal' }` — Sanguine's
 "heal for the amount that Bleed tick dealt" — is already derived from another
-number; running it through the formula as well would compound two multipliers.
+number; running it through the formula as well would compound two multipliers. **One named
+exception**: a passive heal may carry `scaledBy: 'wisdom'` (Patch's Upkeep, `CLAUDE.md`).
 
 ## Scaled status magnitudes (2026-09-05)
 
@@ -318,23 +301,26 @@ StatMult  = 1 + (stat − 50)/100, clamped [0.5, 2.0]
 `engine/status/statusMagnitude.ts`. One shape for both signs, sharing the
 healing formula's constants, so the player reads a single rule: **50 is par,
 every point is 1%**. Which stat is read is the only thing that differs — a
-`hot` takes the caster's Wisdom, a `dot` takes the offensive stat its move
-already swings with (`statKeysForMove`: Attack on a physical move, Intelligence
-on a magical one, honouring `offStatOverride`). Snapshotted at application, the
-same as a HoT and for the same reason.
+`hot` takes the caster's Wisdom, a `shield` the caster's Defense (`docs/shield.md`), and a
+`dot` the offensive stat its move already swings with (`statKeysForMove`: Attack on a
+physical move, Intelligence on a magical one, honouring `offStatOverride`). Snapshotted at
+application, the same as a HoT and for the same reason. A move's stat delta lands on the
+same constants (`docs/stat-scaling.md`, "Stat modifiers" below).
 
-**Why it exists.** The HP doubling (then a hidden `HP_SCALE = 2`, since baked
-into the authored lines — see "Pricing HP" in `progression.md`) is
-difficulty-neutral for anything that repeats and not for anything that decays.
-An attacker's lifetime output rose with the round count the change bought
-(median fight 4 → 6); Burn's is capped at ≈2× its magnitude by `decay: 'halve'`
-no matter how long the fight runs, so it ate the full dilution with no
-compensation. A Burn 20 fell from 32% of a target's bar to 16%, while Bleed —
-the one DoT authored as a percentage — did not move at all and became the
-better one.
+**Burn left the formula on 2026-09-28** (`docs/blessings-and-statuses.md` §3): it is a
+percent of the holder's max HP, never caster-scaled (`fixedMagnitude`), so the `dot` arm has
+no holder today. The reasoning below is why the arm was built, and what a future scaled DoT
+should follow.
+
+**Why it existed.** The HP doubling (then a hidden `HP_SCALE = 2`, since baked into the
+authored lines — see "Pricing HP" in `progression.md`) was difficulty-neutral for anything
+that repeats and not for anything that decays. Burn's lifetime output is capped at ≈2× its
+magnitude by `decay: 'halve'` however long the fight runs, so it ate the full dilution while
+Bleed — authored as a percentage — did not move. (The percent Burn is the same cure taken
+further.)
 
 **Why the move's own category, not one stat.** Fire's slate is split (Kindle
-and Molten Lash physical, Ember and Set Alight magical). Pinning Burn to
+and Molten Lash physical, Ember and Set Alight magical). Pinning a DoT to
 Intelligence would make every physical Fire hero a trap pick. This is the
 opposite call from healing above, and deliberately so: a heal is its own build
 axis, a DoT is the move it rode in on.
@@ -342,10 +328,8 @@ axis, a DoT is the move it rode in on.
 **Why no defender term.** Same asymmetry #3 as healing, plus the applier
 already paid a defended hit to land the rider.
 
-**Why STAB, even on a rider attached to a damage body.** It is a second helping
-on a move like Scorch, and that is a real cost — but dropping it would leave
-Set Alight, whose whole payload is the rider, taking nothing from being Fire.
-Consistency wins.
+**Why STAB, even on a rider attached to a damage body.** Dropping it would leave a move
+whose whole payload is the rider taking nothing from being its type. Consistency wins.
 
 ### A `dot` on `self` is a cost, and costs are flat
 
@@ -353,18 +337,14 @@ Fire's and Mech's self-Burn (Volcanic Surge, Backfire, Overheat, Meltdown) is
 billed by `authoring-moves.md` as the self-harm shape "whose price is knowable
 before the button is pressed". Scaling it would break that promise, and would
 make Meltdown's price grow with the Intelligence Meltdown exists to convert. So
-a `dot` aimed at `self` lands at exactly the authored number. A `hot` on self
-is a benefit rather than a cost and scales like any other.
+a cost lands at exactly the authored number — now true of every Burn, and still the rule
+for any future scaled DoT aimed at `self`. A `hot` on self is a benefit rather than a cost
+and scales like any other. Passive-applied magnitudes are unscaled by the same precedent —
+a passive has no move to take STAB from — except where `scaledBy` is named (`CLAUDE.md`).
 
-That split is what the 2026-09-05 rebase followed: **payoffs ×1.5** (the formula
-supplies the rest of the correction) and **costs ×2** (nothing else lifts them).
-Passive-applied magnitudes are unscaled by the same precedent — a passive has no
-move to take STAB from — so they took the ×2 too.
-
-**Open: the `[0.5, 2.0]` clamp.** Inherited from healing, where nothing on the
-roster reaches either end. Combustion and Superheat each grant +20 to an
-offensive stat *per Burn taken*, so a Mech hero can pass 150 inside a fight and
-stop scaling. The cap is the number most likely to need raising once measured.
+**Open: the `[0.5, 2.0]` clamp.** Inherited from healing. A stat pushed past 150 inside a
+fight (Tempering's Defense, Combustion's Attack) stops scaling the Shields and deltas it
+feeds. Unmeasured; the cap is the number most likely to need raising.
 
 ### Settled alongside the formula (2026-08-28 designer sign-off)
 
@@ -380,8 +360,8 @@ stop scaling. The cap is the number most likely to need raising once measured.
   *less* than an attack turn deals to that target. In doubles two enemies act
   per round against one healer, so even a heal at parity with a single attacker
   loses ground — which is what stops healing from stalling fights into a grind.
-  The current move numbers are placeholders, so nothing is calibrated to this
-  yet; it is the rule to calibrate *by* once real numbers are authored.
+  The slates' heal numbers were authored, not calibrated to this; it is the rule to
+  tune them *by*, and nothing has measured against it yet.
 
 ---
 
@@ -402,7 +382,7 @@ about the hit it is attached to. So:
 - It resolves **after** the hit lands and **before** Conduct's detonation, as its
   own event (`HealedEvent.drain`), so the Battle Log's damage readout stays a
   readout of the damage formula.
-- It is summed per target on a spread move (nothing authored is spread yet).
+- It is summed per target on a spread move.
 
 **Open question this leaves.** A drain's return is now the only healing in the
 game that ignores Wisdom. That is right for a rider on an attack, and it is also
@@ -415,7 +395,9 @@ settled.
 
 `MoveDefinition.manaDiscountOnUse`: each cast permanently lowers that move's cost
 **for that combatant** for the rest of the fight, stacking, floored at 0. Water's
-Wave Shred (80, then 60, then 40, …) is the first and so far only content.
+Wave Shred (70, then 50, then 30, …) is the only content. Its mirror,
+`manaCostGainOnUse`, makes a move dearer each cast and prices the guaranteed lockouts
+(Feint, Blind, Barrier); both bank in `Combatant.moveManaDiscounts`.
 
 Mana is the primary balance lever (CLAUDE.md), so a cost that moves is a real
 extension of the lever rather than a convenience. Two rules keep it honest:
@@ -428,14 +410,9 @@ extension of the lever rather than a convenience. Two rules keep it honest:
   the view's affordability check, and the gem on the button. A second reader of
   `manaCost` is how a button ends up saying 80 while the engine charges 40.
 
-**Open question: the first cast is never discounted**, so a hero whose pool
-cannot reach the authored price can never start the ramp at all. Wave Shred at 80
-is above every Water hero's pool today (Pincer, its only physical-Water carrier,
-sits at 55) — the same shape as Fire's Inferno at 75, and reported rather than
-tuned away. If the intent is "expensive to open, cheap to sustain", it works as
-written the moment a mana relic or a Guild-Hall stat bump exists. If the intent
-is "a ramp you can always start", the discount has to apply *before* the first
-cast, or the authored cost has to come down. That is a designer call.
+**The first cast is never discounted**: "expensive to open, cheap to sustain". A hero
+whose starting pool cannot reach the opening price grows into it — pools grow all run
+(`docs/mana.md`), the same reason a capstone above a starting pool is not a finding.
 
 ## Status-gated targeting (2026-08-30, Frost)
 
@@ -540,8 +517,8 @@ resolution and *can* see this round's work. Both are pinned by
 ## Cost that varies with the BOARD (2026-08-30, Storm; extended 2026-08-30, Iron)
 
 `MoveDefinition.conditionalManaCost`: a **replacement** price that applies while
-the enemy side carries a named status. It has **two sides**, and a move authors
-exactly one:
+the enemy side carries a named status — or, on the third side, while the partner is of a
+named type. A move authors exactly one side:
 
 | Side | Reads | Content |
 |---|---|---|
@@ -568,7 +545,7 @@ something other than the caster's own history (`manaDiscountOnUse`, above).
 - **Exactly one side, unenforced by the type system.** All three fields are
   optional and a move authoring none is a silent dud that never fires. Pinned
   across the whole move table by `test/ironMoves.test.ts`, the same discipline
-  `conditionalPower`'s six siblings follow.
+  `conditionalPower`'s seven forms follow.
 
 **Why "any" is a different mechanic and not a looser "all".** Iron is one of
 Conduct's `triggerTypes`, so an Iron damage move *detonates* the mark it reads.
@@ -583,24 +560,16 @@ reads it, so Overcharge's discount is always self-consuming.
   `effectiveManaCost` remains correct for surfaces with no live fight (draft,
   level-up, compendium), where the authored price is the honest answer.
 
-**Open question this leaves.** Overcharge (60) sits in the pools of two 50-mana
-heroes, so for Squall and Scallywag it is castable *only* at its conditional
-price — a move whose row is dead until the board is fully marked. That is either
-the best version of the design (a real payoff for a two-move setup, on the two
-heroes whose kits can build it) or a row that reads as broken for the first two
-rounds of every fight. Reported rather than tuned away, same as Fire's Inferno
-and Water's Wave Shred. `test/stormMoves.test.ts` asserts the pairing holds —
-any hero who can only afford a conditional-cost move at its discount can also
-reach the status it needs — but nothing in the engine enforces it.
+**Open: a row dead until the board is marked.** A conditional-cost move held by a hero
+whose pool cannot yet reach its full price is castable *only* at the discount — the best
+version of a two-move setup, or a row that reads as broken for the opening rounds.
+`test/stormMoves.test.ts` asserts that any hero who can only afford such a move at its
+discount can also reach the status it needs; nothing in the engine enforces it.
 
-**And the Iron half leaves a sharper version of it (2026-08-30).** Metallic
-Blade's 40 is affordable outright on Gallant's 45 pool, so it never trips that
-assertion — but the Iron slate plants Conduct **zero** times (designer call:
-Iron cashes the mark, a Storm partner or Mind's Cerebral Shock sets it). So the
-discount is not gated on a setup Iron can perform; it is gated on a *team
-composition*. It is the most partner-dependent row in the roster, and unlike
-Overcharge nothing in a test can assert the pairing, because the pairing is not
-within one hero's reach by construction.
+**Iron's version is sharper.** The Iron slate plants Conduct **zero** times (designer call:
+Iron cashes the mark; Storm, Mind's Cerebral Shock and Mech's planters set it), so Metallic
+Blade's discount is gated on a *team composition*, not a setup Iron can perform. Nothing in
+a test can assert that pairing, because it is not within one hero's reach by construction.
 
 ## A move that switches its user out (2026-08-30, Storm)
 
@@ -613,7 +582,7 @@ is the first content.
   target — a pivot is a real decision, and declare-then-resolve is what makes
   prediction the core skill (this file, "Turn & round structure").
 - **It respects lock-in** (2026-08-30 designer call). Routed through
-  `applyVoluntarySwitch`, so the LOCKED 2+ KO rule blocks it exactly as it
+  `applyVoluntarySwitch`, so the LOCKED lock-in rule blocks it exactly as it
   blocks a declared switch. There is no exemption.
 - **A block degrades the move rather than fizzling it.** The buff still lands and
   the mana is still spent; only the pivot half is refused, with its own
@@ -698,9 +667,8 @@ spent, a Rest, or a completed switch. It does **not** reset on an action that
 never happened — a Dazed hero, or one whose target gate went unmet, keeps
 banking. That is the literal reading of the row, and it means a Dazed Stone hero
 wakes up holding a very large Stoneheart, which is the correct payoff for having
-lost a round. (Since Daze became flinch — 2026-08-30, `docs/conditions new.md` —
-that is at most **one** round of extra banking rather than two, and only if the
-Daze's applier was faster.)
+lost a round. (Daze is a flinch, so that is at most **one** round of extra banking,
+and only if the Daze's applier was faster.)
 
 The counter is **live**, which is what separates the two moves beyond their
 percentages:
@@ -736,7 +704,6 @@ Two things it does not share with drain:
   through `applyHpDelta` like any other damage, so a recoil KO counts toward that
   side's KO count and can be the hit that triggers your own lock-in.
 
-This is the recoil shape `docs/authoring-moves.md` §4 listed as unavailable.
 Fire's Volcanic Surge takes its recoil as a self-inflicted Burn instead and
 should stay that way — that shape is better content where it fits (it halves,
 and switching clears it). It does not fit here: a Burn is a flat authored
@@ -941,13 +908,10 @@ Shadow is a deliberately aggressive type, but it is a category and not a move:
 if a second type wants one, it should be priced knowing that this bonus and its
 target's remaining HP move in the same direction.
 
-**Open, deliberately:** the *user*-side version ("double damage while YOU are
-below half"), an inverse ("double against a target above half"), and reading
-any other continuous quantity — mana, stat totals, rounds elapsed — are all
-expressible-looking and none is decided. None is authored today.
-
-> **The user-side version is no longer open — Spirit authored it the next day.**
-> See the section below. The inverse and the other quantities remain open.
+**Open, deliberately:** an inverse ("double against a target above half"), and reading
+any other continuous quantity — mana, stat totals, rounds elapsed — are
+expressible-looking and neither is decided. (The user-side version was built: next
+section.)
 
 ---
 
@@ -1007,7 +971,7 @@ places, because the same question hangs a different mechanic each time:
 | `conditionalStatDeltas` | a multiplier on the move's own stat grants | Prowl, "+10 Attack and +10 Speed, doubled if partner is a Beast" |
 
 Three sibling fields rather than one shared predicate, for the same reason
-`conditionalPower`'s six siblings are siblings: content is **data, not a
+`conditionalPower`'s seven forms are siblings: content is **data, not a
 predicate function** (CLAUDE.md "Architecture"), and a move that wanted two of
 these at once would be unauthorable if they were folded into one.
 
@@ -1021,10 +985,9 @@ things (2026-08-30 designer calls):
   than a roster one.
 - **A fainted partner counts for nothing**, exactly like an empty slot.
 - **Effective types** (`grantedTypes` included), so a hero that grafted Beast
-  through an Evolution satisfies it exactly as an innate Beast does. This is
-  load-bearing rather than incidental: the roster has **one** native Beast
-  hero, and the three heroes with a Beast type-graft path (Sylva, Rime,
-  Mordrax) are how a player's own team reaches the condition at all.
+  through an Evolution satisfies it exactly as an innate Beast does. When the
+  slate landed the roster had one native Beast hero and the grafts were the only
+  way to reach the condition; it has several now, and the grafts still count.
 
 **Read LIVE, at resolution**, which puts it with `conditionalManaCost` and
 `conditionalPower.requiresFieldEffect` rather than with
@@ -1035,8 +998,8 @@ caster can no longer cover the difference the action fizzles for no mana —
 the same shape a cleansed Overcharge already had.
 
 **The locked decision it brushes against.** Nothing here breaks the
-two-pipeline separation (the multiplier is a BasePower-stage input like its
-five siblings) or the flat-stat-modifier rule (doubling a multiple of 5 is a
+two-pipeline separation (the multiplier is a BasePower-stage input like the
+forms before it) or the flat-stat-modifier rule (doubling a multiple of 5 is a
 multiple of 5). What is new is the **counterplay surface**: every damage
 condition before this one could be answered by the defender — cleanse the
 Burn, switch off the Freeze, displace the field, heal above the line. A
@@ -1186,61 +1149,50 @@ hit), unset until the first, kept across a switch like a stat modifier, gone at 
 A passive's `damageModifier.alternatesCategory` fires only when the move's category differs from
 it: never on a first hit, never on a repeat. **Either Hand** is +30% on that condition, and it
 lives on exactly two Evolution paths — Tempest's **Forked** (with Skyfall, Storm's physical Late)
-and Cortex's **Embodied** (with Psychokinesis, Mind's only physical hit) — because a mixed line
+and Reverie's (then Cortex's) **Embodied** (with Psychokinesis, Mind's only physical hit) — because a mixed line
 with one dead hand has nothing to alternate. Both grants are in no pool. Alternating every turn
 lands 1.43 × 1.3 ≈ 1.86, level with the specialist, and only for a kit that can swing both
 hands every other turn — a specialist holding it gets nothing. It replaced Thunderhead
 (Feedback Loop) and Overmind (Entanglement), both deleted.
 
 Measured on the day (4000 focus runs, the one-ply pilot alternating only when the bonus wins
-the turn): at +10/+10 Forked +0.45 against Thunderhead's +0.28 and Embodied −0.19 against
-Overmind's −0.79, the specialist conversions leading. **Raised to +20/+20 per user direction**,
-and Psychokinesis given the slate's verb (100 BP, −20 Wisdom on the target — the body's blow
-opens the mind for the magical hand that follows; 65 mana): Forked **+0.83 against Lightning
-Rod's +0.85**, Embodied −0.15 against Construct's +0.39 (inside one standard error). A floor:
-the pilot never sets a hand up.
+the turn), with Psychokinesis given the slate's verb (−20 Wisdom on the target, opening the
+mind for the magical hand that follows): Forked **+0.83 against Lightning Rod's +0.85**,
+Embodied −0.15 against Construct's +0.39 (inside one standard error). A floor: the pilot
+never sets a hand up.
 
 ## Renew's stacked payoffs (LOCKED — 2026-08-30 designer sign-off)
 
-Renew is currently read **three separate ways**, and as of the Nature slate all
-three can land on one hero at once:
+Renew is read **three separate ways**, and all three can land on one hero at once:
 
-1. **It heals.** End of round, then halves (`docs/conditions new.md`),
-   snapshotted through the healing formula at cast time so the caster's Wisdom
-   and STAB are already inside the stored magnitude.
+1. **It heals** — a percent of the holder's max HP when it lands and at the end of each of
+   the next two rounds, snapshotted off the caster's Wisdom and STAB
+   (`docs/blessings-and-statuses.md` §4).
 2. **It is a damage condition.** `conditionalPower.requiresUserStatus` — Seed
    Shot and Branch Slam double while the user carries it.
-3. **It is a stat.** Under Verdant Earth
-   (`FieldEffectDefinition.statBonusEqualToStatusMagnitude`) every hero gains
-   flat Attack and Intelligence equal to their **own** current Renew, and the
-   Nature slate ships two setters for that field effect.
-
-The consequence at the top of the curve: Overgrowth's Renew 100, snapshotted
-through a Nature caster to roughly 125, is simultaneously ~250 HP of healing
-across the fight, a doubling of an 80 BP move, and +125 Attack and +125
-Intelligence on one hero — larger than any base stat in the roster — decaying
-by half a round at a time.
+3. **It is amplified by the board.** Under Verdant Earth Renew heals ×2 and healing past
+   max HP becomes Shield (`amplifiesStatusHealing`, since 2026-09-28; until then the third
+   reading was flat Attack and Intelligence equal to the holder's Renew, which a percent
+   Renew would have shrunk to nothing).
 
 **This is intended, not a stacking accident.** The reasoning is about what
-Renew *is*: a slow, passive effect that does nothing on the turn you spend on
-it, and returns its value in halving instalments over the rounds after. A
-status shaped like that has to have powerful payoffs or it is never worth the
-turn — every point of "safe" you tune out of it is a point of "why would I ever
-press this". The three readings are the payoff, and the halving curve is the
-limit on them: the +125 is +62 next round and +31 the round after, so the swing
-is a window a hero has to actually use, not a standing buff.
+Renew *is*: a slow, passive effect that returns its value in instalments over the rounds
+after the turn spent on it. A status shaped like that has to have powerful payoffs or it is
+never worth the turn — every point of "safe" you tune out of it is a point of "why would I
+ever press this". The three readings are the payoff, and Renew's short life is the limit on
+them: the window closes two rounds after the last cast, so the swing is something a hero
+has to actually use, not a standing buff.
 
 What this means for a future slate: **do not report Renew's payoffs stacking as
 a finding**, the same way "the capstone costs more than a starting pool" is no
 longer a finding (`docs/mana.md`). A *fourth* reading of Renew would be a new
 conversation — three is the count that has been signed off. Real findings in
-this area would be a payoff that does **not** decay with the magnitude
-(breaking the window that limits all three), or one that reads a *different*
-hero's Renew than its holder's.
+this area would be a payoff that outlasts Renew itself (breaking the window that limits
+all three), or one that reads a *different* hero's Renew than its holder's.
 
-**Open, and separate from the above:** the magnitudes themselves are untested
-in play — 2026-08-30, "we'll see how these work in practice". The shape is
-locked; the numbers are not.
+**Open, and separate from the above:** the magnitudes are untested in play, and the
+percent rework was not measured (per user direction). The shape is locked; the numbers are
+not.
 
 ---
 
@@ -1271,11 +1223,9 @@ and only content.
 
 Like Stone's retribution, this is **fixed damage the damage formula never
 touches**: no ratio, no STAB, no TypeMult, no variance, no crit, and no RNG
-drawn. The same open question therefore extends to it — whether a future relic
-or equipment `DamageModifier` should reach a detonation. It does not today, and
-"fixed means fixed" remains the simplest defensible answer, but the game now has
-**two** independent damage sources outside the type chart rather than one, which
-is worth deciding on purpose rather than by accumulation.
+drawn. **Open:** the same question as retribution's — whether a `DamageModifier` should
+reach it. It does not today; with two fixed-damage sources outside the type chart, it is
+a category worth deciding on purpose rather than by accumulation.
 
 ---
 
@@ -1339,9 +1289,9 @@ target read off something other than the one global field slot.
   (2026-09-14, `stat-scaling.md` phases 2a and 2b, per user direction — the top after a full
   playtest run): `statModifierFloor` / `statModifierCeiling` / `applyStatModifierDelta`
   (state.ts, `STAT_CEILING_MULTIPLE` = 4), applied at WRITE by every writer of `statModifiers`
-  — a move's deltas, Brain Flay's doubling, a passive's `statDelta` — so a debuff can at most
+  — a move's deltas, a passive's `statDelta` — so a debuff can at most
   halve a stat and a buff can at most take it to **four times** what it started the fight at.
-  The third Brain Flay into a bottomed target and the fourth Kindle on a maxed one land 0 and
+  A debuff into a bottomed target and the fourth Kindle on a maxed one land 0 and
   say so (`StatChanged.capped`); the floor at 1 below is a defence no content reaches. Loadout
   moves both ends with the base. Player-facing: "can't go any lower" / "can't go any higher".
 
@@ -1349,8 +1299,8 @@ target read off something other than the one global field slot.
 
 Arcane Overflow grants both allies "Attack and Intelligence equal to the user's current
 Mana (before casting this)". `MoveDefinition.derivedStatDeltas` is the field: a small
-`source` union (`'userManaBeforeCast'` is its only member today) plus the stats it
-feeds. The engine expands it into ordinary `StatDelta`s at cast time, so everything
+`source` union (`'userManaBeforeCast'`, and Beast's `'userEffectiveAttack'`) plus the
+stats it feeds. The engine expands it into ordinary `StatDelta`s at cast time, so everything
 downstream — the target resolution, the `StatChanged` events, `statModifiers` itself
 — is byte-for-byte the path an authored delta takes.
 
@@ -1433,10 +1383,8 @@ Water move plants nothing, and a spread Water move marks each target once (one
 > `Haunt.spreadTriggerTypes` is Spirit and Mind. Planting and cashing stay in two different
 > columns either way — that separation is what makes the graft load-bearing rather than flavour.
 >
-> **Static Tide and Shock Bubble are RESERVED, not deleted** — held for a future recruit-only
-> Water hero that grafts Storm. The passive keeps its four tests (nothing grants it, so nothing
-> else covers it), and Shock Bubble sits in the pinned orphan list in `stoneMoves.test.ts` with
-> the reason written next to it.
+> Static Tide is held again — Pincer's Tideclaw path grants it beside Metallic Blade, an
+> Iron hit being the detonator its mark wants — and Shock Bubble sits in Water pools.
 
 ### Reacting to a stat CHANGE (2026-09-02, Rime)
 
@@ -1471,17 +1419,15 @@ Two additions, both from one hero's Evolution node.
 `field` (default `'amount'`, so Sanguine and the two Class passives are untouched), and
 `PassiveEffect { kind: 'applyStatus' }`'s `magnitude` accepts a `PassiveAmount` as well
 as a flat number. Content: **Restorative Toxin** (Apothecary) — *whenever this hero
-applies Poison, it gains twice that amount as Renew* — which reads `StatusApplied`'s
-`magnitude` at `multiplier: 2`. Before this, a passive could only hand out a magnitude
+applies Poison, it gains Renew off that amount* — which reads `StatusApplied`'s
+`magnitude` through a multiplier. Before this, a passive could only hand out a magnitude
 the author had typed, so "twice what you just did" had no vocabulary; the `heal`
 primitive had it and `applyStatus` did not, for no reason beyond nobody having needed it.
 
-> **Units differ across the 2x, deliberately noted rather than fixed.** Poison's
-> magnitude is a *percent of the victim's max HP*; Renew's is *flat HP on the caster*.
-> So Toxic Spores (Poison 10) pays Renew 20 — a quarter of Sylva's 80 HP — and Blight,
-> which is Poison 20 on *both* foes, fires twice for Renew 40 each, stacking to **80**
-> off one cast. Poison stacks too, so a re-application pays again. This is inside the
-> "Renew payoffs are intended" call, but 80 is the number to watch first.
+> Since Renew became a percent (2026-09-28) both sides are a percent of max HP, and the
+> payout is **×0.5** of the Poison applied (`blessings-and-statuses.md` §4.3). Poison
+> stacks, so a re-application pays again, and a spread Poison fires the passive per target —
+> inside the "Renew payoffs are intended" call.
 
 **`PassiveEffectTarget` gained `'ally'`** — the owner's *active partner*, never the owner,
 resolving to nobody when the owner is alone on the field — and **`PassiveEffect` gained
@@ -1496,9 +1442,10 @@ strips the partner's own Renew. `test/passives.test.ts` pins all five.
 
 `PassiveTriggerCondition` gained **`eventFieldNegative`**, the exact mirror of the
 `eventFieldPositive` Rime needed, on the same terms: a missing or non-numeric field
-never matches, and zero is neither a rise nor a drop. Content: **Entanglement**
+never matches, and zero is neither a rise nor a drop. First content: **Entanglement**
 (Cortex's Overmind Evolution) — *whenever an enemy's Wisdom drops, that enemy is
-Haunted*.
+Haunted*. Overmind and Entanglement were deleted on 2026-09-17 (Either Hand, above); the
+trigger has other holders.
 
 The pairing is the point. Wisdom is the magical `defStat`, so the same debuff that
 softens a target now also marks it, and Cortex's slate is a Wisdom shredder end to end
@@ -1517,8 +1464,8 @@ cast into a spread without ever double-hitting a move that already spreads.
 `moveTiers` may carry a few moves outside its own type, with no Evolution and no STAB —
 the Pokémon TM precedent, where the option existing matters more than the option being
 optimal. First content: Cortex takes **Phantom Strike** (Spirit) and **Cog Bop** (Mech),
-the only two things a base Cortex can point its 53 Attack at, since the Mind slate is
-100% magical. Coverage is a handful of moves, never a second slate — that is what a
+the only two things a base Cortex could point its 53 Attack at, since the Mind slate was
+then 100% magical. Coverage is a handful of moves, never a second slate — that is what a
 `typeGraft` and its `learnableMoveIds` are for.
 
 ### Reacting to a HEAL (2026-09-02, Solace)
@@ -1539,7 +1486,7 @@ sharing an amount**, emitting one `StatChanged` each, exactly as a move's `statD
 does — which keeps a stat-reactive passive (Entanglement) reading them one at a time.
 Existing single-stat content is untouched.
 
-> **Nothing caps it but the mana.** Consecrate hits both allies, so one 45-mana cast is
+> **Nothing caps it but the mana and the ×4 ceiling.** Consecrate hits both allies, so one 45-mana cast is
 > +20/+20 on two heroes and the next cast stacks on top. Compare Rally: a whole turn for
 > +20 Attack to both, and no heal. The dial is the amount; 10 is the obvious step down.
 
@@ -1576,9 +1523,9 @@ simply not firing on Drain. Both emitters now feed the hook.
 > **Combustion** — *whenever this hero is Burned, gain 20 Attack* — read the type's built-in
 > drawback as its fuel rather than needing an enemy to cooperate.
 
-**Valor's Tempering** (*whenever this hero takes damage, gain 10 Defense*) is deliberately
-unbounded within a fight: Valor is the hero that wins the long one, and the Pact Clock is
-what brackets that, not a cap on the passive.
+**Valor's Tempering** (*whenever this hero takes damage, gain 10 Defense*) has no cap of its
+own: Valor is the hero that wins the long one, and the Pact Clock and the ×4 fight ceiling
+are what bracket it, not a cap on the passive.
 
 ### The floor: no effective stat below 1 (LOCKED — 2026-08-30 designer call)
 
@@ -1594,16 +1541,15 @@ chokepoint every reader already goes through: the damage pipeline reads both sid
 its ratio through it, and `getMaxHp`/`getMaxMana` are thin wrappers over it. Three
 details:
 
-- **Applied last**, after Freeze's halving and Verdant Earth's bonus, so a Speed-1 hero
+- **Applied last**, after Freeze's halving and any board-conditional grant, so a Speed-1 hero
   that gets Frozen still reads 1 and still takes a turn.
 - **Flat across every `StatKey`**, not carved out per stat. No content debuffs `hp`,
   `manaPool` or `mpRegen` today, so the floor cannot bind on those — and a future
   "MP Regen 0" debuff should be a conversation rather than something this clamp
   silently forbids.
-- **The modifier itself was not clamped** here, only what is read out of it — until
-  2026-09-14, when `stat-scaling.md` phase 2a held every WRITE at −½(base + loadout)
-  (`applyStatModifierDelta`, above). A modifier written directly by a fixture can still sit at
-  −9999 and this floor still answers it; content cannot put one there any more.
+- **The modifier itself is clamped at WRITE**, separately: every write is held at
+  −½(base + loadout) (`applyStatModifierDelta`, above). This floor answers what content can
+  no longer reach — a modifier written directly by a fixture can still sit at −9999.
 
 `test/mindMoves.test.ts` pins it from both ends: the floored value itself, and that an
 attack into a floored defender still deals positive, finite damage.
@@ -1631,19 +1577,17 @@ made the shape unauthorable, not just this move.
 
 **Persistence on switch (LOCKED — 2026-08-15 designer sign-off): stat mods persist
 through a switch.** Cycling doesn't launder a bad board state — a debuffed hero
-comes back debuffed. This matches the already-implemented state shape
-(`state.ts StatModifiers` attaches to the `Combatant` record, not the active slot),
-so no code change was needed. Still interacts with the unresolved sixth (status)
-engine contract for anything status-shaped, not just flat stat mods.
+comes back debuffed. `state.ts StatModifiers` attaches to the `Combatant` record, not
+the active slot. (Statuses carry their own `clearsOnSwitch` flag.)
 
 ---
 
 ## Switching, bench regen, and lock-in
 
 - A combatant can **switch** with a benched ally as its action for the round.
-- **Benched heroes regenerate** (HP, and per `mana.md`, possibly mana), which makes
-  switching a *productive* action, not a purely defensive one. Renew ticks at round
-  boundaries (per the proposed turn/round model above).
+- **Benched heroes regenerate** — a flat HP regen and their MP Regen every round
+  (`mana.md`) — which makes switching a *productive* action, not a purely defensive one.
+  Renew keeps ticking on the bench.
 - **Lock-in rule (LOCKED):** once **half a side** is KO'd — `ceil(size/2)`, floor 2
   (`lockInThreshold`, `src/engine/state.ts`): 3 of the six a full roster fields, 2 of any
   smaller side — switching is **disabled** for that side. This is self-regulating design: early fights are a
@@ -1651,8 +1595,7 @@ engine contract for anything status-shaped, not just flat stat mods.
   transitions into a committed late-game slugfest. Do not add extra switch
   restrictions on top of this — the single rule is the mechanic.
 
-Open dependencies for switching: the stat-mods-on-switch question above, and any
-mana-on-switch behavior (`mana.md`).
+Stat mods persist through a switch (above); mana overflow survives one (`mana.md`).
 
 ---
 
@@ -1675,9 +1618,9 @@ regression:
   `mana.md`.
 - **No spread damage reduction** (doubles-only, covered above).
 - **No VGC stat-stage brackets** — modifiers are flat additives (covered above).
-- **No percentage-of-max-HP healing, and no variance on heals.** Both are covered
-  in "The healing formula" above, with the reasoning; both look like consistency
-  fixes and are regressions.
+- **No percentage-of-max-HP healing on a heal move, and no variance on heals.** Both are
+  covered in "The healing formula" above, with the reasoning (Renew's percent is the one
+  named exception); both look like consistency fixes and are regressions.
 
 ---
 
@@ -1690,9 +1633,9 @@ Three facts about this engine compose into an unbounded fight:
 1. **Mana regenerates** every round, for the active pair *and* the bench (`mana.md`), so
    it is not a finite resource over a long enough fight.
 2. **There is no accuracy stat and no PP**, so a move's only cost is that mana.
-3. **Stat modifiers have no ceiling.** `getEffectiveStat` floors every stat at 1 and
-   nothing caps it, and two moves — Arcane Overflow and Beast's Apex Predator — are
-   authored to *compound* deliberately.
+3. **Stat modifiers had no ceiling** when the Clock was built, and two moves — Arcane
+   Overflow and Beast's Apex Predator — are authored to *compound* deliberately. (A
+   ceiling of ×4 now exists; see "What it is not".)
 
 So a side whose sustain per round exceeds the opposing side's damage per round wins by
 attrition, and there was **no round limit anywhere in the engine** to notice. Read the
@@ -1702,8 +1645,8 @@ never an upper one. The Pact Clock is the upper one.
 
 ### The rule
 
-From **`PACT_START_ROUND` = 30**, at the round boundary, **every combatant on the board**
-loses a fraction of its **max HP**:
+From round **30** (`DEFAULT_PACT_CLOCK.startRound`, `engine/combat/pactClock.ts`), at the
+round boundary, **every active combatant** loses a fraction of its **max HP**:
 
     fraction = 0.10 + 0.05 × (round − 30)
 
@@ -1724,8 +1667,9 @@ Four properties, each deliberate:
   the escalation (10 → 15 → 20 …) makes any active body lethal within a few rounds, so stalls
   end later, not never, and "the side that is ahead still wins" holds. The immediate reason
   is the mortal companion — a benched mortal dying to the Clock was the one death that is not
-  a decision — but the rule is general: the Clock has no exceptions and keeps none. Phase 5
-  re-measured stall length (below).
+  a decision — but the rule is general: the Clock has no exceptions and keeps none.
+  Re-measured over 892 simulated fights: 0.8% reach round 30 and none hit the engine cap,
+  so it closes every stall it closed with the bench in.
 - **No passive-reaction pass follows it** (unlike the status ticks it sits beside in
   `resolveRound`). A passive that healed off the pact would blunt the exact thing that must
   not be blunted, and "the terminator is not a trigger source" is a cheaper rule to hold
@@ -1749,18 +1693,17 @@ way a Bleed death does.
 ### What it is not
 
 It is **not** the answer to setup on its own, and should not be tuned as though it were.
-Two cheaper levers were considered alongside it and remain open:
+Two cheaper levers were considered alongside it:
 
-- **A cap on stat modifiers.** `getEffectiveStat` already floors every stat at 1 and never
-  ceilings one — the invariant is half-built. Capping the modifier would bound Apex
-  Predator and Brain Flay rather than break them, and is the Pokémon-standard, instantly
-  legible version of "stats stop going up". **Not implemented.**
+- **A cap on stat modifiers — BUILT** (2026-09-14, `docs/stat-scaling.md`): a fight
+  modifier is held inside −½ … +3× of (base + loadout), so a buff can at most take a stat to
+  four times what it started the fight at (`STAT_CEILING_MULTIPLE`; "Stat modifiers" above).
 - **A stat-clearing effect primitive (a Haze).** Setup bounded by *the opponent having an
   answer* rather than by a number is the VGC-native shape, and it is one new verb in the
   effect vocabulary. **Not implemented.**
 
 > 🔒 **OPEN — flag before hardening.** Round 30 is the designer's number, not a measured
-> one. The number to replace it with is the **95th percentile of real Act 3–5 fight
+> one (the 0.8% above says it rarely binds, not that it is the right number). The number to replace it with is the **95th percentile of real Act 3–5 fight
 > lengths** — and the measurement has to respect that the switching game is *supposed* to be
 > slow: bench mana regen is the resource-cycling engine, and the lock-in rule already turns
 > a 2-KO fight into a grind on purpose. A clock set too early does not break a stall, it

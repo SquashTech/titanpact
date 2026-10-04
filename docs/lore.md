@@ -1,14 +1,16 @@
 # lore.md — The Pact, the Seal, and the Endbringer
 
-> Module of the Titanpact `/docs` suite. Companion to `locations.md` (the six places and
-> their factions), `run-loop.md` (which owns Act 6 and the final battle as *structure*),
+> Module of the Titanpact `/docs` suite. Companion to `locations.md` (the places),
+> `run-loop.md` (which owns the finale as *structure*), `titan-eyes.md` (the finale fight)
 > and `combat.md` (which owns the Pact Clock as *mechanism*). This doc owns the layer
 > none of them do: **what the run is about**, and which existing mechanics are already
 > saying it.
 >
 > Signed off 2026-09-05, per user direction. It is deliberately written *after* the
 > systems rather than before them — almost everything below is a reading of something
-> already in the game, not an addition to it.
+> already in the game, not an addition to it. **The fiction has not been re-counted for four
+> acts** (2026-10-02): where it says five seals broken and one shut, the game now breaks four
+> and leaves two of the base six shut (§5).
 
 ---
 
@@ -37,7 +39,7 @@ This is the load-bearing idea, and it is a **reading of the type chart**, not an
 
 `src/data/typechart.ts` makes Ancient a pure defensive wall: every attacker row carries
 `Ancient: 0.5`, and Ancient's own attacker row is deliberately empty. `locations.md`
-already noticed the consequence — all six faction champions are authored **X/Ancient**, so
+already noticed the consequence — every Guardian is authored **X/Ancient**, so
 nothing on the board is ever super-effective against one.
 
 The fiction is that the Ancient half is not the champion's **nature**. It is its **duty**.
@@ -79,7 +81,7 @@ condition arriving on schedule. **The bench is out of the leak** (2026-09-13,
 `titanspawn-overhaul.md` §6): what stands in the seal's draught takes its weight; what
 stands behind the line does not, yet.
 
-Three properties the mechanic already has become fiction for free:
+Two properties the mechanic already has become fiction for free:
 
 | Mechanic (locked in `combat.md`) | What it means |
 |---|---|
@@ -104,58 +106,36 @@ heroes are the characters.
 
 The arithmetic already closes, and the fiction takes it as given rather than arranging it.
 
-There are **six** locations. Act 1 is always Wild's Edge, and acts 2-5 draw four of the
-remaining five without replacement (`locations.md` §1). So **every run breaks exactly five
-seals, and exactly one stays shut.**
+**As built (four acts, 2026-10-02):** there are **six** base seal locations. Act 1 is always
+Wild's Edge, and acts 2–4 each pick one of two drawn from the rest (`locations.md`), so **every
+run breaks four seals and leaves two of the base six shut** — more if it stood in a bought
+Location (`unbrokenSealLocationIds`, `src/run/locations.ts`). The fiction below was written for
+five broken and one shut and has not been re-written; read "the sixth" as "the seals that held".
+The Champion screen already says "The last two held".
 
-- The five you broke are why the Herald walks.
+- The seals you broke are why the Herald walks.
 - **The sixth is why it is only the Herald.** One warden held. The binding failed at five
   points out of six, and a breach five-sixths open is wide enough for the Titan's hand and
   not for the Titan — the seal the player never reached is the difference between "the
   Herald is through" and "the Titan is loose *and nothing is holding it*". It is why there
   is a world left at all.
 
-Which location that is changes every run, and the player is told which one it was.
-(With a Location bought at the Constellation — the Holy Sanctum, 2026-09-19 — a run that
-stood in it leaves TWO of the base six shut; "the sixth" above is then "the ones you never
-reached", and `unbrokenSealLocationIds` is plural for it. The fiction has not been
-re-written for that yet.) This is
-the natural anchor for `progression.md`'s light meta-progression: the sixth seal is the
+Which location that is changes every run, and the player is told which one it was. This is
+the natural anchor for `progression.md`'s light meta-progression: the unbroken seal is the
 thread between runs, and the reason the world survives to be run again.
 
 ## 6. The finale, and why the Guardians come back weaker
 
-With five seals broken, the Endbringer walks — and so do the five, because a broken lock
-does not stay on the floor. It comes out attached to the thing it was holding.
+**Superseded 2026-09-17/18** (`titan-eyes.md` §10, `run-loop.md` §4): the shipped finale does not
+field the broken Guardians. The Herald leads one Late Titanspawn per broken seal — what the lands
+turned — then the Eyes (§7). A Guardian's win is still snapshotted as a `BrokenSeal` (its act,
+Location and the power it was beaten at), and the old path that rebuilds each champion UNSEALED
+— its Ancient half dropped, because the Ancient *was* the seal and the player already took it
+(`unsealedIdFor`, `src/data/enemies.ts`) — remains in `generateFinaleEncounter` only as the
+fallback when no escorts are passed.
 
-**They come back without their Ancient half.** The Ancient in them *was* the seal, and the
-player already took it. In the final battle the five Guardians field as their **base type
-alone**: the Manticore as mono-Beast, the Kraken mono-Water, the Elder Bough
-mono-Nature, the Dragon mono-Fire, Yugzulach mono-Shadow, the Skeleton King
-mono-Spirit. Only the Endbringer — the Herald — keeps the wall.
-
-This is fiction and balance agreeing, which is why it is the shape that shipped:
-
-- **Fiction:** breaking a Guardian breaks its ward. What stands up afterward is just the
-  beast that was carrying it.
-- **Balance:** six X/Ancient bodies at ~700 stat total, none of them takeable at
-  super-effective damage, against a 30-round clock, is a finale that ends in a **timeout** —
-  and `FightScreen` resolves a mutual wipe as a **player loss**. Stripping Ancient off the
-  five makes the type coverage the run actually taught the player *work*, and leaves
-  exactly one true wall to grind: the Herald.
-- **Cost:** zero new engine vocabulary. `enemies.ts` derives an unsealed champion from the
-  authored one by dropping a type — see `run-loop.md` §6.
-
-**They also arrive at the power the player beat them at** (2026-09-05, per user
-direction) — the exact `RosterEntry` snapshot taken at the act's boss win, level and act
-scaling included. Because seals are broken in act order and enter in that order, the
-final battle **escalates across itself**: the Act 1 champion first, the Act 5 champion
-last, then the Herald. The run is replayed in ascending order by the things it broke.
-
-The second-order consequence, named because it is real: this **rewards taking hard
-locations early**, since a champion beaten in Act 2 returns at Act 2 power. That pull is
-accepted, not accidental — it puts a price on `locations.md`'s "when, not whether", and
-the price is paid at the only moment the whole run is on the table at once.
+The fiction it carried still holds: breaking a Guardian breaks its ward, and what stands up
+afterward is just the beast that was carrying it.
 
 ## 7. The Endbringer
 
@@ -182,23 +162,20 @@ out — making it look away — and that *is* the pact. Binding is mutual and is
 has already put the Titan down, and a Titan is on the ground when it has been made to look
 away. The run ends with a Titan on the player's leash, asleep again for a thousand years if the
 seals are kept, its Herald broken and its Eyes closed at the Threshold, and five holes in the
-world where the wardens used to be. The tutorial's "complete the Pact with the Titan" is the
-same sentence from the other side.
+world where the wardens used to be.
 
-This also closes what used to be open here: whether the win should be *survival* rather
-than *reduction to 0 HP*. A Titan cannot be reduced to 0 HP, which is why survival read as
-the better fiction — but a Herald can. Reduction is the win, and it is now the right one
-rather than the free one.
+**The win is reduction, not survival.** A Titan cannot be reduced to 0 HP, which is why survival
+once read as the better fiction — but a Herald and the Eyes can, so reduction is the right win.
 
 ## 8. What the fiction constrains
 
 Not much, on purpose — but these three are now load-bearing and should be flagged rather
 than quietly broken:
 
-1. **A faction champion is Ancient-second.** Every one of the six is, and `locations.md`
+1. **A Guardian is Ancient-second.** Every one is, and `locations.md`
    already calls this a convention. It is now a *rule*: the Ancient half is the seal, so a
-   champion without one is a champion that is not part of the binding. If a seventh
-   location is ever authored, its champion is Ancient-second or it is not a seal.
+   champion without one is a champion that is not part of the binding. Every new location —
+   the four bought ones included — has an Ancient-second champion, or it is not a seal.
 2. **Ancient stays a defensive-only type.** `typechart.ts` already carries a comment
    telling the reader to keep the attacker row empty. The fiction is now the second reason:
    a seal is not a weapon.
@@ -207,13 +184,10 @@ than quietly broken:
 
 ## 9. Open, and deliberately so
 
-- **How much of this the player is ever told.** The current surfaces that could carry it
-  are the act intro (`ActIntroScreen`), the Pact Seal screen (`run-loop.md` §6), the Act 6
-  arrival, and the run summary. Nothing here requires a cutscene, and the house style so
-  far — one line of flavor per location, no exposition — argues for keeping it that way.
-  **Not written yet.**
-- **Whether the factions know.** The reading above says they have forgotten. A version
-  where the *leaders* remember and the basics do not is available and free — it would
-  change nothing but a handful of flavor strings.
+- **How much of this the player is ever told.** What exists: the first-run lore card (four lines,
+  `LoreScreen`, `docs/tutorial.md`), the act intro (`ActIntroScreen`), the Pact Seal screen, the
+  finale's three beats (`HeraldScreen`, `TitanRiseScreen`, `TitanBoundScreen`) and the champion's
+  hall. The house style — one line of flavor per surface, no exposition — argues for keeping it
+  that way. Whether anything more is wanted is open.
 - **What the player character wants.** Deliberately unspecified. "Pactbearer" is a role,
   not a person, and the heroes are where the characterisation budget goes.

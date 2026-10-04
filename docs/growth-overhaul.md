@@ -1,22 +1,15 @@
 # growth-overhaul.md — The Growth Overhaul
 
-> **STATUS: DECIDED AND BUILT (2026-09-10, per user direction). ALL SEVEN PHASES OF §8 ARE IN.**
-> **Then partly REVERSED by `xp-overhaul.md` (2026-09-13, phases 1–3):** the Scroll ladder of §4,
-> §11 and §12 is deleted — moves and the Evolution come from a per-hero level schedule, and a
-> late hero gains on par instead of staying behind. §1's rule, §3's grades and §6's raw hire
-> stand. Read `xp-overhaul.md` §9 for exactly which lines here it reversed.
-> Gems are gone, moves come only from Mastery Scrolls, levels are automatic and cap 30,
-> Evolutions come from the Crucible, a Guild hire arrives raw, the difficulty curve has been
-> re-fitted against all of it, and all 36 heroes carry authored growth grades.
-> **§11 (2026-09-11) is a SECOND PASS that supersedes §5**: Evolutions moved off the Crucible onto
-> the 6th Scroll of a longer ladder, the Crucible now grants a Class, Classes are verbs, and the
-> Mentor is an Early–Mid Tutor. `CLAUDE.md`'s remaining invariants still
-> describe *that* game and are
-> still the rules in force until the phase that replaces each one lands. This module is the
-> destination, and §8 is the route — **check its Status column before assuming anything here
-> runs.** Where it disagrees with `leveling-and-ranks.md`, `progression.md` or `run-loop.md`,
-> those files describe what runs today and this one describes what replaces it — neither is
-> wrong; they are separated in time. Each phase in §8 updates the others as it lands.
+> **STATUS: BUILT IN FULL (2026-09-10, per user direction; second pass §11 2026-09-11, third pass
+> §12 2026-09-12).** What is still in force from this doc: §1's rule, §3's automatic roster-wide
+> levelling and growth grades, §6's finished-vs-raw recruit line, §7's deletions, and §11's
+> Crucible-grants-a-Class, Classes-as-verbs and the Mentor.
+> **Superseded:** the Mastery Scroll ladder of §4, §11 and §12 was deleted by `xp-overhaul.md`
+> (2026-09-13 — moves come from a per-hero level schedule), and the Evolution then moved onto
+> Mastery pips (`mastery.md`, 2026-09-14). §5's Crucible-grants-an-Evolution was reversed by §11.
+> §3's level-curve table was re-authored as XP (`xp-overhaul.md` §2) and cut to four acts
+> (`xp-overhaul.md` §5). Act 4's Forge row (§11) became the Tutor (`gear-absorption.md` §4).
+> Superseded sections keep their heading and a pointer; the current rule is in `CLAUDE.md`.
 
 ---
 
@@ -38,18 +31,15 @@ a shared vocabulary. The engine holds that line; the reward layer had stopped.
 **Why Gems failed specifically**, since it is the guard rail for everything below:
 
 1. **Free re-allocation removed the weight.** A decision you can undo for free is admin, not
-   strategy. Re-allocation was added to solve roster churn — a real problem, but Gems were the
-   wrong thing to ask to solve it.
+   strategy.
 2. **A Gem has no identity.** Ruby / Amethyst / Citrine are a colour code for a number. "+5 Attack"
    never becomes a story; "you learned Ember Cascade" is a thing that happened.
-3. **The caps were inert.** A run earned roughly 40 Gems against a `GEM_CAP_PER_HERO` of 20 × six
-   heroes = 120 capacity, so the hero cap could essentially never bind. Two numbers the player had
-   to hold in their head that did nothing.
+3. **The caps were inert.** A run earned roughly 40 Gems against a capacity of 120, so the hero cap
+   could essentially never bind.
 
-And the proportion is the tell: ~40 Gems is ~200 stat points across a whole roster, maybe +50 on a
-core hero — under 10% of a 550-point stat line — against one late Legendary at 90 points in a
-single decision. **Gems delivered item-comparable power at roughly ten times the attention cost per
-point.**
+And the proportion is the tell: ~40 Gems is ~200 stat points across a whole roster, against one
+late Legendary at 90 points in a single decision. **Gems delivered item-comparable power at roughly
+ten times the attention cost per point.**
 
 Test any future reward proposal against the rule above before anything else.
 
@@ -64,13 +54,13 @@ stated as structure.
 |---|---|---|
 | Frequency | every fight | ~15 picks a run |
 | Shape | **automatic, no interface** | **chosen, one screen each** |
-| Carries | Level, and the stats it rolls | Mastery Scrolls, the Crucible, items, Boons, Classes, recruits |
+| Carries | Level, and the stats it rolls | Mastery, the Crucible, items, Boons, Classes, recruits |
 
 - **Level is what a hero is.** Never a decision — it ticks like a clock, identically for everyone.
-- **Rank is what a hero knows.** Nothing but decisions.
+- **What a hero knows is chosen.** (Drafted as Mastery Rank; Rank is gone — today the chosen axis
+  is Mastery pips, `mastery.md`, and the schedule's offers, `xp-overhaul.md` §4.)
 
-Two numbers that *behave* differently are far easier to hold than two that behave alike, which is
-what defuses the Level/Rank confusion risk. See §4 for the UI consequence.
+Two numbers that *behave* differently are far easier to hold than two that behave alike.
 
 ---
 
@@ -78,36 +68,25 @@ what defuses the Level/Rank confusion risk. See §4 for the UI consequence.
 
 ### XP is automatic and roster-wide
 
-**Every roster hero levels every fight, fielded or benched. There is no pool and no allocation.**
-`MAX_LEVEL` = 30.
+**Every roster hero levels every won fight, fielded or benched. There is no pool and no
+allocation.** `MAX_LEVEL` = 30. `src/run/growth.ts`.
 
-**There IS a screen, added 2026-09-10 (per user direction): `LevelUpScreen`, a REPORT.** The
-distinction the overhaul cares about is that a screen must not exist to collect a decision that is
-really a spreadsheet — not that growth should happen invisibly. Levelling was landing silently: the
-number on the hero sheet was different next time you looked at it, and the moment it changed was
-nowhere. So the screen is a beat, not a form — it names each hero, the level it crossed, and which
-of its seven stats the roll actually took, then it has one button. Every growth stat gets a cell
+**A level-up REPORT is allowed; an allocation screen is not.** The distinction is that a screen
+must not exist to collect a decision that is really a spreadsheet — not that growth should happen
+invisibly. The report names each hero, the level it crossed, and every growth stat as a cell
 whether it rolled or not, because the misses are what make the hits read as a **roll against a
-grade** rather than as an authored grant. It sits FIRST in the post-fight chain, ahead of the
-Banner and everything under it: those are what the act pays, this is what the fight did.
+grade** rather than an authored grant. (Since 2026-09-30 it lives on the victory screen; see
+`CLAUDE.md`.)
 
 Participation-based XP (Fire Emblem's actual model) was considered and **rejected**: it produces the
-runaway where your best four level, your sideboard rots, and by Act 4 you cannot rotate. Roster-wide
-automatic XP gets the screen removal — which was the only thing level 30 actually required — without
-buying that problem. A hero rotated in at Act 4 is at parity, and rotating costs nothing, which is
-*better* for strategic churn than participation XP, not worse.
+runaway where your best four level, your sideboard rots, and by Act 4 you cannot rotate. A hero
+rotated in at Act 4 is at parity, and rotating costs nothing, which is *better* for strategic churn.
 
-**BUILT 2026-09-10.** `src/run/growth.ts`; the curve was `LEVEL_AFTER_ENCOUNTER`, authored
-outright rather than derived from a per-fight rate, because the act-end figures below are the
-decided shape and a rate would only approximate them. **Since 2026-09-13 the XP a fight pays is
-the authored object and par is derived from it** (`ENCOUNTER_XP_BY_ACT`, `docs/xp-overhaul.md` §2);
-the act-end figures are what it is sized to hit.
+**The cost, and it is a real deletion:** hyperfocus dies as a *levelling* strategy. A **focus-hero
+XP dial** (one designated hero per act at +25% XP) was drafted and dropped; the focus axis lives on
+Mastery pips now (`mastery.md`).
 
-**The cost, and it is a real deletion:** hyperfocus dies as a *levelling* strategy. `CLAUDE.md`
-protects it — "the carry build stays legal and is charged for in breadth." It is bought back
-wholesale by Mastery Rank (§4), which is why that system is load-bearing and not a convenience.
-A **focus-hero XP dial** (one designated hero per act at +25% XP) was drafted as a consolation and
-then **dropped** once Rank made it unnecessary. Do not re-introduce it without re-reading §4.
+The curve itself — XP a fight pays, par derived — is `xp-overhaul.md` §2.
 
 ### Growth grades (Fire Emblem model)
 
@@ -125,744 +104,252 @@ the flat "+2 or nothing" roll it replaced was predictable enough to read as a sc
 | +4 | 6% | 4% | 4% | — | — | — | — |
 | Mean points | 1.9 | 1.6 | 1.3 | 1.0 | 0.7 | 0.4 | 0.1 |
 
-- **A point is +1, or +3 HP.** HP is not a special case: `CLAUDE.md`'s own measured break-even
-  is ≈0.33 a point, so 3 HP *is* 1 point's worth. So one level lands anywhere from nothing to
-  +4 (+12 HP) on an S stat, and never past +2 on an F.
-- **Every row's mean is exactly `0.1 + 0.3 × cost`** — the figure the flat roll paid — so the
-  grade budget below still buys every on-budget line the same growth, and phase 6's difficulty
-  re-fit, measured against the flat roll, still holds. A grade is both how often a stat grows
-  and how far it can jump; the shape of the row is what changed, never its size.
-- Grades cover the **seven stats the 550 budget covers** — MP Regen excluded, exactly as it is from
-  the Gem catalog, and for the same reason.
-- **Every hero's grades sum to exactly 28** (an average of B). This is a **second budget**, and it
-  must be enforced by test the way `heroStatTotal` enforces the first — the 550 rule alone stops
-  being sufficient to say a hero is fairly costed the moment grades exist. Taking one stat to S
-  costs another from B to D, or two from B to C.
+- **A point is +1, or +3 HP** (the measured HP break-even is ≈0.33 a point), **or +1 Mana**
+  (`CLAUDE.md`). One level lands anywhere from nothing to +4 (+12 HP) on an S stat, and never past
+  +2 on an F.
+- **Every row's mean is exactly `0.1 + 0.3 × cost`** — the figure the flat roll paid — so the shape
+  of the row changed and never its size.
+- Grades cover the **seven stats the 550 budget covers** — MP Regen excluded.
+- **Every hero's grades sum to exactly 28** (an average of B) — a **second budget**, enforced by
+  test beside the 550 (`test/roster.test.ts`).
 
-At all-B that is ~9.1 points a level, **~264 points over 29 levels** — a hero grows by roughly
-half again. Below ~90 the arc is invisible and the underwhelm returns.
+At all-B that is ~9.1 points a level, ~264 over 29 levels — a hero grows by roughly half again.
 
 **Base and growth are independent axes**, and that is the point. Low base + high growth is a late
-bloomer; high base + low growth is front-loaded. This is Fire Emblem's Est/Oifey axis, and it lands
-on a problem the game already had: a Guild Hall hire arriving underlevelled is a downside today.
-Give that archetype S-grades and arriving underlevelled *is* the build.
+bloomer; high base + low growth is front-loaded.
 
-**What phase 7 found when it authored them: a grade line is a shape, never a size.** A grade's
-mean is exactly `0.1 + 0.3 × cost`, linear with no rounding, so a line summing to 28 buys
-*every* hero the same **9.1 points a level** whatever its shape. "High growth" and "low growth"
-are therefore not available as authored properties — only *placement* is. So the axis is:
+**A grade line is a shape, never a size.** Because a grade's mean is linear in its cost, a line
+summing to 28 buys *every* hero the same 9.1 points a level. Only *placement* is authorable:
 
 - A **late bloomer** stacks the budget on the stat it swings with and on Speed, where growth
   compounds through the damage ratio.
 - A **front-loaded** hero holds its spike at B or C and spends the budget on bulk, Wisdom or mana
   — real value that does not compound.
 
-Two rules bound both, and they are what keep the second budget honest. A hero's **dump stat stays
-dumped** (E/F): it is what the 550 charged for, and growth must not quietly refund it. And a stat
-a hero genuinely swings or defends with **never goes below C** — the first draft gave Tempest an
-F in Defense and measured it straight into trap-pick territory, which `CLAUDE.md`'s north star
-forbids. Authored lines and per-hero notes: `src/data/heroes.ts`, `docs/types-and-heroes.md`.
+Two rules bound both. A hero's **dump stat stays dumped** (E/F): it is what the 550 charged for.
+And a stat a hero genuinely swings or defends with **never goes below C** — the first draft gave
+Tempest an F in Defense and measured it straight into trap-pick territory. Authored lines:
+`src/data/heroes.ts`, `docs/types-and-heroes.md`.
 
 ### The level curve
 
-| Act | Fights | Level at act end | Scrolls granted | Crucible |
-|---|---|---|---|---|
-| 1 | 4 | 8 | 2 | 1, at the Guardian |
-| 2 | 4 | 14 | 2 | 1, at the Guardian |
-| 3 | 4 | 19 | 2 | 1, at the Guardian |
-| 4 | 4 | 24 | 2 | 1, at the Guardian |
-| 5 | 4 | 28 | 2 | 1, at the Guardian |
-| 6 | 1 | 30 | — | (no Vigil purchase — the extra Crucible is a map node) |
-
-~1.5 levels a fight, decelerating. **Every figure here is a first-pass placeholder for playtest;
-only the shape is decided.**
-
-**FRONT-LOADED in phase 6** from 6 / 12 / 18 / 23 / 28. Acts 1-2 measured as the run's wall and
-their enemy stat steps were already zero, so the only lever left was the player's own curve — and
-front-loading is *more* decelerating, so it is within the shape this section decided. The
-per-act payout is now 7 / 6 / 5 / 5 / 4. It lands on the player alone: the enemy level table is
-derived from this one and moved with it, but the thresholds that turn enemy level into rank and
-Evolutions are absolute, so nothing on the enemy side crossed one.
+Act ends are **8 / 14 / 19 / 24**, the finale at par 24 (four acts since 2026-10-02). They were
+front-loaded in phase 6 from 6 / 12 / 18 / 23 because Acts 1–2 measured as the run's wall and the
+player's own curve was the only lever left. The curve is authored as XP a fight pays, with par
+derived: `xp-overhaul.md` §2, §5.
 
 ---
 
 ## 4. Mastery Scrolls and Mastery Rank
 
-**Mastery Scrolls are the only faucet for moves.**
+> **SUPERSEDED.** The Scroll ladder was deleted by `xp-overhaul.md` §4 (2026-09-13); moves come
+> from a per-hero level schedule, and the Evolution from Mastery pips (`mastery.md`). Kept for the
+> three arguments later docs cite.
 
-**Revised 2026-09-10 (per user direction): a Scroll is poured where it is won, not at leisure.**
-The Roster's Mastery tab is gone; winning a Scroll raises `MasteryScreen`, the same six-row board
-pushed rather than pulled, with no way out but pouring. §10 below had flagged the failure this
-fixes — a count on a menu button "still signals admin waiting" — but the deeper argument is the
-one Rank itself makes: the ceiling sits behind the SPEND rather than behind a clock precisely so
-that holding is never better than spending, and a stock nobody has a reason to hold is not a
-strategy, it is a to-do list.
+- **The guard rail — the ceiling sits behind the spend, never behind a clock.** Act-gating the
+  movepool made holding a Scroll always better than spending one, and a currency whose optimal
+  play is *don't spend it* can never feel good to receive. (It retired with its premise: with no
+  Scroll there is nothing to hold — `xp-overhaul.md` §1.)
+- **The silent-deposit objection.** A spend that only ticks a bar is a deposit; every grant should
+  be a moment.
+- **Concentration priced in breadth.** Increasing returns inside a hero, decreasing across the
+  roster — the carry build, priced on an axis with texture rather than arithmetic.
 
-The screen is LAST in the post-fight chain, after the Banner, the contract and the Crucible, so a
-hero recruited or evolved on that beat can take the Scroll it has only just become eligible for.
-What this costs is the **churn hedge**: a Scroll can no longer be banked for a hero you have not
-recruited yet. That is consistent with the rest of recruitment — a Guild hire arrives raw on
-purpose, a contract hero arrives finished on purpose — but it is the thing to watch if pivoting
-starts to feel punished.
-
-### Why Rank exists
-
-Act-gating the movepool was the first proposal and it has a fatal incentive: if the tier ceiling
-rises with the act, **holding a Scroll is always better than spending one**, and a currency whose
-optimal play is *don't spend it* can never feel good to receive. Rank puts the ceiling **behind the
-spend** rather than behind a clock, which inverts the incentive completely.
-
-It also does a second job. Scrolls have **increasing returns inside a hero** (concentrate and the
-ceiling rises) and **decreasing returns across the roster** (spread six ways and nobody ranks up).
-That is the carry build, priced in breadth — the property uniform auto-levelling deleted, recovered
-on the axis where investment has texture instead of the one where it was arithmetic.
-
-### The spend
-
-**A Scroll offers ONE move from the hero's eligible pool; take it or decline; the move is burned
-either way** (2026-09-10, per user direction — a 1-of-3 was drafted here and rejected). The
-arithmetic is what settles it: rank 1 takes three Scrolls, three moves shown apiece against an
-Early band authored to a floor of six, so a 1-of-3 would empty the band before the hero could
-climb out of it — and §4's own promise is that **no hero needs re-authoring**. One move also
-keeps the rule the level curve already ran on unchanged: an offer is spent by being MADE
-(`docs/leveling-and-ranks.md`), whatever the answer.
-
-**Every Scroll does both things**: it offers a move *now* and it ticks the rank bar. Rank-only
-spends with moves arriving at rank-up would make two of every three Scrolls a silent deposit, which
-is the delayed-gratification problem this design exists to escape. The rhythm is: every spend is a
-moment, every third spend is a bigger moment.
-
-### Rank
-
-| Rank | Scrolls to reach | Offerable tier |
-|---|---|---|
-| 1 (start) | — | Early |
-| 2 | 3 | Mid (Early expires, exactly as the level curve does today) |
-| 3 | 3 more | Mid + Late |
-
-This maps **1:1 onto the offerable sets the movepools are already authored against** — in practice
-6 Early / 6 Mid / 4 Late after the starting kit is filtered out — so **no hero needs re-authoring.**
-
-Six Scrolls maxes a hero. Against a run paying **10 guaranteed (2 an act) and ~15–18 reachable**
-once reward rows and Guild Hall purchases are counted, that is two heroes maxed and a third partway,
-or five heroes bumped once and nobody deep. A real spread-vs-concentrate call.
-
-**Revised 2026-09-10 (per user direction): the Skirmish lane pays one too.** A won `skirmish` or
-`elite` now grants a Scroll (`SCROLLS_PER_SKIRMISH`, granted in `handleFightResolved` beside the
-gold). It roughly doubles the guaranteed floor — **~20 rather than 10** — and it exists because
-the Guardian's two an act meant that between one act boundary and the next, nothing a player won
-taught anybody anything: the Monsters lane paid gold and a guaranteed drop, and the recruitable
-lane paid gold and a *chance* of one. This is that lane's counterpart to the drop.
-
-The figure to watch in playtest is the same one the table above sizes: **a floor this high is what
-would make spreading six ways stop costing anything**, which is the whole breadth-vs-depth call.
-If concentration stops being a real choice, this is the number that did it — not the rank curve.
-
-### Two mechanical notes
-
-- **`RosterEntry.offeredMoveIds` already exists** (`src/run/state.ts`) and the pool filter already
-  ran on it (`src/run/progression.ts`, now `masteryMovePool`). A Scroll is the old
-  `grantLevelUpMove` with the level trigger cut off — it ships as `grantOfferedMove`. Because that
-  list accumulates, the fifth Scroll dumped into one hero rolls from a depleted pool —
-  **hyperfocus self-limits with no cap needed**, which is the anti-funnel job the Gem 20/8 caps
-  were doing badly.
-- **`movePoolFloor`'s proof breaks.** `MOVE_POOL_MARGIN` guaranteed a pool "cannot be emptied — by
-  any run, not merely by a likely one," derived against a *fixed* number of curve offers. Scrolls
-  make offers-per-hero player-controlled and unbounded, so the floor is now simply
-  **`SCROLLS_PER_RANK` per offerable set** — what a band must survive to get the hero out of it.
-  `test/moveTiers.test.ts` is rewritten against rank.
-
-  **The refusal is narrower than first drafted** (2026-09-10, as built). "Refuse the spend and
-  grey out a hero whose pool is dry" strands the hero: a band *can* empty — an event's gifts fill
-  the loadout out of the hero's own pool, and offers burn whether taken or declined — and the rank
-  tick is the only thing that opens the next band. So a Scroll is refused only when it would buy
-  **literally nothing**: max rank AND nothing left to teach. Below the cap a dry band still takes
-  one, and the board says so rather than greying out (`canSpendScroll`).
-
-### UI consequence
-
-Under uniform auto-levelling, **Level is a property of the run, not of the hero** — all six read 18
-in Act 3, and a number identical across the whole roster carries no information on a hero card. Put
-it in the map header (*Act 3 · Level 18*) and print it per-hero only where a hero **deviates**,
-which is exactly the case that matters: a recruit that is behind. The hero card then shows one
-progress number, Rank, with pips.
-
-`MASTERY_LEVEL` and the mastery stat reel are dying anyway (§7), so the word "Mastery" is vacated at
-precisely the moment this needs it. No lasting collision — but `drawMasteryStats` must actually go
-rather than linger.
+`MoveOfferOverlay` (one offer, take or decline, burned either way, replace-or-decline at
+`MOVE_CAP`) is the shape this section introduced and the level schedule kept.
 
 ---
 
 ## 5. The Crucible — Evolution's new home
 
 > **SUPERSEDED by §11 (2026-09-11).** The Crucible beat and screen survive; what they grant is a
-> Class. Evolutions come from the ladder. Kept for the reasoning that still holds — the wall
-> argument against a level trigger, the naming, why gold stays off the Evolution axis.
+> Class. The Evolution is on Mastery pips (`mastery.md`). Kept for the reasoning that still holds.
 
-**Evolutions leave the level track entirely.** At level 30, `EVOLUTION_LEVEL` = 5 would arrive in
-Act 1, and under uniform levelling **all six heroes would hit any level threshold in the same
-fight** — a six-decision wall. That rules out the level track outright, so this is a consequence
-rather than a preference.
-
-**The Crucible is a beat in the act-boundary chain, not a map row.** Acts 1–4 already run 9 rows and
-the map had to drop tile labels and shrink to 56px to fit that; a tenth row is not affordable. The
-chain becomes:
-
-> **Guardian falls → Banner → Crucible → Pact Seal → Act intro**
-
-The Banner grants to everyone, the Crucible transforms one, the Seal counts the run. Team, hero,
-run — three scales ascending, a crescendo rather than a pile. It costs zero map rows, and every
-player learns after Act 1 that a Guardian's death is where a hero changes.
-
-**Non-bankable.** It is a turning point, so the choice is made now. That is also why it is a beat
-rather than an item: a grant that cannot be held is a screen anyway, so it should be one the player
-can see coming.
-
-**Naming.** It is **not** called an Evolution Seal. `Seal` is the most load-bearing noun in the
-fiction — `docs/lore.md` is *The Pact, the Seal, and the Endbringer*, a run's five Guardians **are**
-its five broken seals, and `PactSealScreen` / `BrokenSeal` / `recordBrokenSeal` all exist. Worse,
-the Pact Seal is earned **one per act**, so a second per-act "Seal" currency beside it would be
-actively confusing. "The Crucible" sits in the existing node vocabulary (Mentor's Hall, The Forge,
-The Vigil, Guild Hall) without explanation.
-
-**Economy: 5 forced (acts 1–5), 6+ reachable. BUILT 2026-09-10 as a map node only** (per user
-direction), not a Guild Hall purchase: the `crucibleReward` reward-row node, **acts 3+**, weight
-12. Acts 1-2 already get one apiece off their own Guardian, and a roster still forming is not
-where a second Evolution is the interesting pick.
-
-The dead-card problem a reward node has and a Boon does not: a Boon rolls its offers when the
-player arrives, so it can filter itself; a map rolls its nodes an act ahead. So the filter lives
-at **generation** — `rewardPoolFor` drops the Crucible from the pool entirely when no roster hero
-has an Evolution left, and `advanceToNextAct` passes that in. The node also skips itself on
-arrival if the roster evolved in between. A reward row is a pick of THREE; a card nobody can
-spend is a third of the choice gone.
-
-The drafted Guild Hall purchase was **not** built. Gold stays off the Evolution axis: an
-Evolution is identity, not something bought.
-
-This resolves the scarce-vs-universal question that ran through the design: **it is scarce when it
-matters and universal by the end.** You choose who evolves first — in Act 2 that is a real
-commitment on a team still forming — and by the finale everyone can be there. An unevolved sideboard
-hero is not unfinished; `CLAUDE.md` already holds that "mono typing is a valid terminal state, not a
-larval stage," and the same reasoning applies.
+- **No level trigger under roster-wide levelling.** Every hero would cross any threshold in the
+  same fight — a six-decision wall.
+- **A beat in the act-boundary chain, not a map row:** *Guardian falls → Banner → Crucible → Pact
+  Seal → Act intro.* Team, hero, run — three scales ascending. Non-bankable: a turning point is
+  chosen now.
+- **Naming.** Not an "Evolution Seal": `Seal` is the most load-bearing noun in the fiction (a run's
+  Guardians **are** its broken seals), so a second per-act "Seal" would confuse. "The Crucible" sits
+  in the existing node vocabulary.
+- **Gold stays off the Evolution axis**: an Evolution is identity, not something bought.
 
 ---
 
 ## 6. Finished and raw recruits
 
 A pre-evolved late-game recruit makes an existing line **mechanical** rather than a statement about
-stats. `CLAUDE.md`: "Guild heroes have decaying runway value; contract heroes have flat value."
+stats: "Guild heroes have decaying runway value; contract heroes have flat value."
 
-| | Level | Rank | Evolution | Kit |
+| | Level | Kit | Evolution | Gear |
 |---|---|---|---|---|
-| **Contract hero** | act level | 2–3 | already chosen | **chosen by the game** |
-| **Guild hero** | underlevelled | 1 | none | yours to build |
+| **Contract hero** | its node's enemy level | schedule entries below its level taken, **chosen by the game** | already chosen once its Mastery reaches 5 (`masteryForAct`, Act 4) | armed (`gear-absorption.md` §7) |
+| **Guild hire** | one act behind | its authored two moves, the schedule still owed | none | bare |
 
-**BUILT 2026-09-10 on three of those four axes. The LEVEL row is inverted and phase 6 owns it**
-(per user direction). Rank, Evolution and Kit all land as written — and they are the three this
-section actually argues, since "you save six Scrolls and a Crucible" is exactly rank and
-Evolution. Level is not: `ENEMY_LEVEL_BY_ACT` is still [1, 3, 5, 7, 10] against a roster that now
-ends acts at 6/12/18/23/28, so an act-5 contract hero arrives at **10** where a hire arrives at
-**24**. Re-deriving that table is phase 6's first job and §8 says it cannot start earlier — enemy
-level also drives their Evolutions and Mastery Rank, so moving it is a difficulty swing that has
-to be measured rather than guessed. `test/recruitment.test.ts` pins the inversion deliberately and
-says to flip the assertion when phase 6 lands.
-
-Two implementation notes worth keeping:
+Built 2026-09-10; the level axis, briefly inverted, was put right by levelling enemies per node
+(`enemy-levels.md` §4), and `test/recruitment.test.ts` pins it.
 
 - **RAW is unbuilt, not hollow.** A hire still has its levels ROLLED (`levelUpEntry`, seeded off
-  the offer so the preview and the purchase agree). A level-13 hire with no growth grants would be
-  ~120 points behind a level-13 roster hero, which is not an archetype — it is a waste of 50 gold.
-- **`guildHallLevel` is DERIVED from the level curve now**, not authored beside it: a hire arrives
-  at the level the roster held when this act began, plus one (`GUILD_HALL_ACT_LAG`). The old
-  2/4/5/6/7 table was written against a 10-level cap and would have put an Act 3 hire at 5 against
-  a roster at 18. Deriving it means phase 6 retunes `LEVEL_AFTER_ENCOUNTER` once and this follows.
-  That fixed act-sized gap IS the "decaying runway value": worth most early, when one act is most
-  of the run.
+  the offer so the preview and the purchase agree). A hire with no growth would be ~120 points
+  behind a roster hero of the same level — a waste of 50 gold, not an archetype.
+- **`guildHallLevel` is DERIVED from the level curve** (`GUILD_HALL_ACT_LAG`,
+  `src/run/guildRecruit.ts`): the level the roster held when this act began, plus one. That fixed
+  act-sized gap IS the decaying runway — worth most early, when one act is most of the run.
 
-The contract hero is **finished**; the guild hero is **raw**. You save six Scrolls and a Crucible,
-and in exchange you authored none of it — and spending your own Scrolls on it still works, since
-Rank 3 keeps offering. Contracts and Crucibles become partially substitutable, which makes both more
-interesting than either was alone. Act 3+ enemies already arrive evolved, so the content is largely
-there.
+The contract hero is **finished**; the hire is **raw**. You save the walk, and in exchange you
+authored none of it.
 
-**What prices three free axes:** **gold**. It is the one currency that converts to *either* objective
-power (equipment, item slots, the Anvil, the Enchanter) *or* a pre-built hero, so buying the hero is
-visibly not buying the power. The ~5 act-end contracts arrive free, so gold prices the *purchased*
-route only — the free route stays priced by the roster cap, since gaining a hero means terminating
-one and equipment strips with no refund. Two brakes on two routes, both real.
+**What prices it:** **gold** prices the *purchased* route — it is the one currency that converts to
+either objective power or a pre-built hero, so buying the hero is visibly not buying the power. The
+free route is priced by the roster cap: gaining a hero means terminating one, and its gear goes with
+it. Two brakes on two routes.
 
 ---
 
 ## 7. What is deleted
 
-| Going | Surface |
-|---|---|
-| **Gems, entire** | `src/data/gems.ts`, `src/run/gems.ts`, `GemBoard.tsx`, `GemChoiceScreen.tsx`, `test/gems.test.ts`, `RunState.gemsEarned`, `gemReward` in `REWARD_WEIGHTS` |
-| **The Training Point pool** | `levelUpPool`, `levelUpDeferred`, `levelUpCost`, `costToReachLevel`, `MAX_LEVEL_UP_COST`, `BASE_TRAINING_POINTS`, `ACT_XP_STEP`, `LevelUpScreen.tsx`, `test/levelCost.test.ts` |
-| **The mastery stat reel** | `MASTERY_LEVEL`, `drawMasteryStats`, `grantMasteryStat`, `MASTERY_CHOICE_COUNT`, `RANDOM_STAT_POOL`, `test/mastery.test.ts` |
-| **Level as the move gate** | `MOVE_TIER_LEVEL`, `moveOfferLevels`, `EVOLUTION_LEVEL` as a trigger |
-| **The two stat shrines' grants** | `hpBoostReward`, `manaBoostReward` — REMOVED outright (phase 1) |
-| **The XP Cache's payload** | `upgradeReward` — RE-POINTED at Mastery Scrolls as `loneScrollReward` (phase 3, per user direction), paying `LONE_SCROLL_COUNT` = 1 against the Cache's 2. It kept its seat rather than following the shrines because the reward rows were already down to six types. |
+All gone as of 2026-09-10: **Gems** entire (`gems.ts`, `GemBoard`, `GemChoiceScreen`,
+`RunState.gemsEarned`, `gemReward`); **the Training Point pool** (`levelUpPool`, `levelUpCost`,
+`costToReachLevel`, the old allocation `LevelUpScreen`); **the mastery stat reel** (`MASTERY_LEVEL`,
+`drawMasteryStats`, `grantMasteryStat`); **level as the move gate** (`MOVE_TIER_LEVEL`,
+`moveOfferLevels`); and **the two stat shrines** (`hpBoostReward`, `manaBoostReward`). The Mana Well
+later came back as a named exception (`CLAUDE.md`).
 
-The **movepool FLOOR** (`src/data/progression.ts`, `test/moveTiers.test.ts`) dissolves as a
-consequence, and this is a roster-quality win rather than only a code one. It exists so a level-up
-never pays nothing, and it is explicitly worth "pulling an **off-type** move from an adjacent slate"
-to satisfy. Once every level pays stats, a level-up *cannot* pay nothing, and movepools may be
-authored to their real size with no padding — so authored identity stops being diluted to satisfy a
-curve, which serves the north star directly.
+The movepool floor was expected to dissolve here; it did not — it was rewritten twice and lives on
+as `movePoolFloor(schedule)` (`src/run/progression.ts`, `test/moveTiers.test.ts`).
 
 ---
 
 ## 8. Order of work
 
-Sequenced so the tree is playable at every boundary. **The numbering is dependency order, not
-preference.**
+All seven phases **DONE 2026-09-10**. Measured on the sim (greedy pilot) as each landed:
 
-The bridge that makes this work is already in the code: `masteryOrMove` falls back to the stat reel
-when a move pool comes up empty, so the state between phases 2 and 3 is a *working game* where
-Scrolls give moves and level-ups give stats via the old reel.
+| # | Phase | Full-clear after |
+|---|---|---|
+| 1 | Excise Gems; the two stat shrines removed outright | 45.5% → 33.0% |
+| 2 | Mastery Scrolls and Rank (since deleted) | → 18.0% |
+| 3 | Automatic roster-wide levelling, cap 30, stat rolls | → 51.5% |
+| 4 | The Crucible (then granting Evolutions) | → 38.5% |
+| 5 | Finished and raw recruits | → 36.0% |
+| 6 | Re-fit the difficulty curve | → 29.6% (acts 72/75/85/85/82/93) |
+| 7 | Growth grades for all 36 heroes | → 35.6% |
 
-**`SAVE_VERSION` bumps freely.** `src/run/save.ts` rejects version mismatches rather than migrating
-them, so in-flight runs invalidate cleanly and no migration code is owed at any boundary.
-
-| # | Phase | Exit criterion | Status |
-|---|---|---|---|
-| 1 | **Excise Gems.** Isolated and well-bounded; it shrinks the surface everything else moves through. Delete the owned files, strip the state fields, pull `gemReward`, remove the sim's gem handling from `policy.ts` / `run.ts`. The two stat shrines were **removed outright** rather than given a placeholder payload (2026-09-10, per user direction): they are §1's rule stated as a node, so a stand-in screen would have been built only to be deleted in phase 3. Their 20 weight and the Gem Cache's 20 went to the Boon (18 → 30) and the purse (18 → 26) until phase 2 seats the Scroll node. | No gem references, suite green, a run completable end to end. | **DONE** 2026-09-10. 985 tests green; 200 batch runs complete end to end. Cost, measured: full-clear 45.5% → 33.0%, encounters won 12.11 → 10.70 — the ~200 stat points a run Gems carried, handed back by phase 3 and re-fitted in phase 6. |
-| 2 | **Mastery Scrolls and Rank.** Add the currency, `RosterEntry.masteryRank`, and the spend flow on the Roster screen. Re-point `levelUpMovePool`'s tier gate from level to rank and cut the level-up's move grant in the same change — they are one edge. Add the pool-exhaustion guard. | Scrolls are the only move faucet; level-ups fall through to the stat reel. `test/moveTiers.test.ts` rewritten against rank. | **DONE** 2026-09-10. 989 tests green. Measured against phase 1: full-clear 33.0% → 18.0%, encounters won 10.70 → 8.55, and of heroes reaching act 4+ only 38.0% reach rank 2 and 23.1% rank 3 (against 97.9%/54.9% on the old level gate). Income is on §4's spec (~16 a run, ~2 heroes maxed); the gap is the difficulty curve, which phase 6 re-fits. |
-| 3 | **Flip the levelling model.** The destructive one, landing after its replacements exist. XP becomes automatic and roster-wide; pool, deferral, cost curve and stat reel all go; cap 30; each level rolls the seven stats. Ship with a uniform all-B grade set so the engine runs before the content pass does. | No allocation screen anywhere. Level moves to the map header. Tutorial script re-checked — `src/data/tutorial.ts` narrates the old beats. | **DONE** 2026-09-10. 979 tests green. Measured against phase 2: full-clear 18.0% → **51.5%**, encounters won 8.55 → 12.71, mean end level 16.4. That is above even the pre-overhaul 45.5% — the ~264 points a hero of automatic growth more than replaced what Gems and the level curve were paying. Phase 6 re-fits it. The `upgradeReward` XP Cache became `loneScrollReward`, a 1-Scroll node (per user direction), rather than being deleted like the shrines. |
-| 4 | **The Crucible.** Small: `chooseEvolutionPath` and the path data are untouched, only the invocation point moves. Insert into the act-boundary chain ahead of `PactSealScreen`; add the purchasable spend at the Guild Hall and the Vigil. | Five forced Crucibles a run, a sixth reachable. No evolution reachable from a level-up. | **DONE** 2026-09-10. 982 tests green. Map node only, acts 3+, filtered out of the roll when nobody can take one (per user direction) — no Guild Hall purchase. Measured against phase 3: full-clear 51.5% → **38.5%** (1000 runs), encounters won 12.71 → 11.07. Evolutions went from every hero automatically in act 1 to one a Guardian, which is the whole point; phase 6 re-fits. |
-| 5 | **Finished and raw recruits.** Contract heroes arrive levelled, ranked, evolved, kit game-chosen; guild heroes raw. Gold on both purchased routes. | The flat-value / decaying-runway line true on three axes instead of one. `test/recruitment.test.ts` extended. | **DONE** 2026-09-10. 985 tests green. True on Rank, Evolution and Kit; the LEVEL axis is inverted by `ENEMY_LEVEL_BY_ACT` and left for phase 6 (per user direction), with a test pinning the inversion. Measured against phase 4: full-clear 38.5% → 36.0% (400 runs) — a hire losing its Evolution and rank. |
-| 6 | **Re-fit the difficulty curve.** The real work, and it cannot start earlier: `ENEMY_LEVEL_BY_ACT`, `ACT_STEP_CURVE`, Guardian champions, reward weights and Banner values all re-derived. Drive with `scripts/sim` and the skilled pilot. | Batch runs show no mechanical fault — walls, dead nodes, unreachable ranks. Win-rate targets are a playtest question, not a batch one. | **DONE** 2026-09-10. 985 tests green. Act clear `72/63/87/98/96/96` → `72/75/85/85/82/93` over 1000 runs; full-clear 36% → 29.6%. No dead node (every lift inside noise but the Tutor's), no unreachable rank (53% reach rank 2 by act 4+, 24% rank 3). The equipment and Banner open questions were both settled as LEAVE (per user direction), so this was purely the enemy side. |
-| 7 | **Growth grades for 36 heroes.** Parallelisable from phase 3 onward; it needs the schema, not the tuning. The interesting authoring is the mismatches — a low base with S grades is a late bloomer worth recruiting underlevelled, and that archetype only exists once this pass does. | Grade budget enforced by test, beside the 550 check in `test/roster.test.ts`. No hero left on the all-B placeholder. | **DONE** 2026-09-10. All 36 authored; both the budget and the no-placeholder rule pinned in `test/roster.test.ts`. Measured against the same 1000-run batch on all-B: full-clear **29.6% → 35.6%**, because a targeted line spends the same budget on stats the hero actually swings with. Grades are now VISIBLE on the hero sheet and the Guild Hall preview — the late-bloomer decision cannot be made against a number the player cannot read. |
-
-### Phase 6 is the actual project — BUILT 2026-09-10
-
-The diagnosis was not what §8 expected. Enemy LEVEL turned out to buy almost nothing — an enemy
-ships three of its four move slots filled, so a level pays it at most one extra move — and moving
-the table alone shifted the full-clear rate by 1.3pp. What level really controls is the two
-**thresholds** read off it, and both were still set to a game that no longer existed:
-
-- **Rank.** `ENEMY_RANK_LEVELS` was `[4, 7]` — the OLD movepool gate's level thresholds, carried
-  over unchanged in phase 2. Against the re-derived level table that put Act 1 enemies at rank 2
-  and everything from Act 2 at rank 3, while the player — whose rank comes from a Scroll economy
-  paying two a Guardian — measured 38% at rank 2 by Act 4. Enemies out-kitted the player for the
-  whole run. Re-banded to `[10, 21]`, which tracks the player's actual Scroll economy.
-- **Evolution.** Gated on `EVOLUTION_LEVEL` = 5, so every enemy from Act 2 arrived evolved — while
-  the player's roster, since the Crucible, is 1-of-4 evolved entering Act 2 where it used to be
-  4-of-4. `ENEMY_EVOLUTION_LEVEL` = 16 (Act 3's enemy level) instead.
-
-The two §8 named:
-
-- **`ENEMY_LEVEL_BY_ACT` is now DERIVED** from the player curve — its act-end level less
-  `ENEMY_LEVEL_LAG` = 2, giving 6 / 12 / 17 / 22 / 26. That also restores §6's fourth axis: a
-  contract hero out-levels a Guild hire again.
-- **Guardian champions got their own multiplier**, `CHAMPION_STEP_MULTIPLIER` = 1.3. Level and kit
-  depth are both closed to a champion — a full four-move kit leaves `MOVE_CAP` no room, and an
-  enemy definition carries no Evolution nodes — so stats are the only axis it has, and it now takes
-  more of them than its escort. **The Endbringer was worse than flagged**: it was scaled with
-  `actScaling('monsters', FINALE_ACT, FINALE_ACT)`, baselining it against its own act, which paid
-  it ZERO steps. The run's final fight was the one piece of content on the map that never scaled
-  at all. It takes the skirmish track now.
-
-`ACT_STEP_CURVE` re-derived to `[0, 0, 4, 9, 15]`. Index 1 is deliberately a repeat, not a step:
-Act 2 is where the run first meets a real faction after Act 1's soft Goblins, and it measured as
-the wall for as long as it carried one.
-
-**Measured, 1000 runs.** Act clear went `72 / 63 / 87 / 98 / 96 / 96` to
-`72 / 75 / 85 / 85 / 82 / 93`; full-clear 36% → 29.6%. The Act 2 wall is gone and so is the
-late-game victory lap — every act now costs something, and the six Guardians are the run.
-
-**Two findings left for playtest, both structural rather than tunable:**
-
-- **Every non-boss node is a ~99% win from Act 2 on**, so the run's whole tension sits in its six
-  Guardians. That follows from HP and mana fully restoring between map nodes: a fight you win
-  costs nothing, so only a fight you can LOSE matters. Changing it means attrition, which is a
-  design decision and not a constant.
-- **The Monsters track (`fight`/`battle`) never threatens** — ratios around 2.1-2.9 all run. Mob
-  stat lines are authored small and the track baselines at Act 2, both flagged in the code as
-  placeholders awaiting per-act monster content.
-- Minor: `tutorReward` measures a **negative** node lift (z = -2.7 over n=253). One free move now
-  competes against a Forge or two Scrolls on the same row, and it may simply be worth less than
-  what it displaces.
-
-### `CLAUDE.md` ships with each phase, not at the end
-
-The constitution is a deliverable here, not cleanup. A rule in it beats a prompt by design, so a
-half-migrated constitution actively fights the next session's work — worse than either the old state
-or the new one. Update it at each phase boundary, alongside `leveling-and-ranks.md`,
-`progression.md` and `run-loop.md`.
+**Phase 6's lesson, still worth having:** enemy LEVEL bought almost nothing on its own; what
+mattered were the **thresholds** read off it (rank and Evolution), which were still set to a game
+that no longer existed. Its two structural findings were both answered later — *every non-boss node
+a ~99% win because HP restored between nodes* by **Wounds** (`run-loop.md` "Wounds"), and *the
+Monsters track never threatens* by levelling enemies per node (`enemy-levels.md`). The step curve
+and champion multiplier it introduced were deleted by `enemy-levels.md`.
 
 ---
 
 ## 9. Locked invariants this overturns
 
-Each is a sign-off, not an implementation detail. Listed in the order a reader of `CLAUDE.md` meets
-them. **None of these has changed yet** — they are in force until the phase that replaces them lands.
+All landed 2026-09-10. Rows marked † were later superseded again.
 
-| Today | Becomes |
+| Before | Became |
 |---|---|
 | No automatic stat growth from leveling | Every level rolls stats against the hero's growth grades |
 | Level-ups are a pooled currency distributed freely after each battle | XP is automatic and roster-wide; no pool, no allocation |
 | A level-up costs as many pool points as the hero's current level | Deleted with the pool |
-| A level-up unlocks a move from the current tier | Moves come only from Mastery Scrolls, gated by Mastery Rank |
-| Past `MASTERY_LEVEL` a level-up rolls three stats and the player picks one | Absorbed — every level pays stats, so the sink is unnecessary |
-| A level-up never pays out nothing (the movepool FLOOR) | Dissolved; pools authored to their real size, no off-type padding |
-| The level-up that reaches the Evolution level surfaces the Evolution | The Crucible, at the act boundary, five times a run |
+| A level-up unlocks a move from the current tier | † Moves came only from Mastery Scrolls — now the level schedule (`xp-overhaul.md` §4) |
+| Past `MASTERY_LEVEL` a level-up rolls three stats and the player picks one | Absorbed — every level pays stats |
+| A level-up never pays out nothing (the movepool FLOOR) | † Expected to dissolve; it survives as `movePoolFloor(schedule)` |
+| The level-up that reaches the Evolution level surfaces the Evolution | † The Crucible — then the Scroll ladder (§11) — now Mastery pip 5 (`mastery.md`) |
 | Gems are per-hero stat investment, poured and re-poured freely | Deleted; stats are never a decision anywhere in the run |
 
 ---
 
 ## 10. Open questions — DO NOT silently resolve
 
-- ~~**Equipment: two base slots, halved budgets.**~~ **CLOSED 2026-09-10, per user direction:
-  LEAVE IT AT ONE SLOT.** The 79.3% mirror-match edge that drove the move to one slot is real
-  evidence, and phase 6 measured the curve against one slot. Re-opening it means a second full
-  re-fit. Original proposal, for the record: One slot means every
-  drop is replace-or-sell, and builds are combinations — `BASE_ITEM_SLOTS` at 2 with `RARITY_BUDGET`
-  roughly halved keeps stat throughput flat while doubling the decision, and extending
-  `EFFECT_FLOOR_SHARE` down to Rare is what makes an item memorable rather than merely bigger.
-  Budgets tripled when heroes went 3 slots → 1, so this is partly untripling. **Blocks nothing, but
-  settle it before phase 6** — re-measuring the curve twice is the one genuinely wasted pass
-  available.
-- ~~**Do Banners shrink?**~~ **CLOSED 2026-09-10, per user direction: LEAVE THEM.** They carry
-  roughly 175-200 points a run team-wide against ~264 per hero from levelling — about 17% of what
-  growth pays a fielded squad. The judgement was that a Banner's job is the collection ratchet
-  ("Banner of Vitality +2") rather than the raw number, and that phase 6's enemy-side re-fit
-  absorbs whatever they are worth. Phase 6 was measured with them unchanged.
-- **Max Rank 3, or 4?** Three maps exactly onto the authored tiers and needs no re-authoring. A
-  fourth needs a fourth tier — a content pass across 36 heroes, worth it only if a maxed carry reads
-  as finished too early.
-- **Does max Rank change the offer?** Optional payoff: at Rank 3 a Scroll could offer a **free pick**
-  from the pool rather than a roll of three — the Tutor's grammar, earned rather than granted. The
-  hard rule runs the other way: **Rank must never grant stats**, or Gems return through the side
-  door.
+Closed: equipment slots (left at one, 2026-09-10 — since moved to three by `gear-absorption.md`),
+Banner size (left alone, 2026-09-10), and both Rank questions (moot — Rank is deleted).
 
 ### Watch in playtest
 
-- **Does raising become a mistake?** A contract hero now arrives with level, rank and evolution all
-  skipped, paid for in gold and a termination. That is meant to keep churn viable — but there is a
-  point where it tips from *pivoting is an option* to *raising is a trap*, and starters start reading
-  as fodder nobody spends a Crucible on.
-- ~~**Do banked Scrolls read as homework?**~~ **ANSWERED, same day: yes.** Rank removed the
-  incentive to hoard, but a Roster button wearing "4 Scrolls" still signalled admin waiting, and
-  the shared screen did read as a chore hub. Both halves of the drafted fix were taken and then
-  some: equipment and Mastery are split, and Scrolls stopped being bankable at all — a Scroll is
-  poured on the beat it is won (§4). **What replaces this as the watch item:** the forced screen
-  fires ~4× an act now that the Skirmish pays one, stacked behind the level-up report, so the
-  post-fight chain is Victory → Level-up → Mastery → map. If that reads as long, the Skirmish
-  Scroll is the newest thing in it and the first to reconsider.
-- **Does the roster read too flat?** Uniform levelling means differentiation comes entirely from
-  base stats, growth grades and the scarce axes. If it is not enough, the focus-hero XP dial (§3) is
-  the drafted answer — but reach for it only after Rank has been played, not before.
+- **Does raising become a mistake?** A contract hero arrives with level, kit, Evolution and gear
+  skipped, paid for in a termination. That is meant to keep churn viable — the point to watch is
+  where *pivoting is an option* tips into *raising is a trap*.
+- **Does the roster read too flat?** Uniform levelling means differentiation comes from base stats,
+  growth grades, schedules and the scarce axes (`xp-overhaul.md` carries this forward).
 
 ---
 
 ## 11. Second pass (2026-09-11): Evolution on the ladder, Classes in the Crucible
 
-Playtest of the finished overhaul surfaced two things that were true but not good. Listed as
-findings first, because the fix reverses part of §5 and the reversal should be legible.
-
-**Finding 1 — the Crucible handed out what nobody built toward.** §5 was correct that a level
-trigger under roster-wide levelling is a six-decision wall, and correct that the act boundary was
-the only place a forced beat could go. But an Evolution arriving on a fixed cadence, one per
-Guardian, is a *reward* — the player picks who, and that is the whole of their part in it. What the
-level trigger had, and the Crucible lost, was the hero *approaching* its Evolution across an act.
-A Scroll ladder has that property by construction: Scrolls are poured one hero at a time, so a
-threshold on the ladder can never wall, and the player watches the pips fill toward it.
-
-**Finding 2 — Classes were the last Gem.** §1's rule is *a bare number never gets a screen, and a
-screen never buys a bare number*. Sixteen `+10/+10` Classes behind a forced Mentor row is exactly
-that, and the sim measured them statistically inert until there were four of them. They have the
-right fiction and the wrong payload.
-
-Both fixes are the same move: put the Evolution where the player is already investing, and put the
-Class where the Evolution was.
+Playtest of the finished overhaul found two things. **The Crucible handed out what nobody built
+toward** — an Evolution on a fixed cadence, one per Guardian, is a reward with no approach. **Classes
+were the last Gem** — sixteen `+10/+10` Classes behind a forced Mentor row, statistically inert. The
+fix: put the Evolution where the player is already investing, and the Class where the Evolution was.
 
 ### The ladder
 
-`SCROLLS_PER_RANK` is gone. The ladder is authored as thresholds, and it is longer:
-
-| Scrolls into this hero | Rung | What that Scroll does |
-|---|---|---|
-| 1–3 | Rank 1 | offers Early |
-| **4** | **Rank 2** | ticks, then offers **Mid** (Early expires) |
-| 5 | | offers Mid |
-| **6** | **Evolution** | the branch choice, its move grant, then the Scroll's offer — from Mid, or from the graft's line |
-| 7 | | offers Mid (and the graft's line) |
-| **8** | **Rank 3** | ticks, then offers **Late** |
-| 9+ | | offers Late until the pool is dry |
-
-`RANK_THRESHOLDS = [0, 4, 8]` and `EVOLUTION_SCROLLS = 6` (`src/run/progression.ts`). Rank stays
-DERIVED from `masteryScrollsSpent`; so does whether the Evolution is due. Rank 3 is open-ended on
-purpose: `canSpendScroll` already refuses only when the pool is dry, and a carry's last Scrolls are
-never wasted. The tick-before-roll rule is unchanged and is what makes the 4th and 8th Scroll the
-bigger moments — the 4th Scroll's offer is already a Mid move.
-
-The Evolution sits mid-ladder rather than at the top because the top rung stacking Evolution + Late
-+ a graft's whole line onto one pour made every rung below it a deposit. At 6 each rung is a
-distinct milestone: the 4th Scroll changes what a hero can *do*, the 6th changes what it *is*, the
-8th opens the ceiling.
-
-**The 6th Scroll buys the Evolution and nothing else** (revised 2026-09-11, per user direction).
-The Evolution screen raises for that one hero in place of the Scroll's offer; no move rolls behind
-it. The Evolution's own outright grant (and its replace-or-decline overflow) is unchanged, so a
-path that grants a move still teaches exactly that one. It was briefly Evolution *then* offer, so
-a retype's line could be in the pool the same pour — but the pour that changes what a hero *is*
-should not end on a second, smaller box, and the 7th Scroll draws from the post-Evolution pool
-anyway. The dossier's yellow "already knows 4 moves" line went with it: the replace offer says
-that itself when it comes.
-
-**Six evolved is the expected ending.** Six Evolutions cost 36 Scrolls. That is a deliberate
-reversal of §5's "scarce when it matters, universal by the end" into *universal by the end, paced by
-the player*. What the player chooses is the order and how much depth to buy before breadth is done.
+> **SUPERSEDED** — the Evolution moved onto the 6th Scroll here, then onto the level schedule
+> (`xp-overhaul.md` §4), then onto Mastery pip 5 (`mastery.md`). The idea that survived every
+> move: a threshold the player fills toward one hero at a time can never wall.
 
 ### Income: the Skirmish lane pays Scrolls, the Monster lane pays loot
 
-The floor goes from ~20 to ~50, and the player steers it (`src/run/progression.ts`, read by
-`App.tsx` `scrollsForNode`):
-
-| Encounter | Lane | Scrolls |
-|---|---|---|
-| Fight (forced) | Monsters | `SCROLLS_PER_FIGHT` = 1 |
-| Battle | Monsters | `SCROLLS_PER_FIGHT` = 1 |
-| Skirmish | recruitable | `SCROLLS_PER_SKIRMISH` = 2 |
-| Elite | recruitable | `SCROLLS_PER_ELITE` = 3 |
-| Guardian | — | `SCROLLS_PER_ACT` = 3 (was 4; lowered 2026-09-11, four poured at once was too much screen) |
-
-Elite route 9 an act, Battle route 6: **45 vs 30** over five acts, plus the Cache, the lone
-Scroll and the Guild Hall (`SCROLL_PURCHASE_LIMIT` = 2 a visit). A Skirmish-heavy run evolves everyone by the Act 4 Guardian with ~15
-left for depth; a Battle-heavy run evolves everyone in Act 5 with nothing spare, and got the loot.
-The Monster lane's loot side needs no new grant — the guaranteed drop already sits there — only
-the Scroll gap. **The Guardian's 4 is the dial**: it is the one number that moves the total without
-moving the lane split. First-pass figures for playtest.
-
-**Enemy equivalence** (`src/run/enemyGen.ts`): a generated hero still reads its ladder position
-off level. `ENEMY_SCROLLS_BY_LEVEL` maps level bands to a `masteryScrollsSpent` — 0 under 10, 4 at
-10, 6 at 16, 8 at 21 — so rank and Evolution come from ONE table where `ENEMY_RANK_LEVELS` and
-`ENEMY_EVOLUTION_LEVEL` used to be two. Level 16 is Act 3's enemy level, so "a contract hero arrives
-evolved from Act 3" (§6) still holds. `EVOLUTION_LEVEL` remains inert data.
+> **SUPERSEDED** with the Scroll ladder. Fights pay XP; the map pays Mastery Scrolls (`mastery.md`).
 
 ### The Crucible grants a Class
 
-The chain is unchanged — *Guardian falls → Banner → Crucible → Pact Seal → act intro* — and so is
-the screen's shape (pick one hero, pick one of three). What the Crucible tempers a hero into is now
-a **Class**. Five Guardians, five Classes, six heroes: one hero ends Classless, and that is the
-price of a late recruit rather than a reason for a sixth source. The `crucibleReward` reward-row
-node is deleted with its `CRUCIBLE_FIRST_ACT` filter; its 12 weight goes to `scrollReward`.
+The chain is unchanged — *Guardian falls → Banner → Crucible → Pact Seal → act intro* — pick one
+hero, pick one of three. What the Crucible tempers a hero into is a **Class**. One per Guardian, so
+with four Guardians and six heroes two end Classless — the price of a late recruit, not a reason for
+another source. `crucibleReward` is deleted.
 
-**A Class is a verb, never a number** (2026-09-11, per user direction). Its schema is the Evolution
-path's minus the graft and hero clauses: a name, a kind (offensive / defensive / utility), and
-*either* a granted move (`grantMove`, replace-or-decline at `MOVE_CAP`, exactly as an Evolution's
-grant works) *or* a passive with a real effect. No stat line. The Crucible rolls three distinct
-from the whole catalog and prints no kind (revised 2026-09-11, per user direction — it offered one
-per kind under an Offensive/Defensive/Utility tag, which read as a category the screen then had to
-explain). Nine to start, three per kind as authoring intent (`src/data/classes.ts`).
+**A Class is a verb, never a number** (per user direction). Its schema is the Evolution path's minus
+the graft and the hero: a name and *either* a granted move (`grantMove`, replace-or-decline at
+`MOVE_CAP`) *or* a passive with a real effect. No stat line. The Crucible rolls three distinct from
+the whole catalog, un-labelled (the Offensive/Defensive/Utility tag came off the same day). Fourteen
+in `src/data/classes.ts`; one per hero, replace-not-stack (`src/run/classes.ts`).
 
 **Caster pass (2026-10-02, per user direction).** All three damaging class moves were physical, so
-a caster holding one swung its dump stat — a trap pick. Five Classes were added, fourteen in all:
-**Sorcerer** (Cascade, the magical Volley), **Hexer** (Jinx: priority 2, BP 40, −15 Intelligence
-on the target — the magical Feint, a debuff where Feint locks a turn), **Conjurer** (Blink, the
-magical Vanish), **Warlock** (Siphon: every magical hit restores 10 Mana) and **Sage** (Deep
-Breath: a Rest grants +20 Intelligence). Every damaging class move now has a twin in the other
-category (`test/classes.test.ts`). **Volley came down 55 / 30 → 50 / 35**, Cascade at the same
-figures: it was the best damage per mana in the game (10.2 against a Mid spread's ~3.5). **Succor
-became the Cleric's passive**: every hit the holder lands mends its partner 15 healing power off
-its Wisdom — on-hit rather than at round end so it is not Patch's Upkeep, and a spread mends twice.
+a caster holding one swung its dump stat — a trap pick. Five Classes were added: **Sorcerer**
+(Cascade, the magical Volley), **Hexer** (Jinx: priority 2, BP 40, −15 Intelligence on the target),
+**Conjurer** (Blink, the magical Vanish), **Warlock** (Siphon: every magical hit restores 10 Mana)
+and **Sage** (Deep Breath: a Rest grants +20 Intelligence). Every damaging class move has a twin in
+the other category (`test/classes.test.ts`). **Volley came down 55 / 30 → 50 / 35**, Cascade at the
+same figures: it was the best damage per mana in the game. **Succor became the Cleric's passive**:
+every hit the holder lands mends its partner 15 healing power off its Wisdom — on-hit rather than at
+round end so it is not Patch's Upkeep, and a spread mends twice.
 
 Two exclusivity rules, without which a Class is a Boon with a hat:
 
 - A class passive is not in the Boon pool, and no Boon passive is a Class.
-- A class move is in no Scroll pool and no Tutor pool, and carries no `tier`. It **wears its
-  holder's innate primary type** (`MoveDefinition.typeFollowsUser`, 2026-09-11 per user
-  direction): Feint is Fire on Cinder and Water on Riptide, so STAB is guaranteed and the chart is
-  read at the hero's element. Resolved once at the edge — `moveForHero` in `src/engine/state.ts`
-  — by `resolveRound`, the AI and every hero-scoped tile, so the catalog is never mutated and the
-  authored `type` is only the fallback with no hero in hand. Class moves are still **role verbs**
-  (a redirect, a priority strike, a spread, a heal, a hit-and-switch: the doubles toolkit no type
-  slate covers evenly), never nukes. The type slates' own tests exempt them (`classMoves`).
-- **A guaranteed lockout is priced by the fight, not the cast.** Feint's Daze is guaranteed, and
-  Feint, Blind and Barrier all carry `manaCostGainOnUse` = 20 — each cast dearer for the rest of
-  the fight — so none of them is a permanent lock. It banks as a negative entry in the same
-  per-move ledger as `manaDiscountOnUse`.
-
-One Class per hero, replace-not-stack, unchanged (`src/run/classes.ts`).
+- A class move is in no level-up pool and no Tutor pool, and carries no `tier`. It **wears its
+  holder's innate primary type** (`MoveDefinition.typeFollowsUser`): Feint is Fire on Cinder and
+  Water on Riptide, so STAB is guaranteed and the chart is read at the hero's element. Resolved once
+  at the edge — `moveForHero` in `src/engine/state.ts` — so the catalog is never mutated. Class
+  moves are **role verbs** (a redirect, a priority strike, a spread, a heal, a hit-and-switch),
+  never nukes. The type slates' own tests exempt them (`classMoves`).
+- **A guaranteed lockout is priced by the fight, not the cast.** Feint, Blind and Barrier carry
+  `manaCostGainOnUse` = 20 — each cast dearer for the rest of the fight — banked as a negative
+  entry in the same per-move ledger as `manaDiscountOnUse`.
 
 ### The Mentor teaches any hero a powerful move
 
-The Mentor row keeps its seat in **acts 1–3** (`LAST_MENTOR_ACT` = 3). Pick a hero, and the Mentor
-**rolls one Mid-tier move** from that hero's pool — a Scroll pour with the band fixed at Mid,
-un-rank-gated, ticking nothing (`mentorMovePool`, `src/run/tutor.ts`; `MentorNodeScreen`). The
-rolled offer is spent by being made, exactly as a Scroll's is: declined is burned. "A powerful move"
-is the whole of the flavour, and in Act 1 a Mid move is exactly that.
+The Mentor row holds the spliced seat in **acts 1–3** (`LAST_MENTOR_ACT` = 3, `src/run/map.ts`).
+Pick a hero, and the Mentor **rolls one Mid-tier move** from that hero's pool — un-gated, taking no
+schedule entry, spent by being made (`mentorMovePool`, `src/run/tutor.ts`; `MentorNodeScreen`).
 
-It was first built as the Tutor's early sibling — a curated pick from the hero's whole Early-and-Mid
-list — and revised the same day (2026-09-11, per user direction): that is a designer's screen, and
-on one of the first nodes a new player meets a twelve-move list is overwhelming rather than
-empowering. The roll keeps the payoff and leaves *who* as the only decision. The Tutor in acts 4–5
-keeps its curated full pool, where the player has the context to use it.
+It was first a curated pick from the hero's whole Early-and-Mid list, and revised the same day (per
+user direction): on one of the first nodes a new player meets, a twelve-move list is overwhelming.
+The roll keeps the payoff and leaves *who* as the only decision. A Mentor move fills a slot and
+advances nothing else, so it buys exactly one thing — an answer to the measured Acts 1–2 wall.
 
-Why an un-rank-gated Mid move in Act 1 does not break "the ceiling sits behind the spend": rank
-progress and the Evolution both live *only* on the Scroll. A Mentor move fills a slot and ticks
-nothing, so it buys exactly one thing — an answer to the measured Acts 1–2 wall — and leaves every
-reason to pour a Scroll intact.
-
-**Act 4's row becomes a forced Forge** (`forgeReward`), a free +1 slot to one hero at about the
-time a third slot on the carry matters. The Blacksmith sells the same thing one row later; that
-redundancy was weighed against dropping the row and the Forge was kept (2026-09-11, per user
-direction).
+Act 4's seat was a forced Forge here; since `gear-absorption.md` §4 it is the Tutor.
 
 ### What this reverses
 
-| §5 / §9 said | Now |
-|---|---|
-| Evolutions come from the Crucible, never from a level | Evolutions come from the **6th Scroll** into a hero, never from a level and never from the Crucible |
-| Five forced a run plus the `crucibleReward` node | As many as the player pours for; `crucibleReward` deleted |
-| Scarce when it matters, universal by the end | Universal by the end, paced by the player |
-| `SCROLLS_PER_RANK` = 3, six maxes a hero | `RANK_THRESHOLDS` = [0, 4, 8], Rank 3 open-ended |
-| Guardians pay 2, Skirmish/Elite pay 1 | Guardian 3, Elite 3, Skirmish 2, Fight/Battle 1 |
-| Classes are `+10/+10` stat pairs from a Mentor row in acts 1–4 | Classes are a move or a passive, from the Crucible at every Guardian |
-| The Mentor grants a Class | The Mentor is an Early–Mid Tutor, acts 1–3; Act 4's row is a Forge |
-
-### Watch in playtest
-
-- **Screens per act.** Ten Scrolls an act is ten pours and up to ten offers. Accepted on the
-  argument that a move offer is the game's best screen; the number to re-check is whether the
-  *sixth* offer in a beat still feels like one.
-- **Front-loading.** Two heroes can evolve by the Act 1 Guardian and a Mentor can hand a Mid move
-  out in Act 1. Phase 6 fitted `ACT_STEP_CURVE` against one Evolution an act; re-run the sim pilot
-  before trusting the curve.
-- **The Elite/Battle fork.** It is now Scrolls vs loot. If Elite is always right the Battle's loot
-  side needs a grant, not the Elite's Scroll a cut.
+The Evolution left the Crucible (it is now on Mastery pips); `crucibleReward` is deleted; Classes
+went from `+10/+10` stat pairs on a Mentor row to a move or a passive from the Crucible; the Mentor
+went from granting a Class to rolling a Mid move.
 
 ## 12. Third pass (2026-09-12): the ladder is priced, and the purse banks
 
-Per user direction, and it is a reversal: the pre-overhaul level-up curve — *a level-up costs as
-many points as the level being left, flattening at 5; the game pays more the deeper the run goes*
-— was the part of the old system that felt right, and §4 did not carry it over when Scrolls
-replaced the pool. It is brought back whole, on Scrolls, with the old thresholds. The record of
-why it was a curve and not a cap, and of how the income was measured, is in the pre-overhaul
-`docs/leveling-and-ranks.md` (git history, `fcdc365^`); the shape of the argument is repeated
-here only where it changed.
-
-### The price
-
-A hero climbs the ladder in **rungs**, and a rung's price rises with the rung:
-
-| Rung bought | Price | Poured so far | What it opens |
-|---|---|---|---|
-| 1st | 1 | 1 | Early offer |
-| 2nd | 2 | 3 | Early offer |
-| 3rd | 3 | 6 | **Rank 2** — Mid opens, Early expires |
-| 4th | 4 | 10 | **Evolution** — no offer behind it |
-| 5th | 5 | 15 | Mid offer |
-| 6th | 5 | 20 | **Rank 3** — Late opens, open-ended past here |
-| 7th+ | 5 | +5 each | Mid+Late offers until the pool is dry |
-
-`scrollCost(rung)` = `min(MAX_SCROLL_COST, rung + 1)`; `RANK_THRESHOLDS` = [0, 3, 6] in rungs,
-`EVOLUTION_RUNG` = 4 (`src/run/progression.ts`). These are the old curve's levels 4 / 5 / 7 with
-"level 1" as "no rung climbed", so the landmarks land on the same cumulative prices they did: Mid
-at 6, the Evolution at 10, Late at 20. Only `RosterEntry.masteryScrollsSpent` — the cumulative
-price paid — is stored; the rung (`masteryRung`), the rank and the next price are derived from it,
-and since every spend adds exactly the next rung's price, the inversion is exact. A generated hero
-is placed by rung and given that rung's price (`ENEMY_RUNGS_BY_LEVEL`, `enemyGen.ts`).
-
-The tick still lands before the roll (§11), the Evolution is still the rung's whole reward, and
-the pips are still one a rung — a pip is not a Scroll any more, so the row wears the price of its
-next rung beside the bar, dimmed when the purse falls short. **No hero needed re-authoring**: the
-6/6/4 pools sit well above a floor of 2 Early / 3 Mid / 1 Mid+Late (`movePoolFloor`).
-
-### The income
-
-The old Training Point table, verbatim (`scrollsFor`, `src/run/difficulty.ts`): **3** the act
-opener, **3** Battle, **4** Skirmish, **4** Elite, **4** the Guardian, and **+2 per act past the
-first** (`ACT_SCROLL_STEP`). An act's four fights pay:
-
-| Act | Elite route | Battle route |
-|---|---|---|
-| 1 | 15 | 14 |
-| 2 | 23 | 22 |
-| 3 | 31 | 30 |
-| 4 | 39 | 38 |
-| 5 | 47 | 46 |
-| run | ~155 | ~150 |
-
-plus the Scroll Cache (2, flat), the lone Scroll (1, flat) and the Guild Hall's shelf. Against
-that: one hero rushed to its Evolution is **10**, a four-hero core lifted one rung each is **4**,
-six Evolutions are **60**, six heroes to the Late band are **120**. Act 1 pays for an Evolution
-before its own Guardian on either route — the opener's 3 rather than 2 is what guarantees that,
-and it is the reason an all-in on one hero is a plan rather than a coin toss over a routing choice.
-§11's lane split (Skirmish pays Scrolls, Monsters pays loot) survives as the Skirmish lane's +1
-premium, which is what it was before §11 widened it.
-
-The Guardian's separate `SCROLLS_PER_ACT` grant is gone; the Guardian is a fight and pays through
-the same table, at the act it was beaten in.
-
-**The Guild Hall's shelf sells a bundle, not a Scroll.** One purchase is a fight's worth in the
-current act (`scrollsFor('fight', act)`: 3 in Act 1, 11 in Act 5) for `SCROLL_PURCHASE_COST` = 35g,
-`SCROLL_PURCHASE_LIMIT` = 2 a visit. A single Scroll is a fraction of a rung now, and 35g for one
-would have been a trap. This is the one figure in this pass that is NEW rather than restored — the
-old system sold no XP for gold — and the sim (below) says it is generous. First-pass for playtest.
-
-### The purse
-
-A rising price needs a purse: a leftover that buys nobody is normal and banks; one that could buy
-somebody may be banked by choice. This reverses §4's "poured where it is won, never held"
-(2026-09-10), which was right for a flat price — holding a 1-Scroll rung never paid — and is wrong
-for a rising one, where saving toward the carry's 5 while the bench's 1s sit affordable is exactly
-the decision the curve exists to create. The old flow is restored (`fd263fd`):
-
-- The board is pushed after every node that leaves the purse able to buy a rung (`masteryDue` =
-  `canAffordAnyScroll` and not `run.masteryDeferred`), last in the post-fight chain as before.
-- **Bank** is the out; it sets `masteryDeferred`. **Every grant clears it** (`grantMasteryScrolls`,
-  `buyMasteryScroll`), so new income always re-asks and banking is never a dead end. An Evolution
-  or an overflow in flight blocks the out — those are payouts already bought.
-- The map's Scroll chip is a button whenever the purse can buy somebody a rung.
-- The Vigil clears the bank on the way out: the last node before the Endbringer is re-offered or
-  never.
-- `SAVE_VERSION` 10 → 11: a v10 file's spent counts are rungs, not prices.
-
-What §4 gave up for "never held" — saving for a hero not yet recruited — is back. The thing §4
-was protecting against, a count on a menu button that "signals admin waiting", is answered by the
-push: the board still arrives on its own after every fight that funds a rung, so the chip only
-ever shows what the player chose to keep.
-
-### Measured (400 runs, `--pilot chart`, before → after)
-
-| | before | after |
-|---|---|---|
-| full-clear | 24.3% | 26.8% |
-| encounters won / run | 8.39 | 8.97 |
-| Scrolls granted / completed run | 52 | 199 |
-| reached Mid (act 4+ heroes) | 81.5% | 89.0% |
-| reached the Evolution | 80.4% | 84.9% |
-| reached Late | 35.4% | 36.9% |
-| every hero evolved at the end | 34.5% | 41.0% |
-
-The ladder reaches about where it did — the curve and the income were re-based together, so the
-run's shape is the same and only the unit changed. Two things the sim flags: the Guild Hall bundle
-is ~40 Scrolls a completed run, level with the Skirmish lane, because the greedy policy buys it
-whenever the gold is there; and the sim never banks by choice, so the pivot the purse exists for
-is unmeasured. Both are playtest questions.
-
-### What this reverses
-
-| §4 / §11 said | Now |
-|---|---|
-| A Scroll is poured where it is won, never held | The purse banks; a Bank button, and a grant re-asks |
-| `RANK_THRESHOLDS` = [0, 4, 8] Scrolls, `EVOLUTION_SCROLLS` = 6 | [0, 3, 6] **rungs**, `EVOLUTION_RUNG` = 4; a rung costs 1/2/3/4/5 |
-| Guardian 3, Elite 3, Skirmish 2, Fight/Battle 1, flat across acts | 4 / 4 / 4 / 3 / 3, +2 per act past the first |
-| The Guild Hall sells a Scroll for 35g | A fight's worth in the act, for 35g |
-| Six Evolutions cost 36 of ~50 | 60 of ~150 |
-
-### Watch in playtest
-
-- **Banking against the bench.** The cheap rungs are on the heroes you are not building. If the
-  purse always empties into 1s and 2s on the bench because they are affordable and lit, the
-  price is teaching breadth the player did not choose; the fix would be presentation (dim the
-  bench harder, or lead with the carry's short-fall), not the curve.
-- **The Guild Hall bundle.** ~20% of a completed run's Scrolls at 35g a bundle. If gold stops
-  competing with it, halve the bundle before touching the price.
-- **Screens per act.** Fewer pours than §11 (a rung is several Scrolls), and a bank exit: the
-  worry inverts — is the board arriving *often enough* to feel like progress in Acts 4–5, where a
-  win pays two rungs on the carry and one on everyone else?
+> **SUPERSEDED by `xp-overhaul.md` §4 (2026-09-13)** — deleted whole with the ladder. It priced
+> rungs 1/2/3/4/5 Scrolls on the pre-overhaul level-up curve and let a purse bank. The ladder was
+> killed by its screens — ~47 rung decisions a run (`xp-overhaul.md` §0) — not by its price.

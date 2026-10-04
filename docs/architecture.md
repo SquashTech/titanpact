@@ -70,14 +70,13 @@ Design constraints on every event type:
 > stat-mods-on-switch already covers flat mods; no status sits in the stat
 > pipeline any more (Blight, the one that did, was cut).
 
-**Canonical event set** (implemented — `src/engine/events.ts`):
+**Canonical event set** (`src/engine/events.ts`, ~33 kinds). The core:
 
 `RoundStarted` · `TurnStarted` · `MoveDeclared` · `MoveUsed` · `DamageDealt` ·
 `Healed` · `HpChanged` · `StatChanged` · `StatusApplied` · `StatusTicked` ·
 `StatusRemoved` · `ActionBlocked` · `Fainted` · `SwitchedIn` · `BenchRegenTicked` ·
-`ManaChanged` · `RoundEnded`
-
-If the prototype or `CLAUDE.md` already names these differently, their names win.
+`ManaChanged` · `RoundEnded` — plus the later additions (`ManaGranted`, `ManaRegenTicked`,
+`Endured`, …); `events.ts` is the list.
 
 ---
 
@@ -125,42 +124,43 @@ Keep these separate; they have different lifetimes and different persistence nee
 
 - **Combat state** — the current fight: active + benched combatants, HP, mana, stat
   modifiers, turn/round cursor, RNG state. Lifetime: one battle.
-- **Run state** — the current roguelike run: roster (≤6), equipment, relics,
-  progression pool, XP, map/encounter position. Lifetime: one ~45-min run.
-- **Meta state** — whatever survives a run. Lifetime: the save file.
+- **Run state** — the current roguelike run: roster (≤6), equipment, Banners, XP and Mastery,
+  map/encounter position. Lifetime: one run (`src/run/state.ts`, saved by `src/run/save.ts`).
+- **Meta state** — whatever survives a run: the `Profile` (`src/run/profile.ts` — stars, the
+  deck, purchases, records, seen tips). Lifetime: the save file.
 
 **Per-run reset vs. meta-progression is LOCKED** (`progression.md` "Per-run reset vs.
 meta-progression", 2026-08-15): light meta-progression — run state fully resets,
-permanent unlocks persist in meta state. Not yet implemented; see that section for
-what building it actually requires.
+permanent unlocks persist in meta state. Built: the Constellation, the Collection and Ascension
+(`docs/constellation.md`, `docs/collection.md`, `docs/ascension.md`).
 
 ---
 
-## Proposed repo map
+## Repo map
 
-Draft — must match the target repo map already in `CLAUDE.md`. If they diverge,
-`CLAUDE.md` wins and this section gets updated.
+`CLAUDE.md`'s repo map wins if the two diverge.
 
 ```
 /src
   /engine            # pure, deterministic, no React / DOM / audio
     /combat          # turn & round resolution, targeting, switching, lock-in
     /damage          # the two pipelines
+    /heal            # the heal pipeline
+    /status          # status pipelines (shield, …)
     /rng             # seeded RNG
+    content.ts       # the content schemas
     events.ts        # the event contract (typed records)
     state.ts         # combat state shapes
-  /run               # run + progression state, raise-vs-recruit, relics/equipment
-  /data              # CONTENT: heroes, moves, type chart, relics, equipment
-    heroes.ts
-    moves.ts
+  /run               # run + meta state: progression, recruitment, map, saves, profile
+  /data              # CONTENT: heroes, moves, statuses, type chart, equipment, …
     typechart.ts     # the 15x15 matrix lives HERE, not in a doc
-    relics.ts
-    equipment.ts
   /view              # React. subscribes to engine events. owns all feel.
     /combat
-    /feedback        # hitstop, screen shake, particles, Web Audio synth
-  /app               # screens, routing, run orchestration
-/docs                # combat / types-and-heroes / progression / mana / architecture
+    /run
+    /shared
+  /audio             # procedural Web Audio effects and the music
+  /app               # App shell, screens and routing, run orchestration, save storage
+/docs                # the design modules
 CLAUDE.md
 ```
 
@@ -180,8 +180,8 @@ renderer:
   bug or an intentional balance change that needs sign-off.
 - **Formula tests.** Assert the damage pipeline against hand-computed cases,
   especially the multiplicative type-stacking edges (4× and the 0.25× floor).
-- **Invariant tests.** Lock-in engages at 2+ KOs; stat grants are always multiples of
-  5/10; level-ups never mutate a stat directly; type is immutable.
+- **Invariant tests.** Lock-in engages at half a side KO'd (`lockInThreshold`); authored stat grants are multiples of
+  5/10; the 550 and grade budgets hold; a hero's innate primary type is immutable.
 
 The view is tested separately (it should be thin) and is allowed to be
 non-deterministic in timing — it just can't be non-deterministic in *outcome*,
