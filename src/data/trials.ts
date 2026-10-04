@@ -245,8 +245,7 @@ export const trials: Record<string, TrialDefinition> = {
     name: 'The Return',
     line: 'Every blow thrown at the mountain comes back down the mountain.',
     gameplan: 'Invite the hits and send them back: Provoke pulls every blow onto walls that harden with each one, and Stoneheart, Retribution and the Defense-swung blows return it all.',
-    cover: 'Sentinel’s Ice Shard is Frost into Water and Nature; Crag’s Claw is Beast into Nature; nothing Stone can learn hits Iron super-effectively, so Stoneheart and Retribution, which return damage as dealt, are its answer.',
-    uncovered: ['Iron'],
+    cover: 'Sentinel’s Ice Shard is Frost into Water and Nature; Crag’s Claw is Beast into Nature; Dune’s Thunderclap is Storm into Iron.',
     leads: ['scree', 'crag'],
     team: {
       name: 'The Return',
@@ -275,7 +274,7 @@ export const trials: Record<string, TrialDefinition> = {
         {
           heroId: 'dune',
           pathId: 'dune-worldworm',
-          moveIds: ['sandbreach', 'bodyCrush', 'stoneheart', 'faultLine'],
+          moveIds: ['sandbreach', 'bodyCrush', 'stoneheart', 'thunderclap'],
           itemIds: ['sword.mythic.granite', 'spear.mythic', 'greataxe.mythic'],
           classId: 'duelist',
         },

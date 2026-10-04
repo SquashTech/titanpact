@@ -265,6 +265,10 @@ answers *is this fun against this AI* before paying for the teambuilder.
    and the test holds both ends — an undeclared gap fails, and so does a declared one the team
    in fact answers. Stoneheart and Retribution return damage with the chart off, which is the
    Trial's stated answer; the real fix is content (a Storm or Mech line move on one Stone hero).
+   **Closed the same day, per user direction: Dune's pool takes Thunderclap** (Storm physical,
+   Early, 45), the Stone Trial holds it in place of Fault Line, and nothing is declared
+   uncovered — the mechanism stays as the guard for the next gap. The rule is met; the
+   matchup is not moved by it (Stone into Iron 0%, Iron into Stone 100%, AI on both sides).
    **The 14 × 14 round-robin, 20 fights a cell** (scratch `rr2.js`, 24 seconds): with the AI on
    both sides the player-seat averages run 32% (Light) to 67% (Beast) — except **Spirit, 83% as
    the player and 90% as the AI**, beaten only by Mind and its mirror. The cause is hero data,
@@ -301,8 +305,8 @@ answers *is this fun against this AI* before paying for the teambuilder.
 - **Nightmare+** (Dread's mastered innate, 20% of max HP a round off every Haunted foe) with
   Omen's entry Haunt makes Spirit the strongest Trial by a distance — a hero-data call, and
   Classic's too.
-- **Stone's Iron gap**: author a Storm or Mech line move on one Stone hero, or let the
-  declared gap stand.
+- **Stone into Iron** still loses every fight after Thunderclap; whether one Early hit is
+  answer enough, or the matchup wants more, is a playtest call.
 - **Gold-reading innates are dead in Constructed** (Aurum's Gilded Mane: the side holds no
   gold). Give Constructed a fixed purse, or let Aurum be a Sunlance hitter here.
 - **Loose fits the drafts flagged**, to look at in play: Whirr (Mech), Coil (Beast), Lotus

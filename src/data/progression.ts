@@ -1011,10 +1011,11 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'rideTheLightning', 'stormLash', 'tailwind', 'livingWall', 'rendArmor', 'shadowstrike',
       'skyfall', 'overcharge', 'stormSurge', 'juggernaut',
     ],
-    // Dune: Stone's physical column, with Iron's pins and weight. Body Crush is Worldworm's grant.
+    // Dune: Stone's physical column, with Iron's pins and weight, and Thunderclap — the one Storm
+    // move a Stone hero can learn, Stone's answer to Iron. Body Crush is Worldworm's grant.
     dune: [
       'toughenUp',
-      'mudBall', 'gravelSpray', 'openingStrike', 'pinDown', 'fortify', 'heavyBlow',
+      'mudBall', 'gravelSpray', 'openingStrike', 'pinDown', 'fortify', 'heavyBlow', 'thunderclap',
       'faultLine', 'rubbleRush', 'spireClaw', 'rendArmor', 'momentumSwing', 'retribution',
       'boulderSlam', 'titanicCrush', 'stoneheart', 'swingingChain',
     ],
