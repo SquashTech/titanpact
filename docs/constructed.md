@@ -1,6 +1,6 @@
 # constructed.md — Constructed: build six, fight the fourteen
 
-> **STATUS: PROPOSED 2026-10-04, NOTHING BUILT.** A second mode beside Classic. A player who has
+> **STATUS: PROPOSED 2026-10-04; §11 steps 1–2 BUILT (the model and the fight seam), no UI.** A second mode beside Classic. A player who has
 > won a run builds a team of six from the heroes they have won with — each at level 30, Mastery
 > 10, in a chosen Evolution, with a chosen kit, three Mythic items and a Class — and takes it
 > against **fourteen authored teams, one a type, each the six heroes of its type**, in any order.
@@ -226,10 +226,17 @@ each starred when beaten, the fifteenth locked in the centre; Teams beside them.
 Build steps 1–4 with no player-facing UI, and play the Trials from a dev screen first. That
 answers *is this fun against this AI* before paying for the teambuilder.
 
-1. **Model** (`src/constructed/`): `TeamSlot`, `Team`, legality (gate, pool, family rule, cap),
-   expected-line stats (§4), and the projection to `RosterEntry`. Pure, tested.
-2. **A fight without a RunState.** Audit what the fight builder reads off the run (Wounds,
-   `down`, the purse, Banners, act) and give it a constructed entry that fields whole.
+1. **Model — IN (2026-10-04)** (`src/run/constructed.ts`, `test/constructed.test.ts`):
+   `TeamSlot`, `Team`, legality (`slotProblems` / `teamProblems` — the hero gate, the pool, the
+   cap, Mythic only, one a family, six distinct heroes), the expected line (`expectedGrowthGrants`),
+   and `constructedEntry`, which takes the path through the run's own `chooseEvolutionPath` so a
+   graft, a rewire and a path passive land exactly as in Classic. The pool is the kit, the hero's
+   table pool, the path's moves and line, the signature, and the chosen Class's move.
+2. **A fight without a RunState — IN (same day).** Nothing to audit away: `buildCombatState`
+   already takes plain rosters and squads, and Quick Battle already hands `FightScreen` a
+   throwaway run. `constructedSide` is that throwaway — no gold, relics, Banners or potions,
+   nobody wounded or down — with authored leads for the AI and none for the player, who picks
+   them in the fight.
 3. **The fourteen teams as data** (`src/data/trials.ts`), pinned legal by test.
 4. **Sim: a 14 × 14 round-robin** of the Trial teams, plus each against sample builds. The matrix
    is the balance read by type that Classic cannot give.
@@ -253,6 +260,10 @@ answers *is this fun against this AI* before paying for the teambuilder.
 - **Ship before the AI switches?** A Trial set designed around a static AI, or wait for §8.
 - **A beaten Trial's team as a preset** before the player has unlocked its heroes: viewable,
   not buildable — confirm.
+- **A Unique on every hero?** The six Guardian Uniques are Mythic, so the model allows them —
+  and the same one on more than one hero. One a team would match the name; not yet a rule.
+- **Unevolved is legal** in the model (`pathId: null`). A Mastery-10 hero is always evolved in
+  Classic; allowing it costs nothing, but say so if it should be refused.
 
 ---
 

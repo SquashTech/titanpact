@@ -76,6 +76,7 @@ import './innate.test';
 import './evolutionSimplification.test';
 import './evolutionPassives.test';
 import './mvp.test';
+import './constructed.test';
 import { run } from './harness';
 
 run();
