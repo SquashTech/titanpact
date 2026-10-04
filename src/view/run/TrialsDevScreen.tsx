@@ -5,7 +5,6 @@ import { useState } from 'react';
 import { heroes } from '../../data/heroes';
 import { moves } from '../../data/moves';
 import { equipment } from '../../data/equipment';
-import { classes } from '../../data/classes';
 import { progressionTable } from '../../data/progression';
 import { TRIAL_LIST } from '../../data/trials';
 import { constructedPath, type TeamSlot, type TrialDefinition } from '../../run/constructed';
@@ -22,7 +21,6 @@ interface Props {
 function SlotLine({ slot }: { slot: TeamSlot }) {
   const hero = heroes[slot.heroId];
   const path = constructedPath(progressionTable, slot.heroId, slot.pathId);
-  const cls = slot.classId ? classes[slot.classId] : null;
   return (
     <div className="trials-dev-slot">
       <HeroPortrait heroId={slot.heroId} pathId={slot.pathId ?? undefined} className="trials-dev-portrait" />
@@ -30,7 +28,6 @@ function SlotLine({ slot }: { slot: TeamSlot }) {
         <div className="trials-dev-slot-name">
           {hero?.name ?? slot.heroId}
           {path && <span className="trials-dev-slot-path"> · {path.name}</span>}
-          {cls && <span className="trials-dev-slot-path"> · {cls.name}</span>}
         </div>
         <div className="trials-dev-slot-detail">{slot.moveIds.map((id) => moves[id]?.name ?? id).join(', ')}</div>
         <div className="trials-dev-slot-detail">{slot.itemIds.map((id) => equipment[id]?.name ?? id).join(', ')}</div>

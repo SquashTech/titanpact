@@ -3,7 +3,6 @@
 // already reads, so the engine never knows which mode it is in.
 
 import type { HeroDefinition, StatKey, TypeId } from '../engine/content';
-import type { ClassDefinition } from './classes';
 import type { HeroLookup } from '../engine/state';
 import type { Profile } from './profile';
 import type { Squad } from './squad';
@@ -24,9 +23,8 @@ export interface TeamSlot {
   pathId: string | null;
   /** 1 to MOVE_CAP, from `constructedMovePool`. */
   moveIds: string[];
-  /** Up to BASE_ITEM_SLOTS Mythic items, one a family; enchanted ids allowed. */
+  /** Up to BASE_ITEM_SLOTS family items at Mythic, one a family; enchanted ids allowed, Uniques not. */
   itemIds: string[];
-  classId: string | null;
 }
 
 export interface Team {
@@ -56,7 +54,6 @@ export interface ConstructedContent {
   heroes: HeroLookup;
   table: ProgressionTable;
   equipment: Record<string, EquipmentDefinition>;
-  classes: Record<string, ClassDefinition>;
 }
 
 export class ConstructedError extends Error {}
@@ -88,12 +85,11 @@ export function constructedPath(table: ProgressionTable, heroId: string, pathId:
   return (table.evolutions[heroId] ?? []).flatMap((node) => node.paths).find((p) => p.id === pathId) ?? null;
 }
 
-/** Everything the hero could hold at the end of a run in this form: kit, pool, the path's moves, the signature, the Class's move. */
-export function constructedMovePool(content: ConstructedContent, slot: Pick<TeamSlot, 'heroId' | 'pathId' | 'classId'>): string[] {
+/** Everything the hero could hold at the end of a run in this form: kit, pool, the path's moves, the signature. No Class (§3). */
+export function constructedMovePool(content: ConstructedContent, slot: Pick<TeamSlot, 'heroId' | 'pathId'>): string[] {
   const hero = content.heroes[slot.heroId];
   if (!hero) return [];
   const path = constructedPath(content.table, slot.heroId, slot.pathId);
-  const classMove = slot.classId ? content.classes[slot.classId]?.grantsMoveId : undefined;
   return [
     ...new Set([
       ...hero.moveIds,
@@ -101,7 +97,6 @@ export function constructedMovePool(content: ConstructedContent, slot: Pick<Team
       ...(path?.unlocksMoveIds ?? []),
       ...(path?.learnableMoveIds ?? []),
       ...(hero.signatureMoveId ? [hero.signatureMoveId] : []),
-      ...(classMove ? [classMove] : []),
     ]),
   ];
 }
@@ -114,7 +109,6 @@ export function slotProblems(content: ConstructedContent, slot: TeamSlot, unlock
   if (unlocked && !unlocked.has(slot.heroId)) problems.push(`${slot.heroId} has not been won with`);
 
   if (slot.pathId && !constructedPath(content.table, slot.heroId, slot.pathId)) problems.push(`${slot.pathId} is not a path of ${slot.heroId}`);
-  if (slot.classId && !content.classes[slot.classId]) problems.push(`unknown class ${slot.classId}`);
 
   if (slot.moveIds.length === 0) problems.push(`${slot.heroId} holds no move`);
   if (slot.moveIds.length > MOVE_CAP) problems.push(`${slot.heroId} holds ${slot.moveIds.length} moves, the cap is ${MOVE_CAP}`);
@@ -130,7 +124,8 @@ export function slotProblems(content: ConstructedContent, slot: TeamSlot, unlock
       problems.push(`unknown item ${id}`);
       continue;
     }
-    if (item.rarity !== CONSTRUCTED_RARITY) problems.push(`${id} is not ${CONSTRUCTED_RARITY}`);
+    // The id's own tier, not the item's: a Unique is Mythic but has no family, and Constructed fields none (§3).
+    if (parseEquipmentId(id).rarity !== CONSTRUCTED_RARITY) problems.push(`${id} is not a ${CONSTRUCTED_RARITY} family item`);
     const base = parseEquipmentId(id).base;
     if (bases.has(base)) problems.push(`${slot.heroId} holds two of ${base}`);
     bases.add(base);
@@ -168,14 +163,11 @@ export function constructedEntry(content: ConstructedContent, slot: TeamSlot): R
   // The path goes through the run's own verb, so a graft, a rewire and a path passive land exactly as in Classic.
   const evolved = slot.pathId ? chooseEvolutionPath({ ...createRunState(), roster: [raw] }, content.table, content.heroes, raw.rosterId, slot.pathId).roster[0] : raw;
 
-  const cls = slot.classId ? content.classes[slot.classId] : null;
   return {
     ...evolved,
     unlockedMoveIds: [...slot.moveIds],
     offeredMoveIds: [],
     equipment: [...slot.itemIds],
-    classId: cls ? cls.id : null,
-    classPassiveId: cls?.grantsPassiveId ?? null,
   };
 }
 

@@ -3,7 +3,7 @@
 > **STATUS: PROPOSED 2026-10-04; §11 steps 1–6 BUILT (fourteen Trials, the sim, the pilot as the Trials' AI, a dev screen)
 > — no player-facing UI yet.** A second mode beside Classic. A player who has
 > won a run builds a team of six from the heroes they have won with — each at level 30, Mastery
-> 10, in a chosen Evolution, with a chosen kit, three Mythic items and a Class — and takes it
+> 10, in a chosen Evolution, with a chosen kit and three Mythic items — and takes it
 > against **fourteen authored teams, one a type, each the six heroes of its type**, in any order.
 > **Decided per user direction:** the mode is locked until a Classic win; a Trial pays stars on its
 > **first clear only, and a real chunk**; the teambuilder's density is the hard problem and is
@@ -17,7 +17,7 @@
 - **A win has nowhere to go.** After a Classic clear the next thing is another run or Ascension.
   Neither spends what the player now knows about the roster.
 - **The roguelite hides its own depth.** Most players never see a hero's whole pool, a Mythic of
-  every family, or a Class on the hero it was made for. Building is where people fall for a
+  every family, or a path it never took. Building is where people fall for a
   system — Pokémon Showdown is the reference.
 - **The north star gets a test it cannot dodge.** *No hero is a trap pick* is checked in Classic
   through scarcity and luck. In Constructed, with everything chosen, a hero that is viable under
@@ -80,8 +80,17 @@ it is in:
 | Mastery | 10 | the mastered innate (`masteredPassiveIds`) |
 | Evolution | any of three paths (§2) | graft, move and passive as in Classic; the rewire where pinned |
 | Moves | four (`MOVE_CAP`) from the hero's whole pool — every band, plus the signature and the path's move | no schedule, no roll |
-| Items | three, Mythic, an enchant each | one per family still holds (no merge here, so it is a legality rule) |
-| Class | any of the fourteen, or none | the class move wears the hero's type as in Classic |
+| Items | three family items at Mythic, an enchant each | one per family still holds (no merge here, so it is a legality rule); **no Uniques** |
+
+**No Classes and no Uniques** (2026-10-04, per user direction): a constructed hero is an
+Evolution, a moveset and equipment, nothing else. A Class was a fifth axis on a screen already
+carrying four, and the Guardian Uniques were six one-offs beside sixteen families. The model
+refuses both — a Unique's id carries no tier, so `parseEquipmentId(id).rarity` is the test — and
+a constructed entry holds `classId: null`. The Trials' fifteen Uniques became the family piece
+of the same shape (the Scythe a Dagger, the Crown a Crest, the plates Crest, Plate or Shield,
+Worldbreaker a Greataxe; Widow, already holding a Dagger, Leathers). Measured after, pilot on both
+sides: the AI still wins 50% on average; **Spirit rises 67 → 79%** — its six lost little, and
+the teams that answered it lost Class tools.
 
 **Off for both sides:** Banners, Wounds, Mana Well / Ley Line grants, gold, the Pact purse. The
 Pact Clock, lock-in (3 of 6), Field Effects and the whole roster fielding with leads picked in
@@ -198,15 +207,19 @@ in §6 are halved.
 ## 9. The teambuilder
 
 This is the screen most likely to fail, on a portrait phone. Six heroes × (path + four moves +
-three items with enchants + Class) is about fifty decisions. Principles:
+three items with enchants) is about forty-eight decisions. Principles (the first-pass mockup is
+the "Titanpact Teambuilder" design canvas; tabs and locked heroes in full colour are decided):
 
 - **One hero a screen.** The team is a row of six portraits; tapping one opens that hero's
   page. Never a grid of everything.
 - **A suggested build per hero, one tap.** The Trial teams already author a build for all 84
   heroes; **those are the suggestions**. The authoring is shared work, and a player can field a
   team in thirty seconds and tinker later.
-- **Progressive disclosure:** path first (it changes the pool), then moves, then items, then
-  Class. Each section shows its current pick folded; one is open at a time.
+- **Three tabs: Path, Moves, Items** (decided over an accordion). Path first, since it changes
+  the pool. Each tab carries its current pick under its name, so the whole build reads without
+  opening one; the open tab takes the rest of the screen.
+- **Locked heroes show in full colour** in the picker (decided), with a lock and the condition —
+  "Win a run with Crimson" — so the player knows whom to go win with.
 - **Never illegal.** The builder only offers legal picks — no error states. A pick that would
   break a later one (a path that drops a held move) says so as it is made.
 - **The move list is filtered by default** (the hero's types, then everything) and every card is
@@ -235,7 +248,7 @@ answers *is this fun against this AI* before paying for the teambuilder.
    cap, Mythic only, one a family, six distinct heroes), the expected line (`expectedGrowthGrants`),
    and `constructedEntry`, which takes the path through the run's own `chooseEvolutionPath` so a
    graft, a rewire and a path passive land exactly as in Classic. The pool is the kit, the hero's
-   table pool, the path's moves and line, the signature, and the chosen Class's move.
+   table pool, the path's moves and line, and the signature.
 2. **A fight without a RunState — IN (same day).** Nothing to audit away: `buildCombatState`
    already takes plain rosters and squads, and Quick Battle already hands `FightScreen` a
    throwaway run. `constructedSide` is that throwaway — no gold, relics, Banners or potions,
@@ -246,7 +259,7 @@ answers *is this fun against this AI* before paying for the teambuilder.
    Tide* (Selkie's Renew ticks feed Kappa's Attack; Shields; Water Force), *The Charged Line*
    (Ferra plants Conduct, the line's Metallic Blade and Overcharge go free). `test/constructed`
    pins rules 1–4 of §6 as code: each Trial is ready with no gate, fields exactly its type's six,
-   its leads build a side, no Unique twice, and **it holds a damaging move super-effective into
+   its leads build a side, no Unique (since §3's cut), and **it holds a damaging move super-effective into
    every type that hits it super-effectively** — read off the chart, class moves excluded.
    **First read, 3 × 3 round-robin, 100 fights a cell (scratch script on `simulateFight`):**
    with the same AI on both sides Iron is the strongest (66 / 89 / 56% as the player into Fire /
@@ -319,8 +332,6 @@ answers *is this fun against this AI* before paying for the teambuilder.
 - **Ship before the AI switches?** A Trial set designed around a static AI, or wait for §8.
 - **A beaten Trial's team as a preset** before the player has unlocked its heroes: viewable,
   not buildable — confirm.
-- **A Unique on every hero?** The six Guardian Uniques are Mythic, so the model allows them —
-  and the same one on more than one hero. One a team would match the name; not yet a rule.
 - **Spirit is still the strongest Trial after the Nightmare+ nerf** (2026-10-04, per user
   direction: Nightmare+ keeps Nightmare's 10% and reaches the bench — `nightTerrorBench`,
   `whileBenched` — in place of 20% from the field; a reach widened, as the mastered rule

@@ -3,7 +3,6 @@ import { test } from './harness';
 import { heroes } from '../src/data/heroes';
 import { progressionTable } from '../src/data/progression';
 import { equipment } from '../src/data/equipment';
-import { classes } from '../src/data/classes';
 import { passives } from '../src/data/passives';
 import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
@@ -29,14 +28,13 @@ import {
   type TeamSlot,
 } from '../src/run/constructed';
 
-const content: ConstructedContent = { heroes, table: progressionTable, equipment, classes };
+const content: ConstructedContent = { heroes, table: progressionTable, equipment };
 
 const cinder = (over: Partial<TeamSlot> = {}): TeamSlot => ({
   heroId: 'cinderKnight',
   pathId: 'cinderKnight-ironclad',
   moveIds: ['singe', 'setAlight', 'kindle'],
   itemIds: ['sword.mythic.blazing', 'plate.mythic'],
-  classId: 'duelist',
   ...over,
 });
 
@@ -44,7 +42,7 @@ function typeTeam(type: string): Team {
   const six = Object.values(heroes).filter((h) => h.types[0] === type).slice(0, TEAM_SIZE);
   return {
     name: type,
-    slots: six.map((h) => ({ heroId: h.id, pathId: progressionTable.evolutions[h.id][0].paths[0].id, moveIds: [...h.moveIds], itemIds: [], classId: null })),
+    slots: six.map((h) => ({ heroId: h.id, pathId: progressionTable.evolutions[h.id][0].paths[0].id, moveIds: [...h.moveIds], itemIds: [] })),
   };
 }
 
@@ -59,10 +57,10 @@ test('constructed: a legal slot has no problems', () => {
   assert.deepStrictEqual(slotProblems(content, cinder()), []);
 });
 
-test('constructed: the pool holds the kit, the path line, the signature and the Class move', () => {
+test('constructed: the pool holds the kit, the path line and the signature, and no Class move', () => {
   const pool = constructedMovePool(content, cinder());
-  for (const id of ['singe', 'kindle', 'hammerbrand', 'feint']) assert.ok(pool.includes(id), id);
-  assert.ok(!constructedMovePool(content, cinder({ classId: null })).includes('feint'));
+  for (const id of ['singe', 'kindle', 'hammerbrand'] as const) assert.ok(pool.includes(id), id);
+  assert.ok(!pool.includes('feint'), 'Constructed has no Classes');
 });
 
 test('constructed: illegal slots say why', () => {
@@ -74,14 +72,15 @@ test('constructed: illegal slots say why', () => {
   assert.ok(slotProblems(content, cinder({ itemIds: ['sword.epic'] })).length > 0);
   assert.ok(slotProblems(content, cinder({ itemIds: ['sword.mythic', 'sword.mythic.blazing'] })).length > 0);
   assert.ok(slotProblems(content, cinder({ itemIds: ['sword.mythic', 'plate.mythic', 'ring.mythic', 'boots.mythic'] })).length > 0);
-  assert.deepStrictEqual(slotProblems(content, cinder({ itemIds: ['worldbreaker.blazing'] })), []);
+  assert.ok(slotProblems(content, cinder({ itemIds: ['worldbreaker'] })).length > 0, 'a Unique is Mythic but not a family');
+  assert.ok(slotProblems(content, cinder({ itemIds: ['worldbreaker.blazing'] })).length > 0);
 });
 
 test('constructed: the hero gate reads any starred path', () => {
   const unlocked = constructedHeroIds({ evolutionStars: { cinderKnight: ['cinderKnight-ironclad'], crimson: [] } });
   assert.deepStrictEqual([...unlocked], ['cinderKnight']);
   assert.deepStrictEqual(slotProblems(content, cinder({ pathId: 'cinderKnight-thunderblaze', moveIds: ['singe'] }), unlocked), []);
-  assert.ok(slotProblems(content, { ...cinder(), heroId: 'crimson', pathId: null, moveIds: ['ember'], classId: null }, unlocked).length > 0);
+  assert.ok(slotProblems(content, { ...cinder(), heroId: 'crimson', pathId: null, moveIds: ['ember'] }, unlocked).length > 0);
 });
 
 test('constructed: a team is six distinct heroes', () => {
@@ -101,7 +100,7 @@ test('constructed: the entry is level 30, mastered, evolved, and holds exactly t
   assert.ok(entry.evolutionPassiveGrants.includes('cinderguard'));
   assert.deepStrictEqual(entry.unlockedMoveIds, ['singe', 'setAlight', 'kindle']);
   assert.deepStrictEqual(entry.equipment, ['sword.mythic.blazing', 'plate.mythic']);
-  assert.strictEqual(entry.classId, 'duelist');
+  assert.strictEqual(entry.classId, null);
 });
 
 test('constructed: a rewire trades base and growth', () => {
@@ -145,10 +144,10 @@ test('trials: the leads stand on the team and build a side', () => {
   }
 });
 
-test('trials: no Unique twice on one team', () => {
+test('trials: no Unique on any team', () => {
   for (const trial of TRIAL_LIST) {
     const uniques = trial.team.slots.flatMap((s) => s.itemIds).map((id) => parseEquipmentId(id)).filter((p) => p.rarity === null).map((p) => p.base);
-    assert.strictEqual(new Set(uniques).size, uniques.length, trial.id);
+    assert.deepStrictEqual(uniques, [], trial.id);
   }
 });
 
