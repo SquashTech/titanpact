@@ -50,6 +50,7 @@ import { runEvents } from '../data/events';
 import { rollRunEvent } from '../run/events';
 import { turnedCurse } from '../run/curse';
 import { SandboxBattleScreen } from '../view/run/SandboxBattleScreen';
+import { TrialsDevScreen } from '../view/run/TrialsDevScreen';
 import { ChampionScreen } from '../view/run/ChampionScreen';
 import { RunSummaryScreen } from '../view/run/RunSummaryScreen';
 import { heroes } from '../data/heroes';
@@ -152,6 +153,8 @@ import {
   recordPermanentStatGains,
 } from '../run/runProgress';
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
+import { constructedSide } from '../run/constructed';
+import { constructedContent, trials } from '../data/trials';
 import { createStatusTestSides } from '../run/statusTestFight';
 import { atEvolution, currentEvolutionPathId, fullMovepool } from '../run/progression';
 import { progressionTable } from '../data/progression';
@@ -184,6 +187,8 @@ const PLACELESS_SCREENS: ReadonlySet<Screen['kind']> = new Set([
   'quickBattle',
   'sandboxBattle',
   'sandboxFight',
+  'trialsDev',
+  'trialsFight',
   'statusTestFight',
   'champions',
   'runComplete',
@@ -1216,6 +1221,7 @@ export function App() {
           onGrantDevStars={handleGrantDevStars}
           onQuickBattle={handleQuickBattle}
           onOpenSandbox={handleOpenSandbox}
+          onOpenTrials={() => setScreen({ kind: 'trialsDev' })}
           onVisitLocation={handleVisitLocation}
           onStartLevel4TestRun={handleStartLevel4TestRun}
           onStartCrucibleTestRun={handleStartCrucibleTestRun}
@@ -1246,6 +1252,34 @@ export function App() {
           xpGained={0}
           equipmentReward={null}
           onResolved={() => setScreen({ kind: 'sandboxBattle' })}
+        />
+      )}
+
+      {screen.kind === 'trialsDev' && (
+        <TrialsDevScreen
+          onFight={(playerTrialId, opponentTrialId) => {
+            const opponent = trials[opponentTrialId];
+            setScreen({
+              kind: 'trialsFight',
+              player: constructedSide(constructedContent, trials[playerTrialId].team),
+              ai: constructedSide(constructedContent, opponent.team, opponent.leads),
+            });
+          }}
+          onClose={() => setScreen({ kind: 'title' })}
+        />
+      )}
+
+      {screen.kind === 'trialsFight' && (
+        <FightScreen
+          playerRun={screen.player.run}
+          playerSquad={screen.player.squad}
+          aiRun={screen.ai.run}
+          aiSquad={screen.ai.squad}
+          goldReward={0}
+          xpGained={0}
+          equipmentReward={null}
+          onResolved={() => setScreen({ kind: 'trialsDev' })}
+          onExitToTitle={() => setScreen({ kind: 'trialsDev' })}
         />
       )}
 

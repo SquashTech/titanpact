@@ -72,6 +72,9 @@ export type RunScreen =
   | { kind: 'quickBattle'; player: Encounter; ai: Encounter }
   | { kind: 'sandboxBattle' }
   | { kind: 'sandboxFight'; player: Encounter; ai: Encounter; playerRelics: string[] }
+  /** TEMPORARY DEV/TEST — the Trials before the teambuilder (docs/constructed.md §11 step 6). */
+  | { kind: 'trialsDev' }
+  | { kind: 'trialsFight'; player: Encounter; ai: Encounter }
   /** TEMPORARY DEV/TEST — src/run/statusTestFight.ts. Own kind so leaving returns to the title. */
   | { kind: 'statusTestFight'; player: Encounter; ai: Encounter }
   /** `offers` lives on the screen, not in the shop component: a purchase re-renders the shop and component-local state would reroll / forget. */

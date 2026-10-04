@@ -2,7 +2,7 @@
 // Pure — the shape, its legality, and the projection onto RosterEntry/Squad the fight builder
 // already reads, so the engine never knows which mode it is in.
 
-import type { HeroDefinition, StatKey } from '../engine/content';
+import type { HeroDefinition, StatKey, TypeId } from '../engine/content';
 import type { ClassDefinition } from './classes';
 import type { HeroLookup } from '../engine/state';
 import type { Profile } from './profile';
@@ -32,6 +32,22 @@ export interface TeamSlot {
 export interface Team {
   name: string;
   slots: TeamSlot[];
+}
+
+/** An authored opponent (§6): one type's six, one gameplan, and the cover for its own chart weakness. */
+export interface TrialDefinition {
+  id: string;
+  type: TypeId;
+  name: string;
+  /** One line of voice, shown on the Trial's tile. */
+  line: string;
+  /** The plan in one sentence — what every slot serves. */
+  gameplan: string;
+  /** How it answers the types that hit it super-effectively, named. */
+  cover: string;
+  /** The AI's opening two, by hero id. */
+  leads: readonly [string, string];
+  team: Team;
 }
 
 export interface ConstructedContent {

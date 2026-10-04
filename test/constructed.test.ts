@@ -5,6 +5,10 @@ import { progressionTable } from '../src/data/progression';
 import { equipment } from '../src/data/equipment';
 import { classes } from '../src/data/classes';
 import { passives } from '../src/data/passives';
+import { moves } from '../src/data/moves';
+import { typeChart } from '../src/data/typechart';
+import { TRIAL_LIST } from '../src/data/trials';
+import { parseEquipmentId } from '../src/run/equipment';
 import { buildCombatState } from '../src/run/buildCombatState';
 import { gradeExpectedPoints, levelOf } from '../src/run/growth';
 import { innatePassiveIdsFor } from '../src/run/innate';
@@ -119,4 +123,44 @@ test('constructed: two teams build a fight — authored leads on one side, picke
   ], passives);
   assert.strictEqual(Object.keys(state.combatants).length, TEAM_SIZE * 2);
   for (const c of Object.values(state.combatants)) assert.ok(c.currentHp > 0 && c.currentMana > 0);
+});
+
+// --- The Trials (src/data/trials.ts) ---
+
+test('trials: every Trial is a ready team, legal with no gate', () => {
+  for (const trial of TRIAL_LIST) assert.ok(isTeamReady(content, trial.team), `${trial.id}: ${teamProblems(content, trial.team).join('; ')}`);
+});
+
+test('trials: a Trial fields exactly its type’s six', () => {
+  for (const trial of TRIAL_LIST) {
+    const six = Object.values(heroes).filter((h) => h.types[0] === trial.type).map((h) => h.id).sort();
+    assert.deepStrictEqual(trial.team.slots.map((s) => s.heroId).sort(), six, trial.id);
+  }
+});
+
+test('trials: the leads stand on the team and build a side', () => {
+  for (const trial of TRIAL_LIST) {
+    const side = constructedSide(content, trial.team, trial.leads);
+    assert.deepStrictEqual(side.squad.activeIds, [...trial.leads], trial.id);
+  }
+});
+
+test('trials: no Unique twice on one team', () => {
+  for (const trial of TRIAL_LIST) {
+    const uniques = trial.team.slots.flatMap((s) => s.itemIds).map((id) => parseEquipmentId(id)).filter((p) => p.rarity === null).map((p) => p.base);
+    assert.strictEqual(new Set(uniques).size, uniques.length, trial.id);
+  }
+});
+
+test('trials: a Trial answers every type that hits it super-effectively', () => {
+  for (const trial of TRIAL_LIST) {
+    const threats = Object.keys(typeChart).filter((attacker) => (typeChart[attacker][trial.type] ?? 1) > 1);
+    const attackTypes = new Set(
+      trial.team.slots.flatMap((s) => s.moveIds).map((id) => moves[id]).filter((m) => m && m.kind === 'damage' && !m.typeFollowsUser).map((m) => m.type)
+    );
+    for (const threat of threats) {
+      const answered = [...attackTypes].some((t) => (typeChart[t][threat] ?? 1) > 1);
+      assert.ok(answered, `${trial.id} has nothing super-effective into ${threat}`);
+    }
+  }
 });

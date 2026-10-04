@@ -1,6 +1,7 @@
 # constructed.md — Constructed: build six, fight the fourteen
 
-> **STATUS: PROPOSED 2026-10-04; §11 steps 1–2 BUILT (the model and the fight seam), no UI.** A second mode beside Classic. A player who has
+> **STATUS: PROPOSED 2026-10-04; §11 steps 1–2 BUILT, step 3 PILOTED (Fire, Water, Iron), step 6
+> BUILT (a dev screen) — no player-facing UI.** A second mode beside Classic. A player who has
 > won a run builds a team of six from the heroes they have won with — each at level 30, Mastery
 > 10, in a chosen Evolution, with a chosen kit, three Mythic items and a Class — and takes it
 > against **fourteen authored teams, one a type, each the six heroes of its type**, in any order.
@@ -237,11 +238,24 @@ answers *is this fun against this AI* before paying for the teambuilder.
    throwaway run. `constructedSide` is that throwaway — no gold, relics, Banners or potions,
    nobody wounded or down — with authored leads for the AI and none for the player, who picks
    them in the fight.
-3. **The fourteen teams as data** (`src/data/trials.ts`), pinned legal by test.
+3. **The fourteen teams as data** (`src/data/trials.ts`), pinned legal by test. **Pilot IN
+   (2026-10-04): Fire, Water, Iron** — *The Kindling* (Burn both foes, cash it in), *The Long
+   Tide* (Selkie's Renew ticks feed Kappa's Attack; Shields; Water Force), *The Charged Line*
+   (Ferra plants Conduct, the line's Metallic Blade and Overcharge go free). `test/constructed`
+   pins rules 1–4 of §6 as code: each Trial is ready with no gate, fields exactly its type's six,
+   its leads build a side, no Unique twice, and **it holds a damaging move super-effective into
+   every type that hits it super-effectively** — read off the chart, class moves excluded.
+   **First read, 3 × 3 round-robin, 100 fights a cell (scratch script on `simulateFight`):**
+   with the same AI on both sides Iron is the strongest (66 / 89 / 56% as the player into Fire /
+   Water / Iron) and Water the weakest (60 / 32 / 19%). **The skilled pilot wins 64–100%
+   against the AI and 92–99% of mirrors** — §8's cost, measured: the team matters less than
+   who flies it.
 4. **Sim: a 14 × 14 round-robin** of the Trial teams, plus each against sample builds. The matrix
    is the balance read by type that Classic cannot give.
 5. **AI switching** (§8), shared with A5.
-6. **Dev screen**: pick a Trial team, fight a Trial.
+6. **Dev screen — IN (2026-10-04)**: the title's Dev menu → **Trials**
+   (`TrialsDevScreen`): pick a Trial team to fly, pick a Trial to face, fight. The player's leads
+   are picked in the fight; leaving returns to the screen.
 7. **Teambuilder**, slots, team codes.
 8. **Profile** (`constructedTeams`, `trialsCleared`), the tile, rewards, the fifteenth fight.
 

@@ -43433,3 +43433,91 @@ img.smithy-service-art {
   color: var(--text-dim);
   text-align: center;
 }
+
+/* TEMPORARY DEV/TEST — the Trials dev screen (view/run/TrialsDevScreen.tsx). */
+.trials-dev-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.trials-dev-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 10px;
+  cursor: pointer;
+  box-shadow: var(--hairline);
+}
+
+.trials-dev-card.selected {
+  border-color: var(--accent);
+  background: rgba(224, 166, 60, 0.08);
+}
+
+.trials-dev-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trials-dev-card-name {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.trials-dev-card-line {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+
+.trials-dev-cover {
+  font-style: italic;
+}
+
+.trials-dev-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.trials-dev-slot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trials-dev-portrait {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  image-rendering: pixelated;
+  object-fit: contain;
+}
+
+.trials-dev-slot-text {
+  min-width: 0;
+}
+
+.trials-dev-slot-name {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.trials-dev-slot-path {
+  font-weight: 400;
+  color: var(--text-dim);
+}
+
+.trials-dev-slot-detail {
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--text-dim);
+}

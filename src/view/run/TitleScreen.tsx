@@ -46,6 +46,7 @@ interface Props {
   onGrantDevStars: () => void;
   onQuickBattle: () => void;
   onOpenSandbox: () => void;
+  onOpenTrials: () => void;
   /** Opens the chosen Location directly with a random party — App.tsx createLocationVisitRun. */
   onVisitLocation: (locationId: string) => void;
   /** TEMPORARY DEV/TEST — App.tsx createLevel4TestRun. Remove with its Dev-menu row. */
@@ -125,6 +126,7 @@ export function TitleScreen({
   onGrantDevStars,
   onQuickBattle,
   onOpenSandbox,
+  onOpenTrials,
   onVisitLocation,
   onStartLevel4TestRun,
   onStartCrucibleTestRun,
@@ -323,6 +325,9 @@ export function TitleScreen({
             </button>
             <button className="title-dev-item" onClick={() => runDev(onOpenSandbox)}>
               Sandbox Battle
+            </button>
+            <button className="title-dev-item" onClick={() => runDev(onOpenTrials)}>
+              Trials
             </button>
             <button className="title-dev-item" onClick={() => runDev(() => setShowLocations(true))}>
               Visit Location
