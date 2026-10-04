@@ -126,7 +126,7 @@ don't silently override it.
 > nobody can receive is gold on the spot. The bag, its marks and the footer label, the swap
 > sheet, the Blacksmith node, the Guild Hall's item shelf and its Sell are DELETED; the funnel is
 > a forced Guild Hall every act with the Anvil and Enchanter on its **Smithy** tab; the spliced
-> row is the Tutor in acts 4 AND 5 (the in-row act-4 seat retired with the Forge). Its §9 lists the invariants below it reverses. Measured
+> row is the Tutor in act 4 (the in-row act-4 seat retired with the Forge; act 5's went with the fifth act). Its §9 lists the invariants below it reverses. Measured
 > (sim, 3000 runs): full-clear 12.0 → 18.8% on the same seed — three sockets are a player buff
 > — 17.2 items a completed run, a merge OFFERED 4.7 times a run and TAKEN 0.6 by a pilot that
 > widens while a socket is free (§8). **Phase 3 is IN (same day): a contract arrives ARMED** —
@@ -358,8 +358,9 @@ don't silently override it.
   SLOT, it does not append** (2026-09-05): a mono hero gains a second type, an innately
   dual one TRADES the one it was born with, and nothing ever reaches three types
   (`effectiveTypes`, `rosterEntryTypes`). A retype is a swap — it costs the old column and
-  the STAB with it — so exactly one path per dual hero offers it, and that path carries the
-  new type's line (`docs/leveling-and-ranks.md` "The RETYPE").
+  the STAB with it — so a dual hero retypes on BOTH of its type paths and keeps its pairing on
+  the third (2026-09-29, `docs/evolution-simplification.md` §6.1, replacing one retype path a
+  hero); the new type's line is derived (`docs/leveling-and-ranks.md` "The RETYPE").
 
 ### Heroes & progression
 - Heroes are **named, authored, fixed specialists** — **42, three a type for the fourteen
@@ -526,8 +527,8 @@ don't silently override it.
   level's is. It was briefly a curated pick from the hero's Early-and-Mid list, which read as a
   designer's screen on one of a new player's first nodes; the roll keeps the payoff and leaves
   WHO as the only decision. With the Tutor it is the only way to a move AHEAD of its schedule.
-  **Acts 4 and 5's spliced row is a forced Tutor** (2026-09-15; act 4's was the Forge until gear
-  was absorbed — `docs/gear-absorption.md` §4).
+  **Act 4's spliced row is a forced Tutor** (2026-09-15; it was the Forge until gear was
+  absorbed — `docs/gear-absorption.md` §4). Act 5 is the finale, Vigil → fight, with no Tutor.
 - **Evolutions are authored branch points**, each option carrying a **single
   identifiable name** (e.g. Cinder's Explosive / Ironclad / Thunderblaze).
   **Every path is exactly TWO of a type graft, ONE move and ONE passive, and never a stat
@@ -605,13 +606,13 @@ don't silently override it.
   unanswerable applied to all four heroes at once — so the interesting grants live per-hero: on
   equipment and the Boon node. Nothing team-wide grants a passive or an Elemental Force, and a
   Banner is the ONLY team-wide grant of any kind.
-- **The Tutor: one guaranteed seat in each of acts 4 and 5** (2026-09-07; reshaped 2026-09-13
-  per user direction; act 5's moved to the forced spliced row 2026-09-14). `tutorReward` is **the Mentor's beat at the Late band**: pick a hero, and
+- **The Tutor: one guaranteed seat, in act 4** (2026-09-07; reshaped 2026-09-13 per user
+  direction; act 5's seat went with the fifth act, 2026-10-02). `tutorReward` is **the Mentor's beat at the Late band**: pick a hero, and
   one **Late-tier move is ROLLED** from its pool — un-gated by level, taking no schedule entry,
   spent by being made (`tierMovePool`, `src/run/tutor.ts`; the Mentor is the same function at
   Mid). A guaranteed Late move, ahead of the band or beside it. It was a curated pick of ANY move
-  off the pool — the run's strongest reward and its longest screen. **Both seats are the forced
-  spliced row** since 2026-09-15 (`docs/gear-absorption.md` §4): act 4's used to sit inside a
+  off the pool — the run's strongest reward and its longest screen. **The seat is the forced
+  spliced row** since 2026-09-15 (`docs/gear-absorption.md` §4): it used to sit inside a
   pick-1-of-3 reward row, priced by what it displaced, and moved to the row the Forge vacated.
   `docs/run-loop.md` "The Tutor".
 - **Boons: the `passiveReward` node grants ONE hero a passive** (2026-09-07), the salvage of the
@@ -659,9 +660,9 @@ don't silently override it.
   granted passives (`RARITY_BUDGET`, `src/run/equipment.ts`; enforced by `test/equipment.test.ts`).
   Not every stat costs 1 — a point buys 3 HP (`HP_PER_POINT`, the measured break-even), MP Regen is
   3× (`STAT_POINT_VALUE`); Force is 2 a magnitude.
-  **From Epic up an item must spend ≥⅓ of its budget on effects** — a passive or a Force, never
-  stats alone (`EFFECT_FLOOR_SHARE`). Budgets tripled when heroes went from three slots to one,
-  so the floor is what keeps a bigger item from being merely a bigger number.
+  **From Epic up an item must spend at least `EFFECT_FLOOR` = 20 points on effects** — a passive
+  or a Force, never stats alone; flat rather than a share (2026-09-07), since 20 is exactly one
+  Awakening. The floor is what keeps a bigger item from being merely a bigger number.
   **Drop odds scale by act**: Legendary/Mythic cannot appear in Act 1, Common cannot appear
   in Act 5, elites roll one tier ahead (`rarityWeightsFor`, `docs/progression.md`).
   **Drop odds by node** (2026-09-15, measured, `docs/gear-absorption.md` §5): the opener always,
@@ -757,10 +758,12 @@ what's still unimplemented:
   active + bench, full starting pool** (`docs/mana.md`).
 - Five "50/50" heroes: general shape decided — **mono base, second type via an
   Evolution type-graft path** (`docs/progression.md` "Type-graft paths"), not
-  inherent duals. Which specific type each hero starts mono as is still open (below).
+  inherent duals. Of the prototype's five, only Solace is in the roster (mono-Light); the
+  other four are not authored, and any that is gets its type with the designer
+  (`docs/types-and-heroes.md`).
 - Run structure (2026-08-16 sign-off, multi-act extension 2026-08-17): **a Slay the
   Spire-style branching map** — a uniform per-act shape of forced Fight → pick 1 of 3
-  reward → **the spliced seat** (Mentor in acts 1–3, Tutor in 4–5) → pick 1 of 3
+  reward → **the spliced seat** (Mentor in acts 1–3, Tutor in act 4) → pick 1 of 3
   reward → pick 1 of 2 (**Elite or Skirmish** since
   2026-09-13, both recruitable, each tile previewing the enemy typing it fields from a draw
   seeded off the map so the preview IS the fight, and the two guaranteed to differ in a type —
