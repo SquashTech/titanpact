@@ -3,7 +3,6 @@ import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import { classes } from '../../data/classes';
 import { locations } from '../../data/locations';
-import { progressionTable } from '../../data/progression';
 import { chosenClass } from '../../run/classes';
 import { locationForAct } from '../../run/locations';
 import { companionTypeOf, hasCompanionStar, hasEvolutionStar, type Profile } from '../../run/profile';
@@ -15,6 +14,7 @@ import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { levelOf } from '../../run/growth';
 import { rungOf } from '../../run/ascension';
 import { statScaleFor } from '../../run/statScale';
+import { evolutionName } from './evolutionName';
 
 interface Props {
   outcome: 'win' | 'loss';
@@ -33,17 +33,6 @@ const ACT_ROMAN = ['I', 'II', 'III', 'IV', 'V'];
 
 function actLabel(actNumber: number): string {
   return ACT_ROMAN[actNumber - 1] ?? String(actNumber);
-}
-
-/** The name of the last Evolution taken — the one word that says what this hero became. */
-function evolutionName(entry: RosterEntry): string | null {
-  const chosen = currentEvolutionPathId(entry);
-  if (!chosen) return null;
-  for (const node of progressionTable.evolutions[entry.heroId] ?? []) {
-    const path = node.paths.find((p) => p.id === chosen);
-    if (path) return path.name;
-  }
-  return null;
 }
 
 /**
@@ -74,10 +63,13 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
   const hasRecords = starsAwarded.length > 0 || newFurthestAct || clearBonus > 0;
 
   return (
-    <div className={`result-overlay ${won ? 'result-win' : 'result-loss'}`}>
+    <div className={`result-overlay run-summary-overlay ${won ? 'result-win' : 'result-loss'}`}>
+      {/* A cleared run stays under the champion's hall's gold light, so the two read as one beat. */}
+      {won && <span className="champion-rays run-summary-rays" aria-hidden="true" />}
       <div className="result-panel run-summary-panel">
         <div className="result-glow" aria-hidden="true" />
 
+        {won && <div className="run-summary-kicker">Victory · {rung.name}</div>}
         <h2>{won ? 'Run Cleared' : 'Run Failed'}</h2>
         <p className="run-summary-where">
           {won

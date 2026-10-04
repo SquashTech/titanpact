@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { MapNode, MapNodeType, RunMap } from '../../run/map';
 import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
@@ -194,10 +194,12 @@ function ChoiceMedallion({
           </span>
         ))}
       </span>
-      {/* Above the tile: the route lines arrive from below. */}
-      <span className="map-choice-label" aria-hidden="true">
-        {NODE_LABELS[node.type]}
-      </span>
+      {/* Above the tile: the route lines arrive from below. The two gates go unlabelled — the door says it. */}
+      {landmark !== 'gate' && landmark !== 'titanGate' && (
+        <span className="map-choice-label" aria-hidden="true">
+          {NODE_LABELS[node.type]}
+        </span>
+      )}
       {hint && !opening && (
         <span className="map-choice-hint" aria-hidden="true">
           {hint}
@@ -246,7 +248,10 @@ export function MapRoute({
   guardianId,
   onSelectNode,
   onPreviewNode,
+  companion,
 }: {
+  /** The companion, drawn walking beside wherever the party stands. */
+  companion?: ReactNode;
   map: RunMap;
   /** The act's Guardian (LocationDefinition.guardianFinalEnemyId), for the Guardian node's face. */
   guardianId: string | null;
@@ -453,6 +458,7 @@ export function MapRoute({
           <span className="map-origin-mark is-start" ref={originRef} aria-hidden="true">
             <img src={campArt} className="map-origin-camp" alt="" draggable={false} />
           </span>
+          {companion}
         </div>
       )}
 
@@ -472,6 +478,7 @@ export function MapRoute({
               <NodeGlyph type={originNode.type} className="map-origin-glyph" />
             )}
           </span>
+          {companion}
         </div>
       )}
 

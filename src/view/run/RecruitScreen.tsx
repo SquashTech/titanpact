@@ -116,6 +116,26 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, cl
 
       <RosterPeek run={run} />
 
+      {/* Contracts owned as seal pips, in the corner opposite the roster glyph so they cost the
+          stage no height; the leftmost dims while a signable hero is on stage. */}
+      <div
+        className={`recruit-contracts${canSign ? ' is-spending' : ''}`}
+        aria-label={`${contracts} Recruit Contract${contracts === 1 ? '' : 's'} available`}
+      >
+        {contracts <= MAX_CONTRACT_PIPS ? (
+          Array.from({ length: contracts }, (_, i) => (
+            <span key={i} className={`recruit-seal${canSign && i === 0 ? ' is-spending' : ''}`} aria-hidden="true">
+              <ResourceGlyph kind="contract" tone="inherit" />
+            </span>
+          ))
+        ) : (
+          <span className="recruit-seal" aria-hidden="true">
+            <ResourceGlyph kind="contract" tone="inherit" />
+          </span>
+        )}
+        <span className="recruit-contracts-count">{contracts}</span>
+      </div>
+
       {/* No eyebrow and no idle flavor line (2026-09-23, per user direction): with an innate strip
           and four moves on the stage the header was pushing the hero rail below the fold. */}
       <header className="draft-header">
@@ -125,27 +145,6 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, cl
           </span>
           Recruit a Hero
         </h2>
-
-        {/* Contracts owned as seal pips; the leftmost dims while a signable hero is on stage. */}
-        <div
-          className={`recruit-contracts${canSign ? ' is-spending' : ''}`}
-          aria-label={`${contracts} Recruit Contract${contracts === 1 ? '' : 's'} available`}
-        >
-          {contracts <= MAX_CONTRACT_PIPS ? (
-            Array.from({ length: contracts }, (_, i) => (
-              <span key={i} className={`recruit-seal${canSign && i === 0 ? ' is-spending' : ''}`} aria-hidden="true">
-                <ResourceGlyph kind="contract" tone="inherit" />
-              </span>
-            ))
-          ) : (
-            <span className="recruit-seal" aria-hidden="true">
-              <ResourceGlyph kind="contract" tone="inherit" />
-            </span>
-          )}
-          <span className="recruit-contracts-count">
-            {contracts} Contract{contracts === 1 ? '' : 's'}
-          </span>
-        </div>
 
         {/* Only once something has been signed: this line reports, it no longer describes. */}
         {signed && (
@@ -199,24 +198,6 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, cl
         <StageKit key={`${featured.rosterId}-kit`} moveIds={featured.unlockedMoveIds} caster={caster} onPick={setPopupMove} />
       </div>
 
-      {/* Outside the stage, so a long kit or a veteran's marks never move it. `data-sfx="none"`
-          only while it can sign — `contract.sign` is this press's sound. Left off when inert so
-          the delegated listener's disabled buzz still fires (audio/uiSfx.ts). */}
-      <button
-        className={`draft-choose recruit-sign${featuredClaimed ? ' chosen' : ''}`}
-        data-sfx={canSign ? 'none' : undefined}
-        disabled={!canSign}
-        onClick={handleSign}
-      >
-        {featuredClaimed
-          ? `✦ ${hero.name} signed`
-          : contracts <= 0
-            ? 'No Contracts left'
-            : rosterFull
-              ? `Replace a hero for ${hero.name}`
-              : `Sign ${hero.name} — 1 Contract`}
-      </button>
-
       {offers.length > 1 && (
         <StageRail>
           {offers.map((entry) => {
@@ -236,14 +217,29 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, cl
         </StageRail>
       )}
 
-      {/* Quiet while a signature is still possible; `is-only-option` restores the gold slab once
-          this is the only live control on the screen. */}
-      <button
-        className={`resolve-button recruit-leave${nothingLeftToSign ? ' is-only-option' : ''}`}
-        onClick={onDone}
-      >
-        {nothingLeftToSign ? 'Continue' : claimedRosterIds.length > 0 ? 'Done Recruiting' : 'Leave Them'}
-      </button>
+      {/* One row at the foot: the way past and the signature side by side, so neither costs the
+          kit a row of its own. Once nothing is left to sign, the way past is the only control and
+          takes the gold slab (`is-only-option`). `data-sfx="none"` on Sign only while it can sign
+          — `contract.sign` is that press's sound; left off when inert so the delegated listener's
+          disabled buzz still fires (audio/uiSfx.ts). */}
+      <div className="recruit-actions">
+        <button
+          className={`resolve-button recruit-leave${nothingLeftToSign ? ' is-only-option' : ''}`}
+          onClick={onDone}
+        >
+          {nothingLeftToSign ? 'Continue' : claimedRosterIds.length > 0 ? 'Done' : 'Leave'}
+        </button>
+        {!nothingLeftToSign && (
+          <button
+            className={`draft-choose recruit-sign${featuredClaimed ? ' chosen' : ''}`}
+            data-sfx={canSign ? 'none' : undefined}
+            disabled={!canSign}
+            onClick={handleSign}
+          >
+            {featuredClaimed ? `✦ ${hero.name} signed` : rosterFull ? `Swap in ${hero.name}` : `Sign ${hero.name}`}
+          </button>
+        )}
+      </div>
 
       {popupMove && (
         <StageMovePopup move={popupMove} caster={caster} onClose={() => setPopupMove(null)} />

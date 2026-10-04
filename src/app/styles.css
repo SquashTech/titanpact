@@ -13846,17 +13846,21 @@ button.star-shop-bundle-face {
    lifts its children one class at a time; this screen adds enough of its own
    to be worth the blanket rule, with the same exceptions the node screens
    name (anything that positions itself on purpose). */
-.recruit-screen > *:not(.draft-sky):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button) {
+.recruit-screen > *:not(.draft-sky):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button):not(.recruit-contracts) {
   position: relative;
   z-index: 1;
 }
 
+/* The top-left corner, opposite the roster glyph, at its height: the seals cost the stage no row. */
 .recruit-contracts {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 6;
+  height: 44px;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 4px;
-  margin-top: 7px;
 }
 
 .recruit-seal {
@@ -13890,11 +13894,9 @@ button.star-shop-bundle-face {
 }
 
 .recruit-contracts-count {
-  margin-left: 4px;
-  font-size: 11px;
+  margin-left: 2px;
+  font-size: 13px;
   font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
   color: #caa0ef;
 }
 
@@ -13939,12 +13941,39 @@ button.star-shop-bundle-face {
    later seals; here the stage button IS the spend, so it carries the gold of
    a committed action rather than the pact-tinted "selected" look, and says
    the price in the label. */
-/* Out of the scrolling stage and pinned above the rail, so it never walks with the kit's length. */
-.recruit-screen > .recruit-sign {
-  position: relative;
-  z-index: 1;
-  align-self: center;
+/* The foot of the screen: the way past and the signature in one row, out of the scrolling stage
+   so neither walks with the kit's length. The signature takes the width; the way past takes its word. */
+.recruit-actions {
+  flex: none;
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.recruit-actions > button {
+  min-height: 54px;
+  font-size: 14px;
+}
+
+.recruit-actions > .recruit-sign {
+  flex: 1 1 auto;
+  min-width: 0;
   margin-top: 0;
+  padding: 0 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recruit-actions > .recruit-leave {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 96px;
+  padding: 0 16px;
+}
+
+.recruit-actions > .recruit-leave.is-only-option {
+  flex: 1 1 auto;
 }
 
 .recruit-sign:not(:disabled) {
@@ -13959,7 +13988,7 @@ button.star-shop-bundle-face {
    is the signature on the stage, and the bottom button is the way past it.
    Sizing it like the draft's would make walking away the loudest thing on the
    screen. */
-.recruit-screen > .recruit-leave {
+.recruit-actions > .recruit-leave {
   flex: none;
   background: linear-gradient(165deg, var(--panel-alt), var(--panel) 80%);
   border: 1px solid var(--border);
@@ -13969,7 +13998,7 @@ button.star-shop-bundle-face {
   letter-spacing: 0.05em;
 }
 
-.recruit-screen > .recruit-leave:active {
+.recruit-actions > .recruit-leave:active {
   transform: translateY(1px);
 }
 
@@ -13980,7 +14009,7 @@ button.star-shop-bundle-face {
    (.title-cta, .draft-cta:not(:disabled)) and their shared pulse. Same
    treatment, deliberately, rather than a fourth variant of gold: the player
    has learned that surface means "this is the press". */
-.recruit-screen > .recruit-leave.is-only-option {
+.recruit-actions > .recruit-leave.is-only-option {
   background: linear-gradient(135deg, #f3c877, var(--accent) 55%, #b9822a);
   border-color: transparent;
   color: #1a1300;
@@ -18108,54 +18137,6 @@ button.star-shop-bundle-face {
   height: 48px;
   image-rendering: pixelated;
   filter: brightness(0.85) drop-shadow(0 0 8px rgba(255, 150, 60, 0.35));
-}
-
-/* Held open. The title's eye sits narrow and widens now and then; on the map it is a thing to
-   tap, so it stays open and only closes for a slow blink, and the gaze still wanders. */
-.map-landmark-eye .titan-eye-open {
-  animation: map-eye-hold 11s ease-in-out infinite;
-}
-
-@keyframes map-eye-hold {
-  0%,
-  88%,
-  100% {
-    transform: scaleY(1);
-  }
-  92% {
-    transform: scaleY(0.08);
-  }
-  95% {
-    transform: scaleY(1);
-  }
-}
-
-.map-landmark-eye {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-
-.map-eye-halo {
-  fill: url(#map-eye-glare);
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: titan-eye-flare 29s ease-in-out infinite;
-}
-
-.map-eye-lens {
-  fill: url(#map-eye-iris);
-}
-
-.map-eye-hotspot {
-  fill: url(#map-eye-hotspot);
-  opacity: 0.8;
-}
-
-.map-eye-pupil {
-  fill: #07050a;
 }
 
 /* The Mentor, the Tutor and the Scribe met at the roadside: 64px scenes at 2x. */
@@ -32824,55 +32805,118 @@ button.star-shop-bundle-face {
   margin-top: 10px;
 }
 
-/* The companion beside the party under the map: set apart by a hairline and drawn with no bar. */
-.map-party-chip.is-companion {
-  flex: 0 1 38px;
-  padding-left: 4px;
-  margin-left: 2px;
-  border-left: 1px solid rgba(224, 166, 60, 0.28);
-}
-
-.map-party-chip.is-companion .map-party-portrait {
-  width: 36px;
-  height: 36px;
-  margin-bottom: 0;
-}
-
-/* The companion on the Roster: a chip in the header beside the title, read here and never managed. */
-.roster-companion {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: auto;
-  margin-right: 8px;
-  padding: 2px 8px 2px 2px;
-  border: 1px solid rgba(var(--hero-rgb), 0.45);
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(var(--hero-rgb), 0.18), rgba(6, 8, 12, 0.6));
-  color: inherit;
+/* The companion on the map: it walks beside the party's marker on the road, stood in a pool of its
+   Call's light, and a tap reads its Call. Off the footer, which the six fill. */
+.map-companion {
+  position: absolute;
+  bottom: 46px;
+  right: calc(50% + 30px);
+  z-index: 2;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  background: none;
   cursor: pointer;
-  min-width: 0;
+  animation: map-companion-bob 3.2s ease-in-out infinite;
+}
+
+.map-companion::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 44px;
+  height: 12px;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(var(--hero-rgb), 0.5), rgba(var(--hero-rgb), 0.14) 55%, transparent 72%);
+  pointer-events: none;
+}
+
+.map-companion-portrait {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.8)) drop-shadow(0 0 6px rgba(var(--hero-rgb), 0.35));
+}
+
+.map-companion:active .map-companion-portrait {
+  scale: 0.92;
+}
+
+@keyframes map-companion-bob {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-companion {
+    animation: none;
+  }
+}
+
+/* The companion on the Roster: a strip of its own under the six, read here and never managed. */
+.roster-companion {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 2px 0;
+  padding: 2px 12px 2px 4px;
+  border: 4px solid transparent;
+  border-image: url('../../art/ui/slot-thin.png') 2 / 4px round;
+  background:
+    radial-gradient(ellipse 40px 30px at 24px 70%, rgba(var(--hero-rgb), 0.28), transparent 75%) padding-box,
+    linear-gradient(180deg, #121419, #0f1116) padding-box;
+  image-rendering: pixelated;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .roster-companion-portrait {
-  width: 24px;
-  height: 24px;
+  width: 64px;
+  height: 64px;
+  margin: -20px -8px -4px -4px;
   flex: none;
 }
 
-.roster-companion-name {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0;
-  text-transform: none;
-  color: #fff;
+.roster-companion-ident,
+.roster-companion-call {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
 }
 
 .roster-companion-call {
+  margin-left: auto;
+  align-items: flex-end;
+}
+
+.roster-companion-kicker {
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0;
-  text-transform: none;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.roster-companion-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.roster-companion-move {
+  font-size: 14px;
+  font-weight: 800;
   color: rgb(var(--hero-rgb));
   white-space: nowrap;
 }
@@ -33192,127 +33236,303 @@ button.star-shop-bundle-face {
 }
 
 /* ── The champion's hall (ChampionScreen, docs/titan-eyes.md §7) ──────────
-   The run's last screen before the summary: one hero at a
-   time in the recruit fanfare's rings, then everyone in a row. Reuses the
-   fanfare's keyframes on purpose — it is the same rite, performed for the whole
-   pact at once. --pact-rgb is set inline per hero. */
+   The run's last screen before the summary: one hero at a time on a lit dais, then everyone
+   together. Each beat is a rite in its own light — --pact-rgb is set inline per hero — and the
+   hall is the gold the pact is written in.
+
+   No filter on a figure: iOS WebKit draws a drop-shadow on an animated <img> as a box, so every
+   glow here is a gradient on an element of its own. */
 .champion-screen {
-  position: relative;
-  flex: 1;
+  --gold: 224, 166, 60;
+  position: absolute;
+  inset: calc(var(--shell-pad) * -1);
+  z-index: 40;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 20px;
   overflow: hidden;
   padding: 24px 16px;
+  background: #05060a;
   cursor: pointer;
 }
 
 .champion-veil {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 44%, color-mix(in srgb, rgb(var(--pact-rgb)) 14%, #0d0f16), #05060a 64%);
-  transition: background 0.5s ease;
+  background:
+    radial-gradient(ellipse 80% 46% at 50% 40%, rgba(var(--pact-rgb), 0.26), transparent 70%),
+    radial-gradient(ellipse 120% 40% at 50% 100%, rgba(var(--gold), 0.12), transparent 70%),
+    linear-gradient(180deg, #07080d, #0b0c13 50%, #05060a);
+  transition: background 0.6s ease;
 }
 
-.champion-hall {
+/* Light falling on the dais from above: wedges turning slowly, faded to nothing at their ends. */
+.champion-rays {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  width: 900px;
+  height: 900px;
+  margin: -450px 0 0 -450px;
+  background: repeating-conic-gradient(from 0deg, rgba(var(--pact-rgb), 0.16) 0deg 7deg, transparent 7deg 22deg);
+  -webkit-mask-image: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.6) 22%, transparent 48%);
+  mask-image: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.6) 22%, transparent 48%);
+  animation: champion-rays-turn 40s linear infinite;
+  transition: background 0.6s ease;
+}
+
+.champion-screen.is-hall .champion-rays {
+  top: 30%;
+  background: repeating-conic-gradient(from 0deg, rgba(var(--gold), 0.13) 0deg 6deg, transparent 6deg 18deg);
+}
+
+@keyframes champion-rays-turn {
+  to {
+    rotate: 360deg;
+  }
+}
+
+.champion-motes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.champion-mote {
+  position: absolute;
+  bottom: -2%;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, rgba(var(--pact-rgb), 0.9) 55%, transparent 75%);
+  box-shadow: 0 0 6px 1px rgba(var(--pact-rgb), 0.5);
+  opacity: 0;
+  animation: champion-mote-rise 4s ease-in infinite;
+}
+
+.champion-screen.is-hall .champion-mote {
+  background: radial-gradient(circle, #fff 0%, rgba(var(--gold), 0.9) 55%, transparent 75%);
+  box-shadow: 0 0 6px 1px rgba(var(--gold), 0.55);
+}
+
+@keyframes champion-mote-rise {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  15% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(14px, -620px);
+  }
+}
+
+.champion-beat {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  text-align: center;
-  animation: evolve-veil-in 0.6s ease-out backwards;
-}
-
-.champion-kicker {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(var(--pact-rgb), 0.9);
-}
-
-.champion-title {
-  margin: 0;
-  font-size: 32px;
-  font-weight: 800;
-  line-height: 1.05;
-  text-shadow: 0 0 26px rgba(var(--pact-rgb), 0.55);
-}
-
-.champion-line {
-  max-width: 300px;
-  margin: 4px 0 0;
-  font-size: 14px;
-  line-height: 1.45;
-  color: var(--text-dim);
+  margin-top: -40px;
 }
 
 .champion-stage {
   position: relative;
   display: grid;
-  place-items: center;
-  width: 260px;
+  place-items: end center;
+  width: 280px;
   height: 260px;
 }
 
-.champion-ring {
+.champion-halo {
   position: absolute;
-  top: 50%;
   left: 50%;
+  top: 44%;
+  width: 260px;
+  height: 260px;
+  margin: -130px 0 0 -130px;
   border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--pact-rgb), 0.5), rgba(var(--pact-rgb), 0.16) 40%, transparent 68%);
+  animation: champion-halo-in 0.9s var(--ease-out) both, champion-halo-breathe 3.2s ease-in-out 0.9s infinite;
+}
+
+@keyframes champion-halo-in {
+  from {
+    opacity: 0;
+    scale: 0.4;
+  }
+}
+
+@keyframes champion-halo-breathe {
+  50% {
+    scale: 1.08;
+    opacity: 0.85;
+  }
+}
+
+/* One ring going out as the hero lands: the seal's stamp, in its own colour. */
+.champion-shock {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 120px;
+  height: 120px;
+  margin: -60px 0 0 -60px;
+  border-radius: 50%;
+  border: 2px solid rgba(var(--pact-rgb), 0.9);
+  box-shadow: 0 0 18px rgba(var(--pact-rgb), 0.6), inset 0 0 12px rgba(var(--pact-rgb), 0.5);
   opacity: 0;
-  animation: recruit-fanfare-seal 0.72s cubic-bezier(0.3, 0.85, 0.25, 1) both;
-  pointer-events: none;
+  animation: champion-shock 1.1s var(--ease-out) 0.18s both;
 }
 
-.champion-ring.is-outer {
-  width: 240px;
-  height: 240px;
-  margin: -120px 0 0 -120px;
-  border: 2px solid rgba(var(--pact-rgb), 0.75);
+@keyframes champion-shock {
+  0% {
+    opacity: 0.95;
+    scale: 0.5;
+  }
+  100% {
+    opacity: 0;
+    scale: 2.6;
+  }
 }
 
-.champion-ring.is-inner {
-  width: 180px;
-  height: 180px;
-  margin: -90px 0 0 -90px;
-  border: 2px dashed rgba(var(--pact-rgb), 0.6);
-  animation-delay: 0.14s;
+/* The dais: a pool of light the hero stands in, and a gold lip under it. */
+.champion-floor {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  width: 220px;
+  height: 34px;
+  margin-left: -110px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 236, 200, 0.5), rgba(var(--pact-rgb), 0.3) 38%, transparent 70%);
+  animation: champion-halo-in 0.7s var(--ease-out) both;
+}
+
+.champion-floor::after {
+  content: '';
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  top: 50%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(var(--gold), 0.85), transparent);
 }
 
 .champion-figure {
   position: relative;
-  width: 138px;
-  height: 138px;
+  width: 200px;
+  height: 200px;
+  margin-bottom: 18px;
   image-rendering: pixelated;
-  animation: recruit-fanfare-rise 0.7s cubic-bezier(0.2, 1, 0.3, 1) both;
+  animation: champion-figure-rise 0.8s cubic-bezier(0.2, 1, 0.3, 1) both;
+}
+
+@keyframes champion-figure-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.86);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.champion-flash {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.85), rgba(var(--pact-rgb), 0.4) 30%, transparent 62%);
+  opacity: 0;
+  pointer-events: none;
+  animation: champion-flash 0.6s ease-out both;
+}
+
+@keyframes champion-flash {
+  0% {
+    opacity: 1;
+    scale: 0.3;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.4;
+  }
 }
 
 .champion-plate {
-  position: absolute;
-  top: 100%;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  width: 300px;
+  gap: 6px;
+  width: 320px;
+  margin-top: 8px;
   text-align: center;
-  animation: evolve-veil-in 0.5s ease-out 0.35s backwards;
+  animation: champion-plate-in 0.55s var(--ease-out) 0.3s backwards;
+}
+
+@keyframes champion-plate-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+.champion-kicker {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgb(var(--gold));
+  text-shadow: 0 0 10px rgba(var(--gold), 0.5);
 }
 
 .champion-name {
   margin: 0;
-  font-size: 28px;
+  font-size: 40px;
   font-weight: 800;
-  line-height: 1.05;
-  text-shadow: 0 0 26px rgba(var(--pact-rgb), 0.7);
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.6), 0 0 24px rgba(var(--pact-rgb), 0.85);
+}
+
+/* line, diamond, line: the pact's own ornament between a name and what is said of it. */
+.champion-rule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9px;
+  color: rgb(var(--gold));
+}
+
+.champion-rule span {
+  width: 64px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(var(--gold), 0.85));
+}
+
+.champion-rule span:last-child {
+  background: linear-gradient(270deg, transparent, rgba(var(--gold), 0.85));
+}
+
+.champion-facts {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.champion-form {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, rgb(var(--pact-rgb)) 65%, #fff);
 }
 
 .champion-level {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text-dim);
 }
@@ -33322,45 +33542,196 @@ button.star-shop-bundle-face {
   gap: 6px;
 }
 
-/* The stage's plate hangs below it, so the stage sits a little high to leave it room. */
-.champion-screen:not(.is-hall) {
-  justify-content: flex-start;
-  padding-top: 120px;
-}
-
-.champion-row {
+.champion-progress {
+  position: absolute;
+  bottom: calc(28px + var(--shell-pad));
+  left: 50%;
+  translate: -50% 0;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px 6px;
-  max-width: 360px;
-  margin-top: 8px;
+  gap: 10px;
 }
 
-.champion-cell {
+.champion-pip {
+  width: 8px;
+  height: 8px;
+  rotate: 45deg;
+  border: 1px solid rgba(var(--gold), 0.55);
+  background: transparent;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.champion-pip.is-past {
+  background: rgba(var(--gold), 0.55);
+}
+
+.champion-pip.is-here {
+  background: rgb(var(--gold));
+  box-shadow: 0 0 10px rgba(var(--gold), 0.9);
+}
+
+/* The hall: everyone together under the gold. */
+.champion-hall {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 14px;
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+}
+
+.champion-hall-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  animation: champion-plate-in 0.7s var(--ease-out) backwards;
+}
+
+.champion-title {
+  margin: 0;
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1.05;
+  background: linear-gradient(180deg, #fff6dc 10%, #f3c877 50%, #b9822a 92%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 0 rgba(26, 15, 7, 0.9)) drop-shadow(0 0 18px rgba(var(--gold), 0.45));
+}
+
+.champion-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px 4px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.champion-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 4px;
+  animation: champion-figure-rise 0.7s cubic-bezier(0.2, 1, 0.3, 1) var(--enter) backwards;
+}
+
+.champion-cell-floor {
+  position: absolute;
+  left: 50%;
+  top: 70px;
   width: 104px;
-  padding: 8px 4px 6px;
-  border-radius: 10px;
-  background: radial-gradient(ellipse at 50% 90%, rgba(var(--pact-rgb), 0.28), transparent 70%);
+  height: 22px;
+  margin-left: -52px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 236, 200, 0.42), rgba(var(--pact-rgb), 0.32) 40%, transparent 72%);
 }
 
 .champion-cell-figure {
-  width: 72px;
-  height: 72px;
+  position: relative;
+  width: 88px;
+  height: 88px;
   image-rendering: pixelated;
 }
 
 .champion-cell-name {
-  font-size: 12px;
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(var(--pact-rgb), 0.7);
+}
+
+.champion-cell-level {
+  font-size: 10px;
   font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+
+.champion-line {
+  max-width: 300px;
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-style: italic;
+  line-height: 1.5;
+  color: rgba(232, 212, 166, 0.78);
+  animation: champion-plate-in 0.6s var(--ease-out) 1.1s backwards;
 }
 
 .champion-continue {
-  margin-top: 14px;
+  width: 100%;
+  margin-top: 6px;
+  animation: champion-plate-in 0.6s var(--ease-out) 1.3s backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .champion-rays,
+  .champion-mote,
+  .champion-halo {
+    animation: none;
+  }
+}
+
+/* A cleared run in the hall's gold rather than a won fight's green: the same rays the champion's
+   hall turns under, the headline lettered in the pact's gold, the finishing roster rising in. */
+.run-summary-overlay.result-win {
+  --pact-rgb: 224, 166, 60;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 34%, rgba(224, 166, 60, 0.16), rgba(5, 6, 10, 0.97) 64%);
+}
+
+.run-summary-rays {
+  top: 24%;
+}
+
+.run-summary-overlay.result-win .result-glow {
+  background: radial-gradient(circle, rgba(224, 166, 60, 0.3), transparent 70%);
+}
+
+.run-summary-kicker {
+  margin-bottom: -6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgb(224, 166, 60);
+  text-shadow: 0 0 10px rgba(224, 166, 60, 0.5);
+}
+
+.run-summary-overlay.result-win h2 {
+  background: linear-gradient(180deg, #fff6dc 10%, #f3c877 50%, #b9822a 92%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 2px 0 rgba(26, 15, 7, 0.9)) drop-shadow(0 0 16px rgba(224, 166, 60, 0.4));
+}
+
+.run-summary-overlay.result-win .pick-card {
+  animation: champion-figure-rise 0.6s cubic-bezier(0.2, 1, 0.3, 1) backwards;
+}
+
+.run-summary-overlay.result-win .pick-card:nth-child(2) {
+  animation-delay: 0.08s;
+}
+
+.run-summary-overlay.result-win .pick-card:nth-child(3) {
+  animation-delay: 0.16s;
+}
+
+.run-summary-overlay.result-win .pick-card:nth-child(4) {
+  animation-delay: 0.24s;
+}
+
+.run-summary-overlay.result-win .pick-card:nth-child(5) {
+  animation-delay: 0.32s;
+}
+
+.run-summary-overlay.result-win .pick-card:nth-child(6) {
+  animation-delay: 0.4s;
 }
 
 /* ── On the Titan (TitanBody.tsx, docs/titan-eyes.md) ─────────────────────
@@ -38748,7 +39119,7 @@ img.smithy-service-art {
   box-shadow: none;
 }
 
-.recruit-screen > .recruit-leave.is-only-option {
+.recruit-actions > .recruit-leave.is-only-option {
   background: none;
   color: #fff3d6;
   text-shadow: 0 2px 0 #1a0f07, 0 0 12px rgba(224, 166, 60, 0.7);
@@ -38770,12 +39141,6 @@ img.smithy-service-art {
 
 .map-medallion.is-gate .map-landmark-art {
   z-index: 1;
-}
-
-/* The seal rides outside the gate's box, so the word above it climbs clear of the seal's top marker. */
-.map-choice.has-gate .map-choice-label,
-.map-choice.has-titanGate .map-choice-label {
-  transform: translateY(-28px);
 }
 
 /* The seal behind the arch at the title's own size, so the wardens ride outside the stone. The box is
@@ -38955,35 +39320,6 @@ img.smithy-service-art {
   }
 }
 
-.map-gate-seal {
-  position: absolute;
-  left: 50%;
-  top: 46%;
-  width: 44px;
-  height: 44px;
-  translate: -50% -50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--seal-color) 55%, transparent), color-mix(in srgb, var(--seal-color) 16%, transparent) 55%, transparent 72%);
-  box-shadow: 0 0 18px 4px color-mix(in srgb, var(--seal-color) 45%, transparent);
-  pointer-events: none;
-  animation: map-gate-seal 2.6s ease-in-out infinite;
-}
-
-@keyframes map-gate-seal {
-  0%,
-  100% {
-    box-shadow: 0 0 14px 2px color-mix(in srgb, var(--seal-color) 35%, transparent);
-    opacity: 0.85;
-  }
-  50% {
-    box-shadow: 0 0 26px 8px color-mix(in srgb, var(--seal-color) 60%, transparent);
-    opacity: 1;
-  }
-}
-
 /* A gate's art in layers (mapLandmarks GateArt): the arch round its doorway, the light inside it,
    and the two leaves hinged on the arch's inner edges, the doorway's box set per gate. */
 .map-gate-art img {
@@ -39046,10 +39382,6 @@ img.smithy-service-art {
   100% {
     translate: 0 0;
   }
-}
-
-.map-medallion.is-opening .map-gate-seal.is-titan {
-  animation: map-gate-warden-burst 0.4s var(--ease-out) forwards;
 }
 
 .map-medallion.is-opening .map-gate-warden {
@@ -39185,15 +39517,7 @@ img.smithy-service-art {
   height: 48px;
 }
 
-.map-gate-seal.is-quiet {
-  width: 12px;
-  height: 12px;
-  animation: none;
-  box-shadow: none;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .map-gate-seal,
   .map-gate-pact-light,
   .map-gate-warden-glow,
   .map-gate-seam {
@@ -39201,19 +39525,8 @@ img.smithy-service-art {
   }
 }
 
-/* The seal's ring: a burning circle in the element's colour, so it reads as a seal set in the door
-   rather than an icon laid on it. */
-.map-gate-seal:not(.is-quiet)::before {
-  content: '';
-  position: absolute;
-  inset: 6px;
-  border-radius: 50%;
-  border: 2px solid color-mix(in srgb, var(--seal-color) 85%, #fff);
-  box-shadow: 0 0 8px var(--seal-color), inset 0 0 8px color-mix(in srgb, var(--seal-color) 60%, transparent);
-}
-
-/* The finale: a greater gate (128px at 2x), gold-banded pillars and a crimson seam, sealed with the
-   Titan's own eye in place of an element. */
+/* The finale: a greater gate (128px at 2x), gold-banded pillars, the Titan's red pressing through its
+   seam. Nothing is set on its face: the door says it. */
 .map-medallion.is-titanGate {
   width: 256px !important;
   height: 256px !important;
@@ -39223,22 +39536,22 @@ img.smithy-service-art {
   inset: -24px;
 }
 
-.map-gate-seal.is-titan {
-  --seal-color: #e0393f;
-  top: 47%;
-  width: 68px;
-  height: 68px;
+/* The greater door's crack is column 61 of 128, broken by the boss at rows 57-77. */
+.map-gate-seam.is-titan::before,
+.map-gate-seam.is-titan::after {
+  left: calc(61.5 / 128 * 100%);
+  width: 3px;
+  margin-left: -1.5px;
 }
 
-.map-gate-seal.is-titan .map-landmark-eye {
-  position: relative;
-  flex: none;
-  width: 100px;
-  height: auto;
+.map-gate-seam.is-titan::before {
+  top: calc(28 / 128 * 100%);
+  bottom: calc(70 / 128 * 100%);
 }
 
-.map-gate-seal.is-titan::before {
-  inset: 4px;
+.map-gate-seam.is-titan::after {
+  top: calc(77 / 128 * 100%);
+  bottom: calc(20 / 128 * 100%);
 }
 
 .map-origin-mark.is-titanGate {
@@ -39596,12 +39909,12 @@ img.smithy-service-art {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 3px;
-  padding: 1px 3px;
+  gap: 2px;
+  padding: 0 3px;
 }
 
 .roster-sheet-mount .item-box {
-  --item-box-size: 38px;
+  --item-box-size: 32px;
 }
 
 .roster-sheet-mount .item-box .item-piece {

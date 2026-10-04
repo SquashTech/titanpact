@@ -1,4 +1,5 @@
-import { companionHeroId } from '../../run/companion';
+import { companionCallMoveId, companionHeroId } from '../../run/companion';
+import { CompanionDossier } from '../combat/CompanionFigure';
 import { useState, type CSSProperties } from 'react';
 import type { RunState } from '../../run/state';
 import { SEAL_ACTS } from '../../run/state';
@@ -22,7 +23,7 @@ import { progressionTable } from '../../data/progression';
 import { locationForAct } from '../../run/locations';
 import { locationDomains, type LocationDefinition } from '../../data/locations';
 import { ElementGlyph } from '../shared/elementIcons';
-import { getTypeColor } from '../combat/typeColors';
+import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { LocationAmbience } from '../shared/LocationSky';
 import { AudioSettings } from '../shared/AudioSettings';
 import { nodeEncounter, scoutedTypes } from '../../run/encounters';
@@ -156,6 +157,8 @@ function MapPlacard({ location }: { location: LocationDefinition }) {
 export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAbandonRun, saveTrouble = null }: Props) {
   const [rosterOpen, setRosterOpen] = useState(false);
   const companionId = companionHeroId(run);
+  const callMoveId = companionCallMoveId(run);
+  const [companionOpen, setCompanionOpen] = useState(false);
   const [showReference, setShowReference] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   // Two taps to abandon: quitting is reversible now, but abandoning deletes the save.
@@ -258,6 +261,20 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
           guardianId={location.guardianFinalEnemyId}
           onSelectNode={onSelectNode}
           onPreviewNode={setPreviewNode}
+          companion={
+            // The companion walks the road beside the party, not in the footer the six fill.
+            companionId && callMoveId ? (
+              <button
+                type="button"
+                className="map-companion"
+                style={{ '--hero-rgb': getTypeColorRgb(moves[callMoveId].type) } as CSSProperties}
+                onClick={() => setCompanionOpen(true)}
+                aria-label={`${rosterHeroes[companionId].name}, your companion — view its Call`}
+              >
+                <HeroPortrait heroId={companionId} className="map-companion-portrait" />
+              </button>
+            ) : null
+          }
         />
       </div>
 
@@ -283,12 +300,6 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
                 </span>
               );
             })}
-            {/* The companion, set apart and with no bar: it travels with the six and cannot be hurt. */}
-            {companionId && (
-              <span className="map-party-chip is-companion" aria-label={`${rosterHeroes[companionId].name}, your companion`}>
-                <HeroPortrait heroId={companionId} className="map-party-portrait" />
-              </span>
-            )}
           </span>
         </button>
       </div>
@@ -345,6 +356,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
       {rosterOpen && <RosterManagementScreen run={run} onClose={() => setRosterOpen(false)} />}
       {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
       {previewNode && <NodeDossierOverlay node={previewNode} run={run} onClose={() => setPreviewNode(null)} />}
+      {companionOpen && <CompanionDossier run={run} onClose={() => setCompanionOpen(false)} />}
     </div>
   );
 }

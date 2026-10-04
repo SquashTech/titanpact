@@ -59,20 +59,6 @@ export function RosterManagementScreen({ run, onClose }: Props) {
       <div className="log-panel roster-sheet" onClick={(e) => e.stopPropagation()}>
         <div className="log-panel-header roster-sheet-header">
           <span>Roster</span>
-          {/* The companion travels with the six but is not one of them (docs/companion-call.md §8): read here, never managed. */}
-          {companionId && callMoveId && (
-            <button
-              type="button"
-              className="roster-companion"
-              style={{ '--hero-rgb': getTypeColorRgb(moves[callMoveId].type) } as CSSProperties}
-              onClick={() => setCompanionOpen(true)}
-              aria-label={`${rosterHeroes[companionId].name}, travelling with you — view its Call`}
-            >
-              <HeroPortrait heroId={companionId} className="roster-companion-portrait" />
-              <span className="roster-companion-name">{rosterHeroes[companionId].name}</span>
-              <span className="roster-companion-call">Calls {moves[callMoveId].name}</span>
-            </button>
-          )}
           <button className="log-close-button" onClick={onClose} aria-label="Close">
             ✕
           </button>
@@ -96,6 +82,27 @@ export function RosterManagementScreen({ run, onClose }: Props) {
             );
           })}
         </div>
+
+        {/* The companion travels with the six but is not one of them (docs/companion-call.md §8): read here, never managed. */}
+        {companionId && callMoveId && (
+          <button
+            type="button"
+            className="roster-companion"
+            style={{ '--hero-rgb': getTypeColorRgb(moves[callMoveId].type) } as CSSProperties}
+            onClick={() => setCompanionOpen(true)}
+            aria-label={`${rosterHeroes[companionId].name}, travelling with you — view its Call`}
+          >
+            <HeroPortrait heroId={companionId} className="roster-companion-portrait" />
+            <span className="roster-companion-ident">
+              <span className="roster-companion-kicker">Companion</span>
+              <span className="roster-companion-name">{rosterHeroes[companionId].name}</span>
+            </span>
+            <span className="roster-companion-call">
+              <span className="roster-companion-kicker">Call</span>
+              <span className="roster-companion-move">{moves[callMoveId].name}</span>
+            </span>
+          </button>
+        )}
 
         {/* Outside the grid, pinned to the bottom and in thumb reach; the header ✕ is where every
             other overlay puts it, but on a 780px page it is the corner furthest from the hand. */}

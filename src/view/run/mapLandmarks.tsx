@@ -104,48 +104,6 @@ export function landmarkStillArt(type: MapNodeType): string | undefined {
   return kind === 'npc' ? NPC_ART[type] : LANDMARK_STILL[kind];
 }
 
-/** A single Titan eye in the title screen's idiom (titanArt.tsx): lens, lit iris, slit, halo. */
-function MapTitanEye() {
-  // Rounder than the title's (half-height 48 against its 32): this one is a button, and it is
-  // held open rather than narrowed and flared.
-  const lens = 'M-82 0 Q0 -48 82 0 Q0 48 -82 0 Z';
-  return (
-    <svg className="map-landmark-eye" viewBox="-130 -52 260 104" aria-hidden="true">
-      <defs>
-        <radialGradient id="map-eye-iris" cx="50%" cy="50%" r="52%">
-          <stop offset="0%" stopColor="#f6c070" />
-          <stop offset="22%" stopColor="#e8604a" />
-          <stop offset="50%" stopColor="#c8303a" />
-          <stop offset="78%" stopColor="#601018" />
-          <stop offset="100%" stopColor="#1e060a" />
-        </radialGradient>
-        <radialGradient id="map-eye-hotspot" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#fff3d2" stopOpacity="1" />
-          <stop offset="38%" stopColor="#f0b060" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="#e0393f" stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id="map-eye-glare" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#e0393f" stopOpacity="0.5" />
-          <stop offset="42%" stopColor="#e0393f" stopOpacity="0.14" />
-          <stop offset="100%" stopColor="#e0393f" stopOpacity="0" />
-        </radialGradient>
-        <clipPath id="map-eye-lid">
-          <path d={lens} />
-        </clipPath>
-      </defs>
-      <circle className="map-eye-halo" r="128" />
-      <g className="titan-eye-open" clipPath="url(#map-eye-lid)">
-        <path className="map-eye-lens" d={lens} />
-        <g className="titan-eye-gaze">
-          <ellipse className="map-eye-hotspot" rx="52" ry="40" />
-          {/* A slit that tapers inside the lids wherever the gaze takes it, never cut square by them. */}
-          <ellipse className="map-eye-pupil" rx="6" ry="30" />
-        </g>
-      </g>
-    </svg>
-  );
-}
-
 export function MapLandmarkFace({
   kind,
   type,
@@ -203,16 +161,12 @@ export function MapLandmarkFace({
       );
     }
     case 'titanGate':
+      // The Titan's red pressing through the seam of the greater door, and nothing set on its face.
+      if (quiet) return <img src={titanGateArt} className="map-landmark-art" alt="" draggable={false} />;
       return (
         <>
-          {quiet ? (
-            <img src={titanGateArt} className="map-landmark-art" alt="" draggable={false} />
-          ) : (
-            <GateArt door={TITAN_DOOR} light={TITAN_LIGHT} />
-          )}
-          <span className={`map-gate-seal is-titan${quiet ? ' is-quiet' : ''}`} aria-hidden="true">
-            <MapTitanEye />
-          </span>
+          <GateArt door={TITAN_DOOR} light={TITAN_LIGHT} />
+          <span className="map-gate-seam is-titan" style={{ '--warden-color': TITAN_LIGHT } as CSSProperties} aria-hidden="true" />
         </>
       );
   }
