@@ -62,6 +62,8 @@ interface Props {
   onSaveAndQuit?: () => void;
   /** Discard the run and its save (two-tap armed). */
   onAbandonRun?: () => void;
+  /** Set while saves are not landing whole: the menu key wears a mark and the menu says why. */
+  saveTrouble?: string | null;
 }
 
 /** One run resource in the header track. */
@@ -150,7 +152,7 @@ function MapPlacard({ location }: { location: LocationDefinition }) {
 
 // The run's hub (docs/run-loop.md). Levels are automatic (run/growth.ts) and pay out on the
 // level-up report, not here.
-export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAbandonRun }: Props) {
+export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAbandonRun, saveTrouble = null }: Props) {
   const [rosterOpen, setRosterOpen] = useState(false);
   const [showReference, setShowReference] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -219,12 +221,12 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
         </div>
         <button
           type="button"
-          className="map-header-button"
+          className={`map-header-button${saveTrouble ? ' has-save-trouble' : ''}`}
           onClick={() => {
             setConfirmingQuit(false);
             setShowMenu(true);
           }}
-          aria-label="Options"
+          aria-label={saveTrouble ? 'Options — the run is not saving' : 'Options'}
           title="Options"
         >
           <HubGlyph name="menu" />
@@ -325,7 +327,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
               <p className="options-note">
                 {confirmingQuit
                   ? 'This run ends now. Roster, Banners and map progress are lost.'
-                  : 'The run is saved here. Quitting keeps it — Continue picks it back up.'}
+                  : saveTrouble ?? 'The run is saved here. Quitting keeps it — Continue picks it back up.'}
               </p>
             )}
           </div>

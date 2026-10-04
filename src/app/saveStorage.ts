@@ -109,14 +109,25 @@ function isQuotaError(err: unknown): boolean {
   return err instanceof DOMException && (err.name === 'QuotaExceededError' || err.name === 'NS_ERROR_DOM_QUOTA_REACHED' || err.code === 22);
 }
 
-/** Set when a write had to drop the screen to fit; the title says so (TitleScreen's save note). */
-let storageFull = false;
+/**
+ * How the last write went: whole, cut back to the checkpoint to fit a full quota, or refused
+ * outright. Read after every write (App's persist), so the run can say so the moment it changes.
+ */
+export type SaveHealth = 'ok' | 'checkpointOnly' | 'failed';
 
-export function saveStorageFull(): boolean {
-  return storageFull;
+let health: SaveHealth = 'ok';
+
+export function saveHealth(): SaveHealth {
+  return health;
 }
 
 function store(save: SavedRun): boolean {
+  const written = storeEnvelope(save);
+  if (!written) health = 'failed';
+  return written;
+}
+
+function storeEnvelope(save: SavedRun): boolean {
   const envelope = wrapEnvelope(JSON.stringify(save));
   pending = { envelope, written: false };
   try {
@@ -132,7 +143,7 @@ function store(save: SavedRun): boolean {
       const lean = wrapEnvelope(JSON.stringify(encodeSave(save.fallbackRun ?? save.run, save.checkpoint, save.savedAt)));
       try {
         swapIn(local, lean);
-        storageFull = true;
+        health = 'checkpointOnly';
       } catch {
         return false;
       }
@@ -141,7 +152,7 @@ function store(save: SavedRun): boolean {
       return true;
     }
   }
-  storageFull = false;
+  health = 'ok';
   pending = { envelope, written: true };
   mirror(envelope);
   return true;
@@ -163,6 +174,7 @@ export function flushSave(): void {
   try {
     swapIn(local, pending.envelope);
     pending.written = true;
+    health = 'ok';
     mirror(pending.envelope);
   } catch {
     /* Still refused; the run continues in memory. */

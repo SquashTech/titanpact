@@ -592,6 +592,8 @@ interface Props {
   initialSnapshot?: CombatSnapshot;
   /** Called at every point the board waits on the player, with what a resume needs to carry on from there. */
   onCommandPhase?: (snapshot: CombatSnapshot) => void;
+  /** Set while saves are not landing whole: the menu note says why, in place of "saved as it stands". */
+  saveTrouble?: string | null;
   /** Discard the run and its save (two-tap armed). Omit for fights outside a run. */
   onAbandonRun?: () => void;
   /** Plain one-tap exit for fights outside a run (Quick Battle). A caller passes this or the run pair, never both. */
@@ -629,6 +631,7 @@ export function FightScreen({
   mvpRules,
   initialSnapshot,
   onCommandPhase,
+  saveTrouble = null,
 }: Props) {
   /** null outside an act (sandbox, quick battle): the arena keeps its placeless neutral scene. */
   const location = useAmbientLocation();
@@ -2110,7 +2113,7 @@ export function FightScreen({
               <p className="options-note">
                 {confirmingQuit
                   ? 'This run ends now. Roster, relics and map progress are lost.'
-                  : 'The run is saved as it stands. Continue picks this fight up where you left it.'}
+                  : saveTrouble ?? 'The run is saved as it stands. Continue picks this fight up where you left it.'}
               </p>
             )}
           </div>

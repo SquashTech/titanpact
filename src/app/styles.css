@@ -19921,6 +19921,60 @@ button.star-shop-bundle-face {
   color: var(--text-dim);
 }
 
+/* A save that did not land whole (SaveTroubleBanner): over the top of any screen, never a scrim —
+   the run goes on under it. Just below the first-time tips, which are modal. */
+.save-trouble-banner {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  z-index: 59;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 9px 12px;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(224, 166, 60, 0.45);
+  background: rgba(14, 20, 26, 0.94);
+  color: var(--text);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
+
+.save-trouble-glyph {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  margin-top: 1px;
+  color: var(--accent);
+}
+
+.save-trouble-dismiss {
+  color: var(--text-dim);
+}
+
+/* The map's menu key while saves are not landing: a small mark, the words are in the menu. */
+.map-header-button.has-save-trouble {
+  position: relative;
+  opacity: 1;
+}
+
+.map-header-button.has-save-trouble::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
 /* On the SOCKET, and on `filter` rather than `box-shadow`: the plate below it
    is chamfered by a clip-path, and a clip-path takes the shadow with it. The
    drop-shadow follows the painted result instead, so the glow is the shape of

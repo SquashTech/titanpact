@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { initUiScale } from './uiScale';
 import { allArtUrls, locationArtUrls, prefetchImages, preloadImages } from '../view/shared/preload';
 import { useReloadOnNewBuild } from './useReloadOnNewBuild';
-import { clearSave, flushSave, persistStorage, readResume, readSave, readSaveFromMirror, saveStorageFull, writeSave, type SaveRead } from './saveStorage';
+import { clearSave, flushSave, persistStorage, readResume, readSave, readSaveFromMirror, saveHealth, writeSave, type SaveHealth, type SaveRead } from './saveStorage';
 import { eraseAllData, readProfile, updateProfile } from './profileStorage';
 import { usePlaytime } from './usePlaytime';
 import type { StatKey } from '../engine/content';
@@ -108,6 +108,7 @@ import { generateMap, type MapNodeType } from '../run/map';
 import { firstUnseenTip, LORE_TIP_ID, type ScreenTipId } from '../run/tips';
 import { LORE_LINES, SCREEN_TIPS } from '../data/tips';
 import { TipOverlay } from '../view/run/TipOverlay';
+import { SaveTroubleBanner } from '../view/run/SaveTroubleBanner';
 import { InstallOverlay } from '../view/run/InstallOverlay';
 import { currentInstallPlatform } from './installPrompt';
 import { INSTALL_TIP_ID } from '../run/installHint';
@@ -198,6 +199,12 @@ function slotFrom(result: SaveRead | null): { save: SavedRun | null; staleReason
   console.warn(`Titanpact: refused a stored run — ${result.reason}`);
   return { save: null, staleReason: result.reason };
 }
+
+/** What the player is told when a save does not land whole: the fact, and that the run goes on. */
+const SAVE_TROUBLE_LINES: Record<Exclude<SaveHealth, 'ok'>, string> = {
+  checkpointOnly: 'This device is low on storage, so the run is only being saved on the map. It will save everywhere again once there is room.',
+  failed: "Couldn't save — this device is out of storage space. Your run goes on, and it will save again once there is room.",
+};
 
 /** Throwaway (unseeded) seed for the entry-point rolls in this file. */
 function randomSeed(): number {
@@ -473,6 +480,10 @@ export function App() {
   const fallback = useRef<{ run: RunState; checkpoint: SaveCheckpoint } | null>(null);
   // The board the fight on screen last waited on, cleared when the screen moves off it.
   const combatSnapshot = useRef<{ screen: Screen; snapshot: CombatSnapshot } | null>(null);
+  // How the last write went (saveStorage.ts). The banner says so once when it turns bad, and goes
+  // when a write lands again; the map and fight menus keep a quiet mark while it stays bad.
+  const [saveTrouble, setSaveTrouble] = useState<SaveHealth>('ok');
+  const [saveTroubleSeen, setSaveTroubleSeen] = useState(false);
   /** A fight resumed from the save opens on this board, once. */
   const [resumedCombat, setResumedCombat] = useState<{ screen: Screen; snapshot: CombatSnapshot } | null>(null);
 
@@ -490,6 +501,9 @@ export function App() {
       save = writeSave(run, base.checkpoint, { fallbackRun: base.run, resume });
     }
     if (save) setSaveSlot({ save, staleReason: null });
+    const now = saveHealth();
+    if (now === 'ok') setSaveTroubleSeen(false);
+    setSaveTrouble(now);
   }
 
   // Autosave. An effect rather than a call inside each transition handler for two reasons:
@@ -1191,8 +1205,8 @@ export function App() {
           saveNotice={
             saveSlot.recovered
               ? "The last save was cut off, so the run was restored from the one before it."
-              : saveSlot.save && saveStorageFull()
-                ? "This device is out of storage space, so the run is only saved on the map."
+              : saveSlot.save && saveTrouble !== 'ok'
+                ? SAVE_TROUBLE_LINES[saveTrouble]
                 : null
           }
           onContinueRun={handleContinueRun}
@@ -1293,6 +1307,7 @@ export function App() {
           onSelectNode={handleSelectNode}
           onSaveAndQuit={() => setScreen({ kind: 'title' })}
           onAbandonRun={handleAbandonRun}
+          saveTrouble={saveTrouble === 'ok' ? null : SAVE_TROUBLE_LINES[saveTrouble]}
         />
       )}
 
@@ -1335,6 +1350,7 @@ export function App() {
           }
           onSaveAndQuit={() => setScreen({ kind: 'title' })}
           onAbandonRun={handleAbandonRun}
+          saveTrouble={saveTrouble === 'ok' ? null : SAVE_TROUBLE_LINES[saveTrouble]}
           tips={{ nodeType: playerRun.map!.nodes[screen.nodeId].type, seenIds: profile.seenTipIds, onSeen: markTipSeen }}
           cinematicWin={playerRun.map!.nodes[screen.nodeId].type === 'finale'}
         />
@@ -1557,6 +1573,9 @@ export function App() {
           play, since an iPhone's Home Screen app does not share the browser's storage. */}
       {screen.kind === 'title' && launchDone && installPlatform && !profile.seenTipIds.includes(INSTALL_TIP_ID) && (
         <InstallOverlay platform={installPlatform} onDone={() => markTipSeen(INSTALL_TIP_ID)} />
+      )}
+      {saveTrouble !== 'ok' && !saveTroubleSeen && screen.kind !== 'title' && (
+        <SaveTroubleBanner line={SAVE_TROUBLE_LINES[saveTrouble]} onDismiss={() => setSaveTroubleSeen(true)} />
       )}
       {(() => {
         if (recruitFanfare) return null;
