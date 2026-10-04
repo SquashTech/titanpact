@@ -7,6 +7,7 @@ import { createFightState, landedDelta, withFullPools } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { signatureMoves } from '../src/data/signatures';
+import { callMoveIdSet } from '../src/data/titanspawn';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
@@ -240,20 +241,21 @@ test('spirit: no move authors a selfHpCost the engine cannot price', () => {
 test('spirit: every damage move in the slate is single-target, and Haunt is what makes them spread', () => {
   const spirit = Object.values(moves).filter((m) => m.type === 'Spirit' && !signatureMoves[m.id]);
   const damage = spirit.filter((m) => m.kind === 'damage');
-  assert.strictEqual(spirit.length, 19);
-  assert.strictEqual(damage.length, 13);
+  assert.strictEqual(spirit.length, 22);
+  assert.strictEqual(damage.length, 16);
   for (const move of damage) {
-    assert.strictEqual(move.target, 'singleEnemy', `${move.id} is a spread move in a slate that has none`);
+    // The Call's three roll their one target (docs/companion-call.md §3.2) — still one foe, still no spread.
+    assert.ok(move.target === 'singleEnemy' || move.target === 'randomEnemy', `${move.id} is a spread move in a slate that has none`);
   }
   assert.ok(statuses.Haunt.spreadTriggerTypes?.includes('Spirit'));
 });
 
-test('spirit: three moves plant Haunt and all thirteen damage moves cash it in', () => {
+test('spirit: four moves plant Haunt and all sixteen damage moves cash it in', () => {
   const planters = Object.values(moves)
     .filter((m) => m.type === 'Spirit' && !signatureMoves[m.id] && firstStatusApplication(m)?.statusId === 'Haunt')
     .map((m) => m.id)
     .sort();
-  assert.deepStrictEqual(planters, ['poltergeist', 'torment', 'wisp']);
+  assert.deepStrictEqual(planters, ['poltergeist', 'torment', 'willOWisp', 'wisp']);
   // All three are certain since the Haunt pass (docs/blessings-and-statuses.md §2.2): a coin flip on
   // the Early delivery was the finickiness, so no planter rolls for it.
   for (const id of planters) assert.strictEqual(firstStatusApplication(moves[id])?.chance, undefined, `${id} rolls for its Haunt`);
@@ -314,7 +316,8 @@ test('spirit: Revenant holds the magical line and Sorrow the physical one — sp
   ];
   const revenant = reachableBy('revenant');
   const sorrow = reachableBy('sorrow');
-  const spiritMoves = Object.values(moves).filter((m) => m.type === 'Spirit' && !signatureMoves[m.id]);
+  // The Call holds its own three (docs/companion-call.md §3.2) until a hero pool takes them.
+  const spiritMoves = Object.values(moves).filter((m) => m.type === 'Spirit' && !signatureMoves[m.id] && !callMoveIdSet.has(m.id));
 
   for (const move of spiritMoves) {
     if (move.category === 'physical') {

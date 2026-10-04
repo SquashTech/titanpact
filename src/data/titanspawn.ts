@@ -48,8 +48,32 @@ export interface TitanspawnLine {
   names: Record<SpawnTier, string>;
   stats: Record<SpawnTier, StatLine>;
   moveIds: Record<SpawnTier, readonly string[]>;
+  /** The one move the companion casts when Called at each tier (docs/companion-call.md §3.2): it never asks for a target. */
+  callMoveIds: Record<SpawnTier, string>;
   growthGrades: Record<GrowthStatKey, GrowthGrade>;
 }
+
+/**
+ * The Call table (docs/companion-call.md §3.2), in TYPES order: every entry `bothEnemies`,
+ * `bothAllies` or — Spirit, whose slate never spreads — `randomEnemy`; of the line's type and the
+ * tier's band, on the stat the line spikes, with no cost on the caster — test/companionCall.test.ts.
+ */
+const CALL_MOVE_IDS: Partial<Record<TypeId, [string, string, string]>> = {
+  Fire: ['sparkFlash', 'backdraft', 'firestorm'],
+  Water: ['tideGuard', 'oasis', 'highTide'],
+  Frost: ['rimeWind', 'blindingSnow', 'avalanche'],
+  Storm: ['arcFlash', 'chainLightning', 'ionCascade'],
+  Stone: ['gravelSpray', 'bastion', 'rampart'],
+  Nature: ['regrowth', 'wildBloom', 'greenwood'],
+  Light: ['dawnlight', 'benediction', 'divineGrace'],
+  Shadow: ['knifeFan', 'smokeBomb', 'shadowsweep'],
+  Arcane: ['manaFont', 'arcPulse', 'cataclysm'],
+  Mind: ['psiPulse', 'disorient', 'psionicWave'],
+  Spirit: ['willOWisp', 'unquiet', 'requiem'],
+  Iron: ['shrapnel', 'reinforce', 'swingingChain'],
+  Mech: ['overclock', 'whirlingBlades', 'salvo'],
+  Beast: ['howl', 'thrash', 'packLeader'],
+};
 
 const line = (
   type: TypeId,
@@ -64,8 +88,15 @@ const line = (
   names: { early: names[0], mid: names[1], late: names[2] },
   stats: { early: stats[0], mid: stats[1], late: stats[2] },
   moveIds: { early: moveIds[0], mid: moveIds[1], late: moveIds[2] },
+  callMoveIds: callMovesFor(type),
   growthGrades,
 });
+
+function callMovesFor(type: TypeId): Record<SpawnTier, string> {
+  const ids = CALL_MOVE_IDS[type];
+  if (!ids) throw new Error(`${type} spawns but has no Call table`);
+  return { early: ids[0], mid: ids[1], late: ids[2] };
+}
 
 const st = (hp: number, attack: number, defense: number, intelligence: number, wisdom: number, speed: number, manaPool: number, mpRegen: number): StatLine =>
   ({ hp, attack, defense, intelligence, wisdom, speed, manaPool, mpRegen });
@@ -214,3 +245,6 @@ export function spawnSlate(type: TypeId): string[] {
 export const spawnMoveTiers: Record<string, string[]> = Object.fromEntries(
   titanspawnLines.flatMap((line) => SPAWN_TIERS.map((tier) => [spawnId(line, tier), spawnSlate(line.type)]))
 );
+
+/** Every move some line casts when Called — a holder in its own right, beside the hero pools and the kits. */
+export const callMoveIdSet: ReadonlySet<string> = new Set(titanspawnLines.flatMap((line) => SPAWN_TIERS.map((tier) => line.callMoveIds[tier])));

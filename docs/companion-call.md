@@ -1,9 +1,9 @@
 # companion-call.md — The companion off the roster: a Call
 
-> **STATUS: DECIDED 2026-10-04, per user direction — NOTHING BUILT.** The companion still joins
+> **STATUS: DECIDED 2026-10-04, per user direction — PHASE 1 (CONTENT) BUILT.** The companion still joins
 > after the run's first fight, but it **never takes one of the six roster slots**: it travels with
 > the party, and **once a fight an active hero can spend its turn to Call it** — the companion
-> casts its tier's ONE move, a whole-side move that needs no target, from off the field. **No
+> casts its tier's ONE move, which never asks for a target, from off the field. **No
 > stake**: it cannot be lost. **The awakening refreshes the Call** for the Eyes. §11 is the build
 > order; §10 lists what is still open. Reverses part of `docs/titanspawn-overhaul.md` §5 (§9 here).
 
@@ -41,7 +41,7 @@ turn to Call the companion, once a fight.
 | Joins after the first fight: the beaten side's lead, cannot be declined | **Unchanged** |
 | Takes one of the six roster slots; presses on the cap | **Takes none.** The roster is six heroes |
 | Fielded like any hero; every fight fields the whole roster | **Never fielded.** Acts only through the Call |
-| A kit of 3 / 4 / 4 moves off its type's slate | **One Call move per tier**, whole-side — §3.2 |
+| A kit of 3 / 4 / 4 moves off its type's slate | **One Call move per tier**, no target asked — §3.2 |
 | A knockout removes it from the run (`RosterEntry.mortal`) | **Cannot be lost** — §5 |
 | Levels roster-wide, takes schedule offers, Mastery pips, items | **None of them** — §4 |
 | Tier-steps Early → Mid → Late at Mastery 5 and 10 | **Tier by act** (`SPAWN_TIER_BY_ACT`) |
@@ -87,45 +87,69 @@ something useful to do with its turn.
 - **The tuning brake held in reserve**: if the sim shows a round-one Call still decides fights,
   the Call opens at **round 3** (a pip on the figure). Not built unless measured.
 
-### 3.2 One move, whole-side
+### 3.2 One move, and it never asks for a target
 
-**Each line has ONE Call move per tier** — `TitanspawnLine.callMoveIds: Record<SpawnTier, string>`
-— and **every Call move covers a whole side**: `bothEnemies` or `bothAllies`. Never `singleEnemy`,
-`singleAlly`, `self`, or `allOthers` (which would strike the caller's own partner). So **a Call
-never asks for a target**: tap the companion, read its one card, press **Call**. No kit, no list,
-no target panel, nothing greyed. The decision is WHEN, and WHO gives up the turn.
+**Each line has ONE Call move per tier** — `TitanspawnLine.callMoveIds` (`src/data/titanspawn.ts`,
+the `CALL_MOVE_IDS` table) — and **a Call never asks for a target**: tap the companion, read its
+one card, press **Call**. No kit, no list, no target panel, nothing greyed. The decision is WHEN,
+and WHO gives up the turn.
+
+- **Thirteen lines cover a whole side**: `bothEnemies` or `bothAllies`. Never `allOthers`, which
+  would strike the caller's own partner (Snow Blast and Frigid Air are excluded for that).
+- **Spirit rolls its target** (per user direction): its slate's rule is that no Spirit damage move
+  spreads — Haunt is how Spirit spreads — so its Calls are one heavy hit on a `randomEnemy`, still
+  no target asked. Will-o'-Wisp also Haunts the foe it finds.
 
 The spawn kits (`moveIds`, 3 / 4 / 4) stay as they are — they are what an ENEMY spawn fights with.
 The Call move is drawn from the type's whole slate at the tier's band, not only from the kit.
 
-**First pass, picked by name — needs a pass that reads each move's effects** (34 of 42 filled from
-the slates; the 8 gaps have no whole-side move at that band and need one authored):
+**Four rules choose a Call move**, pinned by `test/companionCall.test.ts`:
+
+1. It never asks for a target (above).
+2. A damaging Call swings with the stat its line spikes at that tier — physical on an Attack line,
+   magical on an Intelligence line. A buff, a heal, a Shield read Wisdom or Defense, so they pass.
+3. No cost on the caster — no self-Burn, recoil or HP price. It would be dropped, and the card would
+   then print a price nobody pays.
+4. Nothing that reads the caster's own state — no drain, no derived stat grant (Arcane Overflow),
+   no own-HP or own-status condition, no partner condition.
+
+**The table (built 2026-10-04):**
 
 | Line | Early | Mid | Late |
 |---|---|---|---|
-| Fire | Spark Flash | Backdraft | Firestorm |
-| Water | Tide Guard | Oasis | High Tide |
-| Frost | Rime Wind | Blinding Snow | Avalanche |
-| Storm | **author** | Chain Lightning | Ion Cascade |
-| Stone | Tremor | Bastion | Rampart |
-| Nature | Regrowth | Wild Bloom | **author** |
-| Light | **author** | Benediction | Divine Grace |
-| Shadow | **author** | Smoke Bomb | Umbral Wave |
-| Arcane | Mana Font | Arc Pulse | Cataclysm |
-| Mind | **author** | Disorient | Psionic Wave |
-| Spirit | **author** | **author** | **author** |
-| Iron | **author** | Reinforce | Swinging Chain |
-| Mech | Overclock | Whirling Blades | Meltdown |
-| Beast | Howl | Thrash | Animal Spirit |
+| Fire | Spark Flash — Burn 8% on both | Backdraft — 40, Burn | Firestorm — 70 |
+| Water | Tide Guard — Shield 20 on both | Oasis — heal 50 on both | High Tide — Renew 16% on both |
+| Frost | Rime Wind — 25 | Blinding Snow — +1 priority, 40% Daze, −10 Speed | Avalanche — 60, Freeze |
+| Storm | **Arc Flash** — 30, 30% Conduct | Chain Lightning — 50 | Ion Cascade — 50, ×2 on Conduct |
+| Stone | Gravel Spray — 30 physical | Bastion — Shield 45 | Rampart — Shield 65 |
+| Nature | Regrowth — Renew 9% | Wild Bloom — Renew 19% | **Greenwood** — Renew 16%, cleanse all |
+| Light | **Dawnlight** — heal 25 on both | Benediction — heal 30, Shield 25 | Divine Grace — heal 90 |
+| Shadow | **Knife Fan** — 25 physical, 30% Bleed | Smoke Bomb — −20 Attack, −20 Speed | **Shadowsweep** — 65 physical, 30% Bleed |
+| Arcane | Mana Font — +10 MP Regen, Surging Magic | Arc Pulse — 45 | Cataclysm — 90 |
+| Mind | **Psi Pulse** — 30, 30% −10 Wisdom | Disorient — −30 Int, −30 Wis | Psionic Wave — 70, 50% −30 Wis |
+| Spirit | **Will-o'-Wisp** — 55 on a random foe, Haunt | **Unquiet** — 80 on a random foe | **Requiem** — 130 on a random foe |
+| Iron | **Shrapnel** — 30 physical, 30% crit | Reinforce — +20 Attack, +20 Defense | Swinging Chain — 70 |
+| Mech | Overclock — random +20 on both | Whirling Blades — 45 | Salvo — 65, 30% Daze |
+| Beast | Howl — +15 Attack, +15 Speed | Thrash — 45 | Pack Leader — +50 Attack, +50 Speed |
 
-Snow Blast and Frigid Air are `allOthers` and excluded. Spirit's slate is single-target throughout.
-The eight are authored as ordinary slate moves (`docs/authoring-moves.md`), pooled for heroes like
-any other, so the Call adds content, not a parallel move list.
+Bold is new (ten moves, `src/data/moves.ts` "Companion Calls"). Against the first pass by name,
+four swaps came off the rules: Stone Tremor → Gravel Spray, Shadow Umbral Wave → Shadowsweep and
+Beast Animal Spirit → Pack Leader (each swung with the line's dump stat), Mech Meltdown → Salvo (a
+self-Burn). Greenwood dropped the Verdant Earth it was drafted with — off Nature's Late Wisdom a
+doubled Renew was ~80% of max HP a tick on both. Ion Cascade is the weakest Late, short of its ×2
+without a Conduct setter; Storm Surge is the alternative.
+
+**The ten new moves are Call-only for now**: ordinary tiered slate moves in no hero pool. Some
+belong in hero kits (per user direction) — that is a later pass, and each slate's census test
+already counts them. `callMoveIdSet` is a holder in its own right for the reachability tests.
+
+**Watch in the sim**: the support Calls off a spiked stat — Rampart ~160 Shield on each (Stone
+Defense 160), Divine Grace ~190 heal each (Light Wisdom 120), Pack Leader ~+70 Attack and Speed.
+Each costs a turn, as a Stone hero's Rampart does.
 
 ### 3.3 Restrictions
 
-None needed at runtime: the Call move is authored, and test pins every `callMoveIds` entry as
-whole-side, of the line's type, at the tier's band, and not a pivot.
+None at runtime: the Call move is authored, and test pins every entry to the four rules above.
 
 ### 3.4 The awakening
 
@@ -189,7 +213,8 @@ declared by an on-field one:
   defeat or its lock-in.
 - A new action kind, **`{ kind: 'call', combatantId }`** — `combatantId` is the CALLER, an active
   hero, and it is that hero's action for the round. No `moveId` (the Called caster has one) and no
-  target (it is whole-side). Ordered by the move's priority and the Called caster's Speed, resolved
+  target (it covers a side, or rolls one foe at resolution on the `randomEnemy` path targeting.ts
+  already has). Ordered by the move's priority and the Called caster's Speed, resolved
   through the existing move pipeline with the Called caster: cost waived, self-side effects
   dropped. `callsRemaining` decrements **at resolution**, and only if the caller's action was not
   blocked or pre-empted by its KO.
@@ -252,8 +277,8 @@ fallback is a key in the Bag or the bottom row).
 
 ## 10. Open questions — DO NOT silently resolve
 
-- **The Call table** (§3.2): the 34 picks were chosen by name; each needs reading for effect, and
-  the eight gaps need authoring.
+- **Ion Cascade or Storm Surge** for Storm's Late Call (§3.2), and **which Call moves enter hero
+  kits**, and whose.
 - **The woken line's cross-run reward** (§3.4): a Call that refreshes in every fight's second half,
   or none beyond the finale refresh.
 - **Placement**: the field figure is for playtest; the fallback if it distracts.
@@ -265,8 +290,8 @@ fallback is a key in the Bag or the bottom row).
 
 ## 11. Build order
 
-1. **Content.** `callMoveIds` on every line; the 34 picks reviewed for effect; the eight gaps
-   authored. Test pins whole-side, type, band and no pivot.
+1. **Content — BUILT 2026-10-04.** `callMoveIds` on every line, ten new moves, the four rules
+   pinned by `test/companionCall.test.ts`.
 2. **Engine.** `calledId` / `callsRemaining` on a side, the `call` action as the caller's action,
    the `Called` event, cost waived, self-side effects dropped, spent only at resolution,
    untargetable and outside defeat and lock-in. `test/companionCall.test.ts`.

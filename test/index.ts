@@ -54,6 +54,7 @@ import './guardians.test';
 import './mobLayer.test';
 import './encounters.test';
 import './companion.test';
+import './companionCall.test';
 import './ascension.test';
 import './finale.test';
 import './events.test';

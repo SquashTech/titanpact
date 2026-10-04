@@ -265,10 +265,10 @@ test('shadow: every Ambush grant in the game is self-targeted and carries a magn
 
 // --- The slate's own shape ---
 
-test('shadow: the slate is sixteen moves plus the three 2026-09-15 additions, and every status and condition it names exists', () => {
+test('shadow: the slate is sixteen moves plus the three 2026-09-15 additions and the Call’s two, and every status and condition it names exists', () => {
   // The type's authored slate — a class move wears a type for flavour and is not a row of it.
   const shadow = Object.values(moves).filter((m) => m.type === 'Shadow' && !signatureMoves[m.id] && !classMoves[m.id]);
-  assert.strictEqual(shadow.length, 19);
+  assert.strictEqual(shadow.length, 21);
   for (const move of shadow) {
     for (const app of statusApplicationsOf(move)) {
       assert.ok(statuses[app.statusId], `${move.id} applies unknown status ${app.statusId}`);
@@ -334,7 +334,9 @@ test('shadow: every Poison the slate applies is chanced, and every one runs the 
 
 test('shadow: Dusk Blade is the only guaranteed Bleed, and Bleed is the type flat attrition', () => {
   const bleeders = Object.values(moves).filter((m) => m.type === 'Shadow' && !signatureMoves[m.id] && firstStatusApplication(m)?.statusId === 'Bleed');
-  assert.deepStrictEqual(bleeders.map((m) => m.id).sort(), ['backstab', 'duskBlade', 'shadowSlice']);
+  assert.deepStrictEqual(bleeders.map((m) => m.id).sort(), ['backstab', 'duskBlade', 'knifeFan', 'shadowSlice', 'shadowsweep']);
+  assert.strictEqual(firstStatusApplication(moves.knifeFan)!.chance, 0.3);
+  assert.strictEqual(firstStatusApplication(moves.shadowsweep)!.chance, 0.3);
   assert.strictEqual(firstStatusApplication(moves.duskBlade)!.chance, undefined);
   assert.strictEqual(firstStatusApplication(moves.backstab)!.chance, 0.5);
   assert.strictEqual(firstStatusApplication(moves.shadowSlice)!.chance, 0.3);
