@@ -72,7 +72,7 @@ function fmtStatus(statusId: string, magnitude: number | undefined, duration: nu
  * (HeroPreviewOverlay), so a hero checked mid-fight and a hero checked on the map are one design
  * (2026-09-15, per user direction; it was the one-scroll sheet the run retired on 2026-09-07).
  *
- * What the fight adds sits on the Stats page: the HP and MP bars, the → readout and the
+ * What the fight adds sits on the Overview page: the HP and MP bars, the → readout and the
  * "can't go any lower" tick on every stat, the modifier chips and the statuses, then the passives.
  * A move on the
  * Moves page is priced as THIS fight prices it — the per-move ledger applied, an unaffordable row
@@ -128,7 +128,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
   const [popup, setPopup] = useState<PopupRef | null>(null);
 
   const tabs: TabSpec<TabId>[] = [
-    { id: 'stats', label: 'Stats', glyph: 'stats' },
+    { id: 'stats', label: 'Overview', glyph: 'stats' },
     { id: 'moves', label: 'Moves', glyph: 'moves', count: moveIds.length },
     { id: 'gear', label: 'Gear', glyph: 'equipment', count: heldItems.length },
   ];

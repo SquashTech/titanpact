@@ -128,11 +128,11 @@ function ForceSourceRow({ label, grants }: { label: string; grants: RosterEntry[
 }
 
 /**
- * Out-of-combat stat/loadout sheet, in three pages: Stats, Moves, Gear (2026-09-07, per user
+ * Out-of-combat stat/loadout sheet, in three pages: Overview, Moves, Gear (2026-09-07, per user
  * direction, replacing one long scroll of boxes). The split is what buys each page the room to
  * state things outright — moves as full-width cards carrying their own effect line, items and
  * passives spelled out rather than made into buttons that have to be tapped before they say
- * anything. Passives sit on the Stats page, never behind a tab (2026-10-04, per user direction):
+ * anything. Passives sit on the Overview page, never behind a tab (2026-10-04, per user direction):
  * they are what makes a hero itself, and they took the room of a stat-source ledger that only
  * said what a run teaches anyway — the numbers come from levels and gear.
  *
@@ -159,7 +159,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
   const [popup, setPopup] = useState<{ kind: 'move' | 'equipment' | 'class'; id: string } | null>(null);
 
   const tabs: TabSpec<TabId>[] = [
-    { id: 'stats', label: 'Stats', glyph: 'stats' },
+    { id: 'stats', label: 'Overview', glyph: 'stats' },
     { id: 'moves', label: 'Moves', glyph: 'moves', count: entry.unlockedMoveIds.length },
     ...(unowned ? [] : [{ id: 'gear' as const, label: 'Gear', glyph: 'equipment' as const, count: heldItems.length }]),
   ];
