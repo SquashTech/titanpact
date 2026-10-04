@@ -52,7 +52,7 @@ import { generateEncounter } from '../../src/run/enemyGen';
 import { pickSquad } from '../../src/run/squad';
 import { getMaxHp, type CombatState } from '../../src/engine/state';
 import type { AiContext } from '../../src/run/ai';
-import { slotWorth } from './pilot';
+import { slotWorth } from '../../src/run/pilot';
 
 /**
  * How Scrolls are aimed (docs/mastery.md §2, §8 phase 5's rotate / carry pair). `focus`

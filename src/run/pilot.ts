@@ -1,10 +1,12 @@
-// A SKILLED player pilot, for the player side only.
+// A SKILLED pilot, either side. Two users: the balance sim flies the player side
+// with it, and the Trials fly their enemy with it (docs/constructed.md §8).
 //
-// src/run/ai.ts is the game's enemy: it aims at the type chart and stops there.
+// src/run/ai.ts is Classic's enemy: it aims at the type chart and stops there.
 // Reading it as the player too makes every absolute number in the report a
 // floor, and it biases the comparisons — a hero whose edge is a 110-power
 // finisher looks the same as one whose edge is a 40-power poke, because the
-// chart weight is all either of them is judged on.
+// chart weight is all either of them is judged on. Against a skilled player it
+// wins a fifth of the Trials; this pilot on the enemy side wins about half.
 //
 // This module scores each option in HP, using the REAL damage, heal and
 // status-magnitude pipelines, and takes the best. Everything it can compute it
@@ -16,10 +18,10 @@
 // It is still a ONE-PLY greedy pilot: no lookahead, no reading the opponent's
 // declaration, no baiting. It is a better floor, not a ceiling.
 
-import type { MoveDefinition, StatKey, StatusApplication, StatusDefinition, TargetMode } from '../../src/engine/content';
-import { statusApplicationsOf } from '../../src/engine/content';
-import type { Action } from '../../src/engine/combat/actions';
-import type { CombatState, FieldEffectContext, Side } from '../../src/engine/state';
+import type { MoveDefinition, StatKey, StatusApplication, StatusDefinition, TargetMode } from '../engine/content';
+import { statusApplicationsOf } from '../engine/content';
+import type { Action } from '../engine/combat/actions';
+import type { CombatState, FieldEffectContext, Side } from '../engine/state';
 import {
   applyStatModifierDelta,
   activePartnerTypes,
@@ -34,9 +36,9 @@ import {
   resolveTargetMode,
   declarationTargetMode,
   statusMagnitude,
-} from '../../src/engine/state';
-import { selectableTargets, statusGatedTargets } from '../../src/engine/combat/statusEngine';
-import { collectPassiveDamageModifiers } from '../../src/engine/combat/passiveEngine';
+} from '../engine/state';
+import { selectableTargets, statusGatedTargets } from '../engine/combat/statusEngine';
+import { collectPassiveDamageModifiers } from '../engine/combat/passiveEngine';
 import {
   calcDamage,
   resolveConditionalPowerMultiplier,
@@ -47,18 +49,18 @@ import {
   PROVISIONAL_CRIT_MULTIPLIER,
   VARIANCE_MAX,
   VARIANCE_MIN,
-} from '../../src/engine/damage/damagePipeline';
-import { resolveHeal } from '../../src/engine/heal/healPipeline';
-import { scaleStatusMagnitude } from '../../src/engine/status/statusMagnitude';
-import { shieldStatusDef } from '../../src/engine/status/shield';
-import { scaleStatDelta } from '../../src/engine/combat/statDeltaScaling';
-import { allCombatants } from '../../src/data/content';
-import { moves } from '../../src/data/moves';
-import { statuses } from '../../src/data/statuses';
-import { passives } from '../../src/data/passives';
-import { fieldEffects } from '../../src/data/fieldEffects';
-import { typeChart } from '../../src/data/typechart';
-import type { AiContext } from '../../src/run/ai';
+} from '../engine/damage/damagePipeline';
+import { resolveHeal } from '../engine/heal/healPipeline';
+import { scaleStatusMagnitude } from '../engine/status/statusMagnitude';
+import { shieldStatusDef } from '../engine/status/shield';
+import { scaleStatDelta } from '../engine/combat/statDeltaScaling';
+import { allCombatants } from '../data/content';
+import { moves } from '../data/moves';
+import { statuses } from '../data/statuses';
+import { passives } from '../data/passives';
+import { fieldEffects } from '../data/fieldEffects';
+import { typeChart } from '../data/typechart';
+import type { AiContext } from './ai';
 
 /** Variance is uniform, so its expectation is the midpoint; crit folds in as its expected multiplier. */
 const MEAN_VARIANCE = (VARIANCE_MIN + VARIANCE_MAX) / 2;

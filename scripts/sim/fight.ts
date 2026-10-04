@@ -29,7 +29,7 @@ import { relicTeamPassiveGrants } from '../../src/run/passives';
 import { relicTeamStatusGrants } from '../../src/run/statusGrants';
 import type { RosterEntry } from '../../src/run/state';
 import type { Squad } from '../../src/run/squad';
-import { pilotActions, type PilotOptions } from './pilot';
+import { pilotActions, type PilotOptions } from '../../src/run/pilot';
 import type { Rng } from './rng';
 import { countBeats } from './beats';
 import { shieldStatusDef } from '../../src/engine/status/shield';
@@ -187,8 +187,12 @@ function sideDefeated(state: CombatState, side: Side): boolean {
   return list.length > 0 && list.every((c) => c.fainted);
 }
 
-function contextFor(roster: readonly RosterEntry[], state: CombatState): AiContext {
-  const byRosterId = new Map(roster.map((r) => [r.rosterId, r]));
+/** Both rosters, so a pilot reading the other side's threats sees their real kits, not their starting two. */
+function contextFor(playerRoster: readonly RosterEntry[], aiRoster: readonly RosterEntry[], state: CombatState): AiContext {
+  const bySide: Record<Side, Map<string, RosterEntry>> = {
+    [PLAYER_SIDE]: new Map(playerRoster.map((r) => [r.rosterId, r])),
+    [AI_SIDE]: new Map(aiRoster.map((r) => [r.rosterId, r])),
+  } as Record<Side, Map<string, RosterEntry>>;
   return {
     heroes: allCombatants,
     moves,
@@ -196,7 +200,7 @@ function contextFor(roster: readonly RosterEntry[], state: CombatState): AiConte
     typeChart,
     // Mirrors FightScreen: the entry's unlocked kit, falling back to the hero's authored one.
     moveIdsFor: (combatantId) => {
-      const entry = byRosterId.get(combatantId.slice(combatantId.indexOf(':') + 1));
+      const entry = bySide[state.combatants[combatantId].side].get(combatantId.slice(combatantId.indexOf(':') + 1));
       if (entry && entry.unlockedMoveIds.length > 0) return entry.unlockedMoveIds;
       return allCombatants[state.combatants[combatantId].heroId].moveIds;
     },
@@ -445,7 +449,7 @@ function manaCycleSwitches(state: CombatState, side: Side, ctx: AiContext, actin
   return out;
 }
 
-/** Who pilots the PLAYER side. The enemy is always run/ai.ts — that is what the game ships. */
+/** Who pilots a side: 'chart' is run/ai.ts (Classic's enemy), 'greedy' is run/pilot.ts (the Trials' enemy). */
 export type PilotKind = 'chart' | 'greedy';
 
 export interface FightInput {
@@ -462,6 +466,8 @@ export interface FightInput {
   playerSwitching?: boolean;
   /** 'greedy' pilots the player side with scripts/sim/pilot.ts; 'chart' leaves it on run/ai.ts. */
   pilot?: PilotKind;
+  /** 'greedy' flies the ENEMY with src/run/pilot.ts — the Trials' AI (docs/constructed.md §8). Default: run/ai.ts, Classic's enemy. */
+  aiPilot?: PilotKind;
   /** Revives the pilot may spend in this fight, on the first fallen hero, before its command phase (engine/combat/consumables.ts). Default none. */
   revives?: number;
 }
@@ -520,8 +526,8 @@ export function simulateFight(input: FightInput): FightOutcome {
   const allEvents: CombatEvent[] = [...opening.events];
   let beats = countBeats(opening.events);
 
-  const playerCtx = { ...contextFor(playerRoster, state), random: rng };
-  const aiCtx = { ...contextFor(aiRoster, state), random: rng };
+  const playerCtx = { ...contextFor(playerRoster, aiRoster, state), random: rng };
+  const aiCtx = { ...contextFor(playerRoster, aiRoster, state), random: rng };
 
   let rounds = 0;
   let pactTicked = false;
@@ -572,7 +578,8 @@ export function simulateFight(input: FightInput): FightOutcome {
       input.pilot === 'greedy'
         ? pilotActions(state, PLAYER_SIDE, playerCtx, { switching: input.playerSwitching !== false } as PilotOptions)
         : chartPilotActions(state, playerCtx, playerActive, input.playerSwitching !== false);
-    const actions: Action[] = [...playerActions, ...aiActive.map((id) => pickAiAction(state, id, aiCtx))];
+    const aiActions: Action[] = input.aiPilot === 'greedy' ? pilotActions(state, AI_SIDE, aiCtx, { switching: true }) : aiActive.map((id) => pickAiAction(state, id, aiCtx));
+    const actions: Action[] = [...playerActions, ...aiActions];
 
     for (const action of actions) {
       if (state.combatants[action.combatantId].side !== PLAYER_SIDE) continue;

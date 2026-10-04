@@ -1,7 +1,7 @@
 # constructed.md — Constructed: build six, fight the fourteen
 
-> **STATUS: PROPOSED 2026-10-04; §11 steps 1–3 BUILT (all fourteen Trials drafted), step 6 BUILT
-> (a dev screen) — no player-facing UI.** A second mode beside Classic. A player who has
+> **STATUS: PROPOSED 2026-10-04; §11 steps 1–6 BUILT (fourteen Trials, the sim, the pilot as the Trials' AI, a dev screen)
+> — no player-facing UI yet.** A second mode beside Classic. A player who has
 > won a run builds a team of six from the heroes they have won with — each at level 30, Mastery
 > 10, in a chosen Evolution, with a chosen kit, three Mythic items and a Class — and takes it
 > against **fourteen authored teams, one a type, each the six heroes of its type**, in any order.
@@ -186,6 +186,9 @@ What the Trials need, in order:
    authored on the Trial, read by the AI.
 4. **Target focus** — the two picks agree on a target when one is close to a KO.
 
+**Resolved 2026-10-04 (§11 step 5): not switching — move choice.** The Trials fly their enemy
+with `src/run/pilot.ts`, the sim's skilled pilot, and it wins half the Trials against a skilled
+player where `run/ai.ts` wins a fifth. The list below was the hypothesis; the measurement is in §11.
 This is the same work as the AI tier `ascension.md` proposes for A5. **Build it once, for both.**
 Until it lands, Trial teams must be designed around a no-switch AI — playable, but the gameplans
 in §6 are halved.
@@ -279,7 +282,22 @@ answers *is this fun against this AI* before paying for the teambuilder.
 4. **Sim: a 14 × 14 round-robin — IN (2026-10-04)**: `node dist/scripts/sim/trials.js` (`--fights`,
    `--pilot chart|greedy`, `--only <trial>` for one row plus its record on the AI side). The matrix
    is the balance read by type that Classic cannot give.
-5. **AI switching** (§8), shared with A5.
+5. **The Trials' AI — IN (2026-10-04), and not the switching the plan named.** Measured against
+   the skilled pilot, 14 × 14, 20 fights a cell (AI win%, mean of the fourteen columns):
+   `run/ai.ts` as shipped **22%**; with a switching layer (cycle out for mana, step out of a
+   super-effective matchup 60% of the time — 5.5% of AI turns switched) **23%**; with focus fire
+   too (finish a foe at ≤35% HP, ties to the wounded) **25%**; **flown by the skilled pilot,
+   50%**. Switching was never the missing piece — a switch spends the turn a Rest does, and the
+   incoming hero still eats the round. Move choice was. So **the pilot moved into the game**:
+   `scripts/sim/pilot.ts` → `src/run/pilot.ts` (history kept), side-agnostic as written, and
+   **Trials fights fly the enemy with it** (`FightScreen` `aiPilot`; the sim's `aiPilot:
+   'greedy'`, `trials.js --ai-pilot greedy`). Classic's enemy is untouched. The switching and
+   focus layers were taken back out. A fix rode along: a sim context resolved kits from ONE
+   roster, so a pilot reading the other side saw its starting two moves; it now reads each
+   side's own (Classic skilled full-clear 91.3% on 400 runs, against the 90% on record).
+   **The Trials under the pilot, skilled player vs pilot AI:** the AI wins 24% (Frost) to 73%
+   (Beast); Spirit 67% is no longer the outlier, and Stone, whose Provoke-and-return plan wants
+   a careful hand, jumps to 66%. Frost and Light are the weak pair now (21% / 31% as the player).
 6. **Dev screen — IN (2026-10-04)**: the title's Dev menu → **Trials**
    (`TrialsDevScreen`): pick a Trial team to fly, pick a Trial to face, fight. The player's leads
    are picked in the fight; leaving returns to the screen.

@@ -4,6 +4,7 @@
 //   node dist/scripts/sim/trials.js --fights 20 --pilot chart     both sides on run/ai.ts
 //   node dist/scripts/sim/trials.js --pilot greedy                the skilled pilot flies the player side
 //   node dist/scripts/sim/trials.js --only spirit                 one Trial's row and column
+//   node dist/scripts/sim/trials.js --ai-pilot greedy             the AI side flown by run/pilot.ts, as the Trials ship
 
 import { TRIAL_LIST, constructedContent } from '../../src/data/trials';
 import { constructedSide, type TrialDefinition } from '../../src/run/constructed';
@@ -14,15 +15,17 @@ interface Args {
   fights: number;
   pilot: PilotKind;
   only: string | null;
+  aiPilot: PilotKind;
 }
 
 function parseArgs(argv: readonly string[]): Args {
-  const args: Args = { fights: 20, pilot: 'chart', only: null };
+  const args: Args = { fights: 20, pilot: 'chart', only: null, aiPilot: 'chart' };
   for (let i = 0; i < argv.length; i++) {
     const value = argv[i + 1];
     if (argv[i] === '--fights') args.fights = Number(value);
     if (argv[i] === '--pilot') args.pilot = value as PilotKind;
     if (argv[i] === '--only') args.only = value;
+    if (argv[i] === '--ai-pilot') args.aiPilot = value as PilotKind;
   }
   return args;
 }
@@ -45,6 +48,7 @@ function winRate(player: TrialDefinition, ai: TrialDefinition, args: Args): { pc
       aiSquad: e.squad,
       rng: makeRng(i * 31 + 7),
       pilot: args.pilot,
+      aiPilot: args.aiPilot,
     });
     if (outcome.won) won++;
     if (outcome.stalemate) stalemates++;
@@ -58,7 +62,7 @@ function main(): void {
   const rows = args.only ? TRIAL_LIST.filter((t) => t.id === args.only) : TRIAL_LIST;
   const cols = TRIAL_LIST;
   const label = (t: TrialDefinition) => t.id.slice(0, 5);
-  console.log(`Trials round-robin — ${args.fights} fights a cell, pilot ${args.pilot}. Rows fly the player side; columns are the AI.`);
+  console.log(`Trials round-robin — ${args.fights} fights a cell, pilot ${args.pilot}, AI flown by ${args.aiPilot === 'greedy' ? 'run/pilot.ts (the Trials)' : 'run/ai.ts (Classic)'}. Rows fly the player side; columns are the AI.`);
   console.log('      ' + cols.map((t) => label(t).padStart(6)).join('') + '    avg');
 
   const colSum = cols.map(() => 0);

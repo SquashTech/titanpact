@@ -1279,6 +1279,7 @@ export function App() {
           xpGained={0}
           equipmentReward={null}
           onResolved={() => setScreen({ kind: 'trialsDev' })}
+          aiPilot
           onExitToTitle={() => setScreen({ kind: 'trialsDev' })}
         />
       )}

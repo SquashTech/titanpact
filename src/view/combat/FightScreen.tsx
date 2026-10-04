@@ -69,6 +69,7 @@ import { woundedHp, woundsFrom } from '../../run/wounds';
 import { entryHp } from '../shared/WoundBar';
 import { levelOf } from '../../run/growth';
 import { pickAiAction, type AiContext } from '../../run/ai';
+import { pilotActions } from '../../run/pilot';
 import { relicTeamStatModifiers } from '../../run/relics';
 import { relicTeamPassiveGrants } from '../../run/passives';
 import { relicTeamStatusGrants } from '../../run/statusGrants';
@@ -609,6 +610,8 @@ interface Props {
    * receipt read over a body. A loss still gets its overlay.
    */
   cinematicWin?: boolean;
+  /** The Trials' enemy (docs/constructed.md §8): run/pilot.ts flies the AI side in place of run/ai.ts. */
+  aiPilot?: boolean;
 }
 
 export function FightScreen({
@@ -628,6 +631,7 @@ export function FightScreen({
   onExitToTitle,
   tips,
   cinematicWin = false,
+  aiPilot = false,
   mvpRules,
   initialSnapshot,
   onCommandPhase,
@@ -1205,6 +1209,16 @@ export function FightScreen({
     },
   };
 
+  // The pilot reads threats across the board, so its kits come from whichever side a combatant stands on.
+  const pilotContext: AiContext = {
+    ...aiContext,
+    moveIdsFor: (combatantId) => {
+      const roster = combat.combatants[combatantId].side === AI_SIDE ? aiRun.roster : playerRun.roster;
+      const entry = entryFor(roster, combatantId);
+      return entry.unlockedMoveIds.length > 0 ? entry.unlockedMoveIds : allCombatants[combat.combatants[combatantId].heroId].moveIds;
+    },
+  };
+
   function effectivenessAgainst(move: MoveDefinition, defenderId: string): number {
     const defender = combat.combatants[defenderId];
     const defenderHero = allCombatants[defender.heroId];
@@ -1245,7 +1259,9 @@ export function FightScreen({
         switchToCombatantId: p.switchToCombatantId,
       };
     });
-    const aiActions: Action[] = enemyActiveAlive.map((id) => pickAiAction(combat, id, { ...aiContext, random: derivedRandom(combat, id, 'ai') }));
+    const aiActions: Action[] = aiPilot
+      ? pilotActions(combat, AI_SIDE, pilotContext, { switching: true })
+      : enemyActiveAlive.map((id) => pickAiAction(combat, id, { ...aiContext, random: derivedRandom(combat, id, 'ai') }));
 
     const result = resolveRound(combat, [...playerActions, ...aiActions], config);
     let nextState = result.state;
