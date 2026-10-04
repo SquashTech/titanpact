@@ -169,7 +169,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A whip of molten rope that burns through armour (Burn 8%, -10 Defense).',
+    description: 'A whip of molten rope that burns through armour (Burn 8%, -20 Defense).',
   },
   backdraft: {
     id: 'backdraft',
@@ -1477,7 +1477,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A whip-crack of living vine, sometimes barbed (20% chance of Poison 5).',
+    description: 'A whip-crack of living vine, sometimes barbed (30% chance of Poison 5).',
   },
   toxicSpores: {
     id: 'toxicSpores',
@@ -1705,7 +1705,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Roots wrap the legs and thorns find the skin (−30 Speed, Poison 10).',
+    description: 'Roots wrap the legs and thorns find the skin (−30 Speed, Poison 20).',
   },
   verdantLash: {
     id: 'verdantLash',
@@ -2111,7 +2111,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A short blade under the guard (30% chance of Bleed).',
+    description: 'A short blade under the guard (50% chance of Bleed).',
   },
   weaken: {
     id: 'weaken',
@@ -2127,7 +2127,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 15,
     priority: 0,
     target: 'singleEnemy',
-    description: "Creeping shadow that erodes the target's guard and their will (-10 Defense, -10 Wisdom).",
+    description: "Creeping shadow that erodes the target's guard and their will (-20 Attack, -20 Defense).",
   },
   shadowSlice: {
     id: 'shadowSlice',
@@ -2186,7 +2186,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A sustained lance of darkness (20% chance of Poison 10).',
+    description: 'A sustained lance of darkness (50% chance of Poison 10).',
   },
   shadowstrike: {
     id: 'shadowstrike',
@@ -2215,7 +2215,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 50,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Drags the whole enemy line down (-30 Defense, -30 Wisdom on both).',
+    description: 'Drags the whole enemy line down (-30 Attack, -30 Defense on both).',
   },
   eclipse: {
     id: 'eclipse',
@@ -2321,7 +2321,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'bothEnemies',
-    description: 'A choking cloud that both foes swing blind and slow through (−20 Attack, −10 Speed).',
+    description: 'A choking cloud that both foes swing blind and slow through (−20 Attack, −20 Speed).',
   },
   grimHarvest: {
     id: 'grimHarvest',
@@ -3285,7 +3285,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A hardened, metal-plated punch that settles the shoulder for the next one (+5 Attack).',
+    description: 'A hardened, metal-plated punch that settles the shoulder for the next one (+10 Attack).',
   },
   // No statDeltaTarget on a self-target buff: naming 'self' again makes MoveTile print "(Self) — Self".
   sharpen: {
@@ -3814,7 +3814,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'singleAlly',
-    description: 'Mends an ally and bolts on whatever part was to hand (heal 40; +10 to a random stat).',
+    description: 'Mends an ally and bolts on whatever part was to hand (heal 50; +20 to a random stat).',
   },
   shockCoil: {
     id: 'shockCoil',
