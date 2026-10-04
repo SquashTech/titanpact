@@ -158,9 +158,11 @@ test('trials: a Trial answers every type that hits it super-effectively', () => 
     const attackTypes = new Set(
       trial.team.slots.flatMap((s) => s.moveIds).map((id) => moves[id]).filter((m) => m && m.kind === 'damage' && !m.typeFollowsUser).map((m) => m.type)
     );
+    const declared = new Set(trial.uncovered ?? []);
     for (const threat of threats) {
       const answered = [...attackTypes].some((t) => (typeChart[t][threat] ?? 1) > 1);
-      assert.ok(answered, `${trial.id} has nothing super-effective into ${threat}`);
+      if (declared.has(threat)) assert.ok(!answered, `${trial.id} declares ${threat} uncovered but answers it`);
+      else assert.ok(answered, `${trial.id} has nothing super-effective into ${threat}`);
     }
   }
 });

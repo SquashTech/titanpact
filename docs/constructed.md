@@ -1,7 +1,7 @@
 # constructed.md — Constructed: build six, fight the fourteen
 
-> **STATUS: PROPOSED 2026-10-04; §11 steps 1–2 BUILT, step 3 PILOTED (Fire, Water, Iron), step 6
-> BUILT (a dev screen) — no player-facing UI.** A second mode beside Classic. A player who has
+> **STATUS: PROPOSED 2026-10-04; §11 steps 1–3 BUILT (all fourteen Trials drafted), step 6 BUILT
+> (a dev screen) — no player-facing UI.** A second mode beside Classic. A player who has
 > won a run builds a team of six from the heroes they have won with — each at level 30, Mastery
 > 10, in a chosen Evolution, with a chosen kit, three Mythic items and a Class — and takes it
 > against **fourteen authored teams, one a type, each the six heroes of its type**, in any order.
@@ -250,6 +250,28 @@ answers *is this fun against this AI* before paying for the teambuilder.
    Water / Iron) and Water the weakest (60 / 32 / 19%). **The skilled pilot wins 64–100%
    against the AI and 92–99% of mirrors** — §8's cost, measured: the team matters less than
    who flies it.
+   **All fourteen DRAFTED (same day)**, the other eleven by the same rules and pinned by the same
+   tests: Frost *The White Hold* (every Defense raise sets off Speed drain and Freeze), Storm
+   *The Front* (move first: Tailwind, Storm Surge, priority), Stone *The Return* (Provoke the
+   hits onto hardening walls, send them back), Nature *The Undergrowth* (Poison from every angle,
+   Guillotine under half), Light *The Sounding Bell* (Sanctuary all fight, Smite and Sunlance
+   doubled on it), Shadow *The Ill Omen* (hex both foes down, then cut), Arcane *The Wellspring
+   Court* (pour mana into Zenith, whose every point is Intelligence), Mind *The Unravelling*
+   (strip every stat, Brain Flay at double), Spirit *The Bound Choir* (Haunt both on entry,
+   Nightmare and Séance), Mech *The Wound Spring* (every machine winds up as the fight runs),
+   Beast *The Blood Trail* (open a Bleed, feed on it).
+   **One roster gap, declared: Stone cannot answer Iron.** No Stone hero, on any of its eighteen
+   path builds, can learn a damaging Storm or Mech move, so `TrialDefinition.uncovered` names it
+   and the test holds both ends — an undeclared gap fails, and so does a declared one the team
+   in fact answers. Stoneheart and Retribution return damage with the chart off, which is the
+   Trial's stated answer; the real fix is content (a Storm or Mech line move on one Stone hero).
+   **The 14 × 14 round-robin, 20 fights a cell** (scratch `rr2.js`, 24 seconds): with the AI on
+   both sides the player-seat averages run 32% (Light) to 67% (Beast) — except **Spirit, 83% as
+   the player and 90% as the AI**, beaten only by Mind and its mirror. The cause is hero data,
+   not the Trial: Dread's mastered innate Nightmare+ takes 20% of max HP a round from every
+   Haunted foe, and its Omen path Haunts both foes on entry — a five-round clock that needs no
+   turn spent. Live in Classic too, where Mastery 10 is rarely reached. **With the skilled pilot
+   the AI wins 7–37% of every Trial but Spirit (65%)**; Mind beats Spirit 100%, Storm 95%.
 4. **Sim: a 14 × 14 round-robin** of the Trial teams, plus each against sample builds. The matrix
    is the balance read by type that Classic cannot give.
 5. **AI switching** (§8), shared with A5.
@@ -276,6 +298,17 @@ answers *is this fun against this AI* before paying for the teambuilder.
   not buildable — confirm.
 - **A Unique on every hero?** The six Guardian Uniques are Mythic, so the model allows them —
   and the same one on more than one hero. One a team would match the name; not yet a rule.
+- **Nightmare+** (Dread's mastered innate, 20% of max HP a round off every Haunted foe) with
+  Omen's entry Haunt makes Spirit the strongest Trial by a distance — a hero-data call, and
+  Classic's too.
+- **Stone's Iron gap**: author a Storm or Mech line move on one Stone hero, or let the
+  declared gap stand.
+- **Gold-reading innates are dead in Constructed** (Aurum's Gilded Mane: the side holds no
+  gold). Give Constructed a fixed purse, or let Aurum be a Sunlance hitter here.
+- **Loose fits the drafts flagged**, to look at in play: Whirr (Mech), Coil (Beast), Lotus
+  (Nature), Folio and Thane (Arcane), Koan (Mind), Widow (Shadow); Raiju's on-switch innate is
+  dead under the AI; Hush takes its Shadow path only to answer Light. Thin covers: Shadow's
+  Spirit answer and Spirit's Arcane answer each rest on one hero.
 - **Unevolved is legal** in the model (`pathId: null`). A Mastery-10 hero is always evolved in
   Classic; allowing it costs nothing, but say so if it should be refused.
 

@@ -45,6 +45,8 @@ export interface TrialDefinition {
   gameplan: string;
   /** How it answers the types that hit it super-effectively, named. */
   cover: string;
+  /** Threats no legal build of the six can answer super-effectively — a roster gap, declared rather than hidden. */
+  uncovered?: readonly TypeId[];
   /** The AI's opening two, by hero id. */
   leads: readonly [string, string];
   team: Team;
