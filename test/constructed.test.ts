@@ -6,7 +6,8 @@ import { equipment } from '../src/data/equipment';
 import { passives } from '../src/data/passives';
 import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
-import { TRIAL_LIST } from '../src/data/trials';
+import { TRIAL_LIST, suggestedSlotFor } from '../src/data/trials';
+import { createProfile, decodeProfile } from '../src/run/profile';
 import { parseEquipmentId } from '../src/run/equipment';
 import { buildCombatState } from '../src/run/buildCombatState';
 import { gradeExpectedPoints, levelOf } from '../src/run/growth';
@@ -21,6 +22,11 @@ import {
   constructedSide,
   expectedGrowthGrants,
   isTeamReady,
+  setItem,
+  slotTypes,
+  teamExposure,
+  toggleMove,
+  withPath,
   slotProblems,
   teamProblems,
   type ConstructedContent,
@@ -164,4 +170,49 @@ test('trials: a Trial answers every type that hits it super-effectively', () => 
       else assert.ok(answered, `${trial.id} has nothing super-effective into ${threat}`);
     }
   }
+});
+
+// --- The builder's verbs ---
+
+test('builder: a new path keeps the moves its pool still holds and drops the old line', () => {
+  const thunder = cinder({ pathId: 'cinderKnight-thunderblaze', moveIds: ['hammerbrand', 'stormLash', 'setAlight'] });
+  assert.deepStrictEqual(withPath(content, thunder, 'cinderKnight-ironclad').moveIds, ['hammerbrand', 'setAlight']);
+  assert.deepStrictEqual(slotTypes(content, thunder), ['Fire', 'Storm']);
+});
+
+test('builder: a move toggles, and a fifth is refused', () => {
+  const full = cinder({ moveIds: ['singe', 'setAlight', 'kindle', 'heavyBlow'] });
+  assert.deepStrictEqual(toggleMove(full, 'rendArmor'), full);
+  assert.deepStrictEqual(toggleMove(full, 'kindle').moveIds, ['singe', 'setAlight', 'heavyBlow']);
+});
+
+test('builder: an item fills a socket, and a family held elsewhere leaves it', () => {
+  const slot = cinder({ itemIds: ['sword.mythic', 'plate.mythic'] });
+  assert.deepStrictEqual(setItem(slot, 2, 'ring.mythic').itemIds, ['sword.mythic', 'plate.mythic', 'ring.mythic']);
+  assert.deepStrictEqual(setItem(slot, 1, 'sword.mythic.blazing').itemIds, ['sword.mythic.blazing']);
+  assert.deepStrictEqual(setItem(slot, 0, null).itemIds, ['plate.mythic']);
+  assert.deepStrictEqual(slotProblems(content, setItem(slot, 1, 'sword.mythic.blazing')), []);
+});
+
+test('builder: exposure reads grafts — five Fire heroes on their Kindling paths are Stone ×4, Arcane ×3 with no answer', () => {
+  const kindling = TRIAL_LIST.find((t) => t.id === 'fire')!;
+  const team = { name: 'Ember Line', slots: kindling.team.slots.filter((s) => s.heroId !== 'crimson') };
+  const read = Object.fromEntries(teamExposure(content, team, typeChart, moves).map((e) => [e.type, e]));
+  assert.deepStrictEqual([read.Stone.hits, read.Stone.answers], [4, 2]);
+  assert.deepStrictEqual([read.Arcane.hits, read.Arcane.answers], [3, 0]);
+});
+
+test('builder: every hero has a Suggested build, and it is legal', () => {
+  for (const hero of Object.values(heroes)) {
+    const slot = suggestedSlotFor(hero.id);
+    assert.ok(slot, `${hero.id} has no Suggested build`);
+    assert.deepStrictEqual(slotProblems(content, slot!), [], hero.id);
+  }
+});
+
+test('builder: teams survive the profile, and an unreadable slot is dropped, not the team', () => {
+  const team = { name: 'Ember Line', slots: [cinder(), { heroId: '' } as unknown as TeamSlot] };
+  const decoded = decodeProfile(JSON.parse(JSON.stringify({ ...createProfile(), constructedTeams: [team] })));
+  assert.deepStrictEqual(decoded.constructedTeams, [{ name: 'Ember Line', slots: [cinder()] }]);
+  assert.deepStrictEqual(decodeProfile(JSON.parse(JSON.stringify({ ...createProfile(), constructedTeams: undefined }))).constructedTeams, []);
 });

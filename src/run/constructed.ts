@@ -2,7 +2,8 @@
 // Pure — the shape, its legality, and the projection onto RosterEntry/Squad the fight builder
 // already reads, so the engine never knows which mode it is in.
 
-import type { HeroDefinition, StatKey, TypeId } from '../engine/content';
+import type { HeroDefinition, MoveDefinition, StatKey, TypeId } from '../engine/content';
+import { resolveTypeMult, type TypeChart } from '../engine/damage/typeMult';
 import type { HeroLookup } from '../engine/state';
 import type { Profile } from './profile';
 import type { Squad } from './squad';
@@ -11,7 +12,7 @@ import { createRosterEntry, createRunState, ROSTER_CAP, type RosterEntry, type R
 import { BASE_ITEM_SLOTS, parseEquipmentId, type EquipmentDefinition, type EquipmentRarity } from './equipment';
 import { GROWTH_STATS, MAX_LEVEL, gradeExpectedPoints, gradesFor, growthUnitFor, xpForLevel } from './growth';
 import { MASTERY_CAP } from './mastery';
-import { MOVE_CAP, chooseEvolutionPath, scheduleEntries, scheduleFor, type EvolutionPath, type ProgressionTable } from './progression';
+import { MOVE_CAP, chooseEvolutionPath, rosterEntryTypes, scheduleEntries, scheduleFor, type EvolutionPath, type ProgressionTable } from './progression';
 
 export const TEAM_SIZE = ROSTER_CAP;
 export const CONSTRUCTED_LEVEL = MAX_LEVEL;
@@ -151,7 +152,14 @@ export function isTeamReady(content: ConstructedContent, team: Team, unlocked?: 
 export function constructedEntry(content: ConstructedContent, slot: TeamSlot): RosterEntry {
   const problems = slotProblems(content, slot);
   if (problems.length > 0) throw new ConstructedError(problems.join('; '));
+  return slotEntry(content, slot);
+}
+
+/** The same projection, unchecked — the builder's preview of a slot mid-edit (no moves yet, a socket empty). A path the hero lacks is read as none. */
+export function slotEntry(content: ConstructedContent, slot: TeamSlot): RosterEntry {
   const hero = content.heroes[slot.heroId];
+  if (!hero) throw new ConstructedError(`unknown hero ${slot.heroId}`);
+  if (slot.pathId && !constructedPath(content.table, slot.heroId, slot.pathId)) slot = { ...slot, pathId: null };
 
   const raw: RosterEntry = {
     ...createRosterEntry(slot.heroId, slot.heroId, hero.moveIds),
@@ -185,4 +193,72 @@ export function constructedSide(content: ConstructedContent, team: Team, leads?:
   if (!leads) return { run, squad: openingSquad(roster) };
   for (const id of leads) if (!roster.some((r) => r.rosterId === id)) throw new ConstructedError(`lead ${id} is not on the team`);
   return { run, squad: { activeIds: [leads[0], leads[1]], benchIds: roster.map((r) => r.rosterId).filter((id) => !leads.includes(id)) } };
+}
+
+// --- The builder's verbs (docs/constructed.md §9): pure, so the screen only renders ---
+
+/** Saved teams a player can hold (§5). */
+export const TEAM_SLOTS = 6;
+
+/** The slot's typing as it fields: the innate primary, the path's graft owning the secondary. */
+export function slotTypes(content: ConstructedContent, slot: Pick<TeamSlot, 'heroId' | 'pathId'>): readonly TypeId[] {
+  const hero = content.heroes[slot.heroId];
+  if (!hero) return [];
+  const path = constructedPath(content.table, slot.heroId, slot.pathId);
+  return rosterEntryTypes(hero, { evolutionTypeGraft: path?.typeGraft ?? null });
+}
+
+/** A new path keeps the moves its pool still holds; a path's own line leaves with it. */
+export function withPath(content: ConstructedContent, slot: TeamSlot, pathId: string | null): TeamSlot {
+  const next = { ...slot, pathId };
+  const pool = new Set(constructedMovePool(content, next));
+  return { ...next, moveIds: slot.moveIds.filter((id) => pool.has(id)) };
+}
+
+/** Held: dropped. Not held: added while there is room, else nothing. */
+export function toggleMove(slot: TeamSlot, moveId: string): TeamSlot {
+  if (slot.moveIds.includes(moveId)) return { ...slot, moveIds: slot.moveIds.filter((id) => id !== moveId) };
+  if (slot.moveIds.length >= MOVE_CAP) return slot;
+  return { ...slot, moveIds: [...slot.moveIds, moveId] };
+}
+
+/**
+ * Socket `index` takes `itemId`, or empties on null. The list stays compact, and a family held in
+ * another socket leaves it — one a family is a legality rule, so the builder never makes a breach.
+ */
+export function setItem(slot: TeamSlot, index: number, itemId: string | null): TeamSlot {
+  const items = [...slot.itemIds];
+  if (itemId === null) {
+    items.splice(index, 1);
+    return { ...slot, itemIds: items };
+  }
+  const family = parseEquipmentId(itemId).base;
+  if (index < items.length) items[index] = itemId;
+  else items.push(itemId);
+  const placed = Math.min(index, items.length - 1);
+  return { ...slot, itemIds: items.filter((id, i) => i === placed || parseEquipmentId(id).base !== family).slice(0, BASE_ITEM_SLOTS) };
+}
+
+/** One attacking type's read on a team: how many of it the type hits super-effectively, and how many of the team's attacks hit back. */
+export interface Exposure {
+  type: TypeId;
+  hits: number;
+  answers: number;
+}
+
+/** Every type that hits at least one slot super-effectively, the most-exposed first; Ancient is enemy-only and skipped. */
+export function teamExposure(content: ConstructedContent, team: Team, typeChart: TypeChart, moves: Record<string, MoveDefinition>): Exposure[] {
+  const attacks = team.slots
+    .flatMap((slot) => slot.moveIds)
+    .map((id) => moves[id])
+    .filter((move): move is MoveDefinition => !!move && move.kind === 'damage' && !move.typeFollowsUser);
+  const out: Exposure[] = [];
+  for (const type of Object.keys(typeChart) as TypeId[]) {
+    if (type === 'Ancient') continue;
+    const hits = team.slots.filter((slot) => resolveTypeMult(typeChart, type, slotTypes(content, slot)) > 1).length;
+    if (hits === 0) continue;
+    const answers = attacks.filter((move) => resolveTypeMult(typeChart, move.type, [type]) > 1).length;
+    out.push({ type, hits, answers });
+  }
+  return out.sort((a, b) => b.hits - a.hits || a.answers - b.answers);
 }

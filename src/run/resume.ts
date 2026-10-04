@@ -75,6 +75,9 @@ export type RunScreen =
   /** TEMPORARY DEV/TEST — the Trials before the teambuilder (docs/constructed.md §11 step 6). */
   | { kind: 'trialsDev' }
   | { kind: 'trialsFight'; player: Encounter; ai: Encounter }
+  /** The teambuilder (docs/constructed.md §9). `unlockAll` is the dev route's every-hero gate. */
+  | { kind: 'constructed'; startTeam?: number | null; unlockAll?: boolean }
+  | { kind: 'constructedFight'; player: Encounter; ai: Encounter; teamIndex: number; unlockAll?: boolean }
   /** TEMPORARY DEV/TEST — src/run/statusTestFight.ts. Own kind so leaving returns to the title. */
   | { kind: 'statusTestFight'; player: Encounter; ai: Encounter }
   /** `offers` lives on the screen, not in the shop component: a purchase re-renders the shop and component-local state would reroll / forget. */

@@ -15,6 +15,7 @@ import { ASCENSION_RUNGS } from '../../run/ascension';
 import { AudioSettings } from '../shared/AudioSettings';
 import type { SaveSummary } from '../../run/save';
 import type { Profile } from '../../run/profile';
+import { isConstructedOpen } from '../../run/constructed';
 import recordsArt from '../../../art/ui/records.png';
 
 interface Props {
@@ -47,6 +48,8 @@ interface Props {
   onQuickBattle: () => void;
   onOpenSandbox: () => void;
   onOpenTrials: () => void;
+  /** The teambuilder; `unlockAll` from the dev corner only. Offered once a Classic run has been won. */
+  onOpenConstructed: (unlockAll?: boolean) => void;
   /** Opens the chosen Location directly with a random party — App.tsx createLocationVisitRun. */
   onVisitLocation: (locationId: string) => void;
   /** TEMPORARY DEV/TEST — App.tsx createLevel4TestRun. Remove with its Dev-menu row. */
@@ -127,6 +130,7 @@ export function TitleScreen({
   onQuickBattle,
   onOpenSandbox,
   onOpenTrials,
+  onOpenConstructed,
   onVisitLocation,
   onStartLevel4TestRun,
   onStartCrucibleTestRun,
@@ -276,6 +280,11 @@ export function TitleScreen({
         ) : (
           <PactButton label="Start a Run" disabled={launching} onClick={handleStart} />
         )}
+        {isConstructedOpen(profile) && (
+          <button className="title-newrun-button" onClick={() => onOpenConstructed()} disabled={launching}>
+            Constructed
+          </button>
+        )}
         {/* The reason itself is developer-shaped ("roster[0].unlockedMoveIds references..."), so it
             goes to the console (App.tsx) and the player gets the one fact they can act on. */}
         {staleSaveReason && !staleNoteDismissed && (
@@ -328,6 +337,9 @@ export function TitleScreen({
             </button>
             <button className="title-dev-item" onClick={() => runDev(onOpenTrials)}>
               Trials
+            </button>
+            <button className="title-dev-item" onClick={() => runDev(() => onOpenConstructed(true))}>
+              🧪 Constructed: every hero
             </button>
             <button className="title-dev-item" onClick={() => runDev(() => setShowLocations(true))}>
               Visit Location

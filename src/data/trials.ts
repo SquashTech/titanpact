@@ -2,7 +2,7 @@
 // in chart order. A slot is the same TeamSlot the player builds with; test/constructed pins every
 // one legal, its type's six, and an answer to every type that hits it super-effectively.
 
-import type { ConstructedContent, TrialDefinition } from '../run/constructed';
+import type { ConstructedContent, TeamSlot, TrialDefinition } from '../run/constructed';
 import { equipment } from './equipment';
 import { heroes } from './heroes';
 import { progressionTable } from './progression';
@@ -726,3 +726,12 @@ export const trials: Record<string, TrialDefinition> = {
 };
 
 export const TRIAL_LIST: readonly TrialDefinition[] = Object.values(trials);
+
+/** The Trial's build of a hero, as the builder's Suggested (docs/constructed.md §9): every hero is in exactly one Trial. */
+export function suggestedSlotFor(heroId: string): TeamSlot | null {
+  for (const trial of TRIAL_LIST) {
+    const slot = trial.team.slots.find((s) => s.heroId === heroId);
+    if (slot) return { ...slot, moveIds: [...slot.moveIds], itemIds: [...slot.itemIds] };
+  }
+  return null;
+}

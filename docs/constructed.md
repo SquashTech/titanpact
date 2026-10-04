@@ -1,7 +1,7 @@
 # constructed.md — Constructed: build six, fight the fourteen
 
-> **STATUS: PROPOSED 2026-10-04; §11 steps 1–6 BUILT (fourteen Trials, the sim, the pilot as the Trials' AI, a dev screen)
-> — no player-facing UI yet.** A second mode beside Classic. A player who has
+> **STATUS: PROPOSED 2026-10-04; §11 steps 1–7 BUILT (fourteen Trials, the sim, the pilot as the Trials' AI, a dev screen,
+> the teambuilder) — rewards and the Trials record (step 8) are next.** A second mode beside Classic. A player who has
 > won a run builds a team of six from the heroes they have won with — each at level 30, Mastery
 > 10, in a chosen Evolution, with a chosen kit and three Mythic items — and takes it
 > against **fourteen authored teams, one a type, each the six heroes of its type**, in any order.
@@ -314,7 +314,21 @@ answers *is this fun against this AI* before paying for the teambuilder.
 6. **Dev screen — IN (2026-10-04)**: the title's Dev menu → **Trials**
    (`TrialsDevScreen`): pick a Trial team to fly, pick a Trial to face, fight. The player's leads
    are picked in the fight; leaving returns to the screen.
-7. **Teambuilder**, slots, team codes.
+7. **Teambuilder — IN (2026-10-04), team codes still to come.** `view/run/ConstructedScreen.tsx`, one
+   screen with its own navigation: Teams (six slots, New team) → a team (2 × 3 cells, the
+   "Hit hard by" read, rename, two-tap Delete, Fight a Trial once all six are legal) → a hero
+   (showcase with the mastered innate and the expected stats, then Path / Moves / Items tabs, each
+   carrying its pick in its summary; Suggested; Remove) or the picker (a type a page with the rail,
+   locked heroes in full colour with "Win a run with …"). Every edit lands on the profile
+   (`Profile.constructedTeams`, decoded leniently; a slot this build cannot field is ringed
+   "Needs a fix", never dropped). The verbs are pure and tested in `run/constructed.ts`:
+   `withPath` (a path's own line leaves with it), `toggleMove`, `setItem` (a family held in
+   another socket leaves it), `teamExposure` (grafts read), `slotEntry` (the unchecked preview);
+   `data/trials.ts suggestedSlotFor` is the Trial's build. Entry: a **Constructed** button under
+   the Play stack once a Classic run is won (`isConstructedOpen`), and the dev corner's
+   "Constructed: every hero" for testing. A Trial fight flies the enemy with the pilot and comes
+   back to the team. Not yet: stars for a first clear, the profile's record of Trials beaten,
+   team codes, Copy a Trial, the fifteenth fight (step 8).
 8. **Profile** (`constructedTeams`, `trialsCleared`), the tile, rewards, the fifteenth fight.
 
 ---

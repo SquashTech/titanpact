@@ -11,6 +11,7 @@
 import { spawnPosition } from '../data/titanspawn';
 import { rungOf } from './ascension';
 import { grantLedgerId } from './recruitment';
+import type { Team, TeamSlot } from './constructed';
 
 export const PROFILE_VERSION = 2;
 
@@ -91,6 +92,11 @@ export interface Profile {
    * read again in the next one. Ids are kept whether or not this build still ships them.
    */
   seenTipIds: string[];
+  /**
+   * The Constructed teams (run/constructed.ts, docs/constructed.md §5), at most TEAM_SLOTS. Kept as
+   * written: a slot this build cannot field is marked by the builder, never deleted on read.
+   */
+  constructedTeams: Team[];
 }
 
 /** Oldest records fall off the end. Fifty is a season of play, and past that a list stops being read. */
@@ -152,6 +158,7 @@ export function createProfile(): Profile {
     firstPlayedAt: 0,
     lastPlayedAt: 0,
     seenTipIds: [],
+    constructedTeams: [],
   };
 }
 
@@ -331,6 +338,23 @@ function decodeDeck(value: Record<string, unknown>): Record<string, string[]> {
   return deck;
 }
 
+/** A slot keeps its hero id and whatever else reads; a team keeps its readable slots. */
+function decodeTeamSlot(raw: unknown): TeamSlot | null {
+  if (!isRecord(raw) || typeof raw.heroId !== 'string' || raw.heroId.length === 0) return null;
+  return { heroId: raw.heroId, pathId: typeof raw.pathId === 'string' ? raw.pathId : null, moveIds: stringList(raw.moveIds), itemIds: stringList(raw.itemIds) };
+}
+
+function decodeTeams(value: unknown): Team[] {
+  if (!Array.isArray(value)) return [];
+  const teams: Team[] = [];
+  for (const raw of value) {
+    if (!isRecord(raw)) continue;
+    const slots = Array.isArray(raw.slots) ? raw.slots.map(decodeTeamSlot).filter((s): s is TeamSlot => s !== null) : [];
+    teams.push({ name: typeof raw.name === 'string' ? raw.name : 'Team', slots });
+  }
+  return teams;
+}
+
 function stringList(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && item.length > 0) : [];
 }
@@ -441,5 +465,7 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     // Absent on every profile written before the tips; such a player sees each one once. A
     // pre-tips `tutorialDone` is dropped — the scripted run it recorded no longer exists.
     seenTipIds: [...new Set(stringList(value.seenTipIds))],
+    // Absent on every profile written before Constructed.
+    constructedTeams: decodeTeams(value.constructedTeams),
   };
 }

@@ -51,6 +51,7 @@ import { rollRunEvent } from '../run/events';
 import { turnedCurse } from '../run/curse';
 import { SandboxBattleScreen } from '../view/run/SandboxBattleScreen';
 import { TrialsDevScreen } from '../view/run/TrialsDevScreen';
+import { ConstructedScreen } from '../view/run/ConstructedScreen';
 import { ChampionScreen } from '../view/run/ChampionScreen';
 import { RunSummaryScreen } from '../view/run/RunSummaryScreen';
 import { heroes } from '../data/heroes';
@@ -153,7 +154,7 @@ import {
   recordPermanentStatGains,
 } from '../run/runProgress';
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
-import { constructedSide } from '../run/constructed';
+import { constructedHeroIds, constructedSide, type Team } from '../run/constructed';
 import { constructedContent, trials } from '../data/trials';
 import { createStatusTestSides } from '../run/statusTestFight';
 import { atEvolution, currentEvolutionPathId, fullMovepool } from '../run/progression';
@@ -189,6 +190,8 @@ const PLACELESS_SCREENS: ReadonlySet<Screen['kind']> = new Set([
   'sandboxFight',
   'trialsDev',
   'trialsFight',
+  'constructed',
+  'constructedFight',
   'statusTestFight',
   'champions',
   'runComplete',
@@ -628,6 +631,10 @@ export function App() {
   }
 
   /** The Collection's edit (docs/collection.md §2): the next run drafts from it and is sealed with it. */
+  function handleChangeTeams(teams: Team[]) {
+    setProfile(updateProfile((current) => ({ ...current, constructedTeams: teams })));
+  }
+
   function handleChangeDeck(deck: Deck) {
     setProfile(updateProfile((current) => ({ ...current, deck: { ...deck } as Record<string, string[]> })));
   }
@@ -1222,6 +1229,7 @@ export function App() {
           onQuickBattle={handleQuickBattle}
           onOpenSandbox={handleOpenSandbox}
           onOpenTrials={() => setScreen({ kind: 'trialsDev' })}
+          onOpenConstructed={(unlockAll) => setScreen({ kind: 'constructed', unlockAll })}
           onVisitLocation={handleVisitLocation}
           onStartLevel4TestRun={handleStartLevel4TestRun}
           onStartCrucibleTestRun={handleStartCrucibleTestRun}
@@ -1266,6 +1274,41 @@ export function App() {
             });
           }}
           onClose={() => setScreen({ kind: 'title' })}
+        />
+      )}
+
+      {screen.kind === 'constructed' && (
+        <ConstructedScreen
+          teams={profile.constructedTeams}
+          unlocked={screen.unlockAll ? new Set(Object.keys(heroes)) : constructedHeroIds(profile)}
+          startTeam={screen.startTeam ?? null}
+          onChangeTeams={handleChangeTeams}
+          onFightTrial={(team, trialId, teamIndex) => {
+            const trial = trials[trialId];
+            setScreen({
+              kind: 'constructedFight',
+              player: constructedSide(constructedContent, team),
+              ai: constructedSide(constructedContent, trial.team, trial.leads),
+              teamIndex,
+              unlockAll: screen.unlockAll,
+            });
+          }}
+          onClose={() => setScreen({ kind: 'title' })}
+        />
+      )}
+
+      {screen.kind === 'constructedFight' && (
+        <FightScreen
+          playerRun={screen.player.run}
+          playerSquad={screen.player.squad}
+          aiRun={screen.ai.run}
+          aiSquad={screen.ai.squad}
+          goldReward={0}
+          xpGained={0}
+          equipmentReward={null}
+          aiPilot
+          onResolved={() => setScreen({ kind: 'constructed', startTeam: screen.teamIndex, unlockAll: screen.unlockAll })}
+          onExitToTitle={() => setScreen({ kind: 'constructed', startTeam: screen.teamIndex, unlockAll: screen.unlockAll })}
         />
       )}
 
