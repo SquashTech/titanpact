@@ -1,6 +1,6 @@
 # companion-call.md — The companion off the roster: a Call
 
-> **STATUS: DECIDED 2026-10-04, per user direction — PHASE 1 (CONTENT) BUILT.** The companion still joins
+> **STATUS: DECIDED 2026-10-04, per user direction — PHASES 1–2 (CONTENT, ENGINE) BUILT.** The companion still joins
 > after the run's first fight, but it **never takes one of the six roster slots**: it travels with
 > the party, and **once a fight an active hero can spend its turn to Call it** — the companion
 > casts its tier's ONE move, which never asks for a target, from off the field. **No
@@ -207,10 +207,11 @@ of each Call (§3.1); nothing is the price of keeping it.
 A move today needs a caster on the field. The Call needs **an off-field caster for one action**,
 declared by an on-field one:
 
-- A **Called** combatant: present in `CombatState.combatants`, on neither the active slots nor the
-  bench, held on its side as `calledId` with a `callsRemaining` count (1; the awakening adds 1),
-  holding its tier's one move. Never targetable, never fielded, never counted toward the side's
-  defeat or its lock-in.
+- A **Called** combatant (`Combatant.called`): present in `CombatState.combatants`, on neither the
+  active slots nor the bench, with its side's `CombatState.calls[side] = { combatantId, moveId,
+  remaining }` (1; the awakening adds 1 through `grantCalls`). Seated by `withCalledCaster`, which
+  strips its passives. Never targetable, never fielded, never counted toward the side's defeat
+  (`sideDefeated`, which the view and the sim now read), its lock-in, its mana regen or a ward.
 - A new action kind, **`{ kind: 'call', combatantId }`** — `combatantId` is the CALLER, an active
   hero, and it is that hero's action for the round. No `moveId` (the Called caster has one) and no
   target (it covers a side, or rolls one foe at resolution on the `randomEnemy` path targeting.ts
@@ -292,9 +293,10 @@ fallback is a key in the Bag or the bottom row).
 
 1. **Content — BUILT 2026-10-04.** `callMoveIds` on every line, ten new moves, the four rules
    pinned by `test/companionCall.test.ts`.
-2. **Engine.** `calledId` / `callsRemaining` on a side, the `call` action as the caller's action,
-   the `Called` event, cost waived, self-side effects dropped, spent only at resolution,
-   untargetable and outside defeat and lock-in. `test/companionCall.test.ts`.
+2. **Engine — BUILT 2026-10-04.** `CombatState.calls` and `Combatant.called`, the `call` action as
+   the caller's action (`castOf` orders it off the caster), the `Called` event and the
+   `callUnavailable` block, cost waived, caster-side effects dropped, spent only once the caller's
+   turn happens, untargetable and outside defeat, lock-in and regen. `test/companionCall.test.ts`.
 3. **Run.** `RunState.companion = { heroId, ascended }` replaces the roster entry; the fight build
    adds the Called caster at the act's tier and par; the awakening adds a Call; `absorbCompanions`,
    the pip tier-steps and the companion-only `mortal` readers go; a save migration moves an

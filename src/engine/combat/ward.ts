@@ -21,7 +21,7 @@ export function wardOn(state: CombatState, combatantId: string, passiveDefs: Rec
   if (!held) return null;
   const ownerPhase = phaseOf(owner);
   const companyStands = Object.values(state.combatants).some(
-    (c) => c.side === owner.side && c.combatantId !== combatantId && !c.fainted && phaseOf(c) <= ownerPhase
+    (c) => c.side === owner.side && c.combatantId !== combatantId && !c.fainted && !c.called && phaseOf(c) <= ownerPhase
   );
   return companyStands ? held : null;
 }

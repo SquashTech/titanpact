@@ -84,6 +84,8 @@ export interface Combatant {
    * Set at fight build from Squad.reserves — the Titan's Eyes, docs/titan-eyes.md §6, §10.
    */
   reservePhase?: number;
+  /** A side's off-field caster for the companion's Call (withCalledCaster): never active, benched, targeted or counted. */
+  called?: boolean;
   /** The category of the last damaging move this combatant LANDED (resolveRound, after the move's hits; a Retribution counts). Unset until the first. Read by a passive's `alternatesCategory`; persists across a switch like a stat modifier. */
   lastHitCategory?: DamageCategory;
 }
@@ -114,6 +116,52 @@ export interface CombatState {
   phaseStartedRound?: number;
   /** A passesOnFaint status with no partner free to take it, waiting for the next hero to enter on that side (statusEngine.ts passFaintedStatuses, switching.ts performSwitch). */
   pendingSideStatuses?: Partial<Record<Side, StatusId[]>>;
+  /** The off-field caster each side may Call, and its Calls left (docs/companion-call.md §7). Unset = no Call. */
+  calls?: Partial<Record<Side, SideCall>>;
+}
+
+/** A side's Call: the Called combatant (in `combatants`, `called` set), its one move, and how many Calls remain. */
+export interface SideCall {
+  combatantId: string;
+  moveId: string;
+  remaining: number;
+}
+
+/** A combatant that fights — every one but a Called caster, which is never fielded, targeted or counted. */
+export function isFighter(combatant: Combatant): boolean {
+  return !combatant.called;
+}
+
+/** The side's Call, when it has one with a Call left. */
+export function availableCall(state: CombatState, side: Side): SideCall | null {
+  const call = state.calls?.[side];
+  return call && call.remaining > 0 && state.combatants[call.combatantId] ? call : null;
+}
+
+/**
+ * Seats a Called caster: `combatant` joins `combatants` marked `called`, with no passives (a Call
+ * carries no Mark and no innate), and its side holds `remaining` Calls of `moveId`.
+ */
+export function withCalledCaster(state: CombatState, combatant: Combatant, moveId: string, remaining = 1): CombatState {
+  const caster: Combatant = { ...combatant, called: true, passives: {} };
+  return {
+    ...state,
+    combatants: { ...state.combatants, [caster.combatantId]: caster },
+    calls: { ...state.calls, [caster.side]: { combatantId: caster.combatantId, moveId, remaining } },
+  };
+}
+
+/** More Calls for a side that has a caster (the awakening's refresh); a side without one is unchanged. */
+export function grantCalls(state: CombatState, side: Side, count: number): CombatState {
+  const call = state.calls?.[side];
+  if (!call) return state;
+  return { ...state, calls: { ...state.calls, [side]: { ...call, remaining: call.remaining + count } } };
+}
+
+/** A side is beaten when every combatant that fights has fallen. */
+export function sideDefeated(state: CombatState, side: Side): boolean {
+  const fighters = Object.values(state.combatants).filter((c) => c.side === side && isFighter(c));
+  return fighters.length > 0 && fighters.every((c) => c.fainted);
 }
 
 /** The fight phase a combatant belongs to: 0 for the opening company, Squad.reserves' index + 1 after. */
@@ -129,7 +177,10 @@ export function phaseOf(combatant: Combatant | undefined): number {
  */
 export function lockInThreshold(state: CombatState, side: Side): number {
   let size = 0;
-  for (const id in state.combatants) if (state.combatants[id].side === side && !state.combatants[id].enteredDown) size++;
+  for (const id in state.combatants) {
+    const c = state.combatants[id];
+    if (c.side === side && !c.enteredDown && isFighter(c)) size++;
+  }
   return Math.max(2, Math.ceil(size / 2));
 }
 

@@ -15,7 +15,7 @@ export interface RoundStartedEvent extends BaseEvent {
 /** One declared action in the order the round resolves it; a switch or a Rest carries its own bracket (priority.ts). */
 export interface RoundOrderEntry {
   combatantId: string;
-  kind: 'move' | 'switch' | 'rest';
+  kind: 'move' | 'switch' | 'rest' | 'call';
   /** The bracket sorted on — a random bracket already rolled, a switch +Infinity, a Rest -Infinity. */
   priority: number;
   speed: number;
@@ -201,8 +201,22 @@ export interface MoveGuardedEvent extends BaseEvent {
 export interface ActionBlockedEvent extends BaseEvent {
   type: 'ActionBlocked';
   combatantId: string;
-  /** 'noValidTarget': declared target no longer legal. 'targetStatusMissing': requiresTargetStatus unmet. 'switchBlocked': switchesUserOut pivot refused by lock-in or an empty bench — payload still landed, mana spent. 'moveUnavailable': a oncePerFight or firstTurnOnly gate unmet (state.ts isMoveUsable) — no mana spent. */
-  reason: 'dazed' | 'noValidTarget' | 'targetStatusMissing' | 'switchBlocked' | 'moveUnavailable';
+  /** 'noValidTarget': declared target no longer legal. 'targetStatusMissing': requiresTargetStatus unmet. 'switchBlocked': switchesUserOut pivot refused by lock-in or an empty bench — payload still landed, mana spent. 'moveUnavailable': a oncePerFight or firstTurnOnly gate unmet (state.ts isMoveUsable) — no mana spent. 'callUnavailable': a Call with none left, no caster, or a caller no longer on the field — nothing spent. */
+  reason: 'dazed' | 'noValidTarget' | 'targetStatusMissing' | 'switchBlocked' | 'moveUnavailable' | 'callUnavailable';
+}
+
+/**
+ * A caller spent its turn and one of its side's Calls (docs/companion-call.md §7): the off-field
+ * caster's own MoveDeclared / MoveUsed follow under `calledCombatantId`. Ahead of them so the view
+ * can bring the caster in before its move plays.
+ */
+export interface CalledEvent extends BaseEvent {
+  type: 'Called';
+  /** The caller — the active hero whose turn it was. */
+  combatantId: string;
+  calledCombatantId: string;
+  moveId: string;
+  callsRemaining: number;
 }
 
 export interface FaintedEvent extends BaseEvent {
@@ -364,6 +378,7 @@ export type CombatEvent =
   | StatusDetonatedEvent
   | PassiveTriggeredEvent
   | ActionBlockedEvent
+  | CalledEvent
   | MoveGuardedEvent
   | FaintedEvent
   | EnduredEvent

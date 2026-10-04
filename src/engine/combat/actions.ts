@@ -23,4 +23,14 @@ export interface RestAction {
   combatantId: string;
 }
 
-export type Action = MoveAction | SwitchAction | RestAction;
+/**
+ * The caller spends its turn to Call its side's off-field caster (docs/companion-call.md §3.1), which
+ * casts its one move: no move id and no target here — the side's SideCall holds the move, and a Call
+ * move never asks for one. Once a fight; spent only if the caller's turn happens.
+ */
+export interface CallAction {
+  kind: 'call';
+  combatantId: string;
+}
+
+export type Action = MoveAction | SwitchAction | RestAction | CallAction;

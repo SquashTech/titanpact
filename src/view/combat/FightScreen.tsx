@@ -28,6 +28,7 @@ import {
   getMaxMana,
   moveForHero,
   derivedRandom,
+  sideDefeated,
 } from '../../engine/state';
 import { fieldHealMultiplier, type HealCaster } from '../../engine/heal/healPipeline';
 import { resolveRound } from '../../engine/combat/resolveRound';
@@ -442,11 +443,6 @@ function entryFor(roster: readonly RosterEntry[], combatantId: string): RosterEn
 
 function aliveActiveIdsOn(state: CombatState, side: Side): string[] {
   return state.active[side].filter((id): id is string => id !== null && !state.combatants[id].fainted);
-}
-
-function sideDefeated(state: CombatState, side: Side): boolean {
-  const combatants = Object.values(state.combatants).filter((c) => c.side === side);
-  return combatants.length > 0 && combatants.every((c) => c.fainted);
 }
 
 /** Word readout for the targeting panel's effBadge. Neutral has no label — callers omit the badge for mult === 1. */

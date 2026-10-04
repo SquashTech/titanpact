@@ -4,6 +4,24 @@
 import type { Action } from './actions';
 import type { CombatState, HeroLookup } from '../state';
 import { getEffectiveStat, hasStatus } from '../state';
+
+/**
+ * Who an action's move and Speed are read off, and which move: the declarer, except for a Call,
+ * which is ordered as its off-field caster casting its one move (docs/companion-call.md §3.1).
+ * Null for a switch or a Rest, and for a Call whose side has no caster.
+ */
+export function castOf(state: CombatState, action: Action): { combatantId: string; moveId: string } | null {
+  if (action.kind === 'move') return { combatantId: action.combatantId, moveId: action.moveId };
+  if (action.kind !== 'call') return null;
+  const caller = state.combatants[action.combatantId];
+  const call = caller && state.calls?.[caller.side];
+  return call ? { combatantId: call.combatantId, moveId: call.moveId } : null;
+}
+
+/** The combatant whose Speed orders the action: the Called caster for a Call, the declarer otherwise. */
+function speedSourceOf(state: CombatState, action: Action): string {
+  return action.kind === 'call' ? (castOf(state, action)?.combatantId ?? action.combatantId) : action.combatantId;
+}
 import type { FieldEffectDefinition, MoveDefinition, PassiveDefinition, StatusDefinition } from '../content';
 import { nextInt, type RngState } from '../rng/seededRng';
 
@@ -28,14 +46,17 @@ function actionPriority(
 ): number {
   if (action.kind === 'switch') return SWITCH_PRIORITY_BRACKET;
   if (action.kind === 'rest') return REST_PRIORITY_BRACKET;
-  const move = moves[action.moveId];
+  const cast = castOf(state, action);
+  if (!cast) return 0;
+  const move = moves[cast.moveId];
   const healBonus = move.kind === 'heal' ? (activeFieldEffectDef?.healPriorityBonus ?? 0) : 0;
   const conditional = move.conditionalPriority;
-  const declared = action.declaredTarget ? state.combatants[action.declaredTarget] : undefined;
+  const declaredTarget = action.kind === 'move' ? action.declaredTarget : null;
+  const declared = declaredTarget ? state.combatants[declaredTarget] : undefined;
   const conditionalBonus =
     conditional && declared && !declared.fainted && hasStatus(declared, conditional.requiresTargetStatus) ? conditional.bonus : 0;
   // A held status that lifts the holder's strikes (Poised): damage moves only, read off the pre-resolution board.
-  const actor = state.combatants[action.combatantId];
+  const actor = state.combatants[cast.combatantId];
   const statusBonus =
     move.kind === 'damage' && actor
       ? Object.keys(actor.statuses).reduce((sum, id) => sum + (statusDefs[id]?.priorityBonus ?? 0), 0)
@@ -85,8 +106,9 @@ export function orderActions(
   let rollCursor = rngState;
   const rolledBrackets = new Map<Action, number>();
   for (const action of actions) {
-    if (action.kind !== 'move') continue;
-    const brackets = moves[action.moveId]?.randomPriority;
+    const cast = castOf(state, action);
+    if (!cast) continue;
+    const brackets = moves[cast.moveId]?.randomPriority;
     if (!brackets?.length) continue;
     const draw = nextInt(rollCursor, 0, brackets.length);
     rollCursor = draw.nextState;
@@ -95,7 +117,7 @@ export function orderActions(
 
   const statCtx = { active: state.activeFieldEffect, defs: fieldEffects, board: { state, passives } };
   const withKeys: OrderedAction[] = actions.map((action) => {
-    const combatant = state.combatants[action.combatantId];
+    const combatant = state.combatants[speedSourceOf(state, action)];
     const hero = heroes[combatant.heroId];
     return {
       action,
@@ -187,9 +209,10 @@ export function previewOrder(
   const byId = new Map(declared.map((a) => [a.combatantId, a]));
 
   const keyed = combatantIds.map((combatantId) => {
-    const combatant = state.combatants[combatantId];
     const action = byId.get(combatantId);
-    const random = action?.kind === 'move' && (moves[action.moveId]?.randomPriority?.length ?? 0) > 0;
+    const combatant = state.combatants[action ? speedSourceOf(state, action) : combatantId];
+    const cast = action && castOf(state, action);
+    const random = !!cast && (moves[cast.moveId]?.randomPriority?.length ?? 0) > 0;
     return {
       combatantId,
       priority: random ? null : action ? actionPriority(state, action, moves, activeFieldEffectDef, undefined, statusDefs) : 0,

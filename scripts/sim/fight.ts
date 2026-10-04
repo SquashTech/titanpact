@@ -11,7 +11,7 @@ import { fieldEffects } from '../../src/data/fieldEffects';
 import { equipment } from '../../src/data/equipment';
 import { relics } from '../../src/data/relics';
 import type { CombatState, Side } from '../../src/engine/state';
-import { getMaxHp, getMaxMana, getEffectiveStat } from '../../src/engine/state';
+import { getMaxHp, getMaxMana, getEffectiveStat, sideDefeated } from '../../src/engine/state';
 import { useConsumable } from '../../src/engine/combat/consumables';
 import type { CombatEvent } from '../../src/engine/events';
 import type { StatKey } from '../../src/engine/content';
@@ -180,11 +180,6 @@ function squadStatTotal(state: CombatState, side: Side): number {
 
 function aliveActiveIdsOn(state: CombatState, side: Side): string[] {
   return state.active[side].filter((id): id is string => id !== null && !state.combatants[id].fainted);
-}
-
-function sideDefeated(state: CombatState, side: Side): boolean {
-  const list = Object.values(state.combatants).filter((c) => c.side === side);
-  return list.length > 0 && list.every((c) => c.fainted);
 }
 
 /** Both rosters, so a pilot reading the other side's threats sees their real kits, not their starting two. */
