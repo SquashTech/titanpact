@@ -302,9 +302,17 @@ answers *is this fun against this AI* before paying for the teambuilder.
   not buildable — confirm.
 - **A Unique on every hero?** The six Guardian Uniques are Mythic, so the model allows them —
   and the same one on more than one hero. One a team would match the name; not yet a rule.
-- **Nightmare+** (Dread's mastered innate, 20% of max HP a round off every Haunted foe) with
-  Omen's entry Haunt makes Spirit the strongest Trial by a distance — a hero-data call, and
-  Classic's too.
+- **Spirit is still the strongest Trial after the Nightmare+ nerf** (2026-10-04, per user
+  direction: Nightmare+ keeps Nightmare's 10% and reaches the bench — `nightTerrorBench`,
+  `whileBenched` — in place of 20% from the field; a reach widened, as the mastered rule
+  allows). Spirit 87 → 82% as the player, 90 → 86% as the AI, 65 → 54% against the skilled
+  pilot. **Attribution, toggled one at a time (AI-side win% into the other thirteen):** the
+  Haunt echo −14, Omen's entry Haunt −10, Séance's ×2 −4, Nightmare+ −6, every Spirit innate
+  unmastered −4. Dropping one hero: **Dread −16 (Nevermore's Provoke and Shield 60 on a
+  230 HP, S-Defense wall), Sorrow −15 (Shriek: 30% Daze on every landed hit, echoed through
+  Haunt)**, Kitsu −10, Keen −8, Revenant and Totem −3. Under an AI that never switches a
+  Haunt never clears (`clearsOnSwitch` is its only exit), which is part of every number
+  here. The next lever is Dread's or Sorrow's, and the designer's.
 - **Stone into Iron** still loses every fight after Thunderclap; whether one Early hit is
   answer enough, or the matchup wants more, is a playtest call.
 - **Gold-reading innates are dead in Constructed** (Aurum's Gilded Mane: the side holds no

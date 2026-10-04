@@ -2173,11 +2173,23 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   nightTerror: {
     id: 'nightTerror',
     name: 'Nightmare+',
-    description: 'At the end of each round, every Haunted enemy loses 20% of its max HP.',
+    description: 'At the end of each round, every Haunted enemy loses 10% of its max HP — from the field or the bench.',
+    // The reach widens, the figure holds: at 20% a round, Omen's entry Haunt made it a five-round clock that cost no turn.
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'damage', target: 'activeEnemies', percentMaxHp: 0.2, onlyWithStatus: 'Haunt' },
+      effect: { kind: 'damage', target: 'activeEnemies', percentMaxHp: 0.1, onlyWithStatus: 'Haunt' },
+    },
+  },
+  nightTerrorBench: {
+    id: 'nightTerrorBench',
+    name: 'Nightmare+',
+    description: 'From the bench: at the end of each round, every Haunted enemy loses 10% of its max HP.',
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'damage', target: 'activeEnemies', percentMaxHp: 0.1, onlyWithStatus: 'Haunt' },
+      whileBenched: true,
     },
   },
 

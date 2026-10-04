@@ -303,16 +303,18 @@ test('mastered innate: every hero authors one — new cards, named as the innate
 });
 
 test('mastered innate: a SIZABLE buff — every flat figure at least doubled, or the reach widened and the cap or the roll taken off', () => {
-  // Apex Tyrant keeps Tyrant's Due's 10 and loses its once-a-fight cap instead (every kill banks).
-  const exempt = new Set(['apexTyrant']);
+  // Apex Tyrant keeps Tyrant's Due's 10 and loses its once-a-fight cap instead (every kill banks);
+  // Nightmare+ keeps Nightmare's tenth and reaches the bench (checked below).
+  const exempt = new Set(['apexTyrant', 'nightTerror']);
   let compared = 0;
   for (const hero of Object.values(heroes)) {
     const innate = innatePassiveOf(hero)!;
     const mastered = masteredInnateOf(hero)!;
-    if (exempt.has(mastered.id)) {
+    if (mastered.id === 'apexTyrant') {
       assert.ok(innate.reactive?.oncePerFight && !mastered.reactive?.oncePerFight, `${mastered.id} was exempt for losing a cap it no longer loses`);
       continue;
     }
+    if (exempt.has(mastered.id)) continue;
     const before = flatFigure(innate);
     const after = flatFigure(mastered);
     if (before === null || after === null) continue;
@@ -322,7 +324,11 @@ test('mastered innate: a SIZABLE buff — every flat figure at least doubled, or
   assert.ok(compared >= 30, `only ${compared} innates compared`);
   // The shapes the figure does not read: a chance becomes always, a share is doubled or more.
   assert.ok((passives.boiler.reactive!.chance ?? 1) < 1 && passives.boilingPoint.reactive!.chance === undefined);
-  assert.ok(passives.nightTerror.reactive!.effect.kind === 'damage' && passives.nightTerror.reactive!.effect.percentMaxHp >= 2 * (passives.nightmare.reactive!.effect as { percentMaxHp: number }).percentMaxHp);
+  // A reach widened: the same tenth on the field, and a benched twin of it.
+  assert.deepStrictEqual(passives.nightTerror.reactive!.effect, passives.nightmare.reactive!.effect);
+  assert.deepStrictEqual(passives.nightTerrorBench.reactive!.effect, passives.nightmare.reactive!.effect);
+  assert.ok(passives.nightTerrorBench.reactive!.whileBenched && !passives.nightmare.reactive!.whileBenched);
+  assert.deepStrictEqual(heroes.dread.masteredPassiveIds, ['nightTerror', 'nightTerrorBench']);
 });
 
 test('mastered innate: the tenth pip REPLACES the innate in the fight build — never stacks — and a pip short keeps the born card', () => {

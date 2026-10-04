@@ -437,6 +437,17 @@ test('nightmare: at round end every Haunted active enemy loses a tenth of its ma
   assert.strictEqual(r.state.combatants.b2.currentHp, fixtureMaxHp('crag'), 'not Haunted, untouched');
 });
 
+test('nightmare+: the benched half ticks the Haunted foes on the field while its holder sits out, and is silent on the field', () => {
+  const holder = (s: CombatState) => withPassive(withStatus(s, 'b1', 'Haunt'), 'a3', 'nightTerrorBench');
+  const benched = resolveRound(holder(fixture(33)), restAll(holder(fixture(33))), config).state;
+  const b1Max = fixtureMaxHp(benched.combatants.b1.heroId);
+  assert.strictEqual(benched.combatants.b1.currentHp, b1Max - Math.round(b1Max * 0.1), 'a tenth, from the bench');
+  let fielded = holder(fixture(34));
+  fielded = { ...fielded, active: { ...fielded.active, A: ['a3', 'a2'] }, bench: { ...fielded.bench, A: ['a1'] } };
+  fielded = resolveRound(fielded, restAll(fielded), config).state;
+  assert.strictEqual(fielded.combatants.b1.currentHp, fixtureMaxHp(fielded.combatants.b1.heroId), 'on the field the bench half says nothing');
+});
+
 test('rivet: at each round end the partner gains 5 Defense, and alone on the field nobody does', () => {
   const state = withPassive(twoVTwo(27, 'ironWarden', 'valor', 'crag', 'rime'), 'a1', 'rivet');
   const r = resolveRound(state, restAll(state), config);
