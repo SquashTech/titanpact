@@ -1,6 +1,6 @@
 # companion-call.md — The companion off the roster: a Call
 
-> **STATUS: DECIDED 2026-10-04, per user direction — PHASES 1–3 (CONTENT, ENGINE, RUN) BUILT.** The companion still joins
+> **STATUS: DECIDED 2026-10-04, per user direction — PHASES 1–4 (CONTENT, ENGINE, RUN, VIEW) BUILT.** The companion still joins
 > after the run's first fight, but it **never takes one of the six roster slots**: it travels with
 > the party, and **once a fight an active hero can spend its turn to Call it** — the companion
 > casts its tier's ONE move, which never asks for a target, from off the field. **No
@@ -251,7 +251,7 @@ fallback is a key in the Bag or the bottom row).
   divider and drawn with no HP pip (it cannot be hurt). Tapped, its dossier: tier, its Call move,
   *a hero can spend its turn to Call it, once a fight*. A quiet mark, explained when it changes (the
   join and `grown` beats).
-- **Roster screen**: a read-only *Travelling with you* strip under the six.
+- **Roster screen**: a read-only chip in the header — the companion, *Calls <move>* — opening its dossier.
 - **Beats kept**: the join (*X will follow you. Once a fight, a hero can call on it.*), `grown` at
   the act boundary showing the new move, the awakening, the Spawn page.
 - **Off the companion**: the level report, the Scribe / Cache / item who-screens, the Fallen screen.
@@ -308,9 +308,16 @@ fallback is a key in the Bag or the bottom row).
    star reads `RunRecord.companionType` on a clear. An older save decodes, its roster companion read
    off into `companion` (save.ts `decodeCompanion`, no version bump). Act 1's cap reads the roster
    alone, so the Act 1 Skirmish is 2v2 (§6).
-4. **View.** The field figure, the Call card, the commit into the acting hero's socket, queued /
-   spent states, the playback beat, the order track mark, the map footer chip, the roster strip,
-   join copy, the tip; the companion off the level report, who-screens and Fallen screen.
+4. **View — BUILT 2026-10-04.** `CompanionFigure` stands between and behind the pair in the ally
+   row (`.companion-perch`) — ready (bob), queued (lit ground, ✦; a tap takes it back), acting (a
+   leap on its move's beat), spent (dimmed). `CallSheet` is the move dossier against the live board
+   with the cost hidden (`MoveDetailCard` `free`) and one button, *Valor calls Kindlehide*. A
+   committed Call puts the companion in the hero's console socket (*Calls Kindlehide*) and in its
+   place on the order track; the beat reads *Valor calls Kindlehide · Backdraft · Call* in place of a
+   mana price; the log has its line. Out of a fight: the companion closes the map footer's party row,
+   set apart and with no bar, and the **Roster's header** carries a chip (`CompanionDossier` on a tap)
+   — a strip under the grid was tried and pushed the six off the page. The `fight.call` tip fires
+   the first fight a Call is ready. The dev test runs carry a companion.
 5. **Sim.** A Call policy for both pilots; then measure Act 1, the Act 4 Guardian, the finale and
    full-clear against the current baseline.
 6. **Docs.** This file to BUILT, `titanspawn-overhaul.md` §5, CLAUDE.md's roster-cap exception and

@@ -125,6 +125,8 @@ export interface FightTipCondition {
   enemyTypeOnField?: TypeId;
   /** A Field Effect is up. */
   fieldEffectActive?: boolean;
+  /** The companion's Call is there to be made (docs/companion-call.md). */
+  callReady?: boolean;
 }
 
 export interface FightTip extends Tip {
@@ -139,6 +141,7 @@ export interface FightTipContext {
   benchSize: number;
   enemyTypesOnField: readonly TypeId[];
   fieldEffectActive: boolean;
+  callReady: boolean;
 }
 
 function fightTipMatches(when: FightTipCondition, ctx: FightTipContext): boolean {
@@ -148,6 +151,7 @@ function fightTipMatches(when: FightTipCondition, ctx: FightTipContext): boolean
   if (when.benchHeld !== undefined && ctx.benchSize > 0 !== when.benchHeld) return false;
   if (when.enemyTypeOnField !== undefined && !ctx.enemyTypesOnField.includes(when.enemyTypeOnField)) return false;
   if (when.fieldEffectActive !== undefined && ctx.fieldEffectActive !== when.fieldEffectActive) return false;
+  if (when.callReady !== undefined && ctx.callReady !== when.callReady) return false;
   return true;
 }
 

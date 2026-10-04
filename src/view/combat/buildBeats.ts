@@ -94,7 +94,8 @@ export interface BeatFlavor {
    * and what it cost, as the same objects the move tile wears — the kind glyph and the mana gem —
    * rather than "20 MP" in small type. FightScreen draws it; buildBeats only says what it is.
    */
-  bannerCast?: { kind: MoveKindGlyphKind; label: string; cost: number };
+  /** `called`: cast by the companion off a hero's turn (docs/companion-call.md) — no mana, so the strip says Call. */
+  bannerCast?: { kind: MoveKindGlyphKind; label: string; cost: number; called?: true };
   /** Secondary readout — a Field Effect's rules text. */
   bannerMeta?: string;
   /** Extra class for the bannerMeta span. */
@@ -307,6 +308,8 @@ export function buildBeats(
   let landed = new Set<string>();
   // The round's end beat (regen and ticks), so a field lapsing right behind it can ride on it.
   let roundEndBeat = null as Beat | null;
+  // The Call that put the next declaration's caster on the field (Called rides into its beat).
+  let calledBy: { callerId: string; casterId: string } | null = null;
 
   function push(applied: CombatEvent[], banner: string, popups: BeatPopup[] = [], flavor: BeatFlavor = {}) {
     beats.push({ events: [...carry, ...applied], banner, popups, strikeCombatantId: striker, ...flavor });
@@ -507,6 +510,12 @@ export function buildBeats(
         i++;
         break;
 
+      case 'Called':
+        calledBy = { callerId: e.combatantId, casterId: e.calledCombatantId };
+        carry.push(e);
+        i++;
+        break;
+
       case 'MoveDeclared': {
         striker = e.combatantId;
         landed = new Set();
@@ -526,13 +535,17 @@ export function buildBeats(
         const actorName = `${actorSide && actorSide !== playerSide ? 'Enemy ' : ''}${name(e.combatantId)}`;
         const clause = targetClause(e.targetCombatantIds, e.combatantId, name);
         const cost = manaSpent ?? move.manaCost;
-        push(applied, `${actorName} uses ${move.name}${clause}`, [], {
-          bannerLead: actorName,
+        // A Called caster's declaration names who called it: the hero's turn is what paid for it.
+        const call = calledBy?.casterId === e.combatantId ? calledBy : null;
+        calledBy = null;
+        const lead = call ? `${name(call.callerId)} calls ${name(e.combatantId)}` : actorName;
+        push(applied, call ? `${lead}: ${move.name}${clause}` : `${actorName} uses ${move.name}${clause}`, [], {
+          bannerLead: lead,
           bannerFocus: move.name,
           // `clause` is " on X and Y" — slice past " on".
           bannerSub: clause ? `▸${clause.slice(3)}` : undefined,
           bannerAccent: getTypeColor(move.type),
-          bannerCast: { kind: moveKindGlyph(move), label: castLabel(move), cost },
+          bannerCast: { kind: moveKindGlyph(move), label: castLabel(move), cost, ...(call ? { called: true as const } : {}) },
         });
         break;
       }

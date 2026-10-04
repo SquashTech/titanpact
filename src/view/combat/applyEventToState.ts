@@ -163,6 +163,13 @@ export function applyEventToState(state: CombatState, event: CombatEvent): Comba
     case 'FieldEffectExpired':
       return { ...state, activeFieldEffect: null };
 
+    // The figure dims the beat the Call is spent, not when the round's final state lands.
+    case 'Called': {
+      const side = state.combatants[event.combatantId]?.side;
+      const call = side ? state.calls?.[side] : undefined;
+      return side && call ? { ...state, calls: { ...state.calls, [side]: { ...call, remaining: event.callsRemaining } } } : state;
+    }
+
     // Everything else is always paired with an event above that carries the new value.
     default:
       return state;

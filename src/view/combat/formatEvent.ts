@@ -226,6 +226,9 @@ export function formatEvents(
           className: 'log-heal',
         });
         break;
+      case 'Called':
+        lines.push({ key, text: `${name(e.combatantId)} calls ${name(e.calledCombatantId)}`, className: 'log-field-effect' });
+        break;
       case 'ActionBlocked': {
         const reasonText =
           e.reason === 'dazed'
@@ -234,7 +237,9 @@ export function formatEvents(
               ? 'left without a marked target'
               : e.reason === 'moveUnavailable'
                 ? 'past the moment for that move'
-                : 'out of valid targets';
+                : e.reason === 'callUnavailable'
+                  ? 'unable to call'
+                  : 'out of valid targets';
         lines.push({ key, text: `${name(e.combatantId)} is ${reasonText} and can't act`, className: 'log-faint' });
         break;
       }

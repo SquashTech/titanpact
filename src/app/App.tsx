@@ -279,6 +279,8 @@ function createLevel4TestRun(): RunState {
     }),
     map: generateMap(randomSeed()),
     locationIds: generateItinerary(randomSeed()),
+    // A companion along, so the Call is there to try from the first fight.
+    companion: { type: 'Fire', ascended: false },
   };
 }
 
@@ -310,7 +312,8 @@ function createTitanEyesTestRun(): RunState {
     run = addRosterEntry(run, { ...entry, equipment: loadout });
   }
   const locationIds = generateItinerary(seed);
-  run = { ...run, actNumber: FINALE_ACT, map: generateMap(seed, FINALE_ACT), locationIds, encountersWon: SEAL_ACTS * ENCOUNTERS_PER_ACT };
+  // Unwoken, so the Herald's announcement wakes it and its Call refreshes for the Eyes.
+  run = { ...run, actNumber: FINALE_ACT, map: generateMap(seed, FINALE_ACT), locationIds, encountersWon: SEAL_ACTS * ENCOUNTERS_PER_ACT, companion: { type: 'Storm', ascended: false } };
   const bannerIds = Object.keys(relics);
   for (let act = 1; act <= SEAL_ACTS; act++) {
     const location = locationForAct(locationIds, act);

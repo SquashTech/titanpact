@@ -126,6 +126,15 @@ export const FIGHT_TIPS: readonly FightTip[] = [
     ],
   },
   {
+    id: 'fight.call',
+    title: 'Your Companion',
+    when: { callReady: true },
+    pages: [
+      'Your companion waits behind your heroes. Tap it to read the move it can cast.',
+      'Once a fight, a hero can spend its turn to Call it. The move costs no Mana and needs no target.',
+    ],
+  },
+  {
     id: 'fight.skirmish',
     title: 'Skirmish',
     when: { nodeTypes: ['skirmish', 'elite'] },

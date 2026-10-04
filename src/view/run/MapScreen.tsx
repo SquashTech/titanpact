@@ -1,3 +1,4 @@
+import { companionHeroId } from '../../run/companion';
 import { useState, type CSSProperties } from 'react';
 import type { RunState } from '../../run/state';
 import { SEAL_ACTS } from '../../run/state';
@@ -154,6 +155,7 @@ function MapPlacard({ location }: { location: LocationDefinition }) {
 // level-up report, not here.
 export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAbandonRun, saveTrouble = null }: Props) {
   const [rosterOpen, setRosterOpen] = useState(false);
+  const companionId = companionHeroId(run);
   const [showReference, setShowReference] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   // Two taps to abandon: quitting is reversible now, but abandoning deletes the save.
@@ -281,6 +283,12 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
                 </span>
               );
             })}
+            {/* The companion, set apart and with no bar: it travels with the six and cannot be hurt. */}
+            {companionId && (
+              <span className="map-party-chip is-companion" aria-label={`${rosterHeroes[companionId].name}, your companion`}>
+                <HeroPortrait heroId={companionId} className="map-party-portrait" />
+              </span>
+            )}
           </span>
         </button>
       </div>

@@ -213,10 +213,12 @@ interface CardProps {
   caster?: HealCaster;
   /** Payload rows keep their one-line claim and drop the rule sentence under it — for a screen that has to fit a decision beneath the card. */
   terse?: boolean;
+  /** Cast by the companion's Call (docs/companion-call.md §3.1): it costs no mana, so no price and no mana left is shown. */
+  free?: boolean;
 }
 
 /** The move dossier: a live damage band, the priority bracket, and the mana left after casting. */
-export function MoveDetailCard({ move: authored, label, context, caster, terse }: CardProps) {
+export function MoveDetailCard({ move: authored, label, context, caster, terse, free }: CardProps) {
   const attacker = context ? context.combat.combatants[context.attackerId] : undefined;
   const attackerHero = attacker ? allCombatants[attacker.heroId] : undefined;
   // A Class move wears its holder's type (state.ts): the live attacker's, else the caster's.
@@ -360,7 +362,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
             <span>{TARGET_MODE_LABELS[move.target]}</span>
           </div>
         </div>
-        <ManaCost cost={liveCost} />
+        {!free && <ManaCost cost={liveCost} />}
       </div>
 
       <div className="move-detail-stats">
@@ -428,7 +430,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
             <span className="move-detail-unit">{livePriority > 0 ? 'Strikes first' : 'Strikes last'}</span>
           </span>
         )}
-        {manaAfter !== null && manaPool !== null && (
+        {!free && manaAfter !== null && manaPool !== null && (
           <span className="move-detail-stat move-detail-stat-mana">
             <StatGlyph stat="manaPool" tone="inherit" />
             <strong>{Math.max(0, manaAfter)}</strong>

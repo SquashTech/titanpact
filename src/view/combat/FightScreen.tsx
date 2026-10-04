@@ -64,6 +64,7 @@ import type { Squad } from '../../run/squad';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { buildCombatState } from '../../run/buildCombatState';
 import { companionCallFor } from '../../run/companion';
+import { CallSheet, CompanionFigure, type CompanionState } from './CompanionFigure';
 import { combatantIdFor } from '../../run/combatantIds';
 import { chooseMvp, emptyMvpTally, tallyMvpEvents, type MvpPick, type MvpRules, type MvpTally } from '../../run/mvp';
 import type { CombatSnapshot } from '../../run/resume';
@@ -465,7 +466,8 @@ function spreadTargetLabel(mode: TargetMode): string {
 }
 
 interface PendingAction {
-  kind: 'move' | 'switch' | 'rest';
+  /** 'call': the hero's turn spent on the companion's Call (docs/companion-call.md §3.1). */
+  kind: 'move' | 'switch' | 'rest' | 'call';
   moveId?: string;
   declaredTarget?: string | null;
   benchedCombatantId?: string;
@@ -506,16 +508,21 @@ function ConsoleCrest({
     const cHero = allCombatants[c.heroId];
     const committed = isComplete(pending[cid]) ? pending[cid] : undefined;
     const committedMove = committed?.kind === 'move' ? moveForHero(moves[committed.moveId!], cHero) : undefined;
+    // A committed Call wears the companion in the socket, where a move would wear its name.
+    const call = committed?.kind === 'call' ? state.calls?.[c.side] : undefined;
+    const calledHero = call ? allCombatants[state.combatants[call.combatantId]?.heroId] : undefined;
     const acting = cid === actingId;
     const slotLabel = acting
       ? label
       : committedMove
         ? committedMove.name
-        : committed
-          ? committed.kind === 'rest'
-            ? 'Rest'
-            : 'Switching out'
-          : cHero.name;
+        : calledHero
+          ? `Calls ${calledHero.name}`
+          : committed
+            ? committed.kind === 'rest'
+              ? 'Rest'
+              : 'Switching out'
+            : cHero.name;
     const slotRgb = acting ? labelRgb : committedMove ? getTypeColorRgb(committedMove.type) : undefined;
     return (
       <span key={slot} className={`console-slot ${sideClass}`}>
@@ -530,8 +537,12 @@ function ConsoleCrest({
                 : cHero.name
           }
         >
-          <HeroPortrait heroId={cHero.id} pathId={c.formPathId} className="console-socket-portrait" />
-          {committed && !committedMove && (
+          {calledHero ? (
+            <HeroPortrait heroId={calledHero.id} className="console-socket-portrait" />
+          ) : (
+            <HeroPortrait heroId={cHero.id} pathId={c.formPathId} className="console-socket-portrait" />
+          )}
+          {committed && !committedMove && !calledHero && (
             <span className="console-socket-mark" aria-hidden="true">
               {committed.kind === 'rest' ? '◌' : '⇄'}
             </span>
@@ -690,6 +701,8 @@ export function FightScreen({
   const [fieldNote, setFieldNote] = useState<{ key: number; text: string } | null>(null);
   /** The Bag — every consumable held, and who drinks it — open off the bottom row's key. */
   const [bagOpen, setBagOpen] = useState(false);
+  /** The companion's Call card, open off its figure on the field (CompanionFigure). */
+  const [callSheetOpen, setCallSheetOpen] = useState(false);
   /** Potions drunk this fight. The run's purse is only debited at resolve, so a replayed fight refunds them. */
   const [usedConsumables, setUsedConsumables] = useState<ConsumablePurse>(() => initialSnapshot?.usedConsumables ?? { hpPotion: 0, mpPotion: 0, revive: 0 });
   const [menuOpen, setMenuOpen] = useState(false);
@@ -838,6 +851,30 @@ export function FightScreen({
   /** Drives the target panel and the Back button (exit targeting rather than step to the previous hero). */
   const showingTargetPanel = selecting !== null && selecting.combatantId === actingId;
 
+  // The companion's Call (docs/companion-call.md §8): who has committed it this round, and why the
+  // acting hero could not commit it now.
+  const playerCall = combat.calls?.[PLAYER_SIDE];
+  const companionCaster = playerCall ? combat.combatants[playerCall.combatantId] : undefined;
+  const callerId = playerActiveAlive.find((id) => pending[id]?.kind === 'call') ?? null;
+  const callRefusal: string | null = !playerCall
+    ? 'No companion'
+    : playerCall.remaining <= 0
+      ? 'Already called this fight'
+      : callerId && callerId !== actingId
+        ? 'Already called this round'
+        : actingId === null
+          ? 'Nobody can call right now'
+          : null;
+  const companionState: CompanionState | null = !playerCall
+    ? null
+    : resolving && beat?.strikeCombatantId === playerCall.combatantId
+      ? 'acting'
+      : !resolving && callerId
+        ? 'queued'
+        : playerCall.remaining <= 0
+          ? 'spent'
+          : 'ready';
+
   /**
    * The first-time tip for this moment of the fight, if any (docs/tutorial.md). Evaluated only at
    * the TOP of a command phase — nothing declared yet — so a tip never lands between two orders
@@ -860,6 +897,7 @@ export function FightScreen({
         return [...(allCombatants[combatant.heroId]?.types ?? []), ...combatant.grantedTypes];
       }),
       fieldEffectActive: combat.activeFieldEffect != null,
+      callReady: (combat.calls?.[PLAYER_SIDE]?.remaining ?? 0) > 0,
     };
     return matchFightTip(FIGHT_TIPS, ctx, tips.seenIds);
   })();
@@ -900,6 +938,7 @@ export function FightScreen({
       if (!isPendingComplete(p)) return [];
       if (p!.kind === 'switch') return [{ kind: 'switch', combatantId: id, benchedCombatantId: p!.benchedCombatantId! }];
       if (p!.kind === 'rest') return [{ kind: 'rest', combatantId: id }];
+      if (p!.kind === 'call') return [{ kind: 'call', combatantId: id }];
       return [{ kind: 'move', combatantId: id, moveId: p!.moveId!, declaredTarget: p!.declaredTarget }];
     });
     return previewOrder(combat, allCombatants, [...enemyActiveAlive, ...playerActiveAlive], declared, moves, fieldEffects, passives, statuses);
@@ -941,10 +980,13 @@ export function FightScreen({
         ? orderMarksFor(playbackEntries, playbackOrder.reversedSpeed)
         : {}
       : orderMarksFor(orderPreview.entries, orderPreview.reversedSpeed);
+  // A hero spending its turn on the Call shows the companion in its place on the track.
+  const callingIds = new Set(resolving ? (playbackOrder?.order.filter((o) => o.kind === 'call').map((o) => o.combatantId) ?? []) : callerId ? [callerId] : []);
   const orderTrack: OrderTrackEntry[] = orderSources.flatMap((source) => {
     const c = combat.combatants[source.combatantId];
     const mark = orderMarks[source.combatantId];
-    return c && mark ? [{ combatantId: c.combatantId, heroId: c.heroId, formPathId: c.formPathId, side: c.side === PLAYER_SIDE ? 'ally' : 'enemy', mark }] : [];
+    const shown = c && callingIds.has(c.combatantId) && companionCaster ? companionCaster : c;
+    return c && mark ? [{ combatantId: c.combatantId, heroId: shown.heroId, formPathId: shown.formPathId, side: c.side === PLAYER_SIDE ? 'ally' : 'enemy', mark }] : [];
   });
 
   // The console is lit in the commanding hero's domain color, from under that hero's side of the
@@ -1015,7 +1057,7 @@ export function FightScreen({
   function isPendingComplete(p: PendingAction | undefined): boolean {
     if (!p) return false;
     if (p.kind === 'switch') return !!p.benchedCombatantId;
-    if (p.kind === 'rest') return true;
+    if (p.kind === 'rest' || p.kind === 'call') return true;
     const move = moves[p.moveId!];
     if (declarationTargetMode(combat, move) && !p.declaredTarget) return false;
     return true;
@@ -1109,6 +1151,22 @@ export function FightScreen({
 
   function handleRestClick(combatantId: string) {
     commitAction(combatantId, { kind: 'rest' });
+  }
+
+  /** The Call card's button: the acting hero's turn, committed like a move. */
+  function handleCall() {
+    if (actingId === null || callRefusal !== null) return;
+    setCallSheetOpen(false);
+    commitAction(actingId, { kind: 'call' });
+  }
+
+  /** The figure while a Call is committed: take it back, and the console returns to the hero who made it. */
+  function handleTakeBackCall() {
+    if (!callerId) return;
+    const next = { ...pending };
+    delete next[callerId];
+    setPending(next);
+    setActionStep(Math.max(0, playerActiveAlive.indexOf(callerId)));
   }
 
   /**
@@ -1254,6 +1312,7 @@ export function FightScreen({
       const p = pendingMap[id];
       if (p.kind === 'switch') return { kind: 'switch', combatantId: id, benchedCombatantId: p.benchedCombatantId! };
       if (p.kind === 'rest') return { kind: 'rest', combatantId: id };
+      if (p.kind === 'call') return { kind: 'call', combatantId: id };
       return {
         kind: 'move',
         combatantId: id,
@@ -1607,6 +1666,20 @@ export function FightScreen({
         <div className="team-row ally">
           {renderActiveSlot(PLAYER_SIDE, 0)}
           {renderActiveSlot(PLAYER_SIDE, 1)}
+          {playerCall && companionCaster && companionState && (
+            <CompanionFigure
+              heroId={companionCaster.heroId}
+              state={companionState}
+              moveType={moves[playerCall.moveId]?.type ?? 'Arcane'}
+              onTap={
+                resolving || winner || pickingLeads
+                  ? undefined
+                  : companionState === 'queued'
+                    ? handleTakeBackCall
+                    : () => setCallSheetOpen(true)
+              }
+            />
+          )}
         </div>
 
         {/* The field, at the foot of the arena (2026-09-24): the horizon carries the Pact warning and the order's words. */}
@@ -1708,15 +1781,24 @@ export function FightScreen({
               {beat.bannerSub && <span className="combat-banner-sub">{beat.bannerSub}</span>}
               {beat.bannerTag && <span className="combat-banner-tag">{beat.bannerTag}</span>}
               {beat.bannerCast && (
-                <span className="combat-banner-cast" aria-label={`${beat.bannerCast.label}, ${beat.bannerCast.cost} mana`}>
+                <span
+                  className="combat-banner-cast"
+                  aria-label={beat.bannerCast.called ? `${beat.bannerCast.label}, a Call` : `${beat.bannerCast.label}, ${beat.bannerCast.cost} mana`}
+                >
                   <span className={`combat-banner-cast-kind is-${beat.bannerCast.kind}`}>
                     <MoveKindGlyph kind={beat.bannerCast.kind} className="combat-banner-cast-glyph" />
                     {beat.bannerCast.label}
                   </span>
-                  <span className="combat-banner-cast-cost">
-                    <ManaCost cost={beat.bannerCast.cost} />
-                    <span className="combat-banner-cast-unit">Mana</span>
-                  </span>
+                  {beat.bannerCast.called ? (
+                    <span className="combat-banner-cast-cost">
+                      <span className="combat-banner-cast-unit">Call</span>
+                    </span>
+                  ) : (
+                    <span className="combat-banner-cast-cost">
+                      <ManaCost cost={beat.bannerCast.cost} />
+                      <span className="combat-banner-cast-unit">Mana</span>
+                    </span>
+                  )}
                 </span>
               )}
               {beat.bannerMeta && (
@@ -2201,6 +2283,17 @@ export function FightScreen({
           );
         })()}
 
+      {callSheetOpen && !resolving && (
+        <CallSheet
+          combat={combat}
+          side={PLAYER_SIDE}
+          defenderIds={enemyActiveAlive}
+          callerName={actingId ? allCombatants[combat.combatants[actingId].heroId].name : null}
+          refusal={callRefusal}
+          onCall={handleCall}
+          onClose={() => setCallSheetOpen(false)}
+        />
+      )}
       {bagOpen && actingId && (
         <BagPanel
           purse={flaskPurse}

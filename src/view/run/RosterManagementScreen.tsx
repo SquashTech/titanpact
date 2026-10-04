@@ -1,3 +1,6 @@
+import { companionCallMoveId, companionHeroId } from '../../run/companion';
+import { CompanionDossier } from '../combat/CompanionFigure';
+import { moves } from '../../data/moves';
 import { useState, type CSSProperties } from 'react';
 import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
@@ -35,6 +38,9 @@ interface Props {
 export function RosterManagementScreen({ run, onClose }: Props) {
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
   const [viewedItemId, setViewedItemId] = useState<string | null>(null);
+  const [companionOpen, setCompanionOpen] = useState(false);
+  const companionId = companionHeroId(run);
+  const callMoveId = companionCallMoveId(run);
 
   return (
     <div
@@ -53,6 +59,20 @@ export function RosterManagementScreen({ run, onClose }: Props) {
       <div className="log-panel roster-sheet" onClick={(e) => e.stopPropagation()}>
         <div className="log-panel-header roster-sheet-header">
           <span>Roster</span>
+          {/* The companion travels with the six but is not one of them (docs/companion-call.md §8): read here, never managed. */}
+          {companionId && callMoveId && (
+            <button
+              type="button"
+              className="roster-companion"
+              style={{ '--hero-rgb': getTypeColorRgb(moves[callMoveId].type) } as CSSProperties}
+              onClick={() => setCompanionOpen(true)}
+              aria-label={`${rosterHeroes[companionId].name}, travelling with you — view its Call`}
+            >
+              <HeroPortrait heroId={companionId} className="roster-companion-portrait" />
+              <span className="roster-companion-name">{rosterHeroes[companionId].name}</span>
+              <span className="roster-companion-call">Calls {moves[callMoveId].name}</span>
+            </button>
+          )}
           <button className="log-close-button" onClick={onClose} aria-label="Close">
             ✕
           </button>
@@ -97,6 +117,7 @@ export function RosterManagementScreen({ run, onClose }: Props) {
       )}
 
       <ItemDetailOverlay item={viewedItemId ? (equipment[viewedItemId] ?? null) : null} onClose={() => setViewedItemId(null)} />
+      {companionOpen && <CompanionDossier run={run} onClose={() => setCompanionOpen(false)} />}
     </div>
   );
 }
