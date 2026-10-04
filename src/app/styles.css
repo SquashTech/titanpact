@@ -44191,3 +44191,31 @@ img.smithy-service-art {
   font-weight: 800;
   color: var(--text-dim);
 }
+
+.cx-notice {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: rgba(224, 166, 60, 0.12);
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.cx-trial-beaten,
+.cx-trial-reward {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.cx-trial-reward {
+  color: var(--text-dim);
+}

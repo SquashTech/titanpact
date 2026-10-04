@@ -28,6 +28,7 @@ import {
 } from '../../run/constructed';
 import { ENCHANTMENTS, ENCHANTMENT_IDS, EQUIPMENT_FAMILIES, equipmentIdFor, parseEquipmentId, type EnchantmentId } from '../../run/equipment';
 import { innatePassiveOf, masteredInnateOf } from '../../run/innate';
+import { TRIAL_CLEAR_STARS } from '../../run/profile';
 import { MOVE_CAP } from '../../run/progression';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
@@ -62,6 +63,10 @@ interface Props {
   onClose: () => void;
   /** Where to land: a team after a Trial, else the list. */
   startTeam?: number | null;
+  /** The Trials beaten (Profile.trialsCleared). */
+  cleared: ReadonlySet<string>;
+  /** Said once on landing — a Trial's result. */
+  notice?: string | null;
 }
 
 function Back({ label, onClick }: { label: string; onClick: () => void }) {
@@ -134,6 +139,8 @@ function TeamsView({ teams, unlocked, onOpen, onNew, onClose }: { teams: readonl
 function TeamView({
   team,
   unlocked,
+  notice,
+  onDismissNotice,
   onRename,
   onOpenSlot,
   onAdd,
@@ -143,6 +150,8 @@ function TeamView({
 }: {
   team: Team;
   unlocked: ReadonlySet<string>;
+  notice: string | null;
+  onDismissNotice: () => void;
   onRename: (name: string) => void;
   onOpenSlot: (slot: number) => void;
   onAdd: () => void;
@@ -164,6 +173,11 @@ function TeamView({
         <div className="cx-header-side" />
       </div>
       <div className="screen-scroll cx-team-body">
+        {notice && (
+          <button type="button" className="cx-notice" onClick={onDismissNotice}>
+            {notice}
+          </button>
+        )}
         <div className="cx-grid">
           {Array.from({ length: TEAM_SIZE }, (_, i) => {
             const slot = team.slots[i];
@@ -494,7 +508,7 @@ function PickView({ team, unlocked, onPick, onBack }: { team: Team; unlocked: Re
 
 // --- The Trial to face ---
 
-function TrialsView({ onPick, onBack }: { onPick: (trialId: string) => void; onBack: () => void }) {
+function TrialsView({ cleared, onPick, onBack }: { cleared: ReadonlySet<string>; onPick: (trialId: string) => void; onBack: () => void }) {
   return (
     <>
       <Header title="Choose a Trial" onBack={onBack} backLabel="Back to the team" />
@@ -504,6 +518,16 @@ function TrialsView({ onPick, onBack }: { onPick: (trialId: string) => void; onB
             <span className="cx-trial-head">
               <TypeBadge type={trial.type} />
               <span className="cx-trial-name">{trial.name}</span>
+              {cleared.has(trial.id) ? (
+                <span className="cx-trial-beaten" aria-label="Beaten">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7.1L12 17.3 5.8 21l1.6-7.1L2 9.2l7.1-.6z" />
+                  </svg>
+                  Beaten
+                </span>
+              ) : (
+                <span className="cx-trial-reward">+{TRIAL_CLEAR_STARS} ★</span>
+              )}
             </span>
             <span className="cx-trial-line">{trial.line}</span>
             <span className="cx-trial-strip">
@@ -518,8 +542,9 @@ function TrialsView({ onPick, onBack }: { onPick: (trialId: string) => void; onB
   );
 }
 
-export function ConstructedScreen({ teams, unlocked, onChangeTeams, onFightTrial, onClose, startTeam = null }: Props) {
+export function ConstructedScreen({ teams, unlocked, cleared, notice = null, onChangeTeams, onFightTrial, onClose, startTeam = null }: Props) {
   const [view, setView] = useState<View>(startTeam !== null && teams[startTeam] ? { kind: 'team', team: startTeam } : { kind: 'teams' });
+  const [shownNotice, setShownNotice] = useState<string | null>(notice);
 
   const replaceTeam = (index: number, team: Team) => onChangeTeams(teams.map((t, i) => (i === index ? team : t)));
   const replaceSlot = (index: number, slot: number, next: TeamSlot) =>
@@ -545,6 +570,8 @@ export function ConstructedScreen({ teams, unlocked, onChangeTeams, onFightTrial
         <TeamView
           team={teams[view.team]}
           unlocked={unlocked}
+          notice={shownNotice}
+          onDismissNotice={() => setShownNotice(null)}
           onRename={(name) => replaceTeam(view.team, { ...teams[view.team], name })}
           onOpenSlot={(slot) => setView({ kind: 'hero', team: view.team, slot })}
           onAdd={() => setView({ kind: 'pick', team: view.team })}
@@ -580,7 +607,7 @@ export function ConstructedScreen({ teams, unlocked, onChangeTeams, onFightTrial
         />
       )}
       {view.kind === 'trials' && (
-        <TrialsView onPick={(trialId) => onFightTrial(teams[view.team], trialId, view.team)} onBack={() => setView({ kind: 'team', team: view.team })} />
+        <TrialsView cleared={cleared} onPick={(trialId) => onFightTrial(teams[view.team], trialId, view.team)} onBack={() => setView({ kind: 'team', team: view.team })} />
       )}
     </div>
   );

@@ -97,7 +97,15 @@ export interface Profile {
    * written: a slot this build cannot field is marked by the builder, never deleted on read.
    */
   constructedTeams: Team[];
+  /**
+   * The Trials beaten (data/trials.ts ids), each once — the record, and the stars: a first clear pays
+   * TRIAL_CLEAR_STARS, derived from this set (starShop.ts starsEarned) so there is no count to inflate.
+   */
+  trialsCleared: string[];
 }
+
+/** Stars a Trial pays on its first clear (docs/constructed.md §7). First pass. */
+export const TRIAL_CLEAR_STARS = 5;
 
 /** Oldest records fall off the end. Fifty is a season of play, and past that a list stops being read. */
 export const RUN_HISTORY_CAP = 50;
@@ -159,6 +167,7 @@ export function createProfile(): Profile {
     lastPlayedAt: 0,
     seenTipIds: [],
     constructedTeams: [],
+    trialsCleared: [],
   };
 }
 
@@ -303,6 +312,17 @@ export function totalStars(profile: Profile): number {
   let total = profile.companionStars.length + profile.curseStars.length;
   for (const paths of Object.values(profile.evolutionStars)) total += paths.length;
   return total;
+}
+
+/** A Trial won: recorded the first time, unchanged after — a replay pays nothing (docs/constructed.md §7). */
+export function recordTrialCleared(profile: Profile, trialId: string): Profile {
+  if (profile.trialsCleared.includes(trialId)) return profile;
+  return { ...profile, trialsCleared: [...profile.trialsCleared, trialId] };
+}
+
+/** What the beaten Trials have paid into the balance. */
+export function trialStars(profile: Profile): number {
+  return profile.trialsCleared.length * TRIAL_CLEAR_STARS;
 }
 
 /** Heroes holding at least one star. */
@@ -467,5 +487,6 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     seenTipIds: [...new Set(stringList(value.seenTipIds))],
     // Absent on every profile written before Constructed.
     constructedTeams: decodeTeams(value.constructedTeams),
+    trialsCleared: [...new Set(stringList(value.trialsCleared))],
   };
 }

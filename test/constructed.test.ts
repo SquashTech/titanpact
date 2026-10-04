@@ -7,7 +7,8 @@ import { passives } from '../src/data/passives';
 import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
 import { TRIAL_LIST, suggestedSlotFor } from '../src/data/trials';
-import { createProfile, decodeProfile } from '../src/run/profile';
+import { TRIAL_CLEAR_STARS, createProfile, decodeProfile, recordTrialCleared, trialStars } from '../src/run/profile';
+import { starsEarned } from '../src/run/starShop';
 import { parseEquipmentId } from '../src/run/equipment';
 import { buildCombatState } from '../src/run/buildCombatState';
 import { gradeExpectedPoints, levelOf } from '../src/run/growth';
@@ -215,4 +216,24 @@ test('builder: teams survive the profile, and an unreadable slot is dropped, not
   const decoded = decodeProfile(JSON.parse(JSON.stringify({ ...createProfile(), constructedTeams: [team] })));
   assert.deepStrictEqual(decoded.constructedTeams, [{ name: 'Ember Line', slots: [cinder()] }]);
   assert.deepStrictEqual(decodeProfile(JSON.parse(JSON.stringify({ ...createProfile(), constructedTeams: undefined }))).constructedTeams, []);
+});
+
+// --- The Trials record and its stars (docs/constructed.md §7) ---
+
+test('trials record: a first clear is recorded once, and a replay changes nothing', () => {
+  const once = recordTrialCleared(createProfile(), 'fire');
+  assert.deepStrictEqual(once.trialsCleared, ['fire']);
+  assert.strictEqual(recordTrialCleared(once, 'fire'), once);
+});
+
+test('trials record: each Trial beaten pays TRIAL_CLEAR_STARS into the balance, derived from the set', () => {
+  const before = starsEarned(createProfile());
+  const two = recordTrialCleared(recordTrialCleared(createProfile(), 'fire'), 'water');
+  assert.strictEqual(trialStars(two), 2 * TRIAL_CLEAR_STARS);
+  assert.strictEqual(starsEarned(two) - before, 2 * TRIAL_CLEAR_STARS);
+});
+
+test('trials record: it survives the profile, deduplicated', () => {
+  const decoded = decodeProfile(JSON.parse(JSON.stringify({ ...createProfile(), trialsCleared: ['fire', 'fire', 'water', 7] })));
+  assert.deepStrictEqual(decoded.trialsCleared, ['fire', 'water']);
 });

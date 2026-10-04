@@ -7,7 +7,7 @@
 // separate ledger, `Profile.purchases`, and the balance is earned minus the cost of what is
 // held. So a star is never taken off a hero; it is the count that is drawn down.
 
-import { totalStars, type Profile } from './profile';
+import { totalStars, trialStars, type Profile } from './profile';
 import { rungOf } from './ascension';
 import { heroes } from '../data/heroes';
 import { ownsHero, starfallLedgerId } from './recruitment';
@@ -37,7 +37,7 @@ export const STARFALL_PRICE = 2;
 
 /** Every star the profile has been paid: hero and companion stars, and clear bonuses. */
 export function starsEarned(profile: Profile): number {
-  return totalStars(profile) + profile.bonusStars;
+  return totalStars(profile) + profile.bonusStars + trialStars(profile);
 }
 
 /**

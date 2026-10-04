@@ -16,6 +16,8 @@ import {
   recordSpawnAscended,
   recordRunStarted,
   recordTipSeen,
+  recordTrialCleared,
+  TRIAL_CLEAR_STARS,
   resetTips,
   type Profile,
   type RunEnd,
@@ -631,6 +633,18 @@ export function App() {
   }
 
   /** The Collection's edit (docs/collection.md §2): the next run drafts from it and is sealed with it. */
+  /** A Trial's first win is recorded and paid (docs/constructed.md §7); the dev route's every-hero fights record nothing. */
+  function handleTrialResolved(outcome: 'win' | 'loss', trialId: string, teamIndex: number, unlockAll: boolean) {
+    const name = trials[trialId]?.name ?? trialId;
+    let notice: string | null = null;
+    if (outcome === 'win') {
+      const first = !profile.trialsCleared.includes(trialId);
+      if (first && !unlockAll) setProfile(updateProfile((current) => recordTrialCleared(current, trialId)));
+      notice = first && !unlockAll ? `${name} beaten — +${TRIAL_CLEAR_STARS} ★` : `${name} beaten again`;
+    }
+    setScreen({ kind: 'constructed', startTeam: teamIndex, unlockAll, notice });
+  }
+
   function handleChangeTeams(teams: Team[]) {
     setProfile(updateProfile((current) => ({ ...current, constructedTeams: teams })));
   }
@@ -1282,6 +1296,8 @@ export function App() {
           teams={profile.constructedTeams}
           unlocked={screen.unlockAll ? new Set(Object.keys(heroes)) : constructedHeroIds(profile)}
           startTeam={screen.startTeam ?? null}
+          cleared={new Set(profile.trialsCleared)}
+          notice={screen.notice ?? null}
           onChangeTeams={handleChangeTeams}
           onFightTrial={(team, trialId, teamIndex) => {
             const trial = trials[trialId];
@@ -1290,6 +1306,7 @@ export function App() {
               player: constructedSide(constructedContent, team),
               ai: constructedSide(constructedContent, trial.team, trial.leads),
               teamIndex,
+              trialId,
               unlockAll: screen.unlockAll,
             });
           }}
@@ -1307,7 +1324,7 @@ export function App() {
           xpGained={0}
           equipmentReward={null}
           aiPilot
-          onResolved={() => setScreen({ kind: 'constructed', startTeam: screen.teamIndex, unlockAll: screen.unlockAll })}
+          onResolved={(outcome) => handleTrialResolved(outcome, screen.trialId, screen.teamIndex, !!screen.unlockAll)}
           onExitToTitle={() => setScreen({ kind: 'constructed', startTeam: screen.teamIndex, unlockAll: screen.unlockAll })}
         />
       )}

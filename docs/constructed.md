@@ -1,7 +1,7 @@
 # constructed.md — Constructed: build six, fight the fourteen
 
-> **STATUS: PROPOSED 2026-10-04; §11 steps 1–7 BUILT (fourteen Trials, the sim, the pilot as the Trials' AI, a dev screen,
-> the teambuilder) — rewards and the Trials record (step 8) are next.** A second mode beside Classic. A player who has
+> **STATUS: PROPOSED 2026-10-04; §11 steps 1–8 BUILT (fourteen Trials, the sim, the pilot as the Trials' AI, a dev screen,
+> the teambuilder, the Trials record and its stars) — the fifteenth fight, team codes and Copy a Trial remain.** A second mode beside Classic. A player who has
 > won a run builds a team of six from the heroes they have won with — each at level 30, Mastery
 > 10, in a chosen Evolution, with a chosen kit and three Mythic items — and takes it
 > against **fourteen authored teams, one a type, each the six heroes of its type**, in any order.
@@ -329,7 +329,14 @@ answers *is this fun against this AI* before paying for the teambuilder.
    "Constructed: every hero" for testing. A Trial fight flies the enemy with the pilot and comes
    back to the team. Not yet: stars for a first clear, the profile's record of Trials beaten,
    team codes, Copy a Trial, the fifteenth fight (step 8).
-8. **Profile** (`constructedTeams`, `trialsCleared`), the tile, rewards, the fifteenth fight.
+8. **The Trials record and its stars — IN (2026-10-04).** `Profile.trialsCleared` holds each Trial
+   beaten once (`recordTrialCleared`; a replay changes nothing), and the balance reads it:
+   `starsEarned` = the collectible stars + the clear bonuses + `trialStars`, **5 a Trial beaten**
+   (`TRIAL_CLEAR_STARS`, §7's first pass) — derived from the set, so there is no count to inflate.
+   A win lands back on the team with a notice, "The Long Tide beaten — +5 ★" (or "beaten again");
+   the Trial list marks a beaten Trial with a gold star and an unbeaten one with its "+5 ★". The
+   dev corner's every-hero route records nothing. Still to build: the fifteenth fight and its
+   15 stars, team codes, Copy a beaten Trial.
 
 ---
 
