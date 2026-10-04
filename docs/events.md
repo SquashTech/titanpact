@@ -169,6 +169,23 @@ window. Its best-of-three by act is about 47 / 47 / 64 / 64 / 80 points, against
 global cut to Common and Rare was tried first and reverted: it cost 2.4 points of full-clear
 and moved events against the cache by nothing, since loot events lost value too.
 
+Measured (sim, 4000 runs, seed 1, against the same tree with the cache on the act's curve):
+
+| pilot | full-clear | Act 1 | event lift | cache lift | event − cache |
+| --- | --- | --- | --- | --- | --- |
+| chart, before | 49.1% | 86.1% | −0.00 | +0.07 | −0.07 |
+| chart, after | 47.8% | 86.1% | **+0.05** | −0.01 | **+0.06** |
+| skilled, before | 90.8% | 97.6% | −0.09 | −0.05 | −0.04 |
+| skilled, after | 89.7% | 97.6% | −0.07 | −0.01 | −0.06 |
+
+**What it says:**
+
+- **Act 1 is identical to the run,** as it should be: the cache is unchanged there.
+- **On the chart pilot, an event is now worth more than the cache** for the first time.
+- **On the skilled pilot nothing separates** from the noise (±0.04–0.06).
+- **The full-clear cost is about 1.2 points** (Acts 2–5, a few tenths each). That is half the
+  floor cut's cost, which landed in Acts 1–2.
+
 **Not yet "strong".** If events should beat the cache rather than tie it, the next lever is the
 floor in `test/eventVocabulary` (45 → ~60), or a Location event weight.
 
