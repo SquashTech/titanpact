@@ -749,13 +749,13 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   omen: {
     id: 'omen',
     name: 'Omen',
-    description: 'When this hero enters the battlefield, both active enemies are Haunted.',
-    // Torment for free on every arrival, both foes at once. Sentry's shape carrying Spirit's
-    // mark instead of Provoke: the tank does not need the hits aimed at it, it needs every hit
-    // its partner lands to count twice.
+    description: 'When this hero Haunts a foe, both active enemies are Haunted.',
+    // One curse binds two, but the curse costs a turn (2026-10-04): an entry Haunt on both foes put
+    // Nightmare's clock on the field for nothing. Haunt is stacking 'none', so the partner's Haunt
+    // re-fires this onto two already-Haunted foes, which emits nothing — no loop.
     reactive: {
-      hook: 'SwitchedIn',
-      condition: { relativeTo: 'self' },
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Haunt' } },
       effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Haunt' },
     },
   },
@@ -1254,12 +1254,12 @@ const innatePassives: Record<string, PassiveDefinition> = {
   nightmare: {
     id: 'nightmare',
     name: 'Nightmare',
-    description: 'At the end of each round, every Haunted enemy loses 5% of its max HP.',
+    description: 'At the end of each round, every Haunted enemy loses 10% of its max HP.',
     // Direct loss on the Clock's terms — no Shield, no chart — and only while Dread stands on the field.
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'damage', target: 'activeEnemies', percentMaxHp: 0.05, onlyWithStatus: 'Haunt' },
+      effect: { kind: 'damage', target: 'activeEnemies', percentMaxHp: 0.1, onlyWithStatus: 'Haunt' },
     },
   },
   rivet: {
@@ -2173,12 +2173,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   nightTerror: {
     id: 'nightTerror',
     name: 'Nightmare+',
-    description: 'At the end of each round, every Haunted enemy loses 10% of its max HP.',
-    // Halved with the base (2026-10-04): at 20% a round, Omen's entry Haunt made it a five-round clock that cost no turn.
+    description: 'At the end of each round, every Haunted enemy loses 20% of its max HP.',
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'damage', target: 'activeEnemies', percentMaxHp: 0.1, onlyWithStatus: 'Haunt' },
+      effect: { kind: 'damage', target: 'activeEnemies', percentMaxHp: 0.2, onlyWithStatus: 'Haunt' },
     },
   },
 

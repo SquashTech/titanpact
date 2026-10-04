@@ -333,11 +333,13 @@ answers *is this fun against this AI* before paying for the teambuilder.
 - **A beaten Trial's team as a preset** before the player has unlocked its heroes: viewable,
   not buildable — confirm.
 - **Spirit is still the strongest Trial after the Nightmare+ nerf** (2026-10-04, per user
-  direction). **Settled the same day: Nightmare 10 → 5% and Nightmare+ 20 → 10%, field only**
-  — a first try kept 10% and gave Nightmare+ a benched twin, and the user ruled it out:
-  passives do not act from the bench, outliers aside (Broadside). Halving both keeps the
-  mastered rule's doubling and nerfs Classic's Dread from level 1. The figures below were
-  taken on the benched version. Spirit 87 → 82% as the player, 90 → 86% as the AI, 65 → 54% against the skilled
+  direction). **Settled the same day, per user direction: Nightmare stays 10% / 20%, and the
+  Omen path's Haunt costs a turn** — Omen was "on entering, both foes are Haunted", and is now
+  "when this hero Haunts a foe, both active enemies are Haunted": one Torment binds both. Two
+  tries came first: a benched twin of Nightmare+ (ruled out — passives do not act from the bench,
+  outliers aside, Broadside), then both figures halved. The fix was never the percentage; it was
+  the free clock. Spirit on the AI side, pilot on both sides: 79% (no Classes) → **68%**. The
+  figures below were taken on the benched version. Spirit 87 → 82% as the player, 90 → 86% as the AI, 65 → 54% against the skilled
   pilot. **Attribution, toggled one at a time (AI-side win% into the other thirteen):** the
   Haunt echo −14, Omen's entry Haunt −10, Séance's ×2 −4, Nightmare+ −6, every Spirit innate
   unmastered −4. Dropping one hero: **Dread −16 (Nevermore's Provoke and Shield 60 on a

@@ -18,7 +18,7 @@ import { resolveRound } from '../src/engine/combat/resolveRound';
 import { applyForcedReplacement } from '../src/engine/combat/switching';
 import { tickPactClock } from '../src/engine/combat/pactClock';
 import { applyHpDelta } from '../src/engine/combat/faintHandling';
-import { canSwitchOut, statusMagnitude } from '../src/engine/state';
+import { canSwitchOut, hasStatus, statusMagnitude } from '../src/engine/state';
 import type { CombatState, PassiveInstance } from '../src/engine/state';
 import type { Action } from '../src/engine/combat/actions';
 import { buildCombatState } from '../src/run/buildCombatState';
@@ -426,15 +426,23 @@ test('lament: Sorrow heals for what its echo dealt — the partner a Haunt drags
   assert.strictEqual(strike(base).state.combatants.a1.currentHp, 20, 'nothing Haunted, no echo: nothing');
 });
 
-test('nightmare: at round end every Haunted active enemy loses a twentieth of its max HP, direct — past a Shield, never an unhaunted one', () => {
+test('nightmare: at round end every Haunted active enemy loses a tenth of its max HP, direct — past a Shield, never an unhaunted one', () => {
   let state = withPassive(twoVTwo(26, 'dread', 'valor', 'ironWarden', 'crag'), 'a1', 'nightmare');
   state = withStatus(state, 'b1', 'Haunt');
   state = withStatus(state, 'b1', 'Shield', 100);
   const b1Max = fixtureMaxHp('ironWarden');
   const r = resolveRound(state, restAll(state), config);
-  assert.strictEqual(r.state.combatants.b1.currentHp, b1Max - Math.round(b1Max * 0.05), 'a twentieth, straight through');
+  assert.strictEqual(r.state.combatants.b1.currentHp, b1Max - Math.round(b1Max * 0.1), 'a tenth, straight through');
   assert.strictEqual(statusMagnitude(r.state.combatants.b1, 'Shield'), 100, 'the Shield took none of it');
   assert.strictEqual(r.state.combatants.b2.currentHp, fixtureMaxHp('crag'), 'not Haunted, untouched');
+});
+
+test('omen: Haunting one foe Haunts both, and arriving Haunts nobody', () => {
+  const state = withPassive(twoVTwo(29, 'dread', 'valor', 'ironWarden', 'crag'), 'a1', 'omen');
+  const torment = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'torment', declaredTarget: 'b1' }, ...restAll(state).filter((a) => a.combatantId !== 'a1')], config).state;
+  assert.ok(hasStatus(torment.combatants.b1, 'Haunt') && hasStatus(torment.combatants.b2, 'Haunt'), 'one Torment, both bound');
+  const idle = resolveRound(state, restAll(state), config).state;
+  assert.ok(!hasStatus(idle.combatants.b1, 'Haunt') && !hasStatus(idle.combatants.b2, 'Haunt'), 'no turn spent, no Haunt');
 });
 
 test('rivet: at each round end the partner gains 5 Defense, and alone on the field nobody does', () => {

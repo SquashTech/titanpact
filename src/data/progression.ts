@@ -2335,7 +2335,7 @@ export const progressionTable: ProgressionTable = {
             id: 'dread-omen',
             heroId: 'dread',
             name: 'Omen',
-            description: 'Lands, and both of them are bound to each other and emptied of the will to fight before it has folded its wings.',
+            description: 'One curse, and both of them are bound to each other and emptied of the will to fight.',
             unlocksMoveIds: ['breakWill'],
             grantsPassiveIds: ['omen'],
           },
