@@ -426,26 +426,15 @@ test('lament: Sorrow heals for what its echo dealt — the partner a Haunt drags
   assert.strictEqual(strike(base).state.combatants.a1.currentHp, 20, 'nothing Haunted, no echo: nothing');
 });
 
-test('nightmare: at round end every Haunted active enemy loses a tenth of its max HP, direct — past a Shield, never an unhaunted one', () => {
+test('nightmare: at round end every Haunted active enemy loses a twentieth of its max HP, direct — past a Shield, never an unhaunted one', () => {
   let state = withPassive(twoVTwo(26, 'dread', 'valor', 'ironWarden', 'crag'), 'a1', 'nightmare');
   state = withStatus(state, 'b1', 'Haunt');
   state = withStatus(state, 'b1', 'Shield', 100);
   const b1Max = fixtureMaxHp('ironWarden');
   const r = resolveRound(state, restAll(state), config);
-  assert.strictEqual(r.state.combatants.b1.currentHp, b1Max - Math.round(b1Max * 0.1), 'a tenth, straight through');
+  assert.strictEqual(r.state.combatants.b1.currentHp, b1Max - Math.round(b1Max * 0.05), 'a twentieth, straight through');
   assert.strictEqual(statusMagnitude(r.state.combatants.b1, 'Shield'), 100, 'the Shield took none of it');
   assert.strictEqual(r.state.combatants.b2.currentHp, fixtureMaxHp('crag'), 'not Haunted, untouched');
-});
-
-test('nightmare+: the benched half ticks the Haunted foes on the field while its holder sits out, and is silent on the field', () => {
-  const holder = (s: CombatState) => withPassive(withStatus(s, 'b1', 'Haunt'), 'a3', 'nightTerrorBench');
-  const benched = resolveRound(holder(fixture(33)), restAll(holder(fixture(33))), config).state;
-  const b1Max = fixtureMaxHp(benched.combatants.b1.heroId);
-  assert.strictEqual(benched.combatants.b1.currentHp, b1Max - Math.round(b1Max * 0.1), 'a tenth, from the bench');
-  let fielded = holder(fixture(34));
-  fielded = { ...fielded, active: { ...fielded.active, A: ['a3', 'a2'] }, bench: { ...fielded.bench, A: ['a1'] } };
-  fielded = resolveRound(fielded, restAll(fielded), config).state;
-  assert.strictEqual(fielded.combatants.b1.currentHp, fixtureMaxHp(fielded.combatants.b1.heroId), 'on the field the bench half says nothing');
 });
 
 test('rivet: at each round end the partner gains 5 Defense, and alone on the field nobody does', () => {

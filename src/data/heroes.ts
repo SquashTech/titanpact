@@ -552,7 +552,7 @@ export const heroes: Record<string, HeroDefinition> = {
     schedule: { offerLevels: [6, 10, 12, 19, 24], midLevel: 12, lateLevel: 21, signatureLevel: 14 },
     signatureMoveId: 'nevermore',
     passiveIds: ['nightmare'],
-    masteredPassiveIds: ['nightTerror', 'nightTerrorBench'],
+    masteredPassiveIds: ['nightTerror'],
   },
 
   // --- Iron ---
