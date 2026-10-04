@@ -3278,3 +3278,13 @@ rarity keeps the chit's fill and pips and the element owns the edge. The corner 
 where the sprite already says the element; a Unique, which keeps its one sprite, wears the gem
 and the rim. The sprites are forced out of the bundle (`?no-inline`) and fetched ahead with the
 rest of the art after the title.
+
+**Passives on the hero sheet's first page** (2026-10-04, per user direction). Both hero sheets
+— the run's (`HeroPreviewOverlay`) and the fight's (`HeroDetailOverlay`) — lost their Passives
+tab: a hero's passives, innate first and labelled so, sit under the stat bars on the Stats page,
+because they are what makes the hero itself and a tab hid them. They took the room of what only
+explained where the numbers came from: the run sheet's per-source ledger (Relics / Items /
+Growth…) and the "+N against base" on every bar are gone, the bars reading totals — a run
+teaches that the numbers come from levels and gear. The Ley Line's Force line stays, since no bar
+carries Force. In a fight the "+N", the Buffs / Debuffs chips and the → readout read THIS fight's
+changes only, never the loadout. The Stat Total row keeps its one "+N".

@@ -38,6 +38,7 @@ import { StatusGlyph, statusColor, statusTint, PoisonPips } from '../shared/stat
 import { passives } from '../../data/passives';
 import { PassiveReadout } from '../shared/passiveIcons';
 import { PassiveDetailCard } from '../shared/PassiveDossier';
+import { innatePassiveIdsFor } from '../../run/innate';
 
 interface Props {
   hero: HeroDefinition;
@@ -52,7 +53,7 @@ interface Props {
   onClose: () => void;
 }
 
-type TabId = 'stats' | 'moves' | 'gear' | 'passives';
+type TabId = 'stats' | 'moves' | 'gear';
 type PopupRef = { kind: 'move' | 'equipment' | 'class'; id: string };
 
 function fmtMod(n: number): string {
@@ -67,25 +68,24 @@ function fmtStatus(statusId: string, magnitude: number | undefined, duration: nu
 }
 
 /**
- * The in-fight hero sheet, either side — the same four-page sheet the run reads a hero on
+ * The in-fight hero sheet, either side — the same three-page sheet the run reads a hero on
  * (HeroPreviewOverlay), so a hero checked mid-fight and a hero checked on the map are one design
  * (2026-09-15, per user direction; it was the one-scroll sheet the run retired on 2026-09-07).
  *
  * What the fight adds sits on the Stats page: the HP and MP bars, the → readout and the
- * "can't go any lower" tick on every stat, the modifier chips and the statuses. A move on the
+ * "can't go any lower" tick on every stat, the modifier chips and the statuses, then the passives.
+ * A move on the
  * Moves page is priced as THIS fight prices it — the per-move ledger applied, an unaffordable row
  * dimmed the way the console dims it — because the question asked here is "what can it cast next
  * round", not "what does it know".
  */
 export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLookup, statCtx, scale, onClose }: Props) {
-  // Loadout grants plus in-fight changes — unlike CombatantCard's badges, which flag only the latter.
-  const totalModifiers = Object.fromEntries(
-    STAT_ORDER.map((stat) => [stat, (combatant.baselineStatModifiers[stat] ?? 0) + (combatant.statModifiers[stat] ?? 0)])
-  ) as Record<StatKey, number>;
-  const hasModifiers = STAT_ORDER.some((stat) => totalModifiers[stat] !== 0);
+  // In-fight changes only: what the loadout grants is levels and gear, which a run teaches, and the room is the passives'.
+  const fightModifiers = Object.fromEntries(STAT_ORDER.map((stat) => [stat, combatant.statModifiers[stat] ?? 0])) as Record<StatKey, number>;
+  const hasModifiers = STAT_ORDER.some((stat) => fightModifiers[stat] !== 0);
   // What THIS fight did, apart from the loadout: the → readout and the floor tick (docs/stat-scaling.md §5).
   const fightReadout = {
-    deltas: Object.fromEntries(STAT_ORDER.map((stat) => [stat, combatant.statModifiers[stat] ?? 0])) as Partial<Record<StatKey, number>>,
+    deltas: fightModifiers,
     floors: Object.fromEntries(
       STAT_ORDER.map((stat) => [stat, hero.baseStats[stat] + (combatant.baselineStatModifiers[stat] ?? 0) + statModifierFloor(hero, combatant, stat)])
     ) as Partial<Record<StatKey, number>>,
@@ -116,7 +116,11 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
   const manaOverFraction = maxMana > 0 ? Math.max(0, Math.min(1, (combatant.currentMana - maxMana) / maxMana)) : 0;
   // Hide a duration-shape status once its counter hits 0 (see CombatantCard).
   const visibleStatuses = Object.values(combatant.statuses).filter((s) => s.duration === undefined || s.duration > 0);
-  const passiveList = Object.values(combatant.passives).filter((instance) => passives[instance.passiveId]);
+  // The innate leads and says so: it is who the hero is, and everything else was handed out by the run.
+  const innateIds = (rosterEntry ? innatePassiveIdsFor(hero, rosterEntry) : hero.passiveIds) ?? [];
+  const passiveList = Object.values(combatant.passives)
+    .filter((instance) => passives[instance.passiveId])
+    .sort((a, b) => Number(innateIds.includes(b.passiveId)) - Number(innateIds.includes(a.passiveId)));
   const moveIds = rosterEntry?.unlockedMoveIds.filter((id) => moves[id]) ?? [];
   const heldItems = rosterEntry?.equipment.flatMap((id) => (equipmentLookup[id] ? [equipmentLookup[id]] : [])) ?? [];
 
@@ -127,7 +131,6 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
     { id: 'stats', label: 'Stats', glyph: 'stats' },
     { id: 'moves', label: 'Moves', glyph: 'moves', count: moveIds.length },
     { id: 'gear', label: 'Gear', glyph: 'equipment', count: heldItems.length },
-    { id: 'passives', label: 'Passives', glyph: 'passives', count: passiveList.length },
   ];
 
   // swallowGhostClick: releasing the hold fires a synthesized click that would otherwise read as a dismiss (MoveTile.tsx).
@@ -216,14 +219,14 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
 
               {/* Matchups lead, as on the run's sheet: which columns hurt this hero is the first thing asked. */}
               <TypeMatchups types={types} />
-              <StatBars baseStats={hero.baseStats} deltas={totalModifiers} totals={effectiveTotals} fight={fightReadout} scale={scale} />
+              <StatBars baseStats={hero.baseStats} deltas={fightModifiers} totals={effectiveTotals} fight={fightReadout} scale={scale} />
 
               {hasModifiers && (
                 <>
                   <div className="tab-subhead">Buffs / Debuffs</div>
                   <div className="detail-modifier-list">
-                    {STAT_ORDER.filter((stat) => totalModifiers[stat] !== 0).map((stat) => {
-                      const mod = totalModifiers[stat];
+                    {STAT_ORDER.filter((stat) => fightModifiers[stat] !== 0).map((stat) => {
+                      const mod = fightModifiers[stat];
                       return (
                         <span
                           key={stat}
@@ -257,6 +260,22 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
                         {fmtStatus(s.statusId, s.magnitude, s.duration)}
                         {s.statusId === 'Poison' && <PoisonPips duration={s.duration} />}
                       </span>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {passiveList.length > 0 && (
+                <>
+                  <div className="tab-subhead">Passives</div>
+                  <div className="tab-readout-list">
+                    {passiveList.map((instance) => (
+                      <PassiveReadout
+                        key={instance.passiveId}
+                        passive={passives[instance.passiveId]}
+                        source={innateIds.includes(instance.passiveId) ? 'Innate' : undefined}
+                        count={instance.stacks}
+                      />
                     ))}
                   </div>
                 </>
@@ -297,14 +316,6 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
                 ))}
               </div>
             </>
-          )}
-
-          {tab === 'passives' && (
-            <div className="tab-readout-list">
-              {passiveList.map((instance) => (
-                <PassiveReadout key={instance.passiveId} passive={passives[instance.passiveId]} count={instance.stacks} />
-              ))}
-            </div>
           )}
         </div>
 

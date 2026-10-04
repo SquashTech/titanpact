@@ -9,18 +9,16 @@ import { STAT_ORDER } from '../../engine/content';
 import { entryGradesFor, levelOf } from '../../run/growth';
 import { MasteryPips } from '../shared/MasteryPips';
 import { WoundBar, entryHp } from '../shared/WoundBar';
-import type { StatModifiers } from '../../engine/state';
 import type { RosterEntry } from '../../run/state';
 import type { StatScale } from '../../run/statScale';
 import type { EquipmentDefinition } from '../../run/equipment';
-import { equipmentStatModifiers } from '../../run/equipment';
 import { relicTeamStatModifiers } from '../../run/relics';
-import { relicTeamPassiveGrants, passiveStatModifiers } from '../../run/passives';
-import { entryPassiveCounts, entryStatModifiers, relicStatContribution } from '../../run/entryStats';
+import { relicTeamPassiveGrants } from '../../run/passives';
+import { entryPassiveCounts, entryStatModifiers } from '../../run/entryStats';
 import { chosenEvolutionPaths, itemSlotsFor, rosterEntryTypes, formIdFor } from '../../run/progression';
 import { chosenClass } from '../../run/classes';
 import { innatePassiveIdsFor } from '../../run/innate';
-import { StatBars, StatGlyph, STAT_LABELS } from '../shared/StatBars';
+import { StatBars } from '../shared/StatBars';
 import { TabStrip, type TabSpec } from '../shared/TabStrip';
 import { MoveButtonReplica, swallowGhostClick, useLongPress } from '../shared/MoveTile';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
@@ -61,9 +59,9 @@ interface Props {
   onClose: () => void;
 }
 
-type TabId = 'stats' | 'moves' | 'gear' | 'passives';
+type TabId = 'stats' | 'moves' | 'gear';
 
-/** One passive on this hero, with everything the Passives page prints about it. */
+/** One passive on this hero, with everything the sheet prints about it. */
 interface PassiveRow {
   passiveId: PassiveId;
   count: number;
@@ -108,30 +106,10 @@ function passiveRows(
   return [...rows.values()];
 }
 
-/** Chart order, so two ledger lines list the same stats in the same places. */
-function orderedGrants(mods: StatModifiers): [StatKey, number][] {
-  return STAT_ORDER.flatMap((stat) => (mods[stat] ? [[stat, mods[stat]] as [StatKey, number]] : []));
-}
-
-/** One line of the "where the numbers came from" ledger. Renders nothing for a source granting nothing. */
-function GrantSourceRow({ label, mods }: { label: string; mods: StatModifiers }) {
-  const grants = orderedGrants(mods);
-  if (grants.length === 0) return null;
-  return (
-    <div className="grant-source-row">
-      <span className="grant-source-label">{label}</span>
-      <span className="grant-source-chips">
-        {grants.map(([stat, amount]) => (
-          <span key={stat} className={`grant-source-chip ${amount > 0 ? 'stat-buff' : 'stat-debuff'}`}>
-            <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} {amount > 0 ? `+${amount}` : amount}
-          </span>
-        ))}
-      </span>
-    </div>
-  );
-}
-
-/** The Ley Line's line of the ledger: Force is not a stat, so it wears the Force chip's glyph rather than a stat's. */
+/**
+ * The Ley Line's Force: not a stat, so the bars cannot carry it and nothing else on the sheet says
+ * it is there — the one survivor of the old where-the-numbers-came-from ledger.
+ */
 function ForceSourceRow({ label, grants }: { label: string; grants: RosterEntry['bonusStatusGrants'] }) {
   const held = Object.entries(grants).filter(([, amount]) => (amount ?? 0) > 0) as [string, number][];
   if (held.length === 0) return null;
@@ -150,11 +128,13 @@ function ForceSourceRow({ label, grants }: { label: string; grants: RosterEntry[
 }
 
 /**
- * Out-of-combat stat/loadout sheet, in four pages: Stats, Moves, Gear, Passives (2026-09-07, per
- * user direction, replacing one long scroll of boxes). The split is what buys each page the room to
+ * Out-of-combat stat/loadout sheet, in three pages: Stats, Moves, Gear (2026-09-07, per user
+ * direction, replacing one long scroll of boxes). The split is what buys each page the room to
  * state things outright — moves as full-width cards carrying their own effect line, items and
  * passives spelled out rather than made into buttons that have to be tapped before they say
- * anything.
+ * anything. Passives sit on the Stats page, never behind a tab (2026-10-04, per user direction):
+ * they are what makes a hero itself, and they took the room of a stat-source ledger that only
+ * said what a run teaches anyway — the numbers come from levels and gear.
  *
  * Stats come from entryStats.ts — the same function buildCombatState.ts uses for a Combatant's
  * baseline — so this sheet cannot drift from the fight.
@@ -182,7 +162,6 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
     { id: 'stats', label: 'Stats', glyph: 'stats' },
     { id: 'moves', label: 'Moves', glyph: 'moves', count: entry.unlockedMoveIds.length },
     ...(unowned ? [] : [{ id: 'gear' as const, label: 'Gear', glyph: 'equipment' as const, count: heldItems.length }]),
-    { id: 'passives', label: 'Passives', glyph: 'passives', count: rows.length },
   ];
 
   // swallowGhostClick: releasing a hold fires a synthetic click on whatever now covers the target,
@@ -262,25 +241,23 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
               {/* Matchups lead the page: which columns hurt this hero is the first thing asked of
                   a sheet, and behind eight stat bars it was below the fold. */}
               <TypeMatchups types={types} />
-              <StatBars baseStats={hero.baseStats} deltas={grants} grades={entryGradesFor(hero, entry)} scale={scale} />
-              <div className="grant-source-list">
-                {/* Shown for an unowned hero too, unlike the old from-relics strip: the bars
-                    already carry the team grant, and a ledger that claims to account for the
-                    bars has to account for all of it. */}
-                <GrantSourceRow label="Relics" mods={relicStatContribution(teamStatModifiers, teamPassiveGrants, passives)} />
-                <GrantSourceRow label="Items" mods={equipmentStatModifiers(entry.equipment, equipmentLookup)} />
-                <GrantSourceRow label="Evolution" mods={entry.evolutionStatGrants} />
-                <GrantSourceRow label="Boons" mods={entry.bonusStatGrants} />
-                <ForceSourceRow label="Ley Line" grants={entry.bonusStatusGrants} />
-                <GrantSourceRow label="Growth" mods={entry.growthStatGrants} />
-                {/* Hero-scoped passives only — relic-granted ones are already inside the Relics
-                    line, and every grant has to appear exactly once for the ledger to add up. */}
-                <GrantSourceRow label="Passives" mods={passiveStatModifiers(entryPassiveCounts(entry, equipmentLookup), passives)} />
-              </div>
+              {/* Totals only, no "+N" against base: the room is the passives'. */}
+              <StatBars baseStats={hero.baseStats} totals={previewStats} grades={entryGradesFor(hero, entry)} scale={scale} />
+              <ForceSourceRow label="Ley Line" grants={entry.bonusStatusGrants} />
+              {rows.length > 0 && (
+                <>
+                  <div className="tab-subhead">Passives</div>
+                  <div className="tab-readout-list">
+                    {rows.map((row) => (
+                      <PassiveReadout key={row.passiveId} passive={passives[row.passiveId]} source={row.sources.join(' · ')} count={row.count} />
+                    ))}
+                  </div>
+                </>
+              )}
             </>
           )}
 
-          {/* No hints, no empty-state prose, on this page or the two below (2026-09-07, per user
+          {/* No hints, no empty-state prose, on this page or the one below (2026-09-07, per user
               direction): the strip already carries each page's count, and the cards say the rest. */}
           {tab === 'moves' && (
             <div className="tab-move-list">
@@ -310,14 +287,6 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
                 ))}
               </div>
             </>
-          )}
-
-          {tab === 'passives' && (
-            <div className="tab-readout-list">
-              {rows.map((row) => (
-                <PassiveReadout key={row.passiveId} passive={passives[row.passiveId]} source={row.sources.join(' · ')} count={row.count} />
-              ))}
-            </div>
           )}
         </div>
 
