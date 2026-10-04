@@ -2,14 +2,13 @@
 // Pure — the shape, its legality, and the projection onto RosterEntry/Squad the fight builder
 // already reads, so the engine never knows which mode it is in.
 
-import type { HeroDefinition, MoveDefinition, StatKey, TypeId } from '../engine/content';
-import { resolveTypeMult, type TypeChart } from '../engine/damage/typeMult';
+import type { HeroDefinition, StatKey, TypeId } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
 import type { Profile } from './profile';
 import type { Squad } from './squad';
 import { openingSquad } from './squad';
 import { createRosterEntry, createRunState, ROSTER_CAP, type RosterEntry, type RunState } from './state';
-import { BASE_ITEM_SLOTS, parseEquipmentId, type EquipmentDefinition, type EquipmentRarity } from './equipment';
+import { BASE_ITEM_SLOTS, equipmentIdFor, parseEquipmentId, type EquipmentDefinition, type EquipmentRarity } from './equipment';
 import { MAX_LEVEL, expectedGrowthAt, xpForLevel } from './growth';
 import { MASTERY_CAP } from './mastery';
 import { MOVE_CAP, chooseEvolutionPath, rosterEntryTypes, scheduleEntries, scheduleFor, type EvolutionPath, type ProgressionTable } from './progression';
@@ -24,7 +23,7 @@ export interface TeamSlot {
   pathId: string | null;
   /** 1 to MOVE_CAP, from `constructedMovePool`. */
   moveIds: string[];
-  /** Up to BASE_ITEM_SLOTS family items at Mythic, one a family; enchanted ids allowed, Uniques not. */
+  /** Up to BASE_ITEM_SLOTS family items at Mythic, one a family; no enchants, no Uniques. */
   itemIds: string[];
 }
 
@@ -119,8 +118,9 @@ export function slotProblems(content: ConstructedContent, slot: TeamSlot, unlock
       continue;
     }
     // The id's own tier, not the item's: a Unique is Mythic but has no family, and Constructed fields none (§3).
-    if (parseEquipmentId(id).rarity !== CONSTRUCTED_RARITY) problems.push(`${id} is not a ${CONSTRUCTED_RARITY} family item`);
-    const base = parseEquipmentId(id).base;
+    const { rarity, base, enchantId } = parseEquipmentId(id);
+    if (rarity !== CONSTRUCTED_RARITY) problems.push(`${id} is not a ${CONSTRUCTED_RARITY} family item`);
+    if (enchantId) problems.push(`${id} is enchanted`);
     if (bases.has(base)) problems.push(`${slot.heroId} holds two of ${base}`);
     bases.add(base);
   }
@@ -232,26 +232,8 @@ export function setItem(slot: TeamSlot, index: number, itemId: string | null): T
   return { ...slot, itemIds: items.filter((id, i) => i === placed || parseEquipmentId(id).base !== family).slice(0, BASE_ITEM_SLOTS) };
 }
 
-/** One attacking type's read on a team: how many of it the type hits super-effectively, and how many of the team's attacks hit back. */
-export interface Exposure {
-  type: TypeId;
-  hits: number;
-  answers: number;
-}
-
-/** Every type that hits at least one slot super-effectively, the most-exposed first; Ancient is enemy-only and skipped. */
-export function teamExposure(content: ConstructedContent, team: Team, typeChart: TypeChart, moves: Record<string, MoveDefinition>): Exposure[] {
-  const attacks = team.slots
-    .flatMap((slot) => slot.moveIds)
-    .map((id) => moves[id])
-    .filter((move): move is MoveDefinition => !!move && move.kind === 'damage' && !move.typeFollowsUser);
-  const out: Exposure[] = [];
-  for (const type of Object.keys(typeChart) as TypeId[]) {
-    if (type === 'Ancient') continue;
-    const hits = team.slots.filter((slot) => resolveTypeMult(typeChart, type, slotTypes(content, slot)) > 1).length;
-    if (hits === 0) continue;
-    const answers = attacks.filter((move) => resolveTypeMult(typeChart, move.type, [type]) > 1).length;
-    out.push({ type, hits, answers });
-  }
-  return out.sort((a, b) => b.hits - a.hits || a.answers - b.answers);
+/** An item id without its enchant — a team saved while Constructed still took them reads as the bare piece. */
+export function unenchanted(itemId: string): string {
+  const { base, rarity, enchantId } = parseEquipmentId(itemId);
+  return enchantId ? equipmentIdFor(base, rarity) : itemId;
 }

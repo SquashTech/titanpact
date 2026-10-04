@@ -11,7 +11,7 @@
 import { spawnPosition } from '../data/titanspawn';
 import { rungOf } from './ascension';
 import { grantLedgerId } from './recruitment';
-import type { Team, TeamSlot } from './constructed';
+import { unenchanted, type Team, type TeamSlot } from './constructed';
 
 export const PROFILE_VERSION = 2;
 
@@ -363,7 +363,7 @@ function decodeDeck(value: Record<string, unknown>): Record<string, string[]> {
 /** A slot keeps its hero id and whatever else reads; a team keeps its readable slots. */
 function decodeTeamSlot(raw: unknown): TeamSlot | null {
   if (!isRecord(raw) || typeof raw.heroId !== 'string' || raw.heroId.length === 0) return null;
-  return { heroId: raw.heroId, pathId: typeof raw.pathId === 'string' ? raw.pathId : null, moveIds: stringList(raw.moveIds), itemIds: stringList(raw.itemIds) };
+  return { heroId: raw.heroId, pathId: typeof raw.pathId === 'string' ? raw.pathId : null, moveIds: stringList(raw.moveIds), itemIds: stringList(raw.itemIds).map(unenchanted) };
 }
 
 function decodeTeams(value: unknown): Team[] {

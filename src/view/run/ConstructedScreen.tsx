@@ -6,10 +6,9 @@ import { useMemo, useState } from 'react';
 import { heroes } from '../../data/heroes';
 import { moves } from '../../data/moves';
 import { passives } from '../../data/passives';
-import { typeChart } from '../../data/typechart';
 import { equipment, EQUIPMENT_FAMILY_NOUNS } from '../../data/equipment';
 import { constructedContent, suggestedSlotFor, TRIAL_LIST } from '../../data/trials';
-import type { HeroDefinition, MoveDefinition, TypeId } from '../../engine/content';
+import type { HeroDefinition, MoveDefinition, MoveTier, TypeId } from '../../engine/content';
 import {
   TEAM_SIZE,
   TEAM_SLOTS,
@@ -20,13 +19,12 @@ import {
   slotEntry,
   slotProblems,
   slotTypes,
-  teamExposure,
   toggleMove,
   withPath,
   type Team,
   type TeamSlot,
 } from '../../run/constructed';
-import { ENCHANTMENTS, ENCHANTMENT_IDS, EQUIPMENT_FAMILIES, equipmentIdFor, parseEquipmentId, type EnchantmentId } from '../../run/equipment';
+import { EQUIPMENT_FAMILIES, equipmentIdFor, parseEquipmentId } from '../../run/equipment';
 import { innatePassiveOf, masteredInnateOf } from '../../run/innate';
 import { TRIAL_CLEAR_STARS } from '../../run/profile';
 import { MOVE_CAP } from '../../run/progression';
@@ -53,6 +51,9 @@ type View =
   | { kind: 'trials'; team: number };
 
 type Tab = 'path' | 'moves' | 'items';
+
+/** The move list's order under the signature: the bands a level-30 team actually picks from, first. */
+const TIER_RANK: Record<MoveTier, number> = { late: 1, mid: 2, early: 3 };
 
 interface Props {
   teams: readonly Team[];
@@ -160,9 +161,6 @@ function TeamView({
   onBack: () => void;
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const exposure = useMemo(() => teamExposure(constructedContent, team, typeChart, moves), [team]);
-  const top = exposure.slice(0, 3);
-  const rest = exposure.slice(3);
   const ready = isTeamReady(constructedContent, team, unlocked);
 
   return (
@@ -208,23 +206,6 @@ function TeamView({
             );
           })}
         </div>
-
-        {exposure.length > 0 && (
-          <div className="cx-exposure">
-            <div className="cx-label">Hit hard by</div>
-            <div className="cx-exposure-top">
-              {top.map((e) => (
-                <div key={e.type} className="cx-exposure-cell">
-                  <span className="cx-exposure-type">
-                    <TypeBadge type={e.type} /> ×{e.hits}
-                  </span>
-                  <span className={`cx-exposure-answer${e.answers === 0 ? ' is-none' : ''}`}>{e.answers === 0 ? 'No answer' : `${e.answers} answer${e.answers === 1 ? '' : 's'}`}</span>
-                </div>
-              ))}
-            </div>
-            {rest.length > 0 && <div className="cx-exposure-rest">{rest.map((e) => `${e.type} ×${e.hits}`).join(' · ')}</div>}
-          </div>
-        )}
       </div>
       <div className="cx-footer">
         <button type="button" className={`secondary-button cx-delete${confirmDelete ? ' is-armed' : ''}`} onClick={() => (confirmDelete ? onDelete() : setConfirmDelete(true))}>
@@ -274,7 +255,10 @@ function MovesTab({ slot, caster, onToggle }: { slot: TeamSlot; caster: ReturnTy
   const [inspect, setInspect] = useState<MoveDefinition | null>(null);
   const hero = heroes[slot.heroId];
   const path = constructedPath(constructedContent.table, slot.heroId, slot.pathId);
-  const pool = constructedMovePool(constructedContent, slot).filter((id) => moves[id]);
+  const rank = (id: string) => (id === hero?.signatureMoveId ? 0 : TIER_RANK[moves[id].tier ?? 'early']);
+  const pool = constructedMovePool(constructedContent, slot)
+    .filter((id) => moves[id])
+    .sort((a, b) => rank(a) - rank(b));
   const types = ['All', ...new Set(pool.map((id) => moves[id].type))];
   const shown = pool.filter((id) => filter === 'All' || moves[id].type === filter);
   const tagFor = (id: string) => (id === hero?.signatureMoveId ? 'Signature' : path?.unlocksMoveIds.includes(id) ? 'Path' : undefined);
@@ -314,8 +298,7 @@ function MovesTab({ slot, caster, onToggle }: { slot: TeamSlot; caster: ReturnTy
 function ItemsTab({ slot, onSet }: { slot: TeamSlot; onSet: (index: number, itemId: string | null) => void }) {
   const [socket, setSocket] = useState(0);
   const held = slot.itemIds[socket] ?? null;
-  const heldParts = held ? parseEquipmentId(held) : null;
-  const enchant = heldParts?.enchantId ?? null;
+  const heldFamily = held ? parseEquipmentId(held).base : null;
 
   return (
     <div className="cx-items">
@@ -335,9 +318,9 @@ function ItemsTab({ slot, onSet }: { slot: TeamSlot; onSet: (index: number, item
       <div className="cx-label">Family</div>
       <div className="cx-families">
         {EQUIPMENT_FAMILIES.map((family) => {
-          const id = equipmentIdFor(family, 'mythic', enchant ?? undefined);
+          const id = equipmentIdFor(family, 'mythic');
           const item = equipment[id];
-          const on = heldParts?.base === family;
+          const on = heldFamily === family;
           return (
             <button key={family} type="button" className={`cx-family${on ? ' is-active' : ''}`} onClick={() => onSet(socket, id)}>
               {item && <EquipmentIcon item={item} className="cx-family-icon" />}
@@ -345,30 +328,6 @@ function ItemsTab({ slot, onSet }: { slot: TeamSlot; onSet: (index: number, item
             </button>
           );
         })}
-      </div>
-
-      <div className="cx-label">Enchant</div>
-      <div className="cx-enchants">
-        <button
-          type="button"
-          className={`cx-enchant${held && !enchant ? ' is-active' : ''}`}
-          disabled={!heldParts}
-          onClick={() => heldParts && onSet(socket, equipmentIdFor(heldParts.base, 'mythic'))}
-        >
-          None
-        </button>
-        {ENCHANTMENT_IDS.map((e: EnchantmentId) => (
-          <button
-            key={e}
-            type="button"
-            className={`cx-enchant${enchant === e ? ' is-active' : ''}`}
-            aria-label={ENCHANTMENTS[e]}
-            disabled={!heldParts}
-            onClick={() => heldParts && onSet(socket, equipmentIdFor(heldParts.base, 'mythic', e))}
-          >
-            <ElementGlyph type={ENCHANTMENTS[e]} />
-          </button>
-        ))}
       </div>
 
       {held && (
@@ -381,7 +340,7 @@ function ItemsTab({ slot, onSet }: { slot: TeamSlot; onSet: (index: number, item
 }
 
 function HeroView({ slot, onChange, onRemove, onBack }: { slot: TeamSlot; onChange: (slot: TeamSlot) => void; onRemove: () => void; onBack: () => void }) {
-  const [tab, setTab] = useState<Tab>('moves');
+  const [tab, setTab] = useState<Tab>('path');
   const hero = heroes[slot.heroId];
   const entry = useMemo(() => slotEntry(constructedContent, slot), [slot]);
   const totals = useMemo(() => entryStatTotals(hero, entry), [hero, entry]);
@@ -599,7 +558,7 @@ export function ConstructedScreen({ teams, unlocked, cleared, notice = null, onC
           team={teams[view.team]}
           unlocked={unlocked}
           onPick={(heroId) => {
-            const slot = suggestedSlotFor(heroId) ?? { heroId, pathId: null, moveIds: [...heroes[heroId].moveIds], itemIds: [] };
+            const slot: TeamSlot = { heroId, pathId: null, moveIds: [], itemIds: [] };
             replaceTeam(view.team, { ...teams[view.team], slots: [...teams[view.team].slots, slot] });
             setView({ kind: 'hero', team: view.team, slot: teams[view.team].slots.length });
           }}

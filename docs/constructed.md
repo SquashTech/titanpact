@@ -80,7 +80,7 @@ it is in:
 | Mastery | 10 | the mastered innate (`masteredPassiveIds`) |
 | Evolution | any of three paths (§2) | graft, move and passive as in Classic; the rewire where pinned |
 | Moves | four (`MOVE_CAP`) from the hero's whole pool — every band, plus the signature and the path's move | no schedule, no roll |
-| Items | three family items at Mythic, an enchant each | one per family still holds (no merge here, so it is a legality rule); **no Uniques** |
+| Items | three family items at Mythic, **no enchants** (2026-10-04, per user direction — six heroes × three sockets of the same element pick was repetition, not a decision) | one per family still holds (no merge here, so it is a legality rule); **no Uniques** |
 
 **No Classes and no Uniques** (2026-10-04, per user direction): a constructed hero is an
 Evolution, a moveset and equipment, nothing else. A Class was a fifth axis on a screen already
@@ -207,14 +207,15 @@ in §6 are halved.
 ## 9. The teambuilder
 
 This is the screen most likely to fail, on a portrait phone. Six heroes × (path + four moves +
-three items with enchants) is about forty-eight decisions. Principles (the first-pass mockup is
+three items) is about forty-eight decisions. Principles (the first-pass mockup is
 the "Titanpact Teambuilder" design canvas; tabs and locked heroes in full colour are decided):
 
 - **One hero a screen.** The team is a row of six portraits; tapping one opens that hero's
   page. Never a grid of everything.
-- **A suggested build per hero, one tap.** The Trial teams already author a build for all 84
-  heroes; **those are the suggestions**. The authoring is shared work, and a player can field a
-  team in thirty seconds and tinker later.
+- **A suggested build per hero, one tap — never pre-filled.** The Trial teams already author a
+  build for all 84 heroes; **those are the suggestions**, behind a Suggested button. A hero added
+  to a team arrives blank (no path, no moves, no items) and opens on its Path tab (2026-10-04, per
+  user direction): the player builds it, and one who wants the shortcut taps it.
 - **Three tabs: Path, Moves, Items** (decided over an accordion). Path first, since it changes
   the pool. Each tab carries its current pick under its name, so the whole build reads without
   opening one; the open tab takes the rest of the screen.
@@ -223,8 +224,12 @@ the "Titanpact Teambuilder" design canvas; tabs and locked heroes in full colour
 - **Never illegal.** The builder only offers legal picks — no error states. A pick that would
   break a later one (a path that drops a held move) says so as it is made.
 - **The move list is filtered by default** (the hero's types, then everything) and every card is
-  read whole, as in Classic.
-- **Items: family, then enchant.** Two short lists, not one long one.
+  read whole, as in Classic. **The signature leads it, then Late, Mid, Early** (2026-10-04, per
+  user direction): at level 30 the late bands are what gets picked.
+- **Items: a family a socket, nothing more** (2026-10-04, per user direction — the enchant list
+  came out, and the Trials' enchants with it, so the suggestions stay legal).
+- **No exposure read on the team page** (2026-10-04, per user direction): which types hit the
+  six hard is the player's to see.
 - **A beaten Trial's team can be copied** into a slot — the fastest teacher there is.
 
 ---
@@ -315,15 +320,15 @@ answers *is this fun against this AI* before paying for the teambuilder.
    (`TrialsDevScreen`): pick a Trial team to fly, pick a Trial to face, fight. The player's leads
    are picked in the fight; leaving returns to the screen.
 7. **Teambuilder — IN (2026-10-04), team codes still to come.** `view/run/ConstructedScreen.tsx`, one
-   screen with its own navigation: Teams (six slots, New team) → a team (2 × 3 cells, the
-   "Hit hard by" read, rename, two-tap Delete, Fight a Trial once all six are legal) → a hero
+   screen with its own navigation: Teams (six slots, New team) → a team (2 × 3 cells,
+   rename, two-tap Delete, Fight a Trial once all six are legal) → a hero
    (showcase with the mastered innate and the expected stats, then Path / Moves / Items tabs, each
    carrying its pick in its summary; Suggested; Remove) or the picker (a type a page with the rail,
    locked heroes in full colour with "Win a run with …"). Every edit lands on the profile
    (`Profile.constructedTeams`, decoded leniently; a slot this build cannot field is ringed
    "Needs a fix", never dropped). The verbs are pure and tested in `run/constructed.ts`:
    `withPath` (a path's own line leaves with it), `toggleMove`, `setItem` (a family held in
-   another socket leaves it), `teamExposure` (grafts read), `slotEntry` (the unchecked preview);
+   another socket leaves it), `slotEntry` (the unchecked preview);
    `data/trials.ts suggestedSlotFor` is the Trial's build. Entry: a **Constructed** button under
    the Play stack once a Classic run is won (`isConstructedOpen`), and the dev corner's
    "Constructed: every hero" for testing. A Trial fight flies the enemy with the pilot and comes

@@ -44036,7 +44036,6 @@ img.smithy-service-art {
 .cx-team-row,
 .cx-cell,
 .cx-trial-row,
-.cx-exposure,
 .cx-showcase {
   border: 14px solid transparent;
   border-image: url('../../art/ui/frame-stone.png') 10 fill / 14px round;
@@ -44050,7 +44049,6 @@ img.smithy-service-art {
 .cx-path,
 .cx-socket,
 .cx-family,
-.cx-enchant,
 .cx-filter,
 .cx-pick-card,
 .cx-rail-type,
@@ -44067,7 +44065,6 @@ img.smithy-service-art {
 .cx-path.is-active,
 .cx-socket.is-active,
 .cx-family.is-active,
-.cx-enchant.is-active,
 .cx-filter.is-active,
 .cx-rail-type.is-active {
   border-image-source: url('../../art/ui/slot-lit.png');
@@ -44207,48 +44204,6 @@ img.smithy-service-art {
 .cx-add-plus {
   font-size: 32px;
   line-height: 1;
-}
-
-.cx-exposure {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.cx-exposure-top {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.cx-exposure-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.cx-exposure-type {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.cx-exposure-answer {
-  font-size: 11px;
-  color: #c9d6bf;
-}
-
-.cx-exposure-answer.is-none {
-  color: #f08a6a;
-  font-weight: 800;
-}
-
-.cx-exposure-rest {
-  font-size: 12px;
-  color: var(--text-dim);
 }
 
 .cx-delete.is-armed {
@@ -44494,25 +44449,6 @@ img.smithy-service-art {
 .cx-family-icon {
   width: 24px;
   height: 24px;
-}
-
-.cx-enchants {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 4px;
-}
-
-.cx-enchant {
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.cx-enchant:disabled {
-  opacity: 0.4;
 }
 
 .cx-clear {
