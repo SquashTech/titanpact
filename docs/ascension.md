@@ -4,7 +4,10 @@
 > (`src/run/ascension.ts`, the title's rung picker, the Fallen beat), the companion additions
 > (§7a, 2026-09-26) and the woken Guardians (§2a, 2026-09-29 — A1 measured 49.6% skilled / 5.2%
 > chart). **Not built:** the star colours (§8), and **A2–A5, which are PROPOSED, not decided** (§5).
-> A Revive cannot save the companion at any rung. Every rung above A1 escalates through a RULE,
+> **The companion left the roster 2026-10-04** (`docs/companion-call.md`): it cannot fall, so the
+> rule that a Revive never saves it is retired, A1's Fallen beat lists heroes only, the Act 1 cap
+> reads the whole roster, and the `companion:<type>` star is a clear with that line. Where this doc
+> says otherwise about the companion, the Call doc is the rule. Every rung above A1 escalates through a RULE,
 > never a bare enemy stat multiplier (the standing constraint of 2026-09-09). Recruitment stays as
 > it is at Base; the ladder is where it gets its demand. §10 lists the invariants each rung
 > reverses. The measurements below predate the four-act run (2026-10-02).
@@ -178,7 +181,9 @@ Phase 0 read the first and third rows (§9b).
 ## 7. The companion — three additions, DECIDED
 
 Decided 2026-09-21 for every rung including Base; **built in the shape §7a records**, which
-supersedes the details here.
+supersedes the details here. **Since the Call (2026-10-04, `docs/companion-call.md` §5), the star
+reads a clear with the companion's line — it cannot die, so "alive" is the whole run — and the
+Withering Gaze exemption is moot: the companion never stands on the field.**
 
 1. **A bestiary** for the fourteen spawn lines (now the Constellation's **Spawn** tab,
    `docs/collection.md`).

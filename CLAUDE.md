@@ -31,7 +31,7 @@ don't silently override it.
 > (Early/Mid/Late), geometric SVG art against the heroes' pixel art, kits from the type slates;
 > locations **partition** the fourteen types (Necropolis at two); the fork becomes a previewed
 > Elite-or-Skirmish; a **mortal companion** joins after the first fight (a hero in every respect
-> except that a KO removes it from the run); and the **Pact Clock comes off the bench**. Its §11
+> except that a KO removes it from the run — off the roster as a Call since the twelfth); and the **Pact Clock comes off the bench**. Its §11
 > lists the invariants below it reverses; until the phase in its §9 that replaces each one lands,
 > the rule below is still the rule in force. **Phases 1-2 are IN (2026-09-13):** the 42 spawn
 > exist and render, the factions are deleted, `LocationDefinition.spawnTypes` is the mob layer's
@@ -98,7 +98,7 @@ don't silently override it.
 > the Evolution opens at 5 pips and at no level (`evolutionLevel` is gone from every schedule),
 > the Scribe is a forced row every act 1–5 (`ScrollNodeScreen`, the Evolution raised over it),
 > the Guild Hall shelf sells a Scroll (25g, 2 a visit), enemies / contracts / hires hold
-> `masteryForAct` (**`2N−2`** since phase 5, hires `2N−3` — enemies evolve from Act 4), and the companion steps at 5 / 10. **Phase 2 is IN
+> `masteryForAct` (**`2N−2`** since phase 5, hires `2N−3` — enemies evolve from Act 4), and the companion stepped at 5 / 10 (by act since the Call). **Phase 2 is IN
 > (same day): Ichor is RETIRED** — `src/run/ichor.ts`, both nodes, the screen and the shelf's Drops
 > are gone; the **Scroll Cache** (`scrollReward`, 3 pips in any split) sits in the reward pool at
 > the 46 it held before Ichor. Measured: 35 pips a completed run, every hero evolved 64%, full-clear
@@ -185,15 +185,15 @@ don't silently override it.
 > to "passive-applied magnitudes are flat". Lingering is off the roster; the endure verb stays.
 
 > **An eighth is DECIDED, NOT BUILT: `docs/ascension.md`** (2026-09-21, per user direction).
-> **Ascension 1 is Permadeath**: every roster entry `mortal` (the companion's rule for everyone),
-> a KO on a won fight gone with its gear unless a **Revive** — the ONE way back — is spent on it at
-> the fight's end on a **Fallen** beat before the level report; **a Revive never saves the
-> companion**, at any rung. A2–A5 are PROPOSED, each a RULE never a bare enemy stat multiplier
+> **Ascension 1 is Permadeath**: every roster hero mortal, a KO on a won fight gone with its gear
+> unless a **Revive** — the ONE way back — is spent on it at the fight's end on a **Fallen** beat
+> before the level report (the companion's own rule is retired with its slot — it cannot fall,
+> `docs/companion-call.md` §5). A2–A5 are PROPOSED, each a RULE never a bare enemy stat multiplier
 > (Guardians Marked and warded, authored warbands, Banners halved + Smithy ×1.5 on the one economy
 > rung, Gaze at a tenth + two-phase Guardians + an AI tier). Recruitment stays as it is at Base —
 > the ladder is where it gets its demand. Decided beside it, every rung: a Compendium bestiary
-> for the spawn, a `companion:<type>` star for clearing with the companion alive at the Eyes'
-> close, and the companion exempt from Withering Gaze. Its §10 lists what each rung reverses.
+> for the spawn, a `companion:<type>` star for clearing a run with that line as the companion (it
+> was "alive at the Eyes' close" until the Call), and the companion exempt from Withering Gaze. Its §10 lists what each rung reverses.
 > **Phases 0–1 are IN (same day) — A1 is PLAYABLE:** `isCompanion` splits the identity from the `mortal`
 > rule; `src/run/ascension.ts` holds the rung (`RunState.ascension`, saved), `isPermadeath`, and the
 > Fallen verbs; the title asks *How hard?* once a Base clear has opened A1 (`openAscension`,
@@ -250,6 +250,17 @@ don't silently override it.
 > 170 / 50×5 / 130 Motley. **Gilded Mane** (Aurum): +5 Atk/Def per 50 gold held. **Werewolf Bite**:
 > a `curse` that MARKS a hero, which Turns at Mastery 5 (at once if past it) into pure Beast on a
 > 650 base line (`data/curses.ts`, `run/curse.ts`). Seven more innates there are PROPOSED.
+
+> **A twelfth is BUILT IN FULL: `docs/companion-call.md`** (2026-10-04, per user direction). **The
+> companion is a summon, not a party member**: `RunState.companion` (its line, and whether it has
+> woken), never a roster slot, never fielded, cannot be lost, no XP / pips / offers / items, its tier
+> read off the act. **Once a fight an active hero spends its turn to Call it** (`{ kind: 'call' }`):
+> the off-field caster (`Combatant.called`, `CombatState.calls`) casts its tier's ONE move — a
+> whole-side move, or for Spirit one heavy hit on a random foe — so a Call never asks for a target;
+> no mana, the caster's own costs dropped, its stats the line's at par on the expected line
+> (`TitanspawnLine.callMoveIds`, ten moves authored for it, Call-only for now). The awakening adds a
+> Call for the Eyes. Measured: full-clear flat (90.6 / 49.3%), Act 1 −2 / −6, Act 2 +1 / +4 — the
+> Act 1 dial left alone per user direction. Its §9 lists what it reverses.
 
 ---
 
@@ -573,21 +584,17 @@ don't silently override it.
   direction, replacing the pre-fight lead-order screen): the enemy's two take the field first,
   then the player picks two from the whole roster — HP and a matchup arrow per enemy lead on
   every cell — and the fight goes straight on (`openingSquad`, `placeLeads`, `LeadPickPanel`). Lock-in derives from the side's size (`lockInThreshold`, half,
-  floor 2), so six locks at **3**. Named costs, all open for playtest: the companion can no
-  longer be benched out of a fight it would die in; Wounds lose the sideboard faucet (Rest, the
+  floor 2), so six locks at **3**. Named costs, all open for playtest: Wounds lose the sideboard faucet (Rest, the
   mend and a contract carry it); the finale's squad size is no longer special. 6v4 is a player
   buff to be measured and absorbed by `ACT_LEVEL_ADJUST`, not by a bigger enemy party
   (`docs/combat.md` "The fielded roster"). Gaining a hero
   requires **terminating** an existing one. Equipment strips on termination; no gold refund.
-  **One exception, the companion** (2026-09-13, Titanspawn overhaul §5, `src/run/companion.ts`):
-  after the run's first fight one of the Early spawn it beat joins — it cannot be declined —
-  as a hero in every respect but one: `RosterEntry.mortal`, and **a knockout removes it from
-  the run** (its items strip to the bag). It takes a slot, levels roster-wide, takes its schedule's
-  offers off its type's whole slate, and its schedule's `evolutionLevel` and `lateLevel` are
-  **tier-steps** (Early → Mid, then Mid → Late) in place of a branch. One per run;
-  a dead one is not replaced. **It does not count toward Act 1's enemy-count cap** (per user
-  direction, same day): the cap reads the immortal roster, so the Act 1 Skirmish is 3v2. `rosterHeroes` (`data/content.ts`) is the roster-facing hero
-  lookup for that reason; `heroes` stays the recruitable pool.
+  **The companion is not on the roster** (2026-10-04, `docs/companion-call.md`, replacing the
+  mortal slot-holder of 2026-09-13): after the run's first fight one of the Early spawn it beat
+  joins — it cannot be declined — as `RunState.companion`, and once a fight an active hero can
+  spend its turn to **Call** it (`src/run/companion.ts`). There is no exception to the cap, and the
+  Act 1 Skirmish is 2v2. `rosterHeroes` (`data/content.ts`) still holds the spawn bodies, for the
+  screens that draw the companion; `heroes` stays the recruitable pool.
 - **Items are uncategorised, and ABSORBED** (2026-09-06 for the first half, replacing the
   weapon/armor/accessory split, which playtested as fiddly and unintuitive; 2026-09-15 for the
   second, `docs/gear-absorption.md`, per user direction). Any item goes in any socket; **every

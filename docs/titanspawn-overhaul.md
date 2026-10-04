@@ -8,7 +8,9 @@
 > (`docs/enemy-levels.md`, 2026-09-15); the companion's tier-steps sit on Mastery pips 5 and 10
 > and its gear goes with it on a KO (`docs/mastery.md`, `docs/gear-absorption.md` §7); the run is
 > four acts then the finale (`docs/xp-overhaul.md` §5); the scripted tutorial is deleted
-> (`docs/tutorial.md`).
+> (`docs/tutorial.md`). **The companion of §5 is SUPERSEDED (2026-10-04, `docs/companion-call.md`):**
+> it is off the roster, cannot be lost, and acts only through the **Call** — a hero's turn spent on
+> its tier's one move, once a fight. §5 below is kept as the record of what it was.
 >
 > The approved art is in `docs/art/titanspawn-bestiary.html` (also published at
 > https://claude.ai/code/artifact/94773309-d55c-4bb7-98ff-14edf8de9a57).
@@ -166,6 +168,10 @@ the rows between draw the hero pool.
 **Claim supply goes up by one per act** (the fork's second option is now recruitable).
 
 ## 5. The companion
+
+> **SUPERSEDED 2026-10-04 by `docs/companion-call.md`.** Everything below describes the mortal
+> roster companion that the Call replaced: no slot, no mortality, no levels, pips, offers or items,
+> a tier read off the act, and a Call in place of a body. Its §9 lists what it reverses here.
 
 The Fire Emblem **trainee** (weak early, above the cast with investment) fused with **death fodder**
 from competitive doubles. The cute is the price. `src/run/companion.ts`, `CompanionScreen`.

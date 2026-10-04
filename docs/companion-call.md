@@ -1,6 +1,6 @@
 # companion-call.md — The companion off the roster: a Call
 
-> **STATUS: DECIDED 2026-10-04, per user direction — PHASES 1–5 (CONTENT, ENGINE, RUN, VIEW, SIM) BUILT.** The companion still joins
+> **STATUS: BUILT IN FULL 2026-10-04, per user direction** (content, engine, run, view, sim, docs). The companion still joins
 > after the run's first fight, but it **never takes one of the six roster slots**: it travels with
 > the party, and **once a fight an active hero can spend its turn to Call it** — the companion
 > casts its tier's ONE move, which never asks for a target, from off the field. **No
@@ -348,5 +348,6 @@ fallback is a key in the Bag or the bottom row).
    `CALL_HOLD` = 1.5, or at all when the caller would Rest or `CALL_SPEND_BY` = 2 foes stand; the
    chart pilot (`scripts/sim/fight.ts`) Calls in place of its first Rest, else on round 3. The
    report prints Calls made, the share of fights, and HP a Call. Measured in §6.1.
-6. **Docs.** This file to BUILT, `titanspawn-overhaul.md` §5, CLAUDE.md's roster-cap exception and
-   companion lines, `docs/ascension.md`.
+6. **Docs — BUILT 2026-10-04.** This file; CLAUDE.md's twelfth-overhaul banner, roster-cap paragraph
+   and Ascension lines; `titanspawn-overhaul.md` §5 and `ascension.md` §7 marked superseded. The Act
+   1 dial (§6.1) is left alone, per user direction.
