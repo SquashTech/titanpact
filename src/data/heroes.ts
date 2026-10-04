@@ -2,7 +2,7 @@
 // Starting kit is exactly three moves: one low-power main-type move plus two supports
 // (heal/buff/status) — MOVE_CAP is 4, so one slot is left to grow into on level-up.
 // Every line sums to exactly 550 at face value across seven stats (HP + Mana + the five battle
-// stats; MP Regen is a flat 10 outside it) — the same number the Stat Total row prints, HP
+// stats; MP Regen is a flat 10 outside it) — the same number the sheet prints as Power, HP
 // included at 1:1 (2026-09-09). A specialist is signalled by spiking one stat past anything else
 // in the roster, never by coming in under the total — Bellows' 105 Attack against its 5 Speed is
 // the shape. The re-base took its points out of HP and left Speed alone, so the turn order the

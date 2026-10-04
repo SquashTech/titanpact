@@ -18,7 +18,7 @@ import { entryPassiveCounts, entryStatModifiers } from '../../run/entryStats';
 import { chosenEvolutionPaths, itemSlotsFor, rosterEntryTypes, formIdFor } from '../../run/progression';
 import { chosenClass } from '../../run/classes';
 import { innatePassiveIdsFor } from '../../run/innate';
-import { StatBars } from '../shared/StatBars';
+import { PowerReadout, StatBars } from '../shared/StatBars';
 import { TabStrip, type TabSpec } from '../shared/TabStrip';
 import { MoveButtonReplica, swallowGhostClick, useLongPress } from '../shared/MoveTile';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
@@ -240,7 +240,10 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
             <>
               {/* Matchups lead the page: which columns hurt this hero is the first thing asked of
                   a sheet, and behind eight stat bars it was below the fold. */}
-              <TypeMatchups types={types} />
+              <div className="sheet-head-row">
+                <TypeMatchups types={types} />
+                <PowerReadout stats={previewStats} />
+              </div>
               {/* Totals only, no "+N" against base: the room is the passives'. */}
               <StatBars baseStats={hero.baseStats} totals={previewStats} grades={entryGradesFor(hero, entry)} scale={scale} />
               <ForceSourceRow label="Ley Line" grants={entry.bonusStatusGrants} />

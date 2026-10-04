@@ -76,6 +76,19 @@ export function computeStatTotal(stats: Partial<Record<StatKey, number>>): numbe
   return TOTAL_STATS.reduce((sum, stat) => sum + (stats[stat] ?? 0), 0);
 }
 
+/** The hero's Power — `computeStatTotal` over the figures the sheet's bars draw — as one corner figure. */
+export function PowerReadout({ stats }: { stats: Partial<Record<StatKey, number>> }) {
+  return (
+    <div
+      className="power-readout"
+      title="Power — HP + Attack + Defense + Intelligence + Wisdom + Speed + Mana Pool, as this hero currently stands (MP Regen excluded, flat across the roster)"
+    >
+      <span className="power-label">Power</span>
+      <span className="power-value">{computeStatTotal(stats)}</span>
+    </div>
+  );
+}
+
 // The growth column's tone ramp. Two above the line read as gains and four below fade out of
 // the way, because the question a grade answers is "does THIS stat grow", not "rank all seven".
 const GRADE_TONE: Record<GrowthGrade, { color: string; opacity: number; weight: number }> = {
@@ -122,10 +135,6 @@ export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {}, 
   const percents = STAT_ORDER.map((stat, i) => statFraction(stat, totals[i], scale) * 100);
   // The spike the sheet highlights is one of the seven graded stats; MP Regen is flat on everyone.
   const bestPercent = Math.max(...percents.filter((_, i) => TOTAL_STATS.includes(STAT_ORDER[i])));
-  // Summed from the same effective numbers the bars draw, never from baseStats.
-  const effective = Object.fromEntries(STAT_ORDER.map((stat, i) => [stat, totals[i]])) as Record<StatKey, number>;
-  const statTotal = computeStatTotal(effective);
-  const totalDelta = statTotal - computeStatTotal(baseStats);
 
   return (
     <div className="stat-bars">
@@ -203,16 +212,7 @@ export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {}, 
         <span className="stat-par-key-tick" />
         <span>typical hero at Lv {scale.level}</span>
       </div>
-      <div
-        className="stat-total-row"
-        title="Stat Total — HP + Attack + Defense + Intelligence + Wisdom + Speed + Mana Pool, as this hero currently stands (MP Regen excluded, flat across the roster)"
-      >
-        <span className="stat-total-label">Stat Total</span>
-        <span className="stat-total-value">
-          {statTotal}
-          {totalDelta !== 0 && <span className={totalDelta > 0 ? 'stat-buff' : 'stat-debuff'}> {fmtDelta(totalDelta)}</span>}
-        </span>
-      </div>
+      {/* The total is the sheet's Power, read in the page's corner (PowerReadout), not under the bars. */}
       {/* No key for the letter column (2026-09-16, per user direction): the letter's own tooltip
           carries its odds, and a legend of all seven under every sheet read as a chart. */}
     </div>

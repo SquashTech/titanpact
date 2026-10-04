@@ -1,7 +1,7 @@
 // What an authored stat line COSTS, as opposed to what it reads. Two rules live here.
 //
 // THE HERO ROSTER pays face value (2026-09-09): every hero's seven stats sum to HERO_STAT_TOTAL,
-// HP included at 1:1. The rule is the number the Stat Total row already prints, so "is this line
+// HP included at 1:1. The rule is the number the sheet already prints as Power, so "is this line
 // on budget" is a question the player can answer off the sheet. What it cost: the measured
 // break-even is nearer 0.33 HP per point, so this over-charges HP roughly 3x and the roster's HP
 // range compressed to 170–270 in consequence — docs/progression.md "Pricing HP".

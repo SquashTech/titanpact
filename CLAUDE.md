@@ -312,7 +312,7 @@ don't silently override it.
   exception, the Burden** (2026-09-20, `docs/innate-passives.md` §4): a hero whose innate is a
   COST comes in `BURDEN_SURPLUS` = 60 OVER, never under — printed on the sheet, pinned by test,
   Bellows alone. The rule is
-  the number the hero sheet's Stat Total row already prints, so a line being on budget is
+  the number the hero sheet already prints as **Power**, so a line being on budget is
   checkable by the player and not only by the repo (`heroStatTotal`,
   `src/run/statBudget.ts`; `test/roster.test.ts`; `docs/types-and-heroes.md`). A
   specialist is signalled by spiking one stat past anything else in the roster, never by

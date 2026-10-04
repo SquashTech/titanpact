@@ -230,7 +230,7 @@ it is a tempo dial the equipment layer moves (`STAT_POINT_VALUE` prices it at 3Ã
 a place to hide a hero's power level. `heroStatTotal` in `src/run/statBudget.ts` is the
 one definition; `test/roster.test.ts` pins both halves.
 
-**550 is the number the hero sheet already shows.** The Stat Total row on `StatBars`
+**550 is the number the hero sheet already shows.** The sheet's **Power** figure (`PowerReadout`, once the Stat Total row)
 sums exactly these seven, so the rule is checkable by the player and not just by the
 repo â€” which is the whole reason it is face value. It replaced a 450 budget that
 priced HP at 0.5, under which two on-budget heroes could read 530 and 590 on screen

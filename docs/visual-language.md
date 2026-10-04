@@ -3287,5 +3287,9 @@ explained where the numbers came from: the run sheet's per-source ledger (Relics
 Growth…) and the "+N against base" on every bar are gone, the bars reading totals — a run
 teaches that the numbers come from levels and gear. The Ley Line's Force line stays, since no bar
 carries Force. In a fight the "+N", the Buffs / Debuffs chips and the → readout read THIS fight's
-changes only, never the loadout. The Stat Total row keeps its one "+N".
+changes only, never the loadout. The Stat Total row kept its one "+N" until it became Power, below.
 That page is now labelled **Overview**, not Stats (same day, per user direction).
+**Stat Total is now Power** (same day, per user direction): the row under the bars is gone, and
+the figure sits large in the Overview page's top-right corner beside Weak / Resists
+(`PowerReadout`, `StatBars.tsx`), with no "+N" — the draft stage and the Collection showcase say
+Power too. Same sum, same 550 rule; only the name and the seat changed.

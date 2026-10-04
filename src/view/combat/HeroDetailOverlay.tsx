@@ -20,7 +20,7 @@ import { chosenEvolutionPaths, itemSlotsFor } from '../../run/progression';
 import { chosenClass } from '../../run/classes';
 import { levelOf } from '../../run/growth';
 import { progressionTable } from '../../data/progression';
-import { StatGlyph, STAT_LABELS, STAT_ORDER, StatBars, hpTier, ShieldFill, ShieldLabel } from '../shared/StatBars';
+import { StatGlyph, STAT_LABELS, STAT_ORDER, StatBars, PowerReadout, hpTier, ShieldFill, ShieldLabel } from '../shared/StatBars';
 import { shieldHeld } from '../../engine/status/shield';
 import { statuses } from '../../data/statuses';
 import { EquipmentSlotGrid, ItemReadout } from '../shared/EquipmentBox';
@@ -218,7 +218,10 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
               </div>
 
               {/* Matchups lead, as on the run's sheet: which columns hurt this hero is the first thing asked. */}
-              <TypeMatchups types={types} />
+              <div className="sheet-head-row">
+                <TypeMatchups types={types} />
+                <PowerReadout stats={effectiveTotals} />
+              </div>
               <StatBars baseStats={hero.baseStats} deltas={fightModifiers} totals={effectiveTotals} fight={fightReadout} scale={scale} />
 
               {hasModifiers && (

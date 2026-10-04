@@ -12517,16 +12517,28 @@ button.star-shop-bundle-face {
   white-space: nowrap;
 }
 
-.stat-total-row {
+/* Matchups on the left, the hero's Power in the corner they leave empty. */
+.sheet-head-row {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-top: 4px;
-  padding-top: 5px;
-  border-top: 1px solid var(--border);
+  align-items: flex-start;
+  gap: 8px;
 }
 
-.stat-total-label {
+.sheet-head-row > .matchup-block {
+  flex: 1;
+  min-width: 0;
+}
+
+.power-readout {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+  padding-right: 4px;
+  line-height: 1;
+}
+
+.power-label {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -12534,8 +12546,9 @@ button.star-shop-bundle-face {
   color: var(--text-dim);
 }
 
-.stat-total-value {
-  font-size: 13px;
+.power-value {
+  margin-top: 3px;
+  font-size: 22px;
   font-weight: 800;
   color: var(--accent);
 }
@@ -40881,19 +40894,7 @@ img.smithy-service-art {
   gap: 5px;
 }
 
-.is-showcase-page .stat-total-row {
-  grid-row: 5;
-  grid-column: 1 / -1;
-  margin-top: 3px;
-  padding-top: 4px;
-}
-
 .is-showcase-page .stat-par-key {
-  display: none;
-}
-
-/* Stat Total rides on the showcase corner, opposite the type sigil, instead of a row of its own. */
-.is-showcase-page .stat-total-row {
   display: none;
 }
 

@@ -136,8 +136,8 @@ export function StageSheet({ baseStats, grants = {}, scale, burden = false }: { 
           </div>
         );
       })}
-      <div className="draft-sheet-total" title={burden ? "Stat Total — over the roster's 550, the price of its Burden" : 'Stat Total — the seven bars above it, summed'}>
-        <span className="draft-sheet-label">Stat Total</span>
+      <div className="draft-sheet-total" title={burden ? "Power — over the roster's 550, the price of its Burden" : 'Power — the seven bars above it, summed'}>
+        <span className="draft-sheet-label">Power</span>
         <span className={`draft-sheet-value${burden ? ' is-burden' : ''}`}>
           {computeStatTotal(effective)}
           {burden && <span className="draft-sheet-burden"> · Burden</span>}

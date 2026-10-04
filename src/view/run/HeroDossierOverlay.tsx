@@ -327,7 +327,7 @@ export function HeroDossierOverlay({ hero: opened, cycle, onClose }: Props) {
                 </span>
                 <span className="dossier-showcase-pedestal" aria-hidden="true" />
                 <span className="dossier-showcase-total">
-                  <span>Stat Total</span>
+                  <span>Power</span>
                   {computeStatTotal(hero.baseStats)}
                 </span>
                 {pose && <span key={`flash-${pose.beat}`} className={`dossier-showcase-flash is-${pose.kind}`} aria-hidden="true" />}
