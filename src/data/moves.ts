@@ -4390,7 +4390,7 @@ export const moves: Record<string, MoveDefinition> = {
   },
   // --- Companion Calls (docs/companion-call.md §3.2) ---
   // The ten seats in the Call table no slate filled: never asking for a target, on the line's own stat, no cost on
-  // the caster. Ordinary tiered slate moves held by the Call alone until a hero pool takes them.
+  // the caster. Ordinary tiered slate moves; every one also sits in two heroes' level-up pools.
   arcFlash: {
     id: 'arcFlash',
     name: 'Arc Flash',

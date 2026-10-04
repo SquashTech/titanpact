@@ -266,6 +266,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'blind',
       'focus',
       'snowBlast',
+      'arcFlash',
       'ionize',
       'stunningBolt',
       'electricBurst',
@@ -354,6 +355,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'sow',
       'rootbind',
       'leech',
+      'greenwood',
     ],
     mordax: [
       'rally',
@@ -444,6 +446,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'jolt',
       'corrode',
       'hallow',
+      'dawnlight',
     ],
     aegis: [
     'secondWind','holySlice', 'blind', 'purify', 'bless', 'vigil', 'exalt', 'consecrate', 'benediction', 'divineGrace', 'reinforce', 'pistonPunch', 'vineLash', 'toughenUp', 'rockToss', 'radiantBeam', 'radiance', 'smite', 'solarFlare', 'judgment', 'hallow', 'sunlance', 'bodyguard'],
@@ -467,6 +470,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'weaken',
       'pounce',
       'howl',
+      'knifeFan',
       'cutthroat',
       'rend',
       'shadowSlice',
@@ -478,6 +482,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'thousandCuts',
       'shadowForm',
       'rendingLeap',
+      'shadowsweep',
     ],
     marrow: [
     'purify','lieInWait', 'umbralBeam', 'umbralWave', 'poltergeist', 'enfeeble', 'drain', 'torment', 'soulRend', 'wisp', 'jolt', 'siphon', 'deepChill', 'flicker', 'electricBurst', 'lastRites', 'ionicZap', 'maelstrom', 'grimHarvest', 'stunningBolt', 'seance'],
@@ -568,6 +573,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'magicBolt',
       'wisp',
       'enervate',
+      'psiPulse',
       'arcaneBlast',
       'brainFlay',
       'wickedFear',
@@ -594,6 +600,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'cerebralShock',
       'mindShatter',
       'distort',
+      'psiPulse',
       'hindsight',
       'mindLeech',
     ],
@@ -617,7 +624,9 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'stasis',
       'breakWill',
       'soulfire',
+      'willOWisp',
       'hindsight',
+      'unquiet',
       'seance',
     ],
     sorrow: [
@@ -671,6 +680,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'sharpen',
       'openingStrike',
       'ironSkin',
+      'shrapnel',
       'reinforce',
       'shockSlice',
       'juggernaut',
@@ -875,6 +885,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     hart: [
       'hallow',
       'purify', 'bless', 'blind', 'vigil', 'refresh', 'regrowth',
+      'dawnlight',
       'benediction', 'radiantBeam', 'radiance', 'consecrate', 'smite', 'wildBloom',
       'divineGrace', 'exalt', 'solarFlare', 'forceOfNature',
     ],
@@ -917,6 +928,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ronin: [
       'swiftBlow',
       'ironFist', 'openingStrike', 'pinDown', 'fortify', 'ironSkin',
+      'shrapnel',
       'serratedSlice', 'rendArmor', 'momentumSwing', 'parry', 'shadowstrike',
       'juggernaut', 'swingingChain', 'wailingFlight',
     ],
@@ -954,13 +966,16 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'hamstring', 'backstab', 'openingStrike', 'swiftBlow', 'claw', 'pounce',
       'shadowSlice', 'cutthroat', 'rend', 'smokeBomb', 'lacerate', 'rendArmor', 'maul',
       'duskBlade', 'thousandCuts', 'shadowForm', 'rendingLeap', 'eviscerate',
+      'shadowsweep',
     ],
     // Kitsu: Spirit's magical column, with Arcane's bolts as the off-type. Banish is Ninetails' grant.
     kitsu: [
       'unbound',
       'ember', 'drain', 'soulfire', 'secondWind', 'spite', 'magicBolt', 'focus',
       'soulRend', 'poltergeist', 'flicker', 'vengeance', 'soulOffering', 'arcPulse', 'arcaneBlast',
+      'unquiet',
       'seance', 'lastRites', 'ascendant', 'twinCast', 'cataclysm',
+      'requiem',
     ],
     // Tinder: Fire's magical Burn column, with Spirit's and Storm's quick casts as the off-types. Firestorm is Headliner's grant.
     tinder: [
@@ -989,11 +1004,13 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'sow', 'toxicSpores', 'focus', 'magicBolt', 'glimmer', 'bless',
       'corrode', 'blight', 'magicGrowth', 'wildBloom', 'rootbind', 'radiantBeam', 'arcaneBlast',
       'leech', 'miasma', 'overgrowth', 'solarFlare', 'cataclysm',
+      'greenwood',
     ],
     // Nimbus: Storm's magical column, with Water's rain as the off-type. Ionic Zap is Anvilhead's grant.
     nimbus: [
       'charge',
       'risingStatic', 'staticCharge', 'zap', 'tideGuard', 'splash', 'undercurrent',
+      'arcFlash',
       'chainLightning', 'stunningBolt', 'ionize', 'electricBurst', 'shockBubble', 'cleansingRain', 'torrent',
       'thunderbolt', 'ionCascade', 'tsunami', 'highTide',
     ],
@@ -1030,6 +1047,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     murk: [
       'toughenUp',
       'fadeStrike', 'backstab', 'mudBall', 'vineLash', 'pinDown',
+      'knifeFan',
       'shadowSlice', 'rend', 'smokeBomb', 'rubbleRush', 'thornWhip',
       'duskBlade', 'shadowForm', 'boulderSlam', 'thousandCuts',
     ],
@@ -1072,8 +1090,10 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     keen: [
       'rimeWind',
       'drain', 'spite', 'unbound', 'soulfire', 'inkCloud', 'sparkFlash', 'tremor',
+      'willOWisp',
       'soulRend', 'poltergeist', 'flicker', 'arcPulse', 'disorient', 'deluge', 'backdraft',
       'seance', 'banish', 'ascendant', 'psionicWave', 'cataclysm', 'maelstrom',
+      'requiem',
     ],
     // Ferra: Iron's one magical row is Conjured Sword, kept off every pool (test/ironMoves), so Storm's current and Arcane's bolts carry her. Conjured Sword is Magnetar's grant.
     ferra: [

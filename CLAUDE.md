@@ -258,7 +258,7 @@ don't silently override it.
 > the off-field caster (`Combatant.called`, `CombatState.calls`) casts its tier's ONE move — a
 > whole-side move, or for Spirit one heavy hit on a random foe — so a Call never asks for a target;
 > no mana, the caster's own costs dropped, its stats the line's at par on the expected line
-> (`TitanspawnLine.callMoveIds`, ten moves authored for it, Call-only for now). The awakening adds a
+> (`TitanspawnLine.callMoveIds`, ten moves authored for it, each also in two heroes' pools). The awakening adds a
 > Call for the Eyes. Measured: full-clear flat (90.6 / 49.3%), Act 1 −2 / −6, Act 2 +1 / +4 — the
 > Act 1 dial left alone per user direction. Its §9 lists what it reverses.
 

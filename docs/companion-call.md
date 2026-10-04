@@ -139,9 +139,12 @@ self-Burn). Greenwood dropped the Verdant Earth it was drafted with — off Natu
 doubled Renew was ~80% of max HP a tick on both. Ion Cascade is the weakest Late, short of its ×2
 without a Conduct setter; Storm Surge is the alternative.
 
-**The ten new moves are Call-only for now**: ordinary tiered slate moves in no hero pool. Some
-belong in hero kits (per user direction) — that is a later pass, and each slate's census test
-already counts them. `callMoveIdSet` is a holder in its own right for the reachability tests.
+**The ten new moves are in hero pools too** (2026-10-04, per user direction), two heroes each, on the
+stat line and role they fit: Arc Flash — Skyshear, Nimbus; Dawnlight — Dawnwarden, Hart; Knife Fan
+— Widow, Murk; Shadowsweep — Widow, Jinx; Psi Pulse — Lucius, Trance; Shrapnel — Gallant, Ronin;
+Greenwood — Wild Oracle, Lotus; Will-o'-Wisp — Revenant, Keen; Unquiet — Revenant, Kitsu; Requiem —
+Keen, Kitsu. Each slate's census test counts them; `callMoveIdSet` stays a holder in its own right
+(Requiem is magical Spirit, and Revenant's pool does not reach it).
 
 **Watch in the sim**: the support Calls off a spiked stat — Rampart ~160 Shield on each (Stone
 Defense 160), Divine Grace ~190 heal each (Light Wisdom 120), Pack Leader ~+70 Attack and Speed.
