@@ -206,6 +206,10 @@ export interface Aggregate {
   playerTurns: number;
   playerRests: number;
   playerSwitches: number;
+  /** The companion's Call: fights that had one, Calls that resolved, and the HP they took. */
+  callableFights: number;
+  playerCalls: number;
+  callDamage: number;
   /** Fights where the player side reached the 2-KO lock-in threshold. */
   lockInFights: number;
   /** Per act (index = act): scaled stat deltas landed, |authored| and |landed| summed, fights, fights a [−½S, +S] ceiling would have clamped, and the peak modifier/S summed (docs/stat-scaling.md §8, §10). */
@@ -307,6 +311,9 @@ export function emptyAggregate(): Aggregate {
     playerTurns: 0,
     playerRests: 0,
     playerSwitches: 0,
+    callableFights: 0,
+    playerCalls: 0,
+    callDamage: 0,
     lockInFights: 0,
     statDeltaCountByAct: [],
     shieldByAct: {},
@@ -434,6 +441,9 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   into.playerTurns += from.playerTurns;
   into.playerRests += from.playerRests;
   into.playerSwitches += from.playerSwitches;
+  into.callableFights += from.callableFights;
+  into.playerCalls += from.playerCalls;
+  into.callDamage += from.callDamage;
   into.lockInFights += from.lockInFights;
   mergeArray(into.statDeltaCountByAct, from.statDeltaCountByAct);
   mergeArray(into.statDeltaAuthoredByAct, from.statDeltaAuthoredByAct);

@@ -1,6 +1,6 @@
 # companion-call.md — The companion off the roster: a Call
 
-> **STATUS: DECIDED 2026-10-04, per user direction — PHASES 1–4 (CONTENT, ENGINE, RUN, VIEW) BUILT.** The companion still joins
+> **STATUS: DECIDED 2026-10-04, per user direction — PHASES 1–5 (CONTENT, ENGINE, RUN, VIEW, SIM) BUILT.** The companion still joins
 > after the run's first fight, but it **never takes one of the six roster slots**: it travels with
 > the party, and **once a fight an active hero can spend its turn to Call it** — the companion
 > casts its tier's ONE move, which never asks for a target, from off the field. **No
@@ -188,6 +188,30 @@ of each Call (§3.1); nothing is the price of keeping it.
 
 ## 6. Balance — what must be measured
 
+### 6.1 Measured (2026-10-04, sim, 2000 runs a side, seed 101, Base)
+
+Against the build before phase 1 (companion on the roster, mortal), same seed:
+
+| | skilled before | skilled Call | chart before | chart Call |
+|---|---|---|---|---|
+| **full-clear** | 90.3% | 90.6% | 48.5% | 49.3% |
+| Act 1 | 97.9 | **95.9** | 86.7 | **80.9** |
+| Act 2 | 97.0 | 98.4 | 81.5 | 85.7 |
+| Act 3 | 99.5 | 99.7 | 97.3 | 98.2 |
+| Act 4 | 98.8 | 99.2 | 96.6 | 97.6 |
+| finale | 96.8 | 97.1 | 73.0 | 74.2 |
+| Act 1 Skirmish / Elite | 98.6 / 98.3 | 96.3 / 96.3 | 89.6 / 88.7 | 84.3 / 82.2 |
+
+- **The run is unmoved and the difficulty moved forward**: Act 1 is harder (the Skirmish is 2v2
+  and the Elite loses the body it had), Act 2 easier (a sixth real hero where the trainee stood),
+  the back half a point either way. The chart pilot's Act 1 −5.8 / Act 2 +4.2 is the shape.
+- **The Call is used**: the skilled pilot Calls in 74% of fights with a companion (CALL_HOLD 1.5,
+  spent freely in place of a Rest or with two foes or fewer standing), the chart pilot in 98% (in
+  place of its first Rest, else on round 3); 94 / 81 HP a Call; 5.5% of player turns.
+- **A Late spread Call is not a fight-decider**: the Act 4 Guardian and the finale moved ≤1.2
+  points on either pilot.
+- The dial, if the Act 1 drop is to be paid back, is `ACT_LEVEL_ADJUST`'s Act 1 term — not moved.
+
 - **Act 1 loses its free body.** The Act 1 Skirmish was 3v2 because the cap ignored the companion
   (per user direction, Act 1 78 → 83%). Five heroes against the cap's two, plus a Call that costs a
   turn, is the new shape — a smaller replacement than a free Call would have been. This is the
@@ -283,9 +307,10 @@ fallback is a key in the Bag or the bottom row).
 - **The woken line's cross-run reward** (§3.4): a Call that refreshes in every fight's second half,
   or none beyond the finale refresh.
 - **Placement**: the field figure is for playtest; the fallback if it distracts.
-- **Act 1**: is a turn-costing Call enough to replace the free body, or does `ACT_LEVEL_ADJUST` move.
+- **Act 1**: measured −2.0 skilled / −5.8 chart (§6.1), Act 2 +1.4 / +4.2. Whether to pay it back
+  with `ACT_LEVEL_ADJUST`'s Act 1 term is the designer's.
 - **The round-3 brake** (§3.1): held in reserve, built only if measured.
-- **The sim's Call policy** — the hold value and the latest point it must be spent.
+- **The sim's Call policy** — `CALL_HOLD` 1.5 and `CALL_SPEND_BY` 2 are first-pass, not tuned.
 
 ---
 
@@ -318,7 +343,10 @@ fallback is a key in the Bag or the bottom row).
    set apart and with no bar, and the **Roster's header** carries a chip (`CompanionDossier` on a tap)
    — a strip under the grid was tried and pushed the six off the page. The `fight.call` tip fires
    the first fight a Call is ready. The dev test runs carry a companion.
-5. **Sim.** A Call policy for both pilots; then measure Act 1, the Act 4 Guardian, the finale and
-   full-clear against the current baseline.
+5. **Sim — BUILT 2026-10-04.** The skilled pilot (`src/run/pilot.ts` `pickCaller`) scores the Call
+   off the caster with `scoreCast` and Calls when it beats the caller's own best line by
+   `CALL_HOLD` = 1.5, or at all when the caller would Rest or `CALL_SPEND_BY` = 2 foes stand; the
+   chart pilot (`scripts/sim/fight.ts`) Calls in place of its first Rest, else on round 3. The
+   report prints Calls made, the share of fights, and HP a Call. Measured in §6.1.
 6. **Docs.** This file to BUILT, `titanspawn-overhaul.md` §5, CLAUDE.md's roster-cap exception and
    companion lines, `docs/ascension.md`.

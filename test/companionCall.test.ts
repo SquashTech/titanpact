@@ -19,6 +19,8 @@ import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
 import { fieldEffects } from '../src/data/fieldEffects';
 import { createFightState } from './fixtures';
+import { pilotActions } from '../src/run/pilot';
+import type { AiContext } from '../src/run/ai';
 
 const NO_TARGET_ASKED = new Set(['bothEnemies', 'bothAllies', 'randomEnemy']);
 
@@ -96,7 +98,7 @@ function board(seed = 7): CombatState {
 }
 
 /** Side A's companion, seated as the Called caster of `type`'s line at `tier`, casting `moveId` (its Call move by default). */
-function withCompanion(state: CombatState, type: 'Fire' | 'Stone' | 'Spirit' | 'Mech', tier: 'early' | 'mid' | 'late', moveId?: string): CombatState {
+function withCompanion(state: CombatState, type: 'Fire' | 'Frost' | 'Stone' | 'Spirit' | 'Mech', tier: 'early' | 'mid' | 'late', moveId?: string): CombatState {
   const line = spawnLineOf(type)!;
   const heroId = spawnId(line, tier);
   const hero = allCombatants[heroId];
@@ -214,4 +216,33 @@ test('companionCall: grantCalls refreshes a side with a caster and leaves one wi
   const spent = resolveRound(state, [call('a1')], engineConfig).state;
   assert.strictEqual(grantCalls(spent, 'A', 1).calls?.A?.remaining, 1);
   assert.strictEqual(grantCalls(spent, 'B', 1).calls?.B, undefined);
+});
+
+// --- The pilot (src/run/pilot.ts pickCaller) ---
+
+const pilotCtx: AiContext = {
+  heroes: allCombatants,
+  moves,
+  statuses,
+  typeChart,
+  passives,
+  moveIdsFor: (id) => allCombatants[board().combatants[id]?.heroId ?? '']?.moveIds ?? [],
+};
+
+test('companionCall: the pilot Calls in place of a turn that would only Rest', () => {
+  const base = withCompanion(board(), 'Fire', 'mid');
+  const dry = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, currentMana: 0 } } };
+  const actions = pilotActions(dry, 'A', pilotCtx, { switching: false });
+  assert.deepStrictEqual(actions.find((a) => a.combatantId === 'a1'), { kind: 'call', combatantId: 'a1' });
+});
+
+test('companionCall: the pilot holds the Call while its heroes’ own lines come close, and spends it at the end', () => {
+  // Rime Wind, 25 to both off a level-1 Early body, against two full-mana heroes' own hits.
+  const early = withCompanion(board(), 'Frost', 'early');
+  assert.ok(!pilotActions(early, 'A', pilotCtx, { switching: false }).some((a) => a.kind === 'call'), 'held');
+
+  // One foe left standing: nothing is worth keeping it for.
+  const late = withCompanion(board(), 'Fire', 'late');
+  const lastFoe = { ...late, combatants: { ...late.combatants, b2: { ...late.combatants.b2, fainted: true, currentHp: 0 } }, active: { ...late.active, B: ['b1', null] as [string, null] } };
+  assert.ok(pilotActions(lastFoe, 'A', pilotCtx, { switching: false }).some((a) => a.kind === 'call'), 'spent on the last foe');
 });

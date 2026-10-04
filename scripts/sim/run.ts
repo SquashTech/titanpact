@@ -144,6 +144,9 @@ export interface FightRecord {
   playerHpFrac: number;
   playerTurns: number;
   playerRests: number;
+  callable: boolean;
+  playerCalls: number;
+  callDamage: number;
   playerSwitches: number;
   lockedIn: boolean;
   playerSquadStats: number;
@@ -666,6 +669,9 @@ function resolveEncounterNode(
     playerHpFrac: fight.playerHpFrac,
     playerTurns: fight.playerTurns,
     playerRests: fight.playerRests,
+    callable: fight.callable,
+    playerCalls: fight.playerCalls,
+    callDamage: fight.callDamage,
     playerSwitches: fight.playerSwitches,
     lockedIn: fight.lockedIn,
     playerSquadStats: fight.playerSquadStats,

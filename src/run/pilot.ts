@@ -25,6 +25,8 @@ import type { CombatState, FieldEffectContext, Side } from '../engine/state';
 import {
   applyStatModifierDelta,
   activePartnerTypes,
+  availableCall,
+  isFighter,
   effectiveTypes,
   getEffectiveStat,
   getMaxHp,
@@ -103,6 +105,17 @@ const MANA_OPPORTUNITY = 0.25;
  * which denies that turn on top of the body.
  */
 const LETHAL_RISK = 0.5;
+
+/**
+ * The companion's Call (docs/companion-call.md §3.1) is once a fight, so spending it on a turn the
+ * caller's own best line nearly matches throws the rest of the fight's chances away: the Call has to
+ * be worth this many times what the caller would do with its turn. Waived when the caller would
+ * only Rest, and when the far side is down to its last fighters — the Call must not go unspent.
+ */
+const CALL_HOLD = 1.5;
+
+/** Fighters standing on the far side at or under which the Call stops being held. */
+const CALL_SPEND_BY = 2;
 
 /** Per-point HP-equivalents for the stats that do not convert through a threat figure. */
 const FLAT_STAT_VALUE: Partial<Record<StatKey, number>> = { hp: 1, speed: 1.5, manaPool: 0.3, mpRegen: 3 };
@@ -876,6 +889,7 @@ export function pilotActions(state: CombatState, side: Side, ctx: AiContext, opt
   const claimed = new Set<string>();
   const canSwitch = opts.switching && !isLockedIn(state, side);
 
+  const bestOf = new Map<string, Scored | null>();
   for (const casterId of actingIds) {
     const moveIds = ctx.moveIdsFor(casterId);
     const options = hasAffordableMoveInFight(state, casterId, moveIds, moves, allCombatants)
@@ -885,6 +899,16 @@ export function pilotActions(state: CombatState, side: Side, ctx: AiContext, opt
     for (const option of options) {
       if (!best || option.score > best.score) best = option;
     }
+    bestOf.set(casterId, best);
+  }
+  const caller = pickCaller(state, side, actingIds, bestOf, ctx, cache);
+
+  for (const casterId of actingIds) {
+    if (casterId === caller) {
+      actions.push({ kind: 'call', combatantId: casterId });
+      continue;
+    }
+    const best = bestOf.get(casterId) ?? null;
 
     if (canSwitch && canSwitchOut(state, casterId)) {
       const stay = Math.max(0, best?.gross ?? 0);
@@ -923,6 +947,38 @@ export function pilotActions(state: CombatState, side: Side, ctx: AiContext, opt
   }
 
   return actions;
+}
+
+/**
+ * Who spends a turn on the companion's Call this round, if anyone: the hero whose own best line
+ * the Call beats by the widest margin, provided it beats it by CALL_HOLD — or by anything at all
+ * when that hero would only Rest, or the far side is down to its last fighters.
+ */
+function pickCaller(
+  state: CombatState,
+  side: Side,
+  actingIds: readonly string[],
+  bestOf: ReadonlyMap<string, Scored | null>,
+  ctx: AiContext,
+  cache: Map<string, number>
+): string | null {
+  const call = availableCall(state, side);
+  if (!call) return null;
+  // An unpriceable payload is credited against the side's best line this turn, as a hero's own would be.
+  const reference = Math.max(0, ...actingIds.map((id) => bestOf.get(id)?.gross ?? 0));
+  const callGross = scoreCast(state, call.combatantId, moves[call.moveId], ctx, null, cache, reference);
+  if (callGross <= 0) return null;
+  const foesLeft = Object.values(state.combatants).filter((c) => c.side !== side && isFighter(c) && !c.fainted).length;
+  let pick: { id: string; gain: number } | null = null;
+  for (const id of actingIds) {
+    const best = bestOf.get(id) ?? null;
+    const stay = Math.max(0, best?.gross ?? 0);
+    const free = best === null || foesLeft <= CALL_SPEND_BY;
+    if (!free && callGross < stay * CALL_HOLD) continue;
+    const gain = callGross - stay;
+    if (gain > 0 && (!pick || gain > pick.gain)) pick = { id, gain };
+  }
+  return pick?.id ?? null;
 }
 
 export { HORIZON };

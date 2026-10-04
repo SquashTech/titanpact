@@ -670,6 +670,9 @@ export function formatReport(
   out.push(`    turns taken              ${agg.playerTurns}`);
   out.push(`    spent Resting            ${pct(agg.playerRests, agg.playerTurns)}`);
   out.push(`    spent cycling out        ${pct(agg.playerSwitches, agg.playerTurns)}`);
+  out.push(
+    `    spent on the Call        ${pct(agg.playerCalls, agg.playerTurns)}  (Called in ${pct(agg.playerCalls, Math.max(1, agg.callableFights))} of fights with a companion; ${num(agg.callDamage / Math.max(1, agg.playerCalls), 0)} HP a Call)`
+  );
   out.push(`    fights reaching lock-in  ${pct(agg.lockInFights, totalFights)}  (player side lost 2+ heroes)`);
 
   if (agg.mvp.fights) {

@@ -175,6 +175,9 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
     foldMoves(agg.movesByAct, fight.moves, `${fight.act}:`);
     foldMoves(agg.movesByHero, fight.movesByHero);
     agg.playerRests += fight.playerRests;
+    if (fight.callable) agg.callableFights += 1;
+    agg.playerCalls += fight.playerCalls;
+    agg.callDamage += fight.callDamage;
     agg.playerSwitches += fight.playerSwitches;
     if (fight.lockedIn) agg.lockInFights += 1;
     agg.statDeltaCountByAct[fight.act] = (agg.statDeltaCountByAct[fight.act] ?? 0) + fight.statDeltaCount;

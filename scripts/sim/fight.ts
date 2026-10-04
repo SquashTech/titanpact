@@ -11,7 +11,7 @@ import { fieldEffects } from '../../src/data/fieldEffects';
 import { equipment } from '../../src/data/equipment';
 import { relics } from '../../src/data/relics';
 import type { CombatState, Side } from '../../src/engine/state';
-import { getMaxHp, getMaxMana, getEffectiveStat, isFighter, sideDefeated } from '../../src/engine/state';
+import { availableCall, getMaxHp, getMaxMana, getEffectiveStat, isFighter, sideDefeated } from '../../src/engine/state';
 import { useConsumable } from '../../src/engine/combat/consumables';
 import type { CombatEvent } from '../../src/engine/events';
 import type { StatKey } from '../../src/engine/content';
@@ -117,6 +117,10 @@ export interface FightOutcome {
   /** Player-side turns taken, and how many were spent Resting or cycling out. */
   playerTurns: number;
   playerRests: number;
+  /** The companion's Call (docs/companion-call.md): whether the fight had one, Calls that resolved, and the HP they took. */
+  callable: boolean;
+  playerCalls: number;
+  callDamage: number;
   playerSwitches: number;
   /** The player side lost 2+ heroes, so voluntary switching was locked out. */
   lockedIn: boolean;
@@ -469,12 +473,24 @@ export interface FightInput {
   playerCall?: CallPlacement | null;
 }
 
-/** The original player side: run/ai.ts plus the reactive mana cycle. */
+/** The round by which the chart pilot has spent its Call, if no Rest gave it a reason sooner. */
+const CHART_CALL_ROUND = 3;
+
+/**
+ * The original player side: run/ai.ts plus the reactive mana cycle. Its Call (docs/companion-call.md)
+ * is a plain player's: in place of the first Rest, or on CHART_CALL_ROUND with the first hero that
+ * is not switching — used early, never weighed.
+ */
 function chartPilotActions(state: CombatState, playerCtx: AiContext, playerActive: readonly string[], switching: boolean): Action[] {
   const switches = switching ? manaCycleSwitches(state, PLAYER_SIDE, playerCtx, playerActive) : {};
-  return playerActive.map((id): Action =>
+  const actions = playerActive.map((id): Action =>
     switches[id] ? { kind: 'switch', combatantId: id, benchedCombatantId: switches[id] } : pickAiAction(state, id, playerCtx)
   );
+  if (!availableCall(state, PLAYER_SIDE)) return actions;
+  const resting = actions.findIndex((a) => a.kind === 'rest');
+  const at = resting !== -1 ? resting : state.round >= CHART_CALL_ROUND ? actions.findIndex((a) => a.kind !== 'switch') : -1;
+  if (at !== -1) actions[at] = { kind: 'call', combatantId: actions[at].combatantId };
+  return actions;
 }
 
 export function simulateFight(input: FightInput): FightOutcome {
@@ -532,6 +548,8 @@ export function simulateFight(input: FightInput): FightOutcome {
   let pactTicked = false;
   let playerTurns = 0;
   let playerRests = 0;
+  let playerCalls = 0;
+  let callDamage = 0;
   let playerSwitches = 0;
   const casts = { byTier: {} as Record<string, number>, byManaBand: {} as Record<string, number>, byMove: {} as Record<string, number> };
   const deltas = { count: 0, authored: 0, landed: 0, enemyCount: 0, enemyAuthored: 0, enemyLanded: 0, held: 0, enemyHeld: 0 };
@@ -597,6 +615,10 @@ export function simulateFight(input: FightInput): FightOutcome {
     state = fillOpenSlots(state, AI_SIDE, replacementEvents);
     roundEvents.push(...replacementEvents);
 
+    for (const e of roundEvents) {
+      if (e.type === 'Called' && state.combatants[e.combatantId]?.side === PLAYER_SIDE) playerCalls += 1;
+      else if (e.type === 'DamageDealt' && state.combatants[e.sourceCombatantId]?.called) callDamage += e.amount + (e.absorbed ?? 0);
+    }
     allEvents.push(...roundEvents);
     recordEvents(roundEvents, telemetry, casts, deltas, shield, field, moveTallies, dots);
     beats += countBeats(roundEvents);
@@ -642,6 +664,9 @@ export function simulateFight(input: FightInput): FightOutcome {
     pactTicked,
     playerTurns,
     playerRests,
+    callable: !!playerCall,
+    playerCalls,
+    callDamage,
     playerSwitches,
     lockedIn: state.koCount[PLAYER_SIDE] >= 2,
     playerSquadStats: squadStatTotal(opening.state, PLAYER_SIDE),
