@@ -276,7 +276,8 @@ answers *is this fun against this AI* before paying for the teambuilder.
    Haunted foe, and its Omen path Haunts both foes on entry — a five-round clock that needs no
    turn spent. Live in Classic too, where Mastery 10 is rarely reached. **With the skilled pilot
    the AI wins 7–37% of every Trial but Spirit (65%)**; Mind beats Spirit 100%, Storm 95%.
-4. **Sim: a 14 × 14 round-robin** of the Trial teams, plus each against sample builds. The matrix
+4. **Sim: a 14 × 14 round-robin — IN (2026-10-04)**: `node dist/scripts/sim/trials.js` (`--fights`,
+   `--pilot chart|greedy`, `--only <trial>` for one row plus its record on the AI side). The matrix
    is the balance read by type that Classic cannot give.
 5. **AI switching** (§8), shared with A5.
 6. **Dev screen — IN (2026-10-04)**: the title's Dev menu → **Trials**
