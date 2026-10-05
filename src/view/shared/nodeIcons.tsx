@@ -123,6 +123,14 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
       <path d="M9 7.8h6c3.6 1.9 5.8 5.2 5.8 8.6 0 3.2-2.4 5.2-6 5.2h-5.6c-3.6 0-6-2-6-5.2 0-3.4 2.2-6.7 5.8-8.6Z" />
     </>
   ),
+  // The contract's quill (RunGlyph's counter wears this one): a sealed sheet this small is a floppy
+  // disk, and the diagonal is what survives 14px.
+  contractReward: (
+    <>
+      <path d="M21.4 2.2c-7 .6-11.8 3.5-14.3 7.7-1.4 2.3-1.9 4.7-1.7 6.7l3.2-3.2c2.8.4 6-.8 8.1-3.2-1.5.4-3.2.4-4.5 0 2.6-.5 5.3-2.1 6.8-4.6-1.4.8-3 1.1-4.3 1 1.8-1.5 4.2-3 6.7-4.4Z" />
+      <path d="M7.9 15.1 3.1 20.8l2 1.7 4.5-5.8Z" />
+    </>
+  ),
   // The Mana stat's own drop: a stat reward reuses the exact glyph of what it grants.
   manaWellReward: STAT_PATHS.manaPool,
   // The Smithy's anvil, back on a tile (it was the Forge node's before item slots went): one free lift.

@@ -126,12 +126,14 @@ export interface BrokenSeal {
 
 export interface RunState {
   roster: RosterEntry[];
-  /** Spent at a Guild Hall; contracts are claimed, not bought with this. */
+  /** Spent at a Guild Hall. Never on a hero directly: gold buys a contract, a contract buys a hero. */
   gold: number;
   /** Owned relic ids — duplicates stack. */
   relics: string[];
-  /** Starts at 1; +1 at the end of every act; purchasable at a shop. */
+  /** Starts at 1. Every recruit spends one, a claim or a Tavern hire; the map's Contract node and the Tavern sell them (docs/run-loop.md "Contracts"). */
   recruitContracts: number;
+  /** Contracts bought at the Tavern this run: each raises the next one's price (`contractPrice`). */
+  contractsBought: number;
   /** The potions, a TEAM purse capped per kind (run/consumables.ts). Spent only in a fight. */
   consumables: ConsumablePurse;
   /**
@@ -176,6 +178,7 @@ export function createRunState(gold = 0, recruitContracts = 1, ascension = 0): R
     gold,
     relics: [],
     recruitContracts,
+    contractsBought: 0,
     consumables: { ...STARTING_CONSUMABLES },
     companion: null,
     map: null,

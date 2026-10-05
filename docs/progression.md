@@ -304,14 +304,15 @@ emerge, that is a tuning signal on the curves, not a reason to script the AI or 
 **The mechanism** (`src/run/recruitment.ts`, `src/run/guildRecruit.ts`, `src/run/shop.ts`):
 
 - **The Guild Hall's Tavern** rolls **2–3 heroes** a visit (`rollGuildHallOffers`, once at node
-  select) at a flat **50g** (`GUILD_HALL_RECRUIT_COST`), plus a reroll (`run-loop.md` §1). Every
+  select), each hired for **one Recruit Contract** (2026-10-05; it was a flat 50g), plus a reroll (`run-loop.md` §1). Every
   purchase follows one rule — **show the thing, then ask**: a tap opens the hero's or item's sheet
   and the sheet holds the buy.
 - **Relics are never sold** — a shop that sells one of everything makes gold the only decision.
-- **Recruit Contracts are a scarce currency.** `RunState.recruitContracts` starts at 1, is spent on
-  every `claimContract` (refused with none held), and comes from the per-act grant at each
-  Guardian, the Tavern at a flat **20g** (`CONTRACT_PURCHASE_COST` — cheaper than a hire because a
-  contract still requires beating something specific), and nowhere else. A claim offers up to
+- **Recruit Contracts are the one recruiting currency** (2026-10-05, `run-loop.md` "Contracts").
+  `RunState.recruitContracts` starts at 1 and is spent on every `claimContract` and every Tavern
+  hire (refused with none held). It comes from the `contractReward` seat in the reward rows and the
+  Tavern, at `contractPrice` (40, +20 for each bought this run), and nowhere else; the per-act grant
+  at each Guardian is gone. A claim offers up to
   `MAX_CONTRACT_OFFERS` = 2 beaten recruitable heroes, from the node's own generated roster.
 
 ### A hire arrives RAW
@@ -319,7 +320,7 @@ emerge, that is a tuning signal on the curves, not a reason to script the AI or 
 **A Guild Hall hire is unbuilt**: it arrives at the act's hire level with the growth those levels
 earned and nothing else — **no Evolution, no Mastery, its own authored two moves, every schedule
 entry still owed** (`guildHallEntry`). Every decision about what it becomes is the player's, and
-that is what 50 gold buys.
+that is what its contract buys.
 
 It is the opposite half of a **contract** hero, which arrives **finished** and **armed** — the
 enemy you beat, entire: its Evolution chosen, the Mastery its act bought, every schedule entry
@@ -341,8 +342,9 @@ off the player's par, the Skirmish at par plus the act's term (**3 / 10 / 17 / 2
 step over, so an Elite's contract out-levels a hire in every act and a Skirmish's never trails
 one. `test/recruitment.test.ts` carries the assertion that catches it inverting.
 
-> **Open:** the hire's flat 50g is untouched while what a hire buys has shrunk; whether that is
-> right is undecided.
+> **Open:** a claim and a hire now cost the same contract, so the finished hero is the better buy
+> wherever one is on offer; the hire's edge is choice (any face on the shelf, rerollable) and
+> timing. Whether that is enough is for playtest.
 
 ---
 

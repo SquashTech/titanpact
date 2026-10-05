@@ -319,7 +319,6 @@ function decodeGuildOffer(value: unknown, ctx: Ctx, label: string): GuildHallOff
   return {
     id: str(value.id, `${label}.id`),
     heroId: heroId(value.heroId, ctx, `${label}.heroId`),
-    cost: int(value.cost, `${label}.cost`),
     startingMoveIds: [...value.startingMoveIds],
   };
 }
@@ -426,7 +425,7 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
       };
     }
     case 'reward':
-      if (raw.nodeType !== 'currencyReward' && raw.nodeType !== 'equipmentReward') reject('reward.nodeType is unknown');
+      if (raw.nodeType !== 'currencyReward' && raw.nodeType !== 'contractReward' && raw.nodeType !== 'equipmentReward') reject('reward.nodeType is unknown');
       return { kind, nodeId: nodeId(raw.nodeId, ctx, 'reward.nodeId'), nodeType: raw.nodeType, seed: int(raw.seed, 'reward.seed'), ...settled(raw) };
     case 'itemWho':
       return { kind, itemId: itemId(raw.itemId, ctx, 'itemWho.itemId'), next: next(), ...settled(raw) };

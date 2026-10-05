@@ -36735,6 +36735,25 @@ button.star-shop-bundle-face {
   color: #a88a4a;
 }
 
+/* The Contract on the road wears the gold scene in the contract counter's blue. */
+.is-contract .road-gold-delta {
+  color: #bfe0ff;
+  text-shadow: 0 2px 0 #1d3a5c, 0 0 18px rgba(120, 180, 255, 0.7);
+}
+
+.is-contract .road-gold-purse {
+  color: #9bc9ff;
+  text-shadow: 0 1px 0 #0c1a2a;
+}
+
+.is-contract .road-gold-purse strong {
+  color: #d8ecff;
+}
+
+.is-contract .road-gold-arrow {
+  color: #6f8fb4;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .road-gold-coin {
     display: none;

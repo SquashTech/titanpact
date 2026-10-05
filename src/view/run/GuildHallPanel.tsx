@@ -8,7 +8,7 @@ import { equipmentArt } from '../shared/equipmentArt';
 import { ItemDetailCard } from '../shared/ItemDossier';
 import { RARITY_COLOR_VARS } from '../shared/EquipmentBox';
 import { ItemServicesSection } from './ItemServicesSection';
-import { guildHallOffersFor, CONTRACT_PURCHASE_COST } from '../../data/recruitment';
+import { guildHallOffersFor } from '../../data/recruitment';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import type { HeroDefinition } from '../../engine/content';
 import type { RunState } from '../../run/state';
@@ -22,6 +22,8 @@ import { WoundBar, entryHp } from '../shared/WoundBar';
 import {
   recruitFromGuildHall,
   buyContract,
+  contractPrice,
+  CONTRACT_PRICE_STEP,
   RecruitmentError,
   type GuildHallOffer,
 } from '../../run/recruitment';
@@ -96,13 +98,13 @@ interface Props {
 interface HeroCardProps {
   hero: HeroDefinition;
   offer: GuildHallOffer;
-  /** The act's hire level (difficulty.ts guildHallLevel) — on the card because a hire arrives one act behind, and that is what 50g is priced against. */
+  /** The act's hire level (difficulty.ts guildHallLevel) — on the card because a hire arrives one act behind, and that is what its contract is priced against. */
   level: number;
   affordable: boolean;
   onInspect: () => void;
 }
 
-// A tap puts the hire on the stage; the stage is where gold is spent. Unaffordable offers still open.
+// A tap puts the hire on the stage; the stage is where the contract is spent. Offers open with none held.
 // Pinned to the Tavern's board as a parchment notice: the face, the name, what it is, what it asks.
 function GuildHallHeroCard({ hero, offer, level, affordable, onInspect }: HeroCardProps) {
   return (
@@ -121,7 +123,7 @@ function GuildHallHeroCard({ hero, offer, level, affordable, onInspect }: HeroCa
         ))}
       </span>
       <span className="hall-poster-price">
-        <ResourceGlyph kind="gold" /> {offer.cost}
+        <ResourceGlyph kind="contract" /> 1
       </span>
     </button>
   );
@@ -163,7 +165,9 @@ export function GuildHallPanel({
   const previewOffer = previewOfferId ? heroOffers.find((o) => o.id === previewOfferId) : undefined;
   // The hire as it would arrive — its levels rolled (guildRecruit.ts), its kit authored, nothing evolved.
   const previewEntry = previewOffer ? guildHallEntry(run, previewOffer, 'preview') : null;
-  const canBuyContract = run.gold >= CONTRACT_PURCHASE_COST;
+  const contractCost = contractPrice(run);
+  const canBuyContract = run.gold >= contractCost;
+  const canHire = run.recruitContracts > 0;
   const scrollsSoldOut = scrollsBought >= SCROLL_PURCHASE_LIMIT;
   const canBuyScrollNow = canBuyScroll(run, scrollsBought);
   const rerollCost = tavernRerollCost(rerolls);
@@ -179,7 +183,7 @@ export function GuildHallPanel({
 
   function handleRecruit(offer: GuildHallOffer) {
     if (rosterFull) {
-      if (run.gold >= offer.cost) onRequestRosterReplace(offer);
+      if (canHire) onRequestRosterReplace(offer);
       return;
     }
     try {
@@ -193,7 +197,7 @@ export function GuildHallPanel({
   function handleBuyContract() {
     setConfirmingContract(false);
     try {
-      onRunChange(buyContract(run, CONTRACT_PURCHASE_COST));
+      onRunChange(buyContract(run));
     } catch (err) {
       if (!(err instanceof RecruitmentError)) throw err;
     }
@@ -216,7 +220,7 @@ export function GuildHallPanel({
                       hero={heroes[offer.heroId]}
                       offer={offer}
                       level={guildHallLevel(run.actNumber)}
-                      affordable={run.gold >= offer.cost}
+                      affordable={canHire}
                       onInspect={() => setPreviewOfferId(offer.id)}
                     />
                   ))
@@ -237,7 +241,7 @@ export function GuildHallPanel({
                   <HallGood
                     art={GOOD_ART.contract}
                     name="Contract"
-                    price={CONTRACT_PURCHASE_COST}
+                    price={contractCost}
                     held={run.recruitContracts > 0 ? run.recruitContracts : undefined}
                     disabled={!canBuyContract}
                     onClick={() => setConfirmingContract(true)}
@@ -351,7 +355,7 @@ export function GuildHallPanel({
             previewEntry &&
             (() => {
               const hero = heroes[previewOffer.heroId];
-              const affordable = run.gold >= previewOffer.cost;
+              const affordable = canHire;
               return (
                 <HeroStageOverlay
                   hero={hero}
@@ -361,13 +365,13 @@ export function GuildHallPanel({
                   unowned
                   note={
                     !affordable
-                      ? `Not enough gold — ${previewOffer.cost}g needed, you have ${run.gold}g.`
+                      ? 'Hiring takes a Recruit Contract, and you hold none. The counter sells them.'
                       : rosterFull
                         ? `Roster is full (${ROSTER_CAP}/${ROSTER_CAP}) — you'll choose a hero to terminate next.`
                         : undefined
                   }
                   action={{
-                    label: `Recruit ${hero.name} — ${previewOffer.cost}g`,
+                    label: `Recruit ${hero.name} — 1 Contract`,
                     disabled: !affordable,
                     onConfirm: () => {
                       handleRecruit(previewOffer);
@@ -425,14 +429,14 @@ export function GuildHallPanel({
                     <span className="move-info-name">
                       <ResourceGlyph kind="contract" /> Recruit Contract
                     </span>
-                    <span className="move-info-kind">{CONTRACT_PURCHASE_COST}g</span>
+                    <span className="move-info-kind">{contractCost}g</span>
                   </div>
                   <div className="guild-hall-confirm-body">
-                    A blank contract lets you claim one beaten enemy hero onto your roster, free, after any winnable fight.
+                    Every recruit costs one: sign a hero you beat in a Skirmish or Elite, or hire one at this Tavern. The next one bought costs {contractCost + CONTRACT_PRICE_STEP}g.
                   </div>
                   <div className="guild-hall-confirm-ledger">
                     <span>
-                      Gold {run.gold}g → <strong>{run.gold - CONTRACT_PURCHASE_COST}g</strong>
+                      Gold {run.gold}g → <strong>{run.gold - contractCost}g</strong>
                     </span>
                     <span>
                       Contracts {run.recruitContracts} → <strong>{run.recruitContracts + 1}</strong>
@@ -441,7 +445,7 @@ export function GuildHallPanel({
                 </div>
                 <div className="detail-action">
                   <button className="resolve-button" disabled={!canBuyContract} onClick={handleBuyContract}>
-                    Buy for {CONTRACT_PURCHASE_COST}g
+                    Buy for {contractCost}g
                   </button>
                   <button className="detail-action-cancel" onClick={() => setConfirmingContract(false)}>
                     Cancel

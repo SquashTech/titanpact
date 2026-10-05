@@ -71,8 +71,8 @@ only way to a move AHEAD of its schedule. `SPLICED_ROW`, `LAST_MENTOR_ACT`.
 
 **The Guild Hall's three counters (2026-09-24):** **Shop** (Mastery Scrolls, two to a pack; the
 two potions and the Revive; two pieces of gear a visit on the act's standard curve at
-`EQUIPMENT_PRICE_BY_RARITY`), **Tavern** (the hire shelf, the Recruit Contract, the reroll and the
-party mend) and **Smithy** (the Anvil and the Enchanter over worn gear). It opens on the Tavern.
+`EQUIPMENT_PRICE_BY_RARITY`), **Tavern** (the hire shelf — each hire one Recruit Contract — the Contract for gold, the reroll and
+the party mend) and **Smithy** (the Anvil and the Enchanter over worn gear). It opens on the Tavern.
 **The reroll** is the Tavern's one lever on WHO shows up: a fresh shelf for
 `TAVERN_REROLL_BASE_COST` = 10g, +`TAVERN_REROLL_STEP` = 10 each time a visit
 (`rerollGuildHallOffers`), never a roster hero and never a face just turned away while the pool can
@@ -118,10 +118,11 @@ two reds a shade apart on the act's one real difficulty choice, and was reverted
 | `fight` | The act's opener: **Titanspawn** (`run/spawn.ts`, "The mob layer is Titanspawn" below). Not recruitable. |
 | `skirmish` | Four heroes from the **recruitable pool**, at par. The fork's plain option; a Recruit Contract shot. |
 | `elite` | As `skirmish`, one level over it (`ENEMY_LEVEL_OFFSET`), loot one tier ahead, XP ×1.5. |
-| `boss` | The Location's champion over Titanspawn escorts, all at the node's level (`docs/enemy-levels.md` §4). Pays a Recruit Contract, the Guardian's Banner, the Crucible, and ends the act (§3). |
+| `boss` | The Location's champion over Titanspawn escorts, all at the node's level (`docs/enemy-levels.md` §4). Pays the Guardian's Banner and the Crucible, and ends the act (§3). It paid a Recruit Contract until 2026-10-05 ("Contracts" below). |
 | `shop` | The **Guild Hall** — Shop, Tavern and Smithy (§1). Rolled once a visit (`rollGuildHallOffers`). |
 | `equipmentReward` ("Items") | `NodeRewardScreen` — pick 1 of 3 items on the act's curve; the pick goes straight to the who-screen (`docs/gear-absorption.md`). Weight 78. |
 | `currencyReward` | An instant gold grant (15–30 at Act 1, × `ACT_GOLD_SCALE`), paid on arrival and counted up into the purse. |
+| `contractReward` ("Contract") | One Recruit Contract, paid on arrival (`grantContract`). Weight 24. See "Contracts" below. |
 | `scrollReward` ("Scroll Cache") | `ScrollNodeScreen` — **`SCROLL_CACHE_COUNT` = 3 Mastery pips** in any split. Weight 20. See "Mastery Scrolls" below. |
 | `scribeReward` ("Scribe") | `ScrollNodeScreen` — pick TWO heroes, **2 pips each** (`SCRIBE_PICKS`, `SCRIBE_PIPS_EACH`). Not in `REWARD_WEIGHTS`: a forced row every act (§1). |
 | `forgeReward` ("Forge") | The Smithy's Anvil AND Enchanter, free, once. See "The Forge and the Ley Line". Weight 25. |
@@ -375,7 +376,7 @@ each beat skipped when it has nothing to ask:
 6. **The Guardian's Banner** — boss nodes (§3).
 7. **Recruit Contract claim** (`RecruitScreen`) — up to `MAX_CONTRACT_OFFERS` = 2 beaten
    recruitable heroes, **skipped when the player holds no contracts** or nothing beaten was
-   recruitable. On a boss node the act-end contract is granted first, so it is spendable here.
+   recruitable. A boss node never reaches it: its escorts are spawn and the act grant is gone.
 8. **The Crucible** (`CrucibleScreen`) — boss nodes: pick ONE hero, which takes a **Class** —
    three rolled from the whole catalog, a move or a passive. Skipped when every hero holds one.
 9. **The Pact Seal** (§4), then the next act — boss nodes.
@@ -385,14 +386,45 @@ hero recruited in the same beat arrives under it, and the contract before the Cr
 can walk into it. The claim was once a band on the victory overlay, which priced a permanent roster
 decision below the item drop; it is its own screen on the draft's stage.
 
-Recruit Contracts are granted only by the per-act grant at each Guardian and the Tavern, never by a
-map node (`contractReward` was removed, 2026-08-17).
+### Contracts
+
+**Every recruit costs one Recruit Contract, and gold never buys a hero** (2026-10-05, per user
+direction). A claim after a won Skirmish or Elite spends one, as it always did; a Tavern hire spends
+one too, where it cost 50 gold. The run opens holding one. The supply is two faucets, both of them
+choices:
+
+- **The Contract node** (`contractReward`, weight 24): one contract on arrival, in the pick-1-of-3
+  reward rows, so taking it is turning down a Boon, a Cache or a Forge beside it.
+- **The Tavern's Contract**, at `contractPrice` = `CONTRACT_BASE_PRICE` 40 + `CONTRACT_PRICE_STEP`
+  20 for every one bought this RUN (`RunState.contractsBought`) — 40, 60, 80. It rises across the
+  run, not the visit, so buying a full roster is possible and dearer each time.
+
+**What it replaced.** The run used to pay one free contract at every Guardian. With the starting one
+and a 50g hire, that was exactly the four empty seats a two-hero draft leaves, so the dominant play
+was to recruit at every chance and recruiting stopped being a decision by Act 2. The problem was not
+the currency but that filling an empty seat cost nothing; a contract now costs a reward seat or a
+rising slice of the gold that also buys Scrolls, the Smithy and the mend. One currency for both
+routes also keeps the two-routes rule legible: the contract hero is finished and the hire is raw, at
+the same price. `contractReward` was a node type once before (removed 2026-08-17, when the act grant
+replaced it).
+
+**Measured** (2000 runs a batch, seed 1, against the same seed at `bf5dcc67`): full-clear 31.1 →
+23.6% chart / 81.3 → 75.0% skilled, the whole loss in Acts 3–5 (the finale 56 → 45% chart), Acts
+1–2 flat. Heroes filling an empty seat are unchanged (2.9 a run), but the swaps collapsed — a
+veteran claimed over a weaker hero 1.20 → 0.15 a run chart, 1.84 → 0.28 skilled — and the 35–60g an
+act now spent on contracts came out of the Anvil and Enchanter (Act 3 Anvil 46 → 22g chart). The
+sim walks reward rows at random and spends its contract at the Hall rather than saving it for the
+next fork, so a player who plans should lose less; the direction is the finding.
+
+**Open dials, for playtest:** the node's weight, the two prices, and whether the Elite should drop a
+contract now and then (proposed beside this, not built). An in-fight capture (bind a low-HP enemy)
+was weighed and set aside: it would make combat fiddlier, and speed is the game's strength.
 
 ## 3. Decisions locked for this pass
 
 - **Multi-act sequencing.** A run chains `TOTAL_ACTS` acts (`src/run/state.ts`): four of the §1
   shape, then the finale act (§4). `RunState.actNumber` (1-indexed) tracks the current one. On a
-  Guardian win: grant 1 Recruit Contract (`grantContractReward`), record the broken seal, then
+  Guardian win: record the broken seal, then
   `advanceToNextAct` (a fresh `generateMap` seed, position reset, `actNumber` incremented). Roster,
   gold, Banners, contracts and consumables all carry over; only the map resets. Acts 2–4 open on a
   **1-of-2 Location choice** (`LocationChoiceScreen`, `locations.md` §1, §4).

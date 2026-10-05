@@ -97,10 +97,6 @@ export function grantCurrencyReward(run: RunState, amount: number): RunState {
   return { ...run, gold: run.gold + amount };
 }
 
-/** The per-act contract grant (App.tsx, on the boss-node win). */
-export function grantContractReward(run: RunState, amount: number): RunState {
-  return { ...run, recruitContracts: run.recruitContracts + amount };
-}
 
 /**
  * A Guardian's fall, snapshotted so the finale can field it again at the power it was

@@ -557,9 +557,9 @@ don't silently override it.
 - **Recruitment: a contract hero arrives FINISHED, a Guild hire arrives RAW** (2026-09-10,
   Growth Overhaul phase 5). The line — *Guild heroes have decaying runway value; contract heroes
   have flat value* — is now true on **three axes**, where it used to be true on level alone.
-  A **contract** hero (free, and it IS the enemy you beat) arrives with its Evolution already
+  A **contract** hero (it IS the enemy you beat) arrives with its Evolution already
   chosen, every schedule entry below its level taken, and a kit the game picked. A **Guild hire**
-  (50g) arrives unevolved, its whole schedule still owed, holding its authored two moves — and
+  arrives unevolved, its whole schedule still owed, holding its authored two moves — and
   works the backlog off one entry a fight. You save the walk on a contract, and in exchange you
   authored none of it.
   **RAW is unbuilt, not hollow** — a hire still gets the growth its levels earned, or it would be
@@ -567,8 +567,12 @@ don't silently override it.
   A hire arrives **one act behind**, `guildHallLevel` DERIVED from the level curve
   (`GUILD_HALL_ACT_LAG`, `src/run/difficulty.ts`) rather than authored beside it — that fixed
   act-sized gap IS the decaying runway, worth most early when one act is most of the run.
-  **Two brakes on two routes:** gold prices the purchased one, the roster cap prices the free one
-  (gaining requires terminating, and the terminated hero's gear goes with it). **A contract arrives
+  **One currency for both routes** (2026-10-05, per user direction, `docs/run-loop.md` "Contracts"):
+  a claim and a hire each spend ONE Recruit Contract, and gold never buys a hero — it buys a
+  contract, at a price that rises with every one bought this run (40 +20). The run opens with one;
+  the rest come from a `contractReward` seat in the reward rows or the Tavern, never free at an
+  act's end. The roster cap still prices a swap (gaining requires terminating, and the terminated
+  hero's gear goes with it). **A contract arrives
   ARMED** (2026-09-15, `docs/gear-absorption.md` §7): the piece the enemy fought in — rolled to fit
   it — is absorbed on the contract hero, the fifth finished axis against a hire's bare sockets.
   The LEVEL axis points the right way: a contract hero arrives at its NODE's enemy level
@@ -820,10 +824,9 @@ what's still unimplemented:
   cinematic beats** — the Herald announced before the fight, the Titan rising OVER the fight as
   the Herald falls, and the collapse and re-binding under the title's seal when the Eyes close), are
   chained per run (`RunState.actNumber`, `TOTAL_ACTS`), each with a fresh map generated
-  once the previous act's Guardian falls; 1 Recruit Contract is granted at the end of
-  every act (replacing the removed `contractReward` map-node type — Recruit Contracts
-  now come only from that per-act grant, a beaten enemy's contract claim, or a Guild
-  Hall purchase). Beating an act's Guardian also grants **the Guardian's
+  once the previous act's Guardian falls. **No contract is granted at an act's end since
+  2026-10-05** (`docs/run-loop.md` "Contracts"): Recruit Contracts come from the run's
+  opening one, the `contractReward` reward seat and the Tavern. Beating an act's Guardian also grants **the Guardian's
   Banner** (2026-08-30; reshaped 2026-09-07; **three since 2026-09-14**, per user direction): a
   fixed, never-rolled **1-of-3** team-wide relic, one per CONCEPT — Warcry (offense: +30 Atk,
   +30 Int, +10 Speed), Bulwark (defense: +15 Def, +15 Wis, +5 MP Regen), Wellspring (staying power:

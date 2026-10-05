@@ -25,6 +25,7 @@ export const MAP_NODE_TYPES = [
   'passiveReward',
   'blessingReward',
   'currencyReward',
+  'contractReward',
   'mentorReward',
   'tutorReward',
   'scribeReward',
@@ -117,6 +118,10 @@ export const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // rather than how big its numbers are.
   ['passiveReward', 22],
   ['currencyReward', 20],
+  // The Contract (2026-10-05, per user direction, docs/run-loop.md "Contracts"): one Recruit
+  // Contract, priced against the two rewards beside it. Every hire spends one and the act's end no
+  // longer grants one, so this seat and the Tavern's rising price are the whole supply.
+  ['contractReward', 24],
   // 16 → 30 when the slate grew from six to twenty-six, two thirds Location-gated (docs/wild-innates-and-events.md
   // §3.4): about five events offered a run where there were three. Still an inference, not a measured figure.
   ['event', 30],
@@ -316,4 +321,4 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
 }
 
 /** The two reward nodes that open on the road's chest (NodeRewardScreen). */
-export type RewardNodeType = 'currencyReward' | 'equipmentReward';
+export type RewardNodeType = 'currencyReward' | 'contractReward' | 'equipmentReward';

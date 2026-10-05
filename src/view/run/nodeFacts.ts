@@ -15,7 +15,7 @@ import { championLevel, enemyLevelFor, guildHallLevel, openerEscortTiersFor, spa
 import type { SpawnTier } from '../../data/titanspawn';
 import { ROSTER_CAP, SEAL_ACTS } from '../../run/state';
 import { ANVIL_PRICE_BY_TARGET, ENCHANT_PRICE_BY_RARITY } from '../../run/shop';
-import { CONTRACT_PURCHASE_COST, GUILD_HALL_RECRUIT_COST } from '../../data/recruitment';
+import { CONTRACT_BASE_PRICE, CONTRACT_PRICE_STEP } from '../../run/recruitment';
 import { CONSUMABLE_PRICE, REVIVE_PRICE } from '../../run/consumables';
 import { MEND_PRICE_PER_HERO } from '../../run/wounds';
 import { TYPE_DAMAGE_BONUS } from '../../data/passives';
@@ -124,7 +124,7 @@ const FORCE_BY_TIER = Object.values(ENCHANT_FORCE_BY_RARITY);
 const TERMS = {
   contract: {
     term: 'Recruit Contract',
-    text: 'Spent after a won Skirmish, Elite or Guardian to sign one hero you beat. It joins finished: at its level, evolved, its kit chosen, wearing the piece it fought in.',
+    text: 'Every recruit costs one. Spent after a won Skirmish or Elite to sign a hero you beat — it joins finished: at its level, evolved, its kit chosen, wearing the piece it fought in — or at the Tavern to hire one raw. Found on the road and bought at the Guild Hall, dearer each time.',
   },
   mastery: {
     term: 'Mastery',
@@ -213,16 +213,15 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
       };
     case 'boss':
       return {
-        kind: 'Act boss · Recruitable',
+        kind: 'Act boss',
         facts: [
           ...encounterFacts('boss', actNumber),
-          { glyph: 'contract', label: 'Contract', value: '1' },
           { glyph: 'banner', label: 'Banner', value: '1 of 3', note: 'team-wide' },
           { glyph: 'class', label: 'Class', value: '1 hero', note: 'the Crucible' },
         ],
         odds: odds('boss'),
-        about: 'The act’s end: its champion stands over an escort. Beat it for a Banner, a Contract and the chance to spend one, and the Crucible. Closing the act mends the roster and stands knocked-out heroes back up.',
-        terms: [TERMS.banner, TERMS.class, TERMS.contract],
+        about: 'The act’s end: its champion stands over an escort. Beat it for a Banner and the Crucible. Closing the act mends the roster and stands knocked-out heroes back up.',
+        terms: [TERMS.banner, TERMS.class],
       };
     case 'finale':
       return {
@@ -241,8 +240,8 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
       return {
         kind: 'Landmark · Spend',
         facts: [
-          { glyph: 'hero', label: 'Hire', value: `${GUILD_HALL_RECRUIT_COST}g`, note: `Lv ${guildHallLevel(actNumber)}, raw` },
-          { glyph: 'contract', label: 'Contract', value: `${CONTRACT_PURCHASE_COST}g` },
+          { glyph: 'hero', label: 'Hire', value: '1 Contract', note: `Lv ${guildHallLevel(actNumber)}, raw` },
+          { glyph: 'contract', label: 'Contract', value: `${CONTRACT_BASE_PRICE}g`, note: `+${CONTRACT_PRICE_STEP}g each one bought this run` },
           { glyph: 'scroll', label: `${SCROLL_PACK_PIPS} Mastery Scrolls`, value: `${SCROLL_PURCHASE_COST}g`, note: `up to ${SCROLL_PURCHASE_LIMIT}` },
           { glyph: 'anvil', label: 'Anvil', value: priceBand(ANVIL_PRICE_BY_TARGET), note: '+1 tier' },
           { glyph: 'enchant', label: 'Enchanter', value: priceBand(ENCHANT_PRICE_BY_RARITY), note: 'one element' },
@@ -250,7 +249,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
           { glyph: 'hp', label: 'Potion · Revive', value: `${CONSUMABLE_PRICE}g · ${REVIVE_PRICE}g` },
         ],
         odds: null,
-        about: 'Where gold is spent. The Tavern hires heroes raw — an act behind, unevolved, bare-socketed. The shelf sells Scrolls, potions and one Revive; the Smithy works worn gear; the mend heals everyone, knocked-out heroes included.',
+        about: 'Where gold is spent. The Tavern sells Recruit Contracts and hires heroes for one — raw: an act behind, unevolved, bare-socketed. The shelf sells Scrolls, potions and one Revive; the Smithy works worn gear; the mend heals everyone, knocked-out heroes included.',
         terms: [TERMS.contract],
       };
     case 'muster':
@@ -328,6 +327,14 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         odds: null,
         about: 'Gold, paid the moment you arrive. It is spent at the Guild Hall.',
         terms: [],
+      };
+    case 'contractReward':
+      return {
+        kind: 'Reward · Recruit',
+        facts: [{ glyph: 'contract', label: 'Recruit Contract', value: '+1' }],
+        odds: null,
+        about: 'A Recruit Contract, paid the moment you arrive. Every recruit costs one: a hero you beat in a Skirmish or Elite, or a hire at the Tavern.',
+        terms: [TERMS.contract],
       };
     case 'passiveReward':
       return {

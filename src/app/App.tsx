@@ -108,7 +108,7 @@ import { ShopItemError, TavernRerollError, buyShopItem, rerollGuildHallOffers, r
 import { ConsumableError, buyConsumable, grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse, type PotionKind } from '../run/consumables';
 import { guildHallEntry } from '../run/guildRecruit';
 import { anyClassAvailable } from '../run/classes';
-import { generateMap, type MapNodeType } from '../run/map';
+import { generateMap, type MapNodeType, type RewardNodeType } from '../run/map';
 import { firstUnseenTip, LORE_TIP_ID, type ScreenTipId } from '../run/tips';
 import { LORE_LINES, SCREEN_TIPS } from '../data/tips';
 import { TipOverlay } from '../view/run/TipOverlay';
@@ -146,7 +146,6 @@ import {
   advanceToNode,
   advanceToNextAct,
   grantCurrencyReward,
-  grantContractReward,
   anyoneCanReceive,
   sellItem,
   recordBrokenSeal,
@@ -797,7 +796,7 @@ export function App() {
       if (rolled) setScreen({ kind: 'event', nodeId, eventId: rolled.id, seed: randomSeed() });
       else handleNodeContinue(nodeId);
     } else {
-      setScreen({ kind: 'reward', nodeId, nodeType: node.type as 'currencyReward' | 'equipmentReward', seed: randomSeed() });
+      setScreen({ kind: 'reward', nodeId, nodeType: node.type as RewardNodeType, seed: randomSeed() });
     }
   }
 
@@ -889,7 +888,6 @@ export function App() {
     if (isFinale) {
       afterScreen = { kind: 'champions' };
     } else if (isGuardian) {
-      next = grantContractReward(next, 1);
       // The seal, snapshotted at the power it was beaten at, so the finale can field it
       // again (docs/lore.md §6). The champion rides the Guardian's bench, so it is in the
       // defeated roster under its own id.

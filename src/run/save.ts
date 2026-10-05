@@ -468,6 +468,9 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
 
   if (!isInt(value.gold, 0)) reject('run.gold is not a count');
   if (!isInt(value.recruitContracts, 0)) reject('run.recruitContracts is not a count');
+  // Absent on a file written before the Tavern's price rose with each purchase.
+  const contractsBought = value.contractsBought === undefined ? 0 : value.contractsBought;
+  if (!isInt(contractsBought, 0)) reject('run.contractsBought is not a count');
   const consumables = decodeConsumables(value.consumables);
   if (!isInt(value.fightsStarted, 0)) reject('run.fightsStarted is not a count');
   if (!isInt(value.encountersWon, 0)) reject('run.encountersWon is not a count');
@@ -499,6 +502,7 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
     gold: value.gold,
     relics: requireIds(value.relics, index.relicIds, 'run.relics'),
     recruitContracts: value.recruitContracts,
+    contractsBought,
     consumables,
     companion: decodeCompanion(value, decodedRoster),
     map,

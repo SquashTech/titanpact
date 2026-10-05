@@ -103,7 +103,7 @@ test('resume: every resumable kind round trips, nested chains included', () => {
     { kind: 'manaWell', nodeId },
     { kind: 'rest', nodeId },
     { kind: 'scrolls', plan: { kind: 'scribe' }, nodeId, bought: false, next: map, progress: { remaining: 1, pickedIds: ['rime-1'] } },
-    { kind: 'rosterReplace', candidate: { source: 'guildHall', offer: { id: 'o', heroId: 'rime', cost: 50, startingMoveIds: heroes.rime.moveIds } }, next: map },
+    { kind: 'rosterReplace', candidate: { source: 'guildHall', offer: { id: 'o', heroId: 'rime', startingMoveIds: heroes.rime.moveIds } }, next: map },
     {
       kind: 'fight',
       nodeId,

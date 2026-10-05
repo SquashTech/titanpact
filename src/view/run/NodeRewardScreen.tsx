@@ -5,6 +5,7 @@ import type { RunState } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { rarityWeightsFor } from '../../run/equipment';
 import { grantCurrencyReward, purseRangeFor, rollGoldRange } from '../../run/runProgress';
+import { grantContract } from '../../run/recruitment';
 import { NodeMotes, NODE_TINT_GOLD } from '../shared/NodeStage';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { seededRandom, withSeededRandom } from '../shared/seededRandom';
@@ -49,13 +50,14 @@ interface Props {
 }
 
 /**
- * The instant reward node and the Equipment Cache (docs/run-loop.md), both met on the road: gold
- * is a pile by the roadside that pays out as it is found, and the Cache is a chest that flashes
+ * The instant reward nodes and the Equipment Cache (docs/run-loop.md), all met on the road: gold
+ * is a pile by the roadside that pays out as it is found, a Contract a sealed sheet picked up, and the Cache is a chest that flashes
  * and swings open before offering its 3. The Scroll nodes are not here: which hero takes a pip IS
  * a decision (ScrollNodeScreen).
  */
 export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onClaimEquipment, seed }: Props) {
   if (nodeType === 'currencyReward') return <GoldOnTheRoad run={run} onRunChange={onRunChange} onContinue={onContinue} seed={seed} />;
+  if (nodeType === 'contractReward') return <ContractOnTheRoad run={run} onRunChange={onRunChange} onContinue={onContinue} />;
   return <EquipmentCache run={run} onClaimEquipment={onClaimEquipment} seed={seed} />;
 }
 
@@ -116,6 +118,45 @@ function GoldOnTheRoad({ run, onRunChange, onContinue, seed }: Pick<Props, 'run'
       </span>
       <span className="road-gold-purse" aria-hidden="true">
         <ResourceGlyph kind="gold" /> {from} <span className="road-gold-arrow">→</span> <strong>{from + counted}</strong>
+      </span>
+      <span className="road-encounter-label" aria-hidden="true">
+        {name}
+        <span className="road-encounter-more" />
+      </span>
+    </RoadScene>
+  );
+}
+
+/** A Recruit Contract by the road. Paid on arrival like the purse; the tap only walks on. */
+function ContractOnTheRoad({ run, onRunChange, onContinue }: Pick<Props, 'run' | 'onRunChange' | 'onContinue'>) {
+  const [from] = useState(run.recruitContracts);
+  const [burst, setBurst] = useState(() => prefersReducedMotion());
+  const granted = useRef(false);
+  useEffect(() => {
+    if (granted.current) return;
+    granted.current = true;
+    onRunChange(grantContract(run));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (burst) return;
+    const timer = window.setTimeout(() => {
+      setBurst(true);
+      playSfx('pact.bind');
+    }, POUCH_BURST_AT);
+    return () => window.clearTimeout(timer);
+  }, [burst]);
+
+  const name = 'A Sealed Contract';
+  return (
+    <RoadScene className={`is-place is-arrival is-gold is-contract${burst ? ' is-burst' : ''}`} label={`${name}: +1 Recruit Contract`} onClick={onContinue}>
+      <img src={mapNodeArt('contractReward')} className={`road-encounter-figure road-gold-pouch${prefersReducedMotion() ? ' is-still' : ''}`} alt="" draggable={false} />
+      <span className="road-gold-delta" aria-hidden="true">
+        +1
+      </span>
+      <span className="road-gold-purse" aria-hidden="true">
+        <ResourceGlyph kind="contract" /> {from} <span className="road-gold-arrow">→</span> <strong>{from + 1}</strong>
       </span>
       <span className="road-encounter-label" aria-hidden="true">
         {name}

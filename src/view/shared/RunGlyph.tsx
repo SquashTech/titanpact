@@ -42,15 +42,9 @@ const FLASK_PATH = (
 
 const RESOURCE_PATHS = {
   gold: NODE_PATHS.currencyReward,
-  // A quill, not the document it signs: a sealed sheet drawn this small is a floppy disk
-  // (measured), and a page of ruled lines is the Reference scroll, which is on the same
-  // screen. The diagonal is what survives 14px — the same reason STAT_PATHS.attack is one.
-  contract: (
-    <>
-      <path d="M21.4 2.2c-7 .6-11.8 3.5-14.3 7.7-1.4 2.3-1.9 4.7-1.7 6.7l3.2-3.2c2.8.4 6-.8 8.1-3.2-1.5.4-3.2.4-4.5 0 2.6-.5 5.3-2.1 6.8-4.6-1.4.8-3 1.1-4.3 1 1.8-1.5 4.2-3 6.7-4.4Z" />
-      <path d="M7.9 15.1 3.1 20.8l2 1.7 4.5-5.8Z" />
-    </>
-  ),
+  // A quill, not the document it signs: a page of ruled lines is the Reference scroll, which is
+  // on the same screen. The Contract node's own glyph.
+  contract: NODE_PATHS.contractReward,
   // What leaks from the Titan, drunk on a won fight: the phial that was the Ichor node's mark.
   xp: XP_PHIAL,
   // The Mastery Scroll: the Scribe's node glyph, since a Scroll is what the Scribe hands over.

@@ -18,7 +18,7 @@ import { progressionTable } from '../../src/data/progression';
 import { enemies, finaleEnemies, ENDBRINGER_ID, titanEyes, EYE_PHASES } from '../../src/data/enemies';
 import { encounterKindOf, encounterSeedFor, nodeEncounter } from '../../src/run/encounters';
 import { allCombatants } from '../../src/data/content';
-import { guildHallOffersFor, CONTRACT_PURCHASE_COST } from '../../src/data/recruitment';
+import { guildHallOffersFor } from '../../src/data/recruitment';
 import { chooseMvp, mvpLedgersFromEvents } from '../../src/run/mvp';
 import { statuses } from '../../src/data/statuses';
 import type { CombatEvent } from '../../src/engine/events';
@@ -41,7 +41,6 @@ import {
   itemReceiptFor,
   advanceToNode,
   advanceToNextAct,
-  grantContractReward,
   grantCurrencyReward,
   grantRelicReward,
   anvilQuote,
@@ -59,7 +58,7 @@ import {
   recordPermanentStatGains,
 } from '../../src/run/runProgress';
 import { MOVE_CAP, recordMoveOffer, grantOfferedMove, grantMove } from '../../src/run/progression';
-import { claimContract, claimContractReplacing, deriveContractOffer, heroPool, isRecruitable, pickContractOffers, recruitFromGuildHall, recruitFromGuildHallReplacing, freshRosterId, buyContract } from '../../src/run/recruitment';
+import { claimContract, claimContractReplacing, deriveContractOffer, heroPool, isRecruitable, pickContractOffers, recruitFromGuildHall, recruitFromGuildHallReplacing, freshRosterId, buyContract, contractPrice, grantContract } from '../../src/run/recruitment';
 
 // The run's pool (run/recruitment.ts heroPool): the base game, plus whatever SIM_PURCHASES names —
 // a comma-separated list of Constellation offer ids, so a batch can hold a bundle.
@@ -452,7 +451,6 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
 
       if (node.type === 'boss') {
         record.actsCleared.push(run.actNumber);
-        run = grantContractReward(run, 1);
         run = claimBanner(run, rng, record);
         const champion = outcome.defeatedRoster.find((e) => e.rosterId === location.guardianFinalEnemyId);
         if (champion) {
@@ -832,6 +830,8 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       ledger(record, run.actNumber, 'earned:purse', purse);
       return grantCurrencyReward(run, purse);
     }
+    case 'contractReward':
+      return grantContract(run);
     case 'restReward':
       if (anyDown(run)) record.knockouts.restsWhileDown += 1;
       return mendRoster(run);
@@ -1128,20 +1128,31 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
     revivesBought += 1;
   }
 
+  // A hire is one contract (docs/run-loop.md "Contracts"): a held one first, else one bought on the
+  // spot while the gold is there. The Hall sits after the act's fork, so a contract held here has no
+  // claim to wait for before the next act's.
+  const contractInHand = (): boolean => {
+    if (next.recruitContracts > 0) return true;
+    if (muster || next.gold < contractPrice(next)) return false;
+    spend('contract', () => buyContract(next));
+    return true;
+  };
   for (const offerId of offers.heroOfferIds) {
     const offer = guildHallOffers.find((o) => o.id === offerId);
-    if (!offer || next.gold < offer.cost) continue;
+    if (!offer) continue;
     const rosterId = freshRosterId(next, offer.heroId);
     if (next.roster.length < ROSTER_CAP) {
+      if (!contractInHand()) break;
       record.recruitsBySource.hire = (record.recruitsBySource.hire ?? 0) + 1;
-      spend('hire', () => recruitFromGuildHall(next, offer, rosterId));
+      next = recruitFromGuildHall(next, offer, rosterId);
       continue;
     }
     // A hire arrives raw and one act behind (guildHallEntry), so it replaces only a hero it outscores as-is.
     const weakest = policy.byPower(next.roster)[next.roster.length - 1];
     if (policy.powerScore(weakest) < policy.powerScore(guildHallEntry(next, offer, rosterId))) {
+      if (!contractInHand()) break;
       record.recruitsBySource.hireReplacing = (record.recruitsBySource.hireReplacing ?? 0) + 1;
-      spend('hire', () => recruitFromGuildHallReplacing(next, offer, rosterId, weakest.rosterId));
+      next = recruitFromGuildHallReplacing(next, offer, rosterId, weakest.rosterId);
     }
   }
 
@@ -1163,8 +1174,8 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
   spend('enchant', () => resolveEnchanter(next));
 
   // Spare gold at the last shop before a Guardian buys a contract rather than rusting.
-  if (!muster && next.gold >= CONTRACT_PURCHASE_COST && next.roster.length < ROSTER_CAP) {
-    spend('contract', () => buyContract(next, CONTRACT_PURCHASE_COST));
+  if (!muster && next.gold >= contractPrice(next) && next.roster.length < ROSTER_CAP) {
+    spend('contract', () => buyContract(next));
   }
   return next;
 }

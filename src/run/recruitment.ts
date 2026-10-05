@@ -46,22 +46,25 @@ export function heroPool<T extends { unlock?: string }>(all: Record<string, T>, 
   return Object.fromEntries(Object.entries(all).filter(([id, hero]) => ownsHero(id, hero, purchases)));
 }
 
+/** A Tavern hire. Its price is always one Recruit Contract, as a claim's is (docs/run-loop.md "Contracts"). */
 export interface GuildHallOffer {
   id: string;
   heroId: string;
-  cost: number;
   startingMoveIds: readonly string[];
 }
 
 /** A defeated hero's build — gear included — minus the rosterId a new slot supplies itself. */
 export type ContractOffer = Omit<RosterEntry, 'rosterId'>;
 
-export function recruitFromGuildHall(run: RunState, offer: GuildHallOffer, rosterId: string): RunState {
-  if (run.gold < offer.cost) {
-    throw new RecruitmentError(`Guild Hall recruit costs ${offer.cost} gold, only ${run.gold} available`);
+function spendContract(run: RunState): RunState {
+  if (run.recruitContracts <= 0) {
+    throw new RecruitmentError('No Recruit Contracts available');
   }
-  const withGoldSpent: RunState = { ...run, gold: run.gold - offer.cost };
-  return addRosterEntry(withGoldSpent, guildHallEntry(run, offer, rosterId));
+  return { ...run, recruitContracts: run.recruitContracts - 1 };
+}
+
+export function recruitFromGuildHall(run: RunState, offer: GuildHallOffer, rosterId: string): RunState {
+  return addRosterEntry(spendContract(run), guildHallEntry(run, offer, rosterId));
 }
 
 /**
@@ -75,18 +78,29 @@ export function deriveContractOffer(defeated: RosterEntry): ContractOffer {
 }
 
 export function claimContract(run: RunState, offer: ContractOffer, rosterId: string): RunState {
-  if (run.recruitContracts <= 0) {
-    throw new RecruitmentError('No Recruit Contracts available');
-  }
-  const entry: RosterEntry = { ...offer, rosterId };
-  return addRosterEntry({ ...run, recruitContracts: run.recruitContracts - 1 }, entry);
+  return addRosterEntry(spendContract(run), { ...offer, rosterId });
 }
 
-export function buyContract(run: RunState, cost: number): RunState {
+/** The Tavern's first contract of the run, and what each one bought adds to the next. First-pass figures. */
+export const CONTRACT_BASE_PRICE = 40;
+export const CONTRACT_PRICE_STEP = 20;
+
+/** Rises across the RUN, not the visit: buying your way to a full roster is possible and dearer each time. */
+export function contractPrice(run: Pick<RunState, 'contractsBought'>): number {
+  return CONTRACT_BASE_PRICE + CONTRACT_PRICE_STEP * run.contractsBought;
+}
+
+export function buyContract(run: RunState): RunState {
+  const cost = contractPrice(run);
   if (run.gold < cost) {
     throw new RecruitmentError(`A Recruit Contract costs ${cost} gold, only ${run.gold} available`);
   }
-  return { ...run, gold: run.gold - cost, recruitContracts: run.recruitContracts + 1 };
+  return { ...run, gold: run.gold - cost, recruitContracts: run.recruitContracts + 1, contractsBought: run.contractsBought + 1 };
+}
+
+/** The map's Contract node (`contractReward`). */
+export function grantContract(run: RunState, amount = 1): RunState {
+  return { ...run, recruitContracts: run.recruitContracts + amount };
 }
 
 /** What's arriving when the roster is at ROSTER_CAP (RosterReplaceScreen). */
@@ -101,27 +115,20 @@ export function recruitFromGuildHallReplacing(
   rosterId: string,
   terminatedRosterId: string
 ): RunState {
-  if (run.gold < offer.cost) {
-    throw new RecruitmentError(`Guild Hall recruit costs ${offer.cost} gold, only ${run.gold} available`);
-  }
-  const terminated = run.roster.find((r) => r.rosterId === terminatedRosterId);
-  if (!terminated) {
+  const spent = spendContract(run);
+  if (!run.roster.some((r) => r.rosterId === terminatedRosterId)) {
     throw new RecruitmentError(`No roster entry ${terminatedRosterId} to terminate`);
   }
-  return replaceRosterEntry({ ...run, gold: run.gold - offer.cost }, terminatedRosterId, guildHallEntry(run, offer, rosterId));
+  return replaceRosterEntry(spent, terminatedRosterId, guildHallEntry(run, offer, rosterId));
 }
 
 /** Roster-full variant of claimContract: the incoming hero keeps its own gear, the outgoing hero's goes with it. */
 export function claimContractReplacing(run: RunState, offer: ContractOffer, rosterId: string, terminatedRosterId: string): RunState {
-  if (run.recruitContracts <= 0) {
-    throw new RecruitmentError('No Recruit Contracts available');
-  }
-  const terminated = run.roster.find((r) => r.rosterId === terminatedRosterId);
-  if (!terminated) {
+  const spent = spendContract(run);
+  if (!run.roster.some((r) => r.rosterId === terminatedRosterId)) {
     throw new RecruitmentError(`No roster entry ${terminatedRosterId} to terminate`);
   }
-  const entry: RosterEntry = { ...offer, rosterId };
-  return replaceRosterEntry({ ...run, recruitContracts: run.recruitContracts - 1 }, terminatedRosterId, entry);
+  return replaceRosterEntry(spent, terminatedRosterId, { ...offer, rosterId });
 }
 
 /** Cap on contract offers per win — a 4v4 would otherwise dump every enemy on the player. */

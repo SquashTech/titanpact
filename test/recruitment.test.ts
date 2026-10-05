@@ -18,6 +18,10 @@ import {
   claimContract,
   claimContractReplacing,
   buyContract,
+  contractPrice,
+  CONTRACT_BASE_PRICE,
+  CONTRACT_PRICE_STEP,
+  grantContract,
   isRecruitable,
   freshRosterId,
   RecruitmentError,
@@ -33,12 +37,13 @@ function seedRoster(heroIds: string[], gold = 0) {
 
 // --- Guild Hall (raise) ---
 
-test('recruitment: Guild Hall recruit spends gold and adds an entry at the act hire level', () => {
+test('recruitment: Guild Hall recruit spends a contract, not gold, and adds an entry at the act hire level', () => {
   const run = seedRoster(['cinderKnight'], 100);
   const offer = guildHallOffers.find((o) => o.heroId === 'ironWarden')!;
 
   const next = recruitFromGuildHall(run, offer, 'ironWarden');
-  assert.strictEqual(next.gold, 100 - offer.cost);
+  assert.strictEqual(next.gold, 100);
+  assert.strictEqual(next.recruitContracts, run.recruitContracts - 1);
   const entry = next.roster.find((r) => r.rosterId === 'ironWarden');
   assert.ok(entry);
   assert.strictEqual(entry!.heroId, 'ironWarden');
@@ -46,8 +51,8 @@ test('recruitment: Guild Hall recruit spends gold and adds an entry at the act h
   assert.deepStrictEqual(entry!.chosenPathIds, []);
 });
 
-test('recruitment: Guild Hall recruit rejects insufficient gold', () => {
-  const run = seedRoster(['cinderKnight'], 5);
+test('recruitment: Guild Hall recruit rejects a run holding no contract, whatever its gold', () => {
+  const run = { ...seedRoster(['cinderKnight'], 1000), recruitContracts: 0 };
   const offer = guildHallOffers.find((o) => o.heroId === 'ironWarden')!;
   assert.throws(() => recruitFromGuildHall(run, offer, 'ironWarden'), RecruitmentError);
 });
@@ -187,12 +192,26 @@ test('recruitment: claiming a contract with none available is rejected', () => {
 });
 
 test('recruitment: buyContract spends gold and grants a Recruit Contract; insufficient gold is rejected', () => {
-  const run = seedRoster(['cinderKnight'], 12);
-  assert.throws(() => buyContract(run, 20), RecruitmentError);
+  const poor = seedRoster(['cinderKnight'], CONTRACT_BASE_PRICE - 1);
+  assert.throws(() => buyContract(poor), RecruitmentError);
 
-  const next = buyContract(run, 12);
+  const run = seedRoster(['cinderKnight'], CONTRACT_BASE_PRICE);
+  const next = buyContract(run);
   assert.strictEqual(next.gold, 0);
   assert.strictEqual(next.recruitContracts, run.recruitContracts + 1);
+});
+
+test('recruitment: the Tavern contract rises by a step with each one bought this run, across visits', () => {
+  let run = seedRoster(['cinderKnight'], 1000);
+  const prices: number[] = [];
+  for (let i = 0; i < 3; i++) {
+    prices.push(contractPrice(run));
+    run = buyContract(run);
+  }
+  assert.deepStrictEqual(prices, [CONTRACT_BASE_PRICE, CONTRACT_BASE_PRICE + CONTRACT_PRICE_STEP, CONTRACT_BASE_PRICE + 2 * CONTRACT_PRICE_STEP]);
+  assert.strictEqual(run.gold, 1000 - prices.reduce((a, b) => a + b, 0));
+  // A contract found on the road is free and does not move the price.
+  assert.strictEqual(contractPrice(grantContract(run)), contractPrice(run));
 });
 
 // --- Roster-full replacement (RosterReplaceScreen) ---
@@ -208,7 +227,8 @@ test('recruitment: recruitFromGuildHallReplacing swaps the terminated hero for a
   assert.ok(incomingOffer, 'expected a Guild Hall offer for a hero not already on the fixture roster');
 
   const next = recruitFromGuildHallReplacing(run, incomingOffer, incomingOffer.heroId, 'tidecaller');
-  assert.strictEqual(next.gold, 1000 - incomingOffer.cost);
+  assert.strictEqual(next.gold, 1000);
+  assert.strictEqual(next.recruitContracts, run.recruitContracts - 1);
   assert.strictEqual(next.roster.length, ROSTER_CAP); // still 6, not 7
   assert.ok(!next.roster.some((r) => r.rosterId === 'tidecaller'), 'tidecaller is gone');
   const entry = next.roster.find((r) => r.rosterId === incomingOffer.heroId);
@@ -219,13 +239,13 @@ test('recruitment: recruitFromGuildHallReplacing swaps the terminated hero for a
   assert.ok(!next.roster.some((r) => r.equipment.includes('sword.common')));
 });
 
-test('recruitment: recruitFromGuildHallReplacing rejects insufficient gold and an unknown terminated rosterId', () => {
+test('recruitment: recruitFromGuildHallReplacing rejects a run with no contract and an unknown terminated rosterId', () => {
   const allSix = ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'nightshade'];
-  const run = seedRoster(allSix, 0);
+  const run = { ...seedRoster(allSix, 1000), recruitContracts: 0 };
   const incomingOffer = guildHallOffers.find((o) => !allSix.includes(o.heroId))!;
   assert.throws(() => recruitFromGuildHallReplacing(run, incomingOffer, incomingOffer.heroId, 'tidecaller'), RecruitmentError);
 
-  const richRun = { ...run, gold: 1000 };
+  const richRun = { ...run, recruitContracts: 1 };
   assert.throws(() => recruitFromGuildHallReplacing(richRun, incomingOffer, incomingOffer.heroId, 'nonexistent'), RecruitmentError);
 });
 
@@ -360,15 +380,16 @@ test('recruitment: the LEVEL axis points the right way — a contract hero outra
   }
 });
 
-test('recruitment: a contract is free in gold and a hire is not — two brakes on two routes', () => {
-  // The free route stays priced by the roster cap (gaining means terminating, and equipment
-  // strips with no refund); gold prices the purchased one.
+test('recruitment: a claim and a hire cost the same one contract and no gold', () => {
+  // One currency for every recruit (docs/run-loop.md "Contracts"): gold buys contracts, never heroes.
   const run = { ...seedRoster(['cinderKnight'], 200), actNumber: 3 };
   const beaten = createRosterEntry('beaten', 'ironWarden', heroes.ironWarden.moveIds);
-
-  assert.strictEqual(claimContract(run, deriveContractOffer(beaten), 'claimed').gold, run.gold);
-
+  const claimed = claimContract(run, deriveContractOffer(beaten), 'claimed');
   const offer = guildHallOffers.find((o) => o.heroId === 'ironWarden')!;
-  assert.strictEqual(recruitFromGuildHall(run, offer, 'hired').gold, run.gold - offer.cost);
-  assert.ok(offer.cost > 0);
+  const hired = recruitFromGuildHall(run, offer, 'hired');
+
+  for (const next of [claimed, hired]) {
+    assert.strictEqual(next.gold, run.gold);
+    assert.strictEqual(next.recruitContracts, run.recruitContracts - 1);
+  }
 });
