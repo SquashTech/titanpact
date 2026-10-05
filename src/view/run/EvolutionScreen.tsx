@@ -270,7 +270,7 @@ function PoolMoveChip({ moveId, onRead }: { moveId: string; onRead: () => void }
 }
 
 /** A granted passive as one row: the glyph, the name and the rule, clamped. The tap opens it whole. */
-function PassiveGrantRow({ passiveId, onRead }: { passiveId: string; onRead: () => void }) {
+export function PassiveGrantRow({ passiveId, onRead }: { passiveId: string; onRead: () => void }) {
   const passive = passives[passiveId];
   return (
     <button

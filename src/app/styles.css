@@ -44313,14 +44313,26 @@ img.smithy-service-art {
 .cx-paths {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
+/* A path: the form to pick on top, its grants under it as the Evolution screen draws them. */
 .cx-path {
-  min-height: 84px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px;
+}
+
+.cx-path-head {
   display: flex;
   align-items: center;
   gap: 10px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
   text-align: left;
 }
 
@@ -44329,9 +44341,11 @@ img.smithy-service-art {
   height: 60px;
   flex: 0 0 auto;
   object-fit: contain;
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--path-lead, transparent) 55%, transparent));
 }
 
 .cx-path-text {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -44346,13 +44360,38 @@ img.smithy-service-art {
   font-weight: 800;
 }
 
-.cx-path-grants {
+.cx-path-types {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
-  font-size: 12px;
+}
+
+.cx-path-rewire {
+  font-size: 11px;
+  font-weight: 800;
+  color: #e8c170;
+}
+
+.cx-path-pick {
+  flex: none;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--text-dim);
+}
+
+.cx-path.is-active .cx-path-pick {
+  color: var(--accent);
+}
+
+.cx-path-grant {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(232, 193, 112, 0.18);
 }
 
 .cx-moves {

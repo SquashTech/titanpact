@@ -28,13 +28,17 @@ import {
 import { BASE_ITEM_SLOTS, EQUIPMENT_FAMILIES, equipmentIdFor, parseEquipmentId, type EquipmentDefinition } from '../../run/equipment';
 import { innatePassiveOf, masteredInnateOf } from '../../run/innate';
 import { TRIAL_CLEAR_STARS } from '../../run/profile';
-import { MOVE_CAP } from '../../run/progression';
+import { MOVE_CAP, pathTypes } from '../../run/progression';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
 import { ElementGlyph } from '../shared/elementIcons';
 import { MoveButtonReplica } from '../shared/MoveTile';
 import { ItemBox } from '../shared/EquipmentBox';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
+import { PassiveGrantRow } from './EvolutionScreen';
+import { MoveDetailOverlay } from '../combat/MoveDetailOverlay';
+import { PassiveDetailOverlay } from '../shared/PassiveDossier';
+import { pathTint, pathTintStyle } from '../shared/pathTint';
 import { PassiveReadout } from '../shared/passiveIcons';
 import { EvolutionStar } from '../shared/EvolutionStar';
 import { StageMovePopup } from '../shared/HeroStage';
@@ -223,31 +227,59 @@ function TeamView({
 
 // --- One hero's build ---
 
-function PathTab({ hero, slot, onPick }: { hero: HeroDefinition; slot: TeamSlot; onPick: (pathId: string) => void }) {
+/** A path as the Evolution screen reads it: the form and its typing to pick, then each grant drawn as the fight draws it, tap to read. */
+function PathTab({ hero, slot, caster, onPick }: { hero: HeroDefinition; slot: TeamSlot; caster: ReturnType<typeof healCasterForEntry>; onPick: (pathId: string) => void }) {
+  const [readingMoveId, setReadingMoveId] = useState<string | null>(null);
+  const [readingPassiveId, setReadingPassiveId] = useState<string | null>(null);
   const paths = (constructedContent.table.evolutions[hero.id] ?? []).flatMap((node) => node.paths);
+  const reading = paths.find((p) => p.unlocksMoveIds.includes(readingMoveId ?? ''));
   return (
     <div className="cx-paths">
       {paths.map((path) => {
-        const grants = [
-          path.swapsOffense ? 'Attack ⇄ Intelligence' : null,
-          ...path.unlocksMoveIds.map((id) => moves[id]?.name ?? id),
-          ...(path.grantsPassiveIds ?? []).map((id) => passives[id]?.name ?? id),
-        ].filter((g): g is string => !!g);
+        const types = pathTypes(hero, path);
+        const traded = path.typeGraft ? (hero.types[1] ?? null) : null;
+        const pathCaster = { ...caster, types };
         return (
-          <button key={path.id} type="button" className={`cx-path${path.id === slot.pathId ? ' is-active' : ''}`} onClick={() => onPick(path.id)}>
-            <HeroPortrait heroId={hero.id} pathId={path.id} className="cx-path-portrait" />
-            <span className="cx-path-text">
-              <span className="cx-path-name">
-                {path.name} <EvolutionStar path={path} />
+          <div key={path.id} className={`cx-path${path.id === slot.pathId ? ' is-active' : ''}`} style={pathTintStyle(hero, path)}>
+            <button type="button" className="cx-path-head" aria-pressed={path.id === slot.pathId} onClick={() => onPick(path.id)}>
+              <HeroPortrait heroId={hero.id} pathId={path.id} className="cx-path-portrait" />
+              <span className="cx-path-text">
+                <span className="cx-path-name" style={{ color: pathTint(hero, path).lead }}>
+                  {path.name} <EvolutionStar path={path} />
+                </span>
+                <span className="cx-path-types">
+                  {types.map((t) => (
+                    <TypeBadge key={t} type={t} />
+                  ))}
+                  {traded && <span className="evo-show-kind-note">trades {traded}</span>}
+                  {path.swapsOffense && <span className="cx-path-rewire">Atk ⇄ Int</span>}
+                </span>
               </span>
-              <span className="cx-path-grants">
-                {path.typeGraft && <TypeBadge type={path.typeGraft} />}
-                {grants.join(' · ')}
-              </span>
-            </span>
-          </button>
+              <span className="cx-path-pick">{path.id === slot.pathId ? 'Chosen' : 'Choose'}</span>
+            </button>
+            {path.unlocksMoveIds
+              .filter((id) => moves[id])
+              .map((id) => (
+                <div key={id} className="cx-path-grant">
+                  <div className="evo-show-kind">New move</div>
+                  <MoveButtonReplica move={moves[id]} caster={pathCaster} onClick={() => setReadingMoveId(id)} onLongPress={() => setReadingMoveId(id)} />
+                </div>
+              ))}
+            {(path.grantsPassiveIds ?? [])
+              .filter((id) => passives[id])
+              .map((id) => (
+                <div key={id} className="cx-path-grant">
+                  <div className="evo-show-kind">New passive</div>
+                  <PassiveGrantRow passiveId={id} onRead={() => setReadingPassiveId(id)} />
+                </div>
+              ))}
+          </div>
         );
       })}
+      {readingMoveId && (
+        <MoveDetailOverlay move={moves[readingMoveId]} caster={reading ? { ...caster, types: pathTypes(hero, reading) } : caster} onClose={() => setReadingMoveId(null)} />
+      )}
+      <PassiveDetailOverlay passive={readingPassiveId ? passives[readingPassiveId] : null} onClose={() => setReadingPassiveId(null)} />
     </div>
   );
 }
@@ -408,7 +440,7 @@ function HeroView({ slot, onChange, onRemove, onBack }: { slot: TeamSlot; onChan
         ))}
       </div>
       <div className="screen-scroll cx-tab-body" role="tabpanel">
-        {tab === 'path' && <PathTab hero={hero} slot={slot} onPick={(pathId) => onChange(withPath(constructedContent, slot, pathId))} />}
+        {tab === 'path' && <PathTab hero={hero} slot={slot} caster={caster} onPick={(pathId) => onChange(withPath(constructedContent, slot, pathId))} />}
         {tab === 'moves' && <MovesTab slot={slot} caster={caster} onToggle={(id) => onChange(toggleMove(slot, id))} />}
         {tab === 'items' && <ItemsTab slot={slot} onSet={(i, id) => onChange(setItem(slot, i, id))} />}
       </div>
