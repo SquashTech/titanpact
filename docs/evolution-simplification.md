@@ -76,8 +76,8 @@ on every other path (Cinder's Explosive: Immolate, Scorch, Inferno). A rewire's 
 the first TWO damage moves a tier on its new column, plus the tool — up to six. The extra seat is
 a hit's or nothing: a tier with one hit does not fill it with a second tool. Cinder gains Backdraft
 and Firestorm; Revenant's Wraithblade stays at one (Spirit's physical column is Spooky Slice
-alone), a slate gap, not a rule one. **Every rewire hero's signature is on the column it left**
-— a second-order question for the signature pass, not settled here.
+alone), a slate gap, not a rule one. **Every rewire hero's signature was on the column it left**
+— settled 2026-10-05: the signature follows the rewire (`docs/mastery.md` §5c).
 
 ## 4. The rewire: the one stat exception
 

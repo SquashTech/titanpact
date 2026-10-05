@@ -9,7 +9,10 @@ import { moves } from '../src/data/moves';
 import { passives } from '../src/data/passives';
 import { progressionTable } from '../src/data/progression';
 import { spawnSlate } from '../src/data/titanspawn';
-import { atEvolution, chooseEvolutionPath, levelMovePool, type EvolutionPath } from '../src/run/progression';
+import { atEvolution, chooseEvolutionPath, levelMovePool, pendingSignature, type EvolutionPath } from '../src/run/progression';
+import { rewiredSignatureId } from '../src/data/signatures';
+import { equipment } from '../src/data/equipment';
+import { constructedMovePool, withPath } from '../src/run/constructed';
 import { entryGradesFor, gradesFor, grantXp } from '../src/run/growth';
 import { addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
 
@@ -145,6 +148,32 @@ test('evolution simplification: the rewire trades Attack and Intelligence — ba
   const unswapped = grantXp({ ...after, offenseSwapped: false }, hero, 27_000 - after.xp, () => 0.05).gained;
   assert.strictEqual(levelled.intelligence ?? 0, unswapped.attack ?? 0);
   assert.strictEqual(levelled.attack ?? 0, unswapped.intelligence ?? 0);
+});
+
+test('evolution simplification: the signature follows the rewire — learned before it, owed after it, and in Constructed', () => {
+  const twin = rewiredSignatureId('hammerbrand');
+  assert.strictEqual(moves[twin].category, 'magical');
+  assert.strictEqual(moves[twin].basePower, moves.hammerbrand.basePower);
+
+  // Learned first: it changes hands with the stats.
+  let run = seed('cinderKnight');
+  run = { ...run, roster: [{ ...run.roster[0], unlockedMoveIds: ['singe', 'hammerbrand'] }] };
+  run = chooseEvolutionPath(run, progressionTable, heroes, 'cinderKnight', 'cinderKnight-explosive');
+  assert.ok(run.roster[0].unlockedMoveIds.includes(twin));
+  assert.ok(!run.roster[0].unlockedMoveIds.includes('hammerbrand'));
+
+  // Owed after: the level-up teaches the twin.
+  const swapped = { ...seed('cinderKnight').roster[0], offenseSwapped: true, xp: 30 ** 3 };
+  assert.strictEqual(pendingSignature(heroes.cinderKnight, swapped), twin);
+  assert.strictEqual(pendingSignature(heroes.cinderKnight, { ...swapped, offenseSwapped: false }), 'hammerbrand');
+
+  // Constructed: the pool holds the form's own, and a path change carries a held one across.
+  const content = { heroes, table: progressionTable, equipment };
+  const slot = { heroId: 'cinderKnight', pathId: 'cinderKnight-ironclad', moveIds: ['hammerbrand'], itemIds: [] };
+  assert.ok(constructedMovePool(content, { ...slot, pathId: 'cinderKnight-explosive' }).includes(twin));
+  assert.ok(!constructedMovePool(content, { ...slot, pathId: 'cinderKnight-explosive' }).includes('hammerbrand'));
+  assert.deepStrictEqual(withPath(content, slot, 'cinderKnight-explosive').moveIds, [twin]);
+  assert.deepStrictEqual(withPath(content, withPath(content, slot, 'cinderKnight-explosive'), null).moveIds, ['hammerbrand']);
 });
 
 test('evolution simplification: a grafted Cinder is offered its new type\'s line on the level-up roll', () => {

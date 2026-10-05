@@ -15,6 +15,7 @@ import type { RosterEntry, RunState } from './state';
 import { mergeStatMods } from './statMods';
 import { levelOf } from './growth';
 import { moves as moveCatalog } from '../data/moves';
+import { rewiredSignatureId } from '../data/signatures';
 
 /** Past the cap, growth is substitution, never expansion. */
 export const MOVE_CAP = 4;
@@ -303,9 +304,16 @@ export function signatureLevelFor(hero: HeroDefinition | undefined): number | nu
  */
 export function pendingSignature(hero: HeroDefinition | undefined, entry: RosterEntry, level: number = levelOf(entry)): string | null {
   const at = signatureLevelFor(hero);
-  const moveId = hero?.signatureMoveId;
+  const moveId = signatureIdFor(hero, entry);
   if (!moveId || at === null || level < at) return null;
   return entry.unlockedMoveIds.includes(moveId) || entry.offeredMoveIds.includes(moveId) ? null : moveId;
+}
+
+/** The signature as this entry swings it: the authored move, or its rewired twin once the hero has traded Attack and Intelligence. */
+export function signatureIdFor(hero: HeroDefinition | undefined, entry: Pick<RosterEntry, 'offenseSwapped'>): string | null {
+  const id = hero?.signatureMoveId;
+  if (!id) return null;
+  return entry.offenseSwapped ? rewiredSignatureId(id) : id;
 }
 
 /** A fixture helper: the entry stood at its Evolution — Mastery raised to the pip that opens it. What the sandbox and the tests use to evolve a hero without walking it there. */
@@ -445,11 +453,15 @@ export function chooseEvolutionPath(
   if (!path) throw new ProgressionError(`${pathId} is not one of the offered paths`);
 
   let swapGrant: Partial<Record<StatKey, number>> = {};
+  // A signature already learned (or offered) changes hands with the stats.
+  let rewire = (id: string) => id;
   if (path.swapsOffense) {
     const hero = heroes[entry.heroId];
     if (!hero) throw new ProgressionError(`Unknown hero ${entry.heroId}`);
     if (entry.offenseSwapped) throw new ProgressionError(`${rosterId} has already traded Attack and Intelligence`);
     swapGrant = offenseSwapDelta(hero, entry);
+    const signature = hero.signatureMoveId;
+    if (signature) rewire = (id) => (id === signature ? rewiredSignatureId(signature) : id);
   }
 
   let evolutionTypeGraft = entry.evolutionTypeGraft;
@@ -468,9 +480,9 @@ export function chooseEvolutionPath(
   const nextEntry: RosterEntry = {
     ...entry,
     chosenPathIds: [...entry.chosenPathIds, path.id],
-    unlockedMoveIds: applyEvolutionMoves(entry.unlockedMoveIds, path.unlocksMoveIds).unlockedMoveIds,
+    unlockedMoveIds: applyEvolutionMoves(entry.unlockedMoveIds.map(rewire), path.unlocksMoveIds).unlockedMoveIds,
     // Both halves are spent: what the cap took, and the overflow the caller is about to offer.
-    offeredMoveIds: withOffers(entry, path.unlocksMoveIds),
+    offeredMoveIds: withOffers(entry, path.unlocksMoveIds).map(rewire),
     evolutionStatGrants: mergeStatMods(entry.evolutionStatGrants, swapGrant),
     evolutionPassiveGrants: [...new Set([...entry.evolutionPassiveGrants, ...(path.grantsPassiveIds ?? [])])],
     offenseSwapped: entry.offenseSwapped || !!path.swapsOffense,

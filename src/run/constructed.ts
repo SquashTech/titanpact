@@ -11,7 +11,7 @@ import { createRosterEntry, createRunState, ROSTER_CAP, type RosterEntry, type R
 import { BASE_ITEM_SLOTS, equipmentIdFor, parseEquipmentId, type EquipmentDefinition, type EquipmentRarity } from './equipment';
 import { MAX_LEVEL, expectedGrowthAt, xpForLevel } from './growth';
 import { MASTERY_CAP } from './mastery';
-import { MOVE_CAP, chooseEvolutionPath, rosterEntryTypes, scheduleEntries, scheduleFor, type EvolutionPath, type ProgressionTable } from './progression';
+import { MOVE_CAP, chooseEvolutionPath, rosterEntryTypes, scheduleEntries, scheduleFor, signatureIdFor, type EvolutionPath, type ProgressionTable } from './progression';
 
 export const TEAM_SIZE = ROSTER_CAP;
 export const CONSTRUCTED_LEVEL = MAX_LEVEL;
@@ -89,7 +89,7 @@ export function constructedMovePool(content: ConstructedContent, slot: Pick<Team
       ...(content.table.moveTiers[hero.id] ?? []),
       ...(path?.unlocksMoveIds ?? []),
       ...(path?.learnableMoveIds ?? []),
-      ...(hero.signatureMoveId ? [hero.signatureMoveId] : []),
+      ...[signatureIdFor(hero, { offenseSwapped: !!path?.swapsOffense })].filter((id): id is string => !!id),
     ]),
   ];
 }
@@ -205,7 +205,12 @@ export function slotTypes(content: ConstructedContent, slot: Pick<TeamSlot, 'her
 export function withPath(content: ConstructedContent, slot: TeamSlot, pathId: string | null): TeamSlot {
   const next = { ...slot, pathId };
   const pool = new Set(constructedMovePool(content, next));
-  return { ...next, moveIds: slot.moveIds.filter((id) => pool.has(id)) };
+  // A held signature changes hands with the stats, into or out of a rewire.
+  const hero = content.heroes[slot.heroId];
+  const signature = signatureIdFor(hero, { offenseSwapped: !!constructedPath(content.table, slot.heroId, pathId)?.swapsOffense });
+  const before = signatureIdFor(hero, { offenseSwapped: !!constructedPath(content.table, slot.heroId, slot.pathId)?.swapsOffense });
+  const moveIds = slot.moveIds.map((id) => (id === before && signature ? signature : id));
+  return { ...next, moveIds: moveIds.filter((id) => pool.has(id)) };
 }
 
 /** Held: dropped. Not held: added while there is room, else nothing. */

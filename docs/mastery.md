@@ -196,6 +196,17 @@ spawn line has none.
 **The enemy side.** An enemy is levelled to its node, so a hero-pool enemy holds its signature from
 the same window a roster hero does. Symmetric by design; measured in §8 phase 6.
 
+### 5c. The signature follows the rewire (2026-10-05, per user direction)
+
+A path that trades Attack and Intelligence (`swapsOffense`) left every one of the nine rewire
+heroes' signatures on the column it left — Cinder's Emberlance physical on an Intelligence-85
+Explosive. Every signature now has a **rewired twin** (`rewiredSignatureId`, `data/signatures.ts`):
+the same move, name, power and riders, the category flipped, derived rather than authored. A hero
+that has rewired holds the twin wherever it would hold the signature: `signatureIdFor` is what the
+level-up report teaches, `chooseEvolutionPath` carries a signature already learned (or declined)
+across with the stats, and Constructed's pool and `withPath` do the same. The twin is still the
+hero's ONE signature — in no pool, untiered, and tagged Signature wherever it is drawn.
+
 ---
 
 ## 5b. The mastered innate — the tenth pip

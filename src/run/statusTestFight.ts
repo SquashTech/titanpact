@@ -7,6 +7,7 @@
 import { firstStatusApplication } from '../engine/content';
 import type { MoveDefinition } from '../engine/content';
 import { moves } from '../data/moves';
+import { rewiredSignatureOrigin } from '../data/signatures';
 import { heroes } from '../data/heroes';
 import { createEmptyLoadout } from './equipment';
 import type { SandboxHeroConfig, SandboxSideConfig } from './sandbox';
@@ -23,7 +24,7 @@ function byName(a: MoveDefinition, b: MoveDefinition): number {
 
 /** `afflict` = enemy-targeted status moves; `support` = self/ally status moves plus every cleanser. */
 export function statusTestMovePools(): { afflict: string[]; support: string[] } {
-  const all = Object.values(moves);
+  const all = Object.values(moves).filter((m) => !rewiredSignatureOrigin[m.id]);
   const afflict = all.filter((m) => firstStatusApplication(m) && ENEMY_TARGET_MODES.has(m.target));
   const support = all.filter((m) => (firstStatusApplication(m) && !ENEMY_TARGET_MODES.has(m.target)) || m.cleanses);
   return {

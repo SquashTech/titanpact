@@ -489,7 +489,7 @@ export const trials: Record<string, TrialDefinition> = {
         {
           heroId: 'mindweaver',
           pathId: 'mindweaver-construct',
-          moveIds: ['mindShatter', 'mindlink', 'cogSlam', 'enervate'],
+          moveIds: ['mindShatter', 'mindlinkRewired', 'cogSlam', 'enervate'],
           itemIds: ['crest.mythic', 'tome.mythic', 'robe.mythic'],
         },
         {

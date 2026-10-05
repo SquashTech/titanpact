@@ -16,7 +16,7 @@
 
 import type { MoveDefinition } from '../engine/content';
 
-export const signatureMoves: Record<string, MoveDefinition> = {
+const authoredSignatures: Record<string, MoveDefinition> = {
   // --- Fire ---
   // Cinder: the salamander. Drives the spear in white-hot; what it hits catches, and the shield
   // comes up harder.
@@ -1296,3 +1296,25 @@ export const signatureMoves: Record<string, MoveDefinition> = {
     description: 'Settles down and lets the whole side climb on: something broad in front of every blow, and a calm that keeps mending (Shield 35 and Renew 6% on both allies).',
   },
 };
+
+/**
+ * A rewire's signature (2026-10-05, per user direction, docs/mastery.md §5c): the same move on the
+ * other column, so a hero that traded Attack and Intelligence still swings its signature with its
+ * strong hand. Derived, never authored — same name, power and riders, the category flipped.
+ */
+export function rewiredSignatureId(signatureId: string): string {
+  return `${signatureId}Rewired`;
+}
+
+const rewiredSignatures: Record<string, MoveDefinition> = Object.fromEntries(
+  Object.values(authoredSignatures).map((move) => [
+    rewiredSignatureId(move.id),
+    { ...move, id: rewiredSignatureId(move.id), category: move.category === 'physical' ? 'magical' : 'physical' },
+  ])
+);
+
+/** Every signature and its rewired twin; the twins fold into data/moves.ts with the rest. */
+export const signatureMoves: Record<string, MoveDefinition> = { ...authoredSignatures, ...rewiredSignatures };
+
+/** The twin's original, for a surface that tags a signature. */
+export const rewiredSignatureOrigin: Readonly<Record<string, string>> = Object.fromEntries(Object.keys(authoredSignatures).map((id) => [rewiredSignatureId(id), id]));

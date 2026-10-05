@@ -28,7 +28,7 @@ import {
 import { BASE_ITEM_SLOTS, EQUIPMENT_FAMILIES, equipmentIdFor, parseEquipmentId, type EquipmentDefinition } from '../../run/equipment';
 import { innatePassiveOf, masteredInnateOf } from '../../run/innate';
 import { TRIAL_CLEAR_STARS } from '../../run/profile';
-import { MOVE_CAP, pathTypes } from '../../run/progression';
+import { MOVE_CAP, pathTypes, signatureIdFor } from '../../run/progression';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
 import { ElementGlyph } from '../shared/elementIcons';
@@ -289,13 +289,14 @@ function MovesTab({ slot, caster, onToggle }: { slot: TeamSlot; caster: ReturnTy
   const [inspect, setInspect] = useState<MoveDefinition | null>(null);
   const hero = heroes[slot.heroId];
   const path = constructedPath(constructedContent.table, slot.heroId, slot.pathId);
-  const rank = (id: string) => (id === hero?.signatureMoveId ? 0 : TIER_RANK[moves[id].tier ?? 'early']);
+  const signature = signatureIdFor(hero, { offenseSwapped: !!path?.swapsOffense });
+  const rank =(id: string) => (id === signature ? 0 : TIER_RANK[moves[id].tier ?? 'early']);
   const pool = constructedMovePool(constructedContent, slot)
     .filter((id) => moves[id])
     .sort((a, b) => rank(a) - rank(b));
   const types = ['All', ...new Set(pool.map((id) => moves[id].type))];
   const shown = pool.filter((id) => filter === 'All' || moves[id].type === filter);
-  const tagFor = (id: string) => (id === hero?.signatureMoveId ? 'Signature' : path?.unlocksMoveIds.includes(id) ? 'Path' : undefined);
+  const tagFor = (id: string) => (id === signature ? 'Signature' : path?.unlocksMoveIds.includes(id) ? 'Path' : undefined);
 
   return (
     <div className="cx-moves">
