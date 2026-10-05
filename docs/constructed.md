@@ -227,7 +227,11 @@ the "Titanpact Teambuilder" design canvas; tabs and locked heroes in full colour
   read whole, as in Classic. **The signature leads it, then Late, Mid, Early** (2026-10-04, per
   user direction): at level 30 the late bands are what gets picked.
 - **Items: a family a socket, nothing more** (2026-10-04, per user direction — the enchant list
-  came out, and the Trials' enchants with it, so the suggestions stay legal).
+  came out, and the Trials' enchants with it, so the suggestions stay legal). Drawn as a run
+  draws gear: the sockets are item pieces, the families are the reward row's choice cards with
+  their grants on them, and a pick moves on to the next empty socket.
+- **The picker opens on every hero the player can build**, three across in chart order; the rail
+  narrows it to a type, where the locked ones show too.
 - **No exposure read on the team page** (2026-10-04, per user direction): which types hit the
   six hard is the player's to see.
 - **A beaten Trial's team can be copied** into a slot — the fastest teacher there is.

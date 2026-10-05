@@ -6,10 +6,11 @@ import { useMemo, useState } from 'react';
 import { heroes } from '../../data/heroes';
 import { moves } from '../../data/moves';
 import { passives } from '../../data/passives';
-import { equipment, EQUIPMENT_FAMILY_NOUNS } from '../../data/equipment';
+import { equipment } from '../../data/equipment';
 import { constructedContent, suggestedSlotFor, TRIAL_LIST } from '../../data/trials';
 import type { HeroDefinition, MoveDefinition, MoveTier, TypeId } from '../../engine/content';
 import {
+  CONSTRUCTED_RARITY,
   TEAM_SIZE,
   TEAM_SLOTS,
   constructedMovePool,
@@ -24,7 +25,7 @@ import {
   type Team,
   type TeamSlot,
 } from '../../run/constructed';
-import { EQUIPMENT_FAMILIES, equipmentIdFor, parseEquipmentId } from '../../run/equipment';
+import { BASE_ITEM_SLOTS, EQUIPMENT_FAMILIES, equipmentIdFor, parseEquipmentId, type EquipmentDefinition } from '../../run/equipment';
 import { innatePassiveOf, masteredInnateOf } from '../../run/innate';
 import { TRIAL_CLEAR_STARS } from '../../run/profile';
 import { MOVE_CAP } from '../../run/progression';
@@ -32,7 +33,8 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
 import { ElementGlyph } from '../shared/elementIcons';
 import { MoveButtonReplica } from '../shared/MoveTile';
-import { EquipmentIcon } from '../shared/EquipmentBox';
+import { ItemBox } from '../shared/EquipmentBox';
+import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
 import { PassiveReadout } from '../shared/passiveIcons';
 import { EvolutionStar } from '../shared/EvolutionStar';
 import { StageMovePopup } from '../shared/HeroStage';
@@ -196,7 +198,7 @@ function TeamView({
               <button key={i} type="button" className={`cx-cell${legal ? '' : ' is-broken'}`} onClick={() => onOpenSlot(i)}>
                 <HeroPortrait heroId={slot.heroId} pathId={slot.pathId ?? undefined} className="cx-cell-portrait" />
                 <span className="cx-cell-name">{hero?.name ?? slot.heroId}</span>
-                <span className="cx-cell-path">{legal ? (path?.name ?? 'Unevolved') : 'Needs a fix'}</span>
+                <span className="cx-cell-path">{legal ? (path?.name ?? 'Unevolved') : slot.moveIds.length === 0 ? 'No moves yet' : 'Needs a fix'}</span>
                 <span className="cx-cell-types">
                   {slotTypes(constructedContent, slot).map((t) => (
                     <TypeBadge key={t} type={t} />
@@ -296,36 +298,35 @@ function MovesTab({ slot, caster, onToggle }: { slot: TeamSlot; caster: ReturnTy
 }
 
 function ItemsTab({ slot, onSet }: { slot: TeamSlot; onSet: (index: number, itemId: string | null) => void }) {
-  const [socket, setSocket] = useState(0);
+  const [socket, setSocket] = useState(() => Math.min(slot.itemIds.length, BASE_ITEM_SLOTS - 1));
+  const [inspect, setInspect] = useState<EquipmentDefinition | null>(null);
   const held = slot.itemIds[socket] ?? null;
-  const heldFamily = held ? parseEquipmentId(held).base : null;
+  const elsewhere = new Set(slot.itemIds.filter((_, i) => i !== socket).map((id) => parseEquipmentId(id).base));
+  const options = EQUIPMENT_FAMILIES.map((family) => equipment[equipmentIdFor(family, CONSTRUCTED_RARITY)]).filter((item): item is EquipmentDefinition => !!item);
+
+  const equip = (itemId: string) => {
+    const next = setItem(slot, socket, itemId);
+    onSet(socket, itemId);
+    // On to the next empty socket, so three items are three taps.
+    if (next.itemIds.length < BASE_ITEM_SLOTS) setSocket(next.itemIds.length);
+  };
 
   return (
     <div className="cx-items">
       <div className="cx-sockets">
-        {[0, 1, 2].map((i) => {
+        {Array.from({ length: BASE_ITEM_SLOTS }, (_, i) => {
           const id = slot.itemIds[i];
-          const item = id ? equipment[id] : null;
+          const item = id ? (equipment[id] ?? null) : null;
           return (
-            <button key={i} type="button" className={`cx-socket${i === socket ? ' is-active' : ''}`} onClick={() => setSocket(Math.min(i, slot.itemIds.length))}>
-              {item ? <EquipmentIcon item={item} className="cx-socket-icon" /> : <span className="cx-socket-empty">+</span>}
+            <div key={i} className="cx-socket">
+              <ItemBox
+                item={item}
+                className={i === socket ? 'selected' : undefined}
+                onTap={() => setSocket(Math.min(i, slot.itemIds.length))}
+                onLongPress={item ? () => setInspect(item) : undefined}
+              />
               <span className="cx-socket-name">{item ? item.name : 'Empty'}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="cx-label">Family</div>
-      <div className="cx-families">
-        {EQUIPMENT_FAMILIES.map((family) => {
-          const id = equipmentIdFor(family, 'mythic');
-          const item = equipment[id];
-          const on = heldFamily === family;
-          return (
-            <button key={family} type="button" className={`cx-family${on ? ' is-active' : ''}`} onClick={() => onSet(socket, id)}>
-              {item && <EquipmentIcon item={item} className="cx-family-icon" />}
-              <span>{EQUIPMENT_FAMILY_NOUNS[family]}</span>
-            </button>
+            </div>
           );
         })}
       </div>
@@ -335,6 +336,15 @@ function ItemsTab({ slot, onSet }: { slot: TeamSlot; onSet: (index: number, item
           Empty this socket
         </button>
       )}
+
+      <div className="cx-families">
+        {options.map((item) => (
+          <div key={item.id} className={`cx-family${elsewhere.has(parseEquipmentId(item.id).base) ? ' is-elsewhere' : ''}`}>
+            <EquipChoiceCard item={item} picked={item.id === held} onPick={() => equip(item.id)} onInspect={() => setInspect(item)} revealDelayMs={0} />
+          </div>
+        ))}
+      </div>
+      {inspect && <EquipInspectOverlay item={inspect} onClose={() => setInspect(null)} />}
     </div>
   );
 }
@@ -417,21 +427,25 @@ function HeroView({ slot, onChange, onRemove, onBack }: { slot: TeamSlot; onChan
 // --- The picker ---
 
 function PickView({ team, unlocked, onPick, onBack }: { team: Team; unlocked: ReadonlySet<string>; onPick: (heroId: string) => void; onBack: () => void }) {
-  const [type, setType] = useState<TypeId>('Fire');
+  const [type, setType] = useState<TypeId | 'All'>('All');
   const onTeam = new Set(team.slots.map((s) => s.heroId));
   const ofType = (t: TypeId) => Object.values(heroes).filter((h) => h.types[0] === t);
   const wonOf = (t: TypeId) => ofType(t).filter((h) => unlocked.has(h.id)).length;
+  // All: every hero the player can build, in chart order. A type page also shows whom to go win with.
+  const shown = type === 'All' ? RAIL_TYPES.flatMap(ofType).filter((h) => unlocked.has(h.id)) : ofType(type);
 
   return (
     <>
       <Header title="Add a hero" onBack={onBack} backLabel="Back to the team" />
       <div className="cx-pick">
         <div className="screen-scroll cx-pick-page">
-          <div className="cx-pick-head">
-            <TypeBadge type={type} />
-          </div>
+          {type !== 'All' && (
+            <div className="cx-pick-head">
+              <TypeBadge type={type} />
+            </div>
+          )}
           <div className="cx-pick-grid">
-            {ofType(type).map((hero) => {
+            {shown.map((hero) => {
               const locked = !unlocked.has(hero.id);
               const taken = onTeam.has(hero.id);
               return (
@@ -446,13 +460,21 @@ function PickView({ team, unlocked, onPick, onBack }: { team: Team; unlocked: Re
                   )}
                   <HeroPortrait heroId={hero.id} className="cx-pick-portrait" />
                   <span className="cx-pick-name">{hero.name}</span>
-                  <span className="cx-pick-note">{locked ? `Win a run with ${hero.name}` : taken ? 'On this team' : 'Won with'}</span>
+                  <span className="cx-pick-types">
+                    {hero.types.map((t) => (
+                      <TypeBadge key={t} type={t} />
+                    ))}
+                  </span>
+                  {(locked || taken) && <span className="cx-pick-note">{locked ? `Win a run with ${hero.name}` : 'On this team'}</span>}
                 </button>
               );
             })}
           </div>
         </div>
         <nav className="cx-rail" aria-label="Types">
+          <button type="button" className={`cx-rail-type cx-rail-all${type === 'All' ? ' is-active' : ''}`} aria-label={`All, ${unlocked.size} you can build`} onClick={() => setType('All')}>
+            All
+          </button>
           {RAIL_TYPES.map((t) => (
             <button key={t} type="button" className={`cx-rail-type${t === type ? ' is-active' : ''}`} aria-label={`${t}, ${wonOf(t)} of 6 won with`} onClick={() => setType(t)}>
               <ElementGlyph type={t} />
