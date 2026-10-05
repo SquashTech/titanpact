@@ -1096,19 +1096,13 @@ export function FightScreen({
   /** The one card a single-target move could be aimed at, or null when there is a choice to make. */
   function soleTarget(combatantId: string, move: MoveDefinition): string | null {
     const mode = declarationMode(move);
-    const candidates =
-      mode === 'singleEnemy'
-        ? visibleTargets(move, mode, enemyActiveAlive)
-        : mode === 'singleAlly'
-          ? visibleTargets(move, mode, playerActiveAlive)
-          : mode === 'self'
-            ? [combatantId]
-            : [];
+    const candidates = mode === 'singleAlly' ? visibleTargets(move, mode, playerActiveAlive) : mode === 'self' ? [combatantId] : [];
     return candidates.length === 1 ? candidates[0] : null;
   }
 
   // Two taps when there is a choice: this loads the move and lights its targets, a second tap on a
-  // card commits. With exactly one legal target the first tap commits — nothing is left to choose.
+  // card commits. A move on yourself or your one ally commits on the first tap; a strike at the last
+  // enemy standing still takes the second, the cheap "are you sure" (2026-10-05, per user direction).
   function handleMoveClick(combatantId: string, move: MoveDefinition) {
     const only = soleTarget(combatantId, move);
     if (only) {
@@ -1906,6 +1900,11 @@ export function FightScreen({
                     data-sfx={spread ? 'ui.target' : undefined}
                     aria-label={spread ? `Confirm — hits ${spreadTargetLabel(selectingMode!)}` : undefined}
                   >
+                    {spread && (
+                      <span className="target-row-spread-label" aria-hidden="true">
+                        {TARGET_MODE_LABELS[selectingMode!] ?? 'Everyone'}
+                      </span>
+                    )}
                     {targetableIds.map((tid) => {
                       const tCombatant = combat.combatants[tid];
                       const mult = effectivenessAgainst(move, tid);
