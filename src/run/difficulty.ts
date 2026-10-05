@@ -79,7 +79,7 @@ export function championGradeFor(actNumber: number): GrowthGrade {
  * act clear at Act 1's par and ~1 at Act 5's — and this is the measured first pass: Act 1
  * 50 → 58%, Act 3 98 → 96, Act 5 90 → 88. Acts past the table hold at its last entry.
  */
-export const ACT_LEVEL_ADJUST: readonly number[] = [0, -2, 0, 2, 0, 0];
+export const ACT_LEVEL_ADJUST: readonly number[] = [0, -2, 0, 2, 2, 0];
 
 export function actLevelAdjust(actNumber: number): number {
   const act = clampAct(actNumber);
@@ -222,15 +222,21 @@ export function openerEscortTiersFor(actNumber: number): readonly SpawnTier[] {
 export const OPENER_GEAR_FROM_ACT = 2;
 
 /**
- * The act from which every hero-pool enemy, Guardian escort and champion carries an item, rolled
- * on its node's own rarity curve (equipment.ts LOOT_SOURCE) — the enemy loadout's first faucet.
- * Level alone falls behind a player stacking Banners and late-window gear (docs/enemy-levels.md
- * §5); gear is the axis that grows the way the player's does. Rolled to fit the wearer
- * (data/equipment.ts rollFittingGear), and a contract keeps it (docs/gear-absorption.md §7).
+ * Items every hero-pool enemy, Guardian escort and champion carries, by act (index 0 unused; acts
+ * past the table hold at its last entry), each rolled on its node's own rarity curve
+ * (equipment.ts LOOT_SOURCE), no two of a family. Level alone falls behind a player stacking
+ * Banners and late-window gear (docs/enemy-levels.md §5); gear is the axis that grows the way the
+ * player's does. Rolled to fit the wearer (data/equipment.ts rollFittingGear), and a contract
+ * keeps it (docs/gear-absorption.md §7).
  */
-export const ENEMY_GEAR_FROM_ACT = 4;
+export const ENEMY_GEAR_BY_ACT: readonly number[] = [0, 0, 0, 1, 2];
 
-/** What a node's enemies arrive holding in this act; undefined below `ENEMY_GEAR_FROM_ACT`. */
+export function enemyGearCountFor(actNumber: number): number {
+  return ENEMY_GEAR_BY_ACT[Math.min(clampAct(actNumber), ENEMY_GEAR_BY_ACT.length - 1)];
+}
+
+/** What a node's enemies arrive holding in this act; undefined in an act that fields them bare. */
 export function enemyLoadoutFor(kind: EncounterNodeKind, actNumber: number): EnemyLoadout | undefined {
-  return clampAct(actNumber) >= ENEMY_GEAR_FROM_ACT ? { gear: rarityWeightsFor(actNumber, LOOT_SOURCE[kind]) } : undefined;
+  const gearCount = enemyGearCountFor(actNumber);
+  return gearCount > 0 ? { gear: rarityWeightsFor(actNumber, LOOT_SOURCE[kind]), gearCount } : undefined;
 }

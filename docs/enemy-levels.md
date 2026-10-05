@@ -11,6 +11,11 @@
 > acts** (2026-10-02, `docs/xp-overhaul.md` §5): Act 5 is the finale, Act 4's champion grows on C,
 > and `ACT_LEVEL_ADJUST` is now Act 1 −2, Act 3 +2, the rest 0. The tables below were measured on
 > five acts; their Act 5 column is history.
+> **2026-10-05 (per user direction, Base read as too easy):** an enemy's full kit now swaps an
+> Early move for a later band's offer (`enemyKitWithOffer`, `src/run/enemyGen.ts` — it froze at four
+> Early moves), gear is `ENEMY_GEAR_BY_ACT` = one item in Act 3 and two in Act 4, and Act 4's term
+> is +2. Measured (2000 runs, seed 1): full-clear 90.8 → 88.7% skilled, 49.3 → 45.3% chart; Act 4
+> 99.5 → 97.7 / 98.1 → 89.2%; the finale unmoved.
 
 ---
 
@@ -104,8 +109,8 @@ same shape the opener's escorts already used for their item (`escortLoadout`). `
 already carries both fields and the scout sheet already lists equipment, so nothing new is
 stored or drawn.
 
-**Wired today: gear only, from Act 4** (`ENEMY_GEAR_FROM_ACT`, `enemyLoadoutFor`): one item
-per hero-pool enemy, Guardian escort and champion, rolled on the node's own rarity curve
+**Wired today: gear only, from Act 3** (`ENEMY_GEAR_BY_ACT`, `enemyLoadoutFor`): one item in
+Act 3 and two in Act 4 (no two of a family, `EnemyLoadout.gearCount`) per hero-pool enemy, Guardian escort and champion, rolled on the node's own rarity curve
 (`LOOT_SOURCE` — the Elite's and the Guardian's a tier ahead). A contract hero keeps the piece
 it fought in (`docs/gear-absorption.md` §7). Passives are the seam's other half and nothing hands them out yet.
 

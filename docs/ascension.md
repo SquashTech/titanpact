@@ -146,7 +146,7 @@ scripted rather than random, new mechanics on boss fights.
 |---|---|---|
 | **A1** | **Permadeath** + the woken Guardians (§2a). BUILT. | `src/run/ascension.ts`. |
 | **A2** | **The ward.** Every Guardian is **warded while its escorts stand** — the Herald's rule, trickled down. (The Mark half of this row moved to A1; A2 needs a second piece to stand as a rung.) | `wardedWhileCompanyStands`. A warded champion leading from round one is a target you cannot hit, which may be the point. |
-| **A3** | **Warbands.** The fork and the Guardian's escorts draw **authored comps** — a setter beside its reader, a Shield wall behind a DoT, a Haunt engine — in place of the typing roll, and enemies wear gear from Act 1. | The map-seeded draw in `src/run/encounters.ts`; `ENEMY_GEAR_FROM_ACT` 4 → 1. The one rung that is authoring work. |
+| **A3** | **Warbands.** The fork and the Guardian's escorts draw **authored comps** — a setter beside its reader, a Shield wall behind a DoT, a Haunt engine — in place of the typing roll, and enemies wear gear from Act 1. | The map-seeded draw in `src/run/encounters.ts`; `ENEMY_GEAR_BY_ACT` from Act 1. The one rung that is authoring work. |
 | **A4** | **The Banners fray.** Each Banner at half, the Anvil and Enchanter at ×1.5. The economy rung — the one that taxes the Revive (§1). | `guardianBannerRelics`, `ANVIL_PRICE_BY_TARGET`, `ENCHANT_PRICE_BY_RARITY`. |
 | **A5** | **The Titan's reach.** Withering Gaze at a tenth, every Guardian a two-phase fight, an Ascension AI tier. Candidate: no opening Blessing (`blessings-and-statuses.md` §1.7). | `WITHERING_GAZE_FRACTION` 0.05 → 0.10; the `reserves` phase. **The AI tier does not exist.** |
 

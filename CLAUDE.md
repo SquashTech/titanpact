@@ -846,19 +846,24 @@ what's still unimplemented:
   `src/run/difficulty.ts`): opener −3, `battle` −2, **Skirmish at par, Elite +1**, the
   Guardian's escorts −3 with the champion `CHAMPION_LEVEL_BONUS` = 2 over them, so a row of
   the map reads *Skirmish at your level, Elite a step over, the Guardian beaten on its body*;
-  **plus the act's own term** (`ACT_LEVEL_ADJUST`, 2026-09-15: Act 1 −2, Acts 3 and 5 +2), the
+  **plus the act's own term** (`ACT_LEVEL_ADJUST`: Act 1 −2, Acts 3 and 4 +2 since 2026-10-05), the
   fine dial that shapes the run where the kind offsets shape a row.
   Mastery still reads off the act. **A champion is FRONT-LOADED**: `CHAMPION_GRADES`, all E,
   because on hero grades the Act 2 Guardian measured 67% cleared. **Per act at Base** (2026-09-30, per user direction — the Act 1 Guardian was the longest
   boss, the Act 5 one could be one-shot): **one escort in Acts 1–2** (the champion takes the lead
   slot it leaves, unmarked) and **two after**; the champion grows on **D in Act 4 and C in Act 5**
-  (`GUARDIAN_ESCORTS_BY_ACT`, `CHAMPION_GRADE_BY_ACT`, `src/run/difficulty.ts`). **Enemy gear from Act 4**
-  (`ENEMY_GEAR_FROM_ACT`, `EnemyLoadout`): one item each on the node's own rarity curve,
+  (`GUARDIAN_ESCORTS_BY_ACT`, `CHAMPION_GRADE_BY_ACT`, `src/run/difficulty.ts`). **Enemy gear from Act 3**
+  (`ENEMY_GEAR_BY_ACT`, `EnemyLoadout`, 2026-10-05: one item in Act 3, two in Act 4, no two of a
+  family) on the node's own rarity curve,
   stripped on a contract claim — level alone cannot track a player stacking Banners and
   late-window gear, and gear is the seam passives will share. Measured (sim pass 9): full-clear
   42.4% against the step curve's 43.6%, acts 79 / 79 / 98 / 76 / 92 against 85 / 85 / 96 / 76 /
   82 — Act 1 and Act 5 are the two dials named for playtest. Every number here is a first-pass
-  figure; only the shape is decided. **HP persists across an act's
+  figure; only the shape is decided. **An enemy's kit walks its bands** (2026-10-05): at `MOVE_CAP`
+  an offer replaces the oldest move a band below it, never the starting attack, signature or
+  Evolution move — it used to stop at four Early moves. With the gear and Act 4 term beside it,
+  measured: full-clear 90.8 → 88.7% skilled / 49.3 → 45.3% chart, Acts 3–4 fights ending 5–9
+  points of HP lower; the finale untouched. **HP persists across an act's
   nodes — Wounds — and mana does not** (2026-09-15, per user direction, FOR PLAYTEST;
   `src/run/wounds.ts`, `docs/run-loop.md` "Wounds"). A fight writes the fielded heroes'
   missing HP onto `RosterEntry.wounds`, and **a knockout PERSISTS** (2026-09-17, per user

@@ -400,7 +400,7 @@ map node (`contractReward` was removed, 2026-08-17).
   axis is its **level**, rolled through its growth grades from 1 as a Guild hire's is, set per NODE
   off the player's par plus a kind offset (`ENEMY_LEVEL_OFFSET`) and the act's term
   (`ACT_LEVEL_ADJUST`), and shown on the scouted chips, the dossier and the nameplate. Enemy **gear
-  from Act 4** is the second axis (`ENEMY_GEAR_FROM_ACT`, `EnemyLoadout`). The two-track act-step
+  from Act 3** is the second axis (`ENEMY_GEAR_BY_ACT` — one item in Act 3, two in Act 4 — `EnemyLoadout`). The two-track act-step
   curve, node-kind stat bonuses and the champion multiplier are deleted.
 - **The Guardian's Banner** (2026-08-30; three since 2026-09-14). Beating a Guardian grants a
   **fixed 1-of-3 team-wide relic** (`GuardianBannerScreen`), every seal act. Not a map node; it

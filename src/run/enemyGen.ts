@@ -79,8 +79,10 @@ export interface Encounter {
 
 /** What an enemy arrives holding beyond its level: the seam enemy gear and passives hang on. */
 export interface EnemyLoadout {
-  /** Rarity weights for ONE item, rolled as a drop is; omitted = bare. */
+  /** Rarity weights for each item, rolled as a drop is; omitted = bare. */
   gear?: Record<EquipmentRarity, number>;
+  /** Items rolled on `gear`, no two of a family; omitted = 1. */
+  gearCount?: number;
   /** Granted outright, stacking like a Boon's (RosterEntry.bonusPassiveGrants). */
   passiveIds?: readonly PassiveId[];
 }
@@ -113,9 +115,18 @@ function applyLoadout(entry: RosterEntry, hero: HeroLookup[string], loadout: Ene
   const draw = drawFrom(rng);
   let next = entry;
   if (loadout.gear) {
-    // Rolled to fit the wearer — the contract keeps it (docs/gear-absorption.md §7).
-    const item = rollFittingGear(hero.baseStats, rosterEntryTypes(hero, entry), loadout.gear, draw.random);
-    if (item) next = { ...next, equipment: equipItem(next.equipment, item.id) };
+    // Rolled to fit the wearer — the contract keeps it (docs/gear-absorption.md §7). A second of
+    // a family would merge on a hero, so a repeat is rerolled, and dropped if it keeps repeating.
+    const families = new Set<string>();
+    for (let i = 0; i < (loadout.gearCount ?? 1); i++) {
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const item = rollFittingGear(hero.baseStats, rosterEntryTypes(hero, entry), loadout.gear, draw.random);
+        if (!item || families.has(item.familyId ?? item.id)) continue;
+        families.add(item.familyId ?? item.id);
+        next = { ...next, equipment: equipItem(next.equipment, item.id) };
+        break;
+      }
+    }
   }
   if (loadout.passiveIds && loadout.passiveIds.length > 0) {
     next = { ...next, bonusPassiveGrants: [...next.bonusPassiveGrants, ...loadout.passiveIds] };

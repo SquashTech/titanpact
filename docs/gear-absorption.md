@@ -174,7 +174,7 @@ standing and re-justified against hires (§10).
 
 ## 7. A contract arrives armed
 
-Enemies carry one item from Act 4 (`ENEMY_GEAR_FROM_ACT`), and a contract hero **arrives with its
+Enemies carry one item in Act 3 and two in Act 4 (`ENEMY_GEAR_BY_ACT`, 2026-10-05; it was one from Act 4), and a contract hero **arrives with its
 piece absorbed** — finished on a fourth axis (level, Evolution, kit, gear) against a hire's raw
 one. The piece is rolled to fit the hero (`rollFittingGear`, `data/equipment.ts`: a family that
 suits its offensive stat, the node's rarity curve, an enchant only of a type it fields), so the
