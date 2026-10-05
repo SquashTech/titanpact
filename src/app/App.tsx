@@ -93,6 +93,8 @@ import {
   claimContract,
   claimContractReplacing,
   recruitFromGuildHallReplacing,
+  grantContract,
+  rollContractDrop,
   freshRosterId,
   heroPool,
   isRecruitable,
@@ -816,6 +818,7 @@ export function App() {
       xpGained: xpForEncounter(playerRun.encountersWon + 1, encounterXpKind(mapNodeType)),
       equipmentRewardId: equipmentReward?.id ?? null,
       consumableReward: rollConsumableDrop(mapNodeType),
+      contractReward: rollContractDrop(mapNodeType),
       levelSeed: randomSeed(),
     };
     // The Herald is announced before the fight — and a
@@ -836,6 +839,8 @@ export function App() {
     goldReward: number,
     equipmentReward: EquipmentDefinition | null,
     consumableReward: ConsumableKind | null,
+    /** The Elite's contract drop, paid before the claim so it can sign one of the beaten. */
+    contractReward: boolean,
     /** This fight's enemy side — the beaten builds a Recruit Contract can claim, and the Early that asks to join. */
     encounter: Encounter,
     outcome: 'win' | 'loss',
@@ -868,6 +873,7 @@ export function App() {
     if (finalState) next = recordPermanentStatGains(recordWounds(next, finalState, 'A', rosterHeroes), finalState, 'A');
     // Onto the purse, clamped at the cap — a full flask spills the drop rather than banking it.
     if (consumableReward) next = grantConsumable(next, consumableReward);
+    if (contractReward) next = grantContract(next);
     // Every node kind, unlike `fightsStarted` — this one is the run summary's tally, and since
     // 2026-09-10 it is also what the level curve reads (run/growth.ts).
     next = { ...next, encountersWon: next.encountersWon + 1 };
@@ -1414,6 +1420,7 @@ export function App() {
           levelSeed={screen.levelSeed}
           equipmentReward={screen.equipmentRewardId ? equipment[screen.equipmentRewardId] ?? null : null}
           consumableReward={screen.consumableReward}
+          contractReward={screen.contractReward}
           initialSnapshot={resumedCombat?.screen === screen ? resumedCombat.snapshot : undefined}
           onCommandPhase={handleCommandPhase}
           onResolved={(outcome, finalState, consumablesUsed, mvp) =>
@@ -1422,6 +1429,7 @@ export function App() {
               screen.goldReward,
               screen.equipmentRewardId ? equipment[screen.equipmentRewardId] ?? null : null,
               screen.consumableReward,
+              screen.contractReward,
               screen.encounter,
               outcome,
               consumablesUsed,

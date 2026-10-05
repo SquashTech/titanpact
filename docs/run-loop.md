@@ -390,14 +390,19 @@ decision below the item drop; it is its own screen on the draft's stage.
 
 **Every recruit costs one Recruit Contract, and gold never buys a hero** (2026-10-05, per user
 direction). A claim after a won Skirmish or Elite spends one, as it always did; a Tavern hire spends
-one too, where it cost 50 gold. The run opens holding one. The supply is two faucets, both of them
-choices:
+one too, where it cost 50 gold. The run opens holding one. The supply is three faucets, every one of
+them a choice:
 
 - **The Contract node** (`contractReward`, weight 24): one contract on arrival, in the pick-1-of-3
   reward rows, so taking it is turning down a Boon, a Cache or a Forge beside it.
 - **The Tavern's Contract**, at `contractPrice` = `CONTRACT_BASE_PRICE` 40 + `CONTRACT_PRICE_STEP`
   20 for every one bought this RUN (`RunState.contractsBought`) — 40, 60, 80. It rises across the
   run, not the visit, so buying a full roster is possible and dearer each time.
+- **The Elite's drop** (same day, per user direction): a won Elite drops one at
+  `CONTRACT_DROP_CHANCE.elite` = 50% (`rollContractDrop`), rolled at fight start with its other
+  drops and paid BEFORE the claim screen, so it can sign one of the heroes it was won from. The fork
+  reads Elite = harder fight, better hero, and a coin-flip at the means to take it; the Skirmish
+  stays the safe road, which a held contract still claims from.
 
 **What it replaced.** The run used to pay one free contract at every Guardian. With the starting one
 and a 50g hire, that was exactly the four empty seats a two-hero draft leaves, so the dominant play
@@ -416,8 +421,12 @@ act now spent on contracts came out of the Anvil and Enchanter (Act 3 Anvil 46 �
 sim walks reward rows at random and spends its contract at the Hall rather than saving it for the
 next fork, so a player who plans should lose less; the direction is the finding.
 
-**Open dials, for playtest:** the node's weight, the two prices, and whether the Elite should drop a
-contract now and then (proposed beside this, not built). An in-fight capture (bind a low-HP enemy)
+**The Elite's drop, measured** (same seed, against the build without it): full-clear 23.6 → 28.0%
+chart / 75.0 → 76.2% skilled — about two thirds of the chart pilot's loss back — with veteran swaps
+0.15 → 0.47 / 0.28 → 0.72 a run and Tavern contract spending down 15–40% an act, the gold going back
+to the Smithy (Act 3 Anvil 22 → 31g chart).
+
+**Open dials, for playtest:** the node's weight, the two prices, and the Elite's odds. An in-fight capture (bind a low-HP enemy)
 was weighed and set aside: it would make combat fiddlier, and speed is the game's strength.
 
 ## 3. Decisions locked for this pass

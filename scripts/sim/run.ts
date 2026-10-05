@@ -58,7 +58,7 @@ import {
   recordPermanentStatGains,
 } from '../../src/run/runProgress';
 import { MOVE_CAP, recordMoveOffer, grantOfferedMove, grantMove } from '../../src/run/progression';
-import { claimContract, claimContractReplacing, deriveContractOffer, heroPool, isRecruitable, pickContractOffers, recruitFromGuildHall, recruitFromGuildHallReplacing, freshRosterId, buyContract, contractPrice, grantContract } from '../../src/run/recruitment';
+import { claimContract, claimContractReplacing, deriveContractOffer, heroPool, isRecruitable, pickContractOffers, recruitFromGuildHall, recruitFromGuildHallReplacing, freshRosterId, buyContract, contractPrice, grantContract, rollContractDrop } from '../../src/run/recruitment';
 
 // The run's pool (run/recruitment.ts heroPool): the base game, plus whatever SIM_PURCHASES names —
 // a comma-separated list of Constellation offer ids, so a batch can hold a bundle.
@@ -728,6 +728,7 @@ function resolveEncounterNode(
   const consumableDrop = rollConsumableDrop(kindKey, rng);
   if (consumableDrop) workingRun = grantConsumable(workingRun, consumableDrop);
   if (consumableDrop === 'revive') record.knockouts.revivesFound += 1;
+  if (rollContractDrop(kindKey, rng)) workingRun = grantContract(workingRun);
   return { run: workingRun, won: true, defeatedRoster: encounter.run.roster, drop, encounter, koRosterIds };
 }
 

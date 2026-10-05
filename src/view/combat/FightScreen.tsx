@@ -588,6 +588,8 @@ interface Props {
   equipmentReward: EquipmentDefinition | null;
   /** A potion this win drops (run/consumables.ts), rolled up front like the item. Displayed only. */
   consumableReward?: ConsumableKind | null;
+  /** The Elite's Recruit Contract drop (run/recruitment.ts rollContractDrop). Displayed only. */
+  contractReward?: boolean;
   /**
    * Fired when the player dismisses the result overlay — the caller owns what a win/loss means for
    * the run. `consumablesUsed` is what this fight drank, for the caller to take off the purse.
@@ -633,6 +635,7 @@ export function FightScreen({
   levelSeed,
   equipmentReward,
   consumableReward = null,
+  contractReward = false,
   onResolved,
   onSaveAndQuit,
   onAbandonRun,
@@ -2382,6 +2385,7 @@ export function FightScreen({
           goldReward={goldReward}
           equipmentReward={equipmentReward}
           consumableReward={consumableReward}
+          contractReward={contractReward}
           hpAfter={hpAfter}
           mvp={mvp}
           onContinue={() => onResolved(winner === PLAYER_SIDE ? 'win' : 'loss', combat, usedConsumables, mvp)}

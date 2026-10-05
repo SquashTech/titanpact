@@ -1,11 +1,12 @@
 // Recruitment mechanism (docs/progression.md "The raise-vs-recruit axis").
-// Guild Hall: gold for a fresh entry. Recruit Contract: claim a beaten enemy's build, the gear
-// it wore included (docs/gear-absorption.md §7). Costs and the offer pool are content
-// (src/data/recruitment.ts).
+// Every recruit spends one Recruit Contract (docs/run-loop.md "Contracts"): a Guild Hall hire is a
+// fresh entry, a claim a beaten enemy's build, the gear it wore included (docs/gear-absorption.md
+// §7). The offer pool is content (src/data/recruitment.ts).
 
 import type { RosterEntry, RunState } from './state';
 import { addRosterEntry, replaceRosterEntry } from './state';
 import { guildHallEntry } from './guildRecruit';
+import type { EncounterNodeKind } from './difficulty';
 
 export class RecruitmentError extends Error {}
 
@@ -98,9 +99,17 @@ export function buyContract(run: RunState): RunState {
   return { ...run, gold: run.gold - cost, recruitContracts: run.recruitContracts + 1, contractsBought: run.contractsBought + 1 };
 }
 
-/** The map's Contract node (`contractReward`). */
+/** The map's Contract node (`contractReward`) and the Elite's drop. */
 export function grantContract(run: RunState, amount = 1): RunState {
   return { ...run, recruitContracts: run.recruitContracts + amount };
+}
+
+/** Odds a won encounter drops a Recruit Contract. The Elite only: the fight a step over par pays for it. First-pass. */
+export const CONTRACT_DROP_CHANCE: Partial<Record<EncounterNodeKind, number>> = { elite: 0.5 };
+
+/** Rolled at fight start with the fight's other drops, so a resumed fight keeps it; paid before the claim, so it can sign one of the heroes it was won from. */
+export function rollContractDrop(nodeKind: EncounterNodeKind, rng: () => number = Math.random): boolean {
+  return rng() < (CONTRACT_DROP_CHANCE[nodeKind] ?? 0);
 }
 
 /** What's arriving when the roster is at ROSTER_CAP (RosterReplaceScreen). */

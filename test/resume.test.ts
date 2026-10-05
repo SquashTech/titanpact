@@ -114,6 +114,7 @@ test('resume: every resumable kind round trips, nested chains included', () => {
       xpGained: 100,
       equipmentRewardId: item,
       consumableReward: 'hpPotion',
+      contractReward: true,
       levelSeed: 9,
     },
   ];
@@ -142,6 +143,7 @@ test('resume: the finale party and every act a Guardian brings decode', () => {
       xpGained: 0,
       equipmentRewardId: null,
       consumableReward: null,
+      contractReward: false,
       levelSeed: 1,
     };
     assert.ok(roundTrip({ screen }, run), `a party led by ${encounter.run.roster[0].heroId} did not decode`);
@@ -330,6 +332,7 @@ test('combatSnapshot: a board naming a combatant the run does not hold costs the
     xpGained: 0,
     equipmentRewardId: null,
     consumableReward: null,
+    contractReward: false,
     levelSeed: 1,
   };
   const state = buildCombatState(3, allCombatants, equipment, [{ side: 'A', squad, roster: run.roster }, { side: 'B', squad: enemy.squad, roster: enemy.run.roster }], passives);

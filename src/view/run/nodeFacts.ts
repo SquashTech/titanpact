@@ -15,7 +15,7 @@ import { championLevel, enemyLevelFor, guildHallLevel, openerEscortTiersFor, spa
 import type { SpawnTier } from '../../data/titanspawn';
 import { ROSTER_CAP, SEAL_ACTS } from '../../run/state';
 import { ANVIL_PRICE_BY_TARGET, ENCHANT_PRICE_BY_RARITY } from '../../run/shop';
-import { CONTRACT_BASE_PRICE, CONTRACT_PRICE_STEP } from '../../run/recruitment';
+import { CONTRACT_BASE_PRICE, CONTRACT_DROP_CHANCE, CONTRACT_PRICE_STEP } from '../../run/recruitment';
 import { CONSUMABLE_PRICE, REVIVE_PRICE } from '../../run/consumables';
 import { MEND_PRICE_PER_HERO } from '../../run/wounds';
 import { TYPE_DAMAGE_BONUS } from '../../data/passives';
@@ -206,9 +206,12 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
     case 'elite':
       return {
         kind: 'Elite · Recruitable',
-        facts: encounterFacts('elite', actNumber),
+        facts: [
+          ...encounterFacts('elite', actNumber),
+          { glyph: 'contract', label: 'Contract', value: `${Math.round((CONTRACT_DROP_CHANCE.elite ?? 0) * 100)}%`, note: 'in hand before you sign' },
+        ],
         odds: odds('elite'),
-        about: `A level over you, and it pays for it: ×${ENCOUNTER_XP_MULTIPLIER.elite} XP and an item rolled a tier up. Recruitable like a Skirmish, and its hero arrives stronger than any hire.`,
+        about: `A level over you, and it pays for it: ×${ENCOUNTER_XP_MULTIPLIER.elite} XP, an item rolled a tier up, and sometimes a Recruit Contract, paid before you choose whom to sign. Recruitable like a Skirmish, and its hero arrives stronger than any hire.`,
         terms: [TERMS.contract],
       };
     case 'boss':

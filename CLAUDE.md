@@ -570,8 +570,8 @@ don't silently override it.
   **One currency for both routes** (2026-10-05, per user direction, `docs/run-loop.md` "Contracts"):
   a claim and a hire each spend ONE Recruit Contract, and gold never buys a hero — it buys a
   contract, at a price that rises with every one bought this run (40 +20). The run opens with one;
-  the rest come from a `contractReward` seat in the reward rows or the Tavern, never free at an
-  act's end. The roster cap still prices a swap (gaining requires terminating, and the terminated
+  the rest come from a `contractReward` seat in the reward rows, a won Elite (50%, paid before its
+  claim) or the Tavern, never free at an act's end. The roster cap still prices a swap (gaining requires terminating, and the terminated
   hero's gear goes with it). **A contract arrives
   ARMED** (2026-09-15, `docs/gear-absorption.md` §7): the piece the enemy fought in — rolled to fit
   it — is absorbed on the contract hero, the fifth finished axis against a hire's bare sockets.

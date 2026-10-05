@@ -66,6 +66,8 @@ export type RunScreen =
       equipmentRewardId: string | null;
       /** The potion drop, rolled and carried the same way. */
       consumableReward: ConsumableKind | null;
+      /** The Elite's Recruit Contract drop (run/recruitment.ts rollContractDrop). */
+      contractReward: boolean;
       /** Seeds the level roll, so the victory screen shows the growth handleFightResolved will land (run/growth.ts previewLevelUp). */
       levelSeed: number;
     }
@@ -405,6 +407,8 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
         xpGained: int(raw.xpGained, 'fight.xpGained'),
         equipmentRewardId: reward,
         consumableReward: drop as ConsumableKind | null,
+        // Absent on a fight saved before the Elite dropped contracts.
+        contractReward: raw.contractReward === true,
         levelSeed: int(raw.levelSeed, 'fight.levelSeed'),
       };
     }

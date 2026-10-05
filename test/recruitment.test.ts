@@ -22,6 +22,8 @@ import {
   CONTRACT_BASE_PRICE,
   CONTRACT_PRICE_STEP,
   grantContract,
+  rollContractDrop,
+  CONTRACT_DROP_CHANCE,
   isRecruitable,
   freshRosterId,
   RecruitmentError,
@@ -377,6 +379,16 @@ test('recruitment: the LEVEL axis points the right way — a contract hero outra
         `act ${act}: a ${kind} contract at ${enemyLevelFor(kind, act)} must not out-level the roster at the act's end`
       );
     }
+  }
+});
+
+test('recruitment: only the Elite drops a contract, at its stated odds', () => {
+  const chance = CONTRACT_DROP_CHANCE.elite!;
+  assert.ok(chance > 0 && chance < 1);
+  assert.strictEqual(rollContractDrop('elite', () => chance - 0.001), true);
+  assert.strictEqual(rollContractDrop('elite', () => chance), false);
+  for (const kind of ['fight', 'battle', 'skirmish', 'boss', 'finale'] as const) {
+    assert.strictEqual(rollContractDrop(kind, () => 0), false, `${kind} never drops a contract`);
   }
 });
 

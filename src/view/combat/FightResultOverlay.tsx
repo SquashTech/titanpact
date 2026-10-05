@@ -58,6 +58,8 @@ export interface FightResultProps {
   equipmentReward: EquipmentDefinition | null;
   /** A potion drop (run/consumables.ts). Null on the common no-drop win. */
   consumableReward?: ConsumableKind | null;
+  /** The Elite's Recruit Contract drop, landed before the claim screen that follows. */
+  contractReward?: boolean;
   /**
    * Where each roster hero's HP stands going into the next node (run/wounds.ts) — the fielded
    * read off the fight's end, the reserve off what they were already carrying. Omit (a fight
@@ -90,6 +92,7 @@ export function FightResultOverlay({
   goldReward,
   equipmentReward,
   consumableReward = null,
+  contractReward = false,
   hpAfter,
   mvp = null,
   onContinue,
@@ -119,8 +122,9 @@ export function FightResultOverlay({
     if (goldReward > 0) rows.push({ key: 'gold', render: (shown) => <GoldRow from={goldFrom} amount={goldReward} shown={shown} /> });
     if (equipmentReward) rows.push({ key: 'item', render: () => <ItemRow item={equipmentReward} onInspect={() => setInspecting(true)} /> });
     if (consumableReward) rows.push({ key: 'potion', render: () => <PotionRow kind={consumableReward} /> });
+    if (contractReward) rows.push({ key: 'contract', render: () => <ContractRow /> });
     return rows;
-  }, [won, goldFrom, goldReward, equipmentReward, consumableReward, mvp]);
+  }, [won, goldFrom, goldReward, equipmentReward, consumableReward, contractReward, mvp]);
 
   const stageDone = STAGE_LEDGER + ledger.length;
   const [stage, setStage] = useState(() => (prefersReducedMotion() ? stageDone : STAGE_TITLE));
@@ -423,6 +427,21 @@ function PotionRow({ kind }: { kind: ConsumableKind }) {
       <span className="fight-result-row-text">
         <span className="fight-result-row-label">{CONSUMABLE_NAMES[kind]}</span>
         <span className="fight-result-row-sub">{CONSUMABLE_BLURBS[kind]}</span>
+      </span>
+      <span className="fight-result-row-value">+1</span>
+    </div>
+  );
+}
+
+function ContractRow() {
+  return (
+    <div className="fight-result-row">
+      <span className="fight-result-row-glyph">
+        <ResourceGlyph kind="contract" />
+      </span>
+      <span className="fight-result-row-text">
+        <span className="fight-result-row-label">Recruit Contract</span>
+        <span className="fight-result-row-sub">Sign one of the heroes you just beat</span>
       </span>
       <span className="fight-result-row-value">+1</span>
     </div>
