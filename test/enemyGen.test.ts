@@ -3,6 +3,9 @@ import { test } from './harness';
 import { generateEncounter, appendFinalEnemy } from '../src/run/enemyGen';
 import { heroes } from '../src/data/heroes';
 import { enemies, MANTICORE_ID } from '../src/data/enemies';
+import { moves } from '../src/data/moves';
+import { progressionTable } from '../src/data/progression';
+import { encounterScaling } from '../src/run/difficulty';
 
 test('enemyGen: fight encounters field 4 heroes (2 active + 2 bench) with no stat bonus', () => {
   const { run, squad } = generateEncounter('fight', 1, heroes);
@@ -118,4 +121,17 @@ test('enemyGen: the champion is not recruitable — he is enemy-pool content, so
   const { isRecruitable } = require('../src/run/recruitment') as typeof import('../src/run/recruitment');
   assert.ok(!isRecruitable(MANTICORE_ID, heroes));
   assert.ok(!(MANTICORE_ID in heroes));
+});
+
+test('enemyGen: a late enemy fields its later bands — a full kit swaps an Early move out, never its starting attack', () => {
+  const scaling = encounterScaling('elite', 4);
+  for (let seed = 1; seed <= 20; seed++) {
+    const { run } = generateEncounter('fight', seed * 7919, heroes, { scaling, progression: progressionTable });
+    for (const entry of run.roster) {
+      const hero = heroes[entry.heroId];
+      const attack = hero.moveIds.find((id) => moves[id]?.basePower != null || moves[id]?.kind === 'damage');
+      assert.ok(entry.unlockedMoveIds.some((id) => moves[id]?.tier === 'mid' || moves[id]?.tier === 'late'), `${entry.heroId} holds no Mid or Late move at level ${scaling.level}`);
+      if (attack) assert.ok(entry.unlockedMoveIds.includes(attack), `${entry.heroId} lost its starting attack`);
+    }
+  }
 });

@@ -3,7 +3,7 @@
 // its pips read off the act, its kit walked off its schedule. The level comes from the caller
 // (difficulty.ts ActScaling) — never derived here.
 
-import type { PassiveId, StatKey, TypeId } from '../engine/content';
+import type { MoveTier, PassiveId, StatKey, TypeId } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
 import { createRng, nextFloat, type RngState } from '../engine/rng/seededRng';
 import type { BrokenSeal, RunState, RosterEntry } from './state';
@@ -186,7 +186,7 @@ function drawParty(
  * it (a path taken unweighted, so the offers that follow can draw on a graft's line), then the
  * signature once `level` has reached its `signatureLevel` — into the kit ahead of the offers, in
  * the last slot if the kit is full, since a hero past that level holds it by definition — then each offer rolls one move from the band open at
- * that level and learns it if there is room (an enemy never swaps). The same schedule and the same pips a roster hero reads, so a contract hero is the
+ * that level and learns it — at the cap in place of a move a band below it (enemyKitWithOffer). The same schedule and the same pips a roster hero reads, so a contract hero is the
  * enemy you beat, finished (docs/xp-overhaul.md §4, docs/mastery.md §4).
  */
 export function rollLevelProgression(
@@ -223,6 +223,10 @@ export function rollLevelProgression(
       }),
     };
   }
+  // What the Evolution and the signature put in the kit, and the starting attack, are never swapped out.
+  const kitBeforeOffers = next.roster.find((r) => r.rosterId === rosterId)!.unlockedMoveIds;
+  const startingAttack = hero.moveIds.find((id) => moves[id]?.basePower != null || moves[id]?.kind === 'damage');
+  const kept = new Set([...kitBeforeOffers.filter((id) => !hero.moveIds.includes(id)), ...(startingAttack ? [startingAttack] : [])]);
   // The band an offer rolls from is the band open at the level of THAT entry, not at the level
   // the hero arrives at — a level-13 enemy's first offer was an Early move, as a roster hero's was.
   for (const step of scheduleEntries(scheduleFor(hero))) {
@@ -232,15 +236,36 @@ export function rollLevelProgression(
     const { picked, nextState } = shuffledPick(state, levelMovePool(table, moves, hero, atLevel), 1);
     state = nextState;
     const moveId = picked[0];
-    if (moveId && entry.unlockedMoveIds.length < MOVE_CAP) {
+    const kit = moveId ? enemyKitWithOffer(entry.unlockedMoveIds, moveId, kept) : null;
+    if (moveId && kit) {
       next = {
         ...next,
-        roster: next.roster.map((r) => (r.rosterId === rosterId ? { ...r, unlockedMoveIds: [...r.unlockedMoveIds, moveId], offeredMoveIds: [...r.offeredMoveIds, moveId] } : r)),
+        roster: next.roster.map((r) => (r.rosterId === rosterId ? { ...r, unlockedMoveIds: kit, offeredMoveIds: [...r.offeredMoveIds, moveId] } : r)),
       };
     }
     next = takeScheduleEntry(next, rosterId);
   }
   return { run: next, nextState: state };
+}
+
+const TIER_RANK: Record<MoveTier, number> = { early: 0, mid: 1, late: 2 };
+
+function tierRank(moveId: string): number {
+  return TIER_RANK[moves[moveId]?.tier ?? 'early'];
+}
+
+/**
+ * An enemy's kit after an offer: learned outright below `MOVE_CAP`; at it, the offer takes the
+ * slot of the oldest move a band below it that is not `kept`, so a late enemy fields its late
+ * bands as a roster hero does (docs/enemy-levels.md). Null when nothing is worth replacing.
+ */
+function enemyKitWithOffer(kit: readonly string[], moveId: string, kept: ReadonlySet<string>): string[] | null {
+  if (kit.includes(moveId)) return null;
+  if (kit.length < MOVE_CAP) return [...kit, moveId];
+  const rank = tierRank(moveId);
+  const slot = kit.findIndex((id) => !kept.has(id) && !moves[id]?.permanent && tierRank(id) < rank);
+  if (slot < 0) return null;
+  return kit.map((id, i) => (i === slot ? moveId : id));
 }
 
 /**
