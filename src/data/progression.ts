@@ -1138,6 +1138,7 @@ export const EVOLUTION_LINE_PER_TIER = 2;
  * of the tiered moves of `type` the hero's own pool does not already hold — damage only on the
  * column the hero swings with after the path (flipped by a rewire), minus what the path hands
  * over — two from Mid and two from Late, one damage move and one other where the tier has both.
+ * A rewire takes a second damage move a tier: its hero's own attacks are all on the wrong stat.
  */
 export function evolutionLine(heroId: string, type: TypeId, { swapped = false, granted = [] as readonly string[] } = {}): string[] {
   const hero = heroes[heroId];
@@ -1150,9 +1151,9 @@ export function evolutionLine(heroId: string, type: TypeId, { swapped = false, g
   });
   return EVOLUTION_LINE_TIERS.flatMap((tier) => {
     const inTier = open.filter((id) => moves[id].tier === tier);
-    const hit = inTier.find((id) => moves[id].kind === 'damage');
+    const hits = inTier.filter((id) => moves[id].kind === 'damage').slice(0, swapped ? 2 : 1);
     const tool = inTier.find((id) => moves[id].kind !== 'damage');
-    const picked = [hit, tool].filter((id): id is string => !!id);
+    const picked = [...hits, tool].filter((id): id is string => !!id);
     for (const id of inTier) if (picked.length < EVOLUTION_LINE_PER_TIER && !picked.includes(id)) picked.push(id);
     return open.filter((id) => picked.includes(id));
   });

@@ -93,7 +93,12 @@ test('evolution simplification: a line is the rule, not a list — a hit and a t
       for (const tier of ['mid', 'late'] as const) {
         const inTier = open.filter((id) => moves[id].tier === tier);
         const taken = line.filter((id) => moves[id].tier === tier);
-        assert.strictEqual(taken.length, Math.min(2, inTier.length), `${path.id}: two ${tier} moves where the slate has them`);
+        // A rewire's own attacks are on the wrong stat, so it takes a second hit a tier where there is one.
+        const hits = inTier.filter((id) => moves[id].kind === 'damage').length;
+        const tools = inTier.length - hits;
+        const expected = path.swapsOffense ? Math.max(Math.min(2, inTier.length), Math.min(2, hits) + Math.min(1, tools)) : Math.min(2, inTier.length);
+        assert.strictEqual(taken.length, expected, `${path.id}: two ${tier} moves where the slate has them`);
+        if (path.swapsOffense) assert.ok(taken.filter((id) => moves[id].kind === 'damage').length >= Math.min(2, hits), `${path.id}: a rewire takes two ${tier} hits`);
         if (inTier.some((id) => moves[id].kind === 'damage')) assert.ok(taken.some((id) => moves[id].kind === 'damage'), `${path.id}: a ${tier} hit`);
         if (inTier.some((id) => moves[id].kind !== 'damage')) assert.ok(taken.some((id) => moves[id].kind !== 'damage'), `${path.id}: a ${tier} tool`);
       }

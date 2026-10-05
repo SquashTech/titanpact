@@ -69,6 +69,16 @@ is missing. Early is dropped: a hero who evolves before Mid sees the line open a
 expiring, so the Mid half survives into Late. `EVOLUTION_LINE_TIERS` / `EVOLUTION_LINE_PER_TIER`
 are the dials; `test/evolutionSimplification` pins the shape.
 
+**A rewire takes a second hit a tier (2026-10-04, per user direction).** A graft keeps the hero's
+own attacks and adds a column; a rewire turns every one of them to the wrong stat, so a line of
+one hit a tier left all nine rewire paths with 2–4 usable Mid/Late attacks against a median of 9
+on every other path (Cinder's Explosive: Immolate, Scorch, Inferno). A rewire's line now takes
+the first TWO damage moves a tier on its new column, plus the tool — up to six. The extra seat is
+a hit's or nothing: a tier with one hit does not fill it with a second tool. Cinder gains Backdraft
+and Firestorm; Revenant's Wraithblade stays at one (Spirit's physical column is Spooky Slice
+alone), a slate gap, not a rule one. **Every rewire hero's signature is on the column it left**
+— a second-order question for the signature pass, not settled here.
+
 ## 4. The rewire: the one stat exception
 
 Some paths exist to change what a hero swings with (Explosive turns a physical knight into a
