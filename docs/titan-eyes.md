@@ -255,3 +255,20 @@ re-fit the finale measured 74.4 / 97.3% (chart / skilled, `xp-overhaul.md` §5).
   tile's dossier names the Herald and its company alone.
 - **The Revive is usable in a fight** (`run-loop.md` "Consumables"): the sim's pilot spending what it
   has left at the finale took it 41.9 → 48.6%.
+
+### 10.5 The company arms (2026-10-05, per user direction)
+
+Base read as too easy in play, the finale above all — beaten "without being threatened". The
+Herald's company now wears Act 4's gear (`FinaleEscortOptions.loadout`, `enemyLoadoutFor('finale')`:
+two items each on the elite curve, no two of a family); the Herald and the Eyes stay bare, and the
+four-act re-fit of their lines stands. Measured (2000 runs, seed 1, on top of the same day's enemy
+kit, gear and Act 4 level changes, `enemy-levels.md`):
+
+| Finale variant | Skilled: won / HP left | Chart: won / HP left | Full-clear skilled / chart |
+|---|---|---|---|
+| Before | 97.8% / 70% | 81.8% / 42% | 88.7 / 45.3% |
+| Re-fit undone (Herald Atk/Int +20, Eyes Int +20, Gaze 5%) | 96.4% / 65% | 74.1% / 35% | 87.4 / 41.0% |
+| **Company armed (shipped)** | **89.6% / 55%** | **56.3% / 24%** | **81.3 / 31.1%** |
+| Both | 85.5% / 50% | 48.5% / 19% | 77.5 / 26.9% |
+
+The company's gear is the lever; the re-fit's numbers are the next notch if play still finds it soft.

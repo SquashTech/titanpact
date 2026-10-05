@@ -808,7 +808,7 @@ what's still unimplemented:
   lead-on markers came off that row with it, being derived. **5 acts of that shape,
   then a finale act** (2026-09-05, `docs/lore.md` + `run-loop.md` §4; **the finale corridor is
   Vigil → ONE fight since 2026-09-18, `docs/titan-eyes.md` §10** — the Herald leading one Late
-  Titanspawn per broken seal, **warded while any of its company stands** (`wardedWhileCompanyStands`,
+  Titanspawn per broken seal, **armed with Act 4's two items since 2026-10-05**, **warded while any of its company stands** (`wardedWhileCompanyStands`,
   bench included, so it falls last), then two mono-Ancient Eyes whose Gaze marks a hero Beheld
   and whose Regard can only be aimed at one — a `reserves` PHASE that enters once the Herald's
   is down, the Pact Clock counting from the phase, the phase-2 wide pair cut and **nothing given

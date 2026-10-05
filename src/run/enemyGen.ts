@@ -400,6 +400,8 @@ export function appendFinalEnemy(
 export interface FinaleEscortOptions {
   spawnTypesFor: (locationId: string) => readonly TypeId[] | null;
   heraldLeads?: boolean;
+  /** What each of the company arrives holding (difficulty.ts enemyLoadoutFor); omitted = bare. */
+  loadout?: EnemyLoadout;
 }
 
 /**
@@ -445,8 +447,9 @@ export function generateFinaleEncounter(
       seen.set(heroId, n);
       const rosterId = n === 1 ? heroId : `${heroId}-${n}`;
       const { entry, nextState: afterGrowth } = growTo(createRosterEntry(rosterId, heroId, pool[heroId].moveIds), pool[heroId], endbringerScaling.level, rng);
-      rng = afterGrowth;
-      run = addFinaleEntry(run, { ...entry, mastery: MASTERY_CAP });
+      const { entry: armed, nextState: afterLoadout } = applyLoadout(entry, pool[heroId], escorts.loadout, afterGrowth);
+      rng = afterLoadout;
+      run = addFinaleEntry(run, { ...armed, mastery: MASTERY_CAP });
       orderedIds.push(rosterId);
     }
   } else {

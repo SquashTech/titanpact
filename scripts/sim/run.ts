@@ -31,7 +31,7 @@ import { generateMap, type MapNode, type MapNodeType } from '../../src/run/map';
 import { generateStarterOptions, STARTER_PICK_COUNT } from '../../src/run/draft';
 import { chooseLocation, drawLocationCandidates, locationChoiceDue, locationForAct } from '../../src/run/locations';
 import { ACT_ONE_LOCATION_ID, locations } from '../../src/data/locations';
-import { encounterScaling } from '../../src/run/difficulty';
+import { encounterScaling, enemyLoadoutFor } from '../../src/run/difficulty';
 import { encounterXpKind, grantEncounterLevels, grantXp, levelOf, MAX_LEVEL } from '../../src/run/growth';
 import { deckRows, normalizeDeck } from '../../src/run/deck';
 import { generateFinaleEncounter, type Encounter, type EncounterNodeType } from '../../src/run/enemyGen';
@@ -587,7 +587,7 @@ function resolveEncounterNode(
     const finaleEscorts =
       process.env.SIM_FINALE === 'guardians'
         ? undefined
-        : { spawnTypesFor: (locationId: string) => locations[locationId]?.spawnTypes ?? null, heraldLeads: process.env.SIM_FINALE !== 'spawnLast' };
+        : { spawnTypesFor: (locationId: string) => locations[locationId]?.spawnTypes ?? null, heraldLeads: process.env.SIM_FINALE !== 'spawnLast', loadout: enemyLoadoutFor('finale', TOTAL_ACTS) };
     encounter = generateFinaleEncounter(
       run.brokenSeals,
       location.guardianFinalEnemyId ?? ENDBRINGER_ID,

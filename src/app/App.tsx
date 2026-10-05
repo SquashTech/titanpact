@@ -126,7 +126,7 @@ import {
   type EncounterNodeType,
   type Encounter,
 } from '../run/enemyGen';
-import { CHAMPION_LEVEL_BONUS, encounterScaling, enemyLevelFor } from '../run/difficulty';
+import { CHAMPION_LEVEL_BONUS, encounterScaling, enemyLevelFor, enemyLoadoutFor } from '../run/difficulty';
 import { ENCOUNTERS_PER_ACT, MAX_LEVEL, applySeededEncounterLevels, encounterXpKind, levelOf, xpForEncounter, xpForLevel, type HeroLevelUp } from '../run/growth';
 import { chooseLocation, drawLocationCandidates, generateItinerary, locationChoiceDue, locationForAct, locationPool } from '../run/locations';
 import { encounterKindOf, encounterSeedFor, nodeEncounter } from '../run/encounters';
@@ -728,7 +728,7 @@ export function App() {
         finaleEnemies,
         encounterSeedFor(playerRun.map!, nodeId),
         encounterScaling('finale', FINALE_ACT),
-        { spawnTypesFor: (locationId) => locations[locationId]?.spawnTypes ?? null, heraldLeads: true },
+        { spawnTypesFor: (locationId) => locations[locationId]?.spawnTypes ?? null, heraldLeads: true, loadout: enemyLoadoutFor('finale', FINALE_ACT) },
         { phases: EYE_PHASES, pool: titanEyes }
       );
       handleEnterFight(openingSquad(playerRun.roster), nodeId, 'boss', encounter);
