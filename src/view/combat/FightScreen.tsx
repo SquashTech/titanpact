@@ -1093,22 +1093,9 @@ export function FightScreen({
     }
   }
 
-  /** The one card a single-target move could be aimed at, or null when there is a choice to make. */
-  function soleTarget(combatantId: string, move: MoveDefinition): string | null {
-    const mode = declarationMode(move);
-    const candidates = mode === 'singleAlly' ? visibleTargets(move, mode, playerActiveAlive) : mode === 'self' ? [combatantId] : [];
-    return candidates.length === 1 ? candidates[0] : null;
-  }
-
-  // Two taps when there is a choice: this loads the move and lights its targets, a second tap on a
-  // card commits. A move on yourself or your one ally commits on the first tap; a strike at the last
-  // enemy standing still takes the second, the cheap "are you sure" (2026-10-05, per user direction).
+  // Always two taps: this loads the move and lights its targets, a second tap on a card commits —
+  // even with one legal target, the cheap "are you sure" (2026-10-05, per user direction).
   function handleMoveClick(combatantId: string, move: MoveDefinition) {
-    const only = soleTarget(combatantId, move);
-    if (only) {
-      declareMove(combatantId, move, only);
-      return;
-    }
     setSelecting({ combatantId, move });
   }
 
