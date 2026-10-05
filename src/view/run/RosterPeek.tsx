@@ -17,6 +17,7 @@ import { RosterManagementScreen } from './RosterManagementScreen';
 import { levelOf } from '../../run/growth';
 import { statScaleFor } from '../../run/statScale';
 import { WoundBar, entryHp } from '../shared/WoundBar';
+import { MasteryPips } from '../shared/MasteryPips';
 
 interface Props {
   run: RunState;
@@ -98,7 +99,13 @@ export function RosterPeek({ run, className }: Props) {
                       onActivate={() => setInspecting({ hero, entry })}
                       onPreview={() => setInspecting({ hero, entry })}
                       ariaLabel={`${hero.name}, level ${levelOf(entry)} — view sheet`}
-                      detail={<WoundBar {...entryHp(hero, entry, run.relics)} />}
+                      /* HP and Mastery: what a mend and a Scroll are bought against. */
+                      detail={
+                        <>
+                          <WoundBar {...entryHp(hero, entry, run.relics)} />
+                          <MasteryPips mastery={entry.mastery} />
+                        </>
+                      }
                       /* The Class if any; the card's own badge already shows the level. */
                       cta={heroClass ? heroClass.name.replace('Class - ', '') : 'Inspect'}
                     />

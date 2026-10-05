@@ -20769,6 +20769,21 @@ button.star-shop-bundle-face {
   min-height: 0;
 }
 
+/* Ten pips across a three-wide card: the track tightened to fit, milestones still the larger two. */
+.roster-peek-panel .mastery-pips {
+  gap: 1.5px;
+}
+
+.roster-peek-panel .mastery-pip {
+  width: 6px;
+  height: 6px;
+}
+
+.roster-peek-panel .mastery-pip.is-milestone {
+  width: 8px;
+  height: 8px;
+}
+
 /* --- The hero pick card ---------------------------------------------------
    Shared "pick a hero" card (src/view/shared/HeroPickCard.tsx), generalised
    out of the level-up screen's growth card so ItemFoundScreen,
