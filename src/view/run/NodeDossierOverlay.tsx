@@ -4,7 +4,7 @@ import type { MapNode } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
 import { RARITY_ORDER } from '../../run/equipment';
 import { NODE_COLORS, NODE_LABELS, NODE_NAMES } from './mapNodes';
-import { mapNodeArt } from './mapNodeArt';
+import { mapNodeArt, mapNodeIcon } from './mapNodeArt';
 import { landmarkStillArt } from './mapLandmarks';
 import { nodeDossier, type NodeFactGlyph } from './nodeFacts';
 import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
@@ -86,7 +86,7 @@ export function NodeDossierOverlay({ node, run, onClose }: { node: MapNode; run:
   const dossier = nodeDossier(node.type, run.actNumber);
   const color = NODE_COLORS[node.type];
   // The tile's own pixel art, so the panel reads as the tile opened up.
-  const art = landmarkStillArt(node.type) ?? mapNodeArt(node.type);
+  const art = landmarkStillArt(node.type) ?? mapNodeIcon(node.type) ?? mapNodeArt(node.type);
   const label = NODE_LABELS[node.type];
   const name = NODE_NAMES[node.type];
 

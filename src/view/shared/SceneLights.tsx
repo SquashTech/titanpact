@@ -24,16 +24,6 @@ export interface SceneLight {
 const MAP_PX = 100 / 196;
 const DEFAULT_SIZE: Record<SceneLightKind, number> = { star: 1.2, twinkle: 7 * MAP_PX, glint: 3 * MAP_PX, sparkle: 7 * MAP_PX, glimmer: 3 * MAP_PX, firefly: 7, flame: 16, candle: 6, ember: 1.6, beacon: 14, moon: 30, glow: 16, eye: 5 };
 
-/** A campfire: the glow, and three sparks lifting off it. */
-function campfire(x: number, y: number, size: number): SceneLight[] {
-  return [
-    { kind: 'flame', x, y, size },
-    { kind: 'ember', x: x - size * 0.12, y: y - size * 0.1 },
-    { kind: 'ember', x: x + size * 0.08, y: y - size * 0.15 },
-    { kind: 'ember', x, y: y - size * 0.05 },
-  ];
-}
-
 /** The Locations' arrival paintings (art/locations), by Location id. */
 export const LOCATION_LIGHTS: Record<string, readonly SceneLight[]> = {
   wildsEdge: [
@@ -226,11 +216,6 @@ export const MAP_LIGHTS: Record<string, readonly SceneLight[]> = {
     { kind: 'glint', x: 14.54, y: 35.03 },
     { kind: 'glint', x: 24.23, y: 17.3 },
   ],
-};
-
-/** The map's props, where a road scene stands one (art/map-nodes/props), by node type. */
-export const PROP_LIGHTS: Record<string, readonly SceneLight[]> = {
-  restReward: campfire(33, 72, 40),
 };
 
 export function SceneLights({ lights, className }: { lights: readonly SceneLight[] | undefined; className?: string }) {

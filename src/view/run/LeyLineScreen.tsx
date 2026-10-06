@@ -13,11 +13,10 @@ import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { formIdFor } from '../../run/progression';
 import { NodeMotes } from '../shared/NodeStage';
-import { NodeGlyph } from '../shared/nodeIcons';
 import { StatusGlyph } from '../shared/statusIcons';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
-import stoneArt from '../../../art/map-nodes/awake/leyLineReward.png';
+import shardArt from '../../../art/map-nodes/icons/leyLineReward.png';
 
 interface Props {
   run: RunState;
@@ -25,8 +24,8 @@ interface Props {
   onContinue: () => void;
 }
 
-/** The woken stone's light (mapNodeArt AWAKE_RGB leyLineReward). */
-const LEY_RGB = '120, 230, 255';
+/** The ember shard's light: the Ley Line tile's own colour (mapNodes NODE_COLORS). */
+const LEY_RGB = '232, 100, 60';
 
 /** How many of the hero's moves hit at its own element — what the Force is added to. */
 function movesAtElement(entry: RosterEntry, element: string): number {
@@ -114,7 +113,7 @@ export function LeyLineScreen({ run, onRunChange, onContinue }: Props) {
       <header className="rite-head">
         <span className="rite-place">
           <span className="rite-pool" aria-hidden="true" />
-          <img src={stoneArt} className="rite-place-art" alt="" draggable={false} />
+          <img src={shardArt} className="rite-place-art is-icon" alt="" draggable={false} />
         </span>
         <span className="rite-eyebrow">Power Under the Ground</span>
         <h2 className="rite-name">The Ley Line</h2>
@@ -122,7 +121,7 @@ export function LeyLineScreen({ run, onRunChange, onContinue }: Props) {
 
       <div className="verb-card is-static is-picked ley-gift">
         <span className="verb-card-socket" aria-hidden="true">
-          <NodeGlyph type="leyLineReward" className="verb-card-glyph" />
+          <img src={shardArt} className="verb-card-glyph is-icon" alt="" draggable={false} />
         </span>
         <span className="verb-card-body">
           <span className="verb-card-head">

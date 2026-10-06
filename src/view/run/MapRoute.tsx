@@ -6,7 +6,7 @@ import { useLongPress } from '../shared/MoveTile';
 import { playSfx, type SfxId } from '../../audio/sfx';
 import { NODE_COLORS, NODE_LABELS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
 import { nodeFactsLine } from './nodeFacts';
-import { isMapProp, mapNodeArt, mapNodeIcon } from './mapNodeArt';
+import { mapNodeArt, mapNodeIcon } from './mapNodeArt';
 import { landmarkKind, MapLandmarkFace, TITAN_LIGHT, type LandmarkKind } from './mapLandmarks';
 import campArt from '../../../art/places/rest.png';
 import { ElementPie } from '../shared/ElementPie';
@@ -183,7 +183,6 @@ function ChoiceMedallion({
   // them, its pixel icon and its name inside. The Titanspawn and the act's beats keep their art.
   const tile = landmark ? undefined : mapNodeIcon(node.type);
   const art = landmark || tile ? undefined : mapNodeArt(node.type);
-  const prop = art !== undefined && isMapProp(node.type);
   return (
     <div
       className={`map-choice tier-${NODE_TIERS[node.type]}${landmark ? ` has-${landmark}` : ''}`}
@@ -193,7 +192,7 @@ function ChoiceMedallion({
       <span className="map-choice-ahead" aria-hidden="true">
         {leadOns.map((type) => (
           <span key={type} className="map-choice-ahead-mark" style={{ '--node-color': NODE_COLORS[type] } as CSSProperties}>
-            <NodeGlyph type={type} />
+            {mapNodeIcon(type) ? <img src={mapNodeIcon(type)} className="map-choice-ahead-icon" alt="" draggable={false} /> : <NodeGlyph type={type} />}
           </span>
         ))}
       </span>
@@ -210,7 +209,7 @@ function ChoiceMedallion({
       )}
       <button
         type="button"
-        className={`map-medallion${tile ? ' is-tile' : ''}${scoutedFace ? ' is-scouted' : ''}${art ? (prop ? ' has-prop' : ' has-art') : ''}${landmark ? ` is-landmark is-${landmark}` : ''}${opening ? ' is-opening' : ''}`}
+        className={`map-medallion${tile ? ' is-tile' : ''}${scoutedFace ? ' is-scouted' : ''}${art ? ' has-art' : ''}${landmark ? ` is-landmark is-${landmark}` : ''}${opening ? ' is-opening' : ''}`}
         ref={measureRef}
         aria-label={scoutedFace ? `${label}. Enemies: ${scoutedFace.join(', ')}` : label}
         data-sfx="none"
@@ -219,7 +218,7 @@ function ChoiceMedallion({
         <span className="map-medallion-glow" aria-hidden="true" />
         <span className="map-choice-burst" aria-hidden="true" />
         {landmark && <MapLandmarkFace kind={landmark} type={node.type} guardianId={guardianId} actNumber={actNumber} />}
-        {art && <img src={art} className={prop ? 'map-medallion-prop' : 'map-medallion-art'} alt="" draggable={false} />}
+        {art && <img src={art} className="map-medallion-art" alt="" draggable={false} />}
         {tile && (
           <>
             <img src={tile} className="map-tile-icon" alt="" draggable={false} />

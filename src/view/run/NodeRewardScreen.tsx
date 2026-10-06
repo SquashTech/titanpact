@@ -12,7 +12,7 @@ import { seededRandom, withSeededRandom } from '../shared/seededRandom';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { useCoinCount } from '../shared/useCoinCount';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
-import { mapNodeArt, mapNodeIcon } from './mapNodeArt';
+import { mapNodeIcon } from './mapNodeArt';
 import { RoadScene } from './RoadEncounter';
 import { RosterPeek } from './RosterPeek';
 import cacheOpen from '../../../art/cache/chest-open.png';
@@ -100,7 +100,7 @@ function GoldOnTheRoad({ run, onRunChange, onContinue, seed }: Pick<Props, 'run'
   const name = 'A Spilled Purse';
   return (
     <RoadScene className={`is-place is-arrival is-gold${burst ? ' is-burst' : ''}`} label={`${name}: +${amount} gold`} onClick={onContinue}>
-      <img src={mapNodeArt('currencyReward')} className={`road-encounter-figure road-gold-pouch${prefersReducedMotion() ? ' is-still' : ''}`} alt="" draggable={false} />
+      <img src={mapNodeIcon('currencyReward')} className={`road-encounter-figure is-icon road-gold-pouch${prefersReducedMotion() ? ' is-still' : ''}`} alt="" draggable={false} />
       {burst && (
         <span className="road-gold-fountain" aria-hidden="true">
           {GOLD_COINS.map((c, i) => (
@@ -151,7 +151,7 @@ function ContractOnTheRoad({ run, onRunChange, onContinue }: Pick<Props, 'run' |
   const name = 'A Sealed Contract';
   return (
     <RoadScene className={`is-place is-arrival is-gold is-contract${burst ? ' is-burst' : ''}`} label={`${name}: +1 Recruit Contract`} onClick={onContinue}>
-      <img src={mapNodeArt('contractReward')} className={`road-encounter-figure road-gold-pouch${prefersReducedMotion() ? ' is-still' : ''}`} alt="" draggable={false} />
+      <img src={mapNodeIcon('contractReward')} className={`road-encounter-figure is-icon road-gold-pouch${prefersReducedMotion() ? ' is-still' : ''}`} alt="" draggable={false} />
       <span className="road-gold-delta" aria-hidden="true">
         +1
       </span>
@@ -225,7 +225,7 @@ function EquipmentCache({ run, onClaimEquipment, seed }: Pick<Props, 'run' | 'on
       <header className="rite-head">
         <span className="rite-place">
           <span className="rite-pool" aria-hidden="true" />
-          <img src={cacheOpen} className="rite-place-art" alt="" draggable={false} />
+          <img src={cacheOpen} className="rite-place-art is-icon" alt="" draggable={false} />
         </span>
         <span className="rite-eyebrow">A Forgotten Chest</span>
         <h2 className="rite-name">Choose One</h2>

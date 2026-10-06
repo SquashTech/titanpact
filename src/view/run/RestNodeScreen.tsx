@@ -12,9 +12,8 @@ import { formIdFor } from '../../run/progression';
 import { useLongPress } from '../shared/MoveTile';
 import { NodeMotes, NODE_TINT_VITAL } from '../shared/NodeStage';
 import { WoundBar, entryHp } from '../shared/WoundBar';
-import { PROP_LIGHTS, SceneLights } from '../shared/SceneLights';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
-import campArt from '../../../art/map-nodes/awake/restReward.png';
+import heartArt from '../../../art/map-nodes/icons/restReward.png';
 
 interface Props {
   run: RunState;
@@ -22,7 +21,7 @@ interface Props {
   onContinue: () => void;
 }
 
-/** One hero by the fire: its figure, its name, and its bar where the act left it. A hold reads its sheet. */
+/** One hero at rest: its figure, its name, and its bar where the act left it. A hold reads its sheet. */
 function CampFigure({
   hero,
   entry,
@@ -66,7 +65,7 @@ function CampFigure({
  * The Rest (docs/run-loop.md "Wounds", 2026-09-15, per user direction): the whole roster made
  * whole, in the seat a reward row would otherwise have given to gear, Scrolls or a Boon. No
  * decision on the screen — the decision was the tile — so it is a scene with a beat: the company
- * around the woken camp with every bar where the act left it, one press, the fire flares, every
+ * under the heart with every bar where the act left it, one press, the heart flares, every
  * bar sweeps full with what it got back floating over it, and the downed stand up.
  */
 export function RestNodeScreen({ run, onRunChange, onContinue }: Props) {
@@ -90,27 +89,26 @@ export function RestNodeScreen({ run, onRunChange, onContinue }: Props) {
     setHealed(gained);
   }
 
-  // Two rows around the fire, the nearer three in front.
+  // Two rows, the nearer three in front.
   const frontCount = Math.min(3, run.roster.length);
   const back = run.roster.slice(0, run.roster.length - frontCount);
   const front = run.roster.slice(run.roster.length - frontCount);
 
-  const line = rested ? 'Every wound closes. The company is whole again.' : wounded ? 'Sit by the fire, and every wound the act has left closes.' : 'Nobody is hurt. The fire is warm all the same.';
+  const line = rested ? 'Every wound closes. The company is whole again.' : wounded ? 'Rest a while, and every wound the act has left closes.' : 'Nobody is hurt. A rest does no harm all the same.';
 
   return (
-    <div className={`node-screen rite-screen is-camp rest-screen${rested ? ' is-rested' : ''}`} style={{ '--node-rgb': NODE_TINT_VITAL, '--rite-color': '#ff9a3c' } as CSSProperties}>
+    <div className={`node-screen rite-screen is-camp rest-screen${rested ? ' is-rested' : ''}`} style={{ '--node-rgb': NODE_TINT_VITAL, '--rite-color': 'var(--hp-high)' } as CSSProperties}>
       <span className="node-sky camp-ground" aria-hidden="true" />
       <NodeMotes count={16} />
 
       <header className="rite-head">
         <span className="rite-place camp-fire">
           <span className="rite-pool" aria-hidden="true" />
-          <img src={campArt} className="rite-place-art" alt="" draggable={false} />
-          <SceneLights lights={PROP_LIGHTS.restReward} />
+          <img src={heartArt} className="rite-place-art is-icon" alt="" draggable={false} />
           <span className="camp-flare" aria-hidden="true" />
         </span>
-        <span className="rite-eyebrow">Embers Banked</span>
-        <h2 className="rite-name">A Quiet Camp</h2>
+        <span className="rite-eyebrow">Catch Your Breath</span>
+        <h2 className="rite-name">A Quiet Rest</h2>
         <p className="camp-line" key={rested ? 'rested' : 'idle'}>
           {line}
         </p>

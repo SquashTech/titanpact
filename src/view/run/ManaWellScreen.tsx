@@ -15,7 +15,7 @@ import { NodeMotes, NODE_TINT_MANA } from '../shared/NodeStage';
 import { STAT_COLORS, StatGlyph } from '../shared/statIcons';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
-import wellArt from '../../../art/map-nodes/awake/manaWellReward.png';
+import wellArt from '../../../art/map-nodes/icons/manaWellReward.png';
 
 interface Props {
   run: RunState;
@@ -117,7 +117,7 @@ export function ManaWellScreen({ run, onRunChange, onContinue }: Props) {
       <header className="rite-head">
         <span className="rite-place">
           <span className="rite-pool" aria-hidden="true" />
-          <img src={wellArt} className="rite-place-art" alt="" draggable={false} />
+          <img src={wellArt} className="rite-place-art is-icon" alt="" draggable={false} />
         </span>
         <span className="rite-eyebrow">Cold Water, Far Down</span>
         <h2 className="rite-name">The Mana Well</h2>

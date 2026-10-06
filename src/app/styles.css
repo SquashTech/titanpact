@@ -17757,6 +17757,18 @@ button.star-shop-bundle-face {
   height: 16px;
 }
 
+/* A destination with a map icon wears it at 1x, unlit like the glyphs beside it. */
+.map-choice-ahead-mark:has(.map-choice-ahead-icon) {
+  opacity: 0.85;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.9));
+}
+
+.map-choice-ahead-icon {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+}
+
 /* Who is in there IS the sigil (2026-09-13, per user direction — it was a row of marks under a
    helm): a recruitable encounter's disc is cut into one wedge per enemy type, each tinted and
    wearing its element, so the fork reads as a tactical choice before it is a difficulty one. The
@@ -17976,53 +17988,6 @@ button.star-shop-bundle-face {
   image-rendering: pixelated;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6));
   pointer-events: none;
-}
-
-/* A node drawn as the thing itself (art/map-nodes/props): the lit disc stays — its ring and glow
-   are what say "tap here" and carry difficulty — and the 48px object stands in it at 2x, its foot
-   inside the disc and its top breaking out over the rim. */
-.map-medallion.has-prop,
-.map-choice.tier-reward .map-medallion.has-prop,
-.map-choice.tier-encounter .map-medallion.has-prop {
-  width: 108px;
-  height: 108px;
-  overflow: visible;
-  border: 2px solid color-mix(in srgb, var(--node-color) 80%, #ffffff 10%);
-  box-shadow: inset 0 0 26px -4px var(--node-color), 0 0 0 3px rgba(6, 7, 11, 0.55), 0 0 24px -6px var(--node-color);
-}
-
-.map-choices:has(.map-choice:only-child) .map-choice .map-medallion.has-prop {
-  width: 156px;
-  height: 156px;
-}
-
-.map-medallion.has-prop:hover {
-  border-color: var(--node-color);
-  box-shadow: inset 0 0 30px -2px var(--node-color), 0 0 0 3px rgba(6, 7, 11, 0.55), 0 0 32px -4px var(--node-color);
-}
-
-.map-medallion-prop {
-  position: absolute;
-  left: 50%;
-  bottom: 12px;
-  width: 96px;
-  height: 96px;
-  margin-left: -48px;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.7));
-  pointer-events: none;
-}
-
-.map-choices:has(.map-choice:only-child) .map-medallion-prop {
-  bottom: 14px;
-  width: 144px;
-  height: 144px;
-  margin-left: -72px;
-}
-
-/* The typing plaque hangs under the disc, clear of the object's foot. */
-.map-medallion.has-prop .map-medallion-typing {
-  bottom: -12px;
 }
 
 /* The act's beats drawn as themselves (mapLandmarks.tsx), with no stone and no disc. Sizes are
@@ -18265,6 +18230,24 @@ button.star-shop-bundle-face {
 }
 
 .map-origin-icon {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+}
+
+/* The same icon on the node's own screen, at a clean 3x: an object, so it hums but never breathes. */
+.keeper-art.is-icon {
+  animation: none;
+}
+
+/* And on the road, at 4x. */
+.road-encounter-figure.is-icon {
+  width: 128px;
+  height: 128px;
+  margin-left: -64px;
+}
+
+.verb-card-glyph.is-icon {
   width: 32px;
   height: 32px;
   image-rendering: pixelated;
@@ -31187,12 +31170,12 @@ button.star-shop-bundle-face {
 }
 
 .rite-screen.is-ley {
-  --rite-ink: #7fdcef;
-  --rite-title: #e2fbff;
-  --rite-glow: rgba(120, 230, 255, 0.55);
-  --rite-glow-far: rgba(60, 170, 220, 0.35);
-  --rite-card: #0a1216;
-  --rite-card-lit: #0e1a20;
+  --rite-ink: #f2a06a;
+  --rite-title: #fff0e2;
+  --rite-glow: rgba(240, 120, 70, 0.55);
+  --rite-glow-far: rgba(200, 80, 40, 0.35);
+  --rite-card: #160c0a;
+  --rite-card-lit: #20110e;
 }
 
 .ley-ground {
@@ -31200,8 +31183,8 @@ button.star-shop-bundle-face {
   inset: calc(var(--shell-pad) * -1);
   background:
     radial-gradient(ellipse 80% 32% at 50% 14%, color-mix(in srgb, var(--rite-color) 28%, transparent), transparent 70%),
-    radial-gradient(ellipse 90% 40% at 50% 100%, rgba(60, 170, 220, 0.16), transparent 70%),
-    linear-gradient(180deg, #030709, #071217 55%, #0b2029);
+    radial-gradient(ellipse 90% 40% at 50% 100%, rgba(220, 90, 50, 0.16), transparent 70%),
+    linear-gradient(180deg, #090403, #170a07 55%, #29120b);
   transition: background 0.6s var(--ease-out);
   pointer-events: none;
 }
@@ -33095,19 +33078,19 @@ button.star-shop-bundle-face {
    The company around the woken camp, lit from the fire: two rows of figures with their bars where
    the act left them. Rest flares the fire, sweeps every bar full and floats up what it gave back. */
 .rite-screen.is-camp {
-  --rite-ink: #e0a060;
-  --rite-title: #fff0dc;
-  --rite-glow: rgba(255, 150, 60, 0.6);
-  --rite-glow-far: rgba(230, 90, 30, 0.35);
+  --rite-ink: #8fd8a0;
+  --rite-title: #eafff0;
+  --rite-glow: rgba(90, 200, 120, 0.6);
+  --rite-glow-far: rgba(40, 140, 70, 0.35);
 }
 
 .camp-ground {
   position: absolute;
   inset: calc(var(--shell-pad) * -1);
   background:
-    radial-gradient(ellipse 85% 38% at 50% 16%, rgba(255, 140, 50, 0.3), transparent 70%),
-    radial-gradient(ellipse 100% 45% at 50% 100%, rgba(120, 50, 20, 0.35), transparent 72%),
-    linear-gradient(180deg, #050304, #0e0806 55%, #1c0e08);
+    radial-gradient(ellipse 85% 38% at 50% 16%, rgba(90, 200, 120, 0.26), transparent 70%),
+    radial-gradient(ellipse 100% 45% at 50% 100%, rgba(30, 100, 50, 0.32), transparent 72%),
+    linear-gradient(180deg, #030504, #06100a 55%, #0b1c10);
   pointer-events: none;
 }
 
@@ -33124,7 +33107,7 @@ button.star-shop-bundle-face {
   height: 200px;
   margin: -100px 0 0 -130px;
   border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(255, 236, 200, 0.85), rgba(255, 150, 60, 0.4) 35%, transparent 68%);
+  background: radial-gradient(ellipse, rgba(225, 255, 230, 0.85), rgba(90, 200, 120, 0.4) 35%, transparent 68%);
   opacity: 0;
   pointer-events: none;
 }
@@ -40510,121 +40493,6 @@ img.smithy-service-art {
 
 .app-shell.canvas-shortest .bottom-bar {
   padding-bottom: 6px;
-}
-
-/* -- road-awaken: a place that wakes as the player arrives (RoadEncounter `awakened`). The map's own
-   prop rises, flares white, and gives way to its woken self in a burst of its light; the woken
-   prop then breathes that light while the line is read. -- */
-.road-encounter.is-awakening {
-  --awaken-rgb: 120, 205, 255;
-}
-
-.road-encounter.is-awakening .road-encounter-figure.is-dormant {
-  animation:
-    road-encounter-rise 0.9s var(--ease-out) both,
-    road-awaken-flare 0.45s ease-in 1s forwards;
-}
-
-@keyframes road-awaken-flare {
-  from {
-    opacity: 1;
-    filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.7));
-  }
-  60% {
-    opacity: 1;
-    filter: brightness(0) invert(1) drop-shadow(0 0 22px rgba(var(--awaken-rgb), 1));
-  }
-  to {
-    opacity: 0;
-    filter: brightness(0) invert(1) drop-shadow(0 0 30px rgba(var(--awaken-rgb), 1));
-  }
-}
-
-.road-encounter.is-awakening .road-encounter-figure.is-awake {
-  opacity: 0;
-  animation:
-    road-awaken-in 0.6s var(--ease-out) 1.3s forwards,
-    road-awaken-breathe 2.8s ease-in-out 1.9s infinite;
-}
-
-@keyframes road-awaken-in {
-  from {
-    opacity: 1;
-    transform: scale(1.06);
-    filter: brightness(0) invert(1) drop-shadow(0 0 30px rgba(var(--awaken-rgb), 1));
-  }
-  45% {
-    opacity: 1;
-    filter: brightness(1.6) drop-shadow(0 0 24px rgba(var(--awaken-rgb), 0.9));
-  }
-  to {
-    opacity: 1;
-    transform: none;
-    filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 16px rgba(var(--awaken-rgb), 0.45));
-  }
-}
-
-@keyframes road-awaken-breathe {
-  0%,
-  100% {
-    opacity: 1;
-    filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 16px rgba(var(--awaken-rgb), 0.45));
-  }
-  50% {
-    opacity: 1;
-    filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 26px rgba(var(--awaken-rgb), 0.75));
-  }
-}
-
-/* The burst the waking gives off, then a standing pool of the place's light behind it. */
-.road-awaken-halo {
-  position: absolute;
-  left: 50%;
-  bottom: 120px;
-  width: 360px;
-  height: 300px;
-  margin-left: -180px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(var(--awaken-rgb), 0.5), rgba(var(--awaken-rgb), 0.14) 38%, transparent 68%);
-  opacity: 0;
-  pointer-events: none;
-  animation: road-awaken-halo 1.6s var(--ease-out) 1.25s forwards;
-}
-
-@keyframes road-awaken-halo {
-  from {
-    opacity: 1;
-    transform: scale(0.35);
-  }
-  30% {
-    opacity: 1;
-    transform: scale(1.05);
-  }
-  to {
-    opacity: 0.45;
-    transform: scale(0.85);
-  }
-}
-
-.road-encounter.is-skipped .road-encounter-figure.is-dormant {
-  visibility: hidden;
-}
-
-.road-encounter.is-awakening.is-skipped .road-encounter-figure.is-awake {
-  opacity: 1;
-  animation: road-awaken-breathe 2.8s ease-in-out infinite;
-}
-
-.road-encounter.is-skipped .road-awaken-halo {
-  opacity: 0.45;
-  animation: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .road-encounter.is-awakening .road-encounter-figure.is-awake {
-    animation: none;
-    opacity: 1;
-  }
 }
 
 /* -- Scene lights (SceneLights.tsx): light that moves in a still painting. The layer is laid over

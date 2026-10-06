@@ -17,7 +17,7 @@ import { useLongPress } from '../shared/MoveTile';
 import { NodeMotes, NODE_TINT_ARCANE } from '../shared/NodeStage';
 import { PassiveGlyph, PassiveReadout, passiveColor, passiveKindLabel } from '../shared/passiveIcons';
 import { PassiveDetailOverlay } from '../shared/PassiveDossier';
-import shrineArt from '../../../art/map-nodes/awake/passiveReward.png';
+import shrineArt from '../../../art/map-nodes/icons/passiveReward.png';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
 import { levelOf } from '../../run/growth';
@@ -175,7 +175,7 @@ export function BoonNodeScreen({ run, onRunChange, onContinue, seed }: Props) {
       <header className="rite-head">
         <span className="rite-place">
           <span className="rite-pool" aria-hidden="true" />
-          <img src={shrineArt} className="rite-place-art" alt="" draggable={false} />
+          <img src={shrineArt} className="rite-place-art is-icon" alt="" draggable={false} />
         </span>
         <span className="rite-eyebrow">A Wayside Shrine</span>
         <h2 className="rite-name">{confirmed ? 'Who carries it?' : 'Choose a Boon'}</h2>

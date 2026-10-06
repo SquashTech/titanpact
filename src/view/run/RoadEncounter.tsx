@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { playSfx } from '../../audio/sfx';
 import type { RunState } from '../../run/state';
 import { locationBackdrop } from '../shared/locationBackdrops';
@@ -6,8 +6,7 @@ import { useAmbientLocation } from '../shared/LocationContext';
 import { NodeSky } from '../shared/NodeStage';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { LocationMotes } from '../shared/LocationSky';
-import { LOCATION_LIGHTS, SceneLights, type SceneLight } from '../shared/SceneLights';
-import type { Awakening } from './mapNodeArt';
+import { LOCATION_LIGHTS, SceneLights } from '../shared/SceneLights';
 
 // Meeting someone on the road: the act's own painting, the figure fading in where it stands, and
 // one line said before the node's real screen. A tap finishes the line; a second tap moves on. A
@@ -46,18 +45,14 @@ export function KeeperVoice({ line }: { line: string }) {
 const TYPE_MS = 24;
 /** The fade in, before the line starts (ms). Matches `road-encounter-arrive`. */
 const WALK_MS = 900;
-/** A place that wakes holds the line until it has: rise, flare, the woken art in (styles.css "road-awaken"). */
-const AWAKEN_MS = 1900;
 
 interface Props {
   /** The speaker's 48px portrait, or the place's 48px map piece, drawn at 3x. */
   art: string;
   /** A place rather than a person: no walk, and the line is narration. */
   place?: boolean;
-  /** The place's woken state (mapNodeArt.ts mapNodeAwakening): it flares into this before the line. */
-  awakened?: Awakening;
-  /** Light moving on the figure itself — a campfire's flicker (SceneLights PROP_LIGHTS). */
-  lights?: readonly SceneLight[];
+  /** `art` is a 32px map icon (mapNodeIcon), drawn at its own clean multiple. */
+  icon?: boolean;
   name: string;
   line: string;
   onDone: () => void;
@@ -68,14 +63,11 @@ export function RoadScene({
   className,
   label,
   onClick,
-  awakenRgb,
   children,
 }: {
   className?: string;
   label: string;
   onClick: () => void;
-  /** A waking place's light (road-awaken in styles.css). */
-  awakenRgb?: string;
   children: ReactNode;
 }) {
   const location = useAmbientLocation();
@@ -84,7 +76,6 @@ export function RoadScene({
     <button
       type="button"
       className={`road-encounter${className ? ` ${className}` : ''}`}
-      style={awakenRgb ? ({ '--awaken-rgb': awakenRgb } as CSSProperties) : undefined}
       onClick={onClick}
       data-sfx="none"
       aria-label={label}
@@ -99,24 +90,17 @@ export function RoadScene({
   );
 }
 
-export function RoadEncounter({ art, name, line, place = false, awakened, lights, onDone }: Props) {
+export function RoadEncounter({ art, name, line, place = false, icon = false, onDone }: Props) {
   const instant = prefersReducedMotion();
   const [shown, setShown] = useState(instant ? line.length : 0);
   const [speaking, setSpeaking] = useState(instant);
-  // A tap before the place has woken skips the waking too, not only the line.
-  const [skipped, setSkipped] = useState(instant);
   const done = shown >= line.length;
 
   useEffect(() => {
     if (speaking) return;
-    const start = window.setTimeout(() => setSpeaking(true), awakened ? AWAKEN_MS : WALK_MS);
+    const start = window.setTimeout(() => setSpeaking(true), WALK_MS);
     return () => window.clearTimeout(start);
-  }, [speaking, awakened]);
-
-  useEffect(() => {
-    if (awakened && !instant) playSfx('shrine', { delay: 1.05 });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [speaking]);
 
   useEffect(() => {
     if (!speaking || done) return;
@@ -127,7 +111,6 @@ export function RoadEncounter({ art, name, line, place = false, awakened, lights
   function advance() {
     if (!done) {
       setSpeaking(true);
-      setSkipped(true);
       setShown(line.length);
       return;
     }
@@ -137,15 +120,11 @@ export function RoadEncounter({ art, name, line, place = false, awakened, lights
 
   return (
     <RoadScene
-      className={[place ? 'is-place' : '', awakened ? 'is-awakening' : '', skipped ? 'is-skipped' : ''].filter(Boolean).join(' ') || undefined}
+      className={place ? 'is-place' : undefined}
       label={`${name}: ${line}`}
       onClick={advance}
-      awakenRgb={awakened?.rgb}
     >
-      {awakened && <span className="road-awaken-halo" aria-hidden="true" />}
-      <img src={art} className={`road-encounter-figure${instant ? ' is-still' : ''}${awakened ? ' is-dormant' : ''}`} alt="" draggable={false} />
-      {awakened && <img src={awakened.art} className="road-encounter-figure is-awake" alt="" draggable={false} />}
-      <SceneLights lights={lights} className="road-encounter-figure" />
+      <img src={art} className={`road-encounter-figure${icon ? ' is-icon' : ''}${instant ? ' is-still' : ''}`} alt="" draggable={false} />
       <span className={`road-encounter-speech${speaking ? ' is-open' : ''}`} aria-hidden="true">
         <span className="road-encounter-name">{name}</span>
         <span className="road-encounter-line">
@@ -168,15 +147,13 @@ export function RoadGate({
   name,
   lines,
   place = false,
-  awakened,
-  lights,
+  icon = false,
   enabled = true,
   children,
 }: {
   run: RunState;
   art: string;
-  awakened?: Awakening;
-  lights?: readonly SceneLight[];
+  icon?: boolean;
   name: string;
   lines: readonly string[];
   place?: boolean;
@@ -184,6 +161,6 @@ export function RoadGate({
   children: ReactNode;
 }) {
   const [line, dismiss] = useRoadGreeting(run, lines, enabled);
-  if (line) return <RoadEncounter art={art} name={name} line={line} place={place} awakened={awakened} lights={lights} onDone={dismiss} />;
+  if (line) return <RoadEncounter art={art} name={name} line={line} place={place} icon={icon} onDone={dismiss} />;
   return <>{children}</>;
 }

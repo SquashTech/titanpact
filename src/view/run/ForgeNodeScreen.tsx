@@ -13,7 +13,7 @@ import { ElementGlyph } from '../shared/elementIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { formIdFor } from '../../run/progression';
 import { HubGlyph } from '../shared/nodeIcons';
-import smithArt from '../../../art/npc/smith.png';
+import forgeArt from '../../../art/map-nodes/icons/forgeReward.png';
 import { NodeMotes, NODE_TINT_HEARTH } from '../shared/NodeStage';
 import { overlayHost } from '../shared/overlayHost';
 import { RosterPeek } from './RosterPeek';
@@ -83,11 +83,11 @@ export function ForgeNodeScreen({ run, onRunChange, onContinue }: Props) {
       <NodeMotes count={16} />
       <RosterPeek run={run} />
 
-      {/* The smith at the hearth, and what the Forge does — or, once it has, what it made. */}
+      {/* The anvil, and what the Forge does — or, once it has, what it made. */}
       <header className="keeper-head">
         <span className="keeper-figure">
           <span className="rite-pool" aria-hidden="true" />
-          <img src={smithArt} className="keeper-art" alt="" draggable={false} />
+          <img src={forgeArt} className="keeper-art is-icon" alt="" draggable={false} />
           <span className="forge-flare" aria-hidden="true" />
         </span>
         <span className="keeper-words">

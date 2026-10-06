@@ -3251,7 +3251,11 @@ it drops onto the road and bounces, rattles, flashes white, and bursts into the 
 are one uniform stone tile — the kit's gold-inlaid frame, a 32px icon at 2x from the `art/icons/32x32`
 pack (`art/map-nodes/icons/`), and the node's name inside. The Forge and Ley Line icons and the open
 chest are drawn in that pack's grammar by `scripts/art/map-icons.mjs`. The Titanspawn, the spliced
-seat, the Guild Hall and the Guardian door keep their art.
+seat, the Guild Hall and the Guardian door keep their art. **The icon is the node everywhere it is
+drawn**: the fork's lead-on marks, the long-press dossier, the road scenes (the purse, the contract,
+an event, at 4x) and the node's own screen (Boon, Mana Well, Ley Line, Rest, the Forge's anvil in
+place of the smith, at 3x). The props, their woken states and the Rest's campfire lights are deleted;
+the named keepers — the Scribe, the Pactwarden, the Mentor, the Tutor — keep their figures.
 
 **Short screens** (2026-09-28, per user direction). The console holds four moves at a 780px
 canvas with nothing to spare, and a phone's canvas is its browser's visible height — an
@@ -3263,7 +3267,8 @@ figures stand on their platforms and the nameplates tighten; last the two rows l
 into the horizon. Four moves fit down to 664 and a tall phone draws the fight as authored;
 below ~650 (an SE in a Safari tab) the list still scrolls.
 
-**Places wake, paintings move** (eleventh pass, 2026-09-28, per user direction). A place met
+**Places wake, paintings move** (eleventh pass, 2026-09-28, per user direction; **the waking was
+retired 2026-10-05** with the props — see "Map buttons" below). A place met
 on the road is its own map prop, and it **wakes** as the player arrives: rise, a white flare,
 then its woken self (`art/map-nodes/awake`, one PixelLab edit of each prop) under a halo in the
 place's own light, before the line is read. Every road place wakes — the Scroll crate, the Rest,

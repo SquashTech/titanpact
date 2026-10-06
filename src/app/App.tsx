@@ -166,7 +166,7 @@ import type { RunState, RosterEntry } from '../run/state';
 import type { Squad } from '../run/squad';
 import { statScaleFor } from '../run/statScale';
 import { RoadGate } from '../view/run/RoadEncounter';
-import { mapNodeArt, mapNodeAwakening } from '../view/run/mapNodeArt';
+import { mapNodeIcon } from '../view/run/mapNodeArt';
 
 /** The screen machine (run/resume.ts), so a save can carry the screen it was written on. */
 type Screen = RunScreen;
@@ -1600,7 +1600,7 @@ export function App() {
           const { nodeId, eventId, seed } = screen;
           const onEventRunChange = settlingRunChange(screen);
           return (
-            <RoadGate run={playerRun} place art={mapNodeArt('event')!} awakened={mapNodeAwakening('event')} name={runEvents[eventId].name} lines={[runEvents[eventId].flavor]}>
+            <RoadGate run={playerRun} place icon art={mapNodeIcon('event')!} name={runEvents[eventId].name} lines={[runEvents[eventId].flavor]}>
               <EventNodeScreen
                 event={runEvents[eventId]}
                 run={playerRun}
