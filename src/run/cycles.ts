@@ -24,6 +24,9 @@ export const PERMADEATH_FROM_CYCLE = 2;
 /** The Cycle the Guardians wake at (docs/ascension.md §2a), and every Cycle after it. */
 export const GUARDIANS_WAKE_FROM_CYCLE = 2;
 
+/** The Cycle the Wardens first hold the seals (run/wardens.ts), and every Cycle after it. */
+export const WARDENS_FROM_CYCLE = 2;
+
 export interface CycleDefinition {
   cycle: number;
   numeral: string;
@@ -32,15 +35,29 @@ export interface CycleDefinition {
   line: string;
   /** Stars a clear pays on top of its hero stars, every clear. */
   clearBonus: number;
+  /** A lore card, a line a tap, ahead of the first draft of this Cycle on an account (docs/cycles.md §7). */
+  lore?: readonly string[];
 }
 
 export const CYCLES: readonly CycleDefinition[] = [
   { cycle: 1, numeral: 'I', name: 'The Sealing', line: 'The Titan rises. Seal it.', clearBonus: 1 },
-  { cycle: 2, numeral: 'II', name: 'The Remembered', line: 'The fallen stay fallen.', clearBonus: 6 },
+  {
+    cycle: 2,
+    numeral: 'II',
+    name: 'The Remembered',
+    line: 'The Titan’s darkness spreads. Fallen heroes are gone for good.',
+    clearBonus: 6,
+    lore: ['A year has passed, and the Titan wakes.', 'The heroes who sealed it stayed to guard the seals.', 'Now the Titan holds them.', 'We must seal the pact again.'],
+  },
   { cycle: 3, numeral: 'III', name: 'The Long Winter', line: '', clearBonus: 0 },
   { cycle: 4, numeral: 'IV', name: 'The Gathering', line: '', clearBonus: 0 },
   { cycle: 5, numeral: 'V', name: 'The Last Cycle', line: '', clearBonus: 0 },
 ];
+
+/** The lore card's id in `seenTipIds` for a Cycle past the first; Cycle I's is the account's own (run/tips.ts LORE_TIP_ID). */
+export function cycleLoreTipId(cycle: number): string {
+  return `lore.cycle${cycle}`;
+}
 
 /** The Cycle's row; an unknown Cycle reads as Cycle I. */
 export function cycleOf(cycle: number): CycleDefinition {
@@ -53,6 +70,10 @@ export function isPermadeath(run: Pick<RunState, 'cycle'>): boolean {
 
 export function guardiansWake(run: Pick<RunState, 'cycle'>): boolean {
   return run.cycle >= GUARDIANS_WAKE_FROM_CYCLE;
+}
+
+export function wardensHold(run: Pick<RunState, 'cycle'>): boolean {
+  return run.cycle >= WARDENS_FROM_CYCLE;
 }
 
 /**

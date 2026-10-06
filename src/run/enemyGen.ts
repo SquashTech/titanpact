@@ -104,7 +104,7 @@ function drawFrom(rng: RngState): { random: () => number; state: () => RngState 
  * Level 1 to `level`, every level rolled against the definition's grades — a Titanspawn line's,
  * a hero's, or DEFAULT_GRADES for a champion with none authored. The same call a hire arrives by.
  */
-function growTo(entry: RosterEntry, hero: HeroLookup[string], level: number, rng: RngState): { entry: RosterEntry; nextState: RngState } {
+export function growTo(entry: RosterEntry, hero: HeroLookup[string], level: number, rng: RngState): { entry: RosterEntry; nextState: RngState } {
   const draw = drawFrom(rng);
   const grown = levelUpEntry(entry, hero, level - 1, draw.random).entry;
   return { entry: grown, nextState: draw.state() };

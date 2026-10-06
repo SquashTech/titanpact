@@ -4,6 +4,7 @@
 import { heroes } from '../data/heroes';
 import { progressionTable } from '../data/progression';
 import { createProfile, decodeProfile, type Profile } from '../run/profile';
+import { withBackfilledWardens } from '../run/wardens';
 import { clearSave } from './saveStorage';
 
 const PROFILE_KEY = 'titanpact.profile';
@@ -23,7 +24,8 @@ export function readProfile(): Profile {
   }
   if (!raw) return createProfile();
   try {
-    return decodeProfile(JSON.parse(raw), knownHeroIds, knownPathIds);
+    // A win from before the Wardens seats its band on first read (run/wardens.ts).
+    return withBackfilledWardens(decodeProfile(JSON.parse(raw), knownHeroIds, knownPathIds), heroes, progressionTable);
   } catch {
     return createProfile();
   }

@@ -12,6 +12,7 @@ import { spawnPosition } from '../data/titanspawn';
 import { cycleOf } from './cycles';
 import { grantLedgerId } from './recruitment';
 import { unenchanted, type Team, type TeamSlot } from './constructed';
+import type { Warden } from './wardens';
 
 export const PROFILE_VERSION = 2;
 
@@ -35,6 +36,8 @@ export interface Profile {
   furthestAct: number;
   /** The highest Cycle a run has been cleared on (run/cycles.ts); 0 until a run is cleared. */
   cyclesCleared: number;
+  /** The heroes of the first Cycle I win, each holding a seal from Cycle II (run/wardens.ts). Empty until then; never replaced. */
+  wardens: Warden[];
   /**
    * heroId -> the Evolution path ids that hero has cleared a run down. One star a path, three a
    * hero, and a hero that finished a run unevolved earns nothing — the star is for the form, not
@@ -155,6 +158,7 @@ export function createProfile(): Profile {
     runsFailed: 0,
     furthestAct: 1,
     cyclesCleared: 0,
+    wardens: [],
     evolutionStars: {},
     companionStars: [],
     curseStars: [],
@@ -371,6 +375,27 @@ function decodeTeams(value: unknown): Team[] {
   return teams;
 }
 
+/** A Warden keeps its seat while its hero ships; a path this build no longer authors is dropped, the Warden kept unevolved. */
+function decodeWardens(value: unknown, knownHeroIds?: ReadonlySet<string>, knownPathIds?: ReadonlySet<string>): Warden[] {
+  if (!Array.isArray(value)) return [];
+  const wardens: Warden[] = [];
+  for (const raw of value) {
+    if (!isRecord(raw) || typeof raw.heroId !== 'string' || typeof raw.sealId !== 'string') continue;
+    if (knownHeroIds && !knownHeroIds.has(raw.heroId)) continue;
+    if (wardens.some((w) => w.heroId === raw.heroId || w.sealId === raw.sealId)) continue;
+    const pathId = typeof raw.pathId === 'string' && (!knownPathIds || knownPathIds.has(raw.pathId)) ? raw.pathId : null;
+    wardens.push({
+      heroId: raw.heroId,
+      sealId: raw.sealId,
+      pathId,
+      moveIds: stringList(raw.moveIds),
+      classId: typeof raw.classId === 'string' && raw.classId.length > 0 ? raw.classId : null,
+      itemIds: stringList(raw.itemIds),
+    });
+  }
+  return wardens;
+}
+
 function stringList(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && item.length > 0) : [];
 }
@@ -464,6 +489,7 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     furthestAct: Math.max(1, count(value.furthestAct, 1)),
     // A file from before the Cycles holds the highest Ascension rung cleared, 0 being Cycle I.
     cyclesCleared: value.cyclesCleared !== undefined ? count(value.cyclesCleared) : count(value.runsCompleted) > 0 ? count(value.ascensionCleared) + 1 : 0,
+    wardens: decodeWardens(value.wardens, knownHeroIds, knownPathIds),
     evolutionStars,
     // Absent on every file written before the bestiary; such a player starts both empty.
     companionStars: [...new Set(stringList(value.companionStars))],

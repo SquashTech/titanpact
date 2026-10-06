@@ -17,9 +17,10 @@ import { rosterEntryTypes } from './progression';
 import { championGradeFor, encounterScaling, encounterHeroCountOverride, enemyLoadoutFor, guardianEscortCount } from './difficulty';
 import { appendFinalEnemy, generateEncounter, type Encounter, type EncounterNodeType } from './enemyGen';
 import { locationBias } from './locations';
-import { guardiansWake, wokenChampion, wokenChampionMark, wokenEscortCount } from './cycles';
+import { guardiansWake, wardensHold, wokenChampion, wokenChampionMark, wokenEscortCount } from './cycles';
 import { guardianEscortPool, mobEncounter } from './spawn';
 import { DECK_HEROES_PER_FIGHT } from './deck';
+import { appendWarden, buildWarden, wardenAt, type Warden } from './wardens';
 
 export type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss';
 
@@ -51,6 +52,8 @@ export interface EncounterContext {
   /** The authored enemies, for the Guardian's champion. */
   enemies: HeroLookup;
   progression: ProgressionTable;
+  /** The account's Wardens (run/wardens.ts); from Cycle II the one holding this seal joins its Guardian. */
+  wardens?: readonly Warden[];
 }
 
 /** `skirmish` and `battle` are mechanically plain `fight` encounters. */
@@ -103,6 +106,18 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
     if (woken) encounter = wakeChampion(encounter, finalEnemyId, wokenChampionMark(enemies[finalEnemyId]));
     // A lone escort (difficulty.ts GUARDIAN_ESCORTS_BY_ACT) leaves a lead slot for the champion.
     else if (encounter.squad.activeIds[1] === null) encounter = wakeChampion(encounter, finalEnemyId, null);
+  }
+  // From Cycle II the seal's Warden stands beside its beast, an extra body (docs/cycles.md §2).
+  const warden = type === 'boss' && wardensHold(run) ? wardenAt(ctx.wardens, location.id) : null;
+  if (warden) {
+    const entry = buildWarden(warden, ctx.allCombatants, progression, {
+      level: scaling.level,
+      mastery: scaling.mastery,
+      actNumber: run.actNumber,
+      loadout,
+      seed: encounterSeedFor(ctx.run.map!, `${node.id}:warden`),
+    });
+    if (entry) encounter = appendWarden(encounter, entry);
   }
   return encounter;
 }

@@ -46,6 +46,28 @@ won with. Binding is mutual (`lore.md` §1): the band that sealed the Titan stay
 - **A seal with no Warden keeps the beast alone** — a first win with fewer than six heroes, or an
   account whose first win predates this and is gone from Run History (capped at 50).
 
+### As built (phase 2, 2026-10-06) — `src/run/wardens.ts`
+
+- **A Warden is its decisions, not its numbers** (`Profile.wardens`): the hero, its seal, the path
+  it finished down, its kit, its Class and its gear at the win. Recorded once, by `recordWardens`
+  on the first Cycle I clear; a later win never replaces it.
+- **Seated by type** (`seatWardens`): every assignment of the band to the six seals is tried and
+  the best total fit kept — a seal's spawn line matching the hero's primary scores 2, its
+  secondary 1, roster order breaking ties. Wild's Edge spawns every type and fits nobody, so it
+  takes whoever fits least elsewhere.
+- **Grown again at every seal** (`buildWarden`): to the Guardian's escorts' level
+  (`WARDEN_LEVEL_BONUS` = 0 over them) on its own grades, at the act's Mastery. It fields what that
+  level and act have opened: its Evolution once the pips allow (an enemy's rule, Act 4), its own
+  moves whose band the level has reached, its Class from Act 2 (`WARDEN_CLASS_FROM_ACT`, the first
+  Guardian's reward), and as many pieces of its gear as the act's enemies carry.
+- **Last on the bench** (`appendWarden`): it enters after the escorts and the beast — the last to
+  fall. **Never a contract** (`isWarden`): it is the band's, and may be a hero already held.
+- **A win from before the Wardens is read off its history line** (`withBackfilledWardens`, on
+  profile read): the oldest Cycle I win, each hero with its path and its own two moves, no Class
+  and no gear — all a record kept.
+- **Drawn held** (per user direction): a red glow round the figure and a red rim under it, breathing (`.is-held`, `isWardenCombatant`), and it takes the field on a beat of its own — its name over *The Titan holds them.* (`WARDEN_ARRIVAL_LINE`).
+- The sim plays a Cycle I run to a win and seats that band (`--cycle 2`, `--wardens off` to compare).
+
 Nothing like this exists in another roguelike that we know of. That is the point of protecting it.
 
 ## 3. The five Cycles — first pass
@@ -111,14 +133,19 @@ bundles and the Starfall.
 | Phase | What | Status |
 |---|---|---|
 | 1 | Ascension → Cycles: `src/run/cycles.ts`, `RunState.cycle` (1-based) and `Profile.cyclesCleared`, saves and profiles migrated one up; no entry fee; the title's **Which Cycle?** picker once Cycle I is cleared (I–V listed, the unbuilt greyed by name); the map's Cycle badge; one-year lore; the sim's `--cycle N` | **Done** 2026-10-06 |
-| 2 | The Wardens: snapshot the first Cycle I win (`Profile.wardens`), seat each by type on a base seal, field it as an EXTRA body beside its beast from Cycle II, name it on arrival, a Wardens page; back-fill from Run History; measure | Next |
+| 2 | The Wardens: snapshot the first Cycle I win (`Profile.wardens`), seat each by type on a base seal, field it as an EXTRA body beside its beast from Cycle II; back-fill from Run History; measured (below) | **Built** 2026-10-06 — the arrival line and a Wardens page wait on copy |
 | 3 | Star colours by Cycle: `heroId → { pathId → cycle }`, migrated as Cycle I | — |
 | 4 | Bought Locations granted by a Cycle; the Constellation stops selling them | — |
 | 5 | Cycles III and IV, one rule each, each measured | — |
 | — | Cycle V | When I–IV are built |
 
-The picker copy is held to one line a Cycle (per user direction): Cycle II reads *The fallen stay
-fallen.* until the Wardens land, when it gains *Your first band holds the seals.*
+**Phase 2 measured** (1000 runs a cell, Cycle II, a Cycle I win's band seated): full-clear 23.5 → 16.2% greedy pilot, 2.1 → 0.7% chart pilot; the share of run-ending deaths at a Guardian 50 → 64% / 43 → 55%. Directional — the level dial is `WARDEN_LEVEL_BONUS`, its entry is last on the bench.
+
+The picker copy is held to one line a Cycle (per user direction). Cycle II reads *The Titan’s darkness
+spreads. Fallen heroes are gone for good.* (the user’s line). **Each Cycle past the first may carry a
+lore card** (`CycleDefinition.lore`), four lines a tap, shown once an account ahead of that Cycle’s
+first draft (`cycleLoreTipId`) — Cycle II’s: *A year has passed, and the Titan wakes. / The heroes
+who sealed it stayed to guard the seals. / Now the Titan holds them. / We must seal the pact again.*
 
 ## 8. Decided (2026-10-06, per user direction)
 

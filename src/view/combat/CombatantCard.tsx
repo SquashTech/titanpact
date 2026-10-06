@@ -5,6 +5,7 @@ import { effectiveTypes, getCombatStatDelta, getMaxHp, getMaxMana, statModifierC
 import { fieldEffects } from '../../data/fieldEffects';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { isWardenCombatant } from '../../run/wardens';
 import { isTitanEye } from '../../data/enemies';
 import { StatGlyph, STAT_ORDER, hpTier, ShieldFill, ShieldLabel } from '../shared/StatBars';
 import { shieldHeld } from '../../engine/status/shield';
@@ -366,6 +367,7 @@ export function CombatantCard({
   if (compact) classes.push('compact');
   if (combatant.fainted) classes.push('fainted');
   if (combatant.blessed && !combatant.fainted) classes.push('is-blessed');
+  if (isWardenCombatant(combatant.combatantId)) classes.push('is-held');
   if (pose === 'closed') classes.push('is-closed-eye');
   if (targetable && !combatant.fainted) classes.push('targetable');
   if (selected) classes.push('selected');

@@ -61,7 +61,8 @@ import { moves } from '../data/moves';
 import { allCombatants, rosterHeroes } from '../data/content';
 import { CompanionScreen } from '../view/run/CompanionScreen';
 import { awakenCompanion, companionCandidate, companionGrowth, companionHeroId, companionJoinDue, companionToAwaken, joinCompanion } from '../run/companion';
-import { fallenAfterFight, isPermadeath, openCycle } from '../run/cycles';
+import { FIRST_CYCLE, cycleLoreTipId, cycleOf, fallenAfterFight, isPermadeath, openCycle } from '../run/cycles';
+import { isWarden, recordWardens, wardensFromRun } from '../run/wardens';
 import { FallenScreen } from '../view/run/FallenScreen';
 import type { CombatState } from '../engine/state';
 import { koRosterIdsOf } from '../run/buildCombatState';
@@ -603,7 +604,9 @@ export function App() {
       companionType: playerRun.companion?.type ?? null,
     };
     const before = readProfile();
-    const after = updateProfile((current) => recordRunEnded(current, end, now));
+    // The first Cycle I win is the account's Wardens, forever (run/wardens.ts).
+    const band = end.outcome === 'win' && playerRun.cycle === FIRST_CYCLE ? wardensFromRun(playerRun, heroes) : [];
+    const after = updateProfile((current) => recordWardens(recordRunEnded(current, end, now), band));
     setRunOutcome({ before, after });
   }, [screen.kind]);
 
@@ -751,6 +754,7 @@ export function App() {
         allCombatants,
         enemies,
         progression: progressionTable,
+        wardens: readProfile().wardens,
       });
       const isFirstFight = encounterKind === 'fight' && playerRun.fightsStarted === 0;
       if (isMobFight && isFirstFight) {
@@ -939,7 +943,7 @@ export function App() {
     // Gate order is deliberate: banner, then recruit, then the Crucible — so a hero recruited
     // this beat already stands under the Banner, and can walk into the Crucible itself.
     // `next`, not `playerRun`: a boss node has just granted the contract that is spendable here.
-    const recruitable = defeatedRoster.filter((entry) => isRecruitable(entry.heroId, recruitPool));
+    const recruitable = defeatedRoster.filter((entry) => !isWarden(entry) && isRecruitable(entry.heroId, recruitPool));
     const contractOffers = next.recruitContracts > 0 ? pickContractOffers(recruitable) : [];
     const afterRecruit: Screen = contractOffers.length > 0 ? { kind: 'recruit', offers: contractOffers, next: afterCrucible } : afterCrucible;
     const afterBanner: Screen = banner ? { kind: 'guardianBanner', next: afterRecruit } : afterRecruit;
@@ -1087,8 +1091,9 @@ export function App() {
     const optionIds = generateStarterOptions(randomSeed(), deckRows(profileDeck(profile, heroes)));
     setPlayerRun((run) => ({ ...run, cycle }));
     const draft: Screen = { kind: 'draft', optionIds };
-    // The lore card once an account, ahead of the first draft — its last line is the draft's verb.
-    setScreen(profile.seenTipIds.includes(LORE_TIP_ID) ? draft : { kind: 'lore', next: draft });
+    // A lore card once an account per Cycle: Cycle I's ahead of the very first draft, a later Cycle's ahead of its first.
+    const lore = cycle === FIRST_CYCLE ? { lines: LORE_LINES, tipId: LORE_TIP_ID } : { lines: cycleOf(cycle).lore ?? [], tipId: cycleLoreTipId(cycle) };
+    setScreen(lore.lines.length === 0 || profile.seenTipIds.includes(lore.tipId) ? draft : { kind: 'lore', next: draft, ...lore });
   }
 
   function handleDraftConfirm(chosenIds: string[]) {
@@ -1359,9 +1364,9 @@ export function App() {
 
       {screen.kind === 'lore' && (
         <LoreScreen
-          lines={LORE_LINES}
+          lines={screen.lines}
           onDone={() => {
-            markTipSeen(LORE_TIP_ID);
+            markTipSeen(screen.tipId);
             setScreen(screen.next);
           }}
         />

@@ -35,7 +35,7 @@ import {
 export type RunScreen =
   | { kind: 'title' }
   /** The lore card, ahead of the first draft on an account (docs/tutorial.md). */
-  | { kind: 'lore'; next: RunScreen }
+  | { kind: 'lore'; next: RunScreen; lines: readonly string[]; tipId: string }
   | { kind: 'draft'; optionIds: string[] }
   /** Permadeath's post-fight beat (docs/ascension.md §3): the KO'd heroes, still on the roster until Continue. */
   | { kind: 'fallen'; rosterIds: string[]; next: RunScreen }

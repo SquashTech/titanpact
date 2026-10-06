@@ -17,6 +17,7 @@ import { runEvents } from '../../src/data/events';
 import { progressionTable } from '../../src/data/progression';
 import { enemies, finaleEnemies, ENDBRINGER_ID, titanEyes, EYE_PHASES } from '../../src/data/enemies';
 import { encounterKindOf, encounterSeedFor, nodeEncounter } from '../../src/run/encounters';
+import { wardensFromRun, type Warden } from '../../src/run/wardens';
 import { allCombatants } from '../../src/data/content';
 import { guildHallOffersFor } from '../../src/data/recruitment';
 import { chooseMvp, mvpLedgersFromEvents } from '../../src/run/mvp';
@@ -197,6 +198,8 @@ export interface RunRecord {
   finaleRoster: number | null;
   /** heroId -> best level reached this run, for every hero that was ever on the roster. */
   heroLevels: Record<string, number>;
+  /** A won run's band, seated as the Wardens it would become (run/wardens.ts). */
+  wardens?: Warden[];
   /** Share of the roster that had evolved when the run ended — the §11 target is 1.0. */
   rosterEvolvedEnd: number;
   fights: FightRecord[];
@@ -311,6 +314,8 @@ export interface RunOptions extends policy.PolicyOptions {
   pilot: PilotKind;
   /** The Cycle (docs/cycles.md), 1-based: Cycle II and up is Permadeath, the Revive the one way back. */
   cycle: number;
+  /** The band holding the seals from Cycle II (run/wardens.ts); omitted = none. */
+  wardens?: readonly Warden[];
 }
 
 /**
@@ -509,6 +514,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
   for (const entry of run.roster) {
     record.heroLevels[entry.heroId] = Math.max(record.heroLevels[entry.heroId] ?? 0, levelOf(entry));
   }
+  if (record.won) record.wardens = wardensFromRun(run, heroes);
   return record;
 }
 
@@ -600,7 +606,7 @@ function resolveEncounterNode(
     // The same deterministic draw the game makes (run/encounters.ts): seeded off the map, so the
     // sim's own rng is not consulted here and a map seed reproduces its fights.
     const encounterKind = encounterKindOf(mapNodeType as Exclude<EncounterMapNodeType, 'finale'>);
-    encounter = nodeEncounter(node, { run, location, heroes, allCombatants, enemies, progression: progressionTable });
+    encounter = nodeEncounter(node, { run, location, heroes, allCombatants, enemies, progression: progressionTable, wardens: options.wardens });
     if (encounterKind === 'fight') workingRun = { ...workingRun, fightsStarted: workingRun.fightsStarted + 1 };
   }
 

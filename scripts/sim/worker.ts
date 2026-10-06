@@ -6,6 +6,7 @@ import { simulateRun } from './run';
 import { emptyAggregate, type Aggregate } from './types';
 import type { LevelPolicy } from './policy';
 import type { PilotKind } from './fight';
+import type { Warden } from '../../src/run/wardens';
 
 export interface WorkerJob {
   firstSeed: number;
@@ -15,6 +16,7 @@ export interface WorkerJob {
   playerSwitching: boolean;
   pilot: PilotKind;
   cycle: number;
+  wardens?: readonly Warden[];
 }
 
 export function runShard(job: WorkerJob): Aggregate {
@@ -31,6 +33,7 @@ export function runShard(job: WorkerJob): Aggregate {
           playerSwitching: job.playerSwitching,
           pilot: job.pilot,
           cycle: job.cycle,
+          wardens: job.wardens,
         })
       );
     } catch (err) {

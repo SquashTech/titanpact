@@ -23,6 +23,7 @@ import { statuses } from '../../data/statuses';
 import { getTypeColor } from './typeColors';
 import { statusAmountText } from '../shared/statusFacts';
 import { cinematicEntranceFor, dramaticEntranceFor, type CinematicEntrance } from '../shared/entrances';
+import { WARDEN_ARRIVAL_LINE, isWardenCombatant } from '../../run/wardens';
 import { moveKindGlyph } from '../shared/MoveTile';
 import type { MoveKindGlyphKind } from '../shared/statIcons';
 
@@ -824,6 +825,19 @@ export function buildBeats(
             bannerMeta: entrance.meta,
             bannerMetaClass: 'banner-meta-rules',
             dramaticEntrance: true,
+          });
+          i++;
+          break;
+        }
+        // A Warden (run/wardens.ts): the player's own first band, come in held by the Titan.
+        if (isWardenCombatant(e.inCombatantId)) {
+          push([e], `${inName} takes the field. ${WARDEN_ARRIVAL_LINE}`, [], {
+            bannerFocus: inName,
+            bannerFocusKind: 'ko',
+            bannerMeta: WARDEN_ARRIVAL_LINE,
+            bannerMetaClass: 'banner-meta-rules',
+            dramaticEntrance: true,
+            summonCombatantId: e.inCombatantId,
           });
           i++;
           break;
