@@ -18812,7 +18812,7 @@ button.star-shop-bundle-face {
 }
 
 /* The light the Titan is a hole in. Two sources and no third: the cold open's
-   own ember behind the head (`--tier-mythic-rgb`, the colour TitanWakeScreen
+   own ember behind the head (`--tier-mythic-rgb`, the colour LoreScreen
    burns in), and the sick green of the seal's ground low in the frame, which
    is what the four figures on the ridge are silhouetted against. The upper
    source was cold cyan to begin with, and it fought the eyes in front of it —
@@ -18885,7 +18885,7 @@ button.star-shop-bundle-face {
   }
 }
 
-/* The cold open's eye, shrunk (see `.titan-eye-globe`, TitanWakeScreen). This is
+/* The cold open's eye, shrunk (see `.titan-eye-globe`, LoreScreen). This is
    the throughline between the two screens and the reason it is worth carrying
    the wake's palette onto a screen that is otherwise cold: the thing the title
    is a picture OF is the thing the run opens on, and it should be lit the same
@@ -26587,6 +26587,29 @@ button.star-shop-bundle-face {
   animation: lore-line-in 900ms ease-out both;
 }
 
+/* The cold open's eyes over a lore card (LoreScreen): the wake's own markup and phases, but no
+   black of its own, nothing to tap, and the face lifted to the top of the screen so the open
+   eyes sit well clear of the line under them. The halo still bleeds past the lids. */
+.lore-screen .lore-titan {
+  inset: 0;
+  z-index: 0;
+  background: none;
+  pointer-events: none;
+}
+
+.lore-screen .lore-titan .titan-face {
+  top: 9%;
+}
+
+.lore-screen .lore-line,
+.lore-screen .lore-advance {
+  z-index: 1;
+}
+
+.lore-screen .lore-line {
+  position: relative;
+}
+
 /* The last line is the call to act, so it takes the seal's gold. */
 .lore-line.is-last {
   color: var(--accent);
@@ -26627,7 +26650,7 @@ button.star-shop-bundle-face {
   }
 }
 
-/* --- The cold open (docs/lore.md §1, TitanWakeScreen) -----------------------
+/* --- The cold open (docs/lore.md §1, LoreScreen) -----------------------
    Two eyes, a rumble, and nothing else. It sits between the draft's confirm and
    Act I's arrival, so it has no stage, no header and no control: everything
    below is full-bleed and inert, and the only input is a tap anywhere to skip.

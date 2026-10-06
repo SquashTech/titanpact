@@ -36,8 +36,9 @@ We must seal the pact.
 `LoreScreen` (`src/view/run/LoreScreen.tsx`), full-bleed on the cold open's black, serif, the last
 line in the seal's gold. It sits between the title's *Start a Run* and the draft, because its last
 line is the draft's verb — the draft's button reads *Seal the Pact*. Shown once an account
-(`LORE_TIP_ID` in `Profile.seenTipIds`); the cold open (`TitanWakeScreen`) still plays after every
-draft.
+(`LORE_TIP_ID` in `Profile.seenTipIds`), and each Cycle past the first has its own, once (docs/cycles.md §7).
+**The cold open lives here since 2026-10-06** (per user direction): the Titan's eyes open high on
+the card over the first line; `TitanWakeScreen`, which played them after every draft, is deleted.
 
 ## 3. The tips
 

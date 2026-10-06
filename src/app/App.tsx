@@ -75,7 +75,6 @@ import { PactSealScreen } from '../view/run/PactSealScreen';
 import { HeraldScreen } from '../view/run/HeraldScreen';
 import { CompanionAwakensScreen } from '../view/run/CompanionAwakensScreen';
 import { TitanBoundScreen } from '../view/run/TitanBoundScreen';
-import { TitanWakeScreen } from '../view/run/TitanWakeScreen';
 import { BlessingScreen } from '../view/run/BlessingScreen';
 import { equipment, EQUIPMENT_DROP_POOL, rollEquipmentDrops } from '../data/equipment';
 import {
@@ -179,7 +178,6 @@ const PLACELESS_SCREENS: ReadonlySet<Screen['kind']> = new Set([
   'draft',
   // Placeless is the point: it drops the title's track and leaves the cold open in silence,
   // and Act I's music then starts where it always does, on the arrival screen.
-  'titanWake',
   // Before the act: the stones where the road begins belong to no Location.
   'blessing',
   // Between two acts, and the property of neither.
@@ -1099,10 +1097,8 @@ export function App() {
   function handleDraftConfirm(chosenIds: string[]) {
     // The deck is snapshotted onto the run, so an edit between sessions never moves a run's pools.
     setPlayerRun((run) => ({ ...createStartingRun(chosenIds, run.cycle), deck: deckHeroIds(profileDeck(profile, heroes)) }));
-    // The cold open goes here and not on the title's press for the same reason the run itself
-    // is built here: binding is mutual (docs/lore.md §1), so the thing on the far end of the
-    // leash notices when the pact is sealed, not when a menu is browsed.
-    setScreen({ kind: 'titanWake' });
+    // The Titan's eyes open on the lore cards now (LoreScreen), not before every run.
+    setScreen({ kind: 'blessing' });
     fallback.current = null;
     persistStorage();
     // Sealing the pact is the start, not pressing the title button: a draft backed out of
@@ -1378,7 +1374,6 @@ export function App() {
         <PactSealScreen run={playerRun} onContinue={enterAct} />
       )}
 
-      {screen.kind === 'titanWake' && <TitanWakeScreen onDone={() => setScreen({ kind: 'blessing' })} />}
 
       {screen.kind === 'blessing' && <BlessingScreen run={playerRun} onDone={enterAct} />}
 

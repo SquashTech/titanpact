@@ -35,7 +35,7 @@ type RisePhase = 'stir' | 'rise' | 'settle' | 'fade';
  */
 export function TitanRiseScreen({ onDone }: Props) {
   const [phase, setPhase] = useState<RisePhase>('stir');
-  // Through a ref, as TitanWakeScreen does: the parent rebuilds `onDone` on its own renders.
+  // Through a ref, because the parent rebuilds `onDone` on its own renders.
   const done = useRef(onDone);
   done.current = onDone;
 

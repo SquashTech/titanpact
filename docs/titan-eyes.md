@@ -23,7 +23,7 @@
 What the ask fixes:
 
 - **They are a PAIR.** The title screen draws two eyes over the ridge (`titanArt.tsx` `EYES`); the
-  run's cold open (`TitanWakeScreen`) is one of them opening. The last fight is 2v2 in the only
+  run's cold open (the eyes over a lore card, `LoreScreen`) is one of them opening. The last fight is 2v2 in the only
   sense the game has ever meant it.
 - **The gaze is a TELEGRAPH.** A powerful attack the player is told about a turn early, aimed at
   one named hero, is a decision made with full information. The boss's power is in the number;

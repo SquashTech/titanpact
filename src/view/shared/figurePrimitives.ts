@@ -39,7 +39,7 @@ export const D = (d: string, f: string, extra = '') => `<path d="${d}" fill="${f
 export const L = (d: string, s: string, w = 1.5, extra = '') => `<path d="${d}" fill="none" stroke="${s}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" ${extra}/>`;
 export const G = (t: string, inner: string) => `<g transform="${t}">${inner}</g>`;
 
-/** The eye's fill: gold burning to the mythic red (TitanWakeScreen's). Defined once per figure. */
+/** The eye's fill: gold burning to the mythic red (LoreScreen's). Defined once per figure. */
 export const EYE_GRADIENT = (id: string) =>
   `<defs><radialGradient id="${id}" cx="50%" cy="50%" r="55%"><stop offset="0" stop-color="#f6dc96"/><stop offset=".42" stop-color="#e9a24e"/><stop offset=".78" stop-color="#e0393f"/><stop offset="1" stop-color="#6e1a20"/></radialGradient></defs>`;
 

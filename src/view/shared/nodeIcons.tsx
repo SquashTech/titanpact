@@ -38,7 +38,7 @@ const CLAW = (
   </g>
 );
 
-// The Titan's eye: the same lens TitanWakeScreen and the title open on, tapering to points at
+// The Titan's eye: the same lens LoreScreen and the title open on, tapering to points at
 // both corners, with the slit pupil cut out of it. What the Titanspawn are — a leak from the thing
 // that is watching — rather than a claw, which said only "monster". The lens runs nearly edge to
 // edge so it holds at 16px on the rail; the slit is a hole, not a stroke, so it stays dark on any

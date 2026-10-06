@@ -715,7 +715,7 @@ export const sounds: Record<SfxId, SoundSpec> = {
   },
 
   /**
-   * The run's cold open (TitanWakeScreen), under the black. Deliberately NOT loud — `entrance.dread` keeps the "biggest sound
+   * The run's cold open (LoreScreen), under the black. Deliberately NOT loud — `entrance.dread` keeps the "biggest sound
    * in the table" licence and this takes a different axis instead: the LOWEST. A 29Hz fundamental most phones cannot reproduce
    * at all, with a 58Hz octave over it doing the actual work on a small speaker, so the beat degrades to a hum rather than to
    * nothing. Every attack is slow: nothing here is an impact.

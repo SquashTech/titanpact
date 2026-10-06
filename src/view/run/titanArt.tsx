@@ -31,7 +31,7 @@ const LENS = `M${-EYE_HALF_W} 0 Q0 ${-EYE_HALF_H} ${EYE_HALF_W} 0 Q0 ${EYE_HALF_
  * The Titan: two eyes and the brow over them, and nothing else. The body, the pauldrons,
  * the rim light and the chains all came off (2026-09-11) — drawn, the figure competed with
  * the wordmark for the frame and read as a portrait, which is the wrong scale. What is left
- * is what TitanWakeScreen opens on: a skull continuing past every edge, sensed only by where
+ * is what LoreScreen opens on: a skull continuing past every edge, sensed only by where
  * the backlight is not, and two lights set wider apart than a face has room for.
  */
 export function TitanColossus() {
@@ -44,7 +44,7 @@ export function TitanColossus() {
       aria-hidden="true"
     >
       <defs>
-        {/* Lifted stop for stop from `.titan-eye-globe` (TitanWakeScreen): pale gold at the
+        {/* Lifted stop for stop from `.titan-eye-globe` (LoreScreen): pale gold at the
             centre out through the mythic red to almost nothing at the rim, so the light reads
             as coming from inside the eye rather than the eye being a painted disc. */}
         <radialGradient id="titan-iris" cx="50%" cy="50%" r="52%">
@@ -81,7 +81,7 @@ export function TitanColossus() {
           d="M-10 -32 L376 -32 L376 40 C 320 40 240 52 183 72 C 126 52 46 40 -10 40 Z"
         />
 
-        {/* The same eye TitanWakeScreen opens on: a lens that tapers to points at both
+        {/* The same eye LoreScreen opens on: a lens that tapers to points at both
             corners, lit from inside by pale gold burning out through the run's mythic red,
             with a vertical slit contracted to a hairline and a halo that bleeds past the lids.
             ┄

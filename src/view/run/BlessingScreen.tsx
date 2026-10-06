@@ -26,7 +26,7 @@ export function BlessingScreen({ run, onDone }: { run: RunState; onDone: () => v
   const [phase, setPhase] = useState<Phase>(instant ? 'speak' : 'arrive');
   const [shown, setShown] = useState(instant ? LINE.length : 0);
   const typed = shown >= LINE.length;
-  // Through a ref: the parent rebuilds `onDone` on its own renders (TitanWakeScreen's note).
+  // Through a ref: the parent rebuilds `onDone` on its own renders (TitanRiseScreen's note).
   const done = useRef(onDone);
   done.current = onDone;
   const [left, right] = run.roster;

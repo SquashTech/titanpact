@@ -44,7 +44,6 @@ export type RunScreen =
   /** Acts 2-5 open on a 1-of-2 (docs/locations.md §1): the offer is drawn once, when the seal is behind the player. */
   | { kind: 'locationChoice'; candidateIds: string[] }
   /** Per-act arrival beat; reads its location off the run's itinerary. */
-  | { kind: 'titanWake' }
   | { kind: 'blessing' }
   | { kind: 'actIntro' }
   /** The Herald announced before its fight; `next` is the fight. */
@@ -152,7 +151,6 @@ const RESUMABLE: ReadonlySet<RunScreenKind> = new Set<RunScreenKind>([
   'fallen',
   'pactSeal',
   'locationChoice',
-  'titanWake',
   'blessing',
   'actIntro',
   'herald',
@@ -352,12 +350,14 @@ function decodePlan(value: unknown): ScrollPlan {
 
 const NODE_SCREENS = ['manaWell', 'blessingShrine', 'forge', 'leyLine', 'rest'] as const;
 const SEEDED_NODE_SCREENS = ['boonNode', 'mentorNode', 'tutorNode'] as const;
-const PASS_THROUGH = ['pactSeal', 'titanWake', 'blessing', 'actIntro', 'map', 'champions'] as const;
+const PASS_THROUGH = ['pactSeal', 'blessing', 'actIntro', 'map', 'champions'] as const;
 
 function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
   if (depth > MAX_CHAIN_DEPTH) reject('the screen chain is too deep');
   if (!isObject(value) || typeof value.kind !== 'string') reject('screen has no kind');
   const raw = value;
+  // A run saved on the old cold open (deleted 2026-10-06, its eyes now on the lore cards) picks up on the screen it led to.
+  if (raw.kind === 'titanWake') return { kind: 'blessing' };
   const kind = raw.kind as RunScreenKind;
   if (!isResumable(kind)) reject(`screen "${kind}" is not one a run is saved on`);
   const next = () => decodeScreen(raw.next, ctx, depth + 1);
