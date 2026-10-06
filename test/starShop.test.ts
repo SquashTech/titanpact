@@ -116,11 +116,11 @@ test('star shop: a Cycle grants its Location from that Cycle on, and nothing is 
   assert.strictEqual(second.length, base.length + 1, 'a Cycle adds a place, never replaces one');
   assert.deepStrictEqual(
     Object.values(locations).filter((l) => l.fromCycle).map((l) => [l.id, l.fromCycle]),
-    [['holySanctum', 2], ['dreamingSpires', 3], ['thunderAerie', 4], ['frozenReach', 5]]
+    [['holySanctum', 2], ['dreamingSpires', 3], ['thunderAerie', 4], ['frozenReach', 3]]
   );
   const last = locationPool(5);
-  assert.strictEqual(last.length, Object.keys(locations).length - 1, 'by Cycle V every place but the Threshold');
-  for (const id of base) assert.ok(last.includes(id));
+  assert.strictEqual(last.length, Object.keys(locations).length - 2, 'by Cycle V every place but the Threshold and the lost Wild’s Edge');
+  for (const id of base) if (id !== 'wildsEdge') assert.ok(last.includes(id));
   assert.ok(locationPool(3).includes('holySanctum'), 'a granted place stays in every later Cycle');
   assert.ok(unvisitedLocationIds(['wildsEdge', 'holySanctum'], second).every((id) => id !== 'holySanctum'), 'a granted place is still visited once');
   assert.ok(STAR_SHOP_OFFERS.every((o) => o.grant.kind === 'heroBundle'), 'the shelf sells no places');
@@ -158,7 +158,8 @@ test('star shop: a clear pays its Cycle bonus every time, and no Cycle costs a s
 
 test('star shop: every built Cycle pays more a run than the one before it, at the measured win rates', () => {
   // docs/ascension.md §9b, skilled pilot: Cycle I 73.7%, Cycle II 31.2%. Directional (docs/collection.md §5).
-  const winRate: Record<number, number> = { 1: 0.737, 2: 0.312 };
+  // Cycle III measured (docs/cycles.md §7a, greedy pilot) at 0.22 of Cycle II's clear rate.
+  const winRate: Record<number, number> = { 1: 0.737, 2: 0.312, 3: 0.312 * 0.22 };
   const expected = (cycle: number) => winRate[cycle] * cycleOf(cycle).clearBonus;
   for (let cycle = 2; cycle <= MAX_BUILT_CYCLE; cycle++) assert.ok(expected(cycle) > expected(cycle - 1), `Cycle ${cycle} pays ${expected(cycle).toFixed(2)} against ${expected(cycle - 1).toFixed(2)}`);
 });

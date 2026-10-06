@@ -131,7 +131,7 @@ import {
 } from '../run/enemyGen';
 import { CHAMPION_LEVEL_BONUS, encounterScaling, enemyLevelFor, enemyLoadoutFor } from '../run/difficulty';
 import { ENCOUNTERS_PER_ACT, MAX_LEVEL, applySeededEncounterLevels, encounterXpKind, levelOf, xpForEncounter, xpForLevel, type HeroLevelUp } from '../run/growth';
-import { chooseLocation, drawLocationCandidates, generateItinerary, locationChoiceDue, locationForAct, locationPool } from '../run/locations';
+import { actOneLocationFor, chooseLocation, drawLocationCandidates, generateItinerary, locationChoiceDue, locationForAct, locationPool } from '../run/locations';
 import { encounterKindOf, encounterSeedFor, nodeEncounter } from '../run/encounters';
 import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
 import { LocationProvider } from '../view/shared/LocationContext';
@@ -240,7 +240,7 @@ function createStartingRun(heroIds: readonly string[], cycle: number): RunState 
   return {
     ...blessOpeningPair(addHeroes(createRunState(40, 1, cycle), heroIds)),
     map: generateMap(randomSeed()),
-    locationIds: [ACT_ONE_LOCATION_ID],
+    locationIds: [actOneLocationFor(cycle)],
   };
 }
 

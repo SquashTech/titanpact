@@ -18,6 +18,8 @@ export interface RelicDefinition {
   grantsStatusIds?: readonly StatusGrant[];
   /** One of the five fixed post-Guardian Banners. Display grouping only — nothing in the engine reads it. */
   guardianBanner?: true;
+  /** A Long Winter's Banner (docs/cycles.md §3): the Banner it is a frayed copy of, whose art and cloth it wears. */
+  frayedOf?: string;
 }
 
 export function isValidRelicDefinition(relic: RelicDefinition): boolean {

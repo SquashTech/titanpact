@@ -25,8 +25,8 @@ test('relics: isValidRelicDefinition rejects a non-multiple-of-5 grant', () => {
 
 // One closed family (2026-09-09): the random relic pool went in 2026-09-07, because a team-wide
 // passive applied to all four heroes at once was either a bigger stat grant or unanswerable.
-test('relics: the catalog is exactly the Banners', () => {
-  assert.strictEqual(Object.values(relics).length, guardianBannerRelics.length);
+test('relics: the catalog is exactly the Banners, whole and frayed', () => {
+  assert.strictEqual(Object.values(relics).length, guardianBannerRelics.length * 2);
   for (const relic of Object.values(relics)) {
     assert.ok(relic.guardianBanner, `${relic.id} is not a Banner`);
     assert.ok(!relic.grantsPassiveIds?.length, `${relic.id} grants a team-wide passive`);

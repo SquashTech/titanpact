@@ -2808,6 +2808,8 @@ export function isTitansMark(passiveId: string): boolean {
 // touched — and the Gaze is the Eyes' clock, set as they open and returning every third round so a
 // field of the player's own buys one to three rounds and never the phase.
 export const HERALDS_STANDARD_ID = 'heraldsStandard';
+/** The Herald's ward on every Guardian in a Long Winter (docs/cycles.md §3, run/encounters.ts). */
+export const TITANS_WARD_ID = 'titansWard';
 export const WITHERING_GAZE_FALLS_ID = 'witheringGazeFalls';
 export const WITHERING_GAZE_RETURNS_ID = 'witheringGazeReturns';
 
@@ -2815,6 +2817,12 @@ export const WITHERING_GAZE_RETURNS_ID = 'witheringGazeReturns';
 export const WITHERING_GAZE_CADENCE = 3;
 
 const titanPassives: Record<string, PassiveDefinition> = {
+  [TITANS_WARD_ID]: {
+    id: TITANS_WARD_ID,
+    name: "The Titan's Ward",
+    description: 'While any of its company still stands, every move aimed at this Guardian turns away and no affliction can touch it.',
+    wardedWhileCompanyStands: true,
+  },
   [HERALDS_STANDARD_ID]: {
     id: HERALDS_STANDARD_ID,
     name: "Herald's Standard",

@@ -15,6 +15,7 @@ import { championLevel, enemyLevelFor, guildHallLevel, openerEscortTiersFor, spa
 import type { SpawnTier } from '../../data/titanspawn';
 import { ROSTER_CAP, SEAL_ACTS } from '../../run/state';
 import { ANVIL_PRICE_BY_TARGET, ENCHANT_PRICE_BY_RARITY } from '../../run/shop';
+import { smithyPrice } from '../../run/cycles';
 import { CONTRACT_BASE_PRICE, CONTRACT_DROP_CHANCE, CONTRACT_PRICE_STEP } from '../../run/recruitment';
 import { CONSUMABLE_PRICE, REVIVE_PRICE } from '../../run/consumables';
 import { MEND_PRICE_PER_HERO } from '../../run/wounds';
@@ -76,8 +77,8 @@ function percent(chance: number): string {
   return `${Math.round(chance * 100)}%`;
 }
 
-function priceBand(table: Record<EquipmentRarity, number>): string {
-  const prices = RARITY_ORDER.map((r) => table[r]).filter((p) => p > 0);
+function priceBand(table: Record<EquipmentRarity, number>, cycle: number): string {
+  const prices = RARITY_ORDER.map((r) => smithyPrice({ cycle }, table[r])).filter((p) => p > 0);
   return `${Math.min(...prices)}–${Math.max(...prices)}g`;
 }
 
@@ -174,7 +175,7 @@ function spawnFacts(type: 'fight' | 'battle', actNumber: number, shapeAct: numbe
 
 const SPAWN_ABOUT = 'The Titan’s brood, one line per type. Win and every hero on the roster gains the XP, fielded or not. Spawn never sign a contract.';
 
-export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
+export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): NodeDossier {
   const odds = (kind: EncounterNodeKind | 'standard' | 'cache') =>
     rarityWeightsFor(actNumber, kind === 'standard' || kind === 'cache' ? kind : LOOT_SOURCE[kind]);
 
@@ -246,8 +247,8 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
           { glyph: 'hero', label: 'Hire', value: '1 Contract', note: `Lv ${guildHallLevel(actNumber)}, raw` },
           { glyph: 'contract', label: 'Contract', value: `${CONTRACT_BASE_PRICE}g`, note: `+${CONTRACT_PRICE_STEP}g each one bought this run` },
           { glyph: 'scroll', label: `${SCROLL_PACK_PIPS} Mastery Scrolls`, value: `${SCROLL_PURCHASE_COST}g`, note: `up to ${SCROLL_PURCHASE_LIMIT}` },
-          { glyph: 'anvil', label: 'Anvil', value: priceBand(ANVIL_PRICE_BY_TARGET), note: '+1 tier' },
-          { glyph: 'enchant', label: 'Enchanter', value: priceBand(ENCHANT_PRICE_BY_RARITY), note: 'one element' },
+          { glyph: 'anvil', label: 'Anvil', value: priceBand(ANVIL_PRICE_BY_TARGET, cycle), note: '+1 tier' },
+          { glyph: 'enchant', label: 'Enchanter', value: priceBand(ENCHANT_PRICE_BY_RARITY, cycle), note: 'one element' },
           { glyph: 'hp', label: 'Mend', value: `${MEND_PRICE_PER_HERO}g`, note: 'a hero’s worth of missing HP' },
           { glyph: 'hp', label: 'Potion · Revive', value: `${CONSUMABLE_PRICE}g · ${REVIVE_PRICE}g` },
         ],
@@ -260,8 +261,8 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         kind: 'Landmark · The last stop',
         facts: [
           { glyph: 'scroll', label: `${SCROLL_PACK_PIPS} Mastery Scrolls`, value: `${SCROLL_PURCHASE_COST}g`, note: `up to ${SCROLL_PURCHASE_LIMIT}` },
-          { glyph: 'anvil', label: 'Anvil', value: priceBand(ANVIL_PRICE_BY_TARGET), note: '+1 tier' },
-          { glyph: 'enchant', label: 'Enchanter', value: priceBand(ENCHANT_PRICE_BY_RARITY), note: 'one element' },
+          { glyph: 'anvil', label: 'Anvil', value: priceBand(ANVIL_PRICE_BY_TARGET, cycle), note: '+1 tier' },
+          { glyph: 'enchant', label: 'Enchanter', value: priceBand(ENCHANT_PRICE_BY_RARITY, cycle), note: 'one element' },
           { glyph: 'hp', label: 'Mend', value: `${MEND_PRICE_PER_HERO}g`, note: 'a hero’s worth of missing HP' },
           { glyph: 'hp', label: 'Potion · Revive', value: `${CONSUMABLE_PRICE}g · ${REVIVE_PRICE}g` },
         ],
@@ -394,8 +395,8 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
 }
 
 /** The ledger as one line, for an aria-label: `Skirmish — Gold 15–25, Item 60%, Recruit Contract`. */
-export function nodeFactsLine(name: string, type: MapNodeType, actNumber: number): string {
-  const parts = nodeDossier(type, actNumber)
+export function nodeFactsLine(name: string, type: MapNodeType, actNumber: number, cycle = 1): string {
+  const parts = nodeDossier(type, actNumber, cycle)
     .facts.filter((fact) => fact.value !== null)
     .map((fact) => `${fact.label} ${fact.value}${fact.note ? ` (${fact.note})` : ''}`);
   return `${name} — ${parts.join(', ')}`;

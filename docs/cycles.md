@@ -119,9 +119,9 @@ Cycle **grants** (§3's world line), and the Constellation stops selling them. I
 bundles and the Starfall.
 
 **As built (phase 4, 2026-10-06, per user direction):** `LocationDefinition.fromCycle` replaces
-`unlock` — the Holy Sanctum from Cycle II, Dreaming Spires III, Thunder Aerie IV, Frozen Reach V —
+`unlock` — the Holy Sanctum from Cycle II, Dreaming Spires III, Thunder Aerie IV, Frozen Reach III (moved from V the same day: it is the Long Winter's Act 1) —
 and a granted place is in the pool of **that Cycle and every later one** (`locationPool(cycle)`),
-never a Cycle I run. The three past II wait on their Cycles being built. The shelf's Locations
+never a Cycle I run. Thunder Aerie waits on Cycle IV being built. The shelf's Locations
 section and `LocationPeekOverlay` are deleted; a purchase recorded against an old Location offer
 costs nothing against the balance.
 
@@ -143,8 +143,11 @@ costs nothing against the balance.
 | 2 | The Wardens: snapshot the first Cycle I win (`Profile.wardens`), seat each by type on a base seal, field it as an EXTRA body beside its beast from Cycle II; back-fill from Run History; measured (below) | **Built** 2026-10-06 — the arrival line and a Wardens page wait on copy |
 | 3 | Star colours by Cycle: `Profile.starCycles` (star id → highest Cycle, absent = I) beside the star lists, raised on a win, never walked back; white / bronze / silver / gold / rainbow on every star; the run summary lists a raised star with the new ones | **Built** 2026-10-06 |
 | 4 | Bought Locations granted by a Cycle (§6); the Constellation stops selling them | **Built** 2026-10-06 |
-| 5 | Cycles III and IV, one rule each, each measured | — |
+| 5a | **Cycle III, the Long Winter** — the Guardians warded while their company stands (`TITANS_WARD_ID`, the Herald's rule), the Banners frayed (three half-strength Banners, `guardianBannersFor`, the originals' art), the Smithy ×1.5 (`smithyPrice`), Wild's Edge lost (`lostFromCycle`) and **Act 1 always the Frozen Reach** (`actOneFromCycle`, per user direction — the winter opens in the snow; the Reach moved V → III); Dreaming Spires in the pool; clear +30★ | **Built** 2026-10-06 |
+| 5b | Cycle IV | — |
 | — | Cycle V | When I–IV are built |
+
+**Cycle III measured** (1000 runs a cell, greedy pilot, a played band seated): full-clear **15.3% (Cycle II) → 3.4%**. One rule off at a time: the ward 7.0%, whole Banners 6.5%, Wild's Edge kept 3.2%, the Smithy at Cycle I prices 3.5% — the ward and the fray are the whole of it, each about halving the clear; the Smithy and the lost Edge are flavour at this sample. Chart pilot 0.7% → 0.0%. With Act 1 fixed at the Frozen Reach: 3.6% (noise against the drawn opening). With Act 1 fixed at the Frozen Reach: 3.6% (noise against the drawn opening). The clear bonus (30) is sized so Cycle III pays more a run than Cycle II at those rates.
 
 **Phase 2 measured** (1000 runs a cell, Cycle II, a Cycle I win's band seated): full-clear 23.5 → 16.2% greedy pilot, 2.1 → 0.7% chart pilot; the share of run-ending deaths at a Guardian 50 → 64% / 43 → 55%. Directional — the level dial is `WARDEN_LEVEL_BONUS`, its entry is last on the bench.
 

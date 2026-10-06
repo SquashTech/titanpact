@@ -14,7 +14,13 @@ import { locations } from '../src/data/locations';
 import { CHAMPION_IDS } from '../src/data/enemies';
 import { TYPES } from '../src/data/typechart';
 import { progressionTable } from '../src/data/progression';
-import { CYCLES, MAX_BUILT_CYCLE, cycleOf, fallenAfterFight, isPermadeath, openCycle, releaseFallen } from '../src/run/cycles';
+import { CYCLES, MAX_BUILT_CYCLE, cycleOf, fallenAfterFight, isPermadeath, openCycle, releaseFallen, smithyPrice } from '../src/run/cycles';
+import { actOneLocationFor, generateItinerary, locationForAct, locationPool } from '../src/run/locations';
+import { bannerArtId, guardianBannersFor } from '../src/data/relics';
+import { TITANS_WARD_ID } from '../src/data/passives';
+import { allCombatants } from '../src/data/content';
+import { enemies } from '../src/data/enemies';
+import { nodeEncounter } from '../src/run/encounters';
 import { joinCompanion } from '../src/run/companion';
 import { equipItem } from '../src/run/equipment';
 import { generateMap } from '../src/run/map';
@@ -146,4 +152,45 @@ test('cycles: a star is coloured by the highest Cycle it was earned on, never wa
   assert.strictEqual(starCycleOf(legacy, pathId, true), 1);
   assert.strictEqual(starCycleOf(legacy, 'nobody-path', false), 0, 'an unearned star has no colour');
   assert.deepStrictEqual(decodeProfile(JSON.parse(JSON.stringify(raised))).starCycles, raised.starCycles);
+});
+
+test('cycles: the Long Winter loses Wild’s Edge, frays the Banners and prices the Smithy half again', () => {
+  assert.ok(locationPool(2).includes('wildsEdge'));
+  assert.ok(!locationPool(3).includes('wildsEdge'), 'Wild’s Edge is lost from Cycle III');
+  assert.strictEqual(actOneLocationFor(2), 'wildsEdge');
+  assert.strictEqual(actOneLocationFor(3), 'frozenReach', 'the Long Winter opens in the snow');
+  assert.strictEqual(actOneLocationFor(5), 'frozenReach', 'and keeps opening there');
+  assert.ok(locationPool(3).includes('frozenReach') && locationPool(3).includes('dreamingSpires'), 'Cycle III grants the Reach and the Spires');
+  assert.ok(!locationPool(2).includes('frozenReach'));
+
+  const whole = guardianBannersFor(false);
+  const frayed = guardianBannersFor(true);
+  assert.deepStrictEqual(frayed.map((r) => r.frayedOf), whole.map((r) => r.id), 'one frayed Banner for each, in order');
+  for (const relic of frayed) {
+    const original = relics[relic.frayedOf!];
+    for (const [stat, amount] of Object.entries(relic.statGrants)) {
+      assert.ok(amount! % 5 === 0, `${relic.id} ${stat} is a multiple of 5`);
+      assert.ok(amount! <= original.statGrants[stat as keyof typeof original.statGrants]!, `${relic.id} ${stat} is no more than the whole Banner's`);
+    }
+    assert.strictEqual(bannerArtId(relic.id), relic.frayedOf, 'a frayed Banner wears its original’s art');
+  }
+
+  assert.strictEqual(smithyPrice({ cycle: 2 }, 45), 45);
+  assert.strictEqual(smithyPrice({ cycle: 3 }, 45), 70, '×1.5, rounded to 5 gold');
+  assert.strictEqual(smithyPrice({ cycle: 3 }, 20), 30);
+});
+
+test('cycles: a Long Winter wards the Guardian while its company stands', () => {
+  for (const act of [1, 2, 3, 4]) {
+    let run = createRunState(50, 1, 3);
+    for (const id of ['packAlpha', 'crimson']) run = addRosterEntry(run, createRosterEntry(id, id, heroes[id].moveIds));
+    run = { ...run, map: generateMap(31, act), locationIds: generateItinerary(31), actNumber: act, fightsStarted: 2, encountersWon: 4 };
+    const location = locationForAct(run.locationIds, act);
+    const boss = Object.values(run.map!.nodes).find((n) => n.type === 'boss')!;
+    const ctx = { run, location, heroes, allCombatants, enemies, progression: progressionTable };
+    const champion = (cycle: number) => nodeEncounter(boss, { ...ctx, run: { ...run, cycle } }).run.roster.find((r) => r.rosterId === location.guardianFinalEnemyId)!;
+    assert.ok(champion(3).bonusPassiveGrants.includes(TITANS_WARD_ID), `act ${act}: warded in Cycle III`);
+    assert.ok(!champion(2).bonusPassiveGrants.includes(TITANS_WARD_ID), `act ${act}: not before it`);
+  }
+  assert.ok(passives[TITANS_WARD_ID].wardedWhileCompanyStands);
 });

@@ -1,6 +1,7 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
-import { guardianBannerRelics } from '../../data/relics';
+import { bannerArtId, guardianBannersFor } from '../../data/relics';
+import { isLongWinter } from '../../run/cycles';
 import type { RunState } from '../../run/state';
 import { grantRelicReward } from '../../run/runProgress';
 import { NodeHeader, NodeSky, NODE_TINT_GOLD } from '../shared/NodeStage';
@@ -21,7 +22,7 @@ const BANNER_CLOTH: Record<string, string> = {
   bannerOfTheBulwark: '#4a8ae0',
   bannerOfTheWellspring: '#3fb35c',
 };
-const clothStyle = (relicId: string) => ({ '--relic-color': BANNER_CLOTH[relicId] ?? relicColor(relicId) }) as CSSProperties;
+const clothStyle = (relicId: string) => ({ '--relic-color': BANNER_CLOTH[bannerArtId(relicId)] ?? relicColor(relicId) }) as CSSProperties;
 
 interface Props {
   run: RunState;
@@ -34,6 +35,7 @@ interface Props {
 // charges on the cloth are the grant, and the claim reveals the whole hall with the new one raised.
 export function GuardianBannerScreen({ run, onRunChange, onContinue }: Props) {
   const [pickedRelicId, setPickedRelicId] = useState<string | null>(null);
+  const offered = guardianBannersFor(isLongWinter(run));
   const [claimed, setClaimed] = useState(false);
 
   useEffect(() => {
@@ -41,7 +43,7 @@ export function GuardianBannerScreen({ run, onRunChange, onContinue }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const pickedRelic = pickedRelicId ? guardianBannerRelics.find((r) => r.id === pickedRelicId) ?? null : null;
+  const pickedRelic = pickedRelicId ? offered.find((r) => r.id === pickedRelicId) ?? null : null;
   const claimedRelic = claimed ? pickedRelic : null;
   const counts = new Map<string, number>();
   for (const id of run.relics) counts.set(id, (counts.get(id) ?? 0) + 1);
@@ -78,7 +80,7 @@ export function GuardianBannerScreen({ run, onRunChange, onContinue }: Props) {
           {!claimed ? (
             <>
               <div className="relic-pick-row is-banners">
-                {guardianBannerRelics.map((relic, i) => (
+                {offered.map((relic, i) => (
                   <RelicChoiceCard
                     key={relic.id}
                     relic={relic}
@@ -100,7 +102,7 @@ export function GuardianBannerScreen({ run, onRunChange, onContinue }: Props) {
                   note={claimedCount > 1 ? `${countWord(claimedCount)} raised, summed.` : undefined}
                 />
                 <div className="relic-tally-label">Your banners</div>
-                <RelicFamilyTally family={guardianBannerRelics} variant="banners" counts={counts} gainedRelicId={claimedRelic.id} />
+                <RelicFamilyTally family={offered} variant="banners" counts={counts} gainedRelicId={claimedRelic.id} />
               </>
             )
           )}

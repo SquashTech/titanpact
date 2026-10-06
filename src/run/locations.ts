@@ -27,9 +27,21 @@ export function locationChoiceDue(run: RunState): boolean {
  */
 export function locationPool(cycle = 1): string[] {
   return Object.keys(locations).filter((id) => {
-    const { fromCycle } = locations[id];
-    return id !== FINALE_LOCATION_ID && (!fromCycle || fromCycle <= cycle);
+    const { fromCycle, lostFromCycle } = locations[id];
+    return id !== FINALE_LOCATION_ID && (!fromCycle || fromCycle <= cycle) && (!lostFromCycle || cycle < lostFromCycle);
   });
+}
+
+/**
+ * Where Act 1 stands: Wild's Edge, until a Cycle opens the run somewhere else
+ * (`LocationDefinition.actOneFromCycle`, docs/cycles.md §3) — the Frozen Reach from the Long
+ * Winter on. The latest such Cycle reached wins.
+ */
+export function actOneLocationFor(cycle: number): string {
+  const opening = Object.values(locations)
+    .filter((l) => l.actOneFromCycle !== undefined && l.actOneFromCycle <= cycle)
+    .sort((a, b) => b.actOneFromCycle! - a.actOneFromCycle!)[0];
+  return opening?.id ?? ACT_ONE_LOCATION_ID;
 }
 
 /** Every seal location in the pool not yet visited — a location is never visited twice in one run. */

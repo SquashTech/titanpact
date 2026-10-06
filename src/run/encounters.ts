@@ -17,7 +17,8 @@ import { rosterEntryTypes } from './progression';
 import { championGradeFor, encounterScaling, encounterHeroCountOverride, enemyLoadoutFor, guardianEscortCount } from './difficulty';
 import { appendFinalEnemy, generateEncounter, type Encounter, type EncounterNodeType } from './enemyGen';
 import { locationBias } from './locations';
-import { guardiansWake, wardensHold, wokenChampion, wokenChampionMark, wokenEscortCount } from './cycles';
+import { guardiansWake, isLongWinter, wardensHold, wokenChampion, wokenChampionMark, wokenEscortCount } from './cycles';
+import { TITANS_WARD_ID } from '../data/passives';
 import { guardianEscortPool, mobEncounter } from './spawn';
 import { DECK_HEROES_PER_FIGHT } from './deck';
 import { appendWarden, buildWarden, wardenAt, type Warden } from './wardens';
@@ -106,6 +107,8 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
     if (woken) encounter = wakeChampion(encounter, finalEnemyId, wokenChampionMark(enemies[finalEnemyId]));
     // A lone escort (difficulty.ts GUARDIAN_ESCORTS_BY_ACT) leaves a lead slot for the champion.
     else if (encounter.squad.activeIds[1] === null) encounter = wakeChampion(encounter, finalEnemyId, null);
+    // A Long Winter wards the champion while its company stands — the Herald's rule (docs/cycles.md §3).
+    if (isLongWinter(run)) encounter = grantPassive(encounter, finalEnemyId, TITANS_WARD_ID);
   }
   // From Cycle II the seal's Warden stands beside its beast, an extra body (docs/cycles.md §2).
   const warden = type === 'boss' && wardensHold(run) ? wardenAt(ctx.wardens, location.id) : null;
@@ -128,6 +131,12 @@ function grownOnActGrade(definition: HeroDefinition, actNumber: number): HeroDef
   if (grade === 'E') return definition;
   const growthGrades = Object.fromEntries(Object.keys(definition.growthGrades ?? {}).map((stat) => [stat, grade])) as HeroDefinition['growthGrades'];
   return { ...definition, growthGrades };
+}
+
+/** One passive onto one enemy, beside whatever it already holds. */
+function grantPassive(encounter: Encounter, rosterId: string, passiveId: string): Encounter {
+  const roster = encounter.run.roster.map((entry) => (entry.rosterId === rosterId ? { ...entry, bonusPassiveGrants: [...entry.bonusPassiveGrants, passiveId] } : entry));
+  return { ...encounter, run: { ...encounter.run, roster } };
 }
 
 /** A woken champion wears its Mark and takes the second lead slot from round one; the escort it displaces waits on the bench. */

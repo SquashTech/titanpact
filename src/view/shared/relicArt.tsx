@@ -2,6 +2,7 @@ import { type CSSProperties } from 'react';
 import { STAT_ORDER } from '../../engine/content';
 import { StatGlyph } from './statIcons';
 import { grantsFor, relicColor } from './relicIcons';
+import { bannerArtId } from '../../data/relics';
 
 /** Pixel standards (art/relics/<relicId>.png, 64x64); a relic without one keeps the vector cloth. */
 const PIXEL_ART: Record<string, string> = Object.fromEntries(
@@ -51,7 +52,7 @@ function RelicCharge({ relicId, className }: { relicId: string; className?: stri
  * on. The sheen runs down the cloth rather than across it — a banner is lit from above.
  */
 export function BannerStandard({ relicId, className }: { relicId: string; className?: string }) {
-  const art = PIXEL_ART[relicId];
+  const art = PIXEL_ART[relicId] ?? PIXEL_ART[bannerArtId(relicId)];
   if (art) {
     // The pixel standard carries its own emblem; the stat glyphs stay, as a row under the pole.
     return (

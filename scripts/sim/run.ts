@@ -6,12 +6,12 @@ import type { StatKey } from '../../src/engine/content';
 import { heroes as allHeroes } from '../../src/data/heroes';
 import { rosterHeroes } from '../../src/data/content';
 import { companionCallFor, companionCandidate, companionJoinDue, joinCompanion } from '../../src/run/companion';
-import { fallenAfterFight, isPermadeath, releaseFallen } from '../../src/run/cycles';
+import { fallenAfterFight, isLongWinter, isPermadeath, releaseFallen } from '../../src/run/cycles';
 import { anyDown, canBuyMend, buyMend, mendPrice, mendRoster, recordWounds, reviveHero, standingRoster } from '../../src/run/wounds';
 import { buyConsumable, canBuyConsumable, canUseRevive, grantConsumable, rollConsumableDrop, spendRevive } from '../../src/run/consumables';
 import { moves } from '../../src/data/moves';
 import { equipment } from '../../src/data/equipment';
-import { relics, guardianBannerRelics } from '../../src/data/relics';
+import { relics, guardianBannersFor } from '../../src/data/relics';
 import { classes } from '../../src/data/classes';
 import { runEvents } from '../../src/data/events';
 import { progressionTable } from '../../src/data/progression';
@@ -30,8 +30,8 @@ import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry
 import { blessOpeningPair, canBless, grantBlessing } from '../../src/run/blessings';
 import { generateMap, type MapNode, type MapNodeType } from '../../src/run/map';
 import { generateStarterOptions, STARTER_PICK_COUNT } from '../../src/run/draft';
-import { chooseLocation, drawLocationCandidates, locationChoiceDue, locationForAct, locationPool } from '../../src/run/locations';
-import { ACT_ONE_LOCATION_ID, locations } from '../../src/data/locations';
+import { actOneLocationFor, chooseLocation, drawLocationCandidates, locationChoiceDue, locationForAct, locationPool } from '../../src/run/locations';
+import { locations } from '../../src/data/locations';
 import { encounterScaling, enemyLoadoutFor } from '../../src/run/difficulty';
 import { encounterXpKind, grantEncounterLevels, grantXp, levelOf, MAX_LEVEL } from '../../src/run/growth';
 import { deckRows, normalizeDeck } from '../../src/run/deck';
@@ -47,6 +47,7 @@ import {
   anvilQuote,
   anvilUpgrade,
   enchantItem,
+  enchantPrice,
   reachableNodeIds,
   recordBrokenSeal,
   goldRangeFor,
@@ -74,7 +75,7 @@ export const SIM_NO_BLESSING = process.env.SIM_NO_BLESSING === '1';
 const heroes = heroPool(allHeroes, SIM_PURCHASES);
 const guildHallOffers = guildHallOffersFor(heroes);
 import { guildHallEntry } from '../../src/run/guildRecruit';
-import { ENCHANT_PRICE_BY_RARITY, rollGuildHallOffers, sellValueFor } from '../../src/run/shop';
+import { rollGuildHallOffers, sellValueFor } from '../../src/run/shop';
 import { mentorMovePool, tutorMovePool } from '../../src/run/tutor';
 import { grantClass, rollClassOffers } from '../../src/run/classes';
 import { boonMoveCount, pickBoonOffers } from '../../src/run/boons';
@@ -390,7 +391,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     run = addRosterEntry(run, createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
   }
   if (!SIM_NO_BLESSING) run = blessOpeningPair(run);
-  run = { ...run, map: generateMap(randomSeed(rng)), locationIds: [ACT_ONE_LOCATION_ID] };
+  run = { ...run, map: generateMap(randomSeed(rng)), locationIds: [actOneLocationFor(run.cycle)] };
 
   let alive = true;
   let guard = 0;
@@ -761,7 +762,7 @@ function awardMvp(run: RunState, events: readonly CombatEvent[], final: CombatSt
 
 /** The Guardian's Banner: a fixed 1-of-5, taken at random. */
 function claimBanner(run: RunState, rng: Rng, record: RunRecord): RunState {
-  const offered = guardianBannerRelics.map((r) => r.id);
+  const offered = guardianBannersFor(isLongWinter(run)).map((r) => r.id);
   const picked = pick(rng, offered);
   record.choices.push({ bucket: 'banner', offered, picked: [picked], encountersWonAtChoice: run.encountersWon });
   return grantRelicReward(run, picked);
@@ -1011,7 +1012,7 @@ function resolveEnchanter(run: RunState): RunState {
     if (!enchantId) continue;
     for (let index = 0; index < entry.equipment.length; index++) {
       const item = equipment[entry.equipment[index]];
-      if (!item || item.enchantId === enchantId || ENCHANT_PRICE_BY_RARITY[item.rarity] > run.gold) continue;
+      if (!item || item.enchantId === enchantId || enchantPrice(run, item.rarity) > run.gold) continue;
       const parsed = parseEquipmentId(item.id);
       const target = equipment[equipmentIdFor(parsed.base, parsed.rarity, enchantId)];
       if (!target) continue;

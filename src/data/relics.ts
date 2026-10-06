@@ -42,7 +42,47 @@ const guardianBanners: Record<string, RelicDefinition> = {
   },
 };
 
-export const relics: Record<string, RelicDefinition> = { ...guardianBanners };
+// --- The frayed Banners: what a Guardian leaves in a Long Winter (docs/cycles.md §3, Cycle III on).
+// Half of each, rounded to the nearest 5 (half up), so the multiples-of-5 rule holds: the regen
+// riders round back up to 5. The same three concepts, so a run's shape reads the same.
+const frayedBanners: Record<string, RelicDefinition> = {
+  'bannerOfTheWarcry.frayed': {
+    id: 'bannerOfTheWarcry.frayed',
+    name: 'Frayed Banner of the Warcry',
+    description: 'Team-wide +15 Attack, +15 Intelligence, +5 Speed.',
+    statGrants: { attack: 15, intelligence: 15, speed: 5 },
+    guardianBanner: true,
+    frayedOf: 'bannerOfTheWarcry',
+  },
+  'bannerOfTheBulwark.frayed': {
+    id: 'bannerOfTheBulwark.frayed',
+    name: 'Frayed Banner of the Bulwark',
+    description: 'Team-wide +10 Defense, +10 Wisdom, +5 MP Regen.',
+    statGrants: { defense: 10, wisdom: 10, mpRegen: 5 },
+    guardianBanner: true,
+    frayedOf: 'bannerOfTheBulwark',
+  },
+  'bannerOfTheWellspring.frayed': {
+    id: 'bannerOfTheWellspring.frayed',
+    name: 'Frayed Banner of the Wellspring',
+    description: 'Team-wide +25 HP, +15 Mana Pool, +5 MP Regen.',
+    statGrants: { hp: 25, manaPool: 15, mpRegen: 5 },
+    guardianBanner: true,
+    frayedOf: 'bannerOfTheWellspring',
+  },
+};
+
+export const relics: Record<string, RelicDefinition> = { ...guardianBanners, ...frayedBanners };
 
 /** The three fixed Banners, in the order the post-Guardian screen offers them. */
 export const guardianBannerRelics: RelicDefinition[] = Object.values(guardianBanners);
+
+/** The three a Guardian offers in this Cycle: frayed in a Long Winter, whole before it. */
+export function guardianBannersFor(frayed: boolean): RelicDefinition[] {
+  return frayed ? Object.values(frayedBanners) : guardianBannerRelics;
+}
+
+/** The Banner whose art and cloth a relic wears: a frayed one its whole original's. */
+export function bannerArtId(relicId: string): string {
+  return relics[relicId]?.frayedOf ?? relicId;
+}

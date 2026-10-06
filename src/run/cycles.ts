@@ -3,8 +3,9 @@
 // mortal, and a knockout on a won fight is gone with its gear unless a Revive is spent on it at
 // the Fallen beat (the companion is off the roster and cannot fall) — and beside it the Guardians
 // wake (docs/ascension.md §2a): the champion leads its fight, wears its type's Mark and grows on
-// hero grades, and the escorts rise to three from Act 3. Cycles III–V are not built; the picker
-// shows them by name, greyed.
+// hero grades, and the escorts rise to three from Act 3. Cycle III, the Long Winter, wards every
+// Guardian while its company stands, frays the Banners to half, prices the Smithy half again and
+// loses Wild's Edge (docs/cycles.md §3). Cycles IV–V are not built; the picker greys them.
 
 import type { HeroDefinition } from '../engine/content';
 import { titansMarkFor } from '../data/passives';
@@ -16,7 +17,7 @@ import { DEFAULT_GRADES } from './growth';
 export const FIRST_CYCLE = 1;
 
 /** The highest Cycle with rules; the picker opens nothing past it. */
-export const MAX_BUILT_CYCLE = 2;
+export const MAX_BUILT_CYCLE = 3;
 
 /** The Cycle Permadeath turns on at, and every Cycle after it. */
 export const PERMADEATH_FROM_CYCLE = 2;
@@ -26,6 +27,12 @@ export const GUARDIANS_WAKE_FROM_CYCLE = 2;
 
 /** The Cycle the Wardens first hold the seals (run/wardens.ts), and every Cycle after it. */
 export const WARDENS_FROM_CYCLE = 2;
+
+/** The Long Winter (docs/cycles.md §3): from here the Guardians are warded, the Banners fray and the Smithy costs more. */
+export const LONG_WINTER_FROM_CYCLE = 3;
+
+/** What the Smithy charges in a Long Winter, on its Cycle I price, rounded to 5 gold. */
+export const LONG_WINTER_SMITHY_MULTIPLIER = 1.5;
 
 export interface CycleDefinition {
   cycle: number;
@@ -49,7 +56,14 @@ export const CYCLES: readonly CycleDefinition[] = [
     clearBonus: 6,
     lore: ['A year has passed, and the Titan wakes.', 'The heroes who sealed it stayed to guard the seals.', 'Now the Titan holds them.', 'We must seal the pact again.'],
   },
-  { cycle: 3, numeral: 'III', name: 'The Long Winter', line: '', clearBonus: 0 },
+  {
+    cycle: 3,
+    numeral: 'III',
+    name: 'The Long Winter',
+    line: 'Winter has come. The Guardians hide behind their own, and the banners fray.',
+    clearBonus: 30,
+    lore: ['Another year, and the winter never ended.', 'Wild’s Edge is lost under the snow.', 'The Guardians have learned to hide behind their own.', 'We must seal the pact again.'],
+  },
   { cycle: 4, numeral: 'IV', name: 'The Gathering', line: '', clearBonus: 0 },
   { cycle: 5, numeral: 'V', name: 'The Last Cycle', line: '', clearBonus: 0 },
 ];
@@ -74,6 +88,15 @@ export function guardiansWake(run: Pick<RunState, 'cycle'>): boolean {
 
 export function wardensHold(run: Pick<RunState, 'cycle'>): boolean {
   return run.cycle >= WARDENS_FROM_CYCLE;
+}
+
+export function isLongWinter(run: Pick<RunState, 'cycle'>): boolean {
+  return run.cycle >= LONG_WINTER_FROM_CYCLE;
+}
+
+/** A Smithy price in this run's Cycle: the Long Winter's ×1.5, rounded to 5 gold. */
+export function smithyPrice(run: Pick<RunState, 'cycle'>, base: number): number {
+  return isLongWinter(run) ? Math.round((base * LONG_WINTER_SMITHY_MULTIPLIER) / 5) * 5 : base;
 }
 
 /**

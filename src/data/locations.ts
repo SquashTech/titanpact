@@ -40,6 +40,10 @@ export interface LocationDefinition {
    * replaces one, so its spawn types may overlap theirs. Absent on the base six.
    */
   fromCycle?: number;
+  /** The Cycle this place is lost in (docs/cycles.md §3): from it on, no run stands here. Wild's Edge, under the Long Winter's snow. */
+  lostFromCycle?: number;
+  /** The Cycle from which Act 1 always stands here instead of Wild's Edge (docs/cycles.md §3): the Frozen Reach, the Long Winter's opening. */
+  actOneFromCycle?: number;
 }
 
 /** Act 1 is always this one (docs/locations.md §1). */
@@ -59,6 +63,7 @@ export const locations: Record<string, LocationDefinition> = {
     guardianFinalEnemyId: MANTICORE_ID,
     tintRgb: '154, 176, 84',
     ambience: 'fireflies',
+    lostFromCycle: 3,
   },
 
   blightedShrine: {
@@ -197,7 +202,8 @@ export const locations: Record<string, LocationDefinition> = {
     guardianFinalEnemyId: WENDIGO_ID,
     tintRgb: '150, 214, 224',
     ambience: 'blizzard',
-    fromCycle: 5,
+    fromCycle: 3,
+    actOneFromCycle: 3,
   },
 };
 

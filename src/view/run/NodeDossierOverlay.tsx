@@ -83,7 +83,7 @@ function RarityOdds({ odds }: { odds: Record<EquipmentRarity, number> }) {
  * about it. Portalled into overlayHost(), never document.body — see overlayHost.ts.
  */
 export function NodeDossierOverlay({ node, run, onClose }: { node: MapNode; run: RunState; onClose: () => void }) {
-  const dossier = nodeDossier(node.type, run.actNumber);
+  const dossier = nodeDossier(node.type, run.actNumber, run.cycle);
   const color = NODE_COLORS[node.type];
   // The tile's own pixel art, so the panel reads as the tile opened up.
   const art = landmarkStillArt(node.type) ?? mapNodeIcon(node.type) ?? mapNodeArt(node.type);

@@ -15,8 +15,7 @@ import {
   parseEquipmentId,
 } from '../../run/equipment';
 import { levelOf } from '../../run/growth';
-import { anvilQuote, anvilUpgrade, enchantItem, RunProgressError, type ItemRef } from '../../run/runProgress';
-import { ENCHANT_PRICE_BY_RARITY } from '../../run/shop';
+import { anvilQuote, anvilUpgrade, enchantItem, enchantPrice, RunProgressError, type ItemRef } from '../../run/runProgress';
 import { TOTAL_ACTS, type RosterEntry, type RunState } from '../../run/state';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { enchantTypeOf, ItemEffectChips, ItemPiece, RARITY_COLOR_VARS, RARITY_LABELS, RARITY_RGB_VARS } from '../shared/EquipmentBox';
@@ -66,7 +65,7 @@ export function SmithyWorkSheet({ run, hero, entry, itemRef, item, onCommit, onC
   const lifted = quote ? equipment[quote.targetId] : null;
   const anvilAffordable = !!quote && run.gold >= quote.cost;
 
-  const enchantCost = ENCHANT_PRICE_BY_RARITY[item.rarity];
+  const enchantCost = enchantPrice(run, item.rarity);
   const heldEnchant = parseEquipmentId(item.id).enchantId ?? null;
   const parsed = parseEquipmentId(item.id);
   const boundTarget = pickedEnchant ? equipment[equipmentIdFor(parsed.base, parsed.rarity, pickedEnchant)] : null;

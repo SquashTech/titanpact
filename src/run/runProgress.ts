@@ -10,6 +10,7 @@ import { actAllowsRarity, ENCHANTMENT_IDS, equipItem, equipmentIdFor, holdsItem,
 import { generateMap } from './map';
 import { itemSlotsFor } from './progression';
 import { ANVIL_PRICE_BY_TARGET, ENCHANT_PRICE_BY_RARITY, sellValueFor } from './shop';
+import { smithyPrice } from './cycles';
 import { mergeStatMods } from './statMods';
 import { mendRoster } from './wounds';
 import { rosterIdOfCombatant } from './combatantIds';
@@ -329,8 +330,13 @@ export function anvilQuote(
   return {
     targetId: equipmentIdFor(item.familyId, target, item.enchantId),
     targetRarity: target,
-    cost: ANVIL_PRICE_BY_TARGET[target],
+    cost: smithyPrice(run, ANVIL_PRICE_BY_TARGET[target]),
   };
+}
+
+/** What the Enchanter charges for an item of this tier in this run's Cycle. */
+export function enchantPrice(run: Pick<RunState, 'cycle'>, rarity: EquipmentRarity): number {
+  return smithyPrice(run, ENCHANT_PRICE_BY_RARITY[rarity]);
 }
 
 /** Lifts one owned item a tier for gold, keeping its family and its enchant. */
@@ -400,5 +406,5 @@ export function enchantItem(
   const parsed = parseEquipmentId(itemId);
   const targetId = equipmentIdFor(parsed.base, parsed.rarity, enchantId);
   if (!equipmentLookup[targetId]) throw new RunProgressError(`Unknown equipment ${targetId}`);
-  return writeItemRef(spend(run, ENCHANT_PRICE_BY_RARITY[item.rarity], 'That enchantment'), ref, targetId);
+  return writeItemRef(spend(run, enchantPrice(run, item.rarity), 'That enchantment'), ref, targetId);
 }
