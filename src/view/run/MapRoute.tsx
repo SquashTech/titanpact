@@ -6,7 +6,7 @@ import { useLongPress } from '../shared/MoveTile';
 import { playSfx, type SfxId } from '../../audio/sfx';
 import { NODE_COLORS, NODE_LABELS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
 import { nodeFactsLine } from './nodeFacts';
-import { isMapProp, mapNodeArt } from './mapNodeArt';
+import { isMapProp, mapNodeArt, mapNodeIcon } from './mapNodeArt';
 import { landmarkKind, MapLandmarkFace, TITAN_LIGHT, type LandmarkKind } from './mapLandmarks';
 import campArt from '../../../art/places/rest.png';
 import { ElementPie } from '../shared/ElementPie';
@@ -179,7 +179,10 @@ function ChoiceMedallion({
   // The pixel medallion wears the node's own emblem — helm or crowned helm on the fork — and a
   // scouted typing hangs under it as a plaque, rather than being cut into the face.
   const landmark = landmarkKind(node.type);
-  const art = landmark ? undefined : mapNodeArt(node.type);
+  // A pick-1-of-3 reward or the Elite/Skirmish fork is a plain button: one stone tile for all of
+  // them, its pixel icon and its name inside. The Titanspawn and the act's beats keep their art.
+  const tile = landmark ? undefined : mapNodeIcon(node.type);
+  const art = landmark || tile ? undefined : mapNodeArt(node.type);
   const prop = art !== undefined && isMapProp(node.type);
   return (
     <div
@@ -195,7 +198,7 @@ function ChoiceMedallion({
         ))}
       </span>
       {/* Above the tile: the route lines arrive from below. The two gates go unlabelled — the door says it. */}
-      {landmark !== 'gate' && landmark !== 'titanGate' && (
+      {!tile && landmark !== 'gate' && landmark !== 'titanGate' && (
         <span className="map-choice-label" aria-hidden="true">
           {NODE_LABELS[node.type]}
         </span>
@@ -207,7 +210,7 @@ function ChoiceMedallion({
       )}
       <button
         type="button"
-        className={`map-medallion${scoutedFace ? ' is-scouted' : ''}${art ? (prop ? ' has-prop' : ' has-art') : ''}${landmark ? ` is-landmark is-${landmark}` : ''}${opening ? ' is-opening' : ''}`}
+        className={`map-medallion${tile ? ' is-tile' : ''}${scoutedFace ? ' is-scouted' : ''}${art ? (prop ? ' has-prop' : ' has-art') : ''}${landmark ? ` is-landmark is-${landmark}` : ''}${opening ? ' is-opening' : ''}`}
         ref={measureRef}
         aria-label={scoutedFace ? `${label}. Enemies: ${scoutedFace.join(', ')}` : label}
         data-sfx="none"
@@ -217,7 +220,13 @@ function ChoiceMedallion({
         <span className="map-choice-burst" aria-hidden="true" />
         {landmark && <MapLandmarkFace kind={landmark} type={node.type} guardianId={guardianId} actNumber={actNumber} />}
         {art && <img src={art} className={prop ? 'map-medallion-prop' : 'map-medallion-art'} alt="" draggable={false} />}
-        {art && scoutedFace && (
+        {tile && (
+          <>
+            <img src={tile} className="map-tile-icon" alt="" draggable={false} />
+            <span className="map-tile-label">{NODE_LABELS[node.type]}</span>
+          </>
+        )}
+        {(art || tile) && scoutedFace && (
           <span className="map-medallion-typing" aria-hidden="true">
             {scoutedFace.map((type, i) => (
               <span key={`${type}-${i}`} className="map-medallion-type" style={{ color: getTypeColor(type) }}>
@@ -226,9 +235,9 @@ function ChoiceMedallion({
             ))}
           </span>
         )}
-        {!art && !landmark && scoutedFace && <ElementPie types={scoutedFace} className="map-medallion-pie" />}
-        {!art && !landmark && !scoutedFace && <NodeGlyph type={node.type} className="map-medallion-glyph" />}
-        {!art && !landmark && scoutedFace && node.type === 'elite' && (
+        {!art && !tile && !landmark && scoutedFace && <ElementPie types={scoutedFace} className="map-medallion-pie" />}
+        {!art && !tile && !landmark && !scoutedFace && <NodeGlyph type={node.type} className="map-medallion-glyph" />}
+        {!art && !tile && !landmark && scoutedFace && node.type === 'elite' && (
           <span className="map-medallion-crown" aria-hidden="true">
             <HubGlyph name="crown" />
           </span>
@@ -282,6 +291,8 @@ export function MapRoute({
   // Gated on the node kind, not just on being row 0: act 6 opens on the Vigil, and an omen
   // over a muster would be naming enemies that are not there — nor does a camp sit before it.
   const originLandmark = originNode ? landmarkKind(originNode.type) : undefined;
+  const originTile = originNode && !originLandmark ? mapNodeIcon(originNode.type) : undefined;
+  const originArt = originNode && !originTile ? mapNodeArt(originNode.type) : undefined;
   const opensOnFight = !originNode && map.nodes[choiceIds[0]]?.type === 'fight';
   const showOmen = opensOnFight;
   // An act's first row reveals too, from the camp: the opening fight is reached by a road like
@@ -465,15 +476,17 @@ export function MapRoute({
       {originNode && (
         <div className="map-origin">
           <span
-            className={`map-origin-mark${originLandmark ? ` is-landmark is-${originLandmark}` : mapNodeArt(originNode.type) ? ' has-art' : ''}`}
+            className={`map-origin-mark${originLandmark ? ` is-landmark is-${originLandmark}` : originArt ? ' has-art' : originTile ? ' is-tile' : ''}`}
             ref={originRef}
             aria-hidden="true"
           >
             {/* A landmark stays itself behind you — the eye, the Mentor, the hall — small and unlit. */}
             {originLandmark ? (
               <MapLandmarkFace kind={originLandmark} type={originNode.type} guardianId={guardianId} actNumber={actNumber} quiet />
-            ) : mapNodeArt(originNode.type) ? (
-              <img src={mapNodeArt(originNode.type)} className="map-origin-art" alt="" draggable={false} />
+            ) : originTile ? (
+              <img src={originTile} className="map-origin-icon" alt="" draggable={false} />
+            ) : originArt ? (
+              <img src={originArt} className="map-origin-art" alt="" draggable={false} />
             ) : (
               <NodeGlyph type={originNode.type} className="map-origin-glyph" />
             )}

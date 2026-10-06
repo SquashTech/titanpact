@@ -12,15 +12,15 @@ import { seededRandom, withSeededRandom } from '../shared/seededRandom';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { useCoinCount } from '../shared/useCoinCount';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
-import { mapNodeArt } from './mapNodeArt';
+import { mapNodeArt, mapNodeIcon } from './mapNodeArt';
 import { RoadScene } from './RoadEncounter';
 import { RosterPeek } from './RosterPeek';
-import cacheOpen from '../../../art/cache/chest-opened.png';
+import cacheOpen from '../../../art/cache/chest-open.png';
 
 import type { RewardNodeType } from '../../run/map';
 export type { RewardNodeType };
 
-/** The chest on the road (ms from mount): the map's own piece rises in, blinks white, bursts open. */
+/** The chest on the road (ms from mount): the map tile's chest drops in, rattles, bursts open. */
 const CHEST_FLASH_AT = 1300;
 const CHEST_BURST_AT = CHEST_FLASH_AT + 700;
 /** Held open before the pieces are laid out. */
@@ -195,7 +195,8 @@ function EquipmentCache({ run, onClaimEquipment, seed }: Pick<Props, 'run' | 'on
       >
         <span className="road-cache" aria-hidden="true">
           <span className="road-cache-rays" />
-          <img src={mapNodeArt('equipmentReward')} className="road-cache-art is-closed" alt="" draggable={false} />
+          <span className="road-cache-shadow" />
+          <img src={mapNodeIcon('equipmentReward')} className="road-cache-art is-closed" alt="" draggable={false} />
           <img src={cacheOpen} className="road-cache-art is-open" alt="" draggable={false} />
           {CACHE_SPARKS.map(([x, delay, drift], i) => (
             <span

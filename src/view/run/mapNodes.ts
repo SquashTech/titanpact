@@ -41,7 +41,7 @@ export const NODE_LABELS: Record<MapNodeType, string> = {
   boss: 'Guardian',
   shop: 'Guild Hall',
   equipmentReward: 'Items',
-  scrollReward: 'Scrolls',
+  scrollReward: 'Mastery',
   passiveReward: 'Boon',
   blessingReward: 'Blessing',
   currencyReward: 'Gold',

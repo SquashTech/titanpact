@@ -3243,9 +3243,15 @@ beside it, name, form, HP and Mastery below. The **node dossier** explains itsel
 plain-words line under the name, the ledger, the roster through the one lens the choice
 turns on (`NodeRosterReadout`: pips for a Scroll, pool for a Well, Force and move count
 for a Ley Line, sockets for a Cache or Forge, HP for a fight or the Hall), and the terms
-it leans on defined at the foot. The **Cache** on the road is the map's own chest at 4x:
-it rises in, blinks white three times, and bursts into the same chest open
-(`art/cache/chest-opened.png`, a PixelLab edit of the map prop) under turning rays.
+it leans on defined at the foot. The **Cache** on the road is the map tile's own chest at 5x:
+it drops onto the road and bounces, rattles, flashes white, and bursts into the same chest open
+(`art/cache/chest-open.png`, drawn by `scripts/art/map-icons.mjs`) under turning rays, throwing coins.
+
+**Map buttons** (2026-10-05, per user direction). A pick-1-of-3 reward and the Elite/Skirmish fork
+are one uniform stone tile — the kit's gold-inlaid frame, a 32px icon at 2x from the `art/icons/32x32`
+pack (`art/map-nodes/icons/`), and the node's name inside. The Forge and Ley Line icons and the open
+chest are drawn in that pack's grammar by `scripts/art/map-icons.mjs`. The Titanspawn, the spliced
+seat, the Guild Hall and the Guardian door keep their art.
 
 **Short screens** (2026-09-28, per user direction). The console holds four moves at a 780px
 canvas with nothing to spare, and a phone's canvas is its browser's visible height — an

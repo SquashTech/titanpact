@@ -18,6 +18,16 @@ const PROPS = byName(
   import.meta.glob<string>('../../../art/map-nodes/props/*.png', { eager: true, query: '?url', import: 'default' })
 );
 
+// The pick-1-of-3 rewards and the Elite/Skirmish fork as plain buttons: one 32px icon each, from
+// the art/icons/32x32 pack, set in a uniform stone tile (MapRoute).
+const ICONS = byName(
+  import.meta.glob<string>('../../../art/map-nodes/icons/*.png', { eager: true, query: '?url', import: 'default' })
+);
+
+export function mapNodeIcon(type: MapNodeType): string | undefined {
+  return ICONS[type];
+}
+
 /** Nodes that share another's face: the `battle` is the same Titanspawn pool as the `fight`. */
 const ALIAS: Partial<Record<MapNodeType, MapNodeType>> = { battle: 'fight' };
 
@@ -58,5 +68,5 @@ export function mapNodeAwakening(type: MapNodeType): Awakening | undefined {
 
 /** Every map piece, prop and woken state — what the preloader fetches ahead. */
 export function allMapNodeArtUrls(): string[] {
-  return [...Object.values(MEDALLIONS), ...Object.values(PROPS), ...Object.values(AWAKE)];
+  return [...Object.values(MEDALLIONS), ...Object.values(PROPS), ...Object.values(AWAKE), ...Object.values(ICONS)];
 }
