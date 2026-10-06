@@ -33,7 +33,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Drives the spear in white-hot: what it hits catches, and the shield comes up harder (Burn 20%; +20 Defense to self).',
   },
   // Crimson: the fire-setter. Everything she lit, at once.
   flashover: {
@@ -47,7 +46,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'All of the fire at once. A burning target takes double, and stops burning — there is nothing left to.',
   },
   // Brimstone: the caster that stays. Burns them and warms itself on it.
   hearthfire: {
@@ -62,7 +60,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Sets them alight and sits by it (Burn 20%; heals 50% of the damage dealt).',
   },
   // Drake: the breath it woke up holding. The only physical Fire move that takes both foes, so an
   // Ambush from Slumber lands on each of them.
@@ -77,7 +74,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 70,
     priority: 0,
     target: 'bothEnemies',
-    description: 'The breath it woke up holding, across the whole opposing side (Burn 10% on both).',
   },
 
   // --- Water ---
@@ -95,7 +91,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 45,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A charge that drags the whole tide behind it (grants both allies Renew 8%).',
   },
   // Pincer: the slow crab. Closes, and does not open.
   vise: {
@@ -109,7 +104,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Closes on them and does not open — whatever was quick about them was in the part it has (-20 Speed).',
   },
   // Leviathan: the whole deep comes up behind the strike, and stays up.
   deepsurge: {
@@ -123,7 +117,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'The whole deep comes up behind the strike, and it does not go back down (Water Force 25 to self).',
   },
   // Nautilus: the whole ink sac at once, then gone behind it. Both foes flinch; the retreat fires
   // Ink on the way out. Gated three ways because a double flinch is a free turn: the round it comes
@@ -143,7 +136,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     switchesUserOut: true,
     priority: 2,
     target: 'bothEnemies',
-    description: 'Empties the whole ink sac and is gone behind it: both foes flinch (Daze on both, then switch out). First turn out only, once a fight, spends all Mana.',
   },
 
   // --- Frost ---
@@ -159,7 +151,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Cold that does not ask. Freezes, every time.',
   },
   // Rime: the thrower. Two throws, no pause between them.
   icefall: {
@@ -174,7 +165,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 50,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Two throws with no pause between them (2 hits; each 25% to Freeze).',
   },
   // Floe: everything it is, arriving slowly.
   coldMass: {
@@ -188,7 +178,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'All of it, at once, at whatever speed it can manage (swings with Defense).',
   },
 
   // --- Storm ---
@@ -203,7 +192,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 1,
     target: 'bothEnemies',
-    description: 'Loosed before anyone else has moved, and at both of them (priority +1).',
   },
   // Tempest: one bolt, both of them, and the charge stays in.
   twinbolt: {
@@ -217,7 +205,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'bothEnemies',
-    description: 'One bolt that splits — and the charge stays in both of them (marks both with Conduct).',
   },
   // Skyshear: the hunting dive — down out of the sky before they have looked up.
   stoop: {
@@ -231,7 +218,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 1,
     target: 'singleEnemy',
-    description: 'Comes down out of the sky before they have looked up, and the charge stays in them (priority +1; marks with Conduct).',
   },
 
   // --- Stone ---
@@ -247,7 +233,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Splits the ground under the whole far side (-15 Speed to both).',
   },
   // Sentinel: stands in front of both, and says so.
   roostGuard: {
@@ -262,7 +247,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'bothAllies',
-    description: 'Spreads its wings over the pair and draws every eye to itself (+30 Defense to both allies; Provoke this round).',
   },
   // Petra: throws the ground up under both of them, and what comes down is in reach of the staff.
   upheaval: {
@@ -277,7 +261,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Throws the ground up under both of them, and what comes down is in reach of the staff (+20 Attack to self).',
   },
 
   // --- Nature ---
@@ -296,7 +279,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Seeds the whole field: the far side rots and this side grows (Poison 10% to both foes; Renew 6% to both allies).',
   },
   // Mordrax: opens them up and puts down roots in the gap.
   rootrend: {
@@ -313,7 +295,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Opens them up and puts down roots in the gap (Bleed; Renew 7% to self).',
   },
   // Hollowbark: slow, heavy, and it does not stop coming.
   deadfall: {
@@ -326,7 +307,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 50,
     priority: -1,
     target: 'singleEnemy',
-    description: 'The whole trunk, coming down last and landing hardest (priority -1).',
   },
   // Tixwick: the strike the stance was for — first, and twice as hard on what is already failing.
   guillotine: {
@@ -341,7 +321,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 1,
     target: 'singleEnemy',
-    description: 'Drops before the foe can move, and takes twice as much from one already failing (+1 priority; Bleed; ×2 below half HP).',
   },
 
   // --- Light ---
@@ -358,7 +337,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'bothAllies',
-    description: 'Morning for the whole side: mends both, clears what they carry, and keeps mending (Renew 7%).',
   },
   // Aegis: strikes, and the shield goes up for both.
   bulwarkStrike: {
@@ -373,7 +351,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Strikes with the shield-arm, and the shield comes up for both (+20 Defense to both allies).',
   },
   // Empyrean: comes down out of the noon sky, and the ground where it lands is holy.
   sundive: {
@@ -387,7 +364,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Comes down out of the noon sky, and the ground where it lands is holy (sets Sanctuary).',
   },
 
   // --- Shadow ---
@@ -406,7 +382,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'singleEnemy',
-    description: 'One bite, two things in it (Bleed; Poison 15%).',
   },
   // Marrow: takes the marrow out of them and keeps it.
   deathdrink: {
@@ -420,7 +395,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Takes the marrow out of them and keeps it (heals 100% of the damage dealt).',
   },
   // Nightshade: the one you do not see coming.
   nightfall: {
@@ -434,7 +408,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'The one you do not see coming (50% Crit).',
   },
 
   // --- Arcane ---
@@ -450,7 +423,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Writes over what both of them knew (-20 Intelligence to both).',
   },
   // Zenith: each cast sets the figure higher for the next.
   culmination: {
@@ -465,7 +437,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Every cast raises the ceiling for the one after it (+20 Intelligence to self).',
   },
   // Pixie: the whole side, faster and fuller, and the air singing. The support signature — the
   // one buff in the set — priced 60 for its second rider, as Roost Guard's shape is.
@@ -481,7 +452,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'bothAllies',
-    description: 'Draws the ring, and everyone inside it is quicker and fuller than they were (50 mana and +20 Speed to both allies; sets Surging Magic).',
   },
 
   // --- Mind ---
@@ -502,7 +472,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A lance of thought that threads the two of you together, and both pipelines run hotter for it (+15 Attack and +15 Intelligence to both allies).',
   },
   // Lucius: empties the room behind their eyes.
   hollowing: {
@@ -516,7 +485,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Empties the room behind their eyes (-30 Wisdom).',
   },
   // Trance: they were asleep before they knew they were tired.
   sandman: {
@@ -530,7 +498,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 1,
     target: 'singleEnemy',
-    description: 'Gets there before they are awake, and half the time they stay that way (priority +1; 50% to Daze).',
   },
 
   // --- Spirit ---
@@ -547,7 +514,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Takes it back, and shares it out (heals 50% of the damage dealt; Renew 5% to both allies).',
   },
   // Sorrow: a wail that takes the strength out of both of them.
   dirgeOfAsh: {
@@ -561,7 +527,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'bothEnemies',
-    description: 'A wail with an edge on it, and it takes the fight out of both of them (-20 Attack to both).',
   },
   // Dread: spreads its wings, and everything aimed at the pair finds feathers. The Shield reads
   // the caster's Defense (docs/shield.md), which is the one stat this line spiked.
@@ -578,7 +543,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 1,
     target: 'self',
-    description: 'Spreads its wings, and everything aimed at the pair finds feathers (Provoke this round; Shield 60 on self).',
   },
 
   // --- Iron ---
@@ -594,7 +558,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Hits from behind the shield and dares the far side to answer (Provoke this round).',
   },
   // Valor: a blow the whole line follows.
   oathstrike: {
@@ -609,7 +572,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 50,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A blow the whole line follows (+15 Attack to both allies).',
   },
   // Gallant: first in, hardest in, and it hurts to stop.
   fullTilt: {
@@ -623,7 +585,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 1,
     target: 'singleEnemy',
-    description: 'The lance, and nothing behind it but the ground going past (priority +1; 25% recoil).',
   },
   // Scallywag: no quarter, no guard.
   broadside: {
@@ -638,7 +599,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Everything it has, all at once, and nothing held back to hide behind (-20 Defense to self).',
   },
 
   // --- Mech ---
@@ -654,7 +614,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 50,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Winds tighter with every cast, and nobody is letting it down (+25 Base Power each use, to 140).',
   },
   // Bellows: vents the whole boiler through the fist.
   boilerBlow: {
@@ -671,7 +630,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Vents the whole boiler through the fist; some of it stays in the housing (Burn 20% to the target, Burn 10% to self).',
   },
   // Rex: bites down and keeps what it takes. Mech's first drain; the boiler runs on it.
   devour: {
@@ -685,7 +643,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Bites down and keeps what it takes; the boiler runs on it (heals 50% of damage dealt).',
   },
   // Patch: strips it down and builds it back.
   overhaul: {
@@ -699,7 +656,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleAlly',
-    description: 'Strips them down and builds them back: heals 75, and the plate goes on thicker (+20 Defense).',
   },
 
   // --- Beast ---
@@ -716,7 +672,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Bites, and the pack comes in behind it (+15 Speed to both allies).',
   },
   // Ursa: the whole weight of it, once.
   overbear: {
@@ -730,7 +685,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Puts the whole weight of it into one blow, and some of that weight comes back (recoil 25%).',
   },
   // Coil: tightens until nothing about them works right.
   stranglehold: {
@@ -747,7 +701,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Tightens until nothing about them works right (-20 Speed and -20 Defense).',
   },
   // Vex: opens them and drinks what comes out.
   exsanguinate: {
@@ -762,7 +715,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Opens them and drinks what comes out (Bleed; heals 50% of the damage dealt).',
   },
 
   // --- Starfall ---
@@ -778,7 +730,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Opens every tendril at once and stings both (−10 Attack on each).',
   },
   // Igloo: the whole house comes down, and the walls stay up.
   whiteout: {
@@ -792,7 +743,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Brings the whole roof down on one foe and packs the snow back around itself (Shield 40).',
   },
   // Carillon: the great bell, swung.
   greatToll: {
@@ -805,7 +755,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 70,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Swings the great bell through both of them, and the whole field hears it.',
   },
   // Hart: the antlers lit.
   antlerCrown: {
@@ -819,7 +768,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'bothAllies',
-    description: 'Lights its antlers over both: heals 45 each, and the light stays with them (Renew 5%).',
   },
   // Ashwing: the dive out of its own fire.
   risingPyre: {
@@ -833,7 +781,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Dives out of its own fire at one foe and comes up burning clean (Renew 7% on self).',
   },
   // Kappa: drags them under and drinks what the river gives back.
   pullUnder: {
@@ -847,7 +794,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 50,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Wrestles one foe down into the river and keeps what it takes (heals 50% of the damage dealt).',
   },
   // Tusk: the whole herd's weight, through both of them.
   mammothCharge: {
@@ -860,7 +806,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 75,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Lowers its tusks and goes through the whole opposing side at once.',
   },
   // Motley: both faces of the mask at once.
   tragicomedy: {
@@ -877,7 +822,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Turns the mask on both of them, and neither can laugh or weep straight after (−15 Attack and −15 Intelligence on each).',
   },
   // Folio: every page at once.
   runeVolley: {
@@ -891,7 +835,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Riffles its pages and looses every rune on them at one foe (three hits of 30).',
   },
   // Ronin: the draw.
   drawCut: {
@@ -904,7 +847,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 2,
     target: 'singleEnemy',
-    description: 'Out of the scabbard and back before the far side has moved (priority +2).',
   },
   // Kong: both fists into the ground.
   groundPound: {
@@ -918,7 +860,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Brings both fists down and the ground throws the far side off its feet (−10 Attack on each).',
   },
   // Morel: the whole cap opens.
   sporestorm: {
@@ -933,7 +874,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Opens the whole cap over the far side and lets the air do the rest (Poison 10 and −10 Speed on each).',
   },
   // Scree: curled, and coming.
   rollout: {
@@ -949,7 +889,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Curls into a ball of granite and rolls through one foe, tighter at the end than the start (uses Defense in place of Attack; +20 Defense).',
   },
   // Aurum: the noon sun, landing on one of them.
   solarPounce: {
@@ -963,7 +902,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Leaps out of the glare with the whole mane alight (50% chance of Daze).',
   },
   // Jinx: whatever it crosses, something goes wrong.
   crossedPath: {
@@ -982,7 +920,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Darts across the foe’s path, and something goes wrong for it (one of Bleed, Poison 15, Daze or Haunt, at random).',
   },
   // Kitsu: every tail at once.
   tailfireVolley: {
@@ -996,7 +933,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Looses a ghost-fire from every tail across both foes (2 hits on each).',
   },
   // Tinder: the last trick of the act, and the biggest breath.
   grandFinale: {
@@ -1010,7 +946,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Tips back the torch and breathes the whole act out across the far side (Burn 10% on each).',
   },
   // Selkie: the pelt, thrown over someone else.
   sealskinCloak: {
@@ -1024,7 +959,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 50,
     priority: 0,
     target: 'singleAlly',
-    description: 'Throws her own pelt over one ally, and the sea goes on mending under it (heals 70, Renew 10%).',
   },
   // Hush: down out of the dark without a sound.
   silentDescent: {
@@ -1038,7 +972,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 1,
     target: 'singleEnemy',
-    description: 'Drops on one foe before it hears the wings, talons first and cold (priority +1; 50% chance of Freeze).',
   },
   // Lotus: every petal at once.
   petalfall: {
@@ -1052,7 +985,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Opens every petal and lets them fall on one foe like blades, and the pad floats on (Renew 7% on self).',
   },
   // Nimbus: the lightning falls on their side and the rain on its own.
   cloudburst: {
@@ -1069,7 +1001,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Breaks open over the field: lightning on both foes (Conduct), rain on both allies (Renew 5%).',
   },
   // Kite: flies the kite up into the storm and lets the string go.
   stormkite: {
@@ -1083,7 +1014,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 45,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Sends the kite up into the thunderhead over both foes: each is Conducting and loses 20 Speed.',
   },
   // Raiju: the strike, the mark, and the hand-off.
   relayStrike: {
@@ -1098,7 +1028,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 50,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Strikes one foe, leaves it Conducting, and is back on the bench before the thunder (switches out).',
   },
   // Dune: up through the sand under one foe.
   sandbreach: {
@@ -1111,7 +1040,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 1,
     target: 'singleEnemy',
-    description: 'Bursts up out of the sand beneath one foe before it can move (priority +1).',
   },
   // Cairn: the stone laid on the pile, and the pile standing over both of them.
   raiseTheCairn: {
@@ -1125,7 +1053,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Brings the stack of river stones down on one foe and raises it again over his side (Shield 40 on both allies).',
   },
   // Murk: the whole bog, on top of one of them.
   bogslam: {
@@ -1142,7 +1069,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Drags one foe down into the black mud and sits on it, and it comes up slow and weak (−20 Attack and −20 Speed).',
   },
   // Rook: the witch looks at you, and the crow does too.
   evilEye: {
@@ -1159,7 +1085,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Fixes one foe with the witch’s stare, and whatever it meant to do next it does worse (−20 Attack and −20 Intelligence).',
   },
   // Koan: the blow already answered, and the guard already up.
   foreseenBlow: {
@@ -1173,7 +1098,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 1,
     target: 'singleEnemy',
-    description: 'Strikes where the foe is about to be, before it gets there, and is already braced for its answer (+1 priority; Shield 30 to self).',
   },
   // Thane: the rune that breaks the guard it lands on.
   runebreaker: {
@@ -1187,7 +1111,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Brings the runed edge down through the guard, and the guard does not close behind it (−20 Defense).',
   },
   // Trove: the lid springs.
   mimicsMaw: {
@@ -1201,7 +1124,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Springs open on a foe and swallows what it can (heals 30% of the damage dealt).',
   },
   // Totem: every face on the pole wakes at once.
   ancestorsRise: {
@@ -1218,7 +1140,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'bothAllies',
-    description: 'Every carved face wakes and stands behind both allies (+25 Attack, +25 Intelligence and Renew 5% each).',
   },
   // Keen: the keen for the dead, sung over the living.
   lastKeen: {
@@ -1235,7 +1156,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Sings the lament for both foes before they have fallen, and both believe it (−15 Attack and −15 Intelligence on each).',
   },
   // Ferra: every scrap of metal on the foe, pulled in at once.
   ferrousCrush: {
@@ -1249,7 +1169,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Drags every scrap of metal on the foe inward at once, and tears a Shield in with it (×2 against a Shield).',
   },
   // Abacus: the answer, already on the page.
   foregoneConclusion: {
@@ -1263,7 +1182,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Works the sum out to the last bead, and the answer is worse for a foe already coming apart (×1.5 against a lowered stat).',
   },
   // Whirr: too many wingbeats to count.
   wingbeatBarrage: {
@@ -1277,7 +1195,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 1,
     target: 'singleEnemy',
-    description: 'Darts in before the foe has moved and strikes faster than the eye can follow (priority +1; three hits of 25).',
   },
   // Mellow: everybody climbs on.
   allAboard: {
@@ -1293,7 +1210,6 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'bothAllies',
-    description: 'Settles down and lets the whole side climb on: something broad in front of every blow, and a calm that keeps mending (Shield 35 and Renew 6% on both allies).',
   },
 };
 

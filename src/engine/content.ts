@@ -558,8 +558,6 @@ export interface MoveDefinition {
   target: TargetMode;
   /** Level-up tier gate (MOVE_TIER_LEVEL, src/run/progression.ts); cumulative. Omitted = 'early'. The engine never reads it. */
   tier?: MoveTier;
-  /** Presentational only — the engine never reads it. */
-  description?: string;
 }
 
 /** Locked: stat GRANTS are flat integers, multiples of 5 (CLAUDE.md). Not applied to authored base stat lines. */

@@ -45,7 +45,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A thrown coal that occasionally catches (30% chance of Burn 5%).',
   },
   sparkFlash: {
     id: 'sparkFlash',
@@ -58,7 +57,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 0,
     target: 'bothEnemies',
-    description: 'A snap of flame across the field, leaving both foes smoldering (Burn 8%).',
   },
   kindle: {
     id: 'kindle',
@@ -71,7 +69,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 15,
     priority: 0,
     target: 'self',
-    description: 'Draws the inner fire up into the arms (+20 Attack).',
   },
   singe: {
     id: 'singe',
@@ -85,7 +82,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A glancing burn that finds the gap surprisingly often (30% crit).',
   },
   setAlight: {
     id: 'setAlight',
@@ -98,7 +94,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Takes hold of one foe and does not let go (Burn 15%).',
   },
   stokeTheFlames: {
     id: 'stokeTheFlames',
@@ -112,7 +107,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 0,
     target: 'bothAllies',
-    description: 'Feeds the fire in both allies (grants Fire Force 20 to the whole active side, stacks).',
   },
   scorch: {
     id: 'scorch',
@@ -126,7 +120,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A sustained lick of flame that leaves the skin cooking (Burn 8%).',
   },
   spreadingBlaze: {
     id: 'spreadingBlaze',
@@ -140,7 +133,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Sets the ground itself alight — Scorched Land for 5 rounds, and Burn 8% on both foes.',
   },
   firebrand: {
     id: 'firebrand',
@@ -154,7 +146,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A weapon swung white-hot, and it bites (30% crit).',
   },
   moltenLash: {
     id: 'moltenLash',
@@ -169,7 +160,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A whip of molten rope that burns through armour (Burn 8%, -20 Defense).',
   },
   backdraft: {
     id: 'backdraft',
@@ -183,7 +173,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Fire doubling back through the room, catching both foes (Burn 8%).',
   },
   immolate: {
     id: 'immolate',
@@ -197,7 +186,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Feeds a fire that is already lit — triple power against a Burned target.',
   },
   sparkBurst: {
     id: 'sparkBurst',
@@ -210,7 +198,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Both foes go up at once (Burn 30%).',
   },
   inferno: {
     id: 'inferno',
@@ -223,7 +210,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Everything the caster has, aimed at one place.',
   },
   firestorm: {
     id: 'firestorm',
@@ -236,7 +222,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 75,
     priority: 0,
     target: 'bothEnemies',
-    description: 'A firefront that takes the whole opposing side at once.',
   },
   volcanicSurge: {
     id: 'volcanicSurge',
@@ -250,7 +235,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Opens the ground under one foe, and pays for it (self-inflicts Burn 17%).',
   },
 
   // 2026-09-15 additions (docs/field-effects.md "Readers"; docs/authoring-moves.md §11)
@@ -267,7 +251,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A flame that catches twice as fierce on ground already burning (Burn 5%; ×2 while Scorched Land is up).',
   },
   heatHaze: {
     id: 'heatHaze',
@@ -281,7 +264,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'bothEnemies',
-    description: 'A shimmer of heat that muddles the mind and singes the skin (−20 Intelligence, Burn 8% on both foes).',
   },
   blazingRetreat: {
     id: 'blazingRetreat',
@@ -296,7 +278,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Strikes, sets the foe alight, and falls back behind the flames (Burn 10%, then switch out).',
   },
 
   // --- Water ---
@@ -311,7 +292,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A hard slap of water with nothing clever behind it.',
   },
   siphon: {
     id: 'siphon',
@@ -325,7 +305,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 15,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Draws the water back out of a foe, and keeps half of it (heals 50% of damage dealt).',
   },
   tideGuard: {
     id: 'tideGuard',
@@ -339,7 +318,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 15,
     priority: 0,
     target: 'bothAllies',
-    description: 'A standing swell in front of both allies that takes the first hit (Shield 20).',
   },
   refresh: {
     id: 'refresh',
@@ -352,7 +330,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleAlly',
-    description: 'Sets an ally mending on their own again (grants Renew 9%).',
   },
   inkCloud: {
     id: 'inkCloud',
@@ -368,7 +345,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Clouds the water so neither foe can see what to hit (−15 Attack, −15 Intelligence on both).',
   },
   undertow: {
     id: 'undertow',
@@ -382,7 +358,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Pulls the footing out from under a foe (-10 Defense).',
   },
   torrent: {
     id: 'torrent',
@@ -395,7 +370,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A sustained column of water aimed at one place.',
   },
   oasis: {
     id: 'oasis',
@@ -408,7 +382,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 50,
     priority: 0,
     target: 'bothAllies',
-    description: 'Still water for the whole side at once.',
   },
   engulf: {
     id: 'engulf',
@@ -422,7 +395,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Closes over a foe and does not give it back (heals 50% of damage dealt).',
   },
   aquaSlice: {
     id: 'aquaSlice',
@@ -436,7 +408,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A pressurised edge of water that opens a wound (30% chance of Bleed).',
   },
   deluge: {
     id: 'deluge',
@@ -449,7 +420,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Water enough for both of them.',
   },
   washAway: {
     id: 'washAway',
@@ -464,7 +434,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 0,
     target: 'singleAlly',
-    description: "Rinses one of an ally's afflictions away, chosen by the current (cleanses 1 at random).",
   },
   shockBubble: {
     id: 'shockBubble',
@@ -478,7 +447,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Seals a foe in charged water that keeps carrying the current (inflicts Conduct).',
   },
   tsunami: {
     id: 'tsunami',
@@ -491,7 +459,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'singleEnemy',
-    description: 'The whole ocean, arriving at once, at one hero.',
   },
   maelstrom: {
     id: 'maelstrom',
@@ -504,7 +471,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 75,
     priority: 0,
     target: 'bothEnemies',
-    description: 'A turning of the water that takes the whole opposing side down with it.',
   },
   highTide: {
     id: 'highTide',
@@ -517,7 +483,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'bothAllies',
-    description: 'The tide comes in for the whole side (grants Renew 16%).',
   },
   waveShred: {
     id: 'waveShred',
@@ -531,7 +496,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 70,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Cuts a channel through the water — and every cut after it runs easier (costs 20 less each use).',
   },
   crest: {
     id: 'crest',
@@ -546,7 +510,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Rides the swell in on one foe and stands behind what comes back (Shield 25 on self).',
   },
   seawall: {
     id: 'seawall',
@@ -561,7 +524,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'singleAlly',
-    description: 'Raises the sea between one ally and everything (Shield 70), and washes off what ails them (cleanses).',
   },
 
   // 2026-09-15 additions (docs/authoring-moves.md §11)
@@ -577,7 +539,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'self',
-    description: 'Draws the current up into every Water move (Water Force 25, stacks, kept through a switch).',
   },
   cleansingRain: {
     id: 'cleansingRain',
@@ -591,7 +552,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'bothAllies',
-    description: 'A rain that washes every affliction off both allies and mends a little as it goes (heal 25, cleanse all).',
   },
 
   // --- Frost ---
@@ -607,7 +567,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A splinter of ice thrown hard enough to stick (20% chance of Freeze).',
   },
   frostArmor: {
     id: 'frostArmor',
@@ -620,7 +579,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 15,
     priority: 0,
     target: 'singleAlly',
-    description: 'Sheathes one ally in rime (+20 Defense).',
   },
   // Frost's early single-target bolt (2026-09-29, per user direction): the slate had only the two
   // spreads, one of which catches the partner. Jolt's shape, with Freeze as the chance rider.
@@ -636,7 +594,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A shard of shaped cold that sometimes locks the target in ice (20% chance of Freeze).',
   },
   deepChill: {
     id: 'deepChill',
@@ -649,7 +606,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Drives the cold all the way in, no strike required (inflicts Freeze).',
   },
   rimeWind: {
     id: 'rimeWind',
@@ -662,7 +618,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'bothEnemies',
-    description: 'A thin, cutting wind across the whole far side.',
   },
   snowBlast: {
     id: 'snowBlast',
@@ -675,7 +630,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'allOthers',
-    description: 'A wall of driven snow that does not care who is standing in it.',
   },
   icicleThrust: {
     id: 'icicleThrust',
@@ -689,7 +643,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A driven spear of ice, aimed to stay in (30% chance of Freeze).',
   },
   glaciate: {
     id: 'glaciate',
@@ -703,7 +656,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Grows the ice already in a foe until it does the work (only targets a Frozen enemy).',
   },
   permafrost: {
     id: 'permafrost',
@@ -716,7 +668,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 45,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Sets the cold into the whole far side at once (inflicts Freeze).',
   },
   frigidAir: {
     id: 'frigidAir',
@@ -729,7 +680,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'allOthers',
-    description: 'The air itself turns lethal, for everyone still breathing it.',
   },
   // No Freeze rider despite the name — by design (docs/combat.md hand-off).
   quickFreeze: {
@@ -743,7 +693,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 1,
     target: 'singleEnemy',
-    description: 'Cold, arriving before anything else does.',
   },
   coldSnap: {
     id: 'coldSnap',
@@ -757,7 +706,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Shatters the ice off a foe and puts it through them (×2 vs Frozen, consuming it).',
   },
   avalanche: {
     id: 'avalanche',
@@ -771,7 +719,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 75,
     priority: 0,
     target: 'bothEnemies',
-    description: 'The whole mountain comes down on both of them (inflicts Freeze).',
   },
   absoluteZero: {
     id: 'absoluteZero',
@@ -785,7 +732,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Takes everything that was left (only targets a Frozen enemy).',
   },
   iceShatter: {
     id: 'iceShatter',
@@ -799,7 +745,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A blow that breaks and re-forms at once (50% chance of Freeze).',
   },
   frostWall: {
     id: 'frostWall',
@@ -812,7 +757,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'bothAllies',
-    description: 'A wall of ice across the near side of the field (+60 Defense).',
   },
   snowball: {
     id: 'snowball',
@@ -826,7 +770,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Every throw packs the next one harder (+40 power each use this fight, up to 200).',
   },
   iceShell: {
     id: 'iceShell',
@@ -843,7 +786,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleAlly',
-    description: 'Cases one ally in ice (Shield 50). The hit that breaks it Freezes the striker.',
   },
   rimeCoat: {
     id: 'rimeCoat',
@@ -856,7 +798,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleAlly',
-    description: 'Frosts one ally over before the blow lands (Shield 30).',
   },
 
   // 2026-09-15 additions (docs/authoring-moves.md §11)
@@ -871,7 +812,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'self',
-    description: 'Rimes the edge of every Frost move (Frost Force 25, stacks, kept through a switch).',
   },
   blindingSnow: {
     id: 'blindingSnow',
@@ -886,7 +826,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 1,
     target: 'bothEnemies',
-    description: 'A squall that blinds before anyone can swing (+1 priority; 40% Daze and −10 Speed on both foes).',
   },
 
   // --- Storm ---
@@ -902,7 +841,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 0,
     target: 'randomAlly',
-    description: 'Charge builds unbidden across the field — one ally quickens, one foe starts to conduct.',
   },
   jolt: {
     id: 'jolt',
@@ -916,7 +854,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A cheap arc of current that sometimes leaves the target charged (20% chance of Conduct).',
   },
   charge: {
     id: 'charge',
@@ -932,7 +869,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'self',
-    description: 'Draw the storm inward and hold it (+10 Speed, +20 Intelligence).',
   },
   zap: {
     id: 'zap',
@@ -945,7 +881,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 15,
     priority: 1,
     target: 'singleEnemy',
-    description: 'A flick of current that lands before anything else does.',
   },
   thunderclap: {
     id: 'thunderclap',
@@ -958,7 +893,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A concussive crack of air, close enough to feel in the chest.',
   },
   ionize: {
     id: 'ionize',
@@ -972,7 +906,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 1,
     target: 'bothEnemies',
-    description: "Salts the air on the far side of the field with a light arc — both foes start conducting.",
   },
   chainLightning: {
     id: 'chainLightning',
@@ -985,7 +918,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'bothEnemies',
-    description: 'An arc that refuses to stop at the first thing it touches.',
   },
   tailwind: {
     id: 'tailwind',
@@ -999,7 +931,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 45,
     priority: 0,
     target: 'singleAlly',
-    description: 'Hand the wind to someone else and step out of it (+40 Speed, then switch out).',
   },
   electricBurst: {
     id: 'electricBurst',
@@ -1013,7 +944,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 50,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Current finds a charged target early — and arrives ahead of everything else.',
   },
   stormLash: {
     id: 'stormLash',
@@ -1027,7 +957,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A whipcrack that leaves the target humming (inflicts Conduct).',
   },
   shockSlice: {
     id: 'shockSlice',
@@ -1041,7 +970,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A charged edge drawn across the guard, often deep enough to open it (30% chance of Bleed).',
   },
   overcharge: {
     id: 'overcharge',
@@ -1055,7 +983,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Dump the whole charge at once — free, if the field is already carrying it.',
   },
   thunderbolt: {
     id: 'thunderbolt',
@@ -1069,7 +996,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'singleEnemy',
-    description: 'The whole sky, through one point (inflicts Conduct).',
   },
   stormSurge: {
     id: 'stormSurge',
@@ -1085,7 +1011,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'bothAllies',
-    description: 'The front arrives, and it arrives on your side (+50 Attack, +50 Speed).',
   },
   ionicZap: {
     id: 'ionicZap',
@@ -1098,7 +1023,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 1,
     target: 'singleEnemy',
-    description: 'A heavier bolt that still arrives before the round properly begins.',
   },
 
   // 2026-09-15 additions (docs/authoring-moves.md §11)
@@ -1113,7 +1037,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'self',
-    description: 'Builds a charge that rides every Storm move (Storm Force 25, stacks, kept through a switch).',
   },
   stunningBolt: {
     id: 'stunningBolt',
@@ -1130,7 +1053,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A bolt that leaves the foe charged and, sometimes, reeling (plants Conduct; 30% Daze).',
   },
   rideTheLightning: {
     id: 'rideTheLightning',
@@ -1144,7 +1066,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Strikes and is gone on the same bolt (then switch out).',
   },
   ionCascade: {
     id: 'ionCascade',
@@ -1159,7 +1080,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Arcs across both foes, and finds twice the current in anyone carrying a charge (×2 on a Conduct mark).',
   },
 
   // Forked's grant (Tempest): the physical hand of a mixed slate whose Late column is mostly magical. In no pool.
@@ -1174,7 +1094,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Comes down with the whole sky behind it.',
   },
 
   // --- Stone ---
@@ -1190,7 +1109,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A jagged stone hurled at a seam in the guard (30% crit chance).',
   },
   toughenUp: {
     id: 'toughenUp',
@@ -1206,7 +1124,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 15,
     priority: 0,
     target: 'singleAlly',
-    description: 'Braces an ally into a fighting stance (+15 Attack, +15 Defense).',
   },
   provoke: {
     id: 'provoke',
@@ -1219,7 +1136,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 1,
     target: 'self',
-    description: 'Plants yourself in the way — single-target enemy moves aimed at either ally are redirected onto you this round.',
   },
   tremor: {
     id: 'tremor',
@@ -1232,7 +1148,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'bothEnemies',
-    description: 'A low shudder through the ground beneath both foes.',
   },
   mudBall: {
     id: 'mudBall',
@@ -1246,7 +1161,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 15,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A clot of wet earth to the eyes — slow, cheap, and it sticks (-10 Speed).',
   },
   faultLine: {
     id: 'faultLine',
@@ -1260,7 +1174,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Splits the ground open under one foe (30% crit chance).',
   },
   bodyBlow: {
     id: 'bodyBlow',
@@ -1275,7 +1188,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: "A shoulder driven through the guard, powered by the caster's own bulk (uses Defense in place of Attack).",
   },
   bastion: {
     id: 'bastion',
@@ -1289,7 +1201,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'bothAllies',
-    description: 'Both heroes set their feet and hold the line (Shield 45 on each).',
   },
   retribution: {
     id: 'retribution',
@@ -1303,7 +1214,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Returns half of every wound taken since your last turn, exactly as it was dealt.',
   },
   rockfall: {
     id: 'rockfall',
@@ -1316,7 +1226,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: -1,
     target: 'bothEnemies',
-    description: 'A slow collapse of stone over the whole enemy line.',
   },
   rubbleRush: {
     id: 'rubbleRush',
@@ -1330,7 +1239,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A headlong charge through the debris — cheap, heavy, and it costs you a quarter of what it deals.',
   },
   spireClaw: {
     id: 'spireClaw',
@@ -1345,7 +1253,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Rakes a ridge of rock through the guard and keeps what breaks off (+20 Defense).',
   },
   boulderSlam: {
     id: 'boulderSlam',
@@ -1359,7 +1266,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 70,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Everything the caster has, brought down at once (50% crit chance).',
   },
   bodyCrush: {
     id: 'bodyCrush',
@@ -1373,7 +1279,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'singleEnemy',
-    description: "The full weight of a hero who has spent the fight getting harder to move (uses Defense in place of Attack).",
   },
   stoneheart: {
     id: 'stoneheart',
@@ -1386,7 +1291,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 1,
     target: 'singleEnemy',
-    description: 'Every wound taken since your last turn, returned whole and first.',
   },
   landslide: {
     id: 'landslide',
@@ -1401,7 +1305,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Brings the hillside down on both foes and leaves your side dug into what it left (+20 Defense to allies).',
   },
   titanicCrush: {
     id: 'titanicCrush',
@@ -1414,7 +1317,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 75,
     priority: 0,
     target: 'bothEnemies',
-    description: 'One swing wide enough that there is nowhere on the field to not be under it.',
   },
   rampart: {
     id: 'rampart',
@@ -1427,7 +1329,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'bothAllies',
-    description: 'Raises the ground itself in front of both allies (Shield 65 on each).',
   },
 
   // 2026-09-15 additions (docs/authoring-moves.md §11)
@@ -1444,7 +1345,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'bothEnemies',
-    description: 'A fan of grit across both foes that sometimes finds a joint (30% chance of −10 Defense).',
   },
   bodyguard: {
     id: 'bodyguard',
@@ -1461,7 +1361,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 1,
     target: 'singleAlly',
-    description: 'Steps in front of an ally and braces them (Shield 30 on the ally; single-target enemy moves are redirected onto you this round).',
   },
 
   // --- Nature ---
@@ -1477,7 +1376,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A whip-crack of living vine, sometimes barbed (30% chance of Poison 5).',
   },
   toxicSpores: {
     id: 'toxicSpores',
@@ -1491,7 +1389,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A cloud of spores that clings and drags (inflicts Poison 10, −10 Speed).',
   },
   regrowth: {
     id: 'regrowth',
@@ -1504,7 +1401,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'bothAllies',
-    description: 'Green comes back up under both allies (grants Renew 9%).',
   },
   seedShot: {
     id: 'seedShot',
@@ -1518,7 +1414,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A seed fired hard enough to sting — harder while you are still growing (×2 while you have Renew).',
   },
   ivySpike: {
     id: 'ivySpike',
@@ -1532,7 +1427,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 15,
     priority: 1,
     target: 'singleEnemy',
-    description: 'A low thorn that takes the strength out of the next swing (−10 Attack).',
   },
   blight: {
     id: 'blight',
@@ -1545,7 +1439,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Rot goes through the whole enemy line (inflicts Poison 20 on both).',
   },
   corrode: {
     id: 'corrode',
@@ -1560,7 +1453,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Sap that eats through the guard and stays in the wound (Poison 10, −10 Defense).',
   },
   thornWhip: {
     id: 'thornWhip',
@@ -1578,7 +1470,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 45,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Barbs that leave a foe poisoned and unable to answer either way (Poison 10, −10 Attack, −10 Intelligence).',
   },
   wildBloom: {
     id: 'wildBloom',
@@ -1591,7 +1482,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 45,
     priority: 0,
     target: 'bothAllies',
-    description: 'The whole side flowers at once (grants Renew 19%).',
   },
   magicGrowth: {
     id: 'magicGrowth',
@@ -1605,7 +1495,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleAlly',
-    description: 'Feeds one ally and turns the ground under everyone (Renew 11%; Verdant Earth for 5 rounds).',
   },
   leafSlice: {
     id: 'leafSlice',
@@ -1619,7 +1508,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A leaf edge drawn across the guard (30% chance of Bleed).',
   },
   overgrowth: {
     id: 'overgrowth',
@@ -1632,7 +1520,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'singleAlly',
-    description: 'One ally disappears under new growth (grants Renew 32%).',
   },
   forceOfNature: {
     id: 'forceOfNature',
@@ -1646,7 +1533,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'singleEnemy',
-    description: 'The forest answers, and stays answered (Verdant Earth for 5 rounds).',
   },
   branchSlam: {
     id: 'branchSlam',
@@ -1660,7 +1546,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A whole bough brought down two-handed (×2 while you have Renew).',
   },
   miasma: {
     id: 'miasma',
@@ -1675,7 +1560,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Everything this side has planted goes off at once (Poison 5, then detonates the whole stack).',
   },
 
   // 2026-09-15 additions (docs/field-effects.md "Riders" and "Readers"; docs/authoring-moves.md §11)
@@ -1691,7 +1575,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'singleAlly',
-    description: 'Plants a seed of renewal in an ally and wakes the ground beneath it (Renew 9%; sets Verdant Earth).',
   },
   rootbind: {
     id: 'rootbind',
@@ -1705,7 +1588,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Roots wrap the legs and thorns find the skin (−30 Speed, Poison 20).',
   },
   verdantLash: {
     id: 'verdantLash',
@@ -1719,7 +1601,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A whip of green that strikes twice as hard on living ground (×2 while Verdant Earth is up).',
   },
   leech: {
     id: 'leech',
@@ -1733,7 +1614,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Roots that drink from the foe and feed the caster (heals half of what it deals).',
   },
 
   // --- Light ---
@@ -1750,7 +1630,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A needle of light, occasionally straight across the eyes (10% chance of Daze).',
   },
   bless: {
     id: 'bless',
@@ -1763,7 +1642,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 15,
     priority: 0,
     target: 'singleAlly',
-    description: "Lays a hand on an ally and sharpens what they already know (+20 Intelligence).",
   },
   mend: {
     id: 'mend',
@@ -1776,7 +1654,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'singleAlly',
-    description: 'Closes an ally up, cleanly and immediately.',
   },
   purify: {
     id: 'purify',
@@ -1791,7 +1668,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleAlly',
-    description: "Burns one affliction off an ally, whichever the light finds first.",
   },
   blind: {
     id: 'blind',
@@ -1808,7 +1684,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCostGainOnUse: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Floods a foe with white until there is nothing to aim at (inflicts Daze). Each cast costs 20 more Mana for the rest of the fight.',
   },
   // Light's second early physical attack (2026-09-29, per user direction): the slate had only
   // Holy Strike, so a physical Light hero could not open with two. The glare is Light's Daze.
@@ -1824,7 +1699,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A blow thrown out of the glare, which sometimes leaves the target reeling (20% chance of Daze).',
   },
   holyStrike: {
     id: 'holyStrike',
@@ -1838,7 +1712,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A struck blow that gives something back (grants the user Renew 4%).',
   },
 
   radiantBeam: {
@@ -1853,7 +1726,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A focused lance of blinding light (20% chance of Daze).',
   },
   consecrate: {
     id: 'consecrate',
@@ -1867,7 +1739,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 45,
     priority: 0,
     target: 'bothAllies',
-    description: 'Hallows the ground and lifts both allies (heals, and sets Sanctuary for 5 rounds).',
   },
   radiance: {
     id: 'radiance',
@@ -1880,7 +1751,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 50,
     priority: 0,
     target: 'bothAllies',
-    description: 'Both allies burn brighter (+40 Intelligence each).',
   },
   holySlice: {
     id: 'holySlice',
@@ -1894,7 +1764,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A clean cut that does not close on its own (30% chance of Bleed).',
   },
   smite: {
     id: 'smite',
@@ -1908,7 +1777,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Calls the judgment down — twice as hard on hallowed ground (×2 while Sanctuary is up).',
   },
   blindingFlash: {
     id: 'blindingFlash',
@@ -1922,7 +1790,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 50,
     priority: 0,
     target: 'bothEnemies',
-    description: 'A white detonation across the whole enemy line (30% chance of Daze on each).',
   },
 
   judgment: {
@@ -1936,7 +1803,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 120,
     priority: 0,
     target: 'singleEnemy',
-    description: 'The verdict, delivered. Nothing subtle about it.',
   },
   divineGrace: {
     id: 'divineGrace',
@@ -1949,7 +1815,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'bothAllies',
-    description: 'Grace enough for both, poured out at once.',
   },
   solarFlare: {
     id: 'solarFlare',
@@ -1962,7 +1827,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 75,
     priority: 0,
     target: 'bothEnemies',
-    description: 'A flare of searing light that washes over both foes.',
   },
   deityBlade: {
     id: 'deityBlade',
@@ -1976,7 +1840,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A blade of borrowed divinity, and a light nobody looks straight at (30% chance of Daze).',
   },
   exalt: {
     id: 'exalt',
@@ -1989,7 +1852,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleAlly',
-    description: 'Raises one ally past what they were built for (+100 Intelligence).',
   },
   vigil: {
     id: 'vigil',
@@ -2006,7 +1868,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'singleAlly',
-    description: 'Keeps watch over one ally: a light that holds a hit and mends beneath it (Shield 25, Renew 3%).',
   },
   benediction: {
     id: 'benediction',
@@ -2021,7 +1882,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 50,
     priority: 0,
     target: 'bothAllies',
-    description: 'Mends both allies and sets a light before them (heals, and Shield 25 on each).',
   },
 
   // 2026-09-15 additions (docs/field-effects.md "Riders" and "Readers"; docs/authoring-moves.md §11)
@@ -2037,7 +1897,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'singleAlly',
-    description: 'A small mending that leaves the ground holy (heal 35; sets Sanctuary).',
   },
   sunlance: {
     id: 'sunlance',
@@ -2051,7 +1910,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A spear of daylight, twice as bright on hallowed ground (×2 while Sanctuary is up).',
   },
 
   // --- Shadow ---
@@ -2067,7 +1925,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A dart of congealed dark that sometimes leaves rot behind (30% chance of Poison 5).',
   },
   lieInWait: {
     id: 'lieInWait',
@@ -2083,7 +1940,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'self',
-    description: 'Picks the moment instead of the fight (grants Ambush 45).',
   },
   fadeStrike: {
     id: 'fadeStrike',
@@ -2097,7 +1953,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A strike thrown from the edge of vision, hard to guard against (30% crit).',
   },
   backstab: {
     id: 'backstab',
@@ -2111,7 +1966,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A short blade under the guard (50% chance of Bleed).',
   },
   weaken: {
     id: 'weaken',
@@ -2127,7 +1981,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 15,
     priority: 0,
     target: 'singleEnemy',
-    description: "Creeping shadow that erodes the target's guard and their will (-20 Attack, -20 Defense).",
   },
   shadowSlice: {
     id: 'shadowSlice',
@@ -2141,7 +1994,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A long cut that opens as it lands (30% chance of Bleed).',
   },
   cutthroat: {
     id: 'cutthroat',
@@ -2158,7 +2010,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Strikes and slips back out of reach (grants Ambush 20).',
   },
   rend: {
     id: 'rend',
@@ -2172,7 +2023,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Tears at a wound that is already there (double damage below half HP).',
   },
   umbralBeam: {
     id: 'umbralBeam',
@@ -2186,7 +2036,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A sustained lance of darkness (50% chance of Poison 10).',
   },
   shadowstrike: {
     id: 'shadowstrike',
@@ -2199,7 +2048,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 45,
     priority: 1,
     target: 'singleEnemy',
-    description: 'Crosses the gap before the guard comes up (strikes first).',
   },
   enfeeble: {
     id: 'enfeeble',
@@ -2215,7 +2063,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 50,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Drags the whole enemy line down (-30 Attack, -30 Defense on both).',
   },
   eclipse: {
     id: 'eclipse',
@@ -2229,7 +2076,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 70,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Puts out the light entirely (double damage below half HP).',
   },
   umbralWave: {
     id: 'umbralWave',
@@ -2243,7 +2089,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 70,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Dark rolls over the whole enemy line (20% chance of Poison 20 on each).',
   },
   duskBlade: {
     id: 'duskBlade',
@@ -2257,7 +2102,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A cut that will not close (inflicts Bleed).',
   },
   thousandCuts: {
     id: 'thousandCuts',
@@ -2275,7 +2119,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 70,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Three cuts too fast to count — every bonus lands on each (hits 3 times).',
   },
   shadowForm: {
     id: 'shadowForm',
@@ -2289,7 +2132,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'self',
-    description: 'Becomes the dark itself (grants Ambush 50 and +75 Attack).',
   },
 
   // 2026-09-15 additions (docs/authoring-moves.md §11)
@@ -2305,7 +2147,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A low cut that takes the legs out from under the foe (−15 Speed).',
   },
   smokeBomb: {
     id: 'smokeBomb',
@@ -2321,7 +2162,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'bothEnemies',
-    description: 'A choking cloud that both foes swing blind and slow through (−20 Attack, −20 Speed).',
   },
   grimHarvest: {
     id: 'grimHarvest',
@@ -2336,7 +2176,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Reaps what the poison sowed — fires a held Poison now, and drinks a third of the blow.',
   },
 
   // --- Arcane ---
@@ -2352,7 +2191,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleAlly',
-    description: 'Pours 40 mana into an ally — past their pool if it will not fit.',
   },
   // The roster's only guard, and deliberately a thin slice of it: Glyph and Reverie, both frail
   // casters whose problem is being the weakest body on the field rather than a weak one. Priority 2
@@ -2376,7 +2214,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCostGainOnUse: 20,
     priority: 2,
     target: 'self',
-    description: 'Shapes mana into a wall for one round — the far side cannot reach them at all. Each cast costs 20 more Mana for the rest of the fight.',
   },
   magicBolt: {
     id: 'magicBolt',
@@ -2389,7 +2226,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A clean, unadorned bolt of shaped mana.',
   },
   focus: {
     id: 'focus',
@@ -2402,7 +2238,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 15,
     priority: 0,
     target: 'self',
-    description: 'Narrows the mind to a point (+20 Intelligence).',
   },
   manaFont: {
     id: 'manaFont',
@@ -2416,7 +2251,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'bothAllies',
-    description: 'Opens a well under the whole field (+10 MP Regen to allies, and sets Magical Surge).',
   },
   manaTap: {
     id: 'manaTap',
@@ -2430,7 +2264,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 0,
     priority: 1,
     target: 'singleEnemy',
-    description: 'Draws a trickle of ambient mana and flicks it at a foe. Costs nothing.',
   },
   empower: {
     id: 'empower',
@@ -2444,7 +2277,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleAlly',
-    description: 'Floods an ally with 80 mana — past their pool if it will not fit.',
   },
   arcaneBlast: {
     id: 'arcaneBlast',
@@ -2457,7 +2289,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Raw power, undisguised.',
   },
   arcPulse: {
     id: 'arcPulse',
@@ -2470,7 +2301,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'bothEnemies',
-    description: 'A ring of force that crosses the whole enemy line.',
   },
   overload: {
     id: 'overload',
@@ -2484,7 +2314,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 50,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Dumps stored power into a foe — or into both, if the air is already singing.',
   },
   study: {
     id: 'study',
@@ -2497,7 +2326,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'self',
-    description: 'Reads the shape of the fight and rewrites it (+60 Intelligence).',
   },
   magicCloak: {
     id: 'magicCloak',
@@ -2512,7 +2340,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'self',
-    description: 'Wraps the caster in live mana (grants Ambush 30 and sets Magical Surge).',
   },
   conduit: {
     id: 'conduit',
@@ -2526,7 +2353,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'singleAlly',
-    description: 'Becomes a channel between an ally and the raw source (150 mana, past their pool).',
   },
   singularity: {
     id: 'singularity',
@@ -2540,7 +2366,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 150,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Collapses a point of space onto one enemy.',
   },
   cataclysm: {
     id: 'cataclysm',
@@ -2553,7 +2378,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 90,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Unmakes the ground both foes are standing on.',
   },
   arcaneOverflow: {
     id: 'arcaneOverflow',
@@ -2568,7 +2392,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 70,
     priority: 0,
     target: 'bothAllies',
-    description: "Spills the caster's stored mana into both allies as raw Attack and Intelligence.",
   },
   fontOfPower: {
     id: 'fontOfPower',
@@ -2582,7 +2405,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 100,
     priority: 0,
     target: 'bothAllies',
-    description: 'Opens the source itself — 150 mana to both allies, past their pools.',
   },
 
   // 2026-09-15 additions (docs/field-effects.md "Readers"; docs/authoring-moves.md §11)
@@ -2598,7 +2420,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A bolt that rings twice as loud in charged air (×2 while Magical Surge is up).',
   },
   twinCast: {
     id: 'twinCast',
@@ -2613,7 +2434,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 70,
     priority: 0,
     target: 'singleEnemy',
-    description: 'The same spell spoken twice in one breath (two hits of 45).',
   },
   // 2026-09-28: the slate's first physical column, for Thane and Trove (docs/types-and-heroes.md).
   runeslash: {
@@ -2627,7 +2447,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A rune-cut edge drawn across the guard, the glyph still burning in the wound.',
   },
   wardblade: {
     id: 'wardblade',
@@ -2641,7 +2460,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Cuts, and leaves the rune behind as a ward (Shield 20 on self, scaled off Defense).',
   },
 
   // --- Mind ---
@@ -2659,7 +2477,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A palm strike thrown with the whole mind behind it, which sometimes leaves the target reeling (20% chance of Daze).',
   },
   // Never cast as itself: run/metamorphic.ts swaps it for this round's face at declaration. The
   // body below is what the sheet shows out of a fight. Motley's alone, held by its innate.
@@ -2674,7 +2491,6 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'self',
     metamorphic: true,
     permanent: true,
-    description: 'Becomes a random move from anywhere in the game each round — its type, cost and effects. Cannot be replaced.',
   },
   psiBolt: {
     id: 'psiBolt',
@@ -2689,7 +2505,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: "A lance of raw thought that sometimes leaves the mind open.",
   },
   brainWard: {
     id: 'brainWard',
@@ -2702,7 +2517,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 15,
     priority: 0,
     target: 'singleAlly',
-    description: "Shores up an ally's mind — +30 Wisdom.",
   },
   enervate: {
     id: 'enervate',
@@ -2719,7 +2533,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 0,
     target: 'singleEnemy',
-    description: "Drains a foe's guard and finds the opening (-30 Wisdom, grants Ambush 25).",
   },
   lull: {
     id: 'lull',
@@ -2732,7 +2545,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: "Dulls a foe's focus — -30 Intelligence.",
   },
   dopamine: {
     id: 'dopamine',
@@ -2745,7 +2557,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleAlly',
-    description: 'Floods an ally with relief.',
   },
   psyshock: {
     id: 'psyshock',
@@ -2760,7 +2571,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A heavier shock that can leave the mind wide open.',
   },
   wickedFear: {
     id: 'wickedFear',
@@ -2774,7 +2584,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A terror that binds a foe to its partner.',
   },
   stasis: {
     id: 'stasis',
@@ -2793,7 +2602,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'bothAllies',
-    description: 'Holds the moment still around both allies (+20 Intelligence, +20 Wisdom; sets Stasis Field, where the slowest in a bracket acts first).',
   },
   // Plants Conduct that only a Storm/Iron/Mech partner can detonate — intended.
   cerebralShock: {
@@ -2808,7 +2616,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: "Leaves a foe's nerves conducting — for an ally to set off.",
   },
   psychicBlow: {
     id: 'psychicBlow',
@@ -2821,7 +2628,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 1,
     target: 'singleEnemy',
-    description: 'A thought that lands before the thinking does.',
   },
   disorient: {
     id: 'disorient',
@@ -2837,7 +2643,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 50,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Scrambles both foes — -30 Intelligence and -30 Wisdom.',
   },
   mentalFortress: {
     id: 'mentalFortress',
@@ -2850,7 +2655,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'bothAllies',
-    description: 'Both allies gain +30 Wisdom.',
   },
   psionicWave: {
     id: 'psionicWave',
@@ -2865,7 +2669,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 80,
     priority: 0,
     target: 'bothEnemies',
-    description: 'A wave of pressure across the whole field.',
   },
   mindShatter: {
     id: 'mindShatter',
@@ -2880,7 +2683,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 70,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Breaks a mind open with the strength of your own — swings Wisdom, not Intelligence.',
   },
   // The slate's cash-in: a debuff sets it up, the hit doubles. It doubled the reductions
   // themselves until 2026-09-14, and the stat floor left that nothing to double.
@@ -2897,7 +2699,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 90,
     priority: 0,
     target: 'bothEnemies',
-    description: "Tears open every wound already in both foes' minds — double power against a foe whose stats have been lowered.",
   },
   breakWill: {
     id: 'breakWill',
@@ -2913,7 +2714,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Empties both foes of the will to fight — -50 Intelligence and -50 Attack.',
   },
 
   // 2026-09-15 additions (docs/field-effects.md "Riders" and "Readers"; docs/authoring-moves.md §11)
@@ -2929,7 +2729,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Bends the moment around one foe (−20 Intelligence; sets Stasis Field).',
   },
   hindsight: {
     id: 'hindsight',
@@ -2944,7 +2743,6 @@ export const moves: Record<string, MoveDefinition> = {
     // Slow on purpose: under Stasis Field the slow move is the one that lands first within its bracket.
     priority: -1,
     target: 'singleEnemy',
-    description: 'Lands late, and lands twice as hard when time runs backwards (−1 priority; ×2 while Stasis Field is up).',
   },
   mindLeech: {
     id: 'mindLeech',
@@ -2958,7 +2756,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Feeds on what the foe is thinking (heals 40% of what it deals).',
   },
 
   // Embodied's grant (Reverie): Mind's one physical hit — the slate has no other. In no pool. The
@@ -2976,7 +2773,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Lifts the foe with the mind and puts them down with the body — and what lands that hard leaves the mind open (−20 Wisdom).',
   },
 
   // --- Spirit ---
@@ -2992,7 +2788,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A drifting light that catches and clings (applies Haunt).',
   },
   torment: {
     id: 'torment',
@@ -3008,7 +2803,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: "Binds the target's spirit to its partner, so a blow to one is a blow to both, and the next blow lands harder (applies Haunt; Ambush 20 to self).",
   },
   drain: {
     id: 'drain',
@@ -3022,7 +2816,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Draws the life out of a wound and takes it (heals 50% of damage dealt).',
   },
   secondWind: {
     id: 'secondWind',
@@ -3036,7 +2829,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 0,
     target: 'self',
-    description: 'Steadies the caster’s breath, mending a little more each round (grants Renew 14%).',
   },
   unbound: {
     id: 'unbound',
@@ -3052,7 +2844,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 15,
     priority: 0,
     target: 'self',
-    description: 'Slips the body’s hold entirely (+20 Intelligence, +15 Speed).',
   },
   spite: {
     id: 'spite',
@@ -3066,7 +2857,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Bitterness sharpened by injury — double base power while the user is below 50% HP.',
   },
   phantomStrike: {
     id: 'phantomStrike',
@@ -3080,7 +2870,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A blow from somewhere the target was not watching (30% crit).',
   },
   spookySlice: {
     id: 'spookySlice',
@@ -3094,7 +2883,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A cut that arrives before the blade does (30% chance to inflict Bleed).',
   },
   soulRend: {
     id: 'soulRend',
@@ -3108,7 +2896,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: "A tearing pull at the target's spirit, and the taking of what comes loose (heals 50% of damage dealt).",
   },
   poltergeist: {
     id: 'poltergeist',
@@ -3122,7 +2909,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Hurls the room at one foe and ties them to the other (applies Haunt).',
   },
   soulOffering: {
     id: 'soulOffering',
@@ -3139,7 +2925,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 0,
     target: 'singleAlly',
-    description: 'Spends a quarter of the user’s life to give an ally +40 Intelligence and +40 Attack.',
   },
   vengeance: {
     id: 'vengeance',
@@ -3153,7 +2938,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 45,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Everything left, spent at once — triple base power while the user is below 25% HP.',
   },
   flicker: {
     id: 'flicker',
@@ -3166,7 +2950,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 1,
     target: 'singleEnemy',
-    description: 'Gone and back before the blow lands (always strikes first).',
   },
   banish: {
     id: 'banish',
@@ -3179,7 +2962,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 70,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Sends the target somewhere it does not come back from the same.',
   },
   wailingFlight: {
     id: 'wailingFlight',
@@ -3194,7 +2976,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A shrieking pass that leaves the user faster than it arrived (+20 Speed).',
   },
   lastRites: {
     id: 'lastRites',
@@ -3208,7 +2989,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 50,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Everything the user has, in one blow (the user drops to 1 HP).',
   },
   ascendant: {
     id: 'ascendant',
@@ -3224,7 +3004,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 55,
     priority: 0,
     target: 'self',
-    description: 'Lets go of the body altogether (+75 Intelligence, +25 Speed).',
   },
 
   // 2026-09-15 additions (docs/authoring-moves.md §11)
@@ -3239,7 +3018,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'self',
-    description: 'Kindles the spirit behind every Spirit move (Spirit Force 25, stacks, kept through a switch).',
   },
   seance: {
     id: 'seance',
@@ -3254,7 +3032,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Calls out whatever already clings to the foe (×2 against a Haunted target).',
   },
 
   // --- Iron ---
@@ -3270,7 +3047,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 15,
     priority: 1,
     target: 'singleEnemy',
-    description: 'A short, early jab that lands before almost anything else.',
   },
   ironFist: {
     id: 'ironFist',
@@ -3285,7 +3061,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A hardened, metal-plated punch that settles the shoulder for the next one (+10 Attack).',
   },
   // No statDeltaTarget on a self-target buff: naming 'self' again makes MoveTile print "(Self) — Self".
   sharpen: {
@@ -3299,7 +3074,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'self',
-    description: 'A turn spent on the edge instead of the enemy (+30 Attack).',
   },
   fortify: {
     id: 'fortify',
@@ -3315,7 +3089,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'self',
-    description: "Hardens the caster's guard and picks the moment (+20 Defense, grants Ambush 20).",
   },
   openingStrike: {
     id: 'openingStrike',
@@ -3329,7 +3102,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 1,
     target: 'singleEnemy',
-    description: "A probing blow that finds the seam in a guard (-10 to the target's Defense).",
   },
   heavyBlow: {
     id: 'heavyBlow',
@@ -3343,7 +3115,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A committed, full-weight swing (30% crit chance).',
   },
   pinDown: {
     id: 'pinDown',
@@ -3359,7 +3130,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 15,
     priority: 0,
     target: 'singleEnemy',
-    description: "Traps a limb and leans on it (-20 Defense, -10 Speed).",
   },
 
   serratedSlice: {
@@ -3374,7 +3144,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A ragged, toothed edge dragged across the wound (30% chance of Bleed).',
   },
   momentumSwing: {
     id: 'momentumSwing',
@@ -3389,7 +3158,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Lets the weight of the weapon carry into the follow-through (+20 Attack).',
   },
   rendArmor: {
     id: 'rendArmor',
@@ -3403,7 +3171,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: "Peels plate away from what it was protecting (-20 to the target's Defense).",
   },
   metallicBlade: {
     id: 'metallicBlade',
@@ -3417,7 +3184,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A blade that answers a charged field (free while an enemy carries Conduct).',
   },
   reinforce: {
     id: 'reinforce',
@@ -3433,7 +3199,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 50,
     priority: 0,
     target: 'bothAllies',
-    description: 'Braces both allies behind the same plate (+20 Attack and +20 Defense each).',
   },
 
   onslaught: {
@@ -3449,7 +3214,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 80,
     priority: 0,
     target: 'singleEnemy',
-    description: 'An unbroken sequence of blows that only gets heavier (+30 Attack).',
   },
   juggernaut: {
     id: 'juggernaut',
@@ -3466,7 +3230,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'self',
-    description: 'Becomes the thing that does not stop (+50 Attack, +50 Defense and +50 Speed).',
   },
   swingingChain: {
     id: 'swingingChain',
@@ -3479,7 +3242,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 80,
     priority: 0,
     target: 'bothEnemies',
-    description: 'A weighted chain swung in a flat arc through both foes.',
   },
   conjuredSword: {
     id: 'conjuredSword',
@@ -3493,7 +3255,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 70,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A blade with no smith and no weight, held together by will (magical).',
   },
   ironSkin: {
     id: 'ironSkin',
@@ -3506,7 +3267,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'self',
-    description: 'Hardens the skin to plate before the next blow lands (Shield 30 on self).',
   },
   livingWall: {
     id: 'livingWall',
@@ -3521,7 +3281,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'self',
-    description: 'Braces (Shield 40 on self), then steps back and lets an ally through. The Shield comes back with them.',
   },
 
   // 2026-09-15 additions (docs/authoring-moves.md §11)
@@ -3539,7 +3298,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Drives the shield edge-first — swings with Defense, and sometimes leaves the foe reeling (30% Daze).',
   },
   parry: {
     id: 'parry',
@@ -3553,7 +3311,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 0,
     target: 'self',
-    description: 'Turns the next blow and answers it (Shield 25 on self, +20 Attack).',
   },
 
   // --- Mech ---
@@ -3571,7 +3328,6 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 0,
     randomPriority: [-1, 1],
     target: 'singleEnemy',
-    description: 'A cog swung on a chain. Whether it arrives early or late is between the machine and God.',
   },
   overclock: {
     id: 'overclock',
@@ -3584,7 +3340,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 15,
     priority: 0,
     target: 'bothAllies',
-    description: 'Push the governor past its stop and see which part of the machine wakes up.',
   },
   pistonPunch: {
     id: 'pistonPunch',
@@ -3599,7 +3354,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Every swing seats another part correctly. Rarely the part you wanted.',
   },
   backfire: {
     id: 'backfire',
@@ -3616,7 +3370,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'singleEnemy',
-    description: 'The exhaust goes both ways.',
   },
   kickstart: {
     id: 'kickstart',
@@ -3630,7 +3383,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleAlly',
-    description: 'A boot to the housing. It runs again, and briefly runs hot.',
   },
   whirlingBlades: {
     id: 'whirlingBlades',
@@ -3646,7 +3398,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Spin up the cutting heads and walk forward. Runs on a charged foe for half the mana.',
   },
   overheat: {
     id: 'overheat',
@@ -3663,7 +3414,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 50,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Backfire with the safeties removed.',
   },
   salvage: {
     id: 'salvage',
@@ -3676,7 +3426,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'self',
-    description: 'Strip the wreck for the parts that still turn.',
   },
   juryRig: {
     id: 'juryRig',
@@ -3689,7 +3438,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 50,
     priority: 0,
     target: 'bothAllies',
-    description: 'Wire two things to two other things. Both of them work now.',
   },
   malfunction: {
     id: 'malfunction',
@@ -3707,7 +3455,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Something in there is broken. Point it at the enemy and find out which thing.',
   },
   cogSlam: {
     id: 'cogSlam',
@@ -3721,7 +3468,6 @@ export const moves: Record<string, MoveDefinition> = {
     randomPriority: [-1, 1],
     manaCost: 40,
     target: 'singleEnemy',
-    description: 'The big cog. Same gamble, more mass.',
   },
   jackpot: {
     id: 'jackpot',
@@ -3735,7 +3481,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 70,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Pull the lever. The machine has opinions about what you deserve.',
   },
   meltdown: {
     id: 'meltdown',
@@ -3749,7 +3494,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 80,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Vent the core across the whole field. The core was load-bearing.',
   },
   overdrive: {
     id: 'overdrive',
@@ -3762,7 +3506,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 100,
     priority: 0,
     target: 'bothAllies',
-    description: 'Every governor off at once. It will hold for exactly as long as it holds.',
   },
   perfectCreation: {
     id: 'perfectCreation',
@@ -3783,7 +3526,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 100,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Every failure mode the workshop knows, assembled into one flawless machine and handed to you.',
   },
 
   // 2026-09-15 additions (docs/authoring-moves.md §11)
@@ -3800,7 +3542,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Vents scalding steam across both foes — and some of it back onto the boiler (Burn 3% on self).',
   },
   patchUp: {
     id: 'patchUp',
@@ -3814,7 +3555,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'singleAlly',
-    description: 'Mends an ally and bolts on whatever part was to hand (heal 50; +20 to a random stat).',
   },
   shockCoil: {
     id: 'shockCoil',
@@ -3829,7 +3569,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A coil that leaves a charge in the foe for the next machine blow to find (plants Conduct).',
   },
   sparkPlug: {
     id: 'sparkPlug',
@@ -3844,7 +3583,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Seats a plug in the foe and leaves it live (plants Conduct).',
   },
   salvo: {
     id: 'salvo',
@@ -3858,7 +3596,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 90,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Everything the machine can fire, all at once, at both foes (30% Daze each).',
   },
 
   // --- Beast ---
@@ -3874,7 +3611,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'bothAllies',
-    description: 'A rousing howl that sharpens both allies’ offense (+20 Attack).',
   },
   // Beast's early magical hand (2026-09-29, per user direction): every Beast attack below Late was
   // physical, so an Intelligence Beast had nothing of its own type to open with.
@@ -3890,7 +3626,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A roar old enough to split skin on its own (20% Bleed).',
   },
   claw: {
     id: 'claw',
@@ -3904,7 +3639,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A raking swipe that sometimes opens a wound (20% Bleed).',
   },
   venomBite: {
     id: 'venomBite',
@@ -3918,7 +3652,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A bite that leaves venom working under the skin (Poison 10).',
   },
   prowl: {
     id: 'prowl',
@@ -3939,7 +3672,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'self',
-    description: 'Circles for an opening (+20 Attack, +20 Speed — doubled beside a Beast).',
   },
   pounce: {
     id: 'pounce',
@@ -3952,7 +3684,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 1,
     target: 'singleEnemy',
-    description: 'Springs first, from cover.',
   },
 
   lacerate: {
@@ -3967,7 +3698,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Opens a wound too deep to close (inflicts Bleed).',
   },
   maul: {
     id: 'maul',
@@ -3981,7 +3711,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Tears into an open wound (double damage vs Bleeding).',
   },
   toxicFangs: {
     id: 'toxicFangs',
@@ -3998,7 +3727,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Fangs that tear and envenom at once (inflicts Bleed and Poison 10).',
   },
   rampage: {
     id: 'rampage',
@@ -4012,7 +3740,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 50,
     priority: 0,
     target: 'singleEnemy',
-    description: 'An all-out assault that costs the attacker too (25% recoil).',
   },
   thrash: {
     id: 'thrash',
@@ -4025,7 +3752,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Lashes out at everything within reach.',
   },
   packHunt: {
     id: 'packHunt',
@@ -4039,7 +3765,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Strikes as one of a pair (double power beside a Beast).',
   },
 
   eviscerate: {
@@ -4054,7 +3779,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 70,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Finishes what the wound started (double damage vs Bleeding).',
   },
   apexPredator: {
     id: 'apexPredator',
@@ -4069,7 +3793,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 80,
     priority: 0,
     target: 'self',
-    description: "Sheds every restraint — doubles the user's Attack.",
   },
   packLeader: {
     id: 'packLeader',
@@ -4086,7 +3809,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 100,
     priority: 0,
     target: 'bothAllies',
-    description: 'Takes the front and the pack follows (+50 Attack and Speed to both allies).',
   },
   // Off-type row for casters, not for Beast's own hero (docs/authoring-moves.md §10).
   animalSpirit: {
@@ -4100,7 +3822,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Calls something older than the caster down on both foes.',
   },
 
   // 2026-09-15 additions (docs/authoring-moves.md §11)
@@ -4118,7 +3839,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 0,
     target: 'bothAllies',
-    description: 'A call that sets the whole pack running (+15 Attack, +15 Speed on both allies).',
   },
   gore: {
     id: 'gore',
@@ -4132,7 +3852,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A headlong charge that costs a quarter of what it deals.',
   },
   bloodTrail: {
     id: 'bloodTrail',
@@ -4148,7 +3867,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Opens a wound, and closes on a wounded foe before it can move (Bleed; +1 priority against a bleeding target).',
   },
   rendingLeap: {
     id: 'rendingLeap',
@@ -4162,7 +3880,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 65,
     priority: 1,
     target: 'singleEnemy',
-    description: 'Closes the distance before the foe can act and tears on the way down (+1 priority; Bleed).',
   },
 
   // --- Ancient (docs/authoring-moves.md §10 "Ancient", 2026-09-17) ---
@@ -4186,7 +3903,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: "Old runes, still burning — the seal's plainest word.",
   },
   wardingSigil: {
     id: 'wardingSigil',
@@ -4199,7 +3915,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'self',
-    description: 'A seal is a wall before it is anything else (Shield 30, scaled off Defense).',
   },
   forgottenCurse: {
     id: 'forgottenCurse',
@@ -4213,7 +3928,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'bothEnemies',
-    description: 'An old curse that settles over both foes at once and stays in the mind (−10 Wisdom).',
   },
   // Manticore's and the Kraken's magical half (src/data/enemies.ts).
   archonBlast: {
@@ -4229,7 +3943,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Old authority spoken aloud — and the speaker steadies behind it (+20 Wisdom).',
   },
   weightOfAges: {
     id: 'weightOfAges',
@@ -4243,7 +3956,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 50,
     priority: 0,
     target: 'bothEnemies',
-    description: "The Titan's weight, felt before the Titan: both foes, and both slower for it (−15 Speed).",
   },
   // A flinch that lands only if it resolves first — the Herald's Speed 95 makes it a certainty,
   // a slow Guardian's makes it a gamble. Daze is cleared at end of round (docs/conditions.md).
@@ -4259,7 +3971,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: "Pinned on the standard's point — the target flinches if it has not yet moved (Daze).",
   },
   longDrink: {
     id: 'longDrink',
@@ -4273,7 +3984,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 45,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Takes years off the target and puts them on itself (drains half of the damage).',
   },
   // Enfeeble's sibling on the other axis: Enfeeble empties the offence, Erode the walls.
   erode: {
@@ -4292,7 +4002,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 45,
     priority: 0,
     target: 'bothEnemies',
-    description: 'What an age does to a wall, done in a breath (−15 Defense and −15 Wisdom to both foes).',
   },
   // The standard-bearer's verb: the Herald's company stands taller under the banner.
   raiseTheStandard: {
@@ -4309,7 +4018,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 50,
     priority: 0,
     target: 'bothAllies',
-    description: 'The banner goes up, and what stands under it stands taller (+20 Attack and +20 Intelligence to both allies).',
   },
   // 90, down from 120 (docs/titan-eyes.md §10.3): the Herald is the front of a fight the Eyes
   // finish, and at 120 off Int 135 it took a hero a round through a phase nothing mends after.
@@ -4324,7 +4032,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 70,
     priority: 0,
     target: 'singleEnemy',
-    description: 'What it names is forgotten.',
   },
   abide: {
     id: 'abide',
@@ -4337,7 +4044,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 45,
     priority: 0,
     target: 'self',
-    description: 'A seal does not tire (heals the user).',
   },
   // --- The Titan's Eyes (docs/titan-eyes.md §5; enemies.ts). In no pool. ---
   // The telegraph. Priority so the mark is on the board before the player's actions resolve,
@@ -4353,7 +4059,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 1,
     target: 'singleEnemy',
-    description: "The eye settles on one hero (Beheld for a round). What it looks at, it strikes next.",
   },
   // The strike. Only a Beheld hero can be aimed at; a Provoke pull lands on the taunter instead
   // (gateYieldsToRedirect — content.ts). Ancient is neutral into everything, so the number is
@@ -4371,7 +4076,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'singleEnemy',
-    description: 'The full weight of the regard lands on a Beheld hero. A taunt can take it instead.',
   },
 
   // The Right Eye's turn spent holding: a Shield on both Eyes off its Defense (docs/shield.md).
@@ -4386,7 +4090,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 45,
     priority: 0,
     target: 'bothAllies',
-    description: 'Both eyes half-close (Shield 40 on each, scaled off Defense).',
   },
   // --- Companion Calls (docs/companion-call.md §3.2) ---
   // The ten seats in the Call table no slate filled: never asking for a target, on the line's own stat, no cost on
@@ -4403,7 +4106,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'bothEnemies',
-    description: 'A flash across the far side that leaves some of it humming (30% chance of Conduct on each).',
   },
   dawnlight: {
     id: 'dawnlight',
@@ -4416,7 +4118,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 0,
     target: 'bothAllies',
-    description: 'First light over both allies (heal 25).',
   },
   knifeFan: {
     id: 'knifeFan',
@@ -4430,7 +4131,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'bothEnemies',
-    description: 'A spread of thrown blades from nowhere in particular (30% chance of Bleed on each).',
   },
   psiPulse: {
     id: 'psiPulse',
@@ -4445,7 +4145,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'bothEnemies',
-    description: 'A ring of pressure behind both foes’ eyes (30% chance of −10 Wisdom).',
   },
   shrapnel: {
     id: 'shrapnel',
@@ -4459,7 +4158,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'bothEnemies',
-    description: 'A burst of torn plate across both foes (30% crit chance).',
   },
   greenwood: {
     id: 'greenwood',
@@ -4473,7 +4171,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 75,
     priority: 0,
     target: 'bothAllies',
-    description: 'Old growth closes over both allies and takes what ails them (grants Renew 16%, cleanse all).',
   },
   // Spirit keeps its slate's rule — no damage spread, Haunt is how it spreads (per user direction):
   // its Calls are one heavy hit on a foe the spirit picks, so they still never ask for a target.
@@ -4489,7 +4186,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 0,
     target: 'randomEnemy',
-    description: 'A light that drifts to a foe of its own choosing and stays (hits a random foe; applies Haunt).',
   },
   unquiet: {
     id: 'unquiet',
@@ -4502,7 +4198,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 50,
     priority: 0,
     target: 'randomEnemy',
-    description: 'Something that will not rest finds whichever foe is nearest (hits a random foe).',
   },
   requiem: {
     id: 'requiem',
@@ -4515,7 +4210,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 75,
     priority: 0,
     target: 'randomEnemy',
-    description: 'A rite sung for one foe, and the dead decide which (hits a random foe).',
   },
   shadowsweep: {
     id: 'shadowsweep',
@@ -4529,7 +4223,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 70,
     priority: 0,
     target: 'bothEnemies',
-    description: 'One long cut out of the dark through both foes (30% chance of Bleed on each).',
   },
   // The Class moves (classes.ts): untiered, in no hero's pool — a Class is their only source.
   ...classMoves,

@@ -31,7 +31,6 @@ const testShield: MoveDefinition = {
   manaCost: 10,
   priority: 0,
   target: 'self',
-  description: 'fixture',
 };
 
 /** Ice Shell's shape: a marker beside the Shield that Freezes whoever breaks it. */

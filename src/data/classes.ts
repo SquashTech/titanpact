@@ -24,7 +24,6 @@ export const classMoves: Record<string, MoveDefinition> = {
     manaCostGainOnUse: 20,
     priority: 2,
     target: 'singleEnemy',
-    description: 'A quick strike before anything else moves, and the foe loses the round to it (inflicts Daze). Takes the type of whoever holds it. Each cast costs 20 more Mana for the rest of the fight.',
   },
   volley: {
     id: 'volley',
@@ -37,7 +36,6 @@ export const classMoves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'bothEnemies',
-    description: 'A flight of shafts across the whole enemy line. Takes the type of whoever holds it.',
   },
   cascade: {
     id: 'cascade',
@@ -50,7 +48,6 @@ export const classMoves: Record<string, MoveDefinition> = {
     manaCost: 35,
     priority: 0,
     target: 'bothEnemies',
-    description: 'A torrent of raw power across the whole enemy line. Takes the type of whoever holds it.',
   },
   jinx: {
     id: 'jinx',
@@ -64,7 +61,6 @@ export const classMoves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 2,
     target: 'singleEnemy',
-    description: 'A curse cast before anything else moves, fouling the foe’s spellwork (−15 Intelligence). Takes the type of whoever holds it.',
   },
   blink: {
     id: 'blink',
@@ -78,7 +74,6 @@ export const classMoves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A spell loosed as the caster winks out — the user withdraws to the bench after striking. Takes the type of whoever holds it.',
   },
   intercept: {
     id: 'intercept',
@@ -93,7 +88,6 @@ export const classMoves: Record<string, MoveDefinition> = {
     manaCost: 30,
     priority: 1,
     target: 'self',
-    description: 'Steps in front of the partner — single-target enemy moves aimed at either ally land here this round, and the guard holds (+10 Defense). Takes the type of whoever holds it.',
   },
   vanish: {
     id: 'vanish',
@@ -107,7 +101,6 @@ export const classMoves: Record<string, MoveDefinition> = {
     manaCost: 25,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A cut on the way out — the user withdraws to the bench after striking. Takes the type of whoever holds it.',
   },
 };
 

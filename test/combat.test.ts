@@ -28,7 +28,6 @@ const testMoves = {
     manaCost: 999,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Deliberately unaffordable — exercises the mana-legality guard.',
   } as MoveDefinition,
 };
 
