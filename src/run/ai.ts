@@ -42,6 +42,12 @@ export interface AiContext {
   random?: () => number;
   /** Omitted = no ward is read at targeting (statusEngine.ts selectableTargets). */
   passives?: Record<PassiveId, PassiveDefinition>;
+  /**
+   * A Gathering's enemy plays its warband's engine (docs/cycles.md §3, Cycle IV): a payoff while its
+   * field or status is up, a setter while it is not and a teammate holds the payoff. Off, the AI
+   * weighs only the type chart, as it does in every earlier Cycle.
+   */
+  playsEngines?: boolean;
 }
 
 // The "sharpness" dial: a super-effective option is 3x as likely as neutral,
@@ -57,6 +63,9 @@ const WEIGHT_QUAD_RESIST = 0.5;
 // neutral one, so it is usually the strike and not always — an Eye that always fires is as
 // readable as one that never does.
 const WEIGHT_GATE_OPEN = WEIGHT_SUPER / WEIGHT_NEUTRAL;
+// An engine's move at its moment (AiContext.playsEngines): the same ratio again, so a warband
+// usually plays its combo and not always.
+const WEIGHT_ENGINE = WEIGHT_SUPER / WEIGHT_NEUTRAL;
 
 function aliveActiveIdsOn(state: CombatState, side: Side): string[] {
   return state.active[side].filter((id): id is string => id !== null && !state.combatants[id]?.fainted);
@@ -243,9 +252,31 @@ function bestEffectiveness(state: CombatState, casterId: string, move: MoveDefin
   return Math.max(...targets.map((id) => effectivenessAgainst(state, ctx, move, id)));
 }
 
+/** Whether a side holds a move — active or benched, standing — whose power doubles under this field. */
+function sideReadsField(state: CombatState, side: Side, fieldId: string, ctx: AiContext): boolean {
+  return Object.values(state.combatants).some(
+    (c) => c.side === side && !c.fainted && ctx.moveIdsFor(c.combatantId).some((id) => ctx.moves[id]?.conditionalPower?.requiresFieldEffect === fieldId)
+  );
+}
+
+/** The engine multiplier for a move at this moment: a payoff armed, or a setter for a teammate's payoff. 1 otherwise. */
+function engineWeight(state: CombatState, casterId: string, move: MoveDefinition, ctx: AiContext): number {
+  if (!ctx.playsEngines) return 1;
+  const caster = state.combatants[casterId];
+  const foes = Object.values(state.combatants).filter((c) => c.side !== caster.side && !c.fainted && state.active[c.side].includes(c.combatantId));
+  const field = move.conditionalPower?.requiresFieldEffect;
+  if (field && state.activeFieldEffect?.fieldEffectId === field) return WEIGHT_ENGINE;
+  const status = move.conditionalPower?.requiresTargetStatus ?? move.detonatesStatus;
+  if (status && foes.some((f) => hasStatus(f, status))) return WEIGHT_ENGINE;
+  if (move.fieldEffectApplication && state.activeFieldEffect?.fieldEffectId !== move.fieldEffectApplication && sideReadsField(state, caster.side, move.fieldEffectApplication, ctx)) {
+    return WEIGHT_ENGINE;
+  }
+  return 1;
+}
+
 function weightFor(state: CombatState, casterId: string, move: MoveDefinition, ctx: AiContext): number {
   // Only ever reached for a declarable move, so a gated one here has its gate open.
-  const gate = move.requiresTargetStatus ? WEIGHT_GATE_OPEN : 1;
+  const gate = (move.requiresTargetStatus ? WEIGHT_GATE_OPEN : 1) * engineWeight(state, casterId, move, ctx);
   if (!isDamaging(move)) return WEIGHT_NEUTRAL * gate;
   const mult = bestEffectiveness(state, casterId, move, ctx);
   if (mult >= 4) return WEIGHT_QUAD_SUPER * gate;

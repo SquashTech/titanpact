@@ -471,6 +471,8 @@ export interface FightInput {
   revives?: number;
   /** The player's companion, seated as its Called caster (run/companion.ts companionCallFor). Default none. */
   playerCall?: CallPlacement | null;
+  /** A Gathering's enemy plays its warband's engine (run/ai.ts AiContext.playsEngines). Default off. */
+  aiPlaysEngines?: boolean;
 }
 
 /** The round by which the chart pilot has spent its Call, if no Rest gave it a reason sooner. */
@@ -542,7 +544,7 @@ export function simulateFight(input: FightInput): FightOutcome {
   let beats = countBeats(opening.events);
 
   const playerCtx = { ...contextFor(playerRoster, aiRoster, state), random: rng };
-  const aiCtx = { ...contextFor(playerRoster, aiRoster, state), random: rng };
+  const aiCtx = { ...contextFor(playerRoster, aiRoster, state), random: rng, playsEngines: input.aiPlaysEngines };
 
   let rounds = 0;
   let pactTicked = false;

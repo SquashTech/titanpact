@@ -91,7 +91,8 @@ test('cycles: a Cycle opens on a clear of the one before, and a clear records th
   assert.strictEqual(lostOnTwo.cyclesCleared, 1, 'a loss clears nothing');
   const wonOnTwo = recordRunEnded(firstCleared, end(2, 'win'), 3);
   assert.strictEqual(wonOnTwo.cyclesCleared, 2);
-  assert.strictEqual(openCycle(wonOnTwo), MAX_BUILT_CYCLE, 'never past the Cycles that are built');
+  assert.strictEqual(openCycle(wonOnTwo), 3, 'a Cycle II clear opens Cycle III');
+  assert.strictEqual(openCycle({ cyclesCleared: 99 }), MAX_BUILT_CYCLE, 'never past the Cycles that are built');
   assert.strictEqual(wonOnTwo.runHistory[0].cycle, 2, 'the history line knows the Cycle');
 });
 

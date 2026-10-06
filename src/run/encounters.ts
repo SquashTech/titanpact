@@ -17,7 +17,8 @@ import { rosterEntryTypes } from './progression';
 import { championGradeFor, encounterScaling, encounterHeroCountOverride, enemyLoadoutFor, guardianEscortCount } from './difficulty';
 import { appendFinalEnemy, generateEncounter, type Encounter, type EncounterNodeType } from './enemyGen';
 import { locationBias } from './locations';
-import { guardiansWake, isLongWinter, wardensHold, wokenChampion, wokenChampionMark, wokenEscortCount } from './cycles';
+import { guardiansWake, isGathering, isLongWinter, wardensHold, wokenChampion, wokenChampionMark, wokenEscortCount } from './cycles';
+import { castEscortWarband, castHeroWarband, forceWarbandMoves, learnableIn } from './warbands';
 import { TITANS_WARD_ID } from '../data/passives';
 import { guardianEscortPool, mobEncounter } from './spawn';
 import { DECK_HEROES_PER_FIGHT } from './deck';
@@ -88,8 +89,12 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
   const heroCount = heroCountOverride ?? standardCount;
   // Location affinity bias applies to the recruitable pool only (docs/locations.md §2).
   const bias = pool === heroes ? locationBias(location, heroes, heroCount) : undefined;
+  // A Gathering's hero fight is cast around a warband from the deck (run/warbands.ts); the rest is drawn as ever.
+  const heroWarband =
+    pool === heroes && isGathering(run) ? castHeroWarband(seed, Object.keys(heroes).filter((id) => !excludeHeroIds.includes(id)), heroCount, learnableIn(heroes, progression)) : null;
   let encounter = generateEncounter(encounterKind, seed, pool, {
-    heroCount: heroCountOverride ?? (encounterKind === 'boss' ? standardCount : undefined),
+    forcedHeroIds: heroWarband ? [...heroWarband.cast.keys()] : undefined,
+    heroCount: heroCountOverride ?? (encounterKind === 'boss' || heroWarband ? standardCount : undefined),
     bias,
     excludeHeroIds,
     scaling,
@@ -109,6 +114,13 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
     else if (encounter.squad.activeIds[1] === null) encounter = wakeChampion(encounter, finalEnemyId, null);
     // A Long Winter wards the champion while its company stands — the Herald's rule (docs/cycles.md §3).
     if (isLongWinter(run)) encounter = grantPassive(encounter, finalEnemyId, TITANS_WARD_ID);
+  }
+  if (heroWarband) encounter = forceWarbandMoves(encounter, heroWarband.cast);
+  // A Gathering's Guardian fields its escorts as one engine: a warband fitted to the bodies drawn.
+  if (type === 'boss' && isGathering(run)) {
+    const escorts = encounter.run.roster.map((r) => r.rosterId).filter((id) => id !== finalEnemyId);
+    const escortWarband = castEscortWarband(encounterSeedFor(ctx.run.map!, `${node.id}:warband`), escorts, learnableIn(pool, progression));
+    if (escortWarband) encounter = forceWarbandMoves(encounter, escortWarband.cast);
   }
   // From Cycle II the seal's Warden stands beside its beast, an extra body (docs/cycles.md §2).
   const warden = type === 'boss' && wardensHold(run) ? wardenAt(ctx.wardens, location.id) : null;

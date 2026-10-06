@@ -10,8 +10,9 @@ import type { HeroLookup } from '../engine/state';
 import type { Encounter } from './enemyGen';
 import type { CallPlacement } from './buildCombatState';
 import { spawnId, spawnLineOf, spawnPosition, type SpawnTier } from '../data/titanspawn';
-import { expectedGrowthAt, levelAfterEncounters, xpForLevel } from './growth';
+import { MAX_LEVEL, expectedGrowthAt, levelAfterEncounters, xpForLevel } from './growth';
 import { SPAWN_TIER_BY_ACT } from './difficulty';
+import { GATHERING_COMPANION_LEVEL_BONUS, isGathering } from './cycles';
 import { createRosterEntry, type RunState } from './state';
 
 /** The companion a run took: its line, and whether it has woken to Ancient (this run, or its line on an earlier one). */
@@ -49,21 +50,27 @@ export function joinCompanion(run: RunState, heroId: string, ascended = false): 
   return { ...run, companion: { type: position.line.type, ascended } };
 }
 
-/** The tier the companion stands at in an act — the escorts' own schedule. */
-export function companionTier(actNumber: number): SpawnTier {
-  return SPAWN_TIER_BY_ACT[Math.min(Math.max(actNumber, 1), SPAWN_TIER_BY_ACT.length) - 1];
+const NEXT_TIER: Record<SpawnTier, SpawnTier> = { early: 'mid', mid: 'late', late: 'late' };
+
+/**
+ * The tier the companion stands at in an act — the escorts' own schedule, a tier ahead of it in a
+ * Gathering (docs/cycles.md §3), where the survivors have trained it.
+ */
+export function companionTier(actNumber: number, cycle = 1): SpawnTier {
+  const tier = SPAWN_TIER_BY_ACT[Math.min(Math.max(actNumber, 1), SPAWN_TIER_BY_ACT.length) - 1];
+  return isGathering({ cycle }) ? NEXT_TIER[tier] : tier;
 }
 
 /** The body the run's companion stands in this act, or null without one. */
-export function companionHeroId(run: Pick<RunState, 'companion' | 'actNumber'>): string | null {
+export function companionHeroId(run: Pick<RunState, 'companion' | 'actNumber' | 'cycle'>): string | null {
   const line = run.companion && spawnLineOf(run.companion.type);
-  return line ? spawnId(line, companionTier(run.actNumber)) : null;
+  return line ? spawnId(line, companionTier(run.actNumber, run.cycle)) : null;
 }
 
 /** The one move the companion casts when Called this act, or null without one. */
-export function companionCallMoveId(run: Pick<RunState, 'companion' | 'actNumber'>): string | null {
+export function companionCallMoveId(run: Pick<RunState, 'companion' | 'actNumber' | 'cycle'>): string | null {
   const line = run.companion && spawnLineOf(run.companion.type);
-  return line ? line.callMoveIds[companionTier(run.actNumber)] : null;
+  return line ? line.callMoveIds[companionTier(run.actNumber, run.cycle)] : null;
 }
 
 /**
@@ -77,7 +84,7 @@ export function companionCallFor(run: RunState, heroes: HeroLookup): CallPlaceme
   const moveId = companionCallMoveId(run);
   const hero = heroId ? heroes[heroId] : undefined;
   if (!heroId || !moveId || !hero) return null;
-  const level = levelAfterEncounters(run.encountersWon);
+  const level = Math.min(MAX_LEVEL, levelAfterEncounters(run.encountersWon) + (isGathering(run) ? GATHERING_COMPANION_LEVEL_BONUS : 0));
   const entry = {
     ...createRosterEntry(COMPANION_ROSTER_ID, heroId, [moveId]),
     xp: xpForLevel(level),
@@ -101,11 +108,11 @@ export function awakenCompanion(run: RunState): RunState {
  * The step an act boundary takes the companion through, when the tier changes — the `grown` beat's
  * two bodies. Null when it does not, or there is no companion.
  */
-export function companionGrowth(run: Pick<RunState, 'companion'>, fromAct: number, toAct: number): { fromHeroId: string; toHeroId: string } | null {
+export function companionGrowth(run: Pick<RunState, 'companion' | 'cycle'>, fromAct: number, toAct: number): { fromHeroId: string; toHeroId: string } | null {
   const line = run.companion && spawnLineOf(run.companion.type);
   if (!line) return null;
-  const from = companionTier(fromAct);
-  const to = companionTier(toAct);
+  const from = companionTier(fromAct, run.cycle);
+  const to = companionTier(toAct, run.cycle);
   return from === to ? null : { fromHeroId: spawnId(line, from), toHeroId: spawnId(line, to) };
 }
 

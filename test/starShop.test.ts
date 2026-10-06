@@ -158,8 +158,8 @@ test('star shop: a clear pays its Cycle bonus every time, and no Cycle costs a s
 
 test('star shop: every built Cycle pays more a run than the one before it, at the measured win rates', () => {
   // docs/ascension.md §9b, skilled pilot: Cycle I 73.7%, Cycle II 31.2%. Directional (docs/collection.md §5).
-  // Cycle III measured (docs/cycles.md §7a, greedy pilot) at 0.22 of Cycle II's clear rate.
-  const winRate: Record<number, number> = { 1: 0.737, 2: 0.312, 3: 0.312 * 0.22 };
+  // Cycles III and IV measured (docs/cycles.md §7a, greedy pilot) at 0.22 and 0.27 of Cycle II's clear rate.
+  const winRate: Record<number, number> = { 1: 0.737, 2: 0.312, 3: 0.312 * 0.22, 4: 0.312 * 0.27 };
   const expected = (cycle: number) => winRate[cycle] * cycleOf(cycle).clearBonus;
   for (let cycle = 2; cycle <= MAX_BUILT_CYCLE; cycle++) assert.ok(expected(cycle) > expected(cycle - 1), `Cycle ${cycle} pays ${expected(cycle).toFixed(2)} against ${expected(cycle - 1).toFixed(2)}`);
 });

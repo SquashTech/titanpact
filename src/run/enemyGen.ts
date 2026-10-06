@@ -136,8 +136,8 @@ function applyLoadout(entry: RosterEntry, hero: HeroLookup[string], loadout: Ene
 
 export interface EncounterOptions {
   /**
-   * Names the enemy roster outright instead of drawing one (a test's fixed opponent). Sets the
-   * encounter size too, so `heroCount` is not also needed. Ids in `excludeHeroIds` are dropped
+   * Names enemies outright ahead of the draw (a test's fixed opponent, a Gathering's warband). Sets
+   * the encounter size too unless `heroCount` is given, when the draw fills the rest. Ids in `excludeHeroIds` are dropped
    * and the gap refilled from the pool, so a forced id the player holds is never fielded.
    */
   forcedHeroIds?: readonly string[];
@@ -307,7 +307,7 @@ export function generateEncounter(
   let rng = createRng(seed);
   const excluded = new Set(excludeHeroIds ?? []);
   const forced = forcedHeroIds?.filter((id) => id in pool && !excluded.has(id)) ?? [];
-  const heroCount = forcedHeroIds?.length ?? heroCountOverride ?? (nodeType === 'boss' ? 2 : 4);
+  const heroCount = heroCountOverride ?? forcedHeroIds?.length ?? (nodeType === 'boss' ? 2 : 4);
 
   // A forced roster short of its size (an id the player holds) tops up from the pool, so the
   // fight is never smaller than the one asked for.

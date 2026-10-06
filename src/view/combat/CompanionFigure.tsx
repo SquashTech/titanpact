@@ -131,7 +131,7 @@ export function CompanionDossier({ run, onClose }: { run: RunState; onClose: () 
           <HeroPortrait heroId={hero.id} className="call-sheet-portrait" />
           <span className="call-sheet-ident">
             <span className="call-sheet-name">
-              {hero.name} · {TIER_NAMES[companionTier(run.actNumber)]}
+              {hero.name} · {TIER_NAMES[companionTier(run.actNumber, run.cycle)]}
             </span>
             <span className="call-sheet-rule">A hero can spend its turn to Call it, once a fight. It grows with the act.</span>
           </span>

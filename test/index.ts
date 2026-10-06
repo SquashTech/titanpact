@@ -57,6 +57,7 @@ import './companion.test';
 import './companionCall.test';
 import './cycles.test';
 import './wardens.test';
+import './warbands.test';
 import './finale.test';
 import './events.test';
 import './eventVocabulary.test';

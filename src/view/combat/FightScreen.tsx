@@ -72,6 +72,7 @@ import { woundedHp, woundsFrom } from '../../run/wounds';
 import { entryHp } from '../shared/WoundBar';
 import { levelOf } from '../../run/growth';
 import { pickAiAction, type AiContext } from '../../run/ai';
+import { isGathering } from '../../run/cycles';
 import { pilotActions } from '../../run/pilot';
 import { relicTeamStatModifiers } from '../../run/relics';
 import { relicTeamPassiveGrants } from '../../run/passives';
@@ -1247,6 +1248,7 @@ export function FightScreen({
     moves,
     statuses,
     typeChart,
+    playsEngines: isGathering(playerRun),
     moveIdsFor: (combatantId) => {
       const entry = entryFor(aiRun.roster, combatantId);
       if (entry.unlockedMoveIds.length > 0) return entry.unlockedMoveIds;

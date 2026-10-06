@@ -4,6 +4,7 @@
 // shelf sells two pieces of gear a visit, one of each (2026-09-28, per user direction), absorbed
 // through the same who-screen a drop is (docs/gear-absorption.md §6).
 
+import { GATHERING_EXTRA_HIRES, isGathering } from './cycles';
 import type { RunState } from './state';
 import { rarityWeightsFor, type EquipmentDefinition, type EquipmentRarity } from './equipment';
 import { rollEquipmentDrops } from '../data/equipment';
@@ -102,7 +103,8 @@ export function rollGuildHallOffers(
   if (muster) return { heroOfferIds: [], itemIds };
   const rosterHeroIds = new Set(run.roster.map((r) => r.heroId));
   const availableHeroes = heroPool.filter((o) => !rosterHeroIds.has(o.heroId));
-  return { heroOfferIds: sample(availableHeroes, Math.random() < 0.5 ? 2 : 3).map((o) => o.id), itemIds };
+  const hires = (Math.random() < 0.5 ? 2 : 3) + (isGathering(run) ? GATHERING_EXTRA_HIRES : 0);
+  return { heroOfferIds: sample(availableHeroes, hires).map((o) => o.id), itemIds };
 }
 
 /** The Tavern's first reroll a visit; each one after costs `TAVERN_REROLL_STEP` more. Untuned. */

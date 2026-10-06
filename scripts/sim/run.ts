@@ -6,7 +6,7 @@ import type { StatKey } from '../../src/engine/content';
 import { heroes as allHeroes } from '../../src/data/heroes';
 import { rosterHeroes } from '../../src/data/content';
 import { companionCallFor, companionCandidate, companionJoinDue, joinCompanion } from '../../src/run/companion';
-import { fallenAfterFight, isLongWinter, isPermadeath, releaseFallen } from '../../src/run/cycles';
+import { fallenAfterFight, isGathering, isLongWinter, isPermadeath, releaseFallen } from '../../src/run/cycles';
 import { anyDown, canBuyMend, buyMend, mendPrice, mendRoster, recordWounds, reviveHero, standingRoster } from '../../src/run/wounds';
 import { buyConsumable, canBuyConsumable, canUseRevive, grantConsumable, rollConsumableDrop, spendRevive } from '../../src/run/consumables';
 import { moves } from '../../src/data/moves';
@@ -635,6 +635,7 @@ function resolveEncounterNode(
     // mends inside (docs/titan-eyes.md §10); everywhere else the map's spendRevives has first call.
     revives: mapNodeType === 'finale' ? workingRun.consumables.revive : 0,
     playerCall: companionCallFor(workingRun, allCombatants),
+    aiPlaysEngines: isGathering(workingRun),
   });
   for (let i = 0; i < fight.revivesUsed; i++) {
     workingRun = spendRevive(workingRun);

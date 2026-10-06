@@ -5,7 +5,8 @@
 // wake (docs/ascension.md §2a): the champion leads its fight, wears its type's Mark and grows on
 // hero grades, and the escorts rise to three from Act 3. Cycle III, the Long Winter, wards every
 // Guardian while its company stands, frays the Banners to half, prices the Smithy half again and
-// loses Wild's Edge (docs/cycles.md §3). Cycles IV–V are not built; the picker greys them.
+// loses Wild's Edge (docs/cycles.md §3). Cycle IV, the Gathering, casts the enemy as warbands
+// (run/warbands.ts) and trains the companion and the Guild. Cycle V is not built; the picker greys it.
 
 import type { HeroDefinition } from '../engine/content';
 import { titansMarkFor } from '../data/passives';
@@ -17,7 +18,7 @@ import { DEFAULT_GRADES } from './growth';
 export const FIRST_CYCLE = 1;
 
 /** The highest Cycle with rules; the picker opens nothing past it. */
-export const MAX_BUILT_CYCLE = 3;
+export const MAX_BUILT_CYCLE = 4;
 
 /** The Cycle Permadeath turns on at, and every Cycle after it. */
 export const PERMADEATH_FROM_CYCLE = 2;
@@ -33,6 +34,15 @@ export const LONG_WINTER_FROM_CYCLE = 3;
 
 /** What the Smithy charges in a Long Winter, on its Cycle I price, rounded to 5 gold. */
 export const LONG_WINTER_SMITHY_MULTIPLIER = 1.5;
+
+/** The Gathering (docs/cycles.md §3): from here the enemy fields warbands, and the survivors have prepared. */
+export const GATHERING_FROM_CYCLE = 4;
+
+/** Levels over the run's par the companion's Call is cast at in a Gathering — the survivors trained it. */
+export const GATHERING_COMPANION_LEVEL_BONUS = 5;
+
+/** More hires on the Tavern's board a visit in a Gathering. */
+export const GATHERING_EXTRA_HIRES = 1;
 
 export interface CycleDefinition {
   cycle: number;
@@ -64,7 +74,14 @@ export const CYCLES: readonly CycleDefinition[] = [
     clearBonus: 30,
     lore: ['Another year, and the winter never ended.', 'Wild’s Edge is lost under the snow.', 'The Guardians have learned to hide behind their own.', 'We must seal the pact again.'],
   },
-  { cycle: 4, numeral: 'IV', name: 'The Gathering', line: '', clearBonus: 0 },
+  {
+    cycle: 4,
+    numeral: 'IV',
+    name: 'The Gathering',
+    line: 'The Titan knows your shape. Its servants fight as one.',
+    clearBonus: 40,
+    lore: ['A fourth year, and the Titan has been watching.', 'Its servants no longer gather at random.', 'Neither do we. The Guild has grown, and our companion with it.', 'We must seal the pact again.'],
+  },
   { cycle: 5, numeral: 'V', name: 'The Last Cycle', line: '', clearBonus: 0 },
 ];
 
@@ -92,6 +109,10 @@ export function wardensHold(run: Pick<RunState, 'cycle'>): boolean {
 
 export function isLongWinter(run: Pick<RunState, 'cycle'>): boolean {
   return run.cycle >= LONG_WINTER_FROM_CYCLE;
+}
+
+export function isGathering(run: Pick<RunState, 'cycle'>): boolean {
+  return run.cycle >= GATHERING_FROM_CYCLE;
 }
 
 /** A Smithy price in this run's Cycle: the Long Winter's ×1.5, rounded to 5 gold. */
