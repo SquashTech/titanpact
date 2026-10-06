@@ -8,7 +8,6 @@
 // held. So a star is never taken off a hero; it is the count that is drawn down.
 
 import { totalStars, trialStars, type Profile } from './profile';
-import { rungOf } from './ascension';
 import { heroes } from '../data/heroes';
 import { ownsHero, starfallLedgerId } from './recruitment';
 
@@ -98,11 +97,6 @@ export function bundleOwnedHeroIds(profile: Profile, offer: StarShopOffer): stri
 
 export function canBuy(profile: Profile, catalog: StarShopCatalog, offer: StarShopOffer): boolean {
   return !offerHeld(profile, offer) && starBalance(profile, catalog) >= offerPrice(profile, offer);
-}
-
-/** Whether the balance covers a rung's entry fee (run/ascension.ts). Classic always does. */
-export function canEnterRung(profile: Profile, catalog: StarShopCatalog, rung: number): boolean {
-  return starBalance(profile, catalog) >= rungOf(rung).entryFee;
 }
 
 export class StarShopError extends Error {}

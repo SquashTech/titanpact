@@ -195,7 +195,7 @@ don't silently override it.
 > for the spawn, a `companion:<type>` star for clearing a run with that line as the companion (it
 > was "alive at the Eyes' close" until the Call), and the companion exempt from Withering Gaze. Its §10 lists what each rung reverses.
 > **Phases 0–1 are IN (same day) — A1 is PLAYABLE:** `isCompanion` splits the identity from the `mortal`
-> rule; `src/run/ascension.ts` holds the rung (`RunState.ascension`, saved), `isPermadeath`, and the
+> rule; `src/run/ascension.ts` (now `cycles.ts`) holds the rung (`RunState.ascension`, now `cycle`), `isPermadeath`, and the
 > Fallen verbs; the title asks *How hard?* once a Base clear has opened A1 (`openAscension`,
 > `Profile.ascensionCleared`); `FallenScreen` is first in the post-fight chain. The sim takes
 > `--ascension`; measured (§9b, 3000 runs, skilled pilot) full-clear 73.7 → 31.2%, Act 2
@@ -209,8 +209,9 @@ don't silently override it.
 > Ancient takes its secondary slot, and every later companion of that line joins Ancient
 > (`Profile.ascendedSpawnTypes`). Ancient resists every type, so that is the thing to watch.
 
-> **The Ascension ladder is to be REPLACED: `docs/cycles.md`** (2026-10-06, per user direction,
-> DECIDED in shape, NOT BUILT). Five **Cycles**: a sealed Titan sleeps one year, each Cycle is the
+> **The Ascension ladder is REPLACED: `docs/cycles.md`** (2026-10-06, per user direction;
+> phase 1 IN — `src/run/cycles.ts`, `RunState.cycle` 1-based, the *Which Cycle?* picker once
+> Cycle I is cleared, saves migrated; the Wardens are phase 2). Five **Cycles**: a sealed Titan sleeps one year, each Cycle is the
 > next rising in a changed world against an adapted Titan, and Cycle V — no seal holds — kills it
 > for good. **The account's first Cycle I winners are its Wardens forever**, each standing beside
 > its seal's beast from Cycle II (the beasts always stay). A1 Permadeath becomes Cycle II's rule;

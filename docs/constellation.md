@@ -43,7 +43,7 @@ so the shop is never finished just because the sky is full.
   three a hero. A hero that finishes unevolved earns nothing; clearing the same path twice is the
   same star. A `companion:<type>` star is earned for clearing with the companion alive
   (`docs/ascension.md`).
-- A **clear bonus** on every won run, by rung (`ASCENSION_RUNGS`, `src/run/ascension.ts`); an
+- A **clear bonus** on every won run, by Cycle (`CYCLES`, `src/run/cycles.ts`); an
   Ascension attempt costs an entry fee, always spent (`docs/collection.md` §5).
 - **Balance = earned (hero stars, companion stars, clear bonuses) − cost of what is held − spent**
   (`starBalance`). A star never comes off a hero.

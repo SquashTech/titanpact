@@ -160,8 +160,8 @@ its two Eyes open over the Threshold — the sixth seal holds the body where it 
 stop it looking. Both can be put down; nothing else of a Titan can. Winning is putting the Eyes
 out — making it look away — and that *is* the pact. Binding is mutual and is offered to whoever
 has already put the Titan down, and a Titan is on the ground when it has been made to look
-away. The run ends with a Titan on the player's leash, asleep again for a thousand years if the
-seals are kept, its Herald broken and its Eyes closed at the Threshold, and five holes in the
+away. The run ends with a Titan on the player's leash, asleep again for a year — until the next
+Cycle (`cycles.md`) — its Herald broken and its Eyes closed at the Threshold, and five holes in the
 world where the wardens used to be.
 
 **The win is reduction, not survival.** A Titan cannot be reduced to 0 HP, which is why survival

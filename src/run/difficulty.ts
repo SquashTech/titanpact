@@ -48,7 +48,7 @@ export const CHAMPION_LEVEL_BONUS = 2;
  * The Guardian's shape by act at Base (2026-09-30, per user direction: the Act 1 Guardian never
  * lost and took longest of any boss to beat, 9.3 rounds against a Skirmish's 5; the Act 5 one fell
  * fastest, 4.7, and could be one-shot with the finale in sight). Index 0 unused. From A1 the woken
- * Guardian reads ascension.ts instead.
+ * Guardian reads cycles.ts instead.
  *
  * ESCORTS: one in Acts 1-2, two after — a body is most of what a Guardian fight's length is. A lone
  * escort leaves a lead slot empty, so the champion takes it from round one (unmarked; the Mark is

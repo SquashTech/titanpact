@@ -8,7 +8,7 @@ import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
 import { levelOf } from '../../run/growth';
 import { rosterEntryTypes, formIdFor } from '../../run/progression';
-import { rungOf } from '../../run/ascension';
+import { cycleOf } from '../../run/cycles';
 import type { RunState } from '../../run/state';
 import { getTypeColorRgb } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -122,7 +122,7 @@ export function ChampionScreen({ run, onContinue }: Props) {
       {done && (
         <div className="champion-hall">
           <div className="champion-hall-head">
-            <div className="champion-kicker">{rungOf(run.ascension).name} · The Titan is bound</div>
+            <div className="champion-kicker">Cycle {cycleOf(run.cycle).numeral} · The Titan is bound</div>
             <h2 className="champion-title">Heroes of the Land</h2>
             <div className="champion-rule" aria-hidden="true">
               <span />◆<span />

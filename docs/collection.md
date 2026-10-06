@@ -139,7 +139,7 @@ the bonus is repeatable.
 | A2–A5 | rises by rung | rises by rung | must beat the rung below |
 
 \* Win rate × bonus − fee, at the skilled pilot's measured 73.7% / 31.2% (`ascension.md` §9b).
-First-pass figures (`ASCENSION_RUNGS`, `src/run/ascension.ts`); `test/starShop` pins only the
+First-pass figures (`CYCLES`, `src/run/cycles.ts`); `test/starShop` pins only the
 shape — Classic free and paying, each rung ahead of the one below.
 
 **Decided 2026-09-26, per user direction:** Classic pays a **small bonus on every clear**, so a

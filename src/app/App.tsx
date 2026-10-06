@@ -61,7 +61,7 @@ import { moves } from '../data/moves';
 import { allCombatants, rosterHeroes } from '../data/content';
 import { CompanionScreen } from '../view/run/CompanionScreen';
 import { awakenCompanion, companionCandidate, companionGrowth, companionHeroId, companionJoinDue, companionToAwaken, joinCompanion } from '../run/companion';
-import { fallenAfterFight, isPermadeath, openAscension } from '../run/ascension';
+import { fallenAfterFight, isPermadeath, openCycle } from '../run/cycles';
 import { FallenScreen } from '../view/run/FallenScreen';
 import type { CombatState } from '../engine/state';
 import { koRosterIdsOf } from '../run/buildCombatState';
@@ -137,7 +137,7 @@ import { LocationProvider } from '../view/shared/LocationContext';
 import { LocationChoiceScreen } from '../view/run/LocationChoiceScreen';
 import { ProfileProvider } from '../view/shared/ProfileContext';
 import { starShopCatalog } from '../data/starShop';
-import { buyOffer, canEnterRung, starBalance, starfall, type StarShopOffer } from '../run/starShop';
+import { buyOffer, starfall, type StarShopOffer } from '../run/starShop';
 import { NODE_TINT_MANA, NODE_TINT_VITAL } from '../view/shared/NodeStage';
 import { prefetchTrack, setTrack } from '../audio/music';
 import { playSfx } from '../audio/sfx';
@@ -235,9 +235,9 @@ function addHeroes(run: RunState, heroIds: readonly string[], level?: number): R
  * location choice (`enterAct`). A first run on an account is this run too — there is no tutorial
  * run, only first-time tips over an ordinary one (docs/tutorial.md).
  */
-function createStartingRun(heroIds: readonly string[], ascension: number): RunState {
+function createStartingRun(heroIds: readonly string[], cycle: number): RunState {
   return {
-    ...blessOpeningPair(addHeroes(createRunState(40, 1, ascension), heroIds)),
+    ...blessOpeningPair(addHeroes(createRunState(40, 1, cycle), heroIds)),
     map: generateMap(randomSeed()),
     locationIds: [ACT_ONE_LOCATION_ID],
   };
@@ -593,7 +593,7 @@ export function App() {
       // The finale has no Location of its own (locationForAct falls back to Act 1's); the history reads the act instead.
       locationId: playerRun.actNumber <= SEAL_ACTS ? playerRun.locationIds[playerRun.actNumber - 1] ?? null : null,
       encountersWon: playerRun.encountersWon,
-      ascension: playerRun.ascension,
+      cycle: playerRun.cycle,
       roster: playerRun.roster.map((entry) => ({
         heroId: entry.heroId,
         level: levelOf(entry),
@@ -632,7 +632,7 @@ export function App() {
     return drawn;
   }
 
-  /** TEMPORARY DEV/TEST — 50 stars on the bonus ledger, so the Constellation and the rung fees can be tried without clearing runs. */
+  /** TEMPORARY DEV/TEST — 50 stars on the bonus ledger, so the Constellation can be tried without clearing runs. */
   function handleGrantDevStars() {
     setProfile(updateProfile((current) => ({ ...current, bonusStars: current.bonusStars + 50 })));
   }
@@ -1081,11 +1081,11 @@ export function App() {
     setProfile(updateProfile((current) => recordTipSeen(current, id)));
   }
 
-  /** The rung rides `playerRun` across the draft; the run itself is only built on confirm. */
-  function handleStartNewRun(ascension: number) {
+  /** The Cycle rides `playerRun` across the draft; the run itself is only built on confirm. */
+  function handleStartNewRun(cycle: number) {
     // One hero drawn from each deck row, then four of those shown (run/draft.ts).
     const optionIds = generateStarterOptions(randomSeed(), deckRows(profileDeck(profile, heroes)));
-    setPlayerRun((run) => ({ ...run, ascension }));
+    setPlayerRun((run) => ({ ...run, cycle }));
     const draft: Screen = { kind: 'draft', optionIds };
     // The lore card once an account, ahead of the first draft — its last line is the draft's verb.
     setScreen(profile.seenTipIds.includes(LORE_TIP_ID) ? draft : { kind: 'lore', next: draft });
@@ -1093,7 +1093,7 @@ export function App() {
 
   function handleDraftConfirm(chosenIds: string[]) {
     // The deck is snapshotted onto the run, so an edit between sessions never moves a run's pools.
-    setPlayerRun((run) => ({ ...createStartingRun(chosenIds, run.ascension), deck: deckHeroIds(profileDeck(profile, heroes)) }));
+    setPlayerRun((run) => ({ ...createStartingRun(chosenIds, run.cycle), deck: deckHeroIds(profileDeck(profile, heroes)) }));
     // The cold open goes here and not on the title's press for the same reason the run itself
     // is built here: binding is mutual (docs/lore.md §1), so the thing on the far end of the
     // leash notices when the pact is sealed, not when a menu is browsed.
@@ -1102,9 +1102,7 @@ export function App() {
     persistStorage();
     // Sealing the pact is the start, not pressing the title button: a draft backed out of
     // is not a run. An abandoned run still counts here — it was played.
-    // The rung's entry fee is spent here, with the seal (docs/collection.md §5).
-    const rung = playerRun.ascension;
-    updateProfile((current) => recordRunStarted(current, Date.now(), rung, starBalance(current, starShopCatalog)));
+    updateProfile((current) => recordRunStarted(current, Date.now()));
   }
 
   /** TEMPORARY DEV/TEST — the Crucible sits behind a Guardian, which is three fights away. */
@@ -1239,7 +1237,7 @@ export function App() {
           }
           onContinueRun={handleContinueRun}
           onStartRun={handleStartNewRun}
-          openAscension={openAscension(profile)}
+          openCycle={openCycle(profile)}
           onResetTips={handleResetTips}
           onGrantDevStars={handleGrantDevStars}
           onQuickBattle={handleQuickBattle}
@@ -1651,8 +1649,7 @@ export function App() {
           run={playerRun}
           profileBefore={runOutcome.before}
           profileAfter={runOutcome.after}
-          onNewRun={() => handleStartNewRun(playerRun.ascension)}
-          canAffordRung={canEnterRung(runOutcome.after, starShopCatalog, playerRun.ascension)}
+          onNewRun={() => handleStartNewRun(playerRun.cycle)}
           onReturnToTitle={() => setScreen({ kind: 'title' })}
         />
       )}

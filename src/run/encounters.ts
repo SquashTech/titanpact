@@ -17,7 +17,7 @@ import { rosterEntryTypes } from './progression';
 import { championGradeFor, encounterScaling, encounterHeroCountOverride, enemyLoadoutFor, guardianEscortCount } from './difficulty';
 import { appendFinalEnemy, generateEncounter, type Encounter, type EncounterNodeType } from './enemyGen';
 import { locationBias } from './locations';
-import { guardiansWake, wokenChampion, wokenChampionMark, wokenEscortCount } from './ascension';
+import { guardiansWake, wokenChampion, wokenChampionMark, wokenEscortCount } from './cycles';
 import { guardianEscortPool, mobEncounter } from './spawn';
 import { DECK_HEROES_PER_FIGHT } from './deck';
 
@@ -75,7 +75,7 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
   // reach one roster via a contract claim (mirrors rollGuildHallOffers). Passed unconditionally:
   // enemy and hero ids never collide (test/recruitment.test.ts), so it is inert on a mob pool.
   const excludeHeroIds = run.roster.map((r) => r.heroId);
-  // From A1 the Guardians wake (run/ascension.ts): the escorts climb with the act, the champion leads.
+  // From Cycle II the Guardians wake (run/cycles.ts): the escorts climb with the act, the champion leads.
   const woken = type === 'boss' && guardiansWake(run);
   const standardCount = encounterKind === 'boss' ? (woken ? wokenEscortCount(run.actNumber) : guardianEscortCount(run.actNumber)) : 4;
   // Act 1 caps the enemy count at the roster (the companion is off it — docs/companion-call.md §6).

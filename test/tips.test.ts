@@ -65,8 +65,8 @@ test('tips: every inline icon token is one the view can draw', () => {
 test('tips: the lore card is the four lines, the last the draft\'s verb', () => {
   assert.deepStrictEqual(LORE_LINES, [
     'A Titan cannot be killed.',
-    'It can only be put to sleep for 1,000 years.',
-    'Our time is up.',
+    'Sealed, it sleeps for one year.',
+    'The year is up.',
     'We must seal the pact.',
   ]);
 });

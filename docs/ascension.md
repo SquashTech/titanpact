@@ -1,5 +1,9 @@
 # ascension.md — The Ascension ladder: Permadeath, then rules
 
+> **SUPERSEDED IN PART by `docs/cycles.md` (2026-10-06):** the ladder is now five Cycles. A1 is
+> **Cycle II** (`src/run/cycles.ts`), no Cycle costs a star to enter, and A2–A5 below are re-seated
+> as Cycle rows. The rules here (Permadeath, the woken Guardians, the Fallen) stand as written.
+>
 > **STATUS: A1 is BUILT and PLAYABLE** (decided 2026-09-21, per user direction): Permadeath
 > (`src/run/ascension.ts`, the title's rung picker, the Fallen beat), the companion additions
 > (§7a, 2026-09-26) and the woken Guardians (§2a, 2026-09-29 — A1 measured 49.6% skilled / 5.2%

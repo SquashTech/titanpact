@@ -1,10 +1,10 @@
 # cycles.md — The Cycles: difficulty as the story
 
-> **STATUS: DECIDED in shape, NOT BUILT** (2026-10-06, per user direction). Replaces the
+> **STATUS: DECIDED in shape; PHASE 1 IS IN** (2026-10-06, per user direction — §7a). Replaces the
 > Ascension *ladder* (`docs/ascension.md` §5) with five **Cycles**: each is the Titan's next
 > rising, a year after the last, in a world that has changed and against a Titan that has
 > adapted — and the fifth ends the cycle for good. A1 Permadeath is built and is not thrown away;
-> it becomes Cycle II's rule. §8 lists what is decided, §9 what is open. Nothing here is built.
+> it becomes Cycle II's rule. §8 lists what is decided, §9 what is open, §7a what is built.
 
 ---
 
@@ -98,13 +98,27 @@ bundles and the Starfall.
 
 ## 7. Lore and copy to rewrite
 
-- `src/data/tips.ts` `LORE_LINES`: *put to sleep for 1,000 years* → one year.
-- `src/view/run/TitanBoundScreen.tsx`: *A thousand years, if the seals are kept* → a beat that says
-  the next Cycle is coming (Cycles I–IV) and a different one in Cycle V.
-- `lore.md` §1 (the premise), §5 (why the seals hold, and what happens when they stop), §7
-  (*asleep again for a thousand years*; and *the word outlived everyone who knew what it referred
-  to*, which a one-year cycle does not support — the name needs another origin).
+- **Done (phase 1):** the lore card (*Sealed, it sleeps for one year. / The year is up.*), the
+  Titan Bound line (*It wakes again in a year.*), and `lore.md` §7's *thousand years*.
+- `TitanBoundScreen` in Cycle V needs its own line, when Cycle V is built.
+- `lore.md` §1 (the premise) and §5 (why the seals hold, and what happens when they stop); §7's
+  *the word outlived everyone who knew what it referred to*, which a one-year cycle does not
+  support — the name needs another origin.
 - The champion's hall: a Cycle I–IV clear is a sealing, not an ending.
+
+## 7a. Order of work
+
+| Phase | What | Status |
+|---|---|---|
+| 1 | Ascension → Cycles: `src/run/cycles.ts`, `RunState.cycle` (1-based) and `Profile.cyclesCleared`, saves and profiles migrated one up; no entry fee; the title's **Which Cycle?** picker once Cycle I is cleared (I–V listed, the unbuilt greyed by name); the map's Cycle badge; one-year lore; the sim's `--cycle N` | **Done** 2026-10-06 |
+| 2 | The Wardens: snapshot the first Cycle I win (`Profile.wardens`), seat each by type on a base seal, field it as an EXTRA body beside its beast from Cycle II, name it on arrival, a Wardens page; back-fill from Run History; measure | Next |
+| 3 | Star colours by Cycle: `heroId → { pathId → cycle }`, migrated as Cycle I | — |
+| 4 | Bought Locations granted by a Cycle; the Constellation stops selling them | — |
+| 5 | Cycles III and IV, one rule each, each measured | — |
+| — | Cycle V | When I–IV are built |
+
+The picker copy is held to one line a Cycle (per user direction): Cycle II reads *The fallen stay
+fallen.* until the Wardens land, when it gains *Your first band holds the seals.*
 
 ## 8. Decided (2026-10-06, per user direction)
 

@@ -7,11 +7,11 @@ import { RecordsScreen } from './RecordsScreen';
 import { StarShopScreen } from './StarShopScreen';
 import { HUB_TABS, HubNav, type HubTab } from './HubNav';
 import { starShopCatalog } from '../../data/starShop';
-import { canEnterRung, starBalance, type StarShopOffer } from '../../run/starShop';
+import { starBalance, type StarShopOffer } from '../../run/starShop';
 import { TitanColossus, TitanRidge } from './titanArt';
 import { SealArt } from '../shared/SealArt';
 import { HubGlyph } from '../shared/nodeIcons';
-import { ASCENSION_RUNGS } from '../../run/ascension';
+import { CYCLES, FIRST_CYCLE } from '../../run/cycles';
 import { AudioSettings } from '../shared/AudioSettings';
 import type { SaveSummary } from '../../run/save';
 import type { Profile } from '../../run/profile';
@@ -37,10 +37,10 @@ interface Props {
   /** A line about the save the player can act on or should know: restored from a backup, or storage full. */
   saveNotice?: string | null;
   onContinueRun: () => void;
-  /** Start a run on the given Ascension rung (run/ascension.ts); 0 is Classic. */
-  onStartRun: (ascension: number) => void;
-  /** The highest rung the profile may start on; 0 until a run has been cleared. */
-  openAscension: number;
+  /** Start a run on the given Cycle (run/cycles.ts). */
+  onStartRun: (cycle: number) => void;
+  /** The highest Cycle the profile may start on; Cycle I until a run has been cleared. */
+  openCycle: number;
   /** Forgets every first-time tip seen, and the lore card, so each shows again (docs/tutorial.md). */
   onResetTips: () => void;
   /** TEMPORARY DEV/TEST — App.tsx handleGrantDevStars: +50 stars to test the Constellation and the stakes. */
@@ -124,7 +124,7 @@ export function TitleScreen({
   saveNotice = null,
   onContinueRun,
   onStartRun,
-  openAscension,
+  openCycle,
   onResetTips,
   onGrantDevStars,
   onQuickBattle,
@@ -149,7 +149,7 @@ export function TitleScreen({
   const [showDev, setShowDev] = useState(false);
   const [launching, setLaunching] = useState(false);
   const [confirmingNewRun, setConfirmingNewRun] = useState(false);
-  const [pickingRung, setPickingRung] = useState(false);
+  const [pickingCycle, setPickingCycle] = useState(false);
   const [staleNoteDismissed, setStaleNoteDismissed] = useState(false);
 
   // The sound already plays from the delegated pointerdown listener (audio/uiSfx.ts).
@@ -168,13 +168,13 @@ export function TitleScreen({
     startFresh();
   }
 
-  /** Nothing to ask until a rung is open; then the rung is the one question between the press and the draft. */
+  /** Nothing to ask until Cycle I is cleared; then the Cycle is the one question between the press and the draft. */
   function startFresh() {
-    if (openAscension > 0) {
-      setPickingRung(true);
+    if (openCycle > FIRST_CYCLE) {
+      setPickingCycle(true);
       return;
     }
-    launch(() => onStartRun(0));
+    launch(() => onStartRun(FIRST_CYCLE));
   }
 
   function selectTab(next: HubTab) {
@@ -421,32 +421,34 @@ export function TitleScreen({
         </div>
       )}
 
-      {/* The rung (docs/ascension.md §8): every rung up to the open one, each with the one rule it adds. */}
-      {pickingRung && (
-        <div className="log-overlay" onClick={() => setPickingRung(false)}>
+      {/* The Cycles (docs/cycles.md §4): every open one selectable, the rest teased by name, greyed. */}
+      {pickingCycle && (
+        <div className="log-overlay" onClick={() => setPickingCycle(false)}>
           <div className="log-panel title-confirm-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="title-confirm-title">How hard?</div>
-            {ASCENSION_RUNGS.filter((r) => r.rung <= openAscension).map((r) => (
-              <button
-                key={r.rung}
-                className={`options-item title-rung${r.rung > 0 ? ' options-item-danger' : ''}`}
-                disabled={!canEnterRung(profile, starShopCatalog, r.rung)}
-                onClick={() => {
-                  setPickingRung(false);
-                  launch(() => onStartRun(r.rung));
-                }}
-              >
-                <span className="title-rung-head">
-                  <span className="title-rung-name">{r.name}</span>
-                  {/* The stakes (docs/collection.md §5): what sealing costs, what a clear pays. */}
-                  <span className="title-rung-stakes">
-                    {r.entryFee > 0 && <span className="title-rung-fee">Costs ★ {r.entryFee}</span>}
-                    <span className="title-rung-bonus">Clear +★ {r.clearBonus}</span>
+            <div className="title-confirm-title">Which Cycle?</div>
+            {CYCLES.map((c) => {
+              const open = c.cycle <= openCycle;
+              return (
+                <button
+                  key={c.cycle}
+                  className={`options-item title-cycle${open && c.cycle > FIRST_CYCLE ? ' options-item-danger' : ''}`}
+                  disabled={!open}
+                  onClick={() => {
+                    setPickingCycle(false);
+                    launch(() => onStartRun(c.cycle));
+                  }}
+                >
+                  <span className="title-cycle-head">
+                    <span className="title-cycle-name">
+                      <span className="title-cycle-numeral">{c.numeral}</span>
+                      {c.name}
+                    </span>
+                    {open && <span className="title-cycle-bonus">Clear +★ {c.clearBonus}</span>}
                   </span>
-                </span>
-                <span className="title-rung-rule">{r.rule}</span>
-              </button>
-            ))}
+                  {open && <span className="title-cycle-line">{c.line}</span>}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}

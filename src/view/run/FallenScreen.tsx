@@ -1,7 +1,7 @@
 import { useEffect, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
-import { releaseFallen } from '../../run/ascension';
+import { releaseFallen } from '../../run/cycles';
 import { canUseRevive, spendRevive } from '../../run/consumables';
 import type { RosterEntry, RunState } from '../../run/state';
 import { reviveHero } from '../../run/wounds';

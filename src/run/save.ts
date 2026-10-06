@@ -489,9 +489,11 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
   if (!isStringArray(value.visitedNodeIds)) reject('run.visitedNodeIds is not a list of ids');
   for (const id of value.visitedNodeIds) if (!map.nodes[id]) reject(`run.visitedNodeIds names missing node "${id}"`);
 
-  // Absent on a file written before the ladder existed; such a run was Base.
-  const ascension = value.ascension === undefined ? 0 : value.ascension;
-  if (!isInt(ascension, 0)) reject('run.ascension is not a rung');
+  // A file written before the Cycles holds an Ascension rung (0 = Cycle I); one before the
+  // ladder holds neither, and was Cycle I.
+  let cycle: unknown = value.cycle;
+  if (cycle === undefined) cycle = value.ascension === undefined ? 1 : isInt(value.ascension, 0) ? value.ascension + 1 : null;
+  if (!isInt(cycle, 1)) reject('run.cycle is not a Cycle');
   // Absent on a file written before decks; such a run reads the owned roster whole. A hero this
   // build no longer ships just leaves the pool.
   if (value.deck !== undefined && value.deck !== null && !isStringArray(value.deck)) reject('run.deck is not a list of ids');
@@ -513,7 +515,7 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
     actNumber: value.actNumber,
     locationIds: requireIds(value.locationIds, index.locationIds, 'run.locationIds'),
     brokenSeals: decodeBrokenSeals(value.brokenSeals, index),
-    ascension,
+    cycle,
     deck,
     lastMvpRosterId: typeof value.lastMvpRosterId === 'string' ? value.lastMvpRosterId : null,
   };

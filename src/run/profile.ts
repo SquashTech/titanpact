@@ -9,7 +9,7 @@
 // the player did, not state the engine runs on, so a partially-read one is still true.
 
 import { spawnPosition } from '../data/titanspawn';
-import { rungOf } from './ascension';
+import { cycleOf } from './cycles';
 import { grantLedgerId } from './recruitment';
 import { unenchanted, type Team, type TeamSlot } from './constructed';
 
@@ -33,8 +33,8 @@ export interface Profile {
   runsFailed: number;
   /** Furthest act reached in any run, 1-indexed. */
   furthestAct: number;
-  /** The highest Ascension rung a run has been cleared on (run/ascension.ts); 0 until a run above Base is cleared. */
-  ascensionCleared: number;
+  /** The highest Cycle a run has been cleared on (run/cycles.ts); 0 until a run is cleared. */
+  cyclesCleared: number;
   /**
    * heroId -> the Evolution path ids that hero has cleared a run down. One star a path, three a
    * hero, and a hero that finished a run unevolved earns nothing — the star is for the form, not
@@ -71,9 +71,9 @@ export interface Profile {
    * A dev test run never records a start, so its record carries no duration.
    */
   runStartedAtPlaytimeMs: number | null;
-  /** Lifetime stars paid by clear bonuses (run/ascension.ts `clearBonus`), beside the hero and companion stars. */
+  /** Lifetime stars paid by clear bonuses (run/cycles.ts `clearBonus`), beside the hero and companion stars. */
   bonusStars: number;
-  /** Lifetime stars paid as Ascension entry fees — spent, never refunded. */
+  /** Lifetime stars paid as Ascension entry fees before the Cycles deleted them — spent, never refunded. */
   feesPaid: number;
   /** Constellation (star shop) offer ids bought (run/starShop.ts), each at most once. Stars are never un-earned; this is what draws the balance down. */
   purchases: string[];
@@ -131,15 +131,15 @@ export interface RunRecord {
   /** That act's Location, or null on a run without an itinerary. */
   locationId: string | null;
   encountersWon: number;
-  /** The rung it was played on (run/ascension.ts); 0 on every record written before the ladder. */
-  ascension: number;
+  /** The Cycle it was played on (run/cycles.ts); Cycle I on every record written before the ladder. */
+  cycle: number;
   /** The roster at the end, in roster order. */
   roster: RunRecordHero[];
   /** The companion's line (run/companion.ts), or null for a run that never took one; absent on records before the Call. */
   companionType?: string | null;
   /** The Evolution path ids — and `companion:<type>` — this run's clear starred for the first time; a loss stars nothing. */
   starsEarned: string[];
-  /** The rung's clear bonus this run paid; 0 on a loss and on every record written before the stakes. */
+  /** The Cycle's clear bonus this run paid; 0 on a loss and on every record written before the stakes. */
   clearBonus: number;
 }
 
@@ -154,7 +154,7 @@ export function createProfile(): Profile {
     runsCompleted: 0,
     runsFailed: 0,
     furthestAct: 1,
-    ascensionCleared: 0,
+    cyclesCleared: 0,
     evolutionStars: {},
     companionStars: [],
     curseStars: [],
@@ -181,16 +181,10 @@ export function addPlaytime(profile: Profile, ms: number): Profile {
   return { ...profile, playtimeMs: profile.playtimeMs + Math.round(ms) };
 }
 
-/**
- * The pact sealed. The rung's entry fee is spent here and nowhere else, so quitting mid-run is not
- * a free attempt; a rung the balance cannot cover is refused, and the title never offers one.
- */
-export function recordRunStarted(profile: Profile, now: number, ascension = 0, balance = Infinity): Profile {
-  const fee = rungOf(ascension).entryFee;
-  if (fee > balance) throw new Error(`${rungOf(ascension).name} costs ${fee}, balance is ${balance}`);
+/** The pact sealed. No Cycle costs anything to enter (docs/cycles.md §5). */
+export function recordRunStarted(profile: Profile, now: number): Profile {
   return {
     ...profile,
-    feesPaid: profile.feesPaid + fee,
     runsStarted: profile.runsStarted + 1,
     runStartedAtPlaytimeMs: profile.playtimeMs,
     firstPlayedAt: profile.firstPlayedAt === 0 ? now : profile.firstPlayedAt,
@@ -238,13 +232,13 @@ export function recordRunEnded(profile: Profile, end: RunEnd, now: number): Prof
     endedAt: now,
     durationMs: profile.runStartedAtPlaytimeMs === null ? null : Math.max(0, profile.playtimeMs - profile.runStartedAtPlaytimeMs),
     starsEarned,
-    clearBonus: end.outcome === 'win' ? rungOf(end.ascension).clearBonus : 0,
+    clearBonus: end.outcome === 'win' ? cycleOf(end.cycle).clearBonus : 0,
   };
   return {
     ...profile,
     runsCompleted: profile.runsCompleted + (end.outcome === 'win' ? 1 : 0),
     runsFailed: profile.runsFailed + (end.outcome === 'loss' ? 1 : 0),
-    ascensionCleared: end.outcome === 'win' ? Math.max(profile.ascensionCleared, end.ascension) : profile.ascensionCleared,
+    cyclesCleared: end.outcome === 'win' ? Math.max(profile.cyclesCleared, end.cycle) : profile.cyclesCleared,
     evolutionStars,
     companionStars,
     curseStars,
@@ -413,7 +407,8 @@ function decodeRunRecord(raw: unknown, knownPathIds?: ReadonlySet<string>): RunR
     actReached,
     locationId: typeof raw.locationId === 'string' && raw.locationId.length > 0 ? raw.locationId : null,
     encountersWon: count(raw.encountersWon),
-    ascension: count(raw.ascension),
+    // A record from before the Cycles holds an Ascension rung, 0 being Cycle I.
+    cycle: raw.cycle !== undefined ? Math.max(1, count(raw.cycle, 1)) : count(raw.ascension) + 1,
     roster,
     ...(typeof raw.companionType === 'string' && raw.companionType.length > 0 ? { companionType: raw.companionType } : {}),
     starsEarned: stringList(raw.starsEarned).filter((id) => id.startsWith('companion:') || id.startsWith('curse:') || knownPath(id) !== null),
@@ -467,7 +462,8 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     runsCompleted: count(value.runsCompleted),
     runsFailed: count(value.runsFailed),
     furthestAct: Math.max(1, count(value.furthestAct, 1)),
-    ascensionCleared: count(value.ascensionCleared),
+    // A file from before the Cycles holds the highest Ascension rung cleared, 0 being Cycle I.
+    cyclesCleared: value.cyclesCleared !== undefined ? count(value.cyclesCleared) : count(value.runsCompleted) > 0 ? count(value.ascensionCleared) + 1 : 0,
     evolutionStars,
     // Absent on every file written before the bestiary; such a player starts both empty.
     companionStars: [...new Set(stringList(value.companionStars))],

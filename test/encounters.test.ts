@@ -14,7 +14,7 @@ import { generateItinerary, locationForAct } from '../src/run/locations';
 import { addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
 import { encounterSeedFor, nodeEncounter, scoutedTypes, type EncounterContext } from '../src/run/encounters';
 import { isRecruitable } from '../src/run/recruitment';
-import { wokenChampion, wokenChampionMark, wokenEscortCount } from '../src/run/ascension';
+import { wokenChampion, wokenChampionMark, wokenEscortCount } from '../src/run/cycles';
 import { guardianEscortPool } from '../src/run/spawn';
 import { championGradeFor, encounterScaling, guardianEscortCount } from '../src/run/difficulty';
 import { appendFinalEnemy } from '../src/run/enemyGen';
@@ -87,12 +87,12 @@ test('encounters: the mob nodes draw spawn and the Guardian draws escorts plus i
   for (const id of guardian.squad.activeIds) assert.ok(id && id in titanspawn, `${id} is not a spawn escort`);
 });
 
-test('encounters: from A1 the Guardian wakes — it leads, wears its Mark, grows on hero grades, and gains an escort from Act 3', () => {
+test('encounters: from Cycle II the Guardian wakes — it leads, wears its Mark, grows on hero grades, and gains an escort from Act 3', () => {
   for (const act of [1, 2, 3, 4]) {
     const base = runAt(9, act);
     const [boss] = nodesOfType(base, 'boss');
     const asleep = nodeEncounter(boss, contextFor(base));
-    const woken = nodeEncounter(boss, contextFor({ ...base, ascension: 1 }));
+    const woken = nodeEncounter(boss, contextFor({ ...base, cycle: 2 }));
     const championId = contextFor(base).location.guardianFinalEnemyId!;
     const champion = (e: typeof woken) => e.run.roster.find((r) => r.rosterId === championId)!;
 

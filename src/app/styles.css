@@ -16830,15 +16830,6 @@ button.star-shop-bundle-face {
   margin-right: auto;
 }
 
-/* "A1", the rung's own shorthand: tight, so it reads as one word. */
-.map-ascension {
-  gap: 1px;
-}
-
-.map-ascension .map-act-label {
-  letter-spacing: 0;
-}
-
 .map-act {
   display: flex;
   align-items: baseline;
@@ -19910,20 +19901,20 @@ button.star-shop-bundle-face {
   color: var(--text-dim);
 }
 
-/* The rung picker's rows (docs/ascension.md §8): the rung's name over the one rule it adds. */
-.title-rung {
+/* The Cycle picker's rows (docs/cycles.md §4): the numeral and name over one short line. */
+.title-cycle {
   flex-direction: column;
   align-items: flex-start;
   gap: 3px;
   padding: 10px 16px;
 }
 
-.title-rung:disabled {
-  opacity: 0.45;
+.title-cycle:disabled {
+  opacity: 0.4;
   cursor: default;
 }
 
-.title-rung-head {
+.title-cycle-head {
   display: flex;
   align-self: stretch;
   align-items: baseline;
@@ -19931,28 +19922,29 @@ button.star-shop-bundle-face {
   gap: 8px;
 }
 
-.title-rung-stakes {
+.title-cycle-name {
   display: flex;
+  align-items: baseline;
   gap: 8px;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.title-rung-fee {
-  color: var(--text-dim);
-}
-
-.title-rung-bonus {
-  color: rgb(224, 166, 60);
-}
-
-.title-rung-name {
   font-size: 14px;
   font-weight: 700;
 }
 
-.title-rung-rule {
+.title-cycle-numeral {
+  min-width: 22px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.title-cycle-bonus {
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: rgb(224, 166, 60);
+}
+
+.title-cycle-line {
+  padding-left: 30px;
   font-size: 12px;
   font-weight: 500;
   line-height: 1.4;

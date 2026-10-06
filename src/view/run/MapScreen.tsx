@@ -32,6 +32,7 @@ import { encounterPools } from '../../run/deck';
 import { heroPool } from '../../run/recruitment';
 import { useProfile } from '../shared/ProfileContext';
 import { enemies } from '../../data/enemies';
+import { FIRST_CYCLE, cycleOf } from '../../run/cycles';
 import { allCombatants } from '../../data/content';
 import type { TypeId } from '../../engine/content';
 import partyArt from '../../../art/ui/party.png';
@@ -211,10 +212,10 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
               </span>
             </span>
           )}
-          {run.ascension > 0 && (
-            <span className="map-act map-ascension" aria-label={`Ascension ${run.ascension}`} title="Permadeath: a knocked-out hero is gone unless a Revive is spent on it when the fight ends.">
-              <span className="map-act-label">A</span>
-              <span className="map-act-count">{run.ascension}</span>
+          {run.cycle > FIRST_CYCLE && (
+            <span className="map-act" aria-label={`Cycle ${cycleOf(run.cycle).numeral}`} title={cycleOf(run.cycle).line}>
+              <span className="map-act-label">Cycle</span>
+              <span className="map-act-count">{cycleOf(run.cycle).numeral}</span>
             </span>
           )}
         </div>

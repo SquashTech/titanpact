@@ -164,15 +164,15 @@ export interface RunState {
   locationIds: readonly string[];
   /** Appended on each Guardian win, in act order — the Pact Seal's filled sockets and the finale's enemy side. */
   brokenSeals: readonly BrokenSeal[];
-  /** The Ascension rung this run plays under (run/ascension.ts): 0 is Base, 1 is Permadeath. Chosen at run start, never changed. */
-  ascension: number;
+  /** The Cycle this run plays under (run/cycles.ts), 1-based: Cycle II is Permadeath. Chosen at run start, never changed. */
+  cycle: number;
   /** The deck the run was sealed with (run/deck.ts), fixed for the run: its recruitable pool. Null on a run saved before decks, which reads the owned roster whole. */
   deck: readonly string[] | null;
   /** Last fight's MVP (run/mvp.ts) — the no-repeat rule reads it. Null before the first win. */
   lastMvpRosterId: string | null;
 }
 
-export function createRunState(gold = 0, recruitContracts = 1, ascension = 0): RunState {
+export function createRunState(gold = 0, recruitContracts = 1, cycle = 1): RunState {
   return {
     roster: [],
     gold,
@@ -189,7 +189,7 @@ export function createRunState(gold = 0, recruitContracts = 1, ascension = 0): R
     actNumber: 1,
     locationIds: [],
     brokenSeals: [],
-    ascension,
+    cycle,
     deck: null,
     lastMvpRosterId: null,
   };

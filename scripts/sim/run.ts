@@ -6,7 +6,7 @@ import type { StatKey } from '../../src/engine/content';
 import { heroes as allHeroes } from '../../src/data/heroes';
 import { rosterHeroes } from '../../src/data/content';
 import { companionCallFor, companionCandidate, companionJoinDue, joinCompanion } from '../../src/run/companion';
-import { fallenAfterFight, isPermadeath, releaseFallen } from '../../src/run/ascension';
+import { fallenAfterFight, isPermadeath, releaseFallen } from '../../src/run/cycles';
 import { anyDown, canBuyMend, buyMend, mendPrice, mendRoster, recordWounds, reviveHero, standingRoster } from '../../src/run/wounds';
 import { buyConsumable, canBuyConsumable, canUseRevive, grantConsumable, rollConsumableDrop, spendRevive } from '../../src/run/consumables';
 import { moves } from '../../src/data/moves';
@@ -309,8 +309,8 @@ export interface RunOptions extends policy.PolicyOptions {
   playerSwitching: boolean;
   /** Who pilots the player side in every fight (fight.ts PilotKind). */
   pilot: PilotKind;
-  /** The Ascension rung (docs/ascension.md): 0 is Base; 1 and up is Permadeath, the Revive the one way back. */
-  ascension: number;
+  /** The Cycle (docs/cycles.md), 1-based: Cycle II and up is Permadeath, the Revive the one way back. */
+  cycle: number;
 }
 
 /**
@@ -380,7 +380,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
   record.choices.push({ bucket: 'draft', offered: draftOptions, picked: drafted, encountersWonAtChoice: 0 });
   tally(record, 1, 'draft');
 
-  let run: RunState = createRunState(40, 1, options.ascension);
+  let run: RunState = createRunState(40, 1, options.cycle);
   for (const heroId of drafted) {
     run = addRosterEntry(run, createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
   }

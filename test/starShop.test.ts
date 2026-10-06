@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { test } from './harness';
 import { LEFT_BASE_2026_09_28, PROFILE_VERSION, createProfile, decodeProfile, recordRunEnded, recordRunStarted } from '../src/run/profile';
-import { MAX_ASCENSION, rungOf } from '../src/run/ascension';
+import { MAX_BUILT_CYCLE, cycleOf } from '../src/run/cycles';
 import { STAR_SHOP_OFFERS, starShopCatalog } from '../src/data/starShop';
 import { locations } from '../src/data/locations';
 import { locationPool, unvisitedLocationIds } from '../src/run/locations';
@@ -9,7 +9,7 @@ import { heroes } from '../src/data/heroes';
 import { guildHallOffers, guildHallOffersFor } from '../src/data/recruitment';
 import { heroPool, isRecruitable, starfallLedgerId } from '../src/run/recruitment';
 import { deckHeroIds, profileDeck } from '../src/run/deck';
-import { STARFALL_PRICE, buyOffer, bundleOwnedHeroIds, canBuy, canCallStarfall, canEnterRung, isPurchased, offerHeld, offerPrice, starfall, starfallPool, starBalance, starsSpent, StarShopError, type StarShopCatalog, type StarShopGrant } from '../src/run/starShop';
+import { STARFALL_PRICE, buyOffer, bundleOwnedHeroIds, canBuy, canCallStarfall, isPurchased, offerHeld, offerPrice, starfall, starfallPool, starBalance, starsSpent, StarShopError, type StarShopCatalog, type StarShopGrant } from '../src/run/starShop';
 
 const pack: StarShopGrant = { kind: 'location', locationId: 'holySanctum' };
 
@@ -28,7 +28,7 @@ function withStars(count: number) {
     const heroId = `hero${Math.floor(i / 3)}`;
     profile = recordRunEnded(
       profile,
-      { outcome: 'win', actReached: 6, locationId: null, encountersWon: 1, ascension: 0, roster: [{ heroId, level: 30, evolutionPathId: `${heroId}-${kinds[i % 3]}` }] },
+      { outcome: 'win', actReached: 6, locationId: null, encountersWon: 1, cycle: 1, roster: [{ heroId, level: 30, evolutionPathId: `${heroId}-${kinds[i % 3]}` }] },
       i
     );
   }
@@ -142,34 +142,26 @@ test('star shop: a bought bundle puts its heroes in the recruit pool, and only t
   assert.ok(guildHallOffersFor(held).some((o) => o.heroId === 'drake'), 'the Guild Hall shelf sells him once the bundle is held');
 });
 
-test('star shop: the stakes — a clear pays its rung bonus every time, an entry fee is spent at the seal win or lose', () => {
-  const end = (ascension: number, outcome: 'win' | 'loss') => ({ outcome, actReached: 6, locationId: null, encountersWon: 1, ascension, roster: [] });
-  let profile = recordRunEnded(createProfile(), end(0, 'win'), 1);
-  profile = recordRunEnded(profile, end(0, 'win'), 2);
-  assert.strictEqual(profile.bonusStars, 2 * rungOf(0).clearBonus, 'Classic pays on every clear');
-  assert.strictEqual(profile.runHistory[0].clearBonus, rungOf(0).clearBonus);
-  assert.strictEqual(recordRunEnded(profile, end(1, 'loss'), 3).bonusStars, profile.bonusStars, 'a loss pays nothing');
+test('star shop: a clear pays its Cycle bonus every time, and no Cycle costs a star to enter', () => {
+  const end = (cycle: number, outcome: 'win' | 'loss') => ({ outcome, actReached: 6, locationId: null, encountersWon: 1, cycle, roster: [] });
+  let profile = recordRunEnded(createProfile(), end(1, 'win'), 1);
+  profile = recordRunEnded(profile, end(1, 'win'), 2);
+  assert.strictEqual(profile.bonusStars, 2 * cycleOf(1).clearBonus, 'Cycle I pays on every clear');
+  assert.strictEqual(profile.runHistory[0].clearBonus, cycleOf(1).clearBonus);
+  assert.strictEqual(recordRunEnded(profile, end(2, 'loss'), 3).bonusStars, profile.bonusStars, 'a loss pays nothing');
 
   const balance = starBalance(profile, catalog);
-  assert.ok(canEnterRung(profile, catalog, 1));
-  const sealed = recordRunStarted(profile, 4, 1, balance);
-  assert.strictEqual(starBalance(sealed, catalog), balance - rungOf(1).entryFee);
-  assert.strictEqual(starsSpent(sealed, catalog), rungOf(1).entryFee);
-  const won = recordRunEnded(sealed, end(1, 'win'), 5);
-  assert.strictEqual(starBalance(won, catalog), balance - rungOf(1).entryFee + rungOf(1).clearBonus, 'a win pays the bonus; the fee is not refunded');
-
-  const broke = createProfile();
-  assert.ok(!canEnterRung(broke, catalog, 1) && canEnterRung(broke, catalog, 0), 'Classic is never out of reach');
-  assert.throws(() => recordRunStarted(broke, 6, 1, starBalance(broke, catalog)));
-  assert.strictEqual(recordRunStarted(broke, 6, 0, 0).feesPaid, 0);
+  const sealed = recordRunStarted(profile, 4);
+  assert.strictEqual(starBalance(sealed, catalog), balance, 'sealing the pact spends nothing');
+  const won = recordRunEnded(sealed, end(2, 'win'), 5);
+  assert.strictEqual(starBalance(won, catalog), balance + cycleOf(2).clearBonus);
 });
 
-test('star shop: every rung past Classic pays more a run than the one below it, at the measured win rates', () => {
-  // docs/ascension.md §9b, skilled pilot: Classic 73.7%, A1 31.2%. Directional (docs/collection.md §5).
-  const winRate: Record<number, number> = { 0: 0.737, 1: 0.312 };
-  const expected = (rung: number) => winRate[rung] * rungOf(rung).clearBonus - rungOf(rung).entryFee;
-  assert.ok(rungOf(0).entryFee === 0 && rungOf(0).clearBonus > 0, 'Classic is free and always pays, so no balance is ever stuck');
-  for (let rung = 1; rung <= MAX_ASCENSION; rung++) assert.ok(expected(rung) > expected(rung - 1), `rung ${rung} pays ${expected(rung).toFixed(2)} against ${expected(rung - 1).toFixed(2)}`);
+test('star shop: every built Cycle pays more a run than the one before it, at the measured win rates', () => {
+  // docs/ascension.md §9b, skilled pilot: Cycle I 73.7%, Cycle II 31.2%. Directional (docs/collection.md §5).
+  const winRate: Record<number, number> = { 1: 0.737, 2: 0.312 };
+  const expected = (cycle: number) => winRate[cycle] * cycleOf(cycle).clearBonus;
+  for (let cycle = 2; cycle <= MAX_BUILT_CYCLE; cycle++) assert.ok(expected(cycle) > expected(cycle - 1), `Cycle ${cycle} pays ${expected(cycle).toFixed(2)} against ${expected(cycle - 1).toFixed(2)}`);
 });
 
 test('star shop: a profile written before the stakes reads as none earned and none paid', () => {

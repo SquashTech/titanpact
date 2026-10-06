@@ -55,7 +55,7 @@ import './mobLayer.test';
 import './encounters.test';
 import './companion.test';
 import './companionCall.test';
-import './ascension.test';
+import './cycles.test';
 import './finale.test';
 import './events.test';
 import './eventVocabulary.test';

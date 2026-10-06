@@ -19,8 +19,8 @@ import type { FightTip, ScreenTipId, Tip } from '../run/tips';
  */
 export const LORE_LINES: readonly string[] = [
   'A Titan cannot be killed.',
-  'It can only be put to sleep for 1,000 years.',
-  'Our time is up.',
+  'Sealed, it sleeps for one year.',
+  'The year is up.',
   'We must seal the pact.',
 ];
 
